@@ -999,13 +999,10 @@ static PhysicsVertexData CreateRectanglePolygon(Vector2 pos, Vector2 size)
 void UpdatePhysicsStep(void)
 {
     // Clear previous generated collisions information
-    if (physicsManifoldsCount > 0)
+    for (int i = (int)physicsManifoldsCount - 1; i >= 0; i--)
     {
-        for (unsigned int i = physicsManifoldsCount - 1; i >= 0; i--)
-        {
-            PhysicsManifold manifold = contacts[i];
-            if (manifold != NULL) DestroyPhysicsManifold(manifold);
-        }
+        PhysicsManifold manifold = contacts[i];
+        if (manifold != NULL) DestroyPhysicsManifold(manifold);
     }
 
     // Reset physics bodies grounded state
