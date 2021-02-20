@@ -35,7 +35,7 @@ int main(void)
 
     for (int i = 0; i < MAX_COLORS_COUNT; i++)
     {
-        colorsRecs[i].x = 10 + 30 * i + 2 * i;
+        colorsRecs[i].x = 10 + 30*i + 2*i;
         colorsRecs[i].y = 10;
         colorsRecs[i].width = 30;
         colorsRecs[i].height = 30;
@@ -95,7 +95,7 @@ int main(void)
         }
 
         // Change brush size
-        brushSize += GetMouseWheelMove() * 5;
+        brushSize += GetMouseWheelMove()*5;
         if (brushSize < 2) brushSize = 2;
         if (brushSize > 50) brushSize = 50;
 
@@ -191,10 +191,8 @@ int main(void)
 
         if (colorMouseHover >= 0) DrawRectangleRec(colorsRecs[colorMouseHover], Fade(WHITE, 0.6f));
 
-        DrawRectangleLinesEx((Rectangle) {
-            colorsRecs[colorSelected].x - 2, colorsRecs[colorSelected].y - 2,
-                colorsRecs[colorSelected].width + 4, colorsRecs[colorSelected].height + 4
-        }, 2, BLACK);
+        DrawRectangleLinesEx((Rectangle){ colorsRecs[colorSelected].x - 2, colorsRecs[colorSelected].y - 2,
+                             colorsRecs[colorSelected].width + 4, colorsRecs[colorSelected].height + 4 }, 2, BLACK);
 
         // Draw save image button
         DrawRectangleLinesEx(btnSaveRec, 2, btnSaveMouseHover ? RED : BLACK);
