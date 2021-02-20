@@ -94,7 +94,7 @@ int main(void)
 
             // IsSocketReady, if the socket is ready, attempt to receive data from the socket
             int bytesRecv = 0;
-            if (IsSocketReady(connection)) bytesRecv = SocketReceive(connection, receiveBuffer, strlen(pingmsg) + 1);
+            if (IsSocketReady(connection)) bytesRecv = SocketReceive(connection, receiveBuffer, (int)strlen(pingmsg) + 1);
 
             // If we received data, was that data a "Ping!" or a "Pong!"
             if (bytesRecv > 0)
@@ -110,12 +110,12 @@ int main(void)
                 if (ping) 
                 {
                     ping = false;
-                    SocketSend(connection, pingmsg, strlen(pingmsg) + 1);
+                    SocketSend(connection, pingmsg, (int)strlen(pingmsg) + 1);
                 } 
                 else if (pong)
                 {
                     pong = false;
-                    SocketSend(connection, pongmsg, strlen(pingmsg) + 1);
+                    SocketSend(connection, pongmsg, (int)strlen(pingmsg) + 1);
                 }
                 
                 elapsed = 0.0f;

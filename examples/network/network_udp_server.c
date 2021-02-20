@@ -76,7 +76,7 @@ int main(void)
         //  if (IsSocketReady(serverResult->socket)) {
         //      bytesRecv = SocketReceive(serverResult->socket, receiveBuffer, msglen);
         //  }
-        int bytesRecv = SocketReceive(serverResult->socket, receiveBuffer, strlen(pingmsg) + 1);
+        int bytesRecv = SocketReceive(serverResult->socket, receiveBuffer, (int)strlen(pingmsg) + 1);
 
         // If we received data, is that data a "Ping!" or a "Pong!"?
         if (bytesRecv > 0) 
@@ -93,12 +93,12 @@ int main(void)
             if (ping) 
             {
                 ping = false;
-                SocketSend(serverResult->socket, pingmsg, strlen(pingmsg) + 1);
+                SocketSend(serverResult->socket, pingmsg, (int)strlen(pingmsg) + 1);
             } 
             else if (pong) 
             {
                 pong = false;
-                SocketSend(serverResult->socket, pongmsg, strlen(pongmsg) + 1);
+                SocketSend(serverResult->socket, pongmsg, (int)strlen(pongmsg) + 1);
             }
             
             elapsed = 0.0f;
