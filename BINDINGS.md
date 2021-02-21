@@ -20,7 +20,7 @@ Here it is a list with the ones I'm aware of:
 | raylib-goplus      | 2.6-dev | [Go](https://golang.org/)             | https://github.com/Lachee/raylib-goplus         |
 | ray-go             | 2.6-dev | [Go](https://golang.org/)             | https://github.com/hecate-tech/ray-go     |
 | go-raylib          | 3.5 | [Go](https://golang.org/)       | https://github.com/chunqian/go-raylib  |
-| raylib-rs          | 3.0 | [Rust](https://www.rust-lang.org/)    | https://github.com/deltaphc/raylib-rs     |
+| raylib-rs          | 3.5 | [Rust](https://www.rust-lang.org/)    | https://github.com/deltaphc/raylib-rs     |
 | raylib-lua         | 1.7 | [Lua](http://www.lua.org/)            | https://github.com/raysan5/raylib-lua       |
 | raylib-lua-ffi     | 2.0 | [Lua](http://www.lua.org/)            | https://github.com/raysan5/raylib/issues/693    |
 | raylib-lua-sol     | 2.5 | [Lua](http://www.lua.org/)          | https://github.com/RobLoach/raylib-lua-sol     |
