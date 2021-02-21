@@ -158,6 +158,11 @@
     #define MAX_MATRIX_STACK_SIZE           32      // Maximum size of Matrix stack
 #endif
 
+// Vertex buffers id limit
+#ifndef MAX_MESH_VERTEX_BUFFERS
+    #define MAX_MESH_VERTEX_BUFFERS          7      // Maximum vertex buffers (VBO) per mesh
+#endif
+
 // Shader and material limits
 #ifndef MAX_SHADER_LOCATIONS
     #define MAX_SHADER_LOCATIONS            32      // Maximum number of shader locations supported
@@ -2420,9 +2425,9 @@ void rlGenerateMipmaps(Texture2D *texture)
         if (texture->format == UNCOMPRESSED_R8G8B8A8)
         {
             // Retrieve texture data from VRAM
-            void *data = rlReadTexturePixels(*texture);
+            void *texData = rlReadTexturePixels(*texture);
 
-            // NOTE: data size is reallocated to fit mipmaps data
+            // NOTE: Texture data size is reallocated to fit mipmaps data
             // NOTE: CPU mipmap generation only supports RGBA 32bit data
             int mipmapCount = GenerateMipmaps(data, texture->width, texture->height);
 
@@ -2435,7 +2440,7 @@ void rlGenerateMipmaps(Texture2D *texture)
             // Load the mipmaps
             for (int level = 1; level < mipmapCount; level++)
             {
-                glTexImage2D(GL_TEXTURE_2D, level, GL_RGBA8, mipWidth, mipHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, (unsigned char *)data + offset);
+                glTexImage2D(GL_TEXTURE_2D, level, GL_RGBA8, mipWidth, mipHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, (unsigned char *)texData + offset);
 
                 size = mipWidth*mipHeight*4;
                 offset += size;
@@ -2445,7 +2450,7 @@ void rlGenerateMipmaps(Texture2D *texture)
             }
 
             texture->mipmaps = mipmapCount + 1;
-            RL_FREE(data); // Once mipmaps have been generated and data has been uploaded to GPU VRAM, we can discard RAM data
+            RL_FREE(texData); // Once mipmaps have been generated and data has been uploaded to GPU VRAM, we can discard RAM data
 
             TRACELOG(LOG_WARNING, "TEXTURE: [ID %i] Mipmaps generated manually on CPU side, total: %i", texture->id, texture->mipmaps);
         }
@@ -2481,6 +2486,8 @@ void rlLoadMesh(Mesh *mesh, bool dynamic)
         TRACELOG(LOG_WARNING, "VAO: [ID %i] Trying to re-load an already loaded mesh", mesh->vaoId);
         return;
     }
+    
+    mesh->vboId = (unsigned int *)RL_CALLOC(MAX_MESH_VERTEX_BUFFERS, sizeof(unsigned int));
 
     mesh->vaoId = 0;        // Vertex Array Object
     mesh->vboId[0] = 0;     // Vertex positions VBO
@@ -2952,9 +2959,9 @@ void rlDrawMeshInstanced(Mesh mesh, Material material, Matrix *transforms, int c
     glUniformMatrix4fv(material.shader.locs[LOC_MATRIX_MVP], 1, false,
                        MatrixToFloat(MatrixMultiply(MatrixMultiply(RLGL.State.transform, RLGL.State.modelview), RLGL.State.projection)));
 
-    float16* instances = RL_MALLOC(count*sizeof(float16));
+    float16* instanceTransforms = RL_MALLOC(count*sizeof(float16));
 
-    for (int i = 0; i < count; i++) instances[i] = MatrixToFloatV(transforms[i]);
+    for (int i = 0; i < count; i++) instanceTransforms[i] = MatrixToFloatV(transforms[i]);
 
     // This could alternatively use a static VBO and either glMapBuffer or glBufferSubData.
     // It isn't clear which would be reliably faster in all cases and on all platforms, and
@@ -2963,7 +2970,7 @@ void rlDrawMeshInstanced(Mesh mesh, Material material, Matrix *transforms, int c
     unsigned int instancesB = 0;
     glGenBuffers(1, &instancesB);
     glBindBuffer(GL_ARRAY_BUFFER, instancesB);
-    glBufferData(GL_ARRAY_BUFFER, count*sizeof(float16), instances, GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, count*sizeof(float16), instanceTransforms, GL_STATIC_DRAW);
 
     // Instances are put in LOC_MATRIX_MODEL attribute location with space for 4x Vector4, eg:
     // layout (location = 12) in mat4 instance;
@@ -2983,7 +2990,7 @@ void rlDrawMeshInstanced(Mesh mesh, Material material, Matrix *transforms, int c
     else glDrawArraysInstanced(GL_TRIANGLES, 0, mesh.vertexCount, count);
 
     glDeleteBuffers(1, &instancesB);
-    RL_FREE(instances);
+    RL_FREE(instanceTransforms);
 
     // Unbind all binded texture maps
     for (int i = 0; i < MAX_MATERIAL_MAPS; i++)
@@ -3007,19 +3014,6 @@ void rlDrawMeshInstanced(Mesh mesh, Material material, Matrix *transforms, int c
 // Unload mesh data from CPU and GPU
 void rlUnloadMesh(Mesh mesh)
 {
-    RL_FREE(mesh.vertices);
-    RL_FREE(mesh.texcoords);
-    RL_FREE(mesh.normals);
-    RL_FREE(mesh.colors);
-    RL_FREE(mesh.tangents);
-    RL_FREE(mesh.texcoords2);
-    RL_FREE(mesh.indices);
-
-    RL_FREE(mesh.animVertices);
-    RL_FREE(mesh.animNormals);
-    RL_FREE(mesh.boneWeights);
-    RL_FREE(mesh.boneIds);
-
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     for (int i = 0; i < 7; i++) glDeleteBuffers(1, &mesh.vboId[i]); // DEFAULT_MESH_VERTEX_BUFFERS (model.c)
     if (RLGL.ExtSupported.vao)
@@ -3030,6 +3024,8 @@ void rlUnloadMesh(Mesh mesh)
     }
     else TRACELOG(LOG_INFO, "VBO: Unloaded vertex data from VRAM (GPU)");
 #endif
+
+    RL_FREE(mesh.vboId);
 }
 
 // Read screen pixel data (color buffer)

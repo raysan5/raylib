@@ -92,9 +92,7 @@
 //----------------------------------------------------------------------------------
 // Defines and Macros
 //----------------------------------------------------------------------------------
-#ifndef DEFAULT_MESH_VERTEX_BUFFERS
-    #define DEFAULT_MESH_VERTEX_BUFFERS    7    // Number of vertex buffers (VBO) per mesh
-#endif
+// ...
 
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
@@ -860,8 +858,21 @@ void UploadMesh(Mesh *mesh)
 // Unload mesh from memory (RAM and/or VRAM)
 void UnloadMesh(Mesh mesh)
 {
+    // Unload rlgl mesh vboId data
     rlUnloadMesh(mesh);
-    RL_FREE(mesh.vboId);
+    
+    RL_FREE(mesh.vertices);
+    RL_FREE(mesh.texcoords);
+    RL_FREE(mesh.normals);
+    RL_FREE(mesh.colors);
+    RL_FREE(mesh.tangents);
+    RL_FREE(mesh.texcoords2);
+    RL_FREE(mesh.indices);
+
+    RL_FREE(mesh.animVertices);
+    RL_FREE(mesh.animNormals);
+    RL_FREE(mesh.boneWeights);
+    RL_FREE(mesh.boneIds);
 }
 
 // Export mesh data to file
@@ -1128,8 +1139,6 @@ Mesh GenMeshPoly(int sides, float radius)
 
     if (sides < 3) return mesh;
 
-    mesh.vboId = (unsigned int *)RL_CALLOC(DEFAULT_MESH_VERTEX_BUFFERS, sizeof(unsigned int));
-
     int vertexCount = sides*3;
 
     // Vertices definition
@@ -1186,6 +1195,7 @@ Mesh GenMeshPoly(int sides, float radius)
     RL_FREE(texcoords);
 
     // Upload vertex data to GPU (static mesh)
+    // NOTE: mesh.vboId array is allocated inside rlLoadMesh()
     rlLoadMesh(&mesh, false);
 
     return mesh;
@@ -1195,7 +1205,6 @@ Mesh GenMeshPoly(int sides, float radius)
 Mesh GenMeshPlane(float width, float length, int resX, int resZ)
 {
     Mesh mesh = { 0 };
-    mesh.vboId = (unsigned int *)RL_CALLOC(DEFAULT_MESH_VERTEX_BUFFERS, sizeof(unsigned int));
 
 #define CUSTOM_MESH_GEN_PLANE
 #if defined(CUSTOM_MESH_GEN_PLANE)
@@ -1329,7 +1338,6 @@ Mesh GenMeshPlane(float width, float length, int resX, int resZ)
 Mesh GenMeshCube(float width, float height, float length)
 {
     Mesh mesh = { 0 };
-    mesh.vboId = (unsigned int *)RL_CALLOC(DEFAULT_MESH_VERTEX_BUFFERS, sizeof(unsigned int));
 
 #define CUSTOM_MESH_GEN_CUBE
 #if defined(CUSTOM_MESH_GEN_CUBE)
@@ -1498,8 +1506,6 @@ RLAPI Mesh GenMeshSphere(float radius, int rings, int slices)
 
     if ((rings >= 3) && (slices >= 3))
     {
-        mesh.vboId = (unsigned int *)RL_CALLOC(DEFAULT_MESH_VERTEX_BUFFERS, sizeof(unsigned int));
-
         par_shapes_mesh *sphere = par_shapes_create_parametric_sphere(slices, rings);
         par_shapes_scale(sphere, radius, radius, radius);
         // NOTE: Soft normals are computed internally
@@ -1544,8 +1550,6 @@ RLAPI Mesh GenMeshHemiSphere(float radius, int rings, int slices)
     {
         if (radius < 0.0f) radius = 0.0f;
 
-        mesh.vboId = (unsigned int *)RL_CALLOC(DEFAULT_MESH_VERTEX_BUFFERS, sizeof(unsigned int));
-
         par_shapes_mesh *sphere = par_shapes_create_hemisphere(slices, rings);
         par_shapes_scale(sphere, radius, radius, radius);
         // NOTE: Soft normals are computed internally
@@ -1588,8 +1592,6 @@ Mesh GenMeshCylinder(float radius, float height, int slices)
 
     if (slices >= 3)
     {
-        mesh.vboId = (unsigned int *)RL_CALLOC(DEFAULT_MESH_VERTEX_BUFFERS, sizeof(unsigned int));
-
         // Instance a cylinder that sits on the Z=0 plane using the given tessellation
         // levels across the UV domain.  Think of "slices" like a number of pizza
         // slices, and "stacks" like a number of stacked rings.
@@ -1653,8 +1655,6 @@ Mesh GenMeshTorus(float radius, float size, int radSeg, int sides)
 
     if ((sides >= 3) && (radSeg >= 3))
     {
-        mesh.vboId = (unsigned int *)RL_CALLOC(DEFAULT_MESH_VERTEX_BUFFERS, sizeof(unsigned int));
-
         if (radius > 1.0f) radius = 1.0f;
         else if (radius < 0.1f) radius = 0.1f;
 
@@ -1701,8 +1701,6 @@ Mesh GenMeshKnot(float radius, float size, int radSeg, int sides)
 
     if ((sides >= 3) && (radSeg >= 3))
     {
-        mesh.vboId = (unsigned int *)RL_CALLOC(DEFAULT_MESH_VERTEX_BUFFERS, sizeof(unsigned int));
-
         if (radius > 3.0f) radius = 3.0f;
         else if (radius < 0.5f) radius = 0.5f;
 
@@ -1747,7 +1745,6 @@ Mesh GenMeshHeightmap(Image heightmap, Vector3 size)
     #define GRAY_VALUE(c) ((c.r+c.g+c.b)/3)
 
     Mesh mesh = { 0 };
-    mesh.vboId = (unsigned int *)RL_CALLOC(DEFAULT_MESH_VERTEX_BUFFERS, sizeof(unsigned int));
 
     int mapX = heightmap.width;
     int mapZ = heightmap.height;
@@ -1883,7 +1880,6 @@ Mesh GenMeshCubicmap(Image cubicmap, Vector3 cubeSize)
     #define COLOR_EQUAL(col1, col2) ((col1.r == col2.r)&&(col1.g == col2.g)&&(col1.b == col2.b)&&(col1.a == col2.a))
 
     Mesh mesh = { 0 };
-    mesh.vboId = (unsigned int *)RL_CALLOC(DEFAULT_MESH_VERTEX_BUFFERS, sizeof(unsigned int));
 
     Color *pixels = LoadImageColors(cubicmap);
 
@@ -2842,7 +2838,6 @@ static Model LoadOBJ(const char *fileName)
             model.meshes[mi].vertices = (float *)RL_CALLOC(model.meshes[mi].vertexCount*3, sizeof(float));
             model.meshes[mi].texcoords = (float *)RL_CALLOC(model.meshes[mi].vertexCount*2, sizeof(float));
             model.meshes[mi].normals = (float *)RL_CALLOC(model.meshes[mi].vertexCount*3, sizeof(float));
-            model.meshes[mi].vboId = (unsigned int *)RL_CALLOC(DEFAULT_MESH_VERTEX_BUFFERS, sizeof(unsigned int));
             model.meshMaterial[mi] = mi;
         }
 
@@ -3108,8 +3103,6 @@ static Model LoadIQM(const char *fileName)
         // NOTE: Animated vertex should be re-uploaded to GPU (if not using GPU skinning)
         model.meshes[i].animVertices = RL_CALLOC(model.meshes[i].vertexCount*3, sizeof(float));
         model.meshes[i].animNormals = RL_CALLOC(model.meshes[i].vertexCount*3, sizeof(float));
-
-        model.meshes[i].vboId = (unsigned int *)RL_CALLOC(DEFAULT_MESH_VERTEX_BUFFERS, sizeof(unsigned int));
     }
 
     // Triangles data processing
@@ -3726,10 +3719,7 @@ static Model LoadGLTF(const char *fileName)
         model.boneCount = (int)data->nodes_count;
         model.bones = RL_CALLOC(model.boneCount, sizeof(BoneInfo));
         model.bindPose = RL_CALLOC(model.boneCount, sizeof(Transform));
-
-        for (int i = 0; i < model.meshCount; i++)
-            model.meshes[i].vboId = (unsigned int *)RL_CALLOC(DEFAULT_MESH_VERTEX_BUFFERS, sizeof(unsigned int));
-    
+   
         for (unsigned int j = 0; j < data->nodes_count; j++)
         {
             strcpy(model.bones[j].name, data->nodes[j].name == 0 ? "ANIMJOINT" : data->nodes[j].name);
@@ -3738,43 +3728,25 @@ static Model LoadGLTF(const char *fileName)
         
         for (unsigned int i = 0; i < data->nodes_count; i++)
         {
-            if (data->nodes[i].has_translation)
-            {
-                memcpy(&model.bindPose[i].translation, data->nodes[i].translation, 3 * sizeof(float));
-            }
-            else
-            {
-                model.bindPose[i].translation = Vector3Zero();
-            }
-            
-            if (data->nodes[i].has_rotation)
-            {
-                memcpy(&model.bindPose[i].rotation, data->nodes[i].rotation, 4 * sizeof(float));
-            }
-            else
-            {
-                model.bindPose[i].rotation = QuaternionIdentity();
-            }
+            if (data->nodes[i].has_translation) memcpy(&model.bindPose[i].translation, data->nodes[i].translation, 3 * sizeof(float));
+            else model.bindPose[i].translation = Vector3Zero();
+
+            if (data->nodes[i].has_rotation) memcpy(&model.bindPose[i].rotation, data->nodes[i].rotation, 4 * sizeof(float));
+            else model.bindPose[i].rotation = QuaternionIdentity();
+
             model.bindPose[i].rotation = QuaternionNormalize(model.bindPose[i].rotation);
             
-            if (data->nodes[i].has_scale)
-            {
-                memcpy(&model.bindPose[i].scale, data->nodes[i].scale, 3 * sizeof(float));
-            }
-            else
-            {
-                model.bindPose[i].scale = Vector3One();
-            }
+            if (data->nodes[i].has_scale) memcpy(&model.bindPose[i].scale, data->nodes[i].scale, 3 * sizeof(float));
+            else model.bindPose[i].scale = Vector3One();
         }
     
         for (int i = 0; i < model.boneCount; i++)
         {
-            Transform* currentTransform = model.bindPose + i;
-            BoneInfo* currentBone = model.bones + i;
+            Transform *currentTransform = model.bindPose + i;
+            BoneInfo *currentBone = model.bones + i;
             int root = currentBone->parent;
-            if (root >= model.boneCount)
-                root = 0;
-            Transform* parentTransform = model.bindPose + root;
+            if (root >= model.boneCount) root = 0;
+            Transform *parentTransform = model.bindPose + root;
             
             if (currentBone->parent >= 0)
             {
@@ -3791,7 +3763,7 @@ static Model LoadGLTF(const char *fileName)
             Color tint = (Color){ 255, 255, 255, 255 };
             const char *texPath = GetDirectoryPath(fileName);
 
-            //Ensure material follows raylib support for PBR (metallic/roughness flow)
+            // Ensure material follows raylib support for PBR (metallic/roughness flow)
             if (data->materials[i].has_pbr_metallic_roughness)
             {
                 tint.r = (unsigned char)(data->materials[i].pbr_metallic_roughness.base_color_factor[0] * 255);

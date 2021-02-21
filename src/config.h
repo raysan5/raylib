@@ -92,6 +92,7 @@
 #define DEFAULT_BATCH_DRAWCALLS        256      // Default number of batch draw calls (by state changes: mode, texture)
 
 #define MAX_MATRIX_STACK_SIZE           32      // Maximum size of internal Matrix stack
+#define MAX_MESH_VERTEX_BUFFERS          7      // Maximum vertex buffers (VBO) per mesh
 #define MAX_SHADER_LOCATIONS            32      // Maximum number of shader locations supported
 #define MAX_MATERIAL_MAPS               12      // Maximum number of shader maps supported
 
