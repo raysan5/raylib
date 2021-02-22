@@ -1298,7 +1298,8 @@ Music LoadMusicStream(const char *fileName)
 }
 
 // extension including period ".mod"
-Music LoadMusicStreamFromMemory(const char *fileType, unsigned char* data, int dataSize){
+Music LoadMusicStreamFromMemory(const char *fileType, unsigned char* data, int dataSize)
+{
     Music music = { 0 };
     bool musicLoaded = false;
     
@@ -1341,7 +1342,7 @@ Music LoadMusicStreamFromMemory(const char *fileType, unsigned char* data, int d
         for (int i = 0; i < it; i++){
             newData[i] = data[i];
         }
-        TRACELOG(LOG_WARNING, "-------: %d / %d = %d", dataSize, sizeof(unsigned char), it);
+        
         // Memory loaded version for jar_mod_load_file()
         if (dataSize && dataSize < 32*1024*1024)
         {
