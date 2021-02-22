@@ -164,6 +164,7 @@ float *GetWaveData(Wave wave);                                  // Get samples d
 
 // Music management functions
 Music LoadMusicStream(const char *fileName);                    // Load music stream from file
+Music LoadMusicStreamFromMemory(const char *fileType, unsigned char* data, int dataSize); // Load module music from data
 void UnloadMusicStream(Music music);                            // Unload music stream
 void PlayMusicStream(Music music);                              // Start music playing
 void UpdateMusicStream(Music music);                            // Updates buffers for music streaming
