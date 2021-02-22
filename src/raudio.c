@@ -1298,7 +1298,7 @@ Music LoadMusicStream(const char *fileName)
 }
 
 // extension including period ".mod"
-Music LoadModuleFromData(const char *fileType, const char* data, int dataSize){
+Music LoadMusicStreamFromMemory(const char *fileType, unsigned char* data, int dataSize){
 	Music music = { 0 };
 	bool musicLoaded = false;
 	
@@ -1334,10 +1334,19 @@ Music LoadModuleFromData(const char *fileType, const char* data, int dataSize){
         int result = 0;
 
         jar_mod_init(ctxMod);
+		
+		// copy data to allocated memory for default UnloadMusicStream
+		unsigned char *newData = RL_MALLOC(dataSize);
+		int it = dataSize / sizeof(unsigned char);
+		for (int i = 0; i < it; i++){
+			newData[i] = data[i];
+		}
+		TRACELOG(LOG_WARNING, "-------: %d / %d = %d", dataSize, sizeof(unsigned char), it);
+		// Memory loaded version for jar_mod_load_file()
 		if (dataSize && dataSize < 32*1024*1024)
 		{
 			ctxMod->modfilesize = dataSize;
-			ctxMod->modfile = data;
+			ctxMod->modfile = newData;
 			if(jar_mod_load(ctxMod, (void*)ctxMod->modfile, dataSize)) result = dataSize;
 		}
 		
@@ -1368,19 +1377,20 @@ Music LoadModuleFromData(const char *fileType, const char* data, int dataSize){
         else if (music.ctxType == MUSIC_MODULE_MOD) { jar_mod_unload((jar_mod_context_t *)music.ctxData); RL_FREE(music.ctxData); }
     #endif
 
-        TRACELOG(LOG_WARNING, "FILEIO: [%s] Music data could not be loaded", fileType);
+        music.ctxData = NULL;
+        TRACELOG(LOG_WARNING, "FILEIO: [%s] Music memory could not be opened", fileType);
     }
     else
     {
         // Show some music stream info
-        TRACELOG(LOG_INFO, "FILEIO: [%s] Music data successfully loaded:", fileType);
+        TRACELOG(LOG_INFO, "FILEIO: [%s] Music memory successfully loaded:", fileType);
         TRACELOG(LOG_INFO, "    > Total samples: %i", music.sampleCount);
         TRACELOG(LOG_INFO, "    > Sample rate:   %i Hz", music.stream.sampleRate);
         TRACELOG(LOG_INFO, "    > Sample size:   %i bits", music.stream.sampleSize);
         TRACELOG(LOG_INFO, "    > Channels:      %i (%s)", music.stream.channels, (music.stream.channels == 1)? "Mono" : (music.stream.channels == 2)? "Stereo" : "Multi");
     }
-	
-	return music;
+
+    return music;
 }
 
 // Unload music stream
