@@ -1299,58 +1299,58 @@ Music LoadMusicStream(const char *fileName)
 
 // extension including period ".mod"
 Music LoadMusicStreamFromMemory(const char *fileType, unsigned char* data, int dataSize){
-	Music music = { 0 };
-	bool musicLoaded = false;
-	
-	char fileExtLower[16] = { 0 };
+    Music music = { 0 };
+    bool musicLoaded = false;
+    
+    char fileExtLower[16] = { 0 };
     strcpy(fileExtLower, TextToLower(fileType));
-	
-	if (false) { }
+    
+    if (false) { }
 #if defined(SUPPORT_FILEFORMAT_XM)
-	if (TextIsEqual(fileExtLower, ".xm"))
-	{
-		jar_xm_context_t *ctxXm = NULL;
-		int result = jar_xm_create_context_safe(&ctxXm, data, dataSize, 48000);
-		if (result == 0)    // XM AUDIO.System.context created successfully
-		{
-			music.ctxType = MUSIC_MODULE_XM;
-			jar_xm_set_max_loop_count(ctxXm, 0);    // Set infinite number of loops
+    if (TextIsEqual(fileExtLower, ".xm"))
+    {
+        jar_xm_context_t *ctxXm = NULL;
+        int result = jar_xm_create_context_safe(&ctxXm, data, dataSize, 48000);
+        if (result == 0)    // XM AUDIO.System.context created successfully
+        {
+            music.ctxType = MUSIC_MODULE_XM;
+            jar_xm_set_max_loop_count(ctxXm, 0);    // Set infinite number of loops
 
-			// NOTE: Only stereo is supported for XM
-			music.stream = InitAudioStream(48000, 16, 2);
-			music.sampleCount = (unsigned int)jar_xm_get_remaining_samples(ctxXm)*2;    // 2 channels
-			music.looping = true;   // Looping enabled by default
-			jar_xm_reset(ctxXm);   // make sure we start at the beginning of the song
+            // NOTE: Only stereo is supported for XM
+            music.stream = InitAudioStream(48000, 16, 2);
+            music.sampleCount = (unsigned int)jar_xm_get_remaining_samples(ctxXm)*2;    // 2 channels
+            music.looping = true;   // Looping enabled by default
+            jar_xm_reset(ctxXm);   // make sure we start at the beginning of the song
 
-			music.ctxData = ctxXm;
-			musicLoaded = true;
-		}
-	}
+            music.ctxData = ctxXm;
+            musicLoaded = true;
+        }
+    }
 #endif
 #if defined(SUPPORT_FILEFORMAT_MOD)
-	else if (TextIsEqual(fileExtLower, ".mod"))
-	{
-		jar_mod_context_t *ctxMod = RL_MALLOC(sizeof(jar_mod_context_t));
+    else if (TextIsEqual(fileExtLower, ".mod"))
+    {
+        jar_mod_context_t *ctxMod = RL_MALLOC(sizeof(jar_mod_context_t));
         int result = 0;
 
         jar_mod_init(ctxMod);
-		
-		// copy data to allocated memory for default UnloadMusicStream
-		unsigned char *newData = RL_MALLOC(dataSize);
-		int it = dataSize / sizeof(unsigned char);
-		for (int i = 0; i < it; i++){
-			newData[i] = data[i];
-		}
-		TRACELOG(LOG_WARNING, "-------: %d / %d = %d", dataSize, sizeof(unsigned char), it);
-		// Memory loaded version for jar_mod_load_file()
-		if (dataSize && dataSize < 32*1024*1024)
-		{
-			ctxMod->modfilesize = dataSize;
-			ctxMod->modfile = newData;
-			if(jar_mod_load(ctxMod, (void*)ctxMod->modfile, dataSize)) result = dataSize;
-		}
-		
-		if (result > 0)
+        
+        // copy data to allocated memory for default UnloadMusicStream
+        unsigned char *newData = RL_MALLOC(dataSize);
+        int it = dataSize / sizeof(unsigned char);
+        for (int i = 0; i < it; i++){
+            newData[i] = data[i];
+        }
+        TRACELOG(LOG_WARNING, "-------: %d / %d = %d", dataSize, sizeof(unsigned char), it);
+        // Memory loaded version for jar_mod_load_file()
+        if (dataSize && dataSize < 32*1024*1024)
+        {
+            ctxMod->modfilesize = dataSize;
+            ctxMod->modfile = newData;
+            if(jar_mod_load(ctxMod, (void*)ctxMod->modfile, dataSize)) result = dataSize;
+        }
+        
+        if (result > 0)
         {
             music.ctxType = MUSIC_MODULE_MOD;
 
@@ -1361,11 +1361,11 @@ Music LoadMusicStreamFromMemory(const char *fileType, unsigned char* data, int d
             musicLoaded = true;
 
             music.ctxData = ctxMod;
-			musicLoaded = true;
+            musicLoaded = true;
         }
-	}
+    }
 #endif 
-	else TRACELOG(LOG_WARNING, "STREAM: [%s] Fileformat not supported", fileType);
+    else TRACELOG(LOG_WARNING, "STREAM: [%s] Fileformat not supported", fileType);
 
     if (!musicLoaded)
     {
