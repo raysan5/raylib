@@ -3719,11 +3719,11 @@ static Model LoadGLTF(const char *fileName)
         model.boneCount = (int)data->nodes_count;
         model.bones = RL_CALLOC(model.boneCount, sizeof(BoneInfo));
         model.bindPose = RL_CALLOC(model.boneCount, sizeof(Transform));
-   
+
         for (unsigned int j = 0; j < data->nodes_count; j++)
         {
             strcpy(model.bones[j].name, data->nodes[j].name == 0 ? "ANIMJOINT" : data->nodes[j].name);
-            model.bones[j].parent = (int)((j != 0 && data->nodes[j].parent != NULL) ? data->nodes[j].parent - data->nodes : 0);
+            model.bones[j].parent = (data->nodes[j].parent != NULL) ? data->nodes[j].parent - data->nodes : -1;
         }
         
         for (unsigned int i = 0; i < data->nodes_count; i++)
@@ -3739,22 +3739,41 @@ static Model LoadGLTF(const char *fileName)
             if (data->nodes[i].has_scale) memcpy(&model.bindPose[i].scale, data->nodes[i].scale, 3 * sizeof(float));
             else model.bindPose[i].scale = Vector3One();
         }
-    
-        for (int i = 0; i < model.boneCount; i++)
+
         {
-            Transform *currentTransform = model.bindPose + i;
-            BoneInfo *currentBone = model.bones + i;
-            int root = currentBone->parent;
-            if (root >= model.boneCount) root = 0;
-            Transform *parentTransform = model.bindPose + root;
-            
-            if (currentBone->parent >= 0)
-            {
-                currentTransform->rotation = QuaternionMultiply(parentTransform->rotation, currentTransform->rotation);
-                currentTransform->translation = Vector3RotateByQuaternion(currentTransform->translation, parentTransform->rotation);
-                currentTransform->translation = Vector3Add(currentTransform->translation, parentTransform->translation);
-                currentTransform->scale = Vector3Multiply(parentTransform->scale, parentTransform->scale);
+            bool* completedBones = RL_CALLOC(model.boneCount, sizeof(bool));
+            int numberCompletedBones = 0;
+
+            while (numberCompletedBones < model.boneCount) {
+                for (int i = 0; i < model.boneCount; i++)
+                {
+                    if (completedBones[i]) continue;
+
+                    if (model.bones[i].parent < 0) {
+                        completedBones[i] = true;
+                        numberCompletedBones++;
+                        continue;
+                    }
+
+                    if (!completedBones[model.bones[i].parent]) continue;
+
+                    Transform* currentTransform = &model.bindPose[i];
+                    BoneInfo* currentBone = &model.bones[i];
+                    int root = currentBone->parent;
+                    if (root >= model.boneCount)
+                        root = 0;
+                    Transform* parentTransform = &model.bindPose[root];
+
+                    currentTransform->rotation = QuaternionMultiply(parentTransform->rotation, currentTransform->rotation);
+                    currentTransform->translation = Vector3RotateByQuaternion(currentTransform->translation, parentTransform->rotation);
+                    currentTransform->translation = Vector3Add(currentTransform->translation, parentTransform->translation);
+                    currentTransform->scale = Vector3Multiply(parentTransform->scale, parentTransform->scale);
+                    completedBones[i] = true;
+                    numberCompletedBones++;
+                }
             }
+
+            RL_FREE(completedBones);
         }
         
         for (int i = 0; i < model.materialCount - 1; i++)
@@ -4030,6 +4049,9 @@ static ModelAnimation* LoadGLTFModelAnimations(const char *fileName, int *animCo
     {
         TRACELOG(LOG_INFO, "MODEL: [%s] glTF animations (%s) count: %i", fileName, (data->file_type == 2)? "glb" :
         "gltf", data->animations_count);
+
+        result = cgltf_load_buffers(&options, data, fileName);
+        if (result != cgltf_result_success) TRACELOG(LOG_WARNING, "MODEL: [%s] unable to load glTF animations data", fileName);
         
         animations = RL_MALLOC(data->animations_count*sizeof(ModelAnimation));
     
@@ -4075,7 +4097,7 @@ static ModelAnimation* LoadGLTFModelAnimations(const char *fileName, int *animCo
             for (unsigned int j = 0; j < data->nodes_count; j++)
             {
                 strcpy(output->bones[j].name, data->nodes[j].name == 0 ? "ANIMJOINT" : data->nodes[j].name);
-                output->bones[j].parent = j != 0 ? (int)(data->nodes[j].parent - data->nodes) : 0;
+                output->bones[j].parent = (data->nodes[j].parent != NULL) ? (int)(data->nodes[j].parent - data->nodes) : -1;
             }
 
             // Allocate data for frames
@@ -4184,16 +4206,32 @@ static ModelAnimation* LoadGLTFModelAnimations(const char *fileName, int *animCo
             // Build frameposes
             for (int frame = 0; frame < output->frameCount; frame++)
             {
-                for (int i = 0; i < output->boneCount; i++)
-                {
-                    if (output->bones[i].parent >= 0)
+                bool* completedBones = RL_CALLOC(output->boneCount, sizeof(bool));
+                int numberCompletedBones = 0;
+
+                while (numberCompletedBones < output->boneCount) {
+                    for (int i = 0; i < output->boneCount; i++)
                     {
+                        if (completedBones[i]) continue;
+
+                        if (output->bones[i].parent < 0) {
+                            completedBones[i] = true;
+                            numberCompletedBones++;
+                            continue;
+                        }
+
+                        if (!completedBones[output->bones[i].parent]) continue;
+
                         output->framePoses[frame][i].rotation = QuaternionMultiply(output->framePoses[frame][output->bones[i].parent].rotation, output->framePoses[frame][i].rotation);
                         output->framePoses[frame][i].translation = Vector3RotateByQuaternion(output->framePoses[frame][i].translation, output->framePoses[frame][output->bones[i].parent].rotation);
                         output->framePoses[frame][i].translation = Vector3Add(output->framePoses[frame][i].translation, output->framePoses[frame][output->bones[i].parent].translation);
                         output->framePoses[frame][i].scale = Vector3Multiply(output->framePoses[frame][i].scale, output->framePoses[frame][output->bones[i].parent].scale);
+                        completedBones[i] = true;
+                        numberCompletedBones++;
                     }
                 }
+
+                RL_FREE(completedBones);
             }
 
         }
