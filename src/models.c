@@ -3879,7 +3879,28 @@ static Model LoadGLTF(const char *fileName)
                             short* bones = RL_MALLOC(sizeof(short) * acc->count * 4);
                             
                             LOAD_ACCESSOR(short, 4, acc, bones);
-                            for (unsigned int a = 0; a < acc->count * 4; a ++)
+                            for (unsigned int a = 0; a < acc->count * 4; a++)
+                            {
+                                cgltf_node* skinJoint = data->skins->joints[bones[a]];
+
+                                for (unsigned int k = 0; k < data->nodes_count; k++)
+                                {
+                                    if (&(data->nodes[k]) == skinJoint)
+                                    {
+                                        model.meshes[primitiveIndex].boneIds[a] = k;
+                                        break;
+                                    }
+                                }
+                            }
+                            RL_FREE(bones);
+                        }
+                        else if (acc->component_type == cgltf_component_type_r_8u)
+                        {
+                            model.meshes[primitiveIndex].boneIds = RL_MALLOC(sizeof(int) * acc->count * 4);
+                            unsigned char* bones = RL_MALLOC(sizeof(unsigned char) * acc->count * 4);
+
+                            LOAD_ACCESSOR(unsigned char, 4, acc, bones);
+                            for (unsigned int a = 0; a < acc->count * 4; a++)
                             {
                                 cgltf_node* skinJoint = data->skins->joints[bones[a]];
                                 
