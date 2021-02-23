@@ -1307,8 +1307,65 @@ Music LoadMusicStreamFromMemory(const char *fileType, unsigned char* data, int d
     strcpy(fileExtLower, TextToLower(fileType));
     
     if (false) { }
+#if defined(SUPPORT_FILEFORMAT_WAV)
+    else if (TextIsEqual(fileExtLower, ".wav"))
+    {
+        drwav *ctxWav = RL_CALLOC(1, sizeof(drwav));
+		
+        bool success = drwav_init_memory(ctxWav, (const void*)data, dataSize, NULL);
+        
+        music.ctxType = MUSIC_AUDIO_WAV;
+        music.ctxData = ctxWav;
+        
+        if (success)
+        {
+            int sampleSize = ctxWav->bitsPerSample;
+            if (ctxWav->bitsPerSample == 24) sampleSize = 16;   // Forcing conversion to s16 on UpdateMusicStream()
+
+            music.stream = InitAudioStream(ctxWav->sampleRate, sampleSize, ctxWav->channels);
+            music.sampleCount = (unsigned int)ctxWav->totalPCMFrameCount*ctxWav->channels;
+            music.looping = true;   // Looping enabled by default
+            musicLoaded = true;
+        }
+    }
+#endif
+#if defined(SUPPORT_FILEFORMAT_FLAC)
+    else if (TextIsEqual(fileExtLower, ".flac"))
+    {
+        music.ctxType = MUSIC_AUDIO_FLAC;
+        music.ctxData = drflac_open_memory((const void*)data, dataSize, NULL);
+
+        if (music.ctxData != NULL)
+        {
+            drflac *ctxFlac = (drflac *)music.ctxData;
+
+            music.stream = InitAudioStream(ctxFlac->sampleRate, ctxFlac->bitsPerSample, ctxFlac->channels);
+            music.sampleCount = (unsigned int)ctxFlac->totalPCMFrameCount*ctxFlac->channels;
+            music.looping = true;   // Looping enabled by default
+            musicLoaded = true;
+        }
+    }
+#endif
+#if defined(SUPPORT_FILEFORMAT_MP3)
+    else if (TextIsEqual(fileExtLower, ".mp3"))
+    {
+        drmp3 *ctxMp3 = RL_CALLOC(1, sizeof(drmp3));
+        int success = drmp3_init_memory(ctxMp3, (const void*)data, dataSize, NULL);
+
+        music.ctxType = MUSIC_AUDIO_MP3;
+        music.ctxData = ctxMp3;
+
+        if (success)
+        {
+            music.stream = InitAudioStream(ctxMp3->sampleRate, 32, ctxMp3->channels);
+            music.sampleCount = (unsigned int)drmp3_get_pcm_frame_count(ctxMp3)*ctxMp3->channels;
+            music.looping = true;   // Looping enabled by default
+            musicLoaded = true;
+        }
+    }
+#endif
 #if defined(SUPPORT_FILEFORMAT_XM)
-    if (TextIsEqual(fileExtLower, ".xm"))
+    else if (TextIsEqual(fileExtLower, ".xm"))
     {
         jar_xm_context_t *ctxXm = NULL;
         int result = jar_xm_create_context_safe(&ctxXm, data, dataSize, 48000);
@@ -1371,7 +1428,16 @@ Music LoadMusicStreamFromMemory(const char *fileType, unsigned char* data, int d
     if (!musicLoaded)
     {
         if (false) { }
-    #if defined(SUPPORT_FILEFORMAT_XM)
+    #if defined(SUPPORT_FILEFORMAT_WAV)
+        else if (music.ctxType == MUSIC_AUDIO_WAV) drwav_uninit((drwav *)music.ctxData);
+    #endif
+    #if defined(SUPPORT_FILEFORMAT_FLAC)
+        else if (music.ctxType == MUSIC_AUDIO_FLAC) drflac_free((drflac *)music.ctxData, NULL);
+    #endif
+    #if defined(SUPPORT_FILEFORMAT_MP3)
+        else if (music.ctxType == MUSIC_AUDIO_MP3) { drmp3_uninit((drmp3 *)music.ctxData); RL_FREE(music.ctxData); }
+    #endif
+	#if defined(SUPPORT_FILEFORMAT_XM)
         else if (music.ctxType == MUSIC_MODULE_XM) jar_xm_free_context((jar_xm_context_t *)music.ctxData);
     #endif
     #if defined(SUPPORT_FILEFORMAT_MOD)
