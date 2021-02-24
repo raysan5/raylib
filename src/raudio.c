@@ -1368,7 +1368,7 @@ Music LoadMusicStreamFromMemory(const char *fileType, unsigned char* data, int d
     else if (TextIsEqual(fileExtLower, ".xm"))
     {
         jar_xm_context_t *ctxXm = NULL;
-        int result = jar_xm_create_context_safe(&ctxXm, data, dataSize, 48000);
+        int result = jar_xm_create_context_safe(&ctxXm, (const char*)data, dataSize, 48000);
         if (result == 0)    // XM AUDIO.System.context created successfully
         {
             music.ctxType = MUSIC_MODULE_XM;
