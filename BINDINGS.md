@@ -53,7 +53,8 @@ Here it is a list with the ones I'm aware of:
 | clj-raylib         | 3.0 | [Clojure](https://clojure.org/)          | https://github.com/lsevero/clj-raylib       |
 | node-raylib        | 3.5 | [Node.js](https://nodejs.org/en/)        | https://github.com/RobLoach/node-raylib     |
 | QuickJS-raylib     | 3.0 | [QuickJS](https://bellard.org/quickjs/)  | https://github.com/sntg-p/QuickJS-raylib    |
-| raylib-duktape     | 2.6 | [JavaScript](https://en.wikipedia.org/wiki/JavaScript) | https://github.com/RobLoach/raylib-duktape |
+| raylib-duktape     | 2.6 | [JavaScript (Duktape)](https://en.wikipedia.org/wiki/JavaScript) | https://github.com/RobLoach/raylib-duktape |
+| raylib-v7          | 3.5 | [JavaScript (v7)](https://en.wikipedia.org/wiki/JavaScript)      | https://github.com/Rabios/raylib-v7        |
 | raylib-chaiscript  | 2.6 | [ChaiScript](http://chaiscript.com/)     | https://github.com/RobLoach/raylib-chaiscript        |
 | raylib-squirrel    | 2.5 | [Squirrel](http://www.squirrel-lang.org/)     | https://github.com/RobLoach/raylib-squirrel    |
 | racket-raylib-2d   | 2.5 | [Racket](https://racket-lang.org/)       | https://github.com/arvyy/racket-raylib-2d           |
