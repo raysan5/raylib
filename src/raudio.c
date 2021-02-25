@@ -1364,6 +1364,28 @@ Music LoadMusicStreamFromMemory(const char *fileType, unsigned char* data, int d
         }
     }
 #endif
+#if defined(SUPPORT_FILEFORMAT_OGG)
+    else if (TextIsEqual(fileExtLower, ".ogg"))
+    {
+        // Open ogg audio stream
+        music.ctxType = MUSIC_AUDIO_OGG;
+        //music.ctxData = stb_vorbis_open_filename(fileName, NULL, NULL);
+        music.ctxData = stb_vorbis_open_memory((const unsigned char*)data, dataSize, NULL, NULL);
+
+        if (music.ctxData != NULL)
+        {
+            stb_vorbis_info info = stb_vorbis_get_info((stb_vorbis *)music.ctxData);  // Get Ogg file info
+
+            // OGG bit rate defaults to 16 bit, it's enough for compressed format
+            music.stream = InitAudioStream(info.sample_rate, 16, info.channels);
+
+            // WARNING: It seems this function returns length in frames, not samples, so we multiply by channels
+            music.sampleCount = (unsigned int)stb_vorbis_stream_length_in_samples((stb_vorbis *)music.ctxData)*info.channels;
+            music.looping = true;   // Looping enabled by default
+            musicLoaded = true;
+        }
+    }
+#endif
 #if defined(SUPPORT_FILEFORMAT_XM)
     else if (TextIsEqual(fileExtLower, ".xm"))
     {
@@ -1436,6 +1458,9 @@ Music LoadMusicStreamFromMemory(const char *fileType, unsigned char* data, int d
     #endif
     #if defined(SUPPORT_FILEFORMAT_MP3)
         else if (music.ctxType == MUSIC_AUDIO_MP3) { drmp3_uninit((drmp3 *)music.ctxData); RL_FREE(music.ctxData); }
+    #endif
+    #if defined(SUPPORT_FILEFORMAT_OGG)
+        else if (music.ctxType == MUSIC_AUDIO_OGG) stb_vorbis_close((stb_vorbis *)music.ctxData);
     #endif
 	#if defined(SUPPORT_FILEFORMAT_XM)
         else if (music.ctxType == MUSIC_MODULE_XM) jar_xm_free_context((jar_xm_context_t *)music.ctxData);
