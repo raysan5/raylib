@@ -2429,7 +2429,7 @@ void rlGenerateMipmaps(Texture2D *texture)
 
             // NOTE: Texture data size is reallocated to fit mipmaps data
             // NOTE: CPU mipmap generation only supports RGBA 32bit data
-            int mipmapCount = GenerateMipmaps(data, texture->width, texture->height);
+            int mipmapCount = GenerateMipmaps(texData, texture->width, texture->height);
 
             int size = texture->width*texture->height*4;
             int offset = size;
