@@ -3530,7 +3530,7 @@ TextureCubemap GenTextureCubemap(Shader shader, Texture2D panorama, int size, in
 
     // Reset viewport dimensions to default
     rlViewport(0, 0, RLGL.State.framebufferWidth, RLGL.State.framebufferHeight);
-    //rlEnableBackfaceCulling();
+    rlEnableBackfaceCulling();
     //------------------------------------------------------------------------------------------
 
     cubemap.width = size;
@@ -3603,7 +3603,7 @@ TextureCubemap GenTextureIrradiance(Shader shader, TextureCubemap cubemap, int s
 
     // Reset viewport dimensions to default
     rlViewport(0, 0, RLGL.State.framebufferWidth, RLGL.State.framebufferHeight);
-    //rlEnableBackfaceCulling();
+    rlEnableBackfaceCulling();
     //------------------------------------------------------------------------------------------
 
     irradiance.width = size;
@@ -3701,7 +3701,7 @@ TextureCubemap GenTexturePrefilter(Shader shader, TextureCubemap cubemap, int si
 
     // Reset viewport dimensions to default
     rlViewport(0, 0, RLGL.State.framebufferWidth, RLGL.State.framebufferHeight);
-    //rlEnableBackfaceCulling();
+    rlEnableBackfaceCulling();
     //------------------------------------------------------------------------------------------
 
     prefilter.width = size;
