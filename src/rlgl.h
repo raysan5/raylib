@@ -575,7 +575,7 @@ RLAPI void rlUpdateMesh(Mesh mesh, int buffer, int count);                // Upd
 RLAPI void rlUpdateMeshAt(Mesh mesh, int buffer, int count, int index);   // Update vertex or index data on GPU, at index
 RLAPI void rlDrawMesh(Mesh mesh, Material material, Matrix transform);    // Draw a 3d mesh with material and transform
 RLAPI void rlDrawMeshInstanced(Mesh mesh, Material material, Matrix *transforms, int count);    // Draw a 3d mesh with material and transform
-RLAPI void rlUnloadMesh(Mesh mesh);                                       // Unload mesh data from CPU and GPU
+RLAPI void rlUnloadMesh(Mesh *mesh);                                      // Unload mesh data from CPU and GPU
 
 // NOTE: There is a set of shader related functions that are available to end user,
 // to avoid creating function wrappers through core module, they have been directly declared in raylib.h
@@ -3012,20 +3012,21 @@ void rlDrawMeshInstanced(Mesh mesh, Material material, Matrix *transforms, int c
 }
 
 // Unload mesh data from CPU and GPU
-void rlUnloadMesh(Mesh mesh)
+void rlUnloadMesh(Mesh *mesh)
 {
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
-    for (int i = 0; i < 7; i++) glDeleteBuffers(1, &mesh.vboId[i]); // DEFAULT_MESH_VERTEX_BUFFERS (model.c)
+    for (int i = 0; i < 7; i++) glDeleteBuffers(1, mesh->vboId[i]); // DEFAULT_MESH_VERTEX_BUFFERS (model.c)
     if (RLGL.ExtSupported.vao)
     {
         glBindVertexArray(0);
-        glDeleteVertexArrays(1, &mesh.vaoId);
+        glDeleteVertexArrays(1, mesh->vaoId);
         TRACELOG(LOG_INFO, "VAO: [ID %i] Unloaded vertex data from VRAM (GPU)", mesh.vaoId);
     }
     else TRACELOG(LOG_INFO, "VBO: Unloaded vertex data from VRAM (GPU)");
 #endif
 
-    RL_FREE(mesh.vboId);
+    RL_FREE(mesh->vboId);
+    mesh->vboId = NULL;
 }
 
 // Read screen pixel data (color buffer)

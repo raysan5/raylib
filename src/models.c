@@ -859,7 +859,7 @@ void UploadMesh(Mesh *mesh)
 void UnloadMesh(Mesh mesh)
 {
     // Unload rlgl mesh vboId data
-    rlUnloadMesh(mesh);
+    rlUnloadMesh(&mesh);
     
     RL_FREE(mesh.vertices);
     RL_FREE(mesh.texcoords);
