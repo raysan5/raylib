@@ -1429,13 +1429,13 @@ void SetWindowSize(int width, int height)
 // Get current screen width
 int GetScreenWidth(void)
 {
-    return CORE.Window.screen.width;
+    return CORE.Window.currentFbo.width;
 }
 
 // Get current screen height
 int GetScreenHeight(void)
 {
-    return CORE.Window.screen.height;
+    return CORE.Window.currentFbo.height;
 }
 
 // Get native window handle
@@ -1987,9 +1987,9 @@ void EndTextureMode(void)
     // Set viewport to default framebuffer size
     SetupViewport(CORE.Window.render.width, CORE.Window.render.height);
 
-    // Reset current screen size
-    CORE.Window.currentFbo.width = GetScreenWidth();
-    CORE.Window.currentFbo.height = GetScreenHeight();
+    // Reset current fbo to screen size
+    CORE.Window.currentFbo.width = CORE.Window.screen.width;
+    CORE.Window.currentFbo.height = CORE.Window.screen.height;
 }
 
 // Begin scissor mode (define screen area for following drawing)
