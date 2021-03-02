@@ -3015,11 +3015,11 @@ void rlDrawMeshInstanced(Mesh mesh, Material material, Matrix *transforms, int c
 void rlUnloadMesh(Mesh *mesh)
 {
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
-    for (int i = 0; i < 7; i++) glDeleteBuffers(1, mesh->vboId[i]); // DEFAULT_MESH_VERTEX_BUFFERS (model.c)
+    for (int i = 0; i < 7; i++) glDeleteBuffers(1, &mesh->vboId[i]); // DEFAULT_MESH_VERTEX_BUFFERS (model.c)
     if (RLGL.ExtSupported.vao)
     {
         glBindVertexArray(0);
-        glDeleteVertexArrays(1, mesh->vaoId);
+        glDeleteVertexArrays(1, &mesh->vaoId);
         TRACELOG(LOG_INFO, "VAO: [ID %i] Unloaded vertex data from VRAM (GPU)", mesh.vaoId);
     }
     else TRACELOG(LOG_INFO, "VBO: Unloaded vertex data from VRAM (GPU)");
