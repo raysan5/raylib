@@ -294,7 +294,7 @@ Image LoadImageAnim(const char *fileName, int *frames)
     return image;
 }
 
-// Load image from memory buffer, fileType refers to extension: i.e. "png"
+// Load image from memory buffer, fileType refers to extension: i.e. ".png"
 Image LoadImageFromMemory(const char *fileType, const unsigned char *fileData, int dataSize)
 {
     Image image = { 0 };
@@ -303,28 +303,28 @@ Image LoadImageFromMemory(const char *fileType, const unsigned char *fileData, i
     strcpy(fileExtLower, TextToLower(fileType));
 
 #if defined(SUPPORT_FILEFORMAT_PNG)
-    if ((TextIsEqual(fileExtLower, "png"))
+    if ((TextIsEqual(fileExtLower, ".png"))
 #else
     if ((false)
 #endif
 #if defined(SUPPORT_FILEFORMAT_BMP)
-        || (TextIsEqual(fileExtLower, "bmp"))
+        || (TextIsEqual(fileExtLower, ".bmp"))
 #endif
 #if defined(SUPPORT_FILEFORMAT_TGA)
-        || (TextIsEqual(fileExtLower, "tga"))
+        || (TextIsEqual(fileExtLower, ".tga"))
 #endif
 #if defined(SUPPORT_FILEFORMAT_JPG)
-        || (TextIsEqual(fileExtLower, "jpg") ||
-            TextIsEqual(fileExtLower, "jpeg"))
+        || (TextIsEqual(fileExtLower, ".jpg") ||
+            TextIsEqual(fileExtLower, ".jpeg"))
 #endif
 #if defined(SUPPORT_FILEFORMAT_GIF)
-        || (TextIsEqual(fileExtLower, "gif"))
+        || (TextIsEqual(fileExtLower, ".gif"))
 #endif
 #if defined(SUPPORT_FILEFORMAT_PIC)
-        || (TextIsEqual(fileExtLower, "pic"))
+        || (TextIsEqual(fileExtLower, ".pic"))
 #endif
 #if defined(SUPPORT_FILEFORMAT_PSD)
-        || (TextIsEqual(fileExtLower, "psd"))
+        || (TextIsEqual(fileExtLower, ".psd"))
 #endif
        )
     {

@@ -479,7 +479,7 @@ Font LoadFontFromImage(Image image, Color key, int firstChar)
     return font;
 }
 
-// Load font from memory buffer, fileType refers to extension: i.e. "ttf"
+// Load font from memory buffer, fileType refers to extension: i.e. ".ttf"
 Font LoadFontFromMemory(const char *fileType, const unsigned char *fileData, int dataSize, int fontSize, int *fontChars, int charsCount)
 {
     Font font = { 0 };
@@ -488,8 +488,8 @@ Font LoadFontFromMemory(const char *fileType, const unsigned char *fileData, int
     strcpy(fileExtLower, TextToLower(fileType));
 
 #if defined(SUPPORT_FILEFORMAT_TTF)
-    if (TextIsEqual(fileExtLower, "ttf") ||
-        TextIsEqual(fileExtLower, "otf"))
+    if (TextIsEqual(fileExtLower, ".ttf") ||
+        TextIsEqual(fileExtLower, ".otf"))
     {
         font.baseSize = fontSize;
         font.charsCount = (charsCount > 0)? charsCount : 95;

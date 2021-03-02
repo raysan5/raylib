@@ -2351,14 +2351,14 @@ bool DirectoryExists(const char *dirPath)
     return result;
 }
 
-// Get pointer to extension for a filename string
+// Get pointer to extension for a filename string (includes the dot: .png)
 const char *GetFileExtension(const char *fileName)
 {
     const char *dot = strrchr(fileName, '.');
 
     if (!dot || dot == fileName) return NULL;
 
-    return (dot + 1);
+    return dot;
 }
 
 // String pointer reverse break: returns right-most occurrence of charset in s

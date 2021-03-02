@@ -732,16 +732,16 @@ Wave LoadWaveFromMemory(const char *fileType, const unsigned char *fileData, int
 
     if (false) { }
 #if defined(SUPPORT_FILEFORMAT_WAV)
-    else if (TextIsEqual(fileExtLower, "wav")) wave = LoadWAV(fileData, dataSize);
+    else if (TextIsEqual(fileExtLower, ".wav")) wave = LoadWAV(fileData, dataSize);
 #endif
 #if defined(SUPPORT_FILEFORMAT_OGG)
-    else if (TextIsEqual(fileExtLower, "ogg")) wave = LoadOGG(fileData, dataSize);
+    else if (TextIsEqual(fileExtLower, ".ogg")) wave = LoadOGG(fileData, dataSize);
 #endif
 #if defined(SUPPORT_FILEFORMAT_FLAC)
-    else if (TextIsEqual(fileExtLower, "flac")) wave = LoadFLAC(fileData, dataSize);
+    else if (TextIsEqual(fileExtLower, ".flac")) wave = LoadFLAC(fileData, dataSize);
 #endif
 #if defined(SUPPORT_FILEFORMAT_MP3)
-    else if (TextIsEqual(fileExtLower, "mp3")) wave = LoadMP3(fileData, dataSize);
+    else if (TextIsEqual(fileExtLower, ".mp3")) wave = LoadMP3(fileData, dataSize);
 #endif
     else TRACELOG(LOG_WARNING, "WAVE: File format not supported");
 
