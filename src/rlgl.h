@@ -3020,7 +3020,7 @@ void rlUnloadMesh(Mesh *mesh)
     {
         glBindVertexArray(0);
         glDeleteVertexArrays(1, &mesh->vaoId);
-        TRACELOG(LOG_INFO, "VAO: [ID %i] Unloaded vertex data from VRAM (GPU)", mesh.vaoId);
+        TRACELOG(LOG_INFO, "VAO: [ID %i] Unloaded vertex data from VRAM (GPU)", mesh->vaoId);
     }
     else TRACELOG(LOG_INFO, "VBO: Unloaded vertex data from VRAM (GPU)");
 #endif
