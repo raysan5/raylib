@@ -202,15 +202,16 @@
             unsigned int __stdcall timeBeginPeriod(unsigned int uPeriod);
             unsigned int __stdcall timeEndPeriod(unsigned int uPeriod);
         #endif
-
-    #elif defined(__linux__)
+    #endif
+    #if defined(__linux__) || defined(__FreeBSD__)
         #include <sys/time.h>               // Required for: timespec, nanosleep(), select() - POSIX
 
         //#define GLFW_EXPOSE_NATIVE_X11      // WARNING: Exposing Xlib.h > X.h results in dup symbols for Font type
         //#define GLFW_EXPOSE_NATIVE_WAYLAND
         //#define GLFW_EXPOSE_NATIVE_MIR
         #include "GLFW/glfw3native.h"       // Required for: glfwGetX11Window()
-    #elif defined(__APPLE__)
+    #endif
+    #if defined(__APPLE__)
         #include <unistd.h>                 // Required for: usleep()
 
         //#define GLFW_EXPOSE_NATIVE_COCOA    // WARNING: Fails due to type redefinition
@@ -4234,7 +4235,8 @@ static void Wait(float ms)
 
     #if defined(_WIN32)
         Sleep((unsigned int)ms);
-    #elif defined(__linux__) || defined(PLATFORM_WEB)
+    #endif
+    #if defined(__linux__) || defined(__FreeBSD__) || defined(__EMSCRIPTEN__)
         struct timespec req = { 0 };
         time_t sec = (int)(ms/1000.0f);
         ms -= (sec*1000);
@@ -4243,7 +4245,8 @@ static void Wait(float ms)
 
         // NOTE: Use nanosleep() on Unix platforms... usleep() it's deprecated.
         while (nanosleep(&req, &req) == -1) continue;
-    #elif defined(__APPLE__)
+    #endif
+    #if defined(__APPLE__)
         usleep(ms*1000.0f);
     #endif
 
