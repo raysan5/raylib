@@ -258,13 +258,15 @@ PHYSACDEF Vector2 GetPhysicsShapeVertex(PhysicsBody body, int vertex);          
         // Functions required to query time on Windows
         int __stdcall QueryPerformanceCounter(unsigned long long int *lpPerformanceCount);
         int __stdcall QueryPerformanceFrequency(unsigned long long int *lpFrequency);
-    #elif defined(__linux__)
+    #endif
+    #if defined(__linux__) || defined(__FreeBSD__)
         #if _POSIX_C_SOURCE < 199309L
             #undef _POSIX_C_SOURCE
             #define _POSIX_C_SOURCE 199309L // Required for CLOCK_MONOTONIC if compiled with c99 without gnu ext.
         #endif
         #include <sys/time.h>           // Required for: timespec
-    #elif defined(__APPLE__)            // macOS also defines __MACH__
+    #endif
+    #if defined(__APPLE__)              // macOS also defines __MACH__
         #include <mach/mach_time.h>     // Required for: mach_absolute_time()
     #endif
 #endif

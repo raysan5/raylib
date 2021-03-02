@@ -1445,18 +1445,20 @@ void *GetWindowHandle(void)
 #if defined(PLATFORM_DESKTOP) && defined(_WIN32)
     // NOTE: Returned handle is: void *HWND (windows.h)
     return glfwGetWin32Window(CORE.Window.handle);
-#elif defined(__linux__)
+#endif
+#if defined(__linux__)
     // NOTE: Returned handle is: unsigned long Window (X.h)
     // typedef unsigned long XID;
     // typedef XID Window;
     //unsigned long id = (unsigned long)glfwGetX11Window(window);
     return NULL;    // TODO: Find a way to return value... cast to void *?
-#elif defined(__APPLE__)
+#endif
+#if defined(__APPLE__)
     // NOTE: Returned handle is: (objc_object *)
     return NULL;    // TODO: return (void *)glfwGetCocoaWindow(window);
-#else
-    return NULL;
 #endif
+
+    return NULL;
 }
 
 // Get number of monitors
@@ -2717,6 +2719,7 @@ bool SaveStorageValue(unsigned int position, int value)
 int LoadStorageValue(unsigned int position)
 {
     int value = 0;
+
 #if defined(SUPPORT_DATA_STORAGE)
     char path[512] = { 0 };
 #if defined(PLATFORM_ANDROID)
@@ -2768,9 +2771,11 @@ void OpenURL(const char *url)
         char *cmd = (char *)RL_CALLOC(strlen(url) + 10, sizeof(char));
     #if defined(_WIN32)
         sprintf(cmd, "explorer %s", url);
-    #elif defined(__linux__)
+    #endif
+    #if defined(__linux__) || defined(__FreeBSD__)
         sprintf(cmd, "xdg-open '%s'", url); // Alternatives: firefox, x-www-browser
-    #elif defined(__APPLE__)
+    #endif
+    #if defined(__APPLE__)
         sprintf(cmd, "open '%s'", url);
     #endif
         system(cmd);
@@ -2904,13 +2909,12 @@ const char *GetGamepadName(int gamepad)
 #if defined(PLATFORM_DESKTOP)
     if (CORE.Input.Gamepad.ready[gamepad]) return glfwGetJoystickName(gamepad);
     else return NULL;
-#elif defined(PLATFORM_RPI) || defined(PLATFORM_DRM)
-    if (CORE.Input.Gamepad.ready[gamepad]) ioctl(CORE.Input.Gamepad.streamId[gamepad], JSIOCGNAME(64), &CORE.Input.Gamepad.name);
-
-    return CORE.Input.Gamepad.name;
-#else
-    return NULL;
 #endif
+#if defined(PLATFORM_RPI) || defined(PLATFORM_DRM)
+    if (CORE.Input.Gamepad.ready[gamepad]) ioctl(CORE.Input.Gamepad.streamId[gamepad], JSIOCGNAME(64), &CORE.Input.Gamepad.name);
+    return CORE.Input.Gamepad.name;
+#endif
+    return NULL;
 }
 
 // Return gamepad axis count
@@ -3112,11 +3116,12 @@ float GetMouseWheelMove(void)
 {
 #if defined(PLATFORM_ANDROID)
     return 0.0f;
-#elif defined(PLATFORM_WEB)
-    return CORE.Input.Mouse.previousWheelMove/100.0f;
-#else
-    return CORE.Input.Mouse.previousWheelMove;
 #endif
+#if defined(PLATFORM_WEB)
+    return CORE.Input.Mouse.previousWheelMove/100.0f;
+#endif
+
+    return CORE.Input.Mouse.previousWheelMove;
 }
 
 // Returns mouse cursor
@@ -3166,11 +3171,16 @@ Vector2 GetTouchPosition(int index)
 {
     Vector2 position = { -1.0f, -1.0f };
 
-#if defined(PLATFORM_ANDROID) || defined(PLATFORM_WEB) || defined(PLATFORM_RPI) || defined(PLATFORM_DRM) || defined(PLATFORM_UWP)
+#if defined(PLATFORM_DESKTOP)
+    // TODO: GLFW does not support multi-touch input just yet
+    // https://www.codeproject.com/Articles/668404/Programming-for-Multi-Touch
+    // https://docs.microsoft.com/en-us/windows/win32/wintouch/getting-started-with-multi-touch-messages
+    if (index == 0) position = GetMousePosition();
+#endif
+#if defined(PLATFORM_ANDROID)
     if (index < MAX_TOUCH_POINTS) position = CORE.Input.Touch.position[index];
     else TRACELOG(LOG_WARNING, "INPUT: Required touch point out of range (Max touch points: %i)", MAX_TOUCH_POINTS);
 
-    #if defined(PLATFORM_ANDROID)
     if ((CORE.Window.screen.width > CORE.Window.display.width) || (CORE.Window.screen.height > CORE.Window.display.height))
     {
         position.x = position.x*((float)CORE.Window.screen.width/(float)(CORE.Window.display.width - CORE.Window.renderOffset.x)) - CORE.Window.renderOffset.x/2;
@@ -3181,13 +3191,12 @@ Vector2 GetTouchPosition(int index)
         position.x = position.x*((float)CORE.Window.render.width/(float)CORE.Window.display.width) - CORE.Window.renderOffset.x/2;
         position.y = position.y*((float)CORE.Window.render.height/(float)CORE.Window.display.height) - CORE.Window.renderOffset.y/2;
     }
-    #endif
-
-#elif defined(PLATFORM_DESKTOP)
-    // TODO: GLFW is not supporting multi-touch input just yet
-    // https://www.codeproject.com/Articles/668404/Programming-for-Multi-Touch
-    // https://docs.microsoft.com/en-us/windows/win32/wintouch/getting-started-with-multi-touch-messages
-    if (index == 0) position = GetMousePosition();
+#endif
+#if defined(PLATFORM_WEB) || defined(PLATFORM_RPI) || defined(PLATFORM_DRM) || defined(PLATFORM_UWP)
+    if (index < MAX_TOUCH_POINTS) position = CORE.Input.Touch.position[index];
+    else TRACELOG(LOG_WARNING, "INPUT: Required touch point out of range (Max touch points: %i)", MAX_TOUCH_POINTS);
+    
+    // TODO: Touch position scaling required?
 #endif
 
     return position;
