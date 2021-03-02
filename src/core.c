@@ -3879,7 +3879,7 @@ static bool InitGraphicsDevice(int width, int height)
 
     TRACELOG(LOG_TRACE, "DISPLAY: EGL configs available: %d", numConfigs);
 
-    EGLConfig *configs = calloc(numConfigs, sizeof(*configs));
+    EGLConfig *configs = RL_CALLOC(numConfigs, sizeof(*configs));
     if (!configs)
     {
         TRACELOG(LOG_WARNING, "DISPLAY: Failed to get memory for EGL configs");
@@ -3916,7 +3916,7 @@ static bool InitGraphicsDevice(int width, int height)
         }
     }
 
-    free(configs);
+    RL_FREE(configs);
 
     if (!found)
     {

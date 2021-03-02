@@ -4019,7 +4019,7 @@ static bool GltfReadFloat(cgltf_accessor* acc, unsigned int index, float* variab
 }
 
 // LoadGLTF loads in animation data from given filename
-static ModelAnimation* LoadGLTFModelAnimations(const char *fileName, int *animCount)
+static ModelAnimation *LoadGLTFModelAnimations(const char *fileName, int *animCount)
 {
     /***********************************************************************************
 
@@ -4032,6 +4032,7 @@ static ModelAnimation* LoadGLTFModelAnimations(const char *fileName, int *animCo
           - ...
 
     *************************************************************************************/
+
     // glTF file loading
     unsigned int dataSize = 0;
     unsigned char *fileData = LoadFileData(fileName, &dataSize);
@@ -4081,6 +4082,7 @@ static ModelAnimation* LoadGLTFModelAnimations(const char *fileName, int *animCo
                 cgltf_animation_channel* channel = animation->channels + i;
                 int frameCounts = (int)channel->sampler->input->count;
                 float lastFrameTime = 0.0f;
+                
                 if (GltfReadFloat(channel->sampler->input, frameCounts - 1, &lastFrameTime, 1))
                 {
                     animationDuration = fmaxf(lastFrameTime, animationDuration);
@@ -4137,7 +4139,7 @@ static ModelAnimation* LoadGLTFModelAnimations(const char *fileName, int *animCo
                     for (unsigned int j = 0; j < sampler->input->count; j++)
                     {
                         float inputFrameTime;
-                        if (GltfReadFloat(sampler->input, j, (float*)&inputFrameTime, 1))
+                        if (GltfReadFloat(sampler->input, j, (float *)&inputFrameTime, 1))
                         {
                             if (frameTime < inputFrameTime)
                             {
@@ -4146,59 +4148,53 @@ static ModelAnimation* LoadGLTFModelAnimations(const char *fileName, int *animCo
                                 outputMax = j;
         
                                 float previousInputTime = 0.0f;
-                                if (GltfReadFloat(sampler->input, outputMin, (float*)&previousInputTime, 1))
+                                if (GltfReadFloat(sampler->input, outputMin, (float *)&previousInputTime, 1))
                                 {
-                                    lerpPercent = (frameTime - previousInputTime) / (inputFrameTime - previousInputTime);
+                                    lerpPercent = (frameTime - previousInputTime)/(inputFrameTime - previousInputTime);
                                 }
+                                
                                 break;
                             }
-                        } else {
-                            break;
-                        }
+                        } 
+                        else break;
                     }
                     
                     // If the current transformation has no information for the current frame time point
-                    if (shouldSkipFurtherTransformation) {
-                        continue;
-                    }
+                    if (shouldSkipFurtherTransformation) continue;
 
-                    if (channel->target_path == cgltf_animation_path_type_translation) {
+                    if (channel->target_path == cgltf_animation_path_type_translation)
+                    {
                         Vector3 translationStart;
                         Vector3 translationEnd;
                         
-                        bool success = GltfReadFloat(sampler->output, outputMin, (float*)&translationStart, 3);
-                        success = GltfReadFloat(sampler->output, outputMax, (float*)&translationEnd, 3) || success;
+                        bool success = GltfReadFloat(sampler->output, outputMin, (float *)&translationStart, 3);
+                        success = GltfReadFloat(sampler->output, outputMax, (float *)&translationEnd, 3) || success;
                         
-                        if (success)
-                        {
-                            output->framePoses[frame][boneId].translation = Vector3Lerp(translationStart, translationEnd, lerpPercent);
-                        }
+                        if (success) output->framePoses[frame][boneId].translation = Vector3Lerp(translationStart, translationEnd, lerpPercent);
                     }
-                    if (channel->target_path == cgltf_animation_path_type_rotation) {
+                    if (channel->target_path == cgltf_animation_path_type_rotation)
+                    {
                         Quaternion rotationStart;
                         Quaternion rotationEnd;
     
-                        bool success = GltfReadFloat(sampler->output, outputMin, (float*)&rotationStart, 4);
-                        success = GltfReadFloat(sampler->output, outputMax, (float*)&rotationEnd, 4) || success;
+                        bool success = GltfReadFloat(sampler->output, outputMin, (float *)&rotationStart, 4);
+                        success = GltfReadFloat(sampler->output, outputMax, (float *)&rotationEnd, 4) || success;
     
                         if (success)
                         {
                             output->framePoses[frame][boneId].rotation = QuaternionLerp(rotationStart, rotationEnd, lerpPercent);
                             output->framePoses[frame][boneId].rotation = QuaternionNormalize(output->framePoses[frame][boneId].rotation);
-    
                         }
                     }
-                    if (channel->target_path == cgltf_animation_path_type_scale) {
+                    if (channel->target_path == cgltf_animation_path_type_scale)
+                    {
                         Vector3 scaleStart;
                         Vector3 scaleEnd;
     
-                        bool success = GltfReadFloat(sampler->output, outputMin, (float*)&scaleStart, 3);
-                        success = GltfReadFloat(sampler->output, outputMax, (float*)&scaleEnd, 3) || success;
+                        bool success = GltfReadFloat(sampler->output, outputMin, (float *)&scaleStart, 3);
+                        success = GltfReadFloat(sampler->output, outputMax, (float *)&scaleEnd, 3) || success;
     
-                        if (success)
-                        {
-                            output->framePoses[frame][boneId].scale = Vector3Lerp(scaleStart, scaleEnd, lerpPercent);
-                        }
+                        if (success) output->framePoses[frame][boneId].scale = Vector3Lerp(scaleStart, scaleEnd, lerpPercent);
                     }
                 }
             }
@@ -4206,15 +4202,17 @@ static ModelAnimation* LoadGLTFModelAnimations(const char *fileName, int *animCo
             // Build frameposes
             for (int frame = 0; frame < output->frameCount; frame++)
             {
-                bool* completedBones = RL_CALLOC(output->boneCount, sizeof(bool));
+                bool *completedBones = RL_CALLOC(output->boneCount, sizeof(bool));
                 int numberCompletedBones = 0;
 
-                while (numberCompletedBones < output->boneCount) {
+                while (numberCompletedBones < output->boneCount)
+                {
                     for (int i = 0; i < output->boneCount; i++)
                     {
                         if (completedBones[i]) continue;
 
-                        if (output->bones[i].parent < 0) {
+                        if (output->bones[i].parent < 0)
+                        {
                             completedBones[i] = true;
                             numberCompletedBones++;
                             continue;

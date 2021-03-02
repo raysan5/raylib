@@ -4051,25 +4051,21 @@ static unsigned int CompileShader(const char *shaderStr, int type)
     glCompileShader(shader);
     glGetShaderiv(shader, GL_COMPILE_STATUS, &success);
 
-    if (success != GL_TRUE)
+    if (success == GL_FALSE)
     {
         TRACELOG(LOG_WARNING, "SHADER: [ID %i] Failed to compile shader code", shader);
+        
         int maxLength = 0;
-        int length;
         glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &maxLength);
-
-#if defined(_MSC_VER)
-        char *log = RL_MALLOC(maxLength);
-#else
-        char log[maxLength];
-#endif
-        glGetShaderInfoLog(shader, maxLength, &length, log);
-
-        TRACELOG(LOG_WARNING, "SHADER: [ID %i] Compile error: %s", shader, log);
-
-#if defined(_MSC_VER)
-        RL_FREE(log);
-#endif
+        
+        if (maxLength > 0)
+        {
+            int length = 0;
+            char *log = RL_CALLOC(maxLength, sizeof(char));
+            glGetShaderInfoLog(shader, maxLength, &length, log);
+            TRACELOG(LOG_WARNING, "SHADER: [ID %i] Compile error: %s", shader, log);
+            RL_FREE(log);
+        }
     }
     else TRACELOG(LOG_INFO, "SHADER: [ID %i] Compiled successfully", shader);
 
@@ -4113,7 +4109,7 @@ static unsigned int LoadShaderProgram(unsigned int vShaderId, unsigned int fShad
         
         if (maxLength > 0) 
         {
-            int length;
+            int length = 0;
             char *log = RL_CALLOC(maxLength, sizeof(char));
             glGetProgramInfoLog(program, maxLength, &length, log);
             TRACELOG(LOG_WARNING, "SHADER: [ID %i] Link error: %s", program, log);
