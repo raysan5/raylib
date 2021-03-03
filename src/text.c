@@ -1175,7 +1175,7 @@ const char *TextFormat(const char *text, ...)
 
     va_list args;
     va_start(args, text);
-    vsprintf(currentBuffer, text, args);
+    vsnprintf(currentBuffer, MAX_TEXT_BUFFER_LENGTH, text, args);
     va_end(args);
 
     index += 1;     // Move to next buffer for next function call
