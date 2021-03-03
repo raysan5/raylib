@@ -2754,14 +2754,14 @@ TextureCubemap LoadTextureCubemap(Image image, int layoutType)
         // Check image width/height to determine the type of cubemap provided
         if (image.width > image.height)
         {
-            if ((image.width/6) == image.height) { layoutType = CUBEMAP_LINE_HORIZONTAL; cubemap.width = image.width/6; }
-            else if ((image.width/4) == (image.height/3)) { layoutType = CUBEMAP_CROSS_FOUR_BY_THREE; cubemap.width = image.width/4; }
-            else if (image.width >= (int)((float)image.height*1.85f)) { layoutType = CUBEMAP_PANORAMA; cubemap.width = image.width/4; }
+            if ((image.width/6) == image.height) { layoutType = CUBEMAP_LAYOUT_LINE_HORIZONTAL; cubemap.width = image.width/6; }
+            else if ((image.width/4) == (image.height/3)) { layoutType = CUBEMAP_LAYOUT_CROSS_FOUR_BY_THREE; cubemap.width = image.width/4; }
+            else if (image.width >= (int)((float)image.height*1.85f)) { layoutType = CUBEMAP_LAYOUT_PANORAMA; cubemap.width = image.width/4; }
         }
         else if (image.height > image.width)
         {
-            if ((image.height/6) == image.width) { layoutType = CUBEMAP_LINE_VERTICAL; cubemap.width = image.height/6; }
-            else if ((image.width/3) == (image.height/4)) { layoutType = CUBEMAP_CROSS_THREE_BY_FOUR; cubemap.width = image.width/3; }
+            if ((image.height/6) == image.width) { layoutType = CUBEMAP_LAYOUT_LINE_VERTICAL; cubemap.width = image.height/6; }
+            else if ((image.width/3) == (image.height/4)) { layoutType = CUBEMAP_LAYOUT_CROSS_THREE_BY_FOUR; cubemap.width = image.width/3; }
         }
 
         cubemap.height = cubemap.width;
@@ -3035,23 +3035,23 @@ void SetTextureWrap(Texture2D texture, int wrapMode)
     {
         case TEXTURE_WRAP_REPEAT:
         {
-            rlTextureParameters(texture.id, RL_TEXTURE_TEXTURE_WRAP_S, RL_TEXTURE_WRAP_REPEAT);
-            rlTextureParameters(texture.id, RL_TEXTURE_TEXTURE_WRAP_T, RL_TEXTURE_WRAP_REPEAT);
+            rlTextureParameters(texture.id, RL_TEXTURE_WRAP_S, RL_TEXTURE_WRAP_REPEAT);
+            rlTextureParameters(texture.id, RL_TEXTURE_WRAP_T, RL_TEXTURE_WRAP_REPEAT);
         } break;
         case TEXTURE_WRAP_CLAMP:
         {
-            rlTextureParameters(texture.id, RL_TEXTURE_TEXTURE_WRAP_S, RL_TEXTURE_WRAP_CLAMP);
-            rlTextureParameters(texture.id, RL_TEXTURE_TEXTURE_WRAP_T, RL_TEXTURE_WRAP_CLAMP);
+            rlTextureParameters(texture.id, RL_TEXTURE_WRAP_S, RL_TEXTURE_WRAP_CLAMP);
+            rlTextureParameters(texture.id, RL_TEXTURE_WRAP_T, RL_TEXTURE_WRAP_CLAMP);
         } break;
         case TEXTURE_WRAP_MIRROR_REPEAT:
         {
-            rlTextureParameters(texture.id, RL_TEXTURE_TEXTURE_WRAP_S, RL_TEXTURE_WRAP_MIRROR_REPEAT);
-            rlTextureParameters(texture.id, RL_TEXTURE_TEXTURE_WRAP_T, RL_TEXTURE_WRAP_MIRROR_REPEAT);
+            rlTextureParameters(texture.id, RL_TEXTURE_WRAP_S, RL_TEXTURE_WRAP_MIRROR_REPEAT);
+            rlTextureParameters(texture.id, RL_TEXTURE_WRAP_T, RL_TEXTURE_WRAP_MIRROR_REPEAT);
         } break;
         case TEXTURE_WRAP_MIRROR_CLAMP:
         {
-            rlTextureParameters(texture.id, RL_TEXTURE_TEXTURE_WRAP_S, RL_TEXTURE_WRAP_MIRROR_CLAMP);
-            rlTextureParameters(texture.id, RL_TEXTURE_TEXTURE_WRAP_T, RL_TEXTURE_WRAP_MIRROR_CLAMP);
+            rlTextureParameters(texture.id, RL_TEXTURE_WRAP_S, RL_TEXTURE_WRAP_MIRROR_CLAMP);
+            rlTextureParameters(texture.id, RL_TEXTURE_WRAP_T, RL_TEXTURE_WRAP_MIRROR_CLAMP);
         } break;
         default: break;
     }
