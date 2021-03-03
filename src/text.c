@@ -328,7 +328,7 @@ Font LoadFont(const char *fileName)
         TRACELOG(LOG_WARNING, "FONT: [%s] Failed to load font texture -> Using default font", fileName);
         font = GetFontDefault();
     }
-    else SetTextureFilter(font.texture, FILTER_POINT);    // By default we set point filter (best performance)
+    else SetTextureFilter(font.texture, TEXTURE_FILTER_POINT);    // By default we set point filter (best performance)
 
     return font;
 }
@@ -432,7 +432,7 @@ Font LoadFontFromImage(Image image, Color key, int firstChar)
     }
 
     // NOTE: We need to remove key color borders from image to avoid weird
-    // artifacts on texture scaling when using FILTER_BILINEAR or FILTER_TRILINEAR
+    // artifacts on texture scaling when using TEXTURE_FILTER_BILINEAR or TEXTURE_FILTER_TRILINEAR
     for (int i = 0; i < image.height*image.width; i++) if (COLOR_EQUAL(pixels[i], key)) pixels[i] = BLANK;
 
     // Create a new image with the processed color data (key color replaced by BLANK)

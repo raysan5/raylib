@@ -2967,63 +2967,63 @@ void SetTextureFilter(Texture2D texture, int filterMode)
 {
     switch (filterMode)
     {
-        case FILTER_POINT:
+        case TEXTURE_FILTER_POINT:
         {
             if (texture.mipmaps > 1)
             {
-                // RL_FILTER_MIP_NEAREST - tex filter: POINT, mipmaps filter: POINT (sharp switching between mipmaps)
-                rlTextureParameters(texture.id, RL_TEXTURE_MIN_FILTER, RL_FILTER_MIP_NEAREST);
+                // RL_TEXTURE_FILTER_MIP_NEAREST - tex filter: POINT, mipmaps filter: POINT (sharp switching between mipmaps)
+                rlTextureParameters(texture.id, RL_TEXTURE_MIN_FILTER, RL_TEXTURE_FILTER_MIP_NEAREST);
 
-                // RL_FILTER_NEAREST - tex filter: POINT (no filter), no mipmaps
-                rlTextureParameters(texture.id, RL_TEXTURE_MAG_FILTER, RL_FILTER_NEAREST);
+                // RL_TEXTURE_FILTER_NEAREST - tex filter: POINT (no filter), no mipmaps
+                rlTextureParameters(texture.id, RL_TEXTURE_MAG_FILTER, RL_TEXTURE_FILTER_NEAREST);
             }
             else
             {
-                // RL_FILTER_NEAREST - tex filter: POINT (no filter), no mipmaps
-                rlTextureParameters(texture.id, RL_TEXTURE_MIN_FILTER, RL_FILTER_NEAREST);
-                rlTextureParameters(texture.id, RL_TEXTURE_MAG_FILTER, RL_FILTER_NEAREST);
+                // RL_TEXTURE_FILTER_NEAREST - tex filter: POINT (no filter), no mipmaps
+                rlTextureParameters(texture.id, RL_TEXTURE_MIN_FILTER, RL_TEXTURE_FILTER_NEAREST);
+                rlTextureParameters(texture.id, RL_TEXTURE_MAG_FILTER, RL_TEXTURE_FILTER_NEAREST);
             }
         } break;
-        case FILTER_BILINEAR:
+        case TEXTURE_FILTER_BILINEAR:
         {
             if (texture.mipmaps > 1)
             {
-                // RL_FILTER_LINEAR_MIP_NEAREST - tex filter: BILINEAR, mipmaps filter: POINT (sharp switching between mipmaps)
-                // Alternative: RL_FILTER_NEAREST_MIP_LINEAR - tex filter: POINT, mipmaps filter: BILINEAR (smooth transition between mipmaps)
-                rlTextureParameters(texture.id, RL_TEXTURE_MIN_FILTER, RL_FILTER_LINEAR_MIP_NEAREST);
+                // RL_TEXTURE_FILTER_LINEAR_MIP_NEAREST - tex filter: BILINEAR, mipmaps filter: POINT (sharp switching between mipmaps)
+                // Alternative: RL_TEXTURE_FILTER_NEAREST_MIP_LINEAR - tex filter: POINT, mipmaps filter: BILINEAR (smooth transition between mipmaps)
+                rlTextureParameters(texture.id, RL_TEXTURE_MIN_FILTER, RL_TEXTURE_FILTER_LINEAR_MIP_NEAREST);
 
-                // RL_FILTER_LINEAR - tex filter: BILINEAR, no mipmaps
-                rlTextureParameters(texture.id, RL_TEXTURE_MAG_FILTER, RL_FILTER_LINEAR);
+                // RL_TEXTURE_FILTER_LINEAR - tex filter: BILINEAR, no mipmaps
+                rlTextureParameters(texture.id, RL_TEXTURE_MAG_FILTER, RL_TEXTURE_FILTER_LINEAR);
             }
             else
             {
-                // RL_FILTER_LINEAR - tex filter: BILINEAR, no mipmaps
-                rlTextureParameters(texture.id, RL_TEXTURE_MIN_FILTER, RL_FILTER_LINEAR);
-                rlTextureParameters(texture.id, RL_TEXTURE_MAG_FILTER, RL_FILTER_LINEAR);
+                // RL_TEXTURE_FILTER_LINEAR - tex filter: BILINEAR, no mipmaps
+                rlTextureParameters(texture.id, RL_TEXTURE_MIN_FILTER, RL_TEXTURE_FILTER_LINEAR);
+                rlTextureParameters(texture.id, RL_TEXTURE_MAG_FILTER, RL_TEXTURE_FILTER_LINEAR);
             }
         } break;
-        case FILTER_TRILINEAR:
+        case TEXTURE_FILTER_TRILINEAR:
         {
             if (texture.mipmaps > 1)
             {
-                // RL_FILTER_MIP_LINEAR - tex filter: BILINEAR, mipmaps filter: BILINEAR (smooth transition between mipmaps)
-                rlTextureParameters(texture.id, RL_TEXTURE_MIN_FILTER, RL_FILTER_MIP_LINEAR);
+                // RL_TEXTURE_FILTER_MIP_LINEAR - tex filter: BILINEAR, mipmaps filter: BILINEAR (smooth transition between mipmaps)
+                rlTextureParameters(texture.id, RL_TEXTURE_MIN_FILTER, RL_TEXTURE_FILTER_MIP_LINEAR);
 
-                // RL_FILTER_LINEAR - tex filter: BILINEAR, no mipmaps
-                rlTextureParameters(texture.id, RL_TEXTURE_MAG_FILTER, RL_FILTER_LINEAR);
+                // RL_TEXTURE_FILTER_LINEAR - tex filter: BILINEAR, no mipmaps
+                rlTextureParameters(texture.id, RL_TEXTURE_MAG_FILTER, RL_TEXTURE_FILTER_LINEAR);
             }
             else
             {
                 TRACELOG(LOG_WARNING, "TEXTURE: [ID %i] No mipmaps available for TRILINEAR texture filtering", texture.id);
 
-                // RL_FILTER_LINEAR - tex filter: BILINEAR, no mipmaps
-                rlTextureParameters(texture.id, RL_TEXTURE_MIN_FILTER, RL_FILTER_LINEAR);
-                rlTextureParameters(texture.id, RL_TEXTURE_MAG_FILTER, RL_FILTER_LINEAR);
+                // RL_TEXTURE_FILTER_LINEAR - tex filter: BILINEAR, no mipmaps
+                rlTextureParameters(texture.id, RL_TEXTURE_MIN_FILTER, RL_TEXTURE_FILTER_LINEAR);
+                rlTextureParameters(texture.id, RL_TEXTURE_MAG_FILTER, RL_TEXTURE_FILTER_LINEAR);
             }
         } break;
-        case FILTER_ANISOTROPIC_4X: rlTextureParameters(texture.id, RL_TEXTURE_ANISOTROPIC_FILTER, 4); break;
-        case FILTER_ANISOTROPIC_8X: rlTextureParameters(texture.id, RL_TEXTURE_ANISOTROPIC_FILTER, 8); break;
-        case FILTER_ANISOTROPIC_16X: rlTextureParameters(texture.id, RL_TEXTURE_ANISOTROPIC_FILTER, 16); break;
+        case TEXTURE_FILTER_ANISOTROPIC_4X: rlTextureParameters(texture.id, RL_TEXTURE_FILTER_ANISOTROPIC, 4); break;
+        case TEXTURE_FILTER_ANISOTROPIC_8X: rlTextureParameters(texture.id, RL_TEXTURE_FILTER_ANISOTROPIC, 8); break;
+        case TEXTURE_FILTER_ANISOTROPIC_16X: rlTextureParameters(texture.id, RL_TEXTURE_FILTER_ANISOTROPIC, 16); break;
         default: break;
     }
 }
@@ -3033,25 +3033,25 @@ void SetTextureWrap(Texture2D texture, int wrapMode)
 {
     switch (wrapMode)
     {
-        case WRAP_REPEAT:
+        case TEXTURE_WRAP_REPEAT:
         {
-            rlTextureParameters(texture.id, RL_TEXTURE_WRAP_S, RL_WRAP_REPEAT);
-            rlTextureParameters(texture.id, RL_TEXTURE_WRAP_T, RL_WRAP_REPEAT);
+            rlTextureParameters(texture.id, RL_TEXTURE_TEXTURE_WRAP_S, RL_TEXTURE_WRAP_REPEAT);
+            rlTextureParameters(texture.id, RL_TEXTURE_TEXTURE_WRAP_T, RL_TEXTURE_WRAP_REPEAT);
         } break;
-        case WRAP_CLAMP:
+        case TEXTURE_WRAP_CLAMP:
         {
-            rlTextureParameters(texture.id, RL_TEXTURE_WRAP_S, RL_WRAP_CLAMP);
-            rlTextureParameters(texture.id, RL_TEXTURE_WRAP_T, RL_WRAP_CLAMP);
+            rlTextureParameters(texture.id, RL_TEXTURE_TEXTURE_WRAP_S, RL_TEXTURE_WRAP_CLAMP);
+            rlTextureParameters(texture.id, RL_TEXTURE_TEXTURE_WRAP_T, RL_TEXTURE_WRAP_CLAMP);
         } break;
-        case WRAP_MIRROR_REPEAT:
+        case TEXTURE_WRAP_MIRROR_REPEAT:
         {
-            rlTextureParameters(texture.id, RL_TEXTURE_WRAP_S, RL_WRAP_MIRROR_REPEAT);
-            rlTextureParameters(texture.id, RL_TEXTURE_WRAP_T, RL_WRAP_MIRROR_REPEAT);
+            rlTextureParameters(texture.id, RL_TEXTURE_TEXTURE_WRAP_S, RL_TEXTURE_WRAP_MIRROR_REPEAT);
+            rlTextureParameters(texture.id, RL_TEXTURE_TEXTURE_WRAP_T, RL_TEXTURE_WRAP_MIRROR_REPEAT);
         } break;
-        case WRAP_MIRROR_CLAMP:
+        case TEXTURE_WRAP_MIRROR_CLAMP:
         {
-            rlTextureParameters(texture.id, RL_TEXTURE_WRAP_S, RL_WRAP_MIRROR_CLAMP);
-            rlTextureParameters(texture.id, RL_TEXTURE_WRAP_T, RL_WRAP_MIRROR_CLAMP);
+            rlTextureParameters(texture.id, RL_TEXTURE_TEXTURE_WRAP_S, RL_TEXTURE_WRAP_MIRROR_CLAMP);
+            rlTextureParameters(texture.id, RL_TEXTURE_TEXTURE_WRAP_T, RL_TEXTURE_WRAP_MIRROR_CLAMP);
         } break;
         default: break;
     }

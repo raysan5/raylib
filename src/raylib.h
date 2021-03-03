@@ -157,7 +157,8 @@
 #define LoadText        LoadFileText
 #define GetExtension    GetFileExtension
 #define GetImageData    LoadImageColors
-//#define Fade(c, a)  ColorAlpha(c, a)
+#define FILTER_POINT    TEXTURE_FILTER_POINT
+#define FILTER_BILINEAR TEXTURE_FILTER_BILINEAR
 
 //----------------------------------------------------------------------------------
 // Structures Definition
@@ -791,20 +792,20 @@ typedef enum {
 // NOTE 1: Filtering considers mipmaps if available in the texture
 // NOTE 2: Filter is accordingly set for minification and magnification
 typedef enum {
-    FILTER_POINT = 0,               // No filter, just pixel aproximation
-    FILTER_BILINEAR,                // Linear filtering
-    FILTER_TRILINEAR,               // Trilinear filtering (linear with mipmaps)
-    FILTER_ANISOTROPIC_4X,          // Anisotropic filtering 4x
-    FILTER_ANISOTROPIC_8X,          // Anisotropic filtering 8x
-    FILTER_ANISOTROPIC_16X,         // Anisotropic filtering 16x
+    TEXTURE_FILTER_POINT = 0,               // No filter, just pixel aproximation
+    TEXTURE_FILTER_BILINEAR,                // Linear filtering
+    TEXTURE_FILTER_TRILINEAR,               // Trilinear filtering (linear with mipmaps)
+    TEXTURE_FILTER_ANISOTROPIC_4X,          // Anisotropic filtering 4x
+    TEXTURE_FILTER_ANISOTROPIC_8X,          // Anisotropic filtering 8x
+    TEXTURE_FILTER_ANISOTROPIC_16X,         // Anisotropic filtering 16x
 } TextureFilterMode;
 
 // Texture parameters: wrap mode
 typedef enum {
-    WRAP_REPEAT = 0,        // Repeats texture in tiled mode
-    WRAP_CLAMP,             // Clamps texture to edge pixel in tiled mode
-    WRAP_MIRROR_REPEAT,     // Mirrors and repeats the texture in tiled mode
-    WRAP_MIRROR_CLAMP       // Mirrors and clamps to border the texture in tiled mode
+    TEXTURE_WRAP_REPEAT = 0,        // Repeats texture in tiled mode
+    TEXTURE_WRAP_CLAMP,             // Clamps texture to edge pixel in tiled mode
+    TEXTURE_WRAP_MIRROR_REPEAT,     // Mirrors and repeats the texture in tiled mode
+    TEXTURE_WRAP_MIRROR_CLAMP       // Mirrors and clamps to border the texture in tiled mode
 } TextureWrapMode;
 
 // Cubemap layouts

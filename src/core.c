@@ -754,7 +754,7 @@ void InitWindow(int width, int height, const char *title)
     if ((CORE.Window.flags & FLAG_WINDOW_HIGHDPI) > 0)
     {
         // Set default font texture filter for HighDPI (blurry)
-        SetTextureFilter(GetFontDefault().texture, FILTER_BILINEAR);
+        SetTextureFilter(GetFontDefault().texture, TEXTURE_FILTER_BILINEAR);
     }
 #endif
 

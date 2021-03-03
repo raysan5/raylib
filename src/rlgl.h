@@ -185,19 +185,19 @@
 #define RL_TEXTURE_WRAP_T               0x2803      // GL_TEXTURE_WRAP_T
 #define RL_TEXTURE_MAG_FILTER           0x2800      // GL_TEXTURE_MAG_FILTER
 #define RL_TEXTURE_MIN_FILTER           0x2801      // GL_TEXTURE_MIN_FILTER
-#define RL_TEXTURE_ANISOTROPIC_FILTER   0x3000      // Anisotropic filter (custom identifier)
 
-#define RL_FILTER_NEAREST               0x2600      // GL_NEAREST
-#define RL_FILTER_LINEAR                0x2601      // GL_LINEAR
-#define RL_FILTER_MIP_NEAREST           0x2700      // GL_NEAREST_MIPMAP_NEAREST
-#define RL_FILTER_NEAREST_MIP_LINEAR    0x2702      // GL_NEAREST_MIPMAP_LINEAR
-#define RL_FILTER_LINEAR_MIP_NEAREST    0x2701      // GL_LINEAR_MIPMAP_NEAREST
-#define RL_FILTER_MIP_LINEAR            0x2703      // GL_LINEAR_MIPMAP_LINEAR
+#define RL_TEXTURE_FILTER_NEAREST               0x2600      // GL_NEAREST
+#define RL_TEXTURE_FILTER_LINEAR                0x2601      // GL_LINEAR
+#define RL_TEXTURE_FILTER_MIP_NEAREST           0x2700      // GL_NEAREST_MIPMAP_NEAREST
+#define RL_TEXTURE_FILTER_NEAREST_MIP_LINEAR    0x2702      // GL_NEAREST_MIPMAP_LINEAR
+#define RL_TEXTURE_FILTER_LINEAR_MIP_NEAREST    0x2701      // GL_LINEAR_MIPMAP_NEAREST
+#define RL_TEXTURE_FILTER_MIP_LINEAR            0x2703      // GL_LINEAR_MIPMAP_LINEAR
+#define RL_TEXTURE_FILTER_ANISOTROPIC           0x3000      // Anisotropic filter (custom identifier)
 
-#define RL_WRAP_REPEAT                  0x2901      // GL_REPEAT
-#define RL_WRAP_CLAMP                   0x812F      // GL_CLAMP_TO_EDGE
-#define RL_WRAP_MIRROR_REPEAT           0x8370      // GL_MIRRORED_REPEAT
-#define RL_WRAP_MIRROR_CLAMP            0x8742      // GL_MIRROR_CLAMP_EXT
+#define RL_TEXTURE_WRAP_REPEAT                  0x2901      // GL_REPEAT
+#define RL_TEXTURE_WRAP_CLAMP                   0x812F      // GL_CLAMP_TO_EDGE
+#define RL_TEXTURE_WRAP_MIRROR_REPEAT           0x8370      // GL_MIRRORED_REPEAT
+#define RL_TEXTURE_WRAP_MIRROR_CLAMP            0x8742      // GL_MIRROR_CLAMP_EXT
 
 // Matrix modes (equivalent to OpenGL)
 #define RL_MODELVIEW                    0x1700      // GL_MODELVIEW
@@ -391,12 +391,12 @@ typedef enum {
     // NOTE 1: Filtering considers mipmaps if available in the texture
     // NOTE 2: Filter is accordingly set for minification and magnification
     typedef enum {
-        FILTER_POINT = 0,               // No filter, just pixel aproximation
-        FILTER_BILINEAR,                // Linear filtering
-        FILTER_TRILINEAR,               // Trilinear filtering (linear with mipmaps)
-        FILTER_ANISOTROPIC_4X,          // Anisotropic filtering 4x
-        FILTER_ANISOTROPIC_8X,          // Anisotropic filtering 8x
-        FILTER_ANISOTROPIC_16X,         // Anisotropic filtering 16x
+        TEXTURE_FILTER_POINT = 0,               // No filter, just pixel aproximation
+        TEXTURE_FILTER_BILINEAR,                // Linear filtering
+        TEXTURE_FILTER_TRILINEAR,               // Trilinear filtering (linear with mipmaps)
+        TEXTURE_FILTER_ANISOTROPIC_4X,          // Anisotropic filtering 4x
+        TEXTURE_FILTER_ANISOTROPIC_8X,          // Anisotropic filtering 8x
+        TEXTURE_FILTER_ANISOTROPIC_16X,         // Anisotropic filtering 16x
     } TextureFilterMode;
 
     // Color blending modes (pre-defined)
@@ -1383,6 +1383,7 @@ void rlTextureParameters(unsigned int id, int param, int value)
         case RL_TEXTURE_WRAP_T:
         {
             if (value == RL_WRAP_MIRROR_CLAMP)
+            if (value == RL_TEXTURE_WRAP_MIRROR_CLAMP)
             {
 #if !defined(GRAPHICS_API_OPENGL_11)
                 if (RLGL.ExtSupported.texMirrorClamp) glTexParameteri(GL_TEXTURE_2D, param, value);
@@ -1394,7 +1395,7 @@ void rlTextureParameters(unsigned int id, int param, int value)
         } break;
         case RL_TEXTURE_MAG_FILTER:
         case RL_TEXTURE_MIN_FILTER: glTexParameteri(GL_TEXTURE_2D, param, value); break;
-        case RL_TEXTURE_ANISOTROPIC_FILTER:
+        case RL_TEXTURE_FILTER_ANISOTROPIC:
         {
 #if !defined(GRAPHICS_API_OPENGL_11)
             if (value <= RLGL.ExtSupported.maxAnisotropicLevel) glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, (float)value);
@@ -3633,7 +3634,7 @@ TextureCubemap GenTexturePrefilter(Shader shader, TextureCubemap cubemap, int si
     //------------------------------------------------------------------------------------------
     unsigned int rbo = rlLoadTextureDepth(size, size, true);
     prefilter.id = rlLoadTextureCubemap(NULL, size, UNCOMPRESSED_R32G32B32);
-    rlTextureParameters(prefilter.id, RL_TEXTURE_MIN_FILTER, RL_FILTER_MIP_LINEAR);
+    rlTextureParameters(prefilter.id, RL_TEXTURE_MIN_FILTER, RL_TEXTURE_FILTER_MIP_LINEAR);
 
     unsigned int fbo = rlLoadFramebuffer(size, size);
     rlFramebufferAttach(fbo, rbo, RL_ATTACHMENT_DEPTH, RL_ATTACHMENT_RENDERBUFFER);
