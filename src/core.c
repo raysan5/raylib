@@ -2325,7 +2325,7 @@ bool IsFileExtension(const char *fileName, const char *ext)
 
         for (int i = 0; i < extCount; i++)
         {
-            if (TextIsEqual(fileExtLower, TextToLower(checkExts[i] + 1)))
+            if (TextIsEqual(fileExtLower, TextToLower(checkExts[i])))
             {
                 result = true;
                 break;
