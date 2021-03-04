@@ -619,31 +619,60 @@ void DrawRectanglePro(Rectangle rec, Vector2 origin, float rotation, Color color
 {
     if (rlCheckBufferLimit(4)) rlglDraw();
 
+    Vector2 bl = {};
+    Vector2 br = {};
+    Vector2 tr = {};
+    Vector2 tl = {};
+
+    // Only calculate rotation if needed
+    if (rotation == 0.0f)
+    {
+        float x = rec.x - origin.x;
+        float y = rec.y - origin.y;
+        bl = (Vector2){ x, y };
+        br = (Vector2){ x, y + rec.height };
+        tr = (Vector2){ x + rec.width, y + rec.height };
+        tl = (Vector2){ x + rec.width, y };
+    }
+    else
+    {
+        float sinRotation = sinf(rotation * DEG2RAD);
+        float cosRotation = cosf(rotation * DEG2RAD);
+        float x = rec.x;
+        float y = rec.y;
+        float dx = -origin.x;
+        float dy = -origin.y;
+
+        bl.x = x + dx * cosRotation - (dy + rec.height) * sinRotation;
+        bl.y = y + dx * sinRotation + (dy + rec.height) * cosRotation;
+
+        br.x = x + (dx + rec.width) * cosRotation - (dy + rec.height) * sinRotation;
+        br.y = y + (dx + rec.width) * sinRotation + (dy + rec.height) * cosRotation;
+
+        tr.x = x + (dx + rec.width) * cosRotation - dy * sinRotation;
+        tr.y = y + (dx + rec.width) * sinRotation + dy * cosRotation;
+
+        tl.x = x + dx * cosRotation - dy * sinRotation;
+        tl.y = y + dx * sinRotation + dy * cosRotation;
+    }
+
     rlEnableTexture(GetShapesTexture().id);
+    rlBegin(RL_QUADS);
+        rlNormal3f(0.0f, 0.0f, 1.0f);
+        rlColor4ub(color.r, color.g, color.b, color.a);
 
-    rlPushMatrix();
-        rlTranslatef(rec.x, rec.y, 0.0f);
-        rlRotatef(rotation, 0.0f, 0.0f, 1.0f);
-        rlTranslatef(-origin.x, -origin.y, 0.0f);
+        rlTexCoord2f(GetShapesTextureRec().x/GetShapesTexture().width, GetShapesTextureRec().y/GetShapesTexture().height);
+        rlVertex2f(bl.x, bl.y);
 
-        rlBegin(RL_QUADS);
-            rlNormal3f(0.0f, 0.0f, 1.0f);
-            rlColor4ub(color.r, color.g, color.b, color.a);
+        rlTexCoord2f(GetShapesTextureRec().x/GetShapesTexture().width, (GetShapesTextureRec().y + GetShapesTextureRec().height)/GetShapesTexture().height);
+        rlVertex2f(br.x, br.y);
 
-            rlTexCoord2f(GetShapesTextureRec().x/GetShapesTexture().width, GetShapesTextureRec().y/GetShapesTexture().height);
-            rlVertex2f(0.0f, 0.0f);
+        rlTexCoord2f((GetShapesTextureRec().x + GetShapesTextureRec().width)/GetShapesTexture().width, (GetShapesTextureRec().y + GetShapesTextureRec().height)/GetShapesTexture().height);
+        rlVertex2f(tr.x, tr.y);
 
-            rlTexCoord2f(GetShapesTextureRec().x/GetShapesTexture().width, (GetShapesTextureRec().y + GetShapesTextureRec().height)/GetShapesTexture().height);
-            rlVertex2f(0.0f, rec.height);
-
-            rlTexCoord2f((GetShapesTextureRec().x + GetShapesTextureRec().width)/GetShapesTexture().width, (GetShapesTextureRec().y + GetShapesTextureRec().height)/GetShapesTexture().height);
-            rlVertex2f(rec.width, rec.height);
-
-            rlTexCoord2f((GetShapesTextureRec().x + GetShapesTextureRec().width)/GetShapesTexture().width, GetShapesTextureRec().y/GetShapesTexture().height);
-            rlVertex2f(rec.width, 0.0f);
-        rlEnd();
-    rlPopMatrix();
-
+        rlTexCoord2f((GetShapesTextureRec().x + GetShapesTextureRec().width)/GetShapesTexture().width, GetShapesTextureRec().y/GetShapesTexture().height);
+        rlVertex2f(tl.x, tl.y);
+    rlEnd();
     rlDisableTexture();
 }
 
