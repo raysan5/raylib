@@ -3201,10 +3201,10 @@ void DrawTexturePro(Texture2D texture, Rectangle source, Rectangle dest, Vector2
         if (source.width < 0) { flipX = true; source.width *= -1; }
         if (source.height < 0) source.y -= source.height;
 
-        Vector2 bl = {};
-        Vector2 br = {};
-        Vector2 tr = {};
-        Vector2 tl = {};
+        Vector2 bl = { 0 };
+        Vector2 br = { 0 };
+        Vector2 tr = { 0 };
+        Vector2 tl = { 0 };
 
         // Only calculate rotation if needed
         if (rotation == 0.0f)

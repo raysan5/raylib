@@ -119,11 +119,11 @@ void DrawLineEx(Vector2 startPos, Vector2 endPos, float thick, Color color)
     Vector2 delta = {endPos.x-startPos.x, endPos.y-startPos.y};
     float   length = sqrtf(delta.x*delta.x + delta.y*delta.y);
 
-    if (length > 0  &&  thick > 0) 
+    if (length > 0  &&  thick > 0)
     {
         float   scale = thick/(2*length);
         Vector2 radius = {-scale*delta.y, scale*delta.x};
-        Vector2 strip[] = {{startPos.x-radius.x, startPos.y-radius.y}, {startPos.x+radius.x, startPos.y+radius.y}, 
+        Vector2 strip[] = {{startPos.x-radius.x, startPos.y-radius.y}, {startPos.x+radius.x, startPos.y+radius.y},
                            {endPos.x-radius.x, endPos.y-radius.y}, {endPos.x+radius.x, endPos.y+radius.y}};
 
         DrawTriangleStrip(strip, 4, color);
@@ -157,24 +157,24 @@ void DrawLineBezier(Vector2 startPos, Vector2 endPos, float thick, Color color)
 void DrawLineBezierQuad(Vector2 startPos, Vector2 endPos, Vector2 controlPos, float thick, Color color)
 {
     const float step = 1.0f/BEZIER_LINE_DIVISIONS;
-    
+
     Vector2 previous = startPos;
     Vector2 current = { 0 };
     float t = 0.0f;
-    
+
     for (int i = 0; i <= BEZIER_LINE_DIVISIONS; i++)
     {
         t = step*i;
         float a = powf(1 - t, 2);
         float b = 2*(1 - t)*t;
         float c = powf(t, 2);
-        
+
         // NOTE: The easing functions aren't suitable here because they don't take a control point
         current.y = a*startPos.y + b*controlPos.y + c*endPos.y;
         current.x = a*startPos.x + b*controlPos.x + c*endPos.x;
-        
+
         DrawLineEx(previous,current,thick,color);
-        
+
         previous = current;
     }
 }
@@ -619,10 +619,10 @@ void DrawRectanglePro(Rectangle rec, Vector2 origin, float rotation, Color color
 {
     if (rlCheckBufferLimit(4)) rlglDraw();
 
-    Vector2 bl = {};
-    Vector2 br = {};
-    Vector2 tr = {};
-    Vector2 tl = {};
+    Vector2 bl = { 0 };
+    Vector2 br = { 0 };
+    Vector2 tr = { 0 };
+    Vector2 tl = { 0 };
 
     // Only calculate rotation if needed
     if (rotation == 0.0f)
