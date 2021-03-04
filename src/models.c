@@ -754,7 +754,7 @@ Model LoadModel(const char *fileName)
 
         if (model.meshMaterial == NULL) model.meshMaterial = (int *)RL_CALLOC(model.meshCount, sizeof(int));
     }
-
+	
     return model;
 }
 
@@ -3979,10 +3979,37 @@ static Model LoadGLTF(const char *fileName)
                 }
                 else
                 {
-                    model.meshMaterial[primitiveIndex] = model.materialCount - 1;;
+                    model.meshMaterial[primitiveIndex] = model.materialCount - 1;
                 }
                 
 //                if (data->meshes[i].)
+
+                if (model.meshes[primitiveIndex].boneIds == NULL && data->nodes_count > 0)
+                {
+                    for (int nodeId = 0; nodeId < data->nodes_count; nodeId++)
+                    {
+                        if (data->nodes[nodeId].mesh == &(data->meshes[i]))
+                        {
+                            model.meshes[primitiveIndex].boneIds = RL_CALLOC(4 * model.meshes[primitiveIndex].vertexCount, sizeof(int));
+                            model.meshes[primitiveIndex].boneWeights = RL_CALLOC(4 * model.meshes[primitiveIndex].vertexCount, sizeof(float));
+
+                        	for (int b = 0; b < 4 * model.meshes[primitiveIndex].vertexCount; b++)
+                            {
+                        		if(b % 4 == 0)
+                        		{
+                                    model.meshes[primitiveIndex].boneIds[b] = nodeId;
+                                    model.meshes[primitiveIndex].boneWeights[b] = 1.0f;
+                        		}
+                        		else
+                        		{
+                                    model.meshes[primitiveIndex].boneIds[b] = 0;
+                                    model.meshes[primitiveIndex].boneWeights[b] = 0.0f;
+                        		}
+                                
+                            }
+                        }
+                    }
+                }
                 
                 primitiveIndex++;
             }
@@ -4053,9 +4080,9 @@ static ModelAnimation *LoadGLTFModelAnimations(const char *fileName, int *animCo
 
         result = cgltf_load_buffers(&options, data, fileName);
         if (result != cgltf_result_success) TRACELOG(LOG_WARNING, "MODEL: [%s] unable to load glTF animations data", fileName);
-        
         animations = RL_MALLOC(data->animations_count*sizeof(ModelAnimation));
-    
+        *animCount = data->animations_count;
+
         for (unsigned int a = 0; a < data->animations_count; a++)
         {
             // gltf animation consists of the following structures:
