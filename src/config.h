@@ -203,6 +203,8 @@
 //------------------------------------------------------------------------------------
 // Module: utils - Configuration Flags
 //------------------------------------------------------------------------------------
+// Standard file io library (stdio.h) included
+#define SUPPORT_STANDARD_FILEIO
 // Show TRACELOG() output messages
 // NOTE: By default LOG_DEBUG traces not shown
 #define SUPPORT_TRACELOG            1

@@ -45,8 +45,8 @@
     #include <android/asset_manager.h>  // Required for: Android assets manager: AAsset, AAssetManager_open(), ...
 #endif
 
-#include <stdlib.h>                     // Required for: exit(), FILE, fopen(), fseek(), ftell(), fread(), fwrite(), fprintf(), fclose()
-#include <stdio.h>                      // Required for: vprintf()
+#include <stdlib.h>                     // Required for: exit()
+#include <stdio.h>                      // Required for: FILE, fopen(), fseek(), ftell(), fread(), fwrite(), fprintf(), vprintf(), fclose()
 #include <stdarg.h>                     // Required for: va_list, va_start(), va_end()
 #include <string.h>                     // Required for: strcpy(), strcat()
 
@@ -209,7 +209,7 @@ unsigned char *LoadFileData(const char *fileName, unsigned int *bytesRead)
             data = loadFileData(fileName, bytesRead);
             return data;
         }
-        
+#if defined(SUPPORT_STANDARD_FILEIO)
         FILE *file = fopen(fileName, "rb");
 
         if (file != NULL)
@@ -236,6 +236,9 @@ unsigned char *LoadFileData(const char *fileName, unsigned int *bytesRead)
             fclose(file);
         }
         else TRACELOG(LOG_WARNING, "FILEIO: [%s] Failed to open file", fileName);
+#else
+    TRACELOG(LOG_WARNING, "FILEIO: Standard file io not supported, use custom file callback");
+#endif
     }
     else TRACELOG(LOG_WARNING, "FILEIO: File name provided is not valid");
 
@@ -260,7 +263,7 @@ bool SaveFileData(const char *fileName, void *data, unsigned int bytesToWrite)
             saveFileData(fileName, data, bytesToWrite);
             return success;
         }
-               
+#if defined(SUPPORT_STANDARD_FILEIO)
         FILE *file = fopen(fileName, "wb");
 
         if (file != NULL)
@@ -275,6 +278,9 @@ bool SaveFileData(const char *fileName, void *data, unsigned int bytesToWrite)
             if (result == 0) success = true;
         }
         else TRACELOG(LOG_WARNING, "FILEIO: [%s] Failed to open file", fileName);
+#else
+    TRACELOG(LOG_WARNING, "FILEIO: Standard file io not supported, use custom file callback");
+#endif  
     }
     else TRACELOG(LOG_WARNING, "FILEIO: File name provided is not valid");
 
@@ -289,6 +295,12 @@ char *LoadFileText(const char *fileName)
 
     if (fileName != NULL)
     {
+        if (loadFileText) 
+        {
+            text = loadFileText(fileName);
+            return text;
+        }
+#if defined(SUPPORT_STANDARD_FILEIO)
         FILE *file = fopen(fileName, "rt");
 
         if (file != NULL)
@@ -319,6 +331,9 @@ char *LoadFileText(const char *fileName)
             fclose(file);
         }
         else TRACELOG(LOG_WARNING, "FILEIO: [%s] Failed to open text file", fileName);
+#else
+    TRACELOG(LOG_WARNING, "FILEIO: Standard file io not supported, use custom file callback");
+#endif
     }
     else TRACELOG(LOG_WARNING, "FILEIO: File name provided is not valid");
 
@@ -338,6 +353,12 @@ bool SaveFileText(const char *fileName, char *text)
 
     if (fileName != NULL)
     {
+        if (saveFileText) 
+        {
+            saveFileText(fileName, text);
+            return success;
+        }
+#if defined(SUPPORT_STANDARD_FILEIO)
         FILE *file = fopen(fileName, "wt");
 
         if (file != NULL)
@@ -351,6 +372,9 @@ bool SaveFileText(const char *fileName, char *text)
             if (result == 0) success = true;
         }
         else TRACELOG(LOG_WARNING, "FILEIO: [%s] Failed to open text file", fileName);
+#else
+    TRACELOG(LOG_WARNING, "FILEIO: Standard file io not supported, use custom file callback");
+#endif
     }
     else TRACELOG(LOG_WARNING, "FILEIO: File name provided is not valid");
 
