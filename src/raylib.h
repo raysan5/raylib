@@ -876,10 +876,13 @@ typedef enum {
 // Callbacks to be implemented by users
 typedef void (*TraceLogCallback)(int logType, const char *text, va_list args);
 typedef void *(*MemAllocCallback)(int size);
-typedef void *(*MemReallocCallback)(int size);
+typedef void *(*MemReallocCallback)(void *ptr, int size);
 typedef void (*MemFreeCallback)(void *ptr);
-typedef unsigned char* (*LoadFileDataCallback)(const char* fileName, unsigned int* bytesRead);       // Load file data as byte array (read)
-typedef char* (*LoadFileTextCallback)(const char* fileName);                                        // Load text data from file (read), returns a '\0' terminated string
+typedef unsigned char* (*LoadFileDataCallback)(const char* fileName, unsigned int* bytesRead);
+typedef void (*SaveFileDataCallback)(const char *fileName, void *data, unsigned int bytesToWrite);
+typedef char *(*LoadFileTextCallback)(const char* fileName);
+typedef void (*SaveFileTextCallback)(const char *fileName, char *text);
+
 
 #if defined(__cplusplus)
 extern "C" {            // Prevents name mangling of functions
@@ -979,15 +982,18 @@ RLAPI void SetConfigFlags(unsigned int flags);                    // Setup init 
 RLAPI void TraceLog(int logType, const char *text, ...);          // Show trace log messages (LOG_DEBUG, LOG_INFO, LOG_WARNING, LOG_ERROR)
 RLAPI void SetTraceLogLevel(int logType);                         // Set the current threshold (minimum) log level
 RLAPI void *MemAlloc(int size);                                   // Internal memory allocator
+RLAPI void *MemRealloc(void *ptr, int size);                      // Internal memory reallocator
 RLAPI void MemFree(void *ptr);                                    // Internal memory free
 
-// Set system callbacks
-RLAPI void SetTraceLogCallback(TraceLogCallback callback);        // Set a trace log callback to enable custom logging
+// Set custom system callbacks
+RLAPI void SetTraceLogCallback(TraceLogCallback callback);        // Set custom trace log
 RLAPI void SetMemAllocCallback(MemAllocCallback callback);        // Set custom memory allocator
 RLAPI void SetMemReallocCallback(MemReallocCallback callback);    // Set custom memory reallocator
 RLAPI void SetMemFreeCallback(MemFreeCallback callback);          // Set custom memory free
-RLAPI void SetLoadFileDataCallback(LoadFileDataCallback callback);  // override default file access functions
-RLAPI void SetLoadFileTextCallback(LoadFileDataCallback callback);  // override default file access functions
+RLAPI void SetLoadFileDataCallback(LoadFileDataCallback callback);  // Set custom file data loader
+RLAPI void SetSaveFileDataCallback(SaveFileDataCallback callback);  // Set custom file data saver
+RLAPI void SetLoadFileTextCallback(LoadFileTextCallback callback);  // Set custom file text loader
+RLAPI void SetSaveFileTextCallback(SaveFileTextCallback callback);  // Set custom file text saver
 
 // Files management functions
 RLAPI unsigned char *LoadFileData(const char *fileName, unsigned int *bytesRead);     // Load file data as byte array (read)
