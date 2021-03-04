@@ -45,7 +45,7 @@
     #include <android/asset_manager.h>  // Required for: Android assets manager: AAsset, AAssetManager_open(), ...
 #endif
 
-#include <stdlib.h>                     // Required for: exit()
+#include <stdlib.h>                     // Required for: exit(), FILE, fopen(), fseek(), ftell(), fread(), fwrite(), fprintf(), fclose()
 #include <stdio.h>                      // Required for: vprintf()
 #include <stdarg.h>                     // Required for: va_list, va_start(), va_end()
 #include <string.h>                     // Required for: strcpy(), strcat()
@@ -289,21 +289,21 @@ char *LoadFileText(const char *fileName)
 
     if (fileName != NULL)
     {
-        FILE *textFile = fopen(fileName, "rt");
+        FILE *file = fopen(fileName, "rt");
 
-        if (textFile != NULL)
+        if (file != NULL)
         {
             // WARNING: When reading a file as 'text' file,
             // text mode causes carriage return-linefeed translation...
             // ...but using fseek() should return correct byte-offset
-            fseek(textFile, 0, SEEK_END);
-            unsigned int size = (unsigned int)ftell(textFile);
-            fseek(textFile, 0, SEEK_SET);
+            fseek(file, 0, SEEK_END);
+            unsigned int size = (unsigned int)ftell(file);
+            fseek(file, 0, SEEK_SET);
 
             if (size > 0)
             {
                 text = (char *)RL_MALLOC((size + 1)*sizeof(char));
-                unsigned int count = (unsigned int)fread(text, sizeof(char), size, textFile);
+                unsigned int count = (unsigned int)fread(text, sizeof(char), size, file);
 
                 // WARNING: \r\n is converted to \n on reading, so,
                 // read bytes count gets reduced by the number of lines
@@ -316,7 +316,7 @@ char *LoadFileText(const char *fileName)
             }
             else TRACELOG(LOG_WARNING, "FILEIO: [%s] Failed to read text file", fileName);
 
-            fclose(textFile);
+            fclose(file);
         }
         else TRACELOG(LOG_WARNING, "FILEIO: [%s] Failed to open text file", fileName);
     }
