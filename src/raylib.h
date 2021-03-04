@@ -873,15 +873,18 @@ typedef enum {
     NPATCH_THREE_PATCH_HORIZONTAL   // Npatch defined by 3x1 tiles
 } NPatchType;
 
-// Callbacks to be implemented by users
-typedef void (*TraceLogCallback)(int logType, const char *text, va_list args);
-typedef void *(*MemAllocCallback)(int size);
-typedef void *(*MemReallocCallback)(void *ptr, int size);
-typedef void (*MemFreeCallback)(void *ptr);
-typedef unsigned char* (*LoadFileDataCallback)(const char* fileName, unsigned int* bytesRead);
-typedef void (*SaveFileDataCallback)(const char *fileName, void *data, unsigned int bytesToWrite);
-typedef char *(*LoadFileTextCallback)(const char* fileName);
-typedef void (*SaveFileTextCallback)(const char *fileName, char *text);
+// Callbacks to hook some internal functions
+// WARNING: This callbacks are intended for advance users
+typedef void (*TraceLogCallback)(int logType, const char *text, va_list args);  // Logging: Redirect trace log messages
+
+typedef void *(*MemAllocCallback)(int size);                // Memory: Custom allocator
+typedef void *(*MemReallocCallback)(void *ptr, int size);   // Memory: Custom re-allocator
+typedef void (*MemFreeCallback)(void *ptr);                 // Memory: Custom free
+
+typedef unsigned char* (*LoadFileDataCallback)(const char* fileName, unsigned int* bytesRead);      // FileIO: Load binary data
+typedef void (*SaveFileDataCallback)(const char *fileName, void *data, unsigned int bytesToWrite);  // FileIO: Save binary data
+typedef char *(*LoadFileTextCallback)(const char* fileName);                // FileIO: Load text data
+typedef void (*SaveFileTextCallback)(const char *fileName, char *text);     // FileIO: Save text data
 
 
 #if defined(__cplusplus)
@@ -985,15 +988,16 @@ RLAPI void *MemAlloc(int size);                                   // Internal me
 RLAPI void *MemRealloc(void *ptr, int size);                      // Internal memory reallocator
 RLAPI void MemFree(void *ptr);                                    // Internal memory free
 
-// Set custom system callbacks
+// Set custom callbacks
+// WARNING: Callbacks setup is intended for advance users
 RLAPI void SetTraceLogCallback(TraceLogCallback callback);        // Set custom trace log
 RLAPI void SetMemAllocCallback(MemAllocCallback callback);        // Set custom memory allocator
 RLAPI void SetMemReallocCallback(MemReallocCallback callback);    // Set custom memory reallocator
 RLAPI void SetMemFreeCallback(MemFreeCallback callback);          // Set custom memory free
-RLAPI void SetLoadFileDataCallback(LoadFileDataCallback callback);  // Set custom file data loader
-RLAPI void SetSaveFileDataCallback(SaveFileDataCallback callback);  // Set custom file data saver
-RLAPI void SetLoadFileTextCallback(LoadFileTextCallback callback);  // Set custom file text loader
-RLAPI void SetSaveFileTextCallback(SaveFileTextCallback callback);  // Set custom file text saver
+RLAPI void SetLoadFileDataCallback(LoadFileDataCallback callback);  // Set custom file binary data loader
+RLAPI void SetSaveFileDataCallback(SaveFileDataCallback callback);  // Set custom file binary data saver
+RLAPI void SetLoadFileTextCallback(LoadFileTextCallback callback);  // Set custom file text data loader
+RLAPI void SetSaveFileTextCallback(SaveFileTextCallback callback);  // Set custom file text data saver
 
 // Files management functions
 RLAPI unsigned char *LoadFileData(const char *fileName, unsigned int *bytesRead);     // Load file data as byte array (read)
