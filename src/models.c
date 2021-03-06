@@ -4219,7 +4219,10 @@ static ModelAnimation *LoadGLTFModelAnimations(const char *fileName, int *animCo
                                 float previousInputTime = 0.0f;
                                 if (GltfReadFloat(sampler->input, outputMin, (float *)&previousInputTime, 1))
                                 {
-                                    lerpPercent = (frameTime - previousInputTime)/(inputFrameTime - previousInputTime);
+                                    if((inputFrameTime - previousInputTime) != 0)
+                                    {
+                                        lerpPercent = (frameTime - previousInputTime)/(inputFrameTime - previousInputTime);
+                                    }
                                 }
                                 
                                 break;
