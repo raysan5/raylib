@@ -4005,7 +4005,45 @@ static Model LoadGLTF(const char *fileName)
                                     model.meshes[primitiveIndex].boneIds[b] = 0;
                                     model.meshes[primitiveIndex].boneWeights[b] = 0.0f;
                         		}
-                                
+                            
+                            }
+    
+                            Vector3 boundVertex = { 0 };
+                            Vector3 boundNormal = { 0 };
+    
+                            Vector3 outTranslation = { 0 };
+                            Quaternion outRotation = { 0 };
+                            Vector3 outScale = { 0 };
+    
+                            int vCounter = 0;
+                            int boneCounter = 0;
+                            int boneId = 0;
+    
+                            for (int i = 0; i < model.meshes[primitiveIndex].vertexCount; i++)
+                            {
+                                boneId = model.meshes[primitiveIndex].boneIds[boneCounter];
+                                outTranslation = model.bindPose[boneId].translation;
+                                outRotation = model.bindPose[boneId].rotation;
+                                outScale = model.bindPose[boneId].scale;
+        
+                                // Vertices processing
+                                boundVertex = (Vector3){ model.meshes[primitiveIndex].vertices[vCounter], model.meshes[primitiveIndex].vertices[vCounter + 1], model.meshes[primitiveIndex].vertices[vCounter + 2] };
+                                boundVertex = Vector3Multiply(boundVertex, outScale);
+                                boundVertex = Vector3RotateByQuaternion(boundVertex, outRotation);
+                                boundVertex = Vector3Add(boundVertex, outTranslation);
+                                model.meshes[primitiveIndex].vertices[vCounter] = boundVertex.x;
+                                model.meshes[primitiveIndex].vertices[vCounter + 1] = boundVertex.y;
+                                model.meshes[primitiveIndex].vertices[vCounter + 2] = boundVertex.z;
+        
+                                // Normals processing
+                                boundNormal = (Vector3){ model.meshes[primitiveIndex].normals[vCounter], model.meshes[primitiveIndex].normals[vCounter + 1], model.meshes[primitiveIndex].normals[vCounter + 2] };
+                                boundNormal = Vector3RotateByQuaternion(boundNormal, outRotation);
+                                model.meshes[primitiveIndex].normals[vCounter] = boundNormal.x;
+                                model.meshes[primitiveIndex].normals[vCounter + 1] = boundNormal.y;
+                                model.meshes[primitiveIndex].normals[vCounter + 2] = boundNormal.z;
+                                vCounter += 3;
+        
+                                boneCounter += 4;
                             }
                         }
                     }
@@ -4021,48 +4059,6 @@ static Model LoadGLTF(const char *fileName)
     else TRACELOG(LOG_WARNING, "MODEL: [%s] Failed to load glTF data", fileName);
 
     RL_FREE(fileData);
-
-	// Bind pose setup
-    for (int m = 0; m < model.meshCount; m++)
-    {
-        Vector3 boundVertex = { 0 };
-        Vector3 boundNormal = { 0 };
-
-        Vector3 outTranslation = { 0 };
-        Quaternion outRotation = { 0 };
-        Vector3 outScale = { 0 };
-
-        int vCounter = 0;
-        int boneCounter = 0;
-        int boneId = 0;
-
-        for (int i = 0; i < model.meshes[m].vertexCount; i++)
-        {
-            boneId = model.meshes[m].boneIds[boneCounter];
-            outTranslation = model.bindPose[boneId].translation;
-            outRotation = model.bindPose[boneId].rotation;
-            outScale = model.bindPose[boneId].scale;
-
-            // Vertices processing
-            boundVertex = (Vector3){ model.meshes[m].vertices[vCounter], model.meshes[m].vertices[vCounter + 1], model.meshes[m].vertices[vCounter + 2] };
-            boundVertex = Vector3Multiply(boundVertex, outScale);
-            boundVertex = Vector3RotateByQuaternion(boundVertex, outRotation);
-            boundVertex = Vector3Add(boundVertex, outTranslation);
-            model.meshes[m].vertices[vCounter] = boundVertex.x;
-            model.meshes[m].vertices[vCounter + 1] = boundVertex.y;
-            model.meshes[m].vertices[vCounter + 2] = boundVertex.z;
-
-            // Normals processing
-            boundNormal = (Vector3){ model.meshes[m].normals[vCounter], model.meshes[m].normals[vCounter + 1], model.meshes[m].normals[vCounter + 2] };
-            boundNormal = Vector3RotateByQuaternion(boundNormal, outRotation);
-            model.meshes[m].normals[vCounter] = boundNormal.x;
-            model.meshes[m].normals[vCounter + 1] = boundNormal.y;
-            model.meshes[m].normals[vCounter + 2] = boundNormal.z;
-            vCounter += 3;
-
-            boneCounter += 4;
-        }
-    }
 
     return model;
 }
