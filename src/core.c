@@ -1048,9 +1048,7 @@ void ToggleFullscreen(void)
             CORE.Window.fullscreen = false;          // Toggle fullscreen flag
             CORE.Window.flags &= ~FLAG_FULLSCREEN_MODE;
             
-            int modesCount = 0;
-            const GLFWvidmode *modes = glfwGetVideoModes(glfwGetPrimaryMonitor(), &modesCount);
-            glfwSetWindowMonitor(CORE.Window.handle, glfwGetPrimaryMonitor(), 0, 0, modes[modesCount - 1].width, modes[modesCount - 1].height, GLFW_DONT_CARE);
+            glfwSetWindowMonitor(CORE.Window.handle, NULL, 0, 0, CORE.Window.screen.width, CORE.Window.screen.height, GLFW_DONT_CARE);
             return;
         }
     
