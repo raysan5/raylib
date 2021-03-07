@@ -1056,7 +1056,7 @@ void ToggleFullscreen(void)
         CORE.Window.flags |= FLAG_FULLSCREEN_MODE;
         
         const GLFWvidmode *mode = glfwGetVideoMode(monitor);
-        glfwSetWindowMonitor(CORE.Window.handle, monitor, 0, 0, mode->width, mode->height, 0);
+        glfwSetWindowMonitor(CORE.Window.handle, monitor, 0, 0, mode->width, mode->height, mode->refreshRate);
     }
     else
     {
