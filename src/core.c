@@ -1034,7 +1034,13 @@ void ToggleFullscreen(void)
         // Store previous window position (in case we exit fullscreen)
         glfwGetWindowPos(CORE.Window.handle, &CORE.Window.position.x, &CORE.Window.position.y);
 
-        GLFWmonitor *monitor = glfwGetWindowMonitor(CORE.Window.handle);
+        int monitorCount = 0;
+		GLFWmonitor** monitors = glfwGetMonitors(&monitorCount);
+
+        int monitorIndex = GetCurrentMonitor();
+        // use GetCurrentMonitor so we correctly get the display the window is on
+        GLFWmonitor* monitor = monitorIndex < monitorCount ?  monitors[monitorIndex] : NULL;
+
         if (!monitor)
         {
             TRACELOG(LOG_WARNING, "GLFW: Failed to get monitor");
@@ -1048,10 +1054,6 @@ void ToggleFullscreen(void)
         glfwSetWindowSizeCallback(CORE.Window.handle, NULL);
         glfwSetWindowMonitor(CORE.Window.handle, monitor, 0, 0, CORE.Window.screen.width, CORE.Window.screen.height, GLFW_DONT_CARE);
         glfwSetWindowSizeCallback(CORE.Window.handle, WindowSizeCallback);
-
-        // Try to enable GPU V-Sync, so frames are limited to screen refresh rate (60Hz -> 60 FPS)
-        // NOTE: V-Sync can be enabled by graphic driver configuration
-        if (CORE.Window.flags & FLAG_VSYNC_HINT) glfwSwapInterval(1);
     }
     else
     {
@@ -1059,6 +1061,10 @@ void ToggleFullscreen(void)
         glfwSetWindowMonitor(CORE.Window.handle, NULL, CORE.Window.position.x, CORE.Window.position.y, CORE.Window.screen.width, CORE.Window.screen.height, GLFW_DONT_CARE);
         glfwSetWindowSizeCallback(CORE.Window.handle, WindowSizeCallback);
     }
+
+	// Try to enable GPU V-Sync, so frames are limited to screen refresh rate (60Hz -> 60 FPS)
+    // NOTE: V-Sync can be enabled by graphic driver configuration
+    if (CORE.Window.flags & FLAG_VSYNC_HINT) glfwSwapInterval(1);
 
     CORE.Window.fullscreen = !CORE.Window.fullscreen;          // Toggle fullscreen flag
     CORE.Window.flags ^= FLAG_FULLSCREEN_MODE;
