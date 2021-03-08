@@ -40,8 +40,8 @@ int main(void)
     Vector2 textSize = { 0.0f, 0.0f };
 
     // Setup texture scaling filter
-    SetTextureFilter(font.texture, FILTER_POINT);
-    int currentFontFilter = 0;      // FILTER_POINT
+    SetTextureFilter(font.texture, TEXTURE_FILTER_POINT);
+    int currentFontFilter = 0;      // TEXTURE_FILTER_POINT
 
     SetTargetFPS(60);               // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
@@ -56,18 +56,18 @@ int main(void)
         // Choose font texture filter method
         if (IsKeyPressed(KEY_ONE))
         {
-            SetTextureFilter(font.texture, FILTER_POINT);
+            SetTextureFilter(font.texture, TEXTURE_FILTER_POINT);
             currentFontFilter = 0;
         }
         else if (IsKeyPressed(KEY_TWO))
         {
-            SetTextureFilter(font.texture, FILTER_BILINEAR);
+            SetTextureFilter(font.texture, TEXTURE_FILTER_BILINEAR);
             currentFontFilter = 1;
         }
         else if (IsKeyPressed(KEY_THREE))
         {
             // NOTE: Trilinear filter won't be noticed on 2D drawing
-            SetTextureFilter(font.texture, FILTER_TRILINEAR);
+            SetTextureFilter(font.texture, TEXTURE_FILTER_TRILINEAR);
             currentFontFilter = 2;
         }
 

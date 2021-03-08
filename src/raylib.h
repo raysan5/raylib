@@ -157,7 +157,8 @@
 #define LoadText        LoadFileText
 #define GetExtension    GetFileExtension
 #define GetImageData    LoadImageColors
-//#define Fade(c, a)  ColorAlpha(c, a)
+#define FILTER_POINT    TEXTURE_FILTER_POINT
+#define FILTER_BILINEAR TEXTURE_FILTER_BILINEAR
 
 //----------------------------------------------------------------------------------
 // Structures Definition
@@ -791,30 +792,30 @@ typedef enum {
 // NOTE 1: Filtering considers mipmaps if available in the texture
 // NOTE 2: Filter is accordingly set for minification and magnification
 typedef enum {
-    FILTER_POINT = 0,               // No filter, just pixel aproximation
-    FILTER_BILINEAR,                // Linear filtering
-    FILTER_TRILINEAR,               // Trilinear filtering (linear with mipmaps)
-    FILTER_ANISOTROPIC_4X,          // Anisotropic filtering 4x
-    FILTER_ANISOTROPIC_8X,          // Anisotropic filtering 8x
-    FILTER_ANISOTROPIC_16X,         // Anisotropic filtering 16x
+    TEXTURE_FILTER_POINT = 0,               // No filter, just pixel aproximation
+    TEXTURE_FILTER_BILINEAR,                // Linear filtering
+    TEXTURE_FILTER_TRILINEAR,               // Trilinear filtering (linear with mipmaps)
+    TEXTURE_FILTER_ANISOTROPIC_4X,          // Anisotropic filtering 4x
+    TEXTURE_FILTER_ANISOTROPIC_8X,          // Anisotropic filtering 8x
+    TEXTURE_FILTER_ANISOTROPIC_16X,         // Anisotropic filtering 16x
 } TextureFilterMode;
 
 // Texture parameters: wrap mode
 typedef enum {
-    WRAP_REPEAT = 0,        // Repeats texture in tiled mode
-    WRAP_CLAMP,             // Clamps texture to edge pixel in tiled mode
-    WRAP_MIRROR_REPEAT,     // Mirrors and repeats the texture in tiled mode
-    WRAP_MIRROR_CLAMP       // Mirrors and clamps to border the texture in tiled mode
+    TEXTURE_WRAP_REPEAT = 0,        // Repeats texture in tiled mode
+    TEXTURE_WRAP_CLAMP,             // Clamps texture to edge pixel in tiled mode
+    TEXTURE_WRAP_MIRROR_REPEAT,     // Mirrors and repeats the texture in tiled mode
+    TEXTURE_WRAP_MIRROR_CLAMP       // Mirrors and clamps to border the texture in tiled mode
 } TextureWrapMode;
 
 // Cubemap layouts
 typedef enum {
-    CUBEMAP_AUTO_DETECT = 0,        // Automatically detect layout type
-    CUBEMAP_LINE_VERTICAL,          // Layout is defined by a vertical line with faces
-    CUBEMAP_LINE_HORIZONTAL,        // Layout is defined by an horizontal line with faces
-    CUBEMAP_CROSS_THREE_BY_FOUR,    // Layout is defined by a 3x4 cross with cubemap faces
-    CUBEMAP_CROSS_FOUR_BY_THREE,    // Layout is defined by a 4x3 cross with cubemap faces
-    CUBEMAP_PANORAMA                // Layout is defined by a panorama image (equirectangular map)
+    CUBEMAP_LAYOUT_AUTO_DETECT = 0,        // Automatically detect layout type
+    CUBEMAP_LAYOUT_LINE_VERTICAL,          // Layout is defined by a vertical line with faces
+    CUBEMAP_LAYOUT_LINE_HORIZONTAL,        // Layout is defined by an horizontal line with faces
+    CUBEMAP_LAYOUT_CROSS_THREE_BY_FOUR,    // Layout is defined by a 3x4 cross with cubemap faces
+    CUBEMAP_LAYOUT_CROSS_FOUR_BY_THREE,    // Layout is defined by a 4x3 cross with cubemap faces
+    CUBEMAP_LAYOUT_PANORAMA                // Layout is defined by a panorama image (equirectangular map)
 } CubemapLayoutType;
 
 // Font type, defines generation method
@@ -867,18 +868,24 @@ typedef enum {
 
 // N-patch types
 typedef enum {
-    NPT_9PATCH = 0,         // Npatch defined by 3x3 tiles
-    NPT_3PATCH_VERTICAL,    // Npatch defined by 1x3 tiles
-    NPT_3PATCH_HORIZONTAL   // Npatch defined by 3x1 tiles
+    NPATCH_NINE_PATCH = 0,          // Npatch defined by 3x3 tiles
+    NPATCH_THREE_PATCH_VERTICAL,    // Npatch defined by 1x3 tiles
+    NPATCH_THREE_PATCH_HORIZONTAL   // Npatch defined by 3x1 tiles
 } NPatchType;
 
-// Callbacks to be implemented by users
-typedef void (*TraceLogCallback)(int logType, const char *text, va_list args);
-typedef void *(*MemAllocCallback)(int size);
-typedef void *(*MemReallocCallback)(int size);
-typedef void (*MemFreeCallback)(void *ptr);
-typedef unsigned char* (*LoadFileDataCallback)(const char* fileName, unsigned int* bytesRead);       // Load file data as byte array (read)
-typedef char* (*LoadFileTextCallback)(const char* fileName);                                        // Load text data from file (read), returns a '\0' terminated string
+// Callbacks to hook some internal functions
+// WARNING: This callbacks are intended for advance users
+typedef void (*TraceLogCallback)(int logType, const char *text, va_list args);  // Logging: Redirect trace log messages
+
+typedef void *(*MemAllocCallback)(int size);                // Memory: Custom allocator
+typedef void *(*MemReallocCallback)(void *ptr, int size);   // Memory: Custom re-allocator
+typedef void (*MemFreeCallback)(void *ptr);                 // Memory: Custom free
+
+typedef unsigned char* (*LoadFileDataCallback)(const char* fileName, unsigned int* bytesRead);      // FileIO: Load binary data
+typedef void (*SaveFileDataCallback)(const char *fileName, void *data, unsigned int bytesToWrite);  // FileIO: Save binary data
+typedef char *(*LoadFileTextCallback)(const char* fileName);                // FileIO: Load text data
+typedef void (*SaveFileTextCallback)(const char *fileName, char *text);     // FileIO: Save text data
+
 
 #if defined(__cplusplus)
 extern "C" {            // Prevents name mangling of functions
@@ -978,15 +985,19 @@ RLAPI void SetConfigFlags(unsigned int flags);                    // Setup init 
 RLAPI void TraceLog(int logType, const char *text, ...);          // Show trace log messages (LOG_DEBUG, LOG_INFO, LOG_WARNING, LOG_ERROR)
 RLAPI void SetTraceLogLevel(int logType);                         // Set the current threshold (minimum) log level
 RLAPI void *MemAlloc(int size);                                   // Internal memory allocator
+RLAPI void *MemRealloc(void *ptr, int size);                      // Internal memory reallocator
 RLAPI void MemFree(void *ptr);                                    // Internal memory free
 
-// Set system callbacks
-RLAPI void SetTraceLogCallback(TraceLogCallback callback);        // Set a trace log callback to enable custom logging
+// Set custom callbacks
+// WARNING: Callbacks setup is intended for advance users
+RLAPI void SetTraceLogCallback(TraceLogCallback callback);        // Set custom trace log
 RLAPI void SetMemAllocCallback(MemAllocCallback callback);        // Set custom memory allocator
 RLAPI void SetMemReallocCallback(MemReallocCallback callback);    // Set custom memory reallocator
 RLAPI void SetMemFreeCallback(MemFreeCallback callback);          // Set custom memory free
-RLAPI void SetLoadFileDataCallback(LoadFileDataCallback callback);  // override default file access functions
-RLAPI void SetLoadFileTextCallback(LoadFileDataCallback callback);  // override default file access functions
+RLAPI void SetLoadFileDataCallback(LoadFileDataCallback callback);  // Set custom file binary data loader
+RLAPI void SetSaveFileDataCallback(SaveFileDataCallback callback);  // Set custom file binary data saver
+RLAPI void SetLoadFileTextCallback(LoadFileTextCallback callback);  // Set custom file text data loader
+RLAPI void SetSaveFileTextCallback(SaveFileTextCallback callback);  // Set custom file text data saver
 
 // Files management functions
 RLAPI unsigned char *LoadFileData(const char *fileName, unsigned int *bytesRead);     // Load file data as byte array (read)
@@ -998,7 +1009,7 @@ RLAPI bool SaveFileText(const char *fileName, char *text);        // Save text d
 RLAPI bool FileExists(const char *fileName);                      // Check if file exists
 RLAPI bool DirectoryExists(const char *dirPath);                  // Check if a directory path exists
 RLAPI bool IsFileExtension(const char *fileName, const char *ext);// Check file extension (including point: .png, .wav)
-RLAPI const char *GetFileExtension(const char *fileName);         // Get pointer to extension for a filename string (including point: ".png")
+RLAPI const char *GetFileExtension(const char *fileName);         // Get pointer to extension for a filename string (includes dot: ".png")
 RLAPI const char *GetFileName(const char *filePath);              // Get pointer to filename for a path string
 RLAPI const char *GetFileNameWithoutExt(const char *filePath);    // Get filename string without extension (uses static string)
 RLAPI const char *GetDirectoryPath(const char *filePath);         // Get full path for a given fileName with path (uses static string)
@@ -1495,6 +1506,7 @@ RLAPI void UnloadWaveSamples(float *samples);                         // Unload 
 
 // Music management functions
 RLAPI Music LoadMusicStream(const char *fileName);                    // Load music stream from file
+RLAPI Music LoadMusicStreamFromMemory(const char *fileType, unsigned char* data, int dataSize); // Load module music from data
 RLAPI void UnloadMusicStream(Music music);                            // Unload music stream
 RLAPI void PlayMusicStream(Music music);                              // Start music playing
 RLAPI void UpdateMusicStream(Music music);                            // Updates buffers for music streaming

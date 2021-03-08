@@ -116,45 +116,18 @@ void DrawLineV(Vector2 startPos, Vector2 endPos, Color color)
 // Draw a line defining thickness
 void DrawLineEx(Vector2 startPos, Vector2 endPos, float thick, Color color)
 {
-    if (startPos.x > endPos.x)
+    Vector2 delta = {endPos.x-startPos.x, endPos.y-startPos.y};
+    float   length = sqrtf(delta.x*delta.x + delta.y*delta.y);
+
+    if (length > 0  &&  thick > 0) 
     {
-        Vector2 tempPos = startPos;
-        startPos = endPos;
-        endPos = tempPos;
+        float   scale = thick/(2*length);
+        Vector2 radius = {-scale*delta.y, scale*delta.x};
+        Vector2 strip[] = {{startPos.x-radius.x, startPos.y-radius.y}, {startPos.x+radius.x, startPos.y+radius.y}, 
+                           {endPos.x-radius.x, endPos.y-radius.y}, {endPos.x+radius.x, endPos.y+radius.y}};
+
+        DrawTriangleStrip(strip, 4, color);
     }
-
-    float dx = endPos.x - startPos.x;
-    float dy = endPos.y - startPos.y;
-
-    float d = sqrtf(dx*dx + dy*dy);
-    float angle = asinf(dy/d);
-
-    rlEnableTexture(GetShapesTexture().id);
-
-    rlPushMatrix();
-        rlTranslatef((float)startPos.x, (float)startPos.y, 0.0f);
-        rlRotatef(RAD2DEG*angle, 0.0f, 0.0f, 1.0f);
-        rlTranslatef(0, (thick > 1.0f)? -thick/2.0f : -1.0f, 0.0f);
-
-        rlBegin(RL_QUADS);
-            rlColor4ub(color.r, color.g, color.b, color.a);
-            rlNormal3f(0.0f, 0.0f, 1.0f);
-
-            rlTexCoord2f(GetShapesTextureRec().x/GetShapesTexture().width, GetShapesTextureRec().y/GetShapesTexture().height);
-            rlVertex2f(0.0f, 0.0f);
-
-            rlTexCoord2f(GetShapesTextureRec().x/GetShapesTexture().width, (GetShapesTextureRec().y + GetShapesTextureRec().height)/GetShapesTexture().height);
-            rlVertex2f(0.0f, thick);
-
-            rlTexCoord2f((GetShapesTextureRec().x + GetShapesTextureRec().width)/GetShapesTexture().width, (GetShapesTextureRec().y + GetShapesTextureRec().height)/GetShapesTexture().height);
-            rlVertex2f(d, thick);
-
-            rlTexCoord2f((GetShapesTextureRec().x + GetShapesTextureRec().width)/GetShapesTexture().width, GetShapesTextureRec().y/GetShapesTexture().height);
-            rlVertex2f(d, 0.0f);
-        rlEnd();
-    rlPopMatrix();
-
-    rlDisableTexture();
 }
 
 // Draw line using cubic-bezier curves in-out
@@ -1504,7 +1477,7 @@ bool CheckCollisionLines(Vector2 startPos1, Vector2 endPos1, Vector2 startPos2, 
 
     if (div == 0.0f) return false;      // WARNING: This check could not work due to float precision rounding issues...
 
-    const float xi = ((startPos2.x - startPos2.x)*(startPos1.x*endPos1.y - startPos1.y*endPos1.x) - (startPos1.x - endPos1.x)*(startPos2.x*endPos2.y - startPos2.y*endPos2.x))/div;
+    const float xi = ((startPos2.x - endPos2.x)*(startPos1.x*endPos1.y - startPos1.y*endPos1.x) - (startPos1.x - endPos1.x)*(startPos2.x*endPos2.y - startPos2.y*endPos2.x))/div;
     const float yi = ((startPos2.y - endPos2.y)*(startPos1.x*endPos1.y - startPos1.y*endPos1.x) - (startPos1.y - endPos1.y)*(startPos2.x*endPos2.y - startPos2.y*endPos2.x))/div;
 
     if (xi < fminf(startPos1.x, endPos1.x) || xi > fmaxf(startPos1.x, endPos1.x)) return false;

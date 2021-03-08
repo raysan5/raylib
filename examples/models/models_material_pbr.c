@@ -179,7 +179,7 @@ static Material LoadMaterialPBR(Color albedo, float metalness, float roughness)
     
     // Generate cubemap from panorama texture
     //--------------------------------------------------------------------------------------------------------
-    Texture2D panorama = LoadTexture("resources/dresden_square.hdr");
+    Texture2D panorama = LoadTexture("resources/dresden_square_2k.hdr");
     // Load equirectangular to cubemap shader
 #if defined(PLATFORM_DESKTOP)
     Shader shdrCubemap = LoadShader("resources/shaders/glsl330/cubemap.vs", "resources/shaders/glsl330/cubemap.fs");

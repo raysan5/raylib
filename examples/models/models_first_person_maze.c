@@ -39,7 +39,6 @@ int main(void)
     UnloadImage(imMap);             // Unload image from RAM
 
     Vector3 mapPosition = { -16.0f, 0.0f, -8.0f };  // Set model position
-    Vector3 playerPosition = camera.position;       // Set player position
 
     SetCameraMode(camera, CAMERA_FIRST_PERSON);     // Set camera mode
 
@@ -93,10 +92,7 @@ int main(void)
             ClearBackground(RAYWHITE);
 
             BeginMode3D(camera);
-
                 DrawModel(model, mapPosition, 1.0f, WHITE);                     // Draw maze map
-                //DrawCubeV(playerPosition, (Vector3){ 0.2f, 0.4f, 0.2f }, RED);  // Draw player
-
             EndMode3D();
 
             DrawTextureEx(cubicmap, (Vector2){ GetScreenWidth() - cubicmap.width*4 - 20, 20 }, 0.0f, 4.0f, WHITE);

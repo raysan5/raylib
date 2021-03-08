@@ -202,15 +202,16 @@
             unsigned int __stdcall timeBeginPeriod(unsigned int uPeriod);
             unsigned int __stdcall timeEndPeriod(unsigned int uPeriod);
         #endif
-
-    #elif defined(__linux__)
+    #endif
+    #if defined(__linux__) || defined(__FreeBSD__)
         #include <sys/time.h>               // Required for: timespec, nanosleep(), select() - POSIX
 
         //#define GLFW_EXPOSE_NATIVE_X11      // WARNING: Exposing Xlib.h > X.h results in dup symbols for Font type
         //#define GLFW_EXPOSE_NATIVE_WAYLAND
         //#define GLFW_EXPOSE_NATIVE_MIR
         #include "GLFW/glfw3native.h"       // Required for: glfwGetX11Window()
-    #elif defined(__APPLE__)
+    #endif
+    #if defined(__APPLE__)
         #include <unistd.h>                 // Required for: usleep()
 
         //#define GLFW_EXPOSE_NATIVE_COCOA    // WARNING: Fails due to type redefinition
@@ -753,7 +754,7 @@ void InitWindow(int width, int height, const char *title)
     if ((CORE.Window.flags & FLAG_WINDOW_HIGHDPI) > 0)
     {
         // Set default font texture filter for HighDPI (blurry)
-        SetTextureFilter(GetFontDefault().texture, FILTER_BILINEAR);
+        SetTextureFilter(GetFontDefault().texture, TEXTURE_FILTER_BILINEAR);
     }
 #endif
 
@@ -1429,13 +1430,13 @@ void SetWindowSize(int width, int height)
 // Get current screen width
 int GetScreenWidth(void)
 {
-    return CORE.Window.screen.width;
+    return CORE.Window.currentFbo.width;
 }
 
 // Get current screen height
 int GetScreenHeight(void)
 {
-    return CORE.Window.screen.height;
+    return CORE.Window.currentFbo.height;
 }
 
 // Get native window handle
@@ -1444,18 +1445,20 @@ void *GetWindowHandle(void)
 #if defined(PLATFORM_DESKTOP) && defined(_WIN32)
     // NOTE: Returned handle is: void *HWND (windows.h)
     return glfwGetWin32Window(CORE.Window.handle);
-#elif defined(__linux__)
+#endif
+#if defined(__linux__)
     // NOTE: Returned handle is: unsigned long Window (X.h)
     // typedef unsigned long XID;
     // typedef XID Window;
     //unsigned long id = (unsigned long)glfwGetX11Window(window);
     return NULL;    // TODO: Find a way to return value... cast to void *?
-#elif defined(__APPLE__)
+#endif
+#if defined(__APPLE__)
     // NOTE: Returned handle is: (objc_object *)
     return NULL;    // TODO: return (void *)glfwGetCocoaWindow(window);
-#else
-    return NULL;
 #endif
+
+    return NULL;
 }
 
 // Get number of monitors
@@ -1987,9 +1990,9 @@ void EndTextureMode(void)
     // Set viewport to default framebuffer size
     SetupViewport(CORE.Window.render.width, CORE.Window.render.height);
 
-    // Reset current screen size
-    CORE.Window.currentFbo.width = GetScreenWidth();
-    CORE.Window.currentFbo.height = GetScreenHeight();
+    // Reset current fbo to screen size
+    CORE.Window.currentFbo.width = CORE.Window.screen.width;
+    CORE.Window.currentFbo.height = CORE.Window.screen.height;
 }
 
 // Begin scissor mode (define screen area for following drawing)
@@ -2322,7 +2325,7 @@ bool IsFileExtension(const char *fileName, const char *ext)
 
         for (int i = 0; i < extCount; i++)
         {
-            if (TextIsEqual(fileExtLower, TextToLower(checkExts[i] + 1)))
+            if (TextIsEqual(fileExtLower, TextToLower(checkExts[i])))
             {
                 result = true;
                 break;
@@ -2351,14 +2354,14 @@ bool DirectoryExists(const char *dirPath)
     return result;
 }
 
-// Get pointer to extension for a filename string
+// Get pointer to extension for a filename string (includes the dot: .png)
 const char *GetFileExtension(const char *fileName)
 {
     const char *dot = strrchr(fileName, '.');
 
     if (!dot || dot == fileName) return NULL;
 
-    return (dot + 1);
+    return dot;
 }
 
 // String pointer reverse break: returns right-most occurrence of charset in s
@@ -2716,6 +2719,7 @@ bool SaveStorageValue(unsigned int position, int value)
 int LoadStorageValue(unsigned int position)
 {
     int value = 0;
+
 #if defined(SUPPORT_DATA_STORAGE)
     char path[512] = { 0 };
 #if defined(PLATFORM_ANDROID)
@@ -2767,9 +2771,11 @@ void OpenURL(const char *url)
         char *cmd = (char *)RL_CALLOC(strlen(url) + 10, sizeof(char));
     #if defined(_WIN32)
         sprintf(cmd, "explorer %s", url);
-    #elif defined(__linux__)
+    #endif
+    #if defined(__linux__) || defined(__FreeBSD__)
         sprintf(cmd, "xdg-open '%s'", url); // Alternatives: firefox, x-www-browser
-    #elif defined(__APPLE__)
+    #endif
+    #if defined(__APPLE__)
         sprintf(cmd, "open '%s'", url);
     #endif
         system(cmd);
@@ -2903,13 +2909,12 @@ const char *GetGamepadName(int gamepad)
 #if defined(PLATFORM_DESKTOP)
     if (CORE.Input.Gamepad.ready[gamepad]) return glfwGetJoystickName(gamepad);
     else return NULL;
-#elif defined(PLATFORM_RPI) || defined(PLATFORM_DRM)
-    if (CORE.Input.Gamepad.ready[gamepad]) ioctl(CORE.Input.Gamepad.streamId[gamepad], JSIOCGNAME(64), &CORE.Input.Gamepad.name);
-
-    return CORE.Input.Gamepad.name;
-#else
-    return NULL;
 #endif
+#if defined(PLATFORM_RPI) || defined(PLATFORM_DRM)
+    if (CORE.Input.Gamepad.ready[gamepad]) ioctl(CORE.Input.Gamepad.streamId[gamepad], JSIOCGNAME(64), &CORE.Input.Gamepad.name);
+    return CORE.Input.Gamepad.name;
+#endif
+    return NULL;
 }
 
 // Return gamepad axis count
@@ -3111,11 +3116,12 @@ float GetMouseWheelMove(void)
 {
 #if defined(PLATFORM_ANDROID)
     return 0.0f;
-#elif defined(PLATFORM_WEB)
-    return CORE.Input.Mouse.previousWheelMove/100.0f;
-#else
-    return CORE.Input.Mouse.previousWheelMove;
 #endif
+#if defined(PLATFORM_WEB)
+    return CORE.Input.Mouse.previousWheelMove/100.0f;
+#endif
+
+    return CORE.Input.Mouse.previousWheelMove;
 }
 
 // Returns mouse cursor
@@ -3165,11 +3171,16 @@ Vector2 GetTouchPosition(int index)
 {
     Vector2 position = { -1.0f, -1.0f };
 
-#if defined(PLATFORM_ANDROID) || defined(PLATFORM_WEB) || defined(PLATFORM_RPI) || defined(PLATFORM_DRM) || defined(PLATFORM_UWP)
+#if defined(PLATFORM_DESKTOP)
+    // TODO: GLFW does not support multi-touch input just yet
+    // https://www.codeproject.com/Articles/668404/Programming-for-Multi-Touch
+    // https://docs.microsoft.com/en-us/windows/win32/wintouch/getting-started-with-multi-touch-messages
+    if (index == 0) position = GetMousePosition();
+#endif
+#if defined(PLATFORM_ANDROID)
     if (index < MAX_TOUCH_POINTS) position = CORE.Input.Touch.position[index];
     else TRACELOG(LOG_WARNING, "INPUT: Required touch point out of range (Max touch points: %i)", MAX_TOUCH_POINTS);
 
-    #if defined(PLATFORM_ANDROID)
     if ((CORE.Window.screen.width > CORE.Window.display.width) || (CORE.Window.screen.height > CORE.Window.display.height))
     {
         position.x = position.x*((float)CORE.Window.screen.width/(float)(CORE.Window.display.width - CORE.Window.renderOffset.x)) - CORE.Window.renderOffset.x/2;
@@ -3180,13 +3191,12 @@ Vector2 GetTouchPosition(int index)
         position.x = position.x*((float)CORE.Window.render.width/(float)CORE.Window.display.width) - CORE.Window.renderOffset.x/2;
         position.y = position.y*((float)CORE.Window.render.height/(float)CORE.Window.display.height) - CORE.Window.renderOffset.y/2;
     }
-    #endif
-
-#elif defined(PLATFORM_DESKTOP)
-    // TODO: GLFW is not supporting multi-touch input just yet
-    // https://www.codeproject.com/Articles/668404/Programming-for-Multi-Touch
-    // https://docs.microsoft.com/en-us/windows/win32/wintouch/getting-started-with-multi-touch-messages
-    if (index == 0) position = GetMousePosition();
+#endif
+#if defined(PLATFORM_WEB) || defined(PLATFORM_RPI) || defined(PLATFORM_DRM) || defined(PLATFORM_UWP)
+    if (index < MAX_TOUCH_POINTS) position = CORE.Input.Touch.position[index];
+    else TRACELOG(LOG_WARNING, "INPUT: Required touch point out of range (Max touch points: %i)", MAX_TOUCH_POINTS);
+    
+    // TODO: Touch position scaling required?
 #endif
 
     return position;
@@ -3879,7 +3889,7 @@ static bool InitGraphicsDevice(int width, int height)
 
     TRACELOG(LOG_TRACE, "DISPLAY: EGL configs available: %d", numConfigs);
 
-    EGLConfig *configs = calloc(numConfigs, sizeof(*configs));
+    EGLConfig *configs = RL_CALLOC(numConfigs, sizeof(*configs));
     if (!configs)
     {
         TRACELOG(LOG_WARNING, "DISPLAY: Failed to get memory for EGL configs");
@@ -3916,7 +3926,7 @@ static bool InitGraphicsDevice(int width, int height)
         }
     }
 
-    free(configs);
+    RL_FREE(configs);
 
     if (!found)
     {
@@ -4234,7 +4244,8 @@ static void Wait(float ms)
 
     #if defined(_WIN32)
         Sleep((unsigned int)ms);
-    #elif defined(__linux__) || defined(PLATFORM_WEB)
+    #endif
+    #if defined(__linux__) || defined(__FreeBSD__) || defined(__EMSCRIPTEN__)
         struct timespec req = { 0 };
         time_t sec = (int)(ms/1000.0f);
         ms -= (sec*1000);
@@ -4243,7 +4254,8 @@ static void Wait(float ms)
 
         // NOTE: Use nanosleep() on Unix platforms... usleep() it's deprecated.
         while (nanosleep(&req, &req) == -1) continue;
-    #elif defined(__APPLE__)
+    #endif
+    #if defined(__APPLE__)
         usleep(ms*1000.0f);
     #endif
 
@@ -5753,8 +5765,9 @@ static void *EventThread(void *arg)
                 // Basic movement
                 if (event.code == ABS_X)
                 {
-                    CORE.Input.Mouse.position.x = (event.value - worker->absRange.x)*CORE.Window.screen.width/worker->absRange.width;   // Scale acording to absRange
-
+                    CORE.Input.Mouse.position.x    = (event.value - worker->absRange.x)*CORE.Window.screen.width/worker->absRange.width;   // Scale acording to absRange
+                    CORE.Input.Touch.position[0].x = (event.value - worker->absRange.x)*CORE.Window.screen.width/worker->absRange.width;   // Scale acording to absRange
+                    
                     #if defined(SUPPORT_GESTURES_SYSTEM)
                         touchAction = TOUCH_MOVE;
                         gestureUpdate = true;
@@ -5763,7 +5776,8 @@ static void *EventThread(void *arg)
 
                 if (event.code == ABS_Y)
                 {
-                    CORE.Input.Mouse.position.y = (event.value - worker->absRange.y)*CORE.Window.screen.height/worker->absRange.height; // Scale acording to absRange
+                    CORE.Input.Mouse.position.y    = (event.value - worker->absRange.y)*CORE.Window.screen.height/worker->absRange.height; // Scale acording to absRange
+                    CORE.Input.Touch.position[0].y = (event.value - worker->absRange.y)*CORE.Window.screen.height/worker->absRange.height; // Scale acording to absRange
 
                     #if defined(SUPPORT_GESTURES_SYSTEM)
                         touchAction = TOUCH_MOVE;
@@ -5772,7 +5786,7 @@ static void *EventThread(void *arg)
                 }
 
                 // Multitouch movement
-                if (event.code == ABS_MT_SLOT) worker->touchSlot = event.value;   // Remeber the slot number for the folowing events
+                if (event.code == ABS_MT_SLOT) worker->touchSlot = event.value;   // Remember the slot number for the folowing events
 
                 if (event.code == ABS_MT_POSITION_X)
                 {
@@ -5793,6 +5807,33 @@ static void *EventThread(void *arg)
                         CORE.Input.Touch.position[worker->touchSlot].y = -1;
                     }
                 }
+
+                // Touchscreen tap
+                if(event.code == ABS_PRESSURE)
+                {
+                    int previousMouseLeftButtonState = CORE.Input.Mouse.currentButtonStateEvdev[MOUSE_LEFT_BUTTON];
+                    
+                    if(!event.value && previousMouseLeftButtonState)
+                    {
+                        CORE.Input.Mouse.currentButtonStateEvdev[MOUSE_LEFT_BUTTON] = 0;
+
+                        #if defined(SUPPORT_GESTURES_SYSTEM)
+                            touchAction = TOUCH_UP;
+                            gestureUpdate = true;
+                        #endif
+                    }
+                    
+                    if(event.value && !previousMouseLeftButtonState)
+                    {
+                        CORE.Input.Mouse.currentButtonStateEvdev[MOUSE_LEFT_BUTTON] = 1;
+
+                        #if defined(SUPPORT_GESTURES_SYSTEM)
+                            touchAction = TOUCH_DOWN;
+                            gestureUpdate = true;
+                        #endif
+                    }
+                }
+
             }
 
             // Button parsing

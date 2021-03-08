@@ -92,6 +92,7 @@
 #define DEFAULT_BATCH_DRAWCALLS        256      // Default number of batch draw calls (by state changes: mode, texture)
 
 #define MAX_MATRIX_STACK_SIZE           32      // Maximum size of internal Matrix stack
+#define MAX_MESH_VERTEX_BUFFERS          7      // Maximum vertex buffers (VBO) per mesh
 #define MAX_SHADER_LOCATIONS            32      // Maximum number of shader locations supported
 #define MAX_MATERIAL_MAPS               12      // Maximum number of shader maps supported
 
@@ -186,7 +187,7 @@
 #define SUPPORT_FILEFORMAT_WAV      1
 #define SUPPORT_FILEFORMAT_OGG      1
 #define SUPPORT_FILEFORMAT_XM       1
-//#define SUPPORT_FILEFORMAT_MOD      1
+#define SUPPORT_FILEFORMAT_MOD      1
 #define SUPPORT_FILEFORMAT_MP3      1
 //#define SUPPORT_FILEFORMAT_FLAC     1
 
@@ -202,6 +203,8 @@
 //------------------------------------------------------------------------------------
 // Module: utils - Configuration Flags
 //------------------------------------------------------------------------------------
+// Standard file io library (stdio.h) included
+#define SUPPORT_STANDARD_FILEIO
 // Show TRACELOG() output messages
 // NOTE: By default LOG_DEBUG traces not shown
 #define SUPPORT_TRACELOG            1

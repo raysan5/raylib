@@ -75,7 +75,7 @@
 // Defines and Macros
 //----------------------------------------------------------------------------------
 #ifndef PI
-    #define PI 3.14159265358979323846
+    #define PI 3.14159265358979323846f
 #endif
 
 #ifndef DEG2RAD
@@ -1162,7 +1162,7 @@ RMDEF Quaternion QuaternionIdentity(void)
 // Computes the length of a quaternion
 RMDEF float QuaternionLength(Quaternion q)
 {
-    float result = (float)sqrt(q.x*q.x + q.y*q.y + q.z*q.z + q.w*q.w);
+    float result = sqrtf(q.x*q.x + q.y*q.y + q.z*q.z + q.w*q.w);
     return result;
 }
 
@@ -1270,6 +1270,12 @@ RMDEF Quaternion QuaternionSlerp(Quaternion q1, Quaternion q2, float amount)
     Quaternion result = { 0 };
 
     float cosHalfTheta =  q1.x*q2.x + q1.y*q2.y + q1.z*q2.z + q1.w*q2.w;
+
+    if (cosHalfTheta < 0) 
+    {
+        q2.x = -q2.x; q2.y = -q2.y; q2.z = -q2.z; q2.w = -q2.w;
+        cosHalfTheta = -cosHalfTheta;
+    }    
 
     if (fabs(cosHalfTheta) >= 1.0f) result = q1;
     else if (cosHalfTheta > 0.95f) result = QuaternionNlerp(q1, q2, amount);

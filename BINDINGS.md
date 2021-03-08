@@ -20,7 +20,7 @@ Here it is a list with the ones I'm aware of:
 | raylib-goplus      | 2.6-dev | [Go](https://golang.org/)             | https://github.com/Lachee/raylib-goplus         |
 | ray-go             | 2.6-dev | [Go](https://golang.org/)             | https://github.com/hecate-tech/ray-go     |
 | go-raylib          | 3.5 | [Go](https://golang.org/)       | https://github.com/chunqian/go-raylib  |
-| raylib-rs          | 3.0 | [Rust](https://www.rust-lang.org/)    | https://github.com/deltaphc/raylib-rs     |
+| raylib-rs          | 3.5 | [Rust](https://www.rust-lang.org/)    | https://github.com/deltaphc/raylib-rs     |
 | raylib-lua         | 1.7 | [Lua](http://www.lua.org/)            | https://github.com/raysan5/raylib-lua       |
 | raylib-lua-ffi     | 2.0 | [Lua](http://www.lua.org/)            | https://github.com/raysan5/raylib/issues/693    |
 | raylib-lua-sol     | 2.5 | [Lua](http://www.lua.org/)          | https://github.com/RobLoach/raylib-lua-sol     |
@@ -53,7 +53,8 @@ Here it is a list with the ones I'm aware of:
 | clj-raylib         | 3.0 | [Clojure](https://clojure.org/)          | https://github.com/lsevero/clj-raylib       |
 | node-raylib        | 3.5 | [Node.js](https://nodejs.org/en/)        | https://github.com/RobLoach/node-raylib     |
 | QuickJS-raylib     | 3.0 | [QuickJS](https://bellard.org/quickjs/)  | https://github.com/sntg-p/QuickJS-raylib    |
-| raylib-js          | 2.6 | [JavaScript](https://en.wikipedia.org/wiki/JavaScript)     | https://github.com/RobLoach/raylib-js    |
+| raylib-duktape     | 2.6 | [JavaScript (Duktape)](https://en.wikipedia.org/wiki/JavaScript) | https://github.com/RobLoach/raylib-duktape |
+| raylib-v7          | 3.5 | [JavaScript (v7)](https://en.wikipedia.org/wiki/JavaScript)      | https://github.com/Rabios/raylib-v7        |
 | raylib-chaiscript  | 2.6 | [ChaiScript](http://chaiscript.com/)     | https://github.com/RobLoach/raylib-chaiscript        |
 | raylib-squirrel    | 2.5 | [Squirrel](http://www.squirrel-lang.org/)     | https://github.com/RobLoach/raylib-squirrel    |
 | racket-raylib-2d   | 2.5 | [Racket](https://racket-lang.org/)       | https://github.com/arvyy/racket-raylib-2d           |
@@ -77,7 +78,7 @@ Here it is a list with the ones I'm aware of:
 | raylib-Ada         | 3.0 | [Ada](https://www.adacore.com/about-ada)  | https://github.com/mimo/raylib-Ada        |
 | jaylib             | 3.0 | [Janet](https://janet-lang.org/)          | https://github.com/janet-lang/jaylib      |
 | raykit             | ? | [Kit](https://www.kitlang.org/)           | https://github.com/Gamerfiend/raykit      |
-| vraylib            | 2.5 | [V](https://vlang.io/)                    | https://github.com/MajorHard/vraylib      |
+| vraylib            | 3.5 | [V](https://vlang.io/)                    | https://github.com/waotzi/vraylib      |
 | ray.mod            | 3.0 | [BlitzMax](https://blitzmax.org/)         | https://github.com/bmx-ng/ray.mod         |
 | ray-ocaml          | 3.0 | [OCaml](https://ocaml.org/)               | https://github.com/tjammer/raylib-ocaml   |
 | raylib-mosaic      | 3.0 | [Mosaic](https://github.com/sal55/langs/tree/master/Mosaic)     | https://github.com/pluckyporcupine/raylib-mosaic   |
@@ -90,6 +91,8 @@ Here it is a list with the ones I'm aware of:
 | raylib-beef        | 3.0 | [Beef](https://www.beeflang.org/)          | https://github.com/M0n7y5/raylib-beef    |
 | raylib-never       | 3.0 | [Never](https://github.com/never-lang/never) | https://github.com/never-lang/raylib-never |
 | raylib.cbl         | 2.0 | [COBOL](https://en.wikipedia.org/wiki/COBOL)        | *[code examples](https://github.com/Martinfx/Cobol/tree/master/OpenCobol/Games/raylib)* |
+| Relib              | 3.5 | [ReCT](https://github.com/RedCubeDev-ByteSpace/ReCT) | https://github.com/RedCubeDev-ByteSpace/Relib |
+| Harbour            | 3.5 | [Harbour](https://harbour.github.io)                 | https://github.com/MarcosLeonardoMendezGerencir/hb-raylib |
 
  
 Missing some language? Feel free to create a new binding! :)

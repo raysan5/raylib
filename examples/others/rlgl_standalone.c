@@ -57,7 +57,7 @@
     #define GLFW_INCLUDE_ES2
 #endif
 
-#include <GLFW/glfw3.h>         // Windows/Context and inputs management
+#include "GLFW/glfw3.h"         // Windows/Context and inputs management
 
 #include <stdio.h>              // Required for: printf()
 
@@ -246,13 +246,13 @@ static void DrawRectangleV(Vector2 position, Vector2 size, Color color)
     rlBegin(RL_TRIANGLES);
         rlColor4ub(color.r, color.g, color.b, color.a);
 
-        rlVertex2i(position.x, position.y);
-        rlVertex2i(position.x, position.y + size.y);
-        rlVertex2i(position.x + size.x, position.y + size.y);
+        rlVertex2f(position.x, position.y);
+        rlVertex2f(position.x, position.y + size.y);
+        rlVertex2f(position.x + size.x, position.y + size.y);
 
-        rlVertex2i(position.x, position.y);
-        rlVertex2i(position.x + size.x, position.y + size.y);
-        rlVertex2i(position.x + size.x, position.y);
+        rlVertex2f(position.x, position.y);
+        rlVertex2f(position.x + size.x, position.y + size.y);
+        rlVertex2f(position.x + size.x, position.y);
     rlEnd();
 }
 

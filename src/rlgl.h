@@ -136,7 +136,8 @@
         // This is the maximum amount of elements (quads) per batch
         // NOTE: Be careful with text, every letter maps to a quad
         #define DEFAULT_BATCH_BUFFER_ELEMENTS   8192
-    #elif defined(GRAPHICS_API_OPENGL_ES2)
+    #endif
+    #if defined(GRAPHICS_API_OPENGL_ES2)
         // We reduce memory sizes for embedded systems (RPI and HTML5)
         // NOTE: On HTML5 (emscripten) this is allocated on heap,
         // by default it's only 16MB!...just take care...
@@ -156,6 +157,11 @@
 // Internal Matrix stack
 #ifndef MAX_MATRIX_STACK_SIZE
     #define MAX_MATRIX_STACK_SIZE           32      // Maximum size of Matrix stack
+#endif
+
+// Vertex buffers id limit
+#ifndef MAX_MESH_VERTEX_BUFFERS
+    #define MAX_MESH_VERTEX_BUFFERS          7      // Maximum vertex buffers (VBO) per mesh
 #endif
 
 // Shader and material limits
@@ -179,19 +185,19 @@
 #define RL_TEXTURE_WRAP_T               0x2803      // GL_TEXTURE_WRAP_T
 #define RL_TEXTURE_MAG_FILTER           0x2800      // GL_TEXTURE_MAG_FILTER
 #define RL_TEXTURE_MIN_FILTER           0x2801      // GL_TEXTURE_MIN_FILTER
-#define RL_TEXTURE_ANISOTROPIC_FILTER   0x3000      // Anisotropic filter (custom identifier)
 
-#define RL_FILTER_NEAREST               0x2600      // GL_NEAREST
-#define RL_FILTER_LINEAR                0x2601      // GL_LINEAR
-#define RL_FILTER_MIP_NEAREST           0x2700      // GL_NEAREST_MIPMAP_NEAREST
-#define RL_FILTER_NEAREST_MIP_LINEAR    0x2702      // GL_NEAREST_MIPMAP_LINEAR
-#define RL_FILTER_LINEAR_MIP_NEAREST    0x2701      // GL_LINEAR_MIPMAP_NEAREST
-#define RL_FILTER_MIP_LINEAR            0x2703      // GL_LINEAR_MIPMAP_LINEAR
+#define RL_TEXTURE_FILTER_NEAREST               0x2600      // GL_NEAREST
+#define RL_TEXTURE_FILTER_LINEAR                0x2601      // GL_LINEAR
+#define RL_TEXTURE_FILTER_MIP_NEAREST           0x2700      // GL_NEAREST_MIPMAP_NEAREST
+#define RL_TEXTURE_FILTER_NEAREST_MIP_LINEAR    0x2702      // GL_NEAREST_MIPMAP_LINEAR
+#define RL_TEXTURE_FILTER_LINEAR_MIP_NEAREST    0x2701      // GL_LINEAR_MIPMAP_NEAREST
+#define RL_TEXTURE_FILTER_MIP_LINEAR            0x2703      // GL_LINEAR_MIPMAP_LINEAR
+#define RL_TEXTURE_FILTER_ANISOTROPIC           0x3000      // Anisotropic filter (custom identifier)
 
-#define RL_WRAP_REPEAT                  0x2901      // GL_REPEAT
-#define RL_WRAP_CLAMP                   0x812F      // GL_CLAMP_TO_EDGE
-#define RL_WRAP_MIRROR_REPEAT           0x8370      // GL_MIRRORED_REPEAT
-#define RL_WRAP_MIRROR_CLAMP            0x8742      // GL_MIRROR_CLAMP_EXT
+#define RL_TEXTURE_WRAP_REPEAT                  0x2901      // GL_REPEAT
+#define RL_TEXTURE_WRAP_CLAMP                   0x812F      // GL_CLAMP_TO_EDGE
+#define RL_TEXTURE_WRAP_MIRROR_REPEAT           0x8370      // GL_MIRRORED_REPEAT
+#define RL_TEXTURE_WRAP_MIRROR_CLAMP            0x8742      // GL_MIRROR_CLAMP_EXT
 
 // Matrix modes (equivalent to OpenGL)
 #define RL_MODELVIEW                    0x1700      // GL_MODELVIEW
@@ -385,12 +391,12 @@ typedef enum {
     // NOTE 1: Filtering considers mipmaps if available in the texture
     // NOTE 2: Filter is accordingly set for minification and magnification
     typedef enum {
-        FILTER_POINT = 0,               // No filter, just pixel aproximation
-        FILTER_BILINEAR,                // Linear filtering
-        FILTER_TRILINEAR,               // Trilinear filtering (linear with mipmaps)
-        FILTER_ANISOTROPIC_4X,          // Anisotropic filtering 4x
-        FILTER_ANISOTROPIC_8X,          // Anisotropic filtering 8x
-        FILTER_ANISOTROPIC_16X,         // Anisotropic filtering 16x
+        TEXTURE_FILTER_POINT = 0,               // No filter, just pixel aproximation
+        TEXTURE_FILTER_BILINEAR,                // Linear filtering
+        TEXTURE_FILTER_TRILINEAR,               // Trilinear filtering (linear with mipmaps)
+        TEXTURE_FILTER_ANISOTROPIC_4X,          // Anisotropic filtering 4x
+        TEXTURE_FILTER_ANISOTROPIC_8X,          // Anisotropic filtering 8x
+        TEXTURE_FILTER_ANISOTROPIC_16X,         // Anisotropic filtering 16x
     } TextureFilterMode;
 
     // Color blending modes (pre-defined)
@@ -570,7 +576,7 @@ RLAPI void rlUpdateMesh(Mesh mesh, int buffer, int count);                // Upd
 RLAPI void rlUpdateMeshAt(Mesh mesh, int buffer, int count, int index);   // Update vertex or index data on GPU, at index
 RLAPI void rlDrawMesh(Mesh mesh, Material material, Matrix transform);    // Draw a 3d mesh with material and transform
 RLAPI void rlDrawMeshInstanced(Mesh mesh, Material material, Matrix *transforms, int count);    // Draw a 3d mesh with material and transform
-RLAPI void rlUnloadMesh(Mesh mesh);                                       // Unload mesh data from CPU and GPU
+RLAPI void rlUnloadMesh(Mesh *mesh);                                      // Unload mesh data from CPU and GPU
 
 // NOTE: There is a set of shader related functions that are available to end user,
 // to avoid creating function wrappers through core module, they have been directly declared in raylib.h
@@ -806,7 +812,8 @@ typedef struct VertexBuffer {
     unsigned char *colors;      // Vertex colors (RGBA - 4 components per vertex) (shader-location = 3)
 #if defined(GRAPHICS_API_OPENGL_11) || defined(GRAPHICS_API_OPENGL_33)
     unsigned int *indices;      // Vertex indices (in case vertex data comes indexed) (6 indices per quad)
-#elif defined(GRAPHICS_API_OPENGL_ES2)
+#endif
+#if defined(GRAPHICS_API_OPENGL_ES2)
     unsigned short *indices;    // Vertex indices (in case vertex data comes indexed) (6 indices per quad)
 #endif
     unsigned int vaoId;         // OpenGL Vertex Array Object id
@@ -965,7 +972,6 @@ static Color *GenNextMipmap(Color *srcData, int srcWidth, int srcHeight);
 //----------------------------------------------------------------------------------
 
 #if defined(GRAPHICS_API_OPENGL_11)
-
 // Fallback to OpenGL 1.1 function calls
 //---------------------------------------
 void rlMatrixMode(int mode)
@@ -996,9 +1002,8 @@ void rlTranslatef(float x, float y, float z) { glTranslatef(x, y, z); }
 void rlRotatef(float angleDeg, float x, float y, float z) { glRotatef(angleDeg, x, y, z); }
 void rlScalef(float x, float y, float z) { glScalef(x, y, z); }
 void rlMultMatrixf(float *matf) { glMultMatrixf(matf); }
-
-#elif defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
-
+#endif
+#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
 // Choose the current matrix to be transformed
 void rlMatrixMode(int mode)
 {
@@ -1119,7 +1124,6 @@ void rlViewport(int x, int y, int width, int height)
 // Module Functions Definition - Vertex level operations
 //----------------------------------------------------------------------------------
 #if defined(GRAPHICS_API_OPENGL_11)
-
 // Fallback to OpenGL 1.1 function calls
 //---------------------------------------
 void rlBegin(int mode)
@@ -1142,9 +1146,8 @@ void rlNormal3f(float x, float y, float z) { glNormal3f(x, y, z); }
 void rlColor4ub(unsigned char r, unsigned char g, unsigned char b, unsigned char a) { glColor4ub(r, g, b, a); }
 void rlColor3f(float x, float y, float z) { glColor3f(x, y, z); }
 void rlColor4f(float x, float y, float z, float w) { glColor4f(x, y, z, w); }
-
-#elif defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
-
+#endif
+#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
 // Initialize drawing mode (how to organize vertex)
 void rlBegin(int mode)
 {
@@ -1379,7 +1382,7 @@ void rlTextureParameters(unsigned int id, int param, int value)
         case RL_TEXTURE_WRAP_S:
         case RL_TEXTURE_WRAP_T:
         {
-            if (value == RL_WRAP_MIRROR_CLAMP)
+            if (value == RL_TEXTURE_WRAP_MIRROR_CLAMP)
             {
 #if !defined(GRAPHICS_API_OPENGL_11)
                 if (RLGL.ExtSupported.texMirrorClamp) glTexParameteri(GL_TEXTURE_2D, param, value);
@@ -1391,7 +1394,7 @@ void rlTextureParameters(unsigned int id, int param, int value)
         } break;
         case RL_TEXTURE_MAG_FILTER:
         case RL_TEXTURE_MIN_FILTER: glTexParameteri(GL_TEXTURE_2D, param, value); break;
-        case RL_TEXTURE_ANISOTROPIC_FILTER:
+        case RL_TEXTURE_FILTER_ANISOTROPIC:
         {
 #if !defined(GRAPHICS_API_OPENGL_11)
             if (value <= RLGL.ExtSupported.maxAnisotropicLevel) glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, (float)value);
@@ -1893,15 +1896,18 @@ int rlGetVersion(void)
 {
 #if defined(GRAPHICS_API_OPENGL_11)
     return OPENGL_11;
-#elif defined(GRAPHICS_API_OPENGL_21)
+#endif
+#if defined(GRAPHICS_API_OPENGL_21)
     #if defined(__APPLE__)
         return OPENGL_33;           // NOTE: Force OpenGL 3.3 on OSX
     #else
         return OPENGL_21;
     #endif
-#elif defined(GRAPHICS_API_OPENGL_33)
+#endif
+#if defined(GRAPHICS_API_OPENGL_33)
     return OPENGL_33;
-#elif defined(GRAPHICS_API_OPENGL_ES2)
+#endif
+#if defined(GRAPHICS_API_OPENGL_ES2)
     return OPENGL_ES_20;
 #endif
 }
@@ -1946,7 +1952,8 @@ void rlLoadExtensions(void *loader)
 
         #if defined(GRAPHICS_API_OPENGL_21)
         if (GLAD_GL_VERSION_2_1) TRACELOG(LOG_INFO, "GL: OpenGL 2.1 profile supported");
-        #elif defined(GRAPHICS_API_OPENGL_33)
+        #endif
+        #if defined(GRAPHICS_API_OPENGL_33)
         if (GLAD_GL_VERSION_3_3) TRACELOG(LOG_INFO, "GL: OpenGL 3.3 Core profile supported");
         else TRACELOG(LOG_ERROR, "GL: OpenGL 3.3 Core profile not supported");
         #endif
@@ -2046,7 +2053,8 @@ unsigned int rlLoadTexture(void *data, int width, int height, int format, int mi
             {
             #if defined(GRAPHICS_API_OPENGL_21)
                 GLint swizzleMask[] = { GL_RED, GL_RED, GL_RED, GL_ALPHA };
-            #elif defined(GRAPHICS_API_OPENGL_33)
+            #endif
+            #if defined(GRAPHICS_API_OPENGL_33)
                 GLint swizzleMask[] = { GL_RED, GL_RED, GL_RED, GL_GREEN };
             #endif
                 glTexParameteriv(GL_TEXTURE_2D, GL_TEXTURE_SWIZZLE_RGBA, swizzleMask);
@@ -2213,7 +2221,8 @@ unsigned int rlLoadTextureCubemap(void *data, int size, int format)
             {
 #if defined(GRAPHICS_API_OPENGL_21)
                 GLint swizzleMask[] = { GL_RED, GL_RED, GL_RED, GL_ALPHA };
-#elif defined(GRAPHICS_API_OPENGL_33)
+#endif
+#if defined(GRAPHICS_API_OPENGL_33)
                 GLint swizzleMask[] = { GL_RED, GL_RED, GL_RED, GL_GREEN };
 #endif
                 glTexParameteriv(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_SWIZZLE_RGBA, swizzleMask);
@@ -2279,7 +2288,8 @@ void rlGetGlTextureFormats(int format, unsigned int *glInternalFormat, unsigned 
         case UNCOMPRESSED_R32G32B32: if (RLGL.ExtSupported.texFloat32) *glInternalFormat = GL_RGB; *glFormat = GL_RGB; *glType = GL_FLOAT; break;         // NOTE: Requires extension OES_texture_float
         case UNCOMPRESSED_R32G32B32A32: if (RLGL.ExtSupported.texFloat32) *glInternalFormat = GL_RGBA; *glFormat = GL_RGBA; *glType = GL_FLOAT; break;    // NOTE: Requires extension OES_texture_float
         #endif
-    #elif defined(GRAPHICS_API_OPENGL_33)
+    #endif
+    #if defined(GRAPHICS_API_OPENGL_33)
         case UNCOMPRESSED_GRAYSCALE: *glInternalFormat = GL_R8; *glFormat = GL_RED; *glType = GL_UNSIGNED_BYTE; break;
         case UNCOMPRESSED_GRAY_ALPHA: *glInternalFormat = GL_RG8; *glFormat = GL_RG; *glType = GL_UNSIGNED_BYTE; break;
         case UNCOMPRESSED_R5G6B5: *glInternalFormat = GL_RGB565; *glFormat = GL_RGB; *glType = GL_UNSIGNED_SHORT_5_6_5; break;
@@ -2291,7 +2301,7 @@ void rlGetGlTextureFormats(int format, unsigned int *glInternalFormat, unsigned 
         case UNCOMPRESSED_R32G32B32: if (RLGL.ExtSupported.texFloat32) *glInternalFormat = GL_RGB32F; *glFormat = GL_RGB; *glType = GL_FLOAT; break;
         case UNCOMPRESSED_R32G32B32A32: if (RLGL.ExtSupported.texFloat32) *glInternalFormat = GL_RGBA32F; *glFormat = GL_RGBA; *glType = GL_FLOAT; break;
     #endif
-        #if !defined(GRAPHICS_API_OPENGL_11)
+    #if !defined(GRAPHICS_API_OPENGL_11)
         case COMPRESSED_DXT1_RGB: if (RLGL.ExtSupported.texCompDXT) *glInternalFormat = GL_COMPRESSED_RGB_S3TC_DXT1_EXT; break;
         case COMPRESSED_DXT1_RGBA: if (RLGL.ExtSupported.texCompDXT) *glInternalFormat = GL_COMPRESSED_RGBA_S3TC_DXT1_EXT; break;
         case COMPRESSED_DXT3_RGBA: if (RLGL.ExtSupported.texCompDXT) *glInternalFormat = GL_COMPRESSED_RGBA_S3TC_DXT3_EXT; break;
@@ -2303,7 +2313,7 @@ void rlGetGlTextureFormats(int format, unsigned int *glInternalFormat, unsigned 
         case COMPRESSED_PVRT_RGBA: if (RLGL.ExtSupported.texCompPVRT) *glInternalFormat = GL_COMPRESSED_RGBA_PVRTC_4BPPV1_IMG; break;  // NOTE: Requires PowerVR GPU
         case COMPRESSED_ASTC_4x4_RGBA: if (RLGL.ExtSupported.texCompASTC) *glInternalFormat = GL_COMPRESSED_RGBA_ASTC_4x4_KHR; break;  // NOTE: Requires OpenGL ES 3.1 or OpenGL 4.3
         case COMPRESSED_ASTC_8x8_RGBA: if (RLGL.ExtSupported.texCompASTC) *glInternalFormat = GL_COMPRESSED_RGBA_ASTC_8x8_KHR; break;  // NOTE: Requires OpenGL ES 3.1 or OpenGL 4.3
-        #endif
+    #endif
         default: TRACELOG(LOG_WARNING, "TEXTURE: Current format not supported (%i)", format); break;
     }
 }
@@ -2420,11 +2430,11 @@ void rlGenerateMipmaps(Texture2D *texture)
         if (texture->format == UNCOMPRESSED_R8G8B8A8)
         {
             // Retrieve texture data from VRAM
-            void *data = rlReadTexturePixels(*texture);
+            void *texData = rlReadTexturePixels(*texture);
 
-            // NOTE: data size is reallocated to fit mipmaps data
+            // NOTE: Texture data size is reallocated to fit mipmaps data
             // NOTE: CPU mipmap generation only supports RGBA 32bit data
-            int mipmapCount = GenerateMipmaps(data, texture->width, texture->height);
+            int mipmapCount = GenerateMipmaps(texData, texture->width, texture->height);
 
             int size = texture->width*texture->height*4;
             int offset = size;
@@ -2435,7 +2445,7 @@ void rlGenerateMipmaps(Texture2D *texture)
             // Load the mipmaps
             for (int level = 1; level < mipmapCount; level++)
             {
-                glTexImage2D(GL_TEXTURE_2D, level, GL_RGBA8, mipWidth, mipHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, (unsigned char *)data + offset);
+                glTexImage2D(GL_TEXTURE_2D, level, GL_RGBA8, mipWidth, mipHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, (unsigned char *)texData + offset);
 
                 size = mipWidth*mipHeight*4;
                 offset += size;
@@ -2445,13 +2455,14 @@ void rlGenerateMipmaps(Texture2D *texture)
             }
 
             texture->mipmaps = mipmapCount + 1;
-            RL_FREE(data); // Once mipmaps have been generated and data has been uploaded to GPU VRAM, we can discard RAM data
+            RL_FREE(texData); // Once mipmaps have been generated and data has been uploaded to GPU VRAM, we can discard RAM data
 
             TRACELOG(LOG_WARNING, "TEXTURE: [ID %i] Mipmaps generated manually on CPU side, total: %i", texture->id, texture->mipmaps);
         }
         else TRACELOG(LOG_WARNING, "TEXTURE: [ID %i] Failed to generate mipmaps for provided texture format", texture->id);
     }
-#elif defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
+#endif
+#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     if ((texIsPOT) || (RLGL.ExtSupported.texNPOT))
     {
         //glHint(GL_GENERATE_MIPMAP_HINT, GL_DONT_CARE);   // Hint for mipmaps generation algorythm: GL_FASTEST, GL_NICEST, GL_DONT_CARE
@@ -2481,6 +2492,8 @@ void rlLoadMesh(Mesh *mesh, bool dynamic)
         TRACELOG(LOG_WARNING, "VAO: [ID %i] Trying to re-load an already loaded mesh", mesh->vaoId);
         return;
     }
+    
+    mesh->vboId = (unsigned int *)RL_CALLOC(MAX_MESH_VERTEX_BUFFERS, sizeof(unsigned int));
 
     mesh->vaoId = 0;        // Vertex Array Object
     mesh->vboId[0] = 0;     // Vertex positions VBO
@@ -2952,9 +2965,9 @@ void rlDrawMeshInstanced(Mesh mesh, Material material, Matrix *transforms, int c
     glUniformMatrix4fv(material.shader.locs[LOC_MATRIX_MVP], 1, false,
                        MatrixToFloat(MatrixMultiply(MatrixMultiply(RLGL.State.transform, RLGL.State.modelview), RLGL.State.projection)));
 
-    float16* instances = RL_MALLOC(count*sizeof(float16));
+    float16* instanceTransforms = RL_MALLOC(count*sizeof(float16));
 
-    for (int i = 0; i < count; i++) instances[i] = MatrixToFloatV(transforms[i]);
+    for (int i = 0; i < count; i++) instanceTransforms[i] = MatrixToFloatV(transforms[i]);
 
     // This could alternatively use a static VBO and either glMapBuffer or glBufferSubData.
     // It isn't clear which would be reliably faster in all cases and on all platforms, and
@@ -2963,7 +2976,7 @@ void rlDrawMeshInstanced(Mesh mesh, Material material, Matrix *transforms, int c
     unsigned int instancesB = 0;
     glGenBuffers(1, &instancesB);
     glBindBuffer(GL_ARRAY_BUFFER, instancesB);
-    glBufferData(GL_ARRAY_BUFFER, count*sizeof(float16), instances, GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, count*sizeof(float16), instanceTransforms, GL_STATIC_DRAW);
 
     // Instances are put in LOC_MATRIX_MODEL attribute location with space for 4x Vector4, eg:
     // layout (location = 12) in mat4 instance;
@@ -2983,7 +2996,7 @@ void rlDrawMeshInstanced(Mesh mesh, Material material, Matrix *transforms, int c
     else glDrawArraysInstanced(GL_TRIANGLES, 0, mesh.vertexCount, count);
 
     glDeleteBuffers(1, &instancesB);
-    RL_FREE(instances);
+    RL_FREE(instanceTransforms);
 
     // Unbind all binded texture maps
     for (int i = 0; i < MAX_MATERIAL_MAPS; i++)
@@ -3005,31 +3018,21 @@ void rlDrawMeshInstanced(Mesh mesh, Material material, Matrix *transforms, int c
 }
 
 // Unload mesh data from CPU and GPU
-void rlUnloadMesh(Mesh mesh)
+void rlUnloadMesh(Mesh *mesh)
 {
-    RL_FREE(mesh.vertices);
-    RL_FREE(mesh.texcoords);
-    RL_FREE(mesh.normals);
-    RL_FREE(mesh.colors);
-    RL_FREE(mesh.tangents);
-    RL_FREE(mesh.texcoords2);
-    RL_FREE(mesh.indices);
-
-    RL_FREE(mesh.animVertices);
-    RL_FREE(mesh.animNormals);
-    RL_FREE(mesh.boneWeights);
-    RL_FREE(mesh.boneIds);
-
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
-    for (int i = 0; i < 7; i++) glDeleteBuffers(1, &mesh.vboId[i]); // DEFAULT_MESH_VERTEX_BUFFERS (model.c)
+    for (int i = 0; i < 7; i++) glDeleteBuffers(1, &mesh->vboId[i]); // DEFAULT_MESH_VERTEX_BUFFERS (model.c)
     if (RLGL.ExtSupported.vao)
     {
         glBindVertexArray(0);
-        glDeleteVertexArrays(1, &mesh.vaoId);
-        TRACELOG(LOG_INFO, "VAO: [ID %i] Unloaded vertex data from VRAM (GPU)", mesh.vaoId);
+        glDeleteVertexArrays(1, &mesh->vaoId);
+        TRACELOG(LOG_INFO, "VAO: [ID %i] Unloaded vertex data from VRAM (GPU)", mesh->vaoId);
     }
     else TRACELOG(LOG_INFO, "VBO: Unloaded vertex data from VRAM (GPU)");
 #endif
+
+    RL_FREE(mesh->vboId);
+    mesh->vboId = NULL;
 }
 
 // Read screen pixel data (color buffer)
@@ -3534,7 +3537,7 @@ TextureCubemap GenTextureCubemap(Shader shader, Texture2D panorama, int size, in
 
     // Reset viewport dimensions to default
     rlViewport(0, 0, RLGL.State.framebufferWidth, RLGL.State.framebufferHeight);
-    //rlEnableBackfaceCulling();
+    rlEnableBackfaceCulling();
     //------------------------------------------------------------------------------------------
 
     cubemap.width = size;
@@ -3607,7 +3610,7 @@ TextureCubemap GenTextureIrradiance(Shader shader, TextureCubemap cubemap, int s
 
     // Reset viewport dimensions to default
     rlViewport(0, 0, RLGL.State.framebufferWidth, RLGL.State.framebufferHeight);
-    //rlEnableBackfaceCulling();
+    rlEnableBackfaceCulling();
     //------------------------------------------------------------------------------------------
 
     irradiance.width = size;
@@ -3630,7 +3633,7 @@ TextureCubemap GenTexturePrefilter(Shader shader, TextureCubemap cubemap, int si
     //------------------------------------------------------------------------------------------
     unsigned int rbo = rlLoadTextureDepth(size, size, true);
     prefilter.id = rlLoadTextureCubemap(NULL, size, UNCOMPRESSED_R32G32B32);
-    rlTextureParameters(prefilter.id, RL_TEXTURE_MIN_FILTER, RL_FILTER_MIP_LINEAR);
+    rlTextureParameters(prefilter.id, RL_TEXTURE_MIN_FILTER, RL_TEXTURE_FILTER_MIP_LINEAR);
 
     unsigned int fbo = rlLoadFramebuffer(size, size);
     rlFramebufferAttach(fbo, rbo, RL_ATTACHMENT_DEPTH, RL_ATTACHMENT_RENDERBUFFER);
@@ -3705,7 +3708,7 @@ TextureCubemap GenTexturePrefilter(Shader shader, TextureCubemap cubemap, int si
 
     // Reset viewport dimensions to default
     rlViewport(0, 0, RLGL.State.framebufferWidth, RLGL.State.framebufferHeight);
-    //rlEnableBackfaceCulling();
+    rlEnableBackfaceCulling();
     //------------------------------------------------------------------------------------------
 
     prefilter.width = size;
@@ -4054,25 +4057,21 @@ static unsigned int CompileShader(const char *shaderStr, int type)
     glCompileShader(shader);
     glGetShaderiv(shader, GL_COMPILE_STATUS, &success);
 
-    if (success != GL_TRUE)
+    if (success == GL_FALSE)
     {
         TRACELOG(LOG_WARNING, "SHADER: [ID %i] Failed to compile shader code", shader);
+        
         int maxLength = 0;
-        int length;
         glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &maxLength);
-
-#if defined(_MSC_VER)
-        char *log = RL_MALLOC(maxLength);
-#else
-        char log[maxLength];
-#endif
-        glGetShaderInfoLog(shader, maxLength, &length, log);
-
-        TRACELOG(LOG_WARNING, "SHADER: [ID %i] Compile error: %s", shader, log);
-
-#if defined(_MSC_VER)
-        RL_FREE(log);
-#endif
+        
+        if (maxLength > 0)
+        {
+            int length = 0;
+            char *log = RL_CALLOC(maxLength, sizeof(char));
+            glGetShaderInfoLog(shader, maxLength, &length, log);
+            TRACELOG(LOG_WARNING, "SHADER: [ID %i] Compile error: %s", shader, log);
+            RL_FREE(log);
+        }
     }
     else TRACELOG(LOG_INFO, "SHADER: [ID %i] Compiled successfully", shader);
 
@@ -4116,7 +4115,7 @@ static unsigned int LoadShaderProgram(unsigned int vShaderId, unsigned int fShad
         
         if (maxLength > 0) 
         {
-            int length;
+            int length = 0;
             char *log = RL_CALLOC(maxLength, sizeof(char));
             glGetProgramInfoLog(program, maxLength, &length, log);
             TRACELOG(LOG_WARNING, "SHADER: [ID %i] Link error: %s", program, log);
@@ -4147,7 +4146,8 @@ static Shader LoadShaderDefault(void)
     const char *defaultVShaderStr =
 #if defined(GRAPHICS_API_OPENGL_21)
     "#version 120                       \n"
-#elif defined(GRAPHICS_API_OPENGL_ES2)
+#endif
+#if defined(GRAPHICS_API_OPENGL_ES2)
     "#version 100                       \n"
 #endif
 #if defined(GRAPHICS_API_OPENGL_ES2) || defined(GRAPHICS_API_OPENGL_21)
@@ -4156,7 +4156,8 @@ static Shader LoadShaderDefault(void)
     "attribute vec4 vertexColor;        \n"
     "varying vec2 fragTexCoord;         \n"
     "varying vec4 fragColor;            \n"
-#elif defined(GRAPHICS_API_OPENGL_33)
+#endif
+#if defined(GRAPHICS_API_OPENGL_33)
     "#version 330                       \n"
     "in vec3 vertexPosition;            \n"
     "in vec2 vertexTexCoord;            \n"
@@ -4176,14 +4177,16 @@ static Shader LoadShaderDefault(void)
     const char *defaultFShaderStr =
 #if defined(GRAPHICS_API_OPENGL_21)
     "#version 120                       \n"
-#elif defined(GRAPHICS_API_OPENGL_ES2)
+#endif
+#if defined(GRAPHICS_API_OPENGL_ES2)
     "#version 100                       \n"
     "precision mediump float;           \n"     // precision required for OpenGL ES2 (WebGL)
 #endif
 #if defined(GRAPHICS_API_OPENGL_ES2) || defined(GRAPHICS_API_OPENGL_21)
     "varying vec2 fragTexCoord;         \n"
     "varying vec4 fragColor;            \n"
-#elif defined(GRAPHICS_API_OPENGL_33)
+#endif
+#if defined(GRAPHICS_API_OPENGL_33)
     "#version 330       \n"
     "in vec2 fragTexCoord;              \n"
     "in vec4 fragColor;                 \n"
@@ -4196,7 +4199,8 @@ static Shader LoadShaderDefault(void)
 #if defined(GRAPHICS_API_OPENGL_ES2) || defined(GRAPHICS_API_OPENGL_21)
     "    vec4 texelColor = texture2D(texture0, fragTexCoord); \n" // NOTE: texture2D() is deprecated on OpenGL 3.3 and ES 3.0
     "    gl_FragColor = texelColor*colDiffuse*fragColor;      \n"
-#elif defined(GRAPHICS_API_OPENGL_33)
+#endif
+#if defined(GRAPHICS_API_OPENGL_33)
     "    vec4 texelColor = texture(texture0, fragTexCoord);   \n"
     "    finalColor = texelColor*colDiffuse*fragColor;        \n"
 #endif
@@ -4296,7 +4300,8 @@ static RenderBatch LoadRenderBatch(int numBuffers, int bufferElements)
         batch.vertexBuffer[i].colors = (unsigned char *)RL_MALLOC(bufferElements*4*4*sizeof(unsigned char));   // 4 float by color, 4 colors by quad
 #if defined(GRAPHICS_API_OPENGL_33)
         batch.vertexBuffer[i].indices = (unsigned int *)RL_MALLOC(bufferElements*6*sizeof(unsigned int));      // 6 int by quad (indices)
-#elif defined(GRAPHICS_API_OPENGL_ES2)
+#endif
+#if defined(GRAPHICS_API_OPENGL_ES2)
         batch.vertexBuffer[i].indices = (unsigned short *)RL_MALLOC(bufferElements*6*sizeof(unsigned short));  // 6 int by quad (indices)
 #endif
 
@@ -4365,7 +4370,8 @@ static RenderBatch LoadRenderBatch(int numBuffers, int bufferElements)
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, batch.vertexBuffer[i].vboId[3]);
 #if defined(GRAPHICS_API_OPENGL_33)
         glBufferData(GL_ELEMENT_ARRAY_BUFFER, bufferElements*6*sizeof(int), batch.vertexBuffer[i].indices, GL_STATIC_DRAW);
-#elif defined(GRAPHICS_API_OPENGL_ES2)
+#endif
+#if defined(GRAPHICS_API_OPENGL_ES2)
         glBufferData(GL_ELEMENT_ARRAY_BUFFER, bufferElements*6*sizeof(short), batch.vertexBuffer[i].indices, GL_STATIC_DRAW);
 #endif
     }
@@ -4526,7 +4532,8 @@ static void DrawRenderBatch(RenderBatch *batch)
                     // NOTE: The final parameter tells the GPU the offset in bytes from the
                     // start of the index buffer to the location of the first index to process
                     glDrawElements(GL_TRIANGLES, batch->draws[i].vertexCount/4*6, GL_UNSIGNED_INT, (GLvoid *)(vertexOffset/4*6*sizeof(GLuint)));
-#elif defined(GRAPHICS_API_OPENGL_ES2)
+#endif
+#if defined(GRAPHICS_API_OPENGL_ES2)
                     glDrawElements(GL_TRIANGLES, batch->draws[i].vertexCount/4*6, GL_UNSIGNED_SHORT, (GLvoid *)(vertexOffset/4*6*sizeof(GLushort)));
 #endif
                 }
@@ -4908,21 +4915,21 @@ char *LoadFileText(const char *fileName)
 
     if (fileName != NULL)
     {
-        FILE *textFile = fopen(fileName, "rt");
+        FILE *file = fopen(fileName, "rt");
 
-        if (textFile != NULL)
+        if (file != NULL)
         {
             // WARNING: When reading a file as 'text' file,
             // text mode causes carriage return-linefeed translation...
             // ...but using fseek() should return correct byte-offset
-            fseek(textFile, 0, SEEK_END);
-            int size = ftell(textFile);
-            fseek(textFile, 0, SEEK_SET);
+            fseek(file, 0, SEEK_END);
+            int size = ftell(file);
+            fseek(file, 0, SEEK_SET);
 
             if (size > 0)
             {
                 text = (char *)RL_MALLOC((size + 1)*sizeof(char));
-                int count = fread(text, sizeof(char), size, textFile);
+                int count = (int)fread(text, sizeof(char), size, file);
 
                 // WARNING: \r\n is converted to \n on reading, so,
                 // read bytes count gets reduced by the number of lines
@@ -4935,7 +4942,7 @@ char *LoadFileText(const char *fileName)
             }
             else TRACELOG(LOG_WARNING, "FILEIO: [%s] Failed to read text file", fileName);
 
-            fclose(textFile);
+            fclose(file);
         }
         else TRACELOG(LOG_WARNING, "FILEIO: [%s] Failed to open text file", fileName);
     }

@@ -15,7 +15,7 @@
 
 #define MAX_COLORS_COUNT    23          // Number of colors available
 
-int main(void) 
+int main(void)
 {
     // Initialization
     //--------------------------------------------------------------------------------------
@@ -29,7 +29,7 @@ int main(void)
         RAYWHITE, YELLOW, GOLD, ORANGE, PINK, RED, MAROON, GREEN, LIME, DARKGREEN,
         SKYBLUE, BLUE, DARKBLUE, PURPLE, VIOLET, DARKPURPLE, BEIGE, BROWN, DARKBROWN,
         LIGHTGRAY, GRAY, DARKGRAY, BLACK };
-        
+
     // Define colorsRecs data (for every rectangle)
     Rectangle colorsRecs[MAX_COLORS_COUNT] = { 0 };
 
@@ -45,7 +45,8 @@ int main(void)
     int colorSelectedPrev = colorSelected;
     int colorMouseHover = 0;
     int brushSize = 20;
-    
+    bool mouseWasPressed = false;
+
     Rectangle btnSaveRec = { 750, 10, 40, 30 };
     bool btnSaveMouseHover = false;
     bool showSaveMessage = false;
@@ -68,11 +69,11 @@ int main(void)
         // Update
         //----------------------------------------------------------------------------------
         Vector2 mousePos = GetMousePosition();
-        
+
         // Move between colors with keys
         if (IsKeyPressed(KEY_RIGHT)) colorSelected++;
         else if (IsKeyPressed(KEY_LEFT)) colorSelected--;
-        
+
         if (colorSelected >= MAX_COLORS_COUNT) colorSelected = MAX_COLORS_COUNT - 1;
         else if (colorSelected < 0) colorSelected = 0;
 
@@ -86,8 +87,8 @@ int main(void)
             }
             else colorMouseHover = -1;
         }
-        
-        if ((colorMouseHover >= 0) && IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) 
+
+        if ((colorMouseHover >= 0) && IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
         {
             colorSelected = colorMouseHover;
             colorSelectedPrev = colorSelected;
@@ -98,7 +99,7 @@ int main(void)
         if (brushSize < 2) brushSize = 2;
         if (brushSize > 50) brushSize = 50;
 
-        if (IsKeyPressed(KEY_C)) 
+        if (IsKeyPressed(KEY_C))
         {
             // Clear render texture to clear color
             BeginTextureMode(target);
@@ -118,19 +119,29 @@ int main(void)
 
         if (IsMouseButtonDown(MOUSE_RIGHT_BUTTON))
         {
-            colorSelected = 0;
-            
+            if (!mouseWasPressed)
+            {
+                colorSelectedPrev = colorSelected;
+                colorSelected = 0;
+            }
+
+            mouseWasPressed = true;
+
             // Erase circle from render texture
             BeginTextureMode(target);
             if (mousePos.y > 50) DrawCircle(mousePos.x, mousePos.y, brushSize, colors[0]);
             EndTextureMode();
         }
-        else colorSelected = colorSelectedPrev;
-        
+        else if (IsMouseButtonReleased(MOUSE_RIGHT_BUTTON) && mouseWasPressed)
+        {
+            colorSelected = colorSelectedPrev;
+            mouseWasPressed = false;
+        }
+
         // Check mouse hover save button
         if (CheckCollisionPointRec(mousePos, btnSaveRec)) btnSaveMouseHover = true;
         else btnSaveMouseHover = false;
-        
+
         // Image saving logic
         // NOTE: Saving painted texture to a default named image
         if ((btnSaveMouseHover && IsMouseButtonReleased(MOUSE_LEFT_BUTTON)) || IsKeyPressed(KEY_S))
@@ -141,7 +152,7 @@ int main(void)
             UnloadImage(image);
             showSaveMessage = true;
         }
-        
+
         if (showSaveMessage)
         {
             // On saving, show a full screen message for 2 seconds
@@ -158,42 +169,42 @@ int main(void)
         //----------------------------------------------------------------------------------
         BeginDrawing();
 
-            ClearBackground(RAYWHITE);
+        ClearBackground(RAYWHITE);
 
-            // NOTE: Render texture must be y-flipped due to default OpenGL coordinates (left-bottom)
-            DrawTextureRec(target.texture, (Rectangle){ 0, 0, target.texture.width, -target.texture.height }, (Vector2){ 0, 0 }, WHITE);
+        // NOTE: Render texture must be y-flipped due to default OpenGL coordinates (left-bottom)
+        DrawTextureRec(target.texture, (Rectangle) { 0, 0, target.texture.width, -target.texture.height }, (Vector2) { 0, 0 }, WHITE);
 
-            // Draw drawing circle for reference
-            if (mousePos.y > 50) 
-            {
-                if (IsMouseButtonDown(MOUSE_RIGHT_BUTTON)) DrawCircleLines(mousePos.x, mousePos.y, brushSize, GRAY);
-                else DrawCircle(GetMouseX(), GetMouseY(), brushSize, colors[colorSelected]);
-            }
-            
-            // Draw top panel
-            DrawRectangle(0, 0, GetScreenWidth(), 50, RAYWHITE);
-            DrawLine(0, 50, GetScreenWidth(), 50, LIGHTGRAY);
+        // Draw drawing circle for reference
+        if (mousePos.y > 50)
+        {
+            if (IsMouseButtonDown(MOUSE_RIGHT_BUTTON)) DrawCircleLines(mousePos.x, mousePos.y, brushSize, GRAY);
+            else DrawCircle(GetMouseX(), GetMouseY(), brushSize, colors[colorSelected]);
+        }
 
-            // Draw color selection rectangles
-            for (int i = 0; i < MAX_COLORS_COUNT; i++) DrawRectangleRec(colorsRecs[i], colors[i]);
-            DrawRectangleLines(10, 10, 30, 30, LIGHTGRAY);
+        // Draw top panel
+        DrawRectangle(0, 0, GetScreenWidth(), 50, RAYWHITE);
+        DrawLine(0, 50, GetScreenWidth(), 50, LIGHTGRAY);
 
-            if (colorMouseHover >= 0) DrawRectangleRec(colorsRecs[colorMouseHover], Fade(WHITE, 0.6f));
+        // Draw color selection rectangles
+        for (int i = 0; i < MAX_COLORS_COUNT; i++) DrawRectangleRec(colorsRecs[i], colors[i]);
+        DrawRectangleLines(10, 10, 30, 30, LIGHTGRAY);
 
-            DrawRectangleLinesEx((Rectangle){ colorsRecs[colorSelected].x - 2, colorsRecs[colorSelected].y - 2, 
-                                 colorsRecs[colorSelected].width + 4, colorsRecs[colorSelected].height + 4 }, 2, BLACK);
+        if (colorMouseHover >= 0) DrawRectangleRec(colorsRecs[colorMouseHover], Fade(WHITE, 0.6f));
 
-            // Draw save image button
-            DrawRectangleLinesEx(btnSaveRec, 2, btnSaveMouseHover? RED : BLACK);
-            DrawText("SAVE!", 755, 20, 10, btnSaveMouseHover? RED : BLACK);
-            
-            // Draw save image message
-            if (showSaveMessage)
-            {
-                DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), Fade(RAYWHITE, 0.8f));
-                DrawRectangle(0, 150, GetScreenWidth(), 80, BLACK);
-                DrawText("IMAGE SAVED:  my_amazing_texture_painting.png", 150, 180, 20, RAYWHITE);
-            }
+        DrawRectangleLinesEx((Rectangle){ colorsRecs[colorSelected].x - 2, colorsRecs[colorSelected].y - 2,
+                             colorsRecs[colorSelected].width + 4, colorsRecs[colorSelected].height + 4 }, 2, BLACK);
+
+        // Draw save image button
+        DrawRectangleLinesEx(btnSaveRec, 2, btnSaveMouseHover ? RED : BLACK);
+        DrawText("SAVE!", 755, 20, 10, btnSaveMouseHover ? RED : BLACK);
+
+        // Draw save image message
+        if (showSaveMessage)
+        {
+            DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), Fade(RAYWHITE, 0.8f));
+            DrawRectangle(0, 150, GetScreenWidth(), 80, BLACK);
+            DrawText("IMAGE SAVED:  my_amazing_texture_painting.png", 150, 180, 20, RAYWHITE);
+        }
 
         EndDrawing();
         //----------------------------------------------------------------------------------
@@ -202,7 +213,7 @@ int main(void)
     // De-Initialization
     //--------------------------------------------------------------------------------------
     UnloadRenderTexture(target);    // Unload render texture
-    
+
     CloseWindow();                  // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
 

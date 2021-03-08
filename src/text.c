@@ -328,7 +328,7 @@ Font LoadFont(const char *fileName)
         TRACELOG(LOG_WARNING, "FONT: [%s] Failed to load font texture -> Using default font", fileName);
         font = GetFontDefault();
     }
-    else SetTextureFilter(font.texture, FILTER_POINT);    // By default we set point filter (best performance)
+    else SetTextureFilter(font.texture, TEXTURE_FILTER_POINT);    // By default we set point filter (best performance)
 
     return font;
 }
@@ -432,7 +432,7 @@ Font LoadFontFromImage(Image image, Color key, int firstChar)
     }
 
     // NOTE: We need to remove key color borders from image to avoid weird
-    // artifacts on texture scaling when using FILTER_BILINEAR or FILTER_TRILINEAR
+    // artifacts on texture scaling when using TEXTURE_FILTER_BILINEAR or TEXTURE_FILTER_TRILINEAR
     for (int i = 0; i < image.height*image.width; i++) if (COLOR_EQUAL(pixels[i], key)) pixels[i] = BLANK;
 
     // Create a new image with the processed color data (key color replaced by BLANK)
@@ -479,7 +479,7 @@ Font LoadFontFromImage(Image image, Color key, int firstChar)
     return font;
 }
 
-// Load font from memory buffer, fileType refers to extension: i.e. "ttf"
+// Load font from memory buffer, fileType refers to extension: i.e. ".ttf"
 Font LoadFontFromMemory(const char *fileType, const unsigned char *fileData, int dataSize, int fontSize, int *fontChars, int charsCount)
 {
     Font font = { 0 };
@@ -488,8 +488,8 @@ Font LoadFontFromMemory(const char *fileType, const unsigned char *fileData, int
     strcpy(fileExtLower, TextToLower(fileType));
 
 #if defined(SUPPORT_FILEFORMAT_TTF)
-    if (TextIsEqual(fileExtLower, "ttf") ||
-        TextIsEqual(fileExtLower, "otf"))
+    if (TextIsEqual(fileExtLower, ".ttf") ||
+        TextIsEqual(fileExtLower, ".otf"))
     {
         font.baseSize = fontSize;
         font.charsCount = (charsCount > 0)? charsCount : 95;
@@ -1175,7 +1175,7 @@ const char *TextFormat(const char *text, ...)
 
     va_list args;
     va_start(args, text);
-    vsprintf(currentBuffer, text, args);
+    vsnprintf(currentBuffer, MAX_TEXT_BUFFER_LENGTH, text, args);
     va_end(args);
 
     index += 1;     // Move to next buffer for next function call

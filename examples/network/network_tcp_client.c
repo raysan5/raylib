@@ -80,7 +80,7 @@ int main(void)
 
             // IsSocketReady, if the socket is ready, attempt to receive data from the socket
             int bytesRecv = 0;
-            if (IsSocketReady(clientResult->socket)) bytesRecv = SocketReceive(clientResult->socket, receiveBuffer, strlen(pingmsg) + 1);
+            if (IsSocketReady(clientResult->socket)) bytesRecv = SocketReceive(clientResult->socket, receiveBuffer, (int)strlen(pingmsg) + 1);
 
             // If we received data, was that data a "Ping!" or a "Pong!"
             if (bytesRecv > 0) 
@@ -96,12 +96,12 @@ int main(void)
                 if (ping) 
                 {
                     ping = false;
-                    SocketSend(clientResult->socket, pingmsg, strlen(pingmsg) + 1);
+                    SocketSend(clientResult->socket, pingmsg, (int)strlen(pingmsg) + 1);
                 }
                 else if (pong) 
                 {
                     pong = false;
-                    SocketSend(clientResult->socket, pongmsg, strlen(pingmsg) + 1);
+                    SocketSend(clientResult->socket, pongmsg, (int)strlen(pingmsg) + 1);
                 }
                 
                 elapsed = 0.0f;

@@ -65,7 +65,6 @@
 #endif
 
 #include <stdlib.h>             // Required for: malloc(), free()
-#include <stdio.h>              // Required for: FILE, fopen(), fclose(), fread()
 #include <string.h>             // Required for: strlen() [Used in ImageTextEx()]
 #include <math.h>               // Required for: fabsf()
 
@@ -294,7 +293,7 @@ Image LoadImageAnim(const char *fileName, int *frames)
     return image;
 }
 
-// Load image from memory buffer, fileType refers to extension: i.e. "png"
+// Load image from memory buffer, fileType refers to extension: i.e. ".png"
 Image LoadImageFromMemory(const char *fileType, const unsigned char *fileData, int dataSize)
 {
     Image image = { 0 };
@@ -303,28 +302,28 @@ Image LoadImageFromMemory(const char *fileType, const unsigned char *fileData, i
     strcpy(fileExtLower, TextToLower(fileType));
 
 #if defined(SUPPORT_FILEFORMAT_PNG)
-    if ((TextIsEqual(fileExtLower, "png"))
+    if ((TextIsEqual(fileExtLower, ".png"))
 #else
     if ((false)
 #endif
 #if defined(SUPPORT_FILEFORMAT_BMP)
-        || (TextIsEqual(fileExtLower, "bmp"))
+        || (TextIsEqual(fileExtLower, ".bmp"))
 #endif
 #if defined(SUPPORT_FILEFORMAT_TGA)
-        || (TextIsEqual(fileExtLower, "tga"))
+        || (TextIsEqual(fileExtLower, ".tga"))
 #endif
 #if defined(SUPPORT_FILEFORMAT_JPG)
-        || (TextIsEqual(fileExtLower, "jpg") ||
-            TextIsEqual(fileExtLower, "jpeg"))
+        || (TextIsEqual(fileExtLower, ".jpg") ||
+            TextIsEqual(fileExtLower, ".jpeg"))
 #endif
 #if defined(SUPPORT_FILEFORMAT_GIF)
-        || (TextIsEqual(fileExtLower, "gif"))
+        || (TextIsEqual(fileExtLower, ".gif"))
 #endif
 #if defined(SUPPORT_FILEFORMAT_PIC)
-        || (TextIsEqual(fileExtLower, "pic"))
+        || (TextIsEqual(fileExtLower, ".pic"))
 #endif
 #if defined(SUPPORT_FILEFORMAT_PSD)
-        || (TextIsEqual(fileExtLower, "psd"))
+        || (TextIsEqual(fileExtLower, ".psd"))
 #endif
        )
     {
@@ -2749,25 +2748,25 @@ TextureCubemap LoadTextureCubemap(Image image, int layoutType)
 {
     TextureCubemap cubemap = { 0 };
 
-    if (layoutType == CUBEMAP_AUTO_DETECT)      // Try to automatically guess layout type
+    if (layoutType == CUBEMAP_LAYOUT_AUTO_DETECT)      // Try to automatically guess layout type
     {
         // Check image width/height to determine the type of cubemap provided
         if (image.width > image.height)
         {
-            if ((image.width/6) == image.height) { layoutType = CUBEMAP_LINE_HORIZONTAL; cubemap.width = image.width/6; }
-            else if ((image.width/4) == (image.height/3)) { layoutType = CUBEMAP_CROSS_FOUR_BY_THREE; cubemap.width = image.width/4; }
-            else if (image.width >= (int)((float)image.height*1.85f)) { layoutType = CUBEMAP_PANORAMA; cubemap.width = image.width/4; }
+            if ((image.width/6) == image.height) { layoutType = CUBEMAP_LAYOUT_LINE_HORIZONTAL; cubemap.width = image.width/6; }
+            else if ((image.width/4) == (image.height/3)) { layoutType = CUBEMAP_LAYOUT_CROSS_FOUR_BY_THREE; cubemap.width = image.width/4; }
+            else if (image.width >= (int)((float)image.height*1.85f)) { layoutType = CUBEMAP_LAYOUT_PANORAMA; cubemap.width = image.width/4; }
         }
         else if (image.height > image.width)
         {
-            if ((image.height/6) == image.width) { layoutType = CUBEMAP_LINE_VERTICAL; cubemap.width = image.height/6; }
-            else if ((image.width/3) == (image.height/4)) { layoutType = CUBEMAP_CROSS_THREE_BY_FOUR; cubemap.width = image.width/3; }
+            if ((image.height/6) == image.width) { layoutType = CUBEMAP_LAYOUT_LINE_VERTICAL; cubemap.width = image.height/6; }
+            else if ((image.width/3) == (image.height/4)) { layoutType = CUBEMAP_LAYOUT_CROSS_THREE_BY_FOUR; cubemap.width = image.width/3; }
         }
 
         cubemap.height = cubemap.width;
     }
 
-    if (layoutType != CUBEMAP_AUTO_DETECT)
+    if (layoutType != CUBEMAP_LAYOUT_AUTO_DETECT)
     {
         int size = cubemap.width;
 
@@ -2775,20 +2774,20 @@ TextureCubemap LoadTextureCubemap(Image image, int layoutType)
         Rectangle faceRecs[6] = { 0 };      // Face source rectangles
         for (int i = 0; i < 6; i++) faceRecs[i] = (Rectangle){ 0, 0, (float)size, (float)size };
 
-        if (layoutType == CUBEMAP_LINE_VERTICAL)
+        if (layoutType == CUBEMAP_LAYOUT_LINE_VERTICAL)
         {
             faces = image;
             for (int i = 0; i < 6; i++) faceRecs[i].y = (float)size*i;
         }
-        else if (layoutType == CUBEMAP_PANORAMA)
+        else if (layoutType == CUBEMAP_LAYOUT_PANORAMA)
         {
             // TODO: Convert panorama image to square faces...
             // Ref: https://github.com/denivip/panorama/blob/master/panorama.cpp
         }
         else
         {
-            if (layoutType == CUBEMAP_LINE_HORIZONTAL) for (int i = 0; i < 6; i++) faceRecs[i].x = (float)size*i;
-            else if (layoutType == CUBEMAP_CROSS_THREE_BY_FOUR)
+            if (layoutType == CUBEMAP_LAYOUT_LINE_HORIZONTAL) for (int i = 0; i < 6; i++) faceRecs[i].x = (float)size*i;
+            else if (layoutType == CUBEMAP_LAYOUT_CROSS_THREE_BY_FOUR)
             {
                 faceRecs[0].x = (float)size; faceRecs[0].y = (float)size;
                 faceRecs[1].x = (float)size; faceRecs[1].y = (float)size*3;
@@ -2797,7 +2796,7 @@ TextureCubemap LoadTextureCubemap(Image image, int layoutType)
                 faceRecs[4].x = 0; faceRecs[4].y = (float)size;
                 faceRecs[5].x = (float)size*2; faceRecs[5].y = (float)size;
             }
-            else if (layoutType == CUBEMAP_CROSS_FOUR_BY_THREE)
+            else if (layoutType == CUBEMAP_LAYOUT_CROSS_FOUR_BY_THREE)
             {
                 faceRecs[0].x = (float)size*2; faceRecs[0].y = (float)size;
                 faceRecs[1].x = 0; faceRecs[1].y = (float)size;
@@ -2967,63 +2966,63 @@ void SetTextureFilter(Texture2D texture, int filterMode)
 {
     switch (filterMode)
     {
-        case FILTER_POINT:
+        case TEXTURE_FILTER_POINT:
         {
             if (texture.mipmaps > 1)
             {
-                // RL_FILTER_MIP_NEAREST - tex filter: POINT, mipmaps filter: POINT (sharp switching between mipmaps)
-                rlTextureParameters(texture.id, RL_TEXTURE_MIN_FILTER, RL_FILTER_MIP_NEAREST);
+                // RL_TEXTURE_FILTER_MIP_NEAREST - tex filter: POINT, mipmaps filter: POINT (sharp switching between mipmaps)
+                rlTextureParameters(texture.id, RL_TEXTURE_MIN_FILTER, RL_TEXTURE_FILTER_MIP_NEAREST);
 
-                // RL_FILTER_NEAREST - tex filter: POINT (no filter), no mipmaps
-                rlTextureParameters(texture.id, RL_TEXTURE_MAG_FILTER, RL_FILTER_NEAREST);
+                // RL_TEXTURE_FILTER_NEAREST - tex filter: POINT (no filter), no mipmaps
+                rlTextureParameters(texture.id, RL_TEXTURE_MAG_FILTER, RL_TEXTURE_FILTER_NEAREST);
             }
             else
             {
-                // RL_FILTER_NEAREST - tex filter: POINT (no filter), no mipmaps
-                rlTextureParameters(texture.id, RL_TEXTURE_MIN_FILTER, RL_FILTER_NEAREST);
-                rlTextureParameters(texture.id, RL_TEXTURE_MAG_FILTER, RL_FILTER_NEAREST);
+                // RL_TEXTURE_FILTER_NEAREST - tex filter: POINT (no filter), no mipmaps
+                rlTextureParameters(texture.id, RL_TEXTURE_MIN_FILTER, RL_TEXTURE_FILTER_NEAREST);
+                rlTextureParameters(texture.id, RL_TEXTURE_MAG_FILTER, RL_TEXTURE_FILTER_NEAREST);
             }
         } break;
-        case FILTER_BILINEAR:
+        case TEXTURE_FILTER_BILINEAR:
         {
             if (texture.mipmaps > 1)
             {
-                // RL_FILTER_LINEAR_MIP_NEAREST - tex filter: BILINEAR, mipmaps filter: POINT (sharp switching between mipmaps)
-                // Alternative: RL_FILTER_NEAREST_MIP_LINEAR - tex filter: POINT, mipmaps filter: BILINEAR (smooth transition between mipmaps)
-                rlTextureParameters(texture.id, RL_TEXTURE_MIN_FILTER, RL_FILTER_LINEAR_MIP_NEAREST);
+                // RL_TEXTURE_FILTER_LINEAR_MIP_NEAREST - tex filter: BILINEAR, mipmaps filter: POINT (sharp switching between mipmaps)
+                // Alternative: RL_TEXTURE_FILTER_NEAREST_MIP_LINEAR - tex filter: POINT, mipmaps filter: BILINEAR (smooth transition between mipmaps)
+                rlTextureParameters(texture.id, RL_TEXTURE_MIN_FILTER, RL_TEXTURE_FILTER_LINEAR_MIP_NEAREST);
 
-                // RL_FILTER_LINEAR - tex filter: BILINEAR, no mipmaps
-                rlTextureParameters(texture.id, RL_TEXTURE_MAG_FILTER, RL_FILTER_LINEAR);
+                // RL_TEXTURE_FILTER_LINEAR - tex filter: BILINEAR, no mipmaps
+                rlTextureParameters(texture.id, RL_TEXTURE_MAG_FILTER, RL_TEXTURE_FILTER_LINEAR);
             }
             else
             {
-                // RL_FILTER_LINEAR - tex filter: BILINEAR, no mipmaps
-                rlTextureParameters(texture.id, RL_TEXTURE_MIN_FILTER, RL_FILTER_LINEAR);
-                rlTextureParameters(texture.id, RL_TEXTURE_MAG_FILTER, RL_FILTER_LINEAR);
+                // RL_TEXTURE_FILTER_LINEAR - tex filter: BILINEAR, no mipmaps
+                rlTextureParameters(texture.id, RL_TEXTURE_MIN_FILTER, RL_TEXTURE_FILTER_LINEAR);
+                rlTextureParameters(texture.id, RL_TEXTURE_MAG_FILTER, RL_TEXTURE_FILTER_LINEAR);
             }
         } break;
-        case FILTER_TRILINEAR:
+        case TEXTURE_FILTER_TRILINEAR:
         {
             if (texture.mipmaps > 1)
             {
-                // RL_FILTER_MIP_LINEAR - tex filter: BILINEAR, mipmaps filter: BILINEAR (smooth transition between mipmaps)
-                rlTextureParameters(texture.id, RL_TEXTURE_MIN_FILTER, RL_FILTER_MIP_LINEAR);
+                // RL_TEXTURE_FILTER_MIP_LINEAR - tex filter: BILINEAR, mipmaps filter: BILINEAR (smooth transition between mipmaps)
+                rlTextureParameters(texture.id, RL_TEXTURE_MIN_FILTER, RL_TEXTURE_FILTER_MIP_LINEAR);
 
-                // RL_FILTER_LINEAR - tex filter: BILINEAR, no mipmaps
-                rlTextureParameters(texture.id, RL_TEXTURE_MAG_FILTER, RL_FILTER_LINEAR);
+                // RL_TEXTURE_FILTER_LINEAR - tex filter: BILINEAR, no mipmaps
+                rlTextureParameters(texture.id, RL_TEXTURE_MAG_FILTER, RL_TEXTURE_FILTER_LINEAR);
             }
             else
             {
                 TRACELOG(LOG_WARNING, "TEXTURE: [ID %i] No mipmaps available for TRILINEAR texture filtering", texture.id);
 
-                // RL_FILTER_LINEAR - tex filter: BILINEAR, no mipmaps
-                rlTextureParameters(texture.id, RL_TEXTURE_MIN_FILTER, RL_FILTER_LINEAR);
-                rlTextureParameters(texture.id, RL_TEXTURE_MAG_FILTER, RL_FILTER_LINEAR);
+                // RL_TEXTURE_FILTER_LINEAR - tex filter: BILINEAR, no mipmaps
+                rlTextureParameters(texture.id, RL_TEXTURE_MIN_FILTER, RL_TEXTURE_FILTER_LINEAR);
+                rlTextureParameters(texture.id, RL_TEXTURE_MAG_FILTER, RL_TEXTURE_FILTER_LINEAR);
             }
         } break;
-        case FILTER_ANISOTROPIC_4X: rlTextureParameters(texture.id, RL_TEXTURE_ANISOTROPIC_FILTER, 4); break;
-        case FILTER_ANISOTROPIC_8X: rlTextureParameters(texture.id, RL_TEXTURE_ANISOTROPIC_FILTER, 8); break;
-        case FILTER_ANISOTROPIC_16X: rlTextureParameters(texture.id, RL_TEXTURE_ANISOTROPIC_FILTER, 16); break;
+        case TEXTURE_FILTER_ANISOTROPIC_4X: rlTextureParameters(texture.id, RL_TEXTURE_FILTER_ANISOTROPIC, 4); break;
+        case TEXTURE_FILTER_ANISOTROPIC_8X: rlTextureParameters(texture.id, RL_TEXTURE_FILTER_ANISOTROPIC, 8); break;
+        case TEXTURE_FILTER_ANISOTROPIC_16X: rlTextureParameters(texture.id, RL_TEXTURE_FILTER_ANISOTROPIC, 16); break;
         default: break;
     }
 }
@@ -3033,25 +3032,25 @@ void SetTextureWrap(Texture2D texture, int wrapMode)
 {
     switch (wrapMode)
     {
-        case WRAP_REPEAT:
+        case TEXTURE_WRAP_REPEAT:
         {
-            rlTextureParameters(texture.id, RL_TEXTURE_WRAP_S, RL_WRAP_REPEAT);
-            rlTextureParameters(texture.id, RL_TEXTURE_WRAP_T, RL_WRAP_REPEAT);
+            rlTextureParameters(texture.id, RL_TEXTURE_WRAP_S, RL_TEXTURE_WRAP_REPEAT);
+            rlTextureParameters(texture.id, RL_TEXTURE_WRAP_T, RL_TEXTURE_WRAP_REPEAT);
         } break;
-        case WRAP_CLAMP:
+        case TEXTURE_WRAP_CLAMP:
         {
-            rlTextureParameters(texture.id, RL_TEXTURE_WRAP_S, RL_WRAP_CLAMP);
-            rlTextureParameters(texture.id, RL_TEXTURE_WRAP_T, RL_WRAP_CLAMP);
+            rlTextureParameters(texture.id, RL_TEXTURE_WRAP_S, RL_TEXTURE_WRAP_CLAMP);
+            rlTextureParameters(texture.id, RL_TEXTURE_WRAP_T, RL_TEXTURE_WRAP_CLAMP);
         } break;
-        case WRAP_MIRROR_REPEAT:
+        case TEXTURE_WRAP_MIRROR_REPEAT:
         {
-            rlTextureParameters(texture.id, RL_TEXTURE_WRAP_S, RL_WRAP_MIRROR_REPEAT);
-            rlTextureParameters(texture.id, RL_TEXTURE_WRAP_T, RL_WRAP_MIRROR_REPEAT);
+            rlTextureParameters(texture.id, RL_TEXTURE_WRAP_S, RL_TEXTURE_WRAP_MIRROR_REPEAT);
+            rlTextureParameters(texture.id, RL_TEXTURE_WRAP_T, RL_TEXTURE_WRAP_MIRROR_REPEAT);
         } break;
-        case WRAP_MIRROR_CLAMP:
+        case TEXTURE_WRAP_MIRROR_CLAMP:
         {
-            rlTextureParameters(texture.id, RL_TEXTURE_WRAP_S, RL_WRAP_MIRROR_CLAMP);
-            rlTextureParameters(texture.id, RL_TEXTURE_WRAP_T, RL_WRAP_MIRROR_CLAMP);
+            rlTextureParameters(texture.id, RL_TEXTURE_WRAP_S, RL_TEXTURE_WRAP_MIRROR_CLAMP);
+            rlTextureParameters(texture.id, RL_TEXTURE_WRAP_T, RL_TEXTURE_WRAP_MIRROR_CLAMP);
         } break;
         default: break;
     }
@@ -3251,8 +3250,8 @@ void DrawTextureNPatch(Texture2D texture, NPatchInfo nPatchInfo, Rectangle dest,
 
         if (nPatchInfo.source.width < 0) nPatchInfo.source.x -= nPatchInfo.source.width;
         if (nPatchInfo.source.height < 0) nPatchInfo.source.y -= nPatchInfo.source.height;
-        if (nPatchInfo.type == NPT_3PATCH_HORIZONTAL) patchHeight = nPatchInfo.source.height;
-        if (nPatchInfo.type == NPT_3PATCH_VERTICAL) patchWidth = nPatchInfo.source.width;
+        if (nPatchInfo.type == NPATCH_THREE_PATCH_HORIZONTAL) patchHeight = nPatchInfo.source.height;
+        if (nPatchInfo.type == NPATCH_THREE_PATCH_VERTICAL) patchWidth = nPatchInfo.source.width;
 
         bool drawCenter = true;
         bool drawMiddle = true;
@@ -3262,14 +3261,14 @@ void DrawTextureNPatch(Texture2D texture, NPatchInfo nPatchInfo, Rectangle dest,
         float bottomBorder = (float)nPatchInfo.bottom;
 
         // adjust the lateral (left and right) border widths in case patchWidth < texture.width
-        if (patchWidth <= (leftBorder + rightBorder) && nPatchInfo.type != NPT_3PATCH_VERTICAL)
+        if (patchWidth <= (leftBorder + rightBorder) && nPatchInfo.type != NPATCH_THREE_PATCH_VERTICAL)
         {
             drawCenter = false;
             leftBorder = (leftBorder/(leftBorder + rightBorder))*patchWidth;
             rightBorder = patchWidth - leftBorder;
         }
         // adjust the lateral (top and bottom) border heights in case patchHeight < texture.height
-        if (patchHeight <= (topBorder + bottomBorder) && nPatchInfo.type != NPT_3PATCH_HORIZONTAL)
+        if (patchHeight <= (topBorder + bottomBorder) && nPatchInfo.type != NPATCH_THREE_PATCH_HORIZONTAL)
         {
             drawMiddle = false;
             topBorder = (topBorder/(topBorder + bottomBorder))*patchHeight;
@@ -3307,7 +3306,7 @@ void DrawTextureNPatch(Texture2D texture, NPatchInfo nPatchInfo, Rectangle dest,
                 rlColor4ub(tint.r, tint.g, tint.b, tint.a);
                 rlNormal3f(0.0f, 0.0f, 1.0f);               // Normal vector pointing towards viewer
 
-                if (nPatchInfo.type == NPT_9PATCH)
+                if (nPatchInfo.type == NPATCH_NINE_PATCH)
                 {
                     // ------------------------------------------------------------
                     // TOP-LEFT QUAD
@@ -3373,7 +3372,7 @@ void DrawTextureNPatch(Texture2D texture, NPatchInfo nPatchInfo, Rectangle dest,
                     rlTexCoord2f(coordD.x, coordC.y); rlVertex2f(vertD.x, vertC.y);  // Top-right corner for texture and quad
                     rlTexCoord2f(coordC.x, coordC.y); rlVertex2f(vertC.x, vertC.y);  // Top-left corner for texture and quad
                 }
-                else if (nPatchInfo.type == NPT_3PATCH_VERTICAL)
+                else if (nPatchInfo.type == NPATCH_THREE_PATCH_VERTICAL)
                 {
                     // TOP QUAD
                     // -----------------------------------------------------------
@@ -3400,7 +3399,7 @@ void DrawTextureNPatch(Texture2D texture, NPatchInfo nPatchInfo, Rectangle dest,
                     rlTexCoord2f(coordD.x, coordC.y); rlVertex2f(vertD.x, vertC.y);  // Top-right corner for texture and quad
                     rlTexCoord2f(coordA.x, coordC.y); rlVertex2f(vertA.x, vertC.y);  // Top-left corner for texture and quad
                 }
-                else if (nPatchInfo.type == NPT_3PATCH_HORIZONTAL)
+                else if (nPatchInfo.type == NPATCH_THREE_PATCH_HORIZONTAL)
                 {
                     // LEFT QUAD
                     // -----------------------------------------------------------
