@@ -63,26 +63,18 @@
 //----------------------------------------------------------------------------------
 // Global Variables Definition
 //----------------------------------------------------------------------------------
-
-// Log types messages
 static int logTypeLevel = LOG_INFO;                 // Minimum log type level
 
 static TraceLogCallback traceLog = NULL;            // TraceLog callback function pointer
-static MemAllocCallback memAlloc = NULL;            // MemAlloc callback function pointer
-static MemReallocCallback memRealloc = NULL;        // MemRealloc callback funtion pointer
-static MemFreeCallback memFree = NULL;              // MemFree callback funtion pointer
 static LoadFileDataCallback loadFileData = NULL;    // LoadFileData callback funtion pointer
 static SaveFileDataCallback saveFileData = NULL;    // SaveFileText callback funtion pointer
 static LoadFileTextCallback loadFileText = NULL;    // LoadFileText callback funtion pointer
 static SaveFileTextCallback saveFileText = NULL;    // SaveFileText callback funtion pointer
 
-//void *MemAllocDefault(unsigned int size) { return RL_MALLOC(size); }
-//void MemFreeDefault(void *ptr) { RL_FREE(ptr); }
-
+//----------------------------------------------------------------------------------
+// Functions to set internal callbacks
+//----------------------------------------------------------------------------------
 void SetTraceLogCallback(TraceLogCallback callback) { traceLog = callback; }              // Set custom trace log
-void SetMemAllocCallback(MemAllocCallback callback) { memAlloc = callback; }              // Set custom memory allocator
-void SetMemReallocCallback(MemReallocCallback callback) { memRealloc = callback; }        // Set custom memory reallocator
-void SetMemFreeCallback(MemFreeCallback callback) { memFree = callback; }                 // Set custom memory free
 void SetLoadFileDataCallback(LoadFileDataCallback callback) { loadFileData = callback; }  // Set custom file data loader
 void SetSaveFileDataCallback(SaveFileDataCallback callback) { saveFileData = callback; }  // Set custom file data saver
 void SetLoadFileTextCallback(LoadFileTextCallback callback) { loadFileText = callback; }  // Set custom file text loader
@@ -172,28 +164,21 @@ void TraceLog(int logType, const char *text, ...)
 // NOTE: Initializes to zero by default
 void *MemAlloc(int size)
 {
-    // WARNING: This implementation allows changing memAlloc at any
-    // point during program execution, it could be a security risk
-    void *ptr = NULL;
-    if (memAlloc) ptr = memAlloc(size);
-    else ptr = RL_CALLOC(size, 1);
+    void *ptr = RL_CALLOC(size, 1);
     return ptr;
 }
 
 // Internal memory reallocator
 void *MemRealloc(void *ptr, int size)
 {
-    void *ret = NULL;
-    if (memRealloc) ret = memRealloc(ptr, size);
-    else ret = RL_REALLOC(ptr, size);
+    void *ret = RL_REALLOC(ptr, size);
     return ret;
 }
 
 // Internal memory free
 void MemFree(void *ptr)
 {
-    if (memFree) memFree(ptr);
-    else RL_FREE(ptr);
+    RL_FREE(ptr);
 }
 
 // Load data from file into a buffer
