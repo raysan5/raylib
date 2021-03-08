@@ -54,6 +54,7 @@ if (${CUSTOMIZE_BUILD})
     define_if("raylib" SUPPORT_FILEFORMAT_MOD)
     define_if("raylib" SUPPORT_FILEFORMAT_FLAC)
     define_if("raylib" SUPPORT_FILEFORMAT_MP3)
+    define_if("raylib" SUPPORT_STANDARD_FILEIO)
     define_if("raylib" SUPPORT_TRACELOG)
     define_if("raylib" SUPPORT_COMPRESSION_API)
     
