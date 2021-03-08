@@ -3,7 +3,7 @@ name: Windows Examples
 on:
   push:
   pull_request:
-  branches: [ master ]
+    branches: [ master ]
     paths:
     - 'examples/**'
     
