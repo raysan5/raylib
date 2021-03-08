@@ -1,0 +1,32 @@
+name: Linux Examples
+
+on:
+  push:
+  pull_request:
+    branches: [ master ]
+    paths:
+    - 'examples/**'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+    
+    - name: Setup Environment
+      run: | 
+        sudo apt-get update -qq
+        sudo apt-get install -y --no-install-recommends libglfw3 libglfw3-dev libx11-dev libxcursor-dev libxrandr-dev libxinerama-dev libxi-dev libxext-dev libxfixes-dev
+        
+    - name: Build Library
+      run: |
+        cd src
+        make PLATFORM=PLATFORM_DESKTOP CC=gcc RAYLIB_LIBTYPE=STATIC
+        cd ..
+        
+    - name: Build Examples
+      run: |
+        cd examples
+        make PLATFORM=PLATFORM_DESKTOP -B
+        cd ..
