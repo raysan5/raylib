@@ -322,10 +322,10 @@ sinfl_decompress(unsigned char *out, const unsigned char *in, int size) {
       case 0x02: state = dyn; break;}
     } break;
     case stored: {
-      int len, nlen; /* uncompressed block */
+      int len; /* uncompressed block */
       sinfl_get(&in,e,&s,s.bitcnt & 7);
       len = sinfl_get(&in,e,&s,16);
-      nlen = sinfl_get(&in,e,&s,16);
+      //int nlen = sinfl_get(&in,e,&s,16);
       in -= 2; s.bitcnt = 0;
 
       if (len > (e-in) || !len)
