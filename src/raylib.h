@@ -151,8 +151,8 @@
 #define MAGENTA    CLITERAL(Color){ 255, 0, 255, 255 }     // Magenta
 #define RAYWHITE   CLITERAL(Color){ 245, 245, 245, 255 }   // My own White (raylib logo)
 
-// Temporal hack to avoid breaking old codebases using
-// deprecated raylib implementation of these functions
+// Temporal hacks to avoid breaking old codebases using
+// deprecated raylib implementation or definitions
 #define FormatText      TextFormat
 #define LoadText        LoadFileText
 #define GetExtension    GetFileExtension

@@ -73,8 +73,8 @@ int main(void)
 
     Matrix *transforms = RL_MALLOC(count*sizeof(Matrix));   // Pre-multiplied transformations passed to rlgl
 
-    Shader shader = LoadShader(FormatText("resources/shaders/glsl%i/base_lighting_instanced.vs", GLSL_VERSION), 
-                               FormatText("resources/shaders/glsl%i/lighting.fs", GLSL_VERSION));
+    Shader shader = LoadShader(TextFormat("resources/shaders/glsl%i/base_lighting_instanced.vs", GLSL_VERSION), 
+                               TextFormat("resources/shaders/glsl%i/lighting.fs", GLSL_VERSION));
 
     // Get some shader loactions
     shader.locs[LOC_MATRIX_MVP] = GetShaderLocation(shader, "mvp");
