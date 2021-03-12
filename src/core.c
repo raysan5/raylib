@@ -197,7 +197,7 @@
         #define GLFW_EXPOSE_NATIVE_WIN32
         #include "GLFW/glfw3native.h"       // WARNING: It requires customization to avoid windows.h inclusion!
 
-        #if !defined(SUPPORT_BUSY_WAIT_LOOP)
+        #if defined(SUPPORT_WINMM_HIGHRES_TIMER) && !defined(SUPPORT_BUSY_WAIT_LOOP)
             // NOTE: Those functions require linking with winmm library
             unsigned int __stdcall timeBeginPeriod(unsigned int uPeriod);
             unsigned int __stdcall timeEndPeriod(unsigned int uPeriod);
@@ -575,7 +575,7 @@ static int FindNearestConnectorMode(const drmModeConnector *connector, uint widt
 #endif  // PLATFORM_RPI || PLATFORM_DRM
 
 #if defined(_WIN32)
-    // NOTE: We include Sleep() function signature here to avoid windows.h inclusion
+    // NOTE: We include Sleep() function signature here to avoid windows.h inclusion (kernel32 lib)
     void __stdcall Sleep(unsigned long msTimeout);      // Required for Wait()
 #endif
 
@@ -819,7 +819,7 @@ void CloseWindow(void)
     glfwTerminate();
 #endif
 
-#if !defined(SUPPORT_BUSY_WAIT_LOOP) && defined(_WIN32) && !defined(PLATFORM_UWP)
+#if defined(_WIN32) && defined(SUPPORT_WINMM_HIGHRES_TIMER) && !defined(SUPPORT_BUSY_WAIT_LOOP) && !defined(PLATFORM_UWP)
     timeEndPeriod(1);           // Restore time period
 #endif
 
@@ -4204,10 +4204,14 @@ static void SetupFramebuffer(int width, int height)
 // Initialize hi-resolution timer
 static void InitTimer(void)
 {
-    srand((unsigned int)time(NULL));              // Initialize random seed
+    srand((unsigned int)time(NULL));    // Initialize random seed
 
-#if !defined(SUPPORT_BUSY_WAIT_LOOP) && defined(_WIN32) && !defined(PLATFORM_UWP)
-    timeBeginPeriod(1);             // Setup high-resolution timer to 1ms (granularity of 1-2 ms)
+// Setting a higher resolution can improve the accuracy of time-out intervals in wait functions. 
+// However, it can also reduce overall system performance, because the thread scheduler switches tasks more often. 
+// High resolutions can also prevent the CPU power management system from entering power-saving modes. 
+// Setting a higher resolution does not improve the accuracy of the high-resolution performance counter.
+#if defined(_WIN32) && defined(SUPPORT_WINMM_HIGHRES_TIMER) && !defined(SUPPORT_BUSY_WAIT_LOOP) && !defined(PLATFORM_UWP)
+    timeBeginPeriod(1);                 // Setup high-resolution timer to 1ms (granularity of 1-2 ms)
 #endif
 
 #if defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI) || defined(PLATFORM_DRM)
@@ -4220,7 +4224,7 @@ static void InitTimer(void)
     else TRACELOG(LOG_WARNING, "TIMER: Hi-resolution timer not available");
 #endif
 
-    CORE.Time.previous = GetTime();       // Get time as double
+    CORE.Time.previous = GetTime();     // Get time as double
 }
 
 // Wait for some milliseconds (stop program execution)

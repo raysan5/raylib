@@ -40,6 +40,9 @@
 #define SUPPORT_SSH_KEYBOARD_RPI    1
 // Draw a mouse pointer on screen
 #define SUPPORT_MOUSE_CURSOR_NATIVE 1
+// Setting a higher resolution can improve the accuracy of time-out intervals in wait functions. 
+// However, it can also reduce overall system performance, because the thread scheduler switches tasks more often.
+#define SUPPORT_WINMM_HIGHRES_TIMER 1
 // Use busy wait loop for timing sync, if not defined, a high-resolution timer is setup and used
 //#define SUPPORT_BUSY_WAIT_LOOP      1
 // Use a half-busy wait loop, in this case frame sleeps for some time and runs a busy-wait-loop at the end
