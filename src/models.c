@@ -3678,7 +3678,7 @@ static bool GLTFReadValue(cgltf_accessor* acc, unsigned int index, void* variabl
     if(acc->buffer_view == NULL || acc->buffer_view->buffer == NULL || acc->buffer_view->buffer->data == NULL)
         return false;
     
-    void* readPosition = ((char*)acc->buffer_view->buffer->data) + (index * stride) + acc->buffer_view->offset;
+    void* readPosition = ((char*)acc->buffer_view->buffer->data) + (index * stride) + acc->buffer_view->offset + acc->offset;
     memcpy(variable, readPosition, stride);
     return true;
 }
