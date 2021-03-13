@@ -3769,10 +3769,10 @@ static Model LoadGLTF(const char *fileName)
                         }
                         else if (acc->component_type == cgltf_component_type_r_32u)
                         {
-                            unsigned int readValue[3];
+                            int readValue[3];
                             for(int a = 0; a < acc->count; a++)
                             {
-                                GLTFReadValue(acc, a, readValue, 3, sizeof(unsigned int));
+                                GLTFReadValue(acc, a, readValue, 3, sizeof(int));
                                 model.meshes[primitiveIndex].vertices[(a * 3) + 0] = readValue[0];
                                 model.meshes[primitiveIndex].vertices[(a * 3) + 1] = readValue[1];
                                 model.meshes[primitiveIndex].vertices[(a * 3) + 2] = readValue[2];
@@ -3803,10 +3803,10 @@ static Model LoadGLTF(const char *fileName)
                         }
                         else if (acc->component_type == cgltf_component_type_r_32u)
                         {
-                            unsigned int readValue[3];
+                            int readValue[3];
                             for(int a = 0; a < acc->count; a++)
                             {
-                                GLTFReadValue(acc, a, readValue, 3, sizeof(unsigned int));
+                                GLTFReadValue(acc, a, readValue, 3, sizeof(int));
                                 model.meshes[primitiveIndex].normals[(a * 3) + 0] = readValue[0];
                                 model.meshes[primitiveIndex].normals[(a * 3) + 1] = readValue[1];
                                 model.meshes[primitiveIndex].normals[(a * 3) + 2] = readValue[2];
@@ -3889,14 +3889,14 @@ static Model LoadGLTF(const char *fileName)
                 {
                     model.meshMaterial[primitiveIndex] = model.materialCount - 1;
                 }
-                
+    
                 BindGLTFPrimitivePose(&model, data, primitiveIndex);
     
                 primitiveIndex++;
             }
-    
+            
         }
-
+        
         cgltf_free(data);
     }
     else TRACELOG(LOG_WARNING, "MODEL: [%s] Failed to load glTF data", fileName);
