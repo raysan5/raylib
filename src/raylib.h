@@ -153,12 +153,14 @@
 
 // Temporal hacks to avoid breaking old codebases using
 // deprecated raylib implementation or definitions
-#define FormatText      TextFormat
-#define LoadText        LoadFileText
-#define GetExtension    GetFileExtension
-#define GetImageData    LoadImageColors
-#define FILTER_POINT    TEXTURE_FILTER_POINT
-#define FILTER_BILINEAR TEXTURE_FILTER_BILINEAR
+#define FormatText          TextFormat
+#define LoadText            LoadFileText
+#define GetExtension        GetFileExtension
+#define GetImageData        LoadImageColors
+#define FILTER_POINT        TEXTURE_FILTER_POINT
+#define FILTER_BILINEAR     TEXTURE_FILTER_BILINEAR
+#define MAP_DIFFUSE         MATERIAL_MAP_DIFFUSE
+#define PIXELFORMAT_UNCOMPRESSED_R8G8B8A8   PIXELFORMAT_PIXELFORMAT_UNCOMPRESSED_R8G8B8A8
 
 //----------------------------------------------------------------------------------
 // Structures Definition
@@ -701,91 +703,91 @@ typedef enum {
 
 // Shader location points
 typedef enum {
-    LOC_VERTEX_POSITION = 0,
-    LOC_VERTEX_TEXCOORD01,
-    LOC_VERTEX_TEXCOORD02,
-    LOC_VERTEX_NORMAL,
-    LOC_VERTEX_TANGENT,
-    LOC_VERTEX_COLOR,
-    LOC_MATRIX_MVP,
-    LOC_MATRIX_MODEL,
-    LOC_MATRIX_VIEW,
-    LOC_MATRIX_PROJECTION,
-    LOC_VECTOR_VIEW,
-    LOC_COLOR_DIFFUSE,
-    LOC_COLOR_SPECULAR,
-    LOC_COLOR_AMBIENT,
-    LOC_MAP_ALBEDO,          // LOC_MAP_DIFFUSE
-    LOC_MAP_METALNESS,       // LOC_MAP_SPECULAR
-    LOC_MAP_NORMAL,
-    LOC_MAP_ROUGHNESS,
-    LOC_MAP_OCCLUSION,
-    LOC_MAP_EMISSION,
-    LOC_MAP_HEIGHT,
-    LOC_MAP_CUBEMAP,
-    LOC_MAP_IRRADIANCE,
-    LOC_MAP_PREFILTER,
-    LOC_MAP_BRDF
+    SHADER_LOC_VERTEX_POSITION = 0,
+    SHADER_LOC_VERTEX_TEXCOORD01,
+    SHADER_LOC_VERTEX_TEXCOORD02,
+    SHADER_LOC_VERTEX_NORMAL,
+    SHADER_LOC_VERTEX_TANGENT,
+    SHADER_LOC_VERTEX_COLOR,
+    SHADER_LOC_MATRIX_MVP,
+    SHADER_LOC_MATRIX_MODEL,
+    SHADER_LOC_MATRIX_VIEW,
+    SHADER_LOC_MATRIX_PROJECTION,
+    SHADER_LOC_VECTOR_VIEW,
+    SHADER_LOC_COLOR_DIFFUSE,
+    SHADER_LOC_COLOR_SPECULAR,
+    SHADER_LOC_COLOR_AMBIENT,
+    SHADER_LOC_MAP_ALBEDO,          // SHADER_LOC_MAP_DIFFUSE
+    SHADER_LOC_MAP_METALNESS,       // SHADER_LOC_MAP_SPECULAR
+    SHADER_LOC_MAP_NORMAL,
+    SHADER_LOC_MAP_ROUGHNESS,
+    SHADER_LOC_MAP_OCCLUSION,
+    SHADER_LOC_MAP_EMISSION,
+    SHADER_LOC_MAP_HEIGHT,
+    SHADER_LOC_MAP_CUBEMAP,
+    SHADER_LOC_MAP_IRRADIANCE,
+    SHADER_LOC_MAP_PREFILTER,
+    SHADER_LOC_MAP_BRDF
 } ShaderLocationIndex;
 
-#define LOC_MAP_DIFFUSE      LOC_MAP_ALBEDO
-#define LOC_MAP_SPECULAR     LOC_MAP_METALNESS
+#define SHADER_LOC_MAP_DIFFUSE      SHADER_LOC_MAP_ALBEDO
+#define SHADER_LOC_MAP_SPECULAR     SHADER_LOC_MAP_METALNESS
 
 // Shader uniform data types
 typedef enum {
-    UNIFORM_FLOAT = 0,
-    UNIFORM_VEC2,
-    UNIFORM_VEC3,
-    UNIFORM_VEC4,
-    UNIFORM_INT,
-    UNIFORM_IVEC2,
-    UNIFORM_IVEC3,
-    UNIFORM_IVEC4,
-    UNIFORM_SAMPLER2D
+    SHADER_UNIFORM_FLOAT = 0,
+    SHADER_UNIFORM_VEC2,
+    SHADER_UNIFORM_VEC3,
+    SHADER_UNIFORM_VEC4,
+    SHADER_UNIFORM_INT,
+    SHADER_UNIFORM_IVEC2,
+    SHADER_UNIFORM_IVEC3,
+    SHADER_UNIFORM_IVEC4,
+    SHADER_UNIFORM_SAMPLER2D
 } ShaderUniformDataType;
 
 // Material maps
 typedef enum {
-    MAP_ALBEDO    = 0,       // MAP_DIFFUSE
-    MAP_METALNESS = 1,       // MAP_SPECULAR
-    MAP_NORMAL    = 2,
-    MAP_ROUGHNESS = 3,
-    MAP_OCCLUSION,
-    MAP_EMISSION,
-    MAP_HEIGHT,
-    MAP_CUBEMAP,             // NOTE: Uses GL_TEXTURE_CUBE_MAP
-    MAP_IRRADIANCE,          // NOTE: Uses GL_TEXTURE_CUBE_MAP
-    MAP_PREFILTER,           // NOTE: Uses GL_TEXTURE_CUBE_MAP
-    MAP_BRDF
+    MATERIAL_MAP_ALBEDO    = 0,       // MATERIAL_MAP_DIFFUSE
+    MATERIAL_MAP_METALNESS = 1,       // MATERIAL_MAP_SPECULAR
+    MATERIAL_MAP_NORMAL    = 2,
+    MATERIAL_MAP_ROUGHNESS = 3,
+    MATERIAL_MAP_OCCLUSION,
+    MATERIAL_MAP_EMISSION,
+    MATERIAL_MAP_HEIGHT,
+    MATERIAL_MAP_BRDG,
+    MATERIAL_MAP_CUBEMAP,             // NOTE: Uses GL_TEXTURE_CUBE_MAP
+    MATERIAL_MAP_IRRADIANCE,          // NOTE: Uses GL_TEXTURE_CUBE_MAP
+    MATERIAL_MAP_PREFILTER            // NOTE: Uses GL_TEXTURE_CUBE_MAP
 } MaterialMapType;
 
-#define MAP_DIFFUSE      MAP_ALBEDO
-#define MAP_SPECULAR     MAP_METALNESS
+#define MATERIAL_MAP_DIFFUSE      MATERIAL_MAP_ALBEDO
+#define MATERIAL_MAP_SPECULAR     MATERIAL_MAP_METALNESS
 
 // Pixel formats
 // NOTE: Support depends on OpenGL version and platform
 typedef enum {
-    UNCOMPRESSED_GRAYSCALE = 1,     // 8 bit per pixel (no alpha)
-    UNCOMPRESSED_GRAY_ALPHA,        // 8*2 bpp (2 channels)
-    UNCOMPRESSED_R5G6B5,            // 16 bpp
-    UNCOMPRESSED_R8G8B8,            // 24 bpp
-    UNCOMPRESSED_R5G5B5A1,          // 16 bpp (1 bit alpha)
-    UNCOMPRESSED_R4G4B4A4,          // 16 bpp (4 bit alpha)
-    UNCOMPRESSED_R8G8B8A8,          // 32 bpp
-    UNCOMPRESSED_R32,               // 32 bpp (1 channel - float)
-    UNCOMPRESSED_R32G32B32,         // 32*3 bpp (3 channels - float)
-    UNCOMPRESSED_R32G32B32A32,      // 32*4 bpp (4 channels - float)
-    COMPRESSED_DXT1_RGB,            // 4 bpp (no alpha)
-    COMPRESSED_DXT1_RGBA,           // 4 bpp (1 bit alpha)
-    COMPRESSED_DXT3_RGBA,           // 8 bpp
-    COMPRESSED_DXT5_RGBA,           // 8 bpp
-    COMPRESSED_ETC1_RGB,            // 4 bpp
-    COMPRESSED_ETC2_RGB,            // 4 bpp
-    COMPRESSED_ETC2_EAC_RGBA,       // 8 bpp
-    COMPRESSED_PVRT_RGB,            // 4 bpp
-    COMPRESSED_PVRT_RGBA,           // 4 bpp
-    COMPRESSED_ASTC_4x4_RGBA,       // 8 bpp
-    COMPRESSED_ASTC_8x8_RGBA        // 2 bpp
+    PIXELFORMAT_UNCOMPRESSED_GRAYSCALE = 1,     // 8 bit per pixel (no alpha)
+    PIXELFORMAT_UNCOMPRESSED_GRAY_ALPHA,        // 8*2 bpp (2 channels)
+    PIXELFORMAT_UNCOMPRESSED_R5G6B5,            // 16 bpp
+    PIXELFORMAT_UNCOMPRESSED_R8G8B8,            // 24 bpp
+    PIXELFORMAT_UNCOMPRESSED_R5G5B5A1,          // 16 bpp (1 bit alpha)
+    PIXELFORMAT_UNCOMPRESSED_R4G4B4A4,          // 16 bpp (4 bit alpha)
+    PIXELFORMAT_UNCOMPRESSED_R8G8B8A8,          // 32 bpp
+    PIXELFORMAT_UNCOMPRESSED_R32,               // 32 bpp (1 channel - float)
+    PIXELFORMAT_UNCOMPRESSED_R32G32B32,         // 32*3 bpp (3 channels - float)
+    PIXELFORMAT_UNCOMPRESSED_R32G32B32A32,      // 32*4 bpp (4 channels - float)
+    PIXELFORMAT_COMPRESSED_DXT1_RGB,            // 4 bpp (no alpha)
+    PIXELFORMAT_COMPRESSED_DXT1_RGBA,           // 4 bpp (1 bit alpha)
+    PIXELFORMAT_COMPRESSED_DXT3_RGBA,           // 8 bpp
+    PIXELFORMAT_COMPRESSED_DXT5_RGBA,           // 8 bpp
+    PIXELFORMAT_COMPRESSED_ETC1_RGB,            // 4 bpp
+    PIXELFORMAT_COMPRESSED_ETC2_RGB,            // 4 bpp
+    PIXELFORMAT_COMPRESSED_ETC2_EAC_RGBA,       // 8 bpp
+    PIXELFORMAT_COMPRESSED_PVRT_RGB,            // 4 bpp
+    PIXELFORMAT_COMPRESSED_PVRT_RGBA,           // 4 bpp
+    PIXELFORMAT_COMPRESSED_ASTC_4x4_RGBA,       // 8 bpp
+    PIXELFORMAT_COMPRESSED_ASTC_8x8_RGBA        // 2 bpp
 } PixelFormat;
 
 // Texture parameters: filter mode
@@ -1360,7 +1362,7 @@ RLAPI bool ExportMesh(Mesh mesh, const char *fileName);                         
 RLAPI Material *LoadMaterials(const char *fileName, int *materialCount);                                // Load materials from model file
 RLAPI Material LoadMaterialDefault(void);                                                               // Load default material (Supports: DIFFUSE, SPECULAR, NORMAL maps)
 RLAPI void UnloadMaterial(Material material);                                                           // Unload material from GPU memory (VRAM)
-RLAPI void SetMaterialTexture(Material *material, int mapType, Texture2D texture);                      // Set texture for a material map type (MAP_DIFFUSE, MAP_SPECULAR...)
+RLAPI void SetMaterialTexture(Material *material, int mapType, Texture2D texture);                      // Set texture for a material map type (MATERIAL_MAP_DIFFUSE, MATERIAL_MAP_SPECULAR...)
 RLAPI void SetModelMeshMaterial(Model *model, int meshId, int materialId);                              // Set material for a mesh
 
 // Model animations loading/unloading functions

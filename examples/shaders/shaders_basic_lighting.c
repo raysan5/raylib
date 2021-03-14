@@ -65,20 +65,20 @@ int main(void)
     Texture texture = LoadTexture("resources/texel_checker.png");
 
     // Assign texture to default model material
-    modelA.materials[0].maps[MAP_DIFFUSE].texture = texture;
-    modelB.materials[0].maps[MAP_DIFFUSE].texture = texture;
-    modelC.materials[0].maps[MAP_DIFFUSE].texture = texture;
+    modelA.materials[0].maps[MATERIAL_MAP_DIFFUSE].texture = texture;
+    modelB.materials[0].maps[MATERIAL_MAP_DIFFUSE].texture = texture;
+    modelC.materials[0].maps[MATERIAL_MAP_DIFFUSE].texture = texture;
 
     Shader shader = LoadShader(TextFormat("resources/shaders/glsl%i/base_lighting.vs", GLSL_VERSION), 
                                TextFormat("resources/shaders/glsl%i/lighting.fs", GLSL_VERSION));
     
     // Get some shader loactions
-    shader.locs[LOC_MATRIX_MODEL] = GetShaderLocation(shader, "matModel");
-    shader.locs[LOC_VECTOR_VIEW] = GetShaderLocation(shader, "viewPos");
+    shader.locs[SHADER_LOC_MATRIX_MODEL] = GetShaderLocation(shader, "matModel");
+    shader.locs[SHADER_LOC_VECTOR_VIEW] = GetShaderLocation(shader, "viewPos");
 
     // ambient light level
     int ambientLoc = GetShaderLocation(shader, "ambient");
-    SetShaderValue(shader, ambientLoc, (float[4]){ 0.2f, 0.2f, 0.2f, 1.0f }, UNIFORM_VEC4);
+    SetShaderValue(shader, ambientLoc, (float[4]){ 0.2f, 0.2f, 0.2f, 1.0f }, SHADER_UNIFORM_VEC4);
     
     float angle = 6.282f;
 
@@ -133,7 +133,7 @@ int main(void)
 
         // Update the light shader with the camera view position
         float cameraPos[3] = { camera.position.x, camera.position.y, camera.position.z };
-        SetShaderValue(shader, shader.locs[LOC_VECTOR_VIEW], cameraPos, UNIFORM_VEC3);
+        SetShaderValue(shader, shader.locs[SHADER_LOC_VECTOR_VIEW], cameraPos, SHADER_UNIFORM_VEC3);
         //----------------------------------------------------------------------------------
 
         // Draw

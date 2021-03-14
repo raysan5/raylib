@@ -196,7 +196,7 @@ extern void LoadFontDefault(void)
         .data = calloc(128*128, 2),  // 2 bytes per pixel (gray + alpha)
         .width = 128,
         .height = 128,
-        .format = UNCOMPRESSED_GRAY_ALPHA,
+        .format = PIXELFORMAT_UNCOMPRESSED_GRAY_ALPHA,
         .mipmaps = 1
     };
 
@@ -440,7 +440,7 @@ Font LoadFontFromImage(Image image, Color key, int firstChar)
         .data = pixels,
         .width = image.width,
         .height = image.height,
-        .format = UNCOMPRESSED_R8G8B8A8,
+        .format = PIXELFORMAT_UNCOMPRESSED_R8G8B8A8,
         .mipmaps = 1
     };
 
@@ -598,7 +598,7 @@ CharInfo *LoadFontData(const unsigned char *fileData, int dataSize, int fontSize
                 chars[i].image.width = chw;
                 chars[i].image.height = chh;
                 chars[i].image.mipmaps = 1;
-                chars[i].image.format = UNCOMPRESSED_GRAYSCALE;
+                chars[i].image.format = PIXELFORMAT_UNCOMPRESSED_GRAYSCALE;
 
                 chars[i].offsetY += (int)((float)ascent*scaleFactor);
 
@@ -609,7 +609,7 @@ CharInfo *LoadFontData(const unsigned char *fileData, int dataSize, int fontSize
                         .data = calloc(chars[i].advanceX*fontSize, 2),
                         .width = chars[i].advanceX,
                         .height = fontSize,
-                        .format = UNCOMPRESSED_GRAYSCALE,
+                        .format = PIXELFORMAT_UNCOMPRESSED_GRAYSCALE,
                         .mipmaps = 1
                     };
 
@@ -679,7 +679,7 @@ Image GenImageFontAtlas(const CharInfo *chars, Rectangle **charRecs, int charsCo
     atlas.width = imageSize;   // Atlas bitmap width
     atlas.height = imageSize;  // Atlas bitmap height
     atlas.data = (unsigned char *)RL_CALLOC(1, atlas.width*atlas.height);      // Create a bitmap to store characters (8 bpp)
-    atlas.format = UNCOMPRESSED_GRAYSCALE;
+    atlas.format = PIXELFORMAT_UNCOMPRESSED_GRAYSCALE;
     atlas.mipmaps = 1;
 
     // DEBUG: We can see padding in the generated image setting a gray background...
@@ -783,7 +783,7 @@ Image GenImageFontAtlas(const CharInfo *chars, Rectangle **charRecs, int charsCo
 
     RL_FREE(atlas.data);
     atlas.data = dataGrayAlpha;
-    atlas.format = UNCOMPRESSED_GRAY_ALPHA;
+    atlas.format = PIXELFORMAT_UNCOMPRESSED_GRAY_ALPHA;
 
     *charRecs = recs;
 
@@ -1794,14 +1794,14 @@ static Font LoadBMFont(const char *fileName)
 
     Image imFont = LoadImage(imPath);
 
-    if (imFont.format == UNCOMPRESSED_GRAYSCALE)
+    if (imFont.format == PIXELFORMAT_UNCOMPRESSED_GRAYSCALE)
     {
         // Convert image to GRAYSCALE + ALPHA, using the mask as the alpha channel
         Image imFontAlpha = {
             .data = calloc(imFont.width*imFont.height, 2),
             .width = imFont.width,
             .height = imFont.height,
-            .format = UNCOMPRESSED_GRAY_ALPHA,
+            .format = PIXELFORMAT_UNCOMPRESSED_GRAY_ALPHA,
             .mipmaps = 1
         };
 

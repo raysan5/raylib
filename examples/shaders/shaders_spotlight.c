@@ -114,7 +114,7 @@ int main(void)
     // a pitch black half and a dimly lit half.
     unsigned int wLoc = GetShaderLocation(shdrSpot, "screenWidth");
     float sw = (float)GetScreenWidth();
-    SetShaderValue(shdrSpot, wLoc, &sw, UNIFORM_FLOAT);
+    SetShaderValue(shdrSpot, wLoc, &sw, SHADER_UNIFORM_FLOAT);
 
     // Randomise the locations and velocities of the spotlights
     // and initialise the shader locations
@@ -133,9 +133,9 @@ int main(void)
         spots[i].inner = 28 * (i + 1);
         spots[i].radius = 48 * (i + 1);
         
-        SetShaderValue(shdrSpot, spots[i].posLoc, &spots[i].pos.x, UNIFORM_VEC2);
-        SetShaderValue(shdrSpot, spots[i].innerLoc, &spots[i].inner, UNIFORM_FLOAT);
-        SetShaderValue(shdrSpot, spots[i].radiusLoc, &spots[i].radius, UNIFORM_FLOAT);
+        SetShaderValue(shdrSpot, spots[i].posLoc, &spots[i].pos.x, SHADER_UNIFORM_VEC2);
+        SetShaderValue(shdrSpot, spots[i].innerLoc, &spots[i].inner, SHADER_UNIFORM_FLOAT);
+        SetShaderValue(shdrSpot, spots[i].radiusLoc, &spots[i].radius, SHADER_UNIFORM_FLOAT);
     }
 
     SetTargetFPS(60);               // Set  to run at 60 frames-per-second
@@ -171,7 +171,7 @@ int main(void)
                 if (spots[i].pos.y > (screenHeight - 64)) spots[i].vel.y = -spots[i].vel.y;
             }
             
-            SetShaderValue(shdrSpot, spots[i].posLoc, &spots[i].pos.x, UNIFORM_VEC2);                
+            SetShaderValue(shdrSpot, spots[i].posLoc, &spots[i].pos.x, SHADER_UNIFORM_VEC2);                
         }
             
         // Draw

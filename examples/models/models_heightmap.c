@@ -29,7 +29,7 @@ int main(void)
     Mesh mesh = GenMeshHeightmap(image, (Vector3){ 16, 8, 16 });    // Generate heightmap mesh (RAM and VRAM)
     Model model = LoadModelFromMesh(mesh);                          // Load model from generated mesh
 
-    model.materials[0].maps[MAP_DIFFUSE].texture = texture;         // Set map diffuse texture
+    model.materials[0].maps[MATERIAL_MAP_DIFFUSE].texture = texture;         // Set map diffuse texture
     Vector3 mapPosition = { -8.0f, 0.0f, -8.0f };                   // Define model position
 
     UnloadImage(image);                     // Unload heightmap image from RAM, already uploaded to VRAM

@@ -988,12 +988,12 @@ Material LoadMaterialDefault(void)
     material.maps = (MaterialMap *)RL_CALLOC(MAX_MATERIAL_MAPS, sizeof(MaterialMap));
 
     material.shader = GetShaderDefault();
-    material.maps[MAP_DIFFUSE].texture = GetTextureDefault();   // White texture (1x1 pixel)
-    //material.maps[MAP_NORMAL].texture;         // NOTE: By default, not set
-    //material.maps[MAP_SPECULAR].texture;       // NOTE: By default, not set
+    material.maps[MATERIAL_MAP_DIFFUSE].texture = GetTextureDefault();   // White texture (1x1 pixel)
+    //material.maps[MATERIAL_MAP_NORMAL].texture;         // NOTE: By default, not set
+    //material.maps[MATERIAL_MAP_SPECULAR].texture;       // NOTE: By default, not set
 
-    material.maps[MAP_DIFFUSE].color = WHITE;    // Diffuse color
-    material.maps[MAP_SPECULAR].color = WHITE;   // Specular color
+    material.maps[MATERIAL_MAP_DIFFUSE].color = WHITE;    // Diffuse color
+    material.maps[MATERIAL_MAP_SPECULAR].color = WHITE;   // Specular color
 
     return material;
 }
@@ -1014,7 +1014,7 @@ void UnloadMaterial(Material material)
     RL_FREE(material.params);
 }
 
-// Set texture for a material map type (MAP_DIFFUSE, MAP_SPECULAR...)
+// Set texture for a material map type (MATERIAL_MAP_DIFFUSE, MATERIAL_MAP_SPECULAR...)
 // NOTE: Previous texture should be manually unloaded
 void SetMaterialTexture(Material *material, int mapType, Texture2D texture)
 {
@@ -2338,7 +2338,7 @@ void MeshTangents(Mesh *mesh)
     RL_FREE(tan2);
 
     // Load a new tangent attributes buffer
-    mesh->vboId[LOC_VERTEX_TANGENT] = rlLoadAttribBuffer(mesh->vaoId, LOC_VERTEX_TANGENT, mesh->tangents, mesh->vertexCount*4*sizeof(float), false);
+    mesh->vboId[SHADER_LOC_VERTEX_TANGENT] = rlLoadAttribBuffer(mesh->vaoId, SHADER_LOC_VERTEX_TANGENT, mesh->tangents, mesh->vertexCount*4*sizeof(float), false);
 
     TRACELOG(LOG_INFO, "MESH: Tangents data computed for provided mesh");
 }
@@ -2381,7 +2381,7 @@ void DrawModelEx(Model model, Vector3 position, Vector3 rotationAxis, float rota
 
     for (int i = 0; i < model.meshCount; i++)
     {
-        Color color = model.materials[model.meshMaterial[i]].maps[MAP_DIFFUSE].color;
+        Color color = model.materials[model.meshMaterial[i]].maps[MATERIAL_MAP_DIFFUSE].color;
 
         Color colorTint = WHITE;
         colorTint.r = (unsigned char)((((float)color.r/255.0)*((float)tint.r/255.0))*255.0f);
@@ -2389,9 +2389,9 @@ void DrawModelEx(Model model, Vector3 position, Vector3 rotationAxis, float rota
         colorTint.b = (unsigned char)((((float)color.b/255.0)*((float)tint.b/255.0))*255.0f);
         colorTint.a = (unsigned char)((((float)color.a/255.0)*((float)tint.a/255.0))*255.0f);
 
-        model.materials[model.meshMaterial[i]].maps[MAP_DIFFUSE].color = colorTint;
+        model.materials[model.meshMaterial[i]].maps[MATERIAL_MAP_DIFFUSE].color = colorTint;
         rlDrawMesh(model.meshes[i], model.materials[model.meshMaterial[i]], model.transform);
-        model.materials[model.meshMaterial[i]].maps[MAP_DIFFUSE].color = color;
+        model.materials[model.meshMaterial[i]].maps[MATERIAL_MAP_DIFFUSE].color = color;
     }
 }
 
@@ -2891,28 +2891,28 @@ static Model LoadOBJ(const char *fileName)
         for (unsigned int m = 0; m < materialCount; m++)
         {
             // Init material to default
-            // NOTE: Uses default shader, which only supports MAP_DIFFUSE
+            // NOTE: Uses default shader, which only supports MATERIAL_MAP_DIFFUSE
             model.materials[m] = LoadMaterialDefault();
 
-            model.materials[m].maps[MAP_DIFFUSE].texture = GetTextureDefault();     // Get default texture, in case no texture is defined
+            model.materials[m].maps[MATERIAL_MAP_DIFFUSE].texture = GetTextureDefault();     // Get default texture, in case no texture is defined
 
-            if (materials[m].diffuse_texname != NULL) model.materials[m].maps[MAP_DIFFUSE].texture = LoadTexture(materials[m].diffuse_texname);  //char *diffuse_texname; // map_Kd
-            else model.materials[m].maps[MAP_DIFFUSE].texture = GetTextureDefault();
+            if (materials[m].diffuse_texname != NULL) model.materials[m].maps[MATERIAL_MAP_DIFFUSE].texture = LoadTexture(materials[m].diffuse_texname);  //char *diffuse_texname; // map_Kd
+            else model.materials[m].maps[MATERIAL_MAP_DIFFUSE].texture = GetTextureDefault();
 
-            model.materials[m].maps[MAP_DIFFUSE].color = (Color){ (unsigned char)(materials[m].diffuse[0]*255.0f), (unsigned char)(materials[m].diffuse[1]*255.0f), (unsigned char)(materials[m].diffuse[2]*255.0f), 255 }; //float diffuse[3];
-            model.materials[m].maps[MAP_DIFFUSE].value = 0.0f;
+            model.materials[m].maps[MATERIAL_MAP_DIFFUSE].color = (Color){ (unsigned char)(materials[m].diffuse[0]*255.0f), (unsigned char)(materials[m].diffuse[1]*255.0f), (unsigned char)(materials[m].diffuse[2]*255.0f), 255 }; //float diffuse[3];
+            model.materials[m].maps[MATERIAL_MAP_DIFFUSE].value = 0.0f;
 
-            if (materials[m].specular_texname != NULL) model.materials[m].maps[MAP_SPECULAR].texture = LoadTexture(materials[m].specular_texname);  //char *specular_texname; // map_Ks
-            model.materials[m].maps[MAP_SPECULAR].color = (Color){ (unsigned char)(materials[m].specular[0]*255.0f), (unsigned char)(materials[m].specular[1]*255.0f), (unsigned char)(materials[m].specular[2]*255.0f), 255 }; //float specular[3];
-            model.materials[m].maps[MAP_SPECULAR].value = 0.0f;
+            if (materials[m].specular_texname != NULL) model.materials[m].maps[MATERIAL_MAP_SPECULAR].texture = LoadTexture(materials[m].specular_texname);  //char *specular_texname; // map_Ks
+            model.materials[m].maps[MATERIAL_MAP_SPECULAR].color = (Color){ (unsigned char)(materials[m].specular[0]*255.0f), (unsigned char)(materials[m].specular[1]*255.0f), (unsigned char)(materials[m].specular[2]*255.0f), 255 }; //float specular[3];
+            model.materials[m].maps[MATERIAL_MAP_SPECULAR].value = 0.0f;
 
-            if (materials[m].bump_texname != NULL) model.materials[m].maps[MAP_NORMAL].texture = LoadTexture(materials[m].bump_texname);  //char *bump_texname; // map_bump, bump
-            model.materials[m].maps[MAP_NORMAL].color = WHITE;
-            model.materials[m].maps[MAP_NORMAL].value = materials[m].shininess;
+            if (materials[m].bump_texname != NULL) model.materials[m].maps[MATERIAL_MAP_NORMAL].texture = LoadTexture(materials[m].bump_texname);  //char *bump_texname; // map_bump, bump
+            model.materials[m].maps[MATERIAL_MAP_NORMAL].color = WHITE;
+            model.materials[m].maps[MATERIAL_MAP_NORMAL].value = materials[m].shininess;
 
-            model.materials[m].maps[MAP_EMISSION].color = (Color){ (unsigned char)(materials[m].emission[0]*255.0f), (unsigned char)(materials[m].emission[1]*255.0f), (unsigned char)(materials[m].emission[2]*255.0f), 255 }; //float emission[3];
+            model.materials[m].maps[MATERIAL_MAP_EMISSION].color = (Color){ (unsigned char)(materials[m].emission[0]*255.0f), (unsigned char)(materials[m].emission[1]*255.0f), (unsigned char)(materials[m].emission[2]*255.0f), 255 }; //float emission[3];
 
-            if (materials[m].displacement_texname != NULL) model.materials[m].maps[MAP_HEIGHT].texture = LoadTexture(materials[m].displacement_texname);  //char *displacement_texname; // disp
+            if (materials[m].displacement_texname != NULL) model.materials[m].maps[MATERIAL_MAP_HEIGHT].texture = LoadTexture(materials[m].displacement_texname);  //char *displacement_texname; // disp
         }
 
         tinyobj_attrib_free(&attrib);
@@ -3613,7 +3613,7 @@ static Image LoadImageFromCgltfImage(cgltf_image *image, const char *texPath, Co
                 rimage.data = raw;
                 rimage.width = width;
                 rimage.height = height;
-                rimage.format = UNCOMPRESSED_R8G8B8A8;
+                rimage.format = PIXELFORMAT_UNCOMPRESSED_R8G8B8A8;
                 rimage.mipmaps = 1;
 
                 // TODO: Tint shouldn't be applied here!
@@ -3647,7 +3647,7 @@ static Image LoadImageFromCgltfImage(cgltf_image *image, const char *texPath, Co
         rimage.data = raw;
         rimage.width = width;
         rimage.height = height;
-        rimage.format = UNCOMPRESSED_R8G8B8A8;
+        rimage.format = PIXELFORMAT_UNCOMPRESSED_R8G8B8A8;
         rimage.mipmaps = 1;
 
         // TODO: Tint shouldn't be applied here!
@@ -3981,12 +3981,12 @@ static void LoadGLTFMaterial(Model* model, const char* fileName, const cgltf_dat
             tint.b = (unsigned char)(data->materials[i].pbr_metallic_roughness.base_color_factor[2] * 255);
             tint.a = (unsigned char)(data->materials[i].pbr_metallic_roughness.base_color_factor[3] * 255);
 
-            model->materials[i].maps[MAP_ALBEDO].color = tint;
+            model->materials[i].maps[MATERIAL_MAP_ALBEDO].color = tint;
 
             if (data->materials[i].pbr_metallic_roughness.base_color_texture.texture)
             {
                 Image albedo = LoadImageFromCgltfImage(data->materials[i].pbr_metallic_roughness.base_color_texture.texture->image, texPath, tint);
-                model->materials[i].maps[MAP_ALBEDO].texture = LoadTextureFromImage(albedo);
+                model->materials[i].maps[MATERIAL_MAP_ALBEDO].texture = LoadTextureFromImage(albedo);
                 UnloadImage(albedo);
             }
 
@@ -3995,13 +3995,13 @@ static void LoadGLTFMaterial(Model* model, const char* fileName, const cgltf_dat
             if (data->materials[i].pbr_metallic_roughness.metallic_roughness_texture.texture)
             {
                 Image metallicRoughness = LoadImageFromCgltfImage(data->materials[i].pbr_metallic_roughness.metallic_roughness_texture.texture->image, texPath, tint);
-                model->materials[i].maps[MAP_ROUGHNESS].texture = LoadTextureFromImage(metallicRoughness);
+                model->materials[i].maps[MATERIAL_MAP_ROUGHNESS].texture = LoadTextureFromImage(metallicRoughness);
 
                 float roughness = data->materials[i].pbr_metallic_roughness.roughness_factor;
-                model->materials[i].maps[MAP_ROUGHNESS].value = roughness;
+                model->materials[i].maps[MATERIAL_MAP_ROUGHNESS].value = roughness;
 
                 float metallic = data->materials[i].pbr_metallic_roughness.metallic_factor;
-                model->materials[i].maps[MAP_METALNESS].value = metallic;
+                model->materials[i].maps[MATERIAL_MAP_METALNESS].value = metallic;
 
                 UnloadImage(metallicRoughness);
             }
@@ -4009,25 +4009,25 @@ static void LoadGLTFMaterial(Model* model, const char* fileName, const cgltf_dat
             if (data->materials[i].normal_texture.texture)
             {
                 Image normalImage = LoadImageFromCgltfImage(data->materials[i].normal_texture.texture->image, texPath, tint);
-                model->materials[i].maps[MAP_NORMAL].texture = LoadTextureFromImage(normalImage);
+                model->materials[i].maps[MATERIAL_MAP_NORMAL].texture = LoadTextureFromImage(normalImage);
                 UnloadImage(normalImage);
             }
 
             if (data->materials[i].occlusion_texture.texture)
             {
                 Image occulsionImage = LoadImageFromCgltfImage(data->materials[i].occlusion_texture.texture->image, texPath, tint);
-                model->materials[i].maps[MAP_OCCLUSION].texture = LoadTextureFromImage(occulsionImage);
+                model->materials[i].maps[MATERIAL_MAP_OCCLUSION].texture = LoadTextureFromImage(occulsionImage);
                 UnloadImage(occulsionImage);
             }
 
             if (data->materials[i].emissive_texture.texture)
             {
                 Image emissiveImage = LoadImageFromCgltfImage(data->materials[i].emissive_texture.texture->image, texPath, tint);
-                model->materials[i].maps[MAP_EMISSION].texture = LoadTextureFromImage(emissiveImage);
+                model->materials[i].maps[MATERIAL_MAP_EMISSION].texture = LoadTextureFromImage(emissiveImage);
                 tint.r = (unsigned char)(data->materials[i].emissive_factor[0]*255);
                 tint.g = (unsigned char)(data->materials[i].emissive_factor[1]*255);
                 tint.b = (unsigned char)(data->materials[i].emissive_factor[2]*255);
-                model->materials[i].maps[MAP_EMISSION].color = tint;
+                model->materials[i].maps[MATERIAL_MAP_EMISSION].color = tint;
                 UnloadImage(emissiveImage);
             }
         }

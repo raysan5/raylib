@@ -44,7 +44,7 @@ int main(void)
     int timeLoc = GetShaderLocation(shader, "time");
 
     float resolution[2] = { (float)screenWidth, (float)screenHeight };
-    SetShaderValue(shader, resolutionLoc, resolution, UNIFORM_VEC2);
+    SetShaderValue(shader, resolutionLoc, resolution, SHADER_UNIFORM_VEC2);
 
     float totalTime = 0.0f;
     bool shaderAutoReloading = false;
@@ -62,8 +62,8 @@ int main(void)
         float mousePos[2] = { mouse.x, mouse.y };
 
         // Set shader required uniform values
-        SetShaderValue(shader, timeLoc, &totalTime, UNIFORM_FLOAT);
-        SetShaderValue(shader, mouseLoc, mousePos, UNIFORM_VEC2);
+        SetShaderValue(shader, timeLoc, &totalTime, SHADER_UNIFORM_FLOAT);
+        SetShaderValue(shader, mouseLoc, mousePos, SHADER_UNIFORM_VEC2);
         
         // Hot shader reloading
         if (shaderAutoReloading || (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)))
@@ -87,7 +87,7 @@ int main(void)
                     timeLoc = GetShaderLocation(shader, "time");
                     
                     // Reset required uniforms
-                    SetShaderValue(shader, resolutionLoc, resolution, UNIFORM_VEC2);
+                    SetShaderValue(shader, resolutionLoc, resolution, SHADER_UNIFORM_VEC2);
                 }
                 
                 fragShaderFileModTime = currentFragShaderModTime;
