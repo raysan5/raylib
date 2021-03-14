@@ -2713,7 +2713,7 @@ bool SaveStorageValue(unsigned int position, int value)
         dataPtr[position] = value;
 
         success = SaveFileData(path, fileData, dataSize);
-        RL_FREE(fileData);
+        UnloadFileData(fileData);
     }
 #endif
 
@@ -2752,7 +2752,7 @@ int LoadStorageValue(unsigned int position)
             value = dataPtr[position];
         }
 
-        RL_FREE(fileData);
+        UnloadFileData(fileData);
     }
 #endif
     return value;
