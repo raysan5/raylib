@@ -1365,6 +1365,7 @@ const char *TextJoin(const char **textList, int count, const char *delimiter)
 }
 
 // Split string into multiple strings
+// REQUIRES: memset()
 const char **TextSplit(const char *text, char delimiter, int *count)
 {
     // NOTE: Current implementation returns a copy of the provided string with '\0' (string end delimiter)
@@ -1426,6 +1427,7 @@ int TextFindIndex(const char *text, const char *find)
 }
 
 // Get upper case version of provided string
+// REQUIRES: toupper()
 const char *TextToUpper(const char *text)
 {
     static char buffer[MAX_TEXT_BUFFER_LENGTH] = { 0 };
@@ -1447,6 +1449,7 @@ const char *TextToUpper(const char *text)
 }
 
 // Get lower case version of provided string
+// REQUIRES: tolower()
 const char *TextToLower(const char *text)
 {
     static char buffer[MAX_TEXT_BUFFER_LENGTH] = { 0 };
@@ -1465,6 +1468,7 @@ const char *TextToLower(const char *text)
 }
 
 // Get Pascal case notation version of provided string
+// REQUIRES: toupper()
 const char *TextToPascal(const char *text)
 {
     static char buffer[MAX_TEXT_BUFFER_LENGTH] = { 0 };
@@ -1488,7 +1492,9 @@ const char *TextToPascal(const char *text)
     return buffer;
 }
 
-// Encode text codepoint into utf8 text (memory must be freed!)
+// Encode text codepoint into utf8 text
+// REQUIRES: memcpy()
+// WARNING: Allocated memory should be manually freed
 char *TextToUtf8(int *codepoints, int length)
 {
     // We allocate enough memory fo fit all possible codepoints
@@ -1551,6 +1557,7 @@ RLAPI const char *CodepointToUtf8(int codepoint, int *byteLength)
 }
 
 // Get all codepoints in a string, codepoints count returned by parameters
+// REQUIRES: memset()
 int *GetCodepoints(const char *text, int *count)
 {
     static int codepoints[MAX_TEXT_UNICODE_CHARS] = { 0 };
@@ -1711,6 +1718,7 @@ int GetNextCodepoint(const char *text, int *bytesProcessed)
 #if defined(SUPPORT_FILEFORMAT_FNT)
 
 // Read a line from memory
+// REQUIRES: memcpy()
 // NOTE: Returns the number of bytes read
 static int GetLine(const char *origin, char *buffer, int maxLength)
 {
