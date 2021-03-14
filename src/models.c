@@ -118,10 +118,10 @@ static ModelAnimation *LoadIQMModelAnimations(const char *fileName, int *animCou
 static Model LoadGLTF(const char *fileName);    // Load GLTF mesh data
 static ModelAnimation *LoadGLTFModelAnimations(const char *fileName, int *animCount);    // Load GLTF animation data
 static void LoadGLTFModelIndices(Model* model, cgltf_accessor* indexAccessor, int primitiveIndex);
-static void BindGLTFPrimitivePose(Model* model, const cgltf_data* data, int primitiveIndex);
-static void LoadGLTFBones(Model* model, cgltf_accessor* jointsAccessor, const cgltf_data* data, int primitiveIndex);
+static void BindGLTFPrimitiveToBones(Model* model, const cgltf_data* data, int primitiveIndex);
+static void LoadGLTFBoneAttribute(Model* model, cgltf_accessor* jointsAccessor, const cgltf_data* data, int primitiveIndex);
 static void LoadGLTFMaterial(Model* model, const char* fileName, const cgltf_data* data);
-static void LoadGLTFInitialBoneInformation(Model* model, const cgltf_data* data);
+static void InitGLTFBones(Model* model, const cgltf_data* data);
 #endif
 
 //----------------------------------------------------------------------------------
@@ -3741,7 +3741,7 @@ static Model LoadGLTF(const char *fileName)
         model.bones = RL_CALLOC(model.boneCount, sizeof(BoneInfo));
         model.bindPose = RL_CALLOC(model.boneCount, sizeof(Transform));
     
-        LoadGLTFInitialBoneInformation(&model, data);
+        InitGLTFBones(&model, data);
         LoadGLTFMaterial(&model, fileName, data);
     
         int primitiveIndex = 0;
@@ -3842,7 +3842,7 @@ static Model LoadGLTF(const char *fileName)
                     else if (data->meshes[i].primitives[p].attributes[j].type == cgltf_attribute_type_joints)
                     {
                         cgltf_accessor *acc = data->meshes[i].primitives[p].attributes[j].data;
-                        LoadGLTFBones(&model, acc, data, primitiveIndex);
+                        LoadGLTFBoneAttribute(&model, acc, data, primitiveIndex);
                     }
                     else if (data->meshes[i].primitives[p].attributes[j].type == cgltf_attribute_type_weights)
                     {
@@ -3890,7 +3890,7 @@ static Model LoadGLTF(const char *fileName)
                     model.meshMaterial[primitiveIndex] = model.materialCount - 1;
                 }
     
-                BindGLTFPrimitivePose(&model, data, primitiveIndex);
+                BindGLTFPrimitiveToBones(&model, data, primitiveIndex);
     
                 primitiveIndex++;
             }
@@ -3906,51 +3906,51 @@ static Model LoadGLTF(const char *fileName)
     return model;
 }
 
-static void LoadGLTFInitialBoneInformation(Model* model, const cgltf_data* data)
+static void InitGLTFBones(Model* model, const cgltf_data* data)
 {
     for (unsigned int j = 0; j < data->nodes_count; j++)
     {
-        strcpy((*model).bones[j].name, data->nodes[j].name == 0 ? "ANIMJOINT" : data->nodes[j].name);
-        (*model).bones[j].parent = (data->nodes[j].parent != NULL) ? data->nodes[j].parent - data->nodes : -1;
+        strcpy(model->bones[j].name, data->nodes[j].name == 0 ? "ANIMJOINT" : data->nodes[j].name);
+        model->bones[j].parent = (data->nodes[j].parent != NULL) ? data->nodes[j].parent - data->nodes : -1;
     }
     
     for (unsigned int i = 0; i < data->nodes_count; i++)
     {
-        if (data->nodes[i].has_translation) memcpy(&(*model).bindPose[i].translation, data->nodes[i].translation, 3 * sizeof(float));
-        else (*model).bindPose[i].translation = Vector3Zero();
+        if (data->nodes[i].has_translation) memcpy(&model->bindPose[i].translation, data->nodes[i].translation, 3 * sizeof(float));
+        else model->bindPose[i].translation = Vector3Zero();
 
-        if (data->nodes[i].has_rotation) memcpy(&(*model).bindPose[i].rotation, data->nodes[i].rotation, 4 * sizeof(float));
-        else (*model).bindPose[i].rotation = QuaternionIdentity();
+        if (data->nodes[i].has_rotation) memcpy(&model->bindPose[i].rotation, data->nodes[i].rotation, 4 * sizeof(float));
+        else model->bindPose[i].rotation = QuaternionIdentity();
 
-        (*model).bindPose[i].rotation = QuaternionNormalize((*model).bindPose[i].rotation);
+        model->bindPose[i].rotation = QuaternionNormalize(model->bindPose[i].rotation);
         
-        if (data->nodes[i].has_scale) memcpy(&(*model).bindPose[i].scale, data->nodes[i].scale, 3 * sizeof(float));
-        else (*model).bindPose[i].scale = Vector3One();
+        if (data->nodes[i].has_scale) memcpy(&model->bindPose[i].scale, data->nodes[i].scale, 3 * sizeof(float));
+        else model->bindPose[i].scale = Vector3One();
     }
     
     {
-        bool* completedBones = RL_CALLOC((*model).boneCount, sizeof(bool));
+        bool* completedBones = RL_CALLOC(model->boneCount, sizeof(bool));
         int numberCompletedBones = 0;
 
-        while (numberCompletedBones < (*model).boneCount) {
-            for (int i = 0; i < (*model).boneCount; i++)
+        while (numberCompletedBones < model->boneCount) {
+            for (int i = 0; i < model->boneCount; i++)
             {
                 if (completedBones[i]) continue;
 
-                if ((*model).bones[i].parent < 0) {
+                if (model->bones[i].parent < 0) {
                     completedBones[i] = true;
                     numberCompletedBones++;
                     continue;
                 }
 
-                if (!completedBones[(*model).bones[i].parent]) continue;
+                if (!completedBones[model->bones[i].parent]) continue;
 
-                Transform* currentTransform = &(*model).bindPose[i];
-                BoneInfo* currentBone = &(*model).bones[i];
+                Transform* currentTransform = &model->bindPose[i];
+                BoneInfo* currentBone = &model->bones[i];
                 int root = currentBone->parent;
-                if (root >= (*model).boneCount)
+                if (root >= model->boneCount)
                     root = 0;
-                Transform* parentTransform = &(*model).bindPose[root];
+                Transform* parentTransform = &model->bindPose[root];
 
                 currentTransform->rotation = QuaternionMultiply(parentTransform->rotation, currentTransform->rotation);
                 currentTransform->translation = Vector3RotateByQuaternion(currentTransform->translation, parentTransform->rotation);
@@ -3967,9 +3967,9 @@ static void LoadGLTFInitialBoneInformation(Model* model, const cgltf_data* data)
 
 static void LoadGLTFMaterial(Model* model, const char* fileName, const cgltf_data* data)
 {
-    for (int i = 0; i < (*model).materialCount - 1; i++)
+    for (int i = 0; i < model->materialCount - 1; i++)
     {
-        (*model).materials[i] = LoadMaterialDefault();
+        model->materials[i] = LoadMaterialDefault();
         Color tint = (Color){ 255, 255, 255, 255 };
         const char *texPath = GetDirectoryPath(fileName);
 
@@ -3981,12 +3981,12 @@ static void LoadGLTFMaterial(Model* model, const char* fileName, const cgltf_dat
             tint.b = (unsigned char)(data->materials[i].pbr_metallic_roughness.base_color_factor[2] * 255);
             tint.a = (unsigned char)(data->materials[i].pbr_metallic_roughness.base_color_factor[3] * 255);
 
-            (*model).materials[i].maps[MAP_ALBEDO].color = tint;
+            model->materials[i].maps[MAP_ALBEDO].color = tint;
 
             if (data->materials[i].pbr_metallic_roughness.base_color_texture.texture)
             {
                 Image albedo = LoadImageFromCgltfImage(data->materials[i].pbr_metallic_roughness.base_color_texture.texture->image, texPath, tint);
-                (*model).materials[i].maps[MAP_ALBEDO].texture = LoadTextureFromImage(albedo);
+                model->materials[i].maps[MAP_ALBEDO].texture = LoadTextureFromImage(albedo);
                 UnloadImage(albedo);
             }
 
@@ -3995,13 +3995,13 @@ static void LoadGLTFMaterial(Model* model, const char* fileName, const cgltf_dat
             if (data->materials[i].pbr_metallic_roughness.metallic_roughness_texture.texture)
             {
                 Image metallicRoughness = LoadImageFromCgltfImage(data->materials[i].pbr_metallic_roughness.metallic_roughness_texture.texture->image, texPath, tint);
-                (*model).materials[i].maps[MAP_ROUGHNESS].texture = LoadTextureFromImage(metallicRoughness);
+                model->materials[i].maps[MAP_ROUGHNESS].texture = LoadTextureFromImage(metallicRoughness);
 
                 float roughness = data->materials[i].pbr_metallic_roughness.roughness_factor;
-                (*model).materials[i].maps[MAP_ROUGHNESS].value = roughness;
+                model->materials[i].maps[MAP_ROUGHNESS].value = roughness;
 
                 float metallic = data->materials[i].pbr_metallic_roughness.metallic_factor;
-                (*model).materials[i].maps[MAP_METALNESS].value = metallic;
+                model->materials[i].maps[MAP_METALNESS].value = metallic;
 
                 UnloadImage(metallicRoughness);
             }
@@ -4009,38 +4009,38 @@ static void LoadGLTFMaterial(Model* model, const char* fileName, const cgltf_dat
             if (data->materials[i].normal_texture.texture)
             {
                 Image normalImage = LoadImageFromCgltfImage(data->materials[i].normal_texture.texture->image, texPath, tint);
-                (*model).materials[i].maps[MAP_NORMAL].texture = LoadTextureFromImage(normalImage);
+                model->materials[i].maps[MAP_NORMAL].texture = LoadTextureFromImage(normalImage);
                 UnloadImage(normalImage);
             }
 
             if (data->materials[i].occlusion_texture.texture)
             {
                 Image occulsionImage = LoadImageFromCgltfImage(data->materials[i].occlusion_texture.texture->image, texPath, tint);
-                (*model).materials[i].maps[MAP_OCCLUSION].texture = LoadTextureFromImage(occulsionImage);
+                model->materials[i].maps[MAP_OCCLUSION].texture = LoadTextureFromImage(occulsionImage);
                 UnloadImage(occulsionImage);
             }
 
             if (data->materials[i].emissive_texture.texture)
             {
                 Image emissiveImage = LoadImageFromCgltfImage(data->materials[i].emissive_texture.texture->image, texPath, tint);
-                (*model).materials[i].maps[MAP_EMISSION].texture = LoadTextureFromImage(emissiveImage);
+                model->materials[i].maps[MAP_EMISSION].texture = LoadTextureFromImage(emissiveImage);
                 tint.r = (unsigned char)(data->materials[i].emissive_factor[0]*255);
                 tint.g = (unsigned char)(data->materials[i].emissive_factor[1]*255);
                 tint.b = (unsigned char)(data->materials[i].emissive_factor[2]*255);
-                (*model).materials[i].maps[MAP_EMISSION].color = tint;
+                model->materials[i].maps[MAP_EMISSION].color = tint;
                 UnloadImage(emissiveImage);
             }
         }
     }
     
-    (*model).materials[(*model).materialCount - 1] = LoadMaterialDefault();
+    model->materials[model->materialCount - 1] = LoadMaterialDefault();
 }
 
-static void LoadGLTFBones(Model* model, cgltf_accessor* jointsAccessor, const cgltf_data* data, int primitiveIndex)
+static void LoadGLTFBoneAttribute(Model* model, cgltf_accessor* jointsAccessor, const cgltf_data* data, int primitiveIndex)
 {
     if (jointsAccessor->component_type == cgltf_component_type_r_16u)
     {
-        (*model).meshes[primitiveIndex].boneIds = RL_MALLOC(sizeof(int) * jointsAccessor->count * 4);
+        model->meshes[primitiveIndex].boneIds = RL_MALLOC(sizeof(int) * jointsAccessor->count * 4);
         short* bones = RL_MALLOC(sizeof(short) * jointsAccessor->count * 4);
 
         for(int a = 0; a < jointsAccessor->count; a++)
@@ -4056,7 +4056,7 @@ static void LoadGLTFBones(Model* model, cgltf_accessor* jointsAccessor, const cg
             {
                 if (&(data->nodes[k]) == skinJoint)
                 {
-                    (*model).meshes[primitiveIndex].boneIds[a] = k;
+                    model->meshes[primitiveIndex].boneIds[a] = k;
                     break;
                 }
             }
@@ -4065,7 +4065,7 @@ static void LoadGLTFBones(Model* model, cgltf_accessor* jointsAccessor, const cg
     }
     else if (jointsAccessor->component_type == cgltf_component_type_r_8u)
     {
-        (*model).meshes[primitiveIndex].boneIds = RL_MALLOC(sizeof(int) * jointsAccessor->count * 4);
+        model->meshes[primitiveIndex].boneIds = RL_MALLOC(sizeof(int) * jointsAccessor->count * 4);
         unsigned char* bones = RL_MALLOC(sizeof(unsigned char) * jointsAccessor->count * 4);
 
         for(int a = 0; a < jointsAccessor->count; a++)
@@ -4081,7 +4081,7 @@ static void LoadGLTFBones(Model* model, cgltf_accessor* jointsAccessor, const cg
             {
                 if (&(data->nodes[k]) == skinJoint)
                 {
-                    (*model).meshes[primitiveIndex].boneIds[a] = k;
+                    model->meshes[primitiveIndex].boneIds[a] = k;
                     break;
                 }
             }
@@ -4095,28 +4095,28 @@ static void LoadGLTFBones(Model* model, cgltf_accessor* jointsAccessor, const cg
     }
 }
 
-static void BindGLTFPrimitivePose(Model* model, const cgltf_data* data, int primitiveIndex)
+static void BindGLTFPrimitiveToBones(Model* model, const cgltf_data* data, int primitiveIndex)
 {
-    if ((*model).meshes[primitiveIndex].boneIds == NULL && data->nodes_count > 0)
+    if (model->meshes[primitiveIndex].boneIds == NULL && data->nodes_count > 0)
     {
         for (int nodeId = 0; nodeId < data->nodes_count; nodeId++)
         {
             if (data->nodes[nodeId].mesh == &(data->meshes[primitiveIndex]))
             {
-                (*model).meshes[primitiveIndex].boneIds = RL_CALLOC(4 * (*model).meshes[primitiveIndex].vertexCount, sizeof(int));
-                (*model).meshes[primitiveIndex].boneWeights = RL_CALLOC(4 * (*model).meshes[primitiveIndex].vertexCount, sizeof(float));
+                model->meshes[primitiveIndex].boneIds = RL_CALLOC(4 * model->meshes[primitiveIndex].vertexCount, sizeof(int));
+                model->meshes[primitiveIndex].boneWeights = RL_CALLOC(4 * model->meshes[primitiveIndex].vertexCount, sizeof(float));
 
-                for (int b = 0; b < 4 * (*model).meshes[primitiveIndex].vertexCount; b++)
+                for (int b = 0; b < 4 * model->meshes[primitiveIndex].vertexCount; b++)
                 {
                     if(b % 4 == 0)
                     {
-                        (*model).meshes[primitiveIndex].boneIds[b] = nodeId;
-                        (*model).meshes[primitiveIndex].boneWeights[b] = 1.0f;
+                        model->meshes[primitiveIndex].boneIds[b] = nodeId;
+                        model->meshes[primitiveIndex].boneWeights[b] = 1.0f;
                     }
                     else
                     {
-                        (*model).meshes[primitiveIndex].boneIds[b] = 0;
-                        (*model).meshes[primitiveIndex].boneWeights[b] = 0.0f;
+                        model->meshes[primitiveIndex].boneIds[b] = 0;
+                        model->meshes[primitiveIndex].boneWeights[b] = 0.0f;
                     }
                 
                 }
@@ -4132,30 +4132,30 @@ static void BindGLTFPrimitivePose(Model* model, const cgltf_data* data, int prim
                 int boneCounter = 0;
                 int boneId = 0;
 
-                for (int i = 0; i < (*model).meshes[primitiveIndex].vertexCount; i++)
+                for (int i = 0; i < model->meshes[primitiveIndex].vertexCount; i++)
                 {
-                    boneId = (*model).meshes[primitiveIndex].boneIds[boneCounter];
-                    outTranslation = (*model).bindPose[boneId].translation;
-                    outRotation = (*model).bindPose[boneId].rotation;
-                    outScale = (*model).bindPose[boneId].scale;
+                    boneId = model->meshes[primitiveIndex].boneIds[boneCounter];
+                    outTranslation = model->bindPose[boneId].translation;
+                    outRotation = model->bindPose[boneId].rotation;
+                    outScale = model->bindPose[boneId].scale;
 
                     // Vertices processing
-                    boundVertex = (Vector3){ (*model).meshes[primitiveIndex].vertices[vCounter], (*model).meshes[primitiveIndex].vertices[vCounter + 1], (*model).meshes[primitiveIndex].vertices[vCounter + 2] };
+                    boundVertex = (Vector3){ model->meshes[primitiveIndex].vertices[vCounter], model->meshes[primitiveIndex].vertices[vCounter + 1], model->meshes[primitiveIndex].vertices[vCounter + 2] };
                     boundVertex = Vector3Multiply(boundVertex, outScale);
                     boundVertex = Vector3RotateByQuaternion(boundVertex, outRotation);
                     boundVertex = Vector3Add(boundVertex, outTranslation);
-                    (*model).meshes[primitiveIndex].vertices[vCounter] = boundVertex.x;
-                    (*model).meshes[primitiveIndex].vertices[vCounter + 1] = boundVertex.y;
-                    (*model).meshes[primitiveIndex].vertices[vCounter + 2] = boundVertex.z;
+                    model->meshes[primitiveIndex].vertices[vCounter] = boundVertex.x;
+                    model->meshes[primitiveIndex].vertices[vCounter + 1] = boundVertex.y;
+                    model->meshes[primitiveIndex].vertices[vCounter + 2] = boundVertex.z;
 
                     // Normals processing
-                    if((*model).meshes[primitiveIndex].normals != NULL)
+                    if(model->meshes[primitiveIndex].normals != NULL)
                     {
-                        boundNormal = (Vector3){ (*model).meshes[primitiveIndex].normals[vCounter], (*model).meshes[primitiveIndex].normals[vCounter + 1], (*model).meshes[primitiveIndex].normals[vCounter + 2] };
+                        boundNormal = (Vector3){ model->meshes[primitiveIndex].normals[vCounter], model->meshes[primitiveIndex].normals[vCounter + 1], model->meshes[primitiveIndex].normals[vCounter + 2] };
                         boundNormal = Vector3RotateByQuaternion(boundNormal, outRotation);
-                        (*model).meshes[primitiveIndex].normals[vCounter] = boundNormal.x;
-                        (*model).meshes[primitiveIndex].normals[vCounter + 1] = boundNormal.y;
-                        (*model).meshes[primitiveIndex].normals[vCounter + 2] = boundNormal.z;
+                        model->meshes[primitiveIndex].normals[vCounter] = boundNormal.x;
+                        model->meshes[primitiveIndex].normals[vCounter + 1] = boundNormal.y;
+                        model->meshes[primitiveIndex].normals[vCounter + 2] = boundNormal.z;
                     }
                     
                     vCounter += 3;
@@ -4172,45 +4172,45 @@ static void LoadGLTFModelIndices(Model* model, cgltf_accessor* indexAccessor, in
     {
         if (indexAccessor->component_type == cgltf_component_type_r_16u || indexAccessor->component_type == cgltf_component_type_r_16)
         {
-            (*model).meshes[primitiveIndex].triangleCount = (int)indexAccessor->count / 3;
-            (*model).meshes[primitiveIndex].indices = RL_MALLOC((*model).meshes[primitiveIndex].triangleCount * 3 * sizeof(unsigned short));
+            model->meshes[primitiveIndex].triangleCount = (int)indexAccessor->count / 3;
+            model->meshes[primitiveIndex].indices = RL_MALLOC(model->meshes[primitiveIndex].triangleCount * 3 * sizeof(unsigned short));
             
             unsigned short readValue = 0;
             for(int a = 0; a < indexAccessor->count; a++)
             {
                 GLTFReadValue(indexAccessor, a, &readValue, 1, sizeof(short));
-                (*model).meshes[primitiveIndex].indices[a] = readValue;
+                model->meshes[primitiveIndex].indices[a] = readValue;
             }
         }
         else if (indexAccessor->component_type == cgltf_component_type_r_8u || indexAccessor->component_type == cgltf_component_type_r_8)
         {
-            (*model).meshes[primitiveIndex].triangleCount = (int)indexAccessor->count / 3;
-            (*model).meshes[primitiveIndex].indices = RL_MALLOC((*model).meshes[primitiveIndex].triangleCount * 3 * sizeof(unsigned short));
+            model->meshes[primitiveIndex].triangleCount = (int)indexAccessor->count / 3;
+            model->meshes[primitiveIndex].indices = RL_MALLOC(model->meshes[primitiveIndex].triangleCount * 3 * sizeof(unsigned short));
             
             unsigned char readValue = 0;
             for(int a = 0; a < indexAccessor->count; a++)
             {
                 GLTFReadValue(indexAccessor, a, &readValue, 1, sizeof(char));
-                (*model).meshes[primitiveIndex].indices[a] = (unsigned short)readValue;
+                model->meshes[primitiveIndex].indices[a] = (unsigned short)readValue;
             }
         }
         else if (indexAccessor->component_type == cgltf_component_type_r_32u)
         {
-            (*model).meshes[primitiveIndex].triangleCount = (int)indexAccessor->count / 3;
-            (*model).meshes[primitiveIndex].indices = RL_MALLOC((*model).meshes[primitiveIndex].triangleCount * 3 * sizeof(unsigned short));
+            model->meshes[primitiveIndex].triangleCount = (int)indexAccessor->count / 3;
+            model->meshes[primitiveIndex].indices = RL_MALLOC(model->meshes[primitiveIndex].triangleCount * 3 * sizeof(unsigned short));
 
             unsigned int readValue;
             for(int a = 0; a < indexAccessor->count; a++)
             {
                 GLTFReadValue(indexAccessor, a, &readValue, 1, sizeof(unsigned int));
-                (*model).meshes[primitiveIndex].indices[a] = (unsigned short)readValue;
+                model->meshes[primitiveIndex].indices[a] = (unsigned short)readValue;
             }
         }
     }
     else
     {
         // Unindexed mesh
-        (*model).meshes[primitiveIndex].triangleCount = (*model).meshes[primitiveIndex].vertexCount / 3;
+        model->meshes[primitiveIndex].triangleCount = model->meshes[primitiveIndex].vertexCount / 3;
     }
 }
 
