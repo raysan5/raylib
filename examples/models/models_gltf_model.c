@@ -98,8 +98,6 @@ int main(void)
 
             EndMode3D();
 
-            DrawText("(cc0) Avocado by @Microsoft", screenWidth - 200, screenHeight - 20, 10, GRAY);
-
         EndDrawing();
         //----------------------------------------------------------------------------------
     }
