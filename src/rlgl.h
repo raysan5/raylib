@@ -364,27 +364,27 @@ typedef enum {
 
     // Texture formats (support depends on OpenGL version)
     typedef enum {
-        UNCOMPRESSED_GRAYSCALE = 1,     // 8 bit per pixel (no alpha)
-        UNCOMPRESSED_GRAY_ALPHA,
-        UNCOMPRESSED_R5G6B5,            // 16 bpp
-        UNCOMPRESSED_R8G8B8,            // 24 bpp
-        UNCOMPRESSED_R5G5B5A1,          // 16 bpp (1 bit alpha)
-        UNCOMPRESSED_R4G4B4A4,          // 16 bpp (4 bit alpha)
-        UNCOMPRESSED_R8G8B8A8,          // 32 bpp
-        UNCOMPRESSED_R32,               // 32 bpp (1 channel - float)
-        UNCOMPRESSED_R32G32B32,         // 32*3 bpp (3 channels - float)
-        UNCOMPRESSED_R32G32B32A32,      // 32*4 bpp (4 channels - float)
-        COMPRESSED_DXT1_RGB,            // 4 bpp (no alpha)
-        COMPRESSED_DXT1_RGBA,           // 4 bpp (1 bit alpha)
-        COMPRESSED_DXT3_RGBA,           // 8 bpp
-        COMPRESSED_DXT5_RGBA,           // 8 bpp
-        COMPRESSED_ETC1_RGB,            // 4 bpp
-        COMPRESSED_ETC2_RGB,            // 4 bpp
-        COMPRESSED_ETC2_EAC_RGBA,       // 8 bpp
-        COMPRESSED_PVRT_RGB,            // 4 bpp
-        COMPRESSED_PVRT_RGBA,           // 4 bpp
-        COMPRESSED_ASTC_4x4_RGBA,       // 8 bpp
-        COMPRESSED_ASTC_8x8_RGBA        // 2 bpp
+        PIXELFORMAT_UNCOMPRESSED_GRAYSCALE = 1,     // 8 bit per pixel (no alpha)
+        PIXELFORMAT_UNCOMPRESSED_GRAY_ALPHA,
+        PIXELFORMAT_UNCOMPRESSED_R5G6B5,            // 16 bpp
+        PIXELFORMAT_UNCOMPRESSED_R8G8B8,            // 24 bpp
+        PIXELFORMAT_UNCOMPRESSED_R5G5B5A1,          // 16 bpp (1 bit alpha)
+        PIXELFORMAT_UNCOMPRESSED_R4G4B4A4,          // 16 bpp (4 bit alpha)
+        PIXELFORMAT_UNCOMPRESSED_R8G8B8A8,          // 32 bpp
+        PIXELFORMAT_UNCOMPRESSED_R32,               // 32 bpp (1 channel - float)
+        PIXELFORMAT_UNCOMPRESSED_R32G32B32,         // 32*3 bpp (3 channels - float)
+        PIXELFORMAT_UNCOMPRESSED_R32G32B32A32,      // 32*4 bpp (4 channels - float)
+        PIXELFORMAT_COMPRESSED_DXT1_RGB,            // 4 bpp (no alpha)
+        PIXELFORMAT_COMPRESSED_DXT1_RGBA,           // 4 bpp (1 bit alpha)
+        PIXELFORMAT_COMPRESSED_DXT3_RGBA,           // 8 bpp
+        PIXELFORMAT_COMPRESSED_DXT5_RGBA,           // 8 bpp
+        PIXELFORMAT_COMPRESSED_ETC1_RGB,            // 4 bpp
+        PIXELFORMAT_COMPRESSED_ETC2_RGB,            // 4 bpp
+        PIXELFORMAT_COMPRESSED_ETC2_EAC_RGBA,       // 8 bpp
+        PIXELFORMAT_COMPRESSED_PVRT_RGB,            // 4 bpp
+        PIXELFORMAT_COMPRESSED_PVRT_RGBA,           // 4 bpp
+        PIXELFORMAT_COMPRESSED_ASTC_4x4_RGBA,       // 8 bpp
+        PIXELFORMAT_COMPRESSED_ASTC_8x8_RGBA        // 2 bpp
     } PixelFormat;
 
     // Texture parameters: filter mode
@@ -411,66 +411,66 @@ typedef enum {
 
     // Shader location point type
     typedef enum {
-        LOC_VERTEX_POSITION = 0,
-        LOC_VERTEX_TEXCOORD01,
-        LOC_VERTEX_TEXCOORD02,
-        LOC_VERTEX_NORMAL,
-        LOC_VERTEX_TANGENT,
-        LOC_VERTEX_COLOR,
-        LOC_MATRIX_MVP,
-        LOC_MATRIX_MODEL,
-        LOC_MATRIX_VIEW,
-        LOC_MATRIX_PROJECTION,
-        LOC_VECTOR_VIEW,
-        LOC_COLOR_DIFFUSE,
-        LOC_COLOR_SPECULAR,
-        LOC_COLOR_AMBIENT,
-        LOC_MAP_ALBEDO,          // LOC_MAP_DIFFUSE
-        LOC_MAP_METALNESS,       // LOC_MAP_SPECULAR
-        LOC_MAP_NORMAL,
-        LOC_MAP_ROUGHNESS,
-        LOC_MAP_OCCLUSION,
-        LOC_MAP_EMISSION,
-        LOC_MAP_HEIGHT,
-        LOC_MAP_CUBEMAP,
-        LOC_MAP_IRRADIANCE,
-        LOC_MAP_PREFILTER,
-        LOC_MAP_BRDF
+        SHADER_LOC_VERTEX_POSITION = 0,
+        SHADER_LOC_VERTEX_TEXCOORD01,
+        SHADER_LOC_VERTEX_TEXCOORD02,
+        SHADER_LOC_VERTEX_NORMAL,
+        SHADER_LOC_VERTEX_TANGENT,
+        SHADER_LOC_VERTEX_COLOR,
+        SHADER_LOC_MATRIX_MVP,
+        SHADER_LOC_MATRIX_MODEL,
+        SHADER_LOC_MATRIX_VIEW,
+        SHADER_LOC_MATRIX_PROJECTION,
+        SHADER_LOC_VECTOR_VIEW,
+        SHADER_LOC_COLOR_DIFFUSE,
+        SHADER_LOC_COLOR_SPECULAR,
+        SHADER_LOC_COLOR_AMBIENT,
+        SHADER_LOC_MAP_ALBEDO,          // SHADER_LOC_MAP_DIFFUSE
+        SHADER_LOC_MAP_METALNESS,       // SHADER_LOC_MAP_SPECULAR
+        SHADER_LOC_MAP_NORMAL,
+        SHADER_LOC_MAP_ROUGHNESS,
+        SHADER_LOC_MAP_OCCLUSION,
+        SHADER_LOC_MAP_EMISSION,
+        SHADER_LOC_MAP_HEIGHT,
+        SHADER_LOC_MAP_CUBEMAP,
+        SHADER_LOC_MAP_IRRADIANCE,
+        SHADER_LOC_MAP_PREFILTER,
+        SHADER_LOC_MAP_BRDF
     } ShaderLocationIndex;
 
     // Shader uniform data types
     typedef enum {
-        UNIFORM_FLOAT = 0,
-        UNIFORM_VEC2,
-        UNIFORM_VEC3,
-        UNIFORM_VEC4,
-        UNIFORM_INT,
-        UNIFORM_IVEC2,
-        UNIFORM_IVEC3,
-        UNIFORM_IVEC4,
-        UNIFORM_SAMPLER2D
+        SHADER_UNIFORM_FLOAT = 0,
+        SHADER_UNIFORM_VEC2,
+        SHADER_UNIFORM_VEC3,
+        SHADER_UNIFORM_VEC4,
+        SHADER_UNIFORM_INT,
+        SHADER_UNIFORM_IVEC2,
+        SHADER_UNIFORM_IVEC3,
+        SHADER_UNIFORM_IVEC4,
+        SHADER_UNIFORM_SAMPLER2D
     } ShaderUniformDataType;
 
-    #define LOC_MAP_DIFFUSE      LOC_MAP_ALBEDO
-    #define LOC_MAP_SPECULAR     LOC_MAP_METALNESS
+    #define SHADER_LOC_MAP_DIFFUSE      SHADER_LOC_MAP_ALBEDO
+    #define SHADER_LOC_MAP_SPECULAR     SHADER_LOC_MAP_METALNESS
 
     // Material map type
     typedef enum {
-        MAP_ALBEDO    = 0,       // MAP_DIFFUSE
-        MAP_METALNESS = 1,       // MAP_SPECULAR
-        MAP_NORMAL    = 2,
-        MAP_ROUGHNESS = 3,
-        MAP_OCCLUSION,
-        MAP_EMISSION,
-        MAP_HEIGHT,
-        MAP_CUBEMAP,             // NOTE: Uses GL_TEXTURE_CUBE_MAP
-        MAP_IRRADIANCE,          // NOTE: Uses GL_TEXTURE_CUBE_MAP
-        MAP_PREFILTER,           // NOTE: Uses GL_TEXTURE_CUBE_MAP
-        MAP_BRDF
+        MATERIAL_MAP_ALBEDO    = 0,       // MATERIAL_MAP_DIFFUSE
+        MATERIAL_MAP_METALNESS = 1,       // MATERIAL_MAP_SPECULAR
+        MATERIAL_MAP_NORMAL    = 2,
+        MATERIAL_MAP_ROUGHNESS = 3,
+        MATERIAL_MAP_OCCLUSION,
+        MATERIAL_MAP_EMISSION,
+        MATERIAL_MAP_HEIGHT,
+        MATERIAL_MAP_CUBEMAP,             // NOTE: Uses GL_TEXTURE_CUBE_MAP
+        MATERIAL_MAP_IRRADIANCE,          // NOTE: Uses GL_TEXTURE_CUBE_MAP
+        MATERIAL_MAP_PREFILTER,           // NOTE: Uses GL_TEXTURE_CUBE_MAP
+        MATERIAL_MAP_BRDG
     } MaterialMapType;
 
-    #define MAP_DIFFUSE      MAP_ALBEDO
-    #define MAP_SPECULAR     MAP_METALNESS
+    #define MATERIAL_MAP_DIFFUSE      MATERIAL_MAP_ALBEDO
+    #define MATERIAL_MAP_SPECULAR     MATERIAL_MAP_METALNESS
 #endif
 
 #if defined(__cplusplus)
@@ -1762,7 +1762,7 @@ void rlglInit(int width, int height)
     //----------------------------------------------------------
     // Init default white texture
     unsigned char pixels[4] = { 255, 255, 255, 255 };   // 1 pixel RGBA (4 bytes)
-    RLGL.State.defaultTextureId = rlLoadTexture(pixels, 1, 1, UNCOMPRESSED_R8G8B8A8, 1);
+    RLGL.State.defaultTextureId = rlLoadTexture(pixels, 1, 1, PIXELFORMAT_UNCOMPRESSED_R8G8B8A8, 1);
 
     if (RLGL.State.defaultTextureId != 0) TRACELOG(LOG_INFO, "TEXTURE: [ID %i] Default texture loaded successfully", RLGL.State.defaultTextureId);
     else TRACELOG(LOG_WARNING, "TEXTURE: Failed to load default texture");
@@ -1973,38 +1973,38 @@ unsigned int rlLoadTexture(void *data, int width, int height, int format, int mi
 
     // Check texture format support by OpenGL 1.1 (compressed textures not supported)
 #if defined(GRAPHICS_API_OPENGL_11)
-    if (format >= COMPRESSED_DXT1_RGB)
+    if (format >= PIXELFORMAT_COMPRESSED_DXT1_RGB)
     {
         TRACELOG(LOG_WARNING, "GL: OpenGL 1.1 does not support GPU compressed texture formats");
         return id;
     }
 #else
-    if ((!RLGL.ExtSupported.texCompDXT) && ((format == COMPRESSED_DXT1_RGB) || (format == COMPRESSED_DXT1_RGBA) ||
-        (format == COMPRESSED_DXT3_RGBA) || (format == COMPRESSED_DXT5_RGBA)))
+    if ((!RLGL.ExtSupported.texCompDXT) && ((format == PIXELFORMAT_COMPRESSED_DXT1_RGB) || (format == PIXELFORMAT_COMPRESSED_DXT1_RGBA) ||
+        (format == PIXELFORMAT_COMPRESSED_DXT3_RGBA) || (format == PIXELFORMAT_COMPRESSED_DXT5_RGBA)))
     {
         TRACELOG(LOG_WARNING, "GL: DXT compressed texture format not supported");
         return id;
     }
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
-    if ((!RLGL.ExtSupported.texCompETC1) && (format == COMPRESSED_ETC1_RGB))
+    if ((!RLGL.ExtSupported.texCompETC1) && (format == PIXELFORMAT_COMPRESSED_ETC1_RGB))
     {
         TRACELOG(LOG_WARNING, "GL: ETC1 compressed texture format not supported");
         return id;
     }
 
-    if ((!RLGL.ExtSupported.texCompETC2) && ((format == COMPRESSED_ETC2_RGB) || (format == COMPRESSED_ETC2_EAC_RGBA)))
+    if ((!RLGL.ExtSupported.texCompETC2) && ((format == PIXELFORMAT_COMPRESSED_ETC2_RGB) || (format == PIXELFORMAT_COMPRESSED_ETC2_EAC_RGBA)))
     {
         TRACELOG(LOG_WARNING, "GL: ETC2 compressed texture format not supported");
         return id;
     }
 
-    if ((!RLGL.ExtSupported.texCompPVRT) && ((format == COMPRESSED_PVRT_RGB) || (format == COMPRESSED_PVRT_RGBA)))
+    if ((!RLGL.ExtSupported.texCompPVRT) && ((format == PIXELFORMAT_COMPRESSED_PVRT_RGB) || (format == PIXELFORMAT_COMPRESSED_PVRT_RGBA)))
     {
         TRACELOG(LOG_WARNING, "GL: PVRT compressed texture format not supported");
         return id;
     }
 
-    if ((!RLGL.ExtSupported.texCompASTC) && ((format == COMPRESSED_ASTC_4x4_RGBA) || (format == COMPRESSED_ASTC_8x8_RGBA)))
+    if ((!RLGL.ExtSupported.texCompASTC) && ((format == PIXELFORMAT_COMPRESSED_ASTC_4x4_RGBA) || (format == PIXELFORMAT_COMPRESSED_ASTC_8x8_RGBA)))
     {
         TRACELOG(LOG_WARNING, "GL: ASTC compressed texture format not supported");
         return id;
@@ -2038,18 +2038,18 @@ unsigned int rlLoadTexture(void *data, int width, int height, int format, int mi
 
         if (glInternalFormat != -1)
         {
-            if (format < COMPRESSED_DXT1_RGB) glTexImage2D(GL_TEXTURE_2D, i, glInternalFormat, mipWidth, mipHeight, 0, glFormat, glType, (unsigned char *)data + mipOffset);
+            if (format < PIXELFORMAT_COMPRESSED_DXT1_RGB) glTexImage2D(GL_TEXTURE_2D, i, glInternalFormat, mipWidth, mipHeight, 0, glFormat, glType, (unsigned char *)data + mipOffset);
         #if !defined(GRAPHICS_API_OPENGL_11)
             else glCompressedTexImage2D(GL_TEXTURE_2D, i, glInternalFormat, mipWidth, mipHeight, 0, mipSize, (unsigned char *)data + mipOffset);
         #endif
 
         #if defined(GRAPHICS_API_OPENGL_33)
-            if (format == UNCOMPRESSED_GRAYSCALE)
+            if (format == PIXELFORMAT_UNCOMPRESSED_GRAYSCALE)
             {
                 GLint swizzleMask[] = { GL_RED, GL_RED, GL_RED, GL_ONE };
                 glTexParameteriv(GL_TEXTURE_2D, GL_TEXTURE_SWIZZLE_RGBA, swizzleMask);
             }
-            else if (format == UNCOMPRESSED_GRAY_ALPHA)
+            else if (format == PIXELFORMAT_UNCOMPRESSED_GRAY_ALPHA)
             {
             #if defined(GRAPHICS_API_OPENGL_21)
                 GLint swizzleMask[] = { GL_RED, GL_RED, GL_RED, GL_ALPHA };
@@ -2192,32 +2192,32 @@ unsigned int rlLoadTextureCubemap(void *data, int size, int format)
         {
             if (data == NULL)
             {
-                if (format < COMPRESSED_DXT1_RGB)
+                if (format < PIXELFORMAT_COMPRESSED_DXT1_RGB)
                 {
-                    if (format == UNCOMPRESSED_R32G32B32)
+                    if (format == PIXELFORMAT_UNCOMPRESSED_R32G32B32)
                     {
                         // Instead of using a sized internal texture format (GL_RGB16F, GL_RGB32F), we let the driver to choose the better format for us (GL_RGB)
                         if (RLGL.ExtSupported.texFloat32) glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGB, size, size, 0, GL_RGB, GL_FLOAT, NULL);
                         else TRACELOG(LOG_WARNING, "TEXTURES: Cubemap requested format not supported");
                     }
-                    else if ((format == UNCOMPRESSED_R32) || (format == UNCOMPRESSED_R32G32B32A32)) TRACELOG(LOG_WARNING, "TEXTURES: Cubemap requested format not supported");
+                    else if ((format == PIXELFORMAT_UNCOMPRESSED_R32) || (format == PIXELFORMAT_UNCOMPRESSED_R32G32B32A32)) TRACELOG(LOG_WARNING, "TEXTURES: Cubemap requested format not supported");
                     else glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, glInternalFormat, size, size, 0, glFormat, glType, NULL);
                 }
                 else TRACELOG(LOG_WARNING, "TEXTURES: Empty cubemap creation does not support compressed format");
             }
             else
             {
-                if (format < COMPRESSED_DXT1_RGB) glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, glInternalFormat, size, size, 0, glFormat, glType, (unsigned char *)data + i*dataSize);
+                if (format < PIXELFORMAT_COMPRESSED_DXT1_RGB) glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, glInternalFormat, size, size, 0, glFormat, glType, (unsigned char *)data + i*dataSize);
                 else glCompressedTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, glInternalFormat, size, size, 0, dataSize, (unsigned char *)data + i*dataSize);
             }
 
 #if defined(GRAPHICS_API_OPENGL_33)
-            if (format == UNCOMPRESSED_GRAYSCALE)
+            if (format == PIXELFORMAT_UNCOMPRESSED_GRAYSCALE)
             {
                 GLint swizzleMask[] = { GL_RED, GL_RED, GL_RED, GL_ONE };
                 glTexParameteriv(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_SWIZZLE_RGBA, swizzleMask);
             }
-            else if (format == UNCOMPRESSED_GRAY_ALPHA)
+            else if (format == PIXELFORMAT_UNCOMPRESSED_GRAY_ALPHA)
             {
 #if defined(GRAPHICS_API_OPENGL_21)
                 GLint swizzleMask[] = { GL_RED, GL_RED, GL_RED, GL_ALPHA };
@@ -2258,7 +2258,7 @@ void rlUpdateTexture(unsigned int id, int offsetX, int offsetY, int width, int h
     unsigned int glInternalFormat, glFormat, glType;
     rlGetGlTextureFormats(format, &glInternalFormat, &glFormat, &glType);
 
-    if ((glInternalFormat != -1) && (format < COMPRESSED_DXT1_RGB))
+    if ((glInternalFormat != -1) && (format < PIXELFORMAT_COMPRESSED_DXT1_RGB))
     {
         glTexSubImage2D(GL_TEXTURE_2D, 0, offsetX, offsetY, width, height, glFormat, glType, (unsigned char *)data);
     }
@@ -2276,43 +2276,43 @@ void rlGetGlTextureFormats(int format, unsigned int *glInternalFormat, unsigned 
     {
     #if defined(GRAPHICS_API_OPENGL_11) || defined(GRAPHICS_API_OPENGL_21) || defined(GRAPHICS_API_OPENGL_ES2)
         // NOTE: on OpenGL ES 2.0 (WebGL), internalFormat must match format and options allowed are: GL_LUMINANCE, GL_RGB, GL_RGBA
-        case UNCOMPRESSED_GRAYSCALE: *glInternalFormat = GL_LUMINANCE; *glFormat = GL_LUMINANCE; *glType = GL_UNSIGNED_BYTE; break;
-        case UNCOMPRESSED_GRAY_ALPHA: *glInternalFormat = GL_LUMINANCE_ALPHA; *glFormat = GL_LUMINANCE_ALPHA; *glType = GL_UNSIGNED_BYTE; break;
-        case UNCOMPRESSED_R5G6B5: *glInternalFormat = GL_RGB; *glFormat = GL_RGB; *glType = GL_UNSIGNED_SHORT_5_6_5; break;
-        case UNCOMPRESSED_R8G8B8: *glInternalFormat = GL_RGB; *glFormat = GL_RGB; *glType = GL_UNSIGNED_BYTE; break;
-        case UNCOMPRESSED_R5G5B5A1: *glInternalFormat = GL_RGBA; *glFormat = GL_RGBA; *glType = GL_UNSIGNED_SHORT_5_5_5_1; break;
-        case UNCOMPRESSED_R4G4B4A4: *glInternalFormat = GL_RGBA; *glFormat = GL_RGBA; *glType = GL_UNSIGNED_SHORT_4_4_4_4; break;
-        case UNCOMPRESSED_R8G8B8A8: *glInternalFormat = GL_RGBA; *glFormat = GL_RGBA; *glType = GL_UNSIGNED_BYTE; break;
+        case PIXELFORMAT_UNCOMPRESSED_GRAYSCALE: *glInternalFormat = GL_LUMINANCE; *glFormat = GL_LUMINANCE; *glType = GL_UNSIGNED_BYTE; break;
+        case PIXELFORMAT_UNCOMPRESSED_GRAY_ALPHA: *glInternalFormat = GL_LUMINANCE_ALPHA; *glFormat = GL_LUMINANCE_ALPHA; *glType = GL_UNSIGNED_BYTE; break;
+        case PIXELFORMAT_UNCOMPRESSED_R5G6B5: *glInternalFormat = GL_RGB; *glFormat = GL_RGB; *glType = GL_UNSIGNED_SHORT_5_6_5; break;
+        case PIXELFORMAT_UNCOMPRESSED_R8G8B8: *glInternalFormat = GL_RGB; *glFormat = GL_RGB; *glType = GL_UNSIGNED_BYTE; break;
+        case PIXELFORMAT_UNCOMPRESSED_R5G5B5A1: *glInternalFormat = GL_RGBA; *glFormat = GL_RGBA; *glType = GL_UNSIGNED_SHORT_5_5_5_1; break;
+        case PIXELFORMAT_UNCOMPRESSED_R4G4B4A4: *glInternalFormat = GL_RGBA; *glFormat = GL_RGBA; *glType = GL_UNSIGNED_SHORT_4_4_4_4; break;
+        case PIXELFORMAT_UNCOMPRESSED_R8G8B8A8: *glInternalFormat = GL_RGBA; *glFormat = GL_RGBA; *glType = GL_UNSIGNED_BYTE; break;
         #if !defined(GRAPHICS_API_OPENGL_11)
-        case UNCOMPRESSED_R32: if (RLGL.ExtSupported.texFloat32) *glInternalFormat = GL_LUMINANCE; *glFormat = GL_LUMINANCE; *glType = GL_FLOAT; break;   // NOTE: Requires extension OES_texture_float
-        case UNCOMPRESSED_R32G32B32: if (RLGL.ExtSupported.texFloat32) *glInternalFormat = GL_RGB; *glFormat = GL_RGB; *glType = GL_FLOAT; break;         // NOTE: Requires extension OES_texture_float
-        case UNCOMPRESSED_R32G32B32A32: if (RLGL.ExtSupported.texFloat32) *glInternalFormat = GL_RGBA; *glFormat = GL_RGBA; *glType = GL_FLOAT; break;    // NOTE: Requires extension OES_texture_float
+        case PIXELFORMAT_UNCOMPRESSED_R32: if (RLGL.ExtSupported.texFloat32) *glInternalFormat = GL_LUMINANCE; *glFormat = GL_LUMINANCE; *glType = GL_FLOAT; break;   // NOTE: Requires extension OES_texture_float
+        case PIXELFORMAT_UNCOMPRESSED_R32G32B32: if (RLGL.ExtSupported.texFloat32) *glInternalFormat = GL_RGB; *glFormat = GL_RGB; *glType = GL_FLOAT; break;         // NOTE: Requires extension OES_texture_float
+        case PIXELFORMAT_UNCOMPRESSED_R32G32B32A32: if (RLGL.ExtSupported.texFloat32) *glInternalFormat = GL_RGBA; *glFormat = GL_RGBA; *glType = GL_FLOAT; break;    // NOTE: Requires extension OES_texture_float
         #endif
     #endif
     #if defined(GRAPHICS_API_OPENGL_33)
-        case UNCOMPRESSED_GRAYSCALE: *glInternalFormat = GL_R8; *glFormat = GL_RED; *glType = GL_UNSIGNED_BYTE; break;
-        case UNCOMPRESSED_GRAY_ALPHA: *glInternalFormat = GL_RG8; *glFormat = GL_RG; *glType = GL_UNSIGNED_BYTE; break;
-        case UNCOMPRESSED_R5G6B5: *glInternalFormat = GL_RGB565; *glFormat = GL_RGB; *glType = GL_UNSIGNED_SHORT_5_6_5; break;
-        case UNCOMPRESSED_R8G8B8: *glInternalFormat = GL_RGB8; *glFormat = GL_RGB; *glType = GL_UNSIGNED_BYTE; break;
-        case UNCOMPRESSED_R5G5B5A1: *glInternalFormat = GL_RGB5_A1; *glFormat = GL_RGBA; *glType = GL_UNSIGNED_SHORT_5_5_5_1; break;
-        case UNCOMPRESSED_R4G4B4A4: *glInternalFormat = GL_RGBA4; *glFormat = GL_RGBA; *glType = GL_UNSIGNED_SHORT_4_4_4_4; break;
-        case UNCOMPRESSED_R8G8B8A8: *glInternalFormat = GL_RGBA8; *glFormat = GL_RGBA; *glType = GL_UNSIGNED_BYTE; break;
-        case UNCOMPRESSED_R32: if (RLGL.ExtSupported.texFloat32) *glInternalFormat = GL_R32F; *glFormat = GL_RED; *glType = GL_FLOAT; break;
-        case UNCOMPRESSED_R32G32B32: if (RLGL.ExtSupported.texFloat32) *glInternalFormat = GL_RGB32F; *glFormat = GL_RGB; *glType = GL_FLOAT; break;
-        case UNCOMPRESSED_R32G32B32A32: if (RLGL.ExtSupported.texFloat32) *glInternalFormat = GL_RGBA32F; *glFormat = GL_RGBA; *glType = GL_FLOAT; break;
+        case PIXELFORMAT_UNCOMPRESSED_GRAYSCALE: *glInternalFormat = GL_R8; *glFormat = GL_RED; *glType = GL_UNSIGNED_BYTE; break;
+        case PIXELFORMAT_UNCOMPRESSED_GRAY_ALPHA: *glInternalFormat = GL_RG8; *glFormat = GL_RG; *glType = GL_UNSIGNED_BYTE; break;
+        case PIXELFORMAT_UNCOMPRESSED_R5G6B5: *glInternalFormat = GL_RGB565; *glFormat = GL_RGB; *glType = GL_UNSIGNED_SHORT_5_6_5; break;
+        case PIXELFORMAT_UNCOMPRESSED_R8G8B8: *glInternalFormat = GL_RGB8; *glFormat = GL_RGB; *glType = GL_UNSIGNED_BYTE; break;
+        case PIXELFORMAT_UNCOMPRESSED_R5G5B5A1: *glInternalFormat = GL_RGB5_A1; *glFormat = GL_RGBA; *glType = GL_UNSIGNED_SHORT_5_5_5_1; break;
+        case PIXELFORMAT_UNCOMPRESSED_R4G4B4A4: *glInternalFormat = GL_RGBA4; *glFormat = GL_RGBA; *glType = GL_UNSIGNED_SHORT_4_4_4_4; break;
+        case PIXELFORMAT_UNCOMPRESSED_R8G8B8A8: *glInternalFormat = GL_RGBA8; *glFormat = GL_RGBA; *glType = GL_UNSIGNED_BYTE; break;
+        case PIXELFORMAT_UNCOMPRESSED_R32: if (RLGL.ExtSupported.texFloat32) *glInternalFormat = GL_R32F; *glFormat = GL_RED; *glType = GL_FLOAT; break;
+        case PIXELFORMAT_UNCOMPRESSED_R32G32B32: if (RLGL.ExtSupported.texFloat32) *glInternalFormat = GL_RGB32F; *glFormat = GL_RGB; *glType = GL_FLOAT; break;
+        case PIXELFORMAT_UNCOMPRESSED_R32G32B32A32: if (RLGL.ExtSupported.texFloat32) *glInternalFormat = GL_RGBA32F; *glFormat = GL_RGBA; *glType = GL_FLOAT; break;
     #endif
     #if !defined(GRAPHICS_API_OPENGL_11)
-        case COMPRESSED_DXT1_RGB: if (RLGL.ExtSupported.texCompDXT) *glInternalFormat = GL_COMPRESSED_RGB_S3TC_DXT1_EXT; break;
-        case COMPRESSED_DXT1_RGBA: if (RLGL.ExtSupported.texCompDXT) *glInternalFormat = GL_COMPRESSED_RGBA_S3TC_DXT1_EXT; break;
-        case COMPRESSED_DXT3_RGBA: if (RLGL.ExtSupported.texCompDXT) *glInternalFormat = GL_COMPRESSED_RGBA_S3TC_DXT3_EXT; break;
-        case COMPRESSED_DXT5_RGBA: if (RLGL.ExtSupported.texCompDXT) *glInternalFormat = GL_COMPRESSED_RGBA_S3TC_DXT5_EXT; break;
-        case COMPRESSED_ETC1_RGB: if (RLGL.ExtSupported.texCompETC1) *glInternalFormat = GL_ETC1_RGB8_OES; break;                      // NOTE: Requires OpenGL ES 2.0 or OpenGL 4.3
-        case COMPRESSED_ETC2_RGB: if (RLGL.ExtSupported.texCompETC2) *glInternalFormat = GL_COMPRESSED_RGB8_ETC2; break;               // NOTE: Requires OpenGL ES 3.0 or OpenGL 4.3
-        case COMPRESSED_ETC2_EAC_RGBA: if (RLGL.ExtSupported.texCompETC2) *glInternalFormat = GL_COMPRESSED_RGBA8_ETC2_EAC; break;     // NOTE: Requires OpenGL ES 3.0 or OpenGL 4.3
-        case COMPRESSED_PVRT_RGB: if (RLGL.ExtSupported.texCompPVRT) *glInternalFormat = GL_COMPRESSED_RGB_PVRTC_4BPPV1_IMG; break;    // NOTE: Requires PowerVR GPU
-        case COMPRESSED_PVRT_RGBA: if (RLGL.ExtSupported.texCompPVRT) *glInternalFormat = GL_COMPRESSED_RGBA_PVRTC_4BPPV1_IMG; break;  // NOTE: Requires PowerVR GPU
-        case COMPRESSED_ASTC_4x4_RGBA: if (RLGL.ExtSupported.texCompASTC) *glInternalFormat = GL_COMPRESSED_RGBA_ASTC_4x4_KHR; break;  // NOTE: Requires OpenGL ES 3.1 or OpenGL 4.3
-        case COMPRESSED_ASTC_8x8_RGBA: if (RLGL.ExtSupported.texCompASTC) *glInternalFormat = GL_COMPRESSED_RGBA_ASTC_8x8_KHR; break;  // NOTE: Requires OpenGL ES 3.1 or OpenGL 4.3
+        case PIXELFORMAT_COMPRESSED_DXT1_RGB: if (RLGL.ExtSupported.texCompDXT) *glInternalFormat = GL_COMPRESSED_RGB_S3TC_DXT1_EXT; break;
+        case PIXELFORMAT_COMPRESSED_DXT1_RGBA: if (RLGL.ExtSupported.texCompDXT) *glInternalFormat = GL_COMPRESSED_RGBA_S3TC_DXT1_EXT; break;
+        case PIXELFORMAT_COMPRESSED_DXT3_RGBA: if (RLGL.ExtSupported.texCompDXT) *glInternalFormat = GL_COMPRESSED_RGBA_S3TC_DXT3_EXT; break;
+        case PIXELFORMAT_COMPRESSED_DXT5_RGBA: if (RLGL.ExtSupported.texCompDXT) *glInternalFormat = GL_COMPRESSED_RGBA_S3TC_DXT5_EXT; break;
+        case PIXELFORMAT_COMPRESSED_ETC1_RGB: if (RLGL.ExtSupported.texCompETC1) *glInternalFormat = GL_ETC1_RGB8_OES; break;                      // NOTE: Requires OpenGL ES 2.0 or OpenGL 4.3
+        case PIXELFORMAT_COMPRESSED_ETC2_RGB: if (RLGL.ExtSupported.texCompETC2) *glInternalFormat = GL_COMPRESSED_RGB8_ETC2; break;               // NOTE: Requires OpenGL ES 3.0 or OpenGL 4.3
+        case PIXELFORMAT_COMPRESSED_ETC2_EAC_RGBA: if (RLGL.ExtSupported.texCompETC2) *glInternalFormat = GL_COMPRESSED_RGBA8_ETC2_EAC; break;     // NOTE: Requires OpenGL ES 3.0 or OpenGL 4.3
+        case PIXELFORMAT_COMPRESSED_PVRT_RGB: if (RLGL.ExtSupported.texCompPVRT) *glInternalFormat = GL_COMPRESSED_RGB_PVRTC_4BPPV1_IMG; break;    // NOTE: Requires PowerVR GPU
+        case PIXELFORMAT_COMPRESSED_PVRT_RGBA: if (RLGL.ExtSupported.texCompPVRT) *glInternalFormat = GL_COMPRESSED_RGBA_PVRTC_4BPPV1_IMG; break;  // NOTE: Requires PowerVR GPU
+        case PIXELFORMAT_COMPRESSED_ASTC_4x4_RGBA: if (RLGL.ExtSupported.texCompASTC) *glInternalFormat = GL_COMPRESSED_RGBA_ASTC_4x4_KHR; break;  // NOTE: Requires OpenGL ES 3.1 or OpenGL 4.3
+        case PIXELFORMAT_COMPRESSED_ASTC_8x8_RGBA: if (RLGL.ExtSupported.texCompASTC) *glInternalFormat = GL_COMPRESSED_RGBA_ASTC_8x8_KHR; break;  // NOTE: Requires OpenGL ES 3.1 or OpenGL 4.3
     #endif
         default: TRACELOG(LOG_WARNING, "TEXTURE: Current format not supported (%i)", format); break;
     }
@@ -2427,7 +2427,7 @@ void rlGenerateMipmaps(Texture2D *texture)
     if (texIsPOT)
     {
         // WARNING: Manual mipmap generation only works for RGBA 32bit textures!
-        if (texture->format == UNCOMPRESSED_R8G8B8A8)
+        if (texture->format == PIXELFORMAT_UNCOMPRESSED_R8G8B8A8)
         {
             // Retrieve texture data from VRAM
             void *texData = rlReadTexturePixels(*texture);
@@ -2731,7 +2731,7 @@ void rlDrawMesh(Mesh mesh, Material material, Matrix transform)
 {
 #if defined(GRAPHICS_API_OPENGL_11)
     glEnable(GL_TEXTURE_2D);
-    glBindTexture(GL_TEXTURE_2D, material.maps[MAP_DIFFUSE].texture.id);
+    glBindTexture(GL_TEXTURE_2D, material.maps[MATERIAL_MAP_DIFFUSE].texture.id);
 
     // NOTE: On OpenGL 1.1 we use Vertex Arrays to draw model
     glEnableClientState(GL_VERTEX_ARRAY);                   // Enable vertex array
@@ -2746,7 +2746,7 @@ void rlDrawMesh(Mesh mesh, Material material, Matrix transform)
 
     rlPushMatrix();
         rlMultMatrixf(MatrixToFloat(transform));
-        rlColor4ub(material.maps[MAP_DIFFUSE].color.r, material.maps[MAP_DIFFUSE].color.g, material.maps[MAP_DIFFUSE].color.b, material.maps[MAP_DIFFUSE].color.a);
+        rlColor4ub(material.maps[MATERIAL_MAP_DIFFUSE].color.r, material.maps[MATERIAL_MAP_DIFFUSE].color.g, material.maps[MATERIAL_MAP_DIFFUSE].color.b, material.maps[MATERIAL_MAP_DIFFUSE].color.a);
 
         if (mesh.indices != NULL) glDrawElements(GL_TRIANGLES, mesh.triangleCount*3, GL_UNSIGNED_SHORT, mesh.indices);
         else glDrawArrays(GL_TRIANGLES, 0, mesh.vertexCount);
@@ -2768,24 +2768,24 @@ void rlDrawMesh(Mesh mesh, Material material, Matrix transform)
     // Matrices and other values required by shader
     //-----------------------------------------------------
     // Calculate and send to shader model matrix (used by PBR shader)
-    if (material.shader.locs[LOC_MATRIX_MODEL] != -1) SetShaderValueMatrix(material.shader, material.shader.locs[LOC_MATRIX_MODEL], transform);
+    if (material.shader.locs[SHADER_LOC_MATRIX_MODEL] != -1) SetShaderValueMatrix(material.shader, material.shader.locs[SHADER_LOC_MATRIX_MODEL], transform);
 
     // Upload to shader material.colDiffuse
-    if (material.shader.locs[LOC_COLOR_DIFFUSE] != -1)
-        glUniform4f(material.shader.locs[LOC_COLOR_DIFFUSE], (float)material.maps[MAP_DIFFUSE].color.r/255.0f,
-                                                           (float)material.maps[MAP_DIFFUSE].color.g/255.0f,
-                                                           (float)material.maps[MAP_DIFFUSE].color.b/255.0f,
-                                                           (float)material.maps[MAP_DIFFUSE].color.a/255.0f);
+    if (material.shader.locs[SHADER_LOC_COLOR_DIFFUSE] != -1)
+        glUniform4f(material.shader.locs[SHADER_LOC_COLOR_DIFFUSE], (float)material.maps[MATERIAL_MAP_DIFFUSE].color.r/255.0f,
+                                                           (float)material.maps[MATERIAL_MAP_DIFFUSE].color.g/255.0f,
+                                                           (float)material.maps[MATERIAL_MAP_DIFFUSE].color.b/255.0f,
+                                                           (float)material.maps[MATERIAL_MAP_DIFFUSE].color.a/255.0f);
 
     // Upload to shader material.colSpecular (if available)
-    if (material.shader.locs[LOC_COLOR_SPECULAR] != -1)
-        glUniform4f(material.shader.locs[LOC_COLOR_SPECULAR], (float)material.maps[MAP_SPECULAR].color.r/255.0f,
-                                                               (float)material.maps[MAP_SPECULAR].color.g/255.0f,
-                                                               (float)material.maps[MAP_SPECULAR].color.b/255.0f,
-                                                               (float)material.maps[MAP_SPECULAR].color.a/255.0f);
+    if (material.shader.locs[SHADER_LOC_COLOR_SPECULAR] != -1)
+        glUniform4f(material.shader.locs[SHADER_LOC_COLOR_SPECULAR], (float)material.maps[MATERIAL_MAP_SPECULAR].color.r/255.0f,
+                                                               (float)material.maps[MATERIAL_MAP_SPECULAR].color.g/255.0f,
+                                                               (float)material.maps[MATERIAL_MAP_SPECULAR].color.b/255.0f,
+                                                               (float)material.maps[MATERIAL_MAP_SPECULAR].color.a/255.0f);
 
-    if (material.shader.locs[LOC_MATRIX_VIEW] != -1) SetShaderValueMatrix(material.shader, material.shader.locs[LOC_MATRIX_VIEW], RLGL.State.modelview);
-    if (material.shader.locs[LOC_MATRIX_PROJECTION] != -1) SetShaderValueMatrix(material.shader, material.shader.locs[LOC_MATRIX_PROJECTION], RLGL.State.projection);
+    if (material.shader.locs[SHADER_LOC_MATRIX_VIEW] != -1) SetShaderValueMatrix(material.shader, material.shader.locs[SHADER_LOC_MATRIX_VIEW], RLGL.State.modelview);
+    if (material.shader.locs[SHADER_LOC_MATRIX_PROJECTION] != -1) SetShaderValueMatrix(material.shader, material.shader.locs[SHADER_LOC_MATRIX_PROJECTION], RLGL.State.projection);
 
     // At this point the modelview matrix just contains the view matrix (camera)
     // That's because BeginMode3D() sets it an no model-drawing function modifies it, all use rlPushMatrix() and rlPopMatrix()
@@ -2807,10 +2807,10 @@ void rlDrawMesh(Mesh mesh, Material material, Matrix transform)
         if (material.maps[i].texture.id > 0)
         {
             glActiveTexture(GL_TEXTURE0 + i);
-            if ((i == MAP_IRRADIANCE) || (i == MAP_PREFILTER) || (i == MAP_CUBEMAP)) glBindTexture(GL_TEXTURE_CUBE_MAP, material.maps[i].texture.id);
+            if ((i == MATERIAL_MAP_IRRADIANCE) || (i == MATERIAL_MAP_PREFILTER) || (i == MATERIAL_MAP_CUBEMAP)) glBindTexture(GL_TEXTURE_CUBE_MAP, material.maps[i].texture.id);
             else glBindTexture(GL_TEXTURE_2D, material.maps[i].texture.id);
 
-            glUniform1i(material.shader.locs[LOC_MAP_DIFFUSE + i], i);
+            glUniform1i(material.shader.locs[SHADER_LOC_MAP_DIFFUSE + i], i);
         }
     }
 
@@ -2820,54 +2820,54 @@ void rlDrawMesh(Mesh mesh, Material material, Matrix transform)
     {
         // Bind mesh VBO data: vertex position (shader-location = 0)
         glBindBuffer(GL_ARRAY_BUFFER, mesh.vboId[0]);
-        glVertexAttribPointer(material.shader.locs[LOC_VERTEX_POSITION], 3, GL_FLOAT, 0, 0, 0);
-        glEnableVertexAttribArray(material.shader.locs[LOC_VERTEX_POSITION]);
+        glVertexAttribPointer(material.shader.locs[SHADER_LOC_VERTEX_POSITION], 3, GL_FLOAT, 0, 0, 0);
+        glEnableVertexAttribArray(material.shader.locs[SHADER_LOC_VERTEX_POSITION]);
 
         // Bind mesh VBO data: vertex texcoords (shader-location = 1)
         glBindBuffer(GL_ARRAY_BUFFER, mesh.vboId[1]);
-        glVertexAttribPointer(material.shader.locs[LOC_VERTEX_TEXCOORD01], 2, GL_FLOAT, 0, 0, 0);
-        glEnableVertexAttribArray(material.shader.locs[LOC_VERTEX_TEXCOORD01]);
+        glVertexAttribPointer(material.shader.locs[SHADER_LOC_VERTEX_TEXCOORD01], 2, GL_FLOAT, 0, 0, 0);
+        glEnableVertexAttribArray(material.shader.locs[SHADER_LOC_VERTEX_TEXCOORD01]);
 
         // Bind mesh VBO data: vertex normals (shader-location = 2, if available)
-        if (material.shader.locs[LOC_VERTEX_NORMAL] != -1)
+        if (material.shader.locs[SHADER_LOC_VERTEX_NORMAL] != -1)
         {
             glBindBuffer(GL_ARRAY_BUFFER, mesh.vboId[2]);
-            glVertexAttribPointer(material.shader.locs[LOC_VERTEX_NORMAL], 3, GL_FLOAT, 0, 0, 0);
-            glEnableVertexAttribArray(material.shader.locs[LOC_VERTEX_NORMAL]);
+            glVertexAttribPointer(material.shader.locs[SHADER_LOC_VERTEX_NORMAL], 3, GL_FLOAT, 0, 0, 0);
+            glEnableVertexAttribArray(material.shader.locs[SHADER_LOC_VERTEX_NORMAL]);
         }
 
         // Bind mesh VBO data: vertex colors (shader-location = 3, if available)
-        if (material.shader.locs[LOC_VERTEX_COLOR] != -1)
+        if (material.shader.locs[SHADER_LOC_VERTEX_COLOR] != -1)
         {
             if (mesh.vboId[3] != 0)
             {
                 glBindBuffer(GL_ARRAY_BUFFER, mesh.vboId[3]);
-                glVertexAttribPointer(material.shader.locs[LOC_VERTEX_COLOR], 4, GL_UNSIGNED_BYTE, GL_TRUE, 0, 0);
-                glEnableVertexAttribArray(material.shader.locs[LOC_VERTEX_COLOR]);
+                glVertexAttribPointer(material.shader.locs[SHADER_LOC_VERTEX_COLOR], 4, GL_UNSIGNED_BYTE, GL_TRUE, 0, 0);
+                glEnableVertexAttribArray(material.shader.locs[SHADER_LOC_VERTEX_COLOR]);
             }
             else
             {
                 // Set default value for unused attribute
                 // NOTE: Required when using default shader and no VAO support
-                glVertexAttrib4f(material.shader.locs[LOC_VERTEX_COLOR], 1.0f, 1.0f, 1.0f, 1.0f);
-                glDisableVertexAttribArray(material.shader.locs[LOC_VERTEX_COLOR]);
+                glVertexAttrib4f(material.shader.locs[SHADER_LOC_VERTEX_COLOR], 1.0f, 1.0f, 1.0f, 1.0f);
+                glDisableVertexAttribArray(material.shader.locs[SHADER_LOC_VERTEX_COLOR]);
             }
         }
 
         // Bind mesh VBO data: vertex tangents (shader-location = 4, if available)
-        if (material.shader.locs[LOC_VERTEX_TANGENT] != -1)
+        if (material.shader.locs[SHADER_LOC_VERTEX_TANGENT] != -1)
         {
             glBindBuffer(GL_ARRAY_BUFFER, mesh.vboId[4]);
-            glVertexAttribPointer(material.shader.locs[LOC_VERTEX_TANGENT], 4, GL_FLOAT, 0, 0, 0);
-            glEnableVertexAttribArray(material.shader.locs[LOC_VERTEX_TANGENT]);
+            glVertexAttribPointer(material.shader.locs[SHADER_LOC_VERTEX_TANGENT], 4, GL_FLOAT, 0, 0, 0);
+            glEnableVertexAttribArray(material.shader.locs[SHADER_LOC_VERTEX_TANGENT]);
         }
 
         // Bind mesh VBO data: vertex texcoords2 (shader-location = 5, if available)
-        if (material.shader.locs[LOC_VERTEX_TEXCOORD02] != -1)
+        if (material.shader.locs[SHADER_LOC_VERTEX_TEXCOORD02] != -1)
         {
             glBindBuffer(GL_ARRAY_BUFFER, mesh.vboId[5]);
-            glVertexAttribPointer(material.shader.locs[LOC_VERTEX_TEXCOORD02], 2, GL_FLOAT, 0, 0, 0);
-            glEnableVertexAttribArray(material.shader.locs[LOC_VERTEX_TEXCOORD02]);
+            glVertexAttribPointer(material.shader.locs[SHADER_LOC_VERTEX_TEXCOORD02], 2, GL_FLOAT, 0, 0, 0);
+            glEnableVertexAttribArray(material.shader.locs[SHADER_LOC_VERTEX_TEXCOORD02]);
         }
 
         if (mesh.indices != NULL) glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh.vboId[6]);
@@ -2889,7 +2889,7 @@ void rlDrawMesh(Mesh mesh, Material material, Matrix transform)
         Matrix matMVP = MatrixMultiply(RLGL.State.modelview, RLGL.State.projection);        // Transform to screen-space coordinates
 
         // Send combined model-view-projection matrix to shader
-        glUniformMatrix4fv(material.shader.locs[LOC_MATRIX_MVP], 1, false, MatrixToFloat(matMVP));
+        glUniformMatrix4fv(material.shader.locs[SHADER_LOC_MATRIX_MVP], 1, false, MatrixToFloat(matMVP));
 
         // Draw call!
         if (mesh.indices != NULL) glDrawElements(GL_TRIANGLES, mesh.triangleCount*3, GL_UNSIGNED_SHORT, 0); // Indexed vertices draw
@@ -2900,7 +2900,7 @@ void rlDrawMesh(Mesh mesh, Material material, Matrix transform)
     for (int i = 0; i < MAX_MATERIAL_MAPS; i++)
     {
         glActiveTexture(GL_TEXTURE0 + i);       // Set shader active texture
-        if ((i == MAP_IRRADIANCE) || (i == MAP_PREFILTER) || (i == MAP_CUBEMAP)) glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
+        if ((i == MATERIAL_MAP_IRRADIANCE) || (i == MATERIAL_MAP_PREFILTER) || (i == MATERIAL_MAP_CUBEMAP)) glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
         else glBindTexture(GL_TEXTURE_2D, 0);   // Unbind current active texture
     }
 
@@ -2930,18 +2930,18 @@ void rlDrawMeshInstanced(Mesh mesh, Material material, Matrix *transforms, int c
     glUseProgram(material.shader.id);
 
     // Upload to shader material.colDiffuse
-    if (material.shader.locs[LOC_COLOR_DIFFUSE] != -1)
-        glUniform4f(material.shader.locs[LOC_COLOR_DIFFUSE], (float)material.maps[MAP_DIFFUSE].color.r/255.0f,
-                                                           (float)material.maps[MAP_DIFFUSE].color.g/255.0f,
-                                                           (float)material.maps[MAP_DIFFUSE].color.b/255.0f,
-                                                           (float)material.maps[MAP_DIFFUSE].color.a/255.0f);
+    if (material.shader.locs[SHADER_LOC_COLOR_DIFFUSE] != -1)
+        glUniform4f(material.shader.locs[SHADER_LOC_COLOR_DIFFUSE], (float)material.maps[MATERIAL_MAP_DIFFUSE].color.r/255.0f,
+                                                           (float)material.maps[MATERIAL_MAP_DIFFUSE].color.g/255.0f,
+                                                           (float)material.maps[MATERIAL_MAP_DIFFUSE].color.b/255.0f,
+                                                           (float)material.maps[MATERIAL_MAP_DIFFUSE].color.a/255.0f);
 
     // Upload to shader material.colSpecular (if available)
-    if (material.shader.locs[LOC_COLOR_SPECULAR] != -1)
-        glUniform4f(material.shader.locs[LOC_COLOR_SPECULAR], (float)material.maps[MAP_SPECULAR].color.r/255.0f,
-                                                               (float)material.maps[MAP_SPECULAR].color.g/255.0f,
-                                                               (float)material.maps[MAP_SPECULAR].color.b/255.0f,
-                                                               (float)material.maps[MAP_SPECULAR].color.a/255.0f);
+    if (material.shader.locs[SHADER_LOC_COLOR_SPECULAR] != -1)
+        glUniform4f(material.shader.locs[SHADER_LOC_COLOR_SPECULAR], (float)material.maps[MATERIAL_MAP_SPECULAR].color.r/255.0f,
+                                                               (float)material.maps[MATERIAL_MAP_SPECULAR].color.g/255.0f,
+                                                               (float)material.maps[MATERIAL_MAP_SPECULAR].color.b/255.0f,
+                                                               (float)material.maps[MATERIAL_MAP_SPECULAR].color.a/255.0f);
 
     // Bind active texture maps (if available)
     for (int i = 0; i < MAX_MATERIAL_MAPS; i++)
@@ -2949,11 +2949,11 @@ void rlDrawMeshInstanced(Mesh mesh, Material material, Matrix *transforms, int c
         if (material.maps[i].texture.id > 0)
         {
             glActiveTexture(GL_TEXTURE0 + i);
-            if ((i == MAP_IRRADIANCE) || (i == MAP_PREFILTER) || (i == MAP_CUBEMAP))
+            if ((i == MATERIAL_MAP_IRRADIANCE) || (i == MATERIAL_MAP_PREFILTER) || (i == MATERIAL_MAP_CUBEMAP))
                 glBindTexture(GL_TEXTURE_CUBE_MAP, material.maps[i].texture.id);
             else glBindTexture(GL_TEXTURE_2D, material.maps[i].texture.id);
 
-            glUniform1i(material.shader.locs[LOC_MAP_DIFFUSE + i], i);
+            glUniform1i(material.shader.locs[SHADER_LOC_MAP_DIFFUSE + i], i);
         }
     }
 
@@ -2962,7 +2962,7 @@ void rlDrawMeshInstanced(Mesh mesh, Material material, Matrix *transforms, int c
 
     // At this point the modelview matrix just contains the view matrix (camera)
     // For instanced shaders "mvp" is not premultiplied by any instance transform, only RLGL.State.transform
-    glUniformMatrix4fv(material.shader.locs[LOC_MATRIX_MVP], 1, false,
+    glUniformMatrix4fv(material.shader.locs[SHADER_LOC_MATRIX_MVP], 1, false,
                        MatrixToFloat(MatrixMultiply(MatrixMultiply(RLGL.State.transform, RLGL.State.modelview), RLGL.State.projection)));
 
     float16* instanceTransforms = RL_MALLOC(count*sizeof(float16));
@@ -2978,9 +2978,9 @@ void rlDrawMeshInstanced(Mesh mesh, Material material, Matrix *transforms, int c
     glBindBuffer(GL_ARRAY_BUFFER, instancesB);
     glBufferData(GL_ARRAY_BUFFER, count*sizeof(float16), instanceTransforms, GL_STATIC_DRAW);
 
-    // Instances are put in LOC_MATRIX_MODEL attribute location with space for 4x Vector4, eg:
+    // Instances are put in SHADER_LOC_MATRIX_MODEL attribute location with space for 4x Vector4, eg:
     // layout (location = 12) in mat4 instance;
-    unsigned int instanceA = material.shader.locs[LOC_MATRIX_MODEL];
+    unsigned int instanceA = material.shader.locs[SHADER_LOC_MATRIX_MODEL];
 
     for (unsigned int i = 0; i < 4; i++)
     {
@@ -3002,7 +3002,7 @@ void rlDrawMeshInstanced(Mesh mesh, Material material, Matrix *transforms, int c
     for (int i = 0; i < MAX_MATERIAL_MAPS; i++)
     {
         glActiveTexture(GL_TEXTURE0 + i);       // Set shader active texture
-        if ((i == MAP_IRRADIANCE) || (i == MAP_PREFILTER) || (i == MAP_CUBEMAP)) glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
+        if ((i == MATERIAL_MAP_IRRADIANCE) || (i == MATERIAL_MAP_PREFILTER) || (i == MATERIAL_MAP_CUBEMAP)) glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
         else glBindTexture(GL_TEXTURE_2D, 0);   // Unbind current active texture
     }
 
@@ -3089,7 +3089,7 @@ void *rlReadTexturePixels(Texture2D texture)
     rlGetGlTextureFormats(texture.format, &glInternalFormat, &glFormat, &glType);
     unsigned int size = GetPixelDataSize(texture.width, texture.height, texture.format);
 
-    if ((glInternalFormat != -1) && (texture.format < COMPRESSED_DXT1_RGB))
+    if ((glInternalFormat != -1) && (texture.format < PIXELFORMAT_COMPRESSED_DXT1_RGB))
     {
         pixels = RL_MALLOC(size);
         glGetTexImage(GL_TEXTURE_2D, 0, glFormat, glType, pixels);
@@ -3118,7 +3118,7 @@ void *rlReadTexturePixels(Texture2D texture)
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texture.id, 0);
 
     // We read data as RGBA because FBO texture is configured as RGBA, despite binding another texture format
-    pixels = (unsigned char *)RL_MALLOC(GetPixelDataSize(texture.width, texture.height, UNCOMPRESSED_R8G8B8A8));
+    pixels = (unsigned char *)RL_MALLOC(GetPixelDataSize(texture.width, texture.height, PIXELFORMAT_UNCOMPRESSED_R8G8B8A8));
     glReadPixels(0, 0, texture.width, texture.height, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
 
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -3144,7 +3144,7 @@ Texture2D GetTextureDefault(void)
     texture.width = 1;
     texture.height = 1;
     texture.mipmaps = 1;
-    texture.format = UNCOMPRESSED_R8G8B8A8;
+    texture.format = PIXELFORMAT_UNCOMPRESSED_R8G8B8A8;
 #endif
     return texture;
 }
@@ -3357,15 +3357,15 @@ void SetShaderValueV(Shader shader, int uniformLoc, const void *value, int unifo
 
     switch (uniformType)
     {
-        case UNIFORM_FLOAT: glUniform1fv(uniformLoc, count, (float *)value); break;
-        case UNIFORM_VEC2: glUniform2fv(uniformLoc, count, (float *)value); break;
-        case UNIFORM_VEC3: glUniform3fv(uniformLoc, count, (float *)value); break;
-        case UNIFORM_VEC4: glUniform4fv(uniformLoc, count, (float *)value); break;
-        case UNIFORM_INT: glUniform1iv(uniformLoc, count, (int *)value); break;
-        case UNIFORM_IVEC2: glUniform2iv(uniformLoc, count, (int *)value); break;
-        case UNIFORM_IVEC3: glUniform3iv(uniformLoc, count, (int *)value); break;
-        case UNIFORM_IVEC4: glUniform4iv(uniformLoc, count, (int *)value); break;
-        case UNIFORM_SAMPLER2D: glUniform1iv(uniformLoc, count, (int *)value); break;
+        case SHADER_UNIFORM_FLOAT: glUniform1fv(uniformLoc, count, (float *)value); break;
+        case SHADER_UNIFORM_VEC2: glUniform2fv(uniformLoc, count, (float *)value); break;
+        case SHADER_UNIFORM_VEC3: glUniform3fv(uniformLoc, count, (float *)value); break;
+        case SHADER_UNIFORM_VEC4: glUniform4fv(uniformLoc, count, (float *)value); break;
+        case SHADER_UNIFORM_INT: glUniform1iv(uniformLoc, count, (int *)value); break;
+        case SHADER_UNIFORM_IVEC2: glUniform2iv(uniformLoc, count, (int *)value); break;
+        case SHADER_UNIFORM_IVEC3: glUniform3iv(uniformLoc, count, (int *)value); break;
+        case SHADER_UNIFORM_IVEC4: glUniform4iv(uniformLoc, count, (int *)value); break;
+        case SHADER_UNIFORM_SAMPLER2D: glUniform1iv(uniformLoc, count, (int *)value); break;
         default: TRACELOG(LOG_WARNING, "SHADER: [ID %i] Failed to set uniform, data type not recognized", shader.id);
     }
 
@@ -3487,7 +3487,7 @@ TextureCubemap GenTextureCubemap(Shader shader, Texture2D panorama, int size, in
 
     // Define projection matrix and send it to shader
     Matrix fboProjection = MatrixPerspective(90.0*DEG2RAD, 1.0, RL_CULL_DISTANCE_NEAR, RL_CULL_DISTANCE_FAR);
-    SetShaderValueMatrix(shader, shader.locs[LOC_MATRIX_PROJECTION], fboProjection);
+    SetShaderValueMatrix(shader, shader.locs[SHADER_LOC_MATRIX_PROJECTION], fboProjection);
 
     // Define view matrix for every side of the cubemap
     Matrix fboViews[6] = {
@@ -3509,7 +3509,7 @@ TextureCubemap GenTextureCubemap(Shader shader, Texture2D panorama, int size, in
 
     for (int i = 0; i < 6; i++)
     {
-        SetShaderValueMatrix(shader, shader.locs[LOC_MATRIX_VIEW], fboViews[i]);
+        SetShaderValueMatrix(shader, shader.locs[SHADER_LOC_MATRIX_VIEW], fboViews[i]);
         rlFramebufferAttach(fbo, cubemap.id, RL_ATTACHMENT_COLOR_CHANNEL0, RL_ATTACHMENT_CUBEMAP_POSITIVE_X + i);
 
         rlEnableFramebuffer(fbo);
@@ -3543,7 +3543,7 @@ TextureCubemap GenTextureCubemap(Shader shader, Texture2D panorama, int size, in
     cubemap.width = size;
     cubemap.height = size;
     cubemap.mipmaps = 1;
-    cubemap.format = UNCOMPRESSED_R32G32B32;
+    cubemap.format = PIXELFORMAT_UNCOMPRESSED_R32G32B32;
 #endif
     return cubemap;
 }
@@ -3559,7 +3559,7 @@ TextureCubemap GenTextureIrradiance(Shader shader, TextureCubemap cubemap, int s
     // STEP 1: Setup framebuffer
     //------------------------------------------------------------------------------------------
     unsigned int rbo = rlLoadTextureDepth(size, size, true);
-    irradiance.id = rlLoadTextureCubemap(NULL, size, UNCOMPRESSED_R32G32B32);
+    irradiance.id = rlLoadTextureCubemap(NULL, size, PIXELFORMAT_UNCOMPRESSED_R32G32B32);
 
     unsigned int fbo = rlLoadFramebuffer(size, size);
     rlFramebufferAttach(fbo, rbo, RL_ATTACHMENT_DEPTH, RL_ATTACHMENT_RENDERBUFFER);
@@ -3572,7 +3572,7 @@ TextureCubemap GenTextureIrradiance(Shader shader, TextureCubemap cubemap, int s
 
     // Define projection matrix and send it to shader
     Matrix fboProjection = MatrixPerspective(90.0*DEG2RAD, 1.0, RL_CULL_DISTANCE_NEAR, RL_CULL_DISTANCE_FAR);
-    SetShaderValueMatrix(shader, shader.locs[LOC_MATRIX_PROJECTION], fboProjection);
+    SetShaderValueMatrix(shader, shader.locs[SHADER_LOC_MATRIX_PROJECTION], fboProjection);
 
     // Define view matrix for every side of the cubemap
     Matrix fboViews[6] = {
@@ -3592,7 +3592,7 @@ TextureCubemap GenTextureIrradiance(Shader shader, TextureCubemap cubemap, int s
 
     for (int i = 0; i < 6; i++)
     {
-        SetShaderValueMatrix(shader, shader.locs[LOC_MATRIX_VIEW], fboViews[i]);
+        SetShaderValueMatrix(shader, shader.locs[SHADER_LOC_MATRIX_VIEW], fboViews[i]);
         rlFramebufferAttach(fbo, irradiance.id, RL_ATTACHMENT_COLOR_CHANNEL0, RL_ATTACHMENT_CUBEMAP_POSITIVE_X + i);
 
         rlEnableFramebuffer(fbo);
@@ -3616,7 +3616,7 @@ TextureCubemap GenTextureIrradiance(Shader shader, TextureCubemap cubemap, int s
     irradiance.width = size;
     irradiance.height = size;
     irradiance.mipmaps = 1;
-    irradiance.format = UNCOMPRESSED_R32G32B32;
+    irradiance.format = PIXELFORMAT_UNCOMPRESSED_R32G32B32;
 #endif
     return irradiance;
 }
@@ -3632,7 +3632,7 @@ TextureCubemap GenTexturePrefilter(Shader shader, TextureCubemap cubemap, int si
     // STEP 1: Setup framebuffer
     //------------------------------------------------------------------------------------------
     unsigned int rbo = rlLoadTextureDepth(size, size, true);
-    prefilter.id = rlLoadTextureCubemap(NULL, size, UNCOMPRESSED_R32G32B32);
+    prefilter.id = rlLoadTextureCubemap(NULL, size, PIXELFORMAT_UNCOMPRESSED_R32G32B32);
     rlTextureParameters(prefilter.id, RL_TEXTURE_MIN_FILTER, RL_TEXTURE_FILTER_MIP_LINEAR);
 
     unsigned int fbo = rlLoadFramebuffer(size, size);
@@ -3649,7 +3649,7 @@ TextureCubemap GenTexturePrefilter(Shader shader, TextureCubemap cubemap, int si
 
     // Define projection matrix and send it to shader
     Matrix fboProjection = MatrixPerspective(90.0*DEG2RAD, 1.0, RL_CULL_DISTANCE_NEAR, RL_CULL_DISTANCE_FAR);
-    SetShaderValueMatrix(shader, shader.locs[LOC_MATRIX_PROJECTION], fboProjection);
+    SetShaderValueMatrix(shader, shader.locs[SHADER_LOC_MATRIX_PROJECTION], fboProjection);
 
     // Define view matrix for every side of the cubemap
     Matrix fboViews[6] = {
@@ -3688,7 +3688,7 @@ TextureCubemap GenTexturePrefilter(Shader shader, TextureCubemap cubemap, int si
 
         for (int i = 0; i < 6; i++)
         {
-            SetShaderValueMatrix(shader, shader.locs[LOC_MATRIX_VIEW], fboViews[i]);
+            SetShaderValueMatrix(shader, shader.locs[SHADER_LOC_MATRIX_VIEW], fboViews[i]);
             glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, prefilter.id, mip);
             //rlFramebufferAttach(fbo, irradiance.id, RL_ATTACHMENT_COLOR_CHANNEL0, RL_ATTACHMENT_CUBEMAP_POSITIVE_X + i);  // TODO: Support mip levels?
 
@@ -3714,7 +3714,7 @@ TextureCubemap GenTexturePrefilter(Shader shader, TextureCubemap cubemap, int si
     prefilter.width = size;
     prefilter.height = size;
     //prefilter.mipmaps = 1 + (int)floor(log(size)/log(2)); // MAX_MIPMAP_LEVELS
-    //prefilter.format = UNCOMPRESSED_R32G32B32;
+    //prefilter.format = PIXELFORMAT_UNCOMPRESSED_R32G32B32;
 #endif
     return prefilter;
 }
@@ -3728,7 +3728,7 @@ Texture2D GenTextureBRDF(Shader shader, int size)
     // STEP 1: Setup framebuffer
     //------------------------------------------------------------------------------------------
     unsigned int rbo = rlLoadTextureDepth(size, size, true);
-    brdf.id = rlLoadTexture(NULL, size, size, UNCOMPRESSED_R32G32B32, 1);
+    brdf.id = rlLoadTexture(NULL, size, size, PIXELFORMAT_UNCOMPRESSED_R32G32B32, 1);
 
     unsigned int fbo = rlLoadFramebuffer(size, size);
     rlFramebufferAttach(fbo, rbo, RL_ATTACHMENT_DEPTH, RL_ATTACHMENT_RENDERBUFFER);
@@ -3762,7 +3762,7 @@ Texture2D GenTextureBRDF(Shader shader, int size)
     brdf.width = size;
     brdf.height = size;
     brdf.mipmaps = 1;
-    brdf.format = UNCOMPRESSED_R32G32B32;
+    brdf.format = PIXELFORMAT_UNCOMPRESSED_R32G32B32;
 #endif
     return brdf;
 }
@@ -3809,7 +3809,7 @@ void InitVrSimulator(void)
     RLGL.Vr.stereoFboId = rlLoadFramebuffer(RLGL.State.framebufferWidth, RLGL.State.framebufferHeight);
 
     // Load color/depth textures to attach to framebuffer
-    RLGL.Vr.stereoTexId = rlLoadTexture(NULL, RLGL.State.framebufferWidth, RLGL.State.framebufferHeight, UNCOMPRESSED_R8G8B8A8, 1);
+    RLGL.Vr.stereoTexId = rlLoadTexture(NULL, RLGL.State.framebufferWidth, RLGL.State.framebufferHeight, PIXELFORMAT_UNCOMPRESSED_R8G8B8A8, 1);
     unsigned int depthId = rlLoadTextureDepth(RLGL.State.framebufferWidth, RLGL.State.framebufferHeight, true);
 
     // Attach color texture and depth renderbuffer/texture to FBO
@@ -3913,15 +3913,15 @@ void SetVrConfiguration(VrDeviceInfo hmd, Shader distortion)
     if (RLGL.Vr.config.distortionShader.id > 0)
     {
         // Update distortion shader with lens and distortion-scale parameters
-        SetShaderValue(RLGL.Vr.config.distortionShader, GetShaderLocation(RLGL.Vr.config.distortionShader, "leftLensCenter"), leftLensCenter, UNIFORM_VEC2);
-        SetShaderValue(RLGL.Vr.config.distortionShader, GetShaderLocation(RLGL.Vr.config.distortionShader, "rightLensCenter"), rightLensCenter, UNIFORM_VEC2);
-        SetShaderValue(RLGL.Vr.config.distortionShader, GetShaderLocation(RLGL.Vr.config.distortionShader, "leftScreenCenter"), leftScreenCenter, UNIFORM_VEC2);
-        SetShaderValue(RLGL.Vr.config.distortionShader, GetShaderLocation(RLGL.Vr.config.distortionShader, "rightScreenCenter"), rightScreenCenter, UNIFORM_VEC2);
+        SetShaderValue(RLGL.Vr.config.distortionShader, GetShaderLocation(RLGL.Vr.config.distortionShader, "leftLensCenter"), leftLensCenter, SHADER_UNIFORM_VEC2);
+        SetShaderValue(RLGL.Vr.config.distortionShader, GetShaderLocation(RLGL.Vr.config.distortionShader, "rightLensCenter"), rightLensCenter, SHADER_UNIFORM_VEC2);
+        SetShaderValue(RLGL.Vr.config.distortionShader, GetShaderLocation(RLGL.Vr.config.distortionShader, "leftScreenCenter"), leftScreenCenter, SHADER_UNIFORM_VEC2);
+        SetShaderValue(RLGL.Vr.config.distortionShader, GetShaderLocation(RLGL.Vr.config.distortionShader, "rightScreenCenter"), rightScreenCenter, SHADER_UNIFORM_VEC2);
 
-        SetShaderValue(RLGL.Vr.config.distortionShader, GetShaderLocation(RLGL.Vr.config.distortionShader, "scale"), scale, UNIFORM_VEC2);
-        SetShaderValue(RLGL.Vr.config.distortionShader, GetShaderLocation(RLGL.Vr.config.distortionShader, "scaleIn"), scaleIn, UNIFORM_VEC2);
-        SetShaderValue(RLGL.Vr.config.distortionShader, GetShaderLocation(RLGL.Vr.config.distortionShader, "hmdWarpParam"), hmd.lensDistortionValues, UNIFORM_VEC4);
-        SetShaderValue(RLGL.Vr.config.distortionShader, GetShaderLocation(RLGL.Vr.config.distortionShader, "chromaAbParam"), hmd.chromaAbCorrection, UNIFORM_VEC4);
+        SetShaderValue(RLGL.Vr.config.distortionShader, GetShaderLocation(RLGL.Vr.config.distortionShader, "scale"), scale, SHADER_UNIFORM_VEC2);
+        SetShaderValue(RLGL.Vr.config.distortionShader, GetShaderLocation(RLGL.Vr.config.distortionShader, "scaleIn"), scaleIn, SHADER_UNIFORM_VEC2);
+        SetShaderValue(RLGL.Vr.config.distortionShader, GetShaderLocation(RLGL.Vr.config.distortionShader, "hmdWarpParam"), hmd.lensDistortionValues, SHADER_UNIFORM_VEC4);
+        SetShaderValue(RLGL.Vr.config.distortionShader, GetShaderLocation(RLGL.Vr.config.distortionShader, "chromaAbParam"), hmd.chromaAbCorrection, SHADER_UNIFORM_VEC4);
     }
 #endif
 }
@@ -4217,14 +4217,14 @@ static Shader LoadShaderDefault(void)
         TRACELOG(LOG_INFO, "SHADER: [ID %i] Default shader loaded successfully", shader.id);
 
         // Set default shader locations: attributes locations
-        shader.locs[LOC_VERTEX_POSITION] = glGetAttribLocation(shader.id, "vertexPosition");
-        shader.locs[LOC_VERTEX_TEXCOORD01] = glGetAttribLocation(shader.id, "vertexTexCoord");
-        shader.locs[LOC_VERTEX_COLOR] = glGetAttribLocation(shader.id, "vertexColor");
+        shader.locs[SHADER_LOC_VERTEX_POSITION] = glGetAttribLocation(shader.id, "vertexPosition");
+        shader.locs[SHADER_LOC_VERTEX_TEXCOORD01] = glGetAttribLocation(shader.id, "vertexTexCoord");
+        shader.locs[SHADER_LOC_VERTEX_COLOR] = glGetAttribLocation(shader.id, "vertexColor");
 
         // Set default shader locations: uniform locations
-        shader.locs[LOC_MATRIX_MVP]  = glGetUniformLocation(shader.id, "mvp");
-        shader.locs[LOC_COLOR_DIFFUSE] = glGetUniformLocation(shader.id, "colDiffuse");
-        shader.locs[LOC_MAP_DIFFUSE] = glGetUniformLocation(shader.id, "texture0");
+        shader.locs[SHADER_LOC_MATRIX_MVP]  = glGetUniformLocation(shader.id, "mvp");
+        shader.locs[SHADER_LOC_COLOR_DIFFUSE] = glGetUniformLocation(shader.id, "colDiffuse");
+        shader.locs[SHADER_LOC_MAP_DIFFUSE] = glGetUniformLocation(shader.id, "texture0");
 
         // NOTE: We could also use below function but in case DEFAULT_ATTRIB_* points are
         // changed for external custom shaders, we just use direct bindings above
@@ -4248,23 +4248,23 @@ static void SetShaderDefaultLocations(Shader *shader)
     //          vertex texcoord2 location   = 5
 
     // Get handles to GLSL input attibute locations
-    shader->locs[LOC_VERTEX_POSITION] = glGetAttribLocation(shader->id, DEFAULT_SHADER_ATTRIB_NAME_POSITION);
-    shader->locs[LOC_VERTEX_TEXCOORD01] = glGetAttribLocation(shader->id, DEFAULT_SHADER_ATTRIB_NAME_TEXCOORD);
-    shader->locs[LOC_VERTEX_TEXCOORD02] = glGetAttribLocation(shader->id, DEFAULT_SHADER_ATTRIB_NAME_TEXCOORD2);
-    shader->locs[LOC_VERTEX_NORMAL] = glGetAttribLocation(shader->id, DEFAULT_SHADER_ATTRIB_NAME_NORMAL);
-    shader->locs[LOC_VERTEX_TANGENT] = glGetAttribLocation(shader->id, DEFAULT_SHADER_ATTRIB_NAME_TANGENT);
-    shader->locs[LOC_VERTEX_COLOR] = glGetAttribLocation(shader->id, DEFAULT_SHADER_ATTRIB_NAME_COLOR);
+    shader->locs[SHADER_LOC_VERTEX_POSITION] = glGetAttribLocation(shader->id, DEFAULT_SHADER_ATTRIB_NAME_POSITION);
+    shader->locs[SHADER_LOC_VERTEX_TEXCOORD01] = glGetAttribLocation(shader->id, DEFAULT_SHADER_ATTRIB_NAME_TEXCOORD);
+    shader->locs[SHADER_LOC_VERTEX_TEXCOORD02] = glGetAttribLocation(shader->id, DEFAULT_SHADER_ATTRIB_NAME_TEXCOORD2);
+    shader->locs[SHADER_LOC_VERTEX_NORMAL] = glGetAttribLocation(shader->id, DEFAULT_SHADER_ATTRIB_NAME_NORMAL);
+    shader->locs[SHADER_LOC_VERTEX_TANGENT] = glGetAttribLocation(shader->id, DEFAULT_SHADER_ATTRIB_NAME_TANGENT);
+    shader->locs[SHADER_LOC_VERTEX_COLOR] = glGetAttribLocation(shader->id, DEFAULT_SHADER_ATTRIB_NAME_COLOR);
 
     // Get handles to GLSL uniform locations (vertex shader)
-    shader->locs[LOC_MATRIX_MVP]  = glGetUniformLocation(shader->id, "mvp");
-    shader->locs[LOC_MATRIX_PROJECTION]  = glGetUniformLocation(shader->id, "projection");
-    shader->locs[LOC_MATRIX_VIEW]  = glGetUniformLocation(shader->id, "view");
+    shader->locs[SHADER_LOC_MATRIX_MVP]  = glGetUniformLocation(shader->id, "mvp");
+    shader->locs[SHADER_LOC_MATRIX_PROJECTION]  = glGetUniformLocation(shader->id, "projection");
+    shader->locs[SHADER_LOC_MATRIX_VIEW]  = glGetUniformLocation(shader->id, "view");
 
     // Get handles to GLSL uniform locations (fragment shader)
-    shader->locs[LOC_COLOR_DIFFUSE] = glGetUniformLocation(shader->id, "colDiffuse");
-    shader->locs[LOC_MAP_DIFFUSE] = glGetUniformLocation(shader->id, "texture0");
-    shader->locs[LOC_MAP_SPECULAR] = glGetUniformLocation(shader->id, "texture1");
-    shader->locs[LOC_MAP_NORMAL] = glGetUniformLocation(shader->id, "texture2");
+    shader->locs[SHADER_LOC_COLOR_DIFFUSE] = glGetUniformLocation(shader->id, "colDiffuse");
+    shader->locs[SHADER_LOC_MAP_DIFFUSE] = glGetUniformLocation(shader->id, "texture0");
+    shader->locs[SHADER_LOC_MAP_SPECULAR] = glGetUniformLocation(shader->id, "texture1");
+    shader->locs[SHADER_LOC_MAP_NORMAL] = glGetUniformLocation(shader->id, "texture2");
 }
 
 // Unload default shader
@@ -4348,22 +4348,22 @@ static RenderBatch LoadRenderBatch(int numBuffers, int bufferElements)
         glGenBuffers(1, &batch.vertexBuffer[i].vboId[0]);
         glBindBuffer(GL_ARRAY_BUFFER, batch.vertexBuffer[i].vboId[0]);
         glBufferData(GL_ARRAY_BUFFER, bufferElements*3*4*sizeof(float), batch.vertexBuffer[i].vertices, GL_DYNAMIC_DRAW);
-        glEnableVertexAttribArray(RLGL.State.currentShader.locs[LOC_VERTEX_POSITION]);
-        glVertexAttribPointer(RLGL.State.currentShader.locs[LOC_VERTEX_POSITION], 3, GL_FLOAT, 0, 0, 0);
+        glEnableVertexAttribArray(RLGL.State.currentShader.locs[SHADER_LOC_VERTEX_POSITION]);
+        glVertexAttribPointer(RLGL.State.currentShader.locs[SHADER_LOC_VERTEX_POSITION], 3, GL_FLOAT, 0, 0, 0);
 
         // Vertex texcoord buffer (shader-location = 1)
         glGenBuffers(1, &batch.vertexBuffer[i].vboId[1]);
         glBindBuffer(GL_ARRAY_BUFFER, batch.vertexBuffer[i].vboId[1]);
         glBufferData(GL_ARRAY_BUFFER, bufferElements*2*4*sizeof(float), batch.vertexBuffer[i].texcoords, GL_DYNAMIC_DRAW);
-        glEnableVertexAttribArray(RLGL.State.currentShader.locs[LOC_VERTEX_TEXCOORD01]);
-        glVertexAttribPointer(RLGL.State.currentShader.locs[LOC_VERTEX_TEXCOORD01], 2, GL_FLOAT, 0, 0, 0);
+        glEnableVertexAttribArray(RLGL.State.currentShader.locs[SHADER_LOC_VERTEX_TEXCOORD01]);
+        glVertexAttribPointer(RLGL.State.currentShader.locs[SHADER_LOC_VERTEX_TEXCOORD01], 2, GL_FLOAT, 0, 0, 0);
 
         // Vertex color buffer (shader-location = 3)
         glGenBuffers(1, &batch.vertexBuffer[i].vboId[2]);
         glBindBuffer(GL_ARRAY_BUFFER, batch.vertexBuffer[i].vboId[2]);
         glBufferData(GL_ARRAY_BUFFER, bufferElements*4*4*sizeof(unsigned char), batch.vertexBuffer[i].colors, GL_DYNAMIC_DRAW);
-        glEnableVertexAttribArray(RLGL.State.currentShader.locs[LOC_VERTEX_COLOR]);
-        glVertexAttribPointer(RLGL.State.currentShader.locs[LOC_VERTEX_COLOR], 4, GL_UNSIGNED_BYTE, GL_TRUE, 0, 0);
+        glEnableVertexAttribArray(RLGL.State.currentShader.locs[SHADER_LOC_VERTEX_COLOR]);
+        glVertexAttribPointer(RLGL.State.currentShader.locs[SHADER_LOC_VERTEX_COLOR], 4, GL_UNSIGNED_BYTE, GL_TRUE, 0, 0);
 
         // Fill index buffer
         glGenBuffers(1, &batch.vertexBuffer[i].vboId[3]);
@@ -4477,32 +4477,32 @@ static void DrawRenderBatch(RenderBatch *batch)
 
             // Create modelview-projection matrix and upload to shader
             Matrix matMVP = MatrixMultiply(RLGL.State.modelview, RLGL.State.projection);
-            glUniformMatrix4fv(RLGL.State.currentShader.locs[LOC_MATRIX_MVP], 1, false, MatrixToFloat(matMVP));
+            glUniformMatrix4fv(RLGL.State.currentShader.locs[SHADER_LOC_MATRIX_MVP], 1, false, MatrixToFloat(matMVP));
 
             if (RLGL.ExtSupported.vao) glBindVertexArray(batch->vertexBuffer[batch->currentBuffer].vaoId);
             else
             {
                 // Bind vertex attrib: position (shader-location = 0)
                 glBindBuffer(GL_ARRAY_BUFFER, batch->vertexBuffer[batch->currentBuffer].vboId[0]);
-                glVertexAttribPointer(RLGL.State.currentShader.locs[LOC_VERTEX_POSITION], 3, GL_FLOAT, 0, 0, 0);
-                glEnableVertexAttribArray(RLGL.State.currentShader.locs[LOC_VERTEX_POSITION]);
+                glVertexAttribPointer(RLGL.State.currentShader.locs[SHADER_LOC_VERTEX_POSITION], 3, GL_FLOAT, 0, 0, 0);
+                glEnableVertexAttribArray(RLGL.State.currentShader.locs[SHADER_LOC_VERTEX_POSITION]);
 
                 // Bind vertex attrib: texcoord (shader-location = 1)
                 glBindBuffer(GL_ARRAY_BUFFER, batch->vertexBuffer[batch->currentBuffer].vboId[1]);
-                glVertexAttribPointer(RLGL.State.currentShader.locs[LOC_VERTEX_TEXCOORD01], 2, GL_FLOAT, 0, 0, 0);
-                glEnableVertexAttribArray(RLGL.State.currentShader.locs[LOC_VERTEX_TEXCOORD01]);
+                glVertexAttribPointer(RLGL.State.currentShader.locs[SHADER_LOC_VERTEX_TEXCOORD01], 2, GL_FLOAT, 0, 0, 0);
+                glEnableVertexAttribArray(RLGL.State.currentShader.locs[SHADER_LOC_VERTEX_TEXCOORD01]);
 
                 // Bind vertex attrib: color (shader-location = 3)
                 glBindBuffer(GL_ARRAY_BUFFER, batch->vertexBuffer[batch->currentBuffer].vboId[2]);
-                glVertexAttribPointer(RLGL.State.currentShader.locs[LOC_VERTEX_COLOR], 4, GL_UNSIGNED_BYTE, GL_TRUE, 0, 0);
-                glEnableVertexAttribArray(RLGL.State.currentShader.locs[LOC_VERTEX_COLOR]);
+                glVertexAttribPointer(RLGL.State.currentShader.locs[SHADER_LOC_VERTEX_COLOR], 4, GL_UNSIGNED_BYTE, GL_TRUE, 0, 0);
+                glEnableVertexAttribArray(RLGL.State.currentShader.locs[SHADER_LOC_VERTEX_COLOR]);
 
                 glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, batch->vertexBuffer[batch->currentBuffer].vboId[3]);
             }
 
             // Setup some default shader values
-            glUniform4f(RLGL.State.currentShader.locs[LOC_COLOR_DIFFUSE], 1.0f, 1.0f, 1.0f, 1.0f);
-            glUniform1i(RLGL.State.currentShader.locs[LOC_MAP_DIFFUSE], 0);  // Active default sampler2D: texture0
+            glUniform4f(RLGL.State.currentShader.locs[SHADER_LOC_COLOR_DIFFUSE], 1.0f, 1.0f, 1.0f, 1.0f);
+            glUniform1i(RLGL.State.currentShader.locs[SHADER_LOC_MAP_DIFFUSE], 0);  // Active default sampler2D: texture0
 
             // Activate additional sampler textures
             // Those additional textures will be common for all draw calls of the batch
@@ -4960,27 +4960,27 @@ int GetPixelDataSize(int width, int height, int format)
 
     switch (format)
     {
-        case UNCOMPRESSED_GRAYSCALE: bpp = 8; break;
-        case UNCOMPRESSED_GRAY_ALPHA:
-        case UNCOMPRESSED_R5G6B5:
-        case UNCOMPRESSED_R5G5B5A1:
-        case UNCOMPRESSED_R4G4B4A4: bpp = 16; break;
-        case UNCOMPRESSED_R8G8B8A8: bpp = 32; break;
-        case UNCOMPRESSED_R8G8B8: bpp = 24; break;
-        case UNCOMPRESSED_R32: bpp = 32; break;
-        case UNCOMPRESSED_R32G32B32: bpp = 32*3; break;
-        case UNCOMPRESSED_R32G32B32A32: bpp = 32*4; break;
-        case COMPRESSED_DXT1_RGB:
-        case COMPRESSED_DXT1_RGBA:
-        case COMPRESSED_ETC1_RGB:
-        case COMPRESSED_ETC2_RGB:
-        case COMPRESSED_PVRT_RGB:
-        case COMPRESSED_PVRT_RGBA: bpp = 4; break;
-        case COMPRESSED_DXT3_RGBA:
-        case COMPRESSED_DXT5_RGBA:
-        case COMPRESSED_ETC2_EAC_RGBA:
-        case COMPRESSED_ASTC_4x4_RGBA: bpp = 8; break;
-        case COMPRESSED_ASTC_8x8_RGBA: bpp = 2; break;
+        case PIXELFORMAT_UNCOMPRESSED_GRAYSCALE: bpp = 8; break;
+        case PIXELFORMAT_UNCOMPRESSED_GRAY_ALPHA:
+        case PIXELFORMAT_UNCOMPRESSED_R5G6B5:
+        case PIXELFORMAT_UNCOMPRESSED_R5G5B5A1:
+        case PIXELFORMAT_UNCOMPRESSED_R4G4B4A4: bpp = 16; break;
+        case PIXELFORMAT_UNCOMPRESSED_R8G8B8A8: bpp = 32; break;
+        case PIXELFORMAT_UNCOMPRESSED_R8G8B8: bpp = 24; break;
+        case PIXELFORMAT_UNCOMPRESSED_R32: bpp = 32; break;
+        case PIXELFORMAT_UNCOMPRESSED_R32G32B32: bpp = 32*3; break;
+        case PIXELFORMAT_UNCOMPRESSED_R32G32B32A32: bpp = 32*4; break;
+        case PIXELFORMAT_COMPRESSED_DXT1_RGB:
+        case PIXELFORMAT_COMPRESSED_DXT1_RGBA:
+        case PIXELFORMAT_COMPRESSED_ETC1_RGB:
+        case PIXELFORMAT_COMPRESSED_ETC2_RGB:
+        case PIXELFORMAT_COMPRESSED_PVRT_RGB:
+        case PIXELFORMAT_COMPRESSED_PVRT_RGBA: bpp = 4; break;
+        case PIXELFORMAT_COMPRESSED_DXT3_RGBA:
+        case PIXELFORMAT_COMPRESSED_DXT5_RGBA:
+        case PIXELFORMAT_COMPRESSED_ETC2_EAC_RGBA:
+        case PIXELFORMAT_COMPRESSED_ASTC_4x4_RGBA: bpp = 8; break;
+        case PIXELFORMAT_COMPRESSED_ASTC_8x8_RGBA: bpp = 2; break;
         default: break;
     }
 
@@ -4990,8 +4990,8 @@ int GetPixelDataSize(int width, int height, int format)
     // if texture is smaller, minimum dataSize is 8 or 16
     if ((width < 4) && (height < 4))
     {
-        if ((format >= COMPRESSED_DXT1_RGB) && (format < COMPRESSED_DXT3_RGBA)) dataSize = 8;
-        else if ((format >= COMPRESSED_DXT3_RGBA) && (format < COMPRESSED_ASTC_8x8_RGBA)) dataSize = 16;
+        if ((format >= PIXELFORMAT_COMPRESSED_DXT1_RGB) && (format < PIXELFORMAT_COMPRESSED_DXT3_RGBA)) dataSize = 8;
+        else if ((format >= PIXELFORMAT_COMPRESSED_DXT3_RGBA) && (format < PIXELFORMAT_COMPRESSED_ASTC_8x8_RGBA)) dataSize = 16;
     }
 
     return dataSize;

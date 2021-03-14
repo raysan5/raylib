@@ -58,13 +58,13 @@ int main(void)
     float speedY = 8.0f;
 
     float screenSize[2] = { (float)GetScreenWidth(), (float)GetScreenHeight() };
-    SetShaderValue(shader, GetShaderLocation(shader, "size"), &screenSize, UNIFORM_VEC2);
-    SetShaderValue(shader, freqXLoc, &freqX, UNIFORM_FLOAT);
-    SetShaderValue(shader, freqYLoc, &freqY, UNIFORM_FLOAT);
-    SetShaderValue(shader, ampXLoc, &ampX, UNIFORM_FLOAT);
-    SetShaderValue(shader, ampYLoc, &ampY, UNIFORM_FLOAT);
-    SetShaderValue(shader, speedXLoc, &speedX, UNIFORM_FLOAT);
-    SetShaderValue(shader, speedYLoc, &speedY, UNIFORM_FLOAT);
+    SetShaderValue(shader, GetShaderLocation(shader, "size"), &screenSize, SHADER_UNIFORM_VEC2);
+    SetShaderValue(shader, freqXLoc, &freqX, SHADER_UNIFORM_FLOAT);
+    SetShaderValue(shader, freqYLoc, &freqY, SHADER_UNIFORM_FLOAT);
+    SetShaderValue(shader, ampXLoc, &ampX, SHADER_UNIFORM_FLOAT);
+    SetShaderValue(shader, ampYLoc, &ampY, SHADER_UNIFORM_FLOAT);
+    SetShaderValue(shader, speedXLoc, &speedX, SHADER_UNIFORM_FLOAT);
+    SetShaderValue(shader, speedYLoc, &speedY, SHADER_UNIFORM_FLOAT);
 
     float seconds = 0.0f;
 
@@ -78,7 +78,7 @@ int main(void)
         //----------------------------------------------------------------------------------
         seconds += GetFrameTime();
         
-        SetShaderValue(shader, secondsLoc, &seconds, UNIFORM_FLOAT);
+        SetShaderValue(shader, secondsLoc, &seconds, SHADER_UNIFORM_FLOAT);
         //----------------------------------------------------------------------------------
 
         // Draw

@@ -37,7 +37,7 @@ int main(void)
 
     Model tower = LoadModel("resources/models/turret.obj");                 // Load OBJ model
     Texture2D texture = LoadTexture("resources/models/turret_diffuse.png"); // Load model texture
-    tower.materials[0].maps[MAP_DIFFUSE].texture = texture;                 // Set model diffuse texture
+    tower.materials[0].maps[MATERIAL_MAP_DIFFUSE].texture = texture;                 // Set model diffuse texture
 
     Vector3 towerPos = { 0.0f, 0.0f, 0.0f };                    // Set model position
     BoundingBox towerBBox = MeshBoundingBox(tower.meshes[0]);   // Get mesh bounding box

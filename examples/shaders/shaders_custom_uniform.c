@@ -45,7 +45,7 @@ int main(void)
 
     Model model = LoadModel("resources/models/barracks.obj");                   // Load OBJ model
     Texture2D texture = LoadTexture("resources/models/barracks_diffuse.png");   // Load model texture (diffuse map)
-    model.materials[0].maps[MAP_DIFFUSE].texture = texture;                     // Set model diffuse texture
+    model.materials[0].maps[MATERIAL_MAP_DIFFUSE].texture = texture;                     // Set model diffuse texture
 
     Vector3 position = { 0.0f, 0.0f, 0.0f };                                    // Set model position
 
@@ -79,7 +79,7 @@ int main(void)
         swirlCenter[1] = screenHeight - mousePosition.y;
 
         // Send new value to the shader to be used on drawing
-        SetShaderValue(shader, swirlCenterLoc, swirlCenter, UNIFORM_VEC2);
+        SetShaderValue(shader, swirlCenterLoc, swirlCenter, SHADER_UNIFORM_VEC2);
 
         UpdateCamera(&camera);              // Update camera
         //----------------------------------------------------------------------------------

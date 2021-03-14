@@ -62,23 +62,23 @@ int main(void)
     Texture texture = LoadTexture("resources/texel_checker.png");
 
     // Assign texture to default model material
-    modelA.materials[0].maps[MAP_DIFFUSE].texture = texture;
-    modelB.materials[0].maps[MAP_DIFFUSE].texture = texture;
-    modelC.materials[0].maps[MAP_DIFFUSE].texture = texture;
+    modelA.materials[0].maps[MATERIAL_MAP_DIFFUSE].texture = texture;
+    modelB.materials[0].maps[MATERIAL_MAP_DIFFUSE].texture = texture;
+    modelC.materials[0].maps[MATERIAL_MAP_DIFFUSE].texture = texture;
 
     // Load shader and set up some uniforms
     Shader shader = LoadShader(TextFormat("resources/shaders/glsl%i/base_lighting.vs", GLSL_VERSION), 
                                TextFormat("resources/shaders/glsl%i/fog.fs", GLSL_VERSION));
-    shader.locs[LOC_MATRIX_MODEL] = GetShaderLocation(shader, "matModel");
-    shader.locs[LOC_VECTOR_VIEW] = GetShaderLocation(shader, "viewPos");
+    shader.locs[SHADER_LOC_MATRIX_MODEL] = GetShaderLocation(shader, "matModel");
+    shader.locs[SHADER_LOC_VECTOR_VIEW] = GetShaderLocation(shader, "viewPos");
 
     // Ambient light level
     int ambientLoc = GetShaderLocation(shader, "ambient");
-    SetShaderValue(shader, ambientLoc, (float[4]){ 0.2f, 0.2f, 0.2f, 1.0f }, UNIFORM_VEC4);
+    SetShaderValue(shader, ambientLoc, (float[4]){ 0.2f, 0.2f, 0.2f, 1.0f }, SHADER_UNIFORM_VEC4);
     
     float fogDensity = 0.15f;
     int fogDensityLoc = GetShaderLocation(shader, "fogDensity");
-    SetShaderValue(shader, fogDensityLoc, &fogDensity, UNIFORM_FLOAT);
+    SetShaderValue(shader, fogDensityLoc, &fogDensity, SHADER_UNIFORM_FLOAT);
 
     // NOTE: All models share the same shader
     modelA.materials[0].shader = shader;
@@ -112,14 +112,14 @@ int main(void)
             if (fogDensity < 0.0) fogDensity = 0.0;
         }
         
-        SetShaderValue(shader, fogDensityLoc, &fogDensity, UNIFORM_FLOAT);
+        SetShaderValue(shader, fogDensityLoc, &fogDensity, SHADER_UNIFORM_FLOAT);
 
         // Rotate the torus
         modelA.transform = MatrixMultiply(modelA.transform, MatrixRotateX(-0.025));
         modelA.transform = MatrixMultiply(modelA.transform, MatrixRotateZ(0.012));
 
         // Update the light shader with the camera view position
-        SetShaderValue(shader, shader.locs[LOC_VECTOR_VIEW], &camera.position.x, UNIFORM_VEC3);
+        SetShaderValue(shader, shader.locs[SHADER_LOC_VECTOR_VIEW], &camera.position.x, SHADER_UNIFORM_VEC3);
         //----------------------------------------------------------------------------------
 
         // Draw

@@ -147,8 +147,8 @@
 //----------------------------------------------------------------------------------
 // Defines and Macros
 //----------------------------------------------------------------------------------
-#ifndef UNCOMPRESSED_R5G5B5A1_ALPHA_THRESHOLD
-    #define UNCOMPRESSED_R5G5B5A1_ALPHA_THRESHOLD  50    // Threshold over 255 to set alpha as 0
+#ifndef PIXELFORMAT_UNCOMPRESSED_R5G5B5A1_ALPHA_THRESHOLD
+    #define PIXELFORMAT_UNCOMPRESSED_R5G5B5A1_ALPHA_THRESHOLD  50    // Threshold over 255 to set alpha as 0
 #endif
 
 //----------------------------------------------------------------------------------
@@ -276,7 +276,7 @@ Image LoadImageAnim(const char *fileName, int *frames)
             image.data = stbi_load_gif_from_memory(fileData, dataSize, delays, &image.width, &image.height, &framesCount, &comp, 4);
 
             image.mipmaps = 1;
-            image.format = UNCOMPRESSED_R8G8B8A8;
+            image.format = PIXELFORMAT_UNCOMPRESSED_R8G8B8A8;
 
             RL_FREE(fileData);
             RL_FREE(delays);        // NOTE: Frames delays are discarded
@@ -337,10 +337,10 @@ Image LoadImageFromMemory(const char *fileType, const unsigned char *fileData, i
 
             image.mipmaps = 1;
 
-            if (comp == 1) image.format = UNCOMPRESSED_GRAYSCALE;
-            else if (comp == 2) image.format = UNCOMPRESSED_GRAY_ALPHA;
-            else if (comp == 3) image.format = UNCOMPRESSED_R8G8B8;
-            else if (comp == 4) image.format = UNCOMPRESSED_R8G8B8A8;
+            if (comp == 1) image.format = PIXELFORMAT_UNCOMPRESSED_GRAYSCALE;
+            else if (comp == 2) image.format = PIXELFORMAT_UNCOMPRESSED_GRAY_ALPHA;
+            else if (comp == 3) image.format = PIXELFORMAT_UNCOMPRESSED_R8G8B8;
+            else if (comp == 4) image.format = PIXELFORMAT_UNCOMPRESSED_R8G8B8A8;
         }
 #endif
     }
@@ -355,9 +355,9 @@ Image LoadImageFromMemory(const char *fileType, const unsigned char *fileData, i
 
             image.mipmaps = 1;
 
-            if (comp == 1) image.format = UNCOMPRESSED_R32;
-            else if (comp == 3) image.format = UNCOMPRESSED_R32G32B32;
-            else if (comp == 4) image.format = UNCOMPRESSED_R32G32B32A32;
+            if (comp == 1) image.format = PIXELFORMAT_UNCOMPRESSED_R32;
+            else if (comp == 3) image.format = PIXELFORMAT_UNCOMPRESSED_R32G32B32;
+            else if (comp == 4) image.format = PIXELFORMAT_UNCOMPRESSED_R32G32B32A32;
             else
             {
                 TRACELOG(LOG_WARNING, "IMAGE: HDR file format not supported");
@@ -404,10 +404,10 @@ bool ExportImage(Image image, const char *fileName)
     bool allocatedData = false;
     unsigned char *imgData = (unsigned char *)image.data;
 
-    if (image.format == UNCOMPRESSED_GRAYSCALE) channels = 1;
-    else if (image.format == UNCOMPRESSED_GRAY_ALPHA) channels = 2;
-    else if (image.format == UNCOMPRESSED_R8G8B8) channels = 3;
-    else if (image.format == UNCOMPRESSED_R8G8B8A8) channels = 4;
+    if (image.format == PIXELFORMAT_UNCOMPRESSED_GRAYSCALE) channels = 1;
+    else if (image.format == PIXELFORMAT_UNCOMPRESSED_GRAY_ALPHA) channels = 2;
+    else if (image.format == PIXELFORMAT_UNCOMPRESSED_R8G8B8) channels = 3;
+    else if (image.format == PIXELFORMAT_UNCOMPRESSED_R8G8B8A8) channels = 4;
     else
     {
         // NOTE: Getting Color array as RGBA unsigned char values
@@ -512,7 +512,7 @@ Image GenImageColor(int width, int height, Color color)
         .data = pixels,
         .width = width,
         .height = height,
-        .format = UNCOMPRESSED_R8G8B8A8,
+        .format = PIXELFORMAT_UNCOMPRESSED_R8G8B8A8,
         .mipmaps = 1
     };
 
@@ -541,7 +541,7 @@ Image GenImageGradientV(int width, int height, Color top, Color bottom)
         .data = pixels,
         .width = width,
         .height = height,
-        .format = UNCOMPRESSED_R8G8B8A8,
+        .format = PIXELFORMAT_UNCOMPRESSED_R8G8B8A8,
         .mipmaps = 1
     };
 
@@ -569,7 +569,7 @@ Image GenImageGradientH(int width, int height, Color left, Color right)
         .data = pixels,
         .width = width,
         .height = height,
-        .format = UNCOMPRESSED_R8G8B8A8,
+        .format = PIXELFORMAT_UNCOMPRESSED_R8G8B8A8,
         .mipmaps = 1
     };
 
@@ -606,7 +606,7 @@ Image GenImageGradientRadial(int width, int height, float density, Color inner, 
         .data = pixels,
         .width = width,
         .height = height,
-        .format = UNCOMPRESSED_R8G8B8A8,
+        .format = PIXELFORMAT_UNCOMPRESSED_R8G8B8A8,
         .mipmaps = 1
     };
 
@@ -631,7 +631,7 @@ Image GenImageChecked(int width, int height, int checksX, int checksY, Color col
         .data = pixels,
         .width = width,
         .height = height,
-        .format = UNCOMPRESSED_R8G8B8A8,
+        .format = PIXELFORMAT_UNCOMPRESSED_R8G8B8A8,
         .mipmaps = 1
     };
 
@@ -653,7 +653,7 @@ Image GenImageWhiteNoise(int width, int height, float factor)
         .data = pixels,
         .width = width,
         .height = height,
-        .format = UNCOMPRESSED_R8G8B8A8,
+        .format = PIXELFORMAT_UNCOMPRESSED_R8G8B8A8,
         .mipmaps = 1
     };
 
@@ -689,7 +689,7 @@ Image GenImagePerlinNoise(int width, int height, int offsetX, int offsetY, float
         .data = pixels,
         .width = width,
         .height = height,
-        .format = UNCOMPRESSED_R8G8B8A8,
+        .format = PIXELFORMAT_UNCOMPRESSED_R8G8B8A8,
         .mipmaps = 1
     };
 
@@ -754,7 +754,7 @@ Image GenImageCellular(int width, int height, int tileSize)
         .data = pixels,
         .width = width,
         .height = height,
-        .format = UNCOMPRESSED_R8G8B8A8,
+        .format = PIXELFORMAT_UNCOMPRESSED_R8G8B8A8,
         .mipmaps = 1
     };
 
@@ -844,7 +844,7 @@ void ImageCrop(Image *image, Rectangle crop)
     }
 
     if (image->mipmaps > 1) TRACELOG(LOG_WARNING, "Image manipulation only applied to base mipmap level");
-    if (image->format >= COMPRESSED_DXT1_RGB) TRACELOG(LOG_WARNING, "Image manipulation not supported for compressed formats");
+    if (image->format >= PIXELFORMAT_COMPRESSED_DXT1_RGB) TRACELOG(LOG_WARNING, "Image manipulation not supported for compressed formats");
     else
     {
         int bytesPerPixel = GetPixelDataSize(1, 1, image->format);
@@ -885,7 +885,7 @@ void ImageFormat(Image *image, int newFormat)
 
     if ((newFormat != 0) && (image->format != newFormat))
     {
-        if ((image->format < COMPRESSED_DXT1_RGB) && (newFormat < COMPRESSED_DXT1_RGB))
+        if ((image->format < PIXELFORMAT_COMPRESSED_DXT1_RGB) && (newFormat < PIXELFORMAT_COMPRESSED_DXT1_RGB))
         {
             Vector4 *pixels = LoadImageDataNormalized(*image);     // Supports 8 to 32 bit per channel
 
@@ -897,7 +897,7 @@ void ImageFormat(Image *image, int newFormat)
 
             switch (image->format)
             {
-                case UNCOMPRESSED_GRAYSCALE:
+                case PIXELFORMAT_UNCOMPRESSED_GRAYSCALE:
                 {
                     image->data = (unsigned char *)RL_MALLOC(image->width*image->height*sizeof(unsigned char));
 
@@ -907,7 +907,7 @@ void ImageFormat(Image *image, int newFormat)
                     }
 
                 } break;
-                case UNCOMPRESSED_GRAY_ALPHA:
+                case PIXELFORMAT_UNCOMPRESSED_GRAY_ALPHA:
                 {
                     image->data = (unsigned char *)RL_MALLOC(image->width*image->height*2*sizeof(unsigned char));
 
@@ -918,7 +918,7 @@ void ImageFormat(Image *image, int newFormat)
                     }
 
                 } break;
-                case UNCOMPRESSED_R5G6B5:
+                case PIXELFORMAT_UNCOMPRESSED_R5G6B5:
                 {
                     image->data = (unsigned short *)RL_MALLOC(image->width*image->height*sizeof(unsigned short));
 
@@ -936,7 +936,7 @@ void ImageFormat(Image *image, int newFormat)
                     }
 
                 } break;
-                case UNCOMPRESSED_R8G8B8:
+                case PIXELFORMAT_UNCOMPRESSED_R8G8B8:
                 {
                     image->data = (unsigned char *)RL_MALLOC(image->width*image->height*3*sizeof(unsigned char));
 
@@ -947,7 +947,7 @@ void ImageFormat(Image *image, int newFormat)
                         ((unsigned char *)image->data)[i + 2] = (unsigned char)(pixels[k].z*255.0f);
                     }
                 } break;
-                case UNCOMPRESSED_R5G5B5A1:
+                case PIXELFORMAT_UNCOMPRESSED_R5G5B5A1:
                 {
                     image->data = (unsigned short *)RL_MALLOC(image->width*image->height*sizeof(unsigned short));
 
@@ -961,13 +961,13 @@ void ImageFormat(Image *image, int newFormat)
                         r = (unsigned char)(round(pixels[i].x*31.0f));
                         g = (unsigned char)(round(pixels[i].y*31.0f));
                         b = (unsigned char)(round(pixels[i].z*31.0f));
-                        a = (pixels[i].w > ((float)UNCOMPRESSED_R5G5B5A1_ALPHA_THRESHOLD/255.0f))? 1 : 0;
+                        a = (pixels[i].w > ((float)PIXELFORMAT_UNCOMPRESSED_R5G5B5A1_ALPHA_THRESHOLD/255.0f))? 1 : 0;
 
                         ((unsigned short *)image->data)[i] = (unsigned short)r << 11 | (unsigned short)g << 6 | (unsigned short)b << 1 | (unsigned short)a;
                     }
 
                 } break;
-                case UNCOMPRESSED_R4G4B4A4:
+                case PIXELFORMAT_UNCOMPRESSED_R4G4B4A4:
                 {
                     image->data = (unsigned short *)RL_MALLOC(image->width*image->height*sizeof(unsigned short));
 
@@ -987,7 +987,7 @@ void ImageFormat(Image *image, int newFormat)
                     }
 
                 } break;
-                case UNCOMPRESSED_R8G8B8A8:
+                case PIXELFORMAT_UNCOMPRESSED_R8G8B8A8:
                 {
                     image->data = (unsigned char *)RL_MALLOC(image->width*image->height*4*sizeof(unsigned char));
 
@@ -999,7 +999,7 @@ void ImageFormat(Image *image, int newFormat)
                         ((unsigned char *)image->data)[i + 3] = (unsigned char)(pixels[k].w*255.0f);
                     }
                 } break;
-                case UNCOMPRESSED_R32:
+                case PIXELFORMAT_UNCOMPRESSED_R32:
                 {
                     // WARNING: Image is converted to GRAYSCALE eqeuivalent 32bit
 
@@ -1010,7 +1010,7 @@ void ImageFormat(Image *image, int newFormat)
                         ((float *)image->data)[i] = (float)(pixels[i].x*0.299f + pixels[i].y*0.587f + pixels[i].z*0.114f);
                     }
                 } break;
-                case UNCOMPRESSED_R32G32B32:
+                case PIXELFORMAT_UNCOMPRESSED_R32G32B32:
                 {
                     image->data = (float *)RL_MALLOC(image->width*image->height*3*sizeof(float));
 
@@ -1021,7 +1021,7 @@ void ImageFormat(Image *image, int newFormat)
                         ((float *)image->data)[i + 2] = pixels[k].z;
                     }
                 } break;
-                case UNCOMPRESSED_R32G32B32A32:
+                case PIXELFORMAT_UNCOMPRESSED_R32G32B32A32:
                 {
                     image->data = (float *)RL_MALLOC(image->width*image->height*4*sizeof(float));
 
@@ -1164,12 +1164,12 @@ void ImageAlphaClear(Image *image, Color color, float threshold)
     if ((image->data == NULL) || (image->width == 0) || (image->height == 0)) return;
 
     if (image->mipmaps > 1) TRACELOG(LOG_WARNING, "Image manipulation only applied to base mipmap level");
-    if (image->format >= COMPRESSED_DXT1_RGB) TRACELOG(LOG_WARNING, "Image manipulation not supported for compressed formats");
+    if (image->format >= PIXELFORMAT_COMPRESSED_DXT1_RGB) TRACELOG(LOG_WARNING, "Image manipulation not supported for compressed formats");
     else
     {
         switch (image->format)
         {
-            case UNCOMPRESSED_GRAY_ALPHA:
+            case PIXELFORMAT_UNCOMPRESSED_GRAY_ALPHA:
             {
                 unsigned char thresholdValue = (unsigned char)(threshold*255.0f);
                 for (int i = 1; i < image->width*image->height*2; i += 2)
@@ -1181,7 +1181,7 @@ void ImageAlphaClear(Image *image, Color color, float threshold)
                     }
                 }
             } break;
-            case UNCOMPRESSED_R5G5B5A1:
+            case PIXELFORMAT_UNCOMPRESSED_R5G5B5A1:
             {
                 unsigned char thresholdValue = ((threshold < 0.5f)? 0 : 1);
 
@@ -1198,7 +1198,7 @@ void ImageAlphaClear(Image *image, Color color, float threshold)
                     }
                 }
             } break;
-            case UNCOMPRESSED_R4G4B4A4:
+            case PIXELFORMAT_UNCOMPRESSED_R4G4B4A4:
             {
                 unsigned char thresholdValue = (unsigned char)(threshold*15.0f);
 
@@ -1215,7 +1215,7 @@ void ImageAlphaClear(Image *image, Color color, float threshold)
                     }
                 }
             } break;
-            case UNCOMPRESSED_R8G8B8A8:
+            case PIXELFORMAT_UNCOMPRESSED_R8G8B8A8:
             {
                 unsigned char thresholdValue = (unsigned char)(threshold*255.0f);
                 for (int i = 3; i < image->width*image->height*4; i += 4)
@@ -1229,7 +1229,7 @@ void ImageAlphaClear(Image *image, Color color, float threshold)
                     }
                 }
             } break;
-            case UNCOMPRESSED_R32G32B32A32:
+            case PIXELFORMAT_UNCOMPRESSED_R32G32B32A32:
             {
                 for (int i = 3; i < image->width*image->height*4; i += 4)
                 {
@@ -1256,7 +1256,7 @@ void ImageAlphaMask(Image *image, Image alphaMask)
     {
         TRACELOG(LOG_WARNING, "IMAGE: Alpha mask must be same size as image");
     }
-    else if (image->format >= COMPRESSED_DXT1_RGB)
+    else if (image->format >= PIXELFORMAT_COMPRESSED_DXT1_RGB)
     {
         TRACELOG(LOG_WARNING, "IMAGE: Alpha mask can not be applied to compressed data formats");
     }
@@ -1264,10 +1264,10 @@ void ImageAlphaMask(Image *image, Image alphaMask)
     {
         // Force mask to be Grayscale
         Image mask = ImageCopy(alphaMask);
-        if (mask.format != UNCOMPRESSED_GRAYSCALE) ImageFormat(&mask, UNCOMPRESSED_GRAYSCALE);
+        if (mask.format != PIXELFORMAT_UNCOMPRESSED_GRAYSCALE) ImageFormat(&mask, PIXELFORMAT_UNCOMPRESSED_GRAYSCALE);
 
         // In case image is only grayscale, we just add alpha channel
-        if (image->format == UNCOMPRESSED_GRAYSCALE)
+        if (image->format == PIXELFORMAT_UNCOMPRESSED_GRAYSCALE)
         {
             unsigned char *data = (unsigned char *)RL_MALLOC(image->width*image->height*2);
 
@@ -1280,12 +1280,12 @@ void ImageAlphaMask(Image *image, Image alphaMask)
 
             RL_FREE(image->data);
             image->data = data;
-            image->format = UNCOMPRESSED_GRAY_ALPHA;
+            image->format = PIXELFORMAT_UNCOMPRESSED_GRAY_ALPHA;
         }
         else
         {
             // Convert image to RGBA
-            if (image->format != UNCOMPRESSED_R8G8B8A8) ImageFormat(image, UNCOMPRESSED_R8G8B8A8);
+            if (image->format != PIXELFORMAT_UNCOMPRESSED_R8G8B8A8) ImageFormat(image, PIXELFORMAT_UNCOMPRESSED_R8G8B8A8);
 
             // Apply alpha mask to alpha channel
             for (int i = 0, k = 3; (i < mask.width*mask.height) || (i < image->width*image->height); i++, k += 4)
@@ -1328,7 +1328,7 @@ void ImageAlphaPremultiply(Image *image)
 
     int format = image->format;
     image->data = pixels;
-    image->format = UNCOMPRESSED_R8G8B8A8;
+    image->format = PIXELFORMAT_UNCOMPRESSED_R8G8B8A8;
 
     ImageFormat(image, format);
 }
@@ -1343,7 +1343,7 @@ void ImageResize(Image *image, int newWidth, int newHeight)
     if ((image->data == NULL) || (image->width == 0) || (image->height == 0)) return;
 
     bool fastPath = true;
-    if ((image->format != UNCOMPRESSED_GRAYSCALE) && (image->format != UNCOMPRESSED_GRAY_ALPHA) && (image->format != UNCOMPRESSED_R8G8B8) && (image->format != UNCOMPRESSED_R8G8B8A8)) fastPath = true;
+    if ((image->format != PIXELFORMAT_UNCOMPRESSED_GRAYSCALE) && (image->format != PIXELFORMAT_UNCOMPRESSED_GRAY_ALPHA) && (image->format != PIXELFORMAT_UNCOMPRESSED_R8G8B8) && (image->format != PIXELFORMAT_UNCOMPRESSED_R8G8B8A8)) fastPath = true;
 
     if (fastPath)
     {
@@ -1352,10 +1352,10 @@ void ImageResize(Image *image, int newWidth, int newHeight)
 
         switch (image->format)
         {
-            case UNCOMPRESSED_GRAYSCALE: stbir_resize_uint8((unsigned char *)image->data, image->width, image->height, 0, output, newWidth, newHeight, 0, 1); break;
-            case UNCOMPRESSED_GRAY_ALPHA: stbir_resize_uint8((unsigned char *)image->data, image->width, image->height, 0, output, newWidth, newHeight, 0, 2); break;
-            case UNCOMPRESSED_R8G8B8: stbir_resize_uint8((unsigned char *)image->data, image->width, image->height, 0, output, newWidth, newHeight, 0, 3); break;
-            case UNCOMPRESSED_R8G8B8A8: stbir_resize_uint8((unsigned char *)image->data, image->width, image->height, 0, output, newWidth, newHeight, 0, 4); break;
+            case PIXELFORMAT_UNCOMPRESSED_GRAYSCALE: stbir_resize_uint8((unsigned char *)image->data, image->width, image->height, 0, output, newWidth, newHeight, 0, 1); break;
+            case PIXELFORMAT_UNCOMPRESSED_GRAY_ALPHA: stbir_resize_uint8((unsigned char *)image->data, image->width, image->height, 0, output, newWidth, newHeight, 0, 2); break;
+            case PIXELFORMAT_UNCOMPRESSED_R8G8B8: stbir_resize_uint8((unsigned char *)image->data, image->width, image->height, 0, output, newWidth, newHeight, 0, 3); break;
+            case PIXELFORMAT_UNCOMPRESSED_R8G8B8A8: stbir_resize_uint8((unsigned char *)image->data, image->width, image->height, 0, output, newWidth, newHeight, 0, 4); break;
             default: break;
         }
 
@@ -1381,7 +1381,7 @@ void ImageResize(Image *image, int newWidth, int newHeight)
         image->data = output;
         image->width = newWidth;
         image->height = newHeight;
-        image->format = UNCOMPRESSED_R8G8B8A8;
+        image->format = PIXELFORMAT_UNCOMPRESSED_R8G8B8A8;
 
         ImageFormat(image, format);  // Reformat 32bit RGBA image to original format
     }
@@ -1419,7 +1419,7 @@ void ImageResizeNN(Image *image,int newWidth,int newHeight)
     image->data = output;
     image->width = newWidth;
     image->height = newHeight;
-    image->format = UNCOMPRESSED_R8G8B8A8;
+    image->format = PIXELFORMAT_UNCOMPRESSED_R8G8B8A8;
 
     ImageFormat(image, format);  // Reformat 32bit RGBA image to original format
 
@@ -1434,7 +1434,7 @@ void ImageResizeCanvas(Image *image, int newWidth, int newHeight, int offsetX, i
     if ((image->data == NULL) || (image->width == 0) || (image->height == 0)) return;
 
     if (image->mipmaps > 1) TRACELOG(LOG_WARNING, "Image manipulation only applied to base mipmap level");
-    if (image->format >= COMPRESSED_DXT1_RGB) TRACELOG(LOG_WARNING, "Image manipulation not supported for compressed formats");
+    if (image->format >= PIXELFORMAT_COMPRESSED_DXT1_RGB) TRACELOG(LOG_WARNING, "Image manipulation not supported for compressed formats");
     else if ((newWidth != image->width) || (newHeight != image->height))
     {
         Rectangle srcRec = { 0, 0, (float)image->width, (float)image->height };
@@ -1557,7 +1557,7 @@ void ImageDither(Image *image, int rBpp, int gBpp, int bBpp, int aBpp)
     // Security check to avoid program crash
     if ((image->data == NULL) || (image->width == 0) || (image->height == 0)) return;
 
-    if (image->format >= COMPRESSED_DXT1_RGB)
+    if (image->format >= PIXELFORMAT_COMPRESSED_DXT1_RGB)
     {
         TRACELOG(LOG_WARNING, "IMAGE: Compressed data formats can not be dithered");
         return;
@@ -1573,15 +1573,15 @@ void ImageDither(Image *image, int rBpp, int gBpp, int bBpp, int aBpp)
 
         RL_FREE(image->data);      // free old image data
 
-        if ((image->format != UNCOMPRESSED_R8G8B8) && (image->format != UNCOMPRESSED_R8G8B8A8))
+        if ((image->format != PIXELFORMAT_UNCOMPRESSED_R8G8B8) && (image->format != PIXELFORMAT_UNCOMPRESSED_R8G8B8A8))
         {
             TRACELOG(LOG_WARNING, "IMAGE: Format is already 16bpp or lower, dithering could have no effect");
         }
 
         // Define new image format, check if desired bpp match internal known format
-        if ((rBpp == 5) && (gBpp == 6) && (bBpp == 5) && (aBpp == 0)) image->format = UNCOMPRESSED_R5G6B5;
-        else if ((rBpp == 5) && (gBpp == 5) && (bBpp == 5) && (aBpp == 1)) image->format = UNCOMPRESSED_R5G5B5A1;
-        else if ((rBpp == 4) && (gBpp == 4) && (bBpp == 4) && (aBpp == 4)) image->format = UNCOMPRESSED_R4G4B4A4;
+        if ((rBpp == 5) && (gBpp == 6) && (bBpp == 5) && (aBpp == 0)) image->format = PIXELFORMAT_UNCOMPRESSED_R5G6B5;
+        else if ((rBpp == 5) && (gBpp == 5) && (bBpp == 5) && (aBpp == 1)) image->format = PIXELFORMAT_UNCOMPRESSED_R5G5B5A1;
+        else if ((rBpp == 4) && (gBpp == 4) && (bBpp == 4) && (aBpp == 4)) image->format = PIXELFORMAT_UNCOMPRESSED_R4G4B4A4;
         else
         {
             image->format = 0;
@@ -1668,7 +1668,7 @@ void ImageFlipVertical(Image *image)
     if ((image->data == NULL) || (image->width == 0) || (image->height == 0)) return;
 
     if (image->mipmaps > 1) TRACELOG(LOG_WARNING, "Image manipulation only applied to base mipmap level");
-    if (image->format >= COMPRESSED_DXT1_RGB) TRACELOG(LOG_WARNING, "Image manipulation not supported for compressed formats");
+    if (image->format >= PIXELFORMAT_COMPRESSED_DXT1_RGB) TRACELOG(LOG_WARNING, "Image manipulation not supported for compressed formats");
     else
     {
         int bytesPerPixel = GetPixelDataSize(1, 1, image->format);
@@ -1692,7 +1692,7 @@ void ImageFlipHorizontal(Image *image)
     if ((image->data == NULL) || (image->width == 0) || (image->height == 0)) return;
 
     if (image->mipmaps > 1) TRACELOG(LOG_WARNING, "Image manipulation only applied to base mipmap level");
-    if (image->format >= COMPRESSED_DXT1_RGB) TRACELOG(LOG_WARNING, "Image manipulation not supported for compressed formats");
+    if (image->format >= PIXELFORMAT_COMPRESSED_DXT1_RGB) TRACELOG(LOG_WARNING, "Image manipulation not supported for compressed formats");
     else
     {
         int bytesPerPixel = GetPixelDataSize(1, 1, image->format);
@@ -1737,7 +1737,7 @@ void ImageRotateCW(Image *image)
     if ((image->data == NULL) || (image->width == 0) || (image->height == 0)) return;
 
     if (image->mipmaps > 1) TRACELOG(LOG_WARNING, "Image manipulation only applied to base mipmap level");
-    if (image->format >= COMPRESSED_DXT1_RGB) TRACELOG(LOG_WARNING, "Image manipulation not supported for compressed formats");
+    if (image->format >= PIXELFORMAT_COMPRESSED_DXT1_RGB) TRACELOG(LOG_WARNING, "Image manipulation not supported for compressed formats");
     else
     {
         int bytesPerPixel = GetPixelDataSize(1, 1, image->format);
@@ -1769,7 +1769,7 @@ void ImageRotateCCW(Image *image)
     if ((image->data == NULL) || (image->width == 0) || (image->height == 0)) return;
 
     if (image->mipmaps > 1) TRACELOG(LOG_WARNING, "Image manipulation only applied to base mipmap level");
-    if (image->format >= COMPRESSED_DXT1_RGB) TRACELOG(LOG_WARNING, "Image manipulation not supported for compressed formats");
+    if (image->format >= PIXELFORMAT_COMPRESSED_DXT1_RGB) TRACELOG(LOG_WARNING, "Image manipulation not supported for compressed formats");
     else
     {
         int bytesPerPixel = GetPixelDataSize(1, 1, image->format);
@@ -1828,7 +1828,7 @@ void ImageColorTint(Image *image, Color color)
     RL_FREE(image->data);
 
     image->data = pixels;
-    image->format = UNCOMPRESSED_R8G8B8A8;
+    image->format = PIXELFORMAT_UNCOMPRESSED_R8G8B8A8;
 
     ImageFormat(image, format);
 }
@@ -1855,7 +1855,7 @@ void ImageColorInvert(Image *image)
     RL_FREE(image->data);
 
     image->data = pixels;
-    image->format = UNCOMPRESSED_R8G8B8A8;
+    image->format = PIXELFORMAT_UNCOMPRESSED_R8G8B8A8;
 
     ImageFormat(image, format);
 }
@@ -1863,7 +1863,7 @@ void ImageColorInvert(Image *image)
 // Modify image color: grayscale
 void ImageColorGrayscale(Image *image)
 {
-    ImageFormat(image, UNCOMPRESSED_GRAYSCALE);
+    ImageFormat(image, PIXELFORMAT_UNCOMPRESSED_GRAYSCALE);
 }
 
 // Modify image color: contrast
@@ -1919,7 +1919,7 @@ void ImageColorContrast(Image *image, float contrast)
     RL_FREE(image->data);
 
     image->data = pixels;
-    image->format = UNCOMPRESSED_R8G8B8A8;
+    image->format = PIXELFORMAT_UNCOMPRESSED_R8G8B8A8;
 
     ImageFormat(image, format);
 }
@@ -1963,7 +1963,7 @@ void ImageColorBrightness(Image *image, int brightness)
     RL_FREE(image->data);
 
     image->data = pixels;
-    image->format = UNCOMPRESSED_R8G8B8A8;
+    image->format = PIXELFORMAT_UNCOMPRESSED_R8G8B8A8;
 
     ImageFormat(image, format);
 }
@@ -1997,7 +1997,7 @@ void ImageColorReplace(Image *image, Color color, Color replace)
     RL_FREE(image->data);
 
     image->data = pixels;
-    image->format = UNCOMPRESSED_R8G8B8A8;
+    image->format = PIXELFORMAT_UNCOMPRESSED_R8G8B8A8;
 
     ImageFormat(image, format);
 }
@@ -2011,18 +2011,18 @@ Color *LoadImageColors(Image image)
 
     Color *pixels = (Color *)RL_MALLOC(image.width*image.height*sizeof(Color));
 
-    if (image.format >= COMPRESSED_DXT1_RGB) TRACELOG(LOG_WARNING, "IMAGE: Pixel data retrieval not supported for compressed image formats");
+    if (image.format >= PIXELFORMAT_COMPRESSED_DXT1_RGB) TRACELOG(LOG_WARNING, "IMAGE: Pixel data retrieval not supported for compressed image formats");
     else
     {
-        if ((image.format == UNCOMPRESSED_R32) ||
-            (image.format == UNCOMPRESSED_R32G32B32) ||
-            (image.format == UNCOMPRESSED_R32G32B32A32)) TRACELOG(LOG_WARNING, "IMAGE: Pixel format converted from 32bit to 8bit per channel");
+        if ((image.format == PIXELFORMAT_UNCOMPRESSED_R32) ||
+            (image.format == PIXELFORMAT_UNCOMPRESSED_R32G32B32) ||
+            (image.format == PIXELFORMAT_UNCOMPRESSED_R32G32B32A32)) TRACELOG(LOG_WARNING, "IMAGE: Pixel format converted from 32bit to 8bit per channel");
 
         for (int i = 0, k = 0; i < image.width*image.height; i++)
         {
             switch (image.format)
             {
-                case UNCOMPRESSED_GRAYSCALE:
+                case PIXELFORMAT_UNCOMPRESSED_GRAYSCALE:
                 {
                     pixels[i].r = ((unsigned char *)image.data)[i];
                     pixels[i].g = ((unsigned char *)image.data)[i];
@@ -2030,7 +2030,7 @@ Color *LoadImageColors(Image image)
                     pixels[i].a = 255;
 
                 } break;
-                case UNCOMPRESSED_GRAY_ALPHA:
+                case PIXELFORMAT_UNCOMPRESSED_GRAY_ALPHA:
                 {
                     pixels[i].r = ((unsigned char *)image.data)[k];
                     pixels[i].g = ((unsigned char *)image.data)[k];
@@ -2039,7 +2039,7 @@ Color *LoadImageColors(Image image)
 
                     k += 2;
                 } break;
-                case UNCOMPRESSED_R5G5B5A1:
+                case PIXELFORMAT_UNCOMPRESSED_R5G5B5A1:
                 {
                     unsigned short pixel = ((unsigned short *)image.data)[i];
 
@@ -2049,7 +2049,7 @@ Color *LoadImageColors(Image image)
                     pixels[i].a = (unsigned char)((pixel & 0b0000000000000001)*255);
 
                 } break;
-                case UNCOMPRESSED_R5G6B5:
+                case PIXELFORMAT_UNCOMPRESSED_R5G6B5:
                 {
                     unsigned short pixel = ((unsigned short *)image.data)[i];
 
@@ -2059,7 +2059,7 @@ Color *LoadImageColors(Image image)
                     pixels[i].a = 255;
 
                 } break;
-                case UNCOMPRESSED_R4G4B4A4:
+                case PIXELFORMAT_UNCOMPRESSED_R4G4B4A4:
                 {
                     unsigned short pixel = ((unsigned short *)image.data)[i];
 
@@ -2069,7 +2069,7 @@ Color *LoadImageColors(Image image)
                     pixels[i].a = (unsigned char)((float)(pixel & 0b0000000000001111)*(255/15));
 
                 } break;
-                case UNCOMPRESSED_R8G8B8A8:
+                case PIXELFORMAT_UNCOMPRESSED_R8G8B8A8:
                 {
                     pixels[i].r = ((unsigned char *)image.data)[k];
                     pixels[i].g = ((unsigned char *)image.data)[k + 1];
@@ -2078,7 +2078,7 @@ Color *LoadImageColors(Image image)
 
                     k += 4;
                 } break;
-                case UNCOMPRESSED_R8G8B8:
+                case PIXELFORMAT_UNCOMPRESSED_R8G8B8:
                 {
                     pixels[i].r = (unsigned char)((unsigned char *)image.data)[k];
                     pixels[i].g = (unsigned char)((unsigned char *)image.data)[k + 1];
@@ -2087,7 +2087,7 @@ Color *LoadImageColors(Image image)
 
                     k += 3;
                 } break;
-                case UNCOMPRESSED_R32:
+                case PIXELFORMAT_UNCOMPRESSED_R32:
                 {
                     pixels[i].r = (unsigned char)(((float *)image.data)[k]*255.0f);
                     pixels[i].g = 0;
@@ -2095,7 +2095,7 @@ Color *LoadImageColors(Image image)
                     pixels[i].a = 255;
 
                 } break;
-                case UNCOMPRESSED_R32G32B32:
+                case PIXELFORMAT_UNCOMPRESSED_R32G32B32:
                 {
                     pixels[i].r = (unsigned char)(((float *)image.data)[k]*255.0f);
                     pixels[i].g = (unsigned char)(((float *)image.data)[k + 1]*255.0f);
@@ -2104,7 +2104,7 @@ Color *LoadImageColors(Image image)
 
                     k += 3;
                 } break;
-                case UNCOMPRESSED_R32G32B32A32:
+                case PIXELFORMAT_UNCOMPRESSED_R32G32B32A32:
                 {
                     pixels[i].r = (unsigned char)(((float *)image.data)[k]*255.0f);
                     pixels[i].g = (unsigned char)(((float *)image.data)[k]*255.0f);
@@ -2194,14 +2194,14 @@ static Vector4 *LoadImageDataNormalized(Image image)
 {
     Vector4 *pixels = (Vector4 *)RL_MALLOC(image.width*image.height*sizeof(Vector4));
 
-    if (image.format >= COMPRESSED_DXT1_RGB) TRACELOG(LOG_WARNING, "IMAGE: Pixel data retrieval not supported for compressed image formats");
+    if (image.format >= PIXELFORMAT_COMPRESSED_DXT1_RGB) TRACELOG(LOG_WARNING, "IMAGE: Pixel data retrieval not supported for compressed image formats");
     else
     {
         for (int i = 0, k = 0; i < image.width*image.height; i++)
         {
             switch (image.format)
             {
-                case UNCOMPRESSED_GRAYSCALE:
+                case PIXELFORMAT_UNCOMPRESSED_GRAYSCALE:
                 {
                     pixels[i].x = (float)((unsigned char *)image.data)[i]/255.0f;
                     pixels[i].y = (float)((unsigned char *)image.data)[i]/255.0f;
@@ -2209,7 +2209,7 @@ static Vector4 *LoadImageDataNormalized(Image image)
                     pixels[i].w = 1.0f;
 
                 } break;
-                case UNCOMPRESSED_GRAY_ALPHA:
+                case PIXELFORMAT_UNCOMPRESSED_GRAY_ALPHA:
                 {
                     pixels[i].x = (float)((unsigned char *)image.data)[k]/255.0f;
                     pixels[i].y = (float)((unsigned char *)image.data)[k]/255.0f;
@@ -2218,7 +2218,7 @@ static Vector4 *LoadImageDataNormalized(Image image)
 
                     k += 2;
                 } break;
-                case UNCOMPRESSED_R5G5B5A1:
+                case PIXELFORMAT_UNCOMPRESSED_R5G5B5A1:
                 {
                     unsigned short pixel = ((unsigned short *)image.data)[i];
 
@@ -2228,7 +2228,7 @@ static Vector4 *LoadImageDataNormalized(Image image)
                     pixels[i].w = ((pixel & 0b0000000000000001) == 0)? 0.0f : 1.0f;
 
                 } break;
-                case UNCOMPRESSED_R5G6B5:
+                case PIXELFORMAT_UNCOMPRESSED_R5G6B5:
                 {
                     unsigned short pixel = ((unsigned short *)image.data)[i];
 
@@ -2238,7 +2238,7 @@ static Vector4 *LoadImageDataNormalized(Image image)
                     pixels[i].w = 1.0f;
 
                 } break;
-                case UNCOMPRESSED_R4G4B4A4:
+                case PIXELFORMAT_UNCOMPRESSED_R4G4B4A4:
                 {
                     unsigned short pixel = ((unsigned short *)image.data)[i];
 
@@ -2248,7 +2248,7 @@ static Vector4 *LoadImageDataNormalized(Image image)
                     pixels[i].w = (float)(pixel & 0b0000000000001111)*(1.0f/15);
 
                 } break;
-                case UNCOMPRESSED_R8G8B8A8:
+                case PIXELFORMAT_UNCOMPRESSED_R8G8B8A8:
                 {
                     pixels[i].x = (float)((unsigned char *)image.data)[k]/255.0f;
                     pixels[i].y = (float)((unsigned char *)image.data)[k + 1]/255.0f;
@@ -2257,7 +2257,7 @@ static Vector4 *LoadImageDataNormalized(Image image)
 
                     k += 4;
                 } break;
-                case UNCOMPRESSED_R8G8B8:
+                case PIXELFORMAT_UNCOMPRESSED_R8G8B8:
                 {
                     pixels[i].x = (float)((unsigned char *)image.data)[k]/255.0f;
                     pixels[i].y = (float)((unsigned char *)image.data)[k + 1]/255.0f;
@@ -2266,7 +2266,7 @@ static Vector4 *LoadImageDataNormalized(Image image)
 
                     k += 3;
                 } break;
-                case UNCOMPRESSED_R32:
+                case PIXELFORMAT_UNCOMPRESSED_R32:
                 {
                     pixels[i].x = ((float *)image.data)[k];
                     pixels[i].y = 0.0f;
@@ -2274,7 +2274,7 @@ static Vector4 *LoadImageDataNormalized(Image image)
                     pixels[i].w = 1.0f;
 
                 } break;
-                case UNCOMPRESSED_R32G32B32:
+                case PIXELFORMAT_UNCOMPRESSED_R32G32B32:
                 {
                     pixels[i].x = ((float *)image.data)[k];
                     pixels[i].y = ((float *)image.data)[k + 1];
@@ -2283,7 +2283,7 @@ static Vector4 *LoadImageDataNormalized(Image image)
 
                     k += 3;
                 } break;
-                case UNCOMPRESSED_R32G32B32A32:
+                case PIXELFORMAT_UNCOMPRESSED_R32G32B32A32:
                 {
                     pixels[i].x = ((float *)image.data)[k];
                     pixels[i].y = ((float *)image.data)[k + 1];
@@ -2359,7 +2359,7 @@ void ImageDrawPixel(Image *dst, int x, int y, Color color)
 
     switch (dst->format)
     {
-        case UNCOMPRESSED_GRAYSCALE:
+        case PIXELFORMAT_UNCOMPRESSED_GRAYSCALE:
         {
             // NOTE: Calculate grayscale equivalent color
             Vector3 coln = { (float)color.r/255.0f, (float)color.g/255.0f, (float)color.b/255.0f };
@@ -2368,7 +2368,7 @@ void ImageDrawPixel(Image *dst, int x, int y, Color color)
             ((unsigned char *)dst->data)[y*dst->width + x] = gray;
 
         } break;
-        case UNCOMPRESSED_GRAY_ALPHA:
+        case PIXELFORMAT_UNCOMPRESSED_GRAY_ALPHA:
         {
             // NOTE: Calculate grayscale equivalent color
             Vector3 coln = { (float)color.r/255.0f, (float)color.g/255.0f, (float)color.b/255.0f };
@@ -2378,7 +2378,7 @@ void ImageDrawPixel(Image *dst, int x, int y, Color color)
             ((unsigned char *)dst->data)[(y*dst->width + x)*2 + 1] = color.a;
 
         } break;
-        case UNCOMPRESSED_R5G6B5:
+        case PIXELFORMAT_UNCOMPRESSED_R5G6B5:
         {
             // NOTE: Calculate R5G6B5 equivalent color
             Vector3 coln = { (float)color.r/255.0f, (float)color.g/255.0f, (float)color.b/255.0f };
@@ -2390,7 +2390,7 @@ void ImageDrawPixel(Image *dst, int x, int y, Color color)
             ((unsigned short *)dst->data)[y*dst->width + x] = (unsigned short)r << 11 | (unsigned short)g << 5 | (unsigned short)b;
 
         } break;
-        case UNCOMPRESSED_R5G5B5A1:
+        case PIXELFORMAT_UNCOMPRESSED_R5G5B5A1:
         {
             // NOTE: Calculate R5G5B5A1 equivalent color
             Vector4 coln = { (float)color.r/255.0f, (float)color.g/255.0f, (float)color.b/255.0f, (float)color.a/255.0f };
@@ -2398,12 +2398,12 @@ void ImageDrawPixel(Image *dst, int x, int y, Color color)
             unsigned char r = (unsigned char)(round(coln.x*31.0f));
             unsigned char g = (unsigned char)(round(coln.y*31.0f));
             unsigned char b = (unsigned char)(round(coln.z*31.0f));
-            unsigned char a = (coln.w > ((float)UNCOMPRESSED_R5G5B5A1_ALPHA_THRESHOLD/255.0f))? 1 : 0;;
+            unsigned char a = (coln.w > ((float)PIXELFORMAT_UNCOMPRESSED_R5G5B5A1_ALPHA_THRESHOLD/255.0f))? 1 : 0;;
 
             ((unsigned short *)dst->data)[y*dst->width + x] = (unsigned short)r << 11 | (unsigned short)g << 6 | (unsigned short)b << 1 | (unsigned short)a;
 
         } break;
-        case UNCOMPRESSED_R4G4B4A4:
+        case PIXELFORMAT_UNCOMPRESSED_R4G4B4A4:
         {
             // NOTE: Calculate R5G5B5A1 equivalent color
             Vector4 coln = { (float)color.r/255.0f, (float)color.g/255.0f, (float)color.b/255.0f, (float)color.a/255.0f };
@@ -2416,14 +2416,14 @@ void ImageDrawPixel(Image *dst, int x, int y, Color color)
             ((unsigned short *)dst->data)[y*dst->width + x] = (unsigned short)r << 12 | (unsigned short)g << 8 | (unsigned short)b << 4 | (unsigned short)a;
 
         } break;
-        case UNCOMPRESSED_R8G8B8:
+        case PIXELFORMAT_UNCOMPRESSED_R8G8B8:
         {
             ((unsigned char *)dst->data)[(y*dst->width + x)*3] = color.r;
             ((unsigned char *)dst->data)[(y*dst->width + x)*3 + 1] = color.g;
             ((unsigned char *)dst->data)[(y*dst->width + x)*3 + 2] = color.b;
 
         } break;
-        case UNCOMPRESSED_R8G8B8A8:
+        case PIXELFORMAT_UNCOMPRESSED_R8G8B8A8:
         {
             ((unsigned char *)dst->data)[(y*dst->width + x)*4] = color.r;
             ((unsigned char *)dst->data)[(y*dst->width + x)*4 + 1] = color.g;
@@ -2431,7 +2431,7 @@ void ImageDrawPixel(Image *dst, int x, int y, Color color)
             ((unsigned char *)dst->data)[(y*dst->width + x)*4 + 3] = color.a;
 
         } break;
-        case UNCOMPRESSED_R32:
+        case PIXELFORMAT_UNCOMPRESSED_R32:
         {
             // NOTE: Calculate grayscale equivalent color (normalized to 32bit)
             Vector3 coln = { (float)color.r/255.0f, (float)color.g/255.0f, (float)color.b/255.0f };
@@ -2439,7 +2439,7 @@ void ImageDrawPixel(Image *dst, int x, int y, Color color)
             ((float *)dst->data)[y*dst->width + x] = coln.x*0.299f + coln.y*0.587f + coln.z*0.114f;
 
         } break;
-        case UNCOMPRESSED_R32G32B32:
+        case PIXELFORMAT_UNCOMPRESSED_R32G32B32:
         {
             // NOTE: Calculate R32G32B32 equivalent color (normalized to 32bit)
             Vector3 coln = { (float)color.r/255.0f, (float)color.g/255.0f, (float)color.b/255.0f };
@@ -2448,7 +2448,7 @@ void ImageDrawPixel(Image *dst, int x, int y, Color color)
             ((float *)dst->data)[(y*dst->width + x)*3 + 1] = coln.y;
             ((float *)dst->data)[(y*dst->width + x)*3 + 2] = coln.z;
         } break;
-        case UNCOMPRESSED_R32G32B32A32:
+        case PIXELFORMAT_UNCOMPRESSED_R32G32B32A32:
         {
             // NOTE: Calculate R32G32B32A32 equivalent color (normalized to 32bit)
             Vector4 coln = { (float)color.r/255.0f, (float)color.g/255.0f, (float)color.b/255.0f, (float)color.a/255.0f };
@@ -2578,7 +2578,7 @@ void ImageDraw(Image *dst, Image src, Rectangle srcRec, Rectangle dstRec, Color 
         (src.data == NULL) || (src.width == 0) || (src.height == 0)) return;
 
     if (dst->mipmaps > 1) TRACELOG(LOG_WARNING, "Image drawing only applied to base mipmap level");
-    if (dst->format >= COMPRESSED_DXT1_RGB) TRACELOG(LOG_WARNING, "Image drawing not supported for compressed formats");
+    if (dst->format >= PIXELFORMAT_COMPRESSED_DXT1_RGB) TRACELOG(LOG_WARNING, "Image drawing not supported for compressed formats");
     else
     {
         Image srcMod = { 0 };       // Source copy (in case it was required)
@@ -2638,7 +2638,7 @@ void ImageDraw(Image *dst, Image src, Rectangle srcRec, Rectangle dstRec, Color 
         bool blendRequired = true;
 
         // Fast path: Avoid blend if source has no alpha to blend
-        if ((tint.a == 255) && ((srcPtr->format == UNCOMPRESSED_GRAYSCALE) || (srcPtr->format == UNCOMPRESSED_R8G8B8) || (srcPtr->format == UNCOMPRESSED_R5G6B5))) blendRequired = false;
+        if ((tint.a == 255) && ((srcPtr->format == PIXELFORMAT_UNCOMPRESSED_GRAYSCALE) || (srcPtr->format == PIXELFORMAT_UNCOMPRESSED_R8G8B8) || (srcPtr->format == PIXELFORMAT_UNCOMPRESSED_R5G6B5))) blendRequired = false;
 
         int strideDst = GetPixelDataSize(dst->width, 1, dst->format);
         int bytesPerPixelDst = strideDst/(dst->width);
@@ -2838,10 +2838,10 @@ RenderTexture2D LoadRenderTexture(int width, int height)
         rlEnableFramebuffer(target.id);
 
         // Create color texture (default to RGBA)
-        target.texture.id = rlLoadTexture(NULL, width, height, UNCOMPRESSED_R8G8B8A8, 1);
+        target.texture.id = rlLoadTexture(NULL, width, height, PIXELFORMAT_UNCOMPRESSED_R8G8B8A8, 1);
         target.texture.width = width;
         target.texture.height = height;
-        target.texture.format = UNCOMPRESSED_R8G8B8A8;
+        target.texture.format = PIXELFORMAT_UNCOMPRESSED_R8G8B8A8;
         target.texture.mipmaps = 1;
 
         // Create depth renderbuffer/texture
@@ -2910,7 +2910,7 @@ Image GetTextureData(Texture2D texture)
 {
     Image image = { 0 };
 
-    if (texture.format < COMPRESSED_DXT1_RGB)
+    if (texture.format < PIXELFORMAT_COMPRESSED_DXT1_RGB)
     {
         image.data = rlReadTexturePixels(texture);
 
@@ -2925,7 +2925,7 @@ Image GetTextureData(Texture2D texture)
             // NOTE: Data retrieved on OpenGL ES 2.0 should be RGBA,
             // coming from FBO color buffer attachment, but it seems
             // original texture format is retrieved on RPI...
-            image.format = UNCOMPRESSED_R8G8B8A8;
+            image.format = PIXELFORMAT_UNCOMPRESSED_R8G8B8A8;
 #endif
             TRACELOG(LOG_INFO, "TEXTURE: [ID %i] Pixel data retrieved successfully", texture.id);
         }
@@ -2944,7 +2944,7 @@ Image GetScreenData(void)
     image.width = GetScreenWidth();
     image.height = GetScreenHeight();
     image.mipmaps = 1;
-    image.format = UNCOMPRESSED_R8G8B8A8;
+    image.format = PIXELFORMAT_UNCOMPRESSED_R8G8B8A8;
     image.data = rlReadScreenPixels(image.width, image.height);
 
     return image;
@@ -3646,9 +3646,9 @@ Color GetPixelColor(void *srcPtr, int format)
 
     switch (format)
     {
-        case UNCOMPRESSED_GRAYSCALE: col = (Color){ ((unsigned char *)srcPtr)[0], ((unsigned char *)srcPtr)[0], ((unsigned char *)srcPtr)[0], 255 }; break;
-        case UNCOMPRESSED_GRAY_ALPHA: col = (Color){ ((unsigned char *)srcPtr)[0], ((unsigned char *)srcPtr)[0], ((unsigned char *)srcPtr)[0], ((unsigned char *)srcPtr)[1] }; break;
-        case UNCOMPRESSED_R5G6B5:
+        case PIXELFORMAT_UNCOMPRESSED_GRAYSCALE: col = (Color){ ((unsigned char *)srcPtr)[0], ((unsigned char *)srcPtr)[0], ((unsigned char *)srcPtr)[0], 255 }; break;
+        case PIXELFORMAT_UNCOMPRESSED_GRAY_ALPHA: col = (Color){ ((unsigned char *)srcPtr)[0], ((unsigned char *)srcPtr)[0], ((unsigned char *)srcPtr)[0], ((unsigned char *)srcPtr)[1] }; break;
+        case PIXELFORMAT_UNCOMPRESSED_R5G6B5:
         {
             col.r = (unsigned char)((((unsigned short *)srcPtr)[0] >> 11)*255/31);
             col.g = (unsigned char)(((((unsigned short *)srcPtr)[0] >> 5) & 0b0000000000111111)*255/63);
@@ -3656,7 +3656,7 @@ Color GetPixelColor(void *srcPtr, int format)
             col.a = 255;
 
         } break;
-        case UNCOMPRESSED_R5G5B5A1:
+        case PIXELFORMAT_UNCOMPRESSED_R5G5B5A1:
         {
             col.r = (unsigned char)((((unsigned short *)srcPtr)[0] >> 11)*255/31);
             col.g = (unsigned char)(((((unsigned short *)srcPtr)[0] >> 6) & 0b0000000000011111)*255/31);
@@ -3664,7 +3664,7 @@ Color GetPixelColor(void *srcPtr, int format)
             col.a = (((unsigned short *)srcPtr)[0] & 0b0000000000000001)? 255 : 0;
 
         } break;
-        case UNCOMPRESSED_R4G4B4A4:
+        case PIXELFORMAT_UNCOMPRESSED_R4G4B4A4:
         {
             col.r = (unsigned char)((((unsigned short *)srcPtr)[0] >> 12)*255/15);
             col.g = (unsigned char)(((((unsigned short *)srcPtr)[0] >> 8) & 0b0000000000001111)*255/15);
@@ -3672,11 +3672,11 @@ Color GetPixelColor(void *srcPtr, int format)
             col.a = (unsigned char)((((unsigned short *)srcPtr)[0] & 0b0000000000001111)*255/15);
 
         } break;
-        case UNCOMPRESSED_R8G8B8A8: col = (Color){ ((unsigned char *)srcPtr)[0], ((unsigned char *)srcPtr)[1], ((unsigned char *)srcPtr)[2], ((unsigned char *)srcPtr)[3] }; break;
-        case UNCOMPRESSED_R8G8B8: col = (Color){ ((unsigned char *)srcPtr)[0], ((unsigned char *)srcPtr)[1], ((unsigned char *)srcPtr)[2], 255 }; break;
-        // TODO: case UNCOMPRESSED_R32: break;
-        // TODO: case UNCOMPRESSED_R32G32B32: break;
-        // TODO: case UNCOMPRESSED_R32G32B32A32: break;
+        case PIXELFORMAT_UNCOMPRESSED_R8G8B8A8: col = (Color){ ((unsigned char *)srcPtr)[0], ((unsigned char *)srcPtr)[1], ((unsigned char *)srcPtr)[2], ((unsigned char *)srcPtr)[3] }; break;
+        case PIXELFORMAT_UNCOMPRESSED_R8G8B8: col = (Color){ ((unsigned char *)srcPtr)[0], ((unsigned char *)srcPtr)[1], ((unsigned char *)srcPtr)[2], 255 }; break;
+        // TODO: case PIXELFORMAT_UNCOMPRESSED_R32: break;
+        // TODO: case PIXELFORMAT_UNCOMPRESSED_R32G32B32: break;
+        // TODO: case PIXELFORMAT_UNCOMPRESSED_R32G32B32A32: break;
         default: break;
     }
 
@@ -3688,7 +3688,7 @@ void SetPixelColor(void *dstPtr, Color color, int format)
 {
     switch (format)
     {
-        case UNCOMPRESSED_GRAYSCALE:
+        case PIXELFORMAT_UNCOMPRESSED_GRAYSCALE:
         {
             // NOTE: Calculate grayscale equivalent color
             Vector3 coln = { (float)color.r/255.0f, (float)color.g/255.0f, (float)color.b/255.0f };
@@ -3697,7 +3697,7 @@ void SetPixelColor(void *dstPtr, Color color, int format)
             ((unsigned char *)dstPtr)[0] = gray;
 
         } break;
-        case UNCOMPRESSED_GRAY_ALPHA:
+        case PIXELFORMAT_UNCOMPRESSED_GRAY_ALPHA:
         {
             // NOTE: Calculate grayscale equivalent color
             Vector3 coln = { (float)color.r/255.0f, (float)color.g/255.0f, (float)color.b/255.0f };
@@ -3707,7 +3707,7 @@ void SetPixelColor(void *dstPtr, Color color, int format)
             ((unsigned char *)dstPtr)[1] = color.a;
 
         } break;
-        case UNCOMPRESSED_R5G6B5:
+        case PIXELFORMAT_UNCOMPRESSED_R5G6B5:
         {
             // NOTE: Calculate R5G6B5 equivalent color
             Vector3 coln = { (float)color.r/255.0f, (float)color.g/255.0f, (float)color.b/255.0f };
@@ -3719,7 +3719,7 @@ void SetPixelColor(void *dstPtr, Color color, int format)
             ((unsigned short *)dstPtr)[0] = (unsigned short)r << 11 | (unsigned short)g << 5 | (unsigned short)b;
 
         } break;
-        case UNCOMPRESSED_R5G5B5A1:
+        case PIXELFORMAT_UNCOMPRESSED_R5G5B5A1:
         {
             // NOTE: Calculate R5G5B5A1 equivalent color
             Vector4 coln = { (float)color.r/255.0f, (float)color.g/255.0f, (float)color.b/255.0f, (float)color.a/255.0f };
@@ -3727,12 +3727,12 @@ void SetPixelColor(void *dstPtr, Color color, int format)
             unsigned char r = (unsigned char)(round(coln.x*31.0f));
             unsigned char g = (unsigned char)(round(coln.y*31.0f));
             unsigned char b = (unsigned char)(round(coln.z*31.0f));
-            unsigned char a = (coln.w > ((float)UNCOMPRESSED_R5G5B5A1_ALPHA_THRESHOLD/255.0f))? 1 : 0;;
+            unsigned char a = (coln.w > ((float)PIXELFORMAT_UNCOMPRESSED_R5G5B5A1_ALPHA_THRESHOLD/255.0f))? 1 : 0;;
 
             ((unsigned short *)dstPtr)[0] = (unsigned short)r << 11 | (unsigned short)g << 6 | (unsigned short)b << 1 | (unsigned short)a;
 
         } break;
-        case UNCOMPRESSED_R4G4B4A4:
+        case PIXELFORMAT_UNCOMPRESSED_R4G4B4A4:
         {
             // NOTE: Calculate R5G5B5A1 equivalent color
             Vector4 coln = { (float)color.r/255.0f, (float)color.g/255.0f, (float)color.b/255.0f, (float)color.a/255.0f };
@@ -3745,14 +3745,14 @@ void SetPixelColor(void *dstPtr, Color color, int format)
             ((unsigned short *)dstPtr)[0] = (unsigned short)r << 12 | (unsigned short)g << 8 | (unsigned short)b << 4 | (unsigned short)a;
 
         } break;
-        case UNCOMPRESSED_R8G8B8:
+        case PIXELFORMAT_UNCOMPRESSED_R8G8B8:
         {
             ((unsigned char *)dstPtr)[0] = color.r;
             ((unsigned char *)dstPtr)[1] = color.g;
             ((unsigned char *)dstPtr)[2] = color.b;
 
         } break;
-        case UNCOMPRESSED_R8G8B8A8:
+        case PIXELFORMAT_UNCOMPRESSED_R8G8B8A8:
         {
             ((unsigned char *)dstPtr)[0] = color.r;
             ((unsigned char *)dstPtr)[1] = color.g;
@@ -3773,27 +3773,27 @@ int GetPixelDataSize(int width, int height, int format)
 
     switch (format)
     {
-        case UNCOMPRESSED_GRAYSCALE: bpp = 8; break;
-        case UNCOMPRESSED_GRAY_ALPHA:
-        case UNCOMPRESSED_R5G6B5:
-        case UNCOMPRESSED_R5G5B5A1:
-        case UNCOMPRESSED_R4G4B4A4: bpp = 16; break;
-        case UNCOMPRESSED_R8G8B8A8: bpp = 32; break;
-        case UNCOMPRESSED_R8G8B8: bpp = 24; break;
-        case UNCOMPRESSED_R32: bpp = 32; break;
-        case UNCOMPRESSED_R32G32B32: bpp = 32*3; break;
-        case UNCOMPRESSED_R32G32B32A32: bpp = 32*4; break;
-        case COMPRESSED_DXT1_RGB:
-        case COMPRESSED_DXT1_RGBA:
-        case COMPRESSED_ETC1_RGB:
-        case COMPRESSED_ETC2_RGB:
-        case COMPRESSED_PVRT_RGB:
-        case COMPRESSED_PVRT_RGBA: bpp = 4; break;
-        case COMPRESSED_DXT3_RGBA:
-        case COMPRESSED_DXT5_RGBA:
-        case COMPRESSED_ETC2_EAC_RGBA:
-        case COMPRESSED_ASTC_4x4_RGBA: bpp = 8; break;
-        case COMPRESSED_ASTC_8x8_RGBA: bpp = 2; break;
+        case PIXELFORMAT_UNCOMPRESSED_GRAYSCALE: bpp = 8; break;
+        case PIXELFORMAT_UNCOMPRESSED_GRAY_ALPHA:
+        case PIXELFORMAT_UNCOMPRESSED_R5G6B5:
+        case PIXELFORMAT_UNCOMPRESSED_R5G5B5A1:
+        case PIXELFORMAT_UNCOMPRESSED_R4G4B4A4: bpp = 16; break;
+        case PIXELFORMAT_UNCOMPRESSED_R8G8B8A8: bpp = 32; break;
+        case PIXELFORMAT_UNCOMPRESSED_R8G8B8: bpp = 24; break;
+        case PIXELFORMAT_UNCOMPRESSED_R32: bpp = 32; break;
+        case PIXELFORMAT_UNCOMPRESSED_R32G32B32: bpp = 32*3; break;
+        case PIXELFORMAT_UNCOMPRESSED_R32G32B32A32: bpp = 32*4; break;
+        case PIXELFORMAT_COMPRESSED_DXT1_RGB:
+        case PIXELFORMAT_COMPRESSED_DXT1_RGBA:
+        case PIXELFORMAT_COMPRESSED_ETC1_RGB:
+        case PIXELFORMAT_COMPRESSED_ETC2_RGB:
+        case PIXELFORMAT_COMPRESSED_PVRT_RGB:
+        case PIXELFORMAT_COMPRESSED_PVRT_RGBA: bpp = 4; break;
+        case PIXELFORMAT_COMPRESSED_DXT3_RGBA:
+        case PIXELFORMAT_COMPRESSED_DXT5_RGBA:
+        case PIXELFORMAT_COMPRESSED_ETC2_EAC_RGBA:
+        case PIXELFORMAT_COMPRESSED_ASTC_4x4_RGBA: bpp = 8; break;
+        case PIXELFORMAT_COMPRESSED_ASTC_8x8_RGBA: bpp = 2; break;
         default: break;
     }
 
@@ -3803,8 +3803,8 @@ int GetPixelDataSize(int width, int height, int format)
     // if texture is smaller, minimum dataSize is 8 or 16
     if ((width < 4) && (height < 4))
     {
-        if ((format >= COMPRESSED_DXT1_RGB) && (format < COMPRESSED_DXT3_RGBA)) dataSize = 8;
-        else if ((format >= COMPRESSED_DXT3_RGBA) && (format < COMPRESSED_ASTC_8x8_RGBA)) dataSize = 16;
+        if ((format >= PIXELFORMAT_COMPRESSED_DXT1_RGB) && (format < PIXELFORMAT_COMPRESSED_DXT3_RGBA)) dataSize = 8;
+        else if ((format >= PIXELFORMAT_COMPRESSED_DXT3_RGBA) && (format < PIXELFORMAT_COMPRESSED_ASTC_8x8_RGBA)) dataSize = 16;
     }
 
     return dataSize;
@@ -3902,7 +3902,7 @@ static Image LoadDDS(const unsigned char *fileData, unsigned int fileSize)
 
                     memcpy(image.data, fileDataPtr, dataSize);
 
-                    image.format = UNCOMPRESSED_R5G6B5;
+                    image.format = PIXELFORMAT_UNCOMPRESSED_R5G6B5;
                 }
                 else if (ddsHeader->ddspf.flags == 0x41)        // with alpha channel
                 {
@@ -3923,7 +3923,7 @@ static Image LoadDDS(const unsigned char *fileData, unsigned int fileSize)
                             ((unsigned short *)image.data)[i] += alpha;
                         }
 
-                        image.format = UNCOMPRESSED_R5G5B5A1;
+                        image.format = PIXELFORMAT_UNCOMPRESSED_R5G5B5A1;
                     }
                     else if (ddsHeader->ddspf.aBitMask == 0xf000)   // 4bit alpha
                     {
@@ -3942,7 +3942,7 @@ static Image LoadDDS(const unsigned char *fileData, unsigned int fileSize)
                             ((unsigned short *)image.data)[i] += alpha;
                         }
 
-                        image.format = UNCOMPRESSED_R4G4B4A4;
+                        image.format = PIXELFORMAT_UNCOMPRESSED_R4G4B4A4;
                     }
                 }
             }
@@ -3953,7 +3953,7 @@ static Image LoadDDS(const unsigned char *fileData, unsigned int fileSize)
 
                 memcpy(image.data, fileDataPtr, dataSize);
 
-                image.format = UNCOMPRESSED_R8G8B8;
+                image.format = PIXELFORMAT_UNCOMPRESSED_R8G8B8;
             }
             else if (ddsHeader->ddspf.flags == 0x41 && ddsHeader->ddspf.rgbBitCount == 32) // DDS_RGBA, no compressed
             {
@@ -3974,7 +3974,7 @@ static Image LoadDDS(const unsigned char *fileData, unsigned int fileSize)
                     ((unsigned char *)image.data)[i + 2] = blue;
                 }
 
-                image.format = UNCOMPRESSED_R8G8B8A8;
+                image.format = PIXELFORMAT_UNCOMPRESSED_R8G8B8A8;
             }
             else if (((ddsHeader->ddspf.flags == 0x04) || (ddsHeader->ddspf.flags == 0x05)) && (ddsHeader->ddspf.fourCC > 0)) // Compressed
             {
@@ -3992,11 +3992,11 @@ static Image LoadDDS(const unsigned char *fileData, unsigned int fileSize)
                 {
                     case FOURCC_DXT1:
                     {
-                        if (ddsHeader->ddspf.flags == 0x04) image.format = COMPRESSED_DXT1_RGB;
-                        else image.format = COMPRESSED_DXT1_RGBA;
+                        if (ddsHeader->ddspf.flags == 0x04) image.format = PIXELFORMAT_COMPRESSED_DXT1_RGB;
+                        else image.format = PIXELFORMAT_COMPRESSED_DXT1_RGBA;
                     } break;
-                    case FOURCC_DXT3: image.format = COMPRESSED_DXT3_RGBA; break;
-                    case FOURCC_DXT5: image.format = COMPRESSED_DXT5_RGBA; break;
+                    case FOURCC_DXT3: image.format = PIXELFORMAT_COMPRESSED_DXT3_RGBA; break;
+                    case FOURCC_DXT5: image.format = PIXELFORMAT_COMPRESSED_DXT5_RGBA; break;
                     default: break;
                 }
             }
@@ -4079,9 +4079,9 @@ static Image LoadPKM(const unsigned char *fileData, unsigned int fileSize)
 
             memcpy(image.data, fileDataPtr, dataSize);
 
-            if (pkmHeader->format == 0) image.format = COMPRESSED_ETC1_RGB;
-            else if (pkmHeader->format == 1) image.format = COMPRESSED_ETC2_RGB;
-            else if (pkmHeader->format == 3) image.format = COMPRESSED_ETC2_EAC_RGBA;
+            if (pkmHeader->format == 0) image.format = PIXELFORMAT_COMPRESSED_ETC1_RGB;
+            else if (pkmHeader->format == 1) image.format = PIXELFORMAT_COMPRESSED_ETC2_RGB;
+            else if (pkmHeader->format == 3) image.format = PIXELFORMAT_COMPRESSED_ETC2_EAC_RGBA;
         }
     }
 
@@ -4162,9 +4162,9 @@ static Image LoadKTX(const unsigned char *fileData, unsigned int fileSize)
 
             memcpy(image.data, fileDataPtr, dataSize);
 
-            if (ktxHeader->glInternalFormat == 0x8D64) image.format = COMPRESSED_ETC1_RGB;
-            else if (ktxHeader->glInternalFormat == 0x9274) image.format = COMPRESSED_ETC2_RGB;
-            else if (ktxHeader->glInternalFormat == 0x9278) image.format = COMPRESSED_ETC2_EAC_RGBA;
+            if (ktxHeader->glInternalFormat == 0x8D64) image.format = PIXELFORMAT_COMPRESSED_ETC1_RGB;
+            else if (ktxHeader->glInternalFormat == 0x9274) image.format = PIXELFORMAT_COMPRESSED_ETC2_RGB;
+            else if (ktxHeader->glInternalFormat == 0x9278) image.format = PIXELFORMAT_COMPRESSED_ETC2_EAC_RGBA;
         }
     }
 
@@ -4358,24 +4358,24 @@ static Image LoadPVR(const unsigned char *fileData, unsigned int fileSize)
                 image.mipmaps = pvrHeader->numMipmaps;
 
                 // Check data format
-                if (((pvrHeader->channels[0] == 'l') && (pvrHeader->channels[1] == 0)) && (pvrHeader->channelDepth[0] == 8)) image.format = UNCOMPRESSED_GRAYSCALE;
-                else if (((pvrHeader->channels[0] == 'l') && (pvrHeader->channels[1] == 'a')) && ((pvrHeader->channelDepth[0] == 8) && (pvrHeader->channelDepth[1] == 8))) image.format = UNCOMPRESSED_GRAY_ALPHA;
+                if (((pvrHeader->channels[0] == 'l') && (pvrHeader->channels[1] == 0)) && (pvrHeader->channelDepth[0] == 8)) image.format = PIXELFORMAT_UNCOMPRESSED_GRAYSCALE;
+                else if (((pvrHeader->channels[0] == 'l') && (pvrHeader->channels[1] == 'a')) && ((pvrHeader->channelDepth[0] == 8) && (pvrHeader->channelDepth[1] == 8))) image.format = PIXELFORMAT_UNCOMPRESSED_GRAY_ALPHA;
                 else if ((pvrHeader->channels[0] == 'r') && (pvrHeader->channels[1] == 'g') && (pvrHeader->channels[2] == 'b'))
                 {
                     if (pvrHeader->channels[3] == 'a')
                     {
-                        if ((pvrHeader->channelDepth[0] == 5) && (pvrHeader->channelDepth[1] == 5) && (pvrHeader->channelDepth[2] == 5) && (pvrHeader->channelDepth[3] == 1)) image.format = UNCOMPRESSED_R5G5B5A1;
-                        else if ((pvrHeader->channelDepth[0] == 4) && (pvrHeader->channelDepth[1] == 4) && (pvrHeader->channelDepth[2] == 4) && (pvrHeader->channelDepth[3] == 4)) image.format = UNCOMPRESSED_R4G4B4A4;
-                        else if ((pvrHeader->channelDepth[0] == 8) && (pvrHeader->channelDepth[1] == 8) && (pvrHeader->channelDepth[2] == 8) && (pvrHeader->channelDepth[3] == 8)) image.format = UNCOMPRESSED_R8G8B8A8;
+                        if ((pvrHeader->channelDepth[0] == 5) && (pvrHeader->channelDepth[1] == 5) && (pvrHeader->channelDepth[2] == 5) && (pvrHeader->channelDepth[3] == 1)) image.format = PIXELFORMAT_UNCOMPRESSED_R5G5B5A1;
+                        else if ((pvrHeader->channelDepth[0] == 4) && (pvrHeader->channelDepth[1] == 4) && (pvrHeader->channelDepth[2] == 4) && (pvrHeader->channelDepth[3] == 4)) image.format = PIXELFORMAT_UNCOMPRESSED_R4G4B4A4;
+                        else if ((pvrHeader->channelDepth[0] == 8) && (pvrHeader->channelDepth[1] == 8) && (pvrHeader->channelDepth[2] == 8) && (pvrHeader->channelDepth[3] == 8)) image.format = PIXELFORMAT_UNCOMPRESSED_R8G8B8A8;
                     }
                     else if (pvrHeader->channels[3] == 0)
                     {
-                        if ((pvrHeader->channelDepth[0] == 5) && (pvrHeader->channelDepth[1] == 6) && (pvrHeader->channelDepth[2] == 5)) image.format = UNCOMPRESSED_R5G6B5;
-                        else if ((pvrHeader->channelDepth[0] == 8) && (pvrHeader->channelDepth[1] == 8) && (pvrHeader->channelDepth[2] == 8)) image.format = UNCOMPRESSED_R8G8B8;
+                        if ((pvrHeader->channelDepth[0] == 5) && (pvrHeader->channelDepth[1] == 6) && (pvrHeader->channelDepth[2] == 5)) image.format = PIXELFORMAT_UNCOMPRESSED_R5G6B5;
+                        else if ((pvrHeader->channelDepth[0] == 8) && (pvrHeader->channelDepth[1] == 8) && (pvrHeader->channelDepth[2] == 8)) image.format = PIXELFORMAT_UNCOMPRESSED_R8G8B8;
                     }
                 }
-                else if (pvrHeader->channels[0] == 2) image.format = COMPRESSED_PVRT_RGB;
-                else if (pvrHeader->channels[0] == 3) image.format = COMPRESSED_PVRT_RGBA;
+                else if (pvrHeader->channels[0] == 2) image.format = PIXELFORMAT_COMPRESSED_PVRT_RGB;
+                else if (pvrHeader->channels[0] == 3) image.format = PIXELFORMAT_COMPRESSED_PVRT_RGBA;
 
                 fileDataPtr += pvrHeader->metaDataSize;    // Skip meta data header
 
@@ -4383,15 +4383,15 @@ static Image LoadPVR(const unsigned char *fileData, unsigned int fileSize)
                 int bpp = 0;
                 switch (image.format)
                 {
-                    case UNCOMPRESSED_GRAYSCALE: bpp = 8; break;
-                    case UNCOMPRESSED_GRAY_ALPHA:
-                    case UNCOMPRESSED_R5G5B5A1:
-                    case UNCOMPRESSED_R5G6B5:
-                    case UNCOMPRESSED_R4G4B4A4: bpp = 16; break;
-                    case UNCOMPRESSED_R8G8B8A8: bpp = 32; break;
-                    case UNCOMPRESSED_R8G8B8: bpp = 24; break;
-                    case COMPRESSED_PVRT_RGB:
-                    case COMPRESSED_PVRT_RGBA: bpp = 4; break;
+                    case PIXELFORMAT_UNCOMPRESSED_GRAYSCALE: bpp = 8; break;
+                    case PIXELFORMAT_UNCOMPRESSED_GRAY_ALPHA:
+                    case PIXELFORMAT_UNCOMPRESSED_R5G5B5A1:
+                    case PIXELFORMAT_UNCOMPRESSED_R5G6B5:
+                    case PIXELFORMAT_UNCOMPRESSED_R4G4B4A4: bpp = 16; break;
+                    case PIXELFORMAT_UNCOMPRESSED_R8G8B8A8: bpp = 32; break;
+                    case PIXELFORMAT_UNCOMPRESSED_R8G8B8: bpp = 24; break;
+                    case PIXELFORMAT_COMPRESSED_PVRT_RGB:
+                    case PIXELFORMAT_COMPRESSED_PVRT_RGBA: bpp = 4; break;
                     default: break;
                 }
 
@@ -4470,8 +4470,8 @@ static Image LoadASTC(const unsigned char *fileData, unsigned int fileSize)
 
                 memcpy(image.data, fileDataPtr, dataSize);
 
-                if (bpp == 8) image.format = COMPRESSED_ASTC_4x4_RGBA;
-                else if (bpp == 2) image.format = COMPRESSED_ASTC_8x8_RGBA;
+                if (bpp == 8) image.format = PIXELFORMAT_COMPRESSED_ASTC_4x4_RGBA;
+                else if (bpp == 2) image.format = PIXELFORMAT_COMPRESSED_ASTC_8x8_RGBA;
             }
             else TRACELOG(LOG_WARNING, "IMAGE: ASTC block size configuration not supported");
         }

@@ -35,9 +35,9 @@ int main(void)
 
     // Model loading
     Model model = LoadModel("resources/plane.obj");     // Load OBJ model
-    model.materials[0].maps[MAP_DIFFUSE].texture = LoadTexture("resources/plane_diffuse.png"); // Set map diffuse texture
+    model.materials[0].maps[MATERIAL_MAP_DIFFUSE].texture = LoadTexture("resources/plane_diffuse.png"); // Set map diffuse texture
 
-    GenTextureMipmaps(&model.materials[0].maps[MAP_DIFFUSE].texture);
+    GenTextureMipmaps(&model.materials[0].maps[MATERIAL_MAP_DIFFUSE].texture);
 
     Camera camera = { 0 };
     camera.position = (Vector3){ 0.0f, 60.0f, -120.0f };// Camera position perspective
@@ -169,7 +169,7 @@ int main(void)
     //--------------------------------------------------------------------------------------
 
     // Unload all loaded data
-    UnloadTexture(model.materials[0].maps[MAP_DIFFUSE].texture);
+    UnloadTexture(model.materials[0].maps[MATERIAL_MAP_DIFFUSE].texture);
     UnloadModel(model);
 
     UnloadRenderTexture(framebuffer);

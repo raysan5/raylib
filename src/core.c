@@ -1356,7 +1356,7 @@ void ClearWindowState(unsigned int flags)
 void SetWindowIcon(Image image)
 {
 #if defined(PLATFORM_DESKTOP)
-    if (image.format == UNCOMPRESSED_R8G8B8A8)
+    if (image.format == PIXELFORMAT_UNCOMPRESSED_R8G8B8A8)
     {
         GLFWimage icon[1] = { 0 };
 
@@ -2258,7 +2258,7 @@ void SetConfigFlags(unsigned int flags)
 void TakeScreenshot(const char *fileName)
 {
     unsigned char *imgData = rlReadScreenPixels(CORE.Window.render.width, CORE.Window.render.height);
-    Image image = { imgData, CORE.Window.render.width, CORE.Window.render.height, 1, UNCOMPRESSED_R8G8B8A8 };
+    Image image = { imgData, CORE.Window.render.width, CORE.Window.render.height, 1, PIXELFORMAT_UNCOMPRESSED_R8G8B8A8 };
 
     char path[512] = { 0 };
 #if defined(PLATFORM_ANDROID)
