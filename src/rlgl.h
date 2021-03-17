@@ -892,11 +892,12 @@ typedef struct rlglData {
 
     } State;            // Renderer state
     struct {
-        bool vao;                           // VAO support (OpenGL ES2 could not support VAO extension)
-        bool texNPOT;                       // NPOT textures full support
-        bool texDepth;                      // Depth textures supported
-        bool texFloat32;                    // float textures support (32 bit per channel)
-        bool texCompDXT;                    // DDS texture compression support
+        bool vao;                           // VAO support (OpenGL ES2 could not support VAO extension) (GL_ARB_vertex_array_object)
+        bool instancing;                    // Instancing supported
+        bool texNPOT;                       // NPOT textures full support (GL_ARB_texture_non_power_of_two, GL_OES_texture_npot)
+        bool texDepth;                      // Depth textures supported (GL_ARB_depth_texture, GL_WEBGL_depth_texture)
+        bool texFloat32;                    // float textures support (32 bit per channel) (GL_OES_texture_float)
+        bool texCompDXT;                    // DDS texture compression support (GL_EXT_texture_compression_s3tc)
         bool texCompETC1;                   // ETC1 texture compression support
         bool texCompETC2;                   // ETC2/EAC texture compression support
         bool texCompPVRT;                   // PVR texture compression support
@@ -930,9 +931,14 @@ static rlglData RLGL = { 0 };
 
 #if defined(GRAPHICS_API_OPENGL_ES2)
 // NOTE: VAO functionality is exposed through extensions (OES)
-static PFNGLGENVERTEXARRAYSOESPROC glGenVertexArrays;        // Entry point pointer to function glGenVertexArrays()
-static PFNGLBINDVERTEXARRAYOESPROC glBindVertexArray;        // Entry point pointer to function glBindVertexArray()
-static PFNGLDELETEVERTEXARRAYSOESPROC glDeleteVertexArrays;  // Entry point pointer to function glDeleteVertexArrays()
+static PFNGLGENVERTEXARRAYSOESPROC glGenVertexArrays = NULL;
+static PFNGLBINDVERTEXARRAYOESPROC glBindVertexArray = NULL;
+static PFNGLDELETEVERTEXARRAYSOESPROC glDeleteVertexArrays = NULL;
+
+// NOTE: Instancing functionality could also be available through extension
+static PFNGLDRAWARRAYSINSTANCEDEXTPROC glDrawArraysInstanced = NULL;
+static PFNGLDRAWELEMENTSINSTANCEDEXTPROC glDrawElementsInstanced = NULL;
+static PFNGLVERTEXATTRIBDIVISOREXTPROC glVertexAttribDivisor = NULL;
 #endif
 
 //----------------------------------------------------------------------------------
@@ -1617,10 +1623,9 @@ void rlglInit(int width, int height)
     GLint numExt = 0;
 
 #if defined(GRAPHICS_API_OPENGL_33) && !defined(GRAPHICS_API_OPENGL_21)
-    // NOTE: On OpenGL 3.3 VAO and NPOT are supported by default
+    // OpenGL 3.3 extensions supported by default (core)
     RLGL.ExtSupported.vao = true;
-
-    // Multiple texture extensions supported by default
+    RLGL.ExtSupported.instancing = true;
     RLGL.ExtSupported.texNPOT = true;
     RLGL.ExtSupported.texFloat32 = true;
     RLGL.ExtSupported.texDepth = true;
@@ -1685,7 +1690,17 @@ void rlglInit(int width, int height)
 
             if ((glGenVertexArrays != NULL) && (glBindVertexArray != NULL) && (glDeleteVertexArrays != NULL)) RLGL.ExtSupported.vao = true;
         }
-
+        
+        // Check instanced rendering support
+        if (strcmp(extList[i], (const char *)"GL_ANGLE_instanced_arrays") == 0) 
+        {
+            glDrawArraysInstanced = (PFNGLDRAWARRAYSINSTANCEDEXTPROC)eglGetProcAddress("glDrawArraysInstancedANGLE");
+            glDrawElementsInstanced = (PFNGLDRAWELEMENTSINSTANCEDEXTPROC)eglGetProcAddress("glDrawElementsInstancedANGLE");
+            glVertexAttribDivisor = (PFNGLVERTEXATTRIBDIVISOREXTPROC)eglGetProcAddress("glVertexAttribDivisorANGLE");
+            
+            if ((glDrawArraysInstanced != NULL) && (glDrawElementsInstanced != NULL) && (glVertexAttribDivisor != NULL)) RLGL.ExtSupported.instancing = true;
+        }
+        
         // Check NPOT textures support
         // NOTE: Only check on OpenGL ES, OpenGL 3.3 has NPOT textures full support as core feature
         if (strcmp(extList[i], (const char *)"GL_OES_texture_npot") == 0) RLGL.ExtSupported.texNPOT = true;
@@ -2925,95 +2940,95 @@ void rlDrawMesh(Mesh mesh, Material material, Matrix transform)
 // Draw a 3d mesh with material and transform
 void rlDrawMeshInstanced(Mesh mesh, Material material, Matrix *transforms, int count)
 {
-#if defined(GRAPHICS_API_OPENGL_33)
-    // Bind shader program
-    glUseProgram(material.shader.id);
-
-    // Upload to shader material.colDiffuse
-    if (material.shader.locs[SHADER_LOC_COLOR_DIFFUSE] != -1)
-        glUniform4f(material.shader.locs[SHADER_LOC_COLOR_DIFFUSE], (float)material.maps[MATERIAL_MAP_DIFFUSE].color.r/255.0f,
-                                                           (float)material.maps[MATERIAL_MAP_DIFFUSE].color.g/255.0f,
-                                                           (float)material.maps[MATERIAL_MAP_DIFFUSE].color.b/255.0f,
-                                                           (float)material.maps[MATERIAL_MAP_DIFFUSE].color.a/255.0f);
-
-    // Upload to shader material.colSpecular (if available)
-    if (material.shader.locs[SHADER_LOC_COLOR_SPECULAR] != -1)
-        glUniform4f(material.shader.locs[SHADER_LOC_COLOR_SPECULAR], (float)material.maps[MATERIAL_MAP_SPECULAR].color.r/255.0f,
-                                                               (float)material.maps[MATERIAL_MAP_SPECULAR].color.g/255.0f,
-                                                               (float)material.maps[MATERIAL_MAP_SPECULAR].color.b/255.0f,
-                                                               (float)material.maps[MATERIAL_MAP_SPECULAR].color.a/255.0f);
-
-    // Bind active texture maps (if available)
-    for (int i = 0; i < MAX_MATERIAL_MAPS; i++)
+#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
+    if (RLGL.ExtSupported.instancing)
     {
-        if (material.maps[i].texture.id > 0)
+        // Bind shader program
+        glUseProgram(material.shader.id);
+
+        // Upload to shader material.colDiffuse
+        if (material.shader.locs[SHADER_LOC_COLOR_DIFFUSE] != -1)
+            glUniform4f(material.shader.locs[SHADER_LOC_COLOR_DIFFUSE], (float)material.maps[MATERIAL_MAP_DIFFUSE].color.r/255.0f,
+                                                               (float)material.maps[MATERIAL_MAP_DIFFUSE].color.g/255.0f,
+                                                               (float)material.maps[MATERIAL_MAP_DIFFUSE].color.b/255.0f,
+                                                               (float)material.maps[MATERIAL_MAP_DIFFUSE].color.a/255.0f);
+
+        // Upload to shader material.colSpecular (if available)
+        if (material.shader.locs[SHADER_LOC_COLOR_SPECULAR] != -1)
+            glUniform4f(material.shader.locs[SHADER_LOC_COLOR_SPECULAR], (float)material.maps[MATERIAL_MAP_SPECULAR].color.r/255.0f,
+                                                                   (float)material.maps[MATERIAL_MAP_SPECULAR].color.g/255.0f,
+                                                                   (float)material.maps[MATERIAL_MAP_SPECULAR].color.b/255.0f,
+                                                                   (float)material.maps[MATERIAL_MAP_SPECULAR].color.a/255.0f);
+
+        // Bind active texture maps (if available)
+        for (int i = 0; i < MAX_MATERIAL_MAPS; i++)
         {
-            glActiveTexture(GL_TEXTURE0 + i);
-            if ((i == MATERIAL_MAP_IRRADIANCE) || (i == MATERIAL_MAP_PREFILTER) || (i == MATERIAL_MAP_CUBEMAP))
-                glBindTexture(GL_TEXTURE_CUBE_MAP, material.maps[i].texture.id);
-            else glBindTexture(GL_TEXTURE_2D, material.maps[i].texture.id);
+            if (material.maps[i].texture.id > 0)
+            {
+                glActiveTexture(GL_TEXTURE0 + i);
+                if ((i == MATERIAL_MAP_IRRADIANCE) || (i == MATERIAL_MAP_PREFILTER) || (i == MATERIAL_MAP_CUBEMAP))
+                    glBindTexture(GL_TEXTURE_CUBE_MAP, material.maps[i].texture.id);
+                else glBindTexture(GL_TEXTURE_2D, material.maps[i].texture.id);
 
-            glUniform1i(material.shader.locs[SHADER_LOC_MAP_DIFFUSE + i], i);
+                glUniform1i(material.shader.locs[SHADER_LOC_MAP_DIFFUSE + i], i);
+            }
         }
+
+        // Bind vertex array objects (or VBOs)
+        glBindVertexArray(mesh.vaoId);
+
+        // At this point the modelview matrix just contains the view matrix (camera)
+        // For instanced shaders "mvp" is not premultiplied by any instance transform, only RLGL.State.transform
+        glUniformMatrix4fv(material.shader.locs[SHADER_LOC_MATRIX_MVP], 1, false,
+                           MatrixToFloat(MatrixMultiply(MatrixMultiply(RLGL.State.transform, RLGL.State.modelview), RLGL.State.projection)));
+
+        float16* instanceTransforms = RL_MALLOC(count*sizeof(float16));
+
+        for (int i = 0; i < count; i++) instanceTransforms[i] = MatrixToFloatV(transforms[i]);
+
+        // This could alternatively use a static VBO and either glMapBuffer or glBufferSubData.
+        // It isn't clear which would be reliably faster in all cases and on all platforms, and
+        // anecdotally glMapBuffer seems very slow (syncs) while glBufferSubData seems no faster
+        // since we're transferring all the transform matrices anyway.
+        unsigned int instancesB = 0;
+        glGenBuffers(1, &instancesB);
+        glBindBuffer(GL_ARRAY_BUFFER, instancesB);
+        glBufferData(GL_ARRAY_BUFFER, count*sizeof(float16), instanceTransforms, GL_STATIC_DRAW);
+
+        // Instances are put in SHADER_LOC_MATRIX_MODEL attribute location with space for 4x Vector4, eg:
+        // layout (location = 12) in mat4 instance;
+        unsigned int instanceA = material.shader.locs[SHADER_LOC_MATRIX_MODEL];
+
+        for (unsigned int i = 0; i < 4; i++)
+        {
+            glEnableVertexAttribArray(instanceA+i);
+            glVertexAttribPointer(instanceA + i, 4, GL_FLOAT, GL_FALSE, sizeof(Matrix), (void *)(i*sizeof(Vector4)));
+            glVertexAttribDivisor(instanceA + i, 1);
+        }
+
+        glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+        // Draw instanced
+        if (mesh.indices != NULL) glDrawElementsInstanced(GL_TRIANGLES, mesh.triangleCount*3, GL_UNSIGNED_SHORT, 0, count);
+        else glDrawArraysInstanced(GL_TRIANGLES, 0, mesh.vertexCount, count);
+
+        glDeleteBuffers(1, &instancesB);
+        RL_FREE(instanceTransforms);
+
+        // Unbind all binded texture maps
+        for (int i = 0; i < MAX_MATERIAL_MAPS; i++)
+        {
+            glActiveTexture(GL_TEXTURE0 + i);       // Set shader active texture
+            if ((i == MATERIAL_MAP_IRRADIANCE) || (i == MATERIAL_MAP_PREFILTER) || (i == MATERIAL_MAP_CUBEMAP)) glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
+            else glBindTexture(GL_TEXTURE_2D, 0);   // Unbind current active texture
+        }
+
+        // Unind vertex array objects (or VBOs)
+        glBindVertexArray(0);
+
+        // Unbind shader program
+        glUseProgram(0);
     }
-
-    // Bind vertex array objects (or VBOs)
-    glBindVertexArray(mesh.vaoId);
-
-    // At this point the modelview matrix just contains the view matrix (camera)
-    // For instanced shaders "mvp" is not premultiplied by any instance transform, only RLGL.State.transform
-    glUniformMatrix4fv(material.shader.locs[SHADER_LOC_MATRIX_MVP], 1, false,
-                       MatrixToFloat(MatrixMultiply(MatrixMultiply(RLGL.State.transform, RLGL.State.modelview), RLGL.State.projection)));
-
-    float16* instanceTransforms = RL_MALLOC(count*sizeof(float16));
-
-    for (int i = 0; i < count; i++) instanceTransforms[i] = MatrixToFloatV(transforms[i]);
-
-    // This could alternatively use a static VBO and either glMapBuffer or glBufferSubData.
-    // It isn't clear which would be reliably faster in all cases and on all platforms, and
-    // anecdotally glMapBuffer seems very slow (syncs) while glBufferSubData seems no faster
-    // since we're transferring all the transform matrices anyway.
-    unsigned int instancesB = 0;
-    glGenBuffers(1, &instancesB);
-    glBindBuffer(GL_ARRAY_BUFFER, instancesB);
-    glBufferData(GL_ARRAY_BUFFER, count*sizeof(float16), instanceTransforms, GL_STATIC_DRAW);
-
-    // Instances are put in SHADER_LOC_MATRIX_MODEL attribute location with space for 4x Vector4, eg:
-    // layout (location = 12) in mat4 instance;
-    unsigned int instanceA = material.shader.locs[SHADER_LOC_MATRIX_MODEL];
-
-    for (unsigned int i = 0; i < 4; i++)
-    {
-        glEnableVertexAttribArray(instanceA+i);
-        glVertexAttribPointer(instanceA + i, 4, GL_FLOAT, GL_FALSE, sizeof(Matrix), (void *)(i*sizeof(Vector4)));
-        glVertexAttribDivisor(instanceA + i, 1);
-    }
-
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-
-    // Draw call!
-    if (mesh.indices != NULL) glDrawElementsInstanced(GL_TRIANGLES, mesh.triangleCount*3, GL_UNSIGNED_SHORT, 0, count);
-    else glDrawArraysInstanced(GL_TRIANGLES, 0, mesh.vertexCount, count);
-
-    glDeleteBuffers(1, &instancesB);
-    RL_FREE(instanceTransforms);
-
-    // Unbind all binded texture maps
-    for (int i = 0; i < MAX_MATERIAL_MAPS; i++)
-    {
-        glActiveTexture(GL_TEXTURE0 + i);       // Set shader active texture
-        if ((i == MATERIAL_MAP_IRRADIANCE) || (i == MATERIAL_MAP_PREFILTER) || (i == MATERIAL_MAP_CUBEMAP)) glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
-        else glBindTexture(GL_TEXTURE_2D, 0);   // Unbind current active texture
-    }
-
-    // Unind vertex array objects (or VBOs)
-    glBindVertexArray(0);
-
-    // Unbind shader program
-    glUseProgram(0);
-
-#else
-    TRACELOG(LOG_WARNING, "VAO: Instanced rendering requires GRAPHICS_API_OPENGL_33");
 #endif
 }
 
