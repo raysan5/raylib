@@ -127,12 +127,16 @@ int main(void)
             ClearBackground(RAYWHITE);
 
             BeginMode3D(camera);
+            
+                // We are inside the cube, we need to disable backface culling!
                 rlDisableBackfaceCulling();
                 rlDisableDepthMask();
                     DrawModel(skybox, (Vector3){0, 0, 0}, 1.0f, WHITE);
                 rlEnableBackfaceCulling();
                 rlEnableDepthMask();
+                
                 DrawGrid(10, 1.0f);
+                
             EndMode3D();
 
             if (useHDR)
