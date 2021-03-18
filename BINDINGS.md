@@ -58,9 +58,9 @@ Here it is a list with the ones I'm aware of:
 | raylib-chaiscript  | 2.6 | [ChaiScript](http://chaiscript.com/)     | https://github.com/RobLoach/raylib-chaiscript        |
 | raylib-squirrel    | 2.5 | [Squirrel](http://www.squirrel-lang.org/)     | https://github.com/RobLoach/raylib-squirrel    |
 | racket-raylib-2d   | 2.5 | [Racket](https://racket-lang.org/)       | https://github.com/arvyy/racket-raylib-2d           |
-| raylib-php         | 3.0 | [PHP](https://en.wikipedia.org/wiki/PHP)      | https://github.com/joseph-montanez/raylib-php   |
+| raylib-php         | 3.5 | [PHP](https://en.wikipedia.org/wiki/PHP)      | https://github.com/joseph-montanez/raylib-php   |
 | raylib-php-ffi     | 2.4-dev | [PHP](https://en.wikipedia.org/wiki/PHP)      | https://github.com/oraoto/raylib-php-ffi      |
-| raylib-phpcpp      | 3.0 | [PHP](https://en.wikipedia.org/wiki/PHP)      | https://github.com/oraoto/raylib-phpcpp      |
+| raylib-phpcpp      | 3.5 | [PHP](https://en.wikipedia.org/wiki/PHP)      | https://github.com/oraoto/raylib-phpcpp      |
 | raylib-factor      | 3.5 | [Factor](https://factorcode.org/)        | https://github.com/ArnautDaniel/raylib-factor   |
 | gforth-raylib      | 3.5 | [Gforth](https://gforth.org/)            | https://github.com/ArnautDaniel/gforth-raylib   |
 | raylib-haxe        | 2.4 | [Haxe](https://haxe.org/)                | https://github.com/ibilon/raylib-haxe           |
