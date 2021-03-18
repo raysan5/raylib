@@ -797,15 +797,11 @@ void UnloadModel(Model model)
     // Unload meshes
     for (int i = 0; i < model.meshCount; i++) UnloadMesh(model.meshes[i]);
 
-    // Unload materials maps  and params
+    // Unload materials maps
     // NOTE: As the user could be sharing shaders and textures between models,
-    // we don't unload the material but just free it's maps and params,
+    // we don't unload the material but just free it's maps,
     // the user is responsible for freeing models shaders and textures
-    for (int i = 0; i < model.materialCount; i++)
-    {
-        RL_FREE(model.materials[i].maps);
-        RL_FREE(model.materials[i].params);
-    }
+    for (int i = 0; i < model.materialCount; i++) RL_FREE(model.materials[i].maps);
 
     // Unload arrays
     RL_FREE(model.meshes);
@@ -822,15 +818,11 @@ void UnloadModel(Model model)
 // Unload model (but not meshes) from memory (RAM and/or VRAM)
 void UnloadModelKeepMeshes(Model model)
 {
-    // Unload materials maps  and params
+    // Unload materials maps
     // NOTE: As the user could be sharing shaders and textures between models,
-    // we don't unload the material but just free it's maps and params,
+    // we don't unload the material but just free it's maps,
     // the user is responsible for freeing models shaders and textures
-    for (int i = 0; i < model.materialCount; i++)
-    {
-        RL_FREE(model.materials[i].maps);
-        RL_FREE(model.materials[i].params);
-    }
+    for (int i = 0; i < model.materialCount; i++) RL_FREE(model.materials[i].maps);
 
     // Unload arrays
     RL_FREE(model.meshes);
@@ -1013,7 +1005,6 @@ void UnloadMaterial(Material material)
     }
 
     RL_FREE(material.maps);
-    RL_FREE(material.params);
 }
 
 // Set texture for a material map type (MATERIAL_MAP_DIFFUSE, MATERIAL_MAP_SPECULAR...)
