@@ -131,6 +131,8 @@ static void InitGLTFBones(Model* model, const cgltf_data* data);
 // Draw a line in 3D world space
 void DrawLine3D(Vector3 startPos, Vector3 endPos, Color color)
 {
+    if (rlCheckBufferLimit(2)) rlglDraw();
+
     rlBegin(RL_LINES);
         rlColor4ub(color.r, color.g, color.b, color.a);
         rlVertex3f(startPos.x, startPos.y, startPos.z);
@@ -141,7 +143,7 @@ void DrawLine3D(Vector3 startPos, Vector3 endPos, Color color)
 // Draw a point in 3D space, actually a small line
 void DrawPoint3D(Vector3 position, Color color)
 {
-    if (rlCheckBufferLimit(8)) rlglDraw();
+    if (rlCheckBufferLimit(2)) rlglDraw();
 
     rlPushMatrix();
         rlTranslatef(position.x, position.y, position.z);
