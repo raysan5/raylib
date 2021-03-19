@@ -41,7 +41,7 @@ int main(void)
     camera.target = (Vector3){ 0.0f, 1.0f, -1.0f };
     camera.up = (Vector3){ 0.0f, 1.0f, 0.0f };
     camera.fovy = 45.0f;
-    camera.type = CAMERA_PERSPECTIVE;
+    camera.projection = CAMERA_PERSPECTIVE;
 
     Model model = LoadModel("resources/models/watermill.obj");                   // Load OBJ model
     Texture2D texture = LoadTexture("resources/models/watermill_diffuse.png");   // Load model texture
