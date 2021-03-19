@@ -1461,24 +1461,24 @@ RMDEF void QuaternionToAxisAngle(Quaternion q, Vector3 *outAxis, float *outAngle
     *outAngle = resAngle;
 }
 
-// Returns he quaternion equivalent to Euler angles
+// Returns the quaternion equivalent to Euler angles
 // NOTE: Rotation order is ZYX
-RMDEF Quaternion QuaternionFromEuler(float yaw, float pitch, float roll)
+RMDEF Quaternion QuaternionFromEuler(float pitch, float yaw, float roll)
 {
     Quaternion q = { 0 };
 
-    float cy = cosf(yaw*0.5f);
-    float sy = sinf(yaw*0.5f);
-    float cp = cosf(pitch*0.5f);
-    float sp = sinf(pitch*0.5f);
-    float cr = cosf(roll*0.5f);
-    float sr = sinf(roll*0.5f);
+    float x0 = cosf(pitch*0.5f);
+    float x1 = sinf(pitch*0.5f);
+    float y0 = cosf(yaw*0.5f);
+    float y1 = sinf(yaw*0.5f);
+    float z0 = cosf(roll*0.5f);
+    float z1 = sinf(roll*0.5f);
 
-    q.x = sr*cp*cy - cr*sp*sy;
-    q.y = cr*sp*cy + sr*cp*sy;
-    q.z = cr*cp*sy - sr*sp*cy;
-    q.w = cr*cp*cy + sr*sp*sy;
-
+    q.x = x1*y0*z0 - x0*y1*z1;
+    q.y = x0*y1*z0 + x1*y0*z1;
+    q.z = x0*y0*z1 - x1*y1*z0;
+    q.w = x0*y0*z0 + x1*y1*z1;
+    
     return q;
 }
 
