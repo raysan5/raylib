@@ -294,7 +294,7 @@ typedef enum {
     LOG_ERROR,
     LOG_FATAL,
     LOG_NONE
-} TraceLogType;
+} TraceLogLevel;
 #endif
 
 // NOTE: Different logic is used when feeding data to the playback device

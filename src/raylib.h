@@ -248,9 +248,9 @@ typedef Texture TextureCubemap;
 
 // RenderTexture type, for texture rendering
 typedef struct RenderTexture {
-    unsigned int id;        // OpenGL Framebuffer Object (FBO) id
-    Texture texture;      // Color buffer attachment texture
-    Texture depth;        // Depth buffer attachment texture
+    unsigned int id;        // OpenGL framebuffer object id
+    Texture texture;        // Color buffer attachment texture
+    Texture depth;          // Depth buffer attachment texture
 } RenderTexture;
 
 // RenderTexture2D type, same as RenderTexture
@@ -258,12 +258,12 @@ typedef RenderTexture RenderTexture2D;
 
 // N-Patch layout info
 typedef struct NPatchInfo {
-    Rectangle source;   // Region in the texture
-    int left;              // left border offset
-    int top;               // top border offset
-    int right;             // right border offset
-    int bottom;            // bottom border offset
-    int type;              // layout of the n-patch: 3x3, 1x3 or 3x1
+    Rectangle source;       // Texture source rectangle
+    int left;               // Left border offset
+    int top;                // Top border offset
+    int right;              // Right border offset
+    int bottom;             // Bottom border offset
+    int layout;             // Layout of the n-patch: 3x3, 1x3 or 3x1
 } NPatchInfo;
 
 // Font character info
@@ -293,7 +293,7 @@ typedef struct Camera3D {
     Vector3 target;         // Camera target it looks-at
     Vector3 up;             // Camera up vector (rotation over its axis)
     float fovy;             // Camera field-of-view apperture in Y (degrees) in perspective, used as near plane width in orthographic
-    int type;               // Camera type, defines projection type: CAMERA_PERSPECTIVE or CAMERA_ORTHOGRAPHIC
+    int type;               // Camera projection: CAMERA_PERSPECTIVE or CAMERA_ORTHOGRAPHIC
 } Camera3D;
 
 typedef Camera3D Camera;    // Camera type fallback, defaults to Camera3D
@@ -482,9 +482,9 @@ typedef enum {
     FLAG_WINDOW_HIGHDPI     = 0x00002000,   // Set to support HighDPI
     FLAG_MSAA_4X_HINT       = 0x00000020,   // Set to try enabling MSAA 4X
     FLAG_INTERLACED_HINT    = 0x00010000    // Set to try enabling interlaced video format (for V3D)
-} ConfigFlag;
+} ConfigFlags;
 
-// Trace log type
+// Trace log level
 typedef enum {
     LOG_ALL = 0,        // Display all logs
     LOG_TRACE,
@@ -494,7 +494,7 @@ typedef enum {
     LOG_ERROR,
     LOG_FATAL,
     LOG_NONE            // Disable logging
-} TraceLogType;
+} TraceLogLevel;
 
 // Keyboard keys (US keyboard layout)
 // NOTE: Use GetKeyPressed() to allow redefining
@@ -609,16 +609,13 @@ typedef enum {
     KEY_KP_SUBTRACT     = 333,
     KEY_KP_ADD          = 334,
     KEY_KP_ENTER        = 335,
-    KEY_KP_EQUAL        = 336
-} KeyboardKey;
-
-// Android buttons
-typedef enum {
+    KEY_KP_EQUAL        = 336,
+    // Android key buttons
     KEY_BACK            = 4,
     KEY_MENU            = 82,
     KEY_VOLUME_UP       = 24,
     KEY_VOLUME_DOWN     = 25
-} AndroidButton;
+} KeyboardKey;
 
 // Mouse buttons
 typedef enum {
@@ -627,7 +624,7 @@ typedef enum {
     MOUSE_MIDDLE_BUTTON = 2
 } MouseButton;
 
-// Mouse cursor types
+// Mouse cursor
 typedef enum {
     MOUSE_CURSOR_DEFAULT       = 0,
     MOUSE_CURSOR_ARROW         = 1,
@@ -701,7 +698,7 @@ typedef enum {
     GAMEPAD_AXIS_RIGHT_TRIGGER = 5      // [1..-1] (pressure-level)
 } GamepadAxis;
 
-// Shader location points
+// Shader location index
 typedef enum {
     SHADER_LOC_VERTEX_POSITION = 0,
     SHADER_LOC_VERTEX_TEXCOORD01,
@@ -733,7 +730,7 @@ typedef enum {
 #define SHADER_LOC_MAP_DIFFUSE      SHADER_LOC_MAP_ALBEDO
 #define SHADER_LOC_MAP_SPECULAR     SHADER_LOC_MAP_METALNESS
 
-// Shader uniform data types
+// Shader uniform data type
 typedef enum {
     SHADER_UNIFORM_FLOAT = 0,
     SHADER_UNIFORM_VEC2,
@@ -746,7 +743,7 @@ typedef enum {
     SHADER_UNIFORM_SAMPLER2D
 } ShaderUniformDataType;
 
-// Material maps
+// Material map index
 typedef enum {
     MATERIAL_MAP_ALBEDO    = 0,       // MATERIAL_MAP_DIFFUSE
     MATERIAL_MAP_METALNESS = 1,       // MATERIAL_MAP_SPECULAR
@@ -759,7 +756,7 @@ typedef enum {
     MATERIAL_MAP_CUBEMAP,             // NOTE: Uses GL_TEXTURE_CUBE_MAP
     MATERIAL_MAP_IRRADIANCE,          // NOTE: Uses GL_TEXTURE_CUBE_MAP
     MATERIAL_MAP_PREFILTER            // NOTE: Uses GL_TEXTURE_CUBE_MAP
-} MaterialMapType;
+} MaterialMapIndex;
 
 #define MATERIAL_MAP_DIFFUSE      MATERIAL_MAP_ALBEDO
 #define MATERIAL_MAP_SPECULAR     MATERIAL_MAP_METALNESS
@@ -800,7 +797,7 @@ typedef enum {
     TEXTURE_FILTER_ANISOTROPIC_4X,          // Anisotropic filtering 4x
     TEXTURE_FILTER_ANISOTROPIC_8X,          // Anisotropic filtering 8x
     TEXTURE_FILTER_ANISOTROPIC_16X,         // Anisotropic filtering 16x
-} TextureFilterMode;
+} TextureFilter;
 
 // Texture parameters: wrap mode
 typedef enum {
@@ -808,7 +805,7 @@ typedef enum {
     TEXTURE_WRAP_CLAMP,             // Clamps texture to edge pixel in tiled mode
     TEXTURE_WRAP_MIRROR_REPEAT,     // Mirrors and repeats the texture in tiled mode
     TEXTURE_WRAP_MIRROR_CLAMP       // Mirrors and clamps to border the texture in tiled mode
-} TextureWrapMode;
+} TextureWrap;
 
 // Cubemap layouts
 typedef enum {
@@ -818,7 +815,7 @@ typedef enum {
     CUBEMAP_LAYOUT_CROSS_THREE_BY_FOUR,    // Layout is defined by a 3x4 cross with cubemap faces
     CUBEMAP_LAYOUT_CROSS_FOUR_BY_THREE,    // Layout is defined by a 4x3 cross with cubemap faces
     CUBEMAP_LAYOUT_PANORAMA                // Layout is defined by a panorama image (equirectangular map)
-} CubemapLayoutType;
+} CubemapLayout;
 
 // Font type, defines generation method
 typedef enum {
@@ -837,7 +834,7 @@ typedef enum {
     BLEND_CUSTOM            // Belnd textures using custom src/dst factors (use rlSetBlendMode())
 } BlendMode;
 
-// Gestures type
+// Gestures
 // NOTE: It could be used as flags to enable only some gestures
 typedef enum {
     GESTURE_NONE        = 0,
@@ -851,7 +848,7 @@ typedef enum {
     GESTURE_SWIPE_DOWN  = 128,
     GESTURE_PINCH_IN    = 256,
     GESTURE_PINCH_OUT   = 512
-} GestureType;
+} Gestures;
 
 // Camera system modes
 typedef enum {
@@ -862,22 +859,22 @@ typedef enum {
     CAMERA_THIRD_PERSON
 } CameraMode;
 
-// Camera projection modes
+// Camera projection
 typedef enum {
     CAMERA_PERSPECTIVE = 0,
     CAMERA_ORTHOGRAPHIC
-} CameraType;
+} CameraProjection;
 
-// N-patch types
+// N-patch layout
 typedef enum {
-    NPATCH_NINE_PATCH = 0,          // Npatch defined by 3x3 tiles
-    NPATCH_THREE_PATCH_VERTICAL,    // Npatch defined by 1x3 tiles
-    NPATCH_THREE_PATCH_HORIZONTAL   // Npatch defined by 3x1 tiles
-} NPatchType;
+    NPATCH_NINE_PATCH = 0,          // Npatch layout: 3x3 tiles
+    NPATCH_THREE_PATCH_VERTICAL,    // Npatch layout: 1x3 tiles
+    NPATCH_THREE_PATCH_HORIZONTAL   // Npatch layout: 3x1 tiles
+} NPatchLayout;
 
 // Callbacks to hook some internal functions
 // WARNING: This callbacks are intended for advance users
-typedef void (*TraceLogCallback)(int logType, const char *text, va_list args);  // Logging: Redirect trace log messages
+typedef void (*TraceLogCallback)(int logLevel, const char *text, va_list args);  // Logging: Redirect trace log messages
 typedef unsigned char* (*LoadFileDataCallback)(const char* fileName, unsigned int* bytesRead);      // FileIO: Load binary data
 typedef void (*SaveFileDataCallback)(const char *fileName, void *data, unsigned int bytesToWrite);  // FileIO: Save binary data
 typedef char *(*LoadFileTextCallback)(const char* fileName);                // FileIO: Load text data
@@ -979,8 +976,8 @@ RLAPI int GetRandomValue(int min, int max);                       // Returns a r
 RLAPI void TakeScreenshot(const char *fileName);                  // Takes a screenshot of current screen (filename extension defines format)
 RLAPI void SetConfigFlags(unsigned int flags);                    // Setup init configuration flags (view FLAGS)
 
-RLAPI void TraceLog(int logType, const char *text, ...);          // Show trace log messages (LOG_DEBUG, LOG_INFO, LOG_WARNING, LOG_ERROR)
-RLAPI void SetTraceLogLevel(int logType);                         // Set the current threshold (minimum) log level
+RLAPI void TraceLog(int logLevel, const char *text, ...);          // Show trace log messages (LOG_DEBUG, LOG_INFO, LOG_WARNING, LOG_ERROR)
+RLAPI void SetTraceLogLevel(int logLevel);                         // Set the current threshold (minimum) log level
 RLAPI void *MemAlloc(int size);                                   // Internal memory allocator
 RLAPI void *MemRealloc(void *ptr, int size);                      // Internal memory reallocator
 RLAPI void MemFree(void *ptr);                                    // Internal memory free
@@ -1075,7 +1072,7 @@ RLAPI Vector2 GetTouchPosition(int index);                    // Returns touch p
 //------------------------------------------------------------------------------------
 // Gestures and Touch Handling Functions (Module: gestures)
 //------------------------------------------------------------------------------------
-RLAPI void SetGesturesEnabled(unsigned int gestureFlags);     // Enable a set of gestures using flags
+RLAPI void SetGesturesEnabled(unsigned int flags);     // Enable a set of gestures using flags
 RLAPI bool IsGestureDetected(int gesture);                    // Check if a gesture have been detected
 RLAPI int GetGestureDetected(void);                           // Get latest detected gesture
 RLAPI int GetTouchPointsCount(void);                          // Get touch points count
@@ -1225,7 +1222,7 @@ RLAPI void ImageDrawTextEx(Image *dst, Font font, const char *text, Vector2 posi
 // NOTE: These functions require GPU access
 RLAPI Texture2D LoadTexture(const char *fileName);                                                       // Load texture from file into GPU memory (VRAM)
 RLAPI Texture2D LoadTextureFromImage(Image image);                                                       // Load texture from image data
-RLAPI TextureCubemap LoadTextureCubemap(Image image, int layoutType);                                    // Load cubemap from image, multiple image cubemap layouts supported
+RLAPI TextureCubemap LoadTextureCubemap(Image image, int layout);                                    // Load cubemap from image, multiple image cubemap layouts supported
 RLAPI RenderTexture2D LoadRenderTexture(int width, int height);                                          // Load texture for rendering (framebuffer)
 RLAPI void UnloadTexture(Texture2D texture);                                                             // Unload texture from GPU memory (VRAM)
 RLAPI void UnloadRenderTexture(RenderTexture2D target);                                                  // Unload render texture from GPU memory (VRAM)
@@ -1236,8 +1233,8 @@ RLAPI Image GetScreenData(void);                                                
 
 // Texture configuration functions
 RLAPI void GenTextureMipmaps(Texture2D *texture);                                                        // Generate GPU mipmaps for a texture
-RLAPI void SetTextureFilter(Texture2D texture, int filterMode);                                          // Set texture scaling filter mode
-RLAPI void SetTextureWrap(Texture2D texture, int wrapMode);                                              // Set texture wrapping mode
+RLAPI void SetTextureFilter(Texture2D texture, int filter);                                          // Set texture scaling filter mode
+RLAPI void SetTextureWrap(Texture2D texture, int wrap);                                              // Set texture wrapping mode
 
 // Texture drawing functions
 RLAPI void DrawTexture(Texture2D texture, int posX, int posY, Color tint);                               // Draw a Texture2D
@@ -1429,10 +1426,10 @@ RLAPI void SetShapesTexture(Texture2D texture, Rectangle source);         // Def
 // Shader configuration functions
 RLAPI int GetShaderLocation(Shader shader, const char *uniformName);      // Get shader uniform location
 RLAPI int GetShaderLocationAttrib(Shader shader, const char *attribName); // Get shader attribute location
-RLAPI void SetShaderValue(Shader shader, int uniformLoc, const void *value, int uniformType);               // Set shader uniform value
-RLAPI void SetShaderValueV(Shader shader, int uniformLoc, const void *value, int uniformType, int count);   // Set shader uniform value vector
-RLAPI void SetShaderValueMatrix(Shader shader, int uniformLoc, Matrix mat);         // Set shader uniform value (matrix 4x4)
-RLAPI void SetShaderValueTexture(Shader shader, int uniformLoc, Texture2D texture); // Set shader uniform value for texture
+RLAPI void SetShaderValue(Shader shader, int locIndex, const void *value, int uniformType);               // Set shader uniform value
+RLAPI void SetShaderValueV(Shader shader, int locIndex, const void *value, int uniformType, int count);   // Set shader uniform value vector
+RLAPI void SetShaderValueMatrix(Shader shader, int locIndex, Matrix mat);         // Set shader uniform value (matrix 4x4)
+RLAPI void SetShaderValueTexture(Shader shader, int locIndex, Texture2D texture); // Set shader uniform value for texture
 RLAPI void SetMatrixProjection(Matrix proj);                              // Set a custom projection matrix (replaces internal projection matrix)
 RLAPI void SetMatrixModelview(Matrix view);                               // Set a custom modelview matrix (replaces internal modelview matrix)
 RLAPI Matrix GetMatrixModelview(void);                                    // Get internal modelview matrix

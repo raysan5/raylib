@@ -91,7 +91,7 @@
     typedef enum {
         CAMERA_PERSPECTIVE = 0,
         CAMERA_ORTHOGRAPHIC
-    } CameraType;
+    } CameraProjection;
 #endif
 
 #ifdef __cplusplus

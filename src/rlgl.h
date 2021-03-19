@@ -360,7 +360,7 @@ typedef enum {
         LOG_ERROR,
         LOG_FATAL,
         LOG_NONE
-    } TraceLogType;
+    } TraceLogLevel;
 
     // Texture formats (support depends on OpenGL version)
     typedef enum {
@@ -397,7 +397,7 @@ typedef enum {
         TEXTURE_FILTER_ANISOTROPIC_4X,          // Anisotropic filtering 4x
         TEXTURE_FILTER_ANISOTROPIC_8X,          // Anisotropic filtering 8x
         TEXTURE_FILTER_ANISOTROPIC_16X,         // Anisotropic filtering 16x
-    } TextureFilterMode;
+    } TextureFilter;
 
     // Color blending modes (pre-defined)
     typedef enum {
@@ -467,7 +467,7 @@ typedef enum {
         MATERIAL_MAP_IRRADIANCE,          // NOTE: Uses GL_TEXTURE_CUBE_MAP
         MATERIAL_MAP_PREFILTER,           // NOTE: Uses GL_TEXTURE_CUBE_MAP
         MATERIAL_MAP_BRDG
-    } MaterialMapType;
+    } MaterialMapIndex;
 
     #define MATERIAL_MAP_DIFFUSE      MATERIAL_MAP_ALBEDO
     #define MATERIAL_MAP_SPECULAR     MATERIAL_MAP_METALNESS
@@ -599,9 +599,9 @@ RLAPI Rectangle GetShapesTextureRec(void);                                // Get
 // Shader configuration functions
 RLAPI int GetShaderLocation(Shader shader, const char *uniformName);              // Get shader uniform location
 RLAPI int GetShaderLocationAttrib(Shader shader, const char *attribName);         // Get shader attribute location
-RLAPI void SetShaderValue(Shader shader, int uniformLoc, const void *value, int uniformType);               // Set shader uniform value
-RLAPI void SetShaderValueV(Shader shader, int uniformLoc, const void *value, int uniformType, int count);   // Set shader uniform value vector
-RLAPI void SetShaderValueMatrix(Shader shader, int uniformLoc, Matrix mat);       // Set shader uniform value (matrix 4x4)
+RLAPI void SetShaderValue(Shader shader, int locIndex, const void *value, int uniformType);               // Set shader uniform value
+RLAPI void SetShaderValueV(Shader shader, int locIndex, const void *value, int uniformType, int count);   // Set shader uniform value vector
+RLAPI void SetShaderValueMatrix(Shader shader, int locIndex, Matrix mat);       // Set shader uniform value (matrix 4x4)
 RLAPI void SetMatrixProjection(Matrix proj);                              // Set a custom projection matrix (replaces internal projection matrix)
 RLAPI void SetMatrixModelview(Matrix view);                               // Set a custom modelview matrix (replaces internal modelview matrix)
 RLAPI Matrix GetMatrixModelview(void);                                    // Get internal modelview matrix
@@ -3359,28 +3359,28 @@ int GetShaderLocationAttrib(Shader shader, const char *attribName)
 }
 
 // Set shader uniform value
-void SetShaderValue(Shader shader, int uniformLoc, const void *value, int uniformType)
+void SetShaderValue(Shader shader, int locIndex, const void *value, int uniformType)
 {
-    SetShaderValueV(shader, uniformLoc, value, uniformType, 1);
+    SetShaderValueV(shader, locIndex, value, uniformType, 1);
 }
 
 // Set shader uniform value vector
-void SetShaderValueV(Shader shader, int uniformLoc, const void *value, int uniformType, int count)
+void SetShaderValueV(Shader shader, int locIndex, const void *value, int uniformType, int count)
 {
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     glUseProgram(shader.id);
 
     switch (uniformType)
     {
-        case SHADER_UNIFORM_FLOAT: glUniform1fv(uniformLoc, count, (float *)value); break;
-        case SHADER_UNIFORM_VEC2: glUniform2fv(uniformLoc, count, (float *)value); break;
-        case SHADER_UNIFORM_VEC3: glUniform3fv(uniformLoc, count, (float *)value); break;
-        case SHADER_UNIFORM_VEC4: glUniform4fv(uniformLoc, count, (float *)value); break;
-        case SHADER_UNIFORM_INT: glUniform1iv(uniformLoc, count, (int *)value); break;
-        case SHADER_UNIFORM_IVEC2: glUniform2iv(uniformLoc, count, (int *)value); break;
-        case SHADER_UNIFORM_IVEC3: glUniform3iv(uniformLoc, count, (int *)value); break;
-        case SHADER_UNIFORM_IVEC4: glUniform4iv(uniformLoc, count, (int *)value); break;
-        case SHADER_UNIFORM_SAMPLER2D: glUniform1iv(uniformLoc, count, (int *)value); break;
+        case SHADER_UNIFORM_FLOAT: glUniform1fv(locIndex, count, (float *)value); break;
+        case SHADER_UNIFORM_VEC2: glUniform2fv(locIndex, count, (float *)value); break;
+        case SHADER_UNIFORM_VEC3: glUniform3fv(locIndex, count, (float *)value); break;
+        case SHADER_UNIFORM_VEC4: glUniform4fv(locIndex, count, (float *)value); break;
+        case SHADER_UNIFORM_INT: glUniform1iv(locIndex, count, (int *)value); break;
+        case SHADER_UNIFORM_IVEC2: glUniform2iv(locIndex, count, (int *)value); break;
+        case SHADER_UNIFORM_IVEC3: glUniform3iv(locIndex, count, (int *)value); break;
+        case SHADER_UNIFORM_IVEC4: glUniform4iv(locIndex, count, (int *)value); break;
+        case SHADER_UNIFORM_SAMPLER2D: glUniform1iv(locIndex, count, (int *)value); break;
         default: TRACELOG(LOG_WARNING, "SHADER: [ID %i] Failed to set uniform, data type not recognized", shader.id);
     }
 
@@ -3390,19 +3390,19 @@ void SetShaderValueV(Shader shader, int uniformLoc, const void *value, int unifo
 
 
 // Set shader uniform value (matrix 4x4)
-void SetShaderValueMatrix(Shader shader, int uniformLoc, Matrix mat)
+void SetShaderValueMatrix(Shader shader, int locIndex, Matrix mat)
 {
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     glUseProgram(shader.id);
 
-    glUniformMatrix4fv(uniformLoc, 1, false, MatrixToFloat(mat));
+    glUniformMatrix4fv(locIndex, 1, false, MatrixToFloat(mat));
 
     //glUseProgram(0);
 #endif
 }
 
 // Set shader uniform value for texture
-void SetShaderValueTexture(Shader shader, int uniformLoc, Texture2D texture)
+void SetShaderValueTexture(Shader shader, int locIndex, Texture2D texture)
 {
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     glUseProgram(shader.id);
@@ -3416,7 +3416,7 @@ void SetShaderValueTexture(Shader shader, int uniformLoc, Texture2D texture)
     {
         if (RLGL.State.activeTextureId[i] == 0)
         {
-            glUniform1i(uniformLoc, 1 + i);             // Activate new texture unit
+            glUniform1i(locIndex, 1 + i);             // Activate new texture unit
             RLGL.State.activeTextureId[i] = texture.id; // Save texture id for binding on drawing
             break;
         }
