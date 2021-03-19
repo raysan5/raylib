@@ -1913,13 +1913,23 @@ void BeginMode3D(Camera3D camera)
 
     float aspect = (float)CORE.Window.currentFbo.width/(float)CORE.Window.currentFbo.height;
 
-    double top = 0;
-    if (camera.projection == CAMERA_PERSPECTIVE) top = RL_CULL_DISTANCE_NEAR*tan(camera.fovy*0.5*DEG2RAD);
-    else if (camera.projection == CAMERA_ORTHOGRAPHIC) top = camera.fovy/2.0;
-
-    rlFrustum(-top*aspect, top*aspect, -top, top, RL_CULL_DISTANCE_NEAR, RL_CULL_DISTANCE_FAR);
-
     // NOTE: zNear and zFar values are important when computing depth buffer values
+    if (camera.projection == CAMERA_PERSPECTIVE)
+    {
+        // Setup perspective projection
+        double top = RL_CULL_DISTANCE_NEAR*tan(camera.fovy*0.5*DEG2RAD);
+        double right = top*aspect;
+
+        rlFrustum(-right, right, -top, top, RL_CULL_DISTANCE_NEAR, RL_CULL_DISTANCE_FAR);
+    }
+    else if (camera.projection == CAMERA_ORTHOGRAPHIC)
+    {
+        // Setup orthographic projection
+        double top = camera.fovy/2.0;
+        double right = top*aspect;
+
+        rlOrtho(-right, right, -top,top, RL_CULL_DISTANCE_NEAR, RL_CULL_DISTANCE_FAR);
+    }
 
     rlMatrixMode(RL_MODELVIEW);         // Switch back to modelview matrix
     rlLoadIdentity();                   // Reset current matrix (modelview)
