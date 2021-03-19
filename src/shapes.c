@@ -619,59 +619,61 @@ void DrawRectanglePro(Rectangle rec, Vector2 origin, float rotation, Color color
 {
     if (rlCheckBufferLimit(4)) rlglDraw();
 
-    Vector2 bl = { 0 };
-    Vector2 br = { 0 };
-    Vector2 tr = { 0 };
-    Vector2 tl = { 0 };
+    Vector2 bottomLeft = { 0 };
+    Vector2 bottomRight = { 0 };
+    Vector2 topRight = { 0 };
+    Vector2 topLeft = { 0 };
 
     // Only calculate rotation if needed
     if (rotation == 0.0f)
     {
         float x = rec.x - origin.x;
         float y = rec.y - origin.y;
-        bl = (Vector2){ x, y };
-        br = (Vector2){ x, y + rec.height };
-        tr = (Vector2){ x + rec.width, y + rec.height };
-        tl = (Vector2){ x + rec.width, y };
+        bottomLeft = (Vector2){ x, y };
+        bottomRight = (Vector2){ x, y + rec.height };
+        topRight = (Vector2){ x + rec.width, y + rec.height };
+        topLeft = (Vector2){ x + rec.width, y };
     }
     else
     {
-        float sinRotation = sinf(rotation * DEG2RAD);
-        float cosRotation = cosf(rotation * DEG2RAD);
+        float sinRotation = sinf(rotation*DEG2RAD);
+        float cosRotation = cosf(rotation*DEG2RAD);
         float x = rec.x;
         float y = rec.y;
         float dx = -origin.x;
         float dy = -origin.y;
 
-        bl.x = x + dx * cosRotation - (dy + rec.height) * sinRotation;
-        bl.y = y + dx * sinRotation + (dy + rec.height) * cosRotation;
+        bottomLeft.x = x + dx*cosRotation - (dy + rec.height)*sinRotation;
+        bottomLeft.y = y + dx*sinRotation + (dy + rec.height)*cosRotation;
 
-        br.x = x + (dx + rec.width) * cosRotation - (dy + rec.height) * sinRotation;
-        br.y = y + (dx + rec.width) * sinRotation + (dy + rec.height) * cosRotation;
+        bottomRight.x = x + (dx + rec.width)*cosRotation - (dy + rec.height)*sinRotation;
+        bottomRight.y = y + (dx + rec.width)*sinRotation + (dy + rec.height)*cosRotation;
 
-        tr.x = x + (dx + rec.width) * cosRotation - dy * sinRotation;
-        tr.y = y + (dx + rec.width) * sinRotation + dy * cosRotation;
+        topRight.x = x + (dx + rec.width)*cosRotation - dy*sinRotation;
+        topRight.y = y + (dx + rec.width)*sinRotation + dy*cosRotation;
 
-        tl.x = x + dx * cosRotation - dy * sinRotation;
-        tl.y = y + dx * sinRotation + dy * cosRotation;
+        topLeft.x = x + dx*cosRotation - dy*sinRotation;
+        topLeft.y = y + dx*sinRotation + dy*cosRotation;
     }
 
     rlEnableTexture(GetShapesTexture().id);
     rlBegin(RL_QUADS);
+    
         rlNormal3f(0.0f, 0.0f, 1.0f);
         rlColor4ub(color.r, color.g, color.b, color.a);
 
         rlTexCoord2f(GetShapesTextureRec().x/GetShapesTexture().width, GetShapesTextureRec().y/GetShapesTexture().height);
-        rlVertex2f(bl.x, bl.y);
+        rlVertex2f(bottomLeft.x, bottomLeft.y);
 
         rlTexCoord2f(GetShapesTextureRec().x/GetShapesTexture().width, (GetShapesTextureRec().y + GetShapesTextureRec().height)/GetShapesTexture().height);
-        rlVertex2f(br.x, br.y);
+        rlVertex2f(bottomRight.x, bottomRight.y);
 
         rlTexCoord2f((GetShapesTextureRec().x + GetShapesTextureRec().width)/GetShapesTexture().width, (GetShapesTextureRec().y + GetShapesTextureRec().height)/GetShapesTexture().height);
-        rlVertex2f(tr.x, tr.y);
+        rlVertex2f(topRight.x, topRight.y);
 
         rlTexCoord2f((GetShapesTextureRec().x + GetShapesTextureRec().width)/GetShapesTexture().width, GetShapesTextureRec().y/GetShapesTexture().height);
-        rlVertex2f(tl.x, tl.y);
+        rlVertex2f(topLeft.x, topLeft.y);
+        
     rlEnd();
     rlDisableTexture();
 }

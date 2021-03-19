@@ -703,7 +703,7 @@ Image GenImageCellular(int width, int height, int tileSize)
 
     int seedsPerRow = width/tileSize;
     int seedsPerCol = height/tileSize;
-    int seedsCount = seedsPerRow * seedsPerCol;
+    int seedsCount = seedsPerRow*seedsPerCol;
 
     Vector2 *seeds = (Vector2 *)RL_MALLOC(seedsCount*sizeof(Vector2));
 
@@ -1811,7 +1811,7 @@ void ImageColorTint(Image *image, Color color)
     {
         for (int x = 0; x < image->width; x++)
         {
-            int index = y * image->width + x;
+            int index = y*image->width + x;
             unsigned char r = (unsigned char)(((float)pixels[index].r/255*cR)*255.0f);
             unsigned char g = (unsigned char)(((float)pixels[index].g/255*cG)*255.0f);
             unsigned char b = (unsigned char)(((float)pixels[index].b/255*cB)*255.0f);
@@ -3200,69 +3200,111 @@ void DrawTexturePro(Texture2D texture, Rectangle source, Rectangle dest, Vector2
         if (source.width < 0) { flipX = true; source.width *= -1; }
         if (source.height < 0) source.y -= source.height;
 
-        Vector2 bl = { 0 };
-        Vector2 br = { 0 };
-        Vector2 tr = { 0 };
-        Vector2 tl = { 0 };
+        Vector2 bottomLeft = { 0 };
+        Vector2 bottomRight = { 0 };
+        Vector2 topRight = { 0 };
+        Vector2 topLeft = { 0 };
 
         // Only calculate rotation if needed
         if (rotation == 0.0f)
         {
             float x = dest.x - origin.x;
             float y = dest.y - origin.y;
-            bl = (Vector2){ x, y };
-            br = (Vector2){ x, y + dest.height };
-            tr = (Vector2){ x + dest.width, y + dest.height };
-            tl = (Vector2){ x + dest.width, y };
+            bottomLeft = (Vector2){ x, y };
+            bottomRight = (Vector2){ x, y + dest.height };
+            topRight = (Vector2){ x + dest.width, y + dest.height };
+            topLeft = (Vector2){ x + dest.width, y };
         }
         else
         {
-            float sinRotation = sinf(rotation * DEG2RAD);
-            float cosRotation = cosf(rotation * DEG2RAD);
+            float sinRotation = sinf(rotation*DEG2RAD);
+            float cosRotation = cosf(rotation*DEG2RAD);
             float x = dest.x;
             float y = dest.y;
             float dx = -origin.x;
             float dy = -origin.y;
 
-            bl.x = x + dx * cosRotation - (dy + dest.height) * sinRotation;
-            bl.y = y + dx * sinRotation + (dy + dest.height) * cosRotation;
+            bottomLeft.x = x + dx*cosRotation - (dy + dest.height)*sinRotation;
+            bottomLeft.y = y + dx*sinRotation + (dy + dest.height)*cosRotation;
 
-            br.x = x + (dx + dest.width) * cosRotation - (dy + dest.height) * sinRotation;
-            br.y = y + (dx + dest.width) * sinRotation + (dy + dest.height) * cosRotation;
+            bottomRight.x = x + (dx + dest.width)*cosRotation - (dy + dest.height) *sinRotation;
+            bottomRight.y = y + (dx + dest.width)*sinRotation + (dy + dest.height)*cosRotation;
 
-            tr.x = x + (dx + dest.width) * cosRotation - dy * sinRotation;
-            tr.y = y + (dx + dest.width) * sinRotation + dy * cosRotation;
+            topRight.x = x + (dx + dest.width)*cosRotation - dy*sinRotation;
+            topRight.y = y + (dx + dest.width)*sinRotation + dy*cosRotation;
 
-            tl.x = x + dx * cosRotation - dy * sinRotation;
-            tl.y = y + dx * sinRotation + dy * cosRotation;
+            topLeft.x = x + dx*cosRotation - dy*sinRotation;
+            topLeft.y = y + dx*sinRotation + dy*cosRotation;
         }
 
         rlEnableTexture(texture.id);
         rlBegin(RL_QUADS);
+        
             rlColor4ub(tint.r, tint.g, tint.b, tint.a);
             rlNormal3f(0.0f, 0.0f, 1.0f);                          // Normal vector pointing towards viewer
 
             // Bottom-left corner for texture and quad
             if (flipX) rlTexCoord2f((source.x + source.width)/width, source.y/height);
             else rlTexCoord2f(source.x/width, source.y/height);
-            rlVertex2f(bl.x, bl.y);
+            rlVertex2f(bottomLeft.x, bottomLeft.y);
 
             // Bottom-right corner for texture and quad
             if (flipX) rlTexCoord2f((source.x + source.width)/width, (source.y + source.height)/height);
             else rlTexCoord2f(source.x/width, (source.y + source.height)/height);
-            rlVertex2f(br.x, br.y);
+            rlVertex2f(bottomRight.x, bottomRight.y);
 
             // Top-right corner for texture and quad
             if (flipX) rlTexCoord2f(source.x/width, (source.y + source.height)/height);
             else rlTexCoord2f((source.x + source.width)/width, (source.y + source.height)/height);
-            rlVertex2f(tr.x, tr.y);
+            rlVertex2f(topRight.x, topRight.y);
 
             // Top-left corner for texture and quad
             if (flipX) rlTexCoord2f(source.x/width, source.y/height);
             else rlTexCoord2f((source.x + source.width)/width, source.y/height);
-            rlVertex2f(tl.x, tl.y);
+            rlVertex2f(topLeft.x, topLeft.y);
+            
         rlEnd();
         rlDisableTexture();
+        
+        // NOTE: Vertex position can be transformed using matrices
+        // but the process is way more costly than just calculating
+        // the vertex positions manually, like done above.
+        // I leave here the old implementation for educational pourposes,
+        // just in case someone wants to do some performance test
+        /*
+        rlEnableTexture(texture.id);
+        rlPushMatrix();
+            rlTranslatef(dest.x, dest.y, 0.0f);
+            if (rotation != 0.0f) rlRotatef(rotation, 0.0f, 0.0f, 1.0f);
+            rlTranslatef(-origin.x, -origin.y, 0.0f);
+
+            rlBegin(RL_QUADS);
+                rlColor4ub(tint.r, tint.g, tint.b, tint.a);
+                rlNormal3f(0.0f, 0.0f, 1.0f);                          // Normal vector pointing towards viewer
+
+                // Bottom-left corner for texture and quad
+                if (flipX) rlTexCoord2f((source.x + source.width)/width, source.y/height);
+                else rlTexCoord2f(source.x/width, source.y/height);
+                rlVertex2f(0.0f, 0.0f);
+
+                // Bottom-right corner for texture and quad
+                if (flipX) rlTexCoord2f((source.x + source.width)/width, (source.y + source.height)/height);
+                else rlTexCoord2f(source.x/width, (source.y + source.height)/height);
+                rlVertex2f(0.0f, dest.height);
+
+                // Top-right corner for texture and quad
+                if (flipX) rlTexCoord2f(source.x/width, (source.y + source.height)/height);
+                else rlTexCoord2f((source.x + source.width)/width, (source.y + source.height)/height);
+                rlVertex2f(dest.width, dest.height);
+
+                // Top-left corner for texture and quad
+                if (flipX) rlTexCoord2f(source.x/width, source.y/height);
+                else rlTexCoord2f((source.x + source.width)/width, source.y/height);
+                rlVertex2f(dest.width, 0.0f);
+            rlEnd();
+        rlPopMatrix();
+        rlDisableTexture();
+        */
     }
 }
 
