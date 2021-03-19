@@ -35,7 +35,7 @@ int main(void)
     camera.target = (Vector3){ 0.0f, 10.0f, 0.0f };     // Camera looking at point
     camera.up = (Vector3){ 0.0f, 1.0f, 0.0f };          // Camera up vector (rotation towards target)
     camera.fovy = 45.0f;                                // Camera field-of-view Y
-    camera.type = CAMERA_PERSPECTIVE;                   // Camera mode type
+    camera.projection = CAMERA_PERSPECTIVE;                   // Camera mode type
 
     Model model = LoadModel("resources/models/castle.obj");                 // Load model
     Texture2D texture = LoadTexture("resources/models/castle_diffuse.png"); // Load model texture

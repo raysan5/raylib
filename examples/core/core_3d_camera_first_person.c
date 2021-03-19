@@ -28,7 +28,7 @@ int main(void)
     camera.target = (Vector3){ 0.0f, 1.8f, 0.0f };
     camera.up = (Vector3){ 0.0f, 1.0f, 0.0f };
     camera.fovy = 60.0f;
-    camera.type = CAMERA_PERSPECTIVE;
+    camera.projection = CAMERA_PERSPECTIVE;
 
     // Generates some random columns
     float heights[MAX_COLUMNS] = { 0 };

@@ -37,7 +37,7 @@ int main(void)
     camera.target = (Vector3){ 0.0f, 0.0f, 0.0f };      // Camera looking at point
     camera.up = (Vector3){ 0.0f, 1.0f, 0.0f };          // Camera up vector (rotation towards target)
     camera.fovy = 45.0f;                                // Camera field-of-view Y
-    camera.type = CAMERA_PERSPECTIVE;                   // Camera mode type
+    camera.projection = CAMERA_PERSPECTIVE;                   // Camera mode type
 
     Model model = LoadModel("resources/guy/guy.iqm");               // Load the animated model mesh and basic data
     Texture2D texture = LoadTexture("resources/guy/guytex.png");    // Load model texture and set material

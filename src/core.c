@@ -1914,10 +1914,10 @@ void BeginMode3D(Camera3D camera)
     float aspect = (float)CORE.Window.currentFbo.width/(float)CORE.Window.currentFbo.height;
     
     double top = 0;
-    if (camera.type == CAMERA_PERSPECTIVE) top = RL_CULL_DISTANCE_NEAR*tan(camera.fovy*0.5*DEG2RAD);
-    else if (camera.type == CAMERA_ORTHOGRAPHIC) top = camera.fovy/2.0;
+    if (camera.projection == CAMERA_PERSPECTIVE) top = RL_CULL_DISTANCE_NEAR*tan(camera.fovy*0.5*DEG2RAD);
+    else if (camera.projection == CAMERA_ORTHOGRAPHIC) top = camera.fovy/2.0;
 
-    rlFrustum(-right, top*aspect, -top, top, RL_CULL_DISTANCE_NEAR, RL_CULL_DISTANCE_FAR);
+    rlFrustum(-top*aspect, top*aspect, -top, top, RL_CULL_DISTANCE_NEAR, RL_CULL_DISTANCE_FAR);
 
     // NOTE: zNear and zFar values are important when computing depth buffer values
 
@@ -2026,12 +2026,12 @@ Ray GetMouseRay(Vector2 mouse, Camera camera)
 
     Matrix matProj = MatrixIdentity();
 
-    if (camera.type == CAMERA_PERSPECTIVE)
+    if (camera.projection == CAMERA_PERSPECTIVE)
     {
         // Calculate projection matrix from perspective
         matProj = MatrixPerspective(camera.fovy*DEG2RAD, ((double)GetScreenWidth()/(double)GetScreenHeight()), RL_CULL_DISTANCE_NEAR, RL_CULL_DISTANCE_FAR);
     }
-    else if (camera.type == CAMERA_ORTHOGRAPHIC)
+    else if (camera.projection == CAMERA_ORTHOGRAPHIC)
     {
         float aspect = (float)CORE.Window.screen.width/(float)CORE.Window.screen.height;
         double top = camera.fovy/2.0;
@@ -2053,8 +2053,8 @@ Ray GetMouseRay(Vector2 mouse, Camera camera)
     // Calculate normalized direction vector
     Vector3 direction = Vector3Normalize(Vector3Subtract(farPoint, nearPoint));
 
-    if (camera.type == CAMERA_PERSPECTIVE) ray.position = camera.position;
-    else if (camera.type == CAMERA_ORTHOGRAPHIC) ray.position = cameraPlanePointerPos;
+    if (camera.projection == CAMERA_PERSPECTIVE) ray.position = camera.position;
+    else if (camera.projection == CAMERA_ORTHOGRAPHIC) ray.position = cameraPlanePointerPos;
 
     // Apply calculated vectors to ray
     ray.direction = direction;
@@ -2110,12 +2110,12 @@ Vector2 GetWorldToScreenEx(Vector3 position, Camera camera, int width, int heigh
     // Calculate projection matrix (from perspective instead of frustum
     Matrix matProj = MatrixIdentity();
 
-    if (camera.type == CAMERA_PERSPECTIVE)
+    if (camera.projection == CAMERA_PERSPECTIVE)
     {
         // Calculate projection matrix from perspective
         matProj = MatrixPerspective(camera.fovy * DEG2RAD, ((double)width/(double)height), RL_CULL_DISTANCE_NEAR, RL_CULL_DISTANCE_FAR);
     }
-    else if (camera.type == CAMERA_ORTHOGRAPHIC)
+    else if (camera.projection == CAMERA_ORTHOGRAPHIC)
     {
         float aspect = (float)CORE.Window.screen.width/(float)CORE.Window.screen.height;
         double top = camera.fovy/2.0;
