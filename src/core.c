@@ -3119,12 +3119,6 @@ float GetMouseWheelMove(void)
     return CORE.Input.Mouse.previousWheelMove;
 }
 
-// Returns mouse cursor
-int GetMouseCursor(void)
-{
-    return CORE.Input.Mouse.cursor;
-}
-
 // Set mouse cursor
 // NOTE: This is a no-op on platforms other than PLATFORM_DESKTOP
 void SetMouseCursor(int cursor)
