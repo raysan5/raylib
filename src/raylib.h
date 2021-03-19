@@ -639,14 +639,6 @@ typedef enum {
     MOUSE_CURSOR_NOT_ALLOWED   = 10     // The operation-not-allowed shape
 } MouseCursor;
 
-// Gamepad number
-typedef enum {
-    GAMEPAD_PLAYER1     = 0,
-    GAMEPAD_PLAYER2     = 1,
-    GAMEPAD_PLAYER3     = 2,
-    GAMEPAD_PLAYER4     = 3
-} GamepadNumber;
-
 // Gamepad buttons
 typedef enum {
     // This is here just for error checking
