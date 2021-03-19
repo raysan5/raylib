@@ -21,7 +21,6 @@
 
 #include <stdlib.h>
 
-
 int main(void)
 {
     // Initialization
@@ -37,7 +36,7 @@ int main(void)
     camera.target = (Vector3){ 0.0f, 0.0f, 0.0f };      // Camera looking at point
     camera.up = (Vector3){ 0.0f, 1.0f, 0.0f };          // Camera up vector (rotation towards target)
     camera.fovy = 45.0f;                                // Camera field-of-view Y
-    camera.projection = CAMERA_PERSPECTIVE;                   // Camera mode type
+    camera.projection = CAMERA_PERSPECTIVE;             // Camera mode type
 
     Model model[7];
     
@@ -52,7 +51,7 @@ int main(void)
     int currentModel = 0;
     int modelCount = 7;
 
-    Vector3 position = { 0.0f, 0.0f, 0.0f };            // Set model position
+    Vector3 position = { 0.0f, 0.0f, 0.0f };    // Set model position
 
     SetCameraMode(camera, CAMERA_FREE); // Set free camera mode
 
@@ -66,22 +65,16 @@ int main(void)
         //----------------------------------------------------------------------------------
         UpdateCamera(&camera);
         
-        if(IsKeyReleased(KEY_RIGHT))
+        if (IsKeyReleased(KEY_RIGHT))
         {
             currentModel++;
-            if(currentModel == modelCount)
-            {
-                currentModel = 0;
-            }
+            if (currentModel == modelCount) currentModel = 0;
         }
     
-        if(IsKeyReleased(KEY_LEFT))
+        if (IsKeyReleased(KEY_LEFT))
         {
             currentModel--;
-            if(currentModel < 0)
-            {
-                currentModel = modelCount - 1;
-            }
+            if (currentModel < 0) currentModel = modelCount - 1;
         }
 
         // Draw
@@ -104,11 +97,7 @@ int main(void)
 
     // De-Initialization
     //--------------------------------------------------------------------------------------
-
-    for(int i = 0; i < modelCount; i++)
-    {
-        UnloadModel(model[i]);         // Unload model
-    }
+    for(int i = 0; i < modelCount; i++) UnloadModel(model[i]);  // Unload models
 
     CloseWindow();              // Close window and OpenGL context
     //--------------------------------------------------------------------------------------

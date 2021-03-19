@@ -173,7 +173,7 @@ void DrawLineBezierQuad(Vector2 startPos, Vector2 endPos, Vector2 controlPos, fl
         current.y = a*startPos.y + b*controlPos.y + c*endPos.y;
         current.x = a*startPos.x + b*controlPos.x + c*endPos.x;
 
-        DrawLineEx(previous,current,thick,color);
+        DrawLineEx(previous, current, thick, color);
 
         previous = current;
     }
