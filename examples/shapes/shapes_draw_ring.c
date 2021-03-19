@@ -30,8 +30,8 @@ int main(void)
     float innerRadius = 80.0f;
     float outerRadius = 190.0f;
 
-    int startAngle = 0;
-    int endAngle = 360;
+    float startAngle = 0.0f;
+    float endAngle = 360.0f;
     int segments = 0;
 
     bool drawRing = true;
