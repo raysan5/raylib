@@ -2980,7 +2980,7 @@ bool IsGamepadButtonReleased(int gamepad, int button)
     return released;
 }
 
-// Detect if a mouse button is NOT being pressed
+// Detect if a gamepad button is NOT being pressed
 bool IsGamepadButtonUp(int gamepad, int button)
 {
     bool result = false;
