@@ -28,8 +28,8 @@ int main(void)
     Vector2 center = {(GetScreenWidth() - 300)/2, GetScreenHeight()/2 };
 
     float outerRadius = 180.0f;
-    int startAngle = 0;
-    int endAngle = 180;
+    float startAngle = 0.0f;
+    float endAngle = 180.0f;
     int segments = 0;
 
     SetTargetFPS(60);               // Set our game to run at 60 frames-per-second

@@ -205,7 +205,7 @@ void DrawCircle(int centerX, int centerY, float radius, Color color)
 }
 
 // Draw a piece of a circle
-void DrawCircleSector(Vector2 center, float radius, int startAngle, int endAngle, int segments, Color color)
+void DrawCircleSector(Vector2 center, float radius, float startAngle, float endAngle, int segments, Color color)
 {
     if (radius <= 0.0f) radius = 0.1f;  // Avoid div by zero
 
@@ -213,7 +213,7 @@ void DrawCircleSector(Vector2 center, float radius, int startAngle, int endAngle
     if (endAngle < startAngle)
     {
         // Swap values
-        int tmp = startAngle;
+        float tmp = startAngle;
         startAngle = endAngle;
         endAngle = tmp;
     }
@@ -227,8 +227,8 @@ void DrawCircleSector(Vector2 center, float radius, int startAngle, int endAngle
         if (segments <= 0) segments = 4;
     }
 
-    float stepLength = (float)(endAngle - startAngle)/(float)segments;
-    float angle = (float)startAngle;
+    float stepLength = (endAngle - startAngle)/(float)segments;
+    float angle = startAngle;
 
 #if defined(SUPPORT_QUADS_DRAW_MODE)
     if (rlCheckBufferLimit(4*segments/2)) rlglDraw();
@@ -294,7 +294,7 @@ void DrawCircleSector(Vector2 center, float radius, int startAngle, int endAngle
 #endif
 }
 
-void DrawCircleSectorLines(Vector2 center, float radius, int startAngle, int endAngle, int segments, Color color)
+void DrawCircleSectorLines(Vector2 center, float radius, float startAngle, float endAngle, int segments, Color color)
 {
     if (radius <= 0.0f) radius = 0.1f;  // Avoid div by zero issue
 
@@ -302,7 +302,7 @@ void DrawCircleSectorLines(Vector2 center, float radius, int startAngle, int end
     if (endAngle < startAngle)
     {
         // Swap values
-        int tmp = startAngle;
+        float tmp = startAngle;
         startAngle = endAngle;
         endAngle = tmp;
     }
@@ -316,13 +316,13 @@ void DrawCircleSectorLines(Vector2 center, float radius, int startAngle, int end
         if (segments <= 0) segments = 4;
     }
 
-    float stepLength = (float)(endAngle - startAngle)/(float)segments;
-    float angle = (float)startAngle;
+    float stepLength = (endAngle - startAngle)/(float)segments;
+    float angle = startAngle;
 
     // Hide the cap lines when the circle is full
     bool showCapLines = true;
     int limit = 2*(segments + 2);
-    if ((endAngle - startAngle)%360 == 0) { limit = 2*segments; showCapLines = false; }
+    if ((int)(endAngle - startAngle)%360 == 0) { limit = 2*segments; showCapLines = false; }
 
     if (rlCheckBufferLimit(limit)) rlglDraw();
 
@@ -427,7 +427,7 @@ void DrawEllipseLines(int centerX, int centerY, float radiusH, float radiusV, Co
     rlEnd();
 }
 
-void DrawRing(Vector2 center, float innerRadius, float outerRadius, int startAngle, int endAngle, int segments, Color color)
+void DrawRing(Vector2 center, float innerRadius, float outerRadius, float startAngle, float endAngle, int segments, Color color)
 {
     if (startAngle == endAngle) return;
 
@@ -445,7 +445,7 @@ void DrawRing(Vector2 center, float innerRadius, float outerRadius, int startAng
     if (endAngle < startAngle)
     {
         // Swap values
-        int tmp = startAngle;
+        float tmp = startAngle;
         startAngle = endAngle;
         endAngle = tmp;
     }
@@ -466,8 +466,8 @@ void DrawRing(Vector2 center, float innerRadius, float outerRadius, int startAng
         return;
     }
 
-    float stepLength = (float)(endAngle - startAngle)/(float)segments;
-    float angle = (float)startAngle;
+    float stepLength = (endAngle - startAngle)/(float)segments;
+    float angle = startAngle;
 
 #if defined(SUPPORT_QUADS_DRAW_MODE)
     if (rlCheckBufferLimit(4*segments)) rlglDraw();
@@ -518,7 +518,7 @@ void DrawRing(Vector2 center, float innerRadius, float outerRadius, int startAng
 #endif
 }
 
-void DrawRingLines(Vector2 center, float innerRadius, float outerRadius, int startAngle, int endAngle, int segments, Color color)
+void DrawRingLines(Vector2 center, float innerRadius, float outerRadius, float startAngle, float endAngle, int segments, Color color)
 {
     if (startAngle == endAngle) return;
 
@@ -536,7 +536,7 @@ void DrawRingLines(Vector2 center, float innerRadius, float outerRadius, int sta
     if (endAngle < startAngle)
     {
         // Swap values
-        int tmp = startAngle;
+        float tmp = startAngle;
         startAngle = endAngle;
         endAngle = tmp;
     }
@@ -556,12 +556,12 @@ void DrawRingLines(Vector2 center, float innerRadius, float outerRadius, int sta
         return;
     }
 
-    float stepLength = (float)(endAngle - startAngle)/(float)segments;
-    float angle = (float)startAngle;
+    float stepLength = (endAngle - startAngle)/(float)segments;
+    float angle = startAngle;
 
     bool showCapLines = true;
     int limit = 4*(segments + 1);
-    if ((endAngle - startAngle)%360 == 0) { limit = 4*segments; showCapLines = false; }
+    if ((int)(endAngle - startAngle)%360 == 0) { limit = 4*segments; showCapLines = false; }
 
     if (rlCheckBufferLimit(limit)) rlglDraw();
 
