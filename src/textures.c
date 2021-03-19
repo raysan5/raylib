@@ -3239,7 +3239,7 @@ void DrawTexturePro(Texture2D texture, Rectangle source, Rectangle dest, Vector2
 
         rlEnableTexture(texture.id);
         rlBegin(RL_QUADS);
-        
+
             rlColor4ub(tint.r, tint.g, tint.b, tint.a);
             rlNormal3f(0.0f, 0.0f, 1.0f);                          // Normal vector pointing towards viewer
 
@@ -3262,10 +3262,10 @@ void DrawTexturePro(Texture2D texture, Rectangle source, Rectangle dest, Vector2
             if (flipX) rlTexCoord2f(source.x/width, source.y/height);
             else rlTexCoord2f((source.x + source.width)/width, source.y/height);
             rlVertex2f(topLeft.x, topLeft.y);
-            
+
         rlEnd();
         rlDisableTexture();
-        
+
         // NOTE: Vertex position can be transformed using matrices
         // but the process is way more costly than just calculating
         // the vertex positions manually, like done above.

@@ -171,7 +171,7 @@ ifeq ($(PLATFORM),PLATFORM_ANDROID)
     # Starting on August 2020, minimum required target API is Android 10 (API level 29)
     ANDROID_ARCH ?= arm64
     ANDROID_API_VERSION ?= 29
-    
+
     # Android required path variables
     # NOTE: Starting with Android NDK r21, no more toolchain generation is required, NDK is the toolchain on itself
     ifeq ($(OS),Windows_NT)
@@ -181,7 +181,7 @@ ifeq ($(PLATFORM),PLATFORM_ANDROID)
         ANDROID_NDK ?= /usr/lib/android/ndk
         ANDROID_TOOLCHAIN = $(ANDROID_NDK)/toolchains/llvm/prebuilt/linux-x86_64
     endif
-    
+
     # NOTE: Sysroot can also be reference from $(ANDROID_NDK)/sysroot
     ANDROID_SYSROOT ?= $(ANDROID_TOOLCHAIN)/sysroot
 
@@ -197,7 +197,7 @@ ifeq ($(PLATFORM),PLATFORM_ANDROID)
     ifeq ($(ANDROID_ARCH),x86_64)
         ANDROID_ARCH_NAME = x86_64
     endif
-    
+
 endif
 
 # Define raylib graphics api depending on selected platform
@@ -413,7 +413,7 @@ ifeq ($(PLATFORM),PLATFORM_ANDROID)
     NATIVE_APP_GLUE = $(ANDROID_NDK)/sources/android/native_app_glue
     # Include android_native_app_glue.h
     INCLUDE_PATHS += -I$(NATIVE_APP_GLUE)
-    
+
     # Android required libraries
     INCLUDE_PATHS += -I$(ANDROID_SYSROOT)/usr/include
     ifeq ($(ANDROID_ARCH),arm)
@@ -507,7 +507,7 @@ else
 				cd $(RAYLIB_RELEASE_PATH) && ln -fsv lib$(RAYLIB_LIB_NAME).so.$(RAYLIB_API_VERSION) lib$(RAYLIB_LIB_NAME).so
             endif
             ifeq ($(PLATFORM_OS),OSX)
-				$(CC) -dynamiclib -o $(RAYLIB_RELEASE_PATH)/lib$(RAYLIB_LIB_NAME).$(RAYLIB_VERSION).dylib $(OBJS) $(LDFLAGS) -compatibility_version $(RAYLIB_API_VERSION) -current_version $(RAYLIB_VERSION) -framework OpenGL -framework Cocoa -framework IOKit -framework CoreAudio -framework CoreVideo 
+				$(CC) -dynamiclib -o $(RAYLIB_RELEASE_PATH)/lib$(RAYLIB_LIB_NAME).$(RAYLIB_VERSION).dylib $(OBJS) $(LDFLAGS) -compatibility_version $(RAYLIB_API_VERSION) -current_version $(RAYLIB_VERSION) -framework OpenGL -framework Cocoa -framework IOKit -framework CoreAudio -framework CoreVideo
 				install_name_tool -id "lib$(RAYLIB_LIB_NAME).$(VERSION).dylib" $(RAYLIB_RELEASE_PATH)/lib$(RAYLIB_LIB_NAME).$(RAYLIB_VERSION).dylib
 				@echo "raylib shared library generated (lib$(RAYLIB_LIB_NAME).$(RAYLIB_VERSION).dylib)!"
 				cd $(RAYLIB_RELEASE_PATH) && ln -fs lib$(RAYLIB_LIB_NAME).$(RAYLIB_VERSION).dylib lib$(RAYLIB_LIB_NAME).$(RAYLIB_API_VERSION).dylib
@@ -606,7 +606,7 @@ physac.o : physac.c physac.h
 # Compile android_native_app_glue module
 android_native_app_glue.o : $(NATIVE_APP_GLUE)/android_native_app_glue.c
 	$(CC) -c $< $(CFLAGS) $(INCLUDE_PATHS)
-    
+
 
 # Install generated and needed files to desired directories.
 # On GNU/Linux and BSDs, there are some standard directories that contain extra

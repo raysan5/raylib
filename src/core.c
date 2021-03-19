@@ -153,7 +153,7 @@
 #if defined(SUPPORT_COMPRESSION_API)
     #define SINFL_IMPLEMENTATION
     #include "external/sinfl.h"
-    
+
     #define SDEFL_IMPLEMENTATION
     #include "external/sdefl.h"
 #endif
@@ -906,7 +906,7 @@ void CloseWindow(void)
         close(CORE.Input.Keyboard.fd);
         CORE.Input.Keyboard.fd = -1;
     }
-    
+
     for (int i = 0; i < sizeof(CORE.Input.eventWorker)/sizeof(InputEventWorker); ++i)
     {
         if (CORE.Input.eventWorker[i].threadId)
@@ -914,7 +914,7 @@ void CloseWindow(void)
             pthread_join(CORE.Input.eventWorker[i].threadId, NULL);
         }
     }
-    
+
 
     if (CORE.Input.Gamepad.threadId) pthread_join(CORE.Input.Gamepad.threadId, NULL);
 #endif
@@ -1044,24 +1044,24 @@ void ToggleFullscreen(void)
         if (!monitor)
         {
             TRACELOG(LOG_WARNING, "GLFW: Failed to get monitor");
-    
+
             CORE.Window.fullscreen = false;          // Toggle fullscreen flag
             CORE.Window.flags &= ~FLAG_FULLSCREEN_MODE;
-            
+
             glfwSetWindowMonitor(CORE.Window.handle, NULL, 0, 0, CORE.Window.screen.width, CORE.Window.screen.height, GLFW_DONT_CARE);
             return;
         }
-    
+
         CORE.Window.fullscreen = true;          // Toggle fullscreen flag
         CORE.Window.flags |= FLAG_FULLSCREEN_MODE;
-        
+
         glfwSetWindowMonitor(CORE.Window.handle, monitor, 0, 0, CORE.Window.screen.width, CORE.Window.screen.height, GLFW_DONT_CARE);
     }
     else
     {
         CORE.Window.fullscreen = false;          // Toggle fullscreen flag
         CORE.Window.flags &= ~FLAG_FULLSCREEN_MODE;
-        
+
         glfwSetWindowMonitor(CORE.Window.handle, NULL, CORE.Window.position.x, CORE.Window.position.y, CORE.Window.screen.width, CORE.Window.screen.height, GLFW_DONT_CARE);
     }
 
@@ -1506,7 +1506,7 @@ int GetCurrentMonitor(void)
         int y = 0;
 
         glfwGetWindowPos(CORE.Window.handle, &x, &y);
-        
+
         for (int i = 0; i < monitorCount; i++)
         {
             int mx = 0;
@@ -1557,7 +1557,7 @@ int GetMonitorWidth(int monitor)
     {
         int count = 0;
         const GLFWvidmode *modes = glfwGetVideoModes(monitors[monitor], &count);
-    
+
         // We return the maximum resolution available, the last one in the modes array
         if (count > 0) return modes[count - 1].width;
         else TRACELOG(LOG_WARNING, "GLFW: Failed to find video mode for selected monitor");
@@ -1578,7 +1578,7 @@ int GetMonitorHeight(int monitor)
     {
         int count = 0;
         const GLFWvidmode *modes = glfwGetVideoModes(monitors[monitor], &count);
-        
+
         // We return the maximum resolution available, the last one in the modes array
         if (count > 0) return modes[count - 1].height;
         else TRACELOG(LOG_WARNING, "GLFW: Failed to find video mode for selected monitor");
@@ -1912,7 +1912,7 @@ void BeginMode3D(Camera3D camera)
     rlLoadIdentity();                   // Reset current matrix (projection)
 
     float aspect = (float)CORE.Window.currentFbo.width/(float)CORE.Window.currentFbo.height;
-    
+
     double top = 0;
     if (camera.projection == CAMERA_PERSPECTIVE) top = RL_CULL_DISTANCE_NEAR*tan(camera.fovy*0.5*DEG2RAD);
     else if (camera.projection == CAMERA_ORTHOGRAPHIC) top = camera.fovy/2.0;
@@ -2600,7 +2600,7 @@ unsigned char *CompressData(unsigned char *data, int dataLength, int *compDataLe
     int bounds = sdefl_bound(dataLength);
     compData = (unsigned char *)RL_CALLOC(bounds, 1);
     *compDataLength = sdeflate(&sdefl, compData, data, dataLength, COMPRESSION_QUALITY_DEFLATE);   // Compression level 8, same as stbwi
-    
+
     TraceLog(LOG_INFO, "SYSTEM: Data compressed: Original size: %i -> Comp. size: %i\n", dataLength, compDataLength);
 #endif
 
@@ -2617,10 +2617,10 @@ unsigned char *DecompressData(unsigned char *compData, int compDataLength, int *
     data = RL_CALLOC(MAX_DECOMPRESSION_SIZE*1024*1024, 1);
     int length = sinflate(data, compData, compDataLength);
     unsigned char *temp = RL_REALLOC(data, length);
-    
+
     if (temp != NULL) data = temp;
     else TRACELOG(LOG_WARNING, "SYSTEM: Failed to re-allocate required decompression memory");
-    
+
     *dataLength = length;
 
     TraceLog(LOG_INFO, "SYSTEM: Data compressed: Original size: %i -> Comp. size: %i\n", dataLength, compDataLength);
@@ -3184,7 +3184,7 @@ Vector2 GetTouchPosition(int index)
 #if defined(PLATFORM_WEB) || defined(PLATFORM_RPI) || defined(PLATFORM_DRM) || defined(PLATFORM_UWP)
     if (index < MAX_TOUCH_POINTS) position = CORE.Input.Touch.position[index];
     else TRACELOG(LOG_WARNING, "INPUT: Required touch point out of range (Max touch points: %i)", MAX_TOUCH_POINTS);
-    
+
     // TODO: Touch position scaling required?
 #endif
 
@@ -3297,7 +3297,7 @@ static bool InitGraphicsDevice(int width, int height)
     else glfwWindowHint(GLFW_SCALE_TO_MONITOR, GLFW_FALSE);
 #endif
 
-    if (CORE.Window.flags & FLAG_MSAA_4X_HINT) 
+    if (CORE.Window.flags & FLAG_MSAA_4X_HINT)
     {
         TRACELOG(LOG_INFO, "DISPLAY: Trying to enable MSAA x4");
         glfwWindowHint(GLFW_SAMPLES, 4);   // Tries to enable multisampling x4 (MSAA), default is 0
@@ -3339,7 +3339,7 @@ static bool InitGraphicsDevice(int width, int height)
     }
 
 #if defined(PLATFORM_DESKTOP)
-    // NOTE: GLFW 3.4+ defers initialization of the Joystick subsystem on the first call to any Joystick related functions. 
+    // NOTE: GLFW 3.4+ defers initialization of the Joystick subsystem on the first call to any Joystick related functions.
     // Forcing this initialization here avoids doing it on `PollInputEvents` called by `EndDrawing` after first frame has been just drawn.
     // The initialization will still happen and possible delays still occur, but before the window is shown, which is a nicer experience.
     // REF: https://github.com/raysan5/raylib/issues/1554
@@ -4189,9 +4189,9 @@ static void InitTimer(void)
 {
     srand((unsigned int)time(NULL));    // Initialize random seed
 
-// Setting a higher resolution can improve the accuracy of time-out intervals in wait functions. 
-// However, it can also reduce overall system performance, because the thread scheduler switches tasks more often. 
-// High resolutions can also prevent the CPU power management system from entering power-saving modes. 
+// Setting a higher resolution can improve the accuracy of time-out intervals in wait functions.
+// However, it can also reduce overall system performance, because the thread scheduler switches tasks more often.
+// High resolutions can also prevent the CPU power management system from entering power-saving modes.
 // Setting a higher resolution does not improve the accuracy of the high-resolution performance counter.
 #if defined(_WIN32) && defined(SUPPORT_WINMM_HIGHRES_TIMER) && !defined(SUPPORT_BUSY_WAIT_LOOP) && !defined(PLATFORM_UWP)
     timeBeginPeriod(1);                 // Setup high-resolution timer to 1ms (granularity of 1-2 ms)
@@ -4280,7 +4280,7 @@ static void PollInputEvents(void)
 #if defined(PLATFORM_RPI) || defined(PLATFORM_DRM)
     // Register previous keys states
     for (int i = 0; i < 512; i++) CORE.Input.Keyboard.previousKeyState[i] = CORE.Input.Keyboard.currentKeyState[i];
-    
+
     PollKeyboardEvents();
 
     // Register previous mouse states
@@ -4291,7 +4291,7 @@ static void PollInputEvents(void)
         CORE.Input.Mouse.previousButtonState[i] = CORE.Input.Mouse.currentButtonState[i];
         CORE.Input.Mouse.currentButtonState[i] = CORE.Input.Mouse.currentButtonStateEvdev[i];
     }
-    
+
     // Register gamepads buttons events
     for (int i = 0; i < MAX_GAMEPADS; i++)
     {
@@ -4366,8 +4366,8 @@ static void PollInputEvents(void)
 
             for (int k = 0; (buttons != NULL) && (k < GLFW_GAMEPAD_BUTTON_DPAD_LEFT + 1) && (k < MAX_GAMEPAD_BUTTONS); k++)
             {
-                GamepadButton button = -1; 
-                
+                GamepadButton button = -1;
+
                 switch (k)
                 {
                     case GLFW_GAMEPAD_BUTTON_Y: button = GAMEPAD_BUTTON_RIGHT_FACE_UP; break;
@@ -4391,7 +4391,7 @@ static void PollInputEvents(void)
                     case GLFW_GAMEPAD_BUTTON_RIGHT_THUMB: button = GAMEPAD_BUTTON_RIGHT_THUMB; break;
                     default: break;
                 }
-                
+
                 if (button != -1)   // Check for valid button
                 {
                     if (buttons[k] == GLFW_PRESS)
@@ -4450,7 +4450,7 @@ static void PollInputEvents(void)
             for (int j = 0; (j < gamepadState.numButtons) && (j < MAX_GAMEPAD_BUTTONS); j++)
             {
                 GamepadButton button = -1;
-                
+
                 // Gamepad Buttons reference: https://www.w3.org/TR/gamepad/#gamepad-interface
                 switch (j)
                 {
@@ -4472,7 +4472,7 @@ static void PollInputEvents(void)
                     case 15: button = GAMEPAD_BUTTON_LEFT_FACE_RIGHT; break;
                     default: break;
                 }
-                
+
                 if (button != -1)   // Check for valid button
                 {
                     if (gamepadState.digitalButton[j] == 1)
@@ -4609,10 +4609,10 @@ static void WindowSizeCallback(GLFWwindow *window, int width, int height)
     CORE.Window.currentFbo.width = width;
     CORE.Window.currentFbo.height = height;
     CORE.Window.resizedLastFrame = true;
-    
+
     if(IsWindowFullscreen())
         return;
-    
+
     // Set current screen size
     CORE.Window.screen.width = width;
     CORE.Window.screen.height = height;
@@ -4697,7 +4697,7 @@ static void KeyCallback(GLFWwindow *window, int key, int scancode, int action, i
             }
         }
         else
-#endif  // SUPPORT_GIF_RECORDING   
+#endif  // SUPPORT_GIF_RECORDING
         {
             TakeScreenshot(TextFormat("screenshot%03i.png", screenshotCounter));
             screenshotCounter++;
@@ -5406,7 +5406,7 @@ static void InitEvdevInput(void)
     char path[MAX_FILEPATH_LENGTH];
     DIR *directory;
     struct dirent *entity;
-    
+
     // Initialise keyboard file descriptor
     CORE.Input.Keyboard.fd = -1;
 
@@ -5669,7 +5669,7 @@ static void PollKeyboardEvents(void)
 
     struct input_event event;
     int keycode;
-    
+
     // Try to read data from the keyboard and only continue if successful
     while (read(fd, &event, sizeof(event)) == (int)sizeof(event))
     {
@@ -5762,7 +5762,7 @@ static void *EventThread(void *arg)
                 {
                     CORE.Input.Mouse.position.x    = (event.value - worker->absRange.x)*CORE.Window.screen.width/worker->absRange.width;   // Scale acording to absRange
                     CORE.Input.Touch.position[0].x = (event.value - worker->absRange.x)*CORE.Window.screen.width/worker->absRange.width;   // Scale acording to absRange
-                    
+
                     #if defined(SUPPORT_GESTURES_SYSTEM)
                         touchAction = TOUCH_MOVE;
                         gestureUpdate = true;
@@ -5807,7 +5807,7 @@ static void *EventThread(void *arg)
                 if(event.code == ABS_PRESSURE)
                 {
                     int previousMouseLeftButtonState = CORE.Input.Mouse.currentButtonStateEvdev[MOUSE_LEFT_BUTTON];
-                    
+
                     if(!event.value && previousMouseLeftButtonState)
                     {
                         CORE.Input.Mouse.currentButtonStateEvdev[MOUSE_LEFT_BUTTON] = 0;
@@ -5817,7 +5817,7 @@ static void *EventThread(void *arg)
                             gestureUpdate = true;
                         #endif
                     }
-                    
+
                     if(event.value && !previousMouseLeftButtonState)
                     {
                         CORE.Input.Mouse.currentButtonStateEvdev[MOUSE_LEFT_BUTTON] = 1;
@@ -6079,7 +6079,7 @@ void UWPKeyDownEvent(int key, bool down, bool controlKey)
             }
         }
         else
-#endif  // SUPPORT_GIF_RECORDING   
+#endif  // SUPPORT_GIF_RECORDING
         {
             TakeScreenshot(TextFormat("screenshot%03i.png", screenshotCounter));
             screenshotCounter++;

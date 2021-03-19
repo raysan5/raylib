@@ -859,7 +859,7 @@ void UnloadMesh(Mesh mesh)
 {
     // Unload rlgl mesh vboId data
     rlUnloadMesh(&mesh);
-    
+
     RL_FREE(mesh.vertices);
     RL_FREE(mesh.texcoords);
     RL_FREE(mesh.normals);
@@ -1033,7 +1033,7 @@ ModelAnimation *LoadModelAnimations(const char *fileName, int *animCount)
 #if defined(SUPPORT_FILEFORMAT_GLTF)
     if (IsFileExtension(fileName, ".gltf;.glb")) animations = LoadGLTFModelAnimations(fileName, animCount);
 #endif
-    
+
     return animations;
 }
 
@@ -1093,7 +1093,7 @@ void UpdateModelAnimation(Model model, ModelAnimation anim, int frame)
                     model.meshes[m].animNormals[vCounter + 1] = animNormal.y;
                     model.meshes[m].animNormals[vCounter + 2] = animNormal.z;
                 }
-                
+
                 vCounter += 3;
                 boneCounter += 4;
             }
@@ -3300,11 +3300,11 @@ static ModelAnimation* LoadIQMModelAnimations(const char* fileName, int* animCou
 {
 #define IQM_MAGIC       "INTERQUAKEMODEL"   // IQM file magic number
 #define IQM_VERSION     2                   // only IQM version 2 supported
-    
+
     unsigned int fileSize = 0;
     unsigned char *fileData = LoadFileData(fileName, &fileSize);
     unsigned char *fileDataPtr = fileData;
-    
+
     typedef struct IQMHeader {
         char magic[16];
         unsigned int version;
@@ -3321,60 +3321,60 @@ static ModelAnimation* LoadIQMModelAnimations(const char* fileName, int* animCou
         unsigned int num_comment, ofs_comment;
         unsigned int num_extensions, ofs_extensions;
     } IQMHeader;
-    
+
     typedef struct IQMPose {
         int parent;
         unsigned int mask;
         float channeloffset[10];
         float channelscale[10];
     } IQMPose;
-    
+
     typedef struct IQMAnim {
         unsigned int name;
         unsigned int first_frame, num_frames;
         float framerate;
         unsigned int flags;
     } IQMAnim;
-    
+
     // In case file can not be read, return an empty model
     if (fileDataPtr == NULL) return NULL;
-    
+
     // Read IQM header
     IQMHeader *iqmHeader = (IQMHeader *)fileDataPtr;
-    
+
     if (memcmp(iqmHeader->magic, IQM_MAGIC, sizeof(IQM_MAGIC)) != 0)
     {
         TRACELOG(LOG_WARNING, "MODEL: [%s] IQM file is not a valid model", fileName);
         return NULL;
     }
-    
+
     if (iqmHeader->version != IQM_VERSION)
     {
         TRACELOG(LOG_WARNING, "MODEL: [%s] IQM file version not supported (%i)", fileName, iqmHeader->version);
         return NULL;
     }
-    
+
     // Get bones data
     IQMPose *poses = RL_MALLOC(iqmHeader->num_poses*sizeof(IQMPose));
     //fseek(iqmFile, iqmHeader->ofs_poses, SEEK_SET);
     //fread(poses, iqmHeader->num_poses*sizeof(IQMPose), 1, iqmFile);
     memcpy(poses, fileDataPtr + iqmHeader->ofs_poses, iqmHeader->num_poses*sizeof(IQMPose));
-    
+
     // Get animations data
     *animCount = iqmHeader->num_anims;
     IQMAnim *anim = RL_MALLOC(iqmHeader->num_anims*sizeof(IQMAnim));
     //fseek(iqmFile, iqmHeader->ofs_anims, SEEK_SET);
     //fread(anim, iqmHeader->num_anims*sizeof(IQMAnim), 1, iqmFile);
     memcpy(anim, fileDataPtr + iqmHeader->ofs_anims, iqmHeader->num_anims*sizeof(IQMAnim));
-    
+
     ModelAnimation *animations = RL_MALLOC(iqmHeader->num_anims*sizeof(ModelAnimation));
-    
+
     // frameposes
     unsigned short *framedata = RL_MALLOC(iqmHeader->num_frames*iqmHeader->num_framechannels*sizeof(unsigned short));
     //fseek(iqmFile, iqmHeader->ofs_frames, SEEK_SET);
     //fread(framedata, iqmHeader->num_frames*iqmHeader->num_framechannels*sizeof(unsigned short), 1, iqmFile);
     memcpy(framedata, fileDataPtr + iqmHeader->ofs_frames, iqmHeader->num_frames*iqmHeader->num_framechannels*sizeof(unsigned short));
-    
+
     for (unsigned int a = 0; a < iqmHeader->num_anims; a++)
     {
         animations[a].frameCount = anim[a].num_frames;
@@ -3382,105 +3382,105 @@ static ModelAnimation* LoadIQMModelAnimations(const char* fileName, int* animCou
         animations[a].bones = RL_MALLOC(iqmHeader->num_poses*sizeof(BoneInfo));
         animations[a].framePoses = RL_MALLOC(anim[a].num_frames*sizeof(Transform *));
         // animations[a].framerate = anim.framerate;     // TODO: Use framerate?
-        
+
         for (unsigned int j = 0; j < iqmHeader->num_poses; j++)
         {
             strcpy(animations[a].bones[j].name, "ANIMJOINTNAME");
             animations[a].bones[j].parent = poses[j].parent;
         }
-        
+
         for (unsigned int j = 0; j < anim[a].num_frames; j++) animations[a].framePoses[j] = RL_MALLOC(iqmHeader->num_poses*sizeof(Transform));
-        
+
         int dcounter = anim[a].first_frame*iqmHeader->num_framechannels;
-        
+
         for (unsigned int frame = 0; frame < anim[a].num_frames; frame++)
         {
             for (unsigned int i = 0; i < iqmHeader->num_poses; i++)
             {
                 animations[a].framePoses[frame][i].translation.x = poses[i].channeloffset[0];
-                
+
                 if (poses[i].mask & 0x01)
                 {
                     animations[a].framePoses[frame][i].translation.x += framedata[dcounter]*poses[i].channelscale[0];
                     dcounter++;
                 }
-                
+
                 animations[a].framePoses[frame][i].translation.y = poses[i].channeloffset[1];
-                
+
                 if (poses[i].mask & 0x02)
                 {
                     animations[a].framePoses[frame][i].translation.y += framedata[dcounter]*poses[i].channelscale[1];
                     dcounter++;
                 }
-                
+
                 animations[a].framePoses[frame][i].translation.z = poses[i].channeloffset[2];
-                
+
                 if (poses[i].mask & 0x04)
                 {
                     animations[a].framePoses[frame][i].translation.z += framedata[dcounter]*poses[i].channelscale[2];
                     dcounter++;
                 }
-                
+
                 animations[a].framePoses[frame][i].rotation.x = poses[i].channeloffset[3];
-                
+
                 if (poses[i].mask & 0x08)
                 {
                     animations[a].framePoses[frame][i].rotation.x += framedata[dcounter]*poses[i].channelscale[3];
                     dcounter++;
                 }
-                
+
                 animations[a].framePoses[frame][i].rotation.y = poses[i].channeloffset[4];
-                
+
                 if (poses[i].mask & 0x10)
                 {
                     animations[a].framePoses[frame][i].rotation.y += framedata[dcounter]*poses[i].channelscale[4];
                     dcounter++;
                 }
-                
+
                 animations[a].framePoses[frame][i].rotation.z = poses[i].channeloffset[5];
-                
+
                 if (poses[i].mask & 0x20)
                 {
                     animations[a].framePoses[frame][i].rotation.z += framedata[dcounter]*poses[i].channelscale[5];
                     dcounter++;
                 }
-                
+
                 animations[a].framePoses[frame][i].rotation.w = poses[i].channeloffset[6];
-                
+
                 if (poses[i].mask & 0x40)
                 {
                     animations[a].framePoses[frame][i].rotation.w += framedata[dcounter]*poses[i].channelscale[6];
                     dcounter++;
                 }
-                
+
                 animations[a].framePoses[frame][i].scale.x = poses[i].channeloffset[7];
-                
+
                 if (poses[i].mask & 0x80)
                 {
                     animations[a].framePoses[frame][i].scale.x += framedata[dcounter]*poses[i].channelscale[7];
                     dcounter++;
                 }
-                
+
                 animations[a].framePoses[frame][i].scale.y = poses[i].channeloffset[8];
-                
+
                 if (poses[i].mask & 0x100)
                 {
                     animations[a].framePoses[frame][i].scale.y += framedata[dcounter]*poses[i].channelscale[8];
                     dcounter++;
                 }
-                
+
                 animations[a].framePoses[frame][i].scale.z = poses[i].channeloffset[9];
-                
+
                 if (poses[i].mask & 0x200)
                 {
                     animations[a].framePoses[frame][i].scale.z += framedata[dcounter]*poses[i].channelscale[9];
                     dcounter++;
                 }
-                
+
                 animations[a].framePoses[frame][i].rotation = QuaternionNormalize(animations[a].framePoses[frame][i].rotation);
             }
         }
-        
+
         // Build frameposes
         for (unsigned int frame = 0; frame < anim[a].num_frames; frame++)
         {
@@ -3496,13 +3496,13 @@ static ModelAnimation* LoadIQMModelAnimations(const char* fileName, int* animCou
             }
         }
     }
-    
+
     RL_FREE(fileData);
-    
+
     RL_FREE(framedata);
     RL_FREE(poses);
     RL_FREE(anim);
-    
+
     return animations;
 }
 
@@ -3667,17 +3667,17 @@ static bool GLTFReadValue(cgltf_accessor* acc, unsigned int index, void* variabl
         {
             return false;
         }
-        
+
         memcpy(variable, index == 0 ? acc->min : acc->max, elements * size);
         return true;
     }
-    
+
     unsigned int stride = size * elements;
     memset(variable, 0, stride);
-    
+
     if(acc->buffer_view == NULL || acc->buffer_view->buffer == NULL || acc->buffer_view->buffer->data == NULL)
         return false;
-    
+
     void* readPosition = ((char*)acc->buffer_view->buffer->data) + (index * stride) + acc->buffer_view->offset + acc->offset;
     memcpy(variable, readPosition, stride);
     return true;
@@ -3740,10 +3740,10 @@ static Model LoadGLTF(const char *fileName)
         model.boneCount = (int)data->nodes_count;
         model.bones = RL_CALLOC(model.boneCount, sizeof(BoneInfo));
         model.bindPose = RL_CALLOC(model.boneCount, sizeof(Transform));
-    
+
         InitGLTFBones(&model, data);
         LoadGLTFMaterial(&model, fileName, data);
-    
+
         int primitiveIndex = 0;
 
         for (unsigned int i = 0; i < data->meshes_count; i++)
@@ -3759,7 +3759,7 @@ static Model LoadGLTF(const char *fileName)
                         int bufferSize = model.meshes[primitiveIndex].vertexCount * 3 * sizeof(float);
                         model.meshes[primitiveIndex].vertices = RL_MALLOC(bufferSize);
                         model.meshes[primitiveIndex].animVertices = RL_MALLOC(bufferSize);
-    
+
                         if(acc->component_type == cgltf_component_type_r_32f)
                         {
                             for(int a = 0; a < acc->count; a++)
@@ -3783,17 +3783,17 @@ static Model LoadGLTF(const char *fileName)
                             // TODO: Support normalized unsigned byte/unsigned short vertices
                             TRACELOG(LOG_WARNING, "MODEL: [%s] glTF vertices must be float or int", fileName);
                         }
-                        
+
                         memcpy(model.meshes[primitiveIndex].animVertices, model.meshes[primitiveIndex].vertices, bufferSize);
                     }
                     else if (data->meshes[i].primitives[p].attributes[j].type == cgltf_attribute_type_normal)
                     {
                         cgltf_accessor *acc = data->meshes[i].primitives[p].attributes[j].data;
-                        
+
                         int bufferSize = (int)(acc->count*3*sizeof(float));
                         model.meshes[primitiveIndex].normals = RL_MALLOC(bufferSize);
                         model.meshes[primitiveIndex].animNormals = RL_MALLOC(bufferSize);
-                        
+
                         if(acc->component_type == cgltf_component_type_r_32f)
                         {
                             for(int a = 0; a < acc->count; a++)
@@ -3817,7 +3817,7 @@ static Model LoadGLTF(const char *fileName)
                             // TODO: Support normalized unsigned byte/unsigned short normals
                             TRACELOG(LOG_WARNING, "MODEL: [%s] glTF normals must be float or int", fileName);
                         }
-                        
+
                         memcpy(model.meshes[primitiveIndex].animNormals, model.meshes[primitiveIndex].normals, bufferSize);
                     }
                     else if (data->meshes[i].primitives[p].attributes[j].type == cgltf_attribute_type_texcoord)
@@ -3827,7 +3827,7 @@ static Model LoadGLTF(const char *fileName)
                         if (acc->component_type == cgltf_component_type_r_32f)
                         {
                             model.meshes[primitiveIndex].texcoords = RL_MALLOC(acc->count*2*sizeof(float));
-                            
+
                             for(int a = 0; a < acc->count; a++)
                             {
                                 GLTFReadValue(acc, a, model.meshes[primitiveIndex].texcoords + (a * 2), 2, sizeof(float));
@@ -3847,9 +3847,9 @@ static Model LoadGLTF(const char *fileName)
                     else if (data->meshes[i].primitives[p].attributes[j].type == cgltf_attribute_type_weights)
                     {
                         cgltf_accessor *acc = data->meshes[i].primitives[p].attributes[j].data;
-    
+
                         model.meshes[primitiveIndex].boneWeights = RL_MALLOC(acc->count*4*sizeof(float));
-    
+
                         if(acc->component_type == cgltf_component_type_r_32f)
                         {
                             for(int a = 0; a < acc->count; a++)
@@ -3879,7 +3879,7 @@ static Model LoadGLTF(const char *fileName)
 
                 cgltf_accessor *acc = data->meshes[i].primitives[p].indices;
                 LoadGLTFModelIndices(&model, acc, primitiveIndex);
-    
+
                 if (data->meshes[i].primitives[p].material)
                 {
                     // Compute the offset
@@ -3889,14 +3889,14 @@ static Model LoadGLTF(const char *fileName)
                 {
                     model.meshMaterial[primitiveIndex] = model.materialCount - 1;
                 }
-    
+
                 BindGLTFPrimitiveToBones(&model, data, primitiveIndex);
-    
+
                 primitiveIndex++;
             }
-            
+
         }
-        
+
         cgltf_free(data);
     }
     else TRACELOG(LOG_WARNING, "MODEL: [%s] Failed to load glTF data", fileName);
@@ -3913,7 +3913,7 @@ static void InitGLTFBones(Model* model, const cgltf_data* data)
         strcpy(model->bones[j].name, data->nodes[j].name == 0 ? "ANIMJOINT" : data->nodes[j].name);
         model->bones[j].parent = (data->nodes[j].parent != NULL) ? data->nodes[j].parent - data->nodes : -1;
     }
-    
+
     for (unsigned int i = 0; i < data->nodes_count; i++)
     {
         if (data->nodes[i].has_translation) memcpy(&model->bindPose[i].translation, data->nodes[i].translation, 3 * sizeof(float));
@@ -3923,11 +3923,11 @@ static void InitGLTFBones(Model* model, const cgltf_data* data)
         else model->bindPose[i].rotation = QuaternionIdentity();
 
         model->bindPose[i].rotation = QuaternionNormalize(model->bindPose[i].rotation);
-        
+
         if (data->nodes[i].has_scale) memcpy(&model->bindPose[i].scale, data->nodes[i].scale, 3 * sizeof(float));
         else model->bindPose[i].scale = Vector3One();
     }
-    
+
     {
         bool* completedBones = RL_CALLOC(model->boneCount, sizeof(bool));
         int numberCompletedBones = 0;
@@ -4032,7 +4032,7 @@ static void LoadGLTFMaterial(Model* model, const char* fileName, const cgltf_dat
             }
         }
     }
-    
+
     model->materials[model->materialCount - 1] = LoadMaterialDefault();
 }
 
@@ -4047,7 +4047,7 @@ static void LoadGLTFBoneAttribute(Model* model, cgltf_accessor* jointsAccessor, 
         {
             GLTFReadValue(jointsAccessor, a, bones + (a * 4), 4, sizeof(short));
         }
-        
+
         for (unsigned int a = 0; a < jointsAccessor->count * 4; a++)
         {
             cgltf_node* skinJoint = data->skins->joints[bones[a]];
@@ -4072,11 +4072,11 @@ static void LoadGLTFBoneAttribute(Model* model, cgltf_accessor* jointsAccessor, 
         {
             GLTFReadValue(jointsAccessor, a, bones + (a * 4), 4, sizeof(unsigned char));
         }
-        
+
         for (unsigned int a = 0; a < jointsAccessor->count * 4; a++)
         {
             cgltf_node* skinJoint = data->skins->joints[bones[a]];
-            
+
             for (unsigned int k = 0; k < data->nodes_count; k++)
             {
                 if (&(data->nodes[k]) == skinJoint)
@@ -4118,7 +4118,7 @@ static void BindGLTFPrimitiveToBones(Model* model, const cgltf_data* data, int p
                         model->meshes[primitiveIndex].boneIds[b] = 0;
                         model->meshes[primitiveIndex].boneWeights[b] = 0.0f;
                     }
-                
+
                 }
 
                 Vector3 boundVertex = { 0 };
@@ -4157,7 +4157,7 @@ static void BindGLTFPrimitiveToBones(Model* model, const cgltf_data* data, int p
                         model->meshes[primitiveIndex].normals[vCounter + 1] = boundNormal.y;
                         model->meshes[primitiveIndex].normals[vCounter + 2] = boundNormal.z;
                     }
-                    
+
                     vCounter += 3;
                     boneCounter += 4;
                 }
@@ -4174,7 +4174,7 @@ static void LoadGLTFModelIndices(Model* model, cgltf_accessor* indexAccessor, in
         {
             model->meshes[primitiveIndex].triangleCount = (int)indexAccessor->count / 3;
             model->meshes[primitiveIndex].indices = RL_MALLOC(model->meshes[primitiveIndex].triangleCount * 3 * sizeof(unsigned short));
-            
+
             unsigned short readValue = 0;
             for(int a = 0; a < indexAccessor->count; a++)
             {
@@ -4186,7 +4186,7 @@ static void LoadGLTFModelIndices(Model* model, cgltf_accessor* indexAccessor, in
         {
             model->meshes[primitiveIndex].triangleCount = (int)indexAccessor->count / 3;
             model->meshes[primitiveIndex].indices = RL_MALLOC(model->meshes[primitiveIndex].triangleCount * 3 * sizeof(unsigned short));
-            
+
             unsigned char readValue = 0;
             for(int a = 0; a < indexAccessor->count; a++)
             {
@@ -4232,16 +4232,16 @@ static ModelAnimation *LoadGLTFModelAnimations(const char *fileName, int *animCo
     // glTF file loading
     unsigned int dataSize = 0;
     unsigned char *fileData = LoadFileData(fileName, &dataSize);
-    
+
     ModelAnimation *animations = NULL;
-    
+
     if (fileData == NULL) return animations;
-    
+
     // glTF data loading
     cgltf_options options = { 0 };
     cgltf_data *data = NULL;
     cgltf_result result = cgltf_parse(&options, fileData, dataSize, &data);
-    
+
     if (result == cgltf_result_success)
     {
         TRACELOG(LOG_INFO, "MODEL: [%s] glTF animations (%s) count: %i", fileName, (data->file_type == 2)? "glb" :
@@ -4263,34 +4263,34 @@ static ModelAnimation *LoadGLTFModelAnimations(const char *fileName, int *animCo
             //         - input - points in time this transformation happens
             //         - output - the transformation amount at the given input points in time
             //         - interpolation - the type of interpolation to use between the frames
-            
+
             cgltf_animation *animation = data->animations + a;
-    
+
             ModelAnimation *output = animations + a;
-            
+
             // 30 frames sampled per second
             const float TIMESTEP = (1.0f / 30.0f);
             float animationDuration = 0.0f;
-    
+
             // Getting the max animation time to consider for animation duration
             for (unsigned int i = 0; i < animation->channels_count; i++)
             {
                 cgltf_animation_channel* channel = animation->channels + i;
                 int frameCounts = (int)channel->sampler->input->count;
                 float lastFrameTime = 0.0f;
-                
+
                 if (GLTFReadValue(channel->sampler->input, frameCounts - 1, &lastFrameTime, 1, sizeof(float)))
                 {
                     animationDuration = fmaxf(lastFrameTime, animationDuration);
                 }
             }
-    
+
             output->frameCount = (int)(animationDuration / TIMESTEP);
             output->boneCount = (int)data->nodes_count;
             output->bones = RL_MALLOC(output->boneCount*sizeof(BoneInfo));
             output->framePoses = RL_MALLOC(output->frameCount*sizeof(Transform *));
             // output->framerate = // TODO: Use framerate instead of const timestep
-    
+
             // Name and parent bones
             for (unsigned int j = 0; j < data->nodes_count; j++)
             {
@@ -4303,7 +4303,7 @@ static ModelAnimation *LoadGLTFModelAnimations(const char *fileName, int *animCo
             for (int frame = 0; frame < output->frameCount; frame++)
             {
                 output->framePoses[frame] = RL_MALLOC(output->frameCount*data->nodes_count*sizeof(Transform));
-    
+
                 for (unsigned int i = 0; i < data->nodes_count; i++)
                 {
                     output->framePoses[frame][i].translation = Vector3Zero();
@@ -4312,15 +4312,15 @@ static ModelAnimation *LoadGLTFModelAnimations(const char *fileName, int *animCo
                     output->framePoses[frame][i].scale = Vector3One();
                 }
             }
-            
+
             // for each single transformation type on single bone
             for (unsigned int channelId = 0; channelId < animation->channels_count; channelId++)
             {
                 cgltf_animation_channel* channel = animation->channels + channelId;
                 cgltf_animation_sampler* sampler = channel->sampler;
-                
+
                 int boneId = (int)(channel->target_node - data->nodes);
-                
+
                 for (int frame = 0; frame < output->frameCount; frame++)
                 {
                     bool shouldSkipFurtherTransformation = true;
@@ -4328,7 +4328,7 @@ static ModelAnimation *LoadGLTFModelAnimations(const char *fileName, int *animCo
                     int outputMax = 0;
                     float frameTime = frame * TIMESTEP;
                     float lerpPercent = 0.0f;
-                    
+
                     // For this transformation:
                     // getting between which input values the current frame time position
                     // and also what is the percent to use in the linear interpolation later
@@ -4342,7 +4342,7 @@ static ModelAnimation *LoadGLTFModelAnimations(const char *fileName, int *animCo
                                 shouldSkipFurtherTransformation = false;
                                 outputMin = (j == 0) ? 0 : j - 1;
                                 outputMax = j;
-        
+
                                 float previousInputTime = 0.0f;
                                 if (GLTFReadValue(sampler->input, outputMin, &previousInputTime, 1, sizeof(float)))
                                 {
@@ -4351,13 +4351,13 @@ static ModelAnimation *LoadGLTFModelAnimations(const char *fileName, int *animCo
                                         lerpPercent = (frameTime - previousInputTime)/(inputFrameTime - previousInputTime);
                                     }
                                 }
-                                
+
                                 break;
                             }
-                        } 
+                        }
                         else break;
                     }
-                    
+
                     // If the current transformation has no information for the current frame time point
                     if (shouldSkipFurtherTransformation) continue;
 
@@ -4365,20 +4365,20 @@ static ModelAnimation *LoadGLTFModelAnimations(const char *fileName, int *animCo
                     {
                         Vector3 translationStart;
                         Vector3 translationEnd;
-                        
+
                         bool success = GLTFReadValue(sampler->output, outputMin, &translationStart, 3, sizeof(float));
                         success = GLTFReadValue(sampler->output, outputMax, &translationEnd, 3, sizeof(float)) || success;
-                        
+
                         if (success) output->framePoses[frame][boneId].translation = Vector3Lerp(translationStart, translationEnd, lerpPercent);
                     }
                     if (channel->target_path == cgltf_animation_path_type_rotation)
                     {
                         Quaternion rotationStart;
                         Quaternion rotationEnd;
-    
+
                         bool success = GLTFReadValue(sampler->output, outputMin, &rotationStart, 4, sizeof(float));
                         success = GLTFReadValue(sampler->output, outputMax, &rotationEnd, 4, sizeof(float)) || success;
-    
+
                         if (success)
                         {
                             output->framePoses[frame][boneId].rotation = QuaternionLerp(rotationStart, rotationEnd, lerpPercent);
@@ -4389,15 +4389,15 @@ static ModelAnimation *LoadGLTFModelAnimations(const char *fileName, int *animCo
                     {
                         Vector3 scaleStart;
                         Vector3 scaleEnd;
-    
+
                         bool success = GLTFReadValue(sampler->output, outputMin, &scaleStart, 3, sizeof(float));
                         success = GLTFReadValue(sampler->output, outputMax, &scaleEnd, 3, sizeof(float)) || success;
-    
+
                         if (success) output->framePoses[frame][boneId].scale = Vector3Lerp(scaleStart, scaleEnd, lerpPercent);
                     }
                 }
             }
-    
+
             // Build frameposes
             for (int frame = 0; frame < output->frameCount; frame++)
             {
@@ -4432,13 +4432,13 @@ static ModelAnimation *LoadGLTFModelAnimations(const char *fileName, int *animCo
             }
 
         }
-        
+
         cgltf_free(data);
     }
     else TRACELOG(LOG_WARNING, ": [%s] Failed to load glTF data", fileName);
-    
+
     RL_FREE(fileData);
-    
+
     return animations;
 }
 

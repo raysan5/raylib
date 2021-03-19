@@ -1690,17 +1690,17 @@ void rlglInit(int width, int height)
 
             if ((glGenVertexArrays != NULL) && (glBindVertexArray != NULL) && (glDeleteVertexArrays != NULL)) RLGL.ExtSupported.vao = true;
         }
-        
+
         // Check instanced rendering support
-        if (strcmp(extList[i], (const char *)"GL_ANGLE_instanced_arrays") == 0) 
+        if (strcmp(extList[i], (const char *)"GL_ANGLE_instanced_arrays") == 0)
         {
             glDrawArraysInstanced = (PFNGLDRAWARRAYSINSTANCEDEXTPROC)eglGetProcAddress("glDrawArraysInstancedANGLE");
             glDrawElementsInstanced = (PFNGLDRAWELEMENTSINSTANCEDEXTPROC)eglGetProcAddress("glDrawElementsInstancedANGLE");
             glVertexAttribDivisor = (PFNGLVERTEXATTRIBDIVISOREXTPROC)eglGetProcAddress("glVertexAttribDivisorANGLE");
-            
+
             if ((glDrawArraysInstanced != NULL) && (glDrawElementsInstanced != NULL) && (glVertexAttribDivisor != NULL)) RLGL.ExtSupported.instancing = true;
         }
-        
+
         // Check NPOT textures support
         // NOTE: Only check on OpenGL ES, OpenGL 3.3 has NPOT textures full support as core feature
         if (strcmp(extList[i], (const char *)"GL_OES_texture_npot") == 0) RLGL.ExtSupported.texNPOT = true;
@@ -2507,7 +2507,7 @@ void rlLoadMesh(Mesh *mesh, bool dynamic)
         TRACELOG(LOG_WARNING, "VAO: [ID %i] Trying to re-load an already loaded mesh", mesh->vaoId);
         return;
     }
-    
+
     mesh->vboId = (unsigned int *)RL_CALLOC(MAX_MESH_VERTEX_BUFFERS, sizeof(unsigned int));
 
     mesh->vaoId = 0;        // Vertex Array Object
@@ -4075,10 +4075,10 @@ static unsigned int CompileShader(const char *shaderStr, int type)
     if (success == GL_FALSE)
     {
         TRACELOG(LOG_WARNING, "SHADER: [ID %i] Failed to compile shader code", shader);
-        
+
         int maxLength = 0;
         glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &maxLength);
-        
+
         if (maxLength > 0)
         {
             int length = 0;
@@ -4127,8 +4127,8 @@ static unsigned int LoadShaderProgram(unsigned int vShaderId, unsigned int fShad
 
         int maxLength = 0;
         glGetProgramiv(program, GL_INFO_LOG_LENGTH, &maxLength);
-        
-        if (maxLength > 0) 
+
+        if (maxLength > 0)
         {
             int length = 0;
             char *log = RL_CALLOC(maxLength, sizeof(char));

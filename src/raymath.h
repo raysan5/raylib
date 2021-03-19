@@ -984,7 +984,7 @@ RMDEF Matrix MatrixRotateZYX(Vector3 ang)
     result.m0 = cz*cy;
     result.m1 = cz*sy*sx - cx*sz;
     result.m2 = sz*sx + cz*cx*sy;
-    result.m3 = 0; 
+    result.m3 = 0;
 
     result.m4 = cy*sz;
     result.m5 = cz*cx + sz*sy*sx;
@@ -995,7 +995,7 @@ RMDEF Matrix MatrixRotateZYX(Vector3 ang)
     result.m9 = cy*sx;
     result.m10 = cy*cx;
     result.m11 = 0;
-    
+
     result.m12 = 0;
     result.m13 = 0;
     result.m14 = 0;
@@ -1294,11 +1294,11 @@ RMDEF Quaternion QuaternionSlerp(Quaternion q1, Quaternion q2, float amount)
 
     float cosHalfTheta =  q1.x*q2.x + q1.y*q2.y + q1.z*q2.z + q1.w*q2.w;
 
-    if (cosHalfTheta < 0) 
+    if (cosHalfTheta < 0)
     {
         q2.x = -q2.x; q2.y = -q2.y; q2.z = -q2.z; q2.w = -q2.w;
         cosHalfTheta = -cosHalfTheta;
-    }    
+    }
 
     if (fabs(cosHalfTheta) >= 1.0f) result = q1;
     else if (cosHalfTheta > 0.95f) result = QuaternionNlerp(q1, q2, amount);
@@ -1478,7 +1478,7 @@ RMDEF Quaternion QuaternionFromEuler(float pitch, float yaw, float roll)
     q.y = x0*y1*z0 + x1*y0*z1;
     q.z = x0*y0*z1 - x1*y1*z0;
     q.w = x0*y0*z0 + x1*y1*z1;
-    
+
     return q;
 }
 

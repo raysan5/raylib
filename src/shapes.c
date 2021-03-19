@@ -658,7 +658,7 @@ void DrawRectanglePro(Rectangle rec, Vector2 origin, float rotation, Color color
 
     rlEnableTexture(GetShapesTexture().id);
     rlBegin(RL_QUADS);
-    
+
         rlNormal3f(0.0f, 0.0f, 1.0f);
         rlColor4ub(color.r, color.g, color.b, color.a);
 
@@ -673,7 +673,7 @@ void DrawRectanglePro(Rectangle rec, Vector2 origin, float rotation, Color color
 
         rlTexCoord2f((GetShapesTextureRec().x + GetShapesTextureRec().width)/GetShapesTexture().width, GetShapesTextureRec().y/GetShapesTexture().height);
         rlVertex2f(topLeft.x, topLeft.y);
-        
+
     rlEnd();
     rlDisableTexture();
 }

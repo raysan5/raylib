@@ -1302,10 +1302,10 @@ Music LoadMusicStreamFromMemory(const char *fileType, unsigned char* data, int d
 {
     Music music = { 0 };
     bool musicLoaded = false;
-    
+
     char fileExtLower[16] = { 0 };
     strcpy(fileExtLower, TextToLower(fileType));
-    
+
     if (false) { }
 #if defined(SUPPORT_FILEFORMAT_WAV)
     else if (TextIsEqual(fileExtLower, ".wav"))
@@ -1313,10 +1313,10 @@ Music LoadMusicStreamFromMemory(const char *fileType, unsigned char* data, int d
         drwav *ctxWav = RL_CALLOC(1, sizeof(drwav));
 		
         bool success = drwav_init_memory(ctxWav, (const void*)data, dataSize, NULL);
-        
+
         music.ctxType = MUSIC_AUDIO_WAV;
         music.ctxData = ctxWav;
-        
+
         if (success)
         {
             int sampleSize = ctxWav->bitsPerSample;
@@ -1414,14 +1414,14 @@ Music LoadMusicStreamFromMemory(const char *fileType, unsigned char* data, int d
         int result = 0;
 
         jar_mod_init(ctxMod);
-        
+
         // copy data to allocated memory for default UnloadMusicStream
         unsigned char *newData = RL_MALLOC(dataSize);
         int it = dataSize / sizeof(unsigned char);
         for (int i = 0; i < it; i++){
             newData[i] = data[i];
         }
-        
+
         // Memory loaded version for jar_mod_load_file()
         if (dataSize && dataSize < 32*1024*1024)
         {
@@ -1429,7 +1429,7 @@ Music LoadMusicStreamFromMemory(const char *fileType, unsigned char* data, int d
             ctxMod->modfile = newData;
             if(jar_mod_load(ctxMod, (void*)ctxMod->modfile, dataSize)) result = dataSize;
         }
-        
+
         if (result > 0)
         {
             music.ctxType = MUSIC_MODULE_MOD;
@@ -1444,7 +1444,7 @@ Music LoadMusicStreamFromMemory(const char *fileType, unsigned char* data, int d
             musicLoaded = true;
         }
     }
-#endif 
+#endif
     else TRACELOG(LOG_WARNING, "STREAM: [%s] Fileformat not supported", fileType);
 
     if (!musicLoaded)
