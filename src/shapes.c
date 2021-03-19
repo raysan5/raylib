@@ -119,11 +119,11 @@ void DrawLineEx(Vector2 startPos, Vector2 endPos, float thick, Color color)
     Vector2 delta = {endPos.x-startPos.x, endPos.y-startPos.y};
     float   length = sqrtf(delta.x*delta.x + delta.y*delta.y);
 
-    if (length > 0  &&  thick > 0) 
+    if (length > 0  &&  thick > 0)
     {
         float   scale = thick/(2*length);
         Vector2 radius = {-scale*delta.y, scale*delta.x};
-        Vector2 strip[] = {{startPos.x-radius.x, startPos.y-radius.y}, {startPos.x+radius.x, startPos.y+radius.y}, 
+        Vector2 strip[] = {{startPos.x-radius.x, startPos.y-radius.y}, {startPos.x+radius.x, startPos.y+radius.y},
                            {endPos.x-radius.x, endPos.y-radius.y}, {endPos.x+radius.x, endPos.y+radius.y}};
 
         DrawTriangleStrip(strip, 4, color);
@@ -157,24 +157,24 @@ void DrawLineBezier(Vector2 startPos, Vector2 endPos, float thick, Color color)
 void DrawLineBezierQuad(Vector2 startPos, Vector2 endPos, Vector2 controlPos, float thick, Color color)
 {
     const float step = 1.0f/BEZIER_LINE_DIVISIONS;
-    
+
     Vector2 previous = startPos;
     Vector2 current = { 0 };
     float t = 0.0f;
-    
+
     for (int i = 0; i <= BEZIER_LINE_DIVISIONS; i++)
     {
         t = step*i;
         float a = powf(1 - t, 2);
         float b = 2*(1 - t)*t;
         float c = powf(t, 2);
-        
+
         // NOTE: The easing functions aren't suitable here because they don't take a control point
         current.y = a*startPos.y + b*controlPos.y + c*endPos.y;
         current.x = a*startPos.x + b*controlPos.x + c*endPos.x;
-        
+
         DrawLineEx(previous,current,thick,color);
-        
+
         previous = current;
     }
 }
@@ -619,31 +619,60 @@ void DrawRectanglePro(Rectangle rec, Vector2 origin, float rotation, Color color
 {
     if (rlCheckBufferLimit(4)) rlglDraw();
 
+    Vector2 bl = { 0 };
+    Vector2 br = { 0 };
+    Vector2 tr = { 0 };
+    Vector2 tl = { 0 };
+
+    // Only calculate rotation if needed
+    if (rotation == 0.0f)
+    {
+        float x = rec.x - origin.x;
+        float y = rec.y - origin.y;
+        bl = (Vector2){ x, y };
+        br = (Vector2){ x, y + rec.height };
+        tr = (Vector2){ x + rec.width, y + rec.height };
+        tl = (Vector2){ x + rec.width, y };
+    }
+    else
+    {
+        float sinRotation = sinf(rotation * DEG2RAD);
+        float cosRotation = cosf(rotation * DEG2RAD);
+        float x = rec.x;
+        float y = rec.y;
+        float dx = -origin.x;
+        float dy = -origin.y;
+
+        bl.x = x + dx * cosRotation - (dy + rec.height) * sinRotation;
+        bl.y = y + dx * sinRotation + (dy + rec.height) * cosRotation;
+
+        br.x = x + (dx + rec.width) * cosRotation - (dy + rec.height) * sinRotation;
+        br.y = y + (dx + rec.width) * sinRotation + (dy + rec.height) * cosRotation;
+
+        tr.x = x + (dx + rec.width) * cosRotation - dy * sinRotation;
+        tr.y = y + (dx + rec.width) * sinRotation + dy * cosRotation;
+
+        tl.x = x + dx * cosRotation - dy * sinRotation;
+        tl.y = y + dx * sinRotation + dy * cosRotation;
+    }
+
     rlEnableTexture(GetShapesTexture().id);
+    rlBegin(RL_QUADS);
+        rlNormal3f(0.0f, 0.0f, 1.0f);
+        rlColor4ub(color.r, color.g, color.b, color.a);
 
-    rlPushMatrix();
-        rlTranslatef(rec.x, rec.y, 0.0f);
-        rlRotatef(rotation, 0.0f, 0.0f, 1.0f);
-        rlTranslatef(-origin.x, -origin.y, 0.0f);
+        rlTexCoord2f(GetShapesTextureRec().x/GetShapesTexture().width, GetShapesTextureRec().y/GetShapesTexture().height);
+        rlVertex2f(bl.x, bl.y);
 
-        rlBegin(RL_QUADS);
-            rlNormal3f(0.0f, 0.0f, 1.0f);
-            rlColor4ub(color.r, color.g, color.b, color.a);
+        rlTexCoord2f(GetShapesTextureRec().x/GetShapesTexture().width, (GetShapesTextureRec().y + GetShapesTextureRec().height)/GetShapesTexture().height);
+        rlVertex2f(br.x, br.y);
 
-            rlTexCoord2f(GetShapesTextureRec().x/GetShapesTexture().width, GetShapesTextureRec().y/GetShapesTexture().height);
-            rlVertex2f(0.0f, 0.0f);
+        rlTexCoord2f((GetShapesTextureRec().x + GetShapesTextureRec().width)/GetShapesTexture().width, (GetShapesTextureRec().y + GetShapesTextureRec().height)/GetShapesTexture().height);
+        rlVertex2f(tr.x, tr.y);
 
-            rlTexCoord2f(GetShapesTextureRec().x/GetShapesTexture().width, (GetShapesTextureRec().y + GetShapesTextureRec().height)/GetShapesTexture().height);
-            rlVertex2f(0.0f, rec.height);
-
-            rlTexCoord2f((GetShapesTextureRec().x + GetShapesTextureRec().width)/GetShapesTexture().width, (GetShapesTextureRec().y + GetShapesTextureRec().height)/GetShapesTexture().height);
-            rlVertex2f(rec.width, rec.height);
-
-            rlTexCoord2f((GetShapesTextureRec().x + GetShapesTextureRec().width)/GetShapesTexture().width, GetShapesTextureRec().y/GetShapesTexture().height);
-            rlVertex2f(rec.width, 0.0f);
-        rlEnd();
-    rlPopMatrix();
-
+        rlTexCoord2f((GetShapesTextureRec().x + GetShapesTextureRec().width)/GetShapesTexture().width, GetShapesTextureRec().y/GetShapesTexture().height);
+        rlVertex2f(tl.x, tl.y);
+    rlEnd();
     rlDisableTexture();
 }
 
