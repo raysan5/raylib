@@ -500,6 +500,7 @@ typedef enum {
 // NOTE: Use GetKeyPressed() to allow redefining
 // required keys for alternative layouts
 typedef enum {
+    KEY_NULL            = 0,
     // Alphanumeric keys
     KEY_APOSTROPHE      = 39,
     KEY_COMMA           = 44,
