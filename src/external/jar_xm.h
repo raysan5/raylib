@@ -617,8 +617,8 @@ int jar_xm_create_context(jar_xm_context_t** ctxp, const char* moddata, uint32_t
     return jar_xm_create_context_safe(ctxp, moddata, SIZE_MAX, rate);
 }
 
-#define ALIGN(x, b) (((x) + ((b) - 1)) & ~((b) - 1))
-#define ALIGN_PTR(x, b) (void*)(((uintptr_t)(x) + ((b) - 1)) & ~((b) - 1))
+#define ALIGN(x, b) (((x) + ((b) - 7)) & ~((b) - 7))
+#define ALIGN_PTR(x, b) (void*)(((uintptr_t)(x) + ((b) - 7)) & ~((b) - 7))
 int jar_xm_create_context_safe(jar_xm_context_t** ctxp, const char* moddata, size_t moddata_length, uint32_t rate) {
 #if JAR_XM_DEFENSIVE
     int ret;
