@@ -25,7 +25,7 @@
 #endif
 
 // A few good julia sets
-const float POINTS_OF_INTEREST[6][2] =
+const float pointsOfInterest[6][2] =
 {
     { -0.348827, 0.607167 },
     { -0.786268, 0.169728 },
@@ -42,17 +42,21 @@ int main(void)
     const int screenWidth = 800;
     const int screenHeight = 450;
 
+    SetConfigFlags(FLAG_WINDOW_HIGHDPI);
     InitWindow(screenWidth, screenHeight, "raylib [shaders] example - julia sets");
 
     // Load julia set shader
     // NOTE: Defining 0 (NULL) for vertex shader forces usage of internal default vertex shader
     Shader shader = LoadShader(0, TextFormat("resources/shaders/glsl%i/julia_set.fs", GLSL_VERSION));
+    
+    // Create a RenderTexture2D to be used for render to texture
+    RenderTexture2D target = LoadRenderTexture(GetScreenWidth(), GetScreenHeight());
 
     // c constant to use in z^2 + c
-    float c[2] = { POINTS_OF_INTEREST[0][0], POINTS_OF_INTEREST[0][1] };
+    float c[2] = { pointsOfInterest[0][0], pointsOfInterest[0][1] };
 
     // Offset and zoom to draw the julia set at. (centered on screen and default size)
-    float offset[2] = { -(float)screenWidth/2, -(float)screenHeight/2 };
+    float offset[2] = { -(float)GetScreenWidth()/2, -(float)GetScreenHeight()/2 };
     float zoom = 1.0f;
 
     Vector2 offsetSpeed = { 0.0f, 0.0f };
@@ -64,16 +68,13 @@ int main(void)
     int offsetLoc = GetShaderLocation(shader, "offset");
 
     // Tell the shader what the screen dimensions, zoom, offset and c are
-    float screenDims[2] = { (float)screenWidth, (float)screenHeight };
+    float screenDims[2] = { (float)GetScreenWidth(), (float)GetScreenHeight() };
     SetShaderValue(shader, GetShaderLocation(shader, "screenDims"), screenDims, SHADER_UNIFORM_VEC2);
 
     SetShaderValue(shader, cLoc, c, SHADER_UNIFORM_VEC2);
     SetShaderValue(shader, zoomLoc, &zoom, SHADER_UNIFORM_FLOAT);
     SetShaderValue(shader, offsetLoc, offset, SHADER_UNIFORM_VEC2);
-
-    // Create a RenderTexture2D to be used for render to texture
-    RenderTexture2D target = LoadRenderTexture(screenWidth, screenHeight);
-
+    
     int incrementSpeed = 0;         // Multiplier of speed to change c value
     bool showControls = true;       // Show controls
     bool pause = false;             // Pause animation
@@ -94,12 +95,12 @@ int main(void)
             IsKeyPressed(KEY_FIVE) ||
             IsKeyPressed(KEY_SIX))
         {
-            if (IsKeyPressed(KEY_ONE)) c[0] = POINTS_OF_INTEREST[0][0], c[1] = POINTS_OF_INTEREST[0][1];
-            else if (IsKeyPressed(KEY_TWO)) c[0] = POINTS_OF_INTEREST[1][0], c[1] = POINTS_OF_INTEREST[1][1];
-            else if (IsKeyPressed(KEY_THREE)) c[0] = POINTS_OF_INTEREST[2][0], c[1] = POINTS_OF_INTEREST[2][1];
-            else if (IsKeyPressed(KEY_FOUR)) c[0] = POINTS_OF_INTEREST[3][0], c[1] = POINTS_OF_INTEREST[3][1];
-            else if (IsKeyPressed(KEY_FIVE)) c[0] = POINTS_OF_INTEREST[4][0], c[1] = POINTS_OF_INTEREST[4][1];
-            else if (IsKeyPressed(KEY_SIX)) c[0] = POINTS_OF_INTEREST[5][0], c[1] = POINTS_OF_INTEREST[5][1];
+            if (IsKeyPressed(KEY_ONE)) c[0] = pointsOfInterest[0][0], c[1] = pointsOfInterest[0][1];
+            else if (IsKeyPressed(KEY_TWO)) c[0] = pointsOfInterest[1][0], c[1] = pointsOfInterest[1][1];
+            else if (IsKeyPressed(KEY_THREE)) c[0] = pointsOfInterest[2][0], c[1] = pointsOfInterest[2][1];
+            else if (IsKeyPressed(KEY_FOUR)) c[0] = pointsOfInterest[3][0], c[1] = pointsOfInterest[3][1];
+            else if (IsKeyPressed(KEY_FIVE)) c[0] = pointsOfInterest[4][0], c[1] = pointsOfInterest[4][1];
+            else if (IsKeyPressed(KEY_SIX)) c[0] = pointsOfInterest[5][0], c[1] = pointsOfInterest[5][1];
 
             SetShaderValue(shader, cLoc, c, SHADER_UNIFORM_VEC2);
         }
@@ -162,7 +163,9 @@ int main(void)
             // Draw the saved texture and rendered julia set with shader
             // NOTE: We do not invert texture on Y, already considered inside shader
             BeginShaderMode(shader);
-                DrawTexture(target.texture, 0, 0, WHITE);
+                // WARNING: If FLAG_WINDOW_HIGHDPI is enabled, HighDPI monitor scaling should be considered
+                // when rendering the RenderTexture2D to fit in the HighDPI scaled Window
+                DrawTextureEx(target.texture, (Vector2){ 0.0f, 0.0f }, 0.0f, GetWindowScaleDPI().x, WHITE);
             EndShaderMode();
 
             if (showControls)
