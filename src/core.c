@@ -4261,9 +4261,16 @@ static void SetupViewport(int width, int height)
 	// Set viewport width and height
 	// NOTE: We consider render size (scaled) and offset in case black bars are required and
 	// render area does not match full display area (this situation is only applicable on fullscreen mode)
-	float xScale = 1, yScale = 1;
-	glfwGetWindowContentScale(CORE.Window.handle, &xScale, &yScale);
-	rlViewport(CORE.Window.renderOffset.x/2*xScale, CORE.Window.renderOffset.y/2*yScale, (CORE.Window.render.width - CORE.Window.renderOffset.x)*xScale, (CORE.Window.render.height - CORE.Window.renderOffset.y)*yScale);
+#if defined(__APPLE__)
+    if ((CORE.Window.flags & FLAG_WINDOW_HIGHDPI) > 0)
+    {
+        float xScale = 1.0f, yScale = 1.0f;
+        glfwGetWindowContentScale(CORE.Window.handle, &xScale, &yScale);
+        rlViewport(CORE.Window.renderOffset.x/2*xScale, CORE.Window.renderOffset.y/2*yScale, (CORE.Window.render.width - CORE.Window.renderOffset.x)*xScale, (CORE.Window.render.height - CORE.Window.renderOffset.y)*yScale);
+    }
+#else    
+    rlViewport(CORE.Window.renderOffset.x/2, CORE.Window.renderOffset.y/2, CORE.Window.render.width - CORE.Window.renderOffset.x, CORE.Window.render.height - CORE.Window.renderOffset.y);
+#endif
 
     rlMatrixMode(RL_PROJECTION);        // Switch to projection matrix
     rlLoadIdentity();                   // Reset current matrix (projection)
