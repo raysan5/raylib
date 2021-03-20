@@ -57,6 +57,8 @@
 #define SUPPORT_COMPRESSION_API     1
 // Support saving binary data automatically to a generated storage.data file. This file is managed internally.
 #define SUPPORT_DATA_STORAGE        1
+// Support VR simulation functionality (stereo rendering)
+#define SUPPORT_VR_SIMULATOR        1
 
 // core: Configuration values
 //------------------------------------------------------------------------------------
@@ -78,12 +80,7 @@
 
 
 //------------------------------------------------------------------------------------
-// Module: rlgl - Configuration Flags
-//------------------------------------------------------------------------------------
-// Support VR simulation functionality (stereo rendering)
-#define SUPPORT_VR_SIMULATOR        1
-
-// rlgl: Configuration values
+// Module: rlgl - Configuration values
 //------------------------------------------------------------------------------------
 #if defined(GRAPHICS_API_OPENGL_11) || defined(GRAPHICS_API_OPENGL_33)
     #define DEFAULT_BATCH_BUFFER_ELEMENTS   8192    // Default internal render batch limits

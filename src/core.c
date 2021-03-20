@@ -80,7 +80,10 @@
 *       for linkage
 *
 *   #define SUPPORT_DATA_STORAGE
-*       Support saving binary data automatically to a generated storage.data file. This file is managed internally.
+*       Support saving binary data automatically to a generated storage.data file. This file is managed internally
+*
+*   #define SUPPORT_VR_SIMULATOR
+*       Support VR simulation functionality (stereo rendering)
 *
 *   DEPENDENCIES:
 *       rglfw    - Manage graphic device, OpenGL context and inputs on PLATFORM_DESKTOP (Windows, Linux, OSX. FreeBSD, OpenBSD, NetBSD, DragonFly)
@@ -473,6 +476,15 @@ typedef struct CoreData {
         unsigned long long base;            // Base time measure for hi-res timer
 #endif
     } Time;
+#if defined(SUPPORT_VR_SIMULATOR)
+    struct {
+        VrStereoConfig config;              // VR stereo configuration for simulator
+        unsigned int stereoFboId;           // VR stereo rendering framebuffer id
+        unsigned int stereoTexId;           // VR stereo color texture (attached to framebuffer)
+        bool simulatorReady;                // VR simulator ready flag
+        bool stereoRender;                  // VR stereo rendering enabled/disabled flag
+    } Vr;               // VR simulator data
+#endif  // SUPPORT_VR_SIMULATOR
 } CoreData;
 
 //----------------------------------------------------------------------------------
@@ -1999,6 +2011,147 @@ void EndTextureMode(void)
     CORE.Window.currentFbo.width = CORE.Window.screen.width;
     CORE.Window.currentFbo.height = CORE.Window.screen.height;
 }
+
+
+#if defined(SUPPORT_VR_SIMULATOR)
+// Init VR simulator for selected device parameters
+void InitVrSimulator(VrDeviceInfo device)
+{
+#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
+    // Reset CORE.Vr.config for a new values assignment
+    memset(&CORE.Vr.config, 0, sizeof(VrStereoConfig));
+
+    // Compute aspect ratio
+    float aspect = ((float)device.hResolution*0.5f)/(float)device.vResolution;
+
+    // Compute lens parameters
+    float lensShift = (device.hScreenSize*0.25f - device.lensSeparationDistance*0.5f)/device.hScreenSize;
+    CORE.Vr.config.leftLensCenter[0] = 0.25f + lensShift;
+    CORE.Vr.config.leftLensCenter[1] = 0.5f;
+    CORE.Vr.config.rightLensCenter[0] = 0.75f - lensShift;
+    CORE.Vr.config.rightLensCenter[1] = 0.5f;
+    CORE.Vr.config.leftScreenCenter[0] = 0.25f;
+    CORE.Vr.config.leftScreenCenter[1] = 0.5f;
+    CORE.Vr.config.rightScreenCenter[0] = 0.75f;
+    CORE.Vr.config.rightScreenCenter[1] = 0.5f;
+
+    // Compute distortion scale parameters
+    // NOTE: To get lens max radius, lensShift must be normalized to [-1..1]
+    float lensRadius = fabsf(-1.0f - 4.0f*lensShift);
+    float lensRadiusSq = lensRadius*lensRadius;
+    float distortionScale = device.lensDistortionValues[0] +
+                            device.lensDistortionValues[1]*lensRadiusSq +
+                            device.lensDistortionValues[2]*lensRadiusSq*lensRadiusSq +
+                            device.lensDistortionValues[3]*lensRadiusSq*lensRadiusSq*lensRadiusSq;
+
+    float normScreenWidth = 0.5f;
+    float normScreenHeight = 1.0f;
+    CORE.Vr.config.scaleIn[0] = 2.0f/normScreenWidth;
+    CORE.Vr.config.scaleIn[1] = 2.0f/normScreenHeight/aspect;
+    CORE.Vr.config.scale[0] = normScreenWidth*0.5f/distortionScale;
+    CORE.Vr.config.scale[1] = normScreenHeight*0.5f*aspect/distortionScale;
+
+    // Fovy is normally computed with: 2*atan2f(device.vScreenSize, 2*device.eyeToScreenDistance)
+    // ...but with lens distortion it is increased (see Oculus SDK Documentation)
+    //float fovy = 2.0f*atan2f(device.vScreenSize*0.5f*distortionScale, device.eyeToScreenDistance);     // Really need distortionScale?
+    float fovy = 2.0f*(float)atan2f(device.vScreenSize*0.5f, device.eyeToScreenDistance);
+
+    // Compute camera projection matrices
+    float projOffset = 4.0f*lensShift;      // Scaled to projection space coordinates [-1..1]
+    Matrix proj = MatrixPerspective(fovy, aspect, RL_CULL_DISTANCE_NEAR, RL_CULL_DISTANCE_FAR);
+    rlSetMatrixProjectionStereo(MatrixMultiply(proj, MatrixTranslate(projOffset, 0.0f, 0.0f)), MatrixMultiply(proj, MatrixTranslate(-projOffset, 0.0f, 0.0f)));
+
+    // Compute camera transformation matrices
+    // NOTE: Camera movement might seem more natural if we model the head.
+    // Our axis of rotation is the base of our head, so we might want to add
+    // some y (base of head to eye level) and -z (center of head to eye protrusion) to the camera positions.
+    rlSetMatrixViewOffsetStereo(MatrixTranslate(-device.interpupillaryDistance*0.5f, 0.075f, 0.045f), MatrixTranslate(device.interpupillaryDistance*0.5f, 0.075f, 0.045f));
+
+    // Compute eyes Viewports
+    /*
+    CORE.Vr.config.eyeViewportRight[0] = 0;
+    CORE.Vr.config.eyeViewportRight[1] = 0;
+    CORE.Vr.config.eyeViewportRight[2] = device.hResolution/2;
+    CORE.Vr.config.eyeViewportRight[3] = device.vResolution;
+
+    CORE.Vr.config.eyeViewportLeft[0] = device.hResolution/2;
+    CORE.Vr.config.eyeViewportLeft[1] = 0;
+    CORE.Vr.config.eyeViewportLeft[2] = device.hResolution/2;
+    CORE.Vr.config.eyeViewportLeft[3] = device.vResolution;
+    */
+
+    CORE.Vr.simulatorReady = true;
+#else
+    TRACELOG(LOG_WARNING, "RLGL: VR Simulator not supported on OpenGL 1.1");
+#endif
+}
+
+// Update VR tracking (position and orientation) and camera
+// NOTE: Camera (position, target, up) gets update with head tracking information
+void UpdateVrTracking(Camera *camera)
+{
+    // TODO: Simulate 1st person camera system
+}
+
+// Close VR simulator for current device
+void CloseVrSimulator(void)
+{
+    CORE.Vr.simulatorReady = false;
+}
+
+// Get stereo rendering configuration parameters
+VrStereoConfig GetVrConfig(VrDeviceInfo device)
+{
+    VrStereoConfig config = { 0 };
+#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
+    config = CORE.Vr.config;
+#endif
+    return config;
+}
+
+// Detect if VR simulator is running
+bool IsVrSimulatorReady(void)
+{
+    return CORE.Vr.simulatorReady;
+}
+
+// Begin VR drawing configuration
+void BeginVrDrawing(RenderTexture2D target)
+{
+#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
+    if (CORE.Vr.simulatorReady)
+    {
+        rlEnableFramebuffer(target.id);     // Setup framebuffer for stereo rendering
+        //glEnable(GL_FRAMEBUFFER_SRGB);    // Enable SRGB framebuffer (only if required)
+
+        //rlViewport(0, 0, buffer.width, buffer.height); // Useful if rendering to separate framebuffers (every eye)
+        rlClearScreenBuffers();             // Clear current framebuffer
+
+        rlEnableStereoRender();
+    }
+#endif
+}
+
+// End VR drawing process (and desktop mirror)
+void EndVrDrawing(void)
+{
+#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
+    if (CORE.Vr.simulatorReady)
+    {
+        rlDisableStereoRender();
+
+        rlDisableFramebuffer();         // Unbind current framebuffer
+
+        // Reset viewport and default projection-modelview matrices
+        rlViewport(0, 0, RLGL.State.framebufferWidth, RLGL.State.framebufferHeight);
+        SetMatrixProjection(MatrixOrtho(0.0, RLGL.State.framebufferWidth, RLGL.State.framebufferHeight, 0.0, 0.0, 1.0));
+        SetMatrixModelview(MatrixIdentity());
+
+        rlDisableDepthTest();
+    }
+#endif
+}
+#endif          // SUPPORT_VR_SIMULATOR
 
 // Begin scissor mode (define screen area for following drawing)
 // NOTE: Scissor rec refers to bottom-left corner, we change it to upper-left

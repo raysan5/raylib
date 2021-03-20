@@ -29,8 +29,6 @@
 *   #define RLGL_STANDALONE
 *       Use rlgl as standalone library (no raylib dependency)
 *
-*   #define SUPPORT_VR_SIMULATOR
-*       Support VR simulation functionality (stereo rendering)
 *
 *   DEPENDENCIES:
 *       raymath     - 3D math functionality (Vector3, Matrix, Quaternion)
@@ -327,29 +325,6 @@ typedef enum {
         float fovy;             // Camera field-of-view apperture in Y (degrees)
     } Camera;
 
-    // Head-Mounted-Display device parameters
-    typedef struct VrDeviceInfo {
-        int hResolution;                // HMD horizontal resolution in pixels
-        int vResolution;                // HMD vertical resolution in pixels
-        float hScreenSize;              // HMD horizontal size in meters
-        float vScreenSize;              // HMD vertical size in meters
-        float vScreenCenter;            // HMD screen center in meters
-        float eyeToScreenDistance;      // HMD distance between eye and display in meters
-        float lensSeparationDistance;   // HMD lens separation distance in meters
-        float interpupillaryDistance;   // HMD IPD (distance between pupils) in meters
-        float lensDistortionValues[4];  // HMD lens distortion constant parameters
-        float chromaAbCorrection[4];    // HMD chromatic aberration correction parameters
-    } VrDeviceInfo;
-
-    // VR Stereo rendering configuration for simulator
-    typedef struct VrStereoConfig {
-        Shader distortionShader;        // VR stereo rendering distortion shader
-        Matrix eyesProjection[2];       // VR stereo rendering eyes projection matrices
-        Matrix eyesViewOffset[2];       // VR stereo rendering eyes view offset matrices
-        int eyeViewportRight[4];        // VR stereo rendering right eye viewport [x, y, w, h]
-        int eyeViewportLeft[4];         // VR stereo rendering left eye viewport [x, y, w, h]
-    } VrStereoConfig;
-
     // TraceLog message types
     typedef enum {
         LOG_ALL,
@@ -532,6 +507,8 @@ RLAPI void rlSetLineWidth(float width);                       // Set the line dr
 RLAPI float rlGetLineWidth(void);                             // Get the line drawing width
 RLAPI void rlEnableSmoothLines(void);                         // Enable line aliasing
 RLAPI void rlDisableSmoothLines(void);                        // Disable line aliasing
+RLAPI void rlEnableStereoRender(void);                        // Enable stereo rendering
+RLAPI void rlDisableStereoRender(void);                       // Disable stereo rendering
 
 RLAPI void rlClearColor(unsigned char r, unsigned char g, unsigned char b, unsigned char a);  // Clear color buffer with color
 RLAPI void rlClearScreenBuffers(void);                        // Clear used screen buffers (color and depth)
@@ -563,6 +540,9 @@ RLAPI void rlUnloadTexture(unsigned int id);                              // Unl
 RLAPI void rlGenerateMipmaps(Texture2D *texture);                         // Generate mipmap data for selected texture
 RLAPI void *rlReadTexturePixels(Texture2D texture);                       // Read texture pixel data
 RLAPI unsigned char *rlReadScreenPixels(int width, int height);           // Read screen pixel data (color buffer)
+
+RLAPI void rlSetMatrixProjectionStereo(Matrix right, Matrix left);        // Set eyes projection matrices for stereo rendering
+RLAPI void rlSetMatrixViewOffsetStereo(Matrix right, Matrix left);        // Set eyes view offsets matrices for stereo rendering
 
 // Framebuffer management (fbo)
 RLAPI unsigned int rlLoadFramebuffer(int width, int height);              // Load an empty framebuffer
@@ -597,14 +577,15 @@ RLAPI Texture2D GetShapesTexture(void);                                   // Get
 RLAPI Rectangle GetShapesTextureRec(void);                                // Get texture rectangle to draw shapes
 
 // Shader configuration functions
-RLAPI int GetShaderLocation(Shader shader, const char *uniformName);              // Get shader uniform location
-RLAPI int GetShaderLocationAttrib(Shader shader, const char *attribName);         // Get shader attribute location
+RLAPI int GetShaderLocation(Shader shader, const char *uniformName);      // Get shader uniform location
+RLAPI int GetShaderLocationAttrib(Shader shader, const char *attribName); // Get shader attribute location
 RLAPI void SetShaderValue(Shader shader, int locIndex, const void *value, int uniformType);               // Set shader uniform value
 RLAPI void SetShaderValueV(Shader shader, int locIndex, const void *value, int uniformType, int count);   // Set shader uniform value vector
-RLAPI void SetShaderValueMatrix(Shader shader, int locIndex, Matrix mat);       // Set shader uniform value (matrix 4x4)
+RLAPI void SetShaderValueMatrix(Shader shader, int locIndex, Matrix mat); // Set shader uniform value (matrix 4x4)
 RLAPI void SetMatrixProjection(Matrix proj);                              // Set a custom projection matrix (replaces internal projection matrix)
 RLAPI void SetMatrixModelview(Matrix view);                               // Set a custom modelview matrix (replaces internal modelview matrix)
 RLAPI Matrix GetMatrixModelview(void);                                    // Get internal modelview matrix
+RLAPI Matrix GetMatrixProjection(void);                                   // Get internal projection matrix
 
 // Texture maps generation (PBR)
 // NOTE: Required shaders should be provided
@@ -618,16 +599,6 @@ RLAPI void BeginShaderMode(Shader shader);              // Begin custom shader d
 RLAPI void EndShaderMode(void);                         // End custom shader drawing (use default shader)
 RLAPI void BeginBlendMode(int mode);                    // Begin blending mode (alpha, additive, multiplied)
 RLAPI void EndBlendMode(void);                          // End blending mode (reset to default: alpha blending)
-
-// VR control functions
-RLAPI void InitVrSimulator(void);                       // Init VR simulator for selected device parameters
-RLAPI void CloseVrSimulator(void);                      // Close VR simulator for current device
-RLAPI void UpdateVrTracking(Camera *camera);            // Update VR tracking (position and orientation) and camera
-RLAPI void SetVrConfiguration(VrDeviceInfo info, Shader distortion);      // Set stereo rendering configuration parameters
-RLAPI bool IsVrSimulatorReady(void);                    // Detect if VR simulator is ready
-RLAPI void ToggleVrMode(void);                          // Enable/Disable VR experience
-RLAPI void BeginVrDrawing(void);                        // Begin VR simulator stereo rendering
-RLAPI void EndVrDrawing(void);                          // End VR simulator stereo rendering
 
 RLAPI char *LoadFileText(const char *fileName);         // Load chars array from text file
 RLAPI int GetPixelDataSize(int width, int height, int format);// Get pixel data size in bytes (image or texture)
@@ -847,17 +818,6 @@ typedef struct RenderBatch {
     float currentDepth;         // Current depth value for next draw
 } RenderBatch;
 
-#if defined(SUPPORT_VR_SIMULATOR) && !defined(RLGL_STANDALONE)
-// VR Stereo rendering configuration for simulator
-typedef struct VrStereoConfig {
-    Shader distortionShader;        // VR stereo rendering distortion shader
-    Matrix eyesProjection[2];       // VR stereo rendering eyes projection matrices
-    Matrix eyesViewOffset[2];       // VR stereo rendering eyes view offset matrices
-    int eyeViewportRight[4];        // VR stereo rendering right eye viewport [x, y, w, h]
-    int eyeViewportLeft[4];         // VR stereo rendering left eye viewport [x, y, w, h]
-} VrStereoConfig;
-#endif
-
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
 typedef struct rlglData {
     RenderBatch *currentBatch;              // Current render batch
@@ -881,6 +841,10 @@ typedef struct rlglData {
         unsigned int defaultFShaderId;      // Default fragment shader Id (used by default shader program)
         Shader defaultShader;               // Basic shader, support vertex color and diffuse texture
         Shader currentShader;               // Shader to be used on rendering (by default, defaultShader)
+        
+        bool stereoRender;                  // Stereo rendering flag
+        Matrix eyesProjection[2];           // VR stereo rendering eyes projection matrices
+        Matrix eyesViewOffset[2];           // VR stereo rendering eyes view offset matrices
 
         int currentBlendMode;               // Blending mode active
         int glBlendSrcFactor;               // Blending source factor
@@ -910,15 +874,6 @@ typedef struct rlglData {
         int maxDepthBits;                   // Maximum bits for depth component
 
     } ExtSupported;     // Extensions supported flags
-#if defined(SUPPORT_VR_SIMULATOR)
-    struct {
-        VrStereoConfig config;              // VR stereo configuration for simulator
-        unsigned int stereoFboId;           // VR stereo rendering framebuffer id
-        unsigned int stereoTexId;           // VR stereo color texture (attached to framebuffer)
-        bool simulatorReady;                // VR simulator ready flag
-        bool stereoRender;                  // VR stereo rendering enabled/disabled flag
-    } Vr;               // VR simulator data
-#endif  // SUPPORT_VR_SIMULATOR
 } rlglData;
 #endif  // GRAPHICS_API_OPENGL_33 || GRAPHICS_API_OPENGL_ES2
 
@@ -961,11 +916,6 @@ static void SetRenderBatchDefault(void);                // Set default render ba
 
 static void GenDrawCube(void);              // Generate and draw cube
 static void GenDrawQuad(void);              // Generate and draw quad
-
-#if defined(SUPPORT_VR_SIMULATOR)
-static void SetStereoView(int eye, Matrix matProjection, Matrix matModelView);  // Set internal projection and modelview matrix depending on eye
-#endif
-
 #endif  // GRAPHICS_API_OPENGL_33 || GRAPHICS_API_OPENGL_ES2
 
 #if defined(GRAPHICS_API_OPENGL_11)
@@ -1469,13 +1419,13 @@ void rlEnableBackfaceCulling(void) { glEnable(GL_CULL_FACE); }
 void rlDisableBackfaceCulling(void) { glDisable(GL_CULL_FACE); }
 
 // Enable scissor test
-RLAPI void rlEnableScissorTest(void) { glEnable(GL_SCISSOR_TEST); }
+void rlEnableScissorTest(void) { glEnable(GL_SCISSOR_TEST); }
 
 // Disable scissor test
-RLAPI void rlDisableScissorTest(void) { glDisable(GL_SCISSOR_TEST); }
+void rlDisableScissorTest(void) { glDisable(GL_SCISSOR_TEST); }
 
 // Scissor test
-RLAPI void rlScissor(int x, int y, int width, int height) { glScissor(x, y, width, height); }
+void rlScissor(int x, int y, int width, int height) { glScissor(x, y, width, height); }
 
 // Enable wire mode
 void rlEnableWireMode(void)
@@ -1522,6 +1472,18 @@ void rlDisableSmoothLines(void)
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_21) || defined(GRAPHICS_API_OPENGL_11)
     glDisable(GL_LINE_SMOOTH);
 #endif
+}
+
+// Enable stereo rendering
+void rlEnableStereoRender(void)
+{
+    RLGL.State.stereoRender = true;
+}
+
+// Disable stereo rendering
+void rlDisableStereoRender(void)
+{
+    RLGL.State.stereoRender = false;
 }
 
 // Unload framebuffer from GPU memory
@@ -2889,16 +2851,21 @@ void rlDrawMesh(Mesh mesh, Material material, Matrix transform)
     }
 
     int eyesCount = 1;
-#if defined(SUPPORT_VR_SIMULATOR)
-    if (RLGL.Vr.stereoRender) eyesCount = 2;
-#endif
+    if (RLGL.State.stereoRender) eyesCount = 2;
 
     for (int eye = 0; eye < eyesCount; eye++)
     {
         if (eyesCount == 1) RLGL.State.modelview = matModelView;
-        #if defined(SUPPORT_VR_SIMULATOR)
-        else SetStereoView(eye, matProjection, matModelView);
-        #endif
+        else
+        {
+            // Setup current eye viewport (half screen width)
+            rlViewport(eye*RLGL.State.framebufferWidth/2, 0, RLGL.State.framebufferWidth/2, RLGL.State.framebufferHeight);
+
+            // Set current eye view offset to modelview matrix
+            SetMatrixModelview(MatrixMultiply(matModelView, RLGL.State.eyesViewOffset[eye]));
+            // Set current eye projection matrix
+            SetMatrixProjection(RLGL.State.eyesProjection[eye]);
+        }
 
         // Calculate model-view-projection matrix (MVP)
         Matrix matMVP = MatrixMultiply(RLGL.State.modelview, RLGL.State.projection);        // Transform to screen-space coordinates
@@ -3143,6 +3110,20 @@ void *rlReadTexturePixels(Texture2D texture)
 #endif
 
     return pixels;
+}
+
+// Set eyes projection matrices for stereo rendering
+void rlSetMatrixProjectionStereo(Matrix right, Matrix left)
+{
+    RLGL.State.eyesProjection[0] = right;
+    RLGL.State.eyesProjection[1] = left;
+}
+
+// Set eyes view offsets matrices for stereo rendering
+void rlSetMatrixViewOffsetStereo(Matrix right, Matrix left)
+{
+    RLGL.State.eyesViewOffset[0] = right;
+    RLGL.State.eyesViewOffset[1] = left;
 }
 
 //----------------------------------------------------------------------------------
@@ -3813,250 +3794,6 @@ void EndBlendMode(void)
     BeginBlendMode(BLEND_ALPHA);
 }
 
-#if defined(SUPPORT_VR_SIMULATOR)
-// Init VR simulator for selected device parameters
-// NOTE: It modifies the global variable: RLGL.Vr.stereoFboId
-void InitVrSimulator(void)
-{
-#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
-    // Initialize framebuffer and textures for stereo rendering
-    // NOTE: Screen size should match HMD aspect ratio
-    RLGL.Vr.stereoFboId = rlLoadFramebuffer(RLGL.State.framebufferWidth, RLGL.State.framebufferHeight);
-
-    // Load color/depth textures to attach to framebuffer
-    RLGL.Vr.stereoTexId = rlLoadTexture(NULL, RLGL.State.framebufferWidth, RLGL.State.framebufferHeight, PIXELFORMAT_UNCOMPRESSED_R8G8B8A8, 1);
-    unsigned int depthId = rlLoadTextureDepth(RLGL.State.framebufferWidth, RLGL.State.framebufferHeight, true);
-
-    // Attach color texture and depth renderbuffer/texture to FBO
-    rlFramebufferAttach(RLGL.Vr.stereoFboId, RLGL.Vr.stereoTexId, RL_ATTACHMENT_COLOR_CHANNEL0, RL_ATTACHMENT_TEXTURE2D);
-    rlFramebufferAttach(RLGL.Vr.stereoFboId, depthId, RL_ATTACHMENT_DEPTH, RL_ATTACHMENT_RENDERBUFFER);
-
-    RLGL.Vr.simulatorReady = true;
-#else
-    TRACELOG(LOG_WARNING, "RLGL: VR Simulator not supported on OpenGL 1.1");
-#endif
-}
-
-// Update VR tracking (position and orientation) and camera
-// NOTE: Camera (position, target, up) gets update with head tracking information
-void UpdateVrTracking(Camera *camera)
-{
-    // TODO: Simulate 1st person camera system
-}
-
-// Close VR simulator for current device
-void CloseVrSimulator(void)
-{
-#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
-    if (RLGL.Vr.simulatorReady)
-    {
-        rlUnloadTexture(RLGL.Vr.stereoTexId);       // Unload color texture
-        rlUnloadFramebuffer(RLGL.Vr.stereoFboId);   // Unload stereo framebuffer and depth texture/renderbuffer
-    }
-#endif
-}
-
-// Set stereo rendering configuration parameters
-void SetVrConfiguration(VrDeviceInfo hmd, Shader distortion)
-{
-#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
-    // Reset RLGL.Vr.config for a new values assignment
-    memset(&RLGL.Vr.config, 0, sizeof(RLGL.Vr.config));
-
-    // Assign distortion shader
-    RLGL.Vr.config.distortionShader = distortion;
-
-    // Compute aspect ratio
-    float aspect = ((float)hmd.hResolution*0.5f)/(float)hmd.vResolution;
-
-    // Compute lens parameters
-    float lensShift = (hmd.hScreenSize*0.25f - hmd.lensSeparationDistance*0.5f)/hmd.hScreenSize;
-    float leftLensCenter[2] = { 0.25f + lensShift, 0.5f };
-    float rightLensCenter[2] = { 0.75f - lensShift, 0.5f };
-    float leftScreenCenter[2] = { 0.25f, 0.5f };
-    float rightScreenCenter[2] = { 0.75f, 0.5f };
-
-    // Compute distortion scale parameters
-    // NOTE: To get lens max radius, lensShift must be normalized to [-1..1]
-    float lensRadius = fabsf(-1.0f - 4.0f*lensShift);
-    float lensRadiusSq = lensRadius*lensRadius;
-    float distortionScale = hmd.lensDistortionValues[0] +
-                            hmd.lensDistortionValues[1]*lensRadiusSq +
-                            hmd.lensDistortionValues[2]*lensRadiusSq*lensRadiusSq +
-                            hmd.lensDistortionValues[3]*lensRadiusSq*lensRadiusSq*lensRadiusSq;
-
-    TRACELOGD("RLGL: VR device configuration:");
-    TRACELOGD("    > Distortion Scale: %f", distortionScale);
-
-    float normScreenWidth = 0.5f;
-    float normScreenHeight = 1.0f;
-    float scaleIn[2] = { 2.0f/normScreenWidth, 2.0f/normScreenHeight/aspect };
-    float scale[2] = { normScreenWidth*0.5f/distortionScale, normScreenHeight*0.5f*aspect/distortionScale };
-
-    TRACELOGD("    > Distortion Shader: LeftLensCenter = { %f, %f }", leftLensCenter[0], leftLensCenter[1]);
-    TRACELOGD("    > Distortion Shader: RightLensCenter = { %f, %f }", rightLensCenter[0], rightLensCenter[1]);
-    TRACELOGD("    > Distortion Shader: Scale = { %f, %f }", scale[0], scale[1]);
-    TRACELOGD("    > Distortion Shader: ScaleIn = { %f, %f }", scaleIn[0], scaleIn[1]);
-
-    // Fovy is normally computed with: 2*atan2f(hmd.vScreenSize, 2*hmd.eyeToScreenDistance)
-    // ...but with lens distortion it is increased (see Oculus SDK Documentation)
-    //float fovy = 2.0f*atan2f(hmd.vScreenSize*0.5f*distortionScale, hmd.eyeToScreenDistance);     // Really need distortionScale?
-    float fovy = 2.0f*(float)atan2f(hmd.vScreenSize*0.5f, hmd.eyeToScreenDistance);
-
-    // Compute camera projection matrices
-    float projOffset = 4.0f*lensShift;      // Scaled to projection space coordinates [-1..1]
-    Matrix proj = MatrixPerspective(fovy, aspect, RL_CULL_DISTANCE_NEAR, RL_CULL_DISTANCE_FAR);
-    RLGL.Vr.config.eyesProjection[0] = MatrixMultiply(proj, MatrixTranslate(projOffset, 0.0f, 0.0f));
-    RLGL.Vr.config.eyesProjection[1] = MatrixMultiply(proj, MatrixTranslate(-projOffset, 0.0f, 0.0f));
-
-    // Compute camera transformation matrices
-    // NOTE: Camera movement might seem more natural if we model the head.
-    // Our axis of rotation is the base of our head, so we might want to add
-    // some y (base of head to eye level) and -z (center of head to eye protrusion) to the camera positions.
-    RLGL.Vr.config.eyesViewOffset[0] = MatrixTranslate(-hmd.interpupillaryDistance*0.5f, 0.075f, 0.045f);
-    RLGL.Vr.config.eyesViewOffset[1] = MatrixTranslate(hmd.interpupillaryDistance*0.5f, 0.075f, 0.045f);
-
-    // Compute eyes Viewports
-    RLGL.Vr.config.eyeViewportRight[2] = hmd.hResolution/2;
-    RLGL.Vr.config.eyeViewportRight[3] = hmd.vResolution;
-
-    RLGL.Vr.config.eyeViewportLeft[0] = hmd.hResolution/2;
-    RLGL.Vr.config.eyeViewportLeft[1] = 0;
-    RLGL.Vr.config.eyeViewportLeft[2] = hmd.hResolution/2;
-    RLGL.Vr.config.eyeViewportLeft[3] = hmd.vResolution;
-
-    if (RLGL.Vr.config.distortionShader.id > 0)
-    {
-        // Update distortion shader with lens and distortion-scale parameters
-        SetShaderValue(RLGL.Vr.config.distortionShader, GetShaderLocation(RLGL.Vr.config.distortionShader, "leftLensCenter"), leftLensCenter, SHADER_UNIFORM_VEC2);
-        SetShaderValue(RLGL.Vr.config.distortionShader, GetShaderLocation(RLGL.Vr.config.distortionShader, "rightLensCenter"), rightLensCenter, SHADER_UNIFORM_VEC2);
-        SetShaderValue(RLGL.Vr.config.distortionShader, GetShaderLocation(RLGL.Vr.config.distortionShader, "leftScreenCenter"), leftScreenCenter, SHADER_UNIFORM_VEC2);
-        SetShaderValue(RLGL.Vr.config.distortionShader, GetShaderLocation(RLGL.Vr.config.distortionShader, "rightScreenCenter"), rightScreenCenter, SHADER_UNIFORM_VEC2);
-
-        SetShaderValue(RLGL.Vr.config.distortionShader, GetShaderLocation(RLGL.Vr.config.distortionShader, "scale"), scale, SHADER_UNIFORM_VEC2);
-        SetShaderValue(RLGL.Vr.config.distortionShader, GetShaderLocation(RLGL.Vr.config.distortionShader, "scaleIn"), scaleIn, SHADER_UNIFORM_VEC2);
-        SetShaderValue(RLGL.Vr.config.distortionShader, GetShaderLocation(RLGL.Vr.config.distortionShader, "hmdWarpParam"), hmd.lensDistortionValues, SHADER_UNIFORM_VEC4);
-        SetShaderValue(RLGL.Vr.config.distortionShader, GetShaderLocation(RLGL.Vr.config.distortionShader, "chromaAbParam"), hmd.chromaAbCorrection, SHADER_UNIFORM_VEC4);
-    }
-#endif
-}
-
-// Detect if VR simulator is running
-bool IsVrSimulatorReady(void)
-{
-#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
-    return RLGL.Vr.simulatorReady;
-#else
-    return false;
-#endif
-}
-
-// Enable/Disable VR experience (device or simulator)
-void ToggleVrMode(void)
-{
-#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
-    RLGL.Vr.simulatorReady = !RLGL.Vr.simulatorReady;
-
-    if (!RLGL.Vr.simulatorReady)
-    {
-        RLGL.Vr.stereoRender = false;
-
-        // Reset viewport and default projection-modelview matrices
-        rlViewport(0, 0, RLGL.State.framebufferWidth, RLGL.State.framebufferHeight);
-        RLGL.State.projection = MatrixOrtho(0.0, RLGL.State.framebufferWidth, RLGL.State.framebufferHeight, 0.0, 0.0, 1.0);
-        RLGL.State.modelview = MatrixIdentity();
-    }
-    else RLGL.Vr.stereoRender = true;
-#endif
-}
-
-// Begin VR drawing configuration
-void BeginVrDrawing(void)
-{
-#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
-    if (RLGL.Vr.simulatorReady)
-    {
-        rlEnableFramebuffer(RLGL.Vr.stereoFboId);   // Setup framebuffer for stereo rendering
-        //glEnable(GL_FRAMEBUFFER_SRGB);          // Enable SRGB framebuffer (only if required)
-
-        //rlViewport(0, 0, buffer.width, buffer.height); // Useful if rendering to separate framebuffers (every eye)
-        rlClearScreenBuffers();                   // Clear current framebuffer
-
-        RLGL.Vr.stereoRender = true;
-    }
-#endif
-}
-
-// End VR drawing process (and desktop mirror)
-void EndVrDrawing(void)
-{
-#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
-    if (RLGL.Vr.simulatorReady)
-    {
-        RLGL.Vr.stereoRender = false;   // Disable stereo render
-
-        rlDisableFramebuffer();         // Unbind current framebuffer
-
-        rlClearScreenBuffers();         // Clear current framebuffer
-
-        // Set viewport to default framebuffer size (screen size)
-        rlViewport(0, 0, RLGL.State.framebufferWidth, RLGL.State.framebufferHeight);
-
-        // Let rlgl reconfigure internal matrices
-        rlMatrixMode(RL_PROJECTION);                            // Enable internal projection matrix
-        rlLoadIdentity();                                       // Reset internal projection matrix
-        rlOrtho(0.0, RLGL.State.framebufferWidth, RLGL.State.framebufferHeight, 0.0, 0.0, 1.0); // Recalculate internal RLGL.State.projection matrix
-        rlMatrixMode(RL_MODELVIEW);                             // Enable internal modelview matrix
-        rlLoadIdentity();                                       // Reset internal modelview matrix
-
-        // Draw stereo framebuffer texture using distortion shader if available
-        if (RLGL.Vr.config.distortionShader.id > 0) RLGL.State.currentShader = RLGL.Vr.config.distortionShader;
-        else RLGL.State.currentShader = GetShaderDefault();
-
-        rlEnableTexture(RLGL.Vr.stereoTexId);
-
-        rlPushMatrix();
-            rlBegin(RL_QUADS);
-                rlColor4ub(255, 255, 255, 255);
-                rlNormal3f(0.0f, 0.0f, 1.0f);
-
-                // Bottom-left corner for texture and quad
-                rlTexCoord2f(0.0f, 1.0f);
-                rlVertex2f(0.0f, 0.0f);
-
-                // Bottom-right corner for texture and quad
-                rlTexCoord2f(0.0f, 0.0f);
-                rlVertex2f(0.0f, (float)RLGL.State.framebufferHeight);
-
-                // Top-right corner for texture and quad
-                rlTexCoord2f(1.0f, 0.0f);
-                rlVertex2f((float)RLGL.State.framebufferWidth, (float)RLGL.State.framebufferHeight);
-
-                // Top-left corner for texture and quad
-                rlTexCoord2f(1.0f, 1.0f);
-                rlVertex2f((float)RLGL.State.framebufferWidth, 0.0f);
-            rlEnd();
-        rlPopMatrix();
-
-        rlDisableTexture();
-
-        // Update and draw render texture fbo with distortion to backbuffer
-        DrawRenderBatch(RLGL.currentBatch);
-
-        // Restore RLGL.State.defaultShader
-        RLGL.State.currentShader = RLGL.State.defaultShader;
-
-        // Reset viewport and default projection-modelview matrices
-        rlViewport(0, 0, RLGL.State.framebufferWidth, RLGL.State.framebufferHeight);
-        RLGL.State.projection = MatrixOrtho(0.0, RLGL.State.framebufferWidth, RLGL.State.framebufferHeight, 0.0, 0.0, 1.0);
-        RLGL.State.modelview = MatrixIdentity();
-
-        rlDisableDepthTest();
-    }
-#endif
-}
-#endif          // SUPPORT_VR_SIMULATOR
-
 //----------------------------------------------------------------------------------
 // Module specific Functions Definition
 //----------------------------------------------------------------------------------
@@ -4475,15 +4212,21 @@ static void DrawRenderBatch(RenderBatch *batch)
     Matrix matModelView = RLGL.State.modelview;
 
     int eyesCount = 1;
-#if defined(SUPPORT_VR_SIMULATOR)
-    if (RLGL.Vr.stereoRender) eyesCount = 2;
-#endif
+    if (RLGL.State.stereoRender) eyesCount = 2;
 
     for (int eye = 0; eye < eyesCount; eye++)
     {
-#if defined(SUPPORT_VR_SIMULATOR)
-        if (eyesCount == 2) SetStereoView(eye, matProjection, matModelView);
-#endif
+        if (eyesCount == 2)
+        {
+            // Setup current eye viewport (half screen width)
+            rlViewport(eye*RLGL.State.framebufferWidth/2, 0, RLGL.State.framebufferWidth/2, RLGL.State.framebufferHeight);
+
+            // Set current eye view offset to modelview matrix
+            SetMatrixModelview(MatrixMultiply(matModelView, RLGL.State.eyesViewOffset[eye]));
+            // Set current eye projection matrix
+            SetMatrixProjection(RLGL.State.eyesProjection[eye]);
+        }
+
         // Draw buffers
         if (batch->vertexBuffer[batch->currentBuffer].vCounter > 0)
         {
@@ -4769,28 +4512,6 @@ static void GenDrawCube(void)
     glDeleteBuffers(1, &cubeVBO);
     glDeleteVertexArrays(1, &cubeVAO);
 }
-
-#if defined(SUPPORT_VR_SIMULATOR)
-// Set internal projection and modelview matrix depending on eyes tracking data
-static void SetStereoView(int eye, Matrix matProjection, Matrix matModelView)
-{
-    Matrix eyeProjection = matProjection;
-    Matrix eyeModelView = matModelView;
-
-    // Setup viewport and projection/modelview matrices using tracking data
-    rlViewport(eye*RLGL.State.framebufferWidth/2, 0, RLGL.State.framebufferWidth/2, RLGL.State.framebufferHeight);
-
-    // Apply view offset to modelview matrix
-    eyeModelView = MatrixMultiply(matModelView, RLGL.Vr.config.eyesViewOffset[eye]);
-
-    // Set current eye projection matrix
-    eyeProjection = RLGL.Vr.config.eyesProjection[eye];
-
-    SetMatrixModelview(eyeModelView);
-    SetMatrixProjection(eyeProjection);
-}
-#endif  // SUPPORT_VR_SIMULATOR
-
 #endif  // GRAPHICS_API_OPENGL_33 || GRAPHICS_API_OPENGL_ES2
 
 #if defined(GRAPHICS_API_OPENGL_11)

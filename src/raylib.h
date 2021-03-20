@@ -449,17 +449,27 @@ typedef struct Music {
 
 // Head-Mounted-Display device parameters
 typedef struct VrDeviceInfo {
-    int hResolution;                // HMD horizontal resolution in pixels
-    int vResolution;                // HMD vertical resolution in pixels
-    float hScreenSize;              // HMD horizontal size in meters
-    float vScreenSize;              // HMD vertical size in meters
-    float vScreenCenter;            // HMD screen center in meters
-    float eyeToScreenDistance;      // HMD distance between eye and display in meters
-    float lensSeparationDistance;   // HMD lens separation distance in meters
-    float interpupillaryDistance;   // HMD IPD (distance between pupils) in meters
-    float lensDistortionValues[4];  // HMD lens distortion constant parameters
-    float chromaAbCorrection[4];    // HMD chromatic aberration correction parameters
+    int hResolution;                // Horizontal resolution in pixels
+    int vResolution;                // Vertical resolution in pixels
+    float hScreenSize;              // Horizontal size in meters
+    float vScreenSize;              // Vertical size in meters
+    float vScreenCenter;            // Screen center in meters
+    float eyeToScreenDistance;      // Distance between eye and display in meters
+    float lensSeparationDistance;   // Lens separation distance in meters
+    float interpupillaryDistance;   // IPD (distance between pupils) in meters
+    float lensDistortionValues[4];  // Lens distortion constant parameters
+    float chromaAbCorrection[4];    // Chromatic aberration correction parameters
 } VrDeviceInfo;
+
+// VR Stereo rendering configuration for simulator
+typedef struct VrStereoConfig {
+    float leftLensCenter[2];        // VR left lens center
+    float rightLensCenter[2];       // VR right lens center
+    float leftScreenCenter[2];      // VR left screen center
+    float rightScreenCenter[2];     // VR right screen center
+    float scale[2];                 // VR distortion scale
+    float scaleIn[2];               // VR distortion scale in
+} VrStereoConfig;
 
 //----------------------------------------------------------------------------------
 // Enumerators Definition
@@ -1441,14 +1451,14 @@ RLAPI void BeginBlendMode(int mode);                                      // Beg
 RLAPI void EndBlendMode(void);                                            // End blending mode (reset to default: alpha blending)
 
 // VR control functions
-RLAPI void InitVrSimulator(void);                       // Init VR simulator for selected device parameters
+RLAPI void InitVrSimulator(VrDeviceInfo device);        // Init VR simulator for selected device parameters
 RLAPI void CloseVrSimulator(void);                      // Close VR simulator for current device
-RLAPI void UpdateVrTracking(Camera *camera);            // Update VR tracking (position and orientation) and camera
-RLAPI void SetVrConfiguration(VrDeviceInfo info, Shader distortion);      // Set stereo rendering configuration parameters
 RLAPI bool IsVrSimulatorReady(void);                    // Detect if VR simulator is ready
-RLAPI void ToggleVrMode(void);                          // Enable/Disable VR experience
-RLAPI void BeginVrDrawing(void);                        // Begin VR simulator stereo rendering
+RLAPI void UpdateVrTracking(Camera *camera);            // Update VR tracking (position and orientation) and camera
+RLAPI void BeginVrDrawing(RenderTexture2D target);      // Begin VR simulator stereo rendering (using provided fbo)
 RLAPI void EndVrDrawing(void);                          // End VR simulator stereo rendering
+RLAPI VrStereoConfig GetVrConfig(VrDeviceInfo device);        // Get stereo rendering configuration parameters
+RLAPI Texture2D GetVrTexture(void);                     // Get VR framebuffer texture
 
 //------------------------------------------------------------------------------------
 // Audio Loading and Playing Functions (Module: audio)
