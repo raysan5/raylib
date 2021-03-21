@@ -1,6 +1,6 @@
 /**********************************************************************************************
 *
-*   rlgl v3.1 - raylib OpenGL abstraction layer
+*   rlgl v3.2 - raylib OpenGL abstraction layer
 *
 *   rlgl is a wrapper for multiple OpenGL versions (1.1, 2.1, 3.3 Core, ES 2.0) to
 *   pseudo-OpenGL 1.1 style functions (rlVertex, rlTranslate, rlRotate...).
@@ -235,6 +235,54 @@ typedef enum {
     RL_ATTACHMENT_RENDERBUFFER = 200,
 } FramebufferTexType;
 
+// Dynamic vertex buffers (position + texcoords + colors + indices arrays)
+typedef struct VertexBuffer {
+    int elementsCount;          // Number of elements in the buffer (QUADS)
+
+    int vCounter;               // Vertex position counter to process (and draw) from full buffer
+    int tcCounter;              // Vertex texcoord counter to process (and draw) from full buffer
+    int cCounter;               // Vertex color counter to process (and draw) from full buffer
+
+    float *vertices;            // Vertex position (XYZ - 3 components per vertex) (shader-location = 0)
+    float *texcoords;           // Vertex texture coordinates (UV - 2 components per vertex) (shader-location = 1)
+    unsigned char *colors;      // Vertex colors (RGBA - 4 components per vertex) (shader-location = 3)
+#if defined(GRAPHICS_API_OPENGL_11) || defined(GRAPHICS_API_OPENGL_33)
+    unsigned int *indices;      // Vertex indices (in case vertex data comes indexed) (6 indices per quad)
+#endif
+#if defined(GRAPHICS_API_OPENGL_ES2)
+    unsigned short *indices;    // Vertex indices (in case vertex data comes indexed) (6 indices per quad)
+#endif
+    unsigned int vaoId;         // OpenGL Vertex Array Object id
+    unsigned int vboId[4];      // OpenGL Vertex Buffer Objects id (4 types of vertex data)
+} VertexBuffer;
+
+// Draw call type
+// NOTE: Only texture changes register a new draw, other state-change-related elements are not
+// used at this moment (vaoId, shaderId, matrices), raylib just forces a batch draw call if any
+// of those state-change happens (this is done in core module)
+typedef struct DrawCall {
+    int mode;                   // Drawing mode: LINES, TRIANGLES, QUADS
+    int vertexCount;            // Number of vertex of the draw
+    int vertexAlignment;        // Number of vertex required for index alignment (LINES, TRIANGLES)
+    //unsigned int vaoId;       // Vertex array id to be used on the draw -> Using RLGL.currentBatch->vertexBuffer.vaoId
+    //unsigned int shaderId;    // Shader id to be used on the draw -> Using RLGL.currentShader.id
+    unsigned int textureId;     // Texture id to be used on the draw -> Use to create new draw call if changes
+
+    //Matrix projection;        // Projection matrix for this draw -> Using RLGL.projection
+    //Matrix modelview;         // Modelview matrix for this draw -> Using RLGL.modelview
+} DrawCall;
+
+// RenderBatch type
+typedef struct RenderBatch {
+    int buffersCount;           // Number of vertex buffers (multi-buffering support)
+    int currentBuffer;          // Current buffer tracking in case of multi-buffering
+    VertexBuffer *vertexBuffer; // Dynamic buffer(s) for vertex data
+
+    DrawCall *draws;            // Draw calls array, depends on textureId
+    int drawsCounter;           // Draw calls counter
+    float currentDepth;         // Current depth value for next draw
+} RenderBatch;
+
 #if defined(RLGL_STANDALONE)
     #ifndef __cplusplus
     // Boolean type
@@ -372,6 +420,14 @@ typedef enum {
         TEXTURE_FILTER_ANISOTROPIC_8X,          // Anisotropic filtering 8x
         TEXTURE_FILTER_ANISOTROPIC_16X,         // Anisotropic filtering 16x
     } TextureFilter;
+    
+    // Texture parameters: wrap mode
+    typedef enum {
+        TEXTURE_WRAP_REPEAT = 0,        // Repeats texture in tiled mode
+        TEXTURE_WRAP_CLAMP,             // Clamps texture to edge pixel in tiled mode
+        TEXTURE_WRAP_MIRROR_REPEAT,     // Mirrors and repeats the texture in tiled mode
+        TEXTURE_WRAP_MIRROR_CLAMP       // Mirrors and clamps to border the texture in tiled mode
+    } TextureWrap;
 
     // Color blending modes (pre-defined)
     typedef enum {
@@ -484,35 +540,33 @@ RLAPI void rlColor4f(float x, float y, float z, float w); // Define one vertex (
 // Functions Declaration - OpenGL equivalent functions (common to 1.1, 3.3+, ES2)
 // NOTE: This functions are used to completely abstract raylib code from OpenGL layer
 //------------------------------------------------------------------------------------
-RLAPI void rlEnableTexture(unsigned int id);                  // Enable texture usage
-RLAPI void rlDisableTexture(void);                            // Disable texture usage
+RLAPI void rlEnableTexture(unsigned int id);          // Enable texture usage
+RLAPI void rlDisableTexture(void);                    // Disable texture usage
 RLAPI void rlTextureParameters(unsigned int id, int param, int value); // Set texture parameters (filter, wrap)
-RLAPI void rlEnableShader(unsigned int id);                   // Enable shader program usage
-RLAPI void rlDisableShader(void);                             // Disable shader program usage
-RLAPI void rlEnableFramebuffer(unsigned int id);              // Enable render texture (fbo)
-RLAPI void rlDisableFramebuffer(void);                        // Disable render texture (fbo), return to default framebuffer
-RLAPI void rlEnableDepthTest(void);                           // Enable depth test
-RLAPI void rlDisableDepthTest(void);                          // Disable depth test
-RLAPI void rlEnableDepthMask(void);                           // Enable depth write
-RLAPI void rlDisableDepthMask(void);                          // Disable depth write
-RLAPI void rlEnableBackfaceCulling(void);                     // Enable backface culling
-RLAPI void rlDisableBackfaceCulling(void);                    // Disable backface culling
-RLAPI void rlEnableScissorTest(void);                         // Enable scissor test
-RLAPI void rlDisableScissorTest(void);                        // Disable scissor test
-RLAPI void rlScissor(int x, int y, int width, int height);    // Scissor test
-RLAPI void rlEnableWireMode(void);                            // Enable wire mode
-RLAPI void rlDisableWireMode(void);                           // Disable wire mode
-RLAPI void rlSetLineWidth(float width);                       // Set the line drawing width
-RLAPI float rlGetLineWidth(void);                             // Get the line drawing width
-RLAPI void rlEnableSmoothLines(void);                         // Enable line aliasing
-RLAPI void rlDisableSmoothLines(void);                        // Disable line aliasing
-RLAPI void rlEnableStereoRender(void);                        // Enable stereo rendering
-RLAPI void rlDisableStereoRender(void);                       // Disable stereo rendering
+RLAPI void rlEnableShader(unsigned int id);           // Enable shader program usage
+RLAPI void rlDisableShader(void);                     // Disable shader program usage
+RLAPI void rlEnableFramebuffer(unsigned int id);      // Enable render texture (fbo)
+RLAPI void rlDisableFramebuffer(void);                // Disable render texture (fbo), return to default framebuffer
+RLAPI void rlEnableDepthTest(void);                   // Enable depth test
+RLAPI void rlDisableDepthTest(void);                  // Disable depth test
+RLAPI void rlEnableDepthMask(void);                   // Enable depth write
+RLAPI void rlDisableDepthMask(void);                  // Disable depth write
+RLAPI void rlEnableBackfaceCulling(void);             // Enable backface culling
+RLAPI void rlDisableBackfaceCulling(void);            // Disable backface culling
+RLAPI void rlEnableScissorTest(void);                 // Enable scissor test
+RLAPI void rlDisableScissorTest(void);                // Disable scissor test
+RLAPI void rlScissor(int x, int y, int width, int height); // Scissor test
+RLAPI void rlEnableWireMode(void);                    // Enable wire mode
+RLAPI void rlDisableWireMode(void);                   // Disable wire mode
+RLAPI void rlSetLineWidth(float width);               // Set the line drawing width
+RLAPI float rlGetLineWidth(void);                     // Get the line drawing width
+RLAPI void rlEnableSmoothLines(void);                 // Enable line aliasing
+RLAPI void rlDisableSmoothLines(void);                // Disable line aliasing
+RLAPI void rlEnableStereoRender(void);                // Enable stereo rendering
+RLAPI void rlDisableStereoRender(void);               // Disable stereo rendering
 
-RLAPI void rlClearColor(unsigned char r, unsigned char g, unsigned char b, unsigned char a);  // Clear color buffer with color
-RLAPI void rlClearScreenBuffers(void);                        // Clear used screen buffers (color and depth)
-RLAPI void rlUpdateBuffer(int bufferId, void *data, int dataSize); // Update GPU buffer with new data
-RLAPI unsigned int rlLoadAttribBuffer(unsigned int vaoId, int shaderLoc, void *buffer, int size, bool dynamic);   // Load a new attributes buffer
+RLAPI void rlClearColor(unsigned char r, unsigned char g, unsigned char b, unsigned char a); // Clear color buffer with color
+RLAPI void rlClearScreenBuffers(void);                // Clear used screen buffers (color and depth)
 
 //------------------------------------------------------------------------------------
 // Functions Declaration - rlgl functionality
@@ -524,8 +578,8 @@ RLAPI int rlGetVersion(void);                         // Returns current OpenGL 
 RLAPI void rlCheckErrors(void);                       // Check and log OpenGL error codes
 RLAPI void rlLoadExtensions(void *loader);            // Load OpenGL extensions (loader function pointer required)
 
-RLAPI void rlSetBlendMode(int mode);
-RLAPI void rlSetBlendFactors(int glSrcFactor, int glDstFactor, int glEquation);    // Set blending mode factor and equation (using OpenGL factors)
+RLAPI void rlSetBlendMode(int mode);                  // Set blending mode
+RLAPI void rlSetBlendFactors(int glSrcFactor, int glDstFactor, int glEquation); // Set blending mode factor and equation (using OpenGL factors)
 
 // Textures data management
 RLAPI unsigned int rlLoadTexture(void *data, int width, int height, int format, int mipmapCount); // Load texture in GPU
@@ -539,6 +593,11 @@ RLAPI void rlGenerateMipmaps(Texture2D *texture);                         // Gen
 RLAPI void *rlReadTexturePixels(Texture2D texture);                       // Read texture pixel data
 RLAPI unsigned char *rlReadScreenPixels(int width, int height);           // Read screen pixel data (color buffer)
 
+// OpenGL state management
+RLAPI Matrix rlGetMatrixModelview(void);                                  // Get internal modelview matrix
+RLAPI Matrix rlGetMatrixProjection(void);                                 // Get internal projection matrix
+RLAPI void rlSetMatrixProjection(Matrix proj);                            // Set a custom projection matrix (replaces internal projection matrix)
+RLAPI void rlSetMatrixModelview(Matrix view);                             // Set a custom modelview matrix (replaces internal modelview matrix)
 RLAPI void rlSetMatrixProjectionStereo(Matrix right, Matrix left);        // Set eyes projection matrices for stereo rendering
 RLAPI void rlSetMatrixViewOffsetStereo(Matrix right, Matrix left);        // Set eyes view offsets matrices for stereo rendering
 
@@ -556,23 +615,30 @@ RLAPI void rlDrawMesh(Mesh mesh, Material material, Matrix transform);    // Dra
 RLAPI void rlDrawMeshInstanced(Mesh mesh, Material material, Matrix *transforms, int count);    // Draw a 3d mesh with material and transform
 RLAPI void rlUnloadMesh(Mesh *mesh);                                      // Unload mesh data from CPU and GPU
 
-// NOTE: There is a set of shader related functions that are available to end user,
-// to avoid creating function wrappers through core module, they have been directly declared in raylib.h
+RLAPI unsigned int rlLoadVertexBuffer(unsigned int vaoId, int index, void *buffer, int size, bool dynamic);   // Load a vertex buffer attribute
+RLAPI void rlUpdateBuffer(int bufferId, void *data, int dataSize);        // Update GPU buffer with new data
 
-RLAPI unsigned int rlLoadShaderCode(const char *vsCode, const char *fsCode);    // Load shader from code strings and bind default locations
+// Shaders management
+RLAPI unsigned int rlLoadShaderCode(const char *vsCode, const char *fsCode); // Load shader from code strings
+RLAPI int rlGetLocationUniform(unsigned int shaderId, const char *uniformName); // Get shader location uniform
+RLAPI int rlGetLocationAttrib(unsigned int shaderId, const char *attribName); // Get shader location attribute
+RLAPI void rlSetUniform(int locIndex, const void *value, int uniformType, int count); // Set shader value uniform
+RLAPI void rlSetUniformMatrix(int locIndex, Matrix mat);                  // Set shader value matrix
+RLAPI void rlSetUniformSampler(int locIndex, Texture2D texture);          // Set shader value sampler
 
-RLAPI Shader rlGetShaderDefault(void);                                  // Get default shader
-RLAPI Texture2D rlGetTextureDefault(void);                              // Get default texture
-RLAPI Texture2D rlGetShapesTexture(void);                               // Get texture to draw shapes
-RLAPI Rectangle rlGetShapesTextureRec(void);                            // Get texture rectangle to draw shapes
-RLAPI void rlSetShapesTexture(Texture2D texture, Rectangle source);     // Define default texture used to draw shapes
+// Render batch mangement
+RLAPI bool rlCheckRenderBatchLimit(int vCount);                           // Check internal buffer overflow for a given number of vertex
+RLAPI RenderBatch rlLoadRenderBatch(int numBuffers, int bufferElements);  // Load a render batch system
+RLAPI void rlUnloadRenderBatch(RenderBatch batch);                        // Unload render batch system
+RLAPI void rlDrawRenderBatch(RenderBatch *batch);                         // Draw render batch data (Update->Draw->Reset)
+RLAPI void rlSetRenderBatchActive(RenderBatch *batch);                    // Set the active render batch for rlgl
+RLAPI void rlSetRenderBatchDefault(void);                                 // Set default render batch for rlgl
 
-RLAPI void rlSetMatrixProjection(Matrix proj);                          // Set a custom projection matrix (replaces internal projection matrix)
-RLAPI void rlSetMatrixModelview(Matrix view);                           // Set a custom modelview matrix (replaces internal modelview matrix)
-RLAPI Matrix rlGetMatrixModelview(void);                                // Get internal modelview matrix
-RLAPI Matrix rlGetMatrixProjection(void);                               // Get internal projection matrix
-
-RLAPI bool rlCheckRenderBatchLimit(int vCount);             // Check internal buffer overflow for a given number of vertex
+RLAPI Shader rlGetShaderDefault(void);                                    // Get default shader
+RLAPI Texture2D rlGetTextureDefault(void);                                // Get default texture
+RLAPI Texture2D rlGetShapesTexture(void);                                 // Get texture to draw shapes
+RLAPI Rectangle rlGetShapesTextureRec(void);                              // Get texture rectangle to draw shapes
+RLAPI void rlSetShapesTexture(Texture2D texture, Rectangle source);       // Define default texture used to draw shapes
 
 // Texture maps generation (PBR)
 // NOTE: Required shaders should be provided
@@ -744,55 +810,6 @@ RLAPI Texture2D rlGenTextureBRDF(Shader shader, int size);              // Gener
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
 //----------------------------------------------------------------------------------
-
-// Dynamic vertex buffers (position + texcoords + colors + indices arrays)
-typedef struct VertexBuffer {
-    int elementsCount;          // Number of elements in the buffer (QUADS)
-
-    int vCounter;               // Vertex position counter to process (and draw) from full buffer
-    int tcCounter;              // Vertex texcoord counter to process (and draw) from full buffer
-    int cCounter;               // Vertex color counter to process (and draw) from full buffer
-
-    float *vertices;            // Vertex position (XYZ - 3 components per vertex) (shader-location = 0)
-    float *texcoords;           // Vertex texture coordinates (UV - 2 components per vertex) (shader-location = 1)
-    unsigned char *colors;      // Vertex colors (RGBA - 4 components per vertex) (shader-location = 3)
-#if defined(GRAPHICS_API_OPENGL_11) || defined(GRAPHICS_API_OPENGL_33)
-    unsigned int *indices;      // Vertex indices (in case vertex data comes indexed) (6 indices per quad)
-#endif
-#if defined(GRAPHICS_API_OPENGL_ES2)
-    unsigned short *indices;    // Vertex indices (in case vertex data comes indexed) (6 indices per quad)
-#endif
-    unsigned int vaoId;         // OpenGL Vertex Array Object id
-    unsigned int vboId[4];      // OpenGL Vertex Buffer Objects id (4 types of vertex data)
-} VertexBuffer;
-
-// Draw call type
-// NOTE: Only texture changes register a new draw, other state-change-related elements are not
-// used at this moment (vaoId, shaderId, matrices), raylib just forces a batch draw call if any
-// of those state-change happens (this is done in core module)
-typedef struct DrawCall {
-    int mode;                   // Drawing mode: LINES, TRIANGLES, QUADS
-    int vertexCount;            // Number of vertex of the draw
-    int vertexAlignment;        // Number of vertex required for index alignment (LINES, TRIANGLES)
-    //unsigned int vaoId;       // Vertex array id to be used on the draw -> Using RLGL.currentBatch->vertexBuffer.vaoId
-    //unsigned int shaderId;    // Shader id to be used on the draw -> Using RLGL.currentShader.id
-    unsigned int textureId;     // Texture id to be used on the draw -> Use to create new draw call if changes
-
-    //Matrix projection;        // Projection matrix for this draw -> Using RLGL.projection
-    //Matrix modelview;         // Modelview matrix for this draw -> Using RLGL.modelview
-} DrawCall;
-
-// RenderBatch type
-typedef struct RenderBatch {
-    int buffersCount;           // Number of vertex buffers (multi-buffering support)
-    int currentBuffer;          // Current buffer tracking in case of multi-buffering
-    VertexBuffer *vertexBuffer; // Dynamic buffer(s) for vertex data
-
-    DrawCall *draws;            // Draw calls array, depends on textureId
-    int drawsCounter;           // Draw calls counter
-    float currentDepth;         // Current depth value for next draw
-} RenderBatch;
-
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
 typedef struct rlglData {
     RenderBatch *currentBatch;              // Current render batch
@@ -884,19 +901,12 @@ static void UnloadShaderDefault(void);                  // Unload default shader
 static void GenDrawCube(void);              // Generate and draw cube
 static void GenDrawQuad(void);              // Generate and draw quad
 #endif  // GRAPHICS_API_OPENGL_33 || GRAPHICS_API_OPENGL_ES2
-
-//static int GetPixelDataSize(int width, int height, int format);          // Get pixel data size in bytes (image or texture)
-
-static RenderBatch rlLoadRenderBatch(int numBuffers, int bufferElements); // Load a render batch system
-static void rlUnloadRenderBatch(RenderBatch batch);          // Unload render batch system
-static void rlDrawRenderBatch(RenderBatch *batch);           // Draw render batch data (Update->Draw->Reset)
-static void rlSetRenderBatchActive(RenderBatch *batch);      // Set the active render batch for rlgl
-static void rlSetRenderBatchDefault(void);                   // Set default render batch for rlgl
-
 #if defined(GRAPHICS_API_OPENGL_11)
 static int GenerateMipmaps(unsigned char *data, int baseWidth, int baseHeight);
 static Color *GenNextMipmap(Color *srcData, int srcWidth, int srcHeight);
 #endif
+
+static int rlGetPixelDataSize(int width, int height, int format);   // Get pixel data size in bytes (image or texture)
 
 //----------------------------------------------------------------------------------
 // Module Functions Definition - Matrix operations
@@ -1956,7 +1966,7 @@ unsigned int rlLoadTexture(void *data, int width, int height, int format, int mi
     // Load the different mipmap levels
     for (int i = 0; i < mipmapCount; i++)
     {
-        unsigned int mipSize = GetPixelDataSize(mipWidth, mipHeight, format);
+        unsigned int mipSize = rlGetPixelDataSize(mipWidth, mipHeight, format);
 
         unsigned int glInternalFormat, glFormat, glType;
         rlGetGlTextureFormats(format, &glInternalFormat, &glFormat, &glType);
@@ -2104,7 +2114,7 @@ unsigned int rlLoadTextureCubemap(void *data, int size, int format)
     unsigned int id = 0;
 
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
-    unsigned int dataSize = GetPixelDataSize(size, size, format);
+    unsigned int dataSize = rlGetPixelDataSize(size, size, format);
 
     glGenTextures(1, &id);
     glBindTexture(GL_TEXTURE_CUBE_MAP, id);
@@ -2542,7 +2552,7 @@ void rlLoadMesh(Mesh *mesh, bool dynamic)
 }
 
 // Load a new attributes buffer
-unsigned int rlLoadAttribBuffer(unsigned int vaoId, int shaderLoc, void *buffer, int size, bool dynamic)
+unsigned int rlLoadVertexBuffer(unsigned int vaoId, int index, void *buffer, int size, bool dynamic)
 {
     unsigned int id = 0;
 
@@ -2555,8 +2565,8 @@ unsigned int rlLoadAttribBuffer(unsigned int vaoId, int shaderLoc, void *buffer,
     glGenBuffers(1, &id);
     glBindBuffer(GL_ARRAY_BUFFER, id);
     glBufferData(GL_ARRAY_BUFFER, size, buffer, drawHint);
-    glVertexAttribPointer(shaderLoc, 2, GL_FLOAT, 0, 0, 0);
-    glEnableVertexAttribArray(shaderLoc);
+    glVertexAttribPointer(index, 2, GL_FLOAT, 0, 0, 0);
+    glEnableVertexAttribArray(index);
 
     if (RLGL.ExtSupported.vao) glBindVertexArray(0);
 #endif
@@ -3019,7 +3029,7 @@ void *rlReadTexturePixels(Texture2D texture)
 
     unsigned int glInternalFormat, glFormat, glType;
     rlGetGlTextureFormats(texture.format, &glInternalFormat, &glFormat, &glType);
-    unsigned int size = GetPixelDataSize(texture.width, texture.height, texture.format);
+    unsigned int size = rlGetPixelDataSize(texture.width, texture.height, texture.format);
 
     if ((glInternalFormat != -1) && (texture.format < PIXELFORMAT_COMPRESSED_DXT1_RGB))
     {
@@ -3050,7 +3060,7 @@ void *rlReadTexturePixels(Texture2D texture)
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texture.id, 0);
 
     // We read data as RGBA because FBO texture is configured as RGBA, despite binding another texture format
-    pixels = (unsigned char *)RL_MALLOC(GetPixelDataSize(texture.width, texture.height, PIXELFORMAT_UNCOMPRESSED_R8G8B8A8));
+    pixels = (unsigned char *)RL_MALLOC(rlGetPixelDataSize(texture.width, texture.height, PIXELFORMAT_UNCOMPRESSED_R8G8B8A8));
     glReadPixels(0, 0, texture.width, texture.height, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
 
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -3075,11 +3085,6 @@ void rlSetMatrixViewOffsetStereo(Matrix right, Matrix left)
     RLGL.State.eyesViewOffset[0] = right;
     RLGL.State.eyesViewOffset[1] = left;
 }
-
-//----------------------------------------------------------------------------------
-// Module Functions Definition - Shaders Functions
-// NOTE: Those functions are exposed directly to the user in raylib.h
-//----------------------------------------------------------------------------------
 
 // Get default internal texture (white texture)
 Texture2D rlGetTextureDefault(void)
@@ -3200,6 +3205,7 @@ unsigned int rlLoadShaderCode(const char *vsCode, const char *fsCode)
     return id;
 }
 
+// Unload shader program
 void rlUnloadShaderProgram(unsigned int id)
 {
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
@@ -3207,6 +3213,7 @@ void rlUnloadShaderProgram(unsigned int id)
 #endif
 }
 
+// Set current shader
 void rlSetShaderCurrent(Shader shader)
 {
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
@@ -3218,6 +3225,7 @@ void rlSetShaderCurrent(Shader shader)
 #endif
 }
 
+// Set blend mode
 void rlSetBlendMode(int mode)
 {
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
@@ -3241,6 +3249,7 @@ void rlSetBlendMode(int mode)
 #endif
 }
 
+// Get shader location uniform
 int rlGetLocationUniform(unsigned int shaderId, const char *uniformName)
 {
     int location = -1;
@@ -3250,6 +3259,7 @@ int rlGetLocationUniform(unsigned int shaderId, const char *uniformName)
     return location;
 }
 
+// Get shader location attribute
 int rlGetLocationAttrib(unsigned int shaderId, const char *attribName)
 {
     int location = -1;
@@ -3259,6 +3269,7 @@ int rlGetLocationAttrib(unsigned int shaderId, const char *attribName)
     return location;
 }
 
+// Set shader value uniform
 void rlSetUniform(int locIndex, const void *value, int uniformType, int count)
 {
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
@@ -3278,6 +3289,7 @@ void rlSetUniform(int locIndex, const void *value, int uniformType, int count)
 #endif
 }
 
+// Set shader value uniform matrix
 void rlSetUniformMatrix(int locIndex, Matrix mat)
 {
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
@@ -3285,6 +3297,7 @@ void rlSetUniformMatrix(int locIndex, Matrix mat)
 #endif
 }
 
+// Set shader value uniform sampler
 void rlSetUniformSampler(int locIndex, Texture2D texture)
 {
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
@@ -3304,7 +3317,6 @@ void rlSetUniformSampler(int locIndex, Texture2D texture)
     }
 #endif
 }
-
 
 // Set a custom projection matrix (replaces internal projection matrix)
 void rlSetMatrixProjection(Matrix projection)
@@ -3356,7 +3368,6 @@ Matrix rlGetMatrixModelview(void)
 #endif
     return matrix;
 }
-
 
 // Generate cubemap texture from HDR texture
 TextureCubemap rlGenTextureCubemap(Shader shader, Texture2D panorama, int size, int format)
@@ -3905,7 +3916,7 @@ static void UnloadShaderDefault(void)
 }
 
 // Load render batch
-static RenderBatch rlLoadRenderBatch(int numBuffers, int bufferElements)
+RenderBatch rlLoadRenderBatch(int numBuffers, int bufferElements)
 {
     RenderBatch batch = { 0 };
 
@@ -4030,7 +4041,7 @@ static RenderBatch rlLoadRenderBatch(int numBuffers, int bufferElements)
 
 // Draw render batch
 // NOTE: We require a pointer to reset batch and increase current buffer (multi-buffer)
-static void rlDrawRenderBatch(RenderBatch *batch)
+void rlDrawRenderBatch(RenderBatch *batch)
 {
     // Update batch vertex buffers
     //------------------------------------------------------------------------------------------------------------
@@ -4219,7 +4230,7 @@ static void rlDrawRenderBatch(RenderBatch *batch)
 }
 
 // Unload default internal buffers vertex data from CPU and GPU
-static void rlUnloadRenderBatch(RenderBatch batch)
+void rlUnloadRenderBatch(RenderBatch batch)
 {
     // Unbind everything
     if (RLGL.ExtSupported.vao) glBindVertexArray(0);
@@ -4255,19 +4266,18 @@ static void rlUnloadRenderBatch(RenderBatch batch)
 }
 
 // Set the active render batch for rlgl
-static void rlSetRenderBatchActive(RenderBatch *batch)
+void rlSetRenderBatchActive(RenderBatch *batch)
 {
     rlDrawRenderBatch(RLGL.currentBatch);
     RLGL.currentBatch = batch;
 }
 
 // Set default render batch for rlgl
-static void rlSetRenderBatchDefault(void)
+void rlSetRenderBatchDefault(void)
 {
     rlDrawRenderBatch(RLGL.currentBatch);
     RLGL.currentBatch = &RLGL.defaultBatch;
 }
-
 
 // Renders a 1x1 XY quad in NDC
 static void GenDrawQuad(void)
@@ -4513,10 +4523,9 @@ static Color *GenNextMipmap(Color *srcData, int srcWidth, int srcHeight)
 }
 #endif
 
-#if defined(RLGL_STANDALONE)
 // Get pixel data size in bytes (image or texture)
 // NOTE: Size depends on pixel format
-int GetPixelDataSize(int width, int height, int format)
+static int rlGetPixelDataSize(int width, int height, int format)
 {
     int dataSize = 0;       // Size in bytes
     int bpp = 0;            // Bits per pixel
@@ -4559,6 +4568,4 @@ int GetPixelDataSize(int width, int height, int format)
 
     return dataSize;
 }
-#endif  // RLGL_STANDALONE
-
 #endif  // RLGL_IMPLEMENTATION

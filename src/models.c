@@ -2338,7 +2338,7 @@ void MeshTangents(Mesh *mesh)
     RL_FREE(tan2);
 
     // Load a new tangent attributes buffer
-    mesh->vboId[SHADER_LOC_VERTEX_TANGENT] = rlLoadAttribBuffer(mesh->vaoId, SHADER_LOC_VERTEX_TANGENT, mesh->tangents, mesh->vertexCount*4*sizeof(float), false);
+    mesh->vboId[SHADER_LOC_VERTEX_TANGENT] = rlLoadVertexBuffer(mesh->vaoId, SHADER_LOC_VERTEX_TANGENT, mesh->tangents, mesh->vertexCount*4*sizeof(float), false);
 
     TRACELOG(LOG_INFO, "MESH: Tangents data computed for provided mesh");
 }
