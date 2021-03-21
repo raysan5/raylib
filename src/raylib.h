@@ -1096,6 +1096,18 @@ RLAPI void SetCameraSmoothZoomControl(int keySmoothZoom);         // Set camera 
 RLAPI void SetCameraMoveControls(int keyFront, int keyBack, int keyRight, int keyLeft, int keyUp, int keyDown); // Set camera move controls (1st person and 3rd person cameras)
 
 //------------------------------------------------------------------------------------
+// VR Simulator Functions (Module: core)
+//------------------------------------------------------------------------------------
+RLAPI void InitVrSimulator(VrDeviceInfo device);        // Init VR simulator for selected device parameters
+RLAPI void CloseVrSimulator(void);                      // Close VR simulator for current device
+RLAPI bool IsVrSimulatorReady(void);                    // Detect if VR simulator is ready
+RLAPI void UpdateVrTracking(Camera *camera);            // Update VR tracking (position and orientation) and camera
+RLAPI void BeginVrDrawing(RenderTexture2D target);      // Begin VR simulator stereo rendering (using provided fbo)
+RLAPI void EndVrDrawing(void);                          // End VR simulator stereo rendering
+RLAPI VrStereoConfig GetVrConfig(VrDeviceInfo device);  // Get stereo rendering configuration parameters
+
+
+//------------------------------------------------------------------------------------
 // Basic Shapes Drawing Functions (Module: shapes)
 //------------------------------------------------------------------------------------
 
@@ -1414,51 +1426,21 @@ RLAPI RayHitInfo GetCollisionRayGround(Ray ray, float groundHeight);            
 // NOTE: This functions are useless when using OpenGL 1.1
 //------------------------------------------------------------------------------------
 
-// Shader loading/unloading functions
-RLAPI Shader LoadShader(const char *vsFileName, const char *fsFileName);  // Load shader from files and bind default locations
-RLAPI Shader LoadShaderCode(const char *vsCode, const char *fsCode);      // Load shader from code strings and bind default locations
-RLAPI void UnloadShader(Shader shader);                                   // Unload shader from GPU memory (VRAM)
-
-RLAPI Shader GetShaderDefault(void);                                      // Get default shader
-RLAPI Texture2D GetTextureDefault(void);                                  // Get default texture
-RLAPI Texture2D GetShapesTexture(void);                                   // Get texture to draw shapes
-RLAPI Rectangle GetShapesTextureRec(void);                                // Get texture rectangle to draw shapes
-RLAPI void SetShapesTexture(Texture2D texture, Rectangle source);         // Define default texture used to draw shapes
-
-// Shader configuration functions
-RLAPI int GetShaderLocation(Shader shader, const char *uniformName);      // Get shader uniform location
-RLAPI int GetShaderLocationAttrib(Shader shader, const char *attribName); // Get shader attribute location
-RLAPI void SetShaderValue(Shader shader, int locIndex, const void *value, int uniformType);               // Set shader uniform value
-RLAPI void SetShaderValueV(Shader shader, int locIndex, const void *value, int uniformType, int count);   // Set shader uniform value vector
-RLAPI void SetShaderValueMatrix(Shader shader, int locIndex, Matrix mat);         // Set shader uniform value (matrix 4x4)
-RLAPI void SetShaderValueTexture(Shader shader, int locIndex, Texture2D texture); // Set shader uniform value for texture
-RLAPI void SetMatrixProjection(Matrix proj);                              // Set a custom projection matrix (replaces internal projection matrix)
-RLAPI void SetMatrixModelview(Matrix view);                               // Set a custom modelview matrix (replaces internal modelview matrix)
-RLAPI Matrix GetMatrixModelview(void);                                    // Get internal modelview matrix
-RLAPI Matrix GetMatrixProjection(void);                                   // Get internal projection matrix
-
-// Texture maps generation (PBR)
-// NOTE: Required shaders should be provided
-RLAPI TextureCubemap GenTextureCubemap(Shader shader, Texture2D panorama, int size, int format); // Generate cubemap texture from 2D panorama texture
-RLAPI TextureCubemap GenTextureIrradiance(Shader shader, TextureCubemap cubemap, int size);      // Generate irradiance texture using cubemap data
-RLAPI TextureCubemap GenTexturePrefilter(Shader shader, TextureCubemap cubemap, int size);       // Generate prefilter texture using cubemap data
-RLAPI Texture2D GenTextureBRDF(Shader shader, int size);                  // Generate BRDF texture
-
 // Shading begin/end functions
 RLAPI void BeginShaderMode(Shader shader);                                // Begin custom shader drawing
 RLAPI void EndShaderMode(void);                                           // End custom shader drawing (use default shader)
 RLAPI void BeginBlendMode(int mode);                                      // Begin blending mode (alpha, additive, multiplied)
 RLAPI void EndBlendMode(void);                                            // End blending mode (reset to default: alpha blending)
 
-// VR control functions
-RLAPI void InitVrSimulator(VrDeviceInfo device);        // Init VR simulator for selected device parameters
-RLAPI void CloseVrSimulator(void);                      // Close VR simulator for current device
-RLAPI bool IsVrSimulatorReady(void);                    // Detect if VR simulator is ready
-RLAPI void UpdateVrTracking(Camera *camera);            // Update VR tracking (position and orientation) and camera
-RLAPI void BeginVrDrawing(RenderTexture2D target);      // Begin VR simulator stereo rendering (using provided fbo)
-RLAPI void EndVrDrawing(void);                          // End VR simulator stereo rendering
-RLAPI VrStereoConfig GetVrConfig(VrDeviceInfo device);        // Get stereo rendering configuration parameters
-RLAPI Texture2D GetVrTexture(void);                     // Get VR framebuffer texture
+// Shader management functions
+RLAPI Shader LoadShader(const char *vsFileName, const char *fsFileName);  // Load shader from files and bind default locations
+RLAPI void UnloadShader(Shader shader);                                   // Unload shader from GPU memory (VRAM)
+RLAPI int GetShaderLocation(Shader shader, const char *uniformName);      // Get shader uniform location
+RLAPI int GetShaderLocationAttrib(Shader shader, const char *attribName); // Get shader attribute location
+RLAPI void SetShaderValue(Shader shader, int locIndex, const void *value, int uniformType);               // Set shader uniform value
+RLAPI void SetShaderValueV(Shader shader, int locIndex, const void *value, int uniformType, int count);   // Set shader uniform value vector
+RLAPI void SetShaderValueMatrix(Shader shader, int locIndex, Matrix mat);         // Set shader uniform value (matrix 4x4)
+RLAPI void SetShaderValueTexture(Shader shader, int locIndex, Texture2D texture); // Set shader uniform value for texture
 
 //------------------------------------------------------------------------------------
 // Audio Loading and Playing Functions (Module: audio)

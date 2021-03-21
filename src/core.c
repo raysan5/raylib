@@ -760,7 +760,7 @@ void InitWindow(int width, int height, const char *title)
     LoadFontDefault();
     Rectangle rec = GetFontDefault().recs[95];
     // NOTE: We setup a 1px padding on char rectangle to avoid pixel bleeding on MSAA filtering
-    SetShapesTexture(GetFontDefault().texture, (Rectangle){ rec.x + 1, rec.y + 1, rec.width - 2, rec.height - 2 });
+    rlSetShapesTexture(GetFontDefault().texture, (Rectangle){ rec.x + 1, rec.y + 1, rec.width - 2, rec.height - 2 });
 #endif
 #if defined(PLATFORM_DESKTOP)
     if ((CORE.Window.flags & FLAG_WINDOW_HIGHDPI) > 0)
@@ -1837,7 +1837,7 @@ void EndDrawing(void)
     }
 #endif
 
-    rlglDraw();                     // Draw Buffers (Only OpenGL 3+ and ES2)
+    rlDrawRenderBatchActive();      // Update and draw internal render batch
 
 #if defined(SUPPORT_GIF_RECORDING)
     #define GIF_RECORD_FRAMERATE    10
@@ -1854,7 +1854,7 @@ void EndDrawing(void)
             unsigned char *screenData = rlReadScreenPixels(CORE.Window.screen.width, CORE.Window.screen.height);
             msf_gif_frame(&gifState, screenData, 10, 16, CORE.Window.screen.width*4);
 
-            RL_FREE(screenData);   // Free image data
+            RL_FREE(screenData);    // Free image data
         }
 
         if (((gifFramesCounter/15)%2) == 1)
@@ -1863,7 +1863,7 @@ void EndDrawing(void)
             DrawText("RECORDING", 50, CORE.Window.screen.height - 25, 10, MAROON);
         }
 
-        rlglDraw();                 // Draw RECORDING message
+        rlDrawRenderBatchActive();  // Update and draw internal render batch
     }
 #endif
 
@@ -1894,9 +1894,9 @@ void EndDrawing(void)
 // Initialize 2D mode with custom camera (2D)
 void BeginMode2D(Camera2D camera)
 {
-    rlglDraw();                         // Draw Buffers (Only OpenGL 3+ and ES2)
+    rlDrawRenderBatchActive();      // Update and draw internal render batch
 
-    rlLoadIdentity();                   // Reset current matrix (modelview)
+    rlLoadIdentity();               // Reset current matrix (modelview)
 
     // Apply 2d camera transformation to modelview
     rlMultMatrixf(MatrixToFloat(GetCameraMatrix2D(camera)));
@@ -1908,20 +1908,20 @@ void BeginMode2D(Camera2D camera)
 // Ends 2D mode with custom camera
 void EndMode2D(void)
 {
-    rlglDraw();                         // Draw Buffers (Only OpenGL 3+ and ES2)
+    rlDrawRenderBatchActive();      // Update and draw internal render batch
 
-    rlLoadIdentity();                   // Reset current matrix (modelview)
+    rlLoadIdentity();               // Reset current matrix (modelview)
     rlMultMatrixf(MatrixToFloat(CORE.Window.screenScale)); // Apply screen scaling if required
 }
 
 // Initializes 3D mode with custom camera (3D)
 void BeginMode3D(Camera3D camera)
 {
-    rlglDraw();                         // Draw Buffers (Only OpenGL 3+ and ES2)
+    rlDrawRenderBatchActive();      // Update and draw internal render batch
 
-    rlMatrixMode(RL_PROJECTION);        // Switch to projection matrix
-    rlPushMatrix();                     // Save previous matrix, which contains the settings for the 2d ortho projection
-    rlLoadIdentity();                   // Reset current matrix (projection)
+    rlMatrixMode(RL_PROJECTION);    // Switch to projection matrix
+    rlPushMatrix();                 // Save previous matrix, which contains the settings for the 2d ortho projection
+    rlLoadIdentity();               // Reset current matrix (projection)
 
     float aspect = (float)CORE.Window.currentFbo.width/(float)CORE.Window.currentFbo.height;
 
@@ -1943,53 +1943,53 @@ void BeginMode3D(Camera3D camera)
         rlOrtho(-right, right, -top,top, RL_CULL_DISTANCE_NEAR, RL_CULL_DISTANCE_FAR);
     }
 
-    rlMatrixMode(RL_MODELVIEW);         // Switch back to modelview matrix
-    rlLoadIdentity();                   // Reset current matrix (modelview)
+    rlMatrixMode(RL_MODELVIEW);     // Switch back to modelview matrix
+    rlLoadIdentity();               // Reset current matrix (modelview)
 
     // Setup Camera view
     Matrix matView = MatrixLookAt(camera.position, camera.target, camera.up);
     rlMultMatrixf(MatrixToFloat(matView));      // Multiply modelview matrix by view matrix (camera)
 
-    rlEnableDepthTest();                // Enable DEPTH_TEST for 3D
+    rlEnableDepthTest();            // Enable DEPTH_TEST for 3D
 }
 
 // Ends 3D mode and returns to default 2D orthographic mode
 void EndMode3D(void)
 {
-    rlglDraw();                         // Process internal buffers (update + draw)
+    rlDrawRenderBatchActive();      // Update and draw internal render batch
 
-    rlMatrixMode(RL_PROJECTION);        // Switch to projection matrix
-    rlPopMatrix();                      // Restore previous matrix (projection) from matrix stack
+    rlMatrixMode(RL_PROJECTION);    // Switch to projection matrix
+    rlPopMatrix();                  // Restore previous matrix (projection) from matrix stack
 
-    rlMatrixMode(RL_MODELVIEW);         // Switch back to modelview matrix
-    rlLoadIdentity();                   // Reset current matrix (modelview)
+    rlMatrixMode(RL_MODELVIEW);     // Switch back to modelview matrix
+    rlLoadIdentity();               // Reset current matrix (modelview)
 
     rlMultMatrixf(MatrixToFloat(CORE.Window.screenScale)); // Apply screen scaling if required
 
-    rlDisableDepthTest();               // Disable DEPTH_TEST for 2D
+    rlDisableDepthTest();           // Disable DEPTH_TEST for 2D
 }
 
 // Initializes render texture for drawing
 void BeginTextureMode(RenderTexture2D target)
 {
-    rlglDraw();                         // Draw Buffers (Only OpenGL 3+ and ES2)
+    rlDrawRenderBatchActive();      // Update and draw internal render batch
 
-    rlEnableFramebuffer(target.id);     // Enable render target
+    rlEnableFramebuffer(target.id); // Enable render target
 
     // Set viewport to framebuffer size
     rlViewport(0, 0, target.texture.width, target.texture.height);
 
-    rlMatrixMode(RL_PROJECTION);        // Switch to projection matrix
-    rlLoadIdentity();                   // Reset current matrix (projection)
+    rlMatrixMode(RL_PROJECTION);    // Switch to projection matrix
+    rlLoadIdentity();               // Reset current matrix (projection)
 
     // Set orthographic projection to current framebuffer size
     // NOTE: Configured top-left corner as (0, 0)
     rlOrtho(0, target.texture.width, target.texture.height, 0, 0.0f, 1.0f);
 
-    rlMatrixMode(RL_MODELVIEW);         // Switch back to modelview matrix
-    rlLoadIdentity();                   // Reset current matrix (modelview)
+    rlMatrixMode(RL_MODELVIEW);     // Switch back to modelview matrix
+    rlLoadIdentity();               // Reset current matrix (modelview)
 
-    //rlScalef(0.0f, -1.0f, 0.0f);      // Flip Y-drawing (?)
+    //rlScalef(0.0f, -1.0f, 0.0f);  // Flip Y-drawing (?)
 
     // Setup current width/height for proper aspect ratio
     // calculation when using BeginMode3D()
@@ -2000,9 +2000,9 @@ void BeginTextureMode(RenderTexture2D target)
 // Ends drawing to render texture
 void EndTextureMode(void)
 {
-    rlglDraw();                 // Draw Buffers (Only OpenGL 3+ and ES2)
+    rlDrawRenderBatchActive();      // Update and draw internal render batch
 
-    rlDisableFramebuffer();     // Disable render target (fbo)
+    rlDisableFramebuffer();         // Disable render target (fbo)
 
     // Set viewport to default framebuffer size
     SetupViewport(CORE.Window.render.width, CORE.Window.render.height);
@@ -2012,6 +2012,121 @@ void EndTextureMode(void)
     CORE.Window.currentFbo.height = CORE.Window.screen.height;
 }
 
+// Load shader from files and bind default locations
+// NOTE: If shader string is NULL, using default vertex/fragment shaders
+Shader LoadShader(const char *vsFileName, const char *fsFileName)
+{
+    Shader shader = { 0 };
+    shader.locs = (int *)RL_CALLOC(MAX_SHADER_LOCATIONS, sizeof(int));
+
+    // NOTE: All locations must be reseted to -1 (no location)
+    for (int i = 0; i < MAX_SHADER_LOCATIONS; i++) shader.locs[i] = -1;
+
+    char *vShaderStr = NULL;
+    char *fShaderStr = NULL;
+
+    if (vsFileName != NULL) vShaderStr = LoadFileText(vsFileName);
+    if (fsFileName != NULL) fShaderStr = LoadFileText(fsFileName);
+
+    shader.id = rlLoadShaderCode(vShaderStr, fShaderStr);
+
+    if (vShaderStr != NULL) RL_FREE(vShaderStr);
+    if (fShaderStr != NULL) RL_FREE(fShaderStr);
+    
+    // After shader loading, we TRY to set default location names
+    if (shader.id > 0) SetShaderDefaultLocations(&shader);
+
+    return shader;
+}
+
+// Unload shader from GPU memory (VRAM)
+void UnloadShader(Shader shader)
+{
+    if (shader.id != rlGetShaderDefault().id)
+    {
+        rlUnloadShaderProgram(shader.id);
+        RL_FREE(shader.locs);
+
+        TRACELOG(LOG_INFO, "SHADER: [ID %i] Unloaded shader program data from VRAM (GPU)", shader.id);
+    }
+}
+
+// Begin custom shader mode
+void BeginShaderMode(Shader shader)
+{
+    rlSetShaderCurrent(shader);
+}
+
+// End custom shader mode (returns to default shader)
+void EndShaderMode(void)
+{
+    BeginShaderMode(rlGetShaderDefault());
+}
+
+// Get shader uniform location
+int GetShaderLocation(Shader shader, const char *uniformName)
+{
+    int location = rlGetLocationUniform(shader.id, uniformName);
+
+    if (location == -1) TRACELOG(LOG_WARNING, "SHADER: [ID %i] Failed to find shader uniform: %s", shader.id, uniformName);
+    else TRACELOG(LOG_INFO, "SHADER: [ID %i] Shader uniform (%s) set at location: %i", shader.id, uniformName, location);
+    
+    return location;
+}
+
+// Get shader attribute location
+int GetShaderLocationAttrib(Shader shader, const char *attribName)
+{
+    int location = rlGetLocationAttrib(shader.id, attribName);
+
+    if (location == -1) TRACELOG(LOG_WARNING, "SHADER: [ID %i] Failed to find shader attribute: %s", shader.id, attribName);
+    else TRACELOG(LOG_INFO, "SHADER: [ID %i] Shader attribute (%s) set at location: %i", shader.id, attribName, location);
+
+    return location;
+}
+
+// Set shader uniform value
+void SetShaderValue(Shader shader, int locIndex, const void *value, int uniformType)
+{
+    SetShaderValueV(shader, locIndex, value, uniformType, 1);
+}
+
+// Set shader uniform value vector
+void SetShaderValueV(Shader shader, int locIndex, const void *value, int uniformType, int count)
+{
+    rlEnableShader(shader.id);
+    rlSetUniform(locIndex, value, uniformType, count);
+    //rlDisableShader();      // Avoid reseting current shader program, in case other uniforms are set
+}
+
+// Set shader uniform value (matrix 4x4)
+void SetShaderValueMatrix(Shader shader, int locIndex, Matrix mat)
+{
+    rlEnableShader(shader.id);
+    rlSetUniformMatrix(locIndex, mat);
+    //rlDisableShader();
+}
+
+// Set shader uniform value for texture
+void SetShaderValueTexture(Shader shader, int locIndex, Texture2D texture)
+{
+    rlEnableShader(shader.id);
+    rlSetUniformSampler(locIndex, texture);
+    //rlDisableShader();
+}
+
+// Begin blending mode (alpha, additive, multiplied)
+// NOTE: Only 3 blending modes supported, default blend mode is alpha
+void BeginBlendMode(int mode)
+{
+    rlSetBlendMode(mode);
+}
+
+// End blending mode (reset to default: alpha blending)
+void EndBlendMode(void)
+{
+    rlSetBlendMode(BLEND_ALPHA);
+}
 
 #if defined(SUPPORT_VR_SIMULATOR)
 // Init VR simulator for selected device parameters
@@ -2143,9 +2258,9 @@ void EndVrDrawing(void)
         rlDisableFramebuffer();         // Unbind current framebuffer
 
         // Reset viewport and default projection-modelview matrices
-        rlViewport(0, 0, RLGL.State.framebufferWidth, RLGL.State.framebufferHeight);
-        SetMatrixProjection(MatrixOrtho(0.0, RLGL.State.framebufferWidth, RLGL.State.framebufferHeight, 0.0, 0.0, 1.0));
-        SetMatrixModelview(MatrixIdentity());
+        rlViewport(0, 0, GetScreenWidth(), GetScreenHeight());
+        rlSetMatrixProjection(MatrixOrtho(0.0, GetScreenWidth(), GetScreenHeight(), 0.0, 0.0, 1.0));
+        rlSetMatrixModelview(MatrixIdentity());
 
         rlDisableDepthTest();
     }
@@ -2157,7 +2272,7 @@ void EndVrDrawing(void)
 // NOTE: Scissor rec refers to bottom-left corner, we change it to upper-left
 void BeginScissorMode(int x, int y, int width, int height)
 {
-    rlglDraw(); // Force drawing elements
+    rlDrawRenderBatchActive();      // Update and draw internal render batch
 
     rlEnableScissorTest();
     rlScissor(x, CORE.Window.currentFbo.height - (y + height), width, height);
@@ -2166,7 +2281,7 @@ void BeginScissorMode(int x, int y, int width, int height)
 // End scissor mode
 void EndScissorMode(void)
 {
-    rlglDraw(); // Force drawing elements
+    rlDrawRenderBatchActive();      // Update and draw internal render batch
     rlDisableScissorTest();
 }
 
@@ -5057,7 +5172,7 @@ static void AndroidCommandCallback(struct android_app *app, int32_t cmd)
                     LoadFontDefault();
                     Rectangle rec = GetFontDefault().recs[95];
                     // NOTE: We setup a 1px padding on char rectangle to avoid pixel bleeding on MSAA filtering
-                    SetShapesTexture(GetFontDefault().texture, (Rectangle){ rec.x + 1, rec.y + 1, rec.width - 2, rec.height - 2 });
+                    rlSetShapesTexture(GetFontDefault().texture, (Rectangle){ rec.x + 1, rec.y + 1, rec.width - 2, rec.height - 2 });
                 #endif
 
                     // TODO: GPU assets reload in case of lost focus (lost context)

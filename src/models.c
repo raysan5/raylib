@@ -131,7 +131,7 @@ static void InitGLTFBones(Model* model, const cgltf_data* data);
 // Draw a line in 3D world space
 void DrawLine3D(Vector3 startPos, Vector3 endPos, Color color)
 {
-    if (rlCheckBufferLimit(2)) rlglDraw();
+    rlCheckRenderBatchLimit(2);
 
     rlBegin(RL_LINES);
         rlColor4ub(color.r, color.g, color.b, color.a);
@@ -143,7 +143,7 @@ void DrawLine3D(Vector3 startPos, Vector3 endPos, Color color)
 // Draw a point in 3D space, actually a small line
 void DrawPoint3D(Vector3 position, Color color)
 {
-    if (rlCheckBufferLimit(2)) rlglDraw();
+    rlCheckRenderBatchLimit(2);
 
     rlPushMatrix();
         rlTranslatef(position.x, position.y, position.z);
@@ -158,7 +158,7 @@ void DrawPoint3D(Vector3 position, Color color)
 // Draw a circle in 3D world space
 void DrawCircle3D(Vector3 center, float radius, Vector3 rotationAxis, float rotationAngle, Color color)
 {
-    if (rlCheckBufferLimit(2*36)) rlglDraw();
+    rlCheckRenderBatchLimit(2*36);
 
     rlPushMatrix();
         rlTranslatef(center.x, center.y, center.z);
@@ -179,7 +179,7 @@ void DrawCircle3D(Vector3 center, float radius, Vector3 rotationAxis, float rota
 // Draw a color-filled triangle (vertex in counter-clockwise order!)
 void DrawTriangle3D(Vector3 v1, Vector3 v2, Vector3 v3, Color color)
 {
-    if (rlCheckBufferLimit(3)) rlglDraw();
+    rlCheckRenderBatchLimit(3);
 
     rlBegin(RL_TRIANGLES);
         rlColor4ub(color.r, color.g, color.b, color.a);
@@ -194,7 +194,7 @@ void DrawTriangleStrip3D(Vector3 *points, int pointsCount, Color color)
 {
     if (pointsCount >= 3)
     {
-        if (rlCheckBufferLimit(3*(pointsCount - 2))) rlglDraw();
+        rlCheckRenderBatchLimit(3*(pointsCount - 2));
 
         rlBegin(RL_TRIANGLES);
             rlColor4ub(color.r, color.g, color.b, color.a);
@@ -226,7 +226,7 @@ void DrawCube(Vector3 position, float width, float height, float length, Color c
     float y = 0.0f;
     float z = 0.0f;
 
-    if (rlCheckBufferLimit(36)) rlglDraw();
+    rlCheckRenderBatchLimit(36);
 
     rlPushMatrix();
         // NOTE: Transformation is applied in inverse order (scale -> rotate -> translate)
@@ -307,7 +307,7 @@ void DrawCubeWires(Vector3 position, float width, float height, float length, Co
     float y = 0.0f;
     float z = 0.0f;
 
-    if (rlCheckBufferLimit(36)) rlglDraw();
+    rlCheckRenderBatchLimit(36);
 
     rlPushMatrix();
         rlTranslatef(position.x, position.y, position.z);
@@ -384,7 +384,7 @@ void DrawCubeTexture(Texture2D texture, Vector3 position, float width, float hei
     float y = position.y;
     float z = position.z;
 
-    if (rlCheckBufferLimit(36)) rlglDraw();
+    rlCheckRenderBatchLimit(36);
 
     rlEnableTexture(texture.id);
 
@@ -448,7 +448,7 @@ void DrawSphere(Vector3 centerPos, float radius, Color color)
 void DrawSphereEx(Vector3 centerPos, float radius, int rings, int slices, Color color)
 {
     int numVertex = (rings + 2)*slices*6;
-    if (rlCheckBufferLimit(numVertex)) rlglDraw();
+    rlCheckRenderBatchLimit(numVertex);
 
     rlPushMatrix();
         // NOTE: Transformation is applied in inverse order (scale -> translate)
@@ -491,7 +491,7 @@ void DrawSphereEx(Vector3 centerPos, float radius, int rings, int slices, Color 
 void DrawSphereWires(Vector3 centerPos, float radius, int rings, int slices, Color color)
 {
     int numVertex = (rings + 2)*slices*6;
-    if (rlCheckBufferLimit(numVertex)) rlglDraw();
+    rlCheckRenderBatchLimit(numVertex);
 
     rlPushMatrix();
         // NOTE: Transformation is applied in inverse order (scale -> translate)
@@ -538,7 +538,7 @@ void DrawCylinder(Vector3 position, float radiusTop, float radiusBottom, float h
     if (sides < 3) sides = 3;
 
     int numVertex = sides*6;
-    if (rlCheckBufferLimit(numVertex)) rlglDraw();
+    rlCheckRenderBatchLimit(numVertex);
 
     rlPushMatrix();
         rlTranslatef(position.x, position.y, position.z);
@@ -597,7 +597,7 @@ void DrawCylinderWires(Vector3 position, float radiusTop, float radiusBottom, fl
     if (sides < 3) sides = 3;
 
     int numVertex = sides*8;
-    if (rlCheckBufferLimit(numVertex)) rlglDraw();
+    rlCheckRenderBatchLimit(numVertex);
 
     rlPushMatrix();
         rlTranslatef(position.x, position.y, position.z);
@@ -626,7 +626,7 @@ void DrawCylinderWires(Vector3 position, float radiusTop, float radiusBottom, fl
 // Draw a plane
 void DrawPlane(Vector3 centerPos, Vector2 size, Color color)
 {
-    if (rlCheckBufferLimit(4)) rlglDraw();
+    rlCheckRenderBatchLimit(4);
 
     // NOTE: Plane is always created on XZ ground
     rlPushMatrix();
@@ -664,7 +664,7 @@ void DrawGrid(int slices, float spacing)
 {
     int halfSlices = slices/2;
 
-    if (rlCheckBufferLimit((slices + 2)*4)) rlglDraw();
+    rlCheckRenderBatchLimit((slices + 2)*4);
 
     rlBegin(RL_LINES);
         for (int i = -halfSlices; i <= halfSlices; i++)
@@ -968,7 +968,7 @@ Material *LoadMaterials(const char *fileName, int *materialCount)
     // Set materials shader to default (DIFFUSE, SPECULAR, NORMAL)
     if (materials != NULL)
     {
-        for (unsigned int i = 0; i < count; i++) materials[i].shader = GetShaderDefault();
+        for (unsigned int i = 0; i < count; i++) materials[i].shader = rlGetShaderDefault();
     }
 
     *materialCount = count;
@@ -981,8 +981,8 @@ Material LoadMaterialDefault(void)
     Material material = { 0 };
     material.maps = (MaterialMap *)RL_CALLOC(MAX_MATERIAL_MAPS, sizeof(MaterialMap));
 
-    material.shader = GetShaderDefault();
-    material.maps[MATERIAL_MAP_DIFFUSE].texture = GetTextureDefault();   // White texture (1x1 pixel)
+    material.shader = rlGetShaderDefault();
+    material.maps[MATERIAL_MAP_DIFFUSE].texture = rlGetTextureDefault();   // White texture (1x1 pixel)
     //material.maps[MATERIAL_MAP_NORMAL].texture;         // NOTE: By default, not set
     //material.maps[MATERIAL_MAP_SPECULAR].texture;       // NOTE: By default, not set
 
@@ -996,12 +996,12 @@ Material LoadMaterialDefault(void)
 void UnloadMaterial(Material material)
 {
     // Unload material shader (avoid unloading default shader, managed by raylib)
-    if (material.shader.id != GetShaderDefault().id) UnloadShader(material.shader);
+    if (material.shader.id != rlGetShaderDefault().id) UnloadShader(material.shader);
 
     // Unload loaded texture maps (avoid unloading default texture, managed by raylib)
     for (int i = 0; i < MAX_MATERIAL_MAPS; i++)
     {
-        if (material.maps[i].texture.id != GetTextureDefault().id) rlUnloadTexture(material.maps[i].texture.id);
+        if (material.maps[i].texture.id != rlGetTextureDefault().id) rlUnloadTexture(material.maps[i].texture.id);
     }
 
     RL_FREE(material.maps);
@@ -2454,7 +2454,7 @@ void DrawBillboardRec(Camera camera, Texture2D texture, Rectangle source, Vector
     Vector3 c = Vector3Add(center, p2);
     Vector3 d = Vector3Subtract(center, p1);
 
-    if (rlCheckBufferLimit(4)) rlglDraw();
+    rlCheckRenderBatchLimit(4);
 
     rlEnableTexture(texture.id);
 
@@ -2894,10 +2894,10 @@ static Model LoadOBJ(const char *fileName)
             // NOTE: Uses default shader, which only supports MATERIAL_MAP_DIFFUSE
             model.materials[m] = LoadMaterialDefault();
 
-            model.materials[m].maps[MATERIAL_MAP_DIFFUSE].texture = GetTextureDefault();     // Get default texture, in case no texture is defined
+            model.materials[m].maps[MATERIAL_MAP_DIFFUSE].texture = rlGetTextureDefault();     // Get default texture, in case no texture is defined
 
             if (materials[m].diffuse_texname != NULL) model.materials[m].maps[MATERIAL_MAP_DIFFUSE].texture = LoadTexture(materials[m].diffuse_texname);  //char *diffuse_texname; // map_Kd
-            else model.materials[m].maps[MATERIAL_MAP_DIFFUSE].texture = GetTextureDefault();
+            else model.materials[m].maps[MATERIAL_MAP_DIFFUSE].texture = rlGetTextureDefault();
 
             model.materials[m].maps[MATERIAL_MAP_DIFFUSE].color = (Color){ (unsigned char)(materials[m].diffuse[0]*255.0f), (unsigned char)(materials[m].diffuse[1]*255.0f), (unsigned char)(materials[m].diffuse[2]*255.0f), 255 }; //float diffuse[3];
             model.materials[m].maps[MATERIAL_MAP_DIFFUSE].value = 0.0f;
