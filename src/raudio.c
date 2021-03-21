@@ -359,7 +359,7 @@ static AudioData AUDIO = {          // Global AUDIO context
     // After some math, considering a sampleRate of 48000, a buffer refill rate of 1/60 seconds and a
     // standard double-buffering system, a 4096 samples buffer has been chosen, it should be enough
     // In case of music-stalls, just increase this number
-    .Buffer.defaultSize = DEFAULT_AUDIO_BUFFER_SIZE
+    .Buffer.defaultSize = 0
 };
 
 //----------------------------------------------------------------------------------
@@ -406,6 +406,7 @@ void SetAudioBufferVolume(AudioBuffer *buffer, float volume);
 void SetAudioBufferPitch(AudioBuffer *buffer, float pitch);
 void TrackAudioBuffer(AudioBuffer *buffer);
 void UntrackAudioBuffer(AudioBuffer *buffer);
+int GetAudioStreamBufferSizeDefault();
 
 //----------------------------------------------------------------------------------
 // Module Functions Definition - Audio Device initialization and Closing
@@ -1391,14 +1392,14 @@ Music LoadMusicStreamFromMemory(const char *fileType, unsigned char* data, int d
     else if (TextIsEqual(fileExtLower, ".xm"))
     {
         jar_xm_context_t *ctxXm = NULL;
-        int result = jar_xm_create_context_safe(&ctxXm, (const char*)data, dataSize, 48000);
+        int result = jar_xm_create_context_safe(&ctxXm, (const char*)data, dataSize, AUDIO.System.device.sampleRate);
         if (result == 0)    // XM AUDIO.System.context created successfully
         {
             music.ctxType = MUSIC_MODULE_XM;
             jar_xm_set_max_loop_count(ctxXm, 0);    // Set infinite number of loops
 
             // NOTE: Only stereo is supported for XM
-            music.stream = InitAudioStream(48000, 16, 2);
+            music.stream = InitAudioStream(AUDIO.System.device.sampleRate, 16, 2);
             music.sampleCount = (unsigned int)jar_xm_get_remaining_samples(ctxXm)*2;    // 2 channels
             music.looping = true;   // Looping enabled by default
             jar_xm_reset(ctxXm);   // make sure we start at the beginning of the song
@@ -1436,7 +1437,7 @@ Music LoadMusicStreamFromMemory(const char *fileType, unsigned char* data, int d
             music.ctxType = MUSIC_MODULE_MOD;
 
             // NOTE: Only stereo is supported for MOD
-            music.stream = InitAudioStream(48000, 16, 2);
+			music.stream = InitAudioStream(AUDIO.System.device.sampleRate, 16, 2);
             music.sampleCount = (unsigned int)jar_mod_max_samples(ctxMod)*2;    // 2 channels
             music.looping = true;   // Looping enabled by default
             musicLoaded = true;
@@ -1735,7 +1736,7 @@ AudioStream InitAudioStream(unsigned int sampleRate, unsigned int sampleSize, un
 
     // The size of a streaming buffer must be at least double the size of a period
     unsigned int periodSize = AUDIO.System.device.playback.internalPeriodSizeInFrames;
-    unsigned int subBufferSize = AUDIO.Buffer.defaultSize;     // Default buffer size (audio stream)
+    unsigned int subBufferSize = GetAudioStreamBufferSizeDefault();
 
     if (subBufferSize < periodSize) subBufferSize = periodSize;
 
@@ -1870,6 +1871,14 @@ void SetAudioStreamBufferSizeDefault(int size)
     AUDIO.Buffer.defaultSize = size;
 }
 
+int GetAudioStreamBufferSizeDefault()
+{
+    // if the buffer is not set, compute one that would give us a buffer good enough for a decent frame rate
+    if (AUDIO.Buffer.defaultSize == 0)
+        AUDIO.Buffer.defaultSize = AUDIO.System.device.sampleRate / 30;
+
+	return AUDIO.Buffer.defaultSize;
+}
 //----------------------------------------------------------------------------------
 // Module specific Functions Definition
 //----------------------------------------------------------------------------------
