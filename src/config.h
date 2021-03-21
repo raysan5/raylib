@@ -195,7 +195,6 @@
 //------------------------------------------------------------------------------------
 #define AUDIO_DEVICE_FORMAT    ma_format_f32    // Device output format (miniaudio: float-32bit)
 #define AUDIO_DEVICE_CHANNELS              2    // Device output channels: stereo
-#define AUDIO_DEVICE_SAMPLE_RATE       44100    // Device output sample rate
 
 #define DEFAULT_AUDIO_BUFFER_SIZE       4096    // Default audio buffer size for streaming
 #define MAX_AUDIO_BUFFER_POOL_CHANNELS    16    // Maximum number of audio pool channels

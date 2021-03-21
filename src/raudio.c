@@ -256,9 +256,8 @@ typedef struct tagBITMAPINFOHEADER {
 #ifndef AUDIO_DEVICE_CHANNELS
     #define AUDIO_DEVICE_CHANNELS              2    // Device output channels: stereo
 #endif
-#ifndef AUDIO_DEVICE_SAMPLE_RATE
-    #define AUDIO_DEVICE_SAMPLE_RATE       44100    // Device output sample rate
-#endif
+int AUDIO_DEVICE_SAMPLE_RATE = 0;
+
 #ifndef MAX_AUDIO_BUFFER_POOL_CHANNELS
     #define MAX_AUDIO_BUFFER_POOL_CHANNELS    16    // Audio pool channels
 #endif
@@ -434,7 +433,7 @@ void InitAudioDevice(void)
     config.capture.pDeviceID = NULL;  // NULL for the default capture AUDIO.System.device.
     config.capture.format = ma_format_s16;
     config.capture.channels = 1;
-    config.sampleRate = AUDIO_DEVICE_SAMPLE_RATE;
+    config.sampleRate = 0;
     config.dataCallback = OnSendAudioDataToDevice;
     config.pUserData = NULL;
 
@@ -456,6 +455,8 @@ void InitAudioDevice(void)
         ma_context_uninit(&AUDIO.System.context);
         return;
     }
+
+    AUDIO_DEVICE_SAMPLE_RATE = AUDIO.System.device.sampleRate;
 
     // Mixing happens on a seperate thread which means we need to synchronize. I'm using a mutex here to make things simple, but may
     // want to look at something a bit smarter later on to keep everything real-time, if that's necessary.
@@ -1219,7 +1220,7 @@ Music LoadMusicStream(const char *fileName)
     else if (IsFileExtension(fileName, ".xm"))
     {
         jar_xm_context_t *ctxXm = NULL;
-        int result = jar_xm_create_context_from_file(&ctxXm, 48000, fileName);
+        int result = jar_xm_create_context_from_file(&ctxXm, AUDIO_DEVICE_SAMPLE_RATE, fileName);
 
         music.ctxType = MUSIC_MODULE_XM;
         music.ctxData = ctxXm;
@@ -1229,7 +1230,7 @@ Music LoadMusicStream(const char *fileName)
             jar_xm_set_max_loop_count(ctxXm, 0);    // Set infinite number of loops
 
             // NOTE: Only stereo is supported for XM
-            music.stream = InitAudioStream(48000, 16, 2);
+            music.stream = InitAudioStream(AUDIO_DEVICE_SAMPLE_RATE, 16, AUDIO_DEVICE_CHANNELS);
             music.sampleCount = (unsigned int)jar_xm_get_remaining_samples(ctxXm)*2;    // 2 channels
             music.looping = true;   // Looping enabled by default
             jar_xm_reset(ctxXm);   // make sure we start at the beginning of the song
@@ -1250,7 +1251,7 @@ Music LoadMusicStream(const char *fileName)
         if (result > 0)
         {
             // NOTE: Only stereo is supported for MOD
-            music.stream = InitAudioStream(48000, 16, 2);
+            music.stream = InitAudioStream(AUDIO_DEVICE_SAMPLE_RATE, 16, AUDIO_DEVICE_CHANNELS);
             music.sampleCount = (unsigned int)jar_mod_max_samples(ctxMod)*2;    // 2 channels
             music.looping = true;   // Looping enabled by default
             musicLoaded = true;
