@@ -1232,7 +1232,7 @@ Music LoadMusicStream(const char *fileName)
 
             // NOTE: Only stereo is supported for XM
             music.stream = InitAudioStream(AUDIO.System.device.sampleRate, 16, AUDIO_DEVICE_CHANNELS);
-            music.sampleCount = (unsigned int)jar_xm_get_remaining_samples(ctxXm)*2;    // 2 channels
+            music.sampleCount = (unsigned int)jar_xm_get_remaining_samples(ctxXm) * 2;    // 2 channels
             music.looping = true;   // Looping enabled by default
             jar_xm_reset(ctxXm);   // make sure we start at the beginning of the song
             musicLoaded = true;
@@ -1322,7 +1322,8 @@ Music LoadMusicStreamFromMemory(const char *fileType, unsigned char* data, int d
         if (success)
         {
             int sampleSize = ctxWav->bitsPerSample;
-            if (ctxWav->bitsPerSample == 24) sampleSize = 16;   // Forcing conversion to s16 on UpdateMusicStream()
+            if (ctxWav->bitsPerSample == 24)
+                sampleSize = 16;   // Forcing conversion to s16 on UpdateMusicStream()
 
             music.stream = InitAudioStream(ctxWav->sampleRate, sampleSize, ctxWav->channels);
             music.sampleCount = (unsigned int)ctxWav->totalPCMFrameCount*ctxWav->channels;
@@ -1575,7 +1576,8 @@ void StopMusicStream(Music music)
 // Update (re-fill) music buffers if data already processed
 void UpdateMusicStream(Music music)
 {
-    if (music.stream.buffer == NULL) return;
+    if (music.stream.buffer == NULL)
+        return;
 
     bool streamEnding = false;
 
@@ -1590,10 +1592,15 @@ void UpdateMusicStream(Music music)
     //ma_uint32 frameSizeInBytes = ma_get_bytes_per_sample(music.stream.buffer->dsp.formatConverterIn.config.formatIn)*music.stream.buffer->dsp.formatConverterIn.config.channels;
     int sampleLeft = music.sampleCount - (music.stream.buffer->totalFramesProcessed*music.stream.channels);
 
+    if (music.ctxType == MUSIC_MODULE_XM && music.looping)
+        sampleLeft = subBufferSizeInFrames*4;
+
     while (IsAudioStreamProcessed(music.stream))
     {
-        if ((sampleLeft/music.stream.channels) >= subBufferSizeInFrames) samplesCount = subBufferSizeInFrames*music.stream.channels;
-        else samplesCount = sampleLeft;
+        if ((sampleLeft/music.stream.channels) >= subBufferSizeInFrames)
+            samplesCount = subBufferSizeInFrames*music.stream.channels;
+        else
+            samplesCount = sampleLeft;
 
         switch (music.ctxType)
         {
@@ -1601,8 +1608,10 @@ void UpdateMusicStream(Music music)
             case MUSIC_AUDIO_WAV:
             {
                 // NOTE: Returns the number of samples to process (not required)
-                if (music.stream.sampleSize == 16) drwav_read_pcm_frames_s16((drwav *)music.ctxData, samplesCount/music.stream.channels, (short *)pcm);
-                else if (music.stream.sampleSize == 32) drwav_read_pcm_frames_f32((drwav *)music.ctxData, samplesCount/music.stream.channels, (float *)pcm);
+                if (music.stream.sampleSize == 16) 
+                    drwav_read_pcm_frames_s16((drwav *)music.ctxData, samplesCount/music.stream.channels, (short *)pcm);
+                else if (music.stream.sampleSize == 32) 
+                    drwav_read_pcm_frames_f32((drwav *)music.ctxData, samplesCount/music.stream.channels, (float *)pcm);
 
             } break;
         #endif
@@ -1649,12 +1658,15 @@ void UpdateMusicStream(Music music)
 
         UpdateAudioStream(music.stream, pcm, samplesCount);
 
-        if ((music.ctxType == MUSIC_MODULE_XM) || (music.ctxType == MUSIC_MODULE_MOD))
+        if ((music.ctxType == MUSIC_MODULE_XM) || music.ctxType == MUSIC_MODULE_MOD)
         {
-            if (samplesCount > 1) sampleLeft -= samplesCount/2;
-            else sampleLeft -= samplesCount;
+			if (samplesCount > 1)
+				sampleLeft -= samplesCount / 2;
+			else
+				sampleLeft -= samplesCount;
         }
-        else sampleLeft -= samplesCount;
+        else 
+            sampleLeft -= samplesCount;
 
         if (sampleLeft <= 0)
         {
@@ -1670,13 +1682,15 @@ void UpdateMusicStream(Music music)
     if (streamEnding)
     {
         StopMusicStream(music);                     // Stop music (and reset)
-        if (music.looping) PlayMusicStream(music);  // Play again
+        if (music.looping) 
+            PlayMusicStream(music);  // Play again
     }
     else
     {
         // NOTE: In case window is minimized, music stream is stopped,
         // just make sure to play again on window restore
-        if (IsMusicPlaying(music)) PlayMusicStream(music);
+        if (IsMusicPlaying(music))
+            PlayMusicStream(music);
     }
 }
 
@@ -1697,6 +1711,24 @@ void SetMusicPitch(Music music, float pitch)
 {
     SetAudioBufferPitch(music.stream.buffer, pitch);
 }
+// Set the music to loop or not
+void SetMusicLooping(Music *music, bool loop)
+{
+    music->looping = loop;
+
+#if defined(SUPPORT_FILEFORMAT_XM)
+    if (music->ctxType == MUSIC_MODULE_XM)
+    {
+        jar_xm_set_max_loop_count(music->ctxData, loop ? 0 : 1);
+    }
+#endif
+}
+
+// Get the loop status of the music file
+bool GetMusicLooping(Music music)
+{
+    return music.looping;
+}
 
 // Get music time length (in seconds)
 float GetMusicTimeLength(Music music)
@@ -1711,8 +1743,17 @@ float GetMusicTimeLength(Music music)
 // Get current music time played (in seconds)
 float GetMusicTimePlayed(Music music)
 {
-    float secondsPlayed = 0.0f;
+#if defined(SUPPORT_FILEFORMAT_XM)
+	if (music.ctxType == MUSIC_MODULE_XM)
+	{
+		uint64_t samples = 0;
+		jar_xm_get_position(music.ctxData, NULL, NULL, NULL, &samples);
+        samples = samples % (music.sampleCount);
 
+		return (float)(samples) / (music.stream.sampleRate * music.stream.channels);
+	}
+#endif
+    float secondsPlayed = 0.0f;
     if (music.stream.buffer != NULL)
     {
         //ma_uint32 frameSizeInBytes = ma_get_bytes_per_sample(music.stream.buffer->dsp.formatConverterIn.config.formatIn)*music.stream.buffer->dsp.formatConverterIn.config.channels;
@@ -1797,7 +1838,8 @@ void UpdateAudioStream(AudioStream stream, const void *data, int samplesCount)
             {
                 ma_uint32 framesToWrite = subBufferSizeInFrames;
 
-                if (framesToWrite > ((ma_uint32)samplesCount/stream.channels)) framesToWrite = (ma_uint32)samplesCount/stream.channels;
+                if (framesToWrite > ((ma_uint32)samplesCount/stream.channels)) 
+                    framesToWrite = (ma_uint32)samplesCount/stream.channels;
 
                 ma_uint32 bytesToWrite = framesToWrite*stream.channels*(stream.sampleSize/8);
                 memcpy(subBuffer, data, bytesToWrite);
@@ -1805,7 +1847,8 @@ void UpdateAudioStream(AudioStream stream, const void *data, int samplesCount)
                 // Any leftover frames should be filled with zeros.
                 ma_uint32 leftoverFrameCount = subBufferSizeInFrames - framesToWrite;
 
-                if (leftoverFrameCount > 0) memset(subBuffer + bytesToWrite, 0, leftoverFrameCount*stream.channels*(stream.sampleSize/8));
+                if (leftoverFrameCount > 0) 
+                    memset(subBuffer + bytesToWrite, 0, leftoverFrameCount*stream.channels*(stream.sampleSize/8));
 
                 stream.buffer->isSubBufferProcessed[subBufferToUpdate] = false;
             }
