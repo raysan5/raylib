@@ -761,7 +761,7 @@ Model LoadModel(const char *fileName)
 
         if (model.meshMaterial == NULL) model.meshMaterial = (int *)RL_CALLOC(model.meshCount, sizeof(int));
     }
-	
+    
     return model;
 }
 

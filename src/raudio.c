@@ -1313,7 +1313,7 @@ Music LoadMusicStreamFromMemory(const char *fileType, unsigned char* data, int d
     else if (TextIsEqual(fileExtLower, ".wav"))
     {
         drwav *ctxWav = RL_CALLOC(1, sizeof(drwav));
-		
+        
         bool success = drwav_init_memory(ctxWav, (const void*)data, dataSize, NULL);
 
         music.ctxType = MUSIC_AUDIO_WAV;
@@ -1419,7 +1419,7 @@ Music LoadMusicStreamFromMemory(const char *fileType, unsigned char* data, int d
 
         // copy data to allocated memory for default UnloadMusicStream
         unsigned char *newData = RL_MALLOC(dataSize);
-        int it = dataSize / sizeof(unsigned char);
+        int it = dataSize/sizeof(unsigned char);
         for (int i = 0; i < it; i++){
             newData[i] = data[i];
         }
@@ -1437,7 +1437,7 @@ Music LoadMusicStreamFromMemory(const char *fileType, unsigned char* data, int d
             music.ctxType = MUSIC_MODULE_MOD;
 
             // NOTE: Only stereo is supported for MOD
-			music.stream = InitAudioStream(AUDIO.System.device.sampleRate, 16, 2);
+            music.stream = InitAudioStream(AUDIO.System.device.sampleRate, 16, 2);
             music.sampleCount = (unsigned int)jar_mod_max_samples(ctxMod)*2;    // 2 channels
             music.looping = true;   // Looping enabled by default
             musicLoaded = true;
@@ -1464,7 +1464,7 @@ Music LoadMusicStreamFromMemory(const char *fileType, unsigned char* data, int d
     #if defined(SUPPORT_FILEFORMAT_OGG)
         else if (music.ctxType == MUSIC_AUDIO_OGG) stb_vorbis_close((stb_vorbis *)music.ctxData);
     #endif
-	#if defined(SUPPORT_FILEFORMAT_XM)
+    #if defined(SUPPORT_FILEFORMAT_XM)
         else if (music.ctxType == MUSIC_MODULE_XM) jar_xm_free_context((jar_xm_context_t *)music.ctxData);
     #endif
     #if defined(SUPPORT_FILEFORMAT_MOD)
@@ -1657,8 +1657,8 @@ void UpdateMusicStream(Music music)
 
         if ((music.ctxType == MUSIC_MODULE_XM) || music.ctxType == MUSIC_MODULE_MOD)
         {
-			if (samplesCount > 1) sampleLeft -= samplesCount / 2;
-			else sampleLeft -= samplesCount;
+            if (samplesCount > 1) sampleLeft -= samplesCount/2;
+            else sampleLeft -= samplesCount;
         }
         else sampleLeft -= samplesCount;
 
@@ -1718,14 +1718,14 @@ float GetMusicTimeLength(Music music)
 float GetMusicTimePlayed(Music music)
 {
 #if defined(SUPPORT_FILEFORMAT_XM)
-	if (music.ctxType == MUSIC_MODULE_XM)
-	{
+    if (music.ctxType == MUSIC_MODULE_XM)
+    {
         uint64_t samples = 0;
         jar_xm_get_position(music.ctxData, NULL, NULL, NULL, &samples);
         samples = samples % (music.sampleCount);
 
-        return (float)(samples) / (music.stream.sampleRate * music.stream.channels);
-	}
+        return (float)(samples)/(music.stream.sampleRate*music.stream.channels);
+    }
 #endif
     float secondsPlayed = 0.0f;
     if (music.stream.buffer != NULL)
@@ -1890,10 +1890,11 @@ int GetAudioStreamBufferSizeDefault()
 {
     // if the buffer is not set, compute one that would give us a buffer good enough for a decent frame rate
     if (AUDIO.Buffer.defaultSize == 0)
-        AUDIO.Buffer.defaultSize = AUDIO.System.device.sampleRate / 30;
+        AUDIO.Buffer.defaultSize = AUDIO.System.device.sampleRate/30;
 
-	return AUDIO.Buffer.defaultSize;
+    return AUDIO.Buffer.defaultSize;
 }
+
 //----------------------------------------------------------------------------------
 // Module specific Functions Definition
 //----------------------------------------------------------------------------------
@@ -2014,7 +2015,7 @@ static ma_uint32 ReadAudioBufferFramesInMixingFormat(AudioBuffer *audioBuffer, f
             inputFramesToProcessThisIteration = inputBufferFrameCap;
         }
 
-        float *runningFramesOut = framesOut + (totalOutputFramesProcessed * audioBuffer->converter.config.channelsOut);
+        float *runningFramesOut = framesOut + (totalOutputFramesProcessed*audioBuffer->converter.config.channelsOut);
 
         /* At this point we can convert the data to our mixing format. */
         ma_uint64 inputFramesProcessedThisIteration = ReadAudioBufferFramesInInternalFormat(audioBuffer, inputBuffer, (ma_uint32)inputFramesToProcessThisIteration);    /* Safe cast. */
