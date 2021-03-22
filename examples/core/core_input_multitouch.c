@@ -27,7 +27,7 @@ int main(void)
     Vector2 ballPosition = { -100.0f, -100.0f };
     Color ballColor = BEIGE;
 
-    int touchCounter = 0;
+    float touchCounter = 0;
     Vector2 touchPosition = { 0 };
 
     SetTargetFPS(60);               // Set our game to run at 60 frames-per-second
@@ -50,7 +50,7 @@ int main(void)
         if (IsMouseButtonPressed(MOUSE_MIDDLE_BUTTON)) touchCounter = 10;
         if (IsMouseButtonPressed(MOUSE_RIGHT_BUTTON)) touchCounter = 10;
 
-        if (touchCounter > 0) touchCounter--;
+        if (touchCounter > 0) touchCounter -= 1;
         //----------------------------------------------------------------------------------
 
         // Draw
@@ -68,7 +68,7 @@ int main(void)
                 {
                     // Draw circle and touch index number
                     DrawCircleV(touchPosition, 34, ORANGE);
-                    DrawText(TextFormat("%d", i), touchPosition.x - 10, touchPosition.y - 70, 40, BLACK);
+                    DrawText(TextFormat("%d", i), (int)touchPosition.x - 10, (int)touchPosition.y - 70, 40, BLACK);
                 }
             }
 

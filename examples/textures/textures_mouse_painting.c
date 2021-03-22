@@ -35,7 +35,7 @@ int main(void)
 
     for (int i = 0; i < MAX_COLORS_COUNT; i++)
     {
-        colorsRecs[i].x = 10 + 30*i + 2*i;
+        colorsRecs[i].x = 10 + 30.0f*i + 2*i;
         colorsRecs[i].y = 10;
         colorsRecs[i].width = 30;
         colorsRecs[i].height = 30;
@@ -44,7 +44,7 @@ int main(void)
     int colorSelected = 0;
     int colorSelectedPrev = colorSelected;
     int colorMouseHover = 0;
-    int brushSize = 20;
+    float brushSize = 20;
     bool mouseWasPressed = false;
 
     Rectangle btnSaveRec = { 750, 10, 40, 30 };
@@ -113,7 +113,7 @@ int main(void)
             // NOTE: To avoid discontinuous circles, we could store
             // previous-next mouse points and just draw a line using brush size
             BeginTextureMode(target);
-            if (mousePos.y > 50) DrawCircle(mousePos.x, mousePos.y, brushSize, colors[colorSelected]);
+            if (mousePos.y > 50) DrawCircle((int)mousePos.x, (int)mousePos.y, brushSize, colors[colorSelected]);
             EndTextureMode();
         }
 
@@ -129,7 +129,7 @@ int main(void)
 
             // Erase circle from render texture
             BeginTextureMode(target);
-            if (mousePos.y > 50) DrawCircle(mousePos.x, mousePos.y, brushSize, colors[0]);
+            if (mousePos.y > 50) DrawCircle((int)mousePos.x, (int)mousePos.y, brushSize, colors[0]);
             EndTextureMode();
         }
         else if (IsMouseButtonReleased(MOUSE_RIGHT_BUTTON) && mouseWasPressed)
@@ -172,7 +172,7 @@ int main(void)
         ClearBackground(RAYWHITE);
 
         // NOTE: Render texture must be y-flipped due to default OpenGL coordinates (left-bottom)
-        DrawTextureRec(target.texture, (Rectangle) { 0, 0, target.texture.width, -target.texture.height }, (Vector2) { 0, 0 }, WHITE);
+        DrawTextureRec(target.texture, (Rectangle) { 0, 0, (float)target.texture.width, (float)-target.texture.height }, (Vector2) { 0, 0 }, WHITE);
 
         // Draw drawing circle for reference
         if (mousePos.y > 50)

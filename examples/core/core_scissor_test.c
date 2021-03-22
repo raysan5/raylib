@@ -46,7 +46,7 @@ int main(void)
 
             ClearBackground(RAYWHITE);
 
-            if (scissorMode) BeginScissorMode(scissorArea.x, scissorArea.y, scissorArea.width, scissorArea.height);
+            if (scissorMode) BeginScissorMode((int)scissorArea.x, (int)scissorArea.y, (int)scissorArea.width, (int)scissorArea.height);
 
             // Draw full screen rectangle and some text
             // NOTE: Only part defined by scissor area will be rendered

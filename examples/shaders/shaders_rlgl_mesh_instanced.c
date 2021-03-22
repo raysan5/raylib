@@ -56,14 +56,14 @@ int main(void)
     // Scatter random cubes around
     for (int i = 0; i < count; i++)
     {
-        float x = GetRandomValue(-50, 50);
-        float y = GetRandomValue(-50, 50);
-        float z = GetRandomValue(-50, 50);
+        float x = (float)GetRandomValue(-50, 50);
+        float y = (float)GetRandomValue(-50, 50);
+        float z = (float)GetRandomValue(-50, 50);
         translations[i] = MatrixTranslate(x, y, z); 
 
-        x = GetRandomValue(0, 360);
-        y = GetRandomValue(0, 360);
-        z = GetRandomValue(0, 360);
+        x = (float)GetRandomValue(0, 360);
+        y = (float)GetRandomValue(0, 360);
+        z = (float)GetRandomValue(0, 360);
         Vector3 axis = Vector3Normalize((Vector3){x, y, z});
         float angle = (float)GetRandomValue(0, 10) * DEG2RAD;
 

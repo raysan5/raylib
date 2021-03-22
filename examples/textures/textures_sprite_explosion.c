@@ -58,8 +58,8 @@ int main(void)
             position = GetMousePosition();
             active = true;
 
-            position.x -= frameWidth/2;
-            position.y -= frameHeight/2;
+            position.x -= frameWidth/2.0f;
+            position.y -= frameHeight/2.0f;
 
             PlaySound(fxBoom);
         }
@@ -89,8 +89,8 @@ int main(void)
             }
         }
 
-        frameRec.x = frameWidth*currentFrame;
-        frameRec.y = frameHeight*currentLine;
+        frameRec.x = (float)frameWidth*currentFrame;
+        frameRec.y = (float)frameHeight*currentLine;
         //----------------------------------------------------------------------------------
 
         // Draw
