@@ -61,9 +61,9 @@ int main(void)
     {
         // Update
         //----------------------------------------------------------------------------------
-        UpdatePhysics();            // Update physics system
+        UpdatePhysics();              // Update physics system
 
-        if (IsKeyPressed('R'))      // Reset physics input
+        if (IsKeyPressed(KEY_R))      // Reset physics input
         {
             // Reset movement physics body position, velocity and rotation
             body->position = (Vector2){ screenWidth/2, screenHeight/2 };

@@ -51,7 +51,7 @@ int main(void)
         //----------------------------------------------------------------------------------
         UpdatePhysics();            // Update physics system
 
-        if (IsKeyPressed('R'))      // Reset physics system
+        if (IsKeyPressed(KEY_R))    // Reset physics system
         {
             ResetPhysics();
             

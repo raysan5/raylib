@@ -70,7 +70,7 @@ int main(void)
         //----------------------------------------------------------------------------------
         UpdatePhysics();            // Update physics system
 
-        if (IsKeyPressed('R'))      // Reset physics system
+        if (IsKeyPressed(KEY_R))    // Reset physics system
         {
             // Reset dynamic physics bodies position, velocity and rotation
             bodyA->position = (Vector2){ 35, screenHeight*0.6f };
