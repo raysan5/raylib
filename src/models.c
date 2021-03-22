@@ -1108,7 +1108,7 @@ void UpdateModelAnimation(Model model, ModelAnimation anim, int frame)
 // Unload animation array data
 void UnloadModelAnimations(ModelAnimation* animations, unsigned int count)
 {
-    for (int i = 0; i < count; i++) UnloadModelAnimation(animations[i]);
+    for (unsigned int i = 0; i < count; i++) UnloadModelAnimation(animations[i]);
     RL_FREE(animations);
 }
 
@@ -3773,9 +3773,9 @@ static Model LoadGLTF(const char *fileName)
                             for(int a = 0; a < acc->count; a++)
                             {
                                 GLTFReadValue(acc, a, readValue, 3, sizeof(int));
-                                model.meshes[primitiveIndex].vertices[(a * 3) + 0] = readValue[0];
-                                model.meshes[primitiveIndex].vertices[(a * 3) + 1] = readValue[1];
-                                model.meshes[primitiveIndex].vertices[(a * 3) + 2] = readValue[2];
+                                model.meshes[primitiveIndex].vertices[(a * 3) + 0] = (float)readValue[0];
+                                model.meshes[primitiveIndex].vertices[(a * 3) + 1] = (float)readValue[1];
+                                model.meshes[primitiveIndex].vertices[(a * 3) + 2] = (float)readValue[2];
                             }
                         }
                         else
@@ -3807,9 +3807,9 @@ static Model LoadGLTF(const char *fileName)
                             for(int a = 0; a < acc->count; a++)
                             {
                                 GLTFReadValue(acc, a, readValue, 3, sizeof(int));
-                                model.meshes[primitiveIndex].normals[(a * 3) + 0] = readValue[0];
-                                model.meshes[primitiveIndex].normals[(a * 3) + 1] = readValue[1];
-                                model.meshes[primitiveIndex].normals[(a * 3) + 2] = readValue[2];
+                                model.meshes[primitiveIndex].normals[(a * 3) + 0] = (float)readValue[0];
+                                model.meshes[primitiveIndex].normals[(a * 3) + 1] = (float)readValue[1];
+                                model.meshes[primitiveIndex].normals[(a * 3) + 2] = (float)readValue[2];
                             }
                         }
                         else
@@ -3863,10 +3863,10 @@ static Model LoadGLTF(const char *fileName)
                             for(int a = 0; a < acc->count; a++)
                             {
                                 GLTFReadValue(acc, a, readValue, 4, sizeof(unsigned int));
-                                model.meshes[primitiveIndex].normals[(a * 4) + 0] = readValue[0];
-                                model.meshes[primitiveIndex].normals[(a * 4) + 1] = readValue[1];
-                                model.meshes[primitiveIndex].normals[(a * 4) + 2] = readValue[2];
-                                model.meshes[primitiveIndex].normals[(a * 4) + 3] = readValue[3];
+                                model.meshes[primitiveIndex].normals[(a * 4) + 0] = (float)readValue[0];
+                                model.meshes[primitiveIndex].normals[(a * 4) + 1] = (float)readValue[1];
+                                model.meshes[primitiveIndex].normals[(a * 4) + 2] = (float)readValue[2];
+                                model.meshes[primitiveIndex].normals[(a * 4) + 3] = (float)readValue[3];
                             }
                         }
                         else
@@ -3911,7 +3911,7 @@ static void InitGLTFBones(Model* model, const cgltf_data* data)
     for (unsigned int j = 0; j < data->nodes_count; j++)
     {
         strcpy(model->bones[j].name, data->nodes[j].name == 0 ? "ANIMJOINT" : data->nodes[j].name);
-        model->bones[j].parent = (data->nodes[j].parent != NULL) ? data->nodes[j].parent - data->nodes : -1;
+        model->bones[j].parent = (data->nodes[j].parent != NULL) ? (int)(data->nodes[j].parent - data->nodes) : -1;
     }
 
     for (unsigned int i = 0; i < data->nodes_count; i++)
@@ -4250,7 +4250,7 @@ static ModelAnimation *LoadGLTFModelAnimations(const char *fileName, int *animCo
         result = cgltf_load_buffers(&options, data, fileName);
         if (result != cgltf_result_success) TRACELOG(LOG_WARNING, "MODEL: [%s] unable to load glTF animations data", fileName);
         animations = RL_MALLOC(data->animations_count*sizeof(ModelAnimation));
-        *animCount = data->animations_count;
+        *animCount = (int)data->animations_count;
 
         for (unsigned int a = 0; a < data->animations_count; a++)
         {
