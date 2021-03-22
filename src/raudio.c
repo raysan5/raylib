@@ -1575,7 +1575,11 @@ void StopMusicStream(Music music)
 // Update (re-fill) music buffers if data already processed
 void UpdateMusicStream(Music music)
 {
-    if (music.stream.buffer == NULL) return;
+    if (music.stream.buffer == NULL)
+        return;
+
+    if (music.ctxType == MUSIC_MODULE_XM)
+        jar_xm_set_max_loop_count(music.ctxData, music.looping ? 0 : 1);
 
     bool streamEnding = false;
 
@@ -1589,6 +1593,8 @@ void UpdateMusicStream(Music music)
     // TODO: Get the sampleLeft using totalFramesProcessed... but first, get total frames processed correctly...
     //ma_uint32 frameSizeInBytes = ma_get_bytes_per_sample(music.stream.buffer->dsp.formatConverterIn.config.formatIn)*music.stream.buffer->dsp.formatConverterIn.config.channels;
     int sampleLeft = music.sampleCount - (music.stream.buffer->totalFramesProcessed*music.stream.channels);
+
+    if (music.ctxType == MUSIC_MODULE_XM && music.looping) sampleLeft = subBufferSizeInFrames*4;
 
     while (IsAudioStreamProcessed(music.stream))
     {
@@ -1649,10 +1655,10 @@ void UpdateMusicStream(Music music)
 
         UpdateAudioStream(music.stream, pcm, samplesCount);
 
-        if ((music.ctxType == MUSIC_MODULE_XM) || (music.ctxType == MUSIC_MODULE_MOD))
+        if ((music.ctxType == MUSIC_MODULE_XM) || music.ctxType == MUSIC_MODULE_MOD)
         {
-            if (samplesCount > 1) sampleLeft -= samplesCount/2;
-            else sampleLeft -= samplesCount;
+			if (samplesCount > 1) sampleLeft -= samplesCount / 2;
+			else sampleLeft -= samplesCount;
         }
         else sampleLeft -= samplesCount;
 
@@ -1711,8 +1717,17 @@ float GetMusicTimeLength(Music music)
 // Get current music time played (in seconds)
 float GetMusicTimePlayed(Music music)
 {
-    float secondsPlayed = 0.0f;
+#if defined(SUPPORT_FILEFORMAT_XM)
+	if (music.ctxType == MUSIC_MODULE_XM)
+	{
+        uint64_t samples = 0;
+        jar_xm_get_position(music.ctxData, NULL, NULL, NULL, &samples);
+        samples = samples % (music.sampleCount);
 
+        return (float)(samples) / (music.stream.sampleRate * music.stream.channels);
+	}
+#endif
+    float secondsPlayed = 0.0f;
     if (music.stream.buffer != NULL)
     {
         //ma_uint32 frameSizeInBytes = ma_get_bytes_per_sample(music.stream.buffer->dsp.formatConverterIn.config.formatIn)*music.stream.buffer->dsp.formatConverterIn.config.channels;
