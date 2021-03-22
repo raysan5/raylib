@@ -59,7 +59,7 @@ int main(void)
         //----------------------------------------------------------------------------------
         UpdatePhysics();            // Update physics system
 
-        if (IsKeyPressed('R'))      // Reset physics input
+        if (IsKeyPressed(KEY_R))    // Reset physics input
         {
             // Reset circles physics bodies position and velocity
             circleA->position = (Vector2){ screenWidth*0.25f, screenHeight/2 };
