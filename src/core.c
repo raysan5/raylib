@@ -1047,7 +1047,7 @@ void ToggleFullscreen(void)
         glfwGetWindowPos(CORE.Window.handle, &CORE.Window.position.x, &CORE.Window.position.y);
 
         int monitorCount = 0;
-		GLFWmonitor** monitors = glfwGetMonitors(&monitorCount);
+        GLFWmonitor** monitors = glfwGetMonitors(&monitorCount);
 
         int monitorIndex = GetCurrentMonitor();
         // use GetCurrentMonitor so we correctly get the display the window is on
@@ -1077,7 +1077,7 @@ void ToggleFullscreen(void)
         glfwSetWindowMonitor(CORE.Window.handle, NULL, CORE.Window.position.x, CORE.Window.position.y, CORE.Window.screen.width, CORE.Window.screen.height, GLFW_DONT_CARE);
     }
 
-	// Try to enable GPU V-Sync, so frames are limited to screen refresh rate (60Hz -> 60 FPS)
+    // Try to enable GPU V-Sync, so frames are limited to screen refresh rate (60Hz -> 60 FPS)
     // NOTE: V-Sync can be enabled by graphic driver configuration
     if (CORE.Window.flags & FLAG_VSYNC_HINT) glfwSwapInterval(1);
 
@@ -2034,7 +2034,37 @@ Shader LoadShader(const char *vsFileName, const char *fsFileName)
     if (fShaderStr != NULL) RL_FREE(fShaderStr);
     
     // After shader loading, we TRY to set default location names
-    if (shader.id > 0) SetShaderDefaultLocations(&shader);
+    if (shader.id > 0)
+    {
+        // Default shader attrib locations have been fixed before linking:
+        //          vertex position location    = 0
+        //          vertex texcoord location    = 1
+        //          vertex normal location      = 2
+        //          vertex color location       = 3
+        //          vertex tangent location     = 4
+        //          vertex texcoord2 location   = 5
+        
+        // NOTE: If any location is not found, loc point becomes -1
+
+        // Get handles to GLSL input attibute locations
+        shader.locs[SHADER_LOC_VERTEX_POSITION] = rlGetLocationAttrib(shader.id, DEFAULT_SHADER_ATTRIB_NAME_POSITION);
+        shader.locs[SHADER_LOC_VERTEX_TEXCOORD01] = rlGetLocationAttrib(shader.id, DEFAULT_SHADER_ATTRIB_NAME_TEXCOORD);
+        shader.locs[SHADER_LOC_VERTEX_TEXCOORD02] = rlGetLocationAttrib(shader.id, DEFAULT_SHADER_ATTRIB_NAME_TEXCOORD2);
+        shader.locs[SHADER_LOC_VERTEX_NORMAL] = rlGetLocationAttrib(shader.id, DEFAULT_SHADER_ATTRIB_NAME_NORMAL);
+        shader.locs[SHADER_LOC_VERTEX_TANGENT] = rlGetLocationAttrib(shader.id, DEFAULT_SHADER_ATTRIB_NAME_TANGENT);
+        shader.locs[SHADER_LOC_VERTEX_COLOR] = rlGetLocationAttrib(shader.id, DEFAULT_SHADER_ATTRIB_NAME_COLOR);
+
+        // Get handles to GLSL uniform locations (vertex shader)
+        shader.locs[SHADER_LOC_MATRIX_MVP]  = rlGetLocationUniform(shader.id, "mvp");
+        shader.locs[SHADER_LOC_MATRIX_PROJECTION]  = rlGetLocationUniform(shader.id, "projection");
+        shader.locs[SHADER_LOC_MATRIX_VIEW]  = rlGetLocationUniform(shader.id, "view");
+
+        // Get handles to GLSL uniform locations (fragment shader)
+        shader.locs[SHADER_LOC_COLOR_DIFFUSE] = rlGetLocationUniform(shader.id, "colDiffuse");
+        shader.locs[SHADER_LOC_MAP_DIFFUSE] = rlGetLocationUniform(shader.id, "texture0");
+        shader.locs[SHADER_LOC_MAP_SPECULAR] = rlGetLocationUniform(shader.id, "texture1");
+        shader.locs[SHADER_LOC_MAP_NORMAL] = rlGetLocationUniform(shader.id, "texture2");
+    }
 
     return shader;
 }
@@ -2046,15 +2076,13 @@ void UnloadShader(Shader shader)
     {
         rlUnloadShaderProgram(shader.id);
         RL_FREE(shader.locs);
-
-        TRACELOG(LOG_INFO, "SHADER: [ID %i] Unloaded shader program data from VRAM (GPU)", shader.id);
     }
 }
 
 // Begin custom shader mode
 void BeginShaderMode(Shader shader)
 {
-    rlSetShaderCurrent(shader);
+    rlSetShaderActive(shader);
 }
 
 // End custom shader mode (returns to default shader)
@@ -2066,23 +2094,13 @@ void EndShaderMode(void)
 // Get shader uniform location
 int GetShaderLocation(Shader shader, const char *uniformName)
 {
-    int location = rlGetLocationUniform(shader.id, uniformName);
-
-    if (location == -1) TRACELOG(LOG_WARNING, "SHADER: [ID %i] Failed to find shader uniform: %s", shader.id, uniformName);
-    else TRACELOG(LOG_INFO, "SHADER: [ID %i] Shader uniform (%s) set at location: %i", shader.id, uniformName, location);
-    
-    return location;
+    return rlGetLocationUniform(shader.id, uniformName);
 }
 
 // Get shader attribute location
 int GetShaderLocationAttrib(Shader shader, const char *attribName)
 {
-    int location = rlGetLocationAttrib(shader.id, attribName);
-
-    if (location == -1) TRACELOG(LOG_WARNING, "SHADER: [ID %i] Failed to find shader attribute: %s", shader.id, attribName);
-    else TRACELOG(LOG_INFO, "SHADER: [ID %i] Shader attribute (%s) set at location: %i", shader.id, attribName, location);
-
-    return location;
+    return rlGetLocationAttrib(shader.id, attribName);
 }
 
 // Set shader uniform value
@@ -4373,9 +4391,9 @@ static void SetupViewport(int width, int height)
     CORE.Window.render.width = width;
     CORE.Window.render.height = height;
 
-	// Set viewport width and height
-	// NOTE: We consider render size (scaled) and offset in case black bars are required and
-	// render area does not match full display area (this situation is only applicable on fullscreen mode)
+    // Set viewport width and height
+    // NOTE: We consider render size (scaled) and offset in case black bars are required and
+    // render area does not match full display area (this situation is only applicable on fullscreen mode)
 #if defined(__APPLE__)
     float xScale = 1.0f, yScale = 1.0f;
     glfwGetWindowContentScale(CORE.Window.handle, &xScale, &yScale);
