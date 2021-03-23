@@ -1,6 +1,6 @@
 /**********************************************************************************************
 *
-*   rlgl v3.7 - raylib OpenGL abstraction layer
+*   rlgl v3.5 - raylib OpenGL abstraction layer
 *
 *   rlgl is a wrapper for multiple OpenGL versions (1.1, 2.1, 3.3 Core, ES 2.0) to
 *   pseudo-OpenGL 1.1 style functions (rlVertex, rlTranslate, rlRotate...).
@@ -3257,17 +3257,29 @@ void rlDrawMesh(Mesh mesh, Material material, Matrix transform)
 
     // Upload to shader material.colDiffuse
     if (material.shader.locs[SHADER_LOC_COLOR_DIFFUSE] != -1)
-        glUniform4f(material.shader.locs[SHADER_LOC_COLOR_DIFFUSE], (float)material.maps[MATERIAL_MAP_DIFFUSE].color.r/255.0f,
-                                                           (float)material.maps[MATERIAL_MAP_DIFFUSE].color.g/255.0f,
-                                                           (float)material.maps[MATERIAL_MAP_DIFFUSE].color.b/255.0f,
-                                                           (float)material.maps[MATERIAL_MAP_DIFFUSE].color.a/255.0f);
+    {
+        float values[4] = {
+            (float)material.maps[MATERIAL_MAP_DIFFUSE].color.r/255.0f,
+            (float)material.maps[MATERIAL_MAP_DIFFUSE].color.g/255.0f,
+            (float)material.maps[MATERIAL_MAP_DIFFUSE].color.b/255.0f,
+            (float)material.maps[MATERIAL_MAP_DIFFUSE].color.a/255.0f 
+        };
+        
+        rlSetUniform(material.shader.locs[SHADER_LOC_COLOR_DIFFUSE], values, SHADER_UNIFORM_VEC4, 1);
+    }
 
     // Upload to shader material.colSpecular (if available)
     if (material.shader.locs[SHADER_LOC_COLOR_SPECULAR] != -1)
-        glUniform4f(material.shader.locs[SHADER_LOC_COLOR_SPECULAR], (float)material.maps[MATERIAL_MAP_SPECULAR].color.r/255.0f,
-                                                               (float)material.maps[MATERIAL_MAP_SPECULAR].color.g/255.0f,
-                                                               (float)material.maps[MATERIAL_MAP_SPECULAR].color.b/255.0f,
-                                                               (float)material.maps[MATERIAL_MAP_SPECULAR].color.a/255.0f);
+    {
+        float values[4] = {
+            (float)material.maps[SHADER_LOC_COLOR_SPECULAR].color.r/255.0f,
+            (float)material.maps[SHADER_LOC_COLOR_SPECULAR].color.g/255.0f,
+            (float)material.maps[SHADER_LOC_COLOR_SPECULAR].color.b/255.0f,
+            (float)material.maps[SHADER_LOC_COLOR_SPECULAR].color.a/255.0f 
+        };
+        
+        rlSetUniform(material.shader.locs[SHADER_LOC_COLOR_SPECULAR], values, SHADER_UNIFORM_VEC4, 1);
+    }
 
     if (material.shader.locs[SHADER_LOC_MATRIX_VIEW] != -1) rlSetUniformMatrix(material.shader.locs[SHADER_LOC_MATRIX_VIEW], RLGL.State.modelview);
     if (material.shader.locs[SHADER_LOC_MATRIX_PROJECTION] != -1) rlSetUniformMatrix(material.shader.locs[SHADER_LOC_MATRIX_PROJECTION], RLGL.State.projection);
@@ -3295,7 +3307,7 @@ void rlDrawMesh(Mesh mesh, Material material, Matrix transform)
             if ((i == MATERIAL_MAP_IRRADIANCE) || (i == MATERIAL_MAP_PREFILTER) || (i == MATERIAL_MAP_CUBEMAP)) glBindTexture(GL_TEXTURE_CUBE_MAP, material.maps[i].texture.id);
             else glBindTexture(GL_TEXTURE_2D, material.maps[i].texture.id);
 
-            glUniform1i(material.shader.locs[SHADER_LOC_MAP_DIFFUSE + i], i);
+            rlSetUniform(material.shader.locs[SHADER_LOC_MAP_DIFFUSE + i], &i, SHADER_UNIFORM_INT, 1);
         }
     }
 
@@ -3379,7 +3391,7 @@ void rlDrawMesh(Mesh mesh, Material material, Matrix transform)
         Matrix matMVP = MatrixMultiply(RLGL.State.modelview, RLGL.State.projection);        // Transform to screen-space coordinates
 
         // Send combined model-view-projection matrix to shader
-        glUniformMatrix4fv(material.shader.locs[SHADER_LOC_MATRIX_MVP], 1, false, MatrixToFloat(matMVP));
+        rlSetUniformMatrix(material.shader.locs[SHADER_LOC_MATRIX_MVP], matMVP);
 
         // Draw call!
         if (mesh.indices != NULL) glDrawElements(GL_TRIANGLES, mesh.triangleCount*3, GL_UNSIGNED_SHORT, 0); // Indexed vertices draw
@@ -3403,7 +3415,7 @@ void rlDrawMesh(Mesh mesh, Material material, Matrix transform)
     }
 
     // Unbind shader program
-    glUseProgram(0);
+    rlDisableShader();
 
     // Restore RLGL.State.projection/RLGL.State.modelview matrices
     // NOTE: In stereo rendering matrices are being modified to fit every eye
@@ -3419,7 +3431,7 @@ void rlDrawMeshInstanced(Mesh mesh, Material material, Matrix *transforms, int c
     if (RLGL.ExtSupported.instancing)
     {
         // Bind shader program
-        glUseProgram(material.shader.id);
+        rlEnableShader(material.shader.id);
 
         // Upload to shader material.colDiffuse
         if (material.shader.locs[SHADER_LOC_COLOR_DIFFUSE] != -1)
