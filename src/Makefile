@@ -162,7 +162,12 @@ ifeq ($(PLATFORM),PLATFORM_WEB)
     CLANG_PATH          = $(EMSDK_PATH)/upstream/bin
     PYTHON_PATH         = $(EMSDK_PATH)/python/3.9.2-1_64bit
     NODE_PATH           = $(EMSDK_PATH)/node/14.15.5_64bit/bin
-    export PATH         = $(EMSDK_PATH);$(EMSCRIPTEN_PATH);$(CLANG_PATH);$(NODE_PATH);$(PYTHON_PATH);C:\raylib\MinGW\bin:$$(PATH)
+
+    ifeq ($(PLATFORM_OS),WINDOWS)
+        export PATH = $(EMSDK_PATH);$(EMSCRIPTEN_PATH);$(CLANG_PATH);$(NODE_PATH);$(PYTHON_PATH);C:\raylib\MinGW\bin:$$(PATH)
+    else
+        export PATH := $(EMSDK_PATH):$(EMSCRIPTEN_PATH):$(CLANG_PATH):$(NODE_PATH):$(PYTHON_PATH):$(PATH)
+    endif
 endif
 
 ifeq ($(PLATFORM),PLATFORM_ANDROID)
