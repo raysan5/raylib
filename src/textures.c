@@ -3111,10 +3111,10 @@ void DrawTextureQuad(Texture2D texture, Vector2 tiling, Vector2 offset, Rectangl
 // NOTE: For tilling a whole texture DrawTextureQuad() is better
 void DrawTextureTiled(Texture2D texture, Rectangle source, Rectangle dest, Vector2 origin, float rotation, float scale, Color tint)
 {
-    if (texture.id <= 0 || scale <= 0.0f) return;  // Wanna see a infinite loop?!...just delete this line!
+    if ((texture.id <= 0) || (scale <= 0.0f)) return;  // Wanna see a infinite loop?!...just delete this line!
 
     int tileWidth = (int)(source.width*scale), tileHeight = (int)(source.height*scale);
-    if (dest.width < tileWidth && dest.height < tileHeight)
+    if ((dest.width < tileWidth) && (dest.height < tileHeight))
     {
         // Can fit only one tile
         DrawTexturePro(texture, (Rectangle){source.x, source.y, ((float)dest.width/tileWidth)*source.width, ((float)dest.height/tileHeight)*source.height},
