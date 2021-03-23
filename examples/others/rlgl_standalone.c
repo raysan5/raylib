@@ -65,6 +65,15 @@
 #define RAYWHITE   (Color){ 245, 245, 245, 255 }   // My own White (raylib logo)
 #define DARKGRAY   (Color){ 80, 80, 80, 255 }      // Dark Gray
 
+// Camera type, defines a camera position/orientation in 3d space
+typedef struct Camera {
+    Vector3 position;       // Camera position
+    Vector3 target;         // Camera target it looks-at
+    Vector3 up;             // Camera up vector (rotation over its axis)
+    float fovy;             // Camera field-of-view apperture in Y (degrees) in perspective, used as near plane width in orthographic
+    int projection;         // Camera projection: CAMERA_PERSPECTIVE or CAMERA_ORTHOGRAPHIC
+} Camera;
+
 //----------------------------------------------------------------------------------
 // Module specific Functions Declaration
 //----------------------------------------------------------------------------------
@@ -170,15 +179,15 @@ int main(void)
             Matrix matProj = MatrixPerspective(camera.fovy*DEG2RAD, (double)screenWidth/(double)screenHeight, 0.01, 1000.0);
             Matrix matView = MatrixLookAt(camera.position, camera.target, camera.up);
 
-            SetMatrixModelview(matView);    // Set internal modelview matrix (default shader)
-            SetMatrixProjection(matProj);   // Set internal projection matrix (default shader)
+            rlSetMatrixModelview(matView);    // Set internal modelview matrix (default shader)
+            rlSetMatrixProjection(matProj);   // Set internal projection matrix (default shader)
 
             DrawCube(cubePosition, 2.0f, 2.0f, 2.0f, RED);
             DrawCubeWires(cubePosition, 2.0f, 2.0f, 2.0f, RAYWHITE);
             DrawGrid(10, 1.0f);
 
-            // NOTE: Internal buffers drawing (3D data)
-            rlglDraw();
+            // Draw internal render batch buffers (3D data)
+            rlDrawRenderBatchActive();
             //-----------------------------------------------
             
             // Draw '2D' elements in the scene (GUI)
@@ -188,8 +197,8 @@ int main(void)
             matProj = MatrixOrtho(0.0, screenWidth, screenHeight, 0.0, 0.0, 1.0);
             matView = MatrixIdentity();
             
-            SetMatrixModelview(matView);    // Set internal modelview matrix (default shader)
-            SetMatrixProjection(matProj);   // Set internal projection matrix (default shader)
+            rlSetMatrixModelview(matView);    // Set internal modelview matrix (default shader)
+            rlSetMatrixProjection(matProj);   // Set internal projection matrix (default shader)
 
 #else   // Let rlgl generate and multiply matrix internally
 
@@ -201,8 +210,8 @@ int main(void)
 #endif
             DrawRectangleV((Vector2){ 10.0f, 10.0f }, (Vector2){ 780.0f, 20.0f }, DARKGRAY);
 
-            // NOTE: Internal buffers drawing (2D data)
-            rlglDraw();
+            // Draw internal render batch buffers (3D data)
+            rlDrawRenderBatchActive();
             //-----------------------------------------------
             
         glfwSwapBuffers(window);

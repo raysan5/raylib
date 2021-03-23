@@ -3248,12 +3248,12 @@ void rlDrawMesh(Mesh mesh, Material material, Matrix transform)
 
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     // Bind shader program
-    glUseProgram(material.shader.id);
+    rlEnableShader(material.shader.id);
 
     // Matrices and other values required by shader
     //-----------------------------------------------------
-    // Calculate and send to shader model matrix (used by PBR shader)
-    if (material.shader.locs[SHADER_LOC_MATRIX_MODEL] != -1) SetShaderValueMatrix(material.shader, material.shader.locs[SHADER_LOC_MATRIX_MODEL], transform);
+    // Calculate and send to shader model matrix
+    if (material.shader.locs[SHADER_LOC_MATRIX_MODEL] != -1) rlSetUniformMatrix(material.shader.locs[SHADER_LOC_MATRIX_MODEL], transform);
 
     // Upload to shader material.colDiffuse
     if (material.shader.locs[SHADER_LOC_COLOR_DIFFUSE] != -1)
@@ -3269,8 +3269,8 @@ void rlDrawMesh(Mesh mesh, Material material, Matrix transform)
                                                                (float)material.maps[MATERIAL_MAP_SPECULAR].color.b/255.0f,
                                                                (float)material.maps[MATERIAL_MAP_SPECULAR].color.a/255.0f);
 
-    if (material.shader.locs[SHADER_LOC_MATRIX_VIEW] != -1) SetShaderValueMatrix(material.shader, material.shader.locs[SHADER_LOC_MATRIX_VIEW], RLGL.State.modelview);
-    if (material.shader.locs[SHADER_LOC_MATRIX_PROJECTION] != -1) SetShaderValueMatrix(material.shader, material.shader.locs[SHADER_LOC_MATRIX_PROJECTION], RLGL.State.projection);
+    if (material.shader.locs[SHADER_LOC_MATRIX_VIEW] != -1) rlSetUniformMatrix(material.shader.locs[SHADER_LOC_MATRIX_VIEW], RLGL.State.modelview);
+    if (material.shader.locs[SHADER_LOC_MATRIX_PROJECTION] != -1) rlSetUniformMatrix(material.shader.locs[SHADER_LOC_MATRIX_PROJECTION], RLGL.State.projection);
 
     // At this point the modelview matrix just contains the view matrix (camera)
     // That's because BeginMode3D() sets it an no model-drawing function modifies it, all use rlPushMatrix() and rlPopMatrix()
@@ -4036,7 +4036,8 @@ TextureCubemap rlGenTexturePrefilter(Shader shader, TextureCubemap cubemap, int 
 
     // Define projection matrix and send it to shader
     Matrix fboProjection = MatrixPerspective(90.0*DEG2RAD, 1.0, RL_CULL_DISTANCE_NEAR, RL_CULL_DISTANCE_FAR);
-    SetShaderValueMatrix(shader, shader.locs[SHADER_LOC_MATRIX_PROJECTION], fboProjection);
+    rlEnableShader(shader.id);
+    rlSetUniformMatrix(shader.locs[SHADER_LOC_MATRIX_PROJECTION], fboProjection);
 
     // Define view matrix for every side of the cubemap
     Matrix fboViews[6] = {
@@ -4048,12 +4049,11 @@ TextureCubemap rlGenTexturePrefilter(Shader shader, TextureCubemap cubemap, int 
         MatrixLookAt((Vector3){ 0.0f, 0.0f, 0.0f }, (Vector3){  0.0f,  0.0f, -1.0f }, (Vector3){ 0.0f, -1.0f,  0.0f })
     };
 
-    rlEnableShader(shader.id);
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_CUBE_MAP, cubemap.id);
 
     // TODO: Locations should be taken out of this function... too shader dependant...
-    int roughnessLoc = GetShaderLocation(shader, "roughness");
+    int roughnessLoc = rlGetLocationUniform(shader.id, "roughness");
 
     rlEnableFramebuffer(fbo);
 
@@ -4075,7 +4075,8 @@ TextureCubemap rlGenTexturePrefilter(Shader shader, TextureCubemap cubemap, int 
 
         for (int i = 0; i < 6; i++)
         {
-            SetShaderValueMatrix(shader, shader.locs[SHADER_LOC_MATRIX_VIEW], fboViews[i]);
+            //rlEnableShader(shader.id);
+            rlSetUniformMatrix(shader.locs[SHADER_LOC_MATRIX_VIEW], fboViews[i]);
             glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, prefilter.id, mip);
             //rlFramebufferAttach(fbo, irradiance.id, RL_ATTACHMENT_COLOR_CHANNEL0, RL_ATTACHMENT_CUBEMAP_POSITIVE_X + i);  // TODO: Support mip levels?
 
