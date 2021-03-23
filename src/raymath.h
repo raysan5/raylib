@@ -856,14 +856,14 @@ RMDEF Matrix MatrixRotate(Vector3 axis, float angle)
 
     float x = axis.x, y = axis.y, z = axis.z;
 
-    float length = sqrtf(x*x + y*y + z*z);
+    float lengthSquared = x*x + y*y + z*z;
 
-    if ((length != 1.0f) && (length != 0.0f))
+    if ((lengthSquared != 1.0f) && (lengthSquared != 0.0f))
     {
-        length = 1.0f/length;
-        x *= length;
-        y *= length;
-        z *= length;
+        float inverseLength = 1.0f/sqrtf(lengthSquared);
+        x *= inverseLength;
+        y *= inverseLength;
+        z *= inverseLength;
     }
 
     float sinres = sinf(angle);
