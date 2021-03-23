@@ -135,6 +135,10 @@ void DrawSphereBasic(Color color)
 {
     int rings = 16;
     int slices = 16;
+    
+    // Make sure there is enough space in the internal render batch
+    // buffer to store all required vertex, batch is reseted if required
+    rlCheckRenderBatchLimit((rings + 2)*slices*6);
 
     rlBegin(RL_TRIANGLES);
         rlColor4ub(color.r, color.g, color.b, color.a);
