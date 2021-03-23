@@ -27,7 +27,7 @@ int main(void)
     Vector2 ballPosition = { -100.0f, -100.0f };
     Color ballColor = BEIGE;
 
-    float touchCounter = 0;
+    int touchCounter = 0;
     Vector2 touchPosition = { 0 };
 
     SetTargetFPS(60);               // Set our game to run at 60 frames-per-second
@@ -50,7 +50,7 @@ int main(void)
         if (IsMouseButtonPressed(MOUSE_MIDDLE_BUTTON)) touchCounter = 10;
         if (IsMouseButtonPressed(MOUSE_RIGHT_BUTTON)) touchCounter = 10;
 
-        if (touchCounter > 0) touchCounter -= 1;
+        if (touchCounter > 0) touchCounter--;
         //----------------------------------------------------------------------------------
 
         // Draw
@@ -73,7 +73,7 @@ int main(void)
             }
 
             // Draw the normal mouse location
-            DrawCircleV(ballPosition, 30 + (touchCounter*3), ballColor);
+            DrawCircleV(ballPosition, 30 + (touchCounter*3.0f), ballColor);
 
             DrawText("move ball with mouse and click mouse button to change color", 10, 10, 20, DARKGRAY);
             DrawText("touch the screen at multiple locations to get multiple balls", 10, 30, 20, DARKGRAY);

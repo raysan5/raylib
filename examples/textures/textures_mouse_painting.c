@@ -44,7 +44,7 @@ int main(void)
     int colorSelected = 0;
     int colorSelectedPrev = colorSelected;
     int colorMouseHover = 0;
-    float brushSize = 20;
+    float brushSize = 20.0f;
     bool mouseWasPressed = false;
 
     Rectangle btnSaveRec = { 750, 10, 40, 30 };
