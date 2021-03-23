@@ -45,10 +45,10 @@ int main(void)
     camera.projection = CAMERA_PERSPECTIVE;
 
     // Define our three models to show the shader on
-    Mesh torus = GenMeshTorus(.3, 1, 16, 32);
+    Mesh torus = GenMeshTorus(0.3f, 1, 16, 32);
     Model model1 = LoadModelFromMesh(torus);
 
-    Mesh cube = GenMeshCube(.8,.8,.8);
+    Mesh cube = GenMeshCube(0.8f,0.8f,0.8f);
     Model model2 = LoadModelFromMesh(cube);
 
     // Generate model to be shaded just to see the gaps in the other two

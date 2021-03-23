@@ -14,6 +14,7 @@
 
 #include "raylib.h"
 #include "raymath.h"
+#include "rlgl.h"
 
 #include <stdio.h>
 
@@ -187,7 +188,7 @@ static Material LoadMaterialPBR(Color albedo, float metalness, float roughness)
     Shader shdrCubemap = LoadShader("resources/shaders/glsl100/cubemap.vs", "resources/shaders/glsl100/cubemap.fs");
 #endif
     SetShaderValue(shdrCubemap, GetShaderLocation(shdrCubemap, "equirectangularMap"), (int[1]){ 0 }, SHADER_UNIFORM_INT);
-    TextureCubemap cubemap = GenTextureCubemap(shdrCubemap, panorama, CUBEMAP_SIZE, PIXELFORMAT_UNCOMPRESSED_R32G32B32);
+    TextureCubemap cubemap = rlGenTextureCubemap(shdrCubemap, panorama, CUBEMAP_SIZE, PIXELFORMAT_UNCOMPRESSED_R32G32B32);
     UnloadTexture(panorama);
     UnloadShader(shdrCubemap);
     //--------------------------------------------------------------------------------------------------------
@@ -201,7 +202,7 @@ static Material LoadMaterialPBR(Color albedo, float metalness, float roughness)
     Shader shdrIrradiance = LoadShader("resources/shaders/glsl100/skybox.vs", "resources/shaders/glsl100/irradiance.fs");
 #endif
     SetShaderValue(shdrIrradiance, GetShaderLocation(shdrIrradiance, "environmentMap"), (int[1]){ 0 }, SHADER_UNIFORM_INT);
-    mat.maps[MATERIAL_MAP_IRRADIANCE].texture = GenTextureIrradiance(shdrIrradiance, cubemap, IRRADIANCE_SIZE);
+    mat.maps[MATERIAL_MAP_IRRADIANCE].texture = rlGenTextureIrradiance(shdrIrradiance, cubemap, IRRADIANCE_SIZE);
     UnloadShader(shdrIrradiance);
     //--------------------------------------------------------------------------------------------------------
     
@@ -214,7 +215,7 @@ static Material LoadMaterialPBR(Color albedo, float metalness, float roughness)
     Shader shdrPrefilter = LoadShader("resources/shaders/glsl100/skybox.vs", "resources/shaders/glsl100/prefilter.fs");
 #endif
     SetShaderValue(shdrPrefilter, GetShaderLocation(shdrPrefilter, "environmentMap"), (int[1]){ 0 }, SHADER_UNIFORM_INT);
-    mat.maps[MATERIAL_MAP_PREFILTER].texture = GenTexturePrefilter(shdrPrefilter, cubemap, PREFILTERED_SIZE);
+    mat.maps[MATERIAL_MAP_PREFILTER].texture = rlGenTexturePrefilter(shdrPrefilter, cubemap, PREFILTERED_SIZE);
     UnloadTexture(cubemap);
     UnloadShader(shdrPrefilter);
     //--------------------------------------------------------------------------------------------------------
@@ -226,7 +227,7 @@ static Material LoadMaterialPBR(Color albedo, float metalness, float roughness)
 #else
     Shader shdrBRDF = LoadShader("resources/shaders/glsl100/brdf.vs", "resources/shaders/glsl100/brdf.fs");
 #endif
-    mat.maps[MATERIAL_MAP_BRDG].texture = GenTextureBRDF(shdrBRDF, BRDF_SIZE);
+    mat.maps[MATERIAL_MAP_BRDG].texture = rlGenTextureBRDF(shdrBRDF, BRDF_SIZE);
     UnloadShader(shdrBRDF);
     //--------------------------------------------------------------------------------------------------------
 

@@ -68,12 +68,12 @@ int main(void)
                 {
                     // Draw circle and touch index number
                     DrawCircleV(touchPosition, 34, ORANGE);
-                    DrawText(TextFormat("%d", i), touchPosition.x - 10, touchPosition.y - 70, 40, BLACK);
+                    DrawText(TextFormat("%d", i), (int)touchPosition.x - 10, (int)touchPosition.y - 70, 40, BLACK);
                 }
             }
 
             // Draw the normal mouse location
-            DrawCircleV(ballPosition, 30 + (touchCounter*3), ballColor);
+            DrawCircleV(ballPosition, 30 + (touchCounter*3.0f), ballColor);
 
             DrawText("move ball with mouse and click mouse button to change color", 10, 10, 20, DARKGRAY);
             DrawText("touch the screen at multiple locations to get multiple balls", 10, 30, 20, DARKGRAY);

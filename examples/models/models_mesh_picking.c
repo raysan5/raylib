@@ -142,8 +142,8 @@ int main(void)
                 // If we hit something, draw the cursor at the hit point
                 if (nearestHit.hit)
                 {
-                    DrawCube(nearestHit.position, 0.3, 0.3, 0.3, cursorColor);
-                    DrawCubeWires(nearestHit.position, 0.3, 0.3, 0.3, RED);
+                    DrawCube(nearestHit.position, 0.3f, 0.3f, 0.3f, cursorColor);
+                    DrawCubeWires(nearestHit.position, 0.3f, 0.3f, 0.3f, RED);
 
                     Vector3 normalEnd;
                     normalEnd.x = nearestHit.position.x + nearestHit.normal.x;

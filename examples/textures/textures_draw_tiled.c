@@ -47,10 +47,10 @@ int main(int argc, char **argv)
     // Calculate rectangle for each color
     for (int i = 0, x = 0, y = 0; i < MAX_COLORS; i++)
     {
-        colorRec[i].x = 2 + MARGIN_SIZE + x;
-        colorRec[i].y = 22 + 256 + MARGIN_SIZE + y;
-        colorRec[i].width = COLOR_SIZE*2;
-        colorRec[i].height = COLOR_SIZE;
+        colorRec[i].x = 2.0f + MARGIN_SIZE + x;
+        colorRec[i].y = 22.0f + 256.0f + MARGIN_SIZE + y;
+        colorRec[i].width = COLOR_SIZE*2.0f;
+        colorRec[i].height = (float)COLOR_SIZE;
         
         if (i == (MAX_COLORS/2 - 1))
         {
@@ -122,7 +122,7 @@ int main(int argc, char **argv)
             ClearBackground(RAYWHITE);
             
             // Draw the tiled area
-            DrawTextureTiled(texPattern, recPattern[activePattern], (Rectangle){OPT_WIDTH+MARGIN_SIZE, MARGIN_SIZE, screenWidth - OPT_WIDTH - 2*MARGIN_SIZE, screenHeight - 2*MARGIN_SIZE},
+            DrawTextureTiled(texPattern, recPattern[activePattern], (Rectangle){(float)OPT_WIDTH+MARGIN_SIZE, (float)MARGIN_SIZE, screenWidth - OPT_WIDTH - 2.0f*MARGIN_SIZE, screenHeight - 2.0f*MARGIN_SIZE},
                 (Vector2){0.0f, 0.0f}, rotation, scale, colors[activeCol]);
             
             // Draw options
@@ -130,13 +130,13 @@ int main(int argc, char **argv)
             
             DrawText("Select Pattern", 2 + MARGIN_SIZE, 30 + MARGIN_SIZE, 10, BLACK);
             DrawTexture(texPattern, 2 + MARGIN_SIZE, 40 + MARGIN_SIZE, BLACK);
-            DrawRectangle(2 + MARGIN_SIZE + recPattern[activePattern].x, 40 + MARGIN_SIZE + recPattern[activePattern].y, recPattern[activePattern].width, recPattern[activePattern].height, ColorAlpha(DARKBLUE, 0.3f));
+            DrawRectangle(2 + MARGIN_SIZE + (int)recPattern[activePattern].x, 40 + MARGIN_SIZE + (int)recPattern[activePattern].y, (int)recPattern[activePattern].width, (int)recPattern[activePattern].height, ColorAlpha(DARKBLUE, 0.3f));
             
             DrawText("Select Color", 2+MARGIN_SIZE, 10+256+MARGIN_SIZE, 10, BLACK);
             for (int i = 0; i < MAX_COLORS; i++)
             {
                 DrawRectangleRec(colorRec[i], colors[i]);
-                if (activeCol == i) DrawRectangleLinesEx(colorRec[i], 3.0f, ColorAlpha(WHITE, 0.5f));
+                if (activeCol == i) DrawRectangleLinesEx(colorRec[i], 3, ColorAlpha(WHITE, 0.5f));
             }
             
             DrawText("Scale (UP/DOWN to change)", 2 + MARGIN_SIZE, 80 + 256 + MARGIN_SIZE, 10, BLACK);

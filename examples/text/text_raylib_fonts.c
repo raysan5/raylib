@@ -52,7 +52,7 @@ int main(void)
 
     for (int i = 0; i < MAX_FONTS; i++)
     {
-        positions[i].x = screenWidth/2 - MeasureTextEx(fonts[i], messages[i], fonts[i].baseSize*2, spacings[i]).x/2;
+        positions[i].x = screenWidth/2 - MeasureTextEx(fonts[i], messages[i], fonts[i].baseSize*2.0f, spacings[i]).x/2.0f);
         positions[i].y = 60 + fonts[i].baseSize + 45*i;
     }
 
@@ -85,7 +85,7 @@ int main(void)
 
             for (int i = 0; i < MAX_FONTS; i++)
             {
-                DrawTextEx(fonts[i], messages[i], positions[i], fonts[i].baseSize*2, spacings[i], colors[i]);
+                DrawTextEx(fonts[i], messages[i], positions[i], fonts[i].baseSize*2.0f, (float)spacings[i], colors[i]);
             }
 
         EndDrawing();

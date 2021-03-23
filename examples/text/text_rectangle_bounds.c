@@ -33,10 +33,10 @@ tempor incididunt ut labore et dolore magna aliqua. Nec ullamcorper sit amet ris
     Rectangle resizer = { container.x + container.width - 17, container.y + container.height - 17, 14, 14 };
 
     // Minimum width and heigh for the container rectangle
-    const int minWidth = 60;
-    const int minHeight = 60;
-    const int maxWidth = screenWidth - 50;
-    const int maxHeight = screenHeight - 160;
+    const float minWidth = 60;
+    const float minHeight = 60;
+    const float maxWidth = screenWidth - 50;
+    const float maxHeight = screenHeight - 160;
 
     Vector2 lastMouse = { 0.0f, 0.0f }; // Stores last mouse coordinates
     Color borderColor = MAROON;         // Container border color
@@ -63,10 +63,10 @@ tempor incididunt ut labore et dolore magna aliqua. Nec ullamcorper sit amet ris
         {
             if (IsMouseButtonReleased(MOUSE_LEFT_BUTTON)) resizing = false;
 
-            int width = container.width + (mouse.x - lastMouse.x);
+            float width = container.width + (mouse.x - lastMouse.x);
             container.width = (width > minWidth)? ((width < maxWidth)? width : maxWidth) : minWidth;
 
-            int height = container.height + (mouse.y - lastMouse.y);
+            float height = container.height + (mouse.y - lastMouse.y);
             container.height = (height > minHeight)? ((height < maxHeight)? height : maxHeight) : minHeight;
         }
         else

@@ -49,7 +49,7 @@ int main(void)
     {
         // Update
         //----------------------------------------------------------------------------------
-        time = GetTime();
+        time = (float)GetTime();
         SetShaderValue(shader, timeLoc, &time, SHADER_UNIFORM_FLOAT);
         //----------------------------------------------------------------------------------
 
