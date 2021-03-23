@@ -793,27 +793,29 @@ void DrawRectangleRounded(Rectangle rec, float roundness, int segments, Color co
 
     float stepLength = 90.0f/(float)segments;
 
-    /*  Quick sketch to make sense of all of this (there are 9 parts to draw, also mark the 12 points we'll use below)
-     *  Not my best attempt at ASCII art, just preted it's rounded rectangle :)
-     *     P0                    P1
-     *       ____________________
-     *     /|                    |\
-     *    /1|          2         |3\
-     *P7 /__|____________________|__\ P2
-     *  |   |P8                P9|   |
-     *  | 8 |          9         | 4 |
-     *  | __|____________________|__ |
-     *P6 \  |P11              P10|  / P3
-     *    \7|          6         |5/
-     *     \|____________________|/
-     *     P5                    P4
-     */
+    /*  
+    *   Quick sketch to make sense of all of this 
+    *   (there are 9 parts to draw, also mark the 12 points we'll use below)
+    *
+    *      P0____________________P1
+    *      /|                    |\
+    *     /1|          2         |3\
+    * P7 /__|____________________|__\ P2
+    *   |   |P8                P9|   |
+    *   | 8 |          9         | 4 |
+    *   | __|____________________|__ |
+    * P6 \  |P11              P10|  / P3
+    *     \7|          6         |5/
+    *      \|____________________|/
+    *      P5                    P4
+    */
 
-    const Vector2 point[12] = { // coordinates of the 12 points that define the rounded rect (the idea here is to make things easier)
-        {(float)rec.x + radius, rec.y}, {(float)(rec.x + rec.width) - radius, rec.y}, { rec.x + rec.width, (float)rec.y + radius }, // PO, P1, P2
-        {rec.x + rec.width, (float)(rec.y + rec.height) - radius}, {(float)(rec.x + rec.width) - radius, rec.y + rec.height}, // P3, P4
-        {(float)rec.x + radius, rec.y + rec.height}, { rec.x, (float)(rec.y + rec.height) - radius}, {rec.x, (float)rec.y + radius}, // P5, P6, P7
-        {(float)rec.x + radius, (float)rec.y + radius}, {(float)(rec.x + rec.width) - radius, (float)rec.y + radius}, // P8, P9
+    // Coordinates of the 12 points that define the rounded rect
+    const Vector2 point[12] = {
+        {(float)rec.x + radius, rec.y}, {(float)(rec.x + rec.width) - radius, rec.y}, { rec.x + rec.width, (float)rec.y + radius },     // PO, P1, P2
+        {rec.x + rec.width, (float)(rec.y + rec.height) - radius}, {(float)(rec.x + rec.width) - radius, rec.y + rec.height},           // P3, P4
+        {(float)rec.x + radius, rec.y + rec.height}, { rec.x, (float)(rec.y + rec.height) - radius}, {rec.x, (float)rec.y + radius},    // P5, P6, P7
+        {(float)rec.x + radius, (float)rec.y + radius}, {(float)(rec.x + rec.width) - radius, (float)rec.y + radius},                   // P8, P9
         {(float)(rec.x + rec.width) - radius, (float)(rec.y + rec.height) - radius}, {(float)rec.x + radius, (float)(rec.y + rec.height) - radius} // P10, P11
     };
 
@@ -831,6 +833,7 @@ void DrawRectangleRounded(Rectangle rec, float roundness, int segments, Color co
         {
             float angle = angles[k];
             const Vector2 center = centers[k];
+
             // NOTE: Every QUAD actually represents two segments
             for (int i = 0; i < segments/2; i++)
             {
@@ -845,6 +848,7 @@ void DrawRectangleRounded(Rectangle rec, float roundness, int segments, Color co
                 rlVertex2f(center.x + sinf(DEG2RAD*(angle + stepLength*2))*radius, center.y + cosf(DEG2RAD*(angle + stepLength*2))*radius);
                 angle += (stepLength*2);
             }
+
             // NOTE: In case number of segments is odd, we add one last piece to the cake
             if (segments%2)
             {
@@ -921,6 +925,7 @@ void DrawRectangleRounded(Rectangle rec, float roundness, int segments, Color co
     rlCheckRenderBatchLimit(12*segments + 5*6); // 4 corners with 3 vertices per segment + 5 rectangles with 6 vertices each
 
     rlBegin(RL_TRIANGLES);
+
         // Draw all of the 4 corners: [1] Upper Left Corner, [3] Upper Right Corner, [5] Lower Right Corner, [7] Lower Left Corner
         for (int k = 0; k < 4; ++k) // Hope the compiler is smart enough to unroll this loop
         {
@@ -1014,22 +1019,20 @@ void DrawRectangleRoundedLines(Rectangle rec, float roundness, int segments, int
     float stepLength = 90.0f/(float)segments;
     const float outerRadius = radius + (float)lineThick, innerRadius = radius;
 
-    /*  Quick sketch to make sense of all of this (mark the 16 + 4(corner centers P16-19) points we'll use below)
-     *  Not my best attempt at ASCII art, just preted it's rounded rectangle :)
-     *     P0                     P1
-     *        ====================
-     *     // P8                P9 \\
-     *    //                        \\
-     *P7 // P15                  P10 \\ P2
-     *  ||   *P16             P17*    ||
-     *  ||                            ||
-     *  || P14                   P11  ||
-     *P6 \\  *P19             P18*   // P3
-     *    \\                        //
-     *     \\ P13              P12 //
-     *        ====================
-     *     P5                     P4
-     */
+    /*  
+    *   Quick sketch to make sense of all of this (mark the 16 + 4(corner centers P16-19) points we'll use below)
+    *       P0 ================== P1
+    *      // P8                P9 \\
+    *     //                        \\
+    * P7 // P15                  P10 \\ P2
+    *   ||   *P16             P17*    ||
+    *   ||                            ||
+    *   || P14                   P11  ||
+    * P6 \\  *P19             P18*   // P3
+    *     \\                        //
+    *      \\ P13              P12 //
+    *       P5 ================== P4
+    */
     const Vector2 point[16] = {
         {(float)rec.x + innerRadius, rec.y - lineThick}, {(float)(rec.x + rec.width) - innerRadius, rec.y - lineThick}, { rec.x + rec.width + lineThick, (float)rec.y + innerRadius }, // PO, P1, P2
         {rec.x + rec.width + lineThick, (float)(rec.y + rec.height) - innerRadius}, {(float)(rec.x + rec.width) - innerRadius, rec.y + rec.height + lineThick}, // P3, P4
@@ -1055,6 +1058,7 @@ void DrawRectangleRoundedLines(Rectangle rec, float roundness, int segments, int
         rlEnableTexture(rlGetShapesTexture().id);
 
         rlBegin(RL_QUADS);
+        
             // Draw all of the 4 corners first: Upper Left Corner, Upper Right Corner, Lower Right Corner, Lower Left Corner
             for (int k = 0; k < 4; ++k) // Hope the compiler is smart enough to unroll this loop
             {
