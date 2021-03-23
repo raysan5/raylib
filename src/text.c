@@ -58,6 +58,7 @@
 #include <string.h>         // Required for: strcmp(), strstr(), strcpy(), strncpy() [Used in TextReplace()], sscanf() [Used in LoadBMFont()]
 #include <stdarg.h>         // Required for: va_list, va_start(), vsprintf(), va_end() [Used in TextFormat()]
 #include <ctype.h>          // Requried for: toupper(), tolower() [Used in TextToUpper(), TextToLower()]
+#include <math.h>           // Required for: DrawTextStyle(), DrawTextStyleEx()
 
 #include "utils.h"          // Required for: LoadFileText()
 
@@ -880,6 +881,155 @@ void DrawTextEx(Font font, const char *text, Vector2 position, float fontSize, f
 
         i += codepointByteCount;   // Move text bytes counter to next codepoint
     }
+}
+
+// Originally from https://github.com/NightenDushi/Raylib_DrawTextStyle, slightly modified to be built into raylib
+
+/* You can use basic markdown syntax to style your text :
+
+**italic*
+***Bold***
+~wave animation~
+~~crossed~~
+__underline__
+
+You can make a timer by doing timer_var += GetFrameTime();You can make a timer by doing timer_var += GetFrameTime();
+*/
+void DrawTextStyleEx(Font mainFont, Font italicFont, Font boldFont, Font boldItalicFont, const char* text, Vector2 position, float fontSize, float spacing, float linespacing, float time, Color tint)
+{
+
+    Font font = mainFont;
+
+    int length = TextLength(text);      // Total length in bytes of the text, scanned by codepoints in loop
+
+    int textOffsetY = 0;            // Offset between lines (on line break '\n')
+    float textOffsetX = 0.0f;       // Offset X to next character to draw
+
+
+    float scaleFactor = fontSize/font.baseSize;     // Character quad scaling factor
+
+    //Style flags
+    bool flag_bold = false;
+    bool flag_italic = false;
+    bool flag_wave = false;
+    bool flag_crossed = false;
+    bool flag_underline = false;
+
+    //Parameters for the waves effect
+    float wave_x_range = 1;
+    float wave_y_range = 2;
+    int wave_x_speed = 4;
+    int wave_y_speed = 4;
+    float wave_x_offset = 0.5;
+    float wave_y_offset = 0.5;
+
+
+    for (int i = 0; i < length;)
+    {
+        // Get next codepoint from byte string and glyph index in font
+        int codepointByteCount = 0;
+        int codepoint = GetNextCodepoint(&text[i], &codepointByteCount);
+        int index = GetGlyphIndex(font, codepoint);
+
+
+        if (codepoint == 0x3f) codepointByteCount = 1;
+
+        if (codepoint == '\n')
+        {
+            textOffsetY += (int)((font.baseSize * linespacing)*scaleFactor);
+            textOffsetX = 0.0f;
+        }
+        else if (codepoint == '*')
+        {
+            if (GetNextCodepoint(&text[i+1], &codepointByteCount) == '*') // -> **
+            {
+                flag_bold = !flag_bold;
+                codepointByteCount += 1;
+            }
+            else
+            {
+                flag_italic = !flag_italic;
+            }
+
+            //Font Weight switching
+            if (flag_bold && flag_italic) font = boldItalicFont;
+            else if (flag_bold)font = boldFont;
+            else if (flag_italic) font = italicFont;
+            else font = mainFont;
+        }
+        else if (codepoint == '~') // Maybe use a different symbol for wave effect (or use a escape character ?)
+        {
+            if (GetNextCodepoint(&text[i+1], &codepointByteCount) == '~') // -> ~~
+            {
+                flag_crossed = !flag_crossed;
+                codepointByteCount += 1;
+            }
+            else
+            {
+                flag_wave = !flag_wave;
+            }
+        }
+        else if (codepoint == '_' && GetNextCodepoint(&text[i+1], &codepointByteCount) == '_') // -> __
+        {
+            flag_underline = !flag_underline;
+            codepointByteCount += 1;
+
+        }
+        else
+        {
+            if ((codepoint != ' ') && (codepoint != '\t'))
+            {
+                float position_x;
+                float position_y;
+                position_x = position.x + textOffsetX;
+                position_y = position.y + textOffsetY;
+
+                if (flag_wave) //Apply the wave effect
+                {
+                    position_x += sin(time*wave_x_speed-i*wave_x_offset)*wave_x_range;
+                    position_y += sin(time*wave_y_speed-i*wave_y_offset)*wave_y_range;
+                }
+
+                DrawTextCodepoint(font, codepoint, (Vector2){ position_x, position_y }, fontSize, tint);
+
+                //Draw the crossed and underline
+                if (flag_crossed)
+                {
+                    DrawLine(position_x, position_y+fontSize/2,
+                            position_x + ((float)font.chars[index].advanceX*scaleFactor + spacing), position_y+fontSize/2,
+                            tint);
+                }
+
+                if (flag_underline)
+                {
+                    DrawLine(position_x, position_y+fontSize,
+                            position_x + ((float)font.chars[index].advanceX*scaleFactor + spacing), position_y+fontSize,
+                            tint);
+                }
+
+            }
+
+            if (font.chars[index].advanceX == 0) textOffsetX += ((float)font.recs[index].width*scaleFactor + spacing);
+            else textOffsetX += ((float)font.chars[index].advanceX*scaleFactor + spacing);
+        }
+
+        i += codepointByteCount;   // Move text bytes counter to next codepoint
+
+    }
+}
+/* You can use basic markdown syntax to style your text :
+
+**italic*
+***Bold***
+~wave animation~
+~~crossed~~
+__underline__
+
+You can make a timer by doing timer_var += GetFrameTime();
+*/
+void DrawTextStyle(Font mainFont, Font italicFont, Font boldFont, Font boldItalicFont, const char *text, int posX, int posY, int fontSize, float timer, Color tint)
+{
+    DrawTextStyleEx(mainFont, italicFont, boldFont, boldItalicFont, text, (Vector2){posX, posY}, fontSize, 1, 1.1, timer, tint);
 }
 
 // Draw text using font inside rectangle limits
