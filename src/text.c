@@ -817,7 +817,13 @@ void UnloadFont(Font font)
 // NOTE: Uses default font
 void DrawFPS(int posX, int posY)
 {
-    DrawText(TextFormat("%2i FPS", GetFPS()), posX, posY, 20, LIME);
+    Color color = LIME; // good fps
+    int fps = GetFPS();
+
+    if (fps < 30 && fps >= 15) color = ORANGE;  // warning FPS
+    else if (fps < 15) color = RED;    // bad FPS
+
+    DrawText(TextFormat("%2i FPS", GetFPS()), posX, posY, 20, color);
 }
 
 // Draw text (using default font)
