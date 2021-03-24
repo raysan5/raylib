@@ -813,7 +813,7 @@ void UnloadFont(Font font)
     }
 }
 
-// Shows current FPS on top-left corner
+// Draw current FPS
 // NOTE: Uses default font
 void DrawFPS(int posX, int posY)
 {
