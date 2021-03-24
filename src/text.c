@@ -813,11 +813,18 @@ void UnloadFont(Font font)
     }
 }
 
-// Shows current FPS on top-left corner
+// Draws current FPS
 // NOTE: Uses default font
 void DrawFPS(int posX, int posY)
 {
     DrawText(TextFormat("%2i FPS", GetFPS()), posX, posY, 20, LIME);
+}
+
+// Draws current FPS
+// NOTE: Uses default font
+void DrawFPSEx(int posX, int posY, Color tint)
+{
+    DrawText(TextFormat("%2i FPS", GetFPS()), posX, posY, 20, tint);
 }
 
 // Draw text (using default font)
