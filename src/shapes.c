@@ -1419,6 +1419,48 @@ void DrawPolyLines(Vector2 center, int sides, float radius, float rotation, Colo
     rlPopMatrix();
 }
 
+
+// t            texture to use
+// x,y          position to draw the poly (centre)
+// points       points of the poly (relative to 0,0)
+// tPnts        uv coordinates
+// numPoints    number of points in the poly
+// colour       the tint of the poly
+//
+// NB centre (0,0) must have straight line path to all points
+// without crossing perimeter, points must be in anticlockwise
+// order
+void DrawTexturedPoly(Texture t, float x, float y,
+                        Vector2 *points, Vector2 *tPnts,
+                        int numPoints, Color colour)
+{
+    rlEnableTexture(t.id);
+
+    // for some reason texturing doesn't work on trianglesso make a 
+    // degenerate QUAD, DrawTriangleFan does this too why ?
+    rlCheckRenderBatchLimit((numPoints-1)*4);
+    rlBegin(RL_QUADS);
+    rlColor4ub(colour.r, colour.g, colour.b, colour.a);
+
+    for (int i = 0; i < numPoints-1; i++)
+    {
+        rlTexCoord2f(0.5, 0.5);
+        rlVertex2f(x, y);
+
+        rlTexCoord2f(tPnts[i].x, tPnts[i].y);
+        rlVertex2f(points[i].x + x, points[i].y + y);
+
+        rlTexCoord2f(tPnts[i + 1].x, tPnts[i + 1].y);
+        rlVertex2f(points[i + 1].x + x, points[i + 1].y + y);
+
+        rlTexCoord2f(tPnts[i + 1].x, tPnts[i + 1].y);
+        rlVertex2f(points[i + 1].x + x, points[i + 1].y + y);
+    }
+    rlEnd();
+    rlDisableTexture();
+
+}
+
 //----------------------------------------------------------------------------------
 // Module Functions Definition - Collision Detection functions
 //----------------------------------------------------------------------------------

@@ -416,7 +416,8 @@ SHAPES = \
     shapes/shapes_easings_rectangle_array \
     shapes/shapes_draw_ring \
     shapes/shapes_draw_circle_sector \
-    shapes/shapes_draw_rectangle_rounded
+    shapes/shapes_draw_rectangle_rounded \
+    shapes/shapes_textured_polygon
 
 TEXTURES = \
     textures/textures_logo_raylib \

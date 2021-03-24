@@ -1147,6 +1147,7 @@ RLAPI void DrawTriangleFan(Vector2 *points, int pointsCount, Color color);      
 RLAPI void DrawTriangleStrip(Vector2 *points, int pointsCount, Color color);                             // Draw a triangle strip defined by points
 RLAPI void DrawPoly(Vector2 center, int sides, float radius, float rotation, Color color);               // Draw a regular polygon (Vector version)
 RLAPI void DrawPolyLines(Vector2 center, int sides, float radius, float rotation, Color color);          // Draw a polygon outline of n sides
+RLAPI void DrawTexturedPoly(Texture t, float x, float y, Vector2 *points, Vector2 *tPnts, int numPoints, Color colour); // Draw a textured polygon
 
 // Basic shapes collision detection functions
 RLAPI bool CheckCollisionRecs(Rectangle rec1, Rectangle rec2);                                           // Check collision between two rectangles
