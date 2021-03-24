@@ -693,29 +693,6 @@ void DrawGrid(int slices, float spacing)
     rlEnd();
 }
 
-// Draw gizmo
-void DrawGizmo(Vector3 position)
-{
-    // NOTE: RGB = XYZ
-    float length = 1.0f;
-
-    rlPushMatrix();
-        rlTranslatef(position.x, position.y, position.z);
-        rlScalef(length, length, length);
-
-        rlBegin(RL_LINES);
-            rlColor3f(1.0f, 0.0f, 0.0f); rlVertex3f(0.0f, 0.0f, 0.0f);
-            rlColor3f(1.0f, 0.0f, 0.0f); rlVertex3f(1.0f, 0.0f, 0.0f);
-
-            rlColor3f(0.0f, 1.0f, 0.0f); rlVertex3f(0.0f, 0.0f, 0.0f);
-            rlColor3f(0.0f, 1.0f, 0.0f); rlVertex3f(0.0f, 1.0f, 0.0f);
-
-            rlColor3f(0.0f, 0.0f, 1.0f); rlVertex3f(0.0f, 0.0f, 0.0f);
-            rlColor3f(0.0f, 0.0f, 1.0f); rlVertex3f(0.0f, 0.0f, 1.0f);
-        rlEnd();
-    rlPopMatrix();
-}
-
 // Load model from files (mesh and material)
 Model LoadModel(const char *fileName)
 {
