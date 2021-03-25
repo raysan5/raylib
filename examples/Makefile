@@ -416,8 +416,7 @@ SHAPES = \
     shapes/shapes_easings_rectangle_array \
     shapes/shapes_draw_ring \
     shapes/shapes_draw_circle_sector \
-    shapes/shapes_draw_rectangle_rounded \
-    shapes/shapes_textured_polygon
+    shapes/shapes_draw_rectangle_rounded
 
 TEXTURES = \
     textures/textures_logo_raylib \
@@ -438,7 +437,8 @@ TEXTURES = \
     textures/textures_sprite_explosion \
     textures/textures_bunnymark \
     textures/textures_blend_modes \
-    textures/textures_draw_tiled
+    textures/textures_draw_tiled \
+    textures/textures_poly
 
 TEXT = \
     text/text_raylib_fonts \

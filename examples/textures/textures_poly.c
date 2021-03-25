@@ -47,9 +47,9 @@ int main(void)
         pnts[i].y = (tPnts[i].y - 0.5) * 256.0;
     }
 
-    InitWindow(screenWidth, screenHeight, "raylib [shapes] example - Textured Polygon");
+    InitWindow(screenWidth, screenHeight, "raylib [textures] example - Textured Polygon");
 
-    Texture tex = LoadTexture("../textures/resources/cat.png");
+    Texture tex = LoadTexture("resources/cat.png");
 
     SetTargetFPS(60);               // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
@@ -77,7 +77,7 @@ int main(void)
 
             DrawText("Textured Polygon", 20, 20, 20, DARKGRAY);
             
-            DrawTexturedPoly(tex, screenWidth/2, screenHeight/2,
+            DrawTexturePoly(tex, screenWidth/2, screenHeight/2,
                                 dPnts, tPnts, numPnts, WHITE);
 
         EndDrawing();
