@@ -2082,13 +2082,13 @@ void UnloadShader(Shader shader)
 // Begin custom shader mode
 void BeginShaderMode(Shader shader)
 {
-    rlSetShaderActive(shader);
+    rlSetShader(shader);
 }
 
 // End custom shader mode (returns to default shader)
 void EndShaderMode(void)
 {
-    BeginShaderMode(rlGetShaderDefault());
+    rlSetShader(rlGetShaderDefault());
 }
 
 // Get shader uniform location
@@ -2129,7 +2129,7 @@ void SetShaderValueMatrix(Shader shader, int locIndex, Matrix mat)
 void SetShaderValueTexture(Shader shader, int locIndex, Texture2D texture)
 {
     rlEnableShader(shader.id);
-    rlSetUniformSampler(locIndex, texture);
+    rlSetUniformSampler(locIndex, texture.id);
     //rlDisableShader();
 }
 

@@ -3243,7 +3243,7 @@ void DrawTexturePro(Texture2D texture, Rectangle source, Rectangle dest, Vector2
             bottomRight.y = y + (dx + dest.width)*sinRotation + (dy + dest.height)*cosRotation;
         }
 
-        rlEnableTexture(texture.id);
+        rlSetTexture(texture.id);
         rlBegin(RL_QUADS);
 
             rlColor4ub(tint.r, tint.g, tint.b, tint.a);
@@ -3270,7 +3270,7 @@ void DrawTexturePro(Texture2D texture, Rectangle source, Rectangle dest, Vector2
             rlVertex2f(topRight.x, topRight.y);
 
         rlEnd();
-        rlDisableTexture();
+        rlSetTexture(0);
 
         // NOTE: Vertex position can be transformed using matrices
         // but the process is way more costly than just calculating
@@ -3278,7 +3278,7 @@ void DrawTexturePro(Texture2D texture, Rectangle source, Rectangle dest, Vector2
         // I leave here the old implementation for educational pourposes,
         // just in case someone wants to do some performance test
         /*
-        rlEnableTexture(texture.id);
+        rlSetTexture(texture.id);
         rlPushMatrix();
             rlTranslatef(dest.x, dest.y, 0.0f);
             if (rotation != 0.0f) rlRotatef(rotation, 0.0f, 0.0f, 1.0f);
@@ -3309,7 +3309,7 @@ void DrawTexturePro(Texture2D texture, Rectangle source, Rectangle dest, Vector2
                 rlVertex2f(dest.width, 0.0f);
             rlEnd();
         rlPopMatrix();
-        rlDisableTexture();
+        rlSetTexture(0);
         */
     }
 }
@@ -3372,7 +3372,7 @@ void DrawTextureNPatch(Texture2D texture, NPatchInfo nPatchInfo, Rectangle dest,
         coordD.x = (nPatchInfo.source.x + nPatchInfo.source.width)/width;
         coordD.y = (nPatchInfo.source.y + nPatchInfo.source.height)/height;
 
-        rlEnableTexture(texture.id);
+        rlSetTexture(texture.id);
 
         rlPushMatrix();
             rlTranslatef(dest.x, dest.y, 0.0f);
@@ -3506,7 +3506,7 @@ void DrawTextureNPatch(Texture2D texture, NPatchInfo nPatchInfo, Rectangle dest,
             rlEnd();
         rlPopMatrix();
 
-        rlDisableTexture();
+        rlSetTexture(0);
     }
 }
 

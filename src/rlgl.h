@@ -283,6 +283,14 @@ typedef struct RenderBatch {
     float currentDepth;         // Current depth value for next draw
 } RenderBatch;
 
+// Shader attribute data types
+typedef enum {
+    SHADER_ATTRIB_FLOAT = 0,
+    SHADER_ATTRIB_VEC2,
+    SHADER_ATTRIB_VEC3, 
+    SHADER_ATTRIB_VEC4
+} ShaderAttributeDataType;
+
 #if defined(RLGL_STANDALONE)
     #ifndef __cplusplus
     // Boolean type
@@ -321,48 +329,11 @@ typedef struct RenderBatch {
     // TextureCubemap type, actually, same as Texture
     typedef Texture TextureCubemap;
 
-    // Vertex data definning a mesh
-    typedef struct Mesh {
-        int vertexCount;        // number of vertices stored in arrays
-        int triangleCount;      // number of triangles stored (indexed or not)
-        float *vertices;        // vertex position (XYZ - 3 components per vertex) (shader-location = 0)
-        float *texcoords;       // vertex texture coordinates (UV - 2 components per vertex) (shader-location = 1)
-        float *texcoords2;      // vertex second texture coordinates (useful for lightmaps) (shader-location = 5)
-        float *normals;         // vertex normals (XYZ - 3 components per vertex) (shader-location = 2)
-        float *tangents;        // vertex tangents (XYZW - 4 components per vertex) (shader-location = 4)
-        unsigned char *colors;  // vertex colors (RGBA - 4 components per vertex) (shader-location = 3)
-        unsigned short *indices;// vertex indices (in case vertex data comes indexed)
-
-        // Animation vertex data
-        float *animVertices;    // Animated vertex positions (after bones transformations)
-        float *animNormals;     // Animated normals (after bones transformations)
-        int *boneIds;           // Vertex bone ids, up to 4 bones influence by vertex (skinning)
-        float *boneWeights;     // Vertex bone weight, up to 4 bones influence by vertex (skinning)
-
-        // OpenGL identifiers
-        unsigned int vaoId;     // OpenGL Vertex Array Object id
-        unsigned int *vboId;    // OpenGL Vertex Buffer Objects id (7 types of vertex data)
-    } Mesh;
-
     // Shader type (generic)
     typedef struct Shader {
         unsigned int id;        // Shader program id
         int *locs;              // Shader locations array (MAX_SHADER_LOCATIONS)
     } Shader;
-
-    // Material texture map
-    typedef struct MaterialMap {
-        Texture2D texture;      // Material map texture
-        Color color;            // Material map color
-        float value;            // Material map value
-    } MaterialMap;
-
-    // Material type (generic)
-    typedef struct Material {
-        Shader shader;          // Material shader
-        MaterialMap *maps;      // Material maps (MAX_MATERIAL_MAPS)
-        float params[4];        // Material generic parameters (if required)
-    } Material;
 
     // TraceLog message types
     typedef enum {
@@ -459,6 +430,9 @@ typedef struct RenderBatch {
         SHADER_LOC_MAP_PREFILTER,
         SHADER_LOC_MAP_BRDF
     } ShaderLocationIndex;
+    
+    #define SHADER_LOC_MAP_DIFFUSE      SHADER_LOC_MAP_ALBEDO
+    #define SHADER_LOC_MAP_SPECULAR     SHADER_LOC_MAP_METALNESS
 
     // Shader uniform data types
     typedef enum {
@@ -472,9 +446,6 @@ typedef struct RenderBatch {
         SHADER_UNIFORM_IVEC4,
         SHADER_UNIFORM_SAMPLER2D
     } ShaderUniformDataType;
-
-    #define SHADER_LOC_MAP_DIFFUSE      SHADER_LOC_MAP_ALBEDO
-    #define SHADER_LOC_MAP_SPECULAR     SHADER_LOC_MAP_METALNESS
 
     // Material map type
     typedef enum {
@@ -533,35 +504,56 @@ RLAPI void rlColor4f(float x, float y, float z, float w); // Define one vertex (
 // NOTE: This functions are used to completely abstract raylib code from OpenGL layer,
 // some of them are direct wrappers over OpenGL calls, some others are custom
 //------------------------------------------------------------------------------------
-RLAPI void rlEnableTexture(unsigned int id);          // Enable texture usage
-RLAPI void rlDisableTexture(void);                    // Disable texture usage
+
+// Vertex buffers state
+RLAPI bool rlEnableVertexArray(unsigned int vaoId);     // Enable vertex array (VAO, if supported)
+RLAPI void rlDisableVertexArray(void);                  // Disable vertex array (VAO, if supported)
+RLAPI void rlEnableVertexBuffer(unsigned int id);       // Enable vertex buffer (VBO)
+RLAPI void rlDisableVertexBuffer(void);                 // Disable vertex buffer (VBO)
+RLAPI void rlEnableVertexBufferElement(unsigned int id);// Enable vertex buffer element (VBO element)
+RLAPI void rlDisableVertexBufferElement(void);          // Disable vertex buffer element (VBO element)
+RLAPI void rlEnableVertexAttribute(unsigned int index); // Enable vertex attribute index
+RLAPI void rlDisableVertexAttribute(unsigned int index);// Disable vertex attribute index
+
+// Textures state
+RLAPI void rlActiveTextureSlot(int slot);               // Select and active a texture slot
+RLAPI void rlEnableTexture(unsigned int id);            // Enable texture 
+RLAPI void rlDisableTexture(void);                      // Disable texture
+RLAPI void rlEnableTextureCubemap(unsigned int id);     // Enable texture cubemap
+RLAPI void rlDisableTextureCubemap(void);               // Disable texture cubemap
 RLAPI void rlTextureParameters(unsigned int id, int param, int value); // Set texture parameters (filter, wrap)
-RLAPI void rlEnableShader(unsigned int id);           // Enable shader program usage
-RLAPI void rlDisableShader(void);                     // Disable shader program usage
-RLAPI void rlEnableFramebuffer(unsigned int id);      // Enable render texture (fbo)
-RLAPI void rlDisableFramebuffer(void);                // Disable render texture (fbo), return to default framebuffer
-RLAPI void rlEnableDepthTest(void);                   // Enable depth test
-RLAPI void rlDisableDepthTest(void);                  // Disable depth test
-RLAPI void rlEnableDepthMask(void);                   // Enable depth write
-RLAPI void rlDisableDepthMask(void);                  // Disable depth write
-RLAPI void rlEnableBackfaceCulling(void);             // Enable backface culling
-RLAPI void rlDisableBackfaceCulling(void);            // Disable backface culling
-RLAPI void rlEnableScissorTest(void);                 // Enable scissor test
-RLAPI void rlDisableScissorTest(void);                // Disable scissor test
+
+// Shader state
+RLAPI void rlEnableShader(unsigned int id);             // Enable shader program
+RLAPI void rlDisableShader(void);                       // Disable shader program
+
+// Framebuffer state
+RLAPI void rlEnableFramebuffer(unsigned int id);        // Enable render texture (fbo)
+RLAPI void rlDisableFramebuffer(void);                  // Disable render texture (fbo), return to default framebuffer
+
+// General render state
+RLAPI void rlEnableDepthTest(void);                     // Enable depth test
+RLAPI void rlDisableDepthTest(void);                    // Disable depth test
+RLAPI void rlEnableDepthMask(void);                     // Enable depth write
+RLAPI void rlDisableDepthMask(void);                    // Disable depth write
+RLAPI void rlEnableBackfaceCulling(void);               // Enable backface culling
+RLAPI void rlDisableBackfaceCulling(void);              // Disable backface culling
+RLAPI void rlEnableScissorTest(void);                   // Enable scissor test
+RLAPI void rlDisableScissorTest(void);                  // Disable scissor test
 RLAPI void rlScissor(int x, int y, int width, int height); // Scissor test
-RLAPI void rlEnableWireMode(void);                    // Enable wire mode
-RLAPI void rlDisableWireMode(void);                   // Disable wire mode
-RLAPI void rlSetLineWidth(float width);               // Set the line drawing width
-RLAPI float rlGetLineWidth(void);                     // Get the line drawing width
-RLAPI void rlEnableSmoothLines(void);                 // Enable line aliasing
-RLAPI void rlDisableSmoothLines(void);                // Disable line aliasing
-RLAPI void rlEnableStereoRender(void);                // Enable stereo rendering
-RLAPI void rlDisableStereoRender(void);               // Disable stereo rendering
+RLAPI void rlEnableWireMode(void);                      // Enable wire mode
+RLAPI void rlDisableWireMode(void);                     // Disable wire mode
+RLAPI void rlSetLineWidth(float width);                 // Set the line drawing width
+RLAPI float rlGetLineWidth(void);                       // Get the line drawing width
+RLAPI void rlEnableSmoothLines(void);                   // Enable line aliasing
+RLAPI void rlDisableSmoothLines(void);                  // Disable line aliasing
+RLAPI void rlEnableStereoRender(void);                  // Enable stereo rendering
+RLAPI void rlDisableStereoRender(void);                 // Disable stereo rendering
 
 RLAPI void rlClearColor(unsigned char r, unsigned char g, unsigned char b, unsigned char a); // Clear color buffer with color
-RLAPI void rlClearScreenBuffers(void);                // Clear used screen buffers (color and depth)
-RLAPI void rlCheckErrors(void);                       // Check and log OpenGL error codes
-RLAPI void rlSetBlendMode(int mode);                  // Set blending mode
+RLAPI void rlClearScreenBuffers(void);                  // Clear used screen buffers (color and depth)
+RLAPI void rlCheckErrors(void);                         // Check and log OpenGL error codes
+RLAPI void rlSetBlendMode(int mode);                    // Set blending mode
 RLAPI void rlSetBlendFactors(int glSrcFactor, int glDstFactor, int glEquation); // Set blending mode factor and equation (using OpenGL factors)
 
 //------------------------------------------------------------------------------------
@@ -588,8 +580,23 @@ RLAPI void rlDrawRenderBatch(RenderBatch *batch);                         // Dra
 RLAPI void rlSetRenderBatchActive(RenderBatch *batch);                    // Set the active render batch for rlgl (NULL for default internal)
 RLAPI void rlDrawRenderBatchActive(void);                                 // Update and draw internal render batch
 RLAPI bool rlCheckRenderBatchLimit(int vCount);                           // Check internal buffer overflow for a given number of vertex
+RLAPI void rlSetTexture(unsigned int id);           // Set current texture for render batch and check buffers limits
 
-// Textures data management
+//------------------------------------------------------------------------------------------------------------------------
+
+// Vertex buffers management
+RLAPI unsigned int rlLoadVertexArray(void);                               // Load vertex array (vao) if supported
+RLAPI unsigned int rlLoadVertexBuffer(void *buffer, int size, bool dynamic);            // Load a vertex buffer attribute
+RLAPI unsigned int rlLoadVertexBufferElement(void *buffer, int size, bool dynamic);     // Load a new attributes element buffer
+RLAPI void rlUpdateVertexBuffer(int bufferId, void *data, int dataSize, int offset);    // Update GPU buffer with new data
+RLAPI void rlUnloadVertexArray(unsigned int vaoId);
+RLAPI void rlUnloadVertexBuffer(unsigned int vboId);
+RLAPI void rlSetVertexAttribute(unsigned int index, int compSize, int type, bool normalized, int stride, void *pointer);
+RLAPI void rlSetVertexAttributeDefault(int locIndex, const void *value, int attribType, int count); // Set vertex attribute default value
+RLAPI void rlDrawVertexArray(int offset, int count);
+RLAPI void rlDrawVertexArrayElements(int offset, int count);
+
+// Textures management
 RLAPI unsigned int rlLoadTexture(void *data, int width, int height, int format, int mipmapCount); // Load texture in GPU
 RLAPI unsigned int rlLoadTextureDepth(int width, int height, bool useRenderBuffer);               // Load depth texture/renderbuffer (to be attached to fbo)
 RLAPI unsigned int rlLoadTextureCubemap(void *data, int size, int format);                        // Load texture cubemap
@@ -606,32 +613,22 @@ RLAPI void rlFramebufferAttach(unsigned int fboId, unsigned int texId, int attac
 RLAPI bool rlFramebufferComplete(unsigned int id);                        // Verify framebuffer is complete
 RLAPI void rlUnloadFramebuffer(unsigned int id);                          // Delete framebuffer from GPU
 
-// Vertex data management
-// TODO: Avoid dealing with Mesh and Material structs?
-RLAPI void rlLoadMesh(Mesh *mesh, bool dynamic);                          // Upload vertex data into GPU and provided VAO/VBO ids
-RLAPI unsigned int rlLoadVertexBuffer(unsigned int vaoId, int index, void *buffer, int size, bool dynamic);   // Load a vertex buffer attribute
-RLAPI void rlUpdateMesh(Mesh mesh, int buffer, int count);                // Update vertex or index data on GPU (upload new data to one buffer)
-RLAPI void rlUpdateMeshAt(Mesh mesh, int buffer, int count, int index);   // Update vertex or index data on GPU, at index
-RLAPI void rlUpdateBuffer(int bufferId, void *data, int dataSize);        // Update GPU buffer with new data
-RLAPI void rlDrawMesh(Mesh mesh, Material material, Matrix transform);    // Draw a 3d mesh with material and transform
-RLAPI void rlDrawMeshInstanced(Mesh mesh, Material material, Matrix *transforms, int count);    // Draw a 3d mesh with material and transform
-RLAPI void rlUnloadMesh(Mesh *mesh);                                      // Unload mesh data from CPU and GPU
-
 // Shaders management
-RLAPI unsigned int rlLoadShaderCode(const char *vsCode, const char *fsCode); // Load shader from code strings
-RLAPI unsigned int rlCompileShader(const char *shaderCode, int type);     // Compile custom shader and return shader id (type: GL_VERTEX_SHADER, GL_FRAGMENT_SHADER)
+RLAPI unsigned int rlLoadShaderCode(const char *vsCode, const char *fsCode);    // Load shader from code strings
+RLAPI unsigned int rlCompileShader(const char *shaderCode, int type);           // Compile custom shader and return shader id (type: GL_VERTEX_SHADER, GL_FRAGMENT_SHADER)
 RLAPI unsigned int rlLoadShaderProgram(unsigned int vShaderId, unsigned int fShaderId); // Load custom shader program
-RLAPI void rlUnloadShaderProgram(unsigned int id);                        // Unload shader program
+RLAPI void rlUnloadShaderProgram(unsigned int id);                              // Unload shader program
 RLAPI int rlGetLocationUniform(unsigned int shaderId, const char *uniformName); // Get shader location uniform
-RLAPI int rlGetLocationAttrib(unsigned int shaderId, const char *attribName); // Get shader location attribute
+RLAPI int rlGetLocationAttrib(unsigned int shaderId, const char *attribName);   // Get shader location attribute
 RLAPI void rlSetUniform(int locIndex, const void *value, int uniformType, int count); // Set shader value uniform
-RLAPI void rlSetUniformMatrix(int locIndex, Matrix mat);                  // Set shader value matrix
-RLAPI void rlSetUniformSampler(int locIndex, Texture2D texture);          // Set shader value sampler
-RLAPI void rlSetShaderActive(Shader shader);                              // Set shader currently active
+RLAPI void rlSetUniformMatrix(int locIndex, Matrix mat);                        // Set shader value matrix
+RLAPI void rlSetUniformSampler(int locIndex, unsigned int textureId);           // Set shader value sampler
+RLAPI void rlSetShader(Shader shader);                                    // Set shader currently active
 
 // Matrix state management
 RLAPI Matrix rlGetMatrixModelview(void);                                  // Get internal modelview matrix
 RLAPI Matrix rlGetMatrixProjection(void);                                 // Get internal projection matrix
+RLAPI Matrix rlGetMatrixTransform(void);                                  // Get internal accumulated transform matrix
 RLAPI void rlSetMatrixProjection(Matrix proj);                            // Set a custom projection matrix (replaces internal projection matrix)
 RLAPI void rlSetMatrixModelview(Matrix view);                             // Set a custom modelview matrix (replaces internal modelview matrix)
 RLAPI void rlSetMatrixProjectionStereo(Matrix right, Matrix left);        // Set eyes projection matrices for stereo rendering
@@ -832,8 +829,8 @@ typedef struct rlglData {
         Shader currentShader;               // Shader to be used on rendering (by default, defaultShader)
         
         bool stereoRender;                  // Stereo rendering flag
-        Matrix eyesProjection[2];           // VR stereo rendering eyes projection matrices
-        Matrix eyesViewOffset[2];           // VR stereo rendering eyes view offset matrices
+        Matrix projectionStereo[2];           // VR stereo rendering eyes projection matrices
+        Matrix offsetStereo[2];           // VR stereo rendering eyes view offset matrices
 
         int currentBlendMode;               // Blending mode active
         int glBlendSrcFactor;               // Blending source factor
@@ -1249,57 +1246,99 @@ void rlColor3f(float x, float y, float z)
 // Module Functions Definition - OpenGL style functions (common to 1.1, 3.3+, ES2)
 //--------------------------------------------------------------------------------------
 
-// Enable texture usage
-void rlEnableTexture(unsigned int id)
+// Set current texture to use
+void rlSetTexture(unsigned int id)
 {
-#if defined(GRAPHICS_API_OPENGL_11)
-    glEnable(GL_TEXTURE_2D);
-    glBindTexture(GL_TEXTURE_2D, id);
-#endif
-
-#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
-    if (RLGL.currentBatch->draws[RLGL.currentBatch->drawsCounter - 1].textureId != id)
+    if (id == 0)
     {
-        if (RLGL.currentBatch->draws[RLGL.currentBatch->drawsCounter - 1].vertexCount > 0)
+#if defined(GRAPHICS_API_OPENGL_11)
+        rlDisableTexture();
+#else
+        // NOTE: If quads batch limit is reached, we force a draw call and next batch starts
+        if (RLGL.currentBatch->vertexBuffer[RLGL.currentBatch->currentBuffer].vCounter >= 
+            RLGL.currentBatch->vertexBuffer[RLGL.currentBatch->currentBuffer].elementsCount*4)
         {
-            // Make sure current RLGL.currentBatch->draws[i].vertexCount is aligned a multiple of 4,
-            // that way, following QUADS drawing will keep aligned with index processing
-            // It implies adding some extra alignment vertex at the end of the draw,
-            // those vertex are not processed but they are considered as an additional offset
-            // for the next set of vertex to be drawn
-            if (RLGL.currentBatch->draws[RLGL.currentBatch->drawsCounter - 1].mode == RL_LINES) RLGL.currentBatch->draws[RLGL.currentBatch->drawsCounter - 1].vertexAlignment = ((RLGL.currentBatch->draws[RLGL.currentBatch->drawsCounter - 1].vertexCount < 4)? RLGL.currentBatch->draws[RLGL.currentBatch->drawsCounter - 1].vertexCount : RLGL.currentBatch->draws[RLGL.currentBatch->drawsCounter - 1].vertexCount%4);
-            else if (RLGL.currentBatch->draws[RLGL.currentBatch->drawsCounter - 1].mode == RL_TRIANGLES) RLGL.currentBatch->draws[RLGL.currentBatch->drawsCounter - 1].vertexAlignment = ((RLGL.currentBatch->draws[RLGL.currentBatch->drawsCounter - 1].vertexCount < 4)? 1 : (4 - (RLGL.currentBatch->draws[RLGL.currentBatch->drawsCounter - 1].vertexCount%4)));
-            else RLGL.currentBatch->draws[RLGL.currentBatch->drawsCounter - 1].vertexAlignment = 0;
-
-            if (!rlCheckRenderBatchLimit(RLGL.currentBatch->draws[RLGL.currentBatch->drawsCounter - 1].vertexAlignment))
-            {
-                RLGL.currentBatch->vertexBuffer[RLGL.currentBatch->currentBuffer].vCounter += RLGL.currentBatch->draws[RLGL.currentBatch->drawsCounter - 1].vertexAlignment;
-                RLGL.currentBatch->vertexBuffer[RLGL.currentBatch->currentBuffer].cCounter += RLGL.currentBatch->draws[RLGL.currentBatch->drawsCounter - 1].vertexAlignment;
-                RLGL.currentBatch->vertexBuffer[RLGL.currentBatch->currentBuffer].tcCounter += RLGL.currentBatch->draws[RLGL.currentBatch->drawsCounter - 1].vertexAlignment;
-
-                RLGL.currentBatch->drawsCounter++;
-            }
+            rlDrawRenderBatch(RLGL.currentBatch);
         }
+#endif
+    }
+    else
+    {
+#if defined(GRAPHICS_API_OPENGL_11)
+        rlEnableTexture(id);
+#else
+        if (RLGL.currentBatch->draws[RLGL.currentBatch->drawsCounter - 1].textureId != id)
+        {
+            if (RLGL.currentBatch->draws[RLGL.currentBatch->drawsCounter - 1].vertexCount > 0)
+            {
+                // Make sure current RLGL.currentBatch->draws[i].vertexCount is aligned a multiple of 4,
+                // that way, following QUADS drawing will keep aligned with index processing
+                // It implies adding some extra alignment vertex at the end of the draw,
+                // those vertex are not processed but they are considered as an additional offset
+                // for the next set of vertex to be drawn
+                if (RLGL.currentBatch->draws[RLGL.currentBatch->drawsCounter - 1].mode == RL_LINES) RLGL.currentBatch->draws[RLGL.currentBatch->drawsCounter - 1].vertexAlignment = ((RLGL.currentBatch->draws[RLGL.currentBatch->drawsCounter - 1].vertexCount < 4)? RLGL.currentBatch->draws[RLGL.currentBatch->drawsCounter - 1].vertexCount : RLGL.currentBatch->draws[RLGL.currentBatch->drawsCounter - 1].vertexCount%4);
+                else if (RLGL.currentBatch->draws[RLGL.currentBatch->drawsCounter - 1].mode == RL_TRIANGLES) RLGL.currentBatch->draws[RLGL.currentBatch->drawsCounter - 1].vertexAlignment = ((RLGL.currentBatch->draws[RLGL.currentBatch->drawsCounter - 1].vertexCount < 4)? 1 : (4 - (RLGL.currentBatch->draws[RLGL.currentBatch->drawsCounter - 1].vertexCount%4)));
+                else RLGL.currentBatch->draws[RLGL.currentBatch->drawsCounter - 1].vertexAlignment = 0;
 
-        if (RLGL.currentBatch->drawsCounter >= DEFAULT_BATCH_DRAWCALLS) rlDrawRenderBatch(RLGL.currentBatch);
+                if (!rlCheckRenderBatchLimit(RLGL.currentBatch->draws[RLGL.currentBatch->drawsCounter - 1].vertexAlignment))
+                {
+                    RLGL.currentBatch->vertexBuffer[RLGL.currentBatch->currentBuffer].vCounter += RLGL.currentBatch->draws[RLGL.currentBatch->drawsCounter - 1].vertexAlignment;
+                    RLGL.currentBatch->vertexBuffer[RLGL.currentBatch->currentBuffer].cCounter += RLGL.currentBatch->draws[RLGL.currentBatch->drawsCounter - 1].vertexAlignment;
+                    RLGL.currentBatch->vertexBuffer[RLGL.currentBatch->currentBuffer].tcCounter += RLGL.currentBatch->draws[RLGL.currentBatch->drawsCounter - 1].vertexAlignment;
 
-        RLGL.currentBatch->draws[RLGL.currentBatch->drawsCounter - 1].textureId = id;
-        RLGL.currentBatch->draws[RLGL.currentBatch->drawsCounter - 1].vertexCount = 0;
+                    RLGL.currentBatch->drawsCounter++;
+                }
+            }
+
+            if (RLGL.currentBatch->drawsCounter >= DEFAULT_BATCH_DRAWCALLS) rlDrawRenderBatch(RLGL.currentBatch);
+
+            RLGL.currentBatch->draws[RLGL.currentBatch->drawsCounter - 1].textureId = id;
+            RLGL.currentBatch->draws[RLGL.currentBatch->drawsCounter - 1].vertexCount = 0;
+        }
     }
 #endif
 }
 
-// Disable texture usage
+// Select and active a texture slot
+void rlActiveTextureSlot(int slot)
+{
+    glActiveTexture(GL_TEXTURE0 + slot);
+}
+
+// Enable texture 
+void rlEnableTexture(unsigned int id)
+{
+#if defined(GRAPHICS_API_OPENGL_11)
+    glEnable(GL_TEXTURE_2D);
+#endif
+    glBindTexture(GL_TEXTURE_2D, id);
+}
+
+// Disable texture
 void rlDisableTexture(void)
 {
 #if defined(GRAPHICS_API_OPENGL_11)
     glDisable(GL_TEXTURE_2D);
-    glBindTexture(GL_TEXTURE_2D, 0);
-#else
-    // NOTE: If quads batch limit is reached,
-    // we force a draw call and next batch starts
-    if (RLGL.currentBatch->vertexBuffer[RLGL.currentBatch->currentBuffer].vCounter >= (RLGL.currentBatch->vertexBuffer[RLGL.currentBatch->currentBuffer].elementsCount*4)) rlDrawRenderBatch(RLGL.currentBatch);
 #endif
+    glBindTexture(GL_TEXTURE_2D, 0);
+}
+
+// Enable texture cubemap
+void rlEnableTextureCubemap(unsigned int id)
+{
+#if defined(GRAPHICS_API_OPENGL_11)
+    glEnable(GL_TEXTURE_CUBE_MAP);
+#endif
+    glBindTexture(GL_TEXTURE_CUBE_MAP, id);
+}
+
+// Disable texture cubemap
+void rlDisableTextureCubemap(void)
+{
+#if defined(GRAPHICS_API_OPENGL_11)
+    glDisable(GL_TEXTURE_CUBE_MAP);
+#endif
+    glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
 }
 
 // Set texture parameters (wrap mode/filter mode)
@@ -1342,7 +1381,7 @@ void rlTextureParameters(unsigned int id, int param, int value)
     glBindTexture(GL_TEXTURE_2D, 0);
 }
 
-// Enable shader program usage
+// Enable shader program
 void rlEnableShader(unsigned int id)
 {
 #if (defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2))
@@ -1350,7 +1389,7 @@ void rlEnableShader(unsigned int id)
 #endif
 }
 
-// Disable shader program usage
+// Disable shader program
 void rlDisableShader(void)
 {
 #if (defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2))
@@ -1716,7 +1755,7 @@ void rlglInit(int width, int height)
 
 #if defined(GRAPHICS_API_OPENGL_ES2)
     if (RLGL.ExtSupported.vao) TRACELOG(LOG_INFO, "GL: VAO extension detected, VAO functions initialized successfully");
-    else TRACELOG(LOG_WARNING, "GL: VAO extension not found, VAO usage not supported");
+    else TRACELOG(LOG_WARNING, "GL: VAO extension not found, VAO not supported");
 
     if (RLGL.ExtSupported.texNPOT) TRACELOG(LOG_INFO, "GL: NPOT textures extension detected, full NPOT textures supported");
     else TRACELOG(LOG_WARNING, "GL: NPOT textures extension not found, limited NPOT support (no-mipmaps, no-repeat)");
@@ -2149,9 +2188,9 @@ void rlDrawRenderBatch(RenderBatch *batch)
             rlViewport(eye*RLGL.State.framebufferWidth/2, 0, RLGL.State.framebufferWidth/2, RLGL.State.framebufferHeight);
 
             // Set current eye view offset to modelview matrix
-            rlSetMatrixModelview(MatrixMultiply(matModelView, RLGL.State.eyesViewOffset[eye]));
+            rlSetMatrixModelview(MatrixMultiply(matModelView, RLGL.State.offsetStereo[eye]));
             // Set current eye projection matrix
-            rlSetMatrixProjection(RLGL.State.eyesProjection[eye]);
+            rlSetMatrixProjection(RLGL.State.projectionStereo[eye]);
         }
 
         // Draw buffers
@@ -2959,583 +2998,142 @@ void rlUnloadFramebuffer(unsigned int id)
 
 // Vertex data management
 //-----------------------------------------------------------------------------------------
-// Upload vertex data into a VAO (if supported) and VBO
-void rlLoadMesh(Mesh *mesh, bool dynamic)
-{
-    if (mesh->vaoId > 0)
-    {
-        // Check if mesh has already been loaded in GPU
-        TRACELOG(LOG_WARNING, "VAO: [ID %i] Trying to re-load an already loaded mesh", mesh->vaoId);
-        return;
-    }
-
-    mesh->vboId = (unsigned int *)RL_CALLOC(MAX_MESH_VERTEX_BUFFERS, sizeof(unsigned int));
-
-    mesh->vaoId = 0;        // Vertex Array Object
-    mesh->vboId[0] = 0;     // Vertex positions VBO
-    mesh->vboId[1] = 0;     // Vertex texcoords VBO
-    mesh->vboId[2] = 0;     // Vertex normals VBO
-    mesh->vboId[3] = 0;     // Vertex colors VBO
-    mesh->vboId[4] = 0;     // Vertex tangents VBO
-    mesh->vboId[5] = 0;     // Vertex texcoords2 VBO
-    mesh->vboId[6] = 0;     // Vertex indices VBO
-
-#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
-    int drawHint = GL_STATIC_DRAW;
-    if (dynamic) drawHint = GL_DYNAMIC_DRAW;
-
-    if (RLGL.ExtSupported.vao)
-    {
-        // Initialize Quads VAO (Buffer A)
-        glGenVertexArrays(1, &mesh->vaoId);
-        glBindVertexArray(mesh->vaoId);
-    }
-
-    // NOTE: Attributes must be uploaded considering default locations points
-
-    // Enable vertex attributes: position (shader-location = 0)
-    glGenBuffers(1, &mesh->vboId[0]);
-    glBindBuffer(GL_ARRAY_BUFFER, mesh->vboId[0]);
-    glBufferData(GL_ARRAY_BUFFER, mesh->vertexCount*3*sizeof(float), mesh->vertices, drawHint);
-    glVertexAttribPointer(0, 3, GL_FLOAT, 0, 0, 0);
-    glEnableVertexAttribArray(0);
-
-    // Enable vertex attributes: texcoords (shader-location = 1)
-    glGenBuffers(1, &mesh->vboId[1]);
-    glBindBuffer(GL_ARRAY_BUFFER, mesh->vboId[1]);
-    glBufferData(GL_ARRAY_BUFFER, mesh->vertexCount*2*sizeof(float), mesh->texcoords, drawHint);
-    glVertexAttribPointer(1, 2, GL_FLOAT, 0, 0, 0);
-    glEnableVertexAttribArray(1);
-
-    // Enable vertex attributes: normals (shader-location = 2)
-    if (mesh->normals != NULL)
-    {
-        glGenBuffers(1, &mesh->vboId[2]);
-        glBindBuffer(GL_ARRAY_BUFFER, mesh->vboId[2]);
-        glBufferData(GL_ARRAY_BUFFER, mesh->vertexCount*3*sizeof(float), mesh->normals, drawHint);
-        glVertexAttribPointer(2, 3, GL_FLOAT, 0, 0, 0);
-        glEnableVertexAttribArray(2);
-    }
-    else
-    {
-        // Default color vertex attribute set to WHITE
-        glVertexAttrib3f(2, 1.0f, 1.0f, 1.0f);
-        glDisableVertexAttribArray(2);
-    }
-
-    // Default color vertex attribute (shader-location = 3)
-    if (mesh->colors != NULL)
-    {
-        glGenBuffers(1, &mesh->vboId[3]);
-        glBindBuffer(GL_ARRAY_BUFFER, mesh->vboId[3]);
-        glBufferData(GL_ARRAY_BUFFER, mesh->vertexCount*4*sizeof(unsigned char), mesh->colors, drawHint);
-        glVertexAttribPointer(3, 4, GL_UNSIGNED_BYTE, GL_TRUE, 0, 0);
-        glEnableVertexAttribArray(3);
-    }
-    else
-    {
-        // Default color vertex attribute set to WHITE
-        glVertexAttrib4f(3, 1.0f, 1.0f, 1.0f, 1.0f);
-        glDisableVertexAttribArray(3);
-    }
-
-    // Default tangent vertex attribute (shader-location = 4)
-    if (mesh->tangents != NULL)
-    {
-        glGenBuffers(1, &mesh->vboId[4]);
-        glBindBuffer(GL_ARRAY_BUFFER, mesh->vboId[4]);
-        glBufferData(GL_ARRAY_BUFFER, mesh->vertexCount*4*sizeof(float), mesh->tangents, drawHint);
-        glVertexAttribPointer(4, 4, GL_FLOAT, 0, 0, 0);
-        glEnableVertexAttribArray(4);
-    }
-    else
-    {
-        // Default tangents vertex attribute
-        glVertexAttrib4f(4, 0.0f, 0.0f, 0.0f, 0.0f);
-        glDisableVertexAttribArray(4);
-    }
-
-    // Default texcoord2 vertex attribute (shader-location = 5)
-    if (mesh->texcoords2 != NULL)
-    {
-        glGenBuffers(1, &mesh->vboId[5]);
-        glBindBuffer(GL_ARRAY_BUFFER, mesh->vboId[5]);
-        glBufferData(GL_ARRAY_BUFFER, mesh->vertexCount*2*sizeof(float), mesh->texcoords2, drawHint);
-        glVertexAttribPointer(5, 2, GL_FLOAT, 0, 0, 0);
-        glEnableVertexAttribArray(5);
-    }
-    else
-    {
-        // Default texcoord2 vertex attribute
-        glVertexAttrib2f(5, 0.0f, 0.0f);
-        glDisableVertexAttribArray(5);
-    }
-
-    if (mesh->indices != NULL)
-    {
-        glGenBuffers(1, &mesh->vboId[6]);
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh->vboId[6]);
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, mesh->triangleCount*3*sizeof(unsigned short), mesh->indices, drawHint);
-    }
-
-    if (RLGL.ExtSupported.vao)
-    {
-        if (mesh->vaoId > 0) TRACELOG(LOG_INFO, "VAO: [ID %i] Mesh uploaded successfully to VRAM (GPU)", mesh->vaoId);
-        else TRACELOG(LOG_WARNING, "VAO: Failed to load mesh to VRAM (GPU)");
-    }
-    else
-    {
-        TRACELOG(LOG_INFO, "VBO: Mesh uploaded successfully to VRAM (GPU)");
-    }
-#endif
-}
-
 // Load a new attributes buffer
-unsigned int rlLoadVertexBuffer(unsigned int vaoId, int index, void *buffer, int size, bool dynamic)
+unsigned int rlLoadVertexBuffer(void *buffer, int size, bool dynamic)
 {
     unsigned int id = 0;
 
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
-    int drawHint = GL_STATIC_DRAW;
-    if (dynamic) drawHint = GL_DYNAMIC_DRAW;
-
-    if (RLGL.ExtSupported.vao) glBindVertexArray(vaoId);
-
     glGenBuffers(1, &id);
     glBindBuffer(GL_ARRAY_BUFFER, id);
-    glBufferData(GL_ARRAY_BUFFER, size, buffer, drawHint);
-    glVertexAttribPointer(index, 2, GL_FLOAT, 0, 0, 0);
-    glEnableVertexAttribArray(index);
-
-    if (RLGL.ExtSupported.vao) glBindVertexArray(0);
+    glBufferData(GL_ARRAY_BUFFER, size, buffer, dynamic? GL_DYNAMIC_DRAW : GL_STATIC_DRAW);
 #endif
 
     return id;
 }
 
-// Update vertex or index data on GPU (upload new data to one buffer)
-void rlUpdateMesh(Mesh mesh, int buffer, int count)
+// Load a new attributes element buffer
+unsigned int rlLoadVertexBufferElement(void *buffer, int size, bool dynamic)
 {
-    rlUpdateMeshAt(mesh, buffer, count, 0);
+    unsigned int id = 0;
+
+#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
+    glGenBuffers(1, &id);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, id);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, size, buffer, dynamic? GL_DYNAMIC_DRAW : GL_STATIC_DRAW);
+#endif
+
+    return id;
 }
 
-// Update vertex or index data on GPU, at index
-// WARNING: error checking is in place that will cause the data to not be
-//          updated if offset + size exceeds what the buffer can hold
-void rlUpdateMeshAt(Mesh mesh, int buffer, int count, int index)
+void rlEnableVertexBuffer(unsigned int id)
 {
-#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
-    // Activate mesh VAO
-    if (RLGL.ExtSupported.vao) glBindVertexArray(mesh.vaoId);
+    glBindBuffer(GL_ARRAY_BUFFER, id);
+}
 
-    switch (buffer)
-    {
-        case 0:     // Update vertices (vertex position)
-        {
-            glBindBuffer(GL_ARRAY_BUFFER, mesh.vboId[0]);
-            if (index == 0 && count >= mesh.vertexCount) glBufferData(GL_ARRAY_BUFFER, count*3*sizeof(float), mesh.vertices, GL_DYNAMIC_DRAW);
-            else if (index + count >= mesh.vertexCount) break;
-            else glBufferSubData(GL_ARRAY_BUFFER, index*3*sizeof(float), count*3*sizeof(float), mesh.vertices);
+void rlDisableVertexBuffer(void)
+{
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+}
 
-        } break;
-        case 1:     // Update texcoords (vertex texture coordinates)
-        {
-            glBindBuffer(GL_ARRAY_BUFFER, mesh.vboId[1]);
-            if (index == 0 && count >= mesh.vertexCount) glBufferData(GL_ARRAY_BUFFER, count*2*sizeof(float), mesh.texcoords, GL_DYNAMIC_DRAW);
-            else if (index + count >= mesh.vertexCount) break;
-            else glBufferSubData(GL_ARRAY_BUFFER, index*2*sizeof(float), count*2*sizeof(float), mesh.texcoords);
+void rlEnableVertexBufferElement(unsigned int id)
+{
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, id);
+}
 
-        } break;
-        case 2:     // Update normals (vertex normals)
-        {
-            glBindBuffer(GL_ARRAY_BUFFER, mesh.vboId[2]);
-            if (index == 0 && count >= mesh.vertexCount) glBufferData(GL_ARRAY_BUFFER, count*3*sizeof(float), mesh.normals, GL_DYNAMIC_DRAW);
-            else if (index + count >= mesh.vertexCount) break;
-            else glBufferSubData(GL_ARRAY_BUFFER, index*3*sizeof(float), count*3*sizeof(float), mesh.normals);
-
-        } break;
-        case 3:     // Update colors (vertex colors)
-        {
-            glBindBuffer(GL_ARRAY_BUFFER, mesh.vboId[3]);
-            if (index == 0 && count >= mesh.vertexCount) glBufferData(GL_ARRAY_BUFFER, count*4*sizeof(unsigned char), mesh.colors, GL_DYNAMIC_DRAW);
-            else if (index + count >= mesh.vertexCount) break;
-            else glBufferSubData(GL_ARRAY_BUFFER, index*4*sizeof(unsigned char), count*4*sizeof(unsigned char), mesh.colors);
-
-        } break;
-        case 4:     // Update tangents (vertex tangents)
-        {
-            glBindBuffer(GL_ARRAY_BUFFER, mesh.vboId[4]);
-            if (index == 0 && count >= mesh.vertexCount) glBufferData(GL_ARRAY_BUFFER, count*4*sizeof(float), mesh.tangents, GL_DYNAMIC_DRAW);
-            else if (index + count >= mesh.vertexCount) break;
-            else glBufferSubData(GL_ARRAY_BUFFER, index*4*sizeof(float), count*4*sizeof(float), mesh.tangents);
-
-        } break;
-        case 5:     // Update texcoords2 (vertex second texture coordinates)
-        {
-            glBindBuffer(GL_ARRAY_BUFFER, mesh.vboId[5]);
-            if (index == 0 && count >= mesh.vertexCount) glBufferData(GL_ARRAY_BUFFER, count*2*sizeof(float), mesh.texcoords2, GL_DYNAMIC_DRAW);
-            else if (index + count >= mesh.vertexCount) break;
-            else glBufferSubData(GL_ARRAY_BUFFER, index*2*sizeof(float), count*2*sizeof(float), mesh.texcoords2);
-
-        } break;
-        case 6:     // Update indices (triangle index buffer)
-        {
-            // the * 3 is because each triangle has 3 indices
-            unsigned short *indices = mesh.indices;
-            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh.vboId[6]);
-
-            if (index == 0 && count >= mesh.triangleCount) glBufferData(GL_ELEMENT_ARRAY_BUFFER, count*3*sizeof(*indices), indices, GL_DYNAMIC_DRAW);
-            else if (index + count >= mesh.triangleCount) break;
-            else glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, index*3*sizeof(*indices), count*3*sizeof(*indices), indices);
-
-        } break;
-        default: break;
-    }
-
-    // Unbind the current VAO
-    if (RLGL.ExtSupported.vao) glBindVertexArray(0);
-
-    // Another option would be using buffer mapping...
-    //mesh.vertices = glMapBuffer(GL_ARRAY_BUFFER, GL_READ_WRITE);
-    // Now we can modify vertices
-    //glUnmapBuffer(GL_ARRAY_BUFFER);
-#endif
+void rlDisableVertexBufferElement(void)
+{
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 }
 
 // Update GPU buffer with new data
-void rlUpdateBuffer(int bufferId, void *data, int dataSize)
+// NOTE: dataSize and offset must be provided in bytes
+void rlUpdateVertexBuffer(int bufferId, void *data, int dataSize, int offset)
 {
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     glBindBuffer(GL_ARRAY_BUFFER, bufferId);
-    glBufferSubData(GL_ARRAY_BUFFER, 0, dataSize, data);
+    glBufferSubData(GL_ARRAY_BUFFER, offset, dataSize, data);
 #endif
 }
 
-// Draw a 3d mesh with material and transform
-void rlDrawMesh(Mesh mesh, Material material, Matrix transform)
+bool rlEnableVertexArray(unsigned int vaoId)
 {
-#if defined(GRAPHICS_API_OPENGL_11)
-    glEnable(GL_TEXTURE_2D);
-    glBindTexture(GL_TEXTURE_2D, material.maps[MATERIAL_MAP_DIFFUSE].texture.id);
-
-    // NOTE: On OpenGL 1.1 we use Vertex Arrays to draw model
-    glEnableClientState(GL_VERTEX_ARRAY);                   // Enable vertex array
-    glEnableClientState(GL_TEXTURE_COORD_ARRAY);            // Enable texture coords array
-    if (mesh.normals != NULL) glEnableClientState(GL_NORMAL_ARRAY);     // Enable normals array
-    if (mesh.colors != NULL) glEnableClientState(GL_COLOR_ARRAY);       // Enable colors array
-
-    glVertexPointer(3, GL_FLOAT, 0, mesh.vertices);         // Pointer to vertex coords array
-    glTexCoordPointer(2, GL_FLOAT, 0, mesh.texcoords);      // Pointer to texture coords array
-    if (mesh.normals != NULL) glNormalPointer(GL_FLOAT, 0, mesh.normals);           // Pointer to normals array
-    if (mesh.colors != NULL) glColorPointer(4, GL_UNSIGNED_BYTE, 0, mesh.colors);   // Pointer to colors array
-
-    rlPushMatrix();
-        rlMultMatrixf(MatrixToFloat(transform));
-        rlColor4ub(material.maps[MATERIAL_MAP_DIFFUSE].color.r, material.maps[MATERIAL_MAP_DIFFUSE].color.g, material.maps[MATERIAL_MAP_DIFFUSE].color.b, material.maps[MATERIAL_MAP_DIFFUSE].color.a);
-
-        if (mesh.indices != NULL) glDrawElements(GL_TRIANGLES, mesh.triangleCount*3, GL_UNSIGNED_SHORT, mesh.indices);
-        else glDrawArrays(GL_TRIANGLES, 0, mesh.vertexCount);
-    rlPopMatrix();
-
-    glDisableClientState(GL_VERTEX_ARRAY);                  // Disable vertex array
-    glDisableClientState(GL_TEXTURE_COORD_ARRAY);           // Disable texture coords array
-    if (mesh.normals != NULL) glDisableClientState(GL_NORMAL_ARRAY);    // Disable normals array
-    if (mesh.colors != NULL) glDisableClientState(GL_NORMAL_ARRAY);     // Disable colors array
-
-    glDisable(GL_TEXTURE_2D);
-    glBindTexture(GL_TEXTURE_2D, 0);
-#endif
-
+    bool result = false;
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
-    // Bind shader program
-    rlEnableShader(material.shader.id);
-
-    // Matrices and other values required by shader
-    //-----------------------------------------------------
-    // Calculate and send to shader model matrix
-    if (material.shader.locs[SHADER_LOC_MATRIX_MODEL] != -1) rlSetUniformMatrix(material.shader.locs[SHADER_LOC_MATRIX_MODEL], transform);
-
-    // Upload to shader material.colDiffuse
-    if (material.shader.locs[SHADER_LOC_COLOR_DIFFUSE] != -1)
+    if (RLGL.ExtSupported.vao) 
     {
-        float values[4] = {
-            (float)material.maps[MATERIAL_MAP_DIFFUSE].color.r/255.0f,
-            (float)material.maps[MATERIAL_MAP_DIFFUSE].color.g/255.0f,
-            (float)material.maps[MATERIAL_MAP_DIFFUSE].color.b/255.0f,
-            (float)material.maps[MATERIAL_MAP_DIFFUSE].color.a/255.0f 
-        };
-        
-        rlSetUniform(material.shader.locs[SHADER_LOC_COLOR_DIFFUSE], values, SHADER_UNIFORM_VEC4, 1);
+        glBindVertexArray(vaoId);
+        result = true;
     }
+#endif
+    return result;
+}
 
-    // Upload to shader material.colSpecular (if available)
-    if (material.shader.locs[SHADER_LOC_COLOR_SPECULAR] != -1)
-    {
-        float values[4] = {
-            (float)material.maps[SHADER_LOC_COLOR_SPECULAR].color.r/255.0f,
-            (float)material.maps[SHADER_LOC_COLOR_SPECULAR].color.g/255.0f,
-            (float)material.maps[SHADER_LOC_COLOR_SPECULAR].color.b/255.0f,
-            (float)material.maps[SHADER_LOC_COLOR_SPECULAR].color.a/255.0f 
-        };
-        
-        rlSetUniform(material.shader.locs[SHADER_LOC_COLOR_SPECULAR], values, SHADER_UNIFORM_VEC4, 1);
-    }
-
-    if (material.shader.locs[SHADER_LOC_MATRIX_VIEW] != -1) rlSetUniformMatrix(material.shader.locs[SHADER_LOC_MATRIX_VIEW], RLGL.State.modelview);
-    if (material.shader.locs[SHADER_LOC_MATRIX_PROJECTION] != -1) rlSetUniformMatrix(material.shader.locs[SHADER_LOC_MATRIX_PROJECTION], RLGL.State.projection);
-
-    // At this point the modelview matrix just contains the view matrix (camera)
-    // That's because BeginMode3D() sets it an no model-drawing function modifies it, all use rlPushMatrix() and rlPopMatrix()
-    Matrix matView = RLGL.State.modelview;         // View matrix (camera)
-    Matrix matProjection = RLGL.State.projection;  // Projection matrix (perspective)
-
-    // TODO: Consider possible transform matrices in the RLGL.State.stack
-    // Is this the right order? or should we start with the first stored matrix instead of the last one?
-    //Matrix matStackTransform = MatrixIdentity();
-    //for (int i = RLGL.State.stackCounter; i > 0; i--) matStackTransform = MatrixMultiply(RLGL.State.stack[i], matStackTransform);
-
-    // Transform to camera-space coordinates
-    Matrix matModelView = MatrixMultiply(transform, MatrixMultiply(RLGL.State.transform, matView));
-    //-----------------------------------------------------
-
-    // Bind active texture maps (if available)
-    for (int i = 0; i < MAX_MATERIAL_MAPS; i++)
-    {
-        if (material.maps[i].texture.id > 0)
-        {
-            glActiveTexture(GL_TEXTURE0 + i);
-            if ((i == MATERIAL_MAP_IRRADIANCE) || (i == MATERIAL_MAP_PREFILTER) || (i == MATERIAL_MAP_CUBEMAP)) glBindTexture(GL_TEXTURE_CUBE_MAP, material.maps[i].texture.id);
-            else glBindTexture(GL_TEXTURE_2D, material.maps[i].texture.id);
-
-            rlSetUniform(material.shader.locs[SHADER_LOC_MAP_DIFFUSE + i], &i, SHADER_UNIFORM_INT, 1);
-        }
-    }
-
-    // Bind vertex array objects (or VBOs)
-    if (RLGL.ExtSupported.vao) glBindVertexArray(mesh.vaoId);
-    else
-    {
-        // Bind mesh VBO data: vertex position (shader-location = 0)
-        glBindBuffer(GL_ARRAY_BUFFER, mesh.vboId[0]);
-        glVertexAttribPointer(material.shader.locs[SHADER_LOC_VERTEX_POSITION], 3, GL_FLOAT, 0, 0, 0);
-        glEnableVertexAttribArray(material.shader.locs[SHADER_LOC_VERTEX_POSITION]);
-
-        // Bind mesh VBO data: vertex texcoords (shader-location = 1)
-        glBindBuffer(GL_ARRAY_BUFFER, mesh.vboId[1]);
-        glVertexAttribPointer(material.shader.locs[SHADER_LOC_VERTEX_TEXCOORD01], 2, GL_FLOAT, 0, 0, 0);
-        glEnableVertexAttribArray(material.shader.locs[SHADER_LOC_VERTEX_TEXCOORD01]);
-
-        // Bind mesh VBO data: vertex normals (shader-location = 2, if available)
-        if (material.shader.locs[SHADER_LOC_VERTEX_NORMAL] != -1)
-        {
-            glBindBuffer(GL_ARRAY_BUFFER, mesh.vboId[2]);
-            glVertexAttribPointer(material.shader.locs[SHADER_LOC_VERTEX_NORMAL], 3, GL_FLOAT, 0, 0, 0);
-            glEnableVertexAttribArray(material.shader.locs[SHADER_LOC_VERTEX_NORMAL]);
-        }
-
-        // Bind mesh VBO data: vertex colors (shader-location = 3, if available)
-        if (material.shader.locs[SHADER_LOC_VERTEX_COLOR] != -1)
-        {
-            if (mesh.vboId[3] != 0)
-            {
-                glBindBuffer(GL_ARRAY_BUFFER, mesh.vboId[3]);
-                glVertexAttribPointer(material.shader.locs[SHADER_LOC_VERTEX_COLOR], 4, GL_UNSIGNED_BYTE, GL_TRUE, 0, 0);
-                glEnableVertexAttribArray(material.shader.locs[SHADER_LOC_VERTEX_COLOR]);
-            }
-            else
-            {
-                // Set default value for unused attribute
-                // NOTE: Required when using default shader and no VAO support
-                glVertexAttrib4f(material.shader.locs[SHADER_LOC_VERTEX_COLOR], 1.0f, 1.0f, 1.0f, 1.0f);
-                glDisableVertexAttribArray(material.shader.locs[SHADER_LOC_VERTEX_COLOR]);
-            }
-        }
-
-        // Bind mesh VBO data: vertex tangents (shader-location = 4, if available)
-        if (material.shader.locs[SHADER_LOC_VERTEX_TANGENT] != -1)
-        {
-            glBindBuffer(GL_ARRAY_BUFFER, mesh.vboId[4]);
-            glVertexAttribPointer(material.shader.locs[SHADER_LOC_VERTEX_TANGENT], 4, GL_FLOAT, 0, 0, 0);
-            glEnableVertexAttribArray(material.shader.locs[SHADER_LOC_VERTEX_TANGENT]);
-        }
-
-        // Bind mesh VBO data: vertex texcoords2 (shader-location = 5, if available)
-        if (material.shader.locs[SHADER_LOC_VERTEX_TEXCOORD02] != -1)
-        {
-            glBindBuffer(GL_ARRAY_BUFFER, mesh.vboId[5]);
-            glVertexAttribPointer(material.shader.locs[SHADER_LOC_VERTEX_TEXCOORD02], 2, GL_FLOAT, 0, 0, 0);
-            glEnableVertexAttribArray(material.shader.locs[SHADER_LOC_VERTEX_TEXCOORD02]);
-        }
-
-        if (mesh.indices != NULL) glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh.vboId[6]);
-    }
-
-    int eyesCount = 1;
-    if (RLGL.State.stereoRender) eyesCount = 2;
-
-    for (int eye = 0; eye < eyesCount; eye++)
-    {
-        if (eyesCount == 1) RLGL.State.modelview = matModelView;
-        else
-        {
-            // Setup current eye viewport (half screen width)
-            rlViewport(eye*RLGL.State.framebufferWidth/2, 0, RLGL.State.framebufferWidth/2, RLGL.State.framebufferHeight);
-
-            // Set current eye view offset to modelview matrix
-            rlSetMatrixModelview(MatrixMultiply(matModelView, RLGL.State.eyesViewOffset[eye]));
-            // Set current eye projection matrix
-            rlSetMatrixProjection(RLGL.State.eyesProjection[eye]);
-        }
-
-        // Calculate model-view-projection matrix (MVP)
-        Matrix matMVP = MatrixMultiply(RLGL.State.modelview, RLGL.State.projection);        // Transform to screen-space coordinates
-
-        // Send combined model-view-projection matrix to shader
-        rlSetUniformMatrix(material.shader.locs[SHADER_LOC_MATRIX_MVP], matMVP);
-
-        // Draw call!
-        if (mesh.indices != NULL) glDrawElements(GL_TRIANGLES, mesh.triangleCount*3, GL_UNSIGNED_SHORT, 0); // Indexed vertices draw
-        else glDrawArrays(GL_TRIANGLES, 0, mesh.vertexCount);
-    }
-
-    // Unbind all binded texture maps
-    for (int i = 0; i < MAX_MATERIAL_MAPS; i++)
-    {
-        glActiveTexture(GL_TEXTURE0 + i);       // Set shader active texture
-        if ((i == MATERIAL_MAP_IRRADIANCE) || (i == MATERIAL_MAP_PREFILTER) || (i == MATERIAL_MAP_CUBEMAP)) glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
-        else glBindTexture(GL_TEXTURE_2D, 0);   // Unbind current active texture
-    }
-
-    // Unind vertex array objects (or VBOs)
+void rlDisableVertexArray(void)
+{
+#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     if (RLGL.ExtSupported.vao) glBindVertexArray(0);
-    else
-    {
-        glBindBuffer(GL_ARRAY_BUFFER, 0);
-        if (mesh.indices != NULL) glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-    }
-
-    // Unbind shader program
-    rlDisableShader();
-
-    // Restore RLGL.State.projection/RLGL.State.modelview matrices
-    // NOTE: In stereo rendering matrices are being modified to fit every eye
-    RLGL.State.projection = matProjection;
-    RLGL.State.modelview = matView;
 #endif
 }
 
-// Draw a 3d mesh with material and transform
-void rlDrawMeshInstanced(Mesh mesh, Material material, Matrix *transforms, int count)
+void rlEnableVertexAttribute(unsigned int index)
 {
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
-    if (RLGL.ExtSupported.instancing)
-    {
-        // Bind shader program
-        rlEnableShader(material.shader.id);
-
-        // Upload to shader material.colDiffuse
-        if (material.shader.locs[SHADER_LOC_COLOR_DIFFUSE] != -1)
-            glUniform4f(material.shader.locs[SHADER_LOC_COLOR_DIFFUSE], (float)material.maps[MATERIAL_MAP_DIFFUSE].color.r/255.0f,
-                                                               (float)material.maps[MATERIAL_MAP_DIFFUSE].color.g/255.0f,
-                                                               (float)material.maps[MATERIAL_MAP_DIFFUSE].color.b/255.0f,
-                                                               (float)material.maps[MATERIAL_MAP_DIFFUSE].color.a/255.0f);
-
-        // Upload to shader material.colSpecular (if available)
-        if (material.shader.locs[SHADER_LOC_COLOR_SPECULAR] != -1)
-            glUniform4f(material.shader.locs[SHADER_LOC_COLOR_SPECULAR], (float)material.maps[MATERIAL_MAP_SPECULAR].color.r/255.0f,
-                                                                   (float)material.maps[MATERIAL_MAP_SPECULAR].color.g/255.0f,
-                                                                   (float)material.maps[MATERIAL_MAP_SPECULAR].color.b/255.0f,
-                                                                   (float)material.maps[MATERIAL_MAP_SPECULAR].color.a/255.0f);
-
-        // Bind active texture maps (if available)
-        for (int i = 0; i < MAX_MATERIAL_MAPS; i++)
-        {
-            if (material.maps[i].texture.id > 0)
-            {
-                glActiveTexture(GL_TEXTURE0 + i);
-                if ((i == MATERIAL_MAP_IRRADIANCE) || (i == MATERIAL_MAP_PREFILTER) || (i == MATERIAL_MAP_CUBEMAP))
-                    glBindTexture(GL_TEXTURE_CUBE_MAP, material.maps[i].texture.id);
-                else glBindTexture(GL_TEXTURE_2D, material.maps[i].texture.id);
-
-                glUniform1i(material.shader.locs[SHADER_LOC_MAP_DIFFUSE + i], i);
-            }
-        }
-
-        // Bind vertex array objects (or VBOs)
-        glBindVertexArray(mesh.vaoId);
-
-        // At this point the modelview matrix just contains the view matrix (camera)
-        // For instanced shaders "mvp" is not premultiplied by any instance transform, only RLGL.State.transform
-        glUniformMatrix4fv(material.shader.locs[SHADER_LOC_MATRIX_MVP], 1, false,
-                           MatrixToFloat(MatrixMultiply(MatrixMultiply(RLGL.State.transform, RLGL.State.modelview), RLGL.State.projection)));
-
-        float16* instanceTransforms = RL_MALLOC(count*sizeof(float16));
-
-        for (int i = 0; i < count; i++) instanceTransforms[i] = MatrixToFloatV(transforms[i]);
-
-        // This could alternatively use a static VBO and either glMapBuffer or glBufferSubData.
-        // It isn't clear which would be reliably faster in all cases and on all platforms, and
-        // anecdotally glMapBuffer seems very slow (syncs) while glBufferSubData seems no faster
-        // since we're transferring all the transform matrices anyway.
-        unsigned int instancesB = 0;
-        glGenBuffers(1, &instancesB);
-        glBindBuffer(GL_ARRAY_BUFFER, instancesB);
-        glBufferData(GL_ARRAY_BUFFER, count*sizeof(float16), instanceTransforms, GL_STATIC_DRAW);
-
-        // Instances are put in SHADER_LOC_MATRIX_MODEL attribute location with space for 4x Vector4, eg:
-        // layout (location = 12) in mat4 instance;
-        unsigned int instanceA = material.shader.locs[SHADER_LOC_MATRIX_MODEL];
-
-        for (unsigned int i = 0; i < 4; i++)
-        {
-            glEnableVertexAttribArray(instanceA+i);
-            glVertexAttribPointer(instanceA + i, 4, GL_FLOAT, GL_FALSE, sizeof(Matrix), (void *)(i*sizeof(Vector4)));
-            glVertexAttribDivisor(instanceA + i, 1);
-        }
-
-        glBindBuffer(GL_ARRAY_BUFFER, 0);
-
-        // Draw instanced
-        if (mesh.indices != NULL) glDrawElementsInstanced(GL_TRIANGLES, mesh.triangleCount*3, GL_UNSIGNED_SHORT, 0, count);
-        else glDrawArraysInstanced(GL_TRIANGLES, 0, mesh.vertexCount, count);
-
-        glDeleteBuffers(1, &instancesB);
-        RL_FREE(instanceTransforms);
-
-        // Unbind all binded texture maps
-        for (int i = 0; i < MAX_MATERIAL_MAPS; i++)
-        {
-            glActiveTexture(GL_TEXTURE0 + i);       // Set shader active texture
-            if ((i == MATERIAL_MAP_IRRADIANCE) || (i == MATERIAL_MAP_PREFILTER) || (i == MATERIAL_MAP_CUBEMAP)) glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
-            else glBindTexture(GL_TEXTURE_2D, 0);   // Unbind current active texture
-        }
-
-        // Unind vertex array objects (or VBOs)
-        glBindVertexArray(0);
-
-        // Unbind shader program
-        glUseProgram(0);
-    }
+    glEnableVertexAttribArray(index);
 #endif
 }
 
-// Unload mesh data from CPU and GPU
-void rlUnloadMesh(Mesh *mesh)
+void rlDisableVertexAttribute(unsigned int index)
 {
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
-    for (int i = 0; i < 7; i++) glDeleteBuffers(1, &mesh->vboId[i]); // DEFAULT_MESH_VERTEX_BUFFERS (model.c)
+    glDisableVertexAttribArray(index);
+#endif
+}
+
+void rlDrawVertexArray(int offset, int count)
+{
+    glDrawArrays(GL_TRIANGLES, offset, count);
+}
+
+void rlDrawVertexArrayElements(int offset, int count)
+{
+    // TODO: review offset
+    glDrawElements(GL_TRIANGLES, count, GL_UNSIGNED_SHORT, 0);
+}
+
+unsigned int rlLoadVertexArray(void)
+{
+    unsigned int vaoId = 0;
+    
+    glGenVertexArrays(1, &vaoId);
+    
+    return vaoId;
+}
+
+void rlSetVertexAttribute(unsigned int index, int compSize, int type, bool normalized, int stride, void *pointer)
+{
+    glVertexAttribPointer(index, compSize, type, normalized, stride, pointer);
+}
+
+void rlUnloadVertexArray(unsigned int vaoId)
+{
+#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     if (RLGL.ExtSupported.vao)
     {
         glBindVertexArray(0);
-        glDeleteVertexArrays(1, &mesh->vaoId);
-        TRACELOG(LOG_INFO, "VAO: [ID %i] Unloaded vertex data from VRAM (GPU)", mesh->vaoId);
+        glDeleteVertexArrays(1, &vaoId);
+        TRACELOG(LOG_INFO, "VAO: [ID %i] Unloaded vertex array data from VRAM (GPU)", vaoId);
     }
-    else TRACELOG(LOG_INFO, "VBO: Unloaded vertex data from VRAM (GPU)");
 #endif
-
-    RL_FREE(mesh->vboId);
-    mesh->vboId = NULL;
 }
+
+void rlUnloadVertexBuffer(unsigned int vboId)
+{
+    glDeleteBuffers(1, &vboId);
+    TRACELOG(LOG_INFO, "VBO: Unloaded vertex data from VRAM (GPU)");
+}
+
+
 
 // Shaders management
 //-----------------------------------------------------------------------------------------------
@@ -3741,7 +3339,22 @@ void rlSetUniform(int locIndex, const void *value, int uniformType, int count)
         case SHADER_UNIFORM_IVEC3: glUniform3iv(locIndex, count, (int *)value); break;
         case SHADER_UNIFORM_IVEC4: glUniform4iv(locIndex, count, (int *)value); break;
         case SHADER_UNIFORM_SAMPLER2D: glUniform1iv(locIndex, count, (int *)value); break;
-        default: TRACELOG(LOG_WARNING, "SHADER: Failed to set uniform, data type not recognized");
+        default: TRACELOG(LOG_WARNING, "SHADER: Failed to set uniform value, data type not recognized");
+    }
+#endif
+}
+
+// Set shader value attribute
+void rlSetVertexAttributeDefault(int locIndex, const void *value, int attribType, int count)
+{
+#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
+    switch (attribType)
+    {
+        case SHADER_ATTRIB_FLOAT: if (count == 1) glVertexAttrib1fv(locIndex, (float *)value); break;
+        case SHADER_ATTRIB_VEC2: if (count == 2) glVertexAttrib2fv(locIndex, (float *)value); break;
+        case SHADER_ATTRIB_VEC3: if (count == 3) glVertexAttrib3fv(locIndex, (float *)value); break;
+        case SHADER_ATTRIB_VEC4: if (count == 4) glVertexAttrib4fv(locIndex, (float *)value); break;
+        default: TRACELOG(LOG_WARNING, "SHADER: Failed to set attrib default value, data type not recognized");
     }
 #endif
 }
@@ -3755,11 +3368,11 @@ void rlSetUniformMatrix(int locIndex, Matrix mat)
 }
 
 // Set shader value uniform sampler
-void rlSetUniformSampler(int locIndex, Texture2D texture)
+void rlSetUniformSampler(int locIndex, unsigned int textureId)
 {
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     // Check if texture is already active
-    for (int i = 0; i < MAX_BATCH_ACTIVE_TEXTURES; i++) if (RLGL.State.activeTextureId[i] == texture.id) return;
+    for (int i = 0; i < MAX_BATCH_ACTIVE_TEXTURES; i++) if (RLGL.State.activeTextureId[i] == textureId) return;
 
     // Register a new active texture for the internal batch system
     // NOTE: Default texture is always activated as GL_TEXTURE0
@@ -3767,8 +3380,8 @@ void rlSetUniformSampler(int locIndex, Texture2D texture)
     {
         if (RLGL.State.activeTextureId[i] == 0)
         {
-            glUniform1i(locIndex, 1 + i);             // Activate new texture unit
-            RLGL.State.activeTextureId[i] = texture.id; // Save texture id for binding on drawing
+            glUniform1i(locIndex, 1 + i);              // Activate new texture unit
+            RLGL.State.activeTextureId[i] = textureId; // Save texture id for binding on drawing
             break;
         }
     }
@@ -3776,7 +3389,7 @@ void rlSetUniformSampler(int locIndex, Texture2D texture)
 }
 
 // Set shader currently active
-void rlSetShaderActive(Shader shader)
+void rlSetShader(Shader shader)
 {
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     if (RLGL.State.currentShader.id != shader.id)
@@ -3821,7 +3434,17 @@ Matrix rlGetMatrixProjection(void)
 #else
     return RLGL.State.projection;
 #endif
-#
+}
+
+// Get internal accumulated transform matrix
+Matrix rlGetMatrixTransform(void)
+{
+    // TODO: Consider possible transform matrices in the RLGL.State.stack
+    // Is this the right order? or should we start with the first stored matrix instead of the last one?
+    //Matrix matStackTransform = MatrixIdentity();
+    //for (int i = RLGL.State.stackCounter; i > 0; i--) matStackTransform = MatrixMultiply(RLGL.State.stack[i], matStackTransform);
+    
+    return RLGL.State.transform;
 }
 
 // Set a custom modelview matrix (replaces internal modelview matrix)
@@ -3844,8 +3467,8 @@ void rlSetMatrixProjection(Matrix projection)
 void rlSetMatrixProjectionStereo(Matrix right, Matrix left)
 {
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
-    RLGL.State.eyesProjection[0] = right;
-    RLGL.State.eyesProjection[1] = left;
+    RLGL.State.projectionStereo[0] = right;
+    RLGL.State.projectionStereo[1] = left;
 #endif
 }
 
@@ -3853,8 +3476,8 @@ void rlSetMatrixProjectionStereo(Matrix right, Matrix left)
 void rlSetMatrixViewOffsetStereo(Matrix right, Matrix left)
 {
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
-    RLGL.State.eyesViewOffset[0] = right;
-    RLGL.State.eyesViewOffset[1] = left;
+    RLGL.State.offsetStereo[0] = right;
+    RLGL.State.offsetStereo[1] = left;
 #endif
 }
 
@@ -3900,8 +3523,8 @@ TextureCubemap rlGenTextureCubemap(Shader shader, Texture2D panorama, int size, 
     };
 
 #if !defined(GENTEXTURECUBEMAP_USE_BATCH_SYSTEM)
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, panorama.id);
+    rlActiveTextureSlot(0);
+    rlEnableTexture(panorama.id);
 #endif
 
     rlViewport(0, 0, size, size);   // Set viewport to current fbo dimensions
@@ -3913,7 +3536,7 @@ TextureCubemap rlGenTextureCubemap(Shader shader, Texture2D panorama, int size, 
 
         rlEnableFramebuffer(fbo);
 #if defined(GENTEXTURECUBEMAP_USE_BATCH_SYSTEM)
-        rlEnableTexture(panorama.id);   // WARNING: It must be called after enabling current framebuffer if using internal batch system!
+        rlSetTexture(panorama.id);   // WARNING: It must be called after enabling current framebuffer if using internal batch system!
 #endif
         rlClearScreenBuffers();
         rlGenDrawCube();
@@ -3984,8 +3607,8 @@ TextureCubemap rlGenTextureIrradiance(Shader shader, TextureCubemap cubemap, int
         MatrixLookAt((Vector3){ 0.0f, 0.0f, 0.0f }, (Vector3){  0.0f,  0.0f, -1.0f }, (Vector3){ 0.0f, -1.0f,  0.0f })
     };
 
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_CUBE_MAP, cubemap.id);
+    rlActiveTextureSlot(0);
+    rlEnableTextureCubemap(cubemap.id);
 
     rlViewport(0, 0, size, size);   // Set viewport to current fbo dimensions
 
@@ -4061,8 +3684,8 @@ TextureCubemap rlGenTexturePrefilter(Shader shader, TextureCubemap cubemap, int 
         MatrixLookAt((Vector3){ 0.0f, 0.0f, 0.0f }, (Vector3){  0.0f,  0.0f, -1.0f }, (Vector3){ 0.0f, -1.0f,  0.0f })
     };
 
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_CUBE_MAP, cubemap.id);
+    rlActiveTextureSlot(0);
+    rlEnableTextureCubemap(cubemap.id);
 
     // TODO: Locations should be taken out of this function... too shader dependant...
     int roughnessLoc = rlGetLocationUniform(shader.id, "roughness");

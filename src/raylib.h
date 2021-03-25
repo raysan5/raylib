@@ -701,6 +701,35 @@ typedef enum {
     GAMEPAD_AXIS_RIGHT_TRIGGER = 5      // [1..-1] (pressure-level)
 } GamepadAxis;
 
+// Mesh vertex attributes
+typedef enum {
+    MESH_VERTEX_POSITION    = 1,
+    MESH_VERTEX_TEXCOORD1   = 2,
+    MESH_VERTEX_TEXCOORD2   = 4,
+    MESH_VERTEX_NORMAL      = 8,
+    MESH_VERTEX_TANGENT     = 16,
+    MESH_VERTEX_COLOR       = 32,
+    MESH_VERTEX_INDEX       = 64   
+} MeshVertexAttributes;
+
+// Material map index
+typedef enum {
+    MATERIAL_MAP_ALBEDO    = 0,       // MATERIAL_MAP_DIFFUSE
+    MATERIAL_MAP_METALNESS = 1,       // MATERIAL_MAP_SPECULAR
+    MATERIAL_MAP_NORMAL    = 2,
+    MATERIAL_MAP_ROUGHNESS = 3,
+    MATERIAL_MAP_OCCLUSION,
+    MATERIAL_MAP_EMISSION,
+    MATERIAL_MAP_HEIGHT,
+    MATERIAL_MAP_BRDG,
+    MATERIAL_MAP_CUBEMAP,             // NOTE: Uses GL_TEXTURE_CUBE_MAP
+    MATERIAL_MAP_IRRADIANCE,          // NOTE: Uses GL_TEXTURE_CUBE_MAP
+    MATERIAL_MAP_PREFILTER            // NOTE: Uses GL_TEXTURE_CUBE_MAP
+} MaterialMapIndex;
+
+#define MATERIAL_MAP_DIFFUSE      MATERIAL_MAP_ALBEDO
+#define MATERIAL_MAP_SPECULAR     MATERIAL_MAP_METALNESS
+
 // Shader location index
 typedef enum {
     SHADER_LOC_VERTEX_POSITION = 0,
@@ -745,24 +774,6 @@ typedef enum {
     SHADER_UNIFORM_IVEC4,
     SHADER_UNIFORM_SAMPLER2D
 } ShaderUniformDataType;
-
-// Material map index
-typedef enum {
-    MATERIAL_MAP_ALBEDO    = 0,       // MATERIAL_MAP_DIFFUSE
-    MATERIAL_MAP_METALNESS = 1,       // MATERIAL_MAP_SPECULAR
-    MATERIAL_MAP_NORMAL    = 2,
-    MATERIAL_MAP_ROUGHNESS = 3,
-    MATERIAL_MAP_OCCLUSION,
-    MATERIAL_MAP_EMISSION,
-    MATERIAL_MAP_HEIGHT,
-    MATERIAL_MAP_BRDG,
-    MATERIAL_MAP_CUBEMAP,             // NOTE: Uses GL_TEXTURE_CUBE_MAP
-    MATERIAL_MAP_IRRADIANCE,          // NOTE: Uses GL_TEXTURE_CUBE_MAP
-    MATERIAL_MAP_PREFILTER            // NOTE: Uses GL_TEXTURE_CUBE_MAP
-} MaterialMapIndex;
-
-#define MATERIAL_MAP_DIFFUSE      MATERIAL_MAP_ALBEDO
-#define MATERIAL_MAP_SPECULAR     MATERIAL_MAP_METALNESS
 
 // Pixel formats
 // NOTE: Support depends on OpenGL version and platform
@@ -1359,47 +1370,49 @@ RLAPI void DrawGrid(int slices, float spacing);                                 
 //------------------------------------------------------------------------------------
 
 // Model loading/unloading functions
-RLAPI Model LoadModel(const char *fileName);                                                            // Load model from files (meshes and materials)
-RLAPI Model LoadModelFromMesh(Mesh mesh);                                                               // Load model from generated mesh (default material)
-RLAPI void UnloadModel(Model model);                                                                    // Unload model (including meshes) from memory (RAM and/or VRAM)
-RLAPI void UnloadModelKeepMeshes(Model model);                                                          // Unload model (but not meshes) from memory (RAM and/or VRAM)
+RLAPI Model LoadModel(const char *fileName);                                                // Load model from files (meshes and materials)
+RLAPI Model LoadModelFromMesh(Mesh mesh);                                                   // Load model from generated mesh (default material)
+RLAPI void UnloadModel(Model model);                                                        // Unload model (including meshes) from memory (RAM and/or VRAM)
+RLAPI void UnloadModelKeepMeshes(Model model);                                              // Unload model (but not meshes) from memory (RAM and/or VRAM)
 
 // Mesh loading/unloading functions
-RLAPI Mesh *LoadMeshes(const char *fileName, int *meshCount);                                           // Load meshes from model file
-RLAPI void UploadMesh(Mesh *mesh);                                                                      // Upload mesh vertex data to GPU (VRAM)
-RLAPI void UnloadMesh(Mesh mesh);                                                                       // Unload mesh from memory (RAM and/or VRAM)
-RLAPI bool ExportMesh(Mesh mesh, const char *fileName);                                                 // Export mesh data to file, returns true on success
+RLAPI void UploadMesh(Mesh *mesh, bool dynamic);                                            // Upload vertex data into GPU and provided VAO/VBO ids
+RLAPI void DrawMesh(Mesh mesh, Material material, Matrix transform);                        // Draw a 3d mesh with material and transform
+RLAPI void DrawMeshInstanced(Mesh mesh, Material material, Matrix *transforms, int count);  // Draw a 3d mesh with material and transform
+RLAPI void UnloadMesh(Mesh mesh);                                                           // Unload mesh data from CPU and GPU
+RLAPI bool ExportMesh(Mesh mesh, const char *fileName);                                     // Export mesh data to file, returns true on success
 
 // Material loading/unloading functions
-RLAPI Material *LoadMaterials(const char *fileName, int *materialCount);                                // Load materials from model file
-RLAPI Material LoadMaterialDefault(void);                                                               // Load default material (Supports: DIFFUSE, SPECULAR, NORMAL maps)
-RLAPI void UnloadMaterial(Material material);                                                           // Unload material from GPU memory (VRAM)
-RLAPI void SetMaterialTexture(Material *material, int mapType, Texture2D texture);                      // Set texture for a material map type (MATERIAL_MAP_DIFFUSE, MATERIAL_MAP_SPECULAR...)
-RLAPI void SetModelMeshMaterial(Model *model, int meshId, int materialId);                              // Set material for a mesh
+RLAPI Material *LoadMaterials(const char *fileName, int *materialCount);                    // Load materials from model file
+RLAPI Material LoadMaterialDefault(void);                                                   // Load default material (Supports: DIFFUSE, SPECULAR, NORMAL maps)
+RLAPI void UnloadMaterial(Material material);                                               // Unload material from GPU memory (VRAM)
+RLAPI void SetMaterialTexture(Material *material, int mapType, Texture2D texture);          // Set texture for a material map type (MATERIAL_MAP_DIFFUSE, MATERIAL_MAP_SPECULAR...)
+RLAPI void SetModelMeshMaterial(Model *model, int meshId, int materialId);                  // Set material for a mesh
 
 // Model animations loading/unloading functions
-RLAPI ModelAnimation *LoadModelAnimations(const char *fileName, int *animsCount);                       // Load model animations from file
-RLAPI void UpdateModelAnimation(Model model, ModelAnimation anim, int frame);                           // Update model animation pose
-RLAPI void UnloadModelAnimation(ModelAnimation anim);                                                   // Unload animation data
-RLAPI void UnloadModelAnimations(ModelAnimation* animations, unsigned int count);                       // Unload animation array data
-RLAPI bool IsModelAnimationValid(Model model, ModelAnimation anim);                                     // Check model animation skeleton match
+RLAPI ModelAnimation *LoadModelAnimations(const char *fileName, int *animsCount);           // Load model animations from file
+RLAPI void UpdateModelAnimation(Model model, ModelAnimation anim, int frame);               // Update model animation pose
+RLAPI void UnloadModelAnimation(ModelAnimation anim);                                       // Unload animation data
+RLAPI void UnloadModelAnimations(ModelAnimation* animations, unsigned int count);           // Unload animation array data
+RLAPI bool IsModelAnimationValid(Model model, ModelAnimation anim);                         // Check model animation skeleton match
 
 // Mesh generation functions
-RLAPI Mesh GenMeshPoly(int sides, float radius);                                                        // Generate polygonal mesh
-RLAPI Mesh GenMeshPlane(float width, float length, int resX, int resZ);                                 // Generate plane mesh (with subdivisions)
-RLAPI Mesh GenMeshCube(float width, float height, float length);                                        // Generate cuboid mesh
-RLAPI Mesh GenMeshSphere(float radius, int rings, int slices);                                          // Generate sphere mesh (standard sphere)
-RLAPI Mesh GenMeshHemiSphere(float radius, int rings, int slices);                                      // Generate half-sphere mesh (no bottom cap)
-RLAPI Mesh GenMeshCylinder(float radius, float height, int slices);                                     // Generate cylinder mesh
-RLAPI Mesh GenMeshTorus(float radius, float size, int radSeg, int sides);                               // Generate torus mesh
-RLAPI Mesh GenMeshKnot(float radius, float size, int radSeg, int sides);                                // Generate trefoil knot mesh
-RLAPI Mesh GenMeshHeightmap(Image heightmap, Vector3 size);                                             // Generate heightmap mesh from image data
-RLAPI Mesh GenMeshCubicmap(Image cubicmap, Vector3 cubeSize);                                           // Generate cubes-based map mesh from image data
+RLAPI Mesh GenMeshCustom(int vertexCount, int flags);                                       // Generate custom empty mesh (data initialized to 0)
+RLAPI Mesh GenMeshPoly(int sides, float radius);                                            // Generate polygonal mesh
+RLAPI Mesh GenMeshPlane(float width, float length, int resX, int resZ);                     // Generate plane mesh (with subdivisions)
+RLAPI Mesh GenMeshCube(float width, float height, float length);                            // Generate cuboid mesh
+RLAPI Mesh GenMeshSphere(float radius, int rings, int slices);                              // Generate sphere mesh (standard sphere)
+RLAPI Mesh GenMeshHemiSphere(float radius, int rings, int slices);                          // Generate half-sphere mesh (no bottom cap)
+RLAPI Mesh GenMeshCylinder(float radius, float height, int slices);                         // Generate cylinder mesh
+RLAPI Mesh GenMeshTorus(float radius, float size, int radSeg, int sides);                   // Generate torus mesh
+RLAPI Mesh GenMeshKnot(float radius, float size, int radSeg, int sides);                    // Generate trefoil knot mesh
+RLAPI Mesh GenMeshHeightmap(Image heightmap, Vector3 size);                                 // Generate heightmap mesh from image data
+RLAPI Mesh GenMeshCubicmap(Image cubicmap, Vector3 cubeSize);                               // Generate cubes-based map mesh from image data
 
 // Mesh manipulation functions
-RLAPI BoundingBox MeshBoundingBox(Mesh mesh);                                                           // Compute mesh bounding box limits
-RLAPI void MeshTangents(Mesh *mesh);                                                                    // Compute mesh tangents
-RLAPI void MeshBinormals(Mesh *mesh);                                                                   // Compute mesh binormals
+RLAPI BoundingBox MeshBoundingBox(Mesh mesh);                                               // Compute mesh bounding box limits
+RLAPI void MeshTangents(Mesh *mesh);                                                        // Compute mesh tangents
+RLAPI void MeshBinormals(Mesh *mesh);                                                       // Compute mesh binormals
 
 // Model drawing functions
 RLAPI void DrawModel(Model model, Vector3 position, float scale, Color tint);                           // Draw a model (with texture if set)
