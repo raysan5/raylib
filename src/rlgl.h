@@ -600,9 +600,12 @@ RLAPI void rlUpdateVertexBuffer(int bufferId, void *data, int dataSize, int offs
 RLAPI void rlUnloadVertexArray(unsigned int vaoId);
 RLAPI void rlUnloadVertexBuffer(unsigned int vboId);
 RLAPI void rlSetVertexAttribute(unsigned int index, int compSize, int type, bool normalized, int stride, void *pointer);
+RLAPI void rlSetVertexAttributeDivisor(unsigned int index, int divisor);
 RLAPI void rlSetVertexAttributeDefault(int locIndex, const void *value, int attribType, int count); // Set vertex attribute default value
 RLAPI void rlDrawVertexArray(int offset, int count);
 RLAPI void rlDrawVertexArrayElements(int offset, int count, void *buffer);
+RLAPI void rlDrawVertexArrayInstanced(int offset, int count, int instances);
+RLAPI void rlDrawVertexArrayElementsInstanced(int offset, int count, void *buffer, int instances);
 
 // Textures management
 RLAPI unsigned int rlLoadTexture(void *data, int width, int height, int format, int mipmapCount); // Load texture in GPU
@@ -3118,6 +3121,20 @@ void rlDrawVertexArrayElements(int offset, int count, void *buffer)
     glDrawElements(GL_TRIANGLES, count, GL_UNSIGNED_SHORT, buffer + offset);
 }
 
+void rlDrawVertexArrayInstanced(int offset, int count, int instances)
+{
+#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
+    glDrawArraysInstanced(GL_TRIANGLES, 0, count, instances);
+#endif
+}
+
+void rlDrawVertexArrayElementsInstanced(int offset, int count, void *buffer, int instances)
+{
+#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
+    glDrawElementsInstanced(GL_TRIANGLES, count, GL_UNSIGNED_SHORT, buffer + offset, instances);
+#endif
+}
+
 #if defined(GRAPHICS_API_OPENGL_11)
 void rlEnableStatePointer(int vertexAttribType, void *buffer)
 {
@@ -3155,6 +3172,13 @@ void rlSetVertexAttribute(unsigned int index, int compSize, int type, bool norma
 #endif
 }
 
+void rlSetVertexAttributeDivisor(unsigned int index, int divisor)
+{
+#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
+    glVertexAttribDivisor(index, divisor);
+#endif
+}
+
 void rlUnloadVertexArray(unsigned int vaoId)
 {
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
@@ -3171,7 +3195,7 @@ void rlUnloadVertexBuffer(unsigned int vboId)
 {
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     glDeleteBuffers(1, &vboId);
-    TRACELOG(LOG_INFO, "VBO: Unloaded vertex data from VRAM (GPU)");
+    //TRACELOG(LOG_INFO, "VBO: Unloaded vertex data from VRAM (GPU)");
 #endif
 }
 

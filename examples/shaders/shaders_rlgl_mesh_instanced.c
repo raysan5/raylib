@@ -59,15 +59,15 @@ int main(void)
     camera.fovy = 45.0f;
     camera.projection = CAMERA_PERSPECTIVE;
 
-    const int count = 10000;                                 // Number of instances to display 
+    const int instances = 10000;                                // Number of instances to display 
     Mesh cube = GenMeshCube(1.0f, 1.0f, 1.0f);
 
-    Matrix *rotations = RL_MALLOC(count*sizeof(Matrix));    // Rotation state of instances
-    Matrix *rotationsInc = RL_MALLOC(count*sizeof(Matrix)); // Per-frame rotation animation of instances
-    Matrix *translations = RL_MALLOC(count*sizeof(Matrix)); // Locations of instances
+    Matrix *rotations = RL_MALLOC(instances*sizeof(Matrix));    // Rotation state of instances
+    Matrix *rotationsInc = RL_MALLOC(instances*sizeof(Matrix)); // Per-frame rotation animation of instances
+    Matrix *translations = RL_MALLOC(instances*sizeof(Matrix)); // Locations of instances
 
     // Scatter random cubes around
-    for (int i = 0; i < count; i++)
+    for (int i = 0; i < instances; i++)
     {
         x = GetRandomValue(-50, 50);
         y = GetRandomValue(-50, 50);
@@ -84,7 +84,7 @@ int main(void)
         rotations[i] = MatrixIdentity();
     }
 
-    Matrix *transforms = RL_MALLOC(count*sizeof(Matrix));   // Pre-multiplied transformations passed to rlgl
+    Matrix *transforms = RL_MALLOC(instances*sizeof(Matrix));   // Pre-multiplied transformations passed to rlgl
 
     Shader shader = LoadShader(TextFormat("resources/shaders/glsl%i/base_lighting_instanced.vs", GLSL_VERSION), 
                                TextFormat("resources/shaders/glsl%i/lighting.fs", GLSL_VERSION));
@@ -107,19 +107,18 @@ int main(void)
     SetCameraMode(camera, CAMERA_ORBITAL);  // Set an orbital camera mode
 
     int textPositionY = 300;
-    
-    int framesCounter = 0;               // Simple frames counter to manage animation
+    int framesCounter = 0;                  // Simple frames counter to manage animation
 
-    SetTargetFPS(fps);                   // Set our game to run at 60 frames-per-second
+    SetTargetFPS(fps);                      // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
 
     // Main game loop
-    while (!WindowShouldClose())        // Detect window close button or ESC key
+    while (!WindowShouldClose())            // Detect window close button or ESC key
     {
 
         // Update
         //----------------------------------------------------------------------------------
-        UpdateCamera(&camera);
+        textPositionY = 300;
         framesCounter++;
 
         if (IsKeyDown(KEY_UP)) amp += 0.5f;
@@ -148,7 +147,7 @@ int main(void)
         SetShaderValue(shader, shader.locs[SHADER_LOC_VECTOR_VIEW], cameraPos, SHADER_UNIFORM_VEC3);
 
         // Apply per-instance transformations
-        for (int i = 0; i < count; i++)
+        for (int i = 0; i < instances; i++)
         {
             rotations[i] = MatrixMultiply(rotations[i], rotationsInc[i]);
             transforms[i] = MatrixMultiply(rotations[i], translations[i]);
@@ -164,6 +163,8 @@ int main(void)
             
             transforms[i] = MatrixMultiply(transforms[i], MatrixTranslate(0.0f, y, 0.0f));
         }
+        
+        UpdateCamera(&camera);
         //----------------------------------------------------------------------------------
 
         // Draw
@@ -173,7 +174,7 @@ int main(void)
             ClearBackground(RAYWHITE);
 
             BeginMode3D(camera);
-                DrawMeshInstanced(cube, material, transforms, count);
+                DrawMeshInstanced(cube, material, transforms, instances);
             EndMode3D();
 
             DrawText("A CUBE OF DANCING CUBES!", 490, 10, 20, MAROON);
