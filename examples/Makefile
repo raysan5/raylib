@@ -437,7 +437,8 @@ TEXTURES = \
     textures/textures_sprite_explosion \
     textures/textures_bunnymark \
     textures/textures_blend_modes \
-    textures/textures_draw_tiled
+    textures/textures_draw_tiled \
+    textures/textures_poly
 
 TEXT = \
     text/text_raylib_fonts \
