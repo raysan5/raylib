@@ -813,9 +813,6 @@ void UnloadModelKeepMeshes(Model model)
     TRACELOG(LOG_INFO, "MODEL: Unloaded model (but not meshes) from RAM and VRAM");
 }
 
-#define GL_UNSIGNED_BYTE    0x1401
-#define GL_FLOAT            0x1406
-
 // Upload vertex data into a VAO (if supported) and VBO
 void UploadMesh(Mesh *mesh, bool dynamic)
 {
@@ -845,19 +842,19 @@ void UploadMesh(Mesh *mesh, bool dynamic)
     
     // Enable vertex attributes: position (shader-location = 0)
     mesh->vboId[0] = rlLoadVertexBuffer(mesh->vertices, mesh->vertexCount*3*sizeof(float), dynamic);
-    rlSetVertexAttribute(0, 3, GL_FLOAT, 0, 0, 0);
+    rlSetVertexAttribute(0, 3, RL_FLOAT, 0, 0, 0);
     rlEnableVertexAttribute(0);
 
     // Enable vertex attributes: texcoords (shader-location = 1)
     mesh->vboId[1] = rlLoadVertexBuffer(mesh->texcoords, mesh->vertexCount*2*sizeof(float), dynamic);
-    rlSetVertexAttribute(1, 2, GL_FLOAT, 0, 0, 0);
+    rlSetVertexAttribute(1, 2, RL_FLOAT, 0, 0, 0);
     rlEnableVertexAttribute(1);
 
     if (mesh->normals != NULL)
     {
         // Enable vertex attributes: normals (shader-location = 2)
         mesh->vboId[2] = rlLoadVertexBuffer(mesh->normals, mesh->vertexCount*3*sizeof(float), dynamic);
-        rlSetVertexAttribute(2, 3, GL_FLOAT, 0, 0, 0);
+        rlSetVertexAttribute(2, 3, RL_FLOAT, 0, 0, 0);
         rlEnableVertexAttribute(2);
     }
     else
@@ -872,7 +869,7 @@ void UploadMesh(Mesh *mesh, bool dynamic)
     {
         // Enable vertex attribute: color (shader-location = 3)
         mesh->vboId[3] = rlLoadVertexBuffer(mesh->colors, mesh->vertexCount*4*sizeof(unsigned char), dynamic);
-        rlSetVertexAttribute(3, 4, GL_UNSIGNED_BYTE, 1, 0, 0);
+        rlSetVertexAttribute(3, 4, RL_UNSIGNED_BYTE, 1, 0, 0);
         rlEnableVertexAttribute(3);
     }
     else
@@ -887,7 +884,7 @@ void UploadMesh(Mesh *mesh, bool dynamic)
     {
         // Enable vertex attribute: tangent (shader-location = 4)
         mesh->vboId[4] = rlLoadVertexBuffer(mesh->tangents, mesh->vertexCount*4*sizeof(float), dynamic);
-        rlSetVertexAttribute(4, 4, GL_FLOAT, 0, 0, 0);
+        rlSetVertexAttribute(4, 4, RL_FLOAT, 0, 0, 0);
         rlEnableVertexAttribute(4);
     }
     else
@@ -902,7 +899,7 @@ void UploadMesh(Mesh *mesh, bool dynamic)
     {
         // Enable vertex attribute: texcoord2 (shader-location = 5)
         mesh->vboId[5] = rlLoadVertexBuffer(mesh->texcoords2, mesh->vertexCount*2*sizeof(float), dynamic);
-        rlSetVertexAttribute(5, 2, GL_FLOAT, 0, 0, 0);
+        rlSetVertexAttribute(5, 2, RL_FLOAT, 0, 0, 0);
         rlEnableVertexAttribute(5);
     }
     else
@@ -929,37 +926,35 @@ void UploadMesh(Mesh *mesh, bool dynamic)
 void DrawMesh(Mesh mesh, Material material, Matrix transform)
 {
 #if defined(GRAPHICS_API_OPENGL_11)
-/*
-    glEnable(GL_TEXTURE_2D);
-    glBindTexture(GL_TEXTURE_2D, material.maps[MATERIAL_MAP_DIFFUSE].texture.id);
+    #define GL_VERTEX_ARRAY         0x8074
+    #define GL_NORMAL_ARRAY         0x8075
+    #define GL_COLOR_ARRAY          0x8076
+    #define GL_TEXTURE_COORD_ARRAY  0x8078
 
-    // NOTE: On OpenGL 1.1 we use Vertex Arrays to draw model
-    glEnableClientState(GL_VERTEX_ARRAY);                   // Enable vertex array
-    glEnableClientState(GL_TEXTURE_COORD_ARRAY);            // Enable texture coords array
-    if (mesh.normals != NULL) glEnableClientState(GL_NORMAL_ARRAY);     // Enable normals array
-    if (mesh.colors != NULL) glEnableClientState(GL_COLOR_ARRAY);       // Enable colors array
+    rlEnableTexture(material.maps[MATERIAL_MAP_DIFFUSE].texture.id);
 
-    glVertexPointer(3, GL_FLOAT, 0, mesh.vertices);         // Pointer to vertex coords array
-    glTexCoordPointer(2, GL_FLOAT, 0, mesh.texcoords);      // Pointer to texture coords array
-    if (mesh.normals != NULL) glNormalPointer(GL_FLOAT, 0, mesh.normals);           // Pointer to normals array
-    if (mesh.colors != NULL) glColorPointer(4, GL_UNSIGNED_BYTE, 0, mesh.colors);   // Pointer to colors array
-
+    rlEnableStatePointer(GL_VERTEX_ARRAY, mesh.vertices);
+    rlEnableStatePointer(GL_TEXTURE_COORD_ARRAY, mesh.texcoords);
+    rlEnableStatePointer(GL_NORMAL_ARRAY, mesh.normals);
+    rlEnableStatePointer(GL_COLOR_ARRAY, mesh.colors);
+    
     rlPushMatrix();
         rlMultMatrixf(MatrixToFloat(transform));
-        rlColor4ub(material.maps[MATERIAL_MAP_DIFFUSE].color.r, material.maps[MATERIAL_MAP_DIFFUSE].color.g, material.maps[MATERIAL_MAP_DIFFUSE].color.b, material.maps[MATERIAL_MAP_DIFFUSE].color.a);
+        rlColor4ub(material.maps[MATERIAL_MAP_DIFFUSE].color.r, 
+                   material.maps[MATERIAL_MAP_DIFFUSE].color.g, 
+                   material.maps[MATERIAL_MAP_DIFFUSE].color.b, 
+                   material.maps[MATERIAL_MAP_DIFFUSE].color.a);
 
-        if (mesh.indices != NULL) glDrawArrayElements(GL_TRIANGLES, mesh.triangleCount*3, GL_UNSIGNED_SHORT, mesh.indices);
-        else glDrawArrays(0, mesh.vertexCount);
+        if (mesh.indices != NULL) rlDrawVertexArrayElements(0, mesh.triangleCount*3, mesh.indices);
+        else rlDrawVertexArray(0, mesh.vertexCount);
     rlPopMatrix();
 
-    glDisableClientState(GL_VERTEX_ARRAY);                  // Disable vertex array
-    glDisableClientState(GL_TEXTURE_COORD_ARRAY);           // Disable texture coords array
-    if (mesh.normals != NULL) glDisableClientState(GL_NORMAL_ARRAY);    // Disable normals array
-    if (mesh.colors != NULL) glDisableClientState(GL_NORMAL_ARRAY);     // Disable colors array
+    rlDisableStatePointer(GL_VERTEX_ARRAY);
+    rlDisableStatePointer(GL_TEXTURE_COORD_ARRAY);
+    rlDisableStatePointer(GL_NORMAL_ARRAY);
+    rlDisableStatePointer(GL_COLOR_ARRAY);
 
-    glDisable(GL_TEXTURE_2D);
-    glBindTexture(GL_TEXTURE_2D, 0);
-*/
+    rlDisableTexture();
 #endif
 
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
@@ -1039,23 +1034,23 @@ void DrawMesh(Mesh mesh, Material material, Matrix transform)
     {
         // Bind mesh VBO data: vertex position (shader-location = 0)
         rlEnableVertexBuffer(mesh.vboId[0]);
-        rlSetVertexAttribute(material.shader.locs[SHADER_LOC_VERTEX_POSITION], 3, GL_FLOAT, 0, 0, 0);
+        rlSetVertexAttribute(material.shader.locs[SHADER_LOC_VERTEX_POSITION], 3, RL_FLOAT, 0, 0, 0);
         rlEnableVertexAttribute(material.shader.locs[SHADER_LOC_VERTEX_POSITION]);
     
         rlEnableVertexBuffer(mesh.vboId[0]);
-        rlSetVertexAttribute(material.shader.locs[SHADER_LOC_VERTEX_POSITION], 3, GL_FLOAT, 0, 0, 0);
+        rlSetVertexAttribute(material.shader.locs[SHADER_LOC_VERTEX_POSITION], 3, RL_FLOAT, 0, 0, 0);
         rlEnableVertexAttribute(material.shader.locs[SHADER_LOC_VERTEX_POSITION]);
 
         // Bind mesh VBO data: vertex texcoords (shader-location = 1)
         rlEnableVertexBuffer(mesh.vboId[1]);
-        rlSetVertexAttribute(material.shader.locs[SHADER_LOC_VERTEX_TEXCOORD01], 2, GL_FLOAT, 0, 0, 0);
+        rlSetVertexAttribute(material.shader.locs[SHADER_LOC_VERTEX_TEXCOORD01], 2, RL_FLOAT, 0, 0, 0);
         rlEnableVertexAttribute(material.shader.locs[SHADER_LOC_VERTEX_TEXCOORD01]);
 
         if (material.shader.locs[SHADER_LOC_VERTEX_NORMAL] != -1)
         {
             // Bind mesh VBO data: vertex normals (shader-location = 2)
             rlEnableVertexBuffer(mesh.vboId[2]);
-            rlSetVertexAttribute(material.shader.locs[SHADER_LOC_VERTEX_NORMAL], 3, GL_FLOAT, 0, 0, 0);
+            rlSetVertexAttribute(material.shader.locs[SHADER_LOC_VERTEX_NORMAL], 3, RL_FLOAT, 0, 0, 0);
             rlEnableVertexAttribute(material.shader.locs[SHADER_LOC_VERTEX_NORMAL]);
         }
 
@@ -1065,7 +1060,7 @@ void DrawMesh(Mesh mesh, Material material, Matrix transform)
             if (mesh.vboId[3] != 0)
             {
                 rlEnableVertexBuffer(mesh.vboId[3]);
-                rlSetVertexAttribute(material.shader.locs[SHADER_LOC_VERTEX_COLOR], 4, GL_UNSIGNED_BYTE, 1, 0, 0);
+                rlSetVertexAttribute(material.shader.locs[SHADER_LOC_VERTEX_COLOR], 4, RL_UNSIGNED_BYTE, 1, 0, 0);
                 rlEnableVertexAttribute(material.shader.locs[SHADER_LOC_VERTEX_COLOR]);
             }
             else
@@ -1082,7 +1077,7 @@ void DrawMesh(Mesh mesh, Material material, Matrix transform)
         if (material.shader.locs[SHADER_LOC_VERTEX_TANGENT] != -1)
         {
             rlEnableVertexBuffer(mesh.vboId[4]);
-            rlSetVertexAttribute(material.shader.locs[SHADER_LOC_VERTEX_TANGENT], 4, GL_FLOAT, 0, 0, 0);
+            rlSetVertexAttribute(material.shader.locs[SHADER_LOC_VERTEX_TANGENT], 4, RL_FLOAT, 0, 0, 0);
             rlEnableVertexAttribute(material.shader.locs[SHADER_LOC_VERTEX_TANGENT]);
         }
 
@@ -1090,7 +1085,7 @@ void DrawMesh(Mesh mesh, Material material, Matrix transform)
         if (material.shader.locs[SHADER_LOC_VERTEX_TEXCOORD02] != -1)
         {
             rlEnableVertexBuffer(mesh.vboId[5]);
-            rlSetVertexAttribute(material.shader.locs[SHADER_LOC_VERTEX_TEXCOORD02], 2, GL_FLOAT, 0, 0, 0);
+            rlSetVertexAttribute(material.shader.locs[SHADER_LOC_VERTEX_TEXCOORD02], 2, RL_FLOAT, 0, 0, 0);
             rlEnableVertexAttribute(material.shader.locs[SHADER_LOC_VERTEX_TEXCOORD02]);
         }
 
@@ -1124,7 +1119,7 @@ void DrawMesh(Mesh mesh, Material material, Matrix transform)
         rlSetUniformMatrix(material.shader.locs[SHADER_LOC_MATRIX_MVP], matMVP);
 
         // Draw calls
-        if (mesh.indices != NULL) rlDrawVertexArrayElements(0, mesh.triangleCount*3);
+        if (mesh.indices != NULL) rlDrawVertexArrayElements(0, mesh.triangleCount*3, 0);
         else rlDrawVertexArray(0, mesh.vertexCount);
     }
 

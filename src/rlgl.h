@@ -206,6 +206,10 @@
 #define RL_TRIANGLES                    0x0004      // GL_TRIANGLES
 #define RL_QUADS                        0x0007      // GL_QUADS
 
+// GL equivalent data types
+#define RL_UNSIGNED_BYTE                0x1401      // GL_UNSIGNED_BYTE
+#define RL_FLOAT                        0x1406      // GL_FLOAT
+
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
 //----------------------------------------------------------------------------------
@@ -514,6 +518,10 @@ RLAPI void rlEnableVertexBufferElement(unsigned int id);// Enable vertex buffer 
 RLAPI void rlDisableVertexBufferElement(void);          // Disable vertex buffer element (VBO element)
 RLAPI void rlEnableVertexAttribute(unsigned int index); // Enable vertex attribute index
 RLAPI void rlDisableVertexAttribute(unsigned int index);// Disable vertex attribute index
+#if defined(GRAPHICS_API_OPENGL_11)
+RLAPI void rlEnableStatePointer(int vertexAttribType, void *buffer);
+RLAPI void rlDisableStatePointer(int vertexAttribType);
+#endif
 
 // Textures state
 RLAPI void rlActiveTextureSlot(int slot);               // Select and active a texture slot
@@ -594,7 +602,7 @@ RLAPI void rlUnloadVertexBuffer(unsigned int vboId);
 RLAPI void rlSetVertexAttribute(unsigned int index, int compSize, int type, bool normalized, int stride, void *pointer);
 RLAPI void rlSetVertexAttributeDefault(int locIndex, const void *value, int attribType, int count); // Set vertex attribute default value
 RLAPI void rlDrawVertexArray(int offset, int count);
-RLAPI void rlDrawVertexArrayElements(int offset, int count);
+RLAPI void rlDrawVertexArrayElements(int offset, int count, void *buffer);
 
 // Textures management
 RLAPI unsigned int rlLoadTexture(void *data, int width, int height, int format, int mipmapCount); // Load texture in GPU
@@ -770,6 +778,7 @@ RLAPI Texture2D rlGenTextureBRDF(Shader shader, int size);              // Gener
     #define GL_UNSIGNED_SHORT_5_5_5_1           0x8034
     #define GL_UNSIGNED_SHORT_4_4_4_4           0x8033
 #endif
+
 #if defined(GRAPHICS_API_OPENGL_21)
     #define GL_LUMINANCE                        0x1909
     #define GL_LUMINANCE_ALPHA                  0x190A
@@ -1041,7 +1050,6 @@ void rlOrtho(double left, double right, double bottom, double top, double znear,
 
     *RLGL.State.currentMatrix = MatrixMultiply(*RLGL.State.currentMatrix, matOrtho);
 }
-
 #endif
 
 // Set the viewport area (transformation from normalized device coordinates to window coordinates)
@@ -1295,14 +1303,16 @@ void rlSetTexture(unsigned int id)
             RLGL.currentBatch->draws[RLGL.currentBatch->drawsCounter - 1].textureId = id;
             RLGL.currentBatch->draws[RLGL.currentBatch->drawsCounter - 1].vertexCount = 0;
         }
-    }
 #endif
+    }
 }
 
 // Select and active a texture slot
 void rlActiveTextureSlot(int slot)
 {
+#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     glActiveTexture(GL_TEXTURE0 + slot);
+#endif
 }
 
 // Enable texture 
@@ -1326,19 +1336,19 @@ void rlDisableTexture(void)
 // Enable texture cubemap
 void rlEnableTextureCubemap(unsigned int id)
 {
-#if defined(GRAPHICS_API_OPENGL_11)
-    glEnable(GL_TEXTURE_CUBE_MAP);
-#endif
+#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
+    glEnable(GL_TEXTURE_CUBE_MAP);   // Core in OpenGL 1.4
     glBindTexture(GL_TEXTURE_CUBE_MAP, id);
+#endif
 }
 
 // Disable texture cubemap
 void rlDisableTextureCubemap(void)
 {
-#if defined(GRAPHICS_API_OPENGL_11)
+#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     glDisable(GL_TEXTURE_CUBE_MAP);
-#endif
     glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
+#endif
 }
 
 // Set texture parameters (wrap mode/filter mode)
@@ -3028,22 +3038,30 @@ unsigned int rlLoadVertexBufferElement(void *buffer, int size, bool dynamic)
 
 void rlEnableVertexBuffer(unsigned int id)
 {
+#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     glBindBuffer(GL_ARRAY_BUFFER, id);
+#endif
 }
 
 void rlDisableVertexBuffer(void)
 {
+#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     glBindBuffer(GL_ARRAY_BUFFER, 0);
+#endif
 }
 
 void rlEnableVertexBufferElement(unsigned int id)
 {
+#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, id);
+#endif
 }
 
 void rlDisableVertexBufferElement(void)
 {
+#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+#endif
 }
 
 // Update GPU buffer with new data
@@ -3095,24 +3113,46 @@ void rlDrawVertexArray(int offset, int count)
     glDrawArrays(GL_TRIANGLES, offset, count);
 }
 
-void rlDrawVertexArrayElements(int offset, int count)
+void rlDrawVertexArrayElements(int offset, int count, void *buffer)
 {
-    // TODO: review offset
-    glDrawElements(GL_TRIANGLES, count, GL_UNSIGNED_SHORT, 0);
+    glDrawElements(GL_TRIANGLES, count, GL_UNSIGNED_SHORT, buffer + offset);
 }
+
+#if defined(GRAPHICS_API_OPENGL_11)
+void rlEnableStatePointer(int vertexAttribType, void *buffer)
+{
+    if (buffer != NULL) glEnableClientState(vertexAttribType);
+    switch (vertexAttribType)
+    {
+        case GL_VERTEX_ARRAY: glVertexPointer(3, GL_FLOAT, 0, buffer); break;
+        case GL_TEXTURE_COORD_ARRAY: glTexCoordPointer(2, GL_FLOAT, 0, buffer); break;
+        case GL_NORMAL_ARRAY: if (buffer != NULL) glNormalPointer(GL_FLOAT, 0, buffer); break;
+        case GL_COLOR_ARRAY: if (buffer != NULL) glColorPointer(4, GL_UNSIGNED_BYTE, 0, buffer); break;
+        //case GL_INDEX_ARRAY: if (buffer != NULL) glIndexPointer(GL_SHORT, 0, buffer); break; // Indexed colors
+        default: break;
+    }
+}
+
+void rlDisableStatePointer(int vertexAttribType)
+{
+    glDisableClientState(vertexAttribType);
+}
+#endif
 
 unsigned int rlLoadVertexArray(void)
 {
     unsigned int vaoId = 0;
-    
+#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     glGenVertexArrays(1, &vaoId);
-    
+#endif
     return vaoId;
 }
 
 void rlSetVertexAttribute(unsigned int index, int compSize, int type, bool normalized, int stride, void *pointer)
 {
+#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     glVertexAttribPointer(index, compSize, type, normalized, stride, pointer);
+#endif
 }
 
 void rlUnloadVertexArray(unsigned int vaoId)
@@ -3129,11 +3169,11 @@ void rlUnloadVertexArray(unsigned int vaoId)
 
 void rlUnloadVertexBuffer(unsigned int vboId)
 {
+#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     glDeleteBuffers(1, &vboId);
     TRACELOG(LOG_INFO, "VBO: Unloaded vertex data from VRAM (GPU)");
+#endif
 }
-
-
 
 // Shaders management
 //-----------------------------------------------------------------------------------------------
@@ -3439,12 +3479,15 @@ Matrix rlGetMatrixProjection(void)
 // Get internal accumulated transform matrix
 Matrix rlGetMatrixTransform(void)
 {
+    Matrix mat = MatrixIdentity();
+#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     // TODO: Consider possible transform matrices in the RLGL.State.stack
     // Is this the right order? or should we start with the first stored matrix instead of the last one?
     //Matrix matStackTransform = MatrixIdentity();
     //for (int i = RLGL.State.stackCounter; i > 0; i--) matStackTransform = MatrixMultiply(RLGL.State.stack[i], matStackTransform);
-    
-    return RLGL.State.transform;
+    mat = RLGL.State.transform;
+#endif
+    return mat;
 }
 
 // Set a custom modelview matrix (replaces internal modelview matrix)
