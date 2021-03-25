@@ -21,6 +21,7 @@ int main(void)
     const int screenWidth = 800;
     const int screenHeight = 450;
 
+    //SetConfigFlags(FLAG_MSAA_4X_HINT | FLAG_WINDOW_HIGHDPI);
     InitWindow(screenWidth, screenHeight, "raylib [models] example - plane rotations (yaw, pitch, roll)");
 
     Camera camera = { 0 };
@@ -74,7 +75,7 @@ int main(void)
         }
 
         // Tranformation matrix for rotations
-        model.transform = MatrixRotateXYZ((Vector3){DEG2RAD*pitch,DEG2RAD*yaw,DEG2RAD*roll});
+        model.transform = MatrixRotateXYZ((Vector3){ DEG2RAD*pitch, DEG2RAD*yaw, DEG2RAD*roll });
         //----------------------------------------------------------------------------------
         
         
