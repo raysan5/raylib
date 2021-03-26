@@ -760,10 +760,26 @@ void DrawRectangleLinesEx(Rectangle rec, int lineThick, Color color)
         else if (rec.width < rec.height) lineThick = (int)rec.width/2;
     }
 
-    DrawRectangle( (int)rec.x, (int)rec.y, (int)rec.width, lineThick, color);
-    DrawRectangle( (int)(rec.x - lineThick + rec.width), (int)(rec.y + lineThick), lineThick, (int)(rec.height - lineThick*2.0f), color);
-    DrawRectangle( (int)rec.x, (int)(rec.y + rec.height - lineThick), (int)rec.width, lineThick, color);
-    DrawRectangle( (int)rec.x, (int)(rec.y + lineThick), lineThick, (int)(rec.height - lineThick*2), color);
+    // When rec = { x, y, 8.0f, 6.0f } and lineThick = 2, the following
+    // four rectangles are drawn ([T]op, [B]ottom, [L]eft, [R]ight):
+    //
+    //   TTTTTTTT
+    //   TTTTTTTT
+    //   LL    RR
+    //   LL    RR
+    //   BBBBBBBB
+    //   BBBBBBBB
+    //
+    float thick = (float)lineThick;
+    Rectangle top    = { rec.x                    , rec.y                     , rec.width, thick                     };
+    Rectangle bottom = { rec.x                    , rec.y - thick + rec.height, rec.width, thick                     };
+    Rectangle left   = { rec.x                    , rec.y + thick             , thick    , rec.height - thick * 2.0f };
+    Rectangle right  = { rec.x - thick + rec.width, rec.y + thick             , thick    , rec.height - thick * 2.0f };
+
+    DrawRectangleRec(top, color);
+    DrawRectangleRec(bottom, color);
+    DrawRectangleRec(left, color);
+    DrawRectangleRec(right, color);
 }
 
 // Draw rectangle with rounded edges
@@ -793,8 +809,8 @@ void DrawRectangleRounded(Rectangle rec, float roundness, int segments, Color co
 
     float stepLength = 90.0f/(float)segments;
 
-    /*  
-    *   Quick sketch to make sense of all of this 
+    /*
+    *   Quick sketch to make sense of all of this
     *   (there are 9 parts to draw, also mark the 12 points we'll use below)
     *
     *      P0____________________P1
@@ -1019,7 +1035,7 @@ void DrawRectangleRoundedLines(Rectangle rec, float roundness, int segments, int
     float stepLength = 90.0f/(float)segments;
     const float outerRadius = radius + (float)lineThick, innerRadius = radius;
 
-    /*  
+    /*
     *   Quick sketch to make sense of all of this (mark the 16 + 4(corner centers P16-19) points we'll use below)
     *       P0 ================== P1
     *      // P8                P9 \\
@@ -1058,7 +1074,7 @@ void DrawRectangleRoundedLines(Rectangle rec, float roundness, int segments, int
         rlSetTexture(rlGetShapesTexture().id);
 
         rlBegin(RL_QUADS);
-        
+
             // Draw all of the 4 corners first: Upper Left Corner, Upper Right Corner, Lower Right Corner, Lower Left Corner
             for (int k = 0; k < 4; ++k) // Hope the compiler is smart enough to unroll this loop
             {
