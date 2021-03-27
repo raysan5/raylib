@@ -1316,10 +1316,11 @@ Material *LoadMaterials(const char *fileName, int *materialCount)
     {
         tinyobj_material_t *mats = NULL;
 
-        int result = tinyobj_parse_mtl_file(&mats, &count, fileName);
-        if (result != TINYOBJ_SUCCESS) TRACELOG(LOG_WARNING, "MATERIAL: [%s] Failed to parse materials file", fileName);
+        //int result = tinyobj_parse_mtl_file(&mats, &count, fileName);
+        //if (result != TINYOBJ_SUCCESS) TRACELOG(LOG_WARNING, "MATERIAL: [%s] Failed to parse materials file", fileName);
 
         // TODO: Process materials to return
+        // (codifies) one day I will get around to this...
 
         tinyobj_materials_free(mats, count);
     }
@@ -3132,6 +3133,42 @@ RayHitInfo GetCollisionRayGround(Ray ray, float groundHeight)
 //----------------------------------------------------------------------------------
 
 #if defined(SUPPORT_FILEFORMAT_OBJ)
+
+// (codifies) keep track of allocs I know it reallocs each time but
+// its only per mtl file (usually 0 or 1) although in spec, I've never seen >1 mtl
+// I used the ctx because I'm not a fan of mmap'd files!
+
+// TODO anyway to make this a "private" struct
+typedef struct ObjCtx {
+    char* objAlloc;
+    int numAllocs;
+    char** allocs;
+} ObjCtx;
+
+static void objReader(void* vctx, const char* filename, const int is_mtl,
+                const char* obj_filename, char** data, size_t* len)
+{
+    ObjCtx* ctx = (ObjCtx*)vctx;
+    if (!is_mtl) {
+        ctx->numAllocs = 1;
+        ctx->allocs = RL_MALLOC(sizeof(char*));
+        ctx->allocs[0] = LoadFileText(obj_filename);  // NB tiny obj seems to corrupt this pointer on return
+        ctx->objAlloc = ctx->allocs[0];
+        *data = ctx->allocs[0];
+        *len = strlen(ctx->allocs[0]);
+    } else {
+        ctx->allocs = RL_REALLOC(ctx->allocs, ctx->numAllocs+1);
+        char fullPath[4096];
+        // TODO some brain dead OS's might not follow standard path seperator ?
+        sprintf( fullPath, "%s/%s", GetDirectoryPath(obj_filename), filename);
+        ctx->allocs[ctx->numAllocs] = LoadFileText(fullPath);
+        *data = ctx->allocs[ctx->numAllocs];
+        *len = strlen(ctx->allocs[ctx->numAllocs]);
+        ctx->numAllocs++;
+    }
+}
+
+
 // Load OBJ mesh data
 static Model LoadOBJ(const char *fileName)
 {
@@ -3139,25 +3176,24 @@ static Model LoadOBJ(const char *fileName)
 
     tinyobj_attrib_t attrib = { 0 };
     tinyobj_shape_t *meshes = NULL;
-    unsigned int meshCount = 0;
+    unsigned long int meshCount = 0;
 
     tinyobj_material_t *materials = NULL;
-    unsigned int materialCount = 0;
+    unsigned long int materialCount = 0;
 
-    char *fileData = LoadFileText(fileName);
-
-    if (fileData != NULL)
     {
-        unsigned int dataSize = (unsigned int)strlen(fileData);
-        char currentDir[1024] = { 0 };
-        strcpy(currentDir, GetWorkingDirectory());
-        chdir(GetDirectoryPath(fileName));
-
         unsigned int flags = TINYOBJ_FLAG_TRIANGULATE;
-        int ret = tinyobj_parse_obj(&attrib, &meshes, &meshCount, &materials, &materialCount, fileData, dataSize, flags);
-
+        ObjCtx ctx = { 0 };  // NB important it is cleared before use
+        int ret = tinyobj_parse_obj(&attrib, &meshes, &meshCount, &materials, &materialCount, 
+                                    fileName, objReader, &ctx, flags);
         if (ret != TINYOBJ_SUCCESS) TRACELOG(LOG_WARNING, "MODEL: [%s] Failed to load OBJ data", fileName);
         else TRACELOG(LOG_INFO, "MODEL: [%s] OBJ data loaded successfully: %i meshes / %i materials", fileName, meshCount, materialCount);
+
+        for(int i=1; i < ctx.numAllocs; i++) {
+            RL_FREE(ctx.allocs[i]);
+        }
+        RL_FREE(ctx.objAlloc);
+        RL_FREE(ctx.allocs);
 
         model.meshCount = materialCount;
 
@@ -3212,7 +3248,7 @@ static Model LoadOBJ(const char *fileName)
         }
 
         // scan through the combined sub meshes and pick out each material mesh
-        for (unsigned int af = 0; af < attrib.num_faces; af++)
+        for (unsigned int af = 0; af < attrib.num_faces/3; af++)
         {
             int mm = attrib.material_ids[af];   // mesh material for this face
             if (mm == -1) { mm = 0; }           // no material object..
@@ -3281,7 +3317,6 @@ static Model LoadOBJ(const char *fileName)
         tinyobj_shapes_free(meshes, meshCount);
         tinyobj_materials_free(materials, materialCount);
 
-        RL_FREE(fileData);
         RL_FREE(matFaces);
 
         RL_FREE(vCount);
@@ -3289,7 +3324,6 @@ static Model LoadOBJ(const char *fileName)
         RL_FREE(vnCount);
         RL_FREE(faceCount);
 
-        chdir(currentDir);
     }
 
     return model;
