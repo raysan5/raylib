@@ -1140,22 +1140,21 @@ void DrawMeshInstanced(Mesh mesh, Material material, Matrix *transforms, int ins
     }
     
     int eyesCount = 1;
-    // TODO: if (RLGL.State.stereoRender) eyesCount = 2;
+    if (rlIsStereoRenderEnabled()) eyesCount = 2;
 
     for (int eye = 0; eye < eyesCount; eye++)
     {
         if (eyesCount == 1) rlSetMatrixModelview(matModelView);
         else
         {
-            // TODO.
             // Setup current eye viewport (half screen width)
-            //rlViewport(eye*rlGetFramebufferWidth()/2, 0, rlGetFramebufferWidth()/2, rlGetFramebufferHeight());
+            rlViewport(eye*rlGetFramebufferWidth()/2, 0, rlGetFramebufferWidth()/2, rlGetFramebufferHeight());
 
             // Set current eye view offset to modelview matrix
-            //rlSetMatrixModelview(MatrixMultiply(matModelView, RLGL.State.offsetStereo[eye]));
+            rlSetMatrixModelview(MatrixMultiply(matModelView, rlGetMatrixViewOffsetStereo(eye)));
             
             // Set current eye projection matrix
-            //rlSetMatrixProjection(RLGL.State.projectionStereo[eye]);
+            rlSetMatrixProjection(rlGetMatrixProjectionStereo(eye));
         }
         
         // Calculate model-view-projection matrix (MVP)

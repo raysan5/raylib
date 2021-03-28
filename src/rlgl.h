@@ -557,6 +557,7 @@ RLAPI void rlEnableSmoothLines(void);                   // Enable line aliasing
 RLAPI void rlDisableSmoothLines(void);                  // Disable line aliasing
 RLAPI void rlEnableStereoRender(void);                  // Enable stereo rendering
 RLAPI void rlDisableStereoRender(void);                 // Disable stereo rendering
+RLAPI bool rlIsStereoRenderEnabled(void);               // Check if stereo render is enabled
 
 RLAPI void rlClearColor(unsigned char r, unsigned char g, unsigned char b, unsigned char a); // Clear color buffer with color
 RLAPI void rlClearScreenBuffers(void);                  // Clear used screen buffers (color and depth)
@@ -572,6 +573,8 @@ RLAPI void rlglInit(int width, int height);           // Initialize rlgl (buffer
 RLAPI void rlglClose(void);                           // De-inititialize rlgl (buffers, shaders, textures)
 RLAPI void rlLoadExtensions(void* loader);            // Load OpenGL extensions (loader function pointer required)
 RLAPI int rlGetVersion(void);                         // Returns current OpenGL version
+RLAPI int rlGetFramebufferWidth(void);                // Get default framebuffer width
+RLAPI int rlGetFramebufferHeight(void);               // Get default framebuffer height
 
 RLAPI Shader rlGetShaderDefault(void);                                    // Get default shader
 RLAPI Texture2D rlGetTextureDefault(void);                                // Get default texture
@@ -640,6 +643,8 @@ RLAPI void rlSetShader(Shader shader);                                    // Set
 RLAPI Matrix rlGetMatrixModelview(void);                                  // Get internal modelview matrix
 RLAPI Matrix rlGetMatrixProjection(void);                                 // Get internal projection matrix
 RLAPI Matrix rlGetMatrixTransform(void);                                  // Get internal accumulated transform matrix
+RLAPI Matrix rlGetMatrixProjectionStereo(int eye);                        // Get internal projection matrix for stereo render (selected eye)
+RLAPI Matrix rlGetMatrixViewOffsetStereo(int eye);                        // Get internal view offset matrix for stereo render (selected eye)
 RLAPI void rlSetMatrixProjection(Matrix proj);                            // Set a custom projection matrix (replaces internal projection matrix)
 RLAPI void rlSetMatrixModelview(Matrix view);                             // Set a custom modelview matrix (replaces internal modelview matrix)
 RLAPI void rlSetMatrixProjectionStereo(Matrix right, Matrix left);        // Set eyes projection matrices for stereo rendering
@@ -841,8 +846,8 @@ typedef struct rlglData {
         Shader currentShader;               // Shader to be used on rendering (by default, defaultShader)
         
         bool stereoRender;                  // Stereo rendering flag
-        Matrix projectionStereo[2];           // VR stereo rendering eyes projection matrices
-        Matrix offsetStereo[2];           // VR stereo rendering eyes view offset matrices
+        Matrix projectionStereo[2];         // VR stereo rendering eyes projection matrices
+        Matrix viewOffsetStereo[2];         // VR stereo rendering eyes view offset matrices
 
         int currentBlendMode;               // Blending mode active
         int glBlendSrcFactor;               // Blending source factor
@@ -1516,6 +1521,16 @@ void rlDisableStereoRender(void)
 #endif
 }
 
+// Check if stereo render is enabled
+bool rlIsStereoRenderEnabled(void)
+{
+#if (defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2))
+    return RLGL.State.stereoRender;
+#else
+    return false;
+#endif 
+}
+
 // Clear color buffer with color
 void rlClearColor(unsigned char r, unsigned char g, unsigned char b, unsigned char a)
 {
@@ -1914,6 +1929,26 @@ int rlGetVersion(void)
 #endif
 }
 
+// Get default framebuffer width
+int rlGetFramebufferWidth(void)
+{
+#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
+    return RLGL.State.framebufferWidth;
+#else
+    return 0;
+#endif
+}
+
+// Get default framebuffer height
+int rlGetFramebufferHeight(void)
+{
+#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
+    return RLGL.State.framebufferHeight;
+#else
+    return 0;
+#endif
+}
+
 // Get default internal shader (simple texture + tint color)
 Shader rlGetShaderDefault(void)
 {
@@ -2201,7 +2236,7 @@ void rlDrawRenderBatch(RenderBatch *batch)
             rlViewport(eye*RLGL.State.framebufferWidth/2, 0, RLGL.State.framebufferWidth/2, RLGL.State.framebufferHeight);
 
             // Set current eye view offset to modelview matrix
-            rlSetMatrixModelview(MatrixMultiply(matModelView, RLGL.State.offsetStereo[eye]));
+            rlSetMatrixModelview(MatrixMultiply(matModelView, RLGL.State.viewOffsetStereo[eye]));
             // Set current eye projection matrix
             rlSetMatrixProjection(RLGL.State.projectionStereo[eye]);
         }
@@ -3514,6 +3549,26 @@ Matrix rlGetMatrixTransform(void)
     return mat;
 }
 
+// Get internal projection matrix for stereo render (selected eye)
+RLAPI Matrix rlGetMatrixProjectionStereo(int eye)
+{
+    Matrix mat = MatrixIdentity();
+#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
+    mat = RLGL.State.projectionStereo[eye];
+#endif
+    return mat;
+}
+
+// Get internal view offset matrix for stereo render (selected eye)
+RLAPI Matrix rlGetMatrixViewOffsetStereo(int eye)
+{
+    Matrix mat = MatrixIdentity();
+#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
+    mat = RLGL.State.viewOffsetStereo[eye];
+#endif
+    return mat;
+}
+
 // Set a custom modelview matrix (replaces internal modelview matrix)
 void rlSetMatrixModelview(Matrix view)
 {
@@ -3543,8 +3598,8 @@ void rlSetMatrixProjectionStereo(Matrix right, Matrix left)
 void rlSetMatrixViewOffsetStereo(Matrix right, Matrix left)
 {
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
-    RLGL.State.offsetStereo[0] = right;
-    RLGL.State.offsetStereo[1] = left;
+    RLGL.State.viewOffsetStereo[0] = right;
+    RLGL.State.viewOffsetStereo[1] = left;
 #endif
 }
 
