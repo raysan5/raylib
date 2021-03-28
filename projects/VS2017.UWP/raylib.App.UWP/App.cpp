@@ -194,8 +194,8 @@ void App::GameLoop()
 {
     // Update
     //----------------------------------------------------------------------------------
-    posX += GetGamepadAxisMovement(GAMEPAD_PLAYER1, GAMEPAD_AXIS_LEFT_X) * 5;
-    posY += GetGamepadAxisMovement(GAMEPAD_PLAYER1, GAMEPAD_AXIS_LEFT_Y) * -5;
+    posX += GetGamepadAxisMovement(0, GAMEPAD_AXIS_LEFT_X) * 5;
+    posY += GetGamepadAxisMovement(0, GAMEPAD_AXIS_LEFT_Y) * -5;
 
     auto mPos = GetMousePosition();
 
