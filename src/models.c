@@ -1009,12 +1009,14 @@ void DrawMeshInstanced(Mesh mesh, Material material, Matrix *transforms, int ins
     Matrix matModelView = MatrixIdentity();
     Matrix matProjection = MatrixIdentity();
     
+    // TODO: Review how matrices multiplications are computed!
+    
     if (instancing)
     {
         // Create instances buffer
         instanceTransforms = RL_MALLOC(instances*sizeof(float16));
 
-        for (int i = 0; i < instances; i++) instanceTransforms[i] = MatrixToFloatV(transforms[i]);
+        for (int i = 0; i < instances; i++) instanceTransforms[i] = MatrixToFloatV(MatrixMultiply(transforms[i], rlGetMatrixModelview()));
 
         // Enable mesh VAO to attach new buffer
         rlEnableVertexArray(mesh.vaoId);
