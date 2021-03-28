@@ -2069,6 +2069,50 @@ Shader LoadShader(const char *vsFileName, const char *fsFileName)
     return shader;
 }
 
+// Load shader from code strings and bind default locations
+RLAPI Shader LoadShaderFromMemory(const char *vsCode, const char *fsCode)
+{
+    Shader shader = { 0 };
+    shader.locs = (int *)RL_CALLOC(MAX_SHADER_LOCATIONS, sizeof(int));
+    
+    shader.id = rlLoadShaderCode(vsCode, fsCode);
+    
+    // After shader loading, we TRY to set default location names
+    if (shader.id > 0)
+    {
+        // Default shader attrib locations have been fixed before linking:
+        //          vertex position location    = 0
+        //          vertex texcoord location    = 1
+        //          vertex normal location      = 2
+        //          vertex color location       = 3
+        //          vertex tangent location     = 4
+        //          vertex texcoord2 location   = 5
+        
+        // NOTE: If any location is not found, loc point becomes -1
+
+        // Get handles to GLSL input attibute locations
+        shader.locs[SHADER_LOC_VERTEX_POSITION] = rlGetLocationAttrib(shader.id, DEFAULT_SHADER_ATTRIB_NAME_POSITION);
+        shader.locs[SHADER_LOC_VERTEX_TEXCOORD01] = rlGetLocationAttrib(shader.id, DEFAULT_SHADER_ATTRIB_NAME_TEXCOORD);
+        shader.locs[SHADER_LOC_VERTEX_TEXCOORD02] = rlGetLocationAttrib(shader.id, DEFAULT_SHADER_ATTRIB_NAME_TEXCOORD2);
+        shader.locs[SHADER_LOC_VERTEX_NORMAL] = rlGetLocationAttrib(shader.id, DEFAULT_SHADER_ATTRIB_NAME_NORMAL);
+        shader.locs[SHADER_LOC_VERTEX_TANGENT] = rlGetLocationAttrib(shader.id, DEFAULT_SHADER_ATTRIB_NAME_TANGENT);
+        shader.locs[SHADER_LOC_VERTEX_COLOR] = rlGetLocationAttrib(shader.id, DEFAULT_SHADER_ATTRIB_NAME_COLOR);
+
+        // Get handles to GLSL uniform locations (vertex shader)
+        shader.locs[SHADER_LOC_MATRIX_MVP]  = rlGetLocationUniform(shader.id, "mvp");
+        shader.locs[SHADER_LOC_MATRIX_PROJECTION]  = rlGetLocationUniform(shader.id, "projection");
+        shader.locs[SHADER_LOC_MATRIX_VIEW]  = rlGetLocationUniform(shader.id, "view");
+
+        // Get handles to GLSL uniform locations (fragment shader)
+        shader.locs[SHADER_LOC_COLOR_DIFFUSE] = rlGetLocationUniform(shader.id, "colDiffuse");
+        shader.locs[SHADER_LOC_MAP_DIFFUSE] = rlGetLocationUniform(shader.id, "texture0");
+        shader.locs[SHADER_LOC_MAP_SPECULAR] = rlGetLocationUniform(shader.id, "texture1");
+        shader.locs[SHADER_LOC_MAP_NORMAL] = rlGetLocationUniform(shader.id, "texture2");
+    }
+
+    return shader;
+}
+
 // Unload shader from GPU memory (VRAM)
 void UnloadShader(Shader shader)
 {

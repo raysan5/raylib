@@ -1448,6 +1448,7 @@ RLAPI void EndBlendMode(void);                                            // End
 
 // Shader management functions
 RLAPI Shader LoadShader(const char *vsFileName, const char *fsFileName);  // Load shader from files and bind default locations
+RLAPI Shader LoadShaderFromMemory(const char *vsCode, const char *fsCode); // Load shader from code strings and bind default locations
 RLAPI void UnloadShader(Shader shader);                                   // Unload shader from GPU memory (VRAM)
 RLAPI int GetShaderLocation(Shader shader, const char *uniformName);      // Get shader uniform location
 RLAPI int GetShaderLocationAttrib(Shader shader, const char *attribName); // Get shader attribute location
