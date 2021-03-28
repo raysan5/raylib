@@ -450,7 +450,8 @@ TEXT = \
     text/text_input_box \
     text/text_writing_anim \
     text/text_rectangle_bounds \
-    text/text_unicode
+    text/text_unicode \
+    text/text_draw_3d
 
 MODELS = \
     models/models_animation \
