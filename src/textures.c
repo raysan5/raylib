@@ -3510,47 +3510,38 @@ void DrawTextureNPatch(Texture2D texture, NPatchInfo nPatchInfo, Rectangle dest,
     }
 }
 
-// t            texture to use
-// x,y          position to draw the poly (centre)
-// points       points of the poly (relative to 0,0)
-// tPnts        uv coordinates
-// numPoints    number of points in the poly
-// colour       the tint of the poly
-//
-// NB centre (0,0) must have straight line path to all points
-// without crossing perimeter, points must be in anticlockwise
-// order
-void DrawTexturePoly(Texture t, float x, float y,
-                        Vector2 *points, Vector2 *tPnts,
-                        int numPoints, Color colour)
+// Draw textured polygon, defined by vertex and texturecoordinates
+// NOTE: Polygon center must have straight line path to all points 
+// without crossing perimeter, points must be in anticlockwise order
+void DrawTexturePoly(Texture2D texture, Vector2 center, Vector2 *points, Vector2 *texcoords, int pointsCount, Color tint)
 {
-    rlEnableTexture(t.id);
+    rlCheckRenderBatchLimit((pointsCount - 1)*4);
+    
+    rlSetTexture(texture.id);
 
-    // for some reason texturing doesn't work on trianglesso make a 
-    // degenerate QUAD, DrawTriangleFan does this too why ?
-    rlCheckRenderBatchLimit((numPoints-1)*4);
+    // Texturing is only supported on QUADs
     rlBegin(RL_QUADS);
-    rlColor4ub(colour.r, colour.g, colour.b, colour.a);
 
-    for (int i = 0; i < numPoints-1; i++)
-    {
-        rlTexCoord2f(0.5, 0.5);
-        rlVertex2f(x, y);
+        rlColor4ub(tint.r, tint.g, tint.b, tint.a);
 
-        rlTexCoord2f(tPnts[i].x, tPnts[i].y);
-        rlVertex2f(points[i].x + x, points[i].y + y);
+        for (int i = 0; i < pointsCount - 1; i++)
+        {
+            rlTexCoord2f(0.5f, 0.5f);
+            rlVertex2f(center.x, center.y);
 
-        rlTexCoord2f(tPnts[i + 1].x, tPnts[i + 1].y);
-        rlVertex2f(points[i + 1].x + x, points[i + 1].y + y);
+            rlTexCoord2f(texcoords[i].x, texcoords[i].y);
+            rlVertex2f(points[i].x + center.x, points[i].y + center.y);
 
-        rlTexCoord2f(tPnts[i + 1].x, tPnts[i + 1].y);
-        rlVertex2f(points[i + 1].x + x, points[i + 1].y + y);
-    }
+            rlTexCoord2f(texcoords[i + 1].x, texcoords[i + 1].y);
+            rlVertex2f(points[i + 1].x + center.x, points[i + 1].y + center.y);
+
+            rlTexCoord2f(texcoords[i + 1].x, texcoords[i + 1].y);
+            rlVertex2f(points[i + 1].x + center.x, points[i + 1].y + center.y);
+        }
     rlEnd();
-    rlDisableTexture();
 
+    rlSetTexture(0);
 }
-
 
 // Returns color with alpha applied, alpha goes from 0.0f to 1.0f
 Color Fade(Color color, float alpha)

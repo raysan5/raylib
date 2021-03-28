@@ -2,16 +2,20 @@
 *
 *   raylib [shapes] example - Draw Textured Polygon
 *
-*   This example has been created using raylib 99.98 (www.raylib.com)
+*   This example has been created using raylib 3.7 (www.raylib.com)
 *   raylib is licensed under an unmodified zlib/libpng license (View raylib.h for details)
 *
-*   Copyright (c) 2014 Ramon Santamaria (@raysan5)
-*   Copyright (c) 2021 Chris Camacho (codifies - bedroomcoders.co.uk)
+*   Example contributed by Chris Camacho (@codifies - bedroomcoders.co.uk) and 
+*   reviewed by Ramon Santamaria (@raysan5)
+*
+*   Copyright (c) 2021 Chris Camacho (@codifies) and Ramon Santamaria (@raysan5)
 *
 ********************************************************************************************/
 
 #include "raylib.h"
 #include "raymath.h"
+
+#define MAX_POINTS  11  // 10 points and back to the start
 
 int main(void)
 {
@@ -20,54 +24,51 @@ int main(void)
     const int screenWidth = 800;
     const int screenHeight = 450;
 
-    int numPnts = 11;  // 10 points and back to the start
-
-    Vector2 tPnts[] = {
-        (Vector2){.75,  0},
-        (Vector2){.25,  0},
-        (Vector2){0,    .5},
-        (Vector2){0,    .75},
-        (Vector2){.25,  1},
-        (Vector2){.375, .875},
-        (Vector2){.625, .875},
-        (Vector2){.75,  1},
-        (Vector2){1,    .75},
-        (Vector2){1,    .5},
-        (Vector2){.75,  0}  // close the poly
+    Vector2 texcoords[MAX_POINTS] = {
+        (Vector2){ 0.75f, 0.0f },
+        (Vector2){ 0.25f, 0.0f },
+        (Vector2){ 0.0f, 0.5f },
+        (Vector2){ 0.0f, 0.75f },
+        (Vector2){ 0.25f, 1.0f},
+        (Vector2){ 0.375f, 0.875f},
+        (Vector2){ 0.625f, 0.875f},
+        (Vector2){ 0.75f, 1.0f},
+        (Vector2){ 1.0f, 0.75f},
+        (Vector2){ 1.0f, 0.5f},
+        (Vector2){ 0.75f, 0.0f}  // Close the poly
     };
 
-    Vector2 pnts[numPnts];
+    Vector2 points[MAX_POINTS] = { 0 };
 
-    // create the poly coords from the UV's
+    // Create the poly coords from the UV's
     // you don't have to do this you can specify
     // them however you want
-    for (int i=0; i < numPnts; i++)
+    for (int i = 0; i < MAX_POINTS; i++)
     {
-        pnts[i].x = (tPnts[i].x - 0.5) * 256.0;
-        pnts[i].y = (tPnts[i].y - 0.5) * 256.0;
+        points[i].x = (texcoords[i].x - 0.5f)*256.0f;
+        points[i].y = (texcoords[i].y - 0.5f)*256.0f;
     }
 
-    InitWindow(screenWidth, screenHeight, "raylib [textures] example - Textured Polygon");
+    InitWindow(screenWidth, screenHeight, "raylib [textures] example - textured polygon");
 
-    Texture tex = LoadTexture("resources/cat.png");
+    Texture texture = LoadTexture("resources/cat.png");
+    
+    float ang = 0;
 
     SetTargetFPS(60);               // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
-    float ang = 0;
+
     // Main game loop
     while (!WindowShouldClose())    // Detect window close button or ESC key
     {
         // Update
         //----------------------------------------------------------------------------------
-        // Update your variables here
-        //----------------------------------------------------------------------------------
         ang++;
         
-        Vector2 dPnts[numPnts];
-        for (int i = 0; i < numPnts; i++)
-        {
-            dPnts[i] = Vector2Rotate(pnts[i], ang);
-        }
+        Vector2 positions[MAX_POINTS] = { 0 };
+        
+        for (int i = 0; i < MAX_POINTS; i++) positions[i] = Vector2Rotate(points[i], ang);
+        //----------------------------------------------------------------------------------
 
         // Draw
         //----------------------------------------------------------------------------------
@@ -75,20 +76,20 @@ int main(void)
 
             ClearBackground(RAYWHITE);
 
-            DrawText("Textured Polygon", 20, 20, 20, DARKGRAY);
+            DrawText("textured polygon", 20, 20, 20, DARKGRAY);
             
-            DrawTexturePoly(tex, screenWidth/2, screenHeight/2,
-                                dPnts, tPnts, numPnts, WHITE);
+            DrawTexturePoly(texture, (Vector2){ GetScreenWidth()/2, GetScreenHeight()/2 }, 
+                            positions, texcoords, MAX_POINTS, WHITE);
 
         EndDrawing();
         //----------------------------------------------------------------------------------
     }
-    
-    UnloadTexture(tex);
 
     // De-Initialization
     //--------------------------------------------------------------------------------------
-    CloseWindow();        // Close window and OpenGL context
+    UnloadTexture(texture); // Unload texture
+    
+    CloseWindow();          // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
 
     return 0;
