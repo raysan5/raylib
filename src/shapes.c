@@ -1468,7 +1468,7 @@ bool CheckCollisionPointTriangle(Vector2 point, Vector2 p1, Vector2 p2, Vector2 
 
     float gamma = 1.0f - alpha - beta;
 
-    if ((alpha > 0) && (beta > 0) & (gamma > 0)) collision = true;
+    if ((alpha > 0) && (beta > 0) && (gamma > 0)) collision = true;
 
     return collision;
 }
