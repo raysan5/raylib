@@ -2453,7 +2453,7 @@ Vector2 GetWorldToScreenEx(Vector3 position, Camera camera, int width, int heigh
     if (camera.projection == CAMERA_PERSPECTIVE)
     {
         // Calculate projection matrix from perspective
-        matProj = MatrixPerspective(camera.fovy * DEG2RAD, ((double)width/(double)height), RL_CULL_DISTANCE_NEAR, RL_CULL_DISTANCE_FAR);
+        matProj = MatrixPerspective(camera.fovy*DEG2RAD, ((double)width/(double)height), RL_CULL_DISTANCE_NEAR, RL_CULL_DISTANCE_FAR);
     }
     else if (camera.projection == CAMERA_ORTHOGRAPHIC)
     {
@@ -3928,7 +3928,7 @@ static bool InitGraphicsDevice(int width, int height)
     }
 
     const bool allowInterlaced = CORE.Window.flags & FLAG_INTERLACED_HINT;
-    const int fps = (CORE.Time.target > 0) ? (1.0 / CORE.Time.target) : 60;
+    const int fps = (CORE.Time.target > 0) ? (1.0/CORE.Time.target) : 60;
     // try to find an exact matching mode
     CORE.Window.modeIndex = FindExactConnectorMode(CORE.Window.connector, CORE.Window.screen.width, CORE.Window.screen.height, fps, allowInterlaced);
     // if nothing found, try to find a nearly matching mode
@@ -4961,8 +4961,7 @@ static void WindowSizeCallback(GLFWwindow *window, int width, int height)
     CORE.Window.currentFbo.height = height;
     CORE.Window.resizedLastFrame = true;
 
-    if(IsWindowFullscreen())
-        return;
+    if (IsWindowFullscreen()) return;
 
     // Set current screen size
     CORE.Window.screen.width = width;
@@ -6155,11 +6154,11 @@ static void *EventThread(void *arg)
                 }
 
                 // Touchscreen tap
-                if(event.code == ABS_PRESSURE)
+                if (event.code == ABS_PRESSURE)
                 {
                     int previousMouseLeftButtonState = CORE.Input.Mouse.currentButtonStateEvdev[MOUSE_LEFT_BUTTON];
 
-                    if(!event.value && previousMouseLeftButtonState)
+                    if (!event.value && previousMouseLeftButtonState)
                     {
                         CORE.Input.Mouse.currentButtonStateEvdev[MOUSE_LEFT_BUTTON] = 0;
 
@@ -6169,7 +6168,7 @@ static void *EventThread(void *arg)
                         #endif
                     }
 
-                    if(event.value && !previousMouseLeftButtonState)
+                    if (event.value && !previousMouseLeftButtonState)
                     {
                         CORE.Input.Mouse.currentButtonStateEvdev[MOUSE_LEFT_BUTTON] = 1;
 

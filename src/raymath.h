@@ -160,13 +160,13 @@ RMDEF float Lerp(float start, float end, float amount)
 // Normalize input value within input range
 RMDEF float Normalize(float value, float start, float end)
 {
-    return (value - start) / (end - start);
+    return (value - start)/(end - start);
 }
 
 // Remap input value within input range to output range
 RMDEF float Remap(float value, float inputStart, float inputEnd, float outputStart, float outputEnd)
 {
-    return (value - inputStart) / (inputEnd - inputStart) * (outputEnd - outputStart) + outputStart;
+    return (value - inputStart)/(inputEnd - inputStart)*(outputEnd - outputStart) + outputStart;
 }
 
 //----------------------------------------------------------------------------------
@@ -314,7 +314,7 @@ RMDEF Vector2 Vector2Reflect(Vector2 v, Vector2 normal)
 RMDEF Vector2 Vector2Rotate(Vector2 v, float degs)
 {
     float rads = degs*DEG2RAD;
-    Vector2 result = {v.x * cosf(rads) - v.y * sinf(rads) , v.x * sinf(rads) + v.y * cosf(rads) };
+    Vector2 result = {v.x*cosf(rads) - v.y*sinf(rads) , v.x*sinf(rads) + v.y*cosf(rads) };
     return result;
 }
 
@@ -954,17 +954,17 @@ RMDEF Matrix MatrixRotateXYZ(Vector3 ang)
     float cosx = cosf(-ang.x);
     float sinx = sinf(-ang.x);
 
-    result.m0 = cosz * cosy;
-    result.m4 = (cosz * siny * sinx) - (sinz * cosx);
-    result.m8 = (cosz * siny * cosx) + (sinz * sinx);
+    result.m0 = cosz*cosy;
+    result.m4 = (cosz*siny*sinx) - (sinz*cosx);
+    result.m8 = (cosz*siny*cosx) + (sinz*sinx);
 
-    result.m1 = sinz * cosy;
-    result.m5 = (sinz * siny * sinx) + (cosz * cosx);
-    result.m9 = (sinz * siny * cosx) - (cosz * sinx);
+    result.m1 = sinz*cosy;
+    result.m5 = (sinz*siny*sinx) + (cosz*cosx);
+    result.m9 = (sinz*siny*cosx) - (cosz*sinx);
 
     result.m2 = -siny;
-    result.m6 = cosy * sinx;
-    result.m10= cosy * cosx;
+    result.m6 = cosy*sinx;
+    result.m10= cosy*cosx;
 
     return result;
 }
@@ -1250,10 +1250,10 @@ RMDEF Quaternion QuaternionScale(Quaternion q, float mul)
 
     float qax = q.x, qay = q.y, qaz = q.z, qaw = q.w;
 
-    result.x = qax * mul + qaw * mul + qay * mul - qaz * mul;
-    result.y = qay * mul + qaw * mul + qaz * mul - qax * mul;
-    result.z = qaz * mul + qaw * mul + qax * mul - qay * mul;
-    result.w = qaw * mul - qax * mul - qay * mul - qaz * mul;
+    result.x = qax*mul + qaw*mul + qay*mul - qaz*mul;
+    result.y = qay*mul + qaw*mul + qaz*mul - qax*mul;
+    result.z = qaz*mul + qaw*mul + qax*mul - qay*mul;
+    result.w = qaw*mul - qax*mul - qay*mul - qaz*mul;
 
     return result;
 }
@@ -1261,7 +1261,7 @@ RMDEF Quaternion QuaternionScale(Quaternion q, float mul)
 // Divide two quaternions
 RMDEF Quaternion QuaternionDivide(Quaternion q1, Quaternion q2)
 {
-    Quaternion result = {q1.x / q2.x, q1.y / q2.y, q1.z / q2.z, q1.w / q2.w};
+    Quaternion result = { q1.x/q2.x, q1.y/q2.y, q1.z/q2.z, q1.w/q2.w };
     return result;
 }
 

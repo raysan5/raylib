@@ -1429,7 +1429,7 @@ Music LoadMusicStreamFromMemory(const char *fileType, unsigned char* data, int d
         {
             ctxMod->modfilesize = dataSize;
             ctxMod->modfile = newData;
-            if(jar_mod_load(ctxMod, (void*)ctxMod->modfile, dataSize)) result = dataSize;
+            if (jar_mod_load(ctxMod, (void *)ctxMod->modfile, dataSize)) result = dataSize;
         }
 
         if (result > 0)
