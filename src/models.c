@@ -4507,7 +4507,7 @@ static void BindGLTFPrimitiveToBones(Model* model, const cgltf_data* data, int p
                     model->meshes[primitiveIndex].vertices[vCounter + 2] = boundVertex.z;
 
                     // Normals processing
-                    if(model->meshes[primitiveIndex].normals != NULL)
+                    if (model->meshes[primitiveIndex].normals != NULL)
                     {
                         boundNormal = (Vector3){ model->meshes[primitiveIndex].normals[vCounter], model->meshes[primitiveIndex].normals[vCounter + 1], model->meshes[primitiveIndex].normals[vCounter + 2] };
                         boundNormal = Vector3RotateByQuaternion(boundNormal, outRotation);

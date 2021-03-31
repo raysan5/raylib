@@ -1,22 +1,19 @@
 /*******************************************************************************************
 *
-*   raylib [shaders] example - rlgl module usage for instanced meshes
+*   raylib [shaders] example - mesh instancing
 *
-*   This example uses [rlgl] module funtionality (pseudo-OpenGL 1.1 style coding)
-*
-*   This example has been created using raylib 3.5 (www.raylib.com)
+*   This example has been created using raylib 3.7 (www.raylib.com)
 *   raylib is licensed under an unmodified zlib/libpng license (View raylib.h for details)
 *
-*   Example contributed by @seanpringle and reviewed by Ramon Santamaria (@raysan5)
+*   Example contributed by @seanpringle and reviewed by Max (@moliad) and Ramon Santamaria (@raysan5)
 *
-*   Copyright (c) 2020 @seanpringle
+*   Copyright (c) 2020-2021 @seanpringle, Max (@moliad) and Ramon Santamaria (@raysan5)
 *
 ********************************************************************************************/
 
 
 #include "raylib.h"
 #include "raymath.h"
-#include "rlgl.h"
 
 #define RLIGHTS_IMPLEMENTATION
 #include "rlights.h"
@@ -42,7 +39,7 @@ int main(void)
     const int fps = 60;
 
     SetConfigFlags(FLAG_MSAA_4X_HINT);  // Enable Multi Sampling Anti Aliasing 4x (if available)
-    InitWindow(screenWidth, screenHeight, "raylib [shaders] example - rlgl mesh instanced");
+    InitWindow(screenWidth, screenHeight, "raylib [shaders] example - mesh instancing");
 
     int speed = 30;                 // Speed of jump animation
     int groups = 2;                 // Count of separate groups jumping around
@@ -100,6 +97,8 @@ int main(void)
 
     CreateLight(LIGHT_DIRECTIONAL, (Vector3){ 50.0f, 50.0f, 0.0f }, Vector3Zero(), WHITE, shader);
 
+    // NOTE: We are assigning the intancing shader to material.shader
+    // to be used on mesh drawing with DrawMeshInstanced()
     Material material = LoadMaterialDefault();
     material.shader = shader;
     material.maps[MATERIAL_MAP_DIFFUSE].color = RED;
