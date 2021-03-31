@@ -1058,6 +1058,9 @@ void DrawMeshInstanced(Mesh mesh, Material material, Matrix *transforms, int ins
         //    transform: function parameter transformation
         matModelView = MatrixMultiply(transforms[0], MatrixMultiply(rlGetMatrixTransform(), matView));
     }
+    
+    // Upload model normal matrix (if locations available)
+    if (material.shader.locs[SHADER_LOC_MATRIX_NORMAL] != -1) rlSetUniformMatrix(material.shader.locs[SHADER_LOC_MATRIX_NORMAL], MatrixTranspose(MatrixInvert(matModelView)));
     //-----------------------------------------------------
 
     // Bind active texture maps (if available)
