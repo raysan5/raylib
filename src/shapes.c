@@ -754,7 +754,7 @@ void DrawRectangleLines(int posX, int posY, int width, int height, Color color)
 // Draw rectangle outline with extended parameters
 void DrawRectangleLinesEx(Rectangle rec, int lineThick, Color color)
 {
-    if (lineThick > rec.width || lineThick > rec.height)
+    if ((lineThick > rec.width) || (lineThick > rec.height))
     {
         if (rec.width > rec.height) lineThick = (int)rec.height/2;
         else if (rec.width < rec.height) lineThick = (int)rec.width/2;
@@ -771,10 +771,10 @@ void DrawRectangleLinesEx(Rectangle rec, int lineThick, Color color)
     //   BBBBBBBB
     //
     float thick = (float)lineThick;
-    Rectangle top    = { rec.x                    , rec.y                     , rec.width, thick                     };
-    Rectangle bottom = { rec.x                    , rec.y - thick + rec.height, rec.width, thick                     };
-    Rectangle left   = { rec.x                    , rec.y + thick             , thick    , rec.height - thick * 2.0f };
-    Rectangle right  = { rec.x - thick + rec.width, rec.y + thick             , thick    , rec.height - thick * 2.0f };
+    Rectangle top = { rec.x, rec.y, rec.width, thick };
+    Rectangle bottom = { rec.x, rec.y - thick + rec.height, rec.width, thick };
+    Rectangle left = { rec.x, rec.y + thick, thick, rec.height - thick*2.0f };
+    Rectangle right = { rec.x - thick + rec.width, rec.y + thick, thick, rec.height - thick*2.0f };
 
     DrawRectangleRec(top, color);
     DrawRectangleRec(bottom, color);
@@ -809,22 +809,20 @@ void DrawRectangleRounded(Rectangle rec, float roundness, int segments, Color co
 
     float stepLength = 90.0f/(float)segments;
 
-    /*
-    *   Quick sketch to make sense of all of this
-    *   (there are 9 parts to draw, also mark the 12 points we'll use below)
-    *
-    *      P0____________________P1
-    *      /|                    |\
-    *     /1|          2         |3\
-    * P7 /__|____________________|__\ P2
-    *   |   |P8                P9|   |
-    *   | 8 |          9         | 4 |
-    *   | __|____________________|__ |
-    * P6 \  |P11              P10|  / P3
-    *     \7|          6         |5/
-    *      \|____________________|/
-    *      P5                    P4
-    */
+    //   Quick sketch to make sense of all of this
+    //   (there are 9 parts to draw, also mark the 12 points we'll use below)
+    // 
+    //      P0____________________P1
+    //      /|                    |\
+    //     /1|          2         |3\
+    // P7 /__|____________________|__\ P2
+    //   |   |P8                P9|   |
+    //   | 8 |          9         | 4 |
+    //   | __|____________________|__ |
+    // P6 \  |P11              P10|  / P3
+    //     \7|          6         |5/
+    //      \|____________________|/
+    //      P5                    P4
 
     // Coordinates of the 12 points that define the rounded rect
     const Vector2 point[12] = {
@@ -1035,20 +1033,20 @@ void DrawRectangleRoundedLines(Rectangle rec, float roundness, int segments, int
     float stepLength = 90.0f/(float)segments;
     const float outerRadius = radius + (float)lineThick, innerRadius = radius;
 
-    /*
-    *   Quick sketch to make sense of all of this (mark the 16 + 4(corner centers P16-19) points we'll use below)
-    *       P0 ================== P1
-    *      // P8                P9 \\
-    *     //                        \\
-    * P7 // P15                  P10 \\ P2
-    *   ||   *P16             P17*    ||
-    *   ||                            ||
-    *   || P14                   P11  ||
-    * P6 \\  *P19             P18*   // P3
-    *     \\                        //
-    *      \\ P13              P12 //
-    *       P5 ================== P4
-    */
+
+    //   Quick sketch to make sense of all of this (mark the 16 + 4(corner centers P16-19) points we'll use below)
+    //       P0 ================== P1
+    //      // P8                P9 \\
+    //     //                        \\
+    // P7 // P15                  P10 \\ P2
+    //   ||   *P16             P17*    ||
+    //   ||                            ||
+    //   || P14                   P11  ||
+    // P6 \\  *P19             P18*   // P3
+    //     \\                        //
+    //      \\ P13              P12 //
+    //       P5 ================== P4
+
     const Vector2 point[16] = {
         {(float)rec.x + innerRadius, rec.y - lineThick}, {(float)(rec.x + rec.width) - innerRadius, rec.y - lineThick}, { rec.x + rec.width + lineThick, (float)rec.y + innerRadius }, // PO, P1, P2
         {rec.x + rec.width + lineThick, (float)(rec.y + rec.height) - innerRadius}, {(float)(rec.x + rec.width) - innerRadius, rec.y + rec.height + lineThick}, // P3, P4
