@@ -964,6 +964,13 @@ void DrawMeshInstanced(Mesh mesh, Material material, Matrix *transforms, int ins
 #endif
 
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
+    // Check instancing
+    bool instancing = false;
+    if (instances < 1) return;
+    else if (instances > 1) instancing = true;
+    float16 *instanceTransforms = NULL;
+    unsigned int instancesVboId = 0;
+    
     // Bind shader program
     rlEnableShader(material.shader.id);
 
@@ -982,7 +989,7 @@ void DrawMeshInstanced(Mesh mesh, Material material, Matrix *transforms, int ins
         rlSetUniform(material.shader.locs[SHADER_LOC_COLOR_DIFFUSE], values, SHADER_UNIFORM_VEC4, 1);
     }
 
-    // Upload to shader material.colSpecular (if available)
+    // Upload to shader material.colSpecular (if location available)
     if (material.shader.locs[SHADER_LOC_COLOR_SPECULAR] != -1)
     {
         float values[4] = {
@@ -995,28 +1002,26 @@ void DrawMeshInstanced(Mesh mesh, Material material, Matrix *transforms, int ins
         rlSetUniform(material.shader.locs[SHADER_LOC_COLOR_SPECULAR], values, SHADER_UNIFORM_VEC4, 1);
     }
 
-    if (material.shader.locs[SHADER_LOC_MATRIX_VIEW] != -1) rlSetUniformMatrix(material.shader.locs[SHADER_LOC_MATRIX_VIEW], rlGetMatrixModelview());
-    if (material.shader.locs[SHADER_LOC_MATRIX_PROJECTION] != -1) rlSetUniformMatrix(material.shader.locs[SHADER_LOC_MATRIX_PROJECTION], rlGetMatrixProjection());
+    // Get a copy of current matrices to work with,
+    // just in case stereo render is required and we need to modify them
+    // NOTE: At this point the modelview matrix just contains the view matrix (camera)
+    // That's because BeginMode3D() sets it and there is no model-drawing function
+    // that modifies it, all use rlPushMatrix() and rlPopMatrix()
+    Matrix matView = rlGetMatrixModelview();
+    Matrix matModelView = matView;
+    Matrix matProjection = rlGetMatrixProjection();
 
-    bool instancing = false;
-    if (instances < 1) return;
-    else if (instances > 1) instancing = true;
-    
-    float16 *instanceTransforms = NULL;
-    unsigned int instancesVboId = 0;
-    
-    Matrix matView = MatrixIdentity();
-    Matrix matModelView = MatrixIdentity();
-    Matrix matProjection = MatrixIdentity();
-    
-    // TODO: Review how matrices multiplications are computed!
-    
+    // Upload view and projection matrices (if locations available)
+    if (material.shader.locs[SHADER_LOC_MATRIX_VIEW] != -1) rlSetUniformMatrix(material.shader.locs[SHADER_LOC_MATRIX_VIEW], matView);
+    if (material.shader.locs[SHADER_LOC_MATRIX_PROJECTION] != -1) rlSetUniformMatrix(material.shader.locs[SHADER_LOC_MATRIX_PROJECTION], matProjection);
+
     if (instancing)
     {
         // Create instances buffer
         instanceTransforms = RL_MALLOC(instances*sizeof(float16));
 
-        for (int i = 0; i < instances; i++) instanceTransforms[i] = MatrixToFloatV(MatrixMultiply(transforms[i], rlGetMatrixModelview()));
+        // Fill buffer with instances transformations as float16 arrays
+        for (int i = 0; i < instances; i++) instanceTransforms[i] = MatrixToFloatV(transforms[i]);
 
         // Enable mesh VAO to attach new buffer
         rlEnableVertexArray(mesh.vaoId);
@@ -1027,29 +1032,25 @@ void DrawMeshInstanced(Mesh mesh, Material material, Matrix *transforms, int ins
         // no faster, since we're transferring all the transform matrices anyway
         instancesVboId = rlLoadVertexBuffer(instanceTransforms, instances*sizeof(float16), false);
 
-        // Instances are send to attribute location: SHADER_LOC_MATRIX_MODEL
-        unsigned int instanceLoc = material.shader.locs[SHADER_LOC_MATRIX_MODEL];
-
+        // Instances transformation matrices are send to shader attribute location: SHADER_LOC_MATRIX_MODEL
         for (unsigned int i = 0; i < 4; i++)
         {
-            rlEnableVertexAttribute(instanceLoc + i);
-            rlSetVertexAttribute(instanceLoc + i, 4, RL_FLOAT, 0, sizeof(Matrix), (void *)(i*sizeof(Vector4)));
-            
-            rlSetVertexAttributeDivisor(instanceLoc + i, 1);
+            rlEnableVertexAttribute(material.shader.locs[SHADER_LOC_MATRIX_MODEL] + i);
+            rlSetVertexAttribute(material.shader.locs[SHADER_LOC_MATRIX_MODEL] + i, 4, RL_FLOAT, 0, sizeof(Matrix), (void *)(i*sizeof(Vector4)));
+            rlSetVertexAttributeDivisor(material.shader.locs[SHADER_LOC_MATRIX_MODEL] + i, 1);
         }
 
         rlDisableVertexBuffer();
         rlDisableVertexArray();
+        
+        // Accumulate internal matrix transform (push/pop) and view matrix
+        // NOTE: In this case, model instance transformation must be computed in the shader
+        matModelView = MatrixMultiply(rlGetMatrixTransform(), matView);
     }
     else
     {
-        // Calculate and send to shader model matrix
+        // Model transformation matrix is send to shader uniform location: SHADER_LOC_MATRIX_MODEL
         if (material.shader.locs[SHADER_LOC_MATRIX_MODEL] != -1) rlSetUniformMatrix(material.shader.locs[SHADER_LOC_MATRIX_MODEL], transforms[0]);
-
-        // At this point the modelview matrix just contains the view matrix (camera)
-        // That's because BeginMode3D() sets it an no model-drawing function modifies it, all use rlPushMatrix() and rlPopMatrix()
-        matView = rlGetMatrixModelview();         // View matrix (camera)
-        matProjection = rlGetMatrixProjection();  // Projection matrix (perspective)
 
         // Accumulate several transformations:
         //    matView: rlgl internal modelview matrix (actually, just view matrix)
@@ -1140,28 +1141,22 @@ void DrawMeshInstanced(Mesh mesh, Material material, Matrix *transforms, int ins
 
         if (mesh.indices != NULL) rlEnableVertexBufferElement(mesh.vboId[6]);
     }
-    
+
     int eyesCount = 1;
     if (rlIsStereoRenderEnabled()) eyesCount = 2;
 
     for (int eye = 0; eye < eyesCount; eye++)
     {
-        if (eyesCount == 1) rlSetMatrixModelview(matModelView);
+        // Calculate model-view-projection matrix (MVP)
+        Matrix matMVP = MatrixIdentity();
+        if (eyesCount == 1) matMVP = MatrixMultiply(matModelView, matProjection);
         else
         {
             // Setup current eye viewport (half screen width)
             rlViewport(eye*rlGetFramebufferWidth()/2, 0, rlGetFramebufferWidth()/2, rlGetFramebufferHeight());
-
-            // Set current eye view offset to modelview matrix
-            rlSetMatrixModelview(MatrixMultiply(matModelView, rlGetMatrixViewOffsetStereo(eye)));
-            
-            // Set current eye projection matrix
-            rlSetMatrixProjection(rlGetMatrixProjectionStereo(eye));
+            matMVP = MatrixMultiply(MatrixMultiply(matModelView, rlGetMatrixViewOffsetStereo(eye)), rlGetMatrixProjectionStereo(eye));
         }
-        
-        // Calculate model-view-projection matrix (MVP)
-        Matrix matMVP = MatrixMultiply(rlGetMatrixModelview(), rlGetMatrixProjection());
-            
+
         // Send combined model-view-projection matrix to shader
         rlSetUniformMatrix(material.shader.locs[SHADER_LOC_MATRIX_MVP], matMVP);
 

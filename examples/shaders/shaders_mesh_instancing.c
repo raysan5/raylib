@@ -89,7 +89,7 @@ int main(void)
     // Get some shader loactions
     shader.locs[SHADER_LOC_MATRIX_MVP] = GetShaderLocation(shader, "mvp");
     shader.locs[SHADER_LOC_VECTOR_VIEW] = GetShaderLocation(shader, "viewPos");
-    shader.locs[SHADER_LOC_MATRIX_MODEL] = GetShaderLocationAttrib(shader, "instance");
+    shader.locs[SHADER_LOC_MATRIX_MODEL] = GetShaderLocationAttrib(shader, "instanceTransform");
 
     // Ambient light level
     int ambientLoc = GetShaderLocation(shader, "ambient");
@@ -173,6 +173,7 @@ int main(void)
             ClearBackground(RAYWHITE);
 
             BeginMode3D(camera);
+                //DrawMesh(cube, material, MatrixIdentity());
                 DrawMeshInstanced(cube, material, transforms, instances);
             EndMode3D();
 
