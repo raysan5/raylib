@@ -2032,7 +2032,7 @@ Shader LoadShader(const char *vsFileName, const char *fsFileName)
 
     if (vShaderStr != NULL) RL_FREE(vShaderStr);
     if (fShaderStr != NULL) RL_FREE(fShaderStr);
-    
+
     // After shader loading, we TRY to set default location names
     if (shader.id > 0)
     {
@@ -2043,7 +2043,7 @@ Shader LoadShader(const char *vsFileName, const char *fsFileName)
         //          vertex color location       = 3
         //          vertex tangent location     = 4
         //          vertex texcoord2 location   = 5
-        
+
         // NOTE: If any location is not found, loc point becomes -1
 
         // Get handles to GLSL input attibute locations
@@ -2075,9 +2075,9 @@ RLAPI Shader LoadShaderFromMemory(const char *vsCode, const char *fsCode)
 {
     Shader shader = { 0 };
     shader.locs = (int *)RL_CALLOC(MAX_SHADER_LOCATIONS, sizeof(int));
-    
+
     shader.id = rlLoadShaderCode(vsCode, fsCode);
-    
+
     // After shader loading, we TRY to set default location names
     if (shader.id > 0)
     {
@@ -2088,7 +2088,7 @@ RLAPI Shader LoadShaderFromMemory(const char *vsCode, const char *fsCode)
         //          vertex color location       = 3
         //          vertex tangent location     = 4
         //          vertex texcoord2 location   = 5
-        
+
         // NOTE: If any location is not found, loc point becomes -1
 
         // Get handles to GLSL input attibute locations
@@ -4406,7 +4406,7 @@ static bool InitGraphicsDevice(int width, int height)
 
         // Screen scaling matrix is required in case desired screen area is different than display area
         CORE.Window.screenScale = MatrixScale((float)fbWidth/CORE.Window.screen.width, (float)fbHeight/CORE.Window.screen.height, 1.0f);
-        
+
         // Mouse input scaling for the new screen size
         SetMouseScale((float)CORE.Window.screen.width/fbWidth, (float)CORE.Window.screen.height/fbHeight);
     #endif
@@ -4443,7 +4443,7 @@ static void SetupViewport(int width, int height)
     float xScale = 1.0f, yScale = 1.0f;
     glfwGetWindowContentScale(CORE.Window.handle, &xScale, &yScale);
     rlViewport(CORE.Window.renderOffset.x/2*xScale, CORE.Window.renderOffset.y/2*yScale, (CORE.Window.render.width - CORE.Window.renderOffset.x)*xScale, (CORE.Window.render.height - CORE.Window.renderOffset.y)*yScale);
-#else    
+#else
     rlViewport(CORE.Window.renderOffset.x/2, CORE.Window.renderOffset.y/2, CORE.Window.render.width - CORE.Window.renderOffset.x, CORE.Window.render.height - CORE.Window.renderOffset.y);
 #endif
 

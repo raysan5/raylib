@@ -812,7 +812,7 @@ void DrawRectangleRounded(Rectangle rec, float roundness, int segments, Color co
     /*
     Quick sketch to make sense of all of this,
     there are 9 parts to draw, also mark the 12 points we'll use
-     
+
           P0____________________P1
           /|                    |\
          /1|          2         |3\
@@ -1037,7 +1037,7 @@ void DrawRectangleRoundedLines(Rectangle rec, float roundness, int segments, int
     /*
     Quick sketch to make sense of all of this,
     marks the 16 + 4(corner centers P16-19) points we'll use
-    
+
            P0 ================== P1
           // P8                P9 \\
          //                        \\
@@ -1555,7 +1555,7 @@ bool CheckCollisionPointLine(Vector2 point, Vector2 p1, Vector2 p2, int threshol
     float dxl = p2.x - p1.x;
     float dyl = p2.y - p1.y;
     float cross = dxc*dyl - dyc*dxl;
-    
+
     if (fabsf(cross) < (threshold*fmaxf(fabsf(dxl), fabsf(dyl))))
     {
         if (fabsf(dxl) >= fabsf(dyl)) collision = (dxl > 0)? ((p1.x <= point.x) && (point.x <= p2.x)) : ((p2.x <= point.x) && (point.x <= p1.x));

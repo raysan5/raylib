@@ -1313,7 +1313,7 @@ Music LoadMusicStreamFromMemory(const char *fileType, unsigned char* data, int d
     else if (TextIsEqual(fileExtLower, ".wav"))
     {
         drwav *ctxWav = RL_CALLOC(1, sizeof(drwav));
-        
+
         bool success = drwav_init_memory(ctxWav, (const void*)data, dataSize, NULL);
 
         music.ctxType = MUSIC_AUDIO_WAV;

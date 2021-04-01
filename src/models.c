@@ -738,7 +738,7 @@ Model LoadModel(const char *fileName)
 
         if (model.meshMaterial == NULL) model.meshMaterial = (int *)RL_CALLOC(model.meshCount, sizeof(int));
     }
-    
+
     return model;
 }
 
@@ -839,7 +839,7 @@ void UploadMesh(Mesh *mesh, bool dynamic)
     rlEnableVertexArray(mesh->vaoId);
 
     // NOTE: Attributes must be uploaded considering default locations points
-    
+
     // Enable vertex attributes: position (shader-location = 0)
     mesh->vboId[0] = rlLoadVertexBuffer(mesh->vertices, mesh->vertexCount*3*sizeof(float), dynamic);
     rlSetVertexAttribute(0, 3, RL_FLOAT, 0, 0, 0);
@@ -917,7 +917,7 @@ void UploadMesh(Mesh *mesh, bool dynamic)
 
     if (mesh->vaoId > 0) TRACELOG(LOG_INFO, "VAO: [ID %i] Mesh uploaded successfully to VRAM (GPU)", mesh->vaoId);
     else TRACELOG(LOG_INFO, "VBO: Mesh uploaded successfully to VRAM (GPU)");
-    
+
     rlDisableVertexArray();
 #endif
 }
@@ -943,12 +943,12 @@ void DrawMeshInstanced(Mesh mesh, Material material, Matrix *transforms, int ins
     rlEnableStatePointer(GL_TEXTURE_COORD_ARRAY, mesh.texcoords);
     rlEnableStatePointer(GL_NORMAL_ARRAY, mesh.normals);
     rlEnableStatePointer(GL_COLOR_ARRAY, mesh.colors);
-    
+
     rlPushMatrix();
         rlMultMatrixf(MatrixToFloat(transforms[0]));
-        rlColor4ub(material.maps[MATERIAL_MAP_DIFFUSE].color.r, 
-                   material.maps[MATERIAL_MAP_DIFFUSE].color.g, 
-                   material.maps[MATERIAL_MAP_DIFFUSE].color.b, 
+        rlColor4ub(material.maps[MATERIAL_MAP_DIFFUSE].color.r,
+                   material.maps[MATERIAL_MAP_DIFFUSE].color.g,
+                   material.maps[MATERIAL_MAP_DIFFUSE].color.b,
                    material.maps[MATERIAL_MAP_DIFFUSE].color.a);
 
         if (mesh.indices != NULL) rlDrawVertexArrayElements(0, mesh.triangleCount*3, mesh.indices);
@@ -970,7 +970,7 @@ void DrawMeshInstanced(Mesh mesh, Material material, Matrix *transforms, int ins
     else if (instances > 1) instancing = true;
     float16 *instanceTransforms = NULL;
     unsigned int instancesVboId = 0;
-    
+
     // Bind shader program
     rlEnableShader(material.shader.id);
 
@@ -983,9 +983,9 @@ void DrawMeshInstanced(Mesh mesh, Material material, Matrix *transforms, int ins
             (float)material.maps[MATERIAL_MAP_DIFFUSE].color.r/255.0f,
             (float)material.maps[MATERIAL_MAP_DIFFUSE].color.g/255.0f,
             (float)material.maps[MATERIAL_MAP_DIFFUSE].color.b/255.0f,
-            (float)material.maps[MATERIAL_MAP_DIFFUSE].color.a/255.0f 
+            (float)material.maps[MATERIAL_MAP_DIFFUSE].color.a/255.0f
         };
-        
+
         rlSetUniform(material.shader.locs[SHADER_LOC_COLOR_DIFFUSE], values, SHADER_UNIFORM_VEC4, 1);
     }
 
@@ -996,9 +996,9 @@ void DrawMeshInstanced(Mesh mesh, Material material, Matrix *transforms, int ins
             (float)material.maps[SHADER_LOC_COLOR_SPECULAR].color.r/255.0f,
             (float)material.maps[SHADER_LOC_COLOR_SPECULAR].color.g/255.0f,
             (float)material.maps[SHADER_LOC_COLOR_SPECULAR].color.b/255.0f,
-            (float)material.maps[SHADER_LOC_COLOR_SPECULAR].color.a/255.0f 
+            (float)material.maps[SHADER_LOC_COLOR_SPECULAR].color.a/255.0f
         };
-        
+
         rlSetUniform(material.shader.locs[SHADER_LOC_COLOR_SPECULAR], values, SHADER_UNIFORM_VEC4, 1);
     }
 
@@ -1028,7 +1028,7 @@ void DrawMeshInstanced(Mesh mesh, Material material, Matrix *transforms, int ins
 
         // This could alternatively use a static VBO and either glMapBuffer() or glBufferSubData().
         // It isn't clear which would be reliably faster in all cases and on all platforms,
-        // anecdotally glMapBuffer() seems very slow (syncs) while glBufferSubData() seems 
+        // anecdotally glMapBuffer() seems very slow (syncs) while glBufferSubData() seems
         // no faster, since we're transferring all the transform matrices anyway
         instancesVboId = rlLoadVertexBuffer(instanceTransforms, instances*sizeof(float16), false);
 
@@ -1042,7 +1042,7 @@ void DrawMeshInstanced(Mesh mesh, Material material, Matrix *transforms, int ins
 
         rlDisableVertexBuffer();
         rlDisableVertexArray();
-        
+
         // Accumulate internal matrix transform (push/pop) and view matrix
         // NOTE: In this case, model instance transformation must be computed in the shader
         matModelView = MatrixMultiply(rlGetMatrixTransform(), matView);
@@ -1058,7 +1058,7 @@ void DrawMeshInstanced(Mesh mesh, Material material, Matrix *transforms, int ins
         //    transform: function parameter transformation
         matModelView = MatrixMultiply(transforms[0], MatrixMultiply(rlGetMatrixTransform(), matView));
     }
-    
+
     // Upload model normal matrix (if locations available)
     if (material.shader.locs[SHADER_LOC_MATRIX_NORMAL] != -1) rlSetUniformMatrix(material.shader.locs[SHADER_LOC_MATRIX_NORMAL], MatrixTranspose(MatrixInvert(matModelView)));
     //-----------------------------------------------------
@@ -1070,10 +1070,10 @@ void DrawMeshInstanced(Mesh mesh, Material material, Matrix *transforms, int ins
         {
             // Select current shader texture slot
             rlActiveTextureSlot(i);
-            
+
             // Enable texture for active slot
-            if ((i == MATERIAL_MAP_IRRADIANCE) || 
-                (i == MATERIAL_MAP_PREFILTER) || 
+            if ((i == MATERIAL_MAP_IRRADIANCE) ||
+                (i == MATERIAL_MAP_PREFILTER) ||
                 (i == MATERIAL_MAP_CUBEMAP)) rlEnableTextureCubemap(material.maps[i].texture.id);
             else rlEnableTexture(material.maps[i].texture.id);
 
@@ -1089,7 +1089,7 @@ void DrawMeshInstanced(Mesh mesh, Material material, Matrix *transforms, int ins
         rlEnableVertexBuffer(mesh.vboId[0]);
         rlSetVertexAttribute(material.shader.locs[SHADER_LOC_VERTEX_POSITION], 3, RL_FLOAT, 0, 0, 0);
         rlEnableVertexAttribute(material.shader.locs[SHADER_LOC_VERTEX_POSITION]);
-    
+
         rlEnableVertexBuffer(mesh.vboId[0]);
         rlSetVertexAttribute(material.shader.locs[SHADER_LOC_VERTEX_POSITION], 3, RL_FLOAT, 0, 0, 0);
         rlEnableVertexAttribute(material.shader.locs[SHADER_LOC_VERTEX_POSITION]);
@@ -1180,10 +1180,10 @@ void DrawMeshInstanced(Mesh mesh, Material material, Matrix *transforms, int ins
     {
         // Select current shader texture slot
         rlActiveTextureSlot(i);
-        
+
         // Disable texture for active slot
-        if ((i == MATERIAL_MAP_IRRADIANCE) || 
-            (i == MATERIAL_MAP_PREFILTER) || 
+        if ((i == MATERIAL_MAP_IRRADIANCE) ||
+            (i == MATERIAL_MAP_PREFILTER) ||
             (i == MATERIAL_MAP_CUBEMAP)) rlDisableTextureCubemap();
         else rlDisableTexture();
     }

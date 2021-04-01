@@ -291,7 +291,7 @@ typedef struct RenderBatch {
 typedef enum {
     SHADER_ATTRIB_FLOAT = 0,
     SHADER_ATTRIB_VEC2,
-    SHADER_ATTRIB_VEC3, 
+    SHADER_ATTRIB_VEC3,
     SHADER_ATTRIB_VEC4
 } ShaderAttributeDataType;
 
@@ -387,7 +387,7 @@ typedef enum {
         TEXTURE_FILTER_ANISOTROPIC_8X,          // Anisotropic filtering 8x
         TEXTURE_FILTER_ANISOTROPIC_16X,         // Anisotropic filtering 16x
     } TextureFilter;
-    
+
     // Texture parameters: wrap mode
     typedef enum {
         TEXTURE_WRAP_REPEAT = 0,        // Repeats texture in tiled mode
@@ -435,7 +435,7 @@ typedef enum {
         SHADER_LOC_MAP_PREFILTER,
         SHADER_LOC_MAP_BRDF
     } ShaderLocationIndex;
-    
+
     #define SHADER_LOC_MAP_DIFFUSE      SHADER_LOC_MAP_ALBEDO
     #define SHADER_LOC_MAP_SPECULAR     SHADER_LOC_MAP_METALNESS
 
@@ -526,7 +526,7 @@ RLAPI void rlDisableStatePointer(int vertexAttribType);
 
 // Textures state
 RLAPI void rlActiveTextureSlot(int slot);               // Select and active a texture slot
-RLAPI void rlEnableTexture(unsigned int id);            // Enable texture 
+RLAPI void rlEnableTexture(unsigned int id);            // Enable texture
 RLAPI void rlDisableTexture(void);                      // Disable texture
 RLAPI void rlEnableTextureCubemap(unsigned int id);     // Enable texture cubemap
 RLAPI void rlDisableTextureCubemap(void);               // Disable texture cubemap
@@ -732,8 +732,8 @@ RLAPI Texture2D rlGenTextureBRDF(Shader shader, int size);              // Gener
     #include <EGL/egl.h>                // EGL library
     #include <GLES2/gl2.h>              // OpenGL ES 2.0 library
     #include <GLES2/gl2ext.h>           // OpenGL ES 2.0 extensions library
-    
-    // It seems OpenGL ES 2.0 instancing entry points are not defined on Raspberry Pi 
+
+    // It seems OpenGL ES 2.0 instancing entry points are not defined on Raspberry Pi
     // provided headers (despite being defined in official Khronos GLES2 headers)
     #if defined(PLATFORM_RPI) || defined(PLATFORM_DRM)
     typedef void (GL_APIENTRYP PFNGLDRAWARRAYSINSTANCEDEXTPROC) (GLenum mode, GLint start, GLsizei count, GLsizei primcount);
@@ -853,7 +853,7 @@ typedef struct rlglData {
         unsigned int defaultFShaderId;      // Default fragment shader Id (used by default shader program)
         Shader defaultShader;               // Basic shader, support vertex color and diffuse texture
         Shader currentShader;               // Shader to be used on rendering (by default, defaultShader)
-        
+
         bool stereoRender;                  // Stereo rendering flag
         Matrix projectionStereo[2];         // VR stereo rendering eyes projection matrices
         Matrix viewOffsetStereo[2];         // VR stereo rendering eyes view offset matrices
@@ -1182,7 +1182,7 @@ void rlEnd(void)
 
     // Verify internal buffers limits
     // NOTE: This check is combined with usage of rlCheckRenderBatchLimit()
-    if ((RLGL.currentBatch->vertexBuffer[RLGL.currentBatch->currentBuffer].vCounter) >= 
+    if ((RLGL.currentBatch->vertexBuffer[RLGL.currentBatch->currentBuffer].vCounter) >=
         (RLGL.currentBatch->vertexBuffer[RLGL.currentBatch->currentBuffer].elementsCount*4 - 4))
     {
         // WARNING: If we are between rlPushMatrix() and rlPopMatrix() and we need to force a rlDrawRenderBatch(),
@@ -1280,7 +1280,7 @@ void rlSetTexture(unsigned int id)
         rlDisableTexture();
 #else
         // NOTE: If quads batch limit is reached, we force a draw call and next batch starts
-        if (RLGL.currentBatch->vertexBuffer[RLGL.currentBatch->currentBuffer].vCounter >= 
+        if (RLGL.currentBatch->vertexBuffer[RLGL.currentBatch->currentBuffer].vCounter >=
             RLGL.currentBatch->vertexBuffer[RLGL.currentBatch->currentBuffer].elementsCount*4)
         {
             rlDrawRenderBatch(RLGL.currentBatch);
@@ -1332,7 +1332,7 @@ void rlActiveTextureSlot(int slot)
 #endif
 }
 
-// Enable texture 
+// Enable texture
 void rlEnableTexture(unsigned int id)
 {
 #if defined(GRAPHICS_API_OPENGL_11)
@@ -1537,7 +1537,7 @@ bool rlIsStereoRenderEnabled(void)
     return RLGL.State.stereoRender;
 #else
     return false;
-#endif 
+#endif
 }
 
 // Clear color buffer with color
@@ -1567,7 +1567,7 @@ void rlCheckErrors()
     while (check)
     {
         const GLenum err = glGetError();
-        switch (err) 
+        switch (err)
         {
             case GL_NO_ERROR: check = 0; break;
             case 0x0500: TRACELOG(LOG_WARNING, "GL: Error detected: GL_INVALID_ENUM"); break;
@@ -2032,7 +2032,7 @@ void rlSetShapesTexture(Texture2D texture, Rectangle source)
 RenderBatch rlLoadRenderBatch(int numBuffers, int bufferElements)
 {
     RenderBatch batch = { 0 };
-    
+
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     // Initialize CPU (RAM) vertex buffers (position, texcoord, color data and indexes)
     //--------------------------------------------------------------------------------------------
@@ -2389,7 +2389,7 @@ void rlSetRenderBatchActive(RenderBatch *batch)
 {
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     rlDrawRenderBatch(RLGL.currentBatch);
-    
+
     if (batch != NULL) RLGL.currentBatch = batch;
     else RLGL.currentBatch = &RLGL.defaultBatch;
 #endif
@@ -2410,8 +2410,8 @@ bool rlCheckRenderBatchLimit(int vCount)
     bool overflow = false;
 
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
-    if ((RLGL.currentBatch->vertexBuffer[RLGL.currentBatch->currentBuffer].vCounter + vCount) >= 
-        (RLGL.currentBatch->vertexBuffer[RLGL.currentBatch->currentBuffer].elementsCount*4)) 
+    if ((RLGL.currentBatch->vertexBuffer[RLGL.currentBatch->currentBuffer].vCounter + vCount) >=
+        (RLGL.currentBatch->vertexBuffer[RLGL.currentBatch->currentBuffer].elementsCount*4))
     {
         overflow = true;
         rlDrawRenderBatch(RLGL.currentBatch);    // NOTE: Stereo rendering is checked inside
@@ -3137,7 +3137,7 @@ bool rlEnableVertexArray(unsigned int vaoId)
 {
     bool result = false;
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
-    if (RLGL.ExtSupported.vao) 
+    if (RLGL.ExtSupported.vao)
     {
         glBindVertexArray(vaoId);
         result = true;
@@ -3262,7 +3262,7 @@ void rlUnloadVertexBuffer(unsigned int vboId)
 unsigned int rlLoadShaderCode(const char *vsCode, const char *fsCode)
 {
     unsigned int id = 0;
-    
+
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     unsigned int vertexShaderId = RLGL.State.defaultVShaderId;
     unsigned int fragmentShaderId = RLGL.State.defaultFShaderId;
@@ -3437,7 +3437,7 @@ int rlGetLocationAttrib(unsigned int shaderId, const char *attribName)
     int location = -1;
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     location = glGetAttribLocation(shaderId, attribName);
-    
+
     if (location == -1) TRACELOG(LOG_WARNING, "SHADER: [ID %i] Failed to find shader attribute: %s", shaderId, attribName);
     else TRACELOG(LOG_INFO, "SHADER: [ID %i] Shader attribute (%s) set at location: %i", shaderId, attribName, location);
 #endif

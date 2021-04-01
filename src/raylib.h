@@ -709,7 +709,7 @@ typedef enum {
     MESH_VERTEX_NORMAL      = 8,
     MESH_VERTEX_TANGENT     = 16,
     MESH_VERTEX_COLOR       = 32,
-    MESH_VERTEX_INDEX       = 64   
+    MESH_VERTEX_INDEX       = 64
 } MeshVertexAttributes;
 
 // Material map index

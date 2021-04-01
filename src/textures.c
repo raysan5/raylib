@@ -3511,12 +3511,12 @@ void DrawTextureNPatch(Texture2D texture, NPatchInfo nPatchInfo, Rectangle dest,
 }
 
 // Draw textured polygon, defined by vertex and texturecoordinates
-// NOTE: Polygon center must have straight line path to all points 
+// NOTE: Polygon center must have straight line path to all points
 // without crossing perimeter, points must be in anticlockwise order
 void DrawTexturePoly(Texture2D texture, Vector2 center, Vector2 *points, Vector2 *texcoords, int pointsCount, Color tint)
 {
     rlCheckRenderBatchLimit((pointsCount - 1)*4);
-    
+
     rlSetTexture(texture.id);
 
     // Texturing is only supported on QUADs

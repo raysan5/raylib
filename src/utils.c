@@ -189,7 +189,7 @@ unsigned char *LoadFileData(const char *fileName, unsigned int *bytesRead)
 
     if (fileName != NULL)
     {
-        if (loadFileData) 
+        if (loadFileData)
         {
             data = loadFileData(fileName, bytesRead);
             return data;
@@ -243,7 +243,7 @@ bool SaveFileData(const char *fileName, void *data, unsigned int bytesToWrite)
 
     if (fileName != NULL)
     {
-        if (saveFileData) 
+        if (saveFileData)
         {
             saveFileData(fileName, data, bytesToWrite);
             return success;
@@ -265,7 +265,7 @@ bool SaveFileData(const char *fileName, void *data, unsigned int bytesToWrite)
         else TRACELOG(LOG_WARNING, "FILEIO: [%s] Failed to open file", fileName);
 #else
     TRACELOG(LOG_WARNING, "FILEIO: Standard file io not supported, use custom file callback");
-#endif  
+#endif
     }
     else TRACELOG(LOG_WARNING, "FILEIO: File name provided is not valid");
 
@@ -280,7 +280,7 @@ char *LoadFileText(const char *fileName)
 
     if (fileName != NULL)
     {
-        if (loadFileText) 
+        if (loadFileText)
         {
             text = loadFileText(fileName);
             return text;
@@ -338,7 +338,7 @@ bool SaveFileText(const char *fileName, char *text)
 
     if (fileName != NULL)
     {
-        if (saveFileText) 
+        if (saveFileText)
         {
             saveFileText(fileName, text);
             return success;
