@@ -809,21 +809,22 @@ void DrawRectangleRounded(Rectangle rec, float roundness, int segments, Color co
 
     float stepLength = 90.0f/(float)segments;
 
-    //   Quick sketch to make sense of all of this
-    //   (there are 9 parts to draw, also mark the 12 points we'll use below)
-    // 
-    //      P0____________________P1
-    //      /|                    |\
-    //     /1|          2         |3\
-    // P7 /__|____________________|__\ P2
-    //   |   |P8                P9|   |
-    //   | 8 |          9         | 4 |
-    //   | __|____________________|__ |
-    // P6 \  |P11              P10|  / P3
-    //     \7|          6         |5/
-    //      \|____________________|/
-    //      P5                    P4
-
+    /*
+    Quick sketch to make sense of all of this,
+    there are 9 parts to draw, also mark the 12 points we'll use
+     
+          P0____________________P1
+          /|                    |\
+         /1|          2         |3\
+     P7 /__|____________________|__\ P2
+       |   |P8                P9|   |
+       | 8 |          9         | 4 |
+       | __|____________________|__ |
+     P6 \  |P11              P10|  / P3
+         \7|          6         |5/
+          \|____________________|/
+          P5                    P4
+    */
     // Coordinates of the 12 points that define the rounded rect
     const Vector2 point[12] = {
         {(float)rec.x + radius, rec.y}, {(float)(rec.x + rec.width) - radius, rec.y}, { rec.x + rec.width, (float)rec.y + radius },     // PO, P1, P2
@@ -1033,20 +1034,22 @@ void DrawRectangleRoundedLines(Rectangle rec, float roundness, int segments, int
     float stepLength = 90.0f/(float)segments;
     const float outerRadius = radius + (float)lineThick, innerRadius = radius;
 
-
-    //   Quick sketch to make sense of all of this (mark the 16 + 4(corner centers P16-19) points we'll use below)
-    //       P0 ================== P1
-    //      // P8                P9 \\
-    //     //                        \\
-    // P7 // P15                  P10 \\ P2
-    //   ||   *P16             P17*    ||
-    //   ||                            ||
-    //   || P14                   P11  ||
-    // P6 \\  *P19             P18*   // P3
-    //     \\                        //
-    //      \\ P13              P12 //
-    //       P5 ================== P4
-
+    /*
+    Quick sketch to make sense of all of this,
+    marks the 16 + 4(corner centers P16-19) points we'll use
+    
+           P0 ================== P1
+          // P8                P9 \\
+         //                        \\
+     P7 // P15                  P10 \\ P2
+       ||   *P16             P17*    ||
+       ||                            ||
+       || P14                   P11  ||
+     P6 \\  *P19             P18*   // P3
+         \\                        //
+          \\ P13              P12 //
+           P5 ================== P4
+    */
     const Vector2 point[16] = {
         {(float)rec.x + innerRadius, rec.y - lineThick}, {(float)(rec.x + rec.width) - innerRadius, rec.y - lineThick}, { rec.x + rec.width + lineThick, (float)rec.y + innerRadius }, // PO, P1, P2
         {rec.x + rec.width + lineThick, (float)(rec.y + rec.height) - innerRadius}, {(float)(rec.x + rec.width) - innerRadius, rec.y + rec.height + lineThick}, // P3, P4
