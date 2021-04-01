@@ -18,13 +18,13 @@
 #include "raylib.h"
 
 // NOTE: Gamepad name ID depends on drivers and OS
+#define XBOX360_LEGACY_NAME_ID  "Xbox Controller"
 #if defined(PLATFORM_RPI)
-    #define XBOX360_NAME_ID            "Microsoft X-Box 360 pad"
-    #define PS3_NAME_ID                "PLAYSTATION(R)3 Controller"
+    #define XBOX360_NAME_ID     "Microsoft X-Box 360 pad"
+    #define PS3_NAME_ID         "PLAYSTATION(R)3 Controller"
 #else
-    #define XBOX360_NAME_ID            "Xbox 360 Controller"
-    #define XBOX360_LEGACY_NAME_ID     "Xbox Controller"
-    #define PS3_NAME_ID                "PLAYSTATION(R)3 Controller"
+    #define XBOX360_NAME_ID     "Xbox 360 Controller"
+    #define PS3_NAME_ID         "PLAYSTATION(R)3 Controller"
 #endif
 
 int main(void)
