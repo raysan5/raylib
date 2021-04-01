@@ -682,7 +682,6 @@ RLAPI Texture2D rlGenTextureBRDF(Shader shader, int size);              // Gener
 
 #include <stdlib.h>                     // Required for: malloc(), free()
 #include <string.h>                     // Required for: strcmp(), strlen() [Used in rlglInit(), on extensions loading]
-#include <math.h>                       // Required for: atan2f()
 
 #if defined(GRAPHICS_API_OPENGL_11)
     #if defined(__APPLE__)
