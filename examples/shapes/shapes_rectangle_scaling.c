@@ -12,6 +12,7 @@
 ********************************************************************************************/
 
 #include "raylib.h"
+#include <math.h>
 
 #define MOUSE_SCALE_MARK_SIZE   12
 
@@ -31,6 +32,11 @@ int main(void)
     bool mouseScaleReady = false;
     bool mouseScaleMode = false;
 
+    Color from = LIME;
+    Color to = GREEN;
+    Color color = from;
+    float t = 0.0f;
+
     SetTargetFPS(60);               // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
 
@@ -39,6 +45,8 @@ int main(void)
     {
         // Update
         //----------------------------------------------------------------------------------
+        double time = GetTime();
+
         mousePosition = GetMousePosition();
 
         if (CheckCollisionPointRec(mousePosition, rec) &&
@@ -59,6 +67,9 @@ int main(void)
             if (rec.width < MOUSE_SCALE_MARK_SIZE) rec.width = MOUSE_SCALE_MARK_SIZE;
             if (rec.height < MOUSE_SCALE_MARK_SIZE) rec.height = MOUSE_SCALE_MARK_SIZE;
 
+            t = 0.5f * sin(time * 4.0f) + 0.5f;
+            color = FadeBetween(from, to, t);
+
             if (IsMouseButtonReleased(MOUSE_LEFT_BUTTON)) mouseScaleMode = false;
         }
         //----------------------------------------------------------------------------------
@@ -71,7 +82,7 @@ int main(void)
 
             DrawText("Scale rectangle dragging from bottom-right corner!", 10, 10, 20, GRAY);
 
-            DrawRectangleRec(rec, Fade(GREEN, 0.5f));
+            DrawRectangleRec(rec, color);
 
             if (mouseScaleReady)
             {

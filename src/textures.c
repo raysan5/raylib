@@ -3552,6 +3552,22 @@ Color Fade(Color color, float alpha)
     return (Color){color.r, color.g, color.b, (unsigned char)(255.0f*alpha)};
 }
 
+// Returns color interpolated between two inputs by t 0.0f to 1.0f
+Color FadeBetween(Color from, Color to, float t)
+{
+    if (t < 0.0f) t = 0.0f;
+    if (t > 1.0f) t = 1.0f;
+
+    Color out;
+
+    out.r = (unsigned char) (((1.0f - t) * from.r) + (t * to.r));
+    out.g = (unsigned char) (((1.0f - t) * from.g) + (t * to.g));
+    out.b = (unsigned char) (((1.0f - t) * from.b) + (t * to.b));
+    out.a = (unsigned char) (((1.0f - t) * from.a) + (t * to.a));
+
+    return out;
+}
+
 // Returns hexadecimal value for a Color
 int ColorToInt(Color color)
 {

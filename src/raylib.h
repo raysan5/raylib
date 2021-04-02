@@ -1276,6 +1276,7 @@ RLAPI void DrawTexturePoly(Texture2D texture, Vector2 center, Vector2 *points, V
 
 // Color/pixel related functions
 RLAPI Color Fade(Color color, float alpha);                                 // Returns color with alpha applied, alpha goes from 0.0f to 1.0f
+RLAPI Color FadeBetween(Color from, Color to, float t);                     // Returns color interpolated between two inputs by t 0.0f to 1.0f
 RLAPI int ColorToInt(Color color);                                          // Returns hexadecimal value for a Color
 RLAPI Vector4 ColorNormalize(Color color);                                  // Returns Color normalized as float [0..1]
 RLAPI Color ColorFromNormalized(Vector4 normalized);                        // Returns Color from normalized values [0..1]
