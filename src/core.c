@@ -323,6 +323,10 @@
     #endif
 #endif
 
+#ifndef MAX_DECOMPRESSION_SIZE
+    #define MAX_DECOMPRESSION_SIZE        64        // Max size allocated for decompression in MB
+#endif
+
 // Flags operation macros
 #define FLAG_SET(n, f) ((n) |= (f))
 #define FLAG_CLEAR(n, f) ((n) &= ~(f))
@@ -2942,7 +2946,7 @@ unsigned char *CompressData(unsigned char *data, int dataLength, int *compDataLe
     compData = (unsigned char *)RL_CALLOC(bounds, 1);
     *compDataLength = sdeflate(&sdefl, compData, data, dataLength, COMPRESSION_QUALITY_DEFLATE);   // Compression level 8, same as stbwi
 
-    TraceLog(LOG_INFO, "SYSTEM: Data compressed: Original size: %i -> Comp. size: %i\n", dataLength, compDataLength);
+    TraceLog(LOG_INFO, "SYSTEM: Compress data: Original size: %i -> Comp. size: %i", dataLength, compDataLength);
 #endif
 
     return compData;
@@ -2964,7 +2968,7 @@ unsigned char *DecompressData(unsigned char *compData, int compDataLength, int *
 
     *dataLength = length;
 
-    TraceLog(LOG_INFO, "SYSTEM: Data compressed: Original size: %i -> Comp. size: %i\n", dataLength, compDataLength);
+    TraceLog(LOG_INFO, "SYSTEM: Decompress data: Comp. size: %i -> Original size: %i", compDataLength, dataLength);
 #endif
 
     return data;
