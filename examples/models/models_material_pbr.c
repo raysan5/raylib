@@ -28,6 +28,12 @@
 #define LIGHT_DISTANCE 1000.0f
 #define LIGHT_HEIGHT 1.0f
 
+// PBR texture maps generation
+static TextureCubemap GenTextureCubemap(Shader shader, Texture2D panorama, int size, int format); // Generate cubemap (6 faces) from equirectangular (panorama) texture
+static TextureCubemap GenTextureIrradiance(Shader shader, TextureCubemap cubemap, int size);      // Generate irradiance cubemap using cubemap texture
+static TextureCubemap GenTexturePrefilter(Shader shader, TextureCubemap cubemap, int size);       // Generate prefilter cubemap using cubemap texture
+static Texture2D GenTextureBRDF(Shader shader, int size);              // Generate a generic BRDF texture
+
 // PBR material loading
 static Material LoadMaterialPBR(Color albedo, float metalness, float roughness);
 
@@ -188,7 +194,7 @@ static Material LoadMaterialPBR(Color albedo, float metalness, float roughness)
     Shader shdrCubemap = LoadShader("resources/shaders/glsl100/cubemap.vs", "resources/shaders/glsl100/cubemap.fs");
 #endif
     SetShaderValue(shdrCubemap, GetShaderLocation(shdrCubemap, "equirectangularMap"), (int[1]){ 0 }, SHADER_UNIFORM_INT);
-    TextureCubemap cubemap = rlGenTextureCubemap(shdrCubemap, panorama, CUBEMAP_SIZE, PIXELFORMAT_UNCOMPRESSED_R32G32B32);
+    TextureCubemap cubemap = GenTextureCubemap(shdrCubemap, panorama, CUBEMAP_SIZE, PIXELFORMAT_UNCOMPRESSED_R32G32B32);
     UnloadTexture(panorama);
     UnloadShader(shdrCubemap);
     //--------------------------------------------------------------------------------------------------------
@@ -202,7 +208,7 @@ static Material LoadMaterialPBR(Color albedo, float metalness, float roughness)
     Shader shdrIrradiance = LoadShader("resources/shaders/glsl100/skybox.vs", "resources/shaders/glsl100/irradiance.fs");
 #endif
     SetShaderValue(shdrIrradiance, GetShaderLocation(shdrIrradiance, "environmentMap"), (int[1]){ 0 }, SHADER_UNIFORM_INT);
-    mat.maps[MATERIAL_MAP_IRRADIANCE].texture = rlGenTextureIrradiance(shdrIrradiance, cubemap, IRRADIANCE_SIZE);
+    mat.maps[MATERIAL_MAP_IRRADIANCE].texture = GenTextureIrradiance(shdrIrradiance, cubemap, IRRADIANCE_SIZE);
     UnloadShader(shdrIrradiance);
     //--------------------------------------------------------------------------------------------------------
     
@@ -215,7 +221,7 @@ static Material LoadMaterialPBR(Color albedo, float metalness, float roughness)
     Shader shdrPrefilter = LoadShader("resources/shaders/glsl100/skybox.vs", "resources/shaders/glsl100/prefilter.fs");
 #endif
     SetShaderValue(shdrPrefilter, GetShaderLocation(shdrPrefilter, "environmentMap"), (int[1]){ 0 }, SHADER_UNIFORM_INT);
-    mat.maps[MATERIAL_MAP_PREFILTER].texture = rlGenTexturePrefilter(shdrPrefilter, cubemap, PREFILTERED_SIZE);
+    mat.maps[MATERIAL_MAP_PREFILTER].texture = GenTexturePrefilter(shdrPrefilter, cubemap, PREFILTERED_SIZE);
     UnloadTexture(cubemap);
     UnloadShader(shdrPrefilter);
     //--------------------------------------------------------------------------------------------------------
@@ -227,9 +233,315 @@ static Material LoadMaterialPBR(Color albedo, float metalness, float roughness)
 #else
     Shader shdrBRDF = LoadShader("resources/shaders/glsl100/brdf.vs", "resources/shaders/glsl100/brdf.fs");
 #endif
-    mat.maps[MATERIAL_MAP_BRDG].texture = rlGenTextureBRDF(shdrBRDF, BRDF_SIZE);
+    mat.maps[MATERIAL_MAP_BRDG].texture = GenTextureBRDF(shdrBRDF, BRDF_SIZE);
     UnloadShader(shdrBRDF);
     //--------------------------------------------------------------------------------------------------------
 
     return mat;
+}
+
+// Texture maps generation (PBR)
+//-------------------------------------------------------------------------------------------
+// Generate cubemap texture from HDR texture
+TextureCubemap GenTextureCubemap(Shader shader, Texture2D panorama, int size, int format)
+{
+    TextureCubemap cubemap = { 0 };
+#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
+    rlDisableBackfaceCulling();     // Disable backface culling to render inside the cube
+
+    // STEP 1: Setup framebuffer
+    //------------------------------------------------------------------------------------------
+    unsigned int rbo = rlLoadTextureDepth(size, size, true);
+    cubemap.id = rlLoadTextureCubemap(NULL, size, format);
+
+    unsigned int fbo = rlLoadFramebuffer(size, size);
+    rlFramebufferAttach(fbo, rbo, RL_ATTACHMENT_DEPTH, RL_ATTACHMENT_RENDERBUFFER, 0);
+    rlFramebufferAttach(fbo, cubemap.id, RL_ATTACHMENT_COLOR_CHANNEL0, RL_ATTACHMENT_CUBEMAP_POSITIVE_X, 0);
+
+    // Check if framebuffer is complete with attachments (valid)
+    if (rlFramebufferComplete(fbo)) TraceLog(LOG_INFO, "FBO: [ID %i] Framebuffer object created successfully", fbo);
+    //------------------------------------------------------------------------------------------
+
+    // STEP 2: Draw to framebuffer
+    //------------------------------------------------------------------------------------------
+    // NOTE: Shader is used to convert HDR equirectangular environment map to cubemap equivalent (6 faces)
+    rlEnableShader(shader.id);
+
+    // Define projection matrix and send it to shader
+    Matrix matFboProjection = MatrixPerspective(90.0*DEG2RAD, 1.0, RL_CULL_DISTANCE_NEAR, RL_CULL_DISTANCE_FAR);
+    rlSetUniformMatrix(shader.locs[SHADER_LOC_MATRIX_PROJECTION], matFboProjection);
+
+    // Define view matrix for every side of the cubemap
+    Matrix fboViews[6] = {
+        MatrixLookAt((Vector3){ 0.0f, 0.0f, 0.0f }, (Vector3){  1.0f,  0.0f,  0.0f }, (Vector3){ 0.0f, -1.0f,  0.0f }),
+        MatrixLookAt((Vector3){ 0.0f, 0.0f, 0.0f }, (Vector3){ -1.0f,  0.0f,  0.0f }, (Vector3){ 0.0f, -1.0f,  0.0f }),
+        MatrixLookAt((Vector3){ 0.0f, 0.0f, 0.0f }, (Vector3){  0.0f,  1.0f,  0.0f }, (Vector3){ 0.0f,  0.0f,  1.0f }),
+        MatrixLookAt((Vector3){ 0.0f, 0.0f, 0.0f }, (Vector3){  0.0f, -1.0f,  0.0f }, (Vector3){ 0.0f,  0.0f, -1.0f }),
+        MatrixLookAt((Vector3){ 0.0f, 0.0f, 0.0f }, (Vector3){  0.0f,  0.0f,  1.0f }, (Vector3){ 0.0f, -1.0f,  0.0f }),
+        MatrixLookAt((Vector3){ 0.0f, 0.0f, 0.0f }, (Vector3){  0.0f,  0.0f, -1.0f }, (Vector3){ 0.0f, -1.0f,  0.0f })
+    };
+
+#if !defined(GENTEXTURECUBEMAP_USE_BATCH_SYSTEM)
+    rlActiveTextureSlot(0);
+    rlEnableTexture(panorama.id);
+#endif
+
+    rlViewport(0, 0, size, size);   // Set viewport to current fbo dimensions
+
+    for (int i = 0; i < 6; i++)
+    {
+        rlSetUniformMatrix(shader.locs[SHADER_LOC_MATRIX_VIEW], fboViews[i]);
+        rlFramebufferAttach(fbo, cubemap.id, RL_ATTACHMENT_COLOR_CHANNEL0, RL_ATTACHMENT_CUBEMAP_POSITIVE_X + i, 0);
+
+        rlEnableFramebuffer(fbo);
+#if defined(GENTEXTURECUBEMAP_USE_BATCH_SYSTEM)
+        rlSetTexture(panorama.id);   // WARNING: It must be called after enabling current framebuffer if using internal batch system!
+#endif
+        rlClearScreenBuffers();
+        rlLoadDrawCube();
+
+#if defined(GENTEXTURECUBEMAP_USE_BATCH_SYSTEM)
+        // Using internal batch system instead of raw OpenGL cube creating+drawing
+        // NOTE: DrawCubeV() is actually provided by models.c! -> GenTextureCubemap() should be moved to user code!
+        DrawCubeV(Vector3Zero(), Vector3One(), WHITE);
+        rlDrawRenderBatch(RLGL.currentBatch);
+#endif
+    }
+    //------------------------------------------------------------------------------------------
+
+    // STEP 3: Unload framebuffer and reset state
+    //------------------------------------------------------------------------------------------
+    rlDisableShader();          // Unbind shader
+    rlDisableTexture();         // Unbind texture
+    rlDisableFramebuffer();     // Unbind framebuffer
+    rlUnloadFramebuffer(fbo);   // Unload framebuffer (and automatically attached depth texture/renderbuffer)
+
+    // Reset viewport dimensions to default
+    rlViewport(0, 0, rlGetFramebufferWidth(), rlGetFramebufferHeight());
+    rlEnableBackfaceCulling();
+    //------------------------------------------------------------------------------------------
+
+    cubemap.width = size;
+    cubemap.height = size;
+    cubemap.mipmaps = 1;
+    cubemap.format = PIXELFORMAT_UNCOMPRESSED_R32G32B32;
+#endif
+    return cubemap;
+}
+
+// Generate irradiance texture using cubemap data
+TextureCubemap GenTextureIrradiance(Shader shader, TextureCubemap cubemap, int size)
+{
+    TextureCubemap irradiance = { 0 };
+
+#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
+    rlDisableBackfaceCulling();     // Disable backface culling to render inside the cube
+
+    // STEP 1: Setup framebuffer
+    //------------------------------------------------------------------------------------------
+    unsigned int rbo = rlLoadTextureDepth(size, size, true);
+    irradiance.id = rlLoadTextureCubemap(NULL, size, PIXELFORMAT_UNCOMPRESSED_R32G32B32);
+
+    unsigned int fbo = rlLoadFramebuffer(size, size);
+    rlFramebufferAttach(fbo, rbo, RL_ATTACHMENT_DEPTH, RL_ATTACHMENT_RENDERBUFFER, 0);
+    rlFramebufferAttach(fbo, cubemap.id, RL_ATTACHMENT_COLOR_CHANNEL0, RL_ATTACHMENT_CUBEMAP_POSITIVE_X, 0);
+    //------------------------------------------------------------------------------------------
+
+    // STEP 2: Draw to framebuffer
+    //------------------------------------------------------------------------------------------
+    // NOTE: Shader is used to solve diffuse integral by convolution to create an irradiance cubemap
+    rlEnableShader(shader.id);
+
+    // Define projection matrix and send it to shader
+    Matrix matFboProjection = MatrixPerspective(90.0*DEG2RAD, 1.0, RL_CULL_DISTANCE_NEAR, RL_CULL_DISTANCE_FAR);
+    rlSetUniformMatrix(shader.locs[SHADER_LOC_MATRIX_PROJECTION], matFboProjection);
+
+    // Define view matrix for every side of the cubemap
+    Matrix fboViews[6] = {
+        MatrixLookAt((Vector3){ 0.0f, 0.0f, 0.0f }, (Vector3){  1.0f,  0.0f,  0.0f }, (Vector3){ 0.0f, -1.0f,  0.0f }),
+        MatrixLookAt((Vector3){ 0.0f, 0.0f, 0.0f }, (Vector3){ -1.0f,  0.0f,  0.0f }, (Vector3){ 0.0f, -1.0f,  0.0f }),
+        MatrixLookAt((Vector3){ 0.0f, 0.0f, 0.0f }, (Vector3){  0.0f,  1.0f,  0.0f }, (Vector3){ 0.0f,  0.0f,  1.0f }),
+        MatrixLookAt((Vector3){ 0.0f, 0.0f, 0.0f }, (Vector3){  0.0f, -1.0f,  0.0f }, (Vector3){ 0.0f,  0.0f, -1.0f }),
+        MatrixLookAt((Vector3){ 0.0f, 0.0f, 0.0f }, (Vector3){  0.0f,  0.0f,  1.0f }, (Vector3){ 0.0f, -1.0f,  0.0f }),
+        MatrixLookAt((Vector3){ 0.0f, 0.0f, 0.0f }, (Vector3){  0.0f,  0.0f, -1.0f }, (Vector3){ 0.0f, -1.0f,  0.0f })
+    };
+
+    rlActiveTextureSlot(0);
+    rlEnableTextureCubemap(cubemap.id);
+
+    rlViewport(0, 0, size, size);   // Set viewport to current fbo dimensions
+
+    for (int i = 0; i < 6; i++)
+    {
+        rlSetUniformMatrix(shader.locs[SHADER_LOC_MATRIX_VIEW], fboViews[i]);
+        rlFramebufferAttach(fbo, irradiance.id, RL_ATTACHMENT_COLOR_CHANNEL0, RL_ATTACHMENT_CUBEMAP_POSITIVE_X + i, 0);
+
+        rlEnableFramebuffer(fbo);
+        rlClearScreenBuffers();
+        rlLoadDrawCube();
+    }
+    //------------------------------------------------------------------------------------------
+
+    // STEP 3: Unload framebuffer and reset state
+    //------------------------------------------------------------------------------------------
+    rlDisableShader();          // Unbind shader
+    rlDisableTexture();         // Unbind texture
+    rlDisableFramebuffer();     // Unbind framebuffer
+    rlUnloadFramebuffer(fbo);   // Unload framebuffer (and automatically attached depth texture/renderbuffer)
+
+    // Reset viewport dimensions to default
+    rlViewport(0, 0, rlGetFramebufferWidth(), rlGetFramebufferHeight());
+    rlEnableBackfaceCulling();
+    //------------------------------------------------------------------------------------------
+
+    irradiance.width = size;
+    irradiance.height = size;
+    irradiance.mipmaps = 1;
+    irradiance.format = PIXELFORMAT_UNCOMPRESSED_R32G32B32;
+#endif
+    return irradiance;
+}
+
+// Generate prefilter texture using cubemap data
+TextureCubemap GenTexturePrefilter(Shader shader, TextureCubemap cubemap, int size)
+{
+    TextureCubemap prefilter = { 0 };
+
+#if defined(GRAPHICS_API_OPENGL_33) // || defined(GRAPHICS_API_OPENGL_ES2)
+    rlDisableBackfaceCulling();     // Disable backface culling to render inside the cube
+
+    // STEP 1: Setup framebuffer
+    //------------------------------------------------------------------------------------------
+    unsigned int rbo = rlLoadTextureDepth(size, size, true);
+    prefilter.id = rlLoadTextureCubemap(NULL, size, PIXELFORMAT_UNCOMPRESSED_R32G32B32);
+    rlTextureParameters(prefilter.id, RL_TEXTURE_MIN_FILTER, RL_TEXTURE_FILTER_MIP_LINEAR);
+
+    unsigned int fbo = rlLoadFramebuffer(size, size);
+    rlFramebufferAttach(fbo, rbo, RL_ATTACHMENT_DEPTH, RL_ATTACHMENT_RENDERBUFFER, 0);
+    rlFramebufferAttach(fbo, cubemap.id, RL_ATTACHMENT_COLOR_CHANNEL0, RL_ATTACHMENT_CUBEMAP_POSITIVE_X, 0);
+    //------------------------------------------------------------------------------------------
+
+    // Generate mipmaps for the prefiltered HDR texture
+    //glGenerateMipmap(GL_TEXTURE_CUBE_MAP);    // TODO!
+
+    // STEP 2: Draw to framebuffer
+    //------------------------------------------------------------------------------------------
+    // NOTE: Shader is used to prefilter HDR and store data into mipmap levels
+
+    // Define projection matrix and send it to shader
+    Matrix fboProjection = MatrixPerspective(90.0*DEG2RAD, 1.0, RL_CULL_DISTANCE_NEAR, RL_CULL_DISTANCE_FAR);
+    rlEnableShader(shader.id);
+    rlSetUniformMatrix(shader.locs[SHADER_LOC_MATRIX_PROJECTION], fboProjection);
+
+    // Define view matrix for every side of the cubemap
+    Matrix fboViews[6] = {
+        MatrixLookAt((Vector3){ 0.0f, 0.0f, 0.0f }, (Vector3){  1.0f,  0.0f,  0.0f }, (Vector3){ 0.0f, -1.0f,  0.0f }),
+        MatrixLookAt((Vector3){ 0.0f, 0.0f, 0.0f }, (Vector3){ -1.0f,  0.0f,  0.0f }, (Vector3){ 0.0f, -1.0f,  0.0f }),
+        MatrixLookAt((Vector3){ 0.0f, 0.0f, 0.0f }, (Vector3){  0.0f,  1.0f,  0.0f }, (Vector3){ 0.0f,  0.0f,  1.0f }),
+        MatrixLookAt((Vector3){ 0.0f, 0.0f, 0.0f }, (Vector3){  0.0f, -1.0f,  0.0f }, (Vector3){ 0.0f,  0.0f, -1.0f }),
+        MatrixLookAt((Vector3){ 0.0f, 0.0f, 0.0f }, (Vector3){  0.0f,  0.0f,  1.0f }, (Vector3){ 0.0f, -1.0f,  0.0f }),
+        MatrixLookAt((Vector3){ 0.0f, 0.0f, 0.0f }, (Vector3){  0.0f,  0.0f, -1.0f }, (Vector3){ 0.0f, -1.0f,  0.0f })
+    };
+
+    rlActiveTextureSlot(0);
+    rlEnableTextureCubemap(cubemap.id);
+
+    // TODO: Locations should be taken out of this function... too shader dependant...
+    int roughnessLoc = rlGetLocationUniform(shader.id, "roughness");
+
+    rlEnableFramebuffer(fbo);
+
+    #define MAX_MIPMAP_LEVELS   5   // Max number of prefilter texture mipmaps
+
+    for (int mip = 0; mip < MAX_MIPMAP_LEVELS; mip++)
+    {
+        // Resize framebuffer according to mip-level size.
+        unsigned int mipWidth  = size*(int)powf(0.5f, (float)mip);
+        unsigned int mipHeight = size*(int)powf(0.5f, (float)mip);
+
+        rlViewport(0, 0, mipWidth, mipHeight);
+
+        //glBindRenderbuffer(GL_RENDERBUFFER, rbo);
+        //glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, mipWidth, mipHeight);
+
+        float roughness = (float)mip/(float)(MAX_MIPMAP_LEVELS - 1);
+        rlSetUniform(roughnessLoc, &roughness, SHADER_UNIFORM_FLOAT, 1);
+
+        for (int i = 0; i < 6; i++)
+        {
+            rlSetUniformMatrix(shader.locs[SHADER_LOC_MATRIX_VIEW], fboViews[i]);
+            rlFramebufferAttach(fbo, prefilter.id, RL_ATTACHMENT_COLOR_CHANNEL0, RL_ATTACHMENT_CUBEMAP_POSITIVE_X + i, mip);
+            
+            rlClearScreenBuffers();
+            rlLoadDrawCube();
+        }
+    }
+    //------------------------------------------------------------------------------------------
+
+    // STEP 3: Unload framebuffer and reset state
+    //------------------------------------------------------------------------------------------
+    rlDisableShader();          // Unbind shader
+    rlDisableTexture();         // Unbind texture
+    rlDisableFramebuffer();     // Unbind framebuffer
+    rlUnloadFramebuffer(fbo);   // Unload framebuffer (and automatically attached depth texture/renderbuffer)
+
+    // Reset viewport dimensions to default
+    rlViewport(0, 0, rlGetFramebufferWidth(), rlGetFramebufferHeight());
+    rlEnableBackfaceCulling();
+    //------------------------------------------------------------------------------------------
+
+    prefilter.width = size;
+    prefilter.height = size;
+    prefilter.mipmaps = MAX_MIPMAP_LEVELS;
+    prefilter.format = PIXELFORMAT_UNCOMPRESSED_R32G32B32;
+#endif
+    return prefilter;
+}
+
+// Generate BRDF texture using cubemap data
+// TODO: Review implementation: https://github.com/HectorMF/BRDFGenerator
+Texture2D GenTextureBRDF(Shader shader, int size)
+{
+    Texture2D brdf = { 0 };
+#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
+    // STEP 1: Setup framebuffer
+    //------------------------------------------------------------------------------------------
+    unsigned int rbo = rlLoadTextureDepth(size, size, true);
+    brdf.id = rlLoadTexture(NULL, size, size, PIXELFORMAT_UNCOMPRESSED_R32G32B32, 1);
+
+    unsigned int fbo = rlLoadFramebuffer(size, size);
+    rlFramebufferAttach(fbo, rbo, RL_ATTACHMENT_DEPTH, RL_ATTACHMENT_RENDERBUFFER, 0);
+    rlFramebufferAttach(fbo, brdf.id, RL_ATTACHMENT_COLOR_CHANNEL0, RL_ATTACHMENT_TEXTURE2D, 0);
+    //------------------------------------------------------------------------------------------
+
+    // STEP 2: Draw to framebuffer
+    //------------------------------------------------------------------------------------------
+    // NOTE: Render BRDF LUT into a quad using FBO
+    rlEnableShader(shader.id);
+
+    rlViewport(0, 0, size, size);
+
+    rlEnableFramebuffer(fbo);
+    rlClearScreenBuffers();
+
+    rlLoadDrawQuad();
+    //------------------------------------------------------------------------------------------
+
+    // STEP 3: Unload framebuffer and reset state
+    //------------------------------------------------------------------------------------------
+    rlDisableShader();          // Unbind shader
+    rlDisableTexture();         // Unbind texture
+    rlDisableFramebuffer();     // Unbind framebuffer
+    rlUnloadFramebuffer(fbo);   // Unload framebuffer (and automatically attached depth texture/renderbuffer)
+
+    // Reset viewport dimensions to default
+    rlViewport(0, 0, rlGetFramebufferWidth(), rlGetFramebufferHeight());
+    //------------------------------------------------------------------------------------------
+
+    brdf.width = size;
+    brdf.height = size;
+    brdf.mipmaps = 1;
+    brdf.format = PIXELFORMAT_UNCOMPRESSED_R32G32B32;
+#endif
+    return brdf;
 }
