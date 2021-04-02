@@ -12,6 +12,12 @@
 #include "raylib.h"
 #include "rlgl.h"
 
+#if defined(PLATFORM_DESKTOP)
+    #define GLSL_VERSION            330
+#else   // PLATFORM_RPI, PLATFORM_ANDROID, PLATFORM_WEB
+    #define GLSL_VERSION            100
+#endif
+
 // Generate cubemap (6 faces) from equirectangular (panorama) texture
 static TextureCubemap GenTextureCubemap(Shader shader, Texture2D panorama, int size, int format);
 
@@ -35,21 +41,17 @@ int main(void)
 
     // Load skybox shader and set required locations
     // NOTE: Some locations are automatically set at shader loading
-#if defined(PLATFORM_DESKTOP)
-    skybox.materials[0].shader = LoadShader("resources/shaders/glsl330/skybox.vs", "resources/shaders/glsl330/skybox.fs");
-#else   // PLATFORM_RPI, PLATFORM_ANDROID, PLATFORM_WEB
-    skybox.materials[0].shader = LoadShader("resources/shaders/glsl100/skybox.vs", "resources/shaders/glsl100/skybox.fs");
-#endif
+    skybox.materials[0].shader = LoadShader(TextFormat("resources/shaders/glsl%i/skybox.vs", GLSL_VERSION), 
+                                            TextFormat("resources/shaders/glsl%i/skybox.fs", GLSL_VERSION));
+
     SetShaderValue(skybox.materials[0].shader, GetShaderLocation(skybox.materials[0].shader, "environmentMap"), (int[1]){ MATERIAL_MAP_CUBEMAP }, SHADER_UNIFORM_INT);
     SetShaderValue(skybox.materials[0].shader, GetShaderLocation(skybox.materials[0].shader, "doGamma"), (int[1]) { useHDR ? 1 : 0 }, SHADER_UNIFORM_INT);
     SetShaderValue(skybox.materials[0].shader, GetShaderLocation(skybox.materials[0].shader, "vflipped"), (int[1]){ useHDR ? 1 : 0 }, SHADER_UNIFORM_INT);
 
     // Load cubemap shader and setup required shader locations
-#if defined(PLATFORM_DESKTOP)
-    Shader shdrCubemap = LoadShader("resources/shaders/glsl330/cubemap.vs", "resources/shaders/glsl330/cubemap.fs");
-#else   // PLATFORM_RPI, PLATFORM_ANDROID, PLATFORM_WEB
-    Shader shdrCubemap = LoadShader("resources/shaders/glsl100/cubemap.vs", "resources/shaders/glsl100/cubemap.fs");
-#endif
+    Shader shdrCubemap = LoadShader(TextFormat("resources/shaders/glsl%i/cubemap.vs", GLSL_VERSION), 
+                                    TextFormat("resources/shaders/glsl%i/cubemap.fs", GLSL_VERSION));
+
     SetShaderValue(shdrCubemap, GetShaderLocation(shdrCubemap, "equirectangularMap"), (int[1]){ 0 }, SHADER_UNIFORM_INT);
 
     char skyboxFileName[256] = { 0 };

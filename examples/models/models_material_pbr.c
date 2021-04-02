@@ -21,12 +21,18 @@
 #define RLIGHTS_IMPLEMENTATION
 #include "rlights.h"
 
+#if defined(PLATFORM_DESKTOP)
+    #define GLSL_VERSION            330
+#else   // PLATFORM_RPI, PLATFORM_ANDROID, PLATFORM_WEB
+    #define GLSL_VERSION            100
+#endif
+
 #define CUBEMAP_SIZE        1024        // Cubemap texture size
 #define IRRADIANCE_SIZE       32        // Irradiance texture size
 #define PREFILTERED_SIZE     256        // Prefiltered HDR environment texture size
 #define BRDF_SIZE            512        // BRDF LUT texture size
-#define LIGHT_DISTANCE 1000.0f
-#define LIGHT_HEIGHT 1.0f
+#define LIGHT_DISTANCE      1000.0f
+#define LIGHT_HEIGHT           1.0f
 
 // PBR texture maps generation
 static TextureCubemap GenTextureCubemap(Shader shader, Texture2D panorama, int size, int format); // Generate cubemap (6 faces) from equirectangular (panorama) texture
@@ -127,11 +133,8 @@ static Material LoadMaterialPBR(Color albedo, float metalness, float roughness)
     Material mat = LoadMaterialDefault();   // Initialize material to default
 
     // Load PBR shader (requires several maps)
-#if defined(PLATFORM_DESKTOP)
-    mat.shader = LoadShader("resources/shaders/glsl330/pbr.vs", "resources/shaders/glsl330/pbr.fs");
-#else   // PLATFORM_RPI, PLATFORM_ANDROID, PLATFORM_WEB
-    mat.shader = LoadShader("resources/shaders/glsl100/pbr.vs", "resources/shaders/glsl100/pbr.fs");
-#endif
+    mat.shader = LoadShader(TextFormat("resources/shaders/glsl%i/pbr.vs", GLSL_VERSION), 
+                            TextFormat("resources/shaders/glsl%i/pbr.fs", GLSL_VERSION));
 
     // Get required locations points for PBR material
     // NOTE: Those location names must be available and used in the shader code
@@ -187,12 +190,11 @@ static Material LoadMaterialPBR(Color albedo, float metalness, float roughness)
     // Generate cubemap from panorama texture
     //--------------------------------------------------------------------------------------------------------
     Texture2D panorama = LoadTexture("resources/dresden_square_2k.hdr");
+    
     // Load equirectangular to cubemap shader
-#if defined(PLATFORM_DESKTOP)
-    Shader shdrCubemap = LoadShader("resources/shaders/glsl330/cubemap.vs", "resources/shaders/glsl330/cubemap.fs");
-#else   // PLATFORM_RPI, PLATFORM_ANDROID, PLATFORM_WEB
-    Shader shdrCubemap = LoadShader("resources/shaders/glsl100/cubemap.vs", "resources/shaders/glsl100/cubemap.fs");
-#endif
+    Shader shdrCubemap = LoadShader(TextFormat("resources/shaders/glsl%i/pbr.vs", GLSL_VERSION), 
+                                    TextFormat("resources/shaders/glsl%i/pbr.fs", GLSL_VERSION));
+
     SetShaderValue(shdrCubemap, GetShaderLocation(shdrCubemap, "equirectangularMap"), (int[1]){ 0 }, SHADER_UNIFORM_INT);
     TextureCubemap cubemap = GenTextureCubemap(shdrCubemap, panorama, CUBEMAP_SIZE, PIXELFORMAT_UNCOMPRESSED_R32G32B32);
     UnloadTexture(panorama);
@@ -202,11 +204,9 @@ static Material LoadMaterialPBR(Color albedo, float metalness, float roughness)
     // Generate irradiance map from cubemap texture
     //--------------------------------------------------------------------------------------------------------
     // Load irradiance (GI) calculation shader
-#if defined(PLATFORM_DESKTOP)
-    Shader shdrIrradiance = LoadShader("resources/shaders/glsl330/skybox.vs", "resources/shaders/glsl330/irradiance.fs");
-#else   // PLATFORM_RPI, PLATFORM_ANDROID, PLATFORM_WEB
-    Shader shdrIrradiance = LoadShader("resources/shaders/glsl100/skybox.vs", "resources/shaders/glsl100/irradiance.fs");
-#endif
+    Shader shdrIrradiance = LoadShader(TextFormat("resources/shaders/glsl%i/skybox.vs", GLSL_VERSION), 
+                                       TextFormat("resources/shaders/glsl%i/irradiance.fs", GLSL_VERSION));
+
     SetShaderValue(shdrIrradiance, GetShaderLocation(shdrIrradiance, "environmentMap"), (int[1]){ 0 }, SHADER_UNIFORM_INT);
     mat.maps[MATERIAL_MAP_IRRADIANCE].texture = GenTextureIrradiance(shdrIrradiance, cubemap, IRRADIANCE_SIZE);
     UnloadShader(shdrIrradiance);
@@ -215,11 +215,9 @@ static Material LoadMaterialPBR(Color albedo, float metalness, float roughness)
     // Generate prefilter map from cubemap texture
     //--------------------------------------------------------------------------------------------------------
     // Load reflection prefilter calculation shader
-#if defined(PLATFORM_DESKTOP)
-    Shader shdrPrefilter = LoadShader("resources/shaders/glsl330/skybox.vs", "resources/shaders/glsl330/prefilter.fs");
-#else
-    Shader shdrPrefilter = LoadShader("resources/shaders/glsl100/skybox.vs", "resources/shaders/glsl100/prefilter.fs");
-#endif
+    Shader shdrPrefilter = LoadShader(TextFormat("resources/shaders/glsl%i/skybox.vs", GLSL_VERSION), 
+                                      TextFormat("resources/shaders/glsl%i/prefilter.fs", GLSL_VERSION));
+                                       
     SetShaderValue(shdrPrefilter, GetShaderLocation(shdrPrefilter, "environmentMap"), (int[1]){ 0 }, SHADER_UNIFORM_INT);
     mat.maps[MATERIAL_MAP_PREFILTER].texture = GenTexturePrefilter(shdrPrefilter, cubemap, PREFILTERED_SIZE);
     UnloadTexture(cubemap);
@@ -228,11 +226,9 @@ static Material LoadMaterialPBR(Color albedo, float metalness, float roughness)
     
     // Generate BRDF (bidirectional reflectance distribution function) texture (using shader)
     //--------------------------------------------------------------------------------------------------------
-#if defined(PLATFORM_DESKTOP)
-    Shader shdrBRDF = LoadShader("resources/shaders/glsl330/brdf.vs", "resources/shaders/glsl330/brdf.fs");
-#else
-    Shader shdrBRDF = LoadShader("resources/shaders/glsl100/brdf.vs", "resources/shaders/glsl100/brdf.fs");
-#endif
+    Shader shdrBRDF = LoadShader(TextFormat("resources/shaders/glsl%i/brdf.vs", GLSL_VERSION), 
+                                 TextFormat("resources/shaders/glsl%i/brdf.fs", GLSL_VERSION));
+
     mat.maps[MATERIAL_MAP_BRDG].texture = GenTextureBRDF(shdrBRDF, BRDF_SIZE);
     UnloadShader(shdrBRDF);
     //--------------------------------------------------------------------------------------------------------
@@ -293,7 +289,7 @@ static TextureCubemap GenTextureCubemap(Shader shader, Texture2D panorama, int s
 
         rlClearScreenBuffers();
         DrawCubeV(Vector3Zero(), Vector3One(), WHITE);
-        rlDrawRenderBatch(RLGL.currentBatch);
+        rlDrawRenderBatchActive();
     }
     //------------------------------------------------------------------------------------------
 
