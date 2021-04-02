@@ -556,10 +556,6 @@ static int32_t AndroidInputCallback(struct android_app *app, AInputEvent *event)
 #endif
 
 #if defined(PLATFORM_WEB)
-static EM_BOOL EmscriptenFullscreenChangeCallback(int eventType, const EmscriptenFullscreenChangeEvent *event, void *userData);
-static EM_BOOL EmscriptenWindowResizedCallback(int eventType, const void *reserved, void *userData);
-static EM_BOOL EmscriptenKeyboardCallback(int eventType, const EmscriptenKeyboardEvent *keyEvent, void *userData);
-static EM_BOOL EmscriptenMouseCallback(int eventType, const EmscriptenMouseEvent *mouseEvent, void *userData);
 static EM_BOOL EmscriptenTouchCallback(int eventType, const EmscriptenTouchEvent *touchEvent, void *userData);
 static EM_BOOL EmscriptenGamepadCallback(int eventType, const EmscriptenGamepadEvent *gamepadEvent, void *userData);
 #endif
@@ -787,14 +783,12 @@ void InitWindow(int width, int height, const char *title)
 
 #if defined(PLATFORM_WEB)
     // Detect fullscreen change events
-    emscripten_set_fullscreenchange_callback("#canvas", NULL, 1, EmscriptenFullscreenChangeCallback);
+    //emscripten_set_fullscreenchange_callback("#canvas", NULL, 1, EmscriptenFullscreenChangeCallback);
+    //emscripten_set_resize_callback("#canvas", NULL, 1, EmscriptenResizeCallback);
 
     // Support keyboard events
     //emscripten_set_keypress_callback("#canvas", NULL, 1, EmscriptenKeyboardCallback);
-    emscripten_set_keydown_callback("#canvas", NULL, 1, EmscriptenKeyboardCallback);
-
-    // Support mouse events
-    emscripten_set_click_callback("#canvas", NULL, 1, EmscriptenMouseCallback);
+    //emscripten_set_keydown_callback("#canvas", NULL, 1, EmscriptenKeyboardCallback);
 
     // Support touch events
     emscripten_set_touchstart_callback("#canvas", NULL, 1, EmscriptenTouchCallback);
@@ -1084,41 +1078,62 @@ void ToggleFullscreen(void)
     // Try to enable GPU V-Sync, so frames are limited to screen refresh rate (60Hz -> 60 FPS)
     // NOTE: V-Sync can be enabled by graphic driver configuration
     if (CORE.Window.flags & FLAG_VSYNC_HINT) glfwSwapInterval(1);
-
 #endif
 #if defined(PLATFORM_WEB)
-    /*
-    EM_ASM(
+    EM_ASM
+    (
+        // This strategy works well while using raylib minimal web shell for emscripten,
+        // it re-scales the canvas to fullscreen using monitor resolution, for tools this
+        // is a good strategy but maybe games prefer to keep current canvas resolution and
+        // display it in fullscreen, adjusting monitor resolution if possible
         if (document.fullscreenElement) document.exitFullscreen();
-        else Module.requestFullscreen(true, true);
+        else Module.requestFullscreen(false, true);
     );
-    */
 
-    //EM_ASM(Module.requestFullscreen(false, false););
-
-    /*
+/*
     if (!CORE.Window.fullscreen)
     {
-        //https://github.com/emscripten-core/emscripten/issues/5124
+        // Option 1: Request fullscreen for the canvas element
+        // This option does not seem to work at all
+        //emscripten_request_fullscreen("#canvas", false);
+        
+        // Option 2: Request fullscreen for the canvas element with strategy
+        // This option does not seem to work at all
+        // Ref: https://github.com/emscripten-core/emscripten/issues/5124
+        // EmscriptenFullscreenStrategy strategy = {
+            // .scaleMode = EMSCRIPTEN_FULLSCREEN_SCALE_STRETCH, //EMSCRIPTEN_FULLSCREEN_SCALE_ASPECT,
+            // .canvasResolutionScaleMode = EMSCRIPTEN_FULLSCREEN_CANVAS_SCALE_STDDEF,
+            // .filteringMode = EMSCRIPTEN_FULLSCREEN_FILTERING_DEFAULT,
+            // .canvasResizedCallback = EmscriptenWindowResizedCallback,
+            // .canvasResizedCallbackUserData = NULL
+        // };
+        //emscripten_request_fullscreen_strategy("#canvas", EM_FALSE, &strategy);
+        
+        // Option 3: Request fullscreen for the canvas element with strategy 
+        // It works as expected but only inside the browser (client area)
         EmscriptenFullscreenStrategy strategy = {
-            .scaleMode = EMSCRIPTEN_FULLSCREEN_SCALE_STRETCH, //EMSCRIPTEN_FULLSCREEN_SCALE_ASPECT,
+            .scaleMode = EMSCRIPTEN_FULLSCREEN_SCALE_ASPECT,
             .canvasResolutionScaleMode = EMSCRIPTEN_FULLSCREEN_CANVAS_SCALE_STDDEF,
             .filteringMode = EMSCRIPTEN_FULLSCREEN_FILTERING_DEFAULT,
-            .canvasResizedCallback = EmscriptenWindowResizedCallback, //on_canvassize_changed,
+            .canvasResizedCallback = EmscriptenWindowResizedCallback,
             .canvasResizedCallbackUserData = NULL
         };
+        emscripten_enter_soft_fullscreen("#canvas", &strategy);
 
-        emscripten_request_fullscreen("#canvas", false);
-        //emscripten_request_fullscreen_strategy("#canvas", EM_FALSE, &strategy);
-        //emscripten_enter_soft_fullscreen("canvas", &strategy);
-        TRACELOG(LOG_INFO, "emscripten_request_fullscreen_strategy");
+        int width, height;
+        emscripten_get_canvas_element_size("#canvas", &width, &height);
+        TRACELOG(LOG_WARNING, "Emscripten: Enter fullscreen: Canvas size: %i x %i", width, height);
     }
     else
     {
-        TRACELOG(LOG_INFO, "emscripten_exit_fullscreen");
-        emscripten_exit_fullscreen();
+        //emscripten_exit_fullscreen();
+        emscripten_exit_soft_fullscreen();
+        
+        int width, height;
+        emscripten_get_canvas_element_size("#canvas", &width, &height);
+        TRACELOG(LOG_WARNING, "Emscripten: Exit fullscreen: Canvas size: %i x %i", width, height);  
     }
-    */
+*/
 
     CORE.Window.fullscreen = !CORE.Window.fullscreen;          // Toggle fullscreen flag
     CORE.Window.flags ^= FLAG_FULLSCREEN_MODE;
@@ -5431,59 +5446,6 @@ static int32_t AndroidInputCallback(struct android_app *app, AInputEvent *event)
 #endif
 
 #if defined(PLATFORM_WEB)
-// Register fullscreen change events
-static EM_BOOL EmscriptenFullscreenChangeCallback(int eventType, const EmscriptenFullscreenChangeEvent *event, void *userData)
-{
-    //isFullscreen: int event->isFullscreen
-    //fullscreenEnabled: int event->fullscreenEnabled
-    //fs element nodeName: (char *) event->nodeName
-    //fs element id: (char *) event->id
-    //Current element size: (int) event->elementWidth, (int) event->elementHeight
-    //Screen size:(int) event->screenWidth, (int) event->screenHeight
-/*
-    if (event->isFullscreen)
-    {
-        CORE.Window.fullscreen = true;
-        TRACELOG(LOG_INFO, "WEB: Canvas scaled to fullscreen. ElementSize: (%ix%i), ScreenSize(%ix%i)", event->elementWidth, event->elementHeight, event->screenWidth, event->screenHeight);
-    }
-    else
-    {
-        CORE.Window.fullscreen = false;
-        TRACELOG(LOG_INFO, "WEB: Canvas scaled to windowed. ElementSize: (%ix%i), ScreenSize(%ix%i)", event->elementWidth, event->elementHeight, event->screenWidth, event->screenHeight);
-    }
-
-    // TODO: Depending on scaling factor (screen vs element), calculate factor to scale mouse/touch input
-*/
-    return 0;
-}
-
-// Register keyboard input events
-static EM_BOOL EmscriptenKeyboardCallback(int eventType, const EmscriptenKeyboardEvent *keyEvent, void *userData)
-{
-    if ((eventType == EMSCRIPTEN_EVENT_KEYDOWN) && (keyEvent->keyCode == 27))  // ESCAPE key (strcmp(keyEvent->code, "Escape") == 0)
-    {
-        // WARNING: Not executed when pressing Esc to exit fullscreen, it seems document has priority over #canvas
-
-        emscripten_exit_pointerlock();
-        CORE.Window.fullscreen = false;
-        //TRACELOG(LOG_INFO, "CORE.Window.fullscreen = %s", CORE.Window.fullscreen? "true" : "false");
-    }
-
-    return 0;
-}
-
-// Register mouse input events
-static EM_BOOL EmscriptenMouseCallback(int eventType, const EmscriptenMouseEvent *mouseEvent, void *userData)
-{
-    // Lock mouse pointer when click on screen
-    if (eventType == EMSCRIPTEN_EVENT_CLICK)
-    {
-        // TODO: Manage mouse events if required (note that GLFW JS wrapper manages it now)
-    }
-
-    return 0;
-}
-
 // Register touch input events
 static EM_BOOL EmscriptenTouchCallback(int eventType, const EmscriptenTouchEvent *touchEvent, void *userData)
 {
@@ -5568,16 +5530,6 @@ static EM_BOOL EmscriptenGamepadCallback(int eventType, const EmscriptenGamepadE
     // TODO: Test gamepadEvent->index
 
     return 0;
-}
-
-static EM_BOOL EmscriptenWindowResizedCallback(int eventType, const void *reserved, void *userData)
-{
-    double width, height;
-    emscripten_get_element_css_size("canvas", &width, &height);
-
-    // TODO.
-
-    return true;
 }
 #endif
 
