@@ -243,10 +243,10 @@ static Material LoadMaterialPBR(Color albedo, float metalness, float roughness)
 // Texture maps generation (PBR)
 //-------------------------------------------------------------------------------------------
 // Generate cubemap texture from HDR texture
-TextureCubemap GenTextureCubemap(Shader shader, Texture2D panorama, int size, int format)
+static TextureCubemap GenTextureCubemap(Shader shader, Texture2D panorama, int size, int format)
 {
     TextureCubemap cubemap = { 0 };
-#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
+
     rlDisableBackfaceCulling();     // Disable backface culling to render inside the cube
 
     // STEP 1: Setup framebuffer
@@ -281,11 +281,6 @@ TextureCubemap GenTextureCubemap(Shader shader, Texture2D panorama, int size, in
         MatrixLookAt((Vector3){ 0.0f, 0.0f, 0.0f }, (Vector3){  0.0f,  0.0f, -1.0f }, (Vector3){ 0.0f, -1.0f,  0.0f })
     };
 
-#if !defined(GENTEXTURECUBEMAP_USE_BATCH_SYSTEM)
-    rlActiveTextureSlot(0);
-    rlEnableTexture(panorama.id);
-#endif
-
     rlViewport(0, 0, size, size);   // Set viewport to current fbo dimensions
 
     for (int i = 0; i < 6; i++)
@@ -294,18 +289,11 @@ TextureCubemap GenTextureCubemap(Shader shader, Texture2D panorama, int size, in
         rlFramebufferAttach(fbo, cubemap.id, RL_ATTACHMENT_COLOR_CHANNEL0, RL_ATTACHMENT_CUBEMAP_POSITIVE_X + i, 0);
 
         rlEnableFramebuffer(fbo);
-#if defined(GENTEXTURECUBEMAP_USE_BATCH_SYSTEM)
         rlSetTexture(panorama.id);   // WARNING: It must be called after enabling current framebuffer if using internal batch system!
-#endif
-        rlClearScreenBuffers();
-        rlLoadDrawCube();
 
-#if defined(GENTEXTURECUBEMAP_USE_BATCH_SYSTEM)
-        // Using internal batch system instead of raw OpenGL cube creating+drawing
-        // NOTE: DrawCubeV() is actually provided by models.c! -> GenTextureCubemap() should be moved to user code!
+        rlClearScreenBuffers();
         DrawCubeV(Vector3Zero(), Vector3One(), WHITE);
         rlDrawRenderBatch(RLGL.currentBatch);
-#endif
     }
     //------------------------------------------------------------------------------------------
 
@@ -325,16 +313,15 @@ TextureCubemap GenTextureCubemap(Shader shader, Texture2D panorama, int size, in
     cubemap.height = size;
     cubemap.mipmaps = 1;
     cubemap.format = PIXELFORMAT_UNCOMPRESSED_R32G32B32;
-#endif
+
     return cubemap;
 }
 
 // Generate irradiance texture using cubemap data
-TextureCubemap GenTextureIrradiance(Shader shader, TextureCubemap cubemap, int size)
+static TextureCubemap GenTextureIrradiance(Shader shader, TextureCubemap cubemap, int size)
 {
     TextureCubemap irradiance = { 0 };
 
-#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     rlDisableBackfaceCulling();     // Disable backface culling to render inside the cube
 
     // STEP 1: Setup framebuffer
@@ -398,16 +385,15 @@ TextureCubemap GenTextureIrradiance(Shader shader, TextureCubemap cubemap, int s
     irradiance.height = size;
     irradiance.mipmaps = 1;
     irradiance.format = PIXELFORMAT_UNCOMPRESSED_R32G32B32;
-#endif
+
     return irradiance;
 }
 
 // Generate prefilter texture using cubemap data
-TextureCubemap GenTexturePrefilter(Shader shader, TextureCubemap cubemap, int size)
+static TextureCubemap GenTexturePrefilter(Shader shader, TextureCubemap cubemap, int size)
 {
     TextureCubemap prefilter = { 0 };
 
-#if defined(GRAPHICS_API_OPENGL_33) // || defined(GRAPHICS_API_OPENGL_ES2)
     rlDisableBackfaceCulling();     // Disable backface culling to render inside the cube
 
     // STEP 1: Setup framebuffer
@@ -494,16 +480,16 @@ TextureCubemap GenTexturePrefilter(Shader shader, TextureCubemap cubemap, int si
     prefilter.height = size;
     prefilter.mipmaps = MAX_MIPMAP_LEVELS;
     prefilter.format = PIXELFORMAT_UNCOMPRESSED_R32G32B32;
-#endif
+
     return prefilter;
 }
 
 // Generate BRDF texture using cubemap data
 // TODO: Review implementation: https://github.com/HectorMF/BRDFGenerator
-Texture2D GenTextureBRDF(Shader shader, int size)
+static Texture2D GenTextureBRDF(Shader shader, int size)
 {
     Texture2D brdf = { 0 };
-#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
+
     // STEP 1: Setup framebuffer
     //------------------------------------------------------------------------------------------
     unsigned int rbo = rlLoadTextureDepth(size, size, true);
@@ -542,6 +528,6 @@ Texture2D GenTextureBRDF(Shader shader, int size)
     brdf.height = size;
     brdf.mipmaps = 1;
     brdf.format = PIXELFORMAT_UNCOMPRESSED_R32G32B32;
-#endif
+
     return brdf;
 }
