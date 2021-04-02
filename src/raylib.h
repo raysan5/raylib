@@ -701,17 +701,6 @@ typedef enum {
     GAMEPAD_AXIS_RIGHT_TRIGGER = 5      // [1..-1] (pressure-level)
 } GamepadAxis;
 
-// Mesh vertex attributes
-typedef enum {
-    MESH_VERTEX_POSITION    = 1,
-    MESH_VERTEX_TEXCOORD1   = 2,
-    MESH_VERTEX_TEXCOORD2   = 4,
-    MESH_VERTEX_NORMAL      = 8,
-    MESH_VERTEX_TANGENT     = 16,
-    MESH_VERTEX_COLOR       = 32,
-    MESH_VERTEX_INDEX       = 64
-} MeshVertexAttributes;
-
 // Material map index
 typedef enum {
     MATERIAL_MAP_ALBEDO    = 0,       // MATERIAL_MAP_DIFFUSE
@@ -1398,7 +1387,7 @@ RLAPI void UnloadModelAnimations(ModelAnimation* animations, unsigned int count)
 RLAPI bool IsModelAnimationValid(Model model, ModelAnimation anim);                         // Check model animation skeleton match
 
 // Mesh generation functions
-RLAPI Mesh GenMeshCustom(int vertexCount, int flags);                                       // Generate custom empty mesh (data initialized to 0)
+RLAPI Mesh GenMeshDefault(int vertexCount);                                                 // Generate an empty mesh with vertex: position, texcoords, normals, colors
 RLAPI Mesh GenMeshPoly(int sides, float radius);                                            // Generate polygonal mesh
 RLAPI Mesh GenMeshPlane(float width, float length, int resX, int resZ);                     // Generate plane mesh (with subdivisions)
 RLAPI Mesh GenMeshCube(float width, float height, float length);                            // Generate cuboid mesh

@@ -1501,6 +1501,25 @@ bool IsModelAnimationValid(Model model, ModelAnimation anim)
 }
 
 #if defined(SUPPORT_MESH_GENERATION)
+Mesh GenMeshDefault(int vertexCount)
+{
+    Mesh mesh = { 0 };
+
+    mesh.vertexCount = vertexCount;
+    mesh.triangleCount = vertexCount/3;
+
+    mesh.vertices = (float *)RL_CALLOC(mesh.vertexCount*3, sizeof(float));
+    mesh.texcoords = (float *)RL_CALLOC(mesh.vertexCount*2, sizeof(float));
+    mesh.normals = (float *)RL_CALLOC(mesh.vertexCount*3, sizeof(float));
+    mesh.colors = (unsigned char *)RL_CALLOC(mesh.vertexCount*4, sizeof(unsigned char));
+
+    // Upload vertex data to GPU (static mesh)
+    // NOTE: mesh.vboId array is allocated inside UploadMesh()
+    UploadMesh(&mesh, false);
+    
+    return mesh;
+}
+
 // Generate polygonal mesh
 Mesh GenMeshPoly(int sides, float radius)
 {
@@ -1869,7 +1888,7 @@ par_shapes_mesh* par_shapes_create_icosahedron();       // 20 sides polyhedron
 }
 
 // Generate sphere mesh (standard sphere)
-RLAPI Mesh GenMeshSphere(float radius, int rings, int slices)
+Mesh GenMeshSphere(float radius, int rings, int slices)
 {
     Mesh mesh = { 0 };
 
@@ -1911,7 +1930,7 @@ RLAPI Mesh GenMeshSphere(float radius, int rings, int slices)
 }
 
 // Generate hemi-sphere mesh (half sphere, no bottom cap)
-RLAPI Mesh GenMeshHemiSphere(float radius, int rings, int slices)
+Mesh GenMeshHemiSphere(float radius, int rings, int slices)
 {
     Mesh mesh = { 0 };
 

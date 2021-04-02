@@ -92,7 +92,7 @@
         #define RL_FREE(p)          free(p)
     #endif
 #else
-    #include "raylib.h"         // Required for: Model, Mesh, Material, Shader, Texture2D
+    #include "raylib.h"         // Required for: Shader, Texture2D
 #endif
 
 #include "raymath.h"            // Required for: Vector3, Matrix
@@ -2771,7 +2771,6 @@ void rlUnloadTexture(unsigned int id)
 {
     glDeleteTextures(1, &id);
 }
-
 
 // Generate mipmap data for selected texture
 void rlGenerateMipmaps(Texture2D *texture)
