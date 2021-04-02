@@ -4,10 +4,6 @@
 *
 *   CONFIGURATION:
 *
-*   #define SUPPORT_FONT_TEXTURE
-*       Draw rectangle shapes using font texture white character instead of default white texture
-*       Allows drawing rectangles and text with a single draw call, very useful for GUI systems!
-*
 *   #define SUPPORT_QUADS_DRAW_MODE
 *       Use QUADS instead of TRIANGLES for drawing when possible.
 *       Some lines-based shapes could still use lines
