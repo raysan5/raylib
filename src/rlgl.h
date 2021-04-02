@@ -3700,7 +3700,7 @@ TextureCubemap rlGenTextureCubemap(Shader shader, Texture2D panorama, int size, 
     rlUnloadFramebuffer(fbo);   // Unload framebuffer (and automatically attached depth texture/renderbuffer)
 
     // Reset viewport dimensions to default
-    rlViewport(0, 0, RLGL.State.framebufferWidth, RLGL.State.framebufferHeight);
+    rlViewport(0, 0, rlGetFramebufferWidth(), rlGetFramebufferHeight());
     rlEnableBackfaceCulling();
     //------------------------------------------------------------------------------------------
 
@@ -3773,7 +3773,7 @@ TextureCubemap rlGenTextureIrradiance(Shader shader, TextureCubemap cubemap, int
     rlUnloadFramebuffer(fbo);   // Unload framebuffer (and automatically attached depth texture/renderbuffer)
 
     // Reset viewport dimensions to default
-    rlViewport(0, 0, RLGL.State.framebufferWidth, RLGL.State.framebufferHeight);
+    rlViewport(0, 0, rlGetFramebufferWidth(), rlGetFramebufferHeight());
     rlEnableBackfaceCulling();
     //------------------------------------------------------------------------------------------
 
@@ -3848,7 +3848,7 @@ TextureCubemap rlGenTexturePrefilter(Shader shader, TextureCubemap cubemap, int 
         glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, mipWidth, mipHeight);
 
         float roughness = (float)mip/(float)(MAX_MIPMAP_LEVELS - 1);
-        glUniform1f(roughnessLoc, roughness);
+        rlSetUniform(roughnessLoc, &roughness, SHADER_UNIFORM_FLOAT);
 
         for (int i = 0; i < 6; i++)
         {
@@ -3872,7 +3872,7 @@ TextureCubemap rlGenTexturePrefilter(Shader shader, TextureCubemap cubemap, int 
     rlUnloadFramebuffer(fbo);   // Unload framebuffer (and automatically attached depth texture/renderbuffer)
 
     // Reset viewport dimensions to default
-    rlViewport(0, 0, RLGL.State.framebufferWidth, RLGL.State.framebufferHeight);
+    rlViewport(0, 0, rlGetFramebufferWidth(), rlGetFramebufferHeight());
     rlEnableBackfaceCulling();
     //------------------------------------------------------------------------------------------
 
@@ -3903,7 +3903,6 @@ Texture2D rlGenTextureBRDF(Shader shader, int size)
     // STEP 2: Draw to framebuffer
     //------------------------------------------------------------------------------------------
     // NOTE: Render BRDF LUT into a quad using FBO
-
     rlEnableShader(shader.id);
 
     rlViewport(0, 0, size, size);
@@ -3921,7 +3920,7 @@ Texture2D rlGenTextureBRDF(Shader shader, int size)
     rlUnloadFramebuffer(fbo);   // Unload framebuffer (and automatically attached depth texture/renderbuffer)
 
     // Reset viewport dimensions to default
-    rlViewport(0, 0, RLGL.State.framebufferWidth, RLGL.State.framebufferHeight);
+    rlViewport(0, 0, rlGetFramebufferWidth(), rlGetFramebufferHeight());
     //------------------------------------------------------------------------------------------
 
     brdf.width = size;
