@@ -577,11 +577,8 @@ RLAPI int rlGetVersion(void);                         // Returns current OpenGL 
 RLAPI int rlGetFramebufferWidth(void);                // Get default framebuffer width
 RLAPI int rlGetFramebufferHeight(void);               // Get default framebuffer height
 
-RLAPI Shader rlGetShaderDefault(void);                                    // Get default shader
-RLAPI Texture2D rlGetTextureDefault(void);                                // Get default texture
-RLAPI Texture2D rlGetShapesTexture(void);                                 // Get texture to draw shapes
-RLAPI Rectangle rlGetShapesTextureRec(void);                              // Get texture rectangle to draw shapes
-RLAPI void rlSetShapesTexture(Texture2D texture, Rectangle source);       // Define default texture used to draw shapes
+RLAPI Shader rlGetShaderDefault(void);                // Get default shader
+RLAPI Texture2D rlGetTextureDefault(void);            // Get default texture
 
 // Render batch management
 // NOTE: rlgl provides a default render batch to behave like OpenGL 1.1 immediate mode
@@ -840,8 +837,6 @@ typedef struct rlglData {
         Matrix stack[MAX_MATRIX_STACK_SIZE];// Matrix stack for push/pop
         int stackCounter;                   // Matrix stack counter
 
-        Texture2D shapesTexture;            // Texture used on shapes drawing (usually a white pixel)
-        Rectangle shapesTextureRec;         // Texture source rectangle used on shapes drawing
         unsigned int defaultTextureId;      // Default texture used on shapes/poly drawing (required by shader)
         unsigned int activeTextureId[MAX_BATCH_ACTIVE_TEXTURES];    // Active texture ids to be enabled on batch drawing (0 active by default)
         unsigned int defaultVShaderId;      // Default vertex shader id (used by default shader program)
@@ -1871,10 +1866,6 @@ void rlglInit(int width, int height)
     RLGL.State.framebufferWidth = width;
     RLGL.State.framebufferHeight = height;
 
-    // Init texture and rectangle used on basic shapes drawing
-    RLGL.State.shapesTexture = rlGetTextureDefault();
-    RLGL.State.shapesTextureRec = (Rectangle){ 0.0f, 0.0f, 1.0f, 1.0f };
-
     TRACELOG(LOG_INFO, "RLGL: Default state initialized successfully");
 #endif
 
@@ -1985,37 +1976,6 @@ Texture2D rlGetTextureDefault(void)
     texture.format = PIXELFORMAT_UNCOMPRESSED_R8G8B8A8;
 #endif
     return texture;
-}
-
-// Get texture to draw shapes
-Texture2D rlGetShapesTexture(void)
-{
-#if defined(GRAPHICS_API_OPENGL_11)
-    Texture2D texture = { 0 };
-    return texture;
-#else
-    return RLGL.State.shapesTexture;
-#endif
-}
-
-// Get texture rectangle to draw shapes
-Rectangle rlGetShapesTextureRec(void)
-{
-#if defined(GRAPHICS_API_OPENGL_11)
-    Rectangle rec = { 0 };
-    return rec;
-#else
-    return RLGL.State.shapesTextureRec;
-#endif
-}
-
-// Define default texture used to draw shapes
-void rlSetShapesTexture(Texture2D texture, Rectangle source)
-{
-#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
-    RLGL.State.shapesTexture = texture;
-    RLGL.State.shapesTextureRec = source;
-#endif
 }
 
 // Render batch management
@@ -2881,7 +2841,7 @@ void *rlReadTexturePixels(Texture2D texture)
 
 #if defined(GRAPHICS_API_OPENGL_ES2)
     // glGetTexImage() is not available on OpenGL ES 2.0
-    // Texture2D width and height are required on OpenGL ES 2.0. There is no way to get it from texture id.
+    // Texture width and height are required on OpenGL ES 2.0. There is no way to get it from texture id.
     // Two possible Options:
     // 1 - Bind texture to color fbo attachment and glReadPixels()
     // 2 - Create an fbo, activate it, render quad with texture, glReadPixels()

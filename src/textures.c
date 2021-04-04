@@ -2950,12 +2950,6 @@ Image GetScreenData(void)
     return image;
 }
 
-// Define default texture used to draw shapes
-void SetShapesTexture(Texture2D texture, Rectangle source)
-{
-    rlSetShapesTexture(texture, source);
-}
-
 //------------------------------------------------------------------------------------
 // Texture configuration functions
 //------------------------------------------------------------------------------------
