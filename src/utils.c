@@ -245,8 +245,7 @@ bool SaveFileData(const char *fileName, void *data, unsigned int bytesToWrite)
     {
         if (saveFileData)
         {
-            saveFileData(fileName, data, bytesToWrite);
-            return success;
+            return saveFileData(fileName, data, bytesToWrite);
         }
 #if defined(SUPPORT_STANDARD_FILEIO)
         FILE *file = fopen(fileName, "wb");
@@ -340,8 +339,7 @@ bool SaveFileText(const char *fileName, char *text)
     {
         if (saveFileText)
         {
-            saveFileText(fileName, text);
-            return success;
+            return saveFileText(fileName, text);
         }
 #if defined(SUPPORT_STANDARD_FILEIO)
         FILE *file = fopen(fileName, "wt");
