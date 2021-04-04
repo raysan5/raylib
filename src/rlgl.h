@@ -3578,6 +3578,7 @@ void rlSetMatrixViewOffsetStereo(Matrix right, Matrix left)
 // Load and draw a 1x1 XY quad in NDC
 void rlLoadDrawQuad(void)
 {
+#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     unsigned int quadVAO = 0;
     unsigned int quadVBO = 0;
 
@@ -3612,11 +3613,13 @@ void rlLoadDrawQuad(void)
     // Delete buffers (VBO and VAO)
     glDeleteBuffers(1, &quadVBO);
     glDeleteVertexArrays(1, &quadVAO);
+#endif
 }
 
 // Load and draw a 1x1 3D cube in NDC
 void rlLoadDrawCube(void)
 {
+#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     unsigned int cubeVAO = 0;
     unsigned int cubeVBO = 0;
 
@@ -3688,6 +3691,7 @@ void rlLoadDrawCube(void)
     // Delete VBO and VAO
     glDeleteBuffers(1, &cubeVBO);
     glDeleteVertexArrays(1, &cubeVAO);
+#endif
 }
 
 //----------------------------------------------------------------------------------
