@@ -3236,6 +3236,8 @@ void DrawTexturePro(Texture2D texture, Rectangle source, Rectangle dest, Vector2
             bottomRight.x = x + (dx + dest.width)*cosRotation - (dy + dest.height)*sinRotation;
             bottomRight.y = y + (dx + dest.width)*sinRotation + (dy + dest.height)*cosRotation;
         }
+        
+        rlCheckRenderBatchLimit(4);     // Make sure there is enough free space on the batch buffer
 
         rlSetTexture(texture.id);
         rlBegin(RL_QUADS);
