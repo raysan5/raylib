@@ -980,19 +980,19 @@ RLAPI int GetRandomValue(int min, int max);                       // Returns a r
 RLAPI void TakeScreenshot(const char *fileName);                  // Takes a screenshot of current screen (filename extension defines format)
 RLAPI void SetConfigFlags(unsigned int flags);                    // Setup init configuration flags (view FLAGS)
 
-RLAPI void TraceLog(int logLevel, const char *text, ...);          // Show trace log messages (LOG_DEBUG, LOG_INFO, LOG_WARNING, LOG_ERROR)
-RLAPI void SetTraceLogLevel(int logLevel);                         // Set the current threshold (minimum) log level
+RLAPI void TraceLog(int logLevel, const char *text, ...);         // Show trace log messages (LOG_DEBUG, LOG_INFO, LOG_WARNING, LOG_ERROR)
+RLAPI void SetTraceLogLevel(int logLevel);                        // Set the current threshold (minimum) log level
 RLAPI void *MemAlloc(int size);                                   // Internal memory allocator
 RLAPI void *MemRealloc(void *ptr, int size);                      // Internal memory reallocator
 RLAPI void MemFree(void *ptr);                                    // Internal memory free
 
 // Set custom callbacks
 // WARNING: Callbacks setup is intended for advance users
-RLAPI void SetTraceLogCallback(TraceLogCallback callback);        // Set custom trace log
-RLAPI void SetLoadFileDataCallback(LoadFileDataCallback callback);  // Set custom file binary data loader
-RLAPI void SetSaveFileDataCallback(SaveFileDataCallback callback);  // Set custom file binary data saver
-RLAPI void SetLoadFileTextCallback(LoadFileTextCallback callback);  // Set custom file text data loader
-RLAPI void SetSaveFileTextCallback(SaveFileTextCallback callback);  // Set custom file text data saver
+RLAPI void SetTraceLogCallback(TraceLogCallback callback);         // Set custom trace log
+RLAPI void SetLoadFileDataCallback(LoadFileDataCallback callback); // Set custom file binary data loader
+RLAPI void SetSaveFileDataCallback(SaveFileDataCallback callback); // Set custom file binary data saver
+RLAPI void SetLoadFileTextCallback(LoadFileTextCallback callback); // Set custom file text data loader
+RLAPI void SetSaveFileTextCallback(SaveFileTextCallback callback); // Set custom file text data saver
 
 // Files management functions
 RLAPI unsigned char *LoadFileData(const char *fileName, unsigned int *bytesRead);     // Load file data as byte array (read)
@@ -1075,25 +1075,25 @@ RLAPI Vector2 GetTouchPosition(int index);                    // Returns touch p
 //------------------------------------------------------------------------------------
 // Gestures and Touch Handling Functions (Module: gestures)
 //------------------------------------------------------------------------------------
-RLAPI void SetGesturesEnabled(unsigned int flags);     // Enable a set of gestures using flags
-RLAPI bool IsGestureDetected(int gesture);                    // Check if a gesture have been detected
-RLAPI int GetGestureDetected(void);                           // Get latest detected gesture
-RLAPI int GetTouchPointsCount(void);                          // Get touch points count
-RLAPI float GetGestureHoldDuration(void);                     // Get gesture hold time in milliseconds
-RLAPI Vector2 GetGestureDragVector(void);                     // Get gesture drag vector
-RLAPI float GetGestureDragAngle(void);                        // Get gesture drag angle
-RLAPI Vector2 GetGesturePinchVector(void);                    // Get gesture pinch delta
-RLAPI float GetGesturePinchAngle(void);                       // Get gesture pinch angle
+RLAPI void SetGesturesEnabled(unsigned int flags);      // Enable a set of gestures using flags
+RLAPI bool IsGestureDetected(int gesture);              // Check if a gesture have been detected
+RLAPI int GetGestureDetected(void);                     // Get latest detected gesture
+RLAPI int GetTouchPointsCount(void);                    // Get touch points count
+RLAPI float GetGestureHoldDuration(void);               // Get gesture hold time in milliseconds
+RLAPI Vector2 GetGestureDragVector(void);               // Get gesture drag vector
+RLAPI float GetGestureDragAngle(void);                  // Get gesture drag angle
+RLAPI Vector2 GetGesturePinchVector(void);              // Get gesture pinch delta
+RLAPI float GetGesturePinchAngle(void);                 // Get gesture pinch angle
 
 //------------------------------------------------------------------------------------
 // Camera System Functions (Module: camera)
 //------------------------------------------------------------------------------------
-RLAPI void SetCameraMode(Camera camera, int mode);                // Set camera mode (multiple camera modes available)
-RLAPI void UpdateCamera(Camera *camera);                          // Update camera position for selected mode
+RLAPI void SetCameraMode(Camera camera, int mode);      // Set camera mode (multiple camera modes available)
+RLAPI void UpdateCamera(Camera *camera);                // Update camera position for selected mode
 
-RLAPI void SetCameraPanControl(int keyPan);                       // Set camera pan key to combine with mouse movement (free camera)
-RLAPI void SetCameraAltControl(int keyAlt);                       // Set camera alt key to combine with mouse movement (free camera)
-RLAPI void SetCameraSmoothZoomControl(int keySmoothZoom);         // Set camera smooth zoom key to combine with mouse (free camera)
+RLAPI void SetCameraPanControl(int keyPan);             // Set camera pan key to combine with mouse movement (free camera)
+RLAPI void SetCameraAltControl(int keyAlt);             // Set camera alt key to combine with mouse movement (free camera)
+RLAPI void SetCameraSmoothZoomControl(int keySmoothZoom); // Set camera smooth zoom key to combine with mouse (free camera)
 RLAPI void SetCameraMoveControls(int keyFront, int keyBack, int keyRight, int keyLeft, int keyUp, int keyDown); // Set camera move controls (1st person and 3rd person cameras)
 
 //------------------------------------------------------------------------------------
@@ -1107,6 +1107,25 @@ RLAPI void BeginVrDrawing(RenderTexture2D target);      // Begin VR simulator st
 RLAPI void EndVrDrawing(void);                          // End VR simulator stereo rendering
 RLAPI VrStereoConfig GetVrConfig(VrDeviceInfo device);  // Get stereo rendering configuration parameters
 
+//------------------------------------------------------------------------------------
+// Shaders System Functions (Module: core)
+// NOTE: This functions are useless when using OpenGL 1.1
+//------------------------------------------------------------------------------------
+RLAPI void BeginShaderMode(Shader shader);              // Begin custom shader drawing
+RLAPI void EndShaderMode(void);                         // End custom shader drawing (use default shader)
+RLAPI void BeginBlendMode(int mode);                    // Begin blending mode (alpha, additive, multiplied)
+RLAPI void EndBlendMode(void);                          // End blending mode (reset to default: alpha blending)
+
+// Shader management functions
+RLAPI Shader LoadShader(const char *vsFileName, const char *fsFileName);   // Load shader from files and bind default locations
+RLAPI Shader LoadShaderFromMemory(const char *vsCode, const char *fsCode); // Load shader from code strings and bind default locations
+RLAPI void UnloadShader(Shader shader);                                    // Unload shader from GPU memory (VRAM)
+RLAPI int GetShaderLocation(Shader shader, const char *uniformName);       // Get shader uniform location
+RLAPI int GetShaderLocationAttrib(Shader shader, const char *attribName);  // Get shader attribute location
+RLAPI void SetShaderValue(Shader shader, int locIndex, const void *value, int uniformType);               // Set shader uniform value
+RLAPI void SetShaderValueV(Shader shader, int locIndex, const void *value, int uniformType, int count);   // Set shader uniform value vector
+RLAPI void SetShaderValueMatrix(Shader shader, int locIndex, Matrix mat);         // Set shader uniform value (matrix 4x4)
+RLAPI void SetShaderValueTexture(Shader shader, int locIndex, Texture2D texture); // Set shader uniform value for texture
 
 //------------------------------------------------------------------------------------
 // Basic Shapes Drawing Functions (Module: shapes)
@@ -1252,8 +1271,8 @@ RLAPI Image GetScreenData(void);                                                
 
 // Texture configuration functions
 RLAPI void GenTextureMipmaps(Texture2D *texture);                                                        // Generate GPU mipmaps for a texture
-RLAPI void SetTextureFilter(Texture2D texture, int filter);                                          // Set texture scaling filter mode
-RLAPI void SetTextureWrap(Texture2D texture, int wrap);                                              // Set texture wrapping mode
+RLAPI void SetTextureFilter(Texture2D texture, int filter);                                              // Set texture scaling filter mode
+RLAPI void SetTextureWrap(Texture2D texture, int wrap);                                                  // Set texture wrapping mode
 
 // Texture drawing functions
 RLAPI void DrawTexture(Texture2D texture, int posX, int posY, Color tint);                               // Draw a Texture2D
@@ -1370,7 +1389,7 @@ RLAPI void UnloadModelKeepMeshes(Model model);                                  
 
 // Mesh loading/unloading functions
 RLAPI void UploadMesh(Mesh *mesh, bool dynamic);                                            // Upload vertex data into GPU and provided VAO/VBO ids
-RLAPI void DrawMesh(Mesh mesh, Material material, Matrix transform);                       // Draw a 3d mesh with material and transform
+RLAPI void DrawMesh(Mesh mesh, Material material, Matrix transform);                        // Draw a 3d mesh with material and transform
 RLAPI void DrawMeshInstanced(Mesh mesh, Material material, Matrix *transforms, int instances); // Draw multiple mesh instances with material and different transforms
 RLAPI void UnloadMesh(Mesh mesh);                                                           // Unload mesh data from CPU and GPU
 RLAPI bool ExportMesh(Mesh mesh, const char *fileName);                                     // Export mesh data to file, returns true on success
@@ -1427,28 +1446,6 @@ RLAPI RayHitInfo GetCollisionRayMesh(Ray ray, Mesh mesh, Matrix transform);     
 RLAPI RayHitInfo GetCollisionRayModel(Ray ray, Model model);                                            // Get collision info between ray and model
 RLAPI RayHitInfo GetCollisionRayTriangle(Ray ray, Vector3 p1, Vector3 p2, Vector3 p3);                  // Get collision info between ray and triangle
 RLAPI RayHitInfo GetCollisionRayGround(Ray ray, float groundHeight);                                    // Get collision info between ray and ground plane (Y-normal plane)
-
-//------------------------------------------------------------------------------------
-// Shaders System Functions (Module: rlgl)
-// NOTE: This functions are useless when using OpenGL 1.1
-//------------------------------------------------------------------------------------
-
-// Shading begin/end functions
-RLAPI void BeginShaderMode(Shader shader);                                // Begin custom shader drawing
-RLAPI void EndShaderMode(void);                                           // End custom shader drawing (use default shader)
-RLAPI void BeginBlendMode(int mode);                                      // Begin blending mode (alpha, additive, multiplied)
-RLAPI void EndBlendMode(void);                                            // End blending mode (reset to default: alpha blending)
-
-// Shader management functions
-RLAPI Shader LoadShader(const char *vsFileName, const char *fsFileName);  // Load shader from files and bind default locations
-RLAPI Shader LoadShaderFromMemory(const char *vsCode, const char *fsCode); // Load shader from code strings and bind default locations
-RLAPI void UnloadShader(Shader shader);                                   // Unload shader from GPU memory (VRAM)
-RLAPI int GetShaderLocation(Shader shader, const char *uniformName);      // Get shader uniform location
-RLAPI int GetShaderLocationAttrib(Shader shader, const char *attribName); // Get shader attribute location
-RLAPI void SetShaderValue(Shader shader, int locIndex, const void *value, int uniformType);               // Set shader uniform value
-RLAPI void SetShaderValueV(Shader shader, int locIndex, const void *value, int uniformType, int count);   // Set shader uniform value vector
-RLAPI void SetShaderValueMatrix(Shader shader, int locIndex, Matrix mat);         // Set shader uniform value (matrix 4x4)
-RLAPI void SetShaderValueTexture(Shader shader, int locIndex, Texture2D texture); // Set shader uniform value for texture
 
 //------------------------------------------------------------------------------------
 // Audio Loading and Playing Functions (Module: audio)
