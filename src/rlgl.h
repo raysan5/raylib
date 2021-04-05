@@ -1,6 +1,6 @@
 /**********************************************************************************************
 *
-*   rlgl v3.5 - raylib OpenGL abstraction layer
+*   rlgl v3.7 - raylib OpenGL abstraction layer
 *
 *   rlgl is a wrapper for multiple OpenGL versions (1.1, 2.1, 3.3 Core, ES 2.0) to
 *   pseudo-OpenGL 1.1 style functions (rlVertex, rlTranslate, rlRotate...).
@@ -901,8 +901,8 @@ static PFNGLVERTEXATTRIBDIVISOREXTPROC glVertexAttribDivisor = NULL;
 // Module specific Functions Declaration
 //----------------------------------------------------------------------------------
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
-static Shader rlLoadShaderDefault(void);    // Load default shader (just vertex positioning and texture coloring)
-static void rlUnloadShaderDefault(void);    // Unload default shader
+static void rlLoadShaderDefault(void);      // Load default shader (RLGL.State.defaultShader)
+static void rlUnloadShaderDefault(void);    // Unload default shader (RLGL.State.defaultShader)
 #endif  // GRAPHICS_API_OPENGL_33 || GRAPHICS_API_OPENGL_ES2
 #if defined(GRAPHICS_API_OPENGL_11)
 static int rlGenerateMipmapsData(unsigned char *data, int baseWidth, int baseHeight);   // Generate mipmaps data on CPU side
@@ -1816,7 +1816,7 @@ void rlglInit(int width, int height)
     else TRACELOG(LOG_WARNING, "TEXTURE: Failed to load default texture");
 
     // Init default Shader (customized for GL 3.3 and ES2)
-    RLGL.State.defaultShader = rlLoadShaderDefault();
+    rlLoadShaderDefault(); // RLGL.State.defaultShader
     RLGL.State.currentShader = RLGL.State.defaultShader;
 
     // Init default vertex arrays buffers
@@ -3700,13 +3700,13 @@ void rlLoadDrawCube(void)
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
 // Load default shader (just vertex positioning and texture coloring)
 // NOTE: This shader program is used for internal buffers
-static Shader rlLoadShaderDefault(void)
+// NOTE: It uses global variable: RLGL.State.defaultShader
+static void rlLoadShaderDefault(void)
 {
-    Shader shader = { 0 };
-    shader.locs = (int *)RL_CALLOC(MAX_SHADER_LOCATIONS, sizeof(int));
+    RLGL.State.defaultShader.locs = (int *)RL_CALLOC(MAX_SHADER_LOCATIONS, sizeof(int));
 
     // NOTE: All locations must be reseted to -1 (no location)
-    for (int i = 0; i < MAX_SHADER_LOCATIONS; i++) shader.locs[i] = -1;
+    for (int i = 0; i < MAX_SHADER_LOCATIONS; i++) RLGL.State.defaultShader.locs[i] = -1;
 
     // Vertex shader directly defined, no external file required
     const char *defaultVShaderStr =
@@ -3776,28 +3776,27 @@ static Shader rlLoadShaderDefault(void)
     RLGL.State.defaultVShaderId = rlCompileShader(defaultVShaderStr, GL_VERTEX_SHADER);     // Compile default vertex shader
     RLGL.State.defaultFShaderId = rlCompileShader(defaultFShaderStr, GL_FRAGMENT_SHADER);   // Compile default fragment shader
 
-    shader.id = rlLoadShaderProgram(RLGL.State.defaultVShaderId, RLGL.State.defaultFShaderId);
+    RLGL.State.defaultShader.id = rlLoadShaderProgram(RLGL.State.defaultVShaderId, RLGL.State.defaultFShaderId);
 
-    if (shader.id > 0)
+    if (RLGL.State.defaultShader.id > 0)
     {
-        TRACELOG(LOG_INFO, "SHADER: [ID %i] Default shader loaded successfully", shader.id);
+        TRACELOG(LOG_INFO, "SHADER: [ID %i] Default shader loaded successfully", RLGL.State.defaultShader.id);
 
         // Set default shader locations: attributes locations
-        shader.locs[SHADER_LOC_VERTEX_POSITION] = glGetAttribLocation(shader.id, "vertexPosition");
-        shader.locs[SHADER_LOC_VERTEX_TEXCOORD01] = glGetAttribLocation(shader.id, "vertexTexCoord");
-        shader.locs[SHADER_LOC_VERTEX_COLOR] = glGetAttribLocation(shader.id, "vertexColor");
+        RLGL.State.defaultShader.locs[SHADER_LOC_VERTEX_POSITION] = glGetAttribLocation(RLGL.State.defaultShader.id, "vertexPosition");
+        RLGL.State.defaultShader.locs[SHADER_LOC_VERTEX_TEXCOORD01] = glGetAttribLocation(RLGL.State.defaultShader.id, "vertexTexCoord");
+        RLGL.State.defaultShader.locs[SHADER_LOC_VERTEX_COLOR] = glGetAttribLocation(RLGL.State.defaultShader.id, "vertexColor");
 
         // Set default shader locations: uniform locations
-        shader.locs[SHADER_LOC_MATRIX_MVP]  = glGetUniformLocation(shader.id, "mvp");
-        shader.locs[SHADER_LOC_COLOR_DIFFUSE] = glGetUniformLocation(shader.id, "colDiffuse");
-        shader.locs[SHADER_LOC_MAP_DIFFUSE] = glGetUniformLocation(shader.id, "texture0");
+        RLGL.State.defaultShader.locs[SHADER_LOC_MATRIX_MVP]  = glGetUniformLocation(RLGL.State.defaultShader.id, "mvp");
+        RLGL.State.defaultShader.locs[SHADER_LOC_COLOR_DIFFUSE] = glGetUniformLocation(RLGL.State.defaultShader.id, "colDiffuse");
+        RLGL.State.defaultShader.locs[SHADER_LOC_MAP_DIFFUSE] = glGetUniformLocation(RLGL.State.defaultShader.id, "texture0");
     }
-    else TRACELOG(LOG_WARNING, "SHADER: [ID %i] Failed to load default shader", shader.id);
-
-    return shader;
+    else TRACELOG(LOG_WARNING, "SHADER: [ID %i] Failed to load default shader", RLGL.State.defaultShader.id);
 }
 
 // Unload default shader
+// NOTE: It uses global variable: RLGL.State.defaultShader
 static void rlUnloadShaderDefault(void)
 {
     glUseProgram(0);
