@@ -309,29 +309,15 @@ typedef enum {
         unsigned char a;
     } Color;
 
-    // Rectangle type
-    typedef struct Rectangle {
-        float x;
-        float y;
-        float width;
-        float height;
-    } Rectangle;
-
     // Texture type
     // NOTE: Data stored in GPU memory
-    typedef struct Texture {
+    typedef struct Texture2D {
         unsigned int id;        // OpenGL texture id
         int width;              // Texture base width
         int height;             // Texture base height
         int mipmaps;            // Mipmap levels, 1 by default
         int format;             // Data format (PixelFormat)
-    } Texture;
-
-    // Texture2D type, same as Texture
-    typedef Texture Texture2D;
-
-    // TextureCubemap type, actually, same as Texture
-    typedef Texture TextureCubemap;
+    } Texture2D;
 
     // Shader type (generic)
     typedef struct Shader {
@@ -451,24 +437,6 @@ typedef enum {
         SHADER_UNIFORM_IVEC4,
         SHADER_UNIFORM_SAMPLER2D
     } ShaderUniformDataType;
-
-    // Material map type
-    typedef enum {
-        MATERIAL_MAP_ALBEDO    = 0,       // MATERIAL_MAP_DIFFUSE
-        MATERIAL_MAP_METALNESS = 1,       // MATERIAL_MAP_SPECULAR
-        MATERIAL_MAP_NORMAL    = 2,
-        MATERIAL_MAP_ROUGHNESS = 3,
-        MATERIAL_MAP_OCCLUSION,
-        MATERIAL_MAP_EMISSION,
-        MATERIAL_MAP_HEIGHT,
-        MATERIAL_MAP_CUBEMAP,             // NOTE: Uses GL_TEXTURE_CUBE_MAP
-        MATERIAL_MAP_IRRADIANCE,          // NOTE: Uses GL_TEXTURE_CUBE_MAP
-        MATERIAL_MAP_PREFILTER,           // NOTE: Uses GL_TEXTURE_CUBE_MAP
-        MATERIAL_MAP_BRDG
-    } MaterialMapIndex;
-
-    #define MATERIAL_MAP_DIFFUSE      MATERIAL_MAP_ALBEDO
-    #define MATERIAL_MAP_SPECULAR     MATERIAL_MAP_METALNESS
 #endif
 
 #if defined(__cplusplus)
@@ -906,7 +874,7 @@ static void rlUnloadShaderDefault(void);    // Unload default shader (RLGL.State
 #endif  // GRAPHICS_API_OPENGL_33 || GRAPHICS_API_OPENGL_ES2
 #if defined(GRAPHICS_API_OPENGL_11)
 static int rlGenerateMipmapsData(unsigned char *data, int baseWidth, int baseHeight);   // Generate mipmaps data on CPU side
-static Color *rlGenNextMipmapData(Color *srcData, int srcWidth, int srcHeight);         // Geenrate next mipmap level on CPU side
+static Color *rlGenNextMipmapData(Color *srcData, int srcWidth, int srcHeight);         // Generate next mipmap level on CPU side
 #endif
 static int rlGetPixelDataSize(int width, int height, int format);   // Get pixel data size in bytes (image or texture)
 
@@ -3938,7 +3906,7 @@ static Color *rlGenNextMipmapData(Color *srcData, int srcWidth, int srcHeight)
 
     return mipmap;
 }
-#endif
+#endif      // GRAPHICS_API_OPENGL_11
 
 // Get pixel data size in bytes (image or texture)
 // NOTE: Size depends on pixel format
