@@ -4330,7 +4330,7 @@ static void InitGLTFBones(Model* model, const cgltf_data* data)
                 currentTransform->rotation = QuaternionMultiply(parentTransform->rotation, currentTransform->rotation);
                 currentTransform->translation = Vector3RotateByQuaternion(currentTransform->translation, parentTransform->rotation);
                 currentTransform->translation = Vector3Add(currentTransform->translation, parentTransform->translation);
-                currentTransform->scale = Vector3Multiply(parentTransform->scale, parentTransform->scale);
+                currentTransform->scale = Vector3Multiply(currentTransform->scale, parentTransform->scale);
                 completedBones[i] = true;
                 numberCompletedBones++;
             }
