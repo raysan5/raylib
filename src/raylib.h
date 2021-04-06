@@ -463,6 +463,8 @@ typedef struct VrDeviceInfo {
 
 // VR Stereo rendering configuration for simulator
 typedef struct VrStereoConfig {
+    Matrix projection[2];           // VR projection matrices (per eye)
+    Matrix viewOffset[2];           // VR view offset matrices (per eye)
     float leftLensCenter[2];        // VR left lens center
     float rightLensCenter[2];       // VR right lens center
     float leftScreenCenter[2];      // VR left screen center
@@ -957,12 +959,18 @@ RLAPI void BeginMode3D(Camera3D camera);                          // Initializes
 RLAPI void EndMode3D(void);                                       // Ends 3D mode and returns to default 2D orthographic mode
 RLAPI void BeginTextureMode(RenderTexture2D target);              // Initializes render texture for drawing
 RLAPI void EndTextureMode(void);                                  // Ends drawing to render texture
-RLAPI void BeginScissorMode(int x, int y, int width, int height); // Begin scissor mode (define screen area for following drawing)
-RLAPI void EndScissorMode(void);                                  // End scissor mode
 RLAPI void BeginShaderMode(Shader shader);                        // Begin custom shader drawing
 RLAPI void EndShaderMode(void);                                   // End custom shader drawing (use default shader)
 RLAPI void BeginBlendMode(int mode);                              // Begin blending mode (alpha, additive, multiplied)
 RLAPI void EndBlendMode(void);                                    // End blending mode (reset to default: alpha blending)
+RLAPI void BeginScissorMode(int x, int y, int width, int height); // Begin scissor mode (define screen area for following drawing)
+RLAPI void EndScissorMode(void);                                  // End scissor mode
+RLAPI void BeginVrStereoMode(RenderTexture2D target, VrStereoConfig config); // Begin stereo rendering (requires VR simulator)
+RLAPI void EndVrStereoMode(void);                                 // End stereo rendering (requires VR simulator)
+
+// VR stereo config functions for VR simulator
+RLAPI VrStereoConfig LoadVrStereoMode(VrDeviceInfo device);       // Load VR stereo config for VR simulator device parameters
+RLAPI void UnloadVrStereoConfig(VrStereoConfig config);           // Unload VR stereo config
 
 // Shader management functions
 // NOTE: Shader functionality is not available on OpenGL 1.1
@@ -1111,17 +1119,6 @@ RLAPI void SetCameraPanControl(int keyPan);             // Set camera pan key to
 RLAPI void SetCameraAltControl(int keyAlt);             // Set camera alt key to combine with mouse movement (free camera)
 RLAPI void SetCameraSmoothZoomControl(int keySmoothZoom); // Set camera smooth zoom key to combine with mouse (free camera)
 RLAPI void SetCameraMoveControls(int keyFront, int keyBack, int keyRight, int keyLeft, int keyUp, int keyDown); // Set camera move controls (1st person and 3rd person cameras)
-
-//------------------------------------------------------------------------------------
-// VR Simulator Functions (Module: core)
-//------------------------------------------------------------------------------------
-RLAPI void InitVrSimulator(VrDeviceInfo device);        // Init VR simulator for selected device parameters
-RLAPI void CloseVrSimulator(void);                      // Close VR simulator for current device
-RLAPI bool IsVrSimulatorReady(void);                    // Detect if VR simulator is ready
-RLAPI void UpdateVrTracking(Camera *camera);            // Update VR tracking (position and orientation) and camera
-RLAPI void BeginVrDrawing(RenderTexture2D target);      // Begin VR simulator stereo rendering (using provided fbo)
-RLAPI void EndVrDrawing(void);                          // End VR simulator stereo rendering
-RLAPI VrStereoConfig GetVrConfig(VrDeviceInfo device);  // Get stereo rendering configuration parameters
 
 //------------------------------------------------------------------------------------
 // Basic Shapes Drawing Functions (Module: shapes)

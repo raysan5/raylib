@@ -12,9 +12,9 @@
 #include "raylib.h"
 
 #if defined(PLATFORM_DESKTOP)
-    #define GLSL_VERSION            330
+    #define GLSL_VERSION        330
 #else   // PLATFORM_RPI, PLATFORM_ANDROID, PLATFORM_WEB
-    #define GLSL_VERSION            100
+    #define GLSL_VERSION        100
 #endif
 
 int main(void)
@@ -51,11 +51,8 @@ int main(void)
         .chromaAbCorrection[3] = 0.0f,       // Chromatic aberration correction parameter 3
     };
     
-    // Init VR simulator (Oculus Rift CV1 parameters)
-    InitVrSimulator(device);
-    
-    // Get Vr stereo config parameters for device parameters
-    VrStereoConfig config = GetVrConfig(device);
+    // Load VR stereo config for VR device parameteres (Oculus Rift CV1 parameters)
+    VrStereoConfig config = LoadVrStereoMode(device);
 
     // Distortion shader (uses device lens distortion and chroma)
     Shader distortion = LoadShader(0, TextFormat("resources/distortion%i.fs", GLSL_VERSION));
@@ -104,7 +101,7 @@ int main(void)
 
             ClearBackground(RAYWHITE);
 
-            BeginVrDrawing(target);
+            BeginVrStereoMode(target, config);
                 BeginMode3D(camera);
 
                     DrawCube(cubePosition, 2.0f, 2.0f, 2.0f, RED);
@@ -113,7 +110,7 @@ int main(void)
                     DrawGrid(40, 1.0f);
 
                 EndMode3D();
-            EndVrDrawing();
+            EndVrStereoMode();
             
             BeginShaderMode(distortion);
                 DrawTextureRec(target.texture, (Rectangle){ 0, 0, (float)target.texture.width, (float)-target.texture.height }, (Vector2){ 0.0f, 0.0f }, WHITE);
@@ -127,10 +124,10 @@ int main(void)
 
     // De-Initialization
     //--------------------------------------------------------------------------------------
+    UnloadVrStereoConfig(config);   // Unload stereo config
+    
     UnloadRenderTexture(target);    // Unload stereo render fbo
     UnloadShader(distortion);       // Unload distortion shader
-
-    CloseVrSimulator();             // Close VR simulator
 
     CloseWindow();                  // Close window and OpenGL context
     //--------------------------------------------------------------------------------------

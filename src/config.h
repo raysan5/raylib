@@ -57,8 +57,6 @@
 #define SUPPORT_COMPRESSION_API     1
 // Support saving binary data automatically to a generated storage.data file. This file is managed internally.
 #define SUPPORT_DATA_STORAGE        1
-// Support VR simulation functionality (stereo rendering)
-#define SUPPORT_VR_SIMULATOR        1
 
 // core: Configuration values
 //------------------------------------------------------------------------------------
