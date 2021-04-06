@@ -959,6 +959,22 @@ RLAPI void BeginTextureMode(RenderTexture2D target);              // Initializes
 RLAPI void EndTextureMode(void);                                  // Ends drawing to render texture
 RLAPI void BeginScissorMode(int x, int y, int width, int height); // Begin scissor mode (define screen area for following drawing)
 RLAPI void EndScissorMode(void);                                  // End scissor mode
+RLAPI void BeginShaderMode(Shader shader);                        // Begin custom shader drawing
+RLAPI void EndShaderMode(void);                                   // End custom shader drawing (use default shader)
+RLAPI void BeginBlendMode(int mode);                              // Begin blending mode (alpha, additive, multiplied)
+RLAPI void EndBlendMode(void);                                    // End blending mode (reset to default: alpha blending)
+
+// Shader management functions
+// NOTE: Shader functionality is not available on OpenGL 1.1
+RLAPI Shader LoadShader(const char *vsFileName, const char *fsFileName);   // Load shader from files and bind default locations
+RLAPI Shader LoadShaderFromMemory(const char *vsCode, const char *fsCode); // Load shader from code strings and bind default locations
+RLAPI int GetShaderLocation(Shader shader, const char *uniformName);       // Get shader uniform location
+RLAPI int GetShaderLocationAttrib(Shader shader, const char *attribName);  // Get shader attribute location
+RLAPI void SetShaderValue(Shader shader, int locIndex, const void *value, int uniformType);               // Set shader uniform value
+RLAPI void SetShaderValueV(Shader shader, int locIndex, const void *value, int uniformType, int count);   // Set shader uniform value vector
+RLAPI void SetShaderValueMatrix(Shader shader, int locIndex, Matrix mat);         // Set shader uniform value (matrix 4x4)
+RLAPI void SetShaderValueTexture(Shader shader, int locIndex, Texture2D texture); // Set shader uniform value for texture (sampler2d)
+RLAPI void UnloadShader(Shader shader);                                    // Unload shader from GPU memory (VRAM)
 
 // Screen-space-related functions
 RLAPI Ray GetMouseRay(Vector2 mousePosition, Camera camera);      // Returns a ray trace from mouse position
@@ -1106,26 +1122,6 @@ RLAPI void UpdateVrTracking(Camera *camera);            // Update VR tracking (p
 RLAPI void BeginVrDrawing(RenderTexture2D target);      // Begin VR simulator stereo rendering (using provided fbo)
 RLAPI void EndVrDrawing(void);                          // End VR simulator stereo rendering
 RLAPI VrStereoConfig GetVrConfig(VrDeviceInfo device);  // Get stereo rendering configuration parameters
-
-//------------------------------------------------------------------------------------
-// Shaders System Functions (Module: core)
-// NOTE: This functions are useless when using OpenGL 1.1
-//------------------------------------------------------------------------------------
-RLAPI void BeginShaderMode(Shader shader);              // Begin custom shader drawing
-RLAPI void EndShaderMode(void);                         // End custom shader drawing (use default shader)
-RLAPI void BeginBlendMode(int mode);                    // Begin blending mode (alpha, additive, multiplied)
-RLAPI void EndBlendMode(void);                          // End blending mode (reset to default: alpha blending)
-
-// Shader management functions
-RLAPI Shader LoadShader(const char *vsFileName, const char *fsFileName);   // Load shader from files and bind default locations
-RLAPI Shader LoadShaderFromMemory(const char *vsCode, const char *fsCode); // Load shader from code strings and bind default locations
-RLAPI int GetShaderLocation(Shader shader, const char *uniformName);       // Get shader uniform location
-RLAPI int GetShaderLocationAttrib(Shader shader, const char *attribName);  // Get shader attribute location
-RLAPI void SetShaderValue(Shader shader, int locIndex, const void *value, int uniformType);               // Set shader uniform value
-RLAPI void SetShaderValueV(Shader shader, int locIndex, const void *value, int uniformType, int count);   // Set shader uniform value vector
-RLAPI void SetShaderValueMatrix(Shader shader, int locIndex, Matrix mat);         // Set shader uniform value (matrix 4x4)
-RLAPI void SetShaderValueTexture(Shader shader, int locIndex, Texture2D texture); // Set shader uniform value for texture (sampler2d)
-RLAPI void UnloadShader(Shader shader);                                    // Unload shader from GPU memory (VRAM)
 
 //------------------------------------------------------------------------------------
 // Basic Shapes Drawing Functions (Module: shapes)
