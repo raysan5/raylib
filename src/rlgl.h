@@ -1868,8 +1868,7 @@ void rlLoadExtensions(void *loader)
 
         #if defined(GRAPHICS_API_OPENGL_21)
         if (GLAD_GL_VERSION_2_1) TRACELOG(LOG_INFO, "GL: OpenGL 2.1 profile supported");
-        #endif
-        #if defined(GRAPHICS_API_OPENGL_33)
+        #else
         if (GLAD_GL_VERSION_3_3) TRACELOG(LOG_INFO, "GL: OpenGL 3.3 Core profile supported");
         else TRACELOG(LOG_ERROR, "GL: OpenGL 3.3 Core profile not supported");
         #endif
