@@ -2067,36 +2067,19 @@ void EndScissorMode(void)
 }
 
 // Begin VR drawing configuration
-void BeginVrStereoMode(RenderTexture2D target, VrStereoConfig config)
+void BeginVrStereoMode(VrStereoConfig config)
 {
-#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
-    rlEnableFramebuffer(target.id);     // Setup framebuffer for stereo rendering
-    //glEnable(GL_FRAMEBUFFER_SRGB);    // Enable SRGB framebuffer (only if required)
-    rlClearScreenBuffers();             // Clear current framebuffer
-    
     rlEnableStereoRender();
     
     // Set stereo render matrices
     rlSetMatrixProjectionStereo(config.projection[0], config.projection[1]);
     rlSetMatrixViewOffsetStereo(config.viewOffset[0], config.viewOffset[1]);
-#endif
 }
 
 // End VR drawing process (and desktop mirror)
 void EndVrStereoMode(void)
 {
-#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     rlDisableStereoRender();
-
-    rlDisableFramebuffer();         // Unbind current framebuffer
-
-    // Reset viewport and default projection-modelview matrices
-    rlViewport(0, 0, GetScreenWidth(), GetScreenHeight());
-    rlSetMatrixProjection(MatrixOrtho(0.0, GetScreenWidth(), GetScreenHeight(), 0.0, 0.0, 1.0));
-    rlSetMatrixModelview(MatrixIdentity());
-
-    rlDisableDepthTest();
-#endif
 }
 
 // Load VR stereo config for VR simulator device parameters

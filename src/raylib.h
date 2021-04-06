@@ -965,7 +965,7 @@ RLAPI void BeginBlendMode(int mode);                              // Begin blend
 RLAPI void EndBlendMode(void);                                    // End blending mode (reset to default: alpha blending)
 RLAPI void BeginScissorMode(int x, int y, int width, int height); // Begin scissor mode (define screen area for following drawing)
 RLAPI void EndScissorMode(void);                                  // End scissor mode
-RLAPI void BeginVrStereoMode(RenderTexture2D target, VrStereoConfig config); // Begin stereo rendering (requires VR simulator)
+RLAPI void BeginVrStereoMode(VrStereoConfig config);              // Begin stereo rendering (requires VR simulator)
 RLAPI void EndVrStereoMode(void);                                 // End stereo rendering (requires VR simulator)
 
 // VR stereo config functions for VR simulator
