@@ -163,7 +163,7 @@
 #include <stdio.h>                  // Required for: sprintf() [Used in OpenURL()]
 #include <string.h>                 // Required for: strrchr(), strcmp(), strlen()
 #include <time.h>                   // Required for: time() [Used in InitTimer()]
-#include <math.h>                   // Required for: tan() [Used in BeginMode3D()], atan2f() [Used in LoadVrStereoMode()]
+#include <math.h>                   // Required for: tan() [Used in BeginMode3D()], atan2f() [Used in LoadVrStereoConfig()]
 
 #include <sys/stat.h>               // Required for: stat() [Used in GetFileModTime()]
 
@@ -2100,7 +2100,7 @@ void EndVrStereoMode(void)
 }
 
 // Load VR stereo config for VR simulator device parameters
-VrStereoConfig LoadVrStereoMode(VrDeviceInfo device)
+VrStereoConfig LoadVrStereoConfig(VrDeviceInfo device)
 {
     VrStereoConfig config = { 0 };
     

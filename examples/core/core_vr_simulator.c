@@ -52,7 +52,7 @@ int main(void)
     };
     
     // Load VR stereo config for VR device parameteres (Oculus Rift CV1 parameters)
-    VrStereoConfig config = LoadVrStereoMode(device);
+    VrStereoConfig config = LoadVrStereoConfig(device);
 
     // Distortion shader (uses device lens distortion and chroma)
     Shader distortion = LoadShader(0, TextFormat("resources/distortion%i.fs", GLSL_VERSION));
