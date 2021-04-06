@@ -224,13 +224,15 @@ void DrawCircleSector(Vector2 center, float radius, float startAngle, float endA
         endAngle = tmp;
     }
 
-    if (segments < 4)
+    int minSegments = (int)ceilf((endAngle - startAngle)/90);
+
+    if (segments < minSegments)
     {
         // Calculate the maximum angle between segments based on the error rate (usually 0.5f)
         float th = acosf(2*powf(1 - SMOOTH_CIRCLE_ERROR_RATE/radius, 2) - 1);
         segments = (int)((endAngle - startAngle)*ceilf(2*PI/th)/360);
 
-        if (segments <= 0) segments = 4;
+        if (segments <= 0) segments = minSegments;
     }
 
     float stepLength = (endAngle - startAngle)/(float)segments;
@@ -313,13 +315,15 @@ void DrawCircleSectorLines(Vector2 center, float radius, float startAngle, float
         endAngle = tmp;
     }
 
-    if (segments < 4)
+    int minSegments = (int)ceilf((endAngle - startAngle)/90);
+
+    if (segments < minSegments)
     {
         // Calculate the maximum angle between segments based on the error rate (usually 0.5f)
         float th = acosf(2*powf(1 - SMOOTH_CIRCLE_ERROR_RATE/radius, 2) - 1);
         segments = (int)((endAngle - startAngle)*ceilf(2*PI/th)/360);
 
-        if (segments <= 0) segments = 4;
+        if (segments <= 0) segments = minSegments;
     }
 
     float stepLength = (endAngle - startAngle)/(float)segments;
@@ -456,13 +460,15 @@ void DrawRing(Vector2 center, float innerRadius, float outerRadius, float startA
         endAngle = tmp;
     }
 
-    if (segments < 4)
+    int minSegments = (int)ceilf((endAngle - startAngle)/90);
+
+    if (segments < minSegments)
     {
         // Calculate the maximum angle between segments based on the error rate (usually 0.5f)
         float th = acosf(2*powf(1 - SMOOTH_CIRCLE_ERROR_RATE/outerRadius, 2) - 1);
         segments = (int)((endAngle - startAngle)*ceilf(2*PI/th)/360);
 
-        if (segments <= 0) segments = 4;
+        if (segments <= 0) segments = minSegments;
     }
 
     // Not a ring
@@ -547,13 +553,15 @@ void DrawRingLines(Vector2 center, float innerRadius, float outerRadius, float s
         endAngle = tmp;
     }
 
-    if (segments < 4)
+    int minSegments = (int)ceilf((endAngle - startAngle)/90);
+
+    if (segments < minSegments)
     {
         // Calculate the maximum angle between segments based on the error rate (usually 0.5f)
         float th = acosf(2*powf(1 - SMOOTH_CIRCLE_ERROR_RATE/outerRadius, 2) - 1);
         segments = (int)((endAngle - startAngle)*ceilf(2*PI/th)/360);
 
-        if (segments <= 0) segments = 4;
+        if (segments <= 0) segments = minSegments;
     }
 
     if (innerRadius <= 0.0f)
