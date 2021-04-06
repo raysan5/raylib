@@ -1051,7 +1051,8 @@ void ToggleFullscreen(void)
         GLFWmonitor** monitors = glfwGetMonitors(&monitorCount);
 
         int monitorIndex = GetCurrentMonitor();
-        // use GetCurrentMonitor so we correctly get the display the window is on
+        
+        // Use current monitor, so we correctly get the display the window is on
         GLFWmonitor* monitor = monitorIndex < monitorCount ?  monitors[monitorIndex] : NULL;
 
         if (!monitor)

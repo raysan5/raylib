@@ -724,7 +724,7 @@ Wave LoadWave(const char *fileName)
     return wave;
 }
 
-// Load wave from memory buffer, fileType refers to extension: i.e. "wav"
+// Load wave from memory buffer, fileType refers to extension: i.e. ".wav"
 Wave LoadWaveFromMemory(const char *fileType, const unsigned char *fileData, int dataSize)
 {
     Wave wave = { 0 };
