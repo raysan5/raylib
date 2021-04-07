@@ -118,6 +118,8 @@
     #endif
 #endif
 
+// OpenGL 2.1 uses most of OpenGL 3.3 Core functionality
+// WARNING: Specific parts are checked with #if defines
 #if defined(GRAPHICS_API_OPENGL_21)
     #define GRAPHICS_API_OPENGL_33
 #endif
@@ -664,10 +666,6 @@ RLAPI void rlLoadDrawQuad(void);     // Load and draw a quad
 
         #include <GL/gl.h>              // OpenGL 1.1 library
     #endif
-#endif
-
-#if defined(GRAPHICS_API_OPENGL_21)
-    #define GRAPHICS_API_OPENGL_33      // OpenGL 2.1 uses mostly OpenGL 3.3 Core functionality
 #endif
 
 #if defined(GRAPHICS_API_OPENGL_33)
@@ -1891,8 +1889,7 @@ int rlGetVersion(void)
     #else
         return OPENGL_21;
     #endif
-#endif
-#if defined(GRAPHICS_API_OPENGL_33)
+#elif defined(GRAPHICS_API_OPENGL_33)
     return OPENGL_33;
 #endif
 #if defined(GRAPHICS_API_OPENGL_ES2)
@@ -3689,8 +3686,7 @@ static void rlLoadShaderDefault(void)
     "attribute vec4 vertexColor;        \n"
     "varying vec2 fragTexCoord;         \n"
     "varying vec4 fragColor;            \n"
-#endif
-#if defined(GRAPHICS_API_OPENGL_33)
+#elif defined(GRAPHICS_API_OPENGL_33)
     "#version 330                       \n"
     "in vec3 vertexPosition;            \n"
     "in vec2 vertexTexCoord;            \n"
@@ -3718,8 +3714,7 @@ static void rlLoadShaderDefault(void)
 #if defined(GRAPHICS_API_OPENGL_ES2) || defined(GRAPHICS_API_OPENGL_21)
     "varying vec2 fragTexCoord;         \n"
     "varying vec4 fragColor;            \n"
-#endif
-#if defined(GRAPHICS_API_OPENGL_33)
+#elif defined(GRAPHICS_API_OPENGL_33)
     "#version 330       \n"
     "in vec2 fragTexCoord;              \n"
     "in vec4 fragColor;                 \n"
@@ -3732,8 +3727,7 @@ static void rlLoadShaderDefault(void)
 #if defined(GRAPHICS_API_OPENGL_ES2) || defined(GRAPHICS_API_OPENGL_21)
     "    vec4 texelColor = texture2D(texture0, fragTexCoord); \n" // NOTE: texture2D() is deprecated on OpenGL 3.3 and ES 3.0
     "    gl_FragColor = texelColor*colDiffuse*fragColor;      \n"
-#endif
-#if defined(GRAPHICS_API_OPENGL_33)
+#elif defined(GRAPHICS_API_OPENGL_33)
     "    vec4 texelColor = texture(texture0, fragTexCoord);   \n"
     "    finalColor = texelColor*colDiffuse*fragColor;        \n"
 #endif
