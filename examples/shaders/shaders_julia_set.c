@@ -42,7 +42,7 @@ int main(void)
     const int screenWidth = 800;
     const int screenHeight = 450;
 
-    SetConfigFlags(FLAG_WINDOW_HIGHDPI);
+    //SetConfigFlags(FLAG_WINDOW_HIGHDPI);
     InitWindow(screenWidth, screenHeight, "raylib [shaders] example - julia sets");
 
     // Load julia set shader
@@ -165,7 +165,7 @@ int main(void)
             BeginShaderMode(shader);
                 // WARNING: If FLAG_WINDOW_HIGHDPI is enabled, HighDPI monitor scaling should be considered
                 // when rendering the RenderTexture2D to fit in the HighDPI scaled Window
-                DrawTextureEx(target.texture, (Vector2){ 0.0f, 0.0f }, 0.0f, GetWindowScaleDPI().x, WHITE);
+                DrawTextureEx(target.texture, (Vector2){ 0.0f, 0.0f }, 0.0f, 1.0f, WHITE);
             EndShaderMode();
 
             if (showControls)
