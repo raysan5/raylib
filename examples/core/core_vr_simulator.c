@@ -39,9 +39,8 @@ int main(void)
         .lensSeparationDistance = 0.07f,     // Lens separation distance in meters
         .interpupillaryDistance = 0.07f,     // IPD (distance between pupils) in meters
     
-        // NOTE: CV1 uses a Fresnel-hybrid-asymmetric lenses with specific distortion compute shaders
-        // Following parameters are an approximation to distortion stereo rendering 
-        // but results differ from actual device
+        // NOTE: CV1 uses fresnel-hybrid-asymmetric lenses with specific compute shaders
+        // Following parameters are just an approximation to CV1 distortion stereo rendering 
         .lensDistortionValues[0] = 1.0f,     // Lens distortion constant parameter 0
         .lensDistortionValues[1] = 0.22f,    // Lens distortion constant parameter 1
         .lensDistortionValues[2] = 0.24f,    // Lens distortion constant parameter 2
@@ -85,9 +84,9 @@ int main(void)
     Camera camera = { 0 };
     camera.position = (Vector3){ 5.0f, 2.0f, 5.0f };    // Camera position
     camera.target = (Vector3){ 0.0f, 2.0f, 0.0f };      // Camera looking at point
-    camera.up = (Vector3){ 0.0f, 1.0f, 0.0f };          // Camera up vector (rotation towards target)
+    camera.up = (Vector3){ 0.0f, 1.0f, 0.0f };          // Camera up vector
     camera.fovy = 60.0f;                                // Camera field-of-view Y
-    camera.projection = CAMERA_PERSPECTIVE;                   // Camera type
+    camera.projection = CAMERA_PERSPECTIVE;             // Camera type
 
     Vector3 cubePosition = { 0.0f, 0.0f, 0.0f };
 
