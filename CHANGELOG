@@ -1,7 +1,63 @@
 changelog
 ---------
 
-Current Release:    raylib 3.5.0 (25 December 2020)
+Current Release:    raylib 3.7.0 (xx April 2021)
+
+-------------------------------------------------------------------------
+Release:     raylib 3.7 (xx April 2021)
+-------------------------------------------------------------------------
+KEY CHANGES:
+ - [core] REDESIGNED: VR simulator -> fbo/shader exposed to user
+ - [rlgl] REDESIGNED: More abstraction
+ - [rlgl] REVIEWED: Instancing and stereo rendering
+ - [utils] ADDED: File access callbacks system
+ - [*] RENAMED: enums values renamed for consistency
+
+Detailed changes:
+[core] ADDED: LoadVrStereoConfig()
+[core] ADDED: UnloadVrStereoConfig()
+[core] ADDED: BeginVrStereoMode()
+[core] ADDED: EndVrStereoMode()
+[core] ADDED: GetCurrentMonitor()
+[core] ADDED: SetGamepadMappings(), update SDL_GameControllerDB
+[core] RENAMED: LoadShaderCode() to LoadShaderFromMemory()
+[core] RENAMED: SetMatrixProjection() to rlSetMatrixProjection()
+[core] RENAMED: SetMatrixModelview() to rlSetMatrixModelview()
+[core] RENAMED: GetMatrixModelview() to rlGetMatrixModelview()      
+[core] RENAMED: GetMatrixProjection() to rlGetMatrixProjection()    
+[core] RENAMED: GetShaderDefault() to rlGetShaderDefault()
+[core] RENAMED: GetTextureDefault() to rlGetTextureDefault()
+[core] REMOVED: GetShapesTexture()
+[core] REMOVED: GetShapesTextureRec()
+[core] REMOVED: GetMouseCursor()
+[core] REMOVED: SetTraceLogExit()
+[core] REDESIGNED: GetFileExtension(), includes the .dot
+[core] REDESIGNED: IsFileExtension(), includes the .dot
+[shapes] REDESIGNED: void SetShapesTexture(Texture2D texture, Rectangle source);
+[shapes] ADDED: DrawLineBezierQuad()
+[shapes] REDESIGNED: DrawCircleSector(), to use float params
+[shapes] REDESIGNED: DrawCircleSectorLines(), to use float params
+[shapes] REDESIGNED: DrawRing(), to use float params
+[shapes] REDESIGNED: DrawRingLines(), to use float params
+[shapes] ADDED: CheckCollisionLines()
+[textures] ADDED: DrawTexturePoly()
+[text] REDESIGNED: DrawFPS()
+[models] ADDED: UploadMesh()
+[models] ADDED: DrawMesh()
+[models] ADDED: DrawMeshInstanced()
+[models] ADDED: UnloadModelAnimations()
+[models] ADDED: GenMeshDefault()
+[models] REMOVED: DrawGizmo()
+[models] REMOVED: LoadMeshes()
+[models] REMOVED: MeshNormalsSmooth()
+[audio] ADDED: LoadMusicStreamFromMemory()
+[auido] REVIEWED: jar_xm library
+[utils] ADDED: SetLoadFileDataCallback()
+[utils] ADDED: SetSaveFileDataCallback()
+[utils] ADDED: SetLoadFileTextCallback()
+[utils] ADDED: SetSaveFileTextCallback()
+[examples] ADDED:
+[*] renamed some functions parameters for consistency
 
 -------------------------------------------------------------------------
 Release:     raylib 3.5 - 7th Anniversary Edition (25 December 2020)
