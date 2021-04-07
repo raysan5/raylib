@@ -123,7 +123,7 @@ int main(void)
             EndTextureMode();
             
             BeginShaderMode(distortion);
-               DrawTextureRec(target.texture, (Rectangle){ 0, 0, (float)target.texture.width, 
+                DrawTextureRec(target.texture, (Rectangle){ 0, 0, (float)target.texture.width, 
                               (float)-target.texture.height }, (Vector2){ 0.0f, 0.0f }, WHITE);
             EndShaderMode();
 
