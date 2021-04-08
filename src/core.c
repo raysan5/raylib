@@ -5031,7 +5031,7 @@ static void KeyCallback(GLFWwindow *window, int key, int scancode, int action, i
         else CORE.Input.Keyboard.currentKeyState[key] = 1;
 
         // Check if there is space available in the key queue
-        if ((CORE.Input.Keyboard.keyPressedQueueCount < MAX_KEY_PRESSED_QUEUE) && (action == GLFW_RELEASE))
+        if ((CORE.Input.Keyboard.keyPressedQueueCount < MAX_KEY_PRESSED_QUEUE) && (action == GLFW_PRESS))
         {
             // Add character to the queue
             CORE.Input.Keyboard.keyPressedQueue[CORE.Input.Keyboard.keyPressedQueueCount] = key;
