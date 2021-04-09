@@ -291,3 +291,46 @@ Here the list with some highlights for `raylib 3.5`.
 A part of those changes, many new functions have been added, some redundant functions removed and many functions have been reviewed for consistency with the full API (function name, parameters name and order, code formatting...). Again, this release represents is a **great improvement for raylib and marks the way forward** for the library. Make sure to check [CHANGELOG](CHANGELOG) for details! Hope you enjoy it!
 
 Happy holidays! :)
+
+notes on raylib 3.7
+-------------------
+
+April 2021, it's been about 4 months since last raylib release and here it is already a new one, this time with a bunch of internal redesigns and improvements. Surprisingly, on April the 8th I was awarded for a second time with the [Google Open Source Peer Bonus Award](https://opensource.googleblog.com/2021/04/announcing-first-group-of-google-open-source-peer-bonus-winners.html) for my contribution to open source world with raylib and it seems the library is getting some traction, what a better moment for a new release? Let's see what can be found in this new version:
+
+Let's start with some numbers:
+
+ - **+100** closed issues (for a TOTAL of **+900**!)
+ - **+350** commits since previous RELEASE
+ - **+50** functions ADDED (**+30** of them to rlgl API)
+ - **+30** functions REVIEWED/REDESIGNED
+ - **+30** new contributors (for a TOTAL of **+200**!)
+ 
+Highlights for `raylib 3.7`:
+
+ - [rlgl] REDESIGNED: Greater abstraction level, some functionality moved to core module
+ - [rlgl] REVIEWED: Instancing and stereo rendering
+ - [core] REDESIGNED: VR simulator, fbo/shader exposed to user
+ - [utils] ADDED: File access callbacks system
+ - [models] ADDED: glTF animations support (#1551) by @object71
+ - [audio] ADDED: Music streaming support from memory (#1606) by @nezvers
+ - [*] RENAMED: enums values renamed for consistency
+
+rlgl module has been completely redesigned to move Mesh/Material structures to [models] module. Still some work to do, broken elements:
+   - Many functions renamed to follow rl*() convention
+   - Some internal functions exposed in the API
+   - Some functionality moved to other modules
+   - Reorganized all functions by categories
+   - Make sure it keeps working with OpenGL 1.1 and 2.1
+   - [models] OpenGL 1.1 mesh rendering: DrawMesh()
+   - [models] Mesh Instancing: DrawMeshInstanced()
+   - [models] Stereo rendering: DrawMesh()
+   - [models] GL_FLOAT, GL_UNSIGNED_INT exposed
+   - [models] GenMeshCustom()
+   - [rlgl] GenTexture*() functions removal?
+
+...
+
+ 
+Beside those key changes, many functions have been reviewed with improvements and bug fixes, many of them contributed by the community! Again, this release represents is a **great improvement for raylib and marks the way forward** for the library. Make sure to check [CHANGELOG](CHANGELOG) for detailed list of changes! Hope you enjoy this new raylib installment!
+
+Happy gamedev/tools/graphics programming! :)
