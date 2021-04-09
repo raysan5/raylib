@@ -7,26 +7,12 @@ Current Release:    raylib 3.7.0 (xx April 2021)
 Release:     raylib 3.7 (xx April 2021)
 -------------------------------------------------------------------------
 KEY CHANGES:
- - [core] REDESIGNED: VR simulator -> fbo/shader exposed to user
- - [rlgl] REDESIGNED: More abstraction
-rlgl module has been completely redesigned to move Mesh/Material structures to [models] module. Still some work to do, broken elements:
-   - Many functions renamed to follow rl*() convention
-   - Some internal functions exposed in the API
-   - Some functionality moved to other modules
-   - Reorganized all functions by categories
-   - Make sure it keeps working with OpenGL 1.1 and 2.1
-   - [models] OpenGL 1.1 mesh rendering: DrawMesh()
-   - [models] Mesh Instancing: DrawMeshInstanced()
-   - [models] Stereo rendering: DrawMesh()
-   - [models] GL_FLOAT, GL_UNSIGNED_INT exposed
-   - [models] GenMeshCustom()
-   - [rlgl] GenTexture*() functions removal?
- 
+ - [rlgl] REDESIGNED: Greater abstraction level, some functionality moved to core module
  - [rlgl] REVIEWED: Instancing and stereo rendering
+ - [core] REDESIGNED: VR simulator, fbo/shader exposed to user
  - [utils] ADDED: File access callbacks system
- - [models] Gltf animation support (#1551) by @object71
- 
-[audio] ADDED: LoadMusicStreamFromMemory() (#1606) by @nezvers
+ - [models] ADDED: glTF animations support (#1551) by @object71
+ - [audio] ADDED: Music streaming support from memory (#1606) by @nezvers
  - [*] RENAMED: enums values renamed for consistency
 
 Detailed changes:
@@ -89,7 +75,11 @@ Detailed changes:
 [utils] ADDED: SetLoadFileTextCallback()
 [utils] ADDED: SetSaveFileTextCallback()
 [examples] ADDED: text_draw_3d (#1689) by @Demizdor
-[examples] REDESIGNED: shaders_mesh_intancing by @moliad
+[examples] ADDED: textures_poly (#1677) by @chriscamacho 
+[examples] ADDED: models_gltf_model (#1551) by @object71
+[examples] RENAMED: shaders_rlgl_mesh_instanced to shaders_mesh_intancing
+[examples] REDESIGNED: shaders_rlgl_mesh_instanced by @moliad
+[examples] REDESIGNED: core_vr_simulator
 [examples] REDESIGNED: models_yaw_pitch_roll
 [build] ADDED: Config flag: SUPPORT_STANDARD_FILEIO
 [build] ADDED: Config flag: SUPPORT_WINMM_HIGHRES_TIMER (#1641)
