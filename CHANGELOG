@@ -9,8 +9,24 @@ Release:     raylib 3.7 (xx April 2021)
 KEY CHANGES:
  - [core] REDESIGNED: VR simulator -> fbo/shader exposed to user
  - [rlgl] REDESIGNED: More abstraction
+rlgl module has been completely redesigned to move Mesh/Material structures to [models] module. Still some work to do, broken elements:
+   - Many functions renamed to follow rl*() convention
+   - Some internal functions exposed in the API
+   - Some functionality moved to other modules
+   - Reorganized all functions by categories
+   - Make sure it keeps working with OpenGL 1.1 and 2.1
+   - [models] OpenGL 1.1 mesh rendering: DrawMesh()
+   - [models] Mesh Instancing: DrawMeshInstanced()
+   - [models] Stereo rendering: DrawMesh()
+   - [models] GL_FLOAT, GL_UNSIGNED_INT exposed
+   - [models] GenMeshCustom()
+   - [rlgl] GenTexture*() functions removal?
+ 
  - [rlgl] REVIEWED: Instancing and stereo rendering
  - [utils] ADDED: File access callbacks system
+ - [models] Gltf animation support (#1551) by @object71
+ 
+[audio] ADDED: LoadMusicStreamFromMemory() (#1606) by @nezvers
  - [*] RENAMED: enums values renamed for consistency
 
 Detailed changes:
@@ -18,9 +34,10 @@ Detailed changes:
 [core] ADDED: UnloadVrStereoConfig()
 [core] ADDED: BeginVrStereoMode()
 [core] ADDED: EndVrStereoMode()
-[core] ADDED: GetCurrentMonitor()
-[core] ADDED: SetGamepadMappings(), update SDL_GameControllerDB
-[core] RENAMED: LoadShaderCode() to LoadShaderFromMemory()
+[core] ADDED: GetCurrentMonitor() (#1485) by @object71
+[core] ADDED: SetGamepadMappings() (#1506)
+[core] RENAMED: struct Camera: camera.type to camera.projection
+[core] RENAMED: LoadShaderCode() to LoadShaderFromMemory() (#1690)
 [core] RENAMED: SetMatrixProjection() to rlSetMatrixProjection()
 [core] RENAMED: SetMatrixModelview() to rlSetMatrixModelview()
 [core] RENAMED: GetMatrixModelview() to rlGetMatrixModelview()      
@@ -31,33 +48,60 @@ Detailed changes:
 [core] REMOVED: GetShapesTextureRec()
 [core] REMOVED: GetMouseCursor()
 [core] REMOVED: SetTraceLogExit()
+[core] REVIEWED: GetFileName() and GetDirectoryPath() (#1534) by @gilzoide
+[core] REVIEWED: Wait() to support FreeBSD (#1618)
+[core] REVIEWED: HighDPI support on macOS retina (#1510)
 [core] REDESIGNED: GetFileExtension(), includes the .dot
 [core] REDESIGNED: IsFileExtension(), includes the .dot
-[shapes] REDESIGNED: void SetShapesTexture(Texture2D texture, Rectangle source);
-[shapes] ADDED: DrawLineBezierQuad()
+[core] REDESIGNED: Compresion API to use sdefl/sinfl libs
+[rlgl] REMOVED: GenTexture*() functions (#721)
+[rlgl] REVIEWED: rlLoadShaderDefault() 
+[raymath] REVIEWED: QuaternionFromEuler() (#1651)
+[raymath] REVIEWED: MatrixRotateZYX() (#1642)
+[shapes] ADDED: DrawLineBezierQuad() (#1468) by @epsilon-phase
+[shapes] ADDED: CheckCollisionLines()
+[shapes] ADDED: CheckCollisionPointLine() by @mkupiec1
+[shapes] REVIEWED: CheckCollisionPointTriangle() by @mkupiec1
+[shapes] REDESIGNED: SetShapesTexture()
 [shapes] REDESIGNED: DrawCircleSector(), to use float params
 [shapes] REDESIGNED: DrawCircleSectorLines(), to use float params
 [shapes] REDESIGNED: DrawRing(), to use float params
 [shapes] REDESIGNED: DrawRingLines(), to use float params
-[shapes] ADDED: CheckCollisionLines()
-[textures] ADDED: DrawTexturePoly()
+[textures] ADDED: DrawTexturePoly() and example (#1677) by @chriscamacho
+[textures] ADDED: UnloadImageColors() for allocs consistency
+[textures] RENAMED: GetImageData() to LoadImageColors()
+[textures] REVIEWED: ImageClearBackground() and ImageDrawRectangleRec() (#1487) by @JeffM2501
+[textures] REVIEWED: DrawTexturePro() and DrawRectanglePro() transformations (#1632) by @ChrisDill
 [text] REDESIGNED: DrawFPS()
-[models] ADDED: UploadMesh()
+[models] ADDED: UploadMesh() (#1529)
 [models] ADDED: DrawMesh()
 [models] ADDED: DrawMeshInstanced()
-[models] ADDED: UnloadModelAnimations()
-[models] ADDED: GenMeshDefault()
+[models] ADDED: UnloadModelAnimations() (#1648) by @object71
+[models] ADDED: GenMeshDefault() (#1556)
 [models] REMOVED: DrawGizmo()
 [models] REMOVED: LoadMeshes()
 [models] REMOVED: MeshNormalsSmooth()
-[audio] ADDED: LoadMusicStreamFromMemory()
-[auido] REVIEWED: jar_xm library
+[models] REVIEWED: DrawLine3D() (#1643)
+[audio] REVIEWED: Multichannel sound system (#1548)
+[audio] REVIEWED: jar_xm library (#1701) by @jmorel33
 [utils] ADDED: SetLoadFileDataCallback()
 [utils] ADDED: SetSaveFileDataCallback()
 [utils] ADDED: SetLoadFileTextCallback()
 [utils] ADDED: SetSaveFileTextCallback()
-[examples] ADDED:
-[*] renamed some functions parameters for consistency
+[examples] ADDED: text_draw_3d (#1689) by @Demizdor
+[examples] REDESIGNED: shaders_mesh_intancing by @moliad
+[examples] REDESIGNED: models_yaw_pitch_roll
+[build] ADDED: Config flag: SUPPORT_STANDARD_FILEIO
+[build] ADDED: Config flag: SUPPORT_WINMM_HIGHRES_TIMER (#1641)
+[build] ADDED: Examples projects to VS2019 solution
+[build] REVIEWED: Makefile to support PLATFORM_RPI (#1580)
+[build] REVIEWED: Multiple typecast warnings by @JeffM2501
+[build] REDESIGNED: VS2019 project build paths
+[build] REDESIGNED: CMake build system by @object71
+[*] RENAMED: Several functions parameters for consistency
+[*] UPDATED: Multiple bindings to latest version
+[*] UPDATED: All external libraries to latest versions
+[*] Multiple code improvements and fixes by multiple contributors!
 
 -------------------------------------------------------------------------
 Release:     raylib 3.5 - 7th Anniversary Edition (25 December 2020)
