@@ -3168,7 +3168,11 @@ static Model LoadOBJ(const char *fileName)
         unsigned int dataSize = (unsigned int)strlen(fileData);
         char currentDir[1024] = { 0 };
         strcpy(currentDir, GetWorkingDirectory());
-        chdir(GetDirectoryPath(fileName));
+        const char *workingDir = GetDirectoryPath(fileName);
+        if (CHDIR(workingDir) != 0)
+        {
+            TRACELOG(LOG_WARNING, "MODEL: [%s] Failed to change working directory", workingDir);
+        }
 
         unsigned int flags = TINYOBJ_FLAG_TRIANGULATE;
         int ret = tinyobj_parse_obj(&attrib, &meshes, &meshCount, &materials, &materialCount, fileData, dataSize, flags);
@@ -3306,7 +3310,10 @@ static Model LoadOBJ(const char *fileName)
         RL_FREE(vnCount);
         RL_FREE(faceCount);
 
-        chdir(currentDir);
+        if (CHDIR(currentDir) != 0)
+        {
+            TRACELOG(LOG_WARNING, "MODEL: [%s] Failed to change working directory", currentDir);
+        }
     }
 
     return model;
