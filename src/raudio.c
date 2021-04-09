@@ -1230,8 +1230,14 @@ Music LoadMusicStream(const char *fileName)
         {
             jar_xm_set_max_loop_count(ctxXm, 0);    // Set infinite number of loops
 
+            unsigned int bits = 32;
+            if (AUDIO_DEVICE_FORMAT == ma_format_s16)
+                bits = 16;
+            else if (AUDIO_DEVICE_FORMAT == ma_format_u8)
+                bits = 8;
+ 
             // NOTE: Only stereo is supported for XM
-            music.stream = InitAudioStream(AUDIO.System.device.sampleRate, 16, AUDIO_DEVICE_CHANNELS);
+            music.stream = InitAudioStream(AUDIO.System.device.sampleRate, bits, AUDIO_DEVICE_CHANNELS);
             music.sampleCount = (unsigned int)jar_xm_get_remaining_samples(ctxXm)*2;    // 2 channels
             music.looping = true;   // Looping enabled by default
             jar_xm_reset(ctxXm);   // make sure we start at the beginning of the song
@@ -1398,8 +1404,14 @@ Music LoadMusicStreamFromMemory(const char *fileType, unsigned char* data, int d
             music.ctxType = MUSIC_MODULE_XM;
             jar_xm_set_max_loop_count(ctxXm, 0);    // Set infinite number of loops
 
+            unsigned int bits = 32;
+            if (AUDIO_DEVICE_FORMAT == ma_format_s16)
+                bits = 16;
+            else if (AUDIO_DEVICE_FORMAT == ma_format_u8)
+                bits = 8;
+
             // NOTE: Only stereo is supported for XM
-            music.stream = InitAudioStream(AUDIO.System.device.sampleRate, 16, 2);
+            music.stream = InitAudioStream(AUDIO.System.device.sampleRate, bits, 2);
             music.sampleCount = (unsigned int)jar_xm_get_remaining_samples(ctxXm)*2;    // 2 channels
             music.looping = true;   // Looping enabled by default
             jar_xm_reset(ctxXm);   // make sure we start at the beginning of the song
@@ -1639,8 +1651,24 @@ void UpdateMusicStream(Music music)
         #if defined(SUPPORT_FILEFORMAT_XM)
             case MUSIC_MODULE_XM:
             {
-                // NOTE: Internally this function considers 2 channels generation, so samplesCount/2
-                jar_xm_generate_samples_16bit((jar_xm_context_t *)music.ctxData, (short *)pcm, samplesCount/2);
+                switch (AUDIO_DEVICE_FORMAT)
+                {
+                case ma_format_f32:
+                    // NOTE: Internally this function considers 2 channels generation, so samplesCount/2
+                    jar_xm_generate_samples((jar_xm_context_t*)music.ctxData, (float*)pcm, samplesCount / 2);
+                    break;
+
+                case ma_format_s16:
+                    // NOTE: Internally this function considers 2 channels generation, so samplesCount/2
+                    jar_xm_generate_samples_16bit((jar_xm_context_t*)music.ctxData, (short*)pcm, samplesCount / 2);
+                    break;
+
+                case ma_format_u8:
+                    // NOTE: Internally this function considers 2 channels generation, so samplesCount/2
+                    jar_xm_generate_samples_8bit((jar_xm_context_t*)music.ctxData, (char*)pcm, samplesCount / 2);
+                    break;
+                }
+
             } break;
         #endif
         #if defined(SUPPORT_FILEFORMAT_MOD)
