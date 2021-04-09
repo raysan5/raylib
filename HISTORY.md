@@ -307,29 +307,17 @@ Let's start with some numbers:
  
 Highlights for `raylib 3.7`:
 
- - [rlgl] REDESIGNED: Greater abstraction level, some functionality moved to core module
- - [rlgl] REVIEWED: Instancing and stereo rendering
- - [core] REDESIGNED: VR simulator, fbo/shader exposed to user
- - [utils] ADDED: File access callbacks system
- - [models] ADDED: glTF animations support (#1551) by @object71
- - [audio] ADDED: Music streaming support from memory (#1606) by @nezvers
- - [*] RENAMED: enums values renamed for consistency
-
-rlgl module has been completely redesigned to move Mesh/Material structures to [models] module. Still some work to do, broken elements:
-   - Many functions renamed to follow rl*() convention
-   - Some internal functions exposed in the API
-   - Some functionality moved to other modules
-   - Reorganized all functions by categories
-   - Make sure it keeps working with OpenGL 1.1 and 2.1
-   - [models] OpenGL 1.1 mesh rendering: DrawMesh()
-   - [models] Mesh Instancing: DrawMeshInstanced()
-   - [models] Stereo rendering: DrawMesh()
-   - [models] GL_FLOAT, GL_UNSIGNED_INT exposed
-   - [models] GenMeshCustom()
-   - [rlgl] GenTexture*() functions removal?
-
-...
-
+ - REDESIGNED `rlgl` module for a greater abstraction level. Mesh and Materials structs references have been moved to a higher level, to `models` module as well as `DrawMesh()` and `DrawMeshInstanced()` functions. Some shaders functionality has also been moved to a higher level, to `core` module. Several `rlgl` functions names have been reviewed for consistency, following the `rl*()` prefix convention. Reorganized all functions by categories. GenTexture*() functions removal. Reiewed instancing and stereo rendering.
+ 
+ - REDESIGNED VR simulator along with stereo rendering mechanism, a new API has been added more comprehensive and better integrated with raylib, now stereo rendering can be combined with `RenderTexture` and `Shader` API allowing the user manage fbo and distortion shader directly.
+ 
+ - ADDED file access callbacks system
+ 
+ - ADDED: glTF animations support (#1551) by @object71
+ 
+ - ADDED: Music streaming support from memory (#1606) by @nezvers
+ 
+ - RENAMED: enums values renamed for consistency
  
 Beside those key changes, many functions have been reviewed with improvements and bug fixes, many of them contributed by the community! Again, this release represents is a **great improvement for raylib and marks the way forward** for the library. Make sure to check [CHANGELOG](CHANGELOG) for detailed list of changes! Hope you enjoy this new raylib installment!
 
