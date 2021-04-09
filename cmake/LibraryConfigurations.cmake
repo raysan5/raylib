@@ -73,7 +73,9 @@ elseif (${PLATFORM} MATCHES "DRM")
     find_library(DRM drm)
     find_library(GBM gbm)
     
-    include_directories(/usr/include/libdrm)
+    if (NOT CMAKE_CROSSCOMPILING)
+        include_directories(/usr/include/libdrm)
+    endif ()
     set(LIBS_PRIVATE ${GLESV2} ${EGL} ${DRM} ${GBM} pthread m dl)
 
 endif ()
