@@ -13,7 +13,7 @@ KEY CHANGES:
  - [utils] ADDED: File access callbacks system
  - [models] ADDED: glTF animations support (#1551) by @object71
  - [audio] ADDED: Music streaming support from memory (#1606) by @nezvers
- - [*] RENAMED: enums values renamed for consistency
+ - [*] RENAMED: enum types and enum values for consistency
 
 Detailed changes:
 [core] ADDED: LoadVrStereoConfig()
