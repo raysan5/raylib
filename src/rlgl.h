@@ -2409,11 +2409,11 @@ unsigned int rlLoadTexture(void *data, int width, int height, int format, int mi
         if (glInternalFormat != -1)
         {
             if (format < PIXELFORMAT_COMPRESSED_DXT1_RGB) glTexImage2D(GL_TEXTURE_2D, i, glInternalFormat, mipWidth, mipHeight, 0, glFormat, glType, (unsigned char *)data + mipOffset);
-        #if !defined(GRAPHICS_API_OPENGL_11)
+#if !defined(GRAPHICS_API_OPENGL_11)
             else glCompressedTexImage2D(GL_TEXTURE_2D, i, glInternalFormat, mipWidth, mipHeight, 0, mipSize, (unsigned char *)data + mipOffset);
-        #endif
+#endif
 
-        #if defined(GRAPHICS_API_OPENGL_33)
+#if defined(GRAPHICS_API_OPENGL_33)
             if (format == PIXELFORMAT_UNCOMPRESSED_GRAYSCALE)
             {
                 GLint swizzleMask[] = { GL_RED, GL_RED, GL_RED, GL_ONE };
@@ -2421,14 +2421,14 @@ unsigned int rlLoadTexture(void *data, int width, int height, int format, int mi
             }
             else if (format == PIXELFORMAT_UNCOMPRESSED_GRAY_ALPHA)
             {
-            #if defined(GRAPHICS_API_OPENGL_21)
+#if defined(GRAPHICS_API_OPENGL_21)
                 GLint swizzleMask[] = { GL_RED, GL_RED, GL_RED, GL_ALPHA };
-            #elif defined(GRAPHICS_API_OPENGL_33)
+#elif defined(GRAPHICS_API_OPENGL_33)
                 GLint swizzleMask[] = { GL_RED, GL_RED, GL_RED, GL_GREEN };
-            #endif
+#endif
                 glTexParameteriv(GL_TEXTURE_2D, GL_TEXTURE_SWIZZLE_RGBA, swizzleMask);
             }
-        #endif
+#endif
         }
 
         mipWidth /= 2;
