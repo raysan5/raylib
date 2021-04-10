@@ -18,7 +18,7 @@
 *   #define GRAPHICS_API_OPENGL_ES2
 *       Use selected OpenGL graphics backend, should be supported by platform
 *       Those preprocessor defines are only used on rlgl module, if OpenGL version is
-*       required by any other module, use rlGetVersion() tocheck it
+*       required by any other module, use rlGetVersion() to check it
 *
 *   #define RLGL_IMPLEMENTATION
 *       Generates the implementation of the library into the included file.
@@ -1454,7 +1454,7 @@ float rlGetLineWidth(void)
 // Enable line aliasing
 void rlEnableSmoothLines(void)
 {
-#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_21) || defined(GRAPHICS_API_OPENGL_11)
+#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_11)
     glEnable(GL_LINE_SMOOTH);
 #endif
 }
@@ -1462,7 +1462,7 @@ void rlEnableSmoothLines(void)
 // Disable line aliasing
 void rlDisableSmoothLines(void)
 {
-#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_21) || defined(GRAPHICS_API_OPENGL_11)
+#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_11)
     glDisable(GL_LINE_SMOOTH);
 #endif
 }
@@ -1515,7 +1515,7 @@ void rlClearScreenBuffers(void)
 // Check and log OpenGL error codes
 void rlCheckErrors()
 {
-#if defined(GRAPHICS_API_OPENGL_21) || defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
+#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     int check = 1;
     while (check)
     {
@@ -1631,7 +1631,6 @@ void rlglInit(int width, int height)
 
     // Get extensions strings
     for (int i = 0; i < numExt; i++) extList[i] = (char *)glGetStringi(GL_EXTENSIONS, i);
-
 #endif
 #if defined(GRAPHICS_API_OPENGL_ES2) || defined(GRAPHICS_API_OPENGL_21)
     // Allocate 512 strings pointers (2 KB)
@@ -2390,10 +2389,6 @@ unsigned int rlLoadTexture(void *data, int width, int height, int format, int mi
     glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 
     glGenTextures(1, &id);              // Generate texture id
-
-#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
-    //glActiveTexture(GL_TEXTURE0);     // If not defined, using GL_TEXTURE0 by default (shader texture)
-#endif
 
     glBindTexture(GL_TEXTURE_2D, id);
 
@@ -3673,14 +3668,9 @@ static void rlLoadShaderDefault(void)
     for (int i = 0; i < MAX_SHADER_LOCATIONS; i++) RLGL.State.defaultShader.locs[i] = -1;
 
     // Vertex shader directly defined, no external file required
-    const char *defaultVShaderStr =
+    const char *vShaderDefault =
 #if defined(GRAPHICS_API_OPENGL_21)
     "#version 120                       \n"
-#endif
-#if defined(GRAPHICS_API_OPENGL_ES2)
-    "#version 100                       \n"
-#endif
-#if defined(GRAPHICS_API_OPENGL_ES2) || defined(GRAPHICS_API_OPENGL_21)
     "attribute vec3 vertexPosition;     \n"
     "attribute vec2 vertexTexCoord;     \n"
     "attribute vec4 vertexColor;        \n"
@@ -3694,6 +3684,14 @@ static void rlLoadShaderDefault(void)
     "out vec2 fragTexCoord;             \n"
     "out vec4 fragColor;                \n"
 #endif
+#if defined(GRAPHICS_API_OPENGL_ES2)
+    "#version 100                       \n"
+    "attribute vec3 vertexPosition;     \n"
+    "attribute vec2 vertexTexCoord;     \n"
+    "attribute vec4 vertexColor;        \n"
+    "varying vec2 fragTexCoord;         \n"
+    "varying vec4 fragColor;            \n"
+#endif
     "uniform mat4 mvp;                  \n"
     "void main()                        \n"
     "{                                  \n"
@@ -3703,39 +3701,48 @@ static void rlLoadShaderDefault(void)
     "}                                  \n";
 
     // Fragment shader directly defined, no external file required
-    const char *defaultFShaderStr =
+    const char *fShaderDefault =
 #if defined(GRAPHICS_API_OPENGL_21)
     "#version 120                       \n"
-#endif
-#if defined(GRAPHICS_API_OPENGL_ES2)
-    "#version 100                       \n"
-    "precision mediump float;           \n"     // precision required for OpenGL ES2 (WebGL)
-#endif
-#if defined(GRAPHICS_API_OPENGL_ES2) || defined(GRAPHICS_API_OPENGL_21)
     "varying vec2 fragTexCoord;         \n"
     "varying vec4 fragColor;            \n"
+    "uniform sampler2D texture0;        \n"
+    "uniform vec4 colDiffuse;           \n"
+    "void main()                        \n"
+    "{                                  \n"
+    "    vec4 texelColor = texture2D(texture0, fragTexCoord); \n"
+    "    gl_FragColor = texelColor*colDiffuse*fragColor;      \n"
+    "}                                  \n";     
 #elif defined(GRAPHICS_API_OPENGL_33)
     "#version 330       \n"
     "in vec2 fragTexCoord;              \n"
     "in vec4 fragColor;                 \n"
     "out vec4 finalColor;               \n"
-#endif
     "uniform sampler2D texture0;        \n"
     "uniform vec4 colDiffuse;           \n"
     "void main()                        \n"
     "{                                  \n"
-#if defined(GRAPHICS_API_OPENGL_ES2) || defined(GRAPHICS_API_OPENGL_21)
-    "    vec4 texelColor = texture2D(texture0, fragTexCoord); \n" // NOTE: texture2D() is deprecated on OpenGL 3.3 and ES 3.0
-    "    gl_FragColor = texelColor*colDiffuse*fragColor;      \n"
-#elif defined(GRAPHICS_API_OPENGL_33)
     "    vec4 texelColor = texture(texture0, fragTexCoord);   \n"
     "    finalColor = texelColor*colDiffuse*fragColor;        \n"
-#endif
     "}                                  \n";
+#endif
+#if defined(GRAPHICS_API_OPENGL_ES2)
+    "#version 100                       \n"
+    "precision mediump float;           \n"     // Precision required for OpenGL ES2 (WebGL)
+    "varying vec2 fragTexCoord;         \n"
+    "varying vec4 fragColor;            \n"
+    "uniform sampler2D texture0;        \n"
+    "uniform vec4 colDiffuse;           \n"
+    "void main()                        \n"
+    "{                                  \n"
+    "    vec4 texelColor = texture2D(texture0, fragTexCoord); \n"
+    "    gl_FragColor = texelColor*colDiffuse*fragColor;      \n"
+    "}                                  \n";
+#endif
 
     // NOTE: Compiled vertex/fragment shaders are kept for re-use
-    RLGL.State.defaultVShaderId = rlCompileShader(defaultVShaderStr, GL_VERTEX_SHADER);     // Compile default vertex shader
-    RLGL.State.defaultFShaderId = rlCompileShader(defaultFShaderStr, GL_FRAGMENT_SHADER);   // Compile default fragment shader
+    RLGL.State.defaultVShaderId = rlCompileShader(vShaderDefault, GL_VERTEX_SHADER);     // Compile default vertex shader
+    RLGL.State.defaultFShaderId = rlCompileShader(fShaderDefault, GL_FRAGMENT_SHADER);   // Compile default fragment shader
 
     RLGL.State.defaultShader.id = rlLoadShaderProgram(RLGL.State.defaultVShaderId, RLGL.State.defaultFShaderId);
 
