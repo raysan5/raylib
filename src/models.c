@@ -131,7 +131,10 @@ static void InitGLTFBones(Model* model, const cgltf_data* data);
 // Draw a line in 3D world space
 void DrawLine3D(Vector3 startPos, Vector3 endPos, Color color)
 {
-    rlCheckRenderBatchLimit(2);
+    // WARNING: Be careful with internal buffer vertex alignment
+    // when using RL_LINES or RL_TRIANGLES, data is aligned to fit
+    // lines-triangles-quads in the same indexed buffers!!!
+    rlCheckRenderBatchLimit(4);
 
     rlBegin(RL_LINES);
         rlColor4ub(color.r, color.g, color.b, color.a);
@@ -143,7 +146,7 @@ void DrawLine3D(Vector3 startPos, Vector3 endPos, Color color)
 // Draw a point in 3D space, actually a small line
 void DrawPoint3D(Vector3 position, Color color)
 {
-    rlCheckRenderBatchLimit(2);
+    rlCheckRenderBatchLimit(4);
 
     rlPushMatrix();
         rlTranslatef(position.x, position.y, position.z);
