@@ -134,7 +134,7 @@ void DrawLine3D(Vector3 startPos, Vector3 endPos, Color color)
     // WARNING: Be careful with internal buffer vertex alignment
     // when using RL_LINES or RL_TRIANGLES, data is aligned to fit
     // lines-triangles-quads in the same indexed buffers!!!
-    rlCheckRenderBatchLimit(4);
+    rlCheckRenderBatchLimit(8);
 
     rlBegin(RL_LINES);
         rlColor4ub(color.r, color.g, color.b, color.a);
@@ -146,7 +146,7 @@ void DrawLine3D(Vector3 startPos, Vector3 endPos, Color color)
 // Draw a point in 3D space, actually a small line
 void DrawPoint3D(Vector3 position, Color color)
 {
-    rlCheckRenderBatchLimit(4);
+    rlCheckRenderBatchLimit(8);
 
     rlPushMatrix();
         rlTranslatef(position.x, position.y, position.z);
