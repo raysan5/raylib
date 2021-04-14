@@ -308,10 +308,6 @@ ifeq ($(PLATFORM),PLATFORM_RPI)
     LDFLAGS += -L/opt/vc/lib
 endif
 
-ifeq ($(PLATFORM),PLATFORM_DRM)
-    LDFLAGS += -lGLESv2 -lEGL -ldrm -lgbm
-endif
-
 # Define any libraries required on linking
 # if you want to link libraries (libname.so or libname.a), use the -lname
 ifeq ($(PLATFORM),PLATFORM_DESKTOP)
