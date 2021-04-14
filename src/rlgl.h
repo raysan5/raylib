@@ -825,17 +825,17 @@ typedef struct rlglData {
     } State;            // Renderer state
     struct {
         bool vao;                           // VAO support (OpenGL ES2 could not support VAO extension) (GL_ARB_vertex_array_object)
-        bool instancing;                    // Instancing supported
+        bool instancing;                    // Instancing supported (GL_ANGLE_instanced_arrays, GL_EXT_draw_instanced + GL_EXT_instanced_arrays)
         bool texNPOT;                       // NPOT textures full support (GL_ARB_texture_non_power_of_two, GL_OES_texture_npot)
-        bool texDepth;                      // Depth textures supported (GL_ARB_depth_texture, GL_WEBGL_depth_texture)
+        bool texDepth;                      // Depth textures supported (GL_ARB_depth_texture, GL_WEBGL_depth_texture, GL_OES_depth_texture)
         bool texFloat32;                    // float textures support (32 bit per channel) (GL_OES_texture_float)
-        bool texCompDXT;                    // DDS texture compression support (GL_EXT_texture_compression_s3tc)
-        bool texCompETC1;                   // ETC1 texture compression support
-        bool texCompETC2;                   // ETC2/EAC texture compression support
-        bool texCompPVRT;                   // PVR texture compression support
-        bool texCompASTC;                   // ASTC texture compression support
-        bool texMirrorClamp;                // Clamp mirror wrap mode supported
-        bool texAnisoFilter;                // Anisotropic texture filtering support
+        bool texCompDXT;                    // DDS texture compression support (GL_EXT_texture_compression_s3tc, GL_WEBGL_compressed_texture_s3tc, GL_WEBKIT_WEBGL_compressed_texture_s3tc)
+        bool texCompETC1;                   // ETC1 texture compression support (GL_OES_compressed_ETC1_RGB8_texture, GL_WEBGL_compressed_texture_etc1)
+        bool texCompETC2;                   // ETC2/EAC texture compression support (GL_ARB_ES3_compatibility)
+        bool texCompPVRT;                   // PVR texture compression support (GL_IMG_texture_compression_pvrtc)
+        bool texCompASTC;                   // ASTC texture compression support (GL_KHR_texture_compression_astc_hdr, GL_KHR_texture_compression_astc_ldr)
+        bool texMirrorClamp;                // Clamp mirror wrap mode supported (GL_EXT_texture_mirror_clamp)
+        bool texAnisoFilter;                // Anisotropic texture filtering support (GL_EXT_texture_filter_anisotropic)
 
         float maxAnisotropicLevel;          // Maximum anisotropy level supported (minimum is 2.0f)
         int maxDepthBits;                   // Maximum bits for depth component
