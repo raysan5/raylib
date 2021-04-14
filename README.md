@@ -111,6 +111,11 @@ raylib has been developed on Windows platform using [Notepad++](https://notepad-
 
 *Note that there are lots of IDEs supported, some of the provided templates could require some review, please, if you find some issue with some template or you think they could be improved, feel free to send a PR or open a related issue.*
 
+more info
+----------
+
+TODO.
+
 contact
 -------
 
