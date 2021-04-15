@@ -158,6 +158,26 @@ all: create_temp_project_dirs \
 
 # Create required temp directories for APK building
 create_temp_project_dirs:
+ifeq ($(OS),Windows_NT)
+	if not exist $(PROJECT_BUILD_PATH) mkdir $(PROJECT_BUILD_PATH) 
+	if not exist $(PROJECT_BUILD_PATH)\obj mkdir $(PROJECT_BUILD_PATH)\obj
+	if not exist $(PROJECT_BUILD_PATH)\obj mkdir $(PROJECT_BUILD_PATH)\obj\src
+	if not exist $(PROJECT_BUILD_PATH)\src mkdir $(PROJECT_BUILD_PATH)\src
+	if not exist $(PROJECT_BUILD_PATH)\src\com mkdir $(PROJECT_BUILD_PATH)\src\com
+	if not exist $(PROJECT_BUILD_PATH)\src\com\$(APP_COMPANY_NAME) mkdir $(PROJECT_BUILD_PATH)\src\com\$(APP_COMPANY_NAME)
+	if not exist $(PROJECT_BUILD_PATH)\src\com\$(APP_COMPANY_NAME)\$(APP_PRODUCT_NAME) mkdir $(PROJECT_BUILD_PATH)\src\com\$(APP_COMPANY_NAME)\$(APP_PRODUCT_NAME)
+	if not exist $(PROJECT_BUILD_PATH)\lib mkdir $(PROJECT_BUILD_PATH)\lib
+	if not exist $(PROJECT_BUILD_PATH)\lib\$(ANDROID_ARCH_NAME) mkdir $(PROJECT_BUILD_PATH)\lib\$(ANDROID_ARCH_NAME)
+	if not exist $(PROJECT_BUILD_PATH)\bin mkdir $(PROJECT_BUILD_PATH)\bin
+	if not exist $(PROJECT_BUILD_PATH)\res mkdir $(PROJECT_BUILD_PATH)\res
+	if not exist $(PROJECT_BUILD_PATH)\res\drawable-ldpi mkdir $(PROJECT_BUILD_PATH)\res\drawable-ldpi
+	if not exist $(PROJECT_BUILD_PATH)\res\drawable-mdpi mkdir $(PROJECT_BUILD_PATH)\res\drawable-mdpi
+	if not exist $(PROJECT_BUILD_PATH)\res\drawable-hdpi mkdir $(PROJECT_BUILD_PATH)\res\drawable-hdpi
+	if not exist $(PROJECT_BUILD_PATH)\res\values mkdir $(PROJECT_BUILD_PATH)\res\values
+	if not exist $(PROJECT_BUILD_PATH)\assets mkdir $(PROJECT_BUILD_PATH)\assets
+	if not exist $(PROJECT_BUILD_PATH)\assets\$(PROJECT_RESOURCES_PATH) mkdir $(PROJECT_BUILD_PATH)\assets\$(PROJECT_RESOURCES_PATH)
+	if not exist $(PROJECT_BUILD_PATH)\obj\screens mkdir $(PROJECT_BUILD_PATH)\obj\screens
+else	
 	mkdir -p $(PROJECT_BUILD_PATH) 
 	mkdir -p $(PROJECT_BUILD_PATH)/obj
 	mkdir -p $(PROJECT_BUILD_PATH)/obj/src
@@ -176,6 +196,7 @@ create_temp_project_dirs:
 	mkdir -p $(PROJECT_BUILD_PATH)/assets
 	mkdir -p $(PROJECT_BUILD_PATH)/assets/$(PROJECT_RESOURCES_PATH)
 	mkdir -p $(PROJECT_BUILD_PATH)/obj/screens
+endif
 	$(foreach dir, $(PROJECT_SOURCE_DIRS), $(call create_dir, $(dir)))
 
 define create_dir
@@ -184,70 +205,8 @@ endef
     
 ifeq ($(OS),Windows_NT)
     COPY_COMMAND ?= copy /Y
-    COPY_DIRECTORY_COMMAND = C:\Windows\System32\xcopy /Y /E /F
-    ANDROID_STRING_XML_LINE1 = ^<?xml version="1.0" encoding="utf-8"^?^>
-    ANDROID_STRING_XML_LINE2 = ^<resources^>^<string name="app_name"^>$(APP_LABEL_NAME)^</string^>^</resources^>
-    ANDROID_NATIVE_LOADER_JAVA_LINE1 = package com.$(APP_COMPANY_NAME).$(APP_PRODUCT_NAME);
-    ANDROID_NATIVE_LOADER_JAVA_LINE2 = .
-    ANDROID_NATIVE_LOADER_JAVA_LINE3 = public class NativeLoader extends android.app.NativeActivity {
-    ANDROID_NATIVE_LOADER_JAVA_LINE4 =     static {
-    ANDROID_NATIVE_LOADER_JAVA_LINE5 =        System.loadLibrary("raylib");
-    ANDROID_NATIVE_LOADER_JAVA_LINE6 =         System.loadLibrary("$(PROJECT_LIBRARY_NAME)");
-    ANDROID_NATIVE_LOADER_JAVA_LINE7 =     }
-    ANDROID_NATIVE_LOADER_JAVA_LINE8 = }
-    ANDROID_MANIFEST_XML_LINE1 = ^<?xml version="1.0" encoding="utf-8"^?^>
-    ANDROID_MANIFEST_XML_LINE2 = ^<manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    ANDROID_MANIFEST_XML_LINE3 =         package="com.$(APP_COMPANY_NAME).$(APP_PRODUCT_NAME)"
-    ANDROID_MANIFEST_XML_LINE4 =         android:versionCode="$(APP_VERSION_CODE)" android:versionName="$(APP_VERSION_NAME)" ^>
-    ANDROID_MANIFEST_XML_LINE5 =     ^<uses-sdk android:minSdkVersion="$(ANDROID_API_VERSION)" /^>
-    ANDROID_MANIFEST_XML_LINE6 =     ^<uses-feature android:glEsVersion="0x00020000" android:required="true" /^>
-    ANDROID_MANIFEST_XML_LINE7 =     ^<application android:allowBackup="false" android:label="@string/app_name" android:icon="@drawable/icon" ^>
-    ANDROID_MANIFEST_XML_LINE8 =         ^<activity android:name="com.$(APP_COMPANY_NAME).$(APP_PRODUCT_NAME).NativeLoader"
-    ANDROID_MANIFEST_XML_LINE9 =             android:theme="@android:style/Theme.NoTitleBar.Fullscreen"
-    ANDROID_MANIFEST_XML_LINE10 =             android:configChanges="orientation|keyboardHidden|screenSize"
-    ANDROID_MANIFEST_XML_LINE11 =             android:screenOrientation="$(APP_SCREEN_ORIENTATION)" android:launchMode="singleTask"
-    ANDROID_MANIFEST_XML_LINE12 =             android:clearTaskOnLaunch="true"^>
-    ANDROID_MANIFEST_XML_LINE13 =             ^<meta-data android:name="android.app.lib_name" android:value="$(PROJECT_LIBRARY_NAME)" /^>
-    ANDROID_MANIFEST_XML_LINE14 =             ^<intent-filter^>
-    ANDROID_MANIFEST_XML_LINE15 =                 ^<action android:name="android.intent.action.MAIN" /^>
-    ANDROID_MANIFEST_XML_LINE16 =                 ^<category android:name="android.intent.category.LAUNCHER" /^>
-    ANDROID_MANIFEST_XML_LINE17 =             ^</intent-filter^>
-    ANDROID_MANIFEST_XML_LINE18 =         ^</activity^>
-    ANDROID_MANIFEST_XML_LINE19 =     ^</application^>
-    ANDROID_MANIFEST_XML_LINE20 = ^</manifest^>
 else
     COPY_COMMAND ?= cp -f
-    COPY_DIRECTORY_COMMAND = cp -rf
-    ANDROID_STRING_XML_LINE1 = "<?xml version=\"1.0\" encoding=\"utf-8\"?>"
-    ANDROID_STRING_XML_LINE2 = "<resources><string name=\"app_name\">$(APP_LABEL_NAME)</string></resources>"
-    ANDROID_NATIVE_LOADER_JAVA_LINE1 = "package com.$(APP_COMPANY_NAME).$(APP_PRODUCT_NAME);"
-    ANDROID_NATIVE_LOADER_JAVA_LINE2 = ""
-    ANDROID_NATIVE_LOADER_JAVA_LINE3 = "public class NativeLoader extends android.app.NativeActivity {"
-    ANDROID_NATIVE_LOADER_JAVA_LINE4 = "    static {"
-    ANDROID_NATIVE_LOADER_JAVA_LINE5 = "       System.loadLibrary(\"raylib\");"
-    ANDROID_NATIVE_LOADER_JAVA_LINE6 = "        System.loadLibrary(\"$(PROJECT_LIBRARY_NAME)\");"
-    ANDROID_NATIVE_LOADER_JAVA_LINE7 = "    }"
-    ANDROID_NATIVE_LOADER_JAVA_LINE8 = "}"
-    ANDROID_MANIFEST_XML_LINE1 = "<?xml version=\"1.0\" encoding=\"utf-8\"?>"
-    ANDROID_MANIFEST_XML_LINE2 = "<manifest xmlns:android=\"http://schemas.android.com/apk/res/android\""
-    ANDROID_MANIFEST_XML_LINE3 = "        package=\"com.$(APP_COMPANY_NAME).$(APP_PRODUCT_NAME)\" "
-    ANDROID_MANIFEST_XML_LINE4 = "        android:versionCode=\"$(APP_VERSION_CODE)\" android:versionName=\"$(APP_VERSION_NAME)\" >"
-    ANDROID_MANIFEST_XML_LINE5 = "    <uses-sdk android:minSdkVersion=\"$(ANDROID_API_VERSION)\" />"
-    ANDROID_MANIFEST_XML_LINE6 = "    <uses-feature android:glEsVersion=\"0x00020000\" android:required=\"true\" />"
-    ANDROID_MANIFEST_XML_LINE7 = "    <application android:allowBackup=\"false\" android:label=\"@string/app_name\" android:icon=\"@drawable/icon\" >"
-    ANDROID_MANIFEST_XML_LINE8 = "        <activity android:name=\"com.$(APP_COMPANY_NAME).$(APP_PRODUCT_NAME).NativeLoader\""
-    ANDROID_MANIFEST_XML_LINE9 = "            android:theme=\"@android:style/Theme.NoTitleBar.Fullscreen\""
-    ANDROID_MANIFEST_XML_LINE10 = "             android:configChanges=\"orientation|keyboardHidden|screenSize\""
-    ANDROID_MANIFEST_XML_LINE11 = "            android:screenOrientation=\"$(APP_SCREEN_ORIENTATION)\" android:launchMode=\"singleTask\""
-    ANDROID_MANIFEST_XML_LINE12 = "            android:clearTaskOnLaunch=\"true\">"
-    ANDROID_MANIFEST_XML_LINE13 = "            <meta-data android:name=\"android.app.lib_name\" android:value=\"$(PROJECT_LIBRARY_NAME)\" />"
-    ANDROID_MANIFEST_XML_LINE14 = "            <intent-filter>"
-    ANDROID_MANIFEST_XML_LINE15 = "                <action android:name=\"android.intent.action.MAIN\" />"
-    ANDROID_MANIFEST_XML_LINE16 = "                <category android:name=\"android.intent.category.LAUNCHER\" />"
-    ANDROID_MANIFEST_XML_LINE17 = "            </intent-filter>"
-    ANDROID_MANIFEST_XML_LINE18 = "        </activity>"
-    ANDROID_MANIFEST_XML_LINE19 = "    </application>"
-    ANDROID_MANIFEST_XML_LINE20 = "</manifest>"
 endif
 
 # Copy required shared libs for integration into APK
@@ -266,47 +225,89 @@ copy_project_resources:
 	$(COPY_COMMAND) $(APP_ICON_LDPI) $(PROJECT_BUILD_PATH)/res/drawable-ldpi/icon.png
 	$(COPY_COMMAND) $(APP_ICON_MDPI) $(PROJECT_BUILD_PATH)/res/drawable-mdpi/icon.png
 	$(COPY_COMMAND) $(APP_ICON_HDPI) $(PROJECT_BUILD_PATH)/res/drawable-hdpi/icon.png
-	@echo $(ANDROID_STRING_XML_LINE1) > $(PROJECT_BUILD_PATH)/res/values/strings.xml 
-	@echo $(ANDROID_STRING_XML_LINE2) >> $(PROJECT_BUILD_PATH)/res/values/strings.xml
-	$(COPY_DIRECTORY_COMMAND) $(PROJECT_RESOURCES_PATH) $(PROJECT_BUILD_PATH)/assets/$(PROJECT_RESOURCES_PATH)	
+ifeq ($(OS),Windows_NT)
+	@echo ^<?xml version="1.0" encoding="utf-8"^?^> > $(PROJECT_BUILD_PATH)/res/values/strings.xml
+	@echo ^<resources^>^<string name="app_name"^>$(APP_LABEL_NAME)^</string^>^</resources^> >> $(PROJECT_BUILD_PATH)/res/values/strings.xml
+	if exist $(PROJECT_RESOURCES_PATH) C:\Windows\System32\xcopy $(PROJECT_RESOURCES_PATH) $(PROJECT_BUILD_PATH)\assets\$(PROJECT_RESOURCES_PATH) /Y /E /F
+else
+	@echo "<?xml version=\"1.0\" encoding=\"utf-8\"?>" > $(PROJECT_BUILD_PATH)/res/values/strings.xml 
+	@echo "<resources><string name=\"app_name\">$(APP_LABEL_NAME)</string></resources>" >> $(PROJECT_BUILD_PATH)/res/values/strings.xml
+	@[ -d "$(PROJECT_RESOURCES_PATH)" ] || cp -rf $(PROJECT_RESOURCES_PATH) $(PROJECT_BUILD_PATH)/assets/$(PROJECT_RESOURCES_PATH)	
+endif
 
 # Generate NativeLoader.java to load required shared libraries
 # NOTE: Probably not the bet way to generate this file... but it works.
 generate_loader_script:
-	@echo $(ANDROID_NATIVE_LOADER_JAVA_LINE1) > $(PROJECT_BUILD_PATH)/src/com/$(APP_COMPANY_NAME)/$(APP_PRODUCT_NAME)/NativeLoader.java
-	@echo$(ANDROID_NATIVE_LOADER_JAVA_LINE2) >> $(PROJECT_BUILD_PATH)/src/com/$(APP_COMPANY_NAME)/$(APP_PRODUCT_NAME)/NativeLoader.java
-	@echo $(ANDROID_NATIVE_LOADER_JAVA_LINE3) >> $(PROJECT_BUILD_PATH)/src/com/$(APP_COMPANY_NAME)/$(APP_PRODUCT_NAME)/NativeLoader.java
-	@echo $(ANDROID_NATIVE_LOADER_JAVA_LINE4) >> $(PROJECT_BUILD_PATH)/src/com/$(APP_COMPANY_NAME)/$(APP_PRODUCT_NAME)/NativeLoader.java
+ifeq ($(OS),Windows_NT)
+	@echo package com.$(APP_COMPANY_NAME).$(APP_PRODUCT_NAME); > $(PROJECT_BUILD_PATH)/src/com/$(APP_COMPANY_NAME)/$(APP_PRODUCT_NAME)/NativeLoader.java
+	@echo. >> $(PROJECT_BUILD_PATH)/src/com/$(APP_COMPANY_NAME)/$(APP_PRODUCT_NAME)/NativeLoader.java
+	@echo public class NativeLoader extends android.app.NativeActivity { >> $(PROJECT_BUILD_PATH)/src/com/$(APP_COMPANY_NAME)/$(APP_PRODUCT_NAME)/NativeLoader.java
+	@echo     static { >> $(PROJECT_BUILD_PATH)/src/com/$(APP_COMPANY_NAME)/$(APP_PRODUCT_NAME)/NativeLoader.java
 ifeq ($(RAYLIB_LIBTYPE),SHARED)
-	@echo $(ANDROID_NATIVE_LOADER_JAVA_LINE5) >> $(PROJECT_BUILD_PATH)/src/com/$(APP_COMPANY_NAME)/$(APP_PRODUCT_NAME)/NativeLoader.java
+	@echo         System.loadLibrary("raylib"); >> $(PROJECT_BUILD_PATH)/src/com/$(APP_COMPANY_NAME)/$(APP_PRODUCT_NAME)/NativeLoader.java
 endif
-	@echo $(ANDROID_NATIVE_LOADER_JAVA_LINE6) >> $(PROJECT_BUILD_PATH)/src/com/$(APP_COMPANY_NAME)/$(APP_PRODUCT_NAME)/NativeLoader.java 
-	@echo $(ANDROID_NATIVE_LOADER_JAVA_LINE7) >> $(PROJECT_BUILD_PATH)/src/com/$(APP_COMPANY_NAME)/$(APP_PRODUCT_NAME)/NativeLoader.java
-	@echo $(ANDROID_NATIVE_LOADER_JAVA_LINE8) >> $(PROJECT_BUILD_PATH)/src/com/$(APP_COMPANY_NAME)/$(APP_PRODUCT_NAME)/NativeLoader.java
-    
+	@echo         System.loadLibrary("$(PROJECT_LIBRARY_NAME)"); >> $(PROJECT_BUILD_PATH)/src/com/$(APP_COMPANY_NAME)/$(APP_PRODUCT_NAME)/NativeLoader.java 
+	@echo     } >> $(PROJECT_BUILD_PATH)/src/com/$(APP_COMPANY_NAME)/$(APP_PRODUCT_NAME)/NativeLoader.java
+	@echo } >> $(PROJECT_BUILD_PATH)/src/com/$(APP_COMPANY_NAME)/$(APP_PRODUCT_NAME)/NativeLoader.java
+else	
+	@echo "package com.$(APP_COMPANY_NAME).$(APP_PRODUCT_NAME);" > $(PROJECT_BUILD_PATH)/src/com/$(APP_COMPANY_NAME)/$(APP_PRODUCT_NAME)/NativeLoader.java
+	@echo "" >> $(PROJECT_BUILD_PATH)/src/com/$(APP_COMPANY_NAME)/$(APP_PRODUCT_NAME)/NativeLoader.java
+	@echo "public class NativeLoader extends android.app.NativeActivity {" >> $(PROJECT_BUILD_PATH)/src/com/$(APP_COMPANY_NAME)/$(APP_PRODUCT_NAME)/NativeLoader.java
+	@echo "    static {" >> $(PROJECT_BUILD_PATH)/src/com/$(APP_COMPANY_NAME)/$(APP_PRODUCT_NAME)/NativeLoader.java
+ifeq ($(RAYLIB_LIBTYPE),SHARED)
+	@echo "       System.loadLibrary(\"raylib\");" >> $(PROJECT_BUILD_PATH)/src/com/$(APP_COMPANY_NAME)/$(APP_PRODUCT_NAME)/NativeLoader.java
+endif
+	@echo "        System.loadLibrary(\"$(PROJECT_LIBRARY_NAME)\");" >> $(PROJECT_BUILD_PATH)/src/com/$(APP_COMPANY_NAME)/$(APP_PRODUCT_NAME)/NativeLoader.java 
+	@echo "    }" >> $(PROJECT_BUILD_PATH)/src/com/$(APP_COMPANY_NAME)/$(APP_PRODUCT_NAME)/NativeLoader.java
+	@echo "}" >> $(PROJECT_BUILD_PATH)/src/com/$(APP_COMPANY_NAME)/$(APP_PRODUCT_NAME)/NativeLoader.java
+endif
+
 # Generate AndroidManifest.xml with all the required options
 # NOTE: Probably not the bet way to generate this file... but it works.
 generate_android_manifest:
-	@echo $(ANDROID_MANIFEST_XML_LINE1) > $(PROJECT_BUILD_PATH)/AndroidManifest.xml
-	@echo $(ANDROID_MANIFEST_XML_LINE2) >> $(PROJECT_BUILD_PATH)/AndroidManifest.xml
-	@echo $(ANDROID_MANIFEST_XML_LINE3) >> $(PROJECT_BUILD_PATH)/AndroidManifest.xml
-	@echo $(ANDROID_MANIFEST_XML_LINE4) >> $(PROJECT_BUILD_PATH)/AndroidManifest.xml
-	@echo $(ANDROID_MANIFEST_XML_LINE5) >> $(PROJECT_BUILD_PATH)/AndroidManifest.xml
-	@echo $(ANDROID_MANIFEST_XML_LINE6) >> $(PROJECT_BUILD_PATH)/AndroidManifest.xml
-	@echo $(ANDROID_MANIFEST_XML_LINE7) >> $(PROJECT_BUILD_PATH)/AndroidManifest.xml
-	@echo $(ANDROID_MANIFEST_XML_LINE8) >> $(PROJECT_BUILD_PATH)/AndroidManifest.xml
-	@echo $(ANDROID_MANIFEST_XML_LINE9) >> $(PROJECT_BUILD_PATH)/AndroidManifest.xml
-	@echo $(ANDROID_MANIFEST_XML_LINE10) >> $(PROJECT_BUILD_PATH)/AndroidManifest.xml
-	@echo $(ANDROID_MANIFEST_XML_LINE11) >> $(PROJECT_BUILD_PATH)/AndroidManifest.xml
-	@echo $(ANDROID_MANIFEST_XML_LINE12) >> $(PROJECT_BUILD_PATH)/AndroidManifest.xml
-	@echo $(ANDROID_MANIFEST_XML_LINE13) >> $(PROJECT_BUILD_PATH)/AndroidManifest.xml
-	@echo $(ANDROID_MANIFEST_XML_LINE14) >> $(PROJECT_BUILD_PATH)/AndroidManifest.xml
-	@echo $(ANDROID_MANIFEST_XML_LINE15) >> $(PROJECT_BUILD_PATH)/AndroidManifest.xml
-	@echo $(ANDROID_MANIFEST_XML_LINE16) >> $(PROJECT_BUILD_PATH)/AndroidManifest.xml
-	@echo $(ANDROID_MANIFEST_XML_LINE17) >> $(PROJECT_BUILD_PATH)/AndroidManifest.xml
-	@echo $(ANDROID_MANIFEST_XML_LINE18) >> $(PROJECT_BUILD_PATH)/AndroidManifest.xml
-	@echo $(ANDROID_MANIFEST_XML_LINE19) >> $(PROJECT_BUILD_PATH)/AndroidManifest.xml
-	@echo $(ANDROID_MANIFEST_XML_LINE20) >> $(PROJECT_BUILD_PATH)/AndroidManifest.xml
+ifeq ($(OS),Windows_NT)
+	@echo ^<?xml version="1.0" encoding="utf-8"^?^> > $(PROJECT_BUILD_PATH)/AndroidManifest.xml
+	@echo ^<manifest xmlns:android="http://schemas.android.com/apk/res/android" >> $(PROJECT_BUILD_PATH)/AndroidManifest.xml
+	@echo         package="com.$(APP_COMPANY_NAME).$(APP_PRODUCT_NAME)"  >> $(PROJECT_BUILD_PATH)/AndroidManifest.xml
+	@echo         android:versionCode="$(APP_VERSION_CODE)" android:versionName="$(APP_VERSION_NAME)" ^> >> $(PROJECT_BUILD_PATH)/AndroidManifest.xml
+	@echo     ^<uses-sdk android:minSdkVersion="$(ANDROID_API_VERSION)" /^> >> $(PROJECT_BUILD_PATH)/AndroidManifest.xml
+	@echo     ^<uses-feature android:glEsVersion="0x00020000" android:required="true" /^> >> $(PROJECT_BUILD_PATH)/AndroidManifest.xml
+	@echo     ^<application android:allowBackup="false" android:label="@string/app_name" android:icon="@drawable/icon" ^> >> $(PROJECT_BUILD_PATH)/AndroidManifest.xml
+	@echo         ^<activity android:name="com.$(APP_COMPANY_NAME).$(APP_PRODUCT_NAME).NativeLoader" >> $(PROJECT_BUILD_PATH)/AndroidManifest.xml
+	@echo             android:theme="@android:style/Theme.NoTitleBar.Fullscreen" >> $(PROJECT_BUILD_PATH)/AndroidManifest.xml
+	@echo             android:configChanges="orientation|keyboardHidden|screenSize" >> $(PROJECT_BUILD_PATH)/AndroidManifest.xml
+	@echo             android:screenOrientation="$(APP_SCREEN_ORIENTATION)" android:launchMode="singleTask" >> $(PROJECT_BUILD_PATH)/AndroidManifest.xml
+	@echo             android:clearTaskOnLaunch="true"^> >> $(PROJECT_BUILD_PATH)/AndroidManifest.xml
+	@echo             ^<meta-data android:name="android.app.lib_name" android:value="$(PROJECT_LIBRARY_NAME)" /^> >> $(PROJECT_BUILD_PATH)/AndroidManifest.xml
+	@echo             ^<intent-filter^> >> $(PROJECT_BUILD_PATH)/AndroidManifest.xml
+	@echo                 ^<action android:name="android.intent.action.MAIN" /^> >> $(PROJECT_BUILD_PATH)/AndroidManifest.xml
+	@echo                 ^<category android:name="android.intent.category.LAUNCHER" /^> >> $(PROJECT_BUILD_PATH)/AndroidManifest.xml
+	@echo             ^</intent-filter^> >> $(PROJECT_BUILD_PATH)/AndroidManifest.xml
+	@echo         ^</activity^> >> $(PROJECT_BUILD_PATH)/AndroidManifest.xml
+	@echo     ^</application^> >> $(PROJECT_BUILD_PATH)/AndroidManifest.xml
+	@echo ^</manifest^> >> $(PROJECT_BUILD_PATH)/AndroidManifest.xml
+else
+	@echo "<?xml version=\"1.0\" encoding=\"utf-8\"?>" > $(PROJECT_BUILD_PATH)/AndroidManifest.xml
+	@echo "<manifest xmlns:android=\"http://schemas.android.com/apk/res/android\"" >> $(PROJECT_BUILD_PATH)/AndroidManifest.xml
+	@echo "        package=\"com.$(APP_COMPANY_NAME).$(APP_PRODUCT_NAME)\" " >> $(PROJECT_BUILD_PATH)/AndroidManifest.xml
+	@echo "        android:versionCode=\"$(APP_VERSION_CODE)\" android:versionName=\"$(APP_VERSION_NAME)\" >" >> $(PROJECT_BUILD_PATH)/AndroidManifest.xml
+	@echo "    <uses-sdk android:minSdkVersion=\"$(ANDROID_API_VERSION)\" />" >> $(PROJECT_BUILD_PATH)/AndroidManifest.xml
+	@echo "    <uses-feature android:glEsVersion=\"0x00020000\" android:required=\"true\" />" >> $(PROJECT_BUILD_PATH)/AndroidManifest.xml
+	@echo "    <application android:allowBackup=\"false\" android:label=\"@string/app_name\" android:icon=\"@drawable/icon\" >" >> $(PROJECT_BUILD_PATH)/AndroidManifest.xml
+	@echo "        <activity android:name=\"com.$(APP_COMPANY_NAME).$(APP_PRODUCT_NAME).NativeLoader\"" >> $(PROJECT_BUILD_PATH)/AndroidManifest.xml
+	@echo "            android:theme=\"@android:style/Theme.NoTitleBar.Fullscreen\"" >> $(PROJECT_BUILD_PATH)/AndroidManifest.xml
+	@echo "             android:configChanges=\"orientation|keyboardHidden|screenSize\"" >> $(PROJECT_BUILD_PATH)/AndroidManifest.xml
+	@echo "            android:screenOrientation=\"$(APP_SCREEN_ORIENTATION)\" android:launchMode=\"singleTask\"" >> $(PROJECT_BUILD_PATH)/AndroidManifest.xml
+	@echo "            android:clearTaskOnLaunch=\"true\">" >> $(PROJECT_BUILD_PATH)/AndroidManifest.xml
+	@echo "            <meta-data android:name=\"android.app.lib_name\" android:value=\"$(PROJECT_LIBRARY_NAME)\" />" >> $(PROJECT_BUILD_PATH)/AndroidManifest.xml
+	@echo "            <intent-filter>" >> $(PROJECT_BUILD_PATH)/AndroidManifest.xml
+	@echo "                <action android:name=\"android.intent.action.MAIN\" />" >> $(PROJECT_BUILD_PATH)/AndroidManifest.xml
+	@echo "                <category android:name=\"android.intent.category.LAUNCHER\" />" >> $(PROJECT_BUILD_PATH)/AndroidManifest.xml
+	@echo "            </intent-filter>" >> $(PROJECT_BUILD_PATH)/AndroidManifest.xml
+	@echo "        </activity>" >> $(PROJECT_BUILD_PATH)/AndroidManifest.xml
+	@echo "    </application>" >> $(PROJECT_BUILD_PATH)/AndroidManifest.xml
+	@echo "</manifest>" >> $(PROJECT_BUILD_PATH)/AndroidManifest.xml
+endif
 
 # Generate storekey for APK signing: $(PROJECT_NAME).keystore
 # NOTE: Configure here your Distinguished Names (-dname) if required!
