@@ -588,6 +588,7 @@ RLAPI void rlUnloadTexture(unsigned int id);                              // Unl
 RLAPI void rlGenerateMipmaps(Texture2D *texture);                         // Generate mipmap data for selected texture
 RLAPI void *rlReadTexturePixels(Texture2D texture);                       // Read texture pixel data
 RLAPI unsigned char *rlReadScreenPixels(int width, int height);           // Read screen pixel data (color buffer)
+RLAPI unsigned char *rlReadScreenPixelsWithPosition(Vector2 pos, int width, int height);
 
 // Framebuffer management (fbo)
 RLAPI unsigned int rlLoadFramebuffer(int width, int height);              // Load an empty framebuffer
@@ -2831,13 +2832,19 @@ void *rlReadTexturePixels(Texture2D texture)
 
 
 // Read screen pixel data (color buffer)
-unsigned char *rlReadScreenPixels(int width, int height)
+unsigned char *rlReadScreenPixels(int width, int height) 
+{
+    Vector2 zeroPos = {0, 0};
+    return rlReadScreenPixelsWithPosition(zeroPos, width, height);
+}
+
+unsigned char *rlReadScreenPixelsWithPosition(Vector2 pos, int width, int height)
 {
     unsigned char *screenData = (unsigned char *)RL_CALLOC(width*height*4, sizeof(unsigned char));
 
     // NOTE 1: glReadPixels returns image flipped vertically -> (0,0) is the bottom left corner of the framebuffer
     // NOTE 2: We are getting alpha channel! Be careful, it can be transparent if not cleared properly!
-    glReadPixels(0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, screenData);
+    glReadPixels(pos.x, pos.y, width, height, GL_RGBA, GL_UNSIGNED_BYTE, screenData);
 
     // Flip image vertically!
     unsigned char *imgData = (unsigned char *)RL_MALLOC(width*height*4*sizeof(unsigned char));

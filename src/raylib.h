@@ -1002,6 +1002,8 @@ RLAPI double GetTime(void);                                       // Returns ela
 // Misc. functions
 RLAPI int GetRandomValue(int min, int max);                       // Returns a random value between min and max (both included)
 RLAPI void TakeScreenshot(const char *fileName);                  // Takes a screenshot of current screen (filename extension defines format)
+RLAPI void TakeScreenshotAtPosAndSize(const char *fileName, Vector2 pos, int width, int height);
+
 RLAPI void SetConfigFlags(unsigned int flags);                    // Setup init configuration flags (view FLAGS)
 
 RLAPI void TraceLog(int logLevel, const char *text, ...);         // Show trace log messages (LOG_DEBUG, LOG_INFO, LOG_WARNING, LOG_ERROR)
@@ -1261,6 +1263,7 @@ RLAPI void UpdateTexture(Texture2D texture, const void *pixels);                
 RLAPI void UpdateTextureRec(Texture2D texture, Rectangle rec, const void *pixels);                       // Update GPU texture rectangle with new data
 RLAPI Image GetTextureData(Texture2D texture);                                                           // Get pixel data from GPU texture and return an Image
 RLAPI Image GetScreenData(void);                                                                         // Get pixel data from screen buffer and return an Image (screenshot)
+RLAPI Image GetScreenDataFromPosAndSize(Vector2 pos, int width, int height);
 
 // Texture configuration functions
 RLAPI void GenTextureMipmaps(Texture2D *texture);                                                        // Generate GPU mipmaps for a texture

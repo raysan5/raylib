@@ -2939,13 +2939,19 @@ Image GetTextureData(Texture2D texture)
 // Get pixel data from GPU frontbuffer and return an Image (screenshot)
 Image GetScreenData(void)
 {
+    Vector2 zeroPos = {0, 0};
+    return GetScreenDataFromPosAndSize(zeroPos, GetScreenWidth(), GetScreenHeight());
+}
+
+Image GetScreenDataFromPosAndSize(Vector2 pos, int width, int height)
+{
     Image image = { 0 };
 
-    image.width = GetScreenWidth();
-    image.height = GetScreenHeight();
+    image.width = width;
+    image.height = height;
     image.mipmaps = 1;
     image.format = PIXELFORMAT_UNCOMPRESSED_R8G8B8A8;
-    image.data = rlReadScreenPixels(image.width, image.height);
+    image.data = rlReadScreenPixelsWithPosition(pos, image.width, image.height);
 
     return image;
 }

@@ -2555,8 +2555,14 @@ void SetConfigFlags(unsigned int flags)
 // have their own internal file-systems, to dowload image to user file-system some additional mechanism is required
 void TakeScreenshot(const char *fileName)
 {
-    unsigned char *imgData = rlReadScreenPixels(CORE.Window.render.width, CORE.Window.render.height);
-    Image image = { imgData, CORE.Window.render.width, CORE.Window.render.height, 1, PIXELFORMAT_UNCOMPRESSED_R8G8B8A8 };
+    Vector2 zeroPos = {0, 0};
+    TakeScreenshotAtPosAndSize(fileName, zeroPos, CORE.Window.render.width, CORE.Window.render.height);
+}
+
+void TakeScreenshotAtPosAndSize(const char *fileName, Vector2 pos, int width, int height)
+{
+    unsigned char *imgData = rlReadScreenPixelsWithPosition(pos, width, height);
+    Image image = { imgData, width, height, 1, PIXELFORMAT_UNCOMPRESSED_R8G8B8A8 };
 
     char path[512] = { 0 };
 #if defined(PLATFORM_ANDROID)
