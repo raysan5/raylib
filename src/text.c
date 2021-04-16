@@ -1611,7 +1611,7 @@ int GetCodepointsCount(const char *text)
 // Total number of bytes processed are returned as a parameter
 // NOTE: the standard says U+FFFD should be returned in case of errors
 // but that character is not supported by the default font in raylib
-// TODO: optimize this code for speed!!
+// TODO: Optimize this code for speed!!
 int GetNextCodepoint(const char *text, int *bytesProcessed)
 {
 /*
