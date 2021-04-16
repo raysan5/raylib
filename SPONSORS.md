@@ -6,8 +6,6 @@ The following people is currently [**sponsoring raylib**](https://github.com/spo
 
 Note that Sponsors donations vary between sponsors, I just decided not to make any distinction while listing them.
 
-**If you are a raylib Sponsor reading this list, feel free to send a PR to add your website link if desired.**
-
  - Eric J. ([@ProfJski](https://github.com/ProfJski))
  - devdad ([@devdad](https://github.com/devdad))
  - Zach Geis ([@zacgeis](https://github.com/zacgeis))
@@ -50,4 +48,10 @@ The following people has **sponsored raylib** in the past, allowing the project 
  - James Ghawaly ([@jghawaly](https://github.com/jghawaly))
  - jack ([@Jack-Ji](https://github.com/Jack-Ji))
  - Guido Offermans ([@jghawaly](https://github.com/GuidoOffermans))
+
+### Notes for Current/Past raylib Sponsor
+
+ - **If you are not on the list, feel free to send a PR to add you if desired.**
+ - **If you want your personal webpage listed along your GitHub account, feel free to send a PR to add it.**
+ - **If you prefer not to listed in this list, feel free to send a PR to remove it.**
 
