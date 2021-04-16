@@ -307,18 +307,18 @@ Let's start with some numbers:
  
 Highlights for `raylib 3.7`:
 
- - REDESIGNED `rlgl` module for a greater abstraction level. Mesh and Materials structs references have been moved to a higher level, to `models` module as well as `DrawMesh()` and `DrawMeshInstanced()` functions. Some shaders functionality has also been moved to a higher level, to `core` module. Several `rlgl` functions names have been reviewed for consistency, following the `rl*()` prefix convention. Reorganized all functions by categories. GenTexture*() functions removal. Reiewed instancing and stereo rendering.
+ - **REDESIGNED: `rlgl` module for greater abstraction level**. This suppose an **important change in raylib architecture**, now `rlgl` functionality is self-contained in the module and used by higher-level layers (specially by `core` module), those upper layers are the ones that expose functionality to the main API when required, for example the `Shaders`, `Mesh` and `Materials` functionality. Multiple `rlgl` functions have been renamed for consistency, in this case, following the `rl*()` prefix convention. Functions have also been reorganized internally by categories and `GenTexture*()` functions have been removed from the library and moved to [`models_material_pbr`](https://github.com/raysan5/raylib/blob/master/examples/models/models_material_pbr.c) example.
  
- - REDESIGNED VR simulator along with stereo rendering mechanism, a new API has been added more comprehensive and better integrated with raylib, now stereo rendering can be combined with `RenderTexture` and `Shader` API allowing the user manage fbo and distortion shader directly.
+ - **REDESIGNED: VR simulator and stereo rendering mechanism**. A **brand new API** has been added, more comprehensive and better integrated with raylib, the **new stereo rendering** can be combined with `RenderTexture` and `Shader` API allowing the user to **manage fbo and distortion shader directly**. Also, the new rendering mechanism supports **instancing on stereo rendering**! Check the updated [`core_vr_simulator`](https://github.com/raysan5/raylib/blob/master/examples/core/core_vr_simulator.c) example for reference!
  
- - ADDED file access callbacks system
+ - **ADDED: New file access callbacks system**. Several new callback functions have been added to the API to allow custom file loaders. A [nice example](https://github.com/RobLoach/raylib-physfs) it's the **raylib integration with a virtual file system** [PhysFS](https://icculus.org/physfs/).
  
- - ADDED: glTF animations support (#1551) by @object71
+ - **ADDED: glTF animations support**. glTF is the preferred models file format to be used with raylib and along the addition of a models animation API on latest raylib versions, now animations support for glTF format has come to raylib, thanks for this great contribution to [Hristo Stamenov](@object71)
  
- - ADDED: Music streaming support from memory (#1606) by @nezvers
+ - **ADDED: Music streaming support from memory**. raylib has been adding the `Load*FromMemory()` option to all its supported file formats but **music streaming** was not supported yet... until now. Thanks to this great contribution by [Agnis "NeZvērs" Aldiņš](@nezvers), now raylib supports music streamming from memory data for all supported file formats: WAV, OGG, MP3, FLAC, XM and MOD.
  
- - RENAMED: enums values renamed for consistency
+ - **RENAMED: enums values for consistency**. Most raylib enums names and values names have been renamed for consistency, now all value names start with the type of data they represent. It increases clarity and readability when using those values and also **improves overall library consistency**.
  
-Beside those key changes, many functions have been reviewed with improvements and bug fixes, many of them contributed by the community! Again, this release represents is a **great improvement for raylib and marks the way forward** for the library. Make sure to check [CHANGELOG](CHANGELOG) for detailed list of changes! Hope you enjoy this new raylib installment!
+Beside those key changes, many functions have been reviewed with improvements and bug fixes, many of them contributed by the community! Thanks! And again, this release sets a **new milestone for raylib library**. Make sure to check [CHANGELOG](CHANGELOG) for detailed list of changes! Hope you enjoy this new raylib installment!
 
 Happy gamedev/tools/graphics programming! :)
