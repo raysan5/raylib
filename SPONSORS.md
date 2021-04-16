@@ -49,4 +49,6 @@ The following people has **sponsored raylib** in the past, allowing the project 
  - daddio69 ([@daddio69](https://github.com/daddio69))
  - James Ghawaly ([@jghawaly](https://github.com/jghawaly))
  - jack ([@Jack-Ji](https://github.com/Jack-Ji))
+ - Guido Offermans ([@jghawaly](https://github.com/GuidoOffermans))
+ - Tommi Sinivuo ([@TommiSinivuo](https://github.com/TommiSinivuo))
 
