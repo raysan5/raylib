@@ -47,15 +47,16 @@ endif
 # Required path variables
 # no need to define JAVA_HOME , JAVA_BIN in linux environment (binaries are in $PATH)
 #JAVA_HOME              ?= C:/JavaJDK/
-#JAVA_BIN		?= $(JAVA_HOME)/bin/
+#JAVA_BIN               ?= $(JAVA_HOME)/bin/
 ANDROID_HOME            ?= /opt/android-sdk
-#ANDROID_TOOLCHAIN       = C:/android_toolchain_$(ANDROID_ARCH)_API$(ANDROID_API_VERSION)
-ANDROID_TOOLCHAIN ?= /opt/android-ndk/toolchains/llvm/prebuilt/linux-x86_64/
+ANDROID_NDK             ?= /opt/android-ndk
+ANDROID_TOOLCHAIN       ?= $(ANDROID_NDK)/toolchains/llvm/prebuilt/linux-x86_64/
 
 # find the highest version available of build tools
 ANDROID_BUILD_TOOLS = $(shell ls -1d $(ANDROID_HOME)/build-tools/* | tail -n 1)/
 # and extracts the API version
 ANDROID_API_VERSION     = $(shell echo $(ANDROID_BUILD_TOOLS) | sed 's/.*\/\([0-9]\+\).*/\1/')
+NATIVE_APP_GLUE         = $(ANDROID_NDK)/sources/android/native_app_glue
 
 $(warning  [*] Using $(ANDROID_BUILD_TOOLS) , API version: $(ANDROID_API_VERSION))
 
@@ -107,19 +108,25 @@ endif
 
 # Compiler and archiver
 ifeq ($(ANDROID_ARCH),ARM)
-    CC = $(ANDROID_TOOLCHAIN)/bin/arm-linux-androideabi-clang
-    AR = $(ANDROID_TOOLCHAIN)/bin/arm-linux-androideabi-ar
+    CC = $(ANDROID_TOOLCHAIN)/bin/armv7a-linux-androideabi$(ANDROID_API_VERSION)-clang
+    AR = $(ANDROID_TOOLCHAIN)/bin/armv7a-linux-androideabi-ar
 endif
 ifeq ($(ANDROID_ARCH),ARM64)
-    #CC = $(ANDROID_TOOLCHAIN)/bin/aarch64-linux-android-clang
-    #AR = $(ANDROID_TOOLCHAIN)/bin/aarch64-linux-android-ar
     CC = $(ANDROID_TOOLCHAIN)/bin/aarch64-linux-android$(ANDROID_API_VERSION)-clang
     AR = $(ANDROID_TOOLCHAIN)/bin/aarch64-linux-android-ar
+endif
+ifeq ($(ANDROID_ARCH),x86)
+    CC = $(ANDROID_TOOLCHAIN)/bin/i686-linux-android$(ANDROID_API_VERSION)-clang
+    AR = $(ANDROID_TOOLCHAIN)/bin/i686-linux-android-ar
+endif
+ifeq ($(ANDROID_ARCH),x86_64)
+    CC = $(ANDROID_TOOLCHAIN)/bin/x86_64-linux-android$(ANDROID_API_VERSION)-clang
+    AR = $(ANDROID_TOOLCHAIN)/bin/x86_64-linux-android-ar
 endif
 
 # Compiler flags for arquitecture
 ifeq ($(ANDROID_ARCH),ARM)
-    CFLAGS = -std=c99 -march=armv7-a -mfloat-abi=softfp -mfpu=vfpv3-d16
+    CFLAGS = -std=c99 -march=armv7a -mfloat-abi=softfp -mfpu=vfpv3-d16
 endif
 ifeq ($(ANDROID_ARCH),ARM64)
     CFLAGS = -std=c99 -target aarch64 -mfix-cortex-a53-835769
@@ -132,7 +139,7 @@ CFLAGS += -Wall -Wa,--noexecstack -Wformat -Werror=format-security -no-canonical
 CFLAGS += -DANDROID -DPLATFORM_ANDROID -D__ANDROID_API__=$(ANDROID_API_VERSION)
 
 # Paths containing required header files
-INCLUDE_PATHS = -I. -I$(RAYLIB_PATH)/src -I$(RAYLIB_PATH)/src/external/android/native_app_glue
+INCLUDE_PATHS = -I. -I$(RAYLIB_PATH)/src -I$(NATIVE_APP_GLUE)
 
 # Linker options
 LDFLAGS = -Wl,-soname,lib$(PROJECT_LIBRARY_NAME).so -Wl,--exclude-libs,libatomic.a 
@@ -162,8 +169,8 @@ all: create_temp_project_dirs \
      compile_project_class \
      compile_project_class_dex \
      create_project_apk_package \
-     sign_project_apk_package \
-     zipalign_project_apk_package
+     zipalign_project_apk_package \
+     sign_project_apk_package
 
 # Create required temp directories for APK building
 create_temp_project_dirs:
@@ -175,7 +182,9 @@ create_temp_project_dirs:
 	  mkdir -p $(PROJECT_BUILD_PATH)/obj/screens; \
 	  mkdir -p $(PROJECT_BUILD_PATH)/lib/$(ANDROID_ARCH_NAME); \
 	  mkdir -p $(PROJECT_BUILD_PATH)/bin; \
-	  mkdir -p $(PROJECT_BUILD_PATH)/res/drawable-{l,m,h}dpi; \
+	  mkdir -p $(PROJECT_BUILD_PATH)/res/drawable-ldpi; \
+	  mkdir -p $(PROJECT_BUILD_PATH)/res/drawable-mdpi; \
+	  mkdir -p $(PROJECT_BUILD_PATH)/res/drawable-hdpi; \
 	  mkdir -p $(PROJECT_BUILD_PATH)/res/values; \
 	  mkdir -p $(PROJECT_BUILD_PATH)/assets/$(PROJECT_RESOURCES_PATH); \
 	  $(foreach dir, $(PROJECT_SOURCE_DIRS), mkdir -p $(PROJECT_BUILD_PATH)/obj/$(dir) ); \
@@ -223,7 +232,7 @@ copy_project_resources:
 	cp $(APP_ICON_LDPI) $(PROJECT_BUILD_PATH)/res/drawable-ldpi/icon.png
 	cp $(APP_ICON_MDPI) $(PROJECT_BUILD_PATH)/res/drawable-mdpi/icon.png
 	cp $(APP_ICON_HDPI) $(PROJECT_BUILD_PATH)/res/drawable-hdpi/icon.png
-	@echo -e "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n\
+	@echo "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n\
 	   <resources>\n\
 	       <string name=\"app_name\">\n\
 		  $(APP_LABEL_NAME)\n\
@@ -251,7 +260,7 @@ else
 nativeloader_sharedlib=
 endif
 generate_loader_script:
-	 @echo -e "package com.$(APP_COMPANY_NAME).$(APP_PRODUCT_NAME);\n\n\
+	 @echo "package com.$(APP_COMPANY_NAME).$(APP_PRODUCT_NAME);\n\n\
 	public class NativeLoader extends android.app.NativeActivity {\n\
 	  static {\n\
 	    $(nativeloader_sharedlib);\n\
@@ -272,7 +281,7 @@ generate_loader_script:
 # TODO jseb : replacing @drawable/icon with @mipmap/icon ?
 # https://stackoverflow.com/questions/23796414/error-no-resource-found-that-matches-the-given-name-at-icon-with-value-dr
 generate_android_manifest:
-	 @echo -e "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n\
+	 @echo "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n\
 	    	   <manifest xmlns:android=\"http://schemas.android.com/apk/res/android\"\n\
 		      package=\"com.$(APP_COMPANY_NAME).$(APP_PRODUCT_NAME)\"\n\
 	              android:versionCode=\"$(APP_VERSION_CODE)\" android:versionName=\"$(APP_VERSION_NAME)\">\n\
@@ -336,7 +345,7 @@ config_project_package:
 
 # Compile native_app_glue code as static library: obj/libnative_app_glue.a
 compile_native_app_glue:
-	$(CC) -c $(RAYLIB_PATH)/src/external/android/native_app_glue/android_native_app_glue.c -o $(PROJECT_BUILD_PATH)/obj/native_app_glue.o $(CFLAGS)
+	$(CC) -c $(NATIVE_APP_GLUE)/android_native_app_glue.c -o $(PROJECT_BUILD_PATH)/obj/native_app_glue.o $(CFLAGS)
 	$(AR) rcs $(PROJECT_BUILD_PATH)/obj/libnative_app_glue.a $(PROJECT_BUILD_PATH)/obj/native_app_glue.o
 
 # Compile project code into a shared library: lib/lib$(PROJECT_LIBRARY_NAME).so 
@@ -369,11 +378,13 @@ create_project_apk_package:
 
 sign_project_apk_package:
 	#keytool -genkey -v -keystore debug.keystore -storepass android -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 10000
-	$(JAVA_BIN)jarsigner -keystore $(PROJECT_BUILD_PATH)/$(PROJECT_NAME).keystore -storepass $(APP_KEYSTORE_PASS) -keypass $(APP_KEYSTORE_PASS) -signedjar $(PROJECT_BUILD_PATH)/bin/$(PROJECT_NAME).signed.apk $(PROJECT_BUILD_PATH)/bin/$(PROJECT_NAME).unsigned.apk $(PROJECT_NAME)Key
+	$(ANDROID_BUILD_TOOLS)/apksigner sign --ks $(PROJECT_BUILD_PATH)/$(PROJECT_NAME).keystore --ks-pass pass:$(APP_KEYSTORE_PASS) --out $(PROJECT_BUILD_PATH)/bin/$(PROJECT_NAME).signed.apk $(PROJECT_BUILD_PATH)/bin/$(PROJECT_NAME).zipaligned.apk
+	rm $(PROJECT_BUILD_PATH)/bin/$(PROJECT_NAME).zipaligned.apk
 
 # Create zip-aligned APK package: $(PROJECT_NAME).apk 
 zipalign_project_apk_package:
-	$(ANDROID_BUILD_TOOLS)/zipalign -f 4 $(PROJECT_BUILD_PATH)/bin/$(PROJECT_NAME).signed.apk $(PROJECT_NAME).apk
+	$(ANDROID_BUILD_TOOLS)/zipalign -f 4 $(PROJECT_BUILD_PATH)/bin/$(PROJECT_NAME).unsigned.apk $(PROJECT_BUILD_PATH)/bin/$(PROJECT_NAME).zipaligned.apk
+	rm $(PROJECT_BUILD_PATH)/bin/$(PROJECT_NAME).unsigned.apk
 
 # Install $(PROJECT_NAME).apk to default emulator/device
 # NOTE: Use -e (emulator) or -d (device) parameters if required
