@@ -80,6 +80,9 @@
 //------------------------------------------------------------------------------------
 // Module: rlgl - Configuration values
 //------------------------------------------------------------------------------------
+// Show OpenGL extensions and capabilities detailed logs on init
+//#define SUPPORT_GL_DETAILS_INFO        1
+
 #if defined(GRAPHICS_API_OPENGL_11) || defined(GRAPHICS_API_OPENGL_33)
     #define DEFAULT_BATCH_BUFFER_ELEMENTS   8192    // Default internal render batch limits
 #elif defined(GRAPHICS_API_OPENGL_ES2)

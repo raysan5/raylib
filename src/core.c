@@ -3770,12 +3770,6 @@ static bool InitGraphicsDevice(int width, int height)
     glfwSwapInterval(0);        // No V-Sync by default
 #endif
 
-#if defined(PLATFORM_DESKTOP)
-    // Load OpenGL 3.3 extensions
-    // NOTE: GLFW loader function is passed as parameter
-    rlLoadExtensions(glfwGetProcAddress);
-#endif
-
     // Try to enable GPU V-Sync, so frames are limited to screen refresh rate (60Hz -> 60 FPS)
     // NOTE: V-Sync can be enabled by graphic driver configuration
     if (CORE.Window.flags & FLAG_VSYNC_HINT)
@@ -4356,6 +4350,11 @@ static bool InitGraphicsDevice(int width, int height)
         TRACELOG(LOG_INFO, "    > Viewport offsets: %i, %i", CORE.Window.renderOffset.x, CORE.Window.renderOffset.y);
     }
 #endif // PLATFORM_ANDROID || PLATFORM_RPI || PLATFORM_DRM || PLATFORM_UWP
+
+    // Load OpenGL extensions
+    // NOTE: GLFW loader function is required by GLAD but only used for OpenGL 2.1 and 3.3,
+    // OpenGL ES 2.0 extensions (and entry points) are loaded manually using eglGetProcAddress()
+    rlLoadExtensions(glfwGetProcAddress);
 
     // Initialize OpenGL context (states and resources)
     // NOTE: CORE.Window.screen.width and CORE.Window.screen.height not used, just stored as globals in rlgl
