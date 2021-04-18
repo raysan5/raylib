@@ -1606,7 +1606,7 @@ void rlglInit(int width, int height)
     RLGL.State.projection = MatrixIdentity();
     RLGL.State.modelview = MatrixIdentity();
     RLGL.State.currentMatrix = &RLGL.State.modelview;
-#endif      // GRAPHICS_API_OPENGL_33 || GRAPHICS_API_OPENGL_ES2
+#endif  // GRAPHICS_API_OPENGL_33 || GRAPHICS_API_OPENGL_ES2
 
     // Initialize OpenGL default states
     //----------------------------------------------------------
@@ -1684,7 +1684,7 @@ void rlLoadExtensions(void *loader)
     // WARNING: glGetStringi() not available on OpenGL 2.1
     char **extList = RL_MALLOC(sizeof(char *)*numExt);
     TRACELOG(LOG_INFO, "GL: OpenGL extensions:");
-    for (int i = 0; i < numExt; i++) 
+    for (int i = 0; i < numExt; i++)
     {
         extList[i] = (char *)glGetStringi(GL_EXTENSIONS, i);
         TRACELOG(LOG_INFO, "    %s", extList[i]);
@@ -1730,7 +1730,7 @@ void rlLoadExtensions(void *loader)
             extList[numExt] = &extensionsDup[i + 1];
         }
     }
-    
+
     TRACELOG(LOG_INFO, "GL: Supported extensions count: %i", numExt);
 
 #if defined(SUPPORT_GL_DETAILS_INFO)
@@ -1829,7 +1829,7 @@ void rlLoadExtensions(void *loader)
     TRACELOG(LOG_INFO, "    > Renderer: %s", glGetString(GL_RENDERER));
     TRACELOG(LOG_INFO, "    > Version:  %s", glGetString(GL_VERSION));
     TRACELOG(LOG_INFO, "    > GLSL:     %s", glGetString(GL_SHADING_LANGUAGE_VERSION));
-    
+
     // NOTE: Anisotropy levels capability is an extension
     #ifndef GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT
         #define GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT 0x84FF
@@ -2393,7 +2393,7 @@ unsigned int rlLoadTexture(void *data, int width, int height, int format, int mi
         return id;
     }
 #endif
-#endif      // GRAPHICS_API_OPENGL_11
+#endif  // GRAPHICS_API_OPENGL_11
 
     glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 
@@ -3738,7 +3738,7 @@ static void rlLoadShaderDefault(void)
     "{                                  \n"
     "    vec4 texelColor = texture2D(texture0, fragTexCoord); \n"
     "    gl_FragColor = texelColor*colDiffuse*fragColor;      \n"
-    "}                                  \n";     
+    "}                                  \n";
 #elif defined(GRAPHICS_API_OPENGL_33)
     "#version 330       \n"
     "in vec2 fragTexCoord;              \n"
@@ -3803,7 +3803,7 @@ static void rlUnloadShaderDefault(void)
     glDeleteProgram(RLGL.State.defaultShader.id);
 
     RL_FREE(RLGL.State.defaultShader.locs);
-    
+
     TRACELOG(LOG_INFO, "SHADER: [ID %i] Default shader unloaded successfully", RLGL.State.defaultShader.id);
 }
 
@@ -3813,7 +3813,7 @@ static char *rlGetCompressedFormatName(int format)
 {
     static char compName[64] = { 0 };
     memset(compName, 0, 64);
-    
+
     switch (format)
     {
         // GL_EXT_texture_compression_s3tc
@@ -3853,37 +3853,37 @@ static char *rlGetCompressedFormatName(int format)
         case 0x9272: strcpy(compName, "GL_COMPRESSED_RG11_EAC"); break;
         case 0x9273: strcpy(compName, "GL_COMPRESSED_SIGNED_RG11_EAC"); break;
         // GL_KHR_texture_compression_astc_hdr
-        case 0x93B0: strcpy(compName, "GL_COMPRESSED_RGBA_ASTC_4x4_KHR"); break;  
-        case 0x93B1: strcpy(compName, "GL_COMPRESSED_RGBA_ASTC_5x4_KHR"); break;  
-        case 0x93B2: strcpy(compName, "GL_COMPRESSED_RGBA_ASTC_5x5_KHR"); break;  
-        case 0x93B3: strcpy(compName, "GL_COMPRESSED_RGBA_ASTC_6x5_KHR"); break;  
-        case 0x93B4: strcpy(compName, "GL_COMPRESSED_RGBA_ASTC_6x6_KHR"); break;  
-        case 0x93B5: strcpy(compName, "GL_COMPRESSED_RGBA_ASTC_8x5_KHR"); break;  
-        case 0x93B6: strcpy(compName, "GL_COMPRESSED_RGBA_ASTC_8x6_KHR"); break;  
-        case 0x93B7: strcpy(compName, "GL_COMPRESSED_RGBA_ASTC_8x8_KHR"); break;  
+        case 0x93B0: strcpy(compName, "GL_COMPRESSED_RGBA_ASTC_4x4_KHR"); break;
+        case 0x93B1: strcpy(compName, "GL_COMPRESSED_RGBA_ASTC_5x4_KHR"); break;
+        case 0x93B2: strcpy(compName, "GL_COMPRESSED_RGBA_ASTC_5x5_KHR"); break;
+        case 0x93B3: strcpy(compName, "GL_COMPRESSED_RGBA_ASTC_6x5_KHR"); break;
+        case 0x93B4: strcpy(compName, "GL_COMPRESSED_RGBA_ASTC_6x6_KHR"); break;
+        case 0x93B5: strcpy(compName, "GL_COMPRESSED_RGBA_ASTC_8x5_KHR"); break;
+        case 0x93B6: strcpy(compName, "GL_COMPRESSED_RGBA_ASTC_8x6_KHR"); break;
+        case 0x93B7: strcpy(compName, "GL_COMPRESSED_RGBA_ASTC_8x8_KHR"); break;
         case 0x93B8: strcpy(compName, "GL_COMPRESSED_RGBA_ASTC_10x5_KHR"); break;
         case 0x93B9: strcpy(compName, "GL_COMPRESSED_RGBA_ASTC_10x6_KHR"); break;
         case 0x93BA: strcpy(compName, "GL_COMPRESSED_RGBA_ASTC_10x8_KHR"); break;
         case 0x93BB: strcpy(compName, "GL_COMPRESSED_RGBA_ASTC_10x10_KHR"); break;
         case 0x93BC: strcpy(compName, "GL_COMPRESSED_RGBA_ASTC_12x10_KHR"); break;
         case 0x93BD: strcpy(compName, "GL_COMPRESSED_RGBA_ASTC_12x12_KHR"); break;
-        case 0x93D0: strcpy(compName, "GL_COMPRESSED_SRGB8_ALPHA8_ASTC_4x4_KHR"); break;  
-        case 0x93D1: strcpy(compName, "GL_COMPRESSED_SRGB8_ALPHA8_ASTC_5x4_KHR"); break;  
-        case 0x93D2: strcpy(compName, "GL_COMPRESSED_SRGB8_ALPHA8_ASTC_5x5_KHR"); break;  
-        case 0x93D3: strcpy(compName, "GL_COMPRESSED_SRGB8_ALPHA8_ASTC_6x5_KHR"); break;  
-        case 0x93D4: strcpy(compName, "GL_COMPRESSED_SRGB8_ALPHA8_ASTC_6x6_KHR"); break;  
-        case 0x93D5: strcpy(compName, "GL_COMPRESSED_SRGB8_ALPHA8_ASTC_8x5_KHR"); break;  
-        case 0x93D6: strcpy(compName, "GL_COMPRESSED_SRGB8_ALPHA8_ASTC_8x6_KHR"); break;  
-        case 0x93D7: strcpy(compName, "GL_COMPRESSED_SRGB8_ALPHA8_ASTC_8x8_KHR"); break;  
-        case 0x93D8: strcpy(compName, "GL_COMPRESSED_SRGB8_ALPHA8_ASTC_10x5_KHR"); break;  
-        case 0x93D9: strcpy(compName, "GL_COMPRESSED_SRGB8_ALPHA8_ASTC_10x6_KHR"); break;  
-        case 0x93DA: strcpy(compName, "GL_COMPRESSED_SRGB8_ALPHA8_ASTC_10x8_KHR"); break;  
-        case 0x93DB: strcpy(compName, "GL_COMPRESSED_SRGB8_ALPHA8_ASTC_10x10_KHR"); break;  
-        case 0x93DC: strcpy(compName, "GL_COMPRESSED_SRGB8_ALPHA8_ASTC_12x10_KHR"); break;  
-        case 0x93DD: strcpy(compName, "GL_COMPRESSED_SRGB8_ALPHA8_ASTC_12x12_KHR"); break;  
-        default: strcpy(compName, "GL_COMPRESSED_UNKNOWN"); break;    
+        case 0x93D0: strcpy(compName, "GL_COMPRESSED_SRGB8_ALPHA8_ASTC_4x4_KHR"); break;
+        case 0x93D1: strcpy(compName, "GL_COMPRESSED_SRGB8_ALPHA8_ASTC_5x4_KHR"); break;
+        case 0x93D2: strcpy(compName, "GL_COMPRESSED_SRGB8_ALPHA8_ASTC_5x5_KHR"); break;
+        case 0x93D3: strcpy(compName, "GL_COMPRESSED_SRGB8_ALPHA8_ASTC_6x5_KHR"); break;
+        case 0x93D4: strcpy(compName, "GL_COMPRESSED_SRGB8_ALPHA8_ASTC_6x6_KHR"); break;
+        case 0x93D5: strcpy(compName, "GL_COMPRESSED_SRGB8_ALPHA8_ASTC_8x5_KHR"); break;
+        case 0x93D6: strcpy(compName, "GL_COMPRESSED_SRGB8_ALPHA8_ASTC_8x6_KHR"); break;
+        case 0x93D7: strcpy(compName, "GL_COMPRESSED_SRGB8_ALPHA8_ASTC_8x8_KHR"); break;
+        case 0x93D8: strcpy(compName, "GL_COMPRESSED_SRGB8_ALPHA8_ASTC_10x5_KHR"); break;
+        case 0x93D9: strcpy(compName, "GL_COMPRESSED_SRGB8_ALPHA8_ASTC_10x6_KHR"); break;
+        case 0x93DA: strcpy(compName, "GL_COMPRESSED_SRGB8_ALPHA8_ASTC_10x8_KHR"); break;
+        case 0x93DB: strcpy(compName, "GL_COMPRESSED_SRGB8_ALPHA8_ASTC_10x10_KHR"); break;
+        case 0x93DC: strcpy(compName, "GL_COMPRESSED_SRGB8_ALPHA8_ASTC_12x10_KHR"); break;
+        case 0x93DD: strcpy(compName, "GL_COMPRESSED_SRGB8_ALPHA8_ASTC_12x12_KHR"); break;
+        default: strcpy(compName, "GL_COMPRESSED_UNKNOWN"); break;
     }
-    
+
     return compName;
 }
 #endif  // SUPPORT_GL_DETAILS_INFO
@@ -4016,7 +4016,7 @@ static Color *rlGenNextMipmapData(Color *srcData, int srcWidth, int srcHeight)
 
     return mipmap;
 }
-#endif      // GRAPHICS_API_OPENGL_11
+#endif  // GRAPHICS_API_OPENGL_11
 
 // Get pixel data size in bytes (image or texture)
 // NOTE: Size depends on pixel format

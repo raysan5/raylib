@@ -1040,7 +1040,7 @@ void ToggleFullscreen(void)
         GLFWmonitor** monitors = glfwGetMonitors(&monitorCount);
 
         int monitorIndex = GetCurrentMonitor();
-        
+
         // Use current monitor, so we correctly get the display the window is on
         GLFWmonitor* monitor = monitorIndex < monitorCount ?  monitors[monitorIndex] : NULL;
 
@@ -1089,7 +1089,7 @@ void ToggleFullscreen(void)
         // Option 1: Request fullscreen for the canvas element
         // This option does not seem to work at all
         //emscripten_request_fullscreen("#canvas", false);
-        
+
         // Option 2: Request fullscreen for the canvas element with strategy
         // This option does not seem to work at all
         // Ref: https://github.com/emscripten-core/emscripten/issues/5124
@@ -1101,8 +1101,8 @@ void ToggleFullscreen(void)
             // .canvasResizedCallbackUserData = NULL
         // };
         //emscripten_request_fullscreen_strategy("#canvas", EM_FALSE, &strategy);
-        
-        // Option 3: Request fullscreen for the canvas element with strategy 
+
+        // Option 3: Request fullscreen for the canvas element with strategy
         // It works as expected but only inside the browser (client area)
         EmscriptenFullscreenStrategy strategy = {
             .scaleMode = EMSCRIPTEN_FULLSCREEN_SCALE_ASPECT,
@@ -1121,10 +1121,10 @@ void ToggleFullscreen(void)
     {
         //emscripten_exit_fullscreen();
         emscripten_exit_soft_fullscreen();
-        
+
         int width, height;
         emscripten_get_canvas_element_size("#canvas", &width, &height);
-        TRACELOG(LOG_WARNING, "Emscripten: Exit fullscreen: Canvas size: %i x %i", width, height);  
+        TRACELOG(LOG_WARNING, "Emscripten: Exit fullscreen: Canvas size: %i x %i", width, height);
     }
 */
 
@@ -2070,7 +2070,7 @@ void EndScissorMode(void)
 void BeginVrStereoMode(VrStereoConfig config)
 {
     rlEnableStereoRender();
-    
+
     // Set stereo render matrices
     rlSetMatrixProjectionStereo(config.projection[0], config.projection[1]);
     rlSetMatrixViewOffsetStereo(config.viewOffset[0], config.viewOffset[1]);
@@ -2086,7 +2086,7 @@ void EndVrStereoMode(void)
 VrStereoConfig LoadVrStereoConfig(VrDeviceInfo device)
 {
     VrStereoConfig config = { 0 };
-    
+
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     // Compute aspect ratio
     float aspect = ((float)device.hResolution*0.5f)/(float)device.vResolution;
@@ -2126,7 +2126,7 @@ VrStereoConfig LoadVrStereoConfig(VrDeviceInfo device)
     // Compute camera projection matrices
     float projOffset = 4.0f*lensShift;      // Scaled to projection space coordinates [-1..1]
     Matrix proj = MatrixPerspective(fovy, aspect, RL_CULL_DISTANCE_NEAR, RL_CULL_DISTANCE_FAR);
-    
+
     config.projection[0] = MatrixMultiply(proj, MatrixTranslate(projOffset, 0.0f, 0.0f));
     config.projection[1] = MatrixMultiply(proj, MatrixTranslate(-projOffset, 0.0f, 0.0f));
 
@@ -2156,7 +2156,7 @@ VrStereoConfig LoadVrStereoConfig(VrDeviceInfo device)
     return config;
 }
 
-// Unload VR stereo config properties 
+// Unload VR stereo config properties
 void UnloadVrStereoConfig(VrStereoConfig config)
 {
     //...
@@ -3778,7 +3778,7 @@ static bool InitGraphicsDevice(int width, int height)
         glfwSwapInterval(1);
         TRACELOG(LOG_INFO, "DISPLAY: Trying to enable VSYNC");
     }
-#endif // PLATFORM_DESKTOP || PLATFORM_WEB
+#endif  // PLATFORM_DESKTOP || PLATFORM_WEB
 
 #if defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI) || defined(PLATFORM_DRM) || defined(PLATFORM_UWP)
     CORE.Window.fullscreen = true;
@@ -4349,7 +4349,7 @@ static bool InitGraphicsDevice(int width, int height)
         TRACELOG(LOG_INFO, "    > Screen size:  %i x %i", CORE.Window.screen.width, CORE.Window.screen.height);
         TRACELOG(LOG_INFO, "    > Viewport offsets: %i, %i", CORE.Window.renderOffset.x, CORE.Window.renderOffset.y);
     }
-#endif // PLATFORM_ANDROID || PLATFORM_RPI || PLATFORM_DRM || PLATFORM_UWP
+#endif  // PLATFORM_ANDROID || PLATFORM_RPI || PLATFORM_DRM || PLATFORM_UWP
 
     // Load OpenGL extensions
     // NOTE: GLFW loader function is required by GLAD but only used for OpenGL 2.1 and 3.3,
@@ -4745,7 +4745,7 @@ static void PollInputEvents(void)
 #else
     glfwPollEvents();       // Register keyboard/mouse events (callbacks)... and window events!
 #endif
-#endif      //defined(PLATFORM_DESKTOP)
+#endif  // PLATFORM_DESKTOP
 
 // Gamepad support using emscripten API
 // NOTE: GLFW3 joystick functionality not available in web
@@ -4908,8 +4908,8 @@ static void SwapBuffers(void)
         gbm_surface_release_buffer(CORE.Window.gbmSurface, CORE.Window.prevBO);
     }
     CORE.Window.prevBO = bo;
-#endif // defined(PLATFORM_DRM)
-#endif // defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI) || defined(PLATFORM_DRM) || defined(PLATFORM_UWP)
+#endif  // PLATFORM_DRM
+#endif  // PLATFORM_ANDROID || PLATFORM_RPI || PLATFORM_DRM || PLATFORM_UWP
 }
 
 #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
@@ -5653,7 +5653,7 @@ static void RestoreKeyboard(void)
     // Reconfigure keyboard to default mode
     ioctl(STDIN_FILENO, KDSKBMODE, CORE.Input.Keyboard.defaultMode);
 }
-#endif      //SUPPORT_SSH_KEYBOARD_RPI
+#endif  // SUPPORT_SSH_KEYBOARD_RPI
 
 // Initialise user input from evdev(/dev/input/event<N>) this means mouse, keyboard or gamepad devices
 static void InitEvdevInput(void)
@@ -6237,7 +6237,7 @@ static void *GamepadThread(void *arg)
 
     return NULL;
 }
-#endif      // PLATFORM_RPI || PLATFORM_DRM
+#endif  // PLATFORM_RPI || PLATFORM_DRM
 
 #if defined(PLATFORM_UWP)
 // UWP function pointers
@@ -6509,7 +6509,7 @@ void UWPGestureTouch(int pointer, float x, float y, bool touch)
 #endif
 }
 
-#endif // PLATFORM_UWP
+#endif  // PLATFORM_UWP
 
 #if defined(PLATFORM_DRM)
 // Search matching DRM mode in connector's mode list

@@ -1519,7 +1519,7 @@ Mesh GenMeshDefault(int vertexCount)
     // Upload vertex data to GPU (static mesh)
     // NOTE: mesh.vboId array is allocated inside UploadMesh()
     UploadMesh(&mesh, false);
-    
+
     return mesh;
 }
 

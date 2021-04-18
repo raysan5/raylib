@@ -1235,7 +1235,7 @@ Music LoadMusicStream(const char *fileName)
                 bits = 16;
             else if (AUDIO_DEVICE_FORMAT == ma_format_u8)
                 bits = 8;
- 
+
             // NOTE: Only stereo is supported for XM
             music.stream = InitAudioStream(AUDIO.System.device.sampleRate, bits, AUDIO_DEVICE_CHANNELS);
             music.sampleCount = (unsigned int)jar_xm_get_remaining_samples(ctxXm)*2;    // 2 channels
