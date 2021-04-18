@@ -40,8 +40,10 @@ Detailed changes:
 [core] REDESIGNED: GetFileExtension(), includes the .dot
 [core] REDESIGNED: IsFileExtension(), includes the .dot
 [core] REDESIGNED: Compresion API to use sdefl/sinfl libs
+[rlgl] ADDED: SUPPORT_GL_DETAILS_INFO config flag
 [rlgl] REMOVED: GenTexture*() functions (#721)
 [rlgl] REVIEWED: rlLoadShaderDefault() 
+[rlgl] REDESIGNED: rlLoadExtensions(), more details exposed
 [raymath] REVIEWED: QuaternionFromEuler() (#1651)
 [raymath] REVIEWED: MatrixRotateZYX() (#1642)
 [shapes] ADDED: DrawLineBezierQuad() (#1468) by @epsilon-phase
