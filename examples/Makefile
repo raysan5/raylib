@@ -484,7 +484,8 @@ SHADERS = \
     shaders/shaders_spotlight \
     shaders/shaders_hot_reloading \
     shaders/shaders_mesh_instancing \
-    shaders/shaders_multi_sample2d
+    shaders/shaders_multi_sample2d \
+    shaders/shaders_opengl_interop
 
 AUDIO = \
     audio/audio_module_playing \
