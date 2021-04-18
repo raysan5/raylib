@@ -49,8 +49,8 @@ int main()
     int colorLoc = GetShaderLocation(shader, "color");
     
     // Initialize the vertex buffer for the particles and assign each particle random values
-    const size_t particleCount = 10000;
-    struct { float x, y, period; } particles[particleCount];
+    struct { float x, y, period; } particles[10000];
+    const size_t particleCount = sizeof(particles) / sizeof(particles[0]);
     for (size_t i = 0; i < particleCount; i++)
     {
         particles[i].x = GetRandomValue(20, screenWidth - 20);
