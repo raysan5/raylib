@@ -1425,41 +1425,53 @@ void UpdateModelAnimation(Model model, ModelAnimation anim, int frame)
             int vCounter = 0;
             int boneCounter = 0;
             int boneId = 0;
+            float boneWeight = 0.0;
 
             for (int i = 0; i < model.meshes[m].vertexCount; i++)
             {
-                boneId = model.meshes[m].boneIds[boneCounter];
-                inTranslation = model.bindPose[boneId].translation;
-                inRotation = model.bindPose[boneId].rotation;
-                //inScale = model.bindPose[boneId].scale;
-                outTranslation = anim.framePoses[frame][boneId].translation;
-                outRotation = anim.framePoses[frame][boneId].rotation;
-                outScale = anim.framePoses[frame][boneId].scale;
+                model.meshes[m].animVertices[vCounter]     = 0;
+                model.meshes[m].animVertices[vCounter + 1] = 0;
+                model.meshes[m].animVertices[vCounter + 2] = 0;
 
-                // Vertices processing
-                // NOTE: We use meshes.vertices (default vertex position) to calculate meshes.animVertices (animated vertex position)
-                animVertex = (Vector3){ model.meshes[m].vertices[vCounter], model.meshes[m].vertices[vCounter + 1], model.meshes[m].vertices[vCounter + 2] };
-                animVertex = Vector3Multiply(animVertex, outScale);
-                animVertex = Vector3Subtract(animVertex, inTranslation);
-                animVertex = Vector3RotateByQuaternion(animVertex, QuaternionMultiply(outRotation, QuaternionInvert(inRotation)));
-                animVertex = Vector3Add(animVertex, outTranslation);
-                model.meshes[m].animVertices[vCounter] = animVertex.x;
-                model.meshes[m].animVertices[vCounter + 1] = animVertex.y;
-                model.meshes[m].animVertices[vCounter + 2] = animVertex.z;
+                model.meshes[m].animNormals[vCounter]     = 0;
+                model.meshes[m].animNormals[vCounter + 1] = 0;
+                model.meshes[m].animNormals[vCounter + 2] = 0;
 
-                // Normals processing
-                // NOTE: We use meshes.baseNormals (default normal) to calculate meshes.normals (animated normals)
-                if (model.meshes[m].normals != NULL)
+                for (int j = 0; j < 4; j++)
                 {
-                    animNormal = (Vector3){ model.meshes[m].normals[vCounter], model.meshes[m].normals[vCounter + 1], model.meshes[m].normals[vCounter + 2] };
-                    animNormal = Vector3RotateByQuaternion(animNormal, QuaternionMultiply(outRotation, QuaternionInvert(inRotation)));
-                    model.meshes[m].animNormals[vCounter] = animNormal.x;
-                    model.meshes[m].animNormals[vCounter + 1] = animNormal.y;
-                    model.meshes[m].animNormals[vCounter + 2] = animNormal.z;
-                }
+                    boneId = model.meshes[m].boneIds[boneCounter];
+                    boneWeight = model.meshes[m].boneWeights[boneCounter];
+                    inTranslation = model.bindPose[boneId].translation;
+                    inRotation = model.bindPose[boneId].rotation;
+                    //inScale = model.bindPose[boneId].scale;
+                    outTranslation = anim.framePoses[frame][boneId].translation;
+                    outRotation = anim.framePoses[frame][boneId].rotation;
+                    outScale = anim.framePoses[frame][boneId].scale;
 
+                    // Vertices processing
+                    // NOTE: We use meshes.vertices (default vertex position) to calculate meshes.animVertices (animated vertex position)
+                    animVertex = (Vector3){ model.meshes[m].vertices[vCounter], model.meshes[m].vertices[vCounter + 1], model.meshes[m].vertices[vCounter + 2] };
+                    animVertex = Vector3Multiply(animVertex, outScale);
+                    animVertex = Vector3Subtract(animVertex, inTranslation);
+                    animVertex = Vector3RotateByQuaternion(animVertex, QuaternionMultiply(outRotation, QuaternionInvert(inRotation)));
+                    animVertex = Vector3Add(animVertex, outTranslation);
+                    model.meshes[m].animVertices[vCounter]     += animVertex.x * boneWeight;
+                    model.meshes[m].animVertices[vCounter + 1] += animVertex.y * boneWeight;
+                    model.meshes[m].animVertices[vCounter + 2] += animVertex.z * boneWeight;
+
+                    // Normals processing
+                    // NOTE: We use meshes.baseNormals (default normal) to calculate meshes.normals (animated normals)
+                    if (model.meshes[m].normals != NULL)
+                    {
+                        animNormal = (Vector3){ model.meshes[m].normals[vCounter], model.meshes[m].normals[vCounter + 1], model.meshes[m].normals[vCounter + 2] };
+                        animNormal = Vector3RotateByQuaternion(animNormal, QuaternionMultiply(outRotation, QuaternionInvert(inRotation)));
+                        model.meshes[m].animNormals[vCounter]     += animNormal.x * boneWeight;
+                        model.meshes[m].animNormals[vCounter + 1] += animNormal.y * boneWeight;
+                        model.meshes[m].animNormals[vCounter + 2] += animNormal.z * boneWeight;
+                    }
+                    boneCounter += 1;
+                }
                 vCounter += 3;
-                boneCounter += 4;
             }
 
             // Upload new vertex data to GPU for model drawing
