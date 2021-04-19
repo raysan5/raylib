@@ -29,25 +29,49 @@ Ready to learn? Jump to [code examples!](http://www.raylib.com/examples.html)
 
 features
 --------
-  - **NO external dependencies**, all required libraries are bundled into raylib
+  - **NO external dependencies**, all required libraries are [bundled into raylib](https://github.com/raysan5/raylib/tree/master/src/external)
   - Multiple platforms supported: **Windows, Linux, MacOS, RPI, Android, HTML5... and more!**
   - Written in plain C code (C99) in PascalCase/camelCase notation
   - Hardware accelerated with OpenGL (**1.1, 2.1, 3.3 or ES 2.0**)
   - **Unique OpenGL abstraction layer** (usable as standalone module): [rlgl](https://github.com/raysan5/raylib/blob/master/src/rlgl.h)
   - Multiple **Fonts** formats supported (TTF, XNA fonts, AngelCode fonts)
-  - Outstanding texture formats support, including compressed formats (DXT, ETC, ASTC)
+  - Multiple texture formats supported, including **compressed formats** (DXT, ETC, ASTC)
   - **Full 3D support**, including 3D Shapes, Models, Billboards, Heightmaps and more! 
   - Flexible Materials system, supporting classic maps and **PBR maps**
-  - **Animated 3D models** supported (skeletal bones animation)
+  - **Animated 3D models** supported (skeletal bones animation) (IQM, glTF)
   - Shaders support, including model and **postprocessing** shaders.
   - **Powerful math module** for Vector, Matrix and Quaternion operations: [raymath](https://github.com/raysan5/raylib/blob/master/src/raymath.h)
   - Audio loading and playing with streaming support (WAV, OGG, MP3, FLAC, XM, MOD)
   - **VR stereo rendering** support with configurable HMD device parameters
   - Huge examples collection with [+120 code examples](https://github.com/raysan5/raylib/tree/master/examples)!
   - Bindings to [+50 programming languages](https://github.com/raysan5/raylib/blob/master/BINDINGS.md)!
-  - Free and open source.
+  - **Free and open source**.
 
-raylib uses internally several libraries for window/graphics/inputs management and also to support different fileformats loading and saving, all those libraries are embedded with raylib and available in [src/external](https://github.com/raysan5/raylib/tree/master/src/external) directory. Check [raylib dependencies](https://github.com/raysan5/raylib/wiki/raylib-dependencies) page on [raylib Wiki](https://github.com/raysan5/raylib/wiki) for a detailed list.
+raylib uses internally some libraries for window/graphics/inputs management and also to support different fileformats loading, all those libraries are embedded with raylib and are available in [src/external](https://github.com/raysan5/raylib/tree/master/src/external) directory. Check [raylib dependencies](https://github.com/raysan5/raylib/wiki/raylib-dependencies) on [raylib Wiki](https://github.com/raysan5/raylib/wiki) for a detailed list.
+
+basic example
+--------------
+This is a basic raylib example, it creates a window and it draws the text `"Congrats! You created your first window!"` in the middle of the screen. This example can be seen [running live in web here](https://www.raylib.com/examples/web/core/loader.html?name=core_basic_window).
+```c
+#include "raylib.h"
+
+int main(void)
+{
+    InitWindow(800, 450, "raylib [core] example - basic window");
+
+    while (!WindowShouldClose())
+    {
+        BeginDrawing();
+            ClearBackground(RAYWHITE);
+            DrawText("Congrats! You created your first window!", 190, 200, 20, LIGHTGRAY);
+        EndDrawing();
+    }
+
+    CloseWindow();
+
+    return 0;
+}
+```
 
 build and installation
 ----------------------
