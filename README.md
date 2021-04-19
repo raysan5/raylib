@@ -123,21 +123,27 @@ raylib has been developed on Windows platform using [Notepad++](https://notepad-
 
 *Note that there are lots of IDEs supported, some of the provided templates could require some review, please, if you find some issue with some template or you think they could be improved, feel free to send a PR or open a related issue.*
 
-more info
-----------
+learning
+--------
 
-TODO.
+ - [raylib cheatsheet](https://www.raylib.com/cheatsheet/cheatsheet.html)
+ - [raylib architecture](https://github.com/raysan5/raylib/wiki/raylib-architecture)
+ - [raylib library design](https://github.com/raysan5/raylib/wiki)
+ - [raylib examples collection](https://github.com/raysan5/raylib/tree/master/examples)
+ - [raylib games collection](https://github.com/raysan5/raylib-games)
+ - [raylib Wiki](https://github.com/raysan5/raylib/wiki)
 
-contact
--------
 
-   * Webpage: [http://www.raylib.com](http://www.raylib.com)
-   * Discord: [https://discord.gg/raylib](https://discord.gg/raylib)
-   * Twitter: [http://www.twitter.com/raysan5](http://www.twitter.com/raysan5)
-   * Twitch: [http://www.twitch.tv/raysan5](http://www.twitch.tv/raysan5)
-   * Reddit: [https://www.reddit.com/r/raylib](https://www.reddit.com/r/raylib)
-   * Patreon: [https://www.patreon.com/raylib](https://www.patreon.com/raylib)
-   * YouTube: [https://www.youtube.com/channel/raylib](https://www.youtube.com/c/raylib)
+contact and networks
+---------------------
+
+ - Webpage: [http://www.raylib.com](http://www.raylib.com)
+ - Discord: [https://discord.gg/raylib](https://discord.gg/raylib)
+ - Twitter: [http://www.twitter.com/raysan5](http://www.twitter.com/raysan5)
+ - Twitch: [http://www.twitch.tv/raysan5](http://www.twitch.tv/raysan5)
+ - Reddit: [https://www.reddit.com/r/raylib](https://www.reddit.com/r/raylib)
+ - Patreon: [https://www.patreon.com/raylib](https://www.patreon.com/raylib)
+ - YouTube: [https://www.youtube.com/channel/raylib](https://www.youtube.com/c/raylib)
 
 If you are using raylib and enjoying it, please, join our [Discord server](https://discord.gg/raylib) and let us know! :)
 
