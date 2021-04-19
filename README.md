@@ -1,4 +1,4 @@
-<img align="left" src="https://github.com/raysan5/raylib/blob/master/logo/raylib_256x256.png" width=256>
+<img align="left" src="https://github.com/raysan5/raylib/blob/master/logo/raylib_logo_animation.gif" width="100%">
 
 **raylib is a simple and easy-to-use library to enjoy videogames programming.**
 
