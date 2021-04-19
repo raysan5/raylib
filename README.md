@@ -47,19 +47,7 @@ features
   - Bindings to [+50 programming languages](https://github.com/raysan5/raylib/blob/master/BINDINGS.md)!
   - Free and open source.
 
-raylib uses on its [core](https://github.com/raysan5/raylib/blob/master/src/core.c) module the outstanding [GLFW3](http://www.glfw.org/) library, embedded in the form of [rglfw](https://github.com/raysan5/raylib/blob/master/src/rglfw.c) module, to avoid external dependencies.
-
-raylib uses on its [raudio](https://github.com/raysan5/raylib/blob/master/src/raudio.c) module, the amazing [miniaudio](https://github.com/dr-soft/miniaudio) library to support multiple platforms and multiple audio backends.
-
-raylib uses internally several single-file header-only libraries to support different fileformats loading and saving, all those libraries are embedded with raylib and available in [src/external](https://github.com/raysan5/raylib/tree/master/src/external) directory. Check [raylib Wiki](https://github.com/raysan5/raylib/wiki/raylib-dependencies) for a detailed list.
-
-*On Android platform, `native_app_glue` module (provided by Android NDK) and native Android libraries are used to manage window/context, inputs and activity life cycle.*
-
-*On Raspberry Pi 0,1,2,3 platform (native mode), `Videocore API` and `EGL` libraries are used for window/context management. Inputs are processed using `evdev` Linux libraries*
-
-*On Raspberry Pi 4 platform (native mode), `DRM subsystem` and `GBM API` libraries are used for window/context management. Inputs are processed using `evdev` Linux libraries*
-
-*On Web platform, raylib uses `emscripten` provided libraries for several input events management, specially noticeable the touch events support.*
+raylib uses internally several libraries for window/graphics/inputs management and also to support different fileformats loading and saving, all those libraries are embedded with raylib and available in [src/external](https://github.com/raysan5/raylib/tree/master/src/external) directory. Check [raylib dependencies](https://github.com/raysan5/raylib/wiki/raylib-dependencies) page on [raylib Wiki](https://github.com/raysan5/raylib/wiki) for a detailed list.
 
 build and installation
 ----------------------
