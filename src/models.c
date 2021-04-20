@@ -928,7 +928,7 @@ void UploadMesh(Mesh *mesh, bool dynamic)
 // Update mesh vertex data in GPU for a specific buffer index
 void UpdateMeshBuffer(Mesh mesh, int index, void *data, int dataSize, int offset)
 {
-    rlUpdateVertexBuffer(mesh->vboId[index], data, dataSize, offset);
+    rlUpdateVertexBuffer(mesh.vboId[index], data, dataSize, offset);
 }
 
 // Draw a 3d mesh with material and transform
