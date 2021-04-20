@@ -102,7 +102,7 @@ You can download and install raylib using the [conan](https://conan.io) dependen
 
 *The raylib recipe in conan is kept up to date by conan team members and community contributors. If the version is out of date, please [create an issue or pull request](https://github.com/conan-io/conan-center-index) on the conan-center-index repository.*
 
-#### Building raylib on multiple platforms
+#### Installing and building raylib on multiple platforms
 
 [raylib Wiki](https://github.com/raysan5/raylib/wiki#development-platforms) contains detailed instructions on building and usage on multiple platforms.
 
@@ -117,7 +117,7 @@ You can download and install raylib using the [conan](https://conan.io) dependen
 
 *Note that Wiki is open for edit, if you find some issue while building raylib for your target platform, feel free to edit the Wiki or open and issue related to it.*
 
-#### Using raylib with multiple IDEs
+#### Setup raylib with multiple IDEs
 
 raylib has been developed on Windows platform using [Notepad++](https://notepad-plus-plus.org/) and [MinGW GCC](http://mingw-w64.org/doku.php) compiler but it can be used with other IDEs on multiple platforms.
 
@@ -125,25 +125,28 @@ raylib has been developed on Windows platform using [Notepad++](https://notepad-
 
 *Note that there are lots of IDEs supported, some of the provided templates could require some review, please, if you find some issue with some template or you think they could be improved, feel free to send a PR or open a related issue.*
 
-learning
---------
+learning and docs
+------------------
+
+raylib is designed to be learned using the examples as the main reference. There is no a standard API documentation, just a **cheatsheet** containing all the functions available on the library and a short description of each one, input parameters and result value should be intuitive just seing the naming. Some additional documentation about raylib design can be found in raylib GitHub Wiki. Here the more relevant links:
 
  - [raylib cheatsheet](https://www.raylib.com/cheatsheet/cheatsheet.html)
  - [raylib architecture](https://github.com/raysan5/raylib/wiki/raylib-architecture)
  - [raylib library design](https://github.com/raysan5/raylib/wiki)
  - [raylib examples collection](https://github.com/raysan5/raylib/tree/master/examples)
  - [raylib games collection](https://github.com/raysan5/raylib-games)
- - [raylib Wiki](https://github.com/raysan5/raylib/wiki)
 
 
 contact and networks
 ---------------------
 
+raylib is present in several networks and raylib community is growing everyday. Feel free to join us in any of these networks.
+
  - Webpage: [http://www.raylib.com](http://www.raylib.com)
  - Discord: [https://discord.gg/raylib](https://discord.gg/raylib)
  - Twitter: [http://www.twitter.com/raysan5](http://www.twitter.com/raysan5)
- - Twitch: [http://www.twitch.tv/raysan5](http://www.twitch.tv/raysan5)
- - Reddit: [https://www.reddit.com/r/raylib](https://www.reddit.com/r/raylib)
+ - Twitch:  [http://www.twitch.tv/raysan5](http://www.twitch.tv/raysan5)
+ - Reddit:  [https://www.reddit.com/r/raylib](https://www.reddit.com/r/raylib)
  - Patreon: [https://www.patreon.com/raylib](https://www.patreon.com/raylib)
  - YouTube: [https://www.youtube.com/channel/raylib](https://www.youtube.com/c/raylib)
 
