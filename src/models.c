@@ -829,13 +829,13 @@ void UploadMesh(Mesh *mesh, bool dynamic)
     mesh->vboId = (unsigned int *)RL_CALLOC(MAX_MESH_VERTEX_BUFFERS, sizeof(unsigned int));
 
     mesh->vaoId = 0;        // Vertex Array Object
-    mesh->vboId[0] = 0;     // Vertex positions VBO
-    mesh->vboId[1] = 0;     // Vertex texcoords VBO
-    mesh->vboId[2] = 0;     // Vertex normals VBO
-    mesh->vboId[3] = 0;     // Vertex colors VBO
-    mesh->vboId[4] = 0;     // Vertex tangents VBO
-    mesh->vboId[5] = 0;     // Vertex texcoords2 VBO
-    mesh->vboId[6] = 0;     // Vertex indices VBO
+    mesh->vboId[0] = 0;     // Vertex buffer: positions
+    mesh->vboId[1] = 0;     // Vertex buffer: texcoords
+    mesh->vboId[2] = 0;     // Vertex buffer: normals
+    mesh->vboId[3] = 0;     // Vertex buffer: colors
+    mesh->vboId[4] = 0;     // Vertex buffer: tangents
+    mesh->vboId[5] = 0;     // Vertex buffer: texcoords2
+    mesh->vboId[6] = 0;     // Vertex buffer: indices
 
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     mesh->vaoId = rlLoadVertexArray();
@@ -923,6 +923,12 @@ void UploadMesh(Mesh *mesh, bool dynamic)
 
     rlDisableVertexArray();
 #endif
+}
+
+// Update mesh vertex data in GPU for a specific buffer index
+void UpdateMeshBuffer(Mesh mesh, int index, void *data, int dataSize, int offset)
+{
+    rlUpdateVertexBuffer(mesh->vboId[index], data, dataSize, offset);
 }
 
 // Draw a 3d mesh with material and transform
@@ -1528,9 +1534,9 @@ Mesh GenMeshDefault(int vertexCount)
     mesh.normals = (float *)RL_CALLOC(mesh.vertexCount*3, sizeof(float));
     mesh.colors = (unsigned char *)RL_CALLOC(mesh.vertexCount*4, sizeof(unsigned char));
 
-    // Upload vertex data to GPU (static mesh)
+    // Upload vertex data to GPU (dynamic mesh)
     // NOTE: mesh.vboId array is allocated inside UploadMesh()
-    UploadMesh(&mesh, false);
+    UploadMesh(&mesh, true);
 
     return mesh;
 }
