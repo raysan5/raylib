@@ -62,6 +62,7 @@ Detailed changes:
 [textures] REVIEWED: DrawTexturePro() and DrawRectanglePro() transformations (#1632) by @ChrisDill
 [text] REDESIGNED: DrawFPS()
 [models] ADDED: UploadMesh() (#1529)
+[models] ADDED: UpdateMeshBuffer()
 [models] ADDED: DrawMesh()
 [models] ADDED: DrawMeshInstanced()
 [models] ADDED: UnloadModelAnimations() (#1648) by @object71
