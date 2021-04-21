@@ -73,7 +73,7 @@ APP_KEYSTORE_PASS ?= raylib
 RAYLIB_LIBTYPE ?= STATIC
 
 # Library path for libraylib.a/libraylib.so
-RAYLIB_LIB_PATH = $(RAYLIB_PATH)/src
+RAYLIB_LIB_PATH = $(RAYLIB_PATH)/src/
 
 # Shared libs must be added to APK if required
 # NOTE: Generated NativeLoader.java automatically load those libraries
@@ -82,20 +82,26 @@ ifeq ($(RAYLIB_LIBTYPE),SHARED)
 endif
 
 # Compiler and archiver
-# NOTE: GCC is being deprecated in Android NDK r16
-# NOTE: For some old androild device, maybe you should the CC to arm-linux-androideabi-clang
 ifeq ($(ANDROID_ARCH),ARM)
-    CC = $(ANDROID_TOOLCHAIN)/bin/armv7a-linux-androideabi29-clang
-    AR = $(ANDROID_TOOLCHAIN)/bin/arm-linux-androideabi-ar
+    CC = $(ANDROID_TOOLCHAIN)/bin/armv7a-linux-androideabi$(ANDROID_API_VERSION)-clang
+    AR = $(ANDROID_TOOLCHAIN)/bin/armv7a-linux-androideabi-ar
 endif
 ifeq ($(ANDROID_ARCH),ARM64)
-    CC = $(ANDROID_TOOLCHAIN)/bin/aarch64-linux-android-clang
+    CC = $(ANDROID_TOOLCHAIN)/bin/aarch64-linux-android$(ANDROID_API_VERSION)-clang
     AR = $(ANDROID_TOOLCHAIN)/bin/aarch64-linux-android-ar
+endif
+ifeq ($(ANDROID_ARCH),x86)
+    CC = $(ANDROID_TOOLCHAIN)/bin/i686-linux-android$(ANDROID_API_VERSION)-clang
+    AR = $(ANDROID_TOOLCHAIN)/bin/i686-linux-android-ar
+endif
+ifeq ($(ANDROID_ARCH),x86_64)
+    CC = $(ANDROID_TOOLCHAIN)/bin/x86_64-linux-android$(ANDROID_API_VERSION)-clang
+    AR = $(ANDROID_TOOLCHAIN)/bin/x86_64-linux-android-ar
 endif
 
 # Compiler flags for arquitecture
 ifeq ($(ANDROID_ARCH),ARM)
-    CFLAGS = -std=c99 -march=armv7-a -mfloat-abi=softfp -mfpu=vfpv3-d16
+    CFLAGS = -std=c99 -march=armv7a -mfloat-abi=softfp -mfpu=vfpv3-d16
 endif
 ifeq ($(ANDROID_ARCH),ARM64)
     CFLAGS = -std=c99 -target aarch64 -mfix-cortex-a53-835769
@@ -108,7 +114,7 @@ CFLAGS += -Wall -Wa,--noexecstack -Wformat -Werror=format-security -no-canonical
 CFLAGS += -DANDROID -DPLATFORM_ANDROID -D__ANDROID_API__=$(ANDROID_API_VERSION)
 
 # Paths containing required header files
-INCLUDE_PATHS = -I. -I$(RAYLIB_PATH)/src -I$(RAYLIB_PATH)/src/external/android/native_app_glue
+INCLUDE_PATHS = -I. -I$(RAYLIB_PATH)/src -I$(NATIVE_APP_GLUE)
 
 # Linker options
 LDFLAGS = -Wl,-soname,lib$(PROJECT_LIBRARY_NAME).so -Wl,--exclude-libs,libatomic.a 
@@ -116,12 +122,10 @@ LDFLAGS += -Wl,--build-id -Wl,--no-undefined -Wl,-z,noexecstack -Wl,-z,relro -Wl
 # Force linking of library module to define symbol
 LDFLAGS += -u ANativeActivity_onCreate
 # Library paths containing required libs
-LDFLAGS += -L. -L$(PROJECT_BUILD_PATH)/obj -L$(PROJECT_BUILD_PATH)/lib/$(ANDROID_ARCH_NAME) -L$(ANDROID_TOOLCHAIN)/sysroot/usr/lib
+LDFLAGS += -L. -L$(PROJECT_BUILD_PATH)/obj -L$(PROJECT_BUILD_PATH)/lib/$(ANDROID_ARCH_NAME)
 
 # Define any libraries to link into executable
 # if you want to link libraries (libname.so or libname.a), use the -lname
-
-#LDLIBS =  -lraylib -lnative_app_glue -llog -landroid -lEGL -lGLESv2 -lOpenSLES -latomic -lc -lm -ldl
 LDLIBS = -lm -lc -lraylib -llog -landroid -lEGL -lGLESv2 -lOpenSLES -ldl
 
 # Generate target objects list from PROJECT_SOURCE_FILES
@@ -140,14 +144,10 @@ all: create_temp_project_dirs \
      compile_project_class \
      compile_project_class_dex \
      create_project_apk_package \
-     sign_project_apk_package \
-     zipalign_project_apk_package
+     zipalign_project_apk_package \
+     sign_project_apk_package
 
-# Create required temp directories 
-
-
-
-APK building
+# Create required temp directories for APK building
 create_temp_project_dirs:
 	test -d $(PROJECT_BUILD_PATH) || mkdir -p $(PROJECT_BUILD_PATH)
 	test -d $(PROJECT_BUILD_PATH)/obj || mkdir -p $(PROJECT_BUILD_PATH)/obj
@@ -275,6 +275,7 @@ create_project_apk_package:
 	cd $(PROJECT_BUILD_PATH) && $(ANDROID_BUILD_TOOLS)/aapt add bin/$(PROJECT_NAME).unsigned.apk lib/$(ANDROID_ARCH_NAME)/lib$(PROJECT_LIBRARY_NAME).so $(PROJECT_SHARED_LIBS)
 
 # Create signed APK package using generated Key: bin/$(PROJECT_NAME).signed.apk 
+
 sign_project_apk_package:
 	$(JAVA_HOME)/bin/jarsigner -keystore $(PROJECT_BUILD_PATH)/$(PROJECT_NAME).keystore -storepass $(APP_KEYSTORE_PASS) -keypass $(APP_KEYSTORE_PASS) -signedjar $(PROJECT_BUILD_PATH)/bin/$(PROJECT_NAME).signed.apk $(PROJECT_BUILD_PATH)/bin/$(PROJECT_NAME).unsigned.apk $(PROJECT_NAME)Key
 
