@@ -32,12 +32,12 @@ int main(void)
     Texture2D fgTexture = LoadTextureFromImage(fgImage);          // Image converted to texture, GPU memory (VRAM)
 
     // Once image has been converted to texture and uploaded to VRAM, it can be unloaded from RAM
-    UnloadImage(bgImage);   
+    UnloadImage(bgImage);
     UnloadImage(fgImage);
 
     const int blendCountMax = 4;
     BlendMode blendMode = 0;
-    
+
     // Main game loop
     while (!WindowShouldClose())    // Detect window close button or ESC key
     {
@@ -49,7 +49,7 @@ int main(void)
             else blendMode++;
         }
         //----------------------------------------------------------------------------------
-        
+
         // Draw
         //----------------------------------------------------------------------------------
         BeginDrawing();
@@ -65,7 +65,7 @@ int main(void)
 
             // Draw the texts
             DrawText("Press SPACE to change blend modes.", 310, 350, 10, GRAY);
-            
+
             switch (blendMode)
             {
                 case BLEND_ALPHA: DrawText("Current: BLEND_ALPHA", (screenWidth / 2) - 60, 370, 10, GRAY); break;
@@ -74,7 +74,7 @@ int main(void)
                 case BLEND_ADD_COLORS: DrawText("Current: BLEND_ADD_COLORS", (screenWidth / 2) - 60, 370, 10, GRAY); break;
                 default: break;
             }
-            
+
             DrawText("(c) Cyberpunk Street Environment by Luis Zuno (@ansimuz)", screenWidth - 330, screenHeight - 20, 10, GRAY);
 
         EndDrawing();
@@ -88,6 +88,6 @@ int main(void)
 
     CloseWindow();            // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
-    
+
     return 0;
 }

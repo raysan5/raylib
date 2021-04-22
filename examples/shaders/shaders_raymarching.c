@@ -73,7 +73,7 @@ int main(void)
         SetShaderValue(shader, viewEyeLoc, cameraPos, SHADER_UNIFORM_VEC3);
         SetShaderValue(shader, viewCenterLoc, cameraTarget, SHADER_UNIFORM_VEC3);
         SetShaderValue(shader, runTimeLoc, &runTime, SHADER_UNIFORM_FLOAT);
-        
+
         // Check if screen is resized
         if (IsWindowResized())
         {

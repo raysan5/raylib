@@ -30,7 +30,7 @@ int main(void)
 
     // Load explosion texture
     Texture2D explosion = LoadTexture("resources/explosion.png");
-    
+
     // Init variables for animation
     int frameWidth = explosion.width/NUM_FRAMES_PER_LINE;   // Sprite one frame rectangle width
     int frameHeight = explosion.height/NUM_LINES;           // Sprite one frame rectangle height

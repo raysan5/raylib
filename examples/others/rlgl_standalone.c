@@ -9,7 +9,7 @@
 *       rlgl.h    - OpenGL 1.1 immediate-mode style coding translation layer
 *       glad.h    - OpenGL extensions initialization library (required by rlgl)
 *       raymath.h - 3D math library (required by rlgl)
-*       glfw3     - Windows and context initialization library 
+*       glfw3     - Windows and context initialization library
 *
 *   rlgl library is provided as a single-file header-only library, this library
 *   allows coding in a pseudo-OpenGL 1.1 style while translating calls to multiple
@@ -95,18 +95,18 @@ int main(void)
     //--------------------------------------------------------------------------------------
     const int screenWidth = 800;
     const int screenHeight = 450;
-    
+
     // GLFW3 Initialization + OpenGL 3.3 Context + Extensions
     //--------------------------------------------------------
     glfwSetErrorCallback(ErrorCallback);
-    
+
     if (!glfwInit())
     {
         printf("GLFW3: Can not initialize GLFW\n");
         return 1;
     }
     else printf("GLFW3: GLFW initialized successfully\n");
-    
+
     glfwWindowHint(GLFW_SAMPLES, 4);
     glfwWindowHint(GLFW_DEPTH_BITS, 16);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
@@ -117,27 +117,27 @@ int main(void)
     glfwWindowHint( GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE );
 #endif
 
-   
+
     GLFWwindow *window = glfwCreateWindow(screenWidth, screenHeight, "rlgl standalone", NULL, NULL);
-    
+
     if (!window)
     {
         glfwTerminate();
         return 2;
     }
     else printf("GLFW3: Window created successfully\n");
-    
+
     glfwSetWindowPos(window, 200, 200);
-    
+
     glfwSetKeyCallback(window, KeyCallback);
-    
+
     glfwMakeContextCurrent(window);
     glfwSwapInterval(0);
-    
+
     // Load OpenGL 3.3 supported extensions
     rlLoadExtensions(glfwGetProcAddress);
     //--------------------------------------------------------
-    
+
     // Initialize OpenGL context (states and resources)
     rlglInit(screenWidth, screenHeight);
 
@@ -151,18 +151,18 @@ int main(void)
 
     rlClearColor(245, 245, 245, 255);                   // Define clear color
     rlEnableDepthTest();                                // Enable DEPTH_TEST for 3D
-    
+
     Camera camera = { 0 };
     camera.position = (Vector3){ 5.0f, 5.0f, 5.0f };    // Camera position
     camera.target = (Vector3){ 0.0f, 0.0f, 0.0f };      // Camera looking at point
     camera.up = (Vector3){ 0.0f, 1.0f, 0.0f };          // Camera up vector (rotation towards target)
     camera.fovy = 45.0f;                                // Camera field-of-view Y
-    
-    Vector3 cubePosition = { 0.0f, 0.0f, 0.0f };        // Cube default position (center)
-    //--------------------------------------------------------------------------------------    
 
-    // Main game loop    
-    while (!glfwWindowShouldClose(window)) 
+    Vector3 cubePosition = { 0.0f, 0.0f, 0.0f };        // Cube default position (center)
+    //--------------------------------------------------------------------------------------
+
+    // Main game loop
+    while (!glfwWindowShouldClose(window))
     {
         // Update
         //----------------------------------------------------------------------------------
@@ -189,14 +189,14 @@ int main(void)
             // Draw internal render batch buffers (3D data)
             rlDrawRenderBatchActive();
             //-----------------------------------------------
-            
+
             // Draw '2D' elements in the scene (GUI)
             //-----------------------------------------------
 #define RLGL_CREATE_MATRIX_MANUALLY
 #if defined(RLGL_CREATE_MATRIX_MANUALLY)
             matProj = MatrixOrtho(0.0, screenWidth, screenHeight, 0.0, 0.0, 1.0);
             matView = MatrixIdentity();
-            
+
             rlSetMatrixModelview(matView);    // Set internal modelview matrix (default shader)
             rlSetMatrixProjection(matProj);   // Set internal projection matrix (default shader)
 
@@ -213,7 +213,7 @@ int main(void)
             // Draw internal render batch buffers (3D data)
             rlDrawRenderBatchActive();
             //-----------------------------------------------
-            
+
         glfwSwapBuffers(window);
         glfwPollEvents();
         //----------------------------------------------------------------------------------
@@ -222,11 +222,11 @@ int main(void)
     // De-Initialization
     //--------------------------------------------------------------------------------------
     rlglClose();                    // Unload rlgl internal buffers and default shader/texture
-    
+
     glfwDestroyWindow(window);      // Close window
     glfwTerminate();                // Free GLFW3 resources
     //--------------------------------------------------------------------------------------
-    
+
     return 0;
 }
 

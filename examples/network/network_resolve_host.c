@@ -22,17 +22,17 @@ int main(void)
     const int screenHeight = 450;
 
     InitWindow(screenWidth, screenHeight, "raylib [network] example - resolve host");
-    
+
     InitNetworkDevice();    // Init network communications
-    
+
     char buffer[ADDRESS_IPV6_ADDRSTRLEN];
     unsigned short port = 0;
 
     AddressInformation *address = LoadAddressList(1);
-    
+
     // Address info flags
     //  ADDRESS_INFO_NUMERICHOST    // or try them in conjunction to
-    //  ADDRESS_INFO_NUMERICSERV    // specify custom behaviour from 
+    //  ADDRESS_INFO_NUMERICSERV    // specify custom behaviour from
     //  ADDRESS_INFO_DNS_ONLY       // the function getaddrinfo()
     //  ADDRESS_INFO_ALL            //
     //  ADDRESS_INFO_FQDN           // e.g. ADDRESS_INFO_CANONNAME | ADDRESS_INFO_NUMERICSERV
@@ -70,7 +70,7 @@ int main(void)
     // De-Initialization
     //--------------------------------------------------------------------------------------
     CloseNetworkDevice();   // Close network communication
-    
+
     CloseWindow();          // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
 

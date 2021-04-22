@@ -49,7 +49,7 @@ int main(void)
     InitWindow(screenWidth, screenHeight, "raylib [shaders] example - fog");
 
     // Define the camera to look into our 3d world
-    Camera camera = { 
+    Camera camera = {
         (Vector3){ 2.0f, 2.0f, 6.0f },      // position
         (Vector3){ 0.0f, 0.5f, 0.0f },      // target
         (Vector3){ 0.0f, 1.0f, 0.0f },      // up
@@ -67,7 +67,7 @@ int main(void)
     modelC.materials[0].maps[MATERIAL_MAP_DIFFUSE].texture = texture;
 
     // Load shader and set up some uniforms
-    Shader shader = LoadShader(TextFormat("resources/shaders/glsl%i/base_lighting.vs", GLSL_VERSION), 
+    Shader shader = LoadShader(TextFormat("resources/shaders/glsl%i/base_lighting.vs", GLSL_VERSION),
                                TextFormat("resources/shaders/glsl%i/fog.fs", GLSL_VERSION));
     shader.locs[SHADER_LOC_MATRIX_MODEL] = GetShaderLocation(shader, "matModel");
     shader.locs[SHADER_LOC_VECTOR_VIEW] = GetShaderLocation(shader, "viewPos");
@@ -75,7 +75,7 @@ int main(void)
     // Ambient light level
     int ambientLoc = GetShaderLocation(shader, "ambient");
     SetShaderValue(shader, ambientLoc, (float[4]){ 0.2f, 0.2f, 0.2f, 1.0f }, SHADER_UNIFORM_VEC4);
-    
+
     float fogDensity = 0.15f;
     int fogDensityLoc = GetShaderLocation(shader, "fogDensity");
     SetShaderValue(shader, fogDensityLoc, &fogDensity, SHADER_UNIFORM_FLOAT);
@@ -100,18 +100,18 @@ int main(void)
         //----------------------------------------------------------------------------------
         UpdateCamera(&camera);              // Update camera
 
-        if (IsKeyDown(KEY_UP)) 
+        if (IsKeyDown(KEY_UP))
         {
             fogDensity += 0.001;
             if (fogDensity > 1.0) fogDensity = 1.0;
         }
-        
+
         if (IsKeyDown(KEY_DOWN))
         {
             fogDensity -= 0.001;
             if (fogDensity < 0.0) fogDensity = 0.0;
         }
-        
+
         SetShaderValue(shader, fogDensityLoc, &fogDensity, SHADER_UNIFORM_FLOAT);
 
         // Rotate the torus

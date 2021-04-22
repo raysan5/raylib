@@ -57,7 +57,7 @@ int main(void)
 
     // Load the shader
     Shader shader = LoadShader(0, TextFormat("resources/shaders/glsl%i/mask.fs", GLSL_VERSION));
-    
+
     // Load and apply the diffuse texture (colour map)
     Texture texDiffuse = LoadTexture("resources/plasma.png");
     model1.materials[0].maps[MATERIAL_MAP_DIFFUSE].texture = texDiffuse;
@@ -131,10 +131,10 @@ int main(void)
     UnloadModel(model1);
     UnloadModel(model2);
     UnloadModel(model3);
-    
+
     UnloadTexture(texDiffuse);  // Unload default diffuse texture
     UnloadTexture(texMask);     // Unload texture mask
-    
+
     UnloadShader(shader);       // Unload shader
 
     CloseWindow();              // Close window and OpenGL context

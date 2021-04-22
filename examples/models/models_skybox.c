@@ -36,12 +36,12 @@ int main(void)
     // Load skybox model
     Mesh cube = GenMeshCube(1.0f, 1.0f, 1.0f);
     Model skybox = LoadModelFromMesh(cube);
-    
+
     bool useHDR = false;
 
     // Load skybox shader and set required locations
     // NOTE: Some locations are automatically set at shader loading
-    skybox.materials[0].shader = LoadShader(TextFormat("resources/shaders/glsl%i/skybox.vs", GLSL_VERSION), 
+    skybox.materials[0].shader = LoadShader(TextFormat("resources/shaders/glsl%i/skybox.vs", GLSL_VERSION),
                                             TextFormat("resources/shaders/glsl%i/skybox.fs", GLSL_VERSION));
 
     SetShaderValue(skybox.materials[0].shader, GetShaderLocation(skybox.materials[0].shader, "environmentMap"), (int[1]){ MATERIAL_MAP_CUBEMAP }, SHADER_UNIFORM_INT);
@@ -49,7 +49,7 @@ int main(void)
     SetShaderValue(skybox.materials[0].shader, GetShaderLocation(skybox.materials[0].shader, "vflipped"), (int[1]){ useHDR ? 1 : 0 }, SHADER_UNIFORM_INT);
 
     // Load cubemap shader and setup required shader locations
-    Shader shdrCubemap = LoadShader(TextFormat("resources/shaders/glsl%i/cubemap.vs", GLSL_VERSION), 
+    Shader shdrCubemap = LoadShader(TextFormat("resources/shaders/glsl%i/cubemap.vs", GLSL_VERSION),
                                     TextFormat("resources/shaders/glsl%i/cubemap.fs", GLSL_VERSION));
 
     SetShaderValue(shdrCubemap, GetShaderLocation(shdrCubemap, "equirectangularMap"), (int[1]){ 0 }, SHADER_UNIFORM_INT);
@@ -89,7 +89,7 @@ int main(void)
         // Update
         //----------------------------------------------------------------------------------
         UpdateCamera(&camera);              // Update camera
-        
+
         // Load new cubemap texture on drag&drop
         if (IsFileDropped())
         {
@@ -105,7 +105,7 @@ int main(void)
                     if (useHDR)
                     {
                         Texture2D panorama = LoadTexture(droppedFiles[0]);
-                        
+
                         // Generate cubemap from panorama texture
                         skybox.materials[0].maps[MATERIAL_MAP_CUBEMAP].texture = GenTextureCubemap(shdrCubemap, panorama, 1024, PIXELFORMAT_UNCOMPRESSED_R8G8B8A8);
                         UnloadTexture(panorama);
@@ -132,16 +132,16 @@ int main(void)
             ClearBackground(RAYWHITE);
 
             BeginMode3D(camera);
-            
+
                 // We are inside the cube, we need to disable backface culling!
                 rlDisableBackfaceCulling();
                 rlDisableDepthMask();
                     DrawModel(skybox, (Vector3){0, 0, 0}, 1.0f, WHITE);
                 rlEnableBackfaceCulling();
                 rlEnableDepthMask();
-                
+
                 DrawGrid(10, 1.0f);
-                
+
             EndMode3D();
 
             if (useHDR)
@@ -159,7 +159,7 @@ int main(void)
     //--------------------------------------------------------------------------------------
     UnloadShader(skybox.materials[0].shader);
     UnloadTexture(skybox.materials[0].maps[MATERIAL_MAP_CUBEMAP].texture);
-    
+
     UnloadModel(skybox);        // Unload skybox model
 
     CloseWindow();              // Close window and OpenGL context

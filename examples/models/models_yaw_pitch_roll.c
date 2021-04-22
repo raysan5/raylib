@@ -30,7 +30,7 @@ int main(void)
     camera.up = (Vector3){ 0.0f, 1.0f, 0.0f };          // Camera up vector (rotation towards target)
     camera.fovy = 30.0f;                                // Camera field-of-view Y
     camera.projection = CAMERA_PERSPECTIVE;             // Camera type
-    
+
     // Model loading
     // NOTE: Diffuse map loaded automatically
     Model model = LoadModel("resources/plane/plane.gltf");
@@ -77,8 +77,8 @@ int main(void)
         // Tranformation matrix for rotations
         model.transform = MatrixRotateXYZ((Vector3){ DEG2RAD*pitch, DEG2RAD*yaw, DEG2RAD*roll });
         //----------------------------------------------------------------------------------
-        
-        
+
+
         // Draw
         //----------------------------------------------------------------------------------
         BeginDrawing();
@@ -92,7 +92,7 @@ int main(void)
                 DrawGrid(10, 10.0f);
 
             EndMode3D();
-            
+
             // Draw controls info
             DrawRectangle(30, 370, 260, 70, Fade(GREEN, 0.5f));
             DrawRectangleLines(30, 370, 260, 70, Fade(DARKGREEN, 0.5f));
@@ -107,7 +107,7 @@ int main(void)
     }
 
     // De-Initialization
-    //--------------------------------------------------------------------------------------   
+    //--------------------------------------------------------------------------------------
     UnloadModel(model);     // Unload model data
 
     CloseWindow();          // Close window and OpenGL context

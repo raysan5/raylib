@@ -9,7 +9,7 @@
 *     - GLTF > Modern text/binary file format, includes lot of information and it could
 *              also reference external files, raylib will try loading mesh and materials data
 *     - IQM > Binary file format including mesh vertex data but also animation data,
-*             raylib can load .iqm animations.  
+*             raylib can load .iqm animations.
 *
 *   This example has been created using raylib 2.6 (www.raylib.com)
 *   raylib is licensed under an unmodified zlib/libpng license (View raylib.h for details)
@@ -42,7 +42,7 @@ int main(void)
     model.materials[0].maps[MATERIAL_MAP_DIFFUSE].texture = texture;                 // Set map diffuse texture
 
     Vector3 position = { 0.0f, 0.0f, 0.0f };                // Set model position
- 
+
     BoundingBox bounds = MeshBoundingBox(model.meshes[0]);  // Set model bounds
 
     // NOTE: bounds are calculated from the original size of the model,
@@ -61,7 +61,7 @@ int main(void)
         // Update
         //----------------------------------------------------------------------------------
         UpdateCamera(&camera);
-        
+
         // Load new models/textures on drag&drop
         if (IsFileDropped())
         {
@@ -79,7 +79,7 @@ int main(void)
                     model.materials[0].maps[MATERIAL_MAP_DIFFUSE].texture = texture; // Set current map diffuse texture
 
                     bounds = MeshBoundingBox(model.meshes[0]);
-                    
+
                     // TODO: Move camera position from target enough distance to visualize model properly
                 }
                 else if (IsFileExtension(droppedFiles[0], ".png"))  // Texture file formats supported
@@ -118,7 +118,7 @@ int main(void)
                 if (selected) DrawBoundingBox(bounds, GREEN);   // Draw selection box
 
             EndMode3D();
-            
+
             DrawText("Drag & drop model to load mesh/texture.", 10, GetScreenHeight() - 20, 10, DARKGRAY);
             if (selected) DrawText("MODEL SELECTED", GetScreenWidth() - 110, 10, 10, GREEN);
 

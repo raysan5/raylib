@@ -45,7 +45,7 @@ int main(void)
     {
         //----------------------------------------------------------------------------------
         UpdatePhysics();            // Update physics system
-        
+
         if (IsKeyPressed(KEY_R))    // Reset physics input
         {
             ResetPhysics();
@@ -59,7 +59,7 @@ int main(void)
             for (int i = count - 1; i >= 0; i--)
             {
                 PhysicsBody currentBody = GetPhysicsBody(i);
-                
+
                 if (currentBody != NULL) PhysicsShatter(currentBody, GetMousePosition(), 10/currentBody->inverseMass);
             }
         }

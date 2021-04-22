@@ -58,7 +58,7 @@ int main(void)
                     name[letterCount] = (char)key;
                     letterCount++;
                 }
-                
+
                 key = GetCharPressed();  // Check next character in the queue
             }
 

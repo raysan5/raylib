@@ -5,7 +5,7 @@
 *   This example has been created using raylib 3.7 (www.raylib.com)
 *   raylib is licensed under an unmodified zlib/libpng license (View raylib.h for details)
 *
-*   Example contributed by Chris Camacho (@codifies - bedroomcoders.co.uk) and 
+*   Example contributed by Chris Camacho (@codifies - bedroomcoders.co.uk) and
 *   reviewed by Ramon Santamaria (@raysan5)
 *
 *   Copyright (c) 2021 Chris Camacho (@codifies) and Ramon Santamaria (@raysan5)
@@ -52,7 +52,7 @@ int main(void)
     InitWindow(screenWidth, screenHeight, "raylib [textures] example - textured polygon");
 
     Texture texture = LoadTexture("resources/cat.png");
-    
+
     float ang = 0;
 
     SetTargetFPS(60);               // Set our game to run at 60 frames-per-second
@@ -64,9 +64,9 @@ int main(void)
         // Update
         //----------------------------------------------------------------------------------
         ang++;
-        
+
         Vector2 positions[MAX_POINTS] = { 0 };
-        
+
         for (int i = 0; i < MAX_POINTS; i++) positions[i] = Vector2Rotate(points[i], ang);
         //----------------------------------------------------------------------------------
 
@@ -77,8 +77,8 @@ int main(void)
             ClearBackground(RAYWHITE);
 
             DrawText("textured polygon", 20, 20, 20, DARKGRAY);
-            
-            DrawTexturePoly(texture, (Vector2){ GetScreenWidth()/2, GetScreenHeight()/2 }, 
+
+            DrawTexturePoly(texture, (Vector2){ GetScreenWidth()/2, GetScreenHeight()/2 },
                             positions, texcoords, MAX_POINTS, WHITE);
 
         EndDrawing();
@@ -88,7 +88,7 @@ int main(void)
     // De-Initialization
     //--------------------------------------------------------------------------------------
     UnloadTexture(texture); // Unload texture
-    
+
     CloseWindow();          // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
 

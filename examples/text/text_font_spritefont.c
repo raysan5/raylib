@@ -8,8 +8,8 @@
 *     - Every character and every line must be separated the same distance
 *     - Rectangles must be defined by a MAGENTA color background
 *
-*   If following this constraints, a font can be provided just by an image, 
-*   this is quite handy to avoid additional information files (like BMFonts use). 
+*   If following this constraints, a font can be provided just by an image,
+*   this is quite handy to avoid additional information files (like BMFonts use).
 *
 *   This example has been created using raylib 1.0 (www.raylib.com)
 *   raylib is licensed under an unmodified zlib/libpng license (View raylib.h for details)

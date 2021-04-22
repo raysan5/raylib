@@ -48,7 +48,7 @@ int main(void)
 
     // Restitution demo needs a very tiny physics time step for a proper simulation
     SetPhysicsTimeStep(1.0/60.0/100*1000);
-    
+
     SetTargetFPS(60);               // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
 
@@ -119,7 +119,7 @@ int main(void)
     DestroyPhysicsBody(circleB);
     DestroyPhysicsBody(circleC);
     DestroyPhysicsBody(floor);
-    
+
     ClosePhysics();       // Unitialize physics
 
     CloseWindow();        // Close window and OpenGL context

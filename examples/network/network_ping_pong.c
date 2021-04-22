@@ -40,16 +40,16 @@ static void NetworkConnect(void)
     {
         ping = true;
         connected = true;
-    } 
-    else 
+    }
+    else
     {
         // If the client is connected, run the server code to check for a connection
-        if (clientConnected) 
+        if (clientConnected)
         {
             int active = CheckSockets(socketSet, 0);
             if (active != 0) TraceLog(LOG_INFO, "There are currently %d socket(s) with data to be processed.", active);
 
-            if (active > 0) 
+            if (active > 0)
             {
                 if ((connection = SocketAccept(serverResult->socket, &connectionConfig)) != NULL)
                 {
@@ -58,7 +58,7 @@ static void NetworkConnect(void)
                     ping = true;
                 }
             }
-        } 
+        }
         else
         {
             // Check if we're connected every _delay_ seconds
@@ -66,7 +66,7 @@ static void NetworkConnect(void)
             if (elapsed > delay)
             {
                 if (IsSocketConnected(clientResult->socket)) clientConnected = true;
-                
+
                 elapsed = 0.0f;
             }
         }
@@ -88,7 +88,7 @@ static void UpdateNetwork(void)
     {
         if (IsSocketReady(clientResult->socket)) bytesRecv = SocketReceive(clientResult->socket, receiveBuffer, msglen);
         if (IsSocketReady(serverResult->socket)) bytesRecv = SocketReceive(serverResult->socket, receiveBuffer, msglen);
-    } 
+    }
     else if (IsSocketReady(connection)) bytesRecv = SocketReceive(connection, receiveBuffer, msglen);
 
     // If we received data, was that data a "Ping!" or a "Pong!"
@@ -107,14 +107,14 @@ static void UpdateNetwork(void)
             ping = false;
             if (serverConfig.type == SOCKET_UDP && clientConfig.type == SOCKET_UDP) SocketSend(clientResult->socket, pingmsg, msglen);
             else SocketSend(clientResult->socket, pingmsg, msglen);
-        } 
+        }
         else if (pong)
         {
             pong = false;
             if (serverConfig.type == SOCKET_UDP && clientConfig.type == SOCKET_UDP) SocketSend(clientResult->socket, pongmsg, msglen);
             else SocketSend(clientResult->socket, pongmsg, msglen);
         }
-        
+
         elapsed = 0.0f;
     }
 }
@@ -132,7 +132,7 @@ int main(void)
 
     //  Create the server: getaddrinfo + socket + setsockopt + bind + listen
     serverResult = LoadSocketResult();
-    if (!SocketCreate(&serverConfig, serverResult)) 
+    if (!SocketCreate(&serverConfig, serverResult))
     {
         TraceLog(LOG_WARNING, "Failed to open server: status %d, errno %d", serverResult->status, serverResult->socket->status);
     }
@@ -141,7 +141,7 @@ int main(void)
         if (!SocketBind(&serverConfig, serverResult))
         {
             TraceLog(LOG_WARNING, "Failed to bind server: status %d, errno %d", serverResult->status, serverResult->socket->status);
-        } 
+        }
         else
         {
             if (!(serverConfig.type == SOCKET_UDP))
@@ -156,7 +156,7 @@ int main(void)
 
     // Create the client: getaddrinfo + socket + setsockopt + connect (TCP only)
     clientResult = LoadSocketResult();
-    if (!SocketCreate(&clientConfig, clientResult)) 
+    if (!SocketCreate(&clientConfig, clientResult))
     {
         TraceLog(LOG_WARNING, "Failed to open client: status %d, errno %d", clientResult->status, clientResult->socket->status);
     }
@@ -194,7 +194,7 @@ int main(void)
         BeginDrawing();
 
             ClearBackground(RAYWHITE);
-            
+
             // TODO: Draw relevant connection info
 
         EndDrawing();
@@ -204,7 +204,7 @@ int main(void)
     // De-Initialization
     //--------------------------------------------------------------------------------------
     CloseNetworkDevice();   // Close network communication
-    
+
     CloseWindow();          // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
 

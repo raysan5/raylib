@@ -11,7 +11,7 @@
 *
 ********************************************************************************************
 *
-* To export a model from blender, make sure it is not posed, the vertices need to be in the 
+* To export a model from blender, make sure it is not posed, the vertices need to be in the
 * same position as they would be in edit mode.
 * and that the scale of your models is set to 0. Scaling can be done from the export menu.
 *
@@ -68,13 +68,13 @@ int main(void)
         if (IsKeyDown(KEY_SPACE))
         {
             animFrameCounter += animationDirection;
-            
+
             if (animFrameCounter >= anims[0].frameCount || animFrameCounter <= 0)
             {
                 animationDirection *= -1;
                 animFrameCounter += animationDirection;
             }
-            
+
             UpdateModelAnimation(model, anims[0], animFrameCounter);
         }
         //----------------------------------------------------------------------------------
@@ -108,7 +108,7 @@ int main(void)
     // De-Initialization
     //--------------------------------------------------------------------------------------
 //    UnloadTexture(texture);     // Unload texture
-    
+
     // Unload model animations data
     for (int i = 0; i < animsCount; i++) UnloadModelAnimation(anims[i]);
     RL_FREE(anims);

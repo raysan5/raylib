@@ -34,10 +34,10 @@ int main(void)
     const int screenHeight = 450;
 
     InitWindow(screenWidth, screenHeight, "raylib [shaders] example - texture waves");
-    
+
     // Load texture texture to apply shaders
     Texture2D texture = LoadTexture("resources/space.png");
-    
+
     // Load shader and setup location points and values
     Shader shader = LoadShader(0, TextFormat("resources/shaders/glsl%i/wave.fs", GLSL_VERSION));
 
@@ -77,7 +77,7 @@ int main(void)
         // Update
         //----------------------------------------------------------------------------------
         seconds += GetFrameTime();
-        
+
         SetShaderValue(shader, secondsLoc, &seconds, SHADER_UNIFORM_FLOAT);
         //----------------------------------------------------------------------------------
 
@@ -88,10 +88,10 @@ int main(void)
             ClearBackground(RAYWHITE);
 
             BeginShaderMode(shader);
-            
+
                 DrawTexture(texture, 0, 0, WHITE);
                 DrawTexture(texture, texture.width, 0, WHITE);
-                
+
             EndShaderMode();
 
         EndDrawing();
@@ -102,7 +102,7 @@ int main(void)
     //--------------------------------------------------------------------------------------
     UnloadShader(shader);         // Unload shader
     UnloadTexture(texture);       // Unload texture
-    
+
     CloseWindow();              // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
 

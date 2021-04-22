@@ -107,7 +107,7 @@ int main(void)
     InitWindow(screenWidth, screenHeight, "raylib [easings] example - easings testbed");
 
     Vector2 ballPosition = { 100.0f, 200.0f };
-    
+
     float t = 0.0f;             // Current time (in any unit measure, but same unit as duration)
     float d = 300.0f;           // Total time it should take to complete (duration)
     bool paused = true;
