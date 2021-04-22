@@ -53,7 +53,7 @@ raylib uses internally some libraries for window/graphics/inputs management and 
 
 basic example
 --------------
-This is a basic raylib example, it creates a window and it draws the text `"Congrats! You created your first window!"` in the middle of the screen. This example can be seen [running live in web here](https://www.raylib.com/examples/web/core/loader.html?name=core_basic_window).
+This is a basic raylib example, it creates a window and it draws the text `"Congrats! You created your first window!"` in the middle of the screen. Check this example [running live on web here](https://www.raylib.com/examples/web/core/loader.html?name=core_basic_window).
 ```c
 #include "raylib.h"
 
@@ -128,7 +128,9 @@ raylib has been developed on Windows platform using [Notepad++](https://notepad-
 learning and docs
 ------------------
 
-raylib is designed to be learned using the examples as the main reference. There is no a standard API documentation, just a **cheatsheet** containing all the functions available on the library and a short description of each one, input parameters and result value should be intuitive just seing the naming. Some additional documentation about raylib design can be found in raylib GitHub Wiki. Here the more relevant links:
+raylib is designed to be learned using [the examples](https://github.com/raysan5/raylib/tree/master/examples) as the main reference. There is no standard API documentation but there is a [**cheatsheet**](https://www.raylib.com/cheatsheet/cheatsheet.html) containing all the functions available on the library and a short description of each one of them, input parameters and result value names should be intuitive enough to understand how each function works. 
+
+Some additional documentation about raylib design can be found in raylib GitHub Wiki. Here the more relevant links:
 
  - [raylib cheatsheet](https://www.raylib.com/cheatsheet/cheatsheet.html)
  - [raylib architecture](https://github.com/raysan5/raylib/wiki/raylib-architecture)
@@ -140,7 +142,7 @@ raylib is designed to be learned using the examples as the main reference. There
 contact and networks
 ---------------------
 
-raylib is present in several networks and raylib community is growing everyday. Feel free to join us in any of these networks.
+raylib is present in several networks and raylib community is growing everyday. If you are using raylib and enjoying it, feel free to join us in any of these networks. The most active network is our [Discord server](https://discord.gg/raylib)! :)
 
  - Webpage: [http://www.raylib.com](http://www.raylib.com)
  - Discord: [https://discord.gg/raylib](https://discord.gg/raylib)
@@ -149,8 +151,6 @@ raylib is present in several networks and raylib community is growing everyday. 
  - Reddit:  [https://www.reddit.com/r/raylib](https://www.reddit.com/r/raylib)
  - Patreon: [https://www.patreon.com/raylib](https://www.patreon.com/raylib)
  - YouTube: [https://www.youtube.com/channel/raylib](https://www.youtube.com/c/raylib)
-
-If you are using raylib and enjoying it, please, join our [Discord server](https://discord.gg/raylib) and let us know! :)
 
 license
 -------
