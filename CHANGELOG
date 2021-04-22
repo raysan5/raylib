@@ -1,10 +1,10 @@
 changelog
 ---------
 
-Current Release:    raylib 3.7.0 (xx April 2021)
+Current Release:    raylib 3.7.0 (23 April 2021)
 
 -------------------------------------------------------------------------
-Release:     raylib 3.7 (xx April 2021)
+Release:     raylib 3.7 (23 April 2021)
 -------------------------------------------------------------------------
 KEY CHANGES:
  - [rlgl] REDESIGNED: Greater abstraction level, some functionality moved to core module
