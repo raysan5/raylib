@@ -86,6 +86,7 @@ Detailed changes:
 [examples] REDESIGNED: models_yaw_pitch_roll
 [build] ADDED: Config flag: SUPPORT_STANDARD_FILEIO
 [build] ADDED: Config flag: SUPPORT_WINMM_HIGHRES_TIMER (#1641)
+[build] ADDED: Config flag: SUPPORT_GL_DETAILS_INFO
 [build] ADDED: Examples projects to VS2019 solution
 [build] REVIEWED: Makefile to support PLATFORM_RPI (#1580)
 [build] REVIEWED: Multiple typecast warnings by @JeffM2501
