@@ -300,10 +300,10 @@ April 2021, it's been about 4 months since last raylib release and here it is al
 Let's start with some numbers:
 
  - **+100** closed issues (for a TOTAL of **+900**!)
- - **+350** commits since previous RELEASE
+ - **+400** commits since previous RELEASE
  - **+50** functions ADDED (**+30** of them to rlgl API)
  - **+30** functions REVIEWED/REDESIGNED
- - **+30** new contributors (for a TOTAL of **+200**!)
+ - **+40** new contributors (for a TOTAL of **+210**!)
  
 Highlights for `raylib 3.7`:
 
@@ -321,4 +321,4 @@ Highlights for `raylib 3.7`:
  
 Beside those key changes, many functions have been reviewed with improvements and bug fixes, many of them contributed by the community! Thanks! And again, this release sets a **new milestone for raylib library**. Make sure to check [CHANGELOG](CHANGELOG) for detailed list of changes! Hope you enjoy this new raylib installment!
 
-Happy gamedev/tools/graphics programming! :)
+Happy **gamedev/tools/graphics** programming! :)
