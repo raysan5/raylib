@@ -3810,7 +3810,7 @@ static bool InitGraphicsDevice(int width, int height)
 #else
     TRACELOG(LOG_INFO, "DISPLAY: No graphic card set, trying card1");
     CORE.Window.fd = open("/dev/dri/card1", O_RDWR); // VideoCore VI (Raspberry Pi 4)
-    if (-1 == CORE.Window.fd)
+    if ((-1 == CORE.Window.fd) || (drmModeGetResources(CORE.Window.fd) == NULL))
     {
         TRACELOG(LOG_INFO, "DISPLAY: Failed to open graphic card1, trying card0");
         CORE.Window.fd = open("/dev/dri/card0", O_RDWR); // VideoCore IV (Raspberry Pi 1-3)
