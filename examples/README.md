@@ -77,8 +77,8 @@ Examples using raylib textures functionality, including image/textures loading/g
 | 55 | [textures_bunnymark](textures/textures_bunnymark.c)                       | <img src="textures/textures_bunnymark.png" alt="textures_bunnymark" width="200">                       | ray                                              |     |
 | 56 | [textures_mouse_painting](textures/textures_mouse_painting.c)             | <img src="textures/textures_mouse_painting.png" alt="textures_mouse_painting" width="200">             | [Chris Dill](https://github.com/MysteriousSpace) |     |
 | 57 | [textures_blend_modes](textures/textures_blend_modes.c)                   | <img src="textures/textures_blend_modes.png" alt="textures_blend_modes" width="200">                   | [Karlo Licudine](https://github.com/accidentalrebel) |     |
-| 58 | [textures/textures_draw_tiled](textures/textures_draw_tiled.c)            | <img src="textures/textures_draw_tiled.png" alt="textures_draw_tiled" width="200">                     | [Vlad Adrian](https://github.com/demizdor)       |       |
-| -- | [textures/textures_poly](textures/textures_poly.c)                        | <img src="textures/textures_poly.png" alt="textures_poly" width="200">                                 | [Chris Camacho](https://github.com/codifies)     | ⭐️   |
+| 58 | [textures_draw_tiled](textures/textures_draw_tiled.c)                     | <img src="textures/textures_draw_tiled.png" alt="textures_draw_tiled" width="200">                     | [Vlad Adrian](https://github.com/demizdor)       |       |
+| -- | [textures_poly](textures/textures_poly.c)                                 | <img src="textures/textures_poly.png" alt="textures_poly" width="200">                                 | [Chris Camacho](https://github.com/codifies)     | ⭐️   |
 
 ### category: text
 
@@ -96,7 +96,7 @@ Examples using raylib text functionality, including sprite fonts loading/generat
 | 66 | [text_writing_anim](text/text_writing_anim.c)         | <img src="text/text_writing_anim.png" alt="text_writing_anim" width="200">         | ray                                        |        |
 | 67 | [text_rectangle_bounds](text/text_rectangle_bounds.c) | <img src="text/text_rectangle_bounds.png" alt="text_rectangle_bounds" width="200"> | [Vlad Adrian](https://github.com/demizdor) |        |
 | 68 | [text_unicode](text/text_unicode.c)                   | <img src="text/text_unicode.png" alt="text_unicode" width="200">                   | [Vlad Adrian](https://github.com/demizdor) |        |
-| -- | [text/text_draw_3d](text/text_draw_3d.c)              | <img src="text/text_draw_3d.png" alt="text_draw_3d" width="200">                   | [Vlad Adrian](https://github.com/demizdor) | ⭐️    |    
+| -- | [text_draw_3d](text/text_draw_3d.c)                   | <img src="text/text_draw_3d.png" alt="text_draw_3d" width="200">                   | [Vlad Adrian](https://github.com/demizdor) | ⭐️    |    
     
 ### category: models
 
