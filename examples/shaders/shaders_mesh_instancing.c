@@ -27,6 +27,8 @@
     #define GLSL_VERSION            100
 #endif
 
+#define MAX_INSTANCES  10000
+
 //------------------------------------------------------------------------------------
 // Program main entry point
 //------------------------------------------------------------------------------------
@@ -56,15 +58,14 @@ int main(void)
     camera.fovy = 45.0f;
     camera.projection = CAMERA_PERSPECTIVE;
 
-    const int instances = 10000;                                // Number of instances to display
     Mesh cube = GenMeshCube(1.0f, 1.0f, 1.0f);
 
-    Matrix *rotations = RL_MALLOC(instances*sizeof(Matrix));    // Rotation state of instances
-    Matrix *rotationsInc = RL_MALLOC(instances*sizeof(Matrix)); // Per-frame rotation animation of instances
-    Matrix *translations = RL_MALLOC(instances*sizeof(Matrix)); // Locations of instances
+    Matrix *rotations = RL_MALLOC(MAX_INSTANCES*sizeof(Matrix));    // Rotation state of instances
+    Matrix *rotationsInc = RL_MALLOC(MAX_INSTANCES*sizeof(Matrix)); // Per-frame rotation animation of instances
+    Matrix *translations = RL_MALLOC(MAX_INSTANCES*sizeof(Matrix)); // Locations of instances
 
     // Scatter random cubes around
-    for (int i = 0; i < instances; i++)
+    for (int i = 0; i < MAX_INSTANCES; i++)
     {
         x = GetRandomValue(-50, 50);
         y = GetRandomValue(-50, 50);
@@ -81,7 +82,7 @@ int main(void)
         rotations[i] = MatrixIdentity();
     }
 
-    Matrix *transforms = RL_MALLOC(instances*sizeof(Matrix));   // Pre-multiplied transformations passed to rlgl
+    Matrix *transforms = RL_MALLOC(MAX_INSTANCES*sizeof(Matrix));   // Pre-multiplied transformations passed to rlgl
 
     Shader shader = LoadShader(TextFormat("resources/shaders/glsl%i/base_lighting_instanced.vs", GLSL_VERSION),
                                TextFormat("resources/shaders/glsl%i/lighting.fs", GLSL_VERSION));
@@ -146,7 +147,7 @@ int main(void)
         SetShaderValue(shader, shader.locs[SHADER_LOC_VECTOR_VIEW], cameraPos, SHADER_UNIFORM_VEC3);
 
         // Apply per-instance transformations
-        for (int i = 0; i < instances; i++)
+        for (int i = 0; i < MAX_INSTANCES; i++)
         {
             rotations[i] = MatrixMultiply(rotations[i], rotationsInc[i]);
             transforms[i] = MatrixMultiply(rotations[i], translations[i]);
@@ -174,7 +175,7 @@ int main(void)
 
             BeginMode3D(camera);
                 //DrawMesh(cube, material, MatrixIdentity());
-                DrawMeshInstanced(cube, material, transforms, instances);
+                DrawMeshInstanced(cube, material, transforms, MAX_INSTANCES);
             EndMode3D();
 
             DrawText("A CUBE OF DANCING CUBES!", 490, 10, 20, MAROON);
