@@ -39,7 +39,7 @@
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>shaders_rlgl_mesh_instanced</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
-    <ProjectName>shaders_rlgl_mesh_instanced</ProjectName>
+    <ProjectName>shaders_mesh_instancing</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -374,12 +374,12 @@
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\..\examples\shaders\shaders_rlgl_mesh_instanced.c" />
-  </ItemGroup>
-  <ItemGroup>
     <ProjectReference Include="..\raylib\raylib.vcxproj">
       <Project>{e89d61ac-55de-4482-afd4-df7242ebc859}</Project>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\..\examples\shaders\shaders_mesh_instancing.c" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
