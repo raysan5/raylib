@@ -38,14 +38,14 @@ int main(void)
     Font font2 = LoadFont("resources/custom_alagard.png");        // Font loading
     Font font3 = LoadFont("resources/custom_jupiter_crash.png");  // Font loading
 
-    Vector2 fontPosition1 = { screenWidth/2 - MeasureTextEx(font1, msg1, (float)font1.baseSize, -3).x/2,
-                              screenHeight/2 - font1.baseSize/2 - 80 };
+    Vector2 fontPosition1 = { screenWidth/2.0f - MeasureTextEx(font1, msg1, (float)font1.baseSize, -3).x/2,
+                              screenHeight/2.0f - font1.baseSize/2.0f - 80.0f };
 
-    Vector2 fontPosition2 = { screenWidth/2 - MeasureTextEx(font2, msg2, (float)font2.baseSize, -2).x/2,
-                              screenHeight/2 - font2.baseSize/2 - 10 };
+    Vector2 fontPosition2 = { screenWidth/2.0f - MeasureTextEx(font2, msg2, (float)font2.baseSize, -2.0f).x/2.0f,
+                              screenHeight/2.0f - font2.baseSize/2.0f - 10.0f };
 
-    Vector2 fontPosition3 = { screenWidth/2.0f - MeasureTextEx(font3, msg3, (float)font3.baseSize, 2).x/2,
-                              screenHeight/2.0f - font3.baseSize/2 + 50 };
+    Vector2 fontPosition3 = { screenWidth/2.0f - MeasureTextEx(font3, msg3, (float)font3.baseSize, 2.0f).x/2.0f,
+                              screenHeight/2.0f - font3.baseSize/2.0f + 50.0f };
 
     SetTargetFPS(60);               // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------

@@ -116,22 +116,22 @@ int main(void)
     float sw = (float)GetScreenWidth();
     SetShaderValue(shdrSpot, wLoc, &sw, SHADER_UNIFORM_FLOAT);
 
-    // Randomise the locations and velocities of the spotlights
-    // and initialise the shader locations
+    // Randomize the locations and velocities of the spotlights
+    // and initialize the shader locations
     for (int i = 0; i < MAX_SPOTS; i++)
     {
-        spots[i].pos.x = GetRandomValue(64, screenWidth - 64);
-        spots[i].pos.y = GetRandomValue(64, screenHeight - 64);
+        spots[i].pos.x = GetRandomValue(64.0f, screenWidth - 64.0f);
+        spots[i].pos.y = GetRandomValue(64.0f, screenHeight - 64.0f);
         spots[i].vel = (Vector2){ 0, 0 };
 
         while ((fabs(spots[i].vel.x) + fabs(spots[i].vel.y)) < 2)
         {
-            spots[i].vel.x = GetRandomValue(-40, 40)/10.0;
-            spots[i].vel.y = GetRandomValue(-40, 40)/10.0;
+            spots[i].vel.x = GetRandomValue(-400.f, 40.0f) / 10.0f;
+            spots[i].vel.y = GetRandomValue(-400.f, 40.0f) / 10.0f;
         }
 
-        spots[i].inner = 28 * (i + 1);
-        spots[i].radius = 48 * (i + 1);
+        spots[i].inner = 28.0f * (i + 1);
+        spots[i].radius = 48.0f * (i + 1);
 
         SetShaderValue(shdrSpot, spots[i].posLoc, &spots[i].pos.x, SHADER_UNIFORM_VEC2);
         SetShaderValue(shdrSpot, spots[i].innerLoc, &spots[i].inner, SHADER_UNIFORM_FLOAT);
@@ -184,14 +184,14 @@ int main(void)
             for (int n = 0; n < MAX_STARS; n++)
             {
                 // Single pixel is just too small these days!
-                DrawRectangle(stars[n].pos.x, stars[n].pos.y, 2, 2, WHITE);
+                DrawRectangle((int)stars[n].pos.x, (int)stars[n].pos.y, 2, 2, WHITE);
             }
 
             for (int i = 0; i < 16; i++)
             {
                 DrawTexture(texRay,
-                    (screenWidth/2.0) + cos((frameCounter + i*8)/51.45f)*(screenWidth/2.2) - 32,
-                    (screenHeight/2.0) + sin((frameCounter + i*8)/17.87f)*(screenHeight/4.2), WHITE);
+                    (screenWidth/2.0f) + cos((frameCounter + i*8)/51.45f)*(screenWidth/2.2f) - 32,
+                    (screenHeight/2.0f) + sin((frameCounter + i*8)/17.87f)*(screenHeight/4.2f), WHITE);
             }
 
             // Draw spot lights
