@@ -1408,7 +1408,6 @@ RLAPI void UnloadModelAnimations(ModelAnimation* animations, unsigned int count)
 RLAPI bool IsModelAnimationValid(Model model, ModelAnimation anim);                         // Check model animation skeleton match
 
 // Mesh generation functions
-RLAPI Mesh GenMeshDefault(int vertexCount);                                                 // Generate an empty mesh with vertex: position, texcoords, normals, colors
 RLAPI Mesh GenMeshPoly(int sides, float radius);                                            // Generate polygonal mesh
 RLAPI Mesh GenMeshPlane(float width, float length, int resX, int resZ);                     // Generate plane mesh (with subdivisions)
 RLAPI Mesh GenMeshCube(float width, float height, float length);                            // Generate cuboid mesh

@@ -1522,25 +1522,6 @@ bool IsModelAnimationValid(Model model, ModelAnimation anim)
 }
 
 #if defined(SUPPORT_MESH_GENERATION)
-Mesh GenMeshDefault(int vertexCount)
-{
-    Mesh mesh = { 0 };
-
-    mesh.vertexCount = vertexCount;
-    mesh.triangleCount = vertexCount/3;
-
-    mesh.vertices = (float *)RL_CALLOC(mesh.vertexCount*3, sizeof(float));
-    mesh.texcoords = (float *)RL_CALLOC(mesh.vertexCount*2, sizeof(float));
-    mesh.normals = (float *)RL_CALLOC(mesh.vertexCount*3, sizeof(float));
-    mesh.colors = (unsigned char *)RL_CALLOC(mesh.vertexCount*4, sizeof(unsigned char));
-
-    // Upload vertex data to GPU (dynamic mesh)
-    // NOTE: mesh.vboId array is allocated inside UploadMesh()
-    UploadMesh(&mesh, true);
-
-    return mesh;
-}
-
 // Generate polygonal mesh
 Mesh GenMeshPoly(int sides, float radius)
 {
