@@ -146,8 +146,8 @@ int main(void)
 
                 // Draw the three models
                 DrawModel(modelA, Vector3Zero(), 1.0f, WHITE);
-                DrawModel(modelB, (Vector3){-1.6,0,0}, 1.0f, WHITE);
-                DrawModel(modelC, (Vector3){ 1.6,0,0}, 1.0f, WHITE);
+                DrawModel(modelB, (Vector3){-1.6f,0.0f,0.0f}, 1.0f, WHITE);
+                DrawModel(modelC, (Vector3){ 1.6f,0.0f,0.0f}, 1.0f, WHITE);
 
                 // Draw markers to show where the lights are
                 if (lights[0].enabled) { DrawSphereEx(lights[0].position, 0.2f, 8, 8, WHITE); }

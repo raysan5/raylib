@@ -22,7 +22,7 @@ int main(void)
     InitWindow(screenWidth, screenHeight, "raylib [shapes] example - cubic-bezier lines");
 
     Vector2 start = { 0, 0 };
-    Vector2 end = { screenWidth, screenHeight };
+    Vector2 end = { (float)screenWidth, (float)screenHeight };
 
     SetTargetFPS(60);               // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
