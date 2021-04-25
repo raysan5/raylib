@@ -35,8 +35,8 @@ int main(void)
     // NOTE: On 2D drawing it won't be noticeable, it looks like FILTER_BILINEAR
     GenTextureMipmaps(&font.texture);
 
-    float fontSize = font.baseSize;
-    Vector2 fontPosition = { 40, screenHeight/2 - 80 };
+    float fontSize = (float)font.baseSize;
+    Vector2 fontPosition = { 40.0f, screenHeight/2.0f - 80.0f };
     Vector2 textSize = { 0.0f, 0.0f };
 
     // Setup texture scaling filter
@@ -86,7 +86,7 @@ int main(void)
             if (IsFileExtension(droppedFiles[0], ".ttf"))
             {
                 UnloadFont(font);
-                font = LoadFontEx(droppedFiles[0], fontSize, 0, 0);
+                font = LoadFontEx(droppedFiles[0], (int)fontSize, 0, 0);
                 ClearDroppedFiles();
             }
         }

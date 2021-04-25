@@ -29,14 +29,14 @@ tempor incididunt ut labore et dolore magna aliqua. Nec ullamcorper sit amet ris
     bool resizing = false;
     bool wordWrap = true;
 
-    Rectangle container = { 25, 25, screenWidth - 50, screenHeight - 250};
+    Rectangle container = { 25.0f, 25.0f, screenWidth - 50.0f, screenHeight - 250.0f };
     Rectangle resizer = { container.x + container.width - 17, container.y + container.height - 17, 14, 14 };
 
     // Minimum width and heigh for the container rectangle
     const float minWidth = 60;
     const float minHeight = 60;
-    const float maxWidth = screenWidth - 50;
-    const float maxHeight = screenHeight - 160;
+    const float maxWidth = screenWidth - 50.0f;
+    const float maxHeight = screenHeight - 160.0f;
 
     Vector2 lastMouse = { 0.0f, 0.0f }; // Stores last mouse coordinates
     Color borderColor = MAROON;         // Container border color
@@ -99,7 +99,7 @@ tempor incididunt ut labore et dolore magna aliqua. Nec ullamcorper sit amet ris
 
             // Draw bottom info
             DrawRectangle(0, screenHeight - 54, screenWidth, 54, GRAY);
-            DrawRectangleRec((Rectangle){ 382, screenHeight - 34, 12, 12 }, MAROON);
+            DrawRectangleRec((Rectangle){ 382.0f, screenHeight - 34.0f, 12.0f, 12.0f }, MAROON);
 
             DrawText("Word Wrap: ", 313, screenHeight-115, 20, BLACK);
             if (wordWrap) DrawText("ON", 447, screenHeight - 115, 20, RED);

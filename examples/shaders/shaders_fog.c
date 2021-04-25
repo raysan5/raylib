@@ -102,21 +102,21 @@ int main(void)
 
         if (IsKeyDown(KEY_UP))
         {
-            fogDensity += 0.001;
-            if (fogDensity > 1.0) fogDensity = 1.0;
+            fogDensity += 0.001f;
+            if (fogDensity > 1.0f) fogDensity = 1.0f;
         }
 
         if (IsKeyDown(KEY_DOWN))
         {
-            fogDensity -= 0.001;
-            if (fogDensity < 0.0) fogDensity = 0.0;
+            fogDensity -= 0.001f;
+            if (fogDensity < 0.0f) fogDensity = 0.0f;
         }
 
         SetShaderValue(shader, fogDensityLoc, &fogDensity, SHADER_UNIFORM_FLOAT);
 
         // Rotate the torus
-        modelA.transform = MatrixMultiply(modelA.transform, MatrixRotateX(-0.025));
-        modelA.transform = MatrixMultiply(modelA.transform, MatrixRotateZ(0.012));
+        modelA.transform = MatrixMultiply(modelA.transform, MatrixRotateX(-0.025f));
+        modelA.transform = MatrixMultiply(modelA.transform, MatrixRotateZ(0.012f));
 
         // Update the light shader with the camera view position
         SetShaderValue(shader, shader.locs[SHADER_LOC_VECTOR_VIEW], &camera.position.x, SHADER_UNIFORM_VEC3);
@@ -132,10 +132,10 @@ int main(void)
 
                 // Draw the three models
                 DrawModel(modelA, Vector3Zero(), 1.0f, WHITE);
-                DrawModel(modelB, (Vector3){ -2.6, 0, 0 }, 1.0f, WHITE);
-                DrawModel(modelC, (Vector3){ 2.6, 0, 0 }, 1.0f, WHITE);
+                DrawModel(modelB, (Vector3){ -2.6f, 0, 0 }, 1.0f, WHITE);
+                DrawModel(modelC, (Vector3){ 2.6f, 0, 0 }, 1.0f, WHITE);
 
-                for (int i = -20; i < 20; i += 2) DrawModel(modelA,(Vector3){ i, 0, 2 }, 1.0f, WHITE);
+                for (int i = -20; i < 20; i += 2) DrawModel(modelA,(Vector3){ (float)i, 0, 2 }, 1.0f, WHITE);
 
             EndMode3D();
 
