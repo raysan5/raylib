@@ -40,7 +40,7 @@ Here it is a list with the ones I'm aware of:
 | raylib.cr          | 2.0 | [Crystal](https://crystal-lang.org/)  | https://github.com/sam0x17/raylib.cr     |
 | raylib-pascal      | 2.0 | [Pascal](https://en.wikipedia.org/wiki/Pascal_(programming_language))         | https://github.com/drezgames/raylib-pascal    |
 | raylib-pas         | 3.0 | [Pascal](https://en.wikipedia.org/wiki/Pascal_(programming_language))         | https://github.com/tazdij/raylib-pas      |
-| Ray4Laz            | 3.5 | [Pascal](https://en.wikipedia.org/wiki/Pascal_(programming_language))         | https://github.com/GuvaCode/Ray4Laz      | 
+| Ray4Laz            | 3.7 | [Pascal](https://en.wikipedia.org/wiki/Pascal_(programming_language))         | https://github.com/GuvaCode/Ray4Laz      | 
 | Graphics-Raylib    | 1.4 | [Perl](https://www.perl.org/)            | https://github.com/athreef/Graphics-Raylib      |
 | raylib-ruby-ffi    | 2.0 | [Ruby](https://www.ruby-lang.org/en/)    | https://github.com/D3nX/raylib-ruby-ffi      |
 | raylib-ruby        | 2.6 | [Ruby](https://www.ruby-lang.org/en/)    | https://github.com/a0/raylib-ruby        |
