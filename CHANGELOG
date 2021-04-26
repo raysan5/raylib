@@ -1,10 +1,10 @@
 changelog
 ---------
 
-Current Release:    raylib 3.7.0 (23 April 2021)
+Current Release:    raylib 3.7.0 (26 April 2021)
 
 -------------------------------------------------------------------------
-Release:     raylib 3.7 (23 April 2021)
+Release:     raylib 3.7 (26 April 2021)
 -------------------------------------------------------------------------
 KEY CHANGES:
  - [rlgl] REDESIGNED: Greater abstraction level, some functionality moved to core module
@@ -66,7 +66,6 @@ Detailed changes:
 [models] ADDED: DrawMesh()
 [models] ADDED: DrawMeshInstanced()
 [models] ADDED: UnloadModelAnimations() (#1648) by @object71
-[models] ADDED: GenMeshDefault() (#1556)
 [models] REMOVED: DrawGizmo()
 [models] REMOVED: LoadMeshes()
 [models] REMOVED: MeshNormalsSmooth()
