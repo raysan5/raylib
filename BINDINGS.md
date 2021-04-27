@@ -89,10 +89,11 @@ Here it is a list with the ones I'm aware of:
 | raylib-smallBasic  | 3.1-dev | [SmallBASIC](https://github.com/smallbasic/SmallBASIC) | https://github.com/smallbasic/smallbasic.plugins/tree/master/raylib |
 | raylib-ats2        | 3.0 | [ATS2](http://www.ats-lang.org/)           | https://github.com/mephistopheles-8/raylib-ats2      |
 | raylib-beef        | 3.0 | [Beef](https://www.beeflang.org/)          | https://github.com/M0n7y5/raylib-beef    |
+| raylib-swift       | 3.5 | [Swift](https://swift.org/)                | https://github.com/x2/raylib-swift |
 | raylib-never       | 3.0 | [Never](https://github.com/never-lang/never) | https://github.com/never-lang/raylib-never |
-| raylib.cbl         | 2.0 | [COBOL](https://en.wikipedia.org/wiki/COBOL)        | *[code examples](https://github.com/Martinfx/Cobol/tree/master/OpenCobol/Games/raylib)* |
+| hb-raylib          | 3.5 | [Harbour](https://harbour.github.io)                 | https://github.com/MarcosLeonardoMendezGerencir/hb-raylib |
 | Relib              | 3.5 | [ReCT](https://github.com/RedCubeDev-ByteSpace/ReCT) | https://github.com/RedCubeDev-ByteSpace/Relib |
-| Harbour            | 3.5 | [Harbour](https://harbour.github.io)                 | https://github.com/MarcosLeonardoMendezGerencir/hb-raylib |
+| raylib.cbl         | 2.0 | [COBOL](https://en.wikipedia.org/wiki/COBOL)        | *[code examples](https://github.com/Martinfx/Cobol/tree/master/OpenCobol/Games/raylib)* |
 
  
 Missing some language? Feel free to create a new binding! :)
