@@ -182,10 +182,10 @@
 #endif
 
 // Texture parameters (equivalent to OpenGL defines)
-#define RL_TEXTURE_WRAP_S               0x2802      // GL_TEXTURE_WRAP_S
-#define RL_TEXTURE_WRAP_T               0x2803      // GL_TEXTURE_WRAP_T
-#define RL_TEXTURE_MAG_FILTER           0x2800      // GL_TEXTURE_MAG_FILTER
-#define RL_TEXTURE_MIN_FILTER           0x2801      // GL_TEXTURE_MIN_FILTER
+#define RL_TEXTURE_WRAP_S                       0x2802      // GL_TEXTURE_WRAP_S
+#define RL_TEXTURE_WRAP_T                       0x2803      // GL_TEXTURE_WRAP_T
+#define RL_TEXTURE_MAG_FILTER                   0x2800      // GL_TEXTURE_MAG_FILTER
+#define RL_TEXTURE_MIN_FILTER                   0x2801      // GL_TEXTURE_MIN_FILTER
 
 #define RL_TEXTURE_FILTER_NEAREST               0x2600      // GL_NEAREST
 #define RL_TEXTURE_FILTER_LINEAR                0x2601      // GL_LINEAR
@@ -201,18 +201,18 @@
 #define RL_TEXTURE_WRAP_MIRROR_CLAMP            0x8742      // GL_MIRROR_CLAMP_EXT
 
 // Matrix modes (equivalent to OpenGL)
-#define RL_MODELVIEW                    0x1700      // GL_MODELVIEW
-#define RL_PROJECTION                   0x1701      // GL_PROJECTION
-#define RL_TEXTURE                      0x1702      // GL_TEXTURE
+#define RL_MODELVIEW                            0x1700      // GL_MODELVIEW
+#define RL_PROJECTION                           0x1701      // GL_PROJECTION
+#define RL_TEXTURE                              0x1702      // GL_TEXTURE
 
 // Primitive assembly draw modes
-#define RL_LINES                        0x0001      // GL_LINES
-#define RL_TRIANGLES                    0x0004      // GL_TRIANGLES
-#define RL_QUADS                        0x0007      // GL_QUADS
+#define RL_LINES                                0x0001      // GL_LINES
+#define RL_TRIANGLES                            0x0004      // GL_TRIANGLES
+#define RL_QUADS                                0x0007      // GL_QUADS
 
 // GL equivalent data types
-#define RL_UNSIGNED_BYTE                0x1401      // GL_UNSIGNED_BYTE
-#define RL_FLOAT                        0x1406      // GL_FLOAT
+#define RL_UNSIGNED_BYTE                        0x1401      // GL_UNSIGNED_BYTE
+#define RL_FLOAT                                0x1406      // GL_FLOAT
 
 //----------------------------------------------------------------------------------
 // Types and Structures Definition

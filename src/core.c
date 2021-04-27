@@ -225,8 +225,8 @@
     #include <android/window.h>             // Defines AWINDOW_FLAG_FULLSCREEN and others
     #include <android_native_app_glue.h>    // Defines basic app state struct and manages activity
 
-    #include <EGL/egl.h>                    // EGL library - Native platform display device control functions
-    #include <GLES2/gl2.h>                  // OpenGL ES 2.0 library
+    #include <EGL/egl.h>                    // Native platform windowing system interface
+    //#include <GLES2/gl2.h>                  // OpenGL ES 2.0 library (not required in this module)
 #endif
 
 #if defined(PLATFORM_RPI) || defined(PLATFORM_DRM)
@@ -251,14 +251,14 @@
     #include <xf86drmMode.h>            // Direct Rendering Manager modesetting interface
 #endif
 
-    #include "EGL/egl.h"                // EGL library - Native platform display device control functions
-    #include "EGL/eglext.h"             // EGL library - Extensions
+    #include "EGL/egl.h"                // Native platform windowing system interface
+    #include "EGL/eglext.h"             // EGL extensions
     #include "GLES2/gl2.h"              // OpenGL ES 2.0 library
 #endif
 
 #if defined(PLATFORM_UWP)
-    #include "EGL/egl.h"                // EGL library - Native platform display device control functions
-    #include "EGL/eglext.h"             // EGL library - Extensions
+    #include "EGL/egl.h"                // Native platform windowing system interface
+    #include "EGL/eglext.h"             // EGL extensions
     #include "GLES2/gl2.h"              // OpenGL ES 2.0 library
     #include "uwp_events.h"             // UWP bootstrapping functions
 #endif
