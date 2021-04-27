@@ -4352,9 +4352,12 @@ static bool InitGraphicsDevice(int width, int height)
 #endif  // PLATFORM_ANDROID || PLATFORM_RPI || PLATFORM_DRM || PLATFORM_UWP
 
     // Load OpenGL extensions
-    // NOTE: GLFW loader function is required by GLAD but only used for OpenGL 2.1 and 3.3,
-    // OpenGL ES 2.0 extensions (and entry points) are loaded manually using eglGetProcAddress()
+    // NOTE: GL procedures address loader is required to load extensions
+#if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
     rlLoadExtensions(glfwGetProcAddress);
+#else
+    rlLoadExtensions(NULL);     // Uses eglGetProcAddress() internally
+#endif
 
     // Initialize OpenGL context (states and resources)
     // NOTE: CORE.Window.screen.width and CORE.Window.screen.height not used, just stored as globals in rlgl
