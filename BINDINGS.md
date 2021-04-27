@@ -10,7 +10,7 @@ Here it is a list with the ones I'm aware of:
 | raylib-cpp         | 3.7 | [C++](https://en.wikipedia.org/wiki/C%2B%2B)                             | https://github.com/robloach/raylib-cpp      |
 | Raylib-cs          | 3.5 | [C#](https://en.wikipedia.org/wiki/C_Sharp_(programming_language))       | https://github.com/ChrisDill/Raylib-cs      |
 | raylib-cppsharp    | 2.5 | [C#](https://en.wikipedia.org/wiki/C_Sharp_(programming_language))       | https://github.com/phxvyper/raylib-cppsharp |
-| raylib-boo         | 3.5 | [Boo](http://boo-language.github.io/) | https://github.com/Rabios/raylib-boo          |
+| raylib-boo         | 3.7 | [Boo](http://boo-language.github.io/) | https://github.com/Rabios/raylib-boo          |
 | RaylibFS           | 2.5 | [F#](https://fsharp.org/)             | https://github.com/dallinbeutler/RaylibFS     |
 | raylib_d           | 2.5 | [D](https://dlang.org/)               | https://github.com/Sepheus/raylib_d     |
 | raylib-d           | 3.0 | [D](https://dlang.org/)               | https://github.com/onroundit/raylib-d     |
@@ -26,7 +26,7 @@ Here it is a list with the ones I'm aware of:
 | raylib-lua-sol     | 2.5 | [Lua](http://www.lua.org/)          | https://github.com/RobLoach/raylib-lua-sol     |
 | raylib-lua         | 3.5 | [Lua](http://www.lua.org/)            | https://github.com/TSnake41/raylib-lua       |
 | raylib-luamore     | 3.0 | [Lua](http://www.lua.org/)            | https://github.com/HDPLocust/raylib-luamore    |
-| raylua             | 3.5 | [Lua](http://www.lua.org/)            | https://github.com/Rabios/raylua          |
+| raylua             | 3.7 | [Lua](http://www.lua.org/)            | https://github.com/Rabios/raylua          |
 | LuaJIT-Raylib      | 2.6 | [Lua](http://www.lua.org/)            | https://github.com/Bambofy/LuaJIT-Raylib    |
 | raylib-nelua       | 3.0 | [Nelua](https://nelua.io/)            | https://github.com/Andre-LA/raylib-nelua     |
 | raylib-Nim         | 1.7 | [Nim](https://nim-lang.org/)          | https://gitlab.com/define-private-public/raylib-Nim     |
