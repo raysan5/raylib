@@ -3782,7 +3782,7 @@ static bool InitGraphicsDevice(int width, int height)
 
 #if defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI) || defined(PLATFORM_DRM) || defined(PLATFORM_UWP)
     CORE.Window.fullscreen = true;
-    CORE.Window.flags &= FLAG_FULLSCREEN_MODE;
+    CORE.Window.flags |= FLAG_FULLSCREEN_MODE;
 
 #if defined(PLATFORM_RPI)
     bcm_host_init();
