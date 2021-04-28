@@ -226,7 +226,7 @@
     #include <android_native_app_glue.h>    // Defines basic app state struct and manages activity
 
     #include <EGL/egl.h>                    // Native platform windowing system interface
-    //#include <GLES2/gl2.h>                  // OpenGL ES 2.0 library (not required in this module)
+    //#include <GLES2/gl2.h>                // OpenGL ES 2.0 library (not required in this module)
 #endif
 
 #if defined(PLATFORM_RPI) || defined(PLATFORM_DRM)
@@ -253,13 +253,13 @@
 
     #include "EGL/egl.h"                // Native platform windowing system interface
     #include "EGL/eglext.h"             // EGL extensions
-    #include "GLES2/gl2.h"              // OpenGL ES 2.0 library
+    //#include "GLES2/gl2.h"            // OpenGL ES 2.0 library (not required in this module)
 #endif
 
 #if defined(PLATFORM_UWP)
     #include "EGL/egl.h"                // Native platform windowing system interface
     #include "EGL/eglext.h"             // EGL extensions
-    #include "GLES2/gl2.h"              // OpenGL ES 2.0 library
+    //#include "GLES2/gl2.h"            // OpenGL ES 2.0 library (not required in this module)
     #include "uwp_events.h"             // UWP bootstrapping functions
 #endif
 
@@ -4356,7 +4356,7 @@ static bool InitGraphicsDevice(int width, int height)
 #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
     rlLoadExtensions(glfwGetProcAddress);
 #else
-    rlLoadExtensions(NULL);     // Uses eglGetProcAddress() internally
+    rlLoadExtensions(eglGetProcAddress);
 #endif
 
     // Initialize OpenGL context (states and resources)
