@@ -849,7 +849,7 @@ PHYSACDEF void ResetPhysics(void)
     if (physicsBodiesCount > 0)
     {
         // Unitialize physics bodies dynamic memory allocations
-        for (unsigned int i = physicsBodiesCount - 1; i >= 0; i--)
+        for (int i = physicsBodiesCount - 1; i >= 0; i--)
         {
             PhysicsBody body = bodies[i];
 
@@ -867,7 +867,7 @@ PHYSACDEF void ResetPhysics(void)
     if (physicsManifoldsCount > 0)
     {
         // Unitialize physics manifolds dynamic memory allocations
-        for (unsigned int i = physicsManifoldsCount - 1; i >= 0; i--)
+        for (int i = physicsManifoldsCount - 1; i >= 0; i--)
         {
             PhysicsManifold manifold = contacts[i];
 
