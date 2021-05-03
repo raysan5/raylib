@@ -416,7 +416,7 @@ typedef struct BoundingBox {
 
 // Wave type, defines audio wave data
 typedef struct Wave {
-    unsigned int sampleCount;       // Total number of samples
+    unsigned int sampleCount;       // Total number of samples (considering channels!)
     unsigned int sampleRate;        // Frequency (samples per second)
     unsigned int sampleSize;        // Bit depth (bits per sample): 8, 16, 32 (24 not supported)
     unsigned int channels;          // Number of channels (1-mono, 2-stereo)
