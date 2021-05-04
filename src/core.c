@@ -116,8 +116,6 @@
 // Check if config flags have been externally provided on compilation line
 #if !defined(EXTERNAL_CONFIG_FLAGS)
     #include "config.h"             // Defines module configuration flags
-#else
-    #define RAYLIB_VERSION  "3.7"
 #endif
 
 #include "utils.h"                  // Required for: TRACELOG macros
