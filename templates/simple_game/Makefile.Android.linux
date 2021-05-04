@@ -201,7 +201,7 @@ copy_project_resources:
 	cp $(APP_ICON_LDPI) $(PROJECT_BUILD_PATH)/res/drawable-ldpi/icon.png
 	cp $(APP_ICON_MDPI) $(PROJECT_BUILD_PATH)/res/drawable-mdpi/icon.png
 	cp $(APP_ICON_HDPI) $(PROJECT_BUILD_PATH)/res/drawable-hdpi/icon.png
-	@echo "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n\
+	@printf "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n\
 	   <resources>\n\
 	       <string name=\"app_name\">\n\
 		  $(APP_LABEL_NAME)\n\
@@ -223,7 +223,7 @@ else
 nativeloader_sharedlib=
 endif
 generate_loader_script:
-	@echo "package com.$(APP_COMPANY_NAME).$(APP_PRODUCT_NAME);\n\n\
+	@printf "package com.$(APP_COMPANY_NAME).$(APP_PRODUCT_NAME);\n\n\
 	public class NativeLoader extends android.app.NativeActivity {\n\
 	  static {\n\
 	    $(nativeloader_sharedlib);\n\
@@ -236,7 +236,7 @@ generate_loader_script:
 # TODO @jseb: Replace @drawable/icon with @mipmap/icon?
 # https://stackoverflow.com/questions/23796414/error-no-resource-found-that-matches-the-given-name-at-icon-with-value-dr
 generate_android_manifest:
-	@echo "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n\
+	@printf "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n\
 	    	   <manifest xmlns:android=\"http://schemas.android.com/apk/res/android\"\n\
 		      package=\"com.$(APP_COMPANY_NAME).$(APP_PRODUCT_NAME)\"\n\
 	              android:versionCode=\"$(APP_VERSION_CODE)\" android:versionName=\"$(APP_VERSION_NAME)\">\n\
