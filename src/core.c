@@ -919,6 +919,7 @@ void CloseWindow(void)
     if (CORE.Input.Gamepad.threadId) pthread_join(CORE.Input.Gamepad.threadId, NULL);
 #endif
 
+    CORE.Window.ready = false;
     TRACELOG(LOG_INFO, "Window closed successfully");
 }
 
