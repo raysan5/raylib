@@ -385,6 +385,10 @@ static Wave LoadMP3(const unsigned char *fileData, unsigned int fileSize);   // 
 
 #if defined(RAUDIO_STANDALONE)
 static bool IsFileExtension(const char *fileName, const char *ext); // Check file extension
+static const char *GetFileExtension(const char *fileName);          // Get pointer to extension for a filename string (includes the dot: .png)
+static bool TextIsEqual(const char *text1, const char *text2);      // Check if two text string are equal
+static const char *TextToLower(const char *text);                   // Get lower case version of provided string
+
 static unsigned char *LoadFileData(const char *fileName, unsigned int *bytesRead);     // Load file data as byte array (read)
 static bool SaveFileData(const char *fileName, void *data, unsigned int bytesToWrite); // Save data to file from byte array (write)
 static bool SaveFileText(const char *fileName, char *text);         // Save text data to file (write), string must be '\0' terminated
@@ -1587,11 +1591,11 @@ void StopMusicStream(Music music)
 // Update (re-fill) music buffers if data already processed
 void UpdateMusicStream(Music music)
 {
-    if (music.stream.buffer == NULL)
-        return;
+    if (music.stream.buffer == NULL) return;
 
-    if (music.ctxType == MUSIC_MODULE_XM)
-        jar_xm_set_max_loop_count(music.ctxData, music.looping ? 0 : 1);
+#if defined(SUPPORT_FILEFORMAT_XM)
+    if (music.ctxType == MUSIC_MODULE_XM) jar_xm_set_max_loop_count(music.ctxData, music.looping ? 0 : 1);
+#endif
 
     bool streamEnding = false;
 
@@ -2325,6 +2329,48 @@ static bool IsFileExtension(const char *fileName, const char *ext)
     }
 
     return result;
+}
+
+// Get pointer to extension for a filename string (includes the dot: .png)
+static const char *GetFileExtension(const char *fileName)
+{
+    const char *dot = strrchr(fileName, '.');
+
+    if (!dot || dot == fileName) return NULL;
+
+    return dot;
+}
+
+// Check if two text string are equal
+// REQUIRES: strcmp()
+static bool TextIsEqual(const char *text1, const char *text2)
+{
+    bool result = false;
+
+    if (strcmp(text1, text2) == 0) result = true;
+
+    return result;
+}
+
+// Get lower case version of provided string
+// REQUIRES: tolower()
+static const char *TextToLower(const char *text)
+{
+    #define MAX_TEXT_BUFFER_LENGTH      1024
+    
+    static char buffer[MAX_TEXT_BUFFER_LENGTH] = { 0 };
+
+    for (int i = 0; i < MAX_TEXT_BUFFER_LENGTH; i++)
+    {
+        if (text[i] != '\0')
+        {
+            buffer[i] = (char)tolower(text[i]);
+            //if ((text[i] >= 'A') && (text[i] <= 'Z')) buffer[i] = text[i] + 32;
+        }
+        else { buffer[i] = '\0'; break; }
+    }
+
+    return buffer;
 }
 
 // Load data from file into a buffer
