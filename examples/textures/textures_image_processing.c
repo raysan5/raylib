@@ -80,7 +80,7 @@ int main(void)
             {
                 mouseHoverRec = i;
 
-                if (IsMouseButtonReleased(MOUSE_LEFT_BUTTON))
+                if (IsMouseButtonReleased(MOUSE_BUTTON_LEFT))
                 {
                     currentProcess = i;
                     textureReload = true;

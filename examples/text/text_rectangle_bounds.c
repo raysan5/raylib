@@ -61,7 +61,7 @@ tempor incididunt ut labore et dolore magna aliqua. Nec ullamcorper sit amet ris
         // Container resizing logic
         if (resizing)
         {
-            if (IsMouseButtonReleased(MOUSE_LEFT_BUTTON)) resizing = false;
+            if (IsMouseButtonReleased(MOUSE_BUTTON_LEFT)) resizing = false;
 
             float width = container.width + (mouse.x - lastMouse.x);
             container.width = (width > minWidth)? ((width < maxWidth)? width : maxWidth) : minWidth;
@@ -72,7 +72,7 @@ tempor incididunt ut labore et dolore magna aliqua. Nec ullamcorper sit amet ris
         else
         {
             // Check if we're resizing
-            if (IsMouseButtonDown(MOUSE_LEFT_BUTTON) && CheckCollisionPointRec(mouse, resizer)) resizing = true;
+            if (IsMouseButtonDown(MOUSE_BUTTON_LEFT) && CheckCollisionPointRec(mouse, resizer)) resizing = true;
         }
 
         // Move resizer rectangle properly

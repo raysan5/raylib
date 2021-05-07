@@ -115,10 +115,10 @@ int main(void)
 
             // TODO: The idea is to zoom and move around with mouse
             // Probably offset movement should be proportional to zoom level
-            if (IsMouseButtonDown(MOUSE_LEFT_BUTTON) || IsMouseButtonDown(MOUSE_RIGHT_BUTTON))
+            if (IsMouseButtonDown(MOUSE_BUTTON_LEFT) || IsMouseButtonDown(MOUSE_BUTTON_RIGHT))
             {
-                if (IsMouseButtonDown(MOUSE_LEFT_BUTTON)) zoom += zoom*0.003f;
-                if (IsMouseButtonDown(MOUSE_RIGHT_BUTTON)) zoom -= zoom*0.003f;
+                if (IsMouseButtonDown(MOUSE_BUTTON_LEFT)) zoom += zoom*0.003f;
+                if (IsMouseButtonDown(MOUSE_BUTTON_RIGHT)) zoom -= zoom*0.003f;
 
                 Vector2 mousePos = GetMousePosition();
 

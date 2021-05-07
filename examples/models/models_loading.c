@@ -95,7 +95,7 @@ int main(void)
         }
 
         // Select model on mouse click
-        if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
+        if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT))
         {
             // Check collision between ray and box
             if (CheckCollisionRayBox(GetMouseRay(GetMousePosition(), camera), bounds)) selected = !selected;

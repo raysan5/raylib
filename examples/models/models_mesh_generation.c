@@ -113,7 +113,7 @@ int main(void)
         //----------------------------------------------------------------------------------
         UpdateCamera(&camera);      // Update internal camera and our camera
 
-        if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
+        if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT))
         {
             currentModel = (currentModel + 1)%NUM_MODELS; // Cycle between the textures
         }

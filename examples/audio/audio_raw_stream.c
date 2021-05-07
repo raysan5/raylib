@@ -71,7 +71,7 @@ int main(void)
         // Sample mouse input.
         mousePosition = GetMousePosition();
 
-        if (IsMouseButtonDown(MOUSE_LEFT_BUTTON))
+        if (IsMouseButtonDown(MOUSE_BUTTON_LEFT))
         {
             float fp = (float)(mousePosition.y);
             frequency = 40.0f + (float)(fp);

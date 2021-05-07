@@ -67,7 +67,7 @@ int main(void)
         SetShaderValue(shader, mouseLoc, mousePos, SHADER_UNIFORM_VEC2);
 
         // Hot shader reloading
-        if (shaderAutoReloading || (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)))
+        if (shaderAutoReloading || (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)))
         {
             long currentFragShaderModTime = GetFileModTime(TextFormat(fragShaderFileName, GLSL_VERSION));
 

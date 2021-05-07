@@ -5345,11 +5345,11 @@ static int32_t AndroidInputCallback(struct android_app *app, AInputEvent *event)
 
     if (flags == AMOTION_EVENT_ACTION_DOWN || flags == AMOTION_EVENT_ACTION_MOVE)
     {
-        CORE.Input.Touch.currentTouchState[MOUSE_LEFT_BUTTON] = 1;
+        CORE.Input.Touch.currentTouchState[MOUSE_BUTTON_LEFT] = 1;
     }
     else if (flags == AMOTION_EVENT_ACTION_UP)
     {
-        CORE.Input.Touch.currentTouchState[MOUSE_LEFT_BUTTON] = 0;
+        CORE.Input.Touch.currentTouchState[MOUSE_BUTTON_LEFT] = 0;
     }
 
 #if defined(SUPPORT_GESTURES_SYSTEM)
@@ -6062,11 +6062,11 @@ static void *EventThread(void *arg)
                 // Touchscreen tap
                 if (event.code == ABS_PRESSURE)
                 {
-                    int previousMouseLeftButtonState = CORE.Input.Mouse.currentButtonStateEvdev[MOUSE_LEFT_BUTTON];
+                    int previousMouseLeftButtonState = CORE.Input.Mouse.currentButtonStateEvdev[MOUSE_BUTTON_LEFT];
 
                     if (!event.value && previousMouseLeftButtonState)
                     {
-                        CORE.Input.Mouse.currentButtonStateEvdev[MOUSE_LEFT_BUTTON] = 0;
+                        CORE.Input.Mouse.currentButtonStateEvdev[MOUSE_BUTTON_LEFT] = 0;
 
                         #if defined(SUPPORT_GESTURES_SYSTEM)
                             touchAction = TOUCH_UP;
@@ -6076,7 +6076,7 @@ static void *EventThread(void *arg)
 
                     if (event.value && !previousMouseLeftButtonState)
                     {
-                        CORE.Input.Mouse.currentButtonStateEvdev[MOUSE_LEFT_BUTTON] = 1;
+                        CORE.Input.Mouse.currentButtonStateEvdev[MOUSE_BUTTON_LEFT] = 1;
 
                         #if defined(SUPPORT_GESTURES_SYSTEM)
                             touchAction = TOUCH_DOWN;
@@ -6093,7 +6093,7 @@ static void *EventThread(void *arg)
                 // Mouse button parsing
                 if ((event.code == BTN_TOUCH) || (event.code == BTN_LEFT))
                 {
-                    CORE.Input.Mouse.currentButtonStateEvdev[MOUSE_LEFT_BUTTON] = event.value;
+                    CORE.Input.Mouse.currentButtonStateEvdev[MOUSE_BUTTON_LEFT] = event.value;
 
                     #if defined(SUPPORT_GESTURES_SYSTEM)
                         if (event.value > 0) touchAction = TOUCH_DOWN;
@@ -6102,12 +6102,12 @@ static void *EventThread(void *arg)
                     #endif
                 }
 
-                if (event.code == BTN_RIGHT) CORE.Input.Mouse.currentButtonStateEvdev[MOUSE_RIGHT_BUTTON] = event.value;
-                if (event.code == BTN_MIDDLE) CORE.Input.Mouse.currentButtonStateEvdev[MOUSE_MIDDLE_BUTTON] = event.value;
-                if (event.code == BTN_SIDE) CORE.Input.Mouse.currentButtonStateEvdev[MOUSE_SIDE_BUTTON] = event.value;
-                if (event.code == BTN_EXTRA) CORE.Input.Mouse.currentButtonStateEvdev[MOUSE_EXTRA_BUTTON] = event.value;
-                if (event.code == BTN_FORWARD) CORE.Input.Mouse.currentButtonStateEvdev[MOUSE_FORWARD_BUTTON] = event.value;
-                if (event.code == BTN_BACK) CORE.Input.Mouse.currentButtonStateEvdev[MOUSE_BACK_BUTTON] = event.value;
+                if (event.code == BTN_RIGHT) CORE.Input.Mouse.currentButtonStateEvdev[MOUSE_BUTTON_RIGHT] = event.value;
+                if (event.code == BTN_MIDDLE) CORE.Input.Mouse.currentButtonStateEvdev[MOUSE_BUTTON_MIDDLE] = event.value;
+                if (event.code == BTN_SIDE) CORE.Input.Mouse.currentButtonStateEvdev[MOUSE_BUTTON_SIDE] = event.value;
+                if (event.code == BTN_EXTRA) CORE.Input.Mouse.currentButtonStateEvdev[MOUSE_BUTTON_EXTRA] = event.value;
+                if (event.code == BTN_FORWARD) CORE.Input.Mouse.currentButtonStateEvdev[MOUSE_BUTTON_FORWARD] = event.value;
+                if (event.code == BTN_BACK) CORE.Input.Mouse.currentButtonStateEvdev[MOUSE_BUTTON_BACK] = event.value;
             }
 
             // Screen confinement

@@ -42,13 +42,13 @@ int main(void)
 
         ballColor = BEIGE;
 
-        if (IsMouseButtonDown(MOUSE_LEFT_BUTTON)) ballColor = MAROON;
-        if (IsMouseButtonDown(MOUSE_MIDDLE_BUTTON)) ballColor = LIME;
-        if (IsMouseButtonDown(MOUSE_RIGHT_BUTTON)) ballColor = DARKBLUE;
+        if (IsMouseButtonDown(MOUSE_BUTTON_LEFT)) ballColor = MAROON;
+        if (IsMouseButtonDown(MOUSE_BUTTON_MIDDLE)) ballColor = LIME;
+        if (IsMouseButtonDown(MOUSE_BUTTON_RIGHT)) ballColor = DARKBLUE;
 
-        if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) touchCounter = 10;
-        if (IsMouseButtonPressed(MOUSE_MIDDLE_BUTTON)) touchCounter = 10;
-        if (IsMouseButtonPressed(MOUSE_RIGHT_BUTTON)) touchCounter = 10;
+        if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) touchCounter = 10;
+        if (IsMouseButtonPressed(MOUSE_BUTTON_MIDDLE)) touchCounter = 10;
+        if (IsMouseButtonPressed(MOUSE_BUTTON_RIGHT)) touchCounter = 10;
 
         if (touchCounter > 0) touchCounter--;
         //----------------------------------------------------------------------------------
