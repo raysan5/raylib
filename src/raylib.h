@@ -639,9 +639,14 @@ typedef enum {
 
 // Mouse buttons
 typedef enum {
-    MOUSE_LEFT_BUTTON   = 0,
-    MOUSE_RIGHT_BUTTON  = 1,
-    MOUSE_MIDDLE_BUTTON = 2
+    MOUSE_LEFT_BUTTON    = 0,
+    MOUSE_RIGHT_BUTTON   = 1,
+    MOUSE_MIDDLE_BUTTON  = 2,
+    MOUSE_SIDE_BUTTON    = 3,
+    MOUSE_EXTRA_BUTTON   = 4,
+    MOUSE_FORWARD_BUTTON = 5,
+    MOUSE_BACK_BUTTON    = 6,
+    MOUSE_BUTTON_MAX     = 7
 } MouseButton;
 
 // Mouse cursor
