@@ -61,10 +61,7 @@
 //----------------------------------------------------------------------------------
 // Module Functions Declaration
 //----------------------------------------------------------------------------------
-#if !defined(_MSC_VER)
-static int kbhit(void);             // Check if a key has been pressed
-static char getch();                // Get pressed character
-#else
+#if defined(_MSC_VER)
 #define kbhit _kbhit
 #define getch _getch
 #endif
