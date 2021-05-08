@@ -3141,7 +3141,10 @@ unsigned int rlLoadVertexArray(void)
 {
     unsigned int vaoId = 0;
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
-    glGenVertexArrays(1, &vaoId);
+    if (RLGL.ExtSupported.vao)
+    {
+        glGenVertexArrays(1, &vaoId);
+    }
 #endif
     return vaoId;
 }
