@@ -33,9 +33,13 @@ int main(void)
         //----------------------------------------------------------------------------------
         ballPosition = GetMousePosition();
 
-        if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) ballColor = MAROON;
-        else if (IsMouseButtonPressed(MOUSE_MIDDLE_BUTTON)) ballColor = LIME;
-        else if (IsMouseButtonPressed(MOUSE_RIGHT_BUTTON)) ballColor = DARKBLUE;
+        if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) ballColor = MAROON;
+        else if (IsMouseButtonPressed(MOUSE_BUTTON_MIDDLE)) ballColor = LIME;
+        else if (IsMouseButtonPressed(MOUSE_BUTTON_RIGHT)) ballColor = DARKBLUE;
+        else if (IsMouseButtonPressed(MOUSE_BUTTON_SIDE)) ballColor = PURPLE;
+        else if (IsMouseButtonPressed(MOUSE_BUTTON_EXTRA)) ballColor = YELLOW;
+        else if (IsMouseButtonPressed(MOUSE_BUTTON_FORWARD)) ballColor = ORANGE;
+        else if (IsMouseButtonPressed(MOUSE_BUTTON_BACK)) ballColor = BEIGE;
         //----------------------------------------------------------------------------------
 
         // Draw

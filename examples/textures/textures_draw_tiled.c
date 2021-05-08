@@ -75,7 +75,7 @@ int main(int argc, char **argv)
         screenHeight = GetScreenHeight();
 
         // Handle mouse
-        if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
+        if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT))
         {
             const Vector2 mouse = GetMousePosition();
 

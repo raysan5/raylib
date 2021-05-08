@@ -47,7 +47,7 @@ int main(void)
         //----------------------------------------------------------------------------------
         UpdateCamera(&camera);          // Update camera
 
-        if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
+        if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT))
         {
             if (!collision)
             {

@@ -32,8 +32,8 @@ int main(void)
     {
         // Update
         //----------------------------------------------------------------------------------
-        if (IsMouseButtonDown(MOUSE_LEFT_BUTTON)) start = GetMousePosition();
-        else if (IsMouseButtonDown(MOUSE_RIGHT_BUTTON)) end = GetMousePosition();
+        if (IsMouseButtonDown(MOUSE_BUTTON_LEFT)) start = GetMousePosition();
+        else if (IsMouseButtonDown(MOUSE_BUTTON_RIGHT)) end = GetMousePosition();
         //----------------------------------------------------------------------------------
 
         // Draw

@@ -180,7 +180,7 @@ int main(int argc, char **argv)
         if (IsKeyPressed(KEY_SPACE)) RandomizeEmoji();
 
         // Set the selected emoji and copy its text to clipboard
-        if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON) && (hovered != -1) && (hovered != selected))
+        if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && (hovered != -1) && (hovered != selected))
         {
             selected = hovered;
             selectedPos = hoveredPos;

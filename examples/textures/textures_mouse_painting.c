@@ -88,7 +88,7 @@ int main(void)
             else colorMouseHover = -1;
         }
 
-        if ((colorMouseHover >= 0) && IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
+        if ((colorMouseHover >= 0) && IsMouseButtonPressed(MOUSE_BUTTON_LEFT))
         {
             colorSelected = colorMouseHover;
             colorSelectedPrev = colorSelected;
@@ -107,7 +107,7 @@ int main(void)
             EndTextureMode();
         }
 
-        if (IsMouseButtonDown(MOUSE_LEFT_BUTTON) || (GetGestureDetected() == GESTURE_DRAG))
+        if (IsMouseButtonDown(MOUSE_BUTTON_LEFT) || (GetGestureDetected() == GESTURE_DRAG))
         {
             // Paint circle into render texture
             // NOTE: To avoid discontinuous circles, we could store
@@ -117,7 +117,7 @@ int main(void)
             EndTextureMode();
         }
 
-        if (IsMouseButtonDown(MOUSE_RIGHT_BUTTON))
+        if (IsMouseButtonDown(MOUSE_BUTTON_RIGHT))
         {
             if (!mouseWasPressed)
             {
@@ -132,7 +132,7 @@ int main(void)
             if (mousePos.y > 50) DrawCircle((int)mousePos.x, (int)mousePos.y, brushSize, colors[0]);
             EndTextureMode();
         }
-        else if (IsMouseButtonReleased(MOUSE_RIGHT_BUTTON) && mouseWasPressed)
+        else if (IsMouseButtonReleased(MOUSE_BUTTON_RIGHT) && mouseWasPressed)
         {
             colorSelected = colorSelectedPrev;
             mouseWasPressed = false;
@@ -144,7 +144,7 @@ int main(void)
 
         // Image saving logic
         // NOTE: Saving painted texture to a default named image
-        if ((btnSaveMouseHover && IsMouseButtonReleased(MOUSE_LEFT_BUTTON)) || IsKeyPressed(KEY_S))
+        if ((btnSaveMouseHover && IsMouseButtonReleased(MOUSE_BUTTON_LEFT)) || IsKeyPressed(KEY_S))
         {
             Image image = GetTextureData(target.texture);
             ImageFlipVertical(&image);
@@ -177,7 +177,7 @@ int main(void)
         // Draw drawing circle for reference
         if (mousePos.y > 50)
         {
-            if (IsMouseButtonDown(MOUSE_RIGHT_BUTTON)) DrawCircleLines((int)mousePos.x, (int)mousePos.y, brushSize, GRAY);
+            if (IsMouseButtonDown(MOUSE_BUTTON_RIGHT)) DrawCircleLines((int)mousePos.x, (int)mousePos.y, brushSize, GRAY);
             else DrawCircle(GetMouseX(), GetMouseY(), brushSize, colors[colorSelected]);
         }
 

@@ -53,7 +53,7 @@ int main(void)
         //----------------------------------------------------------------------------------
 
         // Check for mouse button pressed and activate explosion (if not active)
-        if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON) && !active)
+        if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && !active)
         {
             position = GetMousePosition();
             active = true;
