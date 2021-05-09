@@ -61,7 +61,7 @@ int main(void)
         cameraX = (sin(GetTime()) * 50.0f) - 10.0f;
         cameraY = cos(GetTime()) * 30.0f;
 
-        screenSpaceCamera.target = { cameraX, cameraY };
+        screenSpaceCamera.target = (Vector2){ cameraX, cameraY };
 
         if (screenSpaceCamera.target.x >= 1 || screenSpaceCamera.target.x <= -1) // Round worldCamera's X, keep the decimals on screenSpaceCamera.
         {
@@ -105,12 +105,21 @@ int main(void)
         // Also the renderTexture's height is flipped (in the source Rectangle), due to OpenGL reasons.
         DrawTexturePro(
             renderTexture.texture,
-            { 0.0f, 0.0f, (float)renderTexture.texture.width, (float)-renderTexture.texture.height },
-            { -virtualRatio, -virtualRatio, screenWidth + (virtualRatio * 2), screenHeight + (virtualRatio * 2) },
-            { 0.0f, 0.0f },
-            0.0f,
-            WHITE
-        );
+            (Rectangle)
+        {
+            0.0f, 0.0f, (float)renderTexture.texture.width, (float)-renderTexture.texture.height
+        },
+            (Rectangle)
+        {
+            -virtualRatio, -virtualRatio, screenWidth + (virtualRatio * 2), screenHeight + (virtualRatio * 2)
+        },
+                (Vector2)
+            {
+                0.0f, 0.0f
+            },
+                0.0f,
+                    WHITE
+                    );
 
         EndMode2D();
 
