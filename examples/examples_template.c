@@ -1,7 +1,7 @@
 /*
     WELCOME raylib EXAMPLES CONTRIBUTOR!
 
-    This is a bsasic template to anyone ready to contribute with some code example for the library,
+    This is a basic template to anyone ready to contribute with some code example for the library,
     here there are some guidelines on how to create an example to be included in raylib
 
     1. File naming: <module>_<description> - Lower case filename, words separated by underscore,
