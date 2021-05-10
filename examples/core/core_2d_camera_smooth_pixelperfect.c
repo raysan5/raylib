@@ -75,7 +75,7 @@ int main(void)
         {
             worldSpaceCamera.target.x = (int)screenSpaceCamera.target.x;
             screenSpaceCamera.target.x -= worldSpaceCamera.target.x;
-            screenSpaceCamera.target.x*=virtualRatio;
+            screenSpaceCamera.target.x *= virtualRatio;
         }
 
         // Round worldCamera's Y, keep the decimals on screenSpaceCamera.
@@ -83,7 +83,7 @@ int main(void)
         {
             worldSpaceCamera.target.y = (int)screenSpaceCamera.target.y;
             screenSpaceCamera.target.y -= worldSpaceCamera.target.y;
-            screenSpaceCamera.target.y*=virtualRatio;
+            screenSpaceCamera.target.y *= virtualRatio;
         }
         //----------------------------------------------------------------------------------
 
