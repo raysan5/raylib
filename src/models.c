@@ -2798,25 +2798,17 @@ void DrawModelWiresEx(Model model, Vector3 position, Vector3 rotationAxis, float
 }
 
 // Draw a billboard
-void DrawBillboard(Camera camera, Texture2D texture, Vector3 center, float size, Color tint)
+void DrawBillboard(Camera camera, Texture2D texture, Vector3 position, float size, Color tint)
 {
     Rectangle source = { 0.0f, 0.0f, (float)texture.width, (float)texture.height };
 
-    DrawBillboardRec(camera, texture, source, center, (Vector2){ size, size }, tint);
+    DrawBillboardRec(camera, texture, source, position, (Vector2){ size, size }, tint);
 }
 
 // Draw a billboard (part of a texture defined by a rectangle)
-void DrawBillboardRec(Camera camera, Texture2D texture, Rectangle source, Vector3 center, Vector2 size, Color tint)
+void DrawBillboardRec(Camera camera, Texture2D texture, Rectangle source, Vector3 position, Vector2 size, Color tint)
 {
-    DrawBillboardPro(camera, texture, source, center, size, Vector2Zero(), 0.0f, tint);
-}
-
-// Draw a billboard (part of a texture defined by a rectangle)
-void DrawBillboardEx(Camera camera, Texture2D texture, Vector3 center, Vector2 origin, float rotation, Vector2 size, Color tint)
-{
-	Rectangle source = { 0.0f, 0.0f, (float)texture.width, (float)texture.height };
-	
-	DrawBillboardPro(camera, texture, source, center, size, origin, rotation, tint);
+    DrawBillboardPro(camera, texture, source, position, size, Vector2Zero(), 0.0f, tint);
 }
 
 void DrawBillboardPro(Camera camera, Texture2D texture, Rectangle source, Vector3 position, Vector2 size, Vector2 origin, float rotation, Color tint)
@@ -2880,7 +2872,8 @@ void DrawBillboardPro(Camera camera, Texture2D texture, Rectangle source, Vector
 		bottomLeft = Vector3Add(Vector3Scale(up, rotatedY), Vector3Scale(right, rotatedX));
 	}
 	
-	topLeft = Vector3Add(topLeft, position); // Translate points to the draw center (position)
+    // Translate points to the draw center (position)
+	topLeft = Vector3Add(topLeft, position);
 	topRight = Vector3Add(topRight, position);
 	bottomRight = Vector3Add(bottomRight, position);
 	bottomLeft = Vector3Add(bottomLeft, position);
