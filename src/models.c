@@ -2802,27 +2802,27 @@ void DrawBillboard(Camera camera, Texture2D texture, Vector3 center, float size,
 {
     Rectangle source = { 0.0f, 0.0f, (float)texture.width, (float)texture.height };
 
-    DrawBillboardRec(camera, texture, source, center, size, tint);
+    DrawBillboardRec(camera, texture, source, center, (Vector2){ size, size }, tint);
 }
 
 // Draw a billboard (part of a texture defined by a rectangle)
-void DrawBillboardRec(Camera camera, Texture2D texture, Rectangle source, Vector3 center, float size, Color tint)
+void DrawBillboardRec(Camera camera, Texture2D texture, Rectangle source, Vector3 center, Vector2 size, Color tint)
 {
-    DrawBillboardPro(camera, texture, source, center, Vector2Zero(), 0.0f, size, tint);
+    DrawBillboardPro(camera, texture, source, center, size, Vector2Zero(), 0.0f, tint);
 }
 
 // Draw a billboard (part of a texture defined by a rectangle)
-void DrawBillboardEx(Camera camera, Texture2D texture, Vector3 center, Vector2 rotationPoint, float rotation, float size, Color tint)
+void DrawBillboardEx(Camera camera, Texture2D texture, Vector3 center, Vector2 origin, float rotation, Vector2 size, Color tint)
 {
 	Rectangle source = { 0.0f, 0.0f, (float)texture.width, (float)texture.height };
 	
-	DrawBillboardPro(camera, texture, source, center, rotationPoint, rotation, size, tint);
+	DrawBillboardPro(camera, texture, source, center, size, origin, rotation, tint);
 }
 
-void DrawBillboardPro(Camera camera, Texture2D texture, Rectangle source, Vector3 center, Vector2 rotationPoint, float rotation, float size, Color tint)
+void DrawBillboardPro(Camera camera, Texture2D texture, Rectangle source, Vector3 position, Vector2 size, Vector2 origin, float rotation, Color tint)
 {
     // NOTE: Billboard size will maintain source rectangle aspect ratio, size will represent billboard width
-    Vector2 sizeRatio = { size, size*(float)source.height/source.width };
+    Vector2 sizeRatio = { size.y, size.x*(float)source.height/source.width };
 	
     Matrix matView = MatrixLookAt(camera.position, camera.target, camera.up);
 
@@ -2848,16 +2848,16 @@ void DrawBillboardPro(Camera camera, Texture2D texture, Rectangle source, Vector
 		float sinRotation = sinf(rotation*DEG2RAD);
 		float cosRotation = cosf(rotation*DEG2RAD);
 		
-		// NOTE: (-1, 1) is the range where rotationPoint.x, rotationPoint.y is inside the texture
-		float rotateAboutX = sizeRatio.x*rotationPoint.x/2;
-		float rotateAboutY = sizeRatio.y*rotationPoint.y/2;
+		// NOTE: (-1, 1) is the range where origin.x, origin.y is inside the texture
+		float rotateAboutX = sizeRatio.x*origin.x/2;
+		float rotateAboutY = sizeRatio.y*origin.y/2;
 		
 		float xtvalue, ytvalue;
 		float rotatedX, rotatedY;
 		
 		xtvalue = Vector3DotProduct(right, topLeft) - rotateAboutX; // Project points to x and y coordinates on the billboard plane
 		ytvalue = Vector3DotProduct(up, topLeft) - rotateAboutY;
-		rotatedX = xtvalue*cosRotation - ytvalue*sinRotation + rotateAboutX; // Rotate about the point rotationPoint 
+		rotatedX = xtvalue*cosRotation - ytvalue*sinRotation + rotateAboutX; // Rotate about the point origin 
 		rotatedY = xtvalue*sinRotation + ytvalue*cosRotation + rotateAboutY;
 		topLeft = Vector3Add(Vector3Scale(up, rotatedY), Vector3Scale(right, rotatedX)); // Translate back to cartesian coordinates
 		
@@ -2880,10 +2880,10 @@ void DrawBillboardPro(Camera camera, Texture2D texture, Rectangle source, Vector
 		bottomLeft = Vector3Add(Vector3Scale(up, rotatedY), Vector3Scale(right, rotatedX));
 	}
 	
-	topLeft = Vector3Add(topLeft, center); // Translate points to the draw center
-	topRight = Vector3Add(topRight, center);
-	bottomRight = Vector3Add(bottomRight, center);
-	bottomLeft = Vector3Add(bottomLeft, center);
+	topLeft = Vector3Add(topLeft, position); // Translate points to the draw center (position)
+	topRight = Vector3Add(topRight, position);
+	bottomRight = Vector3Add(bottomRight, position);
+	bottomLeft = Vector3Add(bottomLeft, position);
 	
     rlCheckRenderBatchLimit(4);
 
