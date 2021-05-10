@@ -33,7 +33,7 @@ Here it is a list with the ones I'm aware of:
 | raylib-nim         | 2.0 | [Nim](https://nim-lang.org/)          | https://github.com/Skrylar/raylib-nim                  |
 | raylib-Forever     | 3.1-dev | [Nim](https://nim-lang.org/)          | https://github.com/Guevara-chan/Raylib-Forever    |
 | nim-raylib         | 3.1-dev | [Nim](https://nim-lang.org/)          | https://github.com/tomc1998/nim-raylib            |
-| NimraylibNow!      | 3.5-dev | [Nim](https://nim-lang.org/)          | https://github.com/greenfork/nimraylib_now        |
+| NimraylibNow!      | 3.7 | [Nim](https://nim-lang.org/)          | https://github.com/greenfork/nimraylib_now        |
 | raylib-haskell     | 2.0 | [Haskell](https://www.haskell.org/)   | https://github.com/DevJac/raylib-haskell |
 | raylib-cr          | 2.5-dev | [Crystal](https://crystal-lang.org/)  | https://github.com/AregevDev/raylib-cr      |
 | cray               | 1.8 | [Crystal](https://crystal-lang.org/)  | https://gitlab.com/Zatherz/cray           |
