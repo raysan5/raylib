@@ -24,7 +24,7 @@ Here it is a list with the ones I'm aware of:
 | raylib-lua         | 1.7 | [Lua](http://www.lua.org/)            | https://github.com/raysan5/raylib-lua       |
 | raylib-lua-ffi     | 2.0 | [Lua](http://www.lua.org/)            | https://github.com/raysan5/raylib/issues/693    |
 | raylib-lua-sol     | 2.5 | [Lua](http://www.lua.org/)          | https://github.com/RobLoach/raylib-lua-sol     |
-| raylib-lua         | 3.5 | [Lua](http://www.lua.org/)            | https://github.com/TSnake41/raylib-lua       |
+| raylib-lua         | 3.7 | [Lua](http://www.lua.org/)            | https://github.com/TSnake41/raylib-lua       |
 | raylib-luamore     | 3.0 | [Lua](http://www.lua.org/)            | https://github.com/HDPLocust/raylib-luamore    |
 | raylua             | 3.7 | [Lua](http://www.lua.org/)            | https://github.com/Rabios/raylua          |
 | LuaJIT-Raylib      | 2.6 | [Lua](http://www.lua.org/)            | https://github.com/Bambofy/LuaJIT-Raylib    |
@@ -70,7 +70,7 @@ Here it is a list with the ones I'm aware of:
 | raylib-chibi       | 2.5 | [Chibi-Scheme](https://github.com/ashinn/chibi-scheme)   | https://github.com/VincentToups/raylib-chibi  |
 | raylib-gambit-scheme | 3.1-dev | [Gambit Scheme](https://github.com/gambit/gambit)   | https://github.com/georgjz/raylib-gambit-scheme  |
 | Euraylib           | 3.0 | [Euphoria](https://openeuphoria.org/)  | https://github.com/gAndy50/Euraylib          |
-| raylib-wren        | 3.0 | [Wren](http://wren.io/)           | https://github.com/TSnake41/raylib-wren           |
+| raylib-wren        | 3.7 | [Wren](http://wren.io/)           | https://github.com/TSnake41/raylib-wren           |
 | raylib-odin        | 3.0 | [Odin](https://odin-lang.org/)            | https://github.com/kevinw/raylib-odin     |
 | raylib-zig         | 3.0 | [Zig](https://ziglang.org/)               | https://github.com/Not-Nik/raylib-zig     |
 | raylib-jai         | 3.1-dev | [Jai](https://github.com/BSVino/JaiPrimer/blob/master/JaiPrimer.md)  | https://github.com/kevinw/raylib-jai   |
