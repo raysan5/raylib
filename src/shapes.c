@@ -144,7 +144,7 @@ void DrawLineBezier(Vector2 startPos, Vector2 endPos, float thick, Color color)
 #endif
 
     Vector2 previous = startPos;
-    Vector2 current;
+    Vector2 current = { 0 };
 
     for (int i = 1; i <= BEZIER_LINE_DIVISIONS; i++)
     {
@@ -770,8 +770,8 @@ void DrawRectangleLinesEx(Rectangle rec, float lineThick, Color color)
 {
     if ((lineThick > rec.width) || (lineThick > rec.height))
     {
-        if (rec.width > rec.height) lineThick = (int)rec.height/2;
-        else if (rec.width < rec.height) lineThick = (int)rec.width/2;
+        if (rec.width > rec.height) lineThick = rec.height/2;
+        else if (rec.width < rec.height) lineThick = rec.width/2;
     }
 
     // When rec = { x, y, 8.0f, 6.0f } and lineThick = 2, the following

@@ -465,25 +465,25 @@ void DrawSphereEx(Vector3 centerPos, float radius, int rings, int slices, Color 
             {
                 for (int j = 0; j < slices; j++)
                 {
-                    rlVertex3f(cosf(DEG2RAD*(270+(180/(rings + 1))*i))*sinf(DEG2RAD*(j*360/slices)),
-                               sinf(DEG2RAD*(270+(180/(rings + 1))*i)),
-                               cosf(DEG2RAD*(270+(180/(rings + 1))*i))*cosf(DEG2RAD*(j*360/slices)));
-                    rlVertex3f(cosf(DEG2RAD*(270+(180/(rings + 1))*(i+1)))*sinf(DEG2RAD*((j+1)*360/slices)),
-                               sinf(DEG2RAD*(270+(180/(rings + 1))*(i+1))),
-                               cosf(DEG2RAD*(270+(180/(rings + 1))*(i+1)))*cosf(DEG2RAD*((j+1)*360/slices)));
-                    rlVertex3f(cosf(DEG2RAD*(270+(180/(rings + 1))*(i+1)))*sinf(DEG2RAD*(j*360/slices)),
-                               sinf(DEG2RAD*(270+(180/(rings + 1))*(i+1))),
-                               cosf(DEG2RAD*(270+(180/(rings + 1))*(i+1)))*cosf(DEG2RAD*(j*360/slices)));
+                    rlVertex3f(cosf(DEG2RAD*(270 + (180.0f/(rings + 1))*i))*sinf(DEG2RAD*(360.0f*j/slices)),
+                               sinf(DEG2RAD*(270 + (180.0f/(rings + 1))*i)),
+                               cosf(DEG2RAD*(270 + (180.0f/(rings + 1))*i))*cosf(DEG2RAD*(360.0f*j/slices)));
+                    rlVertex3f(cosf(DEG2RAD*(270 + (180.0f/(rings + 1))*(i + 1)))*sinf(DEG2RAD*(360.0f*(j + 1)/slices)),
+                               sinf(DEG2RAD*(270 + (180.0f/(rings + 1))*(i + 1))),
+                               cosf(DEG2RAD*(270 + (180.0f/(rings + 1))*(i + 1)))*cosf(DEG2RAD*(360.0f*(j + 1)/slices)));
+                    rlVertex3f(cosf(DEG2RAD*(270 + (180.0f/(rings + 1))*(i + 1)))*sinf(DEG2RAD*(360.0f*j/slices)),
+                               sinf(DEG2RAD*(270 + (180.0f/(rings + 1))*(i + 1))),
+                               cosf(DEG2RAD*(270 + (180.0f/(rings + 1))*(i + 1)))*cosf(DEG2RAD*(360.0f*j/slices)));
 
-                    rlVertex3f(cosf(DEG2RAD*(270+(180/(rings + 1))*i))*sinf(DEG2RAD*(j*360/slices)),
-                               sinf(DEG2RAD*(270+(180/(rings + 1))*i)),
-                               cosf(DEG2RAD*(270+(180/(rings + 1))*i))*cosf(DEG2RAD*(j*360/slices)));
-                    rlVertex3f(cosf(DEG2RAD*(270+(180/(rings + 1))*(i)))*sinf(DEG2RAD*((j+1)*360/slices)),
-                               sinf(DEG2RAD*(270+(180/(rings + 1))*(i))),
-                               cosf(DEG2RAD*(270+(180/(rings + 1))*(i)))*cosf(DEG2RAD*((j+1)*360/slices)));
-                    rlVertex3f(cosf(DEG2RAD*(270+(180/(rings + 1))*(i+1)))*sinf(DEG2RAD*((j+1)*360/slices)),
-                               sinf(DEG2RAD*(270+(180/(rings + 1))*(i+1))),
-                               cosf(DEG2RAD*(270+(180/(rings + 1))*(i+1)))*cosf(DEG2RAD*((j+1)*360/slices)));
+                    rlVertex3f(cosf(DEG2RAD*(270 + (180.0f/(rings + 1))*i))*sinf(DEG2RAD*(360.0f*j/slices)),
+                               sinf(DEG2RAD*(270 + (180.0f/(rings + 1))*i)),
+                               cosf(DEG2RAD*(270 + (180.0f/(rings + 1))*i))*cosf(DEG2RAD*(360.0f*j/slices)));
+                    rlVertex3f(cosf(DEG2RAD*(270 + (180.0f/(rings + 1))*(i)))*sinf(DEG2RAD*(360.0f*(j + 1)/slices)),
+                               sinf(DEG2RAD*(270 + (180.0f/(rings + 1))*(i))),
+                               cosf(DEG2RAD*(270 + (180.0f/(rings + 1))*(i)))*cosf(DEG2RAD*(360.0f*(j + 1)/slices)));
+                    rlVertex3f(cosf(DEG2RAD*(270 + (180.0f/(rings + 1))*(i + 1)))*sinf(DEG2RAD*(360.0f*(j + 1)/slices)),
+                               sinf(DEG2RAD*(270 + (180.0f/(rings + 1))*(i + 1))),
+                               cosf(DEG2RAD*(270 + (180.0f/(rings + 1))*(i + 1)))*cosf(DEG2RAD*(360.0f*(j + 1)/slices)));
                 }
             }
         rlEnd();
@@ -508,26 +508,26 @@ void DrawSphereWires(Vector3 centerPos, float radius, int rings, int slices, Col
             {
                 for (int j = 0; j < slices; j++)
                 {
-                    rlVertex3f(cosf(DEG2RAD*(270+(180/(rings + 1))*i))*sinf(DEG2RAD*(j*360/slices)),
-                               sinf(DEG2RAD*(270+(180/(rings + 1))*i)),
-                               cosf(DEG2RAD*(270+(180/(rings + 1))*i))*cosf(DEG2RAD*(j*360/slices)));
-                    rlVertex3f(cosf(DEG2RAD*(270+(180/(rings + 1))*(i+1)))*sinf(DEG2RAD*((j+1)*360/slices)),
-                               sinf(DEG2RAD*(270+(180/(rings + 1))*(i+1))),
-                               cosf(DEG2RAD*(270+(180/(rings + 1))*(i+1)))*cosf(DEG2RAD*((j+1)*360/slices)));
+                    rlVertex3f(cosf(DEG2RAD*(270 + (180.0f/(rings + 1))*i))*sinf(DEG2RAD*(360.0f*j/slices)),
+                               sinf(DEG2RAD*(270 + (180.0f/(rings + 1))*i)),
+                               cosf(DEG2RAD*(270 + (180.0f/(rings + 1))*i))*cosf(DEG2RAD*(360.0f*j/slices)));
+                    rlVertex3f(cosf(DEG2RAD*(270 + (180.0f/(rings + 1))*(i + 1)))*sinf(DEG2RAD*(360.0f*(j + 1)/slices)),
+                               sinf(DEG2RAD*(270 + (180.0f/(rings + 1))*(i + 1))),
+                               cosf(DEG2RAD*(270 + (180.0f/(rings + 1))*(i + 1)))*cosf(DEG2RAD*(360.0f*(j + 1)/slices)));
 
-                    rlVertex3f(cosf(DEG2RAD*(270+(180/(rings + 1))*(i+1)))*sinf(DEG2RAD*((j+1)*360/slices)),
-                               sinf(DEG2RAD*(270+(180/(rings + 1))*(i+1))),
-                               cosf(DEG2RAD*(270+(180/(rings + 1))*(i+1)))*cosf(DEG2RAD*((j+1)*360/slices)));
-                    rlVertex3f(cosf(DEG2RAD*(270+(180/(rings + 1))*(i+1)))*sinf(DEG2RAD*(j*360/slices)),
-                               sinf(DEG2RAD*(270+(180/(rings + 1))*(i+1))),
-                               cosf(DEG2RAD*(270+(180/(rings + 1))*(i+1)))*cosf(DEG2RAD*(j*360/slices)));
+                    rlVertex3f(cosf(DEG2RAD*(270 + (180.0f/(rings + 1))*(i + 1)))*sinf(DEG2RAD*(360.0f*(j + 1)/slices)),
+                               sinf(DEG2RAD*(270 + (180.0f/(rings + 1))*(i + 1))),
+                               cosf(DEG2RAD*(270 + (180.0f/(rings + 1))*(i + 1)))*cosf(DEG2RAD*(360.0f*(j + 1)/slices)));
+                    rlVertex3f(cosf(DEG2RAD*(270 + (180.0f/(rings + 1))*(i + 1)))*sinf(DEG2RAD*(360.0f*j/slices)),
+                               sinf(DEG2RAD*(270 + (180.0f/(rings + 1))*(i + 1))),
+                               cosf(DEG2RAD*(270 + (180.0f/(rings + 1))*(i + 1)))*cosf(DEG2RAD*(360.0f*j/slices)));
 
-                    rlVertex3f(cosf(DEG2RAD*(270+(180/(rings + 1))*(i+1)))*sinf(DEG2RAD*(j*360/slices)),
-                               sinf(DEG2RAD*(270+(180/(rings + 1))*(i+1))),
-                               cosf(DEG2RAD*(270+(180/(rings + 1))*(i+1)))*cosf(DEG2RAD*(j*360/slices)));
-                    rlVertex3f(cosf(DEG2RAD*(270+(180/(rings + 1))*i))*sinf(DEG2RAD*(j*360/slices)),
-                               sinf(DEG2RAD*(270+(180/(rings + 1))*i)),
-                               cosf(DEG2RAD*(270+(180/(rings + 1))*i))*cosf(DEG2RAD*(j*360/slices)));
+                    rlVertex3f(cosf(DEG2RAD*(270 + (180.0f/(rings + 1))*(i + 1)))*sinf(DEG2RAD*(360.0f*j/slices)),
+                               sinf(DEG2RAD*(270 + (180.0f/(rings + 1))*(i + 1))),
+                               cosf(DEG2RAD*(270 + (180.0f/(rings + 1))*(i + 1)))*cosf(DEG2RAD*(360.0f*j/slices)));
+                    rlVertex3f(cosf(DEG2RAD*(270 + (180.0f/(rings + 1))*i))*sinf(DEG2RAD*(360.0f*j/slices)),
+                               sinf(DEG2RAD*(270 + (180.0f/(rings + 1))*i)),
+                               cosf(DEG2RAD*(270 + (180.0f/(rings + 1))*i))*cosf(DEG2RAD*(360.0f*j/slices)));
                 }
             }
         rlEnd();
@@ -555,12 +555,12 @@ void DrawCylinder(Vector3 position, float radiusTop, float radiusBottom, float h
                 for (int i = 0; i < 360; i += 360/sides)
                 {
                     rlVertex3f(sinf(DEG2RAD*i)*radiusBottom, 0, cosf(DEG2RAD*i)*radiusBottom); //Bottom Left
-                    rlVertex3f(sinf(DEG2RAD*(i + 360/sides))*radiusBottom, 0, cosf(DEG2RAD*(i + 360/sides))*radiusBottom); //Bottom Right
-                    rlVertex3f(sinf(DEG2RAD*(i + 360/sides))*radiusTop, height, cosf(DEG2RAD*(i + 360/sides))*radiusTop); //Top Right
+                    rlVertex3f(sinf(DEG2RAD*(i + 360.0f/sides))*radiusBottom, 0, cosf(DEG2RAD*(i + 360.0f/sides))*radiusBottom); //Bottom Right
+                    rlVertex3f(sinf(DEG2RAD*(i + 360.0f/sides))*radiusTop, height, cosf(DEG2RAD*(i + 360.0f/sides))*radiusTop); //Top Right
 
                     rlVertex3f(sinf(DEG2RAD*i)*radiusTop, height, cosf(DEG2RAD*i)*radiusTop); //Top Left
                     rlVertex3f(sinf(DEG2RAD*i)*radiusBottom, 0, cosf(DEG2RAD*i)*radiusBottom); //Bottom Left
-                    rlVertex3f(sinf(DEG2RAD*(i + 360/sides))*radiusTop, height, cosf(DEG2RAD*(i + 360/sides))*radiusTop); //Top Right
+                    rlVertex3f(sinf(DEG2RAD*(i + 360.0f/sides))*radiusTop, height, cosf(DEG2RAD*(i + 360.0f/sides))*radiusTop); //Top Right
                 }
 
                 // Draw Cap --------------------------------------------------------------------------------------
@@ -568,7 +568,7 @@ void DrawCylinder(Vector3 position, float radiusTop, float radiusBottom, float h
                 {
                     rlVertex3f(0, height, 0);
                     rlVertex3f(sinf(DEG2RAD*i)*radiusTop, height, cosf(DEG2RAD*i)*radiusTop);
-                    rlVertex3f(sinf(DEG2RAD*(i + 360/sides))*radiusTop, height, cosf(DEG2RAD*(i + 360/sides))*radiusTop);
+                    rlVertex3f(sinf(DEG2RAD*(i + 360.0f/sides))*radiusTop, height, cosf(DEG2RAD*(i + 360.0f/sides))*radiusTop);
                 }
             }
             else
@@ -578,7 +578,7 @@ void DrawCylinder(Vector3 position, float radiusTop, float radiusBottom, float h
                 {
                     rlVertex3f(0, height, 0);
                     rlVertex3f(sinf(DEG2RAD*i)*radiusBottom, 0, cosf(DEG2RAD*i)*radiusBottom);
-                    rlVertex3f(sinf(DEG2RAD*(i + 360/sides))*radiusBottom, 0, cosf(DEG2RAD*(i + 360/sides))*radiusBottom);
+                    rlVertex3f(sinf(DEG2RAD*(i + 360.0f/sides))*radiusBottom, 0, cosf(DEG2RAD*(i + 360.0f/sides))*radiusBottom);
                 }
             }
 
@@ -586,7 +586,7 @@ void DrawCylinder(Vector3 position, float radiusTop, float radiusBottom, float h
             for (int i = 0; i < 360; i += 360/sides)
             {
                 rlVertex3f(0, 0, 0);
-                rlVertex3f(sinf(DEG2RAD*(i + 360/sides))*radiusBottom, 0, cosf(DEG2RAD*(i + 360/sides))*radiusBottom);
+                rlVertex3f(sinf(DEG2RAD*(i + 360.0f/sides))*radiusBottom, 0, cosf(DEG2RAD*(i + 360.0f/sides))*radiusBottom);
                 rlVertex3f(sinf(DEG2RAD*i)*radiusBottom, 0, cosf(DEG2RAD*i)*radiusBottom);
             }
         rlEnd();
@@ -611,12 +611,12 @@ void DrawCylinderWires(Vector3 position, float radiusTop, float radiusBottom, fl
             for (int i = 0; i < 360; i += 360/sides)
             {
                 rlVertex3f(sinf(DEG2RAD*i)*radiusBottom, 0, cosf(DEG2RAD*i)*radiusBottom);
-                rlVertex3f(sinf(DEG2RAD*(i + 360/sides))*radiusBottom, 0, cosf(DEG2RAD*(i + 360/sides))*radiusBottom);
+                rlVertex3f(sinf(DEG2RAD*(i + 360.0f/sides))*radiusBottom, 0, cosf(DEG2RAD*(i + 360.0f/sides))*radiusBottom);
 
-                rlVertex3f(sinf(DEG2RAD*(i + 360/sides))*radiusBottom, 0, cosf(DEG2RAD*(i + 360/sides))*radiusBottom);
-                rlVertex3f(sinf(DEG2RAD*(i + 360/sides))*radiusTop, height, cosf(DEG2RAD*(i + 360/sides))*radiusTop);
+                rlVertex3f(sinf(DEG2RAD*(i + 360.0f/sides))*radiusBottom, 0, cosf(DEG2RAD*(i + 360.0f/sides))*radiusBottom);
+                rlVertex3f(sinf(DEG2RAD*(i + 360.0f/sides))*radiusTop, height, cosf(DEG2RAD*(i + 360.0f/sides))*radiusTop);
 
-                rlVertex3f(sinf(DEG2RAD*(i + 360/sides))*radiusTop, height, cosf(DEG2RAD*(i + 360/sides))*radiusTop);
+                rlVertex3f(sinf(DEG2RAD*(i + 360.0f/sides))*radiusTop, height, cosf(DEG2RAD*(i + 360.0f/sides))*radiusTop);
                 rlVertex3f(sinf(DEG2RAD*i)*radiusTop, height, cosf(DEG2RAD*i)*radiusTop);
 
                 rlVertex3f(sinf(DEG2RAD*i)*radiusTop, height, cosf(DEG2RAD*i)*radiusTop);
@@ -2159,10 +2159,10 @@ Mesh GenMeshHeightmap(Image heightmap, Vector3 size)
 
     Vector3 scaleFactor = { size.x/mapX, size.y/255.0f, size.z/mapZ };
 
-    Vector3 vA;
-    Vector3 vB;
-    Vector3 vC;
-    Vector3 vN;
+    Vector3 vA = { 0 };
+    Vector3 vB = { 0 };
+    Vector3 vC = { 0 };
+    Vector3 vN = { 0 };
 
     for (int z = 0; z < mapZ-1; z++)
     {
@@ -2908,7 +2908,7 @@ void DrawBillboardPro(Camera camera, Texture2D texture, Rectangle source, Vector
 // Draw a bounding box with wires
 void DrawBoundingBox(BoundingBox box, Color color)
 {
-    Vector3 size;
+    Vector3 size = { 0 };
 
     size.x = fabsf(box.max.x - box.min.x);
     size.y = fabsf(box.max.y - box.min.y);
@@ -3027,7 +3027,7 @@ bool CheckCollisionRayBox(Ray ray, BoundingBox box)
 {
     bool collision = false;
 
-    float t[8];
+    float t[8] = { 0 };
     t[0] = (box.min.x - ray.position.x)/ray.direction.x;
     t[1] = (box.max.x - ray.position.x)/ray.direction.x;
     t[2] = (box.min.y - ray.position.y)/ray.direction.y;
@@ -4188,7 +4188,7 @@ static Model LoadGLTF(const char *fileName)
 
                         if (acc->component_type == cgltf_component_type_r_32f)
                         {
-                            for (int a = 0; a < acc->count; a++)
+                            for (unsigned int a = 0; a < acc->count; a++)
                             {
                                 GLTFReadValue(acc, a, model.meshes[primitiveIndex].vertices + (a*3), 3, sizeof(float));
                             }
@@ -4196,7 +4196,7 @@ static Model LoadGLTF(const char *fileName)
                         else if (acc->component_type == cgltf_component_type_r_32u)
                         {
                             int readValue[3];
-                            for (int a = 0; a < acc->count; a++)
+                            for (unsigned int a = 0; a < acc->count; a++)
                             {
                                 GLTFReadValue(acc, a, readValue, 3, sizeof(int));
                                 model.meshes[primitiveIndex].vertices[(a*3) + 0] = (float)readValue[0];
@@ -4222,7 +4222,7 @@ static Model LoadGLTF(const char *fileName)
 
                         if (acc->component_type == cgltf_component_type_r_32f)
                         {
-                            for (int a = 0; a < acc->count; a++)
+                            for (unsigned int a = 0; a < acc->count; a++)
                             {
                                 GLTFReadValue(acc, a, model.meshes[primitiveIndex].normals + (a*3), 3, sizeof(float));
                             }
@@ -4230,7 +4230,7 @@ static Model LoadGLTF(const char *fileName)
                         else if (acc->component_type == cgltf_component_type_r_32u)
                         {
                             int readValue[3];
-                            for (int a = 0; a < acc->count; a++)
+                            for (unsigned int a = 0; a < acc->count; a++)
                             {
                                 GLTFReadValue(acc, a, readValue, 3, sizeof(int));
                                 model.meshes[primitiveIndex].normals[(a*3) + 0] = (float)readValue[0];
@@ -4254,7 +4254,7 @@ static Model LoadGLTF(const char *fileName)
                         {
                             model.meshes[primitiveIndex].texcoords = RL_MALLOC(acc->count*2*sizeof(float));
 
-                            for (int a = 0; a < acc->count; a++)
+                            for (unsigned int a = 0; a < acc->count; a++)
                             {
                                 GLTFReadValue(acc, a, model.meshes[primitiveIndex].texcoords + (a*2), 2, sizeof(float));
                             }
@@ -4278,7 +4278,7 @@ static Model LoadGLTF(const char *fileName)
 
                         if (acc->component_type == cgltf_component_type_r_32f)
                         {
-                            for (int a = 0; a < acc->count; a++)
+                            for (unsigned int a = 0; a < acc->count; a++)
                             {
                                 GLTFReadValue(acc, a, model.meshes[primitiveIndex].boneWeights + (a*4), 4, sizeof(float));
                             }
@@ -4286,7 +4286,7 @@ static Model LoadGLTF(const char *fileName)
                         else if (acc->component_type == cgltf_component_type_r_32u)
                         {
                             unsigned int readValue[4];
-                            for (int a = 0; a < acc->count; a++)
+                            for (unsigned int a = 0; a < acc->count; a++)
                             {
                                 GLTFReadValue(acc, a, readValue, 4, sizeof(unsigned int));
                                 model.meshes[primitiveIndex].normals[(a*4) + 0] = (float)readValue[0];
@@ -4469,7 +4469,7 @@ static void LoadGLTFBoneAttribute(Model* model, cgltf_accessor* jointsAccessor, 
         model->meshes[primitiveIndex].boneIds = RL_MALLOC(sizeof(int)*jointsAccessor->count*4);
         short* bones = RL_MALLOC(sizeof(short)*jointsAccessor->count*4);
 
-        for (int a = 0; a < jointsAccessor->count; a++)
+        for (unsigned int a = 0; a < jointsAccessor->count; a++)
         {
             GLTFReadValue(jointsAccessor, a, bones + (a*4), 4, sizeof(short));
         }
@@ -4494,7 +4494,7 @@ static void LoadGLTFBoneAttribute(Model* model, cgltf_accessor* jointsAccessor, 
         model->meshes[primitiveIndex].boneIds = RL_MALLOC(sizeof(int)*jointsAccessor->count*4);
         unsigned char* bones = RL_MALLOC(sizeof(unsigned char)*jointsAccessor->count*4);
 
-        for (int a = 0; a < jointsAccessor->count; a++)
+        for (unsigned int a = 0; a < jointsAccessor->count; a++)
         {
             GLTFReadValue(jointsAccessor, a, bones + (a*4), 4, sizeof(unsigned char));
         }
@@ -4525,7 +4525,7 @@ static void BindGLTFPrimitiveToBones(Model* model, const cgltf_data* data, int p
 {
     if (model->meshes[primitiveIndex].boneIds == NULL && data->nodes_count > 0)
     {
-        for (int nodeId = 0; nodeId < data->nodes_count; nodeId++)
+        for (unsigned int nodeId = 0; nodeId < data->nodes_count; nodeId++)
         {
             if (data->nodes[nodeId].mesh == &(data->meshes[primitiveIndex]))
             {
@@ -4602,7 +4602,7 @@ static void LoadGLTFModelIndices(Model* model, cgltf_accessor* indexAccessor, in
             model->meshes[primitiveIndex].indices = RL_MALLOC(model->meshes[primitiveIndex].triangleCount*3*sizeof(unsigned short));
 
             unsigned short readValue = 0;
-            for (int a = 0; a < indexAccessor->count; a++)
+            for (unsigned int a = 0; a < indexAccessor->count; a++)
             {
                 GLTFReadValue(indexAccessor, a, &readValue, 1, sizeof(short));
                 model->meshes[primitiveIndex].indices[a] = readValue;
@@ -4614,7 +4614,7 @@ static void LoadGLTFModelIndices(Model* model, cgltf_accessor* indexAccessor, in
             model->meshes[primitiveIndex].indices = RL_MALLOC(model->meshes[primitiveIndex].triangleCount*3*sizeof(unsigned short));
 
             unsigned char readValue = 0;
-            for (int a = 0; a < indexAccessor->count; a++)
+            for (unsigned int a = 0; a < indexAccessor->count; a++)
             {
                 GLTFReadValue(indexAccessor, a, &readValue, 1, sizeof(char));
                 model->meshes[primitiveIndex].indices[a] = (unsigned short)readValue;
@@ -4626,7 +4626,7 @@ static void LoadGLTFModelIndices(Model* model, cgltf_accessor* indexAccessor, in
             model->meshes[primitiveIndex].indices = RL_MALLOC(model->meshes[primitiveIndex].triangleCount*3*sizeof(unsigned short));
 
             unsigned int readValue;
-            for (int a = 0; a < indexAccessor->count; a++)
+            for (unsigned int a = 0; a < indexAccessor->count; a++)
             {
                 GLTFReadValue(indexAccessor, a, &readValue, 1, sizeof(unsigned int));
                 model->meshes[primitiveIndex].indices[a] = (unsigned short)readValue;

@@ -2318,7 +2318,7 @@ void SetShaderValueTexture(Shader shader, int locIndex, Texture2D texture)
 // Returns a ray trace from mouse position
 Ray GetMouseRay(Vector2 mouse, Camera camera)
 {
-    Ray ray;
+    Ray ray = { 0 };
 
     // Calculate normalized device coordinates
     // NOTE: y value is negative
@@ -4551,14 +4551,14 @@ static void Wait(float ms)
     while ((nextTime - prevTime) < ms/1000.0f) nextTime = GetTime();
 #else
     #if defined(SUPPORT_PARTIALBUSY_WAIT_LOOP)
-        #define DEFAULT_PARTIALBUSY_WAIT_TIME  4
-        #define PARTIALBUSY_WAIT_FACTOR 0.95f
-        float halfWait = DEFAULT_PARTIALBUSY_WAIT_TIME;
-        if (CORE.Time.target > 0)
-            halfWait = CORE.Time.target * PARTIALBUSY_WAIT_FACTOR;
+        #define DEFAULT_PARTIALBUSY_WAIT_TIME   4
+        #define PARTIALBUSY_WAIT_FACTOR         0.95
+
+        double halfWait = DEFAULT_PARTIALBUSY_WAIT_TIME;
+        if (CORE.Time.target > 0) halfWait = CORE.Time.target*PARTIALBUSY_WAIT_FACTOR;
 
         double destTime = GetTime() + ms/1000;
-        if (ms > halfWait) ms -= halfWait;
+        if (ms > halfWait) ms -= (float)halfWait;
     #endif
 
     #if defined(_WIN32)
