@@ -25,7 +25,7 @@ int main(void)
     const int virualScreenWidth = 160;
     const int virtualScreenHeight = 90;
 
-    const float virtualRatio = (float)screenWidth / (float)virualScreenWidth;
+    const float virtualRatio = (float)screenWidth/(float)virualScreenWidth;
 
     InitWindow(screenWidth, screenHeight, "raylib [core] example - smooth pixel-perfect camera");
 
@@ -43,7 +43,7 @@ int main(void)
 
     //The renderTexture's height is flipped (in the source Rectangle), due to OpenGL reasons.
     Rectangle renderTextureSource = { 0.0f, 0.0f, (float)renderTexture.texture.width, (float)-renderTexture.texture.height };
-    Rectangle renderTextureDest = { -virtualRatio, -virtualRatio, screenWidth + (virtualRatio * 2), screenHeight + (virtualRatio * 2) };
+    Rectangle renderTextureDest = { -virtualRatio, -virtualRatio, screenWidth + (virtualRatio*2), screenHeight + (virtualRatio*2) };
 
     Vector2 origin = { 0.0f, 0.0f };
 
@@ -61,11 +61,11 @@ int main(void)
     {
         // Update
         //----------------------------------------------------------------------------------
-        rotation += degreesPerSecond * GetFrameTime(); // Rotate the rectangles.
+        rotation += degreesPerSecond*GetFrameTime(); // Rotate the rectangles.
 
         // Make the camera move to demonstrate the effect.
-        cameraX = (sinf(GetTime()) * 50.0f) - 10.0f;
-        cameraY = cosf(GetTime()) * 30.0f;
+        cameraX = (sinf(GetTime())*50.0f) - 10.0f;
+        cameraY = cosf(GetTime())*30.0f;
 
         // Set the camera's target to the values computed above.
         screenSpaceCamera.target = (Vector2){ cameraX, cameraY };
