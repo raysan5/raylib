@@ -70,21 +70,15 @@ int main(void)
         // Set the camera's target to the values computed above.
         screenSpaceCamera.target = (Vector2){ cameraX, cameraY };
 
-        // Round worldCamera's X, keep the decimals on screenSpaceCamera.
-        if (screenSpaceCamera.target.x >= 1 || screenSpaceCamera.target.x <= -1)
-        {
-            worldSpaceCamera.target.x = (int)screenSpaceCamera.target.x;
-            screenSpaceCamera.target.x -= worldSpaceCamera.target.x;
-            screenSpaceCamera.target.x *= virtualRatio;
-        }
+        //Round worldSpace coordinates, keep decimals into screenSpace coordinates.
+        worldSpaceCamera.target.x = (int)screenSpaceCamera.target.x;
+        screenSpaceCamera.target.x -= worldSpaceCamera.target.x;
+        screenSpaceCamera.target.x *= virtualRatio;
 
-        // Round worldCamera's Y, keep the decimals on screenSpaceCamera.
-        if (screenSpaceCamera.target.y >= 1 || screenSpaceCamera.target.y <= -1)
-        {
-            worldSpaceCamera.target.y = (int)screenSpaceCamera.target.y;
-            screenSpaceCamera.target.y -= worldSpaceCamera.target.y;
-            screenSpaceCamera.target.y *= virtualRatio;
-        }
+        worldSpaceCamera.target.y = (int)screenSpaceCamera.target.y;
+        screenSpaceCamera.target.y -= worldSpaceCamera.target.y;
+        screenSpaceCamera.target.y *= virtualRatio;
+
         //----------------------------------------------------------------------------------
 
         // Draw
