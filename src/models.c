@@ -4728,7 +4728,7 @@ static ModelAnimation *LoadGLTFModelAnimations(const char *fileName, int *animCo
             // Initiate with zero bone translations
             for (int frame = 0; frame < output->frameCount; frame++)
             {
-                output->framePoses[frame] = RL_MALLOC(output->frameCount*data->nodes_count*sizeof(Transform));
+                output->framePoses[frame] = RL_MALLOC(data->nodes_count*sizeof(Transform));
 
                 for (unsigned int i = 0; i < data->nodes_count; i++)
                 {
