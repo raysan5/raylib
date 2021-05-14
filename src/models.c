@@ -4289,10 +4289,10 @@ static Model LoadGLTF(const char *fileName)
                             for (unsigned int a = 0; a < acc->count; a++)
                             {
                                 GLTFReadValue(acc, a, readValue, 4, sizeof(unsigned int));
-                                model.meshes[primitiveIndex].normals[(a*4) + 0] = (float)readValue[0];
-                                model.meshes[primitiveIndex].normals[(a*4) + 1] = (float)readValue[1];
-                                model.meshes[primitiveIndex].normals[(a*4) + 2] = (float)readValue[2];
-                                model.meshes[primitiveIndex].normals[(a*4) + 3] = (float)readValue[3];
+                                model.meshes[primitiveIndex].boneWeights[(a*4) + 0] = (float)readValue[0];
+                                model.meshes[primitiveIndex].boneWeights[(a*4) + 1] = (float)readValue[1];
+                                model.meshes[primitiveIndex].boneWeights[(a*4) + 2] = (float)readValue[2];
+                                model.meshes[primitiveIndex].boneWeights[(a*4) + 3] = (float)readValue[3];
                             }
                         }
                         else
