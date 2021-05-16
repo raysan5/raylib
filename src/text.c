@@ -826,6 +826,19 @@ void DrawFPS(int posX, int posY)
     DrawText(TextFormat("%2i FPS", GetFPS()), posX, posY, 20, color);
 }
 
+// Draw current FPS with custom font size and custom color
+// NOTE: Uses default font
+void DrawFPSEx(int posX, int posY, int fontSize, Color highColor, Color midColor, Color lowColor)
+{
+    Color color = highColor; // good FPS
+
+    int fps = GetFPS();
+    if (fps < 30 && fps >= 15) color = midColor; // warning FPS
+    else if (fps < 15) color = lowColor; // bad FPS
+
+    DrawText(TextFormat("%2i FPS", GetFPS()), posX, posY, fontSize, color);
+}
+
 // Draw text (using default font)
 // NOTE: fontSize work like in any drawing program but if fontSize is lower than font-base-size, then font-base-size is used
 // NOTE: chars spacing is proportional to fontSize
