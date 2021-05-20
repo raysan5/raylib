@@ -4718,7 +4718,7 @@ static ModelAnimation *LoadGLTFModelAnimations(const char *fileName, int *animCo
             // output->framerate = // TODO: Use framerate instead of const timestep
 
             // Name and parent bones
-            for (unsigned int j = 0; j < data->nodes_count; j++)
+            for (unsigned int j = 0; j < output->boneCount; j++)
             {
                 strcpy(output->bones[j].name, data->nodes[j].name == 0 ? "ANIMJOINT" : data->nodes[j].name);
                 output->bones[j].parent = (data->nodes[j].parent != NULL) ? (int)(data->nodes[j].parent - data->nodes) : -1;
@@ -4728,9 +4728,9 @@ static ModelAnimation *LoadGLTFModelAnimations(const char *fileName, int *animCo
             // Initiate with zero bone translations
             for (int frame = 0; frame < output->frameCount; frame++)
             {
-                output->framePoses[frame] = RL_MALLOC(data->nodes_count*sizeof(Transform));
+                output->framePoses[frame] = RL_MALLOC(output->boneCount*sizeof(Transform));
 
-                for (unsigned int i = 0; i < data->nodes_count; i++)
+                for (unsigned int i = 0; i < output->boneCount; i++)
                 {
                     output->framePoses[frame][i].translation = Vector3Zero();
                     output->framePoses[frame][i].rotation = QuaternionIdentity();
