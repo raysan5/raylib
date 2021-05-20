@@ -1540,7 +1540,7 @@ void PlayMusicStream(Music music)
         // For music streams, we need to make sure we maintain the frame cursor position
         // This is a hack for this section of code in UpdateMusicStream()
         // NOTE: In case window is minimized, music stream is stopped, just make sure to
-        // play again on window restore: if (IsMusicPlaying(music)) PlayMusicStream(music);
+        // play again on window restore: if (IsMusicStreamPlaying(music)) PlayMusicStream(music);
         ma_uint32 frameCursorPos = music.stream.buffer->frameCursorPos;
         PlayAudioStream(music.stream);  // WARNING: This resets the cursor position.
         music.stream.buffer->frameCursorPos = frameCursorPos;
@@ -1714,12 +1714,12 @@ void UpdateMusicStream(Music music)
     {
         // NOTE: In case window is minimized, music stream is stopped,
         // just make sure to play again on window restore
-        if (IsMusicPlaying(music)) PlayMusicStream(music);
+        if (IsMusicStreamPlaying(music)) PlayMusicStream(music);
     }
 }
 
 // Check if any music is playing
-bool IsMusicPlaying(Music music)
+bool IsMusicStreamPlaying(Music music)
 {
     return IsAudioStreamPlaying(music.stream);
 }

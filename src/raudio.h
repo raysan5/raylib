@@ -169,7 +169,7 @@ Music LoadMusicStream(const char *fileName);                    // Load music st
 Music LoadMusicStreamFromMemory(const char *fileType, unsigned char* data, int dataSize); // Load music stream from data
 void UnloadMusicStream(Music music);                            // Unload music stream
 void PlayMusicStream(Music music);                              // Start music playing
-bool IsMusicPlaying(Music music);                               // Check if music is playing
+bool IsMusicStreamPlaying(Music music);                         // Check if music is playing
 void UpdateMusicStream(Music music);                            // Updates buffers for music streaming
 void StopMusicStream(Music music);                              // Stop music playing
 void PauseMusicStream(Music music);                             // Pause music playing
