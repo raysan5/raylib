@@ -43,8 +43,8 @@
 .PHONY: all clean install uninstall
 
 # Define required raylib variables
-RAYLIB_VERSION        = 3.7.0
-RAYLIB_API_VERSION    = 370
+RAYLIB_VERSION        = 3.8-dev
+RAYLIB_API_VERSION    = 381
 
 # Define raylib source code path
 RAYLIB_SRC_PATH      ?= ../src

@@ -81,7 +81,7 @@
 
 #include <stdarg.h>     // Required for: va_list - Only used by TraceLogCallback
 
-#define RAYLIB_VERSION  "3.7.0"
+#define RAYLIB_VERSION  "3.8-dev"
 
 #if defined(_WIN32)
     // Microsoft attibutes to tell compiler that symbols are imported/exported from a .dll
