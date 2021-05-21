@@ -416,7 +416,13 @@ bool ExportImage(Image image, const char *fileName)
     }
 
 #if defined(SUPPORT_FILEFORMAT_PNG)
-    if (IsFileExtension(fileName, ".png")) success = stbi_write_png(fileName, image.width, image.height, channels, imgData, image.width*channels);
+    if (IsFileExtension(fileName, ".png"))
+    {
+        int dataSize = 0;
+        unsigned char *fileData = stbi_write_png_to_mem((const unsigned char *)imgData, image.width*channels, image.width, image.height, channels, &dataSize);
+        success = SaveFileData(fileName, fileData, dataSize);
+        RL_FREE(fileData);
+    }
 #else
     if (false) {}
 #endif
@@ -3236,7 +3242,7 @@ void DrawTexturePro(Texture2D texture, Rectangle source, Rectangle dest, Vector2
             bottomRight.x = x + (dx + dest.width)*cosRotation - (dy + dest.height)*sinRotation;
             bottomRight.y = y + (dx + dest.width)*sinRotation + (dy + dest.height)*cosRotation;
         }
-        
+
         rlCheckRenderBatchLimit(4);     // Make sure there is enough free space on the batch buffer
 
         rlSetTexture(texture.id);

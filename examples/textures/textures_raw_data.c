@@ -54,8 +54,8 @@ int main(void)
         .height = height,
         .format = PIXELFORMAT_UNCOMPRESSED_R8G8B8A8,
         .mipmaps = 1
-    };        
-    
+    };
+
     Texture2D checked = LoadTextureFromImage(checkedIm);
     UnloadImage(checkedIm);         // Unload CPU (RAM) image data (pixels)
     //---------------------------------------------------------------------------------------

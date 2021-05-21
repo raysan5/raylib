@@ -53,7 +53,7 @@ int main(void)
     Image imOrigin = LoadImage("resources/parrots.png");   // Loaded in CPU memory (RAM)
     ImageFormat(&imOrigin, PIXELFORMAT_UNCOMPRESSED_R8G8B8A8);         // Format image to RGBA 32bit (required for texture update) <-- ISSUE
     Texture2D texture = LoadTextureFromImage(imOrigin);    // Image converted to texture, GPU memory (VRAM)
-    
+
     Image imCopy = ImageCopy(imOrigin);
 
     int currentProcess = NONE;
@@ -72,7 +72,7 @@ int main(void)
     {
         // Update
         //----------------------------------------------------------------------------------
-        
+
         // Mouse toggle group logic
         for (int i = 0; i < NUM_PROCESSES; i++)
         {
@@ -80,7 +80,7 @@ int main(void)
             {
                 mouseHoverRec = i;
 
-                if (IsMouseButtonReleased(MOUSE_LEFT_BUTTON))
+                if (IsMouseButtonReleased(MOUSE_BUTTON_LEFT))
                 {
                     currentProcess = i;
                     textureReload = true;
@@ -89,7 +89,7 @@ int main(void)
             }
             else mouseHoverRec = -1;
         }
-        
+
         // Keyboard toggle group logic
         if (IsKeyPressed(KEY_DOWN))
         {
@@ -109,7 +109,7 @@ int main(void)
         {
             UnloadImage(imCopy);                // Unload image-copy data
             imCopy = ImageCopy(imOrigin);     // Restore image-copy from image-origin
-            
+
             // NOTE: Image processing is a costly CPU process to be done every frame,
             // If image processing is required in a frame-basis, it should be done
             // with a texture and by shaders

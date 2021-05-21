@@ -52,8 +52,8 @@ int main(void)
 
     for (int i = 0; i < MAX_FONTS; i++)
     {
-        positions[i].x = screenWidth/2.0f - MeasureTextEx(fonts[i], messages[i], fonts[i].baseSize*2.0f, spacings[i]).x/2.0f;
-        positions[i].y = 60 + fonts[i].baseSize + 45*i;
+        positions[i].x = screenWidth/2.0f - MeasureTextEx(fonts[i], messages[i], fonts[i].baseSize*2.0f, (float)spacings[i]).x/2.0f;
+        positions[i].y = 60.0f + fonts[i].baseSize + 45.0f*i;
     }
 
     // Small Y position corrections
@@ -62,7 +62,7 @@ int main(void)
     positions[7].y -= 8;
 
     Color colors[MAX_FONTS] = { MAROON, ORANGE, DARKGREEN, DARKBLUE, DARKPURPLE, LIME, GOLD, RED };
-    
+
     SetTargetFPS(60);               // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
 

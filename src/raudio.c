@@ -385,6 +385,10 @@ static Wave LoadMP3(const unsigned char *fileData, unsigned int fileSize);   // 
 
 #if defined(RAUDIO_STANDALONE)
 static bool IsFileExtension(const char *fileName, const char *ext); // Check file extension
+static const char *GetFileExtension(const char *fileName);          // Get pointer to extension for a filename string (includes the dot: .png)
+static bool TextIsEqual(const char *text1, const char *text2);      // Check if two text string are equal
+static const char *TextToLower(const char *text);                   // Get lower case version of provided string
+
 static unsigned char *LoadFileData(const char *fileName, unsigned int *bytesRead);     // Load file data as byte array (read)
 static bool SaveFileData(const char *fileName, void *data, unsigned int bytesToWrite); // Save data to file from byte array (write)
 static bool SaveFileText(const char *fileName, char *text);         // Save text data to file (write), string must be '\0' terminated
@@ -1230,8 +1234,14 @@ Music LoadMusicStream(const char *fileName)
         {
             jar_xm_set_max_loop_count(ctxXm, 0);    // Set infinite number of loops
 
+            unsigned int bits = 32;
+            if (AUDIO_DEVICE_FORMAT == ma_format_s16)
+                bits = 16;
+            else if (AUDIO_DEVICE_FORMAT == ma_format_u8)
+                bits = 8;
+
             // NOTE: Only stereo is supported for XM
-            music.stream = InitAudioStream(AUDIO.System.device.sampleRate, 16, AUDIO_DEVICE_CHANNELS);
+            music.stream = InitAudioStream(AUDIO.System.device.sampleRate, bits, AUDIO_DEVICE_CHANNELS);
             music.sampleCount = (unsigned int)jar_xm_get_remaining_samples(ctxXm)*2;    // 2 channels
             music.looping = true;   // Looping enabled by default
             jar_xm_reset(ctxXm);   // make sure we start at the beginning of the song
@@ -1398,8 +1408,14 @@ Music LoadMusicStreamFromMemory(const char *fileType, unsigned char* data, int d
             music.ctxType = MUSIC_MODULE_XM;
             jar_xm_set_max_loop_count(ctxXm, 0);    // Set infinite number of loops
 
+            unsigned int bits = 32;
+            if (AUDIO_DEVICE_FORMAT == ma_format_s16)
+                bits = 16;
+            else if (AUDIO_DEVICE_FORMAT == ma_format_u8)
+                bits = 8;
+
             // NOTE: Only stereo is supported for XM
-            music.stream = InitAudioStream(AUDIO.System.device.sampleRate, 16, 2);
+            music.stream = InitAudioStream(AUDIO.System.device.sampleRate, bits, 2);
             music.sampleCount = (unsigned int)jar_xm_get_remaining_samples(ctxXm)*2;    // 2 channels
             music.looping = true;   // Looping enabled by default
             jar_xm_reset(ctxXm);   // make sure we start at the beginning of the song
@@ -1524,7 +1540,7 @@ void PlayMusicStream(Music music)
         // For music streams, we need to make sure we maintain the frame cursor position
         // This is a hack for this section of code in UpdateMusicStream()
         // NOTE: In case window is minimized, music stream is stopped, just make sure to
-        // play again on window restore: if (IsMusicPlaying(music)) PlayMusicStream(music);
+        // play again on window restore: if (IsMusicStreamPlaying(music)) PlayMusicStream(music);
         ma_uint32 frameCursorPos = music.stream.buffer->frameCursorPos;
         PlayAudioStream(music.stream);  // WARNING: This resets the cursor position.
         music.stream.buffer->frameCursorPos = frameCursorPos;
@@ -1575,11 +1591,11 @@ void StopMusicStream(Music music)
 // Update (re-fill) music buffers if data already processed
 void UpdateMusicStream(Music music)
 {
-    if (music.stream.buffer == NULL)
-        return;
+    if (music.stream.buffer == NULL) return;
 
-    if (music.ctxType == MUSIC_MODULE_XM)
-        jar_xm_set_max_loop_count(music.ctxData, music.looping ? 0 : 1);
+#if defined(SUPPORT_FILEFORMAT_XM)
+    if (music.ctxType == MUSIC_MODULE_XM) jar_xm_set_max_loop_count(music.ctxData, music.looping ? 0 : 1);
+#endif
 
     bool streamEnding = false;
 
@@ -1639,8 +1655,24 @@ void UpdateMusicStream(Music music)
         #if defined(SUPPORT_FILEFORMAT_XM)
             case MUSIC_MODULE_XM:
             {
-                // NOTE: Internally this function considers 2 channels generation, so samplesCount/2
-                jar_xm_generate_samples_16bit((jar_xm_context_t *)music.ctxData, (short *)pcm, samplesCount/2);
+                switch (AUDIO_DEVICE_FORMAT)
+                {
+                case ma_format_f32:
+                    // NOTE: Internally this function considers 2 channels generation, so samplesCount/2
+                    jar_xm_generate_samples((jar_xm_context_t*)music.ctxData, (float*)pcm, samplesCount / 2);
+                    break;
+
+                case ma_format_s16:
+                    // NOTE: Internally this function considers 2 channels generation, so samplesCount/2
+                    jar_xm_generate_samples_16bit((jar_xm_context_t*)music.ctxData, (short*)pcm, samplesCount / 2);
+                    break;
+
+                case ma_format_u8:
+                    // NOTE: Internally this function considers 2 channels generation, so samplesCount/2
+                    jar_xm_generate_samples_8bit((jar_xm_context_t*)music.ctxData, (char*)pcm, samplesCount / 2);
+                    break;
+                }
+
             } break;
         #endif
         #if defined(SUPPORT_FILEFORMAT_MOD)
@@ -1682,12 +1714,12 @@ void UpdateMusicStream(Music music)
     {
         // NOTE: In case window is minimized, music stream is stopped,
         // just make sure to play again on window restore
-        if (IsMusicPlaying(music)) PlayMusicStream(music);
+        if (IsMusicStreamPlaying(music)) PlayMusicStream(music);
     }
 }
 
 // Check if any music is playing
-bool IsMusicPlaying(Music music)
+bool IsMusicStreamPlaying(Music music)
 {
     return IsAudioStreamPlaying(music.stream);
 }
@@ -2297,6 +2329,48 @@ static bool IsFileExtension(const char *fileName, const char *ext)
     }
 
     return result;
+}
+
+// Get pointer to extension for a filename string (includes the dot: .png)
+static const char *GetFileExtension(const char *fileName)
+{
+    const char *dot = strrchr(fileName, '.');
+
+    if (!dot || dot == fileName) return NULL;
+
+    return dot;
+}
+
+// Check if two text string are equal
+// REQUIRES: strcmp()
+static bool TextIsEqual(const char *text1, const char *text2)
+{
+    bool result = false;
+
+    if (strcmp(text1, text2) == 0) result = true;
+
+    return result;
+}
+
+// Get lower case version of provided string
+// REQUIRES: tolower()
+static const char *TextToLower(const char *text)
+{
+    #define MAX_TEXT_BUFFER_LENGTH      1024
+    
+    static char buffer[MAX_TEXT_BUFFER_LENGTH] = { 0 };
+
+    for (int i = 0; i < MAX_TEXT_BUFFER_LENGTH; i++)
+    {
+        if (text[i] != '\0')
+        {
+            buffer[i] = (char)tolower(text[i]);
+            //if ((text[i] >= 'A') && (text[i] <= 'Z')) buffer[i] = text[i] + 32;
+        }
+        else { buffer[i] = '\0'; break; }
+    }
+
+    return buffer;
 }
 
 // Load data from file into a buffer

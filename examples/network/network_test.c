@@ -85,7 +85,7 @@ void test_resolve_host()
     const char *address = "localhost";
     const char *port = "80";
     AddressInformation *addr = LoadAddressList(3);
-    int count = ResolveHost(address, port, ADDRESS_TYPE_ANY, 0, addr); 
+    int count = ResolveHost(address, port, ADDRESS_TYPE_ANY, 0, addr);
 
     assert(GetAddressFamily(addr[0]) == ADDRESS_TYPE_IPV6);
     assert(GetAddressFamily(addr[1]) == ADDRESS_TYPE_IPV4);
@@ -122,9 +122,9 @@ int main(void)
     const int screenHeight = 450;
 
     InitWindow(screenWidth, screenHeight, "raylib [network] example - network test");
-    
+
     InitNetworkDevice();    // Init network communications
-    
+
     // Run some tests
     test_resolve_host();
     //test_socket_create();
@@ -146,7 +146,7 @@ int main(void)
         BeginDrawing();
 
             ClearBackground(RAYWHITE);
-            
+
             // TODO: Draw relevant connection info
 
         EndDrawing();
@@ -156,7 +156,7 @@ int main(void)
     // De-Initialization
     //--------------------------------------------------------------------------------------
     CloseNetworkDevice();   // Close network communication
-    
+
     CloseWindow();          // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
 

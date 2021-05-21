@@ -40,7 +40,7 @@ int main(void)
     tower.materials[0].maps[MATERIAL_MAP_DIFFUSE].texture = texture;                 // Set model diffuse texture
 
     Vector3 towerPos = { 0.0f, 0.0f, 0.0f };                    // Set model position
-    BoundingBox towerBBox = MeshBoundingBox(tower.meshes[0]);   // Get mesh bounding box
+    BoundingBox towerBBox = GetMeshBoundingBox(tower.meshes[0]);   // Get mesh bounding box
     bool hitMeshBBox = false;
     bool hitTriangle = false;
 

@@ -69,9 +69,9 @@ int main(void)
     modelB.materials[0].maps[MATERIAL_MAP_DIFFUSE].texture = texture;
     modelC.materials[0].maps[MATERIAL_MAP_DIFFUSE].texture = texture;
 
-    Shader shader = LoadShader(TextFormat("resources/shaders/glsl%i/base_lighting.vs", GLSL_VERSION), 
+    Shader shader = LoadShader(TextFormat("resources/shaders/glsl%i/base_lighting.vs", GLSL_VERSION),
                                TextFormat("resources/shaders/glsl%i/lighting.fs", GLSL_VERSION));
-    
+
     // Get some shader loactions
     shader.locs[SHADER_LOC_MATRIX_MODEL] = GetShaderLocation(shader, "matModel");
     shader.locs[SHADER_LOC_VECTOR_VIEW] = GetShaderLocation(shader, "viewPos");
@@ -79,7 +79,7 @@ int main(void)
     // ambient light level
     int ambientLoc = GetShaderLocation(shader, "ambient");
     SetShaderValue(shader, ambientLoc, (float[4]){ 0.2f, 0.2f, 0.2f, 1.0f }, SHADER_UNIFORM_VEC4);
-    
+
     float angle = 6.282f;
 
     // All models use the same shader
@@ -121,7 +121,7 @@ int main(void)
         lights[2].position.z = sinf(angle*0.2f)*4.0f;
         lights[3].position.y = cosf(-angle*0.35f)*4.0f;
         lights[3].position.z = sinf(-angle*0.35f)*4.0f;
-        
+
         UpdateLightValues(shader, lights[0]);
         UpdateLightValues(shader, lights[1]);
         UpdateLightValues(shader, lights[2]);
@@ -146,8 +146,8 @@ int main(void)
 
                 // Draw the three models
                 DrawModel(modelA, Vector3Zero(), 1.0f, WHITE);
-                DrawModel(modelB, (Vector3){-1.6,0,0}, 1.0f, WHITE);
-                DrawModel(modelC, (Vector3){ 1.6,0,0}, 1.0f, WHITE);
+                DrawModel(modelB, (Vector3){-1.6f,0.0f,0.0f}, 1.0f, WHITE);
+                DrawModel(modelC, (Vector3){ 1.6f,0.0f,0.0f}, 1.0f, WHITE);
 
                 // Draw markers to show where the lights are
                 if (lights[0].enabled) { DrawSphereEx(lights[0].position, 0.2f, 8, 8, WHITE); }
@@ -160,7 +160,7 @@ int main(void)
             EndMode3D();
 
             DrawFPS(10, 10);
-            
+
             DrawText("Use keys RGBW to toggle lights", 10, 30, 20, DARKGRAY);
 
         EndDrawing();
@@ -172,7 +172,7 @@ int main(void)
     UnloadModel(modelA);        // Unload the modelA
     UnloadModel(modelB);        // Unload the modelB
     UnloadModel(modelC);        // Unload the modelC
-    
+
     UnloadTexture(texture);     // Unload the texture
     UnloadShader(shader);       // Unload shader
 

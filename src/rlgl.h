@@ -18,7 +18,7 @@
 *   #define GRAPHICS_API_OPENGL_ES2
 *       Use selected OpenGL graphics backend, should be supported by platform
 *       Those preprocessor defines are only used on rlgl module, if OpenGL version is
-*       required by any other module, use rlGetVersion() tocheck it
+*       required by any other module, use rlGetVersion() to check it
 *
 *   #define RLGL_IMPLEMENTATION
 *       Generates the implementation of the library into the included file.
@@ -28,6 +28,8 @@
 *   #define RLGL_STANDALONE
 *       Use rlgl as standalone library (no raylib dependency)
 *
+*   #define SUPPORT_GL_DETAILS_INFO
+*       Show OpenGL extensions and capabilities detailed logs on init
 *
 *   DEPENDENCIES:
 *       raymath     - 3D math functionality (Vector3, Matrix, Quaternion)
@@ -180,10 +182,10 @@
 #endif
 
 // Texture parameters (equivalent to OpenGL defines)
-#define RL_TEXTURE_WRAP_S               0x2802      // GL_TEXTURE_WRAP_S
-#define RL_TEXTURE_WRAP_T               0x2803      // GL_TEXTURE_WRAP_T
-#define RL_TEXTURE_MAG_FILTER           0x2800      // GL_TEXTURE_MAG_FILTER
-#define RL_TEXTURE_MIN_FILTER           0x2801      // GL_TEXTURE_MIN_FILTER
+#define RL_TEXTURE_WRAP_S                       0x2802      // GL_TEXTURE_WRAP_S
+#define RL_TEXTURE_WRAP_T                       0x2803      // GL_TEXTURE_WRAP_T
+#define RL_TEXTURE_MAG_FILTER                   0x2800      // GL_TEXTURE_MAG_FILTER
+#define RL_TEXTURE_MIN_FILTER                   0x2801      // GL_TEXTURE_MIN_FILTER
 
 #define RL_TEXTURE_FILTER_NEAREST               0x2600      // GL_NEAREST
 #define RL_TEXTURE_FILTER_LINEAR                0x2601      // GL_LINEAR
@@ -199,18 +201,18 @@
 #define RL_TEXTURE_WRAP_MIRROR_CLAMP            0x8742      // GL_MIRROR_CLAMP_EXT
 
 // Matrix modes (equivalent to OpenGL)
-#define RL_MODELVIEW                    0x1700      // GL_MODELVIEW
-#define RL_PROJECTION                   0x1701      // GL_PROJECTION
-#define RL_TEXTURE                      0x1702      // GL_TEXTURE
+#define RL_MODELVIEW                            0x1700      // GL_MODELVIEW
+#define RL_PROJECTION                           0x1701      // GL_PROJECTION
+#define RL_TEXTURE                              0x1702      // GL_TEXTURE
 
 // Primitive assembly draw modes
-#define RL_LINES                        0x0001      // GL_LINES
-#define RL_TRIANGLES                    0x0004      // GL_TRIANGLES
-#define RL_QUADS                        0x0007      // GL_QUADS
+#define RL_LINES                                0x0001      // GL_LINES
+#define RL_TRIANGLES                            0x0004      // GL_TRIANGLES
+#define RL_QUADS                                0x0007      // GL_QUADS
 
 // GL equivalent data types
-#define RL_UNSIGNED_BYTE                0x1401      // GL_UNSIGNED_BYTE
-#define RL_FLOAT                        0x1406      // GL_FLOAT
+#define RL_UNSIGNED_BYTE                        0x1401      // GL_UNSIGNED_BYTE
+#define RL_FLOAT                                0x1406      // GL_FLOAT
 
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
@@ -542,7 +544,7 @@ RLAPI void rlSetBlendFactors(int glSrcFactor, int glDstFactor, int glEquation); 
 // rlgl initialization functions
 RLAPI void rlglInit(int width, int height);           // Initialize rlgl (buffers, shaders, textures, states)
 RLAPI void rlglClose(void);                           // De-inititialize rlgl (buffers, shaders, textures)
-RLAPI void rlLoadExtensions(void* loader);            // Load OpenGL extensions (loader function pointer required)
+RLAPI void rlLoadExtensions(void *loader);            // Load OpenGL extensions (loader function required)
 RLAPI int rlGetVersion(void);                         // Returns current OpenGL version
 RLAPI int rlGetFramebufferWidth(void);                // Get default framebuffer width
 RLAPI int rlGetFramebufferHeight(void);               // Get default framebuffer height
@@ -687,7 +689,7 @@ RLAPI void rlLoadDrawQuad(void);     // Load and draw a quad
 
 #if defined(GRAPHICS_API_OPENGL_ES2)
     #define GL_GLEXT_PROTOTYPES
-    #include <EGL/egl.h>                // EGL library
+    //#include <EGL/egl.h>              // EGL library -> not required, platform layer
     #include <GLES2/gl2.h>              // OpenGL ES 2.0 library
     #include <GLES2/gl2ext.h>           // OpenGL ES 2.0 extensions library
 
@@ -825,23 +827,26 @@ typedef struct rlglData {
     } State;            // Renderer state
     struct {
         bool vao;                           // VAO support (OpenGL ES2 could not support VAO extension) (GL_ARB_vertex_array_object)
-        bool instancing;                    // Instancing supported
+        bool instancing;                    // Instancing supported (GL_ANGLE_instanced_arrays, GL_EXT_draw_instanced + GL_EXT_instanced_arrays)
         bool texNPOT;                       // NPOT textures full support (GL_ARB_texture_non_power_of_two, GL_OES_texture_npot)
-        bool texDepth;                      // Depth textures supported (GL_ARB_depth_texture, GL_WEBGL_depth_texture)
+        bool texDepth;                      // Depth textures supported (GL_ARB_depth_texture, GL_WEBGL_depth_texture, GL_OES_depth_texture)
         bool texFloat32;                    // float textures support (32 bit per channel) (GL_OES_texture_float)
-        bool texCompDXT;                    // DDS texture compression support (GL_EXT_texture_compression_s3tc)
-        bool texCompETC1;                   // ETC1 texture compression support
-        bool texCompETC2;                   // ETC2/EAC texture compression support
-        bool texCompPVRT;                   // PVR texture compression support
-        bool texCompASTC;                   // ASTC texture compression support
-        bool texMirrorClamp;                // Clamp mirror wrap mode supported
-        bool texAnisoFilter;                // Anisotropic texture filtering support
+        bool texCompDXT;                    // DDS texture compression support (GL_EXT_texture_compression_s3tc, GL_WEBGL_compressed_texture_s3tc, GL_WEBKIT_WEBGL_compressed_texture_s3tc)
+        bool texCompETC1;                   // ETC1 texture compression support (GL_OES_compressed_ETC1_RGB8_texture, GL_WEBGL_compressed_texture_etc1)
+        bool texCompETC2;                   // ETC2/EAC texture compression support (GL_ARB_ES3_compatibility)
+        bool texCompPVRT;                   // PVR texture compression support (GL_IMG_texture_compression_pvrtc)
+        bool texCompASTC;                   // ASTC texture compression support (GL_KHR_texture_compression_astc_hdr, GL_KHR_texture_compression_astc_ldr)
+        bool texMirrorClamp;                // Clamp mirror wrap mode supported (GL_EXT_texture_mirror_clamp)
+        bool texAnisoFilter;                // Anisotropic texture filtering support (GL_EXT_texture_filter_anisotropic)
 
-        float maxAnisotropicLevel;          // Maximum anisotropy level supported (minimum is 2.0f)
+        float maxAnisotropyLevel;           // Maximum anisotropy level supported (minimum is 2.0f)
         int maxDepthBits;                   // Maximum bits for depth component
 
     } ExtSupported;     // Extensions supported flags
 } rlglData;
+
+typedef void *(*rlglLoadProc)(const char *name);   // OpenGL extension functions loader signature (same as GLADloadproc)
+
 #endif  // GRAPHICS_API_OPENGL_33 || GRAPHICS_API_OPENGL_ES2
 
 //----------------------------------------------------------------------------------
@@ -869,6 +874,9 @@ static PFNGLVERTEXATTRIBDIVISOREXTPROC glVertexAttribDivisor = NULL;
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
 static void rlLoadShaderDefault(void);      // Load default shader (RLGL.State.defaultShader)
 static void rlUnloadShaderDefault(void);    // Unload default shader (RLGL.State.defaultShader)
+#if defined(SUPPORT_GL_DETAILS_INFO)
+static char *rlGetCompressedFormatName(int format); // Get compressed format official GL identifier name
+#endif  // SUPPORT_GL_DETAILS_INFO
 #endif  // GRAPHICS_API_OPENGL_33 || GRAPHICS_API_OPENGL_ES2
 #if defined(GRAPHICS_API_OPENGL_11)
 static int rlGenerateMipmapsData(unsigned char *data, int baseWidth, int baseHeight);   // Generate mipmaps data on CPU side
@@ -1346,10 +1354,10 @@ void rlTextureParameters(unsigned int id, int param, int value)
         case RL_TEXTURE_FILTER_ANISOTROPIC:
         {
 #if !defined(GRAPHICS_API_OPENGL_11)
-            if (value <= RLGL.ExtSupported.maxAnisotropicLevel) glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, (float)value);
-            else if (RLGL.ExtSupported.maxAnisotropicLevel > 0.0f)
+            if (value <= RLGL.ExtSupported.maxAnisotropyLevel) glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, (float)value);
+            else if (RLGL.ExtSupported.maxAnisotropyLevel > 0.0f)
             {
-                TRACELOG(LOG_WARNING, "GL: Maximum anisotropic filter level supported is %iX", id, RLGL.ExtSupported.maxAnisotropicLevel);
+                TRACELOG(LOG_WARNING, "GL: Maximum anisotropic filter level supported is %iX", id, RLGL.ExtSupported.maxAnisotropyLevel);
                 glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, (float)value);
             }
             else TRACELOG(LOG_WARNING, "GL: Anisotropic filtering not supported");
@@ -1454,7 +1462,7 @@ float rlGetLineWidth(void)
 // Enable line aliasing
 void rlEnableSmoothLines(void)
 {
-#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_21) || defined(GRAPHICS_API_OPENGL_11)
+#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_11)
     glEnable(GL_LINE_SMOOTH);
 #endif
 }
@@ -1462,7 +1470,7 @@ void rlEnableSmoothLines(void)
 // Disable line aliasing
 void rlDisableSmoothLines(void)
 {
-#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_21) || defined(GRAPHICS_API_OPENGL_11)
+#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_11)
     glDisable(GL_LINE_SMOOTH);
 #endif
 }
@@ -1515,7 +1523,7 @@ void rlClearScreenBuffers(void)
 // Check and log OpenGL error codes
 void rlCheckErrors()
 {
-#if defined(GRAPHICS_API_OPENGL_21) || defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
+#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     int check = 1;
     while (check)
     {
@@ -1577,203 +1585,7 @@ void rlSetBlendFactors(int glSrcFactor, int glDstFactor, int glEquation)
 // Initialize rlgl: OpenGL extensions, default buffers/shaders/textures, OpenGL states
 void rlglInit(int width, int height)
 {
-    // Check OpenGL information and capabilities
-    //------------------------------------------------------------------------------
-    // Print current OpenGL and GLSL version
-    TRACELOG(LOG_INFO, "GL: OpenGL device information:");
-    TRACELOG(LOG_INFO, "    > Vendor:   %s", glGetString(GL_VENDOR));
-    TRACELOG(LOG_INFO, "    > Renderer: %s", glGetString(GL_RENDERER));
-    TRACELOG(LOG_INFO, "    > Version:  %s", glGetString(GL_VERSION));
-    TRACELOG(LOG_INFO, "    > GLSL:     %s", glGetString(GL_SHADING_LANGUAGE_VERSION));
-
-    // NOTE: We can get a bunch of extra information about GPU capabilities (glGet*)
-    //int maxTexSize;
-    //glGetIntegerv(GL_MAX_TEXTURE_SIZE, &maxTexSize);
-    //TRACELOG(LOG_INFO, "GL: Maximum texture size: %i", maxTexSize);
-
-    //GL_MAX_TEXTURE_IMAGE_UNITS
-    //GL_MAX_VIEWPORT_DIMS
-
-    //int numAuxBuffers;
-    //glGetIntegerv(GL_AUX_BUFFERS, &numAuxBuffers);
-    //TRACELOG(LOG_INFO, "GL: Number of aixiliar buffers: %i", numAuxBuffers);
-
-    //GLint numComp = 0;
-    //GLint format[32] = { 0 };
-    //glGetIntegerv(GL_NUM_COMPRESSED_TEXTURE_FORMATS, &numComp);
-    //glGetIntegerv(GL_COMPRESSED_TEXTURE_FORMATS, format);
-    //for (int i = 0; i < numComp; i++) TRACELOG(LOG_INFO, "GL: Supported compressed format: 0x%x", format[i]);
-
-    // NOTE: We don't need that much data on screen... right now...
-
-    // TODO: Automatize extensions loading using rlLoadExtensions() and GLAD
-    // Actually, when rlglInit() is called in InitWindow() in core.c,
-    // OpenGL context has already been created and required extensions loaded
-
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
-    // Get supported extensions list
-    GLint numExt = 0;
-
-#if defined(GRAPHICS_API_OPENGL_33) && !defined(GRAPHICS_API_OPENGL_21)
-    // OpenGL 3.3 extensions supported by default (core)
-    RLGL.ExtSupported.vao = true;
-    RLGL.ExtSupported.instancing = true;
-    RLGL.ExtSupported.texNPOT = true;
-    RLGL.ExtSupported.texFloat32 = true;
-    RLGL.ExtSupported.texDepth = true;
-
-    // We get a list of available extensions and we check for some of them (compressed textures)
-    // NOTE: We don't need to check again supported extensions but we do (GLAD already dealt with that)
-    glGetIntegerv(GL_NUM_EXTENSIONS, &numExt);
-
-    // Allocate numExt strings pointers
-    char **extList = RL_MALLOC(sizeof(char *)*numExt);
-
-    // Get extensions strings
-    for (int i = 0; i < numExt; i++) extList[i] = (char *)glGetStringi(GL_EXTENSIONS, i);
-
-#endif
-#if defined(GRAPHICS_API_OPENGL_ES2) || defined(GRAPHICS_API_OPENGL_21)
-    // Allocate 512 strings pointers (2 KB)
-    const char **extList = RL_MALLOC(512*sizeof(const char *));
-
-    const char *extensions = (const char *)glGetString(GL_EXTENSIONS);  // One big const string
-
-    // NOTE: We have to duplicate string because glGetString() returns a const string
-    int len = strlen(extensions) + 1;
-    char *extensionsDup = (char *)RL_CALLOC(len, sizeof(char));
-    strcpy(extensionsDup, extensions);
-
-    extList[numExt] = extensionsDup;
-
-    for (int i = 0; i < len; i++)
-    {
-        if (extensionsDup[i] == ' ')
-        {
-            extensionsDup[i] = '\0';
-
-            numExt++;
-            extList[numExt] = &extensionsDup[i + 1];
-        }
-    }
-
-    // NOTE: Duplicated string (extensionsDup) must be deallocated
-#endif
-
-    TRACELOG(LOG_INFO, "GL: Supported extensions count: %i", numExt);
-
-    // Show supported extensions
-    //for (int i = 0; i < numExt; i++)  TRACELOG(LOG_INFO, "Supported extension: %s", extList[i]);
-
-    // Check required extensions
-    for (int i = 0; i < numExt; i++)
-    {
-#if defined(GRAPHICS_API_OPENGL_ES2)
-        // Check VAO support
-        // NOTE: Only check on OpenGL ES, OpenGL 3.3 has VAO support as core feature
-        if (strcmp(extList[i], (const char *)"GL_OES_vertex_array_object") == 0)
-        {
-            // The extension is supported by our hardware and driver, try to get related functions pointers
-            // NOTE: emscripten does not support VAOs natively, it uses emulation and it reduces overall performance...
-            glGenVertexArrays = (PFNGLGENVERTEXARRAYSOESPROC)eglGetProcAddress("glGenVertexArraysOES");
-            glBindVertexArray = (PFNGLBINDVERTEXARRAYOESPROC)eglGetProcAddress("glBindVertexArrayOES");
-            glDeleteVertexArrays = (PFNGLDELETEVERTEXARRAYSOESPROC)eglGetProcAddress("glDeleteVertexArraysOES");
-            //glIsVertexArray = (PFNGLISVERTEXARRAYOESPROC)eglGetProcAddress("glIsVertexArrayOES");     // NOTE: Fails in WebGL, omitted
-
-            if ((glGenVertexArrays != NULL) && (glBindVertexArray != NULL) && (glDeleteVertexArrays != NULL)) RLGL.ExtSupported.vao = true;
-        }
-
-        // Check instanced rendering support
-        if (strcmp(extList[i], (const char *)"GL_ANGLE_instanced_arrays") == 0)         // Web ANGLE
-        {
-            glDrawArraysInstanced = (PFNGLDRAWARRAYSINSTANCEDEXTPROC)eglGetProcAddress("glDrawArraysInstancedANGLE");
-            glDrawElementsInstanced = (PFNGLDRAWELEMENTSINSTANCEDEXTPROC)eglGetProcAddress("glDrawElementsInstancedANGLE");
-            glVertexAttribDivisor = (PFNGLVERTEXATTRIBDIVISOREXTPROC)eglGetProcAddress("glVertexAttribDivisorANGLE");
-
-            if ((glDrawArraysInstanced != NULL) && (glDrawElementsInstanced != NULL) && (glVertexAttribDivisor != NULL)) RLGL.ExtSupported.instancing = true;
-        }
-        else
-        {
-            if ((strcmp(extList[i], (const char *)"GL_EXT_draw_instanced") == 0) &&     // Standard EXT
-                (strcmp(extList[i], (const char *)"GL_EXT_instanced_arrays") == 0))
-            {
-                glDrawArraysInstanced = (PFNGLDRAWARRAYSINSTANCEDEXTPROC)eglGetProcAddress("glDrawArraysInstancedEXT");
-                glDrawElementsInstanced = (PFNGLDRAWELEMENTSINSTANCEDEXTPROC)eglGetProcAddress("glDrawElementsInstancedEXT");
-                glVertexAttribDivisor = (PFNGLVERTEXATTRIBDIVISOREXTPROC)eglGetProcAddress("glVertexAttribDivisorEXT");
-
-                if ((glDrawArraysInstanced != NULL) && (glDrawElementsInstanced != NULL) && (glVertexAttribDivisor != NULL)) RLGL.ExtSupported.instancing = true;
-            }
-        }
-
-        // Check NPOT textures support
-        // NOTE: Only check on OpenGL ES, OpenGL 3.3 has NPOT textures full support as core feature
-        if (strcmp(extList[i], (const char *)"GL_OES_texture_npot") == 0) RLGL.ExtSupported.texNPOT = true;
-
-        // Check texture float support
-        if (strcmp(extList[i], (const char *)"GL_OES_texture_float") == 0) RLGL.ExtSupported.texFloat32 = true;
-
-        // Check depth texture support
-        if ((strcmp(extList[i], (const char *)"GL_OES_depth_texture") == 0) ||
-            (strcmp(extList[i], (const char *)"GL_WEBGL_depth_texture") == 0)) RLGL.ExtSupported.texDepth = true;
-
-        if (strcmp(extList[i], (const char *)"GL_OES_depth24") == 0) RLGL.ExtSupported.maxDepthBits = 24;
-        if (strcmp(extList[i], (const char *)"GL_OES_depth32") == 0) RLGL.ExtSupported.maxDepthBits = 32;
-#endif
-        // DDS texture compression support
-        if ((strcmp(extList[i], (const char *)"GL_EXT_texture_compression_s3tc") == 0) ||
-            (strcmp(extList[i], (const char *)"GL_WEBGL_compressed_texture_s3tc") == 0) ||
-            (strcmp(extList[i], (const char *)"GL_WEBKIT_WEBGL_compressed_texture_s3tc") == 0)) RLGL.ExtSupported.texCompDXT = true;
-
-        // ETC1 texture compression support
-        if ((strcmp(extList[i], (const char *)"GL_OES_compressed_ETC1_RGB8_texture") == 0) ||
-            (strcmp(extList[i], (const char *)"GL_WEBGL_compressed_texture_etc1") == 0)) RLGL.ExtSupported.texCompETC1 = true;
-
-        // ETC2/EAC texture compression support
-        if (strcmp(extList[i], (const char *)"GL_ARB_ES3_compatibility") == 0) RLGL.ExtSupported.texCompETC2 = true;
-
-        // PVR texture compression support
-        if (strcmp(extList[i], (const char *)"GL_IMG_texture_compression_pvrtc") == 0) RLGL.ExtSupported.texCompPVRT = true;
-
-        // ASTC texture compression support
-        if (strcmp(extList[i], (const char *)"GL_KHR_texture_compression_astc_hdr") == 0) RLGL.ExtSupported.texCompASTC = true;
-
-        // Anisotropic texture filter support
-        if (strcmp(extList[i], (const char *)"GL_EXT_texture_filter_anisotropic") == 0)
-        {
-            RLGL.ExtSupported.texAnisoFilter = true;
-            glGetFloatv(0x84FF, &RLGL.ExtSupported.maxAnisotropicLevel);   // GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT
-        }
-
-        // Clamp mirror wrap mode supported
-        if (strcmp(extList[i], (const char *)"GL_EXT_texture_mirror_clamp") == 0) RLGL.ExtSupported.texMirrorClamp = true;
-    }
-
-    // Free extensions pointers
-    RL_FREE(extList);
-
-#if defined(GRAPHICS_API_OPENGL_ES2) || defined(GRAPHICS_API_OPENGL_21)
-    RL_FREE(extensionsDup);    // Duplicated string must be deallocated
-#endif
-
-#if defined(GRAPHICS_API_OPENGL_ES2)
-    if (RLGL.ExtSupported.vao) TRACELOG(LOG_INFO, "GL: VAO extension detected, VAO functions initialized successfully");
-    else TRACELOG(LOG_WARNING, "GL: VAO extension not found, VAO not supported");
-
-    if (RLGL.ExtSupported.texNPOT) TRACELOG(LOG_INFO, "GL: NPOT textures extension detected, full NPOT textures supported");
-    else TRACELOG(LOG_WARNING, "GL: NPOT textures extension not found, limited NPOT support (no-mipmaps, no-repeat)");
-#endif
-
-    if (RLGL.ExtSupported.texCompDXT) TRACELOG(LOG_INFO, "GL: DXT compressed textures supported");
-    if (RLGL.ExtSupported.texCompETC1) TRACELOG(LOG_INFO, "GL: ETC1 compressed textures supported");
-    if (RLGL.ExtSupported.texCompETC2) TRACELOG(LOG_INFO, "GL: ETC2/EAC compressed textures supported");
-    if (RLGL.ExtSupported.texCompPVRT) TRACELOG(LOG_INFO, "GL: PVRT compressed textures supported");
-    if (RLGL.ExtSupported.texCompASTC) TRACELOG(LOG_INFO, "GL: ASTC compressed textures supported");
-
-    if (RLGL.ExtSupported.texAnisoFilter) TRACELOG(LOG_INFO, "GL: Anisotropic textures filtering supported (max: %.0fX)", RLGL.ExtSupported.maxAnisotropicLevel);
-    if (RLGL.ExtSupported.texMirrorClamp) TRACELOG(LOG_INFO, "GL: Mirror clamp wrap texture mode supported");
-
-    // Initialize buffers, default shaders and default textures
-    //----------------------------------------------------------
     // Init default white texture
     unsigned char pixels[4] = { 255, 255, 255, 255 };   // 1 pixel RGBA (4 bytes)
     RLGL.State.defaultTextureId = rlLoadTexture(pixels, 1, 1, PIXELFORMAT_UNCOMPRESSED_R8G8B8A8, 1);
@@ -1797,8 +1609,7 @@ void rlglInit(int width, int height)
     RLGL.State.projection = MatrixIdentity();
     RLGL.State.modelview = MatrixIdentity();
     RLGL.State.currentMatrix = &RLGL.State.modelview;
-
-#endif      // GRAPHICS_API_OPENGL_33 || GRAPHICS_API_OPENGL_ES2
+#endif  // GRAPHICS_API_OPENGL_33 || GRAPHICS_API_OPENGL_ES2
 
     // Initialize OpenGL default states
     //----------------------------------------------------------
@@ -1832,7 +1643,8 @@ void rlglInit(int width, int height)
     RLGL.State.framebufferWidth = width;
     RLGL.State.framebufferHeight = height;
 
-    TRACELOG(LOG_INFO, "RLGL: Default state initialized successfully");
+    TRACELOG(LOG_INFO, "RLGL: Default OpenGL state initialized successfully");
+    //----------------------------------------------------------
 #endif
 
     // Init state: Color/Depth buffers clear
@@ -1848,33 +1660,235 @@ void rlglClose(void)
     rlUnloadRenderBatch(RLGL.defaultBatch);
 
     rlUnloadShaderDefault();          // Unload default shader
-    glDeleteTextures(1, &RLGL.State.defaultTextureId); // Unload default texture
 
-    TRACELOG(LOG_INFO, "TEXTURE: [ID %i] Unloaded default texture data from VRAM (GPU)", RLGL.State.defaultTextureId);
+    glDeleteTextures(1, &RLGL.State.defaultTextureId); // Unload default texture
+    TRACELOG(LOG_INFO, "TEXTURE: [ID %i] Default texture unloaded successfully", RLGL.State.defaultTextureId);
 #endif
 }
 
 // Load OpenGL extensions
-// NOTE: External loader function could be passed as a pointer
+// NOTE: External loader function must be provided
 void rlLoadExtensions(void *loader)
 {
-#if defined(GRAPHICS_API_OPENGL_33)
+#if defined(GRAPHICS_API_OPENGL_33)     // Also defined for GRAPHICS_API_OPENGL_21
     // NOTE: glad is generated and contains only required OpenGL 3.3 Core extensions (and lower versions)
     #if !defined(__APPLE__)
         if (!gladLoadGLLoader((GLADloadproc)loader)) TRACELOG(LOG_WARNING, "GLAD: Cannot load OpenGL extensions");
         else TRACELOG(LOG_INFO, "GLAD: OpenGL extensions loaded successfully");
-
-        #if defined(GRAPHICS_API_OPENGL_21)
-        if (GLAD_GL_VERSION_2_1) TRACELOG(LOG_INFO, "GL: OpenGL 2.1 profile supported");
-        #else
-        if (GLAD_GL_VERSION_3_3) TRACELOG(LOG_INFO, "GL: OpenGL 3.3 Core profile supported");
-        else TRACELOG(LOG_ERROR, "GL: OpenGL 3.3 Core profile not supported");
-        #endif
     #endif
 
-    // With GLAD, we can check if an extension is supported using the GLAD_GL_xxx booleans
-    //if (GLAD_GL_ARB_vertex_array_object) // Use GL_ARB_vertex_array_object
+    // Get number of supported extensions
+    GLint numExt = 0;
+    glGetIntegerv(GL_NUM_EXTENSIONS, &numExt);
+    TRACELOG(LOG_INFO, "GL: Supported extensions count: %i", numExt);
+
+#if defined(SUPPORT_GL_DETAILS_INFO)
+    // Get supported extensions list
+    // WARNING: glGetStringi() not available on OpenGL 2.1
+    char **extList = RL_MALLOC(sizeof(char *)*numExt);
+    TRACELOG(LOG_INFO, "GL: OpenGL extensions:");
+    for (int i = 0; i < numExt; i++)
+    {
+        extList[i] = (char *)glGetStringi(GL_EXTENSIONS, i);
+        TRACELOG(LOG_INFO, "    %s", extList[i]);
+    }
+    RL_FREE(extList);       // Free extensions pointers
 #endif
+
+    // Register supported extensions flags
+    // OpenGL 3.3 extensions supported by default (core)
+    RLGL.ExtSupported.vao = true;
+    RLGL.ExtSupported.instancing = true;
+    RLGL.ExtSupported.texNPOT = true;
+    RLGL.ExtSupported.texFloat32 = true;
+    RLGL.ExtSupported.texDepth = true;
+    RLGL.ExtSupported.maxDepthBits = 32;
+    RLGL.ExtSupported.texAnisoFilter = true;
+    RLGL.ExtSupported.texMirrorClamp = true;
+    #if !defined(__APPLE__)
+    // NOTE: With GLAD, we can check if an extension is supported using the GLAD_GL_xxx booleans
+    if (GLAD_GL_EXT_texture_compression_s3tc) RLGL.ExtSupported.texCompDXT = true;  // Texture compression: DXT
+    if (GLAD_GL_ARB_ES3_compatibility) RLGL.ExtSupported.texCompETC2 = true;        // Texture compression: ETC2/EAC
+    #endif
+#endif  // GRAPHICS_API_OPENGL_33
+
+#if defined(GRAPHICS_API_OPENGL_ES2)
+    // Get supported extensions list
+    GLint numExt = 0;
+    const char **extList = RL_MALLOC(512*sizeof(const char *)); // Allocate 512 strings pointers (2 KB)
+    const char *extensions = (const char *)glGetString(GL_EXTENSIONS);  // One big const string
+
+    // NOTE: We have to duplicate string because glGetString() returns a const string
+    int len = strlen(extensions) + 1;
+    char *extensionsDup = (char *)RL_CALLOC(len, sizeof(char));
+    strcpy(extensionsDup, extensions);
+    extList[numExt] = extensionsDup;
+
+    for (int i = 0; i < len; i++)
+    {
+        if (extensionsDup[i] == ' ')
+        {
+            extensionsDup[i] = '\0';
+            numExt++;
+            extList[numExt] = &extensionsDup[i + 1];
+        }
+    }
+
+    TRACELOG(LOG_INFO, "GL: Supported extensions count: %i", numExt);
+
+#if defined(SUPPORT_GL_DETAILS_INFO)
+    TRACELOG(LOG_INFO, "GL: OpenGL extensions:");
+    for (int i = 0; i < numExt; i++) TRACELOG(LOG_INFO, "    %s", extList[i]);
+#endif
+
+    // Check required extensions
+    for (int i = 0; i < numExt; i++)
+    {
+        // Check VAO support
+        // NOTE: Only check on OpenGL ES, OpenGL 3.3 has VAO support as core feature
+        if (strcmp(extList[i], (const char *)"GL_OES_vertex_array_object") == 0)
+        {
+            // The extension is supported by our hardware and driver, try to get related functions pointers
+            // NOTE: emscripten does not support VAOs natively, it uses emulation and it reduces overall performance...
+            glGenVertexArrays = (PFNGLGENVERTEXARRAYSOESPROC)((rlglLoadProc)loader)("glGenVertexArraysOES");
+            glBindVertexArray = (PFNGLBINDVERTEXARRAYOESPROC)((rlglLoadProc)loader)("glBindVertexArrayOES");
+            glDeleteVertexArrays = (PFNGLDELETEVERTEXARRAYSOESPROC)((rlglLoadProc)loader)("glDeleteVertexArraysOES");
+            //glIsVertexArray = (PFNGLISVERTEXARRAYOESPROC)loader("glIsVertexArrayOES");     // NOTE: Fails in WebGL, omitted
+
+            if ((glGenVertexArrays != NULL) && (glBindVertexArray != NULL) && (glDeleteVertexArrays != NULL)) RLGL.ExtSupported.vao = true;
+        }
+
+        // Check instanced rendering support
+        if (strcmp(extList[i], (const char *)"GL_ANGLE_instanced_arrays") == 0)         // Web ANGLE
+        {
+            glDrawArraysInstanced = (PFNGLDRAWARRAYSINSTANCEDEXTPROC)((rlglLoadProc)loader)("glDrawArraysInstancedANGLE");
+            glDrawElementsInstanced = (PFNGLDRAWELEMENTSINSTANCEDEXTPROC)((rlglLoadProc)loader)("glDrawElementsInstancedANGLE");
+            glVertexAttribDivisor = (PFNGLVERTEXATTRIBDIVISOREXTPROC)((rlglLoadProc)loader)("glVertexAttribDivisorANGLE");
+
+            if ((glDrawArraysInstanced != NULL) && (glDrawElementsInstanced != NULL) && (glVertexAttribDivisor != NULL)) RLGL.ExtSupported.instancing = true;
+        }
+        else
+        {
+            if ((strcmp(extList[i], (const char *)"GL_EXT_draw_instanced") == 0) &&     // Standard EXT
+                (strcmp(extList[i], (const char *)"GL_EXT_instanced_arrays") == 0))
+            {
+                glDrawArraysInstanced = (PFNGLDRAWARRAYSINSTANCEDEXTPROC)((rlglLoadProc)loader)("glDrawArraysInstancedEXT");
+                glDrawElementsInstanced = (PFNGLDRAWELEMENTSINSTANCEDEXTPROC)((rlglLoadProc)loader)("glDrawElementsInstancedEXT");
+                glVertexAttribDivisor = (PFNGLVERTEXATTRIBDIVISOREXTPROC)((rlglLoadProc)loader)("glVertexAttribDivisorEXT");
+
+                if ((glDrawArraysInstanced != NULL) && (glDrawElementsInstanced != NULL) && (glVertexAttribDivisor != NULL)) RLGL.ExtSupported.instancing = true;
+            }
+        }
+
+        // Check NPOT textures support
+        // NOTE: Only check on OpenGL ES, OpenGL 3.3 has NPOT textures full support as core feature
+        if (strcmp(extList[i], (const char *)"GL_OES_texture_npot") == 0) RLGL.ExtSupported.texNPOT = true;
+
+        // Check texture float support
+        if (strcmp(extList[i], (const char *)"GL_OES_texture_float") == 0) RLGL.ExtSupported.texFloat32 = true;
+
+        // Check depth texture support
+        if ((strcmp(extList[i], (const char *)"GL_OES_depth_texture") == 0) ||
+            (strcmp(extList[i], (const char *)"GL_WEBGL_depth_texture") == 0)) RLGL.ExtSupported.texDepth = true;
+
+        if (strcmp(extList[i], (const char *)"GL_OES_depth24") == 0) RLGL.ExtSupported.maxDepthBits = 24;
+        if (strcmp(extList[i], (const char *)"GL_OES_depth32") == 0) RLGL.ExtSupported.maxDepthBits = 32;
+
+        // Check texture compression support: DXT
+        if ((strcmp(extList[i], (const char *)"GL_EXT_texture_compression_s3tc") == 0) ||
+            (strcmp(extList[i], (const char *)"GL_WEBGL_compressed_texture_s3tc") == 0) ||
+            (strcmp(extList[i], (const char *)"GL_WEBKIT_WEBGL_compressed_texture_s3tc") == 0)) RLGL.ExtSupported.texCompDXT = true;
+
+        // Check texture compression support: ETC1
+        if ((strcmp(extList[i], (const char *)"GL_OES_compressed_ETC1_RGB8_texture") == 0) ||
+            (strcmp(extList[i], (const char *)"GL_WEBGL_compressed_texture_etc1") == 0)) RLGL.ExtSupported.texCompETC1 = true;
+
+        // Check texture compression support: ETC2/EAC
+        if (strcmp(extList[i], (const char *)"GL_ARB_ES3_compatibility") == 0) RLGL.ExtSupported.texCompETC2 = true;
+
+        // Check texture compression support: PVR
+        if (strcmp(extList[i], (const char *)"GL_IMG_texture_compression_pvrtc") == 0) RLGL.ExtSupported.texCompPVRT = true;
+
+        // Check texture compression support: ASTC
+        if (strcmp(extList[i], (const char *)"GL_KHR_texture_compression_astc_hdr") == 0) RLGL.ExtSupported.texCompASTC = true;
+
+        // Check anisotropic texture filter support
+        if (strcmp(extList[i], (const char *)"GL_EXT_texture_filter_anisotropic") == 0) RLGL.ExtSupported.texAnisoFilter = true;
+
+        // Check clamp mirror wrap mode support
+        if (strcmp(extList[i], (const char *)"GL_EXT_texture_mirror_clamp") == 0) RLGL.ExtSupported.texMirrorClamp = true;
+    }
+
+    // Free extensions pointers
+    RL_FREE(extList);
+    RL_FREE(extensionsDup);    // Duplicated string must be deallocated
+#endif  // GRAPHICS_API_OPENGL_ES2
+
+    // Check OpenGL information and capabilities
+    //------------------------------------------------------------------------------
+    // Show current OpenGL and GLSL version
+    TRACELOG(LOG_INFO, "GL: OpenGL device information:");
+    TRACELOG(LOG_INFO, "    > Vendor:   %s", glGetString(GL_VENDOR));
+    TRACELOG(LOG_INFO, "    > Renderer: %s", glGetString(GL_RENDERER));
+    TRACELOG(LOG_INFO, "    > Version:  %s", glGetString(GL_VERSION));
+    TRACELOG(LOG_INFO, "    > GLSL:     %s", glGetString(GL_SHADING_LANGUAGE_VERSION));
+
+#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
+    // NOTE: Anisotropy levels capability is an extension
+    #ifndef GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT
+        #define GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT 0x84FF
+    #endif
+    glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &RLGL.ExtSupported.maxAnisotropyLevel);
+
+#if defined(SUPPORT_GL_DETAILS_INFO)
+    // Show some OpenGL GPU capabilities
+    TRACELOG(LOG_INFO, "GL: OpenGL capabilities:");
+    GLint capability = 0;
+    glGetIntegerv(GL_MAX_TEXTURE_SIZE, &capability);
+    TRACELOG(LOG_INFO, "    GL_MAX_TEXTURE_SIZE: %i", capability);
+    glGetIntegerv(GL_MAX_CUBE_MAP_TEXTURE_SIZE, &capability);
+    TRACELOG(LOG_INFO, "    GL_MAX_CUBE_MAP_TEXTURE_SIZE: %i", capability);
+    glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS, &capability);
+    TRACELOG(LOG_INFO, "    GL_MAX_TEXTURE_IMAGE_UNITS: %i", capability);
+    glGetIntegerv(GL_MAX_VERTEX_ATTRIBS, &capability);
+    TRACELOG(LOG_INFO, "    GL_MAX_VERTEX_ATTRIBS: %i", capability);
+    #if !defined(GRAPHICS_API_OPENGL_ES2)
+    glGetIntegerv(GL_MAX_UNIFORM_BLOCK_SIZE, &capability);
+    TRACELOG(LOG_INFO, "    GL_MAX_UNIFORM_BLOCK_SIZE: %i", capability);
+    glGetIntegerv(GL_MAX_DRAW_BUFFERS, &capability);
+    TRACELOG(LOG_INFO, "    GL_MAX_DRAW_BUFFERS: %i", capability);
+    if (RLGL.ExtSupported.texAnisoFilter) TRACELOG(LOG_INFO, "    GL_MAX_TEXTURE_MAX_ANISOTROPY: %.0f", RLGL.ExtSupported.maxAnisotropyLevel);
+    #endif
+    glGetIntegerv(GL_NUM_COMPRESSED_TEXTURE_FORMATS, &capability);
+    TRACELOG(LOG_INFO, "    GL_NUM_COMPRESSED_TEXTURE_FORMATS: %i", capability);
+    GLint format[32] = { 0 };
+    glGetIntegerv(GL_COMPRESSED_TEXTURE_FORMATS, format);
+    for (int i = 0; i < capability; i++) TRACELOG(LOG_INFO, "        %s", rlGetCompressedFormatName(format[i]));
+
+    /*
+    // Following capabilities are only supported by OpenGL 4.3 or greater
+    glGetIntegerv(GL_MAX_VERTEX_ATTRIB_BINDINGS, &capability);
+    TRACELOG(LOG_INFO, "    GL_MAX_VERTEX_ATTRIB_BINDINGS: %i", capability);
+    glGetIntegerv(GL_MAX_UNIFORM_LOCATIONS, &capability);
+    TRACELOG(LOG_INFO, "    GL_MAX_UNIFORM_LOCATIONS: %i", capability);
+    */
+#else   // SUPPORT_GL_DETAILS_INFO
+
+    // Show some basic info about GL supported features
+    #if defined(GRAPHICS_API_OPENGL_ES2)
+    if (RLGL.ExtSupported.vao) TRACELOG(LOG_INFO, "GL: VAO extension detected, VAO functions loaded successfully");
+    else TRACELOG(LOG_WARNING, "GL: VAO extension not found, VAO not supported");
+    if (RLGL.ExtSupported.texNPOT) TRACELOG(LOG_INFO, "GL: NPOT textures extension detected, full NPOT textures supported");
+    else TRACELOG(LOG_WARNING, "GL: NPOT textures extension not found, limited NPOT support (no-mipmaps, no-repeat)");
+    #endif
+    if (RLGL.ExtSupported.texCompDXT) TRACELOG(LOG_INFO, "GL: DXT compressed textures supported");
+    if (RLGL.ExtSupported.texCompETC1) TRACELOG(LOG_INFO, "GL: ETC1 compressed textures supported");
+    if (RLGL.ExtSupported.texCompETC2) TRACELOG(LOG_INFO, "GL: ETC2/EAC compressed textures supported");
+    if (RLGL.ExtSupported.texCompPVRT) TRACELOG(LOG_INFO, "GL: PVRT compressed textures supported");
+    if (RLGL.ExtSupported.texCompASTC) TRACELOG(LOG_INFO, "GL: ASTC compressed textures supported");
+#endif  // SUPPORT_GL_DETAILS_INFO
+
+#endif  // GRAPHICS_API_OPENGL_33 || GRAPHICS_API_OPENGL_ES2
 }
 
 // Returns current OpenGL version
@@ -1992,7 +2006,7 @@ RenderBatch rlLoadRenderBatch(int numBuffers, int bufferElements)
         batch.vertexBuffer[i].cCounter = 0;
     }
 
-    TRACELOG(LOG_INFO, "RLGL: Internal vertex buffers initialized successfully in RAM (CPU)");
+    TRACELOG(LOG_INFO, "RLGL: Render batch vertex buffers loaded successfully in RAM (CPU)");
     //--------------------------------------------------------------------------------------------
 
     // Upload to GPU (VRAM) vertex data and initialize VAOs/VBOs
@@ -2039,7 +2053,7 @@ RenderBatch rlLoadRenderBatch(int numBuffers, int bufferElements)
 #endif
     }
 
-    TRACELOG(LOG_INFO, "RLGL: Render batch vertex buffers loaded successfully");
+    TRACELOG(LOG_INFO, "RLGL: Render batch vertex buffers loaded successfully in VRAM (GPU)");
 
     // Unbind the current VAO
     if (RLGL.ExtSupported.vao) glBindVertexArray(0);
@@ -2385,15 +2399,11 @@ unsigned int rlLoadTexture(void *data, int width, int height, int format, int mi
         return id;
     }
 #endif
-#endif      // GRAPHICS_API_OPENGL_11
+#endif  // GRAPHICS_API_OPENGL_11
 
     glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 
     glGenTextures(1, &id);              // Generate texture id
-
-#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
-    //glActiveTexture(GL_TEXTURE0);     // If not defined, using GL_TEXTURE0 by default (shader texture)
-#endif
 
     glBindTexture(GL_TEXTURE_2D, id);
 
@@ -2414,11 +2424,11 @@ unsigned int rlLoadTexture(void *data, int width, int height, int format, int mi
         if (glInternalFormat != -1)
         {
             if (format < PIXELFORMAT_COMPRESSED_DXT1_RGB) glTexImage2D(GL_TEXTURE_2D, i, glInternalFormat, mipWidth, mipHeight, 0, glFormat, glType, (unsigned char *)data + mipOffset);
-        #if !defined(GRAPHICS_API_OPENGL_11)
+#if !defined(GRAPHICS_API_OPENGL_11)
             else glCompressedTexImage2D(GL_TEXTURE_2D, i, glInternalFormat, mipWidth, mipHeight, 0, mipSize, (unsigned char *)data + mipOffset);
-        #endif
+#endif
 
-        #if defined(GRAPHICS_API_OPENGL_33)
+#if defined(GRAPHICS_API_OPENGL_33)
             if (format == PIXELFORMAT_UNCOMPRESSED_GRAYSCALE)
             {
                 GLint swizzleMask[] = { GL_RED, GL_RED, GL_RED, GL_ONE };
@@ -2426,14 +2436,14 @@ unsigned int rlLoadTexture(void *data, int width, int height, int format, int mi
             }
             else if (format == PIXELFORMAT_UNCOMPRESSED_GRAY_ALPHA)
             {
-            #if defined(GRAPHICS_API_OPENGL_21)
+#if defined(GRAPHICS_API_OPENGL_21)
                 GLint swizzleMask[] = { GL_RED, GL_RED, GL_RED, GL_ALPHA };
-            #elif defined(GRAPHICS_API_OPENGL_33)
+#elif defined(GRAPHICS_API_OPENGL_33)
                 GLint swizzleMask[] = { GL_RED, GL_RED, GL_RED, GL_GREEN };
-            #endif
+#endif
                 glTexParameteriv(GL_TEXTURE_2D, GL_TEXTURE_SWIZZLE_RGBA, swizzleMask);
             }
-        #endif
+#endif
         }
 
         mipWidth /= 2;
@@ -2485,7 +2495,7 @@ unsigned int rlLoadTexture(void *data, int width, int height, int format, int mi
     // Unbind current texture
     glBindTexture(GL_TEXTURE_2D, 0);
 
-    if (id > 0) TRACELOG(LOG_INFO, "TEXTURE: [ID %i] Texture created successfully (%ix%i - %i mipmaps)", id, width, height, mipmapCount);
+    if (id > 0) TRACELOG(LOG_INFO, "TEXTURE: [ID %i] Texture loaded successfully (%ix%i - %i mipmaps)", id, width, height, mipmapCount);
     else TRACELOG(LOG_WARNING, "TEXTURE: Failed to load texture");
 
     return id;
@@ -2616,7 +2626,7 @@ unsigned int rlLoadTextureCubemap(void *data, int size, int format)
     glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
 #endif
 
-    if (id > 0) TRACELOG(LOG_INFO, "TEXTURE: [ID %i] Cubemap texture created successfully (%ix%i)", id, size, size);
+    if (id > 0) TRACELOG(LOG_INFO, "TEXTURE: [ID %i] Cubemap texture loaded successfully (%ix%i)", id, size, size);
     else TRACELOG(LOG_WARNING, "TEXTURE: Failed to load cubemap texture");
 
     return id;
@@ -3131,7 +3141,10 @@ unsigned int rlLoadVertexArray(void)
 {
     unsigned int vaoId = 0;
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
-    glGenVertexArrays(1, &vaoId);
+    if (RLGL.ExtSupported.vao)
+    {
+        glGenVertexArrays(1, &vaoId);
+    }
 #endif
     return vaoId;
 }
@@ -3250,7 +3263,14 @@ unsigned int rlCompileShader(const char *shaderCode, int type)
 
     if (success == GL_FALSE)
     {
-        TRACELOG(LOG_WARNING, "SHADER: [ID %i] Failed to compile shader code", shader);
+        switch (type)
+        {
+            case GL_VERTEX_SHADER: TRACELOG(LOG_WARNING, "SHADER: [ID %i] Failed to compile vertex shader code", shader); break;
+            case GL_FRAGMENT_SHADER: TRACELOG(LOG_WARNING, "SHADER: [ID %i] Failed to compile fragment shader code", shader); break;
+            //case GL_GEOMETRY_SHADER:
+            //case GL_COMPUTE_SHADER:
+            default: break;
+        }
 
         int maxLength = 0;
         glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &maxLength);
@@ -3264,7 +3284,17 @@ unsigned int rlCompileShader(const char *shaderCode, int type)
             RL_FREE(log);
         }
     }
-    else TRACELOG(LOG_INFO, "SHADER: [ID %i] Compiled successfully", shader);
+    else
+    {
+        switch (type)
+        {
+            case GL_VERTEX_SHADER: TRACELOG(LOG_INFO, "SHADER: [ID %i] Vertex shader compiled successfully", shader); break;
+            case GL_FRAGMENT_SHADER: TRACELOG(LOG_INFO, "SHADER: [ID %i] Fragment shader compiled successfully", shader); break;
+            //case GL_GEOMETRY_SHADER:
+            //case GL_COMPUTE_SHADER:
+            default: break;
+        }
+    }
 #endif
 
     return shader;
@@ -3318,7 +3348,7 @@ unsigned int rlLoadShaderProgram(unsigned int vShaderId, unsigned int fShaderId)
 
         program = 0;
     }
-    else TRACELOG(LOG_INFO, "SHADER: [ID %i] Program loaded successfully", program);
+    else TRACELOG(LOG_INFO, "SHADER: [ID %i] Program shader loaded successfully", program);
 #endif
     return program;
 }
@@ -3673,14 +3703,9 @@ static void rlLoadShaderDefault(void)
     for (int i = 0; i < MAX_SHADER_LOCATIONS; i++) RLGL.State.defaultShader.locs[i] = -1;
 
     // Vertex shader directly defined, no external file required
-    const char *defaultVShaderStr =
+    const char *vShaderDefault =
 #if defined(GRAPHICS_API_OPENGL_21)
     "#version 120                       \n"
-#endif
-#if defined(GRAPHICS_API_OPENGL_ES2)
-    "#version 100                       \n"
-#endif
-#if defined(GRAPHICS_API_OPENGL_ES2) || defined(GRAPHICS_API_OPENGL_21)
     "attribute vec3 vertexPosition;     \n"
     "attribute vec2 vertexTexCoord;     \n"
     "attribute vec4 vertexColor;        \n"
@@ -3694,6 +3719,14 @@ static void rlLoadShaderDefault(void)
     "out vec2 fragTexCoord;             \n"
     "out vec4 fragColor;                \n"
 #endif
+#if defined(GRAPHICS_API_OPENGL_ES2)
+    "#version 100                       \n"
+    "attribute vec3 vertexPosition;     \n"
+    "attribute vec2 vertexTexCoord;     \n"
+    "attribute vec4 vertexColor;        \n"
+    "varying vec2 fragTexCoord;         \n"
+    "varying vec4 fragColor;            \n"
+#endif
     "uniform mat4 mvp;                  \n"
     "void main()                        \n"
     "{                                  \n"
@@ -3703,39 +3736,48 @@ static void rlLoadShaderDefault(void)
     "}                                  \n";
 
     // Fragment shader directly defined, no external file required
-    const char *defaultFShaderStr =
+    const char *fShaderDefault =
 #if defined(GRAPHICS_API_OPENGL_21)
     "#version 120                       \n"
-#endif
-#if defined(GRAPHICS_API_OPENGL_ES2)
-    "#version 100                       \n"
-    "precision mediump float;           \n"     // precision required for OpenGL ES2 (WebGL)
-#endif
-#if defined(GRAPHICS_API_OPENGL_ES2) || defined(GRAPHICS_API_OPENGL_21)
     "varying vec2 fragTexCoord;         \n"
     "varying vec4 fragColor;            \n"
+    "uniform sampler2D texture0;        \n"
+    "uniform vec4 colDiffuse;           \n"
+    "void main()                        \n"
+    "{                                  \n"
+    "    vec4 texelColor = texture2D(texture0, fragTexCoord); \n"
+    "    gl_FragColor = texelColor*colDiffuse*fragColor;      \n"
+    "}                                  \n";
 #elif defined(GRAPHICS_API_OPENGL_33)
     "#version 330       \n"
     "in vec2 fragTexCoord;              \n"
     "in vec4 fragColor;                 \n"
     "out vec4 finalColor;               \n"
-#endif
     "uniform sampler2D texture0;        \n"
     "uniform vec4 colDiffuse;           \n"
     "void main()                        \n"
     "{                                  \n"
-#if defined(GRAPHICS_API_OPENGL_ES2) || defined(GRAPHICS_API_OPENGL_21)
-    "    vec4 texelColor = texture2D(texture0, fragTexCoord); \n" // NOTE: texture2D() is deprecated on OpenGL 3.3 and ES 3.0
-    "    gl_FragColor = texelColor*colDiffuse*fragColor;      \n"
-#elif defined(GRAPHICS_API_OPENGL_33)
     "    vec4 texelColor = texture(texture0, fragTexCoord);   \n"
     "    finalColor = texelColor*colDiffuse*fragColor;        \n"
-#endif
     "}                                  \n";
+#endif
+#if defined(GRAPHICS_API_OPENGL_ES2)
+    "#version 100                       \n"
+    "precision mediump float;           \n"     // Precision required for OpenGL ES2 (WebGL)
+    "varying vec2 fragTexCoord;         \n"
+    "varying vec4 fragColor;            \n"
+    "uniform sampler2D texture0;        \n"
+    "uniform vec4 colDiffuse;           \n"
+    "void main()                        \n"
+    "{                                  \n"
+    "    vec4 texelColor = texture2D(texture0, fragTexCoord); \n"
+    "    gl_FragColor = texelColor*colDiffuse*fragColor;      \n"
+    "}                                  \n";
+#endif
 
     // NOTE: Compiled vertex/fragment shaders are kept for re-use
-    RLGL.State.defaultVShaderId = rlCompileShader(defaultVShaderStr, GL_VERTEX_SHADER);     // Compile default vertex shader
-    RLGL.State.defaultFShaderId = rlCompileShader(defaultFShaderStr, GL_FRAGMENT_SHADER);   // Compile default fragment shader
+    RLGL.State.defaultVShaderId = rlCompileShader(vShaderDefault, GL_VERTEX_SHADER);     // Compile default vertex shader
+    RLGL.State.defaultFShaderId = rlCompileShader(fShaderDefault, GL_FRAGMENT_SHADER);   // Compile default fragment shader
 
     RLGL.State.defaultShader.id = rlLoadShaderProgram(RLGL.State.defaultVShaderId, RLGL.State.defaultFShaderId);
 
@@ -3770,7 +3812,91 @@ static void rlUnloadShaderDefault(void)
     glDeleteProgram(RLGL.State.defaultShader.id);
 
     RL_FREE(RLGL.State.defaultShader.locs);
+
+    TRACELOG(LOG_INFO, "SHADER: [ID %i] Default shader unloaded successfully", RLGL.State.defaultShader.id);
 }
+
+#if defined(SUPPORT_GL_DETAILS_INFO)
+// Get compressed format official GL identifier name
+static char *rlGetCompressedFormatName(int format)
+{
+    static char compName[64] = { 0 };
+    memset(compName, 0, 64);
+
+    switch (format)
+    {
+        // GL_EXT_texture_compression_s3tc
+        case 0x83F0: strcpy(compName, "GL_COMPRESSED_RGB_S3TC_DXT1_EXT"); break;
+        case 0x83F1: strcpy(compName, "GL_COMPRESSED_RGBA_S3TC_DXT1_EXT"); break;
+        case 0x83F2: strcpy(compName, "GL_COMPRESSED_RGBA_S3TC_DXT3_EXT"); break;
+        case 0x83F3: strcpy(compName, "GL_COMPRESSED_RGBA_S3TC_DXT5_EXT"); break;
+        // GL_3DFX_texture_compression_FXT1
+        case 0x86B0: strcpy(compName, "GL_COMPRESSED_RGB_FXT1_3DFX"); break;
+        case 0x86B1: strcpy(compName, "GL_COMPRESSED_RGBA_FXT1_3DFX"); break;
+        // GL_IMG_texture_compression_pvrtc
+        case 0x8C00: strcpy(compName, "GL_COMPRESSED_RGB_PVRTC_4BPPV1_IMG"); break;
+        case 0x8C01: strcpy(compName, "GL_COMPRESSED_RGB_PVRTC_2BPPV1_IMG"); break;
+        case 0x8C02: strcpy(compName, "GL_COMPRESSED_RGBA_PVRTC_4BPPV1_IMG"); break;
+        case 0x8C03: strcpy(compName, "GL_COMPRESSED_RGBA_PVRTC_2BPPV1_IMG"); break;
+        // GL_OES_compressed_ETC1_RGB8_texture
+        case 0x8D64: strcpy(compName, "GL_ETC1_RGB8_OES"); break;
+        // GL_ARB_texture_compression_rgtc
+        case 0x8DBB: strcpy(compName, "GL_COMPRESSED_RED_RGTC1"); break;
+        case 0x8DBC: strcpy(compName, "GL_COMPRESSED_SIGNED_RED_RGTC1"); break;
+        case 0x8DBD: strcpy(compName, "GL_COMPRESSED_RG_RGTC2"); break;
+        case 0x8DBE: strcpy(compName, "GL_COMPRESSED_SIGNED_RG_RGTC2"); break;
+        // GL_ARB_texture_compression_bptc
+        case 0x8E8C: strcpy(compName, "GL_COMPRESSED_RGBA_BPTC_UNORM_ARB"); break;
+        case 0x8E8D: strcpy(compName, "GL_COMPRESSED_SRGB_ALPHA_BPTC_UNORM_ARB"); break;
+        case 0x8E8E: strcpy(compName, "GL_COMPRESSED_RGB_BPTC_SIGNED_FLOAT_ARB"); break;
+        case 0x8E8F: strcpy(compName, "GL_COMPRESSED_RGB_BPTC_UNSIGNED_FLOAT_ARB"); break;
+        // GL_ARB_ES3_compatibility
+        case 0x9274: strcpy(compName, "GL_COMPRESSED_RGB8_ETC2"); break;
+        case 0x9275: strcpy(compName, "GL_COMPRESSED_SRGB8_ETC2"); break;
+        case 0x9276: strcpy(compName, "GL_COMPRESSED_RGB8_PUNCHTHROUGH_ALPHA1_ETC2"); break;
+        case 0x9277: strcpy(compName, "GL_COMPRESSED_SRGB8_PUNCHTHROUGH_ALPHA1_ETC2"); break;
+        case 0x9278: strcpy(compName, "GL_COMPRESSED_RGBA8_ETC2_EAC"); break;
+        case 0x9279: strcpy(compName, "GL_COMPRESSED_SRGB8_ALPHA8_ETC2_EAC"); break;
+        case 0x9270: strcpy(compName, "GL_COMPRESSED_R11_EAC"); break;
+        case 0x9271: strcpy(compName, "GL_COMPRESSED_SIGNED_R11_EAC"); break;
+        case 0x9272: strcpy(compName, "GL_COMPRESSED_RG11_EAC"); break;
+        case 0x9273: strcpy(compName, "GL_COMPRESSED_SIGNED_RG11_EAC"); break;
+        // GL_KHR_texture_compression_astc_hdr
+        case 0x93B0: strcpy(compName, "GL_COMPRESSED_RGBA_ASTC_4x4_KHR"); break;
+        case 0x93B1: strcpy(compName, "GL_COMPRESSED_RGBA_ASTC_5x4_KHR"); break;
+        case 0x93B2: strcpy(compName, "GL_COMPRESSED_RGBA_ASTC_5x5_KHR"); break;
+        case 0x93B3: strcpy(compName, "GL_COMPRESSED_RGBA_ASTC_6x5_KHR"); break;
+        case 0x93B4: strcpy(compName, "GL_COMPRESSED_RGBA_ASTC_6x6_KHR"); break;
+        case 0x93B5: strcpy(compName, "GL_COMPRESSED_RGBA_ASTC_8x5_KHR"); break;
+        case 0x93B6: strcpy(compName, "GL_COMPRESSED_RGBA_ASTC_8x6_KHR"); break;
+        case 0x93B7: strcpy(compName, "GL_COMPRESSED_RGBA_ASTC_8x8_KHR"); break;
+        case 0x93B8: strcpy(compName, "GL_COMPRESSED_RGBA_ASTC_10x5_KHR"); break;
+        case 0x93B9: strcpy(compName, "GL_COMPRESSED_RGBA_ASTC_10x6_KHR"); break;
+        case 0x93BA: strcpy(compName, "GL_COMPRESSED_RGBA_ASTC_10x8_KHR"); break;
+        case 0x93BB: strcpy(compName, "GL_COMPRESSED_RGBA_ASTC_10x10_KHR"); break;
+        case 0x93BC: strcpy(compName, "GL_COMPRESSED_RGBA_ASTC_12x10_KHR"); break;
+        case 0x93BD: strcpy(compName, "GL_COMPRESSED_RGBA_ASTC_12x12_KHR"); break;
+        case 0x93D0: strcpy(compName, "GL_COMPRESSED_SRGB8_ALPHA8_ASTC_4x4_KHR"); break;
+        case 0x93D1: strcpy(compName, "GL_COMPRESSED_SRGB8_ALPHA8_ASTC_5x4_KHR"); break;
+        case 0x93D2: strcpy(compName, "GL_COMPRESSED_SRGB8_ALPHA8_ASTC_5x5_KHR"); break;
+        case 0x93D3: strcpy(compName, "GL_COMPRESSED_SRGB8_ALPHA8_ASTC_6x5_KHR"); break;
+        case 0x93D4: strcpy(compName, "GL_COMPRESSED_SRGB8_ALPHA8_ASTC_6x6_KHR"); break;
+        case 0x93D5: strcpy(compName, "GL_COMPRESSED_SRGB8_ALPHA8_ASTC_8x5_KHR"); break;
+        case 0x93D6: strcpy(compName, "GL_COMPRESSED_SRGB8_ALPHA8_ASTC_8x6_KHR"); break;
+        case 0x93D7: strcpy(compName, "GL_COMPRESSED_SRGB8_ALPHA8_ASTC_8x8_KHR"); break;
+        case 0x93D8: strcpy(compName, "GL_COMPRESSED_SRGB8_ALPHA8_ASTC_10x5_KHR"); break;
+        case 0x93D9: strcpy(compName, "GL_COMPRESSED_SRGB8_ALPHA8_ASTC_10x6_KHR"); break;
+        case 0x93DA: strcpy(compName, "GL_COMPRESSED_SRGB8_ALPHA8_ASTC_10x8_KHR"); break;
+        case 0x93DB: strcpy(compName, "GL_COMPRESSED_SRGB8_ALPHA8_ASTC_10x10_KHR"); break;
+        case 0x93DC: strcpy(compName, "GL_COMPRESSED_SRGB8_ALPHA8_ASTC_12x10_KHR"); break;
+        case 0x93DD: strcpy(compName, "GL_COMPRESSED_SRGB8_ALPHA8_ASTC_12x12_KHR"); break;
+        default: strcpy(compName, "GL_COMPRESSED_UNKNOWN"); break;
+    }
+
+    return compName;
+}
+#endif  // SUPPORT_GL_DETAILS_INFO
+
 #endif  // GRAPHICS_API_OPENGL_33 || GRAPHICS_API_OPENGL_ES2
 
 #if defined(GRAPHICS_API_OPENGL_11)
@@ -3899,7 +4025,7 @@ static Color *rlGenNextMipmapData(Color *srcData, int srcWidth, int srcHeight)
 
     return mipmap;
 }
-#endif      // GRAPHICS_API_OPENGL_11
+#endif  // GRAPHICS_API_OPENGL_11
 
 // Get pixel data size in bytes (image or texture)
 // NOTE: Size depends on pixel format

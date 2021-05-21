@@ -60,7 +60,7 @@
 
 #define JAR_XM_DEBUG 0
 #define JAR_XM_DEFENSIVE 1
-#define JAR_XM_RAYLIB 1 // set to 0 to disable the RayLib visualizer extension
+//#define JAR_XM_RAYLIB 0 // set to 0 to disable the RayLib visualizer extension
 
 // Allow custom memory allocators
 #ifndef JARXM_MALLOC

@@ -87,7 +87,7 @@ int main(void)
 
         if (IsKeyDown(KEY_DOWN)) pitch -= 0.01f;
         else if (IsKeyDown(KEY_UP)) pitch += 0.01f;
-        
+
         SetMusicPitch(music, pitch);
 
         // Get timePlayed scaled to bar dimensions

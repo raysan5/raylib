@@ -11,7 +11,7 @@
 *
 ********************************************************************************************
 *
-* To export a model from blender, make sure it is not posed, the vertices need to be in the 
+* To export a model from blender, make sure it is not posed, the vertices need to be in the
 * same position as they would be in edit mode.
 * and that the scale of your models is set to 0. Scaling can be done from the export menu.
 *
@@ -41,14 +41,14 @@ int main(void)
     camera.projection = CAMERA_PERSPECTIVE;             // Camera mode type
 
     Model model[MAX_MODELS] = { 0 };
-    
+
     model[0] = LoadModel("resources/gltf/raylib_32x32.glb");
     model[1] = LoadModel("resources/gltf/rigged_figure.glb");
     model[2] = LoadModel("resources/gltf/GearboxAssy.glb");
     model[3] = LoadModel("resources/gltf/BoxAnimated.glb");
     model[4] = LoadModel("resources/gltf/AnimatedTriangle.gltf");
     model[5] = LoadModel("resources/gltf/AnimatedMorphCube.glb");
-    
+
     int currentModel = 0;
 
     Vector3 position = { 0.0f, 0.0f, 0.0f };    // Set model position
@@ -64,13 +64,13 @@ int main(void)
         // Update
         //----------------------------------------------------------------------------------
         UpdateCamera(&camera);
-        
+
         if (IsKeyReleased(KEY_RIGHT))
         {
             currentModel++;
             if (currentModel == MAX_MODELS) currentModel = 0;
         }
-    
+
         if (IsKeyReleased(KEY_LEFT))
         {
             currentModel--;

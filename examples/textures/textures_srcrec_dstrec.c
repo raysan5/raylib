@@ -21,7 +21,7 @@ int main(void)
     InitWindow(screenWidth, screenHeight, "raylib [textures] examples - texture source and destination rectangles");
 
     // NOTE: Textures MUST be loaded after Window initialization (OpenGL context is required)
-    
+
     Texture2D scarfy = LoadTexture("resources/scarfy.png");        // Texture loading
 
     int frameWidth = scarfy.width/6;

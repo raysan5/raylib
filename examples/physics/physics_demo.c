@@ -54,7 +54,7 @@ int main(void)
         if (IsKeyPressed(KEY_R))    // Reset physics system
         {
             ResetPhysics();
-            
+
             floor = CreatePhysicsBodyRectangle((Vector2){ screenWidth/2, screenHeight }, 500, 100, 10);
             floor->enabled = false;
 
@@ -63,8 +63,8 @@ int main(void)
         }
 
         // Physics body creation inputs
-        if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) CreatePhysicsBodyPolygon(GetMousePosition(), GetRandomValue(20, 80), GetRandomValue(3, 8), 10);
-        else if (IsMouseButtonPressed(MOUSE_RIGHT_BUTTON)) CreatePhysicsBodyCircle(GetMousePosition(), GetRandomValue(10, 45), 10);
+        if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) CreatePhysicsBodyPolygon(GetMousePosition(), GetRandomValue(20, 80), GetRandomValue(3, 8), 10);
+        else if (IsMouseButtonPressed(MOUSE_BUTTON_RIGHT)) CreatePhysicsBodyCircle(GetMousePosition(), GetRandomValue(10, 45), 10);
 
         // Destroy falling physics bodies
         int bodiesCount = GetPhysicsBodiesCount();

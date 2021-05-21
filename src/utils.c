@@ -372,11 +372,11 @@ void InitAssetManager(AAssetManager *manager, const char *dataPath)
     internalDataPath = dataPath;
 }
 
-// Replacement for fopen
+// Replacement for fopen()
 // Ref: https://developer.android.com/ndk/reference/group/asset
 FILE *android_fopen(const char *fileName, const char *mode)
 {
-    if (mode[0] == 'w')     // TODO: Test!
+    if (mode[0] == 'w')
     {
         // TODO: fopen() is mapped to android_fopen() that only grants read access
         // to assets directory through AAssetManager but we want to also be able to

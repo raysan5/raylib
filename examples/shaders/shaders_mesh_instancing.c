@@ -27,6 +27,8 @@
     #define GLSL_VERSION            100
 #endif
 
+#define MAX_INSTANCES  10000
+
 //------------------------------------------------------------------------------------
 // Program main entry point
 //------------------------------------------------------------------------------------
@@ -56,20 +58,19 @@ int main(void)
     camera.fovy = 45.0f;
     camera.projection = CAMERA_PERSPECTIVE;
 
-    const int instances = 10000;                                // Number of instances to display 
     Mesh cube = GenMeshCube(1.0f, 1.0f, 1.0f);
 
-    Matrix *rotations = RL_MALLOC(instances*sizeof(Matrix));    // Rotation state of instances
-    Matrix *rotationsInc = RL_MALLOC(instances*sizeof(Matrix)); // Per-frame rotation animation of instances
-    Matrix *translations = RL_MALLOC(instances*sizeof(Matrix)); // Locations of instances
+    Matrix *rotations = RL_MALLOC(MAX_INSTANCES*sizeof(Matrix));    // Rotation state of instances
+    Matrix *rotationsInc = RL_MALLOC(MAX_INSTANCES*sizeof(Matrix)); // Per-frame rotation animation of instances
+    Matrix *translations = RL_MALLOC(MAX_INSTANCES*sizeof(Matrix)); // Locations of instances
 
     // Scatter random cubes around
-    for (int i = 0; i < instances; i++)
+    for (int i = 0; i < MAX_INSTANCES; i++)
     {
         x = GetRandomValue(-50, 50);
         y = GetRandomValue(-50, 50);
         z = GetRandomValue(-50, 50);
-        translations[i] = MatrixTranslate(x, y, z); 
+        translations[i] = MatrixTranslate(x, y, z);
 
         x = GetRandomValue(0, 360);
         y = GetRandomValue(0, 360);
@@ -81,9 +82,9 @@ int main(void)
         rotations[i] = MatrixIdentity();
     }
 
-    Matrix *transforms = RL_MALLOC(instances*sizeof(Matrix));   // Pre-multiplied transformations passed to rlgl
+    Matrix *transforms = RL_MALLOC(MAX_INSTANCES*sizeof(Matrix));   // Pre-multiplied transformations passed to rlgl
 
-    Shader shader = LoadShader(TextFormat("resources/shaders/glsl%i/base_lighting_instanced.vs", GLSL_VERSION), 
+    Shader shader = LoadShader(TextFormat("resources/shaders/glsl%i/base_lighting_instanced.vs", GLSL_VERSION),
                                TextFormat("resources/shaders/glsl%i/lighting.fs", GLSL_VERSION));
 
     // Get some shader loactions
@@ -102,7 +103,7 @@ int main(void)
     Material material = LoadMaterialDefault();
     material.shader = shader;
     material.maps[MATERIAL_MAP_DIFFUSE].color = RED;
-    
+
     SetCameraMode(camera, CAMERA_ORBITAL);  // Set an orbital camera mode
 
     int textPositionY = 300;
@@ -134,10 +135,10 @@ int main(void)
         if (IsKeyDown(KEY_EIGHT)) groups = 8;
         if (IsKeyDown(KEY_NINE)) groups = 9;
         if (IsKeyDown(KEY_W)) { groups = 7; amp = 25; speed = 18; variance = 0.70f; }
-            
+
         if (IsKeyDown(KEY_EQUAL)) speed = (speed <= (fps*0.25f))? (fps*0.25f) : (speed*0.95f);
         if (IsKeyDown(KEY_KP_ADD)) speed = (speed <= (fps*0.25f))? (fps*0.25f) : (speed*0.95f);
-            
+
         if (IsKeyDown(KEY_MINUS)) speed = fmaxf(speed*1.02f, speed + 1);
         if (IsKeyDown(KEY_KP_SUBTRACT)) speed = fmaxf(speed*1.02f, speed + 1);
 
@@ -146,23 +147,23 @@ int main(void)
         SetShaderValue(shader, shader.locs[SHADER_LOC_VECTOR_VIEW], cameraPos, SHADER_UNIFORM_VEC3);
 
         // Apply per-instance transformations
-        for (int i = 0; i < instances; i++)
+        for (int i = 0; i < MAX_INSTANCES; i++)
         {
             rotations[i] = MatrixMultiply(rotations[i], rotationsInc[i]);
             transforms[i] = MatrixMultiply(rotations[i], translations[i]);
-            
+
             // Get the animation cycle's framesCounter for this instance
             loop = (float)((framesCounter + (int)(((float)(i%groups)/groups)*speed))%speed)/speed;
-            
+
             // Calculate the y according to loop cycle
             y = (sinf(loop*PI*2))*amp*((1 - variance) + (variance*(float)(i%(groups*10))/(groups*10)));
-            
+
             // Clamp to floor
             y = (y < 0)? 0.0f : y;
-            
+
             transforms[i] = MatrixMultiply(transforms[i], MatrixTranslate(0.0f, y, 0.0f));
         }
-        
+
         UpdateCamera(&camera);
         //----------------------------------------------------------------------------------
 
@@ -174,40 +175,40 @@ int main(void)
 
             BeginMode3D(camera);
                 //DrawMesh(cube, material, MatrixIdentity());
-                DrawMeshInstanced(cube, material, transforms, instances);
+                DrawMeshInstanced(cube, material, transforms, MAX_INSTANCES);
             EndMode3D();
 
             DrawText("A CUBE OF DANCING CUBES!", 490, 10, 20, MAROON);
             DrawText("PRESS KEYS:", 10, textPositionY, 20, BLACK);
-            
-            DrawText("1 - 9", 10, textPositionY += 25, 10, BLACK);  
+
+            DrawText("1 - 9", 10, textPositionY += 25, 10, BLACK);
             DrawText(": Number of groups", 50, textPositionY , 10, BLACK);
             DrawText(TextFormat(": %d", groups), 160, textPositionY , 10, BLACK);
-            
-            DrawText("UP", 10, textPositionY += 15, 10, BLACK);  
+
+            DrawText("UP", 10, textPositionY += 15, 10, BLACK);
             DrawText(": increase amplitude", 50, textPositionY, 10, BLACK);
             DrawText(TextFormat(": %.2f", amp), 160, textPositionY , 10, BLACK);
-            
-            DrawText("DOWN", 10, textPositionY += 15, 10, BLACK);  
+
+            DrawText("DOWN", 10, textPositionY += 15, 10, BLACK);
             DrawText(": decrease amplitude", 50, textPositionY, 10, BLACK);
-            
-            DrawText("LEFT", 10, textPositionY += 15, 10, BLACK);  
+
+            DrawText("LEFT", 10, textPositionY += 15, 10, BLACK);
             DrawText(": decrease variance", 50, textPositionY, 10, BLACK);
             DrawText(TextFormat(": %.2f", variance), 160, textPositionY , 10, BLACK);
-            
-            DrawText("RIGHT", 10, textPositionY += 15, 10, BLACK);  
+
+            DrawText("RIGHT", 10, textPositionY += 15, 10, BLACK);
             DrawText(": increase variance", 50, textPositionY, 10, BLACK);
-            
-            DrawText("+/=", 10, textPositionY += 15, 10, BLACK);  
+
+            DrawText("+/=", 10, textPositionY += 15, 10, BLACK);
             DrawText(": increase speed", 50, textPositionY, 10, BLACK);
             DrawText(TextFormat(": %d = %f loops/sec", speed, ((float)fps / speed)), 160, textPositionY , 10, BLACK);
-            
-            DrawText("-", 10, textPositionY += 15, 10, BLACK);  
+
+            DrawText("-", 10, textPositionY += 15, 10, BLACK);
             DrawText(": decrease speed", 50, textPositionY, 10, BLACK);
-            
-            DrawText("W", 10, textPositionY += 15, 10, BLACK);  
+
+            DrawText("W", 10, textPositionY += 15, 10, BLACK);
             DrawText(": Wild setup!", 50, textPositionY, 10, BLACK);
-            
+
             DrawFPS(10, 10);
 
         EndDrawing();

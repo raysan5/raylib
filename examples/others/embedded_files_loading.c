@@ -28,7 +28,7 @@ int main(void)
     InitAudioDevice();              // Initialize audio device
 
     // Loaded in CPU memory (RAM) from header file (audio_data.h)
-    // Same as: Wave wave = LoadWave("sound.wav"); 
+    // Same as: Wave wave = LoadWave("sound.wav");
     Wave wave = {
         .data = AUDIO_DATA,
         .sampleCount = AUDIO_SAMPLE_COUNT,
@@ -39,14 +39,14 @@ int main(void)
 
     // Wave converted to Sound to be played
     Sound sound = LoadSoundFromWave(wave);
-    
+
     // With a Wave loaded from file, after Sound is loaded, we can unload Wave
     // but in our case, Wave is embedded in executable, in program .data segment
     // we can not (and should not) try to free that private memory region
     //UnloadWave(wave);             // Do not unload wave data!
 
     // Loaded in CPU memory (RAM) from header file (image_data.h)
-    // Same as: Image image = LoadImage("raylib_logo.png"); 
+    // Same as: Image image = LoadImage("raylib_logo.png");
     Image image = {
         .data = IMAGE_DATA,
         .width = IMAGE_WIDTH,
@@ -54,15 +54,15 @@ int main(void)
         .format = IMAGE_FORMAT,
         .mipmaps = 1
     };
-    
+
     // Image converted to Texture (VRAM) to be drawn
-    Texture2D texture = LoadTextureFromImage(image); 
-    
+    Texture2D texture = LoadTextureFromImage(image);
+
     // With an Image loaded from file, after Texture is loaded, we can unload Image
     // but in our case, Image is embedded in executable, in program .data segment
     // we can not (and should not) try to free that private memory region
     //UnloadImage(image);           // Do not unload image data!
- 
+
     SetTargetFPS(60);               // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
 

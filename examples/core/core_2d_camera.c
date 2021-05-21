@@ -54,7 +54,7 @@ int main(void)
     {
         // Update
         //----------------------------------------------------------------------------------
-        
+
         // Player movement
         if (IsKeyDown(KEY_RIGHT)) player.x += 2;
         else if (IsKeyDown(KEY_LEFT)) player.x -= 2;

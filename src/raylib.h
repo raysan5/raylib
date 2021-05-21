@@ -4,7 +4,8 @@
 *
 *   FEATURES:
 *       - NO external dependencies, all required libraries included with raylib
-*       - Multiplatform: Windows, Linux, FreeBSD, OpenBSD, NetBSD, DragonFly, MacOS, UWP, Android, Raspberry Pi, HTML5.
+*       - Multiplatform: Windows, Linux, FreeBSD, OpenBSD, NetBSD, DragonFly,
+*                        MacOS, Haiku, UWP, Android, Raspberry Pi, HTML5.
 *       - Written in plain C code (C99) in PascalCase/camelCase notation
 *       - Hardware accelerated with OpenGL (1.1, 2.1, 3.3 or ES2 - choose at compile)
 *       - Unique OpenGL abstraction layer (usable as standalone module): [rlgl]
@@ -12,7 +13,7 @@
 *       - Outstanding texture formats support, including compressed formats (DXT, ETC, ASTC)
 *       - Full 3d support for 3d Shapes, Models, Billboards, Heightmaps and more!
 *       - Flexible Materials system, supporting classic maps and PBR maps
-*       - Skeletal Animation support (CPU bones-based animation)
+*       - Animated 3D models supported (skeletal bones animation) (IQM, glTF)
 *       - Shaders support, including Model shaders and Postprocessing shaders
 *       - Powerful math module for Vector, Matrix and Quaternion operations: [raymath]
 *       - Audio loading and playing with streaming support (WAV, OGG, MP3, FLAC, XM, MOD)
@@ -20,17 +21,20 @@
 *       - Bindings to multiple programming languages available!
 *
 *   NOTES:
-*       One custom font is loaded by default when InitWindow() [core]
-*       If using OpenGL 3.3 or ES2, one default shader is loaded automatically (internally defined) [rlgl]
-*       If using OpenGL 3.3 or ES2, several vertex buffers (VAO/VBO) are created to manage lines-triangles-quads
+*       One default Font is loaded on InitWindow()->LoadFontDefault() [core, text]
+*       One default Texture2D is loaded on rlglInit() [rlgl] (OpenGL 3.3 or ES2)
+*       One default Shader is loaded on rlglInit()->rlLoadShaderDefault() [rlgl] (OpenGL 3.3 or ES2)
+*       One default RenderBatch is loaded on rlglInit()->rlLoadRenderBatch() [rlgl] (OpenGL 3.3 or ES2)
 *
 *   DEPENDENCIES (included):
-*       [core] rglfw (github.com/glfw/glfw) for window/context management and input (only PLATFORM_DESKTOP)
-*       [rlgl] glad (github.com/Dav1dde/glad) for OpenGL 3.3 extensions loading (only PLATFORM_DESKTOP)
-*       [raudio] miniaudio (github.com/dr-soft/miniaudio) for audio device/context management
+*       [core] rglfw (Camilla Löwy - github.com/glfw/glfw) for window/context management and input (PLATFORM_DESKTOP)
+*       [rlgl] glad (David Herberth - github.com/Dav1dde/glad) for OpenGL 3.3 extensions loading (PLATFORM_DESKTOP)
+*       [raudio] miniaudio (David Reid - github.com/dr-soft/miniaudio) for audio device/context management
 *
 *   OPTIONAL DEPENDENCIES (included):
-*       [core] rgif (Charlie Tangora, Ramon Santamaria) for GIF recording
+*       [core] msf_gif (Miles Fogle) for GIF recording
+*       [core] sinfl (Micha Mettke) for DEFLATE decompression algorythm
+*       [core] sdefl (Micha Mettke) for DEFLATE compression algorythm
 *       [textures] stb_image (Sean Barret) for images loading (BMP, TGA, PNG, JPEG, HDR...)
 *       [textures] stb_image_write (Sean Barret) for image writting (BMP, TGA, PNG, JPG)
 *       [textures] stb_image_resize (Sean Barret) for image resizing algorithms
@@ -40,9 +44,10 @@
 *       [models] par_shapes (Philip Rideout) for parametric 3d shapes generation
 *       [models] tinyobj_loader_c (Syoyo Fujita) for models loading (OBJ, MTL)
 *       [models] cgltf (Johannes Kuhlmann) for models loading (glTF)
-*       [raudio] stb_vorbis (Sean Barret) for OGG audio loading
+*       [raudio] dr_wav (David Reid) for WAV audio file loading
 *       [raudio] dr_flac (David Reid) for FLAC audio file loading
 *       [raudio] dr_mp3 (David Reid) for MP3 audio file loading
+*       [raudio] stb_vorbis (Sean Barret) for OGG audio loading
 *       [raudio] jar_xm (Joshua Reisenauer) for XM audio module loading
 *       [raudio] jar_mod (Joshua Reisenauer) for MOD audio module loading
 *
@@ -75,6 +80,8 @@
 #define RAYLIB_H
 
 #include <stdarg.h>     // Required for: va_list - Only used by TraceLogCallback
+
+#define RAYLIB_VERSION  "3.7.0"
 
 #if defined(_WIN32)
     // Microsoft attibutes to tell compiler that symbols are imported/exported from a .dll
@@ -160,7 +167,7 @@
 #define FILTER_POINT        TEXTURE_FILTER_POINT
 #define FILTER_BILINEAR     TEXTURE_FILTER_BILINEAR
 #define MAP_DIFFUSE         MATERIAL_MAP_DIFFUSE
-#define PIXELFORMAT_UNCOMPRESSED_R8G8B8A8   PIXELFORMAT_PIXELFORMAT_UNCOMPRESSED_R8G8B8A8
+#define UNCOMPRESSED_R8G8B8A8   PIXELFORMAT_UNCOMPRESSED_R8G8B8A8
 
 //----------------------------------------------------------------------------------
 // Structures Definition
@@ -411,7 +418,7 @@ typedef struct BoundingBox {
 
 // Wave type, defines audio wave data
 typedef struct Wave {
-    unsigned int sampleCount;       // Total number of samples
+    unsigned int sampleCount;       // Total number of samples (considering channels!)
     unsigned int sampleRate;        // Frequency (samples per second)
     unsigned int sampleSize;        // Bit depth (bits per sample): 8, 16, 32 (24 not supported)
     unsigned int channels;          // Number of channels (1-mono, 2-stereo)
@@ -630,11 +637,21 @@ typedef enum {
     KEY_VOLUME_DOWN     = 25
 } KeyboardKey;
 
+// Add backwards compatibility support for deprecated names
+#define MOUSE_LEFT_BUTTON   MOUSE_BUTTON_LEFT
+#define MOUSE_RIGHT_BUTTON  MOUSE_BUTTON_RIGHT
+#define MOUSE_MIDDLE_BUTTON MOUSE_BUTTON_MIDDLE
+
 // Mouse buttons
 typedef enum {
-    MOUSE_LEFT_BUTTON   = 0,
-    MOUSE_RIGHT_BUTTON  = 1,
-    MOUSE_MIDDLE_BUTTON = 2
+    MOUSE_BUTTON_LEFT    = 0,
+    MOUSE_BUTTON_RIGHT   = 1,
+    MOUSE_BUTTON_MIDDLE  = 2,
+    MOUSE_BUTTON_SIDE    = 3,
+    MOUSE_BUTTON_EXTRA   = 4,
+    MOUSE_BUTTON_FORWARD = 5,
+    MOUSE_BUTTON_BACK    = 6,
+    MOUSE_BUTTON_MAX     = 7
 } MouseButton;
 
 // Mouse cursor
@@ -947,7 +964,7 @@ RLAPI void HideCursor(void);                                      // Hides curso
 RLAPI bool IsCursorHidden(void);                                  // Check if cursor is not visible
 RLAPI void EnableCursor(void);                                    // Enables cursor (unlock cursor)
 RLAPI void DisableCursor(void);                                   // Disables cursor (lock cursor)
-RLAPI bool IsCursorOnScreen(void);                                // Check if cursor is on the current screen.
+RLAPI bool IsCursorOnScreen(void);                                // Check if cursor is on the screen
 
 // Drawing-related functions
 RLAPI void ClearBackground(Color color);                          // Set background color (framebuffer clear color)
@@ -1155,15 +1172,16 @@ RLAPI void DrawRectangleGradientV(int posX, int posY, int width, int height, Col
 RLAPI void DrawRectangleGradientH(int posX, int posY, int width, int height, Color color1, Color color2);// Draw a horizontal-gradient-filled rectangle
 RLAPI void DrawRectangleGradientEx(Rectangle rec, Color col1, Color col2, Color col3, Color col4);       // Draw a gradient-filled rectangle with custom vertex colors
 RLAPI void DrawRectangleLines(int posX, int posY, int width, int height, Color color);                   // Draw rectangle outline
-RLAPI void DrawRectangleLinesEx(Rectangle rec, int lineThick, Color color);                              // Draw rectangle outline with extended parameters
+RLAPI void DrawRectangleLinesEx(Rectangle rec, float lineThick, Color color);                            // Draw rectangle outline with extended parameters
 RLAPI void DrawRectangleRounded(Rectangle rec, float roundness, int segments, Color color);              // Draw rectangle with rounded edges
-RLAPI void DrawRectangleRoundedLines(Rectangle rec, float roundness, int segments, int lineThick, Color color); // Draw rectangle with rounded edges outline
+RLAPI void DrawRectangleRoundedLines(Rectangle rec, float roundness, int segments, float lineThick, Color color); // Draw rectangle with rounded edges outline
 RLAPI void DrawTriangle(Vector2 v1, Vector2 v2, Vector2 v3, Color color);                                // Draw a color-filled triangle (vertex in counter-clockwise order!)
 RLAPI void DrawTriangleLines(Vector2 v1, Vector2 v2, Vector2 v3, Color color);                           // Draw triangle outline (vertex in counter-clockwise order!)
 RLAPI void DrawTriangleFan(Vector2 *points, int pointsCount, Color color);                               // Draw a triangle fan defined by points (first vertex is the center)
 RLAPI void DrawTriangleStrip(Vector2 *points, int pointsCount, Color color);                             // Draw a triangle strip defined by points
 RLAPI void DrawPoly(Vector2 center, int sides, float radius, float rotation, Color color);               // Draw a regular polygon (Vector version)
 RLAPI void DrawPolyLines(Vector2 center, int sides, float radius, float rotation, Color color);          // Draw a polygon outline of n sides
+RLAPI void DrawPolyLinesEx(Vector2 center, int sides, float radius, float rotation, float lineThick, Color color); // Draw a polygon outline of n sides with extended parameters
 
 // Basic shapes collision detection functions
 RLAPI bool CheckCollisionRecs(Rectangle rec1, Rectangle rec2);                                           // Check collision between two rectangles
@@ -1283,8 +1301,8 @@ RLAPI Color Fade(Color color, float alpha);                                 // R
 RLAPI int ColorToInt(Color color);                                          // Returns hexadecimal value for a Color
 RLAPI Vector4 ColorNormalize(Color color);                                  // Returns Color normalized as float [0..1]
 RLAPI Color ColorFromNormalized(Vector4 normalized);                        // Returns Color from normalized values [0..1]
-RLAPI Vector3 ColorToHSV(Color color);                                      // Returns HSV values for a Color
-RLAPI Color ColorFromHSV(float hue, float saturation, float value);         // Returns a Color from HSV values
+RLAPI Vector3 ColorToHSV(Color color);                                      // Returns HSV values for a Color, hue [0..360], saturation/value [0..1]
+RLAPI Color ColorFromHSV(float hue, float saturation, float value);         // Returns a Color from HSV values, hue [0..360], saturation/value [0..1]
 RLAPI Color ColorAlpha(Color color, float alpha);                           // Returns color with alpha applied, alpha goes from 0.0f to 1.0f
 RLAPI Color ColorAlphaBlend(Color dst, Color src, Color tint);              // Returns src alpha-blended into dst color with tint
 RLAPI Color GetColor(int hexValue);                                         // Get Color structure from hexadecimal value
@@ -1381,7 +1399,8 @@ RLAPI void UnloadModel(Model model);                                            
 RLAPI void UnloadModelKeepMeshes(Model model);                                              // Unload model (but not meshes) from memory (RAM and/or VRAM)
 
 // Mesh loading/unloading functions
-RLAPI void UploadMesh(Mesh *mesh, bool dynamic);                                            // Upload vertex data into GPU and provided VAO/VBO ids
+RLAPI void UploadMesh(Mesh *mesh, bool dynamic);                                            // Upload mesh vertex data in GPU and provide VAO/VBO ids
+RLAPI void UpdateMeshBuffer(Mesh mesh, int index, void *data, int dataSize, int offset);    // Update mesh vertex data in GPU for a specific buffer index
 RLAPI void DrawMesh(Mesh mesh, Material material, Matrix transform);                        // Draw a 3d mesh with material and transform
 RLAPI void DrawMeshInstanced(Mesh mesh, Material material, Matrix *transforms, int instances); // Draw multiple mesh instances with material and different transforms
 RLAPI void UnloadMesh(Mesh mesh);                                                           // Unload mesh data from CPU and GPU
@@ -1402,7 +1421,6 @@ RLAPI void UnloadModelAnimations(ModelAnimation* animations, unsigned int count)
 RLAPI bool IsModelAnimationValid(Model model, ModelAnimation anim);                         // Check model animation skeleton match
 
 // Mesh generation functions
-RLAPI Mesh GenMeshDefault(int vertexCount);                                                 // Generate an empty mesh with vertex: position, texcoords, normals, colors
 RLAPI Mesh GenMeshPoly(int sides, float radius);                                            // Generate polygonal mesh
 RLAPI Mesh GenMeshPlane(float width, float length, int resX, int resZ);                     // Generate plane mesh (with subdivisions)
 RLAPI Mesh GenMeshCube(float width, float height, float length);                            // Generate cuboid mesh
@@ -1415,7 +1433,7 @@ RLAPI Mesh GenMeshHeightmap(Image heightmap, Vector3 size);                     
 RLAPI Mesh GenMeshCubicmap(Image cubicmap, Vector3 cubeSize);                               // Generate cubes-based map mesh from image data
 
 // Mesh manipulation functions
-RLAPI BoundingBox MeshBoundingBox(Mesh mesh);                                               // Compute mesh bounding box limits
+RLAPI BoundingBox GetMeshBoundingBox(Mesh mesh);                                               // Compute mesh bounding box limits
 RLAPI void MeshTangents(Mesh *mesh);                                                        // Compute mesh tangents
 RLAPI void MeshBinormals(Mesh *mesh);                                                       // Compute mesh binormals
 
@@ -1425,8 +1443,9 @@ RLAPI void DrawModelEx(Model model, Vector3 position, Vector3 rotationAxis, floa
 RLAPI void DrawModelWires(Model model, Vector3 position, float scale, Color tint);                      // Draw a model wires (with texture if set)
 RLAPI void DrawModelWiresEx(Model model, Vector3 position, Vector3 rotationAxis, float rotationAngle, Vector3 scale, Color tint); // Draw a model wires (with texture if set) with extended parameters
 RLAPI void DrawBoundingBox(BoundingBox box, Color color);                                               // Draw bounding box (wires)
-RLAPI void DrawBillboard(Camera camera, Texture2D texture, Vector3 center, float size, Color tint);     // Draw a billboard texture
-RLAPI void DrawBillboardRec(Camera camera, Texture2D texture, Rectangle source, Vector3 center, float size, Color tint); // Draw a billboard texture defined by source
+RLAPI void DrawBillboard(Camera camera, Texture2D texture, Vector3 position, float size, Color tint);   // Draw a billboard texture
+RLAPI void DrawBillboardRec(Camera camera, Texture2D texture, Rectangle source, Vector3 position, Vector2 size, Color tint); // Draw a billboard texture defined by source
+RLAPI void DrawBillboardPro(Camera camera, Texture2D texture, Rectangle source, Vector3 position, Vector2 size, Vector2 origin, float rotation, Color tint); // Draw a billboard texture defined by source and rotation
 
 // Collision detection functions
 RLAPI bool CheckCollisionSpheres(Vector3 center1, float radius1, Vector3 center2, float radius2);       // Detect collision between two spheres
@@ -1483,7 +1502,7 @@ RLAPI Music LoadMusicStream(const char *fileName);                    // Load mu
 RLAPI Music LoadMusicStreamFromMemory(const char *fileType, unsigned char* data, int dataSize); // Load music stream from data
 RLAPI void UnloadMusicStream(Music music);                            // Unload music stream
 RLAPI void PlayMusicStream(Music music);                              // Start music playing
-RLAPI bool IsMusicPlaying(Music music);                               // Check if music is playing
+RLAPI bool IsMusicStreamPlaying(Music music);                         // Check if music is playing
 RLAPI void UpdateMusicStream(Music music);                            // Updates buffers for music streaming
 RLAPI void StopMusicStream(Music music);                              // Stop music playing
 RLAPI void PauseMusicStream(Music music);                             // Pause music playing

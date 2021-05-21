@@ -15,7 +15,7 @@
 *
 *   COMPILATION:
 *       gcc -o raudio_standalone.exe raudio_standalone.c ..\..\src\raudio.c /
-*           -I..\..\src -I..\..\src\external -L. -Wall -std=c99 -DRAUDIO_STANDALONE / 
+*           -I..\..\src -I..\..\src\external -L. -Wall -std=c99 -DRAUDIO_STANDALONE /
 *           -DSUPPORT_FILEFORMAT_WAV -DSUPPORT_FILEFORMAT_OGG -DSUPPORT_FILEFORMAT_MP3
 *
 *   LICENSE: zlib/libpng
@@ -61,7 +61,7 @@
 //----------------------------------------------------------------------------------
 // Module Functions Declaration
 //----------------------------------------------------------------------------------
-#if !defined(_MSC_VER)
+#if !defined(_WIN32)
 static int kbhit(void);             // Check if a key has been pressed
 static char getch();                // Get pressed character
 #else
@@ -96,7 +96,7 @@ int main(int argc, char *argv[])
 
         if ((key == 's') || (key == 'S')) PlaySound(fxWav);
         if ((key == 'd') || (key == 'D')) PlaySound(fxOgg);
-        
+
         key = 0;
 
         UpdateMusicStream(music);

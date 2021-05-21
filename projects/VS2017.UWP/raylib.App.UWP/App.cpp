@@ -231,7 +231,7 @@ void App::GameLoop()
 
 		if (IsKeyDown(KEY_LEFT_ALT)) DrawRectangle(250, 250, 20, 20, BLACK);
 		if (IsKeyDown(KEY_BACKSPACE)) DrawRectangle(280, 250, 20, 20, BLACK);
-		if (IsMouseButtonDown(MOUSE_LEFT_BUTTON)) DrawRectangle(280, 250, 20, 20, BLACK);
+		if (IsMouseButtonDown(MOUSE_BUTTON_LEFT)) DrawRectangle(280, 250, 20, 20, BLACK);
 
 		DrawRectangle(280, (int)pos + 50, 20, 20, BLACK);
 		DrawRectangle(250, 280 + (gTime++ % 60), 10, 10, PURPLE);
@@ -398,9 +398,9 @@ void App::OnPointerPressed(Windows::UI::Core::CoreWindow^ sender, Windows::UI::C
 
     if (device->PointerDeviceType == Windows::Devices::Input::PointerDeviceType::Mouse)
     {
-        if (props->IsLeftButtonPressed) UWPMouseButtonEvent(MOUSE_LEFT_BUTTON, true);
-        if (props->IsMiddleButtonPressed) UWPMouseButtonEvent(MOUSE_MIDDLE_BUTTON, true);
-        if (props->IsRightButtonPressed) UWPMouseButtonEvent(MOUSE_RIGHT_BUTTON, true);
+        if (props->IsLeftButtonPressed) UWPMouseButtonEvent(MOUSE_BUTTON_LEFT, true);
+        if (props->IsMiddleButtonPressed) UWPMouseButtonEvent(MOUSE_BUTTON_MIDDLE, true);
+        if (props->IsRightButtonPressed) UWPMouseButtonEvent(MOUSE_BUTTON_RIGHT, true);
     }
     else if (device->PointerDeviceType == PointerDeviceType::Touch)
     {
@@ -418,9 +418,9 @@ void App::OnPointerReleased(Windows::UI::Core::CoreWindow^ sender, Windows::UI::
 
     if (device->PointerDeviceType == PointerDeviceType::Mouse)
     {
-        if (!props->IsLeftButtonPressed) UWPMouseButtonEvent(MOUSE_LEFT_BUTTON, false);
-        if (!props->IsMiddleButtonPressed) UWPMouseButtonEvent(MOUSE_MIDDLE_BUTTON, false);
-        if (!props->IsRightButtonPressed) UWPMouseButtonEvent(MOUSE_RIGHT_BUTTON, false);
+        if (!props->IsLeftButtonPressed) UWPMouseButtonEvent(MOUSE_BUTTON_LEFT, false);
+        if (!props->IsMiddleButtonPressed) UWPMouseButtonEvent(MOUSE_BUTTON_MIDDLE, false);
+        if (!props->IsRightButtonPressed) UWPMouseButtonEvent(MOUSE_BUTTON_RIGHT, false);
     }
     else if (device->PointerDeviceType == PointerDeviceType::Touch)
     {

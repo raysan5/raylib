@@ -9,7 +9,7 @@
 *     - BMFonts > Angel code font fileformat, sprite font image must be provided
 *                 together with the .fnt file, font generation cna not be configured
 *     - XNA Spritefont > Sprite font image, following XNA Spritefont conventions,
-*                 Characters in image must follow some spacing and order rules 
+*                 Characters in image must follow some spacing and order rules
 *
 *   This example has been created using raylib 2.6 (www.raylib.com)
 *   raylib is licensed under an unmodified zlib/libpng license (View raylib.h for details)

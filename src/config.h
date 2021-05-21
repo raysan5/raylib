@@ -25,8 +25,6 @@
 *
 **********************************************************************************************/
 
-#define RAYLIB_VERSION  "3.7"
-
 //------------------------------------------------------------------------------------
 // Module: core - Configuration Flags
 //------------------------------------------------------------------------------------
@@ -45,8 +43,8 @@
 #define SUPPORT_WINMM_HIGHRES_TIMER 1
 // Use busy wait loop for timing sync, if not defined, a high-resolution timer is setup and used
 //#define SUPPORT_BUSY_WAIT_LOOP      1
-// Use a half-busy wait loop, in this case frame sleeps for some time and runs a busy-wait-loop at the end
-#define SUPPORT_HALFBUSY_WAIT_LOOP
+// Use a partial-busy wait loop, in this case frame sleeps for most of the time, but then runs a busy loop at the end for accuracy
+#define SUPPORT_PARTIALBUSY_WAIT_LOOP
 // Wait for events passively (sleeping while no events) instead of polling them actively every frame
 //#define SUPPORT_EVENTS_WAITING      1
 // Allow automatic screen capture of current screen pressing F12, defined in KeyCallback()
@@ -80,6 +78,9 @@
 //------------------------------------------------------------------------------------
 // Module: rlgl - Configuration values
 //------------------------------------------------------------------------------------
+// Show OpenGL extensions and capabilities detailed logs on init
+//#define SUPPORT_GL_DETAILS_INFO        1
+
 #if defined(GRAPHICS_API_OPENGL_11) || defined(GRAPHICS_API_OPENGL_33)
     #define DEFAULT_BATCH_BUFFER_ELEMENTS   8192    // Default internal render batch limits
 #elif defined(GRAPHICS_API_OPENGL_ES2)
