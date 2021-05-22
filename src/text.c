@@ -1865,7 +1865,7 @@ static Font LoadBMFont(const char *fileName)
     }
 
     UnloadImage(imFont);
-    RL_FREE(fileText);
+    UnloadFileText(fileText);
 
     if (font.texture.id == 0)
     {

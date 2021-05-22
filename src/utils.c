@@ -325,7 +325,7 @@ char *LoadFileText(const char *fileName)
 }
 
 // Unload file text data allocated by LoadFileText()
-void UnloadFileText(unsigned char *text)
+void UnloadFileText(char *text)
 {
     RL_FREE(text);
 }

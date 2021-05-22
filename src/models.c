@@ -3205,11 +3205,11 @@ static Model LoadOBJ(const char *fileName)
     tinyobj_material_t *materials = NULL;
     unsigned int materialCount = 0;
 
-    char *fileData = LoadFileText(fileName);
+    char *fileText = LoadFileText(fileName);
 
-    if (fileData != NULL)
+    if (fileText != NULL)
     {
-        unsigned int dataSize = (unsigned int)strlen(fileData);
+        unsigned int dataSize = (unsigned int)strlen(fileText);
         char currentDir[1024] = { 0 };
         strcpy(currentDir, GetWorkingDirectory());
         const char *workingDir = GetDirectoryPath(fileName);
@@ -3219,7 +3219,7 @@ static Model LoadOBJ(const char *fileName)
         }
 
         unsigned int flags = TINYOBJ_FLAG_TRIANGULATE;
-        int ret = tinyobj_parse_obj(&attrib, &meshes, &meshCount, &materials, &materialCount, fileData, dataSize, flags);
+        int ret = tinyobj_parse_obj(&attrib, &meshes, &meshCount, &materials, &materialCount, fileText, dataSize, flags);
 
         if (ret != TINYOBJ_SUCCESS) TRACELOG(LOG_WARNING, "MODEL: [%s] Failed to load OBJ data", fileName);
         else TRACELOG(LOG_INFO, "MODEL: [%s] OBJ data loaded successfully: %i meshes / %i materials", fileName, meshCount, materialCount);
@@ -3346,9 +3346,9 @@ static Model LoadOBJ(const char *fileName)
         tinyobj_shapes_free(meshes, meshCount);
         tinyobj_materials_free(materials, materialCount);
 
-        RL_FREE(fileData);
+        UnloadFileText(fileText);
+        
         RL_FREE(matFaces);
-
         RL_FREE(vCount);
         RL_FREE(vtCount);
         RL_FREE(vnCount);
@@ -3496,7 +3496,7 @@ static Model LoadIQM(const char *fileName)
     //fileDataPtr += sizeof(IQMHeader);       // Move file data pointer
 
     // Meshes data processing
-    imesh = RL_MALLOC(sizeof(IQMMesh)*iqmHeader->num_meshes);
+    imesh = RL_MALLOC(iqmHeader->num_meshes*sizeof(IQMMesh));
     //fseek(iqmFile, iqmHeader->ofs_meshes, SEEK_SET);
     //fread(imesh, sizeof(IQMMesh)*iqmHeader->num_meshes, 1, iqmFile);
     memcpy(imesh, fileDataPtr + iqmHeader->ofs_meshes, iqmHeader->num_meshes*sizeof(IQMMesh));
@@ -4466,8 +4466,8 @@ static void LoadGLTFBoneAttribute(Model* model, cgltf_accessor* jointsAccessor, 
 {
     if (jointsAccessor->component_type == cgltf_component_type_r_16u)
     {
-        model->meshes[primitiveIndex].boneIds = RL_MALLOC(sizeof(int)*jointsAccessor->count*4);
-        short* bones = RL_MALLOC(sizeof(short)*jointsAccessor->count*4);
+        model->meshes[primitiveIndex].boneIds = RL_MALLOC(jointsAccessor->count*4*sizeof(int));
+        short* bones = RL_MALLOC(jointsAccessor->count*4*sizeof(short));
 
         for (unsigned int a = 0; a < jointsAccessor->count; a++)
         {
@@ -4491,8 +4491,8 @@ static void LoadGLTFBoneAttribute(Model* model, cgltf_accessor* jointsAccessor, 
     }
     else if (jointsAccessor->component_type == cgltf_component_type_r_8u)
     {
-        model->meshes[primitiveIndex].boneIds = RL_MALLOC(sizeof(int)*jointsAccessor->count*4);
-        unsigned char* bones = RL_MALLOC(sizeof(unsigned char)*jointsAccessor->count*4);
+        model->meshes[primitiveIndex].boneIds = RL_MALLOC(jointsAccessor->count*4*sizeof(int));
+        unsigned char* bones = RL_MALLOC(jointsAccessor->count*4*sizeof(unsigned char));
 
         for (unsigned int a = 0; a < jointsAccessor->count; a++)
         {
