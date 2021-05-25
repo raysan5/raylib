@@ -181,23 +181,23 @@
 
 // Vector2 type
 typedef struct Vector2 {
-    float x;
-    float y;
+    float x;                // Vector x component
+    float y;                // Vector y component
 } Vector2;
 
 // Vector3 type
 typedef struct Vector3 {
-    float x;
-    float y;
-    float z;
+    float x;                // Vector x component
+    float y;                // Vector y component
+    float z;                // Vector z component
 } Vector3;
 
 // Vector4 type
 typedef struct Vector4 {
-    float x;
-    float y;
-    float z;
-    float w;
+    float x;                // Vector x component
+    float y;                // Vector y component
+    float z;                // Vector z component
+    float w;                // Vector w component
 } Vector4;
 
 // Quaternion type, same as Vector4
@@ -205,26 +205,26 @@ typedef Vector4 Quaternion;
 
 // Matrix type (OpenGL style 4x4 - right handed, column major)
 typedef struct Matrix {
-    float m0, m4, m8, m12;
-    float m1, m5, m9, m13;
-    float m2, m6, m10, m14;
-    float m3, m7, m11, m15;
+    float m0, m4, m8, m12;  // Matrix first row (4 components)
+    float m1, m5, m9, m13;  // Matrix second row (4 components)
+    float m2, m6, m10, m14; // Matrix third row (4 components)
+    float m3, m7, m11, m15; // Matrix fourth row (4 components)
 } Matrix;
 
 // Color type, RGBA (32bit)
 typedef struct Color {
-    unsigned char r;
-    unsigned char g;
-    unsigned char b;
-    unsigned char a;
+    unsigned char r;        // Color red value
+    unsigned char g;        // Color green value
+    unsigned char b;        // Color blue value
+    unsigned char a;        // Color alpha value
 } Color;
 
 // Rectangle type
 typedef struct Rectangle {
-    float x;
-    float y;
-    float width;
-    float height;
+    float x;                // Rectangle top-left corner position x 
+    float y;                // Rectangle top-left corner position y
+    float width;            // Rectangle width
+    float height;           // Rectangle height
 } Rectangle;
 
 // Image type, bpp always RGBA (32bit)
@@ -316,113 +316,113 @@ typedef struct Camera2D {
 // Vertex data definning a mesh
 // NOTE: Data stored in CPU memory (and GPU)
 typedef struct Mesh {
-    int vertexCount;        // Number of vertices stored in arrays
-    int triangleCount;      // Number of triangles stored (indexed or not)
+    int vertexCount;            // Number of vertices stored in arrays
+    int triangleCount;          // Number of triangles stored (indexed or not)
 
     // Default vertex data
-    float *vertices;        // Vertex position (XYZ - 3 components per vertex) (shader-location = 0)
-    float *texcoords;       // Vertex texture coordinates (UV - 2 components per vertex) (shader-location = 1)
-    float *texcoords2;      // Vertex second texture coordinates (useful for lightmaps) (shader-location = 5)
-    float *normals;         // Vertex normals (XYZ - 3 components per vertex) (shader-location = 2)
-    float *tangents;        // Vertex tangents (XYZW - 4 components per vertex) (shader-location = 4)
-    unsigned char *colors;  // Vertex colors (RGBA - 4 components per vertex) (shader-location = 3)
-    unsigned short *indices;// Vertex indices (in case vertex data comes indexed)
+    float *vertices;            // Vertex position (XYZ - 3 components per vertex) (shader-location = 0)
+    float *texcoords;           // Vertex texture coordinates (UV - 2 components per vertex) (shader-location = 1)
+    float *texcoords2;          // Vertex second texture coordinates (useful for lightmaps) (shader-location = 5)
+    float *normals;             // Vertex normals (XYZ - 3 components per vertex) (shader-location = 2)
+    float *tangents;            // Vertex tangents (XYZW - 4 components per vertex) (shader-location = 4)
+    unsigned char *colors;      // Vertex colors (RGBA - 4 components per vertex) (shader-location = 3)
+    unsigned short *indices;    // Vertex indices (in case vertex data comes indexed)
 
     // Animation vertex data
-    float *animVertices;    // Animated vertex positions (after bones transformations)
-    float *animNormals;     // Animated normals (after bones transformations)
-    int *boneIds;           // Vertex bone ids, up to 4 bones influence by vertex (skinning)
-    float *boneWeights;     // Vertex bone weight, up to 4 bones influence by vertex (skinning)
+    float *animVertices;        // Animated vertex positions (after bones transformations)
+    float *animNormals;         // Animated normals (after bones transformations)
+    int *boneIds;               // Vertex bone ids, up to 4 bones influence by vertex (skinning)
+    float *boneWeights;         // Vertex bone weight, up to 4 bones influence by vertex (skinning)
 
     // OpenGL identifiers
-    unsigned int vaoId;     // OpenGL Vertex Array Object id
-    unsigned int *vboId;    // OpenGL Vertex Buffer Objects id (default vertex data)
+    unsigned int vaoId;         // OpenGL Vertex Array Object id
+    unsigned int *vboId;        // OpenGL Vertex Buffer Objects id (default vertex data)
 } Mesh;
 
 // Shader type (generic)
 typedef struct Shader {
-    unsigned int id;        // Shader program id
-    int *locs;              // Shader locations array (MAX_SHADER_LOCATIONS)
+    unsigned int id;            // Shader program id
+    int *locs;                  // Shader locations array (MAX_SHADER_LOCATIONS)
 } Shader;
 
 // Material texture map
 typedef struct MaterialMap {
-    Texture2D texture;      // Material map texture
-    Color color;            // Material map color
-    float value;            // Material map value
+    Texture2D texture;          // Material map texture
+    Color color;                // Material map color
+    float value;                // Material map value
 } MaterialMap;
 
 // Material type (generic)
 typedef struct Material {
-    Shader shader;          // Material shader
-    MaterialMap *maps;      // Material maps array (MAX_MATERIAL_MAPS)
-    float params[4];        // Material generic parameters (if required)
+    Shader shader;              // Material shader
+    MaterialMap *maps;          // Material maps array (MAX_MATERIAL_MAPS)
+    float params[4];            // Material generic parameters (if required)
 } Material;
 
 // Transformation properties
 typedef struct Transform {
-    Vector3 translation;    // Translation
-    Quaternion rotation;    // Rotation
-    Vector3 scale;          // Scale
+    Vector3 translation;        // Translation
+    Quaternion rotation;        // Rotation
+    Vector3 scale;              // Scale
 } Transform;
 
 // Bone information
 typedef struct BoneInfo {
-    char name[32];          // Bone name
-    int parent;             // Bone parent
+    char name[32];              // Bone name
+    int parent;                 // Bone parent
 } BoneInfo;
 
 // Model type
 typedef struct Model {
-    Matrix transform;       // Local transform matrix
+    Matrix transform;           // Local transform matrix
 
-    int meshCount;          // Number of meshes
-    int materialCount;      // Number of materials
-    Mesh *meshes;           // Meshes array
-    Material *materials;    // Materials array
-    int *meshMaterial;      // Mesh material number
+    int meshCount;              // Number of meshes
+    int materialCount;          // Number of materials
+    Mesh *meshes;               // Meshes array
+    Material *materials;        // Materials array
+    int *meshMaterial;          // Mesh material number
 
     // Animation data
-    int boneCount;          // Number of bones
-    BoneInfo *bones;        // Bones information (skeleton)
-    Transform *bindPose;    // Bones base transformation (pose)
+    int boneCount;              // Number of bones
+    BoneInfo *bones;            // Bones information (skeleton)
+    Transform *bindPose;        // Bones base transformation (pose)
 } Model;
 
 // Model animation
 typedef struct ModelAnimation {
-    int boneCount;          // Number of bones
-    int frameCount;         // Number of animation frames
-    BoneInfo *bones;        // Bones information (skeleton)
-    Transform **framePoses; // Poses array by frame
+    int boneCount;              // Number of bones
+    int frameCount;             // Number of animation frames
+    BoneInfo *bones;            // Bones information (skeleton)
+    Transform **framePoses;     // Poses array by frame
 } ModelAnimation;
 
 // Ray type (useful for raycast)
 typedef struct Ray {
-    Vector3 position;       // Ray position (origin)
-    Vector3 direction;      // Ray direction
+    Vector3 position;           // Ray position (origin)
+    Vector3 direction;          // Ray direction
 } Ray;
 
 // Raycast hit information
 typedef struct RayHitInfo {
-    bool hit;               // Did the ray hit something?
-    float distance;         // Distance to nearest hit
-    Vector3 position;       // Position of nearest hit
-    Vector3 normal;         // Surface normal of hit
+    bool hit;                   // Did the ray hit something?
+    float distance;             // Distance to nearest hit
+    Vector3 position;           // Position of nearest hit
+    Vector3 normal;             // Surface normal of hit
 } RayHitInfo;
 
 // Bounding box type
 typedef struct BoundingBox {
-    Vector3 min;            // Minimum vertex box-corner
-    Vector3 max;            // Maximum vertex box-corner
+    Vector3 min;                // Minimum vertex box-corner
+    Vector3 max;                // Maximum vertex box-corner
 } BoundingBox;
 
 // Wave type, defines audio wave data
 typedef struct Wave {
-    unsigned int sampleCount;       // Total number of samples (considering channels!)
-    unsigned int sampleRate;        // Frequency (samples per second)
-    unsigned int sampleSize;        // Bit depth (bits per sample): 8, 16, 32 (24 not supported)
-    unsigned int channels;          // Number of channels (1-mono, 2-stereo)
-    void *data;                     // Buffer data pointer
+    unsigned int sampleCount;   // Total number of samples (considering channels!)
+    unsigned int sampleRate;    // Frequency (samples per second)
+    unsigned int sampleSize;    // Bit depth (bits per sample): 8, 16, 32 (24 not supported)
+    unsigned int channels;      // Number of channels (1-mono, 2-stereo)
+    void *data;                 // Buffer data pointer
 } Wave;
 
 typedef struct rAudioBuffer rAudioBuffer;
@@ -430,28 +430,28 @@ typedef struct rAudioBuffer rAudioBuffer;
 // Audio stream type
 // NOTE: Useful to create custom audio streams not bound to a specific file
 typedef struct AudioStream {
-    rAudioBuffer *buffer;           // Pointer to internal data used by the audio system
+    rAudioBuffer *buffer;       // Pointer to internal data used by the audio system
 
-    unsigned int sampleRate;        // Frequency (samples per second)
-    unsigned int sampleSize;        // Bit depth (bits per sample): 8, 16, 32 (24 not supported)
-    unsigned int channels;          // Number of channels (1-mono, 2-stereo)
+    unsigned int sampleRate;    // Frequency (samples per second)
+    unsigned int sampleSize;    // Bit depth (bits per sample): 8, 16, 32 (24 not supported)
+    unsigned int channels;      // Number of channels (1-mono, 2-stereo)
 } AudioStream;
 
 // Sound source type
 typedef struct Sound {
-    AudioStream stream;             // Audio stream
-    unsigned int sampleCount;       // Total number of samples
+    AudioStream stream;         // Audio stream
+    unsigned int sampleCount;   // Total number of samples
 } Sound;
 
 // Music stream type (audio file streaming from memory)
 // NOTE: Anything longer than ~10 seconds should be streamed
 typedef struct Music {
-    AudioStream stream;             // Audio stream
-    unsigned int sampleCount;       // Total number of samples
-    bool looping;                   // Music looping enable
+    AudioStream stream;         // Audio stream
+    unsigned int sampleCount;   // Total number of samples
+    bool looping;               // Music looping enable
 
-    int ctxType;                    // Type of music context (audio filetype)
-    void *ctxData;                  // Audio context data, depends on type
+    int ctxType;                // Type of music context (audio filetype)
+    void *ctxData;              // Audio context data, depends on type
 } Music;
 
 // Head-Mounted-Display device parameters
