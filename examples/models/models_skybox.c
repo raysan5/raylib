@@ -37,7 +37,7 @@ int main(void)
     Mesh cube = GenMeshCube(1.0f, 1.0f, 1.0f);
     Model skybox = LoadModelFromMesh(cube);
 
-    bool useHDR = false;
+    bool useHDR = true;
 
     // Load skybox shader and set required locations
     // NOTE: Some locations are automatically set at shader loading
@@ -55,13 +55,15 @@ int main(void)
     SetShaderValue(shdrCubemap, GetShaderLocation(shdrCubemap, "equirectangularMap"), (int[1]){ 0 }, SHADER_UNIFORM_INT);
 
     char skyboxFileName[256] = { 0 };
+    
+    Texture2D panorama;
 
     if (useHDR)
     {
         TextCopy(skyboxFileName, "resources/dresden_square_2k.hdr");
 
         // Load HDR panorama (sphere) texture
-        Texture2D panorama = panorama = LoadTexture(skyboxFileName);
+        panorama = LoadTexture(skyboxFileName);
 
         // Generate cubemap (texture with 6 quads-cube-mapping) from panorama HDR texture
         // NOTE 1: New texture is generated rendering to texture, shader calculates the sphere->cube coordinates mapping
@@ -69,7 +71,7 @@ int main(void)
         // despite texture can be successfully created.. so using PIXELFORMAT_UNCOMPRESSED_R8G8B8A8 instead of PIXELFORMAT_UNCOMPRESSED_R32G32B32A32
         skybox.materials[0].maps[MATERIAL_MAP_CUBEMAP].texture = GenTextureCubemap(shdrCubemap, panorama, 1024, PIXELFORMAT_UNCOMPRESSED_R8G8B8A8);
 
-        UnloadTexture(panorama);    // Texture not required anymore, cubemap already generated
+        //UnloadTexture(panorama);    // Texture not required anymore, cubemap already generated
     }
     else
     {
@@ -143,11 +145,11 @@ int main(void)
                 DrawGrid(10, 1.0f);
 
             EndMode3D();
+            
+            //DrawTextureEx(panorama, (Vector2){ 0, 0 }, 0.0f, 0.5f, WHITE);
 
-            if (useHDR)
-                DrawText(TextFormat("Panorama image from hdrihaven.com: %s", GetFileName(skyboxFileName)), 10, GetScreenHeight() - 20, 10, BLACK);
-            else
-                DrawText(TextFormat(": %s", GetFileName(skyboxFileName)), 10, GetScreenHeight() - 20, 10, BLACK);
+            if (useHDR) DrawText(TextFormat("Panorama image from hdrihaven.com: %s", GetFileName(skyboxFileName)), 10, GetScreenHeight() - 20, 10, BLACK);
+            else DrawText(TextFormat(": %s", GetFileName(skyboxFileName)), 10, GetScreenHeight() - 20, 10, BLACK);
 
             DrawFPS(10, 10);
 
@@ -208,18 +210,32 @@ static TextureCubemap GenTextureCubemap(Shader shader, Texture2D panorama, int s
     };
 
     rlViewport(0, 0, size, size);   // Set viewport to current fbo dimensions
+    
+    // Activate and enable texture for drawing to cubemap faces
+    rlActiveTextureSlot(0);
+    rlEnableTexture(panorama.id);
 
     for (int i = 0; i < 6; i++)
     {
+        // Set the view matrix for the current cube face
         rlSetUniformMatrix(shader.locs[SHADER_LOC_MATRIX_VIEW], fboViews[i]);
+        
+        // Select the current cubemap face attachment for the fbo
+        // WARNING: This function by default enables->attach->disables fbo!!!
         rlFramebufferAttach(fbo, cubemap.id, RL_ATTACHMENT_COLOR_CHANNEL0, RL_ATTACHMENT_CUBEMAP_POSITIVE_X + i, 0);
-
         rlEnableFramebuffer(fbo);
-        rlSetTexture(panorama.id);   // WARNING: It must be called after enabling current framebuffer if using internal batch system!
 
+        // Load and draw a cube, it uses the current enabled texture
         rlClearScreenBuffers();
-        DrawCubeV(Vector3Zero(), Vector3One(), WHITE);
-        rlDrawRenderBatchActive();
+        rlLoadDrawCube();
+
+        // ALTERNATIVE: Try to use internal batch system to draw the cube instead of rlLoadDrawCube
+        // for some reason this method does not work, maybe due to cube triangles definition? normals pointing out?
+        // TODO: Investigate this issue...
+        //rlSetTexture(panorama.id); // WARNING: It must be called after enabling current framebuffer if using internal batch system!
+        //rlClearScreenBuffers();
+        //DrawCubeV(Vector3Zero(), Vector3One(), WHITE);
+        //rlDrawRenderBatchActive();
     }
     //------------------------------------------------------------------------------------------
 
@@ -238,7 +254,7 @@ static TextureCubemap GenTextureCubemap(Shader shader, Texture2D panorama, int s
     cubemap.width = size;
     cubemap.height = size;
     cubemap.mipmaps = 1;
-    cubemap.format = PIXELFORMAT_UNCOMPRESSED_R32G32B32;
+    cubemap.format = format;
 
     return cubemap;
 }
