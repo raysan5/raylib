@@ -3458,7 +3458,7 @@ static Model LoadIQM(const char *fileName)
         IQM_TANGENT      = 3,       // NOTE: Tangents unused by default
         IQM_BLENDINDEXES = 4,
         IQM_BLENDWEIGHTS = 5,
-        IQM_COLOR        = 6,       // NOTE: Vertex colors unused by default
+        IQM_COLOR        = 6,
         IQM_CUSTOM       = 0x10     // NOTE: Custom vertex values unused by default
     };
 
@@ -3474,6 +3474,7 @@ static Model LoadIQM(const char *fileName)
     float *text = NULL;
     char *blendi = NULL;
     unsigned char *blendw = NULL;
+    unsigned char *color = NULL;
 
     // In case file can not be read, return an empty model
     if (fileDataPtr == NULL) return model;
@@ -3659,6 +3660,25 @@ static Model LoadIQM(const char *fileName)
                     {
                         model.meshes[m].boneWeights[boneCounter] = blendw[i]/255.0f;
                         boneCounter++;
+                    }
+                }
+            } break;
+            case IQM_COLOR:
+            {
+                color = RL_MALLOC(iqmHeader->num_vertexes*4*sizeof(unsigned char));
+                //fseek(iqmFile, va[i].offset, SEEK_SET);
+                //fread(blendw, iqmHeader->num_vertexes*4*sizeof(unsigned char), 1, iqmFile);
+                memcpy(color, fileDataPtr + va[i].offset, iqmHeader->num_vertexes*4*sizeof(unsigned char));
+    
+                for (unsigned int m = 0; m < iqmHeader->num_meshes; m++)
+                {
+                    model.meshes[m].colors = RL_CALLOC(model.meshes[m].vertexCount*4, sizeof(unsigned char));
+    
+                    int vCounter = 0;
+                    for (unsigned int i = imesh[m].first_vertex*4; i < (imesh[m].first_vertex + imesh[m].num_vertexes)*4; i++)
+                    {
+                        model.meshes[m].colors[vCounter] = color[i];
+                        vCounter++;
                     }
                 }
             } break;
@@ -4299,6 +4319,40 @@ static Model LoadGLTF(const char *fileName)
                         {
                             // TODO: Support normalized unsigned byte/unsigned short weights
                             TRACELOG(LOG_WARNING, "MODEL: [%s] glTF normals must be float or int", fileName);
+                        }
+                    }
+                    else if (data->meshes[i].primitives[p].attributes[j].type == cgltf_attribute_type_color)
+                    {
+                        cgltf_accessor *acc = data->meshes[i].primitives[p].attributes[j].data;
+                        model.meshes[primitiveIndex].colors = RL_MALLOC(acc->count*4*sizeof(unsigned char));
+
+                        if (acc->component_type == cgltf_component_type_r_8u)
+                        {
+                            for (int a = 0; a < acc->count; a++)
+                            {
+                                GLTFReadValue(acc, a, model.meshes[primitiveIndex].colors + (a*4), 4, sizeof(unsigned char));
+                            }
+                        }
+                        if (acc->component_type == cgltf_component_type_r_16u)
+                        {
+                            TRACELOG(LOG_WARNING, "MODEL: [%s] converting glTF colors to unsigned char", fileName);
+                            for (int a = 0; a < acc->count; a++)
+                            {
+                                unsigned short readValue[4];
+                                for (int a = 0; a < acc->count; a++)
+                                {
+                                    GLTFReadValue(acc, a, readValue, 4, sizeof(unsigned short));
+                                    // 257 = 65535/255
+                                    model.meshes[primitiveIndex].colors[(a*4) + 0] = (unsigned char)(readValue[0] / 257);
+                                    model.meshes[primitiveIndex].colors[(a*4) + 1] = (unsigned char)(readValue[1] / 257);
+                                    model.meshes[primitiveIndex].colors[(a*4) + 2] = (unsigned char)(readValue[2] / 257);
+                                    model.meshes[primitiveIndex].colors[(a*4) + 3] = (unsigned char)(readValue[3] / 257);
+                                }
+                            }
+                        }
+                        else
+                        {
+                            TRACELOG(LOG_WARNING, "MODEL: [%s] glTF colors must be uchar or ushort", fileName);
                         }
                     }
                 }
