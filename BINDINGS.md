@@ -16,7 +16,7 @@ Here it is a list with the ones I'm aware of:
 | raylib-d           | 3.0 | [D](https://dlang.org/)               | https://github.com/onroundit/raylib-d     |
 | bindbc-raylib      | 3.0 | [D](https://dlang.org/)               | https://github.com/o3o/bindbc-raylib   |
 | dray               | 3.5 | [D](https://dlang.org/)               | https://github.com/xdrie/dray       |
-| raylib-go          | 3.0 | [Go](https://golang.org/)             | https://github.com/gen2brain/raylib-go  |
+| raylib-go          | 3.8-dev | [Go](https://golang.org/)             | https://github.com/gen2brain/raylib-go  |
 | raylib-goplus      | 2.6-dev | [Go](https://golang.org/)             | https://github.com/Lachee/raylib-goplus         |
 | ray-go             | 2.6-dev | [Go](https://golang.org/)             | https://github.com/hecate-tech/ray-go     |
 | go-raylib          | 3.5 | [Go](https://golang.org/)       | https://github.com/chunqian/go-raylib  |
