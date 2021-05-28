@@ -434,6 +434,9 @@ typedef struct CoreData {
             Vector2 offset;                 // Mouse offset
             Vector2 scale;                  // Mouse scaling
 
+            Vector2 delta;                  // Mouse movement per frame
+            Vector2 previousPosition;       // Previus frame position
+
             int cursor;                     // Tracks current mouse cursor
             bool cursorHidden;              // Track if cursor is hidden
             bool cursorOnScreen;            // Tracks if cursor is inside client area
@@ -3387,6 +3390,12 @@ Vector2 GetMousePosition(void)
     return position;
 }
 
+// Mouse movement per frame XY
+RLAPI Vector2 GetDeltaMouse(void)
+{
+    return CORE.Input.Mouse.delta;
+}
+
 // Set mouse position XY
 void SetMousePosition(int x, int y)
 {
@@ -4856,6 +4865,10 @@ static void PollInputEvents(void)
     // NOTE: Mouse input events polling is done asynchronously in another pthread - EventThread()
     // NOTE: Gamepad (Joystick) input events polling is done asynchonously in another pthread - GamepadThread()
 #endif
+
+    CORE.Input.Mouse.delta.x = CORE.Input.Mouse.position.x - CORE.Input.Mouse.previousPosition.x;
+    CORE.Input.Mouse.delta.y = CORE.Input.Mouse.position.y - CORE.Input.Mouse.previousPosition.y;
+    CORE.Input.Mouse.previousPosition = CORE.Input.Mouse.position;
 }
 
 // Copy back buffer to front buffers
