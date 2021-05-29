@@ -1389,23 +1389,28 @@ RMDEF Quaternion QuaternionFromMatrix(Matrix mat)
 RMDEF Matrix QuaternionToMatrix(Quaternion q)
 {
     Matrix result = MatrixIdentity();
+    
+    float a2 = q.x * q.x;
+    float b2 = q.y * q.y;
+    float c2 = q.z * q.z;
+    float ac = q.x * q.z;
+    float ab = q.x * q.y;
+    float bc = q.y * q.z;
+    float ad = q.w * q.x;
+    float bd = q.w * q.y;
+    float cd = q.w * q.z;
 
-    float a2 = 2*(q.x*q.x), b2=2*(q.y*q.y), c2=2*(q.z*q.z); //, d2=2*(q.w*q.w);
+    result.m0 = 1 - 2 * (b2 + c2);
+    result.m1 = 2 * (ab + cd);
+    result.m2 = 2 * (ac - bd);
 
-    float ab = 2*(q.x*q.y), ac=2*(q.x*q.z), bc=2*(q.y*q.z);
-    float ad = 2*(q.x*q.w), bd=2*(q.y*q.w), cd=2*(q.z*q.w);
+    result.m4 = 2 * (ab - cd);
+    result.m5 = 1 - 2 * (a2 + c2);
+    result.m6 = 2 * (bc + ad);
 
-    result.m0 = 1 - b2 - c2;
-    result.m1 = ab - cd;
-    result.m2 = ac + bd;
-
-    result.m4 = ab + cd;
-    result.m5 = 1 - a2 - c2;
-    result.m6 = bc - ad;
-
-    result.m8 = ac - bd;
-    result.m9 = bc + ad;
-    result.m10 = 1 - a2 - b2;
+    result.m8 = 2 * (ac + bd);
+    result.m9 = 2 * (bc - ad);
+    result.m10 = 1 - 2 * (a2 + b2);
 
     return result;
 }
