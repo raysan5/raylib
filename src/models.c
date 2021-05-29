@@ -1461,9 +1461,9 @@ void UpdateModelAnimation(Model model, ModelAnimation anim, int frame)
                     animVertex = Vector3Subtract(animVertex, inTranslation);
                     animVertex = Vector3RotateByQuaternion(animVertex, QuaternionMultiply(outRotation, QuaternionInvert(inRotation)));
                     animVertex = Vector3Add(animVertex, outTranslation);
-                    model.meshes[m].animVertices[vCounter]     += animVertex.x * boneWeight;
-                    model.meshes[m].animVertices[vCounter + 1] += animVertex.y * boneWeight;
-                    model.meshes[m].animVertices[vCounter + 2] += animVertex.z * boneWeight;
+                    model.meshes[m].animVertices[vCounter] += animVertex.x*boneWeight;
+                    model.meshes[m].animVertices[vCounter + 1] += animVertex.y*boneWeight;
+                    model.meshes[m].animVertices[vCounter + 2] += animVertex.z*boneWeight;
 
                     // Normals processing
                     // NOTE: We use meshes.baseNormals (default normal) to calculate meshes.normals (animated normals)
@@ -1471,9 +1471,9 @@ void UpdateModelAnimation(Model model, ModelAnimation anim, int frame)
                     {
                         animNormal = (Vector3){ model.meshes[m].normals[vCounter], model.meshes[m].normals[vCounter + 1], model.meshes[m].normals[vCounter + 2] };
                         animNormal = Vector3RotateByQuaternion(animNormal, QuaternionMultiply(outRotation, QuaternionInvert(inRotation)));
-                        model.meshes[m].animNormals[vCounter]     += animNormal.x * boneWeight;
-                        model.meshes[m].animNormals[vCounter + 1] += animNormal.y * boneWeight;
-                        model.meshes[m].animNormals[vCounter + 2] += animNormal.z * boneWeight;
+                        model.meshes[m].animNormals[vCounter] += animNormal.x*boneWeight;
+                        model.meshes[m].animNormals[vCounter + 1] += animNormal.y*boneWeight;
+                        model.meshes[m].animNormals[vCounter + 2] += animNormal.z*boneWeight;
                     }
                     boneCounter += 1;
                 }
