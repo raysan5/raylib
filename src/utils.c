@@ -155,7 +155,7 @@ void TraceLog(int logType, const char *text, ...)
 
     va_end(args);
 
-    if (logType == LOG_ERROR) exit(1);  // If error, exit program
+    if (logType == LOG_FATAL) exit(EXIT_FAILURE);  // If fatal logging, exit program
 
 #endif  // SUPPORT_TRACELOG
 }

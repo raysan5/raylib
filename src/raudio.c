@@ -276,25 +276,27 @@ typedef struct tagBITMAPINFOHEADER {
 // NOTE: Depends on data structure provided by the library
 // in charge of reading the different file types
 typedef enum {
-    MUSIC_AUDIO_NONE = 0,
-    MUSIC_AUDIO_WAV,
-    MUSIC_AUDIO_OGG,
-    MUSIC_AUDIO_FLAC,
-    MUSIC_AUDIO_MP3,
-    MUSIC_MODULE_XM,
-    MUSIC_MODULE_MOD
+    MUSIC_AUDIO_NONE = 0,   // No audio context loaded
+    MUSIC_AUDIO_WAV,        // WAV audio context
+    MUSIC_AUDIO_OGG,        // OGG audio context
+    MUSIC_AUDIO_FLAC,       // FLAC audio context
+    MUSIC_AUDIO_MP3,        // MP3 audio context
+    MUSIC_MODULE_XM,        // XM module audio context
+    MUSIC_MODULE_MOD        // MOD module audio context
 } MusicContextType;
 
 #if defined(RAUDIO_STANDALONE)
+// Trace log level
+// NOTE: Organized by priority level
 typedef enum {
-    LOG_ALL,
-    LOG_TRACE,
-    LOG_DEBUG,
-    LOG_INFO,
-    LOG_WARNING,
-    LOG_ERROR,
-    LOG_FATAL,
-    LOG_NONE
+    LOG_ALL = 0,        // Display all logs
+    LOG_TRACE,          // Trace logging, intended for internal use only
+    LOG_DEBUG,          // Debug logging, used for internal debugging, it should be disabled on release builds
+    LOG_INFO,           // Info logging, used for program execution info
+    LOG_WARNING,        // Warning logging, used on recoverable failures
+    LOG_ERROR,          // Error logging, used on unrecoverable failures
+    LOG_FATAL,          // Fatal logging, used to abort program: exit(EXIT_FAILURE)
+    LOG_NONE            // Disable logging
 } TraceLogLevel;
 #endif
 
