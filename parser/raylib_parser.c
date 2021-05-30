@@ -72,11 +72,11 @@
 // Function info data
 typedef struct FunctionInfo {
     char name[64];              // Function name
+    char desc[128];             // Function description (comment at the end)
     char retType[32];           // Return value type
     int paramCount;             // Number of function parameters
     char paramType[12][32];     // Parameters type (max: 12 parameters)
     char paramName[12][32];     // Parameters name (max: 12 parameters)
-    char desc[128];             // Function description (comment at the end)
 } FunctionInfo;
 
 // Struct info data
@@ -96,6 +96,7 @@ typedef struct EnumInfo {
     int valueCount;             // Number of values in enumerator
     char valueName[128][64];    // Value name definition (max: 128 values)
     int valueInt[128];          // Value integer (max: 128 values)
+    char valueDesc[128][64];    // Value description (max: 128 values)
 } EnumInfo;
 
 //----------------------------------------------------------------------------------
