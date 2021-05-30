@@ -3543,7 +3543,7 @@ static bool InitGraphicsDevice(int width, int height)
     CORE.Window.display.width = mode->width;
     CORE.Window.display.height = mode->height;
 
-    // Screen size security check
+    // Set screen width/height to the display width/height if they are 0
     if (CORE.Window.screen.width == 0) CORE.Window.screen.width = CORE.Window.display.width;
     if (CORE.Window.screen.height == 0) CORE.Window.screen.height = CORE.Window.display.height;
 #endif  // PLATFORM_DESKTOP
