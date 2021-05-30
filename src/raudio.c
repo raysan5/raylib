@@ -1428,13 +1428,13 @@ Music LoadMusicStreamFromMemory(const char *fileType, unsigned char* data, int d
 #if defined(SUPPORT_FILEFORMAT_MOD)
     else if (TextIsEqual(fileExtLower, ".mod"))
     {
-        jar_mod_context_t *ctxMod = RL_MALLOC(sizeof(jar_mod_context_t));
+        jar_mod_context_t *ctxMod = (jar_mod_context_t *)RL_MALLOC(sizeof(jar_mod_context_t));
         int result = 0;
 
         jar_mod_init(ctxMod);
 
-        // copy data to allocated memory for default UnloadMusicStream
-        unsigned char *newData = RL_MALLOC(dataSize);
+        // Copy data to allocated memory for default UnloadMusicStream
+        unsigned char *newData = (unsigned char *)RL_MALLOC(dataSize);
         int it = dataSize/sizeof(unsigned char);
         for (int i = 0; i < it; i++){
             newData[i] = data[i];

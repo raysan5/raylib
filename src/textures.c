@@ -1354,7 +1354,7 @@ void ImageResize(Image *image, int newWidth, int newHeight)
     if (fastPath)
     {
         int bytesPerPixel = GetPixelDataSize(1, 1, image->format);
-        unsigned char *output = RL_MALLOC(newWidth*newHeight*bytesPerPixel);
+        unsigned char *output = (unsigned char *)RL_MALLOC(newWidth*newHeight*bytesPerPixel);
 
         switch (image->format)
         {

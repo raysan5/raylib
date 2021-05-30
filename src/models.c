@@ -1027,7 +1027,7 @@ void DrawMeshInstanced(Mesh mesh, Material material, Matrix *transforms, int ins
     if (instancing)
     {
         // Create instances buffer
-        instanceTransforms = RL_MALLOC(instances*sizeof(float16));
+        instanceTransforms = (float16 *)RL_MALLOC(instances*sizeof(float16));
 
         // Fill buffer with instances transformations as float16 arrays
         for (int i = 0; i < instances; i++) instanceTransforms[i] = MatrixToFloatV(transforms[i]);

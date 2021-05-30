@@ -1272,7 +1272,7 @@ const char *TextSubtext(const char *text, int position, int length)
 
 // Replace text string
 // REQUIRES: strstr(), strncpy(), strcpy()
-// WARNING: Internally allocated memory must be freed by the user (if return != NULL)
+// WARNING: Returned buffer must be freed by the user (if return != NULL)
 char *TextReplace(char *text, const char *replace, const char *by)
 {
     // Sanity checks and initialization
@@ -1297,14 +1297,14 @@ char *TextReplace(char *text, const char *replace, const char *by)
     for (count = 0; (temp = strstr(insertPoint, replace)); count++) insertPoint = temp + replaceLen;
 
     // Allocate returning string and point temp to it
-    temp = result = RL_MALLOC(TextLength(text) + (byLen - replaceLen)*count + 1);
+    temp = result = (char *)RL_MALLOC(TextLength(text) + (byLen - replaceLen)*count + 1);
 
     if (!result) return NULL;   // Memory could not be allocated
 
     // First time through the loop, all the variable are set correctly from here on,
-    //    temp points to the end of the result string
-    //    insertPoint points to the next occurrence of replace in text
-    //    text points to the remainder of text after "end of replace"
+    //  - 'temp' points to the end of the result string
+    //  - 'insertPoint' points to the next occurrence of replace in text
+    //  - 'text' points to the remainder of text after "end of replace"
     while (count--)
     {
         insertPoint = strstr(text, replace);
