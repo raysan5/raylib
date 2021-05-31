@@ -191,10 +191,10 @@ int main(void)
             Ray ray = GetMouseRay(GetMousePosition(), camera);
 
             // Check collision between ray and box
-            bool collision = CheckCollisionRayBox(ray,
+            RayCollision collision = GetRayCollisionBox(ray,
                             (BoundingBox){(Vector3){ cubePosition.x - cubeSize.x/2, cubePosition.y - cubeSize.y/2, cubePosition.z - cubeSize.z/2 },
                                           (Vector3){ cubePosition.x + cubeSize.x/2, cubePosition.y + cubeSize.y/2, cubePosition.z + cubeSize.z/2 }});
-            if (collision)
+            if (collision.hit)
             {
             	// Generate new random colors
                 light = GenerateRandomColor(0.5f, 0.78f);
