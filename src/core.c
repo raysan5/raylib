@@ -270,12 +270,6 @@
     #include <emscripten/html5.h>       // Emscripten HTML5 library
 #endif
 
-#if defined(SUPPORT_COMPRESSION_API)
-    // NOTE: Those declarations require stb_image and stb_image_write definitions, included in textures module
-    unsigned char *stbi_zlib_compress(unsigned char *data, int data_len, int *out_len, int quality);
-    char *stbi_zlib_decode_malloc(char const *buffer, int len, int *outlen);
-#endif
-
 //----------------------------------------------------------------------------------
 // Defines and Macros
 //----------------------------------------------------------------------------------
