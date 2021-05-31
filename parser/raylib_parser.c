@@ -32,14 +32,14 @@
      
        <desc>
        typedef enum {
-           <valueName[0]> = <valueInt[0]>, <valueDesc[0]>
+           <valueName[0]> = <valueInteger[0]>, <valueDesc[0]>
            <valueName[1]>,
            <valueName[2]>, <valueDesc[2]>
            <valueName[3]>  <valueDesc[3]>
        } <name>;
        
        NOTE: Multiple options are supported: 
-          - If value is not provided, (<valueInt[i -1]> + 1) is assigned
+          - If value is not provided, (<valueInteger[i -1]> + 1) is assigned
           - Value description can be provided or not
           
     This parser could work with other C header files if mentioned constraints are followed.
@@ -95,7 +95,7 @@ typedef struct EnumInfo {
     char desc[64];              // Enum description
     int valueCount;             // Number of values in enumerator
     char valueName[128][64];    // Value name definition (max: 128 values)
-    int valueInt[128];          // Value integer (max: 128 values)
+    int valueInteger[128];      // Value integer (max: 128 values)
     char valueDesc[128][64];    // Value description (max: 128 values)
 } EnumInfo;
 
@@ -362,14 +362,14 @@ int main()
                             c++; n++;
                         }
                         
-                        if (integer[1] == 'x') enums[i].valueInt[enums[i].valueCount] = (int)strtol(integer, NULL, 16);
-                        else enums[i].valueInt[enums[i].valueCount] = atoi(integer);
+                        if (integer[1] == 'x') enums[i].valueInteger[enums[i].valueCount] = (int)strtol(integer, NULL, 16);
+                        else enums[i].valueInteger[enums[i].valueCount] = atoi(integer);
                     }
-                    else enums[i].valueInt[enums[i].valueCount] = (enums[i].valueInt[enums[i].valueCount - 1] + 1);
+                    else enums[i].valueInteger[enums[i].valueCount] = (enums[i].valueInteger[enums[i].valueCount - 1] + 1);
                     
                     // TODO: Parse value description if any
                 }
-                else enums[i].valueInt[enums[i].valueCount] = (enums[i].valueInt[enums[i].valueCount - 1] + 1);
+                else enums[i].valueInteger[enums[i].valueCount] = (enums[i].valueInteger[enums[i].valueCount - 1] + 1);
 
                 enums[i].valueCount++;
             }
@@ -480,7 +480,7 @@ int main()
     {
         printf("Enum %02i: %s (%i values)\n", i + 1, enums[i].name, enums[i].valueCount);
         //printf("Description: %s\n", enums[i].desc);
-        for (int e = 0; e < enums[i].valueCount; e++) printf("  Value %s: %i\n", enums[i].valueName[e], enums[i].valueInt[e]);
+        for (int e = 0; e < enums[i].valueCount; e++) printf("  Value %s: %i\n", enums[i].valueName[e], enums[i].valueInteger[e]);
     }
     
     // Print function info 

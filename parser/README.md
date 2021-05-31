@@ -32,7 +32,7 @@ This parser is specifically designed to work with raylib.h, so, it has some cons
 ```
    <desc>
    typedef enum {
-       <valueName[0]> = <valueInt[0]>, <valueDesc[0]>
+       <valueName[0]> = <valueInteger[0]>, <valueDesc[0]>
        <valueName[1]>,
        <valueName[2]>, <valueDesc[2]>
        <valueName[3]>  <valueDesc[3]>
@@ -41,7 +41,7 @@ This parser is specifically designed to work with raylib.h, so, it has some cons
    
 _NOTE: For enums, multiple options are supported:_
       
- - If value is not provided, (<valueInt[i -1]> + 1) is assigned
+ - If value is not provided, (<valueInteger[i -1]> + 1) is assigned
  - Value description can be provided or not
 
 ## Additional notes
