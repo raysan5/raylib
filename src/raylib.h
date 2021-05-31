@@ -866,7 +866,7 @@ typedef enum {
     GESTURE_SWIPE_DOWN  = 128,
     GESTURE_PINCH_IN    = 256,
     GESTURE_PINCH_OUT   = 512
-} Gestures;
+} Gesture;
 
 // Camera system modes
 typedef enum {
