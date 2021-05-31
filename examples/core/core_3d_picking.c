@@ -33,7 +33,7 @@ int main(void)
 
     Ray ray = { 0 };                    // Picking line ray
 
-    bool collision = false;
+    RayCollision collision = { 0 };
 
     SetCameraMode(camera, CAMERA_FREE); // Set a free camera mode
 
@@ -49,16 +49,16 @@ int main(void)
 
         if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT))
         {
-            if (!collision)
+            if (!collision.hit)
             {
                 ray = GetMouseRay(GetMousePosition(), camera);
 
                 // Check collision between ray and box
-                collision = CheckCollisionRayBox(ray,
+                collision = GetRayCollisionBox(ray,
                             (BoundingBox){(Vector3){ cubePosition.x - cubeSize.x/2, cubePosition.y - cubeSize.y/2, cubePosition.z - cubeSize.z/2 },
                                           (Vector3){ cubePosition.x + cubeSize.x/2, cubePosition.y + cubeSize.y/2, cubePosition.z + cubeSize.z/2 }});
             }
-            else collision = false;
+            else collision.hit = false;
         }
         //----------------------------------------------------------------------------------
 
@@ -70,7 +70,7 @@ int main(void)
 
             BeginMode3D(camera);
 
-                if (collision)
+                if (collision.hit)
                 {
                     DrawCube(cubePosition, cubeSize.x, cubeSize.y, cubeSize.z, RED);
                     DrawCubeWires(cubePosition, cubeSize.x, cubeSize.y, cubeSize.z, MAROON);
@@ -90,7 +90,7 @@ int main(void)
 
             DrawText("Try selecting the box with mouse!", 240, 10, 20, DARKGRAY);
 
-            if (collision) DrawText("BOX SELECTED", (screenWidth - MeasureText("BOX SELECTED", 30)) / 2, (int)(screenHeight * 0.1f), 30, GREEN);
+            if (collision.hit) DrawText("BOX SELECTED", (screenWidth - MeasureText("BOX SELECTED", 30)) / 2, (int)(screenHeight * 0.1f), 30, GREEN);
 
             DrawFPS(10, 10);
 
