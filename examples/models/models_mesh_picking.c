@@ -41,15 +41,17 @@ int main(void)
 
     Vector3 towerPos = { 0.0f, 0.0f, 0.0f };                    // Set model position
     BoundingBox towerBBox = GetMeshBoundingBox(tower.meshes[0]);   // Get mesh bounding box
-    bool hitMeshBBox = false;
-    bool hitTriangle = false;
 
     // Test triangle
-    Vector3 ta = (Vector3){ -25.0, 0.5, 0.0 };
-    Vector3 tb = (Vector3){ -4.0, 2.5, 1.0 };
-    Vector3 tc = (Vector3){ -8.0, 6.5, 0.0 };
+    Vector3 ta = (Vector3){ -25.0f, 0.5f, 0.0f };
+    Vector3 tb = (Vector3){ -4.0f, 2.5f, 1.0f };
+    Vector3 tc = (Vector3){ -8.0f, 6.5f, 0.0f };
 
     Vector3 bary = { 0.0f, 0.0f, 0.0f };
+
+    // Test sphere
+    Vector3 sp = (Vector3){ -30.0f, 5.0f, 5.0f };
+    float sr = 4.0f;
 
     SetCameraMode(camera, CAMERA_FREE); // Set a free camera mode
 
@@ -63,59 +65,67 @@ int main(void)
         UpdateCamera(&camera);          // Update camera
 
         // Display information about closest hit
-        RayHitInfo nearestHit = { 0 };
+        RayCollisionInfo nearestHit = { 0 };
         char *hitObjectName = "None";
         nearestHit.distance = FLT_MAX;
         nearestHit.hit = false;
         Color cursorColor = WHITE;
 
-        // Get ray and test against ground, triangle, and mesh
+        // Get ray and test against objects
         ray = GetMouseRay(GetMousePosition(), camera);
 
-        // Check ray collision aginst ground plane
-        RayHitInfo groundHitInfo = GetCollisionRayGround(ray, 0.0f);
+        // Check ray collision against ground plane
+        /*RayCollisionInfo groundHitInfo = GetCollisionRayQuad(ray, 0.0f);
 
         if ((groundHitInfo.hit) && (groundHitInfo.distance < nearestHit.distance))
         {
             nearestHit = groundHitInfo;
             cursorColor = GREEN;
             hitObjectName = "Ground";
-        }
+        }*/
 
         // Check ray collision against test triangle
-        RayHitInfo triHitInfo = GetCollisionRayTriangle(ray, ta, tb, tc);
+        RayCollisionInfo triHitInfo = GetCollisionRayTriangle(ray, ta, tb, tc);
 
         if ((triHitInfo.hit) && (triHitInfo.distance < nearestHit.distance))
         {
             nearestHit = triHitInfo;
-            cursorColor = PURPLE;
+            cursorColor = ORANGE;
             hitObjectName = "Triangle";
 
             bary = Vector3Barycenter(nearestHit.position, ta, tb, tc);
-            hitTriangle = true;
         }
-        else hitTriangle = false;
-
-        RayHitInfo meshHitInfo = { 0 };
+        
+        // Check ray collision against test sphere
+        RayCollisionInfo sphHitInfo = GetCollisionRaySphere(ray, sp, sr);
+        
+        if ((sphHitInfo.hit) && (sphHitInfo.distance < nearestHit.distance)) {
+            nearestHit = sphHitInfo;
+            cursorColor = ORANGE;
+            hitObjectName = "Sphere";
+        }
 
         // Check ray collision against bounding box first, before trying the full ray-mesh test
-        if (CheckCollisionRayBox(ray, towerBBox))
+        // Note: distance becomes negative if ray.position is inside the box!
+        RayCollisionInfo boxHitInfo = GetCollisionRayBox(ray, towerBBox);
+
+        if ((boxHitInfo.hit) && (boxHitInfo.distance < nearestHit.distance))
         {
-            hitMeshBBox = true;
+            nearestHit = boxHitInfo;
+            cursorColor = PURPLE;
+            hitObjectName = "Box";
 
             // Check ray collision against model
             // NOTE: It considers model.transform matrix!
-            meshHitInfo = GetCollisionRayModel(ray, tower);
+            RayCollisionInfo meshHitInfo = GetCollisionRayModel(ray, tower);
 
-            if ((meshHitInfo.hit) && (meshHitInfo.distance < nearestHit.distance))
+            if (meshHitInfo.hit)
             {
                 nearestHit = meshHitInfo;
                 cursorColor = ORANGE;
                 hitObjectName = "Mesh";
             }
         }
-
-        hitMeshBBox = false;
         //----------------------------------------------------------------------------------
 
         // Draw
@@ -136,8 +146,11 @@ int main(void)
                 DrawLine3D(tb, tc, PURPLE);
                 DrawLine3D(tc, ta, PURPLE);
 
+                // Draw the test sphere
+                DrawSphereWires(sp, sr, 8, 8, PURPLE);
+
                 // Draw the mesh bbox if we hit it
-                if (hitMeshBBox) DrawBoundingBox(towerBBox, LIME);
+                if (boxHitInfo.hit) DrawBoundingBox(towerBBox, LIME);
 
                 // If we hit something, draw the cursor at the hit point
                 if (nearestHit.hit)
@@ -152,9 +165,13 @@ int main(void)
 
                     DrawLine3D(nearestHit.position, normalEnd, RED);
                 }
-
-                DrawRay(ray, MAROON);
-
+                float scale = 10000;
+                DrawLine3D(Vector3Add(ray.position, Vector3Scale(ray.direction, 10)), Vector3Add(ray.position, Vector3Scale(ray.direction, scale)), RED);
+                Vector3 p1 = { 0, 0, 0 };
+                Vector3 p2 = { 10, 10, 10 };
+                DrawLine3D(ray.position, p1, RED);
+                DrawRay(ray, MAROON); // TODO
+                
                 DrawGrid(10, 10.0f);
 
             EndMode3D();
@@ -167,6 +184,7 @@ int main(void)
                 int ypos = 70;
 
                 DrawText(TextFormat("Distance: %3.2f", nearestHit.distance), 10, ypos, 10, BLACK);
+                if (nearestHit.distance < 0) DrawText("(Inside Box)", 100, ypos, 10, BLACK);
 
                 DrawText(TextFormat("Hit Pos: %3.2f %3.2f %3.2f",
                                     nearestHit.position.x,
@@ -178,7 +196,7 @@ int main(void)
                                     nearestHit.normal.y,
                                     nearestHit.normal.z), 10, ypos + 30, 10, BLACK);
 
-                if (hitTriangle) DrawText(TextFormat("Barycenter: %3.2f %3.2f %3.2f",  bary.x, bary.y, bary.z), 10, ypos + 45, 10, BLACK);
+                if (triHitInfo.hit) DrawText(TextFormat("Barycenter: %3.2f %3.2f %3.2f",  bary.x, bary.y, bary.z), 10, ypos + 45, 10, BLACK);
             }
 
             DrawText("Use Mouse to Move Camera", 10, 430, 10, GRAY);
