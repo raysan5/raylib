@@ -973,7 +973,7 @@ RLAPI void BeginTextureMode(RenderTexture2D target);              // Begin drawi
 RLAPI void EndTextureMode(void);                                  // Ends drawing to render texture
 RLAPI void BeginShaderMode(Shader shader);                        // Begin custom shader drawing
 RLAPI void EndShaderMode(void);                                   // End custom shader drawing (use default shader)
-RLAPI void BeginBlendMode(int mode);                              // Begin blending mode (alpha, additive, multiplied)
+RLAPI void BeginBlendMode(int mode);                              // Begin blending mode (alpha, additive, multiplied, subtract, custom)
 RLAPI void EndBlendMode(void);                                    // End blending mode (reset to default: alpha blending)
 RLAPI void BeginScissorMode(int x, int y, int width, int height); // Begin scissor mode (define screen area for following drawing)
 RLAPI void EndScissorMode(void);                                  // End scissor mode

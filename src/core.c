@@ -2034,8 +2034,8 @@ void EndShaderMode(void)
     rlSetShader(rlGetShaderDefault());
 }
 
-// Begin blending mode (alpha, additive, multiplied)
-// NOTE: Only 3 blending modes supported, default blend mode is alpha
+// Begin blending mode (alpha, additive, multiplied, subtract, custom)
+// NOTE: Blend modes supported are enumerated in BlendMode enum
 void BeginBlendMode(int mode)
 {
     rlSetBlendMode(mode);
