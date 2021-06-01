@@ -326,7 +326,7 @@ RMDEF Vector2 Vector2MoveTowards(Vector2 v, Vector2 target, float maxDistance)
     float dy = target.y - v.y;
     float value = (dx*dx) + (dy*dy);
 
-    if ((value == 0) || ((maxDistance >= 0) && (value <= maxDistance*maxDistance))) result = target;
+    if ((value == 0) || ((maxDistance >= 0) && (value <= maxDistance * maxDistance))) return target;
 
     float dist = sqrtf(value);
 
