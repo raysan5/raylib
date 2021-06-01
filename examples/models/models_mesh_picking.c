@@ -81,7 +81,7 @@ int main(void)
         ray = GetMouseRay(GetMousePosition(), camera);
 
         // Check ray collision against ground quad
-        RayCollision collision = GetRayCollisionQuad(ray, g0, g1, g2, g3);
+        RayCollision groundHitInfo = GetRayCollisionQuad(ray, g0, g1, g2, g3);
         DrawPoint3D(g0, RED);
 
         if ((groundHitInfo.hit) && (groundHitInfo.distance < collision.distance))
@@ -104,10 +104,10 @@ int main(void)
         }
         
         // Check ray collision against test sphere
-        RayCollision sphHitInfo = GetRayCollisionSphere(ray, sp, sr);
+        RayCollision sphereHitInfo = GetRayCollisionSphere(ray, sp, sr);
         
-        if ((sphHitInfo.hit) && (sphHitInfo.distance < nearestHit.distance)) {
-            nearestHit = sphHitInfo;
+        if ((sphereHitInfo.hit) && (sphereHitInfo.distance < collision.distance)) {
+            collision = sphereHitInfo;
             cursorColor = ORANGE;
             hitObjectName = "Sphere";
         }
@@ -115,7 +115,7 @@ int main(void)
         // Check ray collision against bounding box first, before trying the full ray-mesh test
         RayCollision boxHitInfo = GetRayCollisionBox(ray, towerBBox);
 
-        if ((boxHitInfo.hit) && (boxHitInfo.distance < nearestHit.distance))
+        if ((boxHitInfo.hit) && (boxHitInfo.distance < collision.distance))
         {
             collision = boxHitInfo;
             cursorColor = ORANGE;

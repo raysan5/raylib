@@ -3204,11 +3204,11 @@ RayCollision GetRayCollisionTriangle(Ray ray, Vector3 p1, Vector3 p2, Vector3 p3
 // Get collision info between ray and quad
 // NOTE: The points are expected to be in counter-clockwise winding
 RayCollision GetRayCollisionQuad(Ray ray, Vector3 p1, Vector3 p2, Vector3 p3, Vector3 p4) {
-    RayCollision result = { 0 };
+    RayCollision collision = { 0 };
 
-    result = GetRayCollisionTriangle(ray, p1, p2, p4);
+    collision = GetRayCollisionTriangle(ray, p1, p2, p4);
 
-    if (!result.hit) result = GetRayCollisionTriangle(ray, p2, p3, p4);
+    if (!collision.hit) collision = GetRayCollisionTriangle(ray, p2, p3, p4);
 
     return collision;
 }
