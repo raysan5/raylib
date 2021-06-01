@@ -82,7 +82,6 @@ int main(void)
 
         // Check ray collision against ground quad
         RayCollision groundHitInfo = GetRayCollisionQuad(ray, g0, g1, g2, g3);
-        DrawPoint3D(g0, RED);
 
         if ((groundHitInfo.hit) && (groundHitInfo.distance < collision.distance))
         {
