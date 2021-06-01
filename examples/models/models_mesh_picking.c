@@ -65,7 +65,7 @@ int main(void)
         UpdateCamera(&camera);          // Update camera
 
         // Display information about closest hit
-        RayCollisionInfo nearestHit = { 0 };
+        RayCollision nearestHit = { 0 };
         char *hitObjectName = "None";
         nearestHit.distance = FLT_MAX;
         nearestHit.hit = false;
@@ -75,7 +75,7 @@ int main(void)
         ray = GetMouseRay(GetMousePosition(), camera);
 
         // Check ray collision against ground plane
-        /*RayCollisionInfo groundHitInfo = GetCollisionRayQuad(ray, 0.0f);
+        /*RayCollision groundHitInfo = GetCollisionRayQuad(ray, 0.0f);
 
         if ((groundHitInfo.hit) && (groundHitInfo.distance < nearestHit.distance))
         {
@@ -85,7 +85,7 @@ int main(void)
         }*/
 
         // Check ray collision against test triangle
-        RayCollisionInfo triHitInfo = GetCollisionRayTriangle(ray, ta, tb, tc);
+        RayCollision triHitInfo = GetRayCollisionTriangle(ray, ta, tb, tc);
 
         if ((triHitInfo.hit) && (triHitInfo.distance < nearestHit.distance))
         {
@@ -93,11 +93,11 @@ int main(void)
             cursorColor = ORANGE;
             hitObjectName = "Triangle";
 
-            bary = Vector3Barycenter(nearestHit.position, ta, tb, tc);
+            bary = Vector3Barycenter(nearestHit.point, ta, tb, tc);
         }
         
         // Check ray collision against test sphere
-        RayCollisionInfo sphHitInfo = GetCollisionRaySphere(ray, sp, sr);
+        RayCollision sphHitInfo = GetRayCollisionSphere(ray, sp, sr);
         
         if ((sphHitInfo.hit) && (sphHitInfo.distance < nearestHit.distance)) {
             nearestHit = sphHitInfo;
@@ -106,18 +106,17 @@ int main(void)
         }
 
         // Check ray collision against bounding box first, before trying the full ray-mesh test
-        // Note: distance becomes negative if ray.position is inside the box!
-        RayCollisionInfo boxHitInfo = GetCollisionRayBox(ray, towerBBox);
+        RayCollision boxHitInfo = GetRayCollisionBox(ray, towerBBox);
 
         if ((boxHitInfo.hit) && (boxHitInfo.distance < nearestHit.distance))
         {
             nearestHit = boxHitInfo;
-            cursorColor = PURPLE;
+            cursorColor = ORANGE;
             hitObjectName = "Box";
 
             // Check ray collision against model
             // NOTE: It considers model.transform matrix!
-            RayCollisionInfo meshHitInfo = GetCollisionRayModel(ray, tower);
+            RayCollision meshHitInfo = GetRayCollisionModel(ray, tower);
 
             if (meshHitInfo.hit)
             {
@@ -155,22 +154,18 @@ int main(void)
                 // If we hit something, draw the cursor at the hit point
                 if (nearestHit.hit)
                 {
-                    DrawCube(nearestHit.position, 0.3f, 0.3f, 0.3f, cursorColor);
-                    DrawCubeWires(nearestHit.position, 0.3f, 0.3f, 0.3f, RED);
+                    DrawCube(nearestHit.point, 0.3f, 0.3f, 0.3f, cursorColor);
+                    DrawCubeWires(nearestHit.point, 0.3f, 0.3f, 0.3f, RED);
 
                     Vector3 normalEnd;
-                    normalEnd.x = nearestHit.position.x + nearestHit.normal.x;
-                    normalEnd.y = nearestHit.position.y + nearestHit.normal.y;
-                    normalEnd.z = nearestHit.position.z + nearestHit.normal.z;
+                    normalEnd.x = nearestHit.point.x + nearestHit.normal.x;
+                    normalEnd.y = nearestHit.point.y + nearestHit.normal.y;
+                    normalEnd.z = nearestHit.point.z + nearestHit.normal.z;
 
-                    DrawLine3D(nearestHit.position, normalEnd, RED);
+                    DrawLine3D(nearestHit.point, normalEnd, RED);
                 }
-                float scale = 10000;
-                DrawLine3D(Vector3Add(ray.position, Vector3Scale(ray.direction, 10)), Vector3Add(ray.position, Vector3Scale(ray.direction, scale)), RED);
-                Vector3 p1 = { 0, 0, 0 };
-                Vector3 p2 = { 10, 10, 10 };
-                DrawLine3D(ray.position, p1, RED);
-                DrawRay(ray, MAROON); // TODO
+
+                DrawRay(ray, MAROON);
                 
                 DrawGrid(10, 10.0f);
 
@@ -184,19 +179,19 @@ int main(void)
                 int ypos = 70;
 
                 DrawText(TextFormat("Distance: %3.2f", nearestHit.distance), 10, ypos, 10, BLACK);
-                if (nearestHit.distance < 0) DrawText("(Inside Box)", 100, ypos, 10, BLACK);
 
                 DrawText(TextFormat("Hit Pos: %3.2f %3.2f %3.2f",
-                                    nearestHit.position.x,
-                                    nearestHit.position.y,
-                                    nearestHit.position.z), 10, ypos + 15, 10, BLACK);
+                                    nearestHit.point.x,
+                                    nearestHit.point.y,
+                                    nearestHit.point.z), 10, ypos + 15, 10, BLACK);
 
                 DrawText(TextFormat("Hit Norm: %3.2f %3.2f %3.2f",
                                     nearestHit.normal.x,
                                     nearestHit.normal.y,
                                     nearestHit.normal.z), 10, ypos + 30, 10, BLACK);
 
-                if (triHitInfo.hit) DrawText(TextFormat("Barycenter: %3.2f %3.2f %3.2f",  bary.x, bary.y, bary.z), 10, ypos + 45, 10, BLACK);
+                if (triHitInfo.hit && strcmp(hitObjectName, "Triangle") == 0)
+                    DrawText(TextFormat("Barycenter: %3.2f %3.2f %3.2f",  bary.x, bary.y, bary.z), 10, ypos + 45, 10, BLACK);
             }
 
             DrawText("Use Mouse to Move Camera", 10, 430, 10, GRAY);
