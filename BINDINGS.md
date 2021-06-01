@@ -8,7 +8,7 @@ Here it is a list with the ones I'm aware of:
 |:------------------:|:-------------: | :--------:|----------------------------------------------------------------------|
 | raylib             | **3.7** | [C](https://en.wikipedia.org/wiki/C_(programming_language))    | https://github.com/raysan5/raylib    |
 | raylib-cpp         | 3.7 | [C++](https://en.wikipedia.org/wiki/C%2B%2B)                             | https://github.com/robloach/raylib-cpp      |
-| Raylib-cs          | 3.5 | [C#](https://en.wikipedia.org/wiki/C_Sharp_(programming_language))       | https://github.com/ChrisDill/Raylib-cs      |
+| Raylib-cs          | 3.7 | [C#](https://en.wikipedia.org/wiki/C_Sharp_(programming_language))       | https://github.com/ChrisDill/Raylib-cs      |
 | raylib-cppsharp    | 2.5 | [C#](https://en.wikipedia.org/wiki/C_Sharp_(programming_language))       | https://github.com/phxvyper/raylib-cppsharp |
 | raylib-boo         | 3.7 | [Boo](http://boo-language.github.io/) | https://github.com/Rabios/raylib-boo          |
 | RaylibFS           | 2.5 | [F#](https://fsharp.org/)             | https://github.com/dallinbeutler/RaylibFS     |
@@ -16,7 +16,7 @@ Here it is a list with the ones I'm aware of:
 | raylib-d           | 3.0 | [D](https://dlang.org/)               | https://github.com/onroundit/raylib-d     |
 | bindbc-raylib      | 3.0 | [D](https://dlang.org/)               | https://github.com/o3o/bindbc-raylib   |
 | dray               | 3.5 | [D](https://dlang.org/)               | https://github.com/xdrie/dray       |
-| raylib-go          | 3.0 | [Go](https://golang.org/)             | https://github.com/gen2brain/raylib-go  |
+| raylib-go          | 3.8-dev | [Go](https://golang.org/)             | https://github.com/gen2brain/raylib-go  |
 | raylib-goplus      | 2.6-dev | [Go](https://golang.org/)             | https://github.com/Lachee/raylib-goplus         |
 | ray-go             | 2.6-dev | [Go](https://golang.org/)             | https://github.com/hecate-tech/ray-go     |
 | go-raylib          | 3.5 | [Go](https://golang.org/)       | https://github.com/chunqian/go-raylib  |

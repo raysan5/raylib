@@ -1,13 +1,3 @@
-/*******************************************************************************************
-*
-*   rPBR [shader] - Background skybox fragment shader
-*
-*   Copyright (c) 2017 Victor Fisac
-*
-*    19-Jun-2020 - modified by Giuseppe Mastrangelo (@peppemas) - VFlip Support
-*
-**********************************************************************************************/
-
 #version 330
 
 // Input vertex attributes (from vertex shader)

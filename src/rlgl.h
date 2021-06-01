@@ -329,16 +329,17 @@ typedef enum {
         int *locs;              // Shader locations array (MAX_SHADER_LOCATIONS)
     } Shader;
 
-    // TraceLog message types
+    // Trace log level
+    // NOTE: Organized by priority level
     typedef enum {
-        LOG_ALL,
-        LOG_TRACE,
-        LOG_DEBUG,
-        LOG_INFO,
-        LOG_WARNING,
-        LOG_ERROR,
-        LOG_FATAL,
-        LOG_NONE
+        LOG_ALL = 0,        // Display all logs
+        LOG_TRACE,          // Trace logging, intended for internal use only
+        LOG_DEBUG,          // Debug logging, used for internal debugging, it should be disabled on release builds
+        LOG_INFO,           // Info logging, used for program execution info
+        LOG_WARNING,        // Warning logging, used on recoverable failures
+        LOG_ERROR,          // Error logging, used on unrecoverable failures
+        LOG_FATAL,          // Fatal logging, used to abort program: exit(EXIT_FAILURE)
+        LOG_NONE            // Disable logging
     } TraceLogLevel;
 
     // Texture formats (support depends on OpenGL version)
@@ -1685,7 +1686,7 @@ void rlLoadExtensions(void *loader)
 #if defined(SUPPORT_GL_DETAILS_INFO)
     // Get supported extensions list
     // WARNING: glGetStringi() not available on OpenGL 2.1
-    char **extList = RL_MALLOC(sizeof(char *)*numExt);
+    char **extList = RL_MALLOC(numExt*sizeof(char *));
     TRACELOG(LOG_INFO, "GL: OpenGL extensions:");
     for (int i = 0; i < numExt; i++)
     {
@@ -1966,7 +1967,7 @@ RenderBatch rlLoadRenderBatch(int numBuffers, int bufferElements)
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     // Initialize CPU (RAM) vertex buffers (position, texcoord, color data and indexes)
     //--------------------------------------------------------------------------------------------
-    batch.vertexBuffer = (VertexBuffer *)RL_MALLOC(sizeof(VertexBuffer)*numBuffers);
+    batch.vertexBuffer = (VertexBuffer *)RL_MALLOC(numBuffers*sizeof(VertexBuffer));
 
     for (int i = 0; i < numBuffers; i++)
     {

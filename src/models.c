@@ -1027,7 +1027,7 @@ void DrawMeshInstanced(Mesh mesh, Material material, Matrix *transforms, int ins
     if (instancing)
     {
         // Create instances buffer
-        instanceTransforms = RL_MALLOC(instances*sizeof(float16));
+        instanceTransforms = (float16 *)RL_MALLOC(instances*sizeof(float16));
 
         // Fill buffer with instances transformations as float16 arrays
         for (int i = 0; i < instances; i++) instanceTransforms[i] = MatrixToFloatV(transforms[i]);
@@ -1461,9 +1461,9 @@ void UpdateModelAnimation(Model model, ModelAnimation anim, int frame)
                     animVertex = Vector3Subtract(animVertex, inTranslation);
                     animVertex = Vector3RotateByQuaternion(animVertex, QuaternionMultiply(outRotation, QuaternionInvert(inRotation)));
                     animVertex = Vector3Add(animVertex, outTranslation);
-                    model.meshes[m].animVertices[vCounter]     += animVertex.x * boneWeight;
-                    model.meshes[m].animVertices[vCounter + 1] += animVertex.y * boneWeight;
-                    model.meshes[m].animVertices[vCounter + 2] += animVertex.z * boneWeight;
+                    model.meshes[m].animVertices[vCounter] += animVertex.x*boneWeight;
+                    model.meshes[m].animVertices[vCounter + 1] += animVertex.y*boneWeight;
+                    model.meshes[m].animVertices[vCounter + 2] += animVertex.z*boneWeight;
 
                     // Normals processing
                     // NOTE: We use meshes.baseNormals (default normal) to calculate meshes.normals (animated normals)
@@ -1471,9 +1471,9 @@ void UpdateModelAnimation(Model model, ModelAnimation anim, int frame)
                     {
                         animNormal = (Vector3){ model.meshes[m].normals[vCounter], model.meshes[m].normals[vCounter + 1], model.meshes[m].normals[vCounter + 2] };
                         animNormal = Vector3RotateByQuaternion(animNormal, QuaternionMultiply(outRotation, QuaternionInvert(inRotation)));
-                        model.meshes[m].animNormals[vCounter]     += animNormal.x * boneWeight;
-                        model.meshes[m].animNormals[vCounter + 1] += animNormal.y * boneWeight;
-                        model.meshes[m].animNormals[vCounter + 2] += animNormal.z * boneWeight;
+                        model.meshes[m].animNormals[vCounter] += animNormal.x*boneWeight;
+                        model.meshes[m].animNormals[vCounter + 1] += animNormal.y*boneWeight;
+                        model.meshes[m].animNormals[vCounter + 2] += animNormal.z*boneWeight;
                     }
                     boneCounter += 1;
                 }
@@ -2979,53 +2979,32 @@ bool CheckCollisionBoxSphere(BoundingBox box, Vector3 center, float radius)
     return collision;
 }
 
-// Detect collision between ray and sphere
-bool CheckCollisionRaySphere(Ray ray, Vector3 center, float radius)
+// Get collision info between ray and sphere
+RayCollision GetRayCollisionSphere(Ray ray, Vector3 center, float radius)
 {
-    bool collision = false;
+    RayCollision collision = { 0 };
 
     Vector3 raySpherePos = Vector3Subtract(center, ray.position);
     float distance = Vector3Length(raySpherePos);
     float vector = Vector3DotProduct(raySpherePos, ray.direction);
     float d = radius*radius - (distance*distance - vector*vector);
 
-    if (d >= 0.0f) collision = true;
-
-    return collision;
-}
-
-// Detect collision between ray and sphere with extended parameters and collision point detection
-bool CheckCollisionRaySphereEx(Ray ray, Vector3 center, float radius, Vector3 *collisionPoint)
-{
-    bool collision = false;
-
-    Vector3 raySpherePos = Vector3Subtract(center, ray.position);
-    float distance = Vector3Length(raySpherePos);
-    float vector = Vector3DotProduct(raySpherePos, ray.direction);
-    float d = radius*radius - (distance*distance - vector*vector);
-
-    if (d >= 0.0f) collision = true;
+    if (d >= 0.0f) collision.hit = true;
 
     // Check if ray origin is inside the sphere to calculate the correct collision point
-    float collisionDistance = 0;
-
-    if (distance < radius) collisionDistance = vector + sqrtf(d);
-    else collisionDistance = vector - sqrtf(d);
+    if (distance < radius) collision.distance = vector + sqrtf(d);
+    else collision.distance = vector - sqrtf(d);
 
     // Calculate collision point
-    Vector3 cPoint = Vector3Add(ray.position, Vector3Scale(ray.direction, collisionDistance));
-
-    collisionPoint->x = cPoint.x;
-    collisionPoint->y = cPoint.y;
-    collisionPoint->z = cPoint.z;
+    collision.point = Vector3Add(ray.position, Vector3Scale(ray.direction, collision.distance));
 
     return collision;
 }
 
-// Detect collision between ray and bounding box
-bool CheckCollisionRayBox(Ray ray, BoundingBox box)
+// Get collision info between ray and box
+RayCollision GetRayCollisionBox(Ray ray, BoundingBox box)
 {
-    bool collision = false;
+    RayCollision collision = { 0 };
 
     float t[8] = { 0 };
     t[0] = (box.min.x - ray.position.x)/ray.direction.x;
@@ -3037,14 +3016,17 @@ bool CheckCollisionRayBox(Ray ray, BoundingBox box)
     t[6] = (float)fmax(fmax(fmin(t[0], t[1]), fmin(t[2], t[3])), fmin(t[4], t[5]));
     t[7] = (float)fmin(fmin(fmax(t[0], t[1]), fmax(t[2], t[3])), fmax(t[4], t[5]));
 
-    collision = !(t[7] < 0 || t[6] > t[7]);
+    collision.hit = !(t[7] < 0 || t[6] > t[7]);
+    
+    // TODO: Calculate other RayCollision data
 
     return collision;
 }
+
 // Get collision info between ray and mesh
-RayHitInfo GetCollisionRayMesh(Ray ray, Mesh mesh, Matrix transform)
+RayCollision GetRayCollisionMesh(Ray ray, Mesh mesh, Matrix transform)
 {
-    RayHitInfo result = { 0 };
+    RayCollision collision = { 0 };
 
     // Check if mesh vertex data on CPU for testing
     if (mesh.vertices != NULL)
@@ -3074,47 +3056,49 @@ RayHitInfo GetCollisionRayMesh(Ray ray, Mesh mesh, Matrix transform)
             b = Vector3Transform(b, transform);
             c = Vector3Transform(c, transform);
 
-            RayHitInfo triHitInfo = GetCollisionRayTriangle(ray, a, b, c);
+            RayCollision triHitInfo = GetRayCollisionTriangle(ray, a, b, c);
 
             if (triHitInfo.hit)
             {
                 // Save the closest hit triangle
-                if ((!result.hit) || (result.distance > triHitInfo.distance)) result = triHitInfo;
+                if ((!collision.hit) || (collision.distance > triHitInfo.distance)) collision = triHitInfo;
             }
         }
     }
-    return result;
+    
+    return collision;
 }
 
 // Get collision info between ray and model
-RayHitInfo GetCollisionRayModel(Ray ray, Model model)
+RayCollision GetRayCollisionModel(Ray ray, Model model)
 {
-    RayHitInfo result = { 0 };
+    RayCollision collision = { 0 };
 
     for (int m = 0; m < model.meshCount; m++)
     {
-        RayHitInfo meshHitInfo = GetCollisionRayMesh(ray, model.meshes[m], model.transform);
+        RayCollision meshHitInfo = GetRayCollisionMesh(ray, model.meshes[m], model.transform);
 
         if (meshHitInfo.hit)
         {
             // Save the closest hit mesh
-            if ((!result.hit) || (result.distance > meshHitInfo.distance)) result = meshHitInfo;
+            if ((!collision.hit) || (collision.distance > meshHitInfo.distance)) collision = meshHitInfo;
         }
     }
 
-    return result;
+    return collision;
 }
 
 // Get collision info between ray and triangle
 // NOTE: Based on https://en.wikipedia.org/wiki/M%C3%B6ller%E2%80%93Trumbore_intersection_algorithm
-RayHitInfo GetCollisionRayTriangle(Ray ray, Vector3 p1, Vector3 p2, Vector3 p3)
+RayCollision GetRayCollisionTriangle(Ray ray, Vector3 p1, Vector3 p2, Vector3 p3)
 {
     #define EPSILON 0.000001        // A small number
 
-    Vector3 edge1, edge2;
+    RayCollision collision = { 0 };
+    Vector3 edge1 = { 0 };
+    Vector3 edge2 = { 0 };
     Vector3 p, q, tv;
     float det, invDet, u, v, t;
-    RayHitInfo result = {0};
 
     // Find vectors for two edges sharing V1
     edge1 = Vector3Subtract(p2, p1);
@@ -3127,7 +3111,7 @@ RayHitInfo GetCollisionRayTriangle(Ray ray, Vector3 p1, Vector3 p2, Vector3 p3)
     det = Vector3DotProduct(edge1, p);
 
     // Avoid culling!
-    if ((det > -EPSILON) && (det < EPSILON)) return result;
+    if ((det > -EPSILON) && (det < EPSILON)) return collision;
 
     invDet = 1.0f/det;
 
@@ -3138,7 +3122,7 @@ RayHitInfo GetCollisionRayTriangle(Ray ray, Vector3 p1, Vector3 p2, Vector3 p3)
     u = Vector3DotProduct(tv, p)*invDet;
 
     // The intersection lies outside of the triangle
-    if ((u < 0.0f) || (u > 1.0f)) return result;
+    if ((u < 0.0f) || (u > 1.0f)) return collision;
 
     // Prepare to test v parameter
     q = Vector3CrossProduct(tv, edge1);
@@ -3147,29 +3131,28 @@ RayHitInfo GetCollisionRayTriangle(Ray ray, Vector3 p1, Vector3 p2, Vector3 p3)
     v = Vector3DotProduct(ray.direction, q)*invDet;
 
     // The intersection lies outside of the triangle
-    if ((v < 0.0f) || ((u + v) > 1.0f)) return result;
+    if ((v < 0.0f) || ((u + v) > 1.0f)) return collision;
 
     t = Vector3DotProduct(edge2, q)*invDet;
 
     if (t > EPSILON)
     {
         // Ray hit, get hit point and normal
-        result.hit = true;
-        result.distance = t;
-        result.hit = true;
-        result.normal = Vector3Normalize(Vector3CrossProduct(edge1, edge2));
-        result.position = Vector3Add(ray.position, Vector3Scale(ray.direction, t));
+        collision.hit = true;
+        collision.distance = t;
+        collision.normal = Vector3Normalize(Vector3CrossProduct(edge1, edge2));
+        collision.point = Vector3Add(ray.position, Vector3Scale(ray.direction, t));
     }
 
-    return result;
+    return collision;
 }
 
 // Get collision info between ray and ground plane (Y-normal plane)
-RayHitInfo GetCollisionRayGround(Ray ray, float groundHeight)
+RayCollision GetRayCollisionGround(Ray ray, float groundHeight)
 {
     #define EPSILON 0.000001        // A small number
 
-    RayHitInfo result = { 0 };
+    RayCollision collision = { 0 };
 
     if (fabsf(ray.direction.y) > EPSILON)
     {
@@ -3177,15 +3160,15 @@ RayHitInfo GetCollisionRayGround(Ray ray, float groundHeight)
 
         if (distance >= 0.0)
         {
-            result.hit = true;
-            result.distance = distance;
-            result.normal = (Vector3){ 0.0, 1.0, 0.0 };
-            result.position = Vector3Add(ray.position, Vector3Scale(ray.direction, distance));
-            result.position.y = groundHeight;
+            collision.hit = true;
+            collision.distance = distance;
+            collision.normal = (Vector3){ 0.0, 1.0, 0.0 };
+            collision.point = Vector3Add(ray.position, Vector3Scale(ray.direction, distance));
+            collision.point.y = groundHeight;
         }
     }
 
-    return result;
+    return collision;
 }
 
 //----------------------------------------------------------------------------------
@@ -3205,11 +3188,11 @@ static Model LoadOBJ(const char *fileName)
     tinyobj_material_t *materials = NULL;
     unsigned int materialCount = 0;
 
-    char *fileData = LoadFileText(fileName);
+    char *fileText = LoadFileText(fileName);
 
-    if (fileData != NULL)
+    if (fileText != NULL)
     {
-        unsigned int dataSize = (unsigned int)strlen(fileData);
+        unsigned int dataSize = (unsigned int)strlen(fileText);
         char currentDir[1024] = { 0 };
         strcpy(currentDir, GetWorkingDirectory());
         const char *workingDir = GetDirectoryPath(fileName);
@@ -3219,7 +3202,7 @@ static Model LoadOBJ(const char *fileName)
         }
 
         unsigned int flags = TINYOBJ_FLAG_TRIANGULATE;
-        int ret = tinyobj_parse_obj(&attrib, &meshes, &meshCount, &materials, &materialCount, fileData, dataSize, flags);
+        int ret = tinyobj_parse_obj(&attrib, &meshes, &meshCount, &materials, &materialCount, fileText, dataSize, flags);
 
         if (ret != TINYOBJ_SUCCESS) TRACELOG(LOG_WARNING, "MODEL: [%s] Failed to load OBJ data", fileName);
         else TRACELOG(LOG_INFO, "MODEL: [%s] OBJ data loaded successfully: %i meshes / %i materials", fileName, meshCount, materialCount);
@@ -3346,9 +3329,9 @@ static Model LoadOBJ(const char *fileName)
         tinyobj_shapes_free(meshes, meshCount);
         tinyobj_materials_free(materials, materialCount);
 
-        RL_FREE(fileData);
+        UnloadFileText(fileText);
+        
         RL_FREE(matFaces);
-
         RL_FREE(vCount);
         RL_FREE(vtCount);
         RL_FREE(vnCount);
@@ -3458,7 +3441,7 @@ static Model LoadIQM(const char *fileName)
         IQM_TANGENT      = 3,       // NOTE: Tangents unused by default
         IQM_BLENDINDEXES = 4,
         IQM_BLENDWEIGHTS = 5,
-        IQM_COLOR        = 6,       // NOTE: Vertex colors unused by default
+        IQM_COLOR        = 6,
         IQM_CUSTOM       = 0x10     // NOTE: Custom vertex values unused by default
     };
 
@@ -3474,6 +3457,7 @@ static Model LoadIQM(const char *fileName)
     float *text = NULL;
     char *blendi = NULL;
     unsigned char *blendw = NULL;
+    unsigned char *color = NULL;
 
     // In case file can not be read, return an empty model
     if (fileDataPtr == NULL) return model;
@@ -3496,7 +3480,7 @@ static Model LoadIQM(const char *fileName)
     //fileDataPtr += sizeof(IQMHeader);       // Move file data pointer
 
     // Meshes data processing
-    imesh = RL_MALLOC(sizeof(IQMMesh)*iqmHeader->num_meshes);
+    imesh = RL_MALLOC(iqmHeader->num_meshes*sizeof(IQMMesh));
     //fseek(iqmFile, iqmHeader->ofs_meshes, SEEK_SET);
     //fread(imesh, sizeof(IQMMesh)*iqmHeader->num_meshes, 1, iqmFile);
     memcpy(imesh, fileDataPtr + iqmHeader->ofs_meshes, iqmHeader->num_meshes*sizeof(IQMMesh));
@@ -3659,6 +3643,25 @@ static Model LoadIQM(const char *fileName)
                     {
                         model.meshes[m].boneWeights[boneCounter] = blendw[i]/255.0f;
                         boneCounter++;
+                    }
+                }
+            } break;
+            case IQM_COLOR:
+            {
+                color = RL_MALLOC(iqmHeader->num_vertexes*4*sizeof(unsigned char));
+                //fseek(iqmFile, va[i].offset, SEEK_SET);
+                //fread(blendw, iqmHeader->num_vertexes*4*sizeof(unsigned char), 1, iqmFile);
+                memcpy(color, fileDataPtr + va[i].offset, iqmHeader->num_vertexes*4*sizeof(unsigned char));
+    
+                for (unsigned int m = 0; m < iqmHeader->num_meshes; m++)
+                {
+                    model.meshes[m].colors = RL_CALLOC(model.meshes[m].vertexCount*4, sizeof(unsigned char));
+    
+                    int vCounter = 0;
+                    for (unsigned int i = imesh[m].first_vertex*4; i < (imesh[m].first_vertex + imesh[m].num_vertexes)*4; i++)
+                    {
+                        model.meshes[m].colors[vCounter] = color[i];
+                        vCounter++;
                     }
                 }
             } break;
@@ -4301,6 +4304,40 @@ static Model LoadGLTF(const char *fileName)
                             TRACELOG(LOG_WARNING, "MODEL: [%s] glTF normals must be float or int", fileName);
                         }
                     }
+                    else if (data->meshes[i].primitives[p].attributes[j].type == cgltf_attribute_type_color)
+                    {
+                        cgltf_accessor *acc = data->meshes[i].primitives[p].attributes[j].data;
+                        model.meshes[primitiveIndex].colors = RL_MALLOC(acc->count*4*sizeof(unsigned char));
+
+                        if (acc->component_type == cgltf_component_type_r_8u)
+                        {
+                            for (int a = 0; a < acc->count; a++)
+                            {
+                                GLTFReadValue(acc, a, model.meshes[primitiveIndex].colors + (a*4), 4, sizeof(unsigned char));
+                            }
+                        }
+                        if (acc->component_type == cgltf_component_type_r_16u)
+                        {
+                            TRACELOG(LOG_WARNING, "MODEL: [%s] converting glTF colors to unsigned char", fileName);
+                            for (int a = 0; a < acc->count; a++)
+                            {
+                                unsigned short readValue[4];
+                                for (int a = 0; a < acc->count; a++)
+                                {
+                                    GLTFReadValue(acc, a, readValue, 4, sizeof(unsigned short));
+                                    // 257 = 65535/255
+                                    model.meshes[primitiveIndex].colors[(a*4) + 0] = (unsigned char)(readValue[0] / 257);
+                                    model.meshes[primitiveIndex].colors[(a*4) + 1] = (unsigned char)(readValue[1] / 257);
+                                    model.meshes[primitiveIndex].colors[(a*4) + 2] = (unsigned char)(readValue[2] / 257);
+                                    model.meshes[primitiveIndex].colors[(a*4) + 3] = (unsigned char)(readValue[3] / 257);
+                                }
+                            }
+                        }
+                        else
+                        {
+                            TRACELOG(LOG_WARNING, "MODEL: [%s] glTF colors must be uchar or ushort", fileName);
+                        }
+                    }
                 }
 
                 cgltf_accessor *acc = data->meshes[i].primitives[p].indices;
@@ -4466,8 +4503,8 @@ static void LoadGLTFBoneAttribute(Model* model, cgltf_accessor* jointsAccessor, 
 {
     if (jointsAccessor->component_type == cgltf_component_type_r_16u)
     {
-        model->meshes[primitiveIndex].boneIds = RL_MALLOC(sizeof(int)*jointsAccessor->count*4);
-        short* bones = RL_MALLOC(sizeof(short)*jointsAccessor->count*4);
+        model->meshes[primitiveIndex].boneIds = RL_MALLOC(jointsAccessor->count*4*sizeof(int));
+        short* bones = RL_MALLOC(jointsAccessor->count*4*sizeof(short));
 
         for (unsigned int a = 0; a < jointsAccessor->count; a++)
         {
@@ -4491,8 +4528,8 @@ static void LoadGLTFBoneAttribute(Model* model, cgltf_accessor* jointsAccessor, 
     }
     else if (jointsAccessor->component_type == cgltf_component_type_r_8u)
     {
-        model->meshes[primitiveIndex].boneIds = RL_MALLOC(sizeof(int)*jointsAccessor->count*4);
-        unsigned char* bones = RL_MALLOC(sizeof(unsigned char)*jointsAccessor->count*4);
+        model->meshes[primitiveIndex].boneIds = RL_MALLOC(jointsAccessor->count*4*sizeof(int));
+        unsigned char* bones = RL_MALLOC(jointsAccessor->count*4*sizeof(unsigned char));
 
         for (unsigned int a = 0; a < jointsAccessor->count; a++)
         {

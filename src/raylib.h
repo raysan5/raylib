@@ -81,7 +81,7 @@
 
 #include <stdarg.h>     // Required for: va_list - Only used by TraceLogCallback
 
-#define RAYLIB_VERSION  "3.7.0"
+#define RAYLIB_VERSION  "3.8-dev"
 
 #if defined(_WIN32)
     // Microsoft attibutes to tell compiler that symbols are imported/exported from a .dll
@@ -160,13 +160,14 @@
 
 // Temporal hacks to avoid breaking old codebases using
 // deprecated raylib implementation or definitions
-#define FormatText          TextFormat
-#define LoadText            LoadFileText
-#define GetExtension        GetFileExtension
-#define GetImageData        LoadImageColors
-#define FILTER_POINT        TEXTURE_FILTER_POINT
-#define FILTER_BILINEAR     TEXTURE_FILTER_BILINEAR
-#define MAP_DIFFUSE         MATERIAL_MAP_DIFFUSE
+#define SpriteFont              Font
+#define FormatText              TextFormat
+#define LoadText                LoadFileText
+#define GetExtension            GetFileExtension
+#define GetImageData            LoadImageColors
+#define FILTER_POINT            TEXTURE_FILTER_POINT
+#define FILTER_BILINEAR         TEXTURE_FILTER_BILINEAR
+#define MAP_DIFFUSE             MATERIAL_MAP_DIFFUSE
 #define UNCOMPRESSED_R8G8B8A8   PIXELFORMAT_UNCOMPRESSED_R8G8B8A8
 
 //----------------------------------------------------------------------------------
@@ -176,59 +177,58 @@
 #if defined(__STDC__) && __STDC_VERSION__ >= 199901L
     #include <stdbool.h>
 #elif !defined(__cplusplus) && !defined(bool)
-    typedef enum { false, true } bool;
+    typedef enum bool { false, true } bool;
 #endif
 
-// Vector2 type
+// Vector2, 2 components
 typedef struct Vector2 {
-    float x;
-    float y;
+    float x;                // Vector x component
+    float y;                // Vector y component
 } Vector2;
 
-// Vector3 type
+// Vector3, 3 components
 typedef struct Vector3 {
-    float x;
-    float y;
-    float z;
+    float x;                // Vector x component
+    float y;                // Vector y component
+    float z;                // Vector z component
 } Vector3;
 
-// Vector4 type
+// Vector4, 4 components
 typedef struct Vector4 {
-    float x;
-    float y;
-    float z;
-    float w;
+    float x;                // Vector x component
+    float y;                // Vector y component
+    float z;                // Vector z component
+    float w;                // Vector w component
 } Vector4;
 
-// Quaternion type, same as Vector4
+// Quaternion, 4 components (Vector4 alias)
 typedef Vector4 Quaternion;
 
-// Matrix type (OpenGL style 4x4 - right handed, column major)
+// Matrix, 4x4 components, column major, OpenGL style, right handed
 typedef struct Matrix {
-    float m0, m4, m8, m12;
-    float m1, m5, m9, m13;
-    float m2, m6, m10, m14;
-    float m3, m7, m11, m15;
+    float m0, m4, m8, m12;  // Matrix first row (4 components)
+    float m1, m5, m9, m13;  // Matrix second row (4 components)
+    float m2, m6, m10, m14; // Matrix third row (4 components)
+    float m3, m7, m11, m15; // Matrix fourth row (4 components)
 } Matrix;
 
-// Color type, RGBA (32bit)
+// Color, 4 components, R8G8B8A8 (32bit)
 typedef struct Color {
-    unsigned char r;
-    unsigned char g;
-    unsigned char b;
-    unsigned char a;
+    unsigned char r;        // Color red value
+    unsigned char g;        // Color green value
+    unsigned char b;        // Color blue value
+    unsigned char a;        // Color alpha value
 } Color;
 
-// Rectangle type
+// Rectangle, 4 components
 typedef struct Rectangle {
-    float x;
-    float y;
-    float width;
-    float height;
+    float x;                // Rectangle top-left corner position x 
+    float y;                // Rectangle top-left corner position y
+    float width;            // Rectangle width
+    float height;           // Rectangle height
 } Rectangle;
 
-// Image type, bpp always RGBA (32bit)
-// NOTE: Data stored in CPU memory (RAM)
+// Image, pixel data stored in CPU memory (RAM)
 typedef struct Image {
     void *data;             // Image raw data
     int width;              // Image base width
@@ -237,8 +237,7 @@ typedef struct Image {
     int format;             // Data format (PixelFormat type)
 } Image;
 
-// Texture type
-// NOTE: Data stored in GPU memory
+// Texture, tex data stored in GPU memory (VRAM)
 typedef struct Texture {
     unsigned int id;        // OpenGL texture id
     int width;              // Texture base width
@@ -247,23 +246,23 @@ typedef struct Texture {
     int format;             // Data format (PixelFormat type)
 } Texture;
 
-// Texture2D type, same as Texture
+// Texture2D, same as Texture
 typedef Texture Texture2D;
 
-// TextureCubemap type, actually, same as Texture
+// TextureCubemap, same as Texture
 typedef Texture TextureCubemap;
 
-// RenderTexture type, for texture rendering
+// RenderTexture, fbo for texture rendering
 typedef struct RenderTexture {
     unsigned int id;        // OpenGL framebuffer object id
     Texture texture;        // Color buffer attachment texture
     Texture depth;          // Depth buffer attachment texture
 } RenderTexture;
 
-// RenderTexture2D type, same as RenderTexture
+// RenderTexture2D, same as RenderTexture
 typedef RenderTexture RenderTexture2D;
 
-// N-Patch layout info
+// NPatchInfo, n-patch layout info
 typedef struct NPatchInfo {
     Rectangle source;       // Texture source rectangle
     int left;               // Left border offset
@@ -273,7 +272,7 @@ typedef struct NPatchInfo {
     int layout;             // Layout of the n-patch: 3x3, 1x3 or 3x1
 } NPatchInfo;
 
-// Font character info
+// CharInfo, font character info
 typedef struct CharInfo {
     int value;              // Character value (Unicode)
     int offsetX;            // Character offset X when drawing
@@ -282,7 +281,7 @@ typedef struct CharInfo {
     Image image;            // Character image data
 } CharInfo;
 
-// Font type, includes texture and charSet array data
+// Font, font texture and CharInfo array data
 typedef struct Font {
     int baseSize;           // Base size (default chars height)
     int charsCount;         // Number of characters
@@ -292,9 +291,7 @@ typedef struct Font {
     CharInfo *chars;        // Characters info data
 } Font;
 
-#define SpriteFont Font     // SpriteFont type fallback, defaults to Font
-
-// Camera type, defines a camera position/orientation in 3d space
+// Camera, defines position/orientation in 3d space
 typedef struct Camera3D {
     Vector3 position;       // Camera position
     Vector3 target;         // Camera target it looks-at
@@ -305,7 +302,7 @@ typedef struct Camera3D {
 
 typedef Camera3D Camera;    // Camera type fallback, defaults to Camera3D
 
-// Camera2D type, defines a 2d camera
+// Camera2D, defines position/orientation in 2d space
 typedef struct Camera2D {
     Vector2 offset;         // Camera offset (displacement from target)
     Vector2 target;         // Camera target (rotation and zoom origin)
@@ -313,148 +310,145 @@ typedef struct Camera2D {
     float zoom;             // Camera zoom (scaling), should be 1.0f by default
 } Camera2D;
 
-// Vertex data definning a mesh
-// NOTE: Data stored in CPU memory (and GPU)
+// Mesh, vertex data and vao/vbo
 typedef struct Mesh {
-    int vertexCount;        // Number of vertices stored in arrays
-    int triangleCount;      // Number of triangles stored (indexed or not)
+    int vertexCount;            // Number of vertices stored in arrays
+    int triangleCount;          // Number of triangles stored (indexed or not)
 
     // Default vertex data
-    float *vertices;        // Vertex position (XYZ - 3 components per vertex) (shader-location = 0)
-    float *texcoords;       // Vertex texture coordinates (UV - 2 components per vertex) (shader-location = 1)
-    float *texcoords2;      // Vertex second texture coordinates (useful for lightmaps) (shader-location = 5)
-    float *normals;         // Vertex normals (XYZ - 3 components per vertex) (shader-location = 2)
-    float *tangents;        // Vertex tangents (XYZW - 4 components per vertex) (shader-location = 4)
-    unsigned char *colors;  // Vertex colors (RGBA - 4 components per vertex) (shader-location = 3)
-    unsigned short *indices;// Vertex indices (in case vertex data comes indexed)
+    float *vertices;            // Vertex position (XYZ - 3 components per vertex) (shader-location = 0)
+    float *texcoords;           // Vertex texture coordinates (UV - 2 components per vertex) (shader-location = 1)
+    float *texcoords2;          // Vertex second texture coordinates (useful for lightmaps) (shader-location = 5)
+    float *normals;             // Vertex normals (XYZ - 3 components per vertex) (shader-location = 2)
+    float *tangents;            // Vertex tangents (XYZW - 4 components per vertex) (shader-location = 4)
+    unsigned char *colors;      // Vertex colors (RGBA - 4 components per vertex) (shader-location = 3)
+    unsigned short *indices;    // Vertex indices (in case vertex data comes indexed)
 
     // Animation vertex data
-    float *animVertices;    // Animated vertex positions (after bones transformations)
-    float *animNormals;     // Animated normals (after bones transformations)
-    int *boneIds;           // Vertex bone ids, up to 4 bones influence by vertex (skinning)
-    float *boneWeights;     // Vertex bone weight, up to 4 bones influence by vertex (skinning)
+    float *animVertices;        // Animated vertex positions (after bones transformations)
+    float *animNormals;         // Animated normals (after bones transformations)
+    int *boneIds;               // Vertex bone ids, up to 4 bones influence by vertex (skinning)
+    float *boneWeights;         // Vertex bone weight, up to 4 bones influence by vertex (skinning)
 
     // OpenGL identifiers
-    unsigned int vaoId;     // OpenGL Vertex Array Object id
-    unsigned int *vboId;    // OpenGL Vertex Buffer Objects id (default vertex data)
+    unsigned int vaoId;         // OpenGL Vertex Array Object id
+    unsigned int *vboId;        // OpenGL Vertex Buffer Objects id (default vertex data)
 } Mesh;
 
-// Shader type (generic)
+// Shader
 typedef struct Shader {
-    unsigned int id;        // Shader program id
-    int *locs;              // Shader locations array (MAX_SHADER_LOCATIONS)
+    unsigned int id;            // Shader program id
+    int *locs;                  // Shader locations array (MAX_SHADER_LOCATIONS)
 } Shader;
 
-// Material texture map
+// MaterialMap
 typedef struct MaterialMap {
-    Texture2D texture;      // Material map texture
-    Color color;            // Material map color
-    float value;            // Material map value
+    Texture2D texture;          // Material map texture
+    Color color;                // Material map color
+    float value;                // Material map value
 } MaterialMap;
 
-// Material type (generic)
+// Material, includes shader and maps
 typedef struct Material {
-    Shader shader;          // Material shader
-    MaterialMap *maps;      // Material maps array (MAX_MATERIAL_MAPS)
-    float params[4];        // Material generic parameters (if required)
+    Shader shader;              // Material shader
+    MaterialMap *maps;          // Material maps array (MAX_MATERIAL_MAPS)
+    float params[4];            // Material generic parameters (if required)
 } Material;
 
-// Transformation properties
+// Transform, vectex transformation data
 typedef struct Transform {
-    Vector3 translation;    // Translation
-    Quaternion rotation;    // Rotation
-    Vector3 scale;          // Scale
+    Vector3 translation;        // Translation
+    Quaternion rotation;        // Rotation
+    Vector3 scale;              // Scale
 } Transform;
 
-// Bone information
+// Bone, skeletal animation bone
 typedef struct BoneInfo {
-    char name[32];          // Bone name
-    int parent;             // Bone parent
+    char name[32];              // Bone name
+    int parent;                 // Bone parent
 } BoneInfo;
 
-// Model type
+// Model, meshes, materials and animation data
 typedef struct Model {
-    Matrix transform;       // Local transform matrix
+    Matrix transform;           // Local transform matrix
 
-    int meshCount;          // Number of meshes
-    int materialCount;      // Number of materials
-    Mesh *meshes;           // Meshes array
-    Material *materials;    // Materials array
-    int *meshMaterial;      // Mesh material number
+    int meshCount;              // Number of meshes
+    int materialCount;          // Number of materials
+    Mesh *meshes;               // Meshes array
+    Material *materials;        // Materials array
+    int *meshMaterial;          // Mesh material number
 
     // Animation data
-    int boneCount;          // Number of bones
-    BoneInfo *bones;        // Bones information (skeleton)
-    Transform *bindPose;    // Bones base transformation (pose)
+    int boneCount;              // Number of bones
+    BoneInfo *bones;            // Bones information (skeleton)
+    Transform *bindPose;        // Bones base transformation (pose)
 } Model;
 
-// Model animation
+// ModelAnimation
 typedef struct ModelAnimation {
-    int boneCount;          // Number of bones
-    int frameCount;         // Number of animation frames
-    BoneInfo *bones;        // Bones information (skeleton)
-    Transform **framePoses; // Poses array by frame
+    int boneCount;              // Number of bones
+    int frameCount;             // Number of animation frames
+    BoneInfo *bones;            // Bones information (skeleton)
+    Transform **framePoses;     // Poses array by frame
 } ModelAnimation;
 
-// Ray type (useful for raycast)
+// Ray, ray for raycasting
 typedef struct Ray {
-    Vector3 position;       // Ray position (origin)
-    Vector3 direction;      // Ray direction
+    Vector3 position;           // Ray position (origin)
+    Vector3 direction;          // Ray direction
 } Ray;
 
-// Raycast hit information
-typedef struct RayHitInfo {
-    bool hit;               // Did the ray hit something?
-    float distance;         // Distance to nearest hit
-    Vector3 position;       // Position of nearest hit
-    Vector3 normal;         // Surface normal of hit
-} RayHitInfo;
+// RayCollision, ray hit information
+typedef struct RayCollision {
+    bool hit;                   // Did the ray hit something?
+    float distance;             // Distance to nearest hit
+    Vector3 point;              // Point of nearest hit
+    Vector3 normal;             // Surface normal of hit
+} RayCollision;
 
-// Bounding box type
+// BoundingBox
 typedef struct BoundingBox {
-    Vector3 min;            // Minimum vertex box-corner
-    Vector3 max;            // Maximum vertex box-corner
+    Vector3 min;                // Minimum vertex box-corner
+    Vector3 max;                // Maximum vertex box-corner
 } BoundingBox;
 
-// Wave type, defines audio wave data
+// Wave, audio wave data
 typedef struct Wave {
-    unsigned int sampleCount;       // Total number of samples (considering channels!)
-    unsigned int sampleRate;        // Frequency (samples per second)
-    unsigned int sampleSize;        // Bit depth (bits per sample): 8, 16, 32 (24 not supported)
-    unsigned int channels;          // Number of channels (1-mono, 2-stereo)
-    void *data;                     // Buffer data pointer
+    unsigned int sampleCount;   // Total number of samples (considering channels!)
+    unsigned int sampleRate;    // Frequency (samples per second)
+    unsigned int sampleSize;    // Bit depth (bits per sample): 8, 16, 32 (24 not supported)
+    unsigned int channels;      // Number of channels (1-mono, 2-stereo)
+    void *data;                 // Buffer data pointer
 } Wave;
 
 typedef struct rAudioBuffer rAudioBuffer;
 
-// Audio stream type
-// NOTE: Useful to create custom audio streams not bound to a specific file
+// AudioStream, custom audio stream
 typedef struct AudioStream {
-    rAudioBuffer *buffer;           // Pointer to internal data used by the audio system
+    rAudioBuffer *buffer;       // Pointer to internal data used by the audio system
 
-    unsigned int sampleRate;        // Frequency (samples per second)
-    unsigned int sampleSize;        // Bit depth (bits per sample): 8, 16, 32 (24 not supported)
-    unsigned int channels;          // Number of channels (1-mono, 2-stereo)
+    unsigned int sampleRate;    // Frequency (samples per second)
+    unsigned int sampleSize;    // Bit depth (bits per sample): 8, 16, 32 (24 not supported)
+    unsigned int channels;      // Number of channels (1-mono, 2-stereo)
 } AudioStream;
 
-// Sound source type
+// Sound
 typedef struct Sound {
-    AudioStream stream;             // Audio stream
-    unsigned int sampleCount;       // Total number of samples
+    AudioStream stream;         // Audio stream
+    unsigned int sampleCount;   // Total number of samples
 } Sound;
 
-// Music stream type (audio file streaming from memory)
-// NOTE: Anything longer than ~10 seconds should be streamed
+// Music, audio stream, anything longer than ~10 seconds should be streamed
 typedef struct Music {
-    AudioStream stream;             // Audio stream
-    unsigned int sampleCount;       // Total number of samples
-    bool looping;                   // Music looping enable
+    AudioStream stream;         // Audio stream
+    unsigned int sampleCount;   // Total number of samples
+    bool looping;               // Music looping enable
 
-    int ctxType;                    // Type of music context (audio filetype)
-    void *ctxData;                  // Audio context data, depends on type
+    int ctxType;                // Type of music context (audio filetype)
+    void *ctxData;              // Audio context data, depends on type
 } Music;
 
-// Head-Mounted-Display device parameters
+// VrDeviceInfo, Head-Mounted-Display device parameters
 typedef struct VrDeviceInfo {
     int hResolution;                // Horizontal resolution in pixels
     int vResolution;                // Vertical resolution in pixels
@@ -468,7 +462,7 @@ typedef struct VrDeviceInfo {
     float chromaAbCorrection[4];    // Chromatic aberration correction parameters
 } VrDeviceInfo;
 
-// VR Stereo rendering configuration for simulator
+// VrStereoConfig, VR stereo rendering configuration for simulator
 typedef struct VrStereoConfig {
     Matrix projection[2];           // VR projection matrices (per eye)
     Matrix viewOffset[2];           // VR view offset matrices (per eye)
@@ -504,14 +498,15 @@ typedef enum {
 } ConfigFlags;
 
 // Trace log level
+// NOTE: Organized by priority level
 typedef enum {
     LOG_ALL = 0,        // Display all logs
-    LOG_TRACE,
-    LOG_DEBUG,
-    LOG_INFO,
-    LOG_WARNING,
-    LOG_ERROR,
-    LOG_FATAL,
+    LOG_TRACE,          // Trace logging, intended for internal use only
+    LOG_DEBUG,          // Debug logging, used for internal debugging, it should be disabled on release builds
+    LOG_INFO,           // Info logging, used for program execution info
+    LOG_WARNING,        // Warning logging, used on recoverable failures
+    LOG_ERROR,          // Error logging, used on unrecoverable failures
+    LOG_FATAL,          // Fatal logging, used to abort program: exit(EXIT_FAILURE)
     LOG_NONE            // Disable logging
 } TraceLogLevel;
 
@@ -871,7 +866,7 @@ typedef enum {
     GESTURE_SWIPE_DOWN  = 128,
     GESTURE_PINCH_IN    = 256,
     GESTURE_PINCH_OUT   = 512
-} Gestures;
+} Gesture;
 
 // Camera system modes
 typedef enum {
@@ -898,9 +893,9 @@ typedef enum {
 // Callbacks to hook some internal functions
 // WARNING: This callbacks are intended for advance users
 typedef void (*TraceLogCallback)(int logLevel, const char *text, va_list args);  // Logging: Redirect trace log messages
-typedef unsigned char* (*LoadFileDataCallback)(const char* fileName, unsigned int* bytesRead);      // FileIO: Load binary data
+typedef unsigned char *(*LoadFileDataCallback)(const char *fileName, unsigned int *bytesRead);      // FileIO: Load binary data
 typedef bool (*SaveFileDataCallback)(const char *fileName, void *data, unsigned int bytesToWrite);  // FileIO: Save binary data
-typedef char *(*LoadFileTextCallback)(const char* fileName);                // FileIO: Load text data
+typedef char *(*LoadFileTextCallback)(const char *fileName);       // FileIO: Load text data
 typedef bool (*SaveFileTextCallback)(const char *fileName, char *text);     // FileIO: Save text data
 
 
@@ -970,15 +965,15 @@ RLAPI bool IsCursorOnScreen(void);                                // Check if cu
 RLAPI void ClearBackground(Color color);                          // Set background color (framebuffer clear color)
 RLAPI void BeginDrawing(void);                                    // Setup canvas (framebuffer) to start drawing
 RLAPI void EndDrawing(void);                                      // End canvas drawing and swap buffers (double buffering)
-RLAPI void BeginMode2D(Camera2D camera);                          // Initialize 2D mode with custom camera (2D)
+RLAPI void BeginMode2D(Camera2D camera);                          // Begin 2D mode with custom camera (2D)
 RLAPI void EndMode2D(void);                                       // Ends 2D mode with custom camera
-RLAPI void BeginMode3D(Camera3D camera);                          // Initializes 3D mode with custom camera (3D)
+RLAPI void BeginMode3D(Camera3D camera);                          // Begin 3D mode with custom camera (3D)
 RLAPI void EndMode3D(void);                                       // Ends 3D mode and returns to default 2D orthographic mode
-RLAPI void BeginTextureMode(RenderTexture2D target);              // Initializes render texture for drawing
+RLAPI void BeginTextureMode(RenderTexture2D target);              // Begin drawing to render texture
 RLAPI void EndTextureMode(void);                                  // Ends drawing to render texture
 RLAPI void BeginShaderMode(Shader shader);                        // Begin custom shader drawing
 RLAPI void EndShaderMode(void);                                   // End custom shader drawing (use default shader)
-RLAPI void BeginBlendMode(int mode);                              // Begin blending mode (alpha, additive, multiplied)
+RLAPI void BeginBlendMode(int mode);                              // Begin blending mode (alpha, additive, multiplied, subtract, custom)
 RLAPI void EndBlendMode(void);                                    // End blending mode (reset to default: alpha blending)
 RLAPI void BeginScissorMode(int x, int y, int width, int height); // Begin scissor mode (define screen area for following drawing)
 RLAPI void EndScissorMode(void);                                  // End scissor mode
@@ -1021,7 +1016,7 @@ RLAPI int GetRandomValue(int min, int max);                       // Returns a r
 RLAPI void TakeScreenshot(const char *fileName);                  // Takes a screenshot of current screen (filename extension defines format)
 RLAPI void SetConfigFlags(unsigned int flags);                    // Setup init configuration flags (view FLAGS)
 
-RLAPI void TraceLog(int logLevel, const char *text, ...);         // Show trace log messages (LOG_DEBUG, LOG_INFO, LOG_WARNING, LOG_ERROR)
+RLAPI void TraceLog(int logLevel, const char *text, ...);         // Show trace log messages (LOG_DEBUG, LOG_INFO, LOG_WARNING, LOG_ERROR...)
 RLAPI void SetTraceLogLevel(int logLevel);                        // Set the current threshold (minimum) log level
 RLAPI void *MemAlloc(int size);                                   // Internal memory allocator
 RLAPI void *MemRealloc(void *ptr, int size);                      // Internal memory reallocator
@@ -1040,12 +1035,12 @@ RLAPI unsigned char *LoadFileData(const char *fileName, unsigned int *bytesRead)
 RLAPI void UnloadFileData(unsigned char *data);                   // Unload file data allocated by LoadFileData()
 RLAPI bool SaveFileData(const char *fileName, void *data, unsigned int bytesToWrite); // Save data to file from byte array (write), returns true on success
 RLAPI char *LoadFileText(const char *fileName);                   // Load text data from file (read), returns a '\0' terminated string
-RLAPI void UnloadFileText(unsigned char *text);                   // Unload file text data allocated by LoadFileText()
+RLAPI void UnloadFileText(char *text);                            // Unload file text data allocated by LoadFileText()
 RLAPI bool SaveFileText(const char *fileName, char *text);        // Save text data to file (write), string must be '\0' terminated, returns true on success
 RLAPI bool FileExists(const char *fileName);                      // Check if file exists
 RLAPI bool DirectoryExists(const char *dirPath);                  // Check if a directory path exists
 RLAPI bool IsFileExtension(const char *fileName, const char *ext);// Check file extension (including point: .png, .wav)
-RLAPI const char *GetFileExtension(const char *fileName);         // Get pointer to extension for a filename string (includes dot: ".png")
+RLAPI const char *GetFileExtension(const char *fileName);         // Get pointer to extension for a filename string (includes dot: '.png')
 RLAPI const char *GetFileName(const char *filePath);              // Get pointer to filename for a path string
 RLAPI const char *GetFileNameWithoutExt(const char *filePath);    // Get filename string without extension (uses static string)
 RLAPI const char *GetDirectoryPath(const char *filePath);         // Get full path for a given fileName with path (uses static string)
@@ -1143,7 +1138,7 @@ RLAPI void SetCameraMoveControls(int keyFront, int keyBack, int keyRight, int ke
 // Set texture and rectangle to be used on shapes drawing
 // NOTE: It can be useful when using basic shapes and one single font,
 // defining a font char white rectangle would allow drawing everything in a single draw call
-RLAPI void SetShapesTexture(Texture2D texture, Rectangle source);
+RLAPI void SetShapesTexture(Texture2D texture, Rectangle source);       // Set texture and rectangle to be used on shapes drawing
 
 // Basic shapes drawing functions
 RLAPI void DrawPixel(int posX, int posY, Color color);                                                   // Draw a pixel
@@ -1202,7 +1197,7 @@ RLAPI Rectangle GetCollisionRec(Rectangle rec1, Rectangle rec2);                
 RLAPI Image LoadImage(const char *fileName);                                                             // Load image from file into CPU memory (RAM)
 RLAPI Image LoadImageRaw(const char *fileName, int width, int height, int format, int headerSize);       // Load image from RAW file data
 RLAPI Image LoadImageAnim(const char *fileName, int *frames);                                            // Load image sequence from file (frames appended to image.data)
-RLAPI Image LoadImageFromMemory(const char *fileType, const unsigned char *fileData, int dataSize);      // Load image from memory buffer, fileType refers to extension: i.e. ".png"
+RLAPI Image LoadImageFromMemory(const char *fileType, const unsigned char *fileData, int dataSize);      // Load image from memory buffer, fileType refers to extension: i.e. '.png'
 RLAPI void UnloadImage(Image image);                                                                     // Unload image from CPU memory (RAM)
 RLAPI bool ExportImage(Image image, const char *fileName);                                               // Export image data to file, returns true on success
 RLAPI bool ExportImageAsCode(Image image, const char *fileName);                                         // Export image as code file defining an array of bytes, returns true on success
@@ -1232,7 +1227,7 @@ RLAPI void ImageAlphaPremultiply(Image *image);                                 
 RLAPI void ImageResize(Image *image, int newWidth, int newHeight);                                       // Resize image (Bicubic scaling algorithm)
 RLAPI void ImageResizeNN(Image *image, int newWidth,int newHeight);                                      // Resize image (Nearest-Neighbor scaling algorithm)
 RLAPI void ImageResizeCanvas(Image *image, int newWidth, int newHeight, int offsetX, int offsetY, Color fill);  // Resize canvas and fill with color
-RLAPI void ImageMipmaps(Image *image);                                                                   // Generate all mipmap levels for a provided image
+RLAPI void ImageMipmaps(Image *image);                                                                   // Compute all mipmap levels for a provided image
 RLAPI void ImageDither(Image *image, int rBpp, int gBpp, int bBpp, int aBpp);                            // Dither image data to 16bpp or lower (Floyd-Steinberg dithering)
 RLAPI void ImageFlipVertical(Image *image);                                                              // Flip image vertically
 RLAPI void ImageFlipHorizontal(Image *image);                                                            // Flip image horizontally
@@ -1319,7 +1314,7 @@ RLAPI Font GetFontDefault(void);                                                
 RLAPI Font LoadFont(const char *fileName);                                                  // Load font from file into GPU memory (VRAM)
 RLAPI Font LoadFontEx(const char *fileName, int fontSize, int *fontChars, int charsCount);  // Load font from file with extended parameters
 RLAPI Font LoadFontFromImage(Image image, Color key, int firstChar);                        // Load font from Image (XNA style)
-RLAPI Font LoadFontFromMemory(const char *fileType, const unsigned char *fileData, int dataSize, int fontSize, int *fontChars, int charsCount); // Load font from memory buffer, fileType refers to extension: i.e. ".ttf"
+RLAPI Font LoadFontFromMemory(const char *fileType, const unsigned char *fileData, int dataSize, int fontSize, int *fontChars, int charsCount); // Load font from memory buffer, fileType refers to extension: i.e. '.ttf'
 RLAPI CharInfo *LoadFontData(const unsigned char *fileData, int dataSize, int fontSize, int *fontChars, int charsCount, int type);      // Load font data for further use
 RLAPI Image GenImageFontAtlas(const CharInfo *chars, Rectangle **recs, int charsCount, int fontSize, int padding, int packMethod);      // Generate image font atlas using chars info
 RLAPI void UnloadFontData(CharInfo *chars, int charsCount);                                 // Unload font chars info data (RAM)
@@ -1330,8 +1325,7 @@ RLAPI void DrawFPS(int posX, int posY);                                         
 RLAPI void DrawText(const char *text, int posX, int posY, int fontSize, Color color);       // Draw text (using default font)
 RLAPI void DrawTextEx(Font font, const char *text, Vector2 position, float fontSize, float spacing, Color tint);                // Draw text using font and additional parameters
 RLAPI void DrawTextRec(Font font, const char *text, Rectangle rec, float fontSize, float spacing, bool wordWrap, Color tint);   // Draw text using font inside rectangle limits
-RLAPI void DrawTextRecEx(Font font, const char *text, Rectangle rec, float fontSize, float spacing, bool wordWrap, Color tint,
-                         int selectStart, int selectLength, Color selectTint, Color selectBackTint);    // Draw text using font inside rectangle limits with support for text selection
+RLAPI void DrawTextRecEx(Font font, const char *text, Rectangle rec, float fontSize, float spacing, bool wordWrap, Color tint, int selectStart, int selectLength, Color selectTint, Color selectBackTint);    // Draw text using font inside rectangle limits with support for text selection
 RLAPI void DrawTextCodepoint(Font font, int codepoint, Vector2 position, float fontSize, Color tint);   // Draw one character (codepoint)
 
 // Text misc. functions
@@ -1433,7 +1427,7 @@ RLAPI Mesh GenMeshHeightmap(Image heightmap, Vector3 size);                     
 RLAPI Mesh GenMeshCubicmap(Image cubicmap, Vector3 cubeSize);                               // Generate cubes-based map mesh from image data
 
 // Mesh manipulation functions
-RLAPI BoundingBox GetMeshBoundingBox(Mesh mesh);                                               // Compute mesh bounding box limits
+RLAPI BoundingBox GetMeshBoundingBox(Mesh mesh);                                            // Compute mesh bounding box limits
 RLAPI void MeshTangents(Mesh *mesh);                                                        // Compute mesh tangents
 RLAPI void MeshBinormals(Mesh *mesh);                                                       // Compute mesh binormals
 
@@ -1451,13 +1445,12 @@ RLAPI void DrawBillboardPro(Camera camera, Texture2D texture, Rectangle source, 
 RLAPI bool CheckCollisionSpheres(Vector3 center1, float radius1, Vector3 center2, float radius2);       // Detect collision between two spheres
 RLAPI bool CheckCollisionBoxes(BoundingBox box1, BoundingBox box2);                                     // Detect collision between two bounding boxes
 RLAPI bool CheckCollisionBoxSphere(BoundingBox box, Vector3 center, float radius);                      // Detect collision between box and sphere
-RLAPI bool CheckCollisionRaySphere(Ray ray, Vector3 center, float radius);                              // Detect collision between ray and sphere
-RLAPI bool CheckCollisionRaySphereEx(Ray ray, Vector3 center, float radius, Vector3 *collisionPoint);   // Detect collision between ray and sphere, returns collision point
-RLAPI bool CheckCollisionRayBox(Ray ray, BoundingBox box);                                              // Detect collision between ray and box
-RLAPI RayHitInfo GetCollisionRayMesh(Ray ray, Mesh mesh, Matrix transform);                             // Get collision info between ray and mesh
-RLAPI RayHitInfo GetCollisionRayModel(Ray ray, Model model);                                            // Get collision info between ray and model
-RLAPI RayHitInfo GetCollisionRayTriangle(Ray ray, Vector3 p1, Vector3 p2, Vector3 p3);                  // Get collision info between ray and triangle
-RLAPI RayHitInfo GetCollisionRayGround(Ray ray, float groundHeight);                                    // Get collision info between ray and ground plane (Y-normal plane)
+RLAPI RayCollision GetRayCollisionSphere(Ray ray, Vector3 center, float radius);                        // Get collision info between ray and sphere
+RLAPI RayCollision GetRayCollisionBox(Ray ray, BoundingBox box);                                        // Get collision info between ray and box
+RLAPI RayCollision GetRayCollisionMesh(Ray ray, Mesh mesh, Matrix transform);                           // Get collision info between ray and mesh
+RLAPI RayCollision GetRayCollisionModel(Ray ray, Model model);                                          // Get collision info between ray and model
+RLAPI RayCollision GetRayCollisionTriangle(Ray ray, Vector3 p1, Vector3 p2, Vector3 p3);                // Get collision info between ray and triangle
+RLAPI RayCollision GetRayCollisionGround(Ray ray, float groundHeight);                                  // Get collision info between ray and ground plane (Y-normal plane)
 
 //------------------------------------------------------------------------------------
 // Audio Loading and Playing Functions (Module: audio)
@@ -1471,7 +1464,7 @@ RLAPI void SetMasterVolume(float volume);                             // Set mas
 
 // Wave/Sound loading/unloading functions
 RLAPI Wave LoadWave(const char *fileName);                            // Load wave data from file
-RLAPI Wave LoadWaveFromMemory(const char *fileType, const unsigned char *fileData, int dataSize); // Load wave from memory buffer, fileType refers to extension: i.e. ".wav"
+RLAPI Wave LoadWaveFromMemory(const char *fileType, const unsigned char *fileData, int dataSize); // Load wave from memory buffer, fileType refers to extension: i.e. '.wav'
 RLAPI Sound LoadSound(const char *fileName);                          // Load sound from file
 RLAPI Sound LoadSoundFromWave(Wave wave);                             // Load sound from wave data
 RLAPI void UpdateSound(Sound sound, const void *data, int samplesCount);// Update sound buffer with new data

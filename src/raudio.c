@@ -276,25 +276,27 @@ typedef struct tagBITMAPINFOHEADER {
 // NOTE: Depends on data structure provided by the library
 // in charge of reading the different file types
 typedef enum {
-    MUSIC_AUDIO_NONE = 0,
-    MUSIC_AUDIO_WAV,
-    MUSIC_AUDIO_OGG,
-    MUSIC_AUDIO_FLAC,
-    MUSIC_AUDIO_MP3,
-    MUSIC_MODULE_XM,
-    MUSIC_MODULE_MOD
+    MUSIC_AUDIO_NONE = 0,   // No audio context loaded
+    MUSIC_AUDIO_WAV,        // WAV audio context
+    MUSIC_AUDIO_OGG,        // OGG audio context
+    MUSIC_AUDIO_FLAC,       // FLAC audio context
+    MUSIC_AUDIO_MP3,        // MP3 audio context
+    MUSIC_MODULE_XM,        // XM module audio context
+    MUSIC_MODULE_MOD        // MOD module audio context
 } MusicContextType;
 
 #if defined(RAUDIO_STANDALONE)
+// Trace log level
+// NOTE: Organized by priority level
 typedef enum {
-    LOG_ALL,
-    LOG_TRACE,
-    LOG_DEBUG,
-    LOG_INFO,
-    LOG_WARNING,
-    LOG_ERROR,
-    LOG_FATAL,
-    LOG_NONE
+    LOG_ALL = 0,        // Display all logs
+    LOG_TRACE,          // Trace logging, intended for internal use only
+    LOG_DEBUG,          // Debug logging, used for internal debugging, it should be disabled on release builds
+    LOG_INFO,           // Info logging, used for program execution info
+    LOG_WARNING,        // Warning logging, used on recoverable failures
+    LOG_ERROR,          // Error logging, used on unrecoverable failures
+    LOG_FATAL,          // Fatal logging, used to abort program: exit(EXIT_FAILURE)
+    LOG_NONE            // Disable logging
 } TraceLogLevel;
 #endif
 
@@ -476,7 +478,7 @@ void InitAudioDevice(void)
     // Init dummy audio buffers pool for multichannel sound playing
     for (int i = 0; i < MAX_AUDIO_BUFFER_POOL_CHANNELS; i++)
     {
-        // WARNING: An empty audioBuffer is created (data = 0)
+        // WARNING: An empty audio buffer is created (data = 0)
         // AudioBuffer data just points to loaded sound data
         AUDIO.MultiChannel.pool[i] = LoadAudioBuffer(AUDIO_DEVICE_FORMAT, AUDIO_DEVICE_CHANNELS, AUDIO.System.device.sampleRate, 0, AUDIO_BUFFER_USAGE_STATIC);
     }
@@ -1428,13 +1430,13 @@ Music LoadMusicStreamFromMemory(const char *fileType, unsigned char* data, int d
 #if defined(SUPPORT_FILEFORMAT_MOD)
     else if (TextIsEqual(fileExtLower, ".mod"))
     {
-        jar_mod_context_t *ctxMod = RL_MALLOC(sizeof(jar_mod_context_t));
+        jar_mod_context_t *ctxMod = (jar_mod_context_t *)RL_MALLOC(sizeof(jar_mod_context_t));
         int result = 0;
 
         jar_mod_init(ctxMod);
 
-        // copy data to allocated memory for default UnloadMusicStream
-        unsigned char *newData = RL_MALLOC(dataSize);
+        // Copy data to allocated memory for default UnloadMusicStream
+        unsigned char *newData = (unsigned char *)RL_MALLOC(dataSize);
         int it = dataSize/sizeof(unsigned char);
         for (int i = 0; i < it; i++){
             newData[i] = data[i];
@@ -2073,6 +2075,7 @@ static ma_uint32 ReadAudioBufferFramesInMixingFormat(AudioBuffer *audioBuffer, f
 
 
 // Sending audio data to device callback function
+// This function will be called when miniaudio needs more data
 // NOTE: All the mixing takes place here
 static void OnSendAudioDataToDevice(ma_device *pDevice, void *pFramesOut, const void *pFramesInput, ma_uint32 frameCount)
 {

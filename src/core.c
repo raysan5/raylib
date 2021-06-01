@@ -270,12 +270,6 @@
     #include <emscripten/html5.h>       // Emscripten HTML5 library
 #endif
 
-#if defined(SUPPORT_COMPRESSION_API)
-    // NOTE: Those declarations require stb_image and stb_image_write definitions, included in textures module
-    unsigned char *stbi_zlib_compress(unsigned char *data, int data_len, int *out_len, int quality);
-    char *stbi_zlib_decode_malloc(char const *buffer, int len, int *outlen);
-#endif
-
 //----------------------------------------------------------------------------------
 // Defines and Macros
 //----------------------------------------------------------------------------------
@@ -652,7 +646,7 @@ void InitWindow(int width, int height, const char *title)
 #if defined(PLATFORM_UWP)
     if (!UWPIsConfigured())
     {
-        TRACELOG(LOG_ERROR, "UWP Functions have not been set yet, please set these before initializing raylib!");
+        TRACELOG(LOG_FATAL, "UWP Functions have not been set yet, please set these before initializing raylib!");
         return;
     }
 #endif
@@ -736,7 +730,12 @@ void InitWindow(int width, int height, const char *title)
     // NOTE: returns true if window and graphic device has been initialized successfully
     CORE.Window.ready = InitGraphicsDevice(width, height);
 
-    if (!CORE.Window.ready) return;
+    // If graphic device is no properly initialized, we end program
+    if (!CORE.Window.ready) 
+    {
+        TRACELOG(LOG_FATAL, "Failed to initialize Graphic Device");
+        return;
+    }
 
     // Init hi-res timer
     InitTimer();
@@ -2035,8 +2034,8 @@ void EndShaderMode(void)
     rlSetShader(rlGetShaderDefault());
 }
 
-// Begin blending mode (alpha, additive, multiplied)
-// NOTE: Only 3 blending modes supported, default blend mode is alpha
+// Begin blending mode (alpha, additive, multiplied, subtract, custom)
+// NOTE: Blend modes supported are enumerated in BlendMode enum
 void BeginBlendMode(int mode)
 {
     rlSetBlendMode(mode);
@@ -2179,8 +2178,8 @@ Shader LoadShader(const char *vsFileName, const char *fsFileName)
 
     shader.id = rlLoadShaderCode(vShaderStr, fShaderStr);
 
-    if (vShaderStr != NULL) RL_FREE(vShaderStr);
-    if (fShaderStr != NULL) RL_FREE(fShaderStr);
+    if (vShaderStr != NULL) UnloadFileText(vShaderStr);
+    if (fShaderStr != NULL) UnloadFileText(fShaderStr);
 
     // After shader loading, we TRY to set default location names
     if (shader.id > 0)
@@ -2801,8 +2800,8 @@ char **GetDirectoryFiles(const char *dirPath, int *fileCount)
     ClearDirectoryFiles();
 
     // Memory allocation for MAX_DIRECTORY_FILES
-    dirFilesPath = (char **)RL_MALLOC(sizeof(char *)*MAX_DIRECTORY_FILES);
-    for (int i = 0; i < MAX_DIRECTORY_FILES; i++) dirFilesPath[i] = (char *)RL_MALLOC(sizeof(char)*MAX_FILEPATH_LENGTH);
+    dirFilesPath = (char **)RL_MALLOC(MAX_DIRECTORY_FILES*sizeof(char *));
+    for (int i = 0; i < MAX_DIRECTORY_FILES; i++) dirFilesPath[i] = (char *)RL_MALLOC(MAX_FILEPATH_LENGTH*sizeof(char));
 
     int counter = 0;
     struct dirent *entity;
@@ -3543,7 +3542,7 @@ static bool InitGraphicsDevice(int width, int height)
     CORE.Window.display.width = mode->width;
     CORE.Window.display.height = mode->height;
 
-    // Screen size security check
+    // Set screen width/height to the display width/height if they are 0
     if (CORE.Window.screen.width == 0) CORE.Window.screen.width = CORE.Window.display.width;
     if (CORE.Window.screen.height == 0) CORE.Window.screen.height = CORE.Window.display.height;
 #endif  // PLATFORM_DESKTOP
@@ -4914,6 +4913,7 @@ static void SwapBuffers(void)
     {
         gbm_surface_release_buffer(CORE.Window.gbmSurface, CORE.Window.prevBO);
     }
+    
     CORE.Window.prevBO = bo;
 #endif  // PLATFORM_DRM
 #endif  // PLATFORM_ANDROID || PLATFORM_RPI || PLATFORM_DRM || PLATFORM_UWP
@@ -5151,11 +5151,11 @@ static void WindowDropCallback(GLFWwindow *window, int count, const char **paths
 {
     ClearDroppedFiles();
 
-    CORE.Window.dropFilesPath = (char **)RL_MALLOC(sizeof(char *)*count);
+    CORE.Window.dropFilesPath = (char **)RL_MALLOC(count*sizeof(char *));
 
     for (int i = 0; i < count; i++)
     {
-        CORE.Window.dropFilesPath[i] = (char *)RL_MALLOC(sizeof(char)*MAX_FILEPATH_LENGTH);
+        CORE.Window.dropFilesPath[i] = (char *)RL_MALLOC(MAX_FILEPATH_LENGTH*sizeof(char));
         strcpy(CORE.Window.dropFilesPath[i], paths[i]);
     }
 
@@ -6268,15 +6268,15 @@ bool UWPIsConfigured()
 {
     bool pass = true;
 
-    if (uwpQueryTimeFunc == NULL) { TRACELOG(LOG_ERROR, "UWP: UWPSetQueryTimeFunc() must be called with a valid function before InitWindow()"); pass = false; }
-    if (uwpSleepFunc == NULL) { TRACELOG(LOG_ERROR, "UWP: UWPSetSleepFunc() must be called with a valid function before InitWindow()"); pass = false; }
-    if (uwpDisplaySizeFunc == NULL) { TRACELOG(LOG_ERROR, "UWP: UWPSetDisplaySizeFunc() must be called with a valid function before InitWindow()"); pass = false; }
-    if (uwpMouseLockFunc == NULL) { TRACELOG(LOG_ERROR, "UWP: UWPSetMouseLockFunc() must be called with a valid function before InitWindow()"); pass = false; }
-    if (uwpMouseUnlockFunc == NULL) { TRACELOG(LOG_ERROR, "UWP: UWPSetMouseUnlockFunc() must be called with a valid function before InitWindow()"); pass = false; }
-    if (uwpMouseShowFunc == NULL) { TRACELOG(LOG_ERROR, "UWP: UWPSetMouseShowFunc() must be called with a valid function before InitWindow()"); pass = false; }
-    if (uwpMouseHideFunc == NULL) { TRACELOG(LOG_ERROR, "UWP: UWPSetMouseHideFunc() must be called with a valid function before InitWindow()"); pass = false; }
-    if (uwpMouseSetPosFunc == NULL) { TRACELOG(LOG_ERROR, "UWP: UWPSetMouseSetPosFunc() must be called with a valid function before InitWindow()"); pass = false; }
-    if (uwpCoreWindow == NULL) { TRACELOG(LOG_ERROR, "UWP: A pointer to the UWP core window must be set before InitWindow()"); pass = false; }
+    if (uwpQueryTimeFunc == NULL) { TRACELOG(LOG_WARNING, "UWP: UWPSetQueryTimeFunc() must be called with a valid function before InitWindow()"); pass = false; }
+    if (uwpSleepFunc == NULL) { TRACELOG(LOG_WARNING, "UWP: UWPSetSleepFunc() must be called with a valid function before InitWindow()"); pass = false; }
+    if (uwpDisplaySizeFunc == NULL) { TRACELOG(LOG_WARNING, "UWP: UWPSetDisplaySizeFunc() must be called with a valid function before InitWindow()"); pass = false; }
+    if (uwpMouseLockFunc == NULL) { TRACELOG(LOG_WARNING, "UWP: UWPSetMouseLockFunc() must be called with a valid function before InitWindow()"); pass = false; }
+    if (uwpMouseUnlockFunc == NULL) { TRACELOG(LOG_WARNING, "UWP: UWPSetMouseUnlockFunc() must be called with a valid function before InitWindow()"); pass = false; }
+    if (uwpMouseShowFunc == NULL) { TRACELOG(LOG_WARNING, "UWP: UWPSetMouseShowFunc() must be called with a valid function before InitWindow()"); pass = false; }
+    if (uwpMouseHideFunc == NULL) { TRACELOG(LOG_WARNING, "UWP: UWPSetMouseHideFunc() must be called with a valid function before InitWindow()"); pass = false; }
+    if (uwpMouseSetPosFunc == NULL) { TRACELOG(LOG_WARNING, "UWP: UWPSetMouseSetPosFunc() must be called with a valid function before InitWindow()"); pass = false; }
+    if (uwpCoreWindow == NULL) { TRACELOG(LOG_WARNING, "UWP: A pointer to the UWP core window must be set before InitWindow()"); pass = false; }
 
     return pass;
 }

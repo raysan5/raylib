@@ -67,6 +67,7 @@
 #include <stdlib.h>             // Required for: malloc(), free()
 #include <string.h>             // Required for: strlen() [Used in ImageTextEx()]
 #include <math.h>               // Required for: fabsf()
+#include <stdio.h>              // Required for: sprintf() [Used in ExportImageAsCode()]
 
 #include "utils.h"              // Required for: fopen() Android mapping
 
@@ -122,7 +123,7 @@
                                             // NOTE: Used to read image data (multiple formats support)
 #endif
 
-#if (defined(SUPPORT_IMAGE_EXPORT) || defined(SUPPORT_COMPRESSION_API))
+#if defined(SUPPORT_IMAGE_EXPORT)
     #define STBIW_MALLOC RL_MALLOC
     #define STBIW_FREE RL_FREE
     #define STBIW_REALLOC RL_REALLOC
@@ -459,6 +460,8 @@ bool ExportImageAsCode(Image image, const char *fileName)
 {
     bool success = false;
 
+#if defined(SUPPORT_IMAGE_EXPORT)
+
 #ifndef TEXT_BYTES_PER_LINE
     #define TEXT_BYTES_PER_LINE     20
 #endif
@@ -500,6 +503,11 @@ bool ExportImageAsCode(Image image, const char *fileName)
     success = SaveFileText(fileName, txtData);
 
     RL_FREE(txtData);
+    
+#endif      // SUPPORT_IMAGE_EXPORT
+
+    if (success != 0) TRACELOG(LOG_INFO, "FILEIO: [%s] Image exported successfully", fileName);
+    else TRACELOG(LOG_WARNING, "FILEIO: [%s] Failed to export image", fileName);
 
     return success;
 }
@@ -1354,7 +1362,7 @@ void ImageResize(Image *image, int newWidth, int newHeight)
     if (fastPath)
     {
         int bytesPerPixel = GetPixelDataSize(1, 1, image->format);
-        unsigned char *output = RL_MALLOC(newWidth*newHeight*bytesPerPixel);
+        unsigned char *output = (unsigned char *)RL_MALLOC(newWidth*newHeight*bytesPerPixel);
 
         switch (image->format)
         {

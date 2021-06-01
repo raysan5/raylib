@@ -1,14 +1,7 @@
-/*******************************************************************************************
-*
-*   rPBR [shader] - Prefiltered environment for reflections fragment shader
-*
-*   Copyright (c) 2017 Victor Fisac
-*
-**********************************************************************************************/
-
 #version 330
-#define     MAX_SAMPLES             1024u
-#define     CUBEMAP_RESOLUTION      1024.0
+
+#define MAX_SAMPLES          1024u
+#define CUBEMAP_RESOLUTION   1024.0
 
 // Input vertex attributes (from vertex shader)
 in vec3 fragPosition;
