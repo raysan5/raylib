@@ -1,15 +1,4 @@
-/*******************************************************************************************
-*
-*   BRDF LUT Generation - Bidirectional reflectance distribution function fragment shader
-*
-*   REF: https://github.com/HectorMF/BRDFGenerator
-*
-*   Copyright (c) 2017 Victor Fisac
-*
-**********************************************************************************************/
-
 #version 330
-
 
 // Input vertex attributes (from vertex shader)
 in vec2 fragTexCoord;
@@ -86,6 +75,8 @@ float GeometrySmith(vec3 N, vec3 V, vec3 L, float roughness)
     return ggx1*ggx2;
 }
 
+// Bidirectional reflectance distribution function
+// Ref: https://github.com/HectorMF/BRDFGenerator
 vec2 IntegrateBRDF(float NdotV, float roughness)
 {
     float A = 0.0;
