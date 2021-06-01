@@ -3019,11 +3019,12 @@ RayCollision GetRayCollisionBox(Ray ray, BoundingBox box)
     RayCollision result = { 0 };
 
     // Note: If ray.position is inside the box, the distance is negative (as if the ray was reversed)
-    // Reversing ray.direction before will give use the correct result.
+    // Reversing ray.direction will give use the correct result.
     bool insideBox = 
         ray.position.x > box.min.x && ray.position.x < box.max.x &&
         ray.position.y > box.min.y && ray.position.y < box.max.y &&
         ray.position.z > box.min.z && ray.position.z < box.max.z;
+
     if (insideBox) {
         ray.direction = Vector3Negate(ray.direction);
     }
@@ -3140,6 +3141,7 @@ RayCollision GetRayCollisionModel(Ray ray, Model model)
 }
 
 // Get collision info between ray and triangle
+// NOTE: The points are expected to be in counter-clockwise winding
 // NOTE: Based on https://en.wikipedia.org/wiki/M%C3%B6ller%E2%80%93Trumbore_intersection_algorithm
 RayCollision GetRayCollisionTriangle(Ray ray, Vector3 p1, Vector3 p2, Vector3 p3)
 {
@@ -3197,26 +3199,14 @@ RayCollision GetRayCollisionTriangle(Ray ray, Vector3 p1, Vector3 p2, Vector3 p3
     return result;
 }
 
-// Get collision info between ray and ground plane (Y-normal plane)
-RayCollision GetRayCollisionGround(Ray ray, float groundHeight)
-{
-    #define EPSILON 0.000001        // A small number
-
+// Get collision info between ray and quad
+// NOTE: The points are expected to be in counter-clockwise winding
+RayCollision GetRayCollisionQuad(Ray ray, Vector3 p1, Vector3 p2, Vector3 p3, Vector3 p4) {
     RayCollision result = { 0 };
 
-    if (fabsf(ray.direction.y) > EPSILON)
-    {
-        float distance = (ray.position.y - groundHeight)/-ray.direction.y;
+    result = GetRayCollisionTriangle(ray, p1, p2, p4);
 
-        if (distance >= 0.0)
-        {
-            result.hit = true;
-            result.distance = distance;
-            result.normal = (Vector3){ 0.0, 1.0, 0.0 };
-            result.point = Vector3Add(ray.position, Vector3Scale(ray.direction, distance));
-            result.point.y = groundHeight;
-        }
-    }
+    if (!result.hit) result = GetRayCollisionTriangle(ray, p2, p3, p4);
 
     return result;
 }

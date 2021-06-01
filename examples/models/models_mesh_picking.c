@@ -42,6 +42,12 @@ int main(void)
     Vector3 towerPos = { 0.0f, 0.0f, 0.0f };                    // Set model position
     BoundingBox towerBBox = GetMeshBoundingBox(tower.meshes[0]);   // Get mesh bounding box
 
+    // Ground quad
+    Vector3 g0 = (Vector3){ -50.0f, 0.0f, -50.0f };
+    Vector3 g1 = (Vector3){ -50.0f, 0.0f,  50.0f };
+    Vector3 g2 = (Vector3){  50.0f, 0.0f,  50.0f };
+    Vector3 g3 = (Vector3){  50.0f, 0.0f, -50.0f };
+
     // Test triangle
     Vector3 ta = (Vector3){ -25.0f, 0.5f, 0.0f };
     Vector3 tb = (Vector3){ -4.0f, 2.5f, 1.0f };
@@ -75,14 +81,15 @@ int main(void)
         ray = GetMouseRay(GetMousePosition(), camera);
 
         // Check ray collision against ground plane
-        /*RayCollision groundHitInfo = GetCollisionRayQuad(ray, 0.0f);
+        RayCollision groundHitInfo = GetRayCollisionQuad(ray, g0, g1, g2, g3);
+        DrawPoint3D(g0, RED);
 
         if ((groundHitInfo.hit) && (groundHitInfo.distance < nearestHit.distance))
         {
             nearestHit = groundHitInfo;
             cursorColor = GREEN;
             hitObjectName = "Ground";
-        }*/
+        }
 
         // Check ray collision against test triangle
         RayCollision triHitInfo = GetRayCollisionTriangle(ray, ta, tb, tc);
