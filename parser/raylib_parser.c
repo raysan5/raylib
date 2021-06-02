@@ -173,7 +173,7 @@ int main()
                     validStruct = true;
                     break;
                 }
-                else if (buffer[i + j] == ';') 
+                else if (buffer[i + c] == ';')
                 {
                     // Not valid struct: 
                     // i.e typedef struct rAudioBuffer rAudioBuffer; -> Typedef and forward declaration
