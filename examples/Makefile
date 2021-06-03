@@ -395,7 +395,8 @@ CORE = \
     core/core_vr_simulator \
     core/core_loading_thread \
     core/core_quat_conversion \
-    core/core_window_flags
+    core/core_window_flags \
+    core/core_split_screen
 
 SHAPES = \
     shapes/shapes_basic_shapes \
