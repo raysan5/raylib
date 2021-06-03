@@ -105,7 +105,8 @@ int main(void)
         // Check ray collision against test sphere
         RayCollision sphereHitInfo = GetRayCollisionSphere(ray, sp, sr);
         
-        if ((sphereHitInfo.hit) && (sphereHitInfo.distance < collision.distance)) {
+        if ((sphereHitInfo.hit) && (sphereHitInfo.distance < collision.distance))
+        {
             collision = sphereHitInfo;
             cursorColor = ORANGE;
             hitObjectName = "Sphere";

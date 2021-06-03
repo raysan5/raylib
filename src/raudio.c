@@ -1661,17 +1661,17 @@ void UpdateMusicStream(Music music)
                 {
                 case ma_format_f32:
                     // NOTE: Internally this function considers 2 channels generation, so samplesCount/2
-                    jar_xm_generate_samples((jar_xm_context_t*)music.ctxData, (float*)pcm, samplesCount / 2);
+                    jar_xm_generate_samples((jar_xm_context_t*)music.ctxData, (float*)pcm, samplesCount/2);
                     break;
 
                 case ma_format_s16:
                     // NOTE: Internally this function considers 2 channels generation, so samplesCount/2
-                    jar_xm_generate_samples_16bit((jar_xm_context_t*)music.ctxData, (short*)pcm, samplesCount / 2);
+                    jar_xm_generate_samples_16bit((jar_xm_context_t*)music.ctxData, (short*)pcm, samplesCount/2);
                     break;
 
                 case ma_format_u8:
                     // NOTE: Internally this function considers 2 channels generation, so samplesCount/2
-                    jar_xm_generate_samples_8bit((jar_xm_context_t*)music.ctxData, (char*)pcm, samplesCount / 2);
+                    jar_xm_generate_samples_8bit((jar_xm_context_t*)music.ctxData, (char*)pcm, samplesCount/2);
                     break;
                 }
 

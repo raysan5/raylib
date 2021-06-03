@@ -2987,12 +2987,13 @@ RayCollision GetRayCollisionSphere(Ray ray, Vector3 center, float radius)
     Vector3 raySpherePos = Vector3Subtract(center, ray.position);
     float vector = Vector3DotProduct(raySpherePos, ray.direction);
     float distance = Vector3Length(raySpherePos);
-    float d = radius*radius - (distance * distance - vector*vector);
+    float d = radius*radius - (distance*distance - vector*vector);
 
     collision.hit = d >= 0.0f;
 
     // Check if ray origin is inside the sphere to calculate the correct collision point
-    if (distance < radius) { // inside
+    if (distance < radius) 
+    {
         collision.distance = vector + sqrtf(d);
 
         // Calculate collision point
@@ -3000,7 +3001,9 @@ RayCollision GetRayCollisionSphere(Ray ray, Vector3 center, float radius)
 
         // Calculate collision normal (pointing outwards)
         collision.normal = Vector3Negate(Vector3Normalize(Vector3Subtract(collision.point, center)));
-    } else { // outside
+    } 
+    else 
+    {
         collision.distance = vector - sqrtf(d);
 
         // Calculate collision point
@@ -3020,31 +3023,28 @@ RayCollision GetRayCollisionBox(Ray ray, BoundingBox box)
 
     // Note: If ray.position is inside the box, the distance is negative (as if the ray was reversed)
     // Reversing ray.direction will give use the correct result.
-    bool insideBox = 
-        ray.position.x > box.min.x && ray.position.x < box.max.x &&
-        ray.position.y > box.min.y && ray.position.y < box.max.y &&
-        ray.position.z > box.min.z && ray.position.z < box.max.z;
+    bool insideBox = (ray.position.x > box.min.x) && (ray.position.x < box.max.x) &&
+                     (ray.position.y > box.min.y) && (ray.position.y < box.max.y) &&
+                     (ray.position.z > box.min.z) && (ray.position.z < box.max.z);
 
-    if (insideBox) {
-        ray.direction = Vector3Negate(ray.direction);
-    }
+    if (insideBox) ray.direction = Vector3Negate(ray.direction);
 
     float t[11] = { 0 };
 
-    t[8] = 1.0f / ray.direction.x;
-    t[9] = 1.0f / ray.direction.y;
-    t[10] = 1.0f / ray.direction.z;
+    t[8] = 1.0f/ray.direction.x;
+    t[9] = 1.0f/ray.direction.y;
+    t[10] = 1.0f/ray.direction.z;
 
-    t[0] = (box.min.x - ray.position.x) * t[8];
-    t[1] = (box.max.x - ray.position.x) * t[8];
-    t[2] = (box.min.y - ray.position.y) * t[9];
-    t[3] = (box.max.y - ray.position.y) * t[9];
-    t[4] = (box.min.z - ray.position.z) * t[10];
-    t[5] = (box.max.z - ray.position.z) * t[10];
+    t[0] = (box.min.x - ray.position.x)*t[8];
+    t[1] = (box.max.x - ray.position.x)*t[8];
+    t[2] = (box.min.y - ray.position.y)*t[9];
+    t[3] = (box.max.y - ray.position.y)*t[9];
+    t[4] = (box.min.z - ray.position.z)*t[10];
+    t[5] = (box.max.z - ray.position.z)*t[10];
     t[6] = (float)fmax(fmax(fmin(t[0], t[1]), fmin(t[2], t[3])), fmin(t[4], t[5]));
     t[7] = (float)fmin(fmin(fmax(t[0], t[1]), fmax(t[2], t[3])), fmax(t[4], t[5]));
 
-    collision.hit = !(t[7] < 0 || t[6] > t[7]);
+    collision.hit = !((t[7] < 0) || (t[6] > t[7]));
     collision.distance = t[6];
     collision.point = Vector3Add(ray.position, Vector3Scale(ray.direction, collision.distance));
 
@@ -3053,19 +3053,20 @@ RayCollision GetRayCollisionBox(Ray ray, BoundingBox box)
     // Get vector center point->hit point
     collision.normal = Vector3Subtract(collision.point, collision.normal);
     // Scale vector to unit cube
-    //  we use an additional .01 to fix numerical errors
+    // NOTE: We use an additional .01 to fix numerical errors
     collision.normal = Vector3Scale(collision.normal, 2.01f);
     collision.normal = Vector3Divide(collision.normal, Vector3Subtract(box.max, box.min));
-    //  the relevant elemets of the vector are now slightly larger than 1.0f (or smaller than -1.0f)
-    //  and the others are somewhere between -1.0 and 1.0
-    //  casting to int is exactly our wanted normal!
+    // The relevant elemets of the vector are now slightly larger than 1.0f (or smaller than -1.0f)
+    // and the others are somewhere between -1.0 and 1.0
+    // casting to int is exactly our wanted normal!
     collision.normal.x = (int)collision.normal.x;
     collision.normal.y = (int)collision.normal.y;
     collision.normal.z = (int)collision.normal.z;
 
     collision.normal = Vector3Normalize(collision.normal);
 
-    if (insideBox) {
+    if (insideBox)
+    {
         // Reset ray.direction
         ray.direction = Vector3Negate(ray.direction);
         // Fix result
@@ -3203,7 +3204,8 @@ RayCollision GetRayCollisionTriangle(Ray ray, Vector3 p1, Vector3 p2, Vector3 p3
 
 // Get collision info between ray and quad
 // NOTE: The points are expected to be in counter-clockwise winding
-RayCollision GetRayCollisionQuad(Ray ray, Vector3 p1, Vector3 p2, Vector3 p3, Vector3 p4) {
+RayCollision GetRayCollisionQuad(Ray ray, Vector3 p1, Vector3 p2, Vector3 p3, Vector3 p4)
+{
     RayCollision collision = { 0 };
 
     collision = GetRayCollisionTriangle(ray, p1, p2, p4);
@@ -3247,7 +3249,7 @@ static Model LoadOBJ(const char *fileName)
         int ret = tinyobj_parse_obj(&attrib, &meshes, &meshCount, &materials, &materialCount, fileText, dataSize, flags);
 
         if (ret != TINYOBJ_SUCCESS) TRACELOG(LOG_WARNING, "MODEL: [%s] Failed to load OBJ data", fileName);
-        else TRACELOG(LOG_INFO, "MODEL: [%s] OBJ data loaded successfully: %i meshes / %i materials", fileName, meshCount, materialCount);
+        else TRACELOG(LOG_INFO, "MODEL: [%s] OBJ data loaded successfully: %i meshes/%i materials", fileName, meshCount, materialCount);
 
         model.meshCount = materialCount;
 
@@ -3283,7 +3285,7 @@ static Model LoadOBJ(const char *fileName)
         //--------------------------------------
         // create the material meshes
 
-        // running counts / indexes for each material mesh as we are
+        // running counts/indexes for each material mesh as we are
         // building them at the same time
         int *vCount = RL_CALLOC(model.meshCount, sizeof(int));
         int *vtCount = RL_CALLOC(model.meshCount, sizeof(int));
@@ -4368,10 +4370,10 @@ static Model LoadGLTF(const char *fileName)
                                 {
                                     GLTFReadValue(acc, a, readValue, 4, sizeof(unsigned short));
                                     // 257 = 65535/255
-                                    model.meshes[primitiveIndex].colors[(a*4) + 0] = (unsigned char)(readValue[0] / 257);
-                                    model.meshes[primitiveIndex].colors[(a*4) + 1] = (unsigned char)(readValue[1] / 257);
-                                    model.meshes[primitiveIndex].colors[(a*4) + 2] = (unsigned char)(readValue[2] / 257);
-                                    model.meshes[primitiveIndex].colors[(a*4) + 3] = (unsigned char)(readValue[3] / 257);
+                                    model.meshes[primitiveIndex].colors[(a*4) + 0] = (unsigned char)(readValue[0]/257);
+                                    model.meshes[primitiveIndex].colors[(a*4) + 1] = (unsigned char)(readValue[1]/257);
+                                    model.meshes[primitiveIndex].colors[(a*4) + 2] = (unsigned char)(readValue[2]/257);
+                                    model.meshes[primitiveIndex].colors[(a*4) + 3] = (unsigned char)(readValue[3]/257);
                                 }
                             }
                         }
@@ -4437,12 +4439,14 @@ static void InitGLTFBones(Model* model, const cgltf_data* data)
         bool* completedBones = RL_CALLOC(model->boneCount, sizeof(bool));
         int numberCompletedBones = 0;
 
-        while (numberCompletedBones < model->boneCount) {
+        while (numberCompletedBones < model->boneCount)
+        {
             for (int i = 0; i < model->boneCount; i++)
             {
                 if (completedBones[i]) continue;
 
-                if (model->bones[i].parent < 0) {
+                if (model->bones[i].parent < 0)
+                {
                     completedBones[i] = true;
                     numberCompletedBones++;
                     continue;
@@ -4453,8 +4457,7 @@ static void InitGLTFBones(Model* model, const cgltf_data* data)
                 Transform* currentTransform = &model->bindPose[i];
                 BoneInfo* currentBone = &model->bones[i];
                 int root = currentBone->parent;
-                if (root >= model->boneCount)
-                    root = 0;
+                if (root >= model->boneCount) root = 0;
                 Transform* parentTransform = &model->bindPose[root];
 
                 currentTransform->rotation = QuaternionMultiply(parentTransform->rotation, currentTransform->rotation);
@@ -4470,7 +4473,7 @@ static void InitGLTFBones(Model* model, const cgltf_data* data)
     }
 }
 
-static void LoadGLTFMaterial(Model* model, const char* fileName, const cgltf_data* data)
+static void LoadGLTFMaterial(Model *model, const char *fileName, const cgltf_data *data)
 {
     for (int i = 0; i < model->materialCount - 1; i++)
     {
@@ -4541,7 +4544,7 @@ static void LoadGLTFMaterial(Model* model, const char* fileName, const cgltf_dat
     model->materials[model->materialCount - 1] = LoadMaterialDefault();
 }
 
-static void LoadGLTFBoneAttribute(Model* model, cgltf_accessor* jointsAccessor, const cgltf_data* data, int primitiveIndex)
+static void LoadGLTFBoneAttribute(Model *model, cgltf_accessor *jointsAccessor, const cgltf_data *data, int primitiveIndex)
 {
     if (jointsAccessor->component_type == cgltf_component_type_r_16u)
     {
@@ -4790,7 +4793,7 @@ static ModelAnimation *LoadGLTFModelAnimations(const char *fileName, int *animCo
                 }
             }
 
-            output->frameCount = (int)(animationDuration / timeStep);
+            output->frameCount = (int)(animationDuration/timeStep);
             output->boneCount = (int)data->nodes_count;
             output->bones = RL_MALLOC(output->boneCount*sizeof(BoneInfo));
             output->framePoses = RL_MALLOC(output->frameCount*sizeof(Transform *));
