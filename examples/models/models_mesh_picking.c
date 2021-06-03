@@ -197,7 +197,7 @@ int main(void)
                                     collision.normal.y,
                                     collision.normal.z), 10, ypos + 30, 10, BLACK);
 
-                if (triHitInfo.hit && strcmp(hitObjectName, "Triangle") == 0)
+                if (triHitInfo.hit && TextIsEqual(hitObjectName, "Triangle"))
                     DrawText(TextFormat("Barycenter: %3.2f %3.2f %3.2f",  bary.x, bary.y, bary.z), 10, ypos + 45, 10, BLACK);
             }
 
