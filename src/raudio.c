@@ -1160,7 +1160,7 @@ Music LoadMusicStream(const char *fileName)
             int sampleSize = ctxWav->bitsPerSample;
             if (ctxWav->bitsPerSample == 24) sampleSize = 16;   // Forcing conversion to s16 on UpdateMusicStream()
 
-            music.stream = InitAudioStream(ctxWav->sampleRate, sampleSize, ctxWav->channels);
+            music.stream = LoadAudioStream(ctxWav->sampleRate, sampleSize, ctxWav->channels);
             music.sampleCount = (unsigned int)ctxWav->totalPCMFrameCount*ctxWav->channels;
             music.looping = true;   // Looping enabled by default
             musicLoaded = true;
@@ -1179,7 +1179,7 @@ Music LoadMusicStream(const char *fileName)
             stb_vorbis_info info = stb_vorbis_get_info((stb_vorbis *)music.ctxData);  // Get Ogg file info
 
             // OGG bit rate defaults to 16 bit, it's enough for compressed format
-            music.stream = InitAudioStream(info.sample_rate, 16, info.channels);
+            music.stream = LoadAudioStream(info.sample_rate, 16, info.channels);
 
             // WARNING: It seems this function returns length in frames, not samples, so we multiply by channels
             music.sampleCount = (unsigned int)stb_vorbis_stream_length_in_samples((stb_vorbis *)music.ctxData)*info.channels;
@@ -1198,7 +1198,7 @@ Music LoadMusicStream(const char *fileName)
         {
             drflac *ctxFlac = (drflac *)music.ctxData;
 
-            music.stream = InitAudioStream(ctxFlac->sampleRate, ctxFlac->bitsPerSample, ctxFlac->channels);
+            music.stream = LoadAudioStream(ctxFlac->sampleRate, ctxFlac->bitsPerSample, ctxFlac->channels);
             music.sampleCount = (unsigned int)ctxFlac->totalPCMFrameCount*ctxFlac->channels;
             music.looping = true;   // Looping enabled by default
             musicLoaded = true;
@@ -1216,7 +1216,7 @@ Music LoadMusicStream(const char *fileName)
 
         if (result > 0)
         {
-            music.stream = InitAudioStream(ctxMp3->sampleRate, 32, ctxMp3->channels);
+            music.stream = LoadAudioStream(ctxMp3->sampleRate, 32, ctxMp3->channels);
             music.sampleCount = (unsigned int)drmp3_get_pcm_frame_count(ctxMp3)*ctxMp3->channels;
             music.looping = true;   // Looping enabled by default
             musicLoaded = true;
@@ -1243,7 +1243,7 @@ Music LoadMusicStream(const char *fileName)
                 bits = 8;
 
             // NOTE: Only stereo is supported for XM
-            music.stream = InitAudioStream(AUDIO.System.device.sampleRate, bits, AUDIO_DEVICE_CHANNELS);
+            music.stream = LoadAudioStream(AUDIO.System.device.sampleRate, bits, AUDIO_DEVICE_CHANNELS);
             music.sampleCount = (unsigned int)jar_xm_get_remaining_samples(ctxXm)*2;    // 2 channels
             music.looping = true;   // Looping enabled by default
             jar_xm_reset(ctxXm);   // make sure we start at the beginning of the song
@@ -1264,7 +1264,7 @@ Music LoadMusicStream(const char *fileName)
         if (result > 0)
         {
             // NOTE: Only stereo is supported for MOD
-            music.stream = InitAudioStream(AUDIO.System.device.sampleRate, 16, AUDIO_DEVICE_CHANNELS);
+            music.stream = LoadAudioStream(AUDIO.System.device.sampleRate, 16, AUDIO_DEVICE_CHANNELS);
             music.sampleCount = (unsigned int)jar_mod_max_samples(ctxMod)*2;    // 2 channels
             music.looping = true;   // Looping enabled by default
             musicLoaded = true;
@@ -1336,7 +1336,7 @@ Music LoadMusicStreamFromMemory(const char *fileType, unsigned char* data, int d
             int sampleSize = ctxWav->bitsPerSample;
             if (ctxWav->bitsPerSample == 24) sampleSize = 16;   // Forcing conversion to s16 on UpdateMusicStream()
 
-            music.stream = InitAudioStream(ctxWav->sampleRate, sampleSize, ctxWav->channels);
+            music.stream = LoadAudioStream(ctxWav->sampleRate, sampleSize, ctxWav->channels);
             music.sampleCount = (unsigned int)ctxWav->totalPCMFrameCount*ctxWav->channels;
             music.looping = true;   // Looping enabled by default
             musicLoaded = true;
@@ -1353,7 +1353,7 @@ Music LoadMusicStreamFromMemory(const char *fileType, unsigned char* data, int d
         {
             drflac *ctxFlac = (drflac *)music.ctxData;
 
-            music.stream = InitAudioStream(ctxFlac->sampleRate, ctxFlac->bitsPerSample, ctxFlac->channels);
+            music.stream = LoadAudioStream(ctxFlac->sampleRate, ctxFlac->bitsPerSample, ctxFlac->channels);
             music.sampleCount = (unsigned int)ctxFlac->totalPCMFrameCount*ctxFlac->channels;
             music.looping = true;   // Looping enabled by default
             musicLoaded = true;
@@ -1371,7 +1371,7 @@ Music LoadMusicStreamFromMemory(const char *fileType, unsigned char* data, int d
 
         if (success)
         {
-            music.stream = InitAudioStream(ctxMp3->sampleRate, 32, ctxMp3->channels);
+            music.stream = LoadAudioStream(ctxMp3->sampleRate, 32, ctxMp3->channels);
             music.sampleCount = (unsigned int)drmp3_get_pcm_frame_count(ctxMp3)*ctxMp3->channels;
             music.looping = true;   // Looping enabled by default
             musicLoaded = true;
@@ -1391,7 +1391,7 @@ Music LoadMusicStreamFromMemory(const char *fileType, unsigned char* data, int d
             stb_vorbis_info info = stb_vorbis_get_info((stb_vorbis *)music.ctxData);  // Get Ogg file info
 
             // OGG bit rate defaults to 16 bit, it's enough for compressed format
-            music.stream = InitAudioStream(info.sample_rate, 16, info.channels);
+            music.stream = LoadAudioStream(info.sample_rate, 16, info.channels);
 
             // WARNING: It seems this function returns length in frames, not samples, so we multiply by channels
             music.sampleCount = (unsigned int)stb_vorbis_stream_length_in_samples((stb_vorbis *)music.ctxData)*info.channels;
@@ -1417,7 +1417,7 @@ Music LoadMusicStreamFromMemory(const char *fileType, unsigned char* data, int d
                 bits = 8;
 
             // NOTE: Only stereo is supported for XM
-            music.stream = InitAudioStream(AUDIO.System.device.sampleRate, bits, 2);
+            music.stream = LoadAudioStream(AUDIO.System.device.sampleRate, bits, 2);
             music.sampleCount = (unsigned int)jar_xm_get_remaining_samples(ctxXm)*2;    // 2 channels
             music.looping = true;   // Looping enabled by default
             jar_xm_reset(ctxXm);   // make sure we start at the beginning of the song
@@ -1455,7 +1455,7 @@ Music LoadMusicStreamFromMemory(const char *fileType, unsigned char* data, int d
             music.ctxType = MUSIC_MODULE_MOD;
 
             // NOTE: Only stereo is supported for MOD
-            music.stream = InitAudioStream(AUDIO.System.device.sampleRate, 16, 2);
+            music.stream = LoadAudioStream(AUDIO.System.device.sampleRate, 16, 2);
             music.sampleCount = (unsigned int)jar_mod_max_samples(ctxMod)*2;    // 2 channels
             music.looping = true;   // Looping enabled by default
             musicLoaded = true;
@@ -1508,7 +1508,7 @@ Music LoadMusicStreamFromMemory(const char *fileType, unsigned char* data, int d
 // Unload music stream
 void UnloadMusicStream(Music music)
 {
-    CloseAudioStream(music.stream);
+    UnloadAudioStream(music.stream);
 
     if (music.ctxData != NULL)
     {
@@ -1772,8 +1772,8 @@ float GetMusicTimePlayed(Music music)
     return secondsPlayed;
 }
 
-// Init audio stream (to stream audio pcm data)
-AudioStream InitAudioStream(unsigned int sampleRate, unsigned int sampleSize, unsigned int channels)
+// Load audio stream (to stream audio pcm data)
+AudioStream LoadAudioStream(unsigned int sampleRate, unsigned int sampleSize, unsigned int channels)
 {
     AudioStream stream = { 0 };
 
@@ -1802,8 +1802,8 @@ AudioStream InitAudioStream(unsigned int sampleRate, unsigned int sampleSize, un
     return stream;
 }
 
-// Close audio stream and free memory
-void CloseAudioStream(AudioStream stream)
+// Unload audio stream and free memory
+void UnloadAudioStream(AudioStream stream)
 {
     UnloadAudioBuffer(stream.buffer);
 
