@@ -1447,10 +1447,10 @@ RLAPI bool CheckCollisionBoxes(BoundingBox box1, BoundingBox box2);             
 RLAPI bool CheckCollisionBoxSphere(BoundingBox box, Vector3 center, float radius);                      // Detect collision between box and sphere
 RLAPI RayCollision GetRayCollisionSphere(Ray ray, Vector3 center, float radius);                        // Get collision info between ray and sphere
 RLAPI RayCollision GetRayCollisionBox(Ray ray, BoundingBox box);                                        // Get collision info between ray and box
-RLAPI RayCollision GetRayCollisionMesh(Ray ray, Mesh mesh, Matrix transform);                           // Get collision info between ray and mesh
 RLAPI RayCollision GetRayCollisionModel(Ray ray, Model model);                                          // Get collision info between ray and model
+RLAPI RayCollision GetRayCollisionMesh(Ray ray, Mesh mesh, Matrix transform);                           // Get collision info between ray and mesh
 RLAPI RayCollision GetRayCollisionTriangle(Ray ray, Vector3 p1, Vector3 p2, Vector3 p3);                // Get collision info between ray and triangle
-RLAPI RayCollision GetRayCollisionGround(Ray ray, float groundHeight);                                  // Get collision info between ray and ground plane (Y-normal plane)
+RLAPI RayCollision GetRayCollisionQuad(Ray ray, Vector3 p1, Vector3 p2, Vector3 p3, Vector3 p4);        // Get collision info between ray and quad
 
 //------------------------------------------------------------------------------------
 // Audio Loading and Playing Functions (Module: audio)

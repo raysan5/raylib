@@ -2985,19 +2985,31 @@ RayCollision GetRayCollisionSphere(Ray ray, Vector3 center, float radius)
     RayCollision collision = { 0 };
 
     Vector3 raySpherePos = Vector3Subtract(center, ray.position);
-    float distance = Vector3Length(raySpherePos);
     float vector = Vector3DotProduct(raySpherePos, ray.direction);
-    float d = radius*radius - (distance*distance - vector*vector);
+    float distance = Vector3Length(raySpherePos);
+    float d = radius*radius - (distance * distance - vector*vector);
 
-    if (d >= 0.0f) collision.hit = true;
+    collision.hit = d >= 0.0f;
 
     // Check if ray origin is inside the sphere to calculate the correct collision point
-    if (distance < radius) collision.distance = vector + sqrtf(d);
-    else collision.distance = vector - sqrtf(d);
+    if (distance < radius) { // inside
+        collision.distance = vector + sqrtf(d);
 
-    // Calculate collision point
-    collision.point = Vector3Add(ray.position, Vector3Scale(ray.direction, collision.distance));
+        // Calculate collision point
+        collision.point = Vector3Add(ray.position, Vector3Scale(ray.direction, collision.distance));
 
+        // Calculate collision normal (pointing outwards)
+        collision.normal = Vector3Negate(Vector3Normalize(Vector3Subtract(collision.point, center)));
+    } else { // outside
+        collision.distance = vector - sqrtf(d);
+
+        // Calculate collision point
+        collision.point = Vector3Add(ray.position, Vector3Scale(ray.direction, collision.distance));
+
+        // Calculate collision normal (pointing inwards)
+        collision.normal = Vector3Normalize(Vector3Subtract(collision.point, center));
+    }
+    
     return collision;
 }
 
@@ -3006,19 +3018,60 @@ RayCollision GetRayCollisionBox(Ray ray, BoundingBox box)
 {
     RayCollision collision = { 0 };
 
-    float t[8] = { 0 };
-    t[0] = (box.min.x - ray.position.x)/ray.direction.x;
-    t[1] = (box.max.x - ray.position.x)/ray.direction.x;
-    t[2] = (box.min.y - ray.position.y)/ray.direction.y;
-    t[3] = (box.max.y - ray.position.y)/ray.direction.y;
-    t[4] = (box.min.z - ray.position.z)/ray.direction.z;
-    t[5] = (box.max.z - ray.position.z)/ray.direction.z;
+    // Note: If ray.position is inside the box, the distance is negative (as if the ray was reversed)
+    // Reversing ray.direction will give use the correct result.
+    bool insideBox = 
+        ray.position.x > box.min.x && ray.position.x < box.max.x &&
+        ray.position.y > box.min.y && ray.position.y < box.max.y &&
+        ray.position.z > box.min.z && ray.position.z < box.max.z;
+
+    if (insideBox) {
+        ray.direction = Vector3Negate(ray.direction);
+    }
+
+    float t[11] = { 0 };
+
+    t[8] = 1.0f / ray.direction.x;
+    t[9] = 1.0f / ray.direction.y;
+    t[10] = 1.0f / ray.direction.z;
+
+    t[0] = (box.min.x - ray.position.x) * t[8];
+    t[1] = (box.max.x - ray.position.x) * t[8];
+    t[2] = (box.min.y - ray.position.y) * t[9];
+    t[3] = (box.max.y - ray.position.y) * t[9];
+    t[4] = (box.min.z - ray.position.z) * t[10];
+    t[5] = (box.max.z - ray.position.z) * t[10];
     t[6] = (float)fmax(fmax(fmin(t[0], t[1]), fmin(t[2], t[3])), fmin(t[4], t[5]));
     t[7] = (float)fmin(fmin(fmax(t[0], t[1]), fmax(t[2], t[3])), fmax(t[4], t[5]));
 
     collision.hit = !(t[7] < 0 || t[6] > t[7]);
-    
-    // TODO: Calculate other RayCollision data
+    collision.distance = t[6];
+    collision.point = Vector3Add(ray.position, Vector3Scale(ray.direction, collision.distance));
+
+    // Get box center point
+    collision.normal = Vector3Lerp(box.min, box.max, 0.5f);
+    // Get vector center point->hit point
+    collision.normal = Vector3Subtract(collision.point, collision.normal);
+    // Scale vector to unit cube
+    //  we use an additional .01 to fix numerical errors
+    collision.normal = Vector3Scale(collision.normal, 2.01f);
+    collision.normal = Vector3Divide(collision.normal, Vector3Subtract(box.max, box.min));
+    //  the relevant elemets of the vector are now slightly larger than 1.0f (or smaller than -1.0f)
+    //  and the others are somewhere between -1.0 and 1.0
+    //  casting to int is exactly our wanted normal!
+    collision.normal.x = (int)collision.normal.x;
+    collision.normal.y = (int)collision.normal.y;
+    collision.normal.z = (int)collision.normal.z;
+
+    collision.normal = Vector3Normalize(collision.normal);
+
+    if (insideBox) {
+        // Reset ray.direction
+        ray.direction = Vector3Negate(ray.direction);
+        // Fix result
+        collision.distance *= -1.0f;
+        collision.normal = Vector3Negate(collision.normal);
+    }
 
     return collision;
 }
@@ -3089,6 +3142,7 @@ RayCollision GetRayCollisionModel(Ray ray, Model model)
 }
 
 // Get collision info between ray and triangle
+// NOTE: The points are expected to be in counter-clockwise winding
 // NOTE: Based on https://en.wikipedia.org/wiki/M%C3%B6ller%E2%80%93Trumbore_intersection_algorithm
 RayCollision GetRayCollisionTriangle(Ray ray, Vector3 p1, Vector3 p2, Vector3 p3)
 {
@@ -3147,26 +3201,14 @@ RayCollision GetRayCollisionTriangle(Ray ray, Vector3 p1, Vector3 p2, Vector3 p3
     return collision;
 }
 
-// Get collision info between ray and ground plane (Y-normal plane)
-RayCollision GetRayCollisionGround(Ray ray, float groundHeight)
-{
-    #define EPSILON 0.000001        // A small number
-
+// Get collision info between ray and quad
+// NOTE: The points are expected to be in counter-clockwise winding
+RayCollision GetRayCollisionQuad(Ray ray, Vector3 p1, Vector3 p2, Vector3 p3, Vector3 p4) {
     RayCollision collision = { 0 };
 
-    if (fabsf(ray.direction.y) > EPSILON)
-    {
-        float distance = (ray.position.y - groundHeight)/-ray.direction.y;
+    collision = GetRayCollisionTriangle(ray, p1, p2, p4);
 
-        if (distance >= 0.0)
-        {
-            collision.hit = true;
-            collision.distance = distance;
-            collision.normal = (Vector3){ 0.0, 1.0, 0.0 };
-            collision.point = Vector3Add(ray.position, Vector3Scale(ray.direction, distance));
-            collision.point.y = groundHeight;
-        }
-    }
+    if (!collision.hit) collision = GetRayCollisionTriangle(ray, p2, p3, p4);
 
     return collision;
 }
