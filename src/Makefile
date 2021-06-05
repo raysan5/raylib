@@ -77,7 +77,7 @@ RAYLIB_MODULE_RAYGUI ?= FALSE
 RAYLIB_MODULE_PHYSAC ?= FALSE
 
 RAYLIB_MODULE_RAYGUI_PATH ?= $(RAYLIB_SRC_PATH)/../../raygui/src
-RAYLIB_MODULE_PHYSAC_PATH ?= $(RAYLIB_SRC_PATH)
+RAYLIB_MODULE_PHYSAC_PATH ?= $(RAYLIB_SRC_PATH)/extras
 
 # Use external GLFW library instead of rglfw module
 # TODO: Review usage of examples on Linux.
@@ -650,7 +650,7 @@ ifeq ($(ROOT),root)
 		cp --update raylib.h $(RAYLIB_H_INSTALL_PATH)/raylib.h
 		cp --update raymath.h $(RAYLIB_H_INSTALL_PATH)/raymath.h
 		cp --update rlgl.h $(RAYLIB_H_INSTALL_PATH)/rlgl.h
-		cp --update physac.h $(RAYLIB_H_INSTALL_PATH)/physac.h
+		cp --update extras/physac.h $(RAYLIB_H_INSTALL_PATH)/physac.h
 		@echo "raylib development files installed/updated!"
     else
 		@echo "This function currently works on GNU/Linux systems. Add yours today (^;"
