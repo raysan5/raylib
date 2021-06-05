@@ -72,6 +72,7 @@ Here it is a list with the ones I'm aware of:
 | Euraylib           | 3.0 | [Euphoria](https://openeuphoria.org/)  | https://github.com/gAndy50/Euraylib          |
 | raylib-wren        | 3.7 | [Wren](http://wren.io/)           | https://github.com/TSnake41/raylib-wren           |
 | raylib-odin        | 3.0 | [Odin](https://odin-lang.org/)            | https://github.com/kevinw/raylib-odin     |
+| raylib_odin_bindings | 3.8+ | [Odin](https://odin-lang.org/)            | https://github.com/Deathbat2190/raylib_odin_bindings     |
 | raylib-zig         | 3.0 | [Zig](https://ziglang.org/)               | https://github.com/Not-Nik/raylib-zig     |
 | raylib-jai         | 3.1-dev | [Jai](https://github.com/BSVino/JaiPrimer/blob/master/JaiPrimer.md)  | https://github.com/kevinw/raylib-jai   |
 | ray.zig            | 2.5 | [Zig](https://ziglang.org/)               | https://github.com/BitPuffin/zig-raylib-experiments |
