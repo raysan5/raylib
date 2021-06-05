@@ -121,7 +121,7 @@
 #endif
 
 // NOTE: MSVC C++ compiler does not support compound literals (C99 feature)
-// Plain structures in C++ (without constructors) can be initialized from { } initializers.
+// Plain structures in C++ (without constructors) can be initialized with { }
 #if defined(__cplusplus)
     #define CLITERAL(type)      type
 #else

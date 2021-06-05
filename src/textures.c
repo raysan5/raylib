@@ -425,7 +425,7 @@ bool ExportImage(Image image, const char *fileName)
         RL_FREE(fileData);
     }
 #else
-    if (false) {}
+    if (false) { }
 #endif
 #if defined(SUPPORT_FILEFORMAT_BMP)
     else if (IsFileExtension(fileName, ".bmp")) success = stbi_write_bmp(fileName, image.width, image.height, channels, imgData);

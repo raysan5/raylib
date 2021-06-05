@@ -1325,7 +1325,7 @@ char *TextReplace(char *text, const char *replace, const char *by)
 char *TextInsert(const char *text, const char *insert, int position)
 {
     int textLen = TextLength(text);
-    int insertLen =  TextLength(insert);
+    int insertLen = TextLength(insert);
 
     char *result = (char *)RL_MALLOC(textLen + insertLen + 1);
 

@@ -326,7 +326,7 @@ RMDEF Vector2 Vector2MoveTowards(Vector2 v, Vector2 target, float maxDistance)
     float dy = target.y - v.y;
     float value = (dx*dx) + (dy*dy);
 
-    if ((value == 0) || ((maxDistance >= 0) && (value <= maxDistance * maxDistance))) return target;
+    if ((value == 0) || ((maxDistance >= 0) && (value <= maxDistance*maxDistance))) return target;
 
     float dist = sqrtf(value);
 
@@ -870,18 +870,18 @@ RMDEF Matrix MatrixRotate(Vector3 axis, float angle)
     float cosres = cosf(angle);
     float t = 1.0f - cosres;
 
-    result.m0  = x*x*t + cosres;
-    result.m1  = y*x*t + z*sinres;
-    result.m2  = z*x*t - y*sinres;
-    result.m3  = 0.0f;
+    result.m0 = x*x*t + cosres;
+    result.m1 = y*x*t + z*sinres;
+    result.m2 = z*x*t - y*sinres;
+    result.m3 = 0.0f;
 
-    result.m4  = x*y*t - z*sinres;
-    result.m5  = y*y*t + cosres;
-    result.m6  = z*y*t + x*sinres;
-    result.m7  = 0.0f;
+    result.m4 = x*y*t - z*sinres;
+    result.m5 = y*y*t + cosres;
+    result.m6 = z*y*t + x*sinres;
+    result.m7 = 0.0f;
 
-    result.m8  = x*z*t + y*sinres;
-    result.m9  = y*z*t - x*sinres;
+    result.m8 = x*z*t + y*sinres;
+    result.m9 = y*z*t - x*sinres;
     result.m10 = z*z*t + cosres;
     result.m11 = 0.0f;
 
@@ -1292,7 +1292,7 @@ RMDEF Quaternion QuaternionSlerp(Quaternion q1, Quaternion q2, float amount)
 {
     Quaternion result = { 0 };
 
-    float cosHalfTheta =  q1.x*q2.x + q1.y*q2.y + q1.z*q2.z + q1.w*q2.w;
+    float cosHalfTheta = q1.x*q2.x + q1.y*q2.y + q1.z*q2.z + q1.w*q2.w;
 
     if (cosHalfTheta < 0)
     {
@@ -1375,7 +1375,7 @@ RMDEF Quaternion QuaternionFromMatrix(Matrix mat)
     }
     else
     {
-        float s  = sqrtf(1.0f + mat.m10 - mat.m0 - mat.m5)*2;
+        float s = sqrtf(1.0f + mat.m10 - mat.m0 - mat.m5)*2;
         result.x = (mat.m2 + mat.m8)/s;
         result.y = (mat.m9 + mat.m6)/s;
         result.z = 0.25f*s;

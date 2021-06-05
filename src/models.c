@@ -1435,11 +1435,11 @@ void UpdateModelAnimation(Model model, ModelAnimation anim, int frame)
 
             for (int i = 0; i < model.meshes[m].vertexCount; i++)
             {
-                model.meshes[m].animVertices[vCounter]     = 0;
+                model.meshes[m].animVertices[vCounter] = 0;
                 model.meshes[m].animVertices[vCounter + 1] = 0;
                 model.meshes[m].animVertices[vCounter + 2] = 0;
 
-                model.meshes[m].animNormals[vCounter]     = 0;
+                model.meshes[m].animNormals[vCounter] = 0;
                 model.meshes[m].animNormals[vCounter + 1] = 0;
                 model.meshes[m].animNormals[vCounter + 2] = 0;
 
