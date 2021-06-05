@@ -412,7 +412,6 @@ void SetAudioBufferVolume(AudioBuffer *buffer, float volume);
 void SetAudioBufferPitch(AudioBuffer *buffer, float pitch);
 void TrackAudioBuffer(AudioBuffer *buffer);
 void UntrackAudioBuffer(AudioBuffer *buffer);
-int GetAudioStreamBufferSizeDefault();
 
 //----------------------------------------------------------------------------------
 // Module Functions Definition - Audio Device initialization and Closing
@@ -1785,7 +1784,9 @@ AudioStream LoadAudioStream(unsigned int sampleRate, unsigned int sampleSize, un
 
     // The size of a streaming buffer must be at least double the size of a period
     unsigned int periodSize = AUDIO.System.device.playback.internalPeriodSizeInFrames;
-    unsigned int subBufferSize = GetAudioStreamBufferSizeDefault();
+    
+    // If the buffer is not set, compute one that would give us a buffer good enough for a decent frame rate
+    unsigned int subBufferSize = (AUDIO.Buffer.defaultSize == 0)? AUDIO.Buffer.defaultSize : AUDIO.System.device.sampleRate/30;
 
     if (subBufferSize < periodSize) subBufferSize = periodSize;
 
@@ -1918,15 +1919,6 @@ void SetAudioStreamPitch(AudioStream stream, float pitch)
 void SetAudioStreamBufferSizeDefault(int size)
 {
     AUDIO.Buffer.defaultSize = size;
-}
-
-int GetAudioStreamBufferSizeDefault()
-{
-    // if the buffer is not set, compute one that would give us a buffer good enough for a decent frame rate
-    if (AUDIO.Buffer.defaultSize == 0)
-        AUDIO.Buffer.defaultSize = AUDIO.System.device.sampleRate/30;
-
-    return AUDIO.Buffer.defaultSize;
 }
 
 //----------------------------------------------------------------------------------
