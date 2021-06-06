@@ -9,6 +9,13 @@ All data is separated into parts, usually as strings. The following types are us
  
 Check `raylib_parser.c` for details about those structs.
 
+## Command Line Arguments
+
+The parser can take a few options...
+
+- `--help` Displays help information about the parser
+- `--json` Outputs the header information in JSON format
+
 ## Constraints
 
 This parser is specifically designed to work with raylib.h, so, it has some constraints: 

@@ -66,6 +66,8 @@
 #define MAX_LINE_LENGTH          512    // Maximum length of one line (including comments)
 #define MAX_STRUCT_LINE_LENGTH  2048    // Maximum length of one struct (multiple lines)
 
+enum OutputFormat { PlainText, JSON };       // Which format the header information should be in
+
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
 //----------------------------------------------------------------------------------
@@ -107,10 +109,24 @@ char **GetTextLines(const char *buffer, int length, int *linesCount);
 void GetDataTypeAndName(const char *typeName, int typeNameLen, char *type, char *name);
 bool IsTextEqual(const char *text1, const char *text2, unsigned int count);
 void MemoryCopy(void *dest, const void *src, unsigned int count);
+char* CharReplace(char* text, char search, char replace);
 
 // Main entry point
-int main()
+int main(int argc, char* argv[])
 {
+    // Help
+    if (IsTextEqual(argv[1], "--help", 6)) {
+        printf("Usage:\n");
+        printf("  raylib_parser [--json]\n");
+        return 0;
+    }
+
+    // Allow changing the output format.
+    int outputFormat = 0;
+    if (IsTextEqual(argv[1], "--json", 6)) {
+        outputFormat = JSON;
+    }
+
     int length = 0;
     char *buffer = LoadFileText("../src/raylib.h", &length);
     
@@ -466,32 +482,130 @@ int main()
     // funcs[]   -> We have all the functions decomposed into pieces for further analysis
     
     // Print structs info
-    printf("\nStructures found: %i\n\n", structCount);
-    for (int i = 0; i < structCount; i++)
+    switch (outputFormat)
     {
-        printf("Struct %02i: %s (%i fields)\n", i + 1, structs[i].name, structs[i].fieldCount);
-        //printf("Description: %s\n", structs[i].desc);
-        for (int f = 0; f < structs[i].fieldCount; f++) printf("  Fields %i: %s %s %s\n", f + 1, structs[i].fieldType[f], structs[i].fieldName[f], structs[i].fieldDesc[f]);
-    }
+        case PlainText: {
+            printf("\nStructures found: %i\n\n", structCount);
+            for (int i = 0; i < structCount; i++)
+            {
+                printf("Struct %02i: %s (%i fields)\n", i + 1, structs[i].name, structs[i].fieldCount);
+                //printf("Description: %s\n", structs[i].desc);
+                for (int f = 0; f < structs[i].fieldCount; f++) printf("  Fields %i: %s %s %s\n", f + 1, structs[i].fieldType[f], structs[i].fieldName[f], structs[i].fieldDesc[f]);
+            }
 
-    // Print enums info
-    printf("\nEnums found: %i\n\n", enumCount);
-    for (int i = 0; i < enumCount; i++)
-    {
-        printf("Enum %02i: %s (%i values)\n", i + 1, enums[i].name, enums[i].valueCount);
-        //printf("Description: %s\n", enums[i].desc);
-        for (int e = 0; e < enums[i].valueCount; e++) printf("  Value %s: %i\n", enums[i].valueName[e], enums[i].valueInteger[e]);
-    }
-    
-    // Print function info 
-    printf("\nFunctions found: %i\n\n", funcCount);
-    for (int i = 0; i < funcCount; i++)
-    {
-        printf("Function %03i: %s() (%i input parameters)\n", i + 1, funcs[i].name, funcs[i].paramCount);
-        printf("  Description: %s\n", funcs[i].desc);
-        printf("  Return type: %s\n", funcs[i].retType);
-        for (int p = 0; p < funcs[i].paramCount; p++) printf("  Param %i: %s (type: %s)\n", p + 1, funcs[i].paramName[p], funcs[i].paramType[p]);
-        if (funcs[i].paramCount == 0) printf("  No input parameters\n");
+            // Print enums info
+            printf("\nEnums found: %i\n\n", enumCount);
+            for (int i = 0; i < enumCount; i++)
+            {
+                printf("Enum %02i: %s (%i values)\n", i + 1, enums[i].name, enums[i].valueCount);
+                //printf("Description: %s\n", enums[i].desc);
+                for (int e = 0; e < enums[i].valueCount; e++) printf("  Value %s: %i\n", enums[i].valueName[e], enums[i].valueInteger[e]);
+            }
+
+            // Print function info
+            printf("\nFunctions found: %i\n\n", funcCount);
+            for (int i = 0; i < funcCount; i++)
+            {
+                printf("Function %03i: %s() (%i input parameters)\n", i + 1, funcs[i].name, funcs[i].paramCount);
+                printf("  Description: %s\n", funcs[i].desc);
+                printf("  Return type: %s\n", funcs[i].retType);
+                for (int p = 0; p < funcs[i].paramCount; p++) printf("  Param %i: %s (type: %s)\n", p + 1, funcs[i].paramName[p], funcs[i].paramType[p]);
+                if (funcs[i].paramCount == 0) printf("  No input parameters\n");
+            }
+        } break;
+        case JSON: {
+            printf("{\n");
+            printf("  \"structs\": [\n");
+            for (int i = 0; i < structCount; i++)
+            {
+                printf("    {\n");
+                printf("      \"name\": \"%s\",\n", structs[i].name);
+                printf("      \"description\": \"%s\",\n", structs[i].desc);
+                printf("      \"fields\": [\n");
+                for (int f = 0; f < structs[i].fieldCount; f++)
+                {
+                    printf("        {\n");
+                    printf("          \"name\": \"%s\",\n", structs[i].fieldName[f]),
+                    printf("          \"type\": \"%s\",\n", structs[i].fieldType[f]),
+                    printf("          \"description\": \"%s\"\n", structs[i].fieldDesc[f] + 3),
+                    printf("        }");
+                    if (f < structs[i].fieldCount - 1)
+                        printf(",\n");
+                    else
+                        printf("\n");
+                }
+                printf("      ]\n");
+                printf("    }");
+                if (i < structCount - 1)
+                    printf(",\n");
+                else
+                    printf("\n");
+            }
+            printf("  ],\n");
+
+            // Print enums info
+            printf("  \"enums\": [\n");
+            for (int i = 0; i < enumCount; i++)
+            {
+                printf("    {\n");
+                printf("      \"name\": \"%s\",\n", enums[i].name);
+                printf("      \"description\": \"%s\",\n", enums[i].desc + 3);
+                printf("      \"values\": [\n");
+                for (int e = 0; e < enums[i].valueCount; e++)
+                {
+                    printf("        {\n");
+                    printf("          \"name\": \"%s\",\n", enums[i].valueName[e]),
+                    printf("          \"value\": %i,\n", enums[i].valueInteger[e]),
+                    printf("          \"description\": \"%s\"\n", enums[i].valueDesc[e] + 3),
+                    printf("        }");
+                    if (e < enums[i].valueCount - 1)
+                        printf(",\n");
+                    else
+                        printf("\n");
+                }
+                printf("      ]\n");
+                printf("    }");
+                if (i < enumCount - 1)
+                    printf(",\n");
+                else
+                    printf("\n");
+            }
+            printf("  ],\n");
+
+            // Print function info
+            printf("  \"functions\": [\n");
+            for (int i = 0; i < funcCount; i++)
+            {
+                printf("    {\n");
+                printf("      \"name\": \"%s\",\n", funcs[i].name);
+                printf("      \"description\": \"%s\",\n", CharReplace(funcs[i].desc, '\\', ' ') + 3);
+                printf("      \"returnType\": \"%s\"", funcs[i].retType);
+
+                if (funcs[i].paramCount == 0)
+                    printf("\n");
+                else
+                {
+                    printf(",\n      \"params\": {\n");
+                    for (int p = 0; p < funcs[i].paramCount; p++)
+                    {
+                        printf("        \"%s\": \"%s\"", funcs[i].paramName[p], funcs[i].paramType[p]);
+                        if (p < funcs[i].paramCount - 1)
+                            printf(",\n");
+                        else
+                            printf("\n");
+                    }
+                    printf("      }\n");
+                }
+                printf("    }");
+
+                if (i < funcCount - 1)
+                    printf(",\n");
+                else
+                    printf("\n");
+            }
+            printf("  ]\n");
+            printf("}\n");
+        } break;
     }
     
     free(funcs);
@@ -629,6 +743,15 @@ bool IsTextEqual(const char *text1, const char *text2, unsigned int count)
     }
 
     return result;
+}
+
+// Search and replace a character within a string.
+char* CharReplace(char* text, char search, char replace)
+{
+    for (int i = 0; text[i] != '\0'; i++)
+        if (text[i] == search)
+            text[i] = replace;
+    return text;
 }
 
 /*
