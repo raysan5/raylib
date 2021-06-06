@@ -703,7 +703,7 @@ void GetDataTypeAndName(const char *typeName, int typeNameLen, char *type, char 
 {
     for (int k = typeNameLen; k > 0; k--)
     {
-        if (typeName[k] == ' ')
+        if (typeName[k] == ' ' && typeName[k - 1] != ',')
         {
             // Function name starts at this point (and ret type finishes at this point)
             MemoryCopy(type, typeName, k);
