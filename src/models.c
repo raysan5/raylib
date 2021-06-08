@@ -2815,7 +2815,7 @@ void DrawBillboardPro(Camera camera, Texture2D texture, Rectangle source, Vector
 {
     // NOTE: Billboard size will maintain source rectangle aspect ratio, size will represent billboard width
     Vector2 sizeRatio = { size.y, size.x*(float)source.height/source.width };
-	
+    
     Matrix matView = MatrixLookAt(camera.position, camera.target, camera.up);
 
     Vector3 right = { matView.m0, matView.m4, matView.m8 };
@@ -2824,9 +2824,9 @@ void DrawBillboardPro(Camera camera, Texture2D texture, Rectangle source, Vector
     // NOTE: Billboard locked on axis-Y
     Vector3 up = { 0.0f, 1.0f, 0.0f };
 
-	Vector3 rightScaled = Vector3Scale(right, sizeRatio.x/2);
-	Vector3 upScaled = Vector3Scale(up, sizeRatio.y/2);
-	
+    Vector3 rightScaled = Vector3Scale(right, sizeRatio.x/2);
+    Vector3 upScaled = Vector3Scale(up, sizeRatio.y/2);
+    
     Vector3 p1 = Vector3Add(rightScaled, upScaled);
     Vector3 p2 = Vector3Subtract(rightScaled, upScaled);
 
@@ -2834,50 +2834,50 @@ void DrawBillboardPro(Camera camera, Texture2D texture, Rectangle source, Vector
     Vector3 topRight = p1;
     Vector3 bottomRight = p2;
     Vector3 bottomLeft = Vector3Scale(p1, -1);
-	
-	if (rotation != 0.0f)
-	{	
-		float sinRotation = sinf(rotation*DEG2RAD);
-		float cosRotation = cosf(rotation*DEG2RAD);
-		
-		// NOTE: (-1, 1) is the range where origin.x, origin.y is inside the texture
-		float rotateAboutX = sizeRatio.x*origin.x/2;
-		float rotateAboutY = sizeRatio.y*origin.y/2;
-		
-		float xtvalue, ytvalue;
-		float rotatedX, rotatedY;
-		
-		xtvalue = Vector3DotProduct(right, topLeft) - rotateAboutX; // Project points to x and y coordinates on the billboard plane
-		ytvalue = Vector3DotProduct(up, topLeft) - rotateAboutY;
-		rotatedX = xtvalue*cosRotation - ytvalue*sinRotation + rotateAboutX; // Rotate about the point origin 
-		rotatedY = xtvalue*sinRotation + ytvalue*cosRotation + rotateAboutY;
-		topLeft = Vector3Add(Vector3Scale(up, rotatedY), Vector3Scale(right, rotatedX)); // Translate back to cartesian coordinates
-		
-		xtvalue = Vector3DotProduct(right, topRight) - rotateAboutX;
-		ytvalue = Vector3DotProduct(up, topRight) - rotateAboutY;
-		rotatedX = xtvalue*cosRotation - ytvalue*sinRotation + rotateAboutX;
-		rotatedY = xtvalue*sinRotation + ytvalue*cosRotation + rotateAboutY;
-		topRight = Vector3Add(Vector3Scale(up, rotatedY), Vector3Scale(right, rotatedX));
+    
+    if (rotation != 0.0f)
+    {    
+        float sinRotation = sinf(rotation*DEG2RAD);
+        float cosRotation = cosf(rotation*DEG2RAD);
+        
+        // NOTE: (-1, 1) is the range where origin.x, origin.y is inside the texture
+        float rotateAboutX = sizeRatio.x*origin.x/2;
+        float rotateAboutY = sizeRatio.y*origin.y/2;
+        
+        float xtvalue, ytvalue;
+        float rotatedX, rotatedY;
+        
+        xtvalue = Vector3DotProduct(right, topLeft) - rotateAboutX; // Project points to x and y coordinates on the billboard plane
+        ytvalue = Vector3DotProduct(up, topLeft) - rotateAboutY;
+        rotatedX = xtvalue*cosRotation - ytvalue*sinRotation + rotateAboutX; // Rotate about the point origin 
+        rotatedY = xtvalue*sinRotation + ytvalue*cosRotation + rotateAboutY;
+        topLeft = Vector3Add(Vector3Scale(up, rotatedY), Vector3Scale(right, rotatedX)); // Translate back to cartesian coordinates
+        
+        xtvalue = Vector3DotProduct(right, topRight) - rotateAboutX;
+        ytvalue = Vector3DotProduct(up, topRight) - rotateAboutY;
+        rotatedX = xtvalue*cosRotation - ytvalue*sinRotation + rotateAboutX;
+        rotatedY = xtvalue*sinRotation + ytvalue*cosRotation + rotateAboutY;
+        topRight = Vector3Add(Vector3Scale(up, rotatedY), Vector3Scale(right, rotatedX));
 
-		xtvalue = Vector3DotProduct(right, bottomRight) - rotateAboutX;
-		ytvalue = Vector3DotProduct(up, bottomRight) - rotateAboutY;
-		rotatedX = xtvalue*cosRotation - ytvalue*sinRotation + rotateAboutX;
-		rotatedY = xtvalue*sinRotation + ytvalue*cosRotation + rotateAboutY;
-		bottomRight = Vector3Add(Vector3Scale(up, rotatedY), Vector3Scale(right, rotatedX));
-		
-		xtvalue = Vector3DotProduct(right, bottomLeft)-rotateAboutX;
-		ytvalue = Vector3DotProduct(up, bottomLeft)-rotateAboutY;
-		rotatedX = xtvalue*cosRotation - ytvalue*sinRotation + rotateAboutX;
-		rotatedY = xtvalue*sinRotation + ytvalue*cosRotation + rotateAboutY;
-		bottomLeft = Vector3Add(Vector3Scale(up, rotatedY), Vector3Scale(right, rotatedX));
-	}
-	
+        xtvalue = Vector3DotProduct(right, bottomRight) - rotateAboutX;
+        ytvalue = Vector3DotProduct(up, bottomRight) - rotateAboutY;
+        rotatedX = xtvalue*cosRotation - ytvalue*sinRotation + rotateAboutX;
+        rotatedY = xtvalue*sinRotation + ytvalue*cosRotation + rotateAboutY;
+        bottomRight = Vector3Add(Vector3Scale(up, rotatedY), Vector3Scale(right, rotatedX));
+        
+        xtvalue = Vector3DotProduct(right, bottomLeft)-rotateAboutX;
+        ytvalue = Vector3DotProduct(up, bottomLeft)-rotateAboutY;
+        rotatedX = xtvalue*cosRotation - ytvalue*sinRotation + rotateAboutX;
+        rotatedY = xtvalue*sinRotation + ytvalue*cosRotation + rotateAboutY;
+        bottomLeft = Vector3Add(Vector3Scale(up, rotatedY), Vector3Scale(right, rotatedX));
+    }
+    
     // Translate points to the draw center (position)
-	topLeft = Vector3Add(topLeft, position);
-	topRight = Vector3Add(topRight, position);
-	bottomRight = Vector3Add(bottomRight, position);
-	bottomLeft = Vector3Add(bottomLeft, position);
-	
+    topLeft = Vector3Add(topLeft, position);
+    topRight = Vector3Add(topRight, position);
+    bottomRight = Vector3Add(bottomRight, position);
+    bottomLeft = Vector3Add(bottomLeft, position);
+    
     rlCheckRenderBatchLimit(4);
 
     rlSetTexture(texture.id);
@@ -2902,7 +2902,7 @@ void DrawBillboardPro(Camera camera, Texture2D texture, Rectangle source, Vector
         rlVertex3f(topRight.x, topRight.y, topRight.z);
     rlEnd();
 
-    rlSetTexture(0);	
+    rlSetTexture(0);    
 }
 
 // Draw a bounding box with wires
