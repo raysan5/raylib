@@ -276,23 +276,24 @@ extern "C" {
 
 /*! @name GLFW version macros
  *  @{ */
-/*! @brief The major version number of the GLFW library.
+/*! @brief The major version number of the GLFW header.
  *
- *  This is incremented when the API is changed in non-compatible ways.
+ *  The major version number of the GLFW header.  This is incremented when the
+ *  API is changed in non-compatible ways.
  *  @ingroup init
  */
 #define GLFW_VERSION_MAJOR          3
-/*! @brief The minor version number of the GLFW library.
+/*! @brief The minor version number of the GLFW header.
  *
- *  This is incremented when features are added to the API but it remains
- *  backward-compatible.
+ *  The minor version number of the GLFW header.  This is incremented when
+ *  features are added to the API but it remains backward-compatible.
  *  @ingroup init
  */
 #define GLFW_VERSION_MINOR          4
-/*! @brief The revision number of the GLFW library.
+/*! @brief The revision number of the GLFW header.
  *
- *  This is incremented when a bug fix release is made that does not contain any
- *  API changes.
+ *  The revision number of the GLFW header.  This is incremented when a bug fix
+ *  release is made that does not contain any API changes.
  *  @ingroup init
  */
 #define GLFW_VERSION_REVISION       0
@@ -977,9 +978,10 @@ extern "C" {
  *  Monitor refresh rate [hint](@ref GLFW_REFRESH_RATE).
  */
 #define GLFW_REFRESH_RATE           0x0002100F
-/*! @brief Framebuffer double buffering hint.
+/*! @brief Framebuffer double buffering hint and attribute.
  *
- *  Framebuffer double buffering [hint](@ref GLFW_DOUBLEBUFFER).
+ *  Framebuffer double buffering [hint](@ref GLFW_DOUBLEBUFFER_hint) and
+ *  [attribute](@ref GLFW_DOUBLEBUFFER_attrib).
  */
 #define GLFW_DOUBLEBUFFER           0x00021010
 
@@ -1250,6 +1252,11 @@ extern "C" {
  *  macOS specific [init hint](@ref GLFW_COCOA_MENUBAR_hint).
  */
 #define GLFW_COCOA_MENUBAR          0x00051002
+/*! @brief X11 specific init hint.
+ *
+ *  X11 specific [init hint](@ref GLFW_X11_XCB_VULKAN_SURFACE_hint).
+ */
+#define GLFW_X11_XCB_VULKAN_SURFACE 0x00052001
 /*! @} */
 
 #define GLFW_DONT_CARE              -1
@@ -2417,8 +2424,9 @@ GLFWAPI GLFWmonitorfun glfwSetMonitorCallback(GLFWmonitorfun callback);
  *
  *  This function returns an array of all video modes supported by the specified
  *  monitor.  The returned array is sorted in ascending order, first by color
- *  bit depth (the sum of all channel depths) and then by resolution area (the
- *  product of width and height).
+ *  bit depth (the sum of all channel depths), then by resolution area (the
+ *  product of width and height), then resolution width and finally by refresh
+ *  rate.
  *
  *  @param[in] monitor The monitor to query.
  *  @param[out] count Where to store the number of video modes in the returned
@@ -5865,9 +5873,8 @@ GLFWAPI int glfwVulkanSupported(void);
  *  returned array, as it is an error to specify an extension more than once in
  *  the `VkInstanceCreateInfo` struct.
  *
- *  @remark @macos This function currently supports either the
- *  `VK_MVK_macos_surface` extension from MoltenVK or `VK_EXT_metal_surface`
- *  extension.
+ *  @remark @macos GLFW currently supports both the `VK_MVK_macos_surface` and
+ *  the newer `VK_EXT_metal_surface` extensions.
  *
  *  @pointer_lifetime The returned array is allocated and freed by GLFW.  You
  *  should not free it yourself.  It is guaranteed to be valid only until the
@@ -5950,7 +5957,7 @@ GLFWAPI GLFWvkproc glfwGetInstanceProcAddress(VkInstance instance, const char* p
  *  GLFW_API_UNAVAILABLE and @ref GLFW_PLATFORM_ERROR.
  *
  *  @remark @macos This function currently always returns `GLFW_TRUE`, as the
- *  `VK_MVK_macos_surface` extension does not provide
+ *  `VK_MVK_macos_surface` and `VK_EXT_metal_surface` extensions do not provide
  *  a `vkGetPhysicalDevice*PresentationSupport` type function.
  *
  *  @thread_safety This function may be called from any thread.  For
@@ -6012,6 +6019,12 @@ GLFWAPI int glfwGetPhysicalDevicePresentationSupport(VkInstance instance, VkPhys
  *
  *  @remark @macos This function creates and sets a `CAMetalLayer` instance for
  *  the window content view, which is required for MoltenVK to function.
+ *
+ *  @remark @x11 GLFW by default attempts to use the `VK_KHR_xcb_surface`
+ *  extension, if available.  You can make it prefer the `VK_KHR_xlib_surface`
+ *  extension by setting the
+ *  [GLFW_X11_XCB_VULKAN_SURFACE](@ref GLFW_X11_XCB_VULKAN_SURFACE_hint) init
+ *  hint.
  *
  *  @thread_safety This function may be called from any thread.  For
  *  synchronization details of Vulkan objects, see the Vulkan specification.
