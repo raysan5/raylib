@@ -117,11 +117,11 @@ static ModelAnimation *LoadIQMModelAnimations(const char *fileName, int *animCou
 #if defined(SUPPORT_FILEFORMAT_GLTF)
 static Model LoadGLTF(const char *fileName);    // Load GLTF mesh data
 static ModelAnimation *LoadGLTFModelAnimations(const char *fileName, int *animCount);    // Load GLTF animation data
-static void LoadGLTFModelIndices(Model* model, cgltf_accessor* indexAccessor, int primitiveIndex);
-static void BindGLTFPrimitiveToBones(Model* model, const cgltf_data* data, int primitiveIndex);
-static void LoadGLTFBoneAttribute(Model* model, cgltf_accessor* jointsAccessor, const cgltf_data* data, int primitiveIndex);
-static void LoadGLTFMaterial(Model* model, const char* fileName, const cgltf_data* data);
-static void InitGLTFBones(Model* model, const cgltf_data* data);
+static void LoadGLTFModelIndices(Model *model, cgltf_accessor *indexAccessor, int primitiveIndex);
+static void BindGLTFPrimitiveToBones(Model *model, const cgltf_data *data, int primitiveIndex);
+static void LoadGLTFBoneAttribute(Model *model, cgltf_accessor *jointsAccessor, const cgltf_data *data, int primitiveIndex);
+static void LoadGLTFMaterial(Model *model, const char *fileName, const cgltf_data *data);
+static void InitGLTFBones(Model *model, const cgltf_data *data);
 #endif
 
 //----------------------------------------------------------------------------------
@@ -3773,7 +3773,7 @@ static Model LoadIQM(const char *fileName)
 }
 
 // Load IQM animation data
-static ModelAnimation* LoadIQMModelAnimations(const char* fileName, int* animCount)
+static ModelAnimation* LoadIQMModelAnimations(const char *fileName, int *animCount)
 {
 #define IQM_MAGIC       "INTERQUAKEMODEL"   // IQM file magic number
 #define IQM_VERSION     2                   // only IQM version 2 supported
@@ -4574,7 +4574,7 @@ static void LoadGLTFBoneAttribute(Model *model, cgltf_accessor *jointsAccessor, 
     else if (jointsAccessor->component_type == cgltf_component_type_r_8u)
     {
         model->meshes[primitiveIndex].boneIds = RL_MALLOC(jointsAccessor->count*4*sizeof(int));
-        unsigned char* bones = RL_MALLOC(jointsAccessor->count*4*sizeof(unsigned char));
+        unsigned char *bones = RL_MALLOC(jointsAccessor->count*4*sizeof(unsigned char));
 
         for (unsigned int a = 0; a < jointsAccessor->count; a++)
         {

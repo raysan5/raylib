@@ -6288,7 +6288,7 @@ bool UWPIsConfigured()
 }
 
 // UWP function handlers get/set
-void UWPSetDataPath(const char* path) { CORE.UWP.internalDataPath = path; }
+void UWPSetDataPath(const char *path) { CORE.UWP.internalDataPath = path; }
 UWPQueryTimeFunc UWPGetQueryTimeFunc(void) { return uwpQueryTimeFunc; }
 void UWPSetQueryTimeFunc(UWPQueryTimeFunc func) { uwpQueryTimeFunc = func; }
 UWPSleepFunc UWPGetSleepFunc(void) { return uwpSleepFunc; }
