@@ -711,23 +711,23 @@ typedef enum {
     GAMEPAD_AXIS_RIGHT_Y = 3,
 
     // Pressure levels for the back triggers
-    GAMEPAD_AXIS_LEFT_TRIGGER = 4,      // [1..-1] (pressure-level)
-    GAMEPAD_AXIS_RIGHT_TRIGGER = 5      // [1..-1] (pressure-level)
+    GAMEPAD_AXIS_LEFT_TRIGGER = 4,  // [1..-1] (pressure-level)
+    GAMEPAD_AXIS_RIGHT_TRIGGER = 5  // [1..-1] (pressure-level)
 } GamepadAxis;
 
 // Material map index
 typedef enum {
-    MATERIAL_MAP_ALBEDO    = 0,       // MATERIAL_MAP_DIFFUSE
-    MATERIAL_MAP_METALNESS = 1,       // MATERIAL_MAP_SPECULAR
-    MATERIAL_MAP_NORMAL    = 2,
-    MATERIAL_MAP_ROUGHNESS = 3,
-    MATERIAL_MAP_OCCLUSION,
-    MATERIAL_MAP_EMISSION,
-    MATERIAL_MAP_HEIGHT,
-    MATERIAL_MAP_BRDG,
-    MATERIAL_MAP_CUBEMAP,             // NOTE: Uses GL_TEXTURE_CUBE_MAP
-    MATERIAL_MAP_IRRADIANCE,          // NOTE: Uses GL_TEXTURE_CUBE_MAP
-    MATERIAL_MAP_PREFILTER            // NOTE: Uses GL_TEXTURE_CUBE_MAP
+    MATERIAL_MAP_ALBEDO    = 0,     // Albedo material (same as: MATERIAL_MAP_DIFFUSE)
+    MATERIAL_MAP_METALNESS,         // Metalness material (same as: MATERIAL_MAP_SPECULAR)
+    MATERIAL_MAP_NORMAL,            // Normal material
+    MATERIAL_MAP_ROUGHNESS,         // Roughness material
+    MATERIAL_MAP_OCCLUSION,         // Ambient occlusion material
+    MATERIAL_MAP_EMISSION,          // Emission material
+    MATERIAL_MAP_HEIGHT,            // Heightmap material
+    MATERIAL_MAP_CUBEMAP,           // Cubemap material (NOTE: Uses GL_TEXTURE_CUBE_MAP)
+    MATERIAL_MAP_IRRADIANCE,        // Irradiance material (NOTE: Uses GL_TEXTURE_CUBE_MAP)
+    MATERIAL_MAP_PREFILTER          // Prefilter material (NOTE: Uses GL_TEXTURE_CUBE_MAP)
+    MATERIAL_MAP_BRDG,              // Brdg material
 } MaterialMapIndex;
 
 #define MATERIAL_MAP_DIFFUSE      MATERIAL_MAP_ALBEDO
@@ -735,32 +735,32 @@ typedef enum {
 
 // Shader location index
 typedef enum {
-    SHADER_LOC_VERTEX_POSITION = 0,
-    SHADER_LOC_VERTEX_TEXCOORD01,
-    SHADER_LOC_VERTEX_TEXCOORD02,
-    SHADER_LOC_VERTEX_NORMAL,
-    SHADER_LOC_VERTEX_TANGENT,
-    SHADER_LOC_VERTEX_COLOR,
-    SHADER_LOC_MATRIX_MVP,
-    SHADER_LOC_MATRIX_VIEW,
-    SHADER_LOC_MATRIX_PROJECTION,
-    SHADER_LOC_MATRIX_MODEL,
-    SHADER_LOC_MATRIX_NORMAL,
-    SHADER_LOC_VECTOR_VIEW,
-    SHADER_LOC_COLOR_DIFFUSE,
-    SHADER_LOC_COLOR_SPECULAR,
-    SHADER_LOC_COLOR_AMBIENT,
-    SHADER_LOC_MAP_ALBEDO,          // SHADER_LOC_MAP_DIFFUSE
-    SHADER_LOC_MAP_METALNESS,       // SHADER_LOC_MAP_SPECULAR
-    SHADER_LOC_MAP_NORMAL,
-    SHADER_LOC_MAP_ROUGHNESS,
-    SHADER_LOC_MAP_OCCLUSION,
-    SHADER_LOC_MAP_EMISSION,
-    SHADER_LOC_MAP_HEIGHT,
-    SHADER_LOC_MAP_CUBEMAP,
-    SHADER_LOC_MAP_IRRADIANCE,
-    SHADER_LOC_MAP_PREFILTER,
-    SHADER_LOC_MAP_BRDF
+    SHADER_LOC_VERTEX_POSITION = 0, // Shader location point: position
+    SHADER_LOC_VERTEX_TEXCOORD01,   // Shader location point: texcoord01
+    SHADER_LOC_VERTEX_TEXCOORD02,   // Shader location point: texcoord02
+    SHADER_LOC_VERTEX_NORMAL,       // Shader location point: normal
+    SHADER_LOC_VERTEX_TANGENT,      // Shader location point: tangent
+    SHADER_LOC_VERTEX_COLOR,        // Shader location point: color
+    SHADER_LOC_MATRIX_MVP,          // Shader location point: model-view-projection matrix
+    SHADER_LOC_MATRIX_VIEW,         // Shader location point: view matrix
+    SHADER_LOC_MATRIX_PROJECTION,   // Shader location point: projection matrix
+    SHADER_LOC_MATRIX_MODEL,        // Shader location point: model matrix
+    SHADER_LOC_MATRIX_NORMAL,       // Shader location point: normal matrix
+    SHADER_LOC_VECTOR_VIEW,         // Shader location point: view vector
+    SHADER_LOC_COLOR_DIFFUSE,       // Shader location point: diffuse color
+    SHADER_LOC_COLOR_SPECULAR,      // Shader location point: specular color
+    SHADER_LOC_COLOR_AMBIENT,       // Shader location point: ambient color
+    SHADER_LOC_MAP_ALBEDO,          // Shader location point: albedo texture (same as: SHADER_LOC_MAP_DIFFUSE)
+    SHADER_LOC_MAP_METALNESS,       // Shader location point: metalness texture (same as: SHADER_LOC_MAP_SPECULAR)
+    SHADER_LOC_MAP_NORMAL,          // Shader location point: normal texture
+    SHADER_LOC_MAP_ROUGHNESS,       // Shader location point: roughness texture
+    SHADER_LOC_MAP_OCCLUSION,       // Shader location point: occlusion texture
+    SHADER_LOC_MAP_EMISSION,        // Shader location point: emission texture
+    SHADER_LOC_MAP_HEIGHT,          // Shader location point: height texture
+    SHADER_LOC_MAP_CUBEMAP,         // Shader location point: cubemap texture_cube_map
+    SHADER_LOC_MAP_IRRADIANCE,      // Shader location point: irradiance texture_cube_map
+    SHADER_LOC_MAP_PREFILTER,       // Shader location point: prefilter texture_cube_map
+    SHADER_LOC_MAP_BRDF             // Shader location point: brdf texture
 } ShaderLocationIndex;
 
 #define SHADER_LOC_MAP_DIFFUSE      SHADER_LOC_MAP_ALBEDO
@@ -768,41 +768,49 @@ typedef enum {
 
 // Shader uniform data type
 typedef enum {
-    SHADER_UNIFORM_FLOAT = 0,
-    SHADER_UNIFORM_VEC2,
-    SHADER_UNIFORM_VEC3,
-    SHADER_UNIFORM_VEC4,
-    SHADER_UNIFORM_INT,
-    SHADER_UNIFORM_IVEC2,
-    SHADER_UNIFORM_IVEC3,
-    SHADER_UNIFORM_IVEC4,
-    SHADER_UNIFORM_SAMPLER2D
+    SHADER_UNIFORM_FLOAT = 0,       // Shader uniform type: float
+    SHADER_UNIFORM_VEC2,            // Shader uniform type: vec2 (2 float)
+    SHADER_UNIFORM_VEC3,            // Shader uniform type: vec3 (3 float)
+    SHADER_UNIFORM_VEC4,            // Shader uniform type: vec4 (4 float)
+    SHADER_UNIFORM_INT,             // Shader uniform type: int
+    SHADER_UNIFORM_IVEC2,           // Shader uniform type: ivec2 (2 int)
+    SHADER_UNIFORM_IVEC3,           // Shader uniform type: ivec3 (3 int)
+    SHADER_UNIFORM_IVEC4,           // Shader uniform type: ivec4 (4 int)
+    SHADER_UNIFORM_SAMPLER2D        // Shader uniform type: sampler2d
 } ShaderUniformDataType;
+
+// Shader attribute data types
+typedef enum {
+    SHADER_ATTRIB_FLOAT = 0,        // Shader attribute type: float
+    SHADER_ATTRIB_VEC2,             // Shader attribute type: vec2 (2 float)
+    SHADER_ATTRIB_VEC3,             // Shader attribute type: vec3 (3 float)
+    SHADER_ATTRIB_VEC4              // Shader attribute type: vec4 (4 float)
+} ShaderAttributeDataType;
 
 // Pixel formats
 // NOTE: Support depends on OpenGL version and platform
 typedef enum {
-    PIXELFORMAT_UNCOMPRESSED_GRAYSCALE = 1,     // 8 bit per pixel (no alpha)
-    PIXELFORMAT_UNCOMPRESSED_GRAY_ALPHA,        // 8*2 bpp (2 channels)
-    PIXELFORMAT_UNCOMPRESSED_R5G6B5,            // 16 bpp
-    PIXELFORMAT_UNCOMPRESSED_R8G8B8,            // 24 bpp
-    PIXELFORMAT_UNCOMPRESSED_R5G5B5A1,          // 16 bpp (1 bit alpha)
-    PIXELFORMAT_UNCOMPRESSED_R4G4B4A4,          // 16 bpp (4 bit alpha)
-    PIXELFORMAT_UNCOMPRESSED_R8G8B8A8,          // 32 bpp
-    PIXELFORMAT_UNCOMPRESSED_R32,               // 32 bpp (1 channel - float)
-    PIXELFORMAT_UNCOMPRESSED_R32G32B32,         // 32*3 bpp (3 channels - float)
-    PIXELFORMAT_UNCOMPRESSED_R32G32B32A32,      // 32*4 bpp (4 channels - float)
-    PIXELFORMAT_COMPRESSED_DXT1_RGB,            // 4 bpp (no alpha)
-    PIXELFORMAT_COMPRESSED_DXT1_RGBA,           // 4 bpp (1 bit alpha)
-    PIXELFORMAT_COMPRESSED_DXT3_RGBA,           // 8 bpp
-    PIXELFORMAT_COMPRESSED_DXT5_RGBA,           // 8 bpp
-    PIXELFORMAT_COMPRESSED_ETC1_RGB,            // 4 bpp
-    PIXELFORMAT_COMPRESSED_ETC2_RGB,            // 4 bpp
-    PIXELFORMAT_COMPRESSED_ETC2_EAC_RGBA,       // 8 bpp
-    PIXELFORMAT_COMPRESSED_PVRT_RGB,            // 4 bpp
-    PIXELFORMAT_COMPRESSED_PVRT_RGBA,           // 4 bpp
-    PIXELFORMAT_COMPRESSED_ASTC_4x4_RGBA,       // 8 bpp
-    PIXELFORMAT_COMPRESSED_ASTC_8x8_RGBA        // 2 bpp
+    PIXELFORMAT_UNCOMPRESSED_GRAYSCALE = 1, // 8 bit per pixel (no alpha)
+    PIXELFORMAT_UNCOMPRESSED_GRAY_ALPHA,    // 8*2 bpp (2 channels)
+    PIXELFORMAT_UNCOMPRESSED_R5G6B5,        // 16 bpp
+    PIXELFORMAT_UNCOMPRESSED_R8G8B8,        // 24 bpp
+    PIXELFORMAT_UNCOMPRESSED_R5G5B5A1,      // 16 bpp (1 bit alpha)
+    PIXELFORMAT_UNCOMPRESSED_R4G4B4A4,      // 16 bpp (4 bit alpha)
+    PIXELFORMAT_UNCOMPRESSED_R8G8B8A8,      // 32 bpp
+    PIXELFORMAT_UNCOMPRESSED_R32,           // 32 bpp (1 channel - float)
+    PIXELFORMAT_UNCOMPRESSED_R32G32B32,     // 32*3 bpp (3 channels - float)
+    PIXELFORMAT_UNCOMPRESSED_R32G32B32A32,  // 32*4 bpp (4 channels - float)
+    PIXELFORMAT_COMPRESSED_DXT1_RGB,        // 4 bpp (no alpha)
+    PIXELFORMAT_COMPRESSED_DXT1_RGBA,       // 4 bpp (1 bit alpha)
+    PIXELFORMAT_COMPRESSED_DXT3_RGBA,       // 8 bpp
+    PIXELFORMAT_COMPRESSED_DXT5_RGBA,       // 8 bpp
+    PIXELFORMAT_COMPRESSED_ETC1_RGB,        // 4 bpp
+    PIXELFORMAT_COMPRESSED_ETC2_RGB,        // 4 bpp
+    PIXELFORMAT_COMPRESSED_ETC2_EAC_RGBA,   // 8 bpp
+    PIXELFORMAT_COMPRESSED_PVRT_RGB,        // 4 bpp
+    PIXELFORMAT_COMPRESSED_PVRT_RGBA,       // 4 bpp
+    PIXELFORMAT_COMPRESSED_ASTC_4x4_RGBA,   // 8 bpp
+    PIXELFORMAT_COMPRESSED_ASTC_8x8_RGBA    // 2 bpp
 } PixelFormat;
 
 // Texture parameters: filter mode
@@ -819,68 +827,68 @@ typedef enum {
 
 // Texture parameters: wrap mode
 typedef enum {
-    TEXTURE_WRAP_REPEAT = 0,        // Repeats texture in tiled mode
-    TEXTURE_WRAP_CLAMP,             // Clamps texture to edge pixel in tiled mode
-    TEXTURE_WRAP_MIRROR_REPEAT,     // Mirrors and repeats the texture in tiled mode
-    TEXTURE_WRAP_MIRROR_CLAMP       // Mirrors and clamps to border the texture in tiled mode
+    TEXTURE_WRAP_REPEAT = 0,                // Repeats texture in tiled mode
+    TEXTURE_WRAP_CLAMP,                     // Clamps texture to edge pixel in tiled mode
+    TEXTURE_WRAP_MIRROR_REPEAT,             // Mirrors and repeats the texture in tiled mode
+    TEXTURE_WRAP_MIRROR_CLAMP               // Mirrors and clamps to border the texture in tiled mode
 } TextureWrap;
 
 // Cubemap layouts
 typedef enum {
-    CUBEMAP_LAYOUT_AUTO_DETECT = 0,        // Automatically detect layout type
-    CUBEMAP_LAYOUT_LINE_VERTICAL,          // Layout is defined by a vertical line with faces
-    CUBEMAP_LAYOUT_LINE_HORIZONTAL,        // Layout is defined by an horizontal line with faces
-    CUBEMAP_LAYOUT_CROSS_THREE_BY_FOUR,    // Layout is defined by a 3x4 cross with cubemap faces
-    CUBEMAP_LAYOUT_CROSS_FOUR_BY_THREE,    // Layout is defined by a 4x3 cross with cubemap faces
-    CUBEMAP_LAYOUT_PANORAMA                // Layout is defined by a panorama image (equirectangular map)
+    CUBEMAP_LAYOUT_AUTO_DETECT = 0,         // Automatically detect layout type
+    CUBEMAP_LAYOUT_LINE_VERTICAL,           // Layout is defined by a vertical line with faces
+    CUBEMAP_LAYOUT_LINE_HORIZONTAL,         // Layout is defined by an horizontal line with faces
+    CUBEMAP_LAYOUT_CROSS_THREE_BY_FOUR,     // Layout is defined by a 3x4 cross with cubemap faces
+    CUBEMAP_LAYOUT_CROSS_FOUR_BY_THREE,     // Layout is defined by a 4x3 cross with cubemap faces
+    CUBEMAP_LAYOUT_PANORAMA                 // Layout is defined by a panorama image (equirectangular map)
 } CubemapLayout;
 
 // Font type, defines generation method
 typedef enum {
-    FONT_DEFAULT = 0,       // Default font generation, anti-aliased
-    FONT_BITMAP,            // Bitmap font generation, no anti-aliasing
-    FONT_SDF                // SDF font generation, requires external shader
+    FONT_DEFAULT = 0,               // Default font generation, anti-aliased
+    FONT_BITMAP,                    // Bitmap font generation, no anti-aliasing
+    FONT_SDF                        // SDF font generation, requires external shader
 } FontType;
 
 // Color blending modes (pre-defined)
 typedef enum {
-    BLEND_ALPHA = 0,        // Blend textures considering alpha (default)
-    BLEND_ADDITIVE,         // Blend textures adding colors
-    BLEND_MULTIPLIED,       // Blend textures multiplying colors
-    BLEND_ADD_COLORS,       // Blend textures adding colors (alternative)
-    BLEND_SUBTRACT_COLORS,  // Blend textures subtracting colors (alternative)
-    BLEND_CUSTOM            // Belnd textures using custom src/dst factors (use rlSetBlendMode())
+    BLEND_ALPHA = 0,                // Blend textures considering alpha (default)
+    BLEND_ADDITIVE,                 // Blend textures adding colors
+    BLEND_MULTIPLIED,               // Blend textures multiplying colors
+    BLEND_ADD_COLORS,               // Blend textures adding colors (alternative)
+    BLEND_SUBTRACT_COLORS,          // Blend textures subtracting colors (alternative)
+    BLEND_CUSTOM                    // Belnd textures using custom src/dst factors (use rlSetBlendMode())
 } BlendMode;
 
 // Gestures
 // NOTE: It could be used as flags to enable only some gestures
 typedef enum {
-    GESTURE_NONE        = 0,
-    GESTURE_TAP         = 1,
-    GESTURE_DOUBLETAP   = 2,
-    GESTURE_HOLD        = 4,
-    GESTURE_DRAG        = 8,
-    GESTURE_SWIPE_RIGHT = 16,
-    GESTURE_SWIPE_LEFT  = 32,
-    GESTURE_SWIPE_UP    = 64,
-    GESTURE_SWIPE_DOWN  = 128,
-    GESTURE_PINCH_IN    = 256,
-    GESTURE_PINCH_OUT   = 512
+    GESTURE_NONE        = 0,        // No gesture
+    GESTURE_TAP         = 1,        // Tap gesture
+    GESTURE_DOUBLETAP   = 2,        // Double tap gesture
+    GESTURE_HOLD        = 4,        // Hold gesture
+    GESTURE_DRAG        = 8,        // Drag gesture
+    GESTURE_SWIPE_RIGHT = 16,       // Swipe right gesture
+    GESTURE_SWIPE_LEFT  = 32,       // Swipe left gesture
+    GESTURE_SWIPE_UP    = 64,       // Swipe up gesture
+    GESTURE_SWIPE_DOWN  = 128,      // Swipe down gesture
+    GESTURE_PINCH_IN    = 256,      // Pinch in gesture
+    GESTURE_PINCH_OUT   = 512       // Pinch out gesture
 } Gesture;
 
 // Camera system modes
 typedef enum {
-    CAMERA_CUSTOM = 0,
-    CAMERA_FREE,
-    CAMERA_ORBITAL,
-    CAMERA_FIRST_PERSON,
-    CAMERA_THIRD_PERSON
+    CAMERA_CUSTOM = 0,              // Custom camera
+    CAMERA_FREE,                    // Free camera
+    CAMERA_ORBITAL,                 // Orbital camera
+    CAMERA_FIRST_PERSON,            // First person camera
+    CAMERA_THIRD_PERSON             // Third person camera
 } CameraMode;
 
 // Camera projection
 typedef enum {
-    CAMERA_PERSPECTIVE = 0,
-    CAMERA_ORTHOGRAPHIC
+    CAMERA_PERSPECTIVE = 0,         // Perspective projection
+    CAMERA_ORTHOGRAPHIC             // Orthographic projection
 } CameraProjection;
 
 // N-patch layout
