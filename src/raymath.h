@@ -42,11 +42,11 @@
 #ifndef RAYMATH_H
 #define RAYMATH_H
 
-//#define RAYMATH_STANDALONE      // NOTE: To use raymath as standalone lib, just uncomment this line
-//#define RAYMATH_HEADER_ONLY     // NOTE: To compile functions as static inline, uncomment this line
+//#define RAYMATH_STANDALONE        // NOTE: To use raymath as standalone lib, just uncomment this line
+//#define RAYMATH_HEADER_ONLY       // NOTE: To compile functions as static inline, uncomment this line
 
 #ifndef RAYMATH_STANDALONE
-    #include "raylib.h"           // Required for structs: Vector3, Matrix
+    #include "raylib.h"             // Required for structs: Vector3, Matrix
 #endif
 
 #if defined(RAYMATH_IMPLEMENTATION) && defined(RAYMATH_HEADER_ONLY)
@@ -55,17 +55,17 @@
 
 #if defined(RAYMATH_IMPLEMENTATION)
     #if defined(_WIN32) && defined(BUILD_LIBTYPE_SHARED)
-        #define RMDEF __declspec(dllexport) extern inline // We are building raylib as a Win32 shared library (.dll).
+        #define RMDEF __declspec(dllexport) extern inline   // We are building raylib as a Win32 shared library (.dll).
     #elif defined(_WIN32) && defined(USE_LIBTYPE_SHARED)
-        #define RMDEF __declspec(dllimport)         // We are using raylib as a Win32 shared library (.dll)
+        #define RMDEF __declspec(dllimport)                 // We are using raylib as a Win32 shared library (.dll)
     #else
         #define RMDEF extern inline // Provide external definition
     #endif
 #elif defined(RAYMATH_HEADER_ONLY)
-    #define RMDEF static inline // Functions may be inlined, no external out-of-line definition
+    #define RMDEF static inline     // Functions may be inlined, no external out-of-line definition
 #else
     #if defined(__TINYC__)
-        #define RMDEF static inline // plain inline not supported by tinycc (See issue #435)
+        #define RMDEF static inline // WARNING: Plain inline not supported by tinycc (See issue #435)
     #else
         #define RMDEF inline        // Functions may be inlined or external definition used
     #endif
@@ -86,12 +86,12 @@
     #define RAD2DEG (180.0f/PI)
 #endif
 
-// Return float vector for Matrix
+// Get float vector for Matrix
 #ifndef MatrixToFloat
     #define MatrixToFloat(mat) (MatrixToFloatV(mat).v)
 #endif
 
-// Return float vector for Vector3
+// Get float vector for Vector3
 #ifndef Vector3ToFloat
     #define Vector3ToFloat(vec) (Vector3ToFloatV(vec).v)
 #endif
@@ -559,7 +559,7 @@ RMDEF Vector3 Vector3Reflect(Vector3 v, Vector3 normal)
     return result;
 }
 
-// Return min value for each pair of components
+// Get min value for each pair of components
 RMDEF Vector3 Vector3Min(Vector3 v1, Vector3 v2)
 {
     Vector3 result = { 0 };
@@ -571,7 +571,7 @@ RMDEF Vector3 Vector3Min(Vector3 v1, Vector3 v2)
     return result;
 }
 
-// Return max value for each pair of components
+// Get max value for each pair of components
 RMDEF Vector3 Vector3Max(Vector3 v1, Vector3 v2)
 {
     Vector3 result = { 0 };
@@ -1487,7 +1487,7 @@ RMDEF Quaternion QuaternionFromEuler(float pitch, float yaw, float roll)
     return q;
 }
 
-// Return the Euler angles equivalent to quaternion (roll, pitch, yaw)
+// Get the Euler angles equivalent to quaternion (roll, pitch, yaw)
 // NOTE: Angles are returned in a Vector3 struct in degrees
 RMDEF Vector3 QuaternionToEuler(Quaternion q)
 {

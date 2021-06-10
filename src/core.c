@@ -777,7 +777,7 @@ void InitWindow(int width, int height, const char *title)
 #endif
 
 #if defined(PLATFORM_WEB)
-    // Detect fullscreen change events
+    // Check fullscreen change events
     //emscripten_set_fullscreenchange_callback("#canvas", NULL, 1, EmscriptenFullscreenChangeCallback);
     //emscripten_set_resize_callback("#canvas", NULL, 1, EmscriptenResizeCallback);
 
@@ -3098,7 +3098,7 @@ void OpenURL(const char *url)
 //----------------------------------------------------------------------------------
 // Module Functions Definition - Input (Keyboard, Mouse, Gamepad) Functions
 //----------------------------------------------------------------------------------
-// Detect if a key has been pressed once
+// Check if a key has been pressed once
 bool IsKeyPressed(int key)
 {
     bool pressed = false;
@@ -3109,14 +3109,14 @@ bool IsKeyPressed(int key)
     return pressed;
 }
 
-// Detect if a key is being pressed (key held down)
+// Check if a key is being pressed (key held down)
 bool IsKeyDown(int key)
 {
     if (CORE.Input.Keyboard.currentKeyState[key] == 1) return true;
     else return false;
 }
 
-// Detect if a key has been released once
+// Check if a key has been released once
 bool IsKeyReleased(int key)
 {
     bool released = false;
@@ -3127,7 +3127,7 @@ bool IsKeyReleased(int key)
     return released;
 }
 
-// Detect if a key is NOT being pressed (key not held down)
+// Check if a key is NOT being pressed (key not held down)
 bool IsKeyUp(int key)
 {
     if (CORE.Input.Keyboard.currentKeyState[key] == 0) return true;
@@ -3189,7 +3189,7 @@ void SetExitKey(int key)
 
 // NOTE: Gamepad support not implemented in emscripten GLFW3 (PLATFORM_WEB)
 
-// Detect if a gamepad is available
+// Check if a gamepad is available
 bool IsGamepadAvailable(int gamepad)
 {
     bool result = false;
@@ -3211,7 +3211,7 @@ bool IsGamepadName(int gamepad, const char *name)
     return result;
 }
 
-// Return gamepad internal name id
+// Get gamepad internal name id
 const char *GetGamepadName(int gamepad)
 {
 #if defined(PLATFORM_DESKTOP)
@@ -3225,7 +3225,7 @@ const char *GetGamepadName(int gamepad)
     return NULL;
 }
 
-// Return gamepad axis count
+// Get gamepad axis count
 int GetGamepadAxisCount(int gamepad)
 {
 #if defined(PLATFORM_RPI) || defined(PLATFORM_DRM)
@@ -3237,7 +3237,7 @@ int GetGamepadAxisCount(int gamepad)
     return CORE.Input.Gamepad.axisCount;
 }
 
-// Return axis movement vector for a gamepad
+// Get axis movement vector for a gamepad
 float GetGamepadAxisMovement(int gamepad, int axis)
 {
     float value = 0;
@@ -3248,7 +3248,7 @@ float GetGamepadAxisMovement(int gamepad, int axis)
     return value;
 }
 
-// Detect if a gamepad button has been pressed once
+// Check if a gamepad button has been pressed once
 bool IsGamepadButtonPressed(int gamepad, int button)
 {
     bool pressed = false;
@@ -3260,7 +3260,7 @@ bool IsGamepadButtonPressed(int gamepad, int button)
     return pressed;
 }
 
-// Detect if a gamepad button is being pressed
+// Check if a gamepad button is being pressed
 bool IsGamepadButtonDown(int gamepad, int button)
 {
     bool result = false;
@@ -3271,7 +3271,7 @@ bool IsGamepadButtonDown(int gamepad, int button)
     return result;
 }
 
-// Detect if a gamepad button has NOT been pressed once
+// Check if a gamepad button has NOT been pressed once
 bool IsGamepadButtonReleased(int gamepad, int button)
 {
     bool released = false;
@@ -3283,7 +3283,7 @@ bool IsGamepadButtonReleased(int gamepad, int button)
     return released;
 }
 
-// Detect if a gamepad button is NOT being pressed
+// Check if a gamepad button is NOT being pressed
 bool IsGamepadButtonUp(int gamepad, int button)
 {
     bool result = false;
@@ -3312,7 +3312,7 @@ int SetGamepadMappings(const char *mappings)
     return result;
 }
 
-// Detect if a mouse button has been pressed once
+// Check if a mouse button has been pressed once
 bool IsMouseButtonPressed(int button)
 {
     bool pressed = false;
@@ -3325,7 +3325,7 @@ bool IsMouseButtonPressed(int button)
     return pressed;
 }
 
-// Detect if a mouse button is being pressed
+// Check if a mouse button is being pressed
 bool IsMouseButtonDown(int button)
 {
     bool down = false;
@@ -3338,7 +3338,7 @@ bool IsMouseButtonDown(int button)
     return down;
 }
 
-// Detect if a mouse button has been released once
+// Check if a mouse button has been released once
 bool IsMouseButtonReleased(int button)
 {
     bool released = false;
@@ -3351,7 +3351,7 @@ bool IsMouseButtonReleased(int button)
     return released;
 }
 
-// Detect if a mouse button is NOT being pressed
+// Check if a mouse button is NOT being pressed
 bool IsMouseButtonUp(int button)
 {
     return !IsMouseButtonDown(button);
@@ -5569,7 +5569,7 @@ static void ProcessKeyboard(void)
         // Up -> 1b 5b 41 / Left -> 1b 5b 44 / Right -> 1b 5b 43 / Down -> 1b 5b 42
         if (keysBuffer[i] == 0x1b)
         {
-            // Detect ESC to stop program
+            // Check if ESCAPE key has been pressed to stop program
             if (bufferByteCount == 1) CORE.Input.Keyboard.currentKeyState[CORE.Input.Keyboard.exitKey] = 1;
             else
             {

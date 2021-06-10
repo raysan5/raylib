@@ -2919,7 +2919,7 @@ void DrawBoundingBox(BoundingBox box, Color color)
     DrawCubeWires(center, size.x, size.y, size.z, color);
 }
 
-// Detect collision between two spheres
+// Check collision between two spheres
 bool CheckCollisionSpheres(Vector3 center1, float radius1, Vector3 center2, float radius2)
 {
     bool collision = false;
@@ -2942,7 +2942,7 @@ bool CheckCollisionSpheres(Vector3 center1, float radius1, Vector3 center2, floa
     return collision;
 }
 
-// Detect collision between two boxes
+// Check collision between two boxes
 // NOTE: Boxes are defined by two points minimum and maximum
 bool CheckCollisionBoxes(BoundingBox box1, BoundingBox box2)
 {
@@ -2958,7 +2958,7 @@ bool CheckCollisionBoxes(BoundingBox box1, BoundingBox box2)
     return collision;
 }
 
-// Detect collision between box and sphere
+// Check collision between box and sphere
 bool CheckCollisionBoxSphere(BoundingBox box, Vector3 center, float radius)
 {
     bool collision = false;

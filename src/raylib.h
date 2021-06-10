@@ -1075,32 +1075,32 @@ RLAPI void OpenURL(const char *url);                              // Open URL wi
 //------------------------------------------------------------------------------------
 
 // Input-related functions: keyboard
-RLAPI bool IsKeyPressed(int key);                             // Detect if a key has been pressed once
-RLAPI bool IsKeyDown(int key);                                // Detect if a key is being pressed
-RLAPI bool IsKeyReleased(int key);                            // Detect if a key has been released once
-RLAPI bool IsKeyUp(int key);                                  // Detect if a key is NOT being pressed
+RLAPI bool IsKeyPressed(int key);                             // Check if a key has been pressed once
+RLAPI bool IsKeyDown(int key);                                // Check if a key is being pressed
+RLAPI bool IsKeyReleased(int key);                            // Check if a key has been released once
+RLAPI bool IsKeyUp(int key);                                  // Check if a key is NOT being pressed
 RLAPI void SetExitKey(int key);                               // Set a custom key to exit program (default is ESC)
 RLAPI int GetKeyPressed(void);                                // Get key pressed (keycode), call it multiple times for keys queued
 RLAPI int GetCharPressed(void);                               // Get char pressed (unicode), call it multiple times for chars queued
 
 // Input-related functions: gamepads
-RLAPI bool IsGamepadAvailable(int gamepad);                   // Detect if a gamepad is available
+RLAPI bool IsGamepadAvailable(int gamepad);                   // Check if a gamepad is available
 RLAPI bool IsGamepadName(int gamepad, const char *name);      // Check gamepad name (if available)
-RLAPI const char *GetGamepadName(int gamepad);                // Return gamepad internal name id
-RLAPI bool IsGamepadButtonPressed(int gamepad, int button);   // Detect if a gamepad button has been pressed once
-RLAPI bool IsGamepadButtonDown(int gamepad, int button);      // Detect if a gamepad button is being pressed
-RLAPI bool IsGamepadButtonReleased(int gamepad, int button);  // Detect if a gamepad button has been released once
-RLAPI bool IsGamepadButtonUp(int gamepad, int button);        // Detect if a gamepad button is NOT being pressed
+RLAPI const char *GetGamepadName(int gamepad);                // Get gamepad internal name id
+RLAPI bool IsGamepadButtonPressed(int gamepad, int button);   // Check if a gamepad button has been pressed once
+RLAPI bool IsGamepadButtonDown(int gamepad, int button);      // Check if a gamepad button is being pressed
+RLAPI bool IsGamepadButtonReleased(int gamepad, int button);  // Check if a gamepad button has been released once
+RLAPI bool IsGamepadButtonUp(int gamepad, int button);        // Check if a gamepad button is NOT being pressed
 RLAPI int GetGamepadButtonPressed(void);                      // Get the last gamepad button pressed
-RLAPI int GetGamepadAxisCount(int gamepad);                   // Return gamepad axis count for a gamepad
-RLAPI float GetGamepadAxisMovement(int gamepad, int axis);    // Return axis movement value for a gamepad axis
+RLAPI int GetGamepadAxisCount(int gamepad);                   // Get gamepad axis count for a gamepad
+RLAPI float GetGamepadAxisMovement(int gamepad, int axis);    // Get axis movement value for a gamepad axis
 RLAPI int SetGamepadMappings(const char *mappings);           // Set internal gamepad mappings (SDL_GameControllerDB)
 
 // Input-related functions: mouse
-RLAPI bool IsMouseButtonPressed(int button);                  // Detect if a mouse button has been pressed once
-RLAPI bool IsMouseButtonDown(int button);                     // Detect if a mouse button is being pressed
-RLAPI bool IsMouseButtonReleased(int button);                 // Detect if a mouse button has been released once
-RLAPI bool IsMouseButtonUp(int button);                       // Detect if a mouse button is NOT being pressed
+RLAPI bool IsMouseButtonPressed(int button);                  // Check if a mouse button has been pressed once
+RLAPI bool IsMouseButtonDown(int button);                     // Check if a mouse button is being pressed
+RLAPI bool IsMouseButtonReleased(int button);                 // Check if a mouse button has been released once
+RLAPI bool IsMouseButtonUp(int button);                       // Check if a mouse button is NOT being pressed
 RLAPI int GetMouseX(void);                                    // Get mouse position X
 RLAPI int GetMouseY(void);                                    // Get mouse position Y
 RLAPI Vector2 GetMousePosition(void);                         // Get mouse position XY
@@ -1449,9 +1449,9 @@ RLAPI void DrawBillboardRec(Camera camera, Texture2D texture, Rectangle source, 
 RLAPI void DrawBillboardPro(Camera camera, Texture2D texture, Rectangle source, Vector3 position, Vector2 size, Vector2 origin, float rotation, Color tint); // Draw a billboard texture defined by source and rotation
 
 // Collision detection functions
-RLAPI bool CheckCollisionSpheres(Vector3 center1, float radius1, Vector3 center2, float radius2);       // Detect collision between two spheres
-RLAPI bool CheckCollisionBoxes(BoundingBox box1, BoundingBox box2);                                     // Detect collision between two bounding boxes
-RLAPI bool CheckCollisionBoxSphere(BoundingBox box, Vector3 center, float radius);                      // Detect collision between box and sphere
+RLAPI bool CheckCollisionSpheres(Vector3 center1, float radius1, Vector3 center2, float radius2);       // Check collision between two spheres
+RLAPI bool CheckCollisionBoxes(BoundingBox box1, BoundingBox box2);                                     // Check collision between two bounding boxes
+RLAPI bool CheckCollisionBoxSphere(BoundingBox box, Vector3 center, float radius);                      // Check collision between box and sphere
 RLAPI RayCollision GetRayCollisionSphere(Ray ray, Vector3 center, float radius);                        // Get collision info between ray and sphere
 RLAPI RayCollision GetRayCollisionBox(Ray ray, BoundingBox box);                                        // Get collision info between ray and box
 RLAPI RayCollision GetRayCollisionModel(Ray ray, Model model);                                          // Get collision info between ray and model

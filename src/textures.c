@@ -2646,7 +2646,7 @@ void ImageDraw(Image *dst, Image src, Rectangle srcRec, Rectangle dstRec, Color 
         //    [x] Optimize ColorAlphaBlend() for faster operations (maybe avoiding divs?)
         //    [x] Consider fast path: no alpha blending required cases (src has no alpha)
         //    [x] Consider fast path: same src/dst format with no alpha -> direct line copy
-        //    [-] GetPixelColor(): Return Vector4 instead of Color, easier for ColorAlphaBlend()
+        //    [-] GetPixelColor(): Get Vector4 instead of Color, easier for ColorAlphaBlend()
 
         Color colSrc, colDst, blend;
         bool blendRequired = true;

@@ -3468,7 +3468,7 @@ void rlSetShader(Shader shader)
 
 // Matrix state management
 //-----------------------------------------------------------------------------------------
-// Return internal modelview matrix
+// Get internal modelview matrix
 Matrix rlGetMatrixModelview(void)
 {
     Matrix matrix = MatrixIdentity();
@@ -3497,7 +3497,7 @@ Matrix rlGetMatrixModelview(void)
     return matrix;
 }
 
-// Return internal projection matrix
+// Get internal projection matrix
 Matrix rlGetMatrixProjection(void)
 {
 #if defined(GRAPHICS_API_OPENGL_11)

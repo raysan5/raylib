@@ -393,7 +393,7 @@ FILE *android_fopen(const char *fileName, const char *mode)
 
         if (asset != NULL)
         {
-            // Return pointer to file in the assets
+            // Get pointer to file in the assets
             return funopen(asset, android_read, android_write, android_seek, android_close);
         }
         else
