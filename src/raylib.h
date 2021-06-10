@@ -646,7 +646,6 @@ typedef enum {
     MOUSE_BUTTON_EXTRA   = 4,
     MOUSE_BUTTON_FORWARD = 5,
     MOUSE_BUTTON_BACK    = 6,
-    MOUSE_BUTTON_MAX     = 7
 } MouseButton;
 
 // Mouse cursor
