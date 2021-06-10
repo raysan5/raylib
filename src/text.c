@@ -1123,7 +1123,7 @@ Vector2 MeasureTextEx(Font font, const char *text, float fontSize, float spacing
     return vec;
 }
 
-// Returns index position for a unicode character on spritefont
+// Get index position for a unicode character on spritefont
 int GetGlyphIndex(Font font, int codepoint)
 {
 #ifndef GLYPH_NOTFOUND_CHAR_FALLBACK
@@ -1586,7 +1586,7 @@ int *GetCodepoints(const char *text, int *count)
     return codepoints;
 }
 
-// Returns total number of characters(codepoints) in a UTF8 encoded text, until '\0' is found
+// Get total number of characters(codepoints) in a UTF8 encoded text, until '\0' is found
 // NOTE: If an invalid UTF8 sequence is encountered a '?'(0x3f) codepoint is counted instead
 int GetCodepointsCount(const char *text)
 {
@@ -1608,7 +1608,7 @@ int GetCodepointsCount(const char *text)
 }
 #endif      // SUPPORT_TEXT_MANIPULATION
 
-// Returns next codepoint in a UTF8 encoded text, scanning until '\0' is found
+// Get next codepoint in a UTF8 encoded text, scanning until '\0' is found
 // When a invalid UTF8 byte is encountered we exit as soon as possible and a '?'(0x3f) codepoint is returned
 // Total number of bytes processed are returned as a parameter
 // NOTE: the standard says U+FFFD should be returned in case of errors

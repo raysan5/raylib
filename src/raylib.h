@@ -1004,22 +1004,22 @@ RLAPI void SetShaderValueTexture(Shader shader, int locIndex, Texture2D texture)
 RLAPI void UnloadShader(Shader shader);                                    // Unload shader from GPU memory (VRAM)
 
 // Screen-space-related functions
-RLAPI Ray GetMouseRay(Vector2 mousePosition, Camera camera);      // Returns a ray trace from mouse position
-RLAPI Matrix GetCameraMatrix(Camera camera);                      // Returns camera transform matrix (view matrix)
-RLAPI Matrix GetCameraMatrix2D(Camera2D camera);                  // Returns camera 2d transform matrix
-RLAPI Vector2 GetWorldToScreen(Vector3 position, Camera camera);  // Returns the screen space position for a 3d world space position
-RLAPI Vector2 GetWorldToScreenEx(Vector3 position, Camera camera, int width, int height); // Returns size position for a 3d world space position
-RLAPI Vector2 GetWorldToScreen2D(Vector2 position, Camera2D camera); // Returns the screen space position for a 2d camera world space position
-RLAPI Vector2 GetScreenToWorld2D(Vector2 position, Camera2D camera); // Returns the world space position for a 2d camera screen space position
+RLAPI Ray GetMouseRay(Vector2 mousePosition, Camera camera);      // Get a ray trace from mouse position
+RLAPI Matrix GetCameraMatrix(Camera camera);                      // Get camera transform matrix (view matrix)
+RLAPI Matrix GetCameraMatrix2D(Camera2D camera);                  // Get camera 2d transform matrix
+RLAPI Vector2 GetWorldToScreen(Vector3 position, Camera camera);  // Get the screen space position for a 3d world space position
+RLAPI Vector2 GetWorldToScreenEx(Vector3 position, Camera camera, int width, int height); // Get size position for a 3d world space position
+RLAPI Vector2 GetWorldToScreen2D(Vector2 position, Camera2D camera); // Get the screen space position for a 2d camera world space position
+RLAPI Vector2 GetScreenToWorld2D(Vector2 position, Camera2D camera); // Get the world space position for a 2d camera screen space position
 
 // Timing-related functions
 RLAPI void SetTargetFPS(int fps);                                 // Set target FPS (maximum)
-RLAPI int GetFPS(void);                                           // Returns current FPS
-RLAPI float GetFrameTime(void);                                   // Returns time in seconds for last frame drawn (delta time)
-RLAPI double GetTime(void);                                       // Returns elapsed time in seconds since InitWindow()
+RLAPI int GetFPS(void);                                           // Get current FPS
+RLAPI float GetFrameTime(void);                                   // Get time in seconds for last frame drawn (delta time)
+RLAPI double GetTime(void);                                       // Get elapsed time in seconds since InitWindow()
 
 // Misc. functions
-RLAPI int GetRandomValue(int min, int max);                       // Returns a random value between min and max (both included)
+RLAPI int GetRandomValue(int min, int max);                       // Get a random value between min and max (both included)
 RLAPI void TakeScreenshot(const char *fileName);                  // Takes a screenshot of current screen (filename extension defines format)
 RLAPI void SetConfigFlags(unsigned int flags);                    // Setup init configuration flags (view FLAGS)
 
@@ -1101,19 +1101,19 @@ RLAPI bool IsMouseButtonPressed(int button);                  // Detect if a mou
 RLAPI bool IsMouseButtonDown(int button);                     // Detect if a mouse button is being pressed
 RLAPI bool IsMouseButtonReleased(int button);                 // Detect if a mouse button has been released once
 RLAPI bool IsMouseButtonUp(int button);                       // Detect if a mouse button is NOT being pressed
-RLAPI int GetMouseX(void);                                    // Returns mouse position X
-RLAPI int GetMouseY(void);                                    // Returns mouse position Y
-RLAPI Vector2 GetMousePosition(void);                         // Returns mouse position XY
+RLAPI int GetMouseX(void);                                    // Get mouse position X
+RLAPI int GetMouseY(void);                                    // Get mouse position Y
+RLAPI Vector2 GetMousePosition(void);                         // Get mouse position XY
 RLAPI void SetMousePosition(int x, int y);                    // Set mouse position XY
 RLAPI void SetMouseOffset(int offsetX, int offsetY);          // Set mouse offset
 RLAPI void SetMouseScale(float scaleX, float scaleY);         // Set mouse scaling
-RLAPI float GetMouseWheelMove(void);                          // Returns mouse wheel movement Y
+RLAPI float GetMouseWheelMove(void);                          // Get mouse wheel movement Y
 RLAPI void SetMouseCursor(int cursor);                        // Set mouse cursor
 
 // Input-related functions: touch
-RLAPI int GetTouchX(void);                                    // Returns touch position X for touch point 0 (relative to screen size)
-RLAPI int GetTouchY(void);                                    // Returns touch position Y for touch point 0 (relative to screen size)
-RLAPI Vector2 GetTouchPosition(int index);                    // Returns touch position XY for a touch point index (relative to screen size)
+RLAPI int GetTouchX(void);                                    // Get touch position X for touch point 0 (relative to screen size)
+RLAPI int GetTouchY(void);                                    // Get touch position Y for touch point 0 (relative to screen size)
+RLAPI Vector2 GetTouchPosition(int index);                    // Get touch position XY for a touch point index (relative to screen size)
 
 //------------------------------------------------------------------------------------
 // Gestures and Touch Handling Functions (Module: gestures)
@@ -1299,14 +1299,14 @@ RLAPI void DrawTextureNPatch(Texture2D texture, NPatchInfo nPatchInfo, Rectangle
 RLAPI void DrawTexturePoly(Texture2D texture, Vector2 center, Vector2 *points, Vector2 *texcoords, int pointsCount, Color tint);      // Draw a textured polygon
 
 // Color/pixel related functions
-RLAPI Color Fade(Color color, float alpha);                                 // Returns color with alpha applied, alpha goes from 0.0f to 1.0f
-RLAPI int ColorToInt(Color color);                                          // Returns hexadecimal value for a Color
-RLAPI Vector4 ColorNormalize(Color color);                                  // Returns Color normalized as float [0..1]
-RLAPI Color ColorFromNormalized(Vector4 normalized);                        // Returns Color from normalized values [0..1]
-RLAPI Vector3 ColorToHSV(Color color);                                      // Returns HSV values for a Color, hue [0..360], saturation/value [0..1]
-RLAPI Color ColorFromHSV(float hue, float saturation, float value);         // Returns a Color from HSV values, hue [0..360], saturation/value [0..1]
-RLAPI Color ColorAlpha(Color color, float alpha);                           // Returns color with alpha applied, alpha goes from 0.0f to 1.0f
-RLAPI Color ColorAlphaBlend(Color dst, Color src, Color tint);              // Returns src alpha-blended into dst color with tint
+RLAPI Color Fade(Color color, float alpha);                                 // Get color with alpha applied, alpha goes from 0.0f to 1.0f
+RLAPI int ColorToInt(Color color);                                          // Get hexadecimal value for a Color
+RLAPI Vector4 ColorNormalize(Color color);                                  // Get Color normalized as float [0..1]
+RLAPI Color ColorFromNormalized(Vector4 normalized);                        // Get Color from normalized values [0..1]
+RLAPI Vector3 ColorToHSV(Color color);                                      // Get HSV values for a Color, hue [0..360], saturation/value [0..1]
+RLAPI Color ColorFromHSV(float hue, float saturation, float value);         // Get a Color from HSV values, hue [0..360], saturation/value [0..1]
+RLAPI Color ColorAlpha(Color color, float alpha);                           // Get color with alpha applied, alpha goes from 0.0f to 1.0f
+RLAPI Color ColorAlphaBlend(Color dst, Color src, Color tint);              // Get src alpha-blended into dst color with tint
 RLAPI Color GetColor(int hexValue);                                         // Get Color structure from hexadecimal value
 RLAPI Color GetPixelColor(void *srcPtr, int format);                        // Get Color from a source pixel pointer of certain format
 RLAPI void SetPixelColor(void *dstPtr, Color color, int format);            // Set color formatted into destination pixel pointer
@@ -1362,7 +1362,7 @@ RLAPI char *TextToUtf8(int *codepoints, int length);                  // Encode 
 // UTF8 text strings management functions
 RLAPI int *GetCodepoints(const char *text, int *count);               // Get all codepoints in a string, codepoints count returned by parameters
 RLAPI int GetCodepointsCount(const char *text);                       // Get total number of characters (codepoints) in a UTF8 encoded string
-RLAPI int GetNextCodepoint(const char *text, int *bytesProcessed);    // Returns next codepoint in a UTF8 encoded string; 0x3f('?') is returned on failure
+RLAPI int GetNextCodepoint(const char *text, int *bytesProcessed);    // Get next codepoint in a UTF8 encoded string; 0x3f('?') is returned on failure
 RLAPI const char *CodepointToUtf8(int codepoint, int *byteLength);    // Encode codepoint into utf8 text (char array length returned as parameter)
 
 //------------------------------------------------------------------------------------

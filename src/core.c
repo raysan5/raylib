@@ -2320,7 +2320,7 @@ void SetShaderValueTexture(Shader shader, int locIndex, Texture2D texture)
     //rlDisableShader();
 }
 
-// Returns a ray trace from mouse position
+// Get a ray trace from mouse position
 Ray GetMouseRay(Vector2 mouse, Camera camera)
 {
     Ray ray = { 0 };
@@ -2381,7 +2381,7 @@ Matrix GetCameraMatrix(Camera camera)
     return MatrixLookAt(camera.position, camera.target, camera.up);
 }
 
-// Returns camera 2d transform matrix
+// Get camera 2d transform matrix
 Matrix GetCameraMatrix2D(Camera2D camera)
 {
     Matrix matTransform = { 0 };
@@ -2409,7 +2409,7 @@ Matrix GetCameraMatrix2D(Camera2D camera)
     return matTransform;
 }
 
-// Returns the screen space position from a 3d world space position
+// Get the screen space position from a 3d world space position
 Vector2 GetWorldToScreen(Vector3 position, Camera camera)
 {
     Vector2 screenPosition = GetWorldToScreenEx(position, camera, GetScreenWidth(), GetScreenHeight());
@@ -2417,7 +2417,7 @@ Vector2 GetWorldToScreen(Vector3 position, Camera camera)
     return screenPosition;
 }
 
-// Returns size position for a 3d world space position (useful for texture drawing)
+// Get size position for a 3d world space position (useful for texture drawing)
 Vector2 GetWorldToScreenEx(Vector3 position, Camera camera, int width, int height)
 {
     // Calculate projection matrix (from perspective instead of frustum
@@ -2459,7 +2459,7 @@ Vector2 GetWorldToScreenEx(Vector3 position, Camera camera, int width, int heigh
     return screenPosition;
 }
 
-// Returns the screen space position for a 2d camera world space position
+// Get the screen space position for a 2d camera world space position
 Vector2 GetWorldToScreen2D(Vector2 position, Camera2D camera)
 {
     Matrix matCamera = GetCameraMatrix2D(camera);
@@ -2468,7 +2468,7 @@ Vector2 GetWorldToScreen2D(Vector2 position, Camera2D camera)
     return (Vector2){ transform.x, transform.y };
 }
 
-// Returns the world space position for a 2d camera screen space position
+// Get the world space position for a 2d camera screen space position
 Vector2 GetScreenToWorld2D(Vector2 position, Camera2D camera)
 {
     Matrix invMatCamera = MatrixInvert(GetCameraMatrix2D(camera));
@@ -2486,7 +2486,7 @@ void SetTargetFPS(int fps)
     TRACELOG(LOG_INFO, "TIMER: Target time per frame: %02.03f milliseconds", (float)CORE.Time.target*1000);
 }
 
-// Returns current FPS
+// Get current FPS
 // NOTE: We calculate an average framerate
 int GetFPS(void)
 {
@@ -2513,7 +2513,7 @@ int GetFPS(void)
     return (int)roundf(1.0f/average);
 }
 
-// Returns time in seconds for last frame drawn (delta time)
+// Get time in seconds for last frame drawn (delta time)
 float GetFrameTime(void)
 {
     return (float)CORE.Time.frame;
@@ -2588,7 +2588,7 @@ void TakeScreenshot(const char *fileName)
     TRACELOG(LOG_INFO, "SYSTEM: [%s] Screenshot taken successfully", path);
 }
 
-// Returns a random value between min and max (both included)
+// Get a random value between min and max (both included)
 int GetRandomValue(int min, int max)
 {
     if (min > max)
@@ -3357,7 +3357,7 @@ bool IsMouseButtonUp(int button)
     return !IsMouseButtonDown(button);
 }
 
-// Returns mouse position X
+// Get mouse position X
 int GetMouseX(void)
 {
 #if defined(PLATFORM_ANDROID)
@@ -3367,7 +3367,7 @@ int GetMouseX(void)
 #endif
 }
 
-// Returns mouse position Y
+// Get mouse position Y
 int GetMouseY(void)
 {
 #if defined(PLATFORM_ANDROID)
@@ -3377,7 +3377,7 @@ int GetMouseY(void)
 #endif
 }
 
-// Returns mouse position XY
+// Get mouse position XY
 Vector2 GetMousePosition(void)
 {
     Vector2 position = { 0 };
@@ -3419,7 +3419,7 @@ void SetMouseScale(float scaleX, float scaleY)
     CORE.Input.Mouse.scale = (Vector2){ scaleX, scaleY };
 }
 
-// Returns mouse wheel movement Y
+// Get mouse wheel movement Y
 float GetMouseWheelMove(void)
 {
 #if defined(PLATFORM_ANDROID)
@@ -3447,7 +3447,7 @@ void SetMouseCursor(int cursor)
 #endif
 }
 
-// Returns touch position X for touch point 0 (relative to screen size)
+// Get touch position X for touch point 0 (relative to screen size)
 int GetTouchX(void)
 {
 #if defined(PLATFORM_ANDROID) || defined(PLATFORM_WEB) || defined(PLATFORM_UWP)
@@ -3457,7 +3457,7 @@ int GetTouchX(void)
 #endif
 }
 
-// Returns touch position Y for touch point 0 (relative to screen size)
+// Get touch position Y for touch point 0 (relative to screen size)
 int GetTouchY(void)
 {
 #if defined(PLATFORM_ANDROID) || defined(PLATFORM_WEB) || defined(PLATFORM_UWP)
@@ -3467,7 +3467,7 @@ int GetTouchY(void)
 #endif
 }
 
-// Returns touch position XY for a touch point index (relative to screen size)
+// Get touch position XY for a touch point index (relative to screen size)
 // TODO: Touch position should be scaled depending on display size and render size
 Vector2 GetTouchPosition(int index)
 {

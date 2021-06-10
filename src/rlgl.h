@@ -546,7 +546,7 @@ RLAPI void rlSetBlendFactors(int glSrcFactor, int glDstFactor, int glEquation); 
 RLAPI void rlglInit(int width, int height);           // Initialize rlgl (buffers, shaders, textures, states)
 RLAPI void rlglClose(void);                           // De-inititialize rlgl (buffers, shaders, textures)
 RLAPI void rlLoadExtensions(void *loader);            // Load OpenGL extensions (loader function required)
-RLAPI int rlGetVersion(void);                         // Returns current OpenGL version
+RLAPI int rlGetVersion(void);                         // Get current OpenGL version
 RLAPI int rlGetFramebufferWidth(void);                // Get default framebuffer width
 RLAPI int rlGetFramebufferHeight(void);               // Get default framebuffer height
 
@@ -1892,7 +1892,7 @@ void rlLoadExtensions(void *loader)
 #endif  // GRAPHICS_API_OPENGL_33 || GRAPHICS_API_OPENGL_ES2
 }
 
-// Returns current OpenGL version
+// Get current OpenGL version
 int rlGetVersion(void)
 {
 #if defined(GRAPHICS_API_OPENGL_11)

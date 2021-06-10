@@ -609,7 +609,7 @@ RMDEF Vector3 Vector3Barycenter(Vector3 p, Vector3 a, Vector3 b, Vector3 c)
     return result;
 }
 
-// Returns Vector3 as float array
+// Get Vector3 as float array
 RMDEF float3 Vector3ToFloatV(Vector3 v)
 {
     float3 buffer = { 0 };
@@ -644,7 +644,7 @@ RMDEF float MatrixDeterminant(Matrix mat)
     return result;
 }
 
-// Returns the trace of the matrix (sum of the values along the diagonal)
+// Get the trace of the matrix (sum of the values along the diagonal)
 RMDEF float MatrixTrace(Matrix mat)
 {
     float result = (mat.m0 + mat.m5 + mat.m10 + mat.m15);
@@ -750,7 +750,7 @@ RMDEF Matrix MatrixNormalize(Matrix mat)
     return result;
 }
 
-// Returns identity matrix
+// Get identity matrix
 RMDEF Matrix MatrixIdentity(void)
 {
     Matrix result = { 1.0f, 0.0f, 0.0f, 0.0f,
@@ -811,7 +811,7 @@ RMDEF Matrix MatrixSubtract(Matrix left, Matrix right)
     return result;
 }
 
-// Returns two matrix multiplication
+// Get two matrix multiplication
 // NOTE: When multiplying matrices... the order matters!
 RMDEF Matrix MatrixMultiply(Matrix left, Matrix right)
 {
@@ -837,7 +837,7 @@ RMDEF Matrix MatrixMultiply(Matrix left, Matrix right)
     return result;
 }
 
-// Returns translation matrix
+// Get translation matrix
 RMDEF Matrix MatrixTranslate(float x, float y, float z)
 {
     Matrix result = { 1.0f, 0.0f, 0.0f, x,
@@ -893,7 +893,7 @@ RMDEF Matrix MatrixRotate(Vector3 axis, float angle)
     return result;
 }
 
-// Returns x-rotation matrix (angle in radians)
+// Get x-rotation matrix (angle in radians)
 RMDEF Matrix MatrixRotateX(float angle)
 {
     Matrix result = MatrixIdentity();
@@ -909,7 +909,7 @@ RMDEF Matrix MatrixRotateX(float angle)
     return result;
 }
 
-// Returns y-rotation matrix (angle in radians)
+// Get y-rotation matrix (angle in radians)
 RMDEF Matrix MatrixRotateY(float angle)
 {
     Matrix result = MatrixIdentity();
@@ -925,7 +925,7 @@ RMDEF Matrix MatrixRotateY(float angle)
     return result;
 }
 
-// Returns z-rotation matrix (angle in radians)
+// Get z-rotation matrix (angle in radians)
 RMDEF Matrix MatrixRotateZ(float angle)
 {
     Matrix result = MatrixIdentity();
@@ -942,7 +942,7 @@ RMDEF Matrix MatrixRotateZ(float angle)
 }
 
 
-// Returns xyz-rotation matrix (angles in radians)
+// Get xyz-rotation matrix (angles in radians)
 RMDEF Matrix MatrixRotateXYZ(Vector3 ang)
 {
     Matrix result = MatrixIdentity();
@@ -969,7 +969,7 @@ RMDEF Matrix MatrixRotateXYZ(Vector3 ang)
     return result;
 }
 
-// Returns zyx-rotation matrix (angles in radians)
+// Get zyx-rotation matrix (angles in radians)
 RMDEF Matrix MatrixRotateZYX(Vector3 ang)
 {
     Matrix result = { 0 };
@@ -1004,7 +1004,7 @@ RMDEF Matrix MatrixRotateZYX(Vector3 ang)
     return result;
 }
 
-// Returns scaling matrix
+// Get scaling matrix
 RMDEF Matrix MatrixScale(float x, float y, float z)
 {
     Matrix result = { x, 0.0f, 0.0f, 0.0f,
@@ -1015,7 +1015,7 @@ RMDEF Matrix MatrixScale(float x, float y, float z)
     return result;
 }
 
-// Returns perspective projection matrix
+// Get perspective projection matrix
 RMDEF Matrix MatrixFrustum(double left, double right, double bottom, double top, double near, double far)
 {
     Matrix result = { 0 };
@@ -1047,7 +1047,7 @@ RMDEF Matrix MatrixFrustum(double left, double right, double bottom, double top,
     return result;
 }
 
-// Returns perspective projection matrix
+// Get perspective projection matrix
 // NOTE: Angle should be provided in radians
 RMDEF Matrix MatrixPerspective(double fovy, double aspect, double near, double far)
 {
@@ -1058,7 +1058,7 @@ RMDEF Matrix MatrixPerspective(double fovy, double aspect, double near, double f
     return result;
 }
 
-// Returns orthographic projection matrix
+// Get orthographic projection matrix
 RMDEF Matrix MatrixOrtho(double left, double right, double bottom, double top, double near, double far)
 {
     Matrix result = { 0 };
@@ -1087,7 +1087,7 @@ RMDEF Matrix MatrixOrtho(double left, double right, double bottom, double top, d
     return result;
 }
 
-// Returns camera look-at matrix (view matrix)
+// Get camera look-at matrix (view matrix)
 RMDEF Matrix MatrixLookAt(Vector3 eye, Vector3 target, Vector3 up)
 {
     Matrix result = { 0 };
@@ -1118,7 +1118,7 @@ RMDEF Matrix MatrixLookAt(Vector3 eye, Vector3 target, Vector3 up)
     return result;
 }
 
-// Returns float array of matrix data
+// Get float array of matrix data
 RMDEF float16 MatrixToFloatV(Matrix mat)
 {
     float16 buffer = { 0 };
@@ -1175,7 +1175,7 @@ RMDEF Quaternion QuaternionSubtractValue(Quaternion q, float sub)
     return result;
 }
 
-// Returns identity quaternion
+// Get identity quaternion
 RMDEF Quaternion QuaternionIdentity(void)
 {
     Quaternion result = { 0.0f, 0.0f, 0.0f, 1.0f };
@@ -1351,7 +1351,7 @@ RMDEF Quaternion QuaternionFromVector3ToVector3(Vector3 from, Vector3 to)
     return result;
 }
 
-// Returns a quaternion for a given rotation matrix
+// Get a quaternion for a given rotation matrix
 RMDEF Quaternion QuaternionFromMatrix(Matrix mat)
 {
     Quaternion result = { 0 };
@@ -1385,7 +1385,7 @@ RMDEF Quaternion QuaternionFromMatrix(Matrix mat)
     return result;
 }
 
-// Returns a matrix for a given quaternion
+// Get a matrix for a given quaternion
 RMDEF Matrix QuaternionToMatrix(Quaternion q)
 {
     Matrix result = MatrixIdentity();
@@ -1415,7 +1415,7 @@ RMDEF Matrix QuaternionToMatrix(Quaternion q)
     return result;
 }
 
-// Returns rotation quaternion for an angle and axis
+// Get rotation quaternion for an angle and axis
 // NOTE: angle must be provided in radians
 RMDEF Quaternion QuaternionFromAxisAngle(Vector3 axis, float angle)
 {
@@ -1440,7 +1440,7 @@ RMDEF Quaternion QuaternionFromAxisAngle(Vector3 axis, float angle)
     return result;
 }
 
-// Returns the rotation angle and axis for a given quaternion
+// Get the rotation angle and axis for a given quaternion
 RMDEF void QuaternionToAxisAngle(Quaternion q, Vector3 *outAxis, float *outAngle)
 {
     if (fabs(q.w) > 1.0f) q = QuaternionNormalize(q);
@@ -1466,7 +1466,7 @@ RMDEF void QuaternionToAxisAngle(Quaternion q, Vector3 *outAxis, float *outAngle
     *outAngle = resAngle;
 }
 
-// Returns the quaternion equivalent to Euler angles
+// Get the quaternion equivalent to Euler angles
 // NOTE: Rotation order is ZYX
 RMDEF Quaternion QuaternionFromEuler(float pitch, float yaw, float roll)
 {

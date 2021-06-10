@@ -3553,7 +3553,7 @@ void DrawTexturePoly(Texture2D texture, Vector2 center, Vector2 *points, Vector2
     rlSetTexture(0);
 }
 
-// Returns color with alpha applied, alpha goes from 0.0f to 1.0f
+// Get color with alpha applied, alpha goes from 0.0f to 1.0f
 Color Fade(Color color, float alpha)
 {
     if (alpha < 0.0f) alpha = 0.0f;
@@ -3562,13 +3562,13 @@ Color Fade(Color color, float alpha)
     return (Color){color.r, color.g, color.b, (unsigned char)(255.0f*alpha)};
 }
 
-// Returns hexadecimal value for a Color
+// Get hexadecimal value for a Color
 int ColorToInt(Color color)
 {
     return (((int)color.r << 24) | ((int)color.g << 16) | ((int)color.b << 8) | (int)color.a);
 }
 
-// Returns color normalized as float [0..1]
+// Get color normalized as float [0..1]
 Vector4 ColorNormalize(Color color)
 {
     Vector4 result;
@@ -3581,7 +3581,7 @@ Vector4 ColorNormalize(Color color)
     return result;
 }
 
-// Returns color from normalized values [0..1]
+// Get color from normalized values [0..1]
 Color ColorFromNormalized(Vector4 normalized)
 {
     Color result;
@@ -3594,7 +3594,7 @@ Color ColorFromNormalized(Vector4 normalized)
     return result;
 }
 
-// Returns HSV values for a Color
+// Get HSV values for a Color
 // NOTE: Hue is returned as degrees [0..360]
 Vector3 ColorToHSV(Color color)
 {
@@ -3646,7 +3646,7 @@ Vector3 ColorToHSV(Color color)
     return hsv;
 }
 
-// Returns a Color from HSV values
+// Get a Color from HSV values
 // Implementation reference: https://en.wikipedia.org/wiki/HSL_and_HSV#Alternative_HSV_conversion
 // NOTE: Color->HSV->Color conversion will not yield exactly the same color due to rounding errors
 // Hue is provided in degrees: [0..360]
@@ -3682,7 +3682,7 @@ Color ColorFromHSV(float hue, float saturation, float value)
     return color;
 }
 
-// Returns color with alpha applied, alpha goes from 0.0f to 1.0f
+// Get color with alpha applied, alpha goes from 0.0f to 1.0f
 Color ColorAlpha(Color color, float alpha)
 {
     if (alpha < 0.0f) alpha = 0.0f;
@@ -3691,7 +3691,7 @@ Color ColorAlpha(Color color, float alpha)
     return (Color){color.r, color.g, color.b, (unsigned char)(255.0f*alpha)};
 }
 
-// Returns src alpha-blended into dst color with tint
+// Get src alpha-blended into dst color with tint
 Color ColorAlphaBlend(Color dst, Color src, Color tint)
 {
     Color out = WHITE;
@@ -3746,7 +3746,7 @@ Color ColorAlphaBlend(Color dst, Color src, Color tint)
     return out;
 }
 
-// Returns a Color struct from hexadecimal value
+// Get a Color struct from hexadecimal value
 Color GetColor(int hexValue)
 {
     Color color;
