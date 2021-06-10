@@ -430,9 +430,10 @@ typedef struct CoreData {
 #endif
         } Keyboard;
         struct {
-            Vector2 position;               // Mouse position on screen
             Vector2 offset;                 // Mouse offset
             Vector2 scale;                  // Mouse scaling
+            Vector2 currentPosition;        // Mouse position on screen
+            Vector2 previousPosition;       // Previous mouse position
 
             int cursor;                     // Tracks current mouse cursor
             bool cursorHidden;              // Track if cursor is hidden
@@ -796,8 +797,8 @@ void InitWindow(int width, int height, const char *title)
     emscripten_set_gamepaddisconnected_callback(NULL, 1, EmscriptenGamepadCallback);
 #endif
 
-    CORE.Input.Mouse.position.x = (float)CORE.Window.screen.width/2.0f;
-    CORE.Input.Mouse.position.y = (float)CORE.Window.screen.height/2.0f;
+    CORE.Input.Mouse.currentPosition.x = (float)CORE.Window.screen.width/2.0f;
+    CORE.Input.Mouse.currentPosition.y = (float)CORE.Window.screen.height/2.0f;
 #endif        // PLATFORM_ANDROID
 }
 
@@ -1849,7 +1850,7 @@ void EndDrawing(void)
     // we draw a small rectangle for user reference
     if (!CORE.Input.Mouse.cursorHidden)
     {
-        DrawRectangle(CORE.Input.Mouse.position.x, CORE.Input.Mouse.position.y, 3, 3, MAROON);
+        DrawRectangle(CORE.Input.Mouse.currentPosition.x, CORE.Input.Mouse.currentPosition.y, 3, 3, MAROON);
     }
 #endif
 
@@ -3363,7 +3364,7 @@ int GetMouseX(void)
 #if defined(PLATFORM_ANDROID)
     return (int)CORE.Input.Touch.position[0].x;
 #else
-    return (int)((CORE.Input.Mouse.position.x + CORE.Input.Mouse.offset.x)*CORE.Input.Mouse.scale.x);
+    return (int)((CORE.Input.Mouse.currentPosition.x + CORE.Input.Mouse.offset.x)*CORE.Input.Mouse.scale.x);
 #endif
 }
 
@@ -3373,7 +3374,7 @@ int GetMouseY(void)
 #if defined(PLATFORM_ANDROID)
     return (int)CORE.Input.Touch.position[0].y;
 #else
-    return (int)((CORE.Input.Mouse.position.y + CORE.Input.Mouse.offset.y)*CORE.Input.Mouse.scale.y);
+    return (int)((CORE.Input.Mouse.currentPosition.y + CORE.Input.Mouse.offset.y)*CORE.Input.Mouse.scale.y);
 #endif
 }
 
@@ -3385,8 +3386,8 @@ Vector2 GetMousePosition(void)
 #if defined(PLATFORM_ANDROID) || defined(PLATFORM_WEB)
     position = GetTouchPosition(0);
 #else
-    position.x = (CORE.Input.Mouse.position.x + CORE.Input.Mouse.offset.x)*CORE.Input.Mouse.scale.x;
-    position.y = (CORE.Input.Mouse.position.y + CORE.Input.Mouse.offset.y)*CORE.Input.Mouse.scale.y;
+    position.x = (CORE.Input.Mouse.currentPosition.x + CORE.Input.Mouse.offset.x)*CORE.Input.Mouse.scale.x;
+    position.y = (CORE.Input.Mouse.currentPosition.y + CORE.Input.Mouse.offset.y)*CORE.Input.Mouse.scale.y;
 #endif
 
     return position;
@@ -3395,10 +3396,10 @@ Vector2 GetMousePosition(void)
 // Set mouse position XY
 void SetMousePosition(int x, int y)
 {
-    CORE.Input.Mouse.position = (Vector2){ (float)x, (float)y };
+    CORE.Input.Mouse.currentPosition = (Vector2){ (float)x, (float)y };
 #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
     // NOTE: emscripten not implemented
-    glfwSetCursorPos(CORE.Window.handle, CORE.Input.Mouse.position.x, CORE.Input.Mouse.position.y);
+    glfwSetCursorPos(CORE.Window.handle, CORE.Input.Mouse.currentPosition.x, CORE.Input.Mouse.currentPosition.y);
 #endif
 #if defined(PLATFORM_UWP)
     UWPGetMouseSetPosFunc()(x, y);
@@ -4665,6 +4666,9 @@ static void PollInputEvents(void)
     // Register previous mouse wheel state
     CORE.Input.Mouse.previousWheelMove = CORE.Input.Mouse.currentWheelMove;
     CORE.Input.Mouse.currentWheelMove = 0.0f;
+    
+    // Register previous mouse position
+    CORE.Input.Mouse.previousPosition = CORE.Input.Mouse.currentPosition;
 #endif
 
     // Register previous touch states
@@ -5109,9 +5113,9 @@ static void MouseButtonCallback(GLFWwindow *window, int button, int action, int 
 // GLFW3 Cursor Position Callback, runs on mouse move
 static void MouseCursorPosCallback(GLFWwindow *window, double x, double y)
 {
-    CORE.Input.Mouse.position.x = (float)x;
-    CORE.Input.Mouse.position.y = (float)y;
-    CORE.Input.Touch.position[0] = CORE.Input.Mouse.position;
+    CORE.Input.Mouse.currentPosition.x = (float)x;
+    CORE.Input.Mouse.currentPosition.y = (float)y;
+    CORE.Input.Touch.position[0] = CORE.Input.Mouse.currentPosition;
 
 #if defined(SUPPORT_GESTURES_SYSTEM) && defined(SUPPORT_MOUSE_GESTURES)
     // Process mouse events as touches to be able to use mouse-gestures
@@ -5999,8 +6003,8 @@ static void *EventThread(void *arg)
             {
                 if (event.code == REL_X)
                 {
-                    CORE.Input.Mouse.position.x += event.value;
-                    CORE.Input.Touch.position[0].x = CORE.Input.Mouse.position.x;
+                    CORE.Input.Mouse.currentPosition.x += event.value;
+                    CORE.Input.Touch.position[0].x = CORE.Input.Mouse.currentPosition.x;
 
                     #if defined(SUPPORT_GESTURES_SYSTEM)
                         touchAction = TOUCH_MOVE;
@@ -6010,8 +6014,8 @@ static void *EventThread(void *arg)
 
                 if (event.code == REL_Y)
                 {
-                    CORE.Input.Mouse.position.y += event.value;
-                    CORE.Input.Touch.position[0].y = CORE.Input.Mouse.position.y;
+                    CORE.Input.Mouse.currentPosition.y += event.value;
+                    CORE.Input.Touch.position[0].y = CORE.Input.Mouse.currentPosition.y;
 
                     #if defined(SUPPORT_GESTURES_SYSTEM)
                         touchAction = TOUCH_MOVE;
@@ -6028,7 +6032,7 @@ static void *EventThread(void *arg)
                 // Basic movement
                 if (event.code == ABS_X)
                 {
-                    CORE.Input.Mouse.position.x = (event.value - worker->absRange.x)*CORE.Window.screen.width/worker->absRange.width;   // Scale acording to absRange
+                    CORE.Input.Mouse.currentPosition.x = (event.value - worker->absRange.x)*CORE.Window.screen.width/worker->absRange.width;   // Scale acording to absRange
                     CORE.Input.Touch.position[0].x = (event.value - worker->absRange.x)*CORE.Window.screen.width/worker->absRange.width;   // Scale acording to absRange
 
                     #if defined(SUPPORT_GESTURES_SYSTEM)
@@ -6039,7 +6043,7 @@ static void *EventThread(void *arg)
 
                 if (event.code == ABS_Y)
                 {
-                    CORE.Input.Mouse.position.y = (event.value - worker->absRange.y)*CORE.Window.screen.height/worker->absRange.height; // Scale acording to absRange
+                    CORE.Input.Mouse.currentPosition.y = (event.value - worker->absRange.y)*CORE.Window.screen.height/worker->absRange.height; // Scale acording to absRange
                     CORE.Input.Touch.position[0].y = (event.value - worker->absRange.y)*CORE.Window.screen.height/worker->absRange.height; // Scale acording to absRange
 
                     #if defined(SUPPORT_GESTURES_SYSTEM)
@@ -6125,11 +6129,11 @@ static void *EventThread(void *arg)
             // Screen confinement
             if (!CORE.Input.Mouse.cursorHidden)
             {
-                if (CORE.Input.Mouse.position.x < 0) CORE.Input.Mouse.position.x = 0;
-                if (CORE.Input.Mouse.position.x > CORE.Window.screen.width/CORE.Input.Mouse.scale.x) CORE.Input.Mouse.position.x = CORE.Window.screen.width/CORE.Input.Mouse.scale.x;
+                if (CORE.Input.Mouse.currentPosition.x < 0) CORE.Input.Mouse.currentPosition.x = 0;
+                if (CORE.Input.Mouse.currentPosition.x > CORE.Window.screen.width/CORE.Input.Mouse.scale.x) CORE.Input.Mouse.currentPosition.x = CORE.Window.screen.width/CORE.Input.Mouse.scale.x;
 
-                if (CORE.Input.Mouse.position.y < 0) CORE.Input.Mouse.position.y = 0;
-                if (CORE.Input.Mouse.position.y > CORE.Window.screen.height/CORE.Input.Mouse.scale.y) CORE.Input.Mouse.position.y = CORE.Window.screen.height/CORE.Input.Mouse.scale.y;
+                if (CORE.Input.Mouse.currentPosition.y < 0) CORE.Input.Mouse.currentPosition.y = 0;
+                if (CORE.Input.Mouse.currentPosition.y > CORE.Window.screen.height/CORE.Input.Mouse.scale.y) CORE.Input.Mouse.currentPosition.y = CORE.Window.screen.height/CORE.Input.Mouse.scale.y;
             }
 
             // Gesture update
@@ -6408,9 +6412,9 @@ void UWPMouseButtonEvent(int button, bool down)
 
 void UWPMousePosEvent(double x, double y)
 {
-    CORE.Input.Mouse.position.x = (float)x;
-    CORE.Input.Mouse.position.y = (float)y;
-    CORE.Input.Touch.position[0] = CORE.Input.Mouse.position;
+    CORE.Input.Mouse.currentPosition.x = (float)x;
+    CORE.Input.Mouse.currentPosition.y = (float)y;
+    CORE.Input.Touch.position[0] = CORE.Input.Mouse.currentPosition;
 
 #if defined(SUPPORT_GESTURES_SYSTEM) && defined(SUPPORT_MOUSE_GESTURES)
     // Process mouse events as touches to be able to use mouse-gestures
@@ -6425,7 +6429,7 @@ void UWPMousePosEvent(double x, double y)
     gestureEvent.pointCount = 1;
 
     // Register touch points position, only one point registered
-    gestureEvent.position[0] = CORE.Input.Mouse.position;
+    gestureEvent.position[0] = CORE.Input.Mouse.currentPosition;
 
     // Normalize gestureEvent.position[0] for CORE.Window.screen.width and CORE.Window.screen.height
     gestureEvent.position[0].x /= (float)GetScreenWidth();
