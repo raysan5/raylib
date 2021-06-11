@@ -55,6 +55,8 @@
 #define SUPPORT_COMPRESSION_API     1
 // Support saving binary data automatically to a generated storage.data file. This file is managed internally.
 #define SUPPORT_DATA_STORAGE        1
+// Support automatic generated events, loading and recording of those events when required
+#define SUPPORT_EVENTS_AUTOMATION     1
 
 // core: Configuration values
 //------------------------------------------------------------------------------------
