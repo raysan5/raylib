@@ -294,37 +294,43 @@ Image LoadImageAnim(const char *fileName, int *frames)
     return image;
 }
 
-// Load image from memory buffer, fileType refers to extension: i.e. ".png"
+// Load image from memory buffer, fileType refers to extension: i.e. "png"
 Image LoadImageFromMemory(const char *fileType, const unsigned char *fileData, int dataSize)
 {
+    // If there is a prefix dot, get rid of it.
+    if (fileType[0] == '.')
+    {
+        fileType++;
+    }
+
     Image image = { 0 };
 
     char fileExtLower[16] = { 0 };
     strcpy(fileExtLower, TextToLower(fileType));
 
 #if defined(SUPPORT_FILEFORMAT_PNG)
-    if ((TextIsEqual(fileExtLower, ".png"))
+    if ((TextIsEqual(fileExtLower, "png"))
 #else
     if ((false)
 #endif
 #if defined(SUPPORT_FILEFORMAT_BMP)
-        || (TextIsEqual(fileExtLower, ".bmp"))
+        || (TextIsEqual(fileExtLower, "bmp"))
 #endif
 #if defined(SUPPORT_FILEFORMAT_TGA)
-        || (TextIsEqual(fileExtLower, ".tga"))
+        || (TextIsEqual(fileExtLower, "tga"))
 #endif
 #if defined(SUPPORT_FILEFORMAT_JPG)
-        || (TextIsEqual(fileExtLower, ".jpg") ||
-            TextIsEqual(fileExtLower, ".jpeg"))
+        || (TextIsEqual(fileExtLower, "jpg") ||
+            TextIsEqual(fileExtLower, "jpeg"))
 #endif
 #if defined(SUPPORT_FILEFORMAT_GIF)
-        || (TextIsEqual(fileExtLower, ".gif"))
+        || (TextIsEqual(fileExtLower, "gif"))
 #endif
 #if defined(SUPPORT_FILEFORMAT_PIC)
-        || (TextIsEqual(fileExtLower, ".pic"))
+        || (TextIsEqual(fileExtLower, "pic"))
 #endif
 #if defined(SUPPORT_FILEFORMAT_PSD)
-        || (TextIsEqual(fileExtLower, ".psd"))
+        || (TextIsEqual(fileExtLower, "psd"))
 #endif
        )
     {
@@ -346,7 +352,7 @@ Image LoadImageFromMemory(const char *fileType, const unsigned char *fileData, i
 #endif
     }
 #if defined(SUPPORT_FILEFORMAT_HDR)
-    else if (TextIsEqual(fileExtLower, ".hdr"))
+    else if (TextIsEqual(fileExtLower, "hdr"))
     {
 #if defined(STBI_REQUIRED)
         if (fileData != NULL)
@@ -369,19 +375,19 @@ Image LoadImageFromMemory(const char *fileType, const unsigned char *fileData, i
     }
 #endif
 #if defined(SUPPORT_FILEFORMAT_DDS)
-    else if (TextIsEqual(fileExtLower, ".dds")) image = LoadDDS(fileData, dataSize);
+    else if (TextIsEqual(fileExtLower, "dds")) image = LoadDDS(fileData, dataSize);
 #endif
 #if defined(SUPPORT_FILEFORMAT_PKM)
-    else if (TextIsEqual(fileExtLower, ".pkm")) image = LoadPKM(fileData, dataSize);
+    else if (TextIsEqual(fileExtLower, "pkm")) image = LoadPKM(fileData, dataSize);
 #endif
 #if defined(SUPPORT_FILEFORMAT_KTX)
-    else if (TextIsEqual(fileExtLower, ".ktx")) image = LoadKTX(fileData, dataSize);
+    else if (TextIsEqual(fileExtLower, "ktx")) image = LoadKTX(fileData, dataSize);
 #endif
 #if defined(SUPPORT_FILEFORMAT_PVR)
-    else if (TextIsEqual(fileExtLower, ".pvr")) image = LoadPVR(fileData, dataSize);
+    else if (TextIsEqual(fileExtLower, "pvr")) image = LoadPVR(fileData, dataSize);
 #endif
 #if defined(SUPPORT_FILEFORMAT_ASTC)
-    else if (TextIsEqual(fileExtLower, ".astc")) image = LoadASTC(fileData, dataSize);
+    else if (TextIsEqual(fileExtLower, "astc")) image = LoadASTC(fileData, dataSize);
 #endif
     else TRACELOG(LOG_WARNING, "IMAGE: File format not supported");
 
