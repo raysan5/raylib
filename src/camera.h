@@ -171,8 +171,8 @@ void SetCameraMoveControls(int keyFront, int keyBack,
 #define CAMERA_FIRST_PERSON_MAX_CLAMP                  -89.0f
 
 #define CAMERA_FIRST_PERSON_STEP_TRIGONOMETRIC_DIVIDER  8.0f
-#define CAMERA_FIRST_PERSON_STEP_DIVIDER                30.0f
-#define CAMERA_FIRST_PERSON_WAVING_DIVIDER              200.0f
+#define CAMERA_FIRST_PERSON_STEP_DIVIDER                3.0f * GetFrameTime()
+#define CAMERA_FIRST_PERSON_WAVING_DIVIDER              20.0f * GetFrameTime()
 
 // THIRD_PERSON
 //#define CAMERA_THIRD_PERSON_MOUSE_SENSITIVITY           0.003f
@@ -182,7 +182,7 @@ void SetCameraMoveControls(int keyFront, int keyBack,
 #define CAMERA_THIRD_PERSON_OFFSET                      (Vector3){ 0.4f, 0.0f, 0.0f }
 
 // PLAYER (used by camera)
-#define PLAYER_MOVEMENT_SENSITIVITY                     20.0f
+#define PLAYER_MOVEMENT_SENSITIVITY                     1.0f * (GetFrameTime() * 10)
 
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
