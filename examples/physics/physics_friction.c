@@ -1,24 +1,19 @@
 /*******************************************************************************************
 *
-*   Physac - Physics friction
+*   raylib [physac] example - physics friction
 *
-*   NOTE 1: Physac requires multi-threading, when InitPhysics() a second thread is created to manage physics calculations.
-*   NOTE 2: Physac requires static C library linkage to avoid dependency on MinGW DLL (-static -lpthread)
+*   This example has been created using raylib 1.5 (www.raylib.com)
+*   raylib is licensed under an unmodified zlib/libpng license (View raylib.h for details)
 *
-*   Use the following line to compile:
+*   This example uses physac 1.1 (https://github.com/raysan5/raylib/blob/master/src/physac.h)
 *
-*   gcc -o $(NAME_PART).exe $(FILE_NAME) -s -static  /
-*       -lraylib -lpthread -lglfw3 -lopengl32 -lgdi32 -lopenal32 -lwinmm /
-*       -std=c99 -Wl,--subsystem,windows -Wl,-allow-multiple-definition
-*
-*   Copyright (c) 2016-2018 Victor Fisac
+*   Copyright (c) 2016-2021 Victor Fisac (@victorfisac) and Ramon Santamaria (@raysan5)
 *
 ********************************************************************************************/
 
 #include "raylib.h"
 
 #define PHYSAC_IMPLEMENTATION
-#define PHYSAC_NO_THREADS
 #include "physac.h"
 
 int main(void)
@@ -29,7 +24,7 @@ int main(void)
     const int screenHeight = 450;
 
     SetConfigFlags(FLAG_MSAA_4X_HINT);
-    InitWindow(screenWidth, screenHeight, "Physac [raylib] - Physics friction");
+    InitWindow(screenWidth, screenHeight, "raylib [physac] example - physics friction");
 
     // Physac logo drawing position
     int logoX = screenWidth - MeasureText("Physac", 30) - 10;
@@ -73,9 +68,9 @@ int main(void)
     {
         // Update
         //----------------------------------------------------------------------------------
-        RunPhysicsStep();
+        UpdatePhysics();            // Update physics system
 
-        if (IsKeyPressed('R'))    // Reset physics input
+        if (IsKeyPressed(KEY_R))    // Reset physics system
         {
             // Reset dynamic physics bodies position, velocity and rotation
             bodyA->position = (Vector2){ 35, screenHeight*0.6f };

@@ -28,9 +28,10 @@ int main(void)
     Vector2 center = {(GetScreenWidth() - 300)/2, GetScreenHeight()/2 };
 
     float outerRadius = 180.0f;
-    int startAngle = 0;
-    int endAngle = 180;
+    float startAngle = 0.0f;
+    float endAngle = 180.0f;
     int segments = 0;
+    int minSegments = 4;
 
     SetTargetFPS(60);               // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
@@ -42,38 +43,39 @@ int main(void)
         //----------------------------------------------------------------------------------
         // NOTE: All variables update happens inside GUI control functions
         //----------------------------------------------------------------------------------
-        
+
         // Draw
         //----------------------------------------------------------------------------------
         BeginDrawing();
-        
+
             ClearBackground(RAYWHITE);
-        
+
             DrawLine(500, 0, 500, GetScreenHeight(), Fade(LIGHTGRAY, 0.6f));
             DrawRectangle(500, 0, GetScreenWidth() - 500, GetScreenHeight(), Fade(LIGHTGRAY, 0.3f));
 
             DrawCircleSector(center, outerRadius, startAngle, endAngle, segments, Fade(MAROON, 0.3));
             DrawCircleSectorLines(center, outerRadius, startAngle, endAngle, segments, Fade(MAROON, 0.6));
-            
+
             // Draw GUI controls
             //------------------------------------------------------------------------------
             startAngle = GuiSliderBar((Rectangle){ 600, 40, 120, 20}, "StartAngle", NULL, startAngle, 0, 720);
             endAngle = GuiSliderBar((Rectangle){ 600, 70, 120, 20}, "EndAngle", NULL, endAngle, 0, 720);
-            
+
             outerRadius = GuiSliderBar((Rectangle){ 600, 140, 120, 20}, "Radius", NULL, outerRadius, 0, 200);
             segments = GuiSliderBar((Rectangle){ 600, 170, 120, 20}, "Segments", NULL, segments, 0, 100);
             //------------------------------------------------------------------------------
-            
-            DrawText(TextFormat("MODE: %s", (segments >= 4)? "MANUAL" : "AUTO"), 600, 200, 10, (segments >= 4)? MAROON : DARKGRAY);
-            
+
+            minSegments = (int)ceilf((endAngle - startAngle) / 90);
+            DrawText(TextFormat("MODE: %s", (segments >= minSegments)? "MANUAL" : "AUTO"), 600, 200, 10, (segments >= minSegments)? MAROON : DARKGRAY);
+
             DrawFPS(10, 10);
-            
+
         EndDrawing();
         //----------------------------------------------------------------------------------
     }
 
     // De-Initialization
-    //--------------------------------------------------------------------------------------  
+    //--------------------------------------------------------------------------------------
     CloseWindow();        // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
 

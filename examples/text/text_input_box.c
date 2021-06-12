@@ -22,7 +22,7 @@ int main(void)
 
     InitWindow(screenWidth, screenHeight, "raylib [text] example - input box");
 
-    char name[MAX_INPUT_CHARS + 1] = "\0";      // NOTE: One extra space required for line ending char '\0'
+    char name[MAX_INPUT_CHARS + 1] = "\0";      // NOTE: One extra space required for null terminator char '\0'
     int letterCount = 0;
 
     Rectangle textBox = { screenWidth/2 - 100, 180, 225, 50 };
@@ -56,9 +56,10 @@ int main(void)
                 if ((key >= 32) && (key <= 125) && (letterCount < MAX_INPUT_CHARS))
                 {
                     name[letterCount] = (char)key;
+                    name[letterCount+1] = '\0'; // Add null terminator at the end of the string.
                     letterCount++;
                 }
-                
+
                 key = GetCharPressed();  // Check next character in the queue
             }
 
@@ -69,7 +70,7 @@ int main(void)
                 name[letterCount] = '\0';
             }
         }
-        else if (GetMouseCursor() != MOUSE_CURSOR_DEFAULT) SetMouseCursor(MOUSE_CURSOR_DEFAULT);
+        else SetMouseCursor(MOUSE_CURSOR_DEFAULT);
 
         if (mouseOnText) framesCounter++;
         else framesCounter = 0;

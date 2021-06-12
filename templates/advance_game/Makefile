@@ -25,7 +25,7 @@
 
 # Define required raylib variables
 PROJECT_NAME       ?= advance_game
-RAYLIB_VERSION     ?= 3.5.0
+RAYLIB_VERSION     ?= 3.7.0
 RAYLIB_PATH        ?= ../..
 
 # Define default options
@@ -177,16 +177,16 @@ ifeq ($(PLATFORM),PLATFORM_WEB)
     CC = emcc
 endif
 
-# Define default make program: Mingw32-make
-MAKE = mingw32-make
+# Define default make program
+MAKE = make
 
 ifeq ($(PLATFORM),PLATFORM_DESKTOP)
-    ifeq ($(PLATFORM_OS),LINUX)
-        MAKE = make
+    ifeq ($(PLATFORM_OS),WINDOWS)
+        MAKE = mingw32-make
     endif
-    ifeq ($(PLATFORM_OS),OSX)
-        MAKE = make
-    endif
+endif
+ifeq ($(PLATFORM),PLATFORM_ANDROID)
+    MAKE = mingw32-make
 endif
 
 # Define compiler flags:
@@ -237,7 +237,7 @@ ifeq ($(PLATFORM),PLATFORM_WEB)
     # -O2                        # optimization level 2, if used, also set --memory-init-file 0
     # -s USE_GLFW=3              # Use glfw3 library (context/input management)
     # -s ALLOW_MEMORY_GROWTH=1   # to allow memory resizing -> WARNING: Audio buffers could FAIL!
-    # -s TOTAL_MEMORY=16777216   # to specify heap memory size (default = 16MB)
+    # -s TOTAL_MEMORY=16777216   # to specify heap memory size (default = 16MB) (67108864 = 64MB)
     # -s USE_PTHREADS=1          # multithreading support
     # -s WASM=0                  # disable Web Assembly, emitted by default
     # -s ASYNCIFY                # lets synchronous C/C++ code interact with asynchronous JS
@@ -246,6 +246,7 @@ ifeq ($(PLATFORM),PLATFORM_WEB)
     # --profiling                # include information for code profiling
     # --memory-init-file 0       # to avoid an external memory initialization code file (.mem)
     # --preload-file resources   # specify a resources folder for data compilation
+    # --source-map-base          # allow debugging in browser with source map
     CFLAGS += -s USE_GLFW=3 -s TOTAL_MEMORY=67108864 -s FORCE_FILESYSTEM=1 --preload-file resources
 
     # Define a custom shell .html and output extension
@@ -274,9 +275,7 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
         INCLUDE_PATHS += -I/usr/local/include
     endif
     ifeq ($(PLATFORM_OS),LINUX)
-        # Reset everything.
-        # Precedence: immediately local, installed version, raysan5 provided libs -I$(RAYLIB_H_INSTALL_PATH) -I$(RAYLIB_PATH)/release/include
-        INCLUDE_PATHS = -I$(RAYLIB_H_INSTALL_PATH) -I. -I$(RAYLIB_PATH)/src -I$(RAYLIB_PATH)/release/include -I$(RAYLIB_PATH)/src/external
+        INCLUDE_PATHS = -I$(RAYLIB_H_INSTALL_PATH) -I. -I$(RAYLIB_PATH)/src -I$(RAYLIB_PATH)/src/external
     endif
 endif
 
@@ -305,10 +304,6 @@ endif
 
 ifeq ($(PLATFORM),PLATFORM_RPI)
     LDFLAGS += -L/opt/vc/lib
-endif
-
-ifeq ($(PLATFORM),PLATFORM_DRM)
-    LDFLAGS += -lGLESv2 -lEGL -ldrm -lgbm
 endif
 
 # Define any libraries required on linking

@@ -26,7 +26,7 @@ int main(void)
     camera.target = (Vector3){ 0.0f, 2.0f, 0.0f };
     camera.up = (Vector3){ 0.0f, 1.0f, 0.0f };
     camera.fovy = 45.0f;
-    camera.type = CAMERA_PERSPECTIVE;
+    camera.projection = CAMERA_PERSPECTIVE;
 
     Texture2D bill = LoadTexture("resources/billboard.png");     // Our texture billboard
     Vector3 billPosition = { 0.0f, 2.0f, 0.0f };                 // Position where draw billboard

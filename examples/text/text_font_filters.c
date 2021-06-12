@@ -35,13 +35,13 @@ int main(void)
     // NOTE: On 2D drawing it won't be noticeable, it looks like FILTER_BILINEAR
     GenTextureMipmaps(&font.texture);
 
-    float fontSize = font.baseSize;
-    Vector2 fontPosition = { 40, screenHeight/2 - 80 };
+    float fontSize = (float)font.baseSize;
+    Vector2 fontPosition = { 40.0f, screenHeight/2.0f - 80.0f };
     Vector2 textSize = { 0.0f, 0.0f };
 
     // Setup texture scaling filter
-    SetTextureFilter(font.texture, FILTER_POINT);
-    int currentFontFilter = 0;      // FILTER_POINT
+    SetTextureFilter(font.texture, TEXTURE_FILTER_POINT);
+    int currentFontFilter = 0;      // TEXTURE_FILTER_POINT
 
     SetTargetFPS(60);               // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
@@ -56,18 +56,18 @@ int main(void)
         // Choose font texture filter method
         if (IsKeyPressed(KEY_ONE))
         {
-            SetTextureFilter(font.texture, FILTER_POINT);
+            SetTextureFilter(font.texture, TEXTURE_FILTER_POINT);
             currentFontFilter = 0;
         }
         else if (IsKeyPressed(KEY_TWO))
         {
-            SetTextureFilter(font.texture, FILTER_BILINEAR);
+            SetTextureFilter(font.texture, TEXTURE_FILTER_BILINEAR);
             currentFontFilter = 1;
         }
         else if (IsKeyPressed(KEY_THREE))
         {
             // NOTE: Trilinear filter won't be noticed on 2D drawing
-            SetTextureFilter(font.texture, FILTER_TRILINEAR);
+            SetTextureFilter(font.texture, TEXTURE_FILTER_TRILINEAR);
             currentFontFilter = 2;
         }
 
@@ -86,7 +86,7 @@ int main(void)
             if (IsFileExtension(droppedFiles[0], ".ttf"))
             {
                 UnloadFont(font);
-                font = LoadFontEx(droppedFiles[0], fontSize, 0, 0);
+                font = LoadFontEx(droppedFiles[0], (int)fontSize, 0, 0);
                 ClearDroppedFiles();
             }
         }

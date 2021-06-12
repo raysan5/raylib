@@ -2485,7 +2485,11 @@ void _glfwPlatformSetWindowMonitor(_GLFWwindow* window,
     }
 
     if (window->monitor)
+    {
+        _glfwPlatformSetWindowDecorated(window, window->decorated);
+        _glfwPlatformSetWindowFloating(window, window->floating);
         releaseMonitor(window);
+    }
 
     _glfwInputWindowMonitor(window, monitor);
     updateNormalHints(window, width, height);
@@ -2935,26 +2939,39 @@ int _glfwPlatformCreateStandardCursor(_GLFWcursor* cursor, int shape)
             const int size = XcursorGetDefaultSize(_glfw.x11.display);
             const char* name = NULL;
 
-            if (shape == GLFW_ARROW_CURSOR)
-                name = "default";
-            else if (shape == GLFW_IBEAM_CURSOR)
-                name = "text";
-            else if (shape == GLFW_CROSSHAIR_CURSOR)
-                name = "crosshair";
-            else if (shape == GLFW_POINTING_HAND_CURSOR)
-                name = "pointer";
-            else if (shape == GLFW_RESIZE_EW_CURSOR)
-                name = "ew-resize";
-            else if (shape == GLFW_RESIZE_NS_CURSOR)
-                name = "ns-resize";
-            else if (shape == GLFW_RESIZE_NWSE_CURSOR)
-                name = "nwse-resize";
-            else if (shape == GLFW_RESIZE_NESW_CURSOR)
-                name = "nesw-resize";
-            else if (shape == GLFW_RESIZE_ALL_CURSOR)
-                name = "all-scroll";
-            else if (shape == GLFW_NOT_ALLOWED_CURSOR)
-                name = "not-allowed";
+            switch (shape)
+            {
+                case GLFW_ARROW_CURSOR:
+                    name = "default";
+                    break;
+                case GLFW_IBEAM_CURSOR:
+                    name = "text";
+                    break;
+                case GLFW_CROSSHAIR_CURSOR:
+                    name = "crosshair";
+                    break;
+                case GLFW_POINTING_HAND_CURSOR:
+                    name = "pointer";
+                    break;
+                case GLFW_RESIZE_EW_CURSOR:
+                    name = "ew-resize";
+                    break;
+                case GLFW_RESIZE_NS_CURSOR:
+                    name = "ns-resize";
+                    break;
+                case GLFW_RESIZE_NWSE_CURSOR:
+                    name = "nwse-resize";
+                    break;
+                case GLFW_RESIZE_NESW_CURSOR:
+                    name = "nesw-resize";
+                    break;
+                case GLFW_RESIZE_ALL_CURSOR:
+                    name = "all-scroll";
+                    break;
+                case GLFW_NOT_ALLOWED_CURSOR:
+                    name = "not-allowed";
+                    break;
+            }
 
             XcursorImage* image = XcursorLibraryLoadImage(name, theme, size);
             if (image)
@@ -2969,25 +2986,33 @@ int _glfwPlatformCreateStandardCursor(_GLFWcursor* cursor, int shape)
     {
         unsigned int native = 0;
 
-        if (shape == GLFW_ARROW_CURSOR)
-            native = XC_left_ptr;
-        else if (shape == GLFW_IBEAM_CURSOR)
-            native = XC_xterm;
-        else if (shape == GLFW_CROSSHAIR_CURSOR)
-            native = XC_crosshair;
-        else if (shape == GLFW_POINTING_HAND_CURSOR)
-            native = XC_hand2;
-        else if (shape == GLFW_RESIZE_EW_CURSOR)
-            native = XC_sb_h_double_arrow;
-        else if (shape == GLFW_RESIZE_NS_CURSOR)
-            native = XC_sb_v_double_arrow;
-        else if (shape == GLFW_RESIZE_ALL_CURSOR)
-            native = XC_fleur;
-        else
+        switch (shape)
         {
-            _glfwInputError(GLFW_CURSOR_UNAVAILABLE,
-                            "X11: Standard cursor shape unavailable");
-            return GLFW_FALSE;
+            case GLFW_ARROW_CURSOR:
+                native = XC_left_ptr;
+                break;
+            case GLFW_IBEAM_CURSOR:
+                native = XC_xterm;
+                break;
+            case GLFW_CROSSHAIR_CURSOR:
+                native = XC_crosshair;
+                break;
+            case GLFW_POINTING_HAND_CURSOR:
+                native = XC_hand2;
+                break;
+            case GLFW_RESIZE_EW_CURSOR:
+                native = XC_sb_h_double_arrow;
+                break;
+            case GLFW_RESIZE_NS_CURSOR:
+                native = XC_sb_v_double_arrow;
+                break;
+            case GLFW_RESIZE_ALL_CURSOR:
+                native = XC_fleur;
+                break;
+            default:
+                _glfwInputError(GLFW_CURSOR_UNAVAILABLE,
+                                "X11: Standard cursor shape unavailable");
+                return GLFW_FALSE;
         }
 
         cursor->x11.handle = XCreateFontCursor(_glfw.x11.display, native);

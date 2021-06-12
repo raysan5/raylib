@@ -74,7 +74,7 @@ int main(void)
 
     Model model = LoadModel("resources/models/church.obj");                 // Load OBJ model
     Texture2D texture = LoadTexture("resources/models/church_diffuse.png"); // Load model texture (diffuse map)
-    model.materials[0].maps[MAP_DIFFUSE].texture = texture;                     // Set model diffuse texture
+    model.materials[0].maps[MATERIAL_MAP_DIFFUSE].texture = texture;                     // Set model diffuse texture
 
     Vector3 position = { 0.0f, 0.0f, 0.0f };                             // Set model position
 
@@ -146,7 +146,7 @@ int main(void)
             BeginShaderMode(shaders[currentShader]);
 
                 // NOTE: Render texture must be y-flipped due to default OpenGL coordinates (left-bottom)
-                DrawTextureRec(target.texture, (Rectangle){ 0, 0, target.texture.width, -target.texture.height }, (Vector2){ 0, 0 }, WHITE);
+                DrawTextureRec(target.texture, (Rectangle){ 0, 0, (float)target.texture.width, (float)-target.texture.height }, (Vector2){ 0, 0 }, WHITE);
 
             EndShaderMode();
 

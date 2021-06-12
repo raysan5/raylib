@@ -49,7 +49,7 @@ int main(void)
     int resolutionLoc = GetShaderLocation(shader, "resolution");
 
     float resolution[2] = { (float)screenWidth, (float)screenHeight };
-    SetShaderValue(shader, resolutionLoc, resolution, UNIFORM_VEC2);
+    SetShaderValue(shader, resolutionLoc, resolution, SHADER_UNIFORM_VEC2);
 
     float runTime = 0.0f;
 
@@ -70,17 +70,17 @@ int main(void)
         runTime += deltaTime;
 
         // Set shader required uniform values
-        SetShaderValue(shader, viewEyeLoc, cameraPos, UNIFORM_VEC3);
-        SetShaderValue(shader, viewCenterLoc, cameraTarget, UNIFORM_VEC3);
-        SetShaderValue(shader, runTimeLoc, &runTime, UNIFORM_FLOAT);
-        
+        SetShaderValue(shader, viewEyeLoc, cameraPos, SHADER_UNIFORM_VEC3);
+        SetShaderValue(shader, viewCenterLoc, cameraTarget, SHADER_UNIFORM_VEC3);
+        SetShaderValue(shader, runTimeLoc, &runTime, SHADER_UNIFORM_FLOAT);
+
         // Check if screen is resized
         if (IsWindowResized())
         {
             screenWidth = GetScreenWidth();
             screenHeight = GetScreenHeight();
             float resolution[2] = { (float)screenWidth, (float)screenHeight };
-            SetShaderValue(shader, resolutionLoc, resolution, UNIFORM_VEC2);
+            SetShaderValue(shader, resolutionLoc, resolution, SHADER_UNIFORM_VEC2);
         }
         //----------------------------------------------------------------------------------
 

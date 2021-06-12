@@ -31,25 +31,33 @@ int main(void)
     camera.target = (Vector3){ 0.0f, 8.0f, 0.0f };      // Camera looking at point
     camera.up = (Vector3){ 0.0f, 1.6f, 0.0f };          // Camera up vector (rotation towards target)
     camera.fovy = 45.0f;                                // Camera field-of-view Y
-    camera.type = CAMERA_PERSPECTIVE;                   // Camera mode type
+    camera.projection = CAMERA_PERSPECTIVE;                   // Camera mode type
 
     Ray ray = { 0 };        // Picking ray
 
     Model tower = LoadModel("resources/models/turret.obj");                 // Load OBJ model
     Texture2D texture = LoadTexture("resources/models/turret_diffuse.png"); // Load model texture
-    tower.materials[0].maps[MAP_DIFFUSE].texture = texture;                 // Set model diffuse texture
+    tower.materials[0].maps[MATERIAL_MAP_DIFFUSE].texture = texture;                 // Set model diffuse texture
 
     Vector3 towerPos = { 0.0f, 0.0f, 0.0f };                    // Set model position
-    BoundingBox towerBBox = MeshBoundingBox(tower.meshes[0]);   // Get mesh bounding box
-    bool hitMeshBBox = false;
-    bool hitTriangle = false;
+    BoundingBox towerBBox = GetMeshBoundingBox(tower.meshes[0]);   // Get mesh bounding box
+
+    // Ground quad
+    Vector3 g0 = (Vector3){ -50.0f, 0.0f, -50.0f };
+    Vector3 g1 = (Vector3){ -50.0f, 0.0f,  50.0f };
+    Vector3 g2 = (Vector3){  50.0f, 0.0f,  50.0f };
+    Vector3 g3 = (Vector3){  50.0f, 0.0f, -50.0f };
 
     // Test triangle
-    Vector3 ta = (Vector3){ -25.0, 0.5, 0.0 };
-    Vector3 tb = (Vector3){ -4.0, 2.5, 1.0 };
-    Vector3 tc = (Vector3){ -8.0, 6.5, 0.0 };
+    Vector3 ta = (Vector3){ -25.0f, 0.5f, 0.0f };
+    Vector3 tb = (Vector3){ -4.0f, 2.5f, 1.0f };
+    Vector3 tc = (Vector3){ -8.0f, 6.5f, 0.0f };
 
     Vector3 bary = { 0.0f, 0.0f, 0.0f };
+
+    // Test sphere
+    Vector3 sp = (Vector3){ -30.0f, 5.0f, 5.0f };
+    float sr = 4.0f;
 
     SetCameraMode(camera, CAMERA_FREE); // Set a free camera mode
 
@@ -63,59 +71,67 @@ int main(void)
         UpdateCamera(&camera);          // Update camera
 
         // Display information about closest hit
-        RayHitInfo nearestHit = { 0 };
+        RayCollision collision = { 0 };
         char *hitObjectName = "None";
-        nearestHit.distance = FLT_MAX;
-        nearestHit.hit = false;
+        collision.distance = FLT_MAX;
+        collision.hit = false;
         Color cursorColor = WHITE;
 
-        // Get ray and test against ground, triangle, and mesh
+        // Get ray and test against objects
         ray = GetMouseRay(GetMousePosition(), camera);
 
-        // Check ray collision aginst ground plane
-        RayHitInfo groundHitInfo = GetCollisionRayGround(ray, 0.0f);
+        // Check ray collision against ground quad
+        RayCollision groundHitInfo = GetRayCollisionQuad(ray, g0, g1, g2, g3);
 
-        if ((groundHitInfo.hit) && (groundHitInfo.distance < nearestHit.distance))
+        if ((groundHitInfo.hit) && (groundHitInfo.distance < collision.distance))
         {
-            nearestHit = groundHitInfo;
+            collision = groundHitInfo;
             cursorColor = GREEN;
             hitObjectName = "Ground";
         }
 
         // Check ray collision against test triangle
-        RayHitInfo triHitInfo = GetCollisionRayTriangle(ray, ta, tb, tc);
+        RayCollision triHitInfo = GetRayCollisionTriangle(ray, ta, tb, tc);
 
-        if ((triHitInfo.hit) && (triHitInfo.distance < nearestHit.distance))
+        if ((triHitInfo.hit) && (triHitInfo.distance < collision.distance))
         {
-            nearestHit = triHitInfo;
+            collision = triHitInfo;
             cursorColor = PURPLE;
             hitObjectName = "Triangle";
 
-            bary = Vector3Barycenter(nearestHit.position, ta, tb, tc);
-            hitTriangle = true;
+            bary = Vector3Barycenter(collision.point, ta, tb, tc);
         }
-        else hitTriangle = false;
-
-        RayHitInfo meshHitInfo = { 0 };
+        
+        // Check ray collision against test sphere
+        RayCollision sphereHitInfo = GetRayCollisionSphere(ray, sp, sr);
+        
+        if ((sphereHitInfo.hit) && (sphereHitInfo.distance < collision.distance))
+        {
+            collision = sphereHitInfo;
+            cursorColor = ORANGE;
+            hitObjectName = "Sphere";
+        }
 
         // Check ray collision against bounding box first, before trying the full ray-mesh test
-        if (CheckCollisionRayBox(ray, towerBBox))
+        RayCollision boxHitInfo = GetRayCollisionBox(ray, towerBBox);
+
+        if ((boxHitInfo.hit) && (boxHitInfo.distance < collision.distance))
         {
-            hitMeshBBox = true;
+            collision = boxHitInfo;
+            cursorColor = ORANGE;
+            hitObjectName = "Box";
 
             // Check ray collision against model
             // NOTE: It considers model.transform matrix!
-            meshHitInfo = GetCollisionRayModel(ray, tower);
+            RayCollision meshHitInfo = GetRayCollisionModel(ray, tower);
 
-            if ((meshHitInfo.hit) && (meshHitInfo.distance < nearestHit.distance))
+            if (meshHitInfo.hit)
             {
-                nearestHit = meshHitInfo;
+                collision = meshHitInfo;
                 cursorColor = ORANGE;
                 hitObjectName = "Mesh";
             }
         }
-
-        hitMeshBBox = false;
         //----------------------------------------------------------------------------------
 
         // Draw
@@ -128,7 +144,7 @@ int main(void)
 
                 // Draw the tower
                 // WARNING: If scale is different than 1.0f,
-                // not considered by GetCollisionRayModel()
+                // not considered by GetRayCollisionModel()
                 DrawModel(tower, towerPos, 1.0f, WHITE);
 
                 // Draw the test triangle
@@ -136,25 +152,28 @@ int main(void)
                 DrawLine3D(tb, tc, PURPLE);
                 DrawLine3D(tc, ta, PURPLE);
 
+                // Draw the test sphere
+                DrawSphereWires(sp, sr, 8, 8, PURPLE);
+
                 // Draw the mesh bbox if we hit it
-                if (hitMeshBBox) DrawBoundingBox(towerBBox, LIME);
+                if (boxHitInfo.hit) DrawBoundingBox(towerBBox, LIME);
 
                 // If we hit something, draw the cursor at the hit point
-                if (nearestHit.hit)
+                if (collision.hit)
                 {
-                    DrawCube(nearestHit.position, 0.3, 0.3, 0.3, cursorColor);
-                    DrawCubeWires(nearestHit.position, 0.3, 0.3, 0.3, RED);
+                    DrawCube(collision.point, 0.3f, 0.3f, 0.3f, cursorColor);
+                    DrawCubeWires(collision.point, 0.3f, 0.3f, 0.3f, RED);
 
                     Vector3 normalEnd;
-                    normalEnd.x = nearestHit.position.x + nearestHit.normal.x;
-                    normalEnd.y = nearestHit.position.y + nearestHit.normal.y;
-                    normalEnd.z = nearestHit.position.z + nearestHit.normal.z;
+                    normalEnd.x = collision.point.x + collision.normal.x;
+                    normalEnd.y = collision.point.y + collision.normal.y;
+                    normalEnd.z = collision.point.z + collision.normal.z;
 
-                    DrawLine3D(nearestHit.position, normalEnd, RED);
+                    DrawLine3D(collision.point, normalEnd, RED);
                 }
 
                 DrawRay(ray, MAROON);
-
+                
                 DrawGrid(10, 10.0f);
 
             EndMode3D();
@@ -162,23 +181,24 @@ int main(void)
             // Draw some debug GUI text
             DrawText(TextFormat("Hit Object: %s", hitObjectName), 10, 50, 10, BLACK);
 
-            if (nearestHit.hit)
+            if (collision.hit)
             {
                 int ypos = 70;
 
-                DrawText(TextFormat("Distance: %3.2f", nearestHit.distance), 10, ypos, 10, BLACK);
+                DrawText(TextFormat("Distance: %3.2f", collision.distance), 10, ypos, 10, BLACK);
 
                 DrawText(TextFormat("Hit Pos: %3.2f %3.2f %3.2f",
-                                    nearestHit.position.x,
-                                    nearestHit.position.y,
-                                    nearestHit.position.z), 10, ypos + 15, 10, BLACK);
+                                    collision.point.x,
+                                    collision.point.y,
+                                    collision.point.z), 10, ypos + 15, 10, BLACK);
 
                 DrawText(TextFormat("Hit Norm: %3.2f %3.2f %3.2f",
-                                    nearestHit.normal.x,
-                                    nearestHit.normal.y,
-                                    nearestHit.normal.z), 10, ypos + 30, 10, BLACK);
+                                    collision.normal.x,
+                                    collision.normal.y,
+                                    collision.normal.z), 10, ypos + 30, 10, BLACK);
 
-                if (hitTriangle) DrawText(TextFormat("Barycenter: %3.2f %3.2f %3.2f",  bary.x, bary.y, bary.z), 10, ypos + 45, 10, BLACK);
+                if (triHitInfo.hit && TextIsEqual(hitObjectName, "Triangle"))
+                    DrawText(TextFormat("Barycenter: %3.2f %3.2f %3.2f",  bary.x, bary.y, bary.z), 10, ypos + 45, 10, BLACK);
             }
 
             DrawText("Use Mouse to Move Camera", 10, 430, 10, GRAY);

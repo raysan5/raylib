@@ -19,7 +19,7 @@ int main(void)
     const int screenHeight = 450;
 
     InitWindow(screenWidth, screenHeight, "raylib [texture] example - image text drawing");
-    
+
     Image parrots = LoadImage("resources/parrots.png"); // Load image in CPU memory (RAM)
 
     // TTF Font loading with custom generation parameters

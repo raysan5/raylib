@@ -26,7 +26,7 @@ int main(void)
     camera.target = (Vector3){ 0.0f, 0.0f, 0.0f };
     camera.up = (Vector3){ 0.0f, 1.0f, 0.0f };
     camera.fovy = 45.0f;
-    camera.type = CAMERA_PERSPECTIVE;
+    camera.projection = CAMERA_PERSPECTIVE;
 
     Vector3 cubePosition = { 0.0f, 0.0f, 0.0f };
     Vector2 cubeScreenPosition = { 0.0f, 0.0f };
@@ -62,7 +62,7 @@ int main(void)
 
             EndMode3D();
 
-            DrawText("Enemy: 100 / 100", cubeScreenPosition.x - MeasureText("Enemy: 100/100", 20)/2, cubeScreenPosition.y, 20, BLACK);
+            DrawText("Enemy: 100 / 100", (int)cubeScreenPosition.x - MeasureText("Enemy: 100/100", 20)/2, (int)cubeScreenPosition.y, 20, BLACK);
             DrawText("Text is always on top of the cube", (screenWidth - MeasureText("Text is always on top of the cube", 20))/2, 25, 20, GRAY);
 
         EndDrawing();

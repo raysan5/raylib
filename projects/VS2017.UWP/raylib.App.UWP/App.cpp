@@ -29,6 +29,20 @@ using namespace raylibUWP;
 #define MAX_GAMEPAD_BUTTONS       32        // Max bumber of buttons supported (per gamepad)
 #define MAX_GAMEPAD_AXIS          8         // Max number of axis supported (per gamepad)
 
+// Gamepad bindings struct
+struct GamepadBinding
+{
+    Gamepad^ Gamepad = nullptr;
+    bool Ready = false;
+};
+
+// Global variables
+static int posX = 100;
+static int posY = 100;
+static int gTime = 0;
+static bool mouseLocked = false;
+static GamepadBinding gGamepadBindings[MAX_GAMEPADS];
+
 // The main function creates an IFrameworkViewSource for our app, and runs the app
 [Platform::MTAThread]
 int main(Platform::Array<Platform::String^>^)
@@ -48,7 +62,7 @@ App::App()
 void App::Initialize(Windows::ApplicationModel::Core::CoreApplicationView^ applicationView)
 {
     // Register event handlers for app lifecycle. This example includes Activated, so that we
-        // can make the CoreWindow active and start rendering on the window.
+    // can make the CoreWindow active and start rendering on the window.
     applicationView->Activated += ref new TypedEventHandler<CoreApplicationView^, IActivatedEventArgs^>(this, &App::OnActivated);
 
     // Logic for other event handlers could go here.
@@ -92,55 +106,38 @@ void App::SetWindow(Windows::UI::Core::CoreWindow^ window)
 
 void App::Load(Platform::String ^entryPoint) {} // Ignored for this example
 
-static bool mouseLocked = false;
 void App::Run()
 {
     // Set up our UWP implementation
-    UWPSetQueryTimeFunc([]()
-        {
-            static auto timeStart = std::chrono::high_resolution_clock::now();
-            std::chrono::duration<double> time_span = std::chrono::duration_cast<std::chrono::duration<double>>(std::chrono::high_resolution_clock::now() - timeStart);
-            return time_span.count();
-        });
+    UWPSetQueryTimeFunc([]() {
+        static auto timeStart = std::chrono::high_resolution_clock::now();
+        std::chrono::duration<double> time_span = std::chrono::duration_cast<std::chrono::duration<double>>(std::chrono::high_resolution_clock::now() - timeStart);
+        return time_span.count(); });
 
     UWPSetSleepFunc([](double seconds) { std::this_thread::sleep_for(std::chrono::duration<double>(seconds)); });
 
-    UWPSetDisplaySizeFunc([](int* width, int* height)
-        {
-            // Get display dimensions
-            DisplayInformation^ dInfo = DisplayInformation::GetForCurrentView();
-            *width = dInfo->ScreenWidthInRawPixels;
-            *height = dInfo->ScreenHeightInRawPixels;
-        });
+    UWPSetDisplaySizeFunc([](int* width, int* height) {
+        // Get display dimensions
+        DisplayInformation^ dInfo = DisplayInformation::GetForCurrentView();
+        *width = dInfo->ScreenWidthInRawPixels;
+        *height = dInfo->ScreenHeightInRawPixels; });
 
-    UWPSetMouseHideFunc([]()
-        {
-            CoreWindow::GetForCurrentThread()->PointerCursor = nullptr;
-        });
+    UWPSetMouseHideFunc([]() { CoreWindow::GetForCurrentThread()->PointerCursor = nullptr; });
 
-    UWPSetMouseShowFunc([]()
-        {
-            CoreWindow::GetForCurrentThread()->PointerCursor = ref new CoreCursor(CoreCursorType::Arrow, 0);
-        });
+    UWPSetMouseShowFunc([]() { CoreWindow::GetForCurrentThread()->PointerCursor = ref new CoreCursor(CoreCursorType::Arrow, 0); });
 
-    UWPSetMouseLockFunc([]()
-        {
-            CoreWindow::GetForCurrentThread()->PointerCursor = nullptr;
-            mouseLocked = true;
-        });
+    UWPSetMouseLockFunc([]() {
+        CoreWindow::GetForCurrentThread()->PointerCursor = nullptr;
+        mouseLocked = true; });
 
-    UWPSetMouseUnlockFunc([]()
-        {
-            CoreWindow::GetForCurrentThread()->PointerCursor = ref new CoreCursor(CoreCursorType::Arrow, 0);
-            mouseLocked = false;
-        });
+    UWPSetMouseUnlockFunc([]() {
+        CoreWindow::GetForCurrentThread()->PointerCursor = ref new CoreCursor(CoreCursorType::Arrow, 0);
+        mouseLocked = false; });
 
-    UWPSetMouseSetPosFunc([](int x, int y)
-        {
-            CoreWindow^ window = CoreWindow::GetForCurrentThread();
-            Point mousePosScreen = Point(x + window->Bounds.X, y + window->Bounds.Y);
-            window->PointerPosition = mousePosScreen;
-        });
+    UWPSetMouseSetPosFunc([](int x, int y) {
+        CoreWindow^ window = CoreWindow::GetForCurrentThread();
+        Point mousePosScreen = Point(x + window->Bounds.X, y + window->Bounds.Y);
+        window->PointerPosition = mousePosScreen; });
 
     // Set custom output handle
     SetTraceLogCallback([](int logType, const char* text, va_list args)
@@ -165,7 +162,7 @@ void App::Run()
         });
 
     // Create window
-    InitWindow(640, 480, "raylib game example");
+    InitWindow(800, 450, "raylib UWP - Basic example");
 
     // Run game loop
     while (!WindowShouldClose() && !mSuspended)
@@ -175,8 +172,13 @@ void App::Run()
             PreProcessInputs();
             GameLoop();
             PostProcessInputs();
+
             CoreWindow::GetForCurrentThread()->Dispatcher->ProcessEvents(CoreProcessEventsOption::ProcessAllIfPresent);
-        } else CoreWindow::GetForCurrentThread()->Dispatcher->ProcessEvents(CoreProcessEventsOption::ProcessOneAndAllPending);
+        } 
+        else
+        {
+            CoreWindow::GetForCurrentThread()->Dispatcher->ProcessEvents(CoreProcessEventsOption::ProcessOneAndAllPending);
+        }
     }
 
     CloseWindow();
@@ -187,17 +189,13 @@ void App::Uninitialize()
     // Do any UWP cleanup here.
 }
 
-static int posX = 100;
-static int posY = 100;
-static int gTime = 0;
-
 // This method is called every frame
 void App::GameLoop()
 {
     // Update
     //----------------------------------------------------------------------------------
-    posX += GetGamepadAxisMovement(GAMEPAD_PLAYER1, GAMEPAD_AXIS_LEFT_X) * 5;
-    posY += GetGamepadAxisMovement(GAMEPAD_PLAYER1, GAMEPAD_AXIS_LEFT_Y) * -5;
+    posX += GetGamepadAxisMovement(0, GAMEPAD_AXIS_LEFT_X) * 5;
+    posY += GetGamepadAxisMovement(0, GAMEPAD_AXIS_LEFT_Y) * -5;
 
     auto mPos = GetMousePosition();
 
@@ -233,7 +231,7 @@ void App::GameLoop()
 
 		if (IsKeyDown(KEY_LEFT_ALT)) DrawRectangle(250, 250, 20, 20, BLACK);
 		if (IsKeyDown(KEY_BACKSPACE)) DrawRectangle(280, 250, 20, 20, BLACK);
-		if (IsMouseButtonDown(MOUSE_LEFT_BUTTON)) DrawRectangle(280, 250, 20, 20, BLACK);
+		if (IsMouseButtonDown(MOUSE_BUTTON_LEFT)) DrawRectangle(280, 250, 20, 20, BLACK);
 
 		DrawRectangle(280, (int)pos + 50, 20, 20, BLACK);
 		DrawRectangle(250, 280 + (gTime++ % 60), 10, 10, PURPLE);
@@ -241,14 +239,6 @@ void App::GameLoop()
 	EndDrawing();
     //----------------------------------------------------------------------------------
 }
-
-struct GamepadBinding
-{
-    Gamepad^ Gamepad = nullptr;
-    bool Ready = false;
-};
-
-static GamepadBinding gGamepadBindings[MAX_GAMEPADS];
 
 void App::PreProcessInputs()
 {
@@ -408,9 +398,9 @@ void App::OnPointerPressed(Windows::UI::Core::CoreWindow^ sender, Windows::UI::C
 
     if (device->PointerDeviceType == Windows::Devices::Input::PointerDeviceType::Mouse)
     {
-        if (props->IsLeftButtonPressed) UWPMouseButtonEvent(MOUSE_LEFT_BUTTON, true);
-        if (props->IsMiddleButtonPressed) UWPMouseButtonEvent(MOUSE_MIDDLE_BUTTON, true);
-        if (props->IsRightButtonPressed) UWPMouseButtonEvent(MOUSE_RIGHT_BUTTON, true);
+        if (props->IsLeftButtonPressed) UWPMouseButtonEvent(MOUSE_BUTTON_LEFT, true);
+        if (props->IsMiddleButtonPressed) UWPMouseButtonEvent(MOUSE_BUTTON_MIDDLE, true);
+        if (props->IsRightButtonPressed) UWPMouseButtonEvent(MOUSE_BUTTON_RIGHT, true);
     }
     else if (device->PointerDeviceType == PointerDeviceType::Touch)
     {
@@ -428,9 +418,9 @@ void App::OnPointerReleased(Windows::UI::Core::CoreWindow^ sender, Windows::UI::
 
     if (device->PointerDeviceType == PointerDeviceType::Mouse)
     {
-        if (!props->IsLeftButtonPressed) UWPMouseButtonEvent(MOUSE_LEFT_BUTTON, false);
-        if (!props->IsMiddleButtonPressed) UWPMouseButtonEvent(MOUSE_MIDDLE_BUTTON, false);
-        if (!props->IsRightButtonPressed) UWPMouseButtonEvent(MOUSE_RIGHT_BUTTON, false);
+        if (!props->IsLeftButtonPressed) UWPMouseButtonEvent(MOUSE_BUTTON_LEFT, false);
+        if (!props->IsMiddleButtonPressed) UWPMouseButtonEvent(MOUSE_BUTTON_MIDDLE, false);
+        if (!props->IsRightButtonPressed) UWPMouseButtonEvent(MOUSE_BUTTON_RIGHT, false);
     }
     else if (device->PointerDeviceType == PointerDeviceType::Touch)
     {
@@ -467,86 +457,86 @@ int App::GetRaylibKey(Windows::System::VirtualKey kVey)
     int actualKey = -1;
     switch (kVey)
     {
-    case VK::Back: actualKey = KEY_BACKSPACE; break;
-    case VK::Space: actualKey = KEY_SPACE; break;
-    case VK::Escape: actualKey = KEY_ESCAPE; break;
-    case VK::Enter: actualKey = KEY_ENTER; break;
-    case VK::Delete: actualKey = KEY_DELETE; break;
-    case VK::Right: actualKey = KEY_RIGHT; break;
-    case VK::Left: actualKey = KEY_LEFT; break;
-    case VK::Down: actualKey = KEY_DOWN; break;
-    case VK::Up: actualKey = KEY_UP; break;
-    case VK::F1: actualKey = KEY_F1; break;
-    case VK::F2: actualKey = KEY_F2; break;
-    case VK::F3: actualKey = KEY_F3; break;
-    case VK::F4: actualKey = KEY_F4; break;
-    case VK::F5: actualKey = KEY_F5; break;
-    case VK::F6: actualKey = KEY_F6; break;
-    case VK::F7: actualKey = KEY_F7; break;
-    case VK::F8: actualKey = KEY_F8; break;
-    case VK::F9: actualKey = KEY_F9; break;
-    case VK::F10: actualKey = KEY_F10; break;
-    case VK::F11: actualKey = KEY_F11; break;
-    case VK::F12: actualKey = KEY_F12; break;
-    case VK::LeftShift: actualKey = KEY_LEFT_SHIFT; break;
-    case VK::LeftControl: actualKey = KEY_LEFT_CONTROL; break;
-    case VK::LeftMenu: actualKey = KEY_LEFT_ALT; break;
-    case VK::RightShift: actualKey = KEY_RIGHT_SHIFT; break;
-    case VK::RightControl: actualKey = KEY_RIGHT_CONTROL; break;
-    case VK::RightMenu: actualKey = KEY_RIGHT_ALT; break;
-    case VK::Number0: actualKey = KEY_ZERO; break;
-    case VK::Number1: actualKey = KEY_ONE; break;
-    case VK::Number2: actualKey = KEY_TWO; break;
-    case VK::Number3: actualKey = KEY_THREE; break;
-    case VK::Number4: actualKey = KEY_FOUR; break;
-    case VK::Number5: actualKey = KEY_FIVE; break;
-    case VK::Number6: actualKey = KEY_SIX; break;
-    case VK::Number7: actualKey = KEY_SEVEN; break;
-    case VK::Number8: actualKey = KEY_EIGHT; break;
-    case VK::Number9: actualKey = KEY_NINE; break;
-    case VK::NumberPad0: actualKey = KEY_KP_0; break;
-    case VK::NumberPad1: actualKey = KEY_KP_1; break;
-    case VK::NumberPad2: actualKey = KEY_KP_2; break;
-    case VK::NumberPad3: actualKey = KEY_KP_3; break;
-    case VK::NumberPad4: actualKey = KEY_KP_4; break;
-    case VK::NumberPad5: actualKey = KEY_KP_5; break;
-    case VK::NumberPad6: actualKey = KEY_KP_6; break;
-    case VK::NumberPad7: actualKey = KEY_KP_7; break;
-    case VK::NumberPad8: actualKey = KEY_KP_8; break;
-    case VK::NumberPad9: actualKey = KEY_KP_9; break;
-    case VK::Decimal: actualKey = KEY_KP_DECIMAL; break;
-    case VK::Divide: actualKey = KEY_KP_DIVIDE; break;
-    case VK::Multiply: actualKey = KEY_KP_MULTIPLY; break;
-    case VK::Subtract: actualKey = KEY_KP_SUBTRACT; break;
-    case VK::Add: actualKey = KEY_KP_ADD; break;
-    // UWP Doesn't have a specific keypad enter or equal...
-    case VK::A: actualKey = KEY_A; break;
-    case VK::B: actualKey = KEY_B; break;
-    case VK::C: actualKey = KEY_C; break;
-    case VK::D: actualKey = KEY_D; break;
-    case VK::E: actualKey = KEY_E; break;
-    case VK::F: actualKey = KEY_F; break;
-    case VK::G: actualKey = KEY_G; break;
-    case VK::H: actualKey = KEY_H; break;
-    case VK::I: actualKey = KEY_I; break;
-    case VK::J: actualKey = KEY_J; break;
-    case VK::K: actualKey = KEY_K; break;
-    case VK::L: actualKey = KEY_L; break;
-    case VK::M: actualKey = KEY_M; break;
-    case VK::N: actualKey = KEY_N; break;
-    case VK::O: actualKey = KEY_O; break;
-    case VK::P: actualKey = KEY_P; break;
-    case VK::Q: actualKey = KEY_Q; break;
-    case VK::R: actualKey = KEY_R; break;
-    case VK::S: actualKey = KEY_S; break;
-    case VK::T: actualKey = KEY_T; break;
-    case VK::U: actualKey = KEY_U; break;
-    case VK::V: actualKey = KEY_V; break;
-    case VK::W: actualKey = KEY_W; break;
-    case VK::X: actualKey = KEY_X; break;
-    case VK::Y: actualKey = KEY_Y; break;
-    case VK::Z: actualKey = KEY_Z; break;
-    // I don't think we can have any more
+        case VK::Back: actualKey = KEY_BACKSPACE; break;
+        case VK::Space: actualKey = KEY_SPACE; break;
+        case VK::Escape: actualKey = KEY_ESCAPE; break;
+        case VK::Enter: actualKey = KEY_ENTER; break;
+        case VK::Delete: actualKey = KEY_DELETE; break;
+        case VK::Right: actualKey = KEY_RIGHT; break;
+        case VK::Left: actualKey = KEY_LEFT; break;
+        case VK::Down: actualKey = KEY_DOWN; break;
+        case VK::Up: actualKey = KEY_UP; break;
+        case VK::F1: actualKey = KEY_F1; break;
+        case VK::F2: actualKey = KEY_F2; break;
+        case VK::F3: actualKey = KEY_F3; break;
+        case VK::F4: actualKey = KEY_F4; break;
+        case VK::F5: actualKey = KEY_F5; break;
+        case VK::F6: actualKey = KEY_F6; break;
+        case VK::F7: actualKey = KEY_F7; break;
+        case VK::F8: actualKey = KEY_F8; break;
+        case VK::F9: actualKey = KEY_F9; break;
+        case VK::F10: actualKey = KEY_F10; break;
+        case VK::F11: actualKey = KEY_F11; break;
+        case VK::F12: actualKey = KEY_F12; break;
+        case VK::LeftShift: actualKey = KEY_LEFT_SHIFT; break;
+        case VK::LeftControl: actualKey = KEY_LEFT_CONTROL; break;
+        case VK::LeftMenu: actualKey = KEY_LEFT_ALT; break;
+        case VK::RightShift: actualKey = KEY_RIGHT_SHIFT; break;
+        case VK::RightControl: actualKey = KEY_RIGHT_CONTROL; break;
+        case VK::RightMenu: actualKey = KEY_RIGHT_ALT; break;
+        case VK::Number0: actualKey = KEY_ZERO; break;
+        case VK::Number1: actualKey = KEY_ONE; break;
+        case VK::Number2: actualKey = KEY_TWO; break;
+        case VK::Number3: actualKey = KEY_THREE; break;
+        case VK::Number4: actualKey = KEY_FOUR; break;
+        case VK::Number5: actualKey = KEY_FIVE; break;
+        case VK::Number6: actualKey = KEY_SIX; break;
+        case VK::Number7: actualKey = KEY_SEVEN; break;
+        case VK::Number8: actualKey = KEY_EIGHT; break;
+        case VK::Number9: actualKey = KEY_NINE; break;
+        case VK::NumberPad0: actualKey = KEY_KP_0; break;
+        case VK::NumberPad1: actualKey = KEY_KP_1; break;
+        case VK::NumberPad2: actualKey = KEY_KP_2; break;
+        case VK::NumberPad3: actualKey = KEY_KP_3; break;
+        case VK::NumberPad4: actualKey = KEY_KP_4; break;
+        case VK::NumberPad5: actualKey = KEY_KP_5; break;
+        case VK::NumberPad6: actualKey = KEY_KP_6; break;
+        case VK::NumberPad7: actualKey = KEY_KP_7; break;
+        case VK::NumberPad8: actualKey = KEY_KP_8; break;
+        case VK::NumberPad9: actualKey = KEY_KP_9; break;
+        case VK::Decimal: actualKey = KEY_KP_DECIMAL; break;
+        case VK::Divide: actualKey = KEY_KP_DIVIDE; break;
+        case VK::Multiply: actualKey = KEY_KP_MULTIPLY; break;
+        case VK::Subtract: actualKey = KEY_KP_SUBTRACT; break;
+        case VK::Add: actualKey = KEY_KP_ADD; break;
+        // UWP Doesn't have a specific keypad enter or equal...
+        case VK::A: actualKey = KEY_A; break;
+        case VK::B: actualKey = KEY_B; break;
+        case VK::C: actualKey = KEY_C; break;
+        case VK::D: actualKey = KEY_D; break;
+        case VK::E: actualKey = KEY_E; break;
+        case VK::F: actualKey = KEY_F; break;
+        case VK::G: actualKey = KEY_G; break;
+        case VK::H: actualKey = KEY_H; break;
+        case VK::I: actualKey = KEY_I; break;
+        case VK::J: actualKey = KEY_J; break;
+        case VK::K: actualKey = KEY_K; break;
+        case VK::L: actualKey = KEY_L; break;
+        case VK::M: actualKey = KEY_M; break;
+        case VK::N: actualKey = KEY_N; break;
+        case VK::O: actualKey = KEY_O; break;
+        case VK::P: actualKey = KEY_P; break;
+        case VK::Q: actualKey = KEY_Q; break;
+        case VK::R: actualKey = KEY_R; break;
+        case VK::S: actualKey = KEY_S; break;
+        case VK::T: actualKey = KEY_T; break;
+        case VK::U: actualKey = KEY_U; break;
+        case VK::V: actualKey = KEY_V; break;
+        case VK::W: actualKey = KEY_W; break;
+        case VK::X: actualKey = KEY_X; break;
+        case VK::Y: actualKey = KEY_Y; break;
+        case VK::Z: actualKey = KEY_Z; break;
+        // I don't think we can have any more
     }
     return actualKey;
 }
@@ -555,17 +545,14 @@ void App::OnKeyDown(Windows::UI::Core::CoreWindow^ sender, Windows::UI::Core::Ke
 {
     auto k = GetRaylibKey(args->VirtualKey);
     auto controlState = (sender->GetKeyState(Windows::System::VirtualKey::Control) & Windows::UI::Core::CoreVirtualKeyStates::Down) == Windows::UI::Core::CoreVirtualKeyStates::Down;
-    if (k != -1) {
-        UWPKeyDownEvent(k, true, controlState);
-    }
+    if (k != -1) UWPKeyDownEvent(k, true, controlState);
     args->Handled = true;
 }
 
 void App::OnKeyUp(Windows::UI::Core::CoreWindow^ sender, Windows::UI::Core::KeyEventArgs^ args)
 {
     auto k = GetRaylibKey(args->VirtualKey);
-    if (k != -1)
-        UWPKeyDownEvent(k, false, false);
+    if (k != -1) UWPKeyDownEvent(k, false, false);
     args->Handled = true;
 }
 

@@ -45,7 +45,7 @@ int main(void)
             CheckCollisionPointRec(mousePosition, (Rectangle){ rec.x + rec.width - MOUSE_SCALE_MARK_SIZE, rec.y + rec.height - MOUSE_SCALE_MARK_SIZE, MOUSE_SCALE_MARK_SIZE, MOUSE_SCALE_MARK_SIZE }))
         {
             mouseScaleReady = true;
-            if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) mouseScaleMode = true;
+            if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) mouseScaleMode = true;
         }
         else mouseScaleReady = false;
 
@@ -59,7 +59,7 @@ int main(void)
             if (rec.width < MOUSE_SCALE_MARK_SIZE) rec.width = MOUSE_SCALE_MARK_SIZE;
             if (rec.height < MOUSE_SCALE_MARK_SIZE) rec.height = MOUSE_SCALE_MARK_SIZE;
 
-            if (IsMouseButtonReleased(MOUSE_LEFT_BUTTON)) mouseScaleMode = false;
+            if (IsMouseButtonReleased(MOUSE_BUTTON_LEFT)) mouseScaleMode = false;
         }
         //----------------------------------------------------------------------------------
 

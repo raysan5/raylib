@@ -31,7 +31,7 @@ int main(void)
     // NOTE: Textures/Fonts MUST be loaded after Window initialization (OpenGL context is required)
 
     const char msg[50] = "Signed Distance Fields";
-    
+
     // Loading file to memory
     unsigned int fileSize = 0;
     unsigned char *fileData = LoadFileData("resources/anonymous_pro_bold.ttf", &fileSize);
@@ -40,7 +40,7 @@ int main(void)
     Font fontDefault = { 0 };
     fontDefault.baseSize = 16;
     fontDefault.charsCount = 95;
-    
+
     // Loading font data from memory data
     // Parameters > font size: 16, no chars array provided (0), chars count: 95 (autogenerate chars array)
     fontDefault.chars = LoadFontData(fileData, fileSize, 16, 0, 95, FONT_DEFAULT);
@@ -59,18 +59,18 @@ int main(void)
     atlas = GenImageFontAtlas(fontSDF.chars, &fontSDF.recs, 95, 16, 0, 1);
     fontSDF.texture = LoadTextureFromImage(atlas);
     UnloadImage(atlas);
-    
+
     UnloadFileData(fileData);      // Free memory from loaded file
 
     // Load SDF required shader (we use default vertex shader)
     Shader shader = LoadShader(0, TextFormat("resources/shaders/glsl%i/sdf.fs", GLSL_VERSION));
     SetTextureFilter(fontSDF.texture, FILTER_BILINEAR);    // Required for SDF font
 
-    Vector2 fontPosition = { 40, screenHeight/2 - 50 };
+    Vector2 fontPosition = { 40, screenHeight/2.0f - 50 };
     Vector2 textSize = { 0.0f, 0.0f };
     float fontSize = 16.0f;
     int currentFont = 0;            // 0 - fontDefault, 1 - fontSDF
-    
+
     SetTargetFPS(60);               // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
 

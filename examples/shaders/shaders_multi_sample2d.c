@@ -42,9 +42,13 @@ int main(void)
     UnloadImage(imBlue);
 
     Shader shader = LoadShader(0, TextFormat("resources/shaders/glsl%i/color_mix.fs", GLSL_VERSION));
-    
+
     // Get an additional sampler2D location to be enabled on drawing
     int texBlueLoc = GetShaderLocation(shader, "texture1");
+
+    // Get shader uniform for divider
+    int dividerLoc = GetShaderLocation(shader, "divider");
+    float dividerValue = 0.5f;
 
     SetTargetFPS(60);                           // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
@@ -54,28 +58,36 @@ int main(void)
     {
         // Update
         //----------------------------------------------------------------------------------
-        // ...
+        if (IsKeyDown(KEY_RIGHT)) dividerValue += 0.01f;
+        else if (IsKeyDown(KEY_LEFT)) dividerValue -= 0.01f;
+
+        if (dividerValue < 0.0f) dividerValue = 0.0f;
+        else if (dividerValue > 1.0f) dividerValue = 1.0f;
+
+        SetShaderValue(shader, dividerLoc, &dividerValue, SHADER_UNIFORM_FLOAT);
         //----------------------------------------------------------------------------------
-        
+
         // Draw
         //----------------------------------------------------------------------------------
         BeginDrawing();
-        
+
             ClearBackground(RAYWHITE);
 
             BeginShaderMode(shader);
-            
+
                 // WARNING: Additional samplers are enabled for all draw calls in the batch,
                 // EndShaderMode() forces batch drawing and consequently resets active textures
                 // to let other sampler2D to be activated on consequent drawings (if required)
                 SetShaderValueTexture(shader, texBlueLoc, texBlue);
-            
+
                 // We are drawing texRed using default sampler2D texture0 but
                 // an additional texture units is enabled for texBlue (sampler2D texture1)
                 DrawTexture(texRed, 0, 0, WHITE);
-                
+
             EndShaderMode();
-            
+
+            DrawText("Use KEY_LEFT/KEY_RIGHT to move texture mixing in shader!", 80, GetScreenHeight() - 40, 20, RAYWHITE);
+
         EndDrawing();
         //----------------------------------------------------------------------------------
     }

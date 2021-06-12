@@ -39,7 +39,7 @@ int main(void)
 
     float time = 0.0f;
     int timeLoc = GetShaderLocation(shader, "uTime");
-    SetShaderValue(shader, timeLoc, &time, UNIFORM_FLOAT);
+    SetShaderValue(shader, timeLoc, &time, SHADER_UNIFORM_FLOAT);
 
     SetTargetFPS(60);               // Set our game to run at 60 frames-per-second
     // -------------------------------------------------------------------------------------------------------------
@@ -49,8 +49,8 @@ int main(void)
     {
         // Update
         //----------------------------------------------------------------------------------
-        time = GetTime();
-        SetShaderValue(shader, timeLoc, &time, UNIFORM_FLOAT);
+        time = (float)GetTime();
+        SetShaderValue(shader, timeLoc, &time, SHADER_UNIFORM_FLOAT);
         //----------------------------------------------------------------------------------
 
         // Draw

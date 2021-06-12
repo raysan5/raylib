@@ -49,7 +49,7 @@ int main(void)
     {
         // Update
         //----------------------------------------------------------------------------------
-        if (IsMouseButtonDown(MOUSE_LEFT_BUTTON))
+        if (IsMouseButtonDown(MOUSE_BUTTON_LEFT))
         {
             // Create more bunnies
             for (int i = 0; i < 100; i++)
@@ -94,7 +94,7 @@ int main(void)
                 // Process of sending data is costly and it could happen that GPU data has not been completely
                 // processed for drawing while new data is tried to be sent (updating current in-use buffers)
                 // it could generates a stall and consequently a frame drop, limiting the number of drawn bunnies
-                DrawTexture(texBunny, bunnies[i].position.x, bunnies[i].position.y, bunnies[i].color);
+                DrawTexture(texBunny, (int)bunnies[i].position.x, (int)bunnies[i].position.y, bunnies[i].color);
             }
 
             DrawRectangle(0, 0, screenWidth, 40, BLACK);

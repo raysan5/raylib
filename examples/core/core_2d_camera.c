@@ -30,19 +30,19 @@ int main(void)
 
     for (int i = 0; i < MAX_BUILDINGS; i++)
     {
-        buildings[i].width = GetRandomValue(50, 200);
-        buildings[i].height = GetRandomValue(100, 800);
-        buildings[i].y = screenHeight - 130 - buildings[i].height;
-        buildings[i].x = -6000 + spacing;
+        buildings[i].width = (float)GetRandomValue(50, 200);
+        buildings[i].height = (float)GetRandomValue(100, 800);
+        buildings[i].y = screenHeight - 130.0f - buildings[i].height;
+        buildings[i].x = -6000.0f + spacing;
 
-        spacing += buildings[i].width;
+        spacing += (int)buildings[i].width;
 
         buildColors[i] = (Color){ GetRandomValue(200, 240), GetRandomValue(200, 240), GetRandomValue(200, 250), 255 };
     }
 
     Camera2D camera = { 0 };
-    camera.target = (Vector2){ player.x + 20, player.y + 20 };
-    camera.offset = (Vector2){ screenWidth/2, screenHeight/2 };
+    camera.target = (Vector2){ player.x + 20.0f, player.y + 20.0f };
+    camera.offset = (Vector2){ screenWidth/2.0f, screenHeight/2.0f };
     camera.rotation = 0.0f;
     camera.zoom = 1.0f;
 
@@ -54,7 +54,7 @@ int main(void)
     {
         // Update
         //----------------------------------------------------------------------------------
-        
+
         // Player movement
         if (IsKeyDown(KEY_RIGHT)) player.x += 2;
         else if (IsKeyDown(KEY_LEFT)) player.x -= 2;
@@ -98,8 +98,8 @@ int main(void)
 
                 DrawRectangleRec(player, RED);
 
-                DrawLine(camera.target.x, -screenHeight*10, camera.target.x, screenHeight*10, GREEN);
-                DrawLine(-screenWidth*10, camera.target.y, screenWidth*10, camera.target.y, GREEN);
+                DrawLine((int)camera.target.x, -screenHeight*10, (int)camera.target.x, screenHeight*10, GREEN);
+                DrawLine(-screenWidth*10, (int)camera.target.y, screenWidth*10, (int)camera.target.y, GREEN);
 
             EndMode2D();
 

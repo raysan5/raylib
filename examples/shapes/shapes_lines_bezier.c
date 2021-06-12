@@ -22,7 +22,7 @@ int main(void)
     InitWindow(screenWidth, screenHeight, "raylib [shapes] example - cubic-bezier lines");
 
     Vector2 start = { 0, 0 };
-    Vector2 end = { screenWidth, screenHeight };
+    Vector2 end = { (float)screenWidth, (float)screenHeight };
 
     SetTargetFPS(60);               // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
@@ -32,8 +32,8 @@ int main(void)
     {
         // Update
         //----------------------------------------------------------------------------------
-        if (IsMouseButtonDown(MOUSE_LEFT_BUTTON)) start = GetMousePosition();
-        else if (IsMouseButtonDown(MOUSE_RIGHT_BUTTON)) end = GetMousePosition();
+        if (IsMouseButtonDown(MOUSE_BUTTON_LEFT)) start = GetMousePosition();
+        else if (IsMouseButtonDown(MOUSE_BUTTON_RIGHT)) end = GetMousePosition();
         //----------------------------------------------------------------------------------
 
         // Draw

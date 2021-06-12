@@ -1,21 +1,25 @@
 roadmap
 -------
 
-Here it is a wish-list with features and ideas to improve the library. Note that features listed here are quite high-level and could be long term additions for the library. Current version of raylib is complete and functional but there is a lot of room for improvement.
+Here it is a wish-list with features and ideas to improve the library. Note that features listed here are usually long term additions for the library. Current version of raylib is complete and functional but there is a lot of room for improvement.
 
-[raylib source code](https://github.com/raysan5/raylib/tree/master/src) has some *TODO* marks around code with pending things to review and improve. Check also [GitHub Issues](https://github.com/raysan5/raylib/issues) for further details!
+Also note that [raylib source code](https://github.com/raysan5/raylib/tree/master/src) has multiple *TODO* comments around code with pending things to review or improve. Check also [GitHub Issues](https://github.com/raysan5/raylib/issues) for further details!
 
-**raylib 3.x**
- - [ ] Network module (UDP): `rnet` ([info](https://github.com/raysan5/raylib/issues/753))
- - [ ] Custom raylib resource packer: `rres` ([info](https://github.com/raysan5/rres))
- - [ ] Basic CPU/GPU stats system (memory, draws, time...)
+There is also a [Discussions Wishlist](https://github.com/raysan5/raylib/discussions/1502) open to everyone, feel free to check and comment.
+
+**raylib 4.0**
+ - [ ] Network module (UDP): `rnet` ([#753](https://github.com/raysan5/raylib/issues/753))
+ - [ ] Custom raylib resource packer: `rres` ([link](https://github.com/raysan5/rres))
+ - [ ] Basic CPU/GPU stats system (memory, draws, time...) ([#1295](https://github.com/raysan5/raylib/issues/1295))
+ - [ ] Software rendering backend (avoiding OpenGL) ([#1370](https://github.com/raysan5/raylib/issues/1370))
+ - [ ] Redesigned camera module (more flexible) ([#1143](https://github.com/raysan5/raylib/issues/1143))
  - [x] Continuous Deployment using GitHub Actions
  
  **raylib 3.0**
  - [x] Custom memory allocators support
  - [x] Global variables moved to global context
  - [x] Optimize data structures for pass-by-value
- - [x] Trace log messages redesign ([info](https://github.com/raysan5/raylib/issues/1065))
+ - [x] Trace log messages redesign ([#1065](https://github.com/raysan5/raylib/issues/1065))
  - [x] Continuous Integration using GitHub Actions
  
 **raylib 2.5**

@@ -90,7 +90,7 @@
 
 typedef enum { TOUCH_UP, TOUCH_DOWN, TOUCH_MOVE } TouchAction;
 
-// Gesture events
+// Gesture event
 // NOTE: MAX_TOUCH_POINTS fixed to 4
 typedef struct {
     int touchAction;
@@ -115,7 +115,7 @@ void ProcessGestureEvent(GestureEvent event);           // Process gesture event
 void UpdateGestures(void);                              // Update gestures detected (must be called every frame)
 
 #if defined(GESTURES_STANDALONE)
-void SetGesturesEnabled(unsigned int gestureFlags);     // Enable a set of gestures using flags
+void SetGesturesEnabled(unsigned int flags);     // Enable a set of gestures using flags
 bool IsGestureDetected(int gesture);                    // Check if a gesture have been detected
 int GetGestureDetected(void);                           // Get latest detected gesture
 int GetTouchPointsCount(void);                          // Get touch points count
@@ -234,9 +234,9 @@ static double GetCurrentTime(void);
 //----------------------------------------------------------------------------------
 
 // Enable only desired getures to be detected
-void SetGesturesEnabled(unsigned int gestureFlags)
+void SetGesturesEnabled(unsigned int flags)
 {
-    GESTURES.enabledFlags = gestureFlags;
+    GESTURES.enabledFlags = flags;
 }
 
 // Check if a gesture have been detected
@@ -490,7 +490,7 @@ float GetGesturePinchAngle(void)
 // Module specific Functions Definition
 //----------------------------------------------------------------------------------
 #if defined(GESTURES_STANDALONE)
-// Returns angle from two-points vector with X-axis
+// Get angle from two-points vector with X-axis
 static float Vector2Angle(Vector2 v1, Vector2 v2)
 {
     float angle = atan2f(v2.y - v1.y, v2.x - v1.x)*(180.0f/PI);

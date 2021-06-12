@@ -206,6 +206,8 @@ GLFWAPI GLFWwindow* glfwCreateWindow(int width, int height,
     window->mousePassthrough = wndconfig.mousePassthrough;
     window->cursorMode       = GLFW_CURSOR_NORMAL;
 
+    window->doublebuffer = fbconfig.doublebuffer;
+
     window->minwidth    = GLFW_DONT_CARE;
     window->minheight   = GLFW_DONT_CARE;
     window->maxwidth    = GLFW_DONT_CARE;
@@ -841,6 +843,8 @@ GLFWAPI int glfwGetWindowAttrib(GLFWwindow* handle, int attrib)
             return window->floating;
         case GLFW_AUTO_ICONIFY:
             return window->autoIconify;
+        case GLFW_DOUBLEBUFFER:
+            return window->doublebuffer;
         case GLFW_CLIENT_API:
             return window->context.client;
         case GLFW_CONTEXT_CREATION_API:
@@ -882,27 +886,18 @@ GLFWAPI void glfwSetWindowAttrib(GLFWwindow* handle, int attrib, int value)
         window->autoIconify = value;
     else if (attrib == GLFW_RESIZABLE)
     {
-        if (window->resizable == value)
-            return;
-
         window->resizable = value;
         if (!window->monitor)
             _glfwPlatformSetWindowResizable(window, value);
     }
     else if (attrib == GLFW_DECORATED)
     {
-        if (window->decorated == value)
-            return;
-
         window->decorated = value;
         if (!window->monitor)
             _glfwPlatformSetWindowDecorated(window, value);
     }
     else if (attrib == GLFW_FLOATING)
     {
-        if (window->floating == value)
-            return;
-
         window->floating = value;
         if (!window->monitor)
             _glfwPlatformSetWindowFloating(window, value);
@@ -911,9 +906,6 @@ GLFWAPI void glfwSetWindowAttrib(GLFWwindow* handle, int attrib, int value)
         window->focusOnShow = value;
     else if (attrib == GLFW_MOUSE_PASSTHROUGH)
     {
-        if (window->mousePassthrough == value)
-            return;
-
         window->mousePassthrough = value;
         _glfwPlatformSetWindowMousePassthrough(window, value);
     }

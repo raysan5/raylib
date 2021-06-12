@@ -163,6 +163,7 @@ typedef struct tagBITMAPINFOHEADER {
 #define MA_NO_FLAC
 #define MA_NO_MP3
 #define MINIAUDIO_IMPLEMENTATION
+//#define MA_DEBUG_OUTPUT
 #include "external/miniaudio.h"         // miniaudio library
 #undef PlaySound                        // Win32 API: windows.h > mmsystem.h defines PlaySound macro
 
@@ -255,8 +256,9 @@ typedef struct tagBITMAPINFOHEADER {
 #ifndef AUDIO_DEVICE_CHANNELS
     #define AUDIO_DEVICE_CHANNELS              2    // Device output channels: stereo
 #endif
+
 #ifndef AUDIO_DEVICE_SAMPLE_RATE
-    #define AUDIO_DEVICE_SAMPLE_RATE       44100    // Device output sample rate
+    #define AUDIO_DEVICE_SAMPLE_RATE              0    // Device output channels: stereo
 #endif
 #ifndef MAX_AUDIO_BUFFER_POOL_CHANNELS
     #define MAX_AUDIO_BUFFER_POOL_CHANNELS    16    // Audio pool channels
@@ -274,25 +276,28 @@ typedef struct tagBITMAPINFOHEADER {
 // NOTE: Depends on data structure provided by the library
 // in charge of reading the different file types
 typedef enum {
-    MUSIC_AUDIO_WAV = 0,
-    MUSIC_AUDIO_OGG,
-    MUSIC_AUDIO_FLAC,
-    MUSIC_AUDIO_MP3,
-    MUSIC_MODULE_XM,
-    MUSIC_MODULE_MOD
+    MUSIC_AUDIO_NONE = 0,   // No audio context loaded
+    MUSIC_AUDIO_WAV,        // WAV audio context
+    MUSIC_AUDIO_OGG,        // OGG audio context
+    MUSIC_AUDIO_FLAC,       // FLAC audio context
+    MUSIC_AUDIO_MP3,        // MP3 audio context
+    MUSIC_MODULE_XM,        // XM module audio context
+    MUSIC_MODULE_MOD        // MOD module audio context
 } MusicContextType;
 
 #if defined(RAUDIO_STANDALONE)
+// Trace log level
+// NOTE: Organized by priority level
 typedef enum {
-    LOG_ALL,
-    LOG_TRACE,
-    LOG_DEBUG,
-    LOG_INFO,
-    LOG_WARNING,
-    LOG_ERROR,
-    LOG_FATAL,
-    LOG_NONE
-} TraceLogType;
+    LOG_ALL = 0,        // Display all logs
+    LOG_TRACE,          // Trace logging, intended for internal use only
+    LOG_DEBUG,          // Debug logging, used for internal debugging, it should be disabled on release builds
+    LOG_INFO,           // Info logging, used for program execution info
+    LOG_WARNING,        // Warning logging, used on recoverable failures
+    LOG_ERROR,          // Error logging, used on unrecoverable failures
+    LOG_FATAL,          // Fatal logging, used to abort program: exit(EXIT_FAILURE)
+    LOG_NONE            // Disable logging
+} TraceLogLevel;
 #endif
 
 // NOTE: Different logic is used when feeding data to the playback device
@@ -341,8 +346,8 @@ typedef struct AudioData {
         int defaultSize;            // Default audio buffer size for audio streams
     } Buffer;
     struct {
-        AudioBuffer *pool[MAX_AUDIO_BUFFER_POOL_CHANNELS];      // Multichannel AudioBuffer pointers pool
         unsigned int poolCounter;                               // AudioBuffer pointers pool counter
+        AudioBuffer *pool[MAX_AUDIO_BUFFER_POOL_CHANNELS];      // Multichannel AudioBuffer pointers pool
         unsigned int channels[MAX_AUDIO_BUFFER_POOL_CHANNELS];  // AudioBuffer pool channels
     } MultiChannel;
 } AudioData;
@@ -356,7 +361,7 @@ static AudioData AUDIO = {          // Global AUDIO context
     // After some math, considering a sampleRate of 48000, a buffer refill rate of 1/60 seconds and a
     // standard double-buffering system, a 4096 samples buffer has been chosen, it should be enough
     // In case of music-stalls, just increase this number
-    .Buffer.defaultSize = DEFAULT_AUDIO_BUFFER_SIZE
+    .Buffer.defaultSize = 0
 };
 
 //----------------------------------------------------------------------------------
@@ -365,9 +370,6 @@ static AudioData AUDIO = {          // Global AUDIO context
 static void OnLog(ma_context *pContext, ma_device *pDevice, ma_uint32 logLevel, const char *message);
 static void OnSendAudioDataToDevice(ma_device *pDevice, void *pFramesOut, const void *pFramesInput, ma_uint32 frameCount);
 static void MixAudioFrames(float *framesOut, const float *framesIn, ma_uint32 frameCount, float localVolume);
-
-static void InitAudioBufferPool(void);                  // Initialise the multichannel buffer pool
-static void CloseAudioBufferPool(void);                 // Close the audio buffers pool
 
 #if defined(SUPPORT_FILEFORMAT_WAV)
 static Wave LoadWAV(const unsigned char *fileData, unsigned int fileSize);   // Load WAV file
@@ -385,6 +387,10 @@ static Wave LoadMP3(const unsigned char *fileData, unsigned int fileSize);   // 
 
 #if defined(RAUDIO_STANDALONE)
 static bool IsFileExtension(const char *fileName, const char *ext); // Check file extension
+static const char *GetFileExtension(const char *fileName);          // Get pointer to extension for a filename string (includes the dot: .png)
+static bool TextIsEqual(const char *text1, const char *text2);      // Check if two text string are equal
+static const char *TextToLower(const char *text);                   // Get lower case version of provided string
+
 static unsigned char *LoadFileData(const char *fileName, unsigned int *bytesRead);     // Load file data as byte array (read)
 static bool SaveFileData(const char *fileName, void *data, unsigned int bytesToWrite); // Save data to file from byte array (write)
 static bool SaveFileText(const char *fileName, char *text);         // Save text data to file (write), string must be '\0' terminated
@@ -422,7 +428,7 @@ void InitAudioDevice(void)
     ma_result result = ma_context_init(NULL, 0, &ctxConfig, &AUDIO.System.context);
     if (result != MA_SUCCESS)
     {
-        TRACELOG(LOG_ERROR, "AUDIO: Failed to initialize context");
+        TRACELOG(LOG_WARNING, "AUDIO: Failed to initialize context");
         return;
     }
 
@@ -442,7 +448,7 @@ void InitAudioDevice(void)
     result = ma_device_init(&AUDIO.System.context, &config, &AUDIO.System.device);
     if (result != MA_SUCCESS)
     {
-        TRACELOG(LOG_ERROR, "AUDIO: Failed to initialize playback device");
+        TRACELOG(LOG_WARNING, "AUDIO: Failed to initialize playback device");
         ma_context_uninit(&AUDIO.System.context);
         return;
     }
@@ -452,7 +458,7 @@ void InitAudioDevice(void)
     result = ma_device_start(&AUDIO.System.device);
     if (result != MA_SUCCESS)
     {
-        TRACELOG(LOG_ERROR, "AUDIO: Failed to start playback device");
+        TRACELOG(LOG_WARNING, "AUDIO: Failed to start playback device");
         ma_device_uninit(&AUDIO.System.device);
         ma_context_uninit(&AUDIO.System.context);
         return;
@@ -462,10 +468,18 @@ void InitAudioDevice(void)
     // want to look at something a bit smarter later on to keep everything real-time, if that's necessary.
     if (ma_mutex_init(&AUDIO.System.lock) != MA_SUCCESS)
     {
-        TRACELOG(LOG_ERROR, "AUDIO: Failed to create mutex for mixing");
+        TRACELOG(LOG_WARNING, "AUDIO: Failed to create mutex for mixing");
         ma_device_uninit(&AUDIO.System.device);
         ma_context_uninit(&AUDIO.System.context);
         return;
+    }
+
+    // Init dummy audio buffers pool for multichannel sound playing
+    for (int i = 0; i < MAX_AUDIO_BUFFER_POOL_CHANNELS; i++)
+    {
+        // WARNING: An empty audio buffer is created (data = 0)
+        // AudioBuffer data just points to loaded sound data
+        AUDIO.MultiChannel.pool[i] = LoadAudioBuffer(AUDIO_DEVICE_FORMAT, AUDIO_DEVICE_CHANNELS, AUDIO.System.device.sampleRate, 0, AUDIO_BUFFER_USAGE_STATIC);
     }
 
     TRACELOG(LOG_INFO, "AUDIO: Device initialized successfully");
@@ -475,8 +489,6 @@ void InitAudioDevice(void)
     TRACELOG(LOG_INFO, "    > Sample rate:   %d -> %d", AUDIO.System.device.sampleRate, AUDIO.System.device.playback.internalSampleRate);
     TRACELOG(LOG_INFO, "    > Periods size:  %d", AUDIO.System.device.playback.internalPeriodSizeInFrames*AUDIO.System.device.playback.internalPeriods);
 
-    InitAudioBufferPool();
-
     AUDIO.System.isReady = true;
 }
 
@@ -485,11 +497,25 @@ void CloseAudioDevice(void)
 {
     if (AUDIO.System.isReady)
     {
+        // Unload dummy audio buffers pool
+        // WARNING: They can be pointing to already unloaded data
+        for (int i = 0; i < MAX_AUDIO_BUFFER_POOL_CHANNELS; i++)
+        {
+            //UnloadAudioBuffer(AUDIO.MultiChannel.pool[i]);
+            if (AUDIO.MultiChannel.pool[i] != NULL)
+            {
+                ma_data_converter_uninit(&AUDIO.MultiChannel.pool[i]->converter);
+                UntrackAudioBuffer(AUDIO.MultiChannel.pool[i]);
+                //RL_FREE(buffer->data);    // Already unloaded by UnloadSound()
+                RL_FREE(AUDIO.MultiChannel.pool[i]);
+            }
+        }
+
         ma_mutex_uninit(&AUDIO.System.lock);
         ma_device_uninit(&AUDIO.System.device);
         ma_context_uninit(&AUDIO.System.context);
 
-        CloseAudioBufferPool();
+        AUDIO.System.isReady = false;
 
         TRACELOG(LOG_INFO, "AUDIO: Device closed successfully");
     }
@@ -519,21 +545,21 @@ AudioBuffer *LoadAudioBuffer(ma_format format, ma_uint32 channels, ma_uint32 sam
 
     if (audioBuffer == NULL)
     {
-        TRACELOG(LOG_ERROR, "AUDIO: Failed to allocate memory for buffer");
+        TRACELOG(LOG_WARNING, "AUDIO: Failed to allocate memory for buffer");
         return NULL;
     }
 
     if (sizeInFrames > 0) audioBuffer->data = RL_CALLOC(sizeInFrames*channels*ma_get_bytes_per_sample(format), 1);
 
     // Audio data runs through a format converter
-    ma_data_converter_config converterConfig = ma_data_converter_config_init(format, AUDIO_DEVICE_FORMAT, channels, AUDIO_DEVICE_CHANNELS, sampleRate, AUDIO_DEVICE_SAMPLE_RATE);
+    ma_data_converter_config converterConfig = ma_data_converter_config_init(format, AUDIO_DEVICE_FORMAT, channels, AUDIO_DEVICE_CHANNELS, sampleRate, AUDIO.System.device.sampleRate);
     converterConfig.resampling.allowDynamicSampleRate = true;        // Required for pitch shifting
 
     ma_result result = ma_data_converter_init(&converterConfig, &audioBuffer->converter);
 
     if (result != MA_SUCCESS)
     {
-        TRACELOG(LOG_ERROR, "AUDIO: Failed to create data conversion pipeline");
+        TRACELOG(LOG_WARNING, "AUDIO: Failed to create data conversion pipeline");
         RL_FREE(audioBuffer);
         return NULL;
     }
@@ -703,7 +729,7 @@ Wave LoadWave(const char *fileName)
     return wave;
 }
 
-// Load wave from memory buffer, fileType refers to extension: i.e. "wav"
+// Load wave from memory buffer, fileType refers to extension: i.e. ".wav"
 Wave LoadWaveFromMemory(const char *fileType, const unsigned char *fileData, int dataSize)
 {
     Wave wave = { 0 };
@@ -713,16 +739,16 @@ Wave LoadWaveFromMemory(const char *fileType, const unsigned char *fileData, int
 
     if (false) { }
 #if defined(SUPPORT_FILEFORMAT_WAV)
-    else if (TextIsEqual(fileExtLower, "wav")) wave = LoadWAV(fileData, dataSize);
+    else if (TextIsEqual(fileExtLower, ".wav")) wave = LoadWAV(fileData, dataSize);
 #endif
 #if defined(SUPPORT_FILEFORMAT_OGG)
-    else if (TextIsEqual(fileExtLower, "ogg")) wave = LoadOGG(fileData, dataSize);
+    else if (TextIsEqual(fileExtLower, ".ogg")) wave = LoadOGG(fileData, dataSize);
 #endif
 #if defined(SUPPORT_FILEFORMAT_FLAC)
-    else if (TextIsEqual(fileExtLower, "flac")) wave = LoadFLAC(fileData, dataSize);
+    else if (TextIsEqual(fileExtLower, ".flac")) wave = LoadFLAC(fileData, dataSize);
 #endif
 #if defined(SUPPORT_FILEFORMAT_MP3)
-    else if (TextIsEqual(fileExtLower, "mp3")) wave = LoadMP3(fileData, dataSize);
+    else if (TextIsEqual(fileExtLower, ".mp3")) wave = LoadMP3(fileData, dataSize);
 #endif
     else TRACELOG(LOG_WARNING, "WAVE: File format not supported");
 
@@ -759,24 +785,24 @@ Sound LoadSoundFromWave(Wave wave)
         //
         // First option has been selected, format conversion is done on the loading stage.
         // The downside is that it uses more memory if the original sound is u8 or s16.
-        ma_format formatIn  = ((wave.sampleSize == 8)? ma_format_u8 : ((wave.sampleSize == 16)? ma_format_s16 : ma_format_f32));
+        ma_format formatIn = ((wave.sampleSize == 8)? ma_format_u8 : ((wave.sampleSize == 16)? ma_format_s16 : ma_format_f32));
         ma_uint32 frameCountIn = wave.sampleCount/wave.channels;
 
-        ma_uint32 frameCount = (ma_uint32)ma_convert_frames(NULL, 0, AUDIO_DEVICE_FORMAT, AUDIO_DEVICE_CHANNELS, AUDIO_DEVICE_SAMPLE_RATE, NULL, frameCountIn, formatIn, wave.channels, wave.sampleRate);
+        ma_uint32 frameCount = (ma_uint32)ma_convert_frames(NULL, 0, AUDIO_DEVICE_FORMAT, AUDIO_DEVICE_CHANNELS, AUDIO.System.device.sampleRate, NULL, frameCountIn, formatIn, wave.channels, wave.sampleRate);
         if (frameCount == 0) TRACELOG(LOG_WARNING, "SOUND: Failed to get frame count for format conversion");
 
-        AudioBuffer *audioBuffer = LoadAudioBuffer(AUDIO_DEVICE_FORMAT, AUDIO_DEVICE_CHANNELS, AUDIO_DEVICE_SAMPLE_RATE, frameCount, AUDIO_BUFFER_USAGE_STATIC);
+        AudioBuffer *audioBuffer = LoadAudioBuffer(AUDIO_DEVICE_FORMAT, AUDIO_DEVICE_CHANNELS, AUDIO.System.device.sampleRate, frameCount, AUDIO_BUFFER_USAGE_STATIC);
         if (audioBuffer == NULL)
         {
             TRACELOG(LOG_WARNING, "SOUND: Failed to create buffer");
             return sound; // early return to avoid dereferencing the audioBuffer null pointer
         }
 
-        frameCount = (ma_uint32)ma_convert_frames(audioBuffer->data, frameCount, AUDIO_DEVICE_FORMAT, AUDIO_DEVICE_CHANNELS, AUDIO_DEVICE_SAMPLE_RATE, wave.data, frameCountIn, formatIn, wave.channels, wave.sampleRate);
+        frameCount = (ma_uint32)ma_convert_frames(audioBuffer->data, frameCount, AUDIO_DEVICE_FORMAT, AUDIO_DEVICE_CHANNELS, AUDIO.System.device.sampleRate, wave.data, frameCountIn, formatIn, wave.channels, wave.sampleRate);
         if (frameCount == 0) TRACELOG(LOG_WARNING, "SOUND: Failed format conversion");
 
         sound.sampleCount = frameCount*AUDIO_DEVICE_CHANNELS;
-        sound.stream.sampleRate = AUDIO_DEVICE_SAMPLE_RATE;
+        sound.stream.sampleRate = AUDIO.System.device.sampleRate;
         sound.stream.sampleSize = 32;
         sound.stream.channels = AUDIO_DEVICE_CHANNELS;
         sound.stream.buffer = audioBuffer;
@@ -1094,9 +1120,9 @@ float *LoadWaveSamples(Wave wave)
 
     for (unsigned int i = 0; i < wave.sampleCount; i++)
     {
-            if (wave.sampleSize == 8) samples[i] = (float)(((unsigned char *)wave.data)[i] - 127)/256.0f;
-            else if (wave.sampleSize == 16) samples[i] = (float)(((short *)wave.data)[i])/32767.0f;
-            else if (wave.sampleSize == 32) samples[i] = ((float *)wave.data)[i];
+        if (wave.sampleSize == 8) samples[i] = (float)(((unsigned char *)wave.data)[i] - 127)/256.0f;
+        else if (wave.sampleSize == 16) samples[i] = (float)(((short *)wave.data)[i])/32767.0f;
+        else if (wave.sampleSize == 32) samples[i] = ((float *)wave.data)[i];
     }
 
     return samples;
@@ -1122,18 +1148,18 @@ Music LoadMusicStream(const char *fileName)
 #if defined(SUPPORT_FILEFORMAT_WAV)
     else if (IsFileExtension(fileName, ".wav"))
     {
-        drwav *ctxWav = RL_MALLOC(sizeof(drwav));
+        drwav *ctxWav = RL_CALLOC(1, sizeof(drwav));
         bool success = drwav_init_file(ctxWav, fileName, NULL);
+
+        music.ctxType = MUSIC_AUDIO_WAV;
+        music.ctxData = ctxWav;
 
         if (success)
         {
-            music.ctxType = MUSIC_AUDIO_WAV;
-            music.ctxData = ctxWav;
-
             int sampleSize = ctxWav->bitsPerSample;
             if (ctxWav->bitsPerSample == 24) sampleSize = 16;   // Forcing conversion to s16 on UpdateMusicStream()
 
-            music.stream = InitAudioStream(ctxWav->sampleRate, sampleSize, ctxWav->channels);
+            music.stream = LoadAudioStream(ctxWav->sampleRate, sampleSize, ctxWav->channels);
             music.sampleCount = (unsigned int)ctxWav->totalPCMFrameCount*ctxWav->channels;
             music.looping = true;   // Looping enabled by default
             musicLoaded = true;
@@ -1144,15 +1170,15 @@ Music LoadMusicStream(const char *fileName)
     else if (IsFileExtension(fileName, ".ogg"))
     {
         // Open ogg audio stream
+        music.ctxType = MUSIC_AUDIO_OGG;
         music.ctxData = stb_vorbis_open_filename(fileName, NULL, NULL);
 
         if (music.ctxData != NULL)
         {
-            music.ctxType = MUSIC_AUDIO_OGG;
             stb_vorbis_info info = stb_vorbis_get_info((stb_vorbis *)music.ctxData);  // Get Ogg file info
 
             // OGG bit rate defaults to 16 bit, it's enough for compressed format
-            music.stream = InitAudioStream(info.sample_rate, 16, info.channels);
+            music.stream = LoadAudioStream(info.sample_rate, 16, info.channels);
 
             // WARNING: It seems this function returns length in frames, not samples, so we multiply by channels
             music.sampleCount = (unsigned int)stb_vorbis_stream_length_in_samples((stb_vorbis *)music.ctxData)*info.channels;
@@ -1164,14 +1190,14 @@ Music LoadMusicStream(const char *fileName)
 #if defined(SUPPORT_FILEFORMAT_FLAC)
     else if (IsFileExtension(fileName, ".flac"))
     {
+        music.ctxType = MUSIC_AUDIO_FLAC;
         music.ctxData = drflac_open_file(fileName, NULL);
 
         if (music.ctxData != NULL)
         {
-            music.ctxType = MUSIC_AUDIO_FLAC;
             drflac *ctxFlac = (drflac *)music.ctxData;
 
-            music.stream = InitAudioStream(ctxFlac->sampleRate, ctxFlac->bitsPerSample, ctxFlac->channels);
+            music.stream = LoadAudioStream(ctxFlac->sampleRate, ctxFlac->bitsPerSample, ctxFlac->channels);
             music.sampleCount = (unsigned int)ctxFlac->totalPCMFrameCount*ctxFlac->channels;
             music.looping = true;   // Looping enabled by default
             musicLoaded = true;
@@ -1181,16 +1207,15 @@ Music LoadMusicStream(const char *fileName)
 #if defined(SUPPORT_FILEFORMAT_MP3)
     else if (IsFileExtension(fileName, ".mp3"))
     {
-        drmp3 *ctxMp3 = RL_MALLOC(sizeof(drmp3));
-        music.ctxData = ctxMp3;
-
+        drmp3 *ctxMp3 = RL_CALLOC(1, sizeof(drmp3));
         int result = drmp3_init_file(ctxMp3, fileName, NULL);
+
+        music.ctxType = MUSIC_AUDIO_MP3;
+        music.ctxData = ctxMp3;
 
         if (result > 0)
         {
-            music.ctxType = MUSIC_AUDIO_MP3;
-
-            music.stream = InitAudioStream(ctxMp3->sampleRate, 32, ctxMp3->channels);
+            music.stream = LoadAudioStream(ctxMp3->sampleRate, 32, ctxMp3->channels);
             music.sampleCount = (unsigned int)drmp3_get_pcm_frame_count(ctxMp3)*ctxMp3->channels;
             music.looping = true;   // Looping enabled by default
             musicLoaded = true;
@@ -1201,44 +1226,47 @@ Music LoadMusicStream(const char *fileName)
     else if (IsFileExtension(fileName, ".xm"))
     {
         jar_xm_context_t *ctxXm = NULL;
+        int result = jar_xm_create_context_from_file(&ctxXm, AUDIO.System.device.sampleRate, fileName);
 
-        int result = jar_xm_create_context_from_file(&ctxXm, 48000, fileName);
+        music.ctxType = MUSIC_MODULE_XM;
+        music.ctxData = ctxXm;
 
         if (result == 0)    // XM AUDIO.System.context created successfully
         {
-            music.ctxType = MUSIC_MODULE_XM;
             jar_xm_set_max_loop_count(ctxXm, 0);    // Set infinite number of loops
 
+            unsigned int bits = 32;
+            if (AUDIO_DEVICE_FORMAT == ma_format_s16)
+                bits = 16;
+            else if (AUDIO_DEVICE_FORMAT == ma_format_u8)
+                bits = 8;
+
             // NOTE: Only stereo is supported for XM
-            music.stream = InitAudioStream(48000, 16, 2);
+            music.stream = LoadAudioStream(AUDIO.System.device.sampleRate, bits, AUDIO_DEVICE_CHANNELS);
             music.sampleCount = (unsigned int)jar_xm_get_remaining_samples(ctxXm)*2;    // 2 channels
             music.looping = true;   // Looping enabled by default
             jar_xm_reset(ctxXm);   // make sure we start at the beginning of the song
             musicLoaded = true;
-
-            music.ctxData = ctxXm;
         }
     }
 #endif
 #if defined(SUPPORT_FILEFORMAT_MOD)
     else if (IsFileExtension(fileName, ".mod"))
     {
-        jar_mod_context_t *ctxMod = RL_MALLOC(sizeof(jar_mod_context_t));
-
+        jar_mod_context_t *ctxMod = RL_CALLOC(1, sizeof(jar_mod_context_t));
         jar_mod_init(ctxMod);
         int result = jar_mod_load_file(ctxMod, fileName);
 
+        music.ctxType = MUSIC_MODULE_MOD;
+        music.ctxData = ctxMod;
+
         if (result > 0)
         {
-            music.ctxType = MUSIC_MODULE_MOD;
-
             // NOTE: Only stereo is supported for MOD
-            music.stream = InitAudioStream(48000, 16, 2);
+            music.stream = LoadAudioStream(AUDIO.System.device.sampleRate, 16, AUDIO_DEVICE_CHANNELS);
             music.sampleCount = (unsigned int)jar_mod_max_samples(ctxMod)*2;    // 2 channels
             music.looping = true;   // Looping enabled by default
             musicLoaded = true;
-
-            music.ctxData = ctxMod;
         }
     }
 #endif
@@ -1266,6 +1294,7 @@ Music LoadMusicStream(const char *fileName)
         else if (music.ctxType == MUSIC_MODULE_MOD) { jar_mod_unload((jar_mod_context_t *)music.ctxData); RL_FREE(music.ctxData); }
     #endif
 
+        music.ctxData = NULL;
         TRACELOG(LOG_WARNING, "FILEIO: [%s] Music file could not be opened", fileName);
     }
     else
@@ -1281,30 +1310,227 @@ Music LoadMusicStream(const char *fileName)
     return music;
 }
 
-// Unload music stream
-void UnloadMusicStream(Music music)
+// extension including period ".mod"
+Music LoadMusicStreamFromMemory(const char *fileType, unsigned char *data, int dataSize)
 {
-    CloseAudioStream(music.stream);
+    Music music = { 0 };
+    bool musicLoaded = false;
+
+    char fileExtLower[16] = { 0 };
+    strcpy(fileExtLower, TextToLower(fileType));
 
     if (false) { }
 #if defined(SUPPORT_FILEFORMAT_WAV)
-    else if (music.ctxType == MUSIC_AUDIO_WAV) drwav_uninit((drwav *)music.ctxData);
-#endif
-#if defined(SUPPORT_FILEFORMAT_OGG)
-    else if (music.ctxType == MUSIC_AUDIO_OGG) stb_vorbis_close((stb_vorbis *)music.ctxData);
+    else if (TextIsEqual(fileExtLower, ".wav"))
+    {
+        drwav *ctxWav = RL_CALLOC(1, sizeof(drwav));
+
+        bool success = drwav_init_memory(ctxWav, (const void *)data, dataSize, NULL);
+
+        music.ctxType = MUSIC_AUDIO_WAV;
+        music.ctxData = ctxWav;
+
+        if (success)
+        {
+            int sampleSize = ctxWav->bitsPerSample;
+            if (ctxWav->bitsPerSample == 24) sampleSize = 16;   // Forcing conversion to s16 on UpdateMusicStream()
+
+            music.stream = LoadAudioStream(ctxWav->sampleRate, sampleSize, ctxWav->channels);
+            music.sampleCount = (unsigned int)ctxWav->totalPCMFrameCount*ctxWav->channels;
+            music.looping = true;   // Looping enabled by default
+            musicLoaded = true;
+        }
+    }
 #endif
 #if defined(SUPPORT_FILEFORMAT_FLAC)
-    else if (music.ctxType == MUSIC_AUDIO_FLAC) drflac_free((drflac *)music.ctxData, NULL);
+    else if (TextIsEqual(fileExtLower, ".flac"))
+    {
+        music.ctxType = MUSIC_AUDIO_FLAC;
+        music.ctxData = drflac_open_memory((const void*)data, dataSize, NULL);
+
+        if (music.ctxData != NULL)
+        {
+            drflac *ctxFlac = (drflac *)music.ctxData;
+
+            music.stream = LoadAudioStream(ctxFlac->sampleRate, ctxFlac->bitsPerSample, ctxFlac->channels);
+            music.sampleCount = (unsigned int)ctxFlac->totalPCMFrameCount*ctxFlac->channels;
+            music.looping = true;   // Looping enabled by default
+            musicLoaded = true;
+        }
+    }
+#endif
+#if defined(SUPPORT_FILEFORMAT_MP3)
+    else if (TextIsEqual(fileExtLower, ".mp3"))
+    {
+        drmp3 *ctxMp3 = RL_CALLOC(1, sizeof(drmp3));
+        int success = drmp3_init_memory(ctxMp3, (const void*)data, dataSize, NULL);
+
+        music.ctxType = MUSIC_AUDIO_MP3;
+        music.ctxData = ctxMp3;
+
+        if (success)
+        {
+            music.stream = LoadAudioStream(ctxMp3->sampleRate, 32, ctxMp3->channels);
+            music.sampleCount = (unsigned int)drmp3_get_pcm_frame_count(ctxMp3)*ctxMp3->channels;
+            music.looping = true;   // Looping enabled by default
+            musicLoaded = true;
+        }
+    }
+#endif
+#if defined(SUPPORT_FILEFORMAT_OGG)
+    else if (TextIsEqual(fileExtLower, ".ogg"))
+    {
+        // Open ogg audio stream
+        music.ctxType = MUSIC_AUDIO_OGG;
+        //music.ctxData = stb_vorbis_open_filename(fileName, NULL, NULL);
+        music.ctxData = stb_vorbis_open_memory((const unsigned char *)data, dataSize, NULL, NULL);
+
+        if (music.ctxData != NULL)
+        {
+            stb_vorbis_info info = stb_vorbis_get_info((stb_vorbis *)music.ctxData);  // Get Ogg file info
+
+            // OGG bit rate defaults to 16 bit, it's enough for compressed format
+            music.stream = LoadAudioStream(info.sample_rate, 16, info.channels);
+
+            // WARNING: It seems this function returns length in frames, not samples, so we multiply by channels
+            music.sampleCount = (unsigned int)stb_vorbis_stream_length_in_samples((stb_vorbis *)music.ctxData)*info.channels;
+            music.looping = true;   // Looping enabled by default
+            musicLoaded = true;
+        }
+    }
+#endif
+#if defined(SUPPORT_FILEFORMAT_XM)
+    else if (TextIsEqual(fileExtLower, ".xm"))
+    {
+        jar_xm_context_t *ctxXm = NULL;
+        int result = jar_xm_create_context_safe(&ctxXm, (const char *)data, dataSize, AUDIO.System.device.sampleRate);
+        if (result == 0)    // XM AUDIO.System.context created successfully
+        {
+            music.ctxType = MUSIC_MODULE_XM;
+            jar_xm_set_max_loop_count(ctxXm, 0);    // Set infinite number of loops
+
+            unsigned int bits = 32;
+            if (AUDIO_DEVICE_FORMAT == ma_format_s16)
+                bits = 16;
+            else if (AUDIO_DEVICE_FORMAT == ma_format_u8)
+                bits = 8;
+
+            // NOTE: Only stereo is supported for XM
+            music.stream = LoadAudioStream(AUDIO.System.device.sampleRate, bits, 2);
+            music.sampleCount = (unsigned int)jar_xm_get_remaining_samples(ctxXm)*2;    // 2 channels
+            music.looping = true;   // Looping enabled by default
+            jar_xm_reset(ctxXm);   // make sure we start at the beginning of the song
+
+            music.ctxData = ctxXm;
+            musicLoaded = true;
+        }
+    }
+#endif
+#if defined(SUPPORT_FILEFORMAT_MOD)
+    else if (TextIsEqual(fileExtLower, ".mod"))
+    {
+        jar_mod_context_t *ctxMod = (jar_mod_context_t *)RL_MALLOC(sizeof(jar_mod_context_t));
+        int result = 0;
+
+        jar_mod_init(ctxMod);
+
+        // Copy data to allocated memory for default UnloadMusicStream
+        unsigned char *newData = (unsigned char *)RL_MALLOC(dataSize);
+        int it = dataSize/sizeof(unsigned char);
+        for (int i = 0; i < it; i++){
+            newData[i] = data[i];
+        }
+
+        // Memory loaded version for jar_mod_load_file()
+        if (dataSize && dataSize < 32*1024*1024)
+        {
+            ctxMod->modfilesize = dataSize;
+            ctxMod->modfile = newData;
+            if (jar_mod_load(ctxMod, (void *)ctxMod->modfile, dataSize)) result = dataSize;
+        }
+
+        if (result > 0)
+        {
+            music.ctxType = MUSIC_MODULE_MOD;
+
+            // NOTE: Only stereo is supported for MOD
+            music.stream = LoadAudioStream(AUDIO.System.device.sampleRate, 16, 2);
+            music.sampleCount = (unsigned int)jar_mod_max_samples(ctxMod)*2;    // 2 channels
+            music.looping = true;   // Looping enabled by default
+            musicLoaded = true;
+
+            music.ctxData = ctxMod;
+            musicLoaded = true;
+        }
+    }
+#endif
+    else TRACELOG(LOG_WARNING, "STREAM: [%s] Fileformat not supported", fileType);
+
+    if (!musicLoaded)
+    {
+        if (false) { }
+    #if defined(SUPPORT_FILEFORMAT_WAV)
+        else if (music.ctxType == MUSIC_AUDIO_WAV) drwav_uninit((drwav *)music.ctxData);
+    #endif
+    #if defined(SUPPORT_FILEFORMAT_FLAC)
+        else if (music.ctxType == MUSIC_AUDIO_FLAC) drflac_free((drflac *)music.ctxData, NULL);
+    #endif
+    #if defined(SUPPORT_FILEFORMAT_MP3)
+        else if (music.ctxType == MUSIC_AUDIO_MP3) { drmp3_uninit((drmp3 *)music.ctxData); RL_FREE(music.ctxData); }
+    #endif
+    #if defined(SUPPORT_FILEFORMAT_OGG)
+        else if (music.ctxType == MUSIC_AUDIO_OGG) stb_vorbis_close((stb_vorbis *)music.ctxData);
+    #endif
+    #if defined(SUPPORT_FILEFORMAT_XM)
+        else if (music.ctxType == MUSIC_MODULE_XM) jar_xm_free_context((jar_xm_context_t *)music.ctxData);
+    #endif
+    #if defined(SUPPORT_FILEFORMAT_MOD)
+        else if (music.ctxType == MUSIC_MODULE_MOD) { jar_mod_unload((jar_mod_context_t *)music.ctxData); RL_FREE(music.ctxData); }
+    #endif
+
+        music.ctxData = NULL;
+        TRACELOG(LOG_WARNING, "FILEIO: [%s] Music memory could not be opened", fileType);
+    }
+    else
+    {
+        // Show some music stream info
+        TRACELOG(LOG_INFO, "FILEIO: [%s] Music memory successfully loaded:", fileType);
+        TRACELOG(LOG_INFO, "    > Total samples: %i", music.sampleCount);
+        TRACELOG(LOG_INFO, "    > Sample rate:   %i Hz", music.stream.sampleRate);
+        TRACELOG(LOG_INFO, "    > Sample size:   %i bits", music.stream.sampleSize);
+        TRACELOG(LOG_INFO, "    > Channels:      %i (%s)", music.stream.channels, (music.stream.channels == 1)? "Mono" : (music.stream.channels == 2)? "Stereo" : "Multi");
+    }
+
+    return music;
+}
+
+// Unload music stream
+void UnloadMusicStream(Music music)
+{
+    UnloadAudioStream(music.stream);
+
+    if (music.ctxData != NULL)
+    {
+        if (false) { }
+#if defined(SUPPORT_FILEFORMAT_WAV)
+        else if (music.ctxType == MUSIC_AUDIO_WAV) drwav_uninit((drwav *)music.ctxData);
+#endif
+#if defined(SUPPORT_FILEFORMAT_OGG)
+        else if (music.ctxType == MUSIC_AUDIO_OGG) stb_vorbis_close((stb_vorbis *)music.ctxData);
+#endif
+#if defined(SUPPORT_FILEFORMAT_FLAC)
+        else if (music.ctxType == MUSIC_AUDIO_FLAC) drflac_free((drflac *)music.ctxData, NULL);
 #endif
 #if defined(SUPPORT_FILEFORMAT_MP3)
     else if (music.ctxType == MUSIC_AUDIO_MP3) { drmp3_uninit((drmp3 *)music.ctxData); RL_FREE(music.ctxData); }
 #endif
 #if defined(SUPPORT_FILEFORMAT_XM)
-    else if (music.ctxType == MUSIC_MODULE_XM) jar_xm_free_context((jar_xm_context_t *)music.ctxData);
+        else if (music.ctxType == MUSIC_MODULE_XM) jar_xm_free_context((jar_xm_context_t *)music.ctxData);
 #endif
 #if defined(SUPPORT_FILEFORMAT_MOD)
-    else if (music.ctxType == MUSIC_MODULE_MOD) { jar_mod_unload((jar_mod_context_t *)music.ctxData); RL_FREE(music.ctxData); }
+        else if (music.ctxType == MUSIC_MODULE_MOD) { jar_mod_unload((jar_mod_context_t *)music.ctxData); RL_FREE(music.ctxData); }
 #endif
+    }
 }
 
 // Start music playing (open stream)
@@ -1315,7 +1541,7 @@ void PlayMusicStream(Music music)
         // For music streams, we need to make sure we maintain the frame cursor position
         // This is a hack for this section of code in UpdateMusicStream()
         // NOTE: In case window is minimized, music stream is stopped, just make sure to
-        // play again on window restore: if (IsMusicPlaying(music)) PlayMusicStream(music);
+        // play again on window restore: if (IsMusicStreamPlaying(music)) PlayMusicStream(music);
         ma_uint32 frameCursorPos = music.stream.buffer->frameCursorPos;
         PlayAudioStream(music.stream);  // WARNING: This resets the cursor position.
         music.stream.buffer->frameCursorPos = frameCursorPos;
@@ -1368,6 +1594,10 @@ void UpdateMusicStream(Music music)
 {
     if (music.stream.buffer == NULL) return;
 
+#if defined(SUPPORT_FILEFORMAT_XM)
+    if (music.ctxType == MUSIC_MODULE_XM) jar_xm_set_max_loop_count(music.ctxData, music.looping ? 0 : 1);
+#endif
+
     bool streamEnding = false;
 
     unsigned int subBufferSizeInFrames = music.stream.buffer->sizeInFrames/2;
@@ -1380,6 +1610,8 @@ void UpdateMusicStream(Music music)
     // TODO: Get the sampleLeft using totalFramesProcessed... but first, get total frames processed correctly...
     //ma_uint32 frameSizeInBytes = ma_get_bytes_per_sample(music.stream.buffer->dsp.formatConverterIn.config.formatIn)*music.stream.buffer->dsp.formatConverterIn.config.channels;
     int sampleLeft = music.sampleCount - (music.stream.buffer->totalFramesProcessed*music.stream.channels);
+
+    if (music.ctxType == MUSIC_MODULE_XM && music.looping) sampleLeft = subBufferSizeInFrames*4;
 
     while (IsAudioStreamProcessed(music.stream))
     {
@@ -1424,8 +1656,24 @@ void UpdateMusicStream(Music music)
         #if defined(SUPPORT_FILEFORMAT_XM)
             case MUSIC_MODULE_XM:
             {
-                // NOTE: Internally this function considers 2 channels generation, so samplesCount/2
-                jar_xm_generate_samples_16bit((jar_xm_context_t *)music.ctxData, (short *)pcm, samplesCount/2);
+                switch (AUDIO_DEVICE_FORMAT)
+                {
+                case ma_format_f32:
+                    // NOTE: Internally this function considers 2 channels generation, so samplesCount/2
+                    jar_xm_generate_samples((jar_xm_context_t*)music.ctxData, (float *)pcm, samplesCount/2);
+                    break;
+
+                case ma_format_s16:
+                    // NOTE: Internally this function considers 2 channels generation, so samplesCount/2
+                    jar_xm_generate_samples_16bit((jar_xm_context_t*)music.ctxData, (short *)pcm, samplesCount/2);
+                    break;
+
+                case ma_format_u8:
+                    // NOTE: Internally this function considers 2 channels generation, so samplesCount/2
+                    jar_xm_generate_samples_8bit((jar_xm_context_t*)music.ctxData, (char *)pcm, samplesCount/2);
+                    break;
+                }
+
             } break;
         #endif
         #if defined(SUPPORT_FILEFORMAT_MOD)
@@ -1440,7 +1688,7 @@ void UpdateMusicStream(Music music)
 
         UpdateAudioStream(music.stream, pcm, samplesCount);
 
-        if ((music.ctxType == MUSIC_MODULE_XM) || (music.ctxType == MUSIC_MODULE_MOD))
+        if ((music.ctxType == MUSIC_MODULE_XM) || music.ctxType == MUSIC_MODULE_MOD)
         {
             if (samplesCount > 1) sampleLeft -= samplesCount/2;
             else sampleLeft -= samplesCount;
@@ -1467,12 +1715,12 @@ void UpdateMusicStream(Music music)
     {
         // NOTE: In case window is minimized, music stream is stopped,
         // just make sure to play again on window restore
-        if (IsMusicPlaying(music)) PlayMusicStream(music);
+        if (IsMusicStreamPlaying(music)) PlayMusicStream(music);
     }
 }
 
 // Check if any music is playing
-bool IsMusicPlaying(Music music)
+bool IsMusicStreamPlaying(Music music)
 {
     return IsAudioStreamPlaying(music.stream);
 }
@@ -1502,8 +1750,17 @@ float GetMusicTimeLength(Music music)
 // Get current music time played (in seconds)
 float GetMusicTimePlayed(Music music)
 {
-    float secondsPlayed = 0.0f;
+#if defined(SUPPORT_FILEFORMAT_XM)
+    if (music.ctxType == MUSIC_MODULE_XM)
+    {
+        uint64_t samples = 0;
+        jar_xm_get_position(music.ctxData, NULL, NULL, NULL, &samples);
+        samples = samples % (music.sampleCount);
 
+        return (float)(samples)/(music.stream.sampleRate*music.stream.channels);
+    }
+#endif
+    float secondsPlayed = 0.0f;
     if (music.stream.buffer != NULL)
     {
         //ma_uint32 frameSizeInBytes = ma_get_bytes_per_sample(music.stream.buffer->dsp.formatConverterIn.config.formatIn)*music.stream.buffer->dsp.formatConverterIn.config.channels;
@@ -1514,8 +1771,8 @@ float GetMusicTimePlayed(Music music)
     return secondsPlayed;
 }
 
-// Init audio stream (to stream audio pcm data)
-AudioStream InitAudioStream(unsigned int sampleRate, unsigned int sampleSize, unsigned int channels)
+// Load audio stream (to stream audio pcm data)
+AudioStream LoadAudioStream(unsigned int sampleRate, unsigned int sampleSize, unsigned int channels)
 {
     AudioStream stream = { 0 };
 
@@ -1527,7 +1784,9 @@ AudioStream InitAudioStream(unsigned int sampleRate, unsigned int sampleSize, un
 
     // The size of a streaming buffer must be at least double the size of a period
     unsigned int periodSize = AUDIO.System.device.playback.internalPeriodSizeInFrames;
-    unsigned int subBufferSize = AUDIO.Buffer.defaultSize;     // Default buffer size (audio stream)
+    
+    // If the buffer is not set, compute one that would give us a buffer good enough for a decent frame rate
+    unsigned int subBufferSize = (AUDIO.Buffer.defaultSize == 0)? AUDIO.Buffer.defaultSize : AUDIO.System.device.sampleRate/30;
 
     if (subBufferSize < periodSize) subBufferSize = periodSize;
 
@@ -1544,8 +1803,8 @@ AudioStream InitAudioStream(unsigned int sampleRate, unsigned int sampleSize, un
     return stream;
 }
 
-// Close audio stream and free memory
-void CloseAudioStream(AudioStream stream)
+// Unload audio stream and free memory
+void UnloadAudioStream(AudioStream stream)
 {
     UnloadAudioBuffer(stream.buffer);
 
@@ -1672,7 +1931,7 @@ static void OnLog(ma_context *pContext, ma_device *pDevice, ma_uint32 logLevel, 
     (void)pContext;
     (void)pDevice;
 
-    TRACELOG(LOG_ERROR, "miniaudio: %s", message);   // All log messages from miniaudio are errors
+    TRACELOG(LOG_WARNING, "miniaudio: %s", message);   // All log messages from miniaudio are errors
 }
 
 // Reads audio data from an AudioBuffer object in internal format.
@@ -1782,7 +2041,7 @@ static ma_uint32 ReadAudioBufferFramesInMixingFormat(AudioBuffer *audioBuffer, f
             inputFramesToProcessThisIteration = inputBufferFrameCap;
         }
 
-        float *runningFramesOut = framesOut + (totalOutputFramesProcessed * audioBuffer->converter.config.channelsOut);
+        float *runningFramesOut = framesOut + (totalOutputFramesProcessed*audioBuffer->converter.config.channelsOut);
 
         /* At this point we can convert the data to our mixing format. */
         ma_uint64 inputFramesProcessedThisIteration = ReadAudioBufferFramesInInternalFormat(audioBuffer, inputBuffer, (ma_uint32)inputFramesToProcessThisIteration);    /* Safe cast. */
@@ -1808,6 +2067,7 @@ static ma_uint32 ReadAudioBufferFramesInMixingFormat(AudioBuffer *audioBuffer, f
 
 
 // Sending audio data to device callback function
+// This function will be called when miniaudio needs more data
 // NOTE: All the mixing takes place here
 static void OnSendAudioDataToDevice(ma_device *pDevice, void *pFramesOut, const void *pFramesInput, ma_uint32 frameCount)
 {
@@ -1848,7 +2108,7 @@ static void OnSendAudioDataToDevice(ma_device *pDevice, void *pFramesOut, const 
                     if (framesJustRead > 0)
                     {
                         float *framesOut = (float *)pFramesOut + (framesRead*AUDIO.System.device.playback.channels);
-                        float *framesIn  = tempBuffer;
+                        float *framesIn = tempBuffer;
 
                         MixAudioFrames(framesOut, framesIn, framesJustRead, audioBuffer->volume);
 
@@ -1899,31 +2159,11 @@ static void MixAudioFrames(float *framesOut, const float *framesIn, ma_uint32 fr
         for (ma_uint32 iChannel = 0; iChannel < AUDIO.System.device.playback.channels; ++iChannel)
         {
             float *frameOut = framesOut + (iFrame*AUDIO.System.device.playback.channels);
-            const float *frameIn  = framesIn  + (iFrame*AUDIO.System.device.playback.channels);
+            const float *frameIn = framesIn + (iFrame*AUDIO.System.device.playback.channels);
 
             frameOut[iChannel] += (frameIn[iChannel]*localVolume);
         }
     }
-}
-
-// Initialise the multichannel buffer pool
-static void InitAudioBufferPool(void)
-{
-    // Dummy buffers
-    for (int i = 0; i < MAX_AUDIO_BUFFER_POOL_CHANNELS; i++)
-    {
-        // WARNING: An empty audioBuffer is created (data = 0)
-        AUDIO.MultiChannel.pool[i] = LoadAudioBuffer(AUDIO_DEVICE_FORMAT, AUDIO_DEVICE_CHANNELS, AUDIO_DEVICE_SAMPLE_RATE, 0, AUDIO_BUFFER_USAGE_STATIC);
-    }
-
-    // TODO: Verification required for log
-    TRACELOG(LOG_INFO, "AUDIO: Multichannel pool size: %i", MAX_AUDIO_BUFFER_POOL_CHANNELS);
-}
-
-// Close the audio buffers pool
-static void CloseAudioBufferPool(void)
-{
-    for (int i = 0; i < MAX_AUDIO_BUFFER_POOL_CHANNELS; i++) RL_FREE(AUDIO.MultiChannel.pool[i]);
 }
 
 #if defined(SUPPORT_FILEFORMAT_WAV)
@@ -2084,6 +2324,48 @@ static bool IsFileExtension(const char *fileName, const char *ext)
     }
 
     return result;
+}
+
+// Get pointer to extension for a filename string (includes the dot: .png)
+static const char *GetFileExtension(const char *fileName)
+{
+    const char *dot = strrchr(fileName, '.');
+
+    if (!dot || dot == fileName) return NULL;
+
+    return dot;
+}
+
+// Check if two text string are equal
+// REQUIRES: strcmp()
+static bool TextIsEqual(const char *text1, const char *text2)
+{
+    bool result = false;
+
+    if (strcmp(text1, text2) == 0) result = true;
+
+    return result;
+}
+
+// Get lower case version of provided string
+// REQUIRES: tolower()
+static const char *TextToLower(const char *text)
+{
+    #define MAX_TEXT_BUFFER_LENGTH      1024
+    
+    static char buffer[MAX_TEXT_BUFFER_LENGTH] = { 0 };
+
+    for (int i = 0; i < MAX_TEXT_BUFFER_LENGTH; i++)
+    {
+        if (text[i] != '\0')
+        {
+            buffer[i] = (char)tolower(text[i]);
+            //if ((text[i] >= 'A') && (text[i] <= 'Z')) buffer[i] = text[i] + 32;
+        }
+        else { buffer[i] = '\0'; break; }
+    }
+
+    return buffer;
 }
 
 // Load data from file into a buffer

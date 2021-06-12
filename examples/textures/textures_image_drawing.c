@@ -32,8 +32,8 @@ int main(void)
     Image parrots = LoadImage("resources/parrots.png");     // Load image in CPU memory (RAM)
 
     // Draw one image over the other with a scaling of 1.5f
-    ImageDraw(&parrots, cat, (Rectangle){ 0, 0, cat.width, cat.height }, (Rectangle){ 30, 40, cat.width*1.5f, cat.height*1.5f }, WHITE);
-    ImageCrop(&parrots, (Rectangle){ 0, 50, parrots.width, parrots.height - 100 }); // Crop resulting image
+    ImageDraw(&parrots, cat, (Rectangle){ 0, 0, (float)cat.width, (float)cat.height }, (Rectangle){ 30, 40, cat.width*1.5f, cat.height*1.5f }, WHITE);
+    ImageCrop(&parrots, (Rectangle){ 0, 50, (float)parrots.width, (float)parrots.height - 100 }); // Crop resulting image
 
     // Draw on the image with a few image draw methods
     ImageDrawPixel(&parrots, 10, 10, RAYWHITE);
@@ -46,7 +46,7 @@ int main(void)
     Font font = LoadFont("resources/custom_jupiter_crash.png");
 
     // Draw over image using custom font
-    ImageDrawTextEx(&parrots, font, "PARROTS & CAT", (Vector2){ 300, 230 }, font.baseSize, -2, WHITE);
+    ImageDrawTextEx(&parrots, font, "PARROTS & CAT", (Vector2){ 300, 230 }, (float)font.baseSize, -2, WHITE);
 
     UnloadFont(font); // Unload custom spritefont (already drawn used on image)
 

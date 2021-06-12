@@ -9,7 +9,7 @@
 *     - BMFonts > Angel code font fileformat, sprite font image must be provided
 *                 together with the .fnt file, font generation cna not be configured
 *     - XNA Spritefont > Sprite font image, following XNA Spritefont conventions,
-*                 Characters in image must follow some spacing and order rules 
+*                 Characters in image must follow some spacing and order rules
 *
 *   This example has been created using raylib 2.6 (www.raylib.com)
 *   raylib is licensed under an unmodified zlib/libpng license (View raylib.h for details)
@@ -66,12 +66,12 @@ int main(void)
 
             if (!useTtf)
             {
-                DrawTextEx(fontBm, msg, (Vector2){ 20.0f, 100.0f }, fontBm.baseSize, 2, MAROON);
+                DrawTextEx(fontBm, msg, (Vector2){ 20.0f, 100.0f }, (float)fontBm.baseSize, 2, MAROON);
                 DrawText("Using BMFont (Angelcode) imported", 20, GetScreenHeight() - 30, 20, GRAY);
             }
             else
             {
-                DrawTextEx(fontTtf, msg, (Vector2){ 20.0f, 100.0f }, fontTtf.baseSize, 2, LIME);
+                DrawTextEx(fontTtf, msg, (Vector2){ 20.0f, 100.0f }, (float)fontTtf.baseSize, 2, LIME);
                 DrawText("Using TTF font generated", 20, GetScreenHeight() - 30, 20, GRAY);
             }
 

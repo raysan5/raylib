@@ -28,11 +28,11 @@ int main(void)
     Texture2D button = LoadTexture("resources/button.png"); // Load button texture
 
     // Define frame rectangle for drawing
-    int frameHeight = button.height/NUM_FRAMES;
-    Rectangle sourceRec = { 0, 0, button.width, frameHeight };
+    float frameHeight = (float)button.height/NUM_FRAMES;
+    Rectangle sourceRec = { 0, 0, (float)button.width, frameHeight };
 
     // Define button bounds on screen
-    Rectangle btnBounds = { screenWidth/2 - button.width/2, screenHeight/2 - button.height/NUM_FRAMES/2, button.width, frameHeight };
+    Rectangle btnBounds = { screenWidth/2.0f - button.width/2.0f, screenHeight/2.0f - button.height/NUM_FRAMES/2.0f, (float)button.width, frameHeight };
 
     int btnState = 0;               // Button state: 0-NORMAL, 1-MOUSE_HOVER, 2-PRESSED
     bool btnAction = false;         // Button action should be activated
@@ -53,10 +53,10 @@ int main(void)
         // Check button state
         if (CheckCollisionPointRec(mousePoint, btnBounds))
         {
-            if (IsMouseButtonDown(MOUSE_LEFT_BUTTON)) btnState = 2;
+            if (IsMouseButtonDown(MOUSE_BUTTON_LEFT)) btnState = 2;
             else btnState = 1;
 
-            if (IsMouseButtonReleased(MOUSE_LEFT_BUTTON)) btnAction = true;
+            if (IsMouseButtonReleased(MOUSE_BUTTON_LEFT)) btnAction = true;
         }
         else btnState = 0;
 

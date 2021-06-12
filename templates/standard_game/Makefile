@@ -25,7 +25,7 @@
 
 # Define required raylib variables
 PROJECT_NAME       ?= standard_game
-RAYLIB_VERSION     ?= 3.5.0
+RAYLIB_VERSION     ?= 3.7.0
 RAYLIB_PATH        ?= ../..
 
 # Define default options
@@ -177,15 +177,12 @@ ifeq ($(PLATFORM),PLATFORM_WEB)
     CC = emcc
 endif
 
-# Define default make program: Mingw32-make
-MAKE = mingw32-make
+# Define default make program
+MAKE = make
 
 ifeq ($(PLATFORM),PLATFORM_DESKTOP)
-    ifeq ($(PLATFORM_OS),LINUX)
-        MAKE = make
-    endif
-    ifeq ($(PLATFORM_OS),OSX)
-        MAKE = make
+    ifeq ($(PLATFORM_OS),WINDOWS)
+        MAKE = mingw32-make
     endif
 endif
 

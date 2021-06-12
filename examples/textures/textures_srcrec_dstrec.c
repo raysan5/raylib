@@ -21,20 +21,20 @@ int main(void)
     InitWindow(screenWidth, screenHeight, "raylib [textures] examples - texture source and destination rectangles");
 
     // NOTE: Textures MUST be loaded after Window initialization (OpenGL context is required)
-    
+
     Texture2D scarfy = LoadTexture("resources/scarfy.png");        // Texture loading
 
     int frameWidth = scarfy.width/6;
     int frameHeight = scarfy.height;
 
     // Source rectangle (part of the texture to use for drawing)
-    Rectangle sourceRec = { 0.0f, 0.0f, frameWidth, frameHeight };
+    Rectangle sourceRec = { 0.0f, 0.0f, (float)frameWidth, (float)frameHeight };
 
     // Destination rectangle (screen rectangle where drawing part of texture)
-    Rectangle destRec = { screenWidth/2, screenHeight/2, frameWidth*2, frameHeight*2 };
+    Rectangle destRec = { screenWidth/2.0f, screenHeight/2.0f, frameWidth*2.0f, frameHeight*2.0f };
 
     // Origin of the texture (rotation/scale point), it's relative to destination rectangle size
-    Vector2 origin = { frameWidth, frameHeight };
+    Vector2 origin = { (float)frameWidth, (float)frameHeight };
 
     int rotation = 0;
 

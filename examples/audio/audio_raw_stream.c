@@ -32,7 +32,7 @@ int main(void)
     InitAudioDevice();              // Initialize audio device
 
     // Init raw audio stream (sample rate: 22050, sample size: 16bit-short, channels: 1-mono)
-    AudioStream stream = InitAudioStream(22050, 16, 1);
+    AudioStream stream = LoadAudioStream(22050, 16, 1);
 
     // Buffer for the single cycle waveform we are synthesizing
     short *data = (short *)malloc(sizeof(short)*MAX_SAMPLES);
@@ -71,7 +71,7 @@ int main(void)
         // Sample mouse input.
         mousePosition = GetMousePosition();
 
-        if (IsMouseButtonDown(MOUSE_LEFT_BUTTON))
+        if (IsMouseButtonDown(MOUSE_BUTTON_LEFT))
         {
             float fp = (float)(mousePosition.y);
             frequency = 40.0f + (float)(fp);
@@ -140,8 +140,8 @@ int main(void)
             // Draw the current buffer state proportionate to the screen
             for (int i = 0; i < screenWidth; i++)
             {
-                position.x = i;
-                position.y = 250 + 50*data[i*MAX_SAMPLES/screenWidth]/32000;
+                position.x = (float)i;
+                position.y = 250 + 50*data[i*MAX_SAMPLES/screenWidth]/32000.0f;
 
                 DrawPixelV(position, RED);
             }
@@ -155,7 +155,7 @@ int main(void)
     free(data);                 // Unload sine wave data
     free(writeBuf);             // Unload write buffer
 
-    CloseAudioStream(stream);   // Close raw audio stream and delete buffers from RAM
+    UnloadAudioStream(stream);   // Close raw audio stream and delete buffers from RAM
     CloseAudioDevice();         // Close audio device (music streaming is automatically stopped)
 
     CloseWindow();              // Close window and OpenGL context

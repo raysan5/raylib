@@ -249,7 +249,7 @@ After **10 months of intense development**, new raylib version is ready. Despite
 
  - New **GitHub Actions CI** system has been implemented for Windows, Linux and macOS code and examples compilation on every new commit or PR to make sure library keeps stable and usable with no breaking bugs.
 
-Note that only key changes are listed here but there is way more! About **30 new functions**, multiple functions reviewed, bindings to [+40 programming languages](https://github.com/raysan5/raylib/blob/master/BINDINGS.md) and great samples/demos/tutorials [created by the community](https://discord.gg/VkzNHUE), including raylib integration with [Spine](https://github.com/WEREMSOFT/spine-raylib-runtimes), [Unity](https://unitycoder.com/blog/2019/12/09/using-raylib-dll-in-unity/), [Tiled](https://github.com/OnACoffeeBreak/raylib_tiled_import_with_tmx), [Nuklear](http://bedroomcoders.co.uk/implementing-a-3d-gui-with-raylib/), [enet](https://github.com/nxrighthere/NetDynamics) and [more](https://github.com/raysan5/raylib/issues/1079)!
+Note that only key changes are listed here but there is way more! About **30 new functions**, multiple functions reviewed, bindings to [+40 programming languages](https://github.com/raysan5/raylib/blob/master/BINDINGS.md) and great samples/demos/tutorials [created by the community](https://discord.gg/raylib), including raylib integration with [Spine](https://github.com/WEREMSOFT/spine-raylib-runtimes), [Unity](https://unitycoder.com/blog/2019/12/09/using-raylib-dll-in-unity/), [Tiled](https://github.com/OnACoffeeBreak/raylib_tiled_import_with_tmx), [Nuklear](http://bedroomcoders.co.uk/implementing-a-3d-gui-with-raylib/), [enet](https://github.com/nxrighthere/NetDynamics) and [more](https://github.com/raysan5/raylib/issues/1079)!
 
 It has been **10 months of improvements** to create the best raylib ever.
 
@@ -291,3 +291,34 @@ Here the list with some highlights for `raylib 3.5`.
 A part of those changes, many new functions have been added, some redundant functions removed and many functions have been reviewed for consistency with the full API (function name, parameters name and order, code formatting...). Again, this release represents is a **great improvement for raylib and marks the way forward** for the library. Make sure to check [CHANGELOG](CHANGELOG) for details! Hope you enjoy it!
 
 Happy holidays! :)
+
+notes on raylib 3.7
+-------------------
+
+April 2021, it's been about 4 months since last raylib release and here it is already a new one, this time with a bunch of internal redesigns and improvements. Surprisingly, on April the 8th I was awarded for a second time with the [Google Open Source Peer Bonus Award](https://opensource.googleblog.com/2021/04/announcing-first-group-of-google-open-source-peer-bonus-winners.html) for my contribution to open source world with raylib and it seems the library is getting some traction, what a better moment for a new release? Let's see what can be found in this new version:
+
+Let's start with some numbers:
+
+ - **+100** closed issues (for a TOTAL of **+900**!)
+ - **+400** commits since previous RELEASE
+ - **+50** functions ADDED (**+30** of them to rlgl API)
+ - **+30** functions REVIEWED/REDESIGNED
+ - **+40** new contributors (for a TOTAL of **+210**!)
+ 
+Highlights for `raylib 3.7`:
+
+ - **REDESIGNED: `rlgl` module for greater abstraction level**. This suppose an **important change in raylib architecture**, now `rlgl` functionality is self-contained in the module and used by higher-level layers (specially by `core` module), those upper layers are the ones that expose functionality to the main API when required, for example the `Shaders`, `Mesh` and `Materials` functionality. Multiple `rlgl` functions have been renamed for consistency, in this case, following the `rl*()` prefix convention. Functions have also been reorganized internally by categories and `GenTexture*()` functions have been removed from the library and moved to [`models_material_pbr`](https://github.com/raysan5/raylib/blob/master/examples/models/models_material_pbr.c) example.
+ 
+ - **REDESIGNED: VR simulator and stereo rendering mechanism**. A **brand new API** has been added, more comprehensive and better integrated with raylib, the **new stereo rendering** can be combined with `RenderTexture` and `Shader` API allowing the user to **manage fbo and distortion shader directly**. Also, the new rendering mechanism supports **instancing on stereo rendering**! Check the updated [`core_vr_simulator`](https://github.com/raysan5/raylib/blob/master/examples/core/core_vr_simulator.c) example for reference!
+ 
+ - **ADDED: New file access callbacks system**. Several new callback functions have been added to the API to allow custom file loaders. A [nice example](https://github.com/RobLoach/raylib-physfs) it's the **raylib integration with a virtual file system** [PhysFS](https://icculus.org/physfs/).
+ 
+ - **ADDED: glTF animations support**. glTF is the preferred models file format to be used with raylib and along the addition of a models animation API on latest raylib versions, now animations support for glTF format has come to raylib, thanks for this great contribution to [Hristo Stamenov](@object71)
+ 
+ - **ADDED: Music streaming support from memory**. raylib has been adding the `Load*FromMemory()` option to all its supported file formats but **music streaming** was not supported yet... until now. Thanks to this great contribution by [Agnis "NeZvērs" Aldiņš](@nezvers), now raylib supports music streamming from memory data for all supported file formats: WAV, OGG, MP3, FLAC, XM and MOD.
+ 
+ - **RENAMED: enums values for consistency**. Most raylib enums names and values names have been renamed for consistency, now all value names start with the type of data they represent. It increases clarity and readability when using those values and also **improves overall library consistency**.
+ 
+Beside those key changes, many functions have been reviewed with improvements and bug fixes, many of them contributed by the community! Thanks! And again, this release sets a **new milestone for raylib library**. Make sure to check [CHANGELOG](CHANGELOG) for detailed list of changes! Hope you enjoy this new raylib installment!
+
+Happy **gamedev/tools/graphics** programming! :)

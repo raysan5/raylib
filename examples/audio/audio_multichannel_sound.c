@@ -26,8 +26,8 @@ int main(void)
 
     Sound fxWav = LoadSound("resources/sound.wav");         // Load WAV audio file
     Sound fxOgg = LoadSound("resources/target.ogg");        // Load OGG audio file
-    
-    SetSoundVolume(fxWav, 0.2);
+
+    SetSoundVolume(fxWav, 0.2f);
 
     SetTargetFPS(60);       // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
@@ -46,7 +46,7 @@ int main(void)
         BeginDrawing();
 
             ClearBackground(RAYWHITE);
-            
+
             DrawText("MULTICHANNEL SOUND PLAYING", 20, 20, 20, GRAY);
             DrawText("Press SPACE to play new ogg instance!", 200, 120, 20, LIGHTGRAY);
             DrawText("Press ENTER to play new wav instance!", 200, 180, 20, LIGHTGRAY);

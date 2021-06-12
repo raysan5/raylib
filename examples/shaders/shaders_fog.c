@@ -49,7 +49,7 @@ int main(void)
     InitWindow(screenWidth, screenHeight, "raylib [shaders] example - fog");
 
     // Define the camera to look into our 3d world
-    Camera camera = { 
+    Camera camera = {
         (Vector3){ 2.0f, 2.0f, 6.0f },      // position
         (Vector3){ 0.0f, 0.5f, 0.0f },      // target
         (Vector3){ 0.0f, 1.0f, 0.0f },      // up
@@ -62,23 +62,23 @@ int main(void)
     Texture texture = LoadTexture("resources/texel_checker.png");
 
     // Assign texture to default model material
-    modelA.materials[0].maps[MAP_DIFFUSE].texture = texture;
-    modelB.materials[0].maps[MAP_DIFFUSE].texture = texture;
-    modelC.materials[0].maps[MAP_DIFFUSE].texture = texture;
+    modelA.materials[0].maps[MATERIAL_MAP_DIFFUSE].texture = texture;
+    modelB.materials[0].maps[MATERIAL_MAP_DIFFUSE].texture = texture;
+    modelC.materials[0].maps[MATERIAL_MAP_DIFFUSE].texture = texture;
 
     // Load shader and set up some uniforms
-    Shader shader = LoadShader(TextFormat("resources/shaders/glsl%i/base_lighting.vs", GLSL_VERSION), 
+    Shader shader = LoadShader(TextFormat("resources/shaders/glsl%i/base_lighting.vs", GLSL_VERSION),
                                TextFormat("resources/shaders/glsl%i/fog.fs", GLSL_VERSION));
-    shader.locs[LOC_MATRIX_MODEL] = GetShaderLocation(shader, "matModel");
-    shader.locs[LOC_VECTOR_VIEW] = GetShaderLocation(shader, "viewPos");
+    shader.locs[SHADER_LOC_MATRIX_MODEL] = GetShaderLocation(shader, "matModel");
+    shader.locs[SHADER_LOC_VECTOR_VIEW] = GetShaderLocation(shader, "viewPos");
 
     // Ambient light level
     int ambientLoc = GetShaderLocation(shader, "ambient");
-    SetShaderValue(shader, ambientLoc, (float[4]){ 0.2f, 0.2f, 0.2f, 1.0f }, UNIFORM_VEC4);
-    
+    SetShaderValue(shader, ambientLoc, (float[4]){ 0.2f, 0.2f, 0.2f, 1.0f }, SHADER_UNIFORM_VEC4);
+
     float fogDensity = 0.15f;
     int fogDensityLoc = GetShaderLocation(shader, "fogDensity");
-    SetShaderValue(shader, fogDensityLoc, &fogDensity, UNIFORM_FLOAT);
+    SetShaderValue(shader, fogDensityLoc, &fogDensity, SHADER_UNIFORM_FLOAT);
 
     // NOTE: All models share the same shader
     modelA.materials[0].shader = shader;
@@ -100,26 +100,26 @@ int main(void)
         //----------------------------------------------------------------------------------
         UpdateCamera(&camera);              // Update camera
 
-        if (IsKeyDown(KEY_UP)) 
+        if (IsKeyDown(KEY_UP))
         {
-            fogDensity += 0.001;
-            if (fogDensity > 1.0) fogDensity = 1.0;
+            fogDensity += 0.001f;
+            if (fogDensity > 1.0f) fogDensity = 1.0f;
         }
-        
+
         if (IsKeyDown(KEY_DOWN))
         {
-            fogDensity -= 0.001;
-            if (fogDensity < 0.0) fogDensity = 0.0;
+            fogDensity -= 0.001f;
+            if (fogDensity < 0.0f) fogDensity = 0.0f;
         }
-        
-        SetShaderValue(shader, fogDensityLoc, &fogDensity, UNIFORM_FLOAT);
+
+        SetShaderValue(shader, fogDensityLoc, &fogDensity, SHADER_UNIFORM_FLOAT);
 
         // Rotate the torus
-        modelA.transform = MatrixMultiply(modelA.transform, MatrixRotateX(-0.025));
-        modelA.transform = MatrixMultiply(modelA.transform, MatrixRotateZ(0.012));
+        modelA.transform = MatrixMultiply(modelA.transform, MatrixRotateX(-0.025f));
+        modelA.transform = MatrixMultiply(modelA.transform, MatrixRotateZ(0.012f));
 
         // Update the light shader with the camera view position
-        SetShaderValue(shader, shader.locs[LOC_VECTOR_VIEW], &camera.position.x, UNIFORM_VEC3);
+        SetShaderValue(shader, shader.locs[SHADER_LOC_VECTOR_VIEW], &camera.position.x, SHADER_UNIFORM_VEC3);
         //----------------------------------------------------------------------------------
 
         // Draw
@@ -132,10 +132,10 @@ int main(void)
 
                 // Draw the three models
                 DrawModel(modelA, Vector3Zero(), 1.0f, WHITE);
-                DrawModel(modelB, (Vector3){ -2.6, 0, 0 }, 1.0f, WHITE);
-                DrawModel(modelC, (Vector3){ 2.6, 0, 0 }, 1.0f, WHITE);
+                DrawModel(modelB, (Vector3){ -2.6f, 0, 0 }, 1.0f, WHITE);
+                DrawModel(modelC, (Vector3){ 2.6f, 0, 0 }, 1.0f, WHITE);
 
-                for (int i = -20; i < 20; i += 2) DrawModel(modelA,(Vector3){ i, 0, 2 }, 1.0f, WHITE);
+                for (int i = -20; i < 20; i += 2) DrawModel(modelA,(Vector3){ (float)i, 0, 2 }, 1.0f, WHITE);
 
             EndMode3D();
 

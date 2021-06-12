@@ -170,8 +170,7 @@ _GLFWmonitor* _glfwAllocMonitor(const char* name, int widthMM, int heightMM)
     monitor->widthMM = widthMM;
     monitor->heightMM = heightMM;
 
-    if (name)
-        monitor->name = _glfw_strdup(name);
+    strncpy(monitor->name, name, sizeof(monitor->name) - 1);
 
     return monitor;
 }
@@ -189,7 +188,6 @@ void _glfwFreeMonitor(_GLFWmonitor* monitor)
     _glfwFreeGammaArrays(&monitor->currentRamp);
 
     free(monitor->modes);
-    free(monitor->name);
     free(monitor);
 }
 

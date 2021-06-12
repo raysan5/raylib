@@ -43,9 +43,9 @@ int main(void)
     for (int i = MAX_CIRCLES - 1; i >= 0; i--)
     {
         circles[i].alpha = 0.0f;
-        circles[i].radius = GetRandomValue(10, 40);
-        circles[i].position.x = GetRandomValue(circles[i].radius, screenWidth - circles[i].radius);
-        circles[i].position.y = GetRandomValue(circles[i].radius, screenHeight - circles[i].radius);
+        circles[i].radius = (float)GetRandomValue(10, 40);
+        circles[i].position.x = (float)GetRandomValue((int)circles[i].radius, (int)(screenWidth - circles[i].radius));
+        circles[i].position.y = (float)GetRandomValue((int)circles[i].radius, (int)(screenHeight - circles[i].radius));
         circles[i].speed = (float)GetRandomValue(1, 100)/2000.0f;
         circles[i].color = colors[GetRandomValue(0, 13)];
     }
@@ -87,7 +87,7 @@ int main(void)
 
         if (IsKeyDown(KEY_DOWN)) pitch -= 0.01f;
         else if (IsKeyDown(KEY_UP)) pitch += 0.01f;
-        
+
         SetMusicPitch(music, pitch);
 
         // Get timePlayed scaled to bar dimensions
@@ -104,9 +104,9 @@ int main(void)
             if (circles[i].alpha <= 0.0f)
             {
                 circles[i].alpha = 0.0f;
-                circles[i].radius = GetRandomValue(10, 40);
-                circles[i].position.x = GetRandomValue(circles[i].radius, screenWidth - circles[i].radius);
-                circles[i].position.y = GetRandomValue(circles[i].radius, screenHeight - circles[i].radius);
+                circles[i].radius = (float)GetRandomValue(10, 40);
+                circles[i].position.x = (float)GetRandomValue((int)circles[i].radius, (int)(screenWidth - circles[i].radius));
+                circles[i].position.y = (float)GetRandomValue((int)circles[i].radius, (int)(screenHeight - circles[i].radius));
                 circles[i].color = colors[GetRandomValue(0, 13)];
                 circles[i].speed = (float)GetRandomValue(1, 100)/2000.0f;
             }

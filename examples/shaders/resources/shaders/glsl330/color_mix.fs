@@ -10,6 +10,8 @@ uniform sampler2D texture0;
 uniform sampler2D texture1;
 uniform vec4 colDiffuse;
 
+uniform float divider = 0.5;
+
 out vec4 finalColor;
 
 void main()
@@ -19,7 +21,7 @@ void main()
     vec4 texelColor1 = texture(texture1, fragTexCoord);
 
     float x = fract(fragTexCoord.s);
-    float out = smoothstep(0.4, 0.6, x);
+    float final = smoothstep(divider - 0.1, divider + 0.1, x);
     
-    finalColor = mix(texelColor0, texelColor1, out);
+    finalColor = mix(texelColor0, texelColor1, final);
 }

@@ -31,67 +31,60 @@ RAYLIB_PATH            ?= ..\..
 ANDROID_ARCH           ?= ARM64
 ANDROID_API_VERSION     = 29
 
-# Android required path variables
-# NOTE: Starting with Android NDK r21, no more toolchain generation is required, NDK is the toolchain on itself
-ifeq ($(OS),Windows_NT)
-    ANDROID_NDK = C:/android-ndk
-    ANDROID_TOOLCHAIN = $(ANDROID_NDK)/toolchains/llvm/prebuilt/windows-x86_64
-else
-    ANDROID_NDK ?= /usr/lib/android/ndk
-    ANDROID_TOOLCHAIN = $(ANDROID_NDK)/toolchains/llvm/prebuilt/linux-x86_64
-endif
-
 ifeq ($(ANDROID_ARCH),ARM)
-    ANDROID_ARCH_NAME = armeabi-v7a
+    ANDROID_ARCH_NAME   = armeabi-v7a
 endif
 ifeq ($(ANDROID_ARCH),ARM64)
-    ANDROID_ARCH_NAME = arm64-v8a
+    ANDROID_ARCH_NAME   = arm64-v8a
 endif
 ifeq ($(ANDROID_ARCH),x86)
-    ANDROID_ARCH_NAME = i686
+    ANDROID_ARCH_NAME   = i686
 endif
 ifeq ($(ANDROID_ARCH),x86_64)
-    ANDROID_ARCH_NAME = x86_64
+    ANDROID_ARCH_NAME   = x86_64
 endif
 
 # Required path variables
 # NOTE: JAVA_HOME must be set to JDK (using OpenJDK 13)
 JAVA_HOME              ?= C:/open-jdk
-ANDROID_HOME            = C:/android-sdk
-ANDROID_TOOLCHAIN       = C:/android-ndk/toolchains/llvm/prebuilt/windows-x86_64
-ANDROID_BUILD_TOOLS     = $(ANDROID_HOME)/build-tools/29.0.3
+ANDROID_HOME           ?= C:/android-sdk
+ANDROID_NDK            ?= C:/android-ndk
+ANDROID_TOOLCHAIN      ?= $(ANDROID_NDK)/toolchains/llvm/prebuilt/windows-x86_64
+ANDROID_BUILD_TOOLS    ?= $(ANDROID_HOME)/build-tools/29.0.3
 ANDROID_PLATFORM_TOOLS  = $(ANDROID_HOME)/platform-tools
 
 # Android project configuration variables
 PROJECT_NAME           ?= raylib_game
 PROJECT_LIBRARY_NAME   ?= main
-PROJECT_BUILD_PATH     ?= android.$(PROJECT_NAME)
+PROJECT_BUILD_ID       ?= android
+PROJECT_BUILD_PATH     ?= $(PROJECT_BUILD_ID).$(PROJECT_NAME)
 PROJECT_RESOURCES_PATH ?= resources
-PROJECT_SOURCE_FILES   ?= raylib_game.c
+PROJECT_SOURCE_FILES   ?= simple_game.c
+NATIVE_APP_GLUE_PATH    = $(ANDROID_NDK)/sources/android/native_app_glue
 
 # Some source files are placed in directories, when compiling to some 
 # output directory other than source, that directory must pre-exist.
 # Here we get a list of required folders that need to be created on
 # code output folder $(PROJECT_BUILD_PATH)\obj to avoid GCC errors.
-PROJECT_SOURCE_DIRS = $(sort $(dir $(PROJECT_SOURCE_FILES)))
+PROJECT_SOURCE_DIRS     = $(sort $(dir $(PROJECT_SOURCE_FILES)))
 
 # Android app configuration variables
-APP_LABEL_NAME ?= rGame
-APP_COMPANY_NAME ?= raylib
-APP_PRODUCT_NAME ?= rgame
-APP_VERSION_CODE ?= 1
-APP_VERSION_NAME ?= 1.0
-APP_ICON_LDPI ?= $(RAYLIB_PATH)\logo\raylib_36x36.png
-APP_ICON_MDPI ?= $(RAYLIB_PATH)\logo\raylib_48x48.png
-APP_ICON_HDPI ?= $(RAYLIB_PATH)\logo\raylib_72x72.png
+APP_LABEL_NAME         ?= rGame
+APP_COMPANY_NAME       ?= raylib
+APP_PRODUCT_NAME       ?= rgame
+APP_VERSION_CODE       ?= 1
+APP_VERSION_NAME       ?= 1.0
+APP_ICON_LDPI          ?= $(RAYLIB_PATH)\logo\raylib_36x36.png
+APP_ICON_MDPI          ?= $(RAYLIB_PATH)\logo\raylib_48x48.png
+APP_ICON_HDPI          ?= $(RAYLIB_PATH)\logo\raylib_72x72.png
 APP_SCREEN_ORIENTATION ?= landscape
-APP_KEYSTORE_PASS ?= raylib
+APP_KEYSTORE_PASS      ?= raylib
 
 # Library type used for raylib: STATIC (.a) or SHARED (.so/.dll)
-RAYLIB_LIBTYPE ?= STATIC
+RAYLIB_LIBTYPE         ?= STATIC
 
 # Library path for libraylib.a/libraylib.so
-RAYLIB_LIB_PATH = $(RAYLIB_PATH)\src
+RAYLIB_LIB_PATH         = $(RAYLIB_PATH)\src
 
 # Shared libs must be added to APK if required
 # NOTE: Generated NativeLoader.java automatically load those libraries
@@ -107,6 +100,14 @@ endif
 ifeq ($(ANDROID_ARCH),ARM64)
     CC = $(ANDROID_TOOLCHAIN)/bin/aarch64-linux-android$(ANDROID_API_VERSION)-clang
     AR = $(ANDROID_TOOLCHAIN)/bin/aarch64-linux-android-ar
+endif
+ifeq ($(ANDROID_ARCH),x86)
+    CC = $(ANDROID_TOOLCHAIN)/bin/i686-linux-android$(ANDROID_API_VERSION)-clang
+    AR = $(ANDROID_TOOLCHAIN)/bin/i686-linux-android-ar
+endif
+ifeq ($(ANDROID_ARCH),x86_64)
+    CC = $(ANDROID_TOOLCHAIN)/bin/x86_64-linux-android$(ANDROID_API_VERSION)-clang
+    AR = $(ANDROID_TOOLCHAIN)/bin/x86_64-linux-android-ar
 endif
 
 # Compiler flags for arquitecture
@@ -124,7 +125,7 @@ CFLAGS += -Wall -Wa,--noexecstack -Wformat -Werror=format-security -no-canonical
 CFLAGS += -DANDROID -DPLATFORM_ANDROID -D__ANDROID_API__=$(ANDROID_API_VERSION)
 
 # Paths containing required header files
-INCLUDE_PATHS = -I. -I$(RAYLIB_PATH)/src -I$(RAYLIB_PATH)/src/external/android/native_app_glue
+INCLUDE_PATHS = -I. -I$(RAYLIB_PATH)/src -I$(NATIVE_APP_GLUE_PATH)
 
 # Linker options
 LDFLAGS = -Wl,-soname,lib$(PROJECT_LIBRARY_NAME).so -Wl,--exclude-libs,libatomic.a 
@@ -154,8 +155,8 @@ all: create_temp_project_dirs \
      compile_project_class \
      compile_project_class_dex \
      create_project_apk_package \
-     sign_project_apk_package \
-     zipalign_project_apk_package
+     zipalign_project_apk_package \
+     sign_project_apk_package
 
 # Create required temp directories for APK building
 create_temp_project_dirs:
@@ -253,7 +254,7 @@ config_project_package:
 
 # Compile native_app_glue code as static library: obj/libnative_app_glue.a
 compile_native_app_glue:
-	$(CC) -c $(RAYLIB_PATH)/src/external/android/native_app_glue/android_native_app_glue.c -o $(PROJECT_BUILD_PATH)/obj/native_app_glue.o $(CFLAGS)
+	$(CC) -c $(NATIVE_APP_GLUE_PATH)/android_native_app_glue.c -o $(PROJECT_BUILD_PATH)/obj/native_app_glue.o $(CFLAGS)
 	$(AR) rcs $(PROJECT_BUILD_PATH)/obj/libnative_app_glue.a $(PROJECT_BUILD_PATH)/obj/native_app_glue.o
 
 # Compile project code into a shared library: lib/lib$(PROJECT_LIBRARY_NAME).so 

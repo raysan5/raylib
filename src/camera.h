@@ -91,7 +91,7 @@
     typedef enum {
         CAMERA_PERSPECTIVE = 0,
         CAMERA_ORTHOGRAPHIC
-    } CameraType;
+    } CameraProjection;
 #endif
 
 #ifdef __cplusplus
@@ -222,7 +222,7 @@ static CameraData CAMERA = {        // Global CAMERA state context
     .moveControl = { 'W', 'S', 'D', 'A', 'E', 'Q' },
     .smoothZoomControl = 341,       // raylib: KEY_LEFT_CONTROL
     .altControl = 342,              // raylib: KEY_LEFT_ALT
-    .panControl = 2                 // raylib: MOUSE_MIDDLE_BUTTON
+    .panControl = 2                 // raylib: MOUSE_BUTTON_MIDDLE
 };
 
 //----------------------------------------------------------------------------------

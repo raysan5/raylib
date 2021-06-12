@@ -25,7 +25,7 @@
 
 # Define required raylib variables
 PROJECT_NAME       ?= raylib_examples
-RAYLIB_VERSION     ?= 3.5.0
+RAYLIB_VERSION     ?= 3.7.0
 RAYLIB_PATH        ?= ..
 
 # Define default options
@@ -177,15 +177,12 @@ ifeq ($(PLATFORM),PLATFORM_WEB)
     CC = emcc
 endif
 
-# Define default make program: Mingw32-make
-MAKE = mingw32-make
+# Define default make program
+MAKE = make
 
 ifeq ($(PLATFORM),PLATFORM_DESKTOP)
-    ifeq ($(PLATFORM_OS),LINUX)
-        MAKE = make
-    endif
-    ifeq ($(PLATFORM_OS),OSX)
-        MAKE = make
+    ifeq ($(PLATFORM_OS),WINDOWS)
+        MAKE = mingw32-make
     endif
 endif
 
@@ -260,8 +257,8 @@ ifeq ($(PLATFORM),PLATFORM_WEB)
 endif
 
 # Define include paths for required headers
-# NOTE: Several external required libraries (stb and others)
-INCLUDE_PATHS = -I. -I$(RAYLIB_PATH)/src -I$(RAYLIB_PATH)/src/external
+# NOTE: Some external/extras libraries could be required (stb, physac, easings...)
+INCLUDE_PATHS = -I. -I$(RAYLIB_PATH)/src -I$(RAYLIB_PATH)/src/external -I$(RAYLIB_PATH)/src/extras
 
 # Define additional directories containing required header files
 ifeq ($(PLATFORM),PLATFORM_RPI)
@@ -280,7 +277,7 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
         INCLUDE_PATHS += -I/usr/local/include
     endif
     ifeq ($(PLATFORM_OS),LINUX)
-        INCLUDE_PATHS = -I$(RAYLIB_H_INSTALL_PATH) -I. -I$(RAYLIB_PATH)/src -I$(RAYLIB_PATH)/src/external
+        INCLUDE_PATHS += -I$(RAYLIB_H_INSTALL_PATH)
     endif
 endif
 
@@ -309,10 +306,6 @@ endif
 
 ifeq ($(PLATFORM),PLATFORM_RPI)
     LDFLAGS += -L/opt/vc/lib
-endif
-
-ifeq ($(PLATFORM),PLATFORM_DRM)
-    LDFLAGS += -lGLESv2 -lEGL -ldrm -lgbm
 endif
 
 # Define any libraries required on linking
@@ -402,7 +395,8 @@ CORE = \
     core/core_vr_simulator \
     core/core_loading_thread \
     core/core_quat_conversion \
-    core/core_window_flags
+    core/core_window_flags \
+    core/core_split_screen
 
 SHAPES = \
     shapes/shapes_basic_shapes \
@@ -440,7 +434,8 @@ TEXTURES = \
     textures/textures_sprite_explosion \
     textures/textures_bunnymark \
     textures/textures_blend_modes \
-    textures/textures_draw_tiled
+    textures/textures_draw_tiled \
+    textures/textures_poly
 
 TEXT = \
     text/text_raylib_fonts \
@@ -452,7 +447,8 @@ TEXT = \
     text/text_input_box \
     text/text_writing_anim \
     text/text_rectangle_bounds \
-    text/text_unicode
+    text/text_unicode \
+    text/text_draw_3d
 
 MODELS = \
     models/models_animation \
@@ -488,7 +484,7 @@ SHADERS = \
     shaders/shaders_simple_mask \
     shaders/shaders_spotlight \
     shaders/shaders_hot_reloading \
-    shaders/shaders_rlgl_mesh_instanced \
+    shaders/shaders_mesh_instancing \
     shaders/shaders_multi_sample2d
 
 AUDIO = \

@@ -1,7 +1,7 @@
 # Setup the project and settings
 project(raylib C)
-set(PROJECT_VERSION 3.5.0)
-set(API_VERSION 351)
+set(PROJECT_VERSION 3.7.0)
+set(API_VERSION 370)
 
 include(GNUInstallDirs)
 include(JoinPaths)
@@ -10,6 +10,8 @@ include(JoinPaths)
 if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
     if(RAYLIB_IS_MAIN)
         set(default_build_type Debug)
+    else()
+        message(WARNING "Default build type is not set (CMAKE_BUILD_TYPE)")
     endif()
 
     message(STATUS "Setting build type to '${default_build_type}' as none was specified.")
@@ -18,15 +20,15 @@ if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
     set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "Debug" "Release" "MinSizeRel" "RelWithDebInfo")
 endif()
 
-# Get the sources together
+# Used as public API to be included into other projects
 set(raylib_public_headers
     raylib.h
     rlgl.h
-    physac.h
     raymath.h
     raudio.h
     )
 
+# Sources to be compiled
 set(raylib_sources
     core.c
     models.c
@@ -36,7 +38,7 @@ set(raylib_sources
     utils.c
     )
 
-# cmake/GlfwImport.cmake handles the details around the inclusion of glfw
+# <root>/cmake/GlfwImport.cmake handles the details around the inclusion of glfw
 include(GlfwImport)
 
 
@@ -47,56 +49,42 @@ else ()
     MESSAGE(STATUS "Audio Backend: None (-DUSE_AUDIO=OFF)")
 endif ()
 
+# Sets additional platform options and link libraries for each platform
+# also selects the proper graphics API and version for that platform
+# Produces a variable LIBS_PRIVATE that will be used later
 include(LibraryConfigurations)
 
-set(LIBS_PRIVATE ${LIBS_PRIVATE} ${OPENAL_LIBRARY})
+add_library(raylib ${raylib_sources} ${raylib_public_headers})
 
-if (STATIC)
+if (NOT BUILD_SHARED_LIBS)
     MESSAGE(STATUS "Building raylib static library")
-    
-    add_library(raylib STATIC ${raylib_sources} ${raylib_public_headers})
     add_library(raylib_static ALIAS raylib)
-    
-    add_test("pkg-config--static" ${PROJECT_SOURCE_DIR}/../cmake/test-pkgconfig.sh --static)
-endif (STATIC)
-
-
-if (SHARED)
+else()
     MESSAGE(STATUS "Building raylib shared library")
-    add_library(raylib SHARED ${raylib_sources} ${raylib_public_headers})
-    
     if (MSVC)
         target_compile_definitions(raylib
                                    PRIVATE $<BUILD_INTERFACE:BUILD_LIBTYPE_SHARED>
                                    INTERFACE $<INSTALL_INTERFACE:USE_LIBTYPE_SHARED>
                                    )
     endif ()
-    
-    add_test("pkg-config" ${PROJECT_SOURCE_DIR}/../cmake/test-pkgconfig.sh)
-endif ()
+endif()
 
-# Setting target properties
 set_target_properties(raylib PROPERTIES
                       PUBLIC_HEADER "${raylib_public_headers}"
                       VERSION ${PROJECT_VERSION}
                       SOVERSION ${API_VERSION}
                       )
 
-if (WITH_PIC OR SHARED)
+if (WITH_PIC OR BUILD_SHARED_LIBS)
     set_property(TARGET raylib PROPERTY POSITION_INDEPENDENT_CODE ON)
 endif ()
 
-# Linking libraries
 target_link_libraries(raylib "${LIBS_PRIVATE}")
-if (${PLATFORM} MATCHES "Desktop")
-    target_link_libraries(raylib glfw)
-endif ()
 
-# Adding compile definitions
-target_compile_definitions(raylib
-                           PUBLIC "${PLATFORM_CPP}"
-                           PUBLIC "${GRAPHICS}"
-                           )
+# Sets some compile time definitions for the pre-processor
+# If CUSTOMIZE_BUILD option is on you will not use config.h by default
+# and you will be able to select more build options
+include(CompileDefinitions)
 
 # Registering include directories
 target_include_directories(raylib
@@ -105,7 +93,6 @@ target_include_directories(raylib
                            $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
                            PRIVATE
                            ${CMAKE_CURRENT_SOURCE_DIR}
-                           ${CMAKE_BINARY_DIR} # For cmake/config.h
                            ${OPENGL_INCLUDE_DIR}
                            ${OPENAL_INCLUDE_DIR}
                            )
@@ -113,6 +100,8 @@ target_include_directories(raylib
 # Copy the header files to the build directory for convenience
 file(COPY ${raylib_public_headers} DESTINATION "include")
 
+# Includes information on how the library will be installed on the system
+# when cmake --install is run
 include(InstallConfigurations)
 
 # Print the flags for the user
@@ -126,6 +115,7 @@ message(STATUS "Compiling with the flags:")
 message(STATUS "  PLATFORM=" ${PLATFORM_CPP})
 message(STATUS "  GRAPHICS=" ${GRAPHICS})
 
+# Options if you want to create an installer using CPack
 include(PackConfigurations)
 
 enable_testing()

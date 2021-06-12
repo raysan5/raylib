@@ -196,12 +196,6 @@ const _GLFWfbconfig* _glfwChooseFBConfig(const _GLFWfbconfig* desired,
             continue;
         }
 
-        if (desired->doublebuffer != current->doublebuffer)
-        {
-            // Double buffering is a hard constraint
-            continue;
-        }
-
         // Count number of missing buffers
         {
             missing = 0;
@@ -570,7 +564,9 @@ GLFWbool _glfwRefreshContextAttribs(_GLFWwindow* window,
         PFNGLCLEARPROC glClear = (PFNGLCLEARPROC)
             window->context.getProcAddress("glClear");
         glClear(GL_COLOR_BUFFER_BIT);
-        window->context.swapBuffers(window);
+
+        if (window->doublebuffer)
+            window->context.swapBuffers(window);
     }
 
     glfwMakeContextCurrent((GLFWwindow*) previous);

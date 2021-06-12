@@ -180,7 +180,7 @@ int main(int argc, char **argv)
         if (IsKeyPressed(KEY_SPACE)) RandomizeEmoji();
 
         // Set the selected emoji and copy its text to clipboard
-        if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON) && (hovered != -1) && (hovered != selected))
+        if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && (hovered != -1) && (hovered != selected))
         {
             selected = hovered;
             selectedPos = hoveredPos;
@@ -203,15 +203,15 @@ int main(int argc, char **argv)
             for (int i = 0; i < SIZEOF(emoji); ++i)
             {
                 const char *txt = &emojiCodepoints[emoji[i].index];
-                Rectangle emojiRect = { pos.x, pos.y, fontEmoji.baseSize, fontEmoji.baseSize };
+                Rectangle emojiRect = { pos.x, pos.y, (float)fontEmoji.baseSize, (float)fontEmoji.baseSize };
 
                 if (!CheckCollisionPointRec(mouse, emojiRect))
                 {
-                    DrawTextEx(fontEmoji, txt, pos, fontEmoji.baseSize, 1.0, selected == i ? emoji[i].color : Fade(LIGHTGRAY, 0.4f));
+                    DrawTextEx(fontEmoji, txt, pos, (float)fontEmoji.baseSize, 1.0f, selected == i ? emoji[i].color : Fade(LIGHTGRAY, 0.4f));
                 }
                 else
                 {
-                    DrawTextEx(fontEmoji, txt, pos, fontEmoji.baseSize, 1.0, emoji[i].color );
+                    DrawTextEx(fontEmoji, txt, pos, (float)fontEmoji.baseSize, 1.0f, emoji[i].color );
                     hovered = i;
                     hoveredPos = pos;
                 }
@@ -235,7 +235,7 @@ int main(int argc, char **argv)
                     TextIsEqual(messages[message].language, "Japanese")) font = &fontAsian;
 
                 // Calculate size for the message box (approximate the height and width)
-                Vector2 sz = MeasureTextEx(*font, messages[message].text, font->baseSize, 1.0f);
+                Vector2 sz = MeasureTextEx(*font, messages[message].text, (float)font->baseSize, 1.0f);
                 if (sz.x > 300) { sz.y *= sz.x/300; sz.x = 300; }
                 else if (sz.x < 160) sz.x = 160;
 
@@ -267,15 +267,15 @@ int main(int argc, char **argv)
 
                 // Draw the main text message
                 Rectangle textRect = { msgRect.x + horizontalPadding/2, msgRect.y + verticalPadding/2, msgRect.width - horizontalPadding, msgRect.height };
-                DrawTextRec(*font, messages[message].text, textRect, font->baseSize, 1.0f, true, WHITE);
+                DrawTextRec(*font, messages[message].text, textRect, (float)font->baseSize, 1.0f, true, WHITE);
 
                 // Draw the info text below the main message
-                int size = strlen(messages[message].text);
+                int size = (int)strlen(messages[message].text);
                 int len = GetCodepointsCount(messages[message].text);
                 const char *info = TextFormat("%s %u characters %i bytes", messages[message].language, len, size);
                 sz = MeasureTextEx(GetFontDefault(), info, 10, 1.0f);
                 Vector2 pos = { textRect.x + textRect.width - sz.x,  msgRect.y + msgRect.height - sz.y - 2 };
-                DrawText(info, pos.x, pos.y, 10, RAYWHITE);
+                DrawText(info, (int)pos.x, (int)pos.y, 10, RAYWHITE);
             }
             //------------------------------------------------------------------------------
 

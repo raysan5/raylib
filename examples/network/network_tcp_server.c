@@ -24,10 +24,10 @@ int main(void)
     InitWindow(screenWidth, screenHeight, "raylib [network] example - tcp server");
 
     InitNetworkDevice();    // Init network communications
-    
+
     const char *pingmsg = "Ping!";
     const char *pongmsg = "Pong!";
-    
+
     bool ping = false;
     bool pong = false;
     float elapsed = 0.0f;
@@ -35,32 +35,32 @@ int main(void)
     bool connected = false;
 
     SocketConfig serverConfig = {
-        .host = "127.0.0.1", 
-        .port = "4950", 
+        .host = "127.0.0.1",
+        .port = "4950",
         .type = SOCKET_TCP,
         .server = true,
         .nonblocking = true
     };
-    
+
     SocketConfig connectionConfig = { .nonblocking = true };
-    
+
     Socket *connection = NULL;
     SocketSet *socketSet = NULL;
     SocketResult *serverResult = NULL;
     char receiveBuffer[512] = { 0 };
-    
+
     //  Create the server: getaddrinfo + socket + setsockopt + bind + listen
     serverResult = LoadSocketResult();
-    if (!SocketCreate(&serverConfig, serverResult)) 
+    if (!SocketCreate(&serverConfig, serverResult))
     {
         TraceLog(LOG_WARNING, "Failed to open server: status %d, errno %d", serverResult->status, serverResult->socket->status);
-    } 
+    }
     else
     {
         if (!SocketBind(&serverConfig, serverResult))
         {
             TraceLog(LOG_WARNING, "Failed to bind server: status %d, errno %d", serverResult->status, serverResult->socket->status);
-        } 
+        }
         else
         {
             if (!(serverConfig.type == SOCKET_UDP))
@@ -94,7 +94,7 @@ int main(void)
 
             // IsSocketReady, if the socket is ready, attempt to receive data from the socket
             int bytesRecv = 0;
-            if (IsSocketReady(connection)) bytesRecv = SocketReceive(connection, receiveBuffer, strlen(pingmsg) + 1);
+            if (IsSocketReady(connection)) bytesRecv = SocketReceive(connection, receiveBuffer, (int)strlen(pingmsg) + 1);
 
             // If we received data, was that data a "Ping!" or a "Pong!"
             if (bytesRecv > 0)
@@ -107,17 +107,17 @@ int main(void)
             elapsed += GetFrameTime();
             if (elapsed > delay)
             {
-                if (ping) 
+                if (ping)
                 {
                     ping = false;
-                    SocketSend(connection, pingmsg, strlen(pingmsg) + 1);
-                } 
+                    SocketSend(connection, pingmsg, (int)strlen(pingmsg) + 1);
+                }
                 else if (pong)
                 {
                     pong = false;
-                    SocketSend(connection, pongmsg, strlen(pingmsg) + 1);
+                    SocketSend(connection, pongmsg, (int)strlen(pingmsg) + 1);
                 }
-                
+
                 elapsed = 0.0f;
             }
         }
@@ -127,9 +127,9 @@ int main(void)
             int active = CheckSockets(socketSet, 0);
             if (active != 0) TraceLog(LOG_DEBUG, "There are currently %d socket(s) with data to be processed.", active);
 
-            if (active > 0) 
+            if (active > 0)
             {
-                if ((connection = SocketAccept(serverResult->socket, &connectionConfig)) != NULL) 
+                if ((connection = SocketAccept(serverResult->socket, &connectionConfig)) != NULL)
                 {
                     AddSocket(socketSet, connection);
                     connected = true;
@@ -144,7 +144,7 @@ int main(void)
         BeginDrawing();
 
             ClearBackground(RAYWHITE);
-            
+
             // TODO: Draw relevant connection info
 
         EndDrawing();
@@ -154,7 +154,7 @@ int main(void)
     // De-Initialization
     //--------------------------------------------------------------------------------------
     CloseNetworkDevice();   // Close network communication
-    
+
     CloseWindow();          // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
 

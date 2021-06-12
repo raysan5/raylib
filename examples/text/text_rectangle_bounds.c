@@ -29,14 +29,14 @@ tempor incididunt ut labore et dolore magna aliqua. Nec ullamcorper sit amet ris
     bool resizing = false;
     bool wordWrap = true;
 
-    Rectangle container = { 25, 25, screenWidth - 50, screenHeight - 250};
+    Rectangle container = { 25.0f, 25.0f, screenWidth - 50.0f, screenHeight - 250.0f };
     Rectangle resizer = { container.x + container.width - 17, container.y + container.height - 17, 14, 14 };
 
     // Minimum width and heigh for the container rectangle
-    const int minWidth = 60;
-    const int minHeight = 60;
-    const int maxWidth = screenWidth - 50;
-    const int maxHeight = screenHeight - 160;
+    const float minWidth = 60;
+    const float minHeight = 60;
+    const float maxWidth = screenWidth - 50.0f;
+    const float maxHeight = screenHeight - 160.0f;
 
     Vector2 lastMouse = { 0.0f, 0.0f }; // Stores last mouse coordinates
     Color borderColor = MAROON;         // Container border color
@@ -61,18 +61,18 @@ tempor incididunt ut labore et dolore magna aliqua. Nec ullamcorper sit amet ris
         // Container resizing logic
         if (resizing)
         {
-            if (IsMouseButtonReleased(MOUSE_LEFT_BUTTON)) resizing = false;
+            if (IsMouseButtonReleased(MOUSE_BUTTON_LEFT)) resizing = false;
 
-            int width = container.width + (mouse.x - lastMouse.x);
+            float width = container.width + (mouse.x - lastMouse.x);
             container.width = (width > minWidth)? ((width < maxWidth)? width : maxWidth) : minWidth;
 
-            int height = container.height + (mouse.y - lastMouse.y);
+            float height = container.height + (mouse.y - lastMouse.y);
             container.height = (height > minHeight)? ((height < maxHeight)? height : maxHeight) : minHeight;
         }
         else
         {
             // Check if we're resizing
-            if (IsMouseButtonDown(MOUSE_LEFT_BUTTON) && CheckCollisionPointRec(mouse, resizer)) resizing = true;
+            if (IsMouseButtonDown(MOUSE_BUTTON_LEFT) && CheckCollisionPointRec(mouse, resizer)) resizing = true;
         }
 
         // Move resizer rectangle properly
@@ -99,16 +99,16 @@ tempor incididunt ut labore et dolore magna aliqua. Nec ullamcorper sit amet ris
 
             // Draw bottom info
             DrawRectangle(0, screenHeight - 54, screenWidth, 54, GRAY);
-            DrawRectangleRec((Rectangle){ 382, screenHeight - 34, 12, 12 }, MAROON);
-            
+            DrawRectangleRec((Rectangle){ 382.0f, screenHeight - 34.0f, 12.0f, 12.0f }, MAROON);
+
             DrawText("Word Wrap: ", 313, screenHeight-115, 20, BLACK);
             if (wordWrap) DrawText("ON", 447, screenHeight - 115, 20, RED);
             else DrawText("OFF", 447, screenHeight - 115, 20, BLACK);
-            
+
             DrawText("Press [SPACE] to toggle word wrap", 218, screenHeight - 86, 20, GRAY);
 
             DrawText("Click hold & drag the    to resize the container", 155, screenHeight - 38, 20, RAYWHITE);
-            
+
         EndDrawing();
         //----------------------------------------------------------------------------------
     }

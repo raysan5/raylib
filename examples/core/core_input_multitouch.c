@@ -42,13 +42,13 @@ int main(void)
 
         ballColor = BEIGE;
 
-        if (IsMouseButtonDown(MOUSE_LEFT_BUTTON)) ballColor = MAROON;
-        if (IsMouseButtonDown(MOUSE_MIDDLE_BUTTON)) ballColor = LIME;
-        if (IsMouseButtonDown(MOUSE_RIGHT_BUTTON)) ballColor = DARKBLUE;
+        if (IsMouseButtonDown(MOUSE_BUTTON_LEFT)) ballColor = MAROON;
+        if (IsMouseButtonDown(MOUSE_BUTTON_MIDDLE)) ballColor = LIME;
+        if (IsMouseButtonDown(MOUSE_BUTTON_RIGHT)) ballColor = DARKBLUE;
 
-        if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) touchCounter = 10;
-        if (IsMouseButtonPressed(MOUSE_MIDDLE_BUTTON)) touchCounter = 10;
-        if (IsMouseButtonPressed(MOUSE_RIGHT_BUTTON)) touchCounter = 10;
+        if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) touchCounter = 10;
+        if (IsMouseButtonPressed(MOUSE_BUTTON_MIDDLE)) touchCounter = 10;
+        if (IsMouseButtonPressed(MOUSE_BUTTON_RIGHT)) touchCounter = 10;
 
         if (touchCounter > 0) touchCounter--;
         //----------------------------------------------------------------------------------
@@ -68,12 +68,12 @@ int main(void)
                 {
                     // Draw circle and touch index number
                     DrawCircleV(touchPosition, 34, ORANGE);
-                    DrawText(TextFormat("%d", i), touchPosition.x - 10, touchPosition.y - 70, 40, BLACK);
+                    DrawText(TextFormat("%d", i), (int)touchPosition.x - 10, (int)touchPosition.y - 70, 40, BLACK);
                 }
             }
 
             // Draw the normal mouse location
-            DrawCircleV(ballPosition, 30 + (touchCounter*3), ballColor);
+            DrawCircleV(ballPosition, 30 + (touchCounter*3.0f), ballColor);
 
             DrawText("move ball with mouse and click mouse button to change color", 10, 10, 20, DARKGRAY);
             DrawText("touch the screen at multiple locations to get multiple balls", 10, 30, 20, DARKGRAY);

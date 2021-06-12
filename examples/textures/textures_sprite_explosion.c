@@ -30,10 +30,10 @@ int main(void)
 
     // Load explosion texture
     Texture2D explosion = LoadTexture("resources/explosion.png");
-    
+
     // Init variables for animation
-    int frameWidth = explosion.width/NUM_FRAMES_PER_LINE;   // Sprite one frame rectangle width
-    int frameHeight = explosion.height/NUM_LINES;           // Sprite one frame rectangle height
+    float frameWidth = explosion.width/NUM_FRAMES_PER_LINE;   // Sprite one frame rectangle width
+    float frameHeight = explosion.height/NUM_LINES;           // Sprite one frame rectangle height
     int currentFrame = 0;
     int currentLine = 0;
 
@@ -53,13 +53,13 @@ int main(void)
         //----------------------------------------------------------------------------------
 
         // Check for mouse button pressed and activate explosion (if not active)
-        if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON) && !active)
+        if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && !active)
         {
             position = GetMousePosition();
             active = true;
 
-            position.x -= frameWidth/2;
-            position.y -= frameHeight/2;
+            position.x -= frameWidth/2.0f;
+            position.y -= frameHeight/2.0f;
 
             PlaySound(fxBoom);
         }

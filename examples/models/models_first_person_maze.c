@@ -32,14 +32,13 @@ int main(void)
 
     // NOTE: By default each cube is mapped to one part of texture atlas
     Texture2D texture = LoadTexture("resources/cubicmap_atlas.png");    // Load map texture
-    model.materials[0].maps[MAP_DIFFUSE].texture = texture;             // Set map diffuse texture
+    model.materials[0].maps[MATERIAL_MAP_DIFFUSE].texture = texture;             // Set map diffuse texture
 
     // Get map image data to be used for collision detection
-    Color *mapPixels = GetImageData(imMap);
+    Color *mapPixels = LoadImageColors(imMap);
     UnloadImage(imMap);             // Unload image from RAM
 
     Vector3 mapPosition = { -16.0f, 0.0f, -8.0f };  // Set model position
-    Vector3 playerPosition = camera.position;       // Set player position
 
     SetCameraMode(camera, CAMERA_FIRST_PERSON);     // Set camera mode
 
@@ -93,13 +92,10 @@ int main(void)
             ClearBackground(RAYWHITE);
 
             BeginMode3D(camera);
-
                 DrawModel(model, mapPosition, 1.0f, WHITE);                     // Draw maze map
-                //DrawCubeV(playerPosition, (Vector3){ 0.2f, 0.4f, 0.2f }, RED);  // Draw player
-
             EndMode3D();
 
-            DrawTextureEx(cubicmap, (Vector2){ GetScreenWidth() - cubicmap.width*4 - 20, 20 }, 0.0f, 4.0f, WHITE);
+            DrawTextureEx(cubicmap, (Vector2){ GetScreenWidth() - cubicmap.width*4.0f - 20, 20.0f }, 0.0f, 4.0f, WHITE);
             DrawRectangleLines(GetScreenWidth() - cubicmap.width*4 - 20, 20, cubicmap.width*4, cubicmap.height*4, GREEN);
 
             // Draw player position radar
@@ -113,13 +109,13 @@ int main(void)
 
     // De-Initialization
     //--------------------------------------------------------------------------------------
-    free(mapPixels);            // Unload color array
+    UnloadImageColors(mapPixels);   // Unload color array
 
-    UnloadTexture(cubicmap);    // Unload cubicmap texture
-    UnloadTexture(texture);     // Unload map texture
-    UnloadModel(model);         // Unload map model
+    UnloadTexture(cubicmap);        // Unload cubicmap texture
+    UnloadTexture(texture);         // Unload map texture
+    UnloadModel(model);             // Unload map model
 
-    CloseWindow();              // Close window and OpenGL context
+    CloseWindow();                  // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
 
     return 0;

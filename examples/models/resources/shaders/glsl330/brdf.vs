@@ -1,11 +1,3 @@
-/*******************************************************************************************
-*
-*   rPBR [shader] - Bidirectional reflectance distribution function vertex shader
-*
-*   Copyright (c) 2017 Victor Fisac
-*
-**********************************************************************************************/
-
 #version 330
 
 // Input vertex attributes

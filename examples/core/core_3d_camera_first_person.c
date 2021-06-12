@@ -28,7 +28,7 @@ int main(void)
     camera.target = (Vector3){ 0.0f, 1.8f, 0.0f };
     camera.up = (Vector3){ 0.0f, 1.0f, 0.0f };
     camera.fovy = 60.0f;
-    camera.type = CAMERA_PERSPECTIVE;
+    camera.projection = CAMERA_PERSPECTIVE;
 
     // Generates some random columns
     float heights[MAX_COLUMNS] = { 0 };
@@ -38,7 +38,7 @@ int main(void)
     for (int i = 0; i < MAX_COLUMNS; i++)
     {
         heights[i] = (float)GetRandomValue(1, 12);
-        positions[i] = (Vector3){ GetRandomValue(-15, 15), heights[i]/2, GetRandomValue(-15, 15) };
+        positions[i] = (Vector3){ (float)GetRandomValue(-15, 15), heights[i]/2.0f, (float)GetRandomValue(-15, 15) };
         colors[i] = (Color){ GetRandomValue(20, 255), GetRandomValue(10, 55), 30, 255 };
     }
 

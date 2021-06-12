@@ -31,7 +31,7 @@ int main(void)
 
     // NOTE: By default each cube is mapped to one part of texture atlas
     Texture2D texture = LoadTexture("resources/cubicmap_atlas.png");    // Load map texture
-    model.materials[0].maps[MAP_DIFFUSE].texture = texture;             // Set map diffuse texture
+    model.materials[0].maps[MATERIAL_MAP_DIFFUSE].texture = texture;             // Set map diffuse texture
 
     Vector3 mapPosition = { -16.0f, 0.0f, -8.0f };          // Set model position
 
@@ -62,7 +62,7 @@ int main(void)
 
             EndMode3D();
 
-            DrawTextureEx(cubicmap, (Vector2){ screenWidth - cubicmap.width*4 - 20, 20 }, 0.0f, 4.0f, WHITE);
+            DrawTextureEx(cubicmap, (Vector2){ screenWidth - cubicmap.width*4.0f - 20, 20.0f }, 0.0f, 4.0f, WHITE);
             DrawRectangleLines(screenWidth - cubicmap.width*4 - 20, 20, cubicmap.width*4, cubicmap.height*4, GREEN);
 
             DrawText("cubicmap image used to", 658, 90, 10, GRAY);

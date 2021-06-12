@@ -112,12 +112,12 @@ EASEDEF float EaseSineOut(float t, float b, float c, float d) { return (c*sinf(t
 EASEDEF float EaseSineInOut(float t, float b, float c, float d) { return (-c/2.0f*(cosf(PI*t/d) - 1.0f) + b); }
 
 // Circular Easing functions
-EASEDEF float EaseCircIn(float t, float b, float c, float d) { t /= d; return (-c*(sqrt(1.0f - t*t) - 1.0f) + b); }
-EASEDEF float EaseCircOut(float t, float b, float c, float d) { t = t/d - 1.0f; return (c*sqrt(1.0f - t*t) + b); }
+EASEDEF float EaseCircIn(float t, float b, float c, float d) { t /= d; return (-c*(sqrtf(1.0f - t*t) - 1.0f) + b); }
+EASEDEF float EaseCircOut(float t, float b, float c, float d) { t = t/d - 1.0f; return (c*sqrtf(1.0f - t*t) + b); }
 EASEDEF float EaseCircInOut(float t, float b, float c, float d)
 {
-    if ((t/=d/2.0f) < 1.0f) return (-c/2.0f*(sqrt(1.0f - t*t) - 1.0f) + b);
-    t -= 2.0f; return (c/2.0f*(sqrt(1.0f - t*t) + 1.0f) + b);
+    if ((t/=d/2.0f) < 1.0f) return (-c/2.0f*(sqrtf(1.0f - t*t) - 1.0f) + b);
+    t -= 2.0f; return (c/2.0f*(sqrtf(1.0f - t*t) + 1.0f) + b);
 }
 
 // Cubic Easing functions
@@ -139,15 +139,15 @@ EASEDEF float EaseQuadInOut(float t, float b, float c, float d)
 }
 
 // Exponential Easing functions
-EASEDEF float EaseExpoIn(float t, float b, float c, float d) { return (t == 0.0f) ? b : (c*pow(2.0f, 10.0f*(t/d - 1.0f)) + b); }
-EASEDEF float EaseExpoOut(float t, float b, float c, float d) { return (t == d) ? (b + c) : (c*(-pow(2.0f, -10.0f*t/d) + 1.0f) + b);    }
+EASEDEF float EaseExpoIn(float t, float b, float c, float d) { return (t == 0.0f) ? b : (c * powf(2.0f, 10.0f*(t/d - 1.0f)) + b); }
+EASEDEF float EaseExpoOut(float t, float b, float c, float d) { return (t == d) ? (b + c) : (c * (-powf(2.0f, -10.0f*t/d) + 1.0f) + b);    }
 EASEDEF float EaseExpoInOut(float t, float b, float c, float d)
 {
     if (t == 0.0f) return b;
     if (t == d) return (b + c);
-    if ((t/=d/2.0f) < 1.0f) return (c/2.0f*pow(2.0f, 10.0f*(t - 1.0f)) + b);
+    if ((t/=d/2.0f) < 1.0f) return (c/2.0f* powf(2.0f, 10.0f*(t - 1.0f)) + b);
 
-    return (c/2.0f*(-pow(2.0f, -10.0f*(t - 1.0f)) + 2.0f) + b);
+    return (c/2.0f*(-powf(2.0f, -10.0f*(t - 1.0f)) + 2.0f) + b);
 }
 
 // Back Easing functions
@@ -219,7 +219,7 @@ EASEDEF float EaseElasticIn(float t, float b, float c, float d)
     float p = d*0.3f;
     float a = c;
     float s = p/4.0f;
-    float postFix = a*pow(2.0f, 10.0f*(t-=1.0f));
+    float postFix = a*powf(2.0f, 10.0f*(t-=1.0f));
 
     return (-(postFix*sinf((t*d-s)*(2.0f*PI)/p )) + b);
 }
@@ -233,7 +233,7 @@ EASEDEF float EaseElasticOut(float t, float b, float c, float d)
     float a = c;
     float s = p/4.0f;
 
-    return (a*pow(2.0f,-10.0f*t)*sinf((t*d-s)*(2.0f*PI)/p) + c + b);
+    return (a*powf(2.0f,-10.0f*t)*sinf((t*d-s)*(2.0f*PI)/p) + c + b);
 }
 
 EASEDEF float EaseElasticInOut(float t, float b, float c, float d)
@@ -247,11 +247,11 @@ EASEDEF float EaseElasticInOut(float t, float b, float c, float d)
 
     if (t < 1.0f)
     {
-        float postFix = a*pow(2.0f, 10.0f*(t-=1.0f));
+        float postFix = a*powf(2.0f, 10.0f*(t-=1.0f));
         return -0.5f*(postFix*sinf((t*d-s)*(2.0f*PI)/p)) + b;
     }
 
-    float postFix = a*pow(2.0f, -10.0f*(t-=1.0f));
+    float postFix = a*powf(2.0f, -10.0f*(t-=1.0f));
 
     return (postFix*sinf((t*d-s)*(2.0f*PI)/p)*0.5f + c + b);
 }

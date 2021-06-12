@@ -1,24 +1,19 @@
 /*******************************************************************************************
 *
-*   Physac - Body shatter
+*   raylib [physac] example - physics shatter
 *
-*   NOTE 1: Physac requires multi-threading, when InitPhysics() a second thread is created to manage physics calculations.
-*   NOTE 2: Physac requires static C library linkage to avoid dependency on MinGW DLL (-static -lpthread)
+*   This example has been created using raylib 1.5 (www.raylib.com)
+*   raylib is licensed under an unmodified zlib/libpng license (View raylib.h for details)
 *
-*   Use the following line to compile:
+*   This example uses physac 1.1 (https://github.com/raysan5/raylib/blob/master/src/physac.h)
 *
-*   gcc -o $(NAME_PART).exe $(FILE_NAME) -s -static  /
-*       -lraylib -lpthread -lglfw3 -lopengl32 -lgdi32 -lopenal32 -lwinmm /
-*       -std=c99 -Wl,--subsystem,windows -Wl,-allow-multiple-definition
-*
-*   Copyright (c) 2016-2018 Victor Fisac
+*   Copyright (c) 2016-2021 Victor Fisac (@victorfisac) and Ramon Santamaria (@raysan5)
 *
 ********************************************************************************************/
 
 #include "raylib.h"
 
 #define PHYSAC_IMPLEMENTATION
-#define PHYSAC_NO_THREADS
 #include "physac.h"
 
 int main(void)
@@ -29,19 +24,18 @@ int main(void)
     const int screenHeight = 450;
 
     SetConfigFlags(FLAG_MSAA_4X_HINT);
-    InitWindow(screenWidth, screenHeight, "Physac [raylib] - Body shatter");
+    InitWindow(screenWidth, screenHeight, "raylib [physac] example - physics shatter");
 
     // Physac logo drawing position
     int logoX = screenWidth - MeasureText("Physac", 30) - 10;
     int logoY = 15;
-    bool needsReset = false;
 
     // Initialize physics and default physics bodies
     InitPhysics();
     SetPhysicsGravity(0, 0);
 
     // Create random polygon physics body to shatter
-    CreatePhysicsBodyPolygon((Vector2){ screenWidth/2, screenHeight/2 }, GetRandomValue(80, 200), GetRandomValue(3, 8), 10);
+    CreatePhysicsBodyPolygon((Vector2){ screenWidth/2.0f, screenHeight/2.0f }, GetRandomValue(80, 200), GetRandomValue(3, 8), 10);
 
     SetTargetFPS(60);               // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
@@ -49,31 +43,23 @@ int main(void)
     // Main game loop
     while (!WindowShouldClose())    // Detect window close button or ESC key
     {
-        // Update
-        RunPhysicsStep();
-
         //----------------------------------------------------------------------------------
-        // Delay initialization of variables due to physics reset asynchronous
-        if (needsReset)
-        {
-            // Create random polygon physics body to shatter
-            CreatePhysicsBodyPolygon((Vector2){ screenWidth/2, screenHeight/2 }, GetRandomValue(80, 200), GetRandomValue(3, 8), 10);
-            needsReset = false;
-        }
+        UpdatePhysics();            // Update physics system
 
-        if (IsKeyPressed('R'))    // Reset physics input
+        if (IsKeyPressed(KEY_R))    // Reset physics input
         {
             ResetPhysics();
-            needsReset = true;
+
+            CreatePhysicsBodyPolygon((Vector2){ screenWidth/2.0f, screenHeight/2.0f }, GetRandomValue(80, 200), GetRandomValue(3, 8), 10);
         }
 
-        if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON))    // Physics shatter input
+        if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT))    // Physics shatter input
         {
-            // Note: some values need to be stored in variables due to asynchronous changes during main thread
             int count = GetPhysicsBodiesCount();
             for (int i = count - 1; i >= 0; i--)
             {
                 PhysicsBody currentBody = GetPhysicsBody(i);
+
                 if (currentBody != NULL) PhysicsShatter(currentBody, GetMousePosition(), 10/currentBody->inverseMass);
             }
         }
