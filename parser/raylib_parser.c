@@ -115,7 +115,7 @@ char* CharReplace(char* text, char search, char replace);
 int main(int argc, char* argv[])
 {
     // Help
-    if (IsTextEqual(argv[1], "--help", 6)) {
+    if (argv[1] != NULL && IsTextEqual(argv[1], "--help", 6)) {
         printf("Usage:\n");
         printf("  raylib_parser [--json]\n");
         return 0;
@@ -123,7 +123,7 @@ int main(int argc, char* argv[])
 
     // Allow changing the output format.
     int outputFormat = 0;
-    if (IsTextEqual(argv[1], "--json", 6)) {
+    if (argv[1] != NULL && IsTextEqual(argv[1], "--json", 6)) {
         outputFormat = JSON;
     }
 
