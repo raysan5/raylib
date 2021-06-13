@@ -547,27 +547,27 @@ typedef enum {
 
 static const char *autoEventTypeName[] = {
     "EVENT_NONE",
-    "INPUT_KEY_UP",             
-    "INPUT_KEY_DOWN",           
-    "INPUT_KEY_PRESSED",        
-    "INPUT_KEY_RELEASED",       
-    "INPUT_MOUSE_BUTTON_UP",    
-    "INPUT_MOUSE_BUTTON_DOWN",  
-    "INPUT_MOUSE_POSITION",     
-    "INPUT_MOUSE_WHEEL_MOTION", 
-    "INPUT_GAMEPAD_CONNECT",    
-    "INPUT_GAMEPAD_DISCONNECT", 
-    "INPUT_GAMEPAD_BUTTON_UP",  
+    "INPUT_KEY_UP",
+    "INPUT_KEY_DOWN",
+    "INPUT_KEY_PRESSED",
+    "INPUT_KEY_RELEASED",
+    "INPUT_MOUSE_BUTTON_UP",
+    "INPUT_MOUSE_BUTTON_DOWN",
+    "INPUT_MOUSE_POSITION",
+    "INPUT_MOUSE_WHEEL_MOTION",
+    "INPUT_GAMEPAD_CONNECT",
+    "INPUT_GAMEPAD_DISCONNECT",
+    "INPUT_GAMEPAD_BUTTON_UP",
     "INPUT_GAMEPAD_BUTTON_DOWN",
     "INPUT_GAMEPAD_AXIS_MOTION",
-    "INPUT_TOUCH_UP",           
-    "INPUT_TOUCH_DOWN",         
-    "INPUT_TOUCH_POSITION",     
-    "INPUT_GESTURE",            
-    "WINDOW_CLOSE",             
-    "WINDOW_MAXIMIZE",          
-    "WINDOW_MINIMIZE",          
-    "WINDOW_RESIZE",            
+    "INPUT_TOUCH_UP",
+    "INPUT_TOUCH_DOWN",
+    "INPUT_TOUCH_POSITION",
+    "INPUT_GESTURE",
+    "WINDOW_CLOSE",
+    "WINDOW_MAXIMIZE",
+    "WINDOW_MINIMIZE",
+    "WINDOW_RESIZE",
     "ACTION_TAKE_SCREENSHOT",
     "ACTION_SETTARGETFPS"
 };
@@ -835,7 +835,7 @@ void InitWindow(int width, int height, const char *title)
     CORE.Window.ready = InitGraphicsDevice(width, height);
 
     // If graphic device is no properly initialized, we end program
-    if (!CORE.Window.ready) 
+    if (!CORE.Window.ready)
     {
         TRACELOG(LOG_FATAL, "Failed to initialize Graphic Device");
         return;
@@ -896,12 +896,12 @@ void InitWindow(int width, int height, const char *title)
 
     CORE.Input.Mouse.currentPosition.x = (float)CORE.Window.screen.width/2.0f;
     CORE.Input.Mouse.currentPosition.y = (float)CORE.Window.screen.height/2.0f;
-    
+
 #if defined(SUPPORT_EVENTS_AUTOMATION)
     events = (AutomationEvent *)malloc(MAX_CODE_AUTOMATION_EVENTS*sizeof(AutomationEvent));
     CORE.Time.frameCounter = 0;
 #endif
-    
+
 #endif        // PLATFORM_DESKTOP || PLATFORM_WEB || PLATFORM_RPI || PLATFORM_DRM || PLATFORM_UWP
 }
 
@@ -2040,12 +2040,12 @@ void EndDrawing(void)
     }
 
     PollInputEvents();              // Poll user events
-    
+
 #if defined(SUPPORT_EVENTS_AUTOMATION)
     if (eventsRecording) RecordAutomationEvent(CORE.Time.frameCounter);
 
     // TODO: When should we play? After/before/replace PollInputEvents()?
-    if (eventsPlaying) 
+    if (eventsPlaying)
     {
         if (CORE.Time.frameCounter >= eventCount) eventsPlaying = false;
         PlayAutomationEvent(CORE.Time.frameCounter);
@@ -4813,7 +4813,7 @@ static void PollInputEvents(void)
     // Register previous mouse wheel state
     CORE.Input.Mouse.previousWheelMove = CORE.Input.Mouse.currentWheelMove;
     CORE.Input.Mouse.currentWheelMove = 0.0f;
-    
+
     // Register previous mouse position
     CORE.Input.Mouse.previousPosition = CORE.Input.Mouse.currentPosition;
 #endif
@@ -5070,7 +5070,7 @@ static void SwapBuffers(void)
     {
         gbm_surface_release_buffer(CORE.Window.gbmSurface, CORE.Window.prevBO);
     }
-    
+
     CORE.Window.prevBO = bo;
 #endif  // PLATFORM_DRM
 #endif  // PLATFORM_ANDROID || PLATFORM_RPI || PLATFORM_DRM || PLATFORM_UWP
@@ -5190,7 +5190,7 @@ static void KeyCallback(GLFWwindow *window, int key, int scancode, int action, i
     else if (key == GLFW_KEY_F11 && action == GLFW_PRESS)
     {
         eventsRecording = !eventsRecording;
-        
+
         // On finish recording, we export events into a file
         if (!eventsRecording) ExportAutomationEvents("eventsrec.rep");
     }
@@ -5198,7 +5198,7 @@ static void KeyCallback(GLFWwindow *window, int key, int scancode, int action, i
     {
         LoadAutomationEvents("eventsrec.rep");
         eventsPlaying = true;
-        
+
         TRACELOG(LOG_WARNING, "eventsPlaying enabled!");
     }
 #endif
@@ -6796,22 +6796,22 @@ static int FindNearestConnectorMode(const drmModeConnector *connector, uint widt
 static void LoadAutomationEvents(const char *fileName)
 {
     //unsigned char fileId[4] = { 0 };
-    
+
     // Load binary
     /*
     FILE *repFile = fopen(fileName, "rb");
     fread(fileId, 4, 1, repFile);
-    
+
     if ((fileId[0] == 'r') && (fileId[1] == 'E') && (fileId[2] == 'P') && (fileId[1] == ' '))
     {
         fread(&eventCount, sizeof(int), 1, repFile);
         TraceLog(LOG_WARNING, "Events loaded: %i\n", eventCount);
         fread(events, sizeof(AutomationEvent), eventCount, repFile);
     }
-    
+
     fclose(repFile);
     */
-    
+
     // Load events (text file)
     FILE *repFile = fopen(fileName, "rt");
 
@@ -6827,20 +6827,20 @@ static void LoadAutomationEvents(const char *fileName)
             if (buffer[0] == 'c') sscanf(buffer, "c %i", &eventCount);
             else if (buffer[0] == 'e')
             {
-                sscanf(buffer, "e %d %d %d %d %d", &events[count].frame, &events[count].type, 
+                sscanf(buffer, "e %d %d %d %d %d", &events[count].frame, &events[count].type,
                        &events[count].params[0], &events[count].params[1], &events[count].params[2]);
-                       
+ 
                 count++;
             }
 
             fgets(buffer, 256, repFile);
         }
-        
+
         if (count != eventCount) TRACELOG(LOG_WARNING, "Events count provided is different than count");
 
         fclose(repFile);
     }
-    
+
     TRACELOG(LOG_WARNING, "Events loaded: %i", eventCount);
 }
 
@@ -6858,23 +6858,23 @@ static void ExportAutomationEvents(const char *fileName)
     fwrite(events, sizeof(AutomationEvent), eventCount, repFile);
     fclose(repFile);
     */
-    
+
     // Export events as text
     FILE *repFile = fopen(fileName, "wt");
-    
+
     if (repFile != NULL)
     {
         fprintf(repFile, "# Automation events list\n");
         fprintf(repFile, "#    c <events_count>\n");
         fprintf(repFile, "#    e <frame> <event_type> <param0> <param1> <param2> // <event_type_name>\n");
-        
+
         fprintf(repFile, "c %i\n", eventCount);
         for (int i = 0; i < eventCount; i++)
         {
-            fprintf(repFile, "e %i %i %i %i %i // %s\n", events[i].frame, events[i].type, 
+            fprintf(repFile, "e %i %i %i %i %i // %s\n", events[i].frame, events[i].type,
                     events[i].params[0], events[i].params[1], events[i].params[2], autoEventTypeName[events[i].type]);
         }
-        
+
         fclose(repFile);
     }
 }
@@ -6893,11 +6893,11 @@ static void RecordAutomationEvent(unsigned int frame)
             events[eventCount].params[0] = key;
             events[eventCount].params[1] = 0;
             events[eventCount].params[2] = 0;
-            
+
             TRACELOG(LOG_INFO, "[%i] INPUT_KEY_UP: %i, %i, %i", events[eventCount].frame, events[eventCount].params[0], events[eventCount].params[1], events[eventCount].params[2]);
             eventCount++;
         }
-        
+
         // INPUT_KEY_DOWN
         if (CORE.Input.Keyboard.currentKeyState[key])
         {
@@ -6922,11 +6922,11 @@ static void RecordAutomationEvent(unsigned int frame)
             events[eventCount].params[0] = button;
             events[eventCount].params[1] = 0;
             events[eventCount].params[2] = 0;
-            
+
             TRACELOG(LOG_INFO, "[%i] INPUT_MOUSE_BUTTON_UP: %i, %i, %i", events[eventCount].frame, events[eventCount].params[0], events[eventCount].params[1], events[eventCount].params[2]);
             eventCount++;
         }
-        
+
         // INPUT_MOUSE_BUTTON_DOWN
         if (CORE.Input.Mouse.currentButtonState[button])
         {
@@ -6940,7 +6940,7 @@ static void RecordAutomationEvent(unsigned int frame)
             eventCount++;
         }
     }
-    
+
     // INPUT_MOUSE_POSITION (only saved if changed)
     if (((int)CORE.Input.Mouse.currentPosition.x != (int)CORE.Input.Mouse.previousPosition.x) ||
         ((int)CORE.Input.Mouse.currentPosition.y != (int)CORE.Input.Mouse.previousPosition.y))
@@ -6954,7 +6954,7 @@ static void RecordAutomationEvent(unsigned int frame)
         TRACELOG(LOG_INFO, "[%i] INPUT_MOUSE_POSITION: %i, %i, %i", events[eventCount].frame, events[eventCount].params[0], events[eventCount].params[1], events[eventCount].params[2]);
         eventCount++;
     }
-    
+
     // INPUT_MOUSE_WHEEL_MOTION
     if ((int)CORE.Input.Mouse.currentWheelMove != (int)CORE.Input.Mouse.previousWheelMove)
     {
@@ -6967,7 +6967,7 @@ static void RecordAutomationEvent(unsigned int frame)
         TRACELOG(LOG_INFO, "[%i] INPUT_MOUSE_WHEEL_MOTION: %i, %i, %i", events[eventCount].frame, events[eventCount].params[0], events[eventCount].params[1], events[eventCount].params[2]);
         eventCount++;
     }
-    
+
     for (int id = 0; id < MAX_TOUCH_POINTS; id++)
     {
         // INPUT_TOUCH_UP
@@ -6982,7 +6982,7 @@ static void RecordAutomationEvent(unsigned int frame)
             TRACELOG(LOG_INFO, "[%i] INPUT_TOUCH_UP: %i, %i, %i", events[eventCount].frame, events[eventCount].params[0], events[eventCount].params[1], events[eventCount].params[2]);
             eventCount++;
         }
-        
+
         // INPUT_TOUCH_DOWN
         if (CORE.Input.Touch.currentTouchState[id])
         {
@@ -6991,11 +6991,11 @@ static void RecordAutomationEvent(unsigned int frame)
             events[eventCount].params[0] = id;
             events[eventCount].params[1] = 0;
             events[eventCount].params[2] = 0;
-            
+
             TRACELOG(LOG_INFO, "[%i] INPUT_TOUCH_DOWN: %i, %i, %i", events[eventCount].frame, events[eventCount].params[0], events[eventCount].params[1], events[eventCount].params[2]);
             eventCount++;
         }
-        
+
         // INPUT_TOUCH_POSITION
         // TODO: It requires the id!
         /*
@@ -7013,7 +7013,7 @@ static void RecordAutomationEvent(unsigned int frame)
         }
         */
     }
-    
+
     for (int gamepad = 0; gamepad < MAX_GAMEPADS; gamepad++)
     {
         // INPUT_GAMEPAD_CONNECT
@@ -7024,7 +7024,7 @@ static void RecordAutomationEvent(unsigned int frame)
             // TODO: Save gamepad connect event
         }
         */
-        
+
         // INPUT_GAMEPAD_DISCONNECT
         /*
         if ((CORE.Input.Gamepad.currentState[gamepad] != CORE.Input.Gamepad.previousState[gamepad]) &&
@@ -7033,7 +7033,7 @@ static void RecordAutomationEvent(unsigned int frame)
             // TODO: Save gamepad disconnect event
         }
         */
-        
+
         for (int button = 0; button < MAX_GAMEPAD_BUTTONS; button++)
         {
             // INPUT_GAMEPAD_BUTTON_UP
@@ -7044,11 +7044,11 @@ static void RecordAutomationEvent(unsigned int frame)
                 events[eventCount].params[0] = gamepad;
                 events[eventCount].params[1] = button;
                 events[eventCount].params[2] = 0;
-                
+
                 TRACELOG(LOG_INFO, "[%i] INPUT_GAMEPAD_BUTTON_UP: %i, %i, %i", events[eventCount].frame, events[eventCount].params[0], events[eventCount].params[1], events[eventCount].params[2]);
                 eventCount++;
             }
-            
+
             // INPUT_GAMEPAD_BUTTON_DOWN
             if (CORE.Input.Gamepad.currentButtonState[gamepad][button])
             {
@@ -7062,7 +7062,7 @@ static void RecordAutomationEvent(unsigned int frame)
                 eventCount++;
             }
         }
-        
+
         for (int axis = 0; axis < MAX_GAMEPAD_AXIS; axis++)
         {
             // INPUT_GAMEPAD_AXIS_MOTION
@@ -7079,7 +7079,7 @@ static void RecordAutomationEvent(unsigned int frame)
             }
         }
     }
-    
+
     // INPUT_GESTURE
     if (GESTURES.current != GESTURE_NONE)
     {
@@ -7128,19 +7128,19 @@ static void PlayAutomationEvent(unsigned int frame)
                 case INPUT_GAMEPAD_AXIS_MOTION: // param[0]: gamepad, param[1]: axis, param[2]: delta
                 {
                     CORE.Input.Gamepad.axisState[events[i].params[0]][events[i].params[1]] = ((float)events[i].params[2]/32768.0f);
-                } break;      
+                } break;
                 case INPUT_GESTURE: GESTURES.current = events[i].params[0]; break;     // param[0]: gesture (enum Gesture) -> gestures.h: GESTURES.current
-                
+
                 // Window events
                 case WINDOW_CLOSE: CORE.Window.shouldClose = true; break;
                 case WINDOW_MAXIMIZE: MaximizeWindow(); break;
                 case WINDOW_MINIMIZE: MinimizeWindow(); break;
                 case WINDOW_RESIZE: SetWindowSize(events[i].params[0], events[i].params[1]); break;
-                
+
                 // Custom events
-                case ACTION_TAKE_SCREENSHOT: 
+                case ACTION_TAKE_SCREENSHOT:
                 {
-                    TakeScreenshot(TextFormat("screenshot%03i.png", screenshotCounter)); 
+                    TakeScreenshot(TextFormat("screenshot%03i.png", screenshotCounter));
                     screenshotCounter++;
                 } break;
                 case ACTION_SETTARGETFPS: SetTargetFPS(events[i].params[0]); break;

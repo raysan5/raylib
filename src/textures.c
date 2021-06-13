@@ -503,7 +503,7 @@ bool ExportImageAsCode(Image image, const char *fileName)
     success = SaveFileText(fileName, txtData);
 
     RL_FREE(txtData);
-    
+
 #endif      // SUPPORT_IMAGE_EXPORT
 
     if (success != 0) TRACELOG(LOG_INFO, "FILEIO: [%s] Image exported successfully", fileName);

@@ -1389,7 +1389,7 @@ RMDEF Quaternion QuaternionFromMatrix(Matrix mat)
 RMDEF Matrix QuaternionToMatrix(Quaternion q)
 {
     Matrix result = MatrixIdentity();
-    
+
     float a2 = q.x*q.x;
     float b2 = q.y*q.y;
     float c2 = q.z*q.z;

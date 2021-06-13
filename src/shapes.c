@@ -130,9 +130,9 @@ void DrawLineEx(Vector2 startPos, Vector2 endPos, float thick, Color color)
         float scale = thick/(2*length);
         Vector2 radius = { -scale*delta.y, scale*delta.x };
         Vector2 strip[4] = {
-            { startPos.x - radius.x, startPos.y - radius.y }, 
+            { startPos.x - radius.x, startPos.y - radius.y },
             { startPos.x + radius.x, startPos.y + radius.y },
-            { endPos.x - radius.x, endPos.y - radius.y }, 
+            { endPos.x - radius.x, endPos.y - radius.y },
             { endPos.x + radius.x, endPos.y + radius.y }
         };
 

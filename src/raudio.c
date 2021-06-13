@@ -1784,7 +1784,7 @@ AudioStream LoadAudioStream(unsigned int sampleRate, unsigned int sampleSize, un
 
     // The size of a streaming buffer must be at least double the size of a period
     unsigned int periodSize = AUDIO.System.device.playback.internalPeriodSizeInFrames;
-    
+
     // If the buffer is not set, compute one that would give us a buffer good enough for a decent frame rate
     unsigned int subBufferSize = (AUDIO.Buffer.defaultSize == 0)? AUDIO.System.device.sampleRate/30 : AUDIO.Buffer.defaultSize;
 
@@ -2352,7 +2352,7 @@ static bool TextIsEqual(const char *text1, const char *text2)
 static const char *TextToLower(const char *text)
 {
     #define MAX_TEXT_BUFFER_LENGTH      1024
-    
+
     static char buffer[MAX_TEXT_BUFFER_LENGTH] = { 0 };
 
     for (int i = 0; i < MAX_TEXT_BUFFER_LENGTH; i++)

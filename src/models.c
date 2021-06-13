@@ -2815,7 +2815,7 @@ void DrawBillboardPro(Camera camera, Texture2D texture, Rectangle source, Vector
 {
     // NOTE: Billboard size will maintain source rectangle aspect ratio, size will represent billboard width
     Vector2 sizeRatio = { size.y, size.x*(float)source.height/source.width };
-    
+
     Matrix matView = MatrixLookAt(camera.position, camera.target, camera.up);
 
     Vector3 right = { matView.m0, matView.m4, matView.m8 };
@@ -2826,7 +2826,7 @@ void DrawBillboardPro(Camera camera, Texture2D texture, Rectangle source, Vector
 
     Vector3 rightScaled = Vector3Scale(right, sizeRatio.x/2);
     Vector3 upScaled = Vector3Scale(up, sizeRatio.y/2);
-    
+
     Vector3 p1 = Vector3Add(rightScaled, upScaled);
     Vector3 p2 = Vector3Subtract(rightScaled, upScaled);
 
@@ -2834,25 +2834,25 @@ void DrawBillboardPro(Camera camera, Texture2D texture, Rectangle source, Vector
     Vector3 topRight = p1;
     Vector3 bottomRight = p2;
     Vector3 bottomLeft = Vector3Scale(p1, -1);
-    
+
     if (rotation != 0.0f)
-    {    
+    {
         float sinRotation = sinf(rotation*DEG2RAD);
         float cosRotation = cosf(rotation*DEG2RAD);
-        
+
         // NOTE: (-1, 1) is the range where origin.x, origin.y is inside the texture
         float rotateAboutX = sizeRatio.x*origin.x/2;
         float rotateAboutY = sizeRatio.y*origin.y/2;
-        
+
         float xtvalue, ytvalue;
         float rotatedX, rotatedY;
-        
+
         xtvalue = Vector3DotProduct(right, topLeft) - rotateAboutX; // Project points to x and y coordinates on the billboard plane
         ytvalue = Vector3DotProduct(up, topLeft) - rotateAboutY;
-        rotatedX = xtvalue*cosRotation - ytvalue*sinRotation + rotateAboutX; // Rotate about the point origin 
+        rotatedX = xtvalue*cosRotation - ytvalue*sinRotation + rotateAboutX; // Rotate about the point origin
         rotatedY = xtvalue*sinRotation + ytvalue*cosRotation + rotateAboutY;
         topLeft = Vector3Add(Vector3Scale(up, rotatedY), Vector3Scale(right, rotatedX)); // Translate back to cartesian coordinates
-        
+
         xtvalue = Vector3DotProduct(right, topRight) - rotateAboutX;
         ytvalue = Vector3DotProduct(up, topRight) - rotateAboutY;
         rotatedX = xtvalue*cosRotation - ytvalue*sinRotation + rotateAboutX;
@@ -2864,20 +2864,20 @@ void DrawBillboardPro(Camera camera, Texture2D texture, Rectangle source, Vector
         rotatedX = xtvalue*cosRotation - ytvalue*sinRotation + rotateAboutX;
         rotatedY = xtvalue*sinRotation + ytvalue*cosRotation + rotateAboutY;
         bottomRight = Vector3Add(Vector3Scale(up, rotatedY), Vector3Scale(right, rotatedX));
-        
+
         xtvalue = Vector3DotProduct(right, bottomLeft)-rotateAboutX;
         ytvalue = Vector3DotProduct(up, bottomLeft)-rotateAboutY;
         rotatedX = xtvalue*cosRotation - ytvalue*sinRotation + rotateAboutX;
         rotatedY = xtvalue*sinRotation + ytvalue*cosRotation + rotateAboutY;
         bottomLeft = Vector3Add(Vector3Scale(up, rotatedY), Vector3Scale(right, rotatedX));
     }
-    
+
     // Translate points to the draw center (position)
     topLeft = Vector3Add(topLeft, position);
     topRight = Vector3Add(topRight, position);
     bottomRight = Vector3Add(bottomRight, position);
     bottomLeft = Vector3Add(bottomLeft, position);
-    
+
     rlCheckRenderBatchLimit(4);
 
     rlSetTexture(texture.id);
@@ -2902,7 +2902,7 @@ void DrawBillboardPro(Camera camera, Texture2D texture, Rectangle source, Vector
         rlVertex3f(topRight.x, topRight.y, topRight.z);
     rlEnd();
 
-    rlSetTexture(0);    
+    rlSetTexture(0);
 }
 
 // Draw a bounding box with wires
@@ -2992,7 +2992,7 @@ RayCollision GetRayCollisionSphere(Ray ray, Vector3 center, float radius)
     collision.hit = d >= 0.0f;
 
     // Check if ray origin is inside the sphere to calculate the correct collision point
-    if (distance < radius) 
+    if (distance < radius)
     {
         collision.distance = vector + sqrtf(d);
 
@@ -3001,8 +3001,8 @@ RayCollision GetRayCollisionSphere(Ray ray, Vector3 center, float radius)
 
         // Calculate collision normal (pointing outwards)
         collision.normal = Vector3Negate(Vector3Normalize(Vector3Subtract(collision.point, center)));
-    } 
-    else 
+    }
+    else
     {
         collision.distance = vector - sqrtf(d);
 
@@ -3012,7 +3012,7 @@ RayCollision GetRayCollisionSphere(Ray ray, Vector3 center, float radius)
         // Calculate collision normal (pointing inwards)
         collision.normal = Vector3Normalize(Vector3Subtract(collision.point, center));
     }
-    
+
     return collision;
 }
 
@@ -3119,7 +3119,7 @@ RayCollision GetRayCollisionMesh(Ray ray, Mesh mesh, Matrix transform)
             }
         }
     }
-    
+
     return collision;
 }
 
@@ -3374,7 +3374,7 @@ static Model LoadOBJ(const char *fileName)
         tinyobj_materials_free(materials, materialCount);
 
         UnloadFileText(fileText);
-        
+
         RL_FREE(matFaces);
         RL_FREE(vCount);
         RL_FREE(vtCount);
@@ -3696,11 +3696,11 @@ static Model LoadIQM(const char *fileName)
                 //fseek(iqmFile, va[i].offset, SEEK_SET);
                 //fread(blendw, iqmHeader->num_vertexes*4*sizeof(unsigned char), 1, iqmFile);
                 memcpy(color, fileDataPtr + va[i].offset, iqmHeader->num_vertexes*4*sizeof(unsigned char));
-    
+
                 for (unsigned int m = 0; m < iqmHeader->num_meshes; m++)
                 {
                     model.meshes[m].colors = RL_CALLOC(model.meshes[m].vertexCount*4, sizeof(unsigned char));
-    
+
                     int vCounter = 0;
                     for (unsigned int i = imesh[m].first_vertex*4; i < (imesh[m].first_vertex + imesh[m].num_vertexes)*4; i++)
                     {
