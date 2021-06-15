@@ -3405,6 +3405,9 @@ void rlSetUniform(int locIndex, const void *value, int uniformType, int count)
         case SHADER_UNIFORM_IVEC3: glUniform3iv(locIndex, count, (int *)value); break;
         case SHADER_UNIFORM_IVEC4: glUniform4iv(locIndex, count, (int *)value); break;
         case SHADER_UNIFORM_SAMPLER2D: glUniform1iv(locIndex, count, (int *)value); break;
+        case SHADER_UNIFORM_MAT3: glUniformMatrix3fv(locIndex, count, GL_FALSE, (float*)value); break;
+        case SHADER_UNIFORM_MAT4: glUniformMatrix4fv(locIndex, count, GL_FALSE, (float*)value); break;
+
         default: TRACELOG(LOG_WARNING, "SHADER: Failed to set uniform value, data type not recognized");
     }
 #endif
