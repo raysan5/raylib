@@ -455,6 +455,7 @@ RLAPI void rlMatrixMode(int mode);                    // Choose the current matr
 RLAPI void rlPushMatrix(void);                        // Push the current matrix to stack
 RLAPI void rlPopMatrix(void);                         // Pop lattest inserted matrix from stack
 RLAPI void rlLoadIdentity(void);                      // Reset current matrix to identity matrix
+RLAPI void rlLoadMatrixf(float *matf);                // Set current matrix
 RLAPI void rlTranslatef(float x, float y, float z);   // Multiply the current matrix by a translation matrix
 RLAPI void rlRotatef(float angleDeg, float x, float y, float z);  // Multiply the current matrix by a rotation matrix
 RLAPI void rlScalef(float x, float y, float z);       // Multiply the current matrix by a scaling matrix
@@ -916,6 +917,7 @@ void rlOrtho(double left, double right, double bottom, double top, double znear,
 void rlPushMatrix(void) { glPushMatrix(); }
 void rlPopMatrix(void) { glPopMatrix(); }
 void rlLoadIdentity(void) { glLoadIdentity(); }
+void rlLoadMatrixf(float *matf) { glLoadMatrixf(matf); }
 void rlTranslatef(float x, float y, float z) { glTranslatef(x, y, z); }
 void rlRotatef(float angleDeg, float x, float y, float z) { glRotatef(angleDeg, x, y, z); }
 void rlScalef(float x, float y, float z) { glScalef(x, y, z); }
@@ -968,6 +970,18 @@ void rlPopMatrix(void)
 void rlLoadIdentity(void)
 {
     *RLGL.State.currentMatrix = MatrixIdentity();
+}
+
+// Set current matrix
+void rlLoadMatrixf(float *matf)
+{
+    // Matrix creation from array
+    Matrix mat = { matf[0], matf[4], matf[8], matf[12],
+                   matf[1], matf[5], matf[9], matf[13],
+                   matf[2], matf[6], matf[10], matf[14],
+                   matf[3], matf[7], matf[11], matf[15] };
+
+    *RLGL.State.currentMatrix = mat;
 }
 
 // Multiply the current matrix by a translation matrix
