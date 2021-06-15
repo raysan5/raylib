@@ -849,7 +849,7 @@ void DrawText(const char *text, int posX, int posY, int fontSize, Color color)
 void DrawTextEx(Font font, const char *text, Vector2 position, float fontSize, float spacing, Color tint)
 {
     if (font.texture.id == 0) font = GetFontDefault();  // Security check in case of not valid font
-    
+
     int length = TextLength(text);  // Total length in bytes of the text, scanned by codepoints in loop
 
     int textOffsetY = 0;            // Offset between lines (on line break '\n')
@@ -1123,7 +1123,7 @@ Vector2 MeasureTextEx(Font font, const char *text, float fontSize, float spacing
     return vec;
 }
 
-// Returns index position for a unicode character on spritefont
+// Get index position for a unicode character on spritefont
 int GetGlyphIndex(Font font, int codepoint)
 {
 #ifndef GLYPH_NOTFOUND_CHAR_FALLBACK
@@ -1176,7 +1176,7 @@ const char *TextFormat(const char *text, ...)
 
     // We create an array of buffers so strings don't expire until MAX_TEXTFORMAT_BUFFERS invocations
     static char buffers[MAX_TEXTFORMAT_BUFFERS][MAX_TEXT_BUFFER_LENGTH] = { 0 };
-    static int  index = 0;
+    static int index = 0;
 
     char *currentBuffer = buffers[index];
     memset(currentBuffer, 0, MAX_TEXT_BUFFER_LENGTH);   // Clear buffer before using
@@ -1586,7 +1586,7 @@ int *GetCodepoints(const char *text, int *count)
     return codepoints;
 }
 
-// Returns total number of characters(codepoints) in a UTF8 encoded text, until '\0' is found
+// Get total number of characters(codepoints) in a UTF8 encoded text, until '\0' is found
 // NOTE: If an invalid UTF8 sequence is encountered a '?'(0x3f) codepoint is counted instead
 int GetCodepointsCount(const char *text)
 {
@@ -1608,7 +1608,7 @@ int GetCodepointsCount(const char *text)
 }
 #endif      // SUPPORT_TEXT_MANIPULATION
 
-// Returns next codepoint in a UTF8 encoded text, scanning until '\0' is found
+// Get next codepoint in a UTF8 encoded text, scanning until '\0' is found
 // When a invalid UTF8 byte is encountered we exit as soon as possible and a '?'(0x3f) codepoint is returned
 // Total number of bytes processed are returned as a parameter
 // NOTE: the standard says U+FFFD should be returned in case of errors

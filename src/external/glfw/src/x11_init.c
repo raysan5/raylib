@@ -813,11 +813,15 @@ static GLFWbool initExtensions(void)
                               XkbGroupStateMask, XkbGroupStateMask);
     }
 
+    if (_glfw.hints.init.x11.xcbVulkanSurface)
+    {
 #if defined(__CYGWIN__)
-    _glfw.x11.x11xcb.handle = _glfw_dlopen("libX11-xcb-1.so");
+        _glfw.x11.x11xcb.handle = _glfw_dlopen("libX11-xcb-1.so");
 #else
-    _glfw.x11.x11xcb.handle = _glfw_dlopen("libX11-xcb.so.1");
+        _glfw.x11.x11xcb.handle = _glfw_dlopen("libX11-xcb.so.1");
 #endif
+    }
+
     if (_glfw.x11.x11xcb.handle)
     {
         _glfw.x11.x11xcb.GetXCBConnection = (PFN_XGetXCBConnection)

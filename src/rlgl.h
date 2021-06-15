@@ -291,26 +291,18 @@ typedef struct RenderBatch {
     float currentDepth;         // Current depth value for next draw
 } RenderBatch;
 
-// Shader attribute data types
-typedef enum {
-    SHADER_ATTRIB_FLOAT = 0,
-    SHADER_ATTRIB_VEC2,
-    SHADER_ATTRIB_VEC3,
-    SHADER_ATTRIB_VEC4
-} ShaderAttributeDataType;
-
 #if defined(RLGL_STANDALONE)
     #ifndef __cplusplus
     // Boolean type
     typedef enum { false, true } bool;
     #endif
 
-    // Color type, RGBA (32bit)
+    // Color, 4 components, R8G8B8A8 (32bit)
     typedef struct Color {
-        unsigned char r;
-        unsigned char g;
-        unsigned char b;
-        unsigned char a;
+        unsigned char r;        // Color red value
+        unsigned char g;        // Color green value
+        unsigned char b;        // Color blue value
+        unsigned char a;        // Color alpha value
     } Color;
 
     // Texture type
@@ -332,20 +324,20 @@ typedef enum {
     // Trace log level
     // NOTE: Organized by priority level
     typedef enum {
-        LOG_ALL = 0,        // Display all logs
-        LOG_TRACE,          // Trace logging, intended for internal use only
-        LOG_DEBUG,          // Debug logging, used for internal debugging, it should be disabled on release builds
-        LOG_INFO,           // Info logging, used for program execution info
-        LOG_WARNING,        // Warning logging, used on recoverable failures
-        LOG_ERROR,          // Error logging, used on unrecoverable failures
-        LOG_FATAL,          // Fatal logging, used to abort program: exit(EXIT_FAILURE)
-        LOG_NONE            // Disable logging
+        LOG_ALL = 0,            // Display all logs
+        LOG_TRACE,              // Trace logging, intended for internal use only
+        LOG_DEBUG,              // Debug logging, used for internal debugging, it should be disabled on release builds
+        LOG_INFO,               // Info logging, used for program execution info
+        LOG_WARNING,            // Warning logging, used on recoverable failures
+        LOG_ERROR,              // Error logging, used on unrecoverable failures
+        LOG_FATAL,              // Fatal logging, used to abort program: exit(EXIT_FAILURE)
+        LOG_NONE                // Disable logging
     } TraceLogLevel;
 
     // Texture formats (support depends on OpenGL version)
     typedef enum {
         PIXELFORMAT_UNCOMPRESSED_GRAYSCALE = 1,     // 8 bit per pixel (no alpha)
-        PIXELFORMAT_UNCOMPRESSED_GRAY_ALPHA,
+        PIXELFORMAT_UNCOMPRESSED_GRAY_ALPHA,        // 8*2 bpp (2 channels)
         PIXELFORMAT_UNCOMPRESSED_R5G6B5,            // 16 bpp
         PIXELFORMAT_UNCOMPRESSED_R8G8B8,            // 24 bpp
         PIXELFORMAT_UNCOMPRESSED_R5G5B5A1,          // 16 bpp (1 bit alpha)
@@ -399,49 +391,57 @@ typedef enum {
 
     // Shader location point type
     typedef enum {
-        SHADER_LOC_VERTEX_POSITION = 0,
-        SHADER_LOC_VERTEX_TEXCOORD01,
-        SHADER_LOC_VERTEX_TEXCOORD02,
-        SHADER_LOC_VERTEX_NORMAL,
-        SHADER_LOC_VERTEX_TANGENT,
-        SHADER_LOC_VERTEX_COLOR,
-        SHADER_LOC_MATRIX_MVP,
-        SHADER_LOC_MATRIX_MODEL,
-        SHADER_LOC_MATRIX_VIEW,
-        SHADER_LOC_MATRIX_NORMAL,
-        SHADER_LOC_MATRIX_PROJECTION,
-        SHADER_LOC_VECTOR_VIEW,
-        SHADER_LOC_COLOR_DIFFUSE,
-        SHADER_LOC_COLOR_SPECULAR,
-        SHADER_LOC_COLOR_AMBIENT,
-        SHADER_LOC_MAP_ALBEDO,          // SHADER_LOC_MAP_DIFFUSE
-        SHADER_LOC_MAP_METALNESS,       // SHADER_LOC_MAP_SPECULAR
-        SHADER_LOC_MAP_NORMAL,
-        SHADER_LOC_MAP_ROUGHNESS,
-        SHADER_LOC_MAP_OCCLUSION,
-        SHADER_LOC_MAP_EMISSION,
-        SHADER_LOC_MAP_HEIGHT,
-        SHADER_LOC_MAP_CUBEMAP,
-        SHADER_LOC_MAP_IRRADIANCE,
-        SHADER_LOC_MAP_PREFILTER,
-        SHADER_LOC_MAP_BRDF
+        SHADER_LOC_VERTEX_POSITION = 0, // Shader location point: position
+        SHADER_LOC_VERTEX_TEXCOORD01,   // Shader location point: texcoord01
+        SHADER_LOC_VERTEX_TEXCOORD02,   // Shader location point: texcoord02
+        SHADER_LOC_VERTEX_NORMAL,       // Shader location point: normal
+        SHADER_LOC_VERTEX_TANGENT,      // Shader location point: tangent
+        SHADER_LOC_VERTEX_COLOR,        // Shader location point: color
+        SHADER_LOC_MATRIX_MVP,          // Shader location point: model-view-projection matrix
+        SHADER_LOC_MATRIX_VIEW,         // Shader location point: view matrix
+        SHADER_LOC_MATRIX_PROJECTION,   // Shader location point: projection matrix
+        SHADER_LOC_MATRIX_MODEL,        // Shader location point: model matrix
+        SHADER_LOC_MATRIX_NORMAL,       // Shader location point: normal matrix
+        SHADER_LOC_VECTOR_VIEW,         // Shader location point: view vector
+        SHADER_LOC_COLOR_DIFFUSE,       // Shader location point: diffuse color
+        SHADER_LOC_COLOR_SPECULAR,      // Shader location point: specular color
+        SHADER_LOC_COLOR_AMBIENT,       // Shader location point: ambient color
+        SHADER_LOC_MAP_ALBEDO,          // Shader location point: albedo texture (same as: SHADER_LOC_MAP_DIFFUSE)
+        SHADER_LOC_MAP_METALNESS,       // Shader location point: metalness texture (same as: SHADER_LOC_MAP_SPECULAR)
+        SHADER_LOC_MAP_NORMAL,          // Shader location point: normal texture
+        SHADER_LOC_MAP_ROUGHNESS,       // Shader location point: roughness texture
+        SHADER_LOC_MAP_OCCLUSION,       // Shader location point: occlusion texture
+        SHADER_LOC_MAP_EMISSION,        // Shader location point: emission texture
+        SHADER_LOC_MAP_HEIGHT,          // Shader location point: height texture
+        SHADER_LOC_MAP_CUBEMAP,         // Shader location point: cubemap texture_cube_map
+        SHADER_LOC_MAP_IRRADIANCE,      // Shader location point: irradiance texture_cube_map
+        SHADER_LOC_MAP_PREFILTER,       // Shader location point: prefilter texture_cube_map
+        SHADER_LOC_MAP_BRDF             // Shader location point: brdf texture
     } ShaderLocationIndex;
 
     #define SHADER_LOC_MAP_DIFFUSE      SHADER_LOC_MAP_ALBEDO
     #define SHADER_LOC_MAP_SPECULAR     SHADER_LOC_MAP_METALNESS
 
-    // Shader uniform data types
+    // Shader uniform data type
     typedef enum {
-        SHADER_UNIFORM_FLOAT = 0,
-        SHADER_UNIFORM_VEC2,
-        SHADER_UNIFORM_VEC3,
-        SHADER_UNIFORM_VEC4,
-        SHADER_UNIFORM_INT,
-        SHADER_UNIFORM_IVEC2,
-        SHADER_UNIFORM_IVEC3,
-        SHADER_UNIFORM_IVEC4,
-        SHADER_UNIFORM_SAMPLER2D
+        SHADER_UNIFORM_FLOAT = 0,       // Shader uniform type: float
+        SHADER_UNIFORM_VEC2,            // Shader uniform type: vec2 (2 float)
+        SHADER_UNIFORM_VEC3,            // Shader uniform type: vec3 (3 float)
+        SHADER_UNIFORM_VEC4,            // Shader uniform type: vec4 (4 float)
+        SHADER_UNIFORM_INT,             // Shader uniform type: int
+        SHADER_UNIFORM_IVEC2,           // Shader uniform type: ivec2 (2 int)
+        SHADER_UNIFORM_IVEC3,           // Shader uniform type: ivec3 (3 int)
+        SHADER_UNIFORM_IVEC4,           // Shader uniform type: ivec4 (4 int)
+        SHADER_UNIFORM_SAMPLER2D        // Shader uniform type: sampler2d
     } ShaderUniformDataType;
+
+    // Shader attribute data types
+    typedef enum {
+        SHADER_ATTRIB_FLOAT = 0,        // Shader attribute type: float
+        SHADER_ATTRIB_VEC2,             // Shader attribute type: vec2 (2 float)
+        SHADER_ATTRIB_VEC3,             // Shader attribute type: vec3 (3 float)
+        SHADER_ATTRIB_VEC4              // Shader attribute type: vec4 (4 float)
+    } ShaderAttributeDataType;
 #endif
 
 #if defined(__cplusplus)
@@ -546,7 +546,7 @@ RLAPI void rlSetBlendFactors(int glSrcFactor, int glDstFactor, int glEquation); 
 RLAPI void rlglInit(int width, int height);           // Initialize rlgl (buffers, shaders, textures, states)
 RLAPI void rlglClose(void);                           // De-inititialize rlgl (buffers, shaders, textures)
 RLAPI void rlLoadExtensions(void *loader);            // Load OpenGL extensions (loader function required)
-RLAPI int rlGetVersion(void);                         // Returns current OpenGL version
+RLAPI int rlGetVersion(void);                         // Get current OpenGL version
 RLAPI int rlGetFramebufferWidth(void);                // Get default framebuffer width
 RLAPI int rlGetFramebufferHeight(void);               // Get default framebuffer height
 
@@ -1892,7 +1892,7 @@ void rlLoadExtensions(void *loader)
 #endif  // GRAPHICS_API_OPENGL_33 || GRAPHICS_API_OPENGL_ES2
 }
 
-// Returns current OpenGL version
+// Get current OpenGL version
 int rlGetVersion(void)
 {
 #if defined(GRAPHICS_API_OPENGL_11)
@@ -3471,7 +3471,7 @@ void rlSetShader(Shader shader)
 
 // Matrix state management
 //-----------------------------------------------------------------------------------------
-// Return internal modelview matrix
+// Get internal modelview matrix
 Matrix rlGetMatrixModelview(void)
 {
     Matrix matrix = MatrixIdentity();
@@ -3500,7 +3500,7 @@ Matrix rlGetMatrixModelview(void)
     return matrix;
 }
 
-// Return internal projection matrix
+// Get internal projection matrix
 Matrix rlGetMatrixProjection(void)
 {
 #if defined(GRAPHICS_API_OPENGL_11)

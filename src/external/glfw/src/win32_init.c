@@ -39,6 +39,10 @@ static const GUID _glfw_GUID_DEVINTERFACE_HID =
 
 #if defined(_GLFW_USE_HYBRID_HPG) || defined(_GLFW_USE_OPTIMUS_HPG)
 
+#if defined(_GLFW_BUILD_DLL)
+ #warning "These symbols must be exported by the executable and have no effect in a DLL"
+#endif
+
 // Executables (but not DLLs) exporting this symbol with this value will be
 // automatically directed to the high-performance GPU on Nvidia Optimus systems
 // with up-to-date drivers
@@ -614,7 +618,9 @@ void _glfwPlatformTerminate(void)
 const char* _glfwPlatformGetVersionString(void)
 {
     return _GLFW_VERSION_NUMBER " Win32 WGL EGL OSMesa"
-#if defined(__MINGW32__)
+#if defined(__MINGW64_VERSION_MAJOR)
+        " MinGW-w64"
+#elif defined(__MINGW32__)
         " MinGW"
 #elif defined(_MSC_VER)
         " VisualC"

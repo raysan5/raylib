@@ -490,7 +490,7 @@ float GetGesturePinchAngle(void)
 // Module specific Functions Definition
 //----------------------------------------------------------------------------------
 #if defined(GESTURES_STANDALONE)
-// Returns angle from two-points vector with X-axis
+// Get angle from two-points vector with X-axis
 static float Vector2Angle(Vector2 v1, Vector2 v2)
 {
     float angle = atan2f(v2.y - v1.y, v2.x - v1.x)*(180.0f/PI);

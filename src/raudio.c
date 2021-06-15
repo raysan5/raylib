@@ -1311,7 +1311,7 @@ Music LoadMusicStream(const char *fileName)
 }
 
 // extension including period ".mod"
-Music LoadMusicStreamFromMemory(const char *fileType, unsigned char* data, int dataSize)
+Music LoadMusicStreamFromMemory(const char *fileType, unsigned char *data, int dataSize)
 {
     Music music = { 0 };
     bool musicLoaded = false;
@@ -1325,7 +1325,7 @@ Music LoadMusicStreamFromMemory(const char *fileType, unsigned char* data, int d
     {
         drwav *ctxWav = RL_CALLOC(1, sizeof(drwav));
 
-        bool success = drwav_init_memory(ctxWav, (const void*)data, dataSize, NULL);
+        bool success = drwav_init_memory(ctxWav, (const void *)data, dataSize, NULL);
 
         music.ctxType = MUSIC_AUDIO_WAV;
         music.ctxData = ctxWav;
@@ -1383,7 +1383,7 @@ Music LoadMusicStreamFromMemory(const char *fileType, unsigned char* data, int d
         // Open ogg audio stream
         music.ctxType = MUSIC_AUDIO_OGG;
         //music.ctxData = stb_vorbis_open_filename(fileName, NULL, NULL);
-        music.ctxData = stb_vorbis_open_memory((const unsigned char*)data, dataSize, NULL, NULL);
+        music.ctxData = stb_vorbis_open_memory((const unsigned char *)data, dataSize, NULL, NULL);
 
         if (music.ctxData != NULL)
         {
@@ -1403,7 +1403,7 @@ Music LoadMusicStreamFromMemory(const char *fileType, unsigned char* data, int d
     else if (TextIsEqual(fileExtLower, ".xm"))
     {
         jar_xm_context_t *ctxXm = NULL;
-        int result = jar_xm_create_context_safe(&ctxXm, (const char*)data, dataSize, AUDIO.System.device.sampleRate);
+        int result = jar_xm_create_context_safe(&ctxXm, (const char *)data, dataSize, AUDIO.System.device.sampleRate);
         if (result == 0)    // XM AUDIO.System.context created successfully
         {
             music.ctxType = MUSIC_MODULE_XM;
@@ -1660,17 +1660,17 @@ void UpdateMusicStream(Music music)
                 {
                 case ma_format_f32:
                     // NOTE: Internally this function considers 2 channels generation, so samplesCount/2
-                    jar_xm_generate_samples((jar_xm_context_t*)music.ctxData, (float*)pcm, samplesCount/2);
+                    jar_xm_generate_samples((jar_xm_context_t*)music.ctxData, (float *)pcm, samplesCount/2);
                     break;
 
                 case ma_format_s16:
                     // NOTE: Internally this function considers 2 channels generation, so samplesCount/2
-                    jar_xm_generate_samples_16bit((jar_xm_context_t*)music.ctxData, (short*)pcm, samplesCount/2);
+                    jar_xm_generate_samples_16bit((jar_xm_context_t*)music.ctxData, (short *)pcm, samplesCount/2);
                     break;
 
                 case ma_format_u8:
                     // NOTE: Internally this function considers 2 channels generation, so samplesCount/2
-                    jar_xm_generate_samples_8bit((jar_xm_context_t*)music.ctxData, (char*)pcm, samplesCount/2);
+                    jar_xm_generate_samples_8bit((jar_xm_context_t*)music.ctxData, (char *)pcm, samplesCount/2);
                     break;
                 }
 
@@ -1784,9 +1784,9 @@ AudioStream LoadAudioStream(unsigned int sampleRate, unsigned int sampleSize, un
 
     // The size of a streaming buffer must be at least double the size of a period
     unsigned int periodSize = AUDIO.System.device.playback.internalPeriodSizeInFrames;
-    
+
     // If the buffer is not set, compute one that would give us a buffer good enough for a decent frame rate
-    unsigned int subBufferSize = (AUDIO.Buffer.defaultSize == 0)? AUDIO.Buffer.defaultSize : AUDIO.System.device.sampleRate/30;
+    unsigned int subBufferSize = (AUDIO.Buffer.defaultSize == 0)? AUDIO.System.device.sampleRate/30 : AUDIO.Buffer.defaultSize;
 
     if (subBufferSize < periodSize) subBufferSize = periodSize;
 
@@ -2352,7 +2352,7 @@ static bool TextIsEqual(const char *text1, const char *text2)
 static const char *TextToLower(const char *text)
 {
     #define MAX_TEXT_BUFFER_LENGTH      1024
-    
+
     static char buffer[MAX_TEXT_BUFFER_LENGTH] = { 0 };
 
     for (int i = 0; i < MAX_TEXT_BUFFER_LENGTH; i++)

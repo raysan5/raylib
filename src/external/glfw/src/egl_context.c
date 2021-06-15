@@ -173,7 +173,7 @@ static GLFWbool chooseEGLConfig(const _GLFWctxconfig* ctxconfig,
         u->stencilBits = getEGLConfigAttrib(n, EGL_STENCIL_SIZE);
 
         u->samples = getEGLConfigAttrib(n, EGL_SAMPLES);
-        u->doublebuffer = GLFW_TRUE;
+        u->doublebuffer = desired->doublebuffer;
 
         u->handle = (uintptr_t) n;
         usableCount++;
@@ -642,6 +642,9 @@ GLFWbool _glfwCreateContextEGL(_GLFWwindow* window,
         if (_glfw.egl.KHR_gl_colorspace)
             setAttrib(EGL_GL_COLORSPACE_KHR, EGL_GL_COLORSPACE_SRGB_KHR);
     }
+
+    if (!fbconfig->doublebuffer)
+        setAttrib(EGL_RENDER_BUFFER, EGL_SINGLE_BUFFER);
 
     setAttrib(EGL_NONE, EGL_NONE);
 
