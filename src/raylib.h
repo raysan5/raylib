@@ -775,7 +775,7 @@ typedef enum {
     SHADER_UNIFORM_IVEC2,           // Shader uniform type: ivec2 (2 int)
     SHADER_UNIFORM_IVEC3,           // Shader uniform type: ivec3 (3 int)
     SHADER_UNIFORM_IVEC4,           // Shader uniform type: ivec4 (4 int)
-    SHADER_UNIFORM_SAMPLER2D        // Shader uniform type: sampler2d
+    SHADER_UNIFORM_SAMPLER2D,        // Shader uniform type: sampler2d
     SHADER_UNIFORM_MAT3,            // Shader uniform type: mat3 (9 float)
     SHADER_UNIFORM_MAT4             // Shader uniform type: mat4 (16 float)
 } ShaderUniformDataType;
