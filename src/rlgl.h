@@ -297,14 +297,6 @@ typedef struct RenderBatch {
     typedef enum { false, true } bool;
     #endif
 
-    // Color, 4 components, R8G8B8A8 (32bit)
-    typedef struct Color {
-        unsigned char r;        // Color red value
-        unsigned char g;        // Color green value
-        unsigned char b;        // Color blue value
-        unsigned char a;        // Color alpha value
-    } Color;
-
     // Texture type
     // NOTE: Data stored in GPU memory
     typedef struct Texture2D {
@@ -880,8 +872,8 @@ static char *rlGetCompressedFormatName(int format); // Get compressed format off
 #endif  // SUPPORT_GL_DETAILS_INFO
 #endif  // GRAPHICS_API_OPENGL_33 || GRAPHICS_API_OPENGL_ES2
 #if defined(GRAPHICS_API_OPENGL_11)
-static int rlGenerateMipmapsData(unsigned char *data, int baseWidth, int baseHeight);   // Generate mipmaps data on CPU side
-static Color *rlGenNextMipmapData(Color *srcData, int srcWidth, int srcHeight);         // Generate next mipmap level on CPU side
+static int rlGenerateMipmapsData(unsigned char *data, int baseWidth, int baseHeight);           // Generate mipmaps data on CPU side
+static unsigned char *rlGenNextMipmapData(unsigned char *srcData, int srcWidth, int srcHeight); // Generate next mipmap level on CPU side
 #endif
 static int rlGetPixelDataSize(int width, int height, int format);   // Get pixel data size in bytes (image or texture)
 
@@ -3957,22 +3949,20 @@ static int rlGenerateMipmapsData(unsigned char *data, int baseWidth, int baseHei
 
     width = baseWidth;
     height = baseHeight;
-    size = (width*height*4);
+    size = (width*height*4);    // RGBA: 4 bytes
 
     // Generate mipmaps
-    // NOTE: Every mipmap data is stored after data
-    Color *image = (Color *)RL_MALLOC(width*height*sizeof(Color));
-    Color *mipmap = NULL;
+    // NOTE: Every mipmap data is stored after data (RGBA - 4 bytes)
+    unsigned char *image = (unsigned char *)RL_MALLOC(width*height*4);
+    unsigned char *mipmap = NULL;
     int offset = 0;
-    int j = 0;
 
     for (int i = 0; i < size; i += 4)
     {
-        image[j].r = data[i];
-        image[j].g = data[i + 1];
-        image[j].b = data[i + 2];
-        image[j].a = data[i + 3];
-        j++;
+        image[i] = data[i];
+        image[i + 1] = data[i + 1];
+        image[i + 2] = data[i + 2];
+        image[i + 3] = data[i + 3];
     }
 
     TRACELOGD("TEXTURE: Mipmap base size (%ix%i)", width, height);
@@ -3982,7 +3972,6 @@ static int rlGenerateMipmapsData(unsigned char *data, int baseWidth, int baseHei
         mipmap = rlGenNextMipmapData(image, width, height);
 
         offset += (width*height*4); // Size of last mipmap
-        j = 0;
 
         width /= 2;
         height /= 2;
@@ -3991,11 +3980,10 @@ static int rlGenerateMipmapsData(unsigned char *data, int baseWidth, int baseHei
         // Add mipmap to data
         for (int i = 0; i < size; i += 4)
         {
-            data[offset + i] = mipmap[j].r;
-            data[offset + i + 1] = mipmap[j].g;
-            data[offset + i + 2] = mipmap[j].b;
-            data[offset + i + 3] = mipmap[j].a;
-            j++;
+            data[offset + i] = mipmap[i];
+            data[offset + i + 1] = mipmap[i + 1];
+            data[offset + i + 2] = mipmap[i + 2];
+            data[offset + i + 3] = mipmap[i + 3];
         }
 
         RL_FREE(image);
@@ -4010,15 +3998,17 @@ static int rlGenerateMipmapsData(unsigned char *data, int baseWidth, int baseHei
 }
 
 // Manual mipmap generation (basic scaling algorithm)
-static Color *rlGenNextMipmapData(Color *srcData, int srcWidth, int srcHeight)
+static unsigned char *rlGenNextMipmapData(unsigned char *srcData, int srcWidth, int srcHeight)
 {
-    int x2, y2;
-    Color prow, pcol;
+    int x2 = 0;
+    int y2 = 0;
+    unsigned char prow[4];
+    unsigned char pcol[4];
 
     int width = srcWidth/2;
     int height = srcHeight/2;
 
-    Color *mipmap = (Color *)RL_MALLOC(width*height*sizeof(Color));
+    unsigned char *mipmap = (unsigned char *)RL_MALLOC(width*height*4);
 
     // Scaling algorithm works perfectly (box-filter)
     for (int y = 0; y < height; y++)
@@ -4029,20 +4019,20 @@ static Color *rlGenNextMipmapData(Color *srcData, int srcWidth, int srcHeight)
         {
             x2 = 2*x;
 
-            prow.r = (srcData[y2*srcWidth + x2].r + srcData[y2*srcWidth + x2 + 1].r)/2;
-            prow.g = (srcData[y2*srcWidth + x2].g + srcData[y2*srcWidth + x2 + 1].g)/2;
-            prow.b = (srcData[y2*srcWidth + x2].b + srcData[y2*srcWidth + x2 + 1].b)/2;
-            prow.a = (srcData[y2*srcWidth + x2].a + srcData[y2*srcWidth + x2 + 1].a)/2;
+            prow[0] = (srcData[(y2*srcWidth + x2)*4 + 0] + srcData[(y2*srcWidth + x2 + 1)*4 + 0])/2;
+            prow[1] = (srcData[(y2*srcWidth + x2)*4 + 1] + srcData[(y2*srcWidth + x2 + 1)*4 + 1])/2;
+            prow[2] = (srcData[(y2*srcWidth + x2)*4 + 2] + srcData[(y2*srcWidth + x2 + 1)*4 + 2])/2;
+            prow[3] = (srcData[(y2*srcWidth + x2)*4 + 3] + srcData[(y2*srcWidth + x2 + 1)*4 + 3])/2;
 
-            pcol.r = (srcData[(y2+1)*srcWidth + x2].r + srcData[(y2+1)*srcWidth + x2 + 1].r)/2;
-            pcol.g = (srcData[(y2+1)*srcWidth + x2].g + srcData[(y2+1)*srcWidth + x2 + 1].g)/2;
-            pcol.b = (srcData[(y2+1)*srcWidth + x2].b + srcData[(y2+1)*srcWidth + x2 + 1].b)/2;
-            pcol.a = (srcData[(y2+1)*srcWidth + x2].a + srcData[(y2+1)*srcWidth + x2 + 1].a)/2;
+            pcol[0] = (srcData[((y2 + 1)*srcWidth + x2)*4 + 0] + srcData[((y2 + 1)*srcWidth + x2 + 1)*4 + 0])/2;
+            pcol[1] = (srcData[((y2 + 1)*srcWidth + x2)*4 + 1] + srcData[((y2 + 1)*srcWidth + x2 + 1)*4 + 1])/2;
+            pcol[2] = (srcData[((y2 + 1)*srcWidth + x2)*4 + 2] + srcData[((y2 + 1)*srcWidth + x2 + 1)*4 + 2])/2;
+            pcol[3] = (srcData[((y2 + 1)*srcWidth + x2)*4 + 3] + srcData[((y2 + 1)*srcWidth + x2 + 1)*4 + 3])/2;
 
-            mipmap[y*width + x].r = (prow.r + pcol.r)/2;
-            mipmap[y*width + x].g = (prow.g + pcol.g)/2;
-            mipmap[y*width + x].b = (prow.b + pcol.b)/2;
-            mipmap[y*width + x].a = (prow.a + pcol.a)/2;
+            mipmap[(y*width + x)*4 + 0] = (prow[0] + pcol[0])/2;
+            mipmap[(y*width + x)*4 + 1] = (prow[1] + pcol[1])/2;
+            mipmap[(y*width + x)*4 + 2] = (prow[2] + pcol[2])/2;
+            mipmap[(y*width + x)*4 + 3] = (prow[3] + pcol[3])/2;
         }
     }
 
