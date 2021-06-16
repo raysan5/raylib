@@ -138,7 +138,7 @@
 typedef struct float3 { float v[3]; } float3;
 typedef struct float16 { float v[16]; } float16;
 
-#include <math.h>       // Required for: sinf(), cosf(), sqrtf(), tan(), fabs()
+#include <math.h>       // Required for: sinf(), cosf(), tan(), atan2f(), sqrtf(), fminf(), fmaxf(), fabs()
 
 //----------------------------------------------------------------------------------
 // Module Functions Definition - Utils math
