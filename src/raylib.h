@@ -1435,8 +1435,8 @@ RLAPI Mesh GenMeshCubicmap(Image cubicmap, Vector3 cubeSize);                   
 
 // Mesh manipulation functions
 RLAPI BoundingBox GetMeshBoundingBox(Mesh mesh);                                            // Compute mesh bounding box limits
-RLAPI void MeshTangents(Mesh *mesh);                                                        // Compute mesh tangents
-RLAPI void MeshBinormals(Mesh *mesh);                                                       // Compute mesh binormals
+RLAPI void GenMeshTangents(Mesh *mesh);                                                     // Compute mesh tangents
+RLAPI void GenMeshBinormals(Mesh *mesh);                                                    // Compute mesh binormals
 
 // Model drawing functions
 RLAPI void DrawModel(Model model, Vector3 position, float scale, Color tint);                           // Draw a model (with texture if set)

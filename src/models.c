@@ -2646,7 +2646,7 @@ BoundingBox GetMeshBoundingBox(Mesh mesh)
 // Compute mesh tangents
 // NOTE: To calculate mesh tangents and binormals we need mesh vertex positions and texture coordinates
 // Implementation base don: https://answers.unity.com/questions/7789/calculating-tangents-vector4.html
-void MeshTangents(Mesh *mesh)
+void GenMeshTangents(Mesh *mesh)
 {
     if (mesh->tangents == NULL) mesh->tangents = (float *)RL_MALLOC(mesh->vertexCount*4*sizeof(float));
     else TRACELOG(LOG_WARNING, "MESH: Tangents data already available, re-writting");
@@ -2726,7 +2726,7 @@ void MeshTangents(Mesh *mesh)
 }
 
 // Compute mesh binormals (aka bitangent)
-void MeshBinormals(Mesh *mesh)
+void GenMeshBinormals(Mesh *mesh)
 {
     for (int i = 0; i < mesh->vertexCount; i++)
     {
