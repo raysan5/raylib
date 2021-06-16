@@ -3540,6 +3540,17 @@ Vector2 GetMousePosition(void)
     return position;
 }
 
+// Mouse movement per frame XY
+Vector2 GetMouseDelta()
+{
+    Vector2 delta = {0};
+
+    delta.x = CORE.Input.Mouse.currentPosition.x - CORE.Input.Mouse.previousPosition.x;
+    delta.y = CORE.Input.Mouse.currentPosition.y - CORE.Input.Mouse.previousPosition.y;
+
+    return delta;
+}
+
 // Set mouse position XY
 void SetMousePosition(int x, int y)
 {
