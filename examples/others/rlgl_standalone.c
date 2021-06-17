@@ -65,6 +65,14 @@
 #define RAYWHITE   (Color){ 245, 245, 245, 255 }   // My own White (raylib logo)
 #define DARKGRAY   (Color){ 80, 80, 80, 255 }      // Dark Gray
 
+// Color, 4 components, R8G8B8A8 (32bit)
+typedef struct Color {
+    unsigned char r;        // Color red value
+    unsigned char g;        // Color green value
+    unsigned char b;        // Color blue value
+    unsigned char a;        // Color alpha value
+} Color;
+
 // Camera type, defines a camera position/orientation in 3d space
 typedef struct Camera {
     Vector3 position;       // Camera position
