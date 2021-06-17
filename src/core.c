@@ -605,7 +605,7 @@ static void SetupViewport(int width, int height);       // Set viewport for a pr
 static void SwapBuffers(void);                          // Copy back buffer to front buffer
 
 static void InitTimer(void);                            // Initialize timer
-static void Wait(float ms);                             // Wait for some milliseconds (stop program execution)
+static void WaitTime(float ms);                         // Wait for some milliseconds (stop program execution)
 
 static void PollInputEvents(void);                      // Register user events
 
@@ -673,7 +673,7 @@ static void PlayAutomationEvent(unsigned int frame);
 
 #if defined(_WIN32)
     // NOTE: We include Sleep() function signature here to avoid windows.h inclusion (kernel32 lib)
-    void __stdcall Sleep(unsigned long msTimeout);      // Required for Wait()
+    void __stdcall Sleep(unsigned long msTimeout);      // Required for WaitTime()
 #endif
 
 //----------------------------------------------------------------------------------
@@ -2031,7 +2031,7 @@ void EndDrawing(void)
     // Wait for some milliseconds...
     if (CORE.Time.frame < CORE.Time.target)
     {
-        Wait((float)(CORE.Time.target - CORE.Time.frame)*1000.0f);
+        WaitTime((float)(CORE.Time.target - CORE.Time.frame)*1000.0f);
 
         CORE.Time.current = GetTime();
         double waitTime = CORE.Time.current - CORE.Time.previous;
@@ -4690,7 +4690,7 @@ static void InitTimer(void)
 // take longer than expected... for that reason we use the busy wait loop
 // Ref: http://stackoverflow.com/questions/43057578/c-programming-win32-games-sleep-taking-longer-than-expected
 // Ref: http://www.geisswerks.com/ryan/FAQS/timing.html --> All about timming on Win32!
-static void Wait(float ms)
+static void WaitTime(float ms)
 {
 #if defined(PLATFORM_UWP)
     UWPGetSleepFunc()(ms/1000);
@@ -6328,7 +6328,8 @@ static void *EventThread(void *arg)
             #endif
             }
         }
-        Wait(5);    // Sleep for 5ms to avoid hogging CPU time
+
+        WaitTime(5);    // Sleep for 5ms to avoid hogging CPU time
     }
 
     close(worker->fd);
@@ -6416,7 +6417,7 @@ static void *GamepadThread(void *arg)
                     }
                 }
             }
-            else Wait(1);    // Sleep for 1 ms to avoid hogging CPU time
+            else WaitTime(1);    // Sleep for 1 ms to avoid hogging CPU time
         }
     }
 
