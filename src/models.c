@@ -1099,10 +1099,6 @@ void DrawMeshInstanced(Mesh mesh, Material material, Matrix *transforms, int ins
         rlSetVertexAttribute(material.shader.locs[SHADER_LOC_VERTEX_POSITION], 3, RL_FLOAT, 0, 0, 0);
         rlEnableVertexAttribute(material.shader.locs[SHADER_LOC_VERTEX_POSITION]);
 
-        rlEnableVertexBuffer(mesh.vboId[0]);
-        rlSetVertexAttribute(material.shader.locs[SHADER_LOC_VERTEX_POSITION], 3, RL_FLOAT, 0, 0, 0);
-        rlEnableVertexAttribute(material.shader.locs[SHADER_LOC_VERTEX_POSITION]);
-
         // Bind mesh VBO data: vertex texcoords (shader-location = 1)
         rlEnableVertexBuffer(mesh.vboId[1]);
         rlSetVertexAttribute(material.shader.locs[SHADER_LOC_VERTEX_TEXCOORD01], 2, RL_FLOAT, 0, 0, 0);
