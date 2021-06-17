@@ -962,11 +962,11 @@ RLAPI const char *GetClipboardText(void);                         // Get clipboa
 
 // Custom frame control functions
 // NOTE: Those functions are intended for advance users that want full control over the frame processing
-// By default EndDrawing() does this job: draws everything + SwapBuffers() + manage frame timming + PollInputEvents()
+// By default EndDrawing() does this job: draws everything + SwapScreenBuffer() + manage frame timming + PollInputEvents()
 // To avoid that behaviour and control frame processes manually, enable in config.h: SUPPORT_CUSTOM_FRAME_CONTROL
 RLAPI void InitTimer(void);                                       // Initialize timer (hi-resolution if available)
 RLAPI void WaitTime(float ms);                                    // Wait for some milliseconds (halt program execution)
-RLAPI void SwapBuffers(void);                                     // Swap back buffer with front buffer (screen drawing)
+RLAPI void SwapScreenBuffer(void);                                // Swap back buffer with front buffer (screen drawing)
 RLAPI void PollInputEvents(void);                                 // Register all input events
 
 // Cursor-related functions

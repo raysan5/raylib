@@ -2014,7 +2014,7 @@ void EndDrawing(void)
 #endif
 
 #if !defined(SUPPORT_CUSTOM_FRAME_CONTROL)
-    SwapBuffers();                  // Copy back buffer to front buffer (screen)
+    SwapScreenBuffer();                  // Copy back buffer to front buffer (screen)
     
     // Frame time control system
     CORE.Time.current = GetTime();
@@ -4735,7 +4735,7 @@ void WaitTime(float ms)
 }
 
 // Swap back buffer with front buffer (screen drawing)
-void SwapBuffers(void)
+void SwapScreenBuffer(void)
 {
 #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
     glfwSwapBuffers(CORE.Window.handle);
