@@ -602,12 +602,6 @@ extern void UnloadFontDefault(void);        // [Module: text] Unloads default fo
 static bool InitGraphicsDevice(int width, int height);  // Initialize graphics device
 static void SetupFramebuffer(int width, int height);    // Setup main framebuffer
 static void SetupViewport(int width, int height);       // Set viewport for a provided width and height
-static void SwapBuffers(void);                          // Copy back buffer to front buffer
-
-static void InitTimer(void);                            // Initialize timer
-static void WaitTime(float ms);                         // Wait for some milliseconds (stop program execution)
-
-static void PollInputEvents(void);                      // Register user events
 
 #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
 static void ErrorCallback(int error, const char *description);                             // GLFW3 Error Callback, runs on GLFW3 error
@@ -2019,6 +2013,7 @@ void EndDrawing(void)
     }
 #endif
 
+#if !defined(SUPPORT_CUSTOM_FRAME_CONTROL)
     SwapBuffers();                  // Copy back buffer to front buffer (screen)
     
     // Frame time control system
@@ -2041,6 +2036,7 @@ void EndDrawing(void)
     }
 
     PollInputEvents();              // Poll user events
+#endif
     
 #if defined(SUPPORT_EVENTS_AUTOMATION)
     // Events recording and playing logic
@@ -4660,7 +4656,7 @@ static void SetupFramebuffer(int width, int height)
 }
 
 // Initialize hi-resolution timer
-static void InitTimer(void)
+void InitTimer(void)
 {
     srand((unsigned int)time(NULL));    // Initialize random seed
 
@@ -4690,7 +4686,7 @@ static void InitTimer(void)
 // take longer than expected... for that reason we use the busy wait loop
 // Ref: http://stackoverflow.com/questions/43057578/c-programming-win32-games-sleep-taking-longer-than-expected
 // Ref: http://www.geisswerks.com/ryan/FAQS/timing.html --> All about timming on Win32!
-static void WaitTime(float ms)
+void WaitTime(float ms)
 {
 #if defined(PLATFORM_UWP)
     UWPGetSleepFunc()(ms/1000);
@@ -4738,8 +4734,70 @@ static void WaitTime(float ms)
 #endif
 }
 
-// Poll (store) all input events
-static void PollInputEvents(void)
+// Swap back buffer with front buffer (screen drawing)
+void SwapBuffers(void)
+{
+#if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
+    glfwSwapBuffers(CORE.Window.handle);
+#endif
+
+#if defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI) || defined(PLATFORM_DRM) || defined(PLATFORM_UWP)
+    eglSwapBuffers(CORE.Window.device, CORE.Window.surface);
+
+#if defined(PLATFORM_DRM)
+    if (!CORE.Window.gbmSurface || (-1 == CORE.Window.fd) || !CORE.Window.connector || !CORE.Window.crtc)
+    {
+        TRACELOG(LOG_ERROR, "DISPLAY: DRM initialization failed to swap");
+        abort();
+    }
+
+    struct gbm_bo *bo = gbm_surface_lock_front_buffer(CORE.Window.gbmSurface);
+    if (!bo)
+    {
+        TRACELOG(LOG_ERROR, "DISPLAY: Failed GBM to lock front buffer");
+        abort();
+    }
+
+    uint32_t fb = 0;
+    int result = drmModeAddFB(CORE.Window.fd, CORE.Window.connector->modes[CORE.Window.modeIndex].hdisplay,
+        CORE.Window.connector->modes[CORE.Window.modeIndex].vdisplay, 24, 32, gbm_bo_get_stride(bo), gbm_bo_get_handle(bo).u32, &fb);
+    if (0 != result)
+    {
+        TRACELOG(LOG_ERROR, "DISPLAY: drmModeAddFB() failed with result: %d", result);
+        abort();
+    }
+
+    result = drmModeSetCrtc(CORE.Window.fd, CORE.Window.crtc->crtc_id, fb, 0, 0,
+        &CORE.Window.connector->connector_id, 1, &CORE.Window.connector->modes[CORE.Window.modeIndex]);
+    if (0 != result)
+    {
+        TRACELOG(LOG_ERROR, "DISPLAY: drmModeSetCrtc() failed with result: %d", result);
+        abort();
+    }
+
+    if (CORE.Window.prevFB)
+    {
+        result = drmModeRmFB(CORE.Window.fd, CORE.Window.prevFB);
+        if (0 != result)
+        {
+            TRACELOG(LOG_ERROR, "DISPLAY: drmModeRmFB() failed with result: %d", result);
+            abort();
+        }
+    }
+    CORE.Window.prevFB = fb;
+
+    if (CORE.Window.prevBO)
+    {
+        gbm_surface_release_buffer(CORE.Window.gbmSurface, CORE.Window.prevBO);
+    }
+
+    CORE.Window.prevBO = bo;
+#endif  // PLATFORM_DRM
+#endif  // PLATFORM_ANDROID || PLATFORM_RPI || PLATFORM_DRM || PLATFORM_UWP
+}
+
+// Register all input events
+void PollInputEvents(void)
 {
 #if defined(SUPPORT_GESTURES_SYSTEM)
     // NOTE: Gestures update must be called every frame to reset gestures correctly
@@ -5013,68 +5071,6 @@ static void PollInputEvents(void)
     // NOTE: Mouse input events polling is done asynchronously in another pthread - EventThread()
     // NOTE: Gamepad (Joystick) input events polling is done asynchonously in another pthread - GamepadThread()
 #endif
-}
-
-// Copy back buffer to front buffers
-static void SwapBuffers(void)
-{
-#if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
-    glfwSwapBuffers(CORE.Window.handle);
-#endif
-
-#if defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI) || defined(PLATFORM_DRM) || defined(PLATFORM_UWP)
-    eglSwapBuffers(CORE.Window.device, CORE.Window.surface);
-
-#if defined(PLATFORM_DRM)
-    if (!CORE.Window.gbmSurface || (-1 == CORE.Window.fd) || !CORE.Window.connector || !CORE.Window.crtc)
-    {
-        TRACELOG(LOG_ERROR, "DISPLAY: DRM initialization failed to swap");
-        abort();
-    }
-
-    struct gbm_bo *bo = gbm_surface_lock_front_buffer(CORE.Window.gbmSurface);
-    if (!bo)
-    {
-        TRACELOG(LOG_ERROR, "DISPLAY: Failed GBM to lock front buffer");
-        abort();
-    }
-
-    uint32_t fb = 0;
-    int result = drmModeAddFB(CORE.Window.fd, CORE.Window.connector->modes[CORE.Window.modeIndex].hdisplay,
-        CORE.Window.connector->modes[CORE.Window.modeIndex].vdisplay, 24, 32, gbm_bo_get_stride(bo), gbm_bo_get_handle(bo).u32, &fb);
-    if (0 != result)
-    {
-        TRACELOG(LOG_ERROR, "DISPLAY: drmModeAddFB() failed with result: %d", result);
-        abort();
-    }
-
-    result = drmModeSetCrtc(CORE.Window.fd, CORE.Window.crtc->crtc_id, fb, 0, 0,
-        &CORE.Window.connector->connector_id, 1, &CORE.Window.connector->modes[CORE.Window.modeIndex]);
-    if (0 != result)
-    {
-        TRACELOG(LOG_ERROR, "DISPLAY: drmModeSetCrtc() failed with result: %d", result);
-        abort();
-    }
-
-    if (CORE.Window.prevFB)
-    {
-        result = drmModeRmFB(CORE.Window.fd, CORE.Window.prevFB);
-        if (0 != result)
-        {
-            TRACELOG(LOG_ERROR, "DISPLAY: drmModeRmFB() failed with result: %d", result);
-            abort();
-        }
-    }
-    CORE.Window.prevFB = fb;
-
-    if (CORE.Window.prevBO)
-    {
-        gbm_surface_release_buffer(CORE.Window.gbmSurface, CORE.Window.prevBO);
-    }
-
-    CORE.Window.prevBO = bo;
-#endif  // PLATFORM_DRM
-#endif  // PLATFORM_ANDROID || PLATFORM_RPI || PLATFORM_DRM || PLATFORM_UWP
 }
 
 #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)

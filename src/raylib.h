@@ -960,6 +960,15 @@ RLAPI const char *GetMonitorName(int monitor);                    // Get the hum
 RLAPI void SetClipboardText(const char *text);                    // Set clipboard text content
 RLAPI const char *GetClipboardText(void);                         // Get clipboard text content
 
+// Custom frame control functions
+// NOTE: Those functions are intended for advance users that want full control over the frame processing
+// By default EndDrawing() does this job: draws everything + SwapBuffers() + manage frame timming + PollInputEvents()
+// To avoid that behaviour and control frame processes manually, enable in config.h: SUPPORT_CUSTOM_FRAME_CONTROL
+RLAPI void InitTimer(void);                                       // Initialize timer (hi-resolution if available)
+RLAPI void WaitTime(float ms);                                    // Wait for some milliseconds (halt program execution)
+RLAPI void SwapBuffers(void);                                     // Swap back buffer with front buffer (screen drawing)
+RLAPI void PollInputEvents(void);                                 // Register all input events
+
 // Cursor-related functions
 RLAPI void ShowCursor(void);                                      // Shows cursor
 RLAPI void HideCursor(void);                                      // Hides cursor

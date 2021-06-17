@@ -57,6 +57,10 @@
 #define SUPPORT_DATA_STORAGE        1
 // Support automatic generated events, loading and recording of those events when required
 #define SUPPORT_EVENTS_AUTOMATION     1
+// Support custom frame control, only for advance users
+// By default EndDrawing() does this job: draws everything + SwapBuffers() + manage frame timming + PollInputEvents()
+// Enabling this flag allows manual control of the frame processes, use at your own risk
+//#define SUPPORT_CUSTOM_FRAME_CONTROL   1
 
 // core: Configuration values
 //------------------------------------------------------------------------------------
