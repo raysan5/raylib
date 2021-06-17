@@ -56,7 +56,7 @@
 *       WARNING: Reconfiguring standard input could lead to undesired effects, like breaking other running processes or
 *       blocking the device is not restored properly. Use with care.
 *
-*   #define SUPPORT_MOUSE_CURSOR_NATIVE (Raspberry Pi and DRM only)
+*   #define SUPPORT_MOUSE_CURSOR_POINT
 *       Draw a mouse pointer on screen
 *
 *   #define SUPPORT_BUSY_WAIT_LOOP
@@ -387,7 +387,7 @@ typedef struct CoreData {
         Point position;                     // Window position on screen (required on fullscreen toggle)
         Size display;                       // Display width and height (monitor, device-screen, LCD, ...)
         Size screen;                        // Screen width and height (used render area)
-        Size currentFbo;                    // Current render width and height, it could change on BeginTextureMode()
+        Size currentFbo;                    // Current render width and height (depends on active fbo)
         Size render;                        // Framebuffer width and height (render area, including black bars if required)
         Point renderOffset;                 // Offset from render area (must be divided by 2)
         Matrix screenScale;                 // Matrix to scale screen (framebuffer rendering)
@@ -1952,22 +1952,22 @@ void BeginDrawing(void)
 // End canvas drawing and swap buffers (double buffering)
 void EndDrawing(void)
 {
-#if (defined(PLATFORM_RPI) || defined(PLATFORM_DRM)) && defined(SUPPORT_MOUSE_CURSOR_NATIVE)
-    // On native mode we have no system mouse cursor, so,
-    // we draw a small rectangle for user reference
+    rlDrawRenderBatchActive();      // Update and draw internal render batch
+    
+#if defined(SUPPORT_MOUSE_CURSOR_POINT)
+    // Draw a small rectangle on mouse position for user reference
     if (!CORE.Input.Mouse.cursorHidden)
     {
         DrawRectangle(CORE.Input.Mouse.currentPosition.x, CORE.Input.Mouse.currentPosition.y, 3, 3, MAROON);
+        rlDrawRenderBatchActive();  // Update and draw internal render batch
     }
 #endif
 
-    rlDrawRenderBatchActive();      // Update and draw internal render batch
-
 #if defined(SUPPORT_GIF_RECORDING)
-    #define GIF_RECORD_FRAMERATE    10
-
+    // Draw record indicator
     if (gifRecording)
     {
+        #define GIF_RECORD_FRAMERATE    10
         gifFramesCounter++;
 
         // NOTE: We record one gif frame every 10 game frames
@@ -1992,6 +1992,7 @@ void EndDrawing(void)
 #endif
 
 #if defined(SUPPORT_EVENTS_AUTOMATION)
+    // Draw record/play indicator
     if (eventsRecording)
     {
         gifFramesCounter++;
@@ -2018,8 +2019,8 @@ void EndDrawing(void)
     }
 #endif
 
-    SwapBuffers();                  // Copy back buffer to front buffer
-
+    SwapBuffers();                  // Copy back buffer to front buffer (screen)
+    
     // Frame time control system
     CORE.Time.current = GetTime();
     CORE.Time.draw = CORE.Time.current - CORE.Time.previous;
@@ -2040,13 +2041,13 @@ void EndDrawing(void)
     }
 
     PollInputEvents();              // Poll user events
-
+    
 #if defined(SUPPORT_EVENTS_AUTOMATION)
+    // Events recording and playing logic
     if (eventsRecording) RecordAutomationEvent(CORE.Time.frameCounter);
-
-    // TODO: When should we play? After/before/replace PollInputEvents()?
-    if (eventsPlaying)
+    else if (eventsPlaying)
     {
+        // TODO: When should we play? After/before/replace PollInputEvents()?
         if (CORE.Time.frameCounter >= eventCount) eventsPlaying = false;
         PlayAutomationEvent(CORE.Time.frameCounter);
     }
