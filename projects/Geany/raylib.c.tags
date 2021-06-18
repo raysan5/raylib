@@ -298,7 +298,7 @@ GenMeshTorus|Mesh|(float radius, float size, int radSeg, int sides);|
 GenMeshKnot|Mesh|(float radius, float size, int radSeg, int sides);|
 GenMeshHeightmap|Mesh|(Image heightmap, Vector3 size);|
 GenMeshCubicmap|Mesh|(Image cubicmap, Vector3 cubeSize);|
-MeshBoundingBox|BoundingBox|(Mesh mesh);|
+GetMeshBoundingBox|BoundingBox|(Mesh mesh);|
 MeshTangents|void|(Mesh *mesh);|
 MeshBinormals|void|(Mesh *mesh);|
 DrawModel|void|(Model model, Vector3 position, float scale, Color tint);|
