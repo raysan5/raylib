@@ -4141,23 +4141,56 @@ static Image LoadImageFromCgltfImage(cgltf_image *image, const char *texPath, Co
 }
 
 
-static bool GLTFReadValue(cgltf_accessor* acc, unsigned int index, void *variable, unsigned int elements, unsigned int size)
+static bool GLTFReadValue(cgltf_accessor* acc, unsigned int index, void *variable)
 {
+    unsigned int typeElements = 0;
+    switch(acc->type) {
+        case cgltf_type_scalar: typeElements = 1; break;
+        case cgltf_type_vec2: typeElements = 2; break;
+        case cgltf_type_vec3: typeElements = 3; break;
+        case cgltf_type_vec4:
+        case cgltf_type_mat2: typeElements = 4; break;
+        case cgltf_type_mat3: typeElements = 9; break;
+        case cgltf_type_mat4: typeElements = 16; break;
+        case cgltf_type_invalid: typeElements = 0; break;
+    }
+    
+    unsigned int typeSize = 0;
+    switch(acc->component_type) {
+        case cgltf_component_type_r_8u:
+        case cgltf_component_type_r_8: typeSize = 1; break;
+        case cgltf_component_type_r_16u:
+        case cgltf_component_type_r_16: typeSize = 2; break;
+        case cgltf_component_type_r_32f:
+        case cgltf_component_type_r_32u: typeSize = 4; break;
+        case cgltf_component_type_invalid: typeSize = 0; break;
+    }
+    
+    unsigned int singleElementSize = typeSize * typeElements;
+    
     if (acc->count == 2)
     {
         if (index > 1) return false;
 
-        memcpy(variable, index == 0 ? acc->min : acc->max, elements*size);
+        memcpy(variable, index == 0 ? acc->min : acc->max, singleElementSize);
         return true;
     }
-
-    unsigned int stride = size*elements;
-    memset(variable, 0, stride);
+    
+    memset(variable, 0, singleElementSize);
 
     if (acc->buffer_view == NULL || acc->buffer_view->buffer == NULL || acc->buffer_view->buffer->data == NULL) return false;
-
-    void* readPosition = ((char *)acc->buffer_view->buffer->data) + (index*stride) + acc->buffer_view->offset + acc->offset;
-    memcpy(variable, readPosition, stride);
+    
+    if(!acc->buffer_view->stride)
+    {
+        void* readPosition = ((char *)acc->buffer_view->buffer->data) + (index * singleElementSize) + acc->buffer_view->offset + acc->offset;
+        memcpy(variable, readPosition, singleElementSize);
+    }
+    else
+    {
+        void* readPosition = ((char *)acc->buffer_view->buffer->data) + (index * acc->buffer_view->stride) + acc->buffer_view->offset + acc->offset;
+        memcpy(variable, readPosition, singleElementSize);
+    }
+    
     return true;
 }
 
@@ -4381,7 +4414,7 @@ static void LoadGLTFBoneAttribute(Model *model, cgltf_accessor *jointsAccessor, 
 
         for (unsigned int a = 0; a < jointsAccessor->count; a++)
         {
-            GLTFReadValue(jointsAccessor, a, bones + (a*4), 4, sizeof(short));
+            GLTFReadValue(jointsAccessor, a, bones + (a*4));
         }
 
         for (unsigned int a = 0; a < jointsAccessor->count*4; a++)
@@ -4406,7 +4439,7 @@ static void LoadGLTFBoneAttribute(Model *model, cgltf_accessor *jointsAccessor, 
 
         for (unsigned int a = 0; a < jointsAccessor->count; a++)
         {
-            GLTFReadValue(jointsAccessor, a, bones + (a*4), 4, sizeof(unsigned char));
+            GLTFReadValue(jointsAccessor, a, bones + (a*4));
         }
 
         for (unsigned int a = 0; a < jointsAccessor->count*4; a++)
@@ -4472,7 +4505,7 @@ static void LoadGLTFModelIndices(Model* model, cgltf_accessor* indexAccessor, in
             unsigned short readValue = 0;
             for (unsigned int a = 0; a < indexAccessor->count; a++)
             {
-                GLTFReadValue(indexAccessor, a, &readValue, 1, sizeof(short));
+                GLTFReadValue(indexAccessor, a, &readValue);
                 model->meshes[primitiveIndex].indices[a] = readValue;
             }
         }
@@ -4484,7 +4517,7 @@ static void LoadGLTFModelIndices(Model* model, cgltf_accessor* indexAccessor, in
             unsigned char readValue = 0;
             for (unsigned int a = 0; a < indexAccessor->count; a++)
             {
-                GLTFReadValue(indexAccessor, a, &readValue, 1, sizeof(char));
+                GLTFReadValue(indexAccessor, a, &readValue);
                 model->meshes[primitiveIndex].indices[a] = (unsigned short)readValue;
             }
         }
@@ -4496,7 +4529,7 @@ static void LoadGLTFModelIndices(Model* model, cgltf_accessor* indexAccessor, in
             unsigned int readValue;
             for (unsigned int a = 0; a < indexAccessor->count; a++)
             {
-                GLTFReadValue(indexAccessor, a, &readValue, 1, sizeof(unsigned int));
+                GLTFReadValue(indexAccessor, a, &readValue);
                 model->meshes[primitiveIndex].indices[a] = (unsigned short)readValue;
             }
         }
@@ -4563,7 +4596,7 @@ static ModelAnimation *LoadGLTFModelAnimations(const char *fileName, int *animCo
             ModelAnimation *output = animations + a;
 
             // 30 frames sampled per second
-            const float timeStep = (1.0f/30.0f);
+            const float timeStep = (1.0f/60.0f);
             float animationDuration = 0.0f;
 
             // Getting the max animation time to consider for animation duration
@@ -4573,7 +4606,7 @@ static ModelAnimation *LoadGLTFModelAnimations(const char *fileName, int *animCo
                 int frameCounts = (int)channel->sampler->input->count;
                 float lastFrameTime = 0.0f;
 
-                if (GLTFReadValue(channel->sampler->input, frameCounts - 1, &lastFrameTime, 1, sizeof(float)))
+                if (GLTFReadValue(channel->sampler->input, frameCounts - 1, &lastFrameTime))
                 {
                     animationDuration = fmaxf(lastFrameTime, animationDuration);
                 }
@@ -4635,7 +4668,7 @@ static ModelAnimation *LoadGLTFModelAnimations(const char *fileName, int *animCo
                     for (unsigned int j = 0; j < sampler->input->count; j++)
                     {
                         float inputFrameTime;
-                        if (GLTFReadValue(sampler->input, j, &inputFrameTime, 1, sizeof(float)))
+                        if (GLTFReadValue(sampler->input, j, &inputFrameTime))
                         {
                             if (frameTime < inputFrameTime)
                             {
@@ -4644,7 +4677,7 @@ static ModelAnimation *LoadGLTFModelAnimations(const char *fileName, int *animCo
                                 outputMax = j;
 
                                 float previousInputTime = 0.0f;
-                                if (GLTFReadValue(sampler->input, outputMin, &previousInputTime, 1, sizeof(float)))
+                                if (GLTFReadValue(sampler->input, outputMin, &previousInputTime))
                                 {
                                     if ((inputFrameTime - previousInputTime) != 0)
                                     {
@@ -4660,24 +4693,48 @@ static ModelAnimation *LoadGLTFModelAnimations(const char *fileName, int *animCo
 
                     // If the current transformation has no information for the current frame time point
                     if (shouldSkipFurtherTransformation) continue;
-
+    
                     if (channel->target_path == cgltf_animation_path_type_translation)
                     {
                         Vector3 translationStart;
                         Vector3 translationEnd;
 
-                        bool success = GLTFReadValue(sampler->output, outputMin, &translationStart, 3, sizeof(float));
-                        success = GLTFReadValue(sampler->output, outputMax, &translationEnd, 3, sizeof(float)) || success;
+                        float values[3];
+    
+                        bool success = GLTFReadValue(sampler->output, outputMin, values);
+    
+                        translationStart.x = values[0];
+                        translationStart.y = values[1];
+                        translationStart.z = values[2];
+                        
+                        success = GLTFReadValue(sampler->output, outputMax, values) || success;
+    
+                        translationEnd.x = values[0];
+                        translationEnd.y = values[1];
+                        translationEnd.z = values[2];
 
                         if (success) output->framePoses[frame][boneId].translation = Vector3Lerp(translationStart, translationEnd, lerpPercent);
                     }
                     if (channel->target_path == cgltf_animation_path_type_rotation)
                     {
-                        Quaternion rotationStart;
-                        Quaternion rotationEnd;
-
-                        bool success = GLTFReadValue(sampler->output, outputMin, &rotationStart, 4, sizeof(float));
-                        success = GLTFReadValue(sampler->output, outputMax, &rotationEnd, 4, sizeof(float)) || success;
+                        Vector4 rotationStart;
+                        Vector4 rotationEnd;
+    
+                        float values[4];
+    
+                        bool success = GLTFReadValue(sampler->output, outputMin, &values);
+    
+                        rotationStart.x = values[0];
+                        rotationStart.y = values[1];
+                        rotationStart.z = values[2];
+                        rotationStart.w = values[3];
+                        
+                        success = GLTFReadValue(sampler->output, outputMax, &values) || success;
+    
+                        rotationEnd.x = values[0];
+                        rotationEnd.y = values[1];
+                        rotationEnd.z = values[2];
+                        rotationEnd.w = values[3];
 
                         if (success)
                         {
@@ -4688,9 +4745,20 @@ static ModelAnimation *LoadGLTFModelAnimations(const char *fileName, int *animCo
                     {
                         Vector3 scaleStart;
                         Vector3 scaleEnd;
-
-                        bool success = GLTFReadValue(sampler->output, outputMin, &scaleStart, 3, sizeof(float));
-                        success = GLTFReadValue(sampler->output, outputMax, &scaleEnd, 3, sizeof(float)) || success;
+    
+                        float values[3];
+    
+                        bool success = GLTFReadValue(sampler->output, outputMin, &values);
+    
+                        scaleStart.x = values[0];
+                        scaleStart.y = values[1];
+                        scaleStart.z = values[2];
+                        
+                        success = GLTFReadValue(sampler->output, outputMax, &values) || success;
+    
+                        scaleEnd.x = values[0];
+                        scaleEnd.y = values[1];
+                        scaleEnd.z = values[2];
 
                         if (success) output->framePoses[frame][boneId].scale = Vector3Lerp(scaleStart, scaleEnd, lerpPercent);
                     }
@@ -4759,7 +4827,7 @@ void LoadGLTFMesh(cgltf_data* data, cgltf_mesh* mesh, Model* outModel, Matrix cu
                 {
                     for (unsigned int a = 0; a < acc->count; a++)
                     {
-                        GLTFReadValue(acc, a, outModel->meshes[(*primitiveIndex)].vertices + (a*3), 3, sizeof(float));
+                        GLTFReadValue(acc, a, outModel->meshes[(*primitiveIndex)].vertices + (a*3));
                     }
                 }
                 else if (acc->component_type == cgltf_component_type_r_32u)
@@ -4767,7 +4835,7 @@ void LoadGLTFMesh(cgltf_data* data, cgltf_mesh* mesh, Model* outModel, Matrix cu
                     int readValue[3];
                     for (unsigned int a = 0; a < acc->count; a++)
                     {
-                        GLTFReadValue(acc, a, readValue, 3, sizeof(int));
+                        GLTFReadValue(acc, a, readValue);
                         outModel->meshes[(*primitiveIndex)].vertices[(a*3) + 0] = (float)readValue[0];
                         outModel->meshes[(*primitiveIndex)].vertices[(a*3) + 1] = (float)readValue[1];
                         outModel->meshes[(*primitiveIndex)].vertices[(a*3) + 2] = (float)readValue[2];
@@ -4808,7 +4876,7 @@ void LoadGLTFMesh(cgltf_data* data, cgltf_mesh* mesh, Model* outModel, Matrix cu
                 {
                     for (unsigned int a = 0; a < acc->count; a++)
                     {
-                        GLTFReadValue(acc, a, outModel->meshes[(*primitiveIndex)].normals + (a*3), 3, sizeof(float));
+                        GLTFReadValue(acc, a, outModel->meshes[(*primitiveIndex)].normals + (a*3));
                     }
                 }
                 else if (acc->component_type == cgltf_component_type_r_32u)
@@ -4816,7 +4884,7 @@ void LoadGLTFMesh(cgltf_data* data, cgltf_mesh* mesh, Model* outModel, Matrix cu
                     int readValue[3];
                     for (unsigned int a = 0; a < acc->count; a++)
                     {
-                        GLTFReadValue(acc, a, readValue, 3, sizeof(int));
+                        GLTFReadValue(acc, a, readValue);
                         outModel->meshes[(*primitiveIndex)].normals[(a*3) + 0] = (float)readValue[0];
                         outModel->meshes[(*primitiveIndex)].normals[(a*3) + 1] = (float)readValue[1];
                         outModel->meshes[(*primitiveIndex)].normals[(a*3) + 2] = (float)readValue[2];
@@ -4855,7 +4923,7 @@ void LoadGLTFMesh(cgltf_data* data, cgltf_mesh* mesh, Model* outModel, Matrix cu
                     
                     for (unsigned int a = 0; a < acc->count; a++)
                     {
-                        GLTFReadValue(acc, a, outModel->meshes[(*primitiveIndex)].texcoords + (a*2), 2, sizeof(float));
+                        GLTFReadValue(acc, a, outModel->meshes[(*primitiveIndex)].texcoords + (a*2));
                     }
                 }
                 else
@@ -4879,7 +4947,7 @@ void LoadGLTFMesh(cgltf_data* data, cgltf_mesh* mesh, Model* outModel, Matrix cu
                 {
                     for (unsigned int a = 0; a < acc->count; a++)
                     {
-                        GLTFReadValue(acc, a, outModel->meshes[(*primitiveIndex)].boneWeights + (a*4), 4, sizeof(float));
+                        GLTFReadValue(acc, a, outModel->meshes[(*primitiveIndex)].boneWeights + (a*4));
                     }
                 }
                 else if (acc->component_type == cgltf_component_type_r_32u)
@@ -4887,7 +4955,7 @@ void LoadGLTFMesh(cgltf_data* data, cgltf_mesh* mesh, Model* outModel, Matrix cu
                     unsigned int readValue[4];
                     for (unsigned int a = 0; a < acc->count; a++)
                     {
-                        GLTFReadValue(acc, a, readValue, 4, sizeof(unsigned int));
+                        GLTFReadValue(acc, a, readValue);
                         outModel->meshes[(*primitiveIndex)].boneWeights[(a*4) + 0] = (float)readValue[0];
                         outModel->meshes[(*primitiveIndex)].boneWeights[(a*4) + 1] = (float)readValue[1];
                         outModel->meshes[(*primitiveIndex)].boneWeights[(a*4) + 2] = (float)readValue[2];
@@ -4909,7 +4977,7 @@ void LoadGLTFMesh(cgltf_data* data, cgltf_mesh* mesh, Model* outModel, Matrix cu
                 {
                     for (int a = 0; a < acc->count; a++)
                     {
-                        GLTFReadValue(acc, a, outModel->meshes[(*primitiveIndex)].colors + (a*4), 4, sizeof(unsigned char));
+                        GLTFReadValue(acc, a, outModel->meshes[(*primitiveIndex)].colors + (a*4));
                     }
                 }
                 if (acc->component_type == cgltf_component_type_r_16u)
@@ -4920,7 +4988,7 @@ void LoadGLTFMesh(cgltf_data* data, cgltf_mesh* mesh, Model* outModel, Matrix cu
                         unsigned short readValue[4];
                         for (int a = 0; a < acc->count; a++)
                         {
-                            GLTFReadValue(acc, a, readValue, 4, sizeof(unsigned short));
+                            GLTFReadValue(acc, a, readValue);
                             // 257 = 65535/255
                             outModel->meshes[(*primitiveIndex)].colors[(a*4) + 0] = (unsigned char)(readValue[0]/257);
                             outModel->meshes[(*primitiveIndex)].colors[(a*4) + 1] = (unsigned char)(readValue[1]/257);
