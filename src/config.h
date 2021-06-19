@@ -56,7 +56,7 @@
 // Support saving binary data automatically to a generated storage.data file. This file is managed internally.
 #define SUPPORT_DATA_STORAGE        1
 // Support automatic generated events, loading and recording of those events when required
-#define SUPPORT_EVENTS_AUTOMATION     1
+//#define SUPPORT_EVENTS_AUTOMATION     1
 // Support custom frame control, only for advance users
 // By default EndDrawing() does this job: draws everything + SwapScreenBuffer() + manage frame timming + PollInputEvents()
 // Enabling this flag allows manual control of the frame processes, use at your own risk
