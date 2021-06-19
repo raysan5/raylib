@@ -4158,6 +4158,253 @@ static bool GLTFReadValue(cgltf_accessor* acc, unsigned int index, void *variabl
     return true;
 }
 
+static void ProcessGLTFMesh(cgltf_data *data, cgltf_mesh* mesh, Model* outModel, Matrix currentTransform, int* primitiveIndex, const char* fileName)
+{
+    for (unsigned int p = 0; p < mesh->primitives_count; p++)
+    {
+        for (unsigned int j = 0; j < mesh->primitives[p].attributes_count; j++)
+        {
+            if (mesh->primitives[p].attributes[j].type == cgltf_attribute_type_position)
+            {
+                cgltf_accessor *acc = mesh->primitives[p].attributes[j].data;
+                outModel->meshes[(*primitiveIndex)].vertexCount = (int)acc->count;
+                int bufferSize = outModel->meshes[(*primitiveIndex)].vertexCount*3*sizeof(float);
+                outModel->meshes[(*primitiveIndex)].vertices = RL_MALLOC(bufferSize);
+                outModel->meshes[(*primitiveIndex)].animVertices = RL_MALLOC(bufferSize);
+
+                if (acc->component_type == cgltf_component_type_r_32f)
+                {
+                    for (unsigned int a = 0; a < acc->count; a++)
+                    {
+                        GLTFReadValue(acc, a, outModel->meshes[(*primitiveIndex)].vertices + (a*3), 3, sizeof(float));
+                    }
+                }
+                else if (acc->component_type == cgltf_component_type_r_32u)
+                {
+                    int readValue[3];
+                    for (unsigned int a = 0; a < acc->count; a++)
+                    {
+                        GLTFReadValue(acc, a, readValue, 3, sizeof(int));
+                        outModel->meshes[(*primitiveIndex)].vertices[(a*3) + 0] = (float)readValue[0];
+                        outModel->meshes[(*primitiveIndex)].vertices[(a*3) + 1] = (float)readValue[1];
+                        outModel->meshes[(*primitiveIndex)].vertices[(a*3) + 2] = (float)readValue[2];
+                    }
+                }
+                else
+                {
+                    // TODO: Support normalized unsigned byte/unsigned short vertices
+                    TRACELOG(LOG_WARNING, "MODEL: [%s] glTF vertices must be float or int", fileName);
+                }
+                
+                for (unsigned int v = 0; v < outModel->meshes[(*primitiveIndex)].vertexCount; v++)
+                {
+                    Vector3 vertex = {
+                            outModel->meshes[(*primitiveIndex)].vertices[(v * 3 + 0)],
+                            outModel->meshes[(*primitiveIndex)].vertices[(v * 3 + 1)],
+                            outModel->meshes[(*primitiveIndex)].vertices[(v * 3 + 2)],
+                    };
+    
+                    vertex = Vector3Transform(vertex, currentTransform);
+    
+                    outModel->meshes[(*primitiveIndex)].vertices[(v * 3 + 0)] = vertex.x;
+                    outModel->meshes[(*primitiveIndex)].vertices[(v * 3 + 1)] = vertex.y;
+                    outModel->meshes[(*primitiveIndex)].vertices[(v * 3 + 2)] = vertex.z;
+                }
+
+                memcpy(outModel->meshes[(*primitiveIndex)].animVertices, outModel->meshes[(*primitiveIndex)].vertices, bufferSize);
+            }
+            else if (mesh->primitives[p].attributes[j].type == cgltf_attribute_type_normal)
+            {
+                cgltf_accessor *acc = mesh->primitives[p].attributes[j].data;
+
+                int bufferSize = (int)(acc->count*3*sizeof(float));
+                outModel->meshes[(*primitiveIndex)].normals = RL_MALLOC(bufferSize);
+                outModel->meshes[(*primitiveIndex)].animNormals = RL_MALLOC(bufferSize);
+
+                if (acc->component_type == cgltf_component_type_r_32f)
+                {
+                    for (unsigned int a = 0; a < acc->count; a++)
+                    {
+                        GLTFReadValue(acc, a, outModel->meshes[(*primitiveIndex)].normals + (a*3), 3, sizeof(float));
+                    }
+                }
+                else if (acc->component_type == cgltf_component_type_r_32u)
+                {
+                    int readValue[3];
+                    for (unsigned int a = 0; a < acc->count; a++)
+                    {
+                        GLTFReadValue(acc, a, readValue, 3, sizeof(int));
+                        outModel->meshes[(*primitiveIndex)].normals[(a*3) + 0] = (float)readValue[0];
+                        outModel->meshes[(*primitiveIndex)].normals[(a*3) + 1] = (float)readValue[1];
+                        outModel->meshes[(*primitiveIndex)].normals[(a*3) + 2] = (float)readValue[2];
+                    }
+                }
+                else
+                {
+                    // TODO: Support normalized unsigned byte/unsigned short normals
+                    TRACELOG(LOG_WARNING, "MODEL: [%s] glTF normals must be float or int", fileName);
+                }
+    
+                for (unsigned int v = 0; v < outModel->meshes[(*primitiveIndex)].vertexCount; v++)
+                {
+                    Vector3 normal = {
+                            outModel->meshes[(*primitiveIndex)].normals[(v * 3 + 0)],
+                            outModel->meshes[(*primitiveIndex)].normals[(v * 3 + 1)],
+                            outModel->meshes[(*primitiveIndex)].normals[(v * 3 + 2)],
+                    };
+    
+                    normal = Vector3Transform(normal, currentTransform);
+        
+                    outModel->meshes[(*primitiveIndex)].normals[(v * 3 + 0)] = normal.x;
+                    outModel->meshes[(*primitiveIndex)].normals[(v * 3 + 1)] = normal.y;
+                    outModel->meshes[(*primitiveIndex)].normals[(v * 3 + 2)] = normal.z;
+                }
+
+                memcpy(outModel->meshes[(*primitiveIndex)].animNormals, outModel->meshes[(*primitiveIndex)].normals, bufferSize);
+            }
+            else if (mesh->primitives[p].attributes[j].type == cgltf_attribute_type_texcoord)
+            {
+                cgltf_accessor *acc = mesh->primitives[p].attributes[j].data;
+
+                if (acc->component_type == cgltf_component_type_r_32f)
+                {
+                    outModel->meshes[(*primitiveIndex)].texcoords = RL_MALLOC(acc->count*2*sizeof(float));
+
+                    for (unsigned int a = 0; a < acc->count; a++)
+                    {
+                        GLTFReadValue(acc, a, outModel->meshes[(*primitiveIndex)].texcoords + (a*2), 2, sizeof(float));
+                    }
+                }
+                else
+                {
+                    // TODO: Support normalized unsigned byte/unsigned short texture coordinates
+                    TRACELOG(LOG_WARNING, "MODEL: [%s] glTF texture coordinates must be float", fileName);
+                }
+            }
+            else if (mesh->primitives[p].attributes[j].type == cgltf_attribute_type_joints)
+            {
+                cgltf_accessor *acc = mesh->primitives[p].attributes[j].data;
+                LoadGLTFBoneAttribute(outModel, acc, data, *primitiveIndex);
+            }
+            else if (mesh->primitives[p].attributes[j].type == cgltf_attribute_type_weights)
+            {
+                cgltf_accessor *acc = mesh->primitives[p].attributes[j].data;
+
+                outModel->meshes[(*primitiveIndex)].boneWeights = RL_MALLOC(acc->count*4*sizeof(float));
+
+                if (acc->component_type == cgltf_component_type_r_32f)
+                {
+                    for (unsigned int a = 0; a < acc->count; a++)
+                    {
+                        GLTFReadValue(acc, a, outModel->meshes[(*primitiveIndex)].boneWeights + (a*4), 4, sizeof(float));
+                    }
+                }
+                else if (acc->component_type == cgltf_component_type_r_32u)
+                {
+                    unsigned int readValue[4];
+                    for (unsigned int a = 0; a < acc->count; a++)
+                    {
+                        GLTFReadValue(acc, a, readValue, 4, sizeof(unsigned int));
+                        outModel->meshes[(*primitiveIndex)].boneWeights[(a*4) + 0] = (float)readValue[0];
+                        outModel->meshes[(*primitiveIndex)].boneWeights[(a*4) + 1] = (float)readValue[1];
+                        outModel->meshes[(*primitiveIndex)].boneWeights[(a*4) + 2] = (float)readValue[2];
+                        outModel->meshes[(*primitiveIndex)].boneWeights[(a*4) + 3] = (float)readValue[3];
+                    }
+                }
+                else
+                {
+                    // TODO: Support normalized unsigned byte/unsigned short weights
+                    TRACELOG(LOG_WARNING, "MODEL: [%s] glTF normals must be float or int", fileName);
+                }
+            }
+            else if (mesh->primitives[p].attributes[j].type == cgltf_attribute_type_color)
+            {
+                cgltf_accessor *acc = mesh->primitives[p].attributes[j].data;
+                outModel->meshes[(*primitiveIndex)].colors = RL_MALLOC(acc->count*4*sizeof(unsigned char));
+
+                if (acc->component_type == cgltf_component_type_r_8u)
+                {
+                    for (int a = 0; a < acc->count; a++)
+                    {
+                        GLTFReadValue(acc, a, outModel->meshes[(*primitiveIndex)].colors + (a*4), 4, sizeof(unsigned char));
+                    }
+                }
+                if (acc->component_type == cgltf_component_type_r_16u)
+                {
+                    TRACELOG(LOG_WARNING, "MODEL: [%s] converting glTF colors to unsigned char", fileName);
+                    for (int a = 0; a < acc->count; a++)
+                    {
+                        unsigned short readValue[4];
+                        for (int a = 0; a < acc->count; a++)
+                        {
+                            GLTFReadValue(acc, a, readValue, 4, sizeof(unsigned short));
+                            // 257 = 65535/255
+                            outModel->meshes[(*primitiveIndex)].colors[(a*4) + 0] = (unsigned char)(readValue[0]/257);
+                            outModel->meshes[(*primitiveIndex)].colors[(a*4) + 1] = (unsigned char)(readValue[1]/257);
+                            outModel->meshes[(*primitiveIndex)].colors[(a*4) + 2] = (unsigned char)(readValue[2]/257);
+                            outModel->meshes[(*primitiveIndex)].colors[(a*4) + 3] = (unsigned char)(readValue[3]/257);
+                        }
+                    }
+                }
+                else
+                {
+                    TRACELOG(LOG_WARNING, "MODEL: [%s] glTF colors must be uchar or ushort", fileName);
+                }
+            }
+        }
+
+        cgltf_accessor *acc = mesh->primitives[p].indices;
+        LoadGLTFModelIndices(outModel, acc, *primitiveIndex);
+
+        if (mesh->primitives[p].material)
+        {
+            // Compute the offset
+            outModel->meshMaterial[(*primitiveIndex)] = (int)(mesh->primitives[p].material - data->materials);
+        }
+        else
+        {
+            outModel->meshMaterial[(*primitiveIndex)] = outModel->materialCount - 1;
+        }
+
+        BindGLTFPrimitiveToBones(outModel, data, *primitiveIndex);
+
+        (*primitiveIndex) = (*primitiveIndex) + 1;
+    }
+}
+
+static void ProcessGLTFNode(cgltf_data *data, cgltf_node* node, Model* outModel, Matrix currentTransform, int* primitiveIndex, const char* fileName)
+{
+    Matrix nodeTransform = { node->matrix[0], node->matrix[4], node->matrix[8], node->matrix[12],
+                             node->matrix[1], node->matrix[5], node->matrix[9], node->matrix[13],
+                             node->matrix[2], node->matrix[6], node->matrix[10], node->matrix[14],
+                             node->matrix[3], node->matrix[7], node->matrix[11], node->matrix[15] };
+
+    currentTransform = MatrixMultiply(nodeTransform, currentTransform);
+    
+    if(node->mesh != NULL)
+    {
+        ProcessGLTFMesh(data, node->mesh, outModel, currentTransform, primitiveIndex, fileName);
+    }
+    
+    for(unsigned int i = 0; i < node->children_count; i++)
+    {
+        ProcessGLTFNode(data, node->children[i], outModel, currentTransform, primitiveIndex, fileName);
+    }
+}
+
+static void GetPrimitiveCount(cgltf_node* node, int* outCount)
+{
+    if(node->mesh != NULL)
+    {
+        *outCount += node->mesh->primitives_count;
+    }
+    
+    for(unsigned int i = 0; i < node->children_count; i++)
+    {
+        GetPrimitiveCount(node->children[i], outCount);
+    }
+}
+
 // LoadGLTF loads in model data from given filename, supporting both .gltf and .glb
 static Model LoadGLTF(const char *fileName)
 {
@@ -4200,12 +4447,15 @@ static Model LoadGLTF(const char *fileName)
         // Read data buffers
         result = cgltf_load_buffers(&options, data, fileName);
         if (result != cgltf_result_success) TRACELOG(LOG_INFO, "MODEL: [%s] Failed to load mesh/material buffers", fileName);
+        
+        if(data->scenes_count > 1) TRACELOG(LOG_INFO, "MODEL: [%s] Has multiple scenes but only the first one will be loaded", fileName);
 
         int primitivesCount = 0;
-
-        for (unsigned int i = 0; i < data->meshes_count; i++)
-            primitivesCount += (int)data->meshes[i].primitives_count;
-
+        for (unsigned int i = 0; i < data->scene->nodes_count; i++)
+        {
+            GetPrimitiveCount(data->scene->nodes[i], &primitivesCount);
+        }
+        
         // Process glTF data and map to model
         model.meshCount = primitivesCount;
         model.meshes = RL_CALLOC(model.meshCount, sizeof(Mesh));
@@ -4215,195 +4465,15 @@ static Model LoadGLTF(const char *fileName)
         model.boneCount = (int)data->nodes_count;
         model.bones = RL_CALLOC(model.boneCount, sizeof(BoneInfo));
         model.bindPose = RL_CALLOC(model.boneCount, sizeof(Transform));
-
+        
         InitGLTFBones(&model, data);
         LoadGLTFMaterial(&model, fileName, data);
-
+    
         int primitiveIndex = 0;
-
-        for (unsigned int i = 0; i < data->meshes_count; i++)
+        for(unsigned int i = 0; i < data->scene->nodes_count; i++)
         {
-            for (unsigned int p = 0; p < data->meshes[i].primitives_count; p++)
-            {
-                for (unsigned int j = 0; j < data->meshes[i].primitives[p].attributes_count; j++)
-                {
-                    if (data->meshes[i].primitives[p].attributes[j].type == cgltf_attribute_type_position)
-                    {
-                        cgltf_accessor *acc = data->meshes[i].primitives[p].attributes[j].data;
-                        model.meshes[primitiveIndex].vertexCount = (int)acc->count;
-                        int bufferSize = model.meshes[primitiveIndex].vertexCount*3*sizeof(float);
-                        model.meshes[primitiveIndex].vertices = RL_MALLOC(bufferSize);
-                        model.meshes[primitiveIndex].animVertices = RL_MALLOC(bufferSize);
-
-                        if (acc->component_type == cgltf_component_type_r_32f)
-                        {
-                            for (unsigned int a = 0; a < acc->count; a++)
-                            {
-                                GLTFReadValue(acc, a, model.meshes[primitiveIndex].vertices + (a*3), 3, sizeof(float));
-                            }
-                        }
-                        else if (acc->component_type == cgltf_component_type_r_32u)
-                        {
-                            int readValue[3];
-                            for (unsigned int a = 0; a < acc->count; a++)
-                            {
-                                GLTFReadValue(acc, a, readValue, 3, sizeof(int));
-                                model.meshes[primitiveIndex].vertices[(a*3) + 0] = (float)readValue[0];
-                                model.meshes[primitiveIndex].vertices[(a*3) + 1] = (float)readValue[1];
-                                model.meshes[primitiveIndex].vertices[(a*3) + 2] = (float)readValue[2];
-                            }
-                        }
-                        else
-                        {
-                            // TODO: Support normalized unsigned byte/unsigned short vertices
-                            TRACELOG(LOG_WARNING, "MODEL: [%s] glTF vertices must be float or int", fileName);
-                        }
-
-                        memcpy(model.meshes[primitiveIndex].animVertices, model.meshes[primitiveIndex].vertices, bufferSize);
-                    }
-                    else if (data->meshes[i].primitives[p].attributes[j].type == cgltf_attribute_type_normal)
-                    {
-                        cgltf_accessor *acc = data->meshes[i].primitives[p].attributes[j].data;
-
-                        int bufferSize = (int)(acc->count*3*sizeof(float));
-                        model.meshes[primitiveIndex].normals = RL_MALLOC(bufferSize);
-                        model.meshes[primitiveIndex].animNormals = RL_MALLOC(bufferSize);
-
-                        if (acc->component_type == cgltf_component_type_r_32f)
-                        {
-                            for (unsigned int a = 0; a < acc->count; a++)
-                            {
-                                GLTFReadValue(acc, a, model.meshes[primitiveIndex].normals + (a*3), 3, sizeof(float));
-                            }
-                        }
-                        else if (acc->component_type == cgltf_component_type_r_32u)
-                        {
-                            int readValue[3];
-                            for (unsigned int a = 0; a < acc->count; a++)
-                            {
-                                GLTFReadValue(acc, a, readValue, 3, sizeof(int));
-                                model.meshes[primitiveIndex].normals[(a*3) + 0] = (float)readValue[0];
-                                model.meshes[primitiveIndex].normals[(a*3) + 1] = (float)readValue[1];
-                                model.meshes[primitiveIndex].normals[(a*3) + 2] = (float)readValue[2];
-                            }
-                        }
-                        else
-                        {
-                            // TODO: Support normalized unsigned byte/unsigned short normals
-                            TRACELOG(LOG_WARNING, "MODEL: [%s] glTF normals must be float or int", fileName);
-                        }
-
-                        memcpy(model.meshes[primitiveIndex].animNormals, model.meshes[primitiveIndex].normals, bufferSize);
-                    }
-                    else if (data->meshes[i].primitives[p].attributes[j].type == cgltf_attribute_type_texcoord)
-                    {
-                        cgltf_accessor *acc = data->meshes[i].primitives[p].attributes[j].data;
-
-                        if (acc->component_type == cgltf_component_type_r_32f)
-                        {
-                            model.meshes[primitiveIndex].texcoords = RL_MALLOC(acc->count*2*sizeof(float));
-
-                            for (unsigned int a = 0; a < acc->count; a++)
-                            {
-                                GLTFReadValue(acc, a, model.meshes[primitiveIndex].texcoords + (a*2), 2, sizeof(float));
-                            }
-                        }
-                        else
-                        {
-                            // TODO: Support normalized unsigned byte/unsigned short texture coordinates
-                            TRACELOG(LOG_WARNING, "MODEL: [%s] glTF texture coordinates must be float", fileName);
-                        }
-                    }
-                    else if (data->meshes[i].primitives[p].attributes[j].type == cgltf_attribute_type_joints)
-                    {
-                        cgltf_accessor *acc = data->meshes[i].primitives[p].attributes[j].data;
-                        LoadGLTFBoneAttribute(&model, acc, data, primitiveIndex);
-                    }
-                    else if (data->meshes[i].primitives[p].attributes[j].type == cgltf_attribute_type_weights)
-                    {
-                        cgltf_accessor *acc = data->meshes[i].primitives[p].attributes[j].data;
-
-                        model.meshes[primitiveIndex].boneWeights = RL_MALLOC(acc->count*4*sizeof(float));
-
-                        if (acc->component_type == cgltf_component_type_r_32f)
-                        {
-                            for (unsigned int a = 0; a < acc->count; a++)
-                            {
-                                GLTFReadValue(acc, a, model.meshes[primitiveIndex].boneWeights + (a*4), 4, sizeof(float));
-                            }
-                        }
-                        else if (acc->component_type == cgltf_component_type_r_32u)
-                        {
-                            unsigned int readValue[4];
-                            for (unsigned int a = 0; a < acc->count; a++)
-                            {
-                                GLTFReadValue(acc, a, readValue, 4, sizeof(unsigned int));
-                                model.meshes[primitiveIndex].boneWeights[(a*4) + 0] = (float)readValue[0];
-                                model.meshes[primitiveIndex].boneWeights[(a*4) + 1] = (float)readValue[1];
-                                model.meshes[primitiveIndex].boneWeights[(a*4) + 2] = (float)readValue[2];
-                                model.meshes[primitiveIndex].boneWeights[(a*4) + 3] = (float)readValue[3];
-                            }
-                        }
-                        else
-                        {
-                            // TODO: Support normalized unsigned byte/unsigned short weights
-                            TRACELOG(LOG_WARNING, "MODEL: [%s] glTF normals must be float or int", fileName);
-                        }
-                    }
-                    else if (data->meshes[i].primitives[p].attributes[j].type == cgltf_attribute_type_color)
-                    {
-                        cgltf_accessor *acc = data->meshes[i].primitives[p].attributes[j].data;
-                        model.meshes[primitiveIndex].colors = RL_MALLOC(acc->count*4*sizeof(unsigned char));
-
-                        if (acc->component_type == cgltf_component_type_r_8u)
-                        {
-                            for (int a = 0; a < acc->count; a++)
-                            {
-                                GLTFReadValue(acc, a, model.meshes[primitiveIndex].colors + (a*4), 4, sizeof(unsigned char));
-                            }
-                        }
-                        if (acc->component_type == cgltf_component_type_r_16u)
-                        {
-                            TRACELOG(LOG_WARNING, "MODEL: [%s] converting glTF colors to unsigned char", fileName);
-                            for (int a = 0; a < acc->count; a++)
-                            {
-                                unsigned short readValue[4];
-                                for (int a = 0; a < acc->count; a++)
-                                {
-                                    GLTFReadValue(acc, a, readValue, 4, sizeof(unsigned short));
-                                    // 257 = 65535/255
-                                    model.meshes[primitiveIndex].colors[(a*4) + 0] = (unsigned char)(readValue[0]/257);
-                                    model.meshes[primitiveIndex].colors[(a*4) + 1] = (unsigned char)(readValue[1]/257);
-                                    model.meshes[primitiveIndex].colors[(a*4) + 2] = (unsigned char)(readValue[2]/257);
-                                    model.meshes[primitiveIndex].colors[(a*4) + 3] = (unsigned char)(readValue[3]/257);
-                                }
-                            }
-                        }
-                        else
-                        {
-                            TRACELOG(LOG_WARNING, "MODEL: [%s] glTF colors must be uchar or ushort", fileName);
-                        }
-                    }
-                }
-
-                cgltf_accessor *acc = data->meshes[i].primitives[p].indices;
-                LoadGLTFModelIndices(&model, acc, primitiveIndex);
-
-                if (data->meshes[i].primitives[p].material)
-                {
-                    // Compute the offset
-                    model.meshMaterial[primitiveIndex] = (int)(data->meshes[i].primitives[p].material - data->materials);
-                }
-                else
-                {
-                    model.meshMaterial[primitiveIndex] = model.materialCount - 1;
-                }
-
-                BindGLTFPrimitiveToBones(&model, data, primitiveIndex);
-
-                primitiveIndex++;
-            }
-
+            Matrix staticTransform = MatrixIdentity();
+            ProcessGLTFNode(data, data->scene->nodes[i], &model, staticTransform, &primitiveIndex, fileName);
         }
 
         cgltf_free(data);
@@ -4607,18 +4677,18 @@ static void LoadGLTFBoneAttribute(Model *model, cgltf_accessor *jointsAccessor, 
 
 static void BindGLTFPrimitiveToBones(Model* model, const cgltf_data* data, int primitiveIndex)
 {
-    if (model->meshes[primitiveIndex].boneIds == NULL && data->nodes_count > 0)
+    for (unsigned int nodeId = 0; nodeId < data->nodes_count; nodeId++)
     {
-        for (unsigned int nodeId = 0; nodeId < data->nodes_count; nodeId++)
+        if (data->nodes[nodeId].mesh == &(data->meshes[primitiveIndex]))
         {
-            if (data->nodes[nodeId].mesh == &(data->meshes[primitiveIndex]))
+            if (model->meshes[primitiveIndex].boneIds == NULL)
             {
-                model->meshes[primitiveIndex].boneIds = RL_CALLOC(4*model->meshes[primitiveIndex].vertexCount, sizeof(int));
-                model->meshes[primitiveIndex].boneWeights = RL_CALLOC(4*model->meshes[primitiveIndex].vertexCount, sizeof(float));
+                model->meshes[primitiveIndex].boneIds = RL_CALLOC(4 * model->meshes[primitiveIndex].vertexCount, sizeof(int));
+                model->meshes[primitiveIndex].boneWeights = RL_CALLOC(4 * model->meshes[primitiveIndex].vertexCount, sizeof(float));
 
-                for (int b = 0; b < 4*model->meshes[primitiveIndex].vertexCount; b++)
+                for (int b = 0; b < 4 * model->meshes[primitiveIndex].vertexCount; b++)
                 {
-                    if (b%4 == 0)
+                    if (b % 4 == 0)
                     {
                         model->meshes[primitiveIndex].boneIds[b] = nodeId;
                         model->meshes[primitiveIndex].boneWeights[b] = 1.0f;
@@ -4628,48 +4698,6 @@ static void BindGLTFPrimitiveToBones(Model* model, const cgltf_data* data, int p
                         model->meshes[primitiveIndex].boneIds[b] = 0;
                         model->meshes[primitiveIndex].boneWeights[b] = 0.0f;
                     }
-
-                }
-
-                Vector3 boundVertex = { 0 };
-                Vector3 boundNormal = { 0 };
-
-                Vector3 outTranslation = { 0 };
-                Quaternion outRotation = { 0 };
-                Vector3 outScale = { 0 };
-
-                int vCounter = 0;
-                int boneCounter = 0;
-                int boneId = 0;
-
-                for (int i = 0; i < model->meshes[primitiveIndex].vertexCount; i++)
-                {
-                    boneId = model->meshes[primitiveIndex].boneIds[boneCounter];
-                    outTranslation = model->bindPose[boneId].translation;
-                    outRotation = model->bindPose[boneId].rotation;
-                    outScale = model->bindPose[boneId].scale;
-
-                    // Vertices processing
-                    boundVertex = (Vector3){ model->meshes[primitiveIndex].vertices[vCounter], model->meshes[primitiveIndex].vertices[vCounter + 1], model->meshes[primitiveIndex].vertices[vCounter + 2] };
-                    boundVertex = Vector3Multiply(boundVertex, outScale);
-                    boundVertex = Vector3RotateByQuaternion(boundVertex, outRotation);
-                    boundVertex = Vector3Add(boundVertex, outTranslation);
-                    model->meshes[primitiveIndex].vertices[vCounter] = boundVertex.x;
-                    model->meshes[primitiveIndex].vertices[vCounter + 1] = boundVertex.y;
-                    model->meshes[primitiveIndex].vertices[vCounter + 2] = boundVertex.z;
-
-                    // Normals processing
-                    if (model->meshes[primitiveIndex].normals != NULL)
-                    {
-                        boundNormal = (Vector3){ model->meshes[primitiveIndex].normals[vCounter], model->meshes[primitiveIndex].normals[vCounter + 1], model->meshes[primitiveIndex].normals[vCounter + 2] };
-                        boundNormal = Vector3RotateByQuaternion(boundNormal, outRotation);
-                        model->meshes[primitiveIndex].normals[vCounter] = boundNormal.x;
-                        model->meshes[primitiveIndex].normals[vCounter + 1] = boundNormal.y;
-                        model->meshes[primitiveIndex].normals[vCounter + 2] = boundNormal.z;
-                    }
-
-                    vCounter += 3;
-                    boneCounter += 4;
                 }
             }
         }
@@ -4765,9 +4793,9 @@ static ModelAnimation *LoadGLTFModelAnimations(const char *fileName, int *animCo
         for (unsigned int a = 0; a < data->animations_count; a++)
         {
             // gltf animation consists of the following structures:
-            // - nodes - bones
+            // - nodes - bones are part of the node system (the whole node system is animatable)
             // - channels - single transformation type on a single bone
-            //     - node - bone
+            //     - node - animatable node
             //     - transformation type (path) - translation, rotation, scale
             //     - sampler - animation samples
             //         - input - points in time this transformation happens
@@ -4813,13 +4841,19 @@ static ModelAnimation *LoadGLTFModelAnimations(const char *fileName, int *animCo
             for (int frame = 0; frame < output->frameCount; frame++)
             {
                 output->framePoses[frame] = RL_MALLOC(output->boneCount*sizeof(Transform));
-
+    
                 for (unsigned int i = 0; i < output->boneCount; i++)
                 {
-                    output->framePoses[frame][i].translation = Vector3Zero();
-                    output->framePoses[frame][i].rotation = QuaternionIdentity();
+                    if (data->nodes[i].has_translation) memcpy(&output->framePoses[frame][i].translation, data->nodes[i].translation, 3 * sizeof(float));
+                    else output->framePoses[frame][i].translation = Vector3Zero();
+    
+                    if (data->nodes[i].has_rotation) memcpy(&output->framePoses[frame][i], data->nodes[i].rotation, 4 * sizeof(float));
+                    else output->framePoses[frame][i].rotation = QuaternionIdentity();
+    
                     output->framePoses[frame][i].rotation = QuaternionNormalize(output->framePoses[frame][i].rotation);
-                    output->framePoses[frame][i].scale = Vector3One();
+    
+                    if (data->nodes[i].has_scale) memcpy(&output->framePoses[frame][i].scale, data->nodes[i].scale, 3 * sizeof(float));
+                    else output->framePoses[frame][i].scale = Vector3One();
                 }
             }
 
@@ -4891,8 +4925,7 @@ static ModelAnimation *LoadGLTFModelAnimations(const char *fileName, int *animCo
 
                         if (success)
                         {
-                            output->framePoses[frame][boneId].rotation = QuaternionLerp(rotationStart, rotationEnd, lerpPercent);
-                            output->framePoses[frame][boneId].rotation = QuaternionNormalize(output->framePoses[frame][boneId].rotation);
+                            output->framePoses[frame][boneId].rotation = QuaternionNlerp(rotationStart, rotationEnd, lerpPercent);
                         }
                     }
                     if (channel->target_path == cgltf_animation_path_type_scale)
