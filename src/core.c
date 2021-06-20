@@ -2635,6 +2635,9 @@ void SetTargetFPS(int fps)
 // NOTE: We calculate an average framerate
 int GetFPS(void)
 {
+    int fps = 0;
+    
+#if !defined(SUPPORT_CUSTOM_FRAME_CONTROL)  
     #define FPS_CAPTURE_FRAMES_COUNT    30      // 30 captures
     #define FPS_AVERAGE_TIME_SECONDS   0.5f     // 500 millisecondes
     #define FPS_STEP (FPS_AVERAGE_TIME_SECONDS/FPS_CAPTURE_FRAMES_COUNT)
@@ -2654,8 +2657,11 @@ int GetFPS(void)
         history[index] = fpsFrame/FPS_CAPTURE_FRAMES_COUNT;
         average += history[index];
     }
+    
+    fps = (int)roundf(1.0f/average);
+#endif
 
-    return (int)roundf(1.0f/average);
+    return fps;
 }
 
 // Get time in seconds for last frame drawn (delta time)
