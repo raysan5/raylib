@@ -3540,8 +3540,8 @@ Vector2 GetMousePosition(void)
     return position;
 }
 
-// Mouse movement per frame XY
-Vector2 GetMouseDelta()
+// Get mouse delta between frames
+Vector2 GetMouseDelta(void)
 {
     Vector2 delta = {0};
 
