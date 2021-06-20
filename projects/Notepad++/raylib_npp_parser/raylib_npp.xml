@@ -97,7 +97,10 @@
                 <Param name="int height" />
             </Overload>
         </KeyWord>
-        <KeyWord name="GetWindowHandle" func="yes">
+        <KeyWord name="GetWindowHandleGL" func="yes">
+            <Overload retVal="void" descr="Get opengl window handle"></Overload>
+        </KeyWord>
+        <KeyWord name="GetWindowHandleNative" func="yes">
             <Overload retVal="void" descr="Get native window handle"></Overload>
         </KeyWord>
         <KeyWord name="GetScreenWidth" func="yes">

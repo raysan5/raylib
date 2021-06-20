@@ -348,10 +348,10 @@ typedef struct { unsigned int width; unsigned int height; } Size;
 typedef struct CoreData {
     struct {
 #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
-        GLFWwindow *handle;                 // Native window handle (graphic device)
+        GLFWwindow *handle;                 // opengl window handle (graphic device)
 #endif
 #if defined(PLATFORM_RPI)
-        EGL_DISPMANX_WINDOW_T handle;       // Native window handle (graphic device)
+        EGL_DISPMANX_WINDOW_T handle;       // opengl window handle (graphic device)
 #endif
 #if defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI) || defined(PLATFORM_DRM) || defined(PLATFORM_UWP)
 #if defined(PLATFORM_DRM)
@@ -1467,8 +1467,14 @@ int GetScreenHeight(void)
     return CORE.Window.currentFbo.height;
 }
 
+// Get opengl window handle
+void *GetWindowHandleGL(void)
+{
+    return CORE.Window.handle;
+}
+
 // Get native window handle
-void *GetWindowHandle(void)
+void *GetWindowHandleNative(void)
 {
 #if defined(PLATFORM_DESKTOP) && defined(_WIN32)
     // NOTE: Returned handle is: void *HWND (windows.h)

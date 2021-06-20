@@ -15,7 +15,8 @@ SetWindowPosition|void|(int x, int y);|
 SetWindowMonitor|void|(int monitor);|
 SetWindowMinSize|void|(int width, int height);|
 SetWindowSize|void|(int width, int height);|
-GetWindowHandle|void *|(void);|
+GetWindowHandleGL|void *|(void);|
+GetWindowHandleNative|void *|(void);|
 GetScreenWidth|int|(void);|
 GetScreenHeight|int|(void);|
 GetMonitorCount|int|(void);|
