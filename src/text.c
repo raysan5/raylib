@@ -931,8 +931,8 @@ void DrawTextRecEx(Font font, const char *text, Rectangle rec, float fontSize, f
         {
             glyphWidth = (font.chars[index].advanceX == 0) ? (int)(font.recs[index].width) : (int)(font.chars[index].advanceX);
 			
-			if (i + 1 < length)
-			   glyphWidth = glyphWidth * scaleFactor + spacing;
+		    if (i + 1 < length)
+		        glyphWidth = glyphWidth * scaleFactor + spacing;
         }
 
         // NOTE: When wordWrap is ON we first measure how much of the text we can draw before going outside of the rec container
