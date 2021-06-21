@@ -929,9 +929,10 @@ void DrawTextRecEx(Font font, const char *text, Rectangle rec, float fontSize, f
         int glyphWidth = 0;
         if (codepoint != '\n')
         {
-            glyphWidth = (font.chars[index].advanceX == 0)?
-                         (int)(font.recs[index].width*scaleFactor + spacing):
-                         (int)(font.chars[index].advanceX*scaleFactor + spacing);
+           glyphWidth = (font.chars[index].advanceX == 0) ? (int)(font.recs[index].width) : (int)(font.chars[index].advanceX);
+
+			if (i + 1 < length)
+				glyphWidth = glyphWidth * scaleFactor + spacing;
         }
 
         // NOTE: When wordWrap is ON we first measure how much of the text we can draw before going outside of the rec container
@@ -945,7 +946,7 @@ void DrawTextRecEx(Font font, const char *text, Rectangle rec, float fontSize, f
             // Ref: http://jkorpela.fi/chars/spaces.html
             if ((codepoint == ' ') || (codepoint == '\t') || (codepoint == '\n')) endLine = i;
 
-            if ((textOffsetX + glyphWidth + 1) >= rec.width)
+            if ((textOffsetX + glyphWidth) > rec.width)
             {
                 endLine = (endLine < 1)? i : endLine;
                 if (i == endLine) endLine -= codepointByteCount;
@@ -985,7 +986,7 @@ void DrawTextRecEx(Font font, const char *text, Rectangle rec, float fontSize, f
             }
             else
             {
-                if (!wordWrap && ((textOffsetX + glyphWidth + 1) >= rec.width))
+                if (!wordWrap && ((textOffsetX + glyphWidth) > rec.width))
                 {
                     textOffsetY += (int)((font.baseSize + font.baseSize/2)*scaleFactor);
                     textOffsetX = 0;
