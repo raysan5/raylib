@@ -948,6 +948,8 @@ static int tinyobj_parse_and_index_mtl_file(tinyobj_material_t **materials_out,
     /* @todo { unknown parameter } */
   }
 
+  fclose(fp);
+
   if (material.name) {
     /* Flush last material element */
     materials = tinyobj_material_add(materials, num_materials, &material);
