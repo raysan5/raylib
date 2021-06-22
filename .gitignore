@@ -53,17 +53,6 @@ packages/
 *.bc
 *.so
 
-# Ignore all examples files
-examples/*
-# Unignore all examples files with extension
-!examples/*.c
-!examples/*.png
-# Unignore examples Makefile
-!examples/Makefile
-!examples/Makefile.Android
-!examples/raylib_compile_execute.bat
-!examples/raylib_makefile_example.bat
-
 # Ignore files build by xcode
 *.mode*v*
 *.pbxuser
@@ -92,9 +81,6 @@ install_manifest.txt
 compile_commands.json
 CTestTestfile.cmake
 build
-
-# Unignore These makefiles...
-!examples/CMakeLists.txt
 
 # Ignore GNU global tags
 GPATH
