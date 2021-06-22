@@ -630,6 +630,8 @@ static int32_t AndroidInputCallback(struct android_app *app, AInputEvent *event)
 #if defined(PLATFORM_WEB)
 static EM_BOOL EmscriptenTouchCallback(int eventType, const EmscriptenTouchEvent *touchEvent, void *userData);
 static EM_BOOL EmscriptenGamepadCallback(int eventType, const EmscriptenGamepadEvent *gamepadEvent, void *userData);
+static EM_BOOL EmscriptenResizeCallback(int eventType, const EmscriptenUiEvent *e, void *userData);
+
 #endif
 
 #if defined(PLATFORM_RPI) || defined(PLATFORM_DRM)
@@ -869,10 +871,14 @@ void InitWindow(int width, int height, const char *title)
 #endif
 
 #if defined(PLATFORM_WEB)
-    // Check fullscreen change events
-    //emscripten_set_fullscreenchange_callback("#canvas", NULL, 1, EmscriptenFullscreenChangeCallback);
-    //emscripten_set_resize_callback("#canvas", NULL, 1, EmscriptenResizeCallback);
-
+    // Check fullscreen change events(note this is done on the window since most
+    // browsers don't support this on #canvas)
+    emscripten_set_fullscreenchange_callback(EMSCRIPTEN_EVENT_TARGET_WINDOW, NULL, 1, EmscriptenResizeCallback);
+    // Check Resize event (note this is done on the window since most browsers
+    // don't support this on #canvas)
+    emscripten_set_resize_callback(EMSCRIPTEN_EVENT_TARGET_WINDOW, NULL, 1, EmscriptenResizeCallback);
+    // Trigger this once to get initial window sizing
+    EmscriptenResizeCallback(EMSCRIPTEN_EVENT_RESIZE, NULL, NULL);
     // Support keyboard events
     //emscripten_set_keypress_callback("#canvas", NULL, 1, EmscriptenKeyboardCallback);
     //emscripten_set_keydown_callback("#canvas", NULL, 1, EmscriptenKeyboardCallback);
@@ -5096,8 +5102,33 @@ static void ErrorCallback(int error, const char *description)
 {
     TRACELOG(LOG_WARNING, "GLFW: Error: %i Description: %s", error, description);
 }
+#if defined(PLATFORM_WEB)
+EM_JS(int, CanvasGetWidth, (), { return canvas.clientWidth; });
+EM_JS(int, CanvasGetHeight, (), { return canvas.clientHeight; });
+static EM_BOOL EmscriptenResizeCallback(int eventType, const EmscriptenUiEvent *e, void *userData)
+{
+    // Don't resize non-resizeable windows
+    if ((CORE.Window.flags & FLAG_WINDOW_RESIZABLE) == 0) return true;
+    // This event is called whenever the window changes sizes, so the size of
+    // the canvas object is explicitly retrieved below
+    int width = CanvasGetWidth();
+    int height = CanvasGetHeight();
+    emscripten_set_canvas_element_size("#canvas",width,height);
+    
+    SetupViewport(width, height);    // Reset viewport and projection matrix for new size
 
+    CORE.Window.currentFbo.width = width;
+    CORE.Window.currentFbo.height = height;
+    CORE.Window.resizedLastFrame = true;
 
+    if (IsWindowFullscreen()) return true;
+
+    // Set current screen size
+    CORE.Window.screen.width = width;
+    CORE.Window.screen.height = height;
+    // NOTE: Postprocessing texture is not scaled to new size
+}
+#endif 
 // GLFW3 WindowSize Callback, runs when window is resizedLastFrame
 // NOTE: Window resizing not allowed by default
 static void WindowSizeCallback(GLFWwindow *window, int width, int height)
