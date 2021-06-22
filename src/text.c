@@ -929,10 +929,9 @@ void DrawTextRecEx(Font font, const char *text, Rectangle rec, float fontSize, f
         float glyphWidth = 0;
         if (codepoint != '\n')
         {
-            glyphWidth = (font.chars[index].advanceX == 0) ? font.recs[index].width * scaleFactor : font.chars[index].advanceX * scaleFactor;
-			
-            if (i + 1 < length)
-                glyphWidth = glyphWidth + spacing;
+            glyphWidth = (font.chars[index].advanceX == 0) ? font.recs[index].width*scaleFactor : font.chars[index].advanceX*scaleFactor;
+
+            if (i + 1 < length) glyphWidth = glyphWidth + spacing;
         }
 
         // NOTE: When wordWrap is ON we first measure how much of the text we can draw before going outside of the rec container
@@ -979,7 +978,7 @@ void DrawTextRecEx(Font font, const char *text, Rectangle rec, float fontSize, f
             {
                 if (!wordWrap)
                 {
-                    textOffsetY += (font.baseSize + font.baseSize / 2) * scaleFactor;
+                    textOffsetY += (font.baseSize + font.baseSize/2)*scaleFactor;
                     textOffsetX = 0;
                 }
             }
@@ -987,7 +986,7 @@ void DrawTextRecEx(Font font, const char *text, Rectangle rec, float fontSize, f
             {
                 if (!wordWrap && ((textOffsetX + glyphWidth) > rec.width))
                 {
-                    textOffsetY += (font.baseSize + font.baseSize / 2) * scaleFactor;
+                    textOffsetY += (font.baseSize + font.baseSize/2)*scaleFactor;
                     textOffsetX = 0;
                 }
 
@@ -998,7 +997,7 @@ void DrawTextRecEx(Font font, const char *text, Rectangle rec, float fontSize, f
                 bool isGlyphSelected = false;
                 if ((selectStart >= 0) && (k >= selectStart) && (k < (selectStart + selectLength)))
                 {
-                    DrawRectangleRec((Rectangle){ rec.x + textOffsetX - 1, rec.y + textOffsetY, glyphWidth, (float)font.baseSize * scaleFactor }, selectBackTint);
+                    DrawRectangleRec((Rectangle){ rec.x + textOffsetX - 1, rec.y + textOffsetY, glyphWidth, (float)font.baseSize*scaleFactor }, selectBackTint);
                     isGlyphSelected = true;
                 }
 
@@ -1011,7 +1010,7 @@ void DrawTextRecEx(Font font, const char *text, Rectangle rec, float fontSize, f
 
             if (wordWrap && (i == endLine))
             {
-                textOffsetY += (font.baseSize + font.baseSize / 2) * scaleFactor;
+                textOffsetY += (font.baseSize + font.baseSize/2)*scaleFactor;
                 textOffsetX = 0;
                 startLine = endLine;
                 endLine = -1;

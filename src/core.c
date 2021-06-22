@@ -1953,7 +1953,7 @@ void BeginDrawing(void)
 void EndDrawing(void)
 {
     rlDrawRenderBatchActive();      // Update and draw internal render batch
-    
+
 #if defined(SUPPORT_MOUSE_CURSOR_POINT)
     // Draw a small rectangle on mouse position for user reference
     if (!CORE.Input.Mouse.cursorHidden)
@@ -2021,7 +2021,7 @@ void EndDrawing(void)
 
 #if !defined(SUPPORT_CUSTOM_FRAME_CONTROL)
     SwapScreenBuffer();                  // Copy back buffer to front buffer (screen)
-    
+
     // Frame time control system
     CORE.Time.current = GetTime();
     CORE.Time.draw = CORE.Time.current - CORE.Time.previous;
@@ -2043,7 +2043,7 @@ void EndDrawing(void)
 
     PollInputEvents();              // Poll user events
 #endif
-    
+
 #if defined(SUPPORT_EVENTS_AUTOMATION)
     // Events recording and playing logic
     if (eventsRecording) RecordAutomationEvent(CORE.Time.frameCounter);
@@ -2642,8 +2642,8 @@ void SetTargetFPS(int fps)
 int GetFPS(void)
 {
     int fps = 0;
-    
-#if !defined(SUPPORT_CUSTOM_FRAME_CONTROL)  
+
+#if !defined(SUPPORT_CUSTOM_FRAME_CONTROL)
     #define FPS_CAPTURE_FRAMES_COUNT    30      // 30 captures
     #define FPS_AVERAGE_TIME_SECONDS   0.5f     // 500 millisecondes
     #define FPS_STEP (FPS_AVERAGE_TIME_SECONDS/FPS_CAPTURE_FRAMES_COUNT)
@@ -2663,7 +2663,7 @@ int GetFPS(void)
         history[index] = fpsFrame/FPS_CAPTURE_FRAMES_COUNT;
         average += history[index];
     }
-    
+
     fps = (int)roundf(1.0f/average);
 #endif
 
@@ -5102,19 +5102,22 @@ static void ErrorCallback(int error, const char *description)
 {
     TRACELOG(LOG_WARNING, "GLFW: Error: %i Description: %s", error, description);
 }
+
 #if defined(PLATFORM_WEB)
-EM_JS(int, CanvasGetWidth, (), { return canvas.clientWidth; });
-EM_JS(int, CanvasGetHeight, (), { return canvas.clientHeight; });
+EM_JS(int, GetCanvasWidth, (), { return canvas.clientWidth; });
+EM_JS(int, GetCanvasHeight, (), { return canvas.clientHeight; });
+
 static EM_BOOL EmscriptenResizeCallback(int eventType, const EmscriptenUiEvent *e, void *userData)
 {
     // Don't resize non-resizeable windows
     if ((CORE.Window.flags & FLAG_WINDOW_RESIZABLE) == 0) return true;
-    // This event is called whenever the window changes sizes, so the size of
-    // the canvas object is explicitly retrieved below
-    int width = CanvasGetWidth();
-    int height = CanvasGetHeight();
+
+    // This event is called whenever the window changes sizes,
+    // so the size of the canvas object is explicitly retrieved below
+    int width = GetCanvasWidth();
+    int height = GetCanvasHeight();
     emscripten_set_canvas_element_size("#canvas",width,height);
-    
+
     SetupViewport(width, height);    // Reset viewport and projection matrix for new size
 
     CORE.Window.currentFbo.width = width;
@@ -5126,9 +5129,11 @@ static EM_BOOL EmscriptenResizeCallback(int eventType, const EmscriptenUiEvent *
     // Set current screen size
     CORE.Window.screen.width = width;
     CORE.Window.screen.height = height;
+
     // NOTE: Postprocessing texture is not scaled to new size
 }
-#endif 
+#endif
+
 // GLFW3 WindowSize Callback, runs when window is resizedLastFrame
 // NOTE: Window resizing not allowed by default
 static void WindowSizeCallback(GLFWwindow *window, int width, int height)
@@ -6875,7 +6880,7 @@ static void LoadAutomationEvents(const char *fileName)
             {
                 sscanf(buffer, "e %d %d %d %d %d", &events[count].frame, &events[count].type,
                        &events[count].params[0], &events[count].params[1], &events[count].params[2]);
- 
+
                 count++;
             }
 
