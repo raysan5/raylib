@@ -64,6 +64,7 @@ Here it is a list with the ones I'm aware of:
 | raylib-factor      | 3.5 | [Factor](https://factorcode.org/)        | https://github.com/ArnautDaniel/raylib-factor   |
 | gforth-raylib      | 3.5 | [Gforth](https://gforth.org/)            | https://github.com/ArnautDaniel/gforth-raylib   |
 | raylib-haxe        | 2.4 | [Haxe](https://haxe.org/)                | https://github.com/ibilon/raylib-haxe           |
+| hxRaylib           | 0.1 | [Haxe](https://haxe.org/)                | https://github.com/ForeignSasquatch/hxRaylib    |
 | ringraylib         | 2.6 | [Ring](http://ring-lang.sourceforge.net/)  | https://github.com/ringpackages/ringraylib     |
 | cl-raylib          | 3.0 | [Common Lisp](https://common-lisp.net/)    | https://github.com/longlene/cl-raylib    |
 | raylib-scm         | 2.5 | [Chicken Scheme](https://www.call-cc.org/) | https://github.com/yashrk/raylib-scm     |
