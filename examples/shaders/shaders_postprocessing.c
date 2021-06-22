@@ -124,50 +124,38 @@ int main(void)
 
         // Draw
         //----------------------------------------------------------------------------------
+        BeginTextureMode(target);       // Enable drawing to texture
+            ClearBackground(RAYWHITE);  // Clear texture background
+
+            BeginMode3D(camera);        // Begin 3d mode drawing
+                DrawModel(model, position, 0.1f, WHITE);   // Draw 3d model with texture
+                DrawGrid(10, 1.0f);     // Draw a grid
+            EndMode3D();                // End 3d mode drawing, returns to orthographic 2d mode
+        EndTextureMode();               // End drawing to texture (now we have a texture available for next passes)
+        
         BeginDrawing();
+            ClearBackground(RAYWHITE);  // Clear screen background
 
-            ClearBackground(RAYWHITE);
-
-            BeginTextureMode(target);       // Enable drawing to texture
-
-                ClearBackground(RAYWHITE);  // Clear texture background
-
-                BeginMode3D(camera);        // Begin 3d mode drawing
-
-                    DrawModel(model, position, 0.1f, WHITE);   // Draw 3d model with texture
-
-                    DrawGrid(10, 1.0f);     // Draw a grid
-
-                EndMode3D();                // End 3d mode drawing, returns to orthographic 2d mode
-
-            EndTextureMode();               // End drawing to texture (now we have a texture available for next passes)
-
-            // Render previously generated texture using selected postpro shader
+            // Render generated texture using selected postprocessing shader
             BeginShaderMode(shaders[currentShader]);
-
                 // NOTE: Render texture must be y-flipped due to default OpenGL coordinates (left-bottom)
                 DrawTextureRec(target.texture, (Rectangle){ 0, 0, (float)target.texture.width, (float)-target.texture.height }, (Vector2){ 0, 0 }, WHITE);
-
             EndShaderMode();
 
             // Draw 2d shapes and text over drawn texture
             DrawRectangle(0, 9, 580, 30, Fade(LIGHTGRAY, 0.7f));
 
             DrawText("(c) Church 3D model by Alberto Cano", screenWidth - 200, screenHeight - 20, 10, GRAY);
-
             DrawText("CURRENT POSTPRO SHADER:", 10, 15, 20, BLACK);
             DrawText(postproShaderText[currentShader], 330, 15, 20, RED);
             DrawText("< >", 540, 10, 30, DARKBLUE);
-
             DrawFPS(700, 15);
-
         EndDrawing();
         //----------------------------------------------------------------------------------
     }
 
     // De-Initialization
     //--------------------------------------------------------------------------------------
-
     // Unload all postpro shaders
     for (int i = 0; i < MAX_POSTPRO_SHADERS; i++) UnloadShader(shaders[i]);
 

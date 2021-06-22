@@ -75,15 +75,15 @@ int main(void)
     SetShaderValue(shader, zoomLoc, &zoom, SHADER_UNIFORM_FLOAT);
     SetShaderValue(shader, offsetLoc, offset, SHADER_UNIFORM_VEC2);
 
-    int incrementSpeed = 0;         // Multiplier of speed to change c value
-    bool showControls = true;       // Show controls
-    bool pause = false;             // Pause animation
+    int incrementSpeed = 0;             // Multiplier of speed to change c value
+    bool showControls = true;           // Show controls
+    bool pause = false;                 // Pause animation
 
-    SetTargetFPS(60);               // Set our game to run at 60 frames-per-second
+    SetTargetFPS(60);                   // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
 
     // Main game loop
-    while (!WindowShouldClose())    // Detect window close button or ESC key
+    while (!WindowShouldClose())        // Detect window close button or ESC key
     {
         // Update
         //----------------------------------------------------------------------------------
@@ -145,20 +145,19 @@ int main(void)
 
         // Draw
         //----------------------------------------------------------------------------------
+        // Using a render texture to draw Julia set
+        BeginTextureMode(target);       // Enable drawing to texture
+            ClearBackground(BLACK);     // Clear the render texture
+
+            // Draw a rectangle in shader mode to be used as shader canvas
+            // NOTE: Rectangle uses font white character texture coordinates,
+            // so shader can not be applied here directly because input vertexTexCoord
+            // do not represent full screen coordinates (space where want to apply shader)
+            DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), BLACK);
+        EndTextureMode();
+            
         BeginDrawing();
-
-            ClearBackground(BLACK);         // Clear the screen of the previous frame.
-
-            // Using a render texture to draw Julia set
-            BeginTextureMode(target);       // Enable drawing to texture
-                ClearBackground(BLACK);     // Clear the render texture
-
-                // Draw a rectangle in shader mode to be used as shader canvas
-                // NOTE: Rectangle uses font white character texture coordinates,
-                // so shader can not be applied here directly because input vertexTexCoord
-                // do not represent full screen coordinates (space where want to apply shader)
-                DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), BLACK);
-            EndTextureMode();
+            ClearBackground(BLACK);     // Clear screen background
 
             // Draw the saved texture and rendered julia set with shader
             // NOTE: We do not invert texture on Y, already considered inside shader
@@ -176,17 +175,16 @@ int main(void)
                 DrawText("Press KEY_LEFT | KEY_RIGHT to change speed", 10, 60, 10, RAYWHITE);
                 DrawText("Press KEY_SPACE to pause movement animation", 10, 75, 10, RAYWHITE);
             }
-
         EndDrawing();
         //----------------------------------------------------------------------------------
     }
 
     // De-Initialization
     //--------------------------------------------------------------------------------------
-    UnloadShader(shader);           // Unload shader
-    UnloadRenderTexture(target);    // Unload render texture
+    UnloadShader(shader);               // Unload shader
+    UnloadRenderTexture(target);        // Unload render texture
 
-    CloseWindow();                  // Close window and OpenGL context
+    CloseWindow();                      // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
 
     return 0;

@@ -1942,7 +1942,10 @@ void ClearBackground(Color color)
 // Setup canvas (framebuffer) to start drawing
 void BeginDrawing(void)
 {
-    CORE.Time.current = GetTime();            // Number of elapsed seconds since InitTimer()
+    // WARNING: Previously to BeginDrawing() other render textures drawing could happen,
+    // consequently the measure for update vs draw is not accurate (only the total frame time is accurate)
+    
+    CORE.Time.current = GetTime();      // Number of elapsed seconds since InitTimer()
     CORE.Time.update = CORE.Time.current - CORE.Time.previous;
     CORE.Time.previous = CORE.Time.current;
 
@@ -2045,7 +2048,7 @@ void EndDrawing(void)
         CORE.Time.frame += waitTime;    // Total frame time: update + draw + wait
     }
 
-    PollInputEvents();              // Poll user events
+    PollInputEvents();      // Poll user events (before next frame update)
 #endif
 
 #if defined(SUPPORT_EVENTS_AUTOMATION)

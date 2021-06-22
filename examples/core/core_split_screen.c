@@ -89,7 +89,7 @@ int main(void)
         // this moves thigns at 10 world units per second, regardless of the actual FPS
         float offsetThisFrame = 10.0f*GetFrameTime();
 
-        // Move player 1 forward and backwards (no turning)
+        // Move Player1 forward and backwards (no turning)
         if (IsKeyDown(KEY_W))
         {
             cameraPlayer1.position.z += offsetThisFrame;
@@ -101,7 +101,7 @@ int main(void)
             cameraPlayer1.target.z -= offsetThisFrame;
         }
 
-        // Move player 2 forward and backwards (no turning)
+        // Move Player2 forward and backwards (no turning)
         if (IsKeyDown(KEY_UP))
         {
             cameraPlayer2.position.x += offsetThisFrame;
@@ -116,7 +116,7 @@ int main(void)
 
         // Draw
         //----------------------------------------------------------------------------------
-        // Draw player 1's view to the render texture
+        // Draw Player1 view to the render texture
         BeginTextureMode(screenPlayer1);
             ClearBackground(SKYBLUE);
             BeginMode3D(cameraPlayer1);
@@ -125,7 +125,7 @@ int main(void)
             DrawText("PLAYER1 W/S to move", 0, 0, 20, RED);
         EndTextureMode();
 
-        // Draw player 2's view to the render texture
+        // Draw Player2 view to the render texture
         BeginTextureMode(screenPlayer2);
             ClearBackground(SKYBLUE);
             BeginMode3D(cameraPlayer2);
@@ -134,21 +134,21 @@ int main(void)
             DrawText("PLAYER2 UP/DOWN to move", 0, 0, 20, BLUE);
         EndTextureMode();
 
-        // Draw both view render textures to the screen side by side
+        // Draw both views render textures to the screen side by side
         BeginDrawing();
             ClearBackground(BLACK);
-            DrawTextureRec(screenPlayer1.texture, splitScreenRect, (Vector2) { 0, 0 }, WHITE);
-            DrawTextureRec(screenPlayer2.texture, splitScreenRect, (Vector2) { screenWidth/2.0f, 0 }, WHITE);
+            DrawTextureRec(screenPlayer1.texture, splitScreenRect, (Vector2){ 0, 0 }, WHITE);
+            DrawTextureRec(screenPlayer2.texture, splitScreenRect, (Vector2){ screenWidth/2.0f, 0 }, WHITE);
         EndDrawing();
     }
 
     // De-Initialization
     //--------------------------------------------------------------------------------------
-    UnloadRenderTexture(screenPlayer1);
-    UnloadRenderTexture(screenPlayer2);
-    UnloadTexture(textureGrid);
+    UnloadRenderTexture(screenPlayer1); // Unload render texture
+    UnloadRenderTexture(screenPlayer2); // Unload render texture
+    UnloadTexture(textureGrid);         // Unload texture
     
-    CloseWindow();        // Close window and OpenGL context
+    CloseWindow();                      // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
 
     return 0;
