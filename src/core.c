@@ -599,6 +599,7 @@ extern void UnloadFontDefault(void);        // [Module: text] Unloads default fo
 //----------------------------------------------------------------------------------
 // Module specific Functions Declaration
 //----------------------------------------------------------------------------------
+static void InitTimer(void);                            // Initialize timer (hi-resolution if available)
 static bool InitGraphicsDevice(int width, int height);  // Initialize graphics device
 static void SetupFramebuffer(int width, int height);    // Setup main framebuffer
 static void SetupViewport(int width, int height);       // Set viewport for a provided width and height
@@ -839,6 +840,9 @@ void InitWindow(int width, int height, const char *title)
 
     // Init hi-res timer
     InitTimer();
+    
+    // Initialize random seed
+    srand((unsigned int)time(NULL));
 
 #if defined(SUPPORT_DEFAULT_FONT)
     // Load default font
@@ -4679,10 +4683,8 @@ static void SetupFramebuffer(int width, int height)
 }
 
 // Initialize hi-resolution timer
-void InitTimer(void)
+static void InitTimer(void)
 {
-    srand((unsigned int)time(NULL));    // Initialize random seed
-
 // Setting a higher resolution can improve the accuracy of time-out intervals in wait functions.
 // However, it can also reduce overall system performance, because the thread scheduler switches tasks more often.
 // High resolutions can also prevent the CPU power management system from entering power-saving modes.
@@ -5424,6 +5426,9 @@ static void AndroidCommandCallback(struct android_app *app, int32_t cmd)
 
                     // Init hi-res timer
                     InitTimer();
+                    
+                    // Initialize random seed
+                    srand((unsigned int)time(NULL));
 
                 #if defined(SUPPORT_DEFAULT_FONT)
                     // Load default font
