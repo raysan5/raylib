@@ -2495,7 +2495,7 @@
         </KeyWord>
 
         <!-- Mesh manipulation functions -->
-        <KeyWord name="MeshBoundingBox" func="yes">
+        <KeyWord name="GetMeshBoundingBox" func="yes">
             <Overload retVal="BoundingBox" descr="Compute mesh bounding box limits">
                 <Param name="Mesh mesh" />
             </Overload>

@@ -37,7 +37,7 @@
 // Reconfigure standard input to receive key inputs, works with SSH connection.
 #define SUPPORT_SSH_KEYBOARD_RPI    1
 // Draw a mouse pointer on screen
-#define SUPPORT_MOUSE_CURSOR_NATIVE 1
+//#define SUPPORT_MOUSE_CURSOR_POINT   1
 // Setting a higher resolution can improve the accuracy of time-out intervals in wait functions.
 // However, it can also reduce overall system performance, because the thread scheduler switches tasks more often.
 #define SUPPORT_WINMM_HIGHRES_TIMER 1
@@ -56,7 +56,11 @@
 // Support saving binary data automatically to a generated storage.data file. This file is managed internally.
 #define SUPPORT_DATA_STORAGE        1
 // Support automatic generated events, loading and recording of those events when required
-#define SUPPORT_EVENTS_AUTOMATION     1
+//#define SUPPORT_EVENTS_AUTOMATION     1
+// Support custom frame control, only for advance users
+// By default EndDrawing() does this job: draws everything + SwapScreenBuffer() + manage frame timming + PollInputEvents()
+// Enabling this flag allows manual control of the frame processes, use at your own risk
+//#define SUPPORT_CUSTOM_FRAME_CONTROL   1
 
 // core: Configuration values
 //------------------------------------------------------------------------------------
@@ -161,7 +165,6 @@
 //------------------------------------------------------------------------------------
 #define MAX_TEXT_BUFFER_LENGTH      1024        // Size of internal static buffers used on some functions:
                                                 // TextFormat(), TextSubtext(), TextToUpper(), TextToLower(), TextToPascal(), TextSplit()
-#define MAX_TEXT_UNICODE_CHARS       512        // Maximum number of unicode codepoints: GetCodepoints()
 #define MAX_TEXTSPLIT_COUNT          128        // Maximum number of substrings to split: TextSplit()
 
 

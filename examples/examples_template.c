@@ -41,16 +41,18 @@
 *
 *   raylib [core] example - Basic window
 *
-*   This example has been created using raylib 2.5 (www.raylib.com)
+*   This example has been created using raylib 3.8 (www.raylib.com)
 *   raylib is licensed under an unmodified zlib/libpng license (View raylib.h for details)
 *
-*   Copyright (c) 2019 Ramon Santamaria (@raysan5)
+*   Example contributed by <user_name> (@<user_github>) and reviewed by Ramon Santamaria (@raysan5)
+*
+*   Copyright (c) 2021 <user_name> (@<user_github>)
 *
 ********************************************************************************************/
 
 #include "raylib.h"
 
-int main()
+int main(void)
 {
     // Initialization
     //--------------------------------------------------------------------------------------

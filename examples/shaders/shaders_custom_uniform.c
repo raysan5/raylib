@@ -65,11 +65,11 @@ int main(void)
     // Setup orbital camera
     SetCameraMode(camera, CAMERA_ORBITAL);  // Set an orbital camera mode
 
-    SetTargetFPS(60);                       // Set our game to run at 60 frames-per-second
+    SetTargetFPS(60);                   // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
 
     // Main game loop
-    while (!WindowShouldClose())            // Detect window close button or ESC key
+    while (!WindowShouldClose())        // Detect window close button or ESC key
     {
         // Update
         //----------------------------------------------------------------------------------
@@ -81,55 +81,46 @@ int main(void)
         // Send new value to the shader to be used on drawing
         SetShaderValue(shader, swirlCenterLoc, swirlCenter, SHADER_UNIFORM_VEC2);
 
-        UpdateCamera(&camera);              // Update camera
+        UpdateCamera(&camera);          // Update camera
         //----------------------------------------------------------------------------------
 
         // Draw
         //----------------------------------------------------------------------------------
+        BeginTextureMode(target);       // Enable drawing to texture
+            ClearBackground(RAYWHITE);  // Clear texture background
+
+            BeginMode3D(camera);        // Begin 3d mode drawing
+                DrawModel(model, position, 0.5f, WHITE);   // Draw 3d model with texture
+                DrawGrid(10, 1.0f);     // Draw a grid
+            EndMode3D();                // End 3d mode drawing, returns to orthographic 2d mode
+
+            DrawText("TEXT DRAWN IN RENDER TEXTURE", 200, 10, 30, RED);
+        EndTextureMode();               // End drawing to texture (now we have a texture available for next passes)
+
         BeginDrawing();
+            ClearBackground(RAYWHITE);  // Clear screen background
 
-            ClearBackground(RAYWHITE);
-
-            BeginTextureMode(target);       // Enable drawing to texture
-
-                ClearBackground(RAYWHITE);  // Clear texture background
-
-                BeginMode3D(camera);        // Begin 3d mode drawing
-
-                    DrawModel(model, position, 0.5f, WHITE);   // Draw 3d model with texture
-
-                    DrawGrid(10, 1.0f);     // Draw a grid
-
-                EndMode3D();                // End 3d mode drawing, returns to orthographic 2d mode
-
-                DrawText("TEXT DRAWN IN RENDER TEXTURE", 200, 10, 30, RED);
-
-            EndTextureMode();               // End drawing to texture (now we have a texture available for next passes)
-
+            // Enable shader using the custom uniform
             BeginShaderMode(shader);
-
                 // NOTE: Render texture must be y-flipped due to default OpenGL coordinates (left-bottom)
                 DrawTextureRec(target.texture, (Rectangle){ 0, 0, (float)target.texture.width, (float)-target.texture.height }, (Vector2){ 0, 0 }, WHITE);
-
             EndShaderMode();
 
             // Draw some 2d text over drawn texture
             DrawText("(c) Barracks 3D model by Alberto Cano", screenWidth - 220, screenHeight - 20, 10, GRAY);
-
             DrawFPS(10, 10);
-
         EndDrawing();
         //----------------------------------------------------------------------------------
     }
 
     // De-Initialization
     //--------------------------------------------------------------------------------------
-    UnloadShader(shader);           // Unload shader
-    UnloadTexture(texture);         // Unload texture
-    UnloadModel(model);             // Unload model
-    UnloadRenderTexture(target);    // Unload render texture
+    UnloadShader(shader);               // Unload shader
+    UnloadTexture(texture);             // Unload texture
+    UnloadModel(model);                 // Unload model
+    UnloadRenderTexture(target);        // Unload render texture
 
-    CloseWindow();                  // Close window and OpenGL context
+    CloseWindow();                      // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
 
     return 0;

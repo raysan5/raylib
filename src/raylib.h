@@ -222,7 +222,7 @@ typedef struct Color {
 
 // Rectangle, 4 components
 typedef struct Rectangle {
-    float x;                // Rectangle top-left corner position x 
+    float x;                // Rectangle top-left corner position x
     float y;                // Rectangle top-left corner position y
     float width;            // Rectangle width
     float height;           // Rectangle height
@@ -960,6 +960,14 @@ RLAPI const char *GetMonitorName(int monitor);                    // Get the hum
 RLAPI void SetClipboardText(const char *text);                    // Set clipboard text content
 RLAPI const char *GetClipboardText(void);                         // Get clipboard text content
 
+// Custom frame control functions
+// NOTE: Those functions are intended for advance users that want full control over the frame processing
+// By default EndDrawing() does this job: draws everything + SwapScreenBuffer() + manage frame timming + PollInputEvents()
+// To avoid that behaviour and control frame processes manually, enable in config.h: SUPPORT_CUSTOM_FRAME_CONTROL
+RLAPI void SwapScreenBuffer(void);                                // Swap back buffer with front buffer (screen drawing)
+RLAPI void PollInputEvents(void);                                 // Register all input events
+RLAPI void WaitTime(float ms);                                    // Wait for some milliseconds (halt program execution)
+
 // Cursor-related functions
 RLAPI void ShowCursor(void);                                      // Shows cursor
 RLAPI void HideCursor(void);                                      // Hides cursor
@@ -1104,6 +1112,7 @@ RLAPI bool IsMouseButtonUp(int button);                       // Check if a mous
 RLAPI int GetMouseX(void);                                    // Get mouse position X
 RLAPI int GetMouseY(void);                                    // Get mouse position Y
 RLAPI Vector2 GetMousePosition(void);                         // Get mouse position XY
+RLAPI Vector2 GetMouseDelta(void);                            // Get mouse delta between frames
 RLAPI void SetMousePosition(int x, int y);                    // Set mouse position XY
 RLAPI void SetMouseOffset(int offsetX, int offsetY);          // Set mouse offset
 RLAPI void SetMouseScale(float scaleX, float scaleY);         // Set mouse scaling
@@ -1360,9 +1369,10 @@ RLAPI int TextToInteger(const char *text);                            // Get int
 RLAPI char *TextToUtf8(int *codepoints, int length);                  // Encode text codepoint into utf8 text (memory must be freed!)
 
 // UTF8 text strings management functions
-RLAPI int *GetCodepoints(const char *text, int *count);               // Get all codepoints in a string, codepoints count returned by parameters
+RLAPI int *LoadCodepoints(const char *text, int *count);              // Load all codepoints from a UTF8 text string, codepoints count returned by parameter
+RLAPI void UnloadCodepoints(int *codepoints);                         // Unload codepoints data from memory
 RLAPI int GetCodepointsCount(const char *text);                       // Get total number of characters (codepoints) in a UTF8 encoded string
-RLAPI int GetNextCodepoint(const char *text, int *bytesProcessed);    // Get next codepoint in a UTF8 encoded string; 0x3f('?') is returned on failure
+RLAPI int GetCodepoint(const char *text, int *bytesProcessed);        // Get next codepoint in a UTF8 encoded string, 0x3f('?') is returned on failure
 RLAPI const char *CodepointToUtf8(int codepoint, int *byteLength);    // Encode codepoint into utf8 text (char array length returned as parameter)
 
 //------------------------------------------------------------------------------------
@@ -1435,8 +1445,8 @@ RLAPI Mesh GenMeshCubicmap(Image cubicmap, Vector3 cubeSize);                   
 
 // Mesh manipulation functions
 RLAPI BoundingBox GetMeshBoundingBox(Mesh mesh);                                            // Compute mesh bounding box limits
-RLAPI void MeshTangents(Mesh *mesh);                                                        // Compute mesh tangents
-RLAPI void MeshBinormals(Mesh *mesh);                                                       // Compute mesh binormals
+RLAPI void GenMeshTangents(Mesh *mesh);                                                     // Compute mesh tangents
+RLAPI void GenMeshBinormals(Mesh *mesh);                                                    // Compute mesh binormals
 
 // Model drawing functions
 RLAPI void DrawModel(Model model, Vector3 position, float scale, Color tint);                           // Draw a model (with texture if set)

@@ -56,7 +56,7 @@
 *       WARNING: Reconfiguring standard input could lead to undesired effects, like breaking other running processes or
 *       blocking the device is not restored properly. Use with care.
 *
-*   #define SUPPORT_MOUSE_CURSOR_NATIVE (Raspberry Pi and DRM only)
+*   #define SUPPORT_MOUSE_CURSOR_POINT
 *       Draw a mouse pointer on screen
 *
 *   #define SUPPORT_BUSY_WAIT_LOOP
@@ -387,7 +387,7 @@ typedef struct CoreData {
         Point position;                     // Window position on screen (required on fullscreen toggle)
         Size display;                       // Display width and height (monitor, device-screen, LCD, ...)
         Size screen;                        // Screen width and height (used render area)
-        Size currentFbo;                    // Current render width and height, it could change on BeginTextureMode()
+        Size currentFbo;                    // Current render width and height (depends on active fbo)
         Size render;                        // Framebuffer width and height (render area, including black bars if required)
         Point renderOffset;                 // Offset from render area (must be divided by 2)
         Matrix screenScale;                 // Matrix to scale screen (framebuffer rendering)
@@ -599,15 +599,10 @@ extern void UnloadFontDefault(void);        // [Module: text] Unloads default fo
 //----------------------------------------------------------------------------------
 // Module specific Functions Declaration
 //----------------------------------------------------------------------------------
+static void InitTimer(void);                            // Initialize timer (hi-resolution if available)
 static bool InitGraphicsDevice(int width, int height);  // Initialize graphics device
 static void SetupFramebuffer(int width, int height);    // Setup main framebuffer
 static void SetupViewport(int width, int height);       // Set viewport for a provided width and height
-static void SwapBuffers(void);                          // Copy back buffer to front buffer
-
-static void InitTimer(void);                            // Initialize timer
-static void Wait(float ms);                             // Wait for some milliseconds (stop program execution)
-
-static void PollInputEvents(void);                      // Register user events
 
 #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
 static void ErrorCallback(int error, const char *description);                             // GLFW3 Error Callback, runs on GLFW3 error
@@ -636,6 +631,8 @@ static int32_t AndroidInputCallback(struct android_app *app, AInputEvent *event)
 #if defined(PLATFORM_WEB)
 static EM_BOOL EmscriptenTouchCallback(int eventType, const EmscriptenTouchEvent *touchEvent, void *userData);
 static EM_BOOL EmscriptenGamepadCallback(int eventType, const EmscriptenGamepadEvent *gamepadEvent, void *userData);
+static EM_BOOL EmscriptenResizeCallback(int eventType, const EmscriptenUiEvent *e, void *userData);
+
 #endif
 
 #if defined(PLATFORM_RPI) || defined(PLATFORM_DRM)
@@ -673,7 +670,7 @@ static void PlayAutomationEvent(unsigned int frame);
 
 #if defined(_WIN32)
     // NOTE: We include Sleep() function signature here to avoid windows.h inclusion (kernel32 lib)
-    void __stdcall Sleep(unsigned long msTimeout);      // Required for Wait()
+    void __stdcall Sleep(unsigned long msTimeout);      // Required for WaitTime()
 #endif
 
 //----------------------------------------------------------------------------------
@@ -843,6 +840,9 @@ void InitWindow(int width, int height, const char *title)
 
     // Init hi-res timer
     InitTimer();
+    
+    // Initialize random seed
+    srand((unsigned int)time(NULL));
 
 #if defined(SUPPORT_DEFAULT_FONT)
     // Load default font
@@ -875,10 +875,14 @@ void InitWindow(int width, int height, const char *title)
 #endif
 
 #if defined(PLATFORM_WEB)
-    // Check fullscreen change events
-    //emscripten_set_fullscreenchange_callback("#canvas", NULL, 1, EmscriptenFullscreenChangeCallback);
-    //emscripten_set_resize_callback("#canvas", NULL, 1, EmscriptenResizeCallback);
-
+    // Check fullscreen change events(note this is done on the window since most
+    // browsers don't support this on #canvas)
+    emscripten_set_fullscreenchange_callback(EMSCRIPTEN_EVENT_TARGET_WINDOW, NULL, 1, EmscriptenResizeCallback);
+    // Check Resize event (note this is done on the window since most browsers
+    // don't support this on #canvas)
+    emscripten_set_resize_callback(EMSCRIPTEN_EVENT_TARGET_WINDOW, NULL, 1, EmscriptenResizeCallback);
+    // Trigger this once to get initial window sizing
+    EmscriptenResizeCallback(EMSCRIPTEN_EVENT_RESIZE, NULL, NULL);
     // Support keyboard events
     //emscripten_set_keypress_callback("#canvas", NULL, 1, EmscriptenKeyboardCallback);
     //emscripten_set_keydown_callback("#canvas", NULL, 1, EmscriptenKeyboardCallback);
@@ -1556,7 +1560,7 @@ void SetWindowMinSize(int width, int height)
 // TODO: Issues on HighDPI scaling
 void SetWindowSize(int width, int height)
 {
-#if defined(PLATFORM_DESKTOP)
+#if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
     glfwSetWindowSize(CORE.Window.handle, width, height);
 #endif
 #if defined(PLATFORM_WEB)
@@ -1938,7 +1942,10 @@ void ClearBackground(Color color)
 // Setup canvas (framebuffer) to start drawing
 void BeginDrawing(void)
 {
-    CORE.Time.current = GetTime();            // Number of elapsed seconds since InitTimer()
+    // WARNING: Previously to BeginDrawing() other render textures drawing could happen,
+    // consequently the measure for update vs draw is not accurate (only the total frame time is accurate)
+    
+    CORE.Time.current = GetTime();      // Number of elapsed seconds since InitTimer()
     CORE.Time.update = CORE.Time.current - CORE.Time.previous;
     CORE.Time.previous = CORE.Time.current;
 
@@ -1952,22 +1959,22 @@ void BeginDrawing(void)
 // End canvas drawing and swap buffers (double buffering)
 void EndDrawing(void)
 {
-#if (defined(PLATFORM_RPI) || defined(PLATFORM_DRM)) && defined(SUPPORT_MOUSE_CURSOR_NATIVE)
-    // On native mode we have no system mouse cursor, so,
-    // we draw a small rectangle for user reference
+    rlDrawRenderBatchActive();      // Update and draw internal render batch
+
+#if defined(SUPPORT_MOUSE_CURSOR_POINT)
+    // Draw a small rectangle on mouse position for user reference
     if (!CORE.Input.Mouse.cursorHidden)
     {
         DrawRectangle(CORE.Input.Mouse.currentPosition.x, CORE.Input.Mouse.currentPosition.y, 3, 3, MAROON);
+        rlDrawRenderBatchActive();  // Update and draw internal render batch
     }
 #endif
 
-    rlDrawRenderBatchActive();      // Update and draw internal render batch
-
 #if defined(SUPPORT_GIF_RECORDING)
-    #define GIF_RECORD_FRAMERATE    10
-
+    // Draw record indicator
     if (gifRecording)
     {
+        #define GIF_RECORD_FRAMERATE    10
         gifFramesCounter++;
 
         // NOTE: We record one gif frame every 10 game frames
@@ -1992,6 +1999,7 @@ void EndDrawing(void)
 #endif
 
 #if defined(SUPPORT_EVENTS_AUTOMATION)
+    // Draw record/play indicator
     if (eventsRecording)
     {
         gifFramesCounter++;
@@ -2018,7 +2026,8 @@ void EndDrawing(void)
     }
 #endif
 
-    SwapBuffers();                  // Copy back buffer to front buffer
+#if !defined(SUPPORT_CUSTOM_FRAME_CONTROL)
+    SwapScreenBuffer();                  // Copy back buffer to front buffer (screen)
 
     // Frame time control system
     CORE.Time.current = GetTime();
@@ -2030,7 +2039,7 @@ void EndDrawing(void)
     // Wait for some milliseconds...
     if (CORE.Time.frame < CORE.Time.target)
     {
-        Wait((float)(CORE.Time.target - CORE.Time.frame)*1000.0f);
+        WaitTime((float)(CORE.Time.target - CORE.Time.frame)*1000.0f);
 
         CORE.Time.current = GetTime();
         double waitTime = CORE.Time.current - CORE.Time.previous;
@@ -2039,14 +2048,15 @@ void EndDrawing(void)
         CORE.Time.frame += waitTime;    // Total frame time: update + draw + wait
     }
 
-    PollInputEvents();              // Poll user events
+    PollInputEvents();      // Poll user events (before next frame update)
+#endif
 
 #if defined(SUPPORT_EVENTS_AUTOMATION)
+    // Events recording and playing logic
     if (eventsRecording) RecordAutomationEvent(CORE.Time.frameCounter);
-
-    // TODO: When should we play? After/before/replace PollInputEvents()?
-    if (eventsPlaying)
+    else if (eventsPlaying)
     {
+        // TODO: When should we play? After/before/replace PollInputEvents()?
         if (CORE.Time.frameCounter >= eventCount) eventsPlaying = false;
         PlayAutomationEvent(CORE.Time.frameCounter);
     }
@@ -2638,6 +2648,9 @@ void SetTargetFPS(int fps)
 // NOTE: We calculate an average framerate
 int GetFPS(void)
 {
+    int fps = 0;
+
+#if !defined(SUPPORT_CUSTOM_FRAME_CONTROL)
     #define FPS_CAPTURE_FRAMES_COUNT    30      // 30 captures
     #define FPS_AVERAGE_TIME_SECONDS   0.5f     // 500 millisecondes
     #define FPS_STEP (FPS_AVERAGE_TIME_SECONDS/FPS_CAPTURE_FRAMES_COUNT)
@@ -2658,7 +2671,10 @@ int GetFPS(void)
         average += history[index];
     }
 
-    return (int)roundf(1.0f/average);
+    fps = (int)roundf(1.0f/average);
+#endif
+
+    return fps;
 }
 
 // Get time in seconds for last frame drawn (delta time)
@@ -3538,6 +3554,17 @@ Vector2 GetMousePosition(void)
 #endif
 
     return position;
+}
+
+// Get mouse delta between frames
+Vector2 GetMouseDelta(void)
+{
+    Vector2 delta = {0};
+
+    delta.x = CORE.Input.Mouse.currentPosition.x - CORE.Input.Mouse.previousPosition.x;
+    delta.y = CORE.Input.Mouse.currentPosition.y - CORE.Input.Mouse.previousPosition.y;
+
+    return delta;
 }
 
 // Set mouse position XY
@@ -4661,8 +4688,6 @@ static void SetupFramebuffer(int width, int height)
 // Initialize hi-resolution timer
 static void InitTimer(void)
 {
-    srand((unsigned int)time(NULL));    // Initialize random seed
-
 // Setting a higher resolution can improve the accuracy of time-out intervals in wait functions.
 // However, it can also reduce overall system performance, because the thread scheduler switches tasks more often.
 // High resolutions can also prevent the CPU power management system from entering power-saving modes.
@@ -4689,7 +4714,7 @@ static void InitTimer(void)
 // take longer than expected... for that reason we use the busy wait loop
 // Ref: http://stackoverflow.com/questions/43057578/c-programming-win32-games-sleep-taking-longer-than-expected
 // Ref: http://www.geisswerks.com/ryan/FAQS/timing.html --> All about timming on Win32!
-static void Wait(float ms)
+void WaitTime(float ms)
 {
 #if defined(PLATFORM_UWP)
     UWPGetSleepFunc()(ms/1000);
@@ -4737,8 +4762,70 @@ static void Wait(float ms)
 #endif
 }
 
-// Poll (store) all input events
-static void PollInputEvents(void)
+// Swap back buffer with front buffer (screen drawing)
+void SwapScreenBuffer(void)
+{
+#if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
+    glfwSwapBuffers(CORE.Window.handle);
+#endif
+
+#if defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI) || defined(PLATFORM_DRM) || defined(PLATFORM_UWP)
+    eglSwapBuffers(CORE.Window.device, CORE.Window.surface);
+
+#if defined(PLATFORM_DRM)
+    if (!CORE.Window.gbmSurface || (-1 == CORE.Window.fd) || !CORE.Window.connector || !CORE.Window.crtc)
+    {
+        TRACELOG(LOG_ERROR, "DISPLAY: DRM initialization failed to swap");
+        abort();
+    }
+
+    struct gbm_bo *bo = gbm_surface_lock_front_buffer(CORE.Window.gbmSurface);
+    if (!bo)
+    {
+        TRACELOG(LOG_ERROR, "DISPLAY: Failed GBM to lock front buffer");
+        abort();
+    }
+
+    uint32_t fb = 0;
+    int result = drmModeAddFB(CORE.Window.fd, CORE.Window.connector->modes[CORE.Window.modeIndex].hdisplay,
+        CORE.Window.connector->modes[CORE.Window.modeIndex].vdisplay, 24, 32, gbm_bo_get_stride(bo), gbm_bo_get_handle(bo).u32, &fb);
+    if (0 != result)
+    {
+        TRACELOG(LOG_ERROR, "DISPLAY: drmModeAddFB() failed with result: %d", result);
+        abort();
+    }
+
+    result = drmModeSetCrtc(CORE.Window.fd, CORE.Window.crtc->crtc_id, fb, 0, 0,
+        &CORE.Window.connector->connector_id, 1, &CORE.Window.connector->modes[CORE.Window.modeIndex]);
+    if (0 != result)
+    {
+        TRACELOG(LOG_ERROR, "DISPLAY: drmModeSetCrtc() failed with result: %d", result);
+        abort();
+    }
+
+    if (CORE.Window.prevFB)
+    {
+        result = drmModeRmFB(CORE.Window.fd, CORE.Window.prevFB);
+        if (0 != result)
+        {
+            TRACELOG(LOG_ERROR, "DISPLAY: drmModeRmFB() failed with result: %d", result);
+            abort();
+        }
+    }
+    CORE.Window.prevFB = fb;
+
+    if (CORE.Window.prevBO)
+    {
+        gbm_surface_release_buffer(CORE.Window.gbmSurface, CORE.Window.prevBO);
+    }
+
+    CORE.Window.prevBO = bo;
+#endif  // PLATFORM_DRM
+#endif  // PLATFORM_ANDROID || PLATFORM_RPI || PLATFORM_DRM || PLATFORM_UWP
+}
+
+// Register all input events
+void PollInputEvents(void)
 {
 #if defined(SUPPORT_GESTURES_SYSTEM)
     // NOTE: Gestures update must be called every frame to reset gestures correctly
@@ -5014,68 +5101,6 @@ static void PollInputEvents(void)
 #endif
 }
 
-// Copy back buffer to front buffers
-static void SwapBuffers(void)
-{
-#if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
-    glfwSwapBuffers(CORE.Window.handle);
-#endif
-
-#if defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI) || defined(PLATFORM_DRM) || defined(PLATFORM_UWP)
-    eglSwapBuffers(CORE.Window.device, CORE.Window.surface);
-
-#if defined(PLATFORM_DRM)
-    if (!CORE.Window.gbmSurface || (-1 == CORE.Window.fd) || !CORE.Window.connector || !CORE.Window.crtc)
-    {
-        TRACELOG(LOG_ERROR, "DISPLAY: DRM initialization failed to swap");
-        abort();
-    }
-
-    struct gbm_bo *bo = gbm_surface_lock_front_buffer(CORE.Window.gbmSurface);
-    if (!bo)
-    {
-        TRACELOG(LOG_ERROR, "DISPLAY: Failed GBM to lock front buffer");
-        abort();
-    }
-
-    uint32_t fb = 0;
-    int result = drmModeAddFB(CORE.Window.fd, CORE.Window.connector->modes[CORE.Window.modeIndex].hdisplay,
-        CORE.Window.connector->modes[CORE.Window.modeIndex].vdisplay, 24, 32, gbm_bo_get_stride(bo), gbm_bo_get_handle(bo).u32, &fb);
-    if (0 != result)
-    {
-        TRACELOG(LOG_ERROR, "DISPLAY: drmModeAddFB() failed with result: %d", result);
-        abort();
-    }
-
-    result = drmModeSetCrtc(CORE.Window.fd, CORE.Window.crtc->crtc_id, fb, 0, 0,
-        &CORE.Window.connector->connector_id, 1, &CORE.Window.connector->modes[CORE.Window.modeIndex]);
-    if (0 != result)
-    {
-        TRACELOG(LOG_ERROR, "DISPLAY: drmModeSetCrtc() failed with result: %d", result);
-        abort();
-    }
-
-    if (CORE.Window.prevFB)
-    {
-        result = drmModeRmFB(CORE.Window.fd, CORE.Window.prevFB);
-        if (0 != result)
-        {
-            TRACELOG(LOG_ERROR, "DISPLAY: drmModeRmFB() failed with result: %d", result);
-            abort();
-        }
-    }
-    CORE.Window.prevFB = fb;
-
-    if (CORE.Window.prevBO)
-    {
-        gbm_surface_release_buffer(CORE.Window.gbmSurface, CORE.Window.prevBO);
-    }
-
-    CORE.Window.prevBO = bo;
-#endif  // PLATFORM_DRM
-#endif  // PLATFORM_ANDROID || PLATFORM_RPI || PLATFORM_DRM || PLATFORM_UWP
-}
-
 #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
 // GLFW3 Error Callback, runs on GLFW3 error
 static void ErrorCallback(int error, const char *description)
@@ -5083,6 +5108,36 @@ static void ErrorCallback(int error, const char *description)
     TRACELOG(LOG_WARNING, "GLFW: Error: %i Description: %s", error, description);
 }
 
+#if defined(PLATFORM_WEB)
+EM_JS(int, GetCanvasWidth, (), { return canvas.clientWidth; });
+EM_JS(int, GetCanvasHeight, (), { return canvas.clientHeight; });
+
+static EM_BOOL EmscriptenResizeCallback(int eventType, const EmscriptenUiEvent *e, void *userData)
+{
+    // Don't resize non-resizeable windows
+    if ((CORE.Window.flags & FLAG_WINDOW_RESIZABLE) == 0) return true;
+
+    // This event is called whenever the window changes sizes,
+    // so the size of the canvas object is explicitly retrieved below
+    int width = GetCanvasWidth();
+    int height = GetCanvasHeight();
+    emscripten_set_canvas_element_size("#canvas",width,height);
+
+    SetupViewport(width, height);    // Reset viewport and projection matrix for new size
+
+    CORE.Window.currentFbo.width = width;
+    CORE.Window.currentFbo.height = height;
+    CORE.Window.resizedLastFrame = true;
+
+    if (IsWindowFullscreen()) return true;
+
+    // Set current screen size
+    CORE.Window.screen.width = width;
+    CORE.Window.screen.height = height;
+
+    // NOTE: Postprocessing texture is not scaled to new size
+}
+#endif
 
 // GLFW3 WindowSize Callback, runs when window is resizedLastFrame
 // NOTE: Window resizing not allowed by default
@@ -5374,6 +5429,9 @@ static void AndroidCommandCallback(struct android_app *app, int32_t cmd)
 
                     // Init hi-res timer
                     InitTimer();
+                    
+                    // Initialize random seed
+                    srand((unsigned int)time(NULL));
 
                 #if defined(SUPPORT_DEFAULT_FONT)
                     // Load default font
@@ -6327,7 +6385,8 @@ static void *EventThread(void *arg)
             #endif
             }
         }
-        Wait(5);    // Sleep for 5ms to avoid hogging CPU time
+
+        WaitTime(5);    // Sleep for 5ms to avoid hogging CPU time
     }
 
     close(worker->fd);
@@ -6415,7 +6474,7 @@ static void *GamepadThread(void *arg)
                     }
                 }
             }
-            else Wait(1);    // Sleep for 1 ms to avoid hogging CPU time
+            else WaitTime(1);    // Sleep for 1 ms to avoid hogging CPU time
         }
     }
 
@@ -6829,7 +6888,7 @@ static void LoadAutomationEvents(const char *fileName)
             {
                 sscanf(buffer, "e %d %d %d %d %d", &events[count].frame, &events[count].type,
                        &events[count].params[0], &events[count].params[1], &events[count].params[2]);
- 
+
                 count++;
             }
 

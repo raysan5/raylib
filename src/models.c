@@ -1105,10 +1105,6 @@ void DrawMeshInstanced(Mesh mesh, Material material, Matrix *transforms, int ins
         rlSetVertexAttribute(material.shader.locs[SHADER_LOC_VERTEX_POSITION], 3, RL_FLOAT, 0, 0, 0);
         rlEnableVertexAttribute(material.shader.locs[SHADER_LOC_VERTEX_POSITION]);
 
-        rlEnableVertexBuffer(mesh.vboId[0]);
-        rlSetVertexAttribute(material.shader.locs[SHADER_LOC_VERTEX_POSITION], 3, RL_FLOAT, 0, 0, 0);
-        rlEnableVertexAttribute(material.shader.locs[SHADER_LOC_VERTEX_POSITION]);
-
         // Bind mesh VBO data: vertex texcoords (shader-location = 1)
         rlEnableVertexBuffer(mesh.vboId[1]);
         rlSetVertexAttribute(material.shader.locs[SHADER_LOC_VERTEX_TEXCOORD01], 2, RL_FLOAT, 0, 0, 0);
@@ -2652,7 +2648,7 @@ BoundingBox GetMeshBoundingBox(Mesh mesh)
 // Compute mesh tangents
 // NOTE: To calculate mesh tangents and binormals we need mesh vertex positions and texture coordinates
 // Implementation base don: https://answers.unity.com/questions/7789/calculating-tangents-vector4.html
-void MeshTangents(Mesh *mesh)
+void GenMeshTangents(Mesh *mesh)
 {
     if (mesh->tangents == NULL) mesh->tangents = (float *)RL_MALLOC(mesh->vertexCount*4*sizeof(float));
     else TRACELOG(LOG_WARNING, "MESH: Tangents data already available, re-writting");
@@ -2732,7 +2728,7 @@ void MeshTangents(Mesh *mesh)
 }
 
 // Compute mesh binormals (aka bitangent)
-void MeshBinormals(Mesh *mesh)
+void GenMeshBinormals(Mesh *mesh)
 {
     for (int i = 0; i < mesh->vertexCount; i++)
     {
@@ -4996,7 +4992,7 @@ static ModelAnimation *LoadGLTFModelAnimations(const char *fileName, int *animCo
             // output->framerate = // TODO: Use framerate instead of const timestep
 
             // Name and parent bones
-            for (unsigned int j = 0; j < output->boneCount; j++)
+            for (int j = 0; j < output->boneCount; j++)
             {
                 strcpy(output->bones[j].name, data->nodes[j].name == 0 ? "ANIMJOINT" : data->nodes[j].name);
                 output->bones[j].parent = (data->nodes[j].parent != NULL) ? (int)(data->nodes[j].parent - data->nodes) : -1;
@@ -5007,7 +5003,7 @@ static ModelAnimation *LoadGLTFModelAnimations(const char *fileName, int *animCo
             for (int frame = 0; frame < output->frameCount; frame++)
             {
                 output->framePoses[frame] = RL_MALLOC(output->boneCount*sizeof(Transform));
-    
+
                 for (unsigned int i = 0; i < output->boneCount; i++)
                 {
                     if (data->nodes[i].has_translation) memcpy(&output->framePoses[frame][i].translation, data->nodes[i].translation, 3 * sizeof(float));

@@ -105,30 +105,26 @@ int main(void)
 
         // Draw
         //----------------------------------------------------------------------------------
-        BeginDrawing();
-
+        BeginTextureMode(target);
             ClearBackground(RAYWHITE);
+            BeginVrStereoMode(config);
+                BeginMode3D(camera);
 
-            BeginTextureMode(target);
-                ClearBackground(RAYWHITE);
-                BeginVrStereoMode(config);
-                    BeginMode3D(camera);
+                    DrawCube(cubePosition, 2.0f, 2.0f, 2.0f, RED);
+                    DrawCubeWires(cubePosition, 2.0f, 2.0f, 2.0f, MAROON);
+                    DrawGrid(40, 1.0f);
 
-                        DrawCube(cubePosition, 2.0f, 2.0f, 2.0f, RED);
-                        DrawCubeWires(cubePosition, 2.0f, 2.0f, 2.0f, MAROON);
-                        DrawGrid(40, 1.0f);
-
-                    EndMode3D();
-                EndVrStereoMode();
-            EndTextureMode();
-
+                EndMode3D();
+            EndVrStereoMode();
+        EndTextureMode();
+        
+        BeginDrawing();
+            ClearBackground(RAYWHITE);
             BeginShaderMode(distortion);
                 DrawTextureRec(target.texture, (Rectangle){ 0, 0, (float)target.texture.width,
                               (float)-target.texture.height }, (Vector2){ 0.0f, 0.0f }, WHITE);
             EndShaderMode();
-
             DrawFPS(10, 10);
-
         EndDrawing();
         //----------------------------------------------------------------------------------
     }

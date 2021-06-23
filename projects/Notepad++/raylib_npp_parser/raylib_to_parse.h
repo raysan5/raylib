@@ -515,7 +515,7 @@ RLAPI Mesh GenMeshHeightmap(Image heightmap, Vector3 size);                     
 RLAPI Mesh GenMeshCubicmap(Image cubicmap, Vector3 cubeSize);                               // Generate cubes-based map mesh from image data
 
 // Mesh manipulation functions
-RLAPI BoundingBox MeshBoundingBox(Mesh mesh);                                               // Compute mesh bounding box limits
+RLAPI BoundingBox GetMeshBoundingBox(Mesh mesh);                                               // Compute mesh bounding box limits
 RLAPI void MeshTangents(Mesh *mesh);                                                        // Compute mesh tangents
 RLAPI void MeshBinormals(Mesh *mesh);                                                       // Compute mesh binormals
 

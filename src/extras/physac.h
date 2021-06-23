@@ -318,7 +318,7 @@ static unsigned int usedMemory = 0;                         // Total allocated d
 //----------------------------------------------------------------------------------
 #if !defined(PHYSAC_AVOID_TIMMING_SYSTEM)
 // Timming measure functions
-static void InitTimer(void);                                                                                // Initializes hi-resolution MONOTONIC timer
+static void InitTimerHiRes(void);                                                                           // Initializes hi-resolution MONOTONIC timer
 static unsigned long long int GetClockTicks(void);                                                          // Get hi-res MONOTONIC time measure in mseconds
 static double GetCurrentTime(void);                                                                         // Get current time measure in milliseconds
 #endif
@@ -370,7 +370,7 @@ PHYSACDEF void InitPhysics(void)
 {
 #if !defined(PHYSAC_AVOID_TIMMING_SYSTEM)
     // Initialize high resolution timer
-    InitTimer();
+    InitTimerHiRes();
 #endif
 
     TRACELOG("[PHYSAC] Physics module initialized successfully\n");
@@ -1848,7 +1848,7 @@ static Vector2 MathTriangleBarycenter(Vector2 v1, Vector2 v2, Vector2 v3)
 
 #if !defined(PHYSAC_AVOID_TIMMING_SYSTEM)
 // Initializes hi-resolution MONOTONIC timer
-static void InitTimer(void)
+static void InitTimerHiRes(void)
 {
 #if defined(_WIN32)
     QueryPerformanceFrequency((unsigned long long int *) &frequency);
