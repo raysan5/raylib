@@ -861,7 +861,7 @@ void DrawTextEx(Font font, const char *text, Vector2 position, float fontSize, f
     {
         // Get next codepoint from byte string and glyph index in font
         int codepointByteCount = 0;
-        int codepoint = GetNextCodepoint(&text[i], &codepointByteCount);
+        int codepoint = GetCodepoint(&text[i], &codepointByteCount);
         int index = GetGlyphIndex(font, codepoint);
 
         // NOTE: Normally we exit the decoding sequence as soon as a bad byte is found (and return 0x3f)
@@ -918,7 +918,7 @@ void DrawTextRecEx(Font font, const char *text, Rectangle rec, float fontSize, f
     {
         // Get next codepoint from byte string and glyph index in font
         int codepointByteCount = 0;
-        int codepoint = GetNextCodepoint(&text[i], &codepointByteCount);
+        int codepoint = GetCodepoint(&text[i], &codepointByteCount);
         int index = GetGlyphIndex(font, codepoint);
 
         // NOTE: Normally we exit the decoding sequence as soon as a bad byte is found (and return 0x3f)
@@ -1089,7 +1089,7 @@ Vector2 MeasureTextEx(Font font, const char *text, float fontSize, float spacing
         lenCounter++;
 
         int next = 0;
-        letter = GetNextCodepoint(&text[i], &next);
+        letter = GetCodepoint(&text[i], &next);
         index = GetGlyphIndex(font, letter);
 
         // NOTE: normally we exit the decoding sequence as soon as a bad byte is found (and return 0x3f)
@@ -1563,26 +1563,36 @@ RLAPI const char *CodepointToUtf8(int codepoint, int *byteLength)
     return utf8;
 }
 
-// Get all codepoints in a string, codepoints count returned by parameters
-// REQUIRES: memset()
-int *GetCodepoints(const char *text, int *count)
+// Load all codepoints from a UTF8 text string, codepoints count returned by parameter
+int *LoadCodepoints(const char *text, int *count)
 {
-    static int codepoints[MAX_TEXT_UNICODE_CHARS] = { 0 };
-    memset(codepoints, 0, MAX_TEXT_UNICODE_CHARS*sizeof(int));
-
-    int bytesProcessed = 0;
     int textLength = TextLength(text);
+    
+    int bytesProcessed = 0;
     int codepointsCount = 0;
+    
+    // Allocate a big enough buffer to store as many codepoints as text bytes
+    int *codepoints = RL_CALLOC(textLength, sizeof(int));
 
     for (int i = 0; i < textLength; codepointsCount++)
     {
-        codepoints[codepointsCount] = GetNextCodepoint(text + i, &bytesProcessed);
+        codepoints[codepointsCount] = GetCodepoint(text + i, &bytesProcessed);
         i += bytesProcessed;
     }
+
+    // Re-allocate buffer to the actual number of codepoints loaded
+    void *temp = RL_REALLOC(codepoints, codepointsCount*sizeof(int));
+    if (temp != NULL) codepoints = temp;
 
     *count = codepointsCount;
 
     return codepoints;
+}
+
+// Unload codepoints data from memory
+void UnloadCodepoints(int *codepoints)
+{
+    RL_FREE(codepoints);
 }
 
 // Get total number of characters(codepoints) in a UTF8 encoded text, until '\0' is found
@@ -1595,7 +1605,7 @@ int GetCodepointsCount(const char *text)
     while (*ptr != '\0')
     {
         int next = 0;
-        int letter = GetNextCodepoint(ptr, &next);
+        int letter = GetCodepoint(ptr, &next);
 
         if (letter == 0x3f) ptr += 1;
         else ptr += next;
@@ -1613,7 +1623,7 @@ int GetCodepointsCount(const char *text)
 // NOTE: the standard says U+FFFD should be returned in case of errors
 // but that character is not supported by the default font in raylib
 // TODO: Optimize this code for speed!!
-int GetNextCodepoint(const char *text, int *bytesProcessed)
+int GetCodepoint(const char *text, int *bytesProcessed)
 {
 /*
     UTF8 specs from https://www.ietf.org/rfc/rfc3629.txt

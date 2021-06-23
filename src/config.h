@@ -165,7 +165,6 @@
 //------------------------------------------------------------------------------------
 #define MAX_TEXT_BUFFER_LENGTH      1024        // Size of internal static buffers used on some functions:
                                                 // TextFormat(), TextSubtext(), TextToUpper(), TextToLower(), TextToPascal(), TextSplit()
-#define MAX_TEXT_UNICODE_CHARS       512        // Maximum number of unicode codepoints: GetCodepoints()
 #define MAX_TEXTSPLIT_COUNT          128        // Maximum number of substrings to split: TextSplit()
 
 
