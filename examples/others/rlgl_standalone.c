@@ -279,7 +279,7 @@ static void DrawGrid(int slices, float spacing)
     int halfSlices = slices / 2;
 
     rlBegin(RL_LINES);
-        for(int i = -halfSlices; i <= halfSlices; i++)
+        for (int i = -halfSlices; i <= halfSlices; i++)
         {
             if (i == 0)
             {

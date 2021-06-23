@@ -98,7 +98,7 @@ int main(void)
 
     // De-Initialization
     //--------------------------------------------------------------------------------------
-    for(int i = 0; i < MAX_MODELS; i++) UnloadModel(model[i]);  // Unload models
+    for (int i = 0; i < MAX_MODELS; i++) UnloadModel(model[i]);  // Unload models
 
     CloseWindow();              // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
