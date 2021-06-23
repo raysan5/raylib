@@ -1560,7 +1560,7 @@ void SetWindowMinSize(int width, int height)
 // TODO: Issues on HighDPI scaling
 void SetWindowSize(int width, int height)
 {
-#if defined(PLATFORM_DESKTOP)
+#if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
     glfwSetWindowSize(CORE.Window.handle, width, height);
 #endif
 #if defined(PLATFORM_WEB)
