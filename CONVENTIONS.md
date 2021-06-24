@@ -27,7 +27,7 @@ Ternary Operator | (condition)? result1 : result2 | `printf("Value is 0: %s", (v
 Some other conventions to follow:
 
  - raylib code **does not use TABS**, use 4 spaces instead.
- - Avoid trailing spaces
+ - Avoid trailing spaces, please, avoid them
  - **ALWAYS** initialize all defined variables.
  - Control flow statements always are followed **by a space**:
 ```c
