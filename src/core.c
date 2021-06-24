@@ -4716,29 +4716,23 @@ static void InitTimer(void)
 // Ref: http://www.geisswerks.com/ryan/FAQS/timing.html --> All about timming on Win32!
 void WaitTime(float ms)
 {
-#if defined(PLATFORM_UWP)
-    UWPGetSleepFunc()(ms/1000);
-    return;
-#endif
-
 #if defined(SUPPORT_BUSY_WAIT_LOOP)
-    double prevTime = GetTime();
-    double nextTime = 0.0;
+    double previousTime = GetTime();
+    double currentTime = 0.0;
 
     // Busy wait loop
-    while ((nextTime - prevTime) < ms/1000.0f) nextTime = GetTime();
+    while ((currentTime - previousTime) < ms/1000.0f) currentTime = GetTime();
 #else
     #if defined(SUPPORT_PARTIALBUSY_WAIT_LOOP)
-        #define DEFAULT_PARTIALBUSY_WAIT_TIME   4
-        #define PARTIALBUSY_WAIT_FACTOR         0.95
-
-        double halfWait = DEFAULT_PARTIALBUSY_WAIT_TIME;
-        if (CORE.Time.target > 0) halfWait = CORE.Time.target*PARTIALBUSY_WAIT_FACTOR;
-
-        double destTime = GetTime() + ms/1000;
-        if (ms > halfWait) ms -= (float)halfWait;
+        double busyWait = ms*0.05;     // NOTE: We are using a busy wait of 5% of the time
+        ms -= (float)busyWait;
     #endif
 
+    // System halt functions
+    #if defined(PLATFORM_UWP)
+        UWPGetSleepFunc()(ms/1000);
+        return;
+    #endif
     #if defined(_WIN32)
         Sleep((unsigned int)ms);
     #endif
@@ -4757,7 +4751,11 @@ void WaitTime(float ms)
     #endif
 
     #if defined(SUPPORT_PARTIALBUSY_WAIT_LOOP)
-        while (GetTime() < destTime) { }
+        double previousTime = GetTime();
+        double currentTime = 0.0;
+        
+        // Partial busy wait loop (only a fraction of the total wait time)
+        while ((currentTime - previousTime) < busyWait/1000.0f) currentTime = GetTime();
     #endif
 #endif
 }
