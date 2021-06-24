@@ -550,7 +550,7 @@ CharInfo *LoadFontData(const unsigned char *fileData, int dataSize, int fontSize
         int genFontChars = false;
         stbtt_fontinfo fontInfo = { 0 };
 
-        if (stbtt_InitFont(&fontInfo, (unsigned char *)fileData, 0))     // Init font for data reading
+        if (stbtt_InitFont(&fontInfo, (unsigned char *)fileData, 0))     // Initialize font for data reading
         {
             // Calculate font scale factor
             float scaleFactor = stbtt_ScaleForPixelHeight(&fontInfo, (float)fontSize);
