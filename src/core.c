@@ -356,7 +356,7 @@ typedef struct { unsigned int width; unsigned int height; } Size;
 typedef struct CoreData {
     struct {
 #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
-        GLFWwindow *handle;                 // Native window handle (graphic device)
+        GLFWwindow *handle;                 // GLFW window handle (graphic device)
 #endif
 #if defined(PLATFORM_RPI)
         EGL_DISPMANX_WINDOW_T handle;       // Native window handle (graphic device)
@@ -401,15 +401,12 @@ typedef struct CoreData {
         bool appEnabled;                    // Flag to detect if app is active ** = true
         struct android_app *app;            // Android activity
         struct android_poll_source *source; // Android events polling source
-        const char *internalDataPath;       // Android internal data path to write data (/data/data/<package>/files)
         bool contextRebindRequired;         // Used to know context rebind required
     } Android;
 #endif
-#if defined(PLATFORM_UWP)
     struct {
-        const char *internalDataPath;       // UWP App data path
-    } UWP;
-#endif
+        const char *basePath;               // Base path for data storage
+    } Storage;
     struct {
 #if defined(PLATFORM_RPI) || defined(PLATFORM_DRM)
         InputEventWorker eventWorker[10];   // List of worker threads for every monitored "/dev/input/event<N>"
@@ -475,7 +472,7 @@ typedef struct CoreData {
         double draw;                        // Time measure for frame draw
         double frame;                       // Time measure for one frame
         double target;                      // Desired time for one frame, if 0 not applied
-#if defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI) || defined(PLATFORM_DRM) || defined(PLATFORM_UWP)
+#if defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI) || defined(PLATFORM_DRM)
         unsigned long long base;            // Base time measure for hi-res timer
 #endif
         unsigned int frameCounter;          // Frame counter
@@ -637,20 +634,20 @@ static EM_BOOL EmscriptenResizeCallback(int eventType, const EmscriptenUiEvent *
 
 #if defined(PLATFORM_RPI) || defined(PLATFORM_DRM)
 #if defined(SUPPORT_SSH_KEYBOARD_RPI)
-static void InitKeyboard(void);                         // Init raw keyboard system (standard input reading)
+static void InitKeyboard(void);                         // Initialize raw keyboard system (standard input reading)
 static void ProcessKeyboard(void);                      // Process keyboard events
 static void RestoreKeyboard(void);                      // Restore keyboard system
 #else
-static void InitTerminal(void);                         // Init terminal (block echo and signal short cuts)
+static void InitTerminal(void);                         // Initialize terminal (block echo and signal short cuts)
 static void RestoreTerminal(void);                      // Restore terminal
 #endif
 
-static void InitEvdevInput(void);                       // Evdev inputs initialization
+static void InitEvdevInput(void);                       // Initialize evdev inputs
 static void ConfigureEvdevDevice(char *device);         // Identifies a input device and configures it for use if appropriate
 static void PollKeyboardEvents(void);                   // Process evdev keyboard events.
 static void *EventThread(void *arg);                    // Input device events reading thread
 
-static void InitGamepad(void);                          // Init raw gamepad input
+static void InitGamepad(void);                          // Initialize raw gamepad input
 static void *GamepadThread(void *arg);                  // Mouse reading thread
 
 #if defined(PLATFORM_DRM)
@@ -662,15 +659,15 @@ static int FindNearestConnectorMode(const drmModeConnector *connector, uint widt
 #endif  // PLATFORM_RPI || PLATFORM_DRM
 
 #if defined(SUPPORT_EVENTS_AUTOMATION)
-static void LoadAutomationEvents(const char *fileName);
-static void ExportAutomationEvents(const char *fileName);
-static void RecordAutomationEvent(unsigned int frame);
-static void PlayAutomationEvent(unsigned int frame);
+static void LoadAutomationEvents(const char *fileName);     // Load automation events from file
+static void ExportAutomationEvents(const char *fileName);   // Export recorded automation events into a file
+static void RecordAutomationEvent(unsigned int frame);      // Record frame events (to internal events array)
+static void PlayAutomationEvent(unsigned int frame);        // Play frame events (from internal events array)
 #endif
 
 #if defined(_WIN32)
-    // NOTE: We include Sleep() function signature here to avoid windows.h inclusion (kernel32 lib)
-    void __stdcall Sleep(unsigned long msTimeout);      // Required for WaitTime()
+// NOTE: We declare Sleep() function symbol to avoid including windows.h (kernel32.lib linkage required)
+void __stdcall Sleep(unsigned long msTimeout);          // Required for WaitTime()
 #endif
 
 //----------------------------------------------------------------------------------
@@ -698,7 +695,7 @@ struct android_app *GetAndroidApp(void)
 }
 #endif
 #if (defined(PLATFORM_RPI) || defined(PLATFORM_DRM)) && !defined(SUPPORT_SSH_KEYBOARD_RPI)
-// Init terminal (block echo and signal short cuts)
+// Initialize terminal (block echo and signal short cuts)
 static void InitTerminal(void)
 {
     TRACELOG(LOG_INFO, "RPI: Reconfiguring terminal...");
@@ -773,9 +770,6 @@ void InitWindow(int width, int height, const char *title)
     CORE.Window.currentFbo.width = width;
     CORE.Window.currentFbo.height = height;
 
-    // Input data is android app pointer
-    CORE.Android.internalDataPath = CORE.Android.app->activity->internalDataPath;
-
     // Set desired windows flags before initializing anything
     ANativeActivity_setWindowFlags(CORE.Android.app->activity, AWINDOW_FLAG_FULLSCREEN, 0);  //AWINDOW_FLAG_SCALED, AWINDOW_FLAG_DITHER
 
@@ -804,7 +798,11 @@ void InitWindow(int width, int height, const char *title)
     CORE.Android.app->onAppCmd = AndroidCommandCallback;
     CORE.Android.app->onInputEvent = AndroidInputCallback;
 
+    // Initialize assets manager
     InitAssetManager(CORE.Android.app->activity->assetManager, CORE.Android.app->activity->internalDataPath);
+    
+    // Initialize base path for storage
+    CORE.Storage.basePath = CORE.Android.app->activity->internalDataPath;
 
     TRACELOG(LOG_INFO, "ANDROID: App initialized successfully");
 
@@ -827,7 +825,7 @@ void InitWindow(int width, int height, const char *title)
     }
 #endif
 #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB) || defined(PLATFORM_RPI) || defined(PLATFORM_UWP) || defined(PLATFORM_DRM)
-    // Init graphics device (display device and OpenGL context)
+    // Initialize graphics device (display device and OpenGL context)
     // NOTE: returns true if window and graphic device has been initialized successfully
     CORE.Window.ready = InitGraphicsDevice(width, height);
 
@@ -838,11 +836,14 @@ void InitWindow(int width, int height, const char *title)
         return;
     }
 
-    // Init hi-res timer
+    // Initialize hi-res timer
     InitTimer();
     
     // Initialize random seed
     srand((unsigned int)time(NULL));
+    
+    // Initialize base path for storage
+    CORE.Storage.basePath = GetWorkingDirectory();
 
 #if defined(SUPPORT_DEFAULT_FONT)
     // Load default font
@@ -864,7 +865,7 @@ void InitWindow(int width, int height, const char *title)
 #endif
 
 #if defined(PLATFORM_RPI) || defined(PLATFORM_DRM)
-    // Init raw input system
+    // Initialize raw input system
     InitEvdevInput();   // Evdev inputs initialization
     InitGamepad();      // Gamepad init
 #if defined(SUPPORT_SSH_KEYBOARD_RPI)
@@ -2689,7 +2690,7 @@ float GetFrameTime(void)
 double GetTime(void)
 {
 #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
-    return glfwGetTime();                   // Elapsed time since glfwInit()
+    return glfwGetTime();   // Elapsed time since glfwInit()
 #endif
 
 #if defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI) || defined(PLATFORM_DRM)
@@ -2727,17 +2728,7 @@ void TakeScreenshot(const char *fileName)
     Image image = { imgData, CORE.Window.render.width, CORE.Window.render.height, 1, PIXELFORMAT_UNCOMPRESSED_R8G8B8A8 };
 
     char path[512] = { 0 };
-#if defined(PLATFORM_ANDROID)
-    strcpy(path, CORE.Android.internalDataPath);
-    strcat(path, "/");
-    strcat(path, fileName);
-#elif defined(PLATFORM_UWP)
-    strcpy(path, CORE.UWP.internalDataPath);
-    strcat(path, "/");
-    strcat(path, fileName);
-#else
-    strcpy(path, fileName);
-#endif
+    strcpy(path, TextFormat("%s/%s", CORE.Storage.basePath, fileName));
 
     ExportImage(image, path);
     RL_FREE(imgData);
@@ -2956,9 +2947,9 @@ const char *GetWorkingDirectory(void)
     static char currentDir[MAX_FILEPATH_LENGTH];
     memset(currentDir, 0, MAX_FILEPATH_LENGTH);
 
-    char *ptr = GETCWD(currentDir, MAX_FILEPATH_LENGTH - 1);
+    char *path = GETCWD(currentDir, MAX_FILEPATH_LENGTH - 1);
 
-    return ptr;
+    return path;
 }
 
 // Get filenames in a directory path (max 512 files)
@@ -3114,17 +3105,7 @@ bool SaveStorageValue(unsigned int position, int value)
 
 #if defined(SUPPORT_DATA_STORAGE)
     char path[512] = { 0 };
-#if defined(PLATFORM_ANDROID)
-    strcpy(path, CORE.Android.internalDataPath);
-    strcat(path, "/");
-    strcat(path, STORAGE_DATA_FILE);
-#elif defined(PLATFORM_UWP)
-    strcpy(path, CORE.UWP.internalDataPath);
-    strcat(path, "/");
-    strcat(path, STORAGE_DATA_FILE);
-#else
-    strcpy(path, STORAGE_DATA_FILE);
-#endif
+    strcpy(path, TextFormat("%s/%s", CORE.Storage.basePath, STORAGE_DATA_FILE));
 
     unsigned int dataSize = 0;
     unsigned int newDataSize = 0;
@@ -3168,10 +3149,12 @@ bool SaveStorageValue(unsigned int position, int value)
 
         success = SaveFileData(path, newFileData, newDataSize);
         RL_FREE(newFileData);
+        
+        TRACELOG(LOG_INFO, "FILEIO: [%s] Saved storage value: %i", path, value);
     }
     else
     {
-        TRACELOG(LOG_INFO, "FILEIO: [%s] File not found, creating it", path);
+        TRACELOG(LOG_INFO, "FILEIO: [%s] File created successfully", path);
 
         dataSize = (position + 1)*sizeof(int);
         fileData = (unsigned char *)RL_MALLOC(dataSize);
@@ -3180,6 +3163,8 @@ bool SaveStorageValue(unsigned int position, int value)
 
         success = SaveFileData(path, fileData, dataSize);
         UnloadFileData(fileData);
+        
+        TRACELOG(LOG_INFO, "FILEIO: [%s] Saved storage value: %i", path, value);
     }
 #endif
 
@@ -3194,24 +3179,14 @@ int LoadStorageValue(unsigned int position)
 
 #if defined(SUPPORT_DATA_STORAGE)
     char path[512] = { 0 };
-#if defined(PLATFORM_ANDROID)
-    strcpy(path, CORE.Android.internalDataPath);
-    strcat(path, "/");
-    strcat(path, STORAGE_DATA_FILE);
-#elif defined(PLATFORM_UWP)
-    strcpy(path, CORE.UWP.internalDataPath);
-    strcat(path, "/");
-    strcat(path, STORAGE_DATA_FILE);
-#else
-    strcpy(path, STORAGE_DATA_FILE);
-#endif
-
+    strcpy(path, TextFormat("%s/%s", CORE.Storage.basePath, STORAGE_DATA_FILE));
+    
     unsigned int dataSize = 0;
     unsigned char *fileData = LoadFileData(path, &dataSize);
 
     if (fileData != NULL)
     {
-        if (dataSize < (position*4)) TRACELOG(LOG_WARNING, "SYSTEM: Failed to find storage position");
+        if (dataSize < (position*4)) TRACELOG(LOG_WARNING, "FILEIO: [%s] Failed to find storage position: %i", path, position);
         else
         {
             int *dataPtr = (int *)fileData;
@@ -3219,6 +3194,8 @@ int LoadStorageValue(unsigned int position)
         }
 
         UnloadFileData(fileData);
+        
+        TRACELOG(LOG_INFO, "FILEIO: [%s] Loaded storage value: %i", path, value);
     }
 #endif
     return value;
@@ -5201,15 +5178,7 @@ static void KeyCallback(GLFWwindow *window, int key, int scancode, int action, i
 
                 MsfGifResult result = msf_gif_end(&gifState);
 
-                char path[512] = { 0 };
-            #if defined(PLATFORM_ANDROID)
-                strcpy(path, CORE.Android.internalDataPath);
-                strcat(path, TextFormat("./screenrec%03i.gif", screenshotCounter));
-            #else
-                strcpy(path, TextFormat("./screenrec%03i.gif", screenshotCounter));
-            #endif
-
-                SaveFileData(path, result.data, (unsigned int)result.dataSize);
+                SaveFileData(TextFormat("%s/screenrec%03i.gif", CORE.Storage.basePath, screenshotCounter), result.data, (unsigned int)result.dataSize);
                 msf_gif_free(result);
 
             #if defined(PLATFORM_WEB)
@@ -5407,7 +5376,7 @@ static void AndroidCommandCallback(struct android_app *app, int32_t cmd)
                 if (CORE.Android.contextRebindRequired)
                 {
                     // Reset screen scaling to full display size
-                    EGLint displayFormat;
+                    EGLint displayFormat = 0;
                     eglGetConfigAttrib(CORE.Window.device, CORE.Window.config, EGL_NATIVE_VISUAL_ID, &displayFormat);
                     ANativeWindow_setBuffersGeometry(app->window, CORE.Window.render.width, CORE.Window.render.height, displayFormat);
 
@@ -5422,10 +5391,10 @@ static void AndroidCommandCallback(struct android_app *app, int32_t cmd)
                     CORE.Window.display.width = ANativeWindow_getWidth(CORE.Android.app->window);
                     CORE.Window.display.height = ANativeWindow_getHeight(CORE.Android.app->window);
 
-                    // Init graphics device (display device and OpenGL context)
+                    // Initialize graphics device (display device and OpenGL context)
                     InitGraphicsDevice(CORE.Window.screen.width, CORE.Window.screen.height);
 
-                    // Init hi-res timer
+                    // Initialize hi-res timer
                     InitTimer();
                     
                     // Initialize random seed
@@ -6392,7 +6361,7 @@ static void *EventThread(void *arg)
     return NULL;
 }
 
-// Init gamepad system
+// Initialize gamepad system
 static void InitGamepad(void)
 {
     char gamepadDev[128] = "";
@@ -6512,7 +6481,7 @@ bool UWPIsConfigured()
 }
 
 // UWP function handlers get/set
-void UWPSetDataPath(const char *path) { CORE.UWP.internalDataPath = path; }
+void UWPSetDataPath(const char *path) { CORE.Storage.basePath = path; }
 UWPQueryTimeFunc UWPGetQueryTimeFunc(void) { return uwpQueryTimeFunc; }
 void UWPSetQueryTimeFunc(UWPQueryTimeFunc func) { uwpQueryTimeFunc = func; }
 UWPSleepFunc UWPGetSleepFunc(void) { return uwpSleepFunc; }
@@ -6553,14 +6522,15 @@ void UWPKeyDownEvent(int key, bool down, bool controlKey)
 
                 MsfGifResult result = msf_gif_end(&gifState);
 
-                SaveFileData(TextFormat("%s/screenrec%03i.gif", CORE.UWP.internalDataPath, screenshotCounter), result.data, result.dataSize);
+                SaveFileData(TextFormat("%s/screenrec%03i.gif", CORE.Storage.basePath, screenshotCounter), result.data, result.dataSize);
                 msf_gif_free(result);
 
-#if defined(PLATFORM_WEB)
+            #if defined(PLATFORM_WEB)
                 // Download file from MEMFS (emscripten memory filesystem)
                 // saveFileFromMEMFSToDisk() function is defined in raylib/templates/web_shel/shell.html
                 emscripten_run_script(TextFormat("saveFileFromMEMFSToDisk('%s','%s')", TextFormat("screenrec%03i.gif", screenshotCounter - 1), TextFormat("screenrec%03i.gif", screenshotCounter - 1)));
-#endif
+            #endif
+
                 TRACELOG(LOG_INFO, "SYSTEM: Finish animated GIF recording");
             }
             else
