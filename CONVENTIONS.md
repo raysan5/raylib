@@ -25,10 +25,9 @@ Functions params | lowerCase | `width`, `height`
 Ternary Operator | (condition)? result1 : result2 | `printf("Value is 0: %s", (value == 0)? "yes" : "no");`
 
 Some other conventions to follow:
-
- - raylib code **does not use TABS**, use 4 spaces instead.
- - Avoid trailing spaces, please, avoid them
  - **ALWAYS** initialize all defined variables.
+ - **Do not use TABS**, use 4 spaces instead.
+ - Avoid trailing spaces, please, avoid them
  - Control flow statements always are followed **by a space**:
 ```c
 if (condition) value = 0;
@@ -89,7 +88,7 @@ resources/screens/logo/logo.png
 resources/screens/title/title.png
 resources/screens/gameplay/background.png
 resources/characters/player.png
-resources/caracters/enemy_slime.png
+resources/characters/enemy_slime.png
 resources/common/font_arial.ttf
 resources/common/gui.png
 ```
