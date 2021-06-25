@@ -4,8 +4,8 @@
 in vec3 vertexPosition;
 
 // Input uniform values
-uniform mat4 projection;
-uniform mat4 view;
+uniform mat4 matProjection;
+uniform mat4 matView;
 
 // Output vertex attributes (to fragment shader)
 out vec3 fragPosition;
@@ -16,5 +16,5 @@ void main()
     fragPosition = vertexPosition;
 
     // Calculate final vertex position
-    gl_Position = projection*view*vec4(vertexPosition, 1.0);
+    gl_Position = matProjection*matView*vec4(vertexPosition, 1.0);
 }

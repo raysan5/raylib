@@ -2375,17 +2375,17 @@ RLAPI Shader LoadShaderFromMemory(const char *vsCode, const char *fsCode)
         shader.locs[SHADER_LOC_VERTEX_COLOR] = rlGetLocationAttrib(shader.id, DEFAULT_SHADER_ATTRIB_NAME_COLOR);
 
         // Get handles to GLSL uniform locations (vertex shader)
-        shader.locs[SHADER_LOC_MATRIX_MVP] = rlGetLocationUniform(shader.id, "mvp");
-        shader.locs[SHADER_LOC_MATRIX_VIEW] = rlGetLocationUniform(shader.id, "view");
-        shader.locs[SHADER_LOC_MATRIX_PROJECTION] = rlGetLocationUniform(shader.id, "projection");
-        //shader.locs[SHADER_LOC_MATRIX_MODEL] = rlGetLocationUniform(shader.id, "matModel");
-        shader.locs[SHADER_LOC_MATRIX_NORMAL] = rlGetLocationUniform(shader.id, "matNormal");
+        shader.locs[SHADER_LOC_MATRIX_MVP] = rlGetLocationUniform(shader.id, DEFAULT_SHADER_UNIFORM_NAME_MVP);
+        shader.locs[SHADER_LOC_MATRIX_VIEW] = rlGetLocationUniform(shader.id, DEFAULT_SHADER_UNIFORM_NAME_VIEW);
+        shader.locs[SHADER_LOC_MATRIX_PROJECTION] = rlGetLocationUniform(shader.id, DEFAULT_SHADER_UNIFORM_NAME_PROJECTION);
+        shader.locs[SHADER_LOC_MATRIX_MODEL] = rlGetLocationUniform(shader.id, DEFAULT_SHADER_UNIFORM_NAME_MODEL);
+        shader.locs[SHADER_LOC_MATRIX_NORMAL] = rlGetLocationUniform(shader.id, DEFAULT_SHADER_UNIFORM_NAME_NORMAL);
 
         // Get handles to GLSL uniform locations (fragment shader)
-        shader.locs[SHADER_LOC_COLOR_DIFFUSE] = rlGetLocationUniform(shader.id, "colDiffuse");
-        shader.locs[SHADER_LOC_MAP_DIFFUSE] = rlGetLocationUniform(shader.id, "texture0");      // SHADER_LOC_MAP_ALBEDO
-        shader.locs[SHADER_LOC_MAP_SPECULAR] = rlGetLocationUniform(shader.id, "texture1");     // SHADER_LOC_MAP_METALNESS
-        shader.locs[SHADER_LOC_MAP_NORMAL] = rlGetLocationUniform(shader.id, "texture2");
+        shader.locs[SHADER_LOC_COLOR_DIFFUSE] = rlGetLocationUniform(shader.id, DEFAULT_SHADER_UNIFORM_NAME_COLOR);
+        shader.locs[SHADER_LOC_MAP_DIFFUSE] = rlGetLocationUniform(shader.id, DEFAULT_SHADER_SAMPLER2D_NAME_TEXTURE0);  // SHADER_LOC_MAP_ALBEDO
+        shader.locs[SHADER_LOC_MAP_SPECULAR] = rlGetLocationUniform(shader.id, DEFAULT_SHADER_SAMPLER2D_NAME_TEXTURE1); // SHADER_LOC_MAP_METALNESS
+        shader.locs[SHADER_LOC_MAP_NORMAL] = rlGetLocationUniform(shader.id, DEFAULT_SHADER_SAMPLER2D_NAME_TEXTURE2);
     }
 
     return shader;

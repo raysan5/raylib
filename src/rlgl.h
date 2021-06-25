@@ -762,22 +762,50 @@ RLAPI void rlLoadDrawQuad(void);     // Load and draw a quad
 
 // Default shader vertex attribute names to set location points
 #ifndef DEFAULT_SHADER_ATTRIB_NAME_POSITION
-    #define DEFAULT_SHADER_ATTRIB_NAME_POSITION    "vertexPosition"    // Binded by default to shader location: 0
+    #define DEFAULT_SHADER_ATTRIB_NAME_POSITION     "vertexPosition"    // Binded by default to shader location: 0
 #endif
 #ifndef DEFAULT_SHADER_ATTRIB_NAME_TEXCOORD
-    #define DEFAULT_SHADER_ATTRIB_NAME_TEXCOORD    "vertexTexCoord"    // Binded by default to shader location: 1
+    #define DEFAULT_SHADER_ATTRIB_NAME_TEXCOORD     "vertexTexCoord"    // Binded by default to shader location: 1
 #endif
 #ifndef DEFAULT_SHADER_ATTRIB_NAME_NORMAL
-    #define DEFAULT_SHADER_ATTRIB_NAME_NORMAL      "vertexNormal"      // Binded by default to shader location: 2
+    #define DEFAULT_SHADER_ATTRIB_NAME_NORMAL       "vertexNormal"      // Binded by default to shader location: 2
 #endif
 #ifndef DEFAULT_SHADER_ATTRIB_NAME_COLOR
-    #define DEFAULT_SHADER_ATTRIB_NAME_COLOR       "vertexColor"       // Binded by default to shader location: 3
+    #define DEFAULT_SHADER_ATTRIB_NAME_COLOR        "vertexColor"       // Binded by default to shader location: 3
 #endif
 #ifndef DEFAULT_SHADER_ATTRIB_NAME_TANGENT
-    #define DEFAULT_SHADER_ATTRIB_NAME_TANGENT     "vertexTangent"     // Binded by default to shader location: 4
+    #define DEFAULT_SHADER_ATTRIB_NAME_TANGENT      "vertexTangent"     // Binded by default to shader location: 4
 #endif
 #ifndef DEFAULT_SHADER_ATTRIB_NAME_TEXCOORD2
-    #define DEFAULT_SHADER_ATTRIB_NAME_TEXCOORD2   "vertexTexCoord2"   // Binded by default to shader location: 5
+    #define DEFAULT_SHADER_ATTRIB_NAME_TEXCOORD2    "vertexTexCoord2"   // Binded by default to shader location: 5
+#endif
+
+#ifndef DEFAULT_SHADER_UNIFORM_NAME_MVP
+    #define DEFAULT_SHADER_UNIFORM_NAME_MVP         "mvp"               // model-view-projection matrix
+#endif
+#ifndef DEFAULT_SHADER_UNIFORM_NAME_VIEW
+    #define DEFAULT_SHADER_UNIFORM_NAME_VIEW        "matView"           // view matrix
+#endif
+#ifndef DEFAULT_SHADER_UNIFORM_NAME_PROJECTION
+    #define DEFAULT_SHADER_UNIFORM_NAME_PROJECTION  "matProjection"     // projection matrix
+#endif
+#ifndef DEFAULT_SHADER_UNIFORM_NAME_MODEL
+    #define DEFAULT_SHADER_UNIFORM_NAME_MODEL       "matModel"          // model matrix
+#endif
+#ifndef DEFAULT_SHADER_UNIFORM_NAME_NORMAL
+    #define DEFAULT_SHADER_UNIFORM_NAME_NORMAL      "matNormal"         // normal matrix (transpose(inverse(matModelView))
+#endif
+#ifndef DEFAULT_SHADER_UNIFORM_NAME_COLOR
+    #define DEFAULT_SHADER_UNIFORM_NAME_COLOR       "colDiffuse"        // color diffuse (base tint color, multiplied by texture color)
+#endif
+#ifndef DEFAULT_SHADER_SAMPLER2D_NAME_TEXTURE0
+    #define DEFAULT_SHADER_SAMPLER2D_NAME_TEXTURE0  "texture0"          // texture0 (texture slot active 0)
+#endif
+#ifndef DEFAULT_SHADER_SAMPLER2D_NAME_TEXTURE1
+    #define DEFAULT_SHADER_SAMPLER2D_NAME_TEXTURE1  "texture1"          // texture1 (texture slot active 1)
+#endif
+#ifndef DEFAULT_SHADER_SAMPLER2D_NAME_TEXTURE2
+    #define DEFAULT_SHADER_SAMPLER2D_NAME_TEXTURE2  "texture2"          // texture2 (texture slot active 2)
 #endif
 
 //----------------------------------------------------------------------------------
