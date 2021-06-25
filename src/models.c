@@ -49,7 +49,12 @@
 #include <stdlib.h>         // Required for: malloc(), free()
 #include <string.h>         // Required for: memcmp(), strlen()
 #include <math.h>           // Required for: sinf(), cosf(), sqrtf(), fabsf()
-#include <climits>
+
+#if defined(_MSC_VER)
+    #include <climits>           // Required for numerical limit constants like CHAR_MAX
+#else
+    #include <limits.h>           // Required for numerical limit constants like CHAR_MAX
+#endif
 
 #if defined(_WIN32)
     #include <direct.h>     // Required for: _chdir() [Used in LoadOBJ()]
