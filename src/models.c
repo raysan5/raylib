@@ -50,6 +50,12 @@
 #include <string.h>         // Required for: memcmp(), strlen()
 #include <math.h>           // Required for: sinf(), cosf(), sqrtf(), fabsf()
 
+#if defined(_MSC_VER)
+    #include <climits>           // Required for numerical limit constants like CHAR_MAX
+#else
+    #include <limits.h>           // Required for numerical limit constants like CHAR_MAX
+#endif
+
 #if defined(_WIN32)
     #include <direct.h>     // Required for: _chdir() [Used in LoadOBJ()]
     #define CHDIR _chdir
@@ -117,11 +123,14 @@ static ModelAnimation *LoadIQMModelAnimations(const char *fileName, int *animCou
 #if defined(SUPPORT_FILEFORMAT_GLTF)
 static Model LoadGLTF(const char *fileName);    // Load GLTF mesh data
 static ModelAnimation *LoadGLTFModelAnimations(const char *fileName, int *animCount);    // Load GLTF animation data
-static void LoadGLTFModelIndices(Model *model, cgltf_accessor *indexAccessor, int primitiveIndex);
-static void BindGLTFPrimitiveToBones(Model *model, const cgltf_data *data, int primitiveIndex);
-static void LoadGLTFBoneAttribute(Model *model, cgltf_accessor *jointsAccessor, const cgltf_data *data, int primitiveIndex);
 static void LoadGLTFMaterial(Model *model, const char *fileName, const cgltf_data *data);
+static void LoadGLTFMesh(cgltf_data *data, cgltf_mesh* mesh, Model* outModel, Matrix currentTransform, int* primitiveIndex, const char* fileName);
+static void LoadGLTFNode(cgltf_data *data, cgltf_node* node, Model* outModel, Matrix currentTransform, int* primitiveIndex, const char* fileName);
 static void InitGLTFBones(Model *model, const cgltf_data *data);
+static void BindGLTFPrimitiveToBones(Model *model, const cgltf_data *data, int primitiveIndex);
+static void GetGLTFPrimitiveCount(cgltf_node* node, int* outCount);
+static bool GLTFReadValue(cgltf_accessor* acc, unsigned int index, void *variable);
+static void* GLTFReadValuesAs(cgltf_accessor* acc, cgltf_component_type type, bool adjustOnDownCasting);
 #endif
 
 //----------------------------------------------------------------------------------
@@ -844,7 +853,8 @@ void UploadMesh(Mesh *mesh, bool dynamic)
     // NOTE: Attributes must be uploaded considering default locations points
 
     // Enable vertex attributes: position (shader-location = 0)
-    mesh->vboId[0] = rlLoadVertexBuffer(mesh->vertices, mesh->vertexCount*3*sizeof(float), dynamic);
+    void* vertices = mesh->animVertices != NULL ? mesh->animVertices : mesh->vertices;
+    mesh->vboId[0] = rlLoadVertexBuffer(vertices, mesh->vertexCount*3*sizeof(float), dynamic);
     rlSetVertexAttribute(0, 3, RL_FLOAT, 0, 0, 0);
     rlEnableVertexAttribute(0);
 
@@ -856,7 +866,8 @@ void UploadMesh(Mesh *mesh, bool dynamic)
     if (mesh->normals != NULL)
     {
         // Enable vertex attributes: normals (shader-location = 2)
-        mesh->vboId[2] = rlLoadVertexBuffer(mesh->normals, mesh->vertexCount*3*sizeof(float), dynamic);
+        void* normals = mesh->animNormals != NULL ? mesh->animNormals : mesh->vertices;
+        mesh->vboId[2] = rlLoadVertexBuffer(normals, mesh->vertexCount*3*sizeof(float), dynamic);
         rlSetVertexAttribute(2, 3, RL_FLOAT, 0, 0, 0);
         rlEnableVertexAttribute(2);
     }
@@ -4132,24 +4143,540 @@ static Image LoadImageFromCgltfImage(cgltf_image *image, const char *texPath, Co
 }
 
 
-static bool GLTFReadValue(cgltf_accessor* acc, unsigned int index, void *variable, unsigned int elements, unsigned int size)
+static bool GLTFReadValue(cgltf_accessor* acc, unsigned int index, void *variable)
 {
+    unsigned int typeElements = 0;
+    switch(acc->type) {
+        case cgltf_type_scalar: typeElements = 1; break;
+        case cgltf_type_vec2: typeElements = 2; break;
+        case cgltf_type_vec3: typeElements = 3; break;
+        case cgltf_type_vec4:
+        case cgltf_type_mat2: typeElements = 4; break;
+        case cgltf_type_mat3: typeElements = 9; break;
+        case cgltf_type_mat4: typeElements = 16; break;
+        case cgltf_type_invalid: typeElements = 0; break;
+    }
+    
+    unsigned int typeSize = 0;
+    switch(acc->component_type) {
+        case cgltf_component_type_r_8u:
+        case cgltf_component_type_r_8: typeSize = 1; break;
+        case cgltf_component_type_r_16u:
+        case cgltf_component_type_r_16: typeSize = 2; break;
+        case cgltf_component_type_r_32f:
+        case cgltf_component_type_r_32u: typeSize = 4; break;
+        case cgltf_component_type_invalid: typeSize = 0; break;
+    }
+    
+    unsigned int singleElementSize = typeSize * typeElements;
+    
     if (acc->count == 2)
     {
         if (index > 1) return false;
 
-        memcpy(variable, index == 0 ? acc->min : acc->max, elements*size);
+        memcpy(variable, index == 0 ? acc->min : acc->max, singleElementSize);
         return true;
     }
-
-    unsigned int stride = size*elements;
-    memset(variable, 0, stride);
+    
+    memset(variable, 0, singleElementSize);
 
     if (acc->buffer_view == NULL || acc->buffer_view->buffer == NULL || acc->buffer_view->buffer->data == NULL) return false;
-
-    void* readPosition = ((char *)acc->buffer_view->buffer->data) + (index*stride) + acc->buffer_view->offset + acc->offset;
-    memcpy(variable, readPosition, stride);
+    
+    if(!acc->buffer_view->stride)
+    {
+        void* readPosition = ((char *)acc->buffer_view->buffer->data) + (index * singleElementSize) + acc->buffer_view->offset + acc->offset;
+        memcpy(variable, readPosition, singleElementSize);
+    }
+    else
+    {
+        void* readPosition = ((char *)acc->buffer_view->buffer->data) + (index * acc->buffer_view->stride) + acc->buffer_view->offset + acc->offset;
+        memcpy(variable, readPosition, singleElementSize);
+    }
+    
     return true;
+}
+
+static void* GLTFReadValuesAs(cgltf_accessor* acc, cgltf_component_type type, bool adjustOnDownCasting)
+{
+    unsigned int count = acc->count;
+    unsigned int typeSize = 0;
+    switch(type) {
+        case cgltf_component_type_r_8u:
+        case cgltf_component_type_r_8: typeSize = 1; break;
+        case cgltf_component_type_r_16u:
+        case cgltf_component_type_r_16: typeSize = 2; break;
+        case cgltf_component_type_r_32f:
+        case cgltf_component_type_r_32u: typeSize = 4; break;
+        case cgltf_component_type_invalid: typeSize = 0; break;
+    }
+    
+    unsigned int typeElements = 0;
+    switch(acc->type) {
+        case cgltf_type_scalar: typeElements = 1; break;
+        case cgltf_type_vec2: typeElements = 2; break;
+        case cgltf_type_vec3: typeElements = 3; break;
+        case cgltf_type_vec4:
+        case cgltf_type_mat2: typeElements = 4; break;
+        case cgltf_type_mat3: typeElements = 9; break;
+        case cgltf_type_mat4: typeElements = 16; break;
+        case cgltf_type_invalid: typeElements = 0; break;
+    }
+    
+    if(acc->component_type == type)
+    {
+        void* array = RL_MALLOC(count * typeElements * typeSize);
+        
+        for(unsigned int i = 0; i < count; i++)
+        {
+            GLTFReadValue(acc, i, (char*)array + i * typeElements * typeSize);
+        }
+        
+        return array;
+        
+    } else {
+    
+        unsigned int accTypeSize = 0;
+        switch(acc->component_type) {
+            case cgltf_component_type_r_8u:
+            case cgltf_component_type_r_8: accTypeSize = 1; break;
+            case cgltf_component_type_r_16u:
+            case cgltf_component_type_r_16: accTypeSize = 2; break;
+            case cgltf_component_type_r_32f:
+            case cgltf_component_type_r_32u: accTypeSize = 4; break;
+            case cgltf_component_type_invalid: accTypeSize = 0; break;
+        }
+    
+        void* array = RL_MALLOC(count * typeElements * typeSize);
+        void* additionalArray = RL_MALLOC(count * typeElements * accTypeSize);
+    
+        for(unsigned int i = 0; i < count; i++)
+        {
+            GLTFReadValue(acc, i, (char*)additionalArray + i * typeElements * accTypeSize);
+        }
+    
+        switch(acc->component_type) {
+            case cgltf_component_type_r_8u:
+            {
+                unsigned char* typedAdditionalArray = (unsigned char*)additionalArray;
+                switch(type) {
+                    case cgltf_component_type_r_8:
+                    {
+                        char* typedArray = (char*) array;
+                        for (unsigned int i = 0; i < count * typeElements; i++)
+                        {
+                            if(adjustOnDownCasting)
+                            {
+                                typedArray[i] = (char)(typedAdditionalArray[i] / (UCHAR_MAX / CHAR_MAX));
+                            }
+                            else
+                            {
+                                typedArray[i] = (char)typedAdditionalArray[i];
+                            }
+                        }
+                        break;
+                    }
+                    case cgltf_component_type_r_16u:
+                    {
+                        unsigned short* typedArray = (unsigned short*) array;
+                        for (unsigned int i = 0; i < count * typeElements; i++)
+                        {
+                            typedArray[i] = (unsigned short)typedAdditionalArray[i];
+                        }
+                        break;
+                    }
+                    case cgltf_component_type_r_16:
+                    {
+                        short* typedArray = (short*) array;
+                        for (unsigned int i = 0; i < count * typeElements; i++)
+                        {
+                            typedArray[i] = (short)typedAdditionalArray[i];
+                        }
+                        break;
+                    }
+                    case cgltf_component_type_r_32f:
+                    {
+                        float* typedArray = (float*) array;
+                        for (unsigned int i = 0; i < count * typeElements; i++)
+                        {
+                            typedArray[i] = (float)typedAdditionalArray[i];
+                        }
+                        break;
+                    }
+                    case cgltf_component_type_r_32u:
+                    {
+                        unsigned int* typedArray = (unsigned int*) array;
+                        for (unsigned int i = 0; i < count * typeElements; i++)
+                        {
+                            typedArray[i] = (unsigned int)typedAdditionalArray[i];
+                        }
+                        break;
+                    }
+                    default: {
+                        RL_FREE(array);
+                        RL_FREE(additionalArray);
+                        return NULL;
+                    }
+                }
+                break;
+            }
+            case cgltf_component_type_r_8:
+            {
+                char* typedAdditionalArray = (char*)additionalArray;
+                switch(type) {
+                    case cgltf_component_type_r_8u:
+                    {
+                        unsigned char* typedArray = (unsigned char*) array;
+                        for (unsigned int i = 0; i < count * typeElements; i++)
+                        {
+                            typedArray[i] = (unsigned char)typedAdditionalArray[i];
+                        }
+                        break;
+                    }
+                    case cgltf_component_type_r_16u:
+                    {
+                        unsigned short* typedArray = (unsigned short*) array;
+                        for (unsigned int i = 0; i < count * typeElements; i++)
+                        {
+                            typedArray[i] = (unsigned short)typedAdditionalArray[i];
+                        }
+                        break;
+                    }
+                    case cgltf_component_type_r_16:
+                    {
+                        short* typedArray = (short*) array;
+                        for (unsigned int i = 0; i < count * typeElements; i++)
+                        {
+                            typedArray[i] = (short)typedAdditionalArray[i];
+                        }
+                        break;
+                    }
+                    case cgltf_component_type_r_32f:
+                    {
+                        float* typedArray = (float*) array;
+                        for (unsigned int i = 0; i < count * typeElements; i++)
+                        {
+                            typedArray[i] = (float)typedAdditionalArray[i];
+                        }
+                        break;
+                    }
+                    case cgltf_component_type_r_32u:
+                    {
+                        unsigned int* typedArray = (unsigned int*) array;
+                        for (unsigned int i = 0; i < count * typeElements; i++)
+                        {
+                            typedArray[i] = (unsigned int)typedAdditionalArray[i];
+                        }
+                        break;
+                    }
+                    default: {
+                        RL_FREE(array);
+                        RL_FREE(additionalArray);
+                        return NULL;
+                    }
+                }
+                break;
+            }
+            case cgltf_component_type_r_16u:
+            {
+                unsigned short* typedAdditionalArray = (unsigned short*)additionalArray;
+                switch(type) {
+                    case cgltf_component_type_r_8u:
+                    {
+                        unsigned char* typedArray = (unsigned char*) array;
+                        for (unsigned int i = 0; i < count * typeElements; i++)
+                        {
+                            if(adjustOnDownCasting)
+                            {
+                                typedArray[i] = (unsigned char)(typedAdditionalArray[i] / (USHRT_MAX / UCHAR_MAX));
+                            }
+                            else
+                            {
+                                typedArray[i] = (unsigned char)typedAdditionalArray[i];
+                            }
+                        }
+                        break;
+                    }
+                    case cgltf_component_type_r_8:
+                    {
+                        char* typedArray = (char*) array;
+                        for (unsigned int i = 0; i < count * typeElements; i++)
+                        {
+                            if(adjustOnDownCasting)
+                            {
+                                typedArray[i] = (char)(typedAdditionalArray[i] / (USHRT_MAX / CHAR_MAX));
+                            }
+                            else
+                            {
+                                typedArray[i] = (char)typedAdditionalArray[i];
+                            }
+                        }
+                        break;
+                    }
+                    case cgltf_component_type_r_16:
+                    {
+                        short* typedArray = (short*) array;
+                        for (unsigned int i = 0; i < count * typeElements; i++)
+                        {
+                            if(adjustOnDownCasting)
+                            {
+                                typedArray[i] = (short)(typedAdditionalArray[i] / (USHRT_MAX / SHRT_MAX));
+                            }
+                            else
+                            {
+                                typedArray[i] = (short)typedAdditionalArray[i];
+                            }
+                        }
+                        break;
+                    }
+                    case cgltf_component_type_r_32f:
+                    {
+                        float* typedArray = (float*) array;
+                        for (unsigned int i = 0; i < count * typeElements; i++)
+                        {
+                            typedArray[i] = (float)typedAdditionalArray[i];
+                        }
+                        break;
+                    }
+                    case cgltf_component_type_r_32u:
+                    {
+                        unsigned int* typedArray = (unsigned int*) array;
+                        for (unsigned int i = 0; i < count * typeElements; i++)
+                        {
+                            typedArray[i] = (unsigned int)typedAdditionalArray[i];
+                        }
+                        break;
+                    }
+                    default: {
+                        RL_FREE(array);
+                        RL_FREE(additionalArray);
+                        return NULL;
+                    }
+                }
+                break;
+            }
+            case cgltf_component_type_r_16:
+            {
+                short* typedAdditionalArray = (short*)additionalArray;
+                switch(type) {
+                    case cgltf_component_type_r_8u:
+                    {
+                        unsigned char* typedArray = (unsigned char*) array;
+                        for (unsigned int i = 0; i < count * typeElements; i++)
+                        {
+                            if(adjustOnDownCasting)
+                            {
+                                typedArray[i] = (unsigned char)(typedAdditionalArray[i] / (SHRT_MAX / UCHAR_MAX));
+                            }
+                            else
+                            {
+                                typedArray[i] = (unsigned char)typedAdditionalArray[i];
+                            }
+                        }
+                        break;
+                    }
+                    case cgltf_component_type_r_8:
+                    {
+                        char* typedArray = (char*) array;
+                        for (unsigned int i = 0; i < count * typeElements; i++)
+                        {
+                            if(adjustOnDownCasting)
+                            {
+                                typedArray[i] = (char)(typedAdditionalArray[i] / (SHRT_MAX / CHAR_MAX));
+                            }
+                            else
+                            {
+                                typedArray[i] = (char)typedAdditionalArray[i];
+                            }
+                        }
+                        break;
+                    }
+                    case cgltf_component_type_r_16u:
+                    {
+                        unsigned short* typedArray = (unsigned short*) array;
+                        for (unsigned int i = 0; i < count * typeElements; i++)
+                        {
+                            typedArray[i] = (unsigned short)typedAdditionalArray[i];
+                        }
+                        break;
+                    }
+                    case cgltf_component_type_r_32f:
+                    {
+                        float* typedArray = (float*) array;
+                        for (unsigned int i = 0; i < count * typeElements; i++)
+                        {
+                            typedArray[i] = (float)typedAdditionalArray[i];
+                        }
+                        break;
+                    }
+                    case cgltf_component_type_r_32u:
+                    {
+                        unsigned int* typedArray = (unsigned int*) array;
+                        for (unsigned int i = 0; i < count * typeElements; i++)
+                        {
+                            typedArray[i] = (unsigned int)typedAdditionalArray[i];
+                        }
+                        break;
+                    }
+                    default: {
+                        RL_FREE(array);
+                        RL_FREE(additionalArray);
+                        return NULL;
+                    }
+                }
+                break;
+            }
+            case cgltf_component_type_r_32f:
+            {
+                float* typedAdditionalArray = (float*)additionalArray;
+                switch(type) {
+                    case cgltf_component_type_r_8u:
+                    {
+                        unsigned char* typedArray = (unsigned char*) array;
+                        for (unsigned int i = 0; i < count * typeElements; i++)
+                        {
+                            typedArray[i] = (unsigned char)typedAdditionalArray[i];
+                        }
+                        break;
+                    }
+                    case cgltf_component_type_r_8:
+                    {
+                        char* typedArray = (char*) array;
+                        for (unsigned int i = 0; i < count * typeElements; i++)
+                        {
+                            typedArray[i] = (char)typedAdditionalArray[i];
+                        }
+                        break;
+                    }
+                    case cgltf_component_type_r_16u:
+                    {
+                        unsigned short* typedArray = (unsigned short*) array;
+                        for (unsigned int i = 0; i < count * typeElements; i++)
+                        {
+                            typedArray[i] = (unsigned short)typedAdditionalArray[i];
+                        }
+                        break;
+                    }
+                    case cgltf_component_type_r_16:
+                    {
+                        short* typedArray = (short*) array;
+                        for (unsigned int i = 0; i < count * typeElements; i++)
+                        {
+                            typedArray[i] = (short)typedAdditionalArray[i];
+                        }
+                        break;
+                    }
+                    case cgltf_component_type_r_32u:
+                    {
+                        unsigned int* typedArray = (unsigned int*) array;
+                        for (unsigned int i = 0; i < count * typeElements; i++)
+                        {
+                            typedArray[i] = (unsigned int)typedAdditionalArray[i];
+                        }
+                        break;
+                    }
+                    default: {
+                        RL_FREE(array);
+                        RL_FREE(additionalArray);
+                        return NULL;
+                    }
+                }
+                break;
+            }
+            case cgltf_component_type_r_32u:
+            {
+                unsigned int* typedAdditionalArray = (unsigned int*)additionalArray;
+                switch(type) {
+                    case cgltf_component_type_r_8u:
+                    {
+                        unsigned char* typedArray = (unsigned char*) array;
+                        for (unsigned int i = 0; i < count * typeElements; i++)
+                        {
+                            if(adjustOnDownCasting)
+                            {
+                                typedArray[i] = (unsigned char)(typedAdditionalArray[i] / (UINT_MAX / UCHAR_MAX));
+                            }
+                            else
+                            {
+                                typedArray[i] = (unsigned char)typedAdditionalArray[i];
+                            }
+                        }
+                        break;
+                    }
+                    case cgltf_component_type_r_8:
+                    {
+                        char* typedArray = (char*) array;
+                        for (unsigned int i = 0; i < count * typeElements; i++)
+                        {
+                            if(adjustOnDownCasting)
+                            {
+                                typedArray[i] = (char)(typedAdditionalArray[i] / (UINT_MAX / CHAR_MAX));
+                            }
+                            else
+                            {
+                                typedArray[i] = (char)typedAdditionalArray[i];
+                            }
+                        }
+                        break;
+                    }
+                    case cgltf_component_type_r_16u:
+                    {
+                        unsigned short* typedArray = (unsigned short*) array;
+                        for (unsigned int i = 0; i < count * typeElements; i++)
+                        {
+                            if(adjustOnDownCasting)
+                            {
+                                typedArray[i] = (unsigned short)(typedAdditionalArray[i] / (UINT_MAX / USHRT_MAX));
+                            }
+                            else
+                            {
+                                typedArray[i] = (unsigned short)typedAdditionalArray[i];
+                            }
+                        }
+                        break;
+                    }
+                    case cgltf_component_type_r_16:
+                    {
+                        short* typedArray = (short*) array;
+                        for (unsigned int i = 0; i < count * typeElements; i++)
+                        {
+                            if(adjustOnDownCasting)
+                            {
+                                typedArray[i] = (short)(typedAdditionalArray[i] / (UINT_MAX / SHRT_MAX));
+                            }
+                            else
+                            {
+                                typedArray[i] = (short)typedAdditionalArray[i];
+                            }
+                        }
+                        break;
+                    }
+                    case cgltf_component_type_r_32f:
+                    {
+                        float* typedArray = (float*) array;
+                        for (unsigned int i = 0; i < count * typeElements; i++)
+                        {
+                            typedArray[i] = (float)typedAdditionalArray[i];
+                        }
+                        break;
+                    }
+                    default: {
+                        RL_FREE(array);
+                        RL_FREE(additionalArray);
+                        return NULL;
+                    }
+                }
+                break;
+            }
+            default: {
+                RL_FREE(array);
+                RL_FREE(additionalArray);
+                return NULL;
+            }
+        }
+        
+        RL_FREE(additionalArray);
+        return array;
+    }
 }
 
 // LoadGLTF loads in model data from given filename, supporting both .gltf and .glb
@@ -4194,12 +4721,15 @@ static Model LoadGLTF(const char *fileName)
         // Read data buffers
         result = cgltf_load_buffers(&options, data, fileName);
         if (result != cgltf_result_success) TRACELOG(LOG_INFO, "MODEL: [%s] Failed to load mesh/material buffers", fileName);
+        
+        if(data->scenes_count > 1) TRACELOG(LOG_INFO, "MODEL: [%s] Has multiple scenes but only the first one will be loaded", fileName);
 
         int primitivesCount = 0;
-
-        for (unsigned int i = 0; i < data->meshes_count; i++)
-            primitivesCount += (int)data->meshes[i].primitives_count;
-
+        for (unsigned int i = 0; i < data->scene->nodes_count; i++)
+        {
+            GetGLTFPrimitiveCount(data->scene->nodes[i], &primitivesCount);
+        }
+        
         // Process glTF data and map to model
         model.meshCount = primitivesCount;
         model.meshes = RL_CALLOC(model.meshCount, sizeof(Mesh));
@@ -4209,195 +4739,15 @@ static Model LoadGLTF(const char *fileName)
         model.boneCount = (int)data->nodes_count;
         model.bones = RL_CALLOC(model.boneCount, sizeof(BoneInfo));
         model.bindPose = RL_CALLOC(model.boneCount, sizeof(Transform));
-
+        
         InitGLTFBones(&model, data);
         LoadGLTFMaterial(&model, fileName, data);
-
+    
         int primitiveIndex = 0;
-
-        for (unsigned int i = 0; i < data->meshes_count; i++)
+        for(unsigned int i = 0; i < data->scene->nodes_count; i++)
         {
-            for (unsigned int p = 0; p < data->meshes[i].primitives_count; p++)
-            {
-                for (unsigned int j = 0; j < data->meshes[i].primitives[p].attributes_count; j++)
-                {
-                    if (data->meshes[i].primitives[p].attributes[j].type == cgltf_attribute_type_position)
-                    {
-                        cgltf_accessor *acc = data->meshes[i].primitives[p].attributes[j].data;
-                        model.meshes[primitiveIndex].vertexCount = (int)acc->count;
-                        int bufferSize = model.meshes[primitiveIndex].vertexCount*3*sizeof(float);
-                        model.meshes[primitiveIndex].vertices = RL_MALLOC(bufferSize);
-                        model.meshes[primitiveIndex].animVertices = RL_MALLOC(bufferSize);
-
-                        if (acc->component_type == cgltf_component_type_r_32f)
-                        {
-                            for (unsigned int a = 0; a < acc->count; a++)
-                            {
-                                GLTFReadValue(acc, a, model.meshes[primitiveIndex].vertices + (a*3), 3, sizeof(float));
-                            }
-                        }
-                        else if (acc->component_type == cgltf_component_type_r_32u)
-                        {
-                            int readValue[3];
-                            for (unsigned int a = 0; a < acc->count; a++)
-                            {
-                                GLTFReadValue(acc, a, readValue, 3, sizeof(int));
-                                model.meshes[primitiveIndex].vertices[(a*3) + 0] = (float)readValue[0];
-                                model.meshes[primitiveIndex].vertices[(a*3) + 1] = (float)readValue[1];
-                                model.meshes[primitiveIndex].vertices[(a*3) + 2] = (float)readValue[2];
-                            }
-                        }
-                        else
-                        {
-                            // TODO: Support normalized unsigned byte/unsigned short vertices
-                            TRACELOG(LOG_WARNING, "MODEL: [%s] glTF vertices must be float or int", fileName);
-                        }
-
-                        memcpy(model.meshes[primitiveIndex].animVertices, model.meshes[primitiveIndex].vertices, bufferSize);
-                    }
-                    else if (data->meshes[i].primitives[p].attributes[j].type == cgltf_attribute_type_normal)
-                    {
-                        cgltf_accessor *acc = data->meshes[i].primitives[p].attributes[j].data;
-
-                        int bufferSize = (int)(acc->count*3*sizeof(float));
-                        model.meshes[primitiveIndex].normals = RL_MALLOC(bufferSize);
-                        model.meshes[primitiveIndex].animNormals = RL_MALLOC(bufferSize);
-
-                        if (acc->component_type == cgltf_component_type_r_32f)
-                        {
-                            for (unsigned int a = 0; a < acc->count; a++)
-                            {
-                                GLTFReadValue(acc, a, model.meshes[primitiveIndex].normals + (a*3), 3, sizeof(float));
-                            }
-                        }
-                        else if (acc->component_type == cgltf_component_type_r_32u)
-                        {
-                            int readValue[3];
-                            for (unsigned int a = 0; a < acc->count; a++)
-                            {
-                                GLTFReadValue(acc, a, readValue, 3, sizeof(int));
-                                model.meshes[primitiveIndex].normals[(a*3) + 0] = (float)readValue[0];
-                                model.meshes[primitiveIndex].normals[(a*3) + 1] = (float)readValue[1];
-                                model.meshes[primitiveIndex].normals[(a*3) + 2] = (float)readValue[2];
-                            }
-                        }
-                        else
-                        {
-                            // TODO: Support normalized unsigned byte/unsigned short normals
-                            TRACELOG(LOG_WARNING, "MODEL: [%s] glTF normals must be float or int", fileName);
-                        }
-
-                        memcpy(model.meshes[primitiveIndex].animNormals, model.meshes[primitiveIndex].normals, bufferSize);
-                    }
-                    else if (data->meshes[i].primitives[p].attributes[j].type == cgltf_attribute_type_texcoord)
-                    {
-                        cgltf_accessor *acc = data->meshes[i].primitives[p].attributes[j].data;
-
-                        if (acc->component_type == cgltf_component_type_r_32f)
-                        {
-                            model.meshes[primitiveIndex].texcoords = RL_MALLOC(acc->count*2*sizeof(float));
-
-                            for (unsigned int a = 0; a < acc->count; a++)
-                            {
-                                GLTFReadValue(acc, a, model.meshes[primitiveIndex].texcoords + (a*2), 2, sizeof(float));
-                            }
-                        }
-                        else
-                        {
-                            // TODO: Support normalized unsigned byte/unsigned short texture coordinates
-                            TRACELOG(LOG_WARNING, "MODEL: [%s] glTF texture coordinates must be float", fileName);
-                        }
-                    }
-                    else if (data->meshes[i].primitives[p].attributes[j].type == cgltf_attribute_type_joints)
-                    {
-                        cgltf_accessor *acc = data->meshes[i].primitives[p].attributes[j].data;
-                        LoadGLTFBoneAttribute(&model, acc, data, primitiveIndex);
-                    }
-                    else if (data->meshes[i].primitives[p].attributes[j].type == cgltf_attribute_type_weights)
-                    {
-                        cgltf_accessor *acc = data->meshes[i].primitives[p].attributes[j].data;
-
-                        model.meshes[primitiveIndex].boneWeights = RL_MALLOC(acc->count*4*sizeof(float));
-
-                        if (acc->component_type == cgltf_component_type_r_32f)
-                        {
-                            for (unsigned int a = 0; a < acc->count; a++)
-                            {
-                                GLTFReadValue(acc, a, model.meshes[primitiveIndex].boneWeights + (a*4), 4, sizeof(float));
-                            }
-                        }
-                        else if (acc->component_type == cgltf_component_type_r_32u)
-                        {
-                            unsigned int readValue[4];
-                            for (unsigned int a = 0; a < acc->count; a++)
-                            {
-                                GLTFReadValue(acc, a, readValue, 4, sizeof(unsigned int));
-                                model.meshes[primitiveIndex].boneWeights[(a*4) + 0] = (float)readValue[0];
-                                model.meshes[primitiveIndex].boneWeights[(a*4) + 1] = (float)readValue[1];
-                                model.meshes[primitiveIndex].boneWeights[(a*4) + 2] = (float)readValue[2];
-                                model.meshes[primitiveIndex].boneWeights[(a*4) + 3] = (float)readValue[3];
-                            }
-                        }
-                        else
-                        {
-                            // TODO: Support normalized unsigned byte/unsigned short weights
-                            TRACELOG(LOG_WARNING, "MODEL: [%s] glTF normals must be float or int", fileName);
-                        }
-                    }
-                    else if (data->meshes[i].primitives[p].attributes[j].type == cgltf_attribute_type_color)
-                    {
-                        cgltf_accessor *acc = data->meshes[i].primitives[p].attributes[j].data;
-                        model.meshes[primitiveIndex].colors = RL_MALLOC(acc->count*4*sizeof(unsigned char));
-
-                        if (acc->component_type == cgltf_component_type_r_8u)
-                        {
-                            for (int a = 0; a < acc->count; a++)
-                            {
-                                GLTFReadValue(acc, a, model.meshes[primitiveIndex].colors + (a*4), 4, sizeof(unsigned char));
-                            }
-                        }
-                        if (acc->component_type == cgltf_component_type_r_16u)
-                        {
-                            TRACELOG(LOG_WARNING, "MODEL: [%s] converting glTF colors to unsigned char", fileName);
-                            for (int a = 0; a < acc->count; a++)
-                            {
-                                unsigned short readValue[4];
-                                for (int a = 0; a < acc->count; a++)
-                                {
-                                    GLTFReadValue(acc, a, readValue, 4, sizeof(unsigned short));
-                                    // 257 = 65535/255
-                                    model.meshes[primitiveIndex].colors[(a*4) + 0] = (unsigned char)(readValue[0]/257);
-                                    model.meshes[primitiveIndex].colors[(a*4) + 1] = (unsigned char)(readValue[1]/257);
-                                    model.meshes[primitiveIndex].colors[(a*4) + 2] = (unsigned char)(readValue[2]/257);
-                                    model.meshes[primitiveIndex].colors[(a*4) + 3] = (unsigned char)(readValue[3]/257);
-                                }
-                            }
-                        }
-                        else
-                        {
-                            TRACELOG(LOG_WARNING, "MODEL: [%s] glTF colors must be uchar or ushort", fileName);
-                        }
-                    }
-                }
-
-                cgltf_accessor *acc = data->meshes[i].primitives[p].indices;
-                LoadGLTFModelIndices(&model, acc, primitiveIndex);
-
-                if (data->meshes[i].primitives[p].material)
-                {
-                    // Compute the offset
-                    model.meshMaterial[primitiveIndex] = (int)(data->meshes[i].primitives[p].material - data->materials);
-                }
-                else
-                {
-                    model.meshMaterial[primitiveIndex] = model.materialCount - 1;
-                }
-
-                BindGLTFPrimitiveToBones(&model, data, primitiveIndex);
-
-                primitiveIndex++;
-            }
-
+            Matrix staticTransform = MatrixIdentity();
+            LoadGLTFNode(data, data->scene->nodes[i], &model, staticTransform, &primitiveIndex, fileName);
         }
 
         cgltf_free(data);
@@ -4540,79 +4890,20 @@ static void LoadGLTFMaterial(Model *model, const char *fileName, const cgltf_dat
     model->materials[model->materialCount - 1] = LoadMaterialDefault();
 }
 
-static void LoadGLTFBoneAttribute(Model *model, cgltf_accessor *jointsAccessor, const cgltf_data *data, int primitiveIndex)
-{
-    if (jointsAccessor->component_type == cgltf_component_type_r_16u)
-    {
-        model->meshes[primitiveIndex].boneIds = RL_MALLOC(jointsAccessor->count*4*sizeof(int));
-        short* bones = RL_MALLOC(jointsAccessor->count*4*sizeof(short));
-
-        for (unsigned int a = 0; a < jointsAccessor->count; a++)
-        {
-            GLTFReadValue(jointsAccessor, a, bones + (a*4), 4, sizeof(short));
-        }
-
-        for (unsigned int a = 0; a < jointsAccessor->count*4; a++)
-        {
-            cgltf_node* skinJoint = data->skins->joints[bones[a]];
-
-            for (unsigned int k = 0; k < data->nodes_count; k++)
-            {
-                if (&(data->nodes[k]) == skinJoint)
-                {
-                    model->meshes[primitiveIndex].boneIds[a] = k;
-                    break;
-                }
-            }
-        }
-        RL_FREE(bones);
-    }
-    else if (jointsAccessor->component_type == cgltf_component_type_r_8u)
-    {
-        model->meshes[primitiveIndex].boneIds = RL_MALLOC(jointsAccessor->count*4*sizeof(int));
-        unsigned char *bones = RL_MALLOC(jointsAccessor->count*4*sizeof(unsigned char));
-
-        for (unsigned int a = 0; a < jointsAccessor->count; a++)
-        {
-            GLTFReadValue(jointsAccessor, a, bones + (a*4), 4, sizeof(unsigned char));
-        }
-
-        for (unsigned int a = 0; a < jointsAccessor->count*4; a++)
-        {
-            cgltf_node* skinJoint = data->skins->joints[bones[a]];
-
-            for (unsigned int k = 0; k < data->nodes_count; k++)
-            {
-                if (&(data->nodes[k]) == skinJoint)
-                {
-                    model->meshes[primitiveIndex].boneIds[a] = k;
-                    break;
-                }
-            }
-        }
-        RL_FREE(bones);
-    }
-    else
-    {
-        // TODO: Support other size of bone index?
-        TRACELOG(LOG_WARNING, "MODEL: glTF bones in unexpected format");
-    }
-}
-
 static void BindGLTFPrimitiveToBones(Model* model, const cgltf_data* data, int primitiveIndex)
 {
-    if (model->meshes[primitiveIndex].boneIds == NULL && data->nodes_count > 0)
+    for (unsigned int nodeId = 0; nodeId < data->nodes_count; nodeId++)
     {
-        for (unsigned int nodeId = 0; nodeId < data->nodes_count; nodeId++)
+        if (data->nodes[nodeId].mesh == &(data->meshes[primitiveIndex]))
         {
-            if (data->nodes[nodeId].mesh == &(data->meshes[primitiveIndex]))
+            if (model->meshes[primitiveIndex].boneIds == NULL)
             {
-                model->meshes[primitiveIndex].boneIds = RL_CALLOC(4*model->meshes[primitiveIndex].vertexCount, sizeof(int));
-                model->meshes[primitiveIndex].boneWeights = RL_CALLOC(4*model->meshes[primitiveIndex].vertexCount, sizeof(float));
+                model->meshes[primitiveIndex].boneIds = RL_CALLOC(4 * model->meshes[primitiveIndex].vertexCount, sizeof(int));
+                model->meshes[primitiveIndex].boneWeights = RL_CALLOC(4 * model->meshes[primitiveIndex].vertexCount, sizeof(float));
 
-                for (int b = 0; b < 4*model->meshes[primitiveIndex].vertexCount; b++)
+                for (int b = 0; b < 4 * model->meshes[primitiveIndex].vertexCount; b++)
                 {
-                    if (b%4 == 0)
+                    if (b % 4 == 0)
                     {
                         model->meshes[primitiveIndex].boneIds[b] = nodeId;
                         model->meshes[primitiveIndex].boneWeights[b] = 1.0f;
@@ -4622,99 +4913,9 @@ static void BindGLTFPrimitiveToBones(Model* model, const cgltf_data* data, int p
                         model->meshes[primitiveIndex].boneIds[b] = 0;
                         model->meshes[primitiveIndex].boneWeights[b] = 0.0f;
                     }
-
-                }
-
-                Vector3 boundVertex = { 0 };
-                Vector3 boundNormal = { 0 };
-
-                Vector3 outTranslation = { 0 };
-                Quaternion outRotation = { 0 };
-                Vector3 outScale = { 0 };
-
-                int vCounter = 0;
-                int boneCounter = 0;
-                int boneId = 0;
-
-                for (int i = 0; i < model->meshes[primitiveIndex].vertexCount; i++)
-                {
-                    boneId = model->meshes[primitiveIndex].boneIds[boneCounter];
-                    outTranslation = model->bindPose[boneId].translation;
-                    outRotation = model->bindPose[boneId].rotation;
-                    outScale = model->bindPose[boneId].scale;
-
-                    // Vertices processing
-                    boundVertex = (Vector3){ model->meshes[primitiveIndex].vertices[vCounter], model->meshes[primitiveIndex].vertices[vCounter + 1], model->meshes[primitiveIndex].vertices[vCounter + 2] };
-                    boundVertex = Vector3Multiply(boundVertex, outScale);
-                    boundVertex = Vector3RotateByQuaternion(boundVertex, outRotation);
-                    boundVertex = Vector3Add(boundVertex, outTranslation);
-                    model->meshes[primitiveIndex].vertices[vCounter] = boundVertex.x;
-                    model->meshes[primitiveIndex].vertices[vCounter + 1] = boundVertex.y;
-                    model->meshes[primitiveIndex].vertices[vCounter + 2] = boundVertex.z;
-
-                    // Normals processing
-                    if (model->meshes[primitiveIndex].normals != NULL)
-                    {
-                        boundNormal = (Vector3){ model->meshes[primitiveIndex].normals[vCounter], model->meshes[primitiveIndex].normals[vCounter + 1], model->meshes[primitiveIndex].normals[vCounter + 2] };
-                        boundNormal = Vector3RotateByQuaternion(boundNormal, outRotation);
-                        model->meshes[primitiveIndex].normals[vCounter] = boundNormal.x;
-                        model->meshes[primitiveIndex].normals[vCounter + 1] = boundNormal.y;
-                        model->meshes[primitiveIndex].normals[vCounter + 2] = boundNormal.z;
-                    }
-
-                    vCounter += 3;
-                    boneCounter += 4;
                 }
             }
         }
-    }
-}
-
-static void LoadGLTFModelIndices(Model* model, cgltf_accessor* indexAccessor, int primitiveIndex)
-{
-    if (indexAccessor)
-    {
-        if (indexAccessor->component_type == cgltf_component_type_r_16u || indexAccessor->component_type == cgltf_component_type_r_16)
-        {
-            model->meshes[primitiveIndex].triangleCount = (int)indexAccessor->count/3;
-            model->meshes[primitiveIndex].indices = RL_MALLOC(model->meshes[primitiveIndex].triangleCount*3*sizeof(unsigned short));
-
-            unsigned short readValue = 0;
-            for (unsigned int a = 0; a < indexAccessor->count; a++)
-            {
-                GLTFReadValue(indexAccessor, a, &readValue, 1, sizeof(short));
-                model->meshes[primitiveIndex].indices[a] = readValue;
-            }
-        }
-        else if (indexAccessor->component_type == cgltf_component_type_r_8u || indexAccessor->component_type == cgltf_component_type_r_8)
-        {
-            model->meshes[primitiveIndex].triangleCount = (int)indexAccessor->count/3;
-            model->meshes[primitiveIndex].indices = RL_MALLOC(model->meshes[primitiveIndex].triangleCount*3*sizeof(unsigned short));
-
-            unsigned char readValue = 0;
-            for (unsigned int a = 0; a < indexAccessor->count; a++)
-            {
-                GLTFReadValue(indexAccessor, a, &readValue, 1, sizeof(char));
-                model->meshes[primitiveIndex].indices[a] = (unsigned short)readValue;
-            }
-        }
-        else if (indexAccessor->component_type == cgltf_component_type_r_32u)
-        {
-            model->meshes[primitiveIndex].triangleCount = (int)indexAccessor->count/3;
-            model->meshes[primitiveIndex].indices = RL_MALLOC(model->meshes[primitiveIndex].triangleCount*3*sizeof(unsigned short));
-
-            unsigned int readValue;
-            for (unsigned int a = 0; a < indexAccessor->count; a++)
-            {
-                GLTFReadValue(indexAccessor, a, &readValue, 1, sizeof(unsigned int));
-                model->meshes[primitiveIndex].indices[a] = (unsigned short)readValue;
-            }
-        }
-    }
-    else
-    {
-        // Unindexed mesh
-        model->meshes[primitiveIndex].triangleCount = model->meshes[primitiveIndex].vertexCount/3;
     }
 }
 
@@ -4759,9 +4960,9 @@ static ModelAnimation *LoadGLTFModelAnimations(const char *fileName, int *animCo
         for (unsigned int a = 0; a < data->animations_count; a++)
         {
             // gltf animation consists of the following structures:
-            // - nodes - bones
+            // - nodes - bones are part of the node system (the whole node system is animatable)
             // - channels - single transformation type on a single bone
-            //     - node - bone
+            //     - node - animatable node
             //     - transformation type (path) - translation, rotation, scale
             //     - sampler - animation samples
             //         - input - points in time this transformation happens
@@ -4773,7 +4974,7 @@ static ModelAnimation *LoadGLTFModelAnimations(const char *fileName, int *animCo
             ModelAnimation *output = animations + a;
 
             // 30 frames sampled per second
-            const float timeStep = (1.0f/30.0f);
+            const float timeStep = (1.0f/60.0f);
             float animationDuration = 0.0f;
 
             // Getting the max animation time to consider for animation duration
@@ -4783,7 +4984,7 @@ static ModelAnimation *LoadGLTFModelAnimations(const char *fileName, int *animCo
                 int frameCounts = (int)channel->sampler->input->count;
                 float lastFrameTime = 0.0f;
 
-                if (GLTFReadValue(channel->sampler->input, frameCounts - 1, &lastFrameTime, 1, sizeof(float)))
+                if (GLTFReadValue(channel->sampler->input, frameCounts - 1, &lastFrameTime))
                 {
                     animationDuration = fmaxf(lastFrameTime, animationDuration);
                 }
@@ -4808,12 +5009,18 @@ static ModelAnimation *LoadGLTFModelAnimations(const char *fileName, int *animCo
             {
                 output->framePoses[frame] = RL_MALLOC(output->boneCount*sizeof(Transform));
 
-                for (int i = 0; i < output->boneCount; i++)
+                for (unsigned int i = 0; i < output->boneCount; i++)
                 {
-                    output->framePoses[frame][i].translation = Vector3Zero();
-                    output->framePoses[frame][i].rotation = QuaternionIdentity();
+                    if (data->nodes[i].has_translation) memcpy(&output->framePoses[frame][i].translation, data->nodes[i].translation, 3 * sizeof(float));
+                    else output->framePoses[frame][i].translation = Vector3Zero();
+    
+                    if (data->nodes[i].has_rotation) memcpy(&output->framePoses[frame][i], data->nodes[i].rotation, 4 * sizeof(float));
+                    else output->framePoses[frame][i].rotation = QuaternionIdentity();
+    
                     output->framePoses[frame][i].rotation = QuaternionNormalize(output->framePoses[frame][i].rotation);
-                    output->framePoses[frame][i].scale = Vector3One();
+    
+                    if (data->nodes[i].has_scale) memcpy(&output->framePoses[frame][i].scale, data->nodes[i].scale, 3 * sizeof(float));
+                    else output->framePoses[frame][i].scale = Vector3One();
                 }
             }
 
@@ -4839,7 +5046,7 @@ static ModelAnimation *LoadGLTFModelAnimations(const char *fileName, int *animCo
                     for (unsigned int j = 0; j < sampler->input->count; j++)
                     {
                         float inputFrameTime;
-                        if (GLTFReadValue(sampler->input, j, &inputFrameTime, 1, sizeof(float)))
+                        if (GLTFReadValue(sampler->input, j, &inputFrameTime))
                         {
                             if (frameTime < inputFrameTime)
                             {
@@ -4848,7 +5055,7 @@ static ModelAnimation *LoadGLTFModelAnimations(const char *fileName, int *animCo
                                 outputMax = j;
 
                                 float previousInputTime = 0.0f;
-                                if (GLTFReadValue(sampler->input, outputMin, &previousInputTime, 1, sizeof(float)))
+                                if (GLTFReadValue(sampler->input, outputMin, &previousInputTime))
                                 {
                                     if ((inputFrameTime - previousInputTime) != 0)
                                     {
@@ -4864,38 +5071,72 @@ static ModelAnimation *LoadGLTFModelAnimations(const char *fileName, int *animCo
 
                     // If the current transformation has no information for the current frame time point
                     if (shouldSkipFurtherTransformation) continue;
-
+    
                     if (channel->target_path == cgltf_animation_path_type_translation)
                     {
                         Vector3 translationStart;
                         Vector3 translationEnd;
 
-                        bool success = GLTFReadValue(sampler->output, outputMin, &translationStart, 3, sizeof(float));
-                        success = GLTFReadValue(sampler->output, outputMax, &translationEnd, 3, sizeof(float)) || success;
+                        float values[3];
+    
+                        bool success = GLTFReadValue(sampler->output, outputMin, values);
+    
+                        translationStart.x = values[0];
+                        translationStart.y = values[1];
+                        translationStart.z = values[2];
+                        
+                        success = GLTFReadValue(sampler->output, outputMax, values) || success;
+    
+                        translationEnd.x = values[0];
+                        translationEnd.y = values[1];
+                        translationEnd.z = values[2];
 
                         if (success) output->framePoses[frame][boneId].translation = Vector3Lerp(translationStart, translationEnd, lerpPercent);
                     }
                     if (channel->target_path == cgltf_animation_path_type_rotation)
                     {
-                        Quaternion rotationStart;
-                        Quaternion rotationEnd;
-
-                        bool success = GLTFReadValue(sampler->output, outputMin, &rotationStart, 4, sizeof(float));
-                        success = GLTFReadValue(sampler->output, outputMax, &rotationEnd, 4, sizeof(float)) || success;
+                        Vector4 rotationStart;
+                        Vector4 rotationEnd;
+    
+                        float values[4];
+    
+                        bool success = GLTFReadValue(sampler->output, outputMin, &values);
+    
+                        rotationStart.x = values[0];
+                        rotationStart.y = values[1];
+                        rotationStart.z = values[2];
+                        rotationStart.w = values[3];
+                        
+                        success = GLTFReadValue(sampler->output, outputMax, &values) || success;
+    
+                        rotationEnd.x = values[0];
+                        rotationEnd.y = values[1];
+                        rotationEnd.z = values[2];
+                        rotationEnd.w = values[3];
 
                         if (success)
                         {
-                            output->framePoses[frame][boneId].rotation = QuaternionLerp(rotationStart, rotationEnd, lerpPercent);
-                            output->framePoses[frame][boneId].rotation = QuaternionNormalize(output->framePoses[frame][boneId].rotation);
+                            output->framePoses[frame][boneId].rotation = QuaternionNlerp(rotationStart, rotationEnd, lerpPercent);
                         }
                     }
                     if (channel->target_path == cgltf_animation_path_type_scale)
                     {
                         Vector3 scaleStart;
                         Vector3 scaleEnd;
-
-                        bool success = GLTFReadValue(sampler->output, outputMin, &scaleStart, 3, sizeof(float));
-                        success = GLTFReadValue(sampler->output, outputMax, &scaleEnd, 3, sizeof(float)) || success;
+    
+                        float values[3];
+    
+                        bool success = GLTFReadValue(sampler->output, outputMin, &values);
+    
+                        scaleStart.x = values[0];
+                        scaleStart.y = values[1];
+                        scaleStart.z = values[2];
+                        
+                        success = GLTFReadValue(sampler->output, outputMax, &values) || success;
+    
+                        scaleEnd.x = values[0];
+                        scaleEnd.y = values[1];
+                        scaleEnd.z = values[2];
 
                         if (success) output->framePoses[frame][boneId].scale = Vector3Lerp(scaleStart, scaleEnd, lerpPercent);
                     }
@@ -4944,6 +5185,169 @@ static ModelAnimation *LoadGLTFModelAnimations(const char *fileName, int *animCo
     RL_FREE(fileData);
 
     return animations;
+}
+
+void LoadGLTFMesh(cgltf_data* data, cgltf_mesh* mesh, Model* outModel, Matrix currentTransform, int* primitiveIndex, const char* fileName)
+{
+    for (unsigned int p = 0; p < mesh->primitives_count; p++)
+    {
+        for (unsigned int j = 0; j < mesh->primitives[p].attributes_count; j++)
+        {
+            if (mesh->primitives[p].attributes[j].type == cgltf_attribute_type_position)
+            {
+                cgltf_accessor *acc = mesh->primitives[p].attributes[j].data;
+                outModel->meshes[(*primitiveIndex)].vertexCount = (int)acc->count;
+                int bufferSize = outModel->meshes[(*primitiveIndex)].vertexCount*3*sizeof(float);
+                outModel->meshes[(*primitiveIndex)].animVertices = RL_MALLOC(bufferSize);
+    
+                outModel->meshes[(*primitiveIndex)].vertices = GLTFReadValuesAs(acc, cgltf_component_type_r_32f, false);
+                
+                // Transform using the nodes matrix attributes
+                for (unsigned int v = 0; v < outModel->meshes[(*primitiveIndex)].vertexCount; v++)
+                {
+                    Vector3 vertex = {
+                            outModel->meshes[(*primitiveIndex)].vertices[(v * 3 + 0)],
+                            outModel->meshes[(*primitiveIndex)].vertices[(v * 3 + 1)],
+                            outModel->meshes[(*primitiveIndex)].vertices[(v * 3 + 2)],
+                    };
+                    
+                    vertex = Vector3Transform(vertex, currentTransform);
+                    
+                    outModel->meshes[(*primitiveIndex)].vertices[(v * 3 + 0)] = vertex.x;
+                    outModel->meshes[(*primitiveIndex)].vertices[(v * 3 + 1)] = vertex.y;
+                    outModel->meshes[(*primitiveIndex)].vertices[(v * 3 + 2)] = vertex.z;
+                }
+                
+                memcpy(outModel->meshes[(*primitiveIndex)].animVertices, outModel->meshes[(*primitiveIndex)].vertices, bufferSize);
+            }
+            else if (mesh->primitives[p].attributes[j].type == cgltf_attribute_type_normal)
+            {
+                cgltf_accessor *acc = mesh->primitives[p].attributes[j].data;
+                
+                int bufferSize = (int)(acc->count*3*sizeof(float));
+                outModel->meshes[(*primitiveIndex)].animNormals = RL_MALLOC(bufferSize);
+    
+                outModel->meshes[(*primitiveIndex)].normals = GLTFReadValuesAs(acc, cgltf_component_type_r_32f, false);
+    
+                // Transform using the nodes matrix attributes
+                for (unsigned int v = 0; v < outModel->meshes[(*primitiveIndex)].vertexCount; v++)
+                {
+                    Vector3 normal = {
+                            outModel->meshes[(*primitiveIndex)].normals[(v * 3 + 0)],
+                            outModel->meshes[(*primitiveIndex)].normals[(v * 3 + 1)],
+                            outModel->meshes[(*primitiveIndex)].normals[(v * 3 + 2)],
+                    };
+                    
+                    normal = Vector3Transform(normal, currentTransform);
+                    
+                    outModel->meshes[(*primitiveIndex)].normals[(v * 3 + 0)] = normal.x;
+                    outModel->meshes[(*primitiveIndex)].normals[(v * 3 + 1)] = normal.y;
+                    outModel->meshes[(*primitiveIndex)].normals[(v * 3 + 2)] = normal.z;
+                }
+                
+                memcpy(outModel->meshes[(*primitiveIndex)].animNormals, outModel->meshes[(*primitiveIndex)].normals, bufferSize);
+            }
+            else if (mesh->primitives[p].attributes[j].type == cgltf_attribute_type_texcoord)
+            {
+                cgltf_accessor *acc = mesh->primitives[p].attributes[j].data;
+                outModel->meshes[(*primitiveIndex)].texcoords = GLTFReadValuesAs(acc, cgltf_component_type_r_32f, false);
+            }
+            else if (mesh->primitives[p].attributes[j].type == cgltf_attribute_type_joints)
+            {
+                cgltf_accessor *acc = mesh->primitives[p].attributes[j].data;
+                unsigned int boneCount = acc->count;
+                unsigned int totalBoneWeights = boneCount * 4;
+    
+                outModel->meshes[(*primitiveIndex)].boneIds = RL_MALLOC(totalBoneWeights * sizeof(int));
+                short* bones = GLTFReadValuesAs(acc, cgltf_component_type_r_16, false);
+                for (unsigned int a = 0; a < totalBoneWeights; a++)
+                {
+                    outModel->meshes[(*primitiveIndex)].boneIds[a] = 0;
+                    if(bones[a] < 0) continue;
+        
+                    cgltf_node* skinJoint = data->skins->joints[bones[a]];
+                    for (unsigned int k = 0; k < data->nodes_count; k++)
+                    {
+                        if (data->nodes + k == skinJoint)
+                        {
+                            outModel->meshes[(*primitiveIndex)].boneIds[a] = k;
+                            break;
+                        }
+                    }
+                }
+                RL_FREE(bones);
+            }
+            else if (mesh->primitives[p].attributes[j].type == cgltf_attribute_type_weights)
+            {
+                cgltf_accessor *acc = mesh->primitives[p].attributes[j].data;
+                outModel->meshes[(*primitiveIndex)].boneWeights = GLTFReadValuesAs(acc, cgltf_component_type_r_32f, false);
+            }
+            else if (mesh->primitives[p].attributes[j].type == cgltf_attribute_type_color)
+            {
+                cgltf_accessor *acc = mesh->primitives[p].attributes[j].data;
+                outModel->meshes[(*primitiveIndex)].colors = GLTFReadValuesAs(acc, cgltf_component_type_r_8u, true);
+            }
+        }
+        
+        cgltf_accessor *acc = mesh->primitives[p].indices;
+        if (acc)
+        {
+            outModel->meshes[(*primitiveIndex)].triangleCount = acc->count/3;
+            outModel->meshes[(*primitiveIndex)].indices = GLTFReadValuesAs(acc, cgltf_component_type_r_16u, false);
+        }
+        else
+        {
+            // Unindexed mesh
+            outModel->meshes[(*primitiveIndex)].triangleCount = outModel->meshes[(*primitiveIndex)].vertexCount/3;
+        }
+        
+        if (mesh->primitives[p].material)
+        {
+            // Compute the offset
+            outModel->meshMaterial[(*primitiveIndex)] = (int)(mesh->primitives[p].material - data->materials);
+        }
+        else
+        {
+            outModel->meshMaterial[(*primitiveIndex)] = outModel->materialCount - 1;
+        }
+        
+        BindGLTFPrimitiveToBones(outModel, data, *primitiveIndex);
+        
+        (*primitiveIndex) = (*primitiveIndex) + 1;
+    }
+}
+
+void LoadGLTFNode(cgltf_data* data, cgltf_node* node, Model* outModel, Matrix currentTransform, int* primitiveIndex, const char* fileName)
+{
+    Matrix nodeTransform = { node->matrix[0], node->matrix[4], node->matrix[8], node->matrix[12],
+                             node->matrix[1], node->matrix[5], node->matrix[9], node->matrix[13],
+                             node->matrix[2], node->matrix[6], node->matrix[10], node->matrix[14],
+                             node->matrix[3], node->matrix[7], node->matrix[11], node->matrix[15] };
+    
+    currentTransform = MatrixMultiply(nodeTransform, currentTransform);
+    
+    if(node->mesh != NULL)
+    {
+        LoadGLTFMesh(data, node->mesh, outModel, currentTransform, primitiveIndex, fileName);
+    }
+    
+    for(unsigned int i = 0; i < node->children_count; i++)
+    {
+        LoadGLTFNode(data, node->children[i], outModel, currentTransform, primitiveIndex, fileName);
+    }
+}
+
+static void GetGLTFPrimitiveCount(cgltf_node* node, int* outCount)
+{
+    if(node->mesh != NULL)
+    {
+        *outCount += node->mesh->primitives_count;
+    }
+    
+    for(unsigned int i = 0; i < node->children_count; i++)
+    {
+        GetGLTFPrimitiveCount(node->children[i], outCount);
+    }
 }
 
 #endif

@@ -21,7 +21,7 @@
 
 #include <stdlib.h>
 
-#define MAX_MODELS  7
+#define MAX_MODELS  8
 
 int main(void)
 {
@@ -49,6 +49,7 @@ int main(void)
     model[4] = LoadModel("resources/gltf/AnimatedTriangle.gltf");
     model[5] = LoadModel("resources/gltf/AnimatedMorphCube.glb");
     model[6] = LoadModel("resources/gltf/vertex_colored_object.glb");
+    model[7] = LoadModel("resources/gltf/girl.glb");
 
     int currentModel = 0;
 
