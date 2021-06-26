@@ -5,7 +5,7 @@
 *   Loaded sprite fonts have been generated following XNA SpriteFont conventions:
 *     - Characters must be ordered starting with character 32 (Space)
 *     - Every character must be contained within the same Rectangle height
-*     - Every character and every line must be separated the same distance
+*     - Every character and every line must be separated by the same distance (margin/padding)
 *     - Rectangles must be defined by a MAGENTA color background
 *
 *   If following this constraints, a font can be provided just by an image,

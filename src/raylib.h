@@ -158,12 +158,8 @@
 #define MAGENTA    CLITERAL(Color){ 255, 0, 255, 255 }     // Magenta
 #define RAYWHITE   CLITERAL(Color){ 245, 245, 245, 255 }   // My own White (raylib logo)
 
-// Temporal hacks to avoid breaking old codebases using
-// deprecated raylib implementation or definitions
-#define SpriteFont              Font
-#define FormatText              TextFormat
-#define LoadText                LoadFileText
-#define GetExtension            GetFileExtension
+// WARNING: Temporal hacks to avoid breaking old codebases using
+// deprecated raylib implementations or definitions
 #define GetImageData            LoadImageColors
 #define FILTER_POINT            TEXTURE_FILTER_POINT
 #define FILTER_BILINEAR         TEXTURE_FILTER_BILINEAR

@@ -444,7 +444,7 @@ Font LoadFontFromImage(Image image, Color key, int firstChar)
         .mipmaps = 1
     };
 
-    // Create spritefont with all data parsed from image
+    // Create font with all data parsed from image
     Font font = { 0 };
 
     font.texture = LoadTextureFromImage(fontClear); // Convert processed image to OpenGL texture
@@ -1122,7 +1122,7 @@ Vector2 MeasureTextEx(Font font, const char *text, float fontSize, float spacing
     return vec;
 }
 
-// Get index position for a unicode character on spritefont
+// Get index position for a unicode character on font
 int GetGlyphIndex(Font font, int codepoint)
 {
 #ifndef GLYPH_NOTFOUND_CHAR_FALLBACK
