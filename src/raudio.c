@@ -256,10 +256,10 @@ typedef struct tagBITMAPINFOHEADER {
 #ifndef AUDIO_DEVICE_CHANNELS
     #define AUDIO_DEVICE_CHANNELS              2    // Device output channels: stereo
 #endif
-
 #ifndef AUDIO_DEVICE_SAMPLE_RATE
-    #define AUDIO_DEVICE_SAMPLE_RATE              0    // Device output channels: stereo
+    #define AUDIO_DEVICE_SAMPLE_RATE           0    // Device output sample rate
 #endif
+
 #ifndef MAX_AUDIO_BUFFER_POOL_CHANNELS
     #define MAX_AUDIO_BUFFER_POOL_CHANNELS    16    // Audio pool channels
 #endif
@@ -322,7 +322,7 @@ struct rAudioBuffer {
     bool isSubBufferProcessed[2];   // SubBuffer processed (virtual double buffer)
     unsigned int sizeInFrames;      // Total buffer size in frames
     unsigned int frameCursorPos;    // Frame cursor position
-    unsigned int totalFramesProcessed;  // Total frames processed in this buffer (required for play timing)
+    unsigned int framesProcessed;   // Total frames processed in this buffer (required for play timing)
 
     unsigned char *data;            // Data buffer, on music stream keeps filling
 
@@ -372,17 +372,7 @@ static void OnSendAudioDataToDevice(ma_device *pDevice, void *pFramesOut, const 
 static void MixAudioFrames(float *framesOut, const float *framesIn, ma_uint32 frameCount, float localVolume);
 
 #if defined(SUPPORT_FILEFORMAT_WAV)
-static Wave LoadWAV(const unsigned char *fileData, unsigned int fileSize);   // Load WAV file
 static int SaveWAV(Wave wave, const char *fileName);    // Save wave data as WAV file
-#endif
-#if defined(SUPPORT_FILEFORMAT_OGG)
-static Wave LoadOGG(const unsigned char *fileData, unsigned int fileSize);   // Load OGG file
-#endif
-#if defined(SUPPORT_FILEFORMAT_FLAC)
-static Wave LoadFLAC(const unsigned char *fileData, unsigned int fileSize);  // Load FLAC file
-#endif
-#if defined(SUPPORT_FILEFORMAT_MP3)
-static Wave LoadMP3(const unsigned char *fileData, unsigned int fileSize);   // Load MP3 file
 #endif
 
 #if defined(RAUDIO_STANDALONE)
@@ -630,7 +620,7 @@ void StopAudioBuffer(AudioBuffer *buffer)
             buffer->playing = false;
             buffer->paused = false;
             buffer->frameCursorPos = 0;
-            buffer->totalFramesProcessed = 0;
+            buffer->framesProcessed = 0;
             buffer->isSubBufferProcessed[0] = true;
             buffer->isSubBufferProcessed[1] = true;
         }
@@ -718,13 +708,10 @@ Wave LoadWave(const char *fileName)
     unsigned int fileSize = 0;
     unsigned char *fileData = LoadFileData(fileName, &fileSize);
 
-    if (fileData != NULL)
-    {
-        // Loading wave from memory data
-        wave = LoadWaveFromMemory(GetFileExtension(fileName), fileData, fileSize);
+    // Loading wave from memory data
+    if (fileData != NULL) wave = LoadWaveFromMemory(GetFileExtension(fileName), fileData, fileSize);
 
-        RL_FREE(fileData);
-    }
+    RL_FREE(fileData);
 
     return wave;
 }
@@ -739,18 +726,85 @@ Wave LoadWaveFromMemory(const char *fileType, const unsigned char *fileData, int
 
     if (false) { }
 #if defined(SUPPORT_FILEFORMAT_WAV)
-    else if (TextIsEqual(fileExtLower, ".wav")) wave = LoadWAV(fileData, dataSize);
+    else if (TextIsEqual(fileExtLower, ".wav"))
+    {
+        drwav wav = { 0 };
+        bool success = drwav_init_memory(&wav, fileData, dataSize, NULL);
+
+        if (success)
+        {
+            wave.sampleCount = (unsigned int)wav.totalPCMFrameCount*wav.channels;
+            wave.sampleRate = wav.sampleRate;
+            wave.sampleSize = 16;
+            wave.channels = wav.channels;
+            wave.data = (short *)RL_MALLOC(wave.sampleCount*sizeof(short));
+            
+            // NOTE: We are forcing conversion to 16bit sample size on reading
+            drwav_read_pcm_frames_s16(&wav, wav.totalPCMFrameCount, wave.data);
+        }
+        else TRACELOG(LOG_WARNING, "WAVE: Failed to load WAV data");
+
+        drwav_uninit(&wav);
+    }
 #endif
 #if defined(SUPPORT_FILEFORMAT_OGG)
-    else if (TextIsEqual(fileExtLower, ".ogg")) wave = LoadOGG(fileData, dataSize);
+    else if (TextIsEqual(fileExtLower, ".ogg"))
+    {
+        stb_vorbis *oggData = stb_vorbis_open_memory((unsigned char *)fileData, dataSize, NULL, NULL);
+
+        if (oggData != NULL)
+        {
+            stb_vorbis_info info = stb_vorbis_get_info(oggData);
+
+            wave.sampleRate = info.sample_rate;
+            wave.sampleSize = 16;       // By default, ogg data is 16 bit per sample (short)
+            wave.channels = info.channels;
+            wave.sampleCount = (unsigned int)stb_vorbis_stream_length_in_samples(oggData)*info.channels;  // Independent by channel
+            wave.data = (short *)RL_MALLOC(wave.sampleCount*sizeof(short));
+            
+            // NOTE: Get the number of samples to process (be careful! we ask for number of shorts!)
+            stb_vorbis_get_samples_short_interleaved(oggData, info.channels, (short *)wave.data, wave.sampleCount);
+            stb_vorbis_close(oggData);
+        }
+        else TRACELOG(LOG_WARNING, "WAVE: Failed to load OGG data");
+    }
 #endif
 #if defined(SUPPORT_FILEFORMAT_FLAC)
-    else if (TextIsEqual(fileExtLower, ".flac")) wave = LoadFLAC(fileData, dataSize);
+    else if (TextIsEqual(fileExtLower, ".flac")) 
+    {
+        unsigned long long int totalFrameCount = 0;
+        
+        // NOTE: We are forcing conversion to 16bit sample size on reading
+        wave.data = drflac_open_memory_and_read_pcm_frames_s16(fileData, dataSize, &wave.channels, &wave.sampleRate, &totalFrameCount, NULL);
+        wave.sampleSize = 16;
+
+        if (wave.data != NULL) wave.sampleCount = (unsigned int)totalFrameCount*wave.channels;
+        else TRACELOG(LOG_WARNING, "WAVE: Failed to load FLAC data");
+    }
 #endif
 #if defined(SUPPORT_FILEFORMAT_MP3)
-    else if (TextIsEqual(fileExtLower, ".mp3")) wave = LoadMP3(fileData, dataSize);
+    else if (TextIsEqual(fileExtLower, ".mp3"))
+    {
+        drmp3_config config = { 0 };
+        unsigned long long int totalFrameCount = 0;
+        
+        // NOTE: We are forcing conversion to 32bit float sample size on reading
+        wave.data = drmp3_open_memory_and_read_pcm_frames_f32(fileData, dataSize, &config, &totalFrameCount, NULL);
+        wave.sampleSize = 32;
+
+        if (wave.data != NULL)
+        {
+            wave.channels = config.channels;
+            wave.sampleRate = config.sampleRate;
+            wave.sampleCount = (int)totalFrameCount*wave.channels;
+        }
+        else TRACELOG(LOG_WARNING, "WAVE: Failed to load MP3 data");
+        
+    }
 #endif
-    else TRACELOG(LOG_WARNING, "WAVE: File format not supported");
+    else TRACELOG(LOG_WARNING, "WAVE: Data format not supported");
+    
+    TRACELOG(LOG_INFO, "WAVE: Data loaded successfully (%i Hz, %i bit, %i channels)", wave.sampleRate, wave.sampleSize, wave.channels);
 
     return wave;
 }
@@ -846,7 +900,26 @@ bool ExportWave(Wave wave, const char *fileName)
 
     if (false) { }
 #if defined(SUPPORT_FILEFORMAT_WAV)
-    else if (IsFileExtension(fileName, ".wav")) success = SaveWAV(wave, fileName);
+    else if (IsFileExtension(fileName, ".wav")) 
+    {
+        drwav wav = { 0 };
+        drwav_data_format format = { 0 };
+        format.container = drwav_container_riff;
+        format.format = DR_WAVE_FORMAT_PCM;
+        format.channels = wave.channels;
+        format.sampleRate = wave.sampleRate;
+        format.bitsPerSample = wave.sampleSize;
+
+        void *fileData = NULL;
+        size_t fileDataSize = 0;
+        success = drwav_init_memory_write(&wav, &fileData, &fileDataSize, &format, NULL);
+        if (success) success = (int)drwav_write_pcm_frames(&wav, wave.sampleCount/wave.channels, wave.data);
+        drwav_result result = drwav_uninit(&wav);
+
+        if (result == DRWAV_SUCCESS) success = SaveFileData(fileName, (unsigned char *)fileData, (unsigned int)fileDataSize);
+
+        drwav_free(fileData, NULL);
+    }
 #endif
     else if (IsFileExtension(fileName, ".raw"))
     {
@@ -1236,10 +1309,8 @@ Music LoadMusicStream(const char *fileName)
             jar_xm_set_max_loop_count(ctxXm, 0);    // Set infinite number of loops
 
             unsigned int bits = 32;
-            if (AUDIO_DEVICE_FORMAT == ma_format_s16)
-                bits = 16;
-            else if (AUDIO_DEVICE_FORMAT == ma_format_u8)
-                bits = 8;
+            if (AUDIO_DEVICE_FORMAT == ma_format_s16) bits = 16;
+            else if (AUDIO_DEVICE_FORMAT == ma_format_u8) bits = 8;
 
             // NOTE: Only stereo is supported for XM
             music.stream = LoadAudioStream(AUDIO.System.device.sampleRate, bits, AUDIO_DEVICE_CHANNELS);
@@ -1607,9 +1678,9 @@ void UpdateMusicStream(Music music)
 
     int samplesCount = 0;    // Total size of data streamed in L+R samples for xm floats, individual L or R for ogg shorts
 
-    // TODO: Get the sampleLeft using totalFramesProcessed... but first, get total frames processed correctly...
+    // TODO: Get the sampleLeft using framesProcessed... but first, get total frames processed correctly...
     //ma_uint32 frameSizeInBytes = ma_get_bytes_per_sample(music.stream.buffer->dsp.formatConverterIn.config.formatIn)*music.stream.buffer->dsp.formatConverterIn.config.channels;
-    int sampleLeft = music.sampleCount - (music.stream.buffer->totalFramesProcessed*music.stream.channels);
+    int sampleLeft = music.sampleCount - (music.stream.buffer->framesProcessed*music.stream.channels);
 
     if (music.ctxType == MUSIC_MODULE_XM && music.looping) sampleLeft = subBufferSizeInFrames*4;
 
@@ -1656,23 +1727,10 @@ void UpdateMusicStream(Music music)
         #if defined(SUPPORT_FILEFORMAT_XM)
             case MUSIC_MODULE_XM:
             {
-                switch (AUDIO_DEVICE_FORMAT)
-                {
-                case ma_format_f32:
-                    // NOTE: Internally this function considers 2 channels generation, so samplesCount/2
-                    jar_xm_generate_samples((jar_xm_context_t*)music.ctxData, (float *)pcm, samplesCount/2);
-                    break;
-
-                case ma_format_s16:
-                    // NOTE: Internally this function considers 2 channels generation, so samplesCount/2
-                    jar_xm_generate_samples_16bit((jar_xm_context_t*)music.ctxData, (short *)pcm, samplesCount/2);
-                    break;
-
-                case ma_format_u8:
-                    // NOTE: Internally this function considers 2 channels generation, so samplesCount/2
-                    jar_xm_generate_samples_8bit((jar_xm_context_t*)music.ctxData, (char *)pcm, samplesCount/2);
-                    break;
-                }
+                // NOTE: Internally we consider 2 channels generation, so samplesCount/2
+                if (AUDIO_DEVICE_FORMAT == ma_format_f32) jar_xm_generate_samples((jar_xm_context_t*)music.ctxData, (float *)pcm, samplesCount/2);
+                else if (AUDIO_DEVICE_FORMAT == ma_format_s16) jar_xm_generate_samples_16bit((jar_xm_context_t*)music.ctxData, (short *)pcm, samplesCount/2);
+                else if (AUDIO_DEVICE_FORMAT == ma_format_u8) jar_xm_generate_samples_8bit((jar_xm_context_t*)music.ctxData, (char *)pcm, samplesCount/2);
 
             } break;
         #endif
@@ -1764,7 +1822,7 @@ float GetMusicTimePlayed(Music music)
     if (music.stream.buffer != NULL)
     {
         //ma_uint32 frameSizeInBytes = ma_get_bytes_per_sample(music.stream.buffer->dsp.formatConverterIn.config.formatIn)*music.stream.buffer->dsp.formatConverterIn.config.channels;
-        unsigned int samplesPlayed = music.stream.buffer->totalFramesProcessed*music.stream.channels;
+        unsigned int samplesPlayed = music.stream.buffer->framesProcessed*music.stream.channels;
         secondsPlayed = (float)samplesPlayed/(music.stream.sampleRate*music.stream.channels);
     }
 
@@ -1839,7 +1897,7 @@ void UpdateAudioStream(AudioStream stream, const void *data, int samplesCount)
             unsigned char *subBuffer = stream.buffer->data + ((subBufferSizeInFrames*stream.channels*(stream.sampleSize/8))*subBufferToUpdate);
 
             // TODO: Get total frames processed on this buffer... DOES NOT WORK.
-            stream.buffer->totalFramesProcessed += subBufferSizeInFrames;
+            stream.buffer->framesProcessed += subBufferSizeInFrames;
 
             // Does this API expect a whole buffer to be updated in one go?
             // Assuming so, but if not will need to change this logic.
@@ -2165,150 +2223,6 @@ static void MixAudioFrames(float *framesOut, const float *framesIn, ma_uint32 fr
         }
     }
 }
-
-#if defined(SUPPORT_FILEFORMAT_WAV)
-// Load WAV file data into Wave structure
-// NOTE: Using dr_wav library
-static Wave LoadWAV(const unsigned char *fileData, unsigned int fileSize)
-{
-    Wave wave = { 0 };
-    drwav wav = { 0 };
-
-    bool success = drwav_init_memory(&wav, fileData, fileSize, NULL);
-
-    if (success)
-    {
-        wave.sampleCount = (unsigned int)wav.totalPCMFrameCount*wav.channels;
-        wave.sampleRate = wav.sampleRate;
-        wave.sampleSize = 16;   // NOTE: We are forcing conversion to 16bit
-        wave.channels = wav.channels;
-        wave.data = (short *)RL_MALLOC(wave.sampleCount*sizeof(short));
-        drwav_read_pcm_frames_s16(&wav, wav.totalPCMFrameCount, wave.data);
-    }
-    else TRACELOG(LOG_WARNING, "WAVE: Failed to load WAV data");
-
-    drwav_uninit(&wav);
-
-    return wave;
-}
-
-// Save wave data as WAV file
-// NOTE: Using dr_wav library
-static int SaveWAV(Wave wave, const char *fileName)
-{
-    int success = false;
-
-    drwav wav = { 0 };
-    drwav_data_format format = { 0 };
-    format.container = drwav_container_riff;
-    format.format = DR_WAVE_FORMAT_PCM;
-    format.channels = wave.channels;
-    format.sampleRate = wave.sampleRate;
-    format.bitsPerSample = wave.sampleSize;
-
-    void *fileData = NULL;
-    size_t fileDataSize = 0;
-    success = drwav_init_memory_write(&wav, &fileData, &fileDataSize, &format, NULL);
-    if (success) success = (int)drwav_write_pcm_frames(&wav, wave.sampleCount/wave.channels, wave.data);
-    drwav_result result = drwav_uninit(&wav);
-
-    if (result == DRWAV_SUCCESS) success = SaveFileData(fileName, (unsigned char *)fileData, (unsigned int)fileDataSize);
-
-    drwav_free(fileData, NULL);
-
-    return success;
-}
-#endif
-
-#if defined(SUPPORT_FILEFORMAT_OGG)
-// Load OGG file data into Wave structure
-// NOTE: Using stb_vorbis library
-static Wave LoadOGG(const unsigned char *fileData, unsigned int fileSize)
-{
-    Wave wave = { 0 };
-
-    stb_vorbis *oggData = stb_vorbis_open_memory((unsigned char *)fileData, fileSize, NULL, NULL);
-
-    if (oggData != NULL)
-    {
-        stb_vorbis_info info = stb_vorbis_get_info(oggData);
-
-        wave.sampleRate = info.sample_rate;
-        wave.sampleSize = 16;                   // 16 bit per sample (short)
-        wave.channels = info.channels;
-        wave.sampleCount = (unsigned int)stb_vorbis_stream_length_in_samples(oggData)*info.channels;  // Independent by channel
-
-        float totalSeconds = stb_vorbis_stream_length_in_seconds(oggData);
-        if (totalSeconds > 10) TRACELOG(LOG_WARNING, "WAVE: OGG audio length larger than 10 seconds (%f sec.), that's a big file in memory, consider music streaming", totalSeconds);
-
-        wave.data = (short *)RL_MALLOC(wave.sampleCount*sizeof(short));
-
-        // NOTE: Returns the number of samples to process (be careful! we ask for number of shorts!)
-        stb_vorbis_get_samples_short_interleaved(oggData, info.channels, (short *)wave.data, wave.sampleCount);
-        TRACELOG(LOG_INFO, "WAVE: OGG data loaded successfully (%i Hz, %i bit, %s)", wave.sampleRate, wave.sampleSize, (wave.channels == 1)? "Mono" : "Stereo");
-
-        stb_vorbis_close(oggData);
-    }
-    else TRACELOG(LOG_WARNING, "WAVE: Failed to load OGG data");
-
-    return wave;
-}
-#endif
-
-#if defined(SUPPORT_FILEFORMAT_FLAC)
-// Load FLAC file data into Wave structure
-// NOTE: Using dr_flac library
-static Wave LoadFLAC(const unsigned char *fileData, unsigned int fileSize)
-{
-    Wave wave = { 0 };
-
-    // Decode the entire FLAC file in one go
-    unsigned long long int totalFrameCount = 0;
-    wave.data = drflac_open_memory_and_read_pcm_frames_s16(fileData, fileSize, &wave.channels, &wave.sampleRate, &totalFrameCount, NULL);
-
-    if (wave.data != NULL)
-    {
-        wave.sampleCount = (unsigned int)totalFrameCount*wave.channels;
-        wave.sampleSize = 16;
-
-        TRACELOG(LOG_INFO, "WAVE: FLAC data loaded successfully (%i Hz, %i bit, %s)", wave.sampleRate, wave.sampleSize, (wave.channels == 1)? "Mono" : "Stereo");
-    }
-    else TRACELOG(LOG_WARNING, "WAVE: Failed to load FLAC data");
-
-    return wave;
-}
-#endif
-
-#if defined(SUPPORT_FILEFORMAT_MP3)
-// Load MP3 file data into Wave structure
-// NOTE: Using dr_mp3 library
-static Wave LoadMP3(const unsigned char *fileData, unsigned int fileSize)
-{
-    Wave wave = { 0 };
-    drmp3_config config = { 0 };
-
-    // Decode the entire MP3 file in one go
-    unsigned long long int totalFrameCount = 0;
-    wave.data = drmp3_open_memory_and_read_pcm_frames_f32(fileData, fileSize, &config, &totalFrameCount, NULL);
-
-    if (wave.data != NULL)
-    {
-        wave.channels = config.channels;
-        wave.sampleRate = config.sampleRate;
-        wave.sampleCount = (int)totalFrameCount*wave.channels;
-        wave.sampleSize = 32;
-
-        // NOTE: Only support up to 2 channels (mono, stereo)
-        // TODO: Really?
-        if (wave.channels > 2) TRACELOG(LOG_WARNING, "WAVE: MP3 channels number (%i) not supported", wave.channels);
-
-        TRACELOG(LOG_INFO, "WAVE: MP3 file loaded successfully (%i Hz, %i bit, %s)", wave.sampleRate, wave.sampleSize, (wave.channels == 1)? "Mono" : "Stereo");
-    }
-    else TRACELOG(LOG_WARNING, "WAVE: Failed to load MP3 data");
-
-    return wave;
-}
-#endif
 
 // Some required functions for audio standalone module version
 #if defined(RAUDIO_STANDALONE)
