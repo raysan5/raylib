@@ -1650,6 +1650,7 @@ int GetCodepoint(const char *text, int *bytesProcessed)
     else if ((octet & 0xe0) == 0xc0)
     {
         // Two octets
+        
         // [0]xC2-DF    [1]UTF8-tail(x80-BF)
         unsigned char octet1 = text[1];
 
@@ -1673,12 +1674,10 @@ int GetCodepoint(const char *text, int *bytesProcessed)
 
         if ((octet2 == '\0') || ((octet2 >> 6) != 2)) { *bytesProcessed = 3; return code; } // Unexpected sequence
 
-        /*
-            [0]xE0    [1]xA0-BF       [2]UTF8-tail(x80-BF)
-            [0]xE1-EC [1]UTF8-tail    [2]UTF8-tail(x80-BF)
-            [0]xED    [1]x80-9F       [2]UTF8-tail(x80-BF)
-            [0]xEE-EF [1]UTF8-tail    [2]UTF8-tail(x80-BF)
-        */
+        // [0]xE0    [1]xA0-BF       [2]UTF8-tail(x80-BF)
+        // [0]xE1-EC [1]UTF8-tail    [2]UTF8-tail(x80-BF)
+        // [0]xED    [1]x80-9F       [2]UTF8-tail(x80-BF)
+        // [0]xEE-EF [1]UTF8-tail    [2]UTF8-tail(x80-BF)
 
         if (((octet == 0xe0) && !((octet1 >= 0xa0) && (octet1 <= 0xbf))) ||
             ((octet == 0xed) && !((octet1 >= 0x80) && (octet1 <= 0x9f)))) { *bytesProcessed = 2; return code; }
@@ -1708,11 +1707,9 @@ int GetCodepoint(const char *text, int *bytesProcessed)
 
         if ((octet3 == '\0') || ((octet3 >> 6) != 2)) { *bytesProcessed = 4; return code; }  // Unexpected sequence
 
-        /*
-            [0]xF0       [1]x90-BF       [2]UTF8-tail  [3]UTF8-tail
-            [0]xF1-F3    [1]UTF8-tail    [2]UTF8-tail  [3]UTF8-tail
-            [0]xF4       [1]x80-8F       [2]UTF8-tail  [3]UTF8-tail
-        */
+        // [0]xF0       [1]x90-BF       [2]UTF8-tail  [3]UTF8-tail
+        // [0]xF1-F3    [1]UTF8-tail    [2]UTF8-tail  [3]UTF8-tail
+        // [0]xF4       [1]x80-8F       [2]UTF8-tail  [3]UTF8-tail
 
         if (((octet == 0xf0) && !((octet1 >= 0x90) && (octet1 <= 0xbf))) ||
             ((octet == 0xf4) && !((octet1 >= 0x80) && (octet1 <= 0x8f)))) { *bytesProcessed = 2; return code; } // Unexpected sequence

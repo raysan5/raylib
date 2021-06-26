@@ -3219,7 +3219,6 @@ RayCollision GetRayCollisionQuad(Ray ray, Vector3 p1, Vector3 p2, Vector3 p3, Ve
 //----------------------------------------------------------------------------------
 // Module specific Functions Definition
 //----------------------------------------------------------------------------------
-
 #if defined(SUPPORT_FILEFORMAT_OBJ)
 // Load OBJ mesh data
 static Model LoadOBJ(const char *fileName)
