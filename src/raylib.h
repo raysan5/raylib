@@ -308,104 +308,104 @@ typedef struct Camera2D {
 
 // Mesh, vertex data and vao/vbo
 typedef struct Mesh {
-    int vertexCount;            // Number of vertices stored in arrays
-    int triangleCount;          // Number of triangles stored (indexed or not)
+    int vertexCount;        // Number of vertices stored in arrays
+    int triangleCount;      // Number of triangles stored (indexed or not)
 
     // Default vertex data
-    float *vertices;            // Vertex position (XYZ - 3 components per vertex) (shader-location = 0)
-    float *texcoords;           // Vertex texture coordinates (UV - 2 components per vertex) (shader-location = 1)
-    float *texcoords2;          // Vertex second texture coordinates (useful for lightmaps) (shader-location = 5)
-    float *normals;             // Vertex normals (XYZ - 3 components per vertex) (shader-location = 2)
-    float *tangents;            // Vertex tangents (XYZW - 4 components per vertex) (shader-location = 4)
+    float *vertices;        // Vertex position (XYZ - 3 components per vertex) (shader-location = 0)
+    float *texcoords;       // Vertex texture coordinates (UV - 2 components per vertex) (shader-location = 1)
+    float *texcoords2;      // Vertex second texture coordinates (useful for lightmaps) (shader-location = 5)
+    float *normals;         // Vertex normals (XYZ - 3 components per vertex) (shader-location = 2)
+    float *tangents;        // Vertex tangents (XYZW - 4 components per vertex) (shader-location = 4)
     unsigned char *colors;      // Vertex colors (RGBA - 4 components per vertex) (shader-location = 3)
     unsigned short *indices;    // Vertex indices (in case vertex data comes indexed)
 
     // Animation vertex data
-    float *animVertices;        // Animated vertex positions (after bones transformations)
-    float *animNormals;         // Animated normals (after bones transformations)
-    int *boneIds;               // Vertex bone ids, up to 4 bones influence by vertex (skinning)
-    float *boneWeights;         // Vertex bone weight, up to 4 bones influence by vertex (skinning)
+    float *animVertices;    // Animated vertex positions (after bones transformations)
+    float *animNormals;     // Animated normals (after bones transformations)
+    int *boneIds;           // Vertex bone ids, up to 4 bones influence by vertex (skinning)
+    float *boneWeights;     // Vertex bone weight, up to 4 bones influence by vertex (skinning)
 
     // OpenGL identifiers
-    unsigned int vaoId;         // OpenGL Vertex Array Object id
-    unsigned int *vboId;        // OpenGL Vertex Buffer Objects id (default vertex data)
+    unsigned int vaoId;     // OpenGL Vertex Array Object id
+    unsigned int *vboId;    // OpenGL Vertex Buffer Objects id (default vertex data)
 } Mesh;
 
 // Shader
 typedef struct Shader {
-    unsigned int id;            // Shader program id
-    int *locs;                  // Shader locations array (MAX_SHADER_LOCATIONS)
+    unsigned int id;        // Shader program id
+    int *locs;              // Shader locations array (MAX_SHADER_LOCATIONS)
 } Shader;
 
 // MaterialMap
 typedef struct MaterialMap {
-    Texture2D texture;          // Material map texture
-    Color color;                // Material map color
-    float value;                // Material map value
+    Texture2D texture;      // Material map texture
+    Color color;            // Material map color
+    float value;            // Material map value
 } MaterialMap;
 
 // Material, includes shader and maps
 typedef struct Material {
-    Shader shader;              // Material shader
-    MaterialMap *maps;          // Material maps array (MAX_MATERIAL_MAPS)
-    float params[4];            // Material generic parameters (if required)
+    Shader shader;          // Material shader
+    MaterialMap *maps;      // Material maps array (MAX_MATERIAL_MAPS)
+    float params[4];        // Material generic parameters (if required)
 } Material;
 
 // Transform, vectex transformation data
 typedef struct Transform {
-    Vector3 translation;        // Translation
-    Quaternion rotation;        // Rotation
-    Vector3 scale;              // Scale
+    Vector3 translation;    // Translation
+    Quaternion rotation;    // Rotation
+    Vector3 scale;          // Scale
 } Transform;
 
 // Bone, skeletal animation bone
 typedef struct BoneInfo {
-    char name[32];              // Bone name
-    int parent;                 // Bone parent
+    char name[32];          // Bone name
+    int parent;             // Bone parent
 } BoneInfo;
 
 // Model, meshes, materials and animation data
 typedef struct Model {
-    Matrix transform;           // Local transform matrix
+    Matrix transform;       // Local transform matrix
 
-    int meshCount;              // Number of meshes
-    int materialCount;          // Number of materials
-    Mesh *meshes;               // Meshes array
-    Material *materials;        // Materials array
-    int *meshMaterial;          // Mesh material number
+    int meshCount;          // Number of meshes
+    int materialCount;      // Number of materials
+    Mesh *meshes;           // Meshes array
+    Material *materials;    // Materials array
+    int *meshMaterial;      // Mesh material number
 
     // Animation data
-    int boneCount;              // Number of bones
-    BoneInfo *bones;            // Bones information (skeleton)
-    Transform *bindPose;        // Bones base transformation (pose)
+    int boneCount;          // Number of bones
+    BoneInfo *bones;        // Bones information (skeleton)
+    Transform *bindPose;    // Bones base transformation (pose)
 } Model;
 
 // ModelAnimation
 typedef struct ModelAnimation {
-    int boneCount;              // Number of bones
-    int frameCount;             // Number of animation frames
-    BoneInfo *bones;            // Bones information (skeleton)
-    Transform **framePoses;     // Poses array by frame
+    int boneCount;          // Number of bones
+    int frameCount;         // Number of animation frames
+    BoneInfo *bones;        // Bones information (skeleton)
+    Transform **framePoses; // Poses array by frame
 } ModelAnimation;
 
 // Ray, ray for raycasting
 typedef struct Ray {
-    Vector3 position;           // Ray position (origin)
-    Vector3 direction;          // Ray direction
+    Vector3 position;       // Ray position (origin)
+    Vector3 direction;      // Ray direction
 } Ray;
 
 // RayCollision, ray hit information
 typedef struct RayCollision {
-    bool hit;                   // Did the ray hit something?
-    float distance;             // Distance to nearest hit
-    Vector3 point;              // Point of nearest hit
-    Vector3 normal;             // Surface normal of hit
+    bool hit;               // Did the ray hit something?
+    float distance;         // Distance to nearest hit
+    Vector3 point;          // Point of nearest hit
+    Vector3 normal;         // Surface normal of hit
 } RayCollision;
 
 // BoundingBox
 typedef struct BoundingBox {
-    Vector3 min;                // Minimum vertex box-corner
-    Vector3 max;                // Maximum vertex box-corner
+    Vector3 min;            // Minimum vertex box-corner
+    Vector3 max;            // Maximum vertex box-corner
 } BoundingBox;
 
 // Wave, audio wave data
@@ -510,122 +510,120 @@ typedef enum {
 // NOTE: Use GetKeyPressed() to allow redefining
 // required keys for alternative layouts
 typedef enum {
-    KEY_NULL            = 0,
+    KEY_NULL            = 0,        // Key: NULL, used for no key pressed
     // Alphanumeric keys
-    KEY_APOSTROPHE      = 39,
-    KEY_COMMA           = 44,
-    KEY_MINUS           = 45,
-    KEY_PERIOD          = 46,
-    KEY_SLASH           = 47,
-    KEY_ZERO            = 48,
-    KEY_ONE             = 49,
-    KEY_TWO             = 50,
-    KEY_THREE           = 51,
-    KEY_FOUR            = 52,
-    KEY_FIVE            = 53,
-    KEY_SIX             = 54,
-    KEY_SEVEN           = 55,
-    KEY_EIGHT           = 56,
-    KEY_NINE            = 57,
-    KEY_SEMICOLON       = 59,
-    KEY_EQUAL           = 61,
-    KEY_A               = 65,
-    KEY_B               = 66,
-    KEY_C               = 67,
-    KEY_D               = 68,
-    KEY_E               = 69,
-    KEY_F               = 70,
-    KEY_G               = 71,
-    KEY_H               = 72,
-    KEY_I               = 73,
-    KEY_J               = 74,
-    KEY_K               = 75,
-    KEY_L               = 76,
-    KEY_M               = 77,
-    KEY_N               = 78,
-    KEY_O               = 79,
-    KEY_P               = 80,
-    KEY_Q               = 81,
-    KEY_R               = 82,
-    KEY_S               = 83,
-    KEY_T               = 84,
-    KEY_U               = 85,
-    KEY_V               = 86,
-    KEY_W               = 87,
-    KEY_X               = 88,
-    KEY_Y               = 89,
-    KEY_Z               = 90,
-
+    KEY_APOSTROPHE      = 39,       // Key: '
+    KEY_COMMA           = 44,       // Key: ,
+    KEY_MINUS           = 45,       // Key: -
+    KEY_PERIOD          = 46,       // Key: .
+    KEY_SLASH           = 47,       // Key: /
+    KEY_ZERO            = 48,       // Key: 0
+    KEY_ONE             = 49,       // Key: 1
+    KEY_TWO             = 50,       // Key: 2
+    KEY_THREE           = 51,       // Key: 3
+    KEY_FOUR            = 52,       // Key: 4
+    KEY_FIVE            = 53,       // Key: 5
+    KEY_SIX             = 54,       // Key: 6
+    KEY_SEVEN           = 55,       // Key: 7
+    KEY_EIGHT           = 56,       // Key: 8
+    KEY_NINE            = 57,       // Key: 9
+    KEY_SEMICOLON       = 59,       // Key: ;
+    KEY_EQUAL           = 61,       // Key: =
+    KEY_A               = 65,       // Key: A | a
+    KEY_B               = 66,       // Key: B | b
+    KEY_C               = 67,       // Key: C | c
+    KEY_D               = 68,       // Key: D | d
+    KEY_E               = 69,       // Key: E | e
+    KEY_F               = 70,       // Key: F | f
+    KEY_G               = 71,       // Key: G | g
+    KEY_H               = 72,       // Key: H | h
+    KEY_I               = 73,       // Key: I | i
+    KEY_J               = 74,       // Key: J | j
+    KEY_K               = 75,       // Key: K | k
+    KEY_L               = 76,       // Key: L | l
+    KEY_M               = 77,       // Key: M | m
+    KEY_N               = 78,       // Key: N | n
+    KEY_O               = 79,       // Key: O | o
+    KEY_P               = 80,       // Key: P | p
+    KEY_Q               = 81,       // Key: Q | q
+    KEY_R               = 82,       // Key: R | r
+    KEY_S               = 83,       // Key: S | s
+    KEY_T               = 84,       // Key: T | t
+    KEY_U               = 85,       // Key: U | u
+    KEY_V               = 86,       // Key: V | v
+    KEY_W               = 87,       // Key: W | w
+    KEY_X               = 88,       // Key: X | x
+    KEY_Y               = 89,       // Key: Y | y
+    KEY_Z               = 90,       // Key: Z | z
+    KEY_LEFT_BRACKET    = 91,       // Key: [
+    KEY_BACKSLASH       = 92,       // Key: '\'
+    KEY_RIGHT_BRACKET   = 93,       // Key: ]
+    KEY_GRAVE           = 96,       // Key: `
     // Function keys
-    KEY_SPACE           = 32,
-    KEY_ESCAPE          = 256,
-    KEY_ENTER           = 257,
-    KEY_TAB             = 258,
-    KEY_BACKSPACE       = 259,
-    KEY_INSERT          = 260,
-    KEY_DELETE          = 261,
-    KEY_RIGHT           = 262,
-    KEY_LEFT            = 263,
-    KEY_DOWN            = 264,
-    KEY_UP              = 265,
-    KEY_PAGE_UP         = 266,
-    KEY_PAGE_DOWN       = 267,
-    KEY_HOME            = 268,
-    KEY_END             = 269,
-    KEY_CAPS_LOCK       = 280,
-    KEY_SCROLL_LOCK     = 281,
-    KEY_NUM_LOCK        = 282,
-    KEY_PRINT_SCREEN    = 283,
-    KEY_PAUSE           = 284,
-    KEY_F1              = 290,
-    KEY_F2              = 291,
-    KEY_F3              = 292,
-    KEY_F4              = 293,
-    KEY_F5              = 294,
-    KEY_F6              = 295,
-    KEY_F7              = 296,
-    KEY_F8              = 297,
-    KEY_F9              = 298,
-    KEY_F10             = 299,
-    KEY_F11             = 300,
-    KEY_F12             = 301,
-    KEY_LEFT_SHIFT      = 340,
-    KEY_LEFT_CONTROL    = 341,
-    KEY_LEFT_ALT        = 342,
-    KEY_LEFT_SUPER      = 343,
-    KEY_RIGHT_SHIFT     = 344,
-    KEY_RIGHT_CONTROL   = 345,
-    KEY_RIGHT_ALT       = 346,
-    KEY_RIGHT_SUPER     = 347,
-    KEY_KB_MENU         = 348,
-    KEY_LEFT_BRACKET    = 91,
-    KEY_BACKSLASH       = 92,
-    KEY_RIGHT_BRACKET   = 93,
-    KEY_GRAVE           = 96,
-
+    KEY_SPACE           = 32,       // Key: Space
+    KEY_ESCAPE          = 256,      // Key: Esc
+    KEY_ENTER           = 257,      // Key: Enter
+    KEY_TAB             = 258,      // Key: Tab
+    KEY_BACKSPACE       = 259,      // Key: Backspace
+    KEY_INSERT          = 260,      // Key: Ins
+    KEY_DELETE          = 261,      // Key: Del
+    KEY_RIGHT           = 262,      // Key: Cursor right
+    KEY_LEFT            = 263,      // Key: Cursor left
+    KEY_DOWN            = 264,      // Key: Cursor down
+    KEY_UP              = 265,      // Key: Cursor up
+    KEY_PAGE_UP         = 266,      // Key: Page up
+    KEY_PAGE_DOWN       = 267,      // Key: Page down
+    KEY_HOME            = 268,      // Key: Home
+    KEY_END             = 269,      // Key: End
+    KEY_CAPS_LOCK       = 280,      // Key: Caps lock
+    KEY_SCROLL_LOCK     = 281,      // Key: Scroll down
+    KEY_NUM_LOCK        = 282,      // Key: Num lock
+    KEY_PRINT_SCREEN    = 283,      // Key: Print screen
+    KEY_PAUSE           = 284,      // Key: Pause
+    KEY_F1              = 290,      // Key: F1
+    KEY_F2              = 291,      // Key: F2
+    KEY_F3              = 292,      // Key: F3
+    KEY_F4              = 293,      // Key: F4
+    KEY_F5              = 294,      // Key: F5
+    KEY_F6              = 295,      // Key: F6
+    KEY_F7              = 296,      // Key: F7
+    KEY_F8              = 297,      // Key: F8
+    KEY_F9              = 298,      // Key: F9
+    KEY_F10             = 299,      // Key: F10
+    KEY_F11             = 300,      // Key: F11
+    KEY_F12             = 301,      // Key: F12
+    KEY_LEFT_SHIFT      = 340,      // Key: Shift left
+    KEY_LEFT_CONTROL    = 341,      // Key: Control left
+    KEY_LEFT_ALT        = 342,      // Key: Alt left
+    KEY_LEFT_SUPER      = 343,      // Key: Super left
+    KEY_RIGHT_SHIFT     = 344,      // Key: Shift right
+    KEY_RIGHT_CONTROL   = 345,      // Key: Control right
+    KEY_RIGHT_ALT       = 346,      // Key: Alt right
+    KEY_RIGHT_SUPER     = 347,      // Key: Super right
+    KEY_KB_MENU         = 348,      // Key: KB menu
     // Keypad keys
-    KEY_KP_0            = 320,
-    KEY_KP_1            = 321,
-    KEY_KP_2            = 322,
-    KEY_KP_3            = 323,
-    KEY_KP_4            = 324,
-    KEY_KP_5            = 325,
-    KEY_KP_6            = 326,
-    KEY_KP_7            = 327,
-    KEY_KP_8            = 328,
-    KEY_KP_9            = 329,
-    KEY_KP_DECIMAL      = 330,
-    KEY_KP_DIVIDE       = 331,
-    KEY_KP_MULTIPLY     = 332,
-    KEY_KP_SUBTRACT     = 333,
-    KEY_KP_ADD          = 334,
-    KEY_KP_ENTER        = 335,
-    KEY_KP_EQUAL        = 336,
+    KEY_KP_0            = 320,      // Key: Keypad 0
+    KEY_KP_1            = 321,      // Key: Keypad 1
+    KEY_KP_2            = 322,      // Key: Keypad 2
+    KEY_KP_3            = 323,      // Key: Keypad 3
+    KEY_KP_4            = 324,      // Key: Keypad 4
+    KEY_KP_5            = 325,      // Key: Keypad 5
+    KEY_KP_6            = 326,      // Key: Keypad 6
+    KEY_KP_7            = 327,      // Key: Keypad 7
+    KEY_KP_8            = 328,      // Key: Keypad 8
+    KEY_KP_9            = 329,      // Key: Keypad 9
+    KEY_KP_DECIMAL      = 330,      // Key: Keypad .
+    KEY_KP_DIVIDE       = 331,      // Key: Keypad /
+    KEY_KP_MULTIPLY     = 332,      // Key: Keypad *
+    KEY_KP_SUBTRACT     = 333,      // Key: Keypad -
+    KEY_KP_ADD          = 334,      // Key: Keypad +
+    KEY_KP_ENTER        = 335,      // Key: Keypad Enter
+    KEY_KP_EQUAL        = 336,      // Key: Keypad =
     // Android key buttons
-    KEY_BACK            = 4,
-    KEY_MENU            = 82,
-    KEY_VOLUME_UP       = 24,
-    KEY_VOLUME_DOWN     = 25
+    KEY_BACK            = 4,        // Key: Android back button
+    KEY_MENU            = 82,       // Key: Android menu button
+    KEY_VOLUME_UP       = 24,       // Key: Android volume up button
+    KEY_VOLUME_DOWN     = 25        // Key: Android volume down button
 } KeyboardKey;
 
 // Add backwards compatibility support for deprecated names
@@ -635,25 +633,25 @@ typedef enum {
 
 // Mouse buttons
 typedef enum {
-    MOUSE_BUTTON_LEFT    = 0,
-    MOUSE_BUTTON_RIGHT   = 1,
-    MOUSE_BUTTON_MIDDLE  = 2,
-    MOUSE_BUTTON_SIDE    = 3,
-    MOUSE_BUTTON_EXTRA   = 4,
-    MOUSE_BUTTON_FORWARD = 5,
-    MOUSE_BUTTON_BACK    = 6,
+    MOUSE_BUTTON_LEFT    = 0,       // Mouse button left
+    MOUSE_BUTTON_RIGHT   = 1,       // Mouse button right
+    MOUSE_BUTTON_MIDDLE  = 2,       // Mouse button middle (pressed wheel)
+    MOUSE_BUTTON_SIDE    = 3,       // Mouse button side (advanced mouse device)
+    MOUSE_BUTTON_EXTRA   = 4,       // Mouse button extra (advanced mouse device)
+    MOUSE_BUTTON_FORWARD = 5,       // Mouse button fordward (advanced mouse device)
+    MOUSE_BUTTON_BACK    = 6,       // Mouse button back (advanced mouse device)
 } MouseButton;
 
 // Mouse cursor
 typedef enum {
-    MOUSE_CURSOR_DEFAULT       = 0,
-    MOUSE_CURSOR_ARROW         = 1,
-    MOUSE_CURSOR_IBEAM         = 2,
-    MOUSE_CURSOR_CROSSHAIR     = 3,
-    MOUSE_CURSOR_POINTING_HAND = 4,
-    MOUSE_CURSOR_RESIZE_EW     = 5,     // The horizontal resize/move arrow shape
-    MOUSE_CURSOR_RESIZE_NS     = 6,     // The vertical resize/move arrow shape
-    MOUSE_CURSOR_RESIZE_NWSE   = 7,     // The top-left to bottom-right diagonal resize/move arrow shape
+    MOUSE_CURSOR_DEFAULT       = 0,     // Default pointer shape
+    MOUSE_CURSOR_ARROW         = 1,     // Arrow shape
+    MOUSE_CURSOR_IBEAM         = 2,     // Text writing cursor shape 
+    MOUSE_CURSOR_CROSSHAIR     = 3,     // Cross shape 
+    MOUSE_CURSOR_POINTING_HAND = 4,     // Pointing hand cursor
+    MOUSE_CURSOR_RESIZE_EW     = 5,     // Horizontal resize/move arrow shape
+    MOUSE_CURSOR_RESIZE_NS     = 6,     // Vertical resize/move arrow shape
+    MOUSE_CURSOR_RESIZE_NWSE   = 7,     // Top-left to bottom-right diagonal resize/move arrow shape
     MOUSE_CURSOR_RESIZE_NESW   = 8,     // The top-right to bottom-left diagonal resize/move arrow shape
     MOUSE_CURSOR_RESIZE_ALL    = 9,     // The omni-directional resize/move cursor shape
     MOUSE_CURSOR_NOT_ALLOWED   = 10     // The operation-not-allowed shape
@@ -661,53 +659,34 @@ typedef enum {
 
 // Gamepad buttons
 typedef enum {
-    // This is here just for error checking
-    GAMEPAD_BUTTON_UNKNOWN = 0,
-
-    // This is normally a DPAD
-    GAMEPAD_BUTTON_LEFT_FACE_UP,
-    GAMEPAD_BUTTON_LEFT_FACE_RIGHT,
-    GAMEPAD_BUTTON_LEFT_FACE_DOWN,
-    GAMEPAD_BUTTON_LEFT_FACE_LEFT,
-
-    // This normally corresponds with PlayStation and Xbox controllers
-    // XBOX: [Y,X,A,B]
-    // PS3: [Triangle,Square,Cross,Circle]
-    // No support for 6 button controllers though..
-    GAMEPAD_BUTTON_RIGHT_FACE_UP,
-    GAMEPAD_BUTTON_RIGHT_FACE_RIGHT,
-    GAMEPAD_BUTTON_RIGHT_FACE_DOWN,
-    GAMEPAD_BUTTON_RIGHT_FACE_LEFT,
-
-    // Triggers
-    GAMEPAD_BUTTON_LEFT_TRIGGER_1,
-    GAMEPAD_BUTTON_LEFT_TRIGGER_2,
-    GAMEPAD_BUTTON_RIGHT_TRIGGER_1,
-    GAMEPAD_BUTTON_RIGHT_TRIGGER_2,
-
-    // These are buttons in the center of the gamepad
-    GAMEPAD_BUTTON_MIDDLE_LEFT,     // PS3 Select
-    GAMEPAD_BUTTON_MIDDLE,          // PS Button/XBOX Button
-    GAMEPAD_BUTTON_MIDDLE_RIGHT,    // PS3 Start
-
-    // These are the joystick press in buttons
-    GAMEPAD_BUTTON_LEFT_THUMB,
-    GAMEPAD_BUTTON_RIGHT_THUMB
+    GAMEPAD_BUTTON_UNKNOWN = 0,         // Unknown button, just for error checking
+    GAMEPAD_BUTTON_LEFT_FACE_UP,        // Gamepad left DPAD up button
+    GAMEPAD_BUTTON_LEFT_FACE_RIGHT,     // Gamepad left DPAD right button
+    GAMEPAD_BUTTON_LEFT_FACE_DOWN,      // Gamepad left DPAD down button
+    GAMEPAD_BUTTON_LEFT_FACE_LEFT,      // Gamepad left DPAD left button
+    GAMEPAD_BUTTON_RIGHT_FACE_UP,       // Gamepad right button up (i.e. PS3: Triangle, Xbox: Y)
+    GAMEPAD_BUTTON_RIGHT_FACE_RIGHT,    // Gamepad right button right (i.e. PS3: Square, Xbox: X)
+    GAMEPAD_BUTTON_RIGHT_FACE_DOWN,     // Gamepad right button down (i.e. PS3: Cross, Xbox: A)
+    GAMEPAD_BUTTON_RIGHT_FACE_LEFT,     // Gamepad right button left (i.e. PS3: Circle, Xbox: B)
+    GAMEPAD_BUTTON_LEFT_TRIGGER_1,      // Gamepad top/back trigger left (first), it could be a trailing button
+    GAMEPAD_BUTTON_LEFT_TRIGGER_2,      // Gamepad top/back trigger left (second), it could be a trailing button
+    GAMEPAD_BUTTON_RIGHT_TRIGGER_1,     // Gamepad top/back trigger right (one), it could be a trailing button
+    GAMEPAD_BUTTON_RIGHT_TRIGGER_2,     // Gamepad top/back trigger right (second), it could be a trailing button
+    GAMEPAD_BUTTON_MIDDLE_LEFT,         // Gamepad center buttons, left one (i.e. PS3: Select)
+    GAMEPAD_BUTTON_MIDDLE,              // Gamepad center buttons, middle one (i.e. PS3: PS, Xbox: XBOX)
+    GAMEPAD_BUTTON_MIDDLE_RIGHT,        // Gamepad center buttons, right one (i.e. PS3: Start)
+    GAMEPAD_BUTTON_LEFT_THUMB,          // Gamepad joystick pressed button left
+    GAMEPAD_BUTTON_RIGHT_THUMB          // Gamepad joystick pressed button right
 } GamepadButton;
 
 // Gamepad axis
 typedef enum {
-    // Left stick
-    GAMEPAD_AXIS_LEFT_X = 0,
-    GAMEPAD_AXIS_LEFT_Y = 1,
-
-    // Right stick
-    GAMEPAD_AXIS_RIGHT_X = 2,
-    GAMEPAD_AXIS_RIGHT_Y = 3,
-
-    // Pressure levels for the back triggers
-    GAMEPAD_AXIS_LEFT_TRIGGER = 4,  // [1..-1] (pressure-level)
-    GAMEPAD_AXIS_RIGHT_TRIGGER = 5  // [1..-1] (pressure-level)
+    GAMEPAD_AXIS_LEFT_X        = 0,     // Gamepad left stick X axis
+    GAMEPAD_AXIS_LEFT_Y        = 1,     // Gamepad left stick Y axis
+    GAMEPAD_AXIS_RIGHT_X       = 2,     // Gamepad right stick X axis
+    GAMEPAD_AXIS_RIGHT_Y       = 3,     // Gamepad right stick Y axis
+    GAMEPAD_AXIS_LEFT_TRIGGER  = 4,     // Gamepad back trigger left, pressure level: [1..-1]
+    GAMEPAD_AXIS_RIGHT_TRIGGER = 5      // Gamepad back trigger right, pressure level: [1..-1]
 } GamepadAxis;
 
 // Material map index
