@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raygui v2.8 - A simple and easy-to-use immediate-mode gui library
+*   raygui v2.9-dev - A simple and easy-to-use immediate-mode gui library
 *
 *   DESCRIPTION:
 *
@@ -69,6 +69,7 @@
 *
 *
 *   VERSIONS HISTORY:
+*       2.9 (17-Mar-2021) Removed tooltip API
 *       2.8 (03-May-2020) Centralized rectangles drawing to GuiDrawRectangle()
 *       2.7 (20-Feb-2020) Added possible tooltips API
 *       2.6 (09-Sep-2019) ADDED: GuiTextInputBox()
@@ -130,32 +131,25 @@
 #ifndef RAYGUI_H
 #define RAYGUI_H
 
-#define RAYGUI_VERSION  "2.6-dev"
+#define RAYGUI_VERSION  "2.9-dev"
 
 #if !defined(RAYGUI_STANDALONE)
     #include "raylib.h"
 #endif
 
 // Define functions scope to be used internally (static) or externally (extern) to the module including this file
-#if defined(RAYGUI_STATIC)
-    #define RAYGUIDEF static            // Functions just visible to module including this file
-#else
-    #ifdef __cplusplus
-        #define RAYGUIDEF extern "C"    // Functions visible from other files (no name mangling of functions in C++)
-    #else
-        // NOTE: By default any function declared in a C file is extern
-        #define RAYGUIDEF extern        // Functions visible from other files
-    #endif
-#endif
-
 #if defined(_WIN32)
+    // Microsoft attibutes to tell compiler that symbols are imported/exported from a .dll
     #if defined(BUILD_LIBTYPE_SHARED)
-        #define RAYGUIDEF __declspec(dllexport)     // We are building raygui as a Win32 shared library (.dll).
+        #define RAYGUIDEF __declspec(dllexport)     // We are building raygui as a Win32 shared library (.dll)
     #elif defined(USE_LIBTYPE_SHARED)
         #define RAYGUIDEF __declspec(dllimport)     // We are using raygui as a Win32 shared library (.dll)
+    #else
+        #define RAYGUIDEF   // We are building or using raygui as a static library
     #endif
+#else
+    #define RAYGUIDEF       // We are building or using raygui as a static library (or Linux shared library)
 #endif
-
 
 #if !defined(RAYGUI_MALLOC) && !defined(RAYGUI_CALLOC) && !defined(RAYGUI_FREE)
     #include <stdlib.h>                 // Required for: malloc(), calloc(), free()
@@ -180,6 +174,10 @@
 #define NUM_PROPS_EXTENDED               8      // Number of extended properties
 
 #define TEXTEDIT_CURSOR_BLINK_FRAMES    20      // Text edit controls cursor blink timming
+
+#if defined(__cplusplus)
+extern "C" {            // Prevents name mangling of functions
+#endif
 
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
@@ -431,12 +429,6 @@ RAYGUIDEF Font GuiGetFont(void);                                        // Get g
 RAYGUIDEF void GuiSetStyle(int control, int property, int value);       // Set one style property
 RAYGUIDEF int GuiGetStyle(int control, int property);                   // Get one style property
 
-// Tooltips set functions
-RAYGUIDEF void GuiEnableTooltip(void);                                  // Enable gui tooltips
-RAYGUIDEF void GuiDisableTooltip(void);                                 // Disable gui tooltips
-RAYGUIDEF void GuiSetTooltip(const char *tooltip);                      // Set current tooltip for display
-RAYGUIDEF void GuiClearTooltip(void);                                   // Clear any tooltip registered
-
 // Container/separator controls, useful for controls organization
 RAYGUIDEF bool GuiWindowBox(Rectangle bounds, const char *title);                                       // Window Box control, shows a window that can be closed
 RAYGUIDEF void GuiGroupBox(Rectangle bounds, const char *text);                                         // Group Box control with text name
@@ -466,6 +458,7 @@ RAYGUIDEF void GuiStatusBar(Rectangle bounds, const char *text);                
 RAYGUIDEF void GuiDummyRec(Rectangle bounds, const char *text);                                         // Dummy control for placeholders
 RAYGUIDEF int GuiScrollBar(Rectangle bounds, int value, int minValue, int maxValue);                    // Scroll Bar control
 RAYGUIDEF Vector2 GuiGrid(Rectangle bounds, float spacing, int subdivs);                                // Grid control
+
 
 // Advance controls set
 RAYGUIDEF int GuiListView(Rectangle bounds, const char *text, int *scrollIndex, int active);            // List View control, returns selected list item index
@@ -502,8 +495,12 @@ RAYGUIDEF void GuiClearIconPixel(int iconId, int x, int y);     // Clear icon pi
 RAYGUIDEF bool GuiCheckIconPixel(int iconId, int x, int y);     // Check icon pixel value
 #endif
 
-#endif // RAYGUI_H
 
+#if defined(__cplusplus)
+}            // Prevents name mangling of functions
+#endif
+
+#endif // RAYGUI_H
 
 /***********************************************************************************
 *
@@ -559,10 +556,6 @@ static float guiAlpha = 1.0f;           // Gui element transpacency on drawing
 static unsigned int guiStyle[NUM_CONTROLS*(NUM_PROPS_DEFAULT + NUM_PROPS_EXTENDED)] = { 0 };
 static bool guiStyleLoaded = false;     // Style loaded flag for lazy style initialization
 
-// Tooltips required variables
-static const char *guiTooltip = NULL;   // Gui tooltip currently active (user provided)
-static bool guiTooltipEnabled = true;   // Gui tooltips enabled
-
 //----------------------------------------------------------------------------------
 // Standalone Mode Functions Declaration
 //
@@ -611,7 +604,7 @@ static Vector2 MeasureTextEx(Font font, const char *text, float fontSize, float 
 static void DrawTextEx(Font font, const char *text, Vector2 position, float fontSize, float spacing, Color tint);  // -- GuiDrawText()
 
 static Font LoadFontEx(const char *fileName, int fontSize, int *fontChars, int charsCount);  // -- GuiLoadStyle()
-static char *LoadText(const char *fileName);                // -- GuiLoadStyle()
+static char *LoadFileText(const char *fileName);            // -- GuiLoadStyle()
 static const char *GetDirectoryPath(const char *filePath);  // -- GuiLoadStyle()
 //-------------------------------------------------------------------------------
 
@@ -639,7 +632,6 @@ static const char *GetTextIcon(const char *text, int *iconId);  // Get text icon
 
 static void GuiDrawText(const char *text, Rectangle bounds, int alignment, Color tint);         // Gui draw text using default font
 static void GuiDrawRectangle(Rectangle rec, int borderWidth, Color borderColor, Color color);   // Gui draw rectangle using default raygui style
-static void GuiDrawTooltip(Rectangle bounds);                   // Draw tooltip relatively to bounds
 
 static const char **GuiTextSplit(const char *text, int *count, int *textRow);   // Split controls text into multiple strings
 static Vector3 ConvertHSVtoRGB(Vector3 hsv);                    // Convert color data from HSV to RGB
@@ -717,19 +709,6 @@ int GuiGetStyle(int control, int property)
     return guiStyle[control*(NUM_PROPS_DEFAULT + NUM_PROPS_EXTENDED) + property];
 }
 
-// Enable gui tooltips
-void GuiEnableTooltip(void) { guiTooltipEnabled = true; }
-
-// Disable gui tooltips
-void GuiDisableTooltip(void) { guiTooltipEnabled = false; }
-
-// Set current tooltip for display
-void GuiSetTooltip(const char *tooltip) { guiTooltip = tooltip; }
-
-// Clear any tooltip registered
-void GuiClearTooltip(void) { guiTooltip = NULL; }
-
-
 //----------------------------------------------------------------------------------
 // Gui Controls Functions Definition
 //----------------------------------------------------------------------------------
@@ -746,12 +725,12 @@ bool GuiWindowBox(Rectangle bounds, const char *title)
     int statusBarHeight = WINDOW_STATUSBAR_HEIGHT + 2*GuiGetStyle(STATUSBAR, BORDER_WIDTH);
     statusBarHeight += (statusBarHeight%2);
 
-    Rectangle statusBar = { bounds.x, bounds.y, bounds.width, statusBarHeight };
-    if (bounds.height < statusBarHeight*2) bounds.height = statusBarHeight*2;
-    
-    Rectangle windowPanel = { bounds.x, bounds.y + statusBarHeight - 1, bounds.width, bounds.height - statusBarHeight };
+    Rectangle statusBar = { bounds.x, bounds.y, bounds.width, (float)statusBarHeight };
+    if (bounds.height < statusBarHeight*2.0f) bounds.height = statusBarHeight*2.0f;
+
+    Rectangle windowPanel = { bounds.x, bounds.y + (float)statusBarHeight - 1, bounds.width, bounds.height - (float)statusBarHeight };
     Rectangle closeButtonRec = { statusBar.x + statusBar.width - GuiGetStyle(STATUSBAR, BORDER_WIDTH) - 20,
-                                 statusBar.y + statusBarHeight/2 - 18/2, 18, 18 };
+                                 statusBar.y + statusBarHeight/2.0f - 18.0f/2.0f, 18, 18 };
 
     // Update control
     //--------------------------------------------------------------------
@@ -762,7 +741,7 @@ bool GuiWindowBox(Rectangle bounds, const char *title)
     //--------------------------------------------------------------------
     GuiStatusBar(statusBar, title); // Draw window header as status bar
     GuiPanel(windowPanel);          // Draw window base
-    
+
     // Draw window close button
     int tempBorderWidth = GuiGetStyle(BUTTON, BORDER_WIDTH);
     int tempTextAlignment = GuiGetStyle(BUTTON, TEXT_ALIGNMENT);
@@ -813,10 +792,10 @@ void GuiLine(Rectangle bounds, const char *text)
     else
     {
         Rectangle textBounds = { 0 };
-        textBounds.width = GetTextWidth(text);      // TODO: Consider text icon
-        textBounds.height = GuiGetStyle(DEFAULT, TEXT_SIZE);
+        textBounds.width = (float)GetTextWidth(text);      // TODO: Consider text icon
+        textBounds.height = (float)GuiGetStyle(DEFAULT, TEXT_SIZE);
         textBounds.x = bounds.x + LINE_TEXT_PADDING;
-        textBounds.y = bounds.y - GuiGetStyle(DEFAULT, TEXT_SIZE)/2;
+        textBounds.y = bounds.y - (float)GuiGetStyle(DEFAULT, TEXT_SIZE)/2;
 
         // Draw line with embedded text label: "--- text --------------"
         GuiDrawRectangle(RAYGUI_CLITERAL(Rectangle){ bounds.x, bounds.y, LINE_TEXT_PADDING - 2, 1 }, 0, BLANK, color);
@@ -870,10 +849,10 @@ Rectangle GuiScrollPanel(Rectangle bounds, Rectangle content, Vector2 *scroll)
     if (view.height > content.height) view.height = content.height;
 
     // TODO: Review!
-    const int horizontalMin = hasHorizontalScrollBar? ((GuiGetStyle(LISTVIEW, SCROLLBAR_SIDE) == SCROLLBAR_LEFT_SIDE)? -verticalScrollBarWidth : 0) - GuiGetStyle(DEFAULT, BORDER_WIDTH) : ((GuiGetStyle(LISTVIEW, SCROLLBAR_SIDE) == SCROLLBAR_LEFT_SIDE)? -verticalScrollBarWidth : 0) - GuiGetStyle(DEFAULT, BORDER_WIDTH);
-    const int horizontalMax = hasHorizontalScrollBar? content.width - bounds.width + verticalScrollBarWidth + GuiGetStyle(DEFAULT, BORDER_WIDTH) - ((GuiGetStyle(LISTVIEW, SCROLLBAR_SIDE) == SCROLLBAR_LEFT_SIDE)? verticalScrollBarWidth : 0) : -GuiGetStyle(DEFAULT, BORDER_WIDTH);
-    const int verticalMin = hasVerticalScrollBar? -GuiGetStyle(DEFAULT, BORDER_WIDTH) : -GuiGetStyle(DEFAULT, BORDER_WIDTH);
-    const int verticalMax = hasVerticalScrollBar? content.height - bounds.height + horizontalScrollBarWidth + GuiGetStyle(DEFAULT, BORDER_WIDTH) : -GuiGetStyle(DEFAULT, BORDER_WIDTH);
+    const float horizontalMin = hasHorizontalScrollBar? ((GuiGetStyle(LISTVIEW, SCROLLBAR_SIDE) == SCROLLBAR_LEFT_SIDE)? (float)-verticalScrollBarWidth : 0) - (float)GuiGetStyle(DEFAULT, BORDER_WIDTH) : (((float)GuiGetStyle(LISTVIEW, SCROLLBAR_SIDE) == SCROLLBAR_LEFT_SIDE)? (float)-verticalScrollBarWidth : 0) - (float)GuiGetStyle(DEFAULT, BORDER_WIDTH);
+    const float horizontalMax = hasHorizontalScrollBar? content.width - bounds.width + (float)verticalScrollBarWidth + GuiGetStyle(DEFAULT, BORDER_WIDTH) - (((float)GuiGetStyle(LISTVIEW, SCROLLBAR_SIDE) == SCROLLBAR_LEFT_SIDE)? (float)verticalScrollBarWidth : 0) : (float)-GuiGetStyle(DEFAULT, BORDER_WIDTH);
+    const float verticalMin = hasVerticalScrollBar? (float)-GuiGetStyle(DEFAULT, BORDER_WIDTH) : (float)-GuiGetStyle(DEFAULT, BORDER_WIDTH);
+    const float verticalMax = hasVerticalScrollBar? content.height - bounds.height + (float)horizontalScrollBarWidth + (float)GuiGetStyle(DEFAULT, BORDER_WIDTH) : (float)-GuiGetStyle(DEFAULT, BORDER_WIDTH);
 
     // Update control
     //--------------------------------------------------------------------
@@ -899,7 +878,11 @@ Rectangle GuiScrollPanel(Rectangle bounds, Rectangle content, Vector2 *scroll)
                 if (IsKeyDown(KEY_UP)) scrollPos.y += GuiGetStyle(SCROLLBAR, SCROLL_SPEED);
             }
 
-            scrollPos.y += GetMouseWheelMove()*20;
+            float wheelMove = GetMouseWheelMove();
+
+            // Horizontal scroll (Shift + Mouse wheel)
+            if (hasHorizontalScrollBar && (IsKeyDown(KEY_LEFT_SHIFT) || IsKeyDown(KEY_RIGHT_SHIFT))) scrollPos.x += wheelMove*20;
+            else scrollPos.y += wheelMove*20; // Vertical scroll
         }
     }
 
@@ -921,29 +904,28 @@ Rectangle GuiScrollPanel(Rectangle bounds, Rectangle content, Vector2 *scroll)
     if (hasHorizontalScrollBar)
     {
         // Change scrollbar slider size to show the diff in size between the content width and the widget width
-        GuiSetStyle(SCROLLBAR, SCROLL_SLIDER_SIZE, ((bounds.width - 2*GuiGetStyle(DEFAULT, BORDER_WIDTH) - verticalScrollBarWidth)/content.width)*(bounds.width - 2*GuiGetStyle(DEFAULT, BORDER_WIDTH) - verticalScrollBarWidth));
-        scrollPos.x = -GuiScrollBar(horizontalScrollBar, -scrollPos.x, horizontalMin, horizontalMax);
+        GuiSetStyle(SCROLLBAR, SCROLL_SLIDER_SIZE, (int)(((bounds.width - 2 * GuiGetStyle(DEFAULT, BORDER_WIDTH) - verticalScrollBarWidth) / (int)content.width) * ((int)bounds.width - 2 * GuiGetStyle(DEFAULT, BORDER_WIDTH) - verticalScrollBarWidth)));
+        scrollPos.x = (float)-GuiScrollBar(horizontalScrollBar, (int)-scrollPos.x, (int)horizontalMin, (int)horizontalMax);
     }
 
     // Draw vertical scrollbar if visible
     if (hasVerticalScrollBar)
     {
         // Change scrollbar slider size to show the diff in size between the content height and the widget height
-        GuiSetStyle(SCROLLBAR, SCROLL_SLIDER_SIZE, ((bounds.height - 2*GuiGetStyle(DEFAULT, BORDER_WIDTH) - horizontalScrollBarWidth)/content.height)* (bounds.height - 2*GuiGetStyle(DEFAULT, BORDER_WIDTH) - horizontalScrollBarWidth));
-        scrollPos.y = -GuiScrollBar(verticalScrollBar, -scrollPos.y, verticalMin, verticalMax);
+        GuiSetStyle(SCROLLBAR, SCROLL_SLIDER_SIZE, (int)(((bounds.height - 2 * GuiGetStyle(DEFAULT, BORDER_WIDTH) - horizontalScrollBarWidth) / (int)content.height) * ((int)bounds.height - 2 * GuiGetStyle(DEFAULT, BORDER_WIDTH) - horizontalScrollBarWidth)));
+        scrollPos.y = (float)-GuiScrollBar(verticalScrollBar, (int)-scrollPos.y, (int)verticalMin, (int)verticalMax);
     }
 
     // Draw detail corner rectangle if both scroll bars are visible
     if (hasHorizontalScrollBar && hasVerticalScrollBar)
     {
-        // TODO: Consider scroll bars side
-        Rectangle corner = { horizontalScrollBar.x + horizontalScrollBar.width + 2, verticalScrollBar.y + verticalScrollBar.height + 2, horizontalScrollBarWidth - 4, verticalScrollBarWidth - 4 };
+        Rectangle corner = { (GuiGetStyle(LISTVIEW, SCROLLBAR_SIDE) == SCROLLBAR_LEFT_SIDE) ? (bounds.x + GuiGetStyle(DEFAULT, BORDER_WIDTH) + 2) : (horizontalScrollBar.x + horizontalScrollBar.width + 2), verticalScrollBar.y + verticalScrollBar.height + 2, (float)horizontalScrollBarWidth - 4, (float)verticalScrollBarWidth - 4 };
         GuiDrawRectangle(corner, 0, BLANK, Fade(GetColor(GuiGetStyle(LISTVIEW, TEXT + (state*3))), guiAlpha));
     }
 
     // Draw scrollbar lines depending on current state
-    GuiDrawRectangle(bounds, GuiGetStyle(DEFAULT, BORDER_WIDTH), Fade(GetColor(GuiGetStyle(LISTVIEW, (float)BORDER + (state*3))), guiAlpha), BLANK);
-    
+    GuiDrawRectangle(bounds, GuiGetStyle(DEFAULT, BORDER_WIDTH), Fade(GetColor(GuiGetStyle(LISTVIEW, BORDER + (state*3))), guiAlpha), BLANK);
+
     // Set scrollbar slider size back to the way it was before
     GuiSetStyle(SCROLLBAR, SCROLL_SLIDER_SIZE, slider);
     //--------------------------------------------------------------------
@@ -1008,7 +990,7 @@ bool GuiLabelButton(Rectangle bounds, const char *text)
     bool pressed = false;
 
     // NOTE: We force bounds.width to be all text
-    int textWidth = MeasureTextEx(guiFont, text, GuiGetStyle(DEFAULT, TEXT_SIZE), GuiGetStyle(DEFAULT, TEXT_SPACING)).x;
+    float textWidth = MeasureTextEx(guiFont, text, (float)GuiGetStyle(DEFAULT, TEXT_SIZE), (float)GuiGetStyle(DEFAULT, TEXT_SPACING)).x;
     if (bounds.width < textWidth) bounds.width = textWidth;
 
     // Update control
@@ -1160,8 +1142,8 @@ bool GuiCheckBox(Rectangle bounds, const char *text, bool checked)
 
     if (text != NULL)
     {
-        textBounds.width = GetTextWidth(text);
-        textBounds.height = GuiGetStyle(DEFAULT, TEXT_SIZE);
+        textBounds.width = (float)GetTextWidth(text);
+        textBounds.height = (float)GuiGetStyle(DEFAULT, TEXT_SIZE);
         textBounds.x = bounds.x + bounds.width + GuiGetStyle(CHECKBOX, TEXT_PADDING);
         textBounds.y = bounds.y + bounds.height/2 - GuiGetStyle(DEFAULT, TEXT_SIZE)/2;
         if (GuiGetStyle(CHECKBOX, TEXT_ALIGNMENT) == GUI_TEXT_ALIGN_LEFT) textBounds.x = bounds.x - textBounds.width - GuiGetStyle(CHECKBOX, TEXT_PADDING);
@@ -1194,7 +1176,7 @@ bool GuiCheckBox(Rectangle bounds, const char *text, bool checked)
     // Draw control
     //--------------------------------------------------------------------
     GuiDrawRectangle(bounds, GuiGetStyle(CHECKBOX, BORDER_WIDTH), Fade(GetColor(GuiGetStyle(CHECKBOX, BORDER + (state*3))), guiAlpha), BLANK);
-    
+
     if (checked)
     {
         Rectangle check = { bounds.x + GuiGetStyle(CHECKBOX, BORDER_WIDTH) + GuiGetStyle(CHECKBOX, CHECK_PADDING),
@@ -1400,7 +1382,7 @@ bool GuiTextBox(Rectangle bounds, char *text, int textSize, bool editMode)
         bounds.x + GuiGetStyle(TEXTBOX, TEXT_PADDING) + GetTextWidth(text) + 2,
         bounds.y + bounds.height/2 - GuiGetStyle(DEFAULT, TEXT_SIZE),
         1,
-        GuiGetStyle(DEFAULT, TEXT_SIZE)*2
+        (float)GuiGetStyle(DEFAULT, TEXT_SIZE)*2
     };
 
     // Update control
@@ -1415,18 +1397,18 @@ bool GuiTextBox(Rectangle bounds, char *text, int textSize, bool editMode)
             framesCounter++;
 
             int key = GetCharPressed();      // Returns codepoint as Unicode
-            int keyCount = strlen(text);
+            int keyCount = (int)strlen(text);
 
             // Only allow keys in range [32..125]
             if (keyCount < (textSize - 1))
             {
-                int maxWidth = (bounds.width - (GuiGetStyle(TEXTBOX, TEXT_INNER_PADDING)*2));
+                float maxWidth = (bounds.width - (GuiGetStyle(TEXTBOX, TEXT_INNER_PADDING)*2));
 
                 if ((GetTextWidth(text) < (maxWidth - GuiGetStyle(DEFAULT, TEXT_SIZE))) && (key >= 32))
                 {
                     int byteLength = 0;
                     const char *textUtf8 = CodepointToUtf8(key, &byteLength);
-                    
+
                     for (int i = 0; i < byteLength; i++)
                     {
                         text[keyCount] = textUtf8[i];
@@ -1512,8 +1494,8 @@ bool GuiSpinner(Rectangle bounds, const char *text, int *value, int minValue, in
     Rectangle textBounds = { 0 };
     if (text != NULL)
     {
-        textBounds.width = GetTextWidth(text);
-        textBounds.height = GuiGetStyle(DEFAULT, TEXT_SIZE);
+        textBounds.width = (float)GetTextWidth(text);
+        textBounds.height = (float)GuiGetStyle(DEFAULT, TEXT_SIZE);
         textBounds.x = bounds.x + bounds.width + GuiGetStyle(SPINNER, TEXT_PADDING);
         textBounds.y = bounds.y + bounds.height/2 - GuiGetStyle(DEFAULT, TEXT_SIZE)/2;
         if (GuiGetStyle(SPINNER, TEXT_ALIGNMENT) == GUI_TEXT_ALIGN_LEFT) textBounds.x = bounds.x - textBounds.width - GuiGetStyle(SPINNER, TEXT_PADDING);
@@ -1590,8 +1572,8 @@ bool GuiValueBox(Rectangle bounds, const char *text, int *value, int minValue, i
     Rectangle textBounds = { 0 };
     if (text != NULL)
     {
-        textBounds.width = GetTextWidth(text);
-        textBounds.height = GuiGetStyle(DEFAULT, TEXT_SIZE);
+        textBounds.width = (float)GetTextWidth(text);
+        textBounds.height = (float)GuiGetStyle(DEFAULT, TEXT_SIZE);
         textBounds.x = bounds.x + bounds.width + GuiGetStyle(VALUEBOX, TEXT_PADDING);
         textBounds.y = bounds.y + bounds.height/2 - GuiGetStyle(DEFAULT, TEXT_SIZE)/2;
         if (GuiGetStyle(VALUEBOX, TEXT_ALIGNMENT) == GUI_TEXT_ALIGN_LEFT) textBounds.x = bounds.x - textBounds.width - GuiGetStyle(VALUEBOX, TEXT_PADDING);
@@ -1611,13 +1593,12 @@ bool GuiValueBox(Rectangle bounds, const char *text, int *value, int minValue, i
 
             framesCounter++;
 
-            int keyCount = strlen(textValue);
+            int keyCount = (int)strlen(textValue);
 
             // Only allow keys in range [48..57]
             if (keyCount < VALUEBOX_MAX_CHARS)
             {
-                int maxWidth = bounds.width;
-                if (GetTextWidth(textValue) < maxWidth)
+                if (GetTextWidth(textValue) < bounds.width)
                 {
                     int key = GetCharPressed();
                     if ((key >= 48) && (key <= 57))
@@ -1674,19 +1655,19 @@ bool GuiValueBox(Rectangle bounds, const char *text, int *value, int minValue, i
     Color baseColor = BLANK;
     if (state == GUI_STATE_PRESSED) baseColor = GetColor(GuiGetStyle(VALUEBOX, BASE_COLOR_PRESSED));
     else if (state == GUI_STATE_DISABLED) baseColor = GetColor(GuiGetStyle(VALUEBOX, BASE_COLOR_DISABLED));
-    
+
     // WARNING: BLANK color does not work properly with Fade()
     GuiDrawRectangle(bounds, GuiGetStyle(VALUEBOX, BORDER_WIDTH), Fade(GetColor(GuiGetStyle(VALUEBOX, BORDER + (state*3))), guiAlpha), baseColor);
     GuiDrawText(textValue, GetTextBounds(VALUEBOX, bounds), GUI_TEXT_ALIGN_CENTER, Fade(GetColor(GuiGetStyle(VALUEBOX, TEXT + (state*3))), guiAlpha));
 
     // Draw blinking cursor
-    if ((state == GUI_STATE_PRESSED) && (editMode && ((framesCounter/20)%2 == 0))) 
+    if ((state == GUI_STATE_PRESSED) && (editMode && ((framesCounter/20)%2 == 0)))
     {
         // NOTE: ValueBox internal text is always centered
         Rectangle cursor = { bounds.x + GetTextWidth(textValue)/2 + bounds.width/2 + 2, bounds.y + 2*GuiGetStyle(VALUEBOX, BORDER_WIDTH), 1, bounds.height - 4*GuiGetStyle(VALUEBOX, BORDER_WIDTH) };
         GuiDrawRectangle(cursor, 0, BLANK, Fade(GetColor(GuiGetStyle(VALUEBOX, BORDER_COLOR_PRESSED)), guiAlpha));
     }
-    
+
     // Draw text label if provided
     if (text != NULL) GuiDrawText(text, textBounds, (GuiGetStyle(VALUEBOX, TEXT_ALIGNMENT) == GUI_TEXT_ALIGN_RIGHT)? GUI_TEXT_ALIGN_LEFT : GUI_TEXT_ALIGN_RIGHT, Fade(GetColor(GuiGetStyle(LABEL, TEXT + (state*3))), guiAlpha));
     //--------------------------------------------------------------------
@@ -1710,7 +1691,7 @@ bool GuiTextBoxMulti(Rectangle bounds, char *text, int textSize, bool editMode)
     };
 
     // Cursor position, [x, y] values should be updated
-    Rectangle cursor = { 0, 0, 1, GuiGetStyle(DEFAULT, TEXT_SIZE) + 2 };
+    Rectangle cursor = { 0, 0, 1, (float)GuiGetStyle(DEFAULT, TEXT_SIZE) + 2 };
 
     int textWidth = 0;
     int currentLine = 0;
@@ -1727,12 +1708,12 @@ bool GuiTextBoxMulti(Rectangle bounds, char *text, int textSize, bool editMode)
             framesCounter++;
 
             int character = GetCharPressed();
-            int keyCount = strlen(text);
+            int keyCount = (int)strlen(text);
 
             // Introduce characters
             if (keyCount < (textSize - 1))
             {
-                Vector2 textSize = MeasureTextEx(guiFont, text, GuiGetStyle(DEFAULT, TEXT_SIZE), GuiGetStyle(DEFAULT, TEXT_SPACING));
+                Vector2 textSize = MeasureTextEx(guiFont, text, (float)GuiGetStyle(DEFAULT, TEXT_SIZE), (float)GuiGetStyle(DEFAULT, TEXT_SPACING));
 
                 if (textSize.y < (textAreaBounds.height - GuiGetStyle(DEFAULT, TEXT_SIZE)))
                 {
@@ -1826,7 +1807,7 @@ bool GuiTextBoxMulti(Rectangle bounds, char *text, int textSize, bool editMode)
     }
     else GuiDrawRectangle(bounds, 1, Fade(GetColor(GuiGetStyle(TEXTBOX, BORDER + (state*3))), guiAlpha), BLANK);
 
-    DrawTextRec(guiFont, text, textAreaBounds, GuiGetStyle(DEFAULT, TEXT_SIZE), GuiGetStyle(DEFAULT, TEXT_SPACING), true, Fade(GetColor(GuiGetStyle(TEXTBOX, TEXT + (state*3))), guiAlpha));
+    DrawTextRec(guiFont, text, textAreaBounds, (float)GuiGetStyle(DEFAULT, TEXT_SIZE), (float)GuiGetStyle(DEFAULT, TEXT_SPACING), true, Fade(GetColor(GuiGetStyle(TEXTBOX, TEXT + (state*3))), guiAlpha));
     //--------------------------------------------------------------------
 
     return pressed;
@@ -1846,12 +1827,12 @@ float GuiSliderPro(Rectangle bounds, const char *textLeft, const char *textRight
     if (sliderWidth > 0)        // Slider
     {
         slider.x += (sliderValue - sliderWidth/2);
-        slider.width = sliderWidth;
+        slider.width = (float)sliderWidth;
     }
     else if (sliderWidth == 0)  // SliderBar
     {
         slider.x += GuiGetStyle(SLIDER, BORDER_WIDTH);
-        slider.width = sliderValue;
+        slider.width = (float)sliderValue;
     }
 
     // Update control
@@ -1870,7 +1851,7 @@ float GuiSliderPro(Rectangle bounds, const char *textLeft, const char *textRight
                 value = ((maxValue - minValue)*(mousePoint.x - (float)(bounds.x + sliderWidth/2)))/(float)(bounds.width - sliderWidth) + minValue;
 
                 if (sliderWidth > 0) slider.x = mousePoint.x - slider.width/2;  // Slider
-                else if (sliderWidth == 0) slider.width = sliderValue;          // SliderBar
+                else if (sliderWidth == 0) slider.width = (float)sliderValue;          // SliderBar
             }
             else state = GUI_STATE_FOCUSED;
         }
@@ -1903,8 +1884,8 @@ float GuiSliderPro(Rectangle bounds, const char *textLeft, const char *textRight
     if (textLeft != NULL)
     {
         Rectangle textBounds = { 0 };
-        textBounds.width = GetTextWidth(textLeft);  // TODO: Consider text icon
-        textBounds.height = GuiGetStyle(DEFAULT, TEXT_SIZE);
+        textBounds.width = (float)GetTextWidth(textLeft);  // TODO: Consider text icon
+        textBounds.height = (float)GuiGetStyle(DEFAULT, TEXT_SIZE);
         textBounds.x = bounds.x - textBounds.width - GuiGetStyle(SLIDER, TEXT_PADDING);
         textBounds.y = bounds.y + bounds.height/2 - GuiGetStyle(DEFAULT, TEXT_SIZE)/2;
 
@@ -1914,8 +1895,8 @@ float GuiSliderPro(Rectangle bounds, const char *textLeft, const char *textRight
     if (textRight != NULL)
     {
         Rectangle textBounds = { 0 };
-        textBounds.width = GetTextWidth(textRight);  // TODO: Consider text icon
-        textBounds.height = GuiGetStyle(DEFAULT, TEXT_SIZE);
+        textBounds.width = (float)GetTextWidth(textRight);  // TODO: Consider text icon
+        textBounds.height = (float)GuiGetStyle(DEFAULT, TEXT_SIZE);
         textBounds.x = bounds.x + bounds.width + GuiGetStyle(SLIDER, TEXT_PADDING);
         textBounds.y = bounds.y + bounds.height/2 - GuiGetStyle(DEFAULT, TEXT_SIZE)/2;
 
@@ -1949,7 +1930,7 @@ float GuiProgressBar(Rectangle bounds, const char *textLeft, const char *textRig
 
     // Update control
     //--------------------------------------------------------------------
-    if (state != GUI_STATE_DISABLED) progress.width = (int)(value/(maxValue - minValue)*(float)(bounds.width - 2*GuiGetStyle(PROGRESSBAR, BORDER_WIDTH)));
+    if (state != GUI_STATE_DISABLED) progress.width = ((float)(value/(maxValue - minValue))*(float)(bounds.width - 2*GuiGetStyle(PROGRESSBAR, BORDER_WIDTH)));
     //--------------------------------------------------------------------
 
     // Draw control
@@ -1964,8 +1945,8 @@ float GuiProgressBar(Rectangle bounds, const char *textLeft, const char *textRig
     if (textLeft != NULL)
     {
         Rectangle textBounds = { 0 };
-        textBounds.width = GetTextWidth(textLeft);  // TODO: Consider text icon
-        textBounds.height = GuiGetStyle(DEFAULT, TEXT_SIZE);
+        textBounds.width = (float)GetTextWidth(textLeft);  // TODO: Consider text icon
+        textBounds.height = (float)GuiGetStyle(DEFAULT, TEXT_SIZE);
         textBounds.x = bounds.x - textBounds.width - GuiGetStyle(PROGRESSBAR, TEXT_PADDING);
         textBounds.y = bounds.y + bounds.height/2 - GuiGetStyle(DEFAULT, TEXT_SIZE)/2;
 
@@ -1975,8 +1956,8 @@ float GuiProgressBar(Rectangle bounds, const char *textLeft, const char *textRig
     if (textRight != NULL)
     {
         Rectangle textBounds = { 0 };
-        textBounds.width = GetTextWidth(textRight);  // TODO: Consider text icon
-        textBounds.height = GuiGetStyle(DEFAULT, TEXT_SIZE);
+        textBounds.width = (float)GetTextWidth(textRight);  // TODO: Consider text icon
+        textBounds.height = (float)GuiGetStyle(DEFAULT, TEXT_SIZE);
         textBounds.x = bounds.x + bounds.width + GuiGetStyle(PROGRESSBAR, TEXT_PADDING);
         textBounds.y = bounds.y + bounds.height/2 - GuiGetStyle(DEFAULT, TEXT_SIZE)/2;
 
@@ -2037,7 +2018,7 @@ int GuiScrollBar(Rectangle bounds, int value, int minValue, int maxValue)
     bool isVertical = (bounds.width > bounds.height)? false : true;
 
     // The size (width or height depending on scrollbar type) of the spinner buttons
-    const int spinnerSize = GuiGetStyle(SCROLLBAR, ARROWS_VISIBLE)? (isVertical? bounds.width - 2*GuiGetStyle(SCROLLBAR, BORDER_WIDTH) : bounds.height - 2*GuiGetStyle(SCROLLBAR, BORDER_WIDTH)) : 0;
+    const int spinnerSize = GuiGetStyle(SCROLLBAR, ARROWS_VISIBLE)? (isVertical? (int)bounds.width - 2*GuiGetStyle(SCROLLBAR, BORDER_WIDTH) : (int)bounds.height - 2*GuiGetStyle(SCROLLBAR, BORDER_WIDTH)) : 0;
 
     // Arrow buttons [<] [>] [∧] [∨]
     Rectangle arrowUpLeft = { 0 };
@@ -2063,14 +2044,14 @@ int GuiScrollBar(Rectangle bounds, int value, int minValue, int maxValue)
     {
         arrowDownRight = RAYGUI_CLITERAL(Rectangle){ (float)bounds.x + GuiGetStyle(SCROLLBAR, BORDER_WIDTH), (float)bounds.y + bounds.height - spinnerSize - GuiGetStyle(SCROLLBAR, BORDER_WIDTH), (float)spinnerSize, (float)spinnerSize};
         scrollbar = RAYGUI_CLITERAL(Rectangle){ bounds.x + GuiGetStyle(SCROLLBAR, BORDER_WIDTH) + GuiGetStyle(SCROLLBAR, SCROLL_PADDING), arrowUpLeft.y + arrowUpLeft.height, bounds.width - 2*(GuiGetStyle(SCROLLBAR, BORDER_WIDTH) + GuiGetStyle(SCROLLBAR, SCROLL_PADDING)), bounds.height - arrowUpLeft.height - arrowDownRight.height - 2*GuiGetStyle(SCROLLBAR, BORDER_WIDTH) };
-        sliderSize = (sliderSize >= scrollbar.height)? (scrollbar.height - 2) : sliderSize;     // Make sure the slider won't get outside of the scrollbar
+        sliderSize = (sliderSize >= scrollbar.height)? ((int)scrollbar.height - 2) : sliderSize;     // Make sure the slider won't get outside of the scrollbar
         slider = RAYGUI_CLITERAL(Rectangle){ (float)bounds.x + GuiGetStyle(SCROLLBAR, BORDER_WIDTH) + GuiGetStyle(SCROLLBAR, SCROLL_SLIDER_PADDING), (float)scrollbar.y + (int)(((float)(value - minValue)/range)*(scrollbar.height - sliderSize)), (float)bounds.width - 2*(GuiGetStyle(SCROLLBAR, BORDER_WIDTH) + GuiGetStyle(SCROLLBAR, SCROLL_SLIDER_PADDING)), (float)sliderSize };
     }
     else
     {
         arrowDownRight = RAYGUI_CLITERAL(Rectangle){ (float)bounds.x + bounds.width - spinnerSize - GuiGetStyle(SCROLLBAR, BORDER_WIDTH), (float)bounds.y + GuiGetStyle(SCROLLBAR, BORDER_WIDTH), (float)spinnerSize, (float)spinnerSize};
         scrollbar = RAYGUI_CLITERAL(Rectangle){ arrowUpLeft.x + arrowUpLeft.width, bounds.y + GuiGetStyle(SCROLLBAR, BORDER_WIDTH) + GuiGetStyle(SCROLLBAR, SCROLL_PADDING), bounds.width - arrowUpLeft.width - arrowDownRight.width - 2*GuiGetStyle(SCROLLBAR, BORDER_WIDTH), bounds.height - 2*(GuiGetStyle(SCROLLBAR, BORDER_WIDTH) + GuiGetStyle(SCROLLBAR, SCROLL_PADDING))};
-        sliderSize = (sliderSize >= scrollbar.width)? (scrollbar.width - 2) : sliderSize;       // Make sure the slider won't get outside of the scrollbar
+        sliderSize = (sliderSize >= scrollbar.width)? ((int)scrollbar.width - 2) : sliderSize;       // Make sure the slider won't get outside of the scrollbar
         slider = RAYGUI_CLITERAL(Rectangle){ (float)scrollbar.x + (int)(((float)(value - minValue)/range)*(scrollbar.width - sliderSize)), (float)bounds.y + GuiGetStyle(SCROLLBAR, BORDER_WIDTH) + GuiGetStyle(SCROLLBAR, SCROLL_SLIDER_PADDING), (float)sliderSize, (float)bounds.height - 2*(GuiGetStyle(SCROLLBAR, BORDER_WIDTH) + GuiGetStyle(SCROLLBAR, SCROLL_SLIDER_PADDING)) };
     }
 
@@ -2085,7 +2066,7 @@ int GuiScrollBar(Rectangle bounds, int value, int minValue, int maxValue)
             state = GUI_STATE_FOCUSED;
 
             // Handle mouse wheel
-            int wheel = GetMouseWheelMove();
+            int wheel = (int)GetMouseWheelMove();
             if (wheel != 0) value += wheel;
 
             if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
@@ -2100,12 +2081,12 @@ int GuiScrollBar(Rectangle bounds, int value, int minValue, int maxValue)
                 if (!isVertical)
                 {
                     Rectangle scrollArea = { arrowUpLeft.x + arrowUpLeft.width, arrowUpLeft.y, scrollbar.width, bounds.height - 2*GuiGetStyle(SCROLLBAR, BORDER_WIDTH)};
-                    if (CheckCollisionPointRec(mousePoint, scrollArea)) value = ((float)(mousePoint.x - scrollArea.x - slider.width/2)*range)/(scrollArea.width - slider.width) + minValue;
+                    if (CheckCollisionPointRec(mousePoint, scrollArea)) value = (int)(((float)(mousePoint.x - scrollArea.x - slider.width/2)*range)/(scrollArea.width - slider.width) + minValue);
                 }
                 else
                 {
                     Rectangle scrollArea = { arrowUpLeft.x, arrowUpLeft.y+arrowUpLeft.height, bounds.width - 2*GuiGetStyle(SCROLLBAR, BORDER_WIDTH),  scrollbar.height};
-                    if (CheckCollisionPointRec(mousePoint, scrollArea)) value = ((float)(mousePoint.y - scrollArea.y - slider.height/2)*range)/(scrollArea.height - slider.height) + minValue;
+                    if (CheckCollisionPointRec(mousePoint, scrollArea)) value = (int)(((float)(mousePoint.y - scrollArea.y - slider.height/2)*range)/(scrollArea.height - slider.height) + minValue);
                 }
             }
         }
@@ -2119,7 +2100,7 @@ int GuiScrollBar(Rectangle bounds, int value, int minValue, int maxValue)
     // Draw control
     //--------------------------------------------------------------------
     GuiDrawRectangle(bounds, GuiGetStyle(SCROLLBAR, BORDER_WIDTH), Fade(GetColor(GuiGetStyle(LISTVIEW, BORDER + state*3)), guiAlpha), Fade(GetColor(GuiGetStyle(DEFAULT, BORDER_COLOR_DISABLED)), guiAlpha));   // Draw the background
-    
+
     GuiDrawRectangle(scrollbar, 0, BLANK, Fade(GetColor(GuiGetStyle(BUTTON, BASE_COLOR_NORMAL)), guiAlpha));     // Draw the scrollbar active area background
     GuiDrawRectangle(slider, 0, BLANK, Fade(GetColor(GuiGetStyle(SLIDER, BORDER + state*3)), guiAlpha));         // Draw the slider bar
 
@@ -2195,11 +2176,11 @@ int GuiListViewEx(Rectangle bounds, const char **text, int count, int *focus, in
     itemBounds.x = bounds.x + GuiGetStyle(LISTVIEW, LIST_ITEMS_PADDING);
     itemBounds.y = bounds.y + GuiGetStyle(LISTVIEW, LIST_ITEMS_PADDING) + GuiGetStyle(DEFAULT, BORDER_WIDTH);
     itemBounds.width = bounds.width - 2*GuiGetStyle(LISTVIEW, LIST_ITEMS_PADDING) - GuiGetStyle(DEFAULT, BORDER_WIDTH);
-    itemBounds.height = GuiGetStyle(LISTVIEW, LIST_ITEMS_HEIGHT);
+    itemBounds.height = (float)GuiGetStyle(LISTVIEW, LIST_ITEMS_HEIGHT);
     if (useScrollBar) itemBounds.width -= GuiGetStyle(LISTVIEW, SCROLLBAR_WIDTH);
 
     // Get items on the list
-    int visibleItems = bounds.height/(GuiGetStyle(LISTVIEW, LIST_ITEMS_HEIGHT) + GuiGetStyle(LISTVIEW, LIST_ITEMS_PADDING));
+    int visibleItems = (int)bounds.height/(GuiGetStyle(LISTVIEW, LIST_ITEMS_HEIGHT) + GuiGetStyle(LISTVIEW, LIST_ITEMS_PADDING));
     if (visibleItems > count) visibleItems = count;
 
     int startIndex = (scrollIndex == NULL)? 0 : *scrollIndex;
@@ -2237,7 +2218,7 @@ int GuiListViewEx(Rectangle bounds, const char **text, int count, int *focus, in
 
             if (useScrollBar)
             {
-                int wheelMove = GetMouseWheelMove();
+                int wheelMove = (int)GetMouseWheelMove();
                 startIndex -= wheelMove;
 
                 if (startIndex < 0) startIndex = 0;
@@ -2306,7 +2287,7 @@ int GuiListViewEx(Rectangle bounds, const char **text, int count, int *focus, in
 
         int prevSliderSize = GuiGetStyle(SCROLLBAR, SCROLL_SLIDER_SIZE);   // Save default slider size
         int prevScrollSpeed = GuiGetStyle(SCROLLBAR, SCROLL_SPEED); // Save default scroll speed
-        GuiSetStyle(SCROLLBAR, SCROLL_SLIDER_SIZE, sliderSize);            // Change slider size
+        GuiSetStyle(SCROLLBAR, SCROLL_SLIDER_SIZE, (int)sliderSize);            // Change slider size
         GuiSetStyle(SCROLLBAR, SCROLL_SPEED, count - visibleItems); // Change scroll speed
 
         startIndex = GuiScrollBar(scrollBarBounds, startIndex, 0, count - visibleItems);
@@ -2387,7 +2368,7 @@ Color GuiColorPanelEx(Rectangle bounds, Color color, float hue)
         DrawRectangleGradientEx(bounds, Fade(colBlack, 0), Fade(colBlack, guiAlpha), Fade(colBlack, guiAlpha), Fade(colBlack, 0));
 
         // Draw color picker: selector
-        Rectangle selector = { pickerSelector.x - GuiGetStyle(COLORPICKER, COLOR_SELECTOR_SIZE)/2, pickerSelector.y - GuiGetStyle(COLORPICKER, COLOR_SELECTOR_SIZE)/2, GuiGetStyle(COLORPICKER, COLOR_SELECTOR_SIZE), GuiGetStyle(COLORPICKER, COLOR_SELECTOR_SIZE) };
+        Rectangle selector = { pickerSelector.x - GuiGetStyle(COLORPICKER, COLOR_SELECTOR_SIZE)/2, pickerSelector.y - GuiGetStyle(COLORPICKER, COLOR_SELECTOR_SIZE)/2, (float)GuiGetStyle(COLORPICKER, COLOR_SELECTOR_SIZE), (float)GuiGetStyle(COLORPICKER, COLOR_SELECTOR_SIZE) };
         GuiDrawRectangle(selector, 0, BLANK, Fade(colWhite, guiAlpha));
     }
     else
@@ -2445,8 +2426,8 @@ float GuiColorBarAlpha(Rectangle bounds, float alpha)
     // Draw alpha bar: checked background
     if (state != GUI_STATE_DISABLED)
     {
-        int checksX = bounds.width/COLORBARALPHA_CHECKED_SIZE;
-        int checksY = bounds.height/COLORBARALPHA_CHECKED_SIZE;
+        int checksX = (int)bounds.width/COLORBARALPHA_CHECKED_SIZE;
+        int checksY = (int)bounds.height/COLORBARALPHA_CHECKED_SIZE;
 
         for (int x = 0; x < checksX; x++)
         {
@@ -2517,14 +2498,14 @@ float GuiColorBarHue(Rectangle bounds, float hue)
     if (state != GUI_STATE_DISABLED)
     {
         // Draw hue bar:color bars
-        DrawRectangleGradientV(bounds.x + GuiGetStyle(COLORPICKER, HUEBAR_SELECTOR_OVERFLOW)/2, bounds.y + GuiGetStyle(COLORPICKER, HUEBAR_SELECTOR_OVERFLOW)/2, bounds.width - GuiGetStyle(COLORPICKER, HUEBAR_SELECTOR_OVERFLOW), (int)bounds.height/6, Fade(RAYGUI_CLITERAL(Color){ 255,0,0,255 }, guiAlpha), Fade(RAYGUI_CLITERAL(Color){ 255,255,0,255 }, guiAlpha));
-        DrawRectangleGradientV(bounds.x + GuiGetStyle(COLORPICKER, HUEBAR_SELECTOR_OVERFLOW)/2, bounds.y + (int)bounds.height/6 + GuiGetStyle(COLORPICKER, HUEBAR_SELECTOR_OVERFLOW)/2, bounds.width - GuiGetStyle(COLORPICKER, HUEBAR_SELECTOR_OVERFLOW), (int)bounds.height/6, Fade(RAYGUI_CLITERAL(Color){ 255,255,0,255 }, guiAlpha), Fade(RAYGUI_CLITERAL(Color){ 0,255,0,255 }, guiAlpha));
-        DrawRectangleGradientV(bounds.x + GuiGetStyle(COLORPICKER, HUEBAR_SELECTOR_OVERFLOW)/2, bounds.y + 2*((int)bounds.height/6) + GuiGetStyle(COLORPICKER, HUEBAR_SELECTOR_OVERFLOW)/2, bounds.width - GuiGetStyle(COLORPICKER, HUEBAR_SELECTOR_OVERFLOW), (int)bounds.height/6, Fade(RAYGUI_CLITERAL(Color){ 0,255,0,255 }, guiAlpha), Fade(RAYGUI_CLITERAL(Color){ 0,255,255,255 }, guiAlpha));
-        DrawRectangleGradientV(bounds.x + GuiGetStyle(COLORPICKER, HUEBAR_SELECTOR_OVERFLOW)/2, bounds.y + 3*((int)bounds.height/6) + GuiGetStyle(COLORPICKER, HUEBAR_SELECTOR_OVERFLOW)/2, bounds.width - GuiGetStyle(COLORPICKER, HUEBAR_SELECTOR_OVERFLOW), (int)bounds.height/6, Fade(RAYGUI_CLITERAL(Color){ 0,255,255,255 }, guiAlpha), Fade(RAYGUI_CLITERAL(Color){ 0,0,255,255 }, guiAlpha));
-        DrawRectangleGradientV(bounds.x + GuiGetStyle(COLORPICKER, HUEBAR_SELECTOR_OVERFLOW)/2, bounds.y + 4*((int)bounds.height/6) + GuiGetStyle(COLORPICKER, HUEBAR_SELECTOR_OVERFLOW)/2, bounds.width - GuiGetStyle(COLORPICKER, HUEBAR_SELECTOR_OVERFLOW), (int)bounds.height/6, Fade(RAYGUI_CLITERAL(Color){ 0,0,255,255 }, guiAlpha), Fade(RAYGUI_CLITERAL(Color){ 255,0,255,255 }, guiAlpha));
-        DrawRectangleGradientV(bounds.x + GuiGetStyle(COLORPICKER, HUEBAR_SELECTOR_OVERFLOW)/2, bounds.y + 5*((int)bounds.height/6) + GuiGetStyle(COLORPICKER, HUEBAR_SELECTOR_OVERFLOW)/2, bounds.width - GuiGetStyle(COLORPICKER, HUEBAR_SELECTOR_OVERFLOW), (int)bounds.height/6 - GuiGetStyle(COLORPICKER, HUEBAR_SELECTOR_OVERFLOW), Fade(RAYGUI_CLITERAL(Color){ 255,0,255,255 }, guiAlpha), Fade(RAYGUI_CLITERAL(Color){ 255,0,0,255 }, guiAlpha));
+        DrawRectangleGradientV((int)bounds.x + GuiGetStyle(COLORPICKER, HUEBAR_SELECTOR_OVERFLOW)/2, (int)bounds.y + GuiGetStyle(COLORPICKER, HUEBAR_SELECTOR_OVERFLOW)/2, (int)bounds.width - GuiGetStyle(COLORPICKER, HUEBAR_SELECTOR_OVERFLOW), (int)bounds.height/6, Fade(RAYGUI_CLITERAL(Color){ 255,0,0,255 }, guiAlpha), Fade(RAYGUI_CLITERAL(Color){ 255,255,0,255 }, guiAlpha));
+        DrawRectangleGradientV((int)bounds.x + GuiGetStyle(COLORPICKER, HUEBAR_SELECTOR_OVERFLOW)/2, (int)bounds.y + (int)bounds.height/6 + GuiGetStyle(COLORPICKER, HUEBAR_SELECTOR_OVERFLOW)/2, (int)bounds.width - GuiGetStyle(COLORPICKER, HUEBAR_SELECTOR_OVERFLOW), (int)bounds.height/6, Fade(RAYGUI_CLITERAL(Color){ 255,255,0,255 }, guiAlpha), Fade(RAYGUI_CLITERAL(Color){ 0,255,0,255 }, guiAlpha));
+        DrawRectangleGradientV((int)bounds.x + GuiGetStyle(COLORPICKER, HUEBAR_SELECTOR_OVERFLOW)/2, (int)bounds.y + 2*((int)bounds.height/6) + GuiGetStyle(COLORPICKER, HUEBAR_SELECTOR_OVERFLOW)/2, (int)bounds.width - GuiGetStyle(COLORPICKER, HUEBAR_SELECTOR_OVERFLOW), (int)bounds.height/6, Fade(RAYGUI_CLITERAL(Color){ 0,255,0,255 }, guiAlpha), Fade(RAYGUI_CLITERAL(Color){ 0,255,255,255 }, guiAlpha));
+        DrawRectangleGradientV((int)bounds.x + GuiGetStyle(COLORPICKER, HUEBAR_SELECTOR_OVERFLOW)/2, (int)bounds.y + 3*((int)bounds.height/6) + GuiGetStyle(COLORPICKER, HUEBAR_SELECTOR_OVERFLOW)/2, (int)bounds.width - GuiGetStyle(COLORPICKER, HUEBAR_SELECTOR_OVERFLOW), (int)bounds.height/6, Fade(RAYGUI_CLITERAL(Color){ 0,255,255,255 }, guiAlpha), Fade(RAYGUI_CLITERAL(Color){ 0,0,255,255 }, guiAlpha));
+        DrawRectangleGradientV((int)bounds.x + GuiGetStyle(COLORPICKER, HUEBAR_SELECTOR_OVERFLOW)/2, (int)bounds.y + 4*((int)bounds.height/6) + GuiGetStyle(COLORPICKER, HUEBAR_SELECTOR_OVERFLOW)/2, (int)bounds.width - GuiGetStyle(COLORPICKER, HUEBAR_SELECTOR_OVERFLOW), (int)bounds.height/6, Fade(RAYGUI_CLITERAL(Color){ 0,0,255,255 }, guiAlpha), Fade(RAYGUI_CLITERAL(Color){ 255,0,255,255 }, guiAlpha));
+        DrawRectangleGradientV((int)bounds.x + GuiGetStyle(COLORPICKER, HUEBAR_SELECTOR_OVERFLOW)/2, (int)bounds.y + 5*((int)bounds.height/6) + GuiGetStyle(COLORPICKER, HUEBAR_SELECTOR_OVERFLOW)/2, (int)bounds.width - GuiGetStyle(COLORPICKER, HUEBAR_SELECTOR_OVERFLOW), (int)bounds.height/6 - GuiGetStyle(COLORPICKER, HUEBAR_SELECTOR_OVERFLOW), Fade(RAYGUI_CLITERAL(Color){ 255,0,255,255 }, guiAlpha), Fade(RAYGUI_CLITERAL(Color){ 255,0,0,255 }, guiAlpha));
     }
-    else DrawRectangleGradientV(bounds.x, bounds.y, bounds.width, bounds.height, Fade(Fade(GetColor(GuiGetStyle(COLORPICKER, BASE_COLOR_DISABLED)), 0.1f), guiAlpha), Fade(GetColor(GuiGetStyle(COLORPICKER, BORDER_COLOR_DISABLED)), guiAlpha));
+    else DrawRectangleGradientV((int)bounds.x, (int)bounds.y, (int)bounds.width, (int)bounds.height, Fade(Fade(GetColor(GuiGetStyle(COLORPICKER, BASE_COLOR_DISABLED)), 0.1f), guiAlpha), Fade(GetColor(GuiGetStyle(COLORPICKER, BORDER_COLOR_DISABLED)), guiAlpha));
 
     GuiDrawRectangle(bounds, 1, Fade(GetColor(GuiGetStyle(COLORPICKER, BORDER + state*3)), guiAlpha), BLANK);
 
@@ -2577,7 +2558,7 @@ int GuiMessageBox(Rectangle bounds, const char *title, const char *message, cons
     buttonBounds.width = (bounds.width - MESSAGEBOX_BUTTON_PADDING*(buttonsCount + 1))/buttonsCount;
     buttonBounds.height = MESSAGEBOX_BUTTON_HEIGHT;
 
-    Vector2 textSize = MeasureTextEx(guiFont, message, GuiGetStyle(DEFAULT, TEXT_SIZE), 1);
+    Vector2 textSize = MeasureTextEx(guiFont, message, (float)GuiGetStyle(DEFAULT, TEXT_SIZE), 1);
 
     Rectangle textBounds = { 0 };
     textBounds.x = bounds.x + bounds.width/2 - textSize.x/2;
@@ -2632,12 +2613,12 @@ int GuiTextInputBox(Rectangle bounds, const char *title, const char *message, co
     buttonBounds.width = (bounds.width - TEXTINPUTBOX_BUTTON_PADDING*(buttonsCount + 1))/buttonsCount;
     buttonBounds.height = TEXTINPUTBOX_BUTTON_HEIGHT;
 
-    int messageInputHeight = bounds.height - WINDOW_STATUSBAR_HEIGHT - GuiGetStyle(STATUSBAR, BORDER_WIDTH) - TEXTINPUTBOX_BUTTON_HEIGHT - 2*TEXTINPUTBOX_BUTTON_PADDING;
+    int messageInputHeight = (int)bounds.height - WINDOW_STATUSBAR_HEIGHT - GuiGetStyle(STATUSBAR, BORDER_WIDTH) - TEXTINPUTBOX_BUTTON_HEIGHT - 2*TEXTINPUTBOX_BUTTON_PADDING;
 
     Rectangle textBounds = { 0 };
     if (message != NULL)
     {
-        Vector2 textSize = MeasureTextEx(guiFont, message, GuiGetStyle(DEFAULT, TEXT_SIZE), 1);
+        Vector2 textSize = MeasureTextEx(guiFont, message, (float)GuiGetStyle(DEFAULT, TEXT_SIZE), 1);
 
         textBounds.x = bounds.x + bounds.width/2 - textSize.x/2;
         textBounds.y = bounds.y + WINDOW_STATUSBAR_HEIGHT + messageInputHeight/4 - textSize.y/2;
@@ -2706,8 +2687,8 @@ Vector2 GuiGrid(Rectangle bounds, float spacing, int subdivs)
     {
         if (CheckCollisionPointRec(mousePoint, bounds))
         {
-            currentCell.x = (int)((mousePoint.x - bounds.x)/spacing);
-            currentCell.y = (int)((mousePoint.y - bounds.y)/spacing);
+            currentCell.x = (mousePoint.x - bounds.x) / spacing;
+            currentCell.y = (mousePoint.y - bounds.y) / spacing;
         }
     }
     //--------------------------------------------------------------------
@@ -2792,7 +2773,7 @@ void GuiLoadStyle(const char *fileName)
                         {
                             // Load characters from charmap file,
                             // expected '\n' separated list of integer values
-                            char *charValues = LoadText(charmapFileName);
+                            char *charValues = LoadFileText(charmapFileName);
                             if (charValues != NULL)
                             {
                                 int charsCount = 0;
@@ -3193,7 +3174,7 @@ static int GetTextWidth(const char *text)
 {
     Vector2 size = { 0 };
 
-    if ((text != NULL) && (text[0] != '\0')) size = MeasureTextEx(guiFont, text, GuiGetStyle(DEFAULT, TEXT_SIZE), GuiGetStyle(DEFAULT, TEXT_SPACING));
+    if ((text != NULL) && (text[0] != '\0')) size = MeasureTextEx(guiFont, text, (float)GuiGetStyle(DEFAULT, TEXT_SIZE), (float)GuiGetStyle(DEFAULT, TEXT_SPACING));
 
     // TODO: Consider text icon width here???
 
@@ -3325,7 +3306,7 @@ static void GuiDrawText(const char *text, Rectangle bounds, int alignment, Color
             position.x += (RICON_SIZE + ICON_TEXT_PADDING);
         }
 #endif
-        DrawTextEx(guiFont, text, position, GuiGetStyle(DEFAULT, TEXT_SIZE), GuiGetStyle(DEFAULT, TEXT_SPACING), tint);
+        DrawTextEx(guiFont, text, position, (float)GuiGetStyle(DEFAULT, TEXT_SIZE), (float)GuiGetStyle(DEFAULT, TEXT_SPACING), tint);
         //---------------------------------------------------------------------------------
     }
 }
@@ -3333,41 +3314,23 @@ static void GuiDrawText(const char *text, Rectangle bounds, int alignment, Color
 // Gui draw rectangle using default raygui plain style with borders
 static void GuiDrawRectangle(Rectangle rec, int borderWidth, Color borderColor, Color color)
 {
-    if (color.a > 0) 
+    if (color.a > 0)
     {
         // Draw rectangle filled with color
-        DrawRectangle(rec.x, rec.y, rec.width, rec.height, color);
+        DrawRectangle((int)rec.x, (int)rec.y, (int)rec.width, (int)rec.height, color);
     }
-    
-    if (borderWidth > 0) 
+
+    if (borderWidth > 0)
     {
         // Draw rectangle border lines with color
-        DrawRectangle(rec.x, rec.y, rec.width, borderWidth, borderColor);
-        DrawRectangle(rec.x, rec.y + borderWidth, borderWidth, rec.height - 2*borderWidth, borderColor);
-        DrawRectangle(rec.x + rec.width - borderWidth, rec.y + borderWidth, borderWidth, rec.height - 2*borderWidth, borderColor);
-        DrawRectangle(rec.x, rec.y + rec.height - borderWidth, rec.width, borderWidth, borderColor);
+        DrawRectangle((int)rec.x, (int)rec.y, (int)rec.width, borderWidth, borderColor);
+        DrawRectangle((int)rec.x, (int)rec.y + borderWidth, borderWidth, (int)rec.height - 2*borderWidth, borderColor);
+        DrawRectangle((int)rec.x + (int)rec.width - borderWidth, (int)rec.y + borderWidth, borderWidth, (int)rec.height - 2*borderWidth, borderColor);
+        DrawRectangle((int)rec.x, (int)rec.y + (int)rec.height - borderWidth, (int)rec.width, borderWidth, borderColor);
     }
-    
+
     // TODO: For n-patch-based style we would need: [state] and maybe [control]
     // In this case all controls drawing logic should be moved to this function... I don't like it...
-}
-
-// Draw tooltip relatively to bounds
-static void GuiDrawTooltip(Rectangle bounds)
-{
-    //static int tooltipFramesCounter = 0;  // Not possible gets reseted at second function call!
-
-    if (guiTooltipEnabled && (guiTooltip != NULL) && CheckCollisionPointRec(GetMousePosition(), bounds))
-    {
-        Vector2 mousePosition = GetMousePosition();
-        Vector2 textSize = MeasureTextEx(guiFont, guiTooltip, GuiGetStyle(DEFAULT, TEXT_SIZE), GuiGetStyle(DEFAULT, TEXT_SPACING));
-        Rectangle tooltipBounds = { mousePosition.x, mousePosition.y, textSize.x + 20, textSize.y*2 };
-
-        GuiDrawRectangle(tooltipBounds, 1, Fade(GetColor(GuiGetStyle(DEFAULT, LINE_COLOR)), guiAlpha), Fade(GetColor(GuiGetStyle(DEFAULT, BACKGROUND_COLOR)), guiAlpha));
-
-        tooltipBounds.x += 10;
-        GuiLabel(tooltipBounds, guiTooltip);
-    }
 }
 
 // Split controls text into multiple strings
@@ -3585,7 +3548,7 @@ static Color Fade(Color color, float alpha)
 {
     if (alpha < 0.0f) alpha = 0.0f;
     else if (alpha > 1.0f) alpha = 1.0f;
-    
+
     Color result = { color.r, color.g, color.b, (unsigned char)(255.0f*alpha) };
 
     return result;
