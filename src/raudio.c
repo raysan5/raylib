@@ -1341,7 +1341,7 @@ Music LoadMusicStream(const char *fileName)
         }
     }
 #endif
-    else TRACELOG(LOG_WARNING, "STREAM: [%s] Fileformat not supported", fileName);
+    else TRACELOG(LOG_WARNING, "STREAM: [%s] File format not supported", fileName);
 
     if (!musicLoaded)
     {
@@ -1371,7 +1371,7 @@ Music LoadMusicStream(const char *fileName)
     else
     {
         // Show some music stream info
-        TRACELOG(LOG_INFO, "FILEIO: [%s] Music file successfully loaded:", fileName);
+        TRACELOG(LOG_INFO, "FILEIO: [%s] Music file loaded successfully", fileName);
         TRACELOG(LOG_INFO, "    > Total samples: %i", music.sampleCount);
         TRACELOG(LOG_INFO, "    > Sample rate:   %i Hz", music.stream.sampleRate);
         TRACELOG(LOG_INFO, "    > Sample size:   %i bits", music.stream.sampleSize);
@@ -1535,7 +1535,7 @@ Music LoadMusicStreamFromMemory(const char *fileType, unsigned char *data, int d
         }
     }
 #endif
-    else TRACELOG(LOG_WARNING, "STREAM: [%s] Fileformat not supported", fileType);
+    else TRACELOG(LOG_WARNING, "STREAM: Data format not supported");
 
     if (!musicLoaded)
     {
@@ -1560,12 +1560,12 @@ Music LoadMusicStreamFromMemory(const char *fileType, unsigned char *data, int d
     #endif
 
         music.ctxData = NULL;
-        TRACELOG(LOG_WARNING, "FILEIO: [%s] Music memory could not be opened", fileType);
+        TRACELOG(LOG_WARNING, "FILEIO: Music data could not be loaded");
     }
     else
     {
         // Show some music stream info
-        TRACELOG(LOG_INFO, "FILEIO: [%s] Music memory successfully loaded:", fileType);
+        TRACELOG(LOG_INFO, "FILEIO: Music data loaded successfully");
         TRACELOG(LOG_INFO, "    > Total samples: %i", music.sampleCount);
         TRACELOG(LOG_INFO, "    > Sample rate:   %i Hz", music.stream.sampleRate);
         TRACELOG(LOG_INFO, "    > Sample size:   %i bits", music.stream.sampleSize);
