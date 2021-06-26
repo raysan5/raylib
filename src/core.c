@@ -6464,7 +6464,7 @@ UWPMouseSetPosFunc UWPGetMouseSetPosFunc() { return uwpMouseSetPosFunc; }
 void UWPSetMouseSetPosFunc(UWPMouseSetPosFunc func) { uwpMouseSetPosFunc = func; }
 
 void *UWPGetCoreWindowPtr() { return uwpCoreWindow; }
-void UWPSetCoreWindowPtr(void* ptr) { uwpCoreWindow = ptr; }
+void UWPSetCoreWindowPtr(void *ptr) { uwpCoreWindow = ptr; }
 void UWPMouseWheelEvent(int deltaY) { CORE.Input.Mouse.currentWheelMove = (float)deltaY; }
 
 void UWPKeyDownEvent(int key, bool down, bool controlKey)

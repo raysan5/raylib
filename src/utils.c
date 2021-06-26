@@ -124,7 +124,7 @@ void TraceLog(int logType, const char *text, ...)
     }
 
 #if defined(PLATFORM_ANDROID)
-    switch(logType)
+    switch (logType)
     {
         case LOG_TRACE: __android_log_vprint(ANDROID_LOG_VERBOSE, "raylib", text, args); break;
         case LOG_DEBUG: __android_log_vprint(ANDROID_LOG_DEBUG, "raylib", text, args); break;
