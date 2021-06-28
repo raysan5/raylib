@@ -1,6 +1,6 @@
 /**********************************************************************************************
 *
-*   raylib.uwp_events - Functions for bootstrapping UWP functionality within raylib's core.
+*   raylib.uwp_events - Functions for bootstrapping UWP functionality
 *
 *
 *   LICENSE: zlib/libpng
@@ -32,83 +32,52 @@ extern "C" {
 #endif
 
 #if defined(PLATFORM_UWP)
+bool UWPIsConfigured();                 // Check if UWP functions are set and ready to use
+void UWPSetDataPath(const char *path);  // Set the UWP data path for saving and loading
 
-// Determine if UWP functions are set and ready for raylib's use.
-bool UWPIsConfigured();
+typedef double(*UWPQueryTimeFunc)();                         // Callback function to query time
+UWPQueryTimeFunc UWPGetQueryTimeFunc(void);                  // Get query time function
+void UWPSetQueryTimeFunc(UWPQueryTimeFunc func);             // Set query time function
 
-// Call this to set the UWP data path you wish for saving and loading.
-void UWPSetDataPath(const char* path);
+typedef void (*UWPSleepFunc)(double sleepUntil);             // Callback function for sleep
+UWPSleepFunc UWPGetSleepFunc(void);                          // Get sleep function
+void UWPSetSleepFunc(UWPSleepFunc func);                     // Set sleep function
 
-// Function for getting program time.
-typedef double(*UWPQueryTimeFunc)();
-UWPQueryTimeFunc UWPGetQueryTimeFunc(void);
-void UWPSetQueryTimeFunc(UWPQueryTimeFunc func);
+typedef void (*UWPDisplaySizeFunc)(int *width, int *height); // Callback function for display size change
+UWPDisplaySizeFunc UWPGetDisplaySizeFunc(void);              // Get display size function
+void UWPSetDisplaySizeFunc(UWPDisplaySizeFunc func);         // Set display size function
 
-// Function for sleeping the current thread
-typedef void (*UWPSleepFunc)(double sleepUntil);
-UWPSleepFunc UWPGetSleepFunc(void);
-void UWPSetSleepFunc(UWPSleepFunc func);
+typedef void (*UWPMouseFunc)(void);                          // Callback function for mouse cursor control
+UWPMouseFunc UWPGetMouseLockFunc();                          // Get mouse lock function
+void UWPSetMouseLockFunc(UWPMouseFunc func);                 // Set mouse lock function
+UWPMouseFunc UWPGetMouseUnlockFunc();                        // Get mouse unlock function
+void UWPSetMouseUnlockFunc(UWPMouseFunc func);               // Set mouse unlock function
+UWPMouseFunc UWPGetMouseShowFunc();                          // Get mouse show function
+void UWPSetMouseShowFunc(UWPMouseFunc func);                 // Set mouse show function
+UWPMouseFunc UWPGetMouseHideFunc();                          // Get mouse hide function
+void UWPSetMouseHideFunc(UWPMouseFunc func);                 // Set mouse hide function
 
-// Function for querying the display size
-typedef void(*UWPDisplaySizeFunc)(int* width, int* height);
-UWPDisplaySizeFunc UWPGetDisplaySizeFunc(void);
-void UWPSetDisplaySizeFunc(UWPDisplaySizeFunc func);
+typedef void (*UWPMouseSetPosFunc)(int x, int y);            // Callback function to set mouse position
+UWPMouseSetPosFunc UWPGetMouseSetPosFunc();                  // Get mouse set position function
+void UWPSetMouseSetPosFunc(UWPMouseSetPosFunc func);         // Set mouse set position function
 
-// Functions for mouse cursor control
-typedef void(*UWPMouseFunc)(void);
-UWPMouseFunc UWPGetMouseLockFunc();
-void UWPSetMouseLockFunc(UWPMouseFunc func);
-UWPMouseFunc UWPGetMouseUnlockFunc();
-void UWPSetMouseUnlockFunc(UWPMouseFunc func);
-UWPMouseFunc UWPGetMouseShowFunc();
-void UWPSetMouseShowFunc(UWPMouseFunc func);
-UWPMouseFunc UWPGetMouseHideFunc();
-void UWPSetMouseHideFunc(UWPMouseFunc func);
-
-// Function for setting mouse cursor position.
-typedef void (*UWPMouseSetPosFunc)(int x, int y);
-UWPMouseSetPosFunc UWPGetMouseSetPosFunc();
-void UWPSetMouseSetPosFunc(UWPMouseSetPosFunc func);
-
-// The below functions are implemented in core.c but are placed here so they can be called by user code.
+// NOTE: Below functions are implemented in core.c but are placed here so they can be called by user code
 // This choice is made as platform-specific code is preferred to be kept away from raylib.h
 
-// Call this when a Key is pressed or released.
-void UWPKeyDownEvent(int key, bool down, bool controlKey);
+void UWPKeyDownEvent(int key, bool down, bool controlKey);   // Check for key down event
+void UWPKeyCharEvent(int key);                               // Check for a character event (CoreWindow::CharacterRecieved)
+void UWPMouseButtonEvent(int button, bool down);             // Check for mouse button state changes event
+void UWPMousePosEvent(double x, double y);                   // Check for mouse cursor move event
+void UWPMouseWheelEvent(int deltaY);                         // Check for mouse wheel move event
+void UWPResizeEvent(int width, int height);                  // Check for window resize event
+void UWPActivateGamepadEvent(int gamepad, bool active);      // Check for gamepad activated event
+void UWPRegisterGamepadButton(int gamepad, int button, bool down);  // Check for gamepad button state change event
+void UWPRegisterGamepadAxis(int gamepad, int axis, float value);    // Check for gamepad axis state change event
+void UWPGestureMove(int pointer, float x, float y);                 // Check for touch point move event
+void UWPGestureTouch(int pointer, float x, float y, bool touch);    // Check for touch down or up event
 
-// Call this on the CoreWindow::CharacterRecieved event
-void UWPKeyCharEvent(int key);
-
-// Call when a mouse button state changes
-void UWPMouseButtonEvent(int button, bool down);
-
-// Call when the mouse cursor moves
-void UWPMousePosEvent(double x, double y);
-
-// Call when the mouse wheel moves
-void UWPMouseWheelEvent(int deltaY);
-
-// Call when the window resizes
-void UWPResizeEvent(int width, int height);
-
-// Call when a gamepad is made active
-void UWPActivateGamepadEvent(int gamepad, bool active);
-
-// Call when a gamepad button state changes
-void UWPRegisterGamepadButton(int gamepad, int button, bool down);
-
-// Call when a gamepad axis state changes
-void UWPRegisterGamepadAxis(int gamepad, int axis, float value);
-
-// Call when the touch point moves
-void UWPGestureMove(int pointer, float x, float y);
-
-// Call when there is a touch down or up
-void UWPGestureTouch(int pointer, float x, float y, bool touch);
-
-// Set the core window pointer so that we can pass it to EGL.
-void* UWPGetCoreWindowPtr();
-void UWPSetCoreWindowPtr(void* ptr);
+void *UWPGetCoreWindowPtr();            // Get core window pointer
+void UWPSetCoreWindowPtr(void *ptr);    // Set core window pointer, so that it can be passed to EGL
 
 #if defined(__cplusplus)
 }
