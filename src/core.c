@@ -7,10 +7,10 @@
 *       - PLATFORM_DESKTOP: Linux (X11 desktop mode)
 *       - PLATFORM_DESKTOP: FreeBSD, OpenBSD, NetBSD, DragonFly (X11 desktop)
 *       - PLATFORM_DESKTOP: OSX/macOS
-*       - PLATFORM_ANDROID: Android 4.0 (ARM, ARM64)
-*       - PLATFORM_RPI:     Raspberry Pi 0,1,2,3,4 (Raspbian)
+*       - PLATFORM_ANDROID: Android (ARM, ARM64)
+*       - PLATFORM_RPI:     Raspberry Pi 0,1,2,3 (Raspbian, native mode)
 *       - PLATFORM_DRM:     Linux native mode, including Raspberry Pi 4 with V3D fkms driver
-*       - PLATFORM_WEB:     HTML5 with asm.js (Chrome, Firefox)
+*       - PLATFORM_WEB:     HTML5 with WebAssembly
 *       - PLATFORM_UWP:     Windows 10 App, Windows Phone, Xbox One
 *
 *   CONFIGURATION:
@@ -226,7 +226,7 @@
     #include <android_native_app_glue.h>    // Defines basic app state struct and manages activity
 
     #include <EGL/egl.h>                    // Native platform windowing system interface
-    //#include <GLES2/gl2.h>                // OpenGL ES 2.0 library (not required in this module)
+    //#include <GLES2/gl2.h>                // OpenGL ES 2.0 library (not required in this module, only in rlgl)
 #endif
 
 #if defined(PLATFORM_RPI) || defined(PLATFORM_DRM)
@@ -253,13 +253,13 @@
 
     #include "EGL/egl.h"                // Native platform windowing system interface
     #include "EGL/eglext.h"             // EGL extensions
-    //#include "GLES2/gl2.h"            // OpenGL ES 2.0 library (not required in this module)
+    //#include "GLES2/gl2.h"            // OpenGL ES 2.0 library (not required in this module, only in rlgl)
 #endif
 
 #if defined(PLATFORM_UWP)
     #include "EGL/egl.h"                // Native platform windowing system interface
     #include "EGL/eglext.h"             // EGL extensions
-    //#include "GLES2/gl2.h"            // OpenGL ES 2.0 library (not required in this module)
+    //#include "GLES2/gl2.h"            // OpenGL ES 2.0 library (not required in this module, only in rlgl)
     #include "uwp_events.h"             // UWP bootstrapping functions
 #endif
 
