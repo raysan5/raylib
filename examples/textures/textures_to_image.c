@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [textures] example - Retrieve image data from texture: GetTextureData()
+*   raylib [textures] example - Retrieve image data from texture: LoadImageFromTexture()
 *
 *   NOTE: Images are loaded in CPU memory (RAM); textures are loaded in GPU memory (VRAM)
 *
@@ -28,7 +28,7 @@ int main(void)
     Texture2D texture = LoadTextureFromImage(image);       // Image converted to texture, GPU memory (RAM -> VRAM)
     UnloadImage(image);                                    // Unload image data from CPU memory (RAM)
 
-    image = GetTextureData(texture);                       // Retrieve image data from GPU memory (VRAM -> RAM)
+    image = LoadImageFromTexture(texture);                 // Load image from GPU texture (VRAM -> RAM)
     UnloadTexture(texture);                                // Unload texture from GPU memory (VRAM)
 
     texture = LoadTextureFromImage(image);                 // Recreate texture from retrieved image data (RAM -> VRAM)

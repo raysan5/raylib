@@ -385,6 +385,52 @@ Image LoadImageFromMemory(const char *fileType, const unsigned char *fileData, i
     return image;
 }
 
+// Load image from GPU texture data
+// NOTE: Compressed texture formats not supported
+Image LoadImageFromTexture(Texture2D texture)
+{
+    Image image = { 0 };
+
+    if (texture.format < PIXELFORMAT_COMPRESSED_DXT1_RGB)
+    {
+        image.data = rlReadTexturePixels(texture);
+
+        if (image.data != NULL)
+        {
+            image.width = texture.width;
+            image.height = texture.height;
+            image.format = texture.format;
+            image.mipmaps = 1;
+
+#if defined(GRAPHICS_API_OPENGL_ES2)
+            // NOTE: Data retrieved on OpenGL ES 2.0 should be RGBA,
+            // coming from FBO color buffer attachment, but it seems
+            // original texture format is retrieved on RPI...
+            image.format = PIXELFORMAT_UNCOMPRESSED_R8G8B8A8;
+#endif
+            TRACELOG(LOG_INFO, "TEXTURE: [ID %i] Pixel data retrieved successfully", texture.id);
+        }
+        else TRACELOG(LOG_WARNING, "TEXTURE: [ID %i] Failed to retrieve pixel data", texture.id);
+    }
+    else TRACELOG(LOG_WARNING, "TEXTURE: [ID %i] Failed to retrieve compressed pixel data", texture.id);
+
+    return image;
+}
+
+// Load image from screen buffer and (screenshot)
+Image LoadImageFromScreen(void)
+{
+    Image image = { 0 };
+
+    image.width = GetScreenWidth();
+    image.height = GetScreenHeight();
+    image.mipmaps = 1;
+    image.format = PIXELFORMAT_UNCOMPRESSED_R8G8B8A8;
+    image.data = rlReadScreenPixels(image.width, image.height);
+
+    return image;
+}
+
 // Unload image from CPU memory (RAM)
 void UnloadImage(Image image)
 {
@@ -2802,52 +2848,6 @@ void UpdateTexture(Texture2D texture, const void *pixels)
 void UpdateTextureRec(Texture2D texture, Rectangle rec, const void *pixels)
 {
     rlUpdateTexture(texture.id, (int)rec.x, (int)rec.y, (int)rec.width, (int)rec.height, texture.format, pixels);
-}
-
-// Get pixel data from GPU texture and return an Image
-// NOTE: Compressed texture formats not supported
-Image GetTextureData(Texture2D texture)
-{
-    Image image = { 0 };
-
-    if (texture.format < PIXELFORMAT_COMPRESSED_DXT1_RGB)
-    {
-        image.data = rlReadTexturePixels(texture);
-
-        if (image.data != NULL)
-        {
-            image.width = texture.width;
-            image.height = texture.height;
-            image.format = texture.format;
-            image.mipmaps = 1;
-
-#if defined(GRAPHICS_API_OPENGL_ES2)
-            // NOTE: Data retrieved on OpenGL ES 2.0 should be RGBA,
-            // coming from FBO color buffer attachment, but it seems
-            // original texture format is retrieved on RPI...
-            image.format = PIXELFORMAT_UNCOMPRESSED_R8G8B8A8;
-#endif
-            TRACELOG(LOG_INFO, "TEXTURE: [ID %i] Pixel data retrieved successfully", texture.id);
-        }
-        else TRACELOG(LOG_WARNING, "TEXTURE: [ID %i] Failed to retrieve pixel data", texture.id);
-    }
-    else TRACELOG(LOG_WARNING, "TEXTURE: [ID %i] Failed to retrieve compressed pixel data", texture.id);
-
-    return image;
-}
-
-// Get pixel data from GPU frontbuffer and return an Image (screenshot)
-Image GetScreenData(void)
-{
-    Image image = { 0 };
-
-    image.width = GetScreenWidth();
-    image.height = GetScreenHeight();
-    image.mipmaps = 1;
-    image.format = PIXELFORMAT_UNCOMPRESSED_R8G8B8A8;
-    image.data = rlReadScreenPixels(image.width, image.height);
-
-    return image;
 }
 
 //------------------------------------------------------------------------------------

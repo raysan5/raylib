@@ -1189,6 +1189,8 @@ RLAPI Image LoadImage(const char *fileName);                                    
 RLAPI Image LoadImageRaw(const char *fileName, int width, int height, int format, int headerSize);       // Load image from RAW file data
 RLAPI Image LoadImageAnim(const char *fileName, int *frames);                                            // Load image sequence from file (frames appended to image.data)
 RLAPI Image LoadImageFromMemory(const char *fileType, const unsigned char *fileData, int dataSize);      // Load image from memory buffer, fileType refers to extension: i.e. '.png'
+RLAPI Image LoadImageFromTexture(Texture2D texture);                                                     // Load image from GPU texture data
+RLAPI Image LoadImageFromScreen(void);                                                                   // Load image from screen buffer and (screenshot)
 RLAPI void UnloadImage(Image image);                                                                     // Unload image from CPU memory (RAM)
 RLAPI bool ExportImage(Image image, const char *fileName);                                               // Export image data to file, returns true on success
 RLAPI bool ExportImageAsCode(Image image, const char *fileName);                                         // Export image as code file defining an array of bytes, returns true on success
@@ -1263,8 +1265,6 @@ RLAPI void UnloadTexture(Texture2D texture);                                    
 RLAPI void UnloadRenderTexture(RenderTexture2D target);                                                  // Unload render texture from GPU memory (VRAM)
 RLAPI void UpdateTexture(Texture2D texture, const void *pixels);                                         // Update GPU texture with new data
 RLAPI void UpdateTextureRec(Texture2D texture, Rectangle rec, const void *pixels);                       // Update GPU texture rectangle with new data
-RLAPI Image GetTextureData(Texture2D texture);                                                           // Get pixel data from GPU texture and return an Image
-RLAPI Image GetScreenData(void);                                                                         // Get pixel data from screen buffer and return an Image (screenshot)
 
 // Texture configuration functions
 RLAPI void GenTextureMipmaps(Texture2D *texture);                                                        // Generate GPU mipmaps for a texture
