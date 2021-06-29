@@ -3055,7 +3055,7 @@ unsigned char *DecompressData(unsigned char *compData, int compDataLength, int *
 
     *dataLength = length;
 
-    TraceLog(LOG_INFO, "SYSTEM: Decompress data: Comp. size: %i -> Original size: %i", compDataLength, dataLength);
+    TraceLog(LOG_INFO, "SYSTEM: Decompress data: Comp. size: %i -> Original size: %i", compDataLength, *dataLength);
 #endif
 
     return data;
