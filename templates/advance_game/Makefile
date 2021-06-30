@@ -371,11 +371,11 @@ endif
 # Define all source files required
 PROJECT_SOURCE_FILES ?= \
     advance_game.c \
-    screens/screen_logo.c \
-    screens/screen_title.c \
-    screens/screen_options.c \
-    screens/screen_gameplay.c \
-    screens/screen_ending.c
+    screen_logo.c \
+    screen_title.c \
+    screen_options.c \
+    screen_gameplay.c \
+    screen_ending.c
 
 # Define all object files from source files
 OBJS = $(patsubst %.c, %.o, $(PROJECT_SOURCE_FILES))

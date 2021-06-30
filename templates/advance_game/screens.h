@@ -32,7 +32,7 @@
 typedef enum GameScreen { LOGO = 0, TITLE, OPTIONS, GAMEPLAY, ENDING } GameScreen;
 
 //----------------------------------------------------------------------------------
-// Global Variables Definition
+// Global Variables Declaration (shared by several modules)
 //----------------------------------------------------------------------------------
 extern GameScreen currentScreen;
 extern Font font;

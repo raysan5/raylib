@@ -13,12 +13,15 @@
 ********************************************************************************************/
 
 #include "raylib.h"
-#include "screens/screens.h"    // NOTE: Defines global variable: currentScreen
+#include "screens.h"    // NOTE: Declares global (extern) variables and screens functions
 
 #if defined(PLATFORM_WEB)
     #include <emscripten/emscripten.h>
 #endif
 
+//----------------------------------------------------------------------------------
+// Shared Variables Definition (global)
+//----------------------------------------------------------------------------------
 GameScreen currentScreen = 0;
 Font font = { 0 };
 Music music = { 0 };
@@ -27,8 +30,8 @@ Sound fxCoin = { 0 };
 //----------------------------------------------------------------------------------
 // Global Variables Definition (local to this module)
 //----------------------------------------------------------------------------------
-const int screenWidth = 800;
-const int screenHeight = 450;
+static const int screenWidth = 800;
+static const int screenHeight = 450;
 
 // Required variables to manage screen transitions (fade-in, fade-out)
 static float transAlpha = 0.0f;
@@ -37,19 +40,16 @@ static bool transFadeOut = false;
 static int transFromScreen = -1;
 static int transToScreen = -1;
 
-// NOTE: Some global variables that require to be visible for all screens,
-// are defined in screens.h (i.e. currentScreen)
-    
 //----------------------------------------------------------------------------------
 // Local Functions Declaration
 //----------------------------------------------------------------------------------
-static void ChangeToScreen(int screen);     // No transition effect
+static void ChangeToScreen(int screen);     // Change to screen, no transition effect
 
-static void TransitionToScreen(int screen);
-static void UpdateTransition(void);
-static void DrawTransition(void);
+static void TransitionToScreen(int screen); // Request transition to next screen
+static void UpdateTransition(void);         // Update transition effect
+static void DrawTransition(void);           // Draw transition effect (full-screen rectangle)
 
-static void UpdateDrawFrame(void);          // Update and Draw one frame
+static void UpdateDrawFrame(void);          // Update and draw one frame
 
 //----------------------------------------------------------------------------------
 // Main entry point
@@ -66,7 +66,7 @@ int main(void)
     font = LoadFont("resources/mecha.png");
     music = LoadMusicStream("resources/ambient.ogg");
     fxCoin = LoadSound("resources/coin.wav");
-    
+
     SetMusicVolume(music, 1.0f);
     PlayMusicStream(music);
 
@@ -89,7 +89,7 @@ int main(void)
 
     // De-Initialization
     //--------------------------------------------------------------------------------------
-    
+
     // Unload current screen data before closing
     switch (currentScreen)
     {
@@ -99,14 +99,14 @@ int main(void)
         case ENDING: UnloadEndingScreen(); break;
         default: break;
     }
-    
+
     // Unload all global loaded data (i.e. fonts) here!
     UnloadFont(font);
     UnloadMusicStream(music);
     UnloadSound(fxCoin);
 
     CloseAudioDevice();     // Close audio context
-    
+
     CloseWindow();          // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
 
@@ -129,7 +129,7 @@ static void ChangeToScreen(int screen)
         case ENDING: UnloadEndingScreen(); break;
         default: break;
     }
-    
+
     // Init next screen
     switch (screen)
     {
@@ -139,11 +139,11 @@ static void ChangeToScreen(int screen)
         case ENDING: InitEndingScreen(); break;
         default: break;
     }
-    
+
     currentScreen = screen;
 }
 
-// Define transition to next screen
+// Request transition to next screen
 static void TransitionToScreen(int screen)
 {
     onTransition = true;
@@ -159,13 +159,13 @@ static void UpdateTransition(void)
     if (!transFadeOut)
     {
         transAlpha += 0.05f;
-        
+
         // NOTE: Due to float internal representation, condition jumps on 1.0f instead of 1.05f
         // For that reason we compare against 1.01f, to avoid last frame loading stop
         if (transAlpha > 1.01f)
         {
             transAlpha = 1.0f;
-        
+
             // Unload current screen
             switch (transFromScreen)
             {
@@ -176,7 +176,7 @@ static void UpdateTransition(void)
                 case ENDING: UnloadEndingScreen(); break;
                 default: break;
             }
-            
+
             // Load next screen
             switch (transToScreen)
             {
@@ -186,9 +186,9 @@ static void UpdateTransition(void)
                 case ENDING: InitEndingScreen(); break;
                 default: break;
             }
-            
+
             currentScreen = transToScreen;
-            
+
             // Activate fade out effect to next loaded screen
             transFadeOut = true;
         }
@@ -196,7 +196,7 @@ static void UpdateTransition(void)
     else  // Transition fade out logic
     {
         transAlpha -= 0.02f;
-        
+
         if (transAlpha < -0.01f)
         {
             transAlpha = 0.0f;
@@ -220,22 +220,22 @@ static void UpdateDrawFrame(void)
     // Update
     //----------------------------------------------------------------------------------
     UpdateMusicStream(music);       // NOTE: Music keeps playing between screens
-    
+
     if (!onTransition)
     {
-        switch(currentScreen) 
+        switch(currentScreen)
         {
-            case LOGO: 
+            case LOGO:
             {
                 UpdateLogoScreen();
-                
+
                 if (FinishLogoScreen()) TransitionToScreen(TITLE);
 
             } break;
-            case TITLE: 
+            case TITLE:
             {
                 UpdateTitleScreen();
-                    
+
                 if (FinishTitleScreen() == 1) TransitionToScreen(OPTIONS);
                 else if (FinishTitleScreen() == 2) TransitionToScreen(GAMEPLAY);
 
@@ -243,22 +243,22 @@ static void UpdateDrawFrame(void)
             case OPTIONS:
             {
                 UpdateOptionsScreen();
-                    
+
                 if (FinishOptionsScreen()) TransitionToScreen(TITLE);
 
             } break;
             case GAMEPLAY:
             {
                 UpdateGameplayScreen();
-                
+
                 if (FinishGameplayScreen() == 1) TransitionToScreen(ENDING);
                 //else if (FinishGameplayScreen() == 2) TransitionToScreen(TITLE);
 
             } break;
             case ENDING:
-            { 
+            {
                 UpdateEndingScreen();
-                
+
                 if (FinishEndingScreen() == 1) TransitionToScreen(TITLE);
 
             } break;
@@ -267,14 +267,14 @@ static void UpdateDrawFrame(void)
     }
     else UpdateTransition();    // Update transition (fade-in, fade-out)
     //----------------------------------------------------------------------------------
-    
+
     // Draw
     //----------------------------------------------------------------------------------
     BeginDrawing();
-        
+
         ClearBackground(RAYWHITE);
-            
-        switch(currentScreen) 
+
+        switch(currentScreen)
         {
             case LOGO: DrawLogoScreen(); break;
             case TITLE: DrawTitleScreen(); break;
@@ -283,12 +283,12 @@ static void UpdateDrawFrame(void)
             case ENDING: DrawEndingScreen(); break;
             default: break;
         }
-         
+
         // Draw full screen rectangle in front of everything
         if (onTransition) DrawTransition();
-        
+
         //DrawFPS(10, 10);
-        
+
     EndDrawing();
     //----------------------------------------------------------------------------------
 }
