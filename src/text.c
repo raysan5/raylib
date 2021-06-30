@@ -1567,10 +1567,10 @@ RLAPI const char *CodepointToUtf8(int codepoint, int *byteLength)
 int *LoadCodepoints(const char *text, int *count)
 {
     int textLength = TextLength(text);
-    
+
     int bytesProcessed = 0;
     int codepointsCount = 0;
-    
+
     // Allocate a big enough buffer to store as many codepoints as text bytes
     int *codepoints = RL_CALLOC(textLength, sizeof(int));
 
@@ -1650,7 +1650,7 @@ int GetCodepoint(const char *text, int *bytesProcessed)
     else if ((octet & 0xe0) == 0xc0)
     {
         // Two octets
-        
+
         // [0]xC2-DF    [1]UTF8-tail(x80-BF)
         unsigned char octet1 = text[1];
 

@@ -738,7 +738,7 @@ Wave LoadWaveFromMemory(const char *fileType, const unsigned char *fileData, int
             wave.sampleSize = 16;
             wave.channels = wav.channels;
             wave.data = (short *)RL_MALLOC(wave.sampleCount*sizeof(short));
-            
+
             // NOTE: We are forcing conversion to 16bit sample size on reading
             drwav_read_pcm_frames_s16(&wav, wav.totalPCMFrameCount, wave.data);
         }
@@ -761,7 +761,7 @@ Wave LoadWaveFromMemory(const char *fileType, const unsigned char *fileData, int
             wave.channels = info.channels;
             wave.sampleCount = (unsigned int)stb_vorbis_stream_length_in_samples(oggData)*info.channels;  // Independent by channel
             wave.data = (short *)RL_MALLOC(wave.sampleCount*sizeof(short));
-            
+
             // NOTE: Get the number of samples to process (be careful! we ask for number of shorts!)
             stb_vorbis_get_samples_short_interleaved(oggData, info.channels, (short *)wave.data, wave.sampleCount);
             stb_vorbis_close(oggData);
@@ -770,10 +770,10 @@ Wave LoadWaveFromMemory(const char *fileType, const unsigned char *fileData, int
     }
 #endif
 #if defined(SUPPORT_FILEFORMAT_FLAC)
-    else if (TextIsEqual(fileExtLower, ".flac")) 
+    else if (TextIsEqual(fileExtLower, ".flac"))
     {
         unsigned long long int totalFrameCount = 0;
-        
+
         // NOTE: We are forcing conversion to 16bit sample size on reading
         wave.data = drflac_open_memory_and_read_pcm_frames_s16(fileData, dataSize, &wave.channels, &wave.sampleRate, &totalFrameCount, NULL);
         wave.sampleSize = 16;
@@ -787,7 +787,7 @@ Wave LoadWaveFromMemory(const char *fileType, const unsigned char *fileData, int
     {
         drmp3_config config = { 0 };
         unsigned long long int totalFrameCount = 0;
-        
+
         // NOTE: We are forcing conversion to 32bit float sample size on reading
         wave.data = drmp3_open_memory_and_read_pcm_frames_f32(fileData, dataSize, &config, &totalFrameCount, NULL);
         wave.sampleSize = 32;
@@ -799,11 +799,11 @@ Wave LoadWaveFromMemory(const char *fileType, const unsigned char *fileData, int
             wave.sampleCount = (int)totalFrameCount*wave.channels;
         }
         else TRACELOG(LOG_WARNING, "WAVE: Failed to load MP3 data");
-        
+
     }
 #endif
     else TRACELOG(LOG_WARNING, "WAVE: Data format not supported");
-    
+
     TRACELOG(LOG_INFO, "WAVE: Data loaded successfully (%i Hz, %i bit, %i channels)", wave.sampleRate, wave.sampleSize, wave.channels);
 
     return wave;
@@ -900,7 +900,7 @@ bool ExportWave(Wave wave, const char *fileName)
 
     if (false) { }
 #if defined(SUPPORT_FILEFORMAT_WAV)
-    else if (IsFileExtension(fileName, ".wav")) 
+    else if (IsFileExtension(fileName, ".wav"))
     {
         drwav wav = { 0 };
         drwav_data_format format = { 0 };

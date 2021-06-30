@@ -379,7 +379,7 @@ Image LoadImageFromMemory(const char *fileType, const unsigned char *fileData, i
     else if (TextIsEqual(fileExtLower, ".astc")) image = LoadASTC(fileData, dataSize);
 #endif
     else TRACELOG(LOG_WARNING, "IMAGE: Data format not supported");
-    
+
     TRACELOG(LOG_INFO, "IMAGE: Data loaded successfully (%ix%i | %s | %i mipmaps)", image.width, image.height, rlGetPixelFormatName(image.format), image.mipmaps);
 
     return image;
@@ -3218,8 +3218,8 @@ void DrawTextureNPatch(Texture2D texture, NPatchInfo nPatchInfo, Rectangle dest,
         float width = (float)texture.width;
         float height = (float)texture.height;
 
-        float patchWidth = (dest.width <= 0.0f)? 0.0f : dest.width;
-        float patchHeight = (dest.height <= 0.0f)? 0.0f : dest.height;
+        float patchWidth = ((int)dest.width <= 0)? 0.0f : dest.width;
+        float patchHeight = ((int)dest.height <= 0)? 0.0f : dest.height;
 
         if (nPatchInfo.source.width < 0) nPatchInfo.source.x -= nPatchInfo.source.width;
         if (nPatchInfo.source.height < 0) nPatchInfo.source.y -= nPatchInfo.source.height;
@@ -3233,14 +3233,15 @@ void DrawTextureNPatch(Texture2D texture, NPatchInfo nPatchInfo, Rectangle dest,
         float rightBorder = (float)nPatchInfo.right;
         float bottomBorder = (float)nPatchInfo.bottom;
 
-        // adjust the lateral (left and right) border widths in case patchWidth < texture.width
+        // Adjust the lateral (left and right) border widths in case patchWidth < texture.width
         if (patchWidth <= (leftBorder + rightBorder) && nPatchInfo.layout != NPATCH_THREE_PATCH_VERTICAL)
         {
             drawCenter = false;
             leftBorder = (leftBorder/(leftBorder + rightBorder))*patchWidth;
             rightBorder = patchWidth - leftBorder;
         }
-        // adjust the lateral (top and bottom) border heights in case patchHeight < texture.height
+
+        // Adjust the lateral (top and bottom) border heights in case patchHeight < texture.height
         if (patchHeight <= (topBorder + bottomBorder) && nPatchInfo.layout != NPATCH_THREE_PATCH_HORIZONTAL)
         {
             drawMiddle = false;

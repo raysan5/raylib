@@ -800,7 +800,7 @@ void InitWindow(int width, int height, const char *title)
 
     // Initialize assets manager
     InitAssetManager(CORE.Android.app->activity->assetManager, CORE.Android.app->activity->internalDataPath);
-    
+
     // Initialize base path for storage
     CORE.Storage.basePath = CORE.Android.app->activity->internalDataPath;
 
@@ -838,10 +838,10 @@ void InitWindow(int width, int height, const char *title)
 
     // Initialize hi-res timer
     InitTimer();
-    
+
     // Initialize random seed
     srand((unsigned int)time(NULL));
-    
+
     // Initialize base path for storage
     CORE.Storage.basePath = GetWorkingDirectory();
 
@@ -1945,7 +1945,7 @@ void BeginDrawing(void)
 {
     // WARNING: Previously to BeginDrawing() other render textures drawing could happen,
     // consequently the measure for update vs draw is not accurate (only the total frame time is accurate)
-    
+
     CORE.Time.current = GetTime();      // Number of elapsed seconds since InitTimer()
     CORE.Time.update = CORE.Time.current - CORE.Time.previous;
     CORE.Time.previous = CORE.Time.current;
@@ -2347,7 +2347,7 @@ RLAPI Shader LoadShaderFromMemory(const char *vsCode, const char *fsCode)
 {
     Shader shader = { 0 };
     shader.locs = (int *)RL_CALLOC(MAX_SHADER_LOCATIONS, sizeof(int));
-    
+
     // NOTE: All locations must be reseted to -1 (no location)
     for (int i = 0; i < MAX_SHADER_LOCATIONS; i++) shader.locs[i] = -1;
 
@@ -3113,7 +3113,7 @@ bool SaveStorageValue(unsigned int position, int value)
 
         success = SaveFileData(path, newFileData, newDataSize);
         RL_FREE(newFileData);
-        
+
         TRACELOG(LOG_INFO, "FILEIO: [%s] Saved storage value: %i", path, value);
     }
     else
@@ -3127,7 +3127,7 @@ bool SaveStorageValue(unsigned int position, int value)
 
         success = SaveFileData(path, fileData, dataSize);
         UnloadFileData(fileData);
-        
+
         TRACELOG(LOG_INFO, "FILEIO: [%s] Saved storage value: %i", path, value);
     }
 #endif
@@ -3144,7 +3144,7 @@ int LoadStorageValue(unsigned int position)
 #if defined(SUPPORT_DATA_STORAGE)
     char path[512] = { 0 };
     strcpy(path, TextFormat("%s/%s", CORE.Storage.basePath, STORAGE_DATA_FILE));
-    
+
     unsigned int dataSize = 0;
     unsigned char *fileData = LoadFileData(path, &dataSize);
 
@@ -3158,7 +3158,7 @@ int LoadStorageValue(unsigned int position)
         }
 
         UnloadFileData(fileData);
-        
+
         TRACELOG(LOG_INFO, "FILEIO: [%s] Loaded storage value: %i", path, value);
     }
 #endif
@@ -4694,7 +4694,7 @@ void WaitTime(float ms)
     #if defined(SUPPORT_PARTIALBUSY_WAIT_LOOP)
         double previousTime = GetTime();
         double currentTime = 0.0;
-        
+
         // Partial busy wait loop (only a fraction of the total wait time)
         while ((currentTime - previousTime) < busyWait/1000.0f) currentTime = GetTime();
     #endif
@@ -5360,7 +5360,7 @@ static void AndroidCommandCallback(struct android_app *app, int32_t cmd)
 
                     // Initialize hi-res timer
                     InitTimer();
-                    
+
                     // Initialize random seed
                     srand((unsigned int)time(NULL));
 
