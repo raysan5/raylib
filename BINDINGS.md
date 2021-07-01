@@ -50,6 +50,7 @@ Here it is a list with the ones I'm aware of:
 | raylib-py-ctbg     | 2.6 | [Python](https://www.python.org/)        | https://github.com/overdev/raylib-py-ctbg                 |
 | jaylib             | 3.0 | [Java](https://en.wikipedia.org/wiki/Java_(programming_language))           | https://github.com/electronstudio/jaylib/   |
 | raylib-java        | 2.0 | [Java](https://en.wikipedia.org/wiki/Java_(programming_language))           | https://github.com/XoanaIO/raylib-java   |
+| raylib-j           | 3.5 | [Java](https://en.wikipedia.org/wiki/Java_(programming_language))           | https://github.com/CreedVI/Raylib-J   |
 | clj-raylib         | 3.0 | [Clojure](https://clojure.org/)          | https://github.com/lsevero/clj-raylib       |
 | node-raylib        | 3.5 | [Node.js](https://nodejs.org/en/)        | https://github.com/RobLoach/node-raylib     |
 | QuickJS-raylib     | 3.0 | [QuickJS](https://bellard.org/quickjs/)  | https://github.com/sntg-p/QuickJS-raylib    |
