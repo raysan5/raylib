@@ -371,10 +371,6 @@ static void OnLog(ma_context *pContext, ma_device *pDevice, ma_uint32 logLevel, 
 static void OnSendAudioDataToDevice(ma_device *pDevice, void *pFramesOut, const void *pFramesInput, ma_uint32 frameCount);
 static void MixAudioFrames(float *framesOut, const float *framesIn, ma_uint32 frameCount, float localVolume);
 
-#if defined(SUPPORT_FILEFORMAT_WAV)
-static int SaveWAV(Wave wave, const char *fileName);    // Save wave data as WAV file
-#endif
-
 #if defined(RAUDIO_STANDALONE)
 static bool IsFileExtension(const char *fileName, const char *ext); // Check file extension
 static const char *GetFileExtension(const char *fileName);          // Get pointer to extension for a filename string (includes the dot: .png)

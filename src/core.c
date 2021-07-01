@@ -6184,24 +6184,24 @@ static void *EventThread(void *arg)
                 // Basic movement
                 if (event.code == ABS_X)
                 {
-                    CORE.Input.Mouse.currentPosition.x = (event.value - worker->absRange.x)*CORE.Window.screen.width/worker->absRange.width;   // Scale acording to absRange
-                    CORE.Input.Touch.position[0].x = (event.value - worker->absRange.x)*CORE.Window.screen.width/worker->absRange.width;   // Scale acording to absRange
+                    CORE.Input.Mouse.currentPosition.x = (event.value - worker->absRange.x)*CORE.Window.screen.width/worker->absRange.width;    // Scale acording to absRange
+                    CORE.Input.Touch.position[0].x = (event.value - worker->absRange.x)*CORE.Window.screen.width/worker->absRange.width;        // Scale acording to absRange
 
-                    #if defined(SUPPORT_GESTURES_SYSTEM)
-                        touchAction = TOUCH_MOVE;
-                        gestureUpdate = true;
-                    #endif
+                #if defined(SUPPORT_GESTURES_SYSTEM)
+                    touchAction = TOUCH_MOVE;
+                    gestureUpdate = true;
+                #endif
                 }
 
                 if (event.code == ABS_Y)
                 {
-                    CORE.Input.Mouse.currentPosition.y = (event.value - worker->absRange.y)*CORE.Window.screen.height/worker->absRange.height; // Scale acording to absRange
-                    CORE.Input.Touch.position[0].y = (event.value - worker->absRange.y)*CORE.Window.screen.height/worker->absRange.height; // Scale acording to absRange
+                    CORE.Input.Mouse.currentPosition.y = (event.value - worker->absRange.y)*CORE.Window.screen.height/worker->absRange.height;  // Scale acording to absRange
+                    CORE.Input.Touch.position[0].y = (event.value - worker->absRange.y)*CORE.Window.screen.height/worker->absRange.height;      // Scale acording to absRange
 
-                    #if defined(SUPPORT_GESTURES_SYSTEM)
-                        touchAction = TOUCH_MOVE;
-                        gestureUpdate = true;
-                    #endif
+                #if defined(SUPPORT_GESTURES_SYSTEM)
+                    touchAction = TOUCH_MOVE;
+                    gestureUpdate = true;
+                #endif
                 }
 
                 // Multitouch movement
@@ -6236,20 +6236,20 @@ static void *EventThread(void *arg)
                     {
                         CORE.Input.Mouse.currentButtonStateEvdev[MOUSE_BUTTON_LEFT] = 0;
 
-                        #if defined(SUPPORT_GESTURES_SYSTEM)
-                            touchAction = TOUCH_UP;
-                            gestureUpdate = true;
-                        #endif
+                    #if defined(SUPPORT_GESTURES_SYSTEM)
+                        touchAction = TOUCH_UP;
+                        gestureUpdate = true;
+                    #endif
                     }
 
                     if (event.value && !previousMouseLeftButtonState)
                     {
                         CORE.Input.Mouse.currentButtonStateEvdev[MOUSE_BUTTON_LEFT] = 1;
 
-                        #if defined(SUPPORT_GESTURES_SYSTEM)
-                            touchAction = TOUCH_DOWN;
-                            gestureUpdate = true;
-                        #endif
+                    #if defined(SUPPORT_GESTURES_SYSTEM)
+                        touchAction = TOUCH_DOWN;
+                        gestureUpdate = true;
+                    #endif
                     }
                 }
 
@@ -6263,11 +6263,11 @@ static void *EventThread(void *arg)
                 {
                     CORE.Input.Mouse.currentButtonStateEvdev[MOUSE_BUTTON_LEFT] = event.value;
 
-                    #if defined(SUPPORT_GESTURES_SYSTEM)
-                        if (event.value > 0) touchAction = TOUCH_DOWN;
-                        else touchAction = TOUCH_UP;
-                        gestureUpdate = true;
-                    #endif
+                #if defined(SUPPORT_GESTURES_SYSTEM)
+                    if (event.value > 0) touchAction = TOUCH_DOWN;
+                    else touchAction = TOUCH_UP;
+                    gestureUpdate = true;
+                #endif
                 }
 
                 if (event.code == BTN_RIGHT) CORE.Input.Mouse.currentButtonStateEvdev[MOUSE_BUTTON_RIGHT] = event.value;
@@ -6288,10 +6288,9 @@ static void *EventThread(void *arg)
                 if (CORE.Input.Mouse.currentPosition.y > CORE.Window.screen.height/CORE.Input.Mouse.scale.y) CORE.Input.Mouse.currentPosition.y = CORE.Window.screen.height/CORE.Input.Mouse.scale.y;
             }
 
-            // Gesture update
+#if defined(SUPPORT_GESTURES_SYSTEM)
             if (gestureUpdate)
             {
-            #if defined(SUPPORT_GESTURES_SYSTEM)
                 GestureEvent gestureEvent = { 0 };
 
                 gestureEvent.pointCount = 0;
@@ -6313,8 +6312,8 @@ static void *EventThread(void *arg)
                 gestureEvent.position[3] = CORE.Input.Touch.position[3];
 
                 ProcessGestureEvent(gestureEvent);
-            #endif
             }
+#endif
         }
 
         WaitTime(5);    // Sleep for 5ms to avoid hogging CPU time
