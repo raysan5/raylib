@@ -29,7 +29,7 @@
 *   DEPENDENCIES (included):
 *       [core] rglfw (Camilla Löwy - github.com/glfw/glfw) for window/context management and input (PLATFORM_DESKTOP)
 *       [rlgl] glad (David Herberth - github.com/Dav1dde/glad) for OpenGL 3.3 extensions loading (PLATFORM_DESKTOP)
-*       [raudio] miniaudio (David Reid - github.com/dr-soft/miniaudio) for audio device/context management
+*       [raudio] miniaudio (David Reid - github.com/mackron/miniaudio) for audio device/context management
 *
 *   OPTIONAL DEPENDENCIES (included):
 *       [core] msf_gif (Miles Fogle) for GIF recording
