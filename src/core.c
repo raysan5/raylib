@@ -363,15 +363,15 @@ typedef struct CoreData {
 #endif
 #if defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI) || defined(PLATFORM_DRM) || defined(PLATFORM_UWP)
 #if defined(PLATFORM_DRM)
-        int fd;                             // /dev/dri/... file descriptor
+        int fd;                             // File descriptor for /dev/dri/... 
         drmModeConnector *connector;        // Direct Rendering Manager (DRM) mode connector
-        int modeIndex;                      // index of the used mode of connector->modes
-        drmModeCrtc *crtc;                  // crt controller
-        struct gbm_device *gbmDevice;       // device of Generic Buffer Management (GBM, native platform for EGL on DRM)
-        struct gbm_surface *gbmSurface;     // surface of GBM
-        struct gbm_bo *prevBO;              // previous used GBM buffer object (during frame swapping)
-        uint32_t prevFB;                    // previous used GBM framebufer (during frame swapping)
-#endif
+        int modeIndex;                      // Index of the used mode of connector->modes
+        drmModeCrtc *crtc;                  // CRT controller
+        struct gbm_device *gbmDevice;       // GBM device (Generic Buffer Management, native platform for EGL on DRM)
+        struct gbm_surface *gbmSurface;     // GBM surface
+        struct gbm_bo *prevBO;              // Previous GBM buffer object (during frame swapping)
+        uint32_t prevFB;                    // Previous GBM framebufer (during frame swapping)
+#endif  // PLATFORM_DRM
         EGLDisplay device;                  // Native display device (physical screen connection)
         EGLSurface surface;                 // Surface to draw on, framebuffers (connected to context)
         EGLContext context;                 // Graphic context, mode in which drawing can be done
@@ -2687,8 +2687,6 @@ void SetConfigFlags(unsigned int flags)
 // NOTE TRACELOG() function is located in [utils.h]
 
 // Takes a screenshot of current screen (saved a .png)
-// NOTE: This function could work in any platform but some platforms: PLATFORM_ANDROID and PLATFORM_WEB
-// have their own internal file-systems, to dowload image to user file-system some additional mechanism is required
 void TakeScreenshot(const char *fileName)
 {
     unsigned char *imgData = rlReadScreenPixels(CORE.Window.render.width, CORE.Window.render.height);
