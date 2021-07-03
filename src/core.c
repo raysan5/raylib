@@ -2661,7 +2661,7 @@ double GetTime(void)
 #endif
 
 #if defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI) || defined(PLATFORM_DRM)
-    struct timespec ts;
+    struct timespec ts = { 0 };
     clock_gettime(CLOCK_MONOTONIC, &ts);
     unsigned long long int time = (unsigned long long int)ts.tv_sec*1000000000LLU + (unsigned long long int)ts.tv_nsec;
 
@@ -2818,7 +2818,7 @@ const char *GetFileNameWithoutExt(const char *filePath)
 {
     #define MAX_FILENAMEWITHOUTEXT_LENGTH   128
 
-    static char fileName[MAX_FILENAMEWITHOUTEXT_LENGTH];
+    static char fileName[MAX_FILENAMEWITHOUTEXT_LENGTH] = { 0 };
     memset(fileName, 0, MAX_FILENAMEWITHOUTEXT_LENGTH);
 
     if (filePath != NULL) strcpy(fileName, GetFileName(filePath));   // Get filename with extension
@@ -2851,7 +2851,7 @@ const char *GetDirectoryPath(const char *filePath)
     #endif
 */
     const char *lastSlash = NULL;
-    static char dirPath[MAX_FILEPATH_LENGTH];
+    static char dirPath[MAX_FILEPATH_LENGTH] = { 0 };
     memset(dirPath, 0, MAX_FILEPATH_LENGTH);
 
     // In case provided path does not contain a root drive letter (C:\, D:\) nor leading path separator (\, /),
@@ -2887,7 +2887,7 @@ const char *GetDirectoryPath(const char *filePath)
 // Get previous directory path for a given path
 const char *GetPrevDirectoryPath(const char *dirPath)
 {
-    static char prevDirPath[MAX_FILEPATH_LENGTH];
+    static char prevDirPath[MAX_FILEPATH_LENGTH] = { 0 };
     memset(prevDirPath, 0, MAX_FILEPATH_LENGTH);
     int pathLen = (int)strlen(dirPath);
 
@@ -2911,7 +2911,7 @@ const char *GetPrevDirectoryPath(const char *dirPath)
 // Get current working directory
 const char *GetWorkingDirectory(void)
 {
-    static char currentDir[MAX_FILEPATH_LENGTH];
+    static char currentDir[MAX_FILEPATH_LENGTH] = { 0 };
     memset(currentDir, 0, MAX_FILEPATH_LENGTH);
 
     char *path = GETCWD(currentDir, MAX_FILEPATH_LENGTH - 1);
@@ -3910,12 +3910,12 @@ static bool InitGraphicsDevice(int width, int height)
 #if defined(PLATFORM_RPI)
     bcm_host_init();
 
-    DISPMANX_ELEMENT_HANDLE_T dispmanElement;
-    DISPMANX_DISPLAY_HANDLE_T dispmanDisplay;
-    DISPMANX_UPDATE_HANDLE_T dispmanUpdate;
+    DISPMANX_ELEMENT_HANDLE_T dispmanElement = { 0 };
+    DISPMANX_DISPLAY_HANDLE_T dispmanDisplay = { 0 };
+    DISPMANX_UPDATE_HANDLE_T dispmanUpdate = { 0 };
 
-    VC_RECT_T dstRect;
-    VC_RECT_T srcRect;
+    VC_RECT_T dstRect = { 0 };
+    VC_RECT_T srcRect = { 0 };
 #endif
 
 #if defined(PLATFORM_DRM)
@@ -4415,7 +4415,7 @@ static bool InitGraphicsDevice(int width, int height)
     // NOTE: RPI dispmanx windowing system takes care of source rectangle scaling to destination rectangle by hardware (no cost)
     // Take care that renderWidth/renderHeight fit on displayWidth/displayHeight aspect ratio
 
-    VC_DISPMANX_ALPHA_T alpha;
+    VC_DISPMANX_ALPHA_T alpha = { 0 };
     alpha.flags = DISPMANX_FLAGS_ALPHA_FIXED_ALL_PIXELS;
     //alpha.flags = DISPMANX_FLAGS_ALPHA_FROM_SOURCE;       // TODO: Allow transparent framebuffer! -> FLAG_WINDOW_TRANSPARENT
     alpha.opacity = 255;    // Set transparency level for framebuffer, requires EGLAttrib: EGL_TRANSPARENT_TYPE
@@ -5525,7 +5525,7 @@ static int32_t AndroidInputCallback(struct android_app *app, AInputEvent *event)
 
 #if defined(SUPPORT_GESTURES_SYSTEM)
 
-    GestureEvent gestureEvent;
+    GestureEvent gestureEvent = { 0 };
 
     // Register touch actions
     if (flags == AMOTION_EVENT_ACTION_DOWN) gestureEvent.touchAction = TOUCH_DOWN;
@@ -5929,8 +5929,7 @@ static void ConfigureEvdevDevice(char *device)
 
     if (ptrDevName != NULL)
     {
-        if (sscanf(ptrDevName, "t%d", &devNum) == 1)
-            worker->eventNum = devNum;
+        if (sscanf(ptrDevName, "t%d", &devNum) == 1) worker->eventNum = devNum;
     }
 
     // At this point we have a connection to the device, but we don't yet know what the device is.
@@ -6074,7 +6073,7 @@ static void PollKeyboardEvents(void)
     // Scancode to keycode mapping for US keyboards
     // TODO: Probably replace this with a keymap from the X11 to get the correct regional map for the keyboard:
     // Currently non US keyboards will have the wrong mapping for some keys
-    static const int keymap_US[] =
+    static const int keymapUS[] =
         { 0,256,49,50,51,52,53,54,55,56,57,48,45,61,259,258,81,87,69,82,84,
         89,85,73,79,80,91,93,257,341,65,83,68,70,71,72,74,75,76,59,39,96,
         340,92,90,88,67,86,66,78,77,44,46,47,344,332,342,32,280,290,291,
@@ -6106,7 +6105,7 @@ static void PollKeyboardEvents(void)
             // Keyboard button parsing
             if ((event.code >= 1) && (event.code <= 255))     //Keyboard keys appear for codes 1 to 255
             {
-                keycode = keymap_US[event.code & 0xFF];     // The code we get is a scancode so we look up the apropriate keycode
+                keycode = keymapUS[event.code & 0xFF];     // The code we get is a scancode so we look up the apropriate keycode
 
                 // Make sure we got a valid keycode
                 if ((keycode > 0) && (keycode < sizeof(CORE.Input.Keyboard.currentKeyState)))
@@ -6121,14 +6120,14 @@ static void PollKeyboardEvents(void)
                         CORE.Input.Keyboard.keyPressedQueueCount++;
                     }
 
-                    #if defined(SUPPORT_SCREEN_CAPTURE)
-                        // Check screen capture key (raylib key: KEY_F12)
-                        if (CORE.Input.Keyboard.currentKeyState[301] == 1)
-                        {
-                            TakeScreenshot(TextFormat("screenshot%03i.png", screenshotCounter));
-                            screenshotCounter++;
-                        }
-                    #endif
+                #if defined(SUPPORT_SCREEN_CAPTURE)
+                    // Check screen capture key (raylib key: KEY_F12)
+                    if (CORE.Input.Keyboard.currentKeyState[301] == 1)
+                    {
+                        TakeScreenshot(TextFormat("screenshot%03i.png", screenshotCounter));
+                        screenshotCounter++;
+                    }
+                #endif
 
                     if (CORE.Input.Keyboard.currentKeyState[CORE.Input.Keyboard.exitKey] == 1) CORE.Window.shouldClose = true;
 
