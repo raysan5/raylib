@@ -54,7 +54,7 @@
 *   #define SUPPORT_SSH_KEYBOARD_RPI (Raspberry Pi only)
 *       Reconfigure standard input to receive key inputs, works with SSH connection.
 *       WARNING: Reconfiguring standard input could lead to undesired effects, like breaking other running processes or
-*       blocking the device is not restored properly. Use with care.
+*       blocking the device if not restored properly. Use with care.
 *
 *   #define SUPPORT_MOUSE_CURSOR_POINT
 *       Draw a mouse pointer on screen
@@ -638,7 +638,7 @@ static void InitKeyboard(void);                         // Initialize raw keyboa
 static void ProcessKeyboard(void);                      // Process keyboard events
 static void RestoreKeyboard(void);                      // Restore keyboard system
 #else
-static void InitTerminal(void);                         // Initialize terminal (block echo and signal short cuts)
+static void InitTerminal(void);                         // Initialize terminal (block echo and signal shortcuts)
 static void RestoreTerminal(void);                      // Restore terminal
 #endif
 
@@ -694,6 +694,7 @@ struct android_app *GetAndroidApp(void)
     return CORE.Android.app;
 }
 #endif
+
 #if (defined(PLATFORM_RPI) || defined(PLATFORM_DRM)) && !defined(SUPPORT_SSH_KEYBOARD_RPI)
 // Initialize terminal (block echo and signal short cuts)
 static void InitTerminal(void)
@@ -725,6 +726,7 @@ static void InitTerminal(void)
     // Register terminal restore when program finishes
     atexit(RestoreTerminal);
 }
+
 // Restore terminal
 static void RestoreTerminal(void)
 {
@@ -737,6 +739,7 @@ static void RestoreTerminal(void)
     ioctl(STDIN_FILENO, KDSKBMODE, CORE.Input.Keyboard.defaultMode);
 }
 #endif
+
 // Initialize window and OpenGL context
 // NOTE: data parameter could be used to pass any kind of required data to the initialization
 void InitWindow(int width, int height, const char *title)
@@ -5663,7 +5666,7 @@ static void InitKeyboard(void)
     fcntl(STDIN_FILENO, F_SETFL, flags | O_NONBLOCK);     // F_SETFL: Set the file status flags to the value specified
 
     // Save terminal keyboard settings and reconfigure terminal with new settings
-    struct termios keyboardNewSettings;
+    struct termios keyboardNewSettings = { 0 };
     tcgetattr(STDIN_FILENO, &CORE.Input.Keyboard.defaultSettings);    // Get current keyboard settings
     keyboardNewSettings = CORE.Input.Keyboard.defaultSettings;
 
@@ -5827,9 +5830,9 @@ static void RestoreKeyboard(void)
 // Initialise user input from evdev(/dev/input/event<N>) this means mouse, keyboard or gamepad devices
 static void InitEvdevInput(void)
 {
-    char path[MAX_FILEPATH_LENGTH];
-    DIR *directory;
-    struct dirent *entity;
+    char path[MAX_FILEPATH_LENGTH] = { 0 };
+    DIR *directory = NULL;
+    struct dirent *entity = NULL;
 
     // Initialise keyboard file descriptor
     CORE.Input.Keyboard.fd = -1;
@@ -5873,18 +5876,18 @@ static void ConfigureEvdevDevice(char *device)
     #define LONG(x)         ((x)/BITS_PER_LONG)
     #define TEST_BIT(array, bit) ((array[LONG(bit)] >> OFF(bit)) & 1)
 
-    struct input_absinfo absinfo;
-    unsigned long evBits[NBITS(EV_MAX)];
-    unsigned long absBits[NBITS(ABS_MAX)];
-    unsigned long relBits[NBITS(REL_MAX)];
-    unsigned long keyBits[NBITS(KEY_MAX)];
+    struct input_absinfo absinfo = { 0 };
+    unsigned long evBits[NBITS(EV_MAX)] = { 0 };
+    unsigned long absBits[NBITS(ABS_MAX)] = { 0 };
+    unsigned long relBits[NBITS(REL_MAX)] = { 0 };
+    unsigned long keyBits[NBITS(KEY_MAX)] = { 0 };
     bool hasAbs = false;
     bool hasRel = false;
     bool hasAbsMulti = false;
     int freeWorkerId = -1;
     int fd = -1;
 
-    InputEventWorker *worker;
+    InputEventWorker *worker = NULL;
 
     // Open the device and allocate worker
     //-------------------------------------------------------------------------------------------------------
@@ -6091,8 +6094,8 @@ static void PollKeyboardEvents(void)
     int fd = CORE.Input.Keyboard.fd;
     if (fd == -1) return;
 
-    struct input_event event;
-    int keycode;
+    struct input_event event = { 0 };
+    int keycode = -1;
 
     // Try to read data from the keyboard and only continue if successful
     while (read(fd, &event, sizeof(event)) == (int)sizeof(event))
@@ -6139,7 +6142,7 @@ static void PollKeyboardEvents(void)
 // Input device events reading thread
 static void *EventThread(void *arg)
 {
-    struct input_event event;
+    struct input_event event = { 0 };
     InputEventWorker *worker = (InputEventWorker *)arg;
 
     int touchAction = -1;
@@ -6327,7 +6330,7 @@ static void *EventThread(void *arg)
 // Initialize gamepad system
 static void InitGamepad(void)
 {
-    char gamepadDev[128] = "";
+    char gamepadDev[128] = { 0 };
 
     for (int i = 0; i < MAX_GAMEPADS; i++)
     {
@@ -6369,7 +6372,7 @@ static void *GamepadThread(void *arg)
     };
 
     // Read gamepad event
-    struct js_event gamepadEvent;
+    struct js_event gamepadEvent = { 0 };
 
     while (!CORE.Window.shouldClose)
     {
