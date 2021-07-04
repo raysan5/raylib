@@ -12,6 +12,7 @@ IDE | Platform | Template type | State
 [Notepad++](https://notepad-plus-plus.org/) | Windows | source/example compiling | DONE
 [SublimeText](https://www.sublimetext.com/) | Windows, Linux, macOS | source/example compiling | DONE
 [VS2017](https://www.visualstudio.com) | Windows | source/example compiling | DONE
+[VS2019](https://www.visualstudio.com) | Windows | source/example compiling | DONE
 [VSCode](https://code.visualstudio.com/) | Windows, macOS | example compiling | DONE
 scripts | Windows, Linux, macOS | source/example compiling | DONE
 
