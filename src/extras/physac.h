@@ -891,15 +891,13 @@ PHYSACDEF void ClosePhysics(void)
     // Unitialize physics manifolds dynamic memory allocations
     if (physicsManifoldsCount > 0)
     {
-        for (unsigned int i = physicsManifoldsCount - 1; i >= 0; i--)
-            DestroyPhysicsManifold(contacts[i]);
+        for (int i = physicsManifoldsCount - 1; i >= 0; i--) DestroyPhysicsManifold(contacts[i]);
     }
     
     // Unitialize physics bodies dynamic memory allocations
     if (physicsBodiesCount > 0)
     {
-        for (unsigned int i = physicsBodiesCount - 1; i >= 0; i--)
-            DestroyPhysicsBody(bodies[i]);
+        for (int i = physicsBodiesCount - 1; i >= 0; i--) DestroyPhysicsBody(bodies[i]);
     }
 
     // Trace log info
