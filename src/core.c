@@ -11,7 +11,6 @@
 *       - PLATFORM_RPI:     Raspberry Pi 0,1,2,3 (Raspbian, native mode)
 *       - PLATFORM_DRM:     Linux native mode, including Raspberry Pi 4 with V3D fkms driver
 *       - PLATFORM_WEB:     HTML5 with WebAssembly
-*       - PLATFORM_UWP:     Windows 10 App, Windows Phone, Xbox One
 *
 *   CONFIGURATION:
 *
@@ -24,16 +23,16 @@
 *       NOTE: OpenGL ES 2.0 is required and graphic device is managed by EGL
 *
 *   #define PLATFORM_RPI
-*       Windowing and input system configured for Raspberry Pi i native mode (no X.org required, tested on Raspbian),
+*       Windowing and input system configured for Raspberry Pi in native mode (no XWindow required),
+*       graphic device is managed by EGL and inputs are processed is raw mode, reading from /dev/input/
+*
+*   #define PLATFORM_DRM
+*       Windowing and input system configured for DRM native mode (RPI4 and other devices)
 *       graphic device is managed by EGL and inputs are processed is raw mode, reading from /dev/input/
 *
 *   #define PLATFORM_WEB
 *       Windowing and input system configured for HTML5 (run on browser), code converted from C to asm.js
 *       using emscripten compiler. OpenGL ES 2.0 required for direct translation to WebGL equivalent code.
-*
-*   #define PLATFORM_UWP
-*       Universal Windows Platform support, using OpenGL ES 2.0 through ANGLE on multiple Windows platforms,
-*       including Windows 10 App, Windows Phone and Xbox One platforms.
 *
 *   #define SUPPORT_DEFAULT_FONT (default)
 *       Default font is loaded on window initialization to be available for the user to render simple text.
@@ -167,7 +166,7 @@
 
 #include <sys/stat.h>               // Required for: stat() [Used in GetFileModTime()]
 
-#if (defined(PLATFORM_DESKTOP) || defined(PLATFORM_UWP)) && defined(_WIN32) && (defined(_MSC_VER) || defined(__TINYC__))
+#if defined(PLATFORM_DESKTOP) && defined(_WIN32) && (defined(_MSC_VER) || defined(__TINYC__))
     #define DIRENT_MALLOC RL_MALLOC
     #define DIRENT_FREE RL_FREE
 
@@ -192,6 +191,8 @@
                                     // NOTE: Already provided by rlgl implementation (on glad.h)
     #include "GLFW/glfw3.h"         // GLFW3 library: Windows, OpenGL context and Input management
                                     // NOTE: GLFW3 already includes gl.h (OpenGL) headers
+                                    
+//https://randomascii.wordpress.com/2020/10/04/windows-timer-resolution-the-great-rule-change/
 
     // Support retrieving native window handlers
     #if defined(_WIN32)
@@ -254,13 +255,6 @@
     #include "EGL/egl.h"                // Native platform windowing system interface
     #include "EGL/eglext.h"             // EGL extensions
     //#include "GLES2/gl2.h"            // OpenGL ES 2.0 library (not required in this module, only in rlgl)
-#endif
-
-#if defined(PLATFORM_UWP)
-    #include "EGL/egl.h"                // Native platform windowing system interface
-    #include "EGL/eglext.h"             // EGL extensions
-    //#include "GLES2/gl2.h"            // OpenGL ES 2.0 library (not required in this module, only in rlgl)
-    #include "uwp_events.h"             // UWP bootstrapping functions
 #endif
 
 #if defined(PLATFORM_WEB)
@@ -361,7 +355,7 @@ typedef struct CoreData {
 #if defined(PLATFORM_RPI)
         EGL_DISPMANX_WINDOW_T handle;       // Native window handle (graphic device)
 #endif
-#if defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI) || defined(PLATFORM_DRM) || defined(PLATFORM_UWP)
+#if defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI) || defined(PLATFORM_DRM)
 #if defined(PLATFORM_DRM)
         int fd;                             // File descriptor for /dev/dri/... 
         drmModeConnector *connector;        // Direct Rendering Manager (DRM) mode connector
@@ -744,14 +738,6 @@ static void RestoreTerminal(void)
 // NOTE: data parameter could be used to pass any kind of required data to the initialization
 void InitWindow(int width, int height, const char *title)
 {
-#if defined(PLATFORM_UWP)
-    if (!UWPIsConfigured())
-    {
-        TRACELOG(LOG_FATAL, "UWP Functions have not been set yet, please set these before initializing raylib!");
-        return;
-    }
-#endif
-
     TRACELOG(LOG_INFO, "Initializing raylib %s", RAYLIB_VERSION);
 
     if ((title != NULL) && (title[0] != 0)) CORE.Window.title = title;
@@ -761,11 +747,6 @@ void InitWindow(int width, int height, const char *title)
     CORE.Input.Mouse.scale = (Vector2){ 1.0f, 1.0f };
     CORE.Input.Mouse.cursor = MOUSE_CURSOR_ARROW;
     CORE.Input.Gamepad.lastButtonPressed = -1;
-
-#if defined(PLATFORM_UWP)
-    // The axis count is 6 (2 thumbsticks and left and right trigger)
-    CORE.Input.Gamepad.axisCount = 6;
-#endif
 
 #if defined(PLATFORM_ANDROID)
     CORE.Window.screen.width = width;
@@ -827,7 +808,7 @@ void InitWindow(int width, int height, const char *title)
         }
     }
 #endif
-#if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB) || defined(PLATFORM_RPI) || defined(PLATFORM_UWP) || defined(PLATFORM_DRM)
+#if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB) || defined(PLATFORM_RPI) || defined(PLATFORM_DRM)
     // Initialize graphics device (display device and OpenGL context)
     // NOTE: returns true if window and graphic device has been initialized successfully
     CORE.Window.ready = InitGraphicsDevice(width, height);
@@ -910,7 +891,7 @@ void InitWindow(int width, int height, const char *title)
     CORE.Time.frameCounter = 0;
 #endif
 
-#endif        // PLATFORM_DESKTOP || PLATFORM_WEB || PLATFORM_RPI || PLATFORM_DRM || PLATFORM_UWP
+#endif        // PLATFORM_DESKTOP || PLATFORM_WEB || PLATFORM_RPI || PLATFORM_DRM
 }
 
 // Close window and unload OpenGL context
@@ -936,11 +917,11 @@ void CloseWindow(void)
     glfwTerminate();
 #endif
 
-#if defined(_WIN32) && defined(SUPPORT_WINMM_HIGHRES_TIMER) && !defined(SUPPORT_BUSY_WAIT_LOOP) && !defined(PLATFORM_UWP)
+#if defined(_WIN32) && defined(SUPPORT_WINMM_HIGHRES_TIMER) && !defined(SUPPORT_BUSY_WAIT_LOOP)
     timeEndPeriod(1);           // Restore time period
 #endif
 
-#if defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI) || defined(PLATFORM_DRM) || defined(PLATFORM_UWP)
+#if defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI) || defined(PLATFORM_DRM)
 #if defined(PLATFORM_DRM)
     if (CORE.Window.prevFB)
     {
@@ -1073,7 +1054,7 @@ bool WindowShouldClose(void)
     else return true;
 #endif
 
-#if defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI) || defined(PLATFORM_DRM) || defined(PLATFORM_UWP)
+#if defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI) || defined(PLATFORM_DRM)
     if (CORE.Window.ready) return CORE.Window.shouldClose;
     else return true;
 #endif
@@ -1103,7 +1084,7 @@ bool IsWindowHidden(void)
 // Check if window has been minimized
 bool IsWindowMinimized(void)
 {
-#if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB) || defined(PLATFORM_UWP)
+#if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
     return ((CORE.Window.flags & FLAG_WINDOW_MINIMIZED) > 0);
 #else
     return false;
@@ -1123,7 +1104,7 @@ bool IsWindowMaximized(void)
 // Check if window has the focus
 bool IsWindowFocused(void)
 {
-#if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB) || defined(PLATFORM_UWP)
+#if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
     return ((CORE.Window.flags & FLAG_WINDOW_UNFOCUSED) == 0);      // TODO!
 #else
     return true;
@@ -1133,7 +1114,7 @@ bool IsWindowFocused(void)
 // Check if window has been resizedLastFrame
 bool IsWindowResized(void)
 {
-#if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB) || defined(PLATFORM_UWP)
+#if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
     return CORE.Window.resizedLastFrame;
 #else
     return false;
@@ -1876,9 +1857,7 @@ void ShowCursor(void)
 #if defined(PLATFORM_DESKTOP)
     glfwSetInputMode(CORE.Window.handle, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
 #endif
-#if defined(PLATFORM_UWP)
-    UWPGetMouseShowFunc()();
-#endif
+
     CORE.Input.Mouse.cursorHidden = false;
 }
 
@@ -1888,9 +1867,7 @@ void HideCursor(void)
 #if defined(PLATFORM_DESKTOP)
     glfwSetInputMode(CORE.Window.handle, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
 #endif
-#if defined(PLATFORM_UWP)
-    UWPGetMouseHideFunc()();
-#endif
+
     CORE.Input.Mouse.cursorHidden = true;
 }
 
@@ -1909,9 +1886,7 @@ void EnableCursor(void)
 #if defined(PLATFORM_WEB)
     emscripten_exit_pointerlock();
 #endif
-#if defined(PLATFORM_UWP)
-    UWPGetMouseUnlockFunc()();
-#endif
+
     CORE.Input.Mouse.cursorHidden = false;
 }
 
@@ -1924,9 +1899,7 @@ void DisableCursor(void)
 #if defined(PLATFORM_WEB)
     emscripten_request_pointerlock("#canvas", 1);
 #endif
-#if defined(PLATFORM_UWP)
-    UWPGetMouseLockFunc()();
-#endif
+
     CORE.Input.Mouse.cursorHidden = true;
 }
 
@@ -2666,10 +2639,6 @@ double GetTime(void)
     unsigned long long int time = (unsigned long long int)ts.tv_sec*1000000000LLU + (unsigned long long int)ts.tv_nsec;
 
     return (double)(time - CORE.Time.base)*1e-9;  // Elapsed time since InitTimer()
-#endif
-
-#if defined(PLATFORM_UWP)
-    return UWPGetQueryTimeFunc()();
 #endif
 }
 
@@ -3517,9 +3486,6 @@ void SetMousePosition(int x, int y)
     // NOTE: emscripten not implemented
     glfwSetCursorPos(CORE.Window.handle, CORE.Input.Mouse.currentPosition.x, CORE.Input.Mouse.currentPosition.y);
 #endif
-#if defined(PLATFORM_UWP)
-    UWPGetMouseSetPosFunc()(x, y);
-#endif
 }
 
 // Set mouse offset
@@ -3567,7 +3533,7 @@ void SetMouseCursor(int cursor)
 // Get touch position X for touch point 0 (relative to screen size)
 int GetTouchX(void)
 {
-#if defined(PLATFORM_ANDROID) || defined(PLATFORM_WEB) || defined(PLATFORM_UWP)
+#if defined(PLATFORM_ANDROID) || defined(PLATFORM_WEB)
     return (int)CORE.Input.Touch.position[0].x;
 #else   // PLATFORM_DESKTOP, PLATFORM_RPI, PLATFORM_DRM
     return GetMouseX();
@@ -3577,7 +3543,7 @@ int GetTouchX(void)
 // Get touch position Y for touch point 0 (relative to screen size)
 int GetTouchY(void)
 {
-#if defined(PLATFORM_ANDROID) || defined(PLATFORM_WEB) || defined(PLATFORM_UWP)
+#if defined(PLATFORM_ANDROID) || defined(PLATFORM_WEB)
     return (int)CORE.Input.Touch.position[0].y;
 #else   // PLATFORM_DESKTOP, PLATFORM_RPI, PLATFORM_DRM
     return GetMouseY();
@@ -3611,7 +3577,7 @@ Vector2 GetTouchPosition(int index)
         position.y = position.y*((float)CORE.Window.render.height/(float)CORE.Window.display.height) - CORE.Window.renderOffset.y/2;
     }
 #endif
-#if defined(PLATFORM_WEB) || defined(PLATFORM_RPI) || defined(PLATFORM_DRM) || defined(PLATFORM_UWP)
+#if defined(PLATFORM_WEB) || defined(PLATFORM_RPI) || defined(PLATFORM_DRM)
     if (index < MAX_TOUCH_POINTS) position = CORE.Input.Touch.position[index];
     else TRACELOG(LOG_WARNING, "INPUT: Required touch point out of range (Max touch points: %i)", MAX_TOUCH_POINTS);
 
@@ -3901,7 +3867,7 @@ static bool InitGraphicsDevice(int width, int height)
     }
 #endif  // PLATFORM_DESKTOP || PLATFORM_WEB
 
-#if defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI) || defined(PLATFORM_DRM) || defined(PLATFORM_UWP)
+#if defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI) || defined(PLATFORM_DRM)
     CORE.Window.fullscreen = true;
     CORE.Window.flags |= FLAG_FULLSCREEN_MODE;
 
@@ -4102,175 +4068,6 @@ static bool InitGraphicsDevice(int width, int height)
         EGL_NONE
     };
 
-#if defined(PLATFORM_UWP)
-    const EGLint surfaceAttributes[] =
-    {
-        // EGL_ANGLE_SURFACE_RENDER_TO_BACK_BUFFER is part of the same optimization as EGL_ANGLE_DISPLAY_ALLOW_RENDER_TO_BACK_BUFFER (see above).
-        // If you have compilation issues with it then please update your Visual Studio templates.
-        EGL_ANGLE_SURFACE_RENDER_TO_BACK_BUFFER, EGL_TRUE,
-        EGL_NONE
-    };
-
-    const EGLint defaultDisplayAttributes[] =
-    {
-        // These are the default display attributes, used to request ANGLE's D3D11 renderer.
-        // eglInitialize will only succeed with these attributes if the hardware supports D3D11 Feature Level 10_0+.
-        EGL_PLATFORM_ANGLE_TYPE_ANGLE, EGL_PLATFORM_ANGLE_TYPE_D3D11_ANGLE,
-
-        // EGL_ANGLE_DISPLAY_ALLOW_RENDER_TO_BACK_BUFFER is an optimization that can have large performance benefits on mobile devices.
-        // Its syntax is subject to change, though. Please update your Visual Studio templates if you experience compilation issues with it.
-        EGL_ANGLE_DISPLAY_ALLOW_RENDER_TO_BACK_BUFFER, EGL_TRUE,
-
-        // EGL_PLATFORM_ANGLE_ENABLE_AUTOMATIC_TRIM_ANGLE is an option that enables ANGLE to automatically call
-        // the IDXGIDevice3::Trim method on behalf of the application when it gets suspended.
-        // Calling IDXGIDevice3::Trim when an application is suspended is a Windows Store application certification requirement.
-        EGL_PLATFORM_ANGLE_ENABLE_AUTOMATIC_TRIM_ANGLE, EGL_TRUE,
-        EGL_NONE,
-    };
-
-    const EGLint fl9_3DisplayAttributes[] =
-    {
-        // These can be used to request ANGLE's D3D11 renderer, with D3D11 Feature Level 9_3.
-        // These attributes are used if the call to eglInitialize fails with the default display attributes.
-        EGL_PLATFORM_ANGLE_TYPE_ANGLE, EGL_PLATFORM_ANGLE_TYPE_D3D11_ANGLE,
-        EGL_PLATFORM_ANGLE_MAX_VERSION_MAJOR_ANGLE, 9,
-        EGL_PLATFORM_ANGLE_MAX_VERSION_MINOR_ANGLE, 3,
-        EGL_ANGLE_DISPLAY_ALLOW_RENDER_TO_BACK_BUFFER, EGL_TRUE,
-        EGL_PLATFORM_ANGLE_ENABLE_AUTOMATIC_TRIM_ANGLE, EGL_TRUE,
-        EGL_NONE,
-    };
-
-    const EGLint warpDisplayAttributes[] =
-    {
-        // These attributes can be used to request D3D11 WARP.
-        // They are used if eglInitialize fails with both the default display attributes and the 9_3 display attributes.
-        EGL_PLATFORM_ANGLE_TYPE_ANGLE, EGL_PLATFORM_ANGLE_TYPE_D3D11_ANGLE,
-        EGL_PLATFORM_ANGLE_DEVICE_TYPE_ANGLE, EGL_PLATFORM_ANGLE_DEVICE_TYPE_WARP_ANGLE,
-        EGL_ANGLE_DISPLAY_ALLOW_RENDER_TO_BACK_BUFFER, EGL_TRUE,
-        EGL_PLATFORM_ANGLE_ENABLE_AUTOMATIC_TRIM_ANGLE, EGL_TRUE,
-        EGL_NONE,
-    };
-
-    // eglGetPlatformDisplayEXT is an alternative to eglGetDisplay. It allows us to pass in display attributes, used to configure D3D11.
-    PFNEGLGETPLATFORMDISPLAYEXTPROC eglGetPlatformDisplayEXT = (PFNEGLGETPLATFORMDISPLAYEXTPROC)(eglGetProcAddress("eglGetPlatformDisplayEXT"));
-    if (!eglGetPlatformDisplayEXT)
-    {
-        TRACELOG(LOG_WARNING, "DISPLAY: Failed to get function pointer: eglGetPlatformDisplayEXT()");
-        return false;
-    }
-
-    //
-    // To initialize the display, we make three sets of calls to eglGetPlatformDisplayEXT and eglInitialize, with varying
-    // parameters passed to eglGetPlatformDisplayEXT:
-    // 1) The first calls uses "defaultDisplayAttributes" as a parameter. This corresponds to D3D11 Feature Level 10_0+.
-    // 2) If eglInitialize fails for step 1 (e.g. because 10_0+ isn't supported by the default GPU), then we try again
-    //    using "fl9_3DisplayAttributes". This corresponds to D3D11 Feature Level 9_3.
-    // 3) If eglInitialize fails for step 2 (e.g. because 9_3+ isn't supported by the default GPU), then we try again
-    //    using "warpDisplayAttributes".  This corresponds to D3D11 Feature Level 11_0 on WARP, a D3D11 software rasterizer.
-    //
-
-    // This tries to initialize EGL to D3D11 Feature Level 10_0+. See above comment for details.
-    CORE.Window.device = eglGetPlatformDisplayEXT(EGL_PLATFORM_ANGLE_ANGLE, EGL_DEFAULT_DISPLAY, defaultDisplayAttributes);
-    if (CORE.Window.device == EGL_NO_DISPLAY)
-    {
-        TRACELOG(LOG_WARNING, "DISPLAY: Failed to initialize EGL device");
-        return false;
-    }
-
-    if (eglInitialize(CORE.Window.device, NULL, NULL) == EGL_FALSE)
-    {
-        // This tries to initialize EGL to D3D11 Feature Level 9_3, if 10_0+ is unavailable (e.g. on some mobile devices).
-        CORE.Window.device = eglGetPlatformDisplayEXT(EGL_PLATFORM_ANGLE_ANGLE, EGL_DEFAULT_DISPLAY, fl9_3DisplayAttributes);
-        if (CORE.Window.device == EGL_NO_DISPLAY)
-        {
-            TRACELOG(LOG_WARNING, "DISPLAY: Failed to initialize EGL device");
-            return false;
-        }
-
-        if (eglInitialize(CORE.Window.device, NULL, NULL) == EGL_FALSE)
-        {
-            // This initializes EGL to D3D11 Feature Level 11_0 on WARP, if 9_3+ is unavailable on the default GPU.
-            CORE.Window.device = eglGetPlatformDisplayEXT(EGL_PLATFORM_ANGLE_ANGLE, EGL_DEFAULT_DISPLAY, warpDisplayAttributes);
-            if (CORE.Window.device == EGL_NO_DISPLAY)
-            {
-                TRACELOG(LOG_WARNING, "DISPLAY: Failed to initialize EGL device");
-                return false;
-            }
-
-            if (eglInitialize(CORE.Window.device, NULL, NULL) == EGL_FALSE)
-            {
-                // If all of the calls to eglInitialize returned EGL_FALSE then an error has occurred.
-                TRACELOG(LOG_WARNING, "DISPLAY: Failed to initialize EGL device");
-                return false;
-            }
-        }
-    }
-
-    EGLint numConfigs = 0;
-    if ((eglChooseConfig(CORE.Window.device, framebufferAttribs, &CORE.Window.config, 1, &numConfigs) == EGL_FALSE) || (numConfigs == 0))
-    {
-        TRACELOG(LOG_WARNING, "DISPLAY: Failed to choose first EGL configuration");
-        return false;
-    }
-
-    // Create a PropertySet and initialize with the EGLNativeWindowType.
-    //PropertySet^ surfaceCreationProperties = ref new PropertySet();
-    //surfaceCreationProperties->Insert(ref new String(EGLNativeWindowTypeProperty), window);     // CoreWindow^ window
-
-    // You can configure the surface to render at a lower resolution and be scaled up to
-    // the full window size. The scaling is often free on mobile hardware.
-    //
-    // One way to configure the SwapChainPanel is to specify precisely which resolution it should render at.
-    // Size customRenderSurfaceSize = Size(800, 600);
-    // surfaceCreationProperties->Insert(ref new String(EGLRenderSurfaceSizeProperty), PropertyValue::CreateSize(customRenderSurfaceSize));
-    //
-    // Another way is to tell the SwapChainPanel to render at a certain scale factor compared to its size.
-    // e.g. if the SwapChainPanel is 1920x1280 then setting a factor of 0.5f will make the app render at 960x640
-    // float customResolutionScale = 0.5f;
-    // surfaceCreationProperties->Insert(ref new String(EGLRenderResolutionScaleProperty), PropertyValue::CreateSingle(customResolutionScale));
-
-
-    // eglCreateWindowSurface() requires a EGLNativeWindowType parameter,
-    // In Windows platform: typedef HWND EGLNativeWindowType;
-
-
-    // Property: EGLNativeWindowTypeProperty
-    // Type: IInspectable
-    // Description: Set this property to specify the window type to use for creating a surface.
-    //              If this property is missing, surface creation will fail.
-    //
-    //const wchar_t EGLNativeWindowTypeProperty[] = L"EGLNativeWindowTypeProperty";
-
-    //https://stackoverflow.com/questions/46550182/how-to-create-eglsurface-using-c-winrt-and-angle
-
-    //CORE.Window.surface = eglCreateWindowSurface(CORE.Window.device, CORE.Window.config, reinterpret_cast<IInspectable*>(surfaceCreationProperties), surfaceAttributes);
-    CORE.Window.surface = eglCreateWindowSurface(CORE.Window.device, CORE.Window.config, (EGLNativeWindowType) UWPGetCoreWindowPtr(), surfaceAttributes);
-    if (CORE.Window.surface == EGL_NO_SURFACE)
-    {
-        TRACELOG(LOG_WARNING, "DISPLAY: Failed to create EGL fullscreen surface");
-        return false;
-    }
-
-    CORE.Window.context = eglCreateContext(CORE.Window.device, CORE.Window.config, EGL_NO_CONTEXT, contextAttribs);
-    if (CORE.Window.context == EGL_NO_CONTEXT)
-    {
-        TRACELOG(LOG_WARNING, "DISPLAY: Failed to create EGL context");
-        return false;
-    }
-
-    // Get EGL device window size
-    eglQuerySurface(CORE.Window.device, CORE.Window.surface, EGL_WIDTH, &CORE.Window.screen.width);
-    eglQuerySurface(CORE.Window.device, CORE.Window.surface, EGL_HEIGHT, &CORE.Window.screen.height);
-
-    // Get display size
-    UWPGetDisplaySizeFunc()(&CORE.Window.display.width, &CORE.Window.display.height);
-
-    // Use the width and height of the surface for render
-    CORE.Window.render.width = CORE.Window.screen.width;
-    CORE.Window.render.height = CORE.Window.screen.height;
-
-#endif  // PLATFORM_UWP
-
 #if defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI) || defined(PLATFORM_DRM)
     EGLint numConfigs = 0;
 
@@ -4470,7 +4267,7 @@ static bool InitGraphicsDevice(int width, int height)
         TRACELOG(LOG_INFO, "    > Screen size:  %i x %i", CORE.Window.screen.width, CORE.Window.screen.height);
         TRACELOG(LOG_INFO, "    > Viewport offsets: %i, %i", CORE.Window.renderOffset.x, CORE.Window.renderOffset.y);
     }
-#endif  // PLATFORM_ANDROID || PLATFORM_RPI || PLATFORM_DRM || PLATFORM_UWP
+#endif  // PLATFORM_ANDROID || PLATFORM_RPI || PLATFORM_DRM
 
     // Load OpenGL extensions
     // NOTE: GL procedures address loader is required to load extensions
@@ -4512,7 +4309,7 @@ static bool InitGraphicsDevice(int width, int height)
 
     ClearBackground(RAYWHITE);      // Default background color for raylib games :P
 
-#if defined(PLATFORM_ANDROID) || defined(PLATFORM_UWP)
+#if defined(PLATFORM_ANDROID)
     CORE.Window.ready = true;
 #endif
 
@@ -4634,7 +4431,7 @@ static void InitTimer(void)
 // However, it can also reduce overall system performance, because the thread scheduler switches tasks more often.
 // High resolutions can also prevent the CPU power management system from entering power-saving modes.
 // Setting a higher resolution does not improve the accuracy of the high-resolution performance counter.
-#if defined(_WIN32) && defined(SUPPORT_WINMM_HIGHRES_TIMER) && !defined(SUPPORT_BUSY_WAIT_LOOP) && !defined(PLATFORM_UWP)
+#if defined(_WIN32) && defined(SUPPORT_WINMM_HIGHRES_TIMER) && !defined(SUPPORT_BUSY_WAIT_LOOP)
     timeBeginPeriod(1);                 // Setup high-resolution timer to 1ms (granularity of 1-2 ms)
 #endif
 
@@ -4671,10 +4468,6 @@ void WaitTime(float ms)
     #endif
 
     // System halt functions
-    #if defined(PLATFORM_UWP)
-        UWPGetSleepFunc()(ms/1000);
-        return;
-    #endif
     #if defined(_WIN32)
         Sleep((unsigned int)ms);
     #endif
@@ -4709,7 +4502,7 @@ void SwapScreenBuffer(void)
     glfwSwapBuffers(CORE.Window.handle);
 #endif
 
-#if defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI) || defined(PLATFORM_DRM) || defined(PLATFORM_UWP)
+#if defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI) || defined(PLATFORM_DRM)
     eglSwapBuffers(CORE.Window.device, CORE.Window.surface);
 
 #if defined(PLATFORM_DRM)
@@ -4761,7 +4554,7 @@ void SwapScreenBuffer(void)
 
     CORE.Window.prevBO = bo;
 #endif  // PLATFORM_DRM
-#endif  // PLATFORM_ANDROID || PLATFORM_RPI || PLATFORM_DRM || PLATFORM_UWP
+#endif  // PLATFORM_ANDROID || PLATFORM_RPI || PLATFORM_DRM
 }
 
 // Register all input events
@@ -4801,32 +4594,13 @@ void PollInputEvents(void)
     // Register gamepads buttons events
     for (int i = 0; i < MAX_GAMEPADS; i++)
     {
-        if (CORE.Input.Gamepad.ready[i])     // Check if gamepad is available
+        if (CORE.Input.Gamepad.ready[i])
         {
             // Register previous gamepad states
             for (int k = 0; k < MAX_GAMEPAD_BUTTONS; k++) CORE.Input.Gamepad.previousButtonState[i][k] = CORE.Input.Gamepad.currentButtonState[i][k];
         }
     }
 #endif
-
-#if defined(PLATFORM_UWP)
-    // Register previous keys states
-    for (int i = 0; i < 512; i++) CORE.Input.Keyboard.previousKeyState[i] = CORE.Input.Keyboard.currentKeyState[i];
-
-    for (int i = 0; i < MAX_GAMEPADS; i++)
-    {
-        if (CORE.Input.Gamepad.ready[i])
-        {
-            for (int k = 0; k < MAX_GAMEPAD_BUTTONS; k++) CORE.Input.Gamepad.previousButtonState[i][k] = CORE.Input.Gamepad.currentButtonState[i][k];
-        }
-    }
-
-    // Register previous mouse states
-    CORE.Input.Mouse.previousWheelMove = CORE.Input.Mouse.currentWheelMove;
-    CORE.Input.Mouse.currentWheelMove = 0.0f;
-
-    for (int i = 0; i < 3; i++) CORE.Input.Mouse.previousButtonState[i] = CORE.Input.Mouse.currentButtonState[i];
-#endif  // PLATFORM_UWP
 
 #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
     // Keyboard/Mouse input polling (automatically managed by GLFW3 through callback)
@@ -6411,279 +6185,6 @@ static void *GamepadThread(void *arg)
     return NULL;
 }
 #endif  // PLATFORM_RPI || PLATFORM_DRM
-
-#if defined(PLATFORM_UWP)
-// UWP function pointers
-// NOTE: Those pointers are set by UWP App
-static UWPQueryTimeFunc uwpQueryTimeFunc = NULL;
-static UWPSleepFunc uwpSleepFunc = NULL;
-static UWPDisplaySizeFunc uwpDisplaySizeFunc = NULL;
-static UWPMouseFunc uwpMouseLockFunc = NULL;
-static UWPMouseFunc uwpMouseUnlockFunc = NULL;
-static UWPMouseFunc uwpMouseShowFunc = NULL;
-static UWPMouseFunc uwpMouseHideFunc = NULL;
-static UWPMouseSetPosFunc uwpMouseSetPosFunc = NULL;
-static void *uwpCoreWindow = NULL;
-
-// Check all required UWP function pointers have been set
-bool UWPIsConfigured()
-{
-    bool pass = true;
-
-    if (uwpQueryTimeFunc == NULL) { TRACELOG(LOG_WARNING, "UWP: UWPSetQueryTimeFunc() must be called with a valid function before InitWindow()"); pass = false; }
-    if (uwpSleepFunc == NULL) { TRACELOG(LOG_WARNING, "UWP: UWPSetSleepFunc() must be called with a valid function before InitWindow()"); pass = false; }
-    if (uwpDisplaySizeFunc == NULL) { TRACELOG(LOG_WARNING, "UWP: UWPSetDisplaySizeFunc() must be called with a valid function before InitWindow()"); pass = false; }
-    if (uwpMouseLockFunc == NULL) { TRACELOG(LOG_WARNING, "UWP: UWPSetMouseLockFunc() must be called with a valid function before InitWindow()"); pass = false; }
-    if (uwpMouseUnlockFunc == NULL) { TRACELOG(LOG_WARNING, "UWP: UWPSetMouseUnlockFunc() must be called with a valid function before InitWindow()"); pass = false; }
-    if (uwpMouseShowFunc == NULL) { TRACELOG(LOG_WARNING, "UWP: UWPSetMouseShowFunc() must be called with a valid function before InitWindow()"); pass = false; }
-    if (uwpMouseHideFunc == NULL) { TRACELOG(LOG_WARNING, "UWP: UWPSetMouseHideFunc() must be called with a valid function before InitWindow()"); pass = false; }
-    if (uwpMouseSetPosFunc == NULL) { TRACELOG(LOG_WARNING, "UWP: UWPSetMouseSetPosFunc() must be called with a valid function before InitWindow()"); pass = false; }
-    if (uwpCoreWindow == NULL) { TRACELOG(LOG_WARNING, "UWP: A pointer to the UWP core window must be set before InitWindow()"); pass = false; }
-
-    return pass;
-}
-
-// UWP function handlers get/set
-void UWPSetDataPath(const char *path) { CORE.Storage.basePath = path; }
-UWPQueryTimeFunc UWPGetQueryTimeFunc(void) { return uwpQueryTimeFunc; }
-void UWPSetQueryTimeFunc(UWPQueryTimeFunc func) { uwpQueryTimeFunc = func; }
-UWPSleepFunc UWPGetSleepFunc(void) { return uwpSleepFunc; }
-void UWPSetSleepFunc(UWPSleepFunc func) { uwpSleepFunc = func; }
-UWPDisplaySizeFunc UWPGetDisplaySizeFunc(void) { return uwpDisplaySizeFunc; }
-void UWPSetDisplaySizeFunc(UWPDisplaySizeFunc func) { uwpDisplaySizeFunc = func; }
-UWPMouseFunc UWPGetMouseLockFunc() { return uwpMouseLockFunc; }
-void UWPSetMouseLockFunc(UWPMouseFunc func) { uwpMouseLockFunc = func; }
-UWPMouseFunc UWPGetMouseUnlockFunc() { return uwpMouseUnlockFunc; }
-void UWPSetMouseUnlockFunc(UWPMouseFunc func) { uwpMouseUnlockFunc = func; }
-UWPMouseFunc UWPGetMouseShowFunc() { return uwpMouseShowFunc; }
-void UWPSetMouseShowFunc(UWPMouseFunc func) { uwpMouseShowFunc = func; }
-UWPMouseFunc UWPGetMouseHideFunc() { return uwpMouseHideFunc; }
-void UWPSetMouseHideFunc(UWPMouseFunc func) { uwpMouseHideFunc = func; }
-UWPMouseSetPosFunc UWPGetMouseSetPosFunc() { return uwpMouseSetPosFunc; }
-void UWPSetMouseSetPosFunc(UWPMouseSetPosFunc func) { uwpMouseSetPosFunc = func; }
-
-void *UWPGetCoreWindowPtr() { return uwpCoreWindow; }
-void UWPSetCoreWindowPtr(void *ptr) { uwpCoreWindow = ptr; }
-void UWPMouseWheelEvent(int deltaY) { CORE.Input.Mouse.currentWheelMove = (float)deltaY; }
-
-void UWPKeyDownEvent(int key, bool down, bool controlKey)
-{
-    if (key == CORE.Input.Keyboard.exitKey && down)
-    {
-        // Time to close the window.
-        CORE.Window.shouldClose = true;
-    }
-#if defined(SUPPORT_SCREEN_CAPTURE)
-    else if (key == KEY_F12 && down)
-    {
-#if defined(SUPPORT_GIF_RECORDING)
-        if (controlKey)
-        {
-            if (gifRecording)
-            {
-                gifRecording = false;
-
-                MsfGifResult result = msf_gif_end(&gifState);
-
-                SaveFileData(TextFormat("%s/screenrec%03i.gif", CORE.Storage.basePath, screenshotCounter), result.data, result.dataSize);
-                msf_gif_free(result);
-
-            #if defined(PLATFORM_WEB)
-                // Download file from MEMFS (emscripten memory filesystem)
-                // saveFileFromMEMFSToDisk() function is defined in raylib/templates/web_shel/shell.html
-                emscripten_run_script(TextFormat("saveFileFromMEMFSToDisk('%s','%s')", TextFormat("screenrec%03i.gif", screenshotCounter - 1), TextFormat("screenrec%03i.gif", screenshotCounter - 1)));
-            #endif
-
-                TRACELOG(LOG_INFO, "SYSTEM: Finish animated GIF recording");
-            }
-            else
-            {
-                gifRecording = true;
-                gifFramesCounter = 0;
-
-                msf_gif_begin(&gifState, CORE.Window.screen.width, CORE.Window.screen.height);
-                screenshotCounter++;
-
-                TRACELOG(LOG_INFO, "SYSTEM: Start animated GIF recording: %s", TextFormat("screenrec%03i.gif", screenshotCounter));
-            }
-        }
-        else
-#endif  // SUPPORT_GIF_RECORDING
-        {
-            TakeScreenshot(TextFormat("screenshot%03i.png", screenshotCounter));
-            screenshotCounter++;
-        }
-    }
-#endif  // SUPPORT_SCREEN_CAPTURE
-    else
-    {
-        CORE.Input.Keyboard.currentKeyState[key] = down;
-    }
-}
-
-void UWPKeyCharEvent(int key)
-{
-    if (CORE.Input.Keyboard.keyPressedQueueCount < MAX_KEY_PRESSED_QUEUE)
-    {
-        // Add character to the queue
-        CORE.Input.Keyboard.keyPressedQueue[CORE.Input.Keyboard.keyPressedQueueCount] = key;
-        CORE.Input.Keyboard.keyPressedQueueCount++;
-    }
-}
-
-void UWPMouseButtonEvent(int button, bool down)
-{
-    CORE.Input.Mouse.currentButtonState[button] = down;
-
-#if defined(SUPPORT_GESTURES_SYSTEM) && defined(SUPPORT_MOUSE_GESTURES)
-    // Process mouse events as touches to be able to use mouse-gestures
-    GestureEvent gestureEvent = { 0 };
-
-    // Register touch actions
-    if ((CORE.Input.Mouse.currentButtonState[button] == 1) && (CORE.Input.Mouse.previousButtonState[button] == 0)) gestureEvent.touchAction = TOUCH_DOWN;
-    else if ((CORE.Input.Mouse.currentButtonState[button] == 0) && (CORE.Input.Mouse.previousButtonState[button] == 1)) gestureEvent.touchAction = TOUCH_UP;
-
-    // NOTE: TOUCH_MOVE event is registered in MouseCursorPosCallback()
-
-    // Assign a pointer ID
-    gestureEvent.pointerId[0] = 0;
-
-    // Register touch points count
-    gestureEvent.pointCount = 1;
-
-    // Register touch points position, only one point registered
-    gestureEvent.position[0] = GetMousePosition();
-
-    // Normalize gestureEvent.position[0] for CORE.Window.screen.width and CORE.Window.screen.height
-    gestureEvent.position[0].x /= (float)GetScreenWidth();
-    gestureEvent.position[0].y /= (float)GetScreenHeight();
-
-    // Gesture data is sent to gestures system for processing
-    ProcessGestureEvent(gestureEvent);
-#endif
-}
-
-void UWPMousePosEvent(double x, double y)
-{
-    CORE.Input.Mouse.currentPosition.x = (float)x;
-    CORE.Input.Mouse.currentPosition.y = (float)y;
-    CORE.Input.Touch.position[0] = CORE.Input.Mouse.currentPosition;
-
-#if defined(SUPPORT_GESTURES_SYSTEM) && defined(SUPPORT_MOUSE_GESTURES)
-    // Process mouse events as touches to be able to use mouse-gestures
-    GestureEvent gestureEvent = { 0 };
-
-    gestureEvent.touchAction = TOUCH_MOVE;
-
-    // Assign a pointer ID
-    gestureEvent.pointerId[0] = 0;
-
-    // Register touch points count
-    gestureEvent.pointCount = 1;
-
-    // Register touch points position, only one point registered
-    gestureEvent.position[0] = CORE.Input.Mouse.currentPosition;
-
-    // Normalize gestureEvent.position[0] for CORE.Window.screen.width and CORE.Window.screen.height
-    gestureEvent.position[0].x /= (float)GetScreenWidth();
-    gestureEvent.position[0].y /= (float)GetScreenHeight();
-
-    // Gesture data is sent to gestures system for processing
-    ProcessGestureEvent(gestureEvent);
-#endif
-}
-
-void UWPResizeEvent(int width, int height)
-{
-    SetupViewport(width, height);    // Reset viewport and projection matrix for new size
-
-    // Set current screen size
-    CORE.Window.screen.width = width;
-    CORE.Window.screen.height = height;
-    CORE.Window.currentFbo.width = width;
-    CORE.Window.currentFbo.height = height;
-
-    // NOTE: Postprocessing texture is not scaled to new size
-
-    CORE.Window.resizedLastFrame = true;
-}
-
-void UWPActivateGamepadEvent(int gamepad, bool active)
-{
-    if (gamepad < MAX_GAMEPADS) CORE.Input.Gamepad.ready[gamepad] = active;
-}
-
-void UWPRegisterGamepadButton(int gamepad, int button, bool down)
-{
-    if (gamepad < MAX_GAMEPADS)
-    {
-        if (button < MAX_GAMEPAD_BUTTONS)
-        {
-            CORE.Input.Gamepad.currentButtonState[gamepad][button] = down;
-            CORE.Input.Gamepad.lastButtonPressed = button;
-        }
-    }
-}
-
-void UWPRegisterGamepadAxis(int gamepad, int axis, float value)
-{
-    if (gamepad < MAX_GAMEPADS)
-    {
-        if (axis < MAX_GAMEPAD_AXIS) CORE.Input.Gamepad.axisState[gamepad][axis] = value;
-    }
-}
-
-void UWPGestureMove(int pointer, float x, float y)
-{
-#if defined(SUPPORT_GESTURES_SYSTEM)
-    GestureEvent gestureEvent = { 0 };
-
-    // Assign the pointer ID and touch action
-    gestureEvent.pointerId[0] = pointer;
-    gestureEvent.touchAction = TOUCH_MOVE;
-
-    // Register touch points count
-    gestureEvent.pointCount = 1;
-
-    // Register touch points position, only one point registered
-    gestureEvent.position[0].x = x;
-    gestureEvent.position[0].y = y;
-
-    // Normalize gestureEvent.position[0] for CORE.Window.screen.width and CORE.Window.screen.height
-    gestureEvent.position[0].x /= (float)GetScreenWidth();
-    gestureEvent.position[0].y /= (float)GetScreenHeight();
-
-    // Gesture data is sent to gestures system for processing
-    ProcessGestureEvent(gestureEvent);
-#endif
-}
-
-void UWPGestureTouch(int pointer, float x, float y, bool touch)
-{
-#if defined(SUPPORT_GESTURES_SYSTEM)
-    GestureEvent gestureEvent = { 0 };
-
-    // Assign the pointer ID and touch action
-    gestureEvent.pointerId[0] = pointer;
-    gestureEvent.touchAction = touch ? TOUCH_DOWN : TOUCH_UP;
-
-    // Register touch points count
-    gestureEvent.pointCount = 1;
-
-    // Register touch points position, only one point registered
-    gestureEvent.position[0].x = x;
-    gestureEvent.position[0].y = y;
-
-    // Normalize gestureEvent.position[0] for CORE.Window.screen.width and CORE.Window.screen.height
-    gestureEvent.position[0].x /= (float)GetScreenWidth();
-    gestureEvent.position[0].y /= (float)GetScreenHeight();
-
-    // Gesture data is sent to gestures system for processing
-    ProcessGestureEvent(gestureEvent);
-#endif
-}
-
-#endif  // PLATFORM_UWP
 
 #if defined(PLATFORM_DRM)
 // Search matching DRM mode in connector's mode list
