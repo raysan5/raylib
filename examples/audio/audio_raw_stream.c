@@ -31,8 +31,10 @@ int main(void)
 
     InitAudioDevice();              // Initialize audio device
 
+    SetAudioStreamBufferSizeDefault(4096);
+
     // Init raw audio stream (sample rate: 22050, sample size: 16bit-short, channels: 1-mono)
-    AudioStream stream = LoadAudioStream(22050, 16, 1);
+    AudioStream stream = LoadAudioStream(44100, 16, 1);
 
     // Buffer for the single cycle waveform we are synthesizing
     short *data = (short *)malloc(sizeof(short)*MAX_SAMPLES);
