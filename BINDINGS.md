@@ -48,7 +48,7 @@ Here it is a list with the ones I'm aware of:
 | raylib-py          | 2.0 | [Python](https://www.python.org/)        | https://github.com/overdev/raylib-py       |
 | raylib-python-cffi | 3.7 | [Python](https://www.python.org/)        | https://github.com/electronstudio/raylib-python-cffi    |
 | raylib-py-ctbg     | 2.6 | [Python](https://www.python.org/)        | https://github.com/overdev/raylib-py-ctbg                 |
-| jaylib             | 3.0 | [Java](https://en.wikipedia.org/wiki/Java_(programming_language))           | https://github.com/electronstudio/jaylib/   |
+| jaylib             | 3.7 | [Java](https://en.wikipedia.org/wiki/Java_(programming_language))           | https://github.com/electronstudio/jaylib/   |
 | raylib-java        | 2.0 | [Java](https://en.wikipedia.org/wiki/Java_(programming_language))           | https://github.com/XoanaIO/raylib-java   |
 | raylib-j           | 3.5 | [Java](https://en.wikipedia.org/wiki/Java_(programming_language))           | https://github.com/CreedVI/Raylib-J   |
 | clj-raylib         | 3.0 | [Clojure](https://clojure.org/)          | https://github.com/lsevero/clj-raylib       |
