@@ -31,7 +31,7 @@ int main(void)
 
     InitAudioDevice();              // Initialize audio device
 
-    SetAudioStreamBufferSizeDefault(4096);
+    SetAudioStreamBufferSizeDefault(MAX_SAMPLES_PER_UPDATE);
 
     // Init raw audio stream (sample rate: 22050, sample size: 16bit-short, channels: 1-mono)
     AudioStream stream = LoadAudioStream(44100, 16, 1);
