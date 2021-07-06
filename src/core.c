@@ -243,11 +243,10 @@
 #if defined(PLATFORM_RPI)
     #include "bcm_host.h"               // Raspberry Pi VideoCore IV access functions
 #endif
-
 #if defined(PLATFORM_DRM)
-    #include <gbm.h>                    // Generic Buffer Management
+    #include <gbm.h>                    // Generic Buffer Management (native platform for EGL on DRM)
     #include <xf86drm.h>                // Direct Rendering Manager user-level library interface
-    #include <xf86drmMode.h>            // Direct Rendering Manager modesetting interface
+    #include <xf86drmMode.h>            // Direct Rendering Manager mode setting (KMS) interface
 #endif
 
     #include "EGL/egl.h"                // Native platform windowing system interface
@@ -357,9 +356,9 @@ typedef struct CoreData {
 #if defined(PLATFORM_DRM)
         int fd;                             // File descriptor for /dev/dri/... 
         drmModeConnector *connector;        // Direct Rendering Manager (DRM) mode connector
+        drmModeCrtc *crtc;                  // CRT Controller
         int modeIndex;                      // Index of the used mode of connector->modes
-        drmModeCrtc *crtc;                  // CRT controller
-        struct gbm_device *gbmDevice;       // GBM device (Generic Buffer Management, native platform for EGL on DRM)
+        struct gbm_device *gbmDevice;       // GBM device
         struct gbm_surface *gbmSurface;     // GBM surface
         struct gbm_bo *prevBO;              // Previous GBM buffer object (during frame swapping)
         uint32_t prevFB;                    // Previous GBM framebufer (during frame swapping)
@@ -777,7 +776,11 @@ void InitWindow(int width, int height, const char *title)
     //AConfiguration_getScreenSize(CORE.Android.app->config);
     //AConfiguration_getScreenLong(CORE.Android.app->config);
 
+    // Initialize App command system
+    // NOTE: On APP_CMD_INIT_WINDOW -> InitGraphicsDevice(), InitTimer(), LoadFontDefault()...
     CORE.Android.app->onAppCmd = AndroidCommandCallback;
+    
+    // Initialize input events system
     CORE.Android.app->onInputEvent = AndroidInputCallback;
 
     // Initialize assets manager
@@ -919,7 +922,29 @@ void CloseWindow(void)
     timeEndPeriod(1);           // Restore time period
 #endif
 
-#if defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI) || defined(PLATFORM_DRM)
+#if defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI)
+    // Close surface, context and display
+    if (CORE.Window.device != EGL_NO_DISPLAY)
+    {
+        eglMakeCurrent(CORE.Window.device, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
+
+        if (CORE.Window.surface != EGL_NO_SURFACE)
+        {
+            eglDestroySurface(CORE.Window.device, CORE.Window.surface);
+            CORE.Window.surface = EGL_NO_SURFACE;
+        }
+
+        if (CORE.Window.context != EGL_NO_CONTEXT)
+        {
+            eglDestroyContext(CORE.Window.device, CORE.Window.context);
+            CORE.Window.context = EGL_NO_CONTEXT;
+        }
+
+        eglTerminate(CORE.Window.device);
+        CORE.Window.device = EGL_NO_DISPLAY;
+    }
+#endif
+
 #if defined(PLATFORM_DRM)
     if (CORE.Window.prevFB)
     {
@@ -964,14 +989,10 @@ void CloseWindow(void)
         close(CORE.Window.fd);
         CORE.Window.fd = -1;
     }
-#endif
 
     // Close surface, context and display
     if (CORE.Window.device != EGL_NO_DISPLAY)
     {
-#if !defined(PLATFORM_DRM)
-        eglMakeCurrent(CORE.Window.device, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
-#endif
         if (CORE.Window.surface != EGL_NO_SURFACE)
         {
             eglDestroySurface(CORE.Window.device, CORE.Window.surface);
@@ -1010,7 +1031,6 @@ void CloseWindow(void)
             pthread_join(CORE.Input.eventWorker[i].threadId, NULL);
         }
     }
-
 
     if (CORE.Input.Gamepad.threadId) pthread_join(CORE.Input.Gamepad.threadId, NULL);
 #endif
@@ -5294,7 +5314,6 @@ static int32_t AndroidInputCallback(struct android_app *app, AInputEvent *event)
     }
 
 #if defined(SUPPORT_GESTURES_SYSTEM)
-
     GestureEvent gestureEvent = { 0 };
 
     // Register touch actions
