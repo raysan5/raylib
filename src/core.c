@@ -624,13 +624,10 @@ static EM_BOOL EmscriptenResizeCallback(int eventType, const EmscriptenUiEvent *
 #endif
 
 #if defined(PLATFORM_RPI) || defined(PLATFORM_DRM)
-#if defined(SUPPORT_SSH_KEYBOARD_RPI)
-static void InitKeyboard(void);                         // Initialize raw keyboard system (standard input reading)
-static void ProcessKeyboard(void);                      // Process keyboard events
+static void InitKeyboard(void);                         // Initialize raw keyboard system
 static void RestoreKeyboard(void);                      // Restore keyboard system
-#else
-static void InitTerminal(void);                         // Initialize terminal (block echo and signal shortcuts)
-static void RestoreTerminal(void);                      // Restore terminal
+#if defined(SUPPORT_SSH_KEYBOARD_RPI)
+static void ProcessKeyboard(void);                      // Process keyboard events
 #endif
 
 static void InitEvdevInput(void);                       // Initialize evdev inputs
@@ -664,7 +661,6 @@ void __stdcall Sleep(unsigned long msTimeout);          // Required for WaitTime
 //----------------------------------------------------------------------------------
 // Module Functions Definition - Window and OpenGL Context Functions
 //----------------------------------------------------------------------------------
-
 #if defined(PLATFORM_ANDROID)
 // To allow easier porting to android, we allow the user to define a
 // main function which we call from android_main, defined by ourselves
@@ -683,51 +679,6 @@ void android_main(struct android_app *app)
 struct android_app *GetAndroidApp(void)
 {
     return CORE.Android.app;
-}
-#endif
-
-#if (defined(PLATFORM_RPI) || defined(PLATFORM_DRM)) && !defined(SUPPORT_SSH_KEYBOARD_RPI)
-// Initialize terminal (block echo and signal short cuts)
-static void InitTerminal(void)
-{
-    TRACELOG(LOG_INFO, "RPI: Reconfiguring terminal...");
-
-    // Save terminal keyboard settings and reconfigure terminal with new settings
-    struct termios keyboardNewSettings;
-    tcgetattr(STDIN_FILENO, &CORE.Input.Keyboard.defaultSettings);    // Get current keyboard settings
-    keyboardNewSettings = CORE.Input.Keyboard.defaultSettings;
-
-    // New terminal settings for keyboard: turn off buffering (non-canonical mode), echo
-    // NOTE: ISIG controls if ^C and ^Z generate break signals or not
-    keyboardNewSettings.c_lflag &= ~(ICANON | ECHO | ISIG);
-    keyboardNewSettings.c_cc[VMIN] = 1;
-    keyboardNewSettings.c_cc[VTIME] = 0;
-
-    // Set new keyboard settings (change occurs immediately)
-    tcsetattr(STDIN_FILENO, TCSANOW, &keyboardNewSettings);
-
-    // Save old keyboard mode to restore it at the end
-    if (ioctl(STDIN_FILENO, KDGKBMODE, &CORE.Input.Keyboard.defaultMode) < 0)
-    {
-        // NOTE: It could mean we are using a remote keyboard through ssh or from the desktop
-        TRACELOG(LOG_WARNING, "RPI: Failed to change keyboard mode (not a local terminal)");
-    }
-    else ioctl(STDIN_FILENO, KDSKBMODE, K_XLATE);
-
-    // Register terminal restore when program finishes
-    atexit(RestoreTerminal);
-}
-
-// Restore terminal
-static void RestoreTerminal(void)
-{
-    TRACELOG(LOG_INFO, "RPI: Restoring terminal...");
-
-    // Reset to default keyboard settings
-    tcsetattr(STDIN_FILENO, TCSANOW, &CORE.Input.Keyboard.defaultSettings);
-
-    // Reconfigure keyboard to default mode
-    ioctl(STDIN_FILENO, KDSKBMODE, CORE.Input.Keyboard.defaultMode);
 }
 #endif
 
@@ -853,11 +804,7 @@ void InitWindow(int width, int height, const char *title)
     // Initialize raw input system
     InitEvdevInput();   // Evdev inputs initialization
     InitGamepad();      // Gamepad init
-#if defined(SUPPORT_SSH_KEYBOARD_RPI)
-    InitKeyboard();     // Keyboard init
-#else
-    InitTerminal();     // Terminal init
-#endif
+    InitKeyboard();     // Keyboard init (stdin)
 #endif
 
 #if defined(PLATFORM_WEB)
@@ -4824,8 +4771,8 @@ void PollInputEvents(void)
 #endif
 
 #if (defined(PLATFORM_RPI) || defined(PLATFORM_DRM)) && defined(SUPPORT_SSH_KEYBOARD_RPI)
-    // NOTE: Keyboard reading could be done using input_event(s) reading or just read from stdin,
-    // we now use both methods inside here. 2nd method is still used for legacy purposes (Allows for input trough SSH console)
+    // NOTE: Keyboard reading could be done using input_event(s) or just read from stdin, both methods are used here. 
+    // stdin reading is still used for legacy purposes, it allows keyboard input trough SSH console
     ProcessKeyboard();
 
     // NOTE: Mouse input events polling is done asynchronously in another pthread - EventThread()
@@ -5443,20 +5390,17 @@ static EM_BOOL EmscriptenGamepadCallback(int eventType, const EmscriptenGamepadE
 #endif
 
 #if defined(PLATFORM_RPI) || defined(PLATFORM_DRM)
-
-#if defined(SUPPORT_SSH_KEYBOARD_RPI)
 // Initialize Keyboard system (using standard input)
 static void InitKeyboard(void)
 {
-    // NOTE: We read directly from Standard Input (stdin) - STDIN_FILENO file descriptor
+    // NOTE: We read directly from Standard Input (stdin) - STDIN_FILENO file descriptor,
+    // Reading directly from stdin will give chars already key-mapped by kernel to ASCII or UNICODE
 
-    // Make stdin non-blocking (not enough, need to configure to non-canonical mode)
-    int flags = fcntl(STDIN_FILENO, F_GETFL, 0);          // F_GETFL: Get the file access mode and the file status flags
-    fcntl(STDIN_FILENO, F_SETFL, flags | O_NONBLOCK);     // F_SETFL: Set the file status flags to the value specified
-
-    // Save terminal keyboard settings and reconfigure terminal with new settings
+    // Save terminal keyboard settings
+    tcgetattr(STDIN_FILENO, &CORE.Input.Keyboard.defaultSettings);
+    
+    // Reconfigure terminal with new settings
     struct termios keyboardNewSettings = { 0 };
-    tcgetattr(STDIN_FILENO, &CORE.Input.Keyboard.defaultSettings);    // Get current keyboard settings
     keyboardNewSettings = CORE.Input.Keyboard.defaultSettings;
 
     // New terminal settings for keyboard: turn off buffering (non-canonical mode), echo and key processing
@@ -5469,28 +5413,37 @@ static void InitKeyboard(void)
     // Set new keyboard settings (change occurs immediately)
     tcsetattr(STDIN_FILENO, TCSANOW, &keyboardNewSettings);
 
-    // NOTE: Reading directly from stdin will give chars already key-mapped by kernel to ASCII or UNICODE
-
     // Save old keyboard mode to restore it at the end
-    if (ioctl(STDIN_FILENO, KDGKBMODE, &CORE.Input.Keyboard.defaultMode) < 0)
-    {
-        // NOTE: It could mean we are using a remote keyboard through ssh!
-        TRACELOG(LOG_WARNING, "RPI: Failed to change keyboard mode (SSH keyboard?)");
-    }
+    // NOTE: If ioctl() returns -1, it means the call failed for some reason (error code set in errno)
+    int result = ioctl(STDIN_FILENO, KDGKBMODE, &CORE.Input.Keyboard.defaultMode);
+    
+    // In case of failure, it could mean a remote keyboard is used (SSH)
+    if (result < 0) TRACELOG(LOG_WARNING, "RPI: Failed to change keyboard mode, an SSH keyboard is probably used");
     else
     {
-        // We reconfigure keyboard mode to get:
+        // Reconfigure keyboard mode to get:
         //    - scancodes (K_RAW)
         //    - keycodes (K_MEDIUMRAW)
         //    - ASCII chars (K_XLATE)
         //    - UNICODE chars (K_UNICODE)
-        ioctl(STDIN_FILENO, KDSKBMODE, K_XLATE);
+        ioctl(STDIN_FILENO, KDSKBMODE, K_XLATE);  // ASCII chars
     }
 
     // Register keyboard restore when program finishes
     atexit(RestoreKeyboard);
 }
 
+// Restore default keyboard input
+static void RestoreKeyboard(void)
+{
+    // Reset to default keyboard settings
+    tcsetattr(STDIN_FILENO, TCSANOW, &CORE.Input.Keyboard.defaultSettings);
+
+    // Reconfigure keyboard to default mode
+    ioctl(STDIN_FILENO, KDSKBMODE, CORE.Input.Keyboard.defaultMode);
+}
+
+#if defined(SUPPORT_SSH_KEYBOARD_RPI)
 // Process keyboard inputs
 // TODO: Most probably input reading and processing should be in a separate thread
 static void ProcessKeyboard(void)
@@ -5603,16 +5556,6 @@ static void ProcessKeyboard(void)
         screenshotCounter++;
     }
 #endif
-}
-
-// Restore default keyboard input
-static void RestoreKeyboard(void)
-{
-    // Reset to default keyboard settings
-    tcsetattr(STDIN_FILENO, TCSANOW, &CORE.Input.Keyboard.defaultSettings);
-
-    // Reconfigure keyboard to default mode
-    ioctl(STDIN_FILENO, KDSKBMODE, CORE.Input.Keyboard.defaultMode);
 }
 #endif  // SUPPORT_SSH_KEYBOARD_RPI
 
