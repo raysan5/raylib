@@ -3251,7 +3251,7 @@ static Model LoadOBJ(const char *fileName)
         if (ret != TINYOBJ_SUCCESS) TRACELOG(LOG_WARNING, "MODEL: [%s] Failed to load OBJ data", fileName);
         else TRACELOG(LOG_INFO, "MODEL: [%s] OBJ data loaded successfully: %i meshes/%i materials", fileName, meshCount, materialCount);
 
-        model.meshCount = materialCount;
+        model.meshCount = materialCount;    // TODO: REVIEW!!!
 
         // Init model materials array
         if (materialCount > 0)
@@ -3269,7 +3269,7 @@ static Model LoadOBJ(const char *fileName)
         model.meshes = (Mesh *)RL_CALLOC(model.meshCount, sizeof(Mesh));
         model.meshMaterial = (int *)RL_CALLOC(model.meshCount, sizeof(int));
 
-        // count the faces for each material
+        // Count the faces for each material
         int *matFaces = RL_CALLOC(meshCount, sizeof(int));
 
         for (unsigned int mi = 0; mi < meshCount; mi++)
@@ -3283,16 +3283,16 @@ static Model LoadOBJ(const char *fileName)
         }
 
         //--------------------------------------
-        // create the material meshes
+        // Create the material meshes
 
-        // running counts/indexes for each material mesh as we are
+        // Running counts/indexes for each material mesh as we are
         // building them at the same time
         int *vCount = RL_CALLOC(model.meshCount, sizeof(int));
         int *vtCount = RL_CALLOC(model.meshCount, sizeof(int));
         int *vnCount = RL_CALLOC(model.meshCount, sizeof(int));
         int *faceCount = RL_CALLOC(model.meshCount, sizeof(int));
 
-        // allocate space for each of the material meshes
+        // Allocate space for each of the material meshes
         for (int mi = 0; mi < model.meshCount; mi++)
         {
             model.meshes[mi].vertexCount = matFaces[mi]*3;
@@ -3303,7 +3303,7 @@ static Model LoadOBJ(const char *fileName)
             model.meshMaterial[mi] = mi;
         }
 
-        // scan through the combined sub meshes and pick out each material mesh
+        // Scan through the combined sub meshes and pick out each material mesh
         for (unsigned int af = 0; af < attrib.num_faces; af++)
         {
             int mm = attrib.material_ids[af];   // mesh material for this face
