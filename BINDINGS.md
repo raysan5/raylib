@@ -83,7 +83,7 @@ Here it is a list with the ones I'm aware of:
 | raykit             | ? | [Kit](https://www.kitlang.org/)           | https://github.com/Gamerfiend/raykit      |
 | vraylib            | 3.5 | [V](https://vlang.io/)                    | https://github.com/waotzi/vraylib      |
 | ray.mod            | 3.0 | [BlitzMax](https://blitzmax.org/)         | https://github.com/bmx-ng/ray.mod         |
-| ray-ocaml          | 3.5 | [OCaml](https://ocaml.org/)               | https://github.com/tjammer/raylib-ocaml   |
+| raylib-ocaml       | 3.7 | [OCaml](https://ocaml.org/)               | https://github.com/tjammer/raylib-ocaml   |
 | raylib-mosaic      | 3.0 | [Mosaic](https://github.com/sal55/langs/tree/master/Mosaic)     | https://github.com/pluckyporcupine/raylib-mosaic   |
 | raylib-xdpw        | 2.6 | [XD Pascal](https://github.com/vtereshkov/xdpw)     | https://github.com/vtereshkov/raylib-xdpw   |
 | raylib-carp        | 3.0 | [Carp](https://github.com/carp-lang/Carp)           | https://github.com/pluckyporcupine/raylib-carp   |
