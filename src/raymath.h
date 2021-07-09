@@ -46,7 +46,7 @@
 //#define RAYMATH_HEADER_ONLY       // NOTE: To compile functions as static inline, uncomment this line
 
 #ifndef RAYMATH_STANDALONE
-    #include "raylib.h"             // Required for structs: Vector3, Matrix
+    #include "raylib.h"             // Required for: Vector3, Matrix structs definition
 #endif
 
 #if defined(RAYMATH_IMPLEMENTATION) && defined(RAYMATH_HEADER_ONLY)

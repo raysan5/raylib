@@ -128,7 +128,7 @@
 // Type required before windows.h inclusion
 typedef struct tagMSG *LPMSG;
 
-#include <windows.h>
+#include <windows.h>        // Windows functionality (miniaudio)
 
 // Type required by some unused function...
 typedef struct tagBITMAPINFOHEADER {
@@ -145,9 +145,9 @@ typedef struct tagBITMAPINFOHEADER {
   DWORD biClrImportant;
 } BITMAPINFOHEADER, *PBITMAPINFOHEADER;
 
-#include <objbase.h>
-#include <mmreg.h>
-#include <mmsystem.h>
+#include <objbase.h>        // Component Object Model (COM) header
+#include <mmreg.h>          // Windows Multimedia, defines some WAVE structs
+#include <mmsystem.h>       // Windows Multimedia, used by Windows GDI, defines DIBINDEX macro
 
 // Some required types defined for MSVC/TinyC compiler
 #if defined(_MSC_VER) || defined(__TINYC__)
@@ -164,7 +164,7 @@ typedef struct tagBITMAPINFOHEADER {
 #define MA_NO_MP3
 #define MINIAUDIO_IMPLEMENTATION
 //#define MA_DEBUG_OUTPUT
-#include "external/miniaudio.h"         // miniaudio library
+#include "external/miniaudio.h"         // Audio device initialization and management
 #undef PlaySound                        // Win32 API: windows.h > mmsystem.h defines PlaySound macro
 
 #include <stdlib.h>                     // Required for: malloc(), free()
@@ -539,7 +539,7 @@ AudioBuffer *LoadAudioBuffer(ma_format format, ma_uint32 channels, ma_uint32 sam
 
     // Audio data runs through a format converter
     ma_data_converter_config converterConfig = ma_data_converter_config_init(format, AUDIO_DEVICE_FORMAT, channels, AUDIO_DEVICE_CHANNELS, sampleRate, AUDIO.System.device.sampleRate);
-    converterConfig.resampling.allowDynamicSampleRate = true;        // Required for pitch shifting
+    converterConfig.resampling.allowDynamicSampleRate = true;        // Pitch shifting
 
     ma_result result = ma_data_converter_init(&converterConfig, &audioBuffer->converter);
 

@@ -119,15 +119,15 @@
     #include "config.h"             // Defines module configuration flags
 #endif
 
-#include "utils.h"                  // Required for: TRACELOG macros
+#include "utils.h"                  // TRACELOG macros
 
 #if (defined(__linux__) || defined(PLATFORM_WEB)) && _POSIX_C_SOURCE < 199309L
     #undef _POSIX_C_SOURCE
-    #define _POSIX_C_SOURCE 199309L // Required for CLOCK_MONOTONIC if compiled with c99 without gnu ext.
+    #define _POSIX_C_SOURCE 199309L // Required for: CLOCK_MONOTONIC if compiled with c99 without gnu ext.
 #endif
 
-#define RAYMATH_IMPLEMENTATION      // Define external out-of-line implementation of raymath here
-#include "raymath.h"                // Required for: Vector3 and Matrix functions
+#define RAYMATH_IMPLEMENTATION      // Define external out-of-line implementation
+#include "raymath.h"                // Vector3, Quaternion and Matrix functionality
 
 #define RLGL_IMPLEMENTATION
 #include "rlgl.h"                   // raylib OpenGL abstraction layer to OpenGL 1.1, 3.3+ or ES2
@@ -143,19 +143,20 @@
 #endif
 
 #if defined(SUPPORT_GIF_RECORDING)
-    //#define MSF_GIF_MALLOC RL_MALLOC
-    //#define MSF_GIF_FREE RL_FREE
+    #define MSF_GIF_MALLOC(contextPointer, newSize) RL_MALLOC(newSize)
+    #define MSF_GIF_REALLOC(contextPointer, oldMemory, oldSize, newSize) RL_REALLOC(oldMemory, newSize)
+    #define MSF_GIF_FREE(contextPointer, oldMemory, oldSize) RL_FREE(oldMemory)
 
     #define MSF_GIF_IMPL
-    #include "external/msf_gif.h"   // Support GIF recording
+    #include "external/msf_gif.h"   // GIF recording functionality
 #endif
 
 #if defined(SUPPORT_COMPRESSION_API)
     #define SINFL_IMPLEMENTATION
-    #include "external/sinfl.h"
+    #include "external/sinfl.h"     // Deflate (RFC 1951) decompressor
 
     #define SDEFL_IMPLEMENTATION
-    #include "external/sdefl.h"
+    #include "external/sdefl.h"     // Deflate (RFC 1951) compressor
 #endif
 
 #include <stdlib.h>                 // Required for: srand(), rand(), atexit()
@@ -179,7 +180,7 @@
     #include <direct.h>             // Required for: _getch(), _chdir()
     #define GETCWD _getcwd          // NOTE: MSDN recommends not to use getcwd(), chdir()
     #define CHDIR _chdir
-    #include <io.h>                 // Required for _access() [Used in FileExists()]
+    #include <io.h>                 // Required for: _access() [Used in FileExists()]
 #else
     #include <unistd.h>             // Required for: getch(), chdir() (POSIX), access()
     #define GETCWD getcwd
@@ -220,9 +221,9 @@
 #endif
 
 #if defined(PLATFORM_ANDROID)
-    //#include <android/sensor.h>           // Android sensors functions (accelerometer, gyroscope, light...)
-    #include <android/window.h>             // Defines AWINDOW_FLAG_FULLSCREEN and others
-    #include <android_native_app_glue.h>    // Defines basic app state struct and manages activity
+    //#include <android/sensor.h>           // Required for: Android sensors functions (accelerometer, gyroscope, light...)
+    #include <android/window.h>             // Required for: AWINDOW_FLAG_FULLSCREEN definition and others
+    #include <android_native_app_glue.h>    // Required for: android_app struct and activity management
 
     #include <EGL/egl.h>                    // Native platform windowing system interface
     //#include <GLES2/gl2.h>                // OpenGL ES 2.0 library (not required in this module, only in rlgl)
@@ -235,7 +236,7 @@
     #include <pthread.h>                // POSIX threads management (inputs reading)
     #include <dirent.h>                 // POSIX directory browsing
 
-    #include <sys/ioctl.h>              // UNIX System call for device-specific input/output operations - ioctl()
+    #include <sys/ioctl.h>              // Required for: ioctl() - UNIX System call for device-specific input/output operations
     #include <linux/kd.h>               // Linux: KDSKBMODE, K_MEDIUMRAM constants definition
     #include <linux/input.h>            // Linux: Keycodes constants definition (KEY_A, ...)
     #include <linux/joystick.h>         // Linux: Joystick support library
@@ -256,10 +257,10 @@
 
 #if defined(PLATFORM_WEB)
     #define GLFW_INCLUDE_ES2            // GLFW3: Enable OpenGL ES 2.0 (translated to WebGL)
-    #include "GLFW/glfw3.h"             // GLFW3 library: Windows, OpenGL context and Input management
+    #include "GLFW/glfw3.h"             // GLFW3: Windows, OpenGL context and Input management
     #include <sys/time.h>               // Required for: timespec, nanosleep(), select() - POSIX
 
-    #include <emscripten/emscripten.h>  // Emscripten library - LLVM to JavaScript compiler
+    #include <emscripten/emscripten.h>  // Emscripten functionality for C
     #include <emscripten/html5.h>       // Emscripten HTML5 library
 #endif
 
@@ -655,7 +656,7 @@ static void PlayAutomationEvent(unsigned int frame);        // Play frame events
 
 #if defined(_WIN32)
 // NOTE: We declare Sleep() function symbol to avoid including windows.h (kernel32.lib linkage required)
-void __stdcall Sleep(unsigned long msTimeout);          // Required for WaitTime()
+void __stdcall Sleep(unsigned long msTimeout);              // Required for: WaitTime()
 #endif
 
 //----------------------------------------------------------------------------------
@@ -808,11 +809,9 @@ void InitWindow(int width, int height, const char *title)
 #endif
 
 #if defined(PLATFORM_WEB)
-    // Check fullscreen change events(note this is done on the window since most
-    // browsers don't support this on #canvas)
+    // Check fullscreen change events(note this is done on the window since most browsers don't support this on #canvas)
     emscripten_set_fullscreenchange_callback(EMSCRIPTEN_EVENT_TARGET_WINDOW, NULL, 1, EmscriptenResizeCallback);
-    // Check Resize event (note this is done on the window since most browsers
-    // don't support this on #canvas)
+    // Check Resize event (note this is done on the window since most browsers don't support this on #canvas)
     emscripten_set_resize_callback(EMSCRIPTEN_EVENT_TARGET_WINDOW, NULL, 1, EmscriptenResizeCallback);
     // Trigger this once to get initial window sizing
     EmscriptenResizeCallback(EMSCRIPTEN_EVENT_RESIZE, NULL, NULL);
@@ -4794,7 +4793,7 @@ EM_JS(int, GetCanvasHeight, (), { return canvas.clientHeight; });
 static EM_BOOL EmscriptenResizeCallback(int eventType, const EmscriptenUiEvent *e, void *userData)
 {
     // Don't resize non-resizeable windows
-    if ((CORE.Window.flags & FLAG_WINDOW_RESIZABLE) == 0) return true;
+    if ((CORE.Window.flags & FLAG_WINDOW_RESIZABLE) == 0) return 1;
 
     // This event is called whenever the window changes sizes,
     // so the size of the canvas object is explicitly retrieved below
@@ -4808,13 +4807,15 @@ static EM_BOOL EmscriptenResizeCallback(int eventType, const EmscriptenUiEvent *
     CORE.Window.currentFbo.height = height;
     CORE.Window.resizedLastFrame = true;
 
-    if (IsWindowFullscreen()) return true;
+    if (IsWindowFullscreen()) return 1;
 
     // Set current screen size
     CORE.Window.screen.width = width;
     CORE.Window.screen.height = height;
 
     // NOTE: Postprocessing texture is not scaled to new size
+    
+    return 0;
 }
 #endif
 
