@@ -297,10 +297,8 @@ endif
 
 ifeq ($(RAYLIB_BUILD_MODE),DEBUG)
     CFLAGS += -g
-    ifeq ($(PLATFORM),PLATFORM_WEB)
-        CFLAGS += -s ASSERTIONS=1 --profiling
-    endif
 endif
+
 ifeq ($(RAYLIB_BUILD_MODE),RELEASE)
     ifeq ($(PLATFORM),PLATFORM_WEB)
         CFLAGS += -Os
@@ -334,6 +332,9 @@ ifeq ($(PLATFORM),PLATFORM_WEB)
     # --memory-init-file 0       # to avoid an external memory initialization code file (.mem)
     # --preload-file resources   # specify a resources folder for data compilation
     CFLAGS += -s USE_GLFW=3
+    ifeq ($(RAYLIB_BUILD_MODE),DEBUG)
+        CFLAGS += -s ASSERTIONS=1 --profiling
+    endif
 endif
 ifeq ($(PLATFORM),PLATFORM_ANDROID)
     # Compiler flags for arquitecture
