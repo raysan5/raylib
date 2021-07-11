@@ -28,6 +28,7 @@ int main(void)
     Texture2D texture = LoadTextureFromImage(image);          // Image converted to texture, GPU memory (VRAM)
 
     UnloadImage(image);   // Once image has been converted to texture and uploaded to VRAM, it can be unloaded from RAM
+    SetTargetFPS(60);     // Set our game to run at 60 frames-per-second
     //---------------------------------------------------------------------------------------
 
     // Main game loop
