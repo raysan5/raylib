@@ -4286,7 +4286,7 @@ static bool InitGraphicsDevice(int width, int height)
 }
 
 // Set viewport for a provided width and height
-static void SetupViewport(int width, int height)
+void SetupViewport(int width, int height)
 {
     CORE.Window.render.width = width;
     CORE.Window.render.height = height;
