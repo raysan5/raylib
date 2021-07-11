@@ -937,7 +937,7 @@ RLAPI const char *GetMonitorName(int monitor);                    // Get the hum
 RLAPI void SetClipboardText(const char *text);                    // Set clipboard text content
 RLAPI const char *GetClipboardText(void);                         // Get clipboard text content
 RLAPI void SetupViewport(int width, int height);
-RLAPI void SetWindowResizeDrawCallback(windowReSizeDrawCallB func)
+RLAPI void SetWindowResizeDrawCallback(windowReSizeDrawCallB func);
 
 // Custom frame control functions
 // NOTE: Those functions are intended for advance users that want full control over the frame processing
