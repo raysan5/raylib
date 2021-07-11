@@ -493,6 +493,8 @@ typedef enum {
     FLAG_INTERLACED_HINT    = 0x00010000    // Set to try enabling interlaced video format (for V3D)
 } ConfigFlags;
 
+typedef void(*windowReSizeDrawCallB)(void);
+
 // Trace log level
 // NOTE: Organized by priority level
 typedef enum {
@@ -934,6 +936,8 @@ RLAPI Vector2 GetWindowScaleDPI(void);                            // Get window 
 RLAPI const char *GetMonitorName(int monitor);                    // Get the human-readable, UTF-8 encoded name of the primary monitor
 RLAPI void SetClipboardText(const char *text);                    // Set clipboard text content
 RLAPI const char *GetClipboardText(void);                         // Get clipboard text content
+RLAPI void SetupViewport(int width, int height);
+RLAPI void SetWindowResizeDrawCallback(windowReSizeDrawCallB func)
 
 // Custom frame control functions
 // NOTE: Those functions are intended for advance users that want full control over the frame processing

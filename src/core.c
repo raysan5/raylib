@@ -387,6 +387,7 @@ typedef struct CoreData {
         char **dropFilesPath;               // Store dropped files paths as strings
         int dropFilesCount;                 // Count dropped files strings
 
+        windowReSizeDrawCallB resizeDrawCallB;
     } Window;
 #if defined(PLATFORM_ANDROID)
     struct {
@@ -591,7 +592,7 @@ extern void UnloadFontDefault(void);        // [Module: text] Unloads default fo
 static void InitTimer(void);                            // Initialize timer (hi-resolution if available)
 static bool InitGraphicsDevice(int width, int height);  // Initialize graphics device
 static void SetupFramebuffer(int width, int height);    // Setup main framebuffer
-static void SetupViewport(int width, int height);       // Set viewport for a provided width and height
+void SetupViewport(int width, int height);       // Set viewport for a provided width and height
 
 #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
 static void ErrorCallback(int error, const char *description);                             // GLFW3 Error Callback, runs on GLFW3 error
@@ -696,6 +697,8 @@ void InitWindow(int width, int height, const char *title)
     CORE.Input.Mouse.scale = (Vector2){ 1.0f, 1.0f };
     CORE.Input.Mouse.cursor = MOUSE_CURSOR_ARROW;
     CORE.Input.Gamepad.lastButtonPressed = -1;
+
+    CORE.Window.resizeDrawCallB = NULL;
 
 #if defined(PLATFORM_ANDROID)
     CORE.Window.screen.width = width;
@@ -4835,6 +4838,13 @@ static void WindowSizeCallback(GLFWwindow *window, int width, int height)
     CORE.Window.screen.height = height;
     // NOTE: Postprocessing texture is not scaled to new size
 
+    if (CORE.Window.resizeDrawCallB != NULL) {
+        CORE.Window.resizeDrawCallB();
+    }
+}
+
+void SetWindowResizeDrawCallback(windowReSizeDrawCallB func) {
+    CORE.Window.resizeDrawCallB = func;
 }
 
 // GLFW3 WindowIconify Callback, runs when window is minimized/restored
