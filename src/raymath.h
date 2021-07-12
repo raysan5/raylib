@@ -641,7 +641,7 @@ RMDEF Vector3 Vector3Slerp(Vector3 v1, Vector3 v2, float t, float iradius, float
 
     if (Vector3LengthSqr(Vector3Subtract(incept,midpoint))<0.1) {  //If our midpoint and axis intercept are very close together, displace the midpoint slightly so that normalization of F does not result in divide-by-zero or G=0 because F={1,0,0}
         midpoint=Vector3Add(v1,Vector3Scale(L,0.49));
-        midpoint=Vector3Add(midpoint,Vector3CrossProduct(midpoint,{0.2,0.0,0.0}));
+        midpoint=Vector3Add(midpoint,Vector3CrossProduct(midpoint,(Vector3){0.2,0.0,0.0}));
     }
     F=Vector3Normalize(Vector3Subtract(incept,midpoint)); // First orthogonal vector
     G=Vector3Normalize(Vector3CrossProduct(L,F));   // Second orthogonal vector
