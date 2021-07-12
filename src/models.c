@@ -860,7 +860,7 @@ void UploadMesh(Mesh *mesh, bool dynamic)
     if (mesh->normals != NULL)
     {
         // Enable vertex attributes: normals (shader-location = 2)
-        void *normals = mesh->animNormals != NULL ? mesh->animNormals : mesh->vertices;
+        void *normals = mesh->animNormals != NULL ? mesh->animNormals : mesh->normals;
         mesh->vboId[2] = rlLoadVertexBuffer(normals, mesh->vertexCount*3*sizeof(float), dynamic);
         rlSetVertexAttribute(2, 3, RL_FLOAT, 0, 0, 0);
         rlEnableVertexAttribute(2);
