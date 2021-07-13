@@ -631,19 +631,20 @@ void DrawCylinderWires(Vector3 position, float radiusTop, float radiusBottom, fl
 
 //Draw an arc between two points
 //If iradius=0. the arc is a semi-circle with a center at the midpoint of the line between the two points.  Increase iradius for a flatter arc with a center off the midpoint.  Theta rotates the arc around the line between the two points.
-void DrawArc(Vector3 v1, Vector3 v2, float iradius, float theta, int steps, Color color) {
+void DrawArc(Vector3 v1, Vector3 v2, float iradius, float theta, int steps, Color color) 
+{
     float increment=1.0/(float)steps;
     Vector3 p;
 
     rlCheckRenderBatchLimit(2*(steps+1));
     rlBegin(RL_LINES);
         rlColor4ub(color.r, color.g, color.b, color.a);
-        for (float t=0.0;t<1.0;t+=increment) {
+        for (float t=0.0;t<1.0;t+=increment) 
+        {
             p=Vector3Slerp(v1,v2,t,iradius,theta);
             rlVertex3f(p.x,p.y,p.z);
             p=Vector3Slerp(v1,v2,t+increment,iradius,theta);
             rlVertex3f(p.x,p.y,p.z);
-
         }
     rlEnd();
 return;
