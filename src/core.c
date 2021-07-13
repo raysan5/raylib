@@ -5249,6 +5249,13 @@ static int32_t AndroidInputCallback(struct android_app *app, AInputEvent *event)
     CORE.Input.Touch.position[0].x = AMotionEvent_getX(event, 0);
     CORE.Input.Touch.position[0].y = AMotionEvent_getY(event, 0);
 
+    unsigned int touchCount = AMotionEvent_getPointerCount(event);
+    for (int i = 1; i < touchCount && i < MAX_TOUCH_POINTS; i++)
+    {
+        CORE.Input.Touch.position[i].x = AMotionEvent_getX(event, i);
+        CORE.Input.Touch.position[i].y = AMotionEvent_getY(event, i);
+    }
+
     int32_t action = AMotionEvent_getAction(event);
     unsigned int flags = action & AMOTION_EVENT_ACTION_MASK;
 
