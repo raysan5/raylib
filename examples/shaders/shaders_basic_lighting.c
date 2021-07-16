@@ -7,21 +7,13 @@
 *
 *   NOTE: Shaders used in this example are #version 330 (OpenGL 3.3).
 *
-*   This example has been created using raylib 2.5 (www.raylib.com)
+*   This example has been created using raylib 3.8 (www.raylib.com)
 *   raylib is licensed under an unmodified zlib/libpng license (View raylib.h for details)
 *
-*   Example contributed by Chris Camacho (@codifies) and reviewed by Ramon Santamaria (@raysan5)
+*   Example contributed by Chris Camacho (@codifies, http://bedroomcoders.co.uk/) and 
+*   reviewed by Ramon Santamaria (@raysan5)
 *
-*   Chris Camacho (@codifies -  http://bedroomcoders.co.uk/) notes:
-*
-*   This is based on the PBR lighting example, but greatly simplified to aid learning...
-*   actually there is very little of the PBR example left!
-*   When I first looked at the bewildering complexity of the PBR example I feared
-*   I would never understand how I could do simple lighting with raylib however its
-*   a testement to the authors of raylib (including rlights.h) that the example
-*   came together fairly quickly.
-*
-*   Copyright (c) 2019 Chris Camacho (@codifies) and Ramon Santamaria (@raysan5)
+*   Copyright (c) 2019-2021 Chris Camacho (@codifies) and Ramon Santamaria (@raysan5)
 *
 ********************************************************************************************/
 
@@ -50,49 +42,39 @@ int main(void)
 
     // Define the camera to look into our 3d world
     Camera camera = { 0 };
-    camera.position = (Vector3){ 2.0f, 2.0f, 6.0f };    // Camera position
+    camera.position = (Vector3){ 2.0f, 4.0f, 6.0f };    // Camera position
     camera.target = (Vector3){ 0.0f, 0.5f, 0.0f };      // Camera looking at point
     camera.up = (Vector3){ 0.0f, 1.0f, 0.0f };          // Camera up vector (rotation towards target)
     camera.fovy = 45.0f;                                // Camera field-of-view Y
-    camera.projection = CAMERA_PERSPECTIVE;                   // Camera mode type
+    camera.projection = CAMERA_PERSPECTIVE;             // Camera mode type
 
-    // Load models
-    Model modelA = LoadModelFromMesh(GenMeshTorus(0.4f, 1.0f, 16, 32));
-    Model modelB = LoadModelFromMesh(GenMeshCube(1.0f, 1.0f, 1.0f));
-    Model modelC = LoadModelFromMesh(GenMeshSphere(0.5f, 32, 32));
-
-    // Load models texture
-    Texture texture = LoadTexture("resources/texel_checker.png");
-
-    // Assign texture to default model material
-    modelA.materials[0].maps[MATERIAL_MAP_DIFFUSE].texture = texture;
-    modelB.materials[0].maps[MATERIAL_MAP_DIFFUSE].texture = texture;
-    modelC.materials[0].maps[MATERIAL_MAP_DIFFUSE].texture = texture;
-
+    // Load plane model from a generated mesh
+    Model model = LoadModelFromMesh(GenMeshPlane(10.0f, 10.0f, 3, 3));
+    Model cube = LoadModelFromMesh(GenMeshCube(2.0f, 4.0f, 2.0f));
+    
     Shader shader = LoadShader(TextFormat("resources/shaders/glsl%i/base_lighting.vs", GLSL_VERSION),
                                TextFormat("resources/shaders/glsl%i/lighting.fs", GLSL_VERSION));
 
-    // Get some shader loactions
-    shader.locs[SHADER_LOC_MATRIX_MODEL] = GetShaderLocation(shader, "matModel");
+    // Get some required shader loactions
     shader.locs[SHADER_LOC_VECTOR_VIEW] = GetShaderLocation(shader, "viewPos");
-
-    // ambient light level
+    // NOTE: "matModel" location name is automatically assigned on shader loading, 
+    // no need to get the location again if using that uniform name
+    //shader.locs[SHADER_LOC_MATRIX_MODEL] = GetShaderLocation(shader, "matModel");
+    
+    // Ambient light level (some basic lighting)
     int ambientLoc = GetShaderLocation(shader, "ambient");
-    SetShaderValue(shader, ambientLoc, (float[4]){ 0.2f, 0.2f, 0.2f, 1.0f }, SHADER_UNIFORM_VEC4);
+    SetShaderValue(shader, ambientLoc, (float[4]){ 0.1f, 0.1f, 0.1f, 1.0f }, SHADER_UNIFORM_VEC4);
 
-    float angle = 6.282f;
+    // Assign out lighting shader to model
+    model.materials[0].shader = shader;
+    cube.materials[0].shader = shader;
 
-    // All models use the same shader
-    modelA.materials[0].shader = shader;
-    modelB.materials[0].shader = shader;
-    modelC.materials[0].shader = shader;
-
-    // Using 4 point lights, white, red, green and blue
+    // Using 4 point lights: gold, red, green and blue
     Light lights[MAX_LIGHTS] = { 0 };
-    lights[0] = CreateLight(LIGHT_POINT, (Vector3){ 4, 2, 4 }, Vector3Zero(), WHITE, shader);
-    lights[1] = CreateLight(LIGHT_POINT, (Vector3){ 4, 2, 4 }, Vector3Zero(), RED, shader);
-    lights[2] = CreateLight(LIGHT_POINT, (Vector3){ 0, 4, 2 }, Vector3Zero(), GREEN, shader);
-    lights[3] = CreateLight(LIGHT_POINT, (Vector3){ 0, 4, 2 }, Vector3Zero(), BLUE, shader);
+    lights[0] = CreateLight(LIGHT_POINT, (Vector3){ -2, 1, -2 }, Vector3Zero(), YELLOW, shader);
+    lights[1] = CreateLight(LIGHT_POINT, (Vector3){ 2, 1, 2 }, Vector3Zero(), RED, shader);
+    lights[2] = CreateLight(LIGHT_POINT, (Vector3){ -2, 1, 2 }, Vector3Zero(), GREEN, shader);
+    lights[3] = CreateLight(LIGHT_POINT, (Vector3){ 2, 1, -2 }, Vector3Zero(), BLUE, shader);
 
     SetCameraMode(camera, CAMERA_ORBITAL);  // Set an orbital camera mode
 
@@ -104,34 +86,21 @@ int main(void)
     {
         // Update
         //----------------------------------------------------------------------------------
-        if (IsKeyPressed(KEY_W)) { lights[0].enabled = !lights[0].enabled; }
+        UpdateCamera(&camera);              // Update camera
+        
+        // Check key inputs to enable/disable lights
+        if (IsKeyPressed(KEY_Y)) { lights[0].enabled = !lights[0].enabled; }
         if (IsKeyPressed(KEY_R)) { lights[1].enabled = !lights[1].enabled; }
         if (IsKeyPressed(KEY_G)) { lights[2].enabled = !lights[2].enabled; }
         if (IsKeyPressed(KEY_B)) { lights[3].enabled = !lights[3].enabled; }
-
-        UpdateCamera(&camera);              // Update camera
-
-        // Make the lights do differing orbits
-        angle -= 0.02f;
-        lights[0].position.x = cosf(angle)*4.0f;
-        lights[0].position.z = sinf(angle)*4.0f;
-        lights[1].position.x = cosf(-angle*0.6f)*4.0f;
-        lights[1].position.z = sinf(-angle*0.6f)*4.0f;
-        lights[2].position.y = cosf(angle*0.2f)*4.0f;
-        lights[2].position.z = sinf(angle*0.2f)*4.0f;
-        lights[3].position.y = cosf(-angle*0.35f)*4.0f;
-        lights[3].position.z = sinf(-angle*0.35f)*4.0f;
-
+        
+        // Update light values (actually, only enable/disable them)
         UpdateLightValues(shader, lights[0]);
         UpdateLightValues(shader, lights[1]);
         UpdateLightValues(shader, lights[2]);
         UpdateLightValues(shader, lights[3]);
 
-        // Rotate the torus
-        modelA.transform = MatrixMultiply(modelA.transform, MatrixRotateX(-0.025f));
-        modelA.transform = MatrixMultiply(modelA.transform, MatrixRotateZ(0.012f));
-
-        // Update the light shader with the camera view position
+        // Update the shader with the camera view vector (points towards { 0.0f, 0.0f, 0.0f })
         float cameraPos[3] = { camera.position.x, camera.position.y, camera.position.z };
         SetShaderValue(shader, shader.locs[SHADER_LOC_VECTOR_VIEW], cameraPos, SHADER_UNIFORM_VEC3);
         //----------------------------------------------------------------------------------
@@ -144,16 +113,18 @@ int main(void)
 
             BeginMode3D(camera);
 
-                // Draw the three models
-                DrawModel(modelA, Vector3Zero(), 1.0f, WHITE);
-                DrawModel(modelB, (Vector3){-1.6f,0.0f,0.0f}, 1.0f, WHITE);
-                DrawModel(modelC, (Vector3){ 1.6f,0.0f,0.0f}, 1.0f, WHITE);
+                DrawModel(model, Vector3Zero(), 1.0f, WHITE);
+                DrawModel(cube, Vector3Zero(), 1.0f, WHITE);
 
                 // Draw markers to show where the lights are
-                if (lights[0].enabled) { DrawSphereEx(lights[0].position, 0.2f, 8, 8, WHITE); }
-                if (lights[1].enabled) { DrawSphereEx(lights[1].position, 0.2f, 8, 8, RED); }
-                if (lights[2].enabled) { DrawSphereEx(lights[2].position, 0.2f, 8, 8, GREEN); }
-                if (lights[3].enabled) { DrawSphereEx(lights[3].position, 0.2f, 8, 8, BLUE); }
+                if (lights[0].enabled) DrawSphereEx(lights[0].position, 0.2f, 8, 8, YELLOW);
+                else DrawSphereWires(lights[0].position, 0.2f, 8, 8, ColorAlpha(YELLOW, 0.3f));
+                if (lights[1].enabled) DrawSphereEx(lights[1].position, 0.2f, 8, 8, RED);
+                else DrawSphereWires(lights[1].position, 0.2f, 8, 8, ColorAlpha(RED, 0.3f));
+                if (lights[2].enabled) DrawSphereEx(lights[2].position, 0.2f, 8, 8, GREEN);
+                else DrawSphereWires(lights[2].position, 0.2f, 8, 8, ColorAlpha(GREEN, 0.3f));
+                if (lights[3].enabled) DrawSphereEx(lights[3].position, 0.2f, 8, 8, BLUE);
+                else DrawSphereWires(lights[3].position, 0.2f, 8, 8, ColorAlpha(BLUE, 0.3f));
 
                 DrawGrid(10, 1.0f);
 
@@ -161,7 +132,7 @@ int main(void)
 
             DrawFPS(10, 10);
 
-            DrawText("Use keys RGBW to toggle lights", 10, 30, 20, DARKGRAY);
+            DrawText("Use keys [Y][R][G][B] to toggle lights", 10, 40, 20, DARKGRAY);
 
         EndDrawing();
         //----------------------------------------------------------------------------------
@@ -169,14 +140,11 @@ int main(void)
 
     // De-Initialization
     //--------------------------------------------------------------------------------------
-    UnloadModel(modelA);        // Unload the modelA
-    UnloadModel(modelB);        // Unload the modelB
-    UnloadModel(modelC);        // Unload the modelC
+    UnloadModel(model);     // Unload the model
+    UnloadModel(cube);      // Unload the model
+    UnloadShader(shader);   // Unload shader
 
-    UnloadTexture(texture);     // Unload the texture
-    UnloadShader(shader);       // Unload shader
-
-    CloseWindow();              // Close window and OpenGL context
+    CloseWindow();          // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
 
     return 0;
