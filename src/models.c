@@ -2737,7 +2737,7 @@ void GenMeshTangents(Mesh *mesh)
 		if (mesh->vboId[SHADER_LOC_VERTEX_TANGENT] != 0)
 		{
 			// Upate existing vertex buffer
-			rlUpdateVertexBuffer(mesh->vboId, mesh->tangents, mesh->vertexCount * 4 * sizeof(float), 0);
+			rlUpdateVertexBuffer(mesh->vboId, mesh->tangents, mesh->vertexCount*4*sizeof(float), 0);
 		}
 		else
 		{
