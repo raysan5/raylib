@@ -2658,7 +2658,6 @@ void GenMeshTangents(Mesh *mesh)
         mesh->tangents = (float*)RL_MALLOC(mesh->vertexCount*4*sizeof(float));
     }
 	else
-	{
         RL_FREE(mesh->tangents);
         mesh->tangents = (float*)RL_MALLOC(mesh->vertexCount*4*sizeof(float));
     }
@@ -2691,7 +2690,7 @@ void GenMeshTangents(Mesh *mesh)
         float t2 = uv3.y - uv1.y;
 
         float div = s1*t2 - s2*t1;
-        float r = (div == 0.0f)? 0.0f : 1.0f/div;
+        float r = (div == 0.0f) ? 0.0f : 1.0f/div;
 
         Vector3 sdir = { (t2*x1 - t1*x2)*r, (t2*y1 - t1*y2)*r, (t2*z1 - t1*z2)*r };
         Vector3 tdir = { (s1*x2 - s2*x1)*r, (s1*y2 - s2*y1)*r, (s1*z2 - s2*z1)*r };
@@ -2731,6 +2730,7 @@ void GenMeshTangents(Mesh *mesh)
     RL_FREE(tan1);
     RL_FREE(tan2);
 
+
 	if (mesh->vboId != NULL)
 	{
 		
@@ -2751,8 +2751,6 @@ void GenMeshTangents(Mesh *mesh)
 		rlDisableVertexArray();
 	}
     
-    
-
     TRACELOG(LOG_INFO, "MESH: Tangents data computed for provided mesh");
 }
 
