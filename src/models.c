@@ -1021,8 +1021,9 @@ void DrawMeshInstanced(Mesh mesh, Material material, Matrix *transforms, int ins
     // NOTE: At this point the modelview matrix just contains the view matrix (camera)
     // That's because BeginMode3D() sets it and there is no model-drawing function
     // that modifies it, all use rlPushMatrix() and rlPopMatrix()
+    Matrix matModel = MatrixIdentity();
     Matrix matView = rlGetMatrixModelview();
-    Matrix matModelView = matView;
+    Matrix matModelView = MatrixIdentity();
     Matrix matProjection = rlGetMatrixProjection();
 
     // Upload view and projection matrices (if locations available)
@@ -1066,15 +1067,17 @@ void DrawMeshInstanced(Mesh mesh, Material material, Matrix *transforms, int ins
         // Model transformation matrix is send to shader uniform location: SHADER_LOC_MATRIX_MODEL
         if (material.shader.locs[SHADER_LOC_MATRIX_MODEL] != -1) rlSetUniformMatrix(material.shader.locs[SHADER_LOC_MATRIX_MODEL], transforms[0]);
 
-        // Accumulate several transformations:
-        //    matView: rlgl internal modelview matrix (actually, just view matrix)
+        // Accumulate several model transformations:
+        //    transforms[0]: model transformation provided (includes DrawModel() params combined with model.transform)
         //    rlGetMatrixTransform(): rlgl internal transform matrix due to push/pop matrix stack
-        //    transform: function parameter transformation
-        matModelView = MatrixMultiply(transforms[0], MatrixMultiply(rlGetMatrixTransform(), matView));
+        matModel = MatrixMultiply(transforms[0], rlGetMatrixTransform());
+        
+        // Get model-view matrix
+        matModelView = MatrixMultiply(matModel, matView);
     }
 
     // Upload model normal matrix (if locations available)
-    if (material.shader.locs[SHADER_LOC_MATRIX_NORMAL] != -1) rlSetUniformMatrix(material.shader.locs[SHADER_LOC_MATRIX_NORMAL], MatrixTranspose(MatrixInvert(matModelView)));
+    if (material.shader.locs[SHADER_LOC_MATRIX_NORMAL] != -1) rlSetUniformMatrix(material.shader.locs[SHADER_LOC_MATRIX_NORMAL], MatrixTranspose(MatrixInvert(matModel)));
     //-----------------------------------------------------
 
     // Bind active texture maps (if available)
@@ -1161,17 +1164,17 @@ void DrawMeshInstanced(Mesh mesh, Material material, Matrix *transforms, int ins
     for (int eye = 0; eye < eyesCount; eye++)
     {
         // Calculate model-view-projection matrix (MVP)
-        Matrix matMVP = MatrixIdentity();
-        if (eyesCount == 1) matMVP = MatrixMultiply(matModelView, matProjection);
+        Matrix matModelViewProjection = MatrixIdentity();
+        if (eyesCount == 1) matModelViewProjection = MatrixMultiply(matModelView, matProjection);
         else
         {
             // Setup current eye viewport (half screen width)
             rlViewport(eye*rlGetFramebufferWidth()/2, 0, rlGetFramebufferWidth()/2, rlGetFramebufferHeight());
-            matMVP = MatrixMultiply(MatrixMultiply(matModelView, rlGetMatrixViewOffsetStereo(eye)), rlGetMatrixProjectionStereo(eye));
+            matModelViewProjection = MatrixMultiply(MatrixMultiply(matModelView, rlGetMatrixViewOffsetStereo(eye)), rlGetMatrixProjectionStereo(eye));
         }
 
         // Send combined model-view-projection matrix to shader
-        rlSetUniformMatrix(material.shader.locs[SHADER_LOC_MATRIX_MVP], matMVP);
+        rlSetUniformMatrix(material.shader.locs[SHADER_LOC_MATRIX_MVP], matModelViewProjection);
 
         if (instancing) // Draw mesh instanced
         {
