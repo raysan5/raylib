@@ -2659,7 +2659,6 @@ void GenMeshTangents(Mesh *mesh)
     }
 	else
 	{
-        rlUnloadVertexBuffer(mesh->vboId[SHADER_LOC_VERTEX_TANGENT]);
         RL_FREE(mesh->tangents);
         mesh->tangents = (float*)RL_MALLOC(mesh->vertexCount*4*sizeof(float));
     }
@@ -2732,14 +2731,27 @@ void GenMeshTangents(Mesh *mesh)
     RL_FREE(tan1);
     RL_FREE(tan2);
 
-    // Load a new tangent attributes buffer
-    mesh->vboId[SHADER_LOC_VERTEX_TANGENT] = rlLoadVertexBuffer(mesh->tangents, mesh->vertexCount*4*sizeof(float), false);
+	if (mesh->vboId != NULL)
+	{
+		
+		if (mesh->vboId[SHADER_LOC_VERTEX_TANGENT] != 0)
+		{
+			// Upate existing vertex buffer
+			rlUpdateVertexBuffer(mesh->vboId, mesh->tangents, mesh->vertexCount * 4 * sizeof(float), 0);
+		}
+		else
+		{
+			// Load a new tangent attributes buffer
+			mesh->vboId[SHADER_LOC_VERTEX_TANGENT] = rlLoadVertexBuffer(mesh->tangents, mesh->vertexCount*4*sizeof(float), false);	
+		}
+		
+		rlEnableVertexArray(mesh->vaoId);
+		rlSetVertexAttribute(4, 4, RL_FLOAT, 0, 0, 0);
+		rlEnableVertexAttribute(4);
+		rlDisableVertexArray();
+	}
     
     
-    rlEnableVertexArray(mesh->vaoId);
-    rlSetVertexAttribute(4, 4, RL_FLOAT, 0, 0, 0);
-    rlEnableVertexAttribute(4);
-    rlDisableVertexArray();
 
     TRACELOG(LOG_INFO, "MESH: Tangents data computed for provided mesh");
 }
