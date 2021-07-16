@@ -2659,7 +2659,6 @@ void GenMeshTangents(Mesh *mesh)
     }
 	else
 	{
-        rlUnloadVertexBuffer(mesh->vboId[SHADER_LOC_VERTEX_TANGENT]);
         RL_FREE(mesh->tangents);
         mesh->tangents = (float*)RL_MALLOC(mesh->vertexCount*4*sizeof(float));
     }
@@ -2713,34 +2712,46 @@ void GenMeshTangents(Mesh *mesh)
         Vector3 tangent = tan1[i];
 
         // TODO: Review, not sure if tangent computation is right, just used reference proposed maths...
-	#if defined(COMPUTE_TANGENTS_METHOD_01)
+	  #if defined(COMPUTE_TANGENTS_METHOD_01)
         Vector3 tmp = Vector3Subtract(tangent, Vector3Scale(normal, Vector3DotProduct(normal, tangent)));
         tmp = Vector3Normalize(tmp);
         mesh->tangents[i*4 + 0] = tmp.x;
         mesh->tangents[i*4 + 1] = tmp.y;
         mesh->tangents[i*4 + 2] = tmp.z;
         mesh->tangents[i*4 + 3] = 1.0f;
-	#else
+	  #else
         Vector3OrthoNormalize(&normal, &tangent);
         mesh->tangents[i*4 + 0] = tangent.x;
         mesh->tangents[i*4 + 1] = tangent.y;
         mesh->tangents[i*4 + 2] = tangent.z;
         mesh->tangents[i*4 + 3] = (Vector3DotProduct(Vector3CrossProduct(normal, tangent), tan2[i]) < 0.0f) ? -1.0f : 1.0f;
-	#endif
+	  #endif
     }
 
     RL_FREE(tan1);
     RL_FREE(tan2);
 
-    // Load a new tangent attributes buffer
-    mesh->vboId[SHADER_LOC_VERTEX_TANGENT] = rlLoadVertexBuffer(mesh->tangents, mesh->vertexCount*4*sizeof(float), false);
-    
-    
-    rlEnableVertexArray(mesh->vaoId);
-    rlSetVertexAttribute(4, 4, RL_FLOAT, 0, 0, 0);
-    rlEnableVertexAttribute(4);
-    rlDisableVertexArray();
 
+	if (mesh->vboId != NULL)
+	{
+		
+		if (mesh->vboId[SHADER_LOC_VERTEX_TANGENT] != 0)
+		{
+			// Upate existing vertex buffer
+			rlUpdateVertexBuffer(mesh->vboId[SHADER_LOC_VERTEX_TANGENT], mesh->tangents, mesh->vertexCount*4*sizeof(float), 0);
+		}
+		else
+		{
+			// Load a new tangent attributes buffer
+			mesh->vboId[SHADER_LOC_VERTEX_TANGENT] = rlLoadVertexBuffer(mesh->tangents, mesh->vertexCount*4*sizeof(float), false);	
+		}
+		
+		rlEnableVertexArray(mesh->vaoId);
+		rlSetVertexAttribute(4, 4, RL_FLOAT, 0, 0, 0);
+		rlEnableVertexAttribute(4);
+		rlDisableVertexArray();
+	}
+    
     TRACELOG(LOG_INFO, "MESH: Tangents data computed for provided mesh");
 }
 
