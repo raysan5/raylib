@@ -355,7 +355,7 @@ typedef struct CoreData {
 #endif
 #if defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI) || defined(PLATFORM_DRM)
 #if defined(PLATFORM_DRM)
-        int fd;                             // File descriptor for /dev/dri/... 
+        int fd;                             // File descriptor for /dev/dri/...
         drmModeConnector *connector;        // Direct Rendering Manager (DRM) mode connector
         drmModeCrtc *crtc;                  // CRT Controller
         int modeIndex;                      // Index of the used mode of connector->modes
@@ -731,7 +731,7 @@ void InitWindow(int width, int height, const char *title)
     // Initialize App command system
     // NOTE: On APP_CMD_INIT_WINDOW -> InitGraphicsDevice(), InitTimer(), LoadFontDefault()...
     CORE.Android.app->onAppCmd = AndroidCommandCallback;
-    
+
     // Initialize input events system
     CORE.Android.app->onInputEvent = AndroidInputCallback;
 
@@ -4770,7 +4770,7 @@ void PollInputEvents(void)
 #endif
 
 #if (defined(PLATFORM_RPI) || defined(PLATFORM_DRM)) && defined(SUPPORT_SSH_KEYBOARD_RPI)
-    // NOTE: Keyboard reading could be done using input_event(s) or just read from stdin, both methods are used here. 
+    // NOTE: Keyboard reading could be done using input_event(s) or just read from stdin, both methods are used here.
     // stdin reading is still used for legacy purposes, it allows keyboard input trough SSH console
     ProcessKeyboard();
 
@@ -4814,7 +4814,7 @@ static EM_BOOL EmscriptenResizeCallback(int eventType, const EmscriptenUiEvent *
     CORE.Window.screen.height = height;
 
     // NOTE: Postprocessing texture is not scaled to new size
-    
+
     return 0;
 }
 #endif
@@ -5406,7 +5406,7 @@ static void InitKeyboard(void)
 
     // Save terminal keyboard settings
     tcgetattr(STDIN_FILENO, &CORE.Input.Keyboard.defaultSettings);
-    
+
     // Reconfigure terminal with new settings
     struct termios keyboardNewSettings = { 0 };
     keyboardNewSettings = CORE.Input.Keyboard.defaultSettings;
@@ -5424,7 +5424,7 @@ static void InitKeyboard(void)
     // Save old keyboard mode to restore it at the end
     // NOTE: If ioctl() returns -1, it means the call failed for some reason (error code set in errno)
     int result = ioctl(STDIN_FILENO, KDGKBMODE, &CORE.Input.Keyboard.defaultMode);
-    
+
     // In case of failure, it could mean a remote keyboard is used (SSH)
     if (result < 0) TRACELOG(LOG_WARNING, "RPI: Failed to change keyboard mode, an SSH keyboard is probably used");
     else
@@ -5814,20 +5814,20 @@ static void PollKeyboardEvents(void)
     // TODO: Probably replace this with a keymap from the X11 to get the correct regional map for the keyboard:
     // Currently non US keyboards will have the wrong mapping for some keys
     static const int keymapUS[] = {
-        0, 256, 49, 50, 51, 52, 53, 54, 55, 56, 57, 48, 45, 61, 259, 258, 81, 87, 69, 82, 84, 
-        89, 85, 73, 79, 80, 91, 93, 257, 341, 65, 83, 68, 70, 71, 72, 74, 75, 76, 59, 39, 96, 
-        340, 92, 90, 88, 67, 86, 66, 78, 77, 44, 46, 47, 344, 332, 342, 32, 280, 290, 291, 
-        292, 293, 294, 295, 296, 297, 298, 299, 282, 281, 327, 328, 329, 333, 324, 325, 
-        326, 334, 321, 322, 323, 320, 330, 0, 85, 86, 300, 301, 89, 90, 91, 92, 93, 94, 95, 
-        335, 345, 331, 283, 346, 101, 268, 265, 266, 263, 262, 269, 264, 267, 260, 261, 
-        112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 347, 127, 
-        128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 
-        144, 145, 146, 147, 148, 149, 150, 151, 152, 153, 154, 155, 156, 157, 158, 159, 
-        160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175, 
-        176, 177, 178, 179, 180, 181, 182, 183, 184, 185, 186, 187, 188, 189, 190, 191, 
-        192, 193, 194, 0, 0, 0, 0, 0, 200, 201, 202, 203, 204, 205, 206, 207, 208, 209, 210, 
-        211, 212, 213, 214, 215, 216, 217, 218, 219, 220, 221, 222, 223, 224, 225, 226, 
-        227, 228, 229, 230, 231, 232, 233, 234, 235, 236, 237, 238, 239, 240, 241, 242, 
+        0, 256, 49, 50, 51, 52, 53, 54, 55, 56, 57, 48, 45, 61, 259, 258, 81, 87, 69, 82, 84,
+        89, 85, 73, 79, 80, 91, 93, 257, 341, 65, 83, 68, 70, 71, 72, 74, 75, 76, 59, 39, 96,
+        340, 92, 90, 88, 67, 86, 66, 78, 77, 44, 46, 47, 344, 332, 342, 32, 280, 290, 291,
+        292, 293, 294, 295, 296, 297, 298, 299, 282, 281, 327, 328, 329, 333, 324, 325,
+        326, 334, 321, 322, 323, 320, 330, 0, 85, 86, 300, 301, 89, 90, 91, 92, 93, 94, 95,
+        335, 345, 331, 283, 346, 101, 268, 265, 266, 263, 262, 269, 264, 267, 260, 261,
+        112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 347, 127,
+        128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143,
+        144, 145, 146, 147, 148, 149, 150, 151, 152, 153, 154, 155, 156, 157, 158, 159,
+        160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175,
+        176, 177, 178, 179, 180, 181, 182, 183, 184, 185, 186, 187, 188, 189, 190, 191,
+        192, 193, 194, 0, 0, 0, 0, 0, 200, 201, 202, 203, 204, 205, 206, 207, 208, 209, 210,
+        211, 212, 213, 214, 215, 216, 217, 218, 219, 220, 221, 222, 223, 224, 225, 226,
+        227, 228, 229, 230, 231, 232, 233, 234, 235, 236, 237, 238, 239, 240, 241, 242,
         243, 244, 245, 246, 247, 248, 0, 0, 0, 0, 0, 0, 0
     };
 
