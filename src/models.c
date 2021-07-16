@@ -2652,20 +2652,7 @@ BoundingBox GetMeshBoundingBox(Mesh mesh)
 // Implementation base don: https://answers.unity.com/questions/7789/calculating-tangents-vector4.html
 void GenMeshTangents(Mesh* mesh)
 {
-    /*
-     * Check and see if the mesh already has tangents.
-     * If the mesh does not have tangents we can simply alloate the space for the data.
-     * 
-     * If the mesh did have tangents, we can not readily depend on the current vertexCount
-     * to be the actual length of the existing tangent data as the mesh vertices could
-     * have been altered and now contain less or more vertices which would result in
-     * either updating to few tangents, or attempting to over-run the space allocated
-     * for the tangents previously. In order to account for this the memory for the
-     * current tangent data must be freed as well as the previously assigned VertexBuffer,
-     * and then we can recreate the tangent data with the new size designated by vertexCount
-     * and create a new VertexBuffer to assign for the tangents.
-     * 
-     */
+
     if (mesh->tangents == NULL)
     {
         mesh->tangents = (float*)RL_MALLOC(mesh->vertexCount * 4 * sizeof(float));
@@ -2747,9 +2734,7 @@ void GenMeshTangents(Mesh* mesh)
     // Load a new tangent attributes buffer
     mesh->vboId[SHADER_LOC_VERTEX_TANGENT] = rlLoadVertexBuffer(mesh->tangents, mesh->vertexCount * 4 * sizeof(float), false);
     
-    /*
-     * Upate the tangets on the GPU.
-     */
+    
     rlEnableVertexArray(mesh->vaoId);
     rlSetVertexAttribute(4, 4, RL_FLOAT, 0, 0, 0);
     rlEnableVertexAttribute(4);
