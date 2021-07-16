@@ -2692,7 +2692,7 @@ void GenMeshTangents(Mesh *mesh)
         float t2 = uv3.y - uv1.y;
 
         float div = s1*t2 - s2*t1;
-        float r = (div == 0.0f) ? 0.0f : 1.0f/div;
+        float r = (div == 0.0f)? 0.0f : 1.0f/div;
 
         Vector3 sdir = { (t2*x1 - t1*x2)*r, (t2*y1 - t1*y2)*r, (t2*z1 - t1*z2)*r };
         Vector3 tdir = { (s1*x2 - s2*x1)*r, (s1*y2 - s2*y1)*r, (s1*z2 - s2*z1)*r };
@@ -2713,20 +2713,20 @@ void GenMeshTangents(Mesh *mesh)
         Vector3 tangent = tan1[i];
 
         // TODO: Review, not sure if tangent computation is right, just used reference proposed maths...
-	#if defined(COMPUTE_TANGENTS_METHOD_01)
+	  #if defined(COMPUTE_TANGENTS_METHOD_01)
         Vector3 tmp = Vector3Subtract(tangent, Vector3Scale(normal, Vector3DotProduct(normal, tangent)));
         tmp = Vector3Normalize(tmp);
         mesh->tangents[i*4 + 0] = tmp.x;
         mesh->tangents[i*4 + 1] = tmp.y;
         mesh->tangents[i*4 + 2] = tmp.z;
         mesh->tangents[i*4 + 3] = 1.0f;
-	#else
+	  #else
         Vector3OrthoNormalize(&normal, &tangent);
         mesh->tangents[i*4 + 0] = tangent.x;
         mesh->tangents[i*4 + 1] = tangent.y;
         mesh->tangents[i*4 + 2] = tangent.z;
         mesh->tangents[i*4 + 3] = (Vector3DotProduct(Vector3CrossProduct(normal, tangent), tan2[i]) < 0.0f) ? -1.0f : 1.0f;
-	#endif
+	  #endif
     }
 
     RL_FREE(tan1);
