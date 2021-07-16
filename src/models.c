@@ -2653,7 +2653,6 @@ BoundingBox GetMeshBoundingBox(Mesh mesh)
 void GenMeshTangents(Mesh* mesh)
 {
     /*
-     * Added - 7/16/2021 - Jason Penick
      * Check and see if the mesh already has tangents.
      * If the mesh does not have tangents we can simply alloate the space for the data.
      * 
@@ -2749,9 +2748,7 @@ void GenMeshTangents(Mesh* mesh)
     mesh->vboId[SHADER_LOC_VERTEX_TANGENT] = rlLoadVertexBuffer(mesh->tangents, mesh->vertexCount * 4 * sizeof(float), false);
     
     /*
-     * Added - 7/16/2021 - Jason Penick
      * Upate the tangets on the GPU.
-     * Issue raised by Kenneth on discord.
      */
     rlEnableVertexArray(mesh->vaoId);
     rlSetVertexAttribute(4, 4, RL_FLOAT, 0, 0, 0);
