@@ -2658,6 +2658,7 @@ void GenMeshTangents(Mesh *mesh)
         mesh->tangents = (float*)RL_MALLOC(mesh->vertexCount*4*sizeof(float));
     }
 	else
+	{
         RL_FREE(mesh->tangents);
         mesh->tangents = (float*)RL_MALLOC(mesh->vertexCount*4*sizeof(float));
     }
