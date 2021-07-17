@@ -416,6 +416,10 @@ typedef struct CoreData {
 
 #if defined(PLATFORM_RPI) || defined(PLATFORM_DRM)
             int defaultMode;                // Default keyboard mode
+#if defined(SUPPORT_SSH_KEYBOARD_RPI)
+            bool evtMode;                   // Keyboard in event mode
+#endif
+            int defaultFileFlags;           // Default IO file flags
             struct termios defaultSettings; // Default keyboard settings
             int fd;                         // File descriptor for the evdev keyboard
 #endif
@@ -4542,7 +4546,7 @@ void PollInputEvents(void)
 
 #if defined(PLATFORM_RPI) || defined(PLATFORM_DRM)
     // Register previous keys states
-    for (int i = 0; i < 512; i++) CORE.Input.Keyboard.previousKeyState[i] = CORE.Input.Keyboard.currentKeyState[i];
+    for (int i = 0; i < MAX_KEYBOARD_KEYS; i++) CORE.Input.Keyboard.previousKeyState[i] = CORE.Input.Keyboard.currentKeyState[i];
 
     PollKeyboardEvents();
 
@@ -4570,7 +4574,7 @@ void PollInputEvents(void)
     // Keyboard/Mouse input polling (automatically managed by GLFW3 through callback)
 
     // Register previous keys states
-    for (int i = 0; i < 512; i++) CORE.Input.Keyboard.previousKeyState[i] = CORE.Input.Keyboard.currentKeyState[i];
+    for (int i = 0; i < MAX_KEYBOARD_KEYS; i++) CORE.Input.Keyboard.previousKeyState[i] = CORE.Input.Keyboard.currentKeyState[i];
 
     // Register previous mouse states
     for (int i = 0; i < 3; i++) CORE.Input.Mouse.previousButtonState[i] = CORE.Input.Mouse.currentButtonState[i];
@@ -4772,7 +4776,8 @@ void PollInputEvents(void)
 #if (defined(PLATFORM_RPI) || defined(PLATFORM_DRM)) && defined(SUPPORT_SSH_KEYBOARD_RPI)
     // NOTE: Keyboard reading could be done using input_event(s) or just read from stdin, both methods are used here.
     // stdin reading is still used for legacy purposes, it allows keyboard input trough SSH console
-    ProcessKeyboard();
+
+    if (!CORE.Input.Keyboard.evtMode) ProcessKeyboard();
 
     // NOTE: Mouse input events polling is done asynchronously in another pthread - EventThread()
     // NOTE: Gamepad (Joystick) input events polling is done asynchonously in another pthread - GamepadThread()
@@ -5422,6 +5427,9 @@ static void InitKeyboard(void)
     tcsetattr(STDIN_FILENO, TCSANOW, &keyboardNewSettings);
 
     // Save old keyboard mode to restore it at the end
+    CORE.Input.Keyboard.defaultFileFlags = fcntl(STDIN_FILENO, F_GETFL, 0);          // F_GETFL: Get the file access mode and the file status flags
+    fcntl(STDIN_FILENO, F_SETFL, CORE.Input.Keyboard.defaultFileFlags | O_NONBLOCK); // F_SETFL: Set the file status flags to the value specified
+
     // NOTE: If ioctl() returns -1, it means the call failed for some reason (error code set in errno)
     int result = ioctl(STDIN_FILENO, KDGKBMODE, &CORE.Input.Keyboard.defaultMode);
 
@@ -5448,6 +5456,7 @@ static void RestoreKeyboard(void)
     tcsetattr(STDIN_FILENO, TCSANOW, &CORE.Input.Keyboard.defaultSettings);
 
     // Reconfigure keyboard to default mode
+    fcntl(STDIN_FILENO, F_SETFL, CORE.Input.Keyboard.defaultFileFlags);
     ioctl(STDIN_FILENO, KDSKBMODE, CORE.Input.Keyboard.defaultMode);
 }
 
@@ -5466,10 +5475,7 @@ static void ProcessKeyboard(void)
     bufferByteCount = read(STDIN_FILENO, keysBuffer, MAX_KEYBUFFER_SIZE);     // POSIX system call
 
     // Reset pressed keys array (it will be filled below)
-    if (bufferByteCount > 0) for (int i = 0; i < MAX_KEYBOARD_KEYS; i++) CORE.Input.Keyboard.currentKeyState[i] = 0;
-
-    // Check keys from event input workers (This is the new keyboard reading method)
-    //for (int i = 0; i < MAX_KEYBOARD_KEYS; i++) CORE.Input.Keyboard.currentKeyState[i] = CORE.Input.Keyboard.currentKeyStateEvdev[i];
+    for (int i = 0; i < MAX_KEYBOARD_KEYS; i++) CORE.Input.Keyboard.currentKeyState[i] = 0;
 
     // Fill all read bytes (looking for keys)
     for (int i = 0; i < bufferByteCount; i++)
@@ -5585,7 +5591,7 @@ static void InitEvdevInput(void)
     }
 
     // Reset keyboard key state
-    for (int i = 0; i < 512; i++) CORE.Input.Keyboard.currentKeyState[i] = 0;
+    for (int i = 0; i < MAX_KEYBOARD_KEYS; i++) CORE.Input.Keyboard.currentKeyState[i] = 0;
 
     // Open the linux directory of "/dev/input"
     directory = opendir(DEFAULT_EVDEV_PATH);
@@ -5843,6 +5849,10 @@ static void PollKeyboardEvents(void)
         // Button parsing
         if (event.type == EV_KEY)
         {
+#if defined(SUPPORT_SSH_KEYBOARD_RPI)
+            // Change keyboard mode to events
+            CORE.Input.Keyboard.evtMode = true;
+#endif
             // Keyboard button parsing
             if ((event.code >= 1) && (event.code <= 255))     //Keyboard keys appear for codes 1 to 255
             {
@@ -6343,7 +6353,7 @@ static void ExportAutomationEvents(const char *fileName)
 // Check event in current frame and save into the events[i] array
 static void RecordAutomationEvent(unsigned int frame)
 {
-    for (int key = 0; key < 512; key++)
+    for (int key = 0; key < MAX_KEYBOARD_KEYS; key++)
     {
         // INPUT_KEY_UP (only saved once)
         if (CORE.Input.Keyboard.previousKeyState[key] && !CORE.Input.Keyboard.currentKeyState[key])
