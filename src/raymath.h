@@ -621,6 +621,44 @@ RMDEF float3 Vector3ToFloatV(Vector3 v)
     return buffer;
 }
 
+RMDEF Vector3 Vector3Slerp(Vector3 v1, Vector3 v2, float t, float iradius, float theta) 
+{
+    if (Vector3LengthSqr(Vector3Subtract(v2,v1))==0.0) return v1; //If our two points are the same, simply return v1
+
+    Vector3 r,a,b,incept,f,g;
+    Vector3 l=Vector3Subtract(v2,v1);  // l=v2-v1
+    Vector3 midpoint=Vector3Add(v1,Vector3Scale(l,0.5)); // midpoint=v1+l*0.5
+    float d=-1*Vector3DotProduct(l,midpoint);  //Solve plane equation for d
+    if (l.x!=0.0) //Find intercept of midpoint and x-axis as long as the plane isn't parallel to the x-axis
+    {  
+        incept=(Vector3){-d/l.x,0.0,0.0};
+    }
+    else if (l.y!=0.0) //Otherwise use y-axis
+    { 
+        incept=(Vector3){0.0,-d/l.y,0.0};
+    }
+    else 
+    { //or z-axis.  All three cannot be zero because of the first if-statement in routine
+        incept=(Vector3){0.0,0.0,-d/l.z};
+    }
+
+    if (Vector3LengthSqr(Vector3Subtract(incept,midpoint))<0.1) //If our midpoint and axis intercept are very close together, displace the midpoint slightly so that normalization of f does not result in divide-by-zero nor g=0 because f={1,0,0}
+    {  
+        midpoint=Vector3Add(v1,Vector3Scale(l,0.49));
+        midpoint=Vector3Add(midpoint,Vector3CrossProduct(midpoint,(Vector3){0.2,0.0,0.0}));
+    }
+    f=Vector3Normalize(Vector3Subtract(incept,midpoint)); // First orthogonal vector
+    g=Vector3Normalize(Vector3CrossProduct(l,f));   // Second orthogonal vector
+
+    Vector3 perp=Vector3Add(midpoint,Vector3Scale(Vector3Add( Vector3Scale(f,cos(theta)),Vector3Scale(g,sin(theta))),iradius)); //perp=midpoint+(f*cos(theta)+g*sin(theta))*iradius
+    a=Vector3Subtract(v1,perp); //translate coordinates to center at perp
+    b=Vector3Subtract(v2,perp);
+    float om=acos( Vector3DotProduct(a,b) / (Vector3Length(a)*Vector3Length(b)) ); //Apply slerp formula for points at origin
+    r= Vector3Add(Vector3Scale(a,sin((1.0F-t)*om)/sin(om)),Vector3Scale(b,sin(t*om)/sin(om)));
+return Vector3Add(r,perp); //translate coordinates back to original frame
+}
+
+
 //----------------------------------------------------------------------------------
 // Module Functions Definition - Matrix math
 //----------------------------------------------------------------------------------
