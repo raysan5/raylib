@@ -2425,130 +2425,93 @@ void ImageDrawLine (Image *dst, int startPosX, int startPosY, int endPosX, int e
     int abs_changeInX = changeInX < 0 ? -changeInX : changeInX;
     int     changeInY = (endPosY - startPosY);
     int abs_changeInY = changeInY < 0 ? -changeInY : changeInY;
+    
+    int startU, startV, endU, V_step; // Substitutions, either U = X, V = Y or vice versa. See loop at end of function
+  //int endV;    // We never need this, i didn't just forget about it! :D  
+                 // For understanding I left it in below, too.
+  
+    int A, B, P; // See linked paper above. Explained down in the main loop.
 
-    if (abs_changeInY < abs_changeInX) 
+    int is_x_y_reversed = (abs_changeInY < abs_changeInX);
+    
+    if (is_x_y_reversed) 
     {
+        A =     2* abs_changeInY;
+        B = A - 2* abs_changeInX;
+        P = A -    abs_changeInX;
+
         if (changeInX > 0) 
-        {
-            // we need to go up or down depending (-1 or 1);
-            int y_directional_unit = changeInY < 0 ? -1 : 1;
-            
-            int A =     2* abs_changeInY;
-            int B = A - 2* abs_changeInX;
-            int P = A -    abs_changeInX;
-            
-            ImageDrawPixel(dst, startPosX, startPosY, color);
-            
-            for (int x = startPosX+1, y = startPosY; x <= endPosX; x += 1) 
-            {
-                if (P >= 0) 
-                {
-                    y += y_directional_unit;
-                    P += B;
-                }
-                else
-                {
-                    P += A;
-                }
-                ImageDrawPixel(dst, x, y, color);
-            }
-        }
-        else
-        {
-            // doing the equivalent of "calling" the branch above with inverted parameters:
-            changeInX = -changeInX;
-            changeInY = -changeInY;
-            int help;
-            help = startPosX;
-            startPosX = endPosX;
-            endPosX = help;
-            help = startPosY;
-            startPosY = endPosY;
-            endPosY = help;
-            
-            int y_directional_unit = changeInY < 0 ? -1 : 1;
-    
-            int A =     2* abs_changeInY;
-            int B = A - 2* abs_changeInX;
-            int P = A -    abs_changeInX;
-            
-            ImageDrawPixel(dst, startPosX, startPosY, color);
-            
-            for (int x = startPosX+1, y = startPosY; x <= endPosX; x += 1) 
-            {
-                if (P >= 0) 
-                {
-                    y += y_directional_unit;
-                    P += B;
-                }
-                else
-                {
-                    P += A;
-                }
-                ImageDrawPixel(dst, x, y, color);
-            }
-        }            
-    }
-    else 
-    {
-        if (changeInY > 0) 
         {   
-            int x_directional_unit = changeInX < 0 ? -1 : 1;
-            
-            int A =     2* abs_changeInX; 
-            int B = A - 2* abs_changeInY;
-            int P = A -    abs_changeInY;
-            
-            ImageDrawPixel(dst, startPosX, startPosY, color);
-            
-            for (int y = startPosY+1, x = startPosX; y <= endPosY; y += 1) 
-            {
-                if (P >= 0) 
-                {
-                    x += x_directional_unit;
-                    P += B;
-                }
-                else
-                {
-                    P += A;
-                }
-                ImageDrawPixel(dst, x, y, color);
-            }
+            startU = startPosX;
+            startV = startPosY;
+            endU   =   endPosX;
+          //endV   =   endPosY;
         }
         else
         {
-            // doing the equivalent of "calling" the branch above with inverted parameters:
+            startU =   endPosX;
+            startV =   endPosY;
+            endU   = startPosX;
+          //endV   = startPosY;
+            
+            // since start and end are reversed:
             changeInX = -changeInX;
             changeInY = -changeInY;
-            int help;
-            help = startPosX;
-            startPosX = endPosX;
-            endPosX = help;
-            help = startPosY;
-            startPosY = endPosY;
-            endPosY = help;
+        }
+        
+        V_step = changeInY < 0 ? -1 : 1;
+        
+        ImageDrawPixel(dst, startU, startV, color); // At this point they are correctly ordered...
+    }
+    else // all X and Y are reversed in here:
+    {
+        A =     2* abs_changeInX; 
+        B = A - 2* abs_changeInY;
+        P = A -    abs_changeInY;
+        
+        if (changeInY > 0) 
+        {
+            startU = startPosY;
+            startV = startPosX;
+            endU   =   endPosY;
+          //endV   =   endPosX;
+        }
+        else
+        {
+            startU =   endPosY;
+            startV =   endPosX;
+            endU   = startPosY;
+          //endV   = startPosX;
             
-            int x_directional_unit = changeInX < 0 ? -1 : 1;
+            // since start and end are reversed:
+            changeInX = -changeInX;
+            changeInY = -changeInY;
+        }
+        
+        V_step = changeInX < 0 ? -1 : 1;
+        
+        ImageDrawPixel(dst, startV, startU, color); // ... but need to be reversed here. Repeated in the main loop below.
+    } 
     
-            int A =     2* abs_changeInX; 
-            int B = A - 2* abs_changeInY;
-            int P = A -    abs_changeInY;
-            
-            ImageDrawPixel(dst, startPosX, startPosY, color);
-            
-            for (int y = startPosY+1, x = startPosX; y <= endPosY; y += 1) 
-            {
-                if (P >= 0) 
-                {
-                    x += x_directional_unit;
-                    P += B;
-                }
-                else
-                {
-                    P += A;
-                }
-                ImageDrawPixel(dst, x, y, color);
-            }
+    // We already drew the start point. If we started at startU+0, the line would be crooked and too short.
+    for (int U = startU+1, V = startV; U <= endU; U += 1) 
+    {
+        if (P >= 0) 
+        {
+            V += V_step;     // Adjusts whenever we stray too far from the direct line. Details in the linked paper above.
+            P += B;          // Remembers that we corrected our path.
+        }
+        else
+        {
+            P += A;          // Remembers how far we are from the direct line.
+        }
+        if (is_x_y_reversed) // Substitutions may be in wrong order for drawing:
+        {
+            ImageDrawPixel(dst, U, V, color);
+        }
+        else
+        {
+            ImageDrawPixel(dst, V, U, color);
         }
     }
 }
