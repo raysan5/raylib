@@ -2414,72 +2414,7 @@ void ImageDrawPixelV(Image *dst, Vector2 position, Color color)
 {
     ImageDrawPixel(dst, (int)position.x, (int)position.y, color);
 }
-
-void _ImageDrawLineHorizontal(Image *dst, int startPosX, int startPosY, int endPosX, int endPosY, Color color){
-
-    int     changeInX = (endPosX - startPosX);
-    int abs_changeInX = changeInX < 0 ? -changeInX : changeInX;
-    int     changeInY = (endPosY - startPosY);
-    int abs_changeInY = changeInY < 0 ? -changeInY : changeInY;
-    
-    // we need to go up or down depending (-1 or 1);
-    int y_directional_unit = changeInY < 0 ? -1 : 1;
-    
-    int A =     2* abs_changeInY;
-    int B = A - 2* abs_changeInX;
-    int P = A -    abs_changeInX;
-    
-    ImageDrawPixel(dst, startPosX, startPosY, color);
-    
-    for (int x = startPosX+1, y = startPosY; x <= endPosX; x += 1) 
-    {
-        if (P >= 0) 
-        {
-            y += y_directional_unit;
-            P += B;
-        }
-        else
-        {
-            P += A;
-        }
-        
-        ImageDrawPixel(dst, x, y, color);
-    }
-}
-        
-void _ImageDrawLineVertical(Image *dst, int startPosX, int startPosY, int endPosX, int endPosY, Color color){
-    // same code as *Horizontal but with all x and y flipped
-    
-    int     changeInX = (endPosX - startPosX);
-    int abs_changeInX = changeInX < 0 ? -changeInX : changeInX;
-    int     changeInY = (endPosY - startPosY);
-    int abs_changeInY = changeInY < 0 ? -changeInY : changeInY;
-    
-    // we need to go left or right depending (-1 or 1)
-    int x_directional_unit = changeInX < 0 ? -1 : 1;
-    
-    int A =     2* abs_changeInX; 
-    int B = A - 2* abs_changeInY;
-    int P = A -    abs_changeInY;
-    
-    ImageDrawPixel(dst, startPosX, startPosY, color);
-    
-    for (int y = startPosY+1, x = startPosX; y <= endPosY; y += 1) 
-    {
-        if (P >= 0) 
-        {
-            x += x_directional_unit;
-            P += B;
-        }
-        else
-        {
-            P += A;
-        }
-        
-        ImageDrawPixel(dst, x, y, color);
-    }
-}
-        
+     
 // Draw line within an image
 void ImageDrawLine (Image *dst, int startPosX, int startPosY, int endPosX, int endPosY, Color color){
     // Using Bresenham's algorithm as described in 
@@ -2495,26 +2430,129 @@ void ImageDrawLine (Image *dst, int startPosX, int startPosY, int endPosX, int e
     {
         if (changeInX > 0) 
         {
-            _ImageDrawLineHorizontal(dst, startPosX, startPosY, endPosX, endPosY, color);
+            // we need to go up or down depending (-1 or 1);
+            int y_directional_unit = changeInY < 0 ? -1 : 1;
+            
+            int A =     2* abs_changeInY;
+            int B = A - 2* abs_changeInX;
+            int P = A -    abs_changeInX;
+            
+            ImageDrawPixel(dst, startPosX, startPosY, color);
+            
+            for (int x = startPosX+1, y = startPosY; x <= endPosX; x += 1) 
+            {
+                if (P >= 0) 
+                {
+                    y += y_directional_unit;
+                    P += B;
+                }
+                else
+                {
+                    P += A;
+                }
+                ImageDrawPixel(dst, x, y, color);
+            }
         }
         else
         {
-            _ImageDrawLineHorizontal(dst, endPosX, endPosY, startPosX, startPosY, color);
+            // doing the equivalent of "calling" the branch above with inverted parameters:
+            changeInX = -changeInX;
+            changeInY = -changeInY;
+            int help;
+            help = startPosX;
+            startPosX = endPosX;
+            endPosX = help;
+            help = startPosY;
+            startPosY = endPosY;
+            endPosY = help;
+            
+            int y_directional_unit = changeInY < 0 ? -1 : 1;
+    
+            int A =     2* abs_changeInY;
+            int B = A - 2* abs_changeInX;
+            int P = A -    abs_changeInX;
+            
+            ImageDrawPixel(dst, startPosX, startPosY, color);
+            
+            for (int x = startPosX+1, y = startPosY; x <= endPosX; x += 1) 
+            {
+                if (P >= 0) 
+                {
+                    y += y_directional_unit;
+                    P += B;
+                }
+                else
+                {
+                    P += A;
+                }
+                ImageDrawPixel(dst, x, y, color);
+            }
         }            
     }
     else 
     {
         if (changeInY > 0) 
-        {
-            _ImageDrawLineVertical(dst, startPosX, startPosY, endPosX, endPosY, color);
+        {   
+            int x_directional_unit = changeInX < 0 ? -1 : 1;
+            
+            int A =     2* abs_changeInX; 
+            int B = A - 2* abs_changeInY;
+            int P = A -    abs_changeInY;
+            
+            ImageDrawPixel(dst, startPosX, startPosY, color);
+            
+            for (int y = startPosY+1, x = startPosX; y <= endPosY; y += 1) 
+            {
+                if (P >= 0) 
+                {
+                    x += x_directional_unit;
+                    P += B;
+                }
+                else
+                {
+                    P += A;
+                }
+                ImageDrawPixel(dst, x, y, color);
+            }
         }
         else
         {
-            _ImageDrawLineVertical(dst, endPosX, endPosY, startPosX, startPosY, color);
+            // doing the equivalent of "calling" the branch above with inverted parameters:
+            changeInX = -changeInX;
+            changeInY = -changeInY;
+            int help;
+            help = startPosX;
+            startPosX = endPosX;
+            endPosX = help;
+            help = startPosY;
+            startPosY = endPosY;
+            endPosY = help;
+            
+            int x_directional_unit = changeInX < 0 ? -1 : 1;
+    
+            int A =     2* abs_changeInX; 
+            int B = A - 2* abs_changeInY;
+            int P = A -    abs_changeInY;
+            
+            ImageDrawPixel(dst, startPosX, startPosY, color);
+            
+            for (int y = startPosY+1, x = startPosX; y <= endPosY; y += 1) 
+            {
+                if (P >= 0) 
+                {
+                    x += x_directional_unit;
+                    P += B;
+                }
+                else
+                {
+                    P += A;
+                }
+                ImageDrawPixel(dst, x, y, color);
+            }
         }
     }
 }
-
+        
 // Draw line within an image (Vector version)
 void ImageDrawLineV(Image *dst, Vector2 start, Vector2 end, Color color)
 {
