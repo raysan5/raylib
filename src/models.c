@@ -2652,19 +2652,15 @@ BoundingBox GetMeshBoundingBox(Mesh mesh)
 // Implementation base don: https://answers.unity.com/questions/7789/calculating-tangents-vector4.html
 void GenMeshTangents(Mesh *mesh)
 {
-
-    if (mesh->tangents == NULL)
+    if (mesh->tangents == NULL) mesh->tangents = (float *)RL_MALLOC(mesh->vertexCount*4*sizeof(float));
+    else
     {
-        mesh->tangents = (float*)RL_MALLOC(mesh->vertexCount*4*sizeof(float));
-    }
-	else
-	{
         RL_FREE(mesh->tangents);
-        mesh->tangents = (float*)RL_MALLOC(mesh->vertexCount*4*sizeof(float));
+        mesh->tangents = (float *)RL_MALLOC(mesh->vertexCount*4*sizeof(float));
     }
 
-    Vector3* tan1 = (Vector3*)RL_MALLOC(mesh->vertexCount*sizeof(Vector3));
-    Vector3* tan2 = (Vector3*)RL_MALLOC(mesh->vertexCount*sizeof(Vector3));
+    Vector3 *tan1 = (Vector3 *)RL_MALLOC(mesh->vertexCount*sizeof(Vector3));
+    Vector3 *tan2 = (Vector3 *)RL_MALLOC(mesh->vertexCount*sizeof(Vector3));
 
     for (int i = 0; i < mesh->vertexCount; i += 3)
     {
@@ -2691,7 +2687,7 @@ void GenMeshTangents(Mesh *mesh)
         float t2 = uv3.y - uv1.y;
 
         float div = s1*t2 - s2*t1;
-        float r = (div == 0.0f) ? 0.0f : 1.0f/div;
+        float r = (div == 0.0f)? 0.0f : 1.0f/div;
 
         Vector3 sdir = { (t2*x1 - t1*x2)*r, (t2*y1 - t1*y2)*r, (t2*z1 - t1*z2)*r };
         Vector3 tdir = { (s1*x2 - s2*x1)*r, (s1*y2 - s2*y1)*r, (s1*z2 - s2*z1)*r };
@@ -2706,53 +2702,51 @@ void GenMeshTangents(Mesh *mesh)
     }
 
     // Compute tangents considering normals
-    for (int i = 0; i < mesh->vertexCount; ++i)
+    for (int i = 0; i < mesh->vertexCount; i++)
     {
         Vector3 normal = { mesh->normals[i*3 + 0], mesh->normals[i*3 + 1], mesh->normals[i*3 + 2] };
         Vector3 tangent = tan1[i];
 
         // TODO: Review, not sure if tangent computation is right, just used reference proposed maths...
-	  #if defined(COMPUTE_TANGENTS_METHOD_01)
+#if defined(COMPUTE_TANGENTS_METHOD_01)
         Vector3 tmp = Vector3Subtract(tangent, Vector3Scale(normal, Vector3DotProduct(normal, tangent)));
         tmp = Vector3Normalize(tmp);
         mesh->tangents[i*4 + 0] = tmp.x;
         mesh->tangents[i*4 + 1] = tmp.y;
         mesh->tangents[i*4 + 2] = tmp.z;
         mesh->tangents[i*4 + 3] = 1.0f;
-	  #else
+#else
         Vector3OrthoNormalize(&normal, &tangent);
         mesh->tangents[i*4 + 0] = tangent.x;
         mesh->tangents[i*4 + 1] = tangent.y;
         mesh->tangents[i*4 + 2] = tangent.z;
-        mesh->tangents[i*4 + 3] = (Vector3DotProduct(Vector3CrossProduct(normal, tangent), tan2[i]) < 0.0f) ? -1.0f : 1.0f;
-	  #endif
+        mesh->tangents[i*4 + 3] = (Vector3DotProduct(Vector3CrossProduct(normal, tangent), tan2[i]) < 0.0f)? -1.0f : 1.0f;
+#endif
     }
 
     RL_FREE(tan1);
     RL_FREE(tan2);
 
-
-	if (mesh->vboId != NULL)
-	{
-		
-		if (mesh->vboId[SHADER_LOC_VERTEX_TANGENT] != 0)
-		{
-			// Upate existing vertex buffer
-			rlUpdateVertexBuffer(mesh->vboId[SHADER_LOC_VERTEX_TANGENT], mesh->tangents, mesh->vertexCount*4*sizeof(float), 0);
-		}
-		else
-		{
-			// Load a new tangent attributes buffer
-			mesh->vboId[SHADER_LOC_VERTEX_TANGENT] = rlLoadVertexBuffer(mesh->tangents, mesh->vertexCount*4*sizeof(float), false);	
-		}
-		
-		rlEnableVertexArray(mesh->vaoId);
-		rlSetVertexAttribute(4, 4, RL_FLOAT, 0, 0, 0);
-		rlEnableVertexAttribute(4);
-		rlDisableVertexArray();
-	}
+    if (mesh->vboId != NULL)
+    {        
+        if (mesh->vboId[SHADER_LOC_VERTEX_TANGENT] != 0)
+        {
+            // Upate existing vertex buffer
+            rlUpdateVertexBuffer(mesh->vboId[SHADER_LOC_VERTEX_TANGENT], mesh->tangents, mesh->vertexCount*4*sizeof(float), 0);
+        }
+        else
+        {
+            // Load a new tangent attributes buffer
+            mesh->vboId[SHADER_LOC_VERTEX_TANGENT] = rlLoadVertexBuffer(mesh->tangents, mesh->vertexCount*4*sizeof(float), false);    
+        }
+        
+        rlEnableVertexArray(mesh->vaoId);
+        rlSetVertexAttribute(4, 4, RL_FLOAT, 0, 0, 0);
+        rlEnableVertexAttribute(4);
+        rlDisableVertexArray();
+    }
     
-    TRACELOG(LOG_INFO, "MESH: Tangents data computed for provided mesh");
+    TRACELOG(LOG_INFO, "MESH: Tangents data computed and uploaded for provided mesh");
 }
 
 // Compute mesh binormals (aka bitangent)

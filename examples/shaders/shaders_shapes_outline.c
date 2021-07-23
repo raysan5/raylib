@@ -1,7 +1,7 @@
 /*******************************************************************************************
 *
-*   raylib [shaders] example - Apply an outline to a texture
-*	
+*   raylib [shaders] example - Apply an shdrOutline to a texture
+*    
 *   NOTE: This example requires raylib OpenGL 3.3 or ES2 versions for shaders support,
 *         OpenGL 1.1 does not support shaders, recompile raylib to OpenGL 3.3 version.
 *
@@ -31,15 +31,15 @@ int main(void)
     const int screenWidth = 800;
     const int screenHeight = 450;
 
-    InitWindow(screenWidth, screenHeight, "raylib [shaders] example - Apply an outline to a texture");
+    InitWindow(screenWidth, screenHeight, "raylib [shaders] example - Apply an shdrOutline to a texture");
 
-	Texture2D egg = LoadTexture("resources/egg.png");
-	Texture2D torus = LoadTexture("resources/torus.png");
-	Shader outline = LoadShader(0, TextFormat("resources/shaders/glsl%i/outline.fs", GLSL_VERSION));
+    Texture2D egg = LoadTexture("resources/egg.png");
+    Texture2D torus = LoadTexture("resources/torus.png");
+    Shader shdrOutline = LoadShader(0, TextFormat("resources/shaders/glsl%i/shdrOutline.fs", GLSL_VERSION));
 
-	float oScale = 16.0;
-	float tScale[2] = { 16.0f*4, 16.0f*4 };
-	SetShaderValue(outline, GetShaderLocation(outline, "texScale"), tScale, SHADER_UNIFORM_VEC2);
+    float outlineScale = 16.0f;
+    float textureScale[2] = { 16.0f*4, 16.0f*4 };
+    SetShaderValue(shdrOutline, GetShaderLocation(shdrOutline, "texScale"), textureScale, SHADER_UNIFORM_VEC2);
 
     SetTargetFPS(60);               // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
@@ -58,12 +58,12 @@ int main(void)
 
             ClearBackground(RAYWHITE);
 
-            BeginShaderMode(outline);
-                DrawTextureEx(egg, (Vector2){ 0, 230 }, 0.0, oScale, WHITE);
-                DrawTextureEx(torus, (Vector2){ 544, 230 }, 0.0, oScale, WHITE);
+            BeginShaderMode(shdrOutline);
+                DrawTextureEx(egg, (Vector2){ 0, 230 }, 0.0, outlineScale, WHITE);
+                DrawTextureEx(torus, (Vector2){ 544, 230 }, 0.0, outlineScale, WHITE);
             EndShaderMode();
 
-			DrawText("Shader-based outlines for textures", 190, 200, 20, LIGHTGRAY);
+            DrawText("Shader-based shdrOutlines for textures", 190, 200, 20, LIGHTGRAY);
 
             DrawFPS(710, 10);
 
@@ -73,9 +73,9 @@ int main(void)
 
     // De-Initialization
     //--------------------------------------------------------------------------------------
-	UnloadTexture(egg);
-	UnloadTexture(torus);
-	UnloadShader(outline);
+    UnloadTexture(egg);
+    UnloadTexture(torus);
+    UnloadShader(shdrOutline);
 
     CloseWindow();        // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
