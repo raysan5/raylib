@@ -1,9 +1,8 @@
-## raylib bindings
+# raylib bindings and wrappers
 
-Some people ported raylib to other languages in form of bindings or wrappers to the library.
+Some people ported raylib to other languages in form of bindings or wrappers to the library. Here it is alist with all the ports available. Feel free to send a PR if you know of any binding/wrapper not in this list.
 
-## Language Bindings
-Here it is a list of language bindings that I am aware of:
+### Language Bindings
 
 |  name              | raylib version | language  | repo                                                                 |
 |:------------------:|:-------------: | :--------:|----------------------------------------------------------------------|
@@ -98,13 +97,13 @@ Here it is a list of language bindings that I am aware of:
 | Relib              | 3.5 | [ReCT](https://github.com/RedCubeDev-ByteSpace/ReCT) | https://github.com/RedCubeDev-ByteSpace/Relib |
 | raylib.cbl         | 2.0 | [COBOL](https://en.wikipedia.org/wiki/COBOL)        | *[code examples](https://github.com/Martinfx/Cobol/tree/master/OpenCobol/Games/raylib)* |
 
-## Utility Wrapers
-Here it is a list of utility wrapers/helpers that I am aware of:
+### Utility Wrapers
+
 |  name              | raylib version | language  | repo                                                                 |
 |:------------------:|:-------------: | :--------:|----------------------------------------------------------------------|
-| raylib-cpp         | 3.7 | [C++](https://en.wikipedia.org/wiki/C%2B%2B)                             | https://github.com/robloach/raylib-cpp      |
+| raylib-cpp         | 3.7 | [C++](https://en.wikipedia.org/wiki/C%2B%2B)     | https://github.com/robloach/raylib-cpp      |
  
-Missing some language or wrapper? Feel free to create a new binding! :)
+Missing some language or wrapper? Feel free to create a new one! :)
 
 Usually, raylib bindings follow the convention: `raylib-{language}`
 
