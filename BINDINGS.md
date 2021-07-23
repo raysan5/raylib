@@ -2,12 +2,12 @@
 
 Some people ported raylib to other languages in form of bindings or wrappers to the library.
 
-Here it is a list with the ones I'm aware of:
+## Language Bindings
+Here it is a list of language bindings that I am aware of:
 
 |  name              | raylib version | language  | repo                                                                 |
 |:------------------:|:-------------: | :--------:|----------------------------------------------------------------------|
-| raylib             | **3.7** | [C](https://en.wikipedia.org/wiki/C_(programming_language))    | https://github.com/raysan5/raylib    |
-| raylib-cpp         | 3.7 | [C++](https://en.wikipedia.org/wiki/C%2B%2B)                             | https://github.com/robloach/raylib-cpp      |
+| raylib             | **3.7** | [C/C++](https://en.wikipedia.org/wiki/C_(programming_language))    | https://github.com/raysan5/raylib    |
 | Raylib-cs          | 3.7 | [C#](https://en.wikipedia.org/wiki/C_Sharp_(programming_language))       | https://github.com/ChrisDill/Raylib-cs      |
 | raylib-cppsharp    | 2.5 | [C#](https://en.wikipedia.org/wiki/C_Sharp_(programming_language))       | https://github.com/phxvyper/raylib-cppsharp |
 | raylib-boo         | 3.7 | [Boo](http://boo-language.github.io/) | https://github.com/Rabios/raylib-boo          |
@@ -98,8 +98,13 @@ Here it is a list with the ones I'm aware of:
 | Relib              | 3.5 | [ReCT](https://github.com/RedCubeDev-ByteSpace/ReCT) | https://github.com/RedCubeDev-ByteSpace/Relib |
 | raylib.cbl         | 2.0 | [COBOL](https://en.wikipedia.org/wiki/COBOL)        | *[code examples](https://github.com/Martinfx/Cobol/tree/master/OpenCobol/Games/raylib)* |
 
+## Utility Wrapers
+Here it is a list of utility wrapers/helpers that I am aware of:
+|  name              | raylib version | language  | repo                                                                 |
+|:------------------:|:-------------: | :--------:|----------------------------------------------------------------------|
+| raylib-cpp         | 3.7 | [C++](https://en.wikipedia.org/wiki/C%2B%2B)                             | https://github.com/robloach/raylib-cpp      |
  
-Missing some language? Feel free to create a new binding! :)
+Missing some language or wrapper? Feel free to create a new binding! :)
 
 Usually, raylib bindings follow the convention: `raylib-{language}`
 
