@@ -2416,19 +2416,19 @@ void ImageDrawPixelV(Image *dst, Vector2 position, Color color)
 }
      
 // Draw line within an image
-void ImageDrawLine (Image *dst, int startPosX, int startPosY, int endPosX, int endPosY, Color color){
+void ImageDrawLine(Image *dst, int startPosX, int startPosY, int endPosX, int endPosY, Color color)
+{
     // Using Bresenham's algorithm as described in 
     // Drawing Lines with Pixels - Joshua Scott - March 2012
     // https://classic.csunplugged.org/wp-content/uploads/2014/12/Lines.pdf
     
-    int     changeInX = (endPosX - startPosX);
-    int abs_changeInX = changeInX < 0 ? -changeInX : changeInX;
-    int     changeInY = (endPosY - startPosY);
-    int abs_changeInY = changeInY < 0 ? -changeInY : changeInY;
+    int changeInX = (endPosX - startPosX);
+    int abs_changeInX = (changeInX < 0)? -changeInX : changeInX;
+    int changeInY = (endPosY - startPosY);
+    int abs_changeInY = (changeInY < 0)? -changeInY : changeInY;
     
     int startU, startV, endU, V_step; // Substitutions, either U = X, V = Y or vice versa. See loop at end of function
-  //int endV;    // We never need this, i didn't just forget about it! :D  
-                 // For understanding I left it in below, too.
+  //int endV;    // This is not needed, but to aid understanding it is left in the code below.
   
     int A, B, P; // See linked paper above. Explained down in the main loop.
 
@@ -2436,59 +2436,59 @@ void ImageDrawLine (Image *dst, int startPosX, int startPosY, int endPosX, int e
     
     if (is_x_y_reversed) 
     {
-        A =     2* abs_changeInY;
-        B = A - 2* abs_changeInX;
-        P = A -    abs_changeInX;
+        A = 2*abs_changeInY;
+        B = A - 2*abs_changeInX;
+        P = A - abs_changeInX;
 
         if (changeInX > 0) 
         {   
             startU = startPosX;
             startV = startPosY;
-            endU   =   endPosX;
-          //endV   =   endPosY;
+            endU = endPosX;
+          //endV = endPosY;
         }
         else
         {
-            startU =   endPosX;
-            startV =   endPosY;
-            endU   = startPosX;
-          //endV   = startPosY;
+            startU = endPosX;
+            startV = endPosY;
+            endU = startPosX;
+          //endV = startPosY;
             
             // since start and end are reversed:
             changeInX = -changeInX;
             changeInY = -changeInY;
         }
         
-        V_step = changeInY < 0 ? -1 : 1;
+        V_step = (changeInY < 0)? -1 : 1;
         
         ImageDrawPixel(dst, startU, startV, color); // At this point they are correctly ordered...
     }
     else // all X and Y are reversed in here:
     {
-        A =     2* abs_changeInX; 
-        B = A - 2* abs_changeInY;
-        P = A -    abs_changeInY;
+        A = 2*abs_changeInX; 
+        B = A - 2*abs_changeInY;
+        P = A - abs_changeInY;
         
         if (changeInY > 0) 
         {
             startU = startPosY;
             startV = startPosX;
-            endU   =   endPosY;
-          //endV   =   endPosX;
+            endU = endPosY;
+          //endV = endPosX;
         }
         else
         {
-            startU =   endPosY;
-            startV =   endPosX;
-            endU   = startPosY;
-          //endV   = startPosX;
+            startU = endPosY;
+            startV = endPosX;
+            endU = startPosY;
+          //endV = startPosX;
             
             // since start and end are reversed:
             changeInX = -changeInX;
             changeInY = -changeInY;
         }
         
-        V_step = changeInX < 0 ? -1 : 1;
+        V_step = (changeInX < 0)? -1 : 1;
         
         ImageDrawPixel(dst, startV, startU, color); // ... but need to be reversed here. Repeated in the main loop below.
     } 
