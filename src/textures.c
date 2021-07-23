@@ -2414,7 +2414,7 @@ void ImageDrawPixelV(Image *dst, Vector2 position, Color color)
 {
     ImageDrawPixel(dst, (int)position.x, (int)position.y, color);
 }
-     
+
 // Draw line within an image
 void ImageDrawLine(Image *dst, int startPosX, int startPosY, int endPosX, int endPosY, Color color)
 {
@@ -2423,99 +2423,89 @@ void ImageDrawLine(Image *dst, int startPosX, int startPosY, int endPosX, int en
     // https://classic.csunplugged.org/wp-content/uploads/2014/12/Lines.pdf
     
     int changeInX = (endPosX - startPosX);
-    int abs_changeInX = (changeInX < 0)? -changeInX : changeInX;
+    int absChangeInX = (changeInX < 0)? -changeInX : changeInX;
     int changeInY = (endPosY - startPosY);
-    int abs_changeInY = (changeInY < 0)? -changeInY : changeInY;
+    int absChangeInY = (changeInY < 0)? -changeInY : changeInY;
     
-    int startU, startV, endU, V_step; // Substitutions, either U = X, V = Y or vice versa. See loop at end of function
-  //int endV;    // This is not needed, but to aid understanding it is left in the code below.
-  
-    int A, B, P; // See linked paper above. Explained down in the main loop.
-
-    int is_x_y_reversed = (abs_changeInY < abs_changeInX);
+    int startU, startV, endU, stepV; // Substitutions, either U = X, V = Y or vice versa. See loop at end of function
+    //int endV;     // Not needed but left for better understanding, check code below
+    int A, B, P;    // See linked paper above, explained down in the main loop
+    int reversedXY = (absChangeInY < absChangeInX);
     
-    if (is_x_y_reversed) 
+    if (reversedXY) 
     {
-        A = 2*abs_changeInY;
-        B = A - 2*abs_changeInX;
-        P = A - abs_changeInX;
+        A = 2*absChangeInY;
+        B = A - 2*absChangeInX;
+        P = A - absChangeInX;
 
-        if (changeInX > 0) 
+        if (changeInX > 0)
         {   
             startU = startPosX;
             startV = startPosY;
             endU = endPosX;
-          //endV = endPosY;
+            //endV = endPosY;
         }
         else
         {
             startU = endPosX;
             startV = endPosY;
             endU = startPosX;
-          //endV = startPosY;
+            //endV = startPosY;
             
-            // since start and end are reversed:
+            // Since start and end are reversed
             changeInX = -changeInX;
             changeInY = -changeInY;
         }
         
-        V_step = (changeInY < 0)? -1 : 1;
+        stepV = (changeInY < 0)? -1 : 1;
         
-        ImageDrawPixel(dst, startU, startV, color); // At this point they are correctly ordered...
+        ImageDrawPixel(dst, startU, startV, color);     // At this point they are correctly ordered...
     }
-    else // all X and Y are reversed in here:
+    else
     {
-        A = 2*abs_changeInX; 
-        B = A - 2*abs_changeInY;
-        P = A - abs_changeInY;
+        A = 2*absChangeInX; 
+        B = A - 2*absChangeInY;
+        P = A - absChangeInY;
         
         if (changeInY > 0) 
         {
             startU = startPosY;
             startV = startPosX;
             endU = endPosY;
-          //endV = endPosX;
+            //endV = endPosX;
         }
         else
         {
             startU = endPosY;
             startV = endPosX;
             endU = startPosY;
-          //endV = startPosX;
+            //endV = startPosX;
             
-            // since start and end are reversed:
+            // Since start and end are reversed
             changeInX = -changeInX;
             changeInY = -changeInY;
         }
         
-        V_step = (changeInX < 0)? -1 : 1;
+        stepV = (changeInX < 0)? -1 : 1;
         
-        ImageDrawPixel(dst, startV, startU, color); // ... but need to be reversed here. Repeated in the main loop below.
+        ImageDrawPixel(dst, startV, startU, color);     // ... but need to be reversed here. Repeated in the main loop below
     } 
     
-    // We already drew the start point. If we started at startU+0, the line would be crooked and too short.
-    for (int U = startU+1, V = startV; U <= endU; U += 1) 
+    // We already drew the start point. If we started at startU + 0, the line would be crooked and too short
+    for (int u = startU + 1, v = startV; u <= endU; u++) 
     {
         if (P >= 0) 
         {
-            V += V_step;     // Adjusts whenever we stray too far from the direct line. Details in the linked paper above.
-            P += B;          // Remembers that we corrected our path.
+            v += stepV;     // Adjusts whenever we stray too far from the direct line. Details in the linked paper above
+            P += B;         // Remembers that we corrected our path
         }
-        else
-        {
-            P += A;          // Remembers how far we are from the direct line.
-        }
-        if (is_x_y_reversed) // Substitutions may be in wrong order for drawing:
-        {
-            ImageDrawPixel(dst, U, V, color);
-        }
-        else
-        {
-            ImageDrawPixel(dst, V, U, color);
-        }
+        else P += A;        // Remembers how far we are from the direct line
+
+        if (reversedXY) ImageDrawPixel(dst, u, v, color);
+        else ImageDrawPixel(dst, v, u, color);
     }
 }
-        
+
 // Draw line within an image (Vector version)
 void ImageDrawLineV(Image *dst, Vector2 start, Vector2 end, Color color)
 {
