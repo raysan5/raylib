@@ -27,6 +27,7 @@ Note that Sponsors donations vary between sponsors, I just decided not to make a
  - Merlyn Morgan-Graham ([@kavika13](https://github.com/kavika13))
  - Toby4213 ([@Toby4213](https://github.com/Toby4213))
  - linus ([@hochbaum](https://github.com/hochbaum))
+ - Nawarian ([@nawarian](https://github.com/nawarian) - [thephp.website](https://thephp.website/))
 
 
 ### Past raylib GitHub Sponsors
