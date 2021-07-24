@@ -58,6 +58,14 @@ packages/
 *.bc
 *.so
 
+# Ignore switch files
+examples/*/*.d
+examples/*/*.elf
+examples/*/*.lst
+examples/*/*.map
+examples/*/*.nacp
+examples/*/*.nro
+
 # Ignore files build by xcode
 *.mode*v*
 *.pbxuser

@@ -30,7 +30,7 @@ RAYLIB_PATH        ?= ..
 
 # Define default options
 
-# One of PLATFORM_DESKTOP, PLATFORM_RPI, PLATFORM_ANDROID, PLATFORM_WEB
+# One of PLATFORM_DESKTOP, PLATFORM_RPI, PLATFORM_ANDROID, PLATFORM_WEB, PLATFORM_NX
 PLATFORM           ?= PLATFORM_DESKTOP
 
 # Locations of your newly installed library and associated headers. See ../src/Makefile
@@ -101,6 +101,14 @@ ifeq ($(PLATFORM),PLATFORM_DRM)
         PLATFORM_OS=LINUX
     endif
 endif
+ifeq ($(PLATFORM),PLATFORM_NX)
+    UNAMEOS = $(shell uname)
+    ifeq ($(UNAMEOS),Linux)
+        PLATFORM_OS = LINUX
+    endif
+    RAYLIB_LIBTYPE = STATIC
+    USE_EXTERNAL_GLFW = TRUE
+endif
 
 # RAYLIB_PATH adjustment for different platforms.
 # If using GNU make, we can get the full path to the top of the tree. Windows? BSD?
@@ -129,6 +137,11 @@ ifeq ($(PLATFORM),PLATFORM_WEB)
     PYTHON_PATH         = $(EMSDK_PATH)/python/3.9.2-1_64bit
     NODE_PATH           = $(EMSDK_PATH)/node/14.15.5_64bit/bin
     export PATH         = $(EMSDK_PATH);$(EMSCRIPTEN_PATH);$(CLANG_PATH);$(NODE_PATH);$(PYTHON_PATH);C:\raylib\MinGW\bin:$$(PATH)
+endif
+
+ifeq ($(PLATFORM),PLATFORM_NX)
+    RAYLIB_PREFIX ?= ..
+    RAYLIB_PATH    = $(realpath $(RAYLIB_PREFIX))
 endif
 
 # Define raylib release directory for compiled library.
@@ -176,6 +189,12 @@ ifeq ($(PLATFORM),PLATFORM_WEB)
     # to use emscripten.h and emscripten_set_main_loop()
     CC = emcc
 endif
+ifeq ($(PLATFORM),PLATFORM_NX)
+    ifeq ($(strip $(DEVKITPRO)),)
+        $(error "Please set DEVKITPRO in your environment. export DEVKITPRO=<path to>/devkitpro")
+    endif
+    include $(DEVKITPRO)/libnx/switch_rules
+endif
 
 # Define default make program
 MAKE = make
@@ -205,6 +224,8 @@ ifeq ($(BUILD_MODE),DEBUG)
 else
     ifeq ($(PLATFORM),PLATFORM_WEB)
         CFLAGS += -Os
+    else ifeq ($(PLATFORM),PLATFORM_NX)
+        CFLAGS += -O2
     else
         CFLAGS += -s -O1
     endif
@@ -260,6 +281,12 @@ endif
 # NOTE: Some external/extras libraries could be required (stb, physac, easings...)
 INCLUDE_PATHS = -I. -I$(RAYLIB_PATH)/src -I$(RAYLIB_PATH)/src/external -I$(RAYLIB_PATH)/src/extras
 
+ifeq ($(PLATFORM),PLATFORM_NX)
+    LIBDIRS := $(PORTLIBS) $(LIBNX)
+    ARCH    :=  -march=armv8-a+crc+crypto -mtune=cortex-a57 -mtp=soft -fPIE
+    CFLAGS  +=  -ffunction-sections $(ARCH) $(foreach dir,$(LIBDIRS),-I$(dir)/include) -D__SWITCH__
+endif
+
 # Define additional directories containing required header files
 ifeq ($(PLATFORM),PLATFORM_RPI)
     # RPI required libraries
@@ -306,6 +333,10 @@ endif
 
 ifeq ($(PLATFORM),PLATFORM_RPI)
     LDFLAGS += -L/opt/vc/lib
+endif
+
+ifeq ($(PLATFORM),PLATFORM_NX)
+    LDFLAGS += -specs=$(DEVKITPRO)/libnx/switch.specs -g $(ARCH) -Wl,-Map,$*.map $(foreach dir,$(LIBDIRS),-L$(dir)/lib)
 endif
 
 # Define any libraries required on linking
@@ -368,6 +399,10 @@ endif
 ifeq ($(PLATFORM),PLATFORM_WEB)
     # Libraries for web (HTML5) compiling
     LDLIBS = $(RAYLIB_RELEASE_PATH)/libraylib.a
+endif
+ifeq ($(PLATFORM),PLATFORM_NX)
+    LDLIBS = -lraylib -lEGL -lGLESv2 -lglapi -ldrm_nouveau -lnx -lm
+    LDLIBS += `$(PREFIX)pkg-config --libs sdl2`
 endif
 
 # Define all object files required
@@ -521,6 +556,12 @@ physics: $(PHYSICS)
 %: %.c
 ifeq ($(PLATFORM),PLATFORM_ANDROID)
 	$(MAKE) -f Makefile.Android PROJECT_NAME=$@ PROJECT_SOURCE_FILES=$<
+else ifeq ($(PLATFORM),PLATFORM_NX)
+	$(CC) -MMD -MP -MF $@.d -o $@.o -c $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
+	$(CXX) $@.o $(LDFLAGS) $(LDLIBS) -o $@.elf -D$(PLATFORM)
+	$(NM) -CSn $@.elf > $@.lst
+	nacptool --create "$(notdir $@)" "Raylib Example" "1.0.0" $@.nacp
+	elf2nro $@.elf $@.nro --icon=textures/resources/raylib_logo.jpg --nacp=$@.nacp
 else
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 endif
@@ -550,6 +591,16 @@ ifeq ($(PLATFORM),PLATFORM_DRM)
 endif
 ifeq ($(PLATFORM),PLATFORM_WEB)
 	del *.o *.html *.js
+endif
+ifeq ($(PLATFORM),PLATFORM_NX)
+	find . -type f \( \
+	-name "*.o" -o \
+	-name "*.d" -o \
+	-name "*.elf" -o \
+	-name "*.lst" -o \
+	-name "*.map" -o \
+	-name "*.nacp" -o \
+	-name "*.nro" \) -delete
 endif
 	@echo Cleaning done
 

@@ -61,6 +61,10 @@
 // By default EndDrawing() does this job: draws everything + SwapScreenBuffer() + manage frame timming + PollInputEvents()
 // Enabling this flag allows manual control of the frame processes, use at your own risk
 //#define SUPPORT_CUSTOM_FRAME_CONTROL   1
+// Enabling this flag allows gamepad to set keyboard and mouse states
+#define NX_SUPPORT_GAMEPAD_EMULATION       1
+// Enabling this flag allows debugging by USB, the application will wait for an USB connection to start
+//#define NX_USB_DEBUGGER                  1
 
 // core: Configuration values
 //------------------------------------------------------------------------------------

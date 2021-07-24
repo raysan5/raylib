@@ -11,6 +11,7 @@
 #    PLATFORM_RPI:      Raspberry Pi (Raspbian)
 #    PLATFORM_DRM:      Linux native mode, including Raspberry Pi 4 with V3D fkms driver
 #    PLATFORM_WEB:      HTML5 (Chrome, Firefox)
+#    PLATFORM_NX:       Switch LibNX
 #
 #  Many thanks to Milan Nikolic (@gen2brain) for implementing Android platform pipeline.
 #  Many thanks to Emanuele Petriglia for his contribution on GNU/Linux pipeline.
@@ -66,7 +67,7 @@ RAYLIB_LIB_NAME      ?= raylib
 RAYLIB_RES_FILE      ?= ./raylib.dll.rc.data
 
 # Define raylib platform
-# Options:  PLATFORM_DESKTOP, PLATFORM_RPI, PLATFORM_ANDROID, PLATFORM_WEB
+# Options:  PLATFORM_DESKTOP, PLATFORM_RPI, PLATFORM_ANDROID, PLATFORM_WEB, PLATFORM_NX
 PLATFORM             ?= PLATFORM_DESKTOP
 
 # Include raylib modules on compilation
@@ -143,6 +144,14 @@ ifeq ($(PLATFORM),PLATFORM_DRM)
     ifeq ($(UNAMEOS),Linux)
         PLATFORM_OS = LINUX
     endif
+endif
+ifeq ($(PLATFORM),PLATFORM_NX)
+    UNAMEOS = $(shell uname)
+    ifeq ($(UNAMEOS),Linux)
+        PLATFORM_OS = LINUX
+    endif
+    RAYLIB_LIBTYPE = STATIC
+    USE_EXTERNAL_GLFW = TRUE
 endif
 
 # RAYLIB_SRC_PATH adjustment for different platforms.
@@ -223,6 +232,9 @@ ifeq ($(PLATFORM),PLATFORM_ANDROID)
     # By default use OpenGL ES 2.0 on Android
     GRAPHICS = GRAPHICS_API_OPENGL_ES2
 endif
+ifeq ($(PLATFORM),PLATFORM_NX)
+    GRAPHICS = GRAPHICS_API_OPENGL_ES2
+endif
 
 # Define default C compiler and archiver to pack library
 CC = gcc
@@ -271,6 +283,12 @@ ifeq ($(PLATFORM),PLATFORM_ANDROID)
         AR = $(ANDROID_TOOLCHAIN)/bin/x86_64-linux-android-ar
     endif
 endif
+ifeq ($(PLATFORM),PLATFORM_NX)
+    ifeq ($(strip $(DEVKITPRO)),)
+        $(error "Please set DEVKITPRO in your environment. export DEVKITPRO=<path to>/devkitpro")
+    endif
+    include $(DEVKITPRO)/libnx/switch_rules
+endif
 
 # Define compiler flags:
 #  -O1                      defines optimization level
@@ -307,6 +325,9 @@ ifeq ($(RAYLIB_BUILD_MODE),RELEASE)
         CFLAGS += -s -O1
     endif
     ifeq ($(PLATFORM),PLATFORM_ANDROID)
+        CFLAGS += -O2
+    endif
+    ifeq ($(PLATFORM),PLATFORM_NX)
         CFLAGS += -O2
     endif
 endif
@@ -386,6 +407,13 @@ endif
 # Define include paths for required headers
 # NOTE: Several external required libraries (stb and others)
 INCLUDE_PATHS = -I. -Iexternal/glfw/include -Iexternal/glfw/deps/mingw
+
+ifeq ($(PLATFORM),PLATFORM_NX)
+    LIBDIRS	:= $(PORTLIBS) $(LIBNX)
+    ARCH	:=	-march=armv8-a+crc+crypto -mtune=cortex-a57 -mtp=soft -fPIC -ftls-model=local-exec
+    CFLAGS	+=	-ffunction-sections -fdata-sections $(ARCH) $(foreach dir,$(LIBDIRS),-I$(dir)/include) -D__SWITCH__
+    INCLUDE_PATHS = -I.
+endif
 
 ifeq ($(PLATFORM),PLATFORM_DESKTOP)
     ifeq ($(PLATFORM_OS),BSD)
@@ -475,7 +503,9 @@ endif
 ifeq ($(RAYLIB_MODULE_PHYSAC),TRUE)
     OBJS += physac.o
 endif
-
+ifeq ($(PLATFORM),PLATFORM_NX)
+    OBJS += nxusb.o
+endif
 ifeq ($(PLATFORM),PLATFORM_ANDROID)
     OBJS += android_native_app_glue.o
 endif
@@ -550,7 +580,7 @@ else
     else
         # Compile raylib static library version $(RAYLIB_VERSION)
         # WARNING: You should type "make clean" before doing this target.
-		$(AR) rcs $(RAYLIB_RELEASE_PATH)/lib$(RAYLIB_LIB_NAME).a $(OBJS)
+		$(AR) rc $(RAYLIB_RELEASE_PATH)/lib$(RAYLIB_LIB_NAME).a $(OBJS)
 		@echo "raylib static library generated (lib$(RAYLIB_LIB_NAME).a) in $(RAYLIB_RELEASE_PATH)!"
     endif
 endif
@@ -589,6 +619,10 @@ models.o : models.c raylib.h rlgl.h raymath.h
 raudio.o : raudio.c raylib.h
 	$(CC) -c $< $(CFLAGS) $(INCLUDE_PATHS) -D$(PLATFORM)
 
+# Compile switch usb module
+nxusb.o : nxusb.c nxusb.h raylib.h
+	$(CC) -c $< $(CFLAGS) $(INCLUDE_PATHS) -D$(PLATFORM)
+
 # Compile raygui module
 # NOTE: raygui header should be distributed with raylib.h
 raygui.o : raygui.c raygui.h gui_textbox_extended.h ricons.h
@@ -620,6 +654,10 @@ android_native_app_glue.o : $(NATIVE_APP_GLUE)/android_native_app_glue.c
 # Hint: add -L$(RAYLIB_INSTALL_PATH) -I$(RAYLIB_H_INSTALL_PATH) to your own makefiles.
 # See below and ../examples/Makefile for more information.
 # TODO: Add other platforms. Remove sudo requirement, i.e. add USER mode.
+
+ifeq ($(PLATFORM),PLATFORM_NX)
+    DESTDIR ?= $(PORTLIBS)
+endif
 
 # RAYLIB_INSTALL_PATH should be the desired full path to libraylib. No relative paths.
 DESTDIR ?= /usr/local
