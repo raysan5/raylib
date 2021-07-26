@@ -56,9 +56,6 @@
 #ifndef MAX_TRACELOG_MSG_LENGTH
     #define MAX_TRACELOG_MSG_LENGTH     128     // Max length of one trace-log message
 #endif
-#ifndef MAX_UWP_MESSAGES
-    #define MAX_UWP_MESSAGES            512     // Max UWP messages to process
-#endif
 
 //----------------------------------------------------------------------------------
 // Global Variables Definition
