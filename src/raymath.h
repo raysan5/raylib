@@ -282,7 +282,11 @@ RMDEF Vector2 Vector2Divide(Vector2 v1, Vector2 v2)
 // Normalize provided vector
 RMDEF Vector2 Vector2Normalize(Vector2 v)
 {
-    Vector2 result = Vector2Scale(v, 1/Vector2Length(v));
+    float length = Vector2Length(v);
+    if (length <= 0)
+        return v;
+
+    Vector2 result = Vector2Scale(v, 1/length);
     return result;
 }
 
