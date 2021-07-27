@@ -1,3 +1,13 @@
+raylib's Nintendo Switch Port
+--------
+This is the repository of the Nintendo Switch port of the raylib using LibNX running over the Atmosphere CFW (others CFW should work too), although it's still fully compatible with all the others platforms, i recommend you to get it from the [main repository](https://github.com/raysan5/raylib) if you are looking to build it for other platforms.
+
+Please, follow the wiki page in order to install and use it:
+
+ - [Working on Switch](https://github.com/luizpestana/raylib-nx/wiki/Working-on-Switch)
+
+---
+
 <img align="left" src="https://github.com/raysan5/raylib/blob/master/logo/raylib_logo_animation.gif" width="288px">
 
 **raylib is a simple and easy-to-use library to enjoy videogames programming.**
@@ -117,7 +127,7 @@ You can download and install raylib using the [conan](https://conan.io) dependen
  - [Working for Android](https://github.com/raysan5/raylib/wiki/Working-for-Android)
  - [Working for Web (HTML5)](https://github.com/raysan5/raylib/wiki/Working-for-Web-(HTML5))
  - [Working anywhere with CMake](https://github.com/raysan5/raylib/wiki/Working-with-CMake)
-
+ 
 *Note that Wiki is open for edit, if you find some issue while building raylib for your target platform, feel free to edit the Wiki or open and issue related to it.*
 
 #### Setup raylib with multiple IDEs
