@@ -1178,12 +1178,12 @@ void DrawMeshInstanced(Mesh mesh, Material material, Matrix *transforms, int ins
 
         if (instancing) // Draw mesh instanced
         {
-            if (mesh.indices != NULL) rlDrawVertexArrayElementsInstanced(0, mesh.triangleCount*3, 0, instances);
+            if (mesh.indices != NULL) rlDrawVertexArrayElementsInstanced(0, mesh.triangleCount*3, mesh.indices, instances);
             else rlDrawVertexArrayInstanced(0, mesh.vertexCount, instances);
         }
         else    // Draw mesh
         {
-            if (mesh.indices != NULL) rlDrawVertexArrayElements(0, mesh.triangleCount*3, 0);
+            if (mesh.indices != NULL) rlDrawVertexArrayElements(0, mesh.triangleCount*3, mesh.indices);
             else rlDrawVertexArray(0, mesh.vertexCount);
         }
     }
@@ -4397,12 +4397,12 @@ static void *ReadGLTFValuesAs(cgltf_accessor* acc, cgltf_component_type type, bo
                     } break;
                     case cgltf_component_type_r_32f:
                     {
-                        float* typedArray = (float*) array;
+                        float *typedArray = (float *)array;
                         for (unsigned int i = 0; i < count*typeElements; i++) typedArray[i] = (float)typedAdditionalArray[i];
                     } break;
                     case cgltf_component_type_r_32u:
                     {
-                        unsigned int* typedArray = (unsigned int*) array;
+                        unsigned int *typedArray = (unsigned int *)array;
                         for (unsigned int i = 0; i < count*typeElements; i++) typedArray[i] = (unsigned int)typedAdditionalArray[i];
                     } break;
                     default:
