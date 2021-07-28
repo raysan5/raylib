@@ -2654,7 +2654,7 @@ BoundingBox GetModelBoundingBox(Model model)
     int meshCount = model.meshCount;
     BoundingBox bounds = { 0 };
     
-    if (meshCount < 1)
+    if (meshCount < 1 || model.meshes == NULL)
     {      
         // No mesh to compute bounds from
         return bounds;
