@@ -70,6 +70,10 @@
 #define MAX_LINE_LENGTH          512    // Maximum length of one line (including comments)
 #define MAX_STRUCT_LINE_LENGTH  2048    // Maximum length of one struct (multiple lines)
 
+#define MAX_FUNCTION_PARAMETERS   12    // Maximum number of function parameters
+#define MAX_STRUCT_FIELDS         32    // Maximum number of struct fields
+#define MAX_ENUM_VALUES          512    // Maximum number of enum values
+
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
 //----------------------------------------------------------------------------------
@@ -79,9 +83,9 @@ typedef struct FunctionInfo {
     char desc[128];             // Function description (comment at the end)
     char retType[32];           // Return value type
     int paramCount;             // Number of function parameters
-    char paramType[12][32];     // Parameters type (max: 12 parameters)
-    char paramName[12][32];     // Parameters name (max: 12 parameters)
-    char paramDesc[12][8];    // Parameters description (max: 12 parameters)
+    char paramType[MAX_FUNCTION_PARAMETERS][32];   // Parameters type
+    char paramName[MAX_FUNCTION_PARAMETERS][32];   // Parameters name
+    char paramDesc[MAX_FUNCTION_PARAMETERS][8];    // Parameters description
 } FunctionInfo;
 
 // Struct info data
@@ -89,9 +93,9 @@ typedef struct StructInfo {
     char name[64];              // Struct name
     char desc[64];              // Struct type description
     int fieldCount;             // Number of fields in the struct
-    char fieldType[16][32];     // Field type (max: 16 fields)
-    char fieldName[16][32];     // Field name (max: 16 fields)
-    char fieldDesc[16][128];    // Field description (max: 16 fields)
+    char fieldType[MAX_STRUCT_FIELDS][64];     // Field type
+    char fieldName[MAX_STRUCT_FIELDS][64];     // Field name
+    char fieldDesc[MAX_STRUCT_FIELDS][128];    // Field description
 } StructInfo;
 
 // Enum info data
@@ -99,9 +103,9 @@ typedef struct EnumInfo {
     char name[64];              // Enum name
     char desc[64];              // Enum description
     int valueCount;             // Number of values in enumerator
-    char valueName[128][64];    // Value name definition (max: 128 values)
-    int valueInteger[128];      // Value integer (max: 128 values)
-    char valueDesc[128][64];    // Value description (max: 128 values)
+    char valueName[MAX_ENUM_VALUES][64];    // Value name definition
+    int valueInteger[MAX_ENUM_VALUES];      // Value integer
+    char valueDesc[MAX_ENUM_VALUES][64];    // Value description
 } EnumInfo;
 
 // Output format for parsed data
@@ -116,6 +120,7 @@ static int enumCount = 0;
 static FunctionInfo *funcs = NULL;
 static StructInfo *structs = NULL;
 static EnumInfo *enums = NULL;
+static char apiDefine[32] = "RLAPI\0";
 
 // Command line variables
 static char inFileName[512] = { 0 };       // Input file name (required in case of provided through CLI)
@@ -171,8 +176,8 @@ int main(int argc, char* argv[])
     // Read function lines
     for (int i = 0; i < linesCount; i++)
     {
-        // Read function line (starting with "RLAPI")
-        if (IsTextEqual(lines[i], "RLAPI", 5))
+        // Read function line (starting with `define`, i.e. for raylib.h "RLAPI")
+        if (IsTextEqual(lines[i], apiDefine, TextLength(apiDefine)))
         {
             // Keep a pointer to the function line
             funcLines[funcCount] = lines[i];
@@ -217,12 +222,6 @@ int main(int argc, char* argv[])
                     j++;
                 }
 
-                while (buffer[i + j] != '}')
-                {
-                    structLines[structCount][j] = buffer[i + j];
-                    j++;
-                }
-
                 while (buffer[i + j] != '\n')
                 {
                     structLines[structCount][j] = buffer[i + j];
@@ -238,7 +237,7 @@ int main(int argc, char* argv[])
     // Read enum lines
     for (int i = 0; i < linesCount; i++)
     {
-        // Read function line (starting with "RLAPI")
+        // Read enum line
         if (IsTextEqual(lines[i], "typedef enum {", 14))
         {
             // Keep the line position in the array of lines,
@@ -335,7 +334,7 @@ int main(int argc, char* argv[])
     {
         // TODO: Get enum description from lines[enumLines[i] - 1]
 
-        for (int j = 1; j < 256; j++)   // Maximum number of lines following enum first line
+        for (int j = 1; j < MAX_ENUM_VALUES*2; j++)   // Maximum number of lines following enum first line
         {
             char *linePtr = lines[enumLines[i] + j];
 
@@ -428,8 +427,9 @@ int main(int argc, char* argv[])
 
                 // At this point we have function return type and function name
                 char funcRetTypeName[128] = { 0 };
-                int funcRetTypeNameLen = c - 6;     // Substract "RLAPI "
-                MemoryCopy(funcRetTypeName, &funcLines[i][6], funcRetTypeNameLen);
+                int dc = TextLength(apiDefine) + 1;
+                int funcRetTypeNameLen = c - dc;     // Substract `define` ("RLAPI " for raylib.h)
+                MemoryCopy(funcRetTypeName, &funcLines[i][dc], funcRetTypeNameLen);
 
                 GetDataTypeAndName(funcRetTypeName, funcRetTypeNameLen, funcs[i].retType, funcs[i].name);
                 break;
@@ -525,7 +525,7 @@ static void ShowCommandLineInfo(void)
     printf("//////////////////////////////////////////////////////////////////////////////////\n\n");
 
     printf("USAGE:\n\n");
-    printf("    > raylib_parser [--help] [--input <filename.h>] [--output <filename.ext>] [--format <type>]\n");
+    printf("    > raylib_parser [--help] [--input <filename.h>] [--output <filename.ext>] [--format <type>] [--define <DEF>]\n");
 
     printf("\nOPTIONS:\n\n");
     printf("    -h, --help                      : Show tool version and command line usage help\n\n");
@@ -536,12 +536,16 @@ static void ShowCommandLineInfo(void)
     printf("                                      NOTE: If not specified, defaults to: raylib_api.txt\n\n");
     printf("    -f, --format <type>             : Define output format for parser data.\n");
     printf("                                      Supported types: DEFAULT, JSON, XML\n\n");
+    printf("    -d, --define <DEF>              : Define functions define (i.e. RLAPI for raylib.h, RMDEF for raymath.h, etc\n");
+    printf("                                      NOTE: If not specified, defaults to: RLAPI\n\n");
 
     printf("\nEXAMPLES:\n\n");
     printf("    > raylib_parser --input raylib.h --output api.json\n");
     printf("        Process <raylib.h> to generate <api.json>\n\n");
     printf("    > raylib_parser --output raylib_data.info --format XML\n");
     printf("        Process <raylib.h> to generate <raylib_data.info> as XML text data\n\n");
+    printf("    > raylib_parser --input raymath.h --output raymath_data.info --format XML\n");
+    printf("        Process <raymath.h> to generate <raymath_data.info> as XML text data\n\n");
 }
 
 // Process command line arguments
@@ -582,6 +586,16 @@ static void ProcessCommandLine(int argc, char *argv[])
                 else if (IsTextEqual(argv[i + 1], "XML\0", 4)) outputFormat = XML;
             }
             else printf("WARNING: No format parameters provided\n");
+        }
+        else if (IsTextEqual(argv[i], "-d", 2) || IsTextEqual(argv[i], "--define", 8))
+        {
+            if (((i + 1) < argc) && (argv[i + 1][0] != '-'))
+            {
+                MemoryCopy(apiDefine, argv[i + 1], TextLength(argv[i + 1])); // Read functions define
+                apiDefine[TextLength(argv[i + 1])] = '\0';
+                i++;
+            }
+            else printf("WARNING: No define key provided\n");
         }
     }
 }
