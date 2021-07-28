@@ -12,7 +12,7 @@
 #include "raylib.h"
 
 #define RNET_IMPLEMENTATION
-#include "rnet.h"
+#include "extras/rnet.h"
 
 #include <assert.h>
 
