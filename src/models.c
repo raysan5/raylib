@@ -2647,6 +2647,41 @@ BoundingBox GetMeshBoundingBox(Mesh mesh)
     return box;
 }
 
+// Compute model bounding box limits
+BoundingBox GetModelBoundingBox(Model model)
+{
+    // Get number of meshes and create our bounding box
+    int meshCount = model.meshCount;
+    BoundingBox bounds = { 0 };
+    
+    if (meshCount < 1)
+    {      
+        // No mesh to compute bounds from
+        return bounds;
+    }else{
+        // Start from the first mesh's bounding box
+        Vector3 tPos;
+        bounds = GetMeshBoundingBox(model.meshes[0]);
+        for (int i = 1; i < meshCount;i++)
+        {
+            // Get each mesh's bounding box to find the largest extents
+            BoundingBox tempBounds = GetMeshBoundingBox(model.meshes[i]);
+            
+            tPos.x = bounds.min.x < tempBounds.min.x ? bounds.min.x : tempBounds.min.x;
+            tPos.y = bounds.min.y < tempBounds.min.y ? bounds.min.y : tempBounds.min.y;
+            tPos.z = bounds.min.z < tempBounds.min.z ? bounds.min.z : tempBounds.min.z;
+            bounds.min = tPos;
+
+            tPos.x = bounds.max.x > tempBounds.max.x ? bounds.max.x : tempBounds.max.x;
+            tPos.y = bounds.max.y > tempBounds.max.y ? bounds.max.y : tempBounds.max.y;
+            tPos.z = bounds.max.z > tempBounds.max.z ? bounds.max.z : tempBounds.max.z;
+            bounds.max = tPos;
+        }
+    }
+    
+    return bounds;
+}
+
 // Compute mesh tangents
 // NOTE: To calculate mesh tangents and binormals we need mesh vertex positions and texture coordinates
 // Implementation base don: https://answers.unity.com/questions/7789/calculating-tangents-vector4.html
