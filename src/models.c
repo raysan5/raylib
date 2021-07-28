@@ -819,6 +819,35 @@ void UnloadModelKeepMeshes(Model model)
     TRACELOG(LOG_INFO, "MODEL: Unloaded model (but not meshes) from RAM and VRAM");
 }
 
+// Compute model bounding box limits (considers all meshes)
+BoundingBox GetModelBoundingBox(Model model)
+{
+    BoundingBox bounds = { 0 };
+    
+    if (model.meshCount > 0)
+    {      
+        Vector3 temp = { 0 };
+        bounds = GetMeshBoundingBox(model.meshes[0]);
+        
+        for (int i = 1; i < model.meshCount; i++)
+        {
+            BoundingBox tempBounds = GetMeshBoundingBox(model.meshes[i]);
+            
+            temp.x = (bounds.min.x < tempBounds.min.x)? bounds.min.x : tempBounds.min.x;
+            temp.y = (bounds.min.y < tempBounds.min.y)? bounds.min.y : tempBounds.min.y;
+            temp.z = (bounds.min.z < tempBounds.min.z)? bounds.min.z : tempBounds.min.z;
+            bounds.min = temp;
+
+            temp.x = (bounds.max.x > tempBounds.max.x)? bounds.max.x : tempBounds.max.x;
+            temp.y = (bounds.max.y > tempBounds.max.y)? bounds.max.y : tempBounds.max.y;
+            temp.z = (bounds.max.z > tempBounds.max.z)? bounds.max.z : tempBounds.max.z;
+            bounds.max = temp;
+        }
+    }
+    
+    return bounds;
+}
+
 // Upload vertex data into a VAO (if supported) and VBO
 void UploadMesh(Mesh *mesh, bool dynamic)
 {
@@ -1178,12 +1207,12 @@ void DrawMeshInstanced(Mesh mesh, Material material, Matrix *transforms, int ins
 
         if (instancing) // Draw mesh instanced
         {
-            if (mesh.indices != NULL) rlDrawVertexArrayElementsInstanced(0, mesh.triangleCount*3, mesh.indices, instances);
+            if (mesh.indices != NULL) rlDrawVertexArrayElementsInstanced(0, mesh.triangleCount*3, 0, instances);
             else rlDrawVertexArrayInstanced(0, mesh.vertexCount, instances);
         }
         else    // Draw mesh
         {
-            if (mesh.indices != NULL) rlDrawVertexArrayElements(0, mesh.triangleCount*3, mesh.indices);
+            if (mesh.indices != NULL) rlDrawVertexArrayElements(0, mesh.triangleCount*3, 0);
             else rlDrawVertexArray(0, mesh.vertexCount);
         }
     }
