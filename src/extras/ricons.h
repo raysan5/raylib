@@ -22,7 +22,7 @@
 // Icons data is defined by bit array (every bit represents one pixel)
 // Those arrays are stored as unsigned int data arrays, so every array
 // element defines 32 pixels (bits) of information
-// Number of elemens depend on RICON_SIZE (by default 16x16 pixels) 
+// Number of elemens depend on RICON_SIZE (by default 16x16 pixels)
 #define RICON_DATA_ELEMENTS   (RICON_SIZE*RICON_SIZE/32)
 
 //----------------------------------------------------------------------------------

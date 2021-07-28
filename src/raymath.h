@@ -282,7 +282,11 @@ RMDEF Vector2 Vector2Divide(Vector2 v1, Vector2 v2)
 // Normalize provided vector
 RMDEF Vector2 Vector2Normalize(Vector2 v)
 {
-    Vector2 result = Vector2Scale(v, 1/Vector2Length(v));
+    float length = Vector2Length(v);
+    if (length <= 0)
+        return v;
+
+    Vector2 result = Vector2Scale(v, 1/length);
     return result;
 }
 
@@ -1422,20 +1426,21 @@ RMDEF Quaternion QuaternionFromAxisAngle(Vector3 axis, float angle)
     Quaternion result = { 0.0f, 0.0f, 0.0f, 1.0f };
 
     if (Vector3Length(axis) != 0.0f)
+    {
+        angle *= 0.5f;
 
-    angle *= 0.5f;
+        axis = Vector3Normalize(axis);
 
-    axis = Vector3Normalize(axis);
+        float sinres = sinf(angle);
+        float cosres = cosf(angle);
 
-    float sinres = sinf(angle);
-    float cosres = cosf(angle);
+        result.x = axis.x*sinres;
+        result.y = axis.y*sinres;
+        result.z = axis.z*sinres;
+        result.w = cosres;
 
-    result.x = axis.x*sinres;
-    result.y = axis.y*sinres;
-    result.z = axis.z*sinres;
-    result.w = cosres;
-
-    result = QuaternionNormalize(result);
+        result = QuaternionNormalize(result);
+    }
 
     return result;
 }

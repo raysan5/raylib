@@ -12,7 +12,7 @@
 #include "raylib.h"
 
 #define RNET_IMPLEMENTATION
-#include "rnet.h"
+#include "extras/rnet.h"
 
 float elapsed = 0.0f;
 float delay = 1.0f;

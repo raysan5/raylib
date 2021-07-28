@@ -516,8 +516,8 @@ RAYGUIDEF bool GuiCheckIconPixel(int iconId, int x, int y);     // Check icon pi
 #endif
 
 #include <stdio.h>              // Required for: FILE, fopen(), fclose(), fprintf(), feof(), fscanf(), vsprintf()
-#include <string.h>             // Required for: strlen() on GuiTextBox()
-#include <math.h>               // Required for: roundf() on GuiColorPicker()
+#include <string.h>             // Required for: strlen() [GuiTextBox()]
+#include <math.h>               // Required for: roundf() [GuiColorPicker()]
 
 #if defined(RAYGUI_STANDALONE)
     #include <stdarg.h>         // Required for: va_list, va_start(), vfprintf(), va_end()
@@ -1373,7 +1373,7 @@ bool GuiDropdownBox(Rectangle bounds, const char *text, int *active, bool editMo
 // NOTE 2: Returns if KEY_ENTER pressed (useful for data validation)
 bool GuiTextBox(Rectangle bounds, char *text, int textSize, bool editMode)
 {
-    static int framesCounter = 0;           // Required for blinking cursor
+    static int framesCounter = 0;       // Blinking cursor counter
 
     GuiControlState state = guiState;
     bool pressed = false;
@@ -1561,7 +1561,7 @@ bool GuiValueBox(Rectangle bounds, const char *text, int *value, int minValue, i
         #define VALUEBOX_MAX_CHARS  32
     #endif
 
-    static int framesCounter = 0;           // Required for blinking cursor
+    static int framesCounter = 0;           // Blinking cursor counter
 
     GuiControlState state = guiState;
     bool pressed = false;
@@ -1678,7 +1678,7 @@ bool GuiValueBox(Rectangle bounds, const char *text, int *value, int minValue, i
 // Text Box control with multiple lines
 bool GuiTextBoxMulti(Rectangle bounds, char *text, int textSize, bool editMode)
 {
-    static int framesCounter = 0;           // Required for blinking cursor
+    static int framesCounter = 0;           // Blinking cursor counter
 
     GuiControlState state = guiState;
     bool pressed = false;
@@ -3083,9 +3083,10 @@ char **GuiLoadIcons(const char *fileName, bool loadIconsName)
                 for (int i = 0; i < iconsCount; i++)
                 {
                     guiIconsName[i] = (char *)RAYGUI_MALLOC(RICON_MAX_NAME_LENGTH);
-                    fread(guiIconsName[i], 32, 1, rgiFile);
+                    fread(guiIconsName[i], RICON_MAX_NAME_LENGTH, 1, rgiFile);
                 }
             }
+            else fseek(rgiFile, iconsCount*RICON_MAX_NAME_LENGTH, SEEK_CUR);
 
             // Read icons data directly over guiIcons data array
             fread(guiIcons, iconsCount*(iconsSize*iconsSize/32), sizeof(unsigned int), rgiFile);

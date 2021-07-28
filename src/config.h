@@ -224,4 +224,3 @@
 // utils: Configuration values
 //------------------------------------------------------------------------------------
 #define MAX_TRACELOG_MSG_LENGTH          128    // Max length of one trace-log message
-#define MAX_UWP_MESSAGES                 512    // Max UWP messages to process

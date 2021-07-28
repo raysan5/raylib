@@ -1724,9 +1724,9 @@ void UpdateMusicStream(Music music)
             case MUSIC_MODULE_XM:
             {
                 // NOTE: Internally we consider 2 channels generation, so samplesCount/2
-                if (AUDIO_DEVICE_FORMAT == ma_format_f32) jar_xm_generate_samples((jar_xm_context_t*)music.ctxData, (float *)pcm, samplesCount/2);
-                else if (AUDIO_DEVICE_FORMAT == ma_format_s16) jar_xm_generate_samples_16bit((jar_xm_context_t*)music.ctxData, (short *)pcm, samplesCount/2);
-                else if (AUDIO_DEVICE_FORMAT == ma_format_u8) jar_xm_generate_samples_8bit((jar_xm_context_t*)music.ctxData, (char *)pcm, samplesCount/2);
+                if (AUDIO_DEVICE_FORMAT == ma_format_f32) jar_xm_generate_samples((jar_xm_context_t *)music.ctxData, (float *)pcm, samplesCount/2);
+                else if (AUDIO_DEVICE_FORMAT == ma_format_s16) jar_xm_generate_samples_16bit((jar_xm_context_t *)music.ctxData, (short *)pcm, samplesCount/2);
+                else if (AUDIO_DEVICE_FORMAT == ma_format_u8) jar_xm_generate_samples_8bit((jar_xm_context_t *)music.ctxData, (char *)pcm, samplesCount/2);
 
             } break;
         #endif

@@ -482,7 +482,7 @@ int main(int argc, char* argv[])
         }
     }
 
-    //for (int i = 0; i < linesCount; i++) free(lines[i]);
+    for (int i = 0; i < linesCount; i++) free(lines[i]);
     free(lines);
     free(funcLines);
 

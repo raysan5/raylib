@@ -3121,7 +3121,7 @@ void rlDrawVertexArray(int offset, int count)
 
 void rlDrawVertexArrayElements(int offset, int count, void *buffer)
 {
-    glDrawElements(GL_TRIANGLES, count, GL_UNSIGNED_SHORT, (unsigned short*)buffer + offset);
+    glDrawElements(GL_TRIANGLES, count, GL_UNSIGNED_SHORT, (unsigned short *)buffer + offset);
 }
 
 void rlDrawVertexArrayInstanced(int offset, int count, int instances)
@@ -3134,7 +3134,7 @@ void rlDrawVertexArrayInstanced(int offset, int count, int instances)
 void rlDrawVertexArrayElementsInstanced(int offset, int count, void *buffer, int instances)
 {
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
-    glDrawElementsInstanced(GL_TRIANGLES, count, GL_UNSIGNED_SHORT, (unsigned short*)buffer + offset, instances);
+    glDrawElementsInstanced(GL_TRIANGLES, count, GL_UNSIGNED_SHORT, (unsigned short *)buffer + offset, instances);
 #endif
 }
 
@@ -3760,7 +3760,7 @@ const char *rlGetPixelFormatName(unsigned int format)
         case PIXELFORMAT_COMPRESSED_PVRT_RGBA: return "PVRT_RGBA"; break;           // 4 bpp
         case PIXELFORMAT_COMPRESSED_ASTC_4x4_RGBA: return "ASTC_4x4_RGBA"; break;   // 8 bpp
         case PIXELFORMAT_COMPRESSED_ASTC_8x8_RGBA: return "ASTC_8x8_RGBA"; break;   // 2 bpp
-        default: return "\0"; break;
+        default: return "UNKNOWN"; break;
     }
 }
 

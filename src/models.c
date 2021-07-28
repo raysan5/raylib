@@ -819,6 +819,35 @@ void UnloadModelKeepMeshes(Model model)
     TRACELOG(LOG_INFO, "MODEL: Unloaded model (but not meshes) from RAM and VRAM");
 }
 
+// Compute model bounding box limits (considers all meshes)
+BoundingBox GetModelBoundingBox(Model model)
+{
+    BoundingBox bounds = { 0 };
+    
+    if (model.meshCount > 0)
+    {      
+        Vector3 temp = { 0 };
+        bounds = GetMeshBoundingBox(model.meshes[0]);
+        
+        for (int i = 1; i < model.meshCount; i++)
+        {
+            BoundingBox tempBounds = GetMeshBoundingBox(model.meshes[i]);
+            
+            temp.x = (bounds.min.x < tempBounds.min.x)? bounds.min.x : tempBounds.min.x;
+            temp.y = (bounds.min.y < tempBounds.min.y)? bounds.min.y : tempBounds.min.y;
+            temp.z = (bounds.min.z < tempBounds.min.z)? bounds.min.z : tempBounds.min.z;
+            bounds.min = temp;
+
+            temp.x = (bounds.max.x > tempBounds.max.x)? bounds.max.x : tempBounds.max.x;
+            temp.y = (bounds.max.y > tempBounds.max.y)? bounds.max.y : tempBounds.max.y;
+            temp.z = (bounds.max.z > tempBounds.max.z)? bounds.max.z : tempBounds.max.z;
+            bounds.max = temp;
+        }
+    }
+    
+    return bounds;
+}
+
 // Upload vertex data into a VAO (if supported) and VBO
 void UploadMesh(Mesh *mesh, bool dynamic)
 {
@@ -860,7 +889,7 @@ void UploadMesh(Mesh *mesh, bool dynamic)
     if (mesh->normals != NULL)
     {
         // Enable vertex attributes: normals (shader-location = 2)
-        void *normals = mesh->animNormals != NULL ? mesh->animNormals : mesh->vertices;
+        void *normals = mesh->animNormals != NULL ? mesh->animNormals : mesh->normals;
         mesh->vboId[2] = rlLoadVertexBuffer(normals, mesh->vertexCount*3*sizeof(float), dynamic);
         rlSetVertexAttribute(2, 3, RL_FLOAT, 0, 0, 0);
         rlEnableVertexAttribute(2);
@@ -1021,8 +1050,9 @@ void DrawMeshInstanced(Mesh mesh, Material material, Matrix *transforms, int ins
     // NOTE: At this point the modelview matrix just contains the view matrix (camera)
     // That's because BeginMode3D() sets it and there is no model-drawing function
     // that modifies it, all use rlPushMatrix() and rlPopMatrix()
+    Matrix matModel = MatrixIdentity();
     Matrix matView = rlGetMatrixModelview();
-    Matrix matModelView = matView;
+    Matrix matModelView = MatrixIdentity();
     Matrix matProjection = rlGetMatrixProjection();
 
     // Upload view and projection matrices (if locations available)
@@ -1066,15 +1096,17 @@ void DrawMeshInstanced(Mesh mesh, Material material, Matrix *transforms, int ins
         // Model transformation matrix is send to shader uniform location: SHADER_LOC_MATRIX_MODEL
         if (material.shader.locs[SHADER_LOC_MATRIX_MODEL] != -1) rlSetUniformMatrix(material.shader.locs[SHADER_LOC_MATRIX_MODEL], transforms[0]);
 
-        // Accumulate several transformations:
-        //    matView: rlgl internal modelview matrix (actually, just view matrix)
+        // Accumulate several model transformations:
+        //    transforms[0]: model transformation provided (includes DrawModel() params combined with model.transform)
         //    rlGetMatrixTransform(): rlgl internal transform matrix due to push/pop matrix stack
-        //    transform: function parameter transformation
-        matModelView = MatrixMultiply(transforms[0], MatrixMultiply(rlGetMatrixTransform(), matView));
+        matModel = MatrixMultiply(transforms[0], rlGetMatrixTransform());
+        
+        // Get model-view matrix
+        matModelView = MatrixMultiply(matModel, matView);
     }
 
     // Upload model normal matrix (if locations available)
-    if (material.shader.locs[SHADER_LOC_MATRIX_NORMAL] != -1) rlSetUniformMatrix(material.shader.locs[SHADER_LOC_MATRIX_NORMAL], MatrixTranspose(MatrixInvert(matModelView)));
+    if (material.shader.locs[SHADER_LOC_MATRIX_NORMAL] != -1) rlSetUniformMatrix(material.shader.locs[SHADER_LOC_MATRIX_NORMAL], MatrixTranspose(MatrixInvert(matModel)));
     //-----------------------------------------------------
 
     // Bind active texture maps (if available)
@@ -1161,17 +1193,17 @@ void DrawMeshInstanced(Mesh mesh, Material material, Matrix *transforms, int ins
     for (int eye = 0; eye < eyesCount; eye++)
     {
         // Calculate model-view-projection matrix (MVP)
-        Matrix matMVP = MatrixIdentity();
-        if (eyesCount == 1) matMVP = MatrixMultiply(matModelView, matProjection);
+        Matrix matModelViewProjection = MatrixIdentity();
+        if (eyesCount == 1) matModelViewProjection = MatrixMultiply(matModelView, matProjection);
         else
         {
             // Setup current eye viewport (half screen width)
             rlViewport(eye*rlGetFramebufferWidth()/2, 0, rlGetFramebufferWidth()/2, rlGetFramebufferHeight());
-            matMVP = MatrixMultiply(MatrixMultiply(matModelView, rlGetMatrixViewOffsetStereo(eye)), rlGetMatrixProjectionStereo(eye));
+            matModelViewProjection = MatrixMultiply(MatrixMultiply(matModelView, rlGetMatrixViewOffsetStereo(eye)), rlGetMatrixProjectionStereo(eye));
         }
 
         // Send combined model-view-projection matrix to shader
-        rlSetUniformMatrix(material.shader.locs[SHADER_LOC_MATRIX_MVP], matMVP);
+        rlSetUniformMatrix(material.shader.locs[SHADER_LOC_MATRIX_MVP], matModelViewProjection);
 
         if (instancing) // Draw mesh instanced
         {
@@ -2650,7 +2682,11 @@ BoundingBox GetMeshBoundingBox(Mesh mesh)
 void GenMeshTangents(Mesh *mesh)
 {
     if (mesh->tangents == NULL) mesh->tangents = (float *)RL_MALLOC(mesh->vertexCount*4*sizeof(float));
-    else TRACELOG(LOG_WARNING, "MESH: Tangents data already available, re-writting");
+    else
+    {
+        RL_FREE(mesh->tangents);
+        mesh->tangents = (float *)RL_MALLOC(mesh->vertexCount*4*sizeof(float));
+    }
 
     Vector3 *tan1 = (Vector3 *)RL_MALLOC(mesh->vertexCount*sizeof(Vector3));
     Vector3 *tan2 = (Vector3 *)RL_MALLOC(mesh->vertexCount*sizeof(Vector3));
@@ -2695,35 +2731,51 @@ void GenMeshTangents(Mesh *mesh)
     }
 
     // Compute tangents considering normals
-    for (int i = 0; i < mesh->vertexCount; ++i)
+    for (int i = 0; i < mesh->vertexCount; i++)
     {
         Vector3 normal = { mesh->normals[i*3 + 0], mesh->normals[i*3 + 1], mesh->normals[i*3 + 2] };
         Vector3 tangent = tan1[i];
 
         // TODO: Review, not sure if tangent computation is right, just used reference proposed maths...
-    #if defined(COMPUTE_TANGENTS_METHOD_01)
+#if defined(COMPUTE_TANGENTS_METHOD_01)
         Vector3 tmp = Vector3Subtract(tangent, Vector3Scale(normal, Vector3DotProduct(normal, tangent)));
         tmp = Vector3Normalize(tmp);
         mesh->tangents[i*4 + 0] = tmp.x;
         mesh->tangents[i*4 + 1] = tmp.y;
         mesh->tangents[i*4 + 2] = tmp.z;
         mesh->tangents[i*4 + 3] = 1.0f;
-    #else
+#else
         Vector3OrthoNormalize(&normal, &tangent);
         mesh->tangents[i*4 + 0] = tangent.x;
         mesh->tangents[i*4 + 1] = tangent.y;
         mesh->tangents[i*4 + 2] = tangent.z;
         mesh->tangents[i*4 + 3] = (Vector3DotProduct(Vector3CrossProduct(normal, tangent), tan2[i]) < 0.0f)? -1.0f : 1.0f;
-    #endif
+#endif
     }
 
     RL_FREE(tan1);
     RL_FREE(tan2);
 
-    // Load a new tangent attributes buffer
-    mesh->vboId[SHADER_LOC_VERTEX_TANGENT] = rlLoadVertexBuffer(mesh->tangents, mesh->vertexCount*4*sizeof(float), false);
-
-    TRACELOG(LOG_INFO, "MESH: Tangents data computed for provided mesh");
+    if (mesh->vboId != NULL)
+    {        
+        if (mesh->vboId[SHADER_LOC_VERTEX_TANGENT] != 0)
+        {
+            // Upate existing vertex buffer
+            rlUpdateVertexBuffer(mesh->vboId[SHADER_LOC_VERTEX_TANGENT], mesh->tangents, mesh->vertexCount*4*sizeof(float), 0);
+        }
+        else
+        {
+            // Load a new tangent attributes buffer
+            mesh->vboId[SHADER_LOC_VERTEX_TANGENT] = rlLoadVertexBuffer(mesh->tangents, mesh->vertexCount*4*sizeof(float), false);    
+        }
+        
+        rlEnableVertexArray(mesh->vaoId);
+        rlSetVertexAttribute(4, 4, RL_FLOAT, 0, 0, 0);
+        rlEnableVertexAttribute(4);
+        rlDisableVertexArray();
+    }
+    
+    TRACELOG(LOG_INFO, "MESH: Tangents data computed and uploaded for provided mesh");
 }
 
 // Compute mesh binormals (aka bitangent)
@@ -4374,12 +4426,12 @@ static void *ReadGLTFValuesAs(cgltf_accessor* acc, cgltf_component_type type, bo
                     } break;
                     case cgltf_component_type_r_32f:
                     {
-                        float* typedArray = (float*) array;
+                        float *typedArray = (float *)array;
                         for (unsigned int i = 0; i < count*typeElements; i++) typedArray[i] = (float)typedAdditionalArray[i];
                     } break;
                     case cgltf_component_type_r_32u:
                     {
-                        unsigned int* typedArray = (unsigned int*) array;
+                        unsigned int *typedArray = (unsigned int *)array;
                         for (unsigned int i = 0; i < count*typeElements; i++) typedArray[i] = (unsigned int)typedAdditionalArray[i];
                     } break;
                     default:
