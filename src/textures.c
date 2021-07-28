@@ -331,12 +331,15 @@ Image LoadImageFromMemory(const char *fileType, const unsigned char *fileData, i
             int comp = 0;
             image.data = stbi_load_from_memory(fileData, dataSize, &image.width, &image.height, &comp, 0);
 
-            image.mipmaps = 1;
+            if (image.data != NULL)
+            {
+                image.mipmaps = 1;
 
-            if (comp == 1) image.format = PIXELFORMAT_UNCOMPRESSED_GRAYSCALE;
-            else if (comp == 2) image.format = PIXELFORMAT_UNCOMPRESSED_GRAY_ALPHA;
-            else if (comp == 3) image.format = PIXELFORMAT_UNCOMPRESSED_R8G8B8;
-            else if (comp == 4) image.format = PIXELFORMAT_UNCOMPRESSED_R8G8B8A8;
+                if (comp == 1) image.format = PIXELFORMAT_UNCOMPRESSED_GRAYSCALE;
+                else if (comp == 2) image.format = PIXELFORMAT_UNCOMPRESSED_GRAY_ALPHA;
+                else if (comp == 3) image.format = PIXELFORMAT_UNCOMPRESSED_R8G8B8;
+                else if (comp == 4) image.format = PIXELFORMAT_UNCOMPRESSED_R8G8B8A8;
+            }
         }
 #endif
     }
@@ -380,8 +383,9 @@ Image LoadImageFromMemory(const char *fileType, const unsigned char *fileData, i
 #endif
     else TRACELOG(LOG_WARNING, "IMAGE: Data format not supported");
 
-    TRACELOG(LOG_INFO, "IMAGE: Data loaded successfully (%ix%i | %s | %i mipmaps)", image.width, image.height, rlGetPixelFormatName(image.format), image.mipmaps);
-
+    if (image.data != NULL) TRACELOG(LOG_INFO, "IMAGE: Data loaded successfully (%ix%i | %s | %i mipmaps)", image.width, image.height, rlGetPixelFormatName(image.format), image.mipmaps);
+    else TRACELOG(LOG_WARNING, "IMAGE: Failed to load image data");
+    
     return image;
 }
 

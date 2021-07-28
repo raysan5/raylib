@@ -3760,7 +3760,7 @@ const char *rlGetPixelFormatName(unsigned int format)
         case PIXELFORMAT_COMPRESSED_PVRT_RGBA: return "PVRT_RGBA"; break;           // 4 bpp
         case PIXELFORMAT_COMPRESSED_ASTC_4x4_RGBA: return "ASTC_4x4_RGBA"; break;   // 8 bpp
         case PIXELFORMAT_COMPRESSED_ASTC_8x8_RGBA: return "ASTC_8x8_RGBA"; break;   // 2 bpp
-        default: return "\0"; break;
+        default: return "UNKNOWN"; break;
     }
 }
 
