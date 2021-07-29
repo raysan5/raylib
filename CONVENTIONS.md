@@ -8,7 +8,7 @@ Defines | ALL_CAPS | `#define PLATFORM_DESKTOP`
 Macros | ALL_CAPS | `#define MIN(a,b) (((a)<(b))?(a):(b))`
 Variables | lowerCase | `int screenWidth = 0;`, `float targetFrameTime = 0.016f;`
 Local variables | lowerCase | `Vector2 playerPosition = { 0 };`
-Global variables | lowerCase | `bool fullscreen = false;`
+Global variables | lowerCase | `bool windowReady = false;`
 Constants | lowerCase | `const int maxValue = 8;`
 Pointers | MyType *pointer | `Texture2D *array = NULL;`
 float values | always x.xf | `float gravity = 10.0f`
