@@ -50,8 +50,11 @@
 
 #define RLGL_IMPLEMENTATION
 #define RLGL_STANDALONE
-#define RLGL_SUPPORT_TRACELOG
-#include "rlgl.h"               // OpenGL 1.1 immediate-mode style coding
+#include "rlgl.h"               // OpenGL abstraction layer to OpenGL 1.1, 3.3+ or ES2
+
+#define RAYMATH_STANDALONE
+#define RAYMATH_HEADER_ONLY
+#include "raymath.h"            // Vector3, Quaternion and Matrix functionality
 
 #if defined(__EMSCRIPTEN__)
     #define GLFW_INCLUDE_ES2
@@ -65,6 +68,9 @@
 #define RAYWHITE   (Color){ 245, 245, 245, 255 }   // My own White (raylib logo)
 #define DARKGRAY   (Color){ 80, 80, 80, 255 }      // Dark Gray
 
+//----------------------------------------------------------------------------------
+// Structures Definition
+//----------------------------------------------------------------------------------
 // Color, 4 components, R8G8B8A8 (32bit)
 typedef struct Color {
     unsigned char r;        // Color red value
@@ -72,6 +78,21 @@ typedef struct Color {
     unsigned char b;        // Color blue value
     unsigned char a;        // Color alpha value
 } Color;
+
+#if !defined(RAYMATH_STANDALONE)
+// Vector2, 2 components
+typedef struct Vector2 {
+    float x;                // Vector x component
+    float y;                // Vector y component
+} Vector2;
+
+// Vector3, 3 components
+typedef struct Vector3 {
+    float x;                // Vector x component
+    float y;                // Vector y component
+    float z;                // Vector z component
+} Vector3;
+#endif
 
 // Camera type, defines a camera position/orientation in 3d space
 typedef struct Camera {
@@ -93,6 +114,24 @@ static void DrawGrid(int slices, float spacing);
 static void DrawCube(Vector3 position, float width, float height, float length, Color color);
 static void DrawCubeWires(Vector3 position, float width, float height, float length, Color color);
 static void DrawRectangleV(Vector2 position, Vector2 size, Color color);
+
+// NOTE: We used raymath to get this functionality but it can be implemented here
+//static rlMatrix MatrixIdentity(void);
+//static rlMatrix MatrixOrtho(double left, double right, double bottom, double top, double near, double far);
+//static rlMatrix MatrixPerspective(double fovy, double aspect, double near, double far);
+//static rlMatrix MatrixLookAt(Vector3 eye, Vector3 target, Vector3 up);
+
+rlMatrix rlMatrixFromMatrix(Matrix mat)
+{
+    rlMatrix result = {
+        mat.m0, mat.m4, mat.m8, mat.m12,    // Matrix first row (4 comat.mponents)
+        mat.m1, mat.m5, mat.m9, mat.m13,    // Matrix second row (4 comat.mponents)
+        mat.m2, mat.m6, mat.m10, mat.m14,   // Matrix third row (4 comat.mponents)
+        mat.m3, mat.m7, mat.m11, mat.m15,   // Matrix fourth row (4 comat.mponents)
+    };
+    
+    return result;
+}
 
 //----------------------------------------------------------------------------------
 // Main Entry point
@@ -187,8 +226,8 @@ int main(void)
             Matrix matProj = MatrixPerspective((double)(camera.fovy*DEG2RAD), (double)screenWidth/(double)screenHeight, 0.01, 1000.0);
             Matrix matView = MatrixLookAt(camera.position, camera.target, camera.up);
 
-            rlSetMatrixModelview(matView);    // Set internal modelview matrix (default shader)
-            rlSetMatrixProjection(matProj);   // Set internal projection matrix (default shader)
+            rlSetMatrixModelview(rlMatrixFromMatrix(matView));    // Set internal modelview matrix (default shader)
+            rlSetMatrixProjection(rlMatrixFromMatrix(matProj));   // Set internal projection matrix (default shader)
 
             DrawCube(cubePosition, 2.0f, 2.0f, 2.0f, RED);
             DrawCubeWires(cubePosition, 2.0f, 2.0f, 2.0f, RAYWHITE);
@@ -205,8 +244,8 @@ int main(void)
             matProj = MatrixOrtho(0.0, screenWidth, screenHeight, 0.0, 0.0, 1.0);
             matView = MatrixIdentity();
 
-            rlSetMatrixModelview(matView);    // Set internal modelview matrix (default shader)
-            rlSetMatrixProjection(matProj);   // Set internal projection matrix (default shader)
+            rlSetMatrixModelview(rlMatrixFromMatrix(matView));    // Set internal modelview matrix (default shader)
+            rlSetMatrixProjection(rlMatrixFromMatrix(matProj));   // Set internal projection matrix (default shader)
 
 #else   // Let rlgl generate and multiply matrix internally
 

@@ -40,25 +40,17 @@
 
 // Check if config flags have been externally provided on compilation line
 #if !defined(EXTERNAL_CONFIG_FLAGS)
-    #include "config.h"         // Defines module configuration flags
+    #include "config.h"     // Defines module configuration flags
 #endif
 
-#include "utils.h"          // Required for: LoadFileData(), LoadFileText(), SaveFileText()
+#include "utils.h"          // Required for: TRACELOG(), LoadFileData(), LoadFileText(), SaveFileText()
+#include "rlgl.h"           // OpenGL abstraction layer to OpenGL 1.1, 2.1, 3.3+ or ES2
+#include "raymath.h"        // Required for: Vector3, Quaternion and Matrix functionality
 
 #include <stdio.h>          // Required for: sprintf()
 #include <stdlib.h>         // Required for: malloc(), free()
 #include <string.h>         // Required for: memcmp(), strlen()
 #include <math.h>           // Required for: sinf(), cosf(), sqrtf(), fabsf()
-
-#if defined(_WIN32)
-    #include <direct.h>     // Required for: _chdir() [Used in LoadOBJ()]
-    #define CHDIR _chdir
-#else
-    #include <unistd.h>     // Required for: chdir() (POSIX) [Used in LoadOBJ()]
-    #define CHDIR chdir
-#endif
-
-#include "rlgl.h"           // raylib OpenGL abstraction layer to OpenGL 1.1, 2.1, 3.3+ or ES2
 
 #if defined(SUPPORT_FILEFORMAT_OBJ) || defined(SUPPORT_FILEFORMAT_MTL)
     #define TINYOBJ_MALLOC RL_MALLOC
@@ -87,6 +79,14 @@
 
     #define PAR_SHAPES_IMPLEMENTATION
     #include "external/par_shapes.h"    // Shapes 3d parametric generation
+#endif
+
+#if defined(_WIN32)
+    #include <direct.h>     // Required for: _chdir() [Used in LoadOBJ()]
+    #define CHDIR _chdir
+#else
+    #include <unistd.h>     // Required for: chdir() (POSIX) [Used in LoadOBJ()]
+    #define CHDIR chdir
 #endif
 
 //----------------------------------------------------------------------------------
@@ -1051,13 +1051,13 @@ void DrawMeshInstanced(Mesh mesh, Material material, Matrix *transforms, int ins
     // That's because BeginMode3D() sets it and there is no model-drawing function
     // that modifies it, all use rlPushMatrix() and rlPopMatrix()
     Matrix matModel = MatrixIdentity();
-    Matrix matView = rlGetMatrixModelview();
+    Matrix matView = rlMatrixToMatrix(rlGetMatrixModelview());
     Matrix matModelView = MatrixIdentity();
-    Matrix matProjection = rlGetMatrixProjection();
+    Matrix matProjection = rlMatrixToMatrix(rlGetMatrixProjection());
 
     // Upload view and projection matrices (if locations available)
-    if (material.shader.locs[SHADER_LOC_MATRIX_VIEW] != -1) rlSetUniformMatrix(material.shader.locs[SHADER_LOC_MATRIX_VIEW], matView);
-    if (material.shader.locs[SHADER_LOC_MATRIX_PROJECTION] != -1) rlSetUniformMatrix(material.shader.locs[SHADER_LOC_MATRIX_PROJECTION], matProjection);
+    if (material.shader.locs[SHADER_LOC_MATRIX_VIEW] != -1) rlSetUniformMatrix(material.shader.locs[SHADER_LOC_MATRIX_VIEW], rlMatrixFromMatrix(matView));
+    if (material.shader.locs[SHADER_LOC_MATRIX_PROJECTION] != -1) rlSetUniformMatrix(material.shader.locs[SHADER_LOC_MATRIX_PROJECTION], rlMatrixFromMatrix(matProjection));
 
     if (instancing)
     {
@@ -1089,24 +1089,24 @@ void DrawMeshInstanced(Mesh mesh, Material material, Matrix *transforms, int ins
 
         // Accumulate internal matrix transform (push/pop) and view matrix
         // NOTE: In this case, model instance transformation must be computed in the shader
-        matModelView = MatrixMultiply(rlGetMatrixTransform(), matView);
+        matModelView = MatrixMultiply(rlMatrixToMatrix(rlGetMatrixTransform()), matView);
     }
     else
     {
         // Model transformation matrix is send to shader uniform location: SHADER_LOC_MATRIX_MODEL
-        if (material.shader.locs[SHADER_LOC_MATRIX_MODEL] != -1) rlSetUniformMatrix(material.shader.locs[SHADER_LOC_MATRIX_MODEL], transforms[0]);
+        if (material.shader.locs[SHADER_LOC_MATRIX_MODEL] != -1) rlSetUniformMatrix(material.shader.locs[SHADER_LOC_MATRIX_MODEL], rlMatrixFromMatrix(transforms[0]));
 
         // Accumulate several model transformations:
         //    transforms[0]: model transformation provided (includes DrawModel() params combined with model.transform)
         //    rlGetMatrixTransform(): rlgl internal transform matrix due to push/pop matrix stack
-        matModel = MatrixMultiply(transforms[0], rlGetMatrixTransform());
+        matModel = MatrixMultiply(transforms[0], rlMatrixToMatrix(rlGetMatrixTransform()));
         
         // Get model-view matrix
         matModelView = MatrixMultiply(matModel, matView);
     }
 
     // Upload model normal matrix (if locations available)
-    if (material.shader.locs[SHADER_LOC_MATRIX_NORMAL] != -1) rlSetUniformMatrix(material.shader.locs[SHADER_LOC_MATRIX_NORMAL], MatrixTranspose(MatrixInvert(matModel)));
+    if (material.shader.locs[SHADER_LOC_MATRIX_NORMAL] != -1) rlSetUniformMatrix(material.shader.locs[SHADER_LOC_MATRIX_NORMAL], rlMatrixFromMatrix(MatrixTranspose(MatrixInvert(matModel))));
     //-----------------------------------------------------
 
     // Bind active texture maps (if available)
@@ -1199,11 +1199,11 @@ void DrawMeshInstanced(Mesh mesh, Material material, Matrix *transforms, int ins
         {
             // Setup current eye viewport (half screen width)
             rlViewport(eye*rlGetFramebufferWidth()/2, 0, rlGetFramebufferWidth()/2, rlGetFramebufferHeight());
-            matModelViewProjection = MatrixMultiply(MatrixMultiply(matModelView, rlGetMatrixViewOffsetStereo(eye)), rlGetMatrixProjectionStereo(eye));
+            matModelViewProjection = MatrixMultiply(MatrixMultiply(matModelView, rlMatrixToMatrix(rlGetMatrixViewOffsetStereo(eye))), rlMatrixToMatrix(rlGetMatrixProjectionStereo(eye)));
         }
 
         // Send combined model-view-projection matrix to shader
-        rlSetUniformMatrix(material.shader.locs[SHADER_LOC_MATRIX_MVP], matModelViewProjection);
+        rlSetUniformMatrix(material.shader.locs[SHADER_LOC_MATRIX_MVP], rlMatrixFromMatrix(matModelViewProjection));
 
         if (instancing) // Draw mesh instanced
         {
@@ -1247,8 +1247,8 @@ void DrawMeshInstanced(Mesh mesh, Material material, Matrix *transforms, int ins
     else
     {
         // Restore rlgl internal modelview and projection matrices
-        rlSetMatrixModelview(matView);
-        rlSetMatrixProjection(matProjection);
+        rlSetMatrixModelview(rlMatrixFromMatrix(matView));
+        rlSetMatrixProjection(rlMatrixFromMatrix(matProjection));
     }
 #endif
 }
@@ -1371,7 +1371,11 @@ Material *LoadMaterials(const char *fileName, int *materialCount)
     // Set materials shader to default (DIFFUSE, SPECULAR, NORMAL)
     if (materials != NULL)
     {
-        for (unsigned int i = 0; i < count; i++) materials[i].shader = rlGetShaderDefault();
+        for (unsigned int i = 0; i < count; i++) 
+        {
+            materials[i].shader.id = rlGetShaderIdDefault();
+            materials[i].shader.locs = rlGetShaderLocsDefault();
+        }
     }
 
     *materialCount = count;
@@ -1384,8 +1388,12 @@ Material LoadMaterialDefault(void)
     Material material = { 0 };
     material.maps = (MaterialMap *)RL_CALLOC(MAX_MATERIAL_MAPS, sizeof(MaterialMap));
 
-    material.shader = rlGetShaderDefault();
-    material.maps[MATERIAL_MAP_DIFFUSE].texture = rlGetTextureDefault();   // White texture (1x1 pixel)
+    // Using rlgl default shader
+    material.shader.id = rlGetShaderIdDefault();
+    material.shader.locs = rlGetShaderLocsDefault();
+    
+    // Using rlgl default texture (1x1 pixel, UNCOMPRESSED_R8G8B8A8, 1 mipmap)
+    material.maps[MATERIAL_MAP_DIFFUSE].texture = (Texture2D){ rlGetTextureIdDefault(), 1, 1, 1, PIXELFORMAT_UNCOMPRESSED_R8G8B8A8 };
     //material.maps[MATERIAL_MAP_NORMAL].texture;         // NOTE: By default, not set
     //material.maps[MATERIAL_MAP_SPECULAR].texture;       // NOTE: By default, not set
 
@@ -1399,12 +1407,12 @@ Material LoadMaterialDefault(void)
 void UnloadMaterial(Material material)
 {
     // Unload material shader (avoid unloading default shader, managed by raylib)
-    if (material.shader.id != rlGetShaderDefault().id) UnloadShader(material.shader);
+    if (material.shader.id != rlGetShaderIdDefault()) UnloadShader(material.shader);
 
     // Unload loaded texture maps (avoid unloading default texture, managed by raylib)
     for (int i = 0; i < MAX_MATERIAL_MAPS; i++)
     {
-        if (material.maps[i].texture.id != rlGetTextureDefault().id) rlUnloadTexture(material.maps[i].texture.id);
+        if (material.maps[i].texture.id != rlGetTextureIdDefault()) rlUnloadTexture(material.maps[i].texture.id);
     }
 
     RL_FREE(material.maps);
@@ -3400,10 +3408,11 @@ static Model LoadOBJ(const char *fileName)
             // NOTE: Uses default shader, which only supports MATERIAL_MAP_DIFFUSE
             model.materials[m] = LoadMaterialDefault();
 
-            model.materials[m].maps[MATERIAL_MAP_DIFFUSE].texture = rlGetTextureDefault();     // Get default texture, in case no texture is defined
+            // Get default texture, in case no texture is defined
+            // NOTE: rlgl default texture is a 1x1 pixel UNCOMPRESSED_R8G8B8A8
+            model.materials[m].maps[MATERIAL_MAP_DIFFUSE].texture = (Texture2D){ rlGetTextureIdDefault(), 1, 1, 1, PIXELFORMAT_UNCOMPRESSED_R8G8B8A8 };  
 
             if (materials[m].diffuse_texname != NULL) model.materials[m].maps[MATERIAL_MAP_DIFFUSE].texture = LoadTexture(materials[m].diffuse_texname);  //char *diffuse_texname; // map_Kd
-            else model.materials[m].maps[MATERIAL_MAP_DIFFUSE].texture = rlGetTextureDefault();
 
             model.materials[m].maps[MATERIAL_MAP_DIFFUSE].color = (Color){ (unsigned char)(materials[m].diffuse[0]*255.0f), (unsigned char)(materials[m].diffuse[1]*255.0f), (unsigned char)(materials[m].diffuse[2]*255.0f), 255 }; //float diffuse[3];
             model.materials[m].maps[MATERIAL_MAP_DIFFUSE].value = 0.0f;

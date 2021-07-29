@@ -64,16 +64,13 @@
     #include "config.h"         // Defines module configuration flags
 #endif
 
+#include "utils.h"              // Required for: TRACELOG() and fopen() Android mapping
+#include "rlgl.h"               // OpenGL abstraction layer to OpenGL 1.1, 3.3 or ES2
+
 #include <stdlib.h>             // Required for: malloc(), free()
 #include <string.h>             // Required for: strlen() [Used in ImageTextEx()]
 #include <math.h>               // Required for: fabsf()
 #include <stdio.h>              // Required for: sprintf() [Used in ExportImageAsCode()]
-
-#include "utils.h"              // Required for: fopen() Android mapping
-
-#include "rlgl.h"               // raylib OpenGL abstraction layer to OpenGL 1.1, 3.3 or ES2
-                                // Required for: rlLoadTexture() rlUnloadTexture(),
-                                // rlGenerateMipmaps(), some funcs for DrawTexturePro()
 
 // Support only desired texture formats on stb_image
 #if !defined(SUPPORT_FILEFORMAT_BMP)
@@ -397,7 +394,7 @@ Image LoadImageFromTexture(Texture2D texture)
 
     if (texture.format < PIXELFORMAT_COMPRESSED_DXT1_RGB)
     {
-        image.data = rlReadTexturePixels(texture);
+        image.data = rlReadTexturePixels(texture.id, texture.width, texture.height, texture.format);
 
         if (image.data != NULL)
         {
@@ -2348,7 +2345,7 @@ void ImageDrawPixel(Image *dst, int x, int y, Color color)
             unsigned char r = (unsigned char)(round(coln.x*31.0f));
             unsigned char g = (unsigned char)(round(coln.y*31.0f));
             unsigned char b = (unsigned char)(round(coln.z*31.0f));
-            unsigned char a = (coln.w > ((float)PIXELFORMAT_UNCOMPRESSED_R5G5B5A1_ALPHA_THRESHOLD/255.0f))? 1 : 0;;
+            unsigned char a = (coln.w > ((float)PIXELFORMAT_UNCOMPRESSED_R5G5B5A1_ALPHA_THRESHOLD/255.0f))? 1 : 0;
 
             ((unsigned short *)dst->data)[y*dst->width + x] = (unsigned short)r << 11 | (unsigned short)g << 6 | (unsigned short)b << 1 | (unsigned short)a;
 
@@ -2934,7 +2931,7 @@ void GenTextureMipmaps(Texture2D *texture)
 {
     // NOTE: NPOT textures support check inside function
     // On WebGL (OpenGL ES 2.0) NPOT textures support is limited
-    rlGenerateMipmaps(texture);
+    rlGenTextureMipmaps(texture->id, texture->width, texture->height, texture->format, &texture->mipmaps);
 }
 
 // Set texture scaling filter mode
@@ -3810,7 +3807,7 @@ void SetPixelColor(void *dstPtr, Color color, int format)
             unsigned char r = (unsigned char)(round(coln.x*31.0f));
             unsigned char g = (unsigned char)(round(coln.y*31.0f));
             unsigned char b = (unsigned char)(round(coln.z*31.0f));
-            unsigned char a = (coln.w > ((float)PIXELFORMAT_UNCOMPRESSED_R5G5B5A1_ALPHA_THRESHOLD/255.0f))? 1 : 0;;
+            unsigned char a = (coln.w > ((float)PIXELFORMAT_UNCOMPRESSED_R5G5B5A1_ALPHA_THRESHOLD/255.0f))? 1 : 0;
 
             ((unsigned short *)dstPtr)[0] = (unsigned short)r << 11 | (unsigned short)g << 6 | (unsigned short)b << 1 | (unsigned short)a;
 

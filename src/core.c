@@ -119,18 +119,13 @@
     #include "config.h"             // Defines module configuration flags
 #endif
 
-#include "utils.h"                  // TRACELOG macros
+#include "utils.h"                  // Required for: TRACELOG() macros
 
-#if (defined(__linux__) || defined(PLATFORM_WEB)) && _POSIX_C_SOURCE < 199309L
-    #undef _POSIX_C_SOURCE
-    #define _POSIX_C_SOURCE 199309L // Required for: CLOCK_MONOTONIC if compiled with c99 without gnu ext.
-#endif
+#define RLGL_IMPLEMENTATION
+#include "rlgl.h"                   // OpenGL abstraction layer to OpenGL 1.1, 3.3+ or ES2
 
 #define RAYMATH_IMPLEMENTATION      // Define external out-of-line implementation
 #include "raymath.h"                // Vector3, Quaternion and Matrix functionality
-
-#define RLGL_IMPLEMENTATION
-#include "rlgl.h"                   // raylib OpenGL abstraction layer to OpenGL 1.1, 3.3+ or ES2
 
 #if defined(SUPPORT_GESTURES_SYSTEM)
     #define GESTURES_IMPLEMENTATION
@@ -157,6 +152,11 @@
 
     #define SDEFL_IMPLEMENTATION
     #include "external/sdefl.h"     // Deflate (RFC 1951) compressor
+#endif
+
+#if (defined(__linux__) || defined(PLATFORM_WEB)) && _POSIX_C_SOURCE < 199309L
+    #undef _POSIX_C_SOURCE
+    #define _POSIX_C_SOURCE 199309L // Required for: CLOCK_MONOTONIC if compiled with c99 without gnu ext.
 #endif
 
 #include <stdlib.h>                 // Required for: srand(), rand(), atexit()
@@ -795,8 +795,10 @@ void InitWindow(int width, int height, const char *title)
     // NOTE: We setup a 1px padding on char rectangle to avoid pixel bleeding on MSAA filtering
     SetShapesTexture(GetFontDefault().texture, (Rectangle){ rec.x + 1, rec.y + 1, rec.width - 2, rec.height - 2 });
 #else
-    // Set default internal texture (1px white) and rectangle to be used for shapes drawing
-    SetShapesTexture(rlGetTextureDefault(), (Rectangle){ 0.0f, 0.0f, 1.0f, 1.0f });
+    // Set default texture and rectangle to be used for shapes drawing
+    // NOTE: rlgl default texture is a 1x1 pixel UNCOMPRESSED_R8G8B8A8
+    Texture2D texture = { rlGetTextureIdDefault(), 1, 1, 1, PIXELFORMAT_UNCOMPRESSED_R8G8B8A8 };
+    SetShapesTexture(texture, (Rectangle){ 0.0f, 0.0f, 1.0f, 1.0f });
 #endif
 #if defined(PLATFORM_DESKTOP)
     if ((CORE.Window.flags & FLAG_WINDOW_HIGHDPI) > 0)
@@ -2138,13 +2140,13 @@ void EndTextureMode(void)
 // Begin custom shader mode
 void BeginShaderMode(Shader shader)
 {
-    rlSetShader(shader);
+    rlSetShader(shader.id, shader.locs);
 }
 
 // End custom shader mode (returns to default shader)
 void EndShaderMode(void)
 {
-    rlSetShader(rlGetShaderDefault());
+    rlSetShader(rlGetShaderIdDefault(), rlGetShaderLocsDefault());
 }
 
 // Begin blending mode (alpha, additive, multiplied, subtract, custom)
@@ -2183,8 +2185,8 @@ void BeginVrStereoMode(VrStereoConfig config)
     rlEnableStereoRender();
 
     // Set stereo render matrices
-    rlSetMatrixProjectionStereo(config.projection[0], config.projection[1]);
-    rlSetMatrixViewOffsetStereo(config.viewOffset[0], config.viewOffset[1]);
+    rlSetMatrixProjectionStereo(rlMatrixFromMatrix(config.projection[0]), rlMatrixFromMatrix(config.projection[1]));
+    rlSetMatrixViewOffsetStereo(rlMatrixFromMatrix(config.viewOffset[0]), rlMatrixFromMatrix(config.viewOffset[1]));
 }
 
 // End VR drawing process (and desktop mirror)
@@ -2342,7 +2344,7 @@ RLAPI Shader LoadShaderFromMemory(const char *vsCode, const char *fsCode)
 // Unload shader from GPU memory (VRAM)
 void UnloadShader(Shader shader)
 {
-    if (shader.id != rlGetShaderDefault().id)
+    if (shader.id != rlGetShaderIdDefault())
     {
         rlUnloadShaderProgram(shader.id);
         RL_FREE(shader.locs);
@@ -2379,7 +2381,7 @@ void SetShaderValueV(Shader shader, int locIndex, const void *value, int uniform
 void SetShaderValueMatrix(Shader shader, int locIndex, Matrix mat)
 {
     rlEnableShader(shader.id);
-    rlSetUniformMatrix(locIndex, mat);
+    rlSetUniformMatrix(locIndex, rlMatrixFromMatrix(mat));
     //rlDisableShader();
 }
 
