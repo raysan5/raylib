@@ -52,7 +52,7 @@
 #include "rlgl.h"               // OpenGL abstraction layer to OpenGL 1.1, 3.3+ or ES2
 
 #define RAYMATH_STATIC_INLINE
-#include "raymath.h"            // Vector3, Quaternion and Matrix functionality
+#include "raymath.h"            // Vector2, Vector3, Quaternion and Matrix functionality
 
 #if defined(__EMSCRIPTEN__)
     #define GLFW_INCLUDE_ES2
