@@ -128,6 +128,16 @@
     #define CLITERAL(type)      (type)
 #endif
 
+// NOTE: We set some defines with some data types declared by raylib
+// Other modules (raymath, rlgl) also require some of those types, so,
+// to be able to use those other modules as standalone (not depending on raylib)
+// this defines are very useful for internal check and avoid type (re)definitions
+#define RL_VECTOR2_TYPE
+#define RL_VECTOR3_TYPE
+#define RL_VECTOR4_TYPE
+#define RL_QUATERNION_TYPE
+#define RL_MATRIX_TYPE
+
 // Some Basic Colors
 // NOTE: Custom raylib color palette for amazing visuals on WHITE background
 #define LIGHTGRAY  CLITERAL(Color){ 200, 200, 200, 255 }   // Light Gray

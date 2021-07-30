@@ -48,13 +48,11 @@
 *
 ********************************************************************************************/
 
-#define RAYMATH_STANDALONE
-#define RAYMATH_HEADER_ONLY
-#include "raymath.h"            // Vector3, Quaternion and Matrix functionality
-
 #define RLGL_IMPLEMENTATION
-#define RLGL_STANDALONE
 #include "rlgl.h"               // OpenGL abstraction layer to OpenGL 1.1, 3.3+ or ES2
+
+#define RAYMATH_STATIC_INLINE
+#include "raymath.h"            // Vector3, Quaternion and Matrix functionality
 
 #if defined(__EMSCRIPTEN__)
     #define GLFW_INCLUDE_ES2
@@ -78,21 +76,6 @@ typedef struct Color {
     unsigned char b;        // Color blue value
     unsigned char a;        // Color alpha value
 } Color;
-
-#if !defined(RAYMATH_STANDALONE)
-// Vector2, 2 components
-typedef struct Vector2 {
-    float x;                // Vector x component
-    float y;                // Vector y component
-} Vector2;
-
-// Vector3, 3 components
-typedef struct Vector3 {
-    float x;                // Vector x component
-    float y;                // Vector y component
-    float z;                // Vector z component
-} Vector3;
-#endif
 
 // Camera type, defines a camera position/orientation in 3d space
 typedef struct Camera {
