@@ -2185,8 +2185,8 @@ void BeginVrStereoMode(VrStereoConfig config)
     rlEnableStereoRender();
 
     // Set stereo render matrices
-    rlSetMatrixProjectionStereo(rlMatrixFromMatrix(config.projection[0]), rlMatrixFromMatrix(config.projection[1]));
-    rlSetMatrixViewOffsetStereo(rlMatrixFromMatrix(config.viewOffset[0]), rlMatrixFromMatrix(config.viewOffset[1]));
+    rlSetMatrixProjectionStereo(config.projection[0], config.projection[1]);
+    rlSetMatrixViewOffsetStereo(config.viewOffset[0], config.viewOffset[1]);
 }
 
 // End VR drawing process (and desktop mirror)
@@ -2381,7 +2381,7 @@ void SetShaderValueV(Shader shader, int locIndex, const void *value, int uniform
 void SetShaderValueMatrix(Shader shader, int locIndex, Matrix mat)
 {
     rlEnableShader(shader.id);
-    rlSetUniformMatrix(locIndex, rlMatrixFromMatrix(mat));
+    rlSetUniformMatrix(locIndex, mat);
     //rlDisableShader();
 }
 

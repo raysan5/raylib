@@ -99,29 +99,6 @@ static int android_close(void *cookie);
 //----------------------------------------------------------------------------------
 // Module Functions Definition - Utilities
 //----------------------------------------------------------------------------------
-rlMatrix rlMatrixFromMatrix(Matrix mat)
-{
-    rlMatrix result = {
-        mat.m0, mat.m4, mat.m8, mat.m12,    // Matrix first row (4 comat.mponents)
-        mat.m1, mat.m5, mat.m9, mat.m13,    // Matrix second row (4 comat.mponents)
-        mat.m2, mat.m6, mat.m10, mat.m14,   // Matrix third row (4 comat.mponents)
-        mat.m3, mat.m7, mat.m11, mat.m15,   // Matrix fourth row (4 comat.mponents)
-    };
-    
-    return result;
-}
-
-Matrix rlMatrixToMatrix(rlMatrix mat)
-{
-    Matrix result = {
-        mat.m0, mat.m4, mat.m8, mat.m12,    // Matrix first row (4 comat.mponents)
-        mat.m1, mat.m5, mat.m9, mat.m13,    // Matrix second row (4 comat.mponents)
-        mat.m2, mat.m6, mat.m10, mat.m14,   // Matrix third row (4 comat.mponents)
-        mat.m3, mat.m7, mat.m11, mat.m15,   // Matrix fourth row (4 comat.mponents)
-    };
-    
-    return result;
-}
 
 // Set the current threshold (minimum) log level
 void SetTraceLogLevel(int logType) { logTypeLevel = logType; }
