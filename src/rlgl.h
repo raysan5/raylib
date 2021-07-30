@@ -3227,8 +3227,7 @@ void rlDrawVertexArray(int offset, int count)
 
 void rlDrawVertexArrayElements(int offset, int count, void *buffer)
 {
-    if (buffer == 0) glDrawElements(GL_TRIANGLES, count, GL_UNSIGNED_SHORT, offset);
-    else glDrawElements(GL_TRIANGLES, count, GL_UNSIGNED_SHORT, (unsigned short *)buffer + offset);
+    glDrawElements(GL_TRIANGLES, count, GL_UNSIGNED_SHORT, (unsigned short *)buffer + offset);
 }
 
 void rlDrawVertexArrayInstanced(int offset, int count, int instances)
@@ -3241,8 +3240,7 @@ void rlDrawVertexArrayInstanced(int offset, int count, int instances)
 void rlDrawVertexArrayElementsInstanced(int offset, int count, void *buffer, int instances)
 {
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
-    if (buffer == 0) glDrawElementsInstanced(GL_TRIANGLES, count, GL_UNSIGNED_SHORT, offset, instances);
-    else glDrawElementsInstanced(GL_TRIANGLES, count, GL_UNSIGNED_SHORT, (unsigned short *)buffer + offset, instances);
+    glDrawElementsInstanced(GL_TRIANGLES, count, GL_UNSIGNED_SHORT, (unsigned short *)buffer + offset, instances);
 #endif
 }
 
