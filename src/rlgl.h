@@ -2,13 +2,18 @@
 *
 *   rlgl v4.0 - OpenGL abstraction layer
 *
-*   rlgl is a wrapper for multiple OpenGL versions (1.1, 2.1, 3.3 Core, ES 2.0) to
-*   pseudo-OpenGL 1.1 style functions (rlVertex, rlTranslate, rlRotate...).
+*   rlgl is an abstraction layer for multiple OpenGL versions (1.1, 2.1, 3.3 Core, ES 2.0)
+*   to pseudo-OpenGL 1.1 immediate-mode style functions (rlVertex, rlTranslate, rlRotate...)
 *
 *   When chosing an OpenGL version greater than OpenGL 1.1, rlgl stores vertex data on internal
-*   VBO buffers (and VAOs if available). It requires calling 3 functions:
-*       rlglInit()  - Initialize internal buffers and auxiliary resources
-*       rlglClose() - De-initialize internal buffers data and other auxiliar resources
+*   buffers loaded at initialization. It requires calling 2 functions:
+*      - rlglInit():  Initialize internal buffers and auxiliary resources
+*      - rlglClose(): De-initialize internal buffers data and other auxiliar resources
+*
+*   The following resources are loaded when calling rlglInit():
+*      - Default batch (RLGL.defaultBatch): RenderBatch system to accumulate vertex data
+*      - Default texture (RLGL.defaultTextureId): 1x1 white pixel R8G8B8A8
+*      - Default shader (RLGL.State.defaultShaderId, RLGL.State.defaultShaderLocs)
 *
 *   CONFIGURATION:
 *
@@ -32,8 +37,42 @@
 *   #define SUPPORT_GL_DETAILS_INFO
 *       Show OpenGL extensions and capabilities detailed logs on init
 *
+*   rlgl capabilities could be customized just defining some internal 
+*   values before library inclusion (default values listed):
+*
+*   #define DEFAULT_BATCH_BUFFER_ELEMENTS   8192    // Default internal render batch limits
+*   #define DEFAULT_BATCH_BUFFERS              1    // Default number of batch buffers (multi-buffering)
+*   #define DEFAULT_BATCH_DRAWCALLS          256    // Default number of batch draw calls (by state changes: mode, texture)
+*   #define MAX_MATRIX_STACK_SIZE             32    // Maximum size of internal Matrix stack
+*   #define MAX_MESH_VERTEX_BUFFERS            7    // Maximum vertex buffers (VBO) per mesh
+*   #define MAX_SHADER_LOCATIONS              32    // Maximum number of shader locations supported
+*   #define MAX_MATERIAL_MAPS                 12    // Maximum number of shader maps supported
+*   #define RL_CULL_DISTANCE_NEAR           0.01    // Default projection matrix near cull distance
+*   #define RL_CULL_DISTANCE_FAR          1000.0    // Default projection matrix far cull distance
+*
+*   When loading a shader, the following vertex attribute and uniform 
+*   location names are tried to be set automatically:
+*
+*   #define RL_DEFAULT_SHADER_ATTRIB_NAME_POSITION     "vertexPosition"    // Binded by default to shader location: 0
+*   #define RL_DEFAULT_SHADER_ATTRIB_NAME_TEXCOORD     "vertexTexCoord"    // Binded by default to shader location: 1
+*   #define RL_DEFAULT_SHADER_ATTRIB_NAME_NORMAL       "vertexNormal"      // Binded by default to shader location: 2
+*   #define RL_DEFAULT_SHADER_ATTRIB_NAME_COLOR        "vertexColor"       // Binded by default to shader location: 3
+*   #define RL_DEFAULT_SHADER_ATTRIB_NAME_TANGENT      "vertexTangent"     // Binded by default to shader location: 4
+*   #define RL_DEFAULT_SHADER_ATTRIB_NAME_TEXCOORD2    "vertexTexCoord2"   // Binded by default to shader location: 5
+*   #define RL_DEFAULT_SHADER_UNIFORM_NAME_MVP         "mvp"               // model-view-projection matrix
+*   #define RL_DEFAULT_SHADER_UNIFORM_NAME_VIEW        "matView"           // view matrix
+*   #define RL_DEFAULT_SHADER_UNIFORM_NAME_PROJECTION  "matProjection"     // projection matrix
+*   #define RL_DEFAULT_SHADER_UNIFORM_NAME_MODEL       "matModel"          // model matrix
+*   #define RL_DEFAULT_SHADER_UNIFORM_NAME_NORMAL      "matNormal"         // normal matrix (transpose(inverse(matModelView))
+*   #define RL_DEFAULT_SHADER_UNIFORM_NAME_COLOR       "colDiffuse"        // color diffuse (base tint color, multiplied by texture color)
+*   #define RL_DEFAULT_SHADER_SAMPLER2D_NAME_TEXTURE0  "texture0"          // texture0 (texture slot active 0)
+*   #define RL_DEFAULT_SHADER_SAMPLER2D_NAME_TEXTURE1  "texture1"          // texture1 (texture slot active 1)
+*   #define RL_DEFAULT_SHADER_SAMPLER2D_NAME_TEXTURE2  "texture2"          // texture2 (texture slot active 2)
+*
 *   DEPENDENCIES:
-*       GLAD        - OpenGL extensions loading (OpenGL 3.3 Core only)
+*
+*      - OpenGL libraries (depending on platform and OpenGL version selected)
+*      - GLAD OpenGL extensions loading library (only for OpenGL 3.3 Core)
 *
 *
 *   LICENSE: zlib/libpng
@@ -617,15 +656,6 @@ RLAPI void rlLoadDrawQuad(void);     // Load and draw a quad
 
 #if defined(RLGL_IMPLEMENTATION)
 
-// Check if config flags have been externally provided on compilation line
-#if !defined(EXTERNAL_CONFIG_FLAGS)
-    #include "config.h"                 // Defines module configuration flags
-#endif
-
-#include <stdlib.h>                     // Required for: malloc(), free()
-#include <string.h>                     // Required for: strcmp(), strlen() [Used in rlglInit(), on extensions loading]
-#include <math.h>                       // Required for: sqrtf(), sinf(), cosf(), floor(), log()
-
 #if defined(GRAPHICS_API_OPENGL_11)
     #if defined(__APPLE__)
         #include <OpenGL/gl.h>          // OpenGL 1.1 library for OSX
@@ -675,6 +705,10 @@ RLAPI void rlLoadDrawQuad(void);     // Load and draw a quad
     typedef void (GL_APIENTRYP PFNGLVERTEXATTRIBDIVISOREXTPROC) (GLuint index, GLuint divisor);
     #endif
 #endif
+
+#include <stdlib.h>                     // Required for: malloc(), free()
+#include <string.h>                     // Required for: strcmp(), strlen() [Used in rlglInit(), on extensions loading]
+#include <math.h>                       // Required for: sqrtf(), sinf(), cosf(), floor(), log()
 
 //----------------------------------------------------------------------------------
 // Defines and Macros
@@ -886,8 +920,8 @@ static PFNGLVERTEXATTRIBDIVISOREXTPROC glVertexAttribDivisor = NULL;
 // Module specific Functions Declaration
 //----------------------------------------------------------------------------------
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
-static void rlLoadShaderDefault(void);      // Load default shader (RLGL.State.defaultShader)
-static void rlUnloadShaderDefault(void);    // Unload default shader (RLGL.State.defaultShader)
+static void rlLoadShaderDefault(void);      // Load default shader
+static void rlUnloadShaderDefault(void);    // Unload default shader
 #if defined(SUPPORT_GL_DETAILS_INFO)
 static char *rlGetCompressedFormatName(int format); // Get compressed format official GL identifier name
 #endif  // SUPPORT_GL_DETAILS_INFO
@@ -3883,7 +3917,7 @@ const char *rlGetPixelFormatName(unsigned int format)
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
 // Load default shader (just vertex positioning and texture coloring)
 // NOTE: This shader program is used for internal buffers
-// NOTE: It uses global variable: RLGL.State.defaultShader
+// NOTE: Loaded: RLGL.State.defaultShaderId, RLGL.State.defaultShaderLocs
 static void rlLoadShaderDefault(void)
 {
     RLGL.State.defaultShaderLocs = (int *)RL_CALLOC(MAX_SHADER_LOCATIONS, sizeof(int));
@@ -3988,7 +4022,7 @@ static void rlLoadShaderDefault(void)
 }
 
 // Unload default shader
-// NOTE: It uses global variable: RLGL.State.defaultShader
+// NOTE: Unloads: RLGL.State.defaultShaderId, RLGL.State.defaultShaderLocs
 static void rlUnloadShaderDefault(void)
 {
     glUseProgram(0);
