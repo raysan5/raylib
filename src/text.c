@@ -266,7 +266,7 @@ extern void LoadFontDefault(void)
 
     defaultFont.baseSize = (int)defaultFont.recs[0].height;
 
-    TRACELOG(LOG_INFO, "FONT: Default font loaded successfully");
+    TRACELOG(LOG_INFO, "FONT: [ID %i] Default font texture loaded successfully", defaultFont.texture.id);
 }
 
 // Unload raylib default font
