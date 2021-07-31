@@ -70,11 +70,10 @@
     #include <stdarg.h>         // Required for: va_list, va_start(), vfprintf(), va_end()
 #else
     #include "raylib.h"         // Declares module functions
-
-// Check if config flags have been externally provided on compilation line
-#if !defined(EXTERNAL_CONFIG_FLAGS)
-    #include "config.h"         // Defines module configuration flags
-#endif
+    // Check if config flags have been externally provided on compilation line
+    #if !defined(EXTERNAL_CONFIG_FLAGS)
+        #include "config.h"     // Defines module configuration flags
+    #endif
     #include "utils.h"          // Required for: fopen() Android mapping
 #endif
 
@@ -173,7 +172,7 @@ typedef struct tagBITMAPINFOHEADER {
 #if defined(RAUDIO_STANDALONE)
     #include <string.h>                 // Required for: strcmp() [Used in IsFileExtension()]
 
-    #if !defined(TRACELOG)
+    #ifndef TRACELOG
         #define TRACELOG(level, ...) (void)0
     #endif
 

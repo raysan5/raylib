@@ -49,9 +49,10 @@
 ********************************************************************************************/
 
 #define RLGL_IMPLEMENTATION
-#define RLGL_STANDALONE
-#define RLGL_SUPPORT_TRACELOG
-#include "rlgl.h"               // OpenGL 1.1 immediate-mode style coding
+#include "rlgl.h"               // OpenGL abstraction layer to OpenGL 1.1, 3.3+ or ES2
+
+#define RAYMATH_STATIC_INLINE
+#include "raymath.h"            // Vector2, Vector3, Quaternion and Matrix functionality
 
 #if defined(__EMSCRIPTEN__)
     #define GLFW_INCLUDE_ES2
@@ -65,6 +66,9 @@
 #define RAYWHITE   (Color){ 245, 245, 245, 255 }   // My own White (raylib logo)
 #define DARKGRAY   (Color){ 80, 80, 80, 255 }      // Dark Gray
 
+//----------------------------------------------------------------------------------
+// Structures Definition
+//----------------------------------------------------------------------------------
 // Color, 4 components, R8G8B8A8 (32bit)
 typedef struct Color {
     unsigned char r;        // Color red value
@@ -93,6 +97,12 @@ static void DrawGrid(int slices, float spacing);
 static void DrawCube(Vector3 position, float width, float height, float length, Color color);
 static void DrawCubeWires(Vector3 position, float width, float height, float length, Color color);
 static void DrawRectangleV(Vector2 position, Vector2 size, Color color);
+
+// NOTE: We used raymath to get this functionality but it can be implemented here
+//static Matrix MatrixIdentity(void);
+//static Matrix MatrixOrtho(double left, double right, double bottom, double top, double near, double far);
+//static Matrix MatrixPerspective(double fovy, double aspect, double near, double far);
+//static Matrix MatrixLookAt(Vector3 eye, Vector3 target, Vector3 up);
 
 //----------------------------------------------------------------------------------
 // Main Entry point
