@@ -291,7 +291,7 @@ typedef struct rlRenderBatch {
 
 #if defined(__STDC__) && __STDC_VERSION__ >= 199901L
     #include <stdbool.h>
-#elif !defined(__cplusplus) && !defined(bool)
+#elif !defined(__cplusplus) && !defined(bool) && !defined(RL_BOOL_TYPE)
     // Boolean type
     typedef enum bool { false, true } bool;
 #endif

@@ -102,9 +102,12 @@
 #ifndef PI
     #define PI 3.14159265358979323846f
 #endif
-
-#define DEG2RAD (PI/180.0f)
-#define RAD2DEG (180.0f/PI)
+#ifndef DEG2RAD
+    #define DEG2RAD (PI/180.0f)
+#endif
+#ifndef RAD2DEG
+    #define RAD2DEG (180.0f/PI)
+#endif
 
 // Allow custom memory allocators
 #ifndef RL_MALLOC
@@ -184,6 +187,7 @@
     #include <stdbool.h>
 #elif !defined(__cplusplus) && !defined(bool)
     typedef enum bool { false, true } bool;
+    #define RL_BOOL_TYPE
 #endif
 
 // Vector2, 2 components
