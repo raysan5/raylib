@@ -1,19 +1,23 @@
 /**********************************************************************************************
 *
-*   rlgl v4.0 - OpenGL abstraction layer
+*   rlgl v4.0
 *
-*   rlgl is an abstraction layer for multiple OpenGL versions (1.1, 2.1, 3.3 Core, ES 2.0)
-*   to pseudo-OpenGL 1.1 immediate-mode style functions (rlVertex, rlTranslate, rlRotate...)
+*   An abstraction layer for multiple OpenGL versions (1.1, 2.1, 3.3 Core, ES 2.0)
+*   that provides a pseudo-OpenGL 1.1 immediate-mode style API (rlVertex, rlTranslate, rlRotate...)
 *
-*   When chosing an OpenGL version greater than OpenGL 1.1, rlgl stores vertex data on internal
-*   buffers loaded at initialization. It requires calling 2 functions:
-*      - rlglInit():  Initialize internal buffers and auxiliary resources
-*      - rlglClose(): De-initialize internal buffers data and other auxiliar resources
+*   When chosing an OpenGL backend different than OpenGL 1.1, some internal buffer are
+*   initialized on rlglInit() to accumulate vertex data.
 *
-*   The following resources are loaded when calling rlglInit():
+*   When an internal state change is required all the stored vertex data is renderer in batch,
+*   additioanlly, rlDrawRenderBatchActive() could be called to force flushing of the batch.
+*
+*   Some additional resources are also loaded for convenience, here the complete list:
 *      - Default batch (RLGL.defaultBatch): RenderBatch system to accumulate vertex data
 *      - Default texture (RLGL.defaultTextureId): 1x1 white pixel R8G8B8A8
 *      - Default shader (RLGL.State.defaultShaderId, RLGL.State.defaultShaderLocs)
+*
+*   Internal buffer (and additional resources) must be manually unloaded calling rlglClose().
+*
 *
 *   CONFIGURATION:
 *
