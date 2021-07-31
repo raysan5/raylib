@@ -348,7 +348,7 @@ typedef struct Mesh {
 // Shader
 typedef struct Shader {
     unsigned int id;        // Shader program id
-    int *locs;              // Shader locations array (MAX_SHADER_LOCATIONS)
+    int *locs;              // Shader locations array (RL_MAX_SHADER_LOCATIONS)
 } Shader;
 
 // MaterialMap

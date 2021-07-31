@@ -40,15 +40,15 @@
 *   rlgl capabilities could be customized just defining some internal 
 *   values before library inclusion (default values listed):
 *
-*   #define DEFAULT_BATCH_BUFFER_ELEMENTS   8192    // Default internal render batch limits
-*   #define DEFAULT_BATCH_BUFFERS              1    // Default number of batch buffers (multi-buffering)
-*   #define DEFAULT_BATCH_DRAWCALLS          256    // Default number of batch draw calls (by state changes: mode, texture)
-*   #define MAX_MATRIX_STACK_SIZE             32    // Maximum size of internal Matrix stack
-*   #define MAX_MESH_VERTEX_BUFFERS            7    // Maximum vertex buffers (VBO) per mesh
-*   #define MAX_SHADER_LOCATIONS              32    // Maximum number of shader locations supported
-*   #define MAX_MATERIAL_MAPS                 12    // Maximum number of shader maps supported
-*   #define RL_CULL_DISTANCE_NEAR           0.01    // Default projection matrix near cull distance
-*   #define RL_CULL_DISTANCE_FAR          1000.0    // Default projection matrix far cull distance
+*   #define RL_DEFAULT_BATCH_BUFFER_ELEMENTS   8192    // Default internal render batch elements limits
+*   #define RL_DEFAULT_BATCH_BUFFERS              1    // Default number of batch buffers (multi-buffering)
+*   #define RL_DEFAULT_BATCH_DRAWCALLS          256    // Default number of batch draw calls (by state changes: mode, texture)
+*   #define RL_DEFAULT_BATCH_MAX_TEXTURE_UNITS    4    // Maximum number of textures units that can be activated on batch drawing (SetShaderValueTexture())
+*
+*   #define RL_MAX_MATRIX_STACK_SIZE             32    // Maximum size of internal Matrix stack
+*   #define RL_MAX_SHADER_LOCATIONS              32    // Maximum number of shader locations supported
+*   #define RL_CULL_DISTANCE_NEAR              0.01    // Default projection matrix near cull distance
+*   #define RL_CULL_DISTANCE_FAR             1000.0    // Default projection matrix far cull distance
 *
 *   When loading a shader, the following vertex attribute and uniform 
 *   location names are tried to be set automatically:
@@ -163,54 +163,47 @@
 //----------------------------------------------------------------------------------
 // Defines and Macros
 //----------------------------------------------------------------------------------
-// Default internal render batch limits
-#ifndef DEFAULT_BATCH_BUFFER_ELEMENTS
+
+// Default internal render batch elements limits
+#ifndef RL_DEFAULT_BATCH_BUFFER_ELEMENTS
     #if defined(GRAPHICS_API_OPENGL_11) || defined(GRAPHICS_API_OPENGL_33)
         // This is the maximum amount of elements (quads) per batch
         // NOTE: Be careful with text, every letter maps to a quad
-        #define DEFAULT_BATCH_BUFFER_ELEMENTS   8192
+        #define RL_DEFAULT_BATCH_BUFFER_ELEMENTS   8192
     #endif
     #if defined(GRAPHICS_API_OPENGL_ES2)
         // We reduce memory sizes for embedded systems (RPI and HTML5)
         // NOTE: On HTML5 (emscripten) this is allocated on heap,
         // by default it's only 16MB!...just take care...
-        #define DEFAULT_BATCH_BUFFER_ELEMENTS   2048
+        #define RL_DEFAULT_BATCH_BUFFER_ELEMENTS   2048
     #endif
 #endif
-#ifndef DEFAULT_BATCH_BUFFERS
-    #define DEFAULT_BATCH_BUFFERS            1      // Default number of batch buffers (multi-buffering)
+#ifndef RL_DEFAULT_BATCH_BUFFERS
+    #define RL_DEFAULT_BATCH_BUFFERS            1      // Default number of batch buffers (multi-buffering)
 #endif
-#ifndef DEFAULT_BATCH_DRAWCALLS
-    #define DEFAULT_BATCH_DRAWCALLS        256      // Default number of batch draw calls (by state changes: mode, texture)
+#ifndef RL_DEFAULT_BATCH_DRAWCALLS
+    #define RL_DEFAULT_BATCH_DRAWCALLS        256      // Default number of batch draw calls (by state changes: mode, texture)
 #endif
-#ifndef MAX_BATCH_ACTIVE_TEXTURES
-    #define MAX_BATCH_ACTIVE_TEXTURES        4      // Maximum number of additional textures that can be activated on batch drawing (SetShaderValueTexture())
+#ifndef RL_DEFAULT_BATCH_MAX_TEXTURE_UNITS
+    #define RL_DEFAULT_BATCH_MAX_TEXTURE_UNITS  4      // Maximum number of textures units that can be activated on batch drawing (SetShaderValueTexture())
 #endif
 
 // Internal Matrix stack
-#ifndef MAX_MATRIX_STACK_SIZE
-    #define MAX_MATRIX_STACK_SIZE           32      // Maximum size of Matrix stack
+#ifndef RL_MAX_MATRIX_STACK_SIZE
+    #define RL_MAX_MATRIX_STACK_SIZE           32      // Maximum size of Matrix stack
 #endif
 
-// Vertex buffers id limit
-#ifndef MAX_MESH_VERTEX_BUFFERS
-    #define MAX_MESH_VERTEX_BUFFERS          7      // Maximum vertex buffers (VBO) per mesh
-#endif
-
-// Shader and material limits
-#ifndef MAX_SHADER_LOCATIONS
-    #define MAX_SHADER_LOCATIONS            32      // Maximum number of shader locations supported
-#endif
-#ifndef MAX_MATERIAL_MAPS
-    #define MAX_MATERIAL_MAPS               12      // Maximum number of shader maps supported
+// Shader limits
+#ifndef RL_MAX_SHADER_LOCATIONS
+    #define RL_MAX_SHADER_LOCATIONS            32      // Maximum number of shader locations supported
 #endif
 
 // Projection matrix culling
 #ifndef RL_CULL_DISTANCE_NEAR
-    #define RL_CULL_DISTANCE_NEAR         0.01      // Default near cull distance
+    #define RL_CULL_DISTANCE_NEAR            0.01      // Default near cull distance
 #endif
 #ifndef RL_CULL_DISTANCE_FAR
-    #define RL_CULL_DISTANCE_FAR        1000.0      // Default far cull distance
+    #define RL_CULL_DISTANCE_FAR           1000.0      // Default far cull distance
 #endif
 
 // Texture parameters (equivalent to OpenGL defines)
@@ -848,11 +841,11 @@ typedef struct rlglData {
         Matrix projection;                // Default projection matrix
         Matrix transform;                 // Transform matrix to be used with rlTranslate, rlRotate, rlScale
         bool transformRequired;             // Require transform matrix application to current draw-call vertex (if required)
-        Matrix stack[MAX_MATRIX_STACK_SIZE];// Matrix stack for push/pop
+        Matrix stack[RL_MAX_MATRIX_STACK_SIZE];// Matrix stack for push/pop
         int stackCounter;                   // Matrix stack counter
 
         unsigned int defaultTextureId;      // Default texture used on shapes/poly drawing (required by shader)
-        unsigned int activeTextureId[MAX_BATCH_ACTIVE_TEXTURES];    // Active texture ids to be enabled on batch drawing (0 active by default)
+        unsigned int activeTextureId[RL_DEFAULT_BATCH_MAX_TEXTURE_UNITS];    // Active texture ids to be enabled on batch drawing (0 active by default)
         unsigned int defaultVShaderId;      // Default vertex shader id (used by default shader program)
         unsigned int defaultFShaderId;      // Default fragment shader id (used by default shader program)
         unsigned int defaultShaderId;       // Default shader program id, supports vertex color and diffuse texture
@@ -985,7 +978,7 @@ void rlMatrixMode(int mode)
 // Push the current matrix into RLGL.State.stack
 void rlPushMatrix(void)
 {
-    if (RLGL.State.stackCounter >= MAX_MATRIX_STACK_SIZE) TRACELOG(RL_LOG_ERROR, "RLGL: Matrix stack overflow (MAX_MATRIX_STACK_SIZE)");
+    if (RLGL.State.stackCounter >= RL_MAX_MATRIX_STACK_SIZE) TRACELOG(RL_LOG_ERROR, "RLGL: Matrix stack overflow (RL_MAX_MATRIX_STACK_SIZE)");
 
     if (RLGL.State.currentMatrixMode == RL_MODELVIEW)
     {
@@ -1231,7 +1224,7 @@ void rlBegin(int mode)
             }
         }
 
-        if (RLGL.currentBatch->drawsCounter >= DEFAULT_BATCH_DRAWCALLS) rlDrawRenderBatch(RLGL.currentBatch);
+        if (RLGL.currentBatch->drawsCounter >= RL_DEFAULT_BATCH_DRAWCALLS) rlDrawRenderBatch(RLGL.currentBatch);
 
         RLGL.currentBatch->draws[RLGL.currentBatch->drawsCounter - 1].mode = mode;
         RLGL.currentBatch->draws[RLGL.currentBatch->drawsCounter - 1].vertexCount = 0;
@@ -1422,7 +1415,7 @@ void rlSetTexture(unsigned int id)
                 }
             }
 
-            if (RLGL.currentBatch->drawsCounter >= DEFAULT_BATCH_DRAWCALLS) rlDrawRenderBatch(RLGL.currentBatch);
+            if (RLGL.currentBatch->drawsCounter >= RL_DEFAULT_BATCH_DRAWCALLS) rlDrawRenderBatch(RLGL.currentBatch);
 
             RLGL.currentBatch->draws[RLGL.currentBatch->drawsCounter - 1].textureId = id;
             RLGL.currentBatch->draws[RLGL.currentBatch->drawsCounter - 1].vertexCount = 0;
@@ -1746,11 +1739,11 @@ void rlglInit(int width, int height)
     RLGL.State.currentShaderLocs = RLGL.State.defaultShaderLocs;
 
     // Init default vertex arrays buffers
-    RLGL.defaultBatch = rlLoadRenderBatch(DEFAULT_BATCH_BUFFERS, DEFAULT_BATCH_BUFFER_ELEMENTS);
+    RLGL.defaultBatch = rlLoadRenderBatch(RL_DEFAULT_BATCH_BUFFERS, RL_DEFAULT_BATCH_BUFFER_ELEMENTS);
     RLGL.currentBatch = &RLGL.defaultBatch;
 
     // Init stack matrices (emulating OpenGL 1.1)
-    for (int i = 0; i < MAX_MATRIX_STACK_SIZE; i++) RLGL.State.stack[i] = rlMatrixIdentity();
+    for (int i = 0; i < RL_MAX_MATRIX_STACK_SIZE; i++) RLGL.State.stack[i] = rlMatrixIdentity();
 
     // Init internal matrices
     RLGL.State.transform = rlMatrixIdentity();
@@ -2217,9 +2210,9 @@ rlRenderBatch rlLoadRenderBatch(int numBuffers, int bufferElements)
 
     // Init draw calls tracking system
     //--------------------------------------------------------------------------------------------
-    batch.draws = (rlDrawCall *)RL_MALLOC(DEFAULT_BATCH_DRAWCALLS*sizeof(rlDrawCall));
+    batch.draws = (rlDrawCall *)RL_MALLOC(RL_DEFAULT_BATCH_DRAWCALLS*sizeof(rlDrawCall));
 
-    for (int i = 0; i < DEFAULT_BATCH_DRAWCALLS; i++)
+    for (int i = 0; i < RL_DEFAULT_BATCH_DRAWCALLS; i++)
     {
         batch.draws[i].mode = RL_QUADS;
         batch.draws[i].vertexCount = 0;
@@ -2391,7 +2384,7 @@ void rlDrawRenderBatch(rlRenderBatch *batch)
 
             // Activate additional sampler textures
             // Those additional textures will be common for all draw calls of the batch
-            for (int i = 0; i < MAX_BATCH_ACTIVE_TEXTURES; i++)
+            for (int i = 0; i < RL_DEFAULT_BATCH_MAX_TEXTURE_UNITS; i++)
             {
                 if (RLGL.State.activeTextureId[i] > 0)
                 {
@@ -2456,7 +2449,7 @@ void rlDrawRenderBatch(rlRenderBatch *batch)
     RLGL.State.modelview = matModelView;
 
     // Reset RLGL.currentBatch->draws array
-    for (int i = 0; i < DEFAULT_BATCH_DRAWCALLS; i++)
+    for (int i = 0; i < RL_DEFAULT_BATCH_DRAWCALLS; i++)
     {
         batch->draws[i].mode = RL_QUADS;
         batch->draws[i].vertexCount = 0;
@@ -2464,7 +2457,7 @@ void rlDrawRenderBatch(rlRenderBatch *batch)
     }
 
     // Reset active texture units for next batch
-    for (int i = 0; i < MAX_BATCH_ACTIVE_TEXTURES; i++) RLGL.State.activeTextureId[i] = 0;
+    for (int i = 0; i < RL_DEFAULT_BATCH_MAX_TEXTURE_UNITS; i++) RLGL.State.activeTextureId[i] = 0;
 
     // Reset draws counter to one draw for the batch
     batch->drawsCounter = 1;
@@ -3605,11 +3598,11 @@ void rlSetUniformSampler(int locIndex, unsigned int textureId)
 {
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     // Check if texture is already active
-    for (int i = 0; i < MAX_BATCH_ACTIVE_TEXTURES; i++) if (RLGL.State.activeTextureId[i] == textureId) return;
+    for (int i = 0; i < RL_DEFAULT_BATCH_MAX_TEXTURE_UNITS; i++) if (RLGL.State.activeTextureId[i] == textureId) return;
 
     // Register a new active texture for the internal batch system
     // NOTE: Default texture is always activated as GL_TEXTURE0
-    for (int i = 0; i < MAX_BATCH_ACTIVE_TEXTURES; i++)
+    for (int i = 0; i < RL_DEFAULT_BATCH_MAX_TEXTURE_UNITS; i++)
     {
         if (RLGL.State.activeTextureId[i] == 0)
         {
@@ -3920,10 +3913,10 @@ const char *rlGetPixelFormatName(unsigned int format)
 // NOTE: Loaded: RLGL.State.defaultShaderId, RLGL.State.defaultShaderLocs
 static void rlLoadShaderDefault(void)
 {
-    RLGL.State.defaultShaderLocs = (int *)RL_CALLOC(MAX_SHADER_LOCATIONS, sizeof(int));
+    RLGL.State.defaultShaderLocs = (int *)RL_CALLOC(RL_MAX_SHADER_LOCATIONS, sizeof(int));
 
     // NOTE: All locations must be reseted to -1 (no location)
-    for (int i = 0; i < MAX_SHADER_LOCATIONS; i++) RLGL.State.defaultShaderLocs[i] = -1;
+    for (int i = 0; i < RL_MAX_SHADER_LOCATIONS; i++) RLGL.State.defaultShaderLocs[i] = -1;
 
     // Vertex shader directly defined, no external file required
     const char *defaultVShaderCode =
