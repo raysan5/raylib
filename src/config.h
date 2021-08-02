@@ -91,22 +91,17 @@
 // Show OpenGL extensions and capabilities detailed logs on init
 //#define SUPPORT_GL_DETAILS_INFO        1
 
-#if defined(GRAPHICS_API_OPENGL_11) || defined(GRAPHICS_API_OPENGL_33)
-    #define DEFAULT_BATCH_BUFFER_ELEMENTS   8192    // Default internal render batch limits
-#elif defined(GRAPHICS_API_OPENGL_ES2)
-    #define DEFAULT_BATCH_BUFFER_ELEMENTS   2048    // Default internal render batch limits
-#endif
+//#define RL_DEFAULT_BATCH_BUFFER_ELEMENTS    4096    // Default internal render batch elements limits
+#define RL_DEFAULT_BATCH_BUFFERS               1      // Default number of batch buffers (multi-buffering)
+#define RL_DEFAULT_BATCH_DRAWCALLS           256      // Default number of batch draw calls (by state changes: mode, texture)
+#define RL_DEFAULT_BATCH_MAX_TEXTURE_UNITS     4      // Maximum number of textures units that can be activated on batch drawing (SetShaderValueTexture())
 
-#define DEFAULT_BATCH_BUFFERS            1      // Default number of batch buffers (multi-buffering)
-#define DEFAULT_BATCH_DRAWCALLS        256      // Default number of batch draw calls (by state changes: mode, texture)
+#define RL_MAX_MATRIX_STACK_SIZE              32      // Maximum size of internal Matrix stack
 
-#define MAX_MATRIX_STACK_SIZE           32      // Maximum size of internal Matrix stack
-#define MAX_MESH_VERTEX_BUFFERS          7      // Maximum vertex buffers (VBO) per mesh
-#define MAX_SHADER_LOCATIONS            32      // Maximum number of shader locations supported
-#define MAX_MATERIAL_MAPS               12      // Maximum number of shader maps supported
+#define RL_MAX_SHADER_LOCATIONS               32      // Maximum number of shader locations supported
 
-#define RL_CULL_DISTANCE_NEAR         0.01      // Default projection matrix near cull distance
-#define RL_CULL_DISTANCE_FAR        1000.0      // Default projection matrix far cull distance
+#define RL_CULL_DISTANCE_NEAR               0.01      // Default projection matrix near cull distance
+#define RL_CULL_DISTANCE_FAR              1000.0      // Default projection matrix far cull distance
 
 // Default shader vertex attribute names to set location points
 // NOTE: When a new shader is loaded, the following locations are tried to be set for convenience
@@ -195,6 +190,10 @@
 // NOTE: Some generated meshes DO NOT include generated texture coordinates
 #define SUPPORT_MESH_GENERATION     1
 
+// models: Configuration values
+//------------------------------------------------------------------------------------
+#define MAX_MATERIAL_MAPS               12      // Maximum number of shader maps supported
+#define MAX_MESH_VERTEX_BUFFERS          7      // Maximum vertex buffers (VBO) per mesh
 
 //------------------------------------------------------------------------------------
 // Module: audio - Configuration Flags

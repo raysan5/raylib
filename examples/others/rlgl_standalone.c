@@ -48,6 +48,16 @@
 *
 ********************************************************************************************/
 
+// NOTE: rlgl can be configured just re-defining the following values:
+//#define RL_DEFAULT_BATCH_BUFFER_ELEMENTS   8192    // Default internal render batch elements limits
+//#define RL_DEFAULT_BATCH_BUFFERS              1    // Default number of batch buffers (multi-buffering)
+//#define RL_DEFAULT_BATCH_DRAWCALLS          256    // Default number of batch draw calls (by state changes: mode, texture)
+//#define RL_DEFAULT_BATCH_MAX_TEXTURE_UNITS    4    // Maximum number of textures units that can be activated on batch drawing (SetShaderValueTexture())
+//#define RL_MAX_MATRIX_STACK_SIZE             32    // Maximum size of internal Matrix stack
+//#define RL_MAX_SHADER_LOCATIONS              32    // Maximum number of shader locations supported
+//#define RL_CULL_DISTANCE_NEAR              0.01    // Default projection matrix near cull distance
+//#define RL_CULL_DISTANCE_FAR             1000.0    // Default projection matrix far cull distance
+
 #define RLGL_IMPLEMENTATION
 #include "rlgl.h"               // OpenGL abstraction layer to OpenGL 1.1, 3.3+ or ES2
 
@@ -57,7 +67,6 @@
 #if defined(__EMSCRIPTEN__)
     #define GLFW_INCLUDE_ES2
 #endif
-
 #include "GLFW/glfw3.h"         // Windows/Context and inputs management
 
 #include <stdio.h>              // Required for: printf()

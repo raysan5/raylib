@@ -92,7 +92,12 @@
 //----------------------------------------------------------------------------------
 // Defines and Macros
 //----------------------------------------------------------------------------------
-// ...
+#ifndef MAX_MATERIAL_MAPS
+    #define MAX_MATERIAL_MAPS       12    // Maximum number of maps supported
+#endif
+#ifndef MAX_MESH_VERTEX_BUFFERS
+    #define MAX_MESH_VERTEX_BUFFERS  7    // Maximum vertex buffers (VBO) per mesh
+#endif
 
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
