@@ -31,6 +31,8 @@ extern "C" {
 #endif
 
 #include <stdint.h>
+// Ray (@raysan5): Commented to avoid conflict with raylib bool
+/*
 #if !defined(_MSC_VER)
 # include <stdbool.h>
 #else // MSVC
@@ -42,6 +44,7 @@ extern "C" {
 #  define false 0
 # endif
 #endif
+*/
 
 #ifndef PAR_SHAPES_T
 #define PAR_SHAPES_T uint16_t

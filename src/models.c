@@ -79,7 +79,6 @@
 
     #define PAR_SHAPES_IMPLEMENTATION
     #include "external/par_shapes.h"    // Shapes 3d parametric generation
-    #undef bool
 #endif
 
 #if defined(_WIN32)
