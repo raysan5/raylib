@@ -2084,6 +2084,61 @@ Mesh GenMeshCylinder(float radius, float height, int slices)
     return mesh;
 }
 
+// Generate cone/pyramid mesh
+Mesh GenMeshCone(float radius, float height, int slices)
+{
+    Mesh mesh = { 0 };
+
+    if (slices >= 3)
+    {
+        // Instance a cone that sits on the Z=0 plane using the given tessellation
+        // levels across the UV domain.  Think of "slices" like a number of pizza
+        // slices, and "stacks" like a number of stacked rings.
+        // Height and radius are both 1.0, but they can easily be changed with par_shapes_scale
+        par_shapes_mesh *cone = par_shapes_create_cone(slices, 8);
+        par_shapes_scale(cone, radius, radius, height);
+        par_shapes_rotate(cone, -PI/2.0f, (float[]){ 1, 0, 0 });
+        par_shapes_rotate(cone, PI/2.0f, (float[]){ 0, 1, 0 });
+
+        // Generate an orientable disk shape (bottom cap)
+        par_shapes_mesh *capBottom = par_shapes_create_disk(radius, slices, (float[]){ 0, 0, 0 }, (float[]){ 0, 0, -1 });
+        capBottom->tcoords = PAR_MALLOC(float, 2*capBottom->npoints);
+        for (int i = 0; i < 2*capBottom->npoints; i++) capBottom->tcoords[i] = 0.95f;
+        par_shapes_rotate(capBottom, PI/2.0f, (float[]){ 1, 0, 0 });
+
+        par_shapes_merge_and_free(cone, capBottom);
+
+        mesh.vertices = (float *)RL_MALLOC(cone->ntriangles*3*3*sizeof(float));
+        mesh.texcoords = (float *)RL_MALLOC(cone->ntriangles*3*2*sizeof(float));
+        mesh.normals = (float *)RL_MALLOC(cone->ntriangles*3*3*sizeof(float));
+
+        mesh.vertexCount = cone->ntriangles*3;
+        mesh.triangleCount = cone->ntriangles;
+
+        for (int k = 0; k < mesh.vertexCount; k++)
+        {
+            mesh.vertices[k*3] = cone->points[cone->triangles[k]*3];
+            mesh.vertices[k*3 + 1] = cone->points[cone->triangles[k]*3 + 1];
+            mesh.vertices[k*3 + 2] = cone->points[cone->triangles[k]*3 + 2];
+
+            mesh.normals[k*3] = cone->normals[cone->triangles[k]*3];
+            mesh.normals[k*3 + 1] = cone->normals[cone->triangles[k]*3 + 1];
+            mesh.normals[k*3 + 2] = cone->normals[cone->triangles[k]*3 + 2];
+
+            mesh.texcoords[k*2] = cone->tcoords[cone->triangles[k]*2];
+            mesh.texcoords[k*2 + 1] = cone->tcoords[cone->triangles[k]*2 + 1];
+        }
+
+        par_shapes_free_mesh(cone);
+
+        // Upload vertex data to GPU (static mesh)
+        UploadMesh(&mesh, false);
+    }
+    else TRACELOG(LOG_WARNING, "MESH: Failed to generate mesh: cone");
+
+    return mesh;
+}
+
 // Generate torus mesh
 Mesh GenMeshTorus(float radius, float size, int radSeg, int sides)
 {
