@@ -79,6 +79,7 @@
 
     #define PAR_SHAPES_IMPLEMENTATION
     #include "external/par_shapes.h"    // Shapes 3d parametric generation
+    #undef bool
 #endif
 
 #if defined(_WIN32)
@@ -3178,11 +3179,10 @@ RayCollision GetRayCollisionBox(Ray ray, BoundingBox box)
     collision.normal = Vector3Scale(collision.normal, 2.01f);
     collision.normal = Vector3Divide(collision.normal, Vector3Subtract(box.max, box.min));
     // The relevant elemets of the vector are now slightly larger than 1.0f (or smaller than -1.0f)
-    // and the others are somewhere between -1.0 and 1.0
-    // casting to int is exactly our wanted normal!
-    collision.normal.x = (int)collision.normal.x;
-    collision.normal.y = (int)collision.normal.y;
-    collision.normal.z = (int)collision.normal.z;
+    // and the others are somewhere between -1.0 and 1.0 casting to int is exactly our wanted normal!
+    collision.normal.x = (float)((int)collision.normal.x);
+    collision.normal.y = (float)((int)collision.normal.y);
+    collision.normal.z = (float)((int)collision.normal.z);
 
     collision.normal = Vector3Normalize(collision.normal);
 
@@ -4992,7 +4992,7 @@ static ModelAnimation *LoadGLTFModelAnimations(const char *fileName, int *animCo
             {
                 output->framePoses[frame] = RL_MALLOC(output->boneCount*sizeof(Transform));
 
-                for (unsigned int i = 0; i < output->boneCount; i++)
+                for (int i = 0; i < output->boneCount; i++)
                 {
                     if (data->nodes[i].has_translation) memcpy(&output->framePoses[frame][i].translation, data->nodes[i].translation, 3*sizeof(float));
                     else output->framePoses[frame][i].translation = Vector3Zero();
@@ -5185,7 +5185,7 @@ void LoadGLTFMesh(cgltf_data* data, cgltf_mesh* mesh, Model* outModel, Matrix cu
                 outModel->meshes[(*primitiveIndex)].vertices = ReadGLTFValuesAs(acc, cgltf_component_type_r_32f, false);
 
                 // Transform using the nodes matrix attributes
-                for (unsigned int v = 0; v < outModel->meshes[(*primitiveIndex)].vertexCount; v++)
+                for (int v = 0; v < outModel->meshes[(*primitiveIndex)].vertexCount; v++)
                 {
                     Vector3 vertex = {
                             outModel->meshes[(*primitiveIndex)].vertices[(v*3 + 0)],
@@ -5211,7 +5211,7 @@ void LoadGLTFMesh(cgltf_data* data, cgltf_mesh* mesh, Model* outModel, Matrix cu
                 outModel->meshes[(*primitiveIndex)].normals = ReadGLTFValuesAs(acc, cgltf_component_type_r_32f, false);
 
                 // Transform using the nodes matrix attributes
-                for (unsigned int v = 0; v < outModel->meshes[(*primitiveIndex)].vertexCount; v++)
+                for (int v = 0; v < outModel->meshes[(*primitiveIndex)].vertexCount; v++)
                 {
                     Vector3 normal = {
                             outModel->meshes[(*primitiveIndex)].normals[(v*3 + 0)],
