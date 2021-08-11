@@ -57,6 +57,7 @@ packages/
 *.a
 *.bc
 *.so
+*.so.*
 
 # Ignore wasm data in examples/
 examples/**/*.wasm
