@@ -40,25 +40,17 @@
 
 // Check if config flags have been externally provided on compilation line
 #if !defined(EXTERNAL_CONFIG_FLAGS)
-    #include "config.h"         // Defines module configuration flags
+    #include "config.h"     // Defines module configuration flags
 #endif
 
-#include "utils.h"          // Required for: LoadFileData(), LoadFileText(), SaveFileText()
+#include "utils.h"          // Required for: TRACELOG(), LoadFileData(), LoadFileText(), SaveFileText()
+#include "rlgl.h"           // OpenGL abstraction layer to OpenGL 1.1, 2.1, 3.3+ or ES2
+#include "raymath.h"        // Required for: Vector3, Quaternion and Matrix functionality
 
 #include <stdio.h>          // Required for: sprintf()
 #include <stdlib.h>         // Required for: malloc(), free()
 #include <string.h>         // Required for: memcmp(), strlen()
 #include <math.h>           // Required for: sinf(), cosf(), sqrtf(), fabsf()
-
-#if defined(_WIN32)
-    #include <direct.h>     // Required for: _chdir() [Used in LoadOBJ()]
-    #define CHDIR _chdir
-#else
-    #include <unistd.h>     // Required for: chdir() (POSIX) [Used in LoadOBJ()]
-    #define CHDIR chdir
-#endif
-
-#include "rlgl.h"           // raylib OpenGL abstraction layer to OpenGL 1.1, 2.1, 3.3+ or ES2
 
 #if defined(SUPPORT_FILEFORMAT_OBJ) || defined(SUPPORT_FILEFORMAT_MTL)
     #define TINYOBJ_MALLOC RL_MALLOC
@@ -89,10 +81,23 @@
     #include "external/par_shapes.h"    // Shapes 3d parametric generation
 #endif
 
+#if defined(_WIN32)
+    #include <direct.h>     // Required for: _chdir() [Used in LoadOBJ()]
+    #define CHDIR _chdir
+#else
+    #include <unistd.h>     // Required for: chdir() (POSIX) [Used in LoadOBJ()]
+    #define CHDIR chdir
+#endif
+
 //----------------------------------------------------------------------------------
 // Defines and Macros
 //----------------------------------------------------------------------------------
-// ...
+#ifndef MAX_MATERIAL_MAPS
+    #define MAX_MATERIAL_MAPS       12    // Maximum number of maps supported
+#endif
+#ifndef MAX_MESH_VERTEX_BUFFERS
+    #define MAX_MESH_VERTEX_BUFFERS  7    // Maximum vertex buffers (VBO) per mesh
+#endif
 
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
@@ -819,6 +824,35 @@ void UnloadModelKeepMeshes(Model model)
     TRACELOG(LOG_INFO, "MODEL: Unloaded model (but not meshes) from RAM and VRAM");
 }
 
+// Compute model bounding box limits (considers all meshes)
+BoundingBox GetModelBoundingBox(Model model)
+{
+    BoundingBox bounds = { 0 };
+    
+    if (model.meshCount > 0)
+    {      
+        Vector3 temp = { 0 };
+        bounds = GetMeshBoundingBox(model.meshes[0]);
+        
+        for (int i = 1; i < model.meshCount; i++)
+        {
+            BoundingBox tempBounds = GetMeshBoundingBox(model.meshes[i]);
+            
+            temp.x = (bounds.min.x < tempBounds.min.x)? bounds.min.x : tempBounds.min.x;
+            temp.y = (bounds.min.y < tempBounds.min.y)? bounds.min.y : tempBounds.min.y;
+            temp.z = (bounds.min.z < tempBounds.min.z)? bounds.min.z : tempBounds.min.z;
+            bounds.min = temp;
+
+            temp.x = (bounds.max.x > tempBounds.max.x)? bounds.max.x : tempBounds.max.x;
+            temp.y = (bounds.max.y > tempBounds.max.y)? bounds.max.y : tempBounds.max.y;
+            temp.z = (bounds.max.z > tempBounds.max.z)? bounds.max.z : tempBounds.max.z;
+            bounds.max = temp;
+        }
+    }
+    
+    return bounds;
+}
+
 // Upload vertex data into a VAO (if supported) and VBO
 void UploadMesh(Mesh *mesh, bool dynamic)
 {
@@ -1342,7 +1376,11 @@ Material *LoadMaterials(const char *fileName, int *materialCount)
     // Set materials shader to default (DIFFUSE, SPECULAR, NORMAL)
     if (materials != NULL)
     {
-        for (unsigned int i = 0; i < count; i++) materials[i].shader = rlGetShaderDefault();
+        for (unsigned int i = 0; i < count; i++) 
+        {
+            materials[i].shader.id = rlGetShaderIdDefault();
+            materials[i].shader.locs = rlGetShaderLocsDefault();
+        }
     }
 
     *materialCount = count;
@@ -1355,8 +1393,12 @@ Material LoadMaterialDefault(void)
     Material material = { 0 };
     material.maps = (MaterialMap *)RL_CALLOC(MAX_MATERIAL_MAPS, sizeof(MaterialMap));
 
-    material.shader = rlGetShaderDefault();
-    material.maps[MATERIAL_MAP_DIFFUSE].texture = rlGetTextureDefault();   // White texture (1x1 pixel)
+    // Using rlgl default shader
+    material.shader.id = rlGetShaderIdDefault();
+    material.shader.locs = rlGetShaderLocsDefault();
+    
+    // Using rlgl default texture (1x1 pixel, UNCOMPRESSED_R8G8B8A8, 1 mipmap)
+    material.maps[MATERIAL_MAP_DIFFUSE].texture = (Texture2D){ rlGetTextureIdDefault(), 1, 1, 1, PIXELFORMAT_UNCOMPRESSED_R8G8B8A8 };
     //material.maps[MATERIAL_MAP_NORMAL].texture;         // NOTE: By default, not set
     //material.maps[MATERIAL_MAP_SPECULAR].texture;       // NOTE: By default, not set
 
@@ -1370,12 +1412,12 @@ Material LoadMaterialDefault(void)
 void UnloadMaterial(Material material)
 {
     // Unload material shader (avoid unloading default shader, managed by raylib)
-    if (material.shader.id != rlGetShaderDefault().id) UnloadShader(material.shader);
+    if (material.shader.id != rlGetShaderIdDefault()) UnloadShader(material.shader);
 
     // Unload loaded texture maps (avoid unloading default texture, managed by raylib)
     for (int i = 0; i < MAX_MATERIAL_MAPS; i++)
     {
-        if (material.maps[i].texture.id != rlGetTextureDefault().id) rlUnloadTexture(material.maps[i].texture.id);
+        if (material.maps[i].texture.id != rlGetTextureIdDefault()) rlUnloadTexture(material.maps[i].texture.id);
     }
 
     RL_FREE(material.maps);
@@ -2042,6 +2084,61 @@ Mesh GenMeshCylinder(float radius, float height, int slices)
     return mesh;
 }
 
+// Generate cone/pyramid mesh
+Mesh GenMeshCone(float radius, float height, int slices)
+{
+    Mesh mesh = { 0 };
+
+    if (slices >= 3)
+    {
+        // Instance a cone that sits on the Z=0 plane using the given tessellation
+        // levels across the UV domain.  Think of "slices" like a number of pizza
+        // slices, and "stacks" like a number of stacked rings.
+        // Height and radius are both 1.0, but they can easily be changed with par_shapes_scale
+        par_shapes_mesh *cone = par_shapes_create_cone(slices, 8);
+        par_shapes_scale(cone, radius, radius, height);
+        par_shapes_rotate(cone, -PI/2.0f, (float[]){ 1, 0, 0 });
+        par_shapes_rotate(cone, PI/2.0f, (float[]){ 0, 1, 0 });
+
+        // Generate an orientable disk shape (bottom cap)
+        par_shapes_mesh *capBottom = par_shapes_create_disk(radius, slices, (float[]){ 0, 0, 0 }, (float[]){ 0, 0, -1 });
+        capBottom->tcoords = PAR_MALLOC(float, 2*capBottom->npoints);
+        for (int i = 0; i < 2*capBottom->npoints; i++) capBottom->tcoords[i] = 0.95f;
+        par_shapes_rotate(capBottom, PI/2.0f, (float[]){ 1, 0, 0 });
+
+        par_shapes_merge_and_free(cone, capBottom);
+
+        mesh.vertices = (float *)RL_MALLOC(cone->ntriangles*3*3*sizeof(float));
+        mesh.texcoords = (float *)RL_MALLOC(cone->ntriangles*3*2*sizeof(float));
+        mesh.normals = (float *)RL_MALLOC(cone->ntriangles*3*3*sizeof(float));
+
+        mesh.vertexCount = cone->ntriangles*3;
+        mesh.triangleCount = cone->ntriangles;
+
+        for (int k = 0; k < mesh.vertexCount; k++)
+        {
+            mesh.vertices[k*3] = cone->points[cone->triangles[k]*3];
+            mesh.vertices[k*3 + 1] = cone->points[cone->triangles[k]*3 + 1];
+            mesh.vertices[k*3 + 2] = cone->points[cone->triangles[k]*3 + 2];
+
+            mesh.normals[k*3] = cone->normals[cone->triangles[k]*3];
+            mesh.normals[k*3 + 1] = cone->normals[cone->triangles[k]*3 + 1];
+            mesh.normals[k*3 + 2] = cone->normals[cone->triangles[k]*3 + 2];
+
+            mesh.texcoords[k*2] = cone->tcoords[cone->triangles[k]*2];
+            mesh.texcoords[k*2 + 1] = cone->tcoords[cone->triangles[k]*2 + 1];
+        }
+
+        par_shapes_free_mesh(cone);
+
+        // Upload vertex data to GPU (static mesh)
+        UploadMesh(&mesh, false);
+    }
+    else TRACELOG(LOG_WARNING, "MESH: Failed to generate mesh: cone");
+
+    return mesh;
+}
+
 // Generate torus mesh
 Mesh GenMeshTorus(float radius, float size, int radSeg, int sides)
 {
@@ -2652,19 +2749,15 @@ BoundingBox GetMeshBoundingBox(Mesh mesh)
 // Implementation base don: https://answers.unity.com/questions/7789/calculating-tangents-vector4.html
 void GenMeshTangents(Mesh *mesh)
 {
-
-    if (mesh->tangents == NULL)
+    if (mesh->tangents == NULL) mesh->tangents = (float *)RL_MALLOC(mesh->vertexCount*4*sizeof(float));
+    else
     {
-        mesh->tangents = (float*)RL_MALLOC(mesh->vertexCount*4*sizeof(float));
-    }
-	else
-	{
         RL_FREE(mesh->tangents);
-        mesh->tangents = (float*)RL_MALLOC(mesh->vertexCount*4*sizeof(float));
+        mesh->tangents = (float *)RL_MALLOC(mesh->vertexCount*4*sizeof(float));
     }
 
-    Vector3* tan1 = (Vector3*)RL_MALLOC(mesh->vertexCount*sizeof(Vector3));
-    Vector3* tan2 = (Vector3*)RL_MALLOC(mesh->vertexCount*sizeof(Vector3));
+    Vector3 *tan1 = (Vector3 *)RL_MALLOC(mesh->vertexCount*sizeof(Vector3));
+    Vector3 *tan2 = (Vector3 *)RL_MALLOC(mesh->vertexCount*sizeof(Vector3));
 
     for (int i = 0; i < mesh->vertexCount; i += 3)
     {
@@ -2691,7 +2784,7 @@ void GenMeshTangents(Mesh *mesh)
         float t2 = uv3.y - uv1.y;
 
         float div = s1*t2 - s2*t1;
-        float r = (div == 0.0f) ? 0.0f : 1.0f/div;
+        float r = (div == 0.0f)? 0.0f : 1.0f/div;
 
         Vector3 sdir = { (t2*x1 - t1*x2)*r, (t2*y1 - t1*y2)*r, (t2*z1 - t1*z2)*r };
         Vector3 tdir = { (s1*x2 - s2*x1)*r, (s1*y2 - s2*y1)*r, (s1*z2 - s2*z1)*r };
@@ -2706,53 +2799,51 @@ void GenMeshTangents(Mesh *mesh)
     }
 
     // Compute tangents considering normals
-    for (int i = 0; i < mesh->vertexCount; ++i)
+    for (int i = 0; i < mesh->vertexCount; i++)
     {
         Vector3 normal = { mesh->normals[i*3 + 0], mesh->normals[i*3 + 1], mesh->normals[i*3 + 2] };
         Vector3 tangent = tan1[i];
 
         // TODO: Review, not sure if tangent computation is right, just used reference proposed maths...
-	  #if defined(COMPUTE_TANGENTS_METHOD_01)
+#if defined(COMPUTE_TANGENTS_METHOD_01)
         Vector3 tmp = Vector3Subtract(tangent, Vector3Scale(normal, Vector3DotProduct(normal, tangent)));
         tmp = Vector3Normalize(tmp);
         mesh->tangents[i*4 + 0] = tmp.x;
         mesh->tangents[i*4 + 1] = tmp.y;
         mesh->tangents[i*4 + 2] = tmp.z;
         mesh->tangents[i*4 + 3] = 1.0f;
-	  #else
+#else
         Vector3OrthoNormalize(&normal, &tangent);
         mesh->tangents[i*4 + 0] = tangent.x;
         mesh->tangents[i*4 + 1] = tangent.y;
         mesh->tangents[i*4 + 2] = tangent.z;
-        mesh->tangents[i*4 + 3] = (Vector3DotProduct(Vector3CrossProduct(normal, tangent), tan2[i]) < 0.0f) ? -1.0f : 1.0f;
-	  #endif
+        mesh->tangents[i*4 + 3] = (Vector3DotProduct(Vector3CrossProduct(normal, tangent), tan2[i]) < 0.0f)? -1.0f : 1.0f;
+#endif
     }
 
     RL_FREE(tan1);
     RL_FREE(tan2);
 
-
-	if (mesh->vboId != NULL)
-	{
-		
-		if (mesh->vboId[SHADER_LOC_VERTEX_TANGENT] != 0)
-		{
-			// Upate existing vertex buffer
-			rlUpdateVertexBuffer(mesh->vboId[SHADER_LOC_VERTEX_TANGENT], mesh->tangents, mesh->vertexCount*4*sizeof(float), 0);
-		}
-		else
-		{
-			// Load a new tangent attributes buffer
-			mesh->vboId[SHADER_LOC_VERTEX_TANGENT] = rlLoadVertexBuffer(mesh->tangents, mesh->vertexCount*4*sizeof(float), false);	
-		}
-		
-		rlEnableVertexArray(mesh->vaoId);
-		rlSetVertexAttribute(4, 4, RL_FLOAT, 0, 0, 0);
-		rlEnableVertexAttribute(4);
-		rlDisableVertexArray();
-	}
+    if (mesh->vboId != NULL)
+    {        
+        if (mesh->vboId[SHADER_LOC_VERTEX_TANGENT] != 0)
+        {
+            // Upate existing vertex buffer
+            rlUpdateVertexBuffer(mesh->vboId[SHADER_LOC_VERTEX_TANGENT], mesh->tangents, mesh->vertexCount*4*sizeof(float), 0);
+        }
+        else
+        {
+            // Load a new tangent attributes buffer
+            mesh->vboId[SHADER_LOC_VERTEX_TANGENT] = rlLoadVertexBuffer(mesh->tangents, mesh->vertexCount*4*sizeof(float), false);    
+        }
+        
+        rlEnableVertexArray(mesh->vaoId);
+        rlSetVertexAttribute(4, 4, RL_FLOAT, 0, 0, 0);
+        rlEnableVertexAttribute(4);
+        rlDisableVertexArray();
+    }
     
-    TRACELOG(LOG_INFO, "MESH: Tangents data computed for provided mesh");
+    TRACELOG(LOG_INFO, "MESH: Tangents data computed and uploaded for provided mesh");
 }
 
 // Compute mesh binormals (aka bitangent)
@@ -3087,11 +3178,10 @@ RayCollision GetRayCollisionBox(Ray ray, BoundingBox box)
     collision.normal = Vector3Scale(collision.normal, 2.01f);
     collision.normal = Vector3Divide(collision.normal, Vector3Subtract(box.max, box.min));
     // The relevant elemets of the vector are now slightly larger than 1.0f (or smaller than -1.0f)
-    // and the others are somewhere between -1.0 and 1.0
-    // casting to int is exactly our wanted normal!
-    collision.normal.x = (int)collision.normal.x;
-    collision.normal.y = (int)collision.normal.y;
-    collision.normal.z = (int)collision.normal.z;
+    // and the others are somewhere between -1.0 and 1.0 casting to int is exactly our wanted normal!
+    collision.normal.x = (float)((int)collision.normal.x);
+    collision.normal.y = (float)((int)collision.normal.y);
+    collision.normal.z = (float)((int)collision.normal.z);
 
     collision.normal = Vector3Normalize(collision.normal);
 
@@ -3377,10 +3467,11 @@ static Model LoadOBJ(const char *fileName)
             // NOTE: Uses default shader, which only supports MATERIAL_MAP_DIFFUSE
             model.materials[m] = LoadMaterialDefault();
 
-            model.materials[m].maps[MATERIAL_MAP_DIFFUSE].texture = rlGetTextureDefault();     // Get default texture, in case no texture is defined
+            // Get default texture, in case no texture is defined
+            // NOTE: rlgl default texture is a 1x1 pixel UNCOMPRESSED_R8G8B8A8
+            model.materials[m].maps[MATERIAL_MAP_DIFFUSE].texture = (Texture2D){ rlGetTextureIdDefault(), 1, 1, 1, PIXELFORMAT_UNCOMPRESSED_R8G8B8A8 };  
 
             if (materials[m].diffuse_texname != NULL) model.materials[m].maps[MATERIAL_MAP_DIFFUSE].texture = LoadTexture(materials[m].diffuse_texname);  //char *diffuse_texname; // map_Kd
-            else model.materials[m].maps[MATERIAL_MAP_DIFFUSE].texture = rlGetTextureDefault();
 
             model.materials[m].maps[MATERIAL_MAP_DIFFUSE].color = (Color){ (unsigned char)(materials[m].diffuse[0]*255.0f), (unsigned char)(materials[m].diffuse[1]*255.0f), (unsigned char)(materials[m].diffuse[2]*255.0f), 255 }; //float diffuse[3];
             model.materials[m].maps[MATERIAL_MAP_DIFFUSE].value = 0.0f;
@@ -4403,12 +4494,12 @@ static void *ReadGLTFValuesAs(cgltf_accessor* acc, cgltf_component_type type, bo
                     } break;
                     case cgltf_component_type_r_32f:
                     {
-                        float* typedArray = (float*) array;
+                        float *typedArray = (float *)array;
                         for (unsigned int i = 0; i < count*typeElements; i++) typedArray[i] = (float)typedAdditionalArray[i];
                     } break;
                     case cgltf_component_type_r_32u:
                     {
-                        unsigned int* typedArray = (unsigned int*) array;
+                        unsigned int *typedArray = (unsigned int *)array;
                         for (unsigned int i = 0; i < count*typeElements; i++) typedArray[i] = (unsigned int)typedAdditionalArray[i];
                     } break;
                     default:
@@ -4900,7 +4991,7 @@ static ModelAnimation *LoadGLTFModelAnimations(const char *fileName, int *animCo
             {
                 output->framePoses[frame] = RL_MALLOC(output->boneCount*sizeof(Transform));
 
-                for (unsigned int i = 0; i < output->boneCount; i++)
+                for (int i = 0; i < output->boneCount; i++)
                 {
                     if (data->nodes[i].has_translation) memcpy(&output->framePoses[frame][i].translation, data->nodes[i].translation, 3*sizeof(float));
                     else output->framePoses[frame][i].translation = Vector3Zero();
@@ -5093,7 +5184,7 @@ void LoadGLTFMesh(cgltf_data* data, cgltf_mesh* mesh, Model* outModel, Matrix cu
                 outModel->meshes[(*primitiveIndex)].vertices = ReadGLTFValuesAs(acc, cgltf_component_type_r_32f, false);
 
                 // Transform using the nodes matrix attributes
-                for (unsigned int v = 0; v < outModel->meshes[(*primitiveIndex)].vertexCount; v++)
+                for (int v = 0; v < outModel->meshes[(*primitiveIndex)].vertexCount; v++)
                 {
                     Vector3 vertex = {
                             outModel->meshes[(*primitiveIndex)].vertices[(v*3 + 0)],
@@ -5119,7 +5210,7 @@ void LoadGLTFMesh(cgltf_data* data, cgltf_mesh* mesh, Model* outModel, Matrix cu
                 outModel->meshes[(*primitiveIndex)].normals = ReadGLTFValuesAs(acc, cgltf_component_type_r_32f, false);
 
                 // Transform using the nodes matrix attributes
-                for (unsigned int v = 0; v < outModel->meshes[(*primitiveIndex)].vertexCount; v++)
+                for (int v = 0; v < outModel->meshes[(*primitiveIndex)].vertexCount; v++)
                 {
                     Vector3 normal = {
                             outModel->meshes[(*primitiveIndex)].normals[(v*3 + 0)],

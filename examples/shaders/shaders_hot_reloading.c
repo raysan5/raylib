@@ -77,7 +77,7 @@ int main(void)
                 // Try reloading updated shader
                 Shader updatedShader = LoadShader(0, TextFormat(fragShaderFileName, GLSL_VERSION));
 
-                if (updatedShader.id != rlGetShaderDefault().id)      // It was correctly loaded
+                if (updatedShader.id != rlGetShaderIdDefault())      // It was correctly loaded
                 {
                     UnloadShader(shader);
                     shader = updatedShader;

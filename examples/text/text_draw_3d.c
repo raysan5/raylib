@@ -5,14 +5,14 @@
 *   Draw a 2D text in 3D space, each letter is drawn in a quad (or 2 quads if backface is set)
 *   where the texture coodinates of each quad map to the texture coordinates of the glyphs
 *   inside the font texture.
-*	A more efficient approach, i believe, would be to render the text in a render texture and
-*	map that texture to a plane and render that, or maybe a shader but my method allows more
-*	flexibility...for example to change position of each letter individually to make somethink
-*	like a wavy text effect.
-*	
-*	Special thanks to:
-*		@Nighten for the DrawTextStyle() code https://github.com/NightenDushi/Raylib_DrawTextStyle
-*		Chris Camacho (codifies - http://bedroomcoders.co.uk/) for the alpha discard shader
+*    A more efficient approach, i believe, would be to render the text in a render texture and
+*    map that texture to a plane and render that, or maybe a shader but my method allows more
+*    flexibility...for example to change position of each letter individually to make somethink
+*    like a wavy text effect.
+*    
+*    Special thanks to:
+*        @Nighten for the DrawTextStyle() code https://github.com/NightenDushi/Raylib_DrawTextStyle
+*        Chris Camacho (codifies - http://bedroomcoders.co.uk/) for the alpha discard shader
 *
 *   This example has been created using raylib 3.5 (www.raylib.com)
 *   raylib is licensed under an unmodified zlib/libpng license (View raylib.h for details)
@@ -196,7 +196,7 @@ int main(void)
                                           (Vector3){ cubePosition.x + cubeSize.x/2, cubePosition.y + cubeSize.y/2, cubePosition.z + cubeSize.z/2 }});
             if (collision.hit)
             {
-            	// Generate new random colors
+                // Generate new random colors
                 light = GenerateRandomColor(0.5f, 0.78f);
                 dark = GenerateRandomColor(0.4f, 0.58f);
             }

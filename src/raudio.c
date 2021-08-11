@@ -70,11 +70,10 @@
     #include <stdarg.h>         // Required for: va_list, va_start(), vfprintf(), va_end()
 #else
     #include "raylib.h"         // Declares module functions
-
-// Check if config flags have been externally provided on compilation line
-#if !defined(EXTERNAL_CONFIG_FLAGS)
-    #include "config.h"         // Defines module configuration flags
-#endif
+    // Check if config flags have been externally provided on compilation line
+    #if !defined(EXTERNAL_CONFIG_FLAGS)
+        #include "config.h"     // Defines module configuration flags
+    #endif
     #include "utils.h"          // Required for: fopen() Android mapping
 #endif
 
@@ -173,7 +172,7 @@ typedef struct tagBITMAPINFOHEADER {
 #if defined(RAUDIO_STANDALONE)
     #include <string.h>                 // Required for: strcmp() [Used in IsFileExtension()]
 
-    #if !defined(TRACELOG)
+    #ifndef TRACELOG
         #define TRACELOG(level, ...) (void)0
     #endif
 
@@ -1724,9 +1723,9 @@ void UpdateMusicStream(Music music)
             case MUSIC_MODULE_XM:
             {
                 // NOTE: Internally we consider 2 channels generation, so samplesCount/2
-                if (AUDIO_DEVICE_FORMAT == ma_format_f32) jar_xm_generate_samples((jar_xm_context_t*)music.ctxData, (float *)pcm, samplesCount/2);
-                else if (AUDIO_DEVICE_FORMAT == ma_format_s16) jar_xm_generate_samples_16bit((jar_xm_context_t*)music.ctxData, (short *)pcm, samplesCount/2);
-                else if (AUDIO_DEVICE_FORMAT == ma_format_u8) jar_xm_generate_samples_8bit((jar_xm_context_t*)music.ctxData, (char *)pcm, samplesCount/2);
+                if (AUDIO_DEVICE_FORMAT == ma_format_f32) jar_xm_generate_samples((jar_xm_context_t *)music.ctxData, (float *)pcm, samplesCount/2);
+                else if (AUDIO_DEVICE_FORMAT == ma_format_s16) jar_xm_generate_samples_16bit((jar_xm_context_t *)music.ctxData, (short *)pcm, samplesCount/2);
+                else if (AUDIO_DEVICE_FORMAT == ma_format_u8) jar_xm_generate_samples_8bit((jar_xm_context_t *)music.ctxData, (char *)pcm, samplesCount/2);
 
             } break;
         #endif

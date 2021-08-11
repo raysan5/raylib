@@ -1,6 +1,6 @@
 /**********************************************************************************************
 *
-*   raymath v1.2 - Math functions to work with Vector3, Matrix and Quaternions
+*   raymath v1.3 - Math functions to work with Vector3, Matrix and Quaternions
 *
 *   CONFIGURATION:
 *
@@ -9,13 +9,9 @@
 *       If not defined, the library is in header only mode and can be included in other headers
 *       or source files without problems. But only ONE file should hold the implementation.
 *
-*   #define RAYMATH_HEADER_ONLY
+*   #define RAYMATH_STATIC_INLINE
 *       Define static inline functions code, so #include header suffices for use.
 *       This may use up lots of memory.
-*
-*   #define RAYMATH_STANDALONE
-*       Avoid raylib.h header inclusion in this file.
-*       Vector3 and Matrix data types are defined internally in raymath module.
 *
 *
 *   LICENSE: zlib/libpng
@@ -42,15 +38,8 @@
 #ifndef RAYMATH_H
 #define RAYMATH_H
 
-//#define RAYMATH_STANDALONE        // NOTE: To use raymath as standalone lib, just uncomment this line
-//#define RAYMATH_HEADER_ONLY       // NOTE: To compile functions as static inline, uncomment this line
-
-#ifndef RAYMATH_STANDALONE
-    #include "raylib.h"             // Required for: Vector3, Matrix structs definition
-#endif
-
-#if defined(RAYMATH_IMPLEMENTATION) && defined(RAYMATH_HEADER_ONLY)
-    #error "Specifying both RAYMATH_IMPLEMENTATION and RAYMATH_HEADER_ONLY is contradictory"
+#if defined(RAYMATH_IMPLEMENTATION) && defined(RAYMATH_STATIC_INLINE)
+    #error "Specifying both RAYMATH_IMPLEMENTATION and RAYMATH_STATIC_INLINE is contradictory"
 #endif
 
 #if defined(RAYMATH_IMPLEMENTATION)
@@ -61,7 +50,7 @@
     #else
         #define RMDEF extern inline // Provide external definition
     #endif
-#elif defined(RAYMATH_HEADER_ONLY)
+#elif defined(RAYMATH_STATIC_INLINE)
     #define RMDEF static inline     // Functions may be inlined, no external out-of-line definition
 #else
     #if defined(__TINYC__)
@@ -100,43 +89,61 @@
 // Types and Structures Definition
 //----------------------------------------------------------------------------------
 
-#if defined(RAYMATH_STANDALONE)
-    // Vector2 type
-    typedef struct Vector2 {
-        float x;
-        float y;
-    } Vector2;
+#if !defined(RL_VECTOR2_TYPE)
+// Vector2 type
+typedef struct Vector2 {
+    float x;
+    float y;
+} Vector2;
+#define RL_VECTOR2_TYPE
+#endif
 
-    // Vector3 type
-    typedef struct Vector3 {
-        float x;
-        float y;
-        float z;
-    } Vector3;
+#if !defined(RL_VECTOR3_TYPE)
+// Vector3 type
+typedef struct Vector3 {
+    float x;
+    float y;
+    float z;
+} Vector3;
+#define RL_VECTOR3_TYPE
+#endif
 
-    // Vector4 type
-    typedef struct Vector4 {
-        float x;
-        float y;
-        float z;
-        float w;
-    } Vector4;
+#if !defined(RL_VECTOR4_TYPE)
+// Vector4 type
+typedef struct Vector4 {
+    float x;
+    float y;
+    float z;
+    float w;
+} Vector4;
+#define RL_VECTOR4_TYPE
+#endif
 
-    // Quaternion type
-    typedef Vector4 Quaternion;
+#if !defined(RL_QUATERNION_TYPE)
+// Quaternion type
+typedef Vector4 Quaternion;
+#define RL_QUATERNION_TYPE
+#endif
 
-    // Matrix type (OpenGL style 4x4 - right handed, column major)
-    typedef struct Matrix {
-        float m0, m4, m8, m12;
-        float m1, m5, m9, m13;
-        float m2, m6, m10, m14;
-        float m3, m7, m11, m15;
-    } Matrix;
+#if !defined(RL_MATRIX_TYPE)
+// Matrix type (OpenGL style 4x4 - right handed, column major)
+typedef struct Matrix {
+    float m0, m4, m8, m12;      // Matrix first row (4 components)
+    float m1, m5, m9, m13;      // Matrix second row (4 components)
+    float m2, m6, m10, m14;     // Matrix third row (4 components)
+    float m3, m7, m11, m15;     // Matrix fourth row (4 components)
+} Matrix;
+#define RL_MATRIX_TYPE
 #endif
 
 // NOTE: Helper types to be used instead of array return types for *ToFloat functions
-typedef struct float3 { float v[3]; } float3;
-typedef struct float16 { float v[16]; } float16;
+typedef struct float3 {
+    float v[3];
+} float3;
+
+typedef struct float16 {
+    float v[16];
+} float16;
 
 #include <math.h>       // Required for: sinf(), cosf(), tan(), atan2f(), sqrtf(), fminf(), fmaxf(), fabs()
 
@@ -282,7 +289,11 @@ RMDEF Vector2 Vector2Divide(Vector2 v1, Vector2 v2)
 // Normalize provided vector
 RMDEF Vector2 Vector2Normalize(Vector2 v)
 {
-    Vector2 result = Vector2Scale(v, 1/Vector2Length(v));
+    float length = Vector2Length(v);
+    if (length <= 0)
+        return v;
+
+    Vector2 result = Vector2Scale(v, 1/length);
     return result;
 }
 
@@ -479,14 +490,14 @@ RMDEF Vector3 Vector3Normalize(Vector3 v)
 {
     Vector3 result = v;
 
-    float length, ilength;
-    length = Vector3Length(v);
+    float length, inverseLength;
+    length = sqrtf(v.x*v.x + v.y*v.y + v.z*v.z);
     if (length == 0.0f) length = 1.0f;
-    ilength = 1.0f/length;
+    inverseLength = 1.0f/length;
 
-    result.x *= ilength;
-    result.y *= ilength;
-    result.z *= ilength;
+    result.x *= inverseLength;
+    result.y *= inverseLength;
+    result.z *= inverseLength;
 
     return result;
 }
@@ -1420,22 +1431,24 @@ RMDEF Matrix QuaternionToMatrix(Quaternion q)
 RMDEF Quaternion QuaternionFromAxisAngle(Vector3 axis, float angle)
 {
     Quaternion result = { 0.0f, 0.0f, 0.0f, 1.0f };
+    float axisLength = sqrtf(axis.x*axis.x + axis.y*axis.y + axis.z*axis.z);
+    
+    if (axisLength != 0.0f)
+    {
+        angle *= 0.5f;
 
-    if (Vector3Length(axis) != 0.0f)
+        axis = Vector3Normalize(axis);
 
-    angle *= 0.5f;
+        float sinres = sinf(angle);
+        float cosres = cosf(angle);
 
-    axis = Vector3Normalize(axis);
+        result.x = axis.x*sinres;
+        result.y = axis.y*sinres;
+        result.z = axis.z*sinres;
+        result.w = cosres;
 
-    float sinres = sinf(angle);
-    float cosres = cosf(angle);
-
-    result.x = axis.x*sinres;
-    result.y = axis.y*sinres;
-    result.z = axis.z*sinres;
-    result.w = cosres;
-
-    result = QuaternionNormalize(result);
+        result = QuaternionNormalize(result);
+    }
 
     return result;
 }

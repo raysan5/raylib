@@ -1,13 +1,12 @@
-## raylib bindings
+# raylib bindings and wrappers
 
-Some people ported raylib to other languages in form of bindings or wrappers to the library.
+Some people ported raylib to other languages in form of bindings or wrappers to the library. Here it is alist with all the ports available. Feel free to send a PR if you know of any binding/wrapper not in this list.
 
-Here it is a list with the ones I'm aware of:
+### Language Bindings
 
 |  name              | raylib version | language  | repo                                                                 |
 |:------------------:|:-------------: | :--------:|----------------------------------------------------------------------|
-| raylib             | **3.7** | [C](https://en.wikipedia.org/wiki/C_(programming_language))    | https://github.com/raysan5/raylib    |
-| raylib-cpp         | 3.7 | [C++](https://en.wikipedia.org/wiki/C%2B%2B)                             | https://github.com/robloach/raylib-cpp      |
+| raylib             | **3.7** | [C/C++](https://en.wikipedia.org/wiki/C_(programming_language))    | https://github.com/raysan5/raylib    |
 | Raylib-cs          | 3.7 | [C#](https://en.wikipedia.org/wiki/C_Sharp_(programming_language))       | https://github.com/ChrisDill/Raylib-cs      |
 | raylib-cppsharp    | 2.5 | [C#](https://en.wikipedia.org/wiki/C_Sharp_(programming_language))       | https://github.com/phxvyper/raylib-cppsharp |
 | raylib-boo         | 3.7 | [Boo](http://boo-language.github.io/) | https://github.com/Rabios/raylib-boo          |
@@ -28,6 +27,7 @@ Here it is a list with the ones I'm aware of:
 | raylib-luamore     | 3.0 | [Lua](http://www.lua.org/)            | https://github.com/HDPLocust/raylib-luamore    |
 | raylua             | 3.7 | [Lua](http://www.lua.org/)            | https://github.com/Rabios/raylua          |
 | LuaJIT-Raylib      | 2.6 | [Lua](http://www.lua.org/)            | https://github.com/Bambofy/LuaJIT-Raylib    |
+| raylib-nelua       | 3.7 | [nelua](https://nelua.io/)            | https://github.com/edubart/nelua-decl/tree/main/libs/raylib       |
 | raylib-nelua       | 3.0 | [Nelua](https://nelua.io/)            | https://github.com/Andre-LA/raylib-nelua     |
 | raylib-Nim         | 1.7 | [Nim](https://nim-lang.org/)          | https://gitlab.com/define-private-public/raylib-Nim     |
 | raylib-nim         | 2.0 | [Nim](https://nim-lang.org/)          | https://github.com/Skrylar/raylib-nim                  |
@@ -96,10 +96,16 @@ Here it is a list with the ones I'm aware of:
 | raylib-never       | 3.0 | [Never](https://github.com/never-lang/never) | https://github.com/never-lang/raylib-never |
 | hb-raylib          | 3.5 | [Harbour](https://harbour.github.io)                 | https://github.com/MarcosLeonardoMendezGerencir/hb-raylib |
 | Relib              | 3.5 | [ReCT](https://github.com/RedCubeDev-ByteSpace/ReCT) | https://github.com/RedCubeDev-ByteSpace/Relib |
+| rayex              | 3.7 | [elixir](https://elixir-lang.org/)         | https://github.com/shiryel/rayex |
 | raylib.cbl         | 2.0 | [COBOL](https://en.wikipedia.org/wiki/COBOL)        | *[code examples](https://github.com/Martinfx/Cobol/tree/master/OpenCobol/Games/raylib)* |
 
+### Utility Wrapers
+
+|  name              | raylib version | language  | repo                                                                 |
+|:------------------:|:-------------: | :--------:|----------------------------------------------------------------------|
+| raylib-cpp         | 3.7 | [C++](https://en.wikipedia.org/wiki/C%2B%2B)     | https://github.com/robloach/raylib-cpp      |
  
-Missing some language? Feel free to create a new binding! :)
+Missing some language or wrapper? Feel free to create a new one! :)
 
 Usually, raylib bindings follow the convention: `raylib-{language}`
 

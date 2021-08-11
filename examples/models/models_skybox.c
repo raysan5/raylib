@@ -11,6 +11,7 @@
 
 #include "raylib.h"
 #include "rlgl.h"
+#include "raymath.h"
 
 #if defined(PLATFORM_DESKTOP)
     #define GLSL_VERSION            330

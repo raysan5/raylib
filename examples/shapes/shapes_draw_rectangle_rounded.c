@@ -14,7 +14,7 @@
 #include <raylib.h>
 
 #define RAYGUI_IMPLEMENTATION
-#include "raygui.h"                 // Required for GUI controls
+#include "extras/raygui.h"                 // Required for GUI controls
 
 int main(void)
 {

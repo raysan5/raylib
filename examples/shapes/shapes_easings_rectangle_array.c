@@ -14,7 +14,7 @@
 
 #include "raylib.h"
 
-#include "easings.h"            // Required for easing functions
+#include "extras/easings.h"            // Required for easing functions
 
 #define RECS_WIDTH              50
 #define RECS_HEIGHT             50
