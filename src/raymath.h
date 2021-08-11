@@ -138,11 +138,11 @@ typedef struct Matrix {
 
 // NOTE: Helper types to be used instead of array return types for *ToFloat functions
 typedef struct float3 {
-	float v[3];
+    float v[3];
 } float3;
 
 typedef struct float16 {
-	float v[16];
+    float v[16];
 } float16;
 
 #include <math.h>       // Required for: sinf(), cosf(), tan(), atan2f(), sqrtf(), fminf(), fmaxf(), fabs()

@@ -2,18 +2,17 @@
 *
 *   raylib [rlgl] example - Using rlgl module as standalone module
 *
-*   NOTE: This example requires OpenGL 3.3 or ES2 versions for shaders support,
+*   rlgl library is an abstraction layer for multiple OpenGL versions (1.1, 2.1, 3.3 Core, ES 2.0)
+*   that provides a pseudo-OpenGL 1.1 immediate-mode style API (rlVertex, rlTranslate, rlRotate...)
+*
+*   NOTE: This example requires OpenGL 3.3 or OpenGL ES 2.0 for shaders support,
 *         OpenGL 1.1 does not support shaders but it can also be used.
 *
 *   DEPENDENCIES:
-*       rlgl.h    - OpenGL 1.1 immediate-mode style coding translation layer
-*       glad.h    - OpenGL extensions initialization library (required by rlgl)
-*       raymath.h - 3D math library (required by rlgl)
 *       glfw3     - Windows and context initialization library
-*
-*   rlgl library is provided as a single-file header-only library, this library
-*   allows coding in a pseudo-OpenGL 1.1 style while translating calls to multiple
-*   OpenGL versions backends (1.1, 2.1, 3.3, ES 2.0).
+*       rlgl.h    - OpenGL abstraction layer to OpenGL 1.1, 3.3 or ES2
+*       glad.h    - OpenGL extensions initialization library (required by rlgl)
+*       raymath.h - 3D math library
 *
 *   WINDOWS COMPILATION:
 *       gcc -o rlgl_standalone.exe rlgl_standalone.c -s -Iexternal\include -I..\..\src  \
@@ -21,15 +20,16 @@
 *
 *   APPLE COMPILATION:
 *       gcc -o rlgl_standalone rlgl_standalone.c -I../../src -Iexternal/include -Lexternal/lib \
-*           -lglfw3 -std=c99 -framework CoreVideo -framework OpenGL -framework OpenAL \
-*           -framework IOKit -framework Cocoa -Wno-deprecated-declarations
+*           -lglfw3 -framework CoreVideo -framework OpenGL -framework IOKit -framework Cocoa
+*           -Wno-deprecated-declarations -std=c99 -DGRAPHICS_API_OPENGL_33
+*
 *
 *   LICENSE: zlib/libpng
 *
 *   This example is licensed under an unmodified zlib/libpng license, which is an OSI-certified,
 *   BSD-like license that allows static linking with closed source software:
 *
-*   Copyright (c) 2014-2019 Ramon Santamaria (@raysan5)
+*   Copyright (c) 2014-2021 Ramon Santamaria (@raysan5)
 *
 *   This software is provided "as-is", without any express or implied warranty. In no event
 *   will the authors be held liable for any damages arising from the use of this software.
@@ -107,7 +107,7 @@ static void DrawCube(Vector3 position, float width, float height, float length, 
 static void DrawCubeWires(Vector3 position, float width, float height, float length, Color color);
 static void DrawRectangleV(Vector2 position, Vector2 size, Color color);
 
-// NOTE: We used raymath to get this functionality but it can be implemented here
+// NOTE: We use raymath to get this functionality but it could be implemented in this module
 //static Matrix MatrixIdentity(void);
 //static Matrix MatrixOrtho(double left, double right, double bottom, double top, double near, double far);
 //static Matrix MatrixPerspective(double fovy, double aspect, double near, double far);
@@ -143,7 +143,6 @@ int main(void)
 #if defined(__APPLE__)
     glfwWindowHint( GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE );
 #endif
-
 
     GLFWwindow *window = glfwCreateWindow(screenWidth, screenHeight, "rlgl standalone", NULL, NULL);
 
@@ -219,8 +218,8 @@ int main(void)
 
             // Draw '2D' elements in the scene (GUI)
             //-----------------------------------------------
-#define RLGL_CREATE_MATRIX_MANUALLY
-#if defined(RLGL_CREATE_MATRIX_MANUALLY)
+#define RLGL_SET_MATRIX_MANUALLY
+#if defined(RLGL_SET_MATRIX_MANUALLY)
             matProj = MatrixOrtho(0.0, screenWidth, screenHeight, 0.0, 0.0, 1.0);
             matView = MatrixIdentity();
 
@@ -237,7 +236,7 @@ int main(void)
 #endif
             DrawRectangleV((Vector2){ 10.0f, 10.0f }, (Vector2){ 780.0f, 20.0f }, DARKGRAY);
 
-            // Draw internal render batch buffers (3D data)
+            // Draw internal render batch buffers (2D data)
             rlDrawRenderBatchActive();
             //-----------------------------------------------
 
