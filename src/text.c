@@ -893,12 +893,15 @@ void DrawTextEx(Font font, const char *text, Vector2 position, float fontSize, f
 // Draw text using Font and pro parameters (rotation)
 void DrawTextPro(Font font, const char *text, Vector2 position, Vector2 origin, float rotation, float fontSize, float spacing, Color tint)
 {
+    // TODO: Not working... why???
+
     rlPushMatrix();
 
-        rlTranslatef(origin.x, origin.y, 0.0f);
+        //rlTranslatef(position.x, position.y, 0.0f);
         rlRotatef(rotation, 0.0f, 0.0f, 1.0f);
+        rlTranslatef(-origin.x, -origin.y, 0.0f);
         
-        DrawTextEx(font, text, position, fontSize, spacing, tint);
+        DrawTextEx(font, text, (Vector2){ position.x, position.y }, fontSize, spacing, tint);
     
     rlPopMatrix();
 }
