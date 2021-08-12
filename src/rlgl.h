@@ -506,8 +506,8 @@ RLAPI void rlDisableVertexBufferElement(void);          // Disable vertex buffer
 RLAPI void rlEnableVertexAttribute(unsigned int index); // Enable vertex attribute index
 RLAPI void rlDisableVertexAttribute(unsigned int index);// Disable vertex attribute index
 #if defined(GRAPHICS_API_OPENGL_11)
-RLAPI void rlEnableStatePointer(int vertexAttribType, void *buffer);
-RLAPI void rlDisableStatePointer(int vertexAttribType);
+RLAPI void rlEnableStatePointer(int vertexAttribType, void *buffer);    // Enable attribute state pointer
+RLAPI void rlDisableStatePointer(int vertexAttribType);                 // Disable attribute state pointer
 #endif
 
 // Textures state
@@ -3223,6 +3223,7 @@ unsigned int rlLoadVertexBufferElement(void *buffer, int size, bool dynamic)
     return id;
 }
 
+// Enable vertex buffer (VBO)
 void rlEnableVertexBuffer(unsigned int id)
 {
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
@@ -3230,6 +3231,7 @@ void rlEnableVertexBuffer(unsigned int id)
 #endif
 }
 
+// Disable vertex buffer (VBO)
 void rlDisableVertexBuffer(void)
 {
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
@@ -3237,6 +3239,7 @@ void rlDisableVertexBuffer(void)
 #endif
 }
 
+// Enable vertex buffer element (VBO element)
 void rlEnableVertexBufferElement(unsigned int id)
 {
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
@@ -3244,6 +3247,7 @@ void rlEnableVertexBufferElement(unsigned int id)
 #endif
 }
 
+// Disable vertex buffer element (VBO element)
 void rlDisableVertexBufferElement(void)
 {
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
@@ -3251,7 +3255,7 @@ void rlDisableVertexBufferElement(void)
 #endif
 }
 
-// Update GPU buffer with new data
+// Update vertex buffer with new data
 // NOTE: dataSize and offset must be provided in bytes
 void rlUpdateVertexBuffer(unsigned int id, void *data, int dataSize, int offset)
 {
@@ -3261,6 +3265,17 @@ void rlUpdateVertexBuffer(unsigned int id, void *data, int dataSize, int offset)
 #endif
 }
 
+// Update vertex buffer elements with new data
+// NOTE: dataSize and offset must be provided in bytes
+void rlUpdateVertexBufferElements(unsigned int id, void *data, int dataSize, int offset)
+{
+#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, id);
+    glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, offset, dataSize, data);
+#endif
+}
+
+// Enable vertex array object (VAO)
 bool rlEnableVertexArray(unsigned int vaoId)
 {
     bool result = false;
@@ -3274,6 +3289,7 @@ bool rlEnableVertexArray(unsigned int vaoId)
     return result;
 }
 
+// Disable vertex array object (VAO)
 void rlDisableVertexArray(void)
 {
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
@@ -3281,6 +3297,7 @@ void rlDisableVertexArray(void)
 #endif
 }
 
+// Enable vertex attribute index
 void rlEnableVertexAttribute(unsigned int index)
 {
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
@@ -3288,6 +3305,7 @@ void rlEnableVertexAttribute(unsigned int index)
 #endif
 }
 
+// Disable vertex attribute index
 void rlDisableVertexAttribute(unsigned int index)
 {
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
@@ -3295,16 +3313,19 @@ void rlDisableVertexAttribute(unsigned int index)
 #endif
 }
 
+// Draw vertex array
 void rlDrawVertexArray(int offset, int count)
 {
     glDrawArrays(GL_TRIANGLES, offset, count);
 }
 
+// Draw vertex array elements
 void rlDrawVertexArrayElements(int offset, int count, void *buffer)
 {
     glDrawElements(GL_TRIANGLES, count, GL_UNSIGNED_SHORT, (unsigned short *)buffer + offset);
 }
 
+// Draw vertex array instanced
 void rlDrawVertexArrayInstanced(int offset, int count, int instances)
 {
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
@@ -3312,6 +3333,7 @@ void rlDrawVertexArrayInstanced(int offset, int count, int instances)
 #endif
 }
 
+// Draw vertex array elements instanced
 void rlDrawVertexArrayElementsInstanced(int offset, int count, void *buffer, int instances)
 {
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
@@ -3320,6 +3342,7 @@ void rlDrawVertexArrayElementsInstanced(int offset, int count, void *buffer, int
 }
 
 #if defined(GRAPHICS_API_OPENGL_11)
+// Enable vertex state pointer
 void rlEnableStatePointer(int vertexAttribType, void *buffer)
 {
     if (buffer != NULL) glEnableClientState(vertexAttribType);
@@ -3334,12 +3357,14 @@ void rlEnableStatePointer(int vertexAttribType, void *buffer)
     }
 }
 
+// Disable vertex state pointer
 void rlDisableStatePointer(int vertexAttribType)
 {
     glDisableClientState(vertexAttribType);
 }
 #endif
 
+// Load vertex array object (VAO)
 unsigned int rlLoadVertexArray(void)
 {
     unsigned int vaoId = 0;
@@ -3352,6 +3377,7 @@ unsigned int rlLoadVertexArray(void)
     return vaoId;
 }
 
+// Set vertex attribute
 void rlSetVertexAttribute(unsigned int index, int compSize, int type, bool normalized, int stride, void *pointer)
 {
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
@@ -3359,6 +3385,7 @@ void rlSetVertexAttribute(unsigned int index, int compSize, int type, bool norma
 #endif
 }
 
+// Set vertex attribute divisor
 void rlSetVertexAttributeDivisor(unsigned int index, int divisor)
 {
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
@@ -3366,6 +3393,7 @@ void rlSetVertexAttributeDivisor(unsigned int index, int divisor)
 #endif
 }
 
+// Unload vertex array object (VAO)
 void rlUnloadVertexArray(unsigned int vaoId)
 {
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
@@ -3378,6 +3406,7 @@ void rlUnloadVertexArray(unsigned int vaoId)
 #endif
 }
 
+// Unload vertex buffer (VBO)
 void rlUnloadVertexBuffer(unsigned int vboId)
 {
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
