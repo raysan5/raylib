@@ -3400,7 +3400,6 @@ static Model LoadOBJ(const char *fileName)
                 matFaces[idx]++;
             }
         }
-
         //--------------------------------------
         // Create the material meshes
 
@@ -3434,32 +3433,9 @@ static Model LoadOBJ(const char *fileName)
             tinyobj_vertex_index_t idx2 = attrib.faces[3*af + 2];
 
             // Fill vertices buffer (float) using vertex index of the face
-            for (int v = 0; v < 3; v++)
-            { 
-                if (mm > model.meshCount)
-                {
-                    TRACELOG(LOG_ERROR, "mm > meshCount");
-                }
-
-                if ((vCount[mm] + v) > model.meshes[mm].vertexCount * 3)
-                {
-                    TRACELOG(LOG_ERROR, "vCount > vertexCount");
-                }
-                model.meshes[mm].vertices[vCount[mm] + v] = attrib.vertices[idx0.v_idx*3 + v]; 
-            } 
-            vCount[mm] +=3;
-
-            for (int v = 0; v < 3; v++) 
-            { 
-                model.meshes[mm].vertices[vCount[mm] + v] = attrib.vertices[idx1.v_idx*3 + v]; 
-            } 
-            vCount[mm] +=3;
-
-            for (int v = 0; v < 3; v++) 
-            { 
-                model.meshes[mm].vertices[vCount[mm] + v] = attrib.vertices[idx2.v_idx*3 + v]; 
-            } 
-            vCount[mm] +=3;
+            for (int v = 0; v < 3; v++) { model.meshes[mm].vertices[vCount[mm] + v] = attrib.vertices[idx0.v_idx*3 + v]; } vCount[mm] +=3;
+            for (int v = 0; v < 3; v++) { model.meshes[mm].vertices[vCount[mm] + v] = attrib.vertices[idx1.v_idx*3 + v]; } vCount[mm] +=3;
+            for (int v = 0; v < 3; v++) { model.meshes[mm].vertices[vCount[mm] + v] = attrib.vertices[idx2.v_idx*3 + v]; } vCount[mm] +=3;
 
             if (attrib.num_texcoords > 0)
             {
@@ -3490,10 +3466,11 @@ static Model LoadOBJ(const char *fileName)
             // NOTE: Uses default shader, which only supports MATERIAL_MAP_DIFFUSE
             model.materials[m] = LoadMaterialDefault();
 
-            model.materials[m].maps[MATERIAL_MAP_DIFFUSE].texture = rlGetTextureDefault();     // Get default texture, in case no texture is defined
+            // Get default texture, in case no texture is defined
+            // NOTE: rlgl default texture is a 1x1 pixel UNCOMPRESSED_R8G8B8A8
+            model.materials[m].maps[MATERIAL_MAP_DIFFUSE].texture = (Texture2D){ rlGetTextureIdDefault(), 1, 1, 1, PIXELFORMAT_UNCOMPRESSED_R8G8B8A8 };  
 
             if (materials[m].diffuse_texname != NULL) model.materials[m].maps[MATERIAL_MAP_DIFFUSE].texture = LoadTexture(materials[m].diffuse_texname);  //char *diffuse_texname; // map_Kd
-            else model.materials[m].maps[MATERIAL_MAP_DIFFUSE].texture = rlGetTextureDefault();
 
             model.materials[m].maps[MATERIAL_MAP_DIFFUSE].color = (Color){ (unsigned char)(materials[m].diffuse[0]*255.0f), (unsigned char)(materials[m].diffuse[1]*255.0f), (unsigned char)(materials[m].diffuse[2]*255.0f), 255 }; //float diffuse[3];
             model.materials[m].maps[MATERIAL_MAP_DIFFUSE].value = 0.0f;
