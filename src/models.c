@@ -3370,7 +3370,7 @@ static Model LoadOBJ(const char *fileName)
         if (ret != TINYOBJ_SUCCESS) TRACELOG(LOG_WARNING, "MODEL: [%s] Failed to load OBJ data", fileName);
         else TRACELOG(LOG_INFO, "MODEL: [%s] OBJ data loaded successfully: %i meshes/%i materials", fileName, meshCount, materialCount);
 
-        model.meshCount = materialCount;    // TODO: REVIEW!!!
+        model.meshCount = materialCount;    
 
         // Init model materials array
         if (materialCount > 0)
@@ -3389,7 +3389,7 @@ static Model LoadOBJ(const char *fileName)
         model.meshMaterial = (int *)RL_CALLOC(model.meshCount, sizeof(int));
 
         // Count the faces for each material
-        int *matFaces = RL_CALLOC(meshCount, sizeof(int));
+        int *matFaces = RL_CALLOC(materialCount, sizeof(int));
 
         for (unsigned int mi = 0; mi < meshCount; mi++)
         {
@@ -3400,7 +3400,6 @@ static Model LoadOBJ(const char *fileName)
                 matFaces[idx]++;
             }
         }
-
         //--------------------------------------
         // Create the material meshes
 
