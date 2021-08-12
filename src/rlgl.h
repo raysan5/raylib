@@ -584,7 +584,7 @@ RLAPI void rlSetTexture(unsigned int id);           // Set current texture for r
 RLAPI unsigned int rlLoadVertexArray(void);                               // Load vertex array (vao) if supported
 RLAPI unsigned int rlLoadVertexBuffer(void *buffer, int size, bool dynamic);            // Load a vertex buffer attribute
 RLAPI unsigned int rlLoadVertexBufferElement(void *buffer, int size, bool dynamic);     // Load a new attributes element buffer
-RLAPI void rlUpdateVertexBuffer(int bufferId, void *data, int dataSize, int offset);    // Update GPU buffer with new data
+RLAPI void rlUpdateVertexBuffer(unsigned int bufferId, void *data, int dataSize, int offset);    // Update GPU buffer with new data
 RLAPI void rlUnloadVertexArray(unsigned int vaoId);
 RLAPI void rlUnloadVertexBuffer(unsigned int vboId);
 RLAPI void rlSetVertexAttribute(unsigned int index, int compSize, int type, bool normalized, int stride, void *pointer);
@@ -3209,7 +3209,7 @@ void rlDisableVertexBufferElement(void)
 
 // Update GPU buffer with new data
 // NOTE: dataSize and offset must be provided in bytes
-void rlUpdateVertexBuffer(int bufferId, void *data, int dataSize, int offset)
+void rlUpdateVertexBuffer(unsigned int bufferId, void *data, int dataSize, int offset)
 {
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     glBindBuffer(GL_ARRAY_BUFFER, bufferId);
