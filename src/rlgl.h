@@ -525,8 +525,11 @@ RLAPI void rlDisableShader(void);                       // Disable shader progra
 // Framebuffer state
 RLAPI void rlEnableFramebuffer(unsigned int id);        // Enable render texture (fbo)
 RLAPI void rlDisableFramebuffer(void);                  // Disable render texture (fbo), return to default framebuffer
+RLAPI void rlActiveDrawBuffers(int count);              // Activate multiple draw color buffers
 
 // General render state
+RLAPI void rlEnableColorBlend(void);                     // Enable color blending
+RLAPI void rlDisableColorBlend(void);                   // Disable color blending
 RLAPI void rlEnableDepthTest(void);                     // Enable depth test
 RLAPI void rlDisableDepthTest(void);                    // Disable depth test
 RLAPI void rlEnableDepthMask(void);                     // Enable depth write
@@ -1544,6 +1547,49 @@ void rlDisableFramebuffer(void)
 #endif
 }
 
+// Activate multiple draw color buffers
+// NOTE: One color buffer is always active by default
+void rlActiveDrawBuffers(int count)
+{
+#if (defined(GRAPHICS_API_OPENGL_33) && defined(SUPPORT_RENDER_TEXTURES_HINT))
+    // NOTE: Maximum number of draw buffers supported is implementation dependant,
+    // it can be queried with glGet*() but it must be at least 8
+    //GLint maxDrawBuffers = 0;
+    //glGetIntegerv(GL_MAX_DRAW_BUFFERS, &maxDrawBuffers);
+    
+    if (count > 0)
+    {
+        if (count > 8) TRACELOG(LOG_WARNING, "GL: Max color buffers limited to 8");
+        else 
+        {
+            unsigned int buffers[8] = {
+                GL_COLOR_ATTACHMENT0,
+                GL_COLOR_ATTACHMENT1,
+                GL_COLOR_ATTACHMENT2,
+                GL_COLOR_ATTACHMENT3,
+                GL_COLOR_ATTACHMENT4,
+                GL_COLOR_ATTACHMENT5,
+                GL_COLOR_ATTACHMENT6,
+                GL_COLOR_ATTACHMENT7,
+            };
+
+            glDrawBuffers(count, buffers);
+        }
+    }
+    else TRACELOG(LOG_WARNING, "GL: One color buffer active by default");
+#endif
+}
+
+//----------------------------------------------------------------------------------
+// General render state configuration
+//----------------------------------------------------------------------------------
+
+// Enable color blending
+void rlEnableColorBlend(void) { glEnable(GL_BLEND); }
+
+// Disable color blending
+void rlDisableColorBlend(void) { glDisable(GL_BLEND); }
+
 // Enable depth test
 void rlEnableDepthTest(void) { glEnable(GL_DEPTH_TEST); }
 
@@ -1588,11 +1634,9 @@ void rlDisableWireMode(void)
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 #endif
 }
+
 // Set the line drawing width
-void rlSetLineWidth(float width)
-{
-    glLineWidth(width);
-}
+void rlSetLineWidth(float width) { glLineWidth(width); }
 
 // Get the line drawing width
 float rlGetLineWidth(void)
@@ -3209,10 +3253,10 @@ void rlDisableVertexBufferElement(void)
 
 // Update GPU buffer with new data
 // NOTE: dataSize and offset must be provided in bytes
-void rlUpdateVertexBuffer(unsigned int bufferId, void *data, int dataSize, int offset)
+void rlUpdateVertexBuffer(unsigned int id, void *data, int dataSize, int offset)
 {
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
-    glBindBuffer(GL_ARRAY_BUFFER, bufferId);
+    glBindBuffer(GL_ARRAY_BUFFER, id);
     glBufferSubData(GL_ARRAY_BUFFER, offset, dataSize, data);
 #endif
 }
