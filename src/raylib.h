@@ -81,7 +81,7 @@
 
 #include <stdarg.h>     // Required for: va_list - Only used by TraceLogCallback
 
-#define RAYLIB_VERSION  "3.8-dev"
+#define RAYLIB_VERSION  "4.0-dev"
 
 #ifndef RLAPI
     #define RLAPI       // We are building or using rlgl as a static library (or Linux shared library)
