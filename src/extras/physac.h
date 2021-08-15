@@ -16,16 +16,9 @@
 *       If not defined, the library is in header only mode and can be included in other headers
 *       or source files without problems. But only ONE file should hold the implementation.
 *
-*   #define PHYSAC_STATIC (defined by default)
-*       The generated implementation will stay private inside implementation file and all
-*       internal symbols and functions will only be visible inside that file.
-*
 *   #define PHYSAC_DEBUG
 *       Show debug traces log messages about physic bodies creation/destruction, physic system errors,
-*       some calculations results and NULL reference exceptions
-*
-*   #define PHYSAC_DEFINE_VECTOR2_TYPE
-*       Forces library to define struct Vector2 data type (float x; float y)
+*       some calculations results and NULL reference exceptions.
 *
 *   #define PHYSAC_AVOID_TIMMING_SYSTEM
 *       Disables internal timming system, used by UpdatePhysics() to launch timmed physic steps,
@@ -79,14 +72,8 @@
 #if !defined(PHYSAC_H)
 #define PHYSAC_H
 
-#if defined(PHYSAC_STATIC)
-    #define PHYSACDEF static            // Functions just visible to module including this file
-#else
-    #if defined(__cplusplus)
-        #define PHYSACDEF extern "C"    // Functions visible from other files (no name mangling of functions in C++)
-    #else
-        #define PHYSACDEF extern        // Functions visible from other files
-    #endif
+#ifndef PHYSACDEF
+    #define PHYSACDEF       // We are building or using physac as a static library
 #endif
 
 // Allow custom memory allocators
@@ -127,7 +114,7 @@ typedef enum PhysicsShapeType { PHYSICS_CIRCLE = 0, PHYSICS_POLYGON } PhysicsSha
 // Previously defined to be used in PhysicsShape struct as circular dependencies
 typedef struct PhysicsBodyData *PhysicsBody;
 
-#if defined(PHYSAC_DEFINE_VECTOR2_TYPE)
+#if !defined(RL_VECTOR2_TYPE)
 // Vector2 type
 typedef struct Vector2 {
     float x;
@@ -192,13 +179,13 @@ typedef struct PhysicsManifoldData {
     float staticFriction;                       // Mixed static friction during collision
 } PhysicsManifoldData, *PhysicsManifold;
 
-#if defined(__cplusplus)
-extern "C" {                                    // Prevents name mangling of functions
-#endif
-
 //----------------------------------------------------------------------------------
 // Module Functions Declaration
 //----------------------------------------------------------------------------------
+
+#if defined(__cplusplus)
+extern "C" {            // Prevents name mangling of functions
+#endif
 // Physics system management
 PHYSACDEF void InitPhysics(void);                                                                           // Initializes physics system
 PHYSACDEF void UpdatePhysics(void);                                                                         // Update physics system
@@ -225,7 +212,6 @@ PHYSACDEF int GetPhysicsBodiesCount(void);                                      
 PHYSACDEF int GetPhysicsShapeType(int index);                                                               // Returns the physics body shape type (PHYSICS_CIRCLE or PHYSICS_POLYGON)
 PHYSACDEF int GetPhysicsShapeVerticesCount(int index);                                                      // Returns the amount of vertices of a physics body shape
 PHYSACDEF Vector2 GetPhysicsShapeVertex(PhysicsBody body, int vertex);                                      // Returns transformed position of a body shape (body position + vertex transformed position)
-
 #if defined(__cplusplus)
 }
 #endif
@@ -253,11 +239,17 @@ PHYSACDEF Vector2 GetPhysicsShapeVertex(PhysicsBody body, int vertex);          
 
 #if !defined(PHYSAC_AVOID_TIMMING_SYSTEM)
     // Time management functionality
-    #include <time.h>                   // Required for: time(), clock_gettime()
+    #include <time.h>               // Required for: time(), clock_gettime()
     #if defined(_WIN32)
+        #if defined(__cplusplus)
+        extern "C" {        // Prevents name mangling of functions
+        #endif
         // Functions required to query time on Windows
         int __stdcall QueryPerformanceCounter(unsigned long long int *lpPerformanceCount);
         int __stdcall QueryPerformanceFrequency(unsigned long long int *lpFrequency);
+        #if defined(__cplusplus)
+        }
+        #endif
     #endif
     #if defined(__linux__) || defined(__FreeBSD__)
         #if _POSIX_C_SOURCE < 199309L
@@ -366,7 +358,7 @@ static Vector2 MathTriangleBarycenter(Vector2 v1, Vector2 v2, Vector2 v3);      
 //----------------------------------------------------------------------------------
 
 // Initializes physics values, pointers and creates physics loop thread
-PHYSACDEF void InitPhysics(void)
+void InitPhysics(void)
 {
 #if !defined(PHYSAC_AVOID_TIMMING_SYSTEM)
     // Initialize high resolution timer
@@ -377,21 +369,21 @@ PHYSACDEF void InitPhysics(void)
 }
 
 // Sets physics global gravity force
-PHYSACDEF void SetPhysicsGravity(float x, float y)
+void SetPhysicsGravity(float x, float y)
 {
     gravityForce.x = x;
     gravityForce.y = y;
 }
 
 // Creates a new circle physics body with generic parameters
-PHYSACDEF PhysicsBody CreatePhysicsBodyCircle(Vector2 pos, float radius, float density)
+PhysicsBody CreatePhysicsBodyCircle(Vector2 pos, float radius, float density)
 {
     PhysicsBody body = CreatePhysicsBodyPolygon(pos, radius, PHYSAC_DEFAULT_CIRCLE_VERTICES, density);
     return body;
 }
 
 // Creates a new rectangle physics body with generic parameters
-PHYSACDEF PhysicsBody CreatePhysicsBodyRectangle(Vector2 pos, float width, float height, float density)
+PhysicsBody CreatePhysicsBodyRectangle(Vector2 pos, float width, float height, float density)
 {
     // NOTE: Make sure body data is initialized to 0
     PhysicsBody body = (PhysicsBody)PHYSAC_CALLOC(sizeof(PhysicsBodyData), 1);
@@ -469,7 +461,7 @@ PHYSACDEF PhysicsBody CreatePhysicsBodyRectangle(Vector2 pos, float width, float
 }
 
 // Creates a new polygon physics body with generic parameters
-PHYSACDEF PhysicsBody CreatePhysicsBodyPolygon(Vector2 pos, float radius, int sides, float density)
+PhysicsBody CreatePhysicsBodyPolygon(Vector2 pos, float radius, int sides, float density)
 {
     PhysicsBody body = (PhysicsBody)PHYSAC_MALLOC(sizeof(PhysicsBodyData));
     usedMemory += sizeof(PhysicsBodyData);
@@ -551,19 +543,19 @@ PHYSACDEF PhysicsBody CreatePhysicsBodyPolygon(Vector2 pos, float radius, int si
 }
 
 // Adds a force to a physics body
-PHYSACDEF void PhysicsAddForce(PhysicsBody body, Vector2 force)
+void PhysicsAddForce(PhysicsBody body, Vector2 force)
 {
     if (body != NULL) body->force = MathVector2Add(body->force, force);
 }
 
 // Adds an angular force to a physics body
-PHYSACDEF void PhysicsAddTorque(PhysicsBody body, float amount)
+void PhysicsAddTorque(PhysicsBody body, float amount)
 {
     if (body != NULL) body->torque += amount;
 }
 
 // Shatters a polygon shape physics body to little physics bodies with explosion force
-PHYSACDEF void PhysicsShatter(PhysicsBody body, Vector2 position, float force)
+void PhysicsShatter(PhysicsBody body, Vector2 position, float force)
 {
     if (body != NULL)
     {
@@ -700,13 +692,13 @@ PHYSACDEF void PhysicsShatter(PhysicsBody body, Vector2 position, float force)
 }
 
 // Returns the current amount of created physics bodies
-PHYSACDEF int GetPhysicsBodiesCount(void)
+int GetPhysicsBodiesCount(void)
 {
     return physicsBodiesCount;
 }
 
 // Returns a physics body of the bodies pool at a specific index
-PHYSACDEF PhysicsBody GetPhysicsBody(int index)
+PhysicsBody GetPhysicsBody(int index)
 {
     PhysicsBody body = NULL;
 
@@ -722,7 +714,7 @@ PHYSACDEF PhysicsBody GetPhysicsBody(int index)
 }
 
 // Returns the physics body shape type (PHYSICS_CIRCLE or PHYSICS_POLYGON)
-PHYSACDEF int GetPhysicsShapeType(int index)
+int GetPhysicsShapeType(int index)
 {
     int result = -1;
 
@@ -739,7 +731,7 @@ PHYSACDEF int GetPhysicsShapeType(int index)
 }
 
 // Returns the amount of vertices of a physics body shape
-PHYSACDEF int GetPhysicsShapeVerticesCount(int index)
+int GetPhysicsShapeVerticesCount(int index)
 {
     int result = 0;
 
@@ -764,7 +756,7 @@ PHYSACDEF int GetPhysicsShapeVerticesCount(int index)
 }
 
 // Returns transformed position of a body shape (body position + vertex transformed position)
-PHYSACDEF Vector2 GetPhysicsShapeVertex(PhysicsBody body, int vertex)
+Vector2 GetPhysicsShapeVertex(PhysicsBody body, int vertex)
 {
     Vector2 position = { 0.0f, 0.0f };
 
@@ -791,7 +783,7 @@ PHYSACDEF Vector2 GetPhysicsShapeVertex(PhysicsBody body, int vertex)
 }
 
 // Sets physics body shape transform based on radians parameter
-PHYSACDEF void SetPhysicsBodyRotation(PhysicsBody body, float radians)
+void SetPhysicsBodyRotation(PhysicsBody body, float radians)
 {
     if (body != NULL)
     {
@@ -802,7 +794,7 @@ PHYSACDEF void SetPhysicsBodyRotation(PhysicsBody body, float radians)
 }
 
 // Unitializes and destroys a physics body
-PHYSACDEF void DestroyPhysicsBody(PhysicsBody body)
+void DestroyPhysicsBody(PhysicsBody body)
 {
     if (body != NULL)
     {
@@ -844,7 +836,7 @@ PHYSACDEF void DestroyPhysicsBody(PhysicsBody body)
 }
 
 // Destroys created physics bodies and manifolds and resets global values
-PHYSACDEF void ResetPhysics(void)
+void ResetPhysics(void)
 {
     if (physicsBodiesCount > 0)
     {
@@ -886,7 +878,7 @@ PHYSACDEF void ResetPhysics(void)
 }
 
 // Unitializes physics pointers and exits physics loop thread
-PHYSACDEF void ClosePhysics(void)
+void ClosePhysics(void)
 {
     // Unitialize physics manifolds dynamic memory allocations
     if (physicsManifoldsCount > 0)
@@ -912,91 +904,98 @@ PHYSACDEF void ClosePhysics(void)
     else TRACELOG("[PHYSAC] Physics module closed successfully\n");
 }
 
+// Update physics system
+// Physics steps are launched at a fixed time step if enabled
+void UpdatePhysics(void)
+{
+#if !defined(PHYSAC_AVOID_TIMMING_SYSTEM)
+    static double deltaTimeAccumulator = 0.0;
+
+    // Calculate current time (ms)
+    currentTime = GetCurrentTime();
+
+    // Calculate current delta time (ms)
+    const double delta = currentTime - startTime;
+
+    // Store the time elapsed since the last frame began
+    deltaTimeAccumulator += delta;
+
+    // Fixed time stepping loop
+    while (deltaTimeAccumulator >= deltaTime)
+    {
+        UpdatePhysicsStep();
+        deltaTimeAccumulator -= deltaTime;
+    }
+
+    // Record the starting of this frame
+    startTime = currentTime;
+#else
+    UpdatePhysicsStep();
+#endif
+}
+
+void SetPhysicsTimeStep(double delta)
+{
+    deltaTime = delta;
+}
+
 //----------------------------------------------------------------------------------
 // Module Internal Functions Definition
 //----------------------------------------------------------------------------------
-// Finds a valid index for a new physics body initialization
-static int FindAvailableBodyIndex()
+#if !defined(PHYSAC_AVOID_TIMMING_SYSTEM)
+// Initializes hi-resolution MONOTONIC timer
+static void InitTimerHiRes(void)
 {
-    int index = -1;
-    for (int i = 0; i < PHYSAC_MAX_BODIES; i++)
-    {
-        int currentId = i;
+#if defined(_WIN32)
+    QueryPerformanceFrequency((unsigned long long int *) &frequency);
+#endif
 
-        // Check if current id already exist in other physics body
-        for (unsigned int k = 0; k < physicsBodiesCount; k++)
-        {
-            if (bodies[k]->id == currentId)
-            {
-                currentId++;
-                break;
-            }
-        }
+#if defined(__EMSCRIPTEN__) || defined(__linux__)
+    struct timespec now;
+    if (clock_gettime(CLOCK_MONOTONIC, &now) == 0) frequency = 1000000000;
+#endif
 
-        // If it is not used, use it as new physics body id
-        if (currentId == (int)i)
-        {
-            index = (int)i;
-            break;
-        }
-    }
+#if defined(__APPLE__)
+    mach_timebase_info_data_t timebase;
+    mach_timebase_info(&timebase);
+    frequency = (timebase.denom*1e9)/timebase.numer;
+#endif
 
-    return index;
+    baseClockTicks = (double)GetClockTicks();      // Get MONOTONIC clock time offset
+    startTime = GetCurrentTime();                  // Get current time in milliseconds
 }
 
-// Creates a default polygon shape with max vertex distance from polygon pivot
-static PhysicsVertexData CreateDefaultPolygon(float radius, int sides)
+// Get hi-res MONOTONIC time measure in clock ticks
+static unsigned long long int GetClockTicks(void)
 {
-    PhysicsVertexData data = { 0 };
-    data.vertexCount = sides;
+    unsigned long long int value = 0;
 
-    // Calculate polygon vertices positions
-    for (unsigned int i = 0; i < data.vertexCount; i++)
-    {
-        data.positions[i].x = (float)cosf(360.0f/sides*i*PHYSAC_DEG2RAD)*radius;
-        data.positions[i].y = (float)sinf(360.0f/sides*i*PHYSAC_DEG2RAD)*radius;
-    }
+#if defined(_WIN32)
+    QueryPerformanceCounter((unsigned long long int *) &value);
+#endif
 
-    // Calculate polygon faces normals
-    for (int i = 0; i < (int)data.vertexCount; i++)
-    {
-        int nextIndex = (((i + 1) < sides) ? (i + 1) : 0);
-        Vector2 face = MathVector2Subtract(data.positions[nextIndex], data.positions[i]);
+#if defined(__linux__)
+    struct timespec now;
+    clock_gettime(CLOCK_MONOTONIC, &now);
+    value = (unsigned long long int)now.tv_sec*(unsigned long long int)1000000000 + (unsigned long long int)now.tv_nsec;
+#endif
 
-        data.normals[i] = CLITERAL(Vector2){ face.y, -face.x };
-        MathVector2Normalize(&data.normals[i]);
-    }
+#if defined(__APPLE__)
+    value = mach_absolute_time();
+#endif
 
-    return data;
+    return value;
 }
 
-// Creates a rectangle polygon shape based on a min and max positions
-static PhysicsVertexData CreateRectanglePolygon(Vector2 pos, Vector2 size)
+// Get current time in milliseconds
+static double GetCurrentTime(void)
 {
-    PhysicsVertexData data = { 0 };
-    data.vertexCount = 4;
-
-    // Calculate polygon vertices positions
-    data.positions[0] = CLITERAL(Vector2){ pos.x + size.x/2, pos.y - size.y/2 };
-    data.positions[1] = CLITERAL(Vector2){ pos.x + size.x/2, pos.y + size.y/2 };
-    data.positions[2] = CLITERAL(Vector2){ pos.x - size.x/2, pos.y + size.y/2 };
-    data.positions[3] = CLITERAL(Vector2){ pos.x - size.x/2, pos.y - size.y/2 };
-
-    // Calculate polygon faces normals
-    for (unsigned int i = 0; i < data.vertexCount; i++)
-    {
-        int nextIndex = (((i + 1) < data.vertexCount) ? (i + 1) : 0);
-        Vector2 face = MathVector2Subtract(data.positions[nextIndex], data.positions[i]);
-
-        data.normals[i] = CLITERAL(Vector2){ face.y, -face.x };
-        MathVector2Normalize(&data.normals[i]);
-    }
-
-    return data;
+    return (double)(GetClockTicks() - baseClockTicks)/frequency*1000;
 }
+#endif // !PHYSAC_AVOID_TIMMING_SYSTEM
 
 // Update physics step (dynamics, collisions and position corrections)
-void UpdatePhysicsStep(void)
+static void UpdatePhysicsStep(void)
 {
     // Clear previous generated collisions information
     for (int i = (int)physicsManifoldsCount - 1; i >= 0; i--)
@@ -1098,39 +1097,84 @@ void UpdatePhysicsStep(void)
     }
 }
 
-// Update physics system
-// Physics steps are launched at a fixed time step if enabled
-PHYSACDEF void UpdatePhysics(void)
+// Finds a valid index for a new physics body initialization
+static int FindAvailableBodyIndex()
 {
-#if !defined(PHYSAC_AVOID_TIMMING_SYSTEM)
-    static double deltaTimeAccumulator = 0.0;
-
-    // Calculate current time (ms)
-    currentTime = GetCurrentTime();
-
-    // Calculate current delta time (ms)
-    const double delta = currentTime - startTime;
-
-    // Store the time elapsed since the last frame began
-    deltaTimeAccumulator += delta;
-
-    // Fixed time stepping loop
-    while (deltaTimeAccumulator >= deltaTime)
+    int index = -1;
+    for (int i = 0; i < PHYSAC_MAX_BODIES; i++)
     {
-        UpdatePhysicsStep();
-        deltaTimeAccumulator -= deltaTime;
+        int currentId = i;
+
+        // Check if current id already exist in other physics body
+        for (unsigned int k = 0; k < physicsBodiesCount; k++)
+        {
+            if (bodies[k]->id == currentId)
+            {
+                currentId++;
+                break;
+            }
+        }
+
+        // If it is not used, use it as new physics body id
+        if (currentId == (int)i)
+        {
+            index = (int)i;
+            break;
+        }
     }
 
-    // Record the starting of this frame
-    startTime = currentTime;
-#else
-    UpdatePhysicsStep();
-#endif
+    return index;
 }
 
-PHYSACDEF void SetPhysicsTimeStep(double delta)
+// Creates a default polygon shape with max vertex distance from polygon pivot
+static PhysicsVertexData CreateDefaultPolygon(float radius, int sides)
 {
-    deltaTime = delta;
+    PhysicsVertexData data = { 0 };
+    data.vertexCount = sides;
+
+    // Calculate polygon vertices positions
+    for (unsigned int i = 0; i < data.vertexCount; i++)
+    {
+        data.positions[i].x = (float)cosf(360.0f/sides*i*PHYSAC_DEG2RAD)*radius;
+        data.positions[i].y = (float)sinf(360.0f/sides*i*PHYSAC_DEG2RAD)*radius;
+    }
+
+    // Calculate polygon faces normals
+    for (int i = 0; i < (int)data.vertexCount; i++)
+    {
+        int nextIndex = (((i + 1) < sides) ? (i + 1) : 0);
+        Vector2 face = MathVector2Subtract(data.positions[nextIndex], data.positions[i]);
+
+        data.normals[i] = CLITERAL(Vector2){ face.y, -face.x };
+        MathVector2Normalize(&data.normals[i]);
+    }
+
+    return data;
+}
+
+// Creates a rectangle polygon shape based on a min and max positions
+static PhysicsVertexData CreateRectanglePolygon(Vector2 pos, Vector2 size)
+{
+    PhysicsVertexData data = { 0 };
+    data.vertexCount = 4;
+
+    // Calculate polygon vertices positions
+    data.positions[0] = CLITERAL(Vector2){ pos.x + size.x/2, pos.y - size.y/2 };
+    data.positions[1] = CLITERAL(Vector2){ pos.x + size.x/2, pos.y + size.y/2 };
+    data.positions[2] = CLITERAL(Vector2){ pos.x - size.x/2, pos.y + size.y/2 };
+    data.positions[3] = CLITERAL(Vector2){ pos.x - size.x/2, pos.y - size.y/2 };
+
+    // Calculate polygon faces normals
+    for (unsigned int i = 0; i < data.vertexCount; i++)
+    {
+        int nextIndex = (((i + 1) < data.vertexCount) ? (i + 1) : 0);
+        Vector2 face = MathVector2Subtract(data.positions[nextIndex], data.positions[i]);
+
+        data.normals[i] = CLITERAL(Vector2){ face.y, -face.x };
+        MathVector2Normalize(&data.normals[i]);
+    }
+
+    return data;
 }
 
 // Finds a valid index for a new manifold initialization
@@ -1843,59 +1887,6 @@ static Vector2 MathTriangleBarycenter(Vector2 v1, Vector2 v2, Vector2 v3)
 
     return result;
 }
-
-#if !defined(PHYSAC_AVOID_TIMMING_SYSTEM)
-// Initializes hi-resolution MONOTONIC timer
-static void InitTimerHiRes(void)
-{
-#if defined(_WIN32)
-    QueryPerformanceFrequency((unsigned long long int *) &frequency);
-#endif
-
-#if defined(__EMSCRIPTEN__) || defined(__linux__)
-    struct timespec now;
-    if (clock_gettime(CLOCK_MONOTONIC, &now) == 0) frequency = 1000000000;
-#endif
-
-#if defined(__APPLE__)
-    mach_timebase_info_data_t timebase;
-    mach_timebase_info(&timebase);
-    frequency = (timebase.denom*1e9)/timebase.numer;
-#endif
-
-    baseClockTicks = (double)GetClockTicks();      // Get MONOTONIC clock time offset
-    startTime = GetCurrentTime();                  // Get current time in milliseconds
-}
-
-// Get hi-res MONOTONIC time measure in clock ticks
-static unsigned long long int GetClockTicks(void)
-{
-    unsigned long long int value = 0;
-
-#if defined(_WIN32)
-    QueryPerformanceCounter((unsigned long long int *) &value);
-#endif
-
-#if defined(__linux__)
-    struct timespec now;
-    clock_gettime(CLOCK_MONOTONIC, &now);
-    value = (unsigned long long int)now.tv_sec*(unsigned long long int)1000000000 + (unsigned long long int)now.tv_nsec;
-#endif
-
-#if defined(__APPLE__)
-    value = mach_absolute_time();
-#endif
-
-    return value;
-}
-
-// Get current time in milliseconds
-static double GetCurrentTime(void)
-{
-    return (double)(GetClockTicks() - baseClockTicks)/frequency*1000;
-}
-#endif // !PHYSAC_AVOID_TIMMING_SYSTEM
-
 
 // Returns the cross product of a vector and a value
 static inline Vector2 MathVector2Product(Vector2 vector, float value)
