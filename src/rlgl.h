@@ -457,13 +457,14 @@ typedef enum {
     RL_SHADER_ATTRIB_VEC4              // Shader attribute type: vec4 (4 float)
 } rlShaderAttributeDataType;
 
+//------------------------------------------------------------------------------------
+// Functions Declaration - Matrix operations
+//------------------------------------------------------------------------------------
+
 #if defined(__cplusplus)
 extern "C" {            // Prevents name mangling of functions
 #endif
 
-//------------------------------------------------------------------------------------
-// Functions Declaration - Matrix operations
-//------------------------------------------------------------------------------------
 RLAPI void rlMatrixMode(int mode);                    // Choose the current matrix to be transformed
 RLAPI void rlPushMatrix(void);                        // Push the current matrix to stack
 RLAPI void rlPopMatrix(void);                         // Pop lattest inserted matrix from stack
@@ -642,6 +643,7 @@ RLAPI void rlSetMatrixViewOffsetStereo(Matrix right, Matrix left);      // Set e
 // Quick and dirty cube/quad buffers load->draw->unload
 RLAPI void rlLoadDrawCube(void);     // Load and draw a cube
 RLAPI void rlLoadDrawQuad(void);     // Load and draw a quad
+
 #if defined(__cplusplus)
 }
 #endif

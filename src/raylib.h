@@ -83,17 +83,16 @@
 
 #define RAYLIB_VERSION  "3.8-dev"
 
+#ifndef RLAPI
+    #define RLAPI       // We are building or using rlgl as a static library (or Linux shared library)
+#endif
+
 #if defined(_WIN32)
-    // Microsoft attibutes to tell compiler that symbols are imported/exported from a .dll
     #if defined(BUILD_LIBTYPE_SHARED)
         #define RLAPI __declspec(dllexport)     // We are building raylib as a Win32 shared library (.dll)
     #elif defined(USE_LIBTYPE_SHARED)
         #define RLAPI __declspec(dllimport)     // We are using raylib as a Win32 shared library (.dll)
-    #else
-        #define RLAPI   // We are building or using raylib as a static library
     #endif
-#else
-    #define RLAPI       // We are building or using raylib as a static library (or Linux shared library)
 #endif
 
 //----------------------------------------------------------------------------------
@@ -894,11 +893,6 @@ typedef bool (*SaveFileDataCallback)(const char *fileName, void *data, unsigned 
 typedef char *(*LoadFileTextCallback)(const char *fileName);       // FileIO: Load text data
 typedef bool (*SaveFileTextCallback)(const char *fileName, char *text);     // FileIO: Save text data
 
-
-#if defined(__cplusplus)
-extern "C" {            // Prevents name mangling of functions
-#endif
-
 //------------------------------------------------------------------------------------
 // Global Variables Definition
 //------------------------------------------------------------------------------------
@@ -907,6 +901,10 @@ extern "C" {            // Prevents name mangling of functions
 //------------------------------------------------------------------------------------
 // Window and Graphics Device Functions (Module: core)
 //------------------------------------------------------------------------------------
+
+#if defined(__cplusplus)
+extern "C" {            // Prevents name mangling of functions
+#endif
 
 // Window-related functions
 RLAPI void InitWindow(int width, int height, const char *title);  // Initialize window and OpenGL context
