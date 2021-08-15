@@ -57,6 +57,13 @@ packages/
 *.a
 *.bc
 *.so
+*.so.*
+
+# Ignore wasm data in examples/
+examples/**/*.wasm
+examples/**/*.data
+examples/**/*.js
+examples/**/*.html
 
 # Ignore files build by xcode
 *.mode*v*

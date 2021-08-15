@@ -2084,6 +2084,61 @@ Mesh GenMeshCylinder(float radius, float height, int slices)
     return mesh;
 }
 
+// Generate cone/pyramid mesh
+Mesh GenMeshCone(float radius, float height, int slices)
+{
+    Mesh mesh = { 0 };
+
+    if (slices >= 3)
+    {
+        // Instance a cone that sits on the Z=0 plane using the given tessellation
+        // levels across the UV domain.  Think of "slices" like a number of pizza
+        // slices, and "stacks" like a number of stacked rings.
+        // Height and radius are both 1.0, but they can easily be changed with par_shapes_scale
+        par_shapes_mesh *cone = par_shapes_create_cone(slices, 8);
+        par_shapes_scale(cone, radius, radius, height);
+        par_shapes_rotate(cone, -PI/2.0f, (float[]){ 1, 0, 0 });
+        par_shapes_rotate(cone, PI/2.0f, (float[]){ 0, 1, 0 });
+
+        // Generate an orientable disk shape (bottom cap)
+        par_shapes_mesh *capBottom = par_shapes_create_disk(radius, slices, (float[]){ 0, 0, 0 }, (float[]){ 0, 0, -1 });
+        capBottom->tcoords = PAR_MALLOC(float, 2*capBottom->npoints);
+        for (int i = 0; i < 2*capBottom->npoints; i++) capBottom->tcoords[i] = 0.95f;
+        par_shapes_rotate(capBottom, PI/2.0f, (float[]){ 1, 0, 0 });
+
+        par_shapes_merge_and_free(cone, capBottom);
+
+        mesh.vertices = (float *)RL_MALLOC(cone->ntriangles*3*3*sizeof(float));
+        mesh.texcoords = (float *)RL_MALLOC(cone->ntriangles*3*2*sizeof(float));
+        mesh.normals = (float *)RL_MALLOC(cone->ntriangles*3*3*sizeof(float));
+
+        mesh.vertexCount = cone->ntriangles*3;
+        mesh.triangleCount = cone->ntriangles;
+
+        for (int k = 0; k < mesh.vertexCount; k++)
+        {
+            mesh.vertices[k*3] = cone->points[cone->triangles[k]*3];
+            mesh.vertices[k*3 + 1] = cone->points[cone->triangles[k]*3 + 1];
+            mesh.vertices[k*3 + 2] = cone->points[cone->triangles[k]*3 + 2];
+
+            mesh.normals[k*3] = cone->normals[cone->triangles[k]*3];
+            mesh.normals[k*3 + 1] = cone->normals[cone->triangles[k]*3 + 1];
+            mesh.normals[k*3 + 2] = cone->normals[cone->triangles[k]*3 + 2];
+
+            mesh.texcoords[k*2] = cone->tcoords[cone->triangles[k]*2];
+            mesh.texcoords[k*2 + 1] = cone->tcoords[cone->triangles[k]*2 + 1];
+        }
+
+        par_shapes_free_mesh(cone);
+
+        // Upload vertex data to GPU (static mesh)
+        UploadMesh(&mesh, false);
+    }
+    else TRACELOG(LOG_WARNING, "MESH: Failed to generate mesh: cone");
+
+    return mesh;
+}
+
 // Generate torus mesh
 Mesh GenMeshTorus(float radius, float size, int radSeg, int sides)
 {
@@ -3123,11 +3178,10 @@ RayCollision GetRayCollisionBox(Ray ray, BoundingBox box)
     collision.normal = Vector3Scale(collision.normal, 2.01f);
     collision.normal = Vector3Divide(collision.normal, Vector3Subtract(box.max, box.min));
     // The relevant elemets of the vector are now slightly larger than 1.0f (or smaller than -1.0f)
-    // and the others are somewhere between -1.0 and 1.0
-    // casting to int is exactly our wanted normal!
-    collision.normal.x = (int)collision.normal.x;
-    collision.normal.y = (int)collision.normal.y;
-    collision.normal.z = (int)collision.normal.z;
+    // and the others are somewhere between -1.0 and 1.0 casting to int is exactly our wanted normal!
+    collision.normal.x = (float)((int)collision.normal.x);
+    collision.normal.y = (float)((int)collision.normal.y);
+    collision.normal.z = (float)((int)collision.normal.z);
 
     collision.normal = Vector3Normalize(collision.normal);
 
@@ -3316,7 +3370,7 @@ static Model LoadOBJ(const char *fileName)
         if (ret != TINYOBJ_SUCCESS) TRACELOG(LOG_WARNING, "MODEL: [%s] Failed to load OBJ data", fileName);
         else TRACELOG(LOG_INFO, "MODEL: [%s] OBJ data loaded successfully: %i meshes/%i materials", fileName, meshCount, materialCount);
 
-        model.meshCount = materialCount;    // TODO: REVIEW!!!
+        model.meshCount = materialCount;    
 
         // Init model materials array
         if (materialCount > 0)
@@ -3335,7 +3389,7 @@ static Model LoadOBJ(const char *fileName)
         model.meshMaterial = (int *)RL_CALLOC(model.meshCount, sizeof(int));
 
         // Count the faces for each material
-        int *matFaces = RL_CALLOC(meshCount, sizeof(int));
+        int *matFaces = RL_CALLOC(materialCount, sizeof(int));
 
         for (unsigned int mi = 0; mi < meshCount; mi++)
         {
@@ -3346,7 +3400,6 @@ static Model LoadOBJ(const char *fileName)
                 matFaces[idx]++;
             }
         }
-
         //--------------------------------------
         // Create the material meshes
 
@@ -4937,7 +4990,7 @@ static ModelAnimation *LoadGLTFModelAnimations(const char *fileName, int *animCo
             {
                 output->framePoses[frame] = RL_MALLOC(output->boneCount*sizeof(Transform));
 
-                for (unsigned int i = 0; i < output->boneCount; i++)
+                for (int i = 0; i < output->boneCount; i++)
                 {
                     if (data->nodes[i].has_translation) memcpy(&output->framePoses[frame][i].translation, data->nodes[i].translation, 3*sizeof(float));
                     else output->framePoses[frame][i].translation = Vector3Zero();
@@ -5130,7 +5183,7 @@ void LoadGLTFMesh(cgltf_data* data, cgltf_mesh* mesh, Model* outModel, Matrix cu
                 outModel->meshes[(*primitiveIndex)].vertices = ReadGLTFValuesAs(acc, cgltf_component_type_r_32f, false);
 
                 // Transform using the nodes matrix attributes
-                for (unsigned int v = 0; v < outModel->meshes[(*primitiveIndex)].vertexCount; v++)
+                for (int v = 0; v < outModel->meshes[(*primitiveIndex)].vertexCount; v++)
                 {
                     Vector3 vertex = {
                             outModel->meshes[(*primitiveIndex)].vertices[(v*3 + 0)],
@@ -5156,7 +5209,7 @@ void LoadGLTFMesh(cgltf_data* data, cgltf_mesh* mesh, Model* outModel, Matrix cu
                 outModel->meshes[(*primitiveIndex)].normals = ReadGLTFValuesAs(acc, cgltf_component_type_r_32f, false);
 
                 // Transform using the nodes matrix attributes
-                for (unsigned int v = 0; v < outModel->meshes[(*primitiveIndex)].vertexCount; v++)
+                for (int v = 0; v < outModel->meshes[(*primitiveIndex)].vertexCount; v++)
                 {
                     Vector3 normal = {
                             outModel->meshes[(*primitiveIndex)].normals[(v*3 + 0)],

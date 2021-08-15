@@ -99,10 +99,6 @@ typedef struct {
     Vector2 position[4];
 } GestureEvent;
 
-#ifdef __cplusplus
-extern "C" {            // Prevents name mangling of functions
-#endif
-
 //----------------------------------------------------------------------------------
 // Global Variables Definition
 //----------------------------------------------------------------------------------
@@ -111,11 +107,15 @@ extern "C" {            // Prevents name mangling of functions
 //----------------------------------------------------------------------------------
 // Module Functions Declaration
 //----------------------------------------------------------------------------------
+
+#ifdef __cplusplus
+extern "C" {            // Prevents name mangling of functions
+#endif
+
 void ProcessGestureEvent(GestureEvent event);           // Process gesture event and translate it into gestures
 void UpdateGestures(void);                              // Update gestures detected (must be called every frame)
-
 #if defined(GESTURES_STANDALONE)
-void SetGesturesEnabled(unsigned int flags);     // Enable a set of gestures using flags
+void SetGesturesEnabled(unsigned int flags);            // Enable a set of gestures using flags
 bool IsGestureDetected(int gesture);                    // Check if a gesture have been detected
 int GetGestureDetected(void);                           // Get latest detected gesture
 int GetTouchPointsCount(void);                          // Get touch points count
@@ -141,9 +141,15 @@ float GetGesturePinchAngle(void);                       // Get gesture pinch ang
 #if defined(GESTURES_IMPLEMENTATION)
 
 #if defined(_WIN32)
+    #if defined(__cplusplus)
+    extern "C" {        // Prevents name mangling of functions
+    #endif
     // Functions required to query time on Windows
     int __stdcall QueryPerformanceCounter(unsigned long long int *lpPerformanceCount);
     int __stdcall QueryPerformanceFrequency(unsigned long long int *lpFrequency);
+    #if defined(__cplusplus)
+    }
+    #endif
 #elif defined(__linux__)
     #if _POSIX_C_SOURCE < 199309L
         #undef _POSIX_C_SOURCE

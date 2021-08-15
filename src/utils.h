@@ -55,9 +55,7 @@
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
 //----------------------------------------------------------------------------------
-#ifdef __cplusplus
-extern "C" {            // Prevents name mangling of functions
-#endif
+//...
 
 //----------------------------------------------------------------------------------
 // Global Variables Definition
@@ -67,6 +65,10 @@ extern "C" {            // Prevents name mangling of functions
 //----------------------------------------------------------------------------------
 // Module Functions Declaration
 //----------------------------------------------------------------------------------
+#ifdef __cplusplus
+extern "C" {            // Prevents name mangling of functions
+#endif
+
 #if defined(PLATFORM_ANDROID)
 void InitAssetManager(AAssetManager *manager, const char *dataPath);   // Initialize asset manager from android app
 FILE *android_fopen(const char *fileName, const char *mode);           // Replacement for fopen() -> Read-only!
