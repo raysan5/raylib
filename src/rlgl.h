@@ -3432,14 +3432,15 @@ unsigned int rlLoadShaderCode(const char *vsCode, const char *fsCode)
     if (vsCode != NULL) vertexShaderId = rlCompileShader(vsCode, GL_VERTEX_SHADER);
     if (fsCode != NULL) fragmentShaderId = rlCompileShader(fsCode, GL_FRAGMENT_SHADER);
     
-    // Get the size of compiled shaders (not available on OpenGL ES 2.0)
-    //GLint binarySize = 0;
-    //glGetProgramiv(programId, GL_PROGRAM_BINARY_LENGTH, &binarySize);
-
     if ((vertexShaderId == RLGL.State.defaultVShaderId) && (fragmentShaderId == RLGL.State.defaultFShaderId)) id = RLGL.State.defaultShaderId;
     else
     {
         id = rlLoadShaderProgram(vertexShaderId, fragmentShaderId);
+        
+        // Get the size of compiled shader program (not available on OpenGL ES 2.0)
+        // NOTE: If GL_LINK_STATUS is GL_FALSE, program binary length is zero.
+        //GLint binarySize = 0;
+        //glGetProgramiv(id, GL_PROGRAM_BINARY_LENGTH, &binarySize);
 
         if (vertexShaderId != RLGL.State.defaultVShaderId)
         {
