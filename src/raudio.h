@@ -78,48 +78,41 @@
     #endif
 #endif
 
-// Wave type, defines audio wave data
+// Wave, audio wave data
 typedef struct Wave {
-    unsigned int sampleCount;       // Total number of samples
-    unsigned int sampleRate;        // Frequency (samples per second)
-    unsigned int sampleSize;        // Bit depth (bits per sample): 8, 16, 32 (24 not supported)
-    unsigned int channels;          // Number of channels (1-mono, 2-stereo)
-    void *data;                     // Buffer data pointer
+    unsigned int frameCount;    // Total number of frames (considering channels)
+    unsigned int sampleRate;    // Frequency (samples per second)
+    unsigned int sampleSize;    // Bit depth (bits per sample): 8, 16, 32 (24 not supported)
+    unsigned int channels;      // Number of channels (1-mono, 2-stereo, ...)
+    void *data;                 // Buffer data pointer
 } Wave;
 
 typedef struct rAudioBuffer rAudioBuffer;
 
-// Audio stream type
-// NOTE: Useful to create custom audio streams not bound to a specific file
+// AudioStream, custom audio stream
 typedef struct AudioStream {
-    unsigned int sampleRate;        // Frequency (samples per second)
-    unsigned int sampleSize;        // Bit depth (bits per sample): 8, 16, 32 (24 not supported)
-    unsigned int channels;          // Number of channels (1-mono, 2-stereo)
+    rAudioBuffer *buffer;       // Pointer to internal data used by the audio system
 
-    rAudioBuffer *buffer;           // Pointer to internal data used by the audio system
+    unsigned int sampleRate;    // Frequency (samples per second)
+    unsigned int sampleSize;    // Bit depth (bits per sample): 8, 16, 32 (24 not supported)
+    unsigned int channels;      // Number of channels (1-mono, 2-stereo, ...)
 } AudioStream;
 
-// Sound source type
+// Sound
 typedef struct Sound {
-    unsigned int sampleCount;       // Total number of samples
-    AudioStream stream;             // Audio stream
+    AudioStream stream;         // Audio stream
+    unsigned int frameCount;    // Total number of frames (considering channels)
 } Sound;
 
-// Music stream type (audio file streaming from memory)
-// NOTE: Anything longer than ~10 seconds should be streamed
+// Music, audio stream, anything longer than ~10 seconds should be streamed
 typedef struct Music {
-    int ctxType;                    // Type of music context (audio filetype)
-    void *ctxData;                  // Audio context data, depends on type
+    AudioStream stream;         // Audio stream
+    unsigned int frameCount;    // Total number of frames (considering channels)
+    bool looping;               // Music looping enable
 
-    bool looping;                   // Music looping enable
-    unsigned int sampleCount;       // Total number of samples
-
-    AudioStream stream;             // Audio stream
+    int ctxType;                // Type of music context (audio filetype)
+    void *ctxData;              // Audio context data, depends on type
 } Music;
-
-#ifdef __cplusplus
-extern "C" {            // Prevents name mangling of functions
-#endif
 
 //----------------------------------------------------------------------------------
 // Global Variables Definition
@@ -129,6 +122,10 @@ extern "C" {            // Prevents name mangling of functions
 //----------------------------------------------------------------------------------
 // Module Functions Declaration
 //----------------------------------------------------------------------------------
+
+#ifdef __cplusplus
+extern "C" {            // Prevents name mangling of functions
+#endif
 
 // Audio device management functions
 void InitAudioDevice(void);                                     // Initialize audio device and context
