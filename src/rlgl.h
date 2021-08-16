@@ -3431,6 +3431,10 @@ unsigned int rlLoadShaderCode(const char *vsCode, const char *fsCode)
 
     if (vsCode != NULL) vertexShaderId = rlCompileShader(vsCode, GL_VERTEX_SHADER);
     if (fsCode != NULL) fragmentShaderId = rlCompileShader(fsCode, GL_FRAGMENT_SHADER);
+    
+    // Get the size of compiled shaders (not available on OpenGL ES 2.0)
+    //GLint binarySize = 0;
+    //glGetProgramiv(programId, GL_PROGRAM_BINARY_LENGTH, &binarySize);
 
     if ((vertexShaderId == RLGL.State.defaultVShaderId) && (fragmentShaderId == RLGL.State.defaultFShaderId)) id = RLGL.State.defaultShaderId;
     else
@@ -3467,7 +3471,7 @@ unsigned int rlLoadShaderCode(const char *vsCode, const char *fsCode)
     {
         int namelen = -1;
         int num = -1;
-        char name[256]; // Assume no variable names longer than 256
+        char name[256] = { 0 };     // Assume no variable names longer than 256
         GLenum type = GL_ZERO;
 
         // Get the name of the uniforms
