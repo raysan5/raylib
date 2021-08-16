@@ -276,6 +276,7 @@ static void __InsertMemNode(MemPool *const mempool, AllocList *const list, MemNo
                 mempool->arena.offs += iter->size;
                 __RemoveMemNode(list, iter);
                 iter = list->head;
+                if (iter == NULL) return;
             }
             const uintptr_t inode = ( uintptr_t )node;
             const uintptr_t iiter = ( uintptr_t )iter;
