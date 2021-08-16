@@ -828,16 +828,16 @@ void UnloadModelKeepMeshes(Model model)
 BoundingBox GetModelBoundingBox(Model model)
 {
     BoundingBox bounds = { 0 };
-    
+
     if (model.meshCount > 0)
-    {      
+    {
         Vector3 temp = { 0 };
         bounds = GetMeshBoundingBox(model.meshes[0]);
-        
+
         for (int i = 1; i < model.meshCount; i++)
         {
             BoundingBox tempBounds = GetMeshBoundingBox(model.meshes[i]);
-            
+
             temp.x = (bounds.min.x < tempBounds.min.x)? bounds.min.x : tempBounds.min.x;
             temp.y = (bounds.min.y < tempBounds.min.y)? bounds.min.y : tempBounds.min.y;
             temp.z = (bounds.min.z < tempBounds.min.z)? bounds.min.z : tempBounds.min.z;
@@ -849,7 +849,7 @@ BoundingBox GetModelBoundingBox(Model model)
             bounds.max = temp;
         }
     }
-    
+
     return bounds;
 }
 
@@ -1105,7 +1105,7 @@ void DrawMeshInstanced(Mesh mesh, Material material, Matrix *transforms, int ins
         //    transforms[0]: model transformation provided (includes DrawModel() params combined with model.transform)
         //    rlGetMatrixTransform(): rlgl internal transform matrix due to push/pop matrix stack
         matModel = MatrixMultiply(transforms[0], rlGetMatrixTransform());
-        
+
         // Get model-view matrix
         matModelView = MatrixMultiply(matModel, matView);
     }
@@ -1376,7 +1376,7 @@ Material *LoadMaterials(const char *fileName, int *materialCount)
     // Set materials shader to default (DIFFUSE, SPECULAR, NORMAL)
     if (materials != NULL)
     {
-        for (unsigned int i = 0; i < count; i++) 
+        for (unsigned int i = 0; i < count; i++)
         {
             materials[i].shader.id = rlGetShaderIdDefault();
             materials[i].shader.locs = rlGetShaderLocsDefault();
@@ -1396,7 +1396,7 @@ Material LoadMaterialDefault(void)
     // Using rlgl default shader
     material.shader.id = rlGetShaderIdDefault();
     material.shader.locs = rlGetShaderLocsDefault();
-    
+
     // Using rlgl default texture (1x1 pixel, UNCOMPRESSED_R8G8B8A8, 1 mipmap)
     material.maps[MATERIAL_MAP_DIFFUSE].texture = (Texture2D){ rlGetTextureIdDefault(), 1, 1, 1, PIXELFORMAT_UNCOMPRESSED_R8G8B8A8 };
     //material.maps[MATERIAL_MAP_NORMAL].texture;         // NOTE: By default, not set
@@ -2825,7 +2825,7 @@ void GenMeshTangents(Mesh *mesh)
     RL_FREE(tan2);
 
     if (mesh->vboId != NULL)
-    {        
+    {
         if (mesh->vboId[SHADER_LOC_VERTEX_TANGENT] != 0)
         {
             // Upate existing vertex buffer
@@ -2834,15 +2834,15 @@ void GenMeshTangents(Mesh *mesh)
         else
         {
             // Load a new tangent attributes buffer
-            mesh->vboId[SHADER_LOC_VERTEX_TANGENT] = rlLoadVertexBuffer(mesh->tangents, mesh->vertexCount*4*sizeof(float), false);    
+            mesh->vboId[SHADER_LOC_VERTEX_TANGENT] = rlLoadVertexBuffer(mesh->tangents, mesh->vertexCount*4*sizeof(float), false);
         }
-        
+
         rlEnableVertexArray(mesh->vaoId);
         rlSetVertexAttribute(4, 4, RL_FLOAT, 0, 0, 0);
         rlEnableVertexAttribute(4);
         rlDisableVertexArray();
     }
-    
+
     TRACELOG(LOG_INFO, "MESH: Tangents data computed and uploaded for provided mesh");
 }
 
@@ -3370,7 +3370,7 @@ static Model LoadOBJ(const char *fileName)
         if (ret != TINYOBJ_SUCCESS) TRACELOG(LOG_WARNING, "MODEL: [%s] Failed to load OBJ data", fileName);
         else TRACELOG(LOG_INFO, "MODEL: [%s] OBJ data loaded successfully: %i meshes/%i materials", fileName, meshCount, materialCount);
 
-        model.meshCount = materialCount;    
+        model.meshCount = materialCount;
 
         // Init model materials array
         if (materialCount > 0)
@@ -3468,7 +3468,7 @@ static Model LoadOBJ(const char *fileName)
 
             // Get default texture, in case no texture is defined
             // NOTE: rlgl default texture is a 1x1 pixel UNCOMPRESSED_R8G8B8A8
-            model.materials[m].maps[MATERIAL_MAP_DIFFUSE].texture = (Texture2D){ rlGetTextureIdDefault(), 1, 1, 1, PIXELFORMAT_UNCOMPRESSED_R8G8B8A8 };  
+            model.materials[m].maps[MATERIAL_MAP_DIFFUSE].texture = (Texture2D){ rlGetTextureIdDefault(), 1, 1, 1, PIXELFORMAT_UNCOMPRESSED_R8G8B8A8 };
 
             if (materials[m].diffuse_texname != NULL) model.materials[m].maps[MATERIAL_MAP_DIFFUSE].texture = LoadTexture(materials[m].diffuse_texname);  //char *diffuse_texname; // map_Kd
 

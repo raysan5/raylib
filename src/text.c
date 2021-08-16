@@ -899,9 +899,9 @@ void DrawTextPro(Font font, const char *text, Vector2 position, Vector2 origin, 
         rlTranslatef(position.x, position.y, 0.0f);
         rlRotatef(rotation, 0.0f, 0.0f, 1.0f);
         rlTranslatef(-origin.x, -origin.y, 0.0f);
-        
+
         DrawTextEx(font, text, (Vector2){ 0.0f, 0.0f }, fontSize, spacing, tint);
-    
+
     rlPopMatrix();
 }
 
@@ -1002,7 +1002,7 @@ Vector2 MeasureTextEx(Font font, const char *text, float fontSize, float spacing
 }
 
 // Get index position for a unicode character on font
-// NOTE: If codepoint is not found in the font it fallbacks to '?' 
+// NOTE: If codepoint is not found in the font it fallbacks to '?'
 int GetGlyphIndex(Font font, int codepoint)
 {
 #ifndef GLYPH_NOTFOUND_CHAR_FALLBACK
@@ -1030,24 +1030,24 @@ int GetGlyphIndex(Font font, int codepoint)
 }
 
 // Get glyph font info data for a codepoint (unicode character)
-// NOTE: If codepoint is not found in the font it fallbacks to '?' 
+// NOTE: If codepoint is not found in the font it fallbacks to '?'
 GlyphInfo GetGlyphInfo(Font font, int codepoint)
 {
     GlyphInfo info = { 0 };
-    
+
     info = font.chars[GetGlyphIndex(font, codepoint)];
-    
+
     return info;
 }
 
 // Get glyph rectangle in font atlas for a codepoint (unicode character)
-// NOTE: If codepoint is not found in the font it fallbacks to '?' 
+// NOTE: If codepoint is not found in the font it fallbacks to '?'
 Rectangle GetGlyphAtlasRec(Font font, int codepoint)
 {
     Rectangle rec = { 0 };
-    
+
     rec = font.recs[GetGlyphIndex(font, codepoint)];
-    
+
     return rec;
 }
 

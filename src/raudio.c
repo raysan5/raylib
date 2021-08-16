@@ -1733,7 +1733,7 @@ void UpdateMusicStream(Music music)
         }
 
         UpdateAudioStream(music.stream, pcm, frameCountToStream);
-        
+
         framesLeft -= frameCountToStream;
 
         if (framesLeft <= 0)
