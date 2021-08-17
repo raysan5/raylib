@@ -423,10 +423,10 @@ typedef struct BoundingBox {
 
 // Wave, audio wave data
 typedef struct Wave {
-    unsigned int sampleCount;   // Total number of samples (considering channels!)
+    unsigned int frameCount;    // Total number of frames (considering channels)
     unsigned int sampleRate;    // Frequency (samples per second)
     unsigned int sampleSize;    // Bit depth (bits per sample): 8, 16, 32 (24 not supported)
-    unsigned int channels;      // Number of channels (1-mono, 2-stereo)
+    unsigned int channels;      // Number of channels (1-mono, 2-stereo, ...)
     void *data;                 // Buffer data pointer
 } Wave;
 
@@ -438,19 +438,19 @@ typedef struct AudioStream {
 
     unsigned int sampleRate;    // Frequency (samples per second)
     unsigned int sampleSize;    // Bit depth (bits per sample): 8, 16, 32 (24 not supported)
-    unsigned int channels;      // Number of channels (1-mono, 2-stereo)
+    unsigned int channels;      // Number of channels (1-mono, 2-stereo, ...)
 } AudioStream;
 
 // Sound
 typedef struct Sound {
     AudioStream stream;         // Audio stream
-    unsigned int sampleCount;   // Total number of samples
+    unsigned int frameCount;    // Total number of frames (considering channels)
 } Sound;
 
 // Music, audio stream, anything longer than ~10 seconds should be streamed
 typedef struct Music {
     AudioStream stream;         // Audio stream
-    unsigned int sampleCount;   // Total number of samples
+    unsigned int frameCount;    // Total number of frames (considering channels)
     bool looping;               // Music looping enable
 
     int ctxType;                // Type of music context (audio filetype)
@@ -1513,7 +1513,7 @@ RLAPI float GetMusicTimePlayed(Music music);                          // Get cur
 // AudioStream management functions
 RLAPI AudioStream LoadAudioStream(unsigned int sampleRate, unsigned int sampleSize, unsigned int channels); // Load audio stream (to stream raw audio pcm data)
 RLAPI void UnloadAudioStream(AudioStream stream);                      // Unload audio stream and free memory
-RLAPI void UpdateAudioStream(AudioStream stream, const void *data, int samplesCount); // Update audio stream buffers with data
+RLAPI void UpdateAudioStream(AudioStream stream, const void *data, int framesCount); // Update audio stream buffers with data
 RLAPI bool IsAudioStreamProcessed(AudioStream stream);                // Check if any audio stream buffers requires refill
 RLAPI void PlayAudioStream(AudioStream stream);                       // Play audio stream
 RLAPI void PauseAudioStream(AudioStream stream);                      // Pause audio stream

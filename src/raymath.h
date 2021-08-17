@@ -1432,7 +1432,7 @@ RMDEF Quaternion QuaternionFromAxisAngle(Vector3 axis, float angle)
 {
     Quaternion result = { 0.0f, 0.0f, 0.0f, 1.0f };
     float axisLength = sqrtf(axis.x*axis.x + axis.y*axis.y + axis.z*axis.z);
-    
+
     if (axisLength != 0.0f)
     {
         angle *= 0.5f;
