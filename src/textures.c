@@ -292,8 +292,9 @@ Image LoadImageAnimDelays(const char *fileName, int *frames, int **frameDelays)
 Image LoadImageAnim(const char *fileName, int *frames)
 {
     int *delays = NULL;
-    LoadImageAnimDelays(fileName, frames, &delays);
+    Image image = LoadImageAnimDelays(fileName, frames, &delays);
     RL_FREE(delays);
+    return image;
 }
 
 // Load image from memory buffer, fileType refers to extension: i.e. ".png"
