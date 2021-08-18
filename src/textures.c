@@ -250,8 +250,8 @@ Image LoadImageRaw(const char *fileName, int width, int height, int format, int 
 //  - Image.data buffer includes all frames: [image#0][image#1][image#2][...]
 //  - Number of frames is returned through 'frames' parameter
 //  - All frames are returned in RGBA format
-//  - Frames delay data is discarded
-Image LoadImageAnim(const char *fileName, int *frames)
+//  - Frames delay data is returned though 'frameDelays' parameter, a pointer to an array of ints that the function will declare with length equal to the number of frames, that represents the delay per frame in miliseconds
+Image LoadImageAnimDelays(const char *fileName, int *frames, int **frameDelays)
 {
     Image image = { 0 };
     int framesCount = 1;
@@ -265,14 +265,12 @@ Image LoadImageAnim(const char *fileName, int *frames)
         if (fileData != NULL)
         {
             int comp = 0;
-            int **delays = NULL;
-            image.data = stbi_load_gif_from_memory(fileData, dataSize, delays, &image.width, &image.height, &framesCount, &comp, 4);
+            image.data = stbi_load_gif_from_memory(fileData, dataSize, frameDelays, &image.width, &image.height, &framesCount, &comp, 4);
 
             image.mipmaps = 1;
             image.format = PIXELFORMAT_UNCOMPRESSED_R8G8B8A8;
 
             RL_FREE(fileData);
-            RL_FREE(delays);        // NOTE: Frames delays are discarded
         }
     }
 #else
@@ -284,6 +282,18 @@ Image LoadImageAnim(const char *fileName, int *frames)
 
     *frames = framesCount;
     return image;
+}
+
+// Load animated image data
+//  - Image.data buffer includes all frames: [image#0][image#1][image#2][...]
+//  - Number of frames is returned through 'frames' parameter
+//  - All frames are returned in RGBA format
+//  - Frames delay data is discarded
+Image LoadImageAnim(const char *fileName, int *frames)
+{
+    int *delays = NULL;
+    LoadImageAnimDelays(fileName, frames, &delays);
+    RL_FREE(delays);
 }
 
 // Load image from memory buffer, fileType refers to extension: i.e. ".png"
