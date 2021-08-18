@@ -41,7 +41,7 @@
 *   #define SUPPORT_GL_DETAILS_INFO
 *       Show OpenGL extensions and capabilities detailed logs on init
 *
-*   rlgl capabilities could be customized just defining some internal 
+*   rlgl capabilities could be customized just defining some internal
 *   values before library inclusion (default values listed):
 *
 *   #define RL_DEFAULT_BATCH_BUFFER_ELEMENTS   8192    // Default internal render batch elements limits
@@ -54,7 +54,7 @@
 *   #define RL_CULL_DISTANCE_NEAR              0.01    // Default projection matrix near cull distance
 *   #define RL_CULL_DISTANCE_FAR             1000.0    // Default projection matrix far cull distance
 *
-*   When loading a shader, the following vertex attribute and uniform 
+*   When loading a shader, the following vertex attribute and uniform
 *   location names are tried to be set automatically:
 *
 *   #define RL_DEFAULT_SHADER_ATTRIB_NAME_POSITION     "vertexPosition"    // Binded by default to shader location: 0
@@ -246,11 +246,11 @@
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
 //----------------------------------------------------------------------------------
-typedef enum { 
-    OPENGL_11 = 1, 
-    OPENGL_21, 
-    OPENGL_33, 
-    OPENGL_ES_20 
+typedef enum {
+    OPENGL_11 = 1,
+    OPENGL_21,
+    OPENGL_33,
+    OPENGL_ES_20
 } rlGlVersion;
 
 typedef enum {
@@ -457,13 +457,14 @@ typedef enum {
     RL_SHADER_ATTRIB_VEC4              // Shader attribute type: vec4 (4 float)
 } rlShaderAttributeDataType;
 
+//------------------------------------------------------------------------------------
+// Functions Declaration - Matrix operations
+//------------------------------------------------------------------------------------
+
 #if defined(__cplusplus)
 extern "C" {            // Prevents name mangling of functions
 #endif
 
-//------------------------------------------------------------------------------------
-// Functions Declaration - Matrix operations
-//------------------------------------------------------------------------------------
 RLAPI void rlMatrixMode(int mode);                    // Choose the current matrix to be transformed
 RLAPI void rlPushMatrix(void);                        // Push the current matrix to stack
 RLAPI void rlPopMatrix(void);                         // Pop lattest inserted matrix from stack
@@ -642,6 +643,7 @@ RLAPI void rlSetMatrixViewOffsetStereo(Matrix right, Matrix left);      // Set e
 // Quick and dirty cube/quad buffers load->draw->unload
 RLAPI void rlLoadDrawCube(void);     // Load and draw a cube
 RLAPI void rlLoadDrawQuad(void);     // Load and draw a quad
+
 #if defined(__cplusplus)
 }
 #endif
@@ -1023,7 +1025,7 @@ void rlLoadIdentity(void)
 // Multiply the current matrix by a translation matrix
 void rlTranslatef(float x, float y, float z)
 {
-    Matrix matTranslation = { 
+    Matrix matTranslation = {
         1.0f, 0.0f, 0.0f, x,
         0.0f, 1.0f, 0.0f, y,
         0.0f, 0.0f, 1.0f, z,
@@ -1039,7 +1041,7 @@ void rlTranslatef(float x, float y, float z)
 void rlRotatef(float angle, float x, float y, float z)
 {
     Matrix matRotation = rlMatrixIdentity();
-    
+
     // Axis vector (x, y, z) normalization
     float lengthSquared = x*x + y*y + z*z;
     if ((lengthSquared != 1.0f) && (lengthSquared != 0.0f))
@@ -1049,7 +1051,7 @@ void rlRotatef(float angle, float x, float y, float z)
         y *= inverseLength;
         z *= inverseLength;
     }
-    
+
     // Rotation matrix generation
     float sinres = sinf(DEG2RAD*angle);
     float cosres = cosf(DEG2RAD*angle);
@@ -1082,11 +1084,11 @@ void rlRotatef(float angle, float x, float y, float z)
 // Multiply the current matrix by a scaling matrix
 void rlScalef(float x, float y, float z)
 {
-    Matrix matScale = { 
+    Matrix matScale = {
         x, 0.0f, 0.0f, 0.0f,
         0.0f, y, 0.0f, 0.0f,
         0.0f, 0.0f, z, 0.0f,
-        0.0f, 0.0f, 0.0f, 1.0f 
+        0.0f, 0.0f, 0.0f, 1.0f
     };
 
     // NOTE: We transpose matrix with multiplication order
@@ -1143,7 +1145,7 @@ void rlOrtho(double left, double right, double bottom, double top, double znear,
     // NOTE: If left-right and top-botton values are equal it could create a division by zero,
     // response to it is platform/compiler dependant
     Matrix matOrtho = { 0 };
-    
+
     float rl = (float)(right - left);
     float tb = (float)(top - bottom);
     float fn = (float)(zfar - znear);
@@ -1556,11 +1558,11 @@ void rlActiveDrawBuffers(int count)
     // it can be queried with glGet*() but it must be at least 8
     //GLint maxDrawBuffers = 0;
     //glGetIntegerv(GL_MAX_DRAW_BUFFERS, &maxDrawBuffers);
-    
+
     if (count > 0)
     {
         if (count > 8) TRACELOG(LOG_WARNING, "GL: Max color buffers limited to 8");
-        else 
+        else
         {
             unsigned int buffers[8] = {
                 GL_COLOR_ATTACHMENT0,
@@ -2397,10 +2399,10 @@ void rlDrawRenderBatch(rlRenderBatch *batch)
 
             // Create modelview-projection matrix and upload to shader
             Matrix matMVP = rlMatrixMultiply(RLGL.State.modelview, RLGL.State.projection);
-            float matMVPfloat[16] = { 
-                matMVP.m0, matMVP.m1, matMVP.m2, matMVP.m3, 
-                matMVP.m4, matMVP.m5, matMVP.m6, matMVP.m7, 
-                matMVP.m8, matMVP.m9, matMVP.m10, matMVP.m11, 
+            float matMVPfloat[16] = {
+                matMVP.m0, matMVP.m1, matMVP.m2, matMVP.m3,
+                matMVP.m4, matMVP.m5, matMVP.m6, matMVP.m7,
+                matMVP.m8, matMVP.m9, matMVP.m10, matMVP.m11,
                 matMVP.m12, matMVP.m13, matMVP.m14, matMVP.m15
             };
             glUniformMatrix4fv(RLGL.State.currentShaderLocs[RL_SHADER_LOC_MATRIX_MVP], 1, false, matMVPfloat);
@@ -3465,7 +3467,7 @@ unsigned int rlLoadShaderCode(const char *vsCode, const char *fsCode)
     {
         int namelen = -1;
         int num = -1;
-        char name[256]; // Assume no variable names longer than 256
+        char name[256] = { 0 };     // Assume no variable names longer than 256
         GLenum type = GL_ZERO;
 
         // Get the name of the uniforms
@@ -3580,7 +3582,15 @@ unsigned int rlLoadShaderProgram(unsigned int vShaderId, unsigned int fShaderId)
 
         program = 0;
     }
-    else TRACELOG(RL_LOG_INFO, "SHADER: [ID %i] Program shader loaded successfully", program);
+    else
+    {
+        // Get the size of compiled shader program (not available on OpenGL ES 2.0)
+        // NOTE: If GL_LINK_STATUS is GL_FALSE, program binary length is zero.
+        //GLint binarySize = 0;
+        //glGetProgramiv(id, GL_PROGRAM_BINARY_LENGTH, &binarySize);
+
+        TRACELOG(RL_LOG_INFO, "SHADER: [ID %i] Program shader loaded successfully", program);
+    }
 #endif
     return program;
 }
@@ -3660,10 +3670,10 @@ void rlSetVertexAttributeDefault(int locIndex, const void *value, int attribType
 void rlSetUniformMatrix(int locIndex, Matrix mat)
 {
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
-    float matfloat[16] = { 
-        mat.m0, mat.m1, mat.m2, mat.m3, 
-        mat.m4, mat.m5, mat.m6, mat.m7, 
-        mat.m8, mat.m9, mat.m10, mat.m11, 
+    float matfloat[16] = {
+        mat.m0, mat.m1, mat.m2, mat.m3,
+        mat.m4, mat.m5, mat.m6, mat.m7,
+        mat.m8, mat.m9, mat.m10, mat.m11,
         mat.m12, mat.m13, mat.m14, mat.m15
     };
     glUniformMatrix4fv(locIndex, 1, false, matfloat);
