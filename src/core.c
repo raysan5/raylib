@@ -2281,8 +2281,11 @@ Shader LoadShader(const char *vsFileName, const char *fsFileName)
 {
     Shader shader = { 0 };
 
-    char *vShaderStr = LoadFileText(vsFileName);
-    char *fShaderStr = LoadFileText(fsFileName);
+    char *vShaderStr = NULL;
+    char *fShaderStr = NULL;
+    
+    if (vsFileName != NULL) vShaderStr = LoadFileText(vsFileName);
+    if (fsFileName != NULL) fShaderStr = LoadFileText(fsFileName);
 
     shader = LoadShaderFromMemory(vShaderStr, fShaderStr);
 

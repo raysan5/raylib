@@ -318,7 +318,7 @@ typedef struct Mesh {
     int vertexCount;        // Number of vertices stored in arrays
     int triangleCount;      // Number of triangles stored (indexed or not)
 
-    // Default vertex data
+    // Vertex attributes data
     float *vertices;        // Vertex position (XYZ - 3 components per vertex) (shader-location = 0)
     float *texcoords;       // Vertex texture coordinates (UV - 2 components per vertex) (shader-location = 1)
     float *texcoords2;      // Vertex second texture coordinates (useful for lightmaps) (shader-location = 5)
