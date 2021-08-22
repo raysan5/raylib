@@ -23,10 +23,10 @@
 
 #define NUM_VOX_FILES  3
 
-char* szVoxFiles[] = {
-	"..\\..\\examples\\models\\resources\\vox\\chr_knight.vox",
-	"..\\..\\examples\\models\\resources\\vox\\chr_sword.vox",
-	"..\\..\\examples\\models\\resources\\vox\\monu9.vox"
+const char* szVoxFiles[] = {
+	"resources/vox/chr_knight.vox",
+	"resources/vox/chr_sword.vox",
+	"resources/vox/monu9.vox"
 };
 
 

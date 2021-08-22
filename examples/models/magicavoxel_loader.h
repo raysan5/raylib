@@ -746,12 +746,12 @@ Model Vox_LoadFileName(const char* pszfileName)
 		pmesh->vertices = MemAlloc(size);
 		memcpy(pmesh->vertices, pvertices, size);
 
-		//Copy Indices
+		//Copy Indices TODO compute globals indices array
 		size = pvoxArray->indices.used * sizeof(unsigned short);
 		pmesh->indices = MemAlloc(size);
 		memcpy(pmesh->indices, pindices, size);
 
-		pmesh->triangleCount = pvoxArray->indices.used / 3;
+		pmesh->triangleCount = (pmesh->vertexCount / 4) * 2;
 
 		// Copy Colors
 		size = pmesh->vertexCount * sizeof(Color);
@@ -780,4 +780,4 @@ Model Vox_LoadFileName(const char* pszfileName)
 }
 
 
-#endif MAGICAVOXEL_LOADER_IMPLEMENTATION
+#endif //MAGICAVOXEL_LOADER_IMPLEMENTATION
