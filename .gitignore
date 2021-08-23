@@ -1,11 +1,6 @@
 # Ignore generated files
 # ...
 
-# Ignore all without extensions
-*
-!*.*
-!*/
-
 # Ignore VIM's backup generated files
 *.swp
 *.swo
