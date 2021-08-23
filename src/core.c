@@ -2318,8 +2318,11 @@ Shader LoadShader(const char *vsFileName, const char *fsFileName)
 {
     Shader shader = { 0 };
 
-    char *vShaderStr = LoadFileText(vsFileName);
-    char *fShaderStr = LoadFileText(fsFileName);
+    char *vShaderStr = NULL;
+    char *fShaderStr = NULL;
+    
+    if (vsFileName != NULL) vShaderStr = LoadFileText(vsFileName);
+    if (fsFileName != NULL) fShaderStr = LoadFileText(fsFileName);
 
     shader = LoadShaderFromMemory(vShaderStr, fShaderStr);
 
@@ -3617,6 +3620,17 @@ static bool InitGraphicsDevice(int width, int height)
 
 #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
     glfwSetErrorCallback(ErrorCallback);
+    /*
+    // Setup custom allocators to match raylib ones
+    const GLFWallocator allocator = {
+        .allocate = MemAlloc,
+        .deallocate = MemFree,
+        .reallocate = MemRealloc,
+        .user = NULL
+    };
+
+    glfwInitAllocator(&allocator);
+    */
 
 #if defined(__APPLE__)
     glfwInitHint(GLFW_COCOA_CHDIR_RESOURCES, GLFW_FALSE);

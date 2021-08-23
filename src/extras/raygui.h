@@ -137,6 +137,10 @@
     #include "raylib.h"
 #endif
 
+#ifndef RAYGUIDEF
+    #define RAYGUIDEF       // We are building or using rlgl as a static library (or Linux shared library)
+#endif
+
 // Define functions scope to be used internally (static) or externally (extern) to the module including this file
 #if defined(_WIN32)
     // Microsoft attibutes to tell compiler that symbols are imported/exported from a .dll
@@ -144,11 +148,7 @@
         #define RAYGUIDEF __declspec(dllexport)     // We are building raygui as a Win32 shared library (.dll)
     #elif defined(USE_LIBTYPE_SHARED)
         #define RAYGUIDEF __declspec(dllimport)     // We are using raygui as a Win32 shared library (.dll)
-    #else
-        #define RAYGUIDEF   // We are building or using raygui as a static library
     #endif
-#else
-    #define RAYGUIDEF       // We are building or using raygui as a static library (or Linux shared library)
 #endif
 
 #if !defined(RAYGUI_MALLOC) && !defined(RAYGUI_CALLOC) && !defined(RAYGUI_FREE)
@@ -174,10 +174,6 @@
 #define NUM_PROPS_EXTENDED               8      // Number of extended properties
 
 #define TEXTEDIT_CURSOR_BLINK_FRAMES    20      // Text edit controls cursor blink timming
-
-#if defined(__cplusplus)
-extern "C" {            // Prevents name mangling of functions
-#endif
 
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
@@ -231,7 +227,7 @@ extern "C" {            // Prevents name mangling of functions
     } Texture2D;
 
     // Font character info
-    typedef struct CharInfo CharInfo;
+    typedef struct GlyphInfo GlyphInfo;
 
     // TODO: Font type is very coupled to raylib, mostly required by GuiLoadStyle()
     // It should be redesigned to be provided by user
@@ -240,7 +236,7 @@ extern "C" {            // Prevents name mangling of functions
         int charsCount;         // Number of characters
         Texture2D texture;      // Characters texture atlas
         Rectangle *recs;        // Characters rectangles in texture
-        CharInfo *chars;        // Characters info data
+        GlyphInfo *chars;        // Characters info data
     } Font;
 #endif
 
@@ -412,6 +408,10 @@ typedef enum {
 // Module Functions Declaration
 //----------------------------------------------------------------------------------
 
+#if defined(__cplusplus)
+extern "C" {            // Prevents name mangling of functions
+#endif
+
 // State modification functions
 RAYGUIDEF void GuiEnable(void);                                         // Enable gui controls (global state)
 RAYGUIDEF void GuiDisable(void);                                        // Disable gui controls (global state)
@@ -494,7 +494,6 @@ RAYGUIDEF void GuiSetIconPixel(int iconId, int x, int y);       // Set icon pixe
 RAYGUIDEF void GuiClearIconPixel(int iconId, int x, int y);     // Clear icon pixel value
 RAYGUIDEF bool GuiCheckIconPixel(int iconId, int x, int y);     // Check icon pixel value
 #endif
-
 
 #if defined(__cplusplus)
 }            // Prevents name mangling of functions
@@ -1407,11 +1406,11 @@ bool GuiTextBox(Rectangle bounds, char *text, int textSize, bool editMode)
                 if ((GetTextWidth(text) < (maxWidth - GuiGetStyle(DEFAULT, TEXT_SIZE))) && (key >= 32))
                 {
                     int byteLength = 0;
-                    const char *textUtf8 = CodepointToUtf8(key, &byteLength);
+                    const char *textUTF8 = CodepointToUTF8(key, &byteLength);
 
                     for (int i = 0; i < byteLength; i++)
                     {
-                        text[keyCount] = textUtf8[i];
+                        text[keyCount] = textUTF8[i];
                         keyCount++;
                     }
 
@@ -2890,7 +2889,7 @@ void GuiLoadStyle(const char *fileName)
                 for (int i = 0; i < font.charsCount; i++) fread(&font.recs[i], 1, sizeof(Rectangle), rgsFile);
 
                 // Load font chars info data
-                font.chars = (CharInfo *)RAYGUI_CALLOC(font.charsCount, sizeof(CharInfo));
+                font.chars = (GlyphInfo *)RAYGUI_CALLOC(font.charsCount, sizeof(GlyphInfo));
                 for (int i = 0; i < font.charsCount; i++)
                 {
                     fread(&font.chars[i].value, 1, sizeof(int), rgsFile);
@@ -3640,8 +3639,8 @@ static int TextToInteger(const char *text)
     return value*sign;
 }
 
-// Encode codepoint into utf8 text (char array length returned as parameter)
-static const char *CodepointToUtf8(int codepoint, int *byteLength)
+// Encode codepoint into UTF-8 text (char array length returned as parameter)
+static const char *CodepointToUTF8(int codepoint, int *byteLength)
 {
     static char utf8[6] = { 0 };
     int length = 0;

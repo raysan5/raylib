@@ -134,6 +134,8 @@
 // Other modules (raymath, rlgl) also require some of those types, so,
 // to be able to use those other modules as standalone (not depending on raylib)
 // this defines are very useful for internal check and avoid type (re)definitions
+#define RL_COLOR_TYPE
+#define RL_RECTANGLE_TYPE
 #define RL_VECTOR2_TYPE
 #define RL_VECTOR3_TYPE
 #define RL_VECTOR4_TYPE
@@ -169,14 +171,6 @@
 #define BLANK      CLITERAL(Color){ 0, 0, 0, 0 }           // Blank (Transparent)
 #define MAGENTA    CLITERAL(Color){ 255, 0, 255, 255 }     // Magenta
 #define RAYWHITE   CLITERAL(Color){ 245, 245, 245, 255 }   // My own White (raylib logo)
-
-// WARNING: Temporal hacks to avoid breaking old codebases using
-// deprecated raylib implementations or definitions
-#define GetImageData            LoadImageColors
-#define FILTER_POINT            TEXTURE_FILTER_POINT
-#define FILTER_BILINEAR         TEXTURE_FILTER_BILINEAR
-#define MAP_DIFFUSE             MATERIAL_MAP_DIFFUSE
-#define UNCOMPRESSED_R8G8B8A8   PIXELFORMAT_UNCOMPRESSED_R8G8B8A8
 
 //----------------------------------------------------------------------------------
 // Structures Definition
@@ -324,7 +318,7 @@ typedef struct Mesh {
     int vertexCount;        // Number of vertices stored in arrays
     int triangleCount;      // Number of triangles stored (indexed or not)
 
-    // Default vertex data
+    // Vertex attributes data
     float *vertices;        // Vertex position (XYZ - 3 components per vertex) (shader-location = 0)
     float *texcoords;       // Vertex texture coordinates (UV - 2 components per vertex) (shader-location = 1)
     float *texcoords2;      // Vertex second texture coordinates (useful for lightmaps) (shader-location = 5)
