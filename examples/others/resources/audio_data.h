@@ -11,7 +11,7 @@
 //////////////////////////////////////////////////////////////////////////////////
 
 // Wave data information
-#define AUDIO_SAMPLE_COUNT     24367
+#define AUDIO_FRAME_COUNT     24367
 #define AUDIO_SAMPLE_RATE      44100
 #define AUDIO_SAMPLE_SIZE      32
 #define AUDIO_CHANNELS         1
