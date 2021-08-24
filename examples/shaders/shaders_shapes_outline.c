@@ -63,7 +63,7 @@ int main(void)
                 DrawTextureEx(torus, (Vector2){ 544, 230 }, 0.0, outlineScale, WHITE);
             EndShaderMode();
 
-            DrawText("Shader-based shdrOutlines for textures", 190, 200, 20, LIGHTGRAY);
+            DrawText("Shader-based outlines for textures", 190, 200, 20, LIGHTGRAY);
 
             DrawFPS(710, 10);
 
