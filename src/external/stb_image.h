@@ -688,10 +688,6 @@ typedef unsigned char validate_uint32[sizeof(stbi__uint32)==4 ? 1 : -1];
 #define STBI_NO_SIMD
 #endif
 
-#if defined(__TINYC__)
-  #define STBI_NO_SIMD
-#endif
-
 #if !defined(STBI_NO_SIMD) && (defined(STBI__X86_TARGET) || defined(STBI__X64_TARGET))
 #define STBI_SSE2
 #include <emmintrin.h>
