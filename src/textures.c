@@ -102,6 +102,10 @@
 #define STBI_NO_PIC
 #define STBI_NO_PNM             // Image format .ppm and .pgm
 
+#if defined(__TINYC__)
+    #define STBI_NO_SIMD
+#endif
+
 #if (defined(SUPPORT_FILEFORMAT_BMP) || \
      defined(SUPPORT_FILEFORMAT_PNG) || \
      defined(SUPPORT_FILEFORMAT_TGA) || \
