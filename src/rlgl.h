@@ -2956,9 +2956,9 @@ void rlGenTextureMipmaps(unsigned int id, int width, int height, int format, int
             *mipmaps = mipmapCount + 1;
             RL_FREE(texData); // Once mipmaps have been generated and data has been uploaded to GPU VRAM, we can discard RAM data
 
-            TRACELOG(RL_LOG_WARNING, "TEXTURE: [ID %i] Mipmaps generated manually on CPU side, total: %i", texture->id, texture->mipmaps);
+            TRACELOG(RL_LOG_WARNING, "TEXTURE: [ID %i] Mipmaps generated manually on CPU side, total: %i", id, *mipmaps);
         }
-        else TRACELOG(RL_LOG_WARNING, "TEXTURE: [ID %i] Failed to generate mipmaps for provided texture format", texture->id);
+        else TRACELOG(RL_LOG_WARNING, "TEXTURE: [ID %i] Failed to generate mipmaps for provided texture format", id);
     }
 #endif
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
