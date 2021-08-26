@@ -1154,7 +1154,7 @@ static const char *GetDirectoryPath(const char *filePath);  // -- GuiLoadStyle()
 
 // raylib functions already implemented in raygui
 //-------------------------------------------------------------------------------
-static Color GetColor(int hexValue);                // Returns a Color struct from hexadecimal value
+static Color GetColor(unsigned int hexValue);                // Returns a Color struct from hexadecimal value
 static int ColorToInt(Color color);                 // Returns hexadecimal value for a Color
 static Color Fade(Color color, float alpha);        // Color fade-in or fade-out, alpha goes from 0.0f to 1.0f
 static bool CheckCollisionPointRec(Vector2 point, Rectangle rec);   // Check if point is inside rectangle
@@ -4061,7 +4061,7 @@ static Vector3 ConvertHSVtoRGB(Vector3 hsv)
 
 #if defined(RAYGUI_STANDALONE)
 // Returns a Color struct from hexadecimal value
-static Color GetColor(int hexValue)
+static Color GetColor(unsigned int hexValue)
 {
     Color color;
 

@@ -2505,7 +2505,7 @@ Function 308: GetColor() (1 input parameters)
   Name: GetColor
   Return type: Color
   Description: Get Color structure from hexadecimal value
-  Param[1]: hexValue (type: int)
+  Param[1]: hexValue (type: unsigned int)
 Function 309: GetPixelColor() (2 input parameters)
   Name: GetPixelColor
   Return type: Color

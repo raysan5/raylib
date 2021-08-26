@@ -1297,7 +1297,7 @@ RLAPI Vector3 ColorToHSV(Color color);                                      // G
 RLAPI Color ColorFromHSV(float hue, float saturation, float value);         // Get a Color from HSV values, hue [0..360], saturation/value [0..1]
 RLAPI Color ColorAlpha(Color color, float alpha);                           // Get color with alpha applied, alpha goes from 0.0f to 1.0f
 RLAPI Color ColorAlphaBlend(Color dst, Color src, Color tint);              // Get src alpha-blended into dst color with tint
-RLAPI Color GetColor(int hexValue);                                         // Get Color structure from hexadecimal value
+RLAPI Color GetColor(unsigned int hexValue);                                         // Get Color structure from hexadecimal value
 RLAPI Color GetPixelColor(void *srcPtr, int format);                        // Get Color from a source pixel pointer of certain format
 RLAPI void SetPixelColor(void *dstPtr, Color color, int format);            // Set color formatted into destination pixel pointer
 RLAPI int GetPixelDataSize(int width, int height, int format);              // Get pixel data size in bytes for certain format
