@@ -82,6 +82,7 @@ Some people ported raylib to other languages in form of bindings or wrappers to 
 | jaylib             | 3.0 | [Janet](https://janet-lang.org/)          | https://github.com/janet-lang/jaylib      |
 | raykit             | ? | [Kit](https://www.kitlang.org/)           | https://github.com/Gamerfiend/raykit      |
 | vraylib            | 3.5 | [V](https://vlang.io/)                    | https://github.com/waotzi/vraylib      |
+| raylib.v           | 3.7 | [V](https://vlang.io/)                    | https://github.com/irishgreencitrus/raylib.v |
 | ray.mod            | 3.0 | [BlitzMax](https://blitzmax.org/)         | https://github.com/bmx-ng/ray.mod         |
 | raylib-ocaml       | 3.7 | [OCaml](https://ocaml.org/)               | https://github.com/tjammer/raylib-ocaml   |
 | raylib-mosaic      | 3.0 | [Mosaic](https://github.com/sal55/langs/tree/master/Mosaic)     | https://github.com/pluckyporcupine/raylib-mosaic   |

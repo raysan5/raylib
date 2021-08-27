@@ -102,6 +102,10 @@
 #define STBI_NO_PIC
 #define STBI_NO_PNM             // Image format .ppm and .pgm
 
+#if defined(__TINYC__)
+    #define STBI_NO_SIMD
+#endif
+
 #if (defined(SUPPORT_FILEFORMAT_BMP) || \
      defined(SUPPORT_FILEFORMAT_PNG) || \
      defined(SUPPORT_FILEFORMAT_TGA) || \
@@ -3707,7 +3711,7 @@ Color ColorAlphaBlend(Color dst, Color src, Color tint)
 }
 
 // Get a Color struct from hexadecimal value
-Color GetColor(int hexValue)
+Color GetColor(unsigned int hexValue)
 {
     Color color;
 

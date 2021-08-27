@@ -1,7 +1,7 @@
 /*******************************************************************************************
 *
 *   raylib [shaders] example - Apply an shdrOutline to a texture
-*    
+*
 *   NOTE: This example requires raylib OpenGL 3.3 or ES2 versions for shaders support,
 *         OpenGL 1.1 does not support shaders, recompile raylib to OpenGL 3.3 version.
 *
@@ -9,7 +9,7 @@
 *
 *   This example has been created using raylib 3.8 (www.raylib.com)
 *   raylib is licensed under an unmodified zlib/libpng license (View raylib.h for details)
-* 
+*
 *   Example contributed by Samuel Skiff (@GoldenThumbs)
 *
 *   Copyright (c) 2021 Samuel SKiff (@GoldenThumbs) and Ramon Santamaria (@raysan5)
@@ -31,11 +31,11 @@ int main(void)
     const int screenWidth = 800;
     const int screenHeight = 450;
 
-    InitWindow(screenWidth, screenHeight, "raylib [shaders] example - Apply an shdrOutline to a texture");
+    InitWindow(screenWidth, screenHeight, "raylib [shaders] example - Apply an outline to a texture");
 
     Texture2D egg = LoadTexture("resources/egg.png");
     Texture2D torus = LoadTexture("resources/torus.png");
-    Shader shdrOutline = LoadShader(0, TextFormat("resources/shaders/glsl%i/shdrOutline.fs", GLSL_VERSION));
+    Shader shdrOutline = LoadShader(0, TextFormat("resources/shaders/glsl%i/outline.fs", GLSL_VERSION));
 
     float outlineScale = 16.0f;
     float textureScale[2] = { 16.0f*4, 16.0f*4 };
@@ -63,7 +63,7 @@ int main(void)
                 DrawTextureEx(torus, (Vector2){ 544, 230 }, 0.0, outlineScale, WHITE);
             EndShaderMode();
 
-            DrawText("Shader-based shdrOutlines for textures", 190, 200, 20, LIGHTGRAY);
+            DrawText("Shader-based outlines for textures", 190, 200, 20, LIGHTGRAY);
 
             DrawFPS(710, 10);
 

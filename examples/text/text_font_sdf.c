@@ -64,7 +64,7 @@ int main(void)
 
     // Load SDF required shader (we use default vertex shader)
     Shader shader = LoadShader(0, TextFormat("resources/shaders/glsl%i/sdf.fs", GLSL_VERSION));
-    SetTextureFilter(fontSDF.texture, FILTER_BILINEAR);    // Required for SDF font
+    SetTextureFilter(fontSDF.texture, TEXTURE_FILTER_BILINEAR);    // Required for SDF font
 
     Vector2 fontPosition = { 40, screenHeight/2.0f - 50 };
     Vector2 textSize = { 0.0f, 0.0f };

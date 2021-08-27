@@ -31,7 +31,7 @@ int main(void)
     // Same as: Wave wave = LoadWave("sound.wav");
     Wave wave = {
         .data = AUDIO_DATA,
-        .sampleCount = AUDIO_SAMPLE_COUNT,
+        .frameCount = AUDIO_FRAME_COUNT,
         .sampleRate = AUDIO_SAMPLE_RATE,
         .sampleSize = AUDIO_SAMPLE_SIZE,
         .channels = AUDIO_CHANNELS
