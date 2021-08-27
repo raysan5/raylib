@@ -1125,8 +1125,8 @@ static bool IsMouseButtonDown(int button);
 static bool IsMouseButtonPressed(int button);
 static bool IsMouseButtonReleased(int button);
 
-static bool IsKeyDown(int key);
-static bool IsKeyPressed(int key);
+static bool IsKeyDown(unsigned int key);
+static bool IsKeyPressed(unsigned int key);
 static int GetCharPressed(void);         // -- GuiTextBox(), GuiTextBoxMulti(), GuiValueBox()
 //-------------------------------------------------------------------------------
 

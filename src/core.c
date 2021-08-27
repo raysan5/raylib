@@ -3151,7 +3151,7 @@ void OpenURL(const char *url)
 // Module Functions Definition - Input (Keyboard, Mouse, Gamepad) Functions
 //----------------------------------------------------------------------------------
 // Check if a key has been pressed once
-bool IsKeyPressed(int key)
+bool IsKeyPressed(unsigned int key)
 {
     bool pressed = false;
 
@@ -3162,14 +3162,14 @@ bool IsKeyPressed(int key)
 }
 
 // Check if a key is being pressed (key held down)
-bool IsKeyDown(int key)
+bool IsKeyDown(unsigned int key)
 {
     if (CORE.Input.Keyboard.currentKeyState[key] == 1) return true;
     else return false;
 }
 
 // Check if a key has been released once
-bool IsKeyReleased(int key)
+bool IsKeyReleased(unsigned int key)
 {
     bool released = false;
 
@@ -3180,7 +3180,7 @@ bool IsKeyReleased(int key)
 }
 
 // Check if a key is NOT being pressed (key not held down)
-bool IsKeyUp(int key)
+bool IsKeyUp(unsigned int key)
 {
     if (CORE.Input.Keyboard.currentKeyState[key] == 0) return true;
     else return false;
@@ -3232,7 +3232,7 @@ int GetCharPressed(void)
 
 // Set a custom key to exit program
 // NOTE: default exitKey is ESCAPE
-void SetExitKey(int key)
+void SetExitKey(unsigned int key)
 {
 #if !defined(PLATFORM_ANDROID)
     CORE.Input.Keyboard.exitKey = key;
