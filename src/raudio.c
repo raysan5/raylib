@@ -952,7 +952,7 @@ bool ExportWaveAsCode(Wave wave, const char *fileName)
     bytesCount += sprintf(txtData + bytesCount, "// more info and bugs-report:  github.com/raysan5/raylib                        //\n");
     bytesCount += sprintf(txtData + bytesCount, "// feedback and support:       ray[at]raylib.com                                //\n");
     bytesCount += sprintf(txtData + bytesCount, "//                                                                              //\n");
-    bytesCount += sprintf(txtData + bytesCount, "// Copyright (c) 2018 Ramon Santamaria (@raysan5)                               //\n");
+    bytesCount += sprintf(txtData + bytesCount, "// Copyright (c) 2018-2021 Ramon Santamaria (@raysan5)                          //\n");
     bytesCount += sprintf(txtData + bytesCount, "//                                                                              //\n");
     bytesCount += sprintf(txtData + bytesCount, "//////////////////////////////////////////////////////////////////////////////////\n\n");
 
