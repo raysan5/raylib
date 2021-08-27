@@ -967,12 +967,13 @@ bool ExportWaveAsCode(Wave wave, const char *fileName)
 
     bytesCount += sprintf(txtData + bytesCount, "// Wave data information\n");
     bytesCount += sprintf(txtData + bytesCount, "#define %s_FRAME_COUNT      %u\n", varFileName, wave.frameCount);
-    bytesCount += sprintf(txtData + bytesCount, "#define %s_SAMPLE_COUNT     %u\n", varFileName, wave.frameCount*wave.channels);
+    bytesCount += sprintf(txtData + bytesCount, "#define %s_FRAME_COUNT      %u\n", varFileName, wave.frameCount);
     bytesCount += sprintf(txtData + bytesCount, "#define %s_SAMPLE_RATE      %u\n", varFileName, wave.sampleRate);
     bytesCount += sprintf(txtData + bytesCount, "#define %s_SAMPLE_SIZE      %u\n", varFileName, wave.sampleSize);
     bytesCount += sprintf(txtData + bytesCount, "#define %s_CHANNELS         %u\n\n", varFileName, wave.channels);
 
     // Write byte data as hexadecimal text
+    // NOTE: Frame data exported is interlaced: Frame01[Sample-Channel01, Sample-Channel02, ...], Frame02[], Frame03[]
     bytesCount += sprintf(txtData + bytesCount, "static unsigned char %s_DATA[%i] = { ", varFileName, waveDataSize);
     for (int i = 0; i < waveDataSize - 1; i++) bytesCount += sprintf(txtData + bytesCount, ((i%TEXT_BYTES_PER_LINE == 0)? "0x%x,\n" : "0x%x, "), ((unsigned char *)wave.data)[i]);
     bytesCount += sprintf(txtData + bytesCount, "0x%x };\n", ((unsigned char *)wave.data)[waveDataSize - 1]);
