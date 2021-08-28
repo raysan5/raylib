@@ -3792,6 +3792,9 @@ static bool InitGraphicsDevice(int width, int height)
         if (CORE.Window.handle)
         {
 #if defined(PLATFORM_DESKTOP)
+            // Set Window size again to prevent GLFW resizing if a different monitor than the primary monitor
+            // is used for starting the application
+            glfwSetWindowSize(CORE.Window.handle,CORE.Window.screen.width,CORE.Window.screen.height);
             // Center window on screen
             int windowPosX = CORE.Window.display.width/2 - CORE.Window.screen.width/2;
             int windowPosY = CORE.Window.display.height/2 - CORE.Window.screen.height/2;
