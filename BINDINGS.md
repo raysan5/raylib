@@ -45,9 +45,10 @@ Some people ported raylib to other languages in form of bindings or wrappers to 
 | raylib-ruby-ffi    | 2.0 | [Ruby](https://www.ruby-lang.org/en/)    | https://github.com/D3nX/raylib-ruby-ffi      |
 | raylib-ruby        | 2.6 | [Ruby](https://www.ruby-lang.org/en/)    | https://github.com/a0/raylib-ruby        |
 | raylib-mruby       | 2.5-dev | [mruby](https://github.com/mruby/mruby)  | https://github.com/lihaochen910/raylib-mruby    |
+| pyraylib          | 3.7 | [Python](https://www.python.org/)        |   https://github.com/Ho011/pyraylib       |
 | raylib-py          | 2.0 | [Python](https://www.python.org/)        | https://github.com/overdev/raylib-py       |
 | raylib-python-cffi | 3.7 | [Python](https://www.python.org/)        | https://github.com/electronstudio/raylib-python-cffi    |
-| raylib-py-ctbg     | 2.6 | [Python](https://www.python.org/)        | https://github.com/overdev/raylib-py-ctbg                 |
+| raylib-py-ctbg     | 2.6 | [Python](https://www.python.org/)        | https://github.com/overdev/raylib-py-ctbg                |
 | jaylib             | 3.7 | [Java](https://en.wikipedia.org/wiki/Java_(programming_language))           | https://github.com/electronstudio/jaylib/   |
 | raylib-java        | 2.0 | [Java](https://en.wikipedia.org/wiki/Java_(programming_language))           | https://github.com/XoanaIO/raylib-java   |
 | raylib-j           | 3.5 | [Java](https://en.wikipedia.org/wiki/Java_(programming_language))           | https://github.com/CreedVI/Raylib-J   |
