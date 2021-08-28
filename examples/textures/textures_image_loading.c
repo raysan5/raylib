@@ -26,8 +26,8 @@ int main(void)
 
     Image image = LoadImage("resources/raylib_logo.png");     // Loaded in CPU memory (RAM)
     Texture2D texture = LoadTextureFromImage(image);          // Image converted to texture, GPU memory (VRAM)
-
     UnloadImage(image);   // Once image has been converted to texture and uploaded to VRAM, it can be unloaded from RAM
+
     SetTargetFPS(60);     // Set our game to run at 60 frames-per-second
     //---------------------------------------------------------------------------------------
 
