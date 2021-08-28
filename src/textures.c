@@ -518,7 +518,7 @@ bool ExportImageAsCode(Image image, const char *fileName)
 
     // NOTE: Text data buffer size is estimated considering image data size in bytes
     // and requiring 6 char bytes for every byte: "0x00, "
-    char *txtData = (char *)RL_CALLOC(6*dataSize + 2000, sizeof(char));
+    char *txtData = (char *)RL_CALLOC(dataSize*6 + 2000, sizeof(char));
 
     int bytesCount = 0;
     bytesCount += sprintf(txtData + bytesCount, "////////////////////////////////////////////////////////////////////////////////////////\n");

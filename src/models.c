@@ -123,13 +123,13 @@ static ModelAnimation *LoadIQMModelAnimations(const char *fileName, int *animCou
 static Model LoadGLTF(const char *fileName);    // Load GLTF mesh data
 static ModelAnimation *LoadGLTFModelAnimations(const char *fileName, int *animCount);    // Load GLTF animation data
 static void LoadGLTFMaterial(Model *model, const char *fileName, const cgltf_data *data);
-static void LoadGLTFMesh(cgltf_data *data, cgltf_mesh* mesh, Model* outModel, Matrix currentTransform, int* primitiveIndex, const char *fileName);
-static void LoadGLTFNode(cgltf_data *data, cgltf_node* node, Model* outModel, Matrix currentTransform, int* primitiveIndex, const char *fileName);
+static void LoadGLTFMesh(cgltf_data *data, cgltf_mesh *mesh, Model *outModel, Matrix currentTransform, int *primitiveIndex, const char *fileName);
+static void LoadGLTFNode(cgltf_data *data, cgltf_node *node, Model *outModel, Matrix currentTransform, int *primitiveIndex, const char *fileName);
 static void InitGLTFBones(Model *model, const cgltf_data *data);
 static void BindGLTFPrimitiveToBones(Model *model, const cgltf_data *data, int primitiveIndex);
-static void GetGLTFPrimitiveCount(cgltf_node* node, int* outCount);
-static bool ReadGLTFValue(cgltf_accessor* acc, unsigned int index, void *variable);
-static void *ReadGLTFValuesAs(cgltf_accessor* acc, cgltf_component_type type, bool adjustOnDownCasting);
+static void GetGLTFPrimitiveCount(cgltf_node *node, int *outCount);
+static bool ReadGLTFValue(cgltf_accessor *acc, unsigned int index, void *variable);
+static void *ReadGLTFValuesAs(cgltf_accessor *acc, cgltf_component_type type, bool adjustOnDownCasting);
 #endif
 
 //----------------------------------------------------------------------------------
@@ -4891,7 +4891,7 @@ static Model LoadGLTF(const char *fileName)
     return model;
 }
 
-static void InitGLTFBones(Model* model, const cgltf_data* data)
+static void InitGLTFBones(Model *model, const cgltf_data *data)
 {
     for (unsigned int j = 0; j < data->nodes_count; j++)
     {
@@ -4914,7 +4914,7 @@ static void InitGLTFBones(Model* model, const cgltf_data* data)
     }
 
     {
-        bool* completedBones = RL_CALLOC(model->boneCount, sizeof(bool));
+        bool *completedBones = RL_CALLOC(model->boneCount, sizeof(bool));
         int numberCompletedBones = 0;
 
         while (numberCompletedBones < model->boneCount)
@@ -5022,7 +5022,7 @@ static void LoadGLTFMaterial(Model *model, const char *fileName, const cgltf_dat
     model->materials[model->materialCount - 1] = LoadMaterialDefault();
 }
 
-static void BindGLTFPrimitiveToBones(Model* model, const cgltf_data* data, int primitiveIndex)
+static void BindGLTFPrimitiveToBones(Model *model, const cgltf_data *data, int primitiveIndex)
 {
     for (unsigned int nodeId = 0; nodeId < data->nodes_count; nodeId++)
     {
@@ -5030,12 +5030,12 @@ static void BindGLTFPrimitiveToBones(Model* model, const cgltf_data* data, int p
         {
             if (model->meshes[primitiveIndex].boneIds == NULL)
             {
-                model->meshes[primitiveIndex].boneIds = RL_CALLOC(4*model->meshes[primitiveIndex].vertexCount, sizeof(int));
-                model->meshes[primitiveIndex].boneWeights = RL_CALLOC(4*model->meshes[primitiveIndex].vertexCount, sizeof(float));
+                model->meshes[primitiveIndex].boneIds = RL_CALLOC(model->meshes[primitiveIndex].vertexCount*4, sizeof(int));
+                model->meshes[primitiveIndex].boneWeights = RL_CALLOC(model->meshes[primitiveIndex].vertexCount*4, sizeof(float));
 
-                for (int b = 0; b < 4*model->meshes[primitiveIndex].vertexCount; b++)
+                for (int b = 0; b < model->meshes[primitiveIndex].vertexCount*4; b++)
                 {
-                    if (b % 4 == 0)
+                    if (b%4 == 0)
                     {
                         model->meshes[primitiveIndex].boneIds[b] = nodeId;
                         model->meshes[primitiveIndex].boneWeights[b] = 1.0f;
@@ -5112,7 +5112,7 @@ static ModelAnimation *LoadGLTFModelAnimations(const char *fileName, int *animCo
             // Getting the max animation time to consider for animation duration
             for (unsigned int i = 0; i < animation->channels_count; i++)
             {
-                cgltf_animation_channel* channel = animation->channels + i;
+                cgltf_animation_channel *channel = animation->channels + i;
                 int frameCounts = (int)channel->sampler->input->count;
                 float lastFrameTime = 0.0f;
 
@@ -5159,8 +5159,8 @@ static ModelAnimation *LoadGLTFModelAnimations(const char *fileName, int *animCo
             // for each single transformation type on single bone
             for (unsigned int channelId = 0; channelId < animation->channels_count; channelId++)
             {
-                cgltf_animation_channel* channel = animation->channels + channelId;
-                cgltf_animation_sampler* sampler = channel->sampler;
+                cgltf_animation_channel *channel = animation->channels + channelId;
+                cgltf_animation_sampler *sampler = channel->sampler;
 
                 int boneId = (int)(channel->target_node - data->nodes);
 
@@ -5318,7 +5318,7 @@ static ModelAnimation *LoadGLTFModelAnimations(const char *fileName, int *animCo
     return animations;
 }
 
-void LoadGLTFMesh(cgltf_data* data, cgltf_mesh* mesh, Model* outModel, Matrix currentTransform, int* primitiveIndex, const char *fileName)
+void LoadGLTFMesh(cgltf_data *data, cgltf_mesh *mesh, Model *outModel, Matrix currentTransform, int *primitiveIndex, const char *fileName)
 {
     for (unsigned int p = 0; p < mesh->primitives_count; p++)
     {
@@ -5443,7 +5443,7 @@ void LoadGLTFMesh(cgltf_data* data, cgltf_mesh* mesh, Model* outModel, Matrix cu
     }
 }
 
-void LoadGLTFNode(cgltf_data* data, cgltf_node* node, Model* outModel, Matrix currentTransform, int* primitiveIndex, const char *fileName)
+void LoadGLTFNode(cgltf_data *data, cgltf_node *node, Model *outModel, Matrix currentTransform, int *primitiveIndex, const char *fileName)
 {
     Matrix nodeTransform = {
         node->matrix[0], node->matrix[4], node->matrix[8], node->matrix[12],
@@ -5458,7 +5458,7 @@ void LoadGLTFNode(cgltf_data* data, cgltf_node* node, Model* outModel, Matrix cu
     for (unsigned int i = 0; i < node->children_count; i++) LoadGLTFNode(data, node->children[i], outModel, currentTransform, primitiveIndex, fileName);
 }
 
-static void GetGLTFPrimitiveCount(cgltf_node* node, int* outCount)
+static void GetGLTFPrimitiveCount(cgltf_node *node, int *outCount)
 {
     if (node->mesh != NULL) *outCount += node->mesh->primitives_count;
 
