@@ -5485,7 +5485,7 @@ void LoadGLTFNode(cgltf_data *data, cgltf_node *node, Model *outModel, Matrix cu
     {
         // Check if skinning is enabled and load Mesh accordingly
         Matrix vertexTransform = currentTransform;
-        if(node->skin != NULL && node->parent != NULL)
+        if((node->skin != NULL) && (node->parent != NULL))
         {
             vertexTransform = localTransform;
             TRACELOG(LOG_WARNING,"MODEL: GLTF Node %s is skinned but not root node! Parent transformations will be ignored (NODE_SKINNED_MESH_NON_ROOT)",node->name);
