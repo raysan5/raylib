@@ -201,16 +201,16 @@ void DrawTriangle3D(Vector3 v1, Vector3 v2, Vector3 v3, Color color)
 }
 
 // Draw a triangle strip defined by points
-void DrawTriangleStrip3D(Vector3 *points, int pointsCount, Color color)
+void DrawTriangleStrip3D(Vector3 *points, int pointCount, Color color)
 {
-    if (pointsCount >= 3)
+    if (pointCount >= 3)
     {
-        rlCheckRenderBatchLimit(3*(pointsCount - 2));
+        rlCheckRenderBatchLimit(3*(pointCount - 2));
 
         rlBegin(RL_TRIANGLES);
             rlColor4ub(color.r, color.g, color.b, color.a);
 
-            for (int i = 2; i < pointsCount; i++)
+            for (int i = 2; i < pointCount; i++)
             {
                 if ((i%2) == 0)
                 {
@@ -1144,14 +1144,14 @@ void DrawMesh(Mesh mesh, Material material, Matrix transform)
         if (mesh.indices != NULL) rlEnableVertexBufferElement(mesh.vboId[6]);
     }
 
-    int eyesCount = 1;
-    if (rlIsStereoRenderEnabled()) eyesCount = 2;
+    int eyeCount = 1;
+    if (rlIsStereoRenderEnabled()) eyeCount = 2;
 
-    for (int eye = 0; eye < eyesCount; eye++)
+    for (int eye = 0; eye < eyeCount; eye++)
     {
         // Calculate model-view-projection matrix (MVP)
         Matrix matModelViewProjection = MatrixIdentity();
-        if (eyesCount == 1) matModelViewProjection = MatrixMultiply(matModelView, matProjection);
+        if (eyeCount == 1) matModelViewProjection = MatrixMultiply(matModelView, matProjection);
         else
         {
             // Setup current eye viewport (half screen width)
@@ -1359,14 +1359,14 @@ void DrawMeshInstanced(Mesh mesh, Material material, Matrix *transforms, int ins
         if (mesh.indices != NULL) rlEnableVertexBufferElement(mesh.vboId[6]);
     }
 
-    int eyesCount = 1;
-    if (rlIsStereoRenderEnabled()) eyesCount = 2;
+    int eyeCount = 1;
+    if (rlIsStereoRenderEnabled()) eyeCount = 2;
 
-    for (int eye = 0; eye < eyesCount; eye++)
+    for (int eye = 0; eye < eyeCount; eye++)
     {
         // Calculate model-view-projection matrix (MVP)
         Matrix matModelViewProjection = MatrixIdentity();
-        if (eyesCount == 1) matModelViewProjection = MatrixMultiply(matModelView, matProjection);
+        if (eyeCount == 1) matModelViewProjection = MatrixMultiply(matModelView, matProjection);
         else
         {
             // Setup current eye viewport (half screen width)
@@ -1448,43 +1448,43 @@ bool ExportMesh(Mesh mesh, const char *fileName)
         // NOTE: Text data buffer size is estimated considering mesh data size
         char *txtData = (char *)RL_CALLOC(dataSize + 2000, sizeof(char));
 
-        int bytesCount = 0;
-        bytesCount += sprintf(txtData + bytesCount, "# //////////////////////////////////////////////////////////////////////////////////\n");
-        bytesCount += sprintf(txtData + bytesCount, "# //                                                                              //\n");
-        bytesCount += sprintf(txtData + bytesCount, "# // rMeshOBJ exporter v1.0 - Mesh exported as triangle faces and not optimized   //\n");
-        bytesCount += sprintf(txtData + bytesCount, "# //                                                                              //\n");
-        bytesCount += sprintf(txtData + bytesCount, "# // more info and bugs-report:  github.com/raysan5/raylib                        //\n");
-        bytesCount += sprintf(txtData + bytesCount, "# // feedback and support:       ray[at]raylib.com                                //\n");
-        bytesCount += sprintf(txtData + bytesCount, "# //                                                                              //\n");
-        bytesCount += sprintf(txtData + bytesCount, "# // Copyright (c) 2018 Ramon Santamaria (@raysan5)                               //\n");
-        bytesCount += sprintf(txtData + bytesCount, "# //                                                                              //\n");
-        bytesCount += sprintf(txtData + bytesCount, "# //////////////////////////////////////////////////////////////////////////////////\n\n");
-        bytesCount += sprintf(txtData + bytesCount, "# Vertex Count:     %i\n", mesh.vertexCount);
-        bytesCount += sprintf(txtData + bytesCount, "# Triangle Count:   %i\n\n", mesh.triangleCount);
+        int byteCount = 0;
+        byteCount += sprintf(txtData + byteCount, "# //////////////////////////////////////////////////////////////////////////////////\n");
+        byteCount += sprintf(txtData + byteCount, "# //                                                                              //\n");
+        byteCount += sprintf(txtData + byteCount, "# // rMeshOBJ exporter v1.0 - Mesh exported as triangle faces and not optimized   //\n");
+        byteCount += sprintf(txtData + byteCount, "# //                                                                              //\n");
+        byteCount += sprintf(txtData + byteCount, "# // more info and bugs-report:  github.com/raysan5/raylib                        //\n");
+        byteCount += sprintf(txtData + byteCount, "# // feedback and support:       ray[at]raylib.com                                //\n");
+        byteCount += sprintf(txtData + byteCount, "# //                                                                              //\n");
+        byteCount += sprintf(txtData + byteCount, "# // Copyright (c) 2018 Ramon Santamaria (@raysan5)                               //\n");
+        byteCount += sprintf(txtData + byteCount, "# //                                                                              //\n");
+        byteCount += sprintf(txtData + byteCount, "# //////////////////////////////////////////////////////////////////////////////////\n\n");
+        byteCount += sprintf(txtData + byteCount, "# Vertex Count:     %i\n", mesh.vertexCount);
+        byteCount += sprintf(txtData + byteCount, "# Triangle Count:   %i\n\n", mesh.triangleCount);
 
-        bytesCount += sprintf(txtData + bytesCount, "g mesh\n");
+        byteCount += sprintf(txtData + byteCount, "g mesh\n");
 
         for (int i = 0, v = 0; i < mesh.vertexCount; i++, v += 3)
         {
-            bytesCount += sprintf(txtData + bytesCount, "v %.2f %.2f %.2f\n", mesh.vertices[v], mesh.vertices[v + 1], mesh.vertices[v + 2]);
+            byteCount += sprintf(txtData + byteCount, "v %.2f %.2f %.2f\n", mesh.vertices[v], mesh.vertices[v + 1], mesh.vertices[v + 2]);
         }
 
         for (int i = 0, v = 0; i < mesh.vertexCount; i++, v += 2)
         {
-            bytesCount += sprintf(txtData + bytesCount, "vt %.3f %.3f\n", mesh.texcoords[v], mesh.texcoords[v + 1]);
+            byteCount += sprintf(txtData + byteCount, "vt %.3f %.3f\n", mesh.texcoords[v], mesh.texcoords[v + 1]);
         }
 
         for (int i = 0, v = 0; i < mesh.vertexCount; i++, v += 3)
         {
-            bytesCount += sprintf(txtData + bytesCount, "vn %.3f %.3f %.3f\n", mesh.normals[v], mesh.normals[v + 1], mesh.normals[v + 2]);
+            byteCount += sprintf(txtData + byteCount, "vn %.3f %.3f %.3f\n", mesh.normals[v], mesh.normals[v + 1], mesh.normals[v + 2]);
         }
 
         for (int i = 0; i < mesh.triangleCount; i += 3)
         {
-            bytesCount += sprintf(txtData + bytesCount, "f %i/%i/%i %i/%i/%i %i/%i/%i\n", i, i, i, i + 1, i + 1, i + 1, i + 2, i + 2, i + 2);
+            byteCount += sprintf(txtData + byteCount, "f %i/%i/%i %i/%i/%i %i/%i/%i\n", i, i, i, i + 1, i + 1, i + 1, i + 2, i + 2, i + 2);
         }
 
-        bytesCount += sprintf(txtData + bytesCount, "\n");
+        byteCount += sprintf(txtData + byteCount, "\n");
 
         // NOTE: Text data length exported is determined by '\0' (NULL) character
         success = SaveFileText(fileName, txtData);
@@ -3547,7 +3547,8 @@ static Model LoadOBJ(const char *fileName)
         // Count the faces for each material
         int *matFaces = RL_CALLOC(materialCount, sizeof(int));
 
-        for(int fi = 0; fi< attrib.num_faces; fi++){
+        for (int fi = 0; fi< attrib.num_faces; fi++)
+        {
             tinyobj_vertex_index_t face = attrib.faces[fi];
             int idx = attrib.material_ids[fi];
             matFaces[idx]++;
@@ -4858,14 +4859,14 @@ static Model LoadGLTF(const char *fileName)
 
         if (data->scenes_count > 1) TRACELOG(LOG_INFO, "MODEL: [%s] Has multiple scenes but only the first one will be loaded", fileName);
 
-        int primitivesCount = 0;
+        int primitiveCount = 0;
         for (unsigned int i = 0; i < data->scene->nodes_count; i++)
         {
-            GetGLTFPrimitiveCount(data->scene->nodes[i], &primitivesCount);
+            GetGLTFPrimitiveCount(data->scene->nodes[i], &primitiveCount);
         }
 
         // Process glTF data and map to model
-        model.meshCount = primitivesCount;
+        model.meshCount = primitiveCount;
         model.meshes = RL_CALLOC(model.meshCount, sizeof(Mesh));
         model.materialCount = (int)data->materials_count + 1;
         model.materials = RL_MALLOC(model.materialCount*sizeof(Material));

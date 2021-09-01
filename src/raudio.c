@@ -877,14 +877,14 @@ void UnloadSound(Sound sound)
 }
 
 // Update sound buffer with new data
-void UpdateSound(Sound sound, const void *data, int samplesCount)
+void UpdateSound(Sound sound, const void *data, int sampleCount)
 {
     if (sound.stream.buffer != NULL)
     {
         StopAudioBuffer(sound.stream.buffer);
 
         // TODO: May want to lock/unlock this since this data buffer is read at mixing time
-        memcpy(sound.stream.buffer->data, data, samplesCount*ma_get_bytes_per_frame(sound.stream.buffer->converter.config.formatIn, sound.stream.buffer->converter.config.channelsIn));
+        memcpy(sound.stream.buffer->data, data, sampleCount*ma_get_bytes_per_frame(sound.stream.buffer->converter.config.formatIn, sound.stream.buffer->converter.config.channelsIn));
     }
 }
 
@@ -944,17 +944,17 @@ bool ExportWaveAsCode(Wave wave, const char *fileName)
     // and requiring 6 char bytes for every byte: "0x00, "
     char *txtData = (char *)RL_CALLOC(waveDataSize*6 + 2000, sizeof(char));
 
-    int bytesCount = 0;
-    bytesCount += sprintf(txtData + bytesCount, "\n//////////////////////////////////////////////////////////////////////////////////\n");
-    bytesCount += sprintf(txtData + bytesCount, "//                                                                              //\n");
-    bytesCount += sprintf(txtData + bytesCount, "// WaveAsCode exporter v1.0 - Wave data exported as an array of bytes           //\n");
-    bytesCount += sprintf(txtData + bytesCount, "//                                                                              //\n");
-    bytesCount += sprintf(txtData + bytesCount, "// more info and bugs-report:  github.com/raysan5/raylib                        //\n");
-    bytesCount += sprintf(txtData + bytesCount, "// feedback and support:       ray[at]raylib.com                                //\n");
-    bytesCount += sprintf(txtData + bytesCount, "//                                                                              //\n");
-    bytesCount += sprintf(txtData + bytesCount, "// Copyright (c) 2018-2021 Ramon Santamaria (@raysan5)                          //\n");
-    bytesCount += sprintf(txtData + bytesCount, "//                                                                              //\n");
-    bytesCount += sprintf(txtData + bytesCount, "//////////////////////////////////////////////////////////////////////////////////\n\n");
+    int byteCount = 0;
+    byteCount += sprintf(txtData + byteCount, "\n//////////////////////////////////////////////////////////////////////////////////\n");
+    byteCount += sprintf(txtData + byteCount, "//                                                                              //\n");
+    byteCount += sprintf(txtData + byteCount, "// WaveAsCode exporter v1.0 - Wave data exported as an array of bytes           //\n");
+    byteCount += sprintf(txtData + byteCount, "//                                                                              //\n");
+    byteCount += sprintf(txtData + byteCount, "// more info and bugs-report:  github.com/raysan5/raylib                        //\n");
+    byteCount += sprintf(txtData + byteCount, "// feedback and support:       ray[at]raylib.com                                //\n");
+    byteCount += sprintf(txtData + byteCount, "//                                                                              //\n");
+    byteCount += sprintf(txtData + byteCount, "// Copyright (c) 2018-2021 Ramon Santamaria (@raysan5)                          //\n");
+    byteCount += sprintf(txtData + byteCount, "//                                                                              //\n");
+    byteCount += sprintf(txtData + byteCount, "//////////////////////////////////////////////////////////////////////////////////\n\n");
 
     char varFileName[256] = { 0 };
 #if !defined(RAUDIO_STANDALONE)
@@ -965,18 +965,18 @@ bool ExportWaveAsCode(Wave wave, const char *fileName)
     strcpy(varFileName, fileName);
 #endif
 
-    bytesCount += sprintf(txtData + bytesCount, "// Wave data information\n");
-    bytesCount += sprintf(txtData + bytesCount, "#define %s_FRAME_COUNT      %u\n", varFileName, wave.frameCount);
-    bytesCount += sprintf(txtData + bytesCount, "#define %s_FRAME_COUNT      %u\n", varFileName, wave.frameCount);
-    bytesCount += sprintf(txtData + bytesCount, "#define %s_SAMPLE_RATE      %u\n", varFileName, wave.sampleRate);
-    bytesCount += sprintf(txtData + bytesCount, "#define %s_SAMPLE_SIZE      %u\n", varFileName, wave.sampleSize);
-    bytesCount += sprintf(txtData + bytesCount, "#define %s_CHANNELS         %u\n\n", varFileName, wave.channels);
+    byteCount += sprintf(txtData + byteCount, "// Wave data information\n");
+    byteCount += sprintf(txtData + byteCount, "#define %s_FRAME_COUNT      %u\n", varFileName, wave.frameCount);
+    byteCount += sprintf(txtData + byteCount, "#define %s_FRAME_COUNT      %u\n", varFileName, wave.frameCount);
+    byteCount += sprintf(txtData + byteCount, "#define %s_SAMPLE_RATE      %u\n", varFileName, wave.sampleRate);
+    byteCount += sprintf(txtData + byteCount, "#define %s_SAMPLE_SIZE      %u\n", varFileName, wave.sampleSize);
+    byteCount += sprintf(txtData + byteCount, "#define %s_CHANNELS         %u\n\n", varFileName, wave.channels);
 
     // Write byte data as hexadecimal text
     // NOTE: Frame data exported is interlaced: Frame01[Sample-Channel01, Sample-Channel02, ...], Frame02[], Frame03[]
-    bytesCount += sprintf(txtData + bytesCount, "static unsigned char %s_DATA[%i] = { ", varFileName, waveDataSize);
-    for (int i = 0; i < waveDataSize - 1; i++) bytesCount += sprintf(txtData + bytesCount, ((i%TEXT_BYTES_PER_LINE == 0)? "0x%x,\n" : "0x%x, "), ((unsigned char *)wave.data)[i]);
-    bytesCount += sprintf(txtData + bytesCount, "0x%x };\n", ((unsigned char *)wave.data)[waveDataSize - 1]);
+    byteCount += sprintf(txtData + byteCount, "static unsigned char %s_DATA[%i] = { ", varFileName, waveDataSize);
+    for (int i = 0; i < waveDataSize - 1; i++) byteCount += sprintf(txtData + byteCount, ((i%TEXT_BYTES_PER_LINE == 0)? "0x%x,\n" : "0x%x, "), ((unsigned char *)wave.data)[i]);
+    byteCount += sprintf(txtData + byteCount, "0x%x };\n", ((unsigned char *)wave.data)[waveDataSize - 1]);
 
     // NOTE: Text data length exported is determined by '\0' (NULL) character
     success = SaveFileText(fileName, txtData);
@@ -1505,9 +1505,7 @@ Music LoadMusicStreamFromMemory(const char *fileType, unsigned char *data, int d
         // Copy data to allocated memory for default UnloadMusicStream
         unsigned char *newData = (unsigned char *)RL_MALLOC(dataSize);
         int it = dataSize/sizeof(unsigned char);
-        for (int i = 0; i < it; i++){
-            newData[i] = data[i];
-        }
+        for (int i = 0; i < it; i++) newData[i] = data[i];
 
         // Memory loaded version for jar_mod_load_file()
         if (dataSize && dataSize < 32*1024*1024)
@@ -1716,7 +1714,7 @@ void UpdateMusicStream(Music music)
         #if defined(SUPPORT_FILEFORMAT_XM)
             case MUSIC_MODULE_XM:
             {
-                // NOTE: Internally we consider 2 channels generation, so samplesCount/2
+                // NOTE: Internally we consider 2 channels generation, so sampleCount/2
                 if (AUDIO_DEVICE_FORMAT == ma_format_f32) jar_xm_generate_samples((jar_xm_context_t *)music.ctxData, (float *)pcm, frameCountToStream);
                 else if (AUDIO_DEVICE_FORMAT == ma_format_s16) jar_xm_generate_samples_16bit((jar_xm_context_t *)music.ctxData, (short *)pcm, frameCountToStream);
                 else if (AUDIO_DEVICE_FORMAT == ma_format_u8) jar_xm_generate_samples_8bit((jar_xm_context_t *)music.ctxData, (char *)pcm, frameCountToStream);
