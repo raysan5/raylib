@@ -2767,9 +2767,9 @@ const char *GetFileNameWithoutExt(const char *filePath)
 
     if (filePath != NULL) strcpy(fileName, GetFileName(filePath));   // Get filename with extension
 
-    int len = (int)strlen(fileName);
+    int size = (int)strlen(fileName);   // Get size in bytes
 
-    for (int i = 0; (i < len) && (i < MAX_FILENAMEWITHOUTEXT_LENGTH); i++)
+    for (int i = 0; (i < size) && (i < MAX_FILENAMEWITHOUTEXT_LENGTH); i++)
     {
         if (fileName[i] == '.')
         {

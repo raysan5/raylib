@@ -277,8 +277,8 @@ int main(int argc, char **argv)
 
                 // Draw the info text below the main message
                 int size = (int)strlen(messages[message].text);
-                int len = GetCodepointCount(messages[message].text);
-                const char *info = TextFormat("%s %u characters %i bytes", messages[message].language, len, size);
+                int length = GetCodepointCount(messages[message].text);
+                const char *info = TextFormat("%s %u characters %i bytes", messages[message].language, length, size);
                 sz = MeasureTextEx(GetFontDefault(), info, 10, 1.0f);
                 Vector2 pos = { textRect.x + textRect.width - sz.x,  msgRect.y + msgRect.height - sz.y - 2 };
                 DrawText(info, (int)pos.x, (int)pos.y, 10, RAYWHITE);

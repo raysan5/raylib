@@ -321,7 +321,7 @@ typedef struct rlRenderBatch {
     rlVertexBuffer *vertexBuffer; // Dynamic buffer(s) for vertex data
 
     rlDrawCall *draws;          // Draw calls array, depends on textureId
-    int drawCounterer;           // Draw calls counter
+    int drawCounter;            // Draw calls counter
     float currentDepth;         // Current depth value for next draw
 } rlRenderBatch;
 
@@ -1210,34 +1210,34 @@ void rlBegin(int mode)
 {
     // Draw mode can be RL_LINES, RL_TRIANGLES and RL_QUADS
     // NOTE: In all three cases, vertex are accumulated over default internal vertex buffer
-    if (RLGL.currentBatch->draws[RLGL.currentBatch->drawCounterer - 1].mode != mode)
+    if (RLGL.currentBatch->draws[RLGL.currentBatch->drawCounter - 1].mode != mode)
     {
-        if (RLGL.currentBatch->draws[RLGL.currentBatch->drawCounterer - 1].vertexCount > 0)
+        if (RLGL.currentBatch->draws[RLGL.currentBatch->drawCounter - 1].vertexCount > 0)
         {
             // Make sure current RLGL.currentBatch->draws[i].vertexCount is aligned a multiple of 4,
             // that way, following QUADS drawing will keep aligned with index processing
             // It implies adding some extra alignment vertex at the end of the draw,
             // those vertex are not processed but they are considered as an additional offset
             // for the next set of vertex to be drawn
-            if (RLGL.currentBatch->draws[RLGL.currentBatch->drawCounterer - 1].mode == RL_LINES) RLGL.currentBatch->draws[RLGL.currentBatch->drawCounterer - 1].vertexAlignment = ((RLGL.currentBatch->draws[RLGL.currentBatch->drawCounterer - 1].vertexCount < 4)? RLGL.currentBatch->draws[RLGL.currentBatch->drawCounterer - 1].vertexCount : RLGL.currentBatch->draws[RLGL.currentBatch->drawCounterer - 1].vertexCount%4);
-            else if (RLGL.currentBatch->draws[RLGL.currentBatch->drawCounterer - 1].mode == RL_TRIANGLES) RLGL.currentBatch->draws[RLGL.currentBatch->drawCounterer - 1].vertexAlignment = ((RLGL.currentBatch->draws[RLGL.currentBatch->drawCounterer - 1].vertexCount < 4)? 1 : (4 - (RLGL.currentBatch->draws[RLGL.currentBatch->drawCounterer - 1].vertexCount%4)));
-            else RLGL.currentBatch->draws[RLGL.currentBatch->drawCounterer - 1].vertexAlignment = 0;
+            if (RLGL.currentBatch->draws[RLGL.currentBatch->drawCounter - 1].mode == RL_LINES) RLGL.currentBatch->draws[RLGL.currentBatch->drawCounter - 1].vertexAlignment = ((RLGL.currentBatch->draws[RLGL.currentBatch->drawCounter - 1].vertexCount < 4)? RLGL.currentBatch->draws[RLGL.currentBatch->drawCounter - 1].vertexCount : RLGL.currentBatch->draws[RLGL.currentBatch->drawCounter - 1].vertexCount%4);
+            else if (RLGL.currentBatch->draws[RLGL.currentBatch->drawCounter - 1].mode == RL_TRIANGLES) RLGL.currentBatch->draws[RLGL.currentBatch->drawCounter - 1].vertexAlignment = ((RLGL.currentBatch->draws[RLGL.currentBatch->drawCounter - 1].vertexCount < 4)? 1 : (4 - (RLGL.currentBatch->draws[RLGL.currentBatch->drawCounter - 1].vertexCount%4)));
+            else RLGL.currentBatch->draws[RLGL.currentBatch->drawCounter - 1].vertexAlignment = 0;
 
-            if (!rlCheckRenderBatchLimit(RLGL.currentBatch->draws[RLGL.currentBatch->drawCounterer - 1].vertexAlignment))
+            if (!rlCheckRenderBatchLimit(RLGL.currentBatch->draws[RLGL.currentBatch->drawCounter - 1].vertexAlignment))
             {
-                RLGL.currentBatch->vertexBuffer[RLGL.currentBatch->currentBuffer].vCounter += RLGL.currentBatch->draws[RLGL.currentBatch->drawCounterer - 1].vertexAlignment;
-                RLGL.currentBatch->vertexBuffer[RLGL.currentBatch->currentBuffer].cCounter += RLGL.currentBatch->draws[RLGL.currentBatch->drawCounterer - 1].vertexAlignment;
-                RLGL.currentBatch->vertexBuffer[RLGL.currentBatch->currentBuffer].tcCounter += RLGL.currentBatch->draws[RLGL.currentBatch->drawCounterer - 1].vertexAlignment;
+                RLGL.currentBatch->vertexBuffer[RLGL.currentBatch->currentBuffer].vCounter += RLGL.currentBatch->draws[RLGL.currentBatch->drawCounter - 1].vertexAlignment;
+                RLGL.currentBatch->vertexBuffer[RLGL.currentBatch->currentBuffer].cCounter += RLGL.currentBatch->draws[RLGL.currentBatch->drawCounter - 1].vertexAlignment;
+                RLGL.currentBatch->vertexBuffer[RLGL.currentBatch->currentBuffer].tcCounter += RLGL.currentBatch->draws[RLGL.currentBatch->drawCounter - 1].vertexAlignment;
 
-                RLGL.currentBatch->drawCounterer++;
+                RLGL.currentBatch->drawCounter++;
             }
         }
 
-        if (RLGL.currentBatch->drawCounterer >= RL_DEFAULT_BATCH_DRAWCALLS) rlDrawRenderBatch(RLGL.currentBatch);
+        if (RLGL.currentBatch->drawCounter >= RL_DEFAULT_BATCH_DRAWCALLS) rlDrawRenderBatch(RLGL.currentBatch);
 
-        RLGL.currentBatch->draws[RLGL.currentBatch->drawCounterer - 1].mode = mode;
-        RLGL.currentBatch->draws[RLGL.currentBatch->drawCounterer - 1].vertexCount = 0;
-        RLGL.currentBatch->draws[RLGL.currentBatch->drawCounterer - 1].textureId = RLGL.State.defaultTextureId;
+        RLGL.currentBatch->draws[RLGL.currentBatch->drawCounter - 1].mode = mode;
+        RLGL.currentBatch->draws[RLGL.currentBatch->drawCounter - 1].vertexCount = 0;
+        RLGL.currentBatch->draws[RLGL.currentBatch->drawCounter - 1].textureId = RLGL.State.defaultTextureId;
     }
 }
 
@@ -1319,7 +1319,7 @@ void rlVertex3f(float x, float y, float z)
         RLGL.currentBatch->vertexBuffer[RLGL.currentBatch->currentBuffer].vertices[3*RLGL.currentBatch->vertexBuffer[RLGL.currentBatch->currentBuffer].vCounter + 2] = tz;
         RLGL.currentBatch->vertexBuffer[RLGL.currentBatch->currentBuffer].vCounter++;
 
-        RLGL.currentBatch->draws[RLGL.currentBatch->drawCounterer - 1].vertexCount++;
+        RLGL.currentBatch->draws[RLGL.currentBatch->drawCounter - 1].vertexCount++;
     }
     else TRACELOG(RL_LOG_ERROR, "RLGL: Batch elements overflow");
 }
@@ -1401,33 +1401,33 @@ void rlSetTexture(unsigned int id)
 #if defined(GRAPHICS_API_OPENGL_11)
         rlEnableTexture(id);
 #else
-        if (RLGL.currentBatch->draws[RLGL.currentBatch->drawCounterer - 1].textureId != id)
+        if (RLGL.currentBatch->draws[RLGL.currentBatch->drawCounter - 1].textureId != id)
         {
-            if (RLGL.currentBatch->draws[RLGL.currentBatch->drawCounterer - 1].vertexCount > 0)
+            if (RLGL.currentBatch->draws[RLGL.currentBatch->drawCounter - 1].vertexCount > 0)
             {
                 // Make sure current RLGL.currentBatch->draws[i].vertexCount is aligned a multiple of 4,
                 // that way, following QUADS drawing will keep aligned with index processing
                 // It implies adding some extra alignment vertex at the end of the draw,
                 // those vertex are not processed but they are considered as an additional offset
                 // for the next set of vertex to be drawn
-                if (RLGL.currentBatch->draws[RLGL.currentBatch->drawCounterer - 1].mode == RL_LINES) RLGL.currentBatch->draws[RLGL.currentBatch->drawCounterer - 1].vertexAlignment = ((RLGL.currentBatch->draws[RLGL.currentBatch->drawCounterer - 1].vertexCount < 4)? RLGL.currentBatch->draws[RLGL.currentBatch->drawCounterer - 1].vertexCount : RLGL.currentBatch->draws[RLGL.currentBatch->drawCounterer - 1].vertexCount%4);
-                else if (RLGL.currentBatch->draws[RLGL.currentBatch->drawCounterer - 1].mode == RL_TRIANGLES) RLGL.currentBatch->draws[RLGL.currentBatch->drawCounterer - 1].vertexAlignment = ((RLGL.currentBatch->draws[RLGL.currentBatch->drawCounterer - 1].vertexCount < 4)? 1 : (4 - (RLGL.currentBatch->draws[RLGL.currentBatch->drawCounterer - 1].vertexCount%4)));
-                else RLGL.currentBatch->draws[RLGL.currentBatch->drawCounterer - 1].vertexAlignment = 0;
+                if (RLGL.currentBatch->draws[RLGL.currentBatch->drawCounter - 1].mode == RL_LINES) RLGL.currentBatch->draws[RLGL.currentBatch->drawCounter - 1].vertexAlignment = ((RLGL.currentBatch->draws[RLGL.currentBatch->drawCounter - 1].vertexCount < 4)? RLGL.currentBatch->draws[RLGL.currentBatch->drawCounter - 1].vertexCount : RLGL.currentBatch->draws[RLGL.currentBatch->drawCounter - 1].vertexCount%4);
+                else if (RLGL.currentBatch->draws[RLGL.currentBatch->drawCounter - 1].mode == RL_TRIANGLES) RLGL.currentBatch->draws[RLGL.currentBatch->drawCounter - 1].vertexAlignment = ((RLGL.currentBatch->draws[RLGL.currentBatch->drawCounter - 1].vertexCount < 4)? 1 : (4 - (RLGL.currentBatch->draws[RLGL.currentBatch->drawCounter - 1].vertexCount%4)));
+                else RLGL.currentBatch->draws[RLGL.currentBatch->drawCounter - 1].vertexAlignment = 0;
 
-                if (!rlCheckRenderBatchLimit(RLGL.currentBatch->draws[RLGL.currentBatch->drawCounterer - 1].vertexAlignment))
+                if (!rlCheckRenderBatchLimit(RLGL.currentBatch->draws[RLGL.currentBatch->drawCounter - 1].vertexAlignment))
                 {
-                    RLGL.currentBatch->vertexBuffer[RLGL.currentBatch->currentBuffer].vCounter += RLGL.currentBatch->draws[RLGL.currentBatch->drawCounterer - 1].vertexAlignment;
-                    RLGL.currentBatch->vertexBuffer[RLGL.currentBatch->currentBuffer].cCounter += RLGL.currentBatch->draws[RLGL.currentBatch->drawCounterer - 1].vertexAlignment;
-                    RLGL.currentBatch->vertexBuffer[RLGL.currentBatch->currentBuffer].tcCounter += RLGL.currentBatch->draws[RLGL.currentBatch->drawCounterer - 1].vertexAlignment;
+                    RLGL.currentBatch->vertexBuffer[RLGL.currentBatch->currentBuffer].vCounter += RLGL.currentBatch->draws[RLGL.currentBatch->drawCounter - 1].vertexAlignment;
+                    RLGL.currentBatch->vertexBuffer[RLGL.currentBatch->currentBuffer].cCounter += RLGL.currentBatch->draws[RLGL.currentBatch->drawCounter - 1].vertexAlignment;
+                    RLGL.currentBatch->vertexBuffer[RLGL.currentBatch->currentBuffer].tcCounter += RLGL.currentBatch->draws[RLGL.currentBatch->drawCounter - 1].vertexAlignment;
 
-                    RLGL.currentBatch->drawCounterer++;
+                    RLGL.currentBatch->drawCounter++;
                 }
             }
 
-            if (RLGL.currentBatch->drawCounterer >= RL_DEFAULT_BATCH_DRAWCALLS) rlDrawRenderBatch(RLGL.currentBatch);
+            if (RLGL.currentBatch->drawCounter >= RL_DEFAULT_BATCH_DRAWCALLS) rlDrawRenderBatch(RLGL.currentBatch);
 
-            RLGL.currentBatch->draws[RLGL.currentBatch->drawCounterer - 1].textureId = id;
-            RLGL.currentBatch->draws[RLGL.currentBatch->drawCounterer - 1].vertexCount = 0;
+            RLGL.currentBatch->draws[RLGL.currentBatch->drawCounter - 1].textureId = id;
+            RLGL.currentBatch->draws[RLGL.currentBatch->drawCounter - 1].vertexCount = 0;
         }
 #endif
     }
@@ -1910,12 +1910,12 @@ void rlLoadExtensions(void *loader)
     const char *extensions = (const char *)glGetString(GL_EXTENSIONS);  // One big const string
 
     // NOTE: We have to duplicate string because glGetString() returns a const string
-    int len = strlen(extensions) + 1;
-    char *extensionsDup = (char *)RL_CALLOC(len, sizeof(char));
+    int size = strlen(extensions) + 1;      // Get extensions string size in bytes
+    char *extensionsDup = (char *)RL_CALLOC(size, sizeof(char));
     strcpy(extensionsDup, extensions);
     extList[numExt] = extensionsDup;
 
-    for (int i = 0; i < len; i++)
+    for (int i = 0; i < size; i++)
     {
         if (extensionsDup[i] == ' ')
         {
@@ -2275,7 +2275,7 @@ rlRenderBatch rlLoadRenderBatch(int numBuffers, int bufferElements)
     }
 
     batch.bufferCount = numBuffers;    // Record buffer count
-    batch.drawCounterer = 1;             // Reset draws counter
+    batch.drawCounter = 1;             // Reset draws counter
     batch.currentDepth = -1.0f;         // Reset depth value
     //--------------------------------------------------------------------------------------------
 #endif
@@ -2447,7 +2447,7 @@ void rlDrawRenderBatch(rlRenderBatch *batch)
             // NOTE: Batch system accumulates calls by texture0 changes, additional textures are enabled for all the draw calls
             glActiveTexture(GL_TEXTURE0);
 
-            for (int i = 0, vertexOffset = 0; i < batch->drawCounterer; i++)
+            for (int i = 0, vertexOffset = 0; i < batch->drawCounter; i++)
             {
                 // Bind current draw call texture, activated as GL_TEXTURE0 and binded to sampler2D texture0 by default
                 glBindTexture(GL_TEXTURE_2D, batch->draws[i].textureId);
@@ -2510,7 +2510,7 @@ void rlDrawRenderBatch(rlRenderBatch *batch)
     for (int i = 0; i < RL_DEFAULT_BATCH_MAX_TEXTURE_UNITS; i++) RLGL.State.activeTextureId[i] = 0;
 
     // Reset draws counter to one draw for the batch
-    batch->drawCounterer = 1;
+    batch->drawCounter = 1;
     //------------------------------------------------------------------------------------------------------------
 
     // Change to next buffer in the list (in case of multi-buffering)

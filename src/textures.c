@@ -547,7 +547,7 @@ bool ExportImageAsCode(Image image, const char *fileName)
     for (int i = 0; i < dataSize - 1; i++) byteCount += sprintf(txtData + byteCount, ((i%TEXT_BYTES_PER_LINE == 0)? "0x%x,\n" : "0x%x, "), ((unsigned char *)image.data)[i]);
     byteCount += sprintf(txtData + byteCount, "0x%x };\n", ((unsigned char *)image.data)[dataSize - 1]);
 
-    // NOTE: Text data length exported is determined by '\0' (NULL) character
+    // NOTE: Text data size exported is determined by '\0' (NULL) character
     success = SaveFileText(fileName, txtData);
 
     RL_FREE(txtData);
@@ -1147,7 +1147,7 @@ Image ImageText(const char *text, int fontSize, Color color)
 // Create an image from text (custom sprite font)
 Image ImageTextEx(Font font, const char *text, float fontSize, float spacing, Color tint)
 {
-    int length = (int)strlen(text);
+    int size = (int)strlen(text);   // Get size in bytes of text
 
     int textOffsetX = 0;            // Image drawing position X
     int textOffsetY = 0;            // Offset between lines (on line break '\n')
@@ -1158,7 +1158,7 @@ Image ImageTextEx(Font font, const char *text, float fontSize, float spacing, Co
     // Create image to store text
     Image imText = GenImageColor((int)imSize.x, (int)imSize.y, BLANK);
 
-    for (int i = 0; i < length; i++)
+    for (int i = 0; i < size; i++)
     {
         // Get next codepoint from byte string and glyph index in font
         int codepointByteCount = 0;

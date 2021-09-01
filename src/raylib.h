@@ -1336,7 +1336,7 @@ RLAPI int *LoadCodepoints(const char *text, int *count);              // Load al
 RLAPI void UnloadCodepoints(int *codepoints);                         // Unload codepoints data from memory
 RLAPI int GetCodepointCount(const char *text);                       // Get total number of codepoints in a UTF-8 encoded string
 RLAPI int GetCodepoint(const char *text, int *bytesProcessed);        // Get next codepoint in a UTF-8 encoded string, 0x3f('?') is returned on failure
-RLAPI const char *CodepointToUTF8(int codepoint, int *byteLength);    // Encode one codepoint into UTF-8 byte array (array length returned as parameter)
+RLAPI const char *CodepointToUTF8(int codepoint, int *byteSize);    // Encode one codepoint into UTF-8 byte array (array length returned as parameter)
 RLAPI char *TextCodepointsToUTF8(int *codepoints, int length);        // Encode text as codepoints array into UTF-8 text string (WARNING: memory must be freed!)
 
 // Text strings management functions (no UTF-8 strings, only byte chars)

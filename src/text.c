@@ -851,14 +851,14 @@ void DrawTextEx(Font font, const char *text, Vector2 position, float fontSize, f
 {
     if (font.texture.id == 0) font = GetFontDefault();  // Security check in case of not valid font
 
-    int length = TextLength(text);  // Total length in bytes of the text, scanned by codepoints in loop
+    int size = TextLength(text);    // Total size in bytes of the text, scanned by codepoints in loop
 
     int textOffsetY = 0;            // Offset between lines (on line break '\n')
     float textOffsetX = 0.0f;       // Offset X to next character to draw
 
     float scaleFactor = fontSize/font.baseSize;         // Character quad scaling factor
 
-    for (int i = 0; i < length;)
+    for (int i = 0; i < size;)
     {
         // Get next codepoint from byte string and glyph index in font
         int codepointByteCount = 0;
@@ -950,9 +950,9 @@ int MeasureText(const char *text, int fontSize)
 // Measure string size for Font
 Vector2 MeasureTextEx(Font font, const char *text, float fontSize, float spacing)
 {
-    int len = TextLength(text);
-    int tempLen = 0;                // Used to count longer text line num chars
-    int lenCounter = 0;
+    int size = TextLength(text);    // Get size in bytes of text
+    int tempByteCounter = 0;        // Used to count longer text line num chars
+    int byteCounter = 0;
 
     float textWidth = 0.0f;
     float tempTextWidth = 0.0f;     // Used to count longer text line width
@@ -963,9 +963,9 @@ Vector2 MeasureTextEx(Font font, const char *text, float fontSize, float spacing
     int letter = 0;                 // Current character
     int index = 0;                  // Index position in sprite font
 
-    for (int i = 0; i < len; i++)
+    for (int i = 0; i < size; i++)
     {
-        lenCounter++;
+        byteCounter++;
 
         int next = 0;
         letter = GetCodepoint(&text[i], &next);
@@ -984,18 +984,18 @@ Vector2 MeasureTextEx(Font font, const char *text, float fontSize, float spacing
         else
         {
             if (tempTextWidth < textWidth) tempTextWidth = textWidth;
-            lenCounter = 0;
+            byteCounter = 0;
             textWidth = 0;
             textHeight += ((float)font.baseSize*1.5f); // NOTE: Fixed line spacing of 1.5 lines
         }
 
-        if (tempLen < lenCounter) tempLen = lenCounter;
+        if (tempByteCounter < byteCounter) tempByteCounter = byteCounter;
     }
 
     if (tempTextWidth < textWidth) tempTextWidth = textWidth;
 
     Vector2 vec = { 0 };
-    vec.x = tempTextWidth*scaleFactor + (float)((tempLen - 1)*spacing); // Adds chars spacing to measure
+    vec.x = tempTextWidth*scaleFactor + (float)((tempByteCounter - 1)*spacing); // Adds chars spacing to measure
     vec.y = textHeight*scaleFactor;
 
     return vec;
@@ -1429,28 +1429,28 @@ char *TextCodepointsToUTF8(int *codepoints, int length)
 
 // Encode codepoint into utf8 text (char array length returned as parameter)
 // NOTE: It uses a static array to store UTF-8 bytes
-RLAPI const char *CodepointToUTF8(int codepoint, int *byteLength)
+RLAPI const char *CodepointToUTF8(int codepoint, int *byteSize)
 {
     static char utf8[6] = { 0 };
-    int length = 0;
+    int size = 0;   // Byte size of codepoint
 
     if (codepoint <= 0x7f)
     {
         utf8[0] = (char)codepoint;
-        length = 1;
+        size = 1;
     }
     else if (codepoint <= 0x7ff)
     {
         utf8[0] = (char)(((codepoint >> 6) & 0x1f) | 0xc0);
         utf8[1] = (char)((codepoint & 0x3f) | 0x80);
-        length = 2;
+        size = 2;
     }
     else if (codepoint <= 0xffff)
     {
         utf8[0] = (char)(((codepoint >> 12) & 0x0f) | 0xe0);
         utf8[1] = (char)(((codepoint >>  6) & 0x3f) | 0x80);
         utf8[2] = (char)((codepoint & 0x3f) | 0x80);
-        length = 3;
+        size = 3;
     }
     else if (codepoint <= 0x10ffff)
     {
@@ -1458,10 +1458,10 @@ RLAPI const char *CodepointToUTF8(int codepoint, int *byteLength)
         utf8[1] = (char)(((codepoint >> 12) & 0x3f) | 0x80);
         utf8[2] = (char)(((codepoint >>  6) & 0x3f) | 0x80);
         utf8[3] = (char)((codepoint & 0x3f) | 0x80);
-        length = 4;
+        size = 4;
     }
 
-    *byteLength = length;
+    *byteSize = size;
 
     return utf8;
 }
@@ -1502,7 +1502,7 @@ void UnloadCodepoints(int *codepoints)
 // NOTE: If an invalid UTF-8 sequence is encountered a '?'(0x3f) codepoint is counted instead
 int GetCodepointCount(const char *text)
 {
-    unsigned int len = 0;
+    unsigned int length = 0;
     char *ptr = (char *)&text[0];
 
     while (*ptr != '\0')
@@ -1513,10 +1513,10 @@ int GetCodepointCount(const char *text)
         if (letter == 0x3f) ptr += 1;
         else ptr += next;
 
-        len++;
+        length++;
     }
 
-    return len;
+    return length;
 }
 #endif      // SUPPORT_TEXT_MANIPULATION
 
