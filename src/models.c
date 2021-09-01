@@ -3491,6 +3491,11 @@ RayCollision GetRayCollisionQuad(Ray ray, Vector3 p1, Vector3 p2, Vector3 p3, Ve
 //----------------------------------------------------------------------------------
 #if defined(SUPPORT_FILEFORMAT_OBJ)
 // Load OBJ mesh data
+//
+// Keep the following information in mind when reading this
+//  - A mesh is created for every material present in the obj file
+//  - the model.meshCount is therefore the materialCount returned from tinyobj
+//  - the mesh is automatically triangulated by tinyobj
 static Model LoadOBJ(const char *fileName)
 {
     Model model = { 0 };
@@ -3542,15 +3547,12 @@ static Model LoadOBJ(const char *fileName)
         // Count the faces for each material
         int *matFaces = RL_CALLOC(materialCount, sizeof(int));
 
-        for (unsigned int mi = 0; mi < meshCount; mi++)
-        {
-            for (unsigned int fi = 0; fi < meshes[mi].length; fi++)
-            {
-                int idx = attrib.material_ids[meshes[mi].face_offset + fi];
-                if (idx == -1) idx = 0; // for no material face (which could be the whole model)
-                matFaces[idx]++;
-            }
+        for(int fi = 0; fi< attrib.num_faces; fi++){
+            tinyobj_vertex_index_t face = attrib.faces[fi];
+            int idx = attrib.material_ids[fi];
+            matFaces[idx]++;
         }
+
         //--------------------------------------
         // Create the material meshes
 
