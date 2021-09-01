@@ -118,7 +118,7 @@ void UpdateGestures(void);                              // Update gestures detec
 void SetGesturesEnabled(unsigned int flags);            // Enable a set of gestures using flags
 bool IsGestureDetected(int gesture);                    // Check if a gesture have been detected
 int GetGestureDetected(void);                           // Get latest detected gesture
-int GetTouchPointsCount(void);                          // Get touch points count
+int GetTouchPointCount(void);                          // Get touch points count
 float GetGestureHoldDuration(void);                     // Get gesture hold time in milliseconds
 Vector2 GetGestureDragVector(void);                     // Get gesture drag vector
 float GetGestureDragAngle(void);                        // Get gesture drag angle
@@ -431,7 +431,7 @@ void UpdateGestures(void)
 }
 
 // Get number of touch points
-int GetTouchPointsCount(void)
+int GetTouchPointCount(void)
 {
     // NOTE: point count is calculated when ProcessGestureEvent(GestureEvent event) is called
 
