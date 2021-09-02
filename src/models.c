@@ -1652,11 +1652,11 @@ void UpdateModelAnimation(Model model, ModelAnimation anim, int frame)
                 mesh.animVertices[vCounter + 1] = 0;
                 mesh.animVertices[vCounter + 2] = 0;
 
-                if(mesh.animNormals!=NULL){
+//                 if(mesh.animNormals!=NULL){
                     mesh.animNormals[vCounter] = 0;
                     mesh.animNormals[vCounter + 1] = 0;
                     mesh.animNormals[vCounter + 2] = 0;
-                }
+//                 }
                 for (int j = 0; j < 4; j++, boneCounter++)
                 {
                     boneWeight = mesh.boneWeights[boneCounter];
@@ -1667,6 +1667,7 @@ void UpdateModelAnimation(Model model, ModelAnimation anim, int frame)
                         continue;
                     }
                     boneId = mesh.boneIds[boneCounter];
+//                     printf("%3i Bone %s\n",boneCounter,model.bones[boneId].name);
                     inTranslation = model.bindPose[boneId].translation;
                     inRotation = model.bindPose[boneId].rotation;
                     inScale = model.bindPose[boneId].scale;
@@ -1675,12 +1676,11 @@ void UpdateModelAnimation(Model model, ModelAnimation anim, int frame)
                     outScale = anim.framePoses[frame][boneId].scale;
 
                     // Check if a transformation will be applied
-                    float angle = 2.0f*acosf(outRotation.w);
-                    float length = Vector3Length(Vector3Subtract(outScale,inScale));
-                    if(angle==0.0 && length==0.0){
-    //                         boneCounter += 1;
-                        continue;
-                    }
+//                     float angle = 2.0f*acosf(outRotation.w);
+//                     float length = Vector3Length(Vector3Subtract(outScale,inScale));
+//                     if(angle==0.0 && length==0.0){
+//                         continue;
+//                     }
 
                     // Vertices processing
                     // NOTE: We use meshes.vertices (default vertex position) to calculate meshes.animVertices (animated vertex position)
@@ -1692,6 +1692,7 @@ void UpdateModelAnimation(Model model, ModelAnimation anim, int frame)
                     mesh.animVertices[vCounter] += animVertex.x*boneWeight;
                     mesh.animVertices[vCounter + 1] += animVertex.y*boneWeight;
                     mesh.animVertices[vCounter + 2] += animVertex.z*boneWeight;
+                    printf("Vertex %.1f %.1f %.1f\n",animVertex.x, animVertex.y, animVertex.z);
                     updated = true;
 
                     // Normals processing
@@ -5432,14 +5433,12 @@ void LoadGLTFMesh(cgltf_data *data, cgltf_node *node, Model *outModel, Matrix cu
                 outModel->meshes[(*primitiveIndex)].boneIds = RL_MALLOC(totalBoneWeights*sizeof(int));
                 short *bones = ReadGLTFValuesAs(acc, cgltf_component_type_r_16, false);
                 //find skin joint
-                //is this useful when only 4 bones are used ?
                 for (unsigned int a = 0; a < totalBoneWeights; a++)
                 {
                     outModel->meshes[(*primitiveIndex)].boneIds[a] = 0;
                     if (bones[a] < 0) continue;
-                    cgltf_node* skinJoint = data->skins->joints[bones[a]];
-                    int skinJointId = skinJoint - data->nodes;
-                    printf("%i, ",skinJointId);
+                    cgltf_node* skinJoint = node->skin->joints[bones[a]];
+                    unsigned int skinJointId = skinJoint - data->nodes;
                     outModel->meshes[(*primitiveIndex)].boneIds[a] = skinJointId;
 
                 }
