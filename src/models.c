@@ -123,10 +123,10 @@ static ModelAnimation *LoadIQMModelAnimations(const char *fileName, int *animCou
 static Model LoadGLTF(const char *fileName);    // Load GLTF mesh data
 static ModelAnimation *LoadGLTFModelAnimations(const char *fileName, int *animCount);    // Load GLTF animation data
 static void LoadGLTFMaterial(Model *model, const char *fileName, const cgltf_data *data);
-static void LoadGLTFMesh(cgltf_data *data, cgltf_mesh *mesh, Model *outModel, Matrix currentTransform, int *primitiveIndex, const char *fileName);
+static void LoadGLTFMesh(cgltf_data *data, cgltf_node *node, Model *outModel, Matrix currentTransform, int *primitiveIndex, const char *fileName);
 static void LoadGLTFNode(cgltf_data *data, cgltf_node *node, Model *outModel, Matrix currentTransform, int *primitiveIndex, const char *fileName);
 static void InitGLTFBones(Model *model, const cgltf_data *data);
-static void BindGLTFPrimitiveToBones(Model *model, const cgltf_data *data, int primitiveIndex);
+static void BindGLTFPrimitiveToBones(Model *model, cgltf_node *node, const cgltf_data *data, int primitiveIndex);
 static void GetGLTFPrimitiveCount(cgltf_node *node, int *outCount);
 static bool ReadGLTFValue(cgltf_accessor *acc, unsigned int index, void *variable);
 static void *ReadGLTFValuesAs(cgltf_accessor *acc, cgltf_component_type type, bool adjustOnDownCasting);
@@ -1608,6 +1608,7 @@ ModelAnimation *LoadModelAnimations(const char *fileName, int *animCount)
 // NOTE: Updated data is uploaded to GPU
 void UpdateModelAnimation(Model model, ModelAnimation anim, int frame)
 {
+    printf("UpdateModelAnimation\n");
     if ((anim.frameCount > 0) && (anim.bones != NULL) && (anim.framePoses != NULL))
     {
         if (frame >= anim.frameCount) frame = frame%anim.frameCount;
@@ -1619,6 +1620,15 @@ void UpdateModelAnimation(Model model, ModelAnimation anim, int frame)
                 TRACELOG(LOG_WARNING, "MODEL: UpdateModelAnimation Mesh %i has no connection to bones",m);
                 continue;
             }
+            printf("Mesh %i %s\n",m,anim.bones[mesh.boneIds[0]].name);
+//             for(int i = 0; i < 4; i++){
+//                 printf("%i, ",mesh.boneIds[i]);
+//             }
+//             printf("\n");
+//             for(int i = 0; i < 4; i++){
+//                 printf("%.1f, ",mesh.boneWeights[i]);
+//             }
+            printf("\n");
             bool updated = false; // set to true when anim vertex information is updated
             Vector3 animVertex = { 0 };
             Vector3 animNormal = { 0 };
@@ -1631,14 +1641,13 @@ void UpdateModelAnimation(Model model, ModelAnimation anim, int frame)
             Quaternion outRotation = { 0 };
             Vector3 outScale = { 0 };
 
-            int vCounter = 0;
-            int boneCounter = 0;
             int boneId = 0;
+            int boneCounter = 0;
             float boneWeight = 0.0;
 
-            for (int i = 0; i < mesh.vertexCount; i++)
+            const int vValues = mesh.vertexCount*3;
+            for (int vCounter = 0; vCounter < vValues; vCounter+=3)
             {
-                vCounter = i*3;
                 mesh.animVertices[vCounter] = 0;
                 mesh.animVertices[vCounter + 1] = 0;
                 mesh.animVertices[vCounter + 2] = 0;
@@ -1648,14 +1657,13 @@ void UpdateModelAnimation(Model model, ModelAnimation anim, int frame)
                     mesh.animNormals[vCounter + 1] = 0;
                     mesh.animNormals[vCounter + 2] = 0;
                 }
-
-                for (int j = 0; j < 4; j++)
+                for (int j = 0; j < 4; j++, boneCounter++)
                 {
                     boneWeight = mesh.boneWeights[boneCounter];
                     // early stop when no transformation will be applied
                     if(boneWeight==0.0f)
                     {
-                        boneCounter += 1;
+    //                         boneCounter += 1;
                         continue;
                     }
                     boneId = mesh.boneIds[boneCounter];
@@ -1670,7 +1678,7 @@ void UpdateModelAnimation(Model model, ModelAnimation anim, int frame)
                     float angle = 2.0f*acosf(outRotation.w);
                     float length = Vector3Length(Vector3Subtract(outScale,inScale));
                     if(angle==0.0 && length==0.0){
-                        boneCounter += 1;
+    //                         boneCounter += 1;
                         continue;
                     }
 
@@ -1696,9 +1704,7 @@ void UpdateModelAnimation(Model model, ModelAnimation anim, int frame)
                         mesh.animNormals[vCounter + 1] += animNormal.y*boneWeight;
                         mesh.animNormals[vCounter + 2] += animNormal.z*boneWeight;
                     }
-                    boneCounter += 1;
                 }
-                vCounter += 3;
             }
 
             // Upload new vertex data to GPU for model drawing
@@ -4927,7 +4933,9 @@ static void InitGLTFBones(Model *model, const cgltf_data *data)
     {
         strcpy(model->bones[j].name, data->nodes[j].name == 0 ? "ANIMJOINT" : data->nodes[j].name);
         model->bones[j].parent = (data->nodes[j].parent != NULL) ? (int)(data->nodes[j].parent - data->nodes) : -1;
+        printf("Bone %3i is %s\n", j, model->bones[j].name);
     }
+    printf("---");
 
     for (unsigned int i = 0; i < data->nodes_count; i++)
     {
@@ -5052,30 +5060,26 @@ static void LoadGLTFMaterial(Model *model, const char *fileName, const cgltf_dat
     model->materials[model->materialCount - 1] = LoadMaterialDefault();
 }
 
-static void BindGLTFPrimitiveToBones(Model *model, const cgltf_data *data, int primitiveIndex)
+static void BindGLTFPrimitiveToBones(Model *model, cgltf_node *node, const cgltf_data *data, int primitiveIndex)
 {
-    for (unsigned int nodeId = 0; nodeId < data->nodes_count; nodeId++)
+    int nodeId = node - data->nodes;
+    printf("\tNodeId %i\n",nodeId);
+    if (model->meshes[primitiveIndex].boneIds == NULL)
     {
-        if (data->nodes[nodeId].mesh == &(data->meshes[primitiveIndex]))
-        {
-            if (model->meshes[primitiveIndex].boneIds == NULL)
-            {
-                model->meshes[primitiveIndex].boneIds = RL_CALLOC(model->meshes[primitiveIndex].vertexCount*4, sizeof(int));
-                model->meshes[primitiveIndex].boneWeights = RL_CALLOC(model->meshes[primitiveIndex].vertexCount*4, sizeof(float));
+        model->meshes[primitiveIndex].boneIds = RL_CALLOC(model->meshes[primitiveIndex].vertexCount*4, sizeof(int));
+        model->meshes[primitiveIndex].boneWeights = RL_CALLOC(model->meshes[primitiveIndex].vertexCount*4, sizeof(float));
 
-                for (int b = 0; b < model->meshes[primitiveIndex].vertexCount*4; b++)
-                {
-                    if (b%4 == 0)
-                    {
-                        model->meshes[primitiveIndex].boneIds[b] = nodeId;
-                        model->meshes[primitiveIndex].boneWeights[b] = 1.0f;
-                    }
-                    else
-                    {
-                        model->meshes[primitiveIndex].boneIds[b] = 0;
-                        model->meshes[primitiveIndex].boneWeights[b] = 0.0f;
-                    }
-                }
+        for (int b = 0; b < model->meshes[primitiveIndex].vertexCount*4; b++)
+        {
+            if (b%4 == 0)
+            {
+                model->meshes[primitiveIndex].boneIds[b] = nodeId;
+                model->meshes[primitiveIndex].boneWeights[b] = 1.0f;
+            }
+            else
+            {
+                model->meshes[primitiveIndex].boneIds[b] = 0;
+                model->meshes[primitiveIndex].boneWeights[b] = 0.0f;
             }
         }
     }
@@ -5158,11 +5162,13 @@ static ModelAnimation *LoadGLTFModelAnimations(const char *fileName, int *animCo
             output->framePoses = RL_MALLOC(output->frameCount*sizeof(Transform *));
             // output->framerate = // TODO: Use framerate instead of const timestep
 
+            printf("LoadAnim %i %s\n",a,animation->name);
             // Name and parent bones
             for (int j = 0; j < output->boneCount; j++)
             {
                 strcpy(output->bones[j].name, data->nodes[j].name == 0 ? "ANIMJOINT" : data->nodes[j].name);
                 output->bones[j].parent = (data->nodes[j].parent != NULL) ? (int)(data->nodes[j].parent - data->nodes) : -1;
+//                 printf("Bone %3i is %s\n",j,output->bones[j].name);
             }
 
             // Allocate data for frames
@@ -5193,6 +5199,8 @@ static ModelAnimation *LoadGLTFModelAnimations(const char *fileName, int *animCo
                 cgltf_animation_sampler *sampler = channel->sampler;
 
                 int boneId = (int)(channel->target_node - data->nodes);
+                printf("Node Name %s\n",channel->target_node->name);
+                printf("Bone %i anims %s\n",boneId, channel->target_node->name);
 
                 for (int frame = 0; frame < output->frameCount; frame++)
                 {
@@ -5305,6 +5313,7 @@ static ModelAnimation *LoadGLTFModelAnimations(const char *fileName, int *animCo
                 }
             }
 
+            printf("---\n");
             // Build frameposes
             for (int frame = 0; frame < output->frameCount; frame++)
             {
@@ -5348,8 +5357,9 @@ static ModelAnimation *LoadGLTFModelAnimations(const char *fileName, int *animCo
     return animations;
 }
 
-void LoadGLTFMesh(cgltf_data *data, cgltf_mesh *mesh, Model *outModel, Matrix currentTransform, int *primitiveIndex, const char *fileName)
+void LoadGLTFMesh(cgltf_data *data, cgltf_node *node, Model *outModel, Matrix currentTransform, int *primitiveIndex, const char *fileName)
 {
+    cgltf_mesh *mesh = node->mesh;
     for (unsigned int p = 0; p < mesh->primitives_count; p++)
     {
         for (unsigned int j = 0; j < mesh->primitives[p].attributes_count; j++)
@@ -5413,27 +5423,27 @@ void LoadGLTFMesh(cgltf_data *data, cgltf_mesh *mesh, Model *outModel, Matrix cu
             }
             else if (mesh->primitives[p].attributes[j].type == cgltf_attribute_type_joints)
             {
+                /*
+                 This seems very inneficient to me it runs over a 100 times just to find an id ?
+                 */
                 cgltf_accessor *acc = mesh->primitives[p].attributes[j].data;
                 unsigned int boneCount = acc->count;
                 unsigned int totalBoneWeights = boneCount*4;
-
                 outModel->meshes[(*primitiveIndex)].boneIds = RL_MALLOC(totalBoneWeights*sizeof(int));
                 short *bones = ReadGLTFValuesAs(acc, cgltf_component_type_r_16, false);
+                //find skin joint
+                //is this useful when only 4 bones are used ?
                 for (unsigned int a = 0; a < totalBoneWeights; a++)
                 {
                     outModel->meshes[(*primitiveIndex)].boneIds[a] = 0;
                     if (bones[a] < 0) continue;
-
                     cgltf_node* skinJoint = data->skins->joints[bones[a]];
-                    for (unsigned int k = 0; k < data->nodes_count; k++)
-                    {
-                        if (data->nodes + k == skinJoint)
-                        {
-                            outModel->meshes[(*primitiveIndex)].boneIds[a] = k;
-                            break;
-                        }
-                    }
+                    int skinJointId = skinJoint - data->nodes;
+                    printf("%i, ",skinJointId);
+                    outModel->meshes[(*primitiveIndex)].boneIds[a] = skinJointId;
+
                 }
+                printf("\n");
                 RL_FREE(bones);
             }
             else if (mesh->primitives[p].attributes[j].type == cgltf_attribute_type_weights)
@@ -5467,7 +5477,7 @@ void LoadGLTFMesh(cgltf_data *data, cgltf_mesh *mesh, Model *outModel, Matrix cu
         }
         else outModel->meshMaterial[(*primitiveIndex)] = outModel->materialCount - 1;
 
-        BindGLTFPrimitiveToBones(outModel, data, *primitiveIndex);
+        BindGLTFPrimitiveToBones(outModel, node, data, *primitiveIndex);
 
         (*primitiveIndex) = (*primitiveIndex) + 1;
     }
@@ -5517,7 +5527,8 @@ void LoadGLTFNode(cgltf_data *data, cgltf_node *node, Model *outModel, Matrix cu
             vertexTransform = localTransform;
             TRACELOG(LOG_WARNING,"MODEL: GLTF Node %s is skinned but not root node! Parent transformations will be ignored (NODE_SKINNED_MESH_NON_ROOT)",node->name);
         }
-        LoadGLTFMesh(data, node->mesh, outModel, vertexTransform, primitiveIndex, fileName);
+        printf("Load Node: %s\n",node->name);
+        LoadGLTFMesh(data, node, outModel, vertexTransform, primitiveIndex, fileName);
     }
     for (unsigned int i = 0; i < node->children_count; i++) LoadGLTFNode(data, node->children[i], outModel, currentTransform, primitiveIndex, fileName);
 }
