@@ -16,8 +16,6 @@
 
 #include <string.h>
 
-#define MAGICAVOXEL_LOADER_IMPLEMENTATION
-#include "magicavoxel_loader.h"
 
 // VOX Files to load and view
 
@@ -44,15 +42,14 @@ int main(void)
 
 	for (int i = 0; i < NUM_VOX_FILES; i++)
 	{
-		// Load MagicaVoxel File and build vertices/colors/indices arrays
+		// Load MagicaVoxel File and build model
 		double t0, t1;
 		t0 = GetTime() * 1000.0;
 
-			models[i] = Vox_LoadFileName(szVoxFiles[i]);
+		models[i] = LoadModel(szVoxFiles[i]);
 
 		t1 = GetTime() * 1000.0;
 		TraceLog(LOG_INFO, TextFormat("Vox <%s> loaded in %f ms", GetFileName(szVoxFiles[i]), t1 - t0));
-
 
 		//Compute model matrix
 		BoundingBox  bb = GetModelBoundingBox(models[i]);
@@ -64,6 +61,8 @@ int main(void)
 		Matrix matP = MatrixTranslate(center.x, center.z, 0);
 		Matrix matR = MatrixRotateX(90 * DEG2RAD);
 		models[i].transform = MatrixMultiply(matP, matR);
+
+
 	}
 
 

@@ -8,6 +8,8 @@
 *   #define SUPPORT_FILEFORMAT_MTL
 *   #define SUPPORT_FILEFORMAT_IQM
 *   #define SUPPORT_FILEFORMAT_GLTF
+*   #define SUPPORT_FILEFORMAT_VOX
+* 
 *       Selected desired fileformats to be supported for model data loading.
 *
 *   #define SUPPORT_MESH_GENERATION
@@ -71,6 +73,11 @@
     #include "external/stb_image.h"     // glTF texture images loading
 #endif
 
+#if defined(SUPPORT_FILEFORMAT_VOX)
+    #define VOX_LOADER_IMPLEMENTATION
+    #include "external/vox_loader.h"        // vox file format loading
+#endif
+
 #if defined(SUPPORT_MESH_GENERATION)
     #define PAR_MALLOC(T, N) ((T*)RL_MALLOC(N*sizeof(T)))
     #define PAR_CALLOC(T, N) ((T*)RL_CALLOC(N*sizeof(T), 1))
@@ -130,6 +137,9 @@ static void BindGLTFPrimitiveToBones(Model *model, const cgltf_data *data, int p
 static void GetGLTFPrimitiveCount(cgltf_node* node, int* outCount);
 static bool ReadGLTFValue(cgltf_accessor* acc, unsigned int index, void *variable);
 static void *ReadGLTFValuesAs(cgltf_accessor* acc, cgltf_component_type type, bool adjustOnDownCasting);
+#endif
+#if defined(SUPPORT_FILEFORMAT_VOX)
+static Model LoadVOX(const char* filename);     //Load VOX mesh data
 #endif
 
 //----------------------------------------------------------------------------------
@@ -717,6 +727,9 @@ Model LoadModel(const char *fileName)
 #endif
 #if defined(SUPPORT_FILEFORMAT_GLTF)
     if (IsFileExtension(fileName, ".gltf;.glb")) model = LoadGLTF(fileName);
+#endif
+#if defined(SUPPORT_FILEFORMAT_VOX)
+    if (IsFileExtension(fileName, ".vox")) model = LoadVOX(fileName);
 #endif
 
     // Make sure model transform is set to identity matrix!
@@ -5314,4 +5327,101 @@ static void GetGLTFPrimitiveCount(cgltf_node* node, int* outCount)
     for (unsigned int i = 0; i < node->children_count; i++) GetGLTFPrimitiveCount(node->children[i], outCount);
 }
 
+#endif
+
+#if defined(SUPPORT_FILEFORMAT_VOX)
+// Load OBJ mesh data
+static Model LoadVOX(const char* fileName)
+{
+    Model model = { 0 };
+    int nbvertices = 0;
+    int meshescount = 0;
+
+    //////////////////////////////////
+    // Load MagicaVoxel fileformat
+    
+    VoxArray3D voxarray;
+    int ret = Vox_LoadFileName(fileName, &voxarray);
+
+    if (ret != VOX_SUCCESS)
+    {
+        TRACELOG(LOG_WARNING, "MODEL: [%s] Failed to load VOX data", fileName);
+        return model;
+    }
+    else
+    {
+        // Compute meshes count
+        nbvertices = voxarray.vertices.used;
+        meshescount = 1 + (nbvertices / 65536);
+
+        TRACELOG(LOG_INFO, "MODEL: [%s] VOX data loaded successfully : %i vertices/%i meshes", fileName, nbvertices, meshescount);
+    }
+
+    //////////////////////////////////
+    // Build model
+
+    // Build Models from meshes
+    model.transform = MatrixIdentity();
+
+    model.meshCount = meshescount;
+    model.meshes = (Mesh*)MemAlloc(model.meshCount * sizeof(Mesh));
+
+    model.meshMaterial = (int*)MemAlloc(model.meshCount * sizeof(int));
+
+    model.materialCount = 1;
+    model.materials = (Material*)MemAlloc(model.materialCount * sizeof(Material));
+    model.materials[0] = LoadMaterialDefault();
+
+
+    // Init model's meshes
+    int verticesRemain = voxarray.vertices.used;
+    int verticesMax = 65532; //5461 voxels x 12 vertices per voxel -> 65532 (must be inf 65536)
+
+    Vector3* pvertices = voxarray.vertices.array;	//6*4=12 vertices per voxel
+    Color* pcolors = voxarray.colors.array;
+    unsigned short* pindices = voxarray.indices.array;	//5461 * 6 * 6 -> 196596 indices max per mesh
+
+    int size;
+
+    for (int idxMesh = 0; idxMesh < meshescount; idxMesh++)
+    {
+        Mesh* pmesh = &model.meshes[idxMesh];
+        memset(pmesh, 0, sizeof(Mesh));
+
+        // Copy Vertices
+        pmesh->vertexCount = (int)fmin(verticesMax, verticesRemain);
+
+        size = pmesh->vertexCount * sizeof(float) * 3;
+        pmesh->vertices = MemAlloc(size);
+        memcpy(pmesh->vertices, pvertices, size);
+
+        //Copy Indices TODO compute globals indices array
+        size = voxarray.indices.used * sizeof(unsigned short);
+        pmesh->indices = MemAlloc(size);
+        memcpy(pmesh->indices, pindices, size);
+
+        pmesh->triangleCount = (pmesh->vertexCount / 4) * 2;
+
+        // Copy Colors
+        size = pmesh->vertexCount * sizeof(Color);
+        pmesh->colors = MemAlloc(size);
+        memcpy(pmesh->colors, pcolors, size);
+
+        // First material index
+        model.meshMaterial[idxMesh] = 0;
+
+        // Build GPU mesh
+        UploadMesh(pmesh, false);
+
+        //Next
+        verticesRemain -= verticesMax;
+        pvertices += verticesMax;
+        pcolors += verticesMax;
+    }
+
+    //Free arrays
+    Vox_FreeArrays(&voxarray);
+
+    return model;
+}
 #endif
