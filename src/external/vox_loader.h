@@ -125,7 +125,7 @@ extern "C" {
 
 	// Functions
 	extern int Vox_LoadFileName(const char* pszfileName, VoxArray3D* voxarray);
-	extern int Vox_FreeArrays(VoxArray3D* voxarray);
+	extern void Vox_FreeArrays(VoxArray3D* voxarray);
 
 
 #ifdef __cplusplus
@@ -736,8 +736,32 @@ int Vox_LoadFileName(const char* pszfileName, VoxArray3D* voxarray)
 	return VOX_SUCCESS;
 }
 
-int Vox_FreeArrays(VoxArray3D* voxarray)
+void Vox_FreeArrays(VoxArray3D* voxarray)
 {
+	//Free chunks
+	if (voxarray->m_arrayChunks != 0)
+	{
+		for (int i = 0; i < voxarray->chunksTotal; i++)
+		{
+			CubeChunk3D* chunk = &voxarray->m_arrayChunks[i];
+			if (chunk->m_array != 0)
+			{
+				chunk->arraySize = 0;
+				MemFree(chunk->m_array);
+			}
+		}
+
+		MemFree(voxarray->m_arrayChunks);
+		voxarray->m_arrayChunks = 0;
+		voxarray->arrayChunksSize = 0;
+
+		voxarray->chunksSizeX = voxarray->chunksSizeY = voxarray->chunksSizeZ = 0;
+		voxarray->chunksTotal = 0;
+		voxarray->chunksAllocated = 0;
+		voxarray->ChunkFlattenOffset = 0;
+		voxarray->sizeX = voxarray->sizeY = voxarray->sizeZ = 0;
+	}
+
 	//Free arrays
 	freeArrayVector3(&voxarray->vertices);
 	freeArrayUShort(&voxarray->indices);
