@@ -381,9 +381,6 @@
   <ItemGroup>
     <ClCompile Include="..\..\..\examples\models\models_magicavoxel_loading.c" />
   </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="..\..\..\examples\models\magicavoxel_loader.h" />
-  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
