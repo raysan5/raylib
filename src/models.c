@@ -5461,18 +5461,52 @@ void LoadGLTFMesh(cgltf_data *data, cgltf_mesh *mesh, Model *outModel, Matrix cu
     }
 }
 
-void LoadGLTFNode(cgltf_data *data, cgltf_node *node, Model *outModel, Matrix currentTransform, int *primitiveIndex, const char *fileName)
+static Matrix GetNodeTransformationMatrix(cgltf_node *node, Matrix current)
 {
-    Matrix nodeTransform = {
+    if (node->has_matrix)
+    {
+        Matrix nodeTransform = {
         node->matrix[0], node->matrix[4], node->matrix[8], node->matrix[12],
         node->matrix[1], node->matrix[5], node->matrix[9], node->matrix[13],
         node->matrix[2], node->matrix[6], node->matrix[10], node->matrix[14],
         node->matrix[3], node->matrix[7], node->matrix[11], node->matrix[15] };
+        current= MatrixMultiply(nodeTransform, current);
+    }
+    if (node->has_translation)
+    {
+        Matrix tl = MatrixTranslate(node->translation[0],node->translation[1],node->translation[2]);
+        current = MatrixMultiply(tl, current);
+    }
+    if (node->has_rotation)
+    {
+        Matrix rot = QuaternionToMatrix((Quaternion){node->rotation[0],node->rotation[1],node->rotation[2],node->rotation[3]});
+        current = MatrixMultiply(rot, current);
+    }
+    if (node->has_scale)
+    {
+        Matrix scale = MatrixScale(node->scale[0],node->scale[1],node->scale[2]);
+        current = MatrixMultiply(scale, current);
+    }
+    return current;
+}
 
-    currentTransform = MatrixMultiply(nodeTransform, currentTransform);
-
-    if (node->mesh != NULL) LoadGLTFMesh(data, node->mesh, outModel, currentTransform, primitiveIndex, fileName);
-
+void LoadGLTFNode(cgltf_data *data, cgltf_node *node, Model *outModel, Matrix currentTransform, int *primitiveIndex, const char *fileName)
+{
+    // Apply the transforms if they exist (Will still be applied even if no mesh is present to support emptys and bone structures)
+    Matrix localTransform = GetNodeTransformationMatrix(node, MatrixIdentity());
+    currentTransform = MatrixMultiply(localTransform, currentTransform);
+    // Load mesh if it exists
+    if (node->mesh != NULL)
+    {
+        // Check if skinning is enabled and load Mesh accordingly
+        Matrix vertexTransform = currentTransform;
+        if((node->skin != NULL) && (node->parent != NULL))
+        {
+            vertexTransform = localTransform;
+            TRACELOG(LOG_WARNING,"MODEL: GLTF Node %s is skinned but not root node! Parent transformations will be ignored (NODE_SKINNED_MESH_NON_ROOT)",node->name);
+        }
+        LoadGLTFMesh(data, node->mesh, outModel, vertexTransform, primitiveIndex, fileName);
+    }
     for (unsigned int i = 0; i < node->children_count; i++) LoadGLTFNode(data, node->children[i], outModel, currentTransform, primitiveIndex, fileName);
 }
 
