@@ -276,6 +276,10 @@ static void __InsertMemNode(MemPool *const mempool, AllocList *const list, MemNo
                 mempool->arena.offs += iter->size;
                 __RemoveMemNode(list, iter);
                 iter = list->head;
+                if (iter == NULL) {
+                    list->head = node;    
+                    return;
+                }
             }
             const uintptr_t inode = ( uintptr_t )node;
             const uintptr_t iiter = ( uintptr_t )iter;
@@ -291,6 +295,14 @@ static void __InsertMemNode(MemPool *const mempool, AllocList *const list, MemNo
                     // if we can coalesce, do so.
                     iter->size += node->size;
                     return;
+                }
+                else if (iter->next == NULL)
+                {
+                    // we reached the end of the free list -> append the node
+                    iter->next = node;
+                    node->prev = iter;
+                    list->len++;
+                    return;    
                 }
             }
             else if (iter > node)
@@ -325,7 +337,7 @@ static void __InsertMemNode(MemPool *const mempool, AllocList *const list, MemNo
                 }
                 else
                 {
-                    __InsertMemNodeBefore(list, iter, node);
+                    __InsertMemNodeBefore(list, node, iter);
                     list->len++;
                     return;
                 }

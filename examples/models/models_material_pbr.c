@@ -162,11 +162,11 @@ static Material LoadMaterialPBR(Color albedo, float metalness, float roughness)
     mat.maps[MATERIAL_MAP_OCCLUSION].texture = LoadTexture("resources/pbr/trooper_ao.png");
 
     // Set textures filtering for better quality
-    SetTextureFilter(mat.maps[MATERIAL_MAP_ALBEDO].texture, FILTER_BILINEAR);
-    SetTextureFilter(mat.maps[MATERIAL_MAP_NORMAL].texture, FILTER_BILINEAR);
-    SetTextureFilter(mat.maps[MATERIAL_MAP_METALNESS].texture, FILTER_BILINEAR);
-    SetTextureFilter(mat.maps[MATERIAL_MAP_ROUGHNESS].texture, FILTER_BILINEAR);
-    SetTextureFilter(mat.maps[MATERIAL_MAP_OCCLUSION].texture, FILTER_BILINEAR);
+    SetTextureFilter(mat.maps[MATERIAL_MAP_ALBEDO].texture, TEXTURE_FILTER_BILINEAR);
+    SetTextureFilter(mat.maps[MATERIAL_MAP_NORMAL].texture, TEXTURE_FILTER_BILINEAR);
+    SetTextureFilter(mat.maps[MATERIAL_MAP_METALNESS].texture, TEXTURE_FILTER_BILINEAR);
+    SetTextureFilter(mat.maps[MATERIAL_MAP_ROUGHNESS].texture, TEXTURE_FILTER_BILINEAR);
+    SetTextureFilter(mat.maps[MATERIAL_MAP_OCCLUSION].texture, TEXTURE_FILTER_BILINEAR);
 
     // Enable sample usage in shader for assigned textures
     SetShaderValue(mat.shader, GetShaderLocation(mat.shader, "albedo.useSampler"), (int[1]){ 1 }, SHADER_UNIFORM_INT);

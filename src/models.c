@@ -130,13 +130,16 @@ static ModelAnimation *LoadIQMModelAnimations(const char *fileName, int *animCou
 static Model LoadGLTF(const char *fileName);    // Load GLTF mesh data
 static ModelAnimation *LoadGLTFModelAnimations(const char *fileName, int *animCount);    // Load GLTF animation data
 static void LoadGLTFMaterial(Model *model, const char *fileName, const cgltf_data *data);
-static void LoadGLTFMesh(cgltf_data *data, cgltf_mesh* mesh, Model* outModel, Matrix currentTransform, int* primitiveIndex, const char *fileName);
-static void LoadGLTFNode(cgltf_data *data, cgltf_node* node, Model* outModel, Matrix currentTransform, int* primitiveIndex, const char *fileName);
+static void LoadGLTFMesh(cgltf_data *data, cgltf_mesh *mesh, Model *outModel, Matrix currentTransform, int *primitiveIndex, const char *fileName);
+static void LoadGLTFNode(cgltf_data *data, cgltf_node *node, Model *outModel, Matrix currentTransform, int *primitiveIndex, const char *fileName);
 static void InitGLTFBones(Model *model, const cgltf_data *data);
 static void BindGLTFPrimitiveToBones(Model *model, const cgltf_data *data, int primitiveIndex);
-static void GetGLTFPrimitiveCount(cgltf_node* node, int* outCount);
-static bool ReadGLTFValue(cgltf_accessor* acc, unsigned int index, void *variable);
-static void *ReadGLTFValuesAs(cgltf_accessor* acc, cgltf_component_type type, bool adjustOnDownCasting);
+static void GetGLTFPrimitiveCount(cgltf_node *node, int *outCount);
+static bool ReadGLTFValue(cgltf_accessor *acc, unsigned int index, void *variable);
+static void *ReadGLTFValuesAs(cgltf_accessor *acc, cgltf_component_type type, bool adjustOnDownCasting);
+#endif
+#if defined(SUPPORT_FILEFORMAT_VOX)
+static Model LoadVOX(const char* filename);     //Load VOX mesh data
 #endif
 #if defined(SUPPORT_FILEFORMAT_VOX)
 static Model LoadVOX(const char* filename);     //Load VOX mesh data
@@ -211,16 +214,16 @@ void DrawTriangle3D(Vector3 v1, Vector3 v2, Vector3 v3, Color color)
 }
 
 // Draw a triangle strip defined by points
-void DrawTriangleStrip3D(Vector3 *points, int pointsCount, Color color)
+void DrawTriangleStrip3D(Vector3 *points, int pointCount, Color color)
 {
-    if (pointsCount >= 3)
+    if (pointCount >= 3)
     {
-        rlCheckRenderBatchLimit(3*(pointsCount - 2));
+        rlCheckRenderBatchLimit(3*(pointCount - 2));
 
         rlBegin(RL_TRIANGLES);
             rlColor4ub(color.r, color.g, color.b, color.a);
 
-            for (int i = 2; i < pointsCount; i++)
+            for (int i = 2; i < pointCount; i++)
             {
                 if ((i%2) == 0)
                 {
@@ -986,12 +989,6 @@ void UpdateMeshBuffer(Mesh mesh, int index, void *data, int dataSize, int offset
 // Draw a 3d mesh with material and transform
 void DrawMesh(Mesh mesh, Material material, Matrix transform)
 {
-    DrawMeshInstanced(mesh, material, &transform, 1);
-}
-
-// Draw multiple mesh instances with material and different transforms
-void DrawMeshInstanced(Mesh mesh, Material material, Matrix *transforms, int instances)
-{
 #if defined(GRAPHICS_API_OPENGL_11)
     #define GL_VERTEX_ARRAY         0x8074
     #define GL_NORMAL_ARRAY         0x8075
@@ -1006,7 +1003,7 @@ void DrawMeshInstanced(Mesh mesh, Material material, Matrix *transforms, int ins
     rlEnableStatePointer(GL_COLOR_ARRAY, mesh.colors);
 
     rlPushMatrix();
-        rlMultMatrixf(MatrixToFloat(transforms[0]));
+        rlMultMatrixf(MatrixToFloat(transform));
         rlColor4ub(material.maps[MATERIAL_MAP_DIFFUSE].color.r,
                    material.maps[MATERIAL_MAP_DIFFUSE].color.g,
                    material.maps[MATERIAL_MAP_DIFFUSE].color.b,
@@ -1025,13 +1022,6 @@ void DrawMeshInstanced(Mesh mesh, Material material, Matrix *transforms, int ins
 #endif
 
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
-    // Check instancing
-    bool instancing = false;
-    if (instances < 1) return;
-    else if (instances > 1) instancing = true;
-    float16 *instanceTransforms = NULL;
-    unsigned int instancesVboId = 0;
-
     // Bind shader program
     rlEnableShader(material.shader.id);
 
@@ -1077,51 +1067,16 @@ void DrawMeshInstanced(Mesh mesh, Material material, Matrix *transforms, int ins
     if (material.shader.locs[SHADER_LOC_MATRIX_VIEW] != -1) rlSetUniformMatrix(material.shader.locs[SHADER_LOC_MATRIX_VIEW], matView);
     if (material.shader.locs[SHADER_LOC_MATRIX_PROJECTION] != -1) rlSetUniformMatrix(material.shader.locs[SHADER_LOC_MATRIX_PROJECTION], matProjection);
 
-    if (instancing)
-    {
-        // Create instances buffer
-        instanceTransforms = (float16 *)RL_MALLOC(instances*sizeof(float16));
+    // Model transformation matrix is send to shader uniform location: SHADER_LOC_MATRIX_MODEL
+    if (material.shader.locs[SHADER_LOC_MATRIX_MODEL] != -1) rlSetUniformMatrix(material.shader.locs[SHADER_LOC_MATRIX_MODEL], transform);
 
-        // Fill buffer with instances transformations as float16 arrays
-        for (int i = 0; i < instances; i++) instanceTransforms[i] = MatrixToFloatV(transforms[i]);
+    // Accumulate several model transformations:
+    //    transform: model transformation provided (includes DrawModel() params combined with model.transform)
+    //    rlGetMatrixTransform(): rlgl internal transform matrix due to push/pop matrix stack
+    matModel = MatrixMultiply(transform, rlGetMatrixTransform());
 
-        // Enable mesh VAO to attach new buffer
-        rlEnableVertexArray(mesh.vaoId);
-
-        // This could alternatively use a static VBO and either glMapBuffer() or glBufferSubData().
-        // It isn't clear which would be reliably faster in all cases and on all platforms,
-        // anecdotally glMapBuffer() seems very slow (syncs) while glBufferSubData() seems
-        // no faster, since we're transferring all the transform matrices anyway
-        instancesVboId = rlLoadVertexBuffer(instanceTransforms, instances*sizeof(float16), false);
-
-        // Instances transformation matrices are send to shader attribute location: SHADER_LOC_MATRIX_MODEL
-        for (unsigned int i = 0; i < 4; i++)
-        {
-            rlEnableVertexAttribute(material.shader.locs[SHADER_LOC_MATRIX_MODEL] + i);
-            rlSetVertexAttribute(material.shader.locs[SHADER_LOC_MATRIX_MODEL] + i, 4, RL_FLOAT, 0, sizeof(Matrix), (void *)(i*sizeof(Vector4)));
-            rlSetVertexAttributeDivisor(material.shader.locs[SHADER_LOC_MATRIX_MODEL] + i, 1);
-        }
-
-        rlDisableVertexBuffer();
-        rlDisableVertexArray();
-
-        // Accumulate internal matrix transform (push/pop) and view matrix
-        // NOTE: In this case, model instance transformation must be computed in the shader
-        matModelView = MatrixMultiply(rlGetMatrixTransform(), matView);
-    }
-    else
-    {
-        // Model transformation matrix is send to shader uniform location: SHADER_LOC_MATRIX_MODEL
-        if (material.shader.locs[SHADER_LOC_MATRIX_MODEL] != -1) rlSetUniformMatrix(material.shader.locs[SHADER_LOC_MATRIX_MODEL], transforms[0]);
-
-        // Accumulate several model transformations:
-        //    transforms[0]: model transformation provided (includes DrawModel() params combined with model.transform)
-        //    rlGetMatrixTransform(): rlgl internal transform matrix due to push/pop matrix stack
-        matModel = MatrixMultiply(transforms[0], rlGetMatrixTransform());
-
-        // Get model-view matrix
-        matModelView = MatrixMultiply(matModel, matView);
-    }
+    // Get model-view matrix
+    matModelView = MatrixMultiply(matModel, matView);
 
     // Upload model normal matrix (if locations available)
     if (material.shader.locs[SHADER_LOC_MATRIX_NORMAL] != -1) rlSetUniformMatrix(material.shader.locs[SHADER_LOC_MATRIX_NORMAL], MatrixTranspose(MatrixInvert(matModel)));
@@ -1205,14 +1160,14 @@ void DrawMeshInstanced(Mesh mesh, Material material, Matrix *transforms, int ins
         if (mesh.indices != NULL) rlEnableVertexBufferElement(mesh.vboId[6]);
     }
 
-    int eyesCount = 1;
-    if (rlIsStereoRenderEnabled()) eyesCount = 2;
+    int eyeCount = 1;
+    if (rlIsStereoRenderEnabled()) eyeCount = 2;
 
-    for (int eye = 0; eye < eyesCount; eye++)
+    for (int eye = 0; eye < eyeCount; eye++)
     {
         // Calculate model-view-projection matrix (MVP)
         Matrix matModelViewProjection = MatrixIdentity();
-        if (eyesCount == 1) matModelViewProjection = MatrixMultiply(matModelView, matProjection);
+        if (eyeCount == 1) matModelViewProjection = MatrixMultiply(matModelView, matProjection);
         else
         {
             // Setup current eye viewport (half screen width)
@@ -1223,16 +1178,9 @@ void DrawMeshInstanced(Mesh mesh, Material material, Matrix *transforms, int ins
         // Send combined model-view-projection matrix to shader
         rlSetUniformMatrix(material.shader.locs[SHADER_LOC_MATRIX_MVP], matModelViewProjection);
 
-        if (instancing) // Draw mesh instanced
-        {
-            if (mesh.indices != NULL) rlDrawVertexArrayElementsInstanced(0, mesh.triangleCount*3, 0, instances);
-            else rlDrawVertexArrayInstanced(0, mesh.vertexCount, instances);
-        }
-        else    // Draw mesh
-        {
-            if (mesh.indices != NULL) rlDrawVertexArrayElements(0, mesh.triangleCount*3, 0);
-            else rlDrawVertexArray(0, mesh.vertexCount);
-        }
+        // Draw mesh
+        if (mesh.indices != NULL) rlDrawVertexArrayElements(0, mesh.triangleCount*3, 0);
+        else rlDrawVertexArray(0, mesh.vertexCount);
     }
 
     // Unbind all binded texture maps
@@ -1256,18 +1204,224 @@ void DrawMeshInstanced(Mesh mesh, Material material, Matrix *transforms, int ins
     // Disable shader program
     rlDisableShader();
 
-    if (instancing)
+    // Restore rlgl internal modelview and projection matrices
+    rlSetMatrixModelview(matView);
+    rlSetMatrixProjection(matProjection);
+#endif
+}
+
+// Draw multiple mesh instances with material and different transforms
+void DrawMeshInstanced(Mesh mesh, Material material, Matrix *transforms, int instances)
+{
+#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
+    // Instancing required variables
+    float16 *instanceTransforms = NULL;
+    unsigned int instancesVboId = 0;
+
+    // Bind shader program
+    rlEnableShader(material.shader.id);
+
+    // Send required data to shader (matrices, values)
+    //-----------------------------------------------------
+    // Upload to shader material.colDiffuse
+    if (material.shader.locs[SHADER_LOC_COLOR_DIFFUSE] != -1)
     {
-        // Remove instance transforms buffer
-        rlUnloadVertexBuffer(instancesVboId);
-        RL_FREE(instanceTransforms);
+        float values[4] = {
+            (float)material.maps[MATERIAL_MAP_DIFFUSE].color.r/255.0f,
+            (float)material.maps[MATERIAL_MAP_DIFFUSE].color.g/255.0f,
+            (float)material.maps[MATERIAL_MAP_DIFFUSE].color.b/255.0f,
+            (float)material.maps[MATERIAL_MAP_DIFFUSE].color.a/255.0f
+        };
+
+        rlSetUniform(material.shader.locs[SHADER_LOC_COLOR_DIFFUSE], values, SHADER_UNIFORM_VEC4, 1);
     }
-    else
+
+    // Upload to shader material.colSpecular (if location available)
+    if (material.shader.locs[SHADER_LOC_COLOR_SPECULAR] != -1)
     {
-        // Restore rlgl internal modelview and projection matrices
-        rlSetMatrixModelview(matView);
-        rlSetMatrixProjection(matProjection);
+        float values[4] = {
+            (float)material.maps[SHADER_LOC_COLOR_SPECULAR].color.r/255.0f,
+            (float)material.maps[SHADER_LOC_COLOR_SPECULAR].color.g/255.0f,
+            (float)material.maps[SHADER_LOC_COLOR_SPECULAR].color.b/255.0f,
+            (float)material.maps[SHADER_LOC_COLOR_SPECULAR].color.a/255.0f
+        };
+
+        rlSetUniform(material.shader.locs[SHADER_LOC_COLOR_SPECULAR], values, SHADER_UNIFORM_VEC4, 1);
     }
+
+    // Get a copy of current matrices to work with,
+    // just in case stereo render is required and we need to modify them
+    // NOTE: At this point the modelview matrix just contains the view matrix (camera)
+    // That's because BeginMode3D() sets it and there is no model-drawing function
+    // that modifies it, all use rlPushMatrix() and rlPopMatrix()
+    Matrix matModel = MatrixIdentity();
+    Matrix matView = rlGetMatrixModelview();
+    Matrix matModelView = MatrixIdentity();
+    Matrix matProjection = rlGetMatrixProjection();
+
+    // Upload view and projection matrices (if locations available)
+    if (material.shader.locs[SHADER_LOC_MATRIX_VIEW] != -1) rlSetUniformMatrix(material.shader.locs[SHADER_LOC_MATRIX_VIEW], matView);
+    if (material.shader.locs[SHADER_LOC_MATRIX_PROJECTION] != -1) rlSetUniformMatrix(material.shader.locs[SHADER_LOC_MATRIX_PROJECTION], matProjection);
+
+    // Create instances buffer
+    instanceTransforms = (float16 *)RL_MALLOC(instances*sizeof(float16));
+
+    // Fill buffer with instances transformations as float16 arrays
+    for (int i = 0; i < instances; i++) instanceTransforms[i] = MatrixToFloatV(transforms[i]);
+
+    // Enable mesh VAO to attach new buffer
+    rlEnableVertexArray(mesh.vaoId);
+
+    // This could alternatively use a static VBO and either glMapBuffer() or glBufferSubData().
+    // It isn't clear which would be reliably faster in all cases and on all platforms,
+    // anecdotally glMapBuffer() seems very slow (syncs) while glBufferSubData() seems
+    // no faster, since we're transferring all the transform matrices anyway
+    instancesVboId = rlLoadVertexBuffer(instanceTransforms, instances*sizeof(float16), false);
+
+    // Instances transformation matrices are send to shader attribute location: SHADER_LOC_MATRIX_MODEL
+    for (unsigned int i = 0; i < 4; i++)
+    {
+        rlEnableVertexAttribute(material.shader.locs[SHADER_LOC_MATRIX_MODEL] + i);
+        rlSetVertexAttribute(material.shader.locs[SHADER_LOC_MATRIX_MODEL] + i, 4, RL_FLOAT, 0, sizeof(Matrix), (void *)(i*sizeof(Vector4)));
+        rlSetVertexAttributeDivisor(material.shader.locs[SHADER_LOC_MATRIX_MODEL] + i, 1);
+    }
+
+    rlDisableVertexBuffer();
+    rlDisableVertexArray();
+
+    // Accumulate internal matrix transform (push/pop) and view matrix
+    // NOTE: In this case, model instance transformation must be computed in the shader
+    matModelView = MatrixMultiply(rlGetMatrixTransform(), matView);
+
+    // Upload model normal matrix (if locations available)
+    if (material.shader.locs[SHADER_LOC_MATRIX_NORMAL] != -1) rlSetUniformMatrix(material.shader.locs[SHADER_LOC_MATRIX_NORMAL], MatrixTranspose(MatrixInvert(matModel)));
+    //-----------------------------------------------------
+
+    // Bind active texture maps (if available)
+    for (int i = 0; i < MAX_MATERIAL_MAPS; i++)
+    {
+        if (material.maps[i].texture.id > 0)
+        {
+            // Select current shader texture slot
+            rlActiveTextureSlot(i);
+
+            // Enable texture for active slot
+            if ((i == MATERIAL_MAP_IRRADIANCE) ||
+                (i == MATERIAL_MAP_PREFILTER) ||
+                (i == MATERIAL_MAP_CUBEMAP)) rlEnableTextureCubemap(material.maps[i].texture.id);
+            else rlEnableTexture(material.maps[i].texture.id);
+
+            rlSetUniform(material.shader.locs[SHADER_LOC_MAP_DIFFUSE + i], &i, SHADER_UNIFORM_INT, 1);
+        }
+    }
+
+    // Try binding vertex array objects (VAO)
+    // or use VBOs if not possible
+    if (!rlEnableVertexArray(mesh.vaoId))
+    {
+        // Bind mesh VBO data: vertex position (shader-location = 0)
+        rlEnableVertexBuffer(mesh.vboId[0]);
+        rlSetVertexAttribute(material.shader.locs[SHADER_LOC_VERTEX_POSITION], 3, RL_FLOAT, 0, 0, 0);
+        rlEnableVertexAttribute(material.shader.locs[SHADER_LOC_VERTEX_POSITION]);
+
+        // Bind mesh VBO data: vertex texcoords (shader-location = 1)
+        rlEnableVertexBuffer(mesh.vboId[1]);
+        rlSetVertexAttribute(material.shader.locs[SHADER_LOC_VERTEX_TEXCOORD01], 2, RL_FLOAT, 0, 0, 0);
+        rlEnableVertexAttribute(material.shader.locs[SHADER_LOC_VERTEX_TEXCOORD01]);
+
+        if (material.shader.locs[SHADER_LOC_VERTEX_NORMAL] != -1)
+        {
+            // Bind mesh VBO data: vertex normals (shader-location = 2)
+            rlEnableVertexBuffer(mesh.vboId[2]);
+            rlSetVertexAttribute(material.shader.locs[SHADER_LOC_VERTEX_NORMAL], 3, RL_FLOAT, 0, 0, 0);
+            rlEnableVertexAttribute(material.shader.locs[SHADER_LOC_VERTEX_NORMAL]);
+        }
+
+        // Bind mesh VBO data: vertex colors (shader-location = 3, if available)
+        if (material.shader.locs[SHADER_LOC_VERTEX_COLOR] != -1)
+        {
+            if (mesh.vboId[3] != 0)
+            {
+                rlEnableVertexBuffer(mesh.vboId[3]);
+                rlSetVertexAttribute(material.shader.locs[SHADER_LOC_VERTEX_COLOR], 4, RL_UNSIGNED_BYTE, 1, 0, 0);
+                rlEnableVertexAttribute(material.shader.locs[SHADER_LOC_VERTEX_COLOR]);
+            }
+            else
+            {
+                // Set default value for unused attribute
+                // NOTE: Required when using default shader and no VAO support
+                float value[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
+                rlSetVertexAttributeDefault(material.shader.locs[SHADER_LOC_VERTEX_COLOR], value, SHADER_ATTRIB_VEC2, 4);
+                rlDisableVertexAttribute(material.shader.locs[SHADER_LOC_VERTEX_COLOR]);
+            }
+        }
+
+        // Bind mesh VBO data: vertex tangents (shader-location = 4, if available)
+        if (material.shader.locs[SHADER_LOC_VERTEX_TANGENT] != -1)
+        {
+            rlEnableVertexBuffer(mesh.vboId[4]);
+            rlSetVertexAttribute(material.shader.locs[SHADER_LOC_VERTEX_TANGENT], 4, RL_FLOAT, 0, 0, 0);
+            rlEnableVertexAttribute(material.shader.locs[SHADER_LOC_VERTEX_TANGENT]);
+        }
+
+        // Bind mesh VBO data: vertex texcoords2 (shader-location = 5, if available)
+        if (material.shader.locs[SHADER_LOC_VERTEX_TEXCOORD02] != -1)
+        {
+            rlEnableVertexBuffer(mesh.vboId[5]);
+            rlSetVertexAttribute(material.shader.locs[SHADER_LOC_VERTEX_TEXCOORD02], 2, RL_FLOAT, 0, 0, 0);
+            rlEnableVertexAttribute(material.shader.locs[SHADER_LOC_VERTEX_TEXCOORD02]);
+        }
+
+        if (mesh.indices != NULL) rlEnableVertexBufferElement(mesh.vboId[6]);
+    }
+
+    int eyeCount = 1;
+    if (rlIsStereoRenderEnabled()) eyeCount = 2;
+
+    for (int eye = 0; eye < eyeCount; eye++)
+    {
+        // Calculate model-view-projection matrix (MVP)
+        Matrix matModelViewProjection = MatrixIdentity();
+        if (eyeCount == 1) matModelViewProjection = MatrixMultiply(matModelView, matProjection);
+        else
+        {
+            // Setup current eye viewport (half screen width)
+            rlViewport(eye*rlGetFramebufferWidth()/2, 0, rlGetFramebufferWidth()/2, rlGetFramebufferHeight());
+            matModelViewProjection = MatrixMultiply(MatrixMultiply(matModelView, rlGetMatrixViewOffsetStereo(eye)), rlGetMatrixProjectionStereo(eye));
+        }
+
+        // Send combined model-view-projection matrix to shader
+        rlSetUniformMatrix(material.shader.locs[SHADER_LOC_MATRIX_MVP], matModelViewProjection);
+
+        // Draw mesh instanced
+        if (mesh.indices != NULL) rlDrawVertexArrayElementsInstanced(0, mesh.triangleCount*3, 0, instances);
+        else rlDrawVertexArrayInstanced(0, mesh.vertexCount, instances);
+    }
+
+    // Unbind all binded texture maps
+    for (int i = 0; i < MAX_MATERIAL_MAPS; i++)
+    {
+        // Select current shader texture slot
+        rlActiveTextureSlot(i);
+
+        // Disable texture for active slot
+        if ((i == MATERIAL_MAP_IRRADIANCE) ||
+            (i == MATERIAL_MAP_PREFILTER) ||
+            (i == MATERIAL_MAP_CUBEMAP)) rlDisableTextureCubemap();
+        else rlDisableTexture();
+    }
+
+    // Disable all possible vertex array objects (or VBOs)
+    rlDisableVertexArray();
+    rlDisableVertexBuffer();
+    rlDisableVertexBufferElement();
+
+    // Disable shader program
+    rlDisableShader();
+
+    // Remove instance transforms buffer
+    rlUnloadVertexBuffer(instancesVboId);
+    RL_FREE(instanceTransforms);
 #endif
 }
 
@@ -1310,43 +1464,43 @@ bool ExportMesh(Mesh mesh, const char *fileName)
         // NOTE: Text data buffer size is estimated considering mesh data size
         char *txtData = (char *)RL_CALLOC(dataSize + 2000, sizeof(char));
 
-        int bytesCount = 0;
-        bytesCount += sprintf(txtData + bytesCount, "# //////////////////////////////////////////////////////////////////////////////////\n");
-        bytesCount += sprintf(txtData + bytesCount, "# //                                                                              //\n");
-        bytesCount += sprintf(txtData + bytesCount, "# // rMeshOBJ exporter v1.0 - Mesh exported as triangle faces and not optimized   //\n");
-        bytesCount += sprintf(txtData + bytesCount, "# //                                                                              //\n");
-        bytesCount += sprintf(txtData + bytesCount, "# // more info and bugs-report:  github.com/raysan5/raylib                        //\n");
-        bytesCount += sprintf(txtData + bytesCount, "# // feedback and support:       ray[at]raylib.com                                //\n");
-        bytesCount += sprintf(txtData + bytesCount, "# //                                                                              //\n");
-        bytesCount += sprintf(txtData + bytesCount, "# // Copyright (c) 2018 Ramon Santamaria (@raysan5)                               //\n");
-        bytesCount += sprintf(txtData + bytesCount, "# //                                                                              //\n");
-        bytesCount += sprintf(txtData + bytesCount, "# //////////////////////////////////////////////////////////////////////////////////\n\n");
-        bytesCount += sprintf(txtData + bytesCount, "# Vertex Count:     %i\n", mesh.vertexCount);
-        bytesCount += sprintf(txtData + bytesCount, "# Triangle Count:   %i\n\n", mesh.triangleCount);
+        int byteCount = 0;
+        byteCount += sprintf(txtData + byteCount, "# //////////////////////////////////////////////////////////////////////////////////\n");
+        byteCount += sprintf(txtData + byteCount, "# //                                                                              //\n");
+        byteCount += sprintf(txtData + byteCount, "# // rMeshOBJ exporter v1.0 - Mesh exported as triangle faces and not optimized   //\n");
+        byteCount += sprintf(txtData + byteCount, "# //                                                                              //\n");
+        byteCount += sprintf(txtData + byteCount, "# // more info and bugs-report:  github.com/raysan5/raylib                        //\n");
+        byteCount += sprintf(txtData + byteCount, "# // feedback and support:       ray[at]raylib.com                                //\n");
+        byteCount += sprintf(txtData + byteCount, "# //                                                                              //\n");
+        byteCount += sprintf(txtData + byteCount, "# // Copyright (c) 2018 Ramon Santamaria (@raysan5)                               //\n");
+        byteCount += sprintf(txtData + byteCount, "# //                                                                              //\n");
+        byteCount += sprintf(txtData + byteCount, "# //////////////////////////////////////////////////////////////////////////////////\n\n");
+        byteCount += sprintf(txtData + byteCount, "# Vertex Count:     %i\n", mesh.vertexCount);
+        byteCount += sprintf(txtData + byteCount, "# Triangle Count:   %i\n\n", mesh.triangleCount);
 
-        bytesCount += sprintf(txtData + bytesCount, "g mesh\n");
+        byteCount += sprintf(txtData + byteCount, "g mesh\n");
 
         for (int i = 0, v = 0; i < mesh.vertexCount; i++, v += 3)
         {
-            bytesCount += sprintf(txtData + bytesCount, "v %.2f %.2f %.2f\n", mesh.vertices[v], mesh.vertices[v + 1], mesh.vertices[v + 2]);
+            byteCount += sprintf(txtData + byteCount, "v %.2f %.2f %.2f\n", mesh.vertices[v], mesh.vertices[v + 1], mesh.vertices[v + 2]);
         }
 
         for (int i = 0, v = 0; i < mesh.vertexCount; i++, v += 2)
         {
-            bytesCount += sprintf(txtData + bytesCount, "vt %.3f %.3f\n", mesh.texcoords[v], mesh.texcoords[v + 1]);
+            byteCount += sprintf(txtData + byteCount, "vt %.3f %.3f\n", mesh.texcoords[v], mesh.texcoords[v + 1]);
         }
 
         for (int i = 0, v = 0; i < mesh.vertexCount; i++, v += 3)
         {
-            bytesCount += sprintf(txtData + bytesCount, "vn %.3f %.3f %.3f\n", mesh.normals[v], mesh.normals[v + 1], mesh.normals[v + 2]);
+            byteCount += sprintf(txtData + byteCount, "vn %.3f %.3f %.3f\n", mesh.normals[v], mesh.normals[v + 1], mesh.normals[v + 2]);
         }
 
         for (int i = 0; i < mesh.triangleCount; i += 3)
         {
-            bytesCount += sprintf(txtData + bytesCount, "f %i/%i/%i %i/%i/%i %i/%i/%i\n", i, i, i, i + 1, i + 1, i + 1, i + 2, i + 2, i + 2);
+            byteCount += sprintf(txtData + byteCount, "f %i/%i/%i %i/%i/%i %i/%i/%i\n", i, i, i, i + 1, i + 1, i + 1, i + 2, i + 2, i + 2);
         }
 
-        bytesCount += sprintf(txtData + bytesCount, "\n");
+        byteCount += sprintf(txtData + byteCount, "\n");
 
         // NOTE: Text data length exported is determined by '\0' (NULL) character
         success = SaveFileText(fileName, txtData);
@@ -3353,6 +3507,11 @@ RayCollision GetRayCollisionQuad(Ray ray, Vector3 p1, Vector3 p2, Vector3 p3, Ve
 //----------------------------------------------------------------------------------
 #if defined(SUPPORT_FILEFORMAT_OBJ)
 // Load OBJ mesh data
+//
+// Keep the following information in mind when reading this
+//  - A mesh is created for every material present in the obj file
+//  - the model.meshCount is therefore the materialCount returned from tinyobj
+//  - the mesh is automatically triangulated by tinyobj
 static Model LoadOBJ(const char *fileName)
 {
     Model model = { 0 };
@@ -3404,15 +3563,13 @@ static Model LoadOBJ(const char *fileName)
         // Count the faces for each material
         int *matFaces = RL_CALLOC(materialCount, sizeof(int));
 
-        for (unsigned int mi = 0; mi < meshCount; mi++)
+        for (int fi = 0; fi< attrib.num_faces; fi++)
         {
-            for (unsigned int fi = 0; fi < meshes[mi].length; fi++)
-            {
-                int idx = attrib.material_ids[meshes[mi].face_offset + fi];
-                if (idx == -1) idx = 0; // for no material face (which could be the whole model)
-                matFaces[idx]++;
-            }
+            tinyobj_vertex_index_t face = attrib.faces[fi];
+            int idx = attrib.material_ids[fi];
+            matFaces[idx]++;
         }
+
         //--------------------------------------
         // Create the material meshes
 
@@ -4718,14 +4875,14 @@ static Model LoadGLTF(const char *fileName)
 
         if (data->scenes_count > 1) TRACELOG(LOG_INFO, "MODEL: [%s] Has multiple scenes but only the first one will be loaded", fileName);
 
-        int primitivesCount = 0;
+        int primitiveCount = 0;
         for (unsigned int i = 0; i < data->scene->nodes_count; i++)
         {
-            GetGLTFPrimitiveCount(data->scene->nodes[i], &primitivesCount);
+            GetGLTFPrimitiveCount(data->scene->nodes[i], &primitiveCount);
         }
 
         // Process glTF data and map to model
-        model.meshCount = primitivesCount;
+        model.meshCount = primitiveCount;
         model.meshes = RL_CALLOC(model.meshCount, sizeof(Mesh));
         model.materialCount = (int)data->materials_count + 1;
         model.materials = RL_MALLOC(model.materialCount*sizeof(Material));
@@ -4753,7 +4910,7 @@ static Model LoadGLTF(const char *fileName)
     return model;
 }
 
-static void InitGLTFBones(Model* model, const cgltf_data* data)
+static void InitGLTFBones(Model *model, const cgltf_data *data)
 {
     for (unsigned int j = 0; j < data->nodes_count; j++)
     {
@@ -4776,7 +4933,7 @@ static void InitGLTFBones(Model* model, const cgltf_data* data)
     }
 
     {
-        bool* completedBones = RL_CALLOC(model->boneCount, sizeof(bool));
+        bool *completedBones = RL_CALLOC(model->boneCount, sizeof(bool));
         int numberCompletedBones = 0;
 
         while (numberCompletedBones < model->boneCount)
@@ -4884,7 +5041,7 @@ static void LoadGLTFMaterial(Model *model, const char *fileName, const cgltf_dat
     model->materials[model->materialCount - 1] = LoadMaterialDefault();
 }
 
-static void BindGLTFPrimitiveToBones(Model* model, const cgltf_data* data, int primitiveIndex)
+static void BindGLTFPrimitiveToBones(Model *model, const cgltf_data *data, int primitiveIndex)
 {
     for (unsigned int nodeId = 0; nodeId < data->nodes_count; nodeId++)
     {
@@ -4892,12 +5049,12 @@ static void BindGLTFPrimitiveToBones(Model* model, const cgltf_data* data, int p
         {
             if (model->meshes[primitiveIndex].boneIds == NULL)
             {
-                model->meshes[primitiveIndex].boneIds = RL_CALLOC(4*model->meshes[primitiveIndex].vertexCount, sizeof(int));
-                model->meshes[primitiveIndex].boneWeights = RL_CALLOC(4*model->meshes[primitiveIndex].vertexCount, sizeof(float));
+                model->meshes[primitiveIndex].boneIds = RL_CALLOC(model->meshes[primitiveIndex].vertexCount*4, sizeof(int));
+                model->meshes[primitiveIndex].boneWeights = RL_CALLOC(model->meshes[primitiveIndex].vertexCount*4, sizeof(float));
 
-                for (int b = 0; b < 4*model->meshes[primitiveIndex].vertexCount; b++)
+                for (int b = 0; b < model->meshes[primitiveIndex].vertexCount*4; b++)
                 {
-                    if (b % 4 == 0)
+                    if (b%4 == 0)
                     {
                         model->meshes[primitiveIndex].boneIds[b] = nodeId;
                         model->meshes[primitiveIndex].boneWeights[b] = 1.0f;
@@ -4974,7 +5131,7 @@ static ModelAnimation *LoadGLTFModelAnimations(const char *fileName, int *animCo
             // Getting the max animation time to consider for animation duration
             for (unsigned int i = 0; i < animation->channels_count; i++)
             {
-                cgltf_animation_channel* channel = animation->channels + i;
+                cgltf_animation_channel *channel = animation->channels + i;
                 int frameCounts = (int)channel->sampler->input->count;
                 float lastFrameTime = 0.0f;
 
@@ -5021,8 +5178,8 @@ static ModelAnimation *LoadGLTFModelAnimations(const char *fileName, int *animCo
             // for each single transformation type on single bone
             for (unsigned int channelId = 0; channelId < animation->channels_count; channelId++)
             {
-                cgltf_animation_channel* channel = animation->channels + channelId;
-                cgltf_animation_sampler* sampler = channel->sampler;
+                cgltf_animation_channel *channel = animation->channels + channelId;
+                cgltf_animation_sampler *sampler = channel->sampler;
 
                 int boneId = (int)(channel->target_node - data->nodes);
 
@@ -5180,7 +5337,7 @@ static ModelAnimation *LoadGLTFModelAnimations(const char *fileName, int *animCo
     return animations;
 }
 
-void LoadGLTFMesh(cgltf_data* data, cgltf_mesh* mesh, Model* outModel, Matrix currentTransform, int* primitiveIndex, const char *fileName)
+void LoadGLTFMesh(cgltf_data *data, cgltf_mesh *mesh, Model *outModel, Matrix currentTransform, int *primitiveIndex, const char *fileName)
 {
     for (unsigned int p = 0; p < mesh->primitives_count; p++)
     {
@@ -5305,7 +5462,7 @@ void LoadGLTFMesh(cgltf_data* data, cgltf_mesh* mesh, Model* outModel, Matrix cu
     }
 }
 
-void LoadGLTFNode(cgltf_data* data, cgltf_node* node, Model* outModel, Matrix currentTransform, int* primitiveIndex, const char *fileName)
+void LoadGLTFNode(cgltf_data *data, cgltf_node *node, Model *outModel, Matrix currentTransform, int *primitiveIndex, const char *fileName)
 {
     Matrix nodeTransform = {
         node->matrix[0], node->matrix[4], node->matrix[8], node->matrix[12],
@@ -5320,7 +5477,7 @@ void LoadGLTFNode(cgltf_data* data, cgltf_node* node, Model* outModel, Matrix cu
     for (unsigned int i = 0; i < node->children_count; i++) LoadGLTFNode(data, node->children[i], outModel, currentTransform, primitiveIndex, fileName);
 }
 
-static void GetGLTFPrimitiveCount(cgltf_node* node, int* outCount)
+static void GetGLTFPrimitiveCount(cgltf_node *node, int *outCount)
 {
     if (node->mesh != NULL) *outCount += node->mesh->primitives_count;
 

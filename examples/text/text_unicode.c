@@ -133,8 +133,8 @@ struct {
 //--------------------------------------------------------------------------------------
 static void RandomizeEmoji(void);    // Fills the emoji array with random emojis
 
-static void DrawTextRec(Font font, const char *text, Rectangle rec, float fontSize, float spacing, bool wordWrap, Color tint);   // Draw text using font inside rectangle limits
-static void DrawTextRecEx(Font font, const char *text, Rectangle rec, float fontSize, float spacing, bool wordWrap, Color tint, int selectStart, int selectLength, Color selectTint, Color selectBackTint);    // Draw text using font inside rectangle limits with support for text selection
+static void DrawTextBoxed(Font font, const char *text, Rectangle rec, float fontSize, float spacing, bool wordWrap, Color tint);   // Draw text using font inside rectangle limits
+static void DrawTextBoxedSelectable(Font font, const char *text, Rectangle rec, float fontSize, float spacing, bool wordWrap, Color tint, int selectStart, int selectLength, Color selectTint, Color selectBackTint);    // Draw text using font inside rectangle limits with support for text selection
 
 //--------------------------------------------------------------------------------------
 // Global variables
@@ -273,12 +273,12 @@ int main(int argc, char **argv)
 
                 // Draw the main text message
                 Rectangle textRect = { msgRect.x + horizontalPadding/2, msgRect.y + verticalPadding/2, msgRect.width - horizontalPadding, msgRect.height };
-                DrawTextRec(*font, messages[message].text, textRect, (float)font->baseSize, 1.0f, true, WHITE);
+                DrawTextBoxed(*font, messages[message].text, textRect, (float)font->baseSize, 1.0f, true, WHITE);
 
                 // Draw the info text below the main message
                 int size = (int)strlen(messages[message].text);
-                int len = GetCodepointsCount(messages[message].text);
-                const char *info = TextFormat("%s %u characters %i bytes", messages[message].language, len, size);
+                int length = GetCodepointCount(messages[message].text);
+                const char *info = TextFormat("%s %u characters %i bytes", messages[message].language, length, size);
                 sz = MeasureTextEx(GetFontDefault(), info, 10, 1.0f);
                 Vector2 pos = { textRect.x + textRect.width - sz.x,  msgRect.y + msgRect.height - sz.y - 2 };
                 DrawText(info, (int)pos.x, (int)pos.y, 10, RAYWHITE);
@@ -329,13 +329,13 @@ static void RandomizeEmoji(void)
 //--------------------------------------------------------------------------------------
 
 // Draw text using font inside rectangle limits
-static void DrawTextRec(Font font, const char *text, Rectangle rec, float fontSize, float spacing, bool wordWrap, Color tint)
+static void DrawTextBoxed(Font font, const char *text, Rectangle rec, float fontSize, float spacing, bool wordWrap, Color tint)
 {
-    DrawTextRecEx(font, text, rec, fontSize, spacing, wordWrap, tint, 0, 0, WHITE, WHITE);
+    DrawTextBoxedSelectable(font, text, rec, fontSize, spacing, wordWrap, tint, 0, 0, WHITE, WHITE);
 }
 
 // Draw text using font inside rectangle limits with support for text selection
-static void DrawTextRecEx(Font font, const char *text, Rectangle rec, float fontSize, float spacing, bool wordWrap, Color tint, int selectStart, int selectLength, Color selectTint, Color selectBackTint)
+static void DrawTextBoxedSelectable(Font font, const char *text, Rectangle rec, float fontSize, float spacing, bool wordWrap, Color tint, int selectStart, int selectLength, Color selectTint, Color selectBackTint)
 {
     int length = TextLength(text);  // Total length in bytes of the text, scanned by codepoints in loop
 
@@ -367,7 +367,7 @@ static void DrawTextRecEx(Font font, const char *text, Rectangle rec, float font
         float glyphWidth = 0;
         if (codepoint != '\n')
         {
-            glyphWidth = (font.chars[index].advanceX == 0) ? font.recs[index].width*scaleFactor : font.chars[index].advanceX*scaleFactor;
+            glyphWidth = (font.glyphs[index].advanceX == 0) ? font.recs[index].width*scaleFactor : font.glyphs[index].advanceX*scaleFactor;
 
             if (i + 1 < length) glyphWidth = glyphWidth + spacing;
         }

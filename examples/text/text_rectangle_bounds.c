@@ -13,8 +13,8 @@
 
 #include "raylib.h"
 
-static void DrawTextRec(Font font, const char *text, Rectangle rec, float fontSize, float spacing, bool wordWrap, Color tint);   // Draw text using font inside rectangle limits
-static void DrawTextRecEx(Font font, const char *text, Rectangle rec, float fontSize, float spacing, bool wordWrap, Color tint, int selectStart, int selectLength, Color selectTint, Color selectBackTint);    // Draw text using font inside rectangle limits with support for text selection
+static void DrawTextBoxed(Font font, const char *text, Rectangle rec, float fontSize, float spacing, bool wordWrap, Color tint);   // Draw text using font inside rectangle limits
+static void DrawTextBoxedSelectable(Font font, const char *text, Rectangle rec, float fontSize, float spacing, bool wordWrap, Color tint, int selectStart, int selectLength, Color selectTint, Color selectBackTint);    // Draw text using font inside rectangle limits with support for text selection
 
 // Main entry point
 int main(void)
@@ -92,14 +92,12 @@ tempor incididunt ut labore et dolore magna aliqua. Nec ullamcorper sit amet ris
 
             ClearBackground(RAYWHITE);
 
-            DrawRectangleLinesEx(container, 3, borderColor); // Draw container border
+            DrawRectangleLinesEx(container, 3, borderColor);    // Draw container border
 
             // Draw text in container (add some padding)
-            DrawTextRec(font, text,
-                       (Rectangle){ container.x + 4, container.y + 4, container.width - 4, container.height - 4 },
-                       20.0f, 2.0f, wordWrap, GRAY);
+            DrawTextBoxed(font, text, (Rectangle){ container.x + 4, container.y + 4, container.width - 4, container.height - 4 }, 20.0f, 2.0f, wordWrap, GRAY);
 
-            DrawRectangleRec(resizer, borderColor);         // Draw the resize box
+            DrawRectangleRec(resizer, borderColor);             // Draw the resize box
 
             // Draw bottom info
             DrawRectangle(0, screenHeight - 54, screenWidth, 54, GRAY);
@@ -130,13 +128,13 @@ tempor incididunt ut labore et dolore magna aliqua. Nec ullamcorper sit amet ris
 //--------------------------------------------------------------------------------------
 
 // Draw text using font inside rectangle limits
-static void DrawTextRec(Font font, const char *text, Rectangle rec, float fontSize, float spacing, bool wordWrap, Color tint)
+static void DrawTextBoxed(Font font, const char *text, Rectangle rec, float fontSize, float spacing, bool wordWrap, Color tint)
 {
-    DrawTextRecEx(font, text, rec, fontSize, spacing, wordWrap, tint, 0, 0, WHITE, WHITE);
+    DrawTextBoxedSelectable(font, text, rec, fontSize, spacing, wordWrap, tint, 0, 0, WHITE, WHITE);
 }
 
 // Draw text using font inside rectangle limits with support for text selection
-static void DrawTextRecEx(Font font, const char *text, Rectangle rec, float fontSize, float spacing, bool wordWrap, Color tint, int selectStart, int selectLength, Color selectTint, Color selectBackTint)
+static void DrawTextBoxedSelectable(Font font, const char *text, Rectangle rec, float fontSize, float spacing, bool wordWrap, Color tint, int selectStart, int selectLength, Color selectTint, Color selectBackTint)
 {
     int length = TextLength(text);  // Total length in bytes of the text, scanned by codepoints in loop
 
@@ -168,7 +166,7 @@ static void DrawTextRecEx(Font font, const char *text, Rectangle rec, float font
         float glyphWidth = 0;
         if (codepoint != '\n')
         {
-            glyphWidth = (font.chars[index].advanceX == 0) ? font.recs[index].width*scaleFactor : font.chars[index].advanceX*scaleFactor;
+            glyphWidth = (font.glyphs[index].advanceX == 0) ? font.recs[index].width*scaleFactor : font.glyphs[index].advanceX*scaleFactor;
 
             if (i + 1 < length) glyphWidth = glyphWidth + spacing;
         }
