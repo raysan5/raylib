@@ -186,16 +186,16 @@ ifeq ($(PLATFORM),PLATFORM_ANDROID)
     ANDROID_SYSROOT ?= $(ANDROID_TOOLCHAIN)/sysroot
 
     ifeq ($(ANDROID_ARCH),arm)
-        ANDROID_ARCH_NAME = armeabi-v7a
+        ANDROID_COMPILER_ARCH = armv7a
     endif
     ifeq ($(ANDROID_ARCH),arm64)
-        ANDROID_ARCH_NAME = arm64-v8a
+        ANDROID_COMPILER_ARCH = aarch64
     endif
     ifeq ($(ANDROID_ARCH),x86)
-        ANDROID_ARCH_NAME = i686
+        ANDROID_COMPILER_ARCH = i686
     endif
     ifeq ($(ANDROID_ARCH),x86_64)
-        ANDROID_ARCH_NAME = x86_64
+        ANDROID_COMPILER_ARCH = x86_64
     endif
 
 endif
@@ -254,22 +254,9 @@ ifeq ($(PLATFORM),PLATFORM_WEB)
 endif
 ifeq ($(PLATFORM),PLATFORM_ANDROID)
     # Android toolchain (must be provided for desired architecture and compiler)
-    ifeq ($(ANDROID_ARCH),arm)
-        CC = $(ANDROID_TOOLCHAIN)/bin/armv7a-linux-androideabi$(ANDROID_API_VERSION)-clang
-        AR = $(ANDROID_TOOLCHAIN)/bin/arm-linux-androideabi-ar
-    endif
-    ifeq ($(ANDROID_ARCH),arm64)
-        CC = $(ANDROID_TOOLCHAIN)/bin/aarch64-linux-android$(ANDROID_API_VERSION)-clang
-        AR = $(ANDROID_TOOLCHAIN)/bin/aarch64-linux-android-ar
-    endif
-    ifeq ($(ANDROID_ARCH),x86)
-        CC = $(ANDROID_TOOLCHAIN)/bin/i686-linux-android$(ANDROID_API_VERSION)-clang
-        AR = $(ANDROID_TOOLCHAIN)/bin/i686-linux-android-ar
-    endif
-    ifeq ($(ANDROID_ARCH),x86_64)
-        CC = $(ANDROID_TOOLCHAIN)/bin/x86_64-linux-android$(ANDROID_API_VERSION)-clang
-        AR = $(ANDROID_TOOLCHAIN)/bin/x86_64-linux-android-ar
-    endif
+    CC = $(ANDROID_TOOLCHAIN)/bin/$(ANDROID_COMPILER_ARCH)-linux-androideabi$(ANDROID_API_VERSION)-clang
+    # It seems from Android NDK r22 onwards we need to use llvm-ar
+    AR = $(ANDROID_TOOLCHAIN)/bin/llvm-ar
 endif
 
 # Define compiler flags:
@@ -344,10 +331,10 @@ ifeq ($(PLATFORM),PLATFORM_ANDROID)
     ifeq ($(ANDROID_ARCH),arm64)
         CFLAGS += -target aarch64 -mfix-cortex-a53-835769
     endif
-    ifeq ($(ANDROID_ARCH), x86)
+    ifeq ($(ANDROID_ARCH),x86)
         CFLAGS += -march=i686
     endif
-    ifeq ($(ANDROID_ARCH), x86_64)
+    ifeq ($(ANDROID_ARCH),x86_64)
         CFLAGS += -march=x86-64
     endif
     # Compilation functions attributes options
