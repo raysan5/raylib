@@ -501,7 +501,8 @@ MODELS = \
     models/models_skybox \
     models/models_yaw_pitch_roll \
     models/models_heightmap \
-    models/models_waving_cubes
+    models/models_waving_cubes \
+	models/models_magicavoxel_loading
 
 SHADERS = \
     shaders/shaders_model_shader \
