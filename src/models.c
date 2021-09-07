@@ -74,8 +74,10 @@
 #endif
 
 #if defined(SUPPORT_FILEFORMAT_VOX)
+    // TODO: Support custom memory allocators
+
     #define VOX_LOADER_IMPLEMENTATION
-    #include "external/vox_loader.h"        // vox file format loading
+    #include "external/vox_loader.h"    // vox file format loading (MagikaVoxel)
 #endif
 
 #if defined(SUPPORT_MESH_GENERATION)
@@ -139,7 +141,7 @@ static bool ReadGLTFValue(cgltf_accessor *acc, unsigned int index, void *variabl
 static void *ReadGLTFValuesAs(cgltf_accessor *acc, cgltf_component_type type, bool adjustOnDownCasting);
 #endif
 #if defined(SUPPORT_FILEFORMAT_VOX)
-static Model LoadVOX(const char* filename);     //Load VOX mesh data
+static Model LoadVOX(const char *filename);     // Load VOX mesh data
 #endif
 #if defined(SUPPORT_FILEFORMAT_VOX)
 static Model LoadVOX(const char* filename);     //Load VOX mesh data
@@ -2422,7 +2424,7 @@ Mesh GenMeshHeightmap(Image heightmap, Vector3 size)
     int vCounter = 0;       // Used to count vertices float by float
     int tcCounter = 0;      // Used to count texcoords float by float
     int nCounter = 0;       // Used to count normals float by float
-
+    
     int trisCounter = 0;
 
     Vector3 scaleFactor = { size.x/mapX, size.y/255.0f, size.z/mapZ };
@@ -3565,7 +3567,7 @@ static Model LoadOBJ(const char *fileName)
 
         for (int fi = 0; fi< attrib.num_faces; fi++)
         {
-            tinyobj_vertex_index_t face = attrib.faces[fi];
+            //tinyobj_vertex_index_t face = attrib.faces[fi];
             int idx = attrib.material_ids[fi];
             matFaces[idx]++;
         }
@@ -5462,18 +5464,52 @@ void LoadGLTFMesh(cgltf_data *data, cgltf_mesh *mesh, Model *outModel, Matrix cu
     }
 }
 
-void LoadGLTFNode(cgltf_data *data, cgltf_node *node, Model *outModel, Matrix currentTransform, int *primitiveIndex, const char *fileName)
+static Matrix GetNodeTransformationMatrix(cgltf_node *node, Matrix current)
 {
-    Matrix nodeTransform = {
+    if (node->has_matrix)
+    {
+        Matrix nodeTransform = {
         node->matrix[0], node->matrix[4], node->matrix[8], node->matrix[12],
         node->matrix[1], node->matrix[5], node->matrix[9], node->matrix[13],
         node->matrix[2], node->matrix[6], node->matrix[10], node->matrix[14],
         node->matrix[3], node->matrix[7], node->matrix[11], node->matrix[15] };
+        current= MatrixMultiply(nodeTransform, current);
+    }
+    if (node->has_translation)
+    {
+        Matrix tl = MatrixTranslate(node->translation[0],node->translation[1],node->translation[2]);
+        current = MatrixMultiply(tl, current);
+    }
+    if (node->has_rotation)
+    {
+        Matrix rot = QuaternionToMatrix((Quaternion){node->rotation[0],node->rotation[1],node->rotation[2],node->rotation[3]});
+        current = MatrixMultiply(rot, current);
+    }
+    if (node->has_scale)
+    {
+        Matrix scale = MatrixScale(node->scale[0],node->scale[1],node->scale[2]);
+        current = MatrixMultiply(scale, current);
+    }
+    return current;
+}
 
-    currentTransform = MatrixMultiply(nodeTransform, currentTransform);
-
-    if (node->mesh != NULL) LoadGLTFMesh(data, node->mesh, outModel, currentTransform, primitiveIndex, fileName);
-
+void LoadGLTFNode(cgltf_data *data, cgltf_node *node, Model *outModel, Matrix currentTransform, int *primitiveIndex, const char *fileName)
+{
+    // Apply the transforms if they exist (Will still be applied even if no mesh is present to support emptys and bone structures)
+    Matrix localTransform = GetNodeTransformationMatrix(node, MatrixIdentity());
+    currentTransform = MatrixMultiply(localTransform, currentTransform);
+    // Load mesh if it exists
+    if (node->mesh != NULL)
+    {
+        // Check if skinning is enabled and load Mesh accordingly
+        Matrix vertexTransform = currentTransform;
+        if((node->skin != NULL) && (node->parent != NULL))
+        {
+            vertexTransform = localTransform;
+            TRACELOG(LOG_WARNING,"MODEL: GLTF Node %s is skinned but not root node! Parent transformations will be ignored (NODE_SKINNED_MESH_NON_ROOT)",node->name);
+        }
+        LoadGLTFMesh(data, node->mesh, outModel, vertexTransform, primitiveIndex, fileName);
+    }
     for (unsigned int i = 0; i < node->children_count; i++) LoadGLTFNode(data, node->children[i], outModel, currentTransform, primitiveIndex, fileName);
 }
 
@@ -5487,17 +5523,14 @@ static void GetGLTFPrimitiveCount(cgltf_node *node, int *outCount)
 #endif
 
 #if defined(SUPPORT_FILEFORMAT_VOX)
-// Load OBJ mesh data
-static Model LoadVOX(const char* fileName)
+// Load VOX (MagikaVoxel) mesh data
+static Model LoadVOX(const char *fileName)
 {
     Model model = { 0 };
     int nbvertices = 0;
     int meshescount = 0;
-
-    //////////////////////////////////
-    // Load MagicaVoxel fileformat
     
-    VoxArray3D voxarray;
+    VoxArray3D voxarray = { 0 };
     int ret = Vox_LoadFileName(fileName, &voxarray);
 
     if (ret != VOX_SUCCESS)
@@ -5509,74 +5542,69 @@ static Model LoadVOX(const char* fileName)
     {
         // Compute meshes count
         nbvertices = voxarray.vertices.used;
-        meshescount = 1 + (nbvertices / 65536);
+        meshescount = 1 + (nbvertices/65536);
 
         TRACELOG(LOG_INFO, "MODEL: [%s] VOX data loaded successfully : %i vertices/%i meshes", fileName, nbvertices, meshescount);
     }
 
-    //////////////////////////////////
-    // Build model
-
-    // Build Models from meshes
+    // Build models from meshes
     model.transform = MatrixIdentity();
 
     model.meshCount = meshescount;
-    model.meshes = (Mesh*)MemAlloc(model.meshCount * sizeof(Mesh));
+    model.meshes = (Mesh *)MemAlloc(model.meshCount*sizeof(Mesh));
 
-    model.meshMaterial = (int*)MemAlloc(model.meshCount * sizeof(int));
+    model.meshMaterial = (int *)MemAlloc(model.meshCount*sizeof(int));
 
     model.materialCount = 1;
-    model.materials = (Material*)MemAlloc(model.materialCount * sizeof(Material));
+    model.materials = (Material *)MemAlloc(model.materialCount*sizeof(Material));
     model.materials[0] = LoadMaterialDefault();
 
-
-    // Init model's meshes
+    // Init model meshes
     int verticesRemain = voxarray.vertices.used;
-    int verticesMax = 65532; //5461 voxels x 12 vertices per voxel -> 65532 (must be inf 65536)
+    int verticesMax = 65532; // 5461 voxels x 12 vertices per voxel -> 65532 (must be inf 65536)
 
-    Vector3* pvertices = voxarray.vertices.array;	//6*4=12 vertices per voxel
-    Color* pcolors = voxarray.colors.array;
-    unsigned short* pindices = voxarray.indices.array;	//5461 * 6 * 6 -> 196596 indices max per mesh
+    Vector3 *pvertices = voxarray.vertices.array;	    // 6*4 = 12 vertices per voxel
+    Color *pcolors = voxarray.colors.array;
+    unsigned short *pindices = voxarray.indices.array;	// 5461*6*6 = 196596 indices max per mesh
 
-    int size;
+    int size = 0;
 
     for (int idxMesh = 0; idxMesh < meshescount; idxMesh++)
     {
-        Mesh* pmesh = &model.meshes[idxMesh];
+        Mesh *pmesh = &model.meshes[idxMesh];
         memset(pmesh, 0, sizeof(Mesh));
 
-        // Copy Vertices
+        // Copy vertices
         pmesh->vertexCount = (int)fmin(verticesMax, verticesRemain);
 
-        size = pmesh->vertexCount * sizeof(float) * 3;
+        size = pmesh->vertexCount*sizeof(float)*3;
         pmesh->vertices = MemAlloc(size);
         memcpy(pmesh->vertices, pvertices, size);
 
-        //Copy Indices TODO compute globals indices array
+        // Copy indices 
+        // TODO: compute globals indices array
         size = voxarray.indices.used * sizeof(unsigned short);
         pmesh->indices = MemAlloc(size);
         memcpy(pmesh->indices, pindices, size);
 
-        pmesh->triangleCount = (pmesh->vertexCount / 4) * 2;
+        pmesh->triangleCount = (pmesh->vertexCount/4)*2;
 
-        // Copy Colors
-        size = pmesh->vertexCount * sizeof(Color);
+        // Copy colors
+        size = pmesh->vertexCount*sizeof(Color);
         pmesh->colors = MemAlloc(size);
         memcpy(pmesh->colors, pcolors, size);
 
         // First material index
         model.meshMaterial[idxMesh] = 0;
 
-        // Build GPU mesh
+        // Upload mesh data to GPU
         UploadMesh(pmesh, false);
 
-        //Next
         verticesRemain -= verticesMax;
         pvertices += verticesMax;
         pcolors += verticesMax;
     }
 
-    //Free arrays
     Vox_FreeArrays(&voxarray);
 
     return model;

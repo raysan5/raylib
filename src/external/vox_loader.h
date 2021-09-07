@@ -352,8 +352,6 @@ void Vox_AllocArray(VoxArray3D* voxarray, int _sx, int _sy, int _sz)
 		voxarray->m_arrayChunks[i].m_array = 0;
 		voxarray->m_arrayChunks[i].arraySize = 0;
 	}
-
-	return voxarray;
 }
 
 // Set voxel ID from its position into VoxArray3D
@@ -578,7 +576,7 @@ int Vox_LoadFileName(const char* pszfileName, VoxArray3D* voxarray)
 
 	unsigned long signature;
 
-	unsigned long readed = 0;
+	unsigned int readed = 0;
 	unsigned char* fileData;
 	fileData = LoadFileData(pszfileName, &readed);
 	if (fileData == 0)
@@ -589,7 +587,7 @@ int Vox_LoadFileName(const char* pszfileName, VoxArray3D* voxarray)
 	unsigned char* fileDataPtr = fileData;
 	unsigned char* endfileDataPtr = fileData + readed;
 
-	signature = *((unsigned long*)fileDataPtr);
+	signature = *((unsigned long *)fileDataPtr);
 	fileDataPtr += sizeof(unsigned long);
 
 	if (signature != 0x20584F56) //56 4F 58 20
@@ -639,7 +637,6 @@ int Vox_LoadFileName(const char* pszfileName, VoxArray3D* voxarray)
 
 		unsigned long chunkTotalChildSize = *((unsigned long*)fileDataPtr);
 		fileDataPtr += sizeof(unsigned long);
-
 
 		if (strcmp(szChunkName, "SIZE") == 0)
 		{
