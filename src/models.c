@@ -74,7 +74,9 @@
 #endif
 
 #if defined(SUPPORT_FILEFORMAT_VOX)
-    // TODO: Support custom memory allocators
+    #define VOX_MALLOC RL_MALLOC
+    #define VOX_REALLOC RL_REALLOC
+    #define VOX_FREE RL_FREE
 
     #define VOX_LOADER_IMPLEMENTATION
     #include "external/vox_loader.h"    // vox file format loading (MagikaVoxel)

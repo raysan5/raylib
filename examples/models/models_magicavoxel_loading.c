@@ -51,16 +51,14 @@ int main(void)
 		t1 = GetTime() * 1000.0;
 		TraceLog(LOG_INFO, TextFormat("Vox <%s> loaded in %f ms", GetFileName(szVoxFiles[i]), t1 - t0));
 
-		//Compute model matrix
+		//Compute model's center matrix 
 		BoundingBox  bb = GetModelBoundingBox(models[i]);
 		Vector3 center;
-		center.x = -(((bb.max.x - bb.min.x) / 2));
-		center.y = -(((bb.max.y - bb.min.y) / 2));
-		center.z = -(((bb.max.z - bb.min.z) / 2));
+		center.x = bb.min.x  + (((bb.max.x - bb.min.x) / 2));
+		center.z = bb.min.z  + (((bb.max.z - bb.min.z) / 2));
 
-		Matrix matP = MatrixTranslate(center.x, center.z, 0);
-		Matrix matR = MatrixRotateX(90 * DEG2RAD);
-		models[i].transform = MatrixMultiply(matP, matR);
+		Matrix matP = MatrixTranslate(-center.x, 0, -center.z);
+		models[i].transform = matP;
 
 
 	}

@@ -34,10 +34,11 @@
 	#include ...
 	#include ...
 	#define VOX_LOADER_INCLUDE__H
-	#include "magicavoxel_loader.h"
+	#include "vox_loader.h"
 
 revision history:
 	1.00  (2021-09-03)	first released version
+	1.01  (2021-09-07)	Support custom memory allocators
 
 */
 
@@ -53,10 +54,10 @@ revision history:
 extern "C" {
 #endif
 
-#define VOX_SUCCESS (0)
-#define VOX_ERROR_FILE_NOT_FOUND (-1)
-#define VOX_ERROR_INVALID_FORMAT (-2)
-#define VOX_ERROR_FILE_VERSION_TOO_OLD (-3)
+	#define VOX_SUCCESS (0)
+	#define VOX_ERROR_FILE_NOT_FOUND (-1)
+	#define VOX_ERROR_INVALID_FORMAT (-2)
+	#define VOX_ERROR_FILE_VERSION_TOO_OLD (-3)
 
 	typedef struct
 	{
@@ -155,7 +156,7 @@ extern "C" {
 
 void initArrayInt(ArrayInt* a, int initialSize)
 {
-	a->array = MemAlloc(initialSize * sizeof(int));
+	a->array = VOX_MALLOC(initialSize * sizeof(int));
 	a->used = 0;
 	a->size = initialSize;
 }
@@ -165,14 +166,14 @@ void insertArrayInt(ArrayInt* a, int element)
 	if (a->used == a->size)
 	{
 		a->size *= 2;
-		a->array = MemRealloc(a->array, a->size * sizeof(int));
+		a->array = VOX_REALLOC(a->array, a->size * sizeof(int));
 	}
 	a->array[a->used++] = element;
 }
 
 void freeArrayInt(ArrayInt* a)
 {
-	MemFree(a->array);
+	VOX_FREE(a->array);
 	a->array = NULL;
 	a->used = a->size = 0;
 }
@@ -183,7 +184,7 @@ void freeArrayInt(ArrayInt* a)
 
 void initArrayUShort(ArrayUShort* a, int initialSize)
 {
-	a->array = MemAlloc(initialSize * sizeof(unsigned short));
+	a->array = VOX_MALLOC(initialSize * sizeof(unsigned short));
 	a->used = 0;
 	a->size = initialSize;
 }
@@ -193,14 +194,14 @@ void insertArrayUShort(ArrayUShort* a, unsigned short element)
 	if (a->used == a->size)
 	{
 		a->size *= 2;
-		a->array = MemRealloc(a->array, a->size * sizeof(unsigned short));
+		a->array = VOX_REALLOC(a->array, a->size * sizeof(unsigned short));
 	}
 	a->array[a->used++] = element;
 }
 
 void freeArrayUShort(ArrayUShort* a)
 {
-	MemFree(a->array);
+	VOX_FREE(a->array);
 	a->array = NULL;
 	a->used = a->size = 0;
 }
@@ -212,7 +213,7 @@ void freeArrayUShort(ArrayUShort* a)
 
 void initArrayVector3(ArrayVector3* a, int initialSize)
 {
-	a->array = MemAlloc(initialSize * sizeof(Vector3));
+	a->array = VOX_MALLOC(initialSize * sizeof(Vector3));
 	a->used = 0;
 	a->size = initialSize;
 }
@@ -222,14 +223,14 @@ void insertArrayVector3(ArrayVector3* a, Vector3 element)
 	if (a->used == a->size)
 	{
 		a->size *= 2;
-		a->array = MemRealloc(a->array, a->size * sizeof(Vector3));
+		a->array = VOX_REALLOC(a->array, a->size * sizeof(Vector3));
 	}
 	a->array[a->used++] = element;
 }
 
 void freeArrayVector3(ArrayVector3* a)
 {
-	MemFree(a->array);
+	VOX_FREE(a->array);
 	a->array = NULL;
 	a->used = a->size = 0;
 }
@@ -240,7 +241,7 @@ void freeArrayVector3(ArrayVector3* a)
 
 void initArrayColor(ArrayColor* a, int initialSize)
 {
-	a->array = MemAlloc(initialSize * sizeof(Color));
+	a->array = VOX_MALLOC(initialSize * sizeof(Color));
 	a->used = 0;
 	a->size = initialSize;
 }
@@ -250,14 +251,14 @@ void insertArrayColor(ArrayColor* a, Color element)
 	if (a->used == a->size)
 	{
 		a->size *= 2;
-		a->array = MemRealloc(a->array, a->size * sizeof(Color));
+		a->array = VOX_REALLOC(a->array, a->size * sizeof(Color));
 	}
 	a->array[a->used++] = element;
 }
 
 void freeArrayColor(ArrayColor* a)
 {
-	MemFree(a->array);
+	VOX_FREE(a->array);
 	a->array = NULL;
 	a->used = a->size = 0;
 }
@@ -315,7 +316,7 @@ const Vector3 SolidVertex[] = {
 
 
 // Allocated VoxArray3D size
-void Vox_AllocArray(VoxArray3D* voxarray, int _sx, int _sy, int _sz)
+void Vox_AllocArray(VoxArray3D* pvoxarray, int _sx, int _sy, int _sz)
 {
 	int sx = _sx + ((CHUNKSIZE - (_sx % CHUNKSIZE)) % CHUNKSIZE);
 	int sy = _sy + ((CHUNKSIZE - (_sy % CHUNKSIZE)) % CHUNKSIZE);
@@ -325,50 +326,50 @@ void Vox_AllocArray(VoxArray3D* voxarray, int _sx, int _sy, int _sz)
 	int chy = sy >> CHUNKSIZE_OPSHIFT; //Chunks Count in Y
 	int chz = sz >> CHUNKSIZE_OPSHIFT; //Chunks Count in Z
 
-	//VoxArray3D* parray = (VoxArray3D*)MemAlloc(sizeof(VoxArray3D));
-	voxarray->sizeX = sx;
-	voxarray->sizeY = sy;
-	voxarray->sizeZ = sz;
+	//VoxArray3D* parray = (VoxArray3D*)VOX_MALLOC(sizeof(VoxArray3D));
+	pvoxarray->sizeX = sx;
+	pvoxarray->sizeY = sy;
+	pvoxarray->sizeZ = sz;
 
-	voxarray->chunksSizeX = chx;
-	voxarray->chunksSizeY = chy;
-	voxarray->chunksSizeZ = chz;
+	pvoxarray->chunksSizeX = chx;
+	pvoxarray->chunksSizeY = chy;
+	pvoxarray->chunksSizeZ = chz;
 
-	voxarray->ChunkFlattenOffset = (chy * chz); //m_arrayChunks[(x * (sy*sz)) + (z * sy) + y]
+	pvoxarray->ChunkFlattenOffset = (chy * chz); //m_arrayChunks[(x * (sy*sz)) + (z * sy) + y]
 
 	//Alloc chunks array
 	int size = sizeof(CubeChunk3D) * chx * chy * chz;
-	voxarray->m_arrayChunks = MemAlloc(size);
-	voxarray->arrayChunksSize = size;
+	pvoxarray->m_arrayChunks = VOX_MALLOC(size);
+	pvoxarray->arrayChunksSize = size;
 
 
 	//Init chunks array
 	size = chx * chy * chz;
-	voxarray->chunksTotal = size;
-	voxarray->chunksAllocated = 0;
+	pvoxarray->chunksTotal = size;
+	pvoxarray->chunksAllocated = 0;
 
 	for (int i = 0; i < size; i++)
 	{
-		voxarray->m_arrayChunks[i].m_array = 0;
-		voxarray->m_arrayChunks[i].arraySize = 0;
+		pvoxarray->m_arrayChunks[i].m_array = 0;
+		pvoxarray->m_arrayChunks[i].arraySize = 0;
 	}
 }
 
 // Set voxel ID from its position into VoxArray3D
-void Vox_SetVoxel(VoxArray3D* voxarray, int x, int y, int z, unsigned char id)
+void Vox_SetVoxel(VoxArray3D* pvoxarray, int x, int y, int z, unsigned char id)
 {
 	//Get chunk from array pos
 	int chX = x >> CHUNKSIZE_OPSHIFT; //x / CHUNKSIZE;
 	int chY = y >> CHUNKSIZE_OPSHIFT; //y / CHUNKSIZE;
 	int chZ = z >> CHUNKSIZE_OPSHIFT; //z / CHUNKSIZE;
-	int offset = (chX * voxarray->ChunkFlattenOffset) + (chZ * voxarray->chunksSizeY) + chY;
+	int offset = (chX * pvoxarray->ChunkFlattenOffset) + (chZ * pvoxarray->chunksSizeY) + chY;
 
 	//if (offset > voxarray->arrayChunksSize)
 	//{
 	//	TraceLog(LOG_ERROR, "Out of array");
 	//}
 
-	CubeChunk3D* chunk = &voxarray->m_arrayChunks[offset];
+	CubeChunk3D* chunk = &pvoxarray->m_arrayChunks[offset];
 
 	//Set Chunk
 	chX = x - (chX << CHUNKSIZE_OPSHIFT); //x - (bx * CHUNKSIZE);
@@ -378,11 +379,11 @@ void Vox_SetVoxel(VoxArray3D* voxarray, int x, int y, int z, unsigned char id)
 	if (chunk->m_array == 0)
 	{
 		int size = CHUNKSIZE * CHUNKSIZE * CHUNKSIZE;
-		chunk->m_array = MemAlloc(size);
+		chunk->m_array = VOX_MALLOC(size);
 		chunk->arraySize = size;
-		//memset(chunk->m_array, 0, size);
+		memset(chunk->m_array, 0, size);
 
-		voxarray->chunksAllocated++;
+		pvoxarray->chunksAllocated++;
 	}
 
 	offset = (chX << CHUNK_FLATTENOFFSET_OPSHIFT) + (chZ << CHUNKSIZE_OPSHIFT) + chY;
@@ -397,12 +398,12 @@ void Vox_SetVoxel(VoxArray3D* voxarray, int x, int y, int z, unsigned char id)
 }
 
 // Get voxel ID from its position into VoxArray3D
-unsigned char Vox_GetVoxel(VoxArray3D* voxarray, int x, int y, int z)
+unsigned char Vox_GetVoxel(VoxArray3D* pvoxarray, int x, int y, int z)
 {
 	if (x < 0 || y < 0 || z < 0)
 		return 0;
 
-	if (x >= voxarray->sizeX || y >= voxarray->sizeY || z >= voxarray->sizeZ)
+	if (x >= pvoxarray->sizeX || y >= pvoxarray->sizeY || z >= pvoxarray->sizeZ)
 		return 0;
 
 
@@ -410,14 +411,14 @@ unsigned char Vox_GetVoxel(VoxArray3D* voxarray, int x, int y, int z)
 	int chX = x >> CHUNKSIZE_OPSHIFT; //x / CHUNKSIZE;
 	int chY = y >> CHUNKSIZE_OPSHIFT; //y / CHUNKSIZE;
 	int chZ = z >> CHUNKSIZE_OPSHIFT; //z / CHUNKSIZE;
-	int offset = (chX * voxarray->ChunkFlattenOffset) + (chZ * voxarray->chunksSizeY) + chY;
+	int offset = (chX * pvoxarray->ChunkFlattenOffset) + (chZ * pvoxarray->chunksSizeY) + chY;
 
 	//if (offset > voxarray->arrayChunksSize)
 	//{
 	//	TraceLog(LOG_ERROR, "Out of array");
 	//}
 
-	CubeChunk3D* chunk = &voxarray->m_arrayChunks[offset];
+	CubeChunk3D* chunk = &pvoxarray->m_arrayChunks[offset];
 
 	//Set Chunk
 	chX = x - (chX << CHUNKSIZE_OPSHIFT); //x - (bx * CHUNKSIZE);
@@ -566,7 +567,7 @@ void Vox_Build_Voxel(VoxArray3D* pvoxArray, int x, int y, int z, int matID)
 }
 
 // MagicaVoxel *.vox file format Loader
-int Vox_LoadFileName(const char* pszfileName, VoxArray3D* voxarray)
+int Vox_LoadFileName(const char* pszfileName, VoxArray3D* pvoxarray)
 {
 
 	//////////////////////////////////////////////////
@@ -592,6 +593,7 @@ int Vox_LoadFileName(const char* pszfileName, VoxArray3D* voxarray)
 
 	if (signature != 0x20584F56) //56 4F 58 20
 	{
+		UnloadFileData(fileData);
 		//TraceLog(LOG_ERROR, "Not an MagicaVoxel File format");
 		return VOX_ERROR_INVALID_FORMAT;
 	}
@@ -603,6 +605,7 @@ int Vox_LoadFileName(const char* pszfileName, VoxArray3D* voxarray)
 
 	if (version < 150)
 	{
+		UnloadFileData(fileData);
 		//TraceLog(LOG_ERROR, "MagicaVoxel version too old");
 		return VOX_ERROR_FILE_VERSION_TOO_OLD;
 	}
@@ -651,7 +654,7 @@ int Vox_LoadFileName(const char* pszfileName, VoxArray3D* voxarray)
 			fileDataPtr += sizeof(unsigned long);
 
 			//Alloc vox array
-			Vox_AllocArray(voxarray, sizeX, sizeY, sizeZ);
+			Vox_AllocArray(pvoxarray, sizeX, sizeZ, sizeY);	//Reverse Y<>Z for left to right handed system
 		}
 		else if (strcmp(szChunkName, "XYZI") == 0)
 		{
@@ -669,7 +672,7 @@ int Vox_LoadFileName(const char* pszfileName, VoxArray3D* voxarray)
 				vz = *((unsigned char*)fileDataPtr++);
 				vi = *((unsigned char*)fileDataPtr++);
 
-				Vox_SetVoxel(voxarray, vx, vy, vz, vi);
+				Vox_SetVoxel(pvoxarray, vx, vz, pvoxarray->sizeZ-vy-1, vi); //Reverse Y<>Z for left to right handed system
 
 				numVoxels--;
 			}
@@ -686,7 +689,7 @@ int Vox_LoadFileName(const char* pszfileName, VoxArray3D* voxarray)
 				col.b = *((unsigned char*)fileDataPtr++);
 				col.a = *((unsigned char*)fileDataPtr++);
 
-				voxarray->palette[i + 1] = col;
+				pvoxarray->palette[i + 1] = col;
 			}
 
 		}
@@ -695,6 +698,7 @@ int Vox_LoadFileName(const char* pszfileName, VoxArray3D* voxarray)
 			fileDataPtr += chunkSize;
 		}
 	}
+
 
 	//TraceLog(LOG_INFO, TextFormat("Vox Size : %dx%dx%d", sizeX, sizeY, sizeZ));
 
@@ -708,26 +712,28 @@ int Vox_LoadFileName(const char* pszfileName, VoxArray3D* voxarray)
 	//TraceLog(LOG_INFO, TextFormat("Building VOX Mesh : %s", pszfileName));
 
 	// Init Arrays
-	initArrayVector3(&voxarray->vertices, 3 * 1024);
-	initArrayUShort(&voxarray->indices, 3 * 1024);
-	initArrayColor(&voxarray->colors, 3 * 1024);
+	initArrayVector3(&pvoxarray->vertices, 3 * 1024);
+	initArrayUShort(&pvoxarray->indices, 3 * 1024);
+	initArrayColor(&pvoxarray->colors, 3 * 1024);
 
 	// Create vertices and indices buffers
 	int x, y, z;
 
-	for (x = 0; x <= voxarray->sizeX; x++)
+	for (x = 0; x <= pvoxarray->sizeX; x++)
 	{
-		for (z = 0; z <= voxarray->sizeZ; z++)
+		for (z = 0; z <= pvoxarray->sizeZ; z++)
 		{
-			for (y = 0; y <= voxarray->sizeY; y++)
+			for (y = 0; y <= pvoxarray->sizeY; y++)
 			{
-				unsigned char matID = Vox_GetVoxel(voxarray, x, y, z);
+				unsigned char matID = Vox_GetVoxel(pvoxarray, x, y, z);
 				if (matID != 0)
-					Vox_Build_Voxel(voxarray, x, y, z, matID);
+					Vox_Build_Voxel(pvoxarray, x, y, z, matID);
 			}
 		}
 	}
 
+	//Free file data
+	UnloadFileData(fileData);
 
 
 	return VOX_SUCCESS;
@@ -744,11 +750,11 @@ void Vox_FreeArrays(VoxArray3D* voxarray)
 			if (chunk->m_array != 0)
 			{
 				chunk->arraySize = 0;
-				MemFree(chunk->m_array);
+				VOX_FREE(chunk->m_array);
 			}
 		}
 
-		MemFree(voxarray->m_arrayChunks);
+		VOX_FREE(voxarray->m_arrayChunks);
 		voxarray->m_arrayChunks = 0;
 		voxarray->arrayChunksSize = 0;
 
