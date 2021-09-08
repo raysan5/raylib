@@ -22,7 +22,7 @@
    THE SOFTWARE.
 
 
-	vox_loader - v1.00
+	vox_loader - v1.01
 			 no warranty implied; use at your own risk
 
 	Do this:
@@ -39,6 +39,7 @@
 revision history:
 	1.00  (2021-09-03)	first released version
 	1.01  (2021-09-07)	Support custom memory allocators
+						Removed Raylib dependencies
 
 */
 
@@ -59,6 +60,17 @@ extern "C" {
 	#define VOX_ERROR_INVALID_FORMAT (-2)
 	#define VOX_ERROR_FILE_VERSION_TOO_OLD (-3)
 
+	// VoxColor, 4 components, R8G8B8A8 (32bit)
+	typedef struct {
+		unsigned char r, g, b, a;
+	} VoxColor;
+
+	// VoxVector3, 3 components
+	typedef struct  {
+		float x, y, z;
+	} VoxVector3;
+
+
 	typedef struct
 	{
 		int* array;
@@ -67,13 +79,13 @@ extern "C" {
 
 	typedef struct
 	{
-		Vector3* array;
+		VoxVector3* array;
 		int used, size;
 	} ArrayVector3;
 
 	typedef struct
 	{
-		Color* array;
+		VoxColor* array;
 		int used, size;
 	} ArrayColor;
 
@@ -119,7 +131,7 @@ extern "C" {
 		ArrayColor colors;
 
 		//Palette for voxels
-		Color palette[256];
+		VoxColor palette[256];
 
 	} VoxArray3D;
 
@@ -213,17 +225,17 @@ void freeArrayUShort(ArrayUShort* a)
 
 void initArrayVector3(ArrayVector3* a, int initialSize)
 {
-	a->array = VOX_MALLOC(initialSize * sizeof(Vector3));
+	a->array = VOX_MALLOC(initialSize * sizeof(VoxVector3));
 	a->used = 0;
 	a->size = initialSize;
 }
 
-void insertArrayVector3(ArrayVector3* a, Vector3 element)
+void insertArrayVector3(ArrayVector3* a, VoxVector3 element)
 {
 	if (a->used == a->size)
 	{
 		a->size *= 2;
-		a->array = VOX_REALLOC(a->array, a->size * sizeof(Vector3));
+		a->array = VOX_REALLOC(a->array, a->size * sizeof(VoxVector3));
 	}
 	a->array[a->used++] = element;
 }
@@ -241,17 +253,17 @@ void freeArrayVector3(ArrayVector3* a)
 
 void initArrayColor(ArrayColor* a, int initialSize)
 {
-	a->array = VOX_MALLOC(initialSize * sizeof(Color));
+	a->array = VOX_MALLOC(initialSize * sizeof(VoxColor));
 	a->used = 0;
 	a->size = initialSize;
 }
 
-void insertArrayColor(ArrayColor* a, Color element)
+void insertArrayColor(ArrayColor* a, VoxColor element)
 {
 	if (a->used == a->size)
 	{
 		a->size *= 2;
-		a->array = VOX_REALLOC(a->array, a->size * sizeof(Color));
+		a->array = VOX_REALLOC(a->array, a->size * sizeof(VoxColor));
 	}
 	a->array[a->used++] = element;
 }
@@ -301,7 +313,7 @@ const int fv[6][4] = {
 	{4, 6, 7, 5 } };//+Z
 
 
-const Vector3 SolidVertex[] = {
+const VoxVector3 SolidVertex[] = {
 	{0, 0, 0},   //0
 	{1, 0, 0},   //1
 	{0, 1, 0},   //2
@@ -482,10 +494,10 @@ unsigned char Vox_CalcFacesVisible(VoxArray3D* pvoxArray, int cx, int cy, int cz
 }
 
 // Get a vertex position from a voxel's corner
-Vector3 Vox_GetVertexPosition(int _wcx, int _wcy, int _wcz, int _nNumVertex)
+VoxVector3 Vox_GetVertexPosition(int _wcx, int _wcy, int _wcz, int _nNumVertex)
 {
 	float scale = 0.25;
-	Vector3 vtx = SolidVertex[_nNumVertex];
+	VoxVector3 vtx = SolidVertex[_nNumVertex];
 	vtx.x = (vtx.x + _wcx) * scale;
 	vtx.y = (vtx.y + _wcy) * scale;
 	vtx.z = (vtx.z + _wcz) * scale;
@@ -502,7 +514,7 @@ void Vox_Build_Voxel(VoxArray3D* pvoxArray, int x, int y, int z, int matID)
 		return;
 
 	int i, j;
-	Vector3 vertComputed[8];
+	VoxVector3 vertComputed[8];
 	int bVertexComputed[8];
 	memset(vertComputed, 0, sizeof(vertComputed));
 	memset(bVertexComputed, 0, sizeof(bVertexComputed));
@@ -543,7 +555,7 @@ void Vox_Build_Voxel(VoxArray3D* pvoxArray, int x, int y, int z, int matID)
 		insertArrayVector3(&pvoxArray->vertices, vertComputed[v2]);
 		insertArrayVector3(&pvoxArray->vertices, vertComputed[v3]);
 
-		Color col = pvoxArray->palette[matID];
+		VoxColor col = pvoxArray->palette[matID];
 
 		insertArrayColor(&pvoxArray->colors, col);
 		insertArrayColor(&pvoxArray->colors, col);
@@ -679,7 +691,7 @@ int Vox_LoadFileName(const char* pszfileName, VoxArray3D* pvoxarray)
 		}
 		else if (strcmp(szChunkName, "RGBA") == 0)
 		{
-			Color col;
+			VoxColor col;
 
 			//(each pixel: 1 byte x 4 : r, g, b, a ) x 256
 			for (int i = 0; i < 256 - 1; i++)
