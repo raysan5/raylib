@@ -3560,13 +3560,22 @@ static Model LoadOBJ(const char *fileName)
         model.meshMaterial = (int *)RL_CALLOC(model.meshCount, sizeof(int));
 
         // Count the faces for each material
-        int *matFaces = RL_CALLOC(materialCount, sizeof(int));
+        int *matFaces = RL_CALLOC(model.meshCount, sizeof(int));
 
-        for (int fi = 0; fi< attrib.num_faces; fi++)
+        // iff no materials are present use all faces on one mesh
+        if (materialCount > 0)
         {
-            //tinyobj_vertex_index_t face = attrib.faces[fi];
-            int idx = attrib.material_ids[fi];
-            matFaces[idx]++;
+            for (int fi = 0; fi< attrib.num_faces; fi++)
+            {
+                //tinyobj_vertex_index_t face = attrib.faces[fi];
+                int idx = attrib.material_ids[fi];
+                matFaces[idx]++;
+            }
+
+        }
+        else
+        {
+            matFaces[0] = attrib.num_faces;
         }
 
         //--------------------------------------
