@@ -4856,7 +4856,9 @@ static EM_BOOL EmscriptenResizeCallback(int eventType, const EmscriptenUiEvent *
 // NOTE: Window resizing not allowed by default
 static void WindowSizeCallback(GLFWwindow *window, int width, int height)
 {
-    SetupViewport(width, height);    // Reset viewport and projection matrix for new size
+    // Reset viewport and projection matrix for new size
+    SetupViewport(width, height);
+
     CORE.Window.currentFbo.width = width;
     CORE.Window.currentFbo.height = height;
     CORE.Window.resizedLastFrame = true;
@@ -4866,8 +4868,8 @@ static void WindowSizeCallback(GLFWwindow *window, int width, int height)
     // Set current screen size
     CORE.Window.screen.width = width;
     CORE.Window.screen.height = height;
+    
     // NOTE: Postprocessing texture is not scaled to new size
-
 }
 
 // GLFW3 WindowIconify Callback, runs when window is minimized/restored
