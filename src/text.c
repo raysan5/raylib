@@ -267,7 +267,7 @@ extern void LoadFontDefault(void)
 
     defaultFont.baseSize = (int)defaultFont.recs[0].height;
 
-    TRACELOG(LOG_INFO, "FONT: [ID %i] Default font texture loaded successfully", defaultFont.texture.id);
+    TRACELOG(LOG_INFO, "FONT: Default font loaded successfully (%i glyphs)", defaultFont.glyphCount);
 }
 
 // Unload raylib default font
@@ -512,6 +512,8 @@ Font LoadFontFromMemory(const char *fileType, const unsigned char *fileData, int
             }
 
             UnloadImage(atlas);
+            
+            // TRACELOG(LOG_INFO, "FONT: Font loaded successfully (%i glyphs)", font.glyphCount);
         }
         else font = GetFontDefault();
     }
@@ -1782,7 +1784,7 @@ static Font LoadBMFont(const char *fileName)
         font = GetFontDefault();
         TRACELOG(LOG_WARNING, "FONT: [%s] Failed to load texture, reverted to default font", fileName);
     }
-    else TRACELOG(LOG_INFO, "FONT: [%s] Font loaded successfully", fileName);
+    else TRACELOG(LOG_INFO, "FONT: [%s] Font loaded successfully (%i glyphs)", fileName, font.glyphCount);
 
     return font;
 }
