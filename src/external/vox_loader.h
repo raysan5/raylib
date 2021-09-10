@@ -40,6 +40,7 @@ revision history:
 	1.00  (2021-09-03)	first released version
 	1.01  (2021-09-07)	Support custom memory allocators
 						Removed Raylib dependencies
+						Changed Vox_LoadFileName to Vox_LoadFromMemory
 
 */
 
@@ -137,7 +138,7 @@ extern "C" {
 
 
 	// Functions
-	extern int Vox_LoadFileName(const char* pszfileName, VoxArray3D* voxarray);
+	extern int Vox_LoadFromMemory(const unsigned char* pvoxData, unsigned int voxDataSize, VoxArray3D* pvoxarray);
 	extern void Vox_FreeArrays(VoxArray3D* voxarray);
 
 
@@ -579,7 +580,7 @@ void Vox_Build_Voxel(VoxArray3D* pvoxArray, int x, int y, int z, int matID)
 }
 
 // MagicaVoxel *.vox file format Loader
-int Vox_LoadFileName(const char* pszfileName, VoxArray3D* pvoxarray)
+int Vox_LoadFromMemory(const unsigned char* pvoxData, unsigned int voxDataSize, VoxArray3D* pvoxarray)
 {
 
 	//////////////////////////////////////////////////
@@ -589,25 +590,17 @@ int Vox_LoadFileName(const char* pszfileName, VoxArray3D* pvoxarray)
 
 	unsigned long signature;
 
-	unsigned int readed = 0;
-	unsigned char* fileData;
-	fileData = LoadFileData(pszfileName, &readed);
-	if (fileData == 0)
-	{
-		return VOX_ERROR_FILE_NOT_FOUND;
-	}
+	unsigned char* fileData = pvoxData;
 
 	unsigned char* fileDataPtr = fileData;
-	unsigned char* endfileDataPtr = fileData + readed;
+	unsigned char* endfileDataPtr = fileData + voxDataSize;
 
 	signature = *((unsigned long *)fileDataPtr);
 	fileDataPtr += sizeof(unsigned long);
 
 	if (signature != 0x20584F56) //56 4F 58 20
 	{
-		UnloadFileData(fileData);
-		//TraceLog(LOG_ERROR, "Not an MagicaVoxel File format");
-		return VOX_ERROR_INVALID_FORMAT;
+		return VOX_ERROR_INVALID_FORMAT; //"Not an MagicaVoxel File format"
 	}
 
 	unsigned long version;
@@ -617,9 +610,7 @@ int Vox_LoadFileName(const char* pszfileName, VoxArray3D* pvoxarray)
 
 	if (version < 150)
 	{
-		UnloadFileData(fileData);
-		//TraceLog(LOG_ERROR, "MagicaVoxel version too old");
-		return VOX_ERROR_FILE_VERSION_TOO_OLD;
+		return VOX_ERROR_FILE_VERSION_TOO_OLD; //"MagicaVoxel version too old"
 	}
 
 
@@ -744,8 +735,6 @@ int Vox_LoadFileName(const char* pszfileName, VoxArray3D* pvoxarray)
 		}
 	}
 
-	//Free file data
-	UnloadFileData(fileData);
 
 
 	return VOX_SUCCESS;
