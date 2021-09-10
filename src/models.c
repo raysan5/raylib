@@ -74,7 +74,19 @@
 #endif
 
 #if defined(SUPPORT_FILEFORMAT_VOX)
-    // TODO: Support custom memory allocators
+    // Allow custom memory allocators
+    #ifndef VOX_MALLOC
+        #define VOX_MALLOC    RL_MALLOC
+    #endif
+    #ifndef VOX_CALLOC
+        #define VOX_CALLOC    RL_CALLOC
+    #endif
+    #ifndef VOX_REALLOC
+        #define VOX_REALLOC    RL_REALLOC
+    #endif
+    #ifndef VOX_FREE
+        #define VOX_FREE      RL_FREE
+    #endif
 
     #define VOX_LOADER_IMPLEMENTATION
     #include "external/vox_loader.h"    // vox file format loading (MagikaVoxel)
@@ -5529,24 +5541,38 @@ static void GetGLTFPrimitiveCount(cgltf_node *node, int *outCount)
 #endif
 
 #if defined(SUPPORT_FILEFORMAT_VOX)
-// Load VOX (MagikaVoxel) mesh data
+// Load VOX (MagicaVoxel) mesh data
 static Model LoadVOX(const char *fileName)
 {
     Model model = { 0 };
     int nbvertices = 0;
     int meshescount = 0;
+    unsigned int readed = 0;
+    unsigned char* fileData;
     
+    //Read vox file into buffer
+    fileData = LoadFileData(fileName, &readed);
+    if (fileData == 0)
+    {
+        TRACELOG(LOG_WARNING, "MODEL: [%s] Failed to load VOX file", fileName);
+        return model;
+    }
+
+    //Read and build voxarray description
     VoxArray3D voxarray = { 0 };
-    int ret = Vox_LoadFileName(fileName, &voxarray);
+    int ret = Vox_LoadFromMemory(fileData, readed, &voxarray);
 
     if (ret != VOX_SUCCESS)
     {
+        // Error
+        UnloadFileData(fileData);
+
         TRACELOG(LOG_WARNING, "MODEL: [%s] Failed to load VOX data", fileName);
         return model;
     }
     else
     {
-        // Compute meshes count
+        // Success: Compute meshes count
         nbvertices = voxarray.vertices.used;
         meshescount = 1 + (nbvertices/65536);
 
@@ -5611,7 +5637,9 @@ static Model LoadVOX(const char *fileName)
         pcolors += verticesMax;
     }
 
+    //Free buffers
     Vox_FreeArrays(&voxarray);
+    UnloadFileData(fileData);
 
     return model;
 }
