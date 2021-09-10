@@ -841,7 +841,7 @@ typedef enum {
     BLEND_CUSTOM                    // Belnd textures using custom src/dst factors (use rlSetBlendMode())
 } BlendMode;
 
-// Gestures
+// Gesture
 // NOTE: It could be used as flags to enable only some gestures
 typedef enum {
     GESTURE_NONE        = 0,        // No gesture
