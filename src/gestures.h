@@ -53,7 +53,9 @@
 //----------------------------------------------------------------------------------
 // Defines and Macros
 //----------------------------------------------------------------------------------
-//...
+#ifndef MAX_TOUCH_POINTS
+    #define MAX_TOUCH_POINTS        8        // Maximum number of touch points supported
+#endif
 
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
@@ -91,12 +93,11 @@
 typedef enum { TOUCH_UP, TOUCH_DOWN, TOUCH_MOVE } TouchAction;
 
 // Gesture event
-// NOTE: MAX_TOUCH_POINTS fixed to 4
 typedef struct {
     int touchAction;
     int pointCount;
-    int pointerId[4];
-    Vector2 position[4];
+    int pointId[MAX_TOUCH_POINTS];
+    Vector2 position[MAX_TOUCH_POINTS];
 } GestureEvent;
 
 //----------------------------------------------------------------------------------
@@ -282,7 +283,7 @@ void ProcessGestureEvent(GestureEvent event)
             GESTURES.Touch.upPosition = GESTURES.Touch.downPositionA;
             GESTURES.Touch.eventTime = GetCurrentTime();
 
-            GESTURES.Touch.firstId = event.pointerId[0];
+            GESTURES.Touch.firstId = event.pointId[0];
 
             GESTURES.Drag.vector = (Vector2){ 0.0f, 0.0f };
         }
@@ -297,7 +298,7 @@ void ProcessGestureEvent(GestureEvent event)
             GESTURES.Swipe.start = false;
 
             // Detect GESTURE_SWIPE
-            if ((GESTURES.Drag.intensity > FORCE_TO_SWIPE) && (GESTURES.Touch.firstId == event.pointerId[0]))
+            if ((GESTURES.Drag.intensity > FORCE_TO_SWIPE) && (GESTURES.Touch.firstId == event.pointId[0]))
             {
                 // NOTE: Angle should be inverted in Y
                 GESTURES.Drag.angle = 360.0f - Vector2Angle(GESTURES.Touch.downPositionA, GESTURES.Touch.upPosition);
@@ -428,14 +429,6 @@ void UpdateGestures(void)
     {
         GESTURES.current = GESTURE_NONE;
     }
-}
-
-// Get number of touch points
-int GetTouchPointCount(void)
-{
-    // NOTE: point count is calculated when ProcessGestureEvent(GestureEvent event) is called
-
-    return GESTURES.Touch.pointCount;
 }
 
 // Get latest detected gesture

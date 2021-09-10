@@ -1104,6 +1104,7 @@ RLAPI void SetMouseCursor(int cursor);                        // Set mouse curso
 RLAPI int GetTouchX(void);                                    // Get touch position X for touch point 0 (relative to screen size)
 RLAPI int GetTouchY(void);                                    // Get touch position Y for touch point 0 (relative to screen size)
 RLAPI Vector2 GetTouchPosition(int index);                    // Get touch position XY for a touch point index (relative to screen size)
+RLAPI int GetTouchPointCount(void);                           // Get number of touch points
 
 //------------------------------------------------------------------------------------
 // Gestures and Touch Handling Functions (Module: gestures)
@@ -1111,7 +1112,6 @@ RLAPI Vector2 GetTouchPosition(int index);                    // Get touch posit
 RLAPI void SetGesturesEnabled(unsigned int flags);      // Enable a set of gestures using flags
 RLAPI bool IsGestureDetected(int gesture);              // Check if a gesture have been detected
 RLAPI int GetGestureDetected(void);                     // Get latest detected gesture
-RLAPI int GetTouchPointCount(void);                     // Get touch points count
 RLAPI float GetGestureHoldDuration(void);               // Get gesture hold time in milliseconds
 RLAPI Vector2 GetGestureDragVector(void);               // Get gesture drag vector
 RLAPI float GetGestureDragAngle(void);                  // Get gesture drag angle

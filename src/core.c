@@ -298,7 +298,7 @@
     #define MAX_GAMEPAD_BUTTONS           32        // Maximum number of buttons supported (per gamepad)
 #endif
 #ifndef MAX_TOUCH_POINTS
-    #define MAX_TOUCH_POINTS              10        // Maximum number of touch points supported
+    #define MAX_TOUCH_POINTS               8        // Maximum number of touch points supported
 #endif
 #ifndef MAX_KEY_PRESSED_QUEUE
     #define MAX_KEY_PRESSED_QUEUE         16        // Maximum number of keys in the key input queue
@@ -443,6 +443,8 @@ typedef struct CoreData {
 #endif
         } Mouse;
         struct {
+            int pointCount;                             // Number of touch points active
+            int pointId[MAX_TOUCH_POINTS];              // Point identifiers
             Vector2 position[MAX_TOUCH_POINTS];         // Touch position on screen
             char currentTouchState[MAX_TOUCH_POINTS];   // Registers current touch state
             char previousTouchState[MAX_TOUCH_POINTS];  // Registers previous touch state
@@ -3564,6 +3566,12 @@ Vector2 GetTouchPosition(int index)
     return position;
 }
 
+// Get number of touch points
+int GetTouchPointCount(void)
+{
+    return CORE.Input.Touch.pointCount;
+}
+
 //----------------------------------------------------------------------------------
 // Module specific Functions Definition
 //----------------------------------------------------------------------------------
@@ -4997,7 +5005,7 @@ static void MouseButtonCallback(GLFWwindow *window, int button, int action, int 
     // but future releases may add more actions (i.e. GLFW_REPEAT)
     CORE.Input.Mouse.currentButtonState[button] = action;
 
-#if defined(SUPPORT_GESTURES_SYSTEM) && defined(SUPPORT_MOUSE_GESTURES)
+#if defined(SUPPORT_GESTURES_SYSTEM) && defined(SUPPORT_MOUSE_GESTURES)         // PLATFORM_DESKTOP
     // Process mouse events as touches to be able to use mouse-gestures
     GestureEvent gestureEvent = { 0 };
 
@@ -5008,7 +5016,7 @@ static void MouseButtonCallback(GLFWwindow *window, int button, int action, int 
     // NOTE: TOUCH_MOVE event is registered in MouseCursorPosCallback()
 
     // Assign a pointer ID
-    gestureEvent.pointerId[0] = 0;
+    gestureEvent.pointId[0] = 0;
 
     // Register touch points count
     gestureEvent.pointCount = 1;
@@ -5032,14 +5040,14 @@ static void MouseCursorPosCallback(GLFWwindow *window, double x, double y)
     CORE.Input.Mouse.currentPosition.y = (float)y;
     CORE.Input.Touch.position[0] = CORE.Input.Mouse.currentPosition;
 
-#if defined(SUPPORT_GESTURES_SYSTEM) && defined(SUPPORT_MOUSE_GESTURES)
+#if defined(SUPPORT_GESTURES_SYSTEM) && defined(SUPPORT_MOUSE_GESTURES)         // PLATFORM_DESKTOP
     // Process mouse events as touches to be able to use mouse-gestures
     GestureEvent gestureEvent = { 0 };
 
     gestureEvent.touchAction = TOUCH_MOVE;
 
     // Assign a pointer ID
-    gestureEvent.pointerId[0] = 0;
+    gestureEvent.pointId[0] = 0;
 
     // Register touch points count
     gestureEvent.pointCount = 1;
@@ -5271,64 +5279,47 @@ static int32_t AndroidInputCallback(struct android_app *app, AInputEvent *event)
 
         return 0;
     }
-
-    CORE.Input.Touch.position[0].x = AMotionEvent_getX(event, 0);
-    CORE.Input.Touch.position[0].y = AMotionEvent_getY(event, 0);
-
-    unsigned int touchCount = AMotionEvent_getPointerCount(event);
-    for (int i = 1; i < touchCount && i < MAX_TOUCH_POINTS; i++)
+    
+    // Register touch points count
+    CORE.Input.Touch.pointCount = AMotionEvent_getPointerCount(event);
+    
+    for (int i = 0; (i < CORE.Input.Touch.pointCount) && (i < MAX_TOUCH_POINTS); i++)
     {
-        CORE.Input.Touch.position[i].x = AMotionEvent_getX(event, i);
-        CORE.Input.Touch.position[i].y = AMotionEvent_getY(event, i);
+        // Register touch points id
+        CORE.Input.Touch.pointId[i] = AMotionEvent_getPointerId(event, i);
+
+        // Register touch points position
+        CORE.Input.Touch.position[i] = (Vector2){ AMotionEvent_getX(event, i), AMotionEvent_getY(event, i) };
+        
+        // Normalize gestureEvent.position[x] for screenWidth and screenHeight
+        gestureEvent.position[i].x /= (float)GetScreenWidth();
+        gestureEvent.position[i].y /= (float)GetScreenHeight();
     }
 
     int32_t action = AMotionEvent_getAction(event);
     unsigned int flags = action & AMOTION_EVENT_ACTION_MASK;
 
-    if (flags == AMOTION_EVENT_ACTION_DOWN || flags == AMOTION_EVENT_ACTION_MOVE)
-    {
-        CORE.Input.Touch.currentTouchState[MOUSE_BUTTON_LEFT] = 1;
-    }
-    else if (flags == AMOTION_EVENT_ACTION_UP)
-    {
-        CORE.Input.Touch.currentTouchState[MOUSE_BUTTON_LEFT] = 0;
-    }
+    if (flags == AMOTION_EVENT_ACTION_DOWN || flags == AMOTION_EVENT_ACTION_MOVE) CORE.Input.Touch.currentTouchState[MOUSE_BUTTON_LEFT] = 1;
+    else if (flags == AMOTION_EVENT_ACTION_UP) CORE.Input.Touch.currentTouchState[MOUSE_BUTTON_LEFT] = 0;
 
-#if defined(SUPPORT_GESTURES_SYSTEM)
+#if defined(SUPPORT_GESTURES_SYSTEM)        // PLATFORM_ANDROID
     GestureEvent gestureEvent = { 0 };
+    
+    gestureEvent.pointCount = CORE.Input.Touch.pointCount;
 
     // Register touch actions
     if (flags == AMOTION_EVENT_ACTION_DOWN) gestureEvent.touchAction = TOUCH_DOWN;
     else if (flags == AMOTION_EVENT_ACTION_UP) gestureEvent.touchAction = TOUCH_UP;
     else if (flags == AMOTION_EVENT_ACTION_MOVE) gestureEvent.touchAction = TOUCH_MOVE;
 
-    // Register touch points count
-    // NOTE: Documentation says pointerCount is Always >= 1,
-    // but in practice it can be 0 or over a million
-    gestureEvent.pointCount = AMotionEvent_getPointerCount(event);
-
-    // Only enable gestures for 1-3 touch points
-    if ((gestureEvent.pointCount > 0) && (gestureEvent.pointCount < 4))
+    for (int i = 0; (i < gestureEvent.pointCount) && (i < MAX_TOUCH_POINTS); i++)
     {
-        // Register touch points id
-        // NOTE: Only two points registered
-        gestureEvent.pointerId[0] = AMotionEvent_getPointerId(event, 0);
-        gestureEvent.pointerId[1] = AMotionEvent_getPointerId(event, 1);
-
-        // Register touch points position
-        gestureEvent.position[0] = (Vector2){ AMotionEvent_getX(event, 0), AMotionEvent_getY(event, 0) };
-        gestureEvent.position[1] = (Vector2){ AMotionEvent_getX(event, 1), AMotionEvent_getY(event, 1) };
-
-        // Normalize gestureEvent.position[x] for screenWidth and screenHeight
-        gestureEvent.position[0].x /= (float)GetScreenWidth();
-        gestureEvent.position[0].y /= (float)GetScreenHeight();
-
-        gestureEvent.position[1].x /= (float)GetScreenWidth();
-        gestureEvent.position[1].y /= (float)GetScreenHeight();
-
-        // Gesture data is sent to gestures system for processing
-        ProcessGestureEvent(gestureEvent);
+        gestureEvent.pointId[i] = CORE.Input.Touch.pointId[i];
+        gestureEvent.position[i] = CORE.Input.Touch.position[i];
     }
+
+    // Gesture data is sent to gestures system for processing
+    ProcessGestureEvent(gestureEvent);
 #endif
 
     return 0;
@@ -5346,64 +5337,50 @@ static EM_BOOL EmscriptenMouseCallback(int eventType, const EmscriptenMouseEvent
 // Register touch input events
 static EM_BOOL EmscriptenTouchCallback(int eventType, const EmscriptenTouchEvent *touchEvent, void *userData)
 {
-    for (int i = 0; i < touchEvent->numTouches; i++)
+    // Register touch points count
+    CORE.Input.Touch.pointCount = touchEvent->numTouches;
+    
+    double canvasWidth = 0.0;
+    double canvasHeight = 0.0;
+    // NOTE: emscripten_get_canvas_element_size() returns canvas.width and canvas.height but
+    // we are looking for actual CSS size: canvas.style.width and canvas.style.height
+    //EMSCRIPTEN_RESULT res = emscripten_get_canvas_element_size("#canvas", &canvasWidth, &canvasHeight);
+    emscripten_get_element_css_size("#canvas", &canvasWidth, &canvasHeight);
+    
+    for (int i = 0; (i < CORE.Input.Touch.pointCount) && (i < MAX_TOUCH_POINTS); i++)
     {
+        // Register touch points id
+        CORE.Input.Touch.pointId[i] = touchEvent->touches[i].identifier;
+
+        // Register touch points position
+        CORE.Input.Touch.position[i] = (Vector2){ touchEvent->touches[i].targetX, touchEvent->touches[i].targetY };
+
+        // Normalize gestureEvent.position[x] for CORE.Window.screen.width and CORE.Window.screen.height
+        CORE.Input.Touch.position[i].x *= ((float)GetScreenWidth()/(float)canvasWidth);
+        CORE.Input.Touch.position[i].y *= ((float)GetScreenHeight()/(float)canvasHeight);
+        
         if (eventType == EMSCRIPTEN_EVENT_TOUCHSTART) CORE.Input.Touch.currentTouchState[i] = 1;
         else if (eventType == EMSCRIPTEN_EVENT_TOUCHEND) CORE.Input.Touch.currentTouchState[i] = 0;
     }
 
-#if defined(SUPPORT_GESTURES_SYSTEM)
+#if defined(SUPPORT_GESTURES_SYSTEM)        // PLATFORM_WEB
     GestureEvent gestureEvent = { 0 };
+    
+    gestureEvent.pointCount = CORE.Input.Touch.pointCount;
 
     // Register touch actions
     if (eventType == EMSCRIPTEN_EVENT_TOUCHSTART) gestureEvent.touchAction = TOUCH_DOWN;
     else if (eventType == EMSCRIPTEN_EVENT_TOUCHEND) gestureEvent.touchAction = TOUCH_UP;
     else if (eventType == EMSCRIPTEN_EVENT_TOUCHMOVE) gestureEvent.touchAction = TOUCH_MOVE;
 
-    // Register touch points count
-    gestureEvent.pointCount = touchEvent->numTouches;
-
-    // Register touch points id
-    gestureEvent.pointerId[0] = touchEvent->touches[0].identifier;
-    gestureEvent.pointerId[1] = touchEvent->touches[1].identifier;
-
-    // Register touch points position
-    // NOTE: Only two points registered
-    gestureEvent.position[0] = (Vector2){ touchEvent->touches[0].targetX, touchEvent->touches[0].targetY };
-    gestureEvent.position[1] = (Vector2){ touchEvent->touches[1].targetX, touchEvent->touches[1].targetY };
-
-    double canvasWidth, canvasHeight;
-    // NOTE: emscripten_get_canvas_element_size() returns canvas.width and canvas.height but
-    // we are looking for actual CSS size: canvas.style.width and canvas.style.height
-    //EMSCRIPTEN_RESULT res = emscripten_get_canvas_element_size("#canvas", &canvasWidth, &canvasHeight);
-    emscripten_get_element_css_size("#canvas", &canvasWidth, &canvasHeight);
-
-    // Normalize gestureEvent.position[x] for CORE.Window.screen.width and CORE.Window.screen.height
-    gestureEvent.position[0].x *= ((float)GetScreenWidth()/(float)canvasWidth);
-    gestureEvent.position[0].y *= ((float)GetScreenHeight()/(float)canvasHeight);
-    gestureEvent.position[1].x *= ((float)GetScreenWidth()/(float)canvasWidth);
-    gestureEvent.position[1].y *= ((float)GetScreenHeight()/(float)canvasHeight);
-
-    CORE.Input.Touch.position[0] = gestureEvent.position[0];
-    CORE.Input.Touch.position[1] = gestureEvent.position[1];
+    for (int i = 0; (i < gestureEvent.pointCount) && (i < MAX_TOUCH_POINTS); i++)
+    {
+        gestureEvent.pointId[i] = CORE.Input.Touch.pointId[i];
+        gestureEvent.position[i] = CORE.Input.Touch.position[i];
+    }
 
     // Gesture data is sent to gestures system for processing
     ProcessGestureEvent(gestureEvent);
-#else
-    // Support only simple touch position
-    if (eventType == EMSCRIPTEN_EVENT_TOUCHSTART)
-    {
-        // Get first touch position
-        CORE.Input.Touch.position[0] = (Vector2){ touchEvent->touches[0].targetX, touchEvent->touches[0].targetY };
-
-        double canvasWidth, canvasHeight;
-        //EMSCRIPTEN_RESULT res = emscripten_get_canvas_element_size("#canvas", &canvasWidth, &canvasHeight);
-        emscripten_get_element_css_size("#canvas", &canvasWidth, &canvasHeight);
-
-        // Normalize gestureEvent.position[x] for screenWidth and screenHeight
-        CORE.Input.Touch.position[0].x *= ((float)GetScreenWidth()/(float)canvasWidth);
-        CORE.Input.Touch.position[0].y *= ((float)GetScreenHeight()/(float)canvasHeight);
-    }
 #endif
 
     return 1;
@@ -5923,8 +5900,8 @@ static void *EventThread(void *arg)
     struct input_event event = { 0 };
     InputEventWorker *worker = (InputEventWorker *)arg;
 
-    int touchAction = -1;
-    bool gestureUpdate = false;
+    int touchAction = -1;           // 0-TOUCH_UP, 1-TOUCH_DOWN, 2-TOUCH_MOVE
+    bool gestureUpdate = false;     // Flag to note gestures require to update
 
     while (!CORE.Window.shouldClose)
     {
@@ -5939,10 +5916,8 @@ static void *EventThread(void *arg)
                     CORE.Input.Mouse.currentPosition.x += event.value;
                     CORE.Input.Touch.position[0].x = CORE.Input.Mouse.currentPosition.x;
 
-                #if defined(SUPPORT_GESTURES_SYSTEM)
-                    touchAction = TOUCH_MOVE;
+                    touchAction = 2;    // TOUCH_MOVE
                     gestureUpdate = true;
-                #endif
                 }
 
                 if (event.code == REL_Y)
@@ -5950,10 +5925,8 @@ static void *EventThread(void *arg)
                     CORE.Input.Mouse.currentPosition.y += event.value;
                     CORE.Input.Touch.position[0].y = CORE.Input.Mouse.currentPosition.y;
 
-                #if defined(SUPPORT_GESTURES_SYSTEM)
-                    touchAction = TOUCH_MOVE;
+                    touchAction = 2;    // TOUCH_MOVE
                     gestureUpdate = true;
-                #endif
                 }
 
                 if (event.code == REL_WHEEL) CORE.Input.Mouse.currentWheelMove += event.value;
@@ -5968,10 +5941,8 @@ static void *EventThread(void *arg)
                     CORE.Input.Mouse.currentPosition.x = (event.value - worker->absRange.x)*CORE.Window.screen.width/worker->absRange.width;    // Scale acording to absRange
                     CORE.Input.Touch.position[0].x = (event.value - worker->absRange.x)*CORE.Window.screen.width/worker->absRange.width;        // Scale acording to absRange
 
-                #if defined(SUPPORT_GESTURES_SYSTEM)
-                    touchAction = TOUCH_MOVE;
+                    touchAction = 2;    // TOUCH_MOVE
                     gestureUpdate = true;
-                #endif
                 }
 
                 if (event.code == ABS_Y)
@@ -5979,10 +5950,8 @@ static void *EventThread(void *arg)
                     CORE.Input.Mouse.currentPosition.y = (event.value - worker->absRange.y)*CORE.Window.screen.height/worker->absRange.height;  // Scale acording to absRange
                     CORE.Input.Touch.position[0].y = (event.value - worker->absRange.y)*CORE.Window.screen.height/worker->absRange.height;      // Scale acording to absRange
 
-                #if defined(SUPPORT_GESTURES_SYSTEM)
-                    touchAction = TOUCH_MOVE;
+                    touchAction = 2;    // TOUCH_MOVE
                     gestureUpdate = true;
-                #endif
                 }
 
                 // Multitouch movement
@@ -6017,20 +5986,16 @@ static void *EventThread(void *arg)
                     {
                         CORE.Input.Mouse.currentButtonStateEvdev[MOUSE_BUTTON_LEFT] = 0;
 
-                    #if defined(SUPPORT_GESTURES_SYSTEM)
-                        touchAction = TOUCH_UP;
+                        touchAction = 0;    // TOUCH_UP
                         gestureUpdate = true;
-                    #endif
                     }
 
                     if (event.value && !previousMouseLeftButtonState)
                     {
                         CORE.Input.Mouse.currentButtonStateEvdev[MOUSE_BUTTON_LEFT] = 1;
 
-                    #if defined(SUPPORT_GESTURES_SYSTEM)
-                        touchAction = TOUCH_DOWN;
+                        touchAction = 1;    // TOUCH_DOWN
                         gestureUpdate = true;
-                    #endif
                     }
                 }
 
@@ -6044,11 +6009,9 @@ static void *EventThread(void *arg)
                 {
                     CORE.Input.Mouse.currentButtonStateEvdev[MOUSE_BUTTON_LEFT] = event.value;
 
-                #if defined(SUPPORT_GESTURES_SYSTEM)
-                    if (event.value > 0) touchAction = TOUCH_DOWN;
-                    else touchAction = TOUCH_UP;
+                    if (event.value > 0) touchAction = 1;   // TOUCH_DOWN
+                    else touchAction = 0;       // TOUCH_UP
                     gestureUpdate = true;
-                #endif
                 }
 
                 if (event.code == BTN_RIGHT) CORE.Input.Mouse.currentButtonStateEvdev[MOUSE_BUTTON_RIGHT] = event.value;
@@ -6069,7 +6032,7 @@ static void *EventThread(void *arg)
                 if (CORE.Input.Mouse.currentPosition.y > CORE.Window.screen.height/CORE.Input.Mouse.scale.y) CORE.Input.Mouse.currentPosition.y = CORE.Window.screen.height/CORE.Input.Mouse.scale.y;
             }
 
-#if defined(SUPPORT_GESTURES_SYSTEM)
+#if defined(SUPPORT_GESTURES_SYSTEM)        // PLATFORM_RPI, PLATFORM_DRM
             if (gestureUpdate)
             {
                 GestureEvent gestureEvent = { 0 };
@@ -6082,10 +6045,10 @@ static void *EventThread(void *arg)
                 if (CORE.Input.Touch.position[2].x >= 0) gestureEvent.pointCount++;
                 if (CORE.Input.Touch.position[3].x >= 0) gestureEvent.pointCount++;
 
-                gestureEvent.pointerId[0] = 0;
-                gestureEvent.pointerId[1] = 1;
-                gestureEvent.pointerId[2] = 2;
-                gestureEvent.pointerId[3] = 3;
+                gestureEvent.pointId[0] = 0;
+                gestureEvent.pointId[1] = 1;
+                gestureEvent.pointId[2] = 2;
+                gestureEvent.pointId[3] = 3;
 
                 gestureEvent.position[0] = CORE.Input.Touch.position[0];
                 gestureEvent.position[1] = CORE.Input.Touch.position[1];
