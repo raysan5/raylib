@@ -461,6 +461,9 @@ typedef struct CoreData {
             int streamId[MAX_GAMEPADS];     // Gamepad device file descriptor
             char name[64];                  // Gamepad name holder
 #endif
+#if defined(PLATFORM_WEB)
+            char gamepadNames[MAX_GAMEPADS][64];
+#endif
         } Gamepad;
     } Input;
     struct {
@@ -3276,6 +3279,9 @@ const char *GetGamepadName(int gamepad)
     if (CORE.Input.Gamepad.ready[gamepad]) ioctl(CORE.Input.Gamepad.streamId[gamepad], JSIOCGNAME(64), &CORE.Input.Gamepad.name);
     return CORE.Input.Gamepad.name;
 #endif
+#if defined(PLATFORM_WEB)
+    return CORE.Input.Gamepad.gamepadNames[gamepad];
+#endif
     return NULL;
 }
 
@@ -5400,7 +5406,13 @@ static EM_BOOL EmscriptenGamepadCallback(int eventType, const EmscriptenGamepadE
     for (int i = 0; i < gamepadEvent->numButtons; ++i) TRACELOGD("Button %d: Digital: %d, Analog: %g", i, gamepadEvent->digitalButton[i], gamepadEvent->analogButton[i]);
     */
 
-    if ((gamepadEvent->connected) && (gamepadEvent->index < MAX_GAMEPADS)) CORE.Input.Gamepad.ready[gamepadEvent->index] = true;
+    if ((gamepadEvent->connected) && (gamepadEvent->index < MAX_GAMEPADS))
+    {
+        CORE.Input.Gamepad.ready[gamepadEvent->index] = true;
+#if defined(PLATFORM_WEB)
+        sprintf(CORE.Input.Gamepad.gamepadNames[gamepadEvent->index],"%s",gamepadEvent->id);
+#endif
+    } 
     else CORE.Input.Gamepad.ready[gamepadEvent->index] = false;
 
     // TODO: Test gamepadEvent->index
