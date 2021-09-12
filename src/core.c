@@ -5406,9 +5406,7 @@ static EM_BOOL EmscriptenGamepadCallback(int eventType, const EmscriptenGamepadE
     if ((gamepadEvent->connected) && (gamepadEvent->index < MAX_GAMEPADS))
     {
         CORE.Input.Gamepad.ready[gamepadEvent->index] = true;
-#if defined(PLATFORM_WEB)
         sprintf(CORE.Input.Gamepad.name[gamepadEvent->index],"%s",gamepadEvent->id);
-#endif
     } 
     else CORE.Input.Gamepad.ready[gamepadEvent->index] = false;
 
