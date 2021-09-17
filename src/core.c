@@ -2669,6 +2669,12 @@ int GetRandomValue(int min, int max)
     return (rand()%(abs(max - min) + 1) + min);
 }
 
+// Set the seed for the random number generator
+void SetRandomSeed(unsigned int seed)
+{
+    srand(seed);
+}
+
 // Check if the file exists
 bool FileExists(const char *fileName)
 {
