@@ -1009,6 +1009,7 @@ RLAPI double GetTime(void);                                       // Get elapsed
 
 // Misc. functions
 RLAPI int GetRandomValue(int min, int max);                       // Get a random value between min and max (both included)
+RLAPI void SetRandomSeed(unsigned int seed);                      // Set the seed for the random number generator
 RLAPI void TakeScreenshot(const char *fileName);                  // Takes a screenshot of current screen (filename extension defines format)
 RLAPI void SetConfigFlags(unsigned int flags);                    // Setup init configuration flags (view FLAGS)
 
