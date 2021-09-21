@@ -549,7 +549,7 @@ endif
 # Compile all modules with their prerequisites
 
 # Compile core module
-core.o : core.c raylib.h rlgl.h utils.h raymath.h camera.h gestures.h
+rcore.o : rcore.c raylib.h rlgl.h utils.h raymath.h rcamera.h rgestures.h
 	$(CC) -c $< $(CFLAGS) $(INCLUDE_PATHS) -D$(PLATFORM) -D$(GRAPHICS)
 
 # Compile rglfw module
@@ -557,15 +557,15 @@ rglfw.o : rglfw.c
 	$(CC) $(GLFW_OSX) -c $< $(CFLAGS) $(INCLUDE_PATHS) -D$(PLATFORM) -D$(GRAPHICS)
 
 # Compile shapes module
-shapes.o : shapes.c raylib.h rlgl.h
+rshapes.o : rshapes.c raylib.h rlgl.h
 	$(CC) -c $< $(CFLAGS) $(INCLUDE_PATHS) -D$(PLATFORM) -D$(GRAPHICS)
 
 # Compile textures module
-textures.o : textures.c raylib.h rlgl.h utils.h
+rtextures.o : rtextures.c raylib.h rlgl.h utils.h
 	$(CC) -c $< $(CFLAGS) $(INCLUDE_PATHS) -D$(PLATFORM) -D$(GRAPHICS)
 
 # Compile text module
-text.o : text.c raylib.h utils.h
+rtext.o : rtext.c raylib.h utils.h
 	$(CC) -c $< $(CFLAGS) $(INCLUDE_PATHS) -D$(PLATFORM) -D$(GRAPHICS)
 
 # Compile utils module
@@ -573,7 +573,7 @@ utils.o : utils.c utils.h
 	$(CC) -c $< $(CFLAGS) $(INCLUDE_PATHS) -D$(PLATFORM)
 
 # Compile models module
-models.o : models.c raylib.h rlgl.h raymath.h
+rmodels.o : rmodels.c raylib.h rlgl.h raymath.h
 	$(CC) -c $< $(CFLAGS) $(INCLUDE_PATHS) -D$(PLATFORM) -D$(GRAPHICS)
 
 # Compile audio module

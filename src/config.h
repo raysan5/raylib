@@ -28,9 +28,9 @@
 //------------------------------------------------------------------------------------
 // Module: core - Configuration Flags
 //------------------------------------------------------------------------------------
-// Camera module is included (camera.h) and multiple predefined cameras are available: free, 1st/3rd person, orbital
+// Camera module is included (rcamera.h) and multiple predefined cameras are available: free, 1st/3rd person, orbital
 #define SUPPORT_CAMERA_SYSTEM       1
-// Gestures module is included (gestures.h) to support gestures detection: tap, hold, swipe, drag
+// Gestures module is included (rgestures.h) to support gestures detection: tap, hold, swipe, drag
 #define SUPPORT_GESTURES_SYSTEM     1
 // Mouse gestures are directly mapped like touches and processed by gestures system
 #define SUPPORT_MOUSE_GESTURES      1

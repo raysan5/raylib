@@ -1,6 +1,6 @@
 /**********************************************************************************************
 *
-*   raylib.textures - Basic functions to load and draw Textures (2d)
+*   rtextures - Basic functions to load and draw textures
 *
 *   CONFIGURATION:
 *

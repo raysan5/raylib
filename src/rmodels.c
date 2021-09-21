@@ -1,6 +1,6 @@
 /**********************************************************************************************
 *
-*   raylib.models - Basic functions to deal with 3d shapes and 3d models
+*   rmodels - Basic functions to draw 3d shapes and load and draw 3d models
 *
 *   CONFIGURATION:
 *
