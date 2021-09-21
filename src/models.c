@@ -70,7 +70,6 @@
 
     #define CGLTF_IMPLEMENTATION
     #include "external/cgltf.h"         // glTF file format loading
-    #include "external/stb_image.h"     // glTF texture images loading
 #endif
 
 #if defined(SUPPORT_FILEFORMAT_VOX)
