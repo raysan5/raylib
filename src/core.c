@@ -3575,6 +3575,16 @@ Vector2 GetTouchPosition(int index)
     return position;
 }
 
+// Get touch point identifier for given index
+int GetTouchPointId(int index)
+{
+    int id = -1;
+    
+    if (index < MAX_TOUCH_POINTS) id = CORE.Input.Touch.pointId[index];
+    
+    return id;
+}
+
 // Get number of touch points
 int GetTouchPointCount(void)
 {
