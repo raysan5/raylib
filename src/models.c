@@ -3098,10 +3098,13 @@ void DrawBillboard(Camera camera, Texture2D texture, Vector3 position, float siz
 // Draw a billboard (part of a texture defined by a rectangle)
 void DrawBillboardRec(Camera camera, Texture2D texture, Rectangle source, Vector3 position, Vector2 size, Color tint)
 {
-    DrawBillboardPro(camera, texture, source, position, size, Vector2Zero(), 0.0f, tint);
+    // NOTE: Billboard locked on axis-Y
+    Vector3 up = { 0.0f, 1.0f, 0.0f };
+	
+    DrawBillboardPro(camera, texture, source, position, up, size, Vector2Zero(), 0.0f, tint);
 }
 
-void DrawBillboardPro(Camera camera, Texture2D texture, Rectangle source, Vector3 position, Vector2 size, Vector2 origin, float rotation, Color tint)
+void DrawBillboardPro(Camera camera, Texture2D texture, Rectangle source, Vector3 position, Vector3 up, Vector2 size, Vector2 origin, float rotation, Color tint)
 {
     // NOTE: Billboard size will maintain source rectangle aspect ratio, size will represent billboard width
     Vector2 sizeRatio = { size.y, size.x*(float)source.height/source.width };
@@ -3110,9 +3113,6 @@ void DrawBillboardPro(Camera camera, Texture2D texture, Rectangle source, Vector
 
     Vector3 right = { matView.m0, matView.m4, matView.m8 };
     //Vector3 up = { matView.m1, matView.m5, matView.m9 };
-
-    // NOTE: Billboard locked on axis-Y
-    Vector3 up = { 0.0f, 1.0f, 0.0f };
 
     Vector3 rightScaled = Vector3Scale(right, sizeRatio.x/2);
     Vector3 upScaled = Vector3Scale(up, sizeRatio.y/2);
