@@ -9,7 +9,7 @@
 *   #define SUPPORT_FILEFORMAT_IQM
 *   #define SUPPORT_FILEFORMAT_GLTF
 *   #define SUPPORT_FILEFORMAT_VOX
-* 
+*
 *       Selected desired fileformats to be supported for model data loading.
 *
 *   #define SUPPORT_MESH_GENERATION
@@ -459,6 +459,157 @@ void DrawCubeTexture(Texture2D texture, Vector3 position, float width, float hei
             rlTexCoord2f(0.0f, 1.0f); rlVertex3f(x - width/2, y + height/2, z - length/2);  // Top Left Of The Texture and Quad
         rlEnd();
     //rlPopMatrix();
+
+    rlSetTexture(0);
+}
+
+void DrawCubeTextureRec(Texture2D texture, Rectangle source, Vector3 position, float width, float height, float length, Color color)
+{
+    float x = position.x;
+    float y = position.y;
+    float z = position.z;
+    float texture_width  = (float)texture.width;
+    float texture_height = (float)texture.height;
+
+    rlCheckRenderBatchLimit(36);
+
+    rlSetTexture(texture.id);
+
+        rlBegin(RL_QUADS);
+            rlColor4ub(color.r, color.g, color.b, color.a);
+
+            // Front Face
+            {
+                // Normal Pointing Towards Viewer
+                rlNormal3f(0.0f, 0.0f, 1.0f);
+
+                // Bottom Left Of The Texture and Quad
+                rlTexCoord2f(source.x / texture_width, (source.y + source.height) / texture_height);
+                rlVertex3f(x - width/2, y - height/2, z + length/2);
+
+                // Bottom Right Of The Texture and Quad
+                rlTexCoord2f((source.x + source.width) / texture_width, (source.y + source.height) / texture_height);
+                rlVertex3f(x + width/2, y - height/2, z + length/2);
+
+                // Top Right Of The Texture and Quad
+                rlTexCoord2f((source.x + source.width) / texture_width, source.y / texture_height);
+                rlVertex3f(x + width/2, y + height/2, z + length/2);
+
+                // Top Left Of The Texture and Quad
+                rlTexCoord2f(source.x / texture_width, source.y / texture_height);
+                rlVertex3f(x - width/2, y + height/2, z + length/2);
+            }
+
+            // Back Face
+            {
+                // Normal Pointing Away From Viewer
+                rlNormal3f(0.0f, 0.0f, - 1.0f);
+
+                // Bottom Right Of The Texture and Quad
+                rlTexCoord2f((source.x + source.width) / texture_width, (source.y + source.height) / texture_height);
+                rlVertex3f(x - width/2, y - height/2, z - length/2);
+
+                // Top Right Of The Texture and Quad
+                rlTexCoord2f((source.x + source.width) / texture_width, source.y / texture_height);
+                rlVertex3f(x - width/2, y + height/2, z - length/2);
+
+                // Top Left Of The Texture and Quad
+                rlTexCoord2f(source.x / texture_width, source.y / texture_height);
+                rlVertex3f(x + width/2, y + height/2, z - length/2);
+
+                // Bottom Left Of The Texture and Quad
+                rlTexCoord2f(source.x / texture_width, (source.y + source.height) / texture_height);
+                rlVertex3f(x + width/2, y - height/2, z - length/2);
+            }
+
+            // Top Face
+            {
+                // Normal Pointing Up
+                rlNormal3f(0.0f, 1.0f, 0.0f);
+
+                // Top Left Of The Texture and Quad
+                rlTexCoord2f(source.x / texture_width, source.y / texture_height);
+                rlVertex3f(x - width/2, y + height/2, z - length/2);
+
+                // Bottom Left Of The Texture and Quad
+                rlTexCoord2f(source.x / texture_width, (source.y + source.height) / texture_height);
+                rlVertex3f(x - width/2, y + height/2, z + length/2);
+
+                // Bottom Right Of The Texture and Quad
+                rlTexCoord2f((source.x + source.width) / texture_width, (source.y + source.height) / texture_height);
+                rlVertex3f(x + width/2, y + height/2, z + length/2);
+
+                // Top Right Of The Texture and Quad
+                rlTexCoord2f((source.x + source.width) / texture_width, source.y / texture_height);
+                rlVertex3f(x + width/2, y + height/2, z - length/2);
+            }
+
+            // Bottom Face
+            {
+                // Normal Pointing Down
+                rlNormal3f(0.0f, - 1.0f, 0.0f);
+
+                // Top Right Of The Texture and Quad
+                rlTexCoord2f((source.x + source.width) / texture_width, source.y / texture_height);
+                rlVertex3f(x - width/2, y - height/2, z - length/2);
+
+                // Top Left Of The Texture and Quad
+                rlTexCoord2f(source.x / texture_width, source.y / texture_height);
+                rlVertex3f(x + width/2, y - height/2, z - length/2);
+
+                // Bottom Left Of The Texture and Quad
+                rlTexCoord2f(source.x / texture_width, (source.y + source.height) / texture_height);
+                rlVertex3f(x + width/2, y - height/2, z + length/2);
+
+                // Bottom Right Of The Texture and Quad
+                rlTexCoord2f((source.x + source.width) / texture_width, (source.y + source.height) / texture_height);
+                rlVertex3f(x - width/2, y - height/2, z + length/2);
+            }
+
+            // Right face
+            {
+                // Normal Pointing Right
+                rlNormal3f(1.0f, 0.0f, 0.0f);
+
+                // Bottom Right Of The Texture and Quad
+                rlTexCoord2f((source.x + source.width) / texture_width, (source.y + source.height) / texture_height);
+                rlVertex3f(x + width/2, y - height/2, z - length/2);
+
+                // Top Right Of The Texture and Quad
+                rlTexCoord2f((source.x + source.width) / texture_width, source.y / texture_height);
+                rlVertex3f(x + width/2, y + height/2, z - length/2);
+
+                // Top Left Of The Texture and Quad
+                rlTexCoord2f(source.x / texture_width, source.y / texture_height);
+                rlVertex3f(x + width/2, y + height/2, z + length/2);
+
+                // Bottom Left Of The Texture and Quad
+                rlTexCoord2f(source.x / texture_width, (source.y + source.height) / texture_height);
+                rlVertex3f(x + width/2, y - height/2, z + length/2);
+            }
+
+            // Left Face
+            {
+                // Normal Pointing Left
+                rlNormal3f( - 1.0f, 0.0f, 0.0f);
+
+                // Bottom Left Of The Texture and Quad
+                rlTexCoord2f(source.x / texture_width, (source.y + source.height) / texture_height);
+                rlVertex3f(x - width/2, y - height/2, z - length/2);
+
+                // Bottom Right Of The Texture and Quad
+                rlTexCoord2f((source.x + source.width) / texture_width, (source.y + source.height) / texture_height);
+                rlVertex3f(x - width/2, y - height/2, z + length/2);
+
+                // Top Right Of The Texture and Quad
+                rlTexCoord2f((source.x + source.width) / texture_width, source.y / texture_height);
+                rlVertex3f(x - width/2, y + height/2, z + length/2);
+
+                // Top Left Of The Texture and Quad
+                rlTexCoord2f(source.x / texture_width, source.y / texture_height);
+                rlVertex3f(x - width/2, y + height/2, z - length/2);
+            }
+        rlEnd();
 
     rlSetTexture(0);
 }
@@ -2423,7 +2574,7 @@ Mesh GenMeshHeightmap(Image heightmap, Vector3 size)
     int vCounter = 0;       // Used to count vertices float by float
     int tcCounter = 0;      // Used to count texcoords float by float
     int nCounter = 0;       // Used to count normals float by float
-    
+
     int trisCounter = 0;
 
     Vector3 scaleFactor = { size.x/mapX, size.y/255.0f, size.z/mapZ };
@@ -3099,7 +3250,7 @@ void DrawBillboardRec(Camera camera, Texture2D texture, Rectangle source, Vector
 {
     // NOTE: Billboard locked on axis-Y
     Vector3 up = { 0.0f, 1.0f, 0.0f };
-	
+
     DrawBillboardPro(camera, texture, source, position, up, size, Vector2Zero(), 0.0f, tint);
 }
 
@@ -5525,7 +5676,7 @@ static Model LoadVOX(const char *fileName)
     int meshescount = 0;
     unsigned int readed = 0;
     unsigned char* fileData;
-    
+
     //Read vox file into buffer
     fileData = LoadFileData(fileName, &readed);
     if (fileData == 0)
@@ -5589,7 +5740,7 @@ static Model LoadVOX(const char *fileName)
         pmesh->vertices = MemAlloc(size);
         memcpy(pmesh->vertices, pvertices, size);
 
-        // Copy indices 
+        // Copy indices
         // TODO: compute globals indices array
         size = voxarray.indices.used * sizeof(unsigned short);
         pmesh->indices = MemAlloc(size);
