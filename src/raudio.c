@@ -1656,6 +1656,28 @@ void StopMusicStream(Music music)
     }
 }
 
+// Seek music to a certain position (in seconds)
+void SeekMusicStream(Music music, float position)
+{
+    unsigned int positionInFrames = (unsigned int)(position * music.stream.sampleRate);
+    switch (music.ctxType)
+    {
+#if defined(SUPPORT_FILEFORMAT_WAV)
+        case MUSIC_AUDIO_WAV: drwav_seek_to_pcm_frame((drwav *)music.ctxData, positionInFrames); break;
+#endif
+#if defined(SUPPORT_FILEFORMAT_OGG)
+        case MUSIC_AUDIO_OGG: stb_vorbis_seek_frame((stb_vorbis *)music.ctxData, positionInFrames); break;
+#endif
+#if defined(SUPPORT_FILEFORMAT_FLAC)
+        case MUSIC_AUDIO_FLAC: drflac_seek_to_pcm_frame((drflac *)music.ctxData, positionInFrames); break;
+#endif
+#if defined(SUPPORT_FILEFORMAT_MP3)
+        case MUSIC_AUDIO_MP3: drmp3_seek_to_pcm_frame((drmp3 *)music.ctxData, positionInFrames); break;
+#endif
+        default: break;
+    }
+}
+
 // Update (re-fill) music buffers if data already processed
 void UpdateMusicStream(Music music)
 {
