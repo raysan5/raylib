@@ -4383,7 +4383,7 @@ static Image LoadImageFromCgltfImage(cgltf_image *image, const char *texPath, Co
                 unsigned char *data = DecodeBase64(image->uri + i + 1, &size);
 
                 int width, height;
-                unsigned char *raw = stbi_load_from_memory(data, size, &width, &height, NULL, 4);
+                unsigned char *raw = LoadImageFromMemory(".png", data, size, &width, &height, NULL, 4);
                 RL_FREE(data);
 
                 rimage.data = raw;
@@ -4417,7 +4417,7 @@ static Image LoadImageFromCgltfImage(cgltf_image *image, const char *texPath, Co
         }
 
         int width, height;
-        unsigned char *raw = stbi_load_from_memory(data, (int)image->buffer_view->size, &width, &height, NULL, 4);
+        unsigned char *raw = LoadImageFromMemory(".png", data, (int)image->buffer_view->size, &width, &height, NULL, 4);
         RL_FREE(data);
 
         rimage.data = raw;
