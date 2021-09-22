@@ -1109,7 +1109,7 @@ RLAPI int GetTouchPointId(int index);                         // Get touch point
 RLAPI int GetTouchPointCount(void);                           // Get number of touch points
 
 //------------------------------------------------------------------------------------
-// Gestures and Touch Handling Functions (Module: gestures)
+// Gestures and Touch Handling Functions (Module: rgestures)
 //------------------------------------------------------------------------------------
 RLAPI void SetGesturesEnabled(unsigned int flags);      // Enable a set of gestures using flags
 RLAPI bool IsGestureDetected(int gesture);              // Check if a gesture have been detected
@@ -1121,7 +1121,7 @@ RLAPI Vector2 GetGesturePinchVector(void);              // Get gesture pinch del
 RLAPI float GetGesturePinchAngle(void);                 // Get gesture pinch angle
 
 //------------------------------------------------------------------------------------
-// Camera System Functions (Module: camera)
+// Camera System Functions (Module: rcamera)
 //------------------------------------------------------------------------------------
 RLAPI void SetCameraMode(Camera camera, int mode);      // Set camera mode (multiple camera modes available)
 RLAPI void UpdateCamera(Camera *camera);                // Update camera position for selected mode
