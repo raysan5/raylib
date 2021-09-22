@@ -443,10 +443,10 @@ endif
 # OBJS = $(patsubst %.c, %.o, $(wildcard *.c))
 
 # Define object required on compilation
-OBJS = core.o \
-       shapes.o \
-       textures.o \
-       text.o \
+OBJS = rcore.o \
+       rshapes.o \
+       rtextures.o \
+       rtext.o \
        utils.o
 
 ifeq ($(PLATFORM),PLATFORM_DESKTOP)
@@ -455,7 +455,7 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
     endif
 endif
 ifeq ($(RAYLIB_MODULE_MODELS),TRUE)
-    OBJS += models.o
+    OBJS += rmodels.o
 endif
 ifeq ($(RAYLIB_MODULE_AUDIO),TRUE)
     OBJS += raudio.o
