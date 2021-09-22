@@ -652,7 +652,7 @@ else
 endif
 
 # Remove raylib dev files installed on the system
-# TODO: see 'install' target.
+# NOTE: see 'install' target.
 uninstall :
 ifeq ($(ROOT),root)
     # WARNING: You are root, about to delete items from $(RAYLIB_INSTALL_PATH).
