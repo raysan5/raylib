@@ -269,8 +269,8 @@ Image LoadImageAnim(const char *fileName, int *frames)
         if (fileData != NULL)
         {
             int comp = 0;
-            int **delays = NULL;
-            image.data = stbi_load_gif_from_memory(fileData, dataSize, delays, &image.width, &image.height, &frameCount, &comp, 4);
+            int *delays = NULL;
+            image.data = stbi_load_gif_from_memory(fileData, dataSize, &delays, &image.width, &image.height, &frameCount, &comp, 4);
 
             image.mipmaps = 1;
             image.format = PIXELFORMAT_UNCOMPRESSED_R8G8B8A8;
