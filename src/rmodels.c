@@ -4382,15 +4382,8 @@ static Image LoadImageFromCgltfImage(cgltf_image *image, const char *texPath, Co
                 int size = 0;
                 unsigned char *data = DecodeBase64(image->uri + i + 1, &size);
 
-                int width, height;
-                unsigned char *raw = LoadImageFromMemory(".png", data, size, &width, &height, NULL, 4);
+                rimage = LoadImageFromMemory(".png", data, size);
                 RL_FREE(data);
-
-                rimage.data = raw;
-                rimage.width = width;
-                rimage.height = height;
-                rimage.format = PIXELFORMAT_UNCOMPRESSED_R8G8B8A8;
-                rimage.mipmaps = 1;
 
                 // TODO: Tint shouldn't be applied here!
                 ImageColorTint(&rimage, tint);
@@ -4416,15 +4409,8 @@ static Image LoadImageFromCgltfImage(cgltf_image *image, const char *texPath, Co
             n += stride;
         }
 
-        int width, height;
-        unsigned char *raw = LoadImageFromMemory(".png", data, (int)image->buffer_view->size, &width, &height, NULL, 4);
+        rimage = LoadImageFromMemory(".png", data, size);
         RL_FREE(data);
-
-        rimage.data = raw;
-        rimage.width = width;
-        rimage.height = height;
-        rimage.format = PIXELFORMAT_UNCOMPRESSED_R8G8B8A8;
-        rimage.mipmaps = 1;
 
         // TODO: Tint shouldn't be applied here!
         ImageColorTint(&rimage, tint);
