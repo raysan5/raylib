@@ -1,6 +1,6 @@
 /**********************************************************************************************
 *
-*   raylib.shapes - Basic functions to draw 2d Shapes and check collisions
+*   rshapes - Basic functions to draw 2d shapes and check collisions
 *
 *   CONFIGURATION:
 *

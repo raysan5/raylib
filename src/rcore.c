@@ -1,6 +1,6 @@
 /**********************************************************************************************
 *
-*   raylib.core - Basic functions to manage windows, OpenGL context and input on multiple platforms
+*   rcore - Basic functions to manage windows, OpenGL context and input on multiple platforms
 *
 *   PLATFORMS SUPPORTED:
 *       - PLATFORM_DESKTOP: Windows (Win32, Win64)
@@ -39,10 +39,10 @@
 *       NOTE: If enabled, uses external module functions to load default raylib font (module: text)
 *
 *   #define SUPPORT_CAMERA_SYSTEM
-*       Camera module is included (camera.h) and multiple predefined cameras are available: free, 1st/3rd person, orbital
+*       Camera module is included (rcamera.h) and multiple predefined cameras are available: free, 1st/3rd person, orbital
 *
 *   #define SUPPORT_GESTURES_SYSTEM
-*       Gestures module is included (gestures.h) to support gestures detection: tap, hold, swipe, drag
+*       Gestures module is included (rgestures.h) to support gestures detection: tap, hold, swipe, drag
 *
 *   #define SUPPORT_MOUSE_GESTURES
 *       Mouse gestures are directly mapped like touches and processed by gestures system.
@@ -129,12 +129,12 @@
 
 #if defined(SUPPORT_GESTURES_SYSTEM)
     #define GESTURES_IMPLEMENTATION
-    #include "gestures.h"           // Gestures detection functionality
+    #include "rgestures.h"           // Gestures detection functionality
 #endif
 
 #if defined(SUPPORT_CAMERA_SYSTEM)
     #define CAMERA_IMPLEMENTATION
-    #include "camera.h"             // Camera system functionality
+    #include "rcamera.h"             // Camera system functionality
 #endif
 
 #if defined(SUPPORT_GIF_RECORDING)
@@ -6617,7 +6617,7 @@ static void PlayAutomationEvent(unsigned int frame)
                 {
                     CORE.Input.Gamepad.axisState[events[i].params[0]][events[i].params[1]] = ((float)events[i].params[2]/32768.0f);
                 } break;
-                case INPUT_GESTURE: GESTURES.current = events[i].params[0]; break;     // param[0]: gesture (enum Gesture) -> gestures.h: GESTURES.current
+                case INPUT_GESTURE: GESTURES.current = events[i].params[0]; break;     // param[0]: gesture (enum Gesture) -> rgestures.h: GESTURES.current
 
                 // Window events
                 case WINDOW_CLOSE: CORE.Window.shouldClose = true; break;

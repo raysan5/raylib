@@ -1,6 +1,6 @@
 /**********************************************************************************************
 *
-*   raylib.gestures - Gestures system, gestures processing based on input events (touch/mouse)
+*   rgestures - Gestures system, gestures processing based on input events (touch/mouse)
 *
 *   NOTE: Memory footprint of this library is aproximately 128 bytes (global variables)
 *
@@ -43,8 +43,8 @@
 *
 **********************************************************************************************/
 
-#ifndef GESTURES_H
-#define GESTURES_H
+#ifndef RGESTURES_H
+#define RGESTURES_H
 
 #ifndef PI
     #define PI 3.14159265358979323846
@@ -481,8 +481,7 @@ float GetGestureDragAngle(void)
 // Get distance between two pinch points
 Vector2 GetGesturePinchVector(void)
 {
-    // NOTE: The position values used for GESTURES.Pinch.distance are not modified like the position values of [core.c]-->GetTouchPosition(int index)
-    // NOTE: pinch distance is calculated on two touch points TOUCH_ACTION_MOVE
+    // NOTE: Pinch distance is calculated on two touch points TOUCH_ACTION_MOVE
 
     return GESTURES.Pinch.vector;
 }

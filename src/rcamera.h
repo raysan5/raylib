@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib.camera - Camera system with multiple modes support
+*   rcamera - Basic camera system for multiple camera modes
 *
 *   NOTE: Memory footprint of this library is aproximately 52 bytes (global variables)
 *
@@ -41,8 +41,8 @@
 *
 **********************************************************************************************/
 
-#ifndef CAMERA_H
-#define CAMERA_H
+#ifndef RCAMERA_H
+#define RCAMERA_H
 
 //----------------------------------------------------------------------------------
 // Defines and Macros

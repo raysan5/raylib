@@ -18,11 +18,11 @@ cmd /c del /F libraylib.a
 :: > Compile raylib modules
 :: ------------------------------
 gcc -O2 -c rglfw.c -Wall -I. -Iexternal/glfw/include
-gcc -O2 -c core.c -std=c99 -Wall -Iexternal/glfw/include -DPLATFORM_DESKTOP -D%GRAPHICS_API%
-gcc -O2 -c shapes.c -std=c99 -Wall -DPLATFORM_DESKTOP
-gcc -O2 -c textures.c -std=c99 -Wall -DPLATFORM_DESKTOP
-gcc -O2 -c text.c -std=c99 -Wall -DPLATFORM_DESKTOP
-gcc -O2 -c models.c -std=c99 -Wall -DPLATFORM_DESKTOP
+gcc -O2 -c rcore.c -std=c99 -Wall -Iexternal/glfw/include -DPLATFORM_DESKTOP -D%GRAPHICS_API%
+gcc -O2 -c rshapes.c -std=c99 -Wall -DPLATFORM_DESKTOP
+gcc -O2 -c rtextures.c -std=c99 -Wall -DPLATFORM_DESKTOP
+gcc -O2 -c rtext.c -std=c99 -Wall -DPLATFORM_DESKTOP
+gcc -O2 -c rmodels.c -std=c99 -Wall -DPLATFORM_DESKTOP
 gcc -O2 -c raudio.c -std=c99 -Wall -DPLATFORM_DESKTOP
 gcc -O2 -c utils.c -std=c99 -Wall -DPLATFORM_DESKTOP
 

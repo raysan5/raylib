@@ -1,6 +1,6 @@
 /**********************************************************************************************
 *
-*   raylib.text - Basic functions to load Fonts and draw Text
+*   rtext - Basic functions to load fonts and draw text
 *
 *   CONFIGURATION:
 *
