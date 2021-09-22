@@ -94,7 +94,7 @@ Some people ported raylib to other languages in form of bindings or wrappers to 
 | raylib-smallBasic  | 3.1-dev | [SmallBASIC](https://github.com/smallbasic/SmallBASIC) | https://github.com/smallbasic/smallbasic.plugins/tree/master/raylib |
 | raylib-ats2        | 3.0 | [ATS2](http://www.ats-lang.org/)           | https://github.com/mephistopheles-8/raylib-ats2      |
 | raylib-beef        | 3.0 | [Beef](https://www.beeflang.org/)          | https://github.com/M0n7y5/raylib-beef    |
-| raylib-swift       | 3.5 | [Swift](https://swift.org/)                | https://github.com/conifer-dev/raylib-swift |
+| raylib-swift       | 3.7 | [Swift](https://swift.org/)                | https://github.com/STREGAsGate/Raylib |
 | raylib-never       | 3.0 | [Never](https://github.com/never-lang/never) | https://github.com/never-lang/raylib-never |
 | hb-raylib          | 3.5 | [Harbour](https://harbour.github.io)                 | https://github.com/MarcosLeonardoMendezGerencir/hb-raylib |
 | Relib              | 3.5 | [ReCT](https://github.com/RedCubeDev-ByteSpace/ReCT) | https://github.com/RedCubeDev-ByteSpace/Relib |
