@@ -80,7 +80,6 @@ RAYLIB_MODULE_RAYGUI_PATH ?= $(RAYLIB_SRC_PATH)/../../raygui/src
 RAYLIB_MODULE_PHYSAC_PATH ?= $(RAYLIB_SRC_PATH)/extras
 
 # Use external GLFW library instead of rglfw module
-# TODO: Review usage of examples on Linux.
 USE_EXTERNAL_GLFW    ?= FALSE
 
 # Use Wayland display server protocol on Linux desktop
@@ -608,7 +607,7 @@ android_native_app_glue.o : $(NATIVE_APP_GLUE)/android_native_app_glue.c
 # for our -L and -I specification to simplify management of the raylib source package.
 # Customize these locations if you like but don't forget to pass them to make
 # for compilation and enable runtime linking with -rpath, LD_LIBRARY_PATH, or ldconfig.
-# Hint: add -L$(RAYLIB_INSTALL_PATH) -I$(RAYLIB_H_INSTALL_PATH) to your own makefiles.
+# HINT: Add -L$(RAYLIB_INSTALL_PATH) -I$(RAYLIB_H_INSTALL_PATH) to your own makefiles.
 # See below and ../examples/Makefile for more information.
 # TODO: Add other platforms. Remove sudo requirement, i.e. add USER mode.
 

@@ -1525,9 +1525,8 @@ int GetCodepointCount(const char *text)
 // Get next codepoint in a UTF-8 encoded text, scanning until '\0' is found
 // When a invalid UTF-8 byte is encountered we exit as soon as possible and a '?'(0x3f) codepoint is returned
 // Total number of bytes processed are returned as a parameter
-// NOTE: the standard says U+FFFD should be returned in case of errors
+// NOTE: The standard says U+FFFD should be returned in case of errors
 // but that character is not supported by the default font in raylib
-// TODO: Optimize this code for speed!!
 int GetCodepoint(const char *text, int *bytesProcessed)
 {
 /*

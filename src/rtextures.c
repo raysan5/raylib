@@ -871,8 +871,6 @@ Image ImageFromImage(Image image, Rectangle rec)
 
     int bytesPerPixel = GetPixelDataSize(1, 1, image.format);
 
-    // TODO: Check rec is valid?
-
     result.width = (int)rec.width;
     result.height = (int)rec.height;
     result.data = RL_CALLOC((int)(rec.width*rec.height)*bytesPerPixel, 1);

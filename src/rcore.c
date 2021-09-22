@@ -1081,7 +1081,7 @@ bool IsWindowMaximized(void)
 bool IsWindowFocused(void)
 {
 #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
-    return ((CORE.Window.flags & FLAG_WINDOW_UNFOCUSED) == 0);      // TODO!
+    return ((CORE.Window.flags & FLAG_WINDOW_UNFOCUSED) == 0);
 #else
     return true;
 #endif

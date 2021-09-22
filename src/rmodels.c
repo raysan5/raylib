@@ -5741,7 +5741,7 @@ static Model LoadVOX(const char *fileName)
         memcpy(pmesh->vertices, pvertices, size);
 
         // Copy indices
-        // TODO: compute globals indices array
+        // TODO: Compute globals indices array
         size = voxarray.indices.used * sizeof(unsigned short);
         pmesh->indices = MemAlloc(size);
         memcpy(pmesh->indices, pindices, size);
