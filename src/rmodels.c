@@ -4409,7 +4409,7 @@ static Image LoadImageFromCgltfImage(cgltf_image *image, const char *texPath, Co
             n += stride;
         }
 
-        rimage = LoadImageFromMemory(".png", data, size);
+        rimage = LoadImageFromMemory(".png", data, (int)image->buffer_view->size);
         RL_FREE(data);
 
         // TODO: Tint shouldn't be applied here!
