@@ -1659,6 +1659,9 @@ void StopMusicStream(Music music)
 // Seek music to a certain position (in seconds)
 void SeekMusicStream(Music music, float position)
 {
+    // Seeking is not supported in module formats
+    if(music.ctxType == MUSIC_MODULE_XM || music.ctxType == MUSIC_MODULE_MOD) return;
+
     unsigned int positionInFrames = (unsigned int)(position * music.stream.sampleRate);
     switch (music.ctxType)
     {
@@ -1676,6 +1679,7 @@ void SeekMusicStream(Music music, float position)
 #endif
         default: break;
     }
+    music.stream.buffer->framesProcessed = positionInFrames;
 }
 
 // Update (re-fill) music buffers if data already processed
