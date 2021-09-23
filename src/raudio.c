@@ -1660,9 +1660,10 @@ void StopMusicStream(Music music)
 void SeekMusicStream(Music music, float position)
 {
     // Seeking is not supported in module formats
-    if(music.ctxType == MUSIC_MODULE_XM || music.ctxType == MUSIC_MODULE_MOD) return;
+    if ((music.ctxType == MUSIC_MODULE_XM) || (music.ctxType == MUSIC_MODULE_MOD)) return;
 
-    unsigned int positionInFrames = (unsigned int)(position * music.stream.sampleRate);
+    unsigned int positionInFrames = (unsigned int)(position*music.stream.sampleRate);
+
     switch (music.ctxType)
     {
 #if defined(SUPPORT_FILEFORMAT_WAV)
@@ -1679,6 +1680,7 @@ void SeekMusicStream(Music music, float position)
 #endif
         default: break;
     }
+    
     music.stream.buffer->framesProcessed = positionInFrames;
 }
 
