@@ -1777,22 +1777,6 @@ ModelAnimation *LoadModelAnimations(const char *fileName, unsigned int *animCoun
 // NOTE: Updated data is uploaded to GPU
 void UpdateModelAnimation(Model model, ModelAnimation anim, int frame)
 {
-    Mesh cyl = GenMeshSphere(0.05, 10, 10);
-    Material redMaterial = LoadMaterialDefault();
-    redMaterial.maps[MATERIAL_MAP_DIFFUSE].color = RED;
-    Material greenMaterial = LoadMaterialDefault();
-    greenMaterial.maps[MATERIAL_MAP_DIFFUSE].color = GREEN;
-//     for (int i = 0; i < anim.boneCount; i++)
-//     {
-//         Vector3 tv = anim.framePoses[frame%anim.frameCount][i].translation;
-//         Quaternion rv = anim.framePoses[frame%anim.frameCount][i].rotation;
-//         Matrix tm = MatrixTranslate(tv.x, tv.y, tv.z);
-//         Matrix rm = QuaternionToMatrix(rv);
-//         Matrix boneMat = MatrixMultiply(tm, rm);
-//         DrawMesh(cyl, material, boneMat);
-//     }
-
-    printf("UpdateModelAnimation\n");
     if ((anim.frameCount > 0) && (anim.bones != NULL) && (anim.framePoses != NULL))
     {
         if (frame >= anim.frameCount) frame = frame%anim.frameCount;
@@ -1800,26 +1784,19 @@ void UpdateModelAnimation(Model model, ModelAnimation anim, int frame)
         for (int m = 0; m < model.meshCount; m++)
         {
             Mesh mesh = model.meshes[m];
-            if(mesh.boneIds == NULL || mesh.boneWeights == NULL){
+            if (mesh.boneIds == NULL || mesh.boneWeights == NULL)
+            {
                 TRACELOG(LOG_WARNING, "MODEL: UpdateModelAnimation Mesh %i has no connection to bones",m);
                 continue;
             }
-            printf("Mesh %i %s\n",m,anim.bones[mesh.boneIds[0]].name);
-//             for(int i = 0; i < 4; i++){
-//                 printf("%i, ",mesh.boneIds[i]);
-//             }
-//             printf("\n");
-//             for(int i = 0; i < 4; i++){
-//                 printf("%.1f, ",mesh.boneWeights[i]);
-//             }
-            printf("\n");
+
             bool updated = false; // set to true when anim vertex information is updated
             Vector3 animVertex = { 0 };
             Vector3 animNormal = { 0 };
 
             Vector3 inTranslation = { 0 };
             Quaternion inRotation = { 0 };
-            Vector3 inScale = { 0 };
+            // Vector3 inScale = { 0 };
 
             Vector3 outTranslation = { 0 };
             Quaternion outRotation = { 0 };
@@ -1836,58 +1813,30 @@ void UpdateModelAnimation(Model model, ModelAnimation anim, int frame)
                 mesh.animVertices[vCounter + 1] = 0;
                 mesh.animVertices[vCounter + 2] = 0;
 
-//                 if(mesh.animNormals!=NULL){
+                if (mesh.animNormals!=NULL)
+                {
                     mesh.animNormals[vCounter] = 0;
                     mesh.animNormals[vCounter + 1] = 0;
                     mesh.animNormals[vCounter + 2] = 0;
-//                 }
+                }
+
+                // Iterates over 4 bones per vertex
                 for (int j = 0; j < 4; j++, boneCounter++)
                 {
                     boneWeight = mesh.boneWeights[boneCounter];
-//                     printf(" Bone Weight: %f", boneWeight);
                     // early stop when no transformation will be applied
-                    if(boneWeight==0.0f)
+                    if (boneWeight == 0.0f)
                     {
-    //                         boneCounter += 1;
                         continue;
                     }
                     boneId = mesh.boneIds[boneCounter];
                     int boneIdParent = model.bones[boneId].parent;
-//                     printf("%3i Bone %s\n",boneCounter,model.bones[boneId].name);
                     inTranslation = model.bindPose[boneId].translation;
                     inRotation = model.bindPose[boneId].rotation;
-                    inScale = model.bindPose[boneId].scale;
+                    // inScale = model.bindPose[boneId].scale;
                     outTranslation = anim.framePoses[frame][boneId].translation;
                     outRotation = anim.framePoses[frame][boneId].rotation;
                     outScale = anim.framePoses[frame][boneId].scale;
-
-                    // Check if a transformation will be applied
-//                     float angle = 2.0f*acosf(outRotation.w);
-//                     float length = Vector3Length(Vector3Subtract(outScale,inScale));
-//                     if(angle==0.0 && length==0.0){
-//                         continue;
-//                     }
-//                     printf("Boneweight %f\n",boneWeight);
-                    Matrix parentTransform = MatrixIdentity();
-                    if(boneIdParent != -1)
-                    {
-                        Vector3 tv = anim.framePoses[frame][boneIdParent].translation;
-                        Quaternion rv = anim.framePoses[frame][boneIdParent].rotation;
-                        Matrix tm = MatrixTranslate(tv.x, tv.y, tv.z);
-                        Matrix rm = QuaternionToMatrix(rv);
-                        parentTransform = MatrixMultiply(tm, rm);
-                    }
-
-                    Matrix tm = MatrixTranslate(outTranslation.x, outTranslation.y, outTranslation.z);
-                    Matrix rm = QuaternionToMatrix((Quaternion){outRotation.x, outRotation.y, outRotation.z, outRotation.w});
-                    Matrix boneMat = MatrixMultiply(tm, rm);
-//                     boneMat = MatrixMultiply(parentTransform, boneMat);
-                    DrawMesh(cyl, redMaterial, boneMat);
-
-                    tm = MatrixTranslate(inTranslation.x, inTranslation.y, inTranslation.z);
-                    rm = QuaternionToMatrix((Quaternion){inRotation.x, inRotation.y, inRotation.z, inRotation.w});
-                    boneMat = MatrixMultiply(tm, rm);
-//                     DrawMesh(cyl, greenMaterial, boneMat);
 
                     // Vertices processing
                     // NOTE: We use meshes.vertices (default vertex position) to calculate meshes.animVertices (animated vertex position)
@@ -1900,7 +1849,6 @@ void UpdateModelAnimation(Model model, ModelAnimation anim, int frame)
                     mesh.animVertices[vCounter] += animVertex.x*boneWeight;
                     mesh.animVertices[vCounter + 1] += animVertex.y*boneWeight;
                     mesh.animVertices[vCounter + 2] += animVertex.z*boneWeight;
-//                     printf("Vertex %.1f %.1f %.1f\n",animVertex.x, animVertex.y, animVertex.z);
                     updated = true;
 
                     // Normals processing
@@ -1918,7 +1866,7 @@ void UpdateModelAnimation(Model model, ModelAnimation anim, int frame)
 
             // Upload new vertex data to GPU for model drawing
             // Only update data when values changed.
-            if(updated){
+            if (updated){
                 rlUpdateVertexBuffer(mesh.vboId[0], mesh.animVertices, mesh.vertexCount*3*sizeof(float), 0);    // Update vertex position
                 rlUpdateVertexBuffer(mesh.vboId[2], mesh.animNormals, mesh.vertexCount*3*sizeof(float), 0);     // Update vertex normals
             }
@@ -3275,8 +3223,6 @@ void DrawModelEx(Model model, Vector3 position, Vector3 rotationAxis, float rota
     // Combine model transformation matrix (model.transform) with matrix generated by function parameters (matTransform)
     model.transform = MatrixMultiply(model.transform, matTransform);
 
-
-
     for (int i = 0; i < model.meshCount; i++)
     {
         Color color = model.materials[model.meshMaterial[i]].maps[MATERIAL_MAP_DIFFUSE].color;
@@ -3291,19 +3237,6 @@ void DrawModelEx(Model model, Vector3 position, Vector3 rotationAxis, float rota
         DrawMesh(model.meshes[i], model.materials[model.meshMaterial[i]], model.transform);
         model.materials[model.meshMaterial[i]].maps[MATERIAL_MAP_DIFFUSE].color = color;
     }
-//     Mesh cyl = GenMeshCylinder(0.001, 0.5, 8);
-//     Material material = LoadMaterialDefault();
-//     for (int i = 0; i < model.boneCount; i++)
-//     {
-//         Vector3 tv = model.bindPose[i].translation;
-//         Quaternion rv = model.bindPose[i].rotation;
-//         Matrix tm = MatrixTranslate(tv.x, tv.y, tv.z);
-//         Matrix rm = QuaternionToMatrix(rv);
-//         Matrix boneMat = MatrixMultiply(tm, rm);
-//         material.maps[MATERIAL_MAP_DIFFUSE].color = RED;
-//         DrawMesh(cyl, material, boneMat);
-//
-//     }
 }
 
 // Draw a model wires (with texture if set)
@@ -5152,9 +5085,7 @@ static void InitGLTFBones(Model *model, const cgltf_data *data)
     {
         strcpy(model->bones[j].name, data->nodes[j].name == 0 ? "ANIMJOINT" : data->nodes[j].name);
         model->bones[j].parent = (data->nodes[j].parent != NULL) ? (int)(data->nodes[j].parent - data->nodes) : -1;
-        printf("Bone %3i is %s\n", j, model->bones[j].name);
     }
-    printf("---");
 
     for (unsigned int i = 0; i < data->nodes_count; i++)
     {
@@ -5282,7 +5213,7 @@ static void LoadGLTFMaterial(Model *model, const char *fileName, const cgltf_dat
 static void BindGLTFPrimitiveToBones(Model *model, cgltf_node *node, const cgltf_data *data, int primitiveIndex)
 {
     int nodeId = node - data->nodes;
-    printf("\tNodeId %i\n",nodeId);
+
     if (model->meshes[primitiveIndex].boneIds == NULL)
     {
         model->meshes[primitiveIndex].boneIds = RL_CALLOC(model->meshes[primitiveIndex].vertexCount*4, sizeof(int));
@@ -5381,13 +5312,11 @@ static ModelAnimation *LoadGLTFModelAnimations(const char *fileName, unsigned in
             output->framePoses = RL_MALLOC(output->frameCount*sizeof(Transform *));
             // output->framerate = // TODO: Use framerate instead of const timestep
 
-            printf("LoadAnim %i %s\n",a,animation->name);
             // Name and parent bones
             for (int j = 0; j < output->boneCount; j++)
             {
                 strcpy(output->bones[j].name, data->nodes[j].name == 0 ? "ANIMJOINT" : data->nodes[j].name);
                 output->bones[j].parent = (data->nodes[j].parent != NULL) ? (int)(data->nodes[j].parent - data->nodes) : -1;
-//                 printf("Bone %3i is %s\n",j,output->bones[j].name);
             }
 
             // Allocate data for frames
@@ -5418,8 +5347,6 @@ static ModelAnimation *LoadGLTFModelAnimations(const char *fileName, unsigned in
                 cgltf_animation_sampler *sampler = channel->sampler;
 
                 int boneId = (int)(channel->target_node - data->nodes);
-                printf("Node Name %s\n",channel->target_node->name);
-                printf("Bone %i anims %s\n",boneId, channel->target_node->name);
 
                 for (int frame = 0; frame < output->frameCount; frame++)
                 {
@@ -5538,16 +5465,12 @@ static ModelAnimation *LoadGLTFModelAnimations(const char *fileName, unsigned in
                 }
             }
 
-            printf("---\n");
             // Build frameposes
             for (int frame = 0; frame < output->frameCount; frame++)
             {
                 bool *completedBones = RL_CALLOC(output->boneCount, sizeof(bool));
                 int numberCompletedBones = 0;
-                /*
-                 * TODO: Well, the speed of this could certrainly be improved by a lot.
-                 * Theres no need for 208 iterations on this if there are only 26 nodes. This is ridiculous.
-                 */
+
                 while (numberCompletedBones < output->boneCount)
                 {
                     for (int i = 0; i < output->boneCount; i++)
@@ -5569,27 +5492,6 @@ static ModelAnimation *LoadGLTFModelAnimations(const char *fileName, unsigned in
                             continue;
                         }
 
-//                         Vector4 outRotation = output->framePoses[frame][i].rotation;
-//                         Vector4 parentRotation = output->framePoses[frame][output->bones[i].parent].rotation;
-//                         if(data->nodes[i].skin){
-//                             const int32_t jointCount = data->nodes[i].skin->joints_count;
-//                             cgltf_skin* skin = data->nodes[i].skin;
-//                             cgltf_accessor *acc = skin->inverse_bind_matrices;
-//                             printf("Loading Node:%10s \t %i\n",data->nodes[i].name, jointCount);
-//                             printf("Parent %s\n",data->nodes[i].parent->name);
-//                             for(int joinId = 0; joinId < jointCount; joinId++){
-//                                 printf("\tSkin joint: %s\n",skin->joints[joinId]->name);
-//                                 Matrix inv;
-//                                 ReadGLTFValue(acc, joinId, &inv.m0);
-//                                 // Print shit
-//                                 printf("\t%.1f %.1f %.1f %.1f \n", inv.m0, inv.m1, inv.m2, inv.m3);
-//                                 printf("\t%.1f %.1f %.1f %.1f \n", inv.m4, inv.m5, inv.m6, inv.m7);
-//                                 printf("\t%.1f %.1f %.1f %.1f \n", inv.m8, inv.m9, inv.m10, inv.m11);
-//                                 printf("\t%.1f %.1f %.1f %.1f \n", inv.m12, inv.m13, inv.m14, inv.m15);
-//                                 parentRotation = QuaternionTransform(parentRotation, inv);
-//                             }
-//
-//                         }
                         output->framePoses[frame][i].rotation = QuaternionMultiply(output->framePoses[frame][output->bones[i].parent].rotation, output->framePoses[frame][i].rotation);
                         output->framePoses[frame][i].translation = Vector3RotateByQuaternion(output->framePoses[frame][i].translation, output->framePoses[frame][output->bones[i].parent].rotation);
                         output->framePoses[frame][i].translation = Vector3Add(output->framePoses[frame][i].translation, output->framePoses[frame][output->bones[i].parent].translation);
@@ -5599,47 +5501,6 @@ static ModelAnimation *LoadGLTFModelAnimations(const char *fileName, unsigned in
                     }
                 }
                 RL_FREE(completedBones);
-
-
-//                 bool *completedJoints = RL_CALLOC(data->nodes_count, sizeof(bool));
-//                 for(int skinId = 0; skinId < data->skins_count; skinId++)
-//                 {
-//                     cgltf_skin skin = data->skins[skinId];
-//                     cgltf_accessor *acc = skin.inverse_bind_matrices;
-//                     printf("Processing Skin %i\n",skinId);
-//                     for(int jointCounter = 0; jointCounter < skin.joints_count; jointCounter++)
-//                     {
-//                         cgltf_node* joint = skin.joints[jointCounter];
-//                         int jointId = joint - data->nodes;
-//                         if(completedJoints[jointId])
-//                             continue;
-//                         completedJoints[jointId] = true;
-//
-//                         Vector3 tv = output->framePoses[frame][jointId].translation;
-//                         Quaternion rv = output->framePoses[frame][jointId].rotation;
-//                         Vector3 sv = output->framePoses[frame][jointId].scale;
-//                         Matrix tm = MatrixTranslate(tv.x,tv.y,tv.z);
-//                         Matrix rm = QuaternionToMatrix(rv);
-//                         Matrix sm = MatrixScale(sv.x,sv.y,sv.z);
-//                         Matrix globalTransform = MatrixMultiply(MatrixMultiply(tm,rm),sm);
-//
-//                         Matrix inv;
-//                         ReadGLTFValue(acc, jointCounter, &inv.m0);
-//                         Matrix jointMatrix = MatrixMultiply(inv,globalTransform);
-//                         tv = (Vector3){jointMatrix.m3, jointMatrix.m7, jointMatrix.m11};
-//                         jointMatrix = MatrixMultiply(MatrixInvert(tm),jointMatrix);
-//                         rv = QuaternionFromMatrix(jointMatrix);
-//                         jointMatrix = MatrixMultiply(MatrixInvert(rm),jointMatrix);
-//                         sv = (Vector3){jointMatrix.m0,jointMatrix.m5,jointMatrix.m10};
-//
-//                         output->framePoses[frame][jointId].translation = tv;
-//                         output->framePoses[frame][jointId].rotation = rv;
-//                         output->framePoses[frame][jointId].scale = sv;
-//                         printf("\t Joint %i %10s\n",jointId,joint->name);
-//                     }
-//                 }
-//                 RL_FREE(completedJoints);
-//                 printf("-------\n");
             }
         }
 
@@ -5718,15 +5579,12 @@ void LoadGLTFMesh(cgltf_data *data, cgltf_node *node, Model *outModel, Matrix cu
             }
             else if (mesh->primitives[p].attributes[j].type == cgltf_attribute_type_joints)
             {
-                /*
-                 This seems very inneficient to me it runs over a 100 times just to find an id ?
-                 */
                 cgltf_accessor *acc = mesh->primitives[p].attributes[j].data;
                 unsigned int boneCount = acc->count;
                 unsigned int totalBoneWeights = boneCount*4;
                 outModel->meshes[(*primitiveIndex)].boneIds = RL_MALLOC(totalBoneWeights*sizeof(int));
                 short *bones = ReadGLTFValuesAs(acc, cgltf_component_type_r_16, false);
-                //find skin joint
+                // Find skin joint
                 for (unsigned int a = 0; a < totalBoneWeights; a++)
                 {
                     outModel->meshes[(*primitiveIndex)].boneIds[a] = 0;
@@ -5734,9 +5592,7 @@ void LoadGLTFMesh(cgltf_data *data, cgltf_node *node, Model *outModel, Matrix cu
                     cgltf_node* skinJoint = node->skin->joints[bones[a]];
                     unsigned int skinJointId = skinJoint - data->nodes;
                     outModel->meshes[(*primitiveIndex)].boneIds[a] = skinJointId;
-
                 }
-                printf("\n");
                 RL_FREE(bones);
             }
             else if (mesh->primitives[p].attributes[j].type == cgltf_attribute_type_weights)
@@ -5815,12 +5671,11 @@ void LoadGLTFNode(cgltf_data *data, cgltf_node *node, Model *outModel, Matrix cu
     {
         // Check if skinning is enabled and load Mesh accordingly
         Matrix vertexTransform = currentTransform;
-        if((node->skin != NULL) && (node->parent != NULL))
+        if ((node->skin != NULL) && (node->parent != NULL))
         {
             vertexTransform = localTransform;
             TRACELOG(LOG_WARNING,"MODEL: GLTF Node %s is skinned but not root node! Parent transformations will be ignored (NODE_SKINNED_MESH_NON_ROOT)",node->name);
         }
-        printf("Load Node: %s\n",node->name);
         LoadGLTFMesh(data, node, outModel, vertexTransform, primitiveIndex, fileName);
     }
     for (unsigned int i = 0; i < node->children_count; i++) LoadGLTFNode(data, node->children[i], outModel, currentTransform, primitiveIndex, fileName);
