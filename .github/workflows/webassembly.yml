@@ -43,7 +43,7 @@ jobs:
       run: |
         cd src
         emcc -v
-        make PLATFORM=PLATFORM_WEB EMSDK_PATH="D:/a/raylib/raylib/emsdk-cache/emsdk-master" RAYLIB_RELEASE_PATH="../build/${{ env.RELEASE_NAME }}/lib"
+        make PLATFORM=PLATFORM_WEB EMSDK_PATH="D:/a/raylib/raylib/emsdk-cache/emsdk-master" RAYLIB_RELEASE_PATH="../build/${{ env.RELEASE_NAME }}/lib" -B
         cd ..
   
     - name: Generate Artifacts

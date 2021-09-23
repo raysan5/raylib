@@ -3028,8 +3028,6 @@ void *rlReadTexturePixels(unsigned int id, int width, int height, int format)
     // NOTE: This behaviour could be conditioned by graphic driver...
     unsigned int fboId = rlLoadFramebuffer(width, height);
 
-    // TODO: Create depth texture/renderbuffer for fbo?
-
     glBindFramebuffer(GL_FRAMEBUFFER, fboId);
     glBindTexture(GL_TEXTURE_2D, 0);
 

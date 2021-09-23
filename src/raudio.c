@@ -26,8 +26,9 @@
 *       supported by default, to remove support, just comment unrequired #define in this module
 *
 *   DEPENDENCIES:
-*       miniaudio.h  - Audio device management lib (https://github.com/dr-soft/miniaudio)
+*       miniaudio.h  - Audio device management lib (https://github.com/mackron/miniaudio)
 *       stb_vorbis.h - Ogg audio files loading (http://www.nothings.org/stb_vorbis/)
+*       dr_wav.h     - WAV audio files loading (http://github.com/mackron/dr_libs)
 *       dr_mp3.h     - MP3 audio file loading (https://github.com/mackron/dr_libs)
 *       dr_flac.h    - FLAC audio file loading (https://github.com/mackron/dr_libs)
 *       jar_xm.h     - XM module file loading
@@ -1650,6 +1651,28 @@ void StopMusicStream(Music music)
 #endif
 #if defined(SUPPORT_FILEFORMAT_MOD)
         case MUSIC_MODULE_MOD: jar_mod_seek_start((jar_mod_context_t *)music.ctxData); break;
+#endif
+        default: break;
+    }
+}
+
+// Seek music to a certain position (in seconds)
+void SeekMusicStream(Music music, float position)
+{
+    unsigned int positionInFrames = (unsigned int)(position * music.stream.sampleRate);
+    switch (music.ctxType)
+    {
+#if defined(SUPPORT_FILEFORMAT_WAV)
+        case MUSIC_AUDIO_WAV: drwav_seek_to_pcm_frame((drwav *)music.ctxData, positionInFrames); break;
+#endif
+#if defined(SUPPORT_FILEFORMAT_OGG)
+        case MUSIC_AUDIO_OGG: stb_vorbis_seek_frame((stb_vorbis *)music.ctxData, positionInFrames); break;
+#endif
+#if defined(SUPPORT_FILEFORMAT_FLAC)
+        case MUSIC_AUDIO_FLAC: drflac_seek_to_pcm_frame((drflac *)music.ctxData, positionInFrames); break;
+#endif
+#if defined(SUPPORT_FILEFORMAT_MP3)
+        case MUSIC_AUDIO_MP3: drmp3_seek_to_pcm_frame((drmp3 *)music.ctxData, positionInFrames); break;
 #endif
         default: break;
     }

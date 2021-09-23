@@ -841,7 +841,7 @@ typedef enum {
     BLEND_CUSTOM                    // Belnd textures using custom src/dst factors (use rlSetBlendMode())
 } BlendMode;
 
-// Gestures
+// Gesture
 // NOTE: It could be used as flags to enable only some gestures
 typedef enum {
     GESTURE_NONE        = 0,        // No gesture
@@ -1009,6 +1009,7 @@ RLAPI double GetTime(void);                                       // Get elapsed
 
 // Misc. functions
 RLAPI int GetRandomValue(int min, int max);                       // Get a random value between min and max (both included)
+RLAPI void SetRandomSeed(unsigned int seed);                      // Set the seed for the random number generator
 RLAPI void TakeScreenshot(const char *fileName);                  // Takes a screenshot of current screen (filename extension defines format)
 RLAPI void SetConfigFlags(unsigned int flags);                    // Setup init configuration flags (view FLAGS)
 
@@ -1104,14 +1105,16 @@ RLAPI void SetMouseCursor(int cursor);                        // Set mouse curso
 RLAPI int GetTouchX(void);                                    // Get touch position X for touch point 0 (relative to screen size)
 RLAPI int GetTouchY(void);                                    // Get touch position Y for touch point 0 (relative to screen size)
 RLAPI Vector2 GetTouchPosition(int index);                    // Get touch position XY for a touch point index (relative to screen size)
+RLAPI int GetTouchPointId(int index);                         // Get touch point identifier for given index
+RLAPI int GetTouchPointCount(void);                           // Get number of touch points
+RLAPI int GetTouchEvent(void);                                // Get last touch event registered
 
 //------------------------------------------------------------------------------------
-// Gestures and Touch Handling Functions (Module: gestures)
+// Gestures and Touch Handling Functions (Module: rgestures)
 //------------------------------------------------------------------------------------
 RLAPI void SetGesturesEnabled(unsigned int flags);      // Enable a set of gestures using flags
 RLAPI bool IsGestureDetected(int gesture);              // Check if a gesture have been detected
 RLAPI int GetGestureDetected(void);                     // Get latest detected gesture
-RLAPI int GetTouchPointCount(void);                     // Get touch points count
 RLAPI float GetGestureHoldDuration(void);               // Get gesture hold time in milliseconds
 RLAPI Vector2 GetGestureDragVector(void);               // Get gesture drag vector
 RLAPI float GetGestureDragAngle(void);                  // Get gesture drag angle
@@ -1119,7 +1122,7 @@ RLAPI Vector2 GetGesturePinchVector(void);              // Get gesture pinch del
 RLAPI float GetGesturePinchAngle(void);                 // Get gesture pinch angle
 
 //------------------------------------------------------------------------------------
-// Camera System Functions (Module: camera)
+// Camera System Functions (Module: rcamera)
 //------------------------------------------------------------------------------------
 RLAPI void SetCameraMode(Camera camera, int mode);      // Set camera mode (multiple camera modes available)
 RLAPI void UpdateCamera(Camera *camera);                // Update camera position for selected mode
@@ -1334,9 +1337,9 @@ RLAPI Rectangle GetGlyphAtlasRec(Font font, int codepoint);                     
 // Text codepoints management functions (unicode characters)
 RLAPI int *LoadCodepoints(const char *text, int *count);              // Load all codepoints from a UTF-8 text string, codepoints count returned by parameter
 RLAPI void UnloadCodepoints(int *codepoints);                         // Unload codepoints data from memory
-RLAPI int GetCodepointCount(const char *text);                       // Get total number of codepoints in a UTF-8 encoded string
+RLAPI int GetCodepointCount(const char *text);                        // Get total number of codepoints in a UTF-8 encoded string
 RLAPI int GetCodepoint(const char *text, int *bytesProcessed);        // Get next codepoint in a UTF-8 encoded string, 0x3f('?') is returned on failure
-RLAPI const char *CodepointToUTF8(int codepoint, int *byteSize);    // Encode one codepoint into UTF-8 byte array (array length returned as parameter)
+RLAPI const char *CodepointToUTF8(int codepoint, int *byteSize);      // Encode one codepoint into UTF-8 byte array (array length returned as parameter)
 RLAPI char *TextCodepointsToUTF8(int *codepoints, int length);        // Encode text as codepoints array into UTF-8 text string (WARNING: memory must be freed!)
 
 // Text strings management functions (no UTF-8 strings, only byte chars)
@@ -1372,6 +1375,7 @@ RLAPI void DrawCubeV(Vector3 position, Vector3 size, Color color);              
 RLAPI void DrawCubeWires(Vector3 position, float width, float height, float length, Color color);        // Draw cube wires
 RLAPI void DrawCubeWiresV(Vector3 position, Vector3 size, Color color);                                  // Draw cube wires (Vector version)
 RLAPI void DrawCubeTexture(Texture2D texture, Vector3 position, float width, float height, float length, Color color); // Draw cube textured
+RLAPI void DrawCubeTextureRec(Texture2D texture, Rectangle source, Vector3 position, float width, float height, float length, Color color); // Draw cube with a region of a texture
 RLAPI void DrawSphere(Vector3 centerPos, float radius, Color color);                                     // Draw sphere
 RLAPI void DrawSphereEx(Vector3 centerPos, float radius, int rings, int slices, Color color);            // Draw sphere with extended parameters
 RLAPI void DrawSphereWires(Vector3 centerPos, float radius, int rings, int slices, Color color);         // Draw sphere wires
@@ -1400,7 +1404,7 @@ RLAPI void DrawModelWiresEx(Model model, Vector3 position, Vector3 rotationAxis,
 RLAPI void DrawBoundingBox(BoundingBox box, Color color);                                               // Draw bounding box (wires)
 RLAPI void DrawBillboard(Camera camera, Texture2D texture, Vector3 position, float size, Color tint);   // Draw a billboard texture
 RLAPI void DrawBillboardRec(Camera camera, Texture2D texture, Rectangle source, Vector3 position, Vector2 size, Color tint); // Draw a billboard texture defined by source
-RLAPI void DrawBillboardPro(Camera camera, Texture2D texture, Rectangle source, Vector3 position, Vector2 size, Vector2 origin, float rotation, Color tint); // Draw a billboard texture defined by source and rotation
+RLAPI void DrawBillboardPro(Camera camera, Texture2D texture, Rectangle source, Vector3 position, Vector3 up, Vector2 size, Vector2 origin, float rotation, Color tint); // Draw a billboard texture defined by source and rotation
 
 // Mesh management functions
 RLAPI void UploadMesh(Mesh *mesh, bool dynamic);                                            // Upload mesh vertex data in GPU and provide VAO/VBO ids
@@ -1434,7 +1438,7 @@ RLAPI void SetMaterialTexture(Material *material, int mapType, Texture2D texture
 RLAPI void SetModelMeshMaterial(Model *model, int meshId, int materialId);                  // Set material for a mesh
 
 // Model animations loading/unloading functions
-RLAPI ModelAnimation *LoadModelAnimations(const char *fileName, int *animCount);           // Load model animations from file
+RLAPI ModelAnimation *LoadModelAnimations(const char *fileName, unsigned int *animCount);   // Load model animations from file
 RLAPI void UpdateModelAnimation(Model model, ModelAnimation anim, int frame);               // Update model animation pose
 RLAPI void UnloadModelAnimation(ModelAnimation anim);                                       // Unload animation data
 RLAPI void UnloadModelAnimations(ModelAnimation* animations, unsigned int count);           // Unload animation array data
@@ -1499,6 +1503,7 @@ RLAPI void UpdateMusicStream(Music music);                            // Updates
 RLAPI void StopMusicStream(Music music);                              // Stop music playing
 RLAPI void PauseMusicStream(Music music);                             // Pause music playing
 RLAPI void ResumeMusicStream(Music music);                            // Resume playing paused music
+RLAPI void SeekMusicStream(Music music, float position);              // Seek music to a position (in seconds)
 RLAPI void SetMusicVolume(Music music, float volume);                 // Set volume for music (1.0 is max level)
 RLAPI void SetMusicPitch(Music music, float pitch);                   // Set pitch for a music (1.0 is base level)
 RLAPI float GetMusicTimeLength(Music music);                          // Get music time length (in seconds)

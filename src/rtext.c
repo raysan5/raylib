@@ -1,6 +1,6 @@
 /**********************************************************************************************
 *
-*   raylib.text - Basic functions to load Fonts and draw Text
+*   rtext - Basic functions to load fonts and draw text
 *
 *   CONFIGURATION:
 *
@@ -267,7 +267,7 @@ extern void LoadFontDefault(void)
 
     defaultFont.baseSize = (int)defaultFont.recs[0].height;
 
-    TRACELOG(LOG_INFO, "FONT: [ID %i] Default font texture loaded successfully", defaultFont.texture.id);
+    TRACELOG(LOG_INFO, "FONT: Default font loaded successfully (%i glyphs)", defaultFont.glyphCount);
 }
 
 // Unload raylib default font
@@ -512,6 +512,8 @@ Font LoadFontFromMemory(const char *fileType, const unsigned char *fileData, int
             }
 
             UnloadImage(atlas);
+            
+            // TRACELOG(LOG_INFO, "FONT: Font loaded successfully (%i glyphs)", font.glyphCount);
         }
         else font = GetFontDefault();
     }
@@ -1523,9 +1525,8 @@ int GetCodepointCount(const char *text)
 // Get next codepoint in a UTF-8 encoded text, scanning until '\0' is found
 // When a invalid UTF-8 byte is encountered we exit as soon as possible and a '?'(0x3f) codepoint is returned
 // Total number of bytes processed are returned as a parameter
-// NOTE: the standard says U+FFFD should be returned in case of errors
+// NOTE: The standard says U+FFFD should be returned in case of errors
 // but that character is not supported by the default font in raylib
-// TODO: Optimize this code for speed!!
 int GetCodepoint(const char *text, int *bytesProcessed)
 {
 /*
@@ -1782,7 +1783,7 @@ static Font LoadBMFont(const char *fileName)
         font = GetFontDefault();
         TRACELOG(LOG_WARNING, "FONT: [%s] Failed to load texture, reverted to default font", fileName);
     }
-    else TRACELOG(LOG_INFO, "FONT: [%s] Font loaded successfully", fileName);
+    else TRACELOG(LOG_INFO, "FONT: [%s] Font loaded successfully (%i glyphs)", fileName, font.glyphCount);
 
     return font;
 }

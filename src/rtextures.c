@@ -1,6 +1,6 @@
 /**********************************************************************************************
 *
-*   raylib.textures - Basic functions to load and draw Textures (2d)
+*   rtextures - Basic functions to load and draw textures
 *
 *   CONFIGURATION:
 *
@@ -269,8 +269,8 @@ Image LoadImageAnim(const char *fileName, int *frames)
         if (fileData != NULL)
         {
             int comp = 0;
-            int **delays = NULL;
-            image.data = stbi_load_gif_from_memory(fileData, dataSize, delays, &image.width, &image.height, &frameCount, &comp, 4);
+            int *delays = NULL;
+            image.data = stbi_load_gif_from_memory(fileData, dataSize, &delays, &image.width, &image.height, &frameCount, &comp, 4);
 
             image.mipmaps = 1;
             image.format = PIXELFORMAT_UNCOMPRESSED_R8G8B8A8;
@@ -870,8 +870,6 @@ Image ImageFromImage(Image image, Rectangle rec)
     Image result = { 0 };
 
     int bytesPerPixel = GetPixelDataSize(1, 1, image.format);
-
-    // TODO: Check rec is valid?
 
     result.width = (int)rec.width;
     result.height = (int)rec.height;

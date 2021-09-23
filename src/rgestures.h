@@ -1,6 +1,6 @@
 /**********************************************************************************************
 *
-*   raylib.gestures - Gestures system, gestures processing based on input events (touch/mouse)
+*   rgestures - Gestures system, gestures processing based on input events (touch/mouse)
 *
 *   NOTE: Memory footprint of this library is aproximately 128 bytes (global variables)
 *
@@ -43,8 +43,8 @@
 *
 **********************************************************************************************/
 
-#ifndef GESTURES_H
-#define GESTURES_H
+#ifndef RGESTURES_H
+#define RGESTURES_H
 
 #ifndef PI
     #define PI 3.14159265358979323846
@@ -53,50 +53,60 @@
 //----------------------------------------------------------------------------------
 // Defines and Macros
 //----------------------------------------------------------------------------------
-//...
+#ifndef MAX_TOUCH_POINTS
+    #define MAX_TOUCH_POINTS        8        // Maximum number of touch points supported
+#endif
 
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
 // NOTE: Below types are required for GESTURES_STANDALONE usage
 //----------------------------------------------------------------------------------
-#if defined(GESTURES_STANDALONE)
-    #ifndef __cplusplus
-        // Boolean type
-        typedef enum { false, true } bool;
-    #endif
-
-    // Vector2 type
-    typedef struct Vector2 {
-        float x;
-        float y;
-    } Vector2;
-
-    // Gestures type
-    // NOTE: It could be used as flags to enable only some gestures
-    typedef enum {
-        GESTURE_NONE        = 0,
-        GESTURE_TAP         = 1,
-        GESTURE_DOUBLETAP   = 2,
-        GESTURE_HOLD        = 4,
-        GESTURE_DRAG        = 8,
-        GESTURE_SWIPE_RIGHT = 16,
-        GESTURE_SWIPE_LEFT  = 32,
-        GESTURE_SWIPE_UP    = 64,
-        GESTURE_SWIPE_DOWN  = 128,
-        GESTURE_PINCH_IN    = 256,
-        GESTURE_PINCH_OUT   = 512
-    } Gestures;
+// Boolean type
+#if defined(__STDC__) && __STDC_VERSION__ >= 199901L
+    #include <stdbool.h>
+#elif !defined(__cplusplus) && !defined(bool) && !defined(RL_BOOL_TYPE)
+    typedef enum bool { false, true } bool;
 #endif
 
-typedef enum { TOUCH_UP, TOUCH_DOWN, TOUCH_MOVE } TouchAction;
+#if !defined(RL_VECTOR2_TYPE)
+// Vector2 type
+typedef struct Vector2 {
+    float x;
+    float y;
+} Vector2;
+#endif
+
+#if defined(GESTURES_STANDALONE)
+// Gestures type
+// NOTE: It could be used as flags to enable only some gestures
+typedef enum {
+    GESTURE_NONE        = 0,
+    GESTURE_TAP         = 1,
+    GESTURE_DOUBLETAP   = 2,
+    GESTURE_HOLD        = 4,
+    GESTURE_DRAG        = 8,
+    GESTURE_SWIPE_RIGHT = 16,
+    GESTURE_SWIPE_LEFT  = 32,
+    GESTURE_SWIPE_UP    = 64,
+    GESTURE_SWIPE_DOWN  = 128,
+    GESTURE_PINCH_IN    = 256,
+    GESTURE_PINCH_OUT   = 512
+} Gesture;
+#endif
+
+typedef enum { 
+    TOUCH_ACTION_UP = 0, 
+    TOUCH_ACTION_DOWN, 
+    TOUCH_ACTION_MOVE,
+    TOUCH_ACTION_CANCEL
+} TouchAction;
 
 // Gesture event
-// NOTE: MAX_TOUCH_POINTS fixed to 4
 typedef struct {
     int touchAction;
     int pointCount;
-    int pointerId[4];
-    Vector2 position[4];
+    int pointId[MAX_TOUCH_POINTS];
+    Vector2 position[MAX_TOUCH_POINTS];
 } GestureEvent;
 
 //----------------------------------------------------------------------------------
@@ -114,11 +124,12 @@ extern "C" {            // Prevents name mangling of functions
 
 void ProcessGestureEvent(GestureEvent event);           // Process gesture event and translate it into gestures
 void UpdateGestures(void);                              // Update gestures detected (must be called every frame)
+
 #if defined(GESTURES_STANDALONE)
 void SetGesturesEnabled(unsigned int flags);            // Enable a set of gestures using flags
 bool IsGestureDetected(int gesture);                    // Check if a gesture have been detected
 int GetGestureDetected(void);                           // Get latest detected gesture
-int GetTouchPointCount(void);                          // Get touch points count
+
 float GetGestureHoldDuration(void);                     // Get gesture hold time in milliseconds
 Vector2 GetGestureDragVector(void);                     // Get gesture drag vector
 float GetGestureDragAngle(void);                        // Get gesture drag angle
@@ -193,7 +204,7 @@ typedef struct {
         Vector2 downDragPosition;       // Touch drag position
         Vector2 moveDownPositionA;      // First touch down position on move
         Vector2 moveDownPositionB;      // Second touch down position on move
-        int tapCounter;                 // TAP counter (one tap implies TOUCH_DOWN and TOUCH_UP actions)
+        int tapCounter;                 // TAP counter (one tap implies TOUCH_ACTION_DOWN and TOUCH_ACTION_UP actions)
     } Touch;
     struct {
         bool resetRequired;             // HOLD reset to get first touch point again
@@ -221,19 +232,16 @@ typedef struct {
 //----------------------------------------------------------------------------------
 static GesturesData GESTURES = {
     .Touch.firstId = -1,
-    .current = GESTURE_NONE,            // No current gesture detected
+    .current = GESTURE_NONE,        // No current gesture detected
     .enabledFlags = 0b0000001111111111  // All gestures supported by default
 };
 
 //----------------------------------------------------------------------------------
 // Module specific Functions Declaration
 //----------------------------------------------------------------------------------
-#if defined(GESTURES_STANDALONE)
-// Some required math functions provided by raymath.h
-static float Vector2Angle(Vector2 initialPosition, Vector2 finalPosition);
-static float Vector2Distance(Vector2 v1, Vector2 v2);
-#endif
-static double GetCurrentTime(void);
+static float rgVector2Angle(Vector2 initialPosition, Vector2 finalPosition);
+static float rgVector2Distance(Vector2 v1, Vector2 v2);
+static double rgGetCurrentTime(void);
 
 //----------------------------------------------------------------------------------
 // Module Functions Definition
@@ -258,14 +266,14 @@ void ProcessGestureEvent(GestureEvent event)
     // Reset required variables
     GESTURES.Touch.pointCount = event.pointCount;      // Required on UpdateGestures()
 
-    if (GESTURES.Touch.pointCount < 2)
+    if (GESTURES.Touch.pointCount == 1)     // One touch point
     {
-        if (event.touchAction == TOUCH_DOWN)
+        if (event.touchAction == TOUCH_ACTION_DOWN)
         {
             GESTURES.Touch.tapCounter++;    // Tap counter
 
             // Detect GESTURE_DOUBLE_TAP
-            if ((GESTURES.current == GESTURE_NONE) && (GESTURES.Touch.tapCounter >= 2) && ((GetCurrentTime() - GESTURES.Touch.eventTime) < TAP_TIMEOUT) && (Vector2Distance(GESTURES.Touch.downPositionA, event.position[0]) < DOUBLETAP_RANGE))
+            if ((GESTURES.current == GESTURE_NONE) && (GESTURES.Touch.tapCounter >= 2) && ((rgGetCurrentTime() - GESTURES.Touch.eventTime) < TAP_TIMEOUT) && (rgVector2Distance(GESTURES.Touch.downPositionA, event.position[0]) < DOUBLETAP_RANGE))
             {
                 GESTURES.current = GESTURE_DOUBLETAP;
                 GESTURES.Touch.tapCounter = 0;
@@ -280,27 +288,27 @@ void ProcessGestureEvent(GestureEvent event)
             GESTURES.Touch.downDragPosition = event.position[0];
 
             GESTURES.Touch.upPosition = GESTURES.Touch.downPositionA;
-            GESTURES.Touch.eventTime = GetCurrentTime();
+            GESTURES.Touch.eventTime = rgGetCurrentTime();
 
-            GESTURES.Touch.firstId = event.pointerId[0];
+            GESTURES.Touch.firstId = event.pointId[0];
 
             GESTURES.Drag.vector = (Vector2){ 0.0f, 0.0f };
         }
-        else if (event.touchAction == TOUCH_UP)
+        else if (event.touchAction == TOUCH_ACTION_UP)
         {
             if (GESTURES.current == GESTURE_DRAG) GESTURES.Touch.upPosition = event.position[0];
 
             // NOTE: GESTURES.Drag.intensity dependend on the resolution of the screen
-            GESTURES.Drag.distance = Vector2Distance(GESTURES.Touch.downPositionA, GESTURES.Touch.upPosition);
-            GESTURES.Drag.intensity = GESTURES.Drag.distance/(float)((GetCurrentTime() - GESTURES.Swipe.timeDuration));
+            GESTURES.Drag.distance = rgVector2Distance(GESTURES.Touch.downPositionA, GESTURES.Touch.upPosition);
+            GESTURES.Drag.intensity = GESTURES.Drag.distance/(float)((rgGetCurrentTime() - GESTURES.Swipe.timeDuration));
 
             GESTURES.Swipe.start = false;
 
             // Detect GESTURE_SWIPE
-            if ((GESTURES.Drag.intensity > FORCE_TO_SWIPE) && (GESTURES.Touch.firstId == event.pointerId[0]))
+            if ((GESTURES.Drag.intensity > FORCE_TO_SWIPE) && (GESTURES.Touch.firstId == event.pointId[0]))
             {
                 // NOTE: Angle should be inverted in Y
-                GESTURES.Drag.angle = 360.0f - Vector2Angle(GESTURES.Touch.downPositionA, GESTURES.Touch.upPosition);
+                GESTURES.Drag.angle = 360.0f - rgVector2Angle(GESTURES.Touch.downPositionA, GESTURES.Touch.upPosition);
 
                 if ((GESTURES.Drag.angle < 30) || (GESTURES.Drag.angle > 330)) GESTURES.current = GESTURE_SWIPE_RIGHT;        // Right
                 else if ((GESTURES.Drag.angle > 30) && (GESTURES.Drag.angle < 120)) GESTURES.current = GESTURE_SWIPE_UP;      // Up
@@ -320,13 +328,13 @@ void ProcessGestureEvent(GestureEvent event)
             GESTURES.Touch.downDragPosition = (Vector2){ 0.0f, 0.0f };
             GESTURES.Touch.pointCount = 0;
         }
-        else if (event.touchAction == TOUCH_MOVE)
+        else if (event.touchAction == TOUCH_ACTION_MOVE)
         {
-            if (GESTURES.current == GESTURE_DRAG) GESTURES.Touch.eventTime = GetCurrentTime();
+            if (GESTURES.current == GESTURE_DRAG) GESTURES.Touch.eventTime = rgGetCurrentTime();
 
             if (!GESTURES.Swipe.start)
             {
-                GESTURES.Swipe.timeDuration = GetCurrentTime();
+                GESTURES.Swipe.timeDuration = rgGetCurrentTime();
                 GESTURES.Swipe.start = true;
             }
 
@@ -339,9 +347,9 @@ void ProcessGestureEvent(GestureEvent event)
                 GESTURES.Hold.resetRequired = false;
 
                 // Detect GESTURE_DRAG
-                if (Vector2Distance(GESTURES.Touch.downPositionA, GESTURES.Touch.moveDownPositionA) >= MINIMUM_DRAG)
+                if (rgVector2Distance(GESTURES.Touch.downPositionA, GESTURES.Touch.moveDownPositionA) >= MINIMUM_DRAG)
                 {
-                    GESTURES.Touch.eventTime = GetCurrentTime();
+                    GESTURES.Touch.eventTime = rgGetCurrentTime();
                     GESTURES.current = GESTURE_DRAG;
                 }
             }
@@ -350,24 +358,24 @@ void ProcessGestureEvent(GestureEvent event)
             GESTURES.Drag.vector.y = GESTURES.Touch.moveDownPositionA.y - GESTURES.Touch.downDragPosition.y;
         }
     }
-    else    // Two touch points
+    else if (GESTURES.Touch.pointCount == 2)    // Two touch points
     {
-        if (event.touchAction == TOUCH_DOWN)
+        if (event.touchAction == TOUCH_ACTION_DOWN)
         {
             GESTURES.Touch.downPositionA = event.position[0];
             GESTURES.Touch.downPositionB = event.position[1];
 
-            //GESTURES.Pinch.distance = Vector2Distance(GESTURES.Touch.downPositionA, GESTURES.Touch.downPositionB);
+            //GESTURES.Pinch.distance = rgVector2Distance(GESTURES.Touch.downPositionA, GESTURES.Touch.downPositionB);
 
             GESTURES.Pinch.vector.x = GESTURES.Touch.downPositionB.x - GESTURES.Touch.downPositionA.x;
             GESTURES.Pinch.vector.y = GESTURES.Touch.downPositionB.y - GESTURES.Touch.downPositionA.y;
 
             GESTURES.current = GESTURE_HOLD;
-            GESTURES.Hold.timeDuration = GetCurrentTime();
+            GESTURES.Hold.timeDuration = rgGetCurrentTime();
         }
-        else if (event.touchAction == TOUCH_MOVE)
+        else if (event.touchAction == TOUCH_ACTION_MOVE)
         {
-            GESTURES.Pinch.distance = Vector2Distance(GESTURES.Touch.moveDownPositionA, GESTURES.Touch.moveDownPositionB);
+            GESTURES.Pinch.distance = rgVector2Distance(GESTURES.Touch.moveDownPositionA, GESTURES.Touch.moveDownPositionB);
 
             GESTURES.Touch.downPositionA = GESTURES.Touch.moveDownPositionA;
             GESTURES.Touch.downPositionB = GESTURES.Touch.moveDownPositionB;
@@ -378,21 +386,21 @@ void ProcessGestureEvent(GestureEvent event)
             GESTURES.Pinch.vector.x = GESTURES.Touch.moveDownPositionB.x - GESTURES.Touch.moveDownPositionA.x;
             GESTURES.Pinch.vector.y = GESTURES.Touch.moveDownPositionB.y - GESTURES.Touch.moveDownPositionA.y;
 
-            if ((Vector2Distance(GESTURES.Touch.downPositionA, GESTURES.Touch.moveDownPositionA) >= MINIMUM_PINCH) || (Vector2Distance(GESTURES.Touch.downPositionB, GESTURES.Touch.moveDownPositionB) >= MINIMUM_PINCH))
+            if ((rgVector2Distance(GESTURES.Touch.downPositionA, GESTURES.Touch.moveDownPositionA) >= MINIMUM_PINCH) || (rgVector2Distance(GESTURES.Touch.downPositionB, GESTURES.Touch.moveDownPositionB) >= MINIMUM_PINCH))
             {
-                if ((Vector2Distance(GESTURES.Touch.moveDownPositionA, GESTURES.Touch.moveDownPositionB) - GESTURES.Pinch.distance) < 0) GESTURES.current = GESTURE_PINCH_IN;
+                if ((rgVector2Distance(GESTURES.Touch.moveDownPositionA, GESTURES.Touch.moveDownPositionB) - GESTURES.Pinch.distance) < 0) GESTURES.current = GESTURE_PINCH_IN;
                 else GESTURES.current = GESTURE_PINCH_OUT;
             }
             else
             {
                 GESTURES.current = GESTURE_HOLD;
-                GESTURES.Hold.timeDuration = GetCurrentTime();
+                GESTURES.Hold.timeDuration = rgGetCurrentTime();
             }
 
             // NOTE: Angle should be inverted in Y
-            GESTURES.Pinch.angle = 360.0f - Vector2Angle(GESTURES.Touch.moveDownPositionA, GESTURES.Touch.moveDownPositionB);
+            GESTURES.Pinch.angle = 360.0f - rgVector2Angle(GESTURES.Touch.moveDownPositionA, GESTURES.Touch.moveDownPositionB);
         }
-        else if (event.touchAction == TOUCH_UP)
+        else if (event.touchAction == TOUCH_ACTION_UP)
         {
             GESTURES.Pinch.distance = 0.0f;
             GESTURES.Pinch.angle = 0.0f;
@@ -401,6 +409,10 @@ void ProcessGestureEvent(GestureEvent event)
 
             GESTURES.current = GESTURE_NONE;
         }
+    }
+    else if (GESTURES.Touch.pointCount > 2)     // More than two touch points
+    {
+        // TODO.
     }
 }
 
@@ -413,13 +425,13 @@ void UpdateGestures(void)
     if (((GESTURES.current == GESTURE_TAP) || (GESTURES.current == GESTURE_DOUBLETAP)) && (GESTURES.Touch.pointCount < 2))
     {
         GESTURES.current = GESTURE_HOLD;
-        GESTURES.Hold.timeDuration = GetCurrentTime();
+        GESTURES.Hold.timeDuration = rgGetCurrentTime();
     }
 
-    if (((GetCurrentTime() - GESTURES.Touch.eventTime) > TAP_TIMEOUT) && (GESTURES.current == GESTURE_DRAG) && (GESTURES.Touch.pointCount < 2))
+    if (((rgGetCurrentTime() - GESTURES.Touch.eventTime) > TAP_TIMEOUT) && (GESTURES.current == GESTURE_DRAG) && (GESTURES.Touch.pointCount < 2))
     {
         GESTURES.current = GESTURE_HOLD;
-        GESTURES.Hold.timeDuration = GetCurrentTime();
+        GESTURES.Hold.timeDuration = rgGetCurrentTime();
         GESTURES.Hold.resetRequired = true;
     }
 
@@ -428,14 +440,6 @@ void UpdateGestures(void)
     {
         GESTURES.current = GESTURE_NONE;
     }
-}
-
-// Get number of touch points
-int GetTouchPointCount(void)
-{
-    // NOTE: point count is calculated when ProcessGestureEvent(GestureEvent event) is called
-
-    return GESTURES.Touch.pointCount;
 }
 
 // Get latest detected gesture
@@ -452,7 +456,7 @@ float GetGestureHoldDuration(void)
 
     double time = 0.0;
 
-    if (GESTURES.current == GESTURE_HOLD) time = GetCurrentTime() - GESTURES.Hold.timeDuration;
+    if (GESTURES.current == GESTURE_HOLD) time = rgGetCurrentTime() - GESTURES.Hold.timeDuration;
 
     return (float)time;
 }
@@ -460,7 +464,7 @@ float GetGestureHoldDuration(void)
 // Get drag vector (between initial touch point to current)
 Vector2 GetGestureDragVector(void)
 {
-    // NOTE: drag vector is calculated on one touch points TOUCH_MOVE
+    // NOTE: drag vector is calculated on one touch points TOUCH_ACTION_MOVE
 
     return GESTURES.Drag.vector;
 }
@@ -469,7 +473,7 @@ Vector2 GetGestureDragVector(void)
 // NOTE: Angle in degrees, horizontal-right is 0, counterclock-wise
 float GetGestureDragAngle(void)
 {
-    // NOTE: drag angle is calculated on one touch points TOUCH_UP
+    // NOTE: drag angle is calculated on one touch points TOUCH_ACTION_UP
 
     return GESTURES.Drag.angle;
 }
@@ -477,8 +481,7 @@ float GetGestureDragAngle(void)
 // Get distance between two pinch points
 Vector2 GetGesturePinchVector(void)
 {
-    // NOTE: The position values used for GESTURES.Pinch.distance are not modified like the position values of [core.c]-->GetTouchPosition(int index)
-    // NOTE: pinch distance is calculated on two touch points TOUCH_MOVE
+    // NOTE: Pinch distance is calculated on two touch points TOUCH_ACTION_MOVE
 
     return GESTURES.Pinch.vector;
 }
@@ -487,7 +490,7 @@ Vector2 GetGesturePinchVector(void)
 // NOTE: Angle in degrees, horizontal-right is 0, counterclock-wise
 float GetGesturePinchAngle(void)
 {
-    // NOTE: pinch angle is calculated on two touch points TOUCH_MOVE
+    // NOTE: pinch angle is calculated on two touch points TOUCH_ACTION_MOVE
 
     return GESTURES.Pinch.angle;
 }
@@ -495,9 +498,8 @@ float GetGesturePinchAngle(void)
 //----------------------------------------------------------------------------------
 // Module specific Functions Definition
 //----------------------------------------------------------------------------------
-#if defined(GESTURES_STANDALONE)
 // Get angle from two-points vector with X-axis
-static float Vector2Angle(Vector2 v1, Vector2 v2)
+static float rgVector2Angle(Vector2 v1, Vector2 v2)
 {
     float angle = atan2f(v2.y - v1.y, v2.x - v1.x)*(180.0f/PI);
 
@@ -507,7 +509,7 @@ static float Vector2Angle(Vector2 v1, Vector2 v2)
 }
 
 // Calculate distance between two Vector2
-static float Vector2Distance(Vector2 v1, Vector2 v2)
+static float rgVector2Distance(Vector2 v1, Vector2 v2)
 {
     float result;
 
@@ -518,10 +520,9 @@ static float Vector2Distance(Vector2 v1, Vector2 v2)
 
     return result;
 }
-#endif
 
 // Time measure returned are milliseconds
-static double GetCurrentTime(void)
+static double rgGetCurrentTime(void)
 {
     double time = 0;
 

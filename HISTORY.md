@@ -33,7 +33,7 @@ Lots of code changes and lot of testing have concluded in this amazing new rayli
 notes on raylib 1.2
 -------------------
 
-On September 2014, after 5 month of raylib 1.1 release, it comes raylib 1.2. Again, this version presents a complete internal redesign of [core](https://github.com/raysan5/raylib/blob/master/src/core.c) module to support two new platforms: [Android](http://www.android.com/) and [Raspberry Pi](http://www.raspberrypi.org/).
+On September 2014, after 5 month of raylib 1.1 release, it comes raylib 1.2. Again, this version presents a complete internal redesign of [core](https://github.com/raysan5/raylib/blob/master/src/rcore.c) module to support two new platforms: [Android](http://www.android.com/) and [Raspberry Pi](http://www.raspberrypi.org/).
 
 It's been some month of really hard work to accomodate raylib to those new platforms while keeping it easy for the users. On Android, raylib manages internally the activity cicle, as well as the inputs; on Raspberry Pi, a complete raw input system has been written from scratch.
 
@@ -54,9 +54,9 @@ On September 2015, after 1 year of raylib 1.2 release, arrives raylib 1.3. This 
 
  - Textures module has grown to support most of the internal texture formats available in OpenGL (RGB565, RGB888, RGBA5551, RGBA4444, etc.), including compressed texture formats (DXT, ETC1, ETC2, ASTC, PVRT); raylib 1.3 can load .dds, .pkm, .ktx, .astc and .pvr files. 
 
- - A brand new [camera](https://github.com/raysan5/raylib/blob/master/src/camera.c) module offers to the user multiple preconfigured ready-to-use camera systems (free camera, 1st person, 3rd person). Camera modes are very easy to use, just check examples: [core_3d_camera_free.c](https://github.com/raysan5/raylib/blob/master/examples/core_3d_camera_free.c) and [core_3d_camera_first_person.c](https://github.com/raysan5/raylib/blob/master/examples/core_3d_camera_first_person.c).
+ - A brand new [camera](https://github.com/raysan5/raylib/blob/master/src/rcamera.c) module offers to the user multiple preconfigured ready-to-use camera systems (free camera, 1st person, 3rd person). Camera modes are very easy to use, just check examples: [core_3d_camera_free.c](https://github.com/raysan5/raylib/blob/master/examples/core_3d_camera_free.c) and [core_3d_camera_first_person.c](https://github.com/raysan5/raylib/blob/master/examples/core_3d_camera_first_person.c).
 
- - New [gestures](https://github.com/raysan5/raylib/blob/master/src/gestures.h) module simplifies gestures detection on Android and HTML5 programs.
+ - New [gestures](https://github.com/raysan5/raylib/blob/master/src/rgestures.h) module simplifies gestures detection on Android and HTML5 programs.
 
  - [raygui](https://github.com/raysan5/raylib/blob/master/src/raygui.h), the new immediate-mode GUI module offers a set of functions to create simple user interfaces, primary intended for tools development. It's still in experimental state but already fully functional.
 
@@ -77,7 +77,7 @@ On February 2016, after 4 months of raylib 1.3 release, it comes raylib 1.4. For
 
  - [raymath](https://github.com/raysan5/raylib/blob/master/src/raymath.h) module has been reviewed; some bugs have been solved and the module has been converted to a header-only file for easier portability, optionally, functions can also be used as inline. 
 
- - [gestures](https://github.com/raysan5/raylib/blob/master/src/gestures.c) module has redesigned and simplified, now it can process touch events from any source, including mouse. This way, gestures system can be used on any platform providing an unified way to work with inputs and allowing the user to create multiplatform games with only one source code.
+ - [gestures](https://github.com/raysan5/raylib/blob/master/src/rgestures.c) module has redesigned and simplified, now it can process touch events from any source, including mouse. This way, gestures system can be used on any platform providing an unified way to work with inputs and allowing the user to create multiplatform games with only one source code.
 
  - Raspberry Pi input system has been redesigned to better read raw inputs using generic Linux event handlers (keyboard:`stdin`, mouse:`/dev/input/mouse0`, gamepad:`/dev/input/js0`). Gamepad support has also been added (experimental).
 
@@ -106,7 +106,7 @@ On July 2016, after 5 months of raylib 1.4 release, arrives raylib 1.5. This new
 
  - Audio chiptunese support and mixing channels: Added support for module audio music (.xm, .mod) loading and playing. Multiple mixing channels are now also supported. All this features thanks to the amazing work of @kd7tck.
 
-Other additions include a [2D camera system](https://github.com/raysan5/raylib/blob/master/examples/core_2d_camera.c), render textures for offline render (and most comprehensive [postprocessing](https://github.com/raysan5/raylib/blob/master/examples/shaders_postprocessing.c)) or support for legacy OpenGL 2.1 on desktop platforms.
+Other additions include a [2D camera system](https://github.com/raysan5/raylib/blob/master/examples/core_2d_rcamera.c), render textures for offline render (and most comprehensive [postprocessing](https://github.com/raysan5/raylib/blob/master/examples/shaders_postprocessing.c)) or support for legacy OpenGL 2.1 on desktop platforms.
 
 This new version is so massive that is difficult to list all the improvements, most of raylib modules have been reviewed and [rlgl](https://github.com/raysan5/raylib/blob/master/src/rlgl.c) module has been completely redesigned to accomodate to new material-lighting systems and stereo rendering. You can check [CHANGELOG](https://github.com/raysan5/raylib/blob/master/CHANGELOG) file for a more detailed list of changes.
 
