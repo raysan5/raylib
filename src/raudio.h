@@ -108,6 +108,7 @@ typedef struct Sound {
 typedef struct Music {
     AudioStream stream;         // Audio stream
     unsigned int frameCount;    // Total number of frames (considering channels)
+    float loopPoint;            // Position (in seconds) to return to after looping
     bool looping;               // Music looping enable
 
     int ctxType;                // Type of music context (audio filetype)

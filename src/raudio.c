@@ -1779,6 +1779,7 @@ void UpdateMusicStream(Music music)
     {
         StopMusicStream(music);                     // Stop music (and reset)
         if (music.looping) PlayMusicStream(music);  // Play again
+		if (music.loopPoint != 0.0f) SeekMusicStream(music, music.loopPoint) // Skip to loop point
     }
     else
     {
