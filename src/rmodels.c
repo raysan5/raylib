@@ -134,13 +134,14 @@ static ModelAnimation *LoadIQMModelAnimations(const char *fileName, unsigned int
 static Model LoadGLTF(const char *fileName);    // Load GLTF mesh data
 static ModelAnimation *LoadGLTFModelAnimations(const char *fileName, unsigned int *animCount);    // Load GLTF animation data
 static void LoadGLTFMaterial(Model *model, const char *fileName, const cgltf_data *data);
-static void LoadGLTFMesh(cgltf_data *data, cgltf_mesh *mesh, Model *outModel, Matrix currentTransform, int *primitiveIndex, const char *fileName);
+static void LoadGLTFMesh(cgltf_data *data, cgltf_node *node, Model *outModel, Matrix currentTransform, int *primitiveIndex, const char *fileName);
 static void LoadGLTFNode(cgltf_data *data, cgltf_node *node, Model *outModel, Matrix currentTransform, int *primitiveIndex, const char *fileName);
 static void InitGLTFBones(Model *model, const cgltf_data *data);
-static void BindGLTFPrimitiveToBones(Model *model, const cgltf_data *data, int primitiveIndex);
+static void BindGLTFPrimitiveToBones(Model *model, cgltf_node *node, const cgltf_data *data, int primitiveIndex);
 static void GetGLTFPrimitiveCount(cgltf_node *node, int *outCount);
 static bool ReadGLTFValue(cgltf_accessor *acc, unsigned int index, void *variable);
 static void *ReadGLTFValuesAs(cgltf_accessor *acc, cgltf_component_type type, bool adjustOnDownCasting);
+static Matrix GetNodeTransformationMatrix(cgltf_node *node, Matrix current);
 #endif
 #if defined(SUPPORT_FILEFORMAT_VOX)
 static Model LoadVOX(const char *filename);     // Load VOX mesh data
@@ -1782,72 +1783,93 @@ void UpdateModelAnimation(Model model, ModelAnimation anim, int frame)
 
         for (int m = 0; m < model.meshCount; m++)
         {
+            Mesh mesh = model.meshes[m];
+            if (mesh.boneIds == NULL || mesh.boneWeights == NULL)
+            {
+                TRACELOG(LOG_WARNING, "MODEL: UpdateModelAnimation Mesh %i has no connection to bones",m);
+                continue;
+            }
+
+            bool updated = false; // set to true when anim vertex information is updated
             Vector3 animVertex = { 0 };
             Vector3 animNormal = { 0 };
 
             Vector3 inTranslation = { 0 };
             Quaternion inRotation = { 0 };
-            //Vector3 inScale = { 0 };      // Not used...
+            // Vector3 inScale = { 0 };
 
             Vector3 outTranslation = { 0 };
             Quaternion outRotation = { 0 };
             Vector3 outScale = { 0 };
 
-            int vCounter = 0;
-            int boneCounter = 0;
             int boneId = 0;
+            int boneCounter = 0;
             float boneWeight = 0.0;
 
-            for (int i = 0; i < model.meshes[m].vertexCount; i++)
+            const int vValues = mesh.vertexCount*3;
+            for (int vCounter = 0; vCounter < vValues; vCounter+=3)
             {
-                model.meshes[m].animVertices[vCounter] = 0;
-                model.meshes[m].animVertices[vCounter + 1] = 0;
-                model.meshes[m].animVertices[vCounter + 2] = 0;
+                mesh.animVertices[vCounter] = 0;
+                mesh.animVertices[vCounter + 1] = 0;
+                mesh.animVertices[vCounter + 2] = 0;
 
-                model.meshes[m].animNormals[vCounter] = 0;
-                model.meshes[m].animNormals[vCounter + 1] = 0;
-                model.meshes[m].animNormals[vCounter + 2] = 0;
-
-                for (int j = 0; j < 4; j++)
+                if (mesh.animNormals!=NULL)
                 {
-                    boneId = model.meshes[m].boneIds[boneCounter];
-                    boneWeight = model.meshes[m].boneWeights[boneCounter];
+                    mesh.animNormals[vCounter] = 0;
+                    mesh.animNormals[vCounter + 1] = 0;
+                    mesh.animNormals[vCounter + 2] = 0;
+                }
+
+                // Iterates over 4 bones per vertex
+                for (int j = 0; j < 4; j++, boneCounter++)
+                {
+                    boneWeight = mesh.boneWeights[boneCounter];
+                    // early stop when no transformation will be applied
+                    if (boneWeight == 0.0f)
+                    {
+                        continue;
+                    }
+                    boneId = mesh.boneIds[boneCounter];
+                    int boneIdParent = model.bones[boneId].parent;
                     inTranslation = model.bindPose[boneId].translation;
                     inRotation = model.bindPose[boneId].rotation;
-                    //inScale = model.bindPose[boneId].scale;
+                    // inScale = model.bindPose[boneId].scale;
                     outTranslation = anim.framePoses[frame][boneId].translation;
                     outRotation = anim.framePoses[frame][boneId].rotation;
                     outScale = anim.framePoses[frame][boneId].scale;
 
                     // Vertices processing
                     // NOTE: We use meshes.vertices (default vertex position) to calculate meshes.animVertices (animated vertex position)
-                    animVertex = (Vector3){ model.meshes[m].vertices[vCounter], model.meshes[m].vertices[vCounter + 1], model.meshes[m].vertices[vCounter + 2] };
+                    animVertex = (Vector3){ mesh.vertices[vCounter], mesh.vertices[vCounter + 1], mesh.vertices[vCounter + 2] };
                     animVertex = Vector3Multiply(animVertex, outScale);
                     animVertex = Vector3Subtract(animVertex, inTranslation);
                     animVertex = Vector3RotateByQuaternion(animVertex, QuaternionMultiply(outRotation, QuaternionInvert(inRotation)));
                     animVertex = Vector3Add(animVertex, outTranslation);
-                    model.meshes[m].animVertices[vCounter] += animVertex.x*boneWeight;
-                    model.meshes[m].animVertices[vCounter + 1] += animVertex.y*boneWeight;
-                    model.meshes[m].animVertices[vCounter + 2] += animVertex.z*boneWeight;
+//                     animVertex = Vector3Transform(animVertex, model.transform);
+                    mesh.animVertices[vCounter] += animVertex.x*boneWeight;
+                    mesh.animVertices[vCounter + 1] += animVertex.y*boneWeight;
+                    mesh.animVertices[vCounter + 2] += animVertex.z*boneWeight;
+                    updated = true;
 
                     // Normals processing
                     // NOTE: We use meshes.baseNormals (default normal) to calculate meshes.normals (animated normals)
-                    if (model.meshes[m].normals != NULL)
+                    if (mesh.normals != NULL)
                     {
-                        animNormal = (Vector3){ model.meshes[m].normals[vCounter], model.meshes[m].normals[vCounter + 1], model.meshes[m].normals[vCounter + 2] };
+                        animNormal = (Vector3){ mesh.normals[vCounter], mesh.normals[vCounter + 1], mesh.normals[vCounter + 2] };
                         animNormal = Vector3RotateByQuaternion(animNormal, QuaternionMultiply(outRotation, QuaternionInvert(inRotation)));
-                        model.meshes[m].animNormals[vCounter] += animNormal.x*boneWeight;
-                        model.meshes[m].animNormals[vCounter + 1] += animNormal.y*boneWeight;
-                        model.meshes[m].animNormals[vCounter + 2] += animNormal.z*boneWeight;
+                        mesh.animNormals[vCounter] += animNormal.x*boneWeight;
+                        mesh.animNormals[vCounter + 1] += animNormal.y*boneWeight;
+                        mesh.animNormals[vCounter + 2] += animNormal.z*boneWeight;
                     }
-                    boneCounter += 1;
                 }
-                vCounter += 3;
             }
 
             // Upload new vertex data to GPU for model drawing
-            rlUpdateVertexBuffer(model.meshes[m].vboId[0], model.meshes[m].animVertices, model.meshes[m].vertexCount*3*sizeof(float), 0);    // Update vertex position
-            rlUpdateVertexBuffer(model.meshes[m].vboId[2], model.meshes[m].animNormals, model.meshes[m].vertexCount*3*sizeof(float), 0);     // Update vertex normals
+            // Only update data when values changed.
+            if (updated){
+                rlUpdateVertexBuffer(mesh.vboId[0], mesh.animVertices, mesh.vertexCount*3*sizeof(float), 0);    // Update vertex position
+                rlUpdateVertexBuffer(mesh.vboId[2], mesh.animNormals, mesh.vertexCount*3*sizeof(float), 0);     // Update vertex normals
+            }
         }
     }
 }
@@ -5188,30 +5210,26 @@ static void LoadGLTFMaterial(Model *model, const char *fileName, const cgltf_dat
     model->materials[model->materialCount - 1] = LoadMaterialDefault();
 }
 
-static void BindGLTFPrimitiveToBones(Model *model, const cgltf_data *data, int primitiveIndex)
+static void BindGLTFPrimitiveToBones(Model *model, cgltf_node *node, const cgltf_data *data, int primitiveIndex)
 {
-    for (unsigned int nodeId = 0; nodeId < data->nodes_count; nodeId++)
-    {
-        if (data->nodes[nodeId].mesh == &(data->meshes[primitiveIndex]))
-        {
-            if (model->meshes[primitiveIndex].boneIds == NULL)
-            {
-                model->meshes[primitiveIndex].boneIds = RL_CALLOC(model->meshes[primitiveIndex].vertexCount*4, sizeof(int));
-                model->meshes[primitiveIndex].boneWeights = RL_CALLOC(model->meshes[primitiveIndex].vertexCount*4, sizeof(float));
+    int nodeId = node - data->nodes;
 
-                for (int b = 0; b < model->meshes[primitiveIndex].vertexCount*4; b++)
-                {
-                    if (b%4 == 0)
-                    {
-                        model->meshes[primitiveIndex].boneIds[b] = nodeId;
-                        model->meshes[primitiveIndex].boneWeights[b] = 1.0f;
-                    }
-                    else
-                    {
-                        model->meshes[primitiveIndex].boneIds[b] = 0;
-                        model->meshes[primitiveIndex].boneWeights[b] = 0.0f;
-                    }
-                }
+    if (model->meshes[primitiveIndex].boneIds == NULL)
+    {
+        model->meshes[primitiveIndex].boneIds = RL_CALLOC(model->meshes[primitiveIndex].vertexCount*4, sizeof(int));
+        model->meshes[primitiveIndex].boneWeights = RL_CALLOC(model->meshes[primitiveIndex].vertexCount*4, sizeof(float));
+
+        for (int b = 0; b < model->meshes[primitiveIndex].vertexCount*4; b++)
+        {
+            if (b%4 == 0)
+            {
+                model->meshes[primitiveIndex].boneIds[b] = nodeId;
+                model->meshes[primitiveIndex].boneWeights[b] = 1.0f;
+            }
+            else
+            {
+                model->meshes[primitiveIndex].boneIds[b] = 0;
+                model->meshes[primitiveIndex].boneWeights[b] = 0.0f;
             }
         }
     }
@@ -5383,13 +5401,16 @@ static ModelAnimation *LoadGLTFModelAnimations(const char *fileName, unsigned in
                         translationStart.y = values[1];
                         translationStart.z = values[2];
 
-                        success = ReadGLTFValue(sampler->output, outputMax, values) || success;
+                        success = ReadGLTFValue(sampler->output, outputMax, values) && success;
 
                         translationEnd.x = values[0];
                         translationEnd.y = values[1];
                         translationEnd.z = values[2];
 
-                        if (success) output->framePoses[frame][boneId].translation = Vector3Lerp(translationStart, translationEnd, lerpPercent);
+                        if (success)
+                        {
+                            output->framePoses[frame][boneId].translation = Vector3Lerp(translationStart, translationEnd, lerpPercent);
+                        }
                     }
                     if (channel->target_path == cgltf_animation_path_type_rotation)
                     {
@@ -5405,7 +5426,7 @@ static ModelAnimation *LoadGLTFModelAnimations(const char *fileName, unsigned in
                         rotationStart.z = values[2];
                         rotationStart.w = values[3];
 
-                        success = ReadGLTFValue(sampler->output, outputMax, &values) || success;
+                        success = ReadGLTFValue(sampler->output, outputMax, &values) && success;
 
                         rotationEnd.x = values[0];
                         rotationEnd.y = values[1];
@@ -5430,13 +5451,16 @@ static ModelAnimation *LoadGLTFModelAnimations(const char *fileName, unsigned in
                         scaleStart.y = values[1];
                         scaleStart.z = values[2];
 
-                        success = ReadGLTFValue(sampler->output, outputMax, &values) || success;
+                        success = ReadGLTFValue(sampler->output, outputMax, &values) && success;
 
                         scaleEnd.x = values[0];
                         scaleEnd.y = values[1];
                         scaleEnd.z = values[2];
 
-                        if (success) output->framePoses[frame][boneId].scale = Vector3Lerp(scaleStart, scaleEnd, lerpPercent);
+                        if (success)
+                        {
+                            output->framePoses[frame][boneId].scale = Vector3Lerp(scaleStart, scaleEnd, lerpPercent);
+                        }
                     }
                 }
             }
@@ -5451,7 +5475,10 @@ static ModelAnimation *LoadGLTFModelAnimations(const char *fileName, unsigned in
                 {
                     for (int i = 0; i < output->boneCount; i++)
                     {
-                        if (completedBones[i]) continue;
+                        if (completedBones[i])
+                        {
+                            continue;
+                        }
 
                         if (output->bones[i].parent < 0)
                         {
@@ -5460,7 +5487,10 @@ static ModelAnimation *LoadGLTFModelAnimations(const char *fileName, unsigned in
                             continue;
                         }
 
-                        if (!completedBones[output->bones[i].parent]) continue;
+                        if (!completedBones[output->bones[i].parent])
+                        {
+                            continue;
+                        }
 
                         output->framePoses[frame][i].rotation = QuaternionMultiply(output->framePoses[frame][output->bones[i].parent].rotation, output->framePoses[frame][i].rotation);
                         output->framePoses[frame][i].translation = Vector3RotateByQuaternion(output->framePoses[frame][i].translation, output->framePoses[frame][output->bones[i].parent].rotation);
@@ -5470,7 +5500,6 @@ static ModelAnimation *LoadGLTFModelAnimations(const char *fileName, unsigned in
                         numberCompletedBones++;
                     }
                 }
-
                 RL_FREE(completedBones);
             }
         }
@@ -5484,8 +5513,9 @@ static ModelAnimation *LoadGLTFModelAnimations(const char *fileName, unsigned in
     return animations;
 }
 
-void LoadGLTFMesh(cgltf_data *data, cgltf_mesh *mesh, Model *outModel, Matrix currentTransform, int *primitiveIndex, const char *fileName)
+void LoadGLTFMesh(cgltf_data *data, cgltf_node *node, Model *outModel, Matrix currentTransform, int *primitiveIndex, const char *fileName)
 {
+    cgltf_mesh *mesh = node->mesh;
     for (unsigned int p = 0; p < mesh->primitives_count; p++)
     {
         for (unsigned int j = 0; j < mesh->primitives[p].attributes_count; j++)
@@ -5552,23 +5582,16 @@ void LoadGLTFMesh(cgltf_data *data, cgltf_mesh *mesh, Model *outModel, Matrix cu
                 cgltf_accessor *acc = mesh->primitives[p].attributes[j].data;
                 unsigned int boneCount = acc->count;
                 unsigned int totalBoneWeights = boneCount*4;
-
                 outModel->meshes[(*primitiveIndex)].boneIds = RL_MALLOC(totalBoneWeights*sizeof(int));
                 short *bones = ReadGLTFValuesAs(acc, cgltf_component_type_r_16, false);
+                // Find skin joint
                 for (unsigned int a = 0; a < totalBoneWeights; a++)
                 {
                     outModel->meshes[(*primitiveIndex)].boneIds[a] = 0;
                     if (bones[a] < 0) continue;
-
-                    cgltf_node* skinJoint = data->skins->joints[bones[a]];
-                    for (unsigned int k = 0; k < data->nodes_count; k++)
-                    {
-                        if (data->nodes + k == skinJoint)
-                        {
-                            outModel->meshes[(*primitiveIndex)].boneIds[a] = k;
-                            break;
-                        }
-                    }
+                    cgltf_node* skinJoint = node->skin->joints[bones[a]];
+                    unsigned int skinJointId = skinJoint - data->nodes;
+                    outModel->meshes[(*primitiveIndex)].boneIds[a] = skinJointId;
                 }
                 RL_FREE(bones);
             }
@@ -5603,7 +5626,7 @@ void LoadGLTFMesh(cgltf_data *data, cgltf_mesh *mesh, Model *outModel, Matrix cu
         }
         else outModel->meshMaterial[(*primitiveIndex)] = outModel->materialCount - 1;
 
-        BindGLTFPrimitiveToBones(outModel, data, *primitiveIndex);
+        BindGLTFPrimitiveToBones(outModel, node, data, *primitiveIndex);
 
         (*primitiveIndex) = (*primitiveIndex) + 1;
     }
@@ -5648,12 +5671,12 @@ void LoadGLTFNode(cgltf_data *data, cgltf_node *node, Model *outModel, Matrix cu
     {
         // Check if skinning is enabled and load Mesh accordingly
         Matrix vertexTransform = currentTransform;
-        if((node->skin != NULL) && (node->parent != NULL))
+        if ((node->skin != NULL) && (node->parent != NULL))
         {
             vertexTransform = localTransform;
             TRACELOG(LOG_WARNING,"MODEL: GLTF Node %s is skinned but not root node! Parent transformations will be ignored (NODE_SKINNED_MESH_NON_ROOT)",node->name);
         }
-        LoadGLTFMesh(data, node->mesh, outModel, vertexTransform, primitiveIndex, fileName);
+        LoadGLTFMesh(data, node, outModel, vertexTransform, primitiveIndex, fileName);
     }
     for (unsigned int i = 0; i < node->children_count; i++) LoadGLTFNode(data, node->children[i], outModel, currentTransform, primitiveIndex, fileName);
 }
