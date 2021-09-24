@@ -1,5 +1,0 @@
-﻿  ANDROID_HOME=C:\\Microsoft\AndroidSDK\25
-  ANT_HOME=C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\Apps\apache-ant-1.9.3
-  JAVA_HOME=C:\Program Files\Android\jdk\microsoft_dist_openjdk_1.8.0.25
-  NDK_ROOT=C:\Users\VadimPC\AppData\Local\Android\Sdk\ndk\21.1.6352462
-  raylib_android.NativeActivity.vcxproj -> C:\raylib-master\projects\VS2019-Android\raylib_android\ARM64\Debug\libmain.so
