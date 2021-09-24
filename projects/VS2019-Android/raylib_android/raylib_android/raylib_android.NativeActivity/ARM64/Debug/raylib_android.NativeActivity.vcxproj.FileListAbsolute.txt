@@ -1,0 +1,1 @@
+C:\raylib-master\projects\VS2019-Android\raylib_android\raylib_android\raylib_android.NativeActivity\ARM64\Debug\libmain.so

@@ -1,0 +1,10 @@
+#Last build type
+#Thu, 23 Sep 2021 15:30:05 +0300
+
+build.last.target=debug
+
+build.last.is.instrumented=false
+
+build.last.is.packaging.debug=true
+
+build.last.is.signing.debug=true

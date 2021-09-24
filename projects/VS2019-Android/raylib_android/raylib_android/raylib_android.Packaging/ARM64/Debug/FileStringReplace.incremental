@@ -1,0 +1,1 @@
+$(AntDependencies)=;$(ApplicationId)=applicationId = "";$(ConfigurationType)=application;$(AarDependencies)=;$(AarDependenciesSettings)=;$(ApplicationName)=raylib_android;$(AndroidAppLibName)=raylib_android;$(AndroidBuildToolsVersion)=25.0.3;$(AndroidAPILevelNumber)=25;$(androidapilevel)=android-25;$(projectname)=raylib_android.Packaging;
