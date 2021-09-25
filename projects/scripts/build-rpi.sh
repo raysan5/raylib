@@ -120,7 +120,7 @@ if [ ! -d "$TEMP_DIR" ]; then
     mkdir -p $TEMP_DIR
     cd $TEMP_DIR
     RAYLIB_DEFINES="-D_DEFAULT_SOURCE -DPLATFORM_RPI -DGRAPHICS_API_OPENGL_ES2"
-    RAYLIB_C_FILES="$RAYLIB_SRC/core.c $RAYLIB_SRC/shapes.c $RAYLIB_SRC/textures.c $RAYLIB_SRC/text.c $RAYLIB_SRC/models.c $RAYLIB_SRC/utils.c $RAYLIB_SRC/raudio.c"
+    RAYLIB_C_FILES="$RAYLIB_SRC/rcore.c $RAYLIB_SRC/rshapes.c $RAYLIB_SRC/rtextures.c $RAYLIB_SRC/rtext.c $RAYLIB_SRC/rmodels.c $RAYLIB_SRC/utils.c $RAYLIB_SRC/raudio.c"
     RAYLIB_INCLUDE_FLAGS="-I$RAYLIB_SRC -I/opt/vc/include"
 
     if [ -n "$REALLY_QUIET" ]; then

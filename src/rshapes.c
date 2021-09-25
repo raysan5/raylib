@@ -1,6 +1,6 @@
 /**********************************************************************************************
 *
-*   raylib.shapes - Basic functions to draw 2d Shapes and check collisions
+*   rshapes - Basic functions to draw 2d shapes and check collisions
 *
 *   CONFIGURATION:
 *
@@ -190,16 +190,16 @@ void DrawLineBezierQuad(Vector2 startPos, Vector2 endPos, Vector2 controlPos, fl
 }
 
 // Draw lines sequence
-void DrawLineStrip(Vector2 *points, int pointsCount, Color color)
+void DrawLineStrip(Vector2 *points, int pointCount, Color color)
 {
-    if (pointsCount >= 2)
+    if (pointCount >= 2)
     {
-        rlCheckRenderBatchLimit(pointsCount);
+        rlCheckRenderBatchLimit(pointCount);
 
         rlBegin(RL_LINES);
             rlColor4ub(color.r, color.g, color.b, color.a);
 
-            for (int i = 0; i < pointsCount - 1; i++)
+            for (int i = 0; i < pointCount - 1; i++)
             {
                 rlVertex2f(points[i].x, points[i].y);
                 rlVertex2f(points[i + 1].x, points[i + 1].y);
@@ -1318,17 +1318,17 @@ void DrawTriangleLines(Vector2 v1, Vector2 v2, Vector2 v3, Color color)
 // Draw a triangle fan defined by points
 // NOTE: First vertex provided is the center, shared by all triangles
 // By default, following vertex should be provided in counter-clockwise order
-void DrawTriangleFan(Vector2 *points, int pointsCount, Color color)
+void DrawTriangleFan(Vector2 *points, int pointCount, Color color)
 {
-    if (pointsCount >= 3)
+    if (pointCount >= 3)
     {
-        rlCheckRenderBatchLimit((pointsCount - 2)*4);
+        rlCheckRenderBatchLimit((pointCount - 2)*4);
 
         rlSetTexture(texShapes.id);
         rlBegin(RL_QUADS);
             rlColor4ub(color.r, color.g, color.b, color.a);
 
-            for (int i = 1; i < pointsCount - 1; i++)
+            for (int i = 1; i < pointCount - 1; i++)
             {
                 rlTexCoord2f(texShapesRec.x/texShapes.width, texShapesRec.y/texShapes.height);
                 rlVertex2f(points[0].x, points[0].y);
@@ -1349,16 +1349,16 @@ void DrawTriangleFan(Vector2 *points, int pointsCount, Color color)
 
 // Draw a triangle strip defined by points
 // NOTE: Every new vertex connects with previous two
-void DrawTriangleStrip(Vector2 *points, int pointsCount, Color color)
+void DrawTriangleStrip(Vector2 *points, int pointCount, Color color)
 {
-    if (pointsCount >= 3)
+    if (pointCount >= 3)
     {
-        rlCheckRenderBatchLimit(3*(pointsCount - 2));
+        rlCheckRenderBatchLimit(3*(pointCount - 2));
 
         rlBegin(RL_TRIANGLES);
             rlColor4ub(color.r, color.g, color.b, color.a);
 
-            for (int i = 2; i < pointsCount; i++)
+            for (int i = 2; i < pointCount; i++)
             {
                 if ((i%2) == 0)
                 {

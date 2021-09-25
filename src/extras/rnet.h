@@ -155,15 +155,15 @@ typedef int socklen_t;
     #include <arpa/inet.h>
 #endif
 
-#ifndef INVALID_SOCKET
-    #define INVALID_SOCKET ~(0)
-#endif
-
 #ifndef __USE_W32_SOCKETS
     #define closesocket close
     #define SOCKET int
     #define INVALID_SOCKET -1
     #define SOCKET_ERROR -1
+#endif
+
+#ifndef INVALID_SOCKET
+    #define INVALID_SOCKET ~(0)
 #endif
 
 #ifdef __USE_W32_SOCKETS

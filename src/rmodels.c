@@ -1,6 +1,6 @@
 /**********************************************************************************************
 *
-*   raylib.models - Basic functions to deal with 3d shapes and 3d models
+*   rmodels - Basic functions to draw 3d shapes and load and draw 3d models
 *
 *   CONFIGURATION:
 *
@@ -8,6 +8,8 @@
 *   #define SUPPORT_FILEFORMAT_MTL
 *   #define SUPPORT_FILEFORMAT_IQM
 *   #define SUPPORT_FILEFORMAT_GLTF
+*   #define SUPPORT_FILEFORMAT_VOX
+*
 *       Selected desired fileformats to be supported for model data loading.
 *
 *   #define SUPPORT_MESH_GENERATION
@@ -68,7 +70,16 @@
 
     #define CGLTF_IMPLEMENTATION
     #include "external/cgltf.h"         // glTF file format loading
-    #include "external/stb_image.h"     // glTF texture images loading
+#endif
+
+#if defined(SUPPORT_FILEFORMAT_VOX)
+    #define VOX_MALLOC RL_MALLOC
+    #define VOX_CALLOC RL_CALLOC
+    #define VOX_REALLOC RL_REALLOC
+    #define VOX_FREE RL_FREE
+
+    #define VOX_LOADER_IMPLEMENTATION
+    #include "external/vox_loader.h"    // vox file format loading (MagikaVoxel)
 #endif
 
 #if defined(SUPPORT_MESH_GENERATION)
@@ -117,19 +128,23 @@ static Model LoadOBJ(const char *fileName);     // Load OBJ mesh data
 #endif
 #if defined(SUPPORT_FILEFORMAT_IQM)
 static Model LoadIQM(const char *fileName);     // Load IQM mesh data
-static ModelAnimation *LoadIQMModelAnimations(const char *fileName, int *animCount);    // Load IQM animation data
+static ModelAnimation *LoadIQMModelAnimations(const char *fileName, unsigned int *animCount);    // Load IQM animation data
 #endif
 #if defined(SUPPORT_FILEFORMAT_GLTF)
 static Model LoadGLTF(const char *fileName);    // Load GLTF mesh data
-static ModelAnimation *LoadGLTFModelAnimations(const char *fileName, int *animCount);    // Load GLTF animation data
+static ModelAnimation *LoadGLTFModelAnimations(const char *fileName, unsigned int *animCount);    // Load GLTF animation data
 static void LoadGLTFMaterial(Model *model, const char *fileName, const cgltf_data *data);
-static void LoadGLTFMesh(cgltf_data *data, cgltf_mesh* mesh, Model* outModel, Matrix currentTransform, int* primitiveIndex, const char *fileName);
-static void LoadGLTFNode(cgltf_data *data, cgltf_node* node, Model* outModel, Matrix currentTransform, int* primitiveIndex, const char *fileName);
+static void LoadGLTFMesh(cgltf_data *data, cgltf_node *node, Model *outModel, Matrix currentTransform, int *primitiveIndex, const char *fileName);
+static void LoadGLTFNode(cgltf_data *data, cgltf_node *node, Model *outModel, Matrix currentTransform, int *primitiveIndex, const char *fileName);
 static void InitGLTFBones(Model *model, const cgltf_data *data);
-static void BindGLTFPrimitiveToBones(Model *model, const cgltf_data *data, int primitiveIndex);
-static void GetGLTFPrimitiveCount(cgltf_node* node, int* outCount);
-static bool ReadGLTFValue(cgltf_accessor* acc, unsigned int index, void *variable);
-static void *ReadGLTFValuesAs(cgltf_accessor* acc, cgltf_component_type type, bool adjustOnDownCasting);
+static void BindGLTFPrimitiveToBones(Model *model, cgltf_node *node, const cgltf_data *data, int primitiveIndex);
+static void GetGLTFPrimitiveCount(cgltf_node *node, int *outCount);
+static bool ReadGLTFValue(cgltf_accessor *acc, unsigned int index, void *variable);
+static void *ReadGLTFValuesAs(cgltf_accessor *acc, cgltf_component_type type, bool adjustOnDownCasting);
+static Matrix GetNodeTransformationMatrix(cgltf_node *node, Matrix current);
+#endif
+#if defined(SUPPORT_FILEFORMAT_VOX)
+static Model LoadVOX(const char *filename);     // Load VOX mesh data
 #endif
 
 //----------------------------------------------------------------------------------
@@ -201,16 +216,16 @@ void DrawTriangle3D(Vector3 v1, Vector3 v2, Vector3 v3, Color color)
 }
 
 // Draw a triangle strip defined by points
-void DrawTriangleStrip3D(Vector3 *points, int pointsCount, Color color)
+void DrawTriangleStrip3D(Vector3 *points, int pointCount, Color color)
 {
-    if (pointsCount >= 3)
+    if (pointCount >= 3)
     {
-        rlCheckRenderBatchLimit(3*(pointsCount - 2));
+        rlCheckRenderBatchLimit(3*(pointCount - 2));
 
         rlBegin(RL_TRIANGLES);
             rlColor4ub(color.r, color.g, color.b, color.a);
 
-            for (int i = 2; i < pointsCount; i++)
+            for (int i = 2; i < pointCount; i++)
             {
                 if ((i%2) == 0)
                 {
@@ -445,6 +460,157 @@ void DrawCubeTexture(Texture2D texture, Vector3 position, float width, float hei
             rlTexCoord2f(0.0f, 1.0f); rlVertex3f(x - width/2, y + height/2, z - length/2);  // Top Left Of The Texture and Quad
         rlEnd();
     //rlPopMatrix();
+
+    rlSetTexture(0);
+}
+
+void DrawCubeTextureRec(Texture2D texture, Rectangle source, Vector3 position, float width, float height, float length, Color color)
+{
+    float x = position.x;
+    float y = position.y;
+    float z = position.z;
+    float texture_width  = (float)texture.width;
+    float texture_height = (float)texture.height;
+
+    rlCheckRenderBatchLimit(36);
+
+    rlSetTexture(texture.id);
+
+        rlBegin(RL_QUADS);
+            rlColor4ub(color.r, color.g, color.b, color.a);
+
+            // Front Face
+            {
+                // Normal Pointing Towards Viewer
+                rlNormal3f(0.0f, 0.0f, 1.0f);
+
+                // Bottom Left Of The Texture and Quad
+                rlTexCoord2f(source.x / texture_width, (source.y + source.height) / texture_height);
+                rlVertex3f(x - width/2, y - height/2, z + length/2);
+
+                // Bottom Right Of The Texture and Quad
+                rlTexCoord2f((source.x + source.width) / texture_width, (source.y + source.height) / texture_height);
+                rlVertex3f(x + width/2, y - height/2, z + length/2);
+
+                // Top Right Of The Texture and Quad
+                rlTexCoord2f((source.x + source.width) / texture_width, source.y / texture_height);
+                rlVertex3f(x + width/2, y + height/2, z + length/2);
+
+                // Top Left Of The Texture and Quad
+                rlTexCoord2f(source.x / texture_width, source.y / texture_height);
+                rlVertex3f(x - width/2, y + height/2, z + length/2);
+            }
+
+            // Back Face
+            {
+                // Normal Pointing Away From Viewer
+                rlNormal3f(0.0f, 0.0f, - 1.0f);
+
+                // Bottom Right Of The Texture and Quad
+                rlTexCoord2f((source.x + source.width) / texture_width, (source.y + source.height) / texture_height);
+                rlVertex3f(x - width/2, y - height/2, z - length/2);
+
+                // Top Right Of The Texture and Quad
+                rlTexCoord2f((source.x + source.width) / texture_width, source.y / texture_height);
+                rlVertex3f(x - width/2, y + height/2, z - length/2);
+
+                // Top Left Of The Texture and Quad
+                rlTexCoord2f(source.x / texture_width, source.y / texture_height);
+                rlVertex3f(x + width/2, y + height/2, z - length/2);
+
+                // Bottom Left Of The Texture and Quad
+                rlTexCoord2f(source.x / texture_width, (source.y + source.height) / texture_height);
+                rlVertex3f(x + width/2, y - height/2, z - length/2);
+            }
+
+            // Top Face
+            {
+                // Normal Pointing Up
+                rlNormal3f(0.0f, 1.0f, 0.0f);
+
+                // Top Left Of The Texture and Quad
+                rlTexCoord2f(source.x / texture_width, source.y / texture_height);
+                rlVertex3f(x - width/2, y + height/2, z - length/2);
+
+                // Bottom Left Of The Texture and Quad
+                rlTexCoord2f(source.x / texture_width, (source.y + source.height) / texture_height);
+                rlVertex3f(x - width/2, y + height/2, z + length/2);
+
+                // Bottom Right Of The Texture and Quad
+                rlTexCoord2f((source.x + source.width) / texture_width, (source.y + source.height) / texture_height);
+                rlVertex3f(x + width/2, y + height/2, z + length/2);
+
+                // Top Right Of The Texture and Quad
+                rlTexCoord2f((source.x + source.width) / texture_width, source.y / texture_height);
+                rlVertex3f(x + width/2, y + height/2, z - length/2);
+            }
+
+            // Bottom Face
+            {
+                // Normal Pointing Down
+                rlNormal3f(0.0f, - 1.0f, 0.0f);
+
+                // Top Right Of The Texture and Quad
+                rlTexCoord2f((source.x + source.width) / texture_width, source.y / texture_height);
+                rlVertex3f(x - width/2, y - height/2, z - length/2);
+
+                // Top Left Of The Texture and Quad
+                rlTexCoord2f(source.x / texture_width, source.y / texture_height);
+                rlVertex3f(x + width/2, y - height/2, z - length/2);
+
+                // Bottom Left Of The Texture and Quad
+                rlTexCoord2f(source.x / texture_width, (source.y + source.height) / texture_height);
+                rlVertex3f(x + width/2, y - height/2, z + length/2);
+
+                // Bottom Right Of The Texture and Quad
+                rlTexCoord2f((source.x + source.width) / texture_width, (source.y + source.height) / texture_height);
+                rlVertex3f(x - width/2, y - height/2, z + length/2);
+            }
+
+            // Right face
+            {
+                // Normal Pointing Right
+                rlNormal3f(1.0f, 0.0f, 0.0f);
+
+                // Bottom Right Of The Texture and Quad
+                rlTexCoord2f((source.x + source.width) / texture_width, (source.y + source.height) / texture_height);
+                rlVertex3f(x + width/2, y - height/2, z - length/2);
+
+                // Top Right Of The Texture and Quad
+                rlTexCoord2f((source.x + source.width) / texture_width, source.y / texture_height);
+                rlVertex3f(x + width/2, y + height/2, z - length/2);
+
+                // Top Left Of The Texture and Quad
+                rlTexCoord2f(source.x / texture_width, source.y / texture_height);
+                rlVertex3f(x + width/2, y + height/2, z + length/2);
+
+                // Bottom Left Of The Texture and Quad
+                rlTexCoord2f(source.x / texture_width, (source.y + source.height) / texture_height);
+                rlVertex3f(x + width/2, y - height/2, z + length/2);
+            }
+
+            // Left Face
+            {
+                // Normal Pointing Left
+                rlNormal3f( - 1.0f, 0.0f, 0.0f);
+
+                // Bottom Left Of The Texture and Quad
+                rlTexCoord2f(source.x / texture_width, (source.y + source.height) / texture_height);
+                rlVertex3f(x - width/2, y - height/2, z - length/2);
+
+                // Bottom Right Of The Texture and Quad
+                rlTexCoord2f((source.x + source.width) / texture_width, (source.y + source.height) / texture_height);
+                rlVertex3f(x - width/2, y - height/2, z + length/2);
+
+                // Top Right Of The Texture and Quad
+                rlTexCoord2f((source.x + source.width) / texture_width, source.y / texture_height);
+                rlVertex3f(x - width/2, y + height/2, z + length/2);
+
+                // Top Left Of The Texture and Quad
+                rlTexCoord2f(source.x / texture_width, source.y / texture_height);
+                rlVertex3f(x - width/2, y + height/2, z - length/2);
+            }
+        rlEnd();
 
     rlSetTexture(0);
 }
@@ -717,6 +883,9 @@ Model LoadModel(const char *fileName)
 #endif
 #if defined(SUPPORT_FILEFORMAT_GLTF)
     if (IsFileExtension(fileName, ".gltf;.glb")) model = LoadGLTF(fileName);
+#endif
+#if defined(SUPPORT_FILEFORMAT_VOX)
+    if (IsFileExtension(fileName, ".vox")) model = LoadVOX(fileName);
 #endif
 
     // Make sure model transform is set to identity matrix!
@@ -1144,14 +1313,14 @@ void DrawMesh(Mesh mesh, Material material, Matrix transform)
         if (mesh.indices != NULL) rlEnableVertexBufferElement(mesh.vboId[6]);
     }
 
-    int eyesCount = 1;
-    if (rlIsStereoRenderEnabled()) eyesCount = 2;
+    int eyeCount = 1;
+    if (rlIsStereoRenderEnabled()) eyeCount = 2;
 
-    for (int eye = 0; eye < eyesCount; eye++)
+    for (int eye = 0; eye < eyeCount; eye++)
     {
         // Calculate model-view-projection matrix (MVP)
         Matrix matModelViewProjection = MatrixIdentity();
-        if (eyesCount == 1) matModelViewProjection = MatrixMultiply(matModelView, matProjection);
+        if (eyeCount == 1) matModelViewProjection = MatrixMultiply(matModelView, matProjection);
         else
         {
             // Setup current eye viewport (half screen width)
@@ -1359,14 +1528,14 @@ void DrawMeshInstanced(Mesh mesh, Material material, Matrix *transforms, int ins
         if (mesh.indices != NULL) rlEnableVertexBufferElement(mesh.vboId[6]);
     }
 
-    int eyesCount = 1;
-    if (rlIsStereoRenderEnabled()) eyesCount = 2;
+    int eyeCount = 1;
+    if (rlIsStereoRenderEnabled()) eyeCount = 2;
 
-    for (int eye = 0; eye < eyesCount; eye++)
+    for (int eye = 0; eye < eyeCount; eye++)
     {
         // Calculate model-view-projection matrix (MVP)
         Matrix matModelViewProjection = MatrixIdentity();
-        if (eyesCount == 1) matModelViewProjection = MatrixMultiply(matModelView, matProjection);
+        if (eyeCount == 1) matModelViewProjection = MatrixMultiply(matModelView, matProjection);
         else
         {
             // Setup current eye viewport (half screen width)
@@ -1448,43 +1617,43 @@ bool ExportMesh(Mesh mesh, const char *fileName)
         // NOTE: Text data buffer size is estimated considering mesh data size
         char *txtData = (char *)RL_CALLOC(dataSize + 2000, sizeof(char));
 
-        int bytesCount = 0;
-        bytesCount += sprintf(txtData + bytesCount, "# //////////////////////////////////////////////////////////////////////////////////\n");
-        bytesCount += sprintf(txtData + bytesCount, "# //                                                                              //\n");
-        bytesCount += sprintf(txtData + bytesCount, "# // rMeshOBJ exporter v1.0 - Mesh exported as triangle faces and not optimized   //\n");
-        bytesCount += sprintf(txtData + bytesCount, "# //                                                                              //\n");
-        bytesCount += sprintf(txtData + bytesCount, "# // more info and bugs-report:  github.com/raysan5/raylib                        //\n");
-        bytesCount += sprintf(txtData + bytesCount, "# // feedback and support:       ray[at]raylib.com                                //\n");
-        bytesCount += sprintf(txtData + bytesCount, "# //                                                                              //\n");
-        bytesCount += sprintf(txtData + bytesCount, "# // Copyright (c) 2018 Ramon Santamaria (@raysan5)                               //\n");
-        bytesCount += sprintf(txtData + bytesCount, "# //                                                                              //\n");
-        bytesCount += sprintf(txtData + bytesCount, "# //////////////////////////////////////////////////////////////////////////////////\n\n");
-        bytesCount += sprintf(txtData + bytesCount, "# Vertex Count:     %i\n", mesh.vertexCount);
-        bytesCount += sprintf(txtData + bytesCount, "# Triangle Count:   %i\n\n", mesh.triangleCount);
+        int byteCount = 0;
+        byteCount += sprintf(txtData + byteCount, "# //////////////////////////////////////////////////////////////////////////////////\n");
+        byteCount += sprintf(txtData + byteCount, "# //                                                                              //\n");
+        byteCount += sprintf(txtData + byteCount, "# // rMeshOBJ exporter v1.0 - Mesh exported as triangle faces and not optimized   //\n");
+        byteCount += sprintf(txtData + byteCount, "# //                                                                              //\n");
+        byteCount += sprintf(txtData + byteCount, "# // more info and bugs-report:  github.com/raysan5/raylib                        //\n");
+        byteCount += sprintf(txtData + byteCount, "# // feedback and support:       ray[at]raylib.com                                //\n");
+        byteCount += sprintf(txtData + byteCount, "# //                                                                              //\n");
+        byteCount += sprintf(txtData + byteCount, "# // Copyright (c) 2018 Ramon Santamaria (@raysan5)                               //\n");
+        byteCount += sprintf(txtData + byteCount, "# //                                                                              //\n");
+        byteCount += sprintf(txtData + byteCount, "# //////////////////////////////////////////////////////////////////////////////////\n\n");
+        byteCount += sprintf(txtData + byteCount, "# Vertex Count:     %i\n", mesh.vertexCount);
+        byteCount += sprintf(txtData + byteCount, "# Triangle Count:   %i\n\n", mesh.triangleCount);
 
-        bytesCount += sprintf(txtData + bytesCount, "g mesh\n");
+        byteCount += sprintf(txtData + byteCount, "g mesh\n");
 
         for (int i = 0, v = 0; i < mesh.vertexCount; i++, v += 3)
         {
-            bytesCount += sprintf(txtData + bytesCount, "v %.2f %.2f %.2f\n", mesh.vertices[v], mesh.vertices[v + 1], mesh.vertices[v + 2]);
+            byteCount += sprintf(txtData + byteCount, "v %.2f %.2f %.2f\n", mesh.vertices[v], mesh.vertices[v + 1], mesh.vertices[v + 2]);
         }
 
         for (int i = 0, v = 0; i < mesh.vertexCount; i++, v += 2)
         {
-            bytesCount += sprintf(txtData + bytesCount, "vt %.3f %.3f\n", mesh.texcoords[v], mesh.texcoords[v + 1]);
+            byteCount += sprintf(txtData + byteCount, "vt %.3f %.3f\n", mesh.texcoords[v], mesh.texcoords[v + 1]);
         }
 
         for (int i = 0, v = 0; i < mesh.vertexCount; i++, v += 3)
         {
-            bytesCount += sprintf(txtData + bytesCount, "vn %.3f %.3f %.3f\n", mesh.normals[v], mesh.normals[v + 1], mesh.normals[v + 2]);
+            byteCount += sprintf(txtData + byteCount, "vn %.3f %.3f %.3f\n", mesh.normals[v], mesh.normals[v + 1], mesh.normals[v + 2]);
         }
 
         for (int i = 0; i < mesh.triangleCount; i += 3)
         {
-            bytesCount += sprintf(txtData + bytesCount, "f %i/%i/%i %i/%i/%i %i/%i/%i\n", i, i, i, i + 1, i + 1, i + 1, i + 2, i + 2, i + 2);
+            byteCount += sprintf(txtData + byteCount, "f %i/%i/%i %i/%i/%i %i/%i/%i\n", i, i, i, i + 1, i + 1, i + 1, i + 2, i + 2, i + 2);
         }
 
-        bytesCount += sprintf(txtData + bytesCount, "\n");
+        byteCount += sprintf(txtData + byteCount, "\n");
 
         // NOTE: Text data length exported is determined by '\0' (NULL) character
         success = SaveFileText(fileName, txtData);
@@ -1590,7 +1759,7 @@ void SetModelMeshMaterial(Model *model, int meshId, int materialId)
 }
 
 // Load model animations from file
-ModelAnimation *LoadModelAnimations(const char *fileName, int *animCount)
+ModelAnimation *LoadModelAnimations(const char *fileName, unsigned int *animCount)
 {
     ModelAnimation *animations = NULL;
 
@@ -1614,72 +1783,93 @@ void UpdateModelAnimation(Model model, ModelAnimation anim, int frame)
 
         for (int m = 0; m < model.meshCount; m++)
         {
+            Mesh mesh = model.meshes[m];
+            if (mesh.boneIds == NULL || mesh.boneWeights == NULL)
+            {
+                TRACELOG(LOG_WARNING, "MODEL: UpdateModelAnimation Mesh %i has no connection to bones",m);
+                continue;
+            }
+
+            bool updated = false; // set to true when anim vertex information is updated
             Vector3 animVertex = { 0 };
             Vector3 animNormal = { 0 };
 
             Vector3 inTranslation = { 0 };
             Quaternion inRotation = { 0 };
-            //Vector3 inScale = { 0 };      // Not used...
+            // Vector3 inScale = { 0 };
 
             Vector3 outTranslation = { 0 };
             Quaternion outRotation = { 0 };
             Vector3 outScale = { 0 };
 
-            int vCounter = 0;
-            int boneCounter = 0;
             int boneId = 0;
+            int boneCounter = 0;
             float boneWeight = 0.0;
 
-            for (int i = 0; i < model.meshes[m].vertexCount; i++)
+            const int vValues = mesh.vertexCount*3;
+            for (int vCounter = 0; vCounter < vValues; vCounter+=3)
             {
-                model.meshes[m].animVertices[vCounter] = 0;
-                model.meshes[m].animVertices[vCounter + 1] = 0;
-                model.meshes[m].animVertices[vCounter + 2] = 0;
+                mesh.animVertices[vCounter] = 0;
+                mesh.animVertices[vCounter + 1] = 0;
+                mesh.animVertices[vCounter + 2] = 0;
 
-                model.meshes[m].animNormals[vCounter] = 0;
-                model.meshes[m].animNormals[vCounter + 1] = 0;
-                model.meshes[m].animNormals[vCounter + 2] = 0;
-
-                for (int j = 0; j < 4; j++)
+                if (mesh.animNormals!=NULL)
                 {
-                    boneId = model.meshes[m].boneIds[boneCounter];
-                    boneWeight = model.meshes[m].boneWeights[boneCounter];
+                    mesh.animNormals[vCounter] = 0;
+                    mesh.animNormals[vCounter + 1] = 0;
+                    mesh.animNormals[vCounter + 2] = 0;
+                }
+
+                // Iterates over 4 bones per vertex
+                for (int j = 0; j < 4; j++, boneCounter++)
+                {
+                    boneWeight = mesh.boneWeights[boneCounter];
+                    // early stop when no transformation will be applied
+                    if (boneWeight == 0.0f)
+                    {
+                        continue;
+                    }
+                    boneId = mesh.boneIds[boneCounter];
+                    int boneIdParent = model.bones[boneId].parent;
                     inTranslation = model.bindPose[boneId].translation;
                     inRotation = model.bindPose[boneId].rotation;
-                    //inScale = model.bindPose[boneId].scale;
+                    // inScale = model.bindPose[boneId].scale;
                     outTranslation = anim.framePoses[frame][boneId].translation;
                     outRotation = anim.framePoses[frame][boneId].rotation;
                     outScale = anim.framePoses[frame][boneId].scale;
 
                     // Vertices processing
                     // NOTE: We use meshes.vertices (default vertex position) to calculate meshes.animVertices (animated vertex position)
-                    animVertex = (Vector3){ model.meshes[m].vertices[vCounter], model.meshes[m].vertices[vCounter + 1], model.meshes[m].vertices[vCounter + 2] };
+                    animVertex = (Vector3){ mesh.vertices[vCounter], mesh.vertices[vCounter + 1], mesh.vertices[vCounter + 2] };
                     animVertex = Vector3Multiply(animVertex, outScale);
                     animVertex = Vector3Subtract(animVertex, inTranslation);
                     animVertex = Vector3RotateByQuaternion(animVertex, QuaternionMultiply(outRotation, QuaternionInvert(inRotation)));
                     animVertex = Vector3Add(animVertex, outTranslation);
-                    model.meshes[m].animVertices[vCounter] += animVertex.x*boneWeight;
-                    model.meshes[m].animVertices[vCounter + 1] += animVertex.y*boneWeight;
-                    model.meshes[m].animVertices[vCounter + 2] += animVertex.z*boneWeight;
+//                     animVertex = Vector3Transform(animVertex, model.transform);
+                    mesh.animVertices[vCounter] += animVertex.x*boneWeight;
+                    mesh.animVertices[vCounter + 1] += animVertex.y*boneWeight;
+                    mesh.animVertices[vCounter + 2] += animVertex.z*boneWeight;
+                    updated = true;
 
                     // Normals processing
                     // NOTE: We use meshes.baseNormals (default normal) to calculate meshes.normals (animated normals)
-                    if (model.meshes[m].normals != NULL)
+                    if (mesh.normals != NULL)
                     {
-                        animNormal = (Vector3){ model.meshes[m].normals[vCounter], model.meshes[m].normals[vCounter + 1], model.meshes[m].normals[vCounter + 2] };
+                        animNormal = (Vector3){ mesh.normals[vCounter], mesh.normals[vCounter + 1], mesh.normals[vCounter + 2] };
                         animNormal = Vector3RotateByQuaternion(animNormal, QuaternionMultiply(outRotation, QuaternionInvert(inRotation)));
-                        model.meshes[m].animNormals[vCounter] += animNormal.x*boneWeight;
-                        model.meshes[m].animNormals[vCounter + 1] += animNormal.y*boneWeight;
-                        model.meshes[m].animNormals[vCounter + 2] += animNormal.z*boneWeight;
+                        mesh.animNormals[vCounter] += animNormal.x*boneWeight;
+                        mesh.animNormals[vCounter + 1] += animNormal.y*boneWeight;
+                        mesh.animNormals[vCounter + 2] += animNormal.z*boneWeight;
                     }
-                    boneCounter += 1;
                 }
-                vCounter += 3;
             }
 
             // Upload new vertex data to GPU for model drawing
-            rlUpdateVertexBuffer(model.meshes[m].vboId[0], model.meshes[m].animVertices, model.meshes[m].vertexCount*3*sizeof(float), 0);    // Update vertex position
-            rlUpdateVertexBuffer(model.meshes[m].vboId[2], model.meshes[m].animNormals, model.meshes[m].vertexCount*3*sizeof(float), 0);     // Update vertex normals
+            // Only update data when values changed.
+            if (updated){
+                rlUpdateVertexBuffer(mesh.vboId[0], mesh.animVertices, mesh.vertexCount*3*sizeof(float), 0);    // Update vertex position
+                rlUpdateVertexBuffer(mesh.vboId[2], mesh.animNormals, mesh.vertexCount*3*sizeof(float), 0);     // Update vertex normals
+            }
         }
     }
 }
@@ -3080,10 +3270,13 @@ void DrawBillboard(Camera camera, Texture2D texture, Vector3 position, float siz
 // Draw a billboard (part of a texture defined by a rectangle)
 void DrawBillboardRec(Camera camera, Texture2D texture, Rectangle source, Vector3 position, Vector2 size, Color tint)
 {
-    DrawBillboardPro(camera, texture, source, position, size, Vector2Zero(), 0.0f, tint);
+    // NOTE: Billboard locked on axis-Y
+    Vector3 up = { 0.0f, 1.0f, 0.0f };
+
+    DrawBillboardPro(camera, texture, source, position, up, size, Vector2Zero(), 0.0f, tint);
 }
 
-void DrawBillboardPro(Camera camera, Texture2D texture, Rectangle source, Vector3 position, Vector2 size, Vector2 origin, float rotation, Color tint)
+void DrawBillboardPro(Camera camera, Texture2D texture, Rectangle source, Vector3 position, Vector3 up, Vector2 size, Vector2 origin, float rotation, Color tint)
 {
     // NOTE: Billboard size will maintain source rectangle aspect ratio, size will represent billboard width
     Vector2 sizeRatio = { size.y, size.x*(float)source.height/source.width };
@@ -3092,9 +3285,6 @@ void DrawBillboardPro(Camera camera, Texture2D texture, Rectangle source, Vector
 
     Vector3 right = { matView.m0, matView.m4, matView.m8 };
     //Vector3 up = { matView.m1, matView.m5, matView.m9 };
-
-    // NOTE: Billboard locked on axis-Y
-    Vector3 up = { 0.0f, 1.0f, 0.0f };
 
     Vector3 rightScaled = Vector3Scale(right, sizeRatio.x/2);
     Vector3 upScaled = Vector3Scale(up, sizeRatio.y/2);
@@ -3491,6 +3681,11 @@ RayCollision GetRayCollisionQuad(Ray ray, Vector3 p1, Vector3 p2, Vector3 p3, Ve
 //----------------------------------------------------------------------------------
 #if defined(SUPPORT_FILEFORMAT_OBJ)
 // Load OBJ mesh data
+//
+// Keep the following information in mind when reading this
+//  - A mesh is created for every material present in the obj file
+//  - the model.meshCount is therefore the materialCount returned from tinyobj
+//  - the mesh is automatically triangulated by tinyobj
 static Model LoadOBJ(const char *fileName)
 {
     Model model = { 0 };
@@ -3540,17 +3735,24 @@ static Model LoadOBJ(const char *fileName)
         model.meshMaterial = (int *)RL_CALLOC(model.meshCount, sizeof(int));
 
         // Count the faces for each material
-        int *matFaces = RL_CALLOC(materialCount, sizeof(int));
+        int *matFaces = RL_CALLOC(model.meshCount, sizeof(int));
 
-        for (unsigned int mi = 0; mi < meshCount; mi++)
+        // iff no materials are present use all faces on one mesh
+        if (materialCount > 0)
         {
-            for (unsigned int fi = 0; fi < meshes[mi].length; fi++)
+            for (int fi = 0; fi< attrib.num_faces; fi++)
             {
-                int idx = attrib.material_ids[meshes[mi].face_offset + fi];
-                if (idx == -1) idx = 0; // for no material face (which could be the whole model)
+                //tinyobj_vertex_index_t face = attrib.faces[fi];
+                int idx = attrib.material_ids[fi];
                 matFaces[idx]++;
             }
+
         }
+        else
+        {
+            matFaces[0] = attrib.num_faces;
+        }
+
         //--------------------------------------
         // Create the material meshes
 
@@ -4043,7 +4245,7 @@ static Model LoadIQM(const char *fileName)
 }
 
 // Load IQM animation data
-static ModelAnimation* LoadIQMModelAnimations(const char *fileName, int *animCount)
+static ModelAnimation* LoadIQMModelAnimations(const char *fileName, unsigned int *animCount)
 {
 #define IQM_MAGIC       "INTERQUAKEMODEL"   // IQM file magic number
 #define IQM_VERSION     2                   // only IQM version 2 supported
@@ -4353,15 +4555,8 @@ static Image LoadImageFromCgltfImage(cgltf_image *image, const char *texPath, Co
                 int size = 0;
                 unsigned char *data = DecodeBase64(image->uri + i + 1, &size);
 
-                int width, height;
-                unsigned char *raw = stbi_load_from_memory(data, size, &width, &height, NULL, 4);
+                rimage = LoadImageFromMemory(".png", data, size);
                 RL_FREE(data);
-
-                rimage.data = raw;
-                rimage.width = width;
-                rimage.height = height;
-                rimage.format = PIXELFORMAT_UNCOMPRESSED_R8G8B8A8;
-                rimage.mipmaps = 1;
 
                 // TODO: Tint shouldn't be applied here!
                 ImageColorTint(&rimage, tint);
@@ -4387,15 +4582,8 @@ static Image LoadImageFromCgltfImage(cgltf_image *image, const char *texPath, Co
             n += stride;
         }
 
-        int width, height;
-        unsigned char *raw = stbi_load_from_memory(data, (int)image->buffer_view->size, &width, &height, NULL, 4);
+        rimage = LoadImageFromMemory(".png", data, (int)image->buffer_view->size);
         RL_FREE(data);
-
-        rimage.data = raw;
-        rimage.width = width;
-        rimage.height = height;
-        rimage.format = PIXELFORMAT_UNCOMPRESSED_R8G8B8A8;
-        rimage.mipmaps = 1;
 
         // TODO: Tint shouldn't be applied here!
         ImageColorTint(&rimage, tint);
@@ -4856,14 +5044,14 @@ static Model LoadGLTF(const char *fileName)
 
         if (data->scenes_count > 1) TRACELOG(LOG_INFO, "MODEL: [%s] Has multiple scenes but only the first one will be loaded", fileName);
 
-        int primitivesCount = 0;
+        int primitiveCount = 0;
         for (unsigned int i = 0; i < data->scene->nodes_count; i++)
         {
-            GetGLTFPrimitiveCount(data->scene->nodes[i], &primitivesCount);
+            GetGLTFPrimitiveCount(data->scene->nodes[i], &primitiveCount);
         }
 
         // Process glTF data and map to model
-        model.meshCount = primitivesCount;
+        model.meshCount = primitiveCount;
         model.meshes = RL_CALLOC(model.meshCount, sizeof(Mesh));
         model.materialCount = (int)data->materials_count + 1;
         model.materials = RL_MALLOC(model.materialCount*sizeof(Material));
@@ -4891,7 +5079,7 @@ static Model LoadGLTF(const char *fileName)
     return model;
 }
 
-static void InitGLTFBones(Model* model, const cgltf_data* data)
+static void InitGLTFBones(Model *model, const cgltf_data *data)
 {
     for (unsigned int j = 0; j < data->nodes_count; j++)
     {
@@ -4914,7 +5102,7 @@ static void InitGLTFBones(Model* model, const cgltf_data* data)
     }
 
     {
-        bool* completedBones = RL_CALLOC(model->boneCount, sizeof(bool));
+        bool *completedBones = RL_CALLOC(model->boneCount, sizeof(bool));
         int numberCompletedBones = 0;
 
         while (numberCompletedBones < model->boneCount)
@@ -5022,37 +5210,33 @@ static void LoadGLTFMaterial(Model *model, const char *fileName, const cgltf_dat
     model->materials[model->materialCount - 1] = LoadMaterialDefault();
 }
 
-static void BindGLTFPrimitiveToBones(Model* model, const cgltf_data* data, int primitiveIndex)
+static void BindGLTFPrimitiveToBones(Model *model, cgltf_node *node, const cgltf_data *data, int primitiveIndex)
 {
-    for (unsigned int nodeId = 0; nodeId < data->nodes_count; nodeId++)
-    {
-        if (data->nodes[nodeId].mesh == &(data->meshes[primitiveIndex]))
-        {
-            if (model->meshes[primitiveIndex].boneIds == NULL)
-            {
-                model->meshes[primitiveIndex].boneIds = RL_CALLOC(4*model->meshes[primitiveIndex].vertexCount, sizeof(int));
-                model->meshes[primitiveIndex].boneWeights = RL_CALLOC(4*model->meshes[primitiveIndex].vertexCount, sizeof(float));
+    int nodeId = node - data->nodes;
 
-                for (int b = 0; b < 4*model->meshes[primitiveIndex].vertexCount; b++)
-                {
-                    if (b % 4 == 0)
-                    {
-                        model->meshes[primitiveIndex].boneIds[b] = nodeId;
-                        model->meshes[primitiveIndex].boneWeights[b] = 1.0f;
-                    }
-                    else
-                    {
-                        model->meshes[primitiveIndex].boneIds[b] = 0;
-                        model->meshes[primitiveIndex].boneWeights[b] = 0.0f;
-                    }
-                }
+    if (model->meshes[primitiveIndex].boneIds == NULL)
+    {
+        model->meshes[primitiveIndex].boneIds = RL_CALLOC(model->meshes[primitiveIndex].vertexCount*4, sizeof(int));
+        model->meshes[primitiveIndex].boneWeights = RL_CALLOC(model->meshes[primitiveIndex].vertexCount*4, sizeof(float));
+
+        for (int b = 0; b < model->meshes[primitiveIndex].vertexCount*4; b++)
+        {
+            if (b%4 == 0)
+            {
+                model->meshes[primitiveIndex].boneIds[b] = nodeId;
+                model->meshes[primitiveIndex].boneWeights[b] = 1.0f;
+            }
+            else
+            {
+                model->meshes[primitiveIndex].boneIds[b] = 0;
+                model->meshes[primitiveIndex].boneWeights[b] = 0.0f;
             }
         }
     }
 }
 
 // LoadGLTF loads in animation data from given filename
-static ModelAnimation *LoadGLTFModelAnimations(const char *fileName, int *animCount)
+static ModelAnimation *LoadGLTFModelAnimations(const char *fileName, unsigned int *animCount)
 {
     /***********************************************************************************
 
@@ -5087,7 +5271,7 @@ static ModelAnimation *LoadGLTFModelAnimations(const char *fileName, int *animCo
         result = cgltf_load_buffers(&options, data, fileName);
         if (result != cgltf_result_success) TRACELOG(LOG_WARNING, "MODEL: [%s] unable to load glTF animations data", fileName);
         animations = RL_MALLOC(data->animations_count*sizeof(ModelAnimation));
-        *animCount = (int)data->animations_count;
+        *animCount = (unsigned int)data->animations_count;
 
         for (unsigned int a = 0; a < data->animations_count; a++)
         {
@@ -5112,7 +5296,7 @@ static ModelAnimation *LoadGLTFModelAnimations(const char *fileName, int *animCo
             // Getting the max animation time to consider for animation duration
             for (unsigned int i = 0; i < animation->channels_count; i++)
             {
-                cgltf_animation_channel* channel = animation->channels + i;
+                cgltf_animation_channel *channel = animation->channels + i;
                 int frameCounts = (int)channel->sampler->input->count;
                 float lastFrameTime = 0.0f;
 
@@ -5159,8 +5343,8 @@ static ModelAnimation *LoadGLTFModelAnimations(const char *fileName, int *animCo
             // for each single transformation type on single bone
             for (unsigned int channelId = 0; channelId < animation->channels_count; channelId++)
             {
-                cgltf_animation_channel* channel = animation->channels + channelId;
-                cgltf_animation_sampler* sampler = channel->sampler;
+                cgltf_animation_channel *channel = animation->channels + channelId;
+                cgltf_animation_sampler *sampler = channel->sampler;
 
                 int boneId = (int)(channel->target_node - data->nodes);
 
@@ -5217,13 +5401,16 @@ static ModelAnimation *LoadGLTFModelAnimations(const char *fileName, int *animCo
                         translationStart.y = values[1];
                         translationStart.z = values[2];
 
-                        success = ReadGLTFValue(sampler->output, outputMax, values) || success;
+                        success = ReadGLTFValue(sampler->output, outputMax, values) && success;
 
                         translationEnd.x = values[0];
                         translationEnd.y = values[1];
                         translationEnd.z = values[2];
 
-                        if (success) output->framePoses[frame][boneId].translation = Vector3Lerp(translationStart, translationEnd, lerpPercent);
+                        if (success)
+                        {
+                            output->framePoses[frame][boneId].translation = Vector3Lerp(translationStart, translationEnd, lerpPercent);
+                        }
                     }
                     if (channel->target_path == cgltf_animation_path_type_rotation)
                     {
@@ -5239,7 +5426,7 @@ static ModelAnimation *LoadGLTFModelAnimations(const char *fileName, int *animCo
                         rotationStart.z = values[2];
                         rotationStart.w = values[3];
 
-                        success = ReadGLTFValue(sampler->output, outputMax, &values) || success;
+                        success = ReadGLTFValue(sampler->output, outputMax, &values) && success;
 
                         rotationEnd.x = values[0];
                         rotationEnd.y = values[1];
@@ -5264,13 +5451,16 @@ static ModelAnimation *LoadGLTFModelAnimations(const char *fileName, int *animCo
                         scaleStart.y = values[1];
                         scaleStart.z = values[2];
 
-                        success = ReadGLTFValue(sampler->output, outputMax, &values) || success;
+                        success = ReadGLTFValue(sampler->output, outputMax, &values) && success;
 
                         scaleEnd.x = values[0];
                         scaleEnd.y = values[1];
                         scaleEnd.z = values[2];
 
-                        if (success) output->framePoses[frame][boneId].scale = Vector3Lerp(scaleStart, scaleEnd, lerpPercent);
+                        if (success)
+                        {
+                            output->framePoses[frame][boneId].scale = Vector3Lerp(scaleStart, scaleEnd, lerpPercent);
+                        }
                     }
                 }
             }
@@ -5285,7 +5475,10 @@ static ModelAnimation *LoadGLTFModelAnimations(const char *fileName, int *animCo
                 {
                     for (int i = 0; i < output->boneCount; i++)
                     {
-                        if (completedBones[i]) continue;
+                        if (completedBones[i])
+                        {
+                            continue;
+                        }
 
                         if (output->bones[i].parent < 0)
                         {
@@ -5294,7 +5487,10 @@ static ModelAnimation *LoadGLTFModelAnimations(const char *fileName, int *animCo
                             continue;
                         }
 
-                        if (!completedBones[output->bones[i].parent]) continue;
+                        if (!completedBones[output->bones[i].parent])
+                        {
+                            continue;
+                        }
 
                         output->framePoses[frame][i].rotation = QuaternionMultiply(output->framePoses[frame][output->bones[i].parent].rotation, output->framePoses[frame][i].rotation);
                         output->framePoses[frame][i].translation = Vector3RotateByQuaternion(output->framePoses[frame][i].translation, output->framePoses[frame][output->bones[i].parent].rotation);
@@ -5304,7 +5500,6 @@ static ModelAnimation *LoadGLTFModelAnimations(const char *fileName, int *animCo
                         numberCompletedBones++;
                     }
                 }
-
                 RL_FREE(completedBones);
             }
         }
@@ -5318,8 +5513,9 @@ static ModelAnimation *LoadGLTFModelAnimations(const char *fileName, int *animCo
     return animations;
 }
 
-void LoadGLTFMesh(cgltf_data* data, cgltf_mesh* mesh, Model* outModel, Matrix currentTransform, int* primitiveIndex, const char *fileName)
+void LoadGLTFMesh(cgltf_data *data, cgltf_node *node, Model *outModel, Matrix currentTransform, int *primitiveIndex, const char *fileName)
 {
+    cgltf_mesh *mesh = node->mesh;
     for (unsigned int p = 0; p < mesh->primitives_count; p++)
     {
         for (unsigned int j = 0; j < mesh->primitives[p].attributes_count; j++)
@@ -5386,23 +5582,16 @@ void LoadGLTFMesh(cgltf_data* data, cgltf_mesh* mesh, Model* outModel, Matrix cu
                 cgltf_accessor *acc = mesh->primitives[p].attributes[j].data;
                 unsigned int boneCount = acc->count;
                 unsigned int totalBoneWeights = boneCount*4;
-
                 outModel->meshes[(*primitiveIndex)].boneIds = RL_MALLOC(totalBoneWeights*sizeof(int));
                 short *bones = ReadGLTFValuesAs(acc, cgltf_component_type_r_16, false);
+                // Find skin joint
                 for (unsigned int a = 0; a < totalBoneWeights; a++)
                 {
                     outModel->meshes[(*primitiveIndex)].boneIds[a] = 0;
                     if (bones[a] < 0) continue;
-
-                    cgltf_node* skinJoint = data->skins->joints[bones[a]];
-                    for (unsigned int k = 0; k < data->nodes_count; k++)
-                    {
-                        if (data->nodes + k == skinJoint)
-                        {
-                            outModel->meshes[(*primitiveIndex)].boneIds[a] = k;
-                            break;
-                        }
-                    }
+                    cgltf_node* skinJoint = node->skin->joints[bones[a]];
+                    unsigned int skinJointId = skinJoint - data->nodes;
+                    outModel->meshes[(*primitiveIndex)].boneIds[a] = skinJointId;
                 }
                 RL_FREE(bones);
             }
@@ -5437,32 +5626,171 @@ void LoadGLTFMesh(cgltf_data* data, cgltf_mesh* mesh, Model* outModel, Matrix cu
         }
         else outModel->meshMaterial[(*primitiveIndex)] = outModel->materialCount - 1;
 
-        BindGLTFPrimitiveToBones(outModel, data, *primitiveIndex);
+        BindGLTFPrimitiveToBones(outModel, node, data, *primitiveIndex);
 
         (*primitiveIndex) = (*primitiveIndex) + 1;
     }
 }
 
-void LoadGLTFNode(cgltf_data* data, cgltf_node* node, Model* outModel, Matrix currentTransform, int* primitiveIndex, const char *fileName)
+static Matrix GetNodeTransformationMatrix(cgltf_node *node, Matrix current)
 {
-    Matrix nodeTransform = {
+    if (node->has_matrix)
+    {
+        Matrix nodeTransform = {
         node->matrix[0], node->matrix[4], node->matrix[8], node->matrix[12],
         node->matrix[1], node->matrix[5], node->matrix[9], node->matrix[13],
         node->matrix[2], node->matrix[6], node->matrix[10], node->matrix[14],
         node->matrix[3], node->matrix[7], node->matrix[11], node->matrix[15] };
+        current= MatrixMultiply(nodeTransform, current);
+    }
+    if (node->has_translation)
+    {
+        Matrix tl = MatrixTranslate(node->translation[0],node->translation[1],node->translation[2]);
+        current = MatrixMultiply(tl, current);
+    }
+    if (node->has_rotation)
+    {
+        Matrix rot = QuaternionToMatrix((Quaternion){node->rotation[0],node->rotation[1],node->rotation[2],node->rotation[3]});
+        current = MatrixMultiply(rot, current);
+    }
+    if (node->has_scale)
+    {
+        Matrix scale = MatrixScale(node->scale[0],node->scale[1],node->scale[2]);
+        current = MatrixMultiply(scale, current);
+    }
+    return current;
+}
 
-    currentTransform = MatrixMultiply(nodeTransform, currentTransform);
-
-    if (node->mesh != NULL) LoadGLTFMesh(data, node->mesh, outModel, currentTransform, primitiveIndex, fileName);
-
+void LoadGLTFNode(cgltf_data *data, cgltf_node *node, Model *outModel, Matrix currentTransform, int *primitiveIndex, const char *fileName)
+{
+    // Apply the transforms if they exist (Will still be applied even if no mesh is present to support emptys and bone structures)
+    Matrix localTransform = GetNodeTransformationMatrix(node, MatrixIdentity());
+    currentTransform = MatrixMultiply(localTransform, currentTransform);
+    // Load mesh if it exists
+    if (node->mesh != NULL)
+    {
+        // Check if skinning is enabled and load Mesh accordingly
+        Matrix vertexTransform = currentTransform;
+        if ((node->skin != NULL) && (node->parent != NULL))
+        {
+            vertexTransform = localTransform;
+            TRACELOG(LOG_WARNING,"MODEL: GLTF Node %s is skinned but not root node! Parent transformations will be ignored (NODE_SKINNED_MESH_NON_ROOT)",node->name);
+        }
+        LoadGLTFMesh(data, node, outModel, vertexTransform, primitiveIndex, fileName);
+    }
     for (unsigned int i = 0; i < node->children_count; i++) LoadGLTFNode(data, node->children[i], outModel, currentTransform, primitiveIndex, fileName);
 }
 
-static void GetGLTFPrimitiveCount(cgltf_node* node, int* outCount)
+static void GetGLTFPrimitiveCount(cgltf_node *node, int *outCount)
 {
     if (node->mesh != NULL) *outCount += node->mesh->primitives_count;
 
     for (unsigned int i = 0; i < node->children_count; i++) GetGLTFPrimitiveCount(node->children[i], outCount);
 }
 
+#endif
+
+#if defined(SUPPORT_FILEFORMAT_VOX)
+// Load VOX (MagicaVoxel) mesh data
+static Model LoadVOX(const char *fileName)
+{
+    Model model = { 0 };
+    int nbvertices = 0;
+    int meshescount = 0;
+    unsigned int readed = 0;
+    unsigned char* fileData;
+
+    //Read vox file into buffer
+    fileData = LoadFileData(fileName, &readed);
+    if (fileData == 0)
+    {
+        TRACELOG(LOG_WARNING, "MODEL: [%s] Failed to load VOX file", fileName);
+        return model;
+    }
+
+    //Read and build voxarray description
+    VoxArray3D voxarray = { 0 };
+    int ret = Vox_LoadFromMemory(fileData, readed, &voxarray);
+
+    if (ret != VOX_SUCCESS)
+    {
+        // Error
+        UnloadFileData(fileData);
+
+        TRACELOG(LOG_WARNING, "MODEL: [%s] Failed to load VOX data", fileName);
+        return model;
+    }
+    else
+    {
+        // Success: Compute meshes count
+        nbvertices = voxarray.vertices.used;
+        meshescount = 1 + (nbvertices/65536);
+
+        TRACELOG(LOG_INFO, "MODEL: [%s] VOX data loaded successfully : %i vertices/%i meshes", fileName, nbvertices, meshescount);
+    }
+
+    // Build models from meshes
+    model.transform = MatrixIdentity();
+
+    model.meshCount = meshescount;
+    model.meshes = (Mesh *)MemAlloc(model.meshCount*sizeof(Mesh));
+
+    model.meshMaterial = (int *)MemAlloc(model.meshCount*sizeof(int));
+
+    model.materialCount = 1;
+    model.materials = (Material *)MemAlloc(model.materialCount*sizeof(Material));
+    model.materials[0] = LoadMaterialDefault();
+
+    // Init model meshes
+    int verticesRemain = voxarray.vertices.used;
+    int verticesMax = 65532; // 5461 voxels x 12 vertices per voxel -> 65532 (must be inf 65536)
+
+    Vector3 *pvertices = voxarray.vertices.array;	    // 6*4 = 12 vertices per voxel
+    Color *pcolors = voxarray.colors.array;
+    unsigned short *pindices = voxarray.indices.array;	// 5461*6*6 = 196596 indices max per mesh
+
+    int size = 0;
+
+    for (int idxMesh = 0; idxMesh < meshescount; idxMesh++)
+    {
+        Mesh *pmesh = &model.meshes[idxMesh];
+        memset(pmesh, 0, sizeof(Mesh));
+
+        // Copy vertices
+        pmesh->vertexCount = (int)fmin(verticesMax, verticesRemain);
+
+        size = pmesh->vertexCount*sizeof(float)*3;
+        pmesh->vertices = MemAlloc(size);
+        memcpy(pmesh->vertices, pvertices, size);
+
+        // Copy indices
+        // TODO: Compute globals indices array
+        size = voxarray.indices.used * sizeof(unsigned short);
+        pmesh->indices = MemAlloc(size);
+        memcpy(pmesh->indices, pindices, size);
+
+        pmesh->triangleCount = (pmesh->vertexCount/4)*2;
+
+        // Copy colors
+        size = pmesh->vertexCount*sizeof(Color);
+        pmesh->colors = MemAlloc(size);
+        memcpy(pmesh->colors, pcolors, size);
+
+        // First material index
+        model.meshMaterial[idxMesh] = 0;
+
+        // Upload mesh data to GPU
+        UploadMesh(pmesh, false);
+
+        verticesRemain -= verticesMax;
+        pvertices += verticesMax;
+        pcolors += verticesMax;
+    }
+
+    //Free buffers
+    Vox_FreeArrays(&voxarray);
+    UnloadFileData(fileData);
+
+    return model;
+}
 #endif
