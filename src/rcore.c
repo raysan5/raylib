@@ -2001,7 +2001,12 @@ void EndDrawing(void)
         CORE.Time.frame += waitTime;    // Total frame time: update + draw + wait
     }
 
-    PollInputEvents();      // Poll user events (before next frame update)
+    bool wait = false;
+#if defined(SUPPORT_EVENTS_WAITING)
+    wait = true;
+#endif
+
+    PollInputEvents(wait);      // Poll user events (before next frame update)
 #endif
 
 #if defined(SUPPORT_EVENTS_AUTOMATION)
@@ -4573,7 +4578,7 @@ void SwapScreenBuffer(void)
 }
 
 // Register all input events
-void PollInputEvents(void)
+void PollInputEvents(bool waitForEvents)
 {
 #if defined(SUPPORT_GESTURES_SYSTEM)
     // NOTE: Gestures update must be called every frame to reset gestures correctly
@@ -4719,11 +4724,10 @@ void PollInputEvents(void)
 
     CORE.Window.resizedLastFrame = false;
 
-#if defined(SUPPORT_EVENTS_WAITING)
-    glfwWaitEvents();
-#else
-    glfwPollEvents();       // Register keyboard/mouse events (callbacks)... and window events!
-#endif
+    if (waitForEvents)
+        glfwWaitEvents();
+    else
+        glfwPollEvents();       // Register keyboard/mouse events (callbacks)... and window events!
 #endif  // PLATFORM_DESKTOP
 
 // Gamepad support using emscripten API
