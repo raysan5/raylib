@@ -470,6 +470,21 @@ RMDEF float Vector3Distance(Vector3 v1, Vector3 v2)
     return result;
 }
 
+// Calculate angle between two vectors in XY and XZ
+RMDEF Vector2 Vector3Angle(Vector3 v1, Vector3 v2)
+{
+    Vector2 result = { 0 };
+    
+    float dx = v2.x - v1.x;
+    float dy = v2.y - v1.y;
+    float dz = v2.z - v1.z;
+
+    result.x = atan2f(dx, dz);                      // Angle in XZ
+    result.y = atan2f(dy, sqrtf(dx*dx + dz*dz));    // Angle in XY
+
+    return result;
+}
+
 // Negate provided vector (invert direction)
 RMDEF Vector3 Vector3Negate(Vector3 v)
 {
