@@ -22,7 +22,7 @@ REM verbose, sorry.
 
 REM To skip to the actual building part of the script, search for ":BUILD"
 
-REM Checks if cl is available and skips to the argument loop if it is 
+REM Checks if cl is available and skips to the argument loop if it is
 REM (Prevents calling vcvarsall every time you run this script)
 WHERE cl >nul 2>nul
 IF %ERRORLEVEL% == 0 goto READ_ARGS
@@ -122,16 +122,16 @@ set "RAYLIB_SRC=!ROOT_DIR!\!RAYLIB_SRC!"
 
 REM Flags
 set OUTPUT_FLAG=/Fe: "!GAME_NAME!"
-set COMPILATION_FLAGS=/O1 /GL
-set WARNING_FLAGS=
+set COMPILATION_FLAGS=/std:c11 /O1 /GL /favor:blend /utf-8 /validate-charset /EHsc
+set WARNING_FLAGS=/W3 /sdl
 set SUBSYSTEM_FLAGS=/SUBSYSTEM:WINDOWS /ENTRY:mainCRTStartup
 set LINK_FLAGS=/link /LTCG kernel32.lib user32.lib shell32.lib winmm.lib gdi32.lib opengl32.lib
 set OUTPUT_DIR=builds\windows-msvc
 REM Debug changes to flags
 IF DEFINED BUILD_DEBUG (
   set OUTPUT_FLAG=/Fe: "!GAME_NAME!"
-  set COMPILATION_FLAGS=/Od /Zi
-  set WARNING_FLAGS=/Wall
+  set COMPILATION_FLAGS=/std:c11 /Od /Zi /utf-8 /validate-charset /EHsc
+  set WARNING_FLAGS=/W3 /sdl
   set SUBSYSTEM_FLAGS=/DEBUG
   set LINK_FLAGS=/link kernel32.lib user32.lib shell32.lib winmm.lib gdi32.lib opengl32.lib
   set OUTPUT_DIR=builds-debug\windows-msvc
