@@ -189,6 +189,32 @@ void DrawLineBezierQuad(Vector2 startPos, Vector2 endPos, Vector2 controlPos, fl
     }
 }
 
+//Draw line using cubic bezier curves with 2 control points
+void DrawLineBezierCubic(Vector2 startPos, Vector2 endPos, Vector2 startControlPos, Vector2 endControlPos, float thick, Color color)
+{
+    const float step = 1.0f/BEZIER_LINE_DIVISIONS;
+
+    Vector2 previous = startPos;
+    Vector2 current = { 0 };
+    float t = 0.0f;
+
+    for (int i = 0; i <= BEZIER_LINE_DIVISIONS; i++)
+    {
+        t = step*i;
+        float a = powf(1 - t, 3);
+        float b = 3*powf(1 - t, 2)*t;
+        float c = 3*(1-t)*powf(t, 2);
+        float d = powf(t, 3);
+
+        current.y = a*startPos.y + b*startControlPos.y + c*endControlPos.y + d*endPos.y;
+        current.x = a*startPos.x + b*startControlPos.x + c*endControlPos.x + d*endPos.x;
+
+        DrawLineEx(previous, current, thick, color);
+
+        previous = current;
+    }
+}
+
 // Draw lines sequence
 void DrawLineStrip(Vector2 *points, int pointCount, Color color)
 {
