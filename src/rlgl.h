@@ -2548,8 +2548,15 @@ bool rlCheckRenderBatchLimit(int vCount)
     if ((RLGL.currentBatch->vertexBuffer[RLGL.currentBatch->currentBuffer].vCounter + vCount) >=
         (RLGL.currentBatch->vertexBuffer[RLGL.currentBatch->currentBuffer].elementCount*4))
     {
+        int currentMode = RLGL.currentBatch->draws[RLGL.currentBatch->drawCounter - 1].mode;
+        int currentTexture = RLGL.currentBatch->draws[RLGL.currentBatch->drawCounter - 1].textureId;
+
         overflow = true;
         rlDrawRenderBatch(RLGL.currentBatch);    // NOTE: Stereo rendering is checked inside
+
+        // restore state of last batch so we can continue adding vertices
+        RLGL.currentBatch->draws[RLGL.currentBatch->drawCounter - 1].mode = currentMode;
+        RLGL.currentBatch->draws[RLGL.currentBatch->drawCounter - 1].textureId = currentTexture;
     }
 #endif
 

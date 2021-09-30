@@ -1,6 +1,6 @@
 /**********************************************************************************************
 *
-*   raylib - A simple and easy-to-use library to enjoy videogames programming (www.raylib.com)
+*   raylib v4.0 - A simple and easy-to-use library to enjoy videogames programming (www.raylib.com)
 *
 *   FEATURES:
 *       - NO external dependencies, all required libraries included with raylib
@@ -81,7 +81,7 @@
 
 #include <stdarg.h>     // Required for: va_list - Only used by TraceLogCallback
 
-#define RAYLIB_VERSION  "4.0-dev"
+#define RAYLIB_VERSION  "4.0"
 
 #ifndef RLAPI
     #define RLAPI       // We are building or using rlgl as a static library (or Linux shared library)
