@@ -1870,7 +1870,7 @@
           "description": ""
         },
         {
-          "name": "MATERIAL_MAP_BRDG",
+          "name": "MATERIAL_MAP_BRDF",
           "value": 10,
           "description": ""
         }

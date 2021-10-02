@@ -229,7 +229,7 @@ static Material LoadMaterialPBR(Color albedo, float metalness, float roughness)
     Shader shdrBRDF = LoadShader(TextFormat("resources/shaders/glsl%i/brdf.vs", GLSL_VERSION),
                                  TextFormat("resources/shaders/glsl%i/brdf.fs", GLSL_VERSION));
 
-    mat.maps[MATERIAL_MAP_BRDG].texture = GenTextureBRDF(shdrBRDF, BRDF_SIZE);
+    mat.maps[MATERIAL_MAP_BRDF].texture = GenTextureBRDF(shdrBRDF, BRDF_SIZE);
     UnloadShader(shdrBRDF);
     //--------------------------------------------------------------------------------------------------------
 

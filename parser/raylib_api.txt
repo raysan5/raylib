@@ -448,7 +448,7 @@ Enum 08: MaterialMapIndex (11 values)
   Value[MATERIAL_MAP_CUBEMAP]: 7
   Value[MATERIAL_MAP_IRRADIANCE]: 8
   Value[MATERIAL_MAP_PREFILTER]: 9
-  Value[MATERIAL_MAP_BRDG]: 10
+  Value[MATERIAL_MAP_BRDF]: 10
 Enum 09: ShaderLocationIndex (26 values)
   Name: ShaderLocationIndex
  Description: 
