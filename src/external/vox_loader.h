@@ -42,6 +42,7 @@ revision history:
 						Removed Raylib dependencies
 						Changed Vox_LoadFileName to Vox_LoadFromMemory
     1.02  (2021-09-10)  @raysan5: Reviewed some formating
+    1.03  (2021-10-02)  @catmanl: Reduce warnings on gcc
 
 */
 
@@ -79,11 +80,6 @@ typedef struct {
 typedef struct {
     float x, y, z;
 } VoxVector3;
-
-typedef struct {
-    int* array;
-    int used, size;
-} ArrayInt;
 
 typedef struct {
     VoxVector3* array;
@@ -142,7 +138,7 @@ extern "C" {            // Prevents name mangling of functions
 #endif
 
 // Functions
-int Vox_LoadFromMemory(const unsigned char* pvoxData, unsigned int voxDataSize, VoxArray3D* pvoxarray);
+int Vox_LoadFromMemory(unsigned char* pvoxData, unsigned int voxDataSize, VoxArray3D* pvoxarray);
 void Vox_FreeArrays(VoxArray3D* voxarray);
 
 #ifdef __cplusplus
@@ -160,35 +156,6 @@ void Vox_FreeArrays(VoxArray3D* voxarray);
 /////////////////////////////////////////////////////////////////////////////////////////////
 
 #ifdef VOX_LOADER_IMPLEMENTATION
-
-/////////////////////////////////////////////////////////////////////////////////////////////
-// ArrayInt helper
-/////////////////////////////////////////////////////////////////////////////////////////////
-
-static void initArrayInt(ArrayInt* a, int initialSize)
-{
-	a->array = VOX_MALLOC(initialSize * sizeof(int));
-	a->used = 0;
-	a->size = initialSize;
-}
-
-static void insertArrayInt(ArrayInt* a, int element)
-{
-	if (a->used == a->size)
-	{
-		a->size *= 2;
-		a->array = VOX_REALLOC(a->array, a->size * sizeof(int));
-	}
-    
-	a->array[a->used++] = element;
-}
-
-static void freeArrayInt(ArrayInt* a)
-{
-	VOX_FREE(a->array);
-	a->array = NULL;
-	a->used = a->size = 0;
-}
 
 /////////////////////////////////////////////////////////////////////////////////////////////
 // ArrayUShort helper
@@ -560,7 +527,7 @@ static void Vox_Build_Voxel(VoxArray3D* pvoxArray, int x, int y, int z, int matI
 }
 
 // MagicaVoxel *.vox file format Loader
-int Vox_LoadFromMemory(const unsigned char* pvoxData, unsigned int voxDataSize, VoxArray3D* pvoxarray)
+int Vox_LoadFromMemory(unsigned char* pvoxData, unsigned int voxDataSize, VoxArray3D* pvoxarray)
 {
 	//////////////////////////////////////////////////
 	//Read VOX file
@@ -607,8 +574,6 @@ int Vox_LoadFromMemory(const unsigned char* pvoxData, unsigned int voxDataSize, 
 	unsigned long sizeX, sizeY, sizeZ;
 	sizeX = sizeY = sizeZ = 0;
 	unsigned long numVoxels = 0;
-	int offsetX, offsetY, offsetZ;
-	offsetX = offsetY = offsetZ = 0;
 
 	while (fileDataPtr < endfileDataPtr)
 	{
@@ -618,9 +583,6 @@ int Vox_LoadFromMemory(const unsigned char* pvoxData, unsigned int voxDataSize, 
 		fileDataPtr += 4;
 
 		unsigned long chunkSize = *((unsigned long*)fileDataPtr);
-		fileDataPtr += sizeof(unsigned long);
-
-		unsigned long chunkTotalChildSize = *((unsigned long*)fileDataPtr);
 		fileDataPtr += sizeof(unsigned long);
 
 		if (strcmp(szChunkName, "SIZE") == 0)
