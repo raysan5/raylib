@@ -123,8 +123,6 @@
 //----------------------------------------------------------------------------------
 // Module specific Functions Declaration
 //----------------------------------------------------------------------------------
-static Vector3 *ToVector3(VoxVector3 *array);
-static Color *ToColor(VoxColor *array);
 #if defined(SUPPORT_FILEFORMAT_OBJ)
 static Model LoadOBJ(const char *fileName);     // Load OBJ mesh data
 #endif
@@ -3681,25 +3679,6 @@ RayCollision GetRayCollisionQuad(Ray ray, Vector3 p1, Vector3 p2, Vector3 p3, Ve
 //----------------------------------------------------------------------------------
 // Module specific Functions Definition
 //----------------------------------------------------------------------------------
-static Vector3 *ToVector3(VoxVector3 *array)
-{
-    Vector3 *vec = { 0 };
-    vec->x = array->x;
-    vec->y = array->y;
-    vec->z = array->z;
-    return vec;
-}
-
-static Color *ToColor(VoxColor *array)
-{
-    Color *color = { 0 };
-    color->r = array->r;
-    color->g = array->g;
-    color->b = array->b;
-    color->a = array->a;
-    return color;
-}
-
 #if defined(SUPPORT_FILEFORMAT_OBJ)
 // Load OBJ mesh data
 //
@@ -5766,8 +5745,18 @@ static Model LoadVOX(const char *fileName)
     int verticesRemain = voxarray.vertices.used;
     int verticesMax = 65532; // 5461 voxels x 12 vertices per voxel -> 65532 (must be inf 65536)
 
-    Vector3 *pvertices = ToVector3(voxarray.vertices.array);        // 6*4 = 12 vertices per voxel
-    Color *pcolors = ToColor(voxarray.colors.array);
+    // 6*4 = 12 vertices per voxel
+    Vector3 *pvertices = { 0 };
+    pvertices->x = voxarray.vertices.array->x;
+    pvertices->y = voxarray.vertices.array->y;
+    pvertices->z = voxarray.vertices.array->z;
+
+    Color *pcolors = { 0 };
+    pcolors->r = voxarray.colors.array->r;
+    pcolors->g = voxarray.colors.array->g;
+    pcolors->b = voxarray.colors.array->b;
+    pcolors->a = voxarray.colors.array->a;
+ 
     unsigned short *pindices = voxarray.indices.array;    // 5461*6*6 = 196596 indices max per mesh
 
     int size = 0;
