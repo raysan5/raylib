@@ -53,7 +53,7 @@ int main(void)
 
     Texture texture = LoadTexture("resources/cat.png");
 
-    float ang = 0;
+    float angle = 0.0f;
 
     SetTargetFPS(60);               // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
@@ -63,11 +63,11 @@ int main(void)
     {
         // Update
         //----------------------------------------------------------------------------------
-        ang++;
+        angle++;
 
         Vector2 positions[MAX_POINTS] = { 0 };
 
-        for (int i = 0; i < MAX_POINTS; i++) positions[i] = Vector2Rotate(points[i], ang);
+        for (int i = 0; i < MAX_POINTS; i++) positions[i] = Vector2Rotate(points[i], angle*DEG2RAD);
         //----------------------------------------------------------------------------------
 
         // Draw

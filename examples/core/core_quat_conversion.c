@@ -69,9 +69,6 @@ int main(void)
         m3 = QuaternionToMatrix(q1);
 
         v2 = QuaternionToEuler(q1);
-        v2.x *= DEG2RAD;
-        v2.y *= DEG2RAD;
-        v2.z *= DEG2RAD;
 
         m4 = MatrixRotateZYX(v2);
         //--------------------------------------------------------------------------------------
