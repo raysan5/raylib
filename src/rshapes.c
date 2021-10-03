@@ -189,7 +189,7 @@ void DrawLineBezierQuad(Vector2 startPos, Vector2 endPos, Vector2 controlPos, fl
     }
 }
 
-//Draw line using cubic bezier curves with 2 control points
+// Draw line using cubic bezier curves with 2 control points
 void DrawLineBezierCubic(Vector2 startPos, Vector2 endPos, Vector2 startControlPos, Vector2 endControlPos, float thick, Color color)
 {
     const float step = 1.0f/BEZIER_LINE_DIVISIONS;
