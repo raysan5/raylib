@@ -111,9 +111,9 @@
 
 #if defined(_WIN32)
     #if defined(BUILD_LIBTYPE_SHARED)
-        #define RLAPI __declspec(dllexport)         // We are building raylib as a Win32 shared library (.dll)
+        #define RLAPI __declspec(dllexport)         // We are building rlgl as a Win32 shared library (.dll)
     #elif defined(USE_LIBTYPE_SHARED)
-        #define RLAPI __declspec(dllimport)         // We are using raylib as a Win32 shared library (.dll)
+        #define RLAPI __declspec(dllimport)         // We are using rlgl as a Win32 shared library (.dll)
     #endif
 #endif
 

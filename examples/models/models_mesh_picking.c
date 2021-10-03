@@ -101,10 +101,10 @@ int main(void)
 
             bary = Vector3Barycenter(collision.point, ta, tb, tc);
         }
-        
+
         // Check ray collision against test sphere
         RayCollision sphereHitInfo = GetRayCollisionSphere(ray, sp, sr);
-        
+
         if ((sphereHitInfo.hit) && (sphereHitInfo.distance < collision.distance))
         {
             collision = sphereHitInfo;
@@ -173,7 +173,7 @@ int main(void)
                 }
 
                 DrawRay(ray, MAROON);
-                
+
                 DrawGrid(10, 10.0f);
 
             EndMode3D();

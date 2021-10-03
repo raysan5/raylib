@@ -94,9 +94,9 @@ typedef enum {
 } Gesture;
 #endif
 
-typedef enum { 
-    TOUCH_ACTION_UP = 0, 
-    TOUCH_ACTION_DOWN, 
+typedef enum {
+    TOUCH_ACTION_UP = 0,
+    TOUCH_ACTION_DOWN,
     TOUCH_ACTION_MOVE,
     TOUCH_ACTION_CANCEL
 } TouchAction;
