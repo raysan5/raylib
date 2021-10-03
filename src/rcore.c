@@ -3912,8 +3912,13 @@ static bool InitGraphicsDevice(int width, int height)
 #if defined(DEFAULT_GRAPHIC_DEVICE_DRM)
     CORE.Window.fd = open(DEFAULT_GRAPHIC_DEVICE_DRM, O_RDWR);
 #else
-    TRACELOG(LOG_INFO, "DISPLAY: No graphic card set, trying card1");
-    CORE.Window.fd = open("/dev/dri/card1", O_RDWR); // VideoCore VI (Raspberry Pi 4)
+    TRACELOG(LOG_INFO, "DISPLAY: No graphic card set, trying platform-gpu-card");
+    CORE.Window.fd = open("/dev/dri/by-path/platform-gpu-card",  O_RDWR); // VideoCore VI (Raspberry Pi 4)
+    if ((-1 == CORE.Window.fd) || (drmModeGetResources(CORE.Window.fd) == NULL))
+    {
+        TRACELOG(LOG_INFO, "DISPLAY: Failed to open platform-gpu-card, trying card1");
+        CORE.Window.fd = open("/dev/dri/card1", O_RDWR); // Other Embedded 
+    }
     if ((-1 == CORE.Window.fd) || (drmModeGetResources(CORE.Window.fd) == NULL))
     {
         TRACELOG(LOG_INFO, "DISPLAY: Failed to open graphic card1, trying card0");
