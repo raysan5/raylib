@@ -5745,8 +5745,18 @@ static Model LoadVOX(const char *fileName)
     int verticesRemain = voxarray.vertices.used;
     int verticesMax = 65532; // 5461 voxels x 12 vertices per voxel -> 65532 (must be inf 65536)
 
-    Vector3 *pvertices = voxarray.vertices.array;        // 6*4 = 12 vertices per voxel
-    Color *pcolors = voxarray.colors.array;
+    // 6*4 = 12 vertices per voxel
+    Vector3 *pvertices = { 0 };
+    pvertices->x = voxarray.vertices.array->x;
+    pvertices->y = voxarray.vertices.array->y;
+    pvertices->z = voxarray.vertices.array->z;
+
+    Color *pcolors = { 0 };
+    pcolors->r = voxarray.colors.array->r;
+    pcolors->g = voxarray.colors.array->g;
+    pcolors->b = voxarray.colors.array->b;
+    pcolors->a = voxarray.colors.array->a;
+ 
     unsigned short *pindices = voxarray.indices.array;    // 5461*6*6 = 196596 indices max per mesh
 
     int size = 0;
