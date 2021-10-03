@@ -743,7 +743,7 @@ Image GenImagePerlinNoise(int width, int height, int offsetX, int offsetY, float
             float p = (stb_perlin_fbm_noise3(nx, ny, 1.0f, 2.0f, 0.5f, 6) + 1.0f)/2.0f;
 
             int intensity = (int)(p*255.0f);
-            pixels[y*width + x] = (Color){intensity, intensity, intensity, 255};
+            pixels[y*width + x] = (Color){ intensity, intensity, intensity, 255 };
         }
     }
 
