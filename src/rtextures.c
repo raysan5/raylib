@@ -2290,6 +2290,109 @@ Rectangle GetImageAlphaBorder(Image image, float threshold)
     return crop;
 }
 
+// Get image pixel color at (x, y) position
+Color GetImageColor(Image image, int x, int y)
+{
+    Color color = { 0 };
+    
+    if ((x >=0) && (x < image.width) && (y >= 0) && (y < image.height))
+    {
+        switch (image.format)
+        {
+            case PIXELFORMAT_UNCOMPRESSED_GRAYSCALE:
+            {
+                color.r = ((unsigned char *)image.data)[y*image.width + x];
+                color.g = ((unsigned char *)image.data)[y*image.width + x];
+                color.b = ((unsigned char *)image.data)[y*image.width + x];
+                color.a = 255;
+
+            } break;
+            case PIXELFORMAT_UNCOMPRESSED_GRAY_ALPHA:
+            {
+                color.r = ((unsigned char *)image.data)[(y*image.width + x)*2];
+                color.g = ((unsigned char *)image.data)[(y*image.width + x)*2];
+                color.b = ((unsigned char *)image.data)[(y*image.width + x)*2];
+                color.a = ((unsigned char *)image.data)[(y*image.width + x)*2 + 1];
+
+            } break;
+            case PIXELFORMAT_UNCOMPRESSED_R5G5B5A1:
+            {
+                unsigned short pixel = ((unsigned short *)image.data)[y*image.width + x];
+
+                color.r = (unsigned char)((float)((pixel & 0b1111100000000000) >> 11)*(255/31));
+                color.g = (unsigned char)((float)((pixel & 0b0000011111000000) >> 6)*(255/31));
+                color.b = (unsigned char)((float)((pixel & 0b0000000000111110) >> 1)*(255/31));
+                color.a = (unsigned char)((pixel & 0b0000000000000001)*255);
+
+            } break;
+            case PIXELFORMAT_UNCOMPRESSED_R5G6B5:
+            {
+                unsigned short pixel = ((unsigned short *)image.data)[y*image.width + x];
+
+                color.r = (unsigned char)((float)((pixel & 0b1111100000000000) >> 11)*(255/31));
+                color.g = (unsigned char)((float)((pixel & 0b0000011111100000) >> 5)*(255/63));
+                color.b = (unsigned char)((float)(pixel & 0b0000000000011111)*(255/31));
+                color.a = 255;
+
+            } break;
+            case PIXELFORMAT_UNCOMPRESSED_R4G4B4A4:
+            {
+                unsigned short pixel = ((unsigned short *)image.data)[y*image.width + x];
+
+                color.r = (unsigned char)((float)((pixel & 0b1111000000000000) >> 12)*(255/15));
+                color.g = (unsigned char)((float)((pixel & 0b0000111100000000) >> 8)*(255/15));
+                color.b = (unsigned char)((float)((pixel & 0b0000000011110000) >> 4)*(255/15));
+                color.a = (unsigned char)((float)(pixel & 0b0000000000001111)*(255/15));
+
+            } break;
+            case PIXELFORMAT_UNCOMPRESSED_R8G8B8A8:
+            {
+                color.r = ((unsigned char *)image.data)[(y*image.width + x)*4];
+                color.g = ((unsigned char *)image.data)[(y*image.width + x)*4 + 1];
+                color.b = ((unsigned char *)image.data)[(y*image.width + x)*4 + 2];
+                color.a = ((unsigned char *)image.data)[(y*image.width + x)*4 + 3];
+
+            } break;
+            case PIXELFORMAT_UNCOMPRESSED_R8G8B8:
+            {
+                color.r = (unsigned char)((unsigned char *)image.data)[(y*image.width + x)*3];
+                color.g = (unsigned char)((unsigned char *)image.data)[(y*image.width + x)*3 + 1];
+                color.b = (unsigned char)((unsigned char *)image.data)[(y*image.width + x)*3 + 2];
+                color.a = 255;
+
+            } break;
+            case PIXELFORMAT_UNCOMPRESSED_R32:
+            {
+                color.r = (unsigned char)(((float *)image.data)[y*image.width + x]*255.0f);
+                color.g = 0;
+                color.b = 0;
+                color.a = 255;
+
+            } break;
+            case PIXELFORMAT_UNCOMPRESSED_R32G32B32:
+            {
+                color.r = (unsigned char)(((float *)image.data)[(y*image.width + x)*3]*255.0f);
+                color.g = (unsigned char)(((float *)image.data)[(y*image.width + x)*3 + 1]*255.0f);
+                color.b = (unsigned char)(((float *)image.data)[(y*image.width + x)*3 + 2]*255.0f);
+                color.a = 255;
+
+            } break;
+            case PIXELFORMAT_UNCOMPRESSED_R32G32B32A32:
+            {
+                color.r = (unsigned char)(((float *)image.data)[(y*image.width + x)*4]*255.0f);
+                color.g = (unsigned char)(((float *)image.data)[(y*image.width + x)*4]*255.0f);
+                color.b = (unsigned char)(((float *)image.data)[(y*image.width + x)*4]*255.0f);
+                color.a = (unsigned char)(((float *)image.data)[(y*image.width + x)*4]*255.0f);
+
+            } break;
+            default: TRACELOG(LOG_WARNING, "Compressed image format does not support color reading"); break;
+        }
+    }
+    else TRACELOG(LOG_WARNING, "Requested image pixel (%i, %i) out of bounds", x, y);
+
+    return color;
+}
+
 //------------------------------------------------------------------------------------
 // Image drawing functions
 //------------------------------------------------------------------------------------
