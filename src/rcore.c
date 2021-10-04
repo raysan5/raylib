@@ -4724,16 +4724,14 @@ void PollInputEvents(void)
         }
     }
 
+    CORE.Window.resizedLastFrame = false;
+
 #if defined(SUPPORT_EVENTS_WAITING)
     glfwWaitEvents();
 #else
     glfwPollEvents();       // Register keyboard/mouse events (callbacks)... and window events!
 #endif
 #endif  // PLATFORM_DESKTOP
-
-#if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
-    CORE.Window.resizedLastFrame = false;
-#endif
 
 // Gamepad support using emscripten API
 // NOTE: GLFW3 joystick functionality not available in web
