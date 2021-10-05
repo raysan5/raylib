@@ -85,7 +85,7 @@
 // Module: rlgl - Configuration values
 //------------------------------------------------------------------------------------
 // Show OpenGL extensions and capabilities detailed logs on init
-//#define SUPPORT_GL_DETAILS_INFO        1
+//#define RLGL_SHOW_GL_DETAILS_INFO        1
 
 //#define RL_DEFAULT_BATCH_BUFFER_ELEMENTS    4096    // Default internal render batch elements limits
 #define RL_DEFAULT_BATCH_BUFFERS               1      // Default number of batch buffers (multi-buffering)

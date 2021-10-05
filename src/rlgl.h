@@ -1,6 +1,6 @@
 /**********************************************************************************************
 *
-*   rlgl v4.0
+*   rlgl v4.0 - A multi-OpenGL abstraction layer with an immediate-mode style API
 *
 *   An abstraction layer for multiple OpenGL versions (1.1, 2.1, 3.3 Core, ES 2.0)
 *   that provides a pseudo-OpenGL 1.1 immediate-mode style API (rlVertex, rlTranslate, rlRotate...)
@@ -34,11 +34,11 @@
 *       If not defined, the library is in header only mode and can be included in other headers
 *       or source files without problems. But only ONE file should hold the implementation.
 *
-*   #define SUPPORT_RENDER_TEXTURES_HINT
+*   #define RLGL_RENDER_TEXTURES_HINT
 *       Enable framebuffer objects (fbo) support (enabled by default)
 *       Some GPUs could not support them despite the OpenGL version
 *
-*   #define SUPPORT_GL_DETAILS_INFO
+*   #define RLGL_SHOW_GL_DETAILS_INFO
 *       Show OpenGL extensions and capabilities detailed logs on init
 *
 *   rlgl capabilities could be customized just defining some internal
@@ -103,17 +103,20 @@
 #ifndef RLGL_H
 #define RLGL_H
 
-#define SUPPORT_RENDER_TEXTURES_HINT
+#define RLGL_VERSION  "4.0"
 
+// Function specifiers definition
 #ifndef RLAPI
-    #define RLAPI   // We are building or using rlgl as a static library (or Linux shared library)
+    #define RLAPI       // Functions defined as 'extern' by default (implicit specifiers)
 #endif
 
+// Function specifiers in case library is build/used as a shared library (Windows)
+// NOTE: Microsoft specifiers to tell compiler that symbols are imported/exported from a .dll
 #if defined(_WIN32)
     #if defined(BUILD_LIBTYPE_SHARED)
-        #define RLAPI __declspec(dllexport)         // We are building rlgl as a Win32 shared library (.dll)
+        #define RLAPI __declspec(dllexport)     // We are building the library as a Win32 shared library (.dll)
     #elif defined(USE_LIBTYPE_SHARED)
-        #define RLAPI __declspec(dllimport)         // We are using rlgl as a Win32 shared library (.dll)
+        #define RLAPI __declspec(dllimport)     // We are using the library as a Win32 shared library (.dll)
     #endif
 #endif
 
@@ -164,6 +167,10 @@
     #define GRAPHICS_API_OPENGL_33
 #endif
 
+// Support framebuffer objects by default
+// NOTE: Some driver implementation do not support it, despite they should
+#define RLGL_RENDER_TEXTURES_HINT
+
 //----------------------------------------------------------------------------------
 // Defines and Macros
 //----------------------------------------------------------------------------------
@@ -173,41 +180,41 @@
     #if defined(GRAPHICS_API_OPENGL_11) || defined(GRAPHICS_API_OPENGL_33)
         // This is the maximum amount of elements (quads) per batch
         // NOTE: Be careful with text, every letter maps to a quad
-        #define RL_DEFAULT_BATCH_BUFFER_ELEMENTS   8192
+        #define RL_DEFAULT_BATCH_BUFFER_ELEMENTS  8192
     #endif
     #if defined(GRAPHICS_API_OPENGL_ES2)
         // We reduce memory sizes for embedded systems (RPI and HTML5)
         // NOTE: On HTML5 (emscripten) this is allocated on heap,
         // by default it's only 16MB!...just take care...
-        #define RL_DEFAULT_BATCH_BUFFER_ELEMENTS   2048
+        #define RL_DEFAULT_BATCH_BUFFER_ELEMENTS  2048
     #endif
 #endif
 #ifndef RL_DEFAULT_BATCH_BUFFERS
-    #define RL_DEFAULT_BATCH_BUFFERS            1      // Default number of batch buffers (multi-buffering)
+    #define RL_DEFAULT_BATCH_BUFFERS                 1      // Default number of batch buffers (multi-buffering)
 #endif
 #ifndef RL_DEFAULT_BATCH_DRAWCALLS
-    #define RL_DEFAULT_BATCH_DRAWCALLS        256      // Default number of batch draw calls (by state changes: mode, texture)
+    #define RL_DEFAULT_BATCH_DRAWCALLS             256      // Default number of batch draw calls (by state changes: mode, texture)
 #endif
 #ifndef RL_DEFAULT_BATCH_MAX_TEXTURE_UNITS
-    #define RL_DEFAULT_BATCH_MAX_TEXTURE_UNITS  4      // Maximum number of textures units that can be activated on batch drawing (SetShaderValueTexture())
+    #define RL_DEFAULT_BATCH_MAX_TEXTURE_UNITS       4      // Maximum number of textures units that can be activated on batch drawing (SetShaderValueTexture())
 #endif
 
 // Internal Matrix stack
 #ifndef RL_MAX_MATRIX_STACK_SIZE
-    #define RL_MAX_MATRIX_STACK_SIZE           32      // Maximum size of Matrix stack
+    #define RL_MAX_MATRIX_STACK_SIZE                32      // Maximum size of Matrix stack
 #endif
 
 // Shader limits
 #ifndef RL_MAX_SHADER_LOCATIONS
-    #define RL_MAX_SHADER_LOCATIONS            32      // Maximum number of shader locations supported
+    #define RL_MAX_SHADER_LOCATIONS                 32      // Maximum number of shader locations supported
 #endif
 
 // Projection matrix culling
 #ifndef RL_CULL_DISTANCE_NEAR
-    #define RL_CULL_DISTANCE_NEAR            0.01      // Default near cull distance
+    #define RL_CULL_DISTANCE_NEAR                 0.01      // Default near cull distance
 #endif
 #ifndef RL_CULL_DISTANCE_FAR
-    #define RL_CULL_DISTANCE_FAR           1000.0      // Default far cull distance
+    #define RL_CULL_DISTANCE_FAR                1000.0      // Default far cull distance
 #endif
 
 // Texture parameters (equivalent to OpenGL defines)
@@ -924,9 +931,9 @@ static PFNGLVERTEXATTRIBDIVISOREXTPROC glVertexAttribDivisor = NULL;
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
 static void rlLoadShaderDefault(void);      // Load default shader
 static void rlUnloadShaderDefault(void);    // Unload default shader
-#if defined(SUPPORT_GL_DETAILS_INFO)
+#if defined(RLGL_SHOW_GL_DETAILS_INFO)
 static char *rlGetCompressedFormatName(int format); // Get compressed format official GL identifier name
-#endif  // SUPPORT_GL_DETAILS_INFO
+#endif  // RLGL_SHOW_GL_DETAILS_INFO
 #endif  // GRAPHICS_API_OPENGL_33 || GRAPHICS_API_OPENGL_ES2
 #if defined(GRAPHICS_API_OPENGL_11)
 static int rlGenTextureMipmapsData(unsigned char *data, int baseWidth, int baseHeight);         // Generate mipmaps data on CPU side
@@ -1536,7 +1543,7 @@ void rlDisableShader(void)
 // Enable rendering to texture (fbo)
 void rlEnableFramebuffer(unsigned int id)
 {
-#if (defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)) && defined(SUPPORT_RENDER_TEXTURES_HINT)
+#if (defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)) && defined(RLGL_RENDER_TEXTURES_HINT)
     glBindFramebuffer(GL_FRAMEBUFFER, id);
 #endif
 }
@@ -1544,7 +1551,7 @@ void rlEnableFramebuffer(unsigned int id)
 // Disable rendering to texture
 void rlDisableFramebuffer(void)
 {
-#if (defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)) && defined(SUPPORT_RENDER_TEXTURES_HINT)
+#if (defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)) && defined(RLGL_RENDER_TEXTURES_HINT)
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 #endif
 }
@@ -1553,7 +1560,7 @@ void rlDisableFramebuffer(void)
 // NOTE: One color buffer is always active by default
 void rlActiveDrawBuffers(int count)
 {
-#if (defined(GRAPHICS_API_OPENGL_33) && defined(SUPPORT_RENDER_TEXTURES_HINT))
+#if (defined(GRAPHICS_API_OPENGL_33) && defined(RLGL_RENDER_TEXTURES_HINT))
     // NOTE: Maximum number of draw buffers supported is implementation dependant,
     // it can be queried with glGet*() but it must be at least 8
     //GLint maxDrawBuffers = 0;
@@ -1873,7 +1880,7 @@ void rlLoadExtensions(void *loader)
     glGetIntegerv(GL_NUM_EXTENSIONS, &numExt);
     TRACELOG(RL_LOG_INFO, "GL: Supported extensions count: %i", numExt);
 
-#if defined(SUPPORT_GL_DETAILS_INFO)
+#if defined(RLGL_SHOW_GL_DETAILS_INFO)
     // Get supported extensions list
     // WARNING: glGetStringi() not available on OpenGL 2.1
     char **extList = RL_MALLOC(numExt*sizeof(char *));
@@ -1927,7 +1934,7 @@ void rlLoadExtensions(void *loader)
 
     TRACELOG(RL_LOG_INFO, "GL: Supported extensions count: %i", numExt);
 
-#if defined(SUPPORT_GL_DETAILS_INFO)
+#if defined(RLGL_SHOW_GL_DETAILS_INFO)
     TRACELOG(RL_LOG_INFO, "GL: OpenGL extensions:");
     for (int i = 0; i < numExt; i++) TRACELOG(RL_LOG_INFO, "    %s", extList[i]);
 #endif
@@ -2031,7 +2038,7 @@ void rlLoadExtensions(void *loader)
     #endif
     glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &RLGL.ExtSupported.maxAnisotropyLevel);
 
-#if defined(SUPPORT_GL_DETAILS_INFO)
+#if defined(RLGL_SHOW_GL_DETAILS_INFO)
     // Show some OpenGL GPU capabilities
     TRACELOG(RL_LOG_INFO, "GL: OpenGL capabilities:");
     GLint capability = 0;
@@ -2063,7 +2070,7 @@ void rlLoadExtensions(void *loader)
     glGetIntegerv(GL_MAX_UNIFORM_LOCATIONS, &capability);
     TRACELOG(RL_LOG_INFO, "    GL_MAX_UNIFORM_LOCATIONS: %i", capability);
     */
-#else   // SUPPORT_GL_DETAILS_INFO
+#else   // RLGL_SHOW_GL_DETAILS_INFO
 
     // Show some basic info about GL supported features
     #if defined(GRAPHICS_API_OPENGL_ES2)
@@ -2077,7 +2084,7 @@ void rlLoadExtensions(void *loader)
     if (RLGL.ExtSupported.texCompETC2) TRACELOG(RL_LOG_INFO, "GL: ETC2/EAC compressed textures supported");
     if (RLGL.ExtSupported.texCompPVRT) TRACELOG(RL_LOG_INFO, "GL: PVRT compressed textures supported");
     if (RLGL.ExtSupported.texCompASTC) TRACELOG(RL_LOG_INFO, "GL: ASTC compressed textures supported");
-#endif  // SUPPORT_GL_DETAILS_INFO
+#endif  // RLGL_SHOW_GL_DETAILS_INFO
 
 #endif  // GRAPHICS_API_OPENGL_33 || GRAPHICS_API_OPENGL_ES2
 }
@@ -3092,7 +3099,7 @@ unsigned int rlLoadFramebuffer(int width, int height)
 {
     unsigned int fboId = 0;
 
-#if (defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)) && defined(SUPPORT_RENDER_TEXTURES_HINT)
+#if (defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)) && defined(RLGL_RENDER_TEXTURES_HINT)
     glGenFramebuffers(1, &fboId);       // Create the framebuffer object
     glBindFramebuffer(GL_FRAMEBUFFER, 0);   // Unbind any framebuffer
 #endif
@@ -3104,7 +3111,7 @@ unsigned int rlLoadFramebuffer(int width, int height)
 // NOTE: Attach type: 0-Color, 1-Depth renderbuffer, 2-Depth texture
 void rlFramebufferAttach(unsigned int fboId, unsigned int texId, int attachType, int texType, int mipLevel)
 {
-#if (defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)) && defined(SUPPORT_RENDER_TEXTURES_HINT)
+#if (defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)) && defined(RLGL_RENDER_TEXTURES_HINT)
     glBindFramebuffer(GL_FRAMEBUFFER, fboId);
 
     switch (attachType)
@@ -3147,7 +3154,7 @@ bool rlFramebufferComplete(unsigned int id)
 {
     bool result = false;
 
-#if (defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)) && defined(SUPPORT_RENDER_TEXTURES_HINT)
+#if (defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)) && defined(RLGL_RENDER_TEXTURES_HINT)
     glBindFramebuffer(GL_FRAMEBUFFER, id);
 
     GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
@@ -3178,7 +3185,7 @@ bool rlFramebufferComplete(unsigned int id)
 // NOTE: All attached textures/cubemaps/renderbuffers are also deleted
 void rlUnloadFramebuffer(unsigned int id)
 {
-#if (defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)) && defined(SUPPORT_RENDER_TEXTURES_HINT)
+#if (defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)) && defined(RLGL_RENDER_TEXTURES_HINT)
 
     // Query depth attachment to automatically delete texture/renderbuffer
     int depthType = 0, depthId = 0;
@@ -4124,7 +4131,7 @@ static void rlUnloadShaderDefault(void)
     TRACELOG(RL_LOG_INFO, "SHADER: [ID %i] Default shader unloaded successfully", RLGL.State.defaultShaderId);
 }
 
-#if defined(SUPPORT_GL_DETAILS_INFO)
+#if defined(RLGL_SHOW_GL_DETAILS_INFO)
 // Get compressed format official GL identifier name
 static char *rlGetCompressedFormatName(int format)
 {
@@ -4203,7 +4210,7 @@ static char *rlGetCompressedFormatName(int format)
 
     return compName;
 }
-#endif  // SUPPORT_GL_DETAILS_INFO
+#endif  // RLGL_SHOW_GL_DETAILS_INFO
 
 #endif  // GRAPHICS_API_OPENGL_33 || GRAPHICS_API_OPENGL_ES2
 
