@@ -27,7 +27,7 @@ Some people ported raylib to other languages in form of bindings or wrappers to 
 | raylib-luamore     | 3.0 | [Lua](http://www.lua.org/)            | https://github.com/HDPLocust/raylib-luamore    |
 | raylua             | 3.7 | [Lua](http://www.lua.org/)            | https://github.com/Rabios/raylua          |
 | LuaJIT-Raylib      | 2.6 | [Lua](http://www.lua.org/)            | https://github.com/Bambofy/LuaJIT-Raylib    |
-| raylib-nelua       | 3.7 | [nelua](https://nelua.io/)            | https://github.com/edubart/nelua-decl/tree/main/libs/raylib       |
+| nelua-raylib       | 3.7 | [nelua](https://nelua.io/)            | https://github.com/AKDev21/nelua-raylib |
 | raylib-nelua       | 3.0 | [Nelua](https://nelua.io/)            | https://github.com/Andre-LA/raylib-nelua     |
 | raylib-Nim         | 1.7 | [Nim](https://nim-lang.org/)          | https://gitlab.com/define-private-public/raylib-Nim     |
 | raylib-nim         | 2.0 | [Nim](https://nim-lang.org/)          | https://github.com/Skrylar/raylib-nim                  |
