@@ -851,7 +851,7 @@ typedef struct rlglData {
         float texcoordx, texcoordy;         // Current active texture coordinate
         float normalx, normaly, normalz;    // Current active normal
         unsigned char colorr, colorg, colorb, colora;   // Current active color
-        
+
         int currentMatrixMode;              // Current matrix mode
         Matrix *currentMatrix;              // Current matrix pointer
         Matrix modelview;                   // Default modelview matrix
@@ -1296,15 +1296,15 @@ void rlVertex3f(float x, float y, float z)
 
         // Add current normal
         // TODO.
-        
+
         // Add current color
         RLGL.currentBatch->vertexBuffer[RLGL.currentBatch->currentBuffer].colors[4*RLGL.State.vertexCounter] = RLGL.State.colorr;
         RLGL.currentBatch->vertexBuffer[RLGL.currentBatch->currentBuffer].colors[4*RLGL.State.vertexCounter + 1] = RLGL.State.colorg;
         RLGL.currentBatch->vertexBuffer[RLGL.currentBatch->currentBuffer].colors[4*RLGL.State.vertexCounter + 2] = RLGL.State.colorb;
         RLGL.currentBatch->vertexBuffer[RLGL.currentBatch->currentBuffer].colors[4*RLGL.State.vertexCounter + 3] = RLGL.State.colora;
-        
+
         RLGL.State.vertexCounter++;
-        
+
         RLGL.currentBatch->draws[RLGL.currentBatch->drawCounter - 1].vertexCount++;
     }
     else TRACELOG(RL_LOG_ERROR, "RLGL: Batch elements overflow");

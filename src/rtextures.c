@@ -2294,7 +2294,7 @@ Rectangle GetImageAlphaBorder(Image image, float threshold)
 Color GetImageColor(Image image, int x, int y)
 {
     Color color = { 0 };
-    
+
     if ((x >=0) && (x < image.width) && (y >= 0) && (y < image.height))
     {
         switch (image.format)

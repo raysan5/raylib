@@ -3917,7 +3917,7 @@ static bool InitGraphicsDevice(int width, int height)
     if ((-1 == CORE.Window.fd) || (drmModeGetResources(CORE.Window.fd) == NULL))
     {
         TRACELOG(LOG_INFO, "DISPLAY: Failed to open platform-gpu-card, trying card1");
-        CORE.Window.fd = open("/dev/dri/card1", O_RDWR); // Other Embedded 
+        CORE.Window.fd = open("/dev/dri/card1", O_RDWR); // Other Embedded
     }
     if ((-1 == CORE.Window.fd) || (drmModeGetResources(CORE.Window.fd) == NULL))
     {

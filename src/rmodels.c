@@ -5756,7 +5756,7 @@ static Model LoadVOX(const char *fileName)
     pcolors->g = voxarray.colors.array->g;
     pcolors->b = voxarray.colors.array->b;
     pcolors->a = voxarray.colors.array->a;
- 
+
     unsigned short *pindices = voxarray.indices.array;    // 5461*6*6 = 196596 indices max per mesh
 
     int size = 0;

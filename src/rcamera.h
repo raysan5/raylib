@@ -467,7 +467,7 @@ void UpdateCamera(Camera *camera)
             matRotation.m2 = -siny;
             matRotation.m6 = cosy*sinx;
             matRotation.m10= cosy*cosx;
-            
+
             // Multiply translation and rotation matrices
             Matrix matTransform = { 0 };
             matTransform.m0 = matTranslation.m0*matRotation.m0 + matTranslation.m1*matRotation.m4 + matTranslation.m2*matRotation.m8 + matTranslation.m3*matRotation.m12;

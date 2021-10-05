@@ -541,7 +541,7 @@ RMAPI float Vector3Distance(Vector3 v1, Vector3 v2)
 RMAPI Vector2 Vector3Angle(Vector3 v1, Vector3 v2)
 {
     Vector2 result = { 0 };
-    
+
     float dx = v2.x - v1.x;
     float dy = v2.y - v1.y;
     float dz = v2.z - v1.z;
