@@ -4,6 +4,11 @@
 *
 *   CONFIGURATION:
 *
+*   #define RAYMATH_IMPLEMENTATION
+*       Generates the implementation of the library into the included file.
+*       If not defined, the library is in header only mode and can be included in other headers
+*       or source files without problems. But only ONE file should hold the implementation.
+*
 *   #define RAYMATH_STATIC_INLINE
 *       Define static inline functions code, so #include header suffices for use.
 *       This may use up lots of memory.
@@ -42,23 +47,33 @@
 #ifndef RAYMATH_H
 #define RAYMATH_H
 
+#if defined(RAYMATH_IMPLEMENTATION) && defined(RAYMATH_STATIC_INLINE)
+    #error "Specifying both RAYMATH_IMPLEMENTATION and RAYMATH_STATIC_INLINE is contradictory"
+#endif
+
 // Function specifiers definition
 #ifndef RMAPI
-    #define RMAPI extern inline     // Functions defined as 'extern inline' by default
-#endif
+    #if defined(RAYMATH_IMPLEMENTATION)
+        #define RMAPI extern inline         // Functions defined as 'extern inline' by default
 
-// Function specifiers in case library is build/used as a shared library (Windows)
-// NOTE: Microsoft specifiers to tell compiler that symbols are imported/exported from a .dll
-#if defined(_WIN32)
-    #if defined(BUILD_LIBTYPE_SHARED)
-        #define RMAPI __declspec(dllexport)     // We are building the library as a Win32 shared library (.dll)
-    #elif defined(USE_LIBTYPE_SHARED)
-        #define RMAPI __declspec(dllimport)     // We are using the library as a Win32 shared library (.dll)
+        // Function specifiers in case library is build/used as a shared library (Windows)
+        // NOTE: Microsoft specifiers to tell compiler that symbols are imported/exported from a .dll
+        #if defined(_WIN32)
+            #if defined(BUILD_LIBTYPE_SHARED)
+                #define RMAPI __declspec(dllexport)     // We are building the library as a Win32 shared library (.dll)
+            #elif defined(USE_LIBTYPE_SHARED)
+                #define RMAPI __declspec(dllimport)     // We are using the library as a Win32 shared library (.dll)
+            #endif
+        #endif
+    #elif defined(RAYMATH_STATIC_INLINE)
+        #define RMAPI static inline         // Functions may be inlined, no external out-of-line definition
+    #else
+        #if defined(__TINYC__)
+            #define RMAPI static inline     // WARNING: Plain inline not supported by tinycc (See issue #435)
+        #else
+            #define RMAPI inline
+        #endif
     #endif
-#endif
-
-#if defined(RAYMATH_STATIC_INLINE)
-    #define RMAPI static inline     // Functions may be inlined, no external out-of-line definition
 #endif
 
 //----------------------------------------------------------------------------------
