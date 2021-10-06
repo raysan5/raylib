@@ -319,7 +319,7 @@ typedef struct rlDrawCall {
 
 // rlRenderBatch type
 typedef struct rlRenderBatch {
-    int bufferCount;           // Number of vertex buffers (multi-buffering support)
+    int bufferCount;            // Number of vertex buffers (multi-buffering support)
     int currentBuffer;          // Current buffer tracking in case of multi-buffering
     rlVertexBuffer *vertexBuffer; // Dynamic buffer(s) for vertex data
 
@@ -847,10 +847,10 @@ typedef struct rlglData {
     rlRenderBatch defaultBatch;             // Default internal render batch
 
     struct {
-        int vertexCounter;                  // Vertex counter to process (and draw) from full buffer
-        float texcoordx, texcoordy;         // Current active texture coordinate
-        float normalx, normaly, normalz;    // Current active normal
-        unsigned char colorr, colorg, colorb, colora;   // Current active color
+        int vertexCounter;                  // Current active render batch vertex counter (generic, used for all batches)
+        float texcoordx, texcoordy;         // Current active texture coordinate (added on glVertex*())
+        float normalx, normaly, normalz;    // Current active normal (added on glVertex*())
+        unsigned char colorr, colorg, colorb, colora;   // Current active color (added on glVertex*())
 
         int currentMatrixMode;              // Current matrix mode
         Matrix *currentMatrix;              // Current matrix pointer
@@ -2468,7 +2468,7 @@ void rlDrawRenderBatch(rlRenderBatch *batch)
 
     // Reset batch buffers
     //------------------------------------------------------------------------------------------------------------
-    // Reset vertex counters for next frame
+    // Reset vertex counter for next frame
     RLGL.State.vertexCounter = 0;
 
     // Reset depth for next draw
@@ -2534,7 +2534,7 @@ bool rlCheckRenderBatchLimit(int vCount)
         overflow = true;
         rlDrawRenderBatch(RLGL.currentBatch);    // NOTE: Stereo rendering is checked inside
 
-        // restore state of last batch so we can continue adding vertices
+        // Restore state of last batch so we can continue adding vertices
         RLGL.currentBatch->draws[RLGL.currentBatch->drawCounter - 1].mode = currentMode;
         RLGL.currentBatch->draws[RLGL.currentBatch->drawCounter - 1].textureId = currentTexture;
     }
