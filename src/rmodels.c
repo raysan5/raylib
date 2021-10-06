@@ -1830,7 +1830,7 @@ void UpdateModelAnimation(Model model, ModelAnimation anim, int frame)
                         continue;
                     }
                     boneId = mesh.boneIds[boneCounter];
-                    int boneIdParent = model.bones[boneId].parent;
+                    //int boneIdParent = model.bones[boneId].parent;
                     inTranslation = model.bindPose[boneId].translation;
                     inRotation = model.bindPose[boneId].rotation;
                     // inScale = model.bindPose[boneId].scale;

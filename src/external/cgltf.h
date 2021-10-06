@@ -1,7 +1,7 @@
 /**
  * cgltf - a single-file glTF 2.0 parser written in C99.
  *
- * Version: 1.10
+ * Version: 1.11
  *
  * Website: https://github.com/jkuhlmann/cgltf
  *
@@ -234,6 +234,12 @@ typedef enum cgltf_light_type {
 	cgltf_light_type_spot,
 } cgltf_light_type;
 
+typedef enum cgltf_data_free_method {
+	cgltf_data_free_method_none,
+	cgltf_data_free_method_file_release,
+	cgltf_data_free_method_memory_free,
+} cgltf_data_free_method;
+
 typedef struct cgltf_extras {
 	cgltf_size start_offset;
 	cgltf_size end_offset;
@@ -250,6 +256,7 @@ typedef struct cgltf_buffer
 	cgltf_size size;
 	char* uri;
 	void* data; /* loaded by cgltf_load_buffers */
+	cgltf_data_free_method data_free_method;
 	cgltf_extras extras;
 	cgltf_size extensions_count;
 	cgltf_extension* extensions;
@@ -372,6 +379,8 @@ typedef struct cgltf_texture
 	char* name;
 	cgltf_image* image;
 	cgltf_sampler* sampler;
+	cgltf_bool has_basisu;
+	cgltf_image* basisu_image;
 	cgltf_extras extras;
 	cgltf_size extensions_count;
 	cgltf_extension* extensions;
@@ -382,6 +391,7 @@ typedef struct cgltf_texture_transform
 	cgltf_float offset[2];
 	cgltf_float rotation;
 	cgltf_float scale[2];
+	cgltf_bool has_texcoord;
 	cgltf_int texcoord;
 } cgltf_texture_transform;
 
@@ -595,6 +605,7 @@ typedef struct cgltf_light {
 	cgltf_float range;
 	cgltf_float spot_inner_cone_angle;
 	cgltf_float spot_outer_cone_angle;
+	cgltf_extras extras;
 } cgltf_light;
 
 struct cgltf_node {
@@ -768,6 +779,7 @@ cgltf_result cgltf_load_buffers(
 
 cgltf_result cgltf_load_buffer_base64(const cgltf_options* options, cgltf_size size, const char* base64, void** out_data);
 
+void cgltf_decode_string(char* string);
 void cgltf_decode_uri(char* uri);
 
 cgltf_result cgltf_validate(cgltf_data* data);
@@ -813,7 +825,7 @@ cgltf_result cgltf_copy_extras_json(const cgltf_data* data, const cgltf_extras* 
 #include <limits.h> /* For UINT_MAX etc */
 #include <float.h>  /* For FLT_MAX */
 
-#if !defined(CGLTF_MALLOC) || !defined(CGLTF_FREE) || !defined(CGLTF_ATOI) || !defined(CGLTF_ATOF)
+#if !defined(CGLTF_MALLOC) || !defined(CGLTF_FREE) || !defined(CGLTF_ATOI) || !defined(CGLTF_ATOF) || !defined(CGLTF_ATOLL)
 #include <stdlib.h> /* For malloc, free, atoi, atof */
 #endif
 
@@ -883,6 +895,9 @@ static const uint32_t GlbMagicBinChunk = 0x004E4942;
 #ifndef CGLTF_ATOF
 #define CGLTF_ATOF(str) atof(str)
 #endif
+#ifndef CGLTF_ATOLL
+#define CGLTF_ATOLL(str) atoll(str)
+#endif
 #ifndef CGLTF_VALIDATE_ENABLE_ASSERTS
 #define CGLTF_VALIDATE_ENABLE_ASSERTS 0
 #endif
@@ -932,7 +947,12 @@ static cgltf_result cgltf_default_file_read(const struct cgltf_memory_options* m
 	{
 		fseek(file, 0, SEEK_END);
 
+#ifdef _WIN32
+		__int64 length = _ftelli64(file);
+#else
 		long length = ftell(file);
+#endif
+
 		if (length < 0)
 		{
 			fclose(file);
@@ -1120,8 +1140,8 @@ cgltf_result cgltf_parse_file(const cgltf_options* options, const char* path, cg
 		return cgltf_result_invalid_options;
 	}
 
-	void (*memory_free)(void*, void*) = options->memory.free ? options->memory.free : &cgltf_default_free;
 	cgltf_result (*file_read)(const struct cgltf_memory_options*, const struct cgltf_file_options*, const char*, cgltf_size*, void**) = options->file.read ? options->file.read : &cgltf_default_file_read;
+	void (*file_release)(const struct cgltf_memory_options*, const struct cgltf_file_options*, void* data) = options->file.release ? options->file.release : cgltf_default_file_release;
 
 	void* file_data = NULL;
 	cgltf_size file_size = 0;
@@ -1135,7 +1155,7 @@ cgltf_result cgltf_parse_file(const cgltf_options* options, const char* path, cg
 
 	if (result != cgltf_result_success)
 	{
-		memory_free(options->memory.user_data, file_data);
+		file_release(&options->memory, &options->file, file_data);
 		return result;
 	}
 
@@ -1246,6 +1266,72 @@ static int cgltf_unhex(char ch)
 		-1;
 }
 
+void cgltf_decode_string(char* string)
+{
+	char* read = strchr(string, '\\');
+	if (read == NULL)
+	{
+		return;
+	}
+	char* write = string;
+	char* last = string;
+
+	while (read)
+	{
+		// Copy characters since last escaped sequence
+		cgltf_size written = read - last;
+		strncpy(write, last, written);
+		write += written;
+
+		// jsmn already checked that all escape sequences are valid
+		++read;
+		switch (*read++)
+		{
+		case '\"': *write++ = '\"'; break;
+		case '/':  *write++ = '/';  break;
+		case '\\': *write++ = '\\'; break;
+		case 'b':  *write++ = '\b'; break;
+		case 'f':  *write++ = '\f'; break;
+		case 'r':  *write++ = '\r'; break;
+		case 'n':  *write++ = '\n'; break;
+		case 't':  *write++ = '\t'; break;
+		case 'u':
+		{
+			// UCS-2 codepoint \uXXXX to UTF-8
+			int character = 0;
+			for (cgltf_size i = 0; i < 4; ++i)
+			{
+				character = (character << 4) + cgltf_unhex(*read++);
+			}
+
+			if (character <= 0x7F)
+			{
+				*write++ = character & 0xFF;
+			}
+			else if (character <= 0x7FF)
+			{
+				*write++ = 0xC0 | ((character >> 6) & 0xFF);
+				*write++ = 0x80 | (character & 0x3F);
+			}
+			else
+			{
+				*write++ = 0xE0 | ((character >> 12) & 0xFF);
+				*write++ = 0x80 | ((character >> 6) & 0x3F);
+				*write++ = 0x80 | (character & 0x3F);
+			}
+			break;
+		}
+		default:
+			break;
+		}
+
+		last = read;
+		read = strchr(read, '\\');
+	}
+
+	strcpy(write, last);
+}
+
 void cgltf_decode_uri(char* uri)
 {
 	char* write = uri;
@@ -1291,6 +1377,7 @@ cgltf_result cgltf_load_buffers(const cgltf_options* options, cgltf_data* data, 
 		}
 
 		data->buffers[0].data = (void*)data->bin;
+		data->buffers[0].data_free_method = cgltf_data_free_method_none;
 	}
 
 	for (cgltf_size i = 0; i < data->buffers_count; ++i)
@@ -1314,6 +1401,7 @@ cgltf_result cgltf_load_buffers(const cgltf_options* options, cgltf_data* data, 
 			if (comma && comma - uri >= 7 && strncmp(comma - 7, ";base64", 7) == 0)
 			{
 				cgltf_result res = cgltf_load_buffer_base64(options, data->buffers[i].size, comma + 1, &data->buffers[i].data);
+				data->buffers[i].data_free_method = cgltf_data_free_method_memory_free;
 
 				if (res != cgltf_result_success)
 				{
@@ -1328,6 +1416,7 @@ cgltf_result cgltf_load_buffers(const cgltf_options* options, cgltf_data* data, 
 		else if (strstr(uri, "://") == NULL && gltf_path)
 		{
 			cgltf_result res = cgltf_load_buffer_file(options, data->buffers[i].size, uri, gltf_path, &data->buffers[i].data);
+			data->buffers[i].data_free_method = cgltf_data_free_method_file_release;
 
 			if (res != cgltf_result_success)
 			{
@@ -1655,10 +1744,15 @@ void cgltf_free(cgltf_data* data)
 	{
 		data->memory.free(data->memory.user_data, data->buffers[i].name);
 
-		if (data->buffers[i].data != data->bin)
+		if (data->buffers[i].data_free_method == cgltf_data_free_method_file_release)
 		{
 			file_release(&data->memory, &data->file, data->buffers[i].data);
 		}
+		else if (data->buffers[i].data_free_method == cgltf_data_free_method_memory_free)
+		{
+			data->memory.free(data->memory.user_data, data->buffers[i].data);
+		}
+
 		data->memory.free(data->memory.user_data, data->buffers[i].uri);
 
 		cgltf_free_extensions(data, data->buffers[i].extensions, data->buffers[i].extensions_count);
@@ -2259,6 +2353,7 @@ cgltf_size cgltf_accessor_read_index(const cgltf_accessor* accessor, cgltf_size 
 #define CGLTF_ERROR_LEGACY -3
 
 #define CGLTF_CHECK_TOKTYPE(tok_, type_) if ((tok_).type != (type_)) { return CGLTF_ERROR_JSON; }
+#define CGLTF_CHECK_TOKTYPE_RETTYPE(tok_, type_, ret_) if ((tok_).type != (type_)) { return (ret_)CGLTF_ERROR_JSON; }
 #define CGLTF_CHECK_KEY(tok_) if ((tok_).type != JSMN_STRING || (tok_).size == 0) { return CGLTF_ERROR_JSON; } /* checking size for 0 verifies that a value follows the key */
 
 #define CGLTF_PTRINDEX(type, idx) (type*)((cgltf_size)idx + 1)
@@ -2281,6 +2376,16 @@ static int cgltf_json_to_int(jsmntok_t const* tok, const uint8_t* json_chunk)
 	strncpy(tmp, (const char*)json_chunk + tok->start, size);
 	tmp[size] = 0;
 	return CGLTF_ATOI(tmp);
+}
+
+static cgltf_size cgltf_json_to_size(jsmntok_t const* tok, const uint8_t* json_chunk)
+{
+	CGLTF_CHECK_TOKTYPE_RETTYPE(*tok, JSMN_PRIMITIVE, cgltf_size);
+	char tmp[128];
+	int size = (cgltf_size)(tok->end - tok->start) < sizeof(tmp) ? tok->end - tok->start : (int)(sizeof(tmp) - 1);
+	strncpy(tmp, (const char*)json_chunk + tok->start, size);
+	tmp[size] = 0;
+	return (cgltf_size)CGLTF_ATOLL(tmp);
 }
 
 static cgltf_float cgltf_json_to_float(jsmntok_t const* tok, const uint8_t* json_chunk)
@@ -3024,7 +3129,7 @@ static int cgltf_parse_json_accessor_sparse(cgltf_options* options, jsmntok_t co
 				else if (cgltf_json_strcmp(tokens+i, json_chunk, "byteOffset") == 0)
 				{
 					++i;
-					out_sparse->indices_byte_offset = cgltf_json_to_int(tokens + i, json_chunk);
+					out_sparse->indices_byte_offset = cgltf_json_to_size(tokens + i, json_chunk);
 					++i;
 				}
 				else if (cgltf_json_strcmp(tokens+i, json_chunk, "componentType") == 0)
@@ -3073,7 +3178,7 @@ static int cgltf_parse_json_accessor_sparse(cgltf_options* options, jsmntok_t co
 				else if (cgltf_json_strcmp(tokens+i, json_chunk, "byteOffset") == 0)
 				{
 					++i;
-					out_sparse->values_byte_offset = cgltf_json_to_int(tokens + i, json_chunk);
+					out_sparse->values_byte_offset = cgltf_json_to_size(tokens + i, json_chunk);
 					++i;
 				}
 				else if (cgltf_json_strcmp(tokens + i, json_chunk, "extras") == 0)
@@ -3142,7 +3247,7 @@ static int cgltf_parse_json_accessor(cgltf_options* options, jsmntok_t const* to
 		{
 			++i;
 			out_accessor->offset =
-					cgltf_json_to_int(tokens+i, json_chunk);
+					cgltf_json_to_size(tokens+i, json_chunk);
 			++i;
 		}
 		else if (cgltf_json_strcmp(tokens+i, json_chunk, "componentType") == 0)
@@ -3268,6 +3373,7 @@ static int cgltf_parse_json_texture_transform(jsmntok_t const* tokens, int i, co
 		else if (cgltf_json_strcmp(tokens + i, json_chunk, "texCoord") == 0)
 		{
 			++i;
+			out_texture_transform->has_texcoord = 1;
 			out_texture_transform->texcoord = cgltf_json_to_int(tokens + i, json_chunk);
 			++i;
 		}
@@ -3885,7 +3991,62 @@ static int cgltf_parse_json_texture(cgltf_options* options, jsmntok_t const* tok
 		}
 		else if (cgltf_json_strcmp(tokens + i, json_chunk, "extensions") == 0)
 		{
-			i = cgltf_parse_json_unprocessed_extensions(options, tokens, i, json_chunk, &out_texture->extensions_count, &out_texture->extensions);
+			++i;
+
+			CGLTF_CHECK_TOKTYPE(tokens[i], JSMN_OBJECT);
+			if (out_texture->extensions)
+			{
+				return CGLTF_ERROR_JSON;
+			}
+
+			int extensions_size = tokens[i].size;
+			++i;
+			out_texture->extensions = (cgltf_extension*)cgltf_calloc(options, sizeof(cgltf_extension), extensions_size);
+			out_texture->extensions_count = 0;
+
+			if (!out_texture->extensions)
+			{
+				return CGLTF_ERROR_NOMEM;
+			}
+
+			for (int k = 0; k < extensions_size; ++k)
+			{
+				CGLTF_CHECK_KEY(tokens[i]);
+
+				if (cgltf_json_strcmp(tokens + i, json_chunk, "KHR_texture_basisu") == 0)
+				{
+					out_texture->has_basisu = 1;
+					++i;
+					CGLTF_CHECK_TOKTYPE(tokens[i], JSMN_OBJECT);
+					int num_properties = tokens[i].size;
+					++i;
+
+					for (int t = 0; t < num_properties; ++t)
+					{
+						CGLTF_CHECK_KEY(tokens[i]);
+
+						if (cgltf_json_strcmp(tokens + i, json_chunk, "source") == 0)
+						{
+							++i;
+							out_texture->basisu_image = CGLTF_PTRINDEX(cgltf_image, cgltf_json_to_int(tokens + i, json_chunk));
+							++i;
+						}
+						else
+						{
+							i = cgltf_skip_json(tokens, i + 1);
+						}
+					}
+				}
+				else
+				{
+					i = cgltf_parse_json_unprocessed_extension(options, tokens, i, json_chunk, &(out_texture->extensions[out_texture->extensions_count++]));
+				}
+
+				if (i < 0)
+				{
+					return i;
+				}
+			}
 		}
 		else
 		{
@@ -4192,19 +4353,19 @@ static int cgltf_parse_json_meshopt_compression(cgltf_options* options, jsmntok_
 		else if (cgltf_json_strcmp(tokens+i, json_chunk, "byteOffset") == 0)
 		{
 			++i;
-			out_meshopt_compression->offset = cgltf_json_to_int(tokens+i, json_chunk);
+			out_meshopt_compression->offset = cgltf_json_to_size(tokens+i, json_chunk);
 			++i;
 		}
 		else if (cgltf_json_strcmp(tokens+i, json_chunk, "byteLength") == 0)
 		{
 			++i;
-			out_meshopt_compression->size = cgltf_json_to_int(tokens+i, json_chunk);
+			out_meshopt_compression->size = cgltf_json_to_size(tokens+i, json_chunk);
 			++i;
 		}
 		else if (cgltf_json_strcmp(tokens+i, json_chunk, "byteStride") == 0)
 		{
 			++i;
-			out_meshopt_compression->stride = cgltf_json_to_int(tokens+i, json_chunk);
+			out_meshopt_compression->stride = cgltf_json_to_size(tokens+i, json_chunk);
 			++i;
 		}
 		else if (cgltf_json_strcmp(tokens+i, json_chunk, "count") == 0)
@@ -4290,21 +4451,21 @@ static int cgltf_parse_json_buffer_view(cgltf_options* options, jsmntok_t const*
 		{
 			++i;
 			out_buffer_view->offset =
-					cgltf_json_to_int(tokens+i, json_chunk);
+					cgltf_json_to_size(tokens+i, json_chunk);
 			++i;
 		}
 		else if (cgltf_json_strcmp(tokens+i, json_chunk, "byteLength") == 0)
 		{
 			++i;
 			out_buffer_view->size =
-					cgltf_json_to_int(tokens+i, json_chunk);
+					cgltf_json_to_size(tokens+i, json_chunk);
 			++i;
 		}
 		else if (cgltf_json_strcmp(tokens+i, json_chunk, "byteStride") == 0)
 		{
 			++i;
 			out_buffer_view->stride =
-					cgltf_json_to_int(tokens+i, json_chunk);
+					cgltf_json_to_size(tokens+i, json_chunk);
 			++i;
 		}
 		else if (cgltf_json_strcmp(tokens+i, json_chunk, "target") == 0)
@@ -4422,7 +4583,7 @@ static int cgltf_parse_json_buffer(cgltf_options* options, jsmntok_t const* toke
 		{
 			++i;
 			out_buffer->size =
-					cgltf_json_to_int(tokens+i, json_chunk);
+					cgltf_json_to_size(tokens+i, json_chunk);
 			++i;
 		}
 		else if (cgltf_json_strcmp(tokens+i, json_chunk, "uri") == 0)
@@ -4737,6 +4898,14 @@ static int cgltf_parse_json_light(cgltf_options* options, jsmntok_t const* token
 {
 	CGLTF_CHECK_TOKTYPE(tokens[i], JSMN_OBJECT);
 
+	out_light->color[0] = 1.f;
+	out_light->color[1] = 1.f;
+	out_light->color[2] = 1.f;
+	out_light->intensity = 1.f;
+
+	out_light->spot_inner_cone_angle = 0.f;
+	out_light->spot_outer_cone_angle = 3.1415926535f / 4.0f;
+
 	int size = tokens[i].size;
 	++i;
 
@@ -4816,6 +4985,10 @@ static int cgltf_parse_json_light(cgltf_options* options, jsmntok_t const* token
 					return i;
 				}
 			}
+		}
+		else if (cgltf_json_strcmp(tokens + i, json_chunk, "extras") == 0)
+		{
+			i = cgltf_parse_json_extras(tokens, i + 1, json_chunk, &out_light->extras);
 		}
 		else
 		{
@@ -5851,6 +6024,7 @@ static int cgltf_fixup_pointers(cgltf_data* data)
 	for (cgltf_size i = 0; i < data->textures_count; ++i)
 	{
 		CGLTF_PTRFIXUP(data->textures[i].image, data->images, data->images_count);
+		CGLTF_PTRFIXUP(data->textures[i].basisu_image, data->images, data->images_count);
 		CGLTF_PTRFIXUP(data->textures[i].sampler, data->samplers, data->samplers_count);
 	}
 
@@ -6305,7 +6479,7 @@ static void jsmn_init(jsmn_parser *parser) {
 
 /* cgltf is distributed under MIT license:
  *
- * Copyright (c) 2018 Johannes Kuhlmann
+ * Copyright (c) 2018-2021 Johannes Kuhlmann
 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal

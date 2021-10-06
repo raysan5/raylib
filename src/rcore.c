@@ -148,6 +148,7 @@
 
 #if defined(SUPPORT_COMPRESSION_API)
     #define SINFL_IMPLEMENTATION
+    #define SINFL_NO_SIMD
     #include "external/sinfl.h"     // Deflate (RFC 1951) decompressor
 
     #define SDEFL_IMPLEMENTATION
@@ -3004,7 +3005,7 @@ unsigned char *DecompressData(unsigned char *compData, int compDataLength, int *
 #if defined(SUPPORT_COMPRESSION_API)
     // Decompress data from a valid DEFLATE stream
     data = RL_CALLOC(MAX_DECOMPRESSION_SIZE*1024*1024, 1);
-    int length = sinflate(data, compData, compDataLength);
+    int length = sinflate(data, MAX_DECOMPRESSION_SIZE, compData, compDataLength);
     unsigned char *temp = RL_REALLOC(data, length);
 
     if (temp != NULL) data = temp;
