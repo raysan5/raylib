@@ -52,29 +52,24 @@
 #endif
 
 // Function specifiers definition
-#ifndef RMAPI
-    #if defined(RAYMATH_IMPLEMENTATION)
-        #define RMAPI extern inline         // Functions defined as 'extern inline' by default
-
-        // Function specifiers in case library is build/used as a shared library (Windows)
-        // NOTE: Microsoft specifiers to tell compiler that symbols are imported/exported from a .dll
-        #if defined(_WIN32)
-            #if defined(BUILD_LIBTYPE_SHARED)
-                #define RMAPI __declspec(dllexport)     // We are building the library as a Win32 shared library (.dll)
-            #elif defined(USE_LIBTYPE_SHARED)
-                #define RMAPI __declspec(dllimport)     // We are using the library as a Win32 shared library (.dll)
-            #endif
-        #endif
-    #elif defined(RAYMATH_STATIC_INLINE)
-        #define RMAPI static inline         // Functions may be inlined, no external out-of-line definition
+#if defined(RAYMATH_IMPLEMENTATION)
+    #if defined(_WIN32) && defined(BUILD_LIBTYPE_SHARED)
+        #define RMAPI __declspec(dllexport) extern inline // We are building raylib as a Win32 shared library (.dll).
+    #elif defined(_WIN32) && defined(USE_LIBTYPE_SHARED)
+        #define RMAPI __declspec(dllimport)         // We are using raylib as a Win32 shared library (.dll)
     #else
-        #if defined(__TINYC__)
-            #define RMAPI static inline     // WARNING: Plain inline not supported by tinycc (See issue #435)
-        #else
-            #define RMAPI inline
-        #endif
+        #define RMAPI extern inline // Provide external definition
+    #endif
+#elif defined(RAYMATH_STATIC_INLINE)
+    #define RMAPI static inline // Functions may be inlined, no external out-of-line definition
+#else
+    #if defined(__TINYC__)
+        #define RMAPI static inline // plain inline not supported by tinycc (See issue #435)
+    #else
+        #define RMAPI inline        // Functions may be inlined or external definition used
     #endif
 #endif
+	
 
 //----------------------------------------------------------------------------------
 // Defines and Macros
