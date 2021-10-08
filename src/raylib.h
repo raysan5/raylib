@@ -90,10 +90,9 @@
         #define RLAPI __declspec(dllexport)     // We are building the library as a Win32 shared library (.dll)
     #elif defined(USE_LIBTYPE_SHARED)
         #define RLAPI __declspec(dllimport)     // We are using the library as a Win32 shared library (.dll)
-    #else
-        #define RLAPI       // Functions defined as 'extern' by default (implicit specifiers)
-    #endif
-#else 
+#endif
+
+#ifndef RLAPI
     #define RLAPI       // Functions defined as 'extern' by default (implicit specifiers)
 #endif
 
