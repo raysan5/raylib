@@ -11,7 +11,6 @@ Some people ported raylib to other languages in form of bindings or wrappers to 
 | raylib-boo         | 3.7 | [Boo](http://boo-language.github.io/) | https://github.com/Rabios/raylib-boo          |
 | dray               | 3.5 | [D](https://dlang.org/)               | https://github.com/xdrie/dray       |
 | raylib-go          | 4.0-dev | [Go](https://golang.org/)             | https://github.com/gen2brain/raylib-go  |
-| go-raylib          | 3.5 | [Go](https://golang.org/)       | https://github.com/chunqian/go-raylib  |
 | raylib-rs          | 3.5 | [Rust](https://www.rust-lang.org/)    | https://github.com/deltaphc/raylib-rs     |
 | raylib-lua         | 3.7 | [Lua](http://www.lua.org/)            | https://github.com/TSnake41/raylib-lua       |
 | raylua             | 3.7 | [Lua](http://www.lua.org/)            | https://github.com/Rabios/raylua          |
@@ -30,7 +29,6 @@ Some people ported raylib to other languages in form of bindings or wrappers to 
 | hxRaylib           | 3.7 | [Haxe](https://haxe.org/)                | https://github.com/ForeignSasquatch/hxRaylib    |
 | raylib-wren        | 3.7 | [Wren](http://wren.io/)           | https://github.com/TSnake41/raylib-wren           |
 | raylib_odin_bindings | 4.0-dev | [Odin](https://odin-lang.org/)            | https://github.com/Deathbat2190/raylib_odin_bindings     |
-| vraylib            | 3.5 | [V](https://vlang.io/)                    | https://github.com/waotzi/vraylib      |
 | raylib.v           | 3.7 | [V](https://vlang.io/)                    | https://github.com/irishgreencitrus/raylib.v |
 | raylib-ocaml       | 3.7 | [OCaml](https://ocaml.org/)               | https://github.com/tjammer/raylib-ocaml   |
 | raylib-swift       | 3.7 | [Swift](https://swift.org/)                | https://github.com/STREGAsGate/Raylib |
@@ -54,6 +52,7 @@ These are older raylib bindings that are more than 2 versions old or have not be
 | raylib_d           | 2.5 | [D](https://dlang.org/)               | https://github.com/Sepheus/raylib_d     |
 | raylib-d           | 3.0 | [D](https://dlang.org/)               | https://github.com/onroundit/raylib-d     |
 | bindbc-raylib      | 3.0 | [D](https://dlang.org/)               | https://github.com/o3o/bindbc-raylib   |
+| go-raylib          | 3.5 | [Go](https://golang.org/)       | https://github.com/chunqian/go-raylib  |
 | raylib-goplus      | 2.6-dev | [Go](https://golang.org/)             | https://github.com/Lachee/raylib-goplus         |
 | ray-go             | 2.6-dev | [Go](https://golang.org/)             | https://github.com/hecate-tech/ray-go     |
 | raylib-luamore     | 3.0 | [Lua](http://www.lua.org/)            | https://github.com/HDPLocust/raylib-luamore    |
@@ -95,6 +94,7 @@ These are older raylib bindings that are more than 2 versions old or have not be
 | raylib-gambit-scheme | 3.1-dev | [Gambit Scheme](https://github.com/gambit/gambit)   | https://github.com/georgjz/raylib-gambit-scheme  |
 | Euraylib           | 3.0 | [Euphoria](https://openeuphoria.org/)  | https://github.com/gAndy50/Euraylib          |
 | raylib-odin        | 3.0 | [Odin](https://odin-lang.org/)            | https://github.com/kevinw/raylib-odin     |
+| vraylib            | 3.5 | [V](https://vlang.io/)                    | https://github.com/waotzi/vraylib      |
 | raylib-zig         | 3.0 | [Zig](https://ziglang.org/)               | https://github.com/Not-Nik/raylib-zig     |
 | raylib-jai         | 3.1-dev | [Jai](https://github.com/BSVino/JaiPrimer/blob/master/JaiPrimer.md)  | https://github.com/kevinw/raylib-jai   |
 | ray.zig            | 2.5 | [Zig](https://ziglang.org/)               | https://github.com/BitPuffin/zig-raylib-experiments |
