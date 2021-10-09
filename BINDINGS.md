@@ -16,6 +16,7 @@ Some people ported raylib to other languages in form of bindings or wrappers to 
 | raylua             | 3.7 | [Lua](http://www.lua.org/)            | https://github.com/Rabios/raylua          |
 | nelua-raylib       | 3.7 | [nelua](https://nelua.io/)            | https://github.com/AKDev21/nelua-raylib |
 | NimraylibNow!      | 3.7 | [Nim](https://nim-lang.org/)          | https://github.com/greenfork/nimraylib_now        |
+| raylib-Forever     | auto | [Nim](https://nim-lang.org/)          | https://github.com/Guevara-chan/Raylib-Forever    |
 | Ray4Laz            | 3.7 | [Pascal](https://en.wikipedia.org/wiki/Pascal_(programming_language))         | https://github.com/GuvaCode/Ray4Laz      | 
 | pyraylib          | 3.7 | [Python](https://www.python.org/)        |   https://github.com/Ho011/pyraylib       |
 | raylib-python-cffi | 3.7 | [Python](https://www.python.org/)        | https://github.com/electronstudio/raylib-python-cffi    |
@@ -63,7 +64,6 @@ These are older raylib bindings that are more than 2 versions old or have not be
 | raylib-nelua       | 3.0 | [Nelua](https://nelua.io/)            | https://github.com/Andre-LA/raylib-nelua     |
 | raylib-nim         | 2.0 | [Nim](https://nim-lang.org/)          | https://github.com/Skrylar/raylib-nim                  |
 | raylib-Nim         | 1.7 | [Nim](https://nim-lang.org/)          | https://gitlab.com/define-private-public/raylib-Nim     |
-| raylib-Forever     | 3.1-dev | [Nim](https://nim-lang.org/)          | https://github.com/Guevara-chan/Raylib-Forever    |
 | nim-raylib         | 3.1-dev | [Nim](https://nim-lang.org/)          | https://github.com/tomc1998/nim-raylib            |
 | raylib-haskell     | 2.0 | [Haskell](https://www.haskell.org/)   | https://github.com/DevJac/raylib-haskell |
 | raylib-cr          | 2.5-dev | [Crystal](https://crystal-lang.org/)  | https://github.com/AregevDev/raylib-cr      |
