@@ -3786,45 +3786,45 @@ Color GetColor(unsigned int hexValue)
 // Get color from a pixel from certain format
 Color GetPixelColor(void *srcPtr, int format)
 {
-    Color col = { 0 };
+    Color color = { 0 };
 
     switch (format)
     {
-        case PIXELFORMAT_UNCOMPRESSED_GRAYSCALE: col = (Color){ ((unsigned char *)srcPtr)[0], ((unsigned char *)srcPtr)[0], ((unsigned char *)srcPtr)[0], 255 }; break;
-        case PIXELFORMAT_UNCOMPRESSED_GRAY_ALPHA: col = (Color){ ((unsigned char *)srcPtr)[0], ((unsigned char *)srcPtr)[0], ((unsigned char *)srcPtr)[0], ((unsigned char *)srcPtr)[1] }; break;
+        case PIXELFORMAT_UNCOMPRESSED_GRAYSCALE: color = (Color){ ((unsigned char *)srcPtr)[0], ((unsigned char *)srcPtr)[0], ((unsigned char *)srcPtr)[0], 255 }; break;
+        case PIXELFORMAT_UNCOMPRESSED_GRAY_ALPHA: color = (Color){ ((unsigned char *)srcPtr)[0], ((unsigned char *)srcPtr)[0], ((unsigned char *)srcPtr)[0], ((unsigned char *)srcPtr)[1] }; break;
         case PIXELFORMAT_UNCOMPRESSED_R5G6B5:
         {
-            col.r = (unsigned char)((((unsigned short *)srcPtr)[0] >> 11)*255/31);
-            col.g = (unsigned char)(((((unsigned short *)srcPtr)[0] >> 5) & 0b0000000000111111)*255/63);
-            col.b = (unsigned char)((((unsigned short *)srcPtr)[0] & 0b0000000000011111)*255/31);
-            col.a = 255;
+            color.r = (unsigned char)((((unsigned short *)srcPtr)[0] >> 11)*255/31);
+            color.g = (unsigned char)(((((unsigned short *)srcPtr)[0] >> 5) & 0b0000000000111111)*255/63);
+            color.b = (unsigned char)((((unsigned short *)srcPtr)[0] & 0b0000000000011111)*255/31);
+            color.a = 255;
 
         } break;
         case PIXELFORMAT_UNCOMPRESSED_R5G5B5A1:
         {
-            col.r = (unsigned char)((((unsigned short *)srcPtr)[0] >> 11)*255/31);
-            col.g = (unsigned char)(((((unsigned short *)srcPtr)[0] >> 6) & 0b0000000000011111)*255/31);
-            col.b = (unsigned char)((((unsigned short *)srcPtr)[0] & 0b0000000000011111)*255/31);
-            col.a = (((unsigned short *)srcPtr)[0] & 0b0000000000000001)? 255 : 0;
+            color.r = (unsigned char)((((unsigned short *)srcPtr)[0] >> 11)*255/31);
+            color.g = (unsigned char)(((((unsigned short *)srcPtr)[0] >> 6) & 0b0000000000011111)*255/31);
+            color.b = (unsigned char)((((unsigned short *)srcPtr)[0] & 0b0000000000011111)*255/31);
+            color.a = (((unsigned short *)srcPtr)[0] & 0b0000000000000001)? 255 : 0;
 
         } break;
         case PIXELFORMAT_UNCOMPRESSED_R4G4B4A4:
         {
-            col.r = (unsigned char)((((unsigned short *)srcPtr)[0] >> 12)*255/15);
-            col.g = (unsigned char)(((((unsigned short *)srcPtr)[0] >> 8) & 0b0000000000001111)*255/15);
-            col.b = (unsigned char)(((((unsigned short *)srcPtr)[0] >> 4) & 0b0000000000001111)*255/15);
-            col.a = (unsigned char)((((unsigned short *)srcPtr)[0] & 0b0000000000001111)*255/15);
+            color.r = (unsigned char)((((unsigned short *)srcPtr)[0] >> 12)*255/15);
+            color.g = (unsigned char)(((((unsigned short *)srcPtr)[0] >> 8) & 0b0000000000001111)*255/15);
+            color.b = (unsigned char)(((((unsigned short *)srcPtr)[0] >> 4) & 0b0000000000001111)*255/15);
+            color.a = (unsigned char)((((unsigned short *)srcPtr)[0] & 0b0000000000001111)*255/15);
 
         } break;
-        case PIXELFORMAT_UNCOMPRESSED_R8G8B8A8: col = (Color){ ((unsigned char *)srcPtr)[0], ((unsigned char *)srcPtr)[1], ((unsigned char *)srcPtr)[2], ((unsigned char *)srcPtr)[3] }; break;
-        case PIXELFORMAT_UNCOMPRESSED_R8G8B8: col = (Color){ ((unsigned char *)srcPtr)[0], ((unsigned char *)srcPtr)[1], ((unsigned char *)srcPtr)[2], 255 }; break;
+        case PIXELFORMAT_UNCOMPRESSED_R8G8B8A8: color = (Color){ ((unsigned char *)srcPtr)[0], ((unsigned char *)srcPtr)[1], ((unsigned char *)srcPtr)[2], ((unsigned char *)srcPtr)[3] }; break;
+        case PIXELFORMAT_UNCOMPRESSED_R8G8B8: color = (Color){ ((unsigned char *)srcPtr)[0], ((unsigned char *)srcPtr)[1], ((unsigned char *)srcPtr)[2], 255 }; break;
         // TODO: case PIXELFORMAT_UNCOMPRESSED_R32: break;
         // TODO: case PIXELFORMAT_UNCOMPRESSED_R32G32B32: break;
         // TODO: case PIXELFORMAT_UNCOMPRESSED_R32G32B32A32: break;
         default: break;
     }
 
-    return col;
+    return color;
 }
 
 // Set pixel color formatted into destination pointer
