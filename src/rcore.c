@@ -2185,14 +2185,14 @@ void BeginScissorMode(int x, int y, int width, int height)
 
     rlEnableScissorTest();
 
-    if ((CORE.Window.flags & FLAG_WINDOW_HIGHDPI) > 0) {
+    if ((CORE.Window.flags & FLAG_WINDOW_HIGHDPI) > 0)
+    {
         Vector2 scale = GetWindowScaleDPI();
-        rlScissor(
-            x * scale.x,
-            CORE.Window.currentFbo.height - (y + height) * scale.y,
-            width * scale.x,
-            height * scale.y);
-    } else {
+        
+        rlScissor(x*scale.x, CORE.Window.currentFbo.height - (y + height)*scale.y, width*scale.x, height*scale.y);
+    } 
+    else
+    {
         rlScissor(x, CORE.Window.currentFbo.height - (y + height), width, height);
     }
 }
@@ -4919,11 +4919,15 @@ static void WindowSizeCallback(GLFWwindow *window, int width, int height)
     CORE.Window.screen.width = width;
     CORE.Window.screen.height = height;
 #else
-    if ((CORE.Window.flags & FLAG_WINDOW_HIGHDPI) > 0) {
+    if ((CORE.Window.flags & FLAG_WINDOW_HIGHDPI) > 0)
+    {
         Vector2 windowScaleDPI = GetWindowScaleDPI();
-        CORE.Window.screen.width = width / windowScaleDPI.x;
-        CORE.Window.screen.height = height / windowScaleDPI.y;
-    } else {
+
+        CORE.Window.screen.width = width/windowScaleDPI.x;
+        CORE.Window.screen.height = height/windowScaleDPI.y;
+    } 
+    else
+    {
         CORE.Window.screen.width = width;
         CORE.Window.screen.height = height;
     }
