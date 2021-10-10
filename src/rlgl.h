@@ -105,11 +105,6 @@
 
 #define RLGL_VERSION  "4.0"
 
-// Function specifiers definition
-#ifndef RLAPI
-    #define RLAPI       // Functions defined as 'extern' by default (implicit specifiers)
-#endif
-
 // Function specifiers in case library is build/used as a shared library (Windows)
 // NOTE: Microsoft specifiers to tell compiler that symbols are imported/exported from a .dll
 #if defined(_WIN32)
@@ -118,6 +113,11 @@
     #elif defined(USE_LIBTYPE_SHARED)
         #define RLAPI __declspec(dllimport)     // We are using the library as a Win32 shared library (.dll)
     #endif
+#endif
+
+// Function specifiers definition
+#ifndef RLAPI
+    #define RLAPI       // Functions defined as 'extern' by default (implicit specifiers)
 #endif
 
 // Support TRACELOG macros
