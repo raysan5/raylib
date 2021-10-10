@@ -1538,13 +1538,25 @@ void SetWindowSize(int width, int height)
 // Get current screen width
 int GetScreenWidth(void)
 {
-    return CORE.Window.currentFbo.width;
+    return CORE.Window.screen.width;
 }
 
 // Get current screen height
 int GetScreenHeight(void)
 {
-    return CORE.Window.currentFbo.height;
+    return CORE.Window.screen.height;
+}
+
+// Get current render width which is equal to screen width * dpi scale
+int GetRenderWidth(void)
+{
+    return CORE.Window.render.width;
+}
+
+// Get current screen height which is equal to screen height * dpi scale
+int GetRenderHeight(void)
+{
+    return CORE.Window.render.height;
 }
 
 // Get native window handle
@@ -2136,8 +2148,8 @@ void EndTextureMode(void)
     SetupViewport(CORE.Window.render.width, CORE.Window.render.height);
 
     // Reset current fbo to screen size
-    CORE.Window.currentFbo.width = CORE.Window.screen.width;
-    CORE.Window.currentFbo.height = CORE.Window.screen.height;
+    CORE.Window.currentFbo.width = CORE.Window.render.width;
+    CORE.Window.currentFbo.height = CORE.Window.render.height;
 }
 
 // Begin custom shader mode
@@ -2172,7 +2184,17 @@ void BeginScissorMode(int x, int y, int width, int height)
     rlDrawRenderBatchActive();      // Update and draw internal render batch
 
     rlEnableScissorTest();
-    rlScissor(x, CORE.Window.currentFbo.height - (y + height), width, height);
+
+    if ((CORE.Window.flags & FLAG_WINDOW_HIGHDPI) > 0) {
+        Vector2 scale = GetWindowScaleDPI();
+        rlScissor(
+            x * scale.x,
+            CORE.Window.currentFbo.height - (y + height) * scale.y,
+            width * scale.x,
+            height * scale.y);
+    } else {
+        rlScissor(x, CORE.Window.currentFbo.height - (y + height), width, height);
+    }
 }
 
 // End scissor mode
@@ -3842,16 +3864,6 @@ static bool InitGraphicsDevice(int width, int height)
         TRACELOG(LOG_WARNING, "GLFW: Failed to initialize Window");
         return false;
     }
-    else
-    {
-        TRACELOG(LOG_INFO, "DISPLAY: Device initialized successfully");
-#if defined(PLATFORM_DESKTOP)
-        TRACELOG(LOG_INFO, "    > Display size: %i x %i", CORE.Window.display.width, CORE.Window.display.height);
-#endif
-        TRACELOG(LOG_INFO, "    > Render size:  %i x %i", CORE.Window.render.width, CORE.Window.render.height);
-        TRACELOG(LOG_INFO, "    > Screen size:  %i x %i", CORE.Window.screen.width, CORE.Window.screen.height);
-        TRACELOG(LOG_INFO, "    > Viewport offsets: %i, %i", CORE.Window.renderOffset.x, CORE.Window.renderOffset.y);
-    }
 
     // Set window callback events
     glfwSetWindowSizeCallback(CORE.Window.handle, WindowSizeCallback);      // NOTE: Resizing not allowed by default!
@@ -4300,12 +4312,8 @@ static bool InitGraphicsDevice(int width, int height)
     rlLoadExtensions(eglGetProcAddress);
 #endif
 
-    // Initialize OpenGL context (states and resources)
-    // NOTE: CORE.Window.screen.width and CORE.Window.screen.height not used, just stored as globals in rlgl
-    rlglInit(CORE.Window.screen.width, CORE.Window.screen.height);
-
-    int fbWidth = CORE.Window.render.width;
-    int fbHeight = CORE.Window.render.height;
+    int fbWidth = CORE.Window.screen.width;
+    int fbHeight = CORE.Window.screen.height;
 
 #if defined(PLATFORM_DESKTOP)
     if ((CORE.Window.flags & FLAG_WINDOW_HIGHDPI) > 0)
@@ -4324,11 +4332,25 @@ static bool InitGraphicsDevice(int width, int height)
     }
 #endif
 
+    CORE.Window.currentFbo.width = fbWidth;
+    CORE.Window.currentFbo.height = fbHeight;
+    CORE.Window.render.width = CORE.Window.currentFbo.width;
+    CORE.Window.render.height = CORE.Window.currentFbo.height;
+
+    // Initialize OpenGL context (states and resources)
+    // NOTE: CORE.Window.currentFbo.width and CORE.Window.currentFbo.height not used, just stored as globals in rlgl
+    rlglInit(CORE.Window.currentFbo.width, CORE.Window.currentFbo.height);
+
     // Setup default viewport
     SetupViewport(fbWidth, fbHeight);
 
-    CORE.Window.currentFbo.width = CORE.Window.screen.width;
-    CORE.Window.currentFbo.height = CORE.Window.screen.height;
+    TRACELOG(LOG_INFO, "DISPLAY: Device initialized successfully");
+#if defined(PLATFORM_DESKTOP)
+    TRACELOG(LOG_INFO, "    > Display size: %i x %i", CORE.Window.display.width, CORE.Window.display.height);
+#endif
+    TRACELOG(LOG_INFO, "    > Screen size:  %i x %i", CORE.Window.screen.width, CORE.Window.screen.height);
+    TRACELOG(LOG_INFO, "    > Render size:  %i x %i", CORE.Window.render.width, CORE.Window.render.height);
+    TRACELOG(LOG_INFO, "    > Viewport offsets: %i, %i", CORE.Window.renderOffset.x, CORE.Window.renderOffset.y);
 
     ClearBackground(RAYWHITE);      // Default background color for raylib games :P
 
@@ -4893,8 +4915,19 @@ static void WindowSizeCallback(GLFWwindow *window, int width, int height)
     if (IsWindowFullscreen()) return;
 
     // Set current screen size
+#if defined(__APPLE__)
     CORE.Window.screen.width = width;
     CORE.Window.screen.height = height;
+#else
+    if ((CORE.Window.flags & FLAG_WINDOW_HIGHDPI) > 0) {
+        Vector2 windowScaleDPI = GetWindowScaleDPI();
+        CORE.Window.screen.width = width / windowScaleDPI.x;
+        CORE.Window.screen.height = height / windowScaleDPI.y;
+    } else {
+        CORE.Window.screen.width = width;
+        CORE.Window.screen.height = height;
+    }
+#endif
 
     // NOTE: Postprocessing texture is not scaled to new size
 }
