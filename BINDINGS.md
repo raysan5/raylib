@@ -17,7 +17,7 @@ Some people ported raylib to other languages in form of bindings or wrappers to 
 | nelua-raylib       | 3.7 | [nelua](https://nelua.io/)            | https://github.com/AKDev21/nelua-raylib |
 | NimraylibNow!      | 3.7 | [Nim](https://nim-lang.org/)          | https://github.com/greenfork/nimraylib_now        |
 | raylib-Forever     | auto | [Nim](https://nim-lang.org/)          | https://github.com/Guevara-chan/Raylib-Forever    |
-| Ray4Laz            | 3.7 | [Pascal](https://en.wikipedia.org/wiki/Pascal_(programming_language))         | https://github.com/GuvaCode/Ray4Laz      | 
+| Ray4Laz            | 3.7 | [Pascal](https://en.wikipedia.org/wiki/Pascal_(programming_language))         | https://github.com/GuvaCode/Ray4Laz      |
 | pyraylib          | 3.7 | [Python](https://www.python.org/)        |   https://github.com/Ho011/pyraylib       |
 | raylib-python-cffi | 3.7 | [Python](https://www.python.org/)        | https://github.com/electronstudio/raylib-python-cffi    |
 | jaylib             | 3.7 | [Java](https://en.wikipedia.org/wiki/Java_(programming_language))           | https://github.com/electronstudio/jaylib/   |
@@ -37,13 +37,14 @@ Some people ported raylib to other languages in form of bindings or wrappers to 
 | Relib              | 3.5 | [ReCT](https://github.com/RedCubeDev-ByteSpace/ReCT) | https://github.com/RedCubeDev-ByteSpace/Relib |
 | rayex              | 3.7 | [elixir](https://elixir-lang.org/)         | https://github.com/shiryel/rayex |
 | kaylib             | 3.7 | [Kotlin/native](https://kotlinlang.org) | https://github.com/electronstudio/kaylib |
+| s48-raylib         | 3.7 | [Scheme48](https://s48.org)             | https://github.com/rc-05/s48-raylib |
 
 ### Utility Wrapers
 These are utility wrappers for specific languages, they are not required to use raylib in the language but may adapt the raylib API to be more inline with the language's pardigm.
 |  name              | raylib version | language  | repo                                                                 |
 |:------------------:|:-------------: | :--------:|----------------------------------------------------------------------|
 | raylib-cpp         | 3.7 | [C++](https://en.wikipedia.org/wiki/C%2B%2B)     | https://github.com/robloach/raylib-cpp      |
- 
+
 ### Older or Unmaintained Language Bindings
 These are older raylib bindings that are more than 2 versions old or have not been maintained.
 |  name              | raylib version | language  | repo                                                                 |
