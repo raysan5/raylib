@@ -58,8 +58,8 @@ int main(void)
                 DrawCylinderWires((Vector3){4.0f, 0.0f, -2.0f}, 1.0f, 2.0f, 3.0f, 4, DARKBLUE);
                 DrawCylinderWires((Vector3){4.5f, -1.0f, 2.0f}, 1.0f, 1.0f, 2.0f, 6, BROWN);
 
-                DrawCylinder((Vector3){1.0f, 0.0f, -4.0f}, 0.0f, 1.5f, 3.0f, 8, GOLD);
-                DrawCylinderWires((Vector3){1.0f, 0.0f, -4.0f}, 0.0f, 1.5f, 3.0f, 8, PINK);
+                DrawCylinderEx((Vector3){1.0f, 0.0f, -4.0f}, (Vector3){-2.0f, 0.0f, -4.0f}, 1.5f, 0.0f, 8, GOLD);
+                DrawCylinderWiresEx((Vector3){1.0f, 0.0f, -4.0f}, (Vector3){-2.0f, 0.0f, -4.0f}, 1.5f, 0.0f, 8, PINK);
 
                 DrawGrid(10, 1.0f);        // Draw a grid
 
