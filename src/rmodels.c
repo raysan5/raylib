@@ -712,9 +712,59 @@ void DrawSphereWires(Vector3 centerPos, float radius, int rings, int slices, Col
 // NOTE: It could be also used for pyramid and cone
 void DrawCylinder(Vector3 position, float radiusTop, float radiusBottom, float height, int sides, Color color)
 {
-    Vector3 endPos = position;
-    endPos.y += height;
-    DrawCylinderEx(position, endPos, radiusBottom, radiusTop, sides, color);
+    if (sides < 3) sides = 3;
+
+    int numVertex = sides*6;
+    rlCheckRenderBatchLimit(numVertex);
+
+    rlPushMatrix();
+        rlTranslatef(position.x, position.y, position.z);
+
+        rlBegin(RL_TRIANGLES);
+            rlColor4ub(color.r, color.g, color.b, color.a);
+
+            if (radiusTop > 0)
+            {
+                // Draw Body -------------------------------------------------------------------------------------
+                for (int i = 0; i < 360; i += 360/sides)
+                {
+                    rlVertex3f(sinf(DEG2RAD*i)*radiusBottom, 0, cosf(DEG2RAD*i)*radiusBottom); //Bottom Left
+                    rlVertex3f(sinf(DEG2RAD*(i + 360.0f/sides))*radiusBottom, 0, cosf(DEG2RAD*(i + 360.0f/sides))*radiusBottom); //Bottom Right
+                    rlVertex3f(sinf(DEG2RAD*(i + 360.0f/sides))*radiusTop, height, cosf(DEG2RAD*(i + 360.0f/sides))*radiusTop); //Top Right
+
+                    rlVertex3f(sinf(DEG2RAD*i)*radiusTop, height, cosf(DEG2RAD*i)*radiusTop); //Top Left
+                    rlVertex3f(sinf(DEG2RAD*i)*radiusBottom, 0, cosf(DEG2RAD*i)*radiusBottom); //Bottom Left
+                    rlVertex3f(sinf(DEG2RAD*(i + 360.0f/sides))*radiusTop, height, cosf(DEG2RAD*(i + 360.0f/sides))*radiusTop); //Top Right
+                }
+
+                // Draw Cap --------------------------------------------------------------------------------------
+                for (int i = 0; i < 360; i += 360/sides)
+                {
+                    rlVertex3f(0, height, 0);
+                    rlVertex3f(sinf(DEG2RAD*i)*radiusTop, height, cosf(DEG2RAD*i)*radiusTop);
+                    rlVertex3f(sinf(DEG2RAD*(i + 360.0f/sides))*radiusTop, height, cosf(DEG2RAD*(i + 360.0f/sides))*radiusTop);
+                }
+            }
+            else
+            {
+                // Draw Cone -------------------------------------------------------------------------------------
+                for (int i = 0; i < 360; i += 360/sides)
+                {
+                    rlVertex3f(0, height, 0);
+                    rlVertex3f(sinf(DEG2RAD*i)*radiusBottom, 0, cosf(DEG2RAD*i)*radiusBottom);
+                    rlVertex3f(sinf(DEG2RAD*(i + 360.0f/sides))*radiusBottom, 0, cosf(DEG2RAD*(i + 360.0f/sides))*radiusBottom);
+                }
+            }
+
+            // Draw Base -----------------------------------------------------------------------------------------
+            for (int i = 0; i < 360; i += 360/sides)
+            {
+                rlVertex3f(0, 0, 0);
+                rlVertex3f(sinf(DEG2RAD*(i + 360.0f/sides))*radiusBottom, 0, cosf(DEG2RAD*(i + 360.0f/sides))*radiusBottom);
+                rlVertex3f(sinf(DEG2RAD*i)*radiusBottom, 0, cosf(DEG2RAD*i)*radiusBottom);
+            }
+        rlEnd();
+    rlPopMatrix();
 }
 
 // Draw a cylinder with base at startPos and top at endPos
@@ -779,9 +829,33 @@ void DrawCylinderEx(Vector3 startPos, Vector3 endPos, float startRadius, float e
 // NOTE: It could be also used for pyramid and cone
 void DrawCylinderWires(Vector3 position, float radiusTop, float radiusBottom, float height, int sides, Color color)
 {
-    Vector3 endPos = position;
-    endPos.y += height;
-    DrawCylinderWiresEx(position, endPos, radiusBottom, radiusTop, sides, color);
+    if (sides < 3) sides = 3;
+
+    int numVertex = sides*8;
+    rlCheckRenderBatchLimit(numVertex);
+
+    rlPushMatrix();
+        rlTranslatef(position.x, position.y, position.z);
+
+        rlBegin(RL_LINES);
+            rlColor4ub(color.r, color.g, color.b, color.a);
+
+            for (int i = 0; i < 360; i += 360/sides)
+            {
+                rlVertex3f(sinf(DEG2RAD*i)*radiusBottom, 0, cosf(DEG2RAD*i)*radiusBottom);
+                rlVertex3f(sinf(DEG2RAD*(i + 360.0f/sides))*radiusBottom, 0, cosf(DEG2RAD*(i + 360.0f/sides))*radiusBottom);
+
+                rlVertex3f(sinf(DEG2RAD*(i + 360.0f/sides))*radiusBottom, 0, cosf(DEG2RAD*(i + 360.0f/sides))*radiusBottom);
+                rlVertex3f(sinf(DEG2RAD*(i + 360.0f/sides))*radiusTop, height, cosf(DEG2RAD*(i + 360.0f/sides))*radiusTop);
+
+                rlVertex3f(sinf(DEG2RAD*(i + 360.0f/sides))*radiusTop, height, cosf(DEG2RAD*(i + 360.0f/sides))*radiusTop);
+                rlVertex3f(sinf(DEG2RAD*i)*radiusTop, height, cosf(DEG2RAD*i)*radiusTop);
+
+                rlVertex3f(sinf(DEG2RAD*i)*radiusTop, height, cosf(DEG2RAD*i)*radiusTop);
+                rlVertex3f(sinf(DEG2RAD*i)*radiusBottom, 0, cosf(DEG2RAD*i)*radiusBottom);
+            }
+        rlEnd();
+    rlPopMatrix();
 }
 
 
