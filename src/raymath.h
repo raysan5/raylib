@@ -69,7 +69,6 @@
         #define RMAPI inline        // Functions may be inlined or external definition used
     #endif
 #endif
-	
 
 //----------------------------------------------------------------------------------
 // Defines and Macros
