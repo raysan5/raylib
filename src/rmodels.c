@@ -777,30 +777,30 @@ void DrawCylinderEx(Vector3 startPos, Vector3 endPos, float startRadius, float e
     rlCheckRenderBatchLimit(numVertex);
     if(sides < 3) sides = 3;
 
-    Vector3 difference = Vector3Subtract(endPos, startPos);
+    Vector3 direction = { endPos.x - startPos.x, endPos.y - startPos.y, endPos.z - startPos.z };
     // Construct a basis of the base and the top face:
-    Vector3 b1 = Vector3Normalize(Vector3Perpendicular(difference));
-    Vector3 b2 = Vector3Normalize(Vector3CrossProduct(b1, difference));
+    Vector3 b1 = Vector3Normalize(Vector3Perpendicular(direction));
+    Vector3 b2 = Vector3Normalize(Vector3CrossProduct(b1, direction));
 
-    float base_angle = (2.0 * PI) / sides;
+    float baseAngle = (2.0*PI)/sides;
 
     rlBegin(RL_TRIANGLES);
         rlColor4ub(color.r, color.g, color.b, color.a);
 
         for (int i = 0; i < sides; i++) {
             // compute the four vertices
-            float s1 = sinf(base_angle * (i+0)) * startRadius;
-            float c1 = cosf(base_angle * (i+0)) * startRadius;
-            Vector3 w1 = Vector3Add(startPos, Vector3Add(Vector3Scale(b1, s1), Vector3Scale(b2, c1)));
-            float s2 = sinf(base_angle * (i+1)) * startRadius;
-            float c2 = cosf(base_angle * (i+1)) * startRadius;
-            Vector3 w2 = Vector3Add(startPos, Vector3Add(Vector3Scale(b1, s2), Vector3Scale(b2, c2)));
-            float s3 = sinf(base_angle * (i+0)) * endRadius;
-            float c3 = cosf(base_angle * (i+0)) * endRadius;
-            Vector3 w3 = Vector3Add(endPos,   Vector3Add(Vector3Scale(b1, s3), Vector3Scale(b2, c3)));
-            float s4 = sinf(base_angle * (i+1)) * endRadius;
-            float c4 = cosf(base_angle * (i+1)) * endRadius;
-            Vector3 w4 = Vector3Add(endPos,   Vector3Add(Vector3Scale(b1, s4), Vector3Scale(b2, c4)));
+            float s1 = sinf(baseAngle*(i + 0))*startRadius;
+            float c1 = cosf(baseAngle*(i + 0))*startRadius;
+            Vector3 w1 = { startPos.x + s1*b1.x + c1*b2.x, startPos.y + s1*b1.y + c1*b2.y, startPos.z + s1*b1.z + c1*b2.z };
+            float s2 = sinf(baseAngle*(i + 1))*startRadius;
+            float c2 = cosf(baseAngle*(i + 1))*startRadius;
+            Vector3 w2 = { startPos.x + s2*b1.x + c2*b2.x, startPos.y + s2*b1.y + c2*b2.y, startPos.z + s2*b1.z + c2*b2.z };
+            float s3 = sinf(baseAngle*(i + 0))*endRadius;
+            float c3 = cosf(baseAngle*(i + 0))*endRadius;
+            Vector3 w3 = { endPos.x + s3*b1.x + c3*b2.x, endPos.y + s3*b1.y + c3*b2.y, endPos.z + s3*b1.z + c3*b2.z };
+            float s4 = sinf(baseAngle*(i + 1))*endRadius;
+            float c4 = cosf(baseAngle*(i + 1))*endRadius;
+            Vector3 w4 = { endPos.x + s4*b1.x + c4*b2.x, endPos.y + s4*b1.y + c4*b2.y, endPos.z + s4*b1.z + c4*b2.z };
 
             if (startRadius > 0) {                              //
                 rlVertex3f(startPos.x, startPos.y, startPos.z); // |
@@ -873,25 +873,25 @@ void DrawCylinderWiresEx(Vector3 startPos, Vector3 endPos, float startRadius, fl
     Vector3 b1 = Vector3Normalize(Vector3Perpendicular(difference));
     Vector3 b2 = Vector3Normalize(Vector3CrossProduct(b1, difference));
 
-    float base_angle = (2.0 * PI) / sides;
+    float baseAngle = (2.0*PI)/sides;
 
     rlBegin(RL_LINES);
         rlColor4ub(color.r, color.g, color.b, color.a);
 
         for (int i = 0; i < sides; i++) {
             // compute the four vertices
-            float s1 = sinf(base_angle * (i+0)) * startRadius;
-            float c1 = cosf(base_angle * (i+0)) * startRadius;
-            Vector3 w1 = Vector3Add(startPos, Vector3Add(Vector3Scale(b1, s1), Vector3Scale(b2, c1)));
-            float s2 = sinf(base_angle * (i+1)) * startRadius;
-            float c2 = cosf(base_angle * (i+1)) * startRadius;
-            Vector3 w2 = Vector3Add(startPos, Vector3Add(Vector3Scale(b1, s2), Vector3Scale(b2, c2)));
-            float s3 = sinf(base_angle * (i+0)) * endRadius;
-            float c3 = cosf(base_angle * (i+0)) * endRadius;
-            Vector3 w3 = Vector3Add(endPos,   Vector3Add(Vector3Scale(b1, s3), Vector3Scale(b2, c3)));
-            float s4 = sinf(base_angle * (i+1)) * endRadius;
-            float c4 = cosf(base_angle * (i+1)) * endRadius;
-            Vector3 w4 = Vector3Add(endPos,   Vector3Add(Vector3Scale(b1, s4), Vector3Scale(b2, c4)));
+            float s1 = sinf(baseAngle*(i + 0))*startRadius;
+            float c1 = cosf(baseAngle*(i + 0))*startRadius;
+            Vector3 w1 = { startPos.x + s1*b1.x + c1*b2.x, startPos.y + s1*b1.y + c1*b2.y, startPos.z + s1*b1.z + c1*b2.z };
+            float s2 = sinf(baseAngle*(i + 1))*startRadius;
+            float c2 = cosf(baseAngle*(i + 1))*startRadius;
+            Vector3 w2 = { startPos.x + s2*b1.x + c2*b2.x, startPos.y + s2*b1.y + c2*b2.y, startPos.z + s2*b1.z + c2*b2.z };
+            float s3 = sinf(baseAngle*(i + 0))*endRadius;
+            float c3 = cosf(baseAngle*(i + 0))*endRadius;
+            Vector3 w3 = { endPos.x + s3*b1.x + c3*b2.x, endPos.y + s3*b1.y + c3*b2.y, endPos.z + s3*b1.z + c3*b2.z };
+            float s4 = sinf(baseAngle*(i + 1))*endRadius;
+            float c4 = cosf(baseAngle*(i + 1))*endRadius;
+            Vector3 w4 = { endPos.x + s4*b1.x + c4*b2.x, endPos.y + s4*b1.y + c4*b2.y, endPos.z + s4*b1.z + c4*b2.z };
 
             rlVertex3f(w1.x, w1.y, w1.z);
             rlVertex3f(w2.x, w2.y, w2.z);
