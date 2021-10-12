@@ -7,12 +7,13 @@
 *
 *   Example contributed by Berni (@Berni8k) and reviewed by Ramon Santamaria (@raysan5)
 *
-*   Copyright (c) 2017 Berni (@Berni8k) and Ramon Santamaria (@raysan5)
+*   Copyright (c) 2017-2021 Berni (@Berni8k) and Ramon Santamaria (@raysan5)
 *
 ********************************************************************************************/
 
 #include "raylib.h"
-#include "raymath.h"
+
+#include "raymath.h"        // Required for: MatrixRotateXYZ()
 
 int main(void)
 {
@@ -33,7 +34,7 @@ int main(void)
 
     // Model loading
     // NOTE: Diffuse map loaded automatically
-    Model model = LoadModel("resources/plane/plane.gltf");
+    Model model = LoadModel("resources/models/gltf/plane/plane.gltf");
 
     float pitch = 0.0f;
     float roll = 0.0f;
