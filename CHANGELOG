@@ -30,6 +30,7 @@ Detailed changes:
 [core] REVIEWED: Raspberry RPI/DRM keyboard blocking render loop (#1879) @luizpestana
 [core] REVIEWED: Android multi-touch (#1869) by @humbe
 [core] REVIEWED: Implemented GetGamepadName() for emscripten by @nbarkhina
+[core] REVIEWED: HighDPI support (#1987) by @ArnaudValensi
 [rlgl] ADDED: rlUpdateVertexBufferElements() (#1915)
 [rlgl] ADDED: rlActiveDrawBuffers() (#1911)
 [rlgl] ADDED: rlEnableColorBlend()/rlDisableColorBlend()
@@ -43,6 +44,7 @@ Detailed changes:
 [shapes] ADDED: RenderPolyLinesEx() (#1758) by @lambertwang
 [shapes] ADDED: DrawLineBezierCubic() (#2021) by @SAOMDVN
 [textures] ADDED: GetImageColor() #2024
+[textures] REMOVED: GenImagePerlinNoise() 
 [textures] RENAMED: GetTextureData() to LoadImageFromTexture()
 [textures] RENAMED: GetScreenData() to LoadImageFromScreen()
 [textures] REVIEWED: ExportImage() to use SaveFileData() (#1779)
@@ -63,6 +65,7 @@ Detailed changes:
 [models] ADDED: GetModelBoundingBox()
 [models] ADDED: DrawBillboardPro() (#1759) by @nobytesgiven
 [models] ADDED: DrawCubeTextureRec() (#2001) by @tdgroot
+[models] ADDED: DrawCylinderEx() and DrawCylinderWiresEx() (#2049) by @Horrowind
 [models] REMOVED: DrawBillboardEx()
 [models] RENAMED: MeshBoundingBox() to GetMeshBoundingBox()
 [models] RENAMED: MeshTangents() to GenMeshTangents()
@@ -87,8 +90,10 @@ Detailed changes:
 [examples] ADDED: core_basic_screen_manager
 [examples] ADDED: core_split_screen (#1806) by @JeffM2501
 [examples] ADDED: core_2d_camera_smooth_pixelperfect (#1771) by @NotManyIdeasDev
-[examples] ADDED: shaders_shapes_outline (#1883) by @GoldenThumbs
-[examples] ADDED: models_magicavoxel_loading (#1940) by @procfxgen
+[examples] ADDED: shaders_texture_outline (#1883) by @GoldenThumbs
+[examples] ADDED: models_loading_vox (#1940) by @procfxgen
+[examples] REMOVED: models_material_pbr
+[examples] REMOVED: models_gltf_animation
 [examples] REVIEWED: core_3d_picking
 [examples] REVIEWED: core_input_mouse
 [examples] REVIEWED: core_vr_simulator, RenderTexture usage
@@ -114,6 +119,7 @@ Detailed changes:
 [examples] REVIEWED: raylib_opengl_interop
 [examples] REVIEWED: rlgl_standalone.c
 [examples] REVIEWED: Resources licenses
+[examples] REVIEWED: models resources reorganization
 [build] ADDED: Zig build file (#2014) by @TommiSinivuo
 [build] ADDED: Android VS2019 solution (#2013) by @Kronka
 [build] REMOVED: VS2017 project, outdated
