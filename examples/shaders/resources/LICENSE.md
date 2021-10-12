@@ -9,5 +9,3 @@
 | raysan.png         | [@raysan5](https://github.com/raysan5)      | [CC0](https://creativecommons.org/publicdomain/zero/1.0/)   | - |
 | space.png          | ❔             | ❔       | - |
 | texel_checker.png  | [@raysan5](https://github.com/raysan5)      | [CC0](https://creativecommons.org/publicdomain/zero/1.0/)   | Made with [UV Checker Map Maker](http://uvchecker.byvalle.com/) |
-| egg.png            | [@GoldenThumbs](https://github.com/GoldenThumbs) |
-| torus.png          | [@GoldenThumbs](https://github.com/GoldenThumbs) |
