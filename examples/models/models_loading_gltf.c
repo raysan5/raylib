@@ -42,14 +42,14 @@ int main(void)
 
     Model model[MAX_MODELS] = { 0 };
 
-    model[0] = LoadModel("resources/gltf/raylib_32x32.glb");
-    model[1] = LoadModel("resources/gltf/rigged_figure.glb");
-    model[2] = LoadModel("resources/gltf/GearboxAssy.glb");
-    model[3] = LoadModel("resources/gltf/BoxAnimated.glb");
-    model[4] = LoadModel("resources/gltf/AnimatedTriangle.gltf");
-    model[5] = LoadModel("resources/gltf/AnimatedMorphCube.glb");
-    model[6] = LoadModel("resources/gltf/vertex_colored_object.glb");
-    model[7] = LoadModel("resources/gltf/girl.glb");
+    model[0] = LoadModel("resources/models/gltf/raylib_32x32.glb");
+    model[1] = LoadModel("resources/models/gltf/rigged_figure.glb");
+    model[2] = LoadModel("resources/models/gltf/GearboxAssy.glb");
+    model[3] = LoadModel("resources/models/gltf/BoxAnimated.glb");
+    model[4] = LoadModel("resources/models/gltf/AnimatedTriangle.gltf");
+    model[5] = LoadModel("resources/models/gltf/AnimatedMorphCube.glb");
+    model[6] = LoadModel("resources/models/gltf/vertex_colored_object.glb");
+    model[7] = LoadModel("resources/models/gltf/girl.glb");
 
     int currentModel = 0;
 

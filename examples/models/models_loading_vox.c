@@ -5,9 +5,9 @@
 *   This example has been created using raylib 3.8 (www.raylib.com)
 *   raylib is licensed under an unmodified zlib/libpng license (View raylib.h for details)
 *
-*   Example contributed by Johann Nadalutti 
+*   Example contributed by Johann Nadalutti (@procfxgen)
 *
-*   Copyright (c) 2021 Johann Nadalutti 
+*   Copyright (c) 2021 Johann Nadalutti (@procfxgen)
 *
 ********************************************************************************************/
 

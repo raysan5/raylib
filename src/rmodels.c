@@ -4289,8 +4289,8 @@ static Model LoadIQM(const char *fileName)
 // Load IQM animation data
 static ModelAnimation* LoadIQMModelAnimations(const char *fileName, unsigned int *animCount)
 {
-#define IQM_MAGIC       "INTERQUAKEMODEL"   // IQM file magic number
-#define IQM_VERSION     2                   // only IQM version 2 supported
+    #define IQM_MAGIC       "INTERQUAKEMODEL"   // IQM file magic number
+    #define IQM_VERSION     2                   // only IQM version 2 supported
 
     unsigned int fileSize = 0;
     unsigned char *fileData = LoadFileData(fileName, &fileSize);
