@@ -714,7 +714,7 @@ void DrawCylinderEx(Vector3 startPos, Vector3 endPos, float startRadius, float e
     if(sides < 3) sides = 3;
 
     Vector3 direction = { endPos.x - startPos.x, endPos.y - startPos.y, endPos.z - startPos.z };
-    if(direction.x == direction.x && direction.y == direction.y && direction.z == direction.z) {
+    if(direction.x == 0 && direction.y == 0 && direction.z == 0) {
         return;
     }
 
@@ -809,7 +809,7 @@ void DrawCylinderWiresEx(Vector3 startPos, Vector3 endPos, float startRadius, fl
     rlCheckRenderBatchLimit(numVertex);
 
     Vector3 direction = { endPos.x - startPos.x, endPos.y - startPos.y, endPos.z - startPos.z };
-    if(direction.x == direction.x && direction.y == direction.y && direction.z == direction.z) {
+    if(direction.x == 0 && direction.y == 0 && direction.z == 0) {
         return;
     }
 
