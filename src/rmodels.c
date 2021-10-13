@@ -714,6 +714,10 @@ void DrawCylinderEx(Vector3 startPos, Vector3 endPos, float startRadius, float e
     if(sides < 3) sides = 3;
 
     Vector3 direction = { endPos.x - startPos.x, endPos.y - startPos.y, endPos.z - startPos.z };
+    if(direction.x == 0 && direction.y == 0 && direction.z == 0) {
+        return;
+    }
+
     // Construct a basis of the base and the top face:
     Vector3 b1 = Vector3Normalize(Vector3Perpendicular(direction));
     Vector3 b2 = Vector3Normalize(Vector3CrossProduct(b1, direction));
@@ -804,10 +808,14 @@ void DrawCylinderWiresEx(Vector3 startPos, Vector3 endPos, float startRadius, fl
     int numVertex = sides*6;
     rlCheckRenderBatchLimit(numVertex);
 
-    Vector3 difference = Vector3Subtract(endPos, startPos);
+    Vector3 direction = { endPos.x - startPos.x, endPos.y - startPos.y, endPos.z - startPos.z };
+    if(direction.x == 0 && direction.y == 0 && direction.z == 0) {
+        return;
+    }
+
     // Construct a basis of the base and the top face:
-    Vector3 b1 = Vector3Normalize(Vector3Perpendicular(difference));
-    Vector3 b2 = Vector3Normalize(Vector3CrossProduct(b1, difference));
+    Vector3 b1 = Vector3Normalize(Vector3Perpendicular(direction));
+    Vector3 b2 = Vector3Normalize(Vector3CrossProduct(b1, direction));
 
     float baseAngle = (2.0*PI)/sides;
 
