@@ -5740,22 +5740,23 @@ static void GetGLTFPrimitiveCount(cgltf_node *node, int *outCount)
 static Model LoadVOX(const char *fileName)
 {
     Model model = { 0 };
+
     int nbvertices = 0;
     int meshescount = 0;
-    unsigned int readed = 0;
-    unsigned char* fileData;
+    unsigned int fileSize = 0;
+    unsigned char *fileData = NULL;
 
-    //Read vox file into buffer
-    fileData = LoadFileData(fileName, &readed);
+    // Read vox file into buffer
+    fileData = LoadFileData(fileName, &fileSize);
     if (fileData == 0)
     {
         TRACELOG(LOG_WARNING, "MODEL: [%s] Failed to load VOX file", fileName);
         return model;
     }
 
-    //Read and build voxarray description
+    // Read and build voxarray description
     VoxArray3D voxarray = { 0 };
-    int ret = Vox_LoadFromMemory(fileData, readed, &voxarray);
+    int ret = Vox_LoadFromMemory(fileData, fileSize, &voxarray);
 
     if (ret != VOX_SUCCESS)
     {
@@ -5778,12 +5779,12 @@ static Model LoadVOX(const char *fileName)
     model.transform = MatrixIdentity();
 
     model.meshCount = meshescount;
-    model.meshes = (Mesh *)MemAlloc(model.meshCount*sizeof(Mesh));
+    model.meshes = (Mesh *)RL_CALLOC(model.meshCount, sizeof(Mesh));
 
-    model.meshMaterial = (int *)MemAlloc(model.meshCount*sizeof(int));
+    model.meshMaterial = (int *)RL_CALLOC(model.meshCount, sizeof(int));
 
     model.materialCount = 1;
-    model.materials = (Material *)MemAlloc(model.materialCount*sizeof(Material));
+    model.materials = (Material *)RL_CALLOC(model.materialCount, sizeof(Material));
     model.materials[0] = LoadMaterialDefault();
 
     // Init model meshes
@@ -5791,58 +5792,47 @@ static Model LoadVOX(const char *fileName)
     int verticesMax = 65532; // 5461 voxels x 12 vertices per voxel -> 65532 (must be inf 65536)
 
     // 6*4 = 12 vertices per voxel
-    Vector3 *pvertices = { 0 };
-    pvertices->x = voxarray.vertices.array->x;
-    pvertices->y = voxarray.vertices.array->y;
-    pvertices->z = voxarray.vertices.array->z;
-
-    Color *pcolors = { 0 };
-    pcolors->r = voxarray.colors.array->r;
-    pcolors->g = voxarray.colors.array->g;
-    pcolors->b = voxarray.colors.array->b;
-    pcolors->a = voxarray.colors.array->a;
+    Vector3 *pvertices = (Vector3 *)voxarray.vertices.array;
+    Color *pcolors = (Color *)voxarray.colors.array;
 
     unsigned short *pindices = voxarray.indices.array;    // 5461*6*6 = 196596 indices max per mesh
 
     int size = 0;
 
-    for (int idxMesh = 0; idxMesh < meshescount; idxMesh++)
+    for (int i = 0; i < meshescount; i++)
     {
-        Mesh *pmesh = &model.meshes[idxMesh];
+        Mesh *pmesh = &model.meshes[i];
         memset(pmesh, 0, sizeof(Mesh));
 
         // Copy vertices
         pmesh->vertexCount = (int)fmin(verticesMax, verticesRemain);
 
         size = pmesh->vertexCount*sizeof(float)*3;
-        pmesh->vertices = MemAlloc(size);
+        pmesh->vertices = RL_MALLOC(size);
         memcpy(pmesh->vertices, pvertices, size);
 
         // Copy indices
         // TODO: Compute globals indices array
-        size = voxarray.indices.used * sizeof(unsigned short);
-        pmesh->indices = MemAlloc(size);
+        size = voxarray.indices.used*sizeof(unsigned short);
+        pmesh->indices = RL_MALLOC(size);
         memcpy(pmesh->indices, pindices, size);
 
         pmesh->triangleCount = (pmesh->vertexCount/4)*2;
 
         // Copy colors
         size = pmesh->vertexCount*sizeof(Color);
-        pmesh->colors = MemAlloc(size);
+        pmesh->colors = RL_MALLOC(size);
         memcpy(pmesh->colors, pcolors, size);
 
         // First material index
-        model.meshMaterial[idxMesh] = 0;
-
-        // Upload mesh data to GPU
-        UploadMesh(pmesh, false);
+        model.meshMaterial[i] = 0;
 
         verticesRemain -= verticesMax;
         pvertices += verticesMax;
         pcolors += verticesMax;
     }
 
-    //Free buffers
+    // Free buffers
     Vox_FreeArrays(&voxarray);
     UnloadFileData(fileData);
 
