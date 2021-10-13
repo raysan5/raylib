@@ -49,21 +49,18 @@ revision history:
 #ifndef VOX_LOADER_H
 #define VOX_LOADER_H
 
-#include <string.h>
-#include <stdlib.h>
-
 // Allow custom memory allocators
 #ifndef VOX_MALLOC
-    #define VOX_MALLOC    RL_MALLOC
+    #define VOX_MALLOC(sz)     malloc(sz)
 #endif
 #ifndef VOX_CALLOC
-    #define VOX_CALLOC    RL_CALLOC
+    #define VOX_CALLOC(n,sz)   calloc(n,sz)
 #endif
 #ifndef VOX_REALLOC
-    #define VOX_REALLOC   RL_REALLOC
+    #define VOX_REALLOC(n,sz)  realloc(n,sz)
 #endif
 #ifndef VOX_FREE
-    #define VOX_FREE      RL_FREE
+    #define VOX_FREE(p)        free(p)
 #endif
 
 #define VOX_SUCCESS (0)
@@ -156,6 +153,9 @@ void Vox_FreeArrays(VoxArray3D* voxarray);
 /////////////////////////////////////////////////////////////////////////////////////////////
 
 #ifdef VOX_LOADER_IMPLEMENTATION
+
+#include <string.h>
+#include <stdlib.h>
 
 /////////////////////////////////////////////////////////////////////////////////////////////
 // ArrayUShort helper
