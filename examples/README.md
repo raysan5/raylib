@@ -1,3 +1,21 @@
+## Building the Examples
+
+The examples assume you have already built the `raylib` library in `../src`.
+
+### With GNU make
+
+- `make` builds all examples
+- `make [module]` builds all examples for a particular module (e.g `make core`)
+
+### With Zig
+
+The [Zig](https://ziglang.org/) toolchain can compile `C` and `C++` in addition to `Zig`.
+You may find it easier to use than other toolchains, especially when it comes to cross-compiling.
+
+- `zig build` to compile all examples
+- `zig build [module]` to compile all examples for a module (e.g. `zig build core`)
+- `zig build [example]` to compile _and run_ a particular example (e.g. `zig build core_basic_window`)
+
 ## EXAMPLES LIST
 
 ### category: core
