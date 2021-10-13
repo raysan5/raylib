@@ -719,7 +719,7 @@ void DrawCylinderEx(Vector3 startPos, Vector3 endPos, float startRadius, float e
     Vector3 b1 = Vector3Normalize(Vector3Perpendicular(direction));
     Vector3 b2 = Vector3Normalize(Vector3CrossProduct(b1, direction));
 
-    float baseAngle = (2.0*PI)/sides;
+    float baseAngle = (2.0f*PI)/sides;
 
     rlBegin(RL_TRIANGLES);
         rlColor4ub(color.r, color.g, color.b, color.a);
@@ -812,7 +812,7 @@ void DrawCylinderWiresEx(Vector3 startPos, Vector3 endPos, float startRadius, fl
     Vector3 b1 = Vector3Normalize(Vector3Perpendicular(direction));
     Vector3 b2 = Vector3Normalize(Vector3CrossProduct(b1, direction));
 
-    float baseAngle = (2.0*PI)/sides;
+    float baseAngle = (2.0f*PI)/sides;
 
     rlBegin(RL_LINES);
         rlColor4ub(color.r, color.g, color.b, color.a);
@@ -3785,7 +3785,7 @@ static Model LoadOBJ(const char *fileName)
         // iff no materials are present use all faces on one mesh
         if (materialCount > 0)
         {
-            for (int fi = 0; fi< attrib.num_faces; fi++)
+            for (unsigned int fi = 0; fi < attrib.num_faces; fi++)
             {
                 //tinyobj_vertex_index_t face = attrib.faces[fi];
                 int idx = attrib.material_ids[fi];
