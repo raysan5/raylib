@@ -5,7 +5,7 @@
 *   FEATURES:
 *       - NO external dependencies, all required libraries included with raylib
 *       - Multiplatform: Windows, Linux, FreeBSD, OpenBSD, NetBSD, DragonFly,
-*                        MacOS, Haiku, UWP, Android, Raspberry Pi, HTML5.
+*                        MacOS, Haiku, Android, Raspberry Pi, DRM native, HTML5.
 *       - Written in plain C code (C99) in PascalCase/camelCase notation
 *       - Hardware accelerated with OpenGL (1.1, 2.1, 3.3 or ES2 - choose at compile)
 *       - Unique OpenGL abstraction layer (usable as standalone module): [rlgl]
@@ -21,29 +21,28 @@
 *       - Bindings to multiple programming languages available!
 *
 *   NOTES:
-*       One default Font is loaded on InitWindow()->LoadFontDefault() [core, text]
-*       One default Texture2D is loaded on rlglInit(), 1x1 white pixel R8G8B8A8 [rlgl] (OpenGL 3.3 or ES2)
-*       One default Shader is loaded on rlglInit()->rlLoadShaderDefault() [rlgl] (OpenGL 3.3 or ES2)
-*       One default RenderBatch is loaded on rlglInit()->rlLoadRenderBatch() [rlgl] (OpenGL 3.3 or ES2)
+*       - One default Font is loaded on InitWindow()->LoadFontDefault() [core, text]
+*       - One default Texture2D is loaded on rlglInit(), 1x1 white pixel R8G8B8A8 [rlgl] (OpenGL 3.3 or ES2)
+*       - One default Shader is loaded on rlglInit()->rlLoadShaderDefault() [rlgl] (OpenGL 3.3 or ES2)
+*       - One default RenderBatch is loaded on rlglInit()->rlLoadRenderBatch() [rlgl] (OpenGL 3.3 or ES2)
 *
 *   DEPENDENCIES (included):
-*       [core] rglfw (Camilla Löwy - github.com/glfw/glfw) for window/context management and input (PLATFORM_DESKTOP)
+*       [rcore] rglfw (Camilla Löwy - github.com/glfw/glfw) for window/context management and input (PLATFORM_DESKTOP)
 *       [rlgl] glad (David Herberth - github.com/Dav1dde/glad) for OpenGL 3.3 extensions loading (PLATFORM_DESKTOP)
 *       [raudio] miniaudio (David Reid - github.com/mackron/miniaudio) for audio device/context management
 *
 *   OPTIONAL DEPENDENCIES (included):
-*       [core] msf_gif (Miles Fogle) for GIF recording
-*       [core] sinfl (Micha Mettke) for DEFLATE decompression algorythm
-*       [core] sdefl (Micha Mettke) for DEFLATE compression algorythm
-*       [textures] stb_image (Sean Barret) for images loading (BMP, TGA, PNG, JPEG, HDR...)
-*       [textures] stb_image_write (Sean Barret) for image writting (BMP, TGA, PNG, JPG)
-*       [textures] stb_image_resize (Sean Barret) for image resizing algorithms
-*       [textures] stb_perlin (Sean Barret) for Perlin noise image generation
-*       [text] stb_truetype (Sean Barret) for ttf fonts loading
-*       [text] stb_rect_pack (Sean Barret) for rectangles packing
-*       [models] par_shapes (Philip Rideout) for parametric 3d shapes generation
-*       [models] tinyobj_loader_c (Syoyo Fujita) for models loading (OBJ, MTL)
-*       [models] cgltf (Johannes Kuhlmann) for models loading (glTF)
+*       [rcore] msf_gif (Miles Fogle) for GIF recording
+*       [rcore] sinfl (Micha Mettke) for DEFLATE decompression algorythm
+*       [rcore] sdefl (Micha Mettke) for DEFLATE compression algorythm
+*       [rtextures] stb_image (Sean Barret) for images loading (BMP, TGA, PNG, JPEG, HDR...)
+*       [rtextures] stb_image_write (Sean Barret) for image writting (BMP, TGA, PNG, JPG)
+*       [rtextures] stb_image_resize (Sean Barret) for image resizing algorithms
+*       [rtext] stb_truetype (Sean Barret) for ttf fonts loading
+*       [rtext] stb_rect_pack (Sean Barret) for rectangles packing
+*       [rmodels] par_shapes (Philip Rideout) for parametric 3d shapes generation
+*       [rmodels] tinyobj_loader_c (Syoyo Fujita) for models loading (OBJ, MTL)
+*       [rmodels] cgltf (Johannes Kuhlmann) for models loading (glTF)
 *       [raudio] dr_wav (David Reid) for WAV audio file loading
 *       [raudio] dr_flac (David Reid) for FLAC audio file loading
 *       [raudio] dr_mp3 (David Reid) for MP3 audio file loading
