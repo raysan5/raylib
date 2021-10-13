@@ -22,9 +22,9 @@
 #define NUM_VOX_FILES  3
 
 const char* szVoxFiles[] = {
-	"resources/vox/chr_knight.vox",
-	"resources/vox/chr_sword.vox",
-	"resources/vox/monu9.vox"
+	"resources/models/vox/chr_knight.vox",
+	"resources/models/vox/chr_sword.vox",
+	"resources/models/vox/monu9.vox"
 };
 
 
@@ -49,9 +49,9 @@ int main(void)
 		models[i] = LoadModel(szVoxFiles[i]);
 
 		t1 = GetTime() * 1000.0;
-		TraceLog(LOG_INFO, TextFormat("Vox <%s> loaded in %f ms", GetFileName(szVoxFiles[i]), t1 - t0));
+		//TraceLog(LOG_INFO, TextFormat("Vox <%s> loaded in %f ms", GetFileName(szVoxFiles[i]), t1 - t0));
 
-		//Compute model's center matrix 
+		// Compute model's center matrix 
 		BoundingBox  bb = GetModelBoundingBox(models[i]);
 		Vector3 center;
 		center.x = bb.min.x  + (((bb.max.x - bb.min.x) / 2));
@@ -59,8 +59,6 @@ int main(void)
 
 		Matrix matP = MatrixTranslate(-center.x, 0, -center.z);
 		models[i].transform = matP;
-
-
 	}
 
 
