@@ -279,7 +279,7 @@ Image LoadImageAnim(const char *fileName, int *frames)
 #endif
     else image = LoadImage(fileName);
 
-    // TODO: Support APNG animated images?
+    // TODO: Support APNG animated images
 
     *frames = frameCount;
     return image;
@@ -1481,7 +1481,7 @@ void ImageResizeCanvas(Image *image, int newWidth, int newHeight, int offsetX, i
         int bytesPerPixel = GetPixelDataSize(1, 1, image->format);
         unsigned char *resizedData = (unsigned char *)RL_CALLOC(newWidth*newHeight*bytesPerPixel, 1);
 
-        // TODO: Fill resizedData with fill color (must be formatted to image->format)
+        // TODO: Fill resized canvas with fill color (must be formatted to image->format)
 
         int dstOffsetSize = ((int)dstPos.y*newWidth + (int)dstPos.x)*bytesPerPixel;
 
@@ -2893,7 +2893,7 @@ TextureCubemap LoadTextureCubemap(Image image, int layout)
             faces = GenImageColor(size, size*6, MAGENTA);
             ImageFormat(&faces, image.format);
 
-            // TODO: Image formating does not work with compressed textures!
+            // NOTE: Image formating does not work with compressed textures
         }
 
         for (int i = 0; i < 6; i++) ImageDraw(&faces, image, faceRecs[i], (Rectangle){ 0, (float)size*i, (float)size, (float)size }, WHITE);
@@ -3818,9 +3818,33 @@ Color GetPixelColor(void *srcPtr, int format)
         } break;
         case PIXELFORMAT_UNCOMPRESSED_R8G8B8A8: color = (Color){ ((unsigned char *)srcPtr)[0], ((unsigned char *)srcPtr)[1], ((unsigned char *)srcPtr)[2], ((unsigned char *)srcPtr)[3] }; break;
         case PIXELFORMAT_UNCOMPRESSED_R8G8B8: color = (Color){ ((unsigned char *)srcPtr)[0], ((unsigned char *)srcPtr)[1], ((unsigned char *)srcPtr)[2], 255 }; break;
-        // TODO: case PIXELFORMAT_UNCOMPRESSED_R32: break;
-        // TODO: case PIXELFORMAT_UNCOMPRESSED_R32G32B32: break;
-        // TODO: case PIXELFORMAT_UNCOMPRESSED_R32G32B32A32: break;
+        case PIXELFORMAT_UNCOMPRESSED_R32:
+        {
+            // NOTE: Pixel normalized float value is converted to [0..255]
+            color.r = (unsigned char)(((float *)srcPtr)[0]*255.0f);
+            color.g = (unsigned char)(((float *)srcPtr)[0]*255.0f);
+            color.b = (unsigned char)(((float *)srcPtr)[0]*255.0f);
+            color.a = 255;
+            
+        } break;
+        case PIXELFORMAT_UNCOMPRESSED_R32G32B32: 
+        {
+            // NOTE: Pixel normalized float value is converted to [0..255]
+            color.r = (unsigned char)(((float *)srcPtr)[0]*255.0f);
+            color.g = (unsigned char)(((float *)srcPtr)[1]*255.0f);
+            color.b = (unsigned char)(((float *)srcPtr)[2]*255.0f);
+            color.a = 255;
+
+        } break;
+        case PIXELFORMAT_UNCOMPRESSED_R32G32B32A32:
+        {
+            // NOTE: Pixel normalized float value is converted to [0..255]
+            color.r = (unsigned char)(((float *)srcPtr)[0]*255.0f);
+            color.g = (unsigned char)(((float *)srcPtr)[1]*255.0f);
+            color.b = (unsigned char)(((float *)srcPtr)[2]*255.0f);
+            color.a = (unsigned char)(((float *)srcPtr)[3]*255.0f);
+
+        } break;
         default: break;
     }
 

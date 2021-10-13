@@ -1294,8 +1294,8 @@ void rlVertex3f(float x, float y, float z)
         RLGL.currentBatch->vertexBuffer[RLGL.currentBatch->currentBuffer].texcoords[2*RLGL.State.vertexCounter] = RLGL.State.texcoordx;
         RLGL.currentBatch->vertexBuffer[RLGL.currentBatch->currentBuffer].texcoords[2*RLGL.State.vertexCounter + 1] = RLGL.State.texcoordy;
 
-        // Add current normal
-        // TODO.
+        // TODO: Add current normal
+        // By default rlVertexBuffer type does not store normals
 
         // Add current color
         RLGL.currentBatch->vertexBuffer[RLGL.currentBatch->currentBuffer].colors[4*RLGL.State.vertexCounter] = RLGL.State.colorr;

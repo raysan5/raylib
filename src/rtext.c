@@ -775,8 +775,6 @@ Image GenImageFontAtlas(const GlyphInfo *chars, Rectangle **charRecs, int glyphC
         RL_FREE(context);
     }
 
-    // TODO: Crop image if required for smaller size
-
     // Convert image data from GRAYSCALE to GRAY_ALPHA
     unsigned char *dataGrayAlpha = (unsigned char *)RL_MALLOC(atlas.width*atlas.height*sizeof(unsigned char)*2); // Two channels
 
@@ -1352,7 +1350,7 @@ const char *TextToUpper(const char *text)
             buffer[i] = (char)toupper(text[i]);
             //if ((text[i] >= 'a') && (text[i] <= 'z')) buffer[i] = text[i] - 32;
 
-            // TODO: Support UTF-8 diacritics!
+            // TODO: Support UTF-8 diacritics to upper-case
             //if ((text[i] >= 'à') && (text[i] <= 'ý')) buffer[i] = text[i] - 32;
         }
         else { buffer[i] = '\0'; break; }

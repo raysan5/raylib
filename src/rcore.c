@@ -680,11 +680,11 @@ void android_main(struct android_app *app)
     char arg0[] = "raylib";     // NOTE: argv[] are mutable
     CORE.Android.app = app;
 
-    // TODO: Should we maybe report != 0 return codes somewhere?
+    // NOTE: Return codes != 0 are skipped
     (void)main(1, (char *[]) { arg0, NULL });
 }
 
-// TODO: Add this to header (if apps really need it)
+// NOTE: Add this to header (if apps really need it)
 struct android_app *GetAndroidApp(void)
 {
     return CORE.Android.app;
@@ -1519,7 +1519,6 @@ void SetWindowMinSize(int width, int height)
 }
 
 // Set window dimensions
-// TODO: Issues on HighDPI scaling
 void SetWindowSize(int width, int height)
 {
 #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
@@ -1528,8 +1527,7 @@ void SetWindowSize(int width, int height)
 #if defined(PLATFORM_WEB)
     //emscripten_set_canvas_size(width, height);  // DEPRECATED!
 
-    // TODO: Below functions should be used to replace previous one but
-    // they do not seem to work properly
+    // TODO: Below functions should be used to replace previous one but they do not seem to work properly
     //emscripten_set_canvas_element_size("canvas", width, height);
     //emscripten_set_element_css_size("canvas", width, height);
 #endif
@@ -2677,7 +2675,6 @@ void TakeScreenshot(const char *fileName)
     emscripten_run_script(TextFormat("saveFileFromMEMFSToDisk('%s','%s')", GetFileName(path), GetFileName(path)));
 #endif
 
-    // TODO: Verification required for log
     TRACELOG(LOG_INFO, "SYSTEM: [%s] Screenshot taken successfully", path);
 }
 
@@ -3593,8 +3590,6 @@ Vector2 GetTouchPosition(int index)
 #if defined(PLATFORM_WEB) || defined(PLATFORM_RPI) || defined(PLATFORM_DRM)
     if (index < MAX_TOUCH_POINTS) position = CORE.Input.Touch.position[index];
     else TRACELOG(LOG_WARNING, "INPUT: Required touch point out of range (Max touch points: %i)", MAX_TOUCH_POINTS);
-
-    // TODO: Touch position scaling required?
 #endif
 
     return position;
@@ -5473,8 +5468,6 @@ static EM_BOOL EmscriptenGamepadCallback(int eventType, const EmscriptenGamepadE
     }
     else CORE.Input.Gamepad.ready[gamepadEvent->index] = false;
 
-    // TODO: Test gamepadEvent->index
-
     return 0;
 }
 #endif
@@ -5539,7 +5532,6 @@ static void RestoreKeyboard(void)
 
 #if defined(SUPPORT_SSH_KEYBOARD_RPI)
 // Process keyboard inputs
-// TODO: Most probably input reading and processing should be in a separate thread
 static void ProcessKeyboard(void)
 {
     #define MAX_KEYBUFFER_SIZE      32      // Max size in bytes to read
@@ -5894,7 +5886,7 @@ static void ConfigureEvdevDevice(char *device)
 static void PollKeyboardEvents(void)
 {
     // Scancode to keycode mapping for US keyboards
-    // TODO: Probably replace this with a keymap from the X11 to get the correct regional map for the keyboard:
+    // TODO: Replace this with a keymap from the X11 to get the correct regional map for the keyboard:
     // Currently non US keyboards will have the wrong mapping for some keys
     static const int keymapUS[] = {
         0, 256, 49, 50, 51, 52, 53, 54, 55, 56, 57, 48, 45, 61, 259, 258, 81, 87, 69, 82, 84,
@@ -6380,7 +6372,6 @@ static void LoadAutomationEvents(const char *fileName)
 // Export recorded events into a file
 static void ExportAutomationEvents(const char *fileName)
 {
-    // TODO: eventCount is required -> header? -> rAEL
     unsigned char fileId[4] = "rEP ";
 
     // Save as binary
