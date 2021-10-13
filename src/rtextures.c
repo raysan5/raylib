@@ -3825,9 +3825,9 @@ Color GetPixelColor(void *srcPtr, int format)
             color.g = (unsigned char)(((float *)srcPtr)[0]*255.0f);
             color.b = (unsigned char)(((float *)srcPtr)[0]*255.0f);
             color.a = 255;
-            
+
         } break;
-        case PIXELFORMAT_UNCOMPRESSED_R32G32B32: 
+        case PIXELFORMAT_UNCOMPRESSED_R32G32B32:
         {
             // NOTE: Pixel normalized float value is converted to [0..255]
             color.r = (unsigned char)(((float *)srcPtr)[0]*255.0f);

@@ -1678,7 +1678,7 @@ void SeekMusicStream(Music music, float position)
 #endif
         default: break;
     }
-    
+
     music.stream.buffer->framesProcessed = positionInFrames;
 }
 
