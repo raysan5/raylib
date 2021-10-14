@@ -41,6 +41,10 @@
 *   #define SUPPORT_GL_DETAILS_INFO
 *       Show OpenGL extensions and capabilities detailed logs on init
 *
+*   #define SUPPORT_COMPUTE_SHADERS
+*       Enable compute shaders and shader storage buffer object support.
+*       Currently only work with GRAPHICS_API_OPENGL_33 with appropriate driver support.
+*
 *   rlgl capabilities could be customized just defining some internal
 *   values before library inclusion (default values listed):
 *
@@ -645,8 +649,9 @@ RLAPI void rlSetUniformMatrix(int locIndex, Matrix mat);                      //
 RLAPI void rlSetUniformSampler(int locIndex, unsigned int textureId);           // Set shader value sampler
 RLAPI void rlSetShader(unsigned int id, int *locs);                             // Set shader currently active (id and locations)
 
+#if defined(SUPPORT_COMPUTE_SHADERS)
 // Compute shader management
-RLAPI unsigned int rlLoadComputeShaderProgram(int shaderId);
+RLAPI unsigned int rlLoadComputeShaderProgram(unsigned int shaderId);
 RLAPI void rlComputeShaderDispatch(unsigned int groupX, unsigned int groupY, unsigned int groupZ);
 
 // Shader buffer storage object management (ssbo)
@@ -659,6 +664,8 @@ RLAPI void rlBindShaderBuffer(unsigned int id, unsigned int index);
 
 // Buffer management
 RLAPI void rlCopyBuffersElements(unsigned int destId, unsigned int srcId, unsigned long long destOffset, unsigned long long srcOffset, unsigned long long count);
+RLAPI void rlBindImageTexture(unsigned int id, unsigned int index, unsigned int format, int readonly);
+#endif
 
 // Matrix state management
 RLAPI Matrix rlGetMatrixModelview(void);                                  // Get internal modelview matrix
@@ -3756,7 +3763,7 @@ void rlSetShader(unsigned int id, int *locs)
 #endif
 }
 
-unsigned int rlLoadComputeShaderProgram(int shaderId)
+unsigned int rlLoadComputeShaderProgram(unsigned int shaderId)
 {
     unsigned int program = 0;
 
@@ -3803,6 +3810,7 @@ unsigned int rlLoadComputeShaderProgram(int shaderId)
     return program;
 }
 
+#if defined(SUPPORT_COMPUTE_SHADERS)
 void rlComputeShaderDispatch(unsigned int groupX, unsigned int groupY, unsigned int groupZ)
 {
 #if defined(GRAPHICS_API_OPENGL_33)
@@ -3872,6 +3880,16 @@ void rlCopyBuffersElements(unsigned int destId, unsigned int srcId, unsigned lon
 #endif
 }
 
+void rlBindImageTexture(unsigned int id, unsigned int index, unsigned int format, int readonly)
+{
+#if defined(GRAPHICS_API_OPENGL_33)
+    int glInternalFormat = 0, glFormat = 0, glType = 0;
+
+    rlGetGlTextureFormats(format, &glInternalFormat, &glFormat, &glType);
+    glBindImageTexture(index, id, 0, 0, 0, readonly ? GL_READ_ONLY : GL_READ_WRITE, glInternalFormat);
+#endif
+}
+#endif
 
 // Matrix state management
 //-----------------------------------------------------------------------------------------
