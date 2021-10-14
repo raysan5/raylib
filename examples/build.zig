@@ -25,7 +25,11 @@ fn add_module(comptime module: []const u8, b: *std.build.Builder, target: std.zi
         exe.setTarget(target);
         exe.setBuildMode(mode);
         exe.linkLibC();
-        exe.addObjectFile("../src/libraylib.a");
+        exe.addObjectFile(switch (target.getOsTag()) {
+            .windows => "../src/raylib.lib",
+            .linux => "../src/libraylib.a",
+            else => @panic("Unsupported OS"),
+        });
 
         exe.addIncludeDir("../src");
         exe.addIncludeDir("../src/external");
