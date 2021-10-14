@@ -18,6 +18,9 @@ fn add_module(comptime module: []const u8, b: *std.build.Builder, target: std.zi
         const name = entry.name[0..extension_idx];
         const path = try std.fs.path.join(b.allocator, &.{ module, entry.name });
 
+        // zig's mingw headers do not include pthread.h
+        if (std.mem.eql(u8, "core_loading_thread", name) and target.getOsTag() == .windows) continue;
+
         const exe = b.addExecutable(name, path);
         exe.setTarget(target);
         exe.setBuildMode(mode);
