@@ -128,7 +128,7 @@ static Model LoadOBJ(const char *fileName);     // Load OBJ mesh data
 #endif
 #if defined(SUPPORT_FILEFORMAT_IQM)
 static Model LoadIQM(const char *fileName);     // Load IQM mesh data
-static ModelAnimation *LoadIQMModelAnimations(const char *fileName, unsigned int *animCount);    // Load IQM animation data
+static ModelAnimation *LoadModelAnimationsIQM(const char *fileName, unsigned int *animCount);    // Load IQM animation data
 #endif
 #if defined(SUPPORT_FILEFORMAT_GLTF)
 static Model LoadGLTF(const char *fileName);    // Load GLTF mesh data
@@ -1809,7 +1809,7 @@ ModelAnimation *LoadModelAnimations(const char *fileName, unsigned int *animCoun
     ModelAnimation *animations = NULL;
 
 #if defined(SUPPORT_FILEFORMAT_IQM)
-    if (IsFileExtension(fileName, ".iqm")) animations = LoadIQMModelAnimations(fileName, animCount);
+    if (IsFileExtension(fileName, ".iqm")) animations = LoadModelAnimationsIQM(fileName, animCount);
 #endif
 #if defined(SUPPORT_FILEFORMAT_GLTF)
     if (IsFileExtension(fileName, ".gltf;.glb")) animations = LoadGLTFModelAnimations(fileName, animCount);
@@ -4290,7 +4290,7 @@ static Model LoadIQM(const char *fileName)
 }
 
 // Load IQM animation data
-static ModelAnimation* LoadIQMModelAnimations(const char *fileName, unsigned int *animCount)
+static ModelAnimation* LoadModelAnimationsIQM(const char *fileName, unsigned int *animCount)
 {
     #define IQM_MAGIC       "INTERQUAKEMODEL"   // IQM file magic number
     #define IQM_VERSION     2                   // only IQM version 2 supported
@@ -4503,74 +4503,98 @@ static ModelAnimation* LoadIQMModelAnimations(const char *fileName, unsigned int
 #endif
 
 #if defined(SUPPORT_FILEFORMAT_GLTF)
-
-static const unsigned char base64Table[] = {
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 62, 0, 0, 0, 63, 52, 53,
-    54, 55, 56, 57, 58, 59, 60, 61, 0, 0,
-    0, 0, 0, 0, 0, 0, 1, 2, 3, 4,
-    5, 6, 7, 8, 9, 10, 11, 12, 13, 14,
-    15, 16, 17, 18, 19, 20, 21, 22, 23, 24,
-    25, 0, 0, 0, 0, 0, 0, 26, 27, 28,
-    29, 30, 31, 32, 33, 34, 35, 36, 37, 38,
-    39, 40, 41, 42, 43, 44, 45, 46, 47, 48,
-    49, 50, 51
-};
-
-static int GetSizeBase64(char *input)
+// Encode data to Base64 string
+char *EncodeBase64(const unsigned char *data, int inputLength, int *outputLength)
 {
-    int size = 0;
-
-    for (int i = 0; input[4*i] != 0; i++)
+    static const unsigned char base64encodeTable[] = {
+        'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X',
+        'Y', 'Z', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v',
+        'w', 'x', 'y', 'z', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '+', '/'
+    };
+    
+    static const int modTable[] = { 0, 2, 1 };
+    
+    *outputLength = 4*((inputLength + 2)/3);
+ 
+    char *encodedData = RL_MALLOC(*outputLength);
+    
+    if (encodedData == NULL) return NULL;
+ 
+    for (int i = 0, j = 0; i < inputLength;)
     {
-        if (input[4*i + 3] == '=')
-        {
-            if (input[4*i + 2] == '=') size += 1;
-            else size += 2;
-        }
-        else size += 3;
+        unsigned int octetA = (i < inputLength)? (unsigned char)data[i++] : 0;
+        unsigned int octetB = (i < inputLength)? (unsigned char)data[i++] : 0;
+        unsigned int octetC = (i < inputLength)? (unsigned char)data[i++] : 0;
+ 
+        unsigned int triple = (octetA << 0x10) + (octetB << 0x08) + octetC;
+ 
+        encodedData[j++] = base64encodeTable[(triple >> 3*6) & 0x3F];
+        encodedData[j++] = base64encodeTable[(triple >> 2*6) & 0x3F];
+        encodedData[j++] = base64encodeTable[(triple >> 1*6) & 0x3F];
+        encodedData[j++] = base64encodeTable[(triple >> 0*6) & 0x3F];
     }
 
-    return size;
+    for (int i = 0; i < modTable[inputLength%3]; i++) encodedData[*outputLength - 1 - i] = '=';
+ 
+    return encodedData;
 }
 
-static unsigned char *DecodeBase64(char *input, int *size)
+// Decode Base64 string data
+static unsigned char *DecodeBase64(char *data, int *outputLength)
 {
-    *size = GetSizeBase64(input);
-
-    unsigned char *buf = (unsigned char *)RL_MALLOC(*size);
-    for (int i = 0; i < *size/3; i++)
+    static const unsigned char base64decodeTable[] = {
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 62, 0, 0, 0, 63, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 
+        11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 0, 0, 0, 0, 0, 0, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 
+        37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51
+    };
+    
+    // Get output size of Base64 input data
+    int outLength = 0;
+    for (int i = 0; data[4*i] != 0; i++)
     {
-        unsigned char a = base64Table[(int)input[4*i]];
-        unsigned char b = base64Table[(int)input[4*i + 1]];
-        unsigned char c = base64Table[(int)input[4*i + 2]];
-        unsigned char d = base64Table[(int)input[4*i + 3]];
-
-        buf[3*i] = (a << 2) | (b >> 4);
-        buf[3*i + 1] = (b << 4) | (c >> 2);
-        buf[3*i + 2] = (c << 6) | d;
+        if (data[4*i + 3] == '=')
+        {
+            if (data[4*i + 2] == '=') size += 1;
+            else outLength += 2;
+        }
+        else outLength += 3;
     }
 
-    if (*size%3 == 1)
+    // Allocate memory to store decoded Base64 data
+    unsigned char *decodedData = (unsigned char *)RL_MALLOC(outLength);
+
+    for (int i = 0; i < outLength/3; i++)
     {
-        int n = *size/3;
-        unsigned char a = base64Table[(int)input[4*n]];
-        unsigned char b = base64Table[(int)input[4*n + 1]];
-        buf[*size - 1] = (a << 2) | (b >> 4);
+        unsigned char a = base64decodeTable[(int)data[4*i]];
+        unsigned char b = base64decodeTable[(int)data[4*i + 1]];
+        unsigned char c = base64decodeTable[(int)data[4*i + 2]];
+        unsigned char d = base64decodeTable[(int)data[4*i + 3]];
+
+        decodedData[3*i] = (a << 2) | (b >> 4);
+        decodedData[3*i + 1] = (b << 4) | (c >> 2);
+        decodedData[3*i + 2] = (c << 6) | d;
     }
-    else if (*size%3 == 2)
+
+    if (outLength%3 == 1)
     {
-        int n = *size/3;
-        unsigned char a = base64Table[(int)input[4*n]];
-        unsigned char b = base64Table[(int)input[4*n + 1]];
-        unsigned char c = base64Table[(int)input[4*n + 2]];
-        buf[*size - 2] = (a << 2) | (b >> 4);
-        buf[*size - 1] = (b << 4) | (c >> 2);
+        int n = outLength/3;
+        unsigned char a = base64decodeTable[(int)data[4*n]];
+        unsigned char b = base64decodeTable[(int)data[4*n + 1]];
+        decodedData[outLength - 1] = (a << 2) | (b >> 4);
     }
-    return buf;
+    else if (outLength%3 == 2)
+    {
+        int n = outLength/3;
+        unsigned char a = base64decodeTable[(int)data[4*n]];
+        unsigned char b = base64decodeTable[(int)data[4*n + 1]];
+        unsigned char c = base64decodeTable[(int)data[4*n + 2]];
+        decodedData[outLength - 2] = (a << 2) | (b >> 4);
+        decodedData[outLength - 1] = (b << 4) | (c >> 2);
+    }
+
+    *outputLength = outLength;
+    return decodedData;
 }
 
 // Load texture from cgltf_image
@@ -4597,9 +4621,11 @@ static Image LoadImageFromCgltfImage(cgltf_image *image, const char *texPath, Co
             if (image->uri[i] == 0) TRACELOG(LOG_WARNING, "IMAGE: glTF data URI is not a valid image");
             else
             {
-                int size = 0;
-                unsigned char *data = DecodeBase64(image->uri + i + 1, &size);
+                //cgltf_result cgltf_load_buffer_base64(const cgltf_options* options, cgltf_size size, const char* base64, void** out_data)
 
+                int size = 0;
+                unsigned char *data = DecodeBase64(image->uri + i + 1, &size);  // TODO: Use cgltf_load_buffer_base64()
+                
                 rimage = LoadImageFromMemory(".png", data, size);
                 RL_FREE(data);
 
@@ -4698,7 +4724,7 @@ static bool ReadGLTFValue(cgltf_accessor *acc, unsigned int index, void *variabl
     return true;
 }
 
-static void *ReadGLTFValuesAs(cgltf_accessor* acc, cgltf_component_type type, bool adjustOnDownCasting)
+static void *ReadGLTFValuesAs(cgltf_accessor *acc, cgltf_component_type type, bool adjustOnDownCasting)
 {
     unsigned int count = acc->count;
     unsigned int typeSize = 0;
@@ -5068,54 +5094,54 @@ static Model LoadGLTF(const char *fileName)
     Model model = { 0 };
 
     // glTF file loading
-    unsigned int dataSize = 0;
-    unsigned char *fileData = LoadFileData(fileName, &dataSize);
+    unsigned int fileSize = 0;
+    unsigned char *fileData = LoadFileData(fileName, &fileSize);
 
     if (fileData == NULL) return model;
 
     // glTF data loading
-    cgltf_options options = { 0 };
-    cgltf_data *data = NULL;
-    cgltf_result result = cgltf_parse(&options, fileData, dataSize, &data);
+    cgltf_data *gltfData = NULL;
+    cgltf_options gltfOptions = { 0 };  // TODO: Define custom allocators/file-accessors
+    cgltf_result result = cgltf_parse(&gltfOptions, fileData, fileSize, &gltfData);
 
     if (result == cgltf_result_success)
     {
-        TRACELOG(LOG_INFO, "MODEL: [%s] glTF meshes (%s) count: %i", fileName, (data->file_type == 2)? "glb" : "gltf", data->meshes_count);
-        TRACELOG(LOG_INFO, "MODEL: [%s] glTF materials (%s) count: %i", fileName, (data->file_type == 2)? "glb" : "gltf", data->materials_count);
+        TRACELOG(LOG_INFO, "MODEL: [%s] glTF meshes (%s) count: %i", fileName, (gltfData->file_type == 2)? "glb" : "gltf", gltfData->meshes_count);
+        TRACELOG(LOG_INFO, "MODEL: [%s] glTF materials (%s) count: %i", fileName, (gltfData->file_type == 2)? "glb" : "gltf", gltfData->materials_count);
 
         // Read data buffers
-        result = cgltf_load_buffers(&options, data, fileName);
+        result = cgltf_load_buffers(&gltfOptions, gltfData, fileName);  // TODO: Not needed, gltfData already contains URIs to buffers for manual loading
         if (result != cgltf_result_success) TRACELOG(LOG_INFO, "MODEL: [%s] Failed to load mesh/material buffers", fileName);
 
-        if (data->scenes_count > 1) TRACELOG(LOG_INFO, "MODEL: [%s] Has multiple scenes but only the first one will be loaded", fileName);
+        if (gltfData->scenes_count > 1) TRACELOG(LOG_INFO, "MODEL: [%s] Has multiple scenes but only the first one will be loaded", fileName);
 
         int primitiveCount = 0;
-        for (unsigned int i = 0; i < data->scene->nodes_count; i++)
+        for (unsigned int i = 0; i < gltfData->scene->nodes_count; i++)
         {
-            GetGLTFPrimitiveCount(data->scene->nodes[i], &primitiveCount);
+            GetGLTFPrimitiveCount(gltfData->scene->nodes[i], &primitiveCount);  // TODO: Recursive function, really needed?
         }
 
         // Process glTF data and map to model
         model.meshCount = primitiveCount;
         model.meshes = RL_CALLOC(model.meshCount, sizeof(Mesh));
-        model.materialCount = (int)data->materials_count + 1;
+        model.materialCount = (int)gltfData->materials_count + 1;
         model.materials = RL_MALLOC(model.materialCount*sizeof(Material));
         model.meshMaterial = RL_MALLOC(model.meshCount*sizeof(int));
-        model.boneCount = (int)data->nodes_count;
+        model.boneCount = (int)gltfData->nodes_count;
         model.bones = RL_CALLOC(model.boneCount, sizeof(BoneInfo));
         model.bindPose = RL_CALLOC(model.boneCount, sizeof(Transform));
 
-        InitGLTFBones(&model, data);
-        LoadGLTFMaterial(&model, fileName, data);
+        InitGLTFBones(&model, gltfData);
+        LoadGLTFMaterial(&model, fileName, gltfData);
 
         int primitiveIndex = 0;
-        for (unsigned int i = 0; i < data->scene->nodes_count; i++)
+        for (unsigned int i = 0; i < gltfData->scene->nodes_count; i++)
         {
             Matrix staticTransform = MatrixIdentity();
-            LoadGLTFNode(data, data->scene->nodes[i], &model, staticTransform, &primitiveIndex, fileName);
+            LoadGLTFNode(gltfData, gltfData->scene->nodes[i], &model, staticTransform, &primitiveIndex, fileName);  // TODO: Recursive function, really needed?
         }
 
-        cgltf_free(data);
+        cgltf_free(gltfData);
     }
     else TRACELOG(LOG_WARNING, "MODEL: [%s] Failed to load glTF data", fileName);
 
@@ -5561,6 +5587,7 @@ static ModelAnimation *LoadGLTFModelAnimations(const char *fileName, unsigned in
 void LoadGLTFMesh(cgltf_data *data, cgltf_node *node, Model *outModel, Matrix currentTransform, int *primitiveIndex, const char *fileName)
 {
     cgltf_mesh *mesh = node->mesh;
+
     for (unsigned int p = 0; p < mesh->primitives_count; p++)
     {
         for (unsigned int j = 0; j < mesh->primitives[p].attributes_count; j++)
@@ -5569,6 +5596,7 @@ void LoadGLTFMesh(cgltf_data *data, cgltf_node *node, Model *outModel, Matrix cu
             {
                 cgltf_accessor *acc = mesh->primitives[p].attributes[j].data;
                 outModel->meshes[(*primitiveIndex)].vertexCount = (int)acc->count;
+                
                 int bufferSize = outModel->meshes[(*primitiveIndex)].vertexCount*3*sizeof(float);
                 outModel->meshes[(*primitiveIndex)].animVertices = RL_MALLOC(bufferSize);
 
@@ -5629,6 +5657,7 @@ void LoadGLTFMesh(cgltf_data *data, cgltf_node *node, Model *outModel, Matrix cu
                 unsigned int totalBoneWeights = boneCount*4;
                 outModel->meshes[(*primitiveIndex)].boneIds = RL_MALLOC(totalBoneWeights*sizeof(int));
                 short *bones = ReadGLTFValuesAs(acc, cgltf_component_type_r_16, false);
+                
                 // Find skin joint
                 for (unsigned int a = 0; a < totalBoneWeights; a++)
                 {
@@ -5638,6 +5667,7 @@ void LoadGLTFMesh(cgltf_data *data, cgltf_node *node, Model *outModel, Matrix cu
                     unsigned int skinJointId = skinJoint - data->nodes;
                     outModel->meshes[(*primitiveIndex)].boneIds[a] = skinJointId;
                 }
+                
                 RL_FREE(bones);
             }
             else if (mesh->primitives[p].attributes[j].type == cgltf_attribute_type_weights)
