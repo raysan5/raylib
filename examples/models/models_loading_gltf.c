@@ -40,8 +40,8 @@ int main(void)
     camera.fovy = 45.0f;                                // Camera field-of-view Y
     camera.projection = CAMERA_PERSPECTIVE;             // Camera mode type
 
+    // Load some models
     Model model[MAX_MODELS] = { 0 };
-
     model[0] = LoadModel("resources/models/gltf/raylib_32x32.glb");
     model[1] = LoadModel("resources/models/gltf/rigged_figure.glb");
     model[2] = LoadModel("resources/models/gltf/GearboxAssy.glb");
@@ -65,7 +65,7 @@ int main(void)
     {
         // Update
         //----------------------------------------------------------------------------------
-        UpdateCamera(&camera);
+        UpdateCamera(&camera);          // Update our camera with inputs
 
         if (IsKeyReleased(KEY_RIGHT))
         {
@@ -78,6 +78,7 @@ int main(void)
             currentModel--;
             if (currentModel < 0) currentModel = MAX_MODELS - 1;
         }
+        //----------------------------------------------------------------------------------
 
         // Draw
         //----------------------------------------------------------------------------------
@@ -87,8 +88,7 @@ int main(void)
 
             BeginMode3D(camera);
 
-                DrawModelEx(model[currentModel], position, (Vector3){ 0.0f, 1.0f, 0.0f }, 180.0f, (Vector3){ 2.0f, 2.0f, 2.0f }, WHITE);
-
+                DrawModel(model[currentModel], position, 1.0f, WHITE);
                 DrawGrid(10, 1.0f);         // Draw a grid
 
             EndMode3D();

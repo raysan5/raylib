@@ -12,21 +12,10 @@
 ********************************************************************************************/
 
 #include "raylib.h"
-#include "raymath.h"
 
-#include <string.h>
-
-
-// VOX Files to load and view
+#include "raymath.h"        // Required for: MatrixTranslate()
 
 #define NUM_VOX_FILES  3
-
-const char* szVoxFiles[] = {
-	"resources/models/vox/chr_knight.vox",
-	"resources/models/vox/chr_sword.vox",
-	"resources/models/vox/monu9.vox"
-};
-
 
 int main(void)
 {
@@ -34,63 +23,63 @@ int main(void)
 	//--------------------------------------------------------------------------------------
 	const int screenWidth = 800;
 	const int screenHeight = 450;
+    
+    const char *voxFileNames[] = {
+        "resources/models/vox/chr_knight.vox",
+        "resources/models/vox/chr_sword.vox",
+        "resources/models/vox/monu9.vox"
+    };
 
 	InitWindow(screenWidth, screenHeight, "raylib [models] example - magicavoxel loading");
+    
+    // Define the camera to look into our 3d world
+    Camera camera = { 0 };
+    camera.position = (Vector3){ 10.0f, 10.0f, 10.0f }; // Camera position
+    camera.target = (Vector3){ 0.0f, 0.0f, 0.0f };      // Camera looking at point
+    camera.up = (Vector3){ 0.0f, 1.0f, 0.0f };          // Camera up vector (rotation towards target)
+    camera.fovy = 45.0f;                                // Camera field-of-view Y
+    camera.projection = CAMERA_PERSPECTIVE;             // Camera mode type
 
 	// Load MagicaVoxel files
 	Model models[NUM_VOX_FILES] = { 0 };
 
 	for (int i = 0; i < NUM_VOX_FILES; i++)
 	{
-		// Load MagicaVoxel File and build model
-		double t0, t1;
-		t0 = GetTime() * 1000.0;
+        // Load VOX file and measure time
+		double t0 = GetTime()*1000.0;
+		models[i] = LoadModel(voxFileNames[i]);
+		double t1 = GetTime()*1000.0;
+		
+        TraceLog(LOG_WARNING, TextFormat("[%s] File loaded in %.3f ms", voxFileNames[i], t1 - t0));
 
-		models[i] = LoadModel(szVoxFiles[i]);
+		// Compute model translation matrix to center model on draw position (0, 0 , 0) 
+		BoundingBox bb = GetModelBoundingBox(models[i]);
+		Vector3 center = { 0 };
+		center.x = bb.min.x  + (((bb.max.x - bb.min.x)/2));
+		center.z = bb.min.z  + (((bb.max.z - bb.min.z)/2));
 
-		t1 = GetTime() * 1000.0;
-		//TraceLog(LOG_INFO, TextFormat("Vox <%s> loaded in %f ms", GetFileName(szVoxFiles[i]), t1 - t0));
-
-		// Compute model's center matrix 
-		BoundingBox  bb = GetModelBoundingBox(models[i]);
-		Vector3 center;
-		center.x = bb.min.x  + (((bb.max.x - bb.min.x) / 2));
-		center.z = bb.min.z  + (((bb.max.z - bb.min.z) / 2));
-
-		Matrix matP = MatrixTranslate(-center.x, 0, -center.z);
-		models[i].transform = matP;
+		Matrix matTranslate = MatrixTranslate(-center.x, 0, -center.z);
+		models[i].transform = matTranslate;
 	}
 
-
-	// Define the camera to look into our 3d world
-	Camera camera = { { 0.0f, 10.0f, 10.0f }, { 0.0f, 0.0f, 0.0f }, { 0.0f, 1.0f, 0.0f }, 45.0f, 0 };
-
-	// Model drawing position
-	Vector3 position = { 0.0f, 0.0f, 0.0f };
-
 	int currentModel = 0;
-
-
 
 	SetCameraMode(camera, CAMERA_ORBITAL);  // Set a orbital camera mode
 
 	SetTargetFPS(60);               // Set our game to run at 60 frames-per-second
-
 	//--------------------------------------------------------------------------------------
+    
 	// Main game loop
-	//--------------------------------------------------------------------------------------
 	while (!WindowShouldClose())    // Detect window close button or ESC key
 	{
-		//--------------------------------------------------------------------------------------
 		// Update
 		//----------------------------------------------------------------------------------
-		UpdateCamera(&camera);      // Update internal camera and our camera
+		UpdateCamera(&camera);      // Update our camera to orbit
 
-		if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT))
-		{
-			currentModel = (currentModel + 1) % NUM_VOX_FILES; // Cycle between models
-		}
+        // Cycle between models on mouse click
+		if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) currentModel = (currentModel + 1)%NUM_VOX_FILES; 
 
+        // Cycle between models on key pressed
 		if (IsKeyPressed(KEY_RIGHT))
 		{
 			currentModel++;
@@ -101,34 +90,27 @@ int main(void)
 			currentModel--;
 			if (currentModel < 0) currentModel = NUM_VOX_FILES - 1;
 		}
-
 		//----------------------------------------------------------------------------------
+        
 		// Draw
 		//----------------------------------------------------------------------------------
 		BeginDrawing();
 
-		ClearBackground(RAYWHITE);
+            ClearBackground(RAYWHITE);
+            
+            // Draw 3D model
+            BeginMode3D(camera);
 
-		//Display model
-		BeginMode3D(camera);
+                DrawModel(models[currentModel], (Vector3){ 0, 0, 0 }, 1.0f, WHITE);
+                DrawGrid(10, 1.0);
 
-		Vector3 rotAxis = { 1,0,0 };
-		Vector3 scale = { 1,1,1 };
+            EndMode3D();
 
-
-		DrawModelEx(models[currentModel], position, rotAxis, 0, scale, WHITE);
-		//DrawModelWiresEx(models[currentModel], position, rotAxis, -90.0f, scale, BLACK);
-
-		DrawGrid(10, 1.0);
-
-		EndMode3D();
-
-		//Display debug infos
-		DrawRectangle(30, 400, 310, 30, Fade(SKYBLUE, 0.5f));
-		DrawRectangleLines(30, 400, 310, 30, Fade(DARKBLUE, 0.5f));
-		DrawText("MOUSE LEFT BUTTON to CYCLE VOX MODELS", 40, 410, 10, BLUE);
-
-		DrawText(GetFileName(szVoxFiles[currentModel]), 100, 10, 20, DARKBLUE);
+            // Display info
+            DrawRectangle(10, 400, 310, 30, Fade(SKYBLUE, 0.5f));
+            DrawRectangleLines(10, 400, 310, 30, Fade(DARKBLUE, 0.5f));
+            DrawText("MOUSE LEFT BUTTON to CYCLE VOX MODELS", 40, 410, 10, BLUE);
+            DrawText(TextFormat("File: %s", GetFileName(voxFileNames[currentModel])), 10, 10, 20, GRAY);
 
 		EndDrawing();
 		//----------------------------------------------------------------------------------
@@ -136,7 +118,6 @@ int main(void)
 
 	// De-Initialization
 	//--------------------------------------------------------------------------------------
-
 	// Unload models data (GPU VRAM)
 	for (int i = 0; i < NUM_VOX_FILES; i++) UnloadModel(models[i]);
 

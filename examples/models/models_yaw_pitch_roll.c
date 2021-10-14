@@ -79,7 +79,6 @@ int main(void)
         model.transform = MatrixRotateXYZ((Vector3){ DEG2RAD*pitch, DEG2RAD*yaw, DEG2RAD*roll });
         //----------------------------------------------------------------------------------
 
-
         // Draw
         //----------------------------------------------------------------------------------
         BeginDrawing();
