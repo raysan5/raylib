@@ -4,18 +4,11 @@
 
 The following people is currently [**sponsoring raylib**](https://github.com/sponsors/raysan5) with a generous donation to allow improving and growing the project!
 
-Note that Sponsors donations vary between sponsors, I just decided not to make any distinction while listing them.
-
  - Eric J. ([@ProfJski](https://github.com/ProfJski))
- - devdad ([@devdad](https://github.com/devdad))
  - Zach Geis ([@zacgeis](https://github.com/zacgeis))
  - minirop ([@minirop](https://github.com/minirop))
  - Daniel Gómez ([@Koocachookies](https://github.com/Koocachookies))
- - Sergio ([@anidealgift](https://github.com/anidealgift))
  - Marc Agüera ([@maguera93](https://github.com/maguera93))
- - Pau Fernández ([@pauek](https://github.com/pauek))
- - Snowminx ([@Gamerfiend](https://github.com/Gamerfiend))
- - NimbusFox ([@NimbusFox](https://github.com/NimbusFox))
  - Robin Mattheussen ([@romatthe](https://github.com/romatthe))
  - Grant Haywood ([@cinterloper](https://github.com/cinterloper))
  - Terry Nguyen ([@terrehbyte](https://github.com/terrehbyte))
@@ -25,10 +18,17 @@ Note that Sponsors donations vary between sponsors, I just decided not to make a
  - cob ([@majorcob](https://github.com/majorcob))
  - Samuel Batista ([@gamedevsam](https://github.com/gamedevsam))
  - Merlyn Morgan-Graham ([@kavika13](https://github.com/kavika13))
- - Toby4213 ([@Toby4213](https://github.com/Toby4213))
  - linus ([@hochbaum](https://github.com/hochbaum))
  - Nawarian ([@nawarian](https://github.com/nawarian) - [thephp.website](https://thephp.website/))
-
+ - kenzie ([@sme-ek](https://github.com/sme-ek))
+ - Allan Regush ([@AllanRegush](https://github.com/AllanRegush))
+ - Jeffery Myers ([@JeffM2501](https://github.com/ProfJski))
+ - Ryan Roden-Corrent ([@rcorre](https://github.com/ProfJski))
+ - michaelfiber ([@michaelfiber](https://github.com/ProfJski))
+ - Nikhilesh S ([@nikki93](https://github.com/ProfJski))
+ - kevinabraun ([@kevinabraun](https://github.com/ProfJski))
+ - Matthew Owens ([@MatthewOwens](https://github.com/ProfJski))
+ - Tim Eilers ([@eilerstim](https://github.com/ProfJski))
 
 ### Past raylib GitHub Sponsors
 
@@ -49,6 +49,16 @@ The following people has **sponsored raylib** in the past, allowing the project 
  - James Ghawaly ([@jghawaly](https://github.com/jghawaly))
  - jack ([@Jack-Ji](https://github.com/Jack-Ji))
  - Guido Offermans ([@jghawaly](https://github.com/GuidoOffermans))
+ - devdad ([@devdad](https://github.com/devdad))
+ - Pau Fernández ([@pauek](https://github.com/pauek))
+ - Sergio ([@anidealgift](https://github.com/anidealgift))
+ - Snowminx ([@Gamerfiend](https://github.com/Gamerfiend))
+ - NimbusFox ([@NimbusFox](https://github.com/NimbusFox))
+ - Shylie ([@Shylie](https://github.com/Shylie))
+ - Livio Dal Maso ([@Humeur](https://github.com/Humeur))
+ - Diego Vaccher ([@denny0754](https://github.com/denny0754))
+ - Ricardo Alcantara ([@ricardoalcantara](https://github.com/ricardoalcantara))
+ - Toby4213 ([@Toby4213](https://github.com/Toby4213))
 
 ### Notes for Current/Past raylib Sponsor
 
