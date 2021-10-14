@@ -62,7 +62,7 @@ The following people has **sponsored raylib** in the past, allowing the project 
 
 ### Notes for Current/Past raylib Sponsor
 
- - **If you are not on the list, feel free to send a PR to add you if desired.**
- - **If you want your personal webpage listed along your GitHub account, feel free to send a PR to add it.**
- - **If you prefer not to listed in this list, feel free to send a PR to remove it.**
+ - If you are not on the list, feel free to send a PR to be added (if desired).
+ - If you want your personal webpage or project listed, feel free to send a PR to be added.
+ - If you prefer not to be in this list, feel free to send a PR to be remove.
 
