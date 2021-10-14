@@ -79,7 +79,7 @@
     #define VOX_FREE RL_FREE
 
     #define VOX_LOADER_IMPLEMENTATION
-    #include "external/vox_loader.h"    // vox file format loading (MagikaVoxel)
+    #include "external/vox_loader.h"    // VOX file format loading (MagikaVoxel)
 #endif
 
 #if defined(SUPPORT_MESH_GENERATION)

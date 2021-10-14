@@ -1,13 +1,13 @@
 /*******************************************************************************************
 *
-*   raylib [models] example - magicavoxel loader and viewer
+*   raylib [models] example - Load models vox (MagicaVoxel)
 *
-*   This example has been created using raylib 3.8 (www.raylib.com)
+*   This example has been created using raylib 4.0 (www.raylib.com)
 *   raylib is licensed under an unmodified zlib/libpng license (View raylib.h for details)
 *
-*   Example contributed by Johann Nadalutti (@procfxgen)
+*   Example contributed by Johann Nadalutti (@procfxgen) and reviewed by Ramon Santamaria (@raysan5)
 *
-*   Copyright (c) 2021 Johann Nadalutti (@procfxgen)
+*   Copyright (c) 2021 Johann Nadalutti (@procfxgen) and Ramon Santamaria (@raysan5)
 *
 ********************************************************************************************/
 
@@ -15,7 +15,7 @@
 
 #include "raymath.h"        // Required for: MatrixTranslate()
 
-#define NUM_VOX_FILES  3
+#define MAX_VOX_FILES  3
 
 int main(void)
 {
@@ -41,9 +41,9 @@ int main(void)
     camera.projection = CAMERA_PERSPECTIVE;             // Camera mode type
 
 	// Load MagicaVoxel files
-	Model models[NUM_VOX_FILES] = { 0 };
+	Model models[MAX_VOX_FILES] = { 0 };
 
-	for (int i = 0; i < NUM_VOX_FILES; i++)
+	for (int i = 0; i < MAX_VOX_FILES; i++)
 	{
         // Load VOX file and measure time
 		double t0 = GetTime()*1000.0;
@@ -77,18 +77,18 @@ int main(void)
 		UpdateCamera(&camera);      // Update our camera to orbit
 
         // Cycle between models on mouse click
-		if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) currentModel = (currentModel + 1)%NUM_VOX_FILES; 
+		if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) currentModel = (currentModel + 1)%MAX_VOX_FILES; 
 
         // Cycle between models on key pressed
 		if (IsKeyPressed(KEY_RIGHT))
 		{
 			currentModel++;
-			if (currentModel >= NUM_VOX_FILES) currentModel = 0;
+			if (currentModel >= MAX_VOX_FILES) currentModel = 0;
 		}
 		else if (IsKeyPressed(KEY_LEFT))
 		{
 			currentModel--;
-			if (currentModel < 0) currentModel = NUM_VOX_FILES - 1;
+			if (currentModel < 0) currentModel = MAX_VOX_FILES - 1;
 		}
 		//----------------------------------------------------------------------------------
         
@@ -119,7 +119,7 @@ int main(void)
 	// De-Initialization
 	//--------------------------------------------------------------------------------------
 	// Unload models data (GPU VRAM)
-	for (int i = 0; i < NUM_VOX_FILES; i++) UnloadModel(models[i]);
+	for (int i = 0; i < MAX_VOX_FILES; i++) UnloadModel(models[i]);
 
 	CloseWindow();          // Close window and OpenGL context
 	//--------------------------------------------------------------------------------------

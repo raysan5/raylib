@@ -1,27 +1,24 @@
 /*******************************************************************************************
 *
-*   raylib [models] example - Load 3d gltf model
+*   raylib [models] example - Load models gltf
 *
 *   This example has been created using raylib 3.5 (www.raylib.com)
 *   raylib is licensed under an unmodified zlib/libpng license (View raylib.h for details)
+*
+*   NOTE: To export a model from Blender, make sure it is not posed, the vertices need to be
+*   in the same position as they would be in edit mode.
+*   Also make sure the scale parameter of your models is set to 0.0,
+*   scaling can be applied from the export menu.
 *
 *   Example contributed by Hristo Stamenov (@object71) and reviewed by Ramon Santamaria (@raysan5)
 *
 *   Copyright (c) 2021 Hristo Stamenov (@object71) and Ramon Santamaria (@raysan5)
 *
-********************************************************************************************
-*
-* To export a model from blender, make sure it is not posed, the vertices need to be in the
-* same position as they would be in edit mode.
-* and that the scale of your models is set to 0. Scaling can be done from the export menu.
-*
 ********************************************************************************************/
 
 #include "raylib.h"
 
-#include <stdlib.h>
-
-#define MAX_MODELS  8
+#define MAX_GLTF_MODELS  8
 
 int main(void)
 {
@@ -41,7 +38,7 @@ int main(void)
     camera.projection = CAMERA_PERSPECTIVE;             // Camera mode type
 
     // Load some models
-    Model model[MAX_MODELS] = { 0 };
+    Model model[MAX_GLTF_MODELS] = { 0 };
     model[0] = LoadModel("resources/models/gltf/raylib_32x32.glb");
     model[1] = LoadModel("resources/models/gltf/rigged_figure.glb");
     model[2] = LoadModel("resources/models/gltf/GearboxAssy.glb");
@@ -70,13 +67,13 @@ int main(void)
         if (IsKeyReleased(KEY_RIGHT))
         {
             currentModel++;
-            if (currentModel == MAX_MODELS) currentModel = 0;
+            if (currentModel == MAX_GLTF_MODELS) currentModel = 0;
         }
 
         if (IsKeyReleased(KEY_LEFT))
         {
             currentModel--;
-            if (currentModel < 0) currentModel = MAX_MODELS - 1;
+            if (currentModel < 0) currentModel = MAX_GLTF_MODELS - 1;
         }
         //----------------------------------------------------------------------------------
 
@@ -99,7 +96,7 @@ int main(void)
 
     // De-Initialization
     //--------------------------------------------------------------------------------------
-    for (int i = 0; i < MAX_MODELS; i++) UnloadModel(model[i]);  // Unload models
+    for (int i = 0; i < MAX_GLTF_MODELS; i++) UnloadModel(model[i]);  // Unload models
 
     CloseWindow();              // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
