@@ -4555,7 +4555,7 @@ static unsigned char *DecodeBase64(char *data, int *outputLength)
     {
         if (data[4*i + 3] == '=')
         {
-            if (data[4*i + 2] == '=') size += 1;
+            if (data[4*i + 2] == '=') outLength += 1;
             else outLength += 2;
         }
         else outLength += 3;
