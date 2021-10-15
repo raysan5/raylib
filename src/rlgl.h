@@ -607,7 +607,7 @@ RLAPI unsigned int rlLoadTexture(void *data, int width, int height, int format, 
 RLAPI unsigned int rlLoadTextureDepth(int width, int height, bool useRenderBuffer);               // Load depth texture/renderbuffer (to be attached to fbo)
 RLAPI unsigned int rlLoadTextureCubemap(void *data, int size, int format);                        // Load texture cubemap
 RLAPI void rlUpdateTexture(unsigned int id, int offsetX, int offsetY, int width, int height, int format, const void *data);  // Update GPU texture with new data
-RLAPI void rlGetGlTextureFormats(int format, unsigned int *glInternalFormat, unsigned int *glFormat, unsigned int *glType);  // Get OpenGL internal formats
+RLAPI void rlGetGlTextureFormats(int format, int *glInternalFormat, int *glFormat, int *glType);  // Get OpenGL internal formats
 RLAPI const char *rlGetPixelFormatName(unsigned int format);              // Get name string for pixel format
 RLAPI void rlUnloadTexture(unsigned int id);                              // Unload texture from GPU memory
 RLAPI void rlGenTextureMipmaps(unsigned int id, int width, int height, int format, int *mipmaps); // Generate mipmap data for selected texture
@@ -2608,7 +2608,7 @@ unsigned int rlLoadTexture(void *data, int width, int height, int format, int mi
     {
         unsigned int mipSize = rlGetPixelDataSize(mipWidth, mipHeight, format);
 
-        unsigned int glInternalFormat, glFormat, glType;
+        int glInternalFormat, glFormat, glType;
         rlGetGlTextureFormats(format, &glInternalFormat, &glFormat, &glType);
 
         TRACELOGD("TEXTURE: Load mipmap level %i (%i x %i), size: %i, offset: %i", i, mipWidth, mipHeight, mipSize, mipOffset);
@@ -2758,7 +2758,7 @@ unsigned int rlLoadTextureCubemap(void *data, int size, int format)
     glGenTextures(1, &id);
     glBindTexture(GL_TEXTURE_CUBE_MAP, id);
 
-    unsigned int glInternalFormat, glFormat, glType;
+    int glInternalFormat, glFormat, glType;
     rlGetGlTextureFormats(format, &glInternalFormat, &glFormat, &glType);
 
     if (glInternalFormat != -1)
@@ -2830,7 +2830,7 @@ void rlUpdateTexture(unsigned int id, int offsetX, int offsetY, int width, int h
 {
     glBindTexture(GL_TEXTURE_2D, id);
 
-    unsigned int glInternalFormat, glFormat, glType;
+    int glInternalFormat, glFormat, glType;
     rlGetGlTextureFormats(format, &glInternalFormat, &glFormat, &glType);
 
     if ((glInternalFormat != -1) && (format < RL_PIXELFORMAT_COMPRESSED_DXT1_RGB))
@@ -2841,7 +2841,7 @@ void rlUpdateTexture(unsigned int id, int offsetX, int offsetY, int width, int h
 }
 
 // Get OpenGL internal formats and data type from raylib PixelFormat
-void rlGetGlTextureFormats(int format, unsigned int *glInternalFormat, unsigned int *glFormat, unsigned int *glType)
+void rlGetGlTextureFormats(int format, int *glInternalFormat, int *glFormat, int *glType)
 {
     *glInternalFormat = -1;
     *glFormat = -1;
@@ -2991,7 +2991,7 @@ void *rlReadTexturePixels(unsigned int id, int width, int height, int format)
     // GL_UNPACK_ALIGNMENT affects operations that write to OpenGL memory (glTexImage, etc.)
     glPixelStorei(GL_PACK_ALIGNMENT, 1);
 
-    unsigned int glInternalFormat, glFormat, glType;
+    int glInternalFormat, glFormat, glType;
     rlGetGlTextureFormats(format, &glInternalFormat, &glFormat, &glType);
     unsigned int size = rlGetPixelDataSize(width, height, format);
 
