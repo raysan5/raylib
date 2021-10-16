@@ -726,8 +726,7 @@ RLAPI void rlLoadDrawQuad(void);     // Load and draw a quad
         #define GLAD_REALLOC RL_REALLOC
         #define GLAD_FREE RL_FREE
 
-        #include "external/glad.c"      // GLAD extensions loading library, includes OpenGL headers
-        #include "external/glad.h"
+        #include "external/glad.h"      // GLAD extensions loading library, includes OpenGL headers
     #endif
 #endif
 
