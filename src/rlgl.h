@@ -280,6 +280,7 @@ typedef enum {
     OPENGL_11 = 1,
     OPENGL_21,
     OPENGL_33,
+    OPENGL_43,
     OPENGL_ES_20
 } rlGlVersion;
 
@@ -732,6 +733,7 @@ RLAPI void rlLoadDrawQuad(void);     // Load and draw a quad
         #define GLAD_REALLOC RL_REALLOC
         #define GLAD_FREE RL_FREE
 
+        #define GLAD_IMPLEMENTATION
         #include "external/glad.h"      // GLAD extensions loading library, includes OpenGL headers
     #endif
 #endif
@@ -2124,6 +2126,9 @@ int rlGetVersion(void)
     #endif
 #elif defined(GRAPHICS_API_OPENGL_33)
     glVersion = OPENGL_33;
+#endif
+#if defined(GRAPHICS_API_OPENGL_43)
+    glVersion = OPENGL_43;
 #endif
 #if defined(GRAPHICS_API_OPENGL_ES2)
     glVersion = OPENGL_ES_20;
