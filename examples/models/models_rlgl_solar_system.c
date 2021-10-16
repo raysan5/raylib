@@ -88,7 +88,6 @@ int main(void)
                 rlPushMatrix();
                     rlRotatef(earthOrbitRotation, 0.0f, 1.0f, 0.0f);    // Rotation for Earth orbit around Sun
                     rlTranslatef(earthOrbitRadius, 0.0f, 0.0f);         // Translation for Earth orbit
-                    rlRotatef(-earthOrbitRotation, 0.0f, 1.0f, 0.0f);   // Rotation for Earth orbit around Sun inverted
 
                     rlPushMatrix();
                         rlRotatef(earthRotation, 0.25, 1.0, 0.0);       // Rotation for Earth itself
@@ -99,7 +98,6 @@ int main(void)
 
                     rlRotatef(moonOrbitRotation, 0.0f, 1.0f, 0.0f);     // Rotation for Moon orbit around Earth
                     rlTranslatef(moonOrbitRadius, 0.0f, 0.0f);          // Translation for Moon orbit
-                    rlRotatef(-moonOrbitRotation, 0.0f, 1.0f, 0.0f);    // Rotation for Moon orbit around Earth inverted
                     rlRotatef(moonRotation, 0.0f, 1.0f, 0.0f);          // Rotation for Moon itself
                     rlScalef(moonRadius, moonRadius, moonRadius);       // Scale Moon
 

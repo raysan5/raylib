@@ -51,21 +51,22 @@
     #error "Specifying both RAYMATH_IMPLEMENTATION and RAYMATH_STATIC_INLINE is contradictory"
 #endif
 
+// Function specifiers definition
 #if defined(RAYMATH_IMPLEMENTATION)
     #if defined(_WIN32) && defined(BUILD_LIBTYPE_SHARED)
-        #define RMDEF __declspec(dllexport) extern inline   // We are building raylib as a Win32 shared library (.dll).
+        #define RMAPI __declspec(dllexport) extern inline // We are building raylib as a Win32 shared library (.dll).
     #elif defined(_WIN32) && defined(USE_LIBTYPE_SHARED)
-        #define RMDEF __declspec(dllimport)                 // We are using raylib as a Win32 shared library (.dll)
+        #define RMAPI __declspec(dllimport)         // We are using raylib as a Win32 shared library (.dll)
     #else
-        #define RMDEF extern inline // Provide external definition
+        #define RMAPI extern inline // Provide external definition
     #endif
 #elif defined(RAYMATH_STATIC_INLINE)
-    #define RMDEF static inline     // Functions may be inlined, no external out-of-line definition
+    #define RMAPI static inline // Functions may be inlined, no external out-of-line definition
 #else
     #if defined(__TINYC__)
-        #define RMDEF static inline // WARNING: Plain inline not supported by tinycc (See issue #435)
+        #define RMAPI static inline // plain inline not supported by tinycc (See issue #435)
     #else
-        #define RMDEF inline        // Functions may be inlined or external definition used
+        #define RMAPI inline        // Functions may be inlined or external definition used
     #endif
 #endif
 
@@ -160,7 +161,7 @@ typedef struct float16 {
 //----------------------------------------------------------------------------------
 
 // Clamp float value
-RMDEF float Clamp(float value, float min, float max)
+RMAPI float Clamp(float value, float min, float max)
 {
     float result = (value < min)? min : value;
 
@@ -170,7 +171,7 @@ RMDEF float Clamp(float value, float min, float max)
 }
 
 // Calculate linear interpolation between two floats
-RMDEF float Lerp(float start, float end, float amount)
+RMAPI float Lerp(float start, float end, float amount)
 {
     float result = start + amount*(end - start);
 
@@ -178,7 +179,7 @@ RMDEF float Lerp(float start, float end, float amount)
 }
 
 // Normalize input value within input range
-RMDEF float Normalize(float value, float start, float end)
+RMAPI float Normalize(float value, float start, float end)
 {
     float result = (value - start)/(end - start);
 
@@ -186,7 +187,7 @@ RMDEF float Normalize(float value, float start, float end)
 }
 
 // Remap input value within input range to output range
-RMDEF float Remap(float value, float inputStart, float inputEnd, float outputStart, float outputEnd)
+RMAPI float Remap(float value, float inputStart, float inputEnd, float outputStart, float outputEnd)
 {
     float result =(value - inputStart)/(inputEnd - inputStart)*(outputEnd - outputStart) + outputStart;
 
@@ -198,7 +199,7 @@ RMDEF float Remap(float value, float inputStart, float inputEnd, float outputSta
 //----------------------------------------------------------------------------------
 
 // Vector with components value 0.0f
-RMDEF Vector2 Vector2Zero(void)
+RMAPI Vector2 Vector2Zero(void)
 {
     Vector2 result = { 0.0f, 0.0f };
 
@@ -206,7 +207,7 @@ RMDEF Vector2 Vector2Zero(void)
 }
 
 // Vector with components value 1.0f
-RMDEF Vector2 Vector2One(void)
+RMAPI Vector2 Vector2One(void)
 {
     Vector2 result = { 1.0f, 1.0f };
 
@@ -214,7 +215,7 @@ RMDEF Vector2 Vector2One(void)
 }
 
 // Add two vectors (v1 + v2)
-RMDEF Vector2 Vector2Add(Vector2 v1, Vector2 v2)
+RMAPI Vector2 Vector2Add(Vector2 v1, Vector2 v2)
 {
     Vector2 result = { v1.x + v2.x, v1.y + v2.y };
 
@@ -222,7 +223,7 @@ RMDEF Vector2 Vector2Add(Vector2 v1, Vector2 v2)
 }
 
 // Add vector and float value
-RMDEF Vector2 Vector2AddValue(Vector2 v, float add)
+RMAPI Vector2 Vector2AddValue(Vector2 v, float add)
 {
     Vector2 result = { v.x + add, v.y + add };
 
@@ -230,7 +231,7 @@ RMDEF Vector2 Vector2AddValue(Vector2 v, float add)
 }
 
 // Subtract two vectors (v1 - v2)
-RMDEF Vector2 Vector2Subtract(Vector2 v1, Vector2 v2)
+RMAPI Vector2 Vector2Subtract(Vector2 v1, Vector2 v2)
 {
     Vector2 result = { v1.x - v2.x, v1.y - v2.y };
 
@@ -238,7 +239,7 @@ RMDEF Vector2 Vector2Subtract(Vector2 v1, Vector2 v2)
 }
 
 // Subtract vector by float value
-RMDEF Vector2 Vector2SubtractValue(Vector2 v, float sub)
+RMAPI Vector2 Vector2SubtractValue(Vector2 v, float sub)
 {
     Vector2 result = { v.x - sub, v.y - sub };
 
@@ -246,7 +247,7 @@ RMDEF Vector2 Vector2SubtractValue(Vector2 v, float sub)
 }
 
 // Calculate vector length
-RMDEF float Vector2Length(Vector2 v)
+RMAPI float Vector2Length(Vector2 v)
 {
     float result = sqrtf((v.x*v.x) + (v.y*v.y));
 
@@ -254,7 +255,7 @@ RMDEF float Vector2Length(Vector2 v)
 }
 
 // Calculate vector square length
-RMDEF float Vector2LengthSqr(Vector2 v)
+RMAPI float Vector2LengthSqr(Vector2 v)
 {
     float result = (v.x*v.x) + (v.y*v.y);
 
@@ -262,7 +263,7 @@ RMDEF float Vector2LengthSqr(Vector2 v)
 }
 
 // Calculate two vectors dot product
-RMDEF float Vector2DotProduct(Vector2 v1, Vector2 v2)
+RMAPI float Vector2DotProduct(Vector2 v1, Vector2 v2)
 {
     float result = (v1.x*v2.x + v1.y*v2.y);
 
@@ -270,7 +271,7 @@ RMDEF float Vector2DotProduct(Vector2 v1, Vector2 v2)
 }
 
 // Calculate distance between two vectors
-RMDEF float Vector2Distance(Vector2 v1, Vector2 v2)
+RMAPI float Vector2Distance(Vector2 v1, Vector2 v2)
 {
     float result = sqrtf((v1.x - v2.x)*(v1.x - v2.x) + (v1.y - v2.y)*(v1.y - v2.y));
 
@@ -278,7 +279,7 @@ RMDEF float Vector2Distance(Vector2 v1, Vector2 v2)
 }
 
 // Calculate angle from two vectors in X-axis
-RMDEF float Vector2Angle(Vector2 v1, Vector2 v2)
+RMAPI float Vector2Angle(Vector2 v1, Vector2 v2)
 {
     float result = atan2f(v2.y - v1.y, v2.x - v1.x)*(180.0f/PI);
 
@@ -288,7 +289,7 @@ RMDEF float Vector2Angle(Vector2 v1, Vector2 v2)
 }
 
 // Scale vector (multiply by value)
-RMDEF Vector2 Vector2Scale(Vector2 v, float scale)
+RMAPI Vector2 Vector2Scale(Vector2 v, float scale)
 {
     Vector2 result = { v.x*scale, v.y*scale };
 
@@ -296,7 +297,7 @@ RMDEF Vector2 Vector2Scale(Vector2 v, float scale)
 }
 
 // Multiply vector by vector
-RMDEF Vector2 Vector2Multiply(Vector2 v1, Vector2 v2)
+RMAPI Vector2 Vector2Multiply(Vector2 v1, Vector2 v2)
 {
     Vector2 result = { v1.x*v2.x, v1.y*v2.y };
 
@@ -304,7 +305,7 @@ RMDEF Vector2 Vector2Multiply(Vector2 v1, Vector2 v2)
 }
 
 // Negate vector
-RMDEF Vector2 Vector2Negate(Vector2 v)
+RMAPI Vector2 Vector2Negate(Vector2 v)
 {
     Vector2 result = { -v.x, -v.y };
 
@@ -312,7 +313,7 @@ RMDEF Vector2 Vector2Negate(Vector2 v)
 }
 
 // Divide vector by vector
-RMDEF Vector2 Vector2Divide(Vector2 v1, Vector2 v2)
+RMAPI Vector2 Vector2Divide(Vector2 v1, Vector2 v2)
 {
     Vector2 result = { v1.x/v2.x, v1.y/v2.y };
 
@@ -320,7 +321,7 @@ RMDEF Vector2 Vector2Divide(Vector2 v1, Vector2 v2)
 }
 
 // Normalize provided vector
-RMDEF Vector2 Vector2Normalize(Vector2 v)
+RMAPI Vector2 Vector2Normalize(Vector2 v)
 {
     Vector2 result = { 0 };
     float length = sqrtf((v.x*v.x) + (v.y*v.y));
@@ -335,7 +336,7 @@ RMDEF Vector2 Vector2Normalize(Vector2 v)
 }
 
 // Calculate linear interpolation between two vectors
-RMDEF Vector2 Vector2Lerp(Vector2 v1, Vector2 v2, float amount)
+RMAPI Vector2 Vector2Lerp(Vector2 v1, Vector2 v2, float amount)
 {
     Vector2 result = { 0 };
 
@@ -346,7 +347,7 @@ RMDEF Vector2 Vector2Lerp(Vector2 v1, Vector2 v2, float amount)
 }
 
 // Calculate reflected vector to normal
-RMDEF Vector2 Vector2Reflect(Vector2 v, Vector2 normal)
+RMAPI Vector2 Vector2Reflect(Vector2 v, Vector2 normal)
 {
     Vector2 result = { 0 };
 
@@ -359,7 +360,7 @@ RMDEF Vector2 Vector2Reflect(Vector2 v, Vector2 normal)
 }
 
 // Rotate vector by angle
-RMDEF Vector2 Vector2Rotate(Vector2 v, float angle)
+RMAPI Vector2 Vector2Rotate(Vector2 v, float angle)
 {
     Vector2 result = { 0 };
 
@@ -370,7 +371,7 @@ RMDEF Vector2 Vector2Rotate(Vector2 v, float angle)
 }
 
 // Move Vector towards target
-RMDEF Vector2 Vector2MoveTowards(Vector2 v, Vector2 target, float maxDistance)
+RMAPI Vector2 Vector2MoveTowards(Vector2 v, Vector2 target, float maxDistance)
 {
     Vector2 result = { 0 };
 
@@ -393,7 +394,7 @@ RMDEF Vector2 Vector2MoveTowards(Vector2 v, Vector2 target, float maxDistance)
 //----------------------------------------------------------------------------------
 
 // Vector with components value 0.0f
-RMDEF Vector3 Vector3Zero(void)
+RMAPI Vector3 Vector3Zero(void)
 {
     Vector3 result = { 0.0f, 0.0f, 0.0f };
 
@@ -401,7 +402,7 @@ RMDEF Vector3 Vector3Zero(void)
 }
 
 // Vector with components value 1.0f
-RMDEF Vector3 Vector3One(void)
+RMAPI Vector3 Vector3One(void)
 {
     Vector3 result = { 1.0f, 1.0f, 1.0f };
 
@@ -409,7 +410,7 @@ RMDEF Vector3 Vector3One(void)
 }
 
 // Add two vectors
-RMDEF Vector3 Vector3Add(Vector3 v1, Vector3 v2)
+RMAPI Vector3 Vector3Add(Vector3 v1, Vector3 v2)
 {
     Vector3 result = { v1.x + v2.x, v1.y + v2.y, v1.z + v2.z };
 
@@ -417,7 +418,7 @@ RMDEF Vector3 Vector3Add(Vector3 v1, Vector3 v2)
 }
 
 // Add vector and float value
-RMDEF Vector3 Vector3AddValue(Vector3 v, float add)
+RMAPI Vector3 Vector3AddValue(Vector3 v, float add)
 {
     Vector3 result = { v.x + add, v.y + add, v.z + add };
 
@@ -425,7 +426,7 @@ RMDEF Vector3 Vector3AddValue(Vector3 v, float add)
 }
 
 // Subtract two vectors
-RMDEF Vector3 Vector3Subtract(Vector3 v1, Vector3 v2)
+RMAPI Vector3 Vector3Subtract(Vector3 v1, Vector3 v2)
 {
     Vector3 result = { v1.x - v2.x, v1.y - v2.y, v1.z - v2.z };
 
@@ -433,7 +434,7 @@ RMDEF Vector3 Vector3Subtract(Vector3 v1, Vector3 v2)
 }
 
 // Subtract vector by float value
-RMDEF Vector3 Vector3SubtractValue(Vector3 v, float sub)
+RMAPI Vector3 Vector3SubtractValue(Vector3 v, float sub)
 {
     Vector3 result = { v.x - sub, v.y - sub, v.z - sub };
 
@@ -441,7 +442,7 @@ RMDEF Vector3 Vector3SubtractValue(Vector3 v, float sub)
 }
 
 // Multiply vector by scalar
-RMDEF Vector3 Vector3Scale(Vector3 v, float scalar)
+RMAPI Vector3 Vector3Scale(Vector3 v, float scalar)
 {
     Vector3 result = { v.x*scalar, v.y*scalar, v.z*scalar };
 
@@ -449,7 +450,7 @@ RMDEF Vector3 Vector3Scale(Vector3 v, float scalar)
 }
 
 // Multiply vector by vector
-RMDEF Vector3 Vector3Multiply(Vector3 v1, Vector3 v2)
+RMAPI Vector3 Vector3Multiply(Vector3 v1, Vector3 v2)
 {
     Vector3 result = { v1.x*v2.x, v1.y*v2.y, v1.z*v2.z };
 
@@ -457,7 +458,7 @@ RMDEF Vector3 Vector3Multiply(Vector3 v1, Vector3 v2)
 }
 
 // Calculate two vectors cross product
-RMDEF Vector3 Vector3CrossProduct(Vector3 v1, Vector3 v2)
+RMAPI Vector3 Vector3CrossProduct(Vector3 v1, Vector3 v2)
 {
     Vector3 result = { v1.y*v2.z - v1.z*v2.y, v1.z*v2.x - v1.x*v2.z, v1.x*v2.y - v1.y*v2.x };
 
@@ -465,7 +466,7 @@ RMDEF Vector3 Vector3CrossProduct(Vector3 v1, Vector3 v2)
 }
 
 // Calculate one vector perpendicular vector
-RMDEF Vector3 Vector3Perpendicular(Vector3 v)
+RMAPI Vector3 Vector3Perpendicular(Vector3 v)
 {
     Vector3 result = { 0 };
 
@@ -494,7 +495,7 @@ RMDEF Vector3 Vector3Perpendicular(Vector3 v)
 }
 
 // Calculate vector length
-RMDEF float Vector3Length(const Vector3 v)
+RMAPI float Vector3Length(const Vector3 v)
 {
     float result = sqrtf(v.x*v.x + v.y*v.y + v.z*v.z);
 
@@ -502,7 +503,7 @@ RMDEF float Vector3Length(const Vector3 v)
 }
 
 // Calculate vector square length
-RMDEF float Vector3LengthSqr(const Vector3 v)
+RMAPI float Vector3LengthSqr(const Vector3 v)
 {
     float result = v.x*v.x + v.y*v.y + v.z*v.z;
 
@@ -510,7 +511,7 @@ RMDEF float Vector3LengthSqr(const Vector3 v)
 }
 
 // Calculate two vectors dot product
-RMDEF float Vector3DotProduct(Vector3 v1, Vector3 v2)
+RMAPI float Vector3DotProduct(Vector3 v1, Vector3 v2)
 {
     float result = (v1.x*v2.x + v1.y*v2.y + v1.z*v2.z);
 
@@ -518,7 +519,7 @@ RMDEF float Vector3DotProduct(Vector3 v1, Vector3 v2)
 }
 
 // Calculate distance between two vectors
-RMDEF float Vector3Distance(Vector3 v1, Vector3 v2)
+RMAPI float Vector3Distance(Vector3 v1, Vector3 v2)
 {
     float result = 0.0f;
 
@@ -531,10 +532,10 @@ RMDEF float Vector3Distance(Vector3 v1, Vector3 v2)
 }
 
 // Calculate angle between two vectors in XY and XZ
-RMDEF Vector2 Vector3Angle(Vector3 v1, Vector3 v2)
+RMAPI Vector2 Vector3Angle(Vector3 v1, Vector3 v2)
 {
     Vector2 result = { 0 };
-    
+
     float dx = v2.x - v1.x;
     float dy = v2.y - v1.y;
     float dz = v2.z - v1.z;
@@ -546,7 +547,7 @@ RMDEF Vector2 Vector3Angle(Vector3 v1, Vector3 v2)
 }
 
 // Negate provided vector (invert direction)
-RMDEF Vector3 Vector3Negate(Vector3 v)
+RMAPI Vector3 Vector3Negate(Vector3 v)
 {
     Vector3 result = { -v.x, -v.y, -v.z };
 
@@ -554,7 +555,7 @@ RMDEF Vector3 Vector3Negate(Vector3 v)
 }
 
 // Divide vector by vector
-RMDEF Vector3 Vector3Divide(Vector3 v1, Vector3 v2)
+RMAPI Vector3 Vector3Divide(Vector3 v1, Vector3 v2)
 {
     Vector3 result = { v1.x/v2.x, v1.y/v2.y, v1.z/v2.z };
 
@@ -562,7 +563,7 @@ RMDEF Vector3 Vector3Divide(Vector3 v1, Vector3 v2)
 }
 
 // Normalize provided vector
-RMDEF Vector3 Vector3Normalize(Vector3 v)
+RMAPI Vector3 Vector3Normalize(Vector3 v)
 {
     Vector3 result = v;
 
@@ -580,7 +581,7 @@ RMDEF Vector3 Vector3Normalize(Vector3 v)
 // Orthonormalize provided vectors
 // Makes vectors normalized and orthogonal to each other
 // Gram-Schmidt function implementation
-RMDEF void Vector3OrthoNormalize(Vector3 *v1, Vector3 *v2)
+RMAPI void Vector3OrthoNormalize(Vector3 *v1, Vector3 *v2)
 {
     float length = 0.0f;
     float ilength = 0.0f;
@@ -613,7 +614,7 @@ RMDEF void Vector3OrthoNormalize(Vector3 *v1, Vector3 *v2)
 }
 
 // Transforms a Vector3 by a given Matrix
-RMDEF Vector3 Vector3Transform(Vector3 v, Matrix mat)
+RMAPI Vector3 Vector3Transform(Vector3 v, Matrix mat)
 {
     Vector3 result = { 0 };
 
@@ -629,7 +630,7 @@ RMDEF Vector3 Vector3Transform(Vector3 v, Matrix mat)
 }
 
 // Transform a vector by quaternion rotation
-RMDEF Vector3 Vector3RotateByQuaternion(Vector3 v, Quaternion q)
+RMAPI Vector3 Vector3RotateByQuaternion(Vector3 v, Quaternion q)
 {
     Vector3 result = { 0 };
 
@@ -641,7 +642,7 @@ RMDEF Vector3 Vector3RotateByQuaternion(Vector3 v, Quaternion q)
 }
 
 // Calculate linear interpolation between two vectors
-RMDEF Vector3 Vector3Lerp(Vector3 v1, Vector3 v2, float amount)
+RMAPI Vector3 Vector3Lerp(Vector3 v1, Vector3 v2, float amount)
 {
     Vector3 result = { 0 };
 
@@ -653,7 +654,7 @@ RMDEF Vector3 Vector3Lerp(Vector3 v1, Vector3 v2, float amount)
 }
 
 // Calculate reflected vector to normal
-RMDEF Vector3 Vector3Reflect(Vector3 v, Vector3 normal)
+RMAPI Vector3 Vector3Reflect(Vector3 v, Vector3 normal)
 {
     Vector3 result = { 0 };
 
@@ -671,7 +672,7 @@ RMDEF Vector3 Vector3Reflect(Vector3 v, Vector3 normal)
 }
 
 // Get min value for each pair of components
-RMDEF Vector3 Vector3Min(Vector3 v1, Vector3 v2)
+RMAPI Vector3 Vector3Min(Vector3 v1, Vector3 v2)
 {
     Vector3 result = { 0 };
 
@@ -683,7 +684,7 @@ RMDEF Vector3 Vector3Min(Vector3 v1, Vector3 v2)
 }
 
 // Get max value for each pair of components
-RMDEF Vector3 Vector3Max(Vector3 v1, Vector3 v2)
+RMAPI Vector3 Vector3Max(Vector3 v1, Vector3 v2)
 {
     Vector3 result = { 0 };
 
@@ -696,7 +697,7 @@ RMDEF Vector3 Vector3Max(Vector3 v1, Vector3 v2)
 
 // Compute barycenter coordinates (u, v, w) for point p with respect to triangle (a, b, c)
 // NOTE: Assumes P is on the plane of the triangle
-RMDEF Vector3 Vector3Barycenter(Vector3 p, Vector3 a, Vector3 b, Vector3 c)
+RMAPI Vector3 Vector3Barycenter(Vector3 p, Vector3 a, Vector3 b, Vector3 c)
 {
     Vector3 result = { 0 };
 
@@ -720,7 +721,7 @@ RMDEF Vector3 Vector3Barycenter(Vector3 p, Vector3 a, Vector3 b, Vector3 c)
 
 // Projects a Vector3 from screen space into object space
 // NOTE: We are avoiding calling other raymath functions despite available
-RMDEF Vector3 Vector3Unproject(Vector3 source, Matrix projection, Matrix view)
+RMAPI Vector3 Vector3Unproject(Vector3 source, Matrix projection, Matrix view)
 {
     Vector3 result = { 0 };
 
@@ -803,7 +804,7 @@ RMDEF Vector3 Vector3Unproject(Vector3 source, Matrix projection, Matrix view)
 }
 
 // Get Vector3 as float array
-RMDEF float3 Vector3ToFloatV(Vector3 v)
+RMAPI float3 Vector3ToFloatV(Vector3 v)
 {
     float3 buffer = { 0 };
 
@@ -819,7 +820,7 @@ RMDEF float3 Vector3ToFloatV(Vector3 v)
 //----------------------------------------------------------------------------------
 
 // Compute matrix determinant
-RMDEF float MatrixDeterminant(Matrix mat)
+RMAPI float MatrixDeterminant(Matrix mat)
 {
     float result = 0.0f;
 
@@ -840,7 +841,7 @@ RMDEF float MatrixDeterminant(Matrix mat)
 }
 
 // Get the trace of the matrix (sum of the values along the diagonal)
-RMDEF float MatrixTrace(Matrix mat)
+RMAPI float MatrixTrace(Matrix mat)
 {
     float result = (mat.m0 + mat.m5 + mat.m10 + mat.m15);
 
@@ -848,7 +849,7 @@ RMDEF float MatrixTrace(Matrix mat)
 }
 
 // Transposes provided matrix
-RMDEF Matrix MatrixTranspose(Matrix mat)
+RMAPI Matrix MatrixTranspose(Matrix mat)
 {
     Matrix result = { 0 };
 
@@ -873,7 +874,7 @@ RMDEF Matrix MatrixTranspose(Matrix mat)
 }
 
 // Invert provided matrix
-RMDEF Matrix MatrixInvert(Matrix mat)
+RMAPI Matrix MatrixInvert(Matrix mat)
 {
     Matrix result = { 0 };
 
@@ -920,7 +921,7 @@ RMDEF Matrix MatrixInvert(Matrix mat)
 }
 
 // Normalize provided matrix
-RMDEF Matrix MatrixNormalize(Matrix mat)
+RMAPI Matrix MatrixNormalize(Matrix mat)
 {
     Matrix result = { 0 };
 
@@ -959,7 +960,7 @@ RMDEF Matrix MatrixNormalize(Matrix mat)
 }
 
 // Get identity matrix
-RMDEF Matrix MatrixIdentity(void)
+RMAPI Matrix MatrixIdentity(void)
 {
     Matrix result = { 1.0f, 0.0f, 0.0f, 0.0f,
                       0.0f, 1.0f, 0.0f, 0.0f,
@@ -970,7 +971,7 @@ RMDEF Matrix MatrixIdentity(void)
 }
 
 // Add two matrices
-RMDEF Matrix MatrixAdd(Matrix left, Matrix right)
+RMAPI Matrix MatrixAdd(Matrix left, Matrix right)
 {
     Matrix result = { 0 };
 
@@ -995,7 +996,7 @@ RMDEF Matrix MatrixAdd(Matrix left, Matrix right)
 }
 
 // Subtract two matrices (left - right)
-RMDEF Matrix MatrixSubtract(Matrix left, Matrix right)
+RMAPI Matrix MatrixSubtract(Matrix left, Matrix right)
 {
     Matrix result = { 0 };
 
@@ -1021,7 +1022,7 @@ RMDEF Matrix MatrixSubtract(Matrix left, Matrix right)
 
 // Get two matrix multiplication
 // NOTE: When multiplying matrices... the order matters!
-RMDEF Matrix MatrixMultiply(Matrix left, Matrix right)
+RMAPI Matrix MatrixMultiply(Matrix left, Matrix right)
 {
     Matrix result = { 0 };
 
@@ -1046,7 +1047,7 @@ RMDEF Matrix MatrixMultiply(Matrix left, Matrix right)
 }
 
 // Get translation matrix
-RMDEF Matrix MatrixTranslate(float x, float y, float z)
+RMAPI Matrix MatrixTranslate(float x, float y, float z)
 {
     Matrix result = { 1.0f, 0.0f, 0.0f, x,
                       0.0f, 1.0f, 0.0f, y,
@@ -1058,7 +1059,7 @@ RMDEF Matrix MatrixTranslate(float x, float y, float z)
 
 // Create rotation matrix from axis and angle
 // NOTE: Angle should be provided in radians
-RMDEF Matrix MatrixRotate(Vector3 axis, float angle)
+RMAPI Matrix MatrixRotate(Vector3 axis, float angle)
 {
     Matrix result = { 0 };
 
@@ -1102,7 +1103,7 @@ RMDEF Matrix MatrixRotate(Vector3 axis, float angle)
 }
 
 // Get x-rotation matrix (angle in radians)
-RMDEF Matrix MatrixRotateX(float angle)
+RMAPI Matrix MatrixRotateX(float angle)
 {
     Matrix result = { 1.0f, 0.0f, 0.0f, 0.0f,
                       0.0f, 1.0f, 0.0f, 0.0f,
@@ -1121,7 +1122,7 @@ RMDEF Matrix MatrixRotateX(float angle)
 }
 
 // Get y-rotation matrix (angle in radians)
-RMDEF Matrix MatrixRotateY(float angle)
+RMAPI Matrix MatrixRotateY(float angle)
 {
     Matrix result = { 1.0f, 0.0f, 0.0f, 0.0f,
                       0.0f, 1.0f, 0.0f, 0.0f,
@@ -1140,7 +1141,7 @@ RMDEF Matrix MatrixRotateY(float angle)
 }
 
 // Get z-rotation matrix (angle in radians)
-RMDEF Matrix MatrixRotateZ(float angle)
+RMAPI Matrix MatrixRotateZ(float angle)
 {
     Matrix result = { 1.0f, 0.0f, 0.0f, 0.0f,
                       0.0f, 1.0f, 0.0f, 0.0f,
@@ -1160,7 +1161,7 @@ RMDEF Matrix MatrixRotateZ(float angle)
 
 
 // Get xyz-rotation matrix (angles in radians)
-RMDEF Matrix MatrixRotateXYZ(Vector3 ang)
+RMAPI Matrix MatrixRotateXYZ(Vector3 ang)
 {
     Matrix result = { 1.0f, 0.0f, 0.0f, 0.0f,
                       0.0f, 1.0f, 0.0f, 0.0f,
@@ -1190,7 +1191,7 @@ RMDEF Matrix MatrixRotateXYZ(Vector3 ang)
 }
 
 // Get zyx-rotation matrix (angles in radians)
-RMDEF Matrix MatrixRotateZYX(Vector3 ang)
+RMAPI Matrix MatrixRotateZYX(Vector3 ang)
 {
     Matrix result = { 0 };
 
@@ -1225,7 +1226,7 @@ RMDEF Matrix MatrixRotateZYX(Vector3 ang)
 }
 
 // Get scaling matrix
-RMDEF Matrix MatrixScale(float x, float y, float z)
+RMAPI Matrix MatrixScale(float x, float y, float z)
 {
     Matrix result = { x, 0.0f, 0.0f, 0.0f,
                       0.0f, y, 0.0f, 0.0f,
@@ -1236,7 +1237,7 @@ RMDEF Matrix MatrixScale(float x, float y, float z)
 }
 
 // Get perspective projection matrix
-RMDEF Matrix MatrixFrustum(double left, double right, double bottom, double top, double near, double far)
+RMAPI Matrix MatrixFrustum(double left, double right, double bottom, double top, double near, double far)
 {
     Matrix result = { 0 };
 
@@ -1269,7 +1270,7 @@ RMDEF Matrix MatrixFrustum(double left, double right, double bottom, double top,
 
 // Get perspective projection matrix
 // NOTE: Angle should be provided in radians
-RMDEF Matrix MatrixPerspective(double fovy, double aspect, double near, double far)
+RMAPI Matrix MatrixPerspective(double fovy, double aspect, double near, double far)
 {
     Matrix result = { 0 };
 
@@ -1295,7 +1296,7 @@ RMDEF Matrix MatrixPerspective(double fovy, double aspect, double near, double f
 }
 
 // Get orthographic projection matrix
-RMDEF Matrix MatrixOrtho(double left, double right, double bottom, double top, double near, double far)
+RMAPI Matrix MatrixOrtho(double left, double right, double bottom, double top, double near, double far)
 {
     Matrix result = { 0 };
 
@@ -1324,7 +1325,7 @@ RMDEF Matrix MatrixOrtho(double left, double right, double bottom, double top, d
 }
 
 // Get camera look-at matrix (view matrix)
-RMDEF Matrix MatrixLookAt(Vector3 eye, Vector3 target, Vector3 up)
+RMAPI Matrix MatrixLookAt(Vector3 eye, Vector3 target, Vector3 up)
 {
     Matrix result = { 0 };
 
@@ -1379,7 +1380,7 @@ RMDEF Matrix MatrixLookAt(Vector3 eye, Vector3 target, Vector3 up)
 }
 
 // Get float array of matrix data
-RMDEF float16 MatrixToFloatV(Matrix mat)
+RMAPI float16 MatrixToFloatV(Matrix mat)
 {
     float16 result = { 0 };
 
@@ -1408,7 +1409,7 @@ RMDEF float16 MatrixToFloatV(Matrix mat)
 //----------------------------------------------------------------------------------
 
 // Add two quaternions
-RMDEF Quaternion QuaternionAdd(Quaternion q1, Quaternion q2)
+RMAPI Quaternion QuaternionAdd(Quaternion q1, Quaternion q2)
 {
     Quaternion result = {q1.x + q2.x, q1.y + q2.y, q1.z + q2.z, q1.w + q2.w};
 
@@ -1416,7 +1417,7 @@ RMDEF Quaternion QuaternionAdd(Quaternion q1, Quaternion q2)
 }
 
 // Add quaternion and float value
-RMDEF Quaternion QuaternionAddValue(Quaternion q, float add)
+RMAPI Quaternion QuaternionAddValue(Quaternion q, float add)
 {
     Quaternion result = {q.x + add, q.y + add, q.z + add, q.w + add};
 
@@ -1424,7 +1425,7 @@ RMDEF Quaternion QuaternionAddValue(Quaternion q, float add)
 }
 
 // Subtract two quaternions
-RMDEF Quaternion QuaternionSubtract(Quaternion q1, Quaternion q2)
+RMAPI Quaternion QuaternionSubtract(Quaternion q1, Quaternion q2)
 {
     Quaternion result = {q1.x - q2.x, q1.y - q2.y, q1.z - q2.z, q1.w - q2.w};
 
@@ -1432,7 +1433,7 @@ RMDEF Quaternion QuaternionSubtract(Quaternion q1, Quaternion q2)
 }
 
 // Subtract quaternion and float value
-RMDEF Quaternion QuaternionSubtractValue(Quaternion q, float sub)
+RMAPI Quaternion QuaternionSubtractValue(Quaternion q, float sub)
 {
     Quaternion result = {q.x - sub, q.y - sub, q.z - sub, q.w - sub};
 
@@ -1440,7 +1441,7 @@ RMDEF Quaternion QuaternionSubtractValue(Quaternion q, float sub)
 }
 
 // Get identity quaternion
-RMDEF Quaternion QuaternionIdentity(void)
+RMAPI Quaternion QuaternionIdentity(void)
 {
     Quaternion result = { 0.0f, 0.0f, 0.0f, 1.0f };
 
@@ -1448,7 +1449,7 @@ RMDEF Quaternion QuaternionIdentity(void)
 }
 
 // Computes the length of a quaternion
-RMDEF float QuaternionLength(Quaternion q)
+RMAPI float QuaternionLength(Quaternion q)
 {
     float result = sqrtf(q.x*q.x + q.y*q.y + q.z*q.z + q.w*q.w);
 
@@ -1456,7 +1457,7 @@ RMDEF float QuaternionLength(Quaternion q)
 }
 
 // Normalize provided quaternion
-RMDEF Quaternion QuaternionNormalize(Quaternion q)
+RMAPI Quaternion QuaternionNormalize(Quaternion q)
 {
     Quaternion result = { 0 };
 
@@ -1473,7 +1474,7 @@ RMDEF Quaternion QuaternionNormalize(Quaternion q)
 }
 
 // Invert provided quaternion
-RMDEF Quaternion QuaternionInvert(Quaternion q)
+RMAPI Quaternion QuaternionInvert(Quaternion q)
 {
     Quaternion result = q;
 
@@ -1494,7 +1495,7 @@ RMDEF Quaternion QuaternionInvert(Quaternion q)
 }
 
 // Calculate two quaternion multiplication
-RMDEF Quaternion QuaternionMultiply(Quaternion q1, Quaternion q2)
+RMAPI Quaternion QuaternionMultiply(Quaternion q1, Quaternion q2)
 {
     Quaternion result = { 0 };
 
@@ -1510,7 +1511,7 @@ RMDEF Quaternion QuaternionMultiply(Quaternion q1, Quaternion q2)
 }
 
 // Scale quaternion by float value
-RMDEF Quaternion QuaternionScale(Quaternion q, float mul)
+RMAPI Quaternion QuaternionScale(Quaternion q, float mul)
 {
     Quaternion result = { 0 };
 
@@ -1525,7 +1526,7 @@ RMDEF Quaternion QuaternionScale(Quaternion q, float mul)
 }
 
 // Divide two quaternions
-RMDEF Quaternion QuaternionDivide(Quaternion q1, Quaternion q2)
+RMAPI Quaternion QuaternionDivide(Quaternion q1, Quaternion q2)
 {
     Quaternion result = { q1.x/q2.x, q1.y/q2.y, q1.z/q2.z, q1.w/q2.w };
 
@@ -1533,7 +1534,7 @@ RMDEF Quaternion QuaternionDivide(Quaternion q1, Quaternion q2)
 }
 
 // Calculate linear interpolation between two quaternions
-RMDEF Quaternion QuaternionLerp(Quaternion q1, Quaternion q2, float amount)
+RMAPI Quaternion QuaternionLerp(Quaternion q1, Quaternion q2, float amount)
 {
     Quaternion result = { 0 };
 
@@ -1546,7 +1547,7 @@ RMDEF Quaternion QuaternionLerp(Quaternion q1, Quaternion q2, float amount)
 }
 
 // Calculate slerp-optimized interpolation between two quaternions
-RMDEF Quaternion QuaternionNlerp(Quaternion q1, Quaternion q2, float amount)
+RMAPI Quaternion QuaternionNlerp(Quaternion q1, Quaternion q2, float amount)
 {
     Quaternion result = { 0 };
 
@@ -1571,7 +1572,7 @@ RMDEF Quaternion QuaternionNlerp(Quaternion q1, Quaternion q2, float amount)
 }
 
 // Calculates spherical linear interpolation between two quaternions
-RMDEF Quaternion QuaternionSlerp(Quaternion q1, Quaternion q2, float amount)
+RMAPI Quaternion QuaternionSlerp(Quaternion q1, Quaternion q2, float amount)
 {
     Quaternion result = { 0 };
 
@@ -1613,7 +1614,7 @@ RMDEF Quaternion QuaternionSlerp(Quaternion q1, Quaternion q2, float amount)
 }
 
 // Calculate quaternion based on the rotation from one vector to another
-RMDEF Quaternion QuaternionFromVector3ToVector3(Vector3 from, Vector3 to)
+RMAPI Quaternion QuaternionFromVector3ToVector3(Vector3 from, Vector3 to)
 {
     Quaternion result = { 0 };
 
@@ -1641,7 +1642,7 @@ RMDEF Quaternion QuaternionFromVector3ToVector3(Vector3 from, Vector3 to)
 }
 
 // Get a quaternion for a given rotation matrix
-RMDEF Quaternion QuaternionFromMatrix(Matrix mat)
+RMAPI Quaternion QuaternionFromMatrix(Matrix mat)
 {
     Quaternion result = { 0 };
 
@@ -1675,7 +1676,7 @@ RMDEF Quaternion QuaternionFromMatrix(Matrix mat)
 }
 
 // Get a matrix for a given quaternion
-RMDEF Matrix QuaternionToMatrix(Quaternion q)
+RMAPI Matrix QuaternionToMatrix(Quaternion q)
 {
     Matrix result = { 1.0f, 0.0f, 0.0f, 0.0f,
                       0.0f, 1.0f, 0.0f, 0.0f,
@@ -1709,7 +1710,7 @@ RMDEF Matrix QuaternionToMatrix(Quaternion q)
 
 // Get rotation quaternion for an angle and axis
 // NOTE: angle must be provided in radians
-RMDEF Quaternion QuaternionFromAxisAngle(Vector3 axis, float angle)
+RMAPI Quaternion QuaternionFromAxisAngle(Vector3 axis, float angle)
 {
     Quaternion result = { 0.0f, 0.0f, 0.0f, 1.0f };
 
@@ -1754,7 +1755,7 @@ RMDEF Quaternion QuaternionFromAxisAngle(Vector3 axis, float angle)
 }
 
 // Get the rotation angle and axis for a given quaternion
-RMDEF void QuaternionToAxisAngle(Quaternion q, Vector3 *outAxis, float *outAngle)
+RMAPI void QuaternionToAxisAngle(Quaternion q, Vector3 *outAxis, float *outAngle)
 {
     if (fabs(q.w) > 1.0f)
     {
@@ -1792,7 +1793,7 @@ RMDEF void QuaternionToAxisAngle(Quaternion q, Vector3 *outAxis, float *outAngle
 
 // Get the quaternion equivalent to Euler angles
 // NOTE: Rotation order is ZYX
-RMDEF Quaternion QuaternionFromEuler(float pitch, float yaw, float roll)
+RMAPI Quaternion QuaternionFromEuler(float pitch, float yaw, float roll)
 {
     Quaternion result = { 0 };
 
@@ -1813,7 +1814,7 @@ RMDEF Quaternion QuaternionFromEuler(float pitch, float yaw, float roll)
 
 // Get the Euler angles equivalent to quaternion (roll, pitch, yaw)
 // NOTE: Angles are returned in a Vector3 struct in radians
-RMDEF Vector3 QuaternionToEuler(Quaternion q)
+RMAPI Vector3 QuaternionToEuler(Quaternion q)
 {
     Vector3 result = { 0 };
 
@@ -1837,7 +1838,7 @@ RMDEF Vector3 QuaternionToEuler(Quaternion q)
 }
 
 // Transform a quaternion given a transformation matrix
-RMDEF Quaternion QuaternionTransform(Quaternion q, Matrix mat)
+RMAPI Quaternion QuaternionTransform(Quaternion q, Matrix mat)
 {
     Quaternion result = { 0 };
 

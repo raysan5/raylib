@@ -148,6 +148,7 @@
 
 #if defined(SUPPORT_COMPRESSION_API)
     #define SINFL_IMPLEMENTATION
+    #define SINFL_NO_SIMD
     #include "external/sinfl.h"     // Deflate (RFC 1951) decompressor
 
     #define SDEFL_IMPLEMENTATION
@@ -679,11 +680,11 @@ void android_main(struct android_app *app)
     char arg0[] = "raylib";     // NOTE: argv[] are mutable
     CORE.Android.app = app;
 
-    // TODO: Should we maybe report != 0 return codes somewhere?
+    // NOTE: Return codes != 0 are skipped
     (void)main(1, (char *[]) { arg0, NULL });
 }
 
-// TODO: Add this to header (if apps really need it)
+// NOTE: Add this to header (if apps really need it)
 struct android_app *GetAndroidApp(void)
 {
     return CORE.Android.app;
@@ -1518,7 +1519,6 @@ void SetWindowMinSize(int width, int height)
 }
 
 // Set window dimensions
-// TODO: Issues on HighDPI scaling
 void SetWindowSize(int width, int height)
 {
 #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
@@ -1527,8 +1527,7 @@ void SetWindowSize(int width, int height)
 #if defined(PLATFORM_WEB)
     //emscripten_set_canvas_size(width, height);  // DEPRECATED!
 
-    // TODO: Below functions should be used to replace previous one but
-    // they do not seem to work properly
+    // TODO: Below functions should be used to replace previous one but they do not seem to work properly
     //emscripten_set_canvas_element_size("canvas", width, height);
     //emscripten_set_element_css_size("canvas", width, height);
 #endif
@@ -1537,13 +1536,25 @@ void SetWindowSize(int width, int height)
 // Get current screen width
 int GetScreenWidth(void)
 {
-    return CORE.Window.currentFbo.width;
+    return CORE.Window.screen.width;
 }
 
 // Get current screen height
 int GetScreenHeight(void)
 {
-    return CORE.Window.currentFbo.height;
+    return CORE.Window.screen.height;
+}
+
+// Get current render width which is equal to screen width * dpi scale
+int GetRenderWidth(void)
+{
+    return CORE.Window.render.width;
+}
+
+// Get current screen height which is equal to screen height * dpi scale
+int GetRenderHeight(void)
+{
+    return CORE.Window.render.height;
 }
 
 // Get native window handle
@@ -2135,8 +2146,8 @@ void EndTextureMode(void)
     SetupViewport(CORE.Window.render.width, CORE.Window.render.height);
 
     // Reset current fbo to screen size
-    CORE.Window.currentFbo.width = CORE.Window.screen.width;
-    CORE.Window.currentFbo.height = CORE.Window.screen.height;
+    CORE.Window.currentFbo.width = CORE.Window.render.width;
+    CORE.Window.currentFbo.height = CORE.Window.render.height;
 }
 
 // Begin custom shader mode
@@ -2171,7 +2182,17 @@ void BeginScissorMode(int x, int y, int width, int height)
     rlDrawRenderBatchActive();      // Update and draw internal render batch
 
     rlEnableScissorTest();
-    rlScissor(x, CORE.Window.currentFbo.height - (y + height), width, height);
+
+    if ((CORE.Window.flags & FLAG_WINDOW_HIGHDPI) > 0)
+    {
+        Vector2 scale = GetWindowScaleDPI();
+
+        rlScissor(x*scale.x, CORE.Window.currentFbo.height - (y + height)*scale.y, width*scale.x, height*scale.y);
+    }
+    else
+    {
+        rlScissor(x, CORE.Window.currentFbo.height - (y + height), width, height);
+    }
 }
 
 // End scissor mode
@@ -2654,7 +2675,6 @@ void TakeScreenshot(const char *fileName)
     emscripten_run_script(TextFormat("saveFileFromMEMFSToDisk('%s','%s')", GetFileName(path), GetFileName(path)));
 #endif
 
-    // TODO: Verification required for log
     TRACELOG(LOG_INFO, "SYSTEM: [%s] Screenshot taken successfully", path);
 }
 
@@ -3004,7 +3024,7 @@ unsigned char *DecompressData(unsigned char *compData, int compDataLength, int *
 #if defined(SUPPORT_COMPRESSION_API)
     // Decompress data from a valid DEFLATE stream
     data = RL_CALLOC(MAX_DECOMPRESSION_SIZE*1024*1024, 1);
-    int length = sinflate(data, compData, compDataLength);
+    int length = sinflate(data, MAX_DECOMPRESSION_SIZE, compData, compDataLength);
     unsigned char *temp = RL_REALLOC(data, length);
 
     if (temp != NULL) data = temp;
@@ -3570,8 +3590,6 @@ Vector2 GetTouchPosition(int index)
 #if defined(PLATFORM_WEB) || defined(PLATFORM_RPI) || defined(PLATFORM_DRM)
     if (index < MAX_TOUCH_POINTS) position = CORE.Input.Touch.position[index];
     else TRACELOG(LOG_WARNING, "INPUT: Required touch point out of range (Max touch points: %i)", MAX_TOUCH_POINTS);
-
-    // TODO: Touch position scaling required?
 #endif
 
     return position;
@@ -3841,16 +3859,6 @@ static bool InitGraphicsDevice(int width, int height)
         TRACELOG(LOG_WARNING, "GLFW: Failed to initialize Window");
         return false;
     }
-    else
-    {
-        TRACELOG(LOG_INFO, "DISPLAY: Device initialized successfully");
-#if defined(PLATFORM_DESKTOP)
-        TRACELOG(LOG_INFO, "    > Display size: %i x %i", CORE.Window.display.width, CORE.Window.display.height);
-#endif
-        TRACELOG(LOG_INFO, "    > Render size:  %i x %i", CORE.Window.render.width, CORE.Window.render.height);
-        TRACELOG(LOG_INFO, "    > Screen size:  %i x %i", CORE.Window.screen.width, CORE.Window.screen.height);
-        TRACELOG(LOG_INFO, "    > Viewport offsets: %i, %i", CORE.Window.renderOffset.x, CORE.Window.renderOffset.y);
-    }
 
     // Set window callback events
     glfwSetWindowSizeCallback(CORE.Window.handle, WindowSizeCallback);      // NOTE: Resizing not allowed by default!
@@ -3912,8 +3920,13 @@ static bool InitGraphicsDevice(int width, int height)
 #if defined(DEFAULT_GRAPHIC_DEVICE_DRM)
     CORE.Window.fd = open(DEFAULT_GRAPHIC_DEVICE_DRM, O_RDWR);
 #else
-    TRACELOG(LOG_INFO, "DISPLAY: No graphic card set, trying card1");
-    CORE.Window.fd = open("/dev/dri/card1", O_RDWR); // VideoCore VI (Raspberry Pi 4)
+    TRACELOG(LOG_INFO, "DISPLAY: No graphic card set, trying platform-gpu-card");
+    CORE.Window.fd = open("/dev/dri/by-path/platform-gpu-card",  O_RDWR); // VideoCore VI (Raspberry Pi 4)
+    if ((-1 == CORE.Window.fd) || (drmModeGetResources(CORE.Window.fd) == NULL))
+    {
+        TRACELOG(LOG_INFO, "DISPLAY: Failed to open platform-gpu-card, trying card1");
+        CORE.Window.fd = open("/dev/dri/card1", O_RDWR); // Other Embedded
+    }
     if ((-1 == CORE.Window.fd) || (drmModeGetResources(CORE.Window.fd) == NULL))
     {
         TRACELOG(LOG_INFO, "DISPLAY: Failed to open graphic card1, trying card0");
@@ -4294,12 +4307,8 @@ static bool InitGraphicsDevice(int width, int height)
     rlLoadExtensions(eglGetProcAddress);
 #endif
 
-    // Initialize OpenGL context (states and resources)
-    // NOTE: CORE.Window.screen.width and CORE.Window.screen.height not used, just stored as globals in rlgl
-    rlglInit(CORE.Window.screen.width, CORE.Window.screen.height);
-
-    int fbWidth = CORE.Window.render.width;
-    int fbHeight = CORE.Window.render.height;
+    int fbWidth = CORE.Window.screen.width;
+    int fbHeight = CORE.Window.screen.height;
 
 #if defined(PLATFORM_DESKTOP)
     if ((CORE.Window.flags & FLAG_WINDOW_HIGHDPI) > 0)
@@ -4318,11 +4327,25 @@ static bool InitGraphicsDevice(int width, int height)
     }
 #endif
 
+    CORE.Window.currentFbo.width = fbWidth;
+    CORE.Window.currentFbo.height = fbHeight;
+    CORE.Window.render.width = CORE.Window.currentFbo.width;
+    CORE.Window.render.height = CORE.Window.currentFbo.height;
+
+    // Initialize OpenGL context (states and resources)
+    // NOTE: CORE.Window.currentFbo.width and CORE.Window.currentFbo.height not used, just stored as globals in rlgl
+    rlglInit(CORE.Window.currentFbo.width, CORE.Window.currentFbo.height);
+
     // Setup default viewport
     SetupViewport(fbWidth, fbHeight);
 
-    CORE.Window.currentFbo.width = CORE.Window.screen.width;
-    CORE.Window.currentFbo.height = CORE.Window.screen.height;
+    TRACELOG(LOG_INFO, "DISPLAY: Device initialized successfully");
+#if defined(PLATFORM_DESKTOP)
+    TRACELOG(LOG_INFO, "    > Display size: %i x %i", CORE.Window.display.width, CORE.Window.display.height);
+#endif
+    TRACELOG(LOG_INFO, "    > Screen size:  %i x %i", CORE.Window.screen.width, CORE.Window.screen.height);
+    TRACELOG(LOG_INFO, "    > Render size:  %i x %i", CORE.Window.render.width, CORE.Window.render.height);
+    TRACELOG(LOG_INFO, "    > Viewport offsets: %i, %i", CORE.Window.renderOffset.x, CORE.Window.renderOffset.y);
 
     ClearBackground(RAYWHITE);      // Default background color for raylib games :P
 
@@ -4719,16 +4742,14 @@ void PollInputEvents(void)
         }
     }
 
+    CORE.Window.resizedLastFrame = false;
+
 #if defined(SUPPORT_EVENTS_WAITING)
     glfwWaitEvents();
 #else
     glfwPollEvents();       // Register keyboard/mouse events (callbacks)... and window events!
 #endif
 #endif  // PLATFORM_DESKTOP
-
-#if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
-    CORE.Window.resizedLastFrame = false;
-#endif
 
 // Gamepad support using emscripten API
 // NOTE: GLFW3 joystick functionality not available in web
@@ -4889,8 +4910,23 @@ static void WindowSizeCallback(GLFWwindow *window, int width, int height)
     if (IsWindowFullscreen()) return;
 
     // Set current screen size
+#if defined(__APPLE__)
     CORE.Window.screen.width = width;
     CORE.Window.screen.height = height;
+#else
+    if ((CORE.Window.flags & FLAG_WINDOW_HIGHDPI) > 0)
+    {
+        Vector2 windowScaleDPI = GetWindowScaleDPI();
+
+        CORE.Window.screen.width = width/windowScaleDPI.x;
+        CORE.Window.screen.height = height/windowScaleDPI.y;
+    }
+    else
+    {
+        CORE.Window.screen.width = width;
+        CORE.Window.screen.height = height;
+    }
+#endif
 
     // NOTE: Postprocessing texture is not scaled to new size
 }
@@ -5432,8 +5468,6 @@ static EM_BOOL EmscriptenGamepadCallback(int eventType, const EmscriptenGamepadE
     }
     else CORE.Input.Gamepad.ready[gamepadEvent->index] = false;
 
-    // TODO: Test gamepadEvent->index
-
     return 0;
 }
 #endif
@@ -5498,7 +5532,6 @@ static void RestoreKeyboard(void)
 
 #if defined(SUPPORT_SSH_KEYBOARD_RPI)
 // Process keyboard inputs
-// TODO: Most probably input reading and processing should be in a separate thread
 static void ProcessKeyboard(void)
 {
     #define MAX_KEYBUFFER_SIZE      32      // Max size in bytes to read
@@ -5853,7 +5886,7 @@ static void ConfigureEvdevDevice(char *device)
 static void PollKeyboardEvents(void)
 {
     // Scancode to keycode mapping for US keyboards
-    // TODO: Probably replace this with a keymap from the X11 to get the correct regional map for the keyboard:
+    // TODO: Replace this with a keymap from the X11 to get the correct regional map for the keyboard:
     // Currently non US keyboards will have the wrong mapping for some keys
     static const int keymapUS[] = {
         0, 256, 49, 50, 51, 52, 53, 54, 55, 56, 57, 48, 45, 61, 259, 258, 81, 87, 69, 82, 84,
@@ -6339,7 +6372,6 @@ static void LoadAutomationEvents(const char *fileName)
 // Export recorded events into a file
 static void ExportAutomationEvents(const char *fileName)
 {
-    // TODO: eventCount is required -> header? -> rAEL
     unsigned char fileId[4] = "rEP ";
 
     // Save as binary

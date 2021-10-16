@@ -4,17 +4,19 @@
 *
 *   raylib supports multiple models file formats:
 *
-*     - OBJ > Text file, must include vertex position-texcoords-normals information,
-*             if files references some .mtl materials file, it will be loaded (or try to)
-*     - GLTF > Modern text/binary file format, includes lot of information and it could
-*              also reference external files, raylib will try loading mesh and materials data
-*     - IQM > Binary file format including mesh vertex data but also animation data,
-*             raylib can load .iqm animations.
+*     - OBJ  > Text file format. Must include vertex position-texcoords-normals information,
+*              if files references some .mtl materials file, it will be loaded (or try to).
+*     - GLTF > Text/binary file format. Includes lot of information and it could
+*              also reference external files, raylib will try loading mesh and materials data.
+*     - IQM  > Binary file format. Includes mesh vertex data but also animation data,
+*              raylib can load .iqm animations.
+*     - VOX  > Binary file format. MagikaVoxel mesh format:
+*              https://github.com/ephtracy/voxel-model/blob/master/MagicaVoxel-file-format-vox.txt
 *
-*   This example has been created using raylib 2.6 (www.raylib.com)
+*   This example has been created using raylib 4.0 (www.raylib.com)
 *   raylib is licensed under an unmodified zlib/libpng license (View raylib.h for details)
 *
-*   Copyright (c) 2014-2019 Ramon Santamaria (@raysan5)
+*   Copyright (c) 2014-2021 Ramon Santamaria (@raysan5)
 *
 ********************************************************************************************/
 

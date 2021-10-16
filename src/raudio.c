@@ -193,7 +193,7 @@ typedef struct tagBITMAPINFOHEADER {
 #endif
 
 #if defined(SUPPORT_FILEFORMAT_OGG)
-    // TODO: Remap malloc()/free() calls to RL_MALLOC/RL_FREE
+    // TODO: Remap stb_vorbis malloc()/free() calls to RL_MALLOC/RL_FREE
 
     #define STB_VORBIS_IMPLEMENTATION
     #include "external/stb_vorbis.h"    // OGG loading functions
@@ -405,8 +405,6 @@ void UntrackAudioBuffer(AudioBuffer *buffer);
 // Initialize audio device
 void InitAudioDevice(void)
 {
-    // TODO: Load AUDIO context memory dynamically?
-
     // Init audio context
     ma_context_config ctxConfig = ma_context_config_init();
     ctxConfig.logCallback = OnLog;
@@ -1680,7 +1678,7 @@ void SeekMusicStream(Music music, float position)
 #endif
         default: break;
     }
-    
+
     music.stream.buffer->framesProcessed = positionInFrames;
 }
 

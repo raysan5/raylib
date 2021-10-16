@@ -412,7 +412,7 @@ void ProcessGestureEvent(GestureEvent event)
     }
     else if (GESTURES.Touch.pointCount > 2)     // More than two touch points
     {
-        // TODO.
+        // TODO: Process gesture events for more than two points
     }
 }
 

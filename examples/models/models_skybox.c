@@ -10,8 +10,9 @@
 ********************************************************************************************/
 
 #include "raylib.h"
+
 #include "rlgl.h"
-#include "raymath.h"
+#include "raymath.h"      // Required for: MatrixPerspective(), MatrixLookAt()
 
 #if defined(PLATFORM_DESKTOP)
     #define GLSL_VERSION            330

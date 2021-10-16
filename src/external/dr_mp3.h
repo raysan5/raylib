@@ -1,6 +1,6 @@
 /*
 MP3 audio decoder. Choice of public domain or MIT-0. See license statements at the end of this file.
-dr_mp3 - v0.6.27 - 2021-02-21
+dr_mp3 - v0.6.31 - 2021-08-22
 
 David Reid - mackron@gmail.com
 
@@ -95,7 +95,7 @@ extern "C" {
 
 #define DRMP3_VERSION_MAJOR     0
 #define DRMP3_VERSION_MINOR     6
-#define DRMP3_VERSION_REVISION  27
+#define DRMP3_VERSION_REVISION  31
 #define DRMP3_VERSION_STRING    DRMP3_XSTRINGIFY(DRMP3_VERSION_MAJOR) "." DRMP3_XSTRINGIFY(DRMP3_VERSION_MINOR) "." DRMP3_XSTRINGIFY(DRMP3_VERSION_REVISION)
 
 #include <stddef.h> /* For size_t. */
@@ -124,7 +124,7 @@ typedef unsigned int            drmp3_uint32;
         #pragma GCC diagnostic pop
     #endif
 #endif
-#if defined(__LP64__) || defined(_WIN64) || (defined(__x86_64__) && !defined(__ILP32__)) || defined(_M_X64) || defined(__ia64) || defined (_M_IA64) || defined(__aarch64__) || defined(__powerpc64__)
+#if defined(__LP64__) || defined(_WIN64) || (defined(__x86_64__) && !defined(__ILP32__)) || defined(_M_X64) || defined(__ia64) || defined (_M_IA64) || defined(__aarch64__) || defined(_M_ARM64) || defined(__powerpc64__)
     typedef drmp3_uint64        drmp3_uintptr;
 #else
     typedef drmp3_uint32        drmp3_uintptr;
@@ -701,7 +701,7 @@ static int drmp3_have_simd(void)
 
 #if defined(__ARM_ARCH) && (__ARM_ARCH >= 6) && !defined(__aarch64__) && !defined(_M_ARM64)
 #define DRMP3_HAVE_ARMV6 1
-static __inline__ __attribute__((always_inline)) drmp3_int32 drmp3_clip_int16_arm(int32_t a)
+static __inline__ __attribute__((always_inline)) drmp3_int32 drmp3_clip_int16_arm(drmp3_int32 a)
 {
     drmp3_int32 x = 0;
     __asm__ ("ssat %0, #16, %1" : "=r"(x) : "r"(a));
@@ -711,6 +711,31 @@ static __inline__ __attribute__((always_inline)) drmp3_int32 drmp3_clip_int16_ar
 #define DRMP3_HAVE_ARMV6 0
 #endif
 
+
+/* Standard library stuff. */
+#ifndef DRMP3_ASSERT
+#include <assert.h>
+#define DRMP3_ASSERT(expression) assert(expression)
+#endif
+#ifndef DRMP3_COPY_MEMORY
+#define DRMP3_COPY_MEMORY(dst, src, sz) memcpy((dst), (src), (sz))
+#endif
+#ifndef DRMP3_MOVE_MEMORY
+#define DRMP3_MOVE_MEMORY(dst, src, sz) memmove((dst), (src), (sz))
+#endif
+#ifndef DRMP3_ZERO_MEMORY
+#define DRMP3_ZERO_MEMORY(p, sz) memset((p), 0, (sz))
+#endif
+#define DRMP3_ZERO_OBJECT(p) DRMP3_ZERO_MEMORY((p), sizeof(*(p)))
+#ifndef DRMP3_MALLOC
+#define DRMP3_MALLOC(sz) malloc((sz))
+#endif
+#ifndef DRMP3_REALLOC
+#define DRMP3_REALLOC(p, sz) realloc((p), (sz))
+#endif
+#ifndef DRMP3_FREE
+#define DRMP3_FREE(p) free((p))
+#endif
 
 typedef struct
 {
@@ -978,7 +1003,7 @@ static int drmp3_L12_dequantize_granule(float *grbuf, drmp3_bs *bs, drmp3_L12_sc
 static void drmp3_L12_apply_scf_384(drmp3_L12_scale_info *sci, const float *scf, float *dst)
 {
     int i, k;
-    memcpy(dst + 576 + sci->stereo_bands*18, dst + sci->stereo_bands*18, (sci->total_bands - sci->stereo_bands)*18*sizeof(float));
+    DRMP3_COPY_MEMORY(dst + 576 + sci->stereo_bands*18, dst + sci->stereo_bands*18, (sci->total_bands - sci->stereo_bands)*18*sizeof(float));
     for (i = 0; i < sci->total_bands; i++, dst += 18, scf += 6)
     {
         for (k = 0; k < 12; k++)
@@ -1123,14 +1148,14 @@ static void drmp3_L3_read_scalefactors(drmp3_uint8 *scf, drmp3_uint8 *ist_pos, c
         int cnt = scf_count[i];
         if (scfsi & 8)
         {
-            memcpy(scf, ist_pos, cnt);
+            DRMP3_COPY_MEMORY(scf, ist_pos, cnt);
         } else
         {
             int bits = scf_size[i];
             if (!bits)
             {
-                memset(scf, 0, cnt);
-                memset(ist_pos, 0, cnt);
+                DRMP3_ZERO_MEMORY(scf, cnt);
+                DRMP3_ZERO_MEMORY(ist_pos, cnt);
             } else
             {
                 int max_scf = (scfsi < 0) ? (1 << bits) - 1 : -1;
@@ -1390,12 +1415,22 @@ static void drmp3_L3_midside_stereo(float *left, int n)
     int i = 0;
     float *right = left + 576;
 #if DRMP3_HAVE_SIMD
-    if (drmp3_have_simd()) for (; i < n - 3; i += 4)
+    if (drmp3_have_simd())
     {
-        drmp3_f4 vl = DRMP3_VLD(left + i);
-        drmp3_f4 vr = DRMP3_VLD(right + i);
-        DRMP3_VSTORE(left + i, DRMP3_VADD(vl, vr));
-        DRMP3_VSTORE(right + i, DRMP3_VSUB(vl, vr));
+        for (; i < n - 3; i += 4)
+        {
+            drmp3_f4 vl = DRMP3_VLD(left + i);
+            drmp3_f4 vr = DRMP3_VLD(right + i);
+            DRMP3_VSTORE(left + i, DRMP3_VADD(vl, vr));
+            DRMP3_VSTORE(right + i, DRMP3_VSUB(vl, vr));
+        }
+#ifdef __GNUC__
+        /* Workaround for spurious -Waggressive-loop-optimizations warning from gcc.
+         * For more info see: https://github.com/lieff/minimp3/issues/88
+         */
+        if (__builtin_constant_p(n % 4 == 0) && n % 4 == 0)
+            return;
+#endif
     }
 #endif
     for (; i < n; i++)
@@ -1505,7 +1540,7 @@ static void drmp3_L3_reorder(float *grbuf, float *scratch, const drmp3_uint8 *sf
             *dst++ = src[2*len];
         }
     }
-    memcpy(grbuf, scratch, (dst - scratch)*sizeof(float));
+    DRMP3_COPY_MEMORY(grbuf, scratch, (dst - scratch)*sizeof(float));
 }
 
 static void drmp3_L3_antialias(float *grbuf, int nbands)
@@ -1674,8 +1709,8 @@ static void drmp3_L3_imdct_short(float *grbuf, float *overlap, int nbands)
     for (;nbands > 0; nbands--, overlap += 9, grbuf += 18)
     {
         float tmp[18];
-        memcpy(tmp, grbuf, sizeof(tmp));
-        memcpy(grbuf, overlap, 6*sizeof(float));
+        DRMP3_COPY_MEMORY(tmp, grbuf, sizeof(tmp));
+        DRMP3_COPY_MEMORY(grbuf, overlap, 6*sizeof(float));
         drmp3_L3_imdct12(tmp, grbuf + 6, overlap + 6);
         drmp3_L3_imdct12(tmp + 1, grbuf + 12, overlap + 6);
         drmp3_L3_imdct12(tmp + 2, overlap, overlap + 6);
@@ -1719,7 +1754,7 @@ static void drmp3_L3_save_reservoir(drmp3dec *h, drmp3dec_scratch *s)
     }
     if (remains > 0)
     {
-        memmove(h->reserv_buf, s->maindata + pos, remains);
+        DRMP3_MOVE_MEMORY(h->reserv_buf, s->maindata + pos, remains);
     }
     h->reserv = remains;
 }
@@ -1728,8 +1763,8 @@ static int drmp3_L3_restore_reservoir(drmp3dec *h, drmp3_bs *bs, drmp3dec_scratc
 {
     int frame_bytes = (bs->limit - bs->pos)/8;
     int bytes_have = DRMP3_MIN(h->reserv, main_data_begin);
-    memcpy(s->maindata, h->reserv_buf + DRMP3_MAX(0, h->reserv - main_data_begin), DRMP3_MIN(h->reserv, main_data_begin));
-    memcpy(s->maindata + bytes_have, bs->buf + bs->pos/8, frame_bytes);
+    DRMP3_COPY_MEMORY(s->maindata, h->reserv_buf + DRMP3_MAX(0, h->reserv - main_data_begin), DRMP3_MIN(h->reserv, main_data_begin));
+    DRMP3_COPY_MEMORY(s->maindata + bytes_have, bs->buf + bs->pos/8, frame_bytes);
     drmp3_bs_init(&s->bs, s->maindata, bytes_have + frame_bytes);
     return h->reserv >= main_data_begin;
 }
@@ -2136,7 +2171,7 @@ static void drmp3d_synth_granule(float *qmf_state, float *grbuf, int nbands, int
         drmp3d_DCT_II(grbuf + 576*i, nbands);
     }
 
-    memcpy(lins, qmf_state, sizeof(float)*15*64);
+    DRMP3_COPY_MEMORY(lins, qmf_state, sizeof(float)*15*64);
 
     for (i = 0; i < nbands; i += 2)
     {
@@ -2152,7 +2187,7 @@ static void drmp3d_synth_granule(float *qmf_state, float *grbuf, int nbands, int
     } else
 #endif
     {
-        memcpy(qmf_state, lins + nbands*64, sizeof(float)*15*64);
+        DRMP3_COPY_MEMORY(qmf_state, lins + nbands*64, sizeof(float)*15*64);
     }
 }
 
@@ -2230,7 +2265,7 @@ DRMP3_API int drmp3dec_decode_frame(drmp3dec *dec, const drmp3_uint8 *mp3, int m
     }
     if (!frame_size)
     {
-        memset(dec, 0, sizeof(drmp3dec));
+        DRMP3_ZERO_MEMORY(dec, sizeof(drmp3dec));
         i = drmp3d_find_frame(mp3, mp3_bytes, &dec->free_format_bytes, &frame_size);
         if (!frame_size || i + frame_size > mp3_bytes)
         {
@@ -2240,7 +2275,7 @@ DRMP3_API int drmp3dec_decode_frame(drmp3dec *dec, const drmp3_uint8 *mp3, int m
     }
 
     hdr = mp3 + i;
-    memcpy(dec->header, hdr, DRMP3_HDR_SIZE);
+    DRMP3_COPY_MEMORY(dec->header, hdr, DRMP3_HDR_SIZE);
     info->frame_bytes = i + frame_size;
     info->channels = DRMP3_HDR_IS_MONO(hdr) ? 1 : 2;
     info->hz = drmp3_hdr_sample_rate_hz(hdr);
@@ -2266,7 +2301,7 @@ DRMP3_API int drmp3dec_decode_frame(drmp3dec *dec, const drmp3_uint8 *mp3, int m
         {
             for (igr = 0; igr < (DRMP3_HDR_TEST_MPEG1(hdr) ? 2 : 1); igr++, pcm = DRMP3_OFFSET_PTR(pcm, sizeof(drmp3d_sample_t)*576*info->channels))
             {
-                memset(scratch.grbuf[0], 0, 576*2*sizeof(float));
+                DRMP3_ZERO_MEMORY(scratch.grbuf[0], 576*2*sizeof(float));
                 drmp3_L3_decode(dec, &scratch, scratch.gr_info + igr*info->channels, info->channels);
                 drmp3d_synth_granule(dec->qmf_state, scratch.grbuf[0], 18, info->channels, (drmp3d_sample_t*)pcm, scratch.syn[0]);
             }
@@ -2285,7 +2320,7 @@ DRMP3_API int drmp3dec_decode_frame(drmp3dec *dec, const drmp3_uint8 *mp3, int m
 
         drmp3_L12_read_scale_info(hdr, bs_frame, sci);
 
-        memset(scratch.grbuf[0], 0, 576*2*sizeof(float));
+        DRMP3_ZERO_MEMORY(scratch.grbuf[0], 576*2*sizeof(float));
         for (i = 0, igr = 0; igr < 3; igr++)
         {
             if (12 == (i += drmp3_L12_dequantize_granule(scratch.grbuf[0] + i, bs_frame, sci, info->layer | 1)))
@@ -2293,7 +2328,7 @@ DRMP3_API int drmp3dec_decode_frame(drmp3dec *dec, const drmp3_uint8 *mp3, int m
                 i = 0;
                 drmp3_L12_apply_scf_384(sci, sci->scf + igr, scratch.grbuf[0]);
                 drmp3d_synth_granule(dec->qmf_state, scratch.grbuf[0], 12, info->channels, (drmp3d_sample_t*)pcm, scratch.syn[0]);
-                memset(scratch.grbuf[0], 0, 576*2*sizeof(float));
+                DRMP3_ZERO_MEMORY(scratch.grbuf[0], 576*2*sizeof(float));
                 pcm = DRMP3_OFFSET_PTR(pcm, sizeof(drmp3d_sample_t)*384*info->channels);
             }
             if (bs_frame->pos > bs_frame->limit)
@@ -2395,28 +2430,6 @@ DRMP3_API void drmp3dec_f32_to_s16(const float *in, drmp3_int16 *out, size_t num
 #define DRMP3_DATA_CHUNK_SIZE  DRMP3_MIN_DATA_CHUNK_SIZE*4
 #endif
 
-
-/* Standard library stuff. */
-#ifndef DRMP3_ASSERT
-#include <assert.h>
-#define DRMP3_ASSERT(expression) assert(expression)
-#endif
-#ifndef DRMP3_COPY_MEMORY
-#define DRMP3_COPY_MEMORY(dst, src, sz) memcpy((dst), (src), (sz))
-#endif
-#ifndef DRMP3_ZERO_MEMORY
-#define DRMP3_ZERO_MEMORY(p, sz) memset((p), 0, (sz))
-#endif
-#define DRMP3_ZERO_OBJECT(p) DRMP3_ZERO_MEMORY((p), sizeof(*(p)))
-#ifndef DRMP3_MALLOC
-#define DRMP3_MALLOC(sz) malloc((sz))
-#endif
-#ifndef DRMP3_REALLOC
-#define DRMP3_REALLOC(p, sz) realloc((p), (sz))
-#endif
-#ifndef DRMP3_FREE
-#define DRMP3_FREE(p) free((p))
-#endif
 
 #define DRMP3_COUNTOF(x)        (sizeof(x) / sizeof(x[0]))
 #define DRMP3_CLAMP(x, lo, hi)  (DRMP3_MAX(lo, DRMP3_MIN(x, hi)))
@@ -2649,7 +2662,7 @@ static drmp3_uint32 drmp3_decode_next_frame_ex__callbacks(drmp3* pMP3, drmp3d_sa
 
             /* First we need to move the data down. */
             if (pMP3->pData != NULL) {
-                memmove(pMP3->pData, pMP3->pData + pMP3->dataConsumed, pMP3->dataSize);
+                DRMP3_MOVE_MEMORY(pMP3->pData, pMP3->pData + pMP3->dataConsumed, pMP3->dataSize);
             }
 
             pMP3->dataConsumed = 0;
@@ -2709,7 +2722,7 @@ static drmp3_uint32 drmp3_decode_next_frame_ex__callbacks(drmp3* pMP3, drmp3d_sa
             size_t bytesRead;
 
             /* First we need to move the data down. */
-            memmove(pMP3->pData, pMP3->pData + pMP3->dataConsumed, pMP3->dataSize);
+            DRMP3_MOVE_MEMORY(pMP3->pData, pMP3->pData + pMP3->dataConsumed, pMP3->dataSize);
             pMP3->dataConsumed = 0;
 
             if (pMP3->dataCapacity == pMP3->dataSize) {
@@ -2754,12 +2767,22 @@ static drmp3_uint32 drmp3_decode_next_frame_ex__memory(drmp3* pMP3, drmp3d_sampl
         return 0;
     }
 
-    pcmFramesRead = drmp3dec_decode_frame(&pMP3->decoder, pMP3->memory.pData + pMP3->memory.currentReadPos, (int)(pMP3->memory.dataSize - pMP3->memory.currentReadPos), pPCMFrames, &info);
-    if (pcmFramesRead > 0) {
-        pMP3->pcmFramesConsumedInMP3Frame  = 0;
-        pMP3->pcmFramesRemainingInMP3Frame = pcmFramesRead;
-        pMP3->mp3FrameChannels             = info.channels;
-        pMP3->mp3FrameSampleRate           = info.hz;
+    for (;;) {
+        pcmFramesRead = drmp3dec_decode_frame(&pMP3->decoder, pMP3->memory.pData + pMP3->memory.currentReadPos, (int)(pMP3->memory.dataSize - pMP3->memory.currentReadPos), pPCMFrames, &info);
+        if (pcmFramesRead > 0) {
+            pcmFramesRead = drmp3_hdr_frame_samples(pMP3->decoder.header);
+            pMP3->pcmFramesConsumedInMP3Frame  = 0;
+            pMP3->pcmFramesRemainingInMP3Frame = pcmFramesRead;
+            pMP3->mp3FrameChannels             = info.channels;
+            pMP3->mp3FrameSampleRate           = info.hz;
+            break;
+        } else if (info.frame_bytes > 0) {
+            /* No frames were read, but it looks like we skipped past one. Read the next MP3 frame. */
+            pMP3->memory.currentReadPos += (size_t)info.frame_bytes;
+        } else {
+            /* Nothing at all was read. Abort. */
+            break;
+        }
     }
 
     /* Consume the data. */
@@ -2822,7 +2845,7 @@ static drmp3_bool32 drmp3_init_internal(drmp3* pMP3, drmp3_read_proc onRead, drm
     }
 
     /* Decode the first frame to confirm that it is indeed a valid MP3 stream. */
-    if (!drmp3_decode_next_frame(pMP3)) {
+    if (drmp3_decode_next_frame(pMP3) == 0) {
         drmp3__free_from_callbacks(pMP3->pData, &pMP3->allocationCallbacks);    /* The call above may have allocated memory. Need to make sure it's freed before aborting. */
         return DRMP3_FALSE; /* Not a valid MP3 stream. */
     }
@@ -4177,7 +4200,7 @@ static float* drmp3__full_read_and_close_f32(drmp3* pMP3, drmp3_config* pConfig,
 
             oldFramesBufferSize = framesCapacity * pMP3->channels * sizeof(float);
             newFramesBufferSize = newFramesCap   * pMP3->channels * sizeof(float);
-            if (newFramesBufferSize > DRMP3_SIZE_MAX) {
+            if (newFramesBufferSize > (drmp3_uint64)DRMP3_SIZE_MAX) {
                 break;
             }
 
@@ -4244,7 +4267,7 @@ static drmp3_int16* drmp3__full_read_and_close_s16(drmp3* pMP3, drmp3_config* pC
 
             oldFramesBufferSize = framesCapacity * pMP3->channels * sizeof(drmp3_int16);
             newFramesBufferSize = newFramesCap   * pMP3->channels * sizeof(drmp3_int16);
-            if (newFramesBufferSize > DRMP3_SIZE_MAX) {
+            if (newFramesBufferSize > (drmp3_uint64)DRMP3_SIZE_MAX) {
                 break;
             }
 
@@ -4450,6 +4473,20 @@ counts rather than sample counts.
 /*
 REVISION HISTORY
 ================
+v0.6.31 - 2021-08-22
+  - Fix a bug when loading from memory.
+
+v0.6.30 - 2021-08-16
+  - Silence some warnings.
+  - Replace memory operations with DRMP3_* macros.
+
+v0.6.29 - 2021-08-08
+  - Bring up to date with minimp3.
+
+v0.6.28 - 2021-07-31
+  - Fix platform detection for ARM64.
+  - Fix a compilation error with C89.
+
 v0.6.27 - 2021-02-21
   - Fix a warning due to referencing _MSC_VER when it is undefined.
 

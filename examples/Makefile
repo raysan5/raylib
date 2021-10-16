@@ -462,7 +462,6 @@ MODELS = \
     models/models_cubicmap \
     models/models_first_person_maze \
     models/models_geometric_shapes \
-    models/models_material_pbr \
     models/models_mesh_generation \
     models/models_mesh_picking \
     models/models_loading \
@@ -471,8 +470,7 @@ MODELS = \
     models/models_skybox \
     models/models_yaw_pitch_roll \
     models/models_heightmap \
-    models/models_waving_cubes \
-	models/models_magicavoxel_loading
+    models/models_waving_cubes
 
 SHADERS = \
     shaders/shaders_model_shader \

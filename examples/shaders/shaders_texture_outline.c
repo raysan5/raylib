@@ -5,12 +5,10 @@
 *   NOTE: This example requires raylib OpenGL 3.3 or ES2 versions for shaders support,
 *         OpenGL 1.1 does not support shaders, recompile raylib to OpenGL 3.3 version.
 *
-*   NOTE: Shaders used in this example are #version 330 (OpenGL 3.3).
-*
 *   This example has been created using raylib 3.8 (www.raylib.com)
 *   raylib is licensed under an unmodified zlib/libpng license (View raylib.h for details)
 *
-*   Example contributed by Samuel Skiff (@GoldenThumbs)
+*   Example contributed by Samuel Skiff (@GoldenThumbs) and reviewed by Ramon Santamaria (@raysan5)
 *
 *   Copyright (c) 2021 Samuel SKiff (@GoldenThumbs) and Ramon Santamaria (@raysan5)
 *
@@ -33,13 +31,23 @@ int main(void)
 
     InitWindow(screenWidth, screenHeight, "raylib [shaders] example - Apply an outline to a texture");
 
-    Texture2D egg = LoadTexture("resources/egg.png");
-    Texture2D torus = LoadTexture("resources/torus.png");
+    Texture2D texture = LoadTexture("resources/fudesumi.png");
+    
     Shader shdrOutline = LoadShader(0, TextFormat("resources/shaders/glsl%i/outline.fs", GLSL_VERSION));
 
-    float outlineScale = 16.0f;
-    float textureScale[2] = { 16.0f*4, 16.0f*4 };
-    SetShaderValue(shdrOutline, GetShaderLocation(shdrOutline, "texScale"), textureScale, SHADER_UNIFORM_VEC2);
+    float outlineSize = 2.0f;
+    float outlineColor[4] = { 1.0f, 0.0f, 0.0f, 1.0f };     // Normalized RED color 
+    float textureSize[2] = { (float)texture.width, (float)texture.height };
+    
+    // Get shader locations
+    int outlineSizeLoc = GetShaderLocation(shdrOutline, "outlineSize");
+    int outlineColorLoc = GetShaderLocation(shdrOutline, "outlineColor");
+    int textureSizeLoc = GetShaderLocation(shdrOutline, "textureSize");
+    
+    // Set shader values (they can be changed later)
+    SetShaderValue(shdrOutline, outlineSizeLoc, &outlineSize, SHADER_UNIFORM_FLOAT);
+    SetShaderValue(shdrOutline, outlineColorLoc, outlineColor, SHADER_UNIFORM_VEC4);
+    SetShaderValue(shdrOutline, textureSizeLoc, textureSize, SHADER_UNIFORM_VEC2);
 
     SetTargetFPS(60);               // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
@@ -49,7 +57,10 @@ int main(void)
     {
         // Update
         //----------------------------------------------------------------------------------
-        // TODO: Update your variables here
+        outlineSize += GetMouseWheelMove();
+        if (outlineSize < 1.0f) outlineSize = 1.0f;
+        
+        SetShaderValue(shdrOutline, outlineSizeLoc, &outlineSize, SHADER_UNIFORM_FLOAT);
         //----------------------------------------------------------------------------------
 
         // Draw
@@ -59,11 +70,14 @@ int main(void)
             ClearBackground(RAYWHITE);
 
             BeginShaderMode(shdrOutline);
-                DrawTextureEx(egg, (Vector2){ 0, 230 }, 0.0, outlineScale, WHITE);
-                DrawTextureEx(torus, (Vector2){ 544, 230 }, 0.0, outlineScale, WHITE);
+            
+                DrawTexture(texture, GetScreenWidth()/2 - texture.width/2, -30, WHITE);
+                
             EndShaderMode();
 
-            DrawText("Shader-based outlines for textures", 190, 200, 20, LIGHTGRAY);
+            DrawText("Shader-based\ntexture\noutline", 10, 10, 20, GRAY);
+            
+            DrawText(TextFormat("Outline size: %i px", (int)outlineSize), 10, 120, 20, MAROON);
 
             DrawFPS(710, 10);
 
@@ -73,8 +87,7 @@ int main(void)
 
     // De-Initialization
     //--------------------------------------------------------------------------------------
-    UnloadTexture(egg);
-    UnloadTexture(torus);
+    UnloadTexture(texture);
     UnloadShader(shdrOutline);
 
     CloseWindow();        // Close window and OpenGL context
