@@ -1860,14 +1860,8 @@ void rlLoadExtensions(void *loader)
 #if defined(RLGL_SHOW_GL_DETAILS_INFO)
     // Get supported extensions list
     // WARNING: glGetStringi() not available on OpenGL 2.1
-    char **extList = RL_MALLOC(numExt*sizeof(char *));
     TRACELOG(RL_LOG_INFO, "GL: OpenGL extensions:");
-    for (int i = 0; i < numExt; i++)
-    {
-        extList[i] = (char *)glGetStringi(GL_EXTENSIONS, i);
-        TRACELOG(RL_LOG_INFO, "    %s", extList[i]);
-    }
-    RL_FREE(extList);       // Free extensions pointers
+    for (int i = 0; i < numExt; i++) TRACELOG(RL_LOG_INFO, "    %s", glGetStringi(GL_EXTENSIONS, i));
 #endif
 
     // Register supported extensions flags
@@ -2036,9 +2030,10 @@ void rlLoadExtensions(void *loader)
     #endif
     glGetIntegerv(GL_NUM_COMPRESSED_TEXTURE_FORMATS, &capability);
     TRACELOG(RL_LOG_INFO, "    GL_NUM_COMPRESSED_TEXTURE_FORMATS: %i", capability);
-    GLint format[32] = { 0 };
-    glGetIntegerv(GL_COMPRESSED_TEXTURE_FORMATS, format);
-    for (int i = 0; i < capability; i++) TRACELOG(RL_LOG_INFO, "        %s", rlGetCompressedFormatName(format[i]));
+    GLint *compFormats = (GLint *)RL_CALLOC(capability, sizeof(GLint));
+    glGetIntegerv(GL_COMPRESSED_TEXTURE_FORMATS, compFormats);
+    for (int i = 0; i < capability; i++) TRACELOG(RL_LOG_INFO, "        %s", rlGetCompressedFormatName(compFormats[i]));
+    RL_FREE(compFormats);
 
     /*
     // Following capabilities are only supported by OpenGL 4.3 or greater
