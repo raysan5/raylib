@@ -3822,7 +3822,7 @@ void rlSetMatrixViewOffsetStereo(Matrix right, Matrix left)
 #endif
 }
 
-// Load and draw a 1x1 XY quad in NDC
+// Load and draw a quad in NDC
 void rlLoadDrawQuad(void)
 {
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
@@ -3863,7 +3863,7 @@ void rlLoadDrawQuad(void)
 #endif
 }
 
-// Load and draw a 1x1 3D cube in NDC
+// Load and draw a cube in NDC
 void rlLoadDrawCube(void)
 {
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
