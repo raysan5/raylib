@@ -41,6 +41,10 @@
 *   #define RLGL_SHOW_GL_DETAILS_INFO
 *       Show OpenGL extensions and capabilities detailed logs on init
 *
+*   #define SUPPORT_COMPUTE_SHADERS
+*       Enable compute shaders and shader storage buffer object support.
+*       Currently only work with GRAPHICS_API_OPENGL_33 with appropriate driver support.
+*
 *   rlgl capabilities could be customized just defining some internal
 *   values before library inclusion (default values listed):
 *
@@ -249,6 +253,22 @@
 // GL equivalent data types
 #define RL_UNSIGNED_BYTE                        0x1401      // GL_UNSIGNED_BYTE
 #define RL_FLOAT                                0x1406      // GL_FLOAT
+
+// Buffer usage hint
+#define RL_STREAM_DRAW                          0x88E0      // GL_STREAM_DRAW
+#define RL_STREAM_READ                          0x88E1      // GL_STREAM_READ
+#define RL_STREAM_COPY                          0x88E2      // GL_STREAM_COPY
+#define RL_STATIC_DRAW                          0x88E4      // GL_STATIC_DRAW
+#define RL_STATIC_READ                          0x88E5      // GL_STATIC_READ
+#define RL_STATIC_COPY                          0x88E6      // GL_STATIC_COPY
+#define RL_DYNAMIC_DRAW                         0x88E8      // GL_DYNAMIC_DRAW
+#define RL_DYNAMIC_READ                         0x88E9      // GL_DYNAMIC_READ
+#define RL_DYNAMIC_COPY                         0x88EA      // GL_DYNAMIC_COPY
+
+// GL Shader type
+#define RL_FRAGMENT_SHADER                      0x8B30      // GL_FRAGMENT_SHADER
+#define RL_VERTEX_SHADER                        0x8B31      // GL_VERTEX_SHADER
+#define RL_COMPUTE_SHADER                       0x91B9      // GL_COMPUTE_SHADER
 
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
@@ -622,7 +642,7 @@ RLAPI void rlUnloadFramebuffer(unsigned int id);                          // Del
 
 // Shaders management
 RLAPI unsigned int rlLoadShaderCode(const char *vsCode, const char *fsCode);    // Load shader from code strings
-RLAPI unsigned int rlCompileShader(const char *shaderCode, int type);           // Compile custom shader and return shader id (type: GL_VERTEX_SHADER, GL_FRAGMENT_SHADER)
+RLAPI unsigned int rlCompileShader(const char *shaderCode, int type);           // Compile custom shader and return shader id (type: RL_VERTEX_SHADER, RL_FRAGMENT_SHADER, RL_COMPUTE_SHADER)
 RLAPI unsigned int rlLoadShaderProgram(unsigned int vShaderId, unsigned int fShaderId); // Load custom shader program
 RLAPI void rlUnloadShaderProgram(unsigned int id);                              // Unload shader program
 RLAPI int rlGetLocationUniform(unsigned int shaderId, const char *uniformName); // Get shader location uniform
@@ -631,6 +651,24 @@ RLAPI void rlSetUniform(int locIndex, const void *value, int uniformType, int co
 RLAPI void rlSetUniformMatrix(int locIndex, Matrix mat);                      // Set shader value matrix
 RLAPI void rlSetUniformSampler(int locIndex, unsigned int textureId);           // Set shader value sampler
 RLAPI void rlSetShader(unsigned int id, int *locs);                             // Set shader currently active (id and locations)
+
+#if defined(SUPPORT_COMPUTE_SHADERS)
+// Compute shader management
+RLAPI unsigned int rlLoadComputeShaderProgram(unsigned int shaderId);
+RLAPI void rlComputeShaderDispatch(unsigned int groupX, unsigned int groupY, unsigned int groupZ);
+
+// Shader buffer storage object management (ssbo)
+RLAPI unsigned int rlLoadShaderBuffer(unsigned long long size, const void *data, int usageHint);
+RLAPI void rlUnloadShaderBuffer(unsigned int ssboId);
+RLAPI void rlUpdateShaderBufferElements(unsigned int id, const void *data, unsigned long long dataSize, unsigned long long offset);
+RLAPI unsigned long long rlGetShaderBufferSize(unsigned int id);
+RLAPI void rlReadShaderBufferElements(unsigned int id, void *dest, unsigned long long count, unsigned long long offset);
+RLAPI void rlBindShaderBuffer(unsigned int id, unsigned int index);
+
+// Buffer management
+RLAPI void rlCopyBuffersElements(unsigned int destId, unsigned int srcId, unsigned long long destOffset, unsigned long long srcOffset, unsigned long long count);
+RLAPI void rlBindImageTexture(unsigned int id, unsigned int index, unsigned int format, int readonly);
+#endif
 
 // Matrix state management
 RLAPI Matrix rlGetMatrixModelview(void);                                  // Get internal modelview matrix
@@ -691,7 +729,6 @@ RLAPI void rlLoadDrawQuad(void);     // Load and draw a quad
         #define GLAD_REALLOC RL_REALLOC
         #define GLAD_FREE RL_FREE
 
-        #define GLAD_IMPLEMENTATION
         #include "external/glad.h"      // GLAD extensions loading library, includes OpenGL headers
     #endif
 #endif
@@ -896,6 +933,8 @@ typedef struct rlglData {
         bool texCompASTC;                   // ASTC texture compression support (GL_KHR_texture_compression_astc_hdr, GL_KHR_texture_compression_astc_ldr)
         bool texMirrorClamp;                // Clamp mirror wrap mode supported (GL_EXT_texture_mirror_clamp)
         bool texAnisoFilter;                // Anisotropic texture filtering support (GL_EXT_texture_filter_anisotropic)
+        bool computeShader;                 // Compute shaders support (GL_ARB_compute_shader)    
+        bool ssbo;                          // Shader storage buffer object support (GL_ARB_shader_storage_buffer_object)
 
         float maxAnisotropyLevel;           // Maximum anisotropy level supported (minimum is 2.0f)
         int maxDepthBits;                   // Maximum bits for depth component
@@ -1874,6 +1913,8 @@ void rlLoadExtensions(void *loader)
     RLGL.ExtSupported.maxDepthBits = 32;
     RLGL.ExtSupported.texAnisoFilter = true;
     RLGL.ExtSupported.texMirrorClamp = true;
+    if (GLAD_GL_ARB_compute_shader) RLGL.ExtSupported.computeShader = true;
+    if (GLAD_GL_ARB_shader_storage_buffer_object) RLGL.ExtSupported.ssbo = true;    
     #if !defined(__APPLE__)
     // NOTE: With GLAD, we can check if an extension is supported using the GLAD_GL_xxx booleans
     if (GLAD_GL_EXT_texture_compression_s3tc) RLGL.ExtSupported.texCompDXT = true;  // Texture compression: DXT
@@ -2056,6 +2097,8 @@ void rlLoadExtensions(void *loader)
     if (RLGL.ExtSupported.texCompETC2) TRACELOG(RL_LOG_INFO, "GL: ETC2/EAC compressed textures supported");
     if (RLGL.ExtSupported.texCompPVRT) TRACELOG(RL_LOG_INFO, "GL: PVRT compressed textures supported");
     if (RLGL.ExtSupported.texCompASTC) TRACELOG(RL_LOG_INFO, "GL: ASTC compressed textures supported");
+    if (RLGL.ExtSupported.computeShader) TRACELOG(RL_LOG_INFO, "GL: Compute shaders supported");
+    if (RLGL.ExtSupported.ssbo) TRACELOG(RL_LOG_INFO, "GL: Shader storage buffer objects supported");
 #endif  // RLGL_SHOW_GL_DETAILS_INFO
 
 #endif  // GRAPHICS_API_OPENGL_33 || GRAPHICS_API_OPENGL_ES2
@@ -3482,7 +3525,7 @@ unsigned int rlCompileShader(const char *shaderCode, int type)
             case GL_VERTEX_SHADER: TRACELOG(RL_LOG_WARNING, "SHADER: [ID %i] Failed to compile vertex shader code", shader); break;
             case GL_FRAGMENT_SHADER: TRACELOG(RL_LOG_WARNING, "SHADER: [ID %i] Failed to compile fragment shader code", shader); break;
             //case GL_GEOMETRY_SHADER:
-            //case GL_COMPUTE_SHADER:
+            case GL_COMPUTE_SHADER: TRACELOG(RL_LOG_WARNING, "SHADER: [ID %i] Failed to compile compute shader code", shader); break;
             default: break;
         }
 
@@ -3505,7 +3548,7 @@ unsigned int rlCompileShader(const char *shaderCode, int type)
             case GL_VERTEX_SHADER: TRACELOG(RL_LOG_INFO, "SHADER: [ID %i] Vertex shader compiled successfully", shader); break;
             case GL_FRAGMENT_SHADER: TRACELOG(RL_LOG_INFO, "SHADER: [ID %i] Fragment shader compiled successfully", shader); break;
             //case GL_GEOMETRY_SHADER:
-            //case GL_COMPUTE_SHADER:
+            case GL_COMPUTE_SHADER: TRACELOG(RL_LOG_INFO, "SHADER: [ID %i] Compute shader compiled successfully", shader); break;
             default: break;
         }
     }
@@ -3693,6 +3736,134 @@ void rlSetShader(unsigned int id, int *locs)
     }
 #endif
 }
+
+unsigned int rlLoadComputeShaderProgram(unsigned int shaderId)
+{
+    unsigned int program = 0;
+
+#if defined(GRAPHICS_API_OPENGL_33)
+    GLint success = 0;
+    program = glCreateProgram();
+    glAttachShader(program, shaderId);
+    glLinkProgram(program);
+
+    // NOTE: All uniform variables are intitialised to 0 when a program links
+
+    glGetProgramiv(program, GL_LINK_STATUS, &success);
+
+    if (success == GL_FALSE)
+    {
+        TRACELOG(RL_LOG_WARNING, "SHADER: [ID %i] Failed to link compute shader program", program);
+
+        int maxLength = 0;
+        glGetProgramiv(program, GL_INFO_LOG_LENGTH, &maxLength);
+
+        if (maxLength > 0)
+        {
+            int length = 0;
+            char *log = RL_CALLOC(maxLength, sizeof(char));
+            glGetProgramInfoLog(program, maxLength, &length, log);
+            TRACELOG(RL_LOG_WARNING, "SHADER: [ID %i] Link error: %s", program, log);
+            RL_FREE(log);
+        }
+
+        glDeleteProgram(program);
+
+        program = 0;
+    }
+    else
+    {
+        // Get the size of compiled shader program (not available on OpenGL ES 2.0)
+        // NOTE: If GL_LINK_STATUS is GL_FALSE, program binary length is zero.
+        //GLint binarySize = 0;
+        //glGetProgramiv(id, GL_PROGRAM_BINARY_LENGTH, &binarySize);
+
+        TRACELOG(RL_LOG_INFO, "SHADER: [ID %i] Compute shader program loaded successfully", program);
+    }
+#endif
+    return program;
+}
+
+#if defined(SUPPORT_COMPUTE_SHADERS)
+void rlComputeShaderDispatch(unsigned int groupX, unsigned int groupY, unsigned int groupZ)
+{
+#if defined(GRAPHICS_API_OPENGL_33)
+    glDispatchCompute(groupX, groupY, groupZ);
+#endif
+}
+
+unsigned int rlLoadShaderBuffer(unsigned long long size, const void *data, int usageHint)
+{
+    unsigned int ssbo = 0;
+#if defined(GRAPHICS_API_OPENGL_33)
+    glGenBuffers(1, &ssbo);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo);
+    glBufferData(GL_SHADER_STORAGE_BUFFER, size, data, usageHint? usageHint : RL_STREAM_COPY);
+#endif
+    return ssbo;
+}
+
+void rlUnloadShaderBuffer(unsigned int ssboId)
+{
+#if defined(GRAPHICS_API_OPENGL_33)
+    glDeleteBuffers(1, &ssboId);
+#endif
+}
+
+void rlUpdateShaderBufferElements(unsigned int id, const void *data, unsigned long long dataSize, unsigned long long offset)
+{
+#if defined(GRAPHICS_API_OPENGL_33)
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, id);
+    glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset, dataSize, data);
+#endif
+}
+
+unsigned long long rlGetShaderBufferSize(unsigned int id)
+{
+    khronos_int64_t size = 0;
+
+#if defined(GRAPHICS_API_OPENGL_33)
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, id);
+    glGetInteger64v(GL_SHADER_STORAGE_BUFFER_SIZE, &size);
+#endif
+
+    return (size > 0) ? size : 0;
+}
+
+void rlReadShaderBufferElements(unsigned int id, void *dest, unsigned long long count, unsigned long long offset)
+{
+#if defined(GRAPHICS_API_OPENGL_33)
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, id);
+    glGetBufferSubData(GL_SHADER_STORAGE_BUFFER, offset, count, dest);
+#endif
+}
+
+void rlBindShaderBuffer(unsigned int id, unsigned int index)
+{
+#if defined(GRAPHICS_API_OPENGL_33)
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, index, id);
+#endif
+}
+
+void rlCopyBuffersElements(unsigned int destId, unsigned int srcId, unsigned long long destOffset, unsigned long long srcOffset, unsigned long long count)
+{
+#if defined(GRAPHICS_API_OPENGL_33)
+    glBindBuffer(GL_COPY_READ_BUFFER, srcId);
+    glBindBuffer(GL_COPY_WRITE_BUFFER, destId);
+    glCopyBufferSubData(GL_COPY_READ_BUFFER, GL_COPY_WRITE_BUFFER, srcOffset, destOffset, count);
+#endif
+}
+
+void rlBindImageTexture(unsigned int id, unsigned int index, unsigned int format, int readonly)
+{
+#if defined(GRAPHICS_API_OPENGL_33)
+    int glInternalFormat = 0, glFormat = 0, glType = 0;
+
+    rlGetGlTextureFormats(format, &glInternalFormat, &glFormat, &glType);
+    glBindImageTexture(index, id, 0, 0, 0, readonly ? GL_READ_ONLY : GL_READ_WRITE, glInternalFormat);
+#endif
+}
+#endif
 
 // Matrix state management
 //-----------------------------------------------------------------------------------------
