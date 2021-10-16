@@ -24,6 +24,7 @@
 *   #define GRAPHICS_API_OPENGL_11
 *   #define GRAPHICS_API_OPENGL_21
 *   #define GRAPHICS_API_OPENGL_33
+*   #define GRAPHICS_API_OPENGL_43
 *   #define GRAPHICS_API_OPENGL_ES2
 *       Use selected OpenGL graphics backend, should be supported by platform
 *       Those preprocessor defines are only used on rlgl module, if OpenGL version is
@@ -41,9 +42,6 @@
 *   #define RLGL_SHOW_GL_DETAILS_INFO
 *       Show OpenGL extensions and capabilities detailed logs on init
 *
-*   #define SUPPORT_COMPUTE_SHADERS
-*       Enable compute shaders and shader storage buffer object support.
-*       Currently only work with GRAPHICS_API_OPENGL_33 with appropriate driver support.
 *
 *   rlgl capabilities could be customized just defining some internal
 *   values before library inclusion (default values listed):
@@ -168,6 +166,11 @@
 // OpenGL 2.1 uses most of OpenGL 3.3 Core functionality
 // WARNING: Specific parts are checked with #if defines
 #if defined(GRAPHICS_API_OPENGL_21)
+    #define GRAPHICS_API_OPENGL_33
+#endif
+
+// OpenGL 4.3 uses OpenGL 3.3 Core functionality
+#if defined(GRAPHICS_API_OPENGL_43)
     #define GRAPHICS_API_OPENGL_33
 #endif
 
@@ -647,12 +650,12 @@ RLAPI unsigned int rlLoadShaderProgram(unsigned int vShaderId, unsigned int fSha
 RLAPI void rlUnloadShaderProgram(unsigned int id);                              // Unload shader program
 RLAPI int rlGetLocationUniform(unsigned int shaderId, const char *uniformName); // Get shader location uniform
 RLAPI int rlGetLocationAttrib(unsigned int shaderId, const char *attribName);   // Get shader location attribute
-RLAPI void rlSetUniform(int locIndex, const void *value, int uniformType, int count); // Set shader value uniform
-RLAPI void rlSetUniformMatrix(int locIndex, Matrix mat);                      // Set shader value matrix
+RLAPI void rlSetUniform(int locIndex, const void *value, int uniformType, int count);   // Set shader value uniform
+RLAPI void rlSetUniformMatrix(int locIndex, Matrix mat);                        // Set shader value matrix
 RLAPI void rlSetUniformSampler(int locIndex, unsigned int textureId);           // Set shader value sampler
 RLAPI void rlSetShader(unsigned int id, int *locs);                             // Set shader currently active (id and locations)
 
-#if defined(SUPPORT_COMPUTE_SHADERS)
+#if defined(GRAPHICS_API_OPENGL_43)
 // Compute shader management
 RLAPI unsigned int rlLoadComputeShaderProgram(unsigned int shaderId);
 RLAPI void rlComputeShaderDispatch(unsigned int groupX, unsigned int groupY, unsigned int groupZ);
@@ -3784,84 +3787,68 @@ unsigned int rlLoadComputeShaderProgram(unsigned int shaderId)
     return program;
 }
 
-#if defined(SUPPORT_COMPUTE_SHADERS)
+#if defined(GRAPHICS_API_OPENGL_43)
 void rlComputeShaderDispatch(unsigned int groupX, unsigned int groupY, unsigned int groupZ)
 {
-#if defined(GRAPHICS_API_OPENGL_33)
     glDispatchCompute(groupX, groupY, groupZ);
-#endif
 }
 
 unsigned int rlLoadShaderBuffer(unsigned long long size, const void *data, int usageHint)
 {
     unsigned int ssbo = 0;
-#if defined(GRAPHICS_API_OPENGL_33)
+
     glGenBuffers(1, &ssbo);
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo);
     glBufferData(GL_SHADER_STORAGE_BUFFER, size, data, usageHint? usageHint : RL_STREAM_COPY);
-#endif
+
     return ssbo;
 }
 
 void rlUnloadShaderBuffer(unsigned int ssboId)
 {
-#if defined(GRAPHICS_API_OPENGL_33)
     glDeleteBuffers(1, &ssboId);
-#endif
 }
 
 void rlUpdateShaderBufferElements(unsigned int id, const void *data, unsigned long long dataSize, unsigned long long offset)
 {
-#if defined(GRAPHICS_API_OPENGL_33)
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, id);
     glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset, dataSize, data);
-#endif
 }
 
 unsigned long long rlGetShaderBufferSize(unsigned int id)
 {
-    khronos_int64_t size = 0;
+    long long size = 0;
 
-#if defined(GRAPHICS_API_OPENGL_33)
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, id);
     glGetInteger64v(GL_SHADER_STORAGE_BUFFER_SIZE, &size);
-#endif
 
     return (size > 0) ? size : 0;
 }
 
 void rlReadShaderBufferElements(unsigned int id, void *dest, unsigned long long count, unsigned long long offset)
 {
-#if defined(GRAPHICS_API_OPENGL_33)
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, id);
     glGetBufferSubData(GL_SHADER_STORAGE_BUFFER, offset, count, dest);
-#endif
 }
 
 void rlBindShaderBuffer(unsigned int id, unsigned int index)
 {
-#if defined(GRAPHICS_API_OPENGL_33)
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, index, id);
-#endif
 }
 
 void rlCopyBuffersElements(unsigned int destId, unsigned int srcId, unsigned long long destOffset, unsigned long long srcOffset, unsigned long long count)
 {
-#if defined(GRAPHICS_API_OPENGL_33)
     glBindBuffer(GL_COPY_READ_BUFFER, srcId);
     glBindBuffer(GL_COPY_WRITE_BUFFER, destId);
     glCopyBufferSubData(GL_COPY_READ_BUFFER, GL_COPY_WRITE_BUFFER, srcOffset, destOffset, count);
-#endif
 }
 
 void rlBindImageTexture(unsigned int id, unsigned int index, unsigned int format, int readonly)
 {
-#if defined(GRAPHICS_API_OPENGL_33)
     int glInternalFormat = 0, glFormat = 0, glType = 0;
 
     rlGetGlTextureFormats(format, &glInternalFormat, &glFormat, &glType);
     glBindImageTexture(index, id, 0, 0, 0, readonly ? GL_READ_ONLY : GL_READ_WRITE, glInternalFormat);
-#endif
 }
 #endif
 
