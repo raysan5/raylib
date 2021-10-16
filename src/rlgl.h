@@ -1916,8 +1916,10 @@ void rlLoadExtensions(void *loader)
     RLGL.ExtSupported.maxDepthBits = 32;
     RLGL.ExtSupported.texAnisoFilter = true;
     RLGL.ExtSupported.texMirrorClamp = true;
+    #if defined(GRAPHICS_API_OPENGL_43) 
     if (GLAD_GL_ARB_compute_shader) RLGL.ExtSupported.computeShader = true;
-    if (GLAD_GL_ARB_shader_storage_buffer_object) RLGL.ExtSupported.ssbo = true;    
+    if (GLAD_GL_ARB_shader_storage_buffer_object) RLGL.ExtSupported.ssbo = true;  
+    #endif
     #if !defined(__APPLE__)
     // NOTE: With GLAD, we can check if an extension is supported using the GLAD_GL_xxx booleans
     if (GLAD_GL_EXT_texture_compression_s3tc) RLGL.ExtSupported.texCompDXT = true;  // Texture compression: DXT
@@ -3528,7 +3530,9 @@ unsigned int rlCompileShader(const char *shaderCode, int type)
             case GL_VERTEX_SHADER: TRACELOG(RL_LOG_WARNING, "SHADER: [ID %i] Failed to compile vertex shader code", shader); break;
             case GL_FRAGMENT_SHADER: TRACELOG(RL_LOG_WARNING, "SHADER: [ID %i] Failed to compile fragment shader code", shader); break;
             //case GL_GEOMETRY_SHADER:
+        #if defined(GRAPHICS_API_OPENGL_43)
             case GL_COMPUTE_SHADER: TRACELOG(RL_LOG_WARNING, "SHADER: [ID %i] Failed to compile compute shader code", shader); break;
+        #endif
             default: break;
         }
 
@@ -3551,7 +3555,9 @@ unsigned int rlCompileShader(const char *shaderCode, int type)
             case GL_VERTEX_SHADER: TRACELOG(RL_LOG_INFO, "SHADER: [ID %i] Vertex shader compiled successfully", shader); break;
             case GL_FRAGMENT_SHADER: TRACELOG(RL_LOG_INFO, "SHADER: [ID %i] Fragment shader compiled successfully", shader); break;
             //case GL_GEOMETRY_SHADER:
+        #if defined(GRAPHICS_API_OPENGL_43)
             case GL_COMPUTE_SHADER: TRACELOG(RL_LOG_INFO, "SHADER: [ID %i] Compute shader compiled successfully", shader); break;
+        #endif
             default: break;
         }
     }
