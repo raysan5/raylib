@@ -146,6 +146,7 @@
 #if !defined(GRAPHICS_API_OPENGL_11) && \
     !defined(GRAPHICS_API_OPENGL_21) && \
     !defined(GRAPHICS_API_OPENGL_33) && \
+    !defined(GRAPHICS_API_OPENGL_43) && \
     !defined(GRAPHICS_API_OPENGL_ES2)
         #define GRAPHICS_API_OPENGL_33
 #endif
@@ -157,6 +158,9 @@
     #endif
     #if defined(GRAPHICS_API_OPENGL_33)
         #undef GRAPHICS_API_OPENGL_33
+    #endif
+    #if defined(GRAPHICS_API_OPENGL_43)
+        #undef GRAPHICS_API_OPENGL_43
     #endif
     #if defined(GRAPHICS_API_OPENGL_ES2)
         #undef GRAPHICS_API_OPENGL_ES2
@@ -730,10 +734,10 @@ RLAPI void rlLoadDrawQuad(void);     // Load and draw a quad
         #include <OpenGL/gl3.h>         // OpenGL 3 library for OSX
         #include <OpenGL/gl3ext.h>      // OpenGL 3 extensions library for OSX
     #else
-        #define GLAD_REALLOC RL_REALLOC
+        #define GLAD_MALLOC RL_MALLOC
         #define GLAD_FREE RL_FREE
 
-        #define GLAD_IMPLEMENTATION
+        #define GLAD_GL_IMPLEMENTATION
         #include "external/glad.h"      // GLAD extensions loading library, includes OpenGL headers
     #endif
 #endif
@@ -1892,7 +1896,7 @@ void rlLoadExtensions(void *loader)
 #if defined(GRAPHICS_API_OPENGL_33)     // Also defined for GRAPHICS_API_OPENGL_21
     // NOTE: glad is generated and contains only required OpenGL 3.3 Core extensions (and lower versions)
     #if !defined(__APPLE__)
-        if (!gladLoadGLLoader((GLADloadproc)loader)) TRACELOG(RL_LOG_WARNING, "GLAD: Cannot load OpenGL extensions");
+        if (gladLoadGL((GLADloadfunc)loader) == 0) TRACELOG(RL_LOG_WARNING, "GLAD: Cannot load OpenGL extensions");
         else TRACELOG(RL_LOG_INFO, "GLAD: OpenGL extensions loaded successfully");
     #endif
 
