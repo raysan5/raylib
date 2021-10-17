@@ -378,6 +378,7 @@ endif
 # Define all object files required
 CORE = \
     core/core_basic_window \
+    core/core_basic_screen_manager \
     core/core_input_keys \
     core/core_input_mouse \
     core/core_input_mouse_wheel \
@@ -401,7 +402,9 @@ CORE = \
     core/core_loading_thread \
     core/core_quat_conversion \
     core/core_window_flags \
-    core/core_split_screen
+    core/core_split_screen \
+    core/core_smooth_pixelperfect \
+    core/core_custom_frame_control
 
 SHAPES = \
     shapes/shapes_basic_shapes \
@@ -440,7 +443,7 @@ TEXTURES = \
     textures/textures_bunnymark \
     textures/textures_blend_modes \
     textures/textures_draw_tiled \
-    textures/textures_poly
+    textures/textures_polygon
 
 TEXT = \
     text/text_raylib_fonts \
@@ -465,6 +468,8 @@ MODELS = \
     models/models_mesh_generation \
     models/models_mesh_picking \
     models/models_loading \
+    models/models_loading_vox \
+    models/models_loading_gltf \
     models/models_orthographic_projection \
     models/models_rlgl_solar_system \
     models/models_skybox \
@@ -481,6 +486,7 @@ SHADERS = \
     shaders/shaders_raymarching \
     shaders/shaders_texture_drawing \
     shaders/shaders_texture_waves \
+    shaders/shaders_texture_outline \
     shaders/shaders_julia_set \
     shaders/shaders_eratosthenes \
     shaders/shaders_basic_lighting \
