@@ -4377,9 +4377,9 @@ static void SetupViewport(int width, int height)
 #if defined(__APPLE__)
     float xScale = 1.0f, yScale = 1.0f;
     glfwGetWindowContentScale(CORE.Window.handle, &xScale, &yScale);
-    rlViewport(CORE.Window.renderOffset.x/2*xScale, CORE.Window.renderOffset.y/2*yScale, (CORE.Window.render.width - CORE.Window.renderOffset.x)*xScale, (CORE.Window.render.height - CORE.Window.renderOffset.y)*yScale);
+    rlViewport(CORE.Window.renderOffset.x/2*xScale, CORE.Window.renderOffset.y/2*yScale, (CORE.Window.render.width)*xScale, (CORE.Window.render.height)*yScale);
 #else
-    rlViewport(CORE.Window.renderOffset.x/2, CORE.Window.renderOffset.y/2, CORE.Window.render.width - CORE.Window.renderOffset.x, CORE.Window.render.height - CORE.Window.renderOffset.y);
+    rlViewport(CORE.Window.renderOffset.x/2, CORE.Window.renderOffset.y/2, CORE.Window.render.width, CORE.Window.render.height);
 #endif
 
     rlMatrixMode(RL_PROJECTION);        // Switch to projection matrix
