@@ -662,20 +662,20 @@ RLAPI void rlSetShader(unsigned int id, int *locs);                             
 
 #if defined(GRAPHICS_API_OPENGL_43)
 // Compute shader management
-RLAPI unsigned int rlLoadComputeShaderProgram(unsigned int shaderId);
-RLAPI void rlComputeShaderDispatch(unsigned int groupX, unsigned int groupY, unsigned int groupZ);
+RLAPI unsigned int rlLoadComputeShaderProgram(unsigned int shaderId);           // Load compute shader program
+RLAPI void rlComputeShaderDispatch(unsigned int groupX, unsigned int groupY, unsigned int groupZ);  // Dispatch compute shader (equivalent to *draw* for graphics pilepine)
 
 // Shader buffer storage object management (ssbo)
-RLAPI unsigned int rlLoadShaderBuffer(unsigned long long size, const void *data, int usageHint);
-RLAPI void rlUnloadShaderBuffer(unsigned int ssboId);
-RLAPI void rlUpdateShaderBufferElements(unsigned int id, const void *data, unsigned long long dataSize, unsigned long long offset);
-RLAPI unsigned long long rlGetShaderBufferSize(unsigned int id);
-RLAPI void rlReadShaderBufferElements(unsigned int id, void *dest, unsigned long long count, unsigned long long offset);
-RLAPI void rlBindShaderBuffer(unsigned int id, unsigned int index);
+RLAPI unsigned int rlLoadShaderBuffer(unsigned long long size, const void *data, int usageHint);    // Load shader storage buffer object (SSBO)
+RLAPI void rlUnloadShaderBuffer(unsigned int ssboId);                           // Unload shader storage buffer object (SSBO)
+RLAPI void rlUpdateShaderBufferElements(unsigned int id, const void *data, unsigned long long dataSize, unsigned long long offset); // Update SSBO buffer data
+RLAPI unsigned long long rlGetShaderBufferSize(unsigned int id);                // Get SSBO buffer size
+RLAPI void rlReadShaderBufferElements(unsigned int id, void *dest, unsigned long long count, unsigned long long offset);    // Bind SSBO buffer
+RLAPI void rlBindShaderBuffer(unsigned int id, unsigned int index);             // Copy SSBO buffer data
 
 // Buffer management
-RLAPI void rlCopyBuffersElements(unsigned int destId, unsigned int srcId, unsigned long long destOffset, unsigned long long srcOffset, unsigned long long count);
-RLAPI void rlBindImageTexture(unsigned int id, unsigned int index, unsigned int format, int readonly);
+RLAPI void rlCopyBuffersElements(unsigned int destId, unsigned int srcId, unsigned long long destOffset, unsigned long long srcOffset, unsigned long long count); // Copy SSBO buffer data
+RLAPI void rlBindImageTexture(unsigned int id, unsigned int index, unsigned int format, int readonly);  // Bind image texture
 #endif
 
 // Matrix state management
@@ -686,8 +686,8 @@ RLAPI Matrix rlGetMatrixProjectionStereo(int eye);                        // Get
 RLAPI Matrix rlGetMatrixViewOffsetStereo(int eye);                        // Get internal view offset matrix for stereo render (selected eye)
 RLAPI void rlSetMatrixProjection(Matrix proj);                            // Set a custom projection matrix (replaces internal projection matrix)
 RLAPI void rlSetMatrixModelview(Matrix view);                             // Set a custom modelview matrix (replaces internal modelview matrix)
-RLAPI void rlSetMatrixProjectionStereo(Matrix right, Matrix left);      // Set eyes projection matrices for stereo rendering
-RLAPI void rlSetMatrixViewOffsetStereo(Matrix right, Matrix left);      // Set eyes view offsets matrices for stereo rendering
+RLAPI void rlSetMatrixProjectionStereo(Matrix right, Matrix left);        // Set eyes projection matrices for stereo rendering
+RLAPI void rlSetMatrixViewOffsetStereo(Matrix right, Matrix left);        // Set eyes view offsets matrices for stereo rendering
 
 // Quick and dirty cube/quad buffers load->draw->unload
 RLAPI void rlLoadDrawCube(void);     // Load and draw a cube
@@ -3755,11 +3755,12 @@ void rlSetShader(unsigned int id, int *locs)
 #endif
 }
 
+#if defined(GRAPHICS_API_OPENGL_43)
+// Load compute shader program
 unsigned int rlLoadComputeShaderProgram(unsigned int shaderId)
 {
     unsigned int program = 0;
 
-#if defined(GRAPHICS_API_OPENGL_43)
     GLint success = 0;
     program = glCreateProgram();
     glAttachShader(program, shaderId);
@@ -3798,16 +3799,17 @@ unsigned int rlLoadComputeShaderProgram(unsigned int shaderId)
 
         TRACELOG(RL_LOG_INFO, "SHADER: [ID %i] Compute shader program loaded successfully", program);
     }
-#endif
+
     return program;
 }
 
-#if defined(GRAPHICS_API_OPENGL_43)
+// Dispatch compute shader (equivalent to *draw* for graphics pilepine)
 void rlComputeShaderDispatch(unsigned int groupX, unsigned int groupY, unsigned int groupZ)
 {
     glDispatchCompute(groupX, groupY, groupZ);
 }
 
+// Load shader storage buffer object (SSBO)
 unsigned int rlLoadShaderBuffer(unsigned long long size, const void *data, int usageHint)
 {
     unsigned int ssbo = 0;
@@ -3819,17 +3821,20 @@ unsigned int rlLoadShaderBuffer(unsigned long long size, const void *data, int u
     return ssbo;
 }
 
+// Unload shader storage buffer object (SSBO)
 void rlUnloadShaderBuffer(unsigned int ssboId)
 {
     glDeleteBuffers(1, &ssboId);
 }
 
+// Update SSBO buffer data
 void rlUpdateShaderBufferElements(unsigned int id, const void *data, unsigned long long dataSize, unsigned long long offset)
 {
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, id);
     glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset, dataSize, data);
 }
 
+// Get SSBO buffer size
 unsigned long long rlGetShaderBufferSize(unsigned int id)
 {
     long long size = 0;
@@ -3837,20 +3842,23 @@ unsigned long long rlGetShaderBufferSize(unsigned int id)
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, id);
     glGetInteger64v(GL_SHADER_STORAGE_BUFFER_SIZE, &size);
 
-    return (size > 0) ? size : 0;
+    return (size > 0)? size : 0;
 }
 
+// Read SSBO buffer data
 void rlReadShaderBufferElements(unsigned int id, void *dest, unsigned long long count, unsigned long long offset)
 {
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, id);
     glGetBufferSubData(GL_SHADER_STORAGE_BUFFER, offset, count, dest);
 }
 
+// Bind SSBO buffer
 void rlBindShaderBuffer(unsigned int id, unsigned int index)
 {
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, index, id);
 }
 
+// Copy SSBO buffer data
 void rlCopyBuffersElements(unsigned int destId, unsigned int srcId, unsigned long long destOffset, unsigned long long srcOffset, unsigned long long count)
 {
     glBindBuffer(GL_COPY_READ_BUFFER, srcId);
@@ -3858,6 +3866,7 @@ void rlCopyBuffersElements(unsigned int destId, unsigned int srcId, unsigned lon
     glCopyBufferSubData(GL_COPY_READ_BUFFER, GL_COPY_WRITE_BUFFER, srcOffset, destOffset, count);
 }
 
+// Bind image texture
 void rlBindImageTexture(unsigned int id, unsigned int index, unsigned int format, int readonly)
 {
     int glInternalFormat = 0, glFormat = 0, glType = 0;
