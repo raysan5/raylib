@@ -25,14 +25,16 @@ pub fn build(b: *std.build.Builder) void {
 
     raylib.addIncludeDir("external/glfw/include");
 
-    raylib.addCSourceFile("rcore.c", raylib_flags);
-    raylib.addCSourceFile("rmodels.c", raylib_flags);
-    raylib.addCSourceFile("raudio.c", raylib_flags);
-    raylib.addCSourceFile("rshapes.c", raylib_flags);
-    raylib.addCSourceFile("rtext.c", raylib_flags);
-    raylib.addCSourceFile("rtextures.c", raylib_flags);
-    raylib.addCSourceFile("utils.c", raylib_flags);
-    raylib.addCSourceFile("rglfw.c", raylib_flags);
+    raylib.addCSourceFiles(&.{
+        "raudio.c",
+        "rcore.c",
+        "rglfw.c",
+        "rmodels.c",
+        "rshapes.c",
+        "rtext.c",
+        "rtextures.c",
+        "utils.c",
+    }, raylib_flags);
 
     switch (raylib.target.toTarget().os.tag) {
         .windows => {
