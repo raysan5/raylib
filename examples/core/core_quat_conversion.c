@@ -39,13 +39,13 @@ int main(void)
 
     // Generic quaternion for operations
     Quaternion q1 = { 0 };
-    
+
     // Transform matrices required to draw 4 cylinders
     Matrix m1 = { 0 };
     Matrix m2 = { 0 };
     Matrix m3 = { 0 };
     Matrix m4 = { 0 };
-    
+
     // Generic vectors for rotations
     Vector3 v1 = { 0 };
     Vector3 v2 = { 0 };
@@ -95,13 +95,13 @@ int main(void)
 
                 model.transform = m1;
                 DrawModel(model, (Vector3){ -1, 0, 0 }, 1.0f, RED);
-                
+
                 model.transform = m2;
                 DrawModel(model, (Vector3){ 1, 0, 0 }, 1.0f, RED);
-                
+
                 model.transform = m3;
                 DrawModel(model, (Vector3){ 0, 0, 0 }, 1.0f, RED);
-                
+
                 model.transform = m4;
                 DrawModel(model, (Vector3){ 0, 0, -1 }, 1.0f, RED);
 

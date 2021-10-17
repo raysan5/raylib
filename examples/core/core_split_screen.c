@@ -22,7 +22,7 @@ void DrawScene(void)
 {
     int count = 5;
     float spacing = 4;
-    
+
     // Grid of cube trees on a plane to make a "world"
     DrawPlane((Vector3){ 0, 0, 0 }, (Vector2){ 50, 50 }, BEIGE); // Simple world plane
 
@@ -73,10 +73,10 @@ int main(void)
     cameraPlayer2.position.y = 3.0f;
 
     RenderTexture screenPlayer2 = LoadRenderTexture(screenWidth / 2, screenHeight);
-   
+
     // Build a flipped rectangle the size of the split view to use for drawing later
     Rectangle splitScreenRect = { 0.0f, 0.0f, (float)screenPlayer1.texture.width, (float)-screenPlayer1.texture.height };
-    
+
     SetTargetFPS(60);               // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
 
@@ -147,7 +147,7 @@ int main(void)
     UnloadRenderTexture(screenPlayer1); // Unload render texture
     UnloadRenderTexture(screenPlayer2); // Unload render texture
     UnloadTexture(textureGrid);         // Unload texture
-    
+
     CloseWindow();                      // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
 

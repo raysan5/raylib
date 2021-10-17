@@ -23,7 +23,7 @@ int main(void)
 	//--------------------------------------------------------------------------------------
 	const int screenWidth = 800;
 	const int screenHeight = 450;
-    
+
     const char *voxFileNames[] = {
         "resources/models/vox/chr_knight.vox",
         "resources/models/vox/chr_sword.vox",
@@ -31,7 +31,7 @@ int main(void)
     };
 
 	InitWindow(screenWidth, screenHeight, "raylib [models] example - magicavoxel loading");
-    
+
     // Define the camera to look into our 3d world
     Camera camera = { 0 };
     camera.position = (Vector3){ 10.0f, 10.0f, 10.0f }; // Camera position
@@ -52,7 +52,7 @@ int main(void)
 		
         TraceLog(LOG_WARNING, TextFormat("[%s] File loaded in %.3f ms", voxFileNames[i], t1 - t0));
 
-		// Compute model translation matrix to center model on draw position (0, 0 , 0) 
+		// Compute model translation matrix to center model on draw position (0, 0 , 0)
 		BoundingBox bb = GetModelBoundingBox(models[i]);
 		Vector3 center = { 0 };
 		center.x = bb.min.x  + (((bb.max.x - bb.min.x)/2));
@@ -68,7 +68,7 @@ int main(void)
 
 	SetTargetFPS(60);               // Set our game to run at 60 frames-per-second
 	//--------------------------------------------------------------------------------------
-    
+
 	// Main game loop
 	while (!WindowShouldClose())    // Detect window close button or ESC key
 	{
@@ -77,7 +77,7 @@ int main(void)
 		UpdateCamera(&camera);      // Update our camera to orbit
 
         // Cycle between models on mouse click
-		if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) currentModel = (currentModel + 1)%MAX_VOX_FILES; 
+		if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) currentModel = (currentModel + 1)%MAX_VOX_FILES;
 
         // Cycle between models on key pressed
 		if (IsKeyPressed(KEY_RIGHT))
@@ -91,13 +91,13 @@ int main(void)
 			if (currentModel < 0) currentModel = MAX_VOX_FILES - 1;
 		}
 		//----------------------------------------------------------------------------------
-        
+
 		// Draw
 		//----------------------------------------------------------------------------------
 		BeginDrawing();
 
             ClearBackground(RAYWHITE);
-            
+
             // Draw 3D model
             BeginMode3D(camera);
 

@@ -46,7 +46,7 @@ int main(void)
     Vector3 position = { 0.0f, 0.0f, 0.0f };            // Set model position
 
     // Load animation data
-    int animsCount = 0;
+    unsigned int animsCount = 0;
     ModelAnimation *anims = LoadModelAnimations("resources/models/iqm/guyanim.iqm", &animsCount);
     int animFrameCounter = 0;
 

@@ -84,14 +84,14 @@ int main(void)
         //----------------------------------------------------------------------------------
         BeginTextureMode(target);
             ClearBackground(RAYWHITE);
-            
+
             BeginMode2D(worldSpaceCamera);
                 DrawRectanglePro(rec01, origin, rotation, BLACK);
                 DrawRectanglePro(rec02, origin, -rotation, RED);
                 DrawRectanglePro(rec03, origin, rotation + 45.0f, BLUE);
             EndMode2D();
         EndTextureMode();
-            
+
         BeginDrawing();
             ClearBackground(RED);
 
@@ -109,7 +109,7 @@ int main(void)
     // De-Initialization
     //--------------------------------------------------------------------------------------
     UnloadRenderTexture(target);    // Unload render texture
-    
+
     CloseWindow();                  // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
 

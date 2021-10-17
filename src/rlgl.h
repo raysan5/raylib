@@ -938,7 +938,7 @@ typedef struct rlglData {
         bool texCompASTC;                   // ASTC texture compression support (GL_KHR_texture_compression_astc_hdr, GL_KHR_texture_compression_astc_ldr)
         bool texMirrorClamp;                // Clamp mirror wrap mode supported (GL_EXT_texture_mirror_clamp)
         bool texAnisoFilter;                // Anisotropic texture filtering support (GL_EXT_texture_filter_anisotropic)
-        bool computeShader;                 // Compute shaders support (GL_ARB_compute_shader)    
+        bool computeShader;                 // Compute shaders support (GL_ARB_compute_shader)
         bool ssbo;                          // Shader storage buffer object support (GL_ARB_shader_storage_buffer_object)
 
         float maxAnisotropyLevel;           // Maximum anisotropy level supported (minimum is 2.0f)
@@ -1918,9 +1918,9 @@ void rlLoadExtensions(void *loader)
     RLGL.ExtSupported.maxDepthBits = 32;
     RLGL.ExtSupported.texAnisoFilter = true;
     RLGL.ExtSupported.texMirrorClamp = true;
-    #if defined(GRAPHICS_API_OPENGL_43) 
+    #if defined(GRAPHICS_API_OPENGL_43)
     if (GLAD_GL_ARB_compute_shader) RLGL.ExtSupported.computeShader = true;
-    if (GLAD_GL_ARB_shader_storage_buffer_object) RLGL.ExtSupported.ssbo = true;  
+    if (GLAD_GL_ARB_shader_storage_buffer_object) RLGL.ExtSupported.ssbo = true;
     #endif
     #if !defined(__APPLE__)
     // NOTE: With GLAD, we can check if an extension is supported using the GLAD_GL_xxx booleans
