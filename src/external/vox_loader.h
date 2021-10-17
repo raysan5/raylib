@@ -43,6 +43,7 @@ revision history:
 						Changed Vox_LoadFileName to Vox_LoadFromMemory
     1.02  (2021-09-10)  @raysan5: Reviewed some formating
     1.03  (2021-10-02)  @catmanl: Reduce warnings on gcc
+    1.04  (2021-10-17)  @warzes: Fixing the error of loading VOX models
 
 */
 
@@ -583,6 +584,9 @@ int Vox_LoadFromMemory(unsigned char* pvoxData, unsigned int voxDataSize, VoxArr
 		fileDataPtr += 4;
 
 		unsigned long chunkSize = *((unsigned long*)fileDataPtr);
+		fileDataPtr += sizeof(unsigned long);
+
+		//unsigned long chunkTotalChildSize = *((unsigned long*)fileDataPtr);
 		fileDataPtr += sizeof(unsigned long);
 
 		if (strcmp(szChunkName, "SIZE") == 0)
