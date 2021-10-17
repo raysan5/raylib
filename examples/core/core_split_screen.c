@@ -122,7 +122,7 @@ int main(void)
             BeginMode3D(cameraPlayer1);
                 DrawScene();
             EndMode3D();
-            DrawText("PLAYER1 W/S to move", 0, 0, 20, RED);
+            DrawText("PLAYER1 W/S to move", 10, 10, 20, RED);
         EndTextureMode();
 
         // Draw Player2 view to the render texture
@@ -131,7 +131,7 @@ int main(void)
             BeginMode3D(cameraPlayer2);
                 DrawScene();
             EndMode3D();
-            DrawText("PLAYER2 UP/DOWN to move", 0, 0, 20, BLUE);
+            DrawText("PLAYER2 UP/DOWN to move", 10, 10, 20, BLUE);
         EndTextureMode();
 
         // Draw both views render textures to the screen side by side

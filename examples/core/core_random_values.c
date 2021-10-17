@@ -20,10 +20,12 @@ int main(void)
 
     InitWindow(screenWidth, screenHeight, "raylib [core] example - generate random values");
 
-    int framesCounter = 0;          // Variable used to count frames
+    // SetRandomSeed(0xaabbccff);   // Set a custom random seed if desired, by default: "time(NULL)"
 
     int randValue = GetRandomValue(-8, 5);   // Get a random integer number between -8 and 5 (both included)
-
+    
+    int framesCounter = 0;          // Variable used to count frames
+    
     SetTargetFPS(60);               // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
 
