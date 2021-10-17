@@ -89,7 +89,7 @@ Detailed changes:
 [examples] ADDED: core_custom_frame_control
 [examples] ADDED: core_basic_screen_manager
 [examples] ADDED: core_split_screen (#1806) by @JeffM2501
-[examples] ADDED: core_2d_camera_smooth_pixelperfect (#1771) by @NotManyIdeasDev
+[examples] ADDED: core_smooth_pixelperfect (#1771) by @NotManyIdeasDev
 [examples] ADDED: shaders_texture_outline (#1883) by @GoldenThumbs
 [examples] ADDED: models_loading_vox (#1940) by @procfxgen
 [examples] REMOVED: models_material_pbr
