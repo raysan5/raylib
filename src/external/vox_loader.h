@@ -43,7 +43,7 @@ revision history:
 						Changed Vox_LoadFileName to Vox_LoadFromMemory
     1.02  (2021-09-10)  @raysan5: Reviewed some formating
     1.03  (2021-10-02)  @catmanl: Reduce warnings on gcc
-	1.04  (2021-10-17)  @warzes: Fixing the error of loading VOX models
+    1.04  (2021-10-17)  @warzes: Fixing the error of loading VOX models
 
 */
 
