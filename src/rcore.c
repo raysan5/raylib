@@ -2223,71 +2223,71 @@ VrStereoConfig LoadVrStereoConfig(VrDeviceInfo device)
 {
     VrStereoConfig config = { 0 };
 
-#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
-    // Compute aspect ratio
-    float aspect = ((float)device.hResolution*0.5f)/(float)device.vResolution;
+    if ((rlGetVersion() == OPENGL_33) || (rlGetVersion() == OPENGL_ES_20))
+    {
+        // Compute aspect ratio
+        float aspect = ((float)device.hResolution*0.5f)/(float)device.vResolution;
 
-    // Compute lens parameters
-    float lensShift = (device.hScreenSize*0.25f - device.lensSeparationDistance*0.5f)/device.hScreenSize;
-    config.leftLensCenter[0] = 0.25f + lensShift;
-    config.leftLensCenter[1] = 0.5f;
-    config.rightLensCenter[0] = 0.75f - lensShift;
-    config.rightLensCenter[1] = 0.5f;
-    config.leftScreenCenter[0] = 0.25f;
-    config.leftScreenCenter[1] = 0.5f;
-    config.rightScreenCenter[0] = 0.75f;
-    config.rightScreenCenter[1] = 0.5f;
+        // Compute lens parameters
+        float lensShift = (device.hScreenSize*0.25f - device.lensSeparationDistance*0.5f)/device.hScreenSize;
+        config.leftLensCenter[0] = 0.25f + lensShift;
+        config.leftLensCenter[1] = 0.5f;
+        config.rightLensCenter[0] = 0.75f - lensShift;
+        config.rightLensCenter[1] = 0.5f;
+        config.leftScreenCenter[0] = 0.25f;
+        config.leftScreenCenter[1] = 0.5f;
+        config.rightScreenCenter[0] = 0.75f;
+        config.rightScreenCenter[1] = 0.5f;
 
-    // Compute distortion scale parameters
-    // NOTE: To get lens max radius, lensShift must be normalized to [-1..1]
-    float lensRadius = fabsf(-1.0f - 4.0f*lensShift);
-    float lensRadiusSq = lensRadius*lensRadius;
-    float distortionScale = device.lensDistortionValues[0] +
-                            device.lensDistortionValues[1]*lensRadiusSq +
-                            device.lensDistortionValues[2]*lensRadiusSq*lensRadiusSq +
-                            device.lensDistortionValues[3]*lensRadiusSq*lensRadiusSq*lensRadiusSq;
+        // Compute distortion scale parameters
+        // NOTE: To get lens max radius, lensShift must be normalized to [-1..1]
+        float lensRadius = fabsf(-1.0f - 4.0f*lensShift);
+        float lensRadiusSq = lensRadius*lensRadius;
+        float distortionScale = device.lensDistortionValues[0] +
+                                device.lensDistortionValues[1]*lensRadiusSq +
+                                device.lensDistortionValues[2]*lensRadiusSq*lensRadiusSq +
+                                device.lensDistortionValues[3]*lensRadiusSq*lensRadiusSq*lensRadiusSq;
 
-    float normScreenWidth = 0.5f;
-    float normScreenHeight = 1.0f;
-    config.scaleIn[0] = 2.0f/normScreenWidth;
-    config.scaleIn[1] = 2.0f/normScreenHeight/aspect;
-    config.scale[0] = normScreenWidth*0.5f/distortionScale;
-    config.scale[1] = normScreenHeight*0.5f*aspect/distortionScale;
+        float normScreenWidth = 0.5f;
+        float normScreenHeight = 1.0f;
+        config.scaleIn[0] = 2.0f/normScreenWidth;
+        config.scaleIn[1] = 2.0f/normScreenHeight/aspect;
+        config.scale[0] = normScreenWidth*0.5f/distortionScale;
+        config.scale[1] = normScreenHeight*0.5f*aspect/distortionScale;
 
-    // Fovy is normally computed with: 2*atan2f(device.vScreenSize, 2*device.eyeToScreenDistance)
-    // ...but with lens distortion it is increased (see Oculus SDK Documentation)
-    //float fovy = 2.0f*atan2f(device.vScreenSize*0.5f*distortionScale, device.eyeToScreenDistance);     // Really need distortionScale?
-    float fovy = 2.0f*(float)atan2f(device.vScreenSize*0.5f, device.eyeToScreenDistance);
+        // Fovy is normally computed with: 2*atan2f(device.vScreenSize, 2*device.eyeToScreenDistance)
+        // ...but with lens distortion it is increased (see Oculus SDK Documentation)
+        //float fovy = 2.0f*atan2f(device.vScreenSize*0.5f*distortionScale, device.eyeToScreenDistance);     // Really need distortionScale?
+        float fovy = 2.0f*(float)atan2f(device.vScreenSize*0.5f, device.eyeToScreenDistance);
 
-    // Compute camera projection matrices
-    float projOffset = 4.0f*lensShift;      // Scaled to projection space coordinates [-1..1]
-    Matrix proj = MatrixPerspective(fovy, aspect, RL_CULL_DISTANCE_NEAR, RL_CULL_DISTANCE_FAR);
+        // Compute camera projection matrices
+        float projOffset = 4.0f*lensShift;      // Scaled to projection space coordinates [-1..1]
+        Matrix proj = MatrixPerspective(fovy, aspect, RL_CULL_DISTANCE_NEAR, RL_CULL_DISTANCE_FAR);
 
-    config.projection[0] = MatrixMultiply(proj, MatrixTranslate(projOffset, 0.0f, 0.0f));
-    config.projection[1] = MatrixMultiply(proj, MatrixTranslate(-projOffset, 0.0f, 0.0f));
+        config.projection[0] = MatrixMultiply(proj, MatrixTranslate(projOffset, 0.0f, 0.0f));
+        config.projection[1] = MatrixMultiply(proj, MatrixTranslate(-projOffset, 0.0f, 0.0f));
 
-    // Compute camera transformation matrices
-    // NOTE: Camera movement might seem more natural if we model the head.
-    // Our axis of rotation is the base of our head, so we might want to add
-    // some y (base of head to eye level) and -z (center of head to eye protrusion) to the camera positions.
-    config.viewOffset[0] = MatrixTranslate(-device.interpupillaryDistance*0.5f, 0.075f, 0.045f);
-    config.viewOffset[1] = MatrixTranslate(device.interpupillaryDistance*0.5f, 0.075f, 0.045f);
+        // Compute camera transformation matrices
+        // NOTE: Camera movement might seem more natural if we model the head.
+        // Our axis of rotation is the base of our head, so we might want to add
+        // some y (base of head to eye level) and -z (center of head to eye protrusion) to the camera positions.
+        config.viewOffset[0] = MatrixTranslate(-device.interpupillaryDistance*0.5f, 0.075f, 0.045f);
+        config.viewOffset[1] = MatrixTranslate(device.interpupillaryDistance*0.5f, 0.075f, 0.045f);
 
-    // Compute eyes Viewports
-    /*
-    config.eyeViewportRight[0] = 0;
-    config.eyeViewportRight[1] = 0;
-    config.eyeViewportRight[2] = device.hResolution/2;
-    config.eyeViewportRight[3] = device.vResolution;
+        // Compute eyes Viewports
+        /*
+        config.eyeViewportRight[0] = 0;
+        config.eyeViewportRight[1] = 0;
+        config.eyeViewportRight[2] = device.hResolution/2;
+        config.eyeViewportRight[3] = device.vResolution;
 
-    config.eyeViewportLeft[0] = device.hResolution/2;
-    config.eyeViewportLeft[1] = 0;
-    config.eyeViewportLeft[2] = device.hResolution/2;
-    config.eyeViewportLeft[3] = device.vResolution;
-    */
-#else
-    TRACELOG(LOG_WARNING, "RLGL: VR Simulator not supported on OpenGL 1.1");
-#endif
+        config.eyeViewportLeft[0] = device.hResolution/2;
+        config.eyeViewportLeft[1] = 0;
+        config.eyeViewportLeft[2] = device.hResolution/2;
+        config.eyeViewportLeft[3] = device.vResolution;
+        */
+    }
+    else TRACELOG(LOG_WARNING, "RLGL: VR Simulator not supported on OpenGL 1.1");
 
     return config;
 }
