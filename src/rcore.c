@@ -3617,10 +3617,14 @@ int GetTouchPointCount(void)
 #if defined(GRAPHICS_API_OPENGL_43) && defined(PLATFORM_DESKTOP)
 static void GLAPIENTRY DebugMessageCallback(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar* message, const void* user_param)
 {
+    // ignore non-significant error/warning codes
+    if (id == 131169 || id == 131185 || id == 131218 || id == 131204) return;
+
     const char* msgSource = NULL;
     switch (source)
     {
     case GL_DEBUG_SOURCE_API: msgSource = "API"; break;
+    case GL_DEBUG_SOURCE_WINDOW_SYSTEM: msgSource = "WINDOW_SYSTEM"; break;
     case GL_DEBUG_SOURCE_SHADER_COMPILER: msgSource = "SHADER_COMPILER"; break;
     case GL_DEBUG_SOURCE_THIRD_PARTY: msgSource = "THIRD_PARTY"; break;
     case GL_DEBUG_SOURCE_APPLICATION: msgSource = "APPLICATION"; break;
@@ -3635,6 +3639,9 @@ static void GLAPIENTRY DebugMessageCallback(GLenum source, GLenum type, GLuint i
     case GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR: msgType = "UNDEFINED_BEHAVIOR"; break;
     case GL_DEBUG_TYPE_PORTABILITY: msgType = "PORTABILITY"; break;
     case GL_DEBUG_TYPE_PERFORMANCE: msgType = "PERFORMANCE"; break;
+    case GL_DEBUG_TYPE_MARKER: msgType = "MARKER"; break;
+    case GL_DEBUG_TYPE_PUSH_GROUP: msgType = "PUSH_GROUP"; break;
+    case GL_DEBUG_TYPE_POP_GROUP: msgType = "POP_GROUP"; break;
     case GL_DEBUG_TYPE_OTHER: msgType = "OTHER"; break;
     }
 
@@ -3644,6 +3651,7 @@ static void GLAPIENTRY DebugMessageCallback(GLenum source, GLenum type, GLuint i
     case GL_DEBUG_SEVERITY_LOW: msgSeverity = "LOW"; break;
     case GL_DEBUG_SEVERITY_MEDIUM: msgSeverity = "MEDIUM"; break;
     case GL_DEBUG_SEVERITY_HIGH: msgSeverity = "HIGH"; break;
+    case GL_DEBUG_SEVERITY_NOTIFICATION: msgSeverity = "NOTIFICATION"; break;
     }
 
     TRACELOG(LOG_WARNING, "OpenGL Debug Message: %s, type = %s, source = %s, severity = %s", message, msgType, msgSource, msgSeverity);
@@ -4358,14 +4366,16 @@ static bool InitGraphicsDevice(int width, int height)
 #endif
 
 #if defined(GRAPHICS_API_OPENGL_43) && defined(PLATFORM_DESKTOP)
-    if (glDebugMessageCallback != NULL)
+    if (glDebugMessageCallback != NULL && glDebugMessageControl != NULL)
     {
         if ((CORE.Window.flags & FLAG_OPENGL_DEBUG) || (CORE.Window.flags & FLAG_OPENGL_DEBUG_SYNC))
         {
             glDebugMessageCallback(DebugMessageCallback, 0);
+            // glDebugMessageControl(GL_DEBUG_SOURCE_API, GL_DEBUG_TYPE_ERROR, GL_DEBUG_SEVERITY_HIGH, 0, 0, GL_TRUE); // TODO: filter message
+
             // GL_DEBUG_OUTPUT - Faster version but not useful for breakpoints
             // GL_DEBUG_OUTPUT_SYNCHRONUS - Callback is in sync with errors, so a breakpoint can be placed on the callback in order to get a stacktrace for the GL error.
-            if (CORE.Window.flags & FLAG_OPENGL_DEBUG) glEnable(GL_DEBUG_OUTPUT);
+            glEnable(GL_DEBUG_OUTPUT);
             if (CORE.Window.flags & FLAG_OPENGL_DEBUG_SYNC) glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
         } 
     }
