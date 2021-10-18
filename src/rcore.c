@@ -3708,49 +3708,6 @@ int GetTouchPointCount(void)
 //----------------------------------------------------------------------------------
 // Module specific Functions Definition
 //----------------------------------------------------------------------------------
-#if defined(GRAPHICS_API_OPENGL_43) && defined(PLATFORM_DESKTOP)
-static void GLAPIENTRY DebugMessageCallback(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar* message, const void* user_param)
-{
-    // ignore non-significant error/warning codes
-    if (id == 131169 || id == 131185 || id == 131218 || id == 131204) return;
-
-    const char* msgSource = NULL;
-    switch (source)
-    {
-    case GL_DEBUG_SOURCE_API: msgSource = "API"; break;
-    case GL_DEBUG_SOURCE_WINDOW_SYSTEM: msgSource = "WINDOW_SYSTEM"; break;
-    case GL_DEBUG_SOURCE_SHADER_COMPILER: msgSource = "SHADER_COMPILER"; break;
-    case GL_DEBUG_SOURCE_THIRD_PARTY: msgSource = "THIRD_PARTY"; break;
-    case GL_DEBUG_SOURCE_APPLICATION: msgSource = "APPLICATION"; break;
-    case GL_DEBUG_SOURCE_OTHER: msgSource = "OTHER"; break;
-    }
-
-    const char* msgType = NULL;
-    switch (type)
-    {
-    case GL_DEBUG_TYPE_ERROR: msgType = "ERROR"; break;
-    case GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR: msgType = "DEPRECATED_BEHAVIOR"; break;
-    case GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR: msgType = "UNDEFINED_BEHAVIOR"; break;
-    case GL_DEBUG_TYPE_PORTABILITY: msgType = "PORTABILITY"; break;
-    case GL_DEBUG_TYPE_PERFORMANCE: msgType = "PERFORMANCE"; break;
-    case GL_DEBUG_TYPE_MARKER: msgType = "MARKER"; break;
-    case GL_DEBUG_TYPE_PUSH_GROUP: msgType = "PUSH_GROUP"; break;
-    case GL_DEBUG_TYPE_POP_GROUP: msgType = "POP_GROUP"; break;
-    case GL_DEBUG_TYPE_OTHER: msgType = "OTHER"; break;
-    }
-
-    const char* msgSeverity = "DEFAULT";
-    switch (severity)
-    {
-    case GL_DEBUG_SEVERITY_LOW: msgSeverity = "LOW"; break;
-    case GL_DEBUG_SEVERITY_MEDIUM: msgSeverity = "MEDIUM"; break;
-    case GL_DEBUG_SEVERITY_HIGH: msgSeverity = "HIGH"; break;
-    case GL_DEBUG_SEVERITY_NOTIFICATION: msgSeverity = "NOTIFICATION"; break;
-    }
-
-    TRACELOG(LOG_WARNING, "OpenGL Debug Message: %s, type = %s, source = %s, severity = %s", message, msgType, msgSource, msgSeverity);
-}
-#endif // GRAPHICS_API_OPENGL_43 && PLATFORM_DESKTOP
 
 // Initialize display device and framebuffer
 // NOTE: width and height represent the screen (framebuffer) desired size, not actual display size
@@ -3902,13 +3859,9 @@ static bool InitGraphicsDevice(int width, int height)
         glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
         glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GLFW_FALSE);
 
-#if defined(GRAPHICS_API_OPENGL_43) && defined(PLATFORM_DESKTOP)
-        // Enable OpenGl Debug Context
-        if ((CORE.Window.flags & FLAG_OPENGL_DEBUG) || (CORE.Window.flags & FLAG_OPENGL_DEBUG_SYNC))
-        {
-            glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GLFW_TRUE);
-        }
-#endif // GRAPHICS_API_OPENGL_43 && PLATFORM_DESKTOP
+#if defined(RLGL_ENABLE_OPENGL_DEBUG_CONTEXT)
+        glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GLFW_TRUE);   // Enable OpenGL Debug Context
+#endif
     }
     else if (rlGetVersion() == OPENGL_ES_20)                    // Request OpenGL ES 2.0 context
     {
@@ -4457,22 +4410,6 @@ static bool InitGraphicsDevice(int width, int height)
     rlLoadExtensions(glfwGetProcAddress);
 #else
     rlLoadExtensions(eglGetProcAddress);
-#endif
-
-#if defined(GRAPHICS_API_OPENGL_43) && defined(PLATFORM_DESKTOP)
-    if (glDebugMessageCallback != NULL && glDebugMessageControl != NULL)
-    {
-        if ((CORE.Window.flags & FLAG_OPENGL_DEBUG) || (CORE.Window.flags & FLAG_OPENGL_DEBUG_SYNC))
-        {
-            glDebugMessageCallback(DebugMessageCallback, 0);
-            // glDebugMessageControl(GL_DEBUG_SOURCE_API, GL_DEBUG_TYPE_ERROR, GL_DEBUG_SEVERITY_HIGH, 0, 0, GL_TRUE); // TODO: filter message
-
-            // GL_DEBUG_OUTPUT - Faster version but not useful for breakpoints
-            // GL_DEBUG_OUTPUT_SYNCHRONUS - Callback is in sync with errors, so a breakpoint can be placed on the callback in order to get a stacktrace for the GL error.
-            glEnable(GL_DEBUG_OUTPUT);
-            if (CORE.Window.flags & FLAG_OPENGL_DEBUG_SYNC) glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
-        } 
-    }
 #endif
 
     int fbWidth = CORE.Window.screen.width;
