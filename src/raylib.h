@@ -498,7 +498,9 @@ typedef enum {
     FLAG_WINDOW_TRANSPARENT = 0x00000010,   // Set to allow transparent framebuffer
     FLAG_WINDOW_HIGHDPI     = 0x00002000,   // Set to support HighDPI
     FLAG_MSAA_4X_HINT       = 0x00000020,   // Set to try enabling MSAA 4X
-    FLAG_INTERLACED_HINT    = 0x00010000    // Set to try enabling interlaced video format (for V3D)
+    FLAG_INTERLACED_HINT    = 0x00010000,   // Set to try enabling interlaced video format (for V3D)
+    FLAG_OPENGL_DEBUG       = 0x00004000,   // Set to support GL_DEBUG_OUTPUT - Faster version but not useful for breakpoints
+    FLAG_OPENGL_DEBUG_SYNC  = 0x00008000    // Set to support GL_DEBUG_OUTPUT_SYNCHRONOUS - Callback is in sync with errors, so a breakpoint can be placed on the callback in order to get a stacktrace for the GL error.
 } ConfigFlags;
 
 // Trace log level
