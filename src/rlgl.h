@@ -2320,17 +2320,23 @@ void rlUnloadRenderBatch(rlRenderBatch batch)
 {
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     // Unbind everything
-    if (RLGL.ExtSupported.vao) glBindVertexArray(0);
-    glDisableVertexAttribArray(0);
-    glDisableVertexAttribArray(1);
-    glDisableVertexAttribArray(2);
-    glDisableVertexAttribArray(3);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
     // Unload all vertex buffers data
     for (int i = 0; i < batch.bufferCount; i++)
     {
+        // Unbind VAO attribs data
+        if (RLGL.ExtSupported.vao) 
+        {
+            glBindVertexArray(batch.vertexBuffer[i].vaoId);
+            glDisableVertexAttribArray(0);
+            glDisableVertexAttribArray(1);
+            glDisableVertexAttribArray(2);
+            glDisableVertexAttribArray(3);
+            glBindVertexArray(0);
+        }
+        
         // Delete VBOs from GPU (VRAM)
         glDeleteBuffers(1, &batch.vertexBuffer[i].vboId[0]);
         glDeleteBuffers(1, &batch.vertexBuffer[i].vboId[1]);
