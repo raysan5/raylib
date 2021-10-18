@@ -1495,7 +1495,6 @@ void rlDisableTexture(void)
 void rlEnableTextureCubemap(unsigned int id)
 {
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
-    glEnable(GL_TEXTURE_CUBE_MAP);   // Core in OpenGL 1.4
     glBindTexture(GL_TEXTURE_CUBE_MAP, id);
 #endif
 }
@@ -1504,7 +1503,6 @@ void rlEnableTextureCubemap(unsigned int id)
 void rlDisableTextureCubemap(void)
 {
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
-    glDisable(GL_TEXTURE_CUBE_MAP);
     glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
 #endif
 }
@@ -2322,17 +2320,23 @@ void rlUnloadRenderBatch(rlRenderBatch batch)
 {
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     // Unbind everything
-    if (RLGL.ExtSupported.vao) glBindVertexArray(0);
-    glDisableVertexAttribArray(0);
-    glDisableVertexAttribArray(1);
-    glDisableVertexAttribArray(2);
-    glDisableVertexAttribArray(3);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
     // Unload all vertex buffers data
     for (int i = 0; i < batch.bufferCount; i++)
     {
+        // Unbind VAO attribs data
+        if (RLGL.ExtSupported.vao) 
+        {
+            glBindVertexArray(batch.vertexBuffer[i].vaoId);
+            glDisableVertexAttribArray(0);
+            glDisableVertexAttribArray(1);
+            glDisableVertexAttribArray(2);
+            glDisableVertexAttribArray(3);
+            glBindVertexArray(0);
+        }
+        
         // Delete VBOs from GPU (VRAM)
         glDeleteBuffers(1, &batch.vertexBuffer[i].vboId[0]);
         glDeleteBuffers(1, &batch.vertexBuffer[i].vboId[1]);

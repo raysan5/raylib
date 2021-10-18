@@ -39,13 +39,13 @@ int main(void)
     camera.fovy = 45.0f;                                // Camera field-of-view Y
     camera.projection = CAMERA_PERSPECTIVE;                   // Camera mode type
 
-    Model model = LoadModel("resources/models/castle.obj");                 // Load model
-    Texture2D texture = LoadTexture("resources/models/castle_diffuse.png"); // Load model texture
-    model.materials[0].maps[MATERIAL_MAP_DIFFUSE].texture = texture;                 // Set map diffuse texture
+    Model model = LoadModel("resources/models/obj/castle.obj");                 // Load model
+    Texture2D texture = LoadTexture("resources/models/obj/castle_diffuse.png"); // Load model texture
+    model.materials[0].maps[MATERIAL_MAP_DIFFUSE].texture = texture;            // Set map diffuse texture
 
-    Vector3 position = { 0.0f, 0.0f, 0.0f };                // Set model position
+    Vector3 position = { 0.0f, 0.0f, 0.0f };                    // Set model position
 
-    BoundingBox bounds = GetMeshBoundingBox(model.meshes[0]);  // Set model bounds
+    BoundingBox bounds = GetMeshBoundingBox(model.meshes[0]);   // Set model bounds
 
     // NOTE: bounds are calculated from the original size of the model,
     // if model is scaled on drawing, bounds must be also scaled

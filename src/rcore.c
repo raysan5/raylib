@@ -2223,71 +2223,71 @@ VrStereoConfig LoadVrStereoConfig(VrDeviceInfo device)
 {
     VrStereoConfig config = { 0 };
 
-#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
-    // Compute aspect ratio
-    float aspect = ((float)device.hResolution*0.5f)/(float)device.vResolution;
+    if ((rlGetVersion() == OPENGL_33) || (rlGetVersion() == OPENGL_ES_20))
+    {
+        // Compute aspect ratio
+        float aspect = ((float)device.hResolution*0.5f)/(float)device.vResolution;
 
-    // Compute lens parameters
-    float lensShift = (device.hScreenSize*0.25f - device.lensSeparationDistance*0.5f)/device.hScreenSize;
-    config.leftLensCenter[0] = 0.25f + lensShift;
-    config.leftLensCenter[1] = 0.5f;
-    config.rightLensCenter[0] = 0.75f - lensShift;
-    config.rightLensCenter[1] = 0.5f;
-    config.leftScreenCenter[0] = 0.25f;
-    config.leftScreenCenter[1] = 0.5f;
-    config.rightScreenCenter[0] = 0.75f;
-    config.rightScreenCenter[1] = 0.5f;
+        // Compute lens parameters
+        float lensShift = (device.hScreenSize*0.25f - device.lensSeparationDistance*0.5f)/device.hScreenSize;
+        config.leftLensCenter[0] = 0.25f + lensShift;
+        config.leftLensCenter[1] = 0.5f;
+        config.rightLensCenter[0] = 0.75f - lensShift;
+        config.rightLensCenter[1] = 0.5f;
+        config.leftScreenCenter[0] = 0.25f;
+        config.leftScreenCenter[1] = 0.5f;
+        config.rightScreenCenter[0] = 0.75f;
+        config.rightScreenCenter[1] = 0.5f;
 
-    // Compute distortion scale parameters
-    // NOTE: To get lens max radius, lensShift must be normalized to [-1..1]
-    float lensRadius = fabsf(-1.0f - 4.0f*lensShift);
-    float lensRadiusSq = lensRadius*lensRadius;
-    float distortionScale = device.lensDistortionValues[0] +
-                            device.lensDistortionValues[1]*lensRadiusSq +
-                            device.lensDistortionValues[2]*lensRadiusSq*lensRadiusSq +
-                            device.lensDistortionValues[3]*lensRadiusSq*lensRadiusSq*lensRadiusSq;
+        // Compute distortion scale parameters
+        // NOTE: To get lens max radius, lensShift must be normalized to [-1..1]
+        float lensRadius = fabsf(-1.0f - 4.0f*lensShift);
+        float lensRadiusSq = lensRadius*lensRadius;
+        float distortionScale = device.lensDistortionValues[0] +
+                                device.lensDistortionValues[1]*lensRadiusSq +
+                                device.lensDistortionValues[2]*lensRadiusSq*lensRadiusSq +
+                                device.lensDistortionValues[3]*lensRadiusSq*lensRadiusSq*lensRadiusSq;
 
-    float normScreenWidth = 0.5f;
-    float normScreenHeight = 1.0f;
-    config.scaleIn[0] = 2.0f/normScreenWidth;
-    config.scaleIn[1] = 2.0f/normScreenHeight/aspect;
-    config.scale[0] = normScreenWidth*0.5f/distortionScale;
-    config.scale[1] = normScreenHeight*0.5f*aspect/distortionScale;
+        float normScreenWidth = 0.5f;
+        float normScreenHeight = 1.0f;
+        config.scaleIn[0] = 2.0f/normScreenWidth;
+        config.scaleIn[1] = 2.0f/normScreenHeight/aspect;
+        config.scale[0] = normScreenWidth*0.5f/distortionScale;
+        config.scale[1] = normScreenHeight*0.5f*aspect/distortionScale;
 
-    // Fovy is normally computed with: 2*atan2f(device.vScreenSize, 2*device.eyeToScreenDistance)
-    // ...but with lens distortion it is increased (see Oculus SDK Documentation)
-    //float fovy = 2.0f*atan2f(device.vScreenSize*0.5f*distortionScale, device.eyeToScreenDistance);     // Really need distortionScale?
-    float fovy = 2.0f*(float)atan2f(device.vScreenSize*0.5f, device.eyeToScreenDistance);
+        // Fovy is normally computed with: 2*atan2f(device.vScreenSize, 2*device.eyeToScreenDistance)
+        // ...but with lens distortion it is increased (see Oculus SDK Documentation)
+        //float fovy = 2.0f*atan2f(device.vScreenSize*0.5f*distortionScale, device.eyeToScreenDistance);     // Really need distortionScale?
+        float fovy = 2.0f*(float)atan2f(device.vScreenSize*0.5f, device.eyeToScreenDistance);
 
-    // Compute camera projection matrices
-    float projOffset = 4.0f*lensShift;      // Scaled to projection space coordinates [-1..1]
-    Matrix proj = MatrixPerspective(fovy, aspect, RL_CULL_DISTANCE_NEAR, RL_CULL_DISTANCE_FAR);
+        // Compute camera projection matrices
+        float projOffset = 4.0f*lensShift;      // Scaled to projection space coordinates [-1..1]
+        Matrix proj = MatrixPerspective(fovy, aspect, RL_CULL_DISTANCE_NEAR, RL_CULL_DISTANCE_FAR);
 
-    config.projection[0] = MatrixMultiply(proj, MatrixTranslate(projOffset, 0.0f, 0.0f));
-    config.projection[1] = MatrixMultiply(proj, MatrixTranslate(-projOffset, 0.0f, 0.0f));
+        config.projection[0] = MatrixMultiply(proj, MatrixTranslate(projOffset, 0.0f, 0.0f));
+        config.projection[1] = MatrixMultiply(proj, MatrixTranslate(-projOffset, 0.0f, 0.0f));
 
-    // Compute camera transformation matrices
-    // NOTE: Camera movement might seem more natural if we model the head.
-    // Our axis of rotation is the base of our head, so we might want to add
-    // some y (base of head to eye level) and -z (center of head to eye protrusion) to the camera positions.
-    config.viewOffset[0] = MatrixTranslate(-device.interpupillaryDistance*0.5f, 0.075f, 0.045f);
-    config.viewOffset[1] = MatrixTranslate(device.interpupillaryDistance*0.5f, 0.075f, 0.045f);
+        // Compute camera transformation matrices
+        // NOTE: Camera movement might seem more natural if we model the head.
+        // Our axis of rotation is the base of our head, so we might want to add
+        // some y (base of head to eye level) and -z (center of head to eye protrusion) to the camera positions.
+        config.viewOffset[0] = MatrixTranslate(-device.interpupillaryDistance*0.5f, 0.075f, 0.045f);
+        config.viewOffset[1] = MatrixTranslate(device.interpupillaryDistance*0.5f, 0.075f, 0.045f);
 
-    // Compute eyes Viewports
-    /*
-    config.eyeViewportRight[0] = 0;
-    config.eyeViewportRight[1] = 0;
-    config.eyeViewportRight[2] = device.hResolution/2;
-    config.eyeViewportRight[3] = device.vResolution;
+        // Compute eyes Viewports
+        /*
+        config.eyeViewportRight[0] = 0;
+        config.eyeViewportRight[1] = 0;
+        config.eyeViewportRight[2] = device.hResolution/2;
+        config.eyeViewportRight[3] = device.vResolution;
 
-    config.eyeViewportLeft[0] = device.hResolution/2;
-    config.eyeViewportLeft[1] = 0;
-    config.eyeViewportLeft[2] = device.hResolution/2;
-    config.eyeViewportLeft[3] = device.vResolution;
-    */
-#else
-    TRACELOG(LOG_WARNING, "RLGL: VR Simulator not supported on OpenGL 1.1");
-#endif
+        config.eyeViewportLeft[0] = device.hResolution/2;
+        config.eyeViewportLeft[1] = 0;
+        config.eyeViewportLeft[2] = device.hResolution/2;
+        config.eyeViewportLeft[3] = device.vResolution;
+        */
+    }
+    else TRACELOG(LOG_WARNING, "RLGL: VR Simulator not supported on OpenGL 1.1");
 
     return config;
 }
@@ -3036,6 +3036,100 @@ unsigned char *DecompressData(unsigned char *compData, int compDataLength, int *
 #endif
 
     return data;
+}
+
+// Encode data to Base64 string
+char *EncodeDataBase64(const unsigned char *data, int dataLength, int *outputLength)
+{
+    static const unsigned char base64encodeTable[] = {
+        'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X',
+        'Y', 'Z', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v',
+        'w', 'x', 'y', 'z', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '+', '/'
+    };
+
+    static const int modTable[] = { 0, 2, 1 };
+
+    *outputLength = 4*((dataLength + 2)/3);
+
+    char *encodedData = RL_MALLOC(*outputLength);
+
+    if (encodedData == NULL) return NULL;
+
+    for (int i = 0, j = 0; i < dataLength;)
+    {
+        unsigned int octetA = (i < dataLength)? (unsigned char)data[i++] : 0;
+        unsigned int octetB = (i < dataLength)? (unsigned char)data[i++] : 0;
+        unsigned int octetC = (i < dataLength)? (unsigned char)data[i++] : 0;
+
+        unsigned int triple = (octetA << 0x10) + (octetB << 0x08) + octetC;
+
+        encodedData[j++] = base64encodeTable[(triple >> 3*6) & 0x3F];
+        encodedData[j++] = base64encodeTable[(triple >> 2*6) & 0x3F];
+        encodedData[j++] = base64encodeTable[(triple >> 1*6) & 0x3F];
+        encodedData[j++] = base64encodeTable[(triple >> 0*6) & 0x3F];
+    }
+
+    for (int i = 0; i < modTable[dataLength%3]; i++) encodedData[*outputLength - 1 - i] = '=';
+
+    return encodedData;
+}
+
+// Decode Base64 string data
+unsigned char *DecodeDataBase64(unsigned char *data, int *outputLength)
+{
+    static const unsigned char base64decodeTable[] = {
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 62, 0, 0, 0, 63, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
+        11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 0, 0, 0, 0, 0, 0, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36,
+        37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51
+    };
+
+    // Get output size of Base64 input data
+    int outLength = 0;
+    for (int i = 0; data[4*i] != 0; i++)
+    {
+        if (data[4*i + 3] == '=')
+        {
+            if (data[4*i + 2] == '=') outLength += 1;
+            else outLength += 2;
+        }
+        else outLength += 3;
+    }
+
+    // Allocate memory to store decoded Base64 data
+    unsigned char *decodedData = (unsigned char *)RL_MALLOC(outLength);
+
+    for (int i = 0; i < outLength/3; i++)
+    {
+        unsigned char a = base64decodeTable[(int)data[4*i]];
+        unsigned char b = base64decodeTable[(int)data[4*i + 1]];
+        unsigned char c = base64decodeTable[(int)data[4*i + 2]];
+        unsigned char d = base64decodeTable[(int)data[4*i + 3]];
+
+        decodedData[3*i] = (a << 2) | (b >> 4);
+        decodedData[3*i + 1] = (b << 4) | (c >> 2);
+        decodedData[3*i + 2] = (c << 6) | d;
+    }
+
+    if (outLength%3 == 1)
+    {
+        int n = outLength/3;
+        unsigned char a = base64decodeTable[(int)data[4*n]];
+        unsigned char b = base64decodeTable[(int)data[4*n + 1]];
+        decodedData[outLength - 1] = (a << 2) | (b >> 4);
+    }
+    else if (outLength%3 == 2)
+    {
+        int n = outLength/3;
+        unsigned char a = base64decodeTable[(int)data[4*n]];
+        unsigned char b = base64decodeTable[(int)data[4*n + 1]];
+        unsigned char c = base64decodeTable[(int)data[4*n + 2]];
+        decodedData[outLength - 2] = (a << 2) | (b >> 4);
+        decodedData[outLength - 1] = (b << 4) | (c >> 2);
+    }
+
+    *outputLength = outLength;
+    return decodedData;
 }
 
 // Save integer value to storage file (to defined position)
