@@ -1495,7 +1495,6 @@ void rlDisableTexture(void)
 void rlEnableTextureCubemap(unsigned int id)
 {
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
-    glEnable(GL_TEXTURE_CUBE_MAP);   // Core in OpenGL 1.4
     glBindTexture(GL_TEXTURE_CUBE_MAP, id);
 #endif
 }
@@ -1504,7 +1503,6 @@ void rlEnableTextureCubemap(unsigned int id)
 void rlDisableTextureCubemap(void)
 {
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
-    glDisable(GL_TEXTURE_CUBE_MAP);
     glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
 #endif
 }
