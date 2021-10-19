@@ -43,27 +43,25 @@ revision history:
 						Changed Vox_LoadFileName to Vox_LoadFromMemory
     1.02  (2021-09-10)  @raysan5: Reviewed some formating
     1.03  (2021-10-02)  @catmanl: Reduce warnings on gcc
+    1.04  (2021-10-17)  @warzes: Fixing the error of loading VOX models
 
 */
 
 #ifndef VOX_LOADER_H
 #define VOX_LOADER_H
 
-#include <string.h>
-#include <stdlib.h>
-
 // Allow custom memory allocators
 #ifndef VOX_MALLOC
-    #define VOX_MALLOC    RL_MALLOC
+    #define VOX_MALLOC(sz)     malloc(sz)
 #endif
 #ifndef VOX_CALLOC
-    #define VOX_CALLOC    RL_CALLOC
+    #define VOX_CALLOC(n,sz)   calloc(n,sz)
 #endif
 #ifndef VOX_REALLOC
-    #define VOX_REALLOC   RL_REALLOC
+    #define VOX_REALLOC(n,sz)  realloc(n,sz)
 #endif
 #ifndef VOX_FREE
-    #define VOX_FREE      RL_FREE
+    #define VOX_FREE(p)        free(p)
 #endif
 
 #define VOX_SUCCESS (0)
@@ -156,6 +154,9 @@ void Vox_FreeArrays(VoxArray3D* voxarray);
 /////////////////////////////////////////////////////////////////////////////////////////////
 
 #ifdef VOX_LOADER_IMPLEMENTATION
+
+#include <string.h>
+#include <stdlib.h>
 
 /////////////////////////////////////////////////////////////////////////////////////////////
 // ArrayUShort helper
@@ -583,6 +584,9 @@ int Vox_LoadFromMemory(unsigned char* pvoxData, unsigned int voxDataSize, VoxArr
 		fileDataPtr += 4;
 
 		unsigned long chunkSize = *((unsigned long*)fileDataPtr);
+		fileDataPtr += sizeof(unsigned long);
+
+		//unsigned long chunkTotalChildSize = *((unsigned long*)fileDataPtr);
 		fileDataPtr += sizeof(unsigned long);
 
 		if (strcmp(szChunkName, "SIZE") == 0)

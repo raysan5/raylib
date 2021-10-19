@@ -1,3 +1,21 @@
+## Building the Examples
+
+The examples assume you have already built the `raylib` library in `../src`.
+
+### With GNU make
+
+- `make` builds all examples
+- `make [module]` builds all examples for a particular module (e.g `make core`)
+
+### With Zig
+
+The [Zig](https://ziglang.org/) toolchain can compile `C` and `C++` in addition to `Zig`.
+You may find it easier to use than other toolchains, especially when it comes to cross-compiling.
+
+- `zig build` to compile all examples
+- `zig build [module]` to compile all examples for a module (e.g. `zig build core`)
+- `zig build [example]` to compile _and run_ a particular example (e.g. `zig build core_basic_window`)
+
 ## EXAMPLES LIST
 
 ### category: core
@@ -110,7 +128,7 @@ Examples using raylib models functionality, including models loading/generation 
 | 72 | [models_cubicmap](models/models_cubicmap.c)                               | <img src="models/models_cubicmap.png" alt="models_cubicmap" width="200">                               | ray                                              |        |
 | 73 | [models_first_person_maze](models/models_first_person_maze.c)             | <img src="models/models_first_person_maze.png" alt="models_first_person_maze" width="200">             | ray                                              |        |
 | 74 | [models_geometric_shapes](models/models_geometric_shapes.c)               | <img src="models/models_geometric_shapes.png" alt="models_geometric_shapes" width="200">               | ray                                              |        |
-| 75 | [models_material_pbr](models/models_material_pbr.c)                       | <img src="models/models_material_pbr.png" alt="models_material_pbr" width="200">                       | ray                                              |        |
+| 75 | [...]()                       |                        | ray                                              |        |
 | 76 | [models_mesh_generation](models/models_mesh_generation.c)                 | <img src="models/models_mesh_generation.png" alt="models_mesh_generation" width="200">                 | ray                                              |        |
 | 77 | [models_mesh_picking](models/models_mesh_picking.c)                       | <img src="models/models_mesh_picking.png" alt="models_mesh_picking" width="200">                       | [Joel Davis](https://github.com/joeld42)         |        |
 | 78 | [models_loading](models/models_loading.c)                                 | <img src="models/models_loading.png" alt="models_loading" width="200">                                 | ray                                              |        |

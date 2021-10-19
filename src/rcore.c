@@ -680,11 +680,11 @@ void android_main(struct android_app *app)
     char arg0[] = "raylib";     // NOTE: argv[] are mutable
     CORE.Android.app = app;
 
-    // TODO: Should we maybe report != 0 return codes somewhere?
+    // NOTE: Return codes != 0 are skipped
     (void)main(1, (char *[]) { arg0, NULL });
 }
 
-// TODO: Add this to header (if apps really need it)
+// NOTE: Add this to header (if apps really need it)
 struct android_app *GetAndroidApp(void)
 {
     return CORE.Android.app;
@@ -1519,7 +1519,6 @@ void SetWindowMinSize(int width, int height)
 }
 
 // Set window dimensions
-// TODO: Issues on HighDPI scaling
 void SetWindowSize(int width, int height)
 {
 #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
@@ -1528,8 +1527,7 @@ void SetWindowSize(int width, int height)
 #if defined(PLATFORM_WEB)
     //emscripten_set_canvas_size(width, height);  // DEPRECATED!
 
-    // TODO: Below functions should be used to replace previous one but
-    // they do not seem to work properly
+    // TODO: Below functions should be used to replace previous one but they do not seem to work properly
     //emscripten_set_canvas_element_size("canvas", width, height);
     //emscripten_set_element_css_size("canvas", width, height);
 #endif
@@ -1538,13 +1536,25 @@ void SetWindowSize(int width, int height)
 // Get current screen width
 int GetScreenWidth(void)
 {
-    return CORE.Window.currentFbo.width;
+    return CORE.Window.screen.width;
 }
 
 // Get current screen height
 int GetScreenHeight(void)
 {
-    return CORE.Window.currentFbo.height;
+    return CORE.Window.screen.height;
+}
+
+// Get current render width which is equal to screen width * dpi scale
+int GetRenderWidth(void)
+{
+    return CORE.Window.render.width;
+}
+
+// Get current screen height which is equal to screen height * dpi scale
+int GetRenderHeight(void)
+{
+    return CORE.Window.render.height;
 }
 
 // Get native window handle
@@ -2136,8 +2146,8 @@ void EndTextureMode(void)
     SetupViewport(CORE.Window.render.width, CORE.Window.render.height);
 
     // Reset current fbo to screen size
-    CORE.Window.currentFbo.width = CORE.Window.screen.width;
-    CORE.Window.currentFbo.height = CORE.Window.screen.height;
+    CORE.Window.currentFbo.width = CORE.Window.render.width;
+    CORE.Window.currentFbo.height = CORE.Window.render.height;
 }
 
 // Begin custom shader mode
@@ -2172,7 +2182,17 @@ void BeginScissorMode(int x, int y, int width, int height)
     rlDrawRenderBatchActive();      // Update and draw internal render batch
 
     rlEnableScissorTest();
-    rlScissor(x, CORE.Window.currentFbo.height - (y + height), width, height);
+
+    if ((CORE.Window.flags & FLAG_WINDOW_HIGHDPI) > 0)
+    {
+        Vector2 scale = GetWindowScaleDPI();
+
+        rlScissor(x*scale.x, CORE.Window.currentFbo.height - (y + height)*scale.y, width*scale.x, height*scale.y);
+    }
+    else
+    {
+        rlScissor(x, CORE.Window.currentFbo.height - (y + height), width, height);
+    }
 }
 
 // End scissor mode
@@ -2203,71 +2223,71 @@ VrStereoConfig LoadVrStereoConfig(VrDeviceInfo device)
 {
     VrStereoConfig config = { 0 };
 
-#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
-    // Compute aspect ratio
-    float aspect = ((float)device.hResolution*0.5f)/(float)device.vResolution;
+    if ((rlGetVersion() == OPENGL_33) || (rlGetVersion() == OPENGL_ES_20))
+    {
+        // Compute aspect ratio
+        float aspect = ((float)device.hResolution*0.5f)/(float)device.vResolution;
 
-    // Compute lens parameters
-    float lensShift = (device.hScreenSize*0.25f - device.lensSeparationDistance*0.5f)/device.hScreenSize;
-    config.leftLensCenter[0] = 0.25f + lensShift;
-    config.leftLensCenter[1] = 0.5f;
-    config.rightLensCenter[0] = 0.75f - lensShift;
-    config.rightLensCenter[1] = 0.5f;
-    config.leftScreenCenter[0] = 0.25f;
-    config.leftScreenCenter[1] = 0.5f;
-    config.rightScreenCenter[0] = 0.75f;
-    config.rightScreenCenter[1] = 0.5f;
+        // Compute lens parameters
+        float lensShift = (device.hScreenSize*0.25f - device.lensSeparationDistance*0.5f)/device.hScreenSize;
+        config.leftLensCenter[0] = 0.25f + lensShift;
+        config.leftLensCenter[1] = 0.5f;
+        config.rightLensCenter[0] = 0.75f - lensShift;
+        config.rightLensCenter[1] = 0.5f;
+        config.leftScreenCenter[0] = 0.25f;
+        config.leftScreenCenter[1] = 0.5f;
+        config.rightScreenCenter[0] = 0.75f;
+        config.rightScreenCenter[1] = 0.5f;
 
-    // Compute distortion scale parameters
-    // NOTE: To get lens max radius, lensShift must be normalized to [-1..1]
-    float lensRadius = fabsf(-1.0f - 4.0f*lensShift);
-    float lensRadiusSq = lensRadius*lensRadius;
-    float distortionScale = device.lensDistortionValues[0] +
-                            device.lensDistortionValues[1]*lensRadiusSq +
-                            device.lensDistortionValues[2]*lensRadiusSq*lensRadiusSq +
-                            device.lensDistortionValues[3]*lensRadiusSq*lensRadiusSq*lensRadiusSq;
+        // Compute distortion scale parameters
+        // NOTE: To get lens max radius, lensShift must be normalized to [-1..1]
+        float lensRadius = fabsf(-1.0f - 4.0f*lensShift);
+        float lensRadiusSq = lensRadius*lensRadius;
+        float distortionScale = device.lensDistortionValues[0] +
+                                device.lensDistortionValues[1]*lensRadiusSq +
+                                device.lensDistortionValues[2]*lensRadiusSq*lensRadiusSq +
+                                device.lensDistortionValues[3]*lensRadiusSq*lensRadiusSq*lensRadiusSq;
 
-    float normScreenWidth = 0.5f;
-    float normScreenHeight = 1.0f;
-    config.scaleIn[0] = 2.0f/normScreenWidth;
-    config.scaleIn[1] = 2.0f/normScreenHeight/aspect;
-    config.scale[0] = normScreenWidth*0.5f/distortionScale;
-    config.scale[1] = normScreenHeight*0.5f*aspect/distortionScale;
+        float normScreenWidth = 0.5f;
+        float normScreenHeight = 1.0f;
+        config.scaleIn[0] = 2.0f/normScreenWidth;
+        config.scaleIn[1] = 2.0f/normScreenHeight/aspect;
+        config.scale[0] = normScreenWidth*0.5f/distortionScale;
+        config.scale[1] = normScreenHeight*0.5f*aspect/distortionScale;
 
-    // Fovy is normally computed with: 2*atan2f(device.vScreenSize, 2*device.eyeToScreenDistance)
-    // ...but with lens distortion it is increased (see Oculus SDK Documentation)
-    //float fovy = 2.0f*atan2f(device.vScreenSize*0.5f*distortionScale, device.eyeToScreenDistance);     // Really need distortionScale?
-    float fovy = 2.0f*(float)atan2f(device.vScreenSize*0.5f, device.eyeToScreenDistance);
+        // Fovy is normally computed with: 2*atan2f(device.vScreenSize, 2*device.eyeToScreenDistance)
+        // ...but with lens distortion it is increased (see Oculus SDK Documentation)
+        //float fovy = 2.0f*atan2f(device.vScreenSize*0.5f*distortionScale, device.eyeToScreenDistance);     // Really need distortionScale?
+        float fovy = 2.0f*(float)atan2f(device.vScreenSize*0.5f, device.eyeToScreenDistance);
 
-    // Compute camera projection matrices
-    float projOffset = 4.0f*lensShift;      // Scaled to projection space coordinates [-1..1]
-    Matrix proj = MatrixPerspective(fovy, aspect, RL_CULL_DISTANCE_NEAR, RL_CULL_DISTANCE_FAR);
+        // Compute camera projection matrices
+        float projOffset = 4.0f*lensShift;      // Scaled to projection space coordinates [-1..1]
+        Matrix proj = MatrixPerspective(fovy, aspect, RL_CULL_DISTANCE_NEAR, RL_CULL_DISTANCE_FAR);
 
-    config.projection[0] = MatrixMultiply(proj, MatrixTranslate(projOffset, 0.0f, 0.0f));
-    config.projection[1] = MatrixMultiply(proj, MatrixTranslate(-projOffset, 0.0f, 0.0f));
+        config.projection[0] = MatrixMultiply(proj, MatrixTranslate(projOffset, 0.0f, 0.0f));
+        config.projection[1] = MatrixMultiply(proj, MatrixTranslate(-projOffset, 0.0f, 0.0f));
 
-    // Compute camera transformation matrices
-    // NOTE: Camera movement might seem more natural if we model the head.
-    // Our axis of rotation is the base of our head, so we might want to add
-    // some y (base of head to eye level) and -z (center of head to eye protrusion) to the camera positions.
-    config.viewOffset[0] = MatrixTranslate(-device.interpupillaryDistance*0.5f, 0.075f, 0.045f);
-    config.viewOffset[1] = MatrixTranslate(device.interpupillaryDistance*0.5f, 0.075f, 0.045f);
+        // Compute camera transformation matrices
+        // NOTE: Camera movement might seem more natural if we model the head.
+        // Our axis of rotation is the base of our head, so we might want to add
+        // some y (base of head to eye level) and -z (center of head to eye protrusion) to the camera positions.
+        config.viewOffset[0] = MatrixTranslate(-device.interpupillaryDistance*0.5f, 0.075f, 0.045f);
+        config.viewOffset[1] = MatrixTranslate(device.interpupillaryDistance*0.5f, 0.075f, 0.045f);
 
-    // Compute eyes Viewports
-    /*
-    config.eyeViewportRight[0] = 0;
-    config.eyeViewportRight[1] = 0;
-    config.eyeViewportRight[2] = device.hResolution/2;
-    config.eyeViewportRight[3] = device.vResolution;
+        // Compute eyes Viewports
+        /*
+        config.eyeViewportRight[0] = 0;
+        config.eyeViewportRight[1] = 0;
+        config.eyeViewportRight[2] = device.hResolution/2;
+        config.eyeViewportRight[3] = device.vResolution;
 
-    config.eyeViewportLeft[0] = device.hResolution/2;
-    config.eyeViewportLeft[1] = 0;
-    config.eyeViewportLeft[2] = device.hResolution/2;
-    config.eyeViewportLeft[3] = device.vResolution;
-    */
-#else
-    TRACELOG(LOG_WARNING, "RLGL: VR Simulator not supported on OpenGL 1.1");
-#endif
+        config.eyeViewportLeft[0] = device.hResolution/2;
+        config.eyeViewportLeft[1] = 0;
+        config.eyeViewportLeft[2] = device.hResolution/2;
+        config.eyeViewportLeft[3] = device.vResolution;
+        */
+    }
+    else TRACELOG(LOG_WARNING, "RLGL: VR Simulator not supported on OpenGL 1.1");
 
     return config;
 }
@@ -2655,7 +2675,6 @@ void TakeScreenshot(const char *fileName)
     emscripten_run_script(TextFormat("saveFileFromMEMFSToDisk('%s','%s')", GetFileName(path), GetFileName(path)));
 #endif
 
-    // TODO: Verification required for log
     TRACELOG(LOG_INFO, "SYSTEM: [%s] Screenshot taken successfully", path);
 }
 
@@ -3017,6 +3036,100 @@ unsigned char *DecompressData(unsigned char *compData, int compDataLength, int *
 #endif
 
     return data;
+}
+
+// Encode data to Base64 string
+char *EncodeDataBase64(const unsigned char *data, int dataLength, int *outputLength)
+{
+    static const unsigned char base64encodeTable[] = {
+        'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X',
+        'Y', 'Z', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v',
+        'w', 'x', 'y', 'z', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '+', '/'
+    };
+
+    static const int modTable[] = { 0, 2, 1 };
+
+    *outputLength = 4*((dataLength + 2)/3);
+
+    char *encodedData = RL_MALLOC(*outputLength);
+
+    if (encodedData == NULL) return NULL;
+
+    for (int i = 0, j = 0; i < dataLength;)
+    {
+        unsigned int octetA = (i < dataLength)? (unsigned char)data[i++] : 0;
+        unsigned int octetB = (i < dataLength)? (unsigned char)data[i++] : 0;
+        unsigned int octetC = (i < dataLength)? (unsigned char)data[i++] : 0;
+
+        unsigned int triple = (octetA << 0x10) + (octetB << 0x08) + octetC;
+
+        encodedData[j++] = base64encodeTable[(triple >> 3*6) & 0x3F];
+        encodedData[j++] = base64encodeTable[(triple >> 2*6) & 0x3F];
+        encodedData[j++] = base64encodeTable[(triple >> 1*6) & 0x3F];
+        encodedData[j++] = base64encodeTable[(triple >> 0*6) & 0x3F];
+    }
+
+    for (int i = 0; i < modTable[dataLength%3]; i++) encodedData[*outputLength - 1 - i] = '=';
+
+    return encodedData;
+}
+
+// Decode Base64 string data
+unsigned char *DecodeDataBase64(unsigned char *data, int *outputLength)
+{
+    static const unsigned char base64decodeTable[] = {
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 62, 0, 0, 0, 63, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
+        11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 0, 0, 0, 0, 0, 0, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36,
+        37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51
+    };
+
+    // Get output size of Base64 input data
+    int outLength = 0;
+    for (int i = 0; data[4*i] != 0; i++)
+    {
+        if (data[4*i + 3] == '=')
+        {
+            if (data[4*i + 2] == '=') outLength += 1;
+            else outLength += 2;
+        }
+        else outLength += 3;
+    }
+
+    // Allocate memory to store decoded Base64 data
+    unsigned char *decodedData = (unsigned char *)RL_MALLOC(outLength);
+
+    for (int i = 0; i < outLength/3; i++)
+    {
+        unsigned char a = base64decodeTable[(int)data[4*i]];
+        unsigned char b = base64decodeTable[(int)data[4*i + 1]];
+        unsigned char c = base64decodeTable[(int)data[4*i + 2]];
+        unsigned char d = base64decodeTable[(int)data[4*i + 3]];
+
+        decodedData[3*i] = (a << 2) | (b >> 4);
+        decodedData[3*i + 1] = (b << 4) | (c >> 2);
+        decodedData[3*i + 2] = (c << 6) | d;
+    }
+
+    if (outLength%3 == 1)
+    {
+        int n = outLength/3;
+        unsigned char a = base64decodeTable[(int)data[4*n]];
+        unsigned char b = base64decodeTable[(int)data[4*n + 1]];
+        decodedData[outLength - 1] = (a << 2) | (b >> 4);
+    }
+    else if (outLength%3 == 2)
+    {
+        int n = outLength/3;
+        unsigned char a = base64decodeTable[(int)data[4*n]];
+        unsigned char b = base64decodeTable[(int)data[4*n + 1]];
+        unsigned char c = base64decodeTable[(int)data[4*n + 2]];
+        decodedData[outLength - 2] = (a << 2) | (b >> 4);
+        decodedData[outLength - 1] = (b << 4) | (c >> 2);
+    }
+
+    *outputLength = outLength;
+    return decodedData;
 }
 
 // Save integer value to storage file (to defined position)
@@ -3571,8 +3684,6 @@ Vector2 GetTouchPosition(int index)
 #if defined(PLATFORM_WEB) || defined(PLATFORM_RPI) || defined(PLATFORM_DRM)
     if (index < MAX_TOUCH_POINTS) position = CORE.Input.Touch.position[index];
     else TRACELOG(LOG_WARNING, "INPUT: Required touch point out of range (Max touch points: %i)", MAX_TOUCH_POINTS);
-
-    // TODO: Touch position scaling required?
 #endif
 
     return position;
@@ -3741,6 +3852,16 @@ static bool InitGraphicsDevice(int width, int height)
 #endif
         //glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GLFW_TRUE); // Request OpenGL DEBUG context
     }
+    else if (rlGetVersion() == OPENGL_43)
+    {
+        glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);          // Choose OpenGL major version (just hint)
+        glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);          // Choose OpenGL minor version (just hint)
+        glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+        glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GLFW_FALSE);
+#if defined(RLGL_ENABLE_OPENGL_DEBUG_CONTEXT)
+        glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GLFW_TRUE);   // Enable OpenGL Debug Context
+#endif
+    }
     else if (rlGetVersion() == OPENGL_ES_20)                    // Request OpenGL ES 2.0 context
     {
         glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 2);
@@ -3841,16 +3962,6 @@ static bool InitGraphicsDevice(int width, int height)
         glfwTerminate();
         TRACELOG(LOG_WARNING, "GLFW: Failed to initialize Window");
         return false;
-    }
-    else
-    {
-        TRACELOG(LOG_INFO, "DISPLAY: Device initialized successfully");
-#if defined(PLATFORM_DESKTOP)
-        TRACELOG(LOG_INFO, "    > Display size: %i x %i", CORE.Window.display.width, CORE.Window.display.height);
-#endif
-        TRACELOG(LOG_INFO, "    > Render size:  %i x %i", CORE.Window.render.width, CORE.Window.render.height);
-        TRACELOG(LOG_INFO, "    > Screen size:  %i x %i", CORE.Window.screen.width, CORE.Window.screen.height);
-        TRACELOG(LOG_INFO, "    > Viewport offsets: %i, %i", CORE.Window.renderOffset.x, CORE.Window.renderOffset.y);
     }
 
     // Set window callback events
@@ -4300,12 +4411,8 @@ static bool InitGraphicsDevice(int width, int height)
     rlLoadExtensions(eglGetProcAddress);
 #endif
 
-    // Initialize OpenGL context (states and resources)
-    // NOTE: CORE.Window.screen.width and CORE.Window.screen.height not used, just stored as globals in rlgl
-    rlglInit(CORE.Window.screen.width, CORE.Window.screen.height);
-
-    int fbWidth = CORE.Window.render.width;
-    int fbHeight = CORE.Window.render.height;
+    int fbWidth = CORE.Window.screen.width;
+    int fbHeight = CORE.Window.screen.height;
 
 #if defined(PLATFORM_DESKTOP)
     if ((CORE.Window.flags & FLAG_WINDOW_HIGHDPI) > 0)
@@ -4324,11 +4431,25 @@ static bool InitGraphicsDevice(int width, int height)
     }
 #endif
 
+    CORE.Window.currentFbo.width = fbWidth;
+    CORE.Window.currentFbo.height = fbHeight;
+    CORE.Window.render.width = CORE.Window.currentFbo.width;
+    CORE.Window.render.height = CORE.Window.currentFbo.height;
+
+    // Initialize OpenGL context (states and resources)
+    // NOTE: CORE.Window.currentFbo.width and CORE.Window.currentFbo.height not used, just stored as globals in rlgl
+    rlglInit(CORE.Window.currentFbo.width, CORE.Window.currentFbo.height);
+
     // Setup default viewport
     SetupViewport(fbWidth, fbHeight);
 
-    CORE.Window.currentFbo.width = CORE.Window.screen.width;
-    CORE.Window.currentFbo.height = CORE.Window.screen.height;
+    TRACELOG(LOG_INFO, "DISPLAY: Device initialized successfully");
+#if defined(PLATFORM_DESKTOP)
+    TRACELOG(LOG_INFO, "    > Display size: %i x %i", CORE.Window.display.width, CORE.Window.display.height);
+#endif
+    TRACELOG(LOG_INFO, "    > Screen size:  %i x %i", CORE.Window.screen.width, CORE.Window.screen.height);
+    TRACELOG(LOG_INFO, "    > Render size:  %i x %i", CORE.Window.render.width, CORE.Window.render.height);
+    TRACELOG(LOG_INFO, "    > Viewport offsets: %i, %i", CORE.Window.renderOffset.x, CORE.Window.renderOffset.y);
 
     ClearBackground(RAYWHITE);      // Default background color for raylib games :P
 
@@ -4353,9 +4474,9 @@ static void SetupViewport(int width, int height)
 #if defined(__APPLE__)
     float xScale = 1.0f, yScale = 1.0f;
     glfwGetWindowContentScale(CORE.Window.handle, &xScale, &yScale);
-    rlViewport(CORE.Window.renderOffset.x/2*xScale, CORE.Window.renderOffset.y/2*yScale, (CORE.Window.render.width - CORE.Window.renderOffset.x)*xScale, (CORE.Window.render.height - CORE.Window.renderOffset.y)*yScale);
+    rlViewport(CORE.Window.renderOffset.x/2*xScale, CORE.Window.renderOffset.y/2*yScale, (CORE.Window.render.width)*xScale, (CORE.Window.render.height)*yScale);
 #else
-    rlViewport(CORE.Window.renderOffset.x/2, CORE.Window.renderOffset.y/2, CORE.Window.render.width - CORE.Window.renderOffset.x, CORE.Window.render.height - CORE.Window.renderOffset.y);
+    rlViewport(CORE.Window.renderOffset.x/2, CORE.Window.renderOffset.y/2, CORE.Window.render.width, CORE.Window.render.height);
 #endif
 
     rlMatrixMode(RL_PROJECTION);        // Switch to projection matrix
@@ -4893,8 +5014,23 @@ static void WindowSizeCallback(GLFWwindow *window, int width, int height)
     if (IsWindowFullscreen()) return;
 
     // Set current screen size
+#if defined(__APPLE__)
     CORE.Window.screen.width = width;
     CORE.Window.screen.height = height;
+#else
+    if ((CORE.Window.flags & FLAG_WINDOW_HIGHDPI) > 0)
+    {
+        Vector2 windowScaleDPI = GetWindowScaleDPI();
+
+        CORE.Window.screen.width = width/windowScaleDPI.x;
+        CORE.Window.screen.height = height/windowScaleDPI.y;
+    }
+    else
+    {
+        CORE.Window.screen.width = width;
+        CORE.Window.screen.height = height;
+    }
+#endif
 
     // NOTE: Postprocessing texture is not scaled to new size
 }
@@ -5436,8 +5572,6 @@ static EM_BOOL EmscriptenGamepadCallback(int eventType, const EmscriptenGamepadE
     }
     else CORE.Input.Gamepad.ready[gamepadEvent->index] = false;
 
-    // TODO: Test gamepadEvent->index
-
     return 0;
 }
 #endif
@@ -5502,7 +5636,6 @@ static void RestoreKeyboard(void)
 
 #if defined(SUPPORT_SSH_KEYBOARD_RPI)
 // Process keyboard inputs
-// TODO: Most probably input reading and processing should be in a separate thread
 static void ProcessKeyboard(void)
 {
     #define MAX_KEYBUFFER_SIZE      32      // Max size in bytes to read
@@ -5857,7 +5990,7 @@ static void ConfigureEvdevDevice(char *device)
 static void PollKeyboardEvents(void)
 {
     // Scancode to keycode mapping for US keyboards
-    // TODO: Probably replace this with a keymap from the X11 to get the correct regional map for the keyboard:
+    // TODO: Replace this with a keymap from the X11 to get the correct regional map for the keyboard:
     // Currently non US keyboards will have the wrong mapping for some keys
     static const int keymapUS[] = {
         0, 256, 49, 50, 51, 52, 53, 54, 55, 56, 57, 48, 45, 61, 259, 258, 81, 87, 69, 82, 84,
@@ -6343,7 +6476,6 @@ static void LoadAutomationEvents(const char *fileName)
 // Export recorded events into a file
 static void ExportAutomationEvents(const char *fileName)
 {
-    // TODO: eventCount is required -> header? -> rAEL
     unsigned char fileId[4] = "rEP ";
 
     // Save as binary

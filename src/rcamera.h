@@ -279,7 +279,6 @@ void SetCameraMode(Camera camera, int mode)
 //       System: EnableCursor(), DisableCursor()
 //       Mouse: IsMouseButtonDown(), GetMousePosition(), GetMouseWheelMove()
 //       Keys:  IsKeyDown()
-// TODO: Port to quaternion-based camera (?)
 void UpdateCamera(Camera *camera)
 {
     static int swingCounter = 0;    // Used for 1st person swinging movement
@@ -532,7 +531,6 @@ void UpdateCamera(Camera *camera)
             // Camera distance clamp
             if (CAMERA.targetDistance < CAMERA_THIRD_PERSON_DISTANCE_CLAMP) CAMERA.targetDistance = CAMERA_THIRD_PERSON_DISTANCE_CLAMP;
 
-            // TODO: It seems camera->position is not correctly updated or some rounding issue makes the camera move straight to camera->target...
             camera->position.x = sinf(CAMERA.angle.x)*CAMERA.targetDistance*cosf(CAMERA.angle.y) + camera->target.x;
 
             if (CAMERA.angle.y <= 0.0f) camera->position.y = sinf(CAMERA.angle.y)*CAMERA.targetDistance*sinf(CAMERA.angle.y) + camera->target.y;

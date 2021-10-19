@@ -45,6 +45,7 @@ ipch/
 *.db
 *.opendb
 packages/
+!examples/models/resources/models/obj/
 
 # Ignore compiled binaries
 *.o

@@ -1,27 +1,24 @@
 /*******************************************************************************************
 *
-*   raylib [models] example - Load 3d gltf model
+*   raylib [models] example - Load models gltf
 *
 *   This example has been created using raylib 3.5 (www.raylib.com)
 *   raylib is licensed under an unmodified zlib/libpng license (View raylib.h for details)
+*
+*   NOTE: To export a model from Blender, make sure it is not posed, the vertices need to be
+*   in the same position as they would be in edit mode.
+*   Also make sure the scale parameter of your models is set to 0.0,
+*   scaling can be applied from the export menu.
 *
 *   Example contributed by Hristo Stamenov (@object71) and reviewed by Ramon Santamaria (@raysan5)
 *
 *   Copyright (c) 2021 Hristo Stamenov (@object71) and Ramon Santamaria (@raysan5)
 *
-********************************************************************************************
-*
-* To export a model from blender, make sure it is not posed, the vertices need to be in the
-* same position as they would be in edit mode.
-* and that the scale of your models is set to 0. Scaling can be done from the export menu.
-*
 ********************************************************************************************/
 
 #include "raylib.h"
 
-#include <stdlib.h>
-
-#define MAX_MODELS  8
+#define MAX_GLTF_MODELS  8
 
 int main(void)
 {
@@ -40,16 +37,16 @@ int main(void)
     camera.fovy = 45.0f;                                // Camera field-of-view Y
     camera.projection = CAMERA_PERSPECTIVE;             // Camera mode type
 
-    Model model[MAX_MODELS] = { 0 };
-
-    model[0] = LoadModel("resources/gltf/raylib_32x32.glb");
-    model[1] = LoadModel("resources/gltf/rigged_figure.glb");
-    model[2] = LoadModel("resources/gltf/GearboxAssy.glb");
-    model[3] = LoadModel("resources/gltf/BoxAnimated.glb");
-    model[4] = LoadModel("resources/gltf/AnimatedTriangle.gltf");
-    model[5] = LoadModel("resources/gltf/AnimatedMorphCube.glb");
-    model[6] = LoadModel("resources/gltf/vertex_colored_object.glb");
-    model[7] = LoadModel("resources/gltf/girl.glb");
+    // Load some models
+    Model model[MAX_GLTF_MODELS] = { 0 };
+    model[0] = LoadModel("resources/models/gltf/raylib_32x32.glb");
+    model[1] = LoadModel("resources/models/gltf/rigged_figure.glb");
+    model[2] = LoadModel("resources/models/gltf/GearboxAssy.glb");
+    model[3] = LoadModel("resources/models/gltf/BoxAnimated.glb");
+    model[4] = LoadModel("resources/models/gltf/AnimatedTriangle.gltf");
+    model[5] = LoadModel("resources/models/gltf/AnimatedMorphCube.glb");
+    model[6] = LoadModel("resources/models/gltf/vertex_colored_object.glb");
+    model[7] = LoadModel("resources/models/gltf/girl.glb");
 
     int currentModel = 0;
 
@@ -65,19 +62,20 @@ int main(void)
     {
         // Update
         //----------------------------------------------------------------------------------
-        UpdateCamera(&camera);
+        UpdateCamera(&camera);          // Update our camera with inputs
 
         if (IsKeyReleased(KEY_RIGHT))
         {
             currentModel++;
-            if (currentModel == MAX_MODELS) currentModel = 0;
+            if (currentModel == MAX_GLTF_MODELS) currentModel = 0;
         }
 
         if (IsKeyReleased(KEY_LEFT))
         {
             currentModel--;
-            if (currentModel < 0) currentModel = MAX_MODELS - 1;
+            if (currentModel < 0) currentModel = MAX_GLTF_MODELS - 1;
         }
+        //----------------------------------------------------------------------------------
 
         // Draw
         //----------------------------------------------------------------------------------
@@ -87,8 +85,7 @@ int main(void)
 
             BeginMode3D(camera);
 
-                DrawModelEx(model[currentModel], position, (Vector3){ 0.0f, 1.0f, 0.0f }, 180.0f, (Vector3){ 2.0f, 2.0f, 2.0f }, WHITE);
-
+                DrawModel(model[currentModel], position, 1.0f, WHITE);
                 DrawGrid(10, 1.0f);         // Draw a grid
 
             EndMode3D();
@@ -99,7 +96,7 @@ int main(void)
 
     // De-Initialization
     //--------------------------------------------------------------------------------------
-    for (int i = 0; i < MAX_MODELS; i++) UnloadModel(model[i]);  // Unload models
+    for (int i = 0; i < MAX_GLTF_MODELS; i++) UnloadModel(model[i]);  // Unload models
 
     CloseWindow();              // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
