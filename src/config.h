@@ -85,11 +85,11 @@
 // Module: rlgl - Configuration values
 //------------------------------------------------------------------------------------
 
-// Enable OpenGL Debug Context (only OpenGL 4.3)
+// Enable OpenGL Debug Context (only available on OpenGL 4.3)
 //#define RLGL_ENABLE_OPENGL_DEBUG_CONTEXT       1
 
 // Show OpenGL extensions and capabilities detailed logs on init
-//#define RLGL_SHOW_GL_DETAILS_INFO        1
+//#define RLGL_SHOW_GL_DETAILS_INFO              1
 
 //#define RL_DEFAULT_BATCH_BUFFER_ELEMENTS    4096    // Default internal render batch elements limits
 #define RL_DEFAULT_BATCH_BUFFERS               1      // Default number of batch buffers (multi-buffering)

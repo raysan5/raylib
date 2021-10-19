@@ -42,6 +42,8 @@
 *   #define RLGL_SHOW_GL_DETAILS_INFO
 *       Show OpenGL extensions and capabilities detailed logs on init
 *
+*   #define RLGL_ENABLE_OPENGL_DEBUG_CONTEXT
+*       Enable debug context (only available on OpenGL 4.3)
 *
 *   rlgl capabilities could be customized just defining some internal
 *   values before library inclusion (default values listed):
@@ -1800,48 +1802,60 @@ void rlSetBlendFactors(int glSrcFactor, int glDstFactor, int glEquation)
 //----------------------------------------------------------------------------------
 // Module Functions Definition - OpenGL Debug
 //----------------------------------------------------------------------------------
-
 #if defined(RLGL_ENABLE_OPENGL_DEBUG_CONTEXT) && defined(GRAPHICS_API_OPENGL_43)
 static void GLAPIENTRY rlDebugMessageCallback(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar *message, const void *userParam)
 {
-    // ignore non-significant error/warning codes
-    if (id == 131169 || id == 131185 || id == 131218 || id == 131204) return;
+    // Ignore non-significant error/warning codes (NVidia drivers)
+    // NOTE: Here there are the details with a sample output:
+    // - #131169 - Framebuffer detailed info: The driver allocated storage for renderbuffer 2. (severity: low)
+    // - #131185 - Buffer detailed info: Buffer object 1 (bound to GL_ELEMENT_ARRAY_BUFFER_ARB, usage hint is GL_ENUM_88e4) 
+    //             will use VIDEO memory as the source for buffer object operations. (severity: low)
+    // - #131218 - Program/shader state performance warning: Vertex shader in program 7 is being recompiled based on GL state. (severity: medium)
+    // - #131204 - Texture state usage warning: The texture object (0) bound to texture image unit 0 does not have 
+    //             a defined base level and cannot be used for texture mapping. (severity: low)
+    if ((id == 131169) || (id == 131185) || (id == 131218) || (id == 131204)) return;
 
     const char *msgSource = NULL;
     switch (source)
     {
-    case GL_DEBUG_SOURCE_API:             msgSource = "API"; break;
-    case GL_DEBUG_SOURCE_WINDOW_SYSTEM:   msgSource = "WINDOW_SYSTEM"; break;
-    case GL_DEBUG_SOURCE_SHADER_COMPILER: msgSource = "SHADER_COMPILER"; break;
-    case GL_DEBUG_SOURCE_THIRD_PARTY:     msgSource = "THIRD_PARTY"; break;
-    case GL_DEBUG_SOURCE_APPLICATION:     msgSource = "APPLICATION"; break;
-    case GL_DEBUG_SOURCE_OTHER:           msgSource = "OTHER"; break;
+        case GL_DEBUG_SOURCE_API: msgSource = "API"; break;
+        case GL_DEBUG_SOURCE_WINDOW_SYSTEM: msgSource = "WINDOW_SYSTEM"; break;
+        case GL_DEBUG_SOURCE_SHADER_COMPILER: msgSource = "SHADER_COMPILER"; break;
+        case GL_DEBUG_SOURCE_THIRD_PARTY: msgSource = "THIRD_PARTY"; break;
+        case GL_DEBUG_SOURCE_APPLICATION: msgSource = "APPLICATION"; break;
+        case GL_DEBUG_SOURCE_OTHER: msgSource = "OTHER"; break;
+        default: break;
     }
 
     const char *msgType = NULL;
     switch (type)
     {
-    case GL_DEBUG_TYPE_ERROR:               msgType = "ERROR"; break;
-    case GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR: msgType = "DEPRECATED_BEHAVIOR"; break;
-    case GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR:  msgType = "UNDEFINED_BEHAVIOR"; break;
-    case GL_DEBUG_TYPE_PORTABILITY:         msgType = "PORTABILITY"; break;
-    case GL_DEBUG_TYPE_PERFORMANCE:         msgType = "PERFORMANCE"; break;
-    case GL_DEBUG_TYPE_MARKER:              msgType = "MARKER"; break;
-    case GL_DEBUG_TYPE_PUSH_GROUP:          msgType = "PUSH_GROUP"; break;
-    case GL_DEBUG_TYPE_POP_GROUP:           msgType = "POP_GROUP"; break;
-    case GL_DEBUG_TYPE_OTHER:               msgType = "OTHER"; break;
+        case GL_DEBUG_TYPE_ERROR: msgType = "ERROR"; break;
+        case GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR: msgType = "DEPRECATED_BEHAVIOR"; break;
+        case GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR: msgType = "UNDEFINED_BEHAVIOR"; break;
+        case GL_DEBUG_TYPE_PORTABILITY: msgType = "PORTABILITY"; break;
+        case GL_DEBUG_TYPE_PERFORMANCE: msgType = "PERFORMANCE"; break;
+        case GL_DEBUG_TYPE_MARKER: msgType = "MARKER"; break;
+        case GL_DEBUG_TYPE_PUSH_GROUP: msgType = "PUSH_GROUP"; break;
+        case GL_DEBUG_TYPE_POP_GROUP: msgType = "POP_GROUP"; break;
+        case GL_DEBUG_TYPE_OTHER: msgType = "OTHER"; break;
+        default: break;
     }
 
     const char *msgSeverity = "DEFAULT";
     switch (severity)
     {
-    case GL_DEBUG_SEVERITY_LOW:          msgSeverity = "LOW"; break;
-    case GL_DEBUG_SEVERITY_MEDIUM:       msgSeverity = "MEDIUM"; break;
-    case GL_DEBUG_SEVERITY_HIGH:         msgSeverity = "HIGH"; break;
-    case GL_DEBUG_SEVERITY_NOTIFICATION: msgSeverity = "NOTIFICATION"; break;
+        case GL_DEBUG_SEVERITY_LOW: msgSeverity = "LOW"; break;
+        case GL_DEBUG_SEVERITY_MEDIUM: msgSeverity = "MEDIUM"; break;
+        case GL_DEBUG_SEVERITY_HIGH: msgSeverity = "HIGH"; break;
+        case GL_DEBUG_SEVERITY_NOTIFICATION: msgSeverity = "NOTIFICATION"; break;
+        default: break;
     }
 
-    TRACELOG(LOG_WARNING, "OpenGL Debug Message: %s, type = %s, source = %s, severity = %s", message, msgType, msgSource, msgSeverity);
+    TRACELOG(LOG_WARNING, "GL: OpenGL debug message: %s", message);
+    TRACELOG(LOG_WARNING, "    > Type: %s", msgType);
+    TRACELOG(LOG_WARNING, "    > Source = %s", msgSource);
+    TRACELOG(LOG_WARNING, "    > Severity = %s", msgSeverity);
 }
 #endif
 
@@ -1852,15 +1866,16 @@ static void GLAPIENTRY rlDebugMessageCallback(GLenum source, GLenum type, GLuint
 // Initialize rlgl: OpenGL extensions, default buffers/shaders/textures, OpenGL states
 void rlglInit(int width, int height)
 {
-    // Enable OpenGL Debug Context
+    // Enable OpenGL debug context if required
 #if defined(RLGL_ENABLE_OPENGL_DEBUG_CONTEXT) && defined(GRAPHICS_API_OPENGL_43)
-    if (glDebugMessageCallback != NULL && glDebugMessageControl != NULL)
+    if ((glDebugMessageCallback != NULL) && (glDebugMessageControl != NULL))
     {
         glDebugMessageCallback(rlDebugMessageCallback, 0);
-        // glDebugMessageControl(GL_DEBUG_SOURCE_API, GL_DEBUG_TYPE_ERROR, GL_DEBUG_SEVERITY_HIGH, 0, 0, GL_TRUE); // TODO: filter message
+        // glDebugMessageControl(GL_DEBUG_SOURCE_API, GL_DEBUG_TYPE_ERROR, GL_DEBUG_SEVERITY_HIGH, 0, 0, GL_TRUE); // TODO: Filter message
 
-        // GL_DEBUG_OUTPUT - Faster version but not useful for breakpoints
-        // GL_DEBUG_OUTPUT_SYNCHRONUS - Callback is in sync with errors, so a breakpoint can be placed on the callback in order to get a stacktrace for the GL error.
+        // Debug context options:
+        //  - GL_DEBUG_OUTPUT - Faster version but not useful for breakpoints
+        //  - GL_DEBUG_OUTPUT_SYNCHRONUS - Callback is in sync with errors, so a breakpoint can be placed on the callback in order to get a stacktrace for the GL error
         glEnable(GL_DEBUG_OUTPUT);
         glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
     }
