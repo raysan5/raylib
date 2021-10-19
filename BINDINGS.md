@@ -37,7 +37,7 @@ Some people ported raylib to other languages in form of bindings or wrappers to 
 | Relib              | 3.5 | [ReCT](https://github.com/RedCubeDev-ByteSpace/ReCT) | https://github.com/RedCubeDev-ByteSpace/Relib |
 | rayex              | 3.7 | [elixir](https://elixir-lang.org/)         | https://github.com/shiryel/rayex |
 | kaylib             | 3.7 | [Kotlin/native](https://kotlinlang.org) | https://github.com/electronstudio/kaylib |
-| s48-raylib         | 3.7 | [Scheme48](https://s48.org)             | https://github.com/rc-05/s48-raylib |
+| dlang_raylib       | 3.7 | [D](https://dlang.org)                  | https://github.com/rc-05/dlang_raylib |
 
 ### Utility Wrapers
 These are utility wrappers for specific languages, they are not required to use raylib in the language but may adapt the raylib API to be more inline with the language's pardigm.
