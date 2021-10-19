@@ -881,8 +881,8 @@ models/models_skybox: models/models_skybox.c
 
 models/models_yaw_pitch_roll: models/models_yaw_pitch_roll.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) -s TOTAL_MEMORY=67108864 \
-    --preload-file models/resources/models/gltf/plane/plane.gltf@resources/models/gltf/plane/plane.gltf \
-    --preload-file models/resources/models/gltf/plane/plane_diffuse.png@resources/models/gltf/plane/plane_diffuse.png
+    --preload-file models/resources/models/obj/plane.gltf@resources/modelsobj/plane.gltf \
+    --preload-file models/resources/models/obj/plane_diffuse.png@resources/models/obj/plane_diffuse.png
 
 models/models_heightmap: models/models_heightmap.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
