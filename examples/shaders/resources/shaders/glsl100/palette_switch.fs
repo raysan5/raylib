@@ -20,9 +20,9 @@ void main()
     // Convert the (normalized) texel color RED component (GB would work, too)
     // to the palette index by scaling up from [0, 1] to [0, 255].
     int index = int(texelColor.r*255.0);
-    
+
     ivec3 color = ivec3(0);
-    
+
     // NOTE: On GLSL 100 we are not allowed to index a uniform array by a variable value,
     // a constantmust be used, so this logic...
     if (index == 0) color = palette[0];

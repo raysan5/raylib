@@ -20,7 +20,7 @@ void main()
     else color = texture(environmentMap, fragPosition).rgb;
 
     if (doGamma)// Apply gamma correction
-    { 
+    {
         color = color/(color + vec3(1.0));
         color = pow(color, vec3(1.0/2.2));
     }

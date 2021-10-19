@@ -1808,10 +1808,10 @@ static void GLAPIENTRY rlDebugMessageCallback(GLenum source, GLenum type, GLuint
     // Ignore non-significant error/warning codes (NVidia drivers)
     // NOTE: Here there are the details with a sample output:
     // - #131169 - Framebuffer detailed info: The driver allocated storage for renderbuffer 2. (severity: low)
-    // - #131185 - Buffer detailed info: Buffer object 1 (bound to GL_ELEMENT_ARRAY_BUFFER_ARB, usage hint is GL_ENUM_88e4) 
+    // - #131185 - Buffer detailed info: Buffer object 1 (bound to GL_ELEMENT_ARRAY_BUFFER_ARB, usage hint is GL_ENUM_88e4)
     //             will use VIDEO memory as the source for buffer object operations. (severity: low)
     // - #131218 - Program/shader state performance warning: Vertex shader in program 7 is being recompiled based on GL state. (severity: medium)
-    // - #131204 - Texture state usage warning: The texture object (0) bound to texture image unit 0 does not have 
+    // - #131204 - Texture state usage warning: The texture object (0) bound to texture image unit 0 does not have
     //             a defined base level and cannot be used for texture mapping. (severity: low)
     if ((id == 131169) || (id == 131185) || (id == 131218) || (id == 131204)) return;
 
@@ -2404,7 +2404,7 @@ void rlUnloadRenderBatch(rlRenderBatch batch)
     for (int i = 0; i < batch.bufferCount; i++)
     {
         // Unbind VAO attribs data
-        if (RLGL.ExtSupported.vao) 
+        if (RLGL.ExtSupported.vao)
         {
             glBindVertexArray(batch.vertexBuffer[i].vaoId);
             glDisableVertexAttribArray(0);
@@ -2413,7 +2413,7 @@ void rlUnloadRenderBatch(rlRenderBatch batch)
             glDisableVertexAttribArray(3);
             glBindVertexArray(0);
         }
-        
+
         // Delete VBOs from GPU (VRAM)
         glDeleteBuffers(1, &batch.vertexBuffer[i].vboId[0]);
         glDeleteBuffers(1, &batch.vertexBuffer[i].vboId[1]);

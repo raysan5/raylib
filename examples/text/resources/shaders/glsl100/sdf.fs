@@ -19,7 +19,7 @@ void main()
     // NOTE: Calculate alpha using signed distance field (SDF)
     float distance = texture2D(texture0, fragTexCoord).a;
     float alpha = smoothstep(0.5 - smoothing, 0.5 + smoothing, distance);
-    
+
     // Calculate final fragment color
     gl_FragColor = vec4(fragColor.rgb, fragColor.a*alpha);
 }

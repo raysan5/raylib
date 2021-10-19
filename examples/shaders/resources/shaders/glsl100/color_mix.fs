@@ -18,9 +18,9 @@ void main()
     // Texel color fetching from texture sampler
     vec4 texelColor0 = texture2D(texture0, fragTexCoord);
     vec4 texelColor1 = texture2D(texture1, fragTexCoord);
-    
+
     float x = fract(fragTexCoord.s);
     float final = smoothstep(divider - 0.1, divider + 0.1, x);
-    
+
     gl_FragColor = mix(texelColor0, texelColor1, final);
 }

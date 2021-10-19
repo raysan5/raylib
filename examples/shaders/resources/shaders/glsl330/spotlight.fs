@@ -23,10 +23,10 @@ uniform float screenWidth;          // Width of the screen
 void main()
 {
     float alpha = 1.0;
-    
+
     // Get the position of the current fragment (screen coordinates!)
     vec2 pos = vec2(gl_FragCoord.x, gl_FragCoord.y);
-    
+
     // Find out which spotlight is nearest
     float d = 65000;  // some high value
     int fi = -1;      // found index
@@ -36,15 +36,15 @@ void main()
         for (int j = 0; j < MAX_SPOTS; j++)
         {
             float dj = distance(pos, spots[j].pos) - spots[j].radius + spots[i].radius;
-            
-            if (d > dj) 
+
+            if (d > dj)
             {
                 d = dj;
                 fi = i;
             }
         }
     }
-    
+
     // d now equals distance to nearest spot...
     // allowing for the different radii of all spotlights
     if (fi != -1)
@@ -56,8 +56,8 @@ void main()
             else alpha = (d - spots[fi].inner) / (spots[fi].radius - spots[fi].inner);
         }
     }
-    
-    // Right hand side of screen is dimly lit, 
+
+    // Right hand side of screen is dimly lit,
     // could make the threshold value user definable
     if ((pos.x > screenWidth/2.0) && (alpha > 0.9)) alpha = 0.9;
 

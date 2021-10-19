@@ -29,12 +29,12 @@ vec4 PostFX(sampler2D tex, vec2 uv)
 
     int remX = int(mod(cPos.x, size));
     int remY = int(mod(cPos.y, size));
-    
+
     if (remX == 0 && remY == 0) tlPos = cPos;
-    
+
     vec2 blPos = tlPos;
     blPos.y += (size - 1.0);
-    
+
     if ((remX == remY) || (((int(cPos.x) - int(blPos.x)) == (int(blPos.y) - int(cPos.y)))))
     {
         if (invert == 1) c = vec4(0.2, 0.15, 0.05, 1.0);
@@ -45,7 +45,7 @@ vec4 PostFX(sampler2D tex, vec2 uv)
         if (invert == 1) c = texture2D(tex, tlPos * vec2(1.0/renderWidth, 1.0/renderHeight)) * 1.4;
         else c = vec4(0.0, 0.0, 0.0, 1.0);
     }
-    
+
     return c;
 }
 

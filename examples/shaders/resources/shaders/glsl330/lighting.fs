@@ -54,17 +54,17 @@ void main()
         if (lights[i].enabled == 1)
         {
             vec3 light = vec3(0.0);
-            
-            if (lights[i].type == LIGHT_DIRECTIONAL) 
+
+            if (lights[i].type == LIGHT_DIRECTIONAL)
             {
                 light = -normalize(lights[i].target - lights[i].position);
             }
-            
-            if (lights[i].type == LIGHT_POINT) 
+
+            if (lights[i].type == LIGHT_POINT)
             {
                 light = normalize(lights[i].position - fragPosition);
             }
-            
+
             float NdotL = max(dot(normal, light), 0.0);
             lightDot += lights[i].color.rgb*NdotL;
 
@@ -76,7 +76,7 @@ void main()
 
     finalColor = (texelColor*((colDiffuse + vec4(specular, 1.0))*vec4(lightDot, 1.0)));
     finalColor += texelColor*(ambient/10.0)*colDiffuse;
-    
+
     // Gamma correction
     finalColor = pow(finalColor, vec4(1.0/2.2));
 }

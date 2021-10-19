@@ -20,7 +20,7 @@ void main()
     float distanceFromOutline = texture(texture0, fragTexCoord).a - 0.5;
     float distanceChangePerFragment = length(vec2(dFdx(distanceFromOutline), dFdy(distanceFromOutline)));
     float alpha = smoothstep(-distanceChangePerFragment, distanceChangePerFragment, distanceFromOutline);
-    
+
     // Calculate final fragment color
     finalColor = vec4(fragColor.rgb, fragColor.a*alpha);
 }
