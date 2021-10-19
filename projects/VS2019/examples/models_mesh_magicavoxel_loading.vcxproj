@@ -379,7 +379,7 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\..\examples\models\models_magicavoxel_loading.c" />
+    <ClCompile Include="..\..\..\examples\models\models_loading_vox.c" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
