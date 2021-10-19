@@ -7,8 +7,47 @@
 		<Option pch_mode="2" />
 		<Option compiler="gcc" />
 		<Build>
-			<Target title="Debug">
-				<Option platforms="Unix;Mac;" />
+			<Target title="Debug (Mac)">
+				<Option platforms="Mac;" />
+				<Option output="bin/Debug/raylib-game-template" prefix_auto="1" extension_auto="1" />
+				<Option working_dir="." />
+				<Option object_output="obj/Debug/" />
+				<Option type="1" />
+				<Option compiler="gcc" />
+				<Compiler>
+					<Add option="-g" />
+				</Compiler>
+				<Linker>
+					<Add library="raylib" />
+	                <Add option="-framework OpenGL" />
+	                <Add option="-framework Cocoa" />
+	                <Add option="-framework IOKit" />
+	                <Add option="-framework CoreAudio" />
+	                <Add option="-framework CoreVideo" />
+				</Linker>
+			</Target>
+			<Target title="Release (Mac)">
+				<Option platforms="Mac;" />
+				<Option output="bin/Release/raylib-game-template" prefix_auto="1" extension_auto="1" />
+				<Option working_dir="." />
+				<Option object_output="obj/Release/" />
+				<Option type="1" />
+				<Option compiler="gcc" />
+				<Compiler>
+					<Add option="-O2" />
+				</Compiler>
+				<Linker>
+					<Add option="-s" />
+					<Add library="raylib" />
+	                <Add option="-framework OpenGL" />
+	                <Add option="-framework Cocoa" />
+	                <Add option="-framework IOKit" />
+	                <Add option="-framework CoreAudio" />
+	                <Add option="-framework CoreVideo" />
+				</Linker>
+			</Target>
+			<Target title="Debug (Linux)">
+				<Option platforms="Unix;" />
 				<Option output="bin/Debug/raylib-game-template" prefix_auto="1" extension_auto="1" />
 				<Option working_dir="." />
 				<Option object_output="obj/Debug/" />
@@ -27,8 +66,8 @@
 					<Add library="X11" />
 				</Linker>
 			</Target>
-			<Target title="Release">
-				<Option platforms="Unix;Mac;" />
+			<Target title="Release (Linux)">
+				<Option platforms="Unix;" />
 				<Option output="bin/Release/raylib-game-template" prefix_auto="1" extension_auto="1" />
 				<Option working_dir="." />
 				<Option object_output="obj/Release/" />
@@ -48,7 +87,7 @@
 					<Add library="X11" />
 				</Linker>
 			</Target>
-			<Target title="Debug (windows)">
+			<Target title="Debug (Windows)">
 				<Option platforms="Windows;" />
 				<Option output="bin/Debug/raylib-game-template" prefix_auto="1" extension_auto="1" />
 				<Option working_dir="." />
@@ -67,7 +106,7 @@
 					<Add library="pthread" />
 				</Linker>
 			</Target>
-			<Target title="Release (windows)">
+			<Target title="Release (Windows)">
 				<Option platforms="Windows;" />
 				<Option output="bin/Release/raylib-game-template" prefix_auto="1" extension_auto="1" />
 				<Option working_dir="." />
