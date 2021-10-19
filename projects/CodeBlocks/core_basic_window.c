@@ -1,11 +1,7 @@
-/*******************************************************************************************-lraylib -lglfw3 -lopengl32 -lgdi32 -lopenal32 -lwinmm
-*
+/*******************************************************************************************
 *   raylib [core] example - Basic window
 *
 *   Welcome to raylib!
-*
-*   To test examples, just press F6 and execute raylib_compile_execute script
-*   Note that compiled executable is placed in the same folder as .c file
 *
 *   You can find all basic examples on C:\raylib\raylib\examples folder or
 *   raylib official webpage: www.raylib.com
