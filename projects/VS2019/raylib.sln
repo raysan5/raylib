@@ -269,7 +269,7 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "rlgl_standalone", "examples
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "core_split_screen", "examples\core_split_screen.vcxproj", "{946A1700-C7AA-46F0-AEF2-67C98B5722AC}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "models_mesh_magicavoxel_loading", "examples\models_mesh_magicavoxel_loading.vcxproj", "{2F1B955B-275E-4D8E-8864-06FEC44D7912}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "models_loading_vox", "examples\models_loading_vox.vcxproj", "{2F1B955B-275E-4D8E-8864-06FEC44D7912}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
