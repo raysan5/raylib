@@ -407,7 +407,7 @@
             <Value name="MATERIAL_MAP_CUBEMAP" integer="7" desc="" />
             <Value name="MATERIAL_MAP_IRRADIANCE" integer="8" desc="" />
             <Value name="MATERIAL_MAP_PREFILTER" integer="9" desc="" />
-            <Value name="MATERIAL_MAP_BRDG" integer="10" desc="" />
+            <Value name="MATERIAL_MAP_BRDF" integer="10" desc="" />
         </Enum>
         <Enum name="ShaderLocationIndex" valueCount="26" desc="">
             <Value name="SHADER_LOC_VERTEX_POSITION" integer="0" desc="" />

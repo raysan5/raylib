@@ -28,9 +28,9 @@
 //------------------------------------------------------------------------------------
 // Module: core - Configuration Flags
 //------------------------------------------------------------------------------------
-// Camera module is included (camera.h) and multiple predefined cameras are available: free, 1st/3rd person, orbital
+// Camera module is included (rcamera.h) and multiple predefined cameras are available: free, 1st/3rd person, orbital
 #define SUPPORT_CAMERA_SYSTEM       1
-// Gestures module is included (gestures.h) to support gestures detection: tap, hold, swipe, drag
+// Gestures module is included (rgestures.h) to support gestures detection: tap, hold, swipe, drag
 #define SUPPORT_GESTURES_SYSTEM     1
 // Mouse gestures are directly mapped like touches and processed by gestures system
 #define SUPPORT_MOUSE_GESTURES      1
@@ -73,7 +73,7 @@
 #define MAX_GAMEPADS                   4        // Max number of gamepads supported
 #define MAX_GAMEPAD_AXIS               8        // Max number of axis supported (per gamepad)
 #define MAX_GAMEPAD_BUTTONS           32        // Max bumber of buttons supported (per gamepad)
-#define MAX_TOUCH_POINTS              10        // Maximum number of touch points supported
+#define MAX_TOUCH_POINTS               8        // Maximum number of touch points supported
 #define MAX_KEY_PRESSED_QUEUE         16        // Max number of characters in the key input queue
 
 #define STORAGE_DATA_FILE  "storage.data"       // Automatic storage filename
@@ -85,7 +85,7 @@
 // Module: rlgl - Configuration values
 //------------------------------------------------------------------------------------
 // Show OpenGL extensions and capabilities detailed logs on init
-//#define SUPPORT_GL_DETAILS_INFO        1
+//#define RLGL_SHOW_GL_DETAILS_INFO        1
 
 //#define RL_DEFAULT_BATCH_BUFFER_ELEMENTS    4096    // Default internal render batch elements limits
 #define RL_DEFAULT_BATCH_BUFFERS               1      // Default number of batch buffers (multi-buffering)

@@ -31,16 +31,16 @@ int main(void)
     camera.target = (Vector3){ 0.0f, 8.0f, 0.0f };      // Camera looking at point
     camera.up = (Vector3){ 0.0f, 1.6f, 0.0f };          // Camera up vector (rotation towards target)
     camera.fovy = 45.0f;                                // Camera field-of-view Y
-    camera.projection = CAMERA_PERSPECTIVE;                   // Camera mode type
+    camera.projection = CAMERA_PERSPECTIVE;             // Camera mode type
 
     Ray ray = { 0 };        // Picking ray
 
-    Model tower = LoadModel("resources/models/turret.obj");                 // Load OBJ model
-    Texture2D texture = LoadTexture("resources/models/turret_diffuse.png"); // Load model texture
-    tower.materials[0].maps[MATERIAL_MAP_DIFFUSE].texture = texture;                 // Set model diffuse texture
+    Model tower = LoadModel("resources/models/obj/turret.obj");                 // Load OBJ model
+    Texture2D texture = LoadTexture("resources/models/obj/turret_diffuse.png"); // Load model texture
+    tower.materials[0].maps[MATERIAL_MAP_DIFFUSE].texture = texture;            // Set model diffuse texture
 
-    Vector3 towerPos = { 0.0f, 0.0f, 0.0f };                    // Set model position
-    BoundingBox towerBBox = GetMeshBoundingBox(tower.meshes[0]);   // Get mesh bounding box
+    Vector3 towerPos = { 0.0f, 0.0f, 0.0f };                        // Set model position
+    BoundingBox towerBBox = GetMeshBoundingBox(tower.meshes[0]);    // Get mesh bounding box
 
     // Ground quad
     Vector3 g0 = (Vector3){ -50.0f, 0.0f, -50.0f };
@@ -101,10 +101,10 @@ int main(void)
 
             bary = Vector3Barycenter(collision.point, ta, tb, tc);
         }
-        
+
         // Check ray collision against test sphere
         RayCollision sphereHitInfo = GetRayCollisionSphere(ray, sp, sr);
-        
+
         if ((sphereHitInfo.hit) && (sphereHitInfo.distance < collision.distance))
         {
             collision = sphereHitInfo;
@@ -173,7 +173,7 @@ int main(void)
                 }
 
                 DrawRay(ray, MAROON);
-                
+
                 DrawGrid(10, 10.0f);
 
             EndMode3D();

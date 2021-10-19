@@ -9,7 +9,9 @@
             "command": "make",
             "args": [
                 "PLATFORM=PLATFORM_DESKTOP",
-                "BUILD_MODE=DEBUG"
+                "BUILD_MODE=DEBUG",
+                "PROJECT_NAME=${fileBasenameNoExtension}",
+                "OBJS=${fileBasenameNoExtension}.c"
             ],
             "windows": {
                 "command": "C:/raylib/mingw/bin/mingw32-make.exe",
@@ -42,6 +44,8 @@
             "command": "make",
             "args": [
                 "PLATFORM=PLATFORM_DESKTOP",
+                "PROJECT_NAME=${fileBasenameNoExtension}",
+                "OBJS=${fileBasenameNoExtension}.c"
             ],
             "windows": {
                 "command": "C:/raylib/mingw/bin/mingw32-make.exe",

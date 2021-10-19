@@ -30,11 +30,11 @@ set(raylib_public_headers
 
 # Sources to be compiled
 set(raylib_sources
-    core.c
-    models.c
-    shapes.c
-    text.c
-    textures.c
+    rcore.c
+    rmodels.c
+    rshapes.c
+    rtext.c
+    rtextures.c
     utils.c
     )
 

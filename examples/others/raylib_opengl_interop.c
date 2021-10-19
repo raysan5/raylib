@@ -24,8 +24,14 @@
 ********************************************************************************************/
 
 #include "raylib.h"
+
 #include "rlgl.h"           // Required for: rlDrawRenderBatchActive(), rlGetMatrixModelview(), rlGetMatrixProjection()
-#include "glad.h"           // Required for: OpenGL functionality 
+#if defined(__APPLE__)
+    #include <OpenGL/gl3.h>     // OpenGL 3 library for OSX
+    #include <OpenGL/gl3ext.h>  // OpenGL 3 extensions library for OSX
+#else
+    #include "glad.h"       // Required for: OpenGL functionality 
+#endif
 #include "raymath.h"        // Required for: MatrixMultiply(), MatrixToFloat()
 
 #if defined(PLATFORM_DESKTOP)

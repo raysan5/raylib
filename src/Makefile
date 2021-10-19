@@ -43,8 +43,8 @@
 .PHONY: all clean install uninstall
 
 # Define required raylib variables
-RAYLIB_VERSION        = 3.8.1
-RAYLIB_API_VERSION    = 381
+RAYLIB_VERSION        = 4.0.0
+RAYLIB_API_VERSION    = 400
 
 # Define raylib source code path
 RAYLIB_SRC_PATH      ?= ../src
@@ -80,7 +80,6 @@ RAYLIB_MODULE_RAYGUI_PATH ?= $(RAYLIB_SRC_PATH)/../../raygui/src
 RAYLIB_MODULE_PHYSAC_PATH ?= $(RAYLIB_SRC_PATH)/extras
 
 # Use external GLFW library instead of rglfw module
-# TODO: Review usage of examples on Linux.
 USE_EXTERNAL_GLFW    ?= FALSE
 
 # Use Wayland display server protocol on Linux desktop
@@ -254,7 +253,12 @@ ifeq ($(PLATFORM),PLATFORM_WEB)
 endif
 ifeq ($(PLATFORM),PLATFORM_ANDROID)
     # Android toolchain (must be provided for desired architecture and compiler)
-    CC = $(ANDROID_TOOLCHAIN)/bin/$(ANDROID_COMPILER_ARCH)-linux-androideabi$(ANDROID_API_VERSION)-clang
+    ifeq ($(ANDROID_ARCH),arm)
+        CC = $(ANDROID_TOOLCHAIN)/bin/$(ANDROID_COMPILER_ARCH)-linux-androideabi$(ANDROID_API_VERSION)-clang
+    endif
+    ifeq ($(ANDROID_ARCH),arm64)
+        CC = $(ANDROID_TOOLCHAIN)/bin/$(ANDROID_COMPILER_ARCH)-linux-android$(ANDROID_API_VERSION)-clang
+    endif
     # It seems from Android NDK r22 onwards we need to use llvm-ar
     AR = $(ANDROID_TOOLCHAIN)/bin/llvm-ar
 endif
@@ -309,7 +313,7 @@ endif
 ifeq ($(PLATFORM),PLATFORM_WEB)
     # -Os                        # size optimization
     # -O2                        # optimization level 2, if used, also set --memory-init-file 0
-    # -s USE_GLFW=3              # Use glfw3 library (context/input management)
+    # -s USE_GLFW=3              # Use glfw3 library (context/input management) -> Only for linker!
     # -s ALLOW_MEMORY_GROWTH=1   # to allow memory resizing -> WARNING: Audio buffers could FAIL!
     # -s TOTAL_MEMORY=16777216   # to specify heap memory size (default = 16MB)
     # -s USE_PTHREADS=1          # multithreading support
@@ -318,7 +322,6 @@ ifeq ($(PLATFORM),PLATFORM_WEB)
     # --profiling                # include information for code profiling
     # --memory-init-file 0       # to avoid an external memory initialization code file (.mem)
     # --preload-file resources   # specify a resources folder for data compilation
-    CFLAGS += -s USE_GLFW=3
     ifeq ($(RAYLIB_BUILD_MODE),DEBUG)
         CFLAGS += -s ASSERTIONS=1 --profiling
     endif
@@ -439,10 +442,10 @@ endif
 # OBJS = $(patsubst %.c, %.o, $(wildcard *.c))
 
 # Define object required on compilation
-OBJS = core.o \
-       shapes.o \
-       textures.o \
-       text.o \
+OBJS = rcore.o \
+       rshapes.o \
+       rtextures.o \
+       rtext.o \
        utils.o
 
 ifeq ($(PLATFORM),PLATFORM_DESKTOP)
@@ -451,7 +454,7 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
     endif
 endif
 ifeq ($(RAYLIB_MODULE_MODELS),TRUE)
-    OBJS += models.o
+    OBJS += rmodels.o
 endif
 ifeq ($(RAYLIB_MODULE_AUDIO),TRUE)
     OBJS += raudio.o
@@ -545,7 +548,7 @@ endif
 # Compile all modules with their prerequisites
 
 # Compile core module
-core.o : core.c raylib.h rlgl.h utils.h raymath.h camera.h gestures.h
+rcore.o : rcore.c raylib.h rlgl.h utils.h raymath.h rcamera.h rgestures.h
 	$(CC) -c $< $(CFLAGS) $(INCLUDE_PATHS) -D$(PLATFORM) -D$(GRAPHICS)
 
 # Compile rglfw module
@@ -553,15 +556,15 @@ rglfw.o : rglfw.c
 	$(CC) $(GLFW_OSX) -c $< $(CFLAGS) $(INCLUDE_PATHS) -D$(PLATFORM) -D$(GRAPHICS)
 
 # Compile shapes module
-shapes.o : shapes.c raylib.h rlgl.h
+rshapes.o : rshapes.c raylib.h rlgl.h
 	$(CC) -c $< $(CFLAGS) $(INCLUDE_PATHS) -D$(PLATFORM) -D$(GRAPHICS)
 
 # Compile textures module
-textures.o : textures.c raylib.h rlgl.h utils.h
+rtextures.o : rtextures.c raylib.h rlgl.h utils.h
 	$(CC) -c $< $(CFLAGS) $(INCLUDE_PATHS) -D$(PLATFORM) -D$(GRAPHICS)
 
 # Compile text module
-text.o : text.c raylib.h utils.h
+rtext.o : rtext.c raylib.h utils.h
 	$(CC) -c $< $(CFLAGS) $(INCLUDE_PATHS) -D$(PLATFORM) -D$(GRAPHICS)
 
 # Compile utils module
@@ -569,7 +572,7 @@ utils.o : utils.c utils.h
 	$(CC) -c $< $(CFLAGS) $(INCLUDE_PATHS) -D$(PLATFORM)
 
 # Compile models module
-models.o : models.c raylib.h rlgl.h raymath.h
+rmodels.o : rmodels.c raylib.h rlgl.h raymath.h
 	$(CC) -c $< $(CFLAGS) $(INCLUDE_PATHS) -D$(PLATFORM) -D$(GRAPHICS)
 
 # Compile audio module
@@ -604,7 +607,7 @@ android_native_app_glue.o : $(NATIVE_APP_GLUE)/android_native_app_glue.c
 # for our -L and -I specification to simplify management of the raylib source package.
 # Customize these locations if you like but don't forget to pass them to make
 # for compilation and enable runtime linking with -rpath, LD_LIBRARY_PATH, or ldconfig.
-# Hint: add -L$(RAYLIB_INSTALL_PATH) -I$(RAYLIB_H_INSTALL_PATH) to your own makefiles.
+# HINT: Add -L$(RAYLIB_INSTALL_PATH) -I$(RAYLIB_H_INSTALL_PATH) to your own makefiles.
 # See below and ../examples/Makefile for more information.
 # TODO: Add other platforms. Remove sudo requirement, i.e. add USER mode.
 
@@ -648,7 +651,7 @@ else
 endif
 
 # Remove raylib dev files installed on the system
-# TODO: see 'install' target.
+# NOTE: see 'install' target.
 uninstall :
 ifeq ($(ROOT),root)
     # WARNING: You are root, about to delete items from $(RAYLIB_INSTALL_PATH).

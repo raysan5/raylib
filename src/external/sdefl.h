@@ -1,5 +1,4 @@
-/*
-# Small Deflate
+/*# Small Deflate
 `sdefl` is a small bare bone lossless compression library in ANSI C (ISO C90)
 which implements the Deflate (RFC 1951) compressed data format specification standard.
 It is mainly tuned to get as much speed and compression ratio from as little code
@@ -33,16 +32,16 @@ this file implementation in *one* C or C++ file to prevent collisions.
 
 | Compressor name         | Compression| Decompress.| Compr. size | Ratio |
 | ------------------------| -----------| -----------| ----------- | ----- |
-| sdefl 1.0 -0            |   127 MB/s |   233 MB/s |    40004116 | 39.88 |
-| sdefl 1.0 -1            |   111 MB/s |   259 MB/s |    38940674 | 38.82 |
-| sdefl 1.0 -5            |    45 MB/s |   275 MB/s |    36577183 | 36.46 |
-| sdefl 1.0 -7            |    38 MB/s |   276 MB/s |    36523781 | 36.41 |
-| zlib 1.2.11 -1          |    72 MB/s |   307 MB/s |    42298774 | 42.30 |
-| zlib 1.2.11 -6          |    24 MB/s |   313 MB/s |    36548921 | 36.55 |
-| zlib 1.2.11 -9          |    20 MB/s |   314 MB/s |    36475792 | 36.48 |
 | miniz 1.0 -1            |   122 MB/s |   208 MB/s |    48510028 | 48.51 |
 | miniz 1.0 -6            |    27 MB/s |   260 MB/s |    36513697 | 36.51 |
 | miniz 1.0 -9            |    23 MB/s |   261 MB/s |    36460101 | 36.46 |
+| zlib 1.2.11 -1          |    72 MB/s |   307 MB/s |    42298774 | 42.30 |
+| zlib 1.2.11 -6          |    24 MB/s |   313 MB/s |    36548921 | 36.55 |
+| zlib 1.2.11 -9          |    20 MB/s |   314 MB/s |    36475792 | 36.48 |
+| sdefl 1.0 -0            |   127 MB/s |   371 MB/s |    40004116 | 39.88 |
+| sdefl 1.0 -1            |   111 MB/s |   398 MB/s |    38940674 | 38.82 |
+| sdefl 1.0 -5            |    45 MB/s |   420 MB/s |    36577183 | 36.46 |
+| sdefl 1.0 -7            |    38 MB/s |   423 MB/s |    36523781 | 36.41 |
 | libdeflate 1.3 -1       |   147 MB/s |   667 MB/s |    39597378 | 39.60 |
 | libdeflate 1.3 -6       |    69 MB/s |   689 MB/s |    36648318 | 36.65 |
 | libdeflate 1.3 -9       |    13 MB/s |   672 MB/s |    35197141 | 35.20 |
@@ -398,8 +397,8 @@ sdefl_precode(struct sdefl_symcnt *cnt, unsigned *freqs, unsigned *items,
     if (offlen[cnt->off - 1]) break;
 
   total = (unsigned)(cnt->lit + cnt->off);
-  memcpy(lens, litlen, sizeof(unsigned char) * cnt->lit);
-  memcpy(lens + cnt->lit, offlen, sizeof(unsigned char) * cnt->off);
+  memcpy(lens, litlen, sizeof(unsigned char) * (size_t)cnt->lit);
+  memcpy(lens + cnt->lit, offlen, sizeof(unsigned char) * (size_t)cnt->off);
   do {
     unsigned len = lens[run_start];
     unsigned run_end = run_start;
