@@ -590,9 +590,10 @@ raygui.c:
 # Compile physac module
 # NOTE: physac header should be distributed with raylib.h
 physac.o : physac.c physac.h
-	@echo #define PHYSAC_IMPLEMENTATION > physac.c
-	@echo #include "$(RAYLIB_MODULE_PHYSAC_PATH)/physac.h" > physac.c
 	$(CC) -c $< $(CFLAGS) $(INCLUDE_PATHS) -D$(PLATFORM) -DPHYSAC_IMPLEMENTATION
+raygui.c:
+	@echo '#define PHYSAC_IMPLEMENTATION > physac.c
+	@echo '#include "$(RAYLIB_MODULE_PHYSAC_PATH)/physac.h"' >> physac.c
 
 # Compile android_native_app_glue module
 android_native_app_glue.o : $(NATIVE_APP_GLUE)/android_native_app_glue.c
