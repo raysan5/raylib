@@ -591,7 +591,7 @@ raygui.c:
 # NOTE: physac header should be distributed with raylib.h
 physac.o : physac.c physac.h
 	$(CC) -c $< $(CFLAGS) $(INCLUDE_PATHS) -D$(PLATFORM) -DPHYSAC_IMPLEMENTATION
-raygui.c:
+physac.c:
 	@echo '#define PHYSAC_IMPLEMENTATION > physac.c
 	@echo '#include "$(RAYLIB_MODULE_PHYSAC_PATH)/physac.h"' >> physac.c
 
