@@ -581,19 +581,19 @@ raudio.o : raudio.c raylib.h
 
 # Compile raygui module
 # NOTE: raygui header should be distributed with raylib.h
-raygui.o : raygui.c raygui.h gui_textbox_extended.h ricons.h
+raygui.o : raygui.c
 	$(CC) -c $< $(CFLAGS) $(INCLUDE_PATHS) -D$(PLATFORM) -DRAYGUI_IMPLEMENTATION
 raygui.c:
-	echo '#define RAYGUI_IMPLEMENTATION' > raygui.c
-	echo '#include "$(RAYLIB_MODULE_RAYGUI_PATH)/raygui.h"' >> raygui.c
+	echo #define RAYGUI_IMPLEMENTATION > raygui.c
+	echo #include "$(RAYLIB_MODULE_RAYGUI_PATH)/raygui.h" >> raygui.c
 
 # Compile physac module
 # NOTE: physac header should be distributed with raylib.h
-physac.o : physac.c physac.h
+physac.o : physac.c
 	$(CC) -c $< $(CFLAGS) $(INCLUDE_PATHS) -D$(PLATFORM) -DPHYSAC_IMPLEMENTATION
 physac.c:
-	@echo '#define PHYSAC_IMPLEMENTATION > physac.c
-	@echo '#include "$(RAYLIB_MODULE_PHYSAC_PATH)/physac.h"' >> physac.c
+	@echo #define PHYSAC_IMPLEMENTATION > physac.c
+	@echo #include "$(RAYLIB_MODULE_PHYSAC_PATH)/physac.h" >> physac.c
 
 # Compile android_native_app_glue module
 android_native_app_glue.o : $(NATIVE_APP_GLUE)/android_native_app_glue.c
