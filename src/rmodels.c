@@ -4494,12 +4494,83 @@ static ModelAnimation* LoadModelAnimationsIQM(const char *fileName, unsigned int
 #endif
 
 #if defined(SUPPORT_FILEFORMAT_GLTF)
+static Image LoadImageFromCgltfImage(cgltf_image *image, const char *texPath, Color tint)
+{
+    Image rimage = { 0 };
+
+    if (image->uri)
+    {
+        if ((strlen(image->uri) > 5) &&
+            (image->uri[0] == 'd') &&
+            (image->uri[1] == 'a') &&
+            (image->uri[2] == 't') &&
+            (image->uri[3] == 'a') &&
+            (image->uri[4] == ':'))
+        {
+            // Data URI
+            // Format: data:<mediatype>;base64,<data>
+
+            // Find the comma
+            int i = 0;
+            while ((image->uri[i] != ',') && (image->uri[i] != 0)) i++;
+
+            if (image->uri[i] == 0) TRACELOG(LOG_WARNING, "IMAGE: glTF data URI is not a valid image");
+            else
+            {
+                int base64Size = strlen(image->uri + i + 1);
+                int outSize = 3*(base64Size/4);         // TODO: Consider padding (-numberOfPaddingCharacters)
+                char *data = NULL;
+
+                cgltf_options options = { 0 };
+                cgltf_result result = cgltf_load_buffer_base64(&options, outSize, image->uri + i + 1, &data);
+                
+                if (result == cgltf_result_success)
+                {
+                    rimage = LoadImageFromMemory(".png", data, outSize);
+                    cgltf_free(data);
+                }
+
+                // TODO: Tint shouldn't be applied here!
+                ImageColorTint(&rimage, tint);
+            }
+        }
+        else
+        {
+            rimage = LoadImage(TextFormat("%s/%s", texPath, image->uri));
+
+            // TODO: Tint shouldn't be applied here!
+            ImageColorTint(&rimage, tint);
+        }
+    }
+    else if (image->buffer_view)
+    {
+        unsigned char *data = RL_MALLOC(image->buffer_view->size);
+        int n = (int)image->buffer_view->offset;
+        int stride = (int)image->buffer_view->stride ? (int)image->buffer_view->stride : 1;
+
+        for (unsigned int i = 0; i < image->buffer_view->size; i++)
+        {
+            data[i] = ((unsigned char *)image->buffer_view->buffer->data)[n];
+            n += stride;
+        }
+
+        rimage = LoadImageFromMemory(".png", data, (int)image->buffer_view->size);
+        RL_FREE(data);
+
+        // TODO: Tint shouldn't be applied here!
+        ImageColorTint(&rimage, tint);
+    }
+    else rimage = GenImageColor(1, 1, tint);
+
+    return rimage;
+}
+
 // LoadGLTF loads in model data from given filename, supporting both .gltf and .glb
 static Model LoadGLTF(const char *fileName)
 {
     /***********************************************************************************
 
-        Function implemented by Wilhem Barbier(@wbrbr), with modifications by Tyler Bezera(@gamerfiend) and Hristo Stamenov(@object71)
+        Function implemented by Wilhem Barbier(@wbrbr), with modifications by Tyler Bezera(@gamerfiend)
 
         Features:
           - Supports .gltf and .glb files
@@ -4515,57 +4586,200 @@ static Model LoadGLTF(const char *fileName)
 
     *************************************************************************************/
 
+    #define LOAD_ACCESSOR(type, nbcomp, acc, dst) \
+    { \
+        int n = 0; \
+        type *buffer = (type *)acc->buffer_view->buffer->data + acc->buffer_view->offset/sizeof(type) + acc->offset/sizeof(type); \
+        for (unsigned int k = 0; k < acc->count; k++) \
+        {\
+            for (int l = 0; l < nbcomp; l++) \
+            {\
+                dst[nbcomp*k + l] = buffer[n + l];\
+            }\
+            n += (int)(acc->stride/sizeof(type));\
+        }\
+    }
+
     Model model = { 0 };
 
     // glTF file loading
-    unsigned int fileSize = 0;
-    unsigned char *fileData = LoadFileData(fileName, &fileSize);
+    unsigned int dataSize = 0;
+    unsigned char *fileData = LoadFileData(fileName, &dataSize);
 
     if (fileData == NULL) return model;
 
     // glTF data loading
-    cgltf_data *gltfData = NULL;
-    cgltf_options gltfOptions = { 0 };  // TODO: Define custom allocators/file-accessors
-    cgltf_result result = cgltf_parse(&gltfOptions, fileData, fileSize, &gltfData);
+    cgltf_options options = { 0 };
+    cgltf_data *data = NULL;
+    cgltf_result result = cgltf_parse(&options, fileData, dataSize, &data);
 
     if (result == cgltf_result_success)
     {
-        TRACELOG(LOG_INFO, "MODEL: [%s] glTF meshes (%s) count: %i", fileName, (gltfData->file_type == 2)? "glb" : "gltf", gltfData->meshes_count);
-        TRACELOG(LOG_INFO, "MODEL: [%s] glTF materials (%s) count: %i", fileName, (gltfData->file_type == 2)? "glb" : "gltf", gltfData->materials_count);
+        TRACELOG(LOG_INFO, "MODEL: [%s] glTF meshes (%s) count: %i", fileName, (data->file_type == 2)? "glb" : "gltf", data->meshes_count);
+        TRACELOG(LOG_INFO, "MODEL: [%s] glTF materials (%s) count: %i", fileName, (data->file_type == 2)? "glb" : "gltf", data->materials_count);
 
         // Read data buffers
-        result = cgltf_load_buffers(&gltfOptions, gltfData, fileName);  // TODO: Not needed, gltfData already contains URIs to buffers for manual loading
+        result = cgltf_load_buffers(&options, data, fileName);
         if (result != cgltf_result_success) TRACELOG(LOG_INFO, "MODEL: [%s] Failed to load mesh/material buffers", fileName);
 
-        if (gltfData->scenes_count > 1) TRACELOG(LOG_INFO, "MODEL: [%s] Has multiple scenes but only the first one will be loaded", fileName);
+        int primitivesCount = 0;
 
-        int primitiveCount = 0;
-        for (unsigned int i = 0; i < gltfData->scene->nodes_count; i++)
-        {
-            //GetGLTFPrimitiveCount(gltfData->scene->nodes[i], &primitiveCount);  // TODO: Recursive function, really needed?
-        }
+        for (unsigned int i = 0; i < data->meshes_count; i++) primitivesCount += (int)data->meshes[i].primitives_count;
 
         // Process glTF data and map to model
-        model.meshCount = primitiveCount;
+        model.meshCount = primitivesCount;
         model.meshes = RL_CALLOC(model.meshCount, sizeof(Mesh));
-        model.materialCount = (int)gltfData->materials_count + 1;
+        model.materialCount = (int)data->materials_count + 1;
         model.materials = RL_MALLOC(model.materialCount*sizeof(Material));
         model.meshMaterial = RL_MALLOC(model.meshCount*sizeof(int));
-        model.boneCount = (int)gltfData->nodes_count;
-        model.bones = RL_CALLOC(model.boneCount, sizeof(BoneInfo));
-        model.bindPose = RL_CALLOC(model.boneCount, sizeof(Transform));
 
-        //InitGLTFBones(&model, gltfData);
-        //LoadGLTFMaterial(&model, fileName, gltfData);
+        for (int i = 0; i < model.meshCount; i++) model.meshes[i].vboId = (unsigned int *)RL_CALLOC(MAX_MESH_VERTEX_BUFFERS, sizeof(unsigned int));
 
-        int primitiveIndex = 0;
-        for (unsigned int i = 0; i < gltfData->scene->nodes_count; i++)
+        for (int i = 0; i < model.materialCount - 1; i++)
         {
-            Matrix staticTransform = MatrixIdentity();
-            //LoadGLTFNode(gltfData, gltfData->scene->nodes[i], &model, staticTransform, &primitiveIndex, fileName);  // TODO: Recursive function, really needed?
+            model.materials[i] = LoadMaterialDefault();
+            Color tint = (Color){ 255, 255, 255, 255 };
+            const char *texPath = GetDirectoryPath(fileName);
+
+            //Ensure material follows raylib support for PBR (metallic/roughness flow)
+            if (data->materials[i].has_pbr_metallic_roughness)
+            {
+                tint.r = (unsigned char)(data->materials[i].pbr_metallic_roughness.base_color_factor[0] * 255);
+                tint.g = (unsigned char)(data->materials[i].pbr_metallic_roughness.base_color_factor[1] * 255);
+                tint.b = (unsigned char)(data->materials[i].pbr_metallic_roughness.base_color_factor[2] * 255);
+                tint.a = (unsigned char)(data->materials[i].pbr_metallic_roughness.base_color_factor[3] * 255);
+
+                model.materials[i].maps[MATERIAL_MAP_ALBEDO].color = tint;
+
+                if (data->materials[i].pbr_metallic_roughness.base_color_texture.texture)
+                {
+                    Image albedo = LoadImageFromCgltfImage(data->materials[i].pbr_metallic_roughness.base_color_texture.texture->image, texPath, tint);
+                    model.materials[i].maps[MATERIAL_MAP_ALBEDO].texture = LoadTextureFromImage(albedo);
+                    UnloadImage(albedo);
+                }
+
+                tint = WHITE;   // Set tint to white after it's been used by Albedo
+
+                if (data->materials[i].pbr_metallic_roughness.metallic_roughness_texture.texture)
+                {
+                    Image metallicRoughness = LoadImageFromCgltfImage(data->materials[i].pbr_metallic_roughness.metallic_roughness_texture.texture->image, texPath, tint);
+                    model.materials[i].maps[MATERIAL_MAP_ROUGHNESS].texture = LoadTextureFromImage(metallicRoughness);
+
+                    float roughness = data->materials[i].pbr_metallic_roughness.roughness_factor;
+                    model.materials[i].maps[MATERIAL_MAP_ROUGHNESS].value = roughness;
+
+                    float metallic = data->materials[i].pbr_metallic_roughness.metallic_factor;
+                    model.materials[i].maps[MATERIAL_MAP_METALNESS].value = metallic;
+
+                    UnloadImage(metallicRoughness);
+                }
+
+                if (data->materials[i].normal_texture.texture)
+                {
+                    Image normalImage = LoadImageFromCgltfImage(data->materials[i].normal_texture.texture->image, texPath, tint);
+                    model.materials[i].maps[MATERIAL_MAP_NORMAL].texture = LoadTextureFromImage(normalImage);
+                    UnloadImage(normalImage);
+                }
+
+                if (data->materials[i].occlusion_texture.texture)
+                {
+                    Image occulsionImage = LoadImageFromCgltfImage(data->materials[i].occlusion_texture.texture->image, texPath, tint);
+                    model.materials[i].maps[MATERIAL_MAP_OCCLUSION].texture = LoadTextureFromImage(occulsionImage);
+                    UnloadImage(occulsionImage);
+                }
+
+                if (data->materials[i].emissive_texture.texture)
+                {
+                    Image emissiveImage = LoadImageFromCgltfImage(data->materials[i].emissive_texture.texture->image, texPath, tint);
+                    model.materials[i].maps[MATERIAL_MAP_EMISSION].texture = LoadTextureFromImage(emissiveImage);
+                    tint.r = (unsigned char)(data->materials[i].emissive_factor[0]*255);
+                    tint.g = (unsigned char)(data->materials[i].emissive_factor[1]*255);
+                    tint.b = (unsigned char)(data->materials[i].emissive_factor[2]*255);
+                    model.materials[i].maps[MATERIAL_MAP_EMISSION].color = tint;
+                    UnloadImage(emissiveImage);
+                }
+            }
         }
 
-        cgltf_free(gltfData);
+        model.materials[model.materialCount - 1] = LoadMaterialDefault();
+
+        int primitiveIndex = 0;
+
+        for (unsigned int i = 0; i < data->meshes_count; i++)
+        {
+            for (unsigned int p = 0; p < data->meshes[i].primitives_count; p++)
+            {
+                for (unsigned int j = 0; j < data->meshes[i].primitives[p].attributes_count; j++)
+                {
+                    if (data->meshes[i].primitives[p].attributes[j].type == cgltf_attribute_type_position)
+                    {
+                        cgltf_accessor *acc = data->meshes[i].primitives[p].attributes[j].data;
+                        model.meshes[primitiveIndex].vertexCount = (int)acc->count;
+                        model.meshes[primitiveIndex].vertices = RL_MALLOC(model.meshes[primitiveIndex].vertexCount*3*sizeof(float));
+
+                        LOAD_ACCESSOR(float, 3, acc, model.meshes[primitiveIndex].vertices)
+                    }
+                    else if (data->meshes[i].primitives[p].attributes[j].type == cgltf_attribute_type_normal)
+                    {
+                        cgltf_accessor *acc = data->meshes[i].primitives[p].attributes[j].data;
+                        model.meshes[primitiveIndex].normals = RL_MALLOC(acc->count*3*sizeof(float));
+
+                        LOAD_ACCESSOR(float, 3, acc, model.meshes[primitiveIndex].normals)
+                    }
+                    else if (data->meshes[i].primitives[p].attributes[j].type == cgltf_attribute_type_texcoord)
+                    {
+                        cgltf_accessor *acc = data->meshes[i].primitives[p].attributes[j].data;
+
+                        if (acc->component_type == cgltf_component_type_r_32f)
+                        {
+                            model.meshes[primitiveIndex].texcoords = RL_MALLOC(acc->count*2*sizeof(float));
+                            LOAD_ACCESSOR(float, 2, acc, model.meshes[primitiveIndex].texcoords)
+                        }
+                        else
+                        {
+                            // TODO: Support normalized unsigned byte/unsigned short texture coordinates
+                            TRACELOG(LOG_WARNING, "MODEL: [%s] glTF texture coordinates must be float", fileName);
+                        }
+                    }
+                }
+
+                cgltf_accessor *acc = data->meshes[i].primitives[p].indices;
+
+                if (acc)
+                {
+                    if (acc->component_type == cgltf_component_type_r_16u)
+                    {
+                        model.meshes[primitiveIndex].triangleCount = (int)acc->count/3;
+                        model.meshes[primitiveIndex].indices = RL_MALLOC(model.meshes[primitiveIndex].triangleCount*3*sizeof(unsigned short));
+                        LOAD_ACCESSOR(unsigned short, 1, acc, model.meshes[primitiveIndex].indices)
+                    }
+                    else
+                    {
+                        // TODO: Support unsigned byte/unsigned int
+                        TRACELOG(LOG_WARNING, "MODEL: [%s] glTF index data must be unsigned short", fileName);
+                    }
+                }
+                else
+                {
+                    // Unindexed mesh
+                    model.meshes[primitiveIndex].triangleCount = model.meshes[primitiveIndex].vertexCount/3;
+                }
+
+                if (data->meshes[i].primitives[p].material)
+                {
+                    // Compute the offset
+                    model.meshMaterial[primitiveIndex] = (int)(data->meshes[i].primitives[p].material - data->materials);
+                }
+                else
+                {
+                    model.meshMaterial[primitiveIndex] = model.materialCount - 1;;
+                }
+
+                primitiveIndex++;
+            }
+        }
+
+        cgltf_free(data);
     }
     else TRACELOG(LOG_WARNING, "MODEL: [%s] Failed to load glTF data", fileName);
 
