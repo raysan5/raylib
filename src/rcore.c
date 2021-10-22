@@ -440,7 +440,8 @@ typedef struct CoreData {
             float currentWheelMove;         // Registers current mouse wheel variation
             float previousWheelMove;        // Registers previous mouse wheel variation
 #if defined(PLATFORM_RPI) || defined(PLATFORM_DRM)
-            char currentButtonStateEvdev[MAX_MOUSE_BUTTONS];    // Holds the new mouse state for the next polling event to grab (Can't be written directly due to multithreading, app could miss the update)
+            // NOTE: currentButtonState[] can't be written directly due to multithreading, app could miss the update
+            char currentButtonStateEvdev[MAX_MOUSE_BUTTONS]; // Holds the new mouse state for the next polling event to grab
 #endif
         } Mouse;
         struct {
@@ -454,13 +455,13 @@ typedef struct CoreData {
             int lastButtonPressed;          // Register last gamepad button pressed
             int axisCount;                  // Register number of available gamepad axis
             bool ready[MAX_GAMEPADS];       // Flag to know if gamepad is ready
+            char name[MAX_GAMEPADS][64];    // Gamepad name holder
             char currentButtonState[MAX_GAMEPADS][MAX_GAMEPAD_BUTTONS];     // Current gamepad buttons state
             char previousButtonState[MAX_GAMEPADS][MAX_GAMEPAD_BUTTONS];    // Previous gamepad buttons state
             float axisState[MAX_GAMEPADS][MAX_GAMEPAD_AXIS];                // Gamepad axis state
-#if defined(PLATFORM_RPI) || defined(PLATFORM_DRM) || defined(PLATFORM_WEB)
+#if defined(PLATFORM_RPI) || defined(PLATFORM_DRM)
             pthread_t threadId;             // Gamepad reading thread id
             int streamId[MAX_GAMEPADS];     // Gamepad device file descriptor
-            char name[MAX_GAMEPADS][64];                  // Gamepad name holder
 #endif
         } Gamepad;
     } Input;
