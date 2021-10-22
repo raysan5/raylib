@@ -47,6 +47,7 @@ int main(void)
     model[5] = LoadModel("resources/models/gltf/AnimatedMorphCube.glb");
     model[6] = LoadModel("resources/models/gltf/vertex_colored_object.glb");
     model[7] = LoadModel("resources/models/gltf/girl.glb");
+    model[8] = LoadModel("resources/models/gltf/Wizard.glb");
 
     int currentModel = 0;
 
