@@ -37,7 +37,7 @@
   <PropertyGroup Label="Globals">
     <ProjectGuid>{2F1B955B-275E-4D8E-8864-06FEC44D7912}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
-    <RootNamespace>models_mesh_magicavoxel_loading</RootNamespace>
+    <RootNamespace>models_loading_vox</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
     <ProjectName>models_loading_vox</ProjectName>
   </PropertyGroup>
@@ -374,12 +374,12 @@
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\..\examples\models\models_loading_vox.c" />
+  </ItemGroup>
+  <ItemGroup>
     <ProjectReference Include="..\raylib\raylib.vcxproj">
       <Project>{e89d61ac-55de-4482-afd4-df7242ebc859}</Project>
     </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
-    <ClCompile Include="..\..\..\examples\models\models_loading_vox.c" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

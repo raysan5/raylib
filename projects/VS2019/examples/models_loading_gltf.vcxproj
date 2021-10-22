@@ -35,11 +35,11 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{3A6C48C6-80AB-456F-A3A5-969930958971}</ProjectGuid>
+    <ProjectGuid>{F5FC9279-DE63-4EF3-B31F-CFCEF9B11F71}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
-    <RootNamespace>models_material_pbr</RootNamespace>
+    <RootNamespace>models_loading_gltf</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
-    <ProjectName>models_material_pbr</ProjectName>
+    <ProjectName>models_loading_gltf</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -374,7 +374,7 @@
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\..\examples\models\models_material_pbr.c" />
+    <ClCompile Include="..\..\..\examples\models\models_loading_gltf.c" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\raylib\raylib.vcxproj">
