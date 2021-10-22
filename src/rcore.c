@@ -3376,18 +3376,6 @@ bool IsGamepadAvailable(int gamepad)
     return result;
 }
 
-// Check gamepad name (if available)
-bool IsGamepadName(int gamepad, const char *name)
-{
-    bool result = false;
-    const char *currentName = NULL;
-
-    if (CORE.Input.Gamepad.ready[gamepad]) currentName = GetGamepadName(gamepad);
-    if ((name != NULL) && (currentName != NULL)) result = (strcmp(name, currentName) == 0);
-
-    return result;
-}
-
 // Get gamepad internal name id
 const char *GetGamepadName(int gamepad)
 {

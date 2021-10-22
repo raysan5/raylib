@@ -1079,7 +1079,6 @@ RLAPI int GetCharPressed(void);                               // Get char presse
 
 // Input-related functions: gamepads
 RLAPI bool IsGamepadAvailable(int gamepad);                   // Check if a gamepad is available
-RLAPI bool IsGamepadName(int gamepad, const char *name);      // Check gamepad name (if available)
 RLAPI const char *GetGamepadName(int gamepad);                // Get gamepad internal name id
 RLAPI bool IsGamepadButtonPressed(int gamepad, int button);   // Check if a gamepad button has been pressed once
 RLAPI bool IsGamepadButtonDown(int gamepad, int button);      // Check if a gamepad button is being pressed
