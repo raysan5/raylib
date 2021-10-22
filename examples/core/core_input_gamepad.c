@@ -62,7 +62,7 @@ int main(void)
             {
                 DrawText(TextFormat("GP1: %s", GetGamepadName(0)), 10, 10, 10, BLACK);
 
-                if (IsGamepadName(0, XBOX360_NAME_ID) || IsGamepadName(0, XBOX360_LEGACY_NAME_ID))
+                if (TextIsEqual(GetGamepadName(0), XBOX360_NAME_ID) || TextIsEqual(GetGamepadName(0), XBOX360_LEGACY_NAME_ID))
                 {
                     DrawTexture(texXboxPad, 0, 0, DARKGRAY);
 
@@ -110,7 +110,7 @@ int main(void)
                     //DrawText(TextFormat("Xbox axis LT: %02.02f", GetGamepadAxisMovement(0, GAMEPAD_AXIS_LEFT_TRIGGER)), 10, 40, 10, BLACK);
                     //DrawText(TextFormat("Xbox axis RT: %02.02f", GetGamepadAxisMovement(0, GAMEPAD_AXIS_RIGHT_TRIGGER)), 10, 60, 10, BLACK);
                 }
-                else if (IsGamepadName(0, PS3_NAME_ID))
+                else if (TextIsEqual(GetGamepadName(0), PS3_NAME_ID))
                 {
                     DrawTexture(texPs3Pad, 0, 0, DARKGRAY);
 

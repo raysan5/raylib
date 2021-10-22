@@ -312,6 +312,7 @@
     <ClCompile Include="..\..\..\src\utils.c" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\..\src\external\cgltf.h" />
     <ClInclude Include="..\..\..\src\rcamera.h" />
     <ClInclude Include="..\..\..\src\config.h" />
     <ClInclude Include="..\..\..\src\external\glad.h" />
