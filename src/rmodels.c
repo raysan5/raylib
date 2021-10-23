@@ -4797,10 +4797,10 @@ static Model LoadGLTF(const char *fileName)
 
                         if ((attribute->component_type == cgltf_component_type_r_32f) && (attribute->type == cgltf_type_vec4))
                         {
-                            // Init raylib mesh normals to copy glTF attribute data
+                            // Init raylib mesh tangent to copy glTF attribute data
                             model.meshes[meshIndex].tangents = RL_MALLOC(attribute->count*4*sizeof(float));
 
-                            // Load 3 components of float data type into mesh.normals
+                            // Load 4 components of float data type into mesh.tangents
                             LOAD_ATTRIBUTE(attribute, 4, float, model.meshes[meshIndex].tangents)
                         }
                         else TRACELOG(LOG_WARNING, "MODEL: [%s] Tangent attribute data format not supported, use vec4 float", fileName);
