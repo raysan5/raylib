@@ -4653,6 +4653,7 @@ static Model LoadGLTF(const char *fileName)
         model.meshMaterial = RL_CALLOC(model.meshCount, sizeof(int));
 
         // Load materials data
+        //----------------------------------------------------------------------------------------------------
         for (unsigned int i = 0, j = 1; i < data->materials_count; i++, j++)
         {
             model.materials[j] = LoadMaterialDefault();
@@ -4742,9 +4743,11 @@ static Model LoadGLTF(const char *fileName)
         }
 
         // Load meshes data
-        // NOTE: meshIndex accumulates primitives
+        //----------------------------------------------------------------------------------------------------
         for (unsigned int i = 0, meshIndex = 0; i < data->meshes_count; i++)
         {
+            // NOTE: meshIndex accumulates primitives
+
             for (unsigned int p = 0; p < data->meshes[i].primitives_count; p++)
             {
                 // NOTE: We only support primitives defined by triangles
@@ -4760,6 +4763,8 @@ static Model LoadGLTF(const char *fileName)
                     if (data->meshes[i].primitives[p].attributes[j].type == cgltf_attribute_type_position)      // POSITION
                     {
                         cgltf_accessor *attribute = data->meshes[i].primitives[p].attributes[j].data;
+
+                        // WARNING: SPECS: POSITION accessor MUST have its min and max properties defined.
 
                         if ((attribute->component_type == cgltf_component_type_r_32f) && (attribute->type == cgltf_type_vec3))
                         {
@@ -4786,8 +4791,24 @@ static Model LoadGLTF(const char *fileName)
                         }
                         else TRACELOG(LOG_WARNING, "MODEL: [%s] Normal attribute data format not supported, use vec3 float", fileName);
                     }
+                    else if (data->meshes[i].primitives[p].attributes[j].type == cgltf_attribute_type_tangent)   // TANGENT
+                    {
+                        cgltf_accessor *attribute = data->meshes[i].primitives[p].attributes[j].data;
+
+                        if ((attribute->component_type == cgltf_component_type_r_32f) && (attribute->type == cgltf_type_vec4))
+                        {
+                            // Init raylib mesh normals to copy glTF attribute data
+                            model.meshes[meshIndex].tangents = RL_MALLOC(attribute->count*4*sizeof(float));
+
+                            // Load 3 components of float data type into mesh.normals
+                            LOAD_ATTRIBUTE(attribute, 4, float, model.meshes[meshIndex].tangents)
+                        }
+                        else TRACELOG(LOG_WARNING, "MODEL: [%s] Tangent attribute data format not supported, use vec4 float", fileName);
+                    }
                     else if (data->meshes[i].primitives[p].attributes[j].type == cgltf_attribute_type_texcoord) // TEXCOORD_0
                     {
+                        // TODO: Support additional texture coordinates: TEXCOORD_1 -> mesh.texcoords2
+
                         cgltf_accessor *attribute = data->meshes[i].primitives[p].attributes[j].data;
 
                         if ((attribute->component_type == cgltf_component_type_r_32f) && (attribute->type == cgltf_type_vec2))
@@ -4803,6 +4824,8 @@ static Model LoadGLTF(const char *fileName)
                     else if (data->meshes[i].primitives[p].attributes[j].type == cgltf_attribute_type_color)    // COLOR_0
                     {
                         cgltf_accessor *attribute = data->meshes[i].primitives[p].attributes[j].data;
+
+                        // WARNING: SPECS: All components of each COLOR_n accessor element MUST be clamped to [0.0, 1.0] range.
 
                         if ((attribute->component_type == cgltf_component_type_r_8u) && (attribute->type == cgltf_type_vec4))
                         {
@@ -4843,15 +4866,14 @@ static Model LoadGLTF(const char *fileName)
                         else TRACELOG(LOG_WARNING, "MODEL: [%s] Color attribute data format not supported", fileName);
                     }
 
-                    // TODO: Additional attributes that could be supported (some related to animations):
-                    // cgltf_attribute_type_tangent, cgltf_attribute_type_joints, cgltf_attribute_type_weights
+                    // NOTE: Attributes related to animations are processed separately
                 }
 
                 // Load primitive indices data (if provided)
-                cgltf_accessor *attribute = data->meshes[i].primitives[p].indices;
-
-                if (attribute != NULL)
+                if (data->meshes[i].primitives[p].indices != NULL)
                 {
+                    cgltf_accessor *attribute = data->meshes[i].primitives[p].indices;
+
                     model.meshes[meshIndex].triangleCount = (int)attribute->count/3;
 
                     if (attribute->component_type == cgltf_component_type_r_16u)
