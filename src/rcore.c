@@ -4849,6 +4849,10 @@ void PollInputEvents(void)
 #endif
 #endif  // PLATFORM_DESKTOP
 
+#if defined(PLATFORM_WEB)
+    CORE.Window.resizedLastFrame = false;
+#endif  // PLATFORM_WEB
+
 // Gamepad support using emscripten API
 // NOTE: GLFW3 joystick functionality not available in web
 #if defined(PLATFORM_WEB)
