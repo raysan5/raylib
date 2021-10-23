@@ -331,7 +331,7 @@ typedef struct Mesh {
     // Animation vertex data
     float *animVertices;    // Animated vertex positions (after bones transformations)
     float *animNormals;     // Animated normals (after bones transformations)
-    int *boneIds;           // Vertex bone ids, up to 4 bones influence by vertex (skinning)
+    unsigned char *boneIds; // Vertex bone ids, max 255 bone ids, up to 4 bones influence by vertex (skinning)
     float *boneWeights;     // Vertex bone weight, up to 4 bones influence by vertex (skinning)
 
     // OpenGL identifiers

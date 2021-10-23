@@ -4067,8 +4067,8 @@ static Model LoadIQM(const char *fileName)
         model.meshes[i].normals = RL_CALLOC(model.meshes[i].vertexCount*3, sizeof(float));        // Default vertex normals
         model.meshes[i].texcoords = RL_CALLOC(model.meshes[i].vertexCount*2, sizeof(float));      // Default vertex texcoords
 
-        model.meshes[i].boneIds = RL_CALLOC(model.meshes[i].vertexCount*4, sizeof(float));        // Up-to 4 bones supported!
-        model.meshes[i].boneWeights = RL_CALLOC(model.meshes[i].vertexCount*4, sizeof(float));    // Up-to 4 bones supported!
+        model.meshes[i].boneIds = RL_CALLOC(model.meshes[i].vertexCount*4, sizeof(unsigned char));  // Up-to 4 bones supported!
+        model.meshes[i].boneWeights = RL_CALLOC(model.meshes[i].vertexCount*4, sizeof(float));      // Up-to 4 bones supported!
 
         model.meshes[i].triangleCount = imesh[i].num_triangles;
         model.meshes[i].indices = RL_CALLOC(model.meshes[i].triangleCount*3, sizeof(unsigned short));
