@@ -1638,15 +1638,15 @@ bool CheckCollisionLines(Vector2 startPos1, Vector2 endPos1, Vector2 startPos2, 
 {
     const float div = (endPos2.y - startPos2.y)*(endPos1.x - startPos1.x) - (endPos2.x - startPos2.x)*(endPos1.y - startPos1.y);
 
-    if (abs(div) < FLT_EPSILON) return false;
+    if (fabsf(div) < FLT_EPSILON) return false;
 
     const float xi = ((startPos2.x - endPos2.x)*(startPos1.x*endPos1.y - startPos1.y*endPos1.x) - (startPos1.x - endPos1.x)*(startPos2.x*endPos2.y - startPos2.y*endPos2.x))/div;
     const float yi = ((startPos2.y - endPos2.y)*(startPos1.x*endPos1.y - startPos1.y*endPos1.x) - (startPos1.y - endPos1.y)*(startPos2.x*endPos2.y - startPos2.y*endPos2.x))/div;
 
-    if (abs(startPos1.x - endPos1.x) > FLT_EPSILON && (xi < fminf(startPos1.x, endPos1.x) || xi > fmaxf(startPos1.x, endPos1.x))) return false;
-    if (abs(startPos2.x - endPos2.x) > FLT_EPSILON && (xi < fminf(startPos2.x, endPos2.x) || xi > fmaxf(startPos2.x, endPos2.x))) return false;
-    if (abs(startPos1.y - endPos1.y) > FLT_EPSILON && (yi < fminf(startPos1.y, endPos1.y) || yi > fmaxf(startPos1.y, endPos1.y))) return false;
-    if (abs(startPos2.y - endPos2.y) > FLT_EPSILON && (yi < fminf(startPos2.y, endPos2.y) || yi > fmaxf(startPos2.y, endPos2.y))) return false;
+    if (fabsf(startPos1.x - endPos1.x) > FLT_EPSILON && (xi < fminf(startPos1.x, endPos1.x) || xi > fmaxf(startPos1.x, endPos1.x))) return false;
+    if (fabsf(startPos2.x - endPos2.x) > FLT_EPSILON && (xi < fminf(startPos2.x, endPos2.x) || xi > fmaxf(startPos2.x, endPos2.x))) return false;
+    if (fabsf(startPos1.y - endPos1.y) > FLT_EPSILON && (yi < fminf(startPos1.y, endPos1.y) || yi > fmaxf(startPos1.y, endPos1.y))) return false;
+    if (fabsf(startPos2.y - endPos2.y) > FLT_EPSILON && (yi < fminf(startPos2.y, endPos2.y) || yi > fmaxf(startPos2.y, endPos2.y))) return false;
 
     if (collisionPoint != 0)
     {
