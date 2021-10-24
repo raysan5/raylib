@@ -1,11 +1,18 @@
 name: Windows Examples
 
 on:
+  workflow_dispatch:
   push:
+    paths:
+      - 'src/**'
+      - 'examples/**'
+      - '.github/workflows/windows_examples.yml'
   pull_request:
     branches: [ master ]
     paths:
-    - 'examples/**'
+      - 'src/**'
+      - 'examples/**'
+      - '.github/workflows/windows_examples.yml'
     
 jobs:
   build:

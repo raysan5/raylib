@@ -2,7 +2,16 @@ name: Android
 
 on:
   push:
+    workflow_dispatch:
+    paths:
+      - 'src/**'
+      - 'examples/**'
+      - '.github/workflows/android.yml'
   pull_request:
+    paths:
+      - 'src/**'
+      - 'examples/**'
+      - '.github/workflows/android.yml'
   release:
     types: [published]
 
