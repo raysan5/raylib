@@ -1,6 +1,7 @@
 name: Android
 
 on:
+  workflow_dispatch:
   push:
     workflow_dispatch:
     paths:
