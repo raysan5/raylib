@@ -1,8 +1,17 @@
 name: Windows
 
-on: 
+on:
+  workflow_dispatch:
   push:
+    paths:
+      - 'src/**'
+      - 'examples/**'
+      - '.github/workflows/windows.yml'
   pull_request:
+    paths:
+      - 'src/**'
+      - 'examples/**'
+      - '.github/workflows/windows.yml'
   release:
     types: [published]
 

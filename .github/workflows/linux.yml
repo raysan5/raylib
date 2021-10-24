@@ -1,8 +1,17 @@
 name: Linux
 
-on: 
+on:
+  workflow_dispatch:
   push:
+    paths:
+      - 'src/**'
+      - 'examples/**'
+      - '.github/workflows/linux.yml'
   pull_request:
+    paths:
+      - 'src/**'
+      - 'examples/**'
+      - '.github/workflows/linux.yml'
   release:
     types: [published]
 

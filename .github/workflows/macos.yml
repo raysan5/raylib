@@ -1,8 +1,17 @@
 name: macOS
 
-on:   
+on:
+  workflow_dispatch:
   push:
+    paths:
+      - 'src/**'
+      - 'examples/**'
+      - '.github/workflows/macos.yml'
   pull_request:
+    paths:
+      - 'src/**'
+      - 'examples/**'
+      - '.github/workflows/macos.yml'
   release:
     types: [published]
 
