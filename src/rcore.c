@@ -2188,7 +2188,7 @@ void BeginScissorMode(int x, int y, int width, int height)
     {
         Vector2 scale = GetWindowScaleDPI();
 
-        rlScissor(x*scale.x, CORE.Window.currentFbo.height - (y + height)*scale.y, width*scale.x, height*scale.y);
+        rlScissor((int)(x*scale.x), (int)(CORE.Window.currentFbo.height - (y + height)*scale.y), (int)(width*scale.x), (int)(height*scale.y));
     }
     else
     {
@@ -5020,8 +5020,8 @@ static void WindowSizeCallback(GLFWwindow *window, int width, int height)
     {
         Vector2 windowScaleDPI = GetWindowScaleDPI();
 
-        CORE.Window.screen.width = width/windowScaleDPI.x;
-        CORE.Window.screen.height = height/windowScaleDPI.y;
+        CORE.Window.screen.width = (unsigned int)(width/windowScaleDPI.x);
+        CORE.Window.screen.height = (unsigned int)(height/windowScaleDPI.y);
     }
     else
     {
