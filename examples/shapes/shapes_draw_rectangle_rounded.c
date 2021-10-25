@@ -43,7 +43,7 @@ int main(void)
     {
         // Update
         //----------------------------------------------------------------------------------
-        Rectangle rec = { (GetScreenWidth() - width - 250)/2, (GetScreenHeight() - height)/2, width, height };
+        Rectangle rec = { ((float)GetScreenWidth() - width - 250)/2, (GetScreenHeight() - height)/2.0f, (float)width, (float)height };
         //----------------------------------------------------------------------------------
 
         // Draw
@@ -55,17 +55,17 @@ int main(void)
             DrawLine(560, 0, 560, GetScreenHeight(), Fade(LIGHTGRAY, 0.6f));
             DrawRectangle(560, 0, GetScreenWidth() - 500, GetScreenHeight(), Fade(LIGHTGRAY, 0.3f));
 
-            if (drawRect) DrawRectangleRec(rec, Fade(GOLD, 0.6));
-            if (drawRoundedRect) DrawRectangleRounded(rec, roundness, segments, Fade(MAROON, 0.2));
-            if (drawRoundedLines) DrawRectangleRoundedLines(rec,roundness, segments, lineThick, Fade(MAROON, 0.4));
+            if (drawRect) DrawRectangleRec(rec, Fade(GOLD, 0.6f));
+            if (drawRoundedRect) DrawRectangleRounded(rec, roundness, segments, Fade(MAROON, 0.2f));
+            if (drawRoundedLines) DrawRectangleRoundedLines(rec,roundness, segments, (float)lineThick, Fade(MAROON, 0.4f));
 
             // Draw GUI controls
             //------------------------------------------------------------------------------
-            width = GuiSliderBar((Rectangle){ 640, 40, 105, 20 }, "Width", NULL, width, 0, GetScreenWidth() - 300);
-            height = GuiSliderBar((Rectangle){ 640, 70, 105, 20 }, "Height", NULL, height, 0, GetScreenHeight() - 50);
+            width = (int)GuiSliderBar((Rectangle){ 640, 40, 105, 20 }, "Width", NULL, (float)width, 0, (float)GetScreenWidth() - 300);
+            height = (int)GuiSliderBar((Rectangle){ 640, 70, 105, 20 }, "Height", NULL, (float)height, 0, (float)GetScreenHeight() - 50);
             roundness = GuiSliderBar((Rectangle){ 640, 140, 105, 20 }, "Roundness", NULL, roundness, 0.0f, 1.0f);
-            lineThick = GuiSliderBar((Rectangle){ 640, 170, 105, 20 }, "Thickness", NULL, lineThick, 0, 20);
-            segments = GuiSliderBar((Rectangle){ 640, 240, 105, 20}, "Segments", NULL, segments, 0, 60);
+            lineThick = (int)GuiSliderBar((Rectangle){ 640, 170, 105, 20 }, "Thickness", NULL, (float)lineThick, 0, 20);
+            segments = (int)GuiSliderBar((Rectangle){ 640, 240, 105, 20}, "Segments", NULL, (float)segments, 0, 60);
 
             drawRoundedRect = GuiCheckBox((Rectangle){ 640, 320, 20, 20 }, "DrawRoundedRect", drawRoundedRect);
             drawRoundedLines = GuiCheckBox((Rectangle){ 640, 350, 20, 20 }, "DrawRoundedLines", drawRoundedLines);

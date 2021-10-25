@@ -59,8 +59,8 @@ int main(void)
                               (Vector2){screenWidth/4.0f*3.0f + 20.0f, 230.0f}, DARKBLUE);
 
             // Polygon shapes and lines
-            DrawPoly((Vector2){screenWidth/4*3, 320}, 6, 80, 0, BROWN);
-            DrawPolyLinesEx((Vector2){screenWidth/4*3, 320}, 6, 80, 0, 6, BEIGE);
+            DrawPoly((Vector2){screenWidth/4.0f*3, 320}, 6, 80, 0, BROWN);
+            DrawPolyLinesEx((Vector2){screenWidth/4.0f*3, 320}, 6, 80, 0, 6, BEIGE);
 
             // NOTE: We draw all LINES based shapes together to optimize internal drawing,
             // this way, all LINES are rendered in a single draw pass

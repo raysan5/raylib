@@ -102,7 +102,7 @@ int main(void)
     UnloadTexture(texture);     // Unload texture
 
     // Unload model animations data
-    for (int i = 0; i < animsCount; i++) UnloadModelAnimation(anims[i]);
+    for (unsigned int i = 0; i < animsCount; i++) UnloadModelAnimation(anims[i]);
     RL_FREE(anims);
 
     UnloadModel(model);         // Unload model

@@ -34,16 +34,16 @@ int main(void)
     InitPhysics();
 
     // Create floor rectangle physics body
-    PhysicsBody floor = CreatePhysicsBodyRectangle((Vector2){ screenWidth/2, screenHeight }, screenWidth, 100, 10);
+    PhysicsBody floor = CreatePhysicsBodyRectangle((Vector2){ screenWidth/2.0f, (float)screenHeight }, (float)screenWidth, 100, 10);
     floor->enabled = false; // Disable body state to convert it to static (no dynamics, but collisions)
     floor->restitution = 1;
 
     // Create circles physics body
-    PhysicsBody circleA = CreatePhysicsBodyCircle((Vector2){ screenWidth*0.25f, screenHeight/2 }, 30, 10);
+    PhysicsBody circleA = CreatePhysicsBodyCircle((Vector2){ screenWidth*0.25f, screenHeight/2.0f }, 30, 10);
     circleA->restitution = 0;
-    PhysicsBody circleB = CreatePhysicsBodyCircle((Vector2){ screenWidth*0.5f, screenHeight/2 }, 30, 10);
+    PhysicsBody circleB = CreatePhysicsBodyCircle((Vector2){ screenWidth*0.5f, screenHeight/2.0f }, 30, 10);
     circleB->restitution = 0.5f;
-    PhysicsBody circleC = CreatePhysicsBodyCircle((Vector2){ screenWidth*0.75f, screenHeight/2 }, 30, 10);
+    PhysicsBody circleC = CreatePhysicsBodyCircle((Vector2){ screenWidth*0.75f, screenHeight/2.0f }, 30, 10);
     circleC->restitution = 1;
 
     // Restitution demo needs a very tiny physics time step for a proper simulation
@@ -62,11 +62,11 @@ int main(void)
         if (IsKeyPressed(KEY_R))    // Reset physics input
         {
             // Reset circles physics bodies position and velocity
-            circleA->position = (Vector2){ screenWidth*0.25f, screenHeight/2 };
+            circleA->position = (Vector2){ screenWidth*0.25f, screenHeight/2.0f };
             circleA->velocity = (Vector2){ 0, 0 };
-            circleB->position = (Vector2){ screenWidth*0.5f, screenHeight/2 };
+            circleB->position = (Vector2){ screenWidth*0.5f, screenHeight/2.0f };
             circleB->velocity = (Vector2){ 0, 0 };
-            circleC->position = (Vector2){ screenWidth*0.75f, screenHeight/2 };
+            circleC->position = (Vector2){ screenWidth*0.75f, screenHeight/2.0f };
             circleC->velocity = (Vector2){ 0, 0 };
         }
         //----------------------------------------------------------------------------------
@@ -100,9 +100,9 @@ int main(void)
             }
 
             DrawText("Restitution amount", (screenWidth - MeasureText("Restitution amount", 30))/2, 75, 30, WHITE);
-            DrawText("0", circleA->position.x - MeasureText("0", 20)/2, circleA->position.y - 7, 20, WHITE);
-            DrawText("0.5", circleB->position.x - MeasureText("0.5", 20)/2, circleB->position.y - 7, 20, WHITE);
-            DrawText("1", circleC->position.x - MeasureText("1", 20)/2, circleC->position.y - 7, 20, WHITE);
+            DrawText("0", (int)circleA->position.x - MeasureText("0", 20)/2, circleA->position.y - 7, 20, WHITE);
+            DrawText("0.5", (int)circleB->position.x - MeasureText("0.5", 20)/2, circleB->position.y - 7, 20, WHITE);
+            DrawText("1", (int)circleC->position.x - MeasureText("1", 20)/2, circleC->position.y - 7, 20, WHITE);
 
             DrawText("Press 'R' to reset example", 10, 10, 10, WHITE);
 

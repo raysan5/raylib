@@ -25,7 +25,7 @@ int main(void)
 
     InitWindow(screenWidth, screenHeight, "raylib [shapes] example - draw ring");
 
-    Vector2 center = {(GetScreenWidth() - 300)/2, GetScreenHeight()/2 };
+    Vector2 center = {(GetScreenWidth() - 300)/2.0f, GetScreenHeight()/2.0f };
 
     float innerRadius = 80.0f;
     float outerRadius = 190.0f;
@@ -59,9 +59,9 @@ int main(void)
             DrawLine(500, 0, 500, GetScreenHeight(), Fade(LIGHTGRAY, 0.6f));
             DrawRectangle(500, 0, GetScreenWidth() - 500, GetScreenHeight(), Fade(LIGHTGRAY, 0.3f));
 
-            if (drawRing) DrawRing(center, innerRadius, outerRadius, startAngle, endAngle, segments, Fade(MAROON, 0.3));
-            if (drawRingLines) DrawRingLines(center, innerRadius, outerRadius, startAngle, endAngle, segments, Fade(BLACK, 0.4));
-            if (drawCircleLines) DrawCircleSectorLines(center, outerRadius, startAngle, endAngle, segments, Fade(BLACK, 0.4));
+            if (drawRing) DrawRing(center, innerRadius, outerRadius, startAngle, endAngle, segments, Fade(MAROON, 0.3f));
+            if (drawRingLines) DrawRingLines(center, innerRadius, outerRadius, startAngle, endAngle, segments, Fade(BLACK, 0.4f));
+            if (drawCircleLines) DrawCircleSectorLines(center, outerRadius, startAngle, endAngle, segments, Fade(BLACK, 0.4f));
 
             // Draw GUI controls
             //------------------------------------------------------------------------------
@@ -71,7 +71,7 @@ int main(void)
             innerRadius = GuiSliderBar((Rectangle){ 600, 140, 120, 20 }, "InnerRadius", NULL, innerRadius, 0, 100);
             outerRadius = GuiSliderBar((Rectangle){ 600, 170, 120, 20 }, "OuterRadius", NULL, outerRadius, 0, 200);
 
-            segments = GuiSliderBar((Rectangle){ 600, 240, 120, 20 }, "Segments", NULL, segments, 0, 100);
+            segments = (int)GuiSliderBar((Rectangle){ 600, 240, 120, 20 }, "Segments", NULL, (float)segments, 0, 100);
 
             drawRing = GuiCheckBox((Rectangle){ 600, 320, 20, 20 }, "Draw Ring", drawRing);
             drawRingLines = GuiCheckBox((Rectangle){ 600, 350, 20, 20 }, "Draw RingLines", drawRingLines);
