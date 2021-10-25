@@ -67,14 +67,14 @@ int main(void)
     // Scatter random cubes around
     for (int i = 0; i < MAX_INSTANCES; i++)
     {
-        x = GetRandomValue(-50, 50);
-        y = GetRandomValue(-50, 50);
-        z = GetRandomValue(-50, 50);
+        x = (float)GetRandomValue(-50, 50);
+        y = (float)GetRandomValue(-50, 50);
+        z = (float)GetRandomValue(-50, 50);
         translations[i] = MatrixTranslate(x, y, z);
 
-        x = GetRandomValue(0, 360);
-        y = GetRandomValue(0, 360);
-        z = GetRandomValue(0, 360);
+        x = (float)GetRandomValue(0, 360);
+        y = (float)GetRandomValue(0, 360);
+        z = (float)GetRandomValue(0, 360);
         Vector3 axis = Vector3Normalize((Vector3){ x, y, z });
         float angle = (float)GetRandomValue(0, 10)*DEG2RAD;
 
@@ -136,11 +136,11 @@ int main(void)
         if (IsKeyDown(KEY_NINE)) groups = 9;
         if (IsKeyDown(KEY_W)) { groups = 7; amp = 25; speed = 18; variance = 0.70f; }
 
-        if (IsKeyDown(KEY_EQUAL)) speed = (speed <= (fps*0.25f))? (fps*0.25f) : (speed*0.95f);
-        if (IsKeyDown(KEY_KP_ADD)) speed = (speed <= (fps*0.25f))? (fps*0.25f) : (speed*0.95f);
+        if (IsKeyDown(KEY_EQUAL)) speed = (speed <= (fps*0.25f))? (int)(fps*0.25f) : (int)(speed*0.95f);
+        if (IsKeyDown(KEY_KP_ADD)) speed = (speed <= (fps*0.25f))? (int)(fps*0.25f) : (int)(speed*0.95f);
 
-        if (IsKeyDown(KEY_MINUS)) speed = fmaxf(speed*1.02f, speed + 1);
-        if (IsKeyDown(KEY_KP_SUBTRACT)) speed = fmaxf(speed*1.02f, speed + 1);
+        if (IsKeyDown(KEY_MINUS)) speed = (int)fmaxf(speed*1.02f, speed + 1);
+        if (IsKeyDown(KEY_KP_SUBTRACT)) speed = (int)fmaxf(speed*1.02f, speed + 1);
 
         // Update the light shader with the camera view position
         float cameraPos[3] = { camera.position.x, camera.position.y, camera.position.z };

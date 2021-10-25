@@ -120,14 +120,14 @@ int main(void)
     // and initialize the shader locations
     for (int i = 0; i < MAX_SPOTS; i++)
     {
-        spots[i].pos.x = GetRandomValue(64.0f, screenWidth - 64.0f);
-        spots[i].pos.y = GetRandomValue(64.0f, screenHeight - 64.0f);
+        spots[i].pos.x = (float)GetRandomValue(64, screenWidth - 64);
+        spots[i].pos.y = (float)GetRandomValue(64, screenHeight - 64);
         spots[i].vel = (Vector2){ 0, 0 };
 
         while ((fabs(spots[i].vel.x) + fabs(spots[i].vel.y)) < 2)
         {
-            spots[i].vel.x = GetRandomValue(-400.f, 40.0f) / 10.0f;
-            spots[i].vel.y = GetRandomValue(-400.f, 40.0f) / 10.0f;
+            spots[i].vel.x = GetRandomValue(-400, 40) / 10.0f;
+            spots[i].vel.y = GetRandomValue(-400, 40) / 10.0f;
         }
 
         spots[i].inner = 28.0f * (i + 1);
@@ -190,8 +190,8 @@ int main(void)
             for (int i = 0; i < 16; i++)
             {
                 DrawTexture(texRay,
-                    (screenWidth/2.0f) + cos((frameCounter + i*8)/51.45f)*(screenWidth/2.2f) - 32,
-                    (screenHeight/2.0f) + sin((frameCounter + i*8)/17.87f)*(screenHeight/4.2f), WHITE);
+                    (int)((screenWidth/2.0f) + cos((frameCounter + i*8)/51.45f)*(screenWidth/2.2f) - 32),
+                    (int)((screenHeight/2.0f) + sin((frameCounter + i*8)/17.87f)*(screenHeight/4.2f)), WHITE);
             }
 
             // Draw spot lights
@@ -206,8 +206,8 @@ int main(void)
             DrawFPS(10, 10);
 
             DrawText("Move the mouse!", 10, 30, 20, GREEN);
-            DrawText("Pitch Black", screenWidth*0.2f, screenHeight/2, 20, GREEN);
-            DrawText("Dark", screenWidth*.66f, screenHeight/2, 20, GREEN);
+            DrawText("Pitch Black", (int)(screenWidth*0.2f), screenHeight/2, 20, GREEN);
+            DrawText("Dark", (int)(screenWidth*.66f), screenHeight/2, 20, GREEN);
 
 
         EndDrawing();

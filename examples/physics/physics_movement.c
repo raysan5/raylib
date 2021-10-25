@@ -36,11 +36,11 @@ int main(void)
     InitPhysics();
 
     // Create floor and walls rectangle physics body
-    PhysicsBody floor = CreatePhysicsBodyRectangle((Vector2){ screenWidth/2, screenHeight }, screenWidth, 100, 10);
+    PhysicsBody floor = CreatePhysicsBodyRectangle((Vector2){ screenWidth/2.0f, (float)screenHeight }, (float)screenWidth, 100, 10);
     PhysicsBody platformLeft = CreatePhysicsBodyRectangle((Vector2){ screenWidth*0.25f, screenHeight*0.6f }, screenWidth*0.25f, 10, 10);
     PhysicsBody platformRight = CreatePhysicsBodyRectangle((Vector2){ screenWidth*0.75f, screenHeight*0.6f }, screenWidth*0.25f, 10, 10);
-    PhysicsBody wallLeft = CreatePhysicsBodyRectangle((Vector2){ -5, screenHeight/2 }, 10, screenHeight, 10);
-    PhysicsBody wallRight = CreatePhysicsBodyRectangle((Vector2){ screenWidth + 5, screenHeight/2 }, 10, screenHeight, 10);
+    PhysicsBody wallLeft = CreatePhysicsBodyRectangle((Vector2){ -5, screenHeight/2.0f }, 10, (float)screenHeight, 10);
+    PhysicsBody wallRight = CreatePhysicsBodyRectangle((Vector2){ (float)screenWidth + 5, screenHeight/2.0f }, 10, (float)screenHeight, 10);
 
     // Disable dynamics to floor and walls physics bodies
     floor->enabled = false;
@@ -50,7 +50,7 @@ int main(void)
     wallRight->enabled = false;
 
     // Create movement physics body
-    PhysicsBody body = CreatePhysicsBodyRectangle((Vector2){ screenWidth/2, screenHeight/2 }, 50, 50, 1);
+    PhysicsBody body = CreatePhysicsBodyRectangle((Vector2){ screenWidth/2.0f, screenHeight/2.0f }, 50, 50, 1);
     body->freezeOrient = true;      // Constrain body rotation to avoid little collision torque amounts
 
     SetTargetFPS(60);               // Set our game to run at 60 frames-per-second
@@ -66,7 +66,7 @@ int main(void)
         if (IsKeyPressed(KEY_R))      // Reset physics input
         {
             // Reset movement physics body position, velocity and rotation
-            body->position = (Vector2){ screenWidth/2, screenHeight/2 };
+            body->position = (Vector2){ screenWidth/2.0f, screenHeight/2.0f };
             body->velocity = (Vector2){ 0, 0 };
             SetPhysicsBodyRotation(body, 0);
         }
