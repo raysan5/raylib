@@ -4517,7 +4517,7 @@ static Image LoadImageFromCgltfImage(cgltf_image *cgltfImage, const char *texPat
             if (cgltfImage->uri[i] == 0) TRACELOG(LOG_WARNING, "IMAGE: glTF data URI is not a valid image");
             else
             {
-                int base64Size = strlen(cgltfImage->uri + i + 1);
+                int base64Size = (int)strlen(cgltfImage->uri + i + 1);
                 int outSize = 3*(base64Size/4);         // TODO: Consider padding (-numberOfPaddingCharacters)
                 char *data = NULL;
 
@@ -4527,7 +4527,7 @@ static Image LoadImageFromCgltfImage(cgltf_image *cgltfImage, const char *texPat
                 if (result == cgltf_result_success)
                 {
                     image = LoadImageFromMemory(".png", data, outSize);
-                    cgltf_free(data);
+                    cgltf_free((cgltf_data*)data);
                 }
             }
         }

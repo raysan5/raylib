@@ -1697,7 +1697,7 @@ void UpdateMusicStream(Music music)
 
     // TODO: Get the framesLeft using framesProcessed... but first, get total frames processed correctly...
     //ma_uint32 frameSizeInBytes = ma_get_bytes_per_sample(music.stream.buffer->dsp.formatConverterIn.config.formatIn)*music.stream.buffer->dsp.formatConverterIn.config.channels;
-    int framesLeft = music.frameCount - music.stream.buffer->framesProcessed;
+    unsigned int framesLeft = music.frameCount - music.stream.buffer->framesProcessed;
 
     while (IsAudioStreamProcessed(music.stream))
     {
