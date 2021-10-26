@@ -3281,7 +3281,6 @@ bool IsKeyPressed(int key)
     bool pressed = false;
 
     if ((CORE.Input.Keyboard.previousKeyState[key] == 0) && (CORE.Input.Keyboard.currentKeyState[key] == 1)) pressed = true;
-    else pressed = false;
 
     return pressed;
 }
@@ -3299,7 +3298,6 @@ bool IsKeyReleased(int key)
     bool released = false;
 
     if ((CORE.Input.Keyboard.previousKeyState[key] == 1) && (CORE.Input.Keyboard.currentKeyState[key] == 0)) released = true;
-    else released = false;
 
     return released;
 }
@@ -3423,7 +3421,6 @@ bool IsGamepadButtonPressed(int gamepad, int button)
 
     if ((gamepad < MAX_GAMEPADS) && CORE.Input.Gamepad.ready[gamepad] && (button < MAX_GAMEPAD_BUTTONS) &&
         (CORE.Input.Gamepad.previousButtonState[gamepad][button] == 0) && (CORE.Input.Gamepad.currentButtonState[gamepad][button] == 1)) pressed = true;
-    else pressed = false;
 
     return pressed;
 }
@@ -3446,7 +3443,6 @@ bool IsGamepadButtonReleased(int gamepad, int button)
 
     if ((gamepad < MAX_GAMEPADS) && CORE.Input.Gamepad.ready[gamepad] && (button < MAX_GAMEPAD_BUTTONS) &&
         (CORE.Input.Gamepad.previousButtonState[gamepad][button] == 1) && (CORE.Input.Gamepad.currentButtonState[gamepad][button] == 0)) released = true;
-    else released = false;
 
     return released;
 }
@@ -5059,16 +5055,24 @@ static void WindowFocusCallback(GLFWwindow *window, int focused)
 // GLFW3 Keyboard Callback, runs on key pressed
 static void KeyCallback(GLFWwindow *window, int key, int scancode, int action, int mods)
 {
-    //TRACELOG(LOG_DEBUG, "Key Callback: KEY:%i(%c) - SCANCODE:%i (STATE:%i)", key, key, scancode, action);
+    // WARNING: GLFW could return GLFW_REPEAT, we need to consider it as 1
+    // to work properly with our implementation (IsKeyDown/IsKeyUp checks)
+    if (action == GLFW_RELEASE) CORE.Input.Keyboard.currentKeyState[key] = 0;
+    else CORE.Input.Keyboard.currentKeyState[key] = 1;
 
-    if (key == CORE.Input.Keyboard.exitKey && action == GLFW_PRESS)
+    // Check if there is space available in the key queue
+    if ((CORE.Input.Keyboard.keyPressedQueueCount < MAX_KEY_PRESSED_QUEUE) && (action == GLFW_PRESS))
     {
-        glfwSetWindowShouldClose(CORE.Window.handle, GLFW_TRUE);
-
-        // NOTE: Before closing window, while loop must be left!
+        // Add character to the queue
+        CORE.Input.Keyboard.keyPressedQueue[CORE.Input.Keyboard.keyPressedQueueCount] = key;
+        CORE.Input.Keyboard.keyPressedQueueCount++;
     }
+    
+    // Check the exit key to set close window
+    if ((key == CORE.Input.Keyboard.exitKey) && (action == GLFW_PRESS)) glfwSetWindowShouldClose(CORE.Window.handle, GLFW_TRUE);
+
 #if defined(SUPPORT_SCREEN_CAPTURE)
-    else if (key == GLFW_KEY_F12 && action == GLFW_PRESS)
+    if ((key == GLFW_KEY_F12) && (action == GLFW_PRESS))
     {
 #if defined(SUPPORT_GIF_RECORDING)
         if (mods == GLFW_MOD_CONTROL)
@@ -5109,15 +5113,16 @@ static void KeyCallback(GLFWwindow *window, int key, int scancode, int action, i
         }
     }
 #endif  // SUPPORT_SCREEN_CAPTURE
+
 #if defined(SUPPORT_EVENTS_AUTOMATION)
-    else if (key == GLFW_KEY_F11 && action == GLFW_PRESS)
+    if ((key == GLFW_KEY_F11) && (action == GLFW_PRESS))
     {
         eventsRecording = !eventsRecording;
 
         // On finish recording, we export events into a file
         if (!eventsRecording) ExportAutomationEvents("eventsrec.rep");
     }
-    else if (key == GLFW_KEY_F9 && action == GLFW_PRESS)
+    else if ((key == GLFW_KEY_F9) && (action == GLFW_PRESS))
     {
         LoadAutomationEvents("eventsrec.rep");
         eventsPlaying = true;
@@ -5125,21 +5130,6 @@ static void KeyCallback(GLFWwindow *window, int key, int scancode, int action, i
         TRACELOG(LOG_WARNING, "eventsPlaying enabled!");
     }
 #endif
-    else
-    {
-        // WARNING: GLFW could return GLFW_REPEAT, we need to consider it as 1
-        // to work properly with our implementation (IsKeyDown/IsKeyUp checks)
-        if (action == GLFW_RELEASE) CORE.Input.Keyboard.currentKeyState[key] = 0;
-        else CORE.Input.Keyboard.currentKeyState[key] = 1;
-
-        // Check if there is space available in the key queue
-        if ((CORE.Input.Keyboard.keyPressedQueueCount < MAX_KEY_PRESSED_QUEUE) && (action == GLFW_PRESS))
-        {
-            // Add character to the queue
-            CORE.Input.Keyboard.keyPressedQueue[CORE.Input.Keyboard.keyPressedQueueCount] = key;
-            CORE.Input.Keyboard.keyPressedQueueCount++;
-        }
-    }
 }
 
 // GLFW3 Char Key Callback, runs on key down (gets equivalent unicode char value)
