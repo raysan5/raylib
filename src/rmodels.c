@@ -4519,14 +4519,14 @@ static Image LoadImageFromCgltfImage(cgltf_image *cgltfImage, const char *texPat
             {
                 int base64Size = (int)strlen(cgltfImage->uri + i + 1);
                 int outSize = 3*(base64Size/4);         // TODO: Consider padding (-numberOfPaddingCharacters)
-                char *data = NULL;
+                void *data = NULL;
 
                 cgltf_options options = { 0 };
                 cgltf_result result = cgltf_load_buffer_base64(&options, outSize, cgltfImage->uri + i + 1, &data);
                 
                 if (result == cgltf_result_success)
                 {
-                    image = LoadImageFromMemory(".png", data, outSize);
+                    image = LoadImageFromMemory(".png", (unsigned char *)data, outSize);
                     cgltf_free((cgltf_data*)data);
                 }
             }
