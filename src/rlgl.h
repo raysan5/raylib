@@ -2,7 +2,7 @@
 *
 *   rlgl v4.0 - A multi-OpenGL abstraction layer with an immediate-mode style API
 *
-*   An abstraction layer for multiple OpenGL versions (1.1, 2.1, 3.3 Core, ES 2.0)
+*   An abstraction layer for multiple OpenGL versions (1.1, 2.1, 3.3 Core, 4.3 Core, ES 2.0)
 *   that provides a pseudo-OpenGL 1.1 immediate-mode style API (rlVertex, rlTranslate, rlRotate...)
 *
 *   When chosing an OpenGL backend different than OpenGL 1.1, some internal buffer are
@@ -80,7 +80,7 @@
 *   DEPENDENCIES:
 *
 *      - OpenGL libraries (depending on platform and OpenGL version selected)
-*      - GLAD OpenGL extensions loading library (only for OpenGL 3.3 Core)
+*      - GLAD OpenGL extensions loading library (only for OpenGL 3.3 Core, 4.3 Core)
 *
 *
 *   LICENSE: zlib/libpng
