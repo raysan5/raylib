@@ -24,124 +24,141 @@
 //            This must be a multiple of 16 (check golLogic compute dispatch).
 #define GOL_WIDTH 768
 
-#define SSBO_SIZE (sizeof(unsigned int) * GOL_WIDTH * GOL_WIDTH)
-
 // Maximum amount of queued draw commands (squares draw from mouse down events).
 #define MAX_BUFFERED_TRANSFERTS 48
 
-struct GolUpdateCmd {
-  unsigned int x; // x coordinate of the gol command
-  unsigned int y; // y coordinate of the gol command
-  unsigned int w; // width of the filled zone
-  unsigned int enabled; // whether to enable or disable zone
+struct GolUpdateCmd
+{
+    unsigned int x; // x coordinate of the gol command
+    unsigned int y; // y coordinate of the gol command
+    unsigned int w; // width of the filled zone
+    unsigned int enabled; // whether to enable or disable zone
 };
 
-struct GolUpdateSSBO {
-  unsigned int count;
-  struct GolUpdateCmd commands[MAX_BUFFERED_TRANSFERTS];
+struct GolUpdateSSBO
+{
+    unsigned int count;
+    struct GolUpdateCmd commands[MAX_BUFFERED_TRANSFERTS];
 };
 
 int main(void)
 {
-  InitWindow(GOL_WIDTH, GOL_WIDTH, "raylib [shaders] example - compute shader gol");
+    // Initialization
+    //--------------------------------------------------------------------------------------
+    InitWindow(GOL_WIDTH, GOL_WIDTH, "raylib [shaders] example - compute shader gol");
 
-  const Vector2 resolution = { GOL_WIDTH, GOL_WIDTH };
-  unsigned int brush_size = 1;
+    const Vector2 resolution = { GOL_WIDTH, GOL_WIDTH };
+    unsigned int brushSize = 1;
 
-  // Game of Life logic compute shader
-  char *golLogicCode = LoadFileText("resources/shaders/glsl430/gol.glsl");
-  unsigned int golLogicShader = rlCompileShader(golLogicCode, RL_COMPUTE_SHADER);
-  unsigned int golLogicProgram = rlLoadComputeShaderProgram(golLogicShader);
-  MemFree(golLogicCode);
+    // Game of Life logic compute shader
+    char *golLogicCode = LoadFileText("resources/shaders/glsl430/gol.glsl");
+    unsigned int golLogicShader = rlCompileShader(golLogicCode, RL_COMPUTE_SHADER);
+    unsigned int golLogicProgram = rlLoadComputeShaderProgram(golLogicShader);
+    MemFree(golLogicCode);
 
-  // Game of Life logic compute shader
-  Shader golRenderShader = LoadShader(NULL, "resources/shaders/glsl430/golRender.glsl");
-  int resUniformLoc = GetShaderLocation(golRenderShader, "res");
+    // Game of Life logic compute shader
+    Shader golRenderShader = LoadShader(NULL, "resources/shaders/glsl430/gol_render.glsl");
+    int resUniformLoc = GetShaderLocation(golRenderShader, "res");
 
-  // Game of Life transfert shader
-  char *golTransfertCode = LoadFileText("resources/shaders/glsl430/golTransfert.glsl");
-  unsigned int golTransfertShader = rlCompileShader(golTransfertCode, RL_COMPUTE_SHADER);
-  unsigned int golTransfertProgram = rlLoadComputeShaderProgram(golTransfertShader);
-  MemFree(golTransfertCode);
+    // Game of Life transfert shader
+    char *golTransfertCode = LoadFileText("resources/shaders/glsl430/gol_transfert.glsl");
+    unsigned int golTransfertShader = rlCompileShader(golTransfertCode, RL_COMPUTE_SHADER);
+    unsigned int golTransfertProgram = rlLoadComputeShaderProgram(golTransfertShader);
+    MemFree(golTransfertCode);
 
-  // SSBOs
-  unsigned int ssboA = rlLoadShaderBuffer(SSBO_SIZE, NULL, RL_DYNAMIC_COPY);
-  unsigned int ssboB = rlLoadShaderBuffer(SSBO_SIZE, NULL, RL_DYNAMIC_COPY);
+    // SSBOs
+    unsigned int ssboA = rlLoadShaderBuffer(sizeof(unsigned int) * GOL_WIDTH * GOL_WIDTH, NULL, RL_DYNAMIC_COPY);
+    unsigned int ssboB = rlLoadShaderBuffer(sizeof(unsigned int) * GOL_WIDTH * GOL_WIDTH, NULL, RL_DYNAMIC_COPY);
 
-  struct GolUpdateSSBO transfertBuffer;
-  transfertBuffer.count = 0;
+    struct GolUpdateSSBO transfertBuffer;
+    transfertBuffer.count = 0;
 
-  int transfertSSBO = rlLoadShaderBuffer(sizeof(struct GolUpdateSSBO), NULL, RL_DYNAMIC_COPY);
+    int transfertSSBO = rlLoadShaderBuffer(sizeof(struct GolUpdateSSBO), NULL, RL_DYNAMIC_COPY);
 
-  Image whiteImage = GenImageColor(GOL_WIDTH, GOL_WIDTH, WHITE);
-  Texture whiteTex = LoadTextureFromImage(whiteImage);
-  UnloadImage(whiteImage);
+    // Create a white texture of the size of the window to update 
+    // each pixel of the window using the fragment shader.
+    Image whiteImage = GenImageColor(GOL_WIDTH, GOL_WIDTH, WHITE);
+    Texture whiteTex = LoadTextureFromImage(whiteImage);
+    UnloadImage(whiteImage);
 
-  while (!WindowShouldClose()) {
-    if (IsKeyPressed(KEY_UP))
-      brush_size *= 2;
-    else if (IsKeyPressed(KEY_DOWN) && brush_size != 1)
-      brush_size /= 2;
+    while (!WindowShouldClose())
+    {
+        if (IsKeyPressed(KEY_UP))                            brushSize *= 2;
+        else if (IsKeyPressed(KEY_DOWN) && (brushSize != 1)) brushSize /= 2;
 
-    if ((IsMouseButtonDown(MOUSE_BUTTON_LEFT) || IsMouseButtonDown(MOUSE_BUTTON_RIGHT))
-      && transfertBuffer.count < MAX_BUFFERED_TRANSFERTS) {
-      // Buffer a new command
-      transfertBuffer.commands[transfertBuffer.count].x = GetMouseX();
-      transfertBuffer.commands[transfertBuffer.count].y = GetMouseY();
-      transfertBuffer.commands[transfertBuffer.count].w = brush_size;
-      transfertBuffer.commands[transfertBuffer.count].enabled = IsMouseButtonDown(MOUSE_BUTTON_LEFT);
-      transfertBuffer.count++;
-    } else if (transfertBuffer.count > 0) {
-      // Process transfert buffer
+        if ((IsMouseButtonDown(MOUSE_BUTTON_LEFT) || IsMouseButtonDown(MOUSE_BUTTON_RIGHT))
+            && (transfertBuffer.count < MAX_BUFFERED_TRANSFERTS))
+        {
+            // Buffer a new command
+            transfertBuffer.commands[transfertBuffer.count].x = GetMouseX();
+            transfertBuffer.commands[transfertBuffer.count].y = GetMouseY();
+            transfertBuffer.commands[transfertBuffer.count].w = brushSize;
+            transfertBuffer.commands[transfertBuffer.count].enabled = IsMouseButtonDown(MOUSE_BUTTON_LEFT);
+            transfertBuffer.count++;
+        }
+        else if (transfertBuffer.count > 0)
+        {
+            // Process transfert buffer
 
-      // Send SSBO buffer to GPU
-      rlUpdateShaderBufferElements(transfertSSBO, &transfertBuffer, sizeof(struct GolUpdateSSBO), 0);
-      // Process ssbo command
-      rlEnableShader(golTransfertProgram);
-      rlBindShaderBuffer(ssboA, 1);
-      rlBindShaderBuffer(transfertSSBO, 3);
-      rlComputeShaderDispatch(transfertBuffer.count, 1, 1); // each GPU unit will process a command
-      rlDisableShader();
+            // Send SSBO buffer to GPU
+            rlUpdateShaderBufferElements(transfertSSBO, &transfertBuffer, sizeof(struct GolUpdateSSBO), 0);
+            // Process ssbo command
+            rlEnableShader(golTransfertProgram);
+            rlBindShaderBuffer(ssboA, 1);
+            rlBindShaderBuffer(transfertSSBO, 3);
+            rlComputeShaderDispatch(transfertBuffer.count, 1, 1); // each GPU unit will process a command
+            rlDisableShader();
 
-      transfertBuffer.count = 0;
-    } else {
-      // Process game of life logic
-      rlEnableShader(golLogicProgram);
-      rlBindShaderBuffer(ssboA, 1);
-      rlBindShaderBuffer(ssboB, 2);
-      rlComputeShaderDispatch(GOL_WIDTH / 16, GOL_WIDTH / 16, 1);
-      rlDisableShader();
+            transfertBuffer.count = 0;
+        }
+        else
+        {
+            // Process game of life logic
+            rlEnableShader(golLogicProgram);
+            rlBindShaderBuffer(ssboA, 1);
+            rlBindShaderBuffer(ssboB, 2);
+            rlComputeShaderDispatch(GOL_WIDTH / 16, GOL_WIDTH / 16, 1);
+            rlDisableShader();
 
-      // ssboA <-> ssboB
-      int temp = ssboA;
-      ssboA = ssboB;
-      ssboB = temp;
+            // ssboA <-> ssboB
+            int temp = ssboA;
+            ssboA = ssboB;
+            ssboB = temp;
+        }
+
+        rlBindShaderBuffer(ssboA, 1);
+
+        BeginDrawing();
+
+        ClearBackground(BLANK);
+        SetShaderValue(golRenderShader, resUniformLoc, &resolution, SHADER_UNIFORM_VEC2);
+
+        BeginShaderMode(golRenderShader);
+        DrawTexture(whiteTex, 0, 0, WHITE);
+        EndShaderMode();
+
+        DrawFPS(0, 0);
+
+        EndDrawing();
     }
 
-    rlBindShaderBuffer(ssboA, 1);
+    // De-Initialization
+    //--------------------------------------------------------------------------------------
 
-    BeginDrawing();
+    // Unload shader buffers objects.
+    rlUnloadShaderBuffer(ssboA);
+    rlUnloadShaderBuffer(ssboB);
+    rlUnloadShaderBuffer(transfertSSBO);
 
-    ClearBackground(BLANK);
-    SetShaderValue(golRenderShader, resUniformLoc, &resolution, SHADER_UNIFORM_VEC2);
+    // Unload compute shader programs
+    rlUnloadShaderProgram(golTransfertProgram);
+    rlUnloadShaderProgram(golLogicProgram);
 
-    BeginShaderMode(golRenderShader);
-    DrawTexture(whiteTex, 0, 0, WHITE);
-    EndShaderMode();
+    UnloadTexture(whiteTex);       // Unload white texture
+    UnloadShader(golRenderShader); // Unload rendering fragment shader
 
-    DrawFPS(0, 0);
+    CloseWindow();                 // Close window and OpenGL context
+    //--------------------------------------------------------------------------------------
 
-    EndDrawing();
-  }
-
-  rlUnloadShaderBuffer(ssboA);
-  rlUnloadShaderBuffer(ssboB);
-  rlUnloadShaderBuffer(transfertSSBO);
-  rlUnloadShaderProgram(golTransfertProgram);
-  rlUnloadShaderProgram(golLogicProgram);
-
-  UnloadTexture(whiteTex);
-  UnloadShader(golRenderShader);
-
-  CloseWindow();
+    return 0;
 }
