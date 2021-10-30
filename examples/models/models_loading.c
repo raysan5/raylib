@@ -74,6 +74,8 @@ int main(void)
             {
                 if (IsFileExtension(droppedFiles[0], ".obj") ||
                     IsFileExtension(droppedFiles[0], ".gltf") ||
+                    IsFileExtension(droppedFiles[0], ".glb") ||
+                    IsFileExtension(droppedFiles[0], ".vox") ||
                     IsFileExtension(droppedFiles[0], ".iqm"))       // Model file formats supported
                 {
                     UnloadModel(model);                     // Unload previous model
