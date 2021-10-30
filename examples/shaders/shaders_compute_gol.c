@@ -15,7 +15,7 @@
 *
 ********************************************************************************************/
 
-#include <stdint.h>
+#include <stdlib.h>
 
 #include "raylib.h"
 #include "rlgl.h"
@@ -27,7 +27,7 @@
 #define SSBO_SIZE (sizeof(unsigned int) * GOL_WIDTH * GOL_WIDTH)
 
 // Maximum amount of queued draw commands (squares draw from mouse down events).
-#define MAX_BUFFERED_TRANSFERTS 128
+#define MAX_BUFFERED_TRANSFERTS 48
 
 struct GolUpdateCmd {
   unsigned int x; // x coordinate of the gol command

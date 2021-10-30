@@ -3,13 +3,13 @@
 
 #define GOL_WIDTH 768
 
-layout (local_size_x = 16, local_size_y = 16, local_size_x = 1) in;
+layout (local_size_x = 16, local_size_y = 16, local_size_z = 1) in;
 
 layout(std430, binding = 1) readonly restrict buffer golLayout {
   uint golBuffer[]; // golBuffer[x, y] = golBuffer[x + gl_NumWorkGroups.x * y]
 };
 
-layout(std430, set = 1, binding = 2) writeonly restrict buffer golLayout2 {
+layout(std430, binding = 2) writeonly restrict buffer golLayout2 {
   uint golBufferDest[]; // golBufferDest[x, y] = golBufferDest[x + gl_NumWorkGroups.x * y]
 };
 
@@ -27,25 +27,25 @@ void main()
 
   // Top left
   neighbour_count += fetchGol(x - 1, y - 1);
-  
+
   // Top middle
   neighbour_count += fetchGol(x, y - 1);
-  
+
   // Top right
   neighbour_count += fetchGol(x + 1, y - 1);
-  
+
   // Left
   neighbour_count += fetchGol(x - 1, y);
 
   // Right
   neighbour_count += fetchGol(x + 1, y);
-  
+
   // Bottom left
   neighbour_count += fetchGol(x - 1, y + 1);
-  
+
   // Bottom middle
   neighbour_count += fetchGol(x, y + 1);
-  
+
   // Bottom right
   neighbour_count += fetchGol(x + 1, y + 1);
 

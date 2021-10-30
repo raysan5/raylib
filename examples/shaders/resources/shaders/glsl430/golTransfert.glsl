@@ -9,9 +9,9 @@ struct GolUpdateCmd {
   uint enabled; // whether to enable or disable zone
 };
 
-layout (local_size_x = 1, local_size_y = 1, local_size_x = 1) in;
+layout (local_size_x = 1, local_size_y = 1, local_size_z = 1) in;
 
-layout(std430, binding = 1) writeonly restrict buffer golBufferLayout {
+layout(std430, binding = 1) buffer golBufferLayout {
   uint golBuffer[]; // golBuffer[x, y] = golBuffer[x + GOL_WIDTH * y]
 };
 
@@ -26,7 +26,7 @@ layout(std430, binding = 3) readonly restrict buffer golUpdateLayout {
 void main()
 {
   uint cmd_index = gl_GlobalInvocationID.x;
-  struct GolUpdateCmd cmd = commands[cmd_index];
+  GolUpdateCmd cmd = commands[cmd_index];
 
   for (uint x = cmd.x; x < (cmd.x + cmd.w); x++) {
     for (uint y = cmd.y; y < (cmd.y + cmd.w); y++) {
