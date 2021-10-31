@@ -52,7 +52,6 @@ These are older raylib bindings that are more than 2 versions old or have not be
 | raylib-cppsharp    | 2.5 | [C#](https://en.wikipedia.org/wiki/C_Sharp_(programming_language))       | https://github.com/phxvyper/raylib-cppsharp |
 | RaylibFS           | 2.5 | [F#](https://fsharp.org/)             | https://github.com/dallinbeutler/RaylibFS     |
 | raylib_d           | 2.5 | [D](https://dlang.org/)               | https://github.com/Sepheus/raylib_d     |
-| raylib-d           | 3.0 | [D](https://dlang.org/)               | https://github.com/onroundit/raylib-d     |
 | bindbc-raylib      | 3.0 | [D](https://dlang.org/)               | https://github.com/o3o/bindbc-raylib   |
 | go-raylib          | 3.5 | [Go](https://golang.org/)       | https://github.com/chunqian/go-raylib  |
 | raylib-goplus      | 2.6-dev | [Go](https://golang.org/)             | https://github.com/Lachee/raylib-goplus         |
