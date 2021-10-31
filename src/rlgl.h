@@ -662,7 +662,6 @@ RLAPI void rlSetUniformMatrix(int locIndex, Matrix mat);                        
 RLAPI void rlSetUniformSampler(int locIndex, unsigned int textureId);           // Set shader value sampler
 RLAPI void rlSetShader(unsigned int id, int *locs);                             // Set shader currently active (id and locations)
 
-#if defined(GRAPHICS_API_OPENGL_43)
 // Compute shader management
 RLAPI unsigned int rlLoadComputeShaderProgram(unsigned int shaderId);           // Load compute shader program
 RLAPI void rlComputeShaderDispatch(unsigned int groupX, unsigned int groupY, unsigned int groupZ);  // Dispatch compute shader (equivalent to *draw* for graphics pilepine)
@@ -678,7 +677,6 @@ RLAPI void rlBindShaderBuffer(unsigned int id, unsigned int index);             
 // Buffer management
 RLAPI void rlCopyBuffersElements(unsigned int destId, unsigned int srcId, unsigned long long destOffset, unsigned long long srcOffset, unsigned long long count); // Copy SSBO buffer data
 RLAPI void rlBindImageTexture(unsigned int id, unsigned int index, unsigned int format, int readonly);  // Bind image texture
-#endif
 
 // Matrix state management
 RLAPI Matrix rlGetMatrixModelview(void);                                  // Get internal modelview matrix
@@ -3836,12 +3834,12 @@ void rlSetShader(unsigned int id, int *locs)
 #endif
 }
 
-#if defined(GRAPHICS_API_OPENGL_43)
 // Load compute shader program
 unsigned int rlLoadComputeShaderProgram(unsigned int shaderId)
 {
     unsigned int program = 0;
 
+#if defined(GRAPHICS_API_OPENGL_43)
     GLint success = 0;
     program = glCreateProgram();
     glAttachShader(program, shaderId);
@@ -3880,6 +3878,7 @@ unsigned int rlLoadComputeShaderProgram(unsigned int shaderId)
 
         TRACELOG(RL_LOG_INFO, "SHADER: [ID %i] Compute shader program loaded successfully", program);
     }
+#endif
 
     return program;
 }
@@ -3887,17 +3886,21 @@ unsigned int rlLoadComputeShaderProgram(unsigned int shaderId)
 // Dispatch compute shader (equivalent to *draw* for graphics pilepine)
 void rlComputeShaderDispatch(unsigned int groupX, unsigned int groupY, unsigned int groupZ)
 {
+#if defined(GRAPHICS_API_OPENGL_43)
     glDispatchCompute(groupX, groupY, groupZ);
+#endif
 }
 
 // Load shader storage buffer object (SSBO)
 unsigned int rlLoadShaderBuffer(unsigned long long size, const void *data, int usageHint)
 {
     unsigned int ssbo = 0;
-
+    
+#if defined(GRAPHICS_API_OPENGL_43)
     glGenBuffers(1, &ssbo);
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo);
     glBufferData(GL_SHADER_STORAGE_BUFFER, size, data, usageHint? usageHint : RL_STREAM_COPY);
+#endif
 
     return ssbo;
 }
@@ -3905,23 +3908,29 @@ unsigned int rlLoadShaderBuffer(unsigned long long size, const void *data, int u
 // Unload shader storage buffer object (SSBO)
 void rlUnloadShaderBuffer(unsigned int ssboId)
 {
+#if defined(GRAPHICS_API_OPENGL_43)
     glDeleteBuffers(1, &ssboId);
+#endif
 }
 
 // Update SSBO buffer data
 void rlUpdateShaderBufferElements(unsigned int id, const void *data, unsigned long long dataSize, unsigned long long offset)
 {
+#if defined(GRAPHICS_API_OPENGL_43)
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, id);
     glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset, dataSize, data);
+#endif
 }
 
 // Get SSBO buffer size
 unsigned long long rlGetShaderBufferSize(unsigned int id)
 {
     long long size = 0;
-
+    
+#if defined(GRAPHICS_API_OPENGL_43)
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, id);
     glGetInteger64v(GL_SHADER_STORAGE_BUFFER_SIZE, &size);
+#endif
 
     return (size > 0)? size : 0;
 }
@@ -3929,33 +3938,40 @@ unsigned long long rlGetShaderBufferSize(unsigned int id)
 // Read SSBO buffer data
 void rlReadShaderBufferElements(unsigned int id, void *dest, unsigned long long count, unsigned long long offset)
 {
+#if defined(GRAPHICS_API_OPENGL_43)
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, id);
     glGetBufferSubData(GL_SHADER_STORAGE_BUFFER, offset, count, dest);
+#endif
 }
 
 // Bind SSBO buffer
 void rlBindShaderBuffer(unsigned int id, unsigned int index)
 {
+#if defined(GRAPHICS_API_OPENGL_43)
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, index, id);
+#endif
 }
 
 // Copy SSBO buffer data
 void rlCopyBuffersElements(unsigned int destId, unsigned int srcId, unsigned long long destOffset, unsigned long long srcOffset, unsigned long long count)
 {
+#if defined(GRAPHICS_API_OPENGL_43)
     glBindBuffer(GL_COPY_READ_BUFFER, srcId);
     glBindBuffer(GL_COPY_WRITE_BUFFER, destId);
     glCopyBufferSubData(GL_COPY_READ_BUFFER, GL_COPY_WRITE_BUFFER, srcOffset, destOffset, count);
+#endif
 }
 
 // Bind image texture
 void rlBindImageTexture(unsigned int id, unsigned int index, unsigned int format, int readonly)
 {
+#if defined(GRAPHICS_API_OPENGL_43)
     int glInternalFormat = 0, glFormat = 0, glType = 0;
 
     rlGetGlTextureFormats(format, &glInternalFormat, &glFormat, &glType);
     glBindImageTexture(index, id, 0, 0, 0, readonly ? GL_READ_ONLY : GL_READ_WRITE, glInternalFormat);
-}
 #endif
+}
 
 // Matrix state management
 //-----------------------------------------------------------------------------------------
