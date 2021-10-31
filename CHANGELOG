@@ -17,6 +17,8 @@ Detailed changes:
 [core] ADDED: Support additional mouse buttons (#1753) by @lambertwang
 [core] ADDED: SetRandomSeed() (#1994) by @TommiSinivuo
 [core] ADDED: GetTouchPointId() #1972
+[core] ADDED: EncodeDataBase64() and DecodeDataBase64()
+[core] REMOVED: IsGamepadName()
 [core] RENAMED: SwapBuffers() to SwapScreenBuffer()
 [core] RENAMED: Wait() to WaitTime()
 [core] RENAMED: RayHitInfo to RayCollision (#1781)
@@ -31,6 +33,8 @@ Detailed changes:
 [core] REVIEWED: Android multi-touch (#1869) by @humbe
 [core] REVIEWED: Implemented GetGamepadName() for emscripten by @nbarkhina
 [core] REVIEWED: HighDPI support (#1987) by @ArnaudValensi
+[core] REVIEWED: KeyCallback(), register keys independently of the actions
+[rlgl] ADDED: GRAPHIC_API_OPENGL_43
 [rlgl] ADDED: rlUpdateVertexBufferElements() (#1915)
 [rlgl] ADDED: rlActiveDrawBuffers() (#1911)
 [rlgl] ADDED: rlEnableColorBlend()/rlDisableColorBlend()
@@ -74,6 +78,7 @@ Detailed changes:
 [models] REVIEWED: CheckCollisionBoxSphere() by @Crydsch
 [models] REVIEWED: GetRayCollisionQuad() by @Crydsch
 [models] REVIEWED: LoadGLTF(), fixed missing transformations and nonroot skinning by @MrDiver
+[models] REVIEWED: LoadGLTF(), rewriten from scratch, removed animations support (broken)
 [models] REVIEWED: Decouple DrawMesh() and DrawMeshInstanced() (#1958)
 [models] REVIEWED: Support vertex color attribute for GLTF and IQM (#1790) by @object71
 [models] REVIEWED: DrawBillboardPro() (#1941) by @GithubPrankster
@@ -92,6 +97,7 @@ Detailed changes:
 [examples] ADDED: core_smooth_pixelperfect (#1771) by @NotManyIdeasDev
 [examples] ADDED: shaders_texture_outline (#1883) by @GoldenThumbs
 [examples] ADDED: models_loading_vox (#1940) by @procfxgen
+[examples] ADDED: rlgl_compute_sahder by @TSnake41 (#2088)
 [examples] REMOVED: models_material_pbr
 [examples] REMOVED: models_gltf_animation
 [examples] REVIEWED: core_3d_picking
@@ -107,7 +113,7 @@ Detailed changes:
 [examples] REVIEWED: models_loading
 [examples] REVIEWED: models_skybox (#1792) (#1778)
 [examples] REVIEWED: models_mesh_picking
-[examples] REVIEWED: models_material_pbr
+[examples] REVIEWED: models_yaw_pitch_roll
 [examples] REVIEWED: models_rlgl_solar_system
 [examples] REVIEWED: shaders_custom_uniform, RenderTexture usage
 [examples] REVIEWED: shaders_eratosthenes, RenderTexture usage
