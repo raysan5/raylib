@@ -338,7 +338,26 @@ Let's start with some numbers:
  
 Highlights for `raylib 4.0`:
 
-...
+ - **Naming consistency and coherency**: `raylib` API has been completely reviewed to be consistent on naming conventions for data structures and functions, comments and descriptions have been reviewed, also the sintax of many symbols for consistency; some functions and structs have been renamed (i.e. `struct CharInfo` to `struct GlyphInfo`). Output log messages have been also improved to show more info to the users. Several articles have been writen in this process: [raylib_syntax analysis](https://github.com/raysan5/raylib/wiki/raylib-syntax-analysis) and [raylib API usage analysis](https://gist.github.com/raysan5/7c0c9fff1b6c19af24bb4a51b7383f1e). In general, a big polishment of the library to make it more consistent and coherent.
 
+ - **Event Automation System**: This new _experimental_ feature has been added for future usage, it allows to **record input events and re-play them automatically**. This feature could be very useful to automatize examples testing but also for tutorials with assited game playing, in-game cinematics, speedruns, AI playing and more! Note this feature is still experimental.
 
-Enjoy **gamedev/tools/graphics** programming again! :)
+ - **Custom game-loop control**: As requested by some advance users, **the game-loop control can be exposed** compiling raylib with the config flag: `SUPPORT_CUSTOM_FRAME_CONTROL`. It's intended for advance users that want to control the events polling and also the timming mechanisms of their games.
+
+ - **`rlgl 4.0`**: This module has been completely **decoupled from platform layer** and raylib, now `rlgl` single-file header-only library only depends on the multiple OpenGL backends supported, even the dependency on `raymath` has been removed. Additionally, **support for OpenGL 4.3** has been added, supporting compute shaders and Shader Storage Buffer Objects (SSBO). Now `rlgl` can be used as a complete standalone portable library to wrap several OpenGL version and providing **a simple and easy-to-use pseudo-OpenGL immediate-mode API**.
+ 
+ - **`raymath 1.5`**: This module has been reviewed and some new conventions have been adopted to make it **more portable and self-contained**:
+   - Functions are self-contained, no function use other raymath function inside, required code is directly re-implemented
+   - Functions input parameters are always received by value
+   - Functions use always a "result" variable for return
+   - Angles are always in radians (`DEG2RAD`/`RAD2DEG` macros provided for convenience)
+
+ - **`raygui 3.0`**: The **official raylib immediate-mode gui library** (included in `raylib/src/extras`) has been updated to a new version, embedding the icons collection and adding mulstiple improvements. It has been simplified and constrained for a better focus on its task: provide a simple and easy-to-use immediate-mode-gui library for small tools development.  
+
+ - **`raylib_parser`**: Added **new tool to parse `raylib.h`** and tokenize its enums, structs and functions, extracting all required info (name, params, descriptions...) into custom output formats (TXT, XML, JSON...) for further processing. This tool is specially useful to **automatize bindings generation**. Hopefully, this tool will make life easier to binding creators to update their bindings for raylib 4.0 or adding new ones!
+
+ - **Zig and Odin official support for raylib**: Those two new amazing programming languages are officially supporting raylib, `Zig` lists raylib as an [official example for C interoperatibility](https://ziglang.org/learn/samples/#c-interoperability) and Odin [officially supports raylib as a vendor library](https://github.com/odin-lang/Odin/tree/master/vendor/raylib). Both languages also have several bingings to raylib.
+
+Those are some of the key features for this new release but actually there is way more! Support for `VOX` ([MagikaVoxel](https://ephtracy.github.io/)) 3d model format has been added, new [raylib_game_template](https://github.com/raysan5/raylib-game-template) repo shared, new `EncodeDataBase64()` and `DecodeDataBase64()` functions added, improved HiDPI support, new `DrawTextPro()` with support for text rotations, completely reviewed `glTF` models loading, added `SeekMusicStream()` for music seeking, many new examples and +20 examples reviewed... **hundreds of improvements and bug fixes**! Make sure to check [CHANGELOG](CHANGELOG) for a detailed list of changes! 
+
+Undoubtely, **this is the best raylib ever**. Enjoy gamedev/tools/graphics programming! :)
