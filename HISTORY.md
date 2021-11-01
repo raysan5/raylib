@@ -322,3 +322,23 @@ Highlights for `raylib 3.7`:
 Beside those key changes, many functions have been reviewed with improvements and bug fixes, many of them contributed by the community! Thanks! And again, this release sets a **new milestone for raylib library**. Make sure to check [CHANGELOG](CHANGELOG) for detailed list of changes! Hope you enjoy this new raylib installment!
 
 Happy **gamedev/tools/graphics** programming! :)
+
+notes on raylib 4.0
+-------------------
+
+It's been 7 months since last raylib release and it's been **8 years since I started with this project**, what an adventure! It's time for a new release and here it is: `raylib 4.0`, the biggest release ever and an inflexion point for the library. Many hours have been put in this release to make it special, many library details have been polished: syntax, naming conventions, code comments, functions descriptions... Almost all the issues have been closed (only 3 remain open at the moment of this writting) and some amazing new features have been added. I expect this `raylib 4.0` to be a long term version (LTS), stable and complete enough for any new graphic/game/tool application.
+
+Let's start with some numbers:
+
+ - **+130** closed issues (for a TOTAL of **+1030**!)
+ - **+550** commits since previous RELEASE
+ - **+20** functions ADDED to raylib (**+60** to rlgl API)
+ - **+40** functions RENAMED/REVIEWED/REDESIGNED
+ - **+60** new contributors (for a TOTAL of **+275**!)
+ 
+Highlights for `raylib 4.0`:
+
+...
+
+
+Enjoy **gamedev/tools/graphics** programming again! :)
