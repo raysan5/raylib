@@ -4,7 +4,7 @@ include(EnumOption)
 
 enum_option(PLATFORM "Desktop;Web;Android;Raspberry Pi;DRM" "Platform to build for.")
 
-enum_option(OPENGL_VERSION "OFF;3.3;2.1;1.1;ES 2.0" "Force a specific OpenGL Version?")
+enum_option(OPENGL_VERSION "OFF;4.3;3.3;2.1;1.1;ES 2.0" "Force a specific OpenGL Version?")
 
 # Configuration options
 option(BUILD_EXAMPLES "Build the examples." ${RAYLIB_IS_MAIN})
@@ -72,6 +72,7 @@ cmake_dependent_option(SUPPORT_FILEFORMAT_OBJ "Support loading OBJ file format" 
 cmake_dependent_option(SUPPORT_FILEFORMAT_MTL "Support loading MTL file format" ON CUSTOMIZE_BUILD ON)
 cmake_dependent_option(SUPPORT_FILEFORMAT_IQM "Support loading IQM file format" ON CUSTOMIZE_BUILD ON)
 cmake_dependent_option(SUPPORT_FILEFORMAT_GLTF "Support loading GLTF file format" ON CUSTOMIZE_BUILD ON)
+cmake_dependent_option(SUPPORT_FILEFORMAT_VOX "Support loading VOX file format" ON CUSTOMIZE_BUILD ON)
 
 # raudio.c
 cmake_dependent_option(SUPPORT_FILEFORMAT_WAV  "Support loading WAV for sound" ON CUSTOMIZE_BUILD ON)
