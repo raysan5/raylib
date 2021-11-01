@@ -27,7 +27,15 @@
 **********************************************************************************************/
 
 //#define _GLFW_BUILD_DLL           // To build shared version
-//http://www.glfw.org/docs/latest/compile.html#compile_manual
+// Ref: http://www.glfw.org/docs/latest/compile.html#compile_manual
+
+// Platform options:
+// _GLFW_WIN32      to use the Win32 API
+// _GLFW_X11        to use the X Window System
+// _GLFW_WAYLAND    to use the Wayland API (experimental and incomplete)
+// _GLFW_COCOA      to use the Cocoa frameworks
+// _GLFW_OSMESA     to use the OSMesa API (headless and non-interactive)
+// _GLFW_MIR        experimental, not supported at this moment
 
 #if defined(_WIN32)
     #define _GLFW_WIN32
@@ -49,8 +57,7 @@
     #define _WIN32_WINNT_WINXP      0x0501
 #endif
 
-// NOTE: _GLFW_MIR experimental platform not supported at this moment
-
+// Common modules to all platforms
 #include "external/glfw/src/context.c"
 #include "external/glfw/src/init.c"
 #include "external/glfw/src/input.c"
