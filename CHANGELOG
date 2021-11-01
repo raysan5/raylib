@@ -98,7 +98,7 @@ Detailed changes:
 [examples] ADDED: core_smooth_pixelperfect (#1771) by @NotManyIdeasDev
 [examples] ADDED: shaders_texture_outline (#1883) by @GoldenThumbs
 [examples] ADDED: models_loading_vox (#1940) by @procfxgen
-[examples] ADDED: rlgl_compute_sahder by @TSnake41 (#2088)
+[examples] ADDED: rlgl_compute_shader by @TSnake41 (#2088)
 [examples] REMOVED: models_material_pbr
 [examples] REMOVED: models_gltf_animation
 [examples] REVIEWED: core_3d_picking
@@ -139,7 +139,7 @@ Detailed changes:
 [build] REVIEWED: raylib resource files
 [build] Moved some extra raylib libraries to /extras/ directory
 [*] UPDATED: Multiple bindings to latest version
-[*] UPDATED: All external libraries to latest versions
+[*] UPDATED: Most external libraries to latest versions (except GLFW)
 [*] Multiple code improvements and fixes by multiple contributors!
 
 -------------------------------------------------------------------------
