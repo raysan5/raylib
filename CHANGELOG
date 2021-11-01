@@ -18,6 +18,7 @@ Detailed changes:
 [core] ADDED: SetRandomSeed() (#1994) by @TommiSinivuo
 [core] ADDED: GetTouchPointId() #1972
 [core] ADDED: EncodeDataBase64() and DecodeDataBase64()
+[core] REMOVED: PLATFORM_UWP, difficult to maintain
 [core] REMOVED: IsGamepadName()
 [core] RENAMED: SwapBuffers() to SwapScreenBuffer()
 [core] RENAMED: Wait() to WaitTime()
@@ -126,6 +127,7 @@ Detailed changes:
 [examples] REVIEWED: rlgl_standalone.c
 [examples] REVIEWED: Resources licenses
 [examples] REVIEWED: models resources reorganization
+[templates] REMOVED: Moved to a separate repo: https://github.com/raysan5/raylib-game-template
 [build] ADDED: Zig build file (#2014) by @TommiSinivuo
 [build] ADDED: Android VS2019 solution (#2013) by @Kronka
 [build] REMOVED: VS2017 project, outdated
