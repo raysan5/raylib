@@ -326,7 +326,7 @@ Happy **gamedev/tools/graphics** programming! :)
 notes on raylib 4.0
 -------------------
 
-It's been 7 months since last raylib release and it's been **8 years since I started with this project**, what an adventure! It's time for a new release and here it is: `raylib 4.0`, the biggest release ever and an inflexion point for the library. Many hours have been put in this release to make it special, many library details have been polished: syntax, naming conventions, code comments, functions descriptions... Almost all the issues have been closed (only 3 remain open at the moment of this writting) and some amazing new features have been added. I expect this `raylib 4.0` to be a long term version (LTS), stable and complete enough for any new graphic/game/tool application.
+It's been 7 months since last raylib release and it's been **8 years since I started with this project**, what an adventure! It's time for a new release and here it is: `raylib 4.0`, the biggest release ever and an inflexion point for the library. Many hours have been put in this release to make it special, many library details have been polished: syntax, naming conventions, code comments, functions descriptions... Almost all the issues have been closed (only 3 remain open at the moment of this writing) and some amazing new features have been added. I expect this `raylib 4.0` to be a long term version (LTS), stable and complete enough for any new graphic/game/tool application.
 
 Let's start with some numbers:
 
