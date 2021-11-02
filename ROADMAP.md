@@ -13,7 +13,7 @@ _Current version of raylib is complete and functional but, as always, there is l
  - [ ] Redesign gestures system, improve touch inputs management
  - [ ] Better documentation and improved examples
  - [ ] Focus on HTML5 and embedded platforms
- - [ ] Additional support libraries: raygui, rres, physac...
+ - [ ] Additional support libraries: [raygui](https://github.com/raysan5/raygui), [rres](https://github.com/raysan5/rres)...
 
 **raylib 4.0**
  - [x] Improved consistency and coherency in raylib API
