@@ -188,22 +188,6 @@ Examples showing physics functionality with raylib. This functionality is provid
 | 110 | [physics_restitution](physics/physics_restitution.c) | <img src="physics/physics_restitution.png" alt="physics_restitution" width="200"> | [Victor Fisac](https://github.com/victorfisac) |        |
 | 111 | [physics_shatter](physics/physics_shatter.c)         | <img src="physics/physics_shatter.png" alt="physics_shatter" width="200">         | [Victor Fisac](https://github.com/victorfisac) |        |
 
-### category: network
-
-Examples showing raylib network functionality. This functionality is provided by [rnet](../src/rnet.h) module.
-
-**Note that rnet module is under development and not ready yet.**
-
-| ## | example  | image  | developer  | new |
-|----|----------|--------|:----------:|:---:|
-| 112 | [network_ping_pong](network/network_ping_pong.c)       |       | [Jak Barnes](https://github.com/syphonx) |        |
-| 113 | [network_resolve_host](network/network_resolve_host.c) |       | [Jak Barnes](https://github.com/syphonx) |        |
-| 114 | [network_tcp_client](network/network_tcp_client.c)     |       | [Jak Barnes](https://github.com/syphonx) |        |
-| 115 | [network_tcp_server](network/network_tcp_server.c)     |       | [Jak Barnes](https://github.com/syphonx) |        |
-| 116 | [network_test](network/network_test.c)                 |       | [Jak Barnes](https://github.com/syphonx) |        |
-| 117 | [network_udp_client](network/network_udp_client.c)     |       | [Jak Barnes](https://github.com/syphonx) |        |
-| 118 | [network_udp_server](network/network_udp_server.c)     |       | [Jak Barnes](https://github.com/syphonx) |        |
-
 ### category: others
 
 Examples showing raylib misc functionality that does not fit in other categories, like standalone modules usage or examples integrating external libraries.
