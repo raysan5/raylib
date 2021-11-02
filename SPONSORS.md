@@ -1,8 +1,8 @@
 ## raylib GitHub Sponsors
 
-### Current raylib GitHub Sponsors
+### Current raylib GitHub Sponsors (raylib 4.0 release)
 
-The following people is currently [**sponsoring raylib**](https://github.com/sponsors/raysan5) with a generous donation to allow improving and growing the project!
+The following people are currently [**sponsoring raylib**](https://github.com/sponsors/raysan5) with a generous donation to allow improving and growing the project!
 
  - Eric J. ([@ProfJski](https://github.com/ProfJski))
  - Zach Geis ([@zacgeis](https://github.com/zacgeis))
@@ -19,7 +19,7 @@ The following people is currently [**sponsoring raylib**](https://github.com/spo
  - Samuel Batista ([@gamedevsam](https://github.com/gamedevsam))
  - Merlyn Morgan-Graham ([@kavika13](https://github.com/kavika13))
  - linus ([@hochbaum](https://github.com/hochbaum))
- - Nawarian ([@nawarian](https://github.com/nawarian) - [thephp.website](https://thephp.website/))
+ - Níckolas Daniel da Silva ([@nawarian](https://github.com/nawarian) - [thephp.website](https://thephp.website/))
  - kenzie ([@sme-ek](https://github.com/sme-ek))
  - Allan Regush ([@AllanRegush](https://github.com/AllanRegush))
  - Jeffery Myers ([@JeffM2501](https://github.com/ProfJski))
