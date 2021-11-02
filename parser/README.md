@@ -1,4 +1,4 @@
-## raylib parser
+# raylib parser
 
 This parser scans [`raylib.h`](../src/raylib.h) to get information about `structs`, `enums` and `functions`.
 All data is separated into parts, usually as strings. The following types are used for data:
