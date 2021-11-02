@@ -2,7 +2,8 @@
 :: > Setup required Environment
 :: -------------------------------------
 set RAYLIB_DIR=C:\raylib
-set PATH=%PATH%;%RAYLIB_DIR%\mingw\bin
+set COMPILER_DIR=C:\raylib\mingw\bin
+set PATH=%PATH%;%COMPILER_DIR%
 set FILE_NAME=%1
 set NAME_PART=%FILE_NAME:~0,-2%
 cd %~dp0

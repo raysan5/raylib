@@ -13,7 +13,7 @@
                 "GRAPHICS_API_OPENGL_33",
                 "PLATFORM_DESKTOP"
             ],
-            "compilerPath": "C:/raylib/mingw/bin/gcc.exe",
+            "compilerPath": "C:/raylib/w64devkit/bin/gcc.exe",
             "cStandard": "c99",
             "cppStandard": "c++14",
             "intelliSenseMode": "gcc-x64"

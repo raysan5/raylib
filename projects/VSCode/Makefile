@@ -25,11 +25,11 @@
 
 # Define required raylib variables
 PROJECT_NAME       ?= game
-RAYLIB_VERSION     ?= 3.8.0
+RAYLIB_VERSION     ?= 4.0.0
 RAYLIB_PATH        ?= ..\..
 
 # Define compiler path on Windows
-COMPILER_PATH      ?= C:/raylib/mingw/bin
+COMPILER_PATH      ?= C:/raylib/w64devkit/bin
 
 # Define default options
 # One of PLATFORM_DESKTOP, PLATFORM_RPI, PLATFORM_ANDROID, PLATFORM_WEB

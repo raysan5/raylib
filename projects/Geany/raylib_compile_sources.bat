@@ -7,7 +7,8 @@ set GRAPHICS_API=GRAPHICS_API_OPENGL_33
 :: > Setup required Environment
 :: -------------------------------------
 set RAYLIB_DIR=C:\raylib
-set PATH=%PATH%;%RAYLIB_DIR%\mingw\bin
+set COMPILER_DIR=C:\raylib\mingw\bin
+set PATH=%PATH%;%COMPILER_DIR%
 cd %RAYLIB_DIR%\raylib\src
 :: .
 :: > Cleaning latest build
@@ -29,7 +30,7 @@ gcc -O2 -c utils.c -std=c99 -Wall -DPLATFORM_DESKTOP
 :: .
 :: . > Generate raylib library
 :: ------------------------------
-ar rcs libraylib.a core.o rglfw.o shapes.o textures.o text.o models.o raudio.o utils.o
+ar rcs libraylib.a rcore.o rglfw.o rshapes.o rtextures.o rtext.o rmodels.o raudio.o utils.o
 :: .
 :: > Installing raylib library
 :: -----------------------------
