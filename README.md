@@ -54,7 +54,7 @@ features
 
 basic example
 --------------
-This is a basic raylib example, it creates a window and it draws the text `"Congrats! You created your first window!"` in the middle of the screen. Check this example [running live on web here](https://www.raylib.com/examples/web/core/loader.html?name=core_basic_window).
+This is a basic raylib example, it creates a window and it draws the text `"Congrats! You created your first window!"` in the middle of the screen. Check this example [running live on web here](https://www.raylib.com/examples/core/loader.html?name=core_basic_window).
 ```c
 #include "raylib.h"
 
