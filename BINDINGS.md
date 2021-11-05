@@ -32,7 +32,7 @@ Some people ported raylib to other languages in form of bindings or wrappers to 
 | raylib-wren        | 3.7 | [Wren](http://wren.io/)           | https://github.com/TSnake41/raylib-wren           |
 | raylib_odin_bindings | 4.0-dev | [Odin](https://odin-lang.org/)            | https://github.com/Deathbat2190/raylib_odin_bindings     |
 | raylib-odin        | 3.7| [Odin](https://odin-lang.org/)            | https://github.com/odin-lang/Odin/tree/master/vendor/raylib     |
-| raylib.v           | 3.7 | [V](https://vlang.io/)                    | https://github.com/irishgreencitrus/raylib.v |
+| raylib.v           | 4.0 | [V](https://vlang.io/)                    | https://github.com/irishgreencitrus/raylib.v |
 | raylib-ocaml       | 3.7 | [OCaml](https://ocaml.org/)               | https://github.com/tjammer/raylib-ocaml   |
 | raylib-swift       | 3.7 | [Swift](https://swift.org/)                | https://github.com/STREGAsGate/Raylib |
 | hb-raylib          | 3.5 | [Harbour](https://harbour.github.io)                 | https://github.com/MarcosLeonardoMendezGerencir/hb-raylib |
