@@ -90,6 +90,7 @@ raylib is also available via multiple [package managers](https://github.com/rays
  - [Working on Windows](https://github.com/raysan5/raylib/wiki/Working-on-Windows)
  - [Working on macOS](https://github.com/raysan5/raylib/wiki/Working-on-macOS)
  - [Working on GNU Linux](https://github.com/raysan5/raylib/wiki/Working-on-GNU-Linux)
+ - [Working on Chrome OS](https://github.com/raysan5/raylib/wiki/Working-on-Chrome-OS)
  - [Working on FreeBSD](https://github.com/raysan5/raylib/wiki/Working-on-FreeBSD)
  - [Working on Raspberry Pi](https://github.com/raysan5/raylib/wiki/Working-on-Raspberry-Pi)
  - [Working for Android](https://github.com/raysan5/raylib/wiki/Working-for-Android)
