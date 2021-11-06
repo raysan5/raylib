@@ -1323,47 +1323,6 @@ void DrawTriangle(Vector2 v1, Vector2 v2, Vector2 v3, Color color)
 #endif
 }
 
-// Draw a gradient-filled triangle
-// NOTE: Vertex must be provided in counter-clockwise order
-void DrawTriangleGradient(Vector2 v1, Vector2 v2, Vector2 v3, Color c1, Color c2, Color c3)
-{
-    rlCheckRenderBatchLimit(4);
-
-#if defined(SUPPORT_QUADS_DRAW_MODE)
-    rlSetTexture(texShapes.id);
-
-    rlBegin(RL_QUADS);
-
-    rlColor4ub(c1.r, c1.g, c1.b, c1.a);
-    rlTexCoord2f(texShapesRec.x/texShapes.width, texShapesRec.y/texShapes.height);
-    rlVertex2f(v1.x, v1.y);
-
-    rlColor4ub(c2.r, c2.g, c2.b, c2.a);
-    rlTexCoord2f(texShapesRec.x/texShapes.width, (texShapesRec.y + texShapesRec.height)/texShapes.height);
-    rlVertex2f(v2.x, v2.y);
-
-    rlColor4ub(c2.r, c2.g, c2.b, c2.a);
-    rlTexCoord2f((texShapesRec.x + texShapesRec.width)/texShapes.width, (texShapesRec.y + texShapesRec.height)/texShapes.height);
-    rlVertex2f(v2.x, v2.y);
-
-    rlColor4ub(c3.r, c3.g, c3.b, c3.a);
-    rlTexCoord2f((texShapesRec.x + texShapesRec.width)/texShapes.width, texShapesRec.y/texShapes.height);
-    rlVertex2f(v3.x, v3.y);
-    rlEnd();
-
-    rlSetTexture(0);
-#else
-    rlBegin(RL_TRIANGLES);
-        rlColor4ub(c1.r, c1.g, c1.b, c1.a);
-        rlVertex2f(v1.x, v1.y);
-        rlColor4ub(c2.r, c2.g, c2.b, c2.a);
-        rlVertex2f(v2.x, v2.y);
-        rlColor4ub(c3.r, c3.g, c3.b, c3.a);
-        rlVertex2f(v3.x, v3.y);
-    rlEnd();
-#endif
-}
-
 // Draw a triangle using lines
 // NOTE: Vertex must be provided in counter-clockwise order
 void DrawTriangleLines(Vector2 v1, Vector2 v2, Vector2 v3, Color color)
