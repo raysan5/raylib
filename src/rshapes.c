@@ -741,6 +741,8 @@ void DrawRectangleGradientH(int posX, int posY, int width, int height, Color col
 // NOTE: Colors refer to corners, starting at top-lef corner and counter-clockwise
 void DrawRectangleGradientEx(Rectangle rec, Color col1, Color col2, Color col3, Color col4)
 {
+    rlCheckRenderBatchLimit(4);
+
     rlSetTexture(texShapes.id);
 
     rlPushMatrix();
