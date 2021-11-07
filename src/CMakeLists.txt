@@ -38,9 +38,10 @@ set(raylib_sources
     utils.c
     )
 
-# <root>/cmake/GlfwImport.cmake handles the details around the inclusion of glfw
-include(GlfwImport)
-
+if (NOT ANDROID AND NOT IOS)
+    # <root>/cmake/GlfwImport.cmake handles the details around the inclusion of glfw
+    include(GlfwImport)
+endif()
 
 if (USE_AUDIO)
     MESSAGE(STATUS "Audio Backend: miniaudio")
@@ -86,16 +87,28 @@ target_link_libraries(raylib "${LIBS_PRIVATE}")
 # and you will be able to select more build options
 include(CompileDefinitions)
 
-# Registering include directories
-target_include_directories(raylib
-                           PUBLIC
-                           $<INSTALL_INTERFACE:include>
-                           $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
-                           PRIVATE
-                           ${CMAKE_CURRENT_SOURCE_DIR}
-                           ${OPENGL_INCLUDE_DIR}
-                           ${OPENAL_INCLUDE_DIR}
-                           )
+if (NOT ANDROID AND NOT IOS)
+    # Registering include directories
+    target_include_directories(raylib
+                               PUBLIC
+                               $<INSTALL_INTERFACE:include>
+                               $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
+                               PRIVATE
+                               ${CMAKE_CURRENT_SOURCE_DIR}
+                               ${OPENGL_INCLUDE_DIR}
+                               ${OPENAL_INCLUDE_DIR}
+                               )
+else()
+    # Registering include directories
+    target_include_directories(raylib
+                               PUBLIC
+                               $<INSTALL_INTERFACE:include>
+                               $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
+                               PRIVATE
+                               ${CMAKE_CURRENT_SOURCE_DIR}
+                               ${OPENAL_INCLUDE_DIR}
+                               )
+endif()
 
 # Copy the header files to the build directory for convenience
 file(COPY ${raylib_public_headers} DESTINATION "include")

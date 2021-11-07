@@ -672,24 +672,24 @@ void __stdcall Sleep(unsigned long msTimeout);              // Required for: Wai
 // Module Functions Definition - Window and OpenGL Context Functions
 //----------------------------------------------------------------------------------
 #if defined(PLATFORM_ANDROID)
-// To allow easier porting to android, we allow the user to define a
-// main function which we call from android_main, defined by ourselves
-extern int main(int argc, char *argv[]);
-
-void android_main(struct android_app *app)
-{
-    char arg0[] = "raylib";     // NOTE: argv[] are mutable
-    CORE.Android.app = app;
-
-    // NOTE: Return codes != 0 are skipped
-    (void)main(1, (char *[]) { arg0, NULL });
-}
-
-// NOTE: Add this to header (if apps really need it)
-struct android_app *GetAndroidApp(void)
-{
-    return CORE.Android.app;
-}
+//// To allow easier porting to android, we allow the user to define a
+//// main function which we call from android_main, defined by ourselves
+//extern int main(int argc, char *argv[]);
+//
+//void android_main(struct android_app *app)
+//{
+//    char arg0[] = "raylib";     // NOTE: argv[] are mutable
+//    CORE.Android.app = app;
+//
+//    // NOTE: Return codes != 0 are skipped
+//    (void)main(1, (char *[]) { arg0, NULL });
+//}
+//
+//// NOTE: Add this to header (if apps really need it)
+//struct android_app *GetAndroidApp(void)
+//{
+//    return CORE.Android.app;
+//}
 #endif
 
 // Initialize window and OpenGL context
