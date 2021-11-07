@@ -28,7 +28,7 @@ Some people ported raylib to other languages in form of bindings or wrappers to 
 | raylib-phpcpp      | 3.5 | [PHP](https://en.wikipedia.org/wiki/PHP)      | https://github.com/oraoto/raylib-phpcpp      |
 | raylib-factor      | 3.5 | [Factor](https://factorcode.org/)        | https://github.com/ArnautDaniel/raylib-factor   |
 | gforth-raylib      | 3.5 | [Gforth](https://gforth.org/)            | https://github.com/ArnautDaniel/gforth-raylib   |
-| hxRaylib           | 3.7 | [Haxe](https://haxe.org/)                | https://github.com/ForeignSasquatch/hxRaylib    |
+| hxRaylib           | 4.0-dev | [Haxe](https://haxe.org/)                | https://github.com/ForeignSasquatch/hxRaylib    |
 | raylib-wren        | 3.7 | [Wren](http://wren.io/)           | https://github.com/TSnake41/raylib-wren           |
 | raylib_odin_bindings | 4.0-dev | [Odin](https://odin-lang.org/)            | https://github.com/Deathbat2190/raylib_odin_bindings     |
 | raylib-odin        | 3.7| [Odin](https://odin-lang.org/)            | https://github.com/odin-lang/Odin/tree/master/vendor/raylib     |
