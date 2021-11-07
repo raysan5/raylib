@@ -1880,6 +1880,29 @@ void rlglInit(int width, int height)
 #endif
 
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
+    #if defined(GRAPHICS_API_OPENGL_33)
+        // in mac os we cannot call rlLoadExtensions
+        // since we need to be in ObjC land
+        // we might be able to pass a callback
+        // to an ObjC loader tho but this will do for now
+
+        // for windows and linux i am not aware of
+        // a non GLAD way to do this
+
+        // for android we can use eglGetProcAddress
+        // from EGL/egl.h
+
+        // OpenGL 3.3 extensions supported by default (core)
+
+        RLGL.ExtSupported.vao = true;
+        RLGL.ExtSupported.instancing = true;
+        RLGL.ExtSupported.texNPOT = true;
+        RLGL.ExtSupported.texFloat32 = true;
+        RLGL.ExtSupported.texDepth = true;
+        RLGL.ExtSupported.maxDepthBits = 32;
+        RLGL.ExtSupported.texAnisoFilter = true;
+        RLGL.ExtSupported.texMirrorClamp = true;
+    #endif
     // Init default white texture
     unsigned char pixels[4] = { 255, 255, 255, 255 };   // 1 pixel RGBA (4 bytes)
     RLGL.State.defaultTextureId = rlLoadTexture(pixels, 1, 1, RL_PIXELFORMAT_UNCOMPRESSED_R8G8B8A8, 1);
