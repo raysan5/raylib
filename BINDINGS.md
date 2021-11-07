@@ -40,6 +40,7 @@ Some people ported raylib to other languages in form of bindings or wrappers to 
 | rayex              | 3.7 | [elixir](https://elixir-lang.org/)         | https://github.com/shiryel/rayex |
 | kaylib             | 3.7 | [Kotlin/native](https://kotlinlang.org) | https://github.com/electronstudio/kaylib |
 | dlang_raylib       | 3.7 | [D](https://dlang.org)                  | https://github.com/rc-05/dlang_raylib |
+| raylib-freebasic   | **4.0** | [FreeBASIC](https://www.freebasic.net/)   | https://github.com/WIITD/raylib-freebasic |
 
 ### Utility Wrapers
 These are utility wrappers for specific languages, they are not required to use raylib in the language but may adapt the raylib API to be more inline with the language's pardigm.
