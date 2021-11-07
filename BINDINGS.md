@@ -14,7 +14,7 @@ Some people ported raylib to other languages in form of bindings or wrappers to 
 | raylib-go          | 4.0-dev | [Go](https://golang.org/)             | https://github.com/gen2brain/raylib-go  |
 | raylib-rs          | 3.5 | [Rust](https://www.rust-lang.org/)    | https://github.com/deltaphc/raylib-rs     |
 | raylib-lua         | **4.0** | [Lua](http://www.lua.org/)            | https://github.com/TSnake41/raylib-lua       |
-| raylua             | 3.7 | [Lua](http://www.lua.org/)            | https://github.com/Rabios/raylua          |
+| raylua             | **4.0** | [Lua](http://www.lua.org/)            | https://github.com/Rabios/raylua          |
 | nelua-raylib       | 4.0 | [nelua](https://nelua.io/)            | https://github.com/AKDev21/nelua-raylib |
 | NimraylibNow!      | 3.7 | [Nim](https://nim-lang.org/)          | https://github.com/greenfork/nimraylib_now        |
 | raylib-Forever     | auto | [Nim](https://nim-lang.org/)          | https://github.com/Guevara-chan/Raylib-Forever    |
