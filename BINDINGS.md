@@ -22,6 +22,7 @@ Some people ported raylib to other languages in form of bindings or wrappers to 
 | pyraylib          | 3.7 | [Python](https://www.python.org/)        |   https://github.com/Ho011/pyraylib       |
 | raylib-python-cffi | **4.0** | [Python](https://www.python.org/)        | https://github.com/electronstudio/raylib-python-cffi    |
 | jaylib             | 3.7 | [Java](https://en.wikipedia.org/wiki/Java_(programming_language))           | https://github.com/electronstudio/jaylib/   |
+| raylib-j           | 3.7 | [Java](https://en.wikipedia.org/wiki/Java_(programming_language))           | https://github.com/CreedVI/Raylib-J   |
 | node-raylib        | 3.5 | [Node.js](https://nodejs.org/en/)        | https://github.com/RobLoach/node-raylib     |
 | raylib-v7          | 3.5 | [JavaScript (v7)](https://en.wikipedia.org/wiki/JavaScript)      | https://github.com/Rabios/raylib-v7        |
 | raylib-php         | 3.5 | [PHP](https://en.wikipedia.org/wiki/PHP)      | https://github.com/joseph-montanez/raylib-php   |
@@ -81,7 +82,6 @@ These are older raylib bindings that are more than 2 versions old or have not be
 | raylib-py-ctbg     | 2.6 | [Python](https://www.python.org/)        | https://github.com/overdev/raylib-py-ctbg                |
 | raylib-py          | 2.0 | [Python](https://www.python.org/)        | https://github.com/overdev/raylib-py       |
 | raylib-java        | 2.0 | [Java](https://en.wikipedia.org/wiki/Java_(programming_language))           | https://github.com/XoanaIO/raylib-java   |
-| raylib-j           | 3.5 | [Java](https://en.wikipedia.org/wiki/Java_(programming_language))           | https://github.com/CreedVI/Raylib-J   |
 | clj-raylib         | 3.0 | [Clojure](https://clojure.org/)          | https://github.com/lsevero/clj-raylib       |
 | QuickJS-raylib     | 3.0 | [QuickJS](https://bellard.org/quickjs/)  | https://github.com/sntg-p/QuickJS-raylib    |
 | raylib-duktape     | 2.6 | [JavaScript (Duktape)](https://en.wikipedia.org/wiki/JavaScript) | https://github.com/RobLoach/raylib-duktape |
