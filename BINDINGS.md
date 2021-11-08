@@ -14,7 +14,7 @@ Some people ported raylib to other languages in form of bindings or wrappers to 
 | raylib-go          | 4.0-dev | [Go](https://golang.org/)             | https://github.com/gen2brain/raylib-go  |
 | raylib-rs          | 3.5 | [Rust](https://www.rust-lang.org/)    | https://github.com/deltaphc/raylib-rs     |
 | raylib-lua         | **4.0** | [Lua](http://www.lua.org/)            | https://github.com/TSnake41/raylib-lua       |
-| raylua             | 3.7 | [Lua](http://www.lua.org/)            | https://github.com/Rabios/raylua          |
+| raylua             | **4.0** | [Lua](http://www.lua.org/)            | https://github.com/Rabios/raylua          |
 | nelua-raylib       | 4.0 | [nelua](https://nelua.io/)            | https://github.com/AKDev21/nelua-raylib |
 | NimraylibNow!      | 3.7 | [Nim](https://nim-lang.org/)          | https://github.com/greenfork/nimraylib_now        |
 | raylib-Forever     | auto | [Nim](https://nim-lang.org/)          | https://github.com/Guevara-chan/Raylib-Forever    |
@@ -40,6 +40,7 @@ Some people ported raylib to other languages in form of bindings or wrappers to 
 | rayex              | 3.7 | [elixir](https://elixir-lang.org/)         | https://github.com/shiryel/rayex |
 | kaylib             | 3.7 | [Kotlin/native](https://kotlinlang.org) | https://github.com/electronstudio/kaylib |
 | dlang_raylib       | 3.7 | [D](https://dlang.org)                  | https://github.com/rc-05/dlang_raylib |
+| raylib-freebasic   | **4.0** | [FreeBASIC](https://www.freebasic.net/)   | https://github.com/WIITD/raylib-freebasic |
 
 ### Utility Wrapers
 These are utility wrappers for specific languages, they are not required to use raylib in the language but may adapt the raylib API to be more inline with the language's pardigm.
