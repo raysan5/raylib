@@ -29,7 +29,7 @@
             <Field type="unsigned char" name="a" desc="Color alpha value" />
         </Struct>
         <Struct name="Rectangle" fieldCount="4" desc="">
-            <Field type="float" name="x" desc="Rectangle top-left corner position x " />
+            <Field type="float" name="x" desc="Rectangle top-left corner position x" />
             <Field type="float" name="y" desc="Rectangle top-left corner position y" />
             <Field type="float" name="width" desc="Rectangle width" />
             <Field type="float" name="height" desc="Rectangle height" />
@@ -61,7 +61,7 @@
             <Field type="int" name="bottom" desc="Bottom border offset" />
             <Field type="int" name="layout" desc="Layout of the n-patch: 3x3, 1x3 or 3x1" />
         </Struct>
-        <Struct name="CharInfo" fieldCount="5" desc="">
+        <Struct name="GlyphInfo" fieldCount="5" desc="">
             <Field type="int" name="value" desc="Character value (Unicode)" />
             <Field type="int" name="offsetX" desc="Character offset X when drawing" />
             <Field type="int" name="offsetY" desc="Character offset Y when drawing" />
@@ -70,11 +70,11 @@
         </Struct>
         <Struct name="Font" fieldCount="6" desc="">
             <Field type="int" name="baseSize" desc="Base size (default chars height)" />
-            <Field type="int" name="charsCount" desc="Number of characters" />
-            <Field type="int" name="charsPadding" desc="Padding around the chars" />
-            <Field type="Texture2D" name="texture" desc="Characters texture atlas" />
-            <Field type="Rectangle *" name="recs" desc="Characters rectangles in texture" />
-            <Field type="CharInfo *" name="chars" desc="Characters info data" />
+            <Field type="int" name="glyphCount" desc="Number of glyph characters" />
+            <Field type="int" name="glyphPadding" desc="Padding around the glyph characters" />
+            <Field type="Texture2D" name="texture" desc="Texture atlas containing the glyphs" />
+            <Field type="Rectangle *" name="recs" desc="Rectangles in texture for the glyphs" />
+            <Field type="GlyphInfo *" name="glyphs" desc="Glyphs info data" />
         </Struct>
         <Struct name="Camera3D" fieldCount="5" desc="">
             <Field type="Vector3" name="position" desc="Camera position" />
@@ -101,14 +101,14 @@
             <Field type="unsigned short *" name="indices" desc="Vertex indices (in case vertex data comes indexed)" />
             <Field type="float *" name="animVertices" desc="Animated vertex positions (after bones transformations)" />
             <Field type="float *" name="animNormals" desc="Animated normals (after bones transformations)" />
-            <Field type="int *" name="boneIds" desc="Vertex bone ids, up to 4 bones influence by vertex (skinning)" />
+            <Field type="unsigned char *" name="boneIds" desc="Vertex bone ids, max 255 bone ids, up to 4 bones influence by vertex (skinning)" />
             <Field type="float *" name="boneWeights" desc="Vertex bone weight, up to 4 bones influence by vertex (skinning)" />
             <Field type="unsigned int" name="vaoId" desc="OpenGL Vertex Array Object id" />
             <Field type="unsigned int *" name="vboId" desc="OpenGL Vertex Buffer Objects id (default vertex data)" />
         </Struct>
         <Struct name="Shader" fieldCount="2" desc="">
             <Field type="unsigned int" name="id" desc="Shader program id" />
-            <Field type="int *" name="locs" desc="Shader locations array (MAX_SHADER_LOCATIONS)" />
+            <Field type="int *" name="locs" desc="Shader locations array (RL_MAX_SHADER_LOCATIONS)" />
         </Struct>
         <Struct name="MaterialMap" fieldCount="3" desc="">
             <Field type="Texture2D" name="texture" desc="Material map texture" />
@@ -161,25 +161,25 @@
             <Field type="Vector3" name="max" desc="Maximum vertex box-corner" />
         </Struct>
         <Struct name="Wave" fieldCount="5" desc="">
-            <Field type="unsigned int" name="sampleCount" desc="Total number of samples (considering channels!)" />
+            <Field type="unsigned int" name="frameCount" desc="Total number of frames (considering channels)" />
             <Field type="unsigned int" name="sampleRate" desc="Frequency (samples per second)" />
             <Field type="unsigned int" name="sampleSize" desc="Bit depth (bits per sample): 8, 16, 32 (24 not supported)" />
-            <Field type="unsigned int" name="channels" desc="Number of channels (1-mono, 2-stereo)" />
+            <Field type="unsigned int" name="channels" desc="Number of channels (1-mono, 2-stereo, ...)" />
             <Field type="void *" name="data" desc="Buffer data pointer" />
         </Struct>
         <Struct name="AudioStream" fieldCount="4" desc="">
             <Field type="rAudioBuffer *" name="buffer" desc="Pointer to internal data used by the audio system" />
             <Field type="unsigned int" name="sampleRate" desc="Frequency (samples per second)" />
             <Field type="unsigned int" name="sampleSize" desc="Bit depth (bits per sample): 8, 16, 32 (24 not supported)" />
-            <Field type="unsigned int" name="channels" desc="Number of channels (1-mono, 2-stereo)" />
+            <Field type="unsigned int" name="channels" desc="Number of channels (1-mono, 2-stereo, ...)" />
         </Struct>
         <Struct name="Sound" fieldCount="2" desc="">
             <Field type="AudioStream" name="stream" desc="Audio stream" />
-            <Field type="unsigned int" name="sampleCount" desc="Total number of samples" />
+            <Field type="unsigned int" name="frameCount" desc="Total number of frames (considering channels)" />
         </Struct>
         <Struct name="Music" fieldCount="5" desc="">
             <Field type="AudioStream" name="stream" desc="Audio stream" />
-            <Field type="unsigned int" name="sampleCount" desc="Total number of samples" />
+            <Field type="unsigned int" name="frameCount" desc="Total number of frames (considering channels)" />
             <Field type="bool" name="looping" desc="Music looping enable" />
             <Field type="int" name="ctxType" desc="Type of music context (audio filetype)" />
             <Field type="void *" name="ctxData" desc="Audio context data, depends on type" />
@@ -279,6 +279,10 @@
             <Value name="KEY_X" integer="88" desc="" />
             <Value name="KEY_Y" integer="89" desc="" />
             <Value name="KEY_Z" integer="90" desc="" />
+            <Value name="KEY_LEFT_BRACKET" integer="91" desc="" />
+            <Value name="KEY_BACKSLASH" integer="92" desc="" />
+            <Value name="KEY_RIGHT_BRACKET" integer="93" desc="" />
+            <Value name="KEY_GRAVE" integer="96" desc="" />
             <Value name="KEY_SPACE" integer="32" desc="" />
             <Value name="KEY_ESCAPE" integer="256" desc="" />
             <Value name="KEY_ENTER" integer="257" desc="" />
@@ -320,10 +324,6 @@
             <Value name="KEY_RIGHT_ALT" integer="346" desc="" />
             <Value name="KEY_RIGHT_SUPER" integer="347" desc="" />
             <Value name="KEY_KB_MENU" integer="348" desc="" />
-            <Value name="KEY_LEFT_BRACKET" integer="91" desc="" />
-            <Value name="KEY_BACKSLASH" integer="92" desc="" />
-            <Value name="KEY_RIGHT_BRACKET" integer="93" desc="" />
-            <Value name="KEY_GRAVE" integer="96" desc="" />
             <Value name="KEY_KP_0" integer="320" desc="" />
             <Value name="KEY_KP_1" integer="321" desc="" />
             <Value name="KEY_KP_2" integer="322" desc="" />
@@ -542,7 +542,7 @@
             <Value name="NPATCH_THREE_PATCH_HORIZONTAL" integer="2" desc="" />
         </Enum>
     </Enums>
-    <Functions count="470">
+    <Functions count="487">
         <Function name="InitWindow" retType="void" paramCount="3" desc="Initialize window and OpenGL context">
             <Param type="int" name="width" desc="" />
             <Param type="int" name="height" desc="" />
@@ -643,6 +643,13 @@
             <Param type="const char *" name="text" desc="" />
         </Function>
         <Function name="GetClipboardText" retType="const char *" paramCount="0" desc="Get clipboard text content">
+        </Function>
+        <Function name="SwapScreenBuffer" retType="void" paramCount="0" desc="Swap back buffer with front buffer (screen drawing)">
+        </Function>
+        <Function name="PollInputEvents" retType="void" paramCount="0" desc="Register all input events">
+        </Function>
+        <Function name="WaitTime" retType="void" paramCount="1" desc="Wait for some milliseconds (halt program execution)">
+            <Param type="float" name="ms" desc="" />
         </Function>
         <Function name="ShowCursor" retType="void" paramCount="0" desc="Shows cursor">
         </Function>
@@ -790,6 +797,9 @@
             <Param type="int" name="min" desc="" />
             <Param type="int" name="max" desc="" />
         </Function>
+        <Function name="SetRandomSeed" retType="void" paramCount="1" desc="Set the seed for the random number generator">
+            <Param type="unsigned int" name="seed" desc="" />
+        </Function>
         <Function name="TakeScreenshot" retType="void" paramCount="1" desc="Takes a screenshot of current screen (filename extension defines format)">
             <Param type="const char *" name="fileName" desc="" />
         </Function>
@@ -907,6 +917,15 @@
             <Param type="int" name="compDataLength" desc="" />
             <Param type="int *" name="dataLength" desc="" />
         </Function>
+        <Function name="EncodeDataBase64" retType="char *" paramCount="3" desc="Encode data to Base64 string">
+            <Param type="const unsigned char *" name="data" desc="" />
+            <Param type="int" name="dataLength" desc="" />
+            <Param type="int *" name="outputLength" desc="" />
+        </Function>
+        <Function name="DecodeDataBase64" retType="unsigned char *" paramCount="2" desc="Decode Base64 string data">
+            <Param type="unsigned char *" name="data" desc="" />
+            <Param type="int *" name="outputLength" desc="" />
+        </Function>
         <Function name="SaveStorageValue" retType="bool" paramCount="2" desc="Save integer value to storage file (to defined position), returns true on success">
             <Param type="unsigned int" name="position" desc="" />
             <Param type="int" name="value" desc="" />
@@ -932,16 +951,12 @@
         <Function name="SetExitKey" retType="void" paramCount="1" desc="Set a custom key to exit program (default is ESC)">
             <Param type="int" name="key" desc="" />
         </Function>
-        <Function name="GetKeyPressed" retType="int" paramCount="0" desc="Get key pressed (keycode), call it multiple times for keys queued">
+        <Function name="GetKeyPressed" retType="int" paramCount="0" desc="Get key pressed (keycode), call it multiple times for keys queued, returns 0 when the queue is empty">
         </Function>
-        <Function name="GetCharPressed" retType="int" paramCount="0" desc="Get char pressed (unicode), call it multiple times for chars queued">
+        <Function name="GetCharPressed" retType="int" paramCount="0" desc="Get char pressed (unicode), call it multiple times for chars queued, returns 0 when the queue is empty">
         </Function>
         <Function name="IsGamepadAvailable" retType="bool" paramCount="1" desc="Check if a gamepad is available">
             <Param type="int" name="gamepad" desc="" />
-        </Function>
-        <Function name="IsGamepadName" retType="bool" paramCount="2" desc="Check gamepad name (if available)">
-            <Param type="int" name="gamepad" desc="" />
-            <Param type="const char *" name="name" desc="" />
         </Function>
         <Function name="GetGamepadName" retType="const char *" paramCount="1" desc="Get gamepad internal name id">
             <Param type="int" name="gamepad" desc="" />
@@ -992,6 +1007,8 @@
         </Function>
         <Function name="GetMousePosition" retType="Vector2" paramCount="0" desc="Get mouse position XY">
         </Function>
+        <Function name="GetMouseDelta" retType="Vector2" paramCount="0" desc="Get mouse delta between frames">
+        </Function>
         <Function name="SetMousePosition" retType="void" paramCount="2" desc="Set mouse position XY">
             <Param type="int" name="x" desc="" />
             <Param type="int" name="y" desc="" />
@@ -1016,6 +1033,11 @@
         <Function name="GetTouchPosition" retType="Vector2" paramCount="1" desc="Get touch position XY for a touch point index (relative to screen size)">
             <Param type="int" name="index" desc="" />
         </Function>
+        <Function name="GetTouchPointId" retType="int" paramCount="1" desc="Get touch point identifier for given index">
+            <Param type="int" name="index" desc="" />
+        </Function>
+        <Function name="GetTouchPointCount" retType="int" paramCount="0" desc="Get number of touch points">
+        </Function>
         <Function name="SetGesturesEnabled" retType="void" paramCount="1" desc="Enable a set of gestures using flags">
             <Param type="unsigned int" name="flags" desc="" />
         </Function>
@@ -1023,8 +1045,6 @@
             <Param type="int" name="gesture" desc="" />
         </Function>
         <Function name="GetGestureDetected" retType="int" paramCount="0" desc="Get latest detected gesture">
-        </Function>
-        <Function name="GetTouchPointsCount" retType="int" paramCount="0" desc="Get touch points count">
         </Function>
         <Function name="GetGestureHoldDuration" retType="float" paramCount="0" desc="Get gesture hold time in milliseconds">
         </Function>
@@ -1097,16 +1117,24 @@
             <Param type="float" name="thick" desc="" />
             <Param type="Color" name="color" desc="" />
         </Function>
-        <Function name="DrawLineBezierQuad" retType="void" paramCount="5" desc="raw line using quadratic bezier curves with a control point">
+        <Function name="DrawLineBezierQuad" retType="void" paramCount="5" desc="Draw line using quadratic bezier curves with a control point">
             <Param type="Vector2" name="startPos" desc="" />
             <Param type="Vector2" name="endPos" desc="" />
             <Param type="Vector2" name="controlPos" desc="" />
             <Param type="float" name="thick" desc="" />
             <Param type="Color" name="color" desc="" />
         </Function>
+        <Function name="DrawLineBezierCubic" retType="void" paramCount="6" desc="Draw line using cubic bezier curves with 2 control points">
+            <Param type="Vector2" name="startPos" desc="" />
+            <Param type="Vector2" name="endPos" desc="" />
+            <Param type="Vector2" name="startControlPos" desc="" />
+            <Param type="Vector2" name="endControlPos" desc="" />
+            <Param type="float" name="thick" desc="" />
+            <Param type="Color" name="color" desc="" />
+        </Function>
         <Function name="DrawLineStrip" retType="void" paramCount="3" desc="Draw lines sequence">
             <Param type="Vector2 *" name="points" desc="" />
-            <Param type="int" name="pointsCount" desc="" />
+            <Param type="int" name="pointCount" desc="" />
             <Param type="Color" name="color" desc="" />
         </Function>
         <Function name="DrawCircle" retType="void" paramCount="4" desc="Draw a color-filled circle">
@@ -1265,12 +1293,12 @@
         </Function>
         <Function name="DrawTriangleFan" retType="void" paramCount="3" desc="Draw a triangle fan defined by points (first vertex is the center)">
             <Param type="Vector2 *" name="points" desc="" />
-            <Param type="int" name="pointsCount" desc="" />
+            <Param type="int" name="pointCount" desc="" />
             <Param type="Color" name="color" desc="" />
         </Function>
         <Function name="DrawTriangleStrip" retType="void" paramCount="3" desc="Draw a triangle strip defined by points">
             <Param type="Vector2 *" name="points" desc="" />
-            <Param type="int" name="pointsCount" desc="" />
+            <Param type="int" name="pointCount" desc="" />
             <Param type="Color" name="color" desc="" />
         </Function>
         <Function name="DrawPoly" retType="void" paramCount="5" desc="Draw a regular polygon (Vector version)">
@@ -1332,6 +1360,12 @@
             <Param type="Vector2" name="endPos2" desc="" />
             <Param type="Vector2 *" name="collisionPoint" desc="" />
         </Function>
+        <Function name="CheckCollisionPointLine" retType="bool" paramCount="4" desc="Check if point belongs to line created between two points [p1] and [p2] with defined margin in pixels [threshold]">
+            <Param type="Vector2" name="point" desc="" />
+            <Param type="Vector2" name="p1" desc="" />
+            <Param type="Vector2" name="p2" desc="" />
+            <Param type="int" name="threshold" desc="" />
+        </Function>
         <Function name="GetCollisionRec" retType="Rectangle" paramCount="2" desc="Get collision rectangle for two rectangles collision">
             <Param type="Rectangle" name="rec1" desc="" />
             <Param type="Rectangle" name="rec2" desc="" />
@@ -1354,6 +1388,11 @@
             <Param type="const char *" name="fileType" desc="" />
             <Param type="const unsigned char *" name="fileData" desc="" />
             <Param type="int" name="dataSize" desc="" />
+        </Function>
+        <Function name="LoadImageFromTexture" retType="Image" paramCount="1" desc="Load image from GPU texture data">
+            <Param type="Texture2D" name="texture" desc="" />
+        </Function>
+        <Function name="LoadImageFromScreen" retType="Image" paramCount="0" desc="Load image from screen buffer and (screenshot)">
         </Function>
         <Function name="UnloadImage" retType="void" paramCount="1" desc="Unload image from CPU memory (RAM)">
             <Param type="Image" name="image" desc="" />
@@ -1403,14 +1442,7 @@
             <Param type="int" name="height" desc="" />
             <Param type="float" name="factor" desc="" />
         </Function>
-        <Function name="GenImagePerlinNoise" retType="Image" paramCount="5" desc="Generate image: perlin noise">
-            <Param type="int" name="width" desc="" />
-            <Param type="int" name="height" desc="" />
-            <Param type="int" name="offsetX" desc="" />
-            <Param type="int" name="offsetY" desc="" />
-            <Param type="float" name="scale" desc="" />
-        </Function>
-        <Function name="GenImageCellular" retType="Image" paramCount="3" desc="Generate image: cellular algorithm. Bigger tileSize means bigger cells">
+        <Function name="GenImageCellular" retType="Image" paramCount="3" desc="Generate image: cellular algorithm, bigger tileSize means bigger cells">
             <Param type="int" name="width" desc="" />
             <Param type="int" name="height" desc="" />
             <Param type="int" name="tileSize" desc="" />
@@ -1531,7 +1563,7 @@
         <Function name="LoadImagePalette" retType="Color *" paramCount="3" desc="Load colors palette from image as a Color array (RGBA - 32bit)">
             <Param type="Image" name="image" desc="" />
             <Param type="int" name="maxPaletteSize" desc="" />
-            <Param type="int *" name="colorsCount" desc="" />
+            <Param type="int *" name="colorCount" desc="" />
         </Function>
         <Function name="UnloadImageColors" retType="void" paramCount="1" desc="Unload color data loaded with LoadImageColors()">
             <Param type="Color *" name="colors" desc="" />
@@ -1542,6 +1574,11 @@
         <Function name="GetImageAlphaBorder" retType="Rectangle" paramCount="2" desc="Get image alpha border rectangle">
             <Param type="Image" name="image" desc="" />
             <Param type="float" name="threshold" desc="" />
+        </Function>
+        <Function name="GetImageColor" retType="Color" paramCount="3" desc="Get image pixel color at (x, y) position">
+            <Param type="Image" name="image" desc="" />
+            <Param type="int" name="x" desc="" />
+            <Param type="int" name="y" desc="" />
         </Function>
         <Function name="ImageClearBackground" retType="void" paramCount="2" desc="Clear image background with given color">
             <Param type="Image *" name="dst" desc="" />
@@ -1663,11 +1700,6 @@
             <Param type="Rectangle" name="rec" desc="" />
             <Param type="const void *" name="pixels" desc="" />
         </Function>
-        <Function name="GetTextureData" retType="Image" paramCount="1" desc="Get pixel data from GPU texture and return an Image">
-            <Param type="Texture2D" name="texture" desc="" />
-        </Function>
-        <Function name="GetScreenData" retType="Image" paramCount="0" desc="Get pixel data from screen buffer and return an Image (screenshot)">
-        </Function>
         <Function name="GenTextureMipmaps" retType="void" paramCount="1" desc="Generate GPU mipmaps for a texture">
             <Param type="Texture2D *" name="texture" desc="" />
         </Function>
@@ -1740,7 +1772,7 @@
             <Param type="Vector2" name="center" desc="" />
             <Param type="Vector2 *" name="points" desc="" />
             <Param type="Vector2 *" name="texcoords" desc="" />
-            <Param type="int" name="pointsCount" desc="" />
+            <Param type="int" name="pointCount" desc="" />
             <Param type="Color" name="tint" desc="" />
         </Function>
         <Function name="Fade" retType="Color" paramCount="2" desc="Get color with alpha applied, alpha goes from 0.0f to 1.0f">
@@ -1774,7 +1806,7 @@
             <Param type="Color" name="tint" desc="" />
         </Function>
         <Function name="GetColor" retType="Color" paramCount="1" desc="Get Color structure from hexadecimal value">
-            <Param type="int" name="hexValue" desc="" />
+            <Param type="unsigned int" name="hexValue" desc="" />
         </Function>
         <Function name="GetPixelColor" retType="Color" paramCount="2" desc="Get Color from a source pixel pointer of certain format">
             <Param type="void *" name="srcPtr" desc="" />
@@ -1799,7 +1831,7 @@
             <Param type="const char *" name="fileName" desc="" />
             <Param type="int" name="fontSize" desc="" />
             <Param type="int *" name="fontChars" desc="" />
-            <Param type="int" name="charsCount" desc="" />
+            <Param type="int" name="glyphCount" desc="" />
         </Function>
         <Function name="LoadFontFromImage" retType="Font" paramCount="3" desc="Load font from Image (XNA style)">
             <Param type="Image" name="image" desc="" />
@@ -1812,27 +1844,27 @@
             <Param type="int" name="dataSize" desc="" />
             <Param type="int" name="fontSize" desc="" />
             <Param type="int *" name="fontChars" desc="" />
-            <Param type="int" name="charsCount" desc="" />
+            <Param type="int" name="glyphCount" desc="" />
         </Function>
-        <Function name="LoadFontData" retType="CharInfo *" paramCount="6" desc="Load font data for further use">
+        <Function name="LoadFontData" retType="GlyphInfo *" paramCount="6" desc="Load font data for further use">
             <Param type="const unsigned char *" name="fileData" desc="" />
             <Param type="int" name="dataSize" desc="" />
             <Param type="int" name="fontSize" desc="" />
             <Param type="int *" name="fontChars" desc="" />
-            <Param type="int" name="charsCount" desc="" />
+            <Param type="int" name="glyphCount" desc="" />
             <Param type="int" name="type" desc="" />
         </Function>
         <Function name="GenImageFontAtlas" retType="Image" paramCount="6" desc="Generate image font atlas using chars info">
-            <Param type="const CharInfo *" name="chars" desc="" />
+            <Param type="const GlyphInfo *" name="chars" desc="" />
             <Param type="Rectangle **" name="recs" desc="" />
-            <Param type="int" name="charsCount" desc="" />
+            <Param type="int" name="glyphCount" desc="" />
             <Param type="int" name="fontSize" desc="" />
             <Param type="int" name="padding" desc="" />
             <Param type="int" name="packMethod" desc="" />
         </Function>
         <Function name="UnloadFontData" retType="void" paramCount="2" desc="Unload font chars info data (RAM)">
-            <Param type="CharInfo *" name="chars" desc="" />
-            <Param type="int" name="charsCount" desc="" />
+            <Param type="GlyphInfo *" name="chars" desc="" />
+            <Param type="int" name="glyphCount" desc="" />
         </Function>
         <Function name="UnloadFont" retType="void" paramCount="1" desc="Unload Font from GPU memory (VRAM)">
             <Param type="Font" name="font" desc="" />
@@ -1856,27 +1888,15 @@
             <Param type="float" name="spacing" desc="" />
             <Param type="Color" name="tint" desc="" />
         </Function>
-        <Function name="DrawTextRec" retType="void" paramCount="7" desc="Draw text using font inside rectangle limits">
+        <Function name="DrawTextPro" retType="void" paramCount="8" desc="Draw text using Font and pro parameters (rotation)">
             <Param type="Font" name="font" desc="" />
             <Param type="const char *" name="text" desc="" />
-            <Param type="Rectangle" name="rec" desc="" />
+            <Param type="Vector2" name="position" desc="" />
+            <Param type="Vector2" name="origin" desc="" />
+            <Param type="float" name="rotation" desc="" />
             <Param type="float" name="fontSize" desc="" />
             <Param type="float" name="spacing" desc="" />
-            <Param type="bool" name="wordWrap" desc="" />
             <Param type="Color" name="tint" desc="" />
-        </Function>
-        <Function name="DrawTextRecEx" retType="void" paramCount="11" desc="Draw text using font inside rectangle limits with support for text selection">
-            <Param type="Font" name="font" desc="" />
-            <Param type="const char *" name="text" desc="" />
-            <Param type="Rectangle" name="rec" desc="" />
-            <Param type="float" name="fontSize" desc="" />
-            <Param type="float" name="spacing" desc="" />
-            <Param type="bool" name="wordWrap" desc="" />
-            <Param type="Color" name="tint" desc="" />
-            <Param type="int" name="selectStart" desc="" />
-            <Param type="int" name="selectLength" desc="" />
-            <Param type="Color" name="selectTint" desc="" />
-            <Param type="Color" name="selectBackTint" desc="" />
         </Function>
         <Function name="DrawTextCodepoint" retType="void" paramCount="5" desc="Draw one character (codepoint)">
             <Param type="Font" name="font" desc="" />
@@ -1895,9 +1915,39 @@
             <Param type="float" name="fontSize" desc="" />
             <Param type="float" name="spacing" desc="" />
         </Function>
-        <Function name="GetGlyphIndex" retType="int" paramCount="2" desc="Get index position for a unicode character on font">
+        <Function name="GetGlyphIndex" retType="int" paramCount="2" desc="Get glyph index position in font for a codepoint (unicode character), fallback to '?' if not found">
             <Param type="Font" name="font" desc="" />
             <Param type="int" name="codepoint" desc="" />
+        </Function>
+        <Function name="GetGlyphInfo" retType="GlyphInfo" paramCount="2" desc="Get glyph font info data for a codepoint (unicode character), fallback to '?' if not found">
+            <Param type="Font" name="font" desc="" />
+            <Param type="int" name="codepoint" desc="" />
+        </Function>
+        <Function name="GetGlyphAtlasRec" retType="Rectangle" paramCount="2" desc="Get glyph rectangle in font atlas for a codepoint (unicode character), fallback to '?' if not found">
+            <Param type="Font" name="font" desc="" />
+            <Param type="int" name="codepoint" desc="" />
+        </Function>
+        <Function name="LoadCodepoints" retType="int *" paramCount="2" desc="Load all codepoints from a UTF-8 text string, codepoints count returned by parameter">
+            <Param type="const char *" name="text" desc="" />
+            <Param type="int *" name="count" desc="" />
+        </Function>
+        <Function name="UnloadCodepoints" retType="void" paramCount="1" desc="Unload codepoints data from memory">
+            <Param type="int *" name="codepoints" desc="" />
+        </Function>
+        <Function name="GetCodepointCount" retType="int" paramCount="1" desc="Get total number of codepoints in a UTF-8 encoded string">
+            <Param type="const char *" name="text" desc="" />
+        </Function>
+        <Function name="GetCodepoint" retType="int" paramCount="2" desc="Get next codepoint in a UTF-8 encoded string, 0x3f('?') is returned on failure">
+            <Param type="const char *" name="text" desc="" />
+            <Param type="int *" name="bytesProcessed" desc="" />
+        </Function>
+        <Function name="CodepointToUTF8" retType="const char *" paramCount="2" desc="Encode one codepoint into UTF-8 byte array (array length returned as parameter)">
+            <Param type="int" name="codepoint" desc="" />
+            <Param type="int *" name="byteSize" desc="" />
+        </Function>
+        <Function name="TextCodepointsToUTF8" retType="char *" paramCount="2" desc="Encode text as codepoints array into UTF-8 text string (WARNING: memory must be freed!)">
+            <Param type="int *" name="codepoints" desc="" />
+            <Param type="int" name="length" desc="" />
         </Function>
         <Function name="TextCopy" retType="int" paramCount="2" desc="Copy one string to another, returns bytes copied">
             <Param type="char *" name="dst" desc="" />
@@ -1910,7 +1960,7 @@
         <Function name="TextLength" retType="unsigned int" paramCount="1" desc="Get text length, checks for '\0' ending">
             <Param type="const char *" name="text" desc="" />
         </Function>
-        <Function name="TextFormat" retType="const char *" paramCount="2" desc="Text formatting with variables (sprintf style)">
+        <Function name="TextFormat" retType="const char *" paramCount="2" desc="Text formatting with variables (sprintf() style)">
             <Param type="const char *" name="text" desc="" />
             <Param type="" name="" desc="" />
         </Function>
@@ -1919,12 +1969,12 @@
             <Param type="int" name="position" desc="" />
             <Param type="int" name="length" desc="" />
         </Function>
-        <Function name="TextReplace" retType="char *" paramCount="3" desc="Replace text string (memory must be freed!)">
+        <Function name="TextReplace" retType="char *" paramCount="3" desc="Replace text string (WARNING: memory must be freed!)">
             <Param type="char *" name="text" desc="" />
             <Param type="const char *" name="replace" desc="" />
             <Param type="const char *" name="by" desc="" />
         </Function>
-        <Function name="TextInsert" retType="char *" paramCount="3" desc="Insert text in a position (memory must be freed!)">
+        <Function name="TextInsert" retType="char *" paramCount="3" desc="Insert text in a position (WARNING: memory must be freed!)">
             <Param type="const char *" name="text" desc="" />
             <Param type="const char *" name="insert" desc="" />
             <Param type="int" name="position" desc="" />
@@ -1960,25 +2010,6 @@
         <Function name="TextToInteger" retType="int" paramCount="1" desc="Get integer value from text (negative values not supported)">
             <Param type="const char *" name="text" desc="" />
         </Function>
-        <Function name="TextToUtf8" retType="char *" paramCount="2" desc="Encode text codepoint into utf8 text (memory must be freed!)">
-            <Param type="int *" name="codepoints" desc="" />
-            <Param type="int" name="length" desc="" />
-        </Function>
-        <Function name="GetCodepoints" retType="int *" paramCount="2" desc="Get all codepoints in a string, codepoints count returned by parameters">
-            <Param type="const char *" name="text" desc="" />
-            <Param type="int *" name="count" desc="" />
-        </Function>
-        <Function name="GetCodepointsCount" retType="int" paramCount="1" desc="Get total number of characters (codepoints) in a UTF8 encoded string">
-            <Param type="const char *" name="text" desc="" />
-        </Function>
-        <Function name="GetNextCodepoint" retType="int" paramCount="2" desc="Get next codepoint in a UTF8 encoded string; 0x3f('?') is returned on failure">
-            <Param type="const char *" name="text" desc="" />
-            <Param type="int *" name="bytesProcessed" desc="" />
-        </Function>
-        <Function name="CodepointToUtf8" retType="const char *" paramCount="2" desc="Encode codepoint into utf8 text (char array length returned as parameter)">
-            <Param type="int" name="codepoint" desc="" />
-            <Param type="int *" name="byteLength" desc="" />
-        </Function>
         <Function name="DrawLine3D" retType="void" paramCount="3" desc="Draw a line in 3D world space">
             <Param type="Vector3" name="startPos" desc="" />
             <Param type="Vector3" name="endPos" desc="" />
@@ -2003,7 +2034,7 @@
         </Function>
         <Function name="DrawTriangleStrip3D" retType="void" paramCount="3" desc="Draw a triangle strip defined by points">
             <Param type="Vector3 *" name="points" desc="" />
-            <Param type="int" name="pointsCount" desc="" />
+            <Param type="int" name="pointCount" desc="" />
             <Param type="Color" name="color" desc="" />
         </Function>
         <Function name="DrawCube" retType="void" paramCount="5" desc="Draw cube">
@@ -2038,6 +2069,15 @@
             <Param type="float" name="length" desc="" />
             <Param type="Color" name="color" desc="" />
         </Function>
+        <Function name="DrawCubeTextureRec" retType="void" paramCount="7" desc="Draw cube with a region of a texture">
+            <Param type="Texture2D" name="texture" desc="" />
+            <Param type="Rectangle" name="source" desc="" />
+            <Param type="Vector3" name="position" desc="" />
+            <Param type="float" name="width" desc="" />
+            <Param type="float" name="height" desc="" />
+            <Param type="float" name="length" desc="" />
+            <Param type="Color" name="color" desc="" />
+        </Function>
         <Function name="DrawSphere" retType="void" paramCount="3" desc="Draw sphere">
             <Param type="Vector3" name="centerPos" desc="" />
             <Param type="float" name="radius" desc="" />
@@ -2065,12 +2105,28 @@
             <Param type="int" name="slices" desc="" />
             <Param type="Color" name="color" desc="" />
         </Function>
+        <Function name="DrawCylinderEx" retType="void" paramCount="6" desc="Draw a cylinder with base at startPos and top at endPos">
+            <Param type="Vector3" name="startPos" desc="" />
+            <Param type="Vector3" name="endPos" desc="" />
+            <Param type="float" name="startRadius" desc="" />
+            <Param type="float" name="endRadius" desc="" />
+            <Param type="int" name="sides" desc="" />
+            <Param type="Color" name="color" desc="" />
+        </Function>
         <Function name="DrawCylinderWires" retType="void" paramCount="6" desc="Draw a cylinder/cone wires">
             <Param type="Vector3" name="position" desc="" />
             <Param type="float" name="radiusTop" desc="" />
             <Param type="float" name="radiusBottom" desc="" />
             <Param type="float" name="height" desc="" />
             <Param type="int" name="slices" desc="" />
+            <Param type="Color" name="color" desc="" />
+        </Function>
+        <Function name="DrawCylinderWiresEx" retType="void" paramCount="6" desc="Draw a cylinder wires with base at startPos and top at endPos">
+            <Param type="Vector3" name="startPos" desc="" />
+            <Param type="Vector3" name="endPos" desc="" />
+            <Param type="float" name="startRadius" desc="" />
+            <Param type="float" name="endRadius" desc="" />
+            <Param type="int" name="sides" desc="" />
             <Param type="Color" name="color" desc="" />
         </Function>
         <Function name="DrawPlane" retType="void" paramCount="3" desc="Draw a plane XZ">
@@ -2098,132 +2154,8 @@
         <Function name="UnloadModelKeepMeshes" retType="void" paramCount="1" desc="Unload model (but not meshes) from memory (RAM and/or VRAM)">
             <Param type="Model" name="model" desc="" />
         </Function>
-        <Function name="UploadMesh" retType="void" paramCount="2" desc="Upload mesh vertex data in GPU and provide VAO/VBO ids">
-            <Param type="Mesh *" name="mesh" desc="" />
-            <Param type="bool" name="dynamic" desc="" />
-        </Function>
-        <Function name="UpdateMeshBuffer" retType="void" paramCount="5" desc="Update mesh vertex data in GPU for a specific buffer index">
-            <Param type="Mesh" name="mesh" desc="" />
-            <Param type="int" name="index" desc="" />
-            <Param type="void *" name="data" desc="" />
-            <Param type="int" name="dataSize" desc="" />
-            <Param type="int" name="offset" desc="" />
-        </Function>
-        <Function name="DrawMesh" retType="void" paramCount="3" desc="Draw a 3d mesh with material and transform">
-            <Param type="Mesh" name="mesh" desc="" />
-            <Param type="Material" name="material" desc="" />
-            <Param type="Matrix" name="transform" desc="" />
-        </Function>
-        <Function name="DrawMeshInstanced" retType="void" paramCount="4" desc="Draw multiple mesh instances with material and different transforms">
-            <Param type="Mesh" name="mesh" desc="" />
-            <Param type="Material" name="material" desc="" />
-            <Param type="Matrix *" name="transforms" desc="" />
-            <Param type="int" name="instances" desc="" />
-        </Function>
-        <Function name="UnloadMesh" retType="void" paramCount="1" desc="Unload mesh data from CPU and GPU">
-            <Param type="Mesh" name="mesh" desc="" />
-        </Function>
-        <Function name="ExportMesh" retType="bool" paramCount="2" desc="Export mesh data to file, returns true on success">
-            <Param type="Mesh" name="mesh" desc="" />
-            <Param type="const char *" name="fileName" desc="" />
-        </Function>
-        <Function name="LoadMaterials" retType="Material *" paramCount="2" desc="Load materials from model file">
-            <Param type="const char *" name="fileName" desc="" />
-            <Param type="int *" name="materialCount" desc="" />
-        </Function>
-        <Function name="LoadMaterialDefault" retType="Material" paramCount="0" desc="Load default material (Supports: DIFFUSE, SPECULAR, NORMAL maps)">
-        </Function>
-        <Function name="UnloadMaterial" retType="void" paramCount="1" desc="Unload material from GPU memory (VRAM)">
-            <Param type="Material" name="material" desc="" />
-        </Function>
-        <Function name="SetMaterialTexture" retType="void" paramCount="3" desc="Set texture for a material map type (MATERIAL_MAP_DIFFUSE, MATERIAL_MAP_SPECULAR...)">
-            <Param type="Material *" name="material" desc="" />
-            <Param type="int" name="mapType" desc="" />
-            <Param type="Texture2D" name="texture" desc="" />
-        </Function>
-        <Function name="SetModelMeshMaterial" retType="void" paramCount="3" desc="Set material for a mesh">
-            <Param type="Model *" name="model" desc="" />
-            <Param type="int" name="meshId" desc="" />
-            <Param type="int" name="materialId" desc="" />
-        </Function>
-        <Function name="LoadModelAnimations" retType="ModelAnimation *" paramCount="2" desc="Load model animations from file">
-            <Param type="const char *" name="fileName" desc="" />
-            <Param type="int *" name="animsCount" desc="" />
-        </Function>
-        <Function name="UpdateModelAnimation" retType="void" paramCount="3" desc="Update model animation pose">
+        <Function name="GetModelBoundingBox" retType="BoundingBox" paramCount="1" desc="Compute model bounding box limits (considers all meshes)">
             <Param type="Model" name="model" desc="" />
-            <Param type="ModelAnimation" name="anim" desc="" />
-            <Param type="int" name="frame" desc="" />
-        </Function>
-        <Function name="UnloadModelAnimation" retType="void" paramCount="1" desc="Unload animation data">
-            <Param type="ModelAnimation" name="anim" desc="" />
-        </Function>
-        <Function name="UnloadModelAnimations" retType="void" paramCount="2" desc="Unload animation array data">
-            <Param type="ModelAnimation*" name="animations" desc="" />
-            <Param type="unsigned int" name="count" desc="" />
-        </Function>
-        <Function name="IsModelAnimationValid" retType="bool" paramCount="2" desc="Check model animation skeleton match">
-            <Param type="Model" name="model" desc="" />
-            <Param type="ModelAnimation" name="anim" desc="" />
-        </Function>
-        <Function name="GenMeshPoly" retType="Mesh" paramCount="2" desc="Generate polygonal mesh">
-            <Param type="int" name="sides" desc="" />
-            <Param type="float" name="radius" desc="" />
-        </Function>
-        <Function name="GenMeshPlane" retType="Mesh" paramCount="4" desc="Generate plane mesh (with subdivisions)">
-            <Param type="float" name="width" desc="" />
-            <Param type="float" name="length" desc="" />
-            <Param type="int" name="resX" desc="" />
-            <Param type="int" name="resZ" desc="" />
-        </Function>
-        <Function name="GenMeshCube" retType="Mesh" paramCount="3" desc="Generate cuboid mesh">
-            <Param type="float" name="width" desc="" />
-            <Param type="float" name="height" desc="" />
-            <Param type="float" name="length" desc="" />
-        </Function>
-        <Function name="GenMeshSphere" retType="Mesh" paramCount="3" desc="Generate sphere mesh (standard sphere)">
-            <Param type="float" name="radius" desc="" />
-            <Param type="int" name="rings" desc="" />
-            <Param type="int" name="slices" desc="" />
-        </Function>
-        <Function name="GenMeshHemiSphere" retType="Mesh" paramCount="3" desc="Generate half-sphere mesh (no bottom cap)">
-            <Param type="float" name="radius" desc="" />
-            <Param type="int" name="rings" desc="" />
-            <Param type="int" name="slices" desc="" />
-        </Function>
-        <Function name="GenMeshCylinder" retType="Mesh" paramCount="3" desc="Generate cylinder mesh">
-            <Param type="float" name="radius" desc="" />
-            <Param type="float" name="height" desc="" />
-            <Param type="int" name="slices" desc="" />
-        </Function>
-        <Function name="GenMeshTorus" retType="Mesh" paramCount="4" desc="Generate torus mesh">
-            <Param type="float" name="radius" desc="" />
-            <Param type="float" name="size" desc="" />
-            <Param type="int" name="radSeg" desc="" />
-            <Param type="int" name="sides" desc="" />
-        </Function>
-        <Function name="GenMeshKnot" retType="Mesh" paramCount="4" desc="Generate trefoil knot mesh">
-            <Param type="float" name="radius" desc="" />
-            <Param type="float" name="size" desc="" />
-            <Param type="int" name="radSeg" desc="" />
-            <Param type="int" name="sides" desc="" />
-        </Function>
-        <Function name="GenMeshHeightmap" retType="Mesh" paramCount="2" desc="Generate heightmap mesh from image data">
-            <Param type="Image" name="heightmap" desc="" />
-            <Param type="Vector3" name="size" desc="" />
-        </Function>
-        <Function name="GenMeshCubicmap" retType="Mesh" paramCount="2" desc="Generate cubes-based map mesh from image data">
-            <Param type="Image" name="cubicmap" desc="" />
-            <Param type="Vector3" name="cubeSize" desc="" />
-        </Function>
-        <Function name="GetMeshBoundingBox" retType="BoundingBox" paramCount="1" desc="Compute mesh bounding box limits">
-            <Param type="Mesh" name="mesh" desc="" />
-        </Function>
-        <Function name="MeshTangents" retType="void" paramCount="1" desc="Compute mesh tangents">
-            <Param type="Mesh *" name="mesh" desc="" />
-        </Function>
-        <Function name="MeshBinormals" retType="void" paramCount="1" desc="Compute mesh binormals">
-            <Param type="Mesh *" name="mesh" desc="" />
         </Function>
         <Function name="DrawModel" retType="void" paramCount="4" desc="Draw a model (with texture if set)">
             <Param type="Model" name="model" desc="" />
@@ -2272,15 +2204,148 @@
             <Param type="Vector2" name="size" desc="" />
             <Param type="Color" name="tint" desc="" />
         </Function>
-        <Function name="DrawBillboardPro" retType="void" paramCount="8" desc="Draw a billboard texture defined by source and rotation">
+        <Function name="DrawBillboardPro" retType="void" paramCount="9" desc="Draw a billboard texture defined by source and rotation">
             <Param type="Camera" name="camera" desc="" />
             <Param type="Texture2D" name="texture" desc="" />
             <Param type="Rectangle" name="source" desc="" />
             <Param type="Vector3" name="position" desc="" />
+            <Param type="Vector3" name="up" desc="" />
             <Param type="Vector2" name="size" desc="" />
             <Param type="Vector2" name="origin" desc="" />
             <Param type="float" name="rotation" desc="" />
             <Param type="Color" name="tint" desc="" />
+        </Function>
+        <Function name="UploadMesh" retType="void" paramCount="2" desc="Upload mesh vertex data in GPU and provide VAO/VBO ids">
+            <Param type="Mesh *" name="mesh" desc="" />
+            <Param type="bool" name="dynamic" desc="" />
+        </Function>
+        <Function name="UpdateMeshBuffer" retType="void" paramCount="5" desc="Update mesh vertex data in GPU for a specific buffer index">
+            <Param type="Mesh" name="mesh" desc="" />
+            <Param type="int" name="index" desc="" />
+            <Param type="void *" name="data" desc="" />
+            <Param type="int" name="dataSize" desc="" />
+            <Param type="int" name="offset" desc="" />
+        </Function>
+        <Function name="UnloadMesh" retType="void" paramCount="1" desc="Unload mesh data from CPU and GPU">
+            <Param type="Mesh" name="mesh" desc="" />
+        </Function>
+        <Function name="DrawMesh" retType="void" paramCount="3" desc="Draw a 3d mesh with material and transform">
+            <Param type="Mesh" name="mesh" desc="" />
+            <Param type="Material" name="material" desc="" />
+            <Param type="Matrix" name="transform" desc="" />
+        </Function>
+        <Function name="DrawMeshInstanced" retType="void" paramCount="4" desc="Draw multiple mesh instances with material and different transforms">
+            <Param type="Mesh" name="mesh" desc="" />
+            <Param type="Material" name="material" desc="" />
+            <Param type="Matrix *" name="transforms" desc="" />
+            <Param type="int" name="instances" desc="" />
+        </Function>
+        <Function name="ExportMesh" retType="bool" paramCount="2" desc="Export mesh data to file, returns true on success">
+            <Param type="Mesh" name="mesh" desc="" />
+            <Param type="const char *" name="fileName" desc="" />
+        </Function>
+        <Function name="GetMeshBoundingBox" retType="BoundingBox" paramCount="1" desc="Compute mesh bounding box limits">
+            <Param type="Mesh" name="mesh" desc="" />
+        </Function>
+        <Function name="GenMeshTangents" retType="void" paramCount="1" desc="Compute mesh tangents">
+            <Param type="Mesh *" name="mesh" desc="" />
+        </Function>
+        <Function name="GenMeshBinormals" retType="void" paramCount="1" desc="Compute mesh binormals">
+            <Param type="Mesh *" name="mesh" desc="" />
+        </Function>
+        <Function name="GenMeshPoly" retType="Mesh" paramCount="2" desc="Generate polygonal mesh">
+            <Param type="int" name="sides" desc="" />
+            <Param type="float" name="radius" desc="" />
+        </Function>
+        <Function name="GenMeshPlane" retType="Mesh" paramCount="4" desc="Generate plane mesh (with subdivisions)">
+            <Param type="float" name="width" desc="" />
+            <Param type="float" name="length" desc="" />
+            <Param type="int" name="resX" desc="" />
+            <Param type="int" name="resZ" desc="" />
+        </Function>
+        <Function name="GenMeshCube" retType="Mesh" paramCount="3" desc="Generate cuboid mesh">
+            <Param type="float" name="width" desc="" />
+            <Param type="float" name="height" desc="" />
+            <Param type="float" name="length" desc="" />
+        </Function>
+        <Function name="GenMeshSphere" retType="Mesh" paramCount="3" desc="Generate sphere mesh (standard sphere)">
+            <Param type="float" name="radius" desc="" />
+            <Param type="int" name="rings" desc="" />
+            <Param type="int" name="slices" desc="" />
+        </Function>
+        <Function name="GenMeshHemiSphere" retType="Mesh" paramCount="3" desc="Generate half-sphere mesh (no bottom cap)">
+            <Param type="float" name="radius" desc="" />
+            <Param type="int" name="rings" desc="" />
+            <Param type="int" name="slices" desc="" />
+        </Function>
+        <Function name="GenMeshCylinder" retType="Mesh" paramCount="3" desc="Generate cylinder mesh">
+            <Param type="float" name="radius" desc="" />
+            <Param type="float" name="height" desc="" />
+            <Param type="int" name="slices" desc="" />
+        </Function>
+        <Function name="GenMeshCone" retType="Mesh" paramCount="3" desc="Generate cone/pyramid mesh">
+            <Param type="float" name="radius" desc="" />
+            <Param type="float" name="height" desc="" />
+            <Param type="int" name="slices" desc="" />
+        </Function>
+        <Function name="GenMeshTorus" retType="Mesh" paramCount="4" desc="Generate torus mesh">
+            <Param type="float" name="radius" desc="" />
+            <Param type="float" name="size" desc="" />
+            <Param type="int" name="radSeg" desc="" />
+            <Param type="int" name="sides" desc="" />
+        </Function>
+        <Function name="GenMeshKnot" retType="Mesh" paramCount="4" desc="Generate trefoil knot mesh">
+            <Param type="float" name="radius" desc="" />
+            <Param type="float" name="size" desc="" />
+            <Param type="int" name="radSeg" desc="" />
+            <Param type="int" name="sides" desc="" />
+        </Function>
+        <Function name="GenMeshHeightmap" retType="Mesh" paramCount="2" desc="Generate heightmap mesh from image data">
+            <Param type="Image" name="heightmap" desc="" />
+            <Param type="Vector3" name="size" desc="" />
+        </Function>
+        <Function name="GenMeshCubicmap" retType="Mesh" paramCount="2" desc="Generate cubes-based map mesh from image data">
+            <Param type="Image" name="cubicmap" desc="" />
+            <Param type="Vector3" name="cubeSize" desc="" />
+        </Function>
+        <Function name="LoadMaterials" retType="Material *" paramCount="2" desc="Load materials from model file">
+            <Param type="const char *" name="fileName" desc="" />
+            <Param type="int *" name="materialCount" desc="" />
+        </Function>
+        <Function name="LoadMaterialDefault" retType="Material" paramCount="0" desc="Load default material (Supports: DIFFUSE, SPECULAR, NORMAL maps)">
+        </Function>
+        <Function name="UnloadMaterial" retType="void" paramCount="1" desc="Unload material from GPU memory (VRAM)">
+            <Param type="Material" name="material" desc="" />
+        </Function>
+        <Function name="SetMaterialTexture" retType="void" paramCount="3" desc="Set texture for a material map type (MATERIAL_MAP_DIFFUSE, MATERIAL_MAP_SPECULAR...)">
+            <Param type="Material *" name="material" desc="" />
+            <Param type="int" name="mapType" desc="" />
+            <Param type="Texture2D" name="texture" desc="" />
+        </Function>
+        <Function name="SetModelMeshMaterial" retType="void" paramCount="3" desc="Set material for a mesh">
+            <Param type="Model *" name="model" desc="" />
+            <Param type="int" name="meshId" desc="" />
+            <Param type="int" name="materialId" desc="" />
+        </Function>
+        <Function name="LoadModelAnimations" retType="ModelAnimation *" paramCount="2" desc="Load model animations from file">
+            <Param type="const char *" name="fileName" desc="" />
+            <Param type="unsigned int *" name="animCount" desc="" />
+        </Function>
+        <Function name="UpdateModelAnimation" retType="void" paramCount="3" desc="Update model animation pose">
+            <Param type="Model" name="model" desc="" />
+            <Param type="ModelAnimation" name="anim" desc="" />
+            <Param type="int" name="frame" desc="" />
+        </Function>
+        <Function name="UnloadModelAnimation" retType="void" paramCount="1" desc="Unload animation data">
+            <Param type="ModelAnimation" name="anim" desc="" />
+        </Function>
+        <Function name="UnloadModelAnimations" retType="void" paramCount="2" desc="Unload animation array data">
+            <Param type="ModelAnimation*" name="animations" desc="" />
+            <Param type="unsigned int" name="count" desc="" />
+        </Function>
+        <Function name="IsModelAnimationValid" retType="bool" paramCount="2" desc="Check model animation skeleton match">
+            <Param type="Model" name="model" desc="" />
+            <Param type="ModelAnimation" name="anim" desc="" />
         </Function>
         <Function name="CheckCollisionSpheres" retType="bool" paramCount="4" desc="Check collision between two spheres">
             <Param type="Vector3" name="center1" desc="" />
@@ -2354,7 +2419,7 @@
         <Function name="UpdateSound" retType="void" paramCount="3" desc="Update sound buffer with new data">
             <Param type="Sound" name="sound" desc="" />
             <Param type="const void *" name="data" desc="" />
-            <Param type="int" name="samplesCount" desc="" />
+            <Param type="int" name="sampleCount" desc="" />
         </Function>
         <Function name="UnloadWave" retType="void" paramCount="1" desc="Unload wave data">
             <Param type="Wave" name="wave" desc="" />
@@ -2449,6 +2514,10 @@
         <Function name="ResumeMusicStream" retType="void" paramCount="1" desc="Resume playing paused music">
             <Param type="Music" name="music" desc="" />
         </Function>
+        <Function name="SeekMusicStream" retType="void" paramCount="2" desc="Seek music to a position (in seconds)">
+            <Param type="Music" name="music" desc="" />
+            <Param type="float" name="position" desc="" />
+        </Function>
         <Function name="SetMusicVolume" retType="void" paramCount="2" desc="Set volume for music (1.0 is max level)">
             <Param type="Music" name="music" desc="" />
             <Param type="float" name="volume" desc="" />
@@ -2474,7 +2543,7 @@
         <Function name="UpdateAudioStream" retType="void" paramCount="3" desc="Update audio stream buffers with data">
             <Param type="AudioStream" name="stream" desc="" />
             <Param type="const void *" name="data" desc="" />
-            <Param type="int" name="samplesCount" desc="" />
+            <Param type="int" name="frameCount" desc="" />
         </Function>
         <Function name="IsAudioStreamProcessed" retType="bool" paramCount="1" desc="Check if any audio stream buffers requires refill">
             <Param type="AudioStream" name="stream" desc="" />
