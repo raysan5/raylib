@@ -2013,7 +2013,7 @@ static ma_uint32 ReadAudioBufferFramesInInternalFormat(AudioBuffer *audioBuffer,
 
     // Another thread can update the processed state of buffers so
     // we just take a copy here to try and avoid potential synchronization problems
-    bool isSubBufferProcessed[2];
+    bool isSubBufferProcessed[2] = { 0 };
     isSubBufferProcessed[0] = audioBuffer->isSubBufferProcessed[0];
     isSubBufferProcessed[1] = audioBuffer->isSubBufferProcessed[1];
 
@@ -2096,7 +2096,7 @@ static ma_uint32 ReadAudioBufferFramesInMixingFormat(AudioBuffer *audioBuffer, f
     // should be defined by the output format of the data converter. We do this until frameCount frames have been output. The important
     // detail to remember here is that we never, ever attempt to read more input data than is required for the specified number of output
     // frames. This can be achieved with ma_data_converter_get_required_input_frame_count().
-    ma_uint8 inputBuffer[4096];
+    ma_uint8 inputBuffer[4096] = { 0 };
     ma_uint32 inputBufferFrameCap = sizeof(inputBuffer)/ma_get_bytes_per_frame(audioBuffer->converter.config.formatIn, audioBuffer->converter.config.channelsIn);
 
     ma_uint32 totalOutputFramesProcessed = 0;
@@ -2165,7 +2165,7 @@ static void OnSendAudioDataToDevice(ma_device *pDevice, void *pFramesOut, const 
 
                 while (framesToRead > 0)
                 {
-                    float tempBuffer[1024]; // 512 frames for stereo
+                    float tempBuffer[1024] = { 0 }; // Frames for stereo
 
                     ma_uint32 framesToReadRightNow = framesToRead;
                     if (framesToReadRightNow > sizeof(tempBuffer)/sizeof(tempBuffer[0])/AUDIO_DEVICE_CHANNELS)

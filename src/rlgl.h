@@ -4547,8 +4547,8 @@ static unsigned char *rlGenNextMipmapData(unsigned char *srcData, int srcWidth, 
 {
     int x2 = 0;
     int y2 = 0;
-    unsigned char prow[4];
-    unsigned char pcol[4];
+    unsigned char prow[4] = { 0 };
+    unsigned char pcol[4] = { 0 };
 
     int width = srcWidth/2;
     int height = srcHeight/2;

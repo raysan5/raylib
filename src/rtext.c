@@ -1142,11 +1142,10 @@ bool TextIsEqual(const char *text1, const char *text2)
 {
     bool result = false;
 
-    if (text1 == NULL || text2 == NULL) {
-        return false;
+    if ((text1 != NULL) && (text2 != NULL))
+    {
+        if (strcmp(text1, text2) == 0) result = true;
     }
-
-    if (strcmp(text1, text2) == 0) result = true;
 
     return result;
 }
@@ -1155,6 +1154,7 @@ bool TextIsEqual(const char *text1, const char *text2)
 const char *TextSubtext(const char *text, int position, int length)
 {
     static char buffer[MAX_TEXT_BUFFER_LENGTH] = { 0 };
+    memset(buffer, 0, MAX_TEXT_BUFFER_LENGTH);
 
     int textLength = TextLength(text);
 
@@ -1178,21 +1178,21 @@ const char *TextSubtext(const char *text, int position, int length)
 }
 
 // Replace text string
-// REQUIRES: strstr(), strncpy(), strcpy()
+// REQUIRES: strlen(), strstr(), strncpy(), strcpy()
 // WARNING: Returned buffer must be freed by the user (if return != NULL)
 char *TextReplace(char *text, const char *replace, const char *by)
 {
     // Sanity checks and initialization
     if (!text || !replace || !by) return NULL;
 
-    char *result;
+    char *result = NULL;
 
-    char *insertPoint;      // Next insert point
-    char *temp;             // Temp pointer
-    int replaceLen;         // Replace string length of (the string to remove)
-    int byLen;              // Replacement length (the string to replace replace by)
-    int lastReplacePos;     // Distance between replace and end of last replace
-    int count;              // Number of replacements
+    char *insertPoint = NULL;   // Next insert point
+    char *temp = NULL;          // Temp pointer
+    int replaceLen = 0;         // Replace string length of (the string to remove)
+    int byLen = 0;              // Replacement length (the string to replace replace by)
+    int lastReplacePos = 0;     // Distance between replace and end of last replace
+    int count = 0;              // Number of replacements
 
     replaceLen = TextLength(replace);
     if (replaceLen == 0) return NULL;  // Empty replace causes infinite loop during count
@@ -1249,9 +1249,9 @@ char *TextInsert(const char *text, const char *insert, int position)
 // REQUIRES: memset(), memcpy()
 const char *TextJoin(const char **textList, int count, const char *delimiter)
 {
-    static char text[MAX_TEXT_BUFFER_LENGTH] = { 0 };
-    memset(text, 0, MAX_TEXT_BUFFER_LENGTH);
-    char *textPtr = text;
+    static char buffer[MAX_TEXT_BUFFER_LENGTH] = { 0 };
+    memset(buffer, 0, MAX_TEXT_BUFFER_LENGTH);
+    char *textPtr = buffer;
 
     int totalLength = 0;
     int delimiterLen = TextLength(delimiter);
@@ -1276,7 +1276,7 @@ const char *TextJoin(const char **textList, int count, const char *delimiter)
         }
     }
 
-    return text;
+    return buffer;
 }
 
 // Split string into multiple strings
@@ -1346,6 +1346,7 @@ int TextFindIndex(const char *text, const char *find)
 const char *TextToUpper(const char *text)
 {
     static char buffer[MAX_TEXT_BUFFER_LENGTH] = { 0 };
+    memset(buffer, 0, MAX_TEXT_BUFFER_LENGTH);
 
     for (int i = 0; i < MAX_TEXT_BUFFER_LENGTH; i++)
     {
@@ -1368,6 +1369,7 @@ const char *TextToUpper(const char *text)
 const char *TextToLower(const char *text)
 {
     static char buffer[MAX_TEXT_BUFFER_LENGTH] = { 0 };
+    memset(buffer, 0, MAX_TEXT_BUFFER_LENGTH);
 
     for (int i = 0; i < MAX_TEXT_BUFFER_LENGTH; i++)
     {
@@ -1387,6 +1389,7 @@ const char *TextToLower(const char *text)
 const char *TextToPascal(const char *text)
 {
     static char buffer[MAX_TEXT_BUFFER_LENGTH] = { 0 };
+    memset(buffer, 0, MAX_TEXT_BUFFER_LENGTH);
 
     buffer[0] = (char)toupper(text[0]);
 
@@ -1666,7 +1669,7 @@ static Font LoadBMFont(const char *fileName)
 
     int imWidth = 0;
     int imHeight = 0;
-    char imFileName[129];
+    char imFileName[129] = { 0 };
 
     int base = 0;   // Useless data
 

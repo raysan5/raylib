@@ -5633,8 +5633,8 @@ static void ProcessKeyboard(void)
     #define MAX_KEYBUFFER_SIZE      32      // Max size in bytes to read
 
     // Keyboard input polling (fill keys[256] array with status)
-    int bufferByteCount = 0;                // Bytes available on the buffer
-    char keysBuffer[MAX_KEYBUFFER_SIZE];    // Max keys to be read at a time
+    int bufferByteCount = 0;                        // Bytes available on the buffer
+    char keysBuffer[MAX_KEYBUFFER_SIZE] = { 0 };    // Max keys to be read at a time
 
     // Read availables keycodes from stdin
     bufferByteCount = read(STDIN_FILENO, keysBuffer, MAX_KEYBUFFER_SIZE);     // POSIX system call
