@@ -1142,6 +1142,10 @@ bool TextIsEqual(const char *text1, const char *text2)
 {
     bool result = false;
 
+    if (text1 == NULL || text2 == NULL) {
+        return false;
+    }
+
     if (strcmp(text1, text2) == 0) result = true;
 
     return result;
