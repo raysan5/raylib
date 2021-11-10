@@ -2,11 +2,24 @@
 *
 *   rshapes - Basic functions to draw 2d shapes and check collisions
 *
+*   NOTES:
+*     Shapes can be draw using 3 types of primitives: LINES, TRIANGLES and QUADS.
+*     Some functions implement two drawing options: TRIANGLES and QUADS, by default TRIANGLES
+*     are used but QUADS implementation can be selected with SUPPORT_QUADS_DRAW_MODE define
+*   
+*     Some functions define texture coordinates (rlTexCoord2f()) for the shapes and use a 
+*     user-provided texture with SetShapesTexture(), the pourpouse of this implementation
+*     is allowing to reduce draw calls when combined with a texture-atlas.
+*
+*     By default, raylib sets the default texture and rectangle at InitWindow()[rcore] to one 
+*     white character of default font [rtext], this way, raylib text and shapes can be draw with
+*     a single draw call and it also allows users to configure it the same way with their own fonts.
+*
 *   CONFIGURATION:
 *
 *   #define SUPPORT_QUADS_DRAW_MODE
-*       Use QUADS instead of TRIANGLES for drawing when possible.
-*       Some lines-based shapes could still use lines
+*       Use QUADS instead of TRIANGLES for drawing when possible. Lines-based shapes still use LINES
+*
 *
 *   LICENSE: zlib/libpng
 *
@@ -44,12 +57,15 @@
 //----------------------------------------------------------------------------------
 // Defines and Macros
 //----------------------------------------------------------------------------------
-
 // Error rate to calculate how many segments we need to draw a smooth circle,
 // taken from https://stackoverflow.com/a/2244088
 #ifndef SMOOTH_CIRCLE_ERROR_RATE
-    #define SMOOTH_CIRCLE_ERROR_RATE  0.5f
+    #define SMOOTH_CIRCLE_ERROR_RATE    0.5f    // Circle error rate
 #endif
+#ifndef BEZIER_LINE_DIVISIONS
+    #define BEZIER_LINE_DIVISIONS       24      // Bezier line divisions
+#endif
+
 
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
@@ -144,10 +160,6 @@ void DrawLineEx(Vector2 startPos, Vector2 endPos, float thick, Color color)
 // Draw line using cubic-bezier curves in-out
 void DrawLineBezier(Vector2 startPos, Vector2 endPos, float thick, Color color)
 {
-#ifndef BEZIER_LINE_DIVISIONS
-    #define BEZIER_LINE_DIVISIONS         24   // Bezier line divisions
-#endif
-
     Vector2 previous = startPos;
     Vector2 current = { 0 };
 
@@ -333,6 +345,7 @@ void DrawCircleSector(Vector2 center, float radius, float startAngle, float endA
 #endif
 }
 
+// Draw a piece of a circle outlines
 void DrawCircleSectorLines(Vector2 center, float radius, float startAngle, float endAngle, int segments, Color color)
 {
     if (radius <= 0.0f) radius = 0.1f;  // Avoid div by zero issue
@@ -468,6 +481,7 @@ void DrawEllipseLines(int centerX, int centerY, float radiusH, float radiusV, Co
     rlEnd();
 }
 
+// Draw ring
 void DrawRing(Vector2 center, float innerRadius, float outerRadius, float startAngle, float endAngle, int segments, Color color)
 {
     if (startAngle == endAngle) return;
@@ -561,6 +575,7 @@ void DrawRing(Vector2 center, float innerRadius, float outerRadius, float startA
 #endif
 }
 
+// Draw ring outline
 void DrawRingLines(Vector2 center, float innerRadius, float outerRadius, float startAngle, float endAngle, int segments, Color color)
 {
     if (startAngle == endAngle) return;
@@ -1313,9 +1328,9 @@ void DrawRectangleRoundedLines(Rectangle rec, float roundness, int segments, flo
 // NOTE: Vertex must be provided in counter-clockwise order
 void DrawTriangle(Vector2 v1, Vector2 v2, Vector2 v3, Color color)
 {
+#if defined(SUPPORT_QUADS_DRAW_MODE)
     rlCheckRenderBatchLimit(4);
 
-#if defined(SUPPORT_QUADS_DRAW_MODE)
     rlSetTexture(texShapes.id);
 
     rlBegin(RL_QUADS);
@@ -1336,6 +1351,8 @@ void DrawTriangle(Vector2 v1, Vector2 v2, Vector2 v3, Color color)
 
     rlSetTexture(0);
 #else
+    rlCheckRenderBatchLimit(3);
+
     rlBegin(RL_TRIANGLES);
         rlColor4ub(color.r, color.g, color.b, color.a);
         rlVertex2f(v1.x, v1.y);
