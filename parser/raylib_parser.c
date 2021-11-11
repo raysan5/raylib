@@ -109,7 +109,7 @@ typedef struct EnumInfo {
 } EnumInfo;
 
 // Output format for parsed data
-typedef enum { DEFAULT = 0, JSON, XML } OutputFormat;
+typedef enum { DEFAULT = 0, JSON, XML, LUA } OutputFormat;
 
 //----------------------------------------------------------------------------------
 // Global Variables Definition
@@ -500,6 +500,7 @@ int main(int argc, char* argv[])
     if (outputFormat == DEFAULT) printf("\nOutput format:    DEFAULT\n\n");
     else if (outputFormat == JSON) printf("\nOutput format:    JSON\n\n");
     else if (outputFormat == XML) printf("\nOutput format:    XML\n\n");
+    else if (outputFormat == LUA) printf("\nOutput format:    LUA\n\n");
 
     ExportParsedData(outFileName, outputFormat);
 
@@ -535,7 +536,7 @@ static void ShowCommandLineInfo(void)
     printf("                                      Supported extensions: .txt, .json, .xml, .h\n");
     printf("                                      NOTE: If not specified, defaults to: raylib_api.txt\n\n");
     printf("    -f, --format <type>             : Define output format for parser data.\n");
-    printf("                                      Supported types: DEFAULT, JSON, XML\n\n");
+    printf("                                      Supported types: DEFAULT, JSON, XML, LUA\n\n");
     printf("    -d, --define <DEF>              : Define functions define (i.e. RLAPI for raylib.h, RMDEF for raymath.h, etc\n");
     printf("                                      NOTE: If not specified, defaults to: RLAPI\n\n");
 
@@ -584,6 +585,7 @@ static void ProcessCommandLine(int argc, char *argv[])
                 if (IsTextEqual(argv[i + 1], "DEFAULT\0", 8)) outputFormat = DEFAULT;
                 else if (IsTextEqual(argv[i + 1], "JSON\0", 5)) outputFormat = JSON;
                 else if (IsTextEqual(argv[i + 1], "XML\0", 4)) outputFormat = XML;
+                else if (IsTextEqual(argv[i + 1], "LUA\0", 4)) outputFormat = LUA;
             }
             else printf("WARNING: No format parameters provided\n");
         }
@@ -840,6 +842,89 @@ static void ExportParsedData(const char *fileName, int format)
                 for (int p = 0; p < funcs[i].paramCount; p++) fprintf(outFile, "  Param[%i]: %s (type: %s)\n", p + 1, funcs[i].paramName[p], funcs[i].paramType[p]);
                 if (funcs[i].paramCount == 0) fprintf(outFile, "  No input parameters\n");
             }
+        } break;
+        case LUA:
+        {
+            fprintf(outFile, "return {\n");
+
+            // Print structs info
+            fprintf(outFile, "  structs = {\n");
+            for (int i = 0; i < structCount; i++)
+            {
+                fprintf(outFile, "    {\n");
+                fprintf(outFile, "      name = \"%s\",\n", structs[i].name);
+                fprintf(outFile, "      description = \"%s\",\n", structs[i].desc);
+                fprintf(outFile, "      fields = {\n");
+                for (int f = 0; f < structs[i].fieldCount; f++)
+                {
+                    fprintf(outFile, "        {\n");
+                    fprintf(outFile, "          name = \"%s\",\n", structs[i].fieldName[f]),
+                    fprintf(outFile, "          type = \"%s\",\n", structs[i].fieldType[f]),
+                    fprintf(outFile, "          description = \"%s\"\n", structs[i].fieldDesc[f] + 3),
+                    fprintf(outFile, "        }");
+                    if (f < structs[i].fieldCount - 1) fprintf(outFile, ",\n");
+                    else fprintf(outFile, "\n");
+                }
+                fprintf(outFile, "      }\n");
+                fprintf(outFile, "    }");
+                if (i < structCount - 1) fprintf(outFile, ",\n");
+                else fprintf(outFile, "\n");
+            }
+            fprintf(outFile, "  },\n");
+
+            // Print enums info
+            fprintf(outFile, "  enums = {\n");
+            for (int i = 0; i < enumCount; i++)
+            {
+                fprintf(outFile, "    {\n");
+                fprintf(outFile, "      name = \"%s\",\n", enums[i].name);
+                fprintf(outFile, "      description = \"%s\",\n", enums[i].desc + 3);
+                fprintf(outFile, "      values = {\n");
+                for (int e = 0; e < enums[i].valueCount; e++)
+                {
+                    fprintf(outFile, "        {\n");
+                    fprintf(outFile, "          name = \"%s\",\n", enums[i].valueName[e]),
+                    fprintf(outFile, "          value = %i,\n", enums[i].valueInteger[e]),
+                    fprintf(outFile, "          description = \"%s\"\n", enums[i].valueDesc[e] + 3),
+                    fprintf(outFile, "        }");
+                    if (e < enums[i].valueCount - 1) fprintf(outFile, ",\n");
+                    else fprintf(outFile, "\n");
+                }
+                fprintf(outFile, "      }\n");
+                fprintf(outFile, "    }");
+                if (i < enumCount - 1) fprintf(outFile, ",\n");
+                else fprintf(outFile, "\n");
+            }
+            fprintf(outFile, "  },\n");
+
+            // Print functions info
+            fprintf(outFile, "  functions = {\n");
+            for (int i = 0; i < funcCount; i++)
+            {
+                fprintf(outFile, "    {\n");
+                fprintf(outFile, "      name = \"%s\",\n", funcs[i].name);
+                fprintf(outFile, "      description = \"%s\",\n", CharReplace(funcs[i].desc, '\\', ' ') + 3);
+                fprintf(outFile, "      returnType = \"%s\"", funcs[i].retType);
+
+                if (funcs[i].paramCount == 0) fprintf(outFile, "\n");
+                else
+                {
+                    fprintf(outFile, ",\n      params = {\n");
+                    for (int p = 0; p < funcs[i].paramCount; p++)
+                    {
+                        fprintf(outFile, "        {name = \"%s\", type = \"%s\"}", funcs[i].paramName[p], funcs[i].paramType[p]);
+                        if (p < funcs[i].paramCount - 1) fprintf(outFile, ",\n");
+                        else fprintf(outFile, "\n");
+                    }
+                    fprintf(outFile, "      }\n");
+                }
+                fprintf(outFile, "    }");
+
+                if (i < funcCount - 1) fprintf(outFile, ",\n");
+                else fprintf(outFile, "\n");
+            }
+            fprintf(outFile, "  }\n");
+            fprintf(outFile, "}\n");
         } break;
         case JSON:
         {
