@@ -2894,40 +2894,37 @@ const char *GetWorkingDirectory(void)
     return path;
 }
 
-// Get filenames in a directory path (max 512 files)
+// Get filenames in a directory path
 // NOTE: Files count is returned by parameters pointer
 char **GetDirectoryFiles(const char *dirPath, int *fileCount)
 {
-    #define MAX_DIRECTORY_FILES     512
-
     ClearDirectoryFiles();
-
-    // Memory allocation for MAX_DIRECTORY_FILES
-    dirFilesPath = (char **)RL_MALLOC(MAX_DIRECTORY_FILES*sizeof(char *));
-    for (int i = 0; i < MAX_DIRECTORY_FILES; i++) dirFilesPath[i] = (char *)RL_MALLOC(MAX_FILEPATH_LENGTH*sizeof(char));
 
     int counter = 0;
     struct dirent *entity;
     DIR *dir = opendir(dirPath);
 
-    if (dir != NULL)  // It's a directory
+    if (dir != NULL) // It's a directory
     {
-        // TODO: Reading could be done in two passes,
-        // first one to count files and second one to read names
-        // That way we can allocate required memory, instead of a limited pool
+        // Count files
+        while ((entity = readdir(dir)) != NULL) counter++; 
 
-        while ((entity = readdir(dir)) != NULL)
-        {
-            strcpy(dirFilesPath[counter], entity->d_name);
-            counter++;
-        }
+        dirFileCount = counter;
+        *fileCount = dirFileCount;
+
+        // Memory allocation for dirFileCount
+        dirFilesPath = (char **)RL_MALLOC(dirFileCount*sizeof(char *));
+        for (int i = 0; i < dirFileCount; i++) dirFilesPath[i] = (char *)RL_MALLOC(MAX_FILEPATH_LENGTH*sizeof(char));
+        
+        // Reset our position in the directory to the beginning
+        rewinddir(dir);
+
+        // Read file names
+        for (int i = 0; (entity = readdir(dir)) != NULL; i++) strcpy(dirFilesPath[i], entity->d_name);
 
         closedir(dir);
     }
     else TRACELOG(LOG_WARNING, "FILEIO: Failed to open requested directory");  // Maybe it's a file...
-
-    dirFileCount = counter;
-    *fileCount = dirFileCount;
 
     return dirFilesPath;
 }
@@ -2937,7 +2934,7 @@ void ClearDirectoryFiles(void)
 {
     if (dirFileCount > 0)
     {
-        for (int i = 0; i < MAX_DIRECTORY_FILES; i++) RL_FREE(dirFilesPath[i]);
+        for (int i = 0; i < dirFileCount; i++) RL_FREE(dirFilesPath[i]);
 
         RL_FREE(dirFilesPath);
     }
