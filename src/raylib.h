@@ -631,7 +631,8 @@ typedef enum {
     KEY_BACK            = 4,        // Key: Android back button
     KEY_MENU            = 82,       // Key: Android menu button
     KEY_VOLUME_UP       = 24,       // Key: Android volume up button
-    KEY_VOLUME_DOWN     = 25        // Key: Android volume down button
+    KEY_VOLUME_DOWN     = 25,       // Key: Android volume down button
+    KEY_NUM_KEYS        = 512       // Key: Number of keys
 } KeyboardKey;
 
 // Add backwards compatibility support for deprecated names
@@ -648,6 +649,7 @@ typedef enum {
     MOUSE_BUTTON_EXTRA   = 4,       // Mouse button extra (advanced mouse device)
     MOUSE_BUTTON_FORWARD = 5,       // Mouse button fordward (advanced mouse device)
     MOUSE_BUTTON_BACK    = 6,       // Mouse button back (advanced mouse device)
+    MOUSE_BUTTON_NUM_BUTTONS        // Number of Mouse Buttons
 } MouseButton;
 
 // Mouse cursor
@@ -684,7 +686,8 @@ typedef enum {
     GAMEPAD_BUTTON_MIDDLE,              // Gamepad center buttons, middle one (i.e. PS3: PS, Xbox: XBOX)
     GAMEPAD_BUTTON_MIDDLE_RIGHT,        // Gamepad center buttons, right one (i.e. PS3: Start)
     GAMEPAD_BUTTON_LEFT_THUMB,          // Gamepad joystick pressed button left
-    GAMEPAD_BUTTON_RIGHT_THUMB          // Gamepad joystick pressed button right
+    GAMEPAD_BUTTON_RIGHT_THUMB,         // Gamepad joystick pressed button right
+    GAMEPAD_BUTTON_NUM_BUTTONS          // Number of Gamepad Buttons
 } GamepadButton;
 
 // Gamepad axis
@@ -694,7 +697,8 @@ typedef enum {
     GAMEPAD_AXIS_RIGHT_X       = 2,     // Gamepad right stick X axis
     GAMEPAD_AXIS_RIGHT_Y       = 3,     // Gamepad right stick Y axis
     GAMEPAD_AXIS_LEFT_TRIGGER  = 4,     // Gamepad back trigger left, pressure level: [1..-1]
-    GAMEPAD_AXIS_RIGHT_TRIGGER = 5      // Gamepad back trigger right, pressure level: [1..-1]
+    GAMEPAD_AXIS_RIGHT_TRIGGER = 5,     // Gamepad back trigger right, pressure level: [1..-1]
+    GAMEPAD_AXIS_NUM_AXIS               // Number of Gamepad axis
 } GamepadAxis;
 
 // Material map index
