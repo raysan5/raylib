@@ -70,11 +70,14 @@
     #define MAX_FILEPATH_LENGTH      512        // Maximum length supported for filepaths
 #endif
 
-#define MAX_GAMEPADS                   4        // Max number of gamepads supported
-#define MAX_GAMEPAD_AXIS               8        // Max number of axis supported (per gamepad)
-#define MAX_GAMEPAD_BUTTONS           32        // Max bumber of buttons supported (per gamepad)
+#define MAX_KEYBOARD_KEYS            512        // Maximum number of keyboard keys supported
+#define MAX_MOUSE_BUTTONS              8        // Maximum number of mouse buttons supported
+#define MAX_GAMEPADS                   4        // Maximum number of gamepads supported
+#define MAX_GAMEPAD_AXIS               8        // Maximum number of axis supported (per gamepad)
+#define MAX_GAMEPAD_BUTTONS           32        // Maximum number of buttons supported (per gamepad)
 #define MAX_TOUCH_POINTS               8        // Maximum number of touch points supported
-#define MAX_KEY_PRESSED_QUEUE         16        // Max number of characters in the key input queue
+#define MAX_KEY_PRESSED_QUEUE         16        // Maximum number of keys in the key input queue
+#define MAX_CHAR_PRESSED_QUEUE        16        // Maximum number of characters in the char input queue
 
 #define STORAGE_DATA_FILE  "storage.data"       // Automatic storage filename
 
