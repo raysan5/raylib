@@ -601,6 +601,8 @@ static bool InitGraphicsDevice(int width, int height);  // Initialize graphics d
 static void SetupFramebuffer(int width, int height);    // Setup main framebuffer
 static void SetupViewport(int width, int height);       // Set viewport for a provided width and height
 
+static void SetHighDPIFromWindowScale(void);            // Helper function to set window high DPI flag from window scale
+
 #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
 static void ErrorCallback(int error, const char *description);                             // GLFW3 Error Callback, runs on GLFW3 error
 // Window callbacks events
@@ -805,6 +807,7 @@ void InitWindow(int width, int height, const char *title)
     SetShapesTexture(texture, (Rectangle){ 0.0f, 0.0f, 1.0f, 1.0f });
 #endif
 #if defined(PLATFORM_DESKTOP)
+    SetHighDPIFromWindowScale();
     if ((CORE.Window.flags & FLAG_WINDOW_HIGHDPI) > 0)
     {
         // Set default font texture filter for HighDPI (blurry)
@@ -1452,6 +1455,13 @@ void ClearWindowState(unsigned int flags)
         TRACELOG(LOG_WARNING, "RPI: Interlaced mode can only by configured before window initialization");
     }
 #endif
+}
+
+// Helper function to set window high DPI flag from window scale
+void SetHighDPIFromWindowScale()
+{
+    Vector2 scale = GetWindowScaleDPI();
+    if (scale.x > 1 || scale.y > 1) SetConfigFlags(FLAG_WINDOW_HIGHDPI);
 }
 
 // Set icon for window (only PLATFORM_DESKTOP)
@@ -2188,7 +2198,8 @@ void BeginScissorMode(int x, int y, int width, int height)
     {
         Vector2 scale = GetWindowScaleDPI();
 
-        rlScissor((int)(x*scale.x), (int)(CORE.Window.currentFbo.height - (y + height)*scale.y), (int)(width*scale.x), (int)(height*scale.y));
+        rlScissor((int)(x*scale.x), (int)(CORE.Window.currentFbo.height - y*scale.y - height/scale.y),
+                  (int)(width*scale.x), (int)(height*scale.y));
     }
     else
     {
