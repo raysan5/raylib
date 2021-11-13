@@ -410,6 +410,8 @@ int main(int argc, char* argv[])
         }
     }
 
+    free(enumLines);
+
     // Functions info data
     funcs = (FunctionInfo *)calloc(MAX_FUNCS_TO_PARSE, sizeof(FunctionInfo));
 
