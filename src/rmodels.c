@@ -1651,7 +1651,7 @@ bool ExportMesh(Mesh mesh, const char *fileName)
                        mesh.triangleCount/3* (int)strlen("f 00000/00000/00000 00000/00000/00000 00000/00000/00000");
 
         // NOTE: Text data buffer size is estimated considering mesh data size
-        char *txtData = (char *)RL_CALLOC(dataSize + 2000, sizeof(char));
+        char *txtData = (char *)RL_CALLOC(dataSize + 2000, sizeof(char)*4);
 
         int byteCount = 0;
         byteCount += sprintf(txtData + byteCount, "# //////////////////////////////////////////////////////////////////////////////////\n");
@@ -1684,9 +1684,9 @@ bool ExportMesh(Mesh mesh, const char *fileName)
             byteCount += sprintf(txtData + byteCount, "vn %.3f %.3f %.3f\n", mesh.normals[v], mesh.normals[v + 1], mesh.normals[v + 2]);
         }
 
-        for (int i = 0; i < mesh.triangleCount; i += 3)
+        for (int i = 0; i < mesh.vertexCount; i += 3)
         {
-            byteCount += sprintf(txtData + byteCount, "f %i/%i/%i %i/%i/%i %i/%i/%i\n", i, i, i, i + 1, i + 1, i + 1, i + 2, i + 2, i + 2);
+            byteCount += sprintf(txtData + byteCount, "f %i/%i/%i %i/%i/%i %i/%i/%i\n", i+1, i+1, i+1, i + 2, i + 2, i + 2, i + 3, i + 3, i + 3);
         }
 
         byteCount += sprintf(txtData + byteCount, "\n");
