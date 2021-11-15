@@ -2812,7 +2812,7 @@ Texture2D LoadTextureFromImage(Image image)
 {
     Texture2D texture = { 0 };
 
-    if ((image.data != NULL) && (image.width != 0) && (image.height != 0))
+    if ((image.width != 0) && (image.height != 0))
     {
         texture.id = rlLoadTexture(image.data, image.width, image.height, image.format, image.mipmaps);
     }
