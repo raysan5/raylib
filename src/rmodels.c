@@ -1645,10 +1645,10 @@ bool ExportMesh(Mesh mesh, const char *fileName)
     if (IsFileExtension(fileName, ".obj"))
     {
         // Estimated data size, it should be enough...
-        int dataSize = mesh.vertexCount/3* (int)strlen("v 0000.00f 0000.00f 0000.00f") +
-                       mesh.vertexCount/2* (int)strlen("vt 0.000f 0.00f") +
-                       mesh.vertexCount/3* (int)strlen("vn 0.000f 0.00f 0.00f") +
-                       mesh.triangleCount/3* (int)strlen("f 00000/00000/00000 00000/00000/00000 00000/00000/00000");
+        int dataSize = mesh.vertexCount/3*(int)strlen("v 0000.00f 0000.00f 0000.00f") +
+                       mesh.vertexCount/2*(int)strlen("vt 0.000f 0.00f") +
+                       mesh.vertexCount/3*(int)strlen("vn 0.000f 0.00f 0.00f") +
+                       mesh.triangleCount/3*(int)strlen("f 00000/00000/00000 00000/00000/00000 00000/00000/00000");
 
         // NOTE: Text data buffer size is estimated considering mesh data size
         char *txtData = (char *)RL_CALLOC(dataSize + 2000, sizeof(char));
@@ -1684,7 +1684,7 @@ bool ExportMesh(Mesh mesh, const char *fileName)
             byteCount += sprintf(txtData + byteCount, "vn %.3f %.3f %.3f\n", mesh.normals[v], mesh.normals[v + 1], mesh.normals[v + 2]);
         }
 
-        for (int i = 0; i < mesh.triangleCount; i += 3)
+        for (int i = 0; i < mesh.triangleCount; i++)
         {
             byteCount += sprintf(txtData + byteCount, "f %i/%i/%i %i/%i/%i %i/%i/%i\n", i, i, i, i + 1, i + 1, i + 1, i + 2, i + 2, i + 2);
         }
