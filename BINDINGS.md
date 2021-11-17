@@ -43,6 +43,7 @@ Some people ported raylib to other languages in form of bindings or wrappers to 
 | dlang_raylib       | 3.7 | [D](https://dlang.org)                  | https://github.com/rc-05/dlang_raylib |
 | raylib-freebasic   | **4.0** | [FreeBASIC](https://www.freebasic.net/)   | https://github.com/WIITD/raylib-freebasic |
 | raylib-cr   | **4.0** | [Crystal](https://crystal-lang.org/)   | https://github.com/sol-vin/raylib-cr |
+| dart-raylib   | **4.0** | [Dart](https://dart.dev/)   | https://gitlab.com/wolfenrain/dart-raylib |
 
 ### Utility Wrapers
 These are utility wrappers for specific languages, they are not required to use raylib in the language but may adapt the raylib API to be more inline with the language's pardigm.
