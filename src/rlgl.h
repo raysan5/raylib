@@ -1034,7 +1034,13 @@ void rlMultMatrixf(float *matf) { glMultMatrixf(matf); }
 void rlMatrixMode(int mode)
 {
     if (mode == RL_PROJECTION) RLGL.State.currentMatrix = &RLGL.State.projection;
-    else if (mode == RL_MODELVIEW) RLGL.State.currentMatrix = &RLGL.State.modelview;
+    else if (mode == RL_MODELVIEW) {
+        if (RLGL.State.stackCounter == 0) {
+            RLGL.State.currentMatrix = &RLGL.State.modelview;
+        } else {
+            RLGL.State.currentMatrix = &RLGL.State.transform;
+        }
+    }
     //else if (mode == RL_TEXTURE) // Not supported
 
     RLGL.State.currentMatrixMode = mode;
