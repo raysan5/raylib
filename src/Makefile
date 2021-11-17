@@ -260,10 +260,10 @@ ifeq ($(PLATFORM),PLATFORM_ANDROID)
         CC = $(ANDROID_TOOLCHAIN)/bin/$(ANDROID_COMPILER_ARCH)-linux-android$(ANDROID_API_VERSION)-clang
     endif
     ifeq ($(ANDROID_ARCH),x86)
-        CC = $(ANDROID_TOOLCHAIN)/bin/i686-linux-android$(ANDROID_API_VERSION)-clang
+        CC = $(ANDROID_TOOLCHAIN)/bin/$(ANDROID_COMPILER_ARCH)-linux-android$(ANDROID_API_VERSION)-clang
     endif
     ifeq ($(ANDROID_ARCH),x86_64)
-        CC = $(ANDROID_TOOLCHAIN)/bin/x86_64-linux-android$(ANDROID_API_VERSION)-clang
+        CC = $(ANDROID_TOOLCHAIN)/bin/$(ANDROID_COMPILER_ARCH)-linux-android$(ANDROID_API_VERSION)-clang
     endif
     # It seems from Android NDK r22 onwards we need to use llvm-ar
     AR = $(ANDROID_TOOLCHAIN)/bin/llvm-ar
