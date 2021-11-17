@@ -492,7 +492,7 @@ static int screenshotCounter = 0;           // Screenshots counter
 #endif
 
 #if defined(SUPPORT_GIF_RECORDING)
-static int gifFrameCounter = 0;            // GIF frames counter
+static int gifFrameCounter = 0;             // GIF frames counter
 static bool gifRecording = false;           // GIF recording state
 static MsfGifState gifState = { 0 };        // MSGIF context state
 #endif
@@ -2708,6 +2708,11 @@ bool FileExists(const char *fileName)
 #else
     if (access(fileName, F_OK) != -1) result = true;
 #endif
+
+    // NOTE: Alternatively, stat() can be used instead of access()
+    //#include <sys/stat.h>
+    //struct stat statbuf;   
+    //if (stat(filename, &statbuf) == 0) result = true;
 
     return result;
 }
