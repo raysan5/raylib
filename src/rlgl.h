@@ -618,6 +618,7 @@ RLAPI void rlSetBlendMode(int mode);                    // Set blending mode
 RLAPI void rlSetBlendFactors(int glSrcFactor, int glDstFactor, int glEquation); // Set blending mode factor and equation (using OpenGL factors)
 RLAPI void rlSetBlendColorFactors(int glSrcFactor, int glDstFactor, int glEquation); // Set blending mode factor and equation for colors
 RLAPI void rlSetBlendAlphaFactors(int glSrcFactor, int glDstFactor, int glEquation); // Set blending mode factor and equation for alpha
+RLAPI void rlSetBlendConstant(float r, float g, float b, float a); // Set the color used for constant factors
 
 //------------------------------------------------------------------------------------
 // Functions Declaration - rlgl functionality
@@ -1860,6 +1861,14 @@ void rlSetBlendAlphaFactors(int glSrcFactor, int glDstFactor, int glEquation)
     RLGL.State.glBlendSrcFactorAlpha = glSrcFactor;
     RLGL.State.glBlendDstFactorAlpha = glDstFactor;
     RLGL.State.glBlendEquationAlpha = glEquation;
+#endif
+}
+
+// Set the color used for constant factors
+void rlSetBlendConstant(float r, float g, float b, float a)
+{
+#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
+    glBlendColor(r, g, b, a);
 #endif
 }
 
