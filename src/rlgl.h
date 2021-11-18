@@ -1819,7 +1819,7 @@ void rlSetBlendMode(int mode)
             case RL_BLEND_CUSTOM_SEPARATED: 
                 glBlendFuncSeparate(
                     RLGL.State.glBlendSrcFactorColor, RLGL.State.glBlendDstFactorColor,
-                    RLGL.State.glBlendSrcFactorAlpha, RLGL.State.glBlendDstFactorAlpha,
+                    RLGL.State.glBlendSrcFactorAlpha, RLGL.State.glBlendDstFactorAlpha
                 ); 
                 glBlendEquationSeparate(
                     RLGL.State.glBlendEquationColor,
