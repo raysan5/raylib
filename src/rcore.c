@@ -2664,7 +2664,7 @@ void TakeScreenshot(const char *fileName)
     unsigned char *imgData = rlReadScreenPixels(CORE.Window.render.width, CORE.Window.render.height);
     Image image = { imgData, CORE.Window.render.width, CORE.Window.render.height, 1, PIXELFORMAT_UNCOMPRESSED_R8G8B8A8 };
 
-    char path[512] = { 0 };
+    char path[2048] = { 0 };
     strcpy(path, TextFormat("%s/%s", CORE.Storage.basePath, fileName));
 
     ExportImage(image, path);
