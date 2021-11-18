@@ -1815,7 +1815,7 @@ void rlSetBlendMode(int mode)
             case RL_BLEND_ADD_COLORS: glBlendFunc(GL_ONE, GL_ONE); glBlendEquation(GL_FUNC_ADD); break;
             case RL_BLEND_SUBTRACT_COLORS: glBlendFunc(GL_ONE, GL_ONE); glBlendEquation(GL_FUNC_SUBTRACT); break;
             case RL_BLEND_CUSTOM: glBlendFunc(RLGL.State.glBlendSrcFactor, RLGL.State.glBlendDstFactor); glBlendEquation(RLGL.State.glBlendEquation); break;
-            case RL_BLEND_CUSTOM: 
+            case RL_BLEND_CUSTOM_SEPARATED: 
                 glBlendFuncSeparate(
                     RLGL.State.glBlendSrcFactorColor, RLGL.State.glBlendDstFactorColor,
                     RLGL.State.glBlendSrcFactorAlpha, RLGL.State.glBlendDstFactorAlpha,
