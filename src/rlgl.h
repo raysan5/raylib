@@ -888,6 +888,58 @@ RLAPI void rlLoadDrawQuad(void);     // Load and draw a quad
 // Types and Structures Definition
 //----------------------------------------------------------------------------------
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
+
+// A structure to represent a stack
+struct rl_MatrixStackNode {
+    Matrix data;
+    struct rl_MatrixStackNode* next;
+};
+
+typedef struct rl_MatrixStackNode MStack;
+
+MStack* rl_Matrix_newNode(Matrix data)
+{
+    MStack* stackNode = (MStack*) RL_MALLOC(sizeof(MStack));
+    stackNode->data = data;
+    stackNode->next = NULL;
+    return stackNode;
+}
+
+void rl_Matrix_push(MStack** root, Matrix data)
+{
+    MStack* stackNode = rl_Matrix_newNode(data);
+    stackNode->next = *root;
+    *root = stackNode;
+}
+
+Matrix rl_Matrix_pop(MStack** root)
+{
+    MStack* temp = *root;
+    *root = (*root)->next;
+    Matrix popped = temp->data;
+    RL_FREE(temp);
+
+    return popped;
+}
+
+void rl_Matrix_clear(MStack** root)
+{
+    while ((*root)->next != NULL) {
+        MStack* temp = *root;
+        *root = (*root)->next;
+        RL_FREE(temp);
+    }
+}
+
+void rl_Matrix_delete(MStack** root)
+{
+    while (*root != NULL) {
+        MStack* temp = *root;
+        *root = (*root)->next;
+        RL_FREE(temp);
+    }
+}
+
 typedef struct rlglData {
     rlRenderBatch *currentBatch;            // Current render batch
     rlRenderBatch defaultBatch;             // Default internal render batch
@@ -901,11 +953,15 @@ typedef struct rlglData {
         int currentMatrixMode;              // Current matrix mode
         Matrix *currentMatrix;              // Current matrix pointer
         Matrix modelview;                   // Default modelview matrix
-        Matrix projection;                  // Default projection matrix
-        Matrix transform;                   // Transform matrix to be used with rlTranslate, rlRotate, rlScale
+        Matrix * projection;                // Default projection matrix
+        Matrix * transform;                 // Transform matrix to be used with rlTranslate, rlRotate, rlScale
         bool transformRequired;             // Require transform matrix application to current draw-call vertex (if required)
-        Matrix stack[RL_MAX_MATRIX_STACK_SIZE];// Matrix stack for push/pop
-        int stackCounter;                   // Matrix stack counter
+
+        MStack* stackProjection;            // Matrix projection stack for push/pop
+        int stackProjectionCounter;         // Matrix projection stack counter
+
+        MStack* stackTransform;             // Matrix transformation stack for push/pop
+        int stackTransformCounter;          // Matrix transformation stack counter
 
         unsigned int defaultTextureId;      // Default texture used on shapes/poly drawing (required by shader)
         unsigned int activeTextureId[RL_DEFAULT_BATCH_MAX_TEXTURE_UNITS];    // Active texture ids to be enabled on batch drawing (0 active by default)
@@ -1033,8 +1089,16 @@ void rlMultMatrixf(float *matf) { glMultMatrixf(matf); }
 // Choose the current matrix to be transformed
 void rlMatrixMode(int mode)
 {
-    if (mode == RL_PROJECTION) RLGL.State.currentMatrix = &RLGL.State.projection;
-    else if (mode == RL_MODELVIEW) RLGL.State.currentMatrix = &RLGL.State.modelview;
+    if (mode == RL_PROJECTION) {
+        RLGL.State.currentMatrix = &RLGL.State.stackProjection->data;
+    }
+    else if (mode == RL_MODELVIEW) {
+        if (RLGL.State.stackTransformCounter == 0) {
+            RLGL.State.currentMatrix = &RLGL.State.modelview;
+        } else {
+            RLGL.State.currentMatrix = &RLGL.State.stackTransform->data;
+        }
+    }
     //else if (mode == RL_TEXTURE) // Not supported
 
     RLGL.State.currentMatrixMode = mode;
@@ -1043,32 +1107,50 @@ void rlMatrixMode(int mode)
 // Push the current matrix into RLGL.State.stack
 void rlPushMatrix(void)
 {
-    if (RLGL.State.stackCounter >= RL_MAX_MATRIX_STACK_SIZE) TRACELOG(RL_LOG_ERROR, "RLGL: Matrix stack overflow (RL_MAX_MATRIX_STACK_SIZE)");
-
     if (RLGL.State.currentMatrixMode == RL_MODELVIEW)
     {
         RLGL.State.transformRequired = true;
-        RLGL.State.currentMatrix = &RLGL.State.transform;
+        rl_Matrix_push(&RLGL.State.stackTransform, RLGL.State.stackTransform->data);
+        RLGL.State.stackTransformCounter++;
+        RLGL.State.currentMatrix = &RLGL.State.stackTransform->data;
+        RLGL.State.transform = RLGL.State.currentMatrix;
+    } else {
+        rl_Matrix_push(&RLGL.State.stackProjection, RLGL.State.stackProjection->data);
+        RLGL.State.stackProjectionCounter++;
+        RLGL.State.currentMatrix = &RLGL.State.stackProjection->data;
+        RLGL.State.projection = RLGL.State.currentMatrix;
     }
-
-    RLGL.State.stack[RLGL.State.stackCounter] = *RLGL.State.currentMatrix;
-    RLGL.State.stackCounter++;
 }
 
 // Pop lattest inserted matrix from RLGL.State.stack
 void rlPopMatrix(void)
 {
-    if (RLGL.State.stackCounter > 0)
+    if (RLGL.State.currentMatrixMode == RL_MODELVIEW)
     {
-        Matrix mat = RLGL.State.stack[RLGL.State.stackCounter - 1];
-        *RLGL.State.currentMatrix = mat;
-        RLGL.State.stackCounter--;
-    }
+        if (RLGL.State.stackTransformCounter > 0) {
+            MStack* temp = RLGL.State.stackTransform;
+            RLGL.State.stackTransform = RLGL.State.stackTransform->next;
+            RL_FREE(temp);
+            RLGL.State.stackTransformCounter--;
 
-    if ((RLGL.State.stackCounter == 0) && (RLGL.State.currentMatrixMode == RL_MODELVIEW))
-    {
-        RLGL.State.currentMatrix = &RLGL.State.modelview;
-        RLGL.State.transformRequired = false;
+            if (RLGL.State.stackTransformCounter == 0) {
+                RLGL.State.transformRequired = false;
+                RLGL.State.currentMatrix = &RLGL.State.modelview;
+                RLGL.State.transform = NULL;
+            } else {
+                RLGL.State.currentMatrix = &RLGL.State.stackTransform->data;
+                RLGL.State.transform = RLGL.State.currentMatrix;
+            }
+        }
+    } else {
+        if (RLGL.State.stackProjectionCounter > 0) {
+            MStack* temp = RLGL.State.stackProjection;
+            RLGL.State.stackProjection = RLGL.State.stackProjection->next;
+            RL_FREE(temp);
+            RLGL.State.stackProjectionCounter--;
+            RLGL.State.currentMatrix = &RLGL.State.stackProjection->data;
+            RLGL.State.projection = RLGL.State.currentMatrix;
+        }
     }
 }
 
@@ -1309,7 +1391,8 @@ void rlEnd(void)
         // WARNING: If we are between rlPushMatrix() and rlPopMatrix() and we need to force a rlDrawRenderBatch(),
         // we need to call rlPopMatrix() before to recover *RLGL.State.currentMatrix (RLGL.State.modelview) for the next forced draw call!
         // If we have multiple matrix pushed, it will require "RLGL.State.stackCounter" pops before launching the draw
-        for (int i = RLGL.State.stackCounter; i >= 0; i--) rlPopMatrix();
+        rl_Matrix_clear(&RLGL.State.stackTransform);
+        RLGL.State.stackTransformCounter = 0;
         rlDrawRenderBatch(RLGL.currentBatch);
     }
 }
@@ -1325,9 +1408,9 @@ void rlVertex3f(float x, float y, float z)
     // Transform provided vector if required
     if (RLGL.State.transformRequired)
     {
-        tx = RLGL.State.transform.m0*x + RLGL.State.transform.m4*y + RLGL.State.transform.m8*z + RLGL.State.transform.m12;
-        ty = RLGL.State.transform.m1*x + RLGL.State.transform.m5*y + RLGL.State.transform.m9*z + RLGL.State.transform.m13;
-        tz = RLGL.State.transform.m2*x + RLGL.State.transform.m6*y + RLGL.State.transform.m10*z + RLGL.State.transform.m14;
+        tx = RLGL.State.transform[0].m0*x + RLGL.State.transform[0].m4*y + RLGL.State.transform[0].m8*z + RLGL.State.transform[0].m12;
+        ty = RLGL.State.transform[0].m1*x + RLGL.State.transform[0].m5*y + RLGL.State.transform[0].m9*z + RLGL.State.transform[0].m13;
+        tz = RLGL.State.transform[0].m2*x + RLGL.State.transform[0].m6*y + RLGL.State.transform[0].m10*z + RLGL.State.transform[0].m14;
     }
 
     // Verify that current vertex buffer elements limit has not been reached
@@ -1898,11 +1981,13 @@ void rlglInit(int width, int height)
     RLGL.currentBatch = &RLGL.defaultBatch;
 
     // Init stack matrices (emulating OpenGL 1.1)
-    for (int i = 0; i < RL_MAX_MATRIX_STACK_SIZE; i++) RLGL.State.stack[i] = rlMatrixIdentity();
+    rl_Matrix_push(&RLGL.State.stackTransform, rlMatrixIdentity());
+    rl_Matrix_push(&RLGL.State.stackProjection, rlMatrixIdentity());
+
 
     // Init internal matrices
-    RLGL.State.transform = rlMatrixIdentity();
-    RLGL.State.projection = rlMatrixIdentity();
+    RLGL.State.transform = NULL;
+    RLGL.State.projection = &RLGL.State.stackProjection->data;
     RLGL.State.modelview = rlMatrixIdentity();
     RLGL.State.currentMatrix = &RLGL.State.modelview;
 #endif  // GRAPHICS_API_OPENGL_33 || GRAPHICS_API_OPENGL_ES2
@@ -1959,6 +2044,10 @@ void rlglClose(void)
 
     glDeleteTextures(1, &RLGL.State.defaultTextureId); // Unload default texture
     TRACELOG(RL_LOG_INFO, "TEXTURE: [ID %i] Default texture unloaded successfully", RLGL.State.defaultTextureId);
+
+    // unload matrix stacks
+    rl_Matrix_delete(&RLGL.State.stackTransform);
+    rl_Matrix_delete(&RLGL.State.stackProjection);
 #endif
 }
 
@@ -2484,7 +2573,7 @@ void rlDrawRenderBatch(rlRenderBatch *batch)
 
     // Draw batch vertex buffers (considering VR stereo if required)
     //------------------------------------------------------------------------------------------------------------
-    Matrix matProjection = RLGL.State.projection;
+    Matrix matProjection = RLGL.State.projection[0];
     Matrix matModelView = RLGL.State.modelview;
 
     int eyeCount = 1;
@@ -2510,7 +2599,7 @@ void rlDrawRenderBatch(rlRenderBatch *batch)
             glUseProgram(RLGL.State.currentShaderId);
 
             // Create modelview-projection matrix and upload to shader
-            Matrix matMVP = rlMatrixMultiply(RLGL.State.modelview, RLGL.State.projection);
+            Matrix matMVP = rlMatrixMultiply(RLGL.State.modelview, RLGL.State.projection[0]);
             float matMVPfloat[16] = {
                 matMVP.m0, matMVP.m1, matMVP.m2, matMVP.m3,
                 matMVP.m4, matMVP.m5, matMVP.m6, matMVP.m7,
@@ -2605,7 +2694,7 @@ void rlDrawRenderBatch(rlRenderBatch *batch)
     batch->currentDepth = -1.0f;
 
     // Restore projection/modelview matrices
-    RLGL.State.projection = matProjection;
+    RLGL.State.projection[0] = matProjection;
     RLGL.State.modelview = matModelView;
 
     // Reset RLGL.currentBatch->draws array
@@ -3894,7 +3983,7 @@ void rlComputeShaderDispatch(unsigned int groupX, unsigned int groupY, unsigned 
 unsigned int rlLoadShaderBuffer(unsigned long long size, const void *data, int usageHint)
 {
     unsigned int ssbo = 0;
-    
+
 #if defined(GRAPHICS_API_OPENGL_43)
     glGenBuffers(1, &ssbo);
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo);
@@ -3925,7 +4014,7 @@ void rlUpdateShaderBufferElements(unsigned int id, const void *data, unsigned lo
 unsigned long long rlGetShaderBufferSize(unsigned int id)
 {
     long long size = 0;
-    
+
 #if defined(GRAPHICS_API_OPENGL_43)
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, id);
     glGetInteger64v(GL_SHADER_STORAGE_BUFFER_SIZE, &size);
@@ -4028,7 +4117,7 @@ Matrix rlGetMatrixProjection(void)
     m.m15 = mat[15];
     return m;
 #else
-    return RLGL.State.projection;
+    return RLGL.State.projection[0];
 #endif
 }
 
@@ -4041,7 +4130,9 @@ Matrix rlGetMatrixTransform(void)
     // Is this the right order? or should we start with the first stored matrix instead of the last one?
     //Matrix matStackTransform = rlMatrixIdentity();
     //for (int i = RLGL.State.stackCounter; i > 0; i--) matStackTransform = rlMatrixMultiply(RLGL.State.stack[i], matStackTransform);
-    mat = RLGL.State.transform;
+    if (RLGL.State.transform != NULL) {
+        mat = RLGL.State.transform[0];
+    }
 #endif
     return mat;
 }
@@ -4078,7 +4169,7 @@ void rlSetMatrixModelview(Matrix view)
 void rlSetMatrixProjection(Matrix projection)
 {
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
-    RLGL.State.projection = projection;
+    RLGL.State.projection[0] = projection;
 #endif
 }
 
