@@ -24,12 +24,11 @@ Some people ported raylib to other languages in form of bindings or wrappers to 
 | jaylib             | 3.7 | [Java](https://en.wikipedia.org/wiki/Java_(programming_language))           | https://github.com/electronstudio/jaylib/   |
 | raylib-j           | 3.7 | [Java](https://en.wikipedia.org/wiki/Java_(programming_language))           | https://github.com/CreedVI/Raylib-J   |
 | node-raylib        | 3.5 | [Node.js](https://nodejs.org/en/)        | https://github.com/RobLoach/node-raylib     |
-| raylib-v7          | 3.5 | [JavaScript (v7)](https://en.wikipedia.org/wiki/JavaScript)      | https://github.com/Rabios/raylib-v7        |
 | raylib-php         | 3.5 | [PHP](https://en.wikipedia.org/wiki/PHP)      | https://github.com/joseph-montanez/raylib-php   |
 | raylib-phpcpp      | 3.5 | [PHP](https://en.wikipedia.org/wiki/PHP)      | https://github.com/oraoto/raylib-phpcpp      |
 | raylib-factor      | 3.5 | [Factor](https://factorcode.org/)        | https://github.com/ArnautDaniel/raylib-factor   |
 | gforth-raylib      | 3.5 | [Gforth](https://gforth.org/)            | https://github.com/ArnautDaniel/gforth-raylib   |
-| hxRaylib           | 4.0-dev | [Haxe](https://haxe.org/)                | https://github.com/ForeignSasquatch/hxRaylib    |
+| hxRaylib           | 4.0 | [Haxe](https://haxe.org/)                | https://github.com/ForeignSasquatch/hxRaylib    |
 | raylib-wren        | **4.0** | [Wren](http://wren.io/)           | https://github.com/TSnake41/raylib-wren           |
 | raylib_odin_bindings | 4.0-dev | [Odin](https://odin-lang.org/)            | https://github.com/Deathbat2190/raylib_odin_bindings     |
 | raylib-odin        | **4.0**| [Odin](https://odin-lang.org/)            | https://github.com/odin-lang/Odin/tree/master/vendor/raylib     |
@@ -87,6 +86,7 @@ These are older raylib bindings that are more than 2 versions old or have not be
 | clj-raylib         | 3.0 | [Clojure](https://clojure.org/)          | https://github.com/lsevero/clj-raylib       |
 | QuickJS-raylib     | 3.0 | [QuickJS](https://bellard.org/quickjs/)  | https://github.com/sntg-p/QuickJS-raylib    |
 | raylib-duktape     | 2.6 | [JavaScript (Duktape)](https://en.wikipedia.org/wiki/JavaScript) | https://github.com/RobLoach/raylib-duktape |
+| raylib-v7          | 3.5 | [JavaScript (v7)](https://en.wikipedia.org/wiki/JavaScript)      | https://github.com/Rabios/raylib-v7        |
 | raylib-chaiscript  | 2.6 | [ChaiScript](http://chaiscript.com/)     | https://github.com/RobLoach/raylib-chaiscript        |
 | raylib-squirrel    | 2.5 | [Squirrel](http://www.squirrel-lang.org/)     | https://github.com/RobLoach/raylib-squirrel    |
 | racket-raylib-2d   | 2.5 | [Racket](https://racket-lang.org/)       | https://github.com/arvyy/racket-raylib-2d           |
