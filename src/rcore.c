@@ -2188,7 +2188,8 @@ void BeginScissorMode(int x, int y, int width, int height)
     {
         Vector2 scale = GetWindowScaleDPI();
 
-        rlScissor((int)(x*scale.x), (int)(CORE.Window.currentFbo.height - (y + height)*scale.y), (int)(width*scale.x), (int)(height*scale.y));
+        rlScissor((int)(x*scale.x), (int)(CORE.Window.currentFbo.height - y*scale.y - height/scale.y),
+                  (int)(width*scale.x), (int)(height*scale.y));
     }
     else
     {

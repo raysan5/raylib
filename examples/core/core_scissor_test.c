@@ -20,6 +20,9 @@ int main(void)
     const int screenWidth = 800;
     const int screenHeight = 450;
 
+    // If you have a high DPI screen you'll have to set the High DPI flag.
+    // SetConfigFlags(FLAG_WINDOW_HIGHDPI);
+
     InitWindow(screenWidth, screenHeight, "raylib [core] example - scissor test");
 
     Rectangle scissorArea = { 0, 0, 300, 300 };
