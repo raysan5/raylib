@@ -418,7 +418,7 @@ typedef enum {
 // NOTE 1: Filtering considers mipmaps if available in the texture
 // NOTE 2: Filter is accordingly set for minification and magnification
 typedef enum {
-    RL_TEXTURE_FILTER_POINT = 0,               // No filter, just pixel aproximation
+    RL_TEXTURE_FILTER_POINT = 0,               // No filter, just pixel approximation
     RL_TEXTURE_FILTER_BILINEAR,                // Linear filtering
     RL_TEXTURE_FILTER_TRILINEAR,               // Trilinear filtering (linear with mipmaps)
     RL_TEXTURE_FILTER_ANISOTROPIC_4X,          // Anisotropic filtering 4x
