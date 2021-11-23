@@ -5439,6 +5439,9 @@ static int32_t AndroidInputCallback(struct android_app *app, AInputEvent *event)
         return 0;
     }
 
+    // Register touch points count
+    CORE.Input.Touch.pointCount = AMotionEvent_getPointerCount(event);
+
     int32_t action = AMotionEvent_getAction(event);
     unsigned int flags = action & AMOTION_EVENT_ACTION_MASK;
 
@@ -5446,9 +5449,6 @@ static int32_t AndroidInputCallback(struct android_app *app, AInputEvent *event)
     // otherwise they get stuck until next pointer event
     if (flags == AMOTION_EVENT_ACTION_POINTER_UP || flags == AMOTION_EVENT_ACTION_UP)
         CORE.Input.Touch.pointCount -= 1;
-
-    // Register touch points count
-    CORE.Input.Touch.pointCount = AMotionEvent_getPointerCount(event);
 
     for (int i = 0; (i < CORE.Input.Touch.pointCount) && (i < MAX_TOUCH_POINTS); i++)
     {
