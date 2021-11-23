@@ -5439,6 +5439,14 @@ static int32_t AndroidInputCallback(struct android_app *app, AInputEvent *event)
         return 0;
     }
 
+    int32_t action = AMotionEvent_getAction(event);
+    unsigned int flags = action & AMOTION_EVENT_ACTION_MASK;
+
+    // Don't register pointers lifted during this action,
+    // otherwise they get stuck until next pointer event
+    if (flags == AMOTION_EVENT_ACTION_POINTER_UP || flags == AMOTION_EVENT_ACTION_UP)
+        CORE.Input.Touch.pointCount -= 1;
+
     // Register touch points count
     CORE.Input.Touch.pointCount = AMotionEvent_getPointerCount(event);
 
@@ -5454,9 +5462,6 @@ static int32_t AndroidInputCallback(struct android_app *app, AInputEvent *event)
         CORE.Input.Touch.position[i].x /= (float)GetScreenWidth();
         CORE.Input.Touch.position[i].y /= (float)GetScreenHeight();
     }
-
-    int32_t action = AMotionEvent_getAction(event);
-    unsigned int flags = action & AMOTION_EVENT_ACTION_MASK;
 
     if (flags == AMOTION_EVENT_ACTION_DOWN || flags == AMOTION_EVENT_ACTION_MOVE) CORE.Input.Touch.currentTouchState[MOUSE_BUTTON_LEFT] = 1;
     else if (flags == AMOTION_EVENT_ACTION_UP) CORE.Input.Touch.currentTouchState[MOUSE_BUTTON_LEFT] = 0;
