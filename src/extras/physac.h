@@ -72,6 +72,16 @@
 #if !defined(PHYSAC_H)
 #define PHYSAC_H
 
+// Function specifiers in case library is build/used as a shared library (Windows)
+// NOTE: Microsoft specifiers to tell compiler that symbols are imported/exported from a .dll
+#if defined(_WIN32)
+    #if defined(BUILD_LIBTYPE_SHARED)
+        #define PHYSACDEF __declspec(dllexport)     // We are building the library as a Win32 shared library (.dll)
+    #elif defined(USE_LIBTYPE_SHARED)
+        #define PHYSACDEF __declspec(dllimport)     // We are using the library as a Win32 shared library (.dll)
+    #endif
+#endif
+
 #ifndef PHYSACDEF
     #define PHYSACDEF       // We are building or using physac as a static library
 #endif
