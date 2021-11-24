@@ -2191,7 +2191,7 @@ void BeginScissorMode(int x, int y, int width, int height)
             (int)(GetScreenHeight() * scale.y - (((y + height) * scale.y))),
             (int)(width*scale.x),
             (int)(height*scale.y));
-#elif
+#else
     if ((CORE.Window.flags & FLAG_WINDOW_HIGHDPI) > 0)
     {
         Vector2 scale = GetWindowScaleDPI();
