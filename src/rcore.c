@@ -2186,16 +2186,11 @@ void BeginScissorMode(int x, int y, int width, int height)
 
 #if defined(__APPLE__)
     Vector2 scale = GetWindowScaleDPI();
-    rlScissor(
-            (int)(x*scale.x),
-            (int)(GetScreenHeight() * scale.y - (((y + height) * scale.y))),
-            (int)(width*scale.x),
-            (int)(height*scale.y));
+    rlScissor((int)(x*scale.x), (int)(GetScreenHeight()*scale.y - (((y + height)*scale.y))), (int)(width*scale.x), (int)(height*scale.y));
 #else
     if ((CORE.Window.flags & FLAG_WINDOW_HIGHDPI) > 0)
     {
         Vector2 scale = GetWindowScaleDPI();
-
         rlScissor((int)(x*scale.x), (int)(CORE.Window.currentFbo.height - (y + height)*scale.y), (int)(width*scale.x), (int)(height*scale.y));
     }
     else
