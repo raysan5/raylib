@@ -11,7 +11,7 @@ Some people ported raylib to other languages in form of bindings or wrappers to 
 | Raylib-CsLo          | **4.0** | [C#](https://en.wikipedia.org/wiki/C_Sharp_(programming_language))       | https://github.com/NotNotTech/Raylib-CsLo      |
 | raylib-boo         | 3.7 | [Boo](http://boo-language.github.io/) | https://github.com/Rabios/raylib-boo          |
 | bindbc-raylib3     | **4.0** | [D](https://dlang.org/)               | https://github.com/o3o/bindbc-raylib3   |
-| dray               | 3.5 | [D](https://dlang.org/)               | https://github.com/xdrie/dray       |
+| dray               | **4.0** | [D](https://dlang.org/)               | https://github.com/xdrie/dray       |
 | raylib-go          | **4.0** | [Go](https://golang.org/)             | https://github.com/gen2brain/raylib-go  |
 | raylib-rs          | 3.5 | [Rust](https://www.rust-lang.org/)    | https://github.com/deltaphc/raylib-rs     |
 | raylib-lua         | **4.0** | [Lua](http://www.lua.org/)            | https://github.com/TSnake41/raylib-lua       |
