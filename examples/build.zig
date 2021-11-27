@@ -21,13 +21,20 @@ fn add_module(comptime module: []const u8, b: *std.build.Builder, target: std.zi
         // zig's mingw headers do not include pthread.h
         if (std.mem.eql(u8, "core_loading_thread", name) and target.getOsTag() == .windows) continue;
 
-        const exe = b.addExecutable(name, path);
+        const exe = b.addExecutable(name, null);
+        exe.addCSourceFile(path, switch (target.getOsTag()) {
+            .windows => &[_][]const u8{},
+            .linux => &[_][]const u8{},
+            .macos => &[_][]const u8{"-DPLATFORM_DESKTOP"},
+            else => @panic("Unsupported OS"),
+        });
         exe.setTarget(target);
         exe.setBuildMode(mode);
         exe.linkLibC();
         exe.addObjectFile(switch (target.getOsTag()) {
             .windows => "../src/raylib.lib",
             .linux => "../src/libraylib.a",
+            .macos => "../src/libraylib.a",
             else => @panic("Unsupported OS"),
         });
 
@@ -48,6 +55,14 @@ fn add_module(comptime module: []const u8, b: *std.build.Builder, target: std.zi
                 exe.linkSystemLibrary("dl");
                 exe.linkSystemLibrary("m");
                 exe.linkSystemLibrary("X11");
+            },
+            .macos => {
+                exe.linkFramework("Foundation");
+                exe.linkFramework("Cocoa");
+                exe.linkFramework("OpenGL");
+                exe.linkFramework("CoreAudio");
+                exe.linkFramework("CoreVideo");
+                exe.linkFramework("IOKit");
             },
             else => {
                 @panic("Unsupported OS");
