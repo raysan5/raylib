@@ -9,6 +9,7 @@
 *   #define SUPPORT_FILEFORMAT_TGA
 *   #define SUPPORT_FILEFORMAT_JPG
 *   #define SUPPORT_FILEFORMAT_GIF
+*   #define SUPPORT_FILEFORMAT_QOI
 *   #define SUPPORT_FILEFORMAT_PSD
 *   #define SUPPORT_FILEFORMAT_PIC
 *   #define SUPPORT_FILEFORMAT_HDR
@@ -124,6 +125,14 @@
                                             // NOTE: Used to read image data (multiple formats support)
 #endif
 
+#if defined(SUPPORT_FILEFORMAT_QOI)
+	#define QOI_MALLOC RL_MALLOC
+	#define QOI_FREE RL_FREE
+    
+    #define QOI_IMPLEMENTATION
+    #include "external/qoi.h"
+#endif
+
 #if defined(SUPPORT_IMAGE_EXPORT)
     #define STBIW_MALLOC RL_MALLOC
     #define STBIW_FREE RL_FREE
@@ -202,7 +211,8 @@ Image LoadImage(const char *fileName)
     defined(SUPPORT_FILEFORMAT_PIC) || \
     defined(SUPPORT_FILEFORMAT_HDR) || \
     defined(SUPPORT_FILEFORMAT_PSD)
-#define STBI_REQUIRED
+
+    #define STBI_REQUIRED
 #endif
 
     // Loading file to memory
@@ -362,6 +372,14 @@ Image LoadImageFromMemory(const char *fileType, const unsigned char *fileData, i
 #endif
     }
 #endif
+#if defined(SUPPORT_FILEFORMAT_QOI)
+    else if (TextIsEqual(fileExtLower, ".qoi")) 
+    {
+        image.data = qoi_decode(fileData, dataSize, &image.width, &image.height, 4);
+        image.format = PIXELFORMAT_UNCOMPRESSED_R8G8B8A8;
+        image.mipmaps = 1;
+    }
+#endif
 #if defined(SUPPORT_FILEFORMAT_DDS)
     else if (TextIsEqual(fileExtLower, ".dds")) image = LoadDDS(fileData, dataSize);
 #endif
@@ -478,6 +496,17 @@ bool ExportImage(Image image, const char *fileName)
 #endif
 #if defined(SUPPORT_FILEFORMAT_JPG)
     else if (IsFileExtension(fileName, ".jpg")) success = stbi_write_jpg(fileName, image.width, image.height, channels, imgData, 90);  // JPG quality: between 1 and 100
+#endif
+#if defined(SUPPORT_FILEFORMAT_QOI)
+    else if (IsFileExtension(fileName, ".qoi"))
+    {
+        channels = 0;
+        if (image.format == PIXELFORMAT_UNCOMPRESSED_R8G8B8) channels = 3;
+        else if (image.format == PIXELFORMAT_UNCOMPRESSED_R8G8B8A8) channels = 4;
+        else TRACELOG(LOG_WARNING, "IMAGE: Image pixel format must be R8G8B8 or R8G8B8A8");
+        
+        if ((channels == 3) || (channels == 4)) success = qoi_write(fileName, imgData, image.width, image.height, channels);
+    }
 #endif
 #if defined(SUPPORT_FILEFORMAT_KTX)
     else if (IsFileExtension(fileName, ".ktx")) success = SaveKTX(image, fileName);

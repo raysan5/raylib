@@ -57,6 +57,7 @@ cmake_dependent_option(SUPPORT_FILEFORMAT_BMP "Support loading BMP as textures" 
 cmake_dependent_option(SUPPORT_FILEFORMAT_TGA "Support loading TGA as textures" ${OFF} CUSTOMIZE_BUILD OFF)
 cmake_dependent_option(SUPPORT_FILEFORMAT_JPG "Support loading JPG as textures" ${OFF} CUSTOMIZE_BUILD OFF)
 cmake_dependent_option(SUPPORT_FILEFORMAT_GIF "Support loading GIF as textures" ${OFF} CUSTOMIZE_BUILD OFF)
+cmake_dependent_option(SUPPORT_FILEFORMAT_QOI "Support loading QOI as textures" ${OFF} CUSTOMIZE_BUILD OFF)
 cmake_dependent_option(SUPPORT_FILEFORMAT_PSD "Support loading PSD as textures" ${OFF} CUSTOMIZE_BUILD OFF)
 cmake_dependent_option(SUPPORT_FILEFORMAT_PKM "Support loading PKM as textures" ${OFF} CUSTOMIZE_BUILD OFF)
 cmake_dependent_option(SUPPORT_FILEFORMAT_PVR "Support loading PVR as textures" ${OFF} CUSTOMIZE_BUILD OFF)
