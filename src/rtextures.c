@@ -375,7 +375,10 @@ Image LoadImageFromMemory(const char *fileType, const unsigned char *fileData, i
 #if defined(SUPPORT_FILEFORMAT_QOI)
     else if (TextIsEqual(fileExtLower, ".qoi")) 
     {
-        image.data = qoi_decode(fileData, dataSize, &image.width, &image.height, 4);
+        qoi_desc desc = { 0 };
+        image.data = qoi_decode(fileData, dataSize, &desc, 4);
+        image.width = desc.width;
+        image.height = desc.height;
         image.format = PIXELFORMAT_UNCOMPRESSED_R8G8B8A8;
         image.mipmaps = 1;
     }
@@ -505,7 +508,16 @@ bool ExportImage(Image image, const char *fileName)
         else if (image.format == PIXELFORMAT_UNCOMPRESSED_R8G8B8A8) channels = 4;
         else TRACELOG(LOG_WARNING, "IMAGE: Image pixel format must be R8G8B8 or R8G8B8A8");
         
-        if ((channels == 3) || (channels == 4)) success = qoi_write(fileName, imgData, image.width, image.height, channels);
+        if ((channels == 3) || (channels == 4))
+        {
+            qoi_desc desc = { 0 };
+            desc.width = image.width; 
+            desc.height = image.height;
+            desc.channels = channels;
+            desc.colorspace = QOI_SRGB;
+
+            success = qoi_write(fileName, imgData, &desc);
+        }
     }
 #endif
 #if defined(SUPPORT_FILEFORMAT_KTX)
