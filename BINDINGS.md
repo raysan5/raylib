@@ -22,7 +22,7 @@ Some people ported raylib to other languages in form of bindings or wrappers to 
 | Ray4Laz            | **4.0** | [Pascal](https://en.wikipedia.org/wiki/Pascal_(programming_language))         | https://github.com/GuvaCode/Ray4Laz      |
 | pyraylib          | 3.7 | [Python](https://www.python.org/)        |   https://github.com/Ho011/pyraylib       |
 | raylib-python-cffi | **4.0** | [Python](https://www.python.org/)        | https://github.com/electronstudio/raylib-python-cffi    |
-| jaylib             | 3.7 | [Java](https://en.wikipedia.org/wiki/Java_(programming_language))           | https://github.com/electronstudio/jaylib/   |
+| jaylib             | **4.0** | [Java](https://en.wikipedia.org/wiki/Java_(programming_language))           | https://github.com/electronstudio/jaylib/   |
 | raylib-j           | 3.7 | [Java](https://en.wikipedia.org/wiki/Java_(programming_language))           | https://github.com/CreedVI/Raylib-J   |
 | node-raylib        | 3.5 | [Node.js](https://nodejs.org/en/)        | https://github.com/RobLoach/node-raylib     |
 | raylib-php         | 3.5 | [PHP](https://en.wikipedia.org/wiki/PHP)      | https://github.com/joseph-montanez/raylib-php   |
