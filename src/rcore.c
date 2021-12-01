@@ -3472,6 +3472,7 @@ const char *GetKeyAsText(int key)
         case KEY_KP_ADD: res = "KEY_KP_ADD"; break;
         case KEY_KP_ENTER: res = "KEY_KP_ENTER"; break;
         case KEY_KP_EQUAL: res = "KEY_KP_EQUAL"; break;
+        default: res = "KEY_UNKNOWN"; break;    // In case the key is not found
     }
 
     return res;
