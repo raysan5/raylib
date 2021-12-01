@@ -3359,6 +3359,124 @@ int GetCharPressed(void)
     return value;
 }
 
+// Get a key as text
+const char *GetKeyAsText(int key)
+{
+    const char *res = "";
+
+    switch (key)
+    {
+        case KEY_NULL: res = "KEY_NULL"; break;
+        case KEY_APOSTROPHE: res = "KEY_APOSTROPHE"; break;
+        case KEY_COMMA: res = "KEY_COMMA"; break;
+        case KEY_MINUS: res = "KEY_MINUS"; break;
+        case KEY_PERIOD: res = "KEY_PERIOD"; break;
+        case KEY_SLASH: res = "KEY_SLASH"; break;
+        case KEY_ZERO: res = "KEY_ZERO"; break;
+        case KEY_ONE: res = "KEY_ONE"; break;
+        case KEY_TWO: res = "KEY_TWO"; break;
+        case KEY_THREE: res = "KEY_THREE"; break;
+        case KEY_FOUR: res = "KEY_FOUR"; break;
+        case KEY_FIVE: res = "KEY_FIVE"; break;
+        case KEY_SIX: res = "KEY_SIX"; break;
+        case KEY_SEVEN: res = "KEY_SEVEN"; break;
+        case KEY_EIGHT: res = "KEY_EIGHT"; break;
+        case KEY_NINE: res = "KEY_NINE"; break;
+        case KEY_SEMICOLON: res = "KEY_SEMICOLON"; break;
+        case KEY_EQUAL: res = "KEY_EQUAL"; break;
+        case KEY_A: res = "KEY_A"; break;
+        case KEY_B: res = "KEY_B"; break;
+        case KEY_C: res = "KEY_C"; break;
+        case KEY_D: res = "KEY_D"; break;
+        case KEY_E: res = "KEY_E"; break;
+        case KEY_F: res = "KEY_F"; break;
+        case KEY_G: res = "KEY_G"; break;
+        case KEY_H: res = "KEY_H"; break;
+        case KEY_I: res = "KEY_I"; break;
+        case KEY_J: res = "KEY_J"; break;
+        case KEY_K: res = "KEY_K"; break;
+        case KEY_L: res = "KEY_L"; break;
+        case KEY_M: res = "KEY_M"; break;
+        case KEY_N: res = "KEY_N"; break;
+        case KEY_O: res = "KEY_O"; break;
+        case KEY_P: res = "KEY_P"; break;
+        case KEY_Q: res = "KEY_Q"; break;
+        case KEY_R: res = "KEY_R"; break;
+        case KEY_S: res = "KEY_S"; break;
+        case KEY_T: res = "KEY_T"; break;
+        case KEY_U: res = "KEY_U"; break;
+        case KEY_V: res = "KEY_V"; break;
+        case KEY_W: res = "KEY_W"; break;
+        case KEY_X: res = "KEY_X"; break;
+        case KEY_Y: res = "KEY_Y"; break;
+        case KEY_Z: res = "KEY_Z"; break;
+        case KEY_LEFT_BRACKET: res = "KEY_LEFT_BRACKET"; break;
+        case KEY_BACKSLASH: res = "KEY_BACKSLASH"; break;
+        case KEY_RIGHT_BRACKET: res = "KEY_RIGHT_BRACKET"; break;
+        case KEY_GRAVE: res = "KEY_GRAVE"; break;
+        case KEY_SPACE: res = "KEY_SPACE"; break;
+        case KEY_ESCAPE: res = "KEY_ESCAPE"; break;
+        case KEY_ENTER: res = "KEY_ENTER"; break;
+        case KEY_TAB: res = "KEY_TAB"; break;
+        case KEY_BACKSPACE: res = "KEY_BACKSPACE"; break;
+        case KEY_INSERT: res = "KEY_INSERT"; break;
+        case KEY_DELETE: res = "KEY_DELETE"; break;
+        case KEY_RIGHT: res = "KEY_RIGHT"; break;
+        case KEY_LEFT: res = "KEY_LEFT"; break;
+        case KEY_DOWN: res = "KEY_DOWN"; break;
+        case KEY_UP: res = "KEY_UP"; break;
+        case KEY_PAGE_UP: res = "KEY_PAGE_UP"; break;
+        case KEY_PAGE_DOWN: res = "KEY_PAGE_DOWN"; break;
+        case KEY_HOME: res = "KEY_HOME"; break;
+        case KEY_END: res = "KEY_END"; break;
+        case KEY_CAPS_LOCK: res = "KEY_CAPS_LOCK"; break;
+        case KEY_SCROLL_LOCK: res = "KEY_SCROLL_LOCK"; break;
+        case KEY_NUM_LOCK: res = "KEY_NUM_LOCK"; break;
+        case KEY_PRINT_SCREEN: res = "KEY_PRINT_SCREEN"; break;
+        case KEY_PAUSE: res = "KEY_PAUSE"; break;
+        case KEY_F1: res = "KEY_F1"; break;
+        case KEY_F2: res = "KEY_F2"; break;
+        case KEY_F3: res = "KEY_F3"; break;
+        case KEY_F4: res = "KEY_F4"; break;
+        case KEY_F5: res = "KEY_F5"; break;
+        case KEY_F6: res = "KEY_F6"; break;
+        case KEY_F7: res = "KEY_F7"; break;
+        case KEY_F8: res = "KEY_F8"; break;
+        case KEY_F9: res = "KEY_F9"; break;
+        case KEY_F10: res = "KEY_F10"; break;
+        case KEY_F11: res = "KEY_F11"; break;
+        case KEY_F12: res = "KEY_F12"; break;
+        case KEY_LEFT_SHIFT: res = "KEY_LEFT_SHIFT"; break;
+        case KEY_LEFT_CONTROL: res = "KEY_LEFT_CONTROL"; break;
+        case KEY_LEFT_ALT: res = "KEY_LEFT_ALT"; break;
+        case KEY_LEFT_SUPER: res = "KEY_LEFT_SUPER"; break;
+        case KEY_RIGHT_SHIFT: res = "KEY_RIGHT_SHIFT"; break;
+        case KEY_RIGHT_CONTROL: res = "KEY_RIGHT_CONTROL"; break;
+        case KEY_RIGHT_ALT: res = "KEY_RIGHT_ALT"; break;
+        case KEY_RIGHT_SUPER: res = "KEY_RIGHT_SUPER"; break;
+        case KEY_KB_MENU: res = "KEY_KB_MENU"; break;
+        case KEY_KP_0: res = "KEY_KP_0"; break;
+        case KEY_KP_1: res = "KEY_KP_1"; break;
+        case KEY_KP_2: res = "KEY_KP_2"; break;
+        case KEY_KP_3: res = "KEY_KP_3"; break;
+        case KEY_KP_4: res = "KEY_KP_4"; break;
+        case KEY_KP_5: res = "KEY_KP_5"; break;
+        case KEY_KP_6: res = "KEY_KP_6"; break;
+        case KEY_KP_7: res = "KEY_KP_7"; break;
+        case KEY_KP_8: res = "KEY_KP_8"; break;
+        case KEY_KP_9: res = "KEY_KP_9"; break;
+        case KEY_KP_DECIMAL: res = "KEY_KP_DECIMAL"; break;
+        case KEY_KP_DIVIDE: res = "KEY_KP_DIVIDE"; break;
+        case KEY_KP_MULTIPLY: res = "KEY_KP_MULTIPLY"; break;
+        case KEY_KP_SUBTRACT: res = "KEY_KP_SUBTRACT"; break;
+        case KEY_KP_ADD: res = "KEY_KP_ADD"; break;
+        case KEY_KP_ENTER: res = "KEY_KP_ENTER"; break;
+        case KEY_KP_EQUAL: res = "KEY_KP_EQUAL"; break;
+    }
+
+    return res;
+}
+
 // Set a custom key to exit program
 // NOTE: default exitKey is ESCAPE
 void SetExitKey(int key)
