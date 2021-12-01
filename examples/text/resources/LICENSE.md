@@ -6,7 +6,7 @@
 | fonts/setback.png              | [Brian Kent (AEnigma)](https://www.dafont.com/es/aenigma.d188) | [Freeware](https://www.dafont.com/es/setback.font)  |  Atlas created by [@raysan5](https://github.com/raysan5) |
 | fonts/jupiter_crash.png        | [Brian Kent (AEnigma)](https://www.dafont.com/es/aenigma.d188) | [Freeware](https://www.dafont.com/es/jupiter-crash.font)  |  Atlas created by [@raysan5](https://github.com/raysan5) |
 | fonts/mecha.png                | Captain Falcon | [Freeware](https://www.dafont.com/es/mecha-cf.font)  |  Atlas created by [@raysan5](https://github.com/raysan5) |
-| fonts/pixelplay.png            | Aleksander Shevchuk | [Freeware](https://www.dafont.com/es/pixelplay.fon)  |  Atlas created by [@raysan5](https://github.com/raysan5) |
+| fonts/pixelplay.png            | Aleksander Shevchuk | [Freeware](https://www.dafont.com/es/pixelplay.font)  |  Atlas created by [@raysan5](https://github.com/raysan5) |
 | fonts/pixantiqua.ttf           | Gerhard Großmann | [Freeware](https://www.dafont.com/es/pixantiqua.font)  |  Atlas created by [@raysan5](https://github.com/raysan5) |
 | anonymous_pro_bold.ttf         | [Mark Simonson](https://fonts.google.com/specimen/Anonymous+Pro) | [Open Font License](https://scripts.sil.org/cms/scripts/page.php?site_id=nrsi&id=OFL) | - |
 | custom_alagard.png             | [Brian Kent (AEnigma)](https://www.dafont.com/es/aenigma.d188) | [Freeware](https://www.dafont.com/es/jupiter-crash.font) | Atlas created by [@raysan5](https://github.com/raysan5) |
