@@ -8,7 +8,7 @@ Some people ported raylib to other languages in form of bindings or wrappers to 
 |:------------------:|:---------------:|:---------:|:----------:|-----------------------------------------------------------|
 | raylib             | **4.0** | [C/C++](https://en.wikipedia.org/wiki/C_(programming_language))    | Zlib | https://github.com/raysan5/raylib          |
 | Raylib-cs          | 3.7     | [C#](https://en.wikipedia.org/wiki/C_Sharp_(programming_language)) | Zlib | https://github.com/ChrisDill/Raylib-cs     |
-| Raylib-CsLo        | **4.0** | [C#](https://en.wikipedia.org/wiki/C_Sharp_(programming_language)) | LGPL | https://github.com/NotNotTech/Raylib-CsLo  |
+| Raylib-CsLo        | **4.0** | [C#](https://en.wikipedia.org/wiki/C_Sharp_(programming_language)) | LGPL-2.1 | https://github.com/NotNotTech/Raylib-CsLo  |
 | raylib-boo         | 3.7     | [Boo](http://boo-language.github.io/)| MIT | https://github.com/Rabios/raylib-boo          |
 | bindbc-raylib3     | **4.0** | [D](https://dlang.org/)              | BSL-1.0 | https://github.com/o3o/bindbc-raylib3     |
 | dray               | **4.0** | [D](https://dlang.org/)              | Apache-2.0 | https://github.com/xdrie/dray          |
