@@ -3112,6 +3112,7 @@ void SetTextureWrap(Texture2D texture, int wrap)
     {
         case TEXTURE_WRAP_REPEAT:
         {
+            // NOTE: It only works if NPOT textures are supported, i.e. OpenGL ES 2.0 could not support it
             rlTextureParameters(texture.id, RL_TEXTURE_WRAP_S, RL_TEXTURE_WRAP_REPEAT);
             rlTextureParameters(texture.id, RL_TEXTURE_WRAP_T, RL_TEXTURE_WRAP_REPEAT);
         } break;
@@ -3173,6 +3174,8 @@ void DrawTextureRec(Texture2D texture, Rectangle source, Vector2 position, Color
 // i.e tiling = { 1.0f, 1.0f } refers to all texture, offset = { 0.5f, 0.5f } moves texture origin to center
 void DrawTextureQuad(Texture2D texture, Vector2 tiling, Vector2 offset, Rectangle quad, Color tint)
 {
+    // WARNING: This solution only works if TEXTURE_WRAP_REPEAT is supported,
+    // NPOT textures supported is required and OpenGL ES 2.0 could not support it
     Rectangle source = { offset.x*texture.width, offset.y*texture.height, tiling.x*texture.width, tiling.y*texture.height };
     Vector2 origin = { 0.0f, 0.0f };
 
