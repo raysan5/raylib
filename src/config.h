@@ -26,7 +26,17 @@
 **********************************************************************************************/
 
 //------------------------------------------------------------------------------------
-// Module: core - Configuration Flags
+// Module selection - Some modules could be avoided
+// Mandatory modules: rcore, rlgl, utils
+//------------------------------------------------------------------------------------
+#define SUPPORT_MODULE_RSHAPES           1
+#define SUPPORT_MODULE_RTEXTURES         1
+#define SUPPORT_MODULE_RTEXT             1          // WARNING: It requires SUPPORT_MODULE_RTEXTURES to load sprite font textures
+#define SUPPORT_MODULE_RMODELS           1
+#define SUPPORT_MODULE_RAUDIO            1
+
+//------------------------------------------------------------------------------------
+// Module: rcore - Configuration Flags
 //------------------------------------------------------------------------------------
 // Camera module is included (rcamera.h) and multiple predefined cameras are available: free, 1st/3rd person, orbital
 #define SUPPORT_CAMERA_SYSTEM       1
@@ -62,7 +72,7 @@
 // Enabling this flag allows manual control of the frame processes, use at your own risk
 //#define SUPPORT_CUSTOM_FRAME_CONTROL   1
 
-// core: Configuration values
+// rcore: Configuration values
 //------------------------------------------------------------------------------------
 #if defined(__linux__)
     #define MAX_FILEPATH_LENGTH     4096        // Maximum length for filepaths (Linux PATH_MAX default value)
@@ -127,7 +137,7 @@
 
 
 //------------------------------------------------------------------------------------
-// Module: shapes - Configuration Flags
+// Module: rshapes - Configuration Flags
 //------------------------------------------------------------------------------------
 // Use QUADS instead of TRIANGLES for drawing when possible
 // Some lines-based shapes could still use lines
@@ -135,7 +145,7 @@
 
 
 //------------------------------------------------------------------------------------
-// Module: textures - Configuration Flags
+// Module: rtextures - Configuration Flags
 //------------------------------------------------------------------------------------
 // Selecte desired fileformats to be supported for image data loading
 #define SUPPORT_FILEFORMAT_PNG      1
@@ -162,7 +172,7 @@
 
 
 //------------------------------------------------------------------------------------
-// Module: text - Configuration Flags
+// Module: rtext - Configuration Flags
 //------------------------------------------------------------------------------------
 // Default font is loaded on window initialization to be available for the user to render simple text
 // NOTE: If enabled, uses external module functions to load default raylib font
@@ -175,7 +185,7 @@
 // If not defined, still some functions are supported: TextLength(), TextFormat()
 #define SUPPORT_TEXT_MANIPULATION   1
 
-// text: Configuration values
+// rtext: Configuration values
 //------------------------------------------------------------------------------------
 #define MAX_TEXT_BUFFER_LENGTH      1024        // Size of internal static buffers used on some functions:
                                                 // TextFormat(), TextSubtext(), TextToUpper(), TextToLower(), TextToPascal(), TextSplit()
@@ -183,7 +193,7 @@
 
 
 //------------------------------------------------------------------------------------
-// Module: models - Configuration Flags
+// Module: rmodels - Configuration Flags
 //------------------------------------------------------------------------------------
 // Selected desired model fileformats to be supported for loading
 #define SUPPORT_FILEFORMAT_OBJ      1
@@ -195,13 +205,13 @@
 // NOTE: Some generated meshes DO NOT include generated texture coordinates
 #define SUPPORT_MESH_GENERATION     1
 
-// models: Configuration values
+// rmodels: Configuration values
 //------------------------------------------------------------------------------------
 #define MAX_MATERIAL_MAPS               12      // Maximum number of shader maps supported
 #define MAX_MESH_VERTEX_BUFFERS          7      // Maximum vertex buffers (VBO) per mesh
 
 //------------------------------------------------------------------------------------
-// Module: audio - Configuration Flags
+// Module: raudio - Configuration Flags
 //------------------------------------------------------------------------------------
 // Desired audio fileformats to be supported for loading
 #define SUPPORT_FILEFORMAT_WAV      1
@@ -211,7 +221,7 @@
 #define SUPPORT_FILEFORMAT_MP3      1
 //#define SUPPORT_FILEFORMAT_FLAC     1
 
-// audio: Configuration values
+// raudio: Configuration values
 //------------------------------------------------------------------------------------
 #define AUDIO_DEVICE_FORMAT    ma_format_f32    // Device output format (miniaudio: float-32bit)
 #define AUDIO_DEVICE_CHANNELS              2    // Device output channels: stereo

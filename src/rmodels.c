@@ -4,12 +4,14 @@
 *
 *   CONFIGURATION:
 *
+*   #define SUPPORT_MODULE_RMODELS
+*       rmodels module is included in the build
+*
 *   #define SUPPORT_FILEFORMAT_OBJ
 *   #define SUPPORT_FILEFORMAT_MTL
 *   #define SUPPORT_FILEFORMAT_IQM
 *   #define SUPPORT_FILEFORMAT_GLTF
 *   #define SUPPORT_FILEFORMAT_VOX
-*
 *       Selected desired fileformats to be supported for model data loading.
 *
 *   #define SUPPORT_MESH_GENERATION
@@ -44,6 +46,8 @@
 #if !defined(EXTERNAL_CONFIG_FLAGS)
     #include "config.h"     // Defines module configuration flags
 #endif
+
+#if defined(SUPPORT_MODULE_RMODELS)
 
 #include "utils.h"          // Required for: TRACELOG(), LoadFileData(), LoadFileText(), SaveFileText()
 #include "rlgl.h"           // OpenGL abstraction layer to OpenGL 1.1, 2.1, 3.3+ or ES2
@@ -918,7 +922,7 @@ Model LoadModel(const char *fileName)
     if (IsFileExtension(fileName, ".iqm")) model = LoadIQM(fileName);
 #endif
 #if defined(SUPPORT_FILEFORMAT_GLTF)
-    if (IsFileExtension(fileName, ".gltf;.glb")) model = LoadGLTF(fileName);
+    if (IsFileExtension(fileName, ".gltf") || IsFileExtension(fileName, ".glb")) model = LoadGLTF(fileName);
 #endif
 #if defined(SUPPORT_FILEFORMAT_VOX)
     if (IsFileExtension(fileName, ".vox")) model = LoadVOX(fileName);
@@ -1703,7 +1707,6 @@ bool ExportMesh(Mesh mesh, const char *fileName)
 
     return success;
 }
-
 
 // Load materials from model file
 Material *LoadMaterials(const char *fileName, int *materialCount)
@@ -5089,3 +5092,5 @@ static Model LoadVOX(const char *fileName)
     return model;
 }
 #endif
+
+#endif      // SUPPORT_MODULE_RMODELS

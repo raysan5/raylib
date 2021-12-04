@@ -17,6 +17,9 @@
 *
 *   CONFIGURATION:
 *
+*   #define SUPPORT_MODULE_RSHAPES
+*       rshapes module is included in the build
+*
 *   #define SUPPORT_QUADS_DRAW_MODE
 *       Use QUADS instead of TRIANGLES for drawing when possible. Lines-based shapes still use LINES
 *
@@ -49,6 +52,8 @@
     #include "config.h"         // Defines module configuration flags
 #endif
 
+#if defined(SUPPORT_MODULE_RSHAPES)
+
 #include "rlgl.h"       // OpenGL abstraction layer to OpenGL 1.1, 2.1, 3.3+ or ES2
 
 #include <math.h>       // Required for: sinf(), asinf(), cosf(), acosf(), sqrtf(), fabsf()
@@ -75,8 +80,8 @@
 //----------------------------------------------------------------------------------
 // Global Variables Definition
 //----------------------------------------------------------------------------------
-Texture2D texShapes = { 1, 1, 1, 1, 7 };        // Texture used on shapes drawing (usually a white pixel)
-Rectangle texShapesRec = { 0, 0, 1, 1 };        // Texture source rectangle used on shapes drawing
+Texture2D texShapes = { 1, 1, 1, 1, 7 };                // Texture used on shapes drawing (usually a white pixel)
+Rectangle texShapesRec = { 0.0f, 0.0f, 1.0f, 1.0f };    // Texture source rectangle used on shapes drawing
 
 //----------------------------------------------------------------------------------
 // Module specific Functions Declaration
@@ -1810,3 +1815,5 @@ static float EaseCubicInOut(float t, float b, float c, float d)
 
     return 0.5f*c*(t*t*t + 2.0f) + b;
 }
+
+#endif      // SUPPORT_MODULE_RSHAPES

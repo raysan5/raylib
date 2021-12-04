@@ -4,6 +4,9 @@
 *
 *   CONFIGURATION:
 *
+*   #define SUPPORT_MODULE_RTEXT
+*       rtext module is included in the build
+*
 *   #define SUPPORT_FILEFORMAT_FNT
 *   #define SUPPORT_FILEFORMAT_TTF
 *       Selected desired fileformats to be supported for loading. Some of those formats are
@@ -52,6 +55,8 @@
 #if !defined(EXTERNAL_CONFIG_FLAGS)
     #include "config.h"     // Defines module configuration flags
 #endif
+
+#if defined(SUPPORT_MODULE_RTEXT)
 
 #include "utils.h"          // Required for: LoadFileText()
 #include "rlgl.h"           // OpenGL abstraction layer to OpenGL 1.1, 2.1, 3.3+ or ES2 -> Only DrawTextPro()
@@ -311,7 +316,7 @@ Font LoadFont(const char *fileName)
     Font font = { 0 };
 
 #if defined(SUPPORT_FILEFORMAT_TTF)
-    if (IsFileExtension(fileName, ".ttf;.otf")) font = LoadFontEx(fileName, FONT_TTF_DEFAULT_SIZE, NULL, FONT_TTF_DEFAULT_NUMCHARS);
+    if (IsFileExtension(fileName, ".ttf") || IsFileExtension(fileName, ".otf")) font = LoadFontEx(fileName, FONT_TTF_DEFAULT_SIZE, NULL, FONT_TTF_DEFAULT_NUMCHARS);
     else
 #endif
 #if defined(SUPPORT_FILEFORMAT_FNT)
@@ -1795,3 +1800,5 @@ static Font LoadBMFont(const char *fileName)
     return font;
 }
 #endif
+
+#endif      // SUPPORT_MODULE_RTEXT

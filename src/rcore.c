@@ -588,7 +588,7 @@ static bool eventsRecording = false;    // Record events
 //----------------------------------------------------------------------------------
 // Other Modules Functions Declaration (required by core)
 //----------------------------------------------------------------------------------
-#if defined(SUPPORT_DEFAULT_FONT)
+#if defined(SUPPORT_MODULE_RTEXT) && defined(SUPPORT_DEFAULT_FONT)
 extern void LoadFontDefault(void);          // [Module: text] Loads default font on InitWindow()
 extern void UnloadFontDefault(void);        // [Module: text] Unloads default font from GPU memory
 #endif
@@ -667,6 +667,10 @@ static void PlayAutomationEvent(unsigned int frame);        // Play frame events
 // NOTE: We declare Sleep() function symbol to avoid including windows.h (kernel32.lib linkage required)
 void __stdcall Sleep(unsigned long msTimeout);              // Required for: WaitTime()
 #endif
+
+#if !defined(SUPPORT_MODULE_RTEXT)
+const char *TextFormat(const char *text, ...);       // Formatting of text with variables to 'embed'
+#endif // !SUPPORT_MODULE_RTEXT
 
 //----------------------------------------------------------------------------------
 // Module Functions Definition - Window and OpenGL Context Functions
@@ -791,24 +795,30 @@ void InitWindow(int width, int height, const char *title)
     // Initialize base path for storage
     CORE.Storage.basePath = GetWorkingDirectory();
 
-#if defined(SUPPORT_DEFAULT_FONT)
+#if defined(SUPPORT_MODULE_RTEXT) && defined(SUPPORT_DEFAULT_FONT)
     // Load default font
-    // NOTE: External functions (defined in module: text)
+    // WARNING: External function: Module required: rtext
     LoadFontDefault();
+    #if defined(SUPPORT_MODULE_RSHAPES)
     Rectangle rec = GetFontDefault().recs[95];
     // NOTE: We setup a 1px padding on char rectangle to avoid pixel bleeding on MSAA filtering
-    SetShapesTexture(GetFontDefault().texture, (Rectangle){ rec.x + 1, rec.y + 1, rec.width - 2, rec.height - 2 });
+    SetShapesTexture(GetFontDefault().texture, (Rectangle){ rec.x + 1, rec.y + 1, rec.width - 2, rec.height - 2 }); // WARNING: Module required: rshapes
+    #endif
 #else
+    #if defined(SUPPORT_MODULE_RSHAPES)
     // Set default texture and rectangle to be used for shapes drawing
     // NOTE: rlgl default texture is a 1x1 pixel UNCOMPRESSED_R8G8B8A8
     Texture2D texture = { rlGetTextureIdDefault(), 1, 1, 1, PIXELFORMAT_UNCOMPRESSED_R8G8B8A8 };
-    SetShapesTexture(texture, (Rectangle){ 0.0f, 0.0f, 1.0f, 1.0f });
+    SetShapesTexture(texture, (Rectangle){ 0.0f, 0.0f, 1.0f, 1.0f });    // WARNING: Module required: rshapes
+    #endif
 #endif
-#if defined(PLATFORM_DESKTOP)
+#if defined(SUPPORT_MODULE_RTEXT) && defined(SUPPORT_DEFAULT_FONT)
     if ((CORE.Window.flags & FLAG_WINDOW_HIGHDPI) > 0)
     {
         // Set default font texture filter for HighDPI (blurry)
-        SetTextureFilter(GetFontDefault().texture, TEXTURE_FILTER_BILINEAR);
+        // RL_TEXTURE_FILTER_LINEAR - tex filter: BILINEAR, no mipmaps
+        rlTextureParameters(GetFontDefault().texture.id, RL_TEXTURE_MIN_FILTER, RL_TEXTURE_FILTER_LINEAR);
+        rlTextureParameters(GetFontDefault().texture.id, RL_TEXTURE_MAG_FILTER, RL_TEXTURE_FILTER_LINEAR);
     }
 #endif
 
@@ -867,8 +877,8 @@ void CloseWindow(void)
     }
 #endif
 
-#if defined(SUPPORT_DEFAULT_FONT)
-    UnloadFontDefault();
+#if defined(SUPPORT_MODULE_RTEXT) && defined(SUPPORT_DEFAULT_FONT)
+    UnloadFontDefault();        // WARNING: Module required: rtext
 #endif
 
     rlglClose();                // De-init rlgl
@@ -1926,11 +1936,11 @@ void EndDrawing(void)
 {
     rlDrawRenderBatchActive();      // Update and draw internal render batch
 
-#if defined(SUPPORT_MOUSE_CURSOR_POINT)
+#if defined(SUPPORT_MODULE_RSHAPES) && defined(SUPPORT_MOUSE_CURSOR_POINT)
     // Draw a small rectangle on mouse position for user reference
     if (!CORE.Input.Mouse.cursorHidden)
     {
-        DrawRectangle(CORE.Input.Mouse.currentPosition.x, CORE.Input.Mouse.currentPosition.y, 3, 3, MAROON);
+        DrawRectangle(CORE.Input.Mouse.currentPosition.x, CORE.Input.Mouse.currentPosition.y, 3, 3, MAROON);    // WARNING: Module required: rshapes
         rlDrawRenderBatchActive();  // Update and draw internal render batch
     }
 #endif
@@ -1953,11 +1963,13 @@ void EndDrawing(void)
             RL_FREE(screenData);    // Free image data
         }
 
+    #if defined(SUPPORT_MODULE_RSHAPES) && defined(SUPPORT_MODULE_RTEXT)
         if (((gifFrameCounter/15)%2) == 1)
         {
-            DrawCircle(30, CORE.Window.screen.height - 20, 10, MAROON);
-            DrawText("GIF RECORDING", 50, CORE.Window.screen.height - 25, 10, RED);
+            DrawCircle(30, CORE.Window.screen.height - 20, 10, MAROON);                 // WARNING: Module required: rshapes
+            DrawText("GIF RECORDING", 50, CORE.Window.screen.height - 25, 10, RED);     // WARNING: Module required: rtext
         }
+    #endif
 
         rlDrawRenderBatchActive();  // Update and draw internal render batch
     }
@@ -2665,13 +2677,14 @@ void SetConfigFlags(unsigned int flags)
 // Takes a screenshot of current screen (saved a .png)
 void TakeScreenshot(const char *fileName)
 {
+#if defined(SUPPORT_MODULE_RTEXTURES)
     unsigned char *imgData = rlReadScreenPixels(CORE.Window.render.width, CORE.Window.render.height);
     Image image = { imgData, CORE.Window.render.width, CORE.Window.render.height, 1, PIXELFORMAT_UNCOMPRESSED_R8G8B8A8 };
 
     char path[2048] = { 0 };
     strcpy(path, TextFormat("%s/%s", CORE.Storage.basePath, fileName));
-
-    ExportImage(image, path);
+    
+    ExportImage(image, path);           // WARNING: Module required: rtextures
     RL_FREE(imgData);
 
 #if defined(PLATFORM_WEB)
@@ -2681,6 +2694,9 @@ void TakeScreenshot(const char *fileName)
 #endif
 
     TRACELOG(LOG_INFO, "SYSTEM: [%s] Screenshot taken successfully", path);
+#else
+    TRACELOG(LOG_WARNING,"IMAGE: ExportImage() requires module: rtextures");
+#endif
 }
 
 // Get a random value between min and max (both included)
@@ -2730,16 +2746,16 @@ bool IsFileExtension(const char *fileName, const char *ext)
 
     if (fileExt != NULL)
     {
-#if defined(SUPPORT_TEXT_MANIPULATION)
+#if defined(SUPPORT_MODULE_RTEXT) && defined(SUPPORT_TEXT_MANIPULATION)
         int extCount = 0;
-        const char **checkExts = TextSplit(ext, ';', &extCount);
+        const char **checkExts = TextSplit(ext, ';', &extCount); // WARNING: Module required: rtext
 
         char fileExtLower[16] = { 0 };
-        strcpy(fileExtLower, TextToLower(fileExt));
+        strcpy(fileExtLower, TextToLower(fileExt));  // WARNING: Module required: rtext
 
         for (int i = 0; i < extCount; i++)
         {
-            if (TextIsEqual(fileExtLower, TextToLower(checkExts[i])))
+            if (strcmp(fileExtLower, TextToLower(checkExts[i])) == 0)
             {
                 result = true;
                 break;
@@ -5302,13 +5318,15 @@ static void AndroidCommandCallback(struct android_app *app, int32_t cmd)
                     // Initialize random seed
                     srand((unsigned int)time(NULL));
 
-                #if defined(SUPPORT_DEFAULT_FONT)
+                #if defined(SUPPORT_MODULE_RTEXT) && defined(SUPPORT_DEFAULT_FONT)
                     // Load default font
-                    // NOTE: External function (defined in module: text)
+                    // WARNING: External function: Module required: rtext
                     LoadFontDefault();
                     Rectangle rec = GetFontDefault().recs[95];
                     // NOTE: We setup a 1px padding on char rectangle to avoid pixel bleeding on MSAA filtering
-                    SetShapesTexture(GetFontDefault().texture, (Rectangle){ rec.x + 1, rec.y + 1, rec.width - 2, rec.height - 2 });
+                    #if defined(SUPPORT_MODULE_RSHAPES)
+                    SetShapesTexture(GetFontDefault().texture, (Rectangle){ rec.x + 1, rec.y + 1, rec.width - 2, rec.height - 2 });  // WARNING: Module required: rshapes
+                    #endif
                 #endif
 
                     // TODO: GPU assets reload in case of lost focus (lost context)
@@ -6776,3 +6794,34 @@ static void PlayAutomationEvent(unsigned int frame)
     }
 }
 #endif
+
+#if !defined(SUPPORT_MODULE_RTEXT)
+// Formatting of text with variables to 'embed'
+// WARNING: String returned will expire after this function is called MAX_TEXTFORMAT_BUFFERS times
+const char *TextFormat(const char *text, ...)
+{
+#ifndef MAX_TEXTFORMAT_BUFFERS
+    #define MAX_TEXTFORMAT_BUFFERS      4        // Maximum number of static buffers for text formatting
+#endif
+#ifndef MAX_TEXT_BUFFER_LENGTH
+    #define MAX_TEXT_BUFFER_LENGTH   1024        // Maximum size of static text buffer
+#endif
+
+    // We create an array of buffers so strings don't expire until MAX_TEXTFORMAT_BUFFERS invocations
+    static char buffers[MAX_TEXTFORMAT_BUFFERS][MAX_TEXT_BUFFER_LENGTH] = { 0 };
+    static int index = 0;
+
+    char *currentBuffer = buffers[index];
+    memset(currentBuffer, 0, MAX_TEXT_BUFFER_LENGTH);   // Clear buffer before using
+
+    va_list args;
+    va_start(args, text);
+    vsnprintf(currentBuffer, MAX_TEXT_BUFFER_LENGTH, text, args);
+    va_end(args);
+
+    index += 1;     // Move to next buffer for next function call
+    if (index >= MAX_TEXTFORMAT_BUFFERS) index = 0;
+
+    return currentBuffer;
+}
+#endif // !SUPPORT_MODULE_RTEXT
