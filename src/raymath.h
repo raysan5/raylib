@@ -328,8 +328,9 @@ RMAPI Vector2 Vector2Normalize(Vector2 v)
 
     if (length > 0)
     {
-        result.x = v.x*1.0f/length;
-        result.y = v.y*1.0f/length;
+        float ilength = 1.0f / length;
+        result.x = v.x * ilength;
+        result.y = v.y * ilength;
     }
 
     return result;
