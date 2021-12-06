@@ -281,9 +281,9 @@ RMAPI float Vector2Distance(Vector2 v1, Vector2 v2)
 // Calculate angle from two vectors in X-axis
 RMAPI float Vector2Angle(Vector2 v1, Vector2 v2)
 {
-    float result = atan2f(v2.y - v1.y, v2.x - v1.x)*(180.0f/PI);
+    float result = atan2f(v2.y - v1.y, v2.x - v1.x);
 
-    if (result < 0) result += 360.0f;
+    if (result < 0) result += 2 * PI;
 
     return result;
 }
