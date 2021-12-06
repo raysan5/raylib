@@ -487,6 +487,8 @@ static CoreData CORE = { 0 };               // Global CORE state context
 static char **dirFilesPath = NULL;          // Store directory files paths as strings
 static int dirFileCount = 0;                // Count directory files strings
 
+const char *raylibVersion = RAYLIB_VERSION; // raylib version symbol, it could be required for some bindings
+
 #if defined(SUPPORT_SCREEN_CAPTURE)
 static int screenshotCounter = 0;           // Screenshots counter
 #endif
