@@ -2200,14 +2200,21 @@ void BeginScissorMode(int x, int y, int width, int height)
     Vector2 scale = GetWindowScaleDPI();
     rlScissor((int)(x*scale.x), (int)(GetScreenHeight()*scale.y - (((y + height)*scale.y))), (int)(width*scale.x), (int)(height*scale.y));
 #else
+    Vector2 scale = { 1, 1 };
     if ((CORE.Window.flags & FLAG_WINDOW_HIGHDPI) > 0)
     {
         Vector2 scale = GetWindowScaleDPI();
-        rlScissor((int)(x*scale.x), (int)(CORE.Window.currentFbo.height - (y + height)*scale.y), (int)(width*scale.x), (int)(height*scale.y));
+    }
+
+    if (CORE.Window.flags & FLAG_FIXED_RENDER_SIZE)
+    {
+        float rapw = ((float)CORE.Window.render.width / (float)CORE.Window.currentFbo.width);
+        float raph = ((float)CORE.Window.render.height / (float)CORE.Window.currentFbo.height);
+        rlScissor(((float)x / rapw)*scale.x, (float)CORE.Window.currentFbo.height - ((((float)y / raph) + ((float)height / raph))*scale.y), ((float)width / rapw)*scale.x, ((float)height / raph)*scale.y);
     }
     else
     {
-        rlScissor(x, CORE.Window.currentFbo.height - (y + height), width, height);
+        rlScissor((int)(x*scale.x), (int)(CORE.Window.currentFbo.height - (y + height)*scale.y), (int)(width*scale.x), (int)(height*scale.y));
     }
 #endif
 }
@@ -3574,7 +3581,11 @@ Vector2 GetMousePosition(void)
     position.x = (CORE.Input.Mouse.currentPosition.x + CORE.Input.Mouse.offset.x)*CORE.Input.Mouse.scale.x;
     position.y = (CORE.Input.Mouse.currentPosition.y + CORE.Input.Mouse.offset.y)*CORE.Input.Mouse.scale.y;
 #endif
-
+    if (CORE.Window.flags & FLAG_FIXED_RENDER_SIZE)
+    {
+        position.x *= ((float)CORE.Window.render.width / (float)CORE.Window.currentFbo.width);
+        position.y *= ((float)CORE.Window.render.height / (float)CORE.Window.currentFbo.height);
+    }
     return position;
 }
 
@@ -4476,9 +4487,6 @@ static bool InitGraphicsDevice(int width, int height)
 // Set viewport for a provided width and height
 static void SetupViewport(int width, int height)
 {
-    CORE.Window.render.width = width;
-    CORE.Window.render.height = height;
-
     // Set viewport width and height
     // NOTE: We consider render size (scaled) and offset in case black bars are required and
     // render area does not match full display area (this situation is only applicable on fullscreen mode)
@@ -4487,7 +4495,15 @@ static void SetupViewport(int width, int height)
     glfwGetWindowContentScale(CORE.Window.handle, &xScale, &yScale);
     rlViewport(CORE.Window.renderOffset.x/2*xScale, CORE.Window.renderOffset.y/2*yScale, (CORE.Window.render.width)*xScale, (CORE.Window.render.height)*yScale);
 #else
-    rlViewport(CORE.Window.renderOffset.x/2, CORE.Window.renderOffset.y/2, CORE.Window.render.width, CORE.Window.render.height);
+    if (!(CORE.Window.flags & FLAG_FIXED_RENDER_SIZE))
+    {
+        CORE.Window.render.width = width;
+        CORE.Window.render.height = height;
+        rlViewport(CORE.Window.renderOffset.x / 2, CORE.Window.renderOffset.y / 2, CORE.Window.render.width - CORE.Window.renderOffset.x, CORE.Window.render.height - CORE.Window.renderOffset.y);
+    }
+    else
+        rlViewport(CORE.Window.renderOffset.x / 2, CORE.Window.renderOffset.y / 2, width - CORE.Window.renderOffset.x, height - CORE.Window.renderOffset.y);
+
 #endif
 
     rlMatrixMode(RL_PROJECTION);        // Switch to projection matrix
