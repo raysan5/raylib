@@ -6855,3 +6855,10 @@ const char *TextFormat(const char *text, ...)
     return currentBuffer;
 }
 #endif // !SUPPORT_MODULE_RTEXT
+
+// Get the release of raylib that this library is built with, to assist in non-C bindings determining
+// a mismatch of structures and/or parameters.
+const char*GetRaylibVersion()
+{
+    return RAYLIB_VERSION;
+}
