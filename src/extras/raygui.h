@@ -1427,7 +1427,6 @@ static int rstb_InsertChars(rstb_String *str, int start, int *chars, int count)
 {
     assert(start >= 0);
     assert(count > 0);
-    assert(str->used + count < str->capacity);
 
     int success = 0;
     // TODO(dbechrd): Unicode support, currently assumes ASCII
@@ -1460,9 +1459,9 @@ static int rstb_InsertChars(rstb_String *str, int start, int *chars, int count)
             memcpy(str->buffer + start, chars, count);
         }
         success = 1;
+        str->used += count;
     }
 
-    str->used += count;
     assert(str->used < str->capacity);
     return success;
 }
