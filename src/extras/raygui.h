@@ -453,6 +453,10 @@ typedef enum {
     HUEBAR_SELECTOR_OVERFLOW       // Right hue bar selector overflow
 } GuiColorPickerProperty;
 
+typedef struct {
+    void *state;  // internal state
+} GuiTextBoxAdvancedState;
+
 //----------------------------------------------------------------------------------
 // Global Variables Definition
 //----------------------------------------------------------------------------------
@@ -475,6 +479,7 @@ RAYGUIAPI bool GuiIsLocked(void);                                       // Check
 RAYGUIAPI void GuiFade(float alpha);                                    // Set gui controls alpha (global state), alpha goes from 0.0f to 1.0f
 RAYGUIAPI void GuiSetState(int state);                                  // Set gui state (global state)
 RAYGUIAPI int GuiGetState(void);                                        // Get gui state (global state)
+RAYGUIAPI void GuiSetActiveTextbox(GuiTextBoxAdvancedState *textbox);   // Set active advanced textbox (global state)
 
 // Font set/get functions
 RAYGUIAPI void GuiSetFont(Font font);                                   // Set gui custom font (global state)
@@ -504,6 +509,7 @@ RAYGUIAPI bool GuiSpinner(Rectangle bounds, const char *text, int *value, int mi
 RAYGUIAPI bool GuiValueBox(Rectangle bounds, const char *text, int *value, int minValue, int maxValue, bool editMode);    // Value Box control, updates input text with numbers
 RAYGUIAPI bool GuiTextBox(Rectangle bounds, char *text, int textSize, bool editMode);                   // Text Box control, updates input text
 RAYGUIAPI bool GuiTextBoxMulti(Rectangle bounds, char *text, int textSize, bool editMode);              // Text Box control with multiple lines
+RAYGUIAPI bool GuiTextBoxAdvanced(GuiTextBoxAdvancedState *textboxState, Rectangle bounds, char *text, int *textSize, int textCapacity, bool readOnly); // Advanced textbox with navigation/selection
 RAYGUIAPI float GuiSlider(Rectangle bounds, const char *textLeft, const char *textRight, float value, float minValue, float maxValue);       // Slider control, returns selected value
 RAYGUIAPI float GuiSliderBar(Rectangle bounds, const char *textLeft, const char *textRight, float value, float minValue, float maxValue);    // Slider Bar control, returns selected value
 RAYGUIAPI float GuiProgressBar(Rectangle bounds, const char *textLeft, const char *textRight, float value, float minValue, float maxValue);  // Progress Bar control, shows current progress value
@@ -518,6 +524,7 @@ RAYGUIAPI int GuiListView(Rectangle bounds, const char *text, int *scrollIndex, 
 RAYGUIAPI int GuiListViewEx(Rectangle bounds, const char **text, int count, int *focus, int *scrollIndex, int active);      // List View with extended parameters
 RAYGUIAPI int GuiMessageBox(Rectangle bounds, const char *title, const char *message, const char *buttons);                 // Message Box control, displays a message
 RAYGUIAPI int GuiTextInputBox(Rectangle bounds, const char *title, const char *message, const char *buttons, char *text);   // Text Input Box control, ask for text
+RAYGUIAPI int GuiTextInputBoxAdvanced(GuiTextBoxAdvancedState *textboxState, Rectangle bounds, const char *title, const char *message, const char *buttons, int submitButton, char *text, int *textSize, int textCapacity, bool readOnly);  // Advanced input box with navigation/selection
 RAYGUIAPI Color GuiColorPicker(Rectangle bounds, Color color);                                          // Color Picker control (multiple color controls)
 RAYGUIAPI Color GuiColorPanel(Rectangle bounds, Color color);                                           // Color Panel control
 RAYGUIAPI float GuiColorBarAlpha(Rectangle bounds, float alpha);                                        // Color Bar Alpha control
@@ -1138,6 +1145,152 @@ static unsigned int guiIcons[RICON_MAX_ICONS*RICON_DATA_ELEMENTS] = {
 #define RAYGUI_MAX_PROPS_EXTENDED        8      // Maximum number of extended properties
 
 //----------------------------------------------------------------------------------
+// stb_textedit configuration and type definitions
+//----------------------------------------------------------------------------------
+// Symbols that must be the same in header-file and implementation mode:
+//
+//     STB_TEXTEDIT_CHARTYPE             the character type
+//     STB_TEXTEDIT_POSITIONTYPE         small type that is a valid cursor position
+//     STB_TEXTEDIT_UNDOSTATECOUNT       the number of undo states to allow
+//     STB_TEXTEDIT_UNDOCHARCOUNT        the number of characters to store in the undo buffer
+//
+//----------------------------------------------------------------------------------
+
+// NOTE(dbechard): It may not be safe to use anything other than "int". These defines were added
+// to stb_textedit after-the-fact and there are a few places that e.g. STB_TEXTEDIT_POSITIONTYPE
+// interacts with ints in a hard-coded way, which is why I've let these default to int instead of
+// specifying a shorter type here (which would reduce the memory overhead of the undo stack).
+#if 0
+#define STB_TEXTEDIT_CHARTYPE       int
+#define STB_TEXTEDIT_KEYTYPE        int
+#define STB_TEXTEDIT_POSITIONTYPE   int
+#endif
+
+// NOTE(dbechrd): These should be user-defined per textbox (requires stb_textedit refactor and
+// dynamic allocation for undo stack).
+#define STB_TEXTEDIT_UNDOSTATECOUNT 32
+#define STB_TEXTEDIT_UNDOCHARCOUNT  512
+
+//----------------------------------------------------------------------------------
+// Symbols you must define for implementation mode:
+//
+//    STB_TEXTEDIT_STRING               the type of object representing a string being edited,
+//                                      typically this is a wrapper object with other data you need
+//
+//    STB_TEXTEDIT_STRINGLEN(obj)       the length of the string (ideally O(1))
+//    STB_TEXTEDIT_LAYOUTROW(&r,obj,n)  returns the results of laying out a line of characters
+//                                        starting from character #n (see discussion below)
+//    STB_TEXTEDIT_GETWIDTH(obj,n,i)    returns the pixel delta from the xpos of the i'th character
+//                                        to the xpos of the i+1'th char for a line of characters
+//                                        starting at character #n (i.e. accounts for kerning
+//                                        with previous char)
+//    STB_TEXTEDIT_KEYTOTEXT(k)         maps a keyboard input to an insertable character
+//                                        (return type is int, -1 means not valid to insert)
+//    STB_TEXTEDIT_GETCHAR(obj,i)       returns the i'th character of obj, 0-based
+//    STB_TEXTEDIT_NEWLINE              the character returned by _GETCHAR() we recognize
+//                                        as manually wordwrapping for end-of-line positioning
+//
+//    STB_TEXTEDIT_DELETECHARS(obj,i,n)      delete n characters starting at i
+//    STB_TEXTEDIT_INSERTCHARS(obj,i,c*,n)   insert n characters at i (pointed to by STB_TEXTEDIT_CHARTYPE*)
+//
+//----------------------------------------------------------------------------------
+#define STB_TEXTEDIT_STRING                                 rstb_String
+#define STB_TEXTEDIT_STRINGLEN(str)                         rstb_StringLen(str)
+#define STB_TEXTEDIT_LAYOUTROW(row, str, start)             rstb_LayoutRow(row, str, start)
+#define STB_TEXTEDIT_GETWIDTH(str, start, offset)           rstb_GetWidth(str, start + offset)
+#define STB_TEXTEDIT_KEYTOTEXT(keycode)                     rstb_KeyToText(keycode)
+#define STB_TEXTEDIT_GETCHAR(str, index)                    rstb_GetChar(str, index)
+#define STB_TEXTEDIT_NEWLINE                                ((int)'\n')
+#define STB_TEXTEDIT_DELETECHARS(str, start, count)         rstb_DeleteChars(str, start, count)
+#define STB_TEXTEDIT_INSERTCHARS(str, start, chars, count)  rstb_InsertChars(str, start, chars, count)
+#define STB_TEXTEDIT_IS_SPACE(c)                            rstb_IsSpace(c)
+
+//----------------------------------------------------------------------------------
+//
+//    STB_TEXTEDIT_K_SHIFT       a power of two that is or'd in to a keyboard input to represent the shift keycode
+//
+//    STB_TEXTEDIT_K_LEFT        keyboard input to move cursor left
+//    STB_TEXTEDIT_K_RIGHT       keyboard input to move cursor right
+//    STB_TEXTEDIT_K_UP          keyboard input to move cursor up
+//    STB_TEXTEDIT_K_DOWN        keyboard input to move cursor down
+//    STB_TEXTEDIT_K_LINESTART   keyboard input to move cursor to start of line  // e.g. HOME
+//    STB_TEXTEDIT_K_LINEEND     keyboard input to move cursor to end of line    // e.g. END
+//    STB_TEXTEDIT_K_TEXTSTART   keyboard input to move cursor to start of text  // e.g. ctrl-HOME
+//    STB_TEXTEDIT_K_TEXTEND     keyboard input to move cursor to end of text    // e.g. ctrl-END
+//    STB_TEXTEDIT_K_DELETE      keyboard input to delete selection or character under cursor
+//    STB_TEXTEDIT_K_BACKSPACE   keyboard input to delete selection or character left of cursor
+//    STB_TEXTEDIT_K_UNDO        keyboard input to perform undo
+//    STB_TEXTEDIT_K_REDO        keyboard input to perform redo
+//
+//----------------------------------------------------------------------------------
+#define KMOD_SHIFT                 (1 << 10)  // 1024, bit flag to represent shift modifier
+#define KMOD_CTRL                  (1 << 11)  // 2048, bit flag to represent control modifier
+
+#define STB_TEXTEDIT_K_SHIFT       KMOD_SHIFT
+#define STB_TEXTEDIT_K_LEFT        KEY_LEFT
+#define STB_TEXTEDIT_K_RIGHT       KEY_RIGHT
+#define STB_TEXTEDIT_K_UP          KEY_UP
+#define STB_TEXTEDIT_K_DOWN        KEY_DOWN
+#define STB_TEXTEDIT_K_LINESTART   KEY_HOME
+#define STB_TEXTEDIT_K_LINEEND     KEY_END
+#define STB_TEXTEDIT_K_TEXTSTART   (KMOD_CTRL | KEY_HOME)
+#define STB_TEXTEDIT_K_TEXTEND     (KMOD_CTRL | KEY_END)
+#define STB_TEXTEDIT_K_DELETE      KEY_DELETE
+#define STB_TEXTEDIT_K_BACKSPACE   KEY_BACKSPACE
+#define STB_TEXTEDIT_K_UNDO        (KMOD_CTRL | KEY_Z)
+#define STB_TEXTEDIT_K_REDO        (KMOD_CTRL | KMOD_SHIFT | KEY_Z)
+
+//----------------------------------------------------------------------------------
+// Optional:
+//    STB_TEXTEDIT_K_INSERT              keyboard input to toggle insert mode
+//    STB_TEXTEDIT_IS_SPACE(ch)          true if character is whitespace (e.g. 'isspace'),
+//                                       required for default WORDLEFT/WORDRIGHT handlers
+//    STB_TEXTEDIT_MOVEWORDLEFT(obj,i)   custom handler for WORDLEFT, returns index to move cursor to
+//    STB_TEXTEDIT_MOVEWORDRIGHT(obj,i)  custom handler for WORDRIGHT, returns index to move cursor to
+//    STB_TEXTEDIT_K_WORDLEFT            keyboard input to move cursor left one word // e.g. ctrl-LEFT
+//    STB_TEXTEDIT_K_WORDRIGHT           keyboard input to move cursor right one word // e.g. ctrl-RIGHT
+//    STB_TEXTEDIT_K_LINESTART2          secondary keyboard input to move cursor to start of line
+//    STB_TEXTEDIT_K_LINEEND2            secondary keyboard input to move cursor to end of line
+//    STB_TEXTEDIT_K_TEXTSTART2          secondary keyboard input to move cursor to start of text
+//    STB_TEXTEDIT_K_TEXTEND2            secondary keyboard input to move cursor to end of text
+//----------------------------------------------------------------------------------
+//#define STB_TEXTEDIT_K_INSERT         KEY_INSERT  // who actually uses insert mode..? disabled for now
+//#define STB_TEXTEDIT_MOVEWORDLEFT     <default>   // see: stb_textedit_move_to_word_previous
+//#define STB_TEXTEDIT_MOVEWORDRIGHT    <default>   // see: stb_textedit_move_to_word_next
+#define STB_TEXTEDIT_K_WORDLEFT         (KMOD_CTRL | KEY_LEFT)
+#define STB_TEXTEDIT_K_WORDRIGHT        (KMOD_CTRL | KEY_RIGHT)
+//#define STB_TEXTEDIT_K_LINESTART2     <not used>
+//#define STB_TEXTEDIT_K_LINEEND2       <not used>
+//#define STB_TEXTEDIT_K_TEXTSTART2     <not used>
+//#define STB_TEXTEDIT_K_TEXTEND2       <not used>
+
+#include "stb_textedit.h"
+
+typedef struct {
+    char *buffer;  // text edit buffer
+    // TODO(dbechrd): Characters, not bytes, need to handle this correctly for Unicode
+    int used;      // # of characters in use
+    int capacity;  // size of buffer in bytes, last byte reserverd for nil terminator
+} rstb_String;
+
+static int   rstb_StringLen(rstb_String *str);
+static void  rstb_LayoutRow(StbTexteditRow *row, rstb_String *str, int start);
+static float rstb_GetWidth(rstb_String *str, int index);
+static int   rstb_KeyToText(int key);;
+static int   rstb_GetChar(rstb_String *str, int index);
+static void  rstb_DeleteChars(rstb_String *str, int start, int count);
+static int   rstb_InsertChars(rstb_String *str, int start, int *chars, int count);
+static int   rstb_IsSpace(int c);
+
+#define STB_TEXTEDIT_IMPLEMENTATION
+#include "stb_textedit.h"
+
+typedef struct {
+    STB_TexteditState stb_state;
+    bool focused;
+} rGuiTextBoxAdvancedState;
+
+//----------------------------------------------------------------------------------
 // Types and Structures Definition
 //----------------------------------------------------------------------------------
 // Gui control property style color element
@@ -1167,6 +1320,163 @@ static float guiAlpha = 1.0f;           // Gui element transpacency on drawing
 static unsigned int guiStyle[RAYGUI_MAX_CONTROLS*(RAYGUI_MAX_PROPS_BASE + RAYGUI_MAX_PROPS_EXTENDED)] = { 0 };
 
 static bool guiStyleLoaded = false;     // Style loaded flag for lazy style initialization
+
+static GuiTextBoxAdvancedState *guiActiveTextbox = 0;
+
+//----------------------------------------------------------------------------------
+// stb_textedit function implementations
+//----------------------------------------------------------------------------------
+#include <cassert>
+
+static int rstb_StringLen(rstb_String *str) {
+    return str->used;
+    //return (int)strnlen(str, str->textSize);
+}
+
+static void rstb_LayoutRow(StbTexteditRow *row, rstb_String *str, int start)
+{
+    // float x0,x1;             // starting x location, end x location (allows for align=right, etc)
+    // float baseline_y_delta;  // position of baseline relative to previous row's baseline
+    // float ymin,ymax;         // height of row above and below baseline
+    // int num_chars;
+
+    // HACK(dbechrd): Assuming single-line mode
+    UNUSED(start);
+    assert(start == 0);
+
+    Vector2 textSize = MeasureTextEx(guiFont, str->buffer, (float)GuiGetStyle(DEFAULT, TEXT_SIZE), (float)GuiGetStyle(DEFAULT, TEXT_SPACING));
+    row->x0 = 0.0f;
+    row->x1 = textSize.x;
+    row->baseline_y_delta = (float)guiFont.baseSize;
+    // TODO(dbechrd): Not sure what STB's coordinate system is here... might need to swap these or make one negative
+    // for multi-line mode to work properly.
+    row->ymin = 0.0f;
+    row->ymax = (float)guiFont.baseSize;
+    row->num_chars = str->used;
+}
+
+static float rstb_GetWidth(rstb_String *str, int index)
+{
+    // Get next codepoint from byte string and glyph index in font
+    assert(index < str->used);
+
+    int codepointByteCount = 0;
+    int codepoint = GetCodepoint(&str->buffer[index], &codepointByteCount);
+    int glpyhIndex = GetGlyphIndex(guiFont, codepoint);
+
+    // TODO: scaleFactor and spacing should probably be configurable?
+    float scaleFactor = 1.0f;
+    float spacing = 1.0f;
+    float glyphWidth = (float)guiFont.glyphs[glpyhIndex].advanceX*scaleFactor + spacing;
+    return glyphWidth;
+}
+
+static int rstb_KeyToText(int key)
+{
+    // Clear modifier keycode flags
+    int c = key & ~(KMOD_CTRL | KMOD_SHIFT);
+
+    // TODO(dbechrd): What should the filter be?
+    if (c < 32 || c >= 128)
+    {
+        c = -1;  // not valid to insert
+    }
+    return c;
+}
+
+static int rstb_GetChar(rstb_String *str, int index)
+{
+    assert(index >= 0);
+    assert(index < str->used);
+
+    // TODO: Unicode (requires O(n) traversal)
+    int c = (int)str->buffer[index];
+    return c;
+}
+
+static void rstb_DeleteChars(rstb_String *str, int start, int count)
+{
+    assert(start >= 0);
+    assert(count > 0);
+    assert(start + count <= str->used);
+
+    // TODO(dbechrd): "start" and "count" are probably meant to be Unicode character indices, not byte indices
+
+    // NOTE: If moveBytes is 0, we're deleting from end of string and don't need to shift anything left
+    int moveBytes = str->used - (start + count);
+    if (moveBytes > 0)
+    {
+        // Shift tail of string left to overwrite deleted section
+        char *dst = str->buffer + start;
+        char *src = str->buffer + start + count;
+        for (int i = 0; i < moveBytes; i++)
+        {
+            *dst = *src;
+            dst++;
+            src++;
+        }
+    }
+    str->used -= count;
+
+    // Clear deleted/shifted characters at end of string
+    assert(str->used + count < str->capacity);
+    memset(str->buffer + str->used, 0, count);
+}
+
+static int rstb_InsertChars(rstb_String *str, int start, int *chars, int count)
+{
+    assert(start >= 0);
+    assert(count > 0);
+    assert(str->used + count < str->capacity);
+
+    int success = 0;
+    // TODO(dbechrd): Unicode support, currently assumes ASCII
+    if (count + str->used < str->capacity)
+    {
+        if (start == str->used)
+        {
+            // Inserting at end of string is easy, just append
+            for (int i = 0; i < count; i++)
+            {
+                assert(chars[i] >= 32);
+                assert(chars[i] < 128);
+                str->buffer[str->used] = (char)chars[i];
+            }
+        }
+        else
+        {
+            // Shift text at insertion location to the right
+            char *dst = str->buffer + str->used + count - 1;
+            char *src = str->buffer + str->used + count - 2;
+            int moveBytes = str->used - (start + count - 1);
+            for (int i = moveBytes; i > 0; i--)
+            {
+                *dst = *src;
+                dst--;
+                src--;
+            }
+
+            // Copy new text into the gap we just created
+            memcpy(str->buffer + start, chars, count);
+        }
+        success = 1;
+    }
+
+    str->used += count;
+    assert(str->used < str->capacity);
+    return success;
+}
+
+static int rstb_IsSpace(int c)
+{
+    int isSpace = 0;
+    switch (c)
+    {
+        case ' ': case '\t': case '\r': case '\n':
+            isSpace = 1;
+    }
+    return isSpace;
+}
 
 //----------------------------------------------------------------------------------
 // Standalone Mode Functions Declaration
@@ -1239,6 +1549,7 @@ static void DrawRectangleGradientV(int posX, int posY, int width, int height, Co
 // Module specific Functions Declaration
 //----------------------------------------------------------------------------------
 static int GetTextWidth(const char *text);                      // Gui get text width using default font
+static int GetTextSubstringWidth(rstb_String *str, int start, int length);  // Get text width of a substring of an STB string
 static Rectangle GetTextBounds(int control, Rectangle bounds);  // Get text bounds considering control bounds
 static const char *GetTextIcon(const char *text, int *iconId);  // Get text icon if provided and move text cursor
 
@@ -1281,6 +1592,8 @@ void GuiSetState(int state) { guiState = (GuiControlState)state; }
 
 // Get gui state (global state)
 int GuiGetState(void) { return guiState; }
+
+void GuiSetActiveTextbox(GuiTextBoxAdvancedState *textbox) { guiActiveTextbox = textbox; }
 
 // Set custom gui font
 // NOTE: Font loading/unloading is external to raygui
@@ -2042,6 +2355,250 @@ bool GuiTextBox(Rectangle bounds, char *text, int textSize, bool editMode)
     return pressed;
 }
 
+// Text Box control, updates input text
+// NOTE 1: Requires static variables: framesCounter
+// NOTE 2: Returns if KEY_ENTER validate (useful for data validation)
+bool GuiTextBoxAdvanced(GuiTextBoxAdvancedState *textboxState, Rectangle bounds, char *text, int *textSize, int textCapacity, bool readOnly)
+{
+    assert(text);
+    assert(textSize && *textSize >= 0);
+    assert(textCapacity > 0);
+    assert(*textSize < textCapacity);
+
+    static int framesCounter = 0;           // Required for blinking cursor
+    static double lastKeyPress = 0;
+    static int keyRepeat = 0;
+
+    // TODO: This has to be per-textbox, but storing it here during prototyping to keep dependency internal to raygui
+    if (!textboxState->state) {
+        textboxState->state = RAYGUI_CALLOC(1, sizeof(rGuiTextBoxAdvancedState));
+    }
+    rGuiTextBoxAdvancedState *rTextboxState = ((rGuiTextBoxAdvancedState *)textboxState->state);
+    if (!rTextboxState->stb_state.initialized || *textSize == 0) {
+        stb_textedit_initialize_state(&rTextboxState->stb_state, 1);
+    }
+
+    rstb_String str = { 0 };
+    str.buffer = text;
+    str.used = *textSize;
+    str.capacity = textCapacity;
+
+    GuiControlState state = guiState;
+    bool submit = false;
+
+    Rectangle textBounds = GetTextBounds(TEXTBOX, bounds);
+
+#if 0
+    Rectangle cursor = {
+        bounds.x + GuiGetStyle(TEXTBOX, TEXT_PADDING) + GetTextWidth(text) + 2,
+        bounds.y + GuiGetStyle(DEFAULT, TEXT_SIZE),
+        1,
+        (float)GuiGetStyle(DEFAULT, TEXT_SIZE) * 1.5f
+    };
+#endif
+
+    // Update control
+    //--------------------------------------------------------------------
+    if ((state != GUI_STATE_DISABLED) && !guiLocked && !readOnly) {
+        Vector2 mousePoint = GetMousePosition();
+
+        state = GUI_STATE_NORMAL;
+
+        // Check for mouse click on/off control, and mouse hover
+        if (CheckCollisionPointRec(mousePoint, bounds)) {
+            state = GUI_STATE_FOCUSED;
+            if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
+                // User clicked on this control
+                guiActiveTextbox = textboxState;
+            }
+        } else if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
+            // User clicked somewhere else
+            if (guiActiveTextbox == textboxState) {
+                guiActiveTextbox = 0;
+            }
+            framesCounter = 0;
+        }
+
+        // Handle input when textbox in edit mode
+        if (guiActiveTextbox == textboxState && !readOnly) {
+            state = GUI_STATE_PRESSED;
+            framesCounter++;
+
+            int ctrlDown = IsKeyDown(KEY_LEFT_CONTROL) || IsKeyDown(KEY_RIGHT_CONTROL);
+            int shiftDown = IsKeyDown(KEY_LEFT_SHIFT) || IsKeyDown(KEY_RIGHT_SHIFT);
+            int keyMods = (ctrlDown > 0 ? KMOD_CTRL : 0) | (shiftDown > 0 ? KMOD_SHIFT : 0);
+
+            int codepoint = GetCharPressed();  // Returns codepoint as Unicode
+            while (codepoint) {
+                // TODO(dbechrd): What is max value returned by GetCharPressed()? Are these bits safe to overwrite?
+                assert(codepoint < KMOD_CTRL);
+                assert(codepoint < KMOD_SHIFT);
+                stb_textedit_key(&str, &rTextboxState->stb_state, codepoint | keyMods);
+                codepoint = GetCharPressed();
+            }
+
+            bool left = IsKeyDown(KEY_LEFT);
+            bool right = IsKeyDown(KEY_RIGHT);
+            if (left && right) {
+                left = false;
+                right = false;
+            }
+
+            bool up = IsKeyDown(KEY_UP);
+            bool down = IsKeyDown(KEY_DOWN);
+            if (up && down) {
+                up = false;
+                down = false;
+            }
+
+            bool home = IsKeyDown(KEY_HOME);
+            bool end = IsKeyDown(KEY_END);
+            if (home && end) {
+                home = false;
+                end = false;
+            }
+
+            bool del = IsKeyDown(KEY_DELETE);
+            bool backspace = IsKeyDown(KEY_BACKSPACE);
+            if (del && backspace) {
+                del = false;
+                backspace = false;
+            }
+
+            bool z = IsKeyDown(KEY_Z);
+            bool insert = IsKeyDown(KEY_INSERT);
+
+            bool any = left || right || up || down || home || end || del || backspace || z || insert;
+            if (any) {
+                const double delayBeforeRepeat = 0.15;
+                const double delayDuringRepeat = 0.03;
+
+                const double timeSinceLastKeyPress = GetTime() - lastKeyPress;
+                //if (timeSinceLastKeyPress > delayBeforeRepeat * 2)
+                //{
+                //    keyRepeat = 0;
+                //}
+
+                double keyRepeatDelay = 0;
+                if (keyRepeat > 1) {
+                    keyRepeatDelay = delayDuringRepeat;
+                } else if (keyRepeat == 1) {
+                    keyRepeatDelay = delayBeforeRepeat;
+                }
+
+                if (timeSinceLastKeyPress > keyRepeatDelay) {
+                    if (left)       stb_textedit_key(&str, &rTextboxState->stb_state, keyMods | KEY_LEFT);
+                    if (right)      stb_textedit_key(&str, &rTextboxState->stb_state, keyMods | KEY_RIGHT);
+                    if (up)         stb_textedit_key(&str, &rTextboxState->stb_state, keyMods | KEY_UP);
+                    if (down)       stb_textedit_key(&str, &rTextboxState->stb_state, keyMods | KEY_DOWN);
+                    if (home)       stb_textedit_key(&str, &rTextboxState->stb_state, keyMods | KEY_HOME);
+                    if (end)        stb_textedit_key(&str, &rTextboxState->stb_state, keyMods | KEY_END);
+                    if (del)        stb_textedit_key(&str, &rTextboxState->stb_state, keyMods | KEY_DELETE);
+                    if (backspace)  stb_textedit_key(&str, &rTextboxState->stb_state, keyMods | KEY_BACKSPACE);
+                    if (z)          stb_textedit_key(&str, &rTextboxState->stb_state, keyMods | KEY_INSERT);
+                    if (insert)     stb_textedit_key(&str, &rTextboxState->stb_state, keyMods | KEY_Z);
+                    keyRepeat++;
+                    lastKeyPress = GetTime();
+                }
+                framesCounter = 0;
+            } else {
+                keyRepeat = 0;
+            }
+
+            if (ctrlDown && IsKeyPressed(KEY_A)) {
+                rTextboxState->stb_state.select_start = 0;
+                rTextboxState->stb_state.select_end = str.used;
+            }
+
+            if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
+                stb_textedit_click(&str, &rTextboxState->stb_state, (float)GetMouseX() - textBounds.x, (float)GetMouseY() - textBounds.y);
+            } else if (IsMouseButtonDown(MOUSE_LEFT_BUTTON)) {
+                stb_textedit_drag(&str, &rTextboxState->stb_state, (float)GetMouseX() - textBounds.x, (float)GetMouseY() - textBounds.y);
+            }
+
+            // If enter key was pressed, we're done editing
+            if (IsKeyPressed(KEY_ENTER) || IsKeyPressed(KEY_KP_ENTER)) {
+                framesCounter = 0;
+                submit = true;
+            }
+
+#if 0
+            // Check text alignment to position cursor properly
+            int textAlignment = GuiGetStyle(TEXTBOX, TEXT_ALIGNMENT);
+            if (textAlignment == GUI_TEXT_ALIGN_CENTER) cursor.x = bounds.x + GetTextWidth(text) / 2 + bounds.width / 2 + 1;
+            else if (textAlignment == GUI_TEXT_ALIGN_RIGHT) cursor.x = bounds.x + bounds.width - GuiGetStyle(TEXTBOX, TEXT_INNER_PADDING);
+#else
+            // TODO: Check text alignment to position cursor properly
+#endif
+        }
+    }
+    //--------------------------------------------------------------------
+
+    assert(str.used < str.capacity);
+    text[str.used] = '\0';
+
+    // Draw control
+    //--------------------------------------------------------------------
+    int selectionStart = MIN(rTextboxState->stb_state.select_start, rTextboxState->stb_state.select_end);
+    int selectionLength = ABS(rTextboxState->stb_state.select_end - rTextboxState->stb_state.select_start);
+
+    GuiControlProperty baseColorProperty = BASE_COLOR_NORMAL;
+    switch (state) {
+    case GUI_STATE_PRESSED:  baseColorProperty = BASE_COLOR_PRESSED; break;
+    case GUI_STATE_DISABLED: baseColorProperty = BASE_COLOR_DISABLED; break;
+    case GUI_STATE_FOCUSED:  baseColorProperty = BASE_COLOR_FOCUSED; break;
+    }
+
+    GuiDrawRectangle(bounds, GuiGetStyle(TEXTBOX, BORDER_WIDTH),
+        //Fade(GetColor(GuiGetStyle(TEXTBOX, BORDER + (state*3))), guiAlpha),
+        //Fade(GetColor(GuiGetStyle(TEXTBOX, baseColorProperty)), guiAlpha)
+        Fade(BLACK, 0.8f),
+        Fade({ 50, 50, 50, 255 }, 0.6f)
+    );
+
+    if (guiActiveTextbox == textboxState) {
+        if (selectionLength) {
+            // Draw selection highlight
+            Color selectedHighlight = ORANGE; //(Color){ 52, 105, 218, 255 };
+            int selectionOffsetX = GetTextSubstringWidth(&str, 0, selectionStart);
+            int selectionWidth = GetTextSubstringWidth(&str, selectionStart, selectionLength);
+            Rectangle cursor = {
+                bounds.x + GuiGetStyle(TEXTBOX, TEXT_PADDING) + selectionOffsetX + 2,
+                bounds.y + bounds.height / 2 - GuiGetStyle(DEFAULT, TEXT_SIZE) + GuiGetStyle(TEXTBOX, TEXT_PADDING),
+                (float)selectionWidth,
+                (float)GuiGetStyle(DEFAULT, TEXT_SIZE) + GuiGetStyle(TEXTBOX, TEXT_PADDING) / 2
+            };
+
+            GuiDrawRectangle(cursor, 0, BLANK, Fade(selectedHighlight, guiAlpha));
+        } else {
+            // Draw blinking cursor
+            int cursorOffetX = GetTextSubstringWidth(&str, 0, rTextboxState->stb_state.cursor);
+            Rectangle cursor = {
+                bounds.x + GuiGetStyle(TEXTBOX, TEXT_PADDING) + cursorOffetX + 2,
+                bounds.y + bounds.height / 2 - GuiGetStyle(DEFAULT, TEXT_SIZE) + GuiGetStyle(TEXTBOX, TEXT_PADDING),
+                1,
+                (float)GuiGetStyle(DEFAULT, TEXT_SIZE) + GuiGetStyle(TEXTBOX, TEXT_PADDING) / 2
+            };
+
+            if (!readOnly && ((framesCounter / 20) % 2 == 0)) {
+                //GuiDrawRectangle(cursor, 0, BLANK, Fade(GetColor(GuiGetStyle(TEXTBOX, BORDER_COLOR_PRESSED)), guiAlpha));
+                GuiDrawRectangle(cursor, 0, BLANK, Fade(RAYWHITE, guiAlpha));
+            }
+        }
+    }
+
+    //Color textColor = GetColor(GuiGetStyle(TEXTBOX, TEXT + (state * 3)));
+    Color textColor = RAYWHITE;
+    if (selectionLength) {
+        //textColor = RAYWHITE;
+    }
+    GuiDrawText(text, textBounds, GuiGetStyle(TEXTBOX, TEXT_ALIGNMENT), Fade(textColor, guiAlpha));
+    //--------------------------------------------------------------------
+
+    *textSize = str.used;
+    return submit;
+}
+
 // Spinner control, returns selected value
 bool GuiSpinner(Rectangle bounds, const char *text, int *value, int minValue, int maxValue, bool editMode)
 {
@@ -2079,6 +2636,14 @@ bool GuiSpinner(Rectangle bounds, const char *text, int *value, int minValue, in
         }
     }
 
+#if defined(RAYGUI_NO_RICONS)
+    if (GuiButton(leftButtonBound, "<")) tempValue--;
+    if (GuiButton(rightButtonBound, ">")) tempValue++;
+#else
+    if (GuiButton(leftButtonBound, GuiIconText(RICON_ARROW_LEFT_FILL, NULL))) tempValue--;
+    if (GuiButton(rightButtonBound, GuiIconText(RICON_ARROW_RIGHT_FILL, NULL))) tempValue++;
+#endif
+
     if (!editMode)
     {
         if (tempValue < minValue) tempValue = minValue;
@@ -2098,13 +2663,7 @@ bool GuiSpinner(Rectangle bounds, const char *text, int *value, int minValue, in
     GuiSetStyle(BUTTON, BORDER_WIDTH, GuiGetStyle(SPINNER, BORDER_WIDTH));
     GuiSetStyle(BUTTON, TEXT_ALIGNMENT, GUI_TEXT_ALIGN_CENTER);
 
-#if defined(RAYGUI_NO_RICONS)
-    if (GuiButton(leftButtonBound, "<")) tempValue--;
-    if (GuiButton(rightButtonBound, ">")) tempValue++;
-#else
-    if (GuiButton(leftButtonBound, GuiIconText(RICON_ARROW_LEFT_FILL, NULL))) tempValue--;
-    if (GuiButton(rightButtonBound, GuiIconText(RICON_ARROW_RIGHT_FILL, NULL))) tempValue++;
-#endif
+
 
     GuiSetStyle(BUTTON, TEXT_ALIGNMENT, tempTextAlign);
     GuiSetStyle(BUTTON, BORDER_WIDTH, tempBorderWidth);
@@ -2183,6 +2742,9 @@ bool GuiValueBox(Rectangle bounds, const char *text, int *value, int minValue, i
             }
 
             if (valueHasChanged) *value = TextToInteger(textValue);
+
+            if (*value > maxValue) *value = maxValue;
+            else if (*value < minValue) *value = minValue;
 
             if (IsKeyPressed(KEY_ENTER) || (!CheckCollisionPointRec(mousePoint, bounds) && IsMouseButtonPressed(MOUSE_LEFT_BUTTON))) pressed = true;
         }
@@ -2349,7 +2911,7 @@ bool GuiTextBoxMulti(Rectangle bounds, char *text, int textSize, bool editMode)
             {
                 int glyphWidth = 0;
                 if (glyphInfo.advanceX != 0) glyphWidth += glyphInfo.advanceX;
-                else glyphWidth += (atlasRec.width + glyphInfo.offsetX);
+                else glyphWidth += (int)(atlasRec.width + glyphInfo.offsetX);
 
                 // Jump line if the end of the text box area has been reached
                 if ((cursorPos.x + (glyphWidth*scaleFactor)) > (textAreaBounds.x + textAreaBounds.width))
@@ -2382,7 +2944,7 @@ bool GuiTextBoxMulti(Rectangle bounds, char *text, int textSize, bool editMode)
 
             int glyphWidth = 0;
             if (glyphInfo.advanceX != 0) glyphWidth += glyphInfo.advanceX;
-            else glyphWidth += (atlasRec.width + glyphInfo.offsetX);
+            else glyphWidth += (int)(atlasRec.width + glyphInfo.offsetX);
 
             cursorPos.x += (glyphWidth*scaleFactor + (float)GuiGetStyle(DEFAULT, TEXT_SPACING));
             //if (i > lastSpacePos) lastSpaceWidth += (atlasRec.width + (float)GuiGetStyle(DEFAULT, TEXT_SPACING));
@@ -3219,6 +3781,108 @@ int GuiTextInputBox(Rectangle bounds, const char *title, const char *message, co
     return btnIndex;
 }
 
+// Text Input Box control, ask for text
+int GuiTextInputBoxAdvanced(GuiTextBoxAdvancedState *textboxState, Rectangle bounds, const char *title, const char *message, const char *buttons, int submitButton, char *text, int *textLength, int textCapacity, bool readOnly)
+{
+    int btnIndex = -1;
+    const float fontSize = (float)GuiGetStyle(DEFAULT, TEXT_SIZE);
+    const float margin = 4.0f;
+    const float buttonSpacing = 4.0f;
+    const float buttonPadding = (float)GuiGetStyle(BUTTON, TEXT_PADDING);
+    const float buttonHeight = fontSize + buttonPadding * 2;
+
+    Vector2 messageSize = { 0 };
+    float messageWidth = 0.0f;
+    if (message != NULL) {
+        messageSize = MeasureTextEx(guiFont, message, fontSize, 1);
+        messageWidth = messageSize.x + buttonPadding * 2;
+    }
+
+    int buttonsCount = 0;
+    const char **buttonsText = GuiTextSplit(buttons, &buttonsCount, NULL);
+
+    float widestButton = 0;
+    for (int i = 0; i < buttonsCount; i++) {
+        float buttonWidth = MeasureTextEx(guiFont, buttonsText[i], fontSize, 1).x;
+        widestButton = MAX(widestButton, buttonWidth + buttonPadding * 2);
+    }
+
+    const float buttonRowWidth = (float)GuiGetStyle(STATUSBAR, BORDER_WIDTH) * 2 + margin * 2 + widestButton * buttonsCount + buttonSpacing * (buttonsCount - 1);
+    const float minWidth = MAX(messageWidth, buttonRowWidth);
+    if (minWidth > bounds.width) {
+        bounds.width = minWidth;
+    }
+
+    float contextX = bounds.x + (float)GuiGetStyle(STATUSBAR, BORDER_WIDTH) + margin;
+    float contentY = bounds.y + (float)GuiGetStyle(STATUSBAR, BORDER_WIDTH) + WINDOW_STATUSBAR_HEIGHT + margin;
+    float contentWidth = bounds.width - (float)GuiGetStyle(STATUSBAR, BORDER_WIDTH) * 2 - margin * 2;
+
+    Rectangle messageBounds = { 0 };
+    if (message != NULL) {
+        messageSize = MeasureTextEx(guiFont, message, fontSize, 1);
+        messageBounds.x = contextX;
+        messageBounds.y = contentY;
+        messageBounds.width = messageWidth;
+        messageBounds.height = messageSize.y;
+        contentY += messageBounds.height + margin;
+    }
+
+    Rectangle textBoxBounds = { 0 };
+    textBoxBounds.x = contextX;
+    textBoxBounds.y = contentY;
+    textBoxBounds.width = contentWidth;
+    textBoxBounds.height = fontSize + (float)GuiGetStyle(TEXTBOX, TEXT_PADDING) * 2;
+    contentY += textBoxBounds.height + buttonPadding;
+
+    contentY += buttonHeight + buttonPadding;
+    float minHeight = contentY + (float)GuiGetStyle(STATUSBAR, BORDER_WIDTH) + margin - bounds.y;
+    if (minHeight > bounds.height) {
+        bounds.height = minHeight;
+    }
+
+    // NOTE: Buttons are anchored to bottom, so this has to happen after minHeight calculation
+    Rectangle buttonBounds = { 0 };
+    buttonBounds.x = contextX + contentWidth - widestButton * buttonsCount - buttonSpacing * (buttonsCount - 1);
+    buttonBounds.y = bounds.y + bounds.height - GuiGetStyle(STATUSBAR, BORDER_WIDTH) - buttonHeight - margin;
+    buttonBounds.width = widestButton;
+    buttonBounds.height = buttonHeight;
+
+    // Draw control
+    //--------------------------------------------------------------------
+    if (GuiWindowBox(bounds, title)) btnIndex = 0;
+
+    // Draw message if available
+    if (message != NULL) {
+        //int prevTextAlignment = GuiGetStyle(LABEL, TEXT_ALIGNMENT);
+        //GuiSetStyle(LABEL, TEXT_ALIGNMENT, GUI_TEXT_ALIGN_CENTER);
+        GuiLabel(messageBounds, message);
+        //GuiSetStyle(LABEL, TEXT_ALIGNMENT, prevTextAlignment);
+    }
+
+    if (GuiTextBoxAdvanced(textboxState, textBoxBounds, text, textLength, textCapacity, readOnly)) {
+        btnIndex = submitButton;
+    }
+
+    int prevBtnTextAlignment = GuiGetStyle(BUTTON, TEXT_ALIGNMENT);
+    GuiSetStyle(BUTTON, TEXT_ALIGNMENT, GUI_TEXT_ALIGN_CENTER);
+
+    for (int i = 0; i < buttonsCount; i++) {
+        if (GuiButton(buttonBounds, buttonsText[i])) {
+            btnIndex = i + 1;
+        }
+        buttonBounds.x += (buttonBounds.width + buttonSpacing);
+    }
+
+    GuiSetStyle(BUTTON, TEXT_ALIGNMENT, prevBtnTextAlignment);
+    //--------------------------------------------------------------------
+
+    if (btnIndex >= 0 && guiActiveTextbox == textboxState) {
+        guiActiveTextbox = 0;
+    }
+
+    return btnIndex;
+}
+
 // Grid control
 // NOTE: Returns grid mouse-hover selected cell
 // About drawing lines at subpixel spacing, simple put, not easy solution:
@@ -3736,6 +4400,37 @@ static int GetTextWidth(const char *text)
     }
 
     return (int)size.x;
+}
+
+// Get text width of a substring of an STB string
+static int GetTextSubstringWidth(rstb_String *str, int start, int length)
+{
+    assert(start >= 0);
+    assert(length >= 0);
+    assert(start + length <= str->used);
+
+    if (length == 0) {
+        return 0;
+    }
+
+    // HACK(dbechrd): Save character at cursor so that we can replace it with nil and call GetTextWidth() to
+    //   get the width of a partial string
+    // TODO: Implement MeasureTextSubstring() that takes a starting index and offset, and only measures the
+    //   substring (should it return early if it encounters '\0'? .. probably)
+    char charAtCursor = 0;
+    int end = start + length;
+    if (end < str->used) {
+        charAtCursor = str->buffer[end];
+        str->buffer[end] = '\0';
+    }
+
+    int width = GetTextWidth(str->buffer + start);
+
+    if (end < str->capacity) {
+        str->buffer[end] = charAtCursor;
+    }
+
+    return width;
 }
 
 // Get text bounds considering control bounds
