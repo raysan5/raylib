@@ -130,6 +130,7 @@ typedef struct Vector2 {
     float x;
     float y;
 } Vector2;
+#define RL_VECTOR2_TYPE
 #endif
 
 // Matrix2x2 type (used for polygon shape rotation matrix)
