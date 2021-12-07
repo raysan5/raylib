@@ -511,6 +511,8 @@ PHYSICS = \
     physics/physics_restitution \
     physics/physics_shatter
 
+EFFECTS = \
+    effects/top_down_lights
 
 CURRENT_MAKEFILE = $(lastword $(MAKEFILE_LIST))
 
@@ -525,6 +527,7 @@ models: $(MODELS)
 shaders: $(SHADERS)
 audio: $(AUDIO)
 physics: $(PHYSICS)
+effects: $(EFFECTS)
 
 # Generic compilation pattern
 # NOTE: Examples must be ready for Android compilation!
