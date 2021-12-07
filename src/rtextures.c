@@ -3202,6 +3202,7 @@ void DrawTextureQuad(Texture2D texture, Vector2 tiling, Vector2 offset, Rectangl
 void DrawTextureTiled(Texture2D texture, Rectangle source, Rectangle dest, Vector2 origin, float rotation, float scale, Color tint)
 {
     if ((texture.id <= 0) || (scale <= 0.0f)) return;  // Wanna see a infinite loop?!...just delete this line!
+    if ((source.width == 0) || (source.height == 0)) return;
 
     int tileWidth = (int)(source.width*scale), tileHeight = (int)(source.height*scale);
     if ((dest.width < tileWidth) && (dest.height < tileHeight))
