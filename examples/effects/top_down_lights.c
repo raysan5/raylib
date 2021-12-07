@@ -360,6 +360,13 @@ int main(void)
     // De-Initialization
     //--------------------------------------------------------------------------------------
     UnloadTexture(backgroundTexture);
+	UnloadRenderTexture(lightMask);
+	for (int i = 0; i < MAX_LIGHTS; i++)
+	{
+		if (Lights[i].Active)
+			UnloadRenderTexture(Lights[i].Mask);
+	}
+
     CloseWindow();        // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
 
