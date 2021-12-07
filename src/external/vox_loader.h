@@ -531,29 +531,34 @@ static void Vox_Build_Voxel(VoxArray3D* pvoxArray, int x, int y, int z, int matI
 int Vox_LoadFromMemory(unsigned char* pvoxData, unsigned int voxDataSize, VoxArray3D* pvoxarray)
 {
 	//////////////////////////////////////////////////
-	//Read VOX file
-	//4 bytes: magic number ('V' 'O' 'X' 'space' )
-	//4 bytes: version number (current version is 150 )
+	// Read VOX file
+	// 4 bytes: magic number ('V' 'O' 'X' 'space')
+	// 4 bytes: version number (current version is 150)
 
-	unsigned long signature;
+	// @raysan5: Reviewed (unsigned long) -> (unsigned int), possible issue with Ubuntu 18.04 64bit
+
+	// @raysan5: reviewed signature loading
+	unsigned char signature[4] = { 0 };
 
 	unsigned char* fileData = pvoxData;
-
 	unsigned char* fileDataPtr = fileData;
 	unsigned char* endfileDataPtr = fileData + voxDataSize;
 
-	signature = *((unsigned long *)fileDataPtr);
-	fileDataPtr += sizeof(unsigned long);
+	signature[0] = fileDataPtr[0];
+	signature[1] = fileDataPtr[1];
+	signature[2] = fileDataPtr[2];
+	signature[3] = fileDataPtr[3];
+	fileDataPtr += 4;
 
-	if (signature != 0x20584F56) //56 4F 58 20
+	if ((signature[0] != 'V') && (signature[0] != 'O') && (signature[0] != 'X') && (signature[0] != ' '))
 	{
 		return VOX_ERROR_INVALID_FORMAT; //"Not an MagicaVoxel File format"
 	}
 
-	unsigned long version;
-
-	version = *((unsigned long*)fileDataPtr);
-	fileDataPtr += sizeof(unsigned long);
+	// @raysan5: reviewed version loading
+	unsigned int version = 0;
+	version = ((unsigned int*)fileDataPtr)[0];
+	fileDataPtr += 4;
 
 	if (version < 150)
 	{
@@ -572,9 +577,9 @@ int Vox_LoadFromMemory(unsigned char* pvoxData, unsigned int voxDataSize, VoxArr
 	//// children chunks : m bytes
 	//{ child chunk 0 }
 	//{ child chunk 1 }
-	unsigned long sizeX, sizeY, sizeZ;
+	unsigned int sizeX, sizeY, sizeZ;
 	sizeX = sizeY = sizeZ = 0;
-	unsigned long numVoxels = 0;
+	unsigned int numVoxels = 0;
 
 	while (fileDataPtr < endfileDataPtr)
 	{
@@ -583,23 +588,23 @@ int Vox_LoadFromMemory(unsigned char* pvoxData, unsigned int voxDataSize, VoxArr
 		szChunkName[4] = 0;
 		fileDataPtr += 4;
 
-		unsigned long chunkSize = *((unsigned long*)fileDataPtr);
-		fileDataPtr += sizeof(unsigned long);
+		unsigned int chunkSize = *((unsigned int*)fileDataPtr);
+		fileDataPtr += sizeof(unsigned int);
 
 		//unsigned long chunkTotalChildSize = *((unsigned long*)fileDataPtr);
-		fileDataPtr += sizeof(unsigned long);
+		fileDataPtr += sizeof(unsigned int);
 
 		if (strcmp(szChunkName, "SIZE") == 0)
 		{
 			//(4 bytes x 3 : x, y, z ) 
-			sizeX = *((unsigned long*)fileDataPtr);
-			fileDataPtr += sizeof(unsigned long);
+			sizeX = *((unsigned int*)fileDataPtr);
+			fileDataPtr += sizeof(unsigned int);
 
-			sizeY = *((unsigned long*)fileDataPtr);
-			fileDataPtr += sizeof(unsigned long);
+			sizeY = *((unsigned int*)fileDataPtr);
+			fileDataPtr += sizeof(unsigned int);
 
-			sizeZ = *((unsigned long*)fileDataPtr);
-			fileDataPtr += sizeof(unsigned long);
+			sizeZ = *((unsigned int*)fileDataPtr);
+			fileDataPtr += sizeof(unsigned int);
 
 			//Alloc vox array
 			Vox_AllocArray(pvoxarray, sizeX, sizeZ, sizeY);	//Reverse Y<>Z for left to right handed system
@@ -610,8 +615,8 @@ int Vox_LoadFromMemory(unsigned char* pvoxData, unsigned int voxDataSize, VoxArr
 
 			//(numVoxels : 4 bytes )
 			//(each voxel: 1 byte x 4 : x, y, z, colorIndex ) x numVoxels
-			numVoxels = *((unsigned long*)fileDataPtr);
-			fileDataPtr += sizeof(unsigned long);
+			numVoxels = *((unsigned int*)fileDataPtr);
+			fileDataPtr += sizeof(unsigned int);
 
 			while (numVoxels > 0)
 			{
