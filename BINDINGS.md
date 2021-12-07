@@ -1,6 +1,6 @@
 # raylib bindings and wrappers
 
-Some people ported raylib to other languages in form of bindings or wrappers to the library. Here it is alist with all the ports available. Feel free to send a PR if you know of any binding/wrapper not in this list.
+Some people ported raylib to other languages in form of bindings or wrappers to the library. Here is a list with all the ports available. Feel free to send a PR if you know of any binding/wrapper not in this list.
 
 ### Language Bindings
 
@@ -12,6 +12,7 @@ Some people ported raylib to other languages in form of bindings or wrappers to 
 | raylib-boo         | 3.7     | [Boo](http://boo-language.github.io/)| MIT | https://github.com/Rabios/raylib-boo          |
 | bindbc-raylib3     | **4.0** | [D](https://dlang.org/)              | BSL-1.0 | https://github.com/o3o/bindbc-raylib3     |
 | dray               | **4.0** | [D](https://dlang.org/)              | Apache-2.0 | https://github.com/xdrie/dray          |
+| raylib-d           | **4.0** | [D](https://dlang.org/)              | Zlib | https://github.com/schveiguy/raylib-d        |
 | raylib-go          | **4.0** | [Go](https://golang.org/)            | Zlib | https://github.com/gen2brain/raylib-go       |
 | raylib-rs          | 3.5     | [Rust](https://www.rust-lang.org/)   | Zlib | https://github.com/deltaphc/raylib-rs        |
 | raylib-lua         | **4.0** | [Lua](http://www.lua.org/)           | ISC | https://github.com/TSnake41/raylib-lua        |

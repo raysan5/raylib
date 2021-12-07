@@ -487,6 +487,8 @@ static CoreData CORE = { 0 };               // Global CORE state context
 static char **dirFilesPath = NULL;          // Store directory files paths as strings
 static int dirFileCount = 0;                // Count directory files strings
 
+const char *raylibVersion = RAYLIB_VERSION; // raylib version symbol, it could be required for some bindings
+
 #if defined(SUPPORT_SCREEN_CAPTURE)
 static int screenshotCounter = 0;           // Screenshots counter
 #endif
@@ -701,6 +703,35 @@ struct android_app *GetAndroidApp(void)
 void InitWindow(int width, int height, const char *title)
 {
     TRACELOG(LOG_INFO, "Initializing raylib %s", RAYLIB_VERSION);
+    
+    TRACELOG(LOG_INFO, "Supported raylib modules:");
+    TRACELOG(LOG_INFO, "    > rcore:..... loaded (mandatory)");
+    TRACELOG(LOG_INFO, "    > rlgl:...... loaded (mandatory)");
+#if defined(SUPPORT_MODULE_RSHAPES)
+    TRACELOG(LOG_INFO, "    > rshapes:... loaded (optional)");
+#else
+    TRACELOG(LOG_INFO, "    > rshapes:... not loaded (optional)");
+#endif
+#if defined(SUPPORT_MODULE_RTEXTURES) 
+    TRACELOG(LOG_INFO, "    > rtextures:. loaded (optional)");
+#else
+    TRACELOG(LOG_INFO, "    > rtextures:. not loaded (optional)");
+#endif  
+#if defined(SUPPORT_MODULE_RTEXT) 
+    TRACELOG(LOG_INFO, "    > rtext:..... loaded (optional)");
+#else
+    TRACELOG(LOG_INFO, "    > rtext:..... not loaded (optional)");
+#endif
+#if defined(SUPPORT_MODULE_RMODELS)
+    TRACELOG(LOG_INFO, "    > rmodels:... loaded (optional)");
+#else
+    TRACELOG(LOG_INFO, "    > rmodels:... not loaded (optional)");
+#endif
+#if defined(SUPPORT_MODULE_RAUDIO) 
+    TRACELOG(LOG_INFO, "    > raudio:.... loaded (optional)");
+#else
+    TRACELOG(LOG_INFO, "    > raudio:.... not loaded (optional)");
+#endif
 
     if ((title != NULL) && (title[0] != 0)) CORE.Window.title = title;
 
@@ -3292,7 +3323,8 @@ void OpenURL(const char *url)
     #if defined(__APPLE__)
         sprintf(cmd, "open '%s'", url);
     #endif
-        system(cmd);
+        int result = system(cmd);
+        if (result == -1) TRACELOG(LOG_WARNING, "OpenURL() child process could bot be created");
         RL_FREE(cmd);
 #endif
 #if defined(PLATFORM_WEB)

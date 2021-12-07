@@ -131,8 +131,8 @@
 #endif
 
 #if defined(SUPPORT_FILEFORMAT_QOI)
-	#define QOI_MALLOC RL_MALLOC
-	#define QOI_FREE RL_FREE
+    #define QOI_MALLOC RL_MALLOC
+    #define QOI_FREE RL_FREE
     
     #define QOI_IMPLEMENTATION
     #include "external/qoi.h"
