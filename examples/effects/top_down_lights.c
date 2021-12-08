@@ -35,7 +35,7 @@ typedef struct
     Vector2 Vertecies[4];
 }ShadowGeometry;
 
-#define MAX_SHADOWS MAX_BOXES*2 // MAX_BOXES * 2. Each box can cast up to two shadow volumes for the edges
+#define MAX_SHADOWS MAX_BOXES*3 // MAX_BOXES *3. Each box can cast up to two shadow volumes for the edges it is away from, and one for the box itself
 
 typedef struct 
 {
@@ -79,7 +79,6 @@ void MoveLight(int slot, float x, float y)
     Lights[slot].Bounds.y = y - Lights[slot].OuterRadius;
 }
 
-
 // compute a shadow volume for the edge
 // takes the edge and projects it back by the light radius and turns it into a quad
 void ComputeShadowVolumeForEdge(int slot, Vector2 sp, Vector2 ep)
@@ -87,7 +86,7 @@ void ComputeShadowVolumeForEdge(int slot, Vector2 sp, Vector2 ep)
     if (Lights[slot].ShadowCount >= MAX_SHADOWS)
         return;
 
-	float extension = Lights[slot].OuterRadius;
+	float extension = Lights[slot].OuterRadius*2;
 
 	Vector2 spVector = Vector2Normalize(Vector2Subtract(sp, Lights[slot].Position));
 	Vector2 spProjection = Vector2Add(sp, Vector2Scale(spVector, extension));
@@ -96,9 +95,9 @@ void ComputeShadowVolumeForEdge(int slot, Vector2 sp, Vector2 ep)
 	Vector2 epProjection = Vector2Add(ep, Vector2Scale(epVector, extension));
 
     Lights[slot].Shadows[Lights[slot].ShadowCount].Vertecies[0] = sp;
-    Lights[slot].Shadows[Lights[slot].ShadowCount].Vertecies[1] = spProjection;
-    Lights[slot].Shadows[Lights[slot].ShadowCount].Vertecies[2] = epProjection;
-    Lights[slot].Shadows[Lights[slot].ShadowCount].Vertecies[3] = ep;
+	Lights[slot].Shadows[Lights[slot].ShadowCount].Vertecies[1] = ep;
+	Lights[slot].Shadows[Lights[slot].ShadowCount].Vertecies[2] = epProjection;
+    Lights[slot].Shadows[Lights[slot].ShadowCount].Vertecies[3] = spProjection;
 
     Lights[slot].ShadowCount++;
 }
@@ -120,7 +119,7 @@ void UpdateLightMask(int slot)
 		DrawCircleGradient((int)Lights[slot].Position.x, (int)Lights[slot].Position.y, Lights[slot].OuterRadius, ColorAlpha(WHITE, 0), WHITE);
 	rlDrawRenderBatchActive();
 
-    // cut out the shadows from the light raidus by forcing the alpha to maxium
+    // cut out the shadows from the light radius by forcing the alpha to maximum
 	rlSetBlendMode(BLEND_ALPHA);
 	rlSetBlendFactors(RLGL_SRC_ALPHA, RLGL_SRC_ALPHA, RLGL_MAX);
 	rlSetBlendMode(BLEND_CUSTOM);
@@ -181,26 +180,33 @@ bool UpdateLight(int slot, Rectangle* boxes, int count)
 		Vector2 sp = (Vector2){ boxes[i].x, boxes[i].y };
 		Vector2 ep = (Vector2){ boxes[i].x + boxes[i].width, boxes[i].y };
 
-		if (Lights[slot].Position.y < ep.y)    
+		if (Lights[slot].Position.y > ep.y)    
             ComputeShadowVolumeForEdge(slot, sp, ep);
 
 		// right
 		sp = ep;
 		ep.y += boxes[i].height;
-		if (Lights[slot].Position.x > ep.x)
+		if (Lights[slot].Position.x < ep.x)
             ComputeShadowVolumeForEdge(slot, sp, ep);
 
 		// bottom
 		sp = ep;
 		ep.x -= boxes[i].width;
-		if (Lights[slot].Position.y > ep.y)
+		if (Lights[slot].Position.y < ep.y)
             ComputeShadowVolumeForEdge(slot, sp, ep);
 
 		// left
 		sp = ep;
 		ep.y -= boxes[i].height;
-		if (Lights[slot].Position.x < ep.x)
+		if (Lights[slot].Position.x > ep.x)
             ComputeShadowVolumeForEdge(slot, sp, ep);
+
+		// the box itself
+		Lights[slot].Shadows[Lights[slot].ShadowCount].Vertecies[0] = (Vector2){ boxes[i].x, boxes[i].y };
+		Lights[slot].Shadows[Lights[slot].ShadowCount].Vertecies[1] = (Vector2){ boxes[i].x, boxes[i].y + boxes[i].height };
+		Lights[slot].Shadows[Lights[slot].ShadowCount].Vertecies[2] = (Vector2){ boxes[i].x + boxes[i].width, boxes[i].y + boxes[i].height };
+		Lights[slot].Shadows[Lights[slot].ShadowCount].Vertecies[3] = (Vector2){ boxes[i].x + boxes[i].width, boxes[i].y };
+		Lights[slot].ShadowCount++;
 	}
 
     Lights[slot].Valid = true;
