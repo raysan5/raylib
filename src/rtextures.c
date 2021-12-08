@@ -775,7 +775,7 @@ Image GenImageCellular(int width, int height, int tileSize)
     {
         int y = (i/seedsPerRow)*tileSize + GetRandomValue(0, tileSize - 1);
         int x = (i%seedsPerRow)*tileSize + GetRandomValue(0, tileSize - 1);
-        seeds[i] = (Vector2){ (float)x, (float)y};
+        seeds[i] = (Vector2){ (float)x, (float)y };
     }
 
     for (int y = 0; y < height; y++)
@@ -786,7 +786,7 @@ Image GenImageCellular(int width, int height, int tileSize)
         {
             int tileX = x/tileSize;
 
-            float minDistance = (float)strtod("Inf", NULL);
+            float minDistance = 65536.0f; //(float)strtod("Inf", NULL);
 
             // Check all adjacent tiles
             for (int i = -1; i < 2; i++)
