@@ -2234,7 +2234,7 @@ void BeginScissorMode(int x, int y, int width, int height)
     Vector2 scale = { 1, 1 };
     if ((CORE.Window.flags & FLAG_WINDOW_HIGHDPI) > 0)
     {
-        Vector2 scale = GetWindowScaleDPI();
+        scale = GetWindowScaleDPI();
     }
 
     if (CORE.Window.flags & FLAG_FIXED_RENDER_SIZE)
