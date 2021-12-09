@@ -99,7 +99,8 @@
 // Types and Structures Definition
 //----------------------------------------------------------------------------------
 #if !defined(RL_VECTOR2_TYPE)
-// Vector2 type
+// 
+type
 typedef struct Vector2 {
     float x;
     float y;
@@ -278,13 +279,11 @@ RMAPI float Vector2Distance(Vector2 v1, Vector2 v2)
     return result;
 }
 
-// Calculate angle from two vectors in X-axis
+// Calculate angle from two vectors
 RMAPI float Vector2Angle(Vector2 v1, Vector2 v2)
 {
     float result = atan2f(v2.y, v2.x) - atan2f(v1.y, v1.x);
-
-    if (result < 0) result += 2 * PI;
-
+    
     return result;
 }
 
@@ -532,18 +531,14 @@ RMAPI float Vector3Distance(Vector3 v1, Vector3 v2)
     return result;
 }
 
-// Calculate angle between two vectors in XY and XZ
-RMAPI Vector2 Vector3Angle(Vector3 v1, Vector3 v2)
+// Calculate angle between two vectors
+RMAPI float Vector3Angle(Vector3 v1, Vector3 v2)
 {
-    Vector2 result = { 0 };
-
-    float dx = v2.x - v1.x;
-    float dy = v2.y - v1.y;
-    float dz = v2.z - v1.z;
-
-    result.x = atan2f(dx, dz);                      // Angle in XZ
-    result.y = atan2f(dy, sqrtf(dx*dx + dz*dz));    // Angle in XY
-
+    Vector3 cross = { v1.y*v2.z - v1.z*v2.y, v1.z*v2.x - v1.x*v2.z, v1.x*v2.y - v1.y*v2.x };
+    float len = sqrtf(cross.x*cross.x + cross.y*cross.y + cross.z*cross.z);
+    float dot = (v1.x*v2.x + v1.y*v2.y + v1.z*v2.z);
+    float result = atan2f(len, dot);
+    
     return result;
 }
 
