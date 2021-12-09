@@ -14,6 +14,7 @@ Some people ported raylib to other languages in form of bindings or wrappers to 
 | dray               | **4.0** | [D](https://dlang.org/)              | Apache-2.0 | https://github.com/xdrie/dray          |
 | raylib-d           | **4.0** | [D](https://dlang.org/)              | Zlib | https://github.com/schveiguy/raylib-d        |
 | raylib-go          | **4.0** | [Go](https://golang.org/)            | Zlib | https://github.com/gen2brain/raylib-go       |
+| raylib-guile       | auto    | [Guile](https://www.gnu.org/software/guile/) | Zlib | https://github.com/petelliott/raylib-guile |
 | raylib-rs          | 3.5     | [Rust](https://www.rust-lang.org/)   | Zlib | https://github.com/deltaphc/raylib-rs        |
 | raylib-lua         | **4.0** | [Lua](http://www.lua.org/)           | ISC | https://github.com/TSnake41/raylib-lua        |
 | raylua             | **4.0** | [Lua](http://www.lua.org/)           | MIT | https://github.com/Rabios/raylua              |
