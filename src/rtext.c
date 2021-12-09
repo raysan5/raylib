@@ -1598,7 +1598,7 @@ int GetCodepoint(const char *text, int *bytesProcessed)
         if (((octet == 0xe0) && !((octet1 >= 0xa0) && (octet1 <= 0xbf))) ||
             ((octet == 0xed) && !((octet1 >= 0x80) && (octet1 <= 0x9f)))) { *bytesProcessed = 2; return code; }
 
-        if ((octet >= 0xe0) && (0 <= 0xef))
+        if ((octet >= 0xe0) && (octet <= 0xef))
         {
             code = ((octet & 0xf) << 12) | ((octet1 & 0x3f) << 6) | (octet2 & 0x3f);
             *bytesProcessed = 3;
