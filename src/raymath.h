@@ -528,7 +528,7 @@ RMAPI float Vector3Distance(Vector3 v1, Vector3 v2)
     return result;
 }
 
-// Calculate between two vectors
+// Calculate angle between two vectors
 RMAPI float Vector3Angle(Vector3 v1, Vector3 v2)
 {
     return atan2f(Vector3Length(Vector3CrossProduct(v1, v2)), Vector3DotProduct(v1, v2));
