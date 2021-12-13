@@ -315,6 +315,9 @@ typedef enum {
 struct rAudioBuffer {
     ma_data_converter converter;    // Audio data converter
 
+    void (*audioCallback)(void*, unsigned int); // optional callback for filling in buffer on audio threads
+    void* audioCallbackData;        // optional data passed to callback
+
     float volume;                   // Audio buffer volume
     float pitch;                    // Audio buffer pitch
 
@@ -396,6 +399,7 @@ void PlayAudioBuffer(AudioBuffer *buffer);
 void StopAudioBuffer(AudioBuffer *buffer);
 void PauseAudioBuffer(AudioBuffer *buffer);
 void ResumeAudioBuffer(AudioBuffer *buffer);
+void SetAudioBufferCallback(AudioBuffer* buffer, int callback(void*));
 void SetAudioBufferVolume(AudioBuffer *buffer, float volume);
 void SetAudioBufferPitch(AudioBuffer *buffer, float pitch);
 void TrackAudioBuffer(AudioBuffer *buffer);
@@ -553,6 +557,8 @@ AudioBuffer *LoadAudioBuffer(ma_format format, ma_uint32 channels, ma_uint32 sam
     // Init audio buffer values
     audioBuffer->volume = 1.0f;
     audioBuffer->pitch = 1.0f;
+    audioBuffer->audioCallback = NULL;
+    audioBuffer->audioCallbackData = NULL;
     audioBuffer->playing = false;
     audioBuffer->paused = false;
     audioBuffer->looping = false;
@@ -633,6 +639,16 @@ void PauseAudioBuffer(AudioBuffer *buffer)
 void ResumeAudioBuffer(AudioBuffer *buffer)
 {
     if (buffer != NULL) buffer->paused = false;
+}
+
+// Audio thread callback to request new data
+void SetAudioBufferCallback(AudioBuffer* buffer, void callback(void*, unsigned int, void*), void* callbackData)
+{
+    if (buffer != NULL)
+    {
+        buffer->audioCallback = callback;
+        buffer->audioCallbackData = callbackData;
+    }
 }
 
 // Set volume for an audio buffer
@@ -1040,6 +1056,9 @@ void PlaySoundMulti(Sound sound)
 
     AUDIO.MultiChannel.pool[index]->volume = sound.stream.buffer->volume;
     AUDIO.MultiChannel.pool[index]->pitch = sound.stream.buffer->pitch;
+    AUDIO.MultiChannel.pool[index]->audioCallback = sound.stream.buffer->audioCallback;
+    AUDIO.MultiChannel.pool[index]->audioCallbackData = sound.stream.buffer->audioCallbackData;
+    
     AUDIO.MultiChannel.pool[index]->looping = sound.stream.buffer->looping;
     AUDIO.MultiChannel.pool[index]->usage = sound.stream.buffer->usage;
     AUDIO.MultiChannel.pool[index]->isSubBufferProcessed[0] = false;
@@ -1987,6 +2006,12 @@ void SetAudioStreamBufferSizeDefault(int size)
     AUDIO.Buffer.defaultSize = size;
 }
 
+// Audio thread callback to request new data
+void SetAudioStreamCallback(AudioStream stream, void callback(void*, unsigned int, void*), void* callbackData)
+{
+    SetAudioBufferCallback(stream.buffer, callback, callbackData);
+}
+
 //----------------------------------------------------------------------------------
 // Module specific Functions Definition
 //----------------------------------------------------------------------------------
@@ -2003,6 +2028,12 @@ static void OnLog(ma_context *pContext, ma_device *pDevice, ma_uint32 logLevel, 
 // Reads audio data from an AudioBuffer object in internal format.
 static ma_uint32 ReadAudioBufferFramesInInternalFormat(AudioBuffer *audioBuffer, void *framesOut, ma_uint32 frameCount)
 {
+    if (audioBuffer->audioCallback)
+    {
+        audioBuffer->audioCallback(framesOut, frameCount, audioBuffer->audioCallbackData);
+        return frameCount;
+    }
+
     ma_uint32 subBufferSizeInFrames = (audioBuffer->sizeInFrames > 1)? audioBuffer->sizeInFrames/2 : audioBuffer->sizeInFrames;
     ma_uint32 currentSubBufferIndex = audioBuffer->frameCursorPos/subBufferSizeInFrames;
 
@@ -2030,7 +2061,8 @@ static ma_uint32 ReadAudioBufferFramesInInternalFormat(AudioBuffer *audioBuffer,
         }
         else
         {
-            if (isSubBufferProcessed[currentSubBufferIndex]) break;
+            if (isSubBufferProcessed[currentSubBufferIndex])
+                break;
         }
 
         ma_uint32 totalFramesRemaining = (frameCount - framesRead);

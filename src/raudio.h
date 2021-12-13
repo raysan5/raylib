@@ -190,6 +190,7 @@ void StopAudioStream(AudioStream stream);                       // Stop audio st
 void SetAudioStreamVolume(AudioStream stream, float volume);    // Set volume for audio stream (1.0 is max level)
 void SetAudioStreamPitch(AudioStream stream, float pitch);      // Set pitch for audio stream (1.0 is base level)
 void SetAudioStreamBufferSizeDefault(int size);                 // Default size for new audio streams
+void SetAudioStreamCallback(AudioStream stream, void callback(void*, unsigned int, void*), void* callbackData);  // Audio thread callback to request new data
 
 #ifdef __cplusplus
 }
