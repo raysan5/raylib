@@ -1257,7 +1257,7 @@ return {
         {
           name = "KEY_BACKSLASH",
           value = 92,
-          description = "Key: '\'"
+          description = "Key: '\\'"
         },
         {
           name = "KEY_RIGHT_BRACKET",
@@ -3244,7 +3244,7 @@ return {
     },
     {
       name = "LoadFileText",
-      description = "Load text data from file (read), returns a ' 0' terminated string",
+      description = "Load text data from file (read), returns a '\\0' terminated string",
       returnType = "char *",
       params = {
         {name = "fileName", type = "const char *"}
@@ -3260,7 +3260,7 @@ return {
     },
     {
       name = "SaveFileText",
-      description = "Save text data to file (write), string must be ' 0' terminated, returns true on success",
+      description = "Save text data to file (write), string must be '\\0' terminated, returns true on success",
       returnType = "bool",
       params = {
         {name = "fileName", type = "const char *"},
@@ -5519,7 +5519,7 @@ return {
     },
     {
       name = "TextLength",
-      description = "Get text length, checks for ' 0' ending",
+      description = "Get text length, checks for '\\0' ending",
       returnType = "unsigned int",
       params = {
         {name = "text", type = "const char *"}
