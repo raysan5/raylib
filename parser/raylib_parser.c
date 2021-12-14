@@ -1107,12 +1107,12 @@ static void ExportParsedData(const char *fileName, int format)
             fprintf(outFile, "    <Structs count=\"%i\">\n", structCount);
             for (int i = 0; i < structCount; i++)
             {
-                FPrintfEscapes(outFile, "        <Struct name=%S fieldCount=\"%i\" desc=%S>\n", structs[i].name, structs[i].fieldCount, structs[i].desc + 3);
+                fprintf(outFile, "        <Struct name=\"%s\" fieldCount=\"%i\" desc=\"%s\">\n", structs[i].name, structs[i].fieldCount, structs[i].desc + 3);
                 for (int f = 0; f < structs[i].fieldCount; f++)
                 {
-                    FPrintfEscapes(outFile, "            <Field type=%S name=%S desc=%S />\n", structs[i].fieldType[f], structs[i].fieldName[f], structs[i].fieldDesc[f] + 3);
+                    fprintf(outFile, "            <Field type=\"%s\" name=\"%s\" desc=\"%s\" />\n", structs[i].fieldType[f], structs[i].fieldName[f], structs[i].fieldDesc[f] + 3);
                 }
-                FPrintfEscapes(outFile, "        </Struct>\n");
+                fprintf(outFile, "        </Struct>\n");
             }
             fprintf(outFile, "    </Structs>\n");
 
@@ -1120,12 +1120,12 @@ static void ExportParsedData(const char *fileName, int format)
             fprintf(outFile, "    <Enums count=\"%i\">\n", enumCount);
             for (int i = 0; i < enumCount; i++)
             {
-                FPrintfEscapes(outFile, "        <Enum name=%S valueCount=\"%i\" desc=%S>\n", enums[i].name, enums[i].valueCount, enums[i].desc + 3);
+                fprintf(outFile, "        <Enum name=\"%s\" valueCount=\"%i\" desc=\"%s\">\n", enums[i].name, enums[i].valueCount, enums[i].desc + 3);
                 for (int v = 0; v < enums[i].valueCount; v++)
                 {
-                    FPrintfEscapes(outFile, "            <Value name=%S integer=\"%i\" desc=%S />\n", enums[i].valueName[v], enums[i].valueInteger[v], enums[i].valueDesc[v] + 3);
+                    fprintf(outFile, "            <Value name=\"%s\" integer=\"%i\" desc=\"%s\" />\n", enums[i].valueName[v], enums[i].valueInteger[v], enums[i].valueDesc[v] + 3);
                 }
-                FPrintfEscapes(outFile, "        </Enum>\n");
+                fprintf(outFile, "        </Enum>\n");
             }
             fprintf(outFile, "    </Enums>\n");
 
@@ -1133,12 +1133,12 @@ static void ExportParsedData(const char *fileName, int format)
             fprintf(outFile, "    <Functions count=\"%i\">\n", funcCount);
             for (int i = 0; i < funcCount; i++)
             {
-                FPrintfEscapes(outFile, "        <Function name=%S retType=%S paramCount=\"%i\" desc=%S>\n", funcs[i].name, funcs[i].retType, funcs[i].paramCount, funcs[i].desc + 3);
+                fprintf(outFile, "        <Function name=\"%s\" retType=\"%s\" paramCount=\"%i\" desc=\"%s\">\n", funcs[i].name, funcs[i].retType, funcs[i].paramCount, funcs[i].desc + 3);
                 for (int p = 0; p < funcs[i].paramCount; p++)
                 {
-                    FPrintfEscapes(outFile, "            <Param type=%S name=%S desc=%S />\n", funcs[i].paramType[p], funcs[i].paramName[p], funcs[i].paramDesc[p] + 3);
+                    fprintf(outFile, "            <Param type=\"%s\" name=\"%s\" desc=\"%s\" />\n", funcs[i].paramType[p], funcs[i].paramName[p], funcs[i].paramDesc[p] + 3);
                 }
-                FPrintfEscapes(outFile, "        </Function>\n");
+                fprintf(outFile, "        </Function>\n");
             }
             fprintf(outFile, "    </Functions>\n");
 

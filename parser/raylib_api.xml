@@ -280,7 +280,7 @@
             <Value name="KEY_Y" integer="89" desc="Key: Y | y" />
             <Value name="KEY_Z" integer="90" desc="Key: Z | z" />
             <Value name="KEY_LEFT_BRACKET" integer="91" desc="Key: [" />
-            <Value name="KEY_BACKSLASH" integer="92" desc="Key: '\\'" />
+            <Value name="KEY_BACKSLASH" integer="92" desc="Key: '\'" />
             <Value name="KEY_RIGHT_BRACKET" integer="93" desc="Key: ]" />
             <Value name="KEY_GRAVE" integer="96" desc="Key: `" />
             <Value name="KEY_SPACE" integer="32" desc="Key: Space" />
@@ -855,13 +855,13 @@
             <Param type="void *" name="data" desc="" />
             <Param type="unsigned int" name="bytesToWrite" desc="" />
         </Function>
-        <Function name="LoadFileText" retType="char *" paramCount="1" desc="Load text data from file (read), returns a '\\0' terminated string">
+        <Function name="LoadFileText" retType="char *" paramCount="1" desc="Load text data from file (read), returns a '\0' terminated string">
             <Param type="const char *" name="fileName" desc="" />
         </Function>
         <Function name="UnloadFileText" retType="void" paramCount="1" desc="Unload file text data allocated by LoadFileText()">
             <Param type="char *" name="text" desc="" />
         </Function>
-        <Function name="SaveFileText" retType="bool" paramCount="2" desc="Save text data to file (write), string must be '\\0' terminated, returns true on success">
+        <Function name="SaveFileText" retType="bool" paramCount="2" desc="Save text data to file (write), string must be '\0' terminated, returns true on success">
             <Param type="const char *" name="fileName" desc="" />
             <Param type="char *" name="text" desc="" />
         </Function>
@@ -1961,7 +1961,7 @@
             <Param type="const char *" name="text1" desc="" />
             <Param type="const char *" name="text2" desc="" />
         </Function>
-        <Function name="TextLength" retType="unsigned int" paramCount="1" desc="Get text length, checks for '\\0' ending">
+        <Function name="TextLength" retType="unsigned int" paramCount="1" desc="Get text length, checks for '\0' ending">
             <Param type="const char *" name="text" desc="" />
         </Function>
         <Function name="TextFormat" retType="const char *" paramCount="2" desc="Text formatting with variables (sprintf() style)">
