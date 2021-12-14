@@ -105,7 +105,7 @@ typedef struct EnumInfo {
     int valueCount;             // Number of values in enumerator
     char valueName[MAX_ENUM_VALUES][64];    // Value name definition
     int valueInteger[MAX_ENUM_VALUES];      // Value integer
-    char valueDesc[MAX_ENUM_VALUES][64];    // Value description
+    char valueDesc[MAX_ENUM_VALUES][128];    // Value description
 } EnumInfo;
 
 // Output format for parsed data
@@ -186,7 +186,7 @@ int main(int argc, char* argv[])
     }
 
     // Read structs data (multiple lines, read directly from buffer)
-    // TODO: Parse structs data from "lines" instead of "buffer" -> Easier to get struct definition
+    // TODO: Parse structs data from "lines" instead of "buffer" -> Easier to get struct definition and description
     for (int i = 0; i < length; i++)
     {
         // Read struct data (starting with "typedef struct", ending with '} ... ;')
@@ -261,6 +261,8 @@ int main(int argc, char* argv[])
     {
         int structLineOffset = 0;
 
+        // TODO: Get struct description
+
         // Get struct name: typedef struct name {
         for (int c = 15; c < 64 + 15; c++)
         {
@@ -332,7 +334,19 @@ int main(int argc, char* argv[])
 
     for (int i = 0; i < enumCount; i++)
     {
-        // TODO: Get enum description from lines[enumLines[i] - 1]
+
+        // Parse enum description
+        // NOTE: This is not necessarily from the line immediately before,
+        // some of the enums have extra lines between the "description"
+        // and the typedef enum
+        for (int j = enumLines[i] - 1; j > 0; j--) {
+            char *linePtr = lines[j];
+            if ((linePtr[0] != '/') || (linePtr[2] != ' '))
+            {
+                MemoryCopy(enums[i].desc, &lines[j + 1][0], sizeof(enums[i].desc) - 1);
+                break;
+            }
+        }
 
         for (int j = 1; j < MAX_ENUM_VALUES*2; j++)   // Maximum number of lines following enum first line
         {
@@ -367,7 +381,7 @@ int main(int argc, char* argv[])
                     //  '='  -> value is provided
                     //  ' '  -> value is equal to previous + 1, there could be a description if not '\0'
                     bool foundValue = false;
-                    while (linePtr[c] != '\0')
+                    while ((linePtr[c] != '\0') && (linePtr[c] != '/'))
                     {
                         if (linePtr[c] == '=') { foundValue = true; break; }
                         c++;
@@ -392,10 +406,15 @@ int main(int argc, char* argv[])
                         else enums[i].valueInteger[enums[i].valueCount] = atoi(integer);
                     }
                     else enums[i].valueInteger[enums[i].valueCount] = (enums[i].valueInteger[enums[i].valueCount - 1] + 1);
-
-                    // TODO: Parse value description if any
                 }
                 else enums[i].valueInteger[enums[i].valueCount] = (enums[i].valueInteger[enums[i].valueCount - 1] + 1);
+
+                // Look for description or end of line
+                while ((linePtr[c] != '/') && (linePtr[c] != '\0')) { c++; }
+                if (linePtr[c] == '/') {
+                    // Parse value description
+                    MemoryCopy(enums[i].valueDesc[enums[i].valueCount], &linePtr[c], sizeof(enums[0].valueDesc[0]) - c - 1);
+                }
 
                 enums[i].valueCount++;
             }
