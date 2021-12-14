@@ -339,7 +339,8 @@ int main(int argc, char* argv[])
         // NOTE: This is not necessarily from the line immediately before,
         // some of the enums have extra lines between the "description"
         // and the typedef enum
-        for (int j = enumLines[i] - 1; j > 0; j--) {
+        for (int j = enumLines[i] - 1; j > 0; j--)
+        {
             char *linePtr = lines[j];
             if ((linePtr[0] != '/') || (linePtr[2] != ' '))
             {
@@ -411,7 +412,8 @@ int main(int argc, char* argv[])
 
                 // Look for description or end of line
                 while ((linePtr[c] != '/') && (linePtr[c] != '\0')) { c++; }
-                if (linePtr[c] == '/') {
+                if (linePtr[c] == '/')
+                {
                     // Parse value description
                     MemoryCopy(enums[i].valueDesc[enums[i].valueCount], &linePtr[c], sizeof(enums[0].valueDesc[0]) - c - 1);
                 }
