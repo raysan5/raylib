@@ -11,6 +11,9 @@
 
 #include "raylib.h"
 
+
+#define AUDIO_THREAD_MUSIC_UPDATE true
+
 int main(void)
 {
     // Initialization
@@ -23,6 +26,7 @@ int main(void)
     InitAudioDevice();              // Initialize audio device
 
     Music music = LoadMusicStream("resources/country.mp3");
+    music.background = AUDIO_THREAD_MUSIC_UPDATE;
 
     PlayMusicStream(music);
 
@@ -37,7 +41,10 @@ int main(void)
     {
         // Update
         //----------------------------------------------------------------------------------
-        UpdateMusicStream(music);   // Update music buffer with new stream data
+        if (!AUDIO_THREAD_MUSIC_UPDATE)
+        {
+            UpdateMusicStream(music);   // Update music buffer with new stream data
+        }
 
         // Restart music playing (stop and play)
         if (IsKeyPressed(KEY_SPACE))

@@ -13,6 +13,8 @@
 
 #define MAX_CIRCLES  64
 
+#define AUDIO_THREAD_MUSIC_UPDATE true
+
 typedef struct {
     Vector2 position;
     float radius;
@@ -52,6 +54,7 @@ int main(void)
 
     Music music = LoadMusicStream("resources/mini1111.xm");
     music.looping = false;
+    music.background = AUDIO_THREAD_MUSIC_UPDATE;
     float pitch = 1.0f;
 
     PlayMusicStream(music);
@@ -67,7 +70,10 @@ int main(void)
     {
         // Update
         //----------------------------------------------------------------------------------
-        UpdateMusicStream(music);      // Update music buffer with new stream data
+        if (!AUDIO_THREAD_MUSIC_UPDATE)
+        {
+            UpdateMusicStream(music);      // Update music buffer with new stream data
+        }
 
         // Restart music playing (stop and play)
         if (IsKeyPressed(KEY_SPACE))

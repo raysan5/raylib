@@ -651,6 +651,7 @@ void SetAudioBufferCallback(AudioBuffer* buffer, void callback(void*, unsigned i
     }
 }
 
+
 // Set volume for an audio buffer
 void SetAudioBufferVolume(AudioBuffer *buffer, float volume)
 {
@@ -1614,6 +1615,63 @@ void UnloadMusicStream(Music music)
     }
 }
 
+#if defined(SUPPORT_FILEFORMAT_WAV)
+static void MusicStreamCallbackWav(void* buffer, unsigned int nframes, void* data)
+{
+    drwav* ctx = (drwav*)data;
+    // NOTE: Returns the number of samples to process (not required)
+    if (ctx->bitsPerSample == 16) drwav_read_pcm_frames_s16(ctx, nframes, (short*)buffer);
+    else if (ctx->bitsPerSample == 32) drwav_read_pcm_frames_f32(ctx, nframes, (short*)buffer);
+}
+#endif
+
+#if defined(SUPPORT_FILEFORMAT_OGG)
+static void MusicStreamCallbackOgg(void* buffer, unsigned int nframes, void* data)
+{
+    stb_vorbis* ctx = (stb_vorbis*)data;
+    // NOTE: Returns the number of samples to process (be careful! we ask for number of shorts!)
+    stb_vorbis_get_samples_short_interleaved(ctx, ctx->channels, (short*)buffer, nframes * ctx->channels);
+}
+#endif
+
+#if defined(SUPPORT_FILEFORMAT_FLAC)
+static void MusicStreamCallbackFlac(void* buffer, unsigned int nframes, void* data)
+{
+    drflac* ctx = (drflac*)data;
+    // NOTE: Returns the number of samples to process (be careful! we ask for number of shorts!)
+    drflac_read_pcm_frames_s16(ctx, nframes * ctx->channels, (short*)buffer);
+}
+#endif
+
+#if defined(SUPPORT_FILEFORMAT_MP3)
+static void MusicStreamCallbackMp3(void* buffer, unsigned int nframes, void* data)
+{
+    drmp3* ctx = (drmp3*)data;
+    drmp3_read_pcm_frames_f32(ctx, nframes, (float*)buffer);
+}
+#endif
+
+#if defined(SUPPORT_FILEFORMAT_XM)
+static void MusicStreamCallbackXm(void* buffer, unsigned int nframes, void* data)
+{
+    jar_xm_context_t* ctx = (jar_xm_context_t*)data;
+    // NOTE: Internally we consider 2 channels generation, so sampleCount/2
+    if (AUDIO_DEVICE_FORMAT == ma_format_f32) jar_xm_generate_samples(ctx, (float*)buffer, nframes);
+    else if (AUDIO_DEVICE_FORMAT == ma_format_s16) jar_xm_generate_samples_16bit(ctx, (short*)buffer, nframes);
+    else if (AUDIO_DEVICE_FORMAT == ma_format_u8) jar_xm_generate_samples_8bit(ctx, (char*)buffer, nframes);
+}
+#endif
+
+#if defined(SUPPORT_FILEFORMAT_MOD)
+static void MusicStreamCallbackMod(void* buffer, unsigned int nframes, void* data)
+{
+    jar_mod_context_t* ctx = (jar_mod_context_t*)data;
+    // NOTE: 3rd parameter (nbsample) specify the number of stereo 16bits samples you want, so sampleCount/2
+    jar_mod_fillbuffer(ctx, (short*)buffer, nframes, 0);
+}
+#endif
+
+
 // Start music playing (open stream)
 void PlayMusicStream(Music music)
 {
@@ -1626,6 +1684,51 @@ void PlayMusicStream(Music music)
         ma_uint32 frameCursorPos = music.stream.buffer->frameCursorPos;
         PlayAudioStream(music.stream);  // WARNING: This resets the cursor position.
         music.stream.buffer->frameCursorPos = frameCursorPos;
+
+        if (music.background)
+        {
+            switch (music.ctxType)
+            {
+#if defined(SUPPORT_FILEFORMAT_WAV)
+            case MUSIC_AUDIO_WAV:
+            {
+                SetAudioBufferCallback(music.stream.buffer, MusicStreamCallbackWav, music.ctxData);
+
+            } break;
+#endif
+#if defined(SUPPORT_FILEFORMAT_OGG)
+            case MUSIC_AUDIO_OGG:
+            {
+                SetAudioBufferCallback(music.stream.buffer, MusicStreamCallbackOgg, music.ctxData);
+            } break;
+#endif
+#if defined(SUPPORT_FILEFORMAT_FLAC)
+            case MUSIC_AUDIO_FLAC:
+            {
+                SetAudioBufferCallback(music.stream.buffer, MusicStreamCallbackFlac, music.ctxData);
+            } break;
+#endif
+#if defined(SUPPORT_FILEFORMAT_MP3)
+            case MUSIC_AUDIO_MP3:
+            {
+                SetAudioBufferCallback(music.stream.buffer, MusicStreamCallbackMp3, music.ctxData);
+            } break;
+#endif
+#if defined(SUPPORT_FILEFORMAT_XM)
+            case MUSIC_MODULE_XM:
+            {
+                SetAudioBufferCallback(music.stream.buffer, MusicStreamCallbackXm, music.ctxData);
+            } break;
+#endif
+#if defined(SUPPORT_FILEFORMAT_MOD)
+            case MUSIC_MODULE_MOD:
+            {
+                SetAudioBufferCallback(music.stream.buffer, MusicStreamCallbackMod, music.ctxData);
+            } break;
+#endif
+            default: break;
+            }
+        }
     }
 }
 
@@ -2009,7 +2112,11 @@ void SetAudioStreamBufferSizeDefault(int size)
 // Audio thread callback to request new data
 void SetAudioStreamCallback(AudioStream stream, void callback(void*, unsigned int, void*), void* callbackData)
 {
-    SetAudioBufferCallback(stream.buffer, callback, callbackData);
+    if (stream.buffer != NULL)
+    {
+        stream.buffer->audioCallback = callback;
+        stream.buffer->audioCallbackData = callbackData;
+    }
 }
 
 //----------------------------------------------------------------------------------
