@@ -426,11 +426,12 @@ typedef struct Wave {
 } Wave;
 
 typedef struct rAudioBuffer rAudioBuffer;
+typedef struct rAudioProcessor rAudioProcessor;
 
 // AudioStream, custom audio stream
 typedef struct AudioStream {
     rAudioBuffer *buffer;       // Pointer to internal data used by the audio system
-
+    rAudioProcessor* processor;
     unsigned int sampleRate;    // Frequency (samples per second)
     unsigned int sampleSize;    // Bit depth (bits per sample): 8, 16, 32 (24 not supported)
     unsigned int channels;      // Number of channels (1-mono, 2-stereo, ...)
@@ -1531,6 +1532,8 @@ RLAPI void SetAudioStreamVolume(AudioStream stream, float volume);    // Set vol
 RLAPI void SetAudioStreamPitch(AudioStream stream, float pitch);      // Set pitch for audio stream (1.0 is base level)
 RLAPI void SetAudioStreamBufferSizeDefault(int size);                 // Default size for new audio streams
 RLAPI void SetAudioStreamCallback(AudioStream stream, void callback(void*, unsigned int, void*), void* callbackData);      // Audio thread callback to request new data
+RLAPI void AddAudioStreamProcessor(AudioStream stream, void (*process)(float*, unsigned int));
+RLAPI void RemoveAudioStreamProcessor(AudioStream stream, void (*process)(float*, unsigned int));
 
 #if defined(__cplusplus)
 }

@@ -14,6 +14,23 @@
 
 #define AUDIO_THREAD_MUSIC_UPDATE true
 
+// a simple lowpass filter applied to the music stream
+static void audioEffectDemo(float* buffer, unsigned int nframes)
+{
+    static float low[2] = { 0.0f, 0.0f };
+    static const float cutoff = 70.0f / 44100.0f; // 70 Hz lowpass filter
+    const float k = cutoff / (cutoff + 0.1591549431f); // RC filter formula
+
+    for (unsigned int i = 0; i < nframes*2; i+=2)
+    {
+        float l = buffer[i], r = buffer[i + 1];
+        low[0] += k * (l - low[0]);
+        low[1] += k * (r - low[1]);
+        buffer[i] = low[0];
+        buffer[i + 1] = low[1];
+    }
+}
+
 int main(void)
 {
     // Initialization
@@ -32,6 +49,7 @@ int main(void)
 
     float timePlayed = 0.0f;
     bool pause = false;
+    bool hasfx = false;
 
     SetTargetFPS(60);               // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
@@ -62,6 +80,20 @@ int main(void)
             else ResumeMusicStream(music);
         }
 
+        // Add/Remove effect
+        if (IsKeyPressed(KEY_F))
+        {
+            hasfx = !hasfx;
+            if (hasfx)
+            {
+                AddAudioStreamProcessor(music.stream, &audioEffectDemo);
+            }
+            else
+            {
+                RemoveAudioStreamProcessor(music.stream, &audioEffectDemo);
+            }
+        }
+
         // Get timePlayed scaled to bar dimensions (400 pixels)
         timePlayed = GetMusicTimePlayed(music)/GetMusicTimeLength(music)*400;
 
@@ -79,9 +111,11 @@ int main(void)
             DrawRectangle(200, 200, 400, 12, LIGHTGRAY);
             DrawRectangle(200, 200, (int)timePlayed, 12, MAROON);
             DrawRectangleLines(200, 200, 400, 12, GRAY);
+            DrawRectangleLines(200, 200, 400, 12, GRAY);
 
             DrawText("PRESS SPACE TO RESTART MUSIC", 215, 250, 20, LIGHTGRAY);
             DrawText("PRESS P TO PAUSE/RESUME MUSIC", 208, 280, 20, LIGHTGRAY);
+            DrawText("PRESS F TO ADD/REMOVE EFFECT", 208, 310, 20, LIGHTGRAY);
 
         EndDrawing();
         //----------------------------------------------------------------------------------
