@@ -3317,7 +3317,7 @@ void OpenURL(const char *url)
         sprintf(cmd, "open '%s'", url);
     #endif
         int result = system(cmd);
-        if (result == -1) TRACELOG(LOG_WARNING, "OpenURL() child process could bot be created");
+        if (result == -1) TRACELOG(LOG_WARNING, "OpenURL() child process could not be created");
         RL_FREE(cmd);
 #endif
 #if defined(PLATFORM_WEB)
