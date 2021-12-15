@@ -333,8 +333,6 @@ struct rAudioBuffer {
 
     rAudioBuffer *next;             // Next audio buffer on the list
     rAudioBuffer *prev;             // Previous audio buffer on the list
-
-    float panVolumeSmoothing[2];
 };
 
 #define AudioBuffer rAudioBuffer    // HACK: To avoid CoreAudio (macOS) symbol collision
@@ -376,7 +374,7 @@ static AudioData AUDIO = {          // Global AUDIO context
 //----------------------------------------------------------------------------------
 static void OnLog(ma_context *pContext, ma_device *pDevice, ma_uint32 logLevel, const char *message);
 static void OnSendAudioDataToDevice(ma_device *pDevice, void *pFramesOut, const void *pFramesInput, ma_uint32 frameCount);
-static void MixAudioFrames(float *framesOut, const float *framesIn, ma_uint32 frameCount, AudioBuffer* buffer);
+static void MixAudioFrames(float *framesOut, const float *framesIn, ma_uint32 frameCount, AudioBuffer *buffer);
 
 #if defined(RAUDIO_STANDALONE)
 static bool IsFileExtension(const char *fileName, const char *ext); // Check file extension
@@ -400,17 +398,10 @@ void StopAudioBuffer(AudioBuffer *buffer);
 void PauseAudioBuffer(AudioBuffer *buffer);
 void ResumeAudioBuffer(AudioBuffer *buffer);
 void SetAudioBufferVolume(AudioBuffer *buffer, float volume);
-void SetAudioBufferPan(AudioBuffer* buffer, float pan);
+void SetAudioBufferPan(AudioBuffer *buffer, float pan);
 void SetAudioBufferPitch(AudioBuffer *buffer, float pitch);
 void TrackAudioBuffer(AudioBuffer *buffer);
 void UntrackAudioBuffer(AudioBuffer *buffer);
-
-
-// pan law
-static float FastSineApproximation(float x)
-{
-    return 0.5f * x * (3 - x * x);
-}
 
 //----------------------------------------------------------------------------------
 // Module Functions Definition - Audio Device initialization and Closing
@@ -565,7 +556,6 @@ AudioBuffer *LoadAudioBuffer(ma_format format, ma_uint32 channels, ma_uint32 sam
     audioBuffer->volume = 1.0f;
     audioBuffer->pitch = 1.0f;
     audioBuffer->pan = 0.5f;
-    audioBuffer->panVolumeSmoothing[0] = audioBuffer->panVolumeSmoothing[1] = FastSineApproximation(0.5f);
 
     audioBuffer->playing = false;
     audioBuffer->paused = false;
@@ -656,7 +646,7 @@ void SetAudioBufferVolume(AudioBuffer *buffer, float volume)
 }
 
 // Set pan for an audio buffer
-void SetAudioBufferPan(AudioBuffer* buffer, float pan)
+void SetAudioBufferPan(AudioBuffer *buffer, float pan)
 {
     if (buffer != NULL) buffer->pan = pan;
 }
@@ -1061,8 +1051,6 @@ void PlaySoundMulti(Sound sound)
     AUDIO.MultiChannel.pool[index]->volume = sound.stream.buffer->volume;
     AUDIO.MultiChannel.pool[index]->pitch = sound.stream.buffer->pitch;
     AUDIO.MultiChannel.pool[index]->pan = sound.stream.buffer->pan;
-    AUDIO.MultiChannel.pool[index]->panVolumeSmoothing[0] = sound.stream.buffer->panVolumeSmoothing[0];
-    AUDIO.MultiChannel.pool[index]->panVolumeSmoothing[1] = sound.stream.buffer->panVolumeSmoothing[1];
     
     AUDIO.MultiChannel.pool[index]->looping = sound.stream.buffer->looping;
     AUDIO.MultiChannel.pool[index]->usage = sound.stream.buffer->usage;
@@ -2262,27 +2250,25 @@ static void OnSendAudioDataToDevice(ma_device *pDevice, void *pFramesOut, const 
 
 // This is the main mixing function. Mixing is pretty simple in this project - it's just an accumulation.
 // NOTE: framesOut is both an input and an output. It will be initially filled with zeros outside of this function.
-static void MixAudioFrames(float *framesOut, const float *framesIn, ma_uint32 frameCount, AudioBuffer* buffer)
+static void MixAudioFrames(float *framesOut, const float *framesIn, ma_uint32 frameCount, AudioBuffer *buffer)
 {
-    float localVolume = buffer->volume;
+    const float localVolume = buffer->volume;
 
     const ma_uint32 nChannels = AUDIO.System.device.playback.channels;
     if (nChannels == 2)
     {
-        float localPan = buffer->pan;
-        float panVolumeTargets[2] = { localVolume * FastSineApproximation(localPan), localVolume * FastSineApproximation(1.0f - localPan) };
-        float* levels = buffer->panVolumeSmoothing;
+        const float left = buffer->pan;
+        const float right = 1.0f - left;
 
-        float* frameOut = framesOut;
-        const float* frameIn = framesIn;
+        // fast sine approximation in [0..1] for pan law: y = 0.5f * x * (3 - x * x);
+        const float levels[2] = { localVolume*0.5f*left*(3.0f-left*left), localVolume*0.5f*right*(3.0f-right*right) };
+
+        float *frameOut = framesOut;
+        const float *frameIn = framesIn;
         for (ma_uint32 iFrame = 0; iFrame < frameCount; ++iFrame)
         {
-            levels[0] = panVolumeTargets[0] - (panVolumeTargets[0]-levels[0]) * 0.995f;
-            levels[1] = panVolumeTargets[1] - (panVolumeTargets[1]-levels[1]) * 0.995f;
-            levels[0] += 1.0f; levels[0] -= 1.0f; // remove denormals
-            levels[1] += 1.0f; levels[1] -= 1.0f;
-            frameOut[0] += (frameIn[0] * levels[0]);
-            frameOut[1] += (frameIn[1] * levels[1]);
+            frameOut[0] += (frameIn[0]*levels[0]);
+            frameOut[1] += (frameIn[1]*levels[1]);
             frameOut += 2;
             frameIn += 2;
         }
@@ -2293,8 +2279,8 @@ static void MixAudioFrames(float *framesOut, const float *framesIn, ma_uint32 fr
         {
             for (ma_uint32 iChannel = 0; iChannel < nChannels; ++iChannel)
             {
-                float* frameOut = framesOut + (iFrame * nChannels);
-                const float* frameIn = framesIn + (iFrame * nChannels);
+                float *frameOut = framesOut + (iFrame * nChannels);
+                const float *frameIn = framesIn + (iFrame * nChannels);
 
                 frameOut[iChannel] += (frameIn[iChannel] * localVolume);
             }
