@@ -62,7 +62,6 @@
 #include <stdlib.h>             // Required for: malloc(), calloc(), realloc(), free(), atoi(), strtol()
 #include <stdio.h>              // Required for: printf(), fopen(), fseek(), ftell(), fread(), fclose()
 #include <stdbool.h>            // Required for: bool
-#include <stdarg.h>             // Required for: va_list, va_start, va_arg
 
 #define MAX_FUNCS_TO_PARSE       512    // Maximum number of functions to parse
 #define MAX_STRUCTS_TO_PARSE      64    // Maximum number of structures to parse
