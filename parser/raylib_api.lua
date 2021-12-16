@@ -2,7 +2,7 @@ return {
   structs = {
     {
       name = "Vector2",
-      description = "",
+      description = "Vector2, 2 components",
       fields = {
         {
           name = "x",
@@ -18,7 +18,7 @@ return {
     },
     {
       name = "Vector3",
-      description = "",
+      description = "Vector3, 3 components",
       fields = {
         {
           name = "x",
@@ -39,7 +39,7 @@ return {
     },
     {
       name = "Vector4",
-      description = "",
+      description = "Vector4, 4 components",
       fields = {
         {
           name = "x",
@@ -65,7 +65,7 @@ return {
     },
     {
       name = "Matrix",
-      description = "",
+      description = "Matrix, 4x4 components, column major, OpenGL style, right handed",
       fields = {
         {
           name = "m0, m4, m8, m12",
@@ -91,7 +91,7 @@ return {
     },
     {
       name = "Color",
-      description = "",
+      description = "Color, 4 components, R8G8B8A8 (32bit)",
       fields = {
         {
           name = "r",
@@ -117,7 +117,7 @@ return {
     },
     {
       name = "Rectangle",
-      description = "",
+      description = "Rectangle, 4 components",
       fields = {
         {
           name = "x",
@@ -143,7 +143,7 @@ return {
     },
     {
       name = "Image",
-      description = "",
+      description = "Image, pixel data stored in CPU memory (RAM)",
       fields = {
         {
           name = "data",
@@ -174,7 +174,7 @@ return {
     },
     {
       name = "Texture",
-      description = "",
+      description = "Texture, tex data stored in GPU memory (VRAM)",
       fields = {
         {
           name = "id",
@@ -205,7 +205,7 @@ return {
     },
     {
       name = "RenderTexture",
-      description = "",
+      description = "RenderTexture, fbo for texture rendering",
       fields = {
         {
           name = "id",
@@ -226,7 +226,7 @@ return {
     },
     {
       name = "NPatchInfo",
-      description = "",
+      description = "NPatchInfo, n-patch layout info",
       fields = {
         {
           name = "source",
@@ -262,7 +262,7 @@ return {
     },
     {
       name = "GlyphInfo",
-      description = "",
+      description = "GlyphInfo, font characters glyphs info",
       fields = {
         {
           name = "value",
@@ -293,7 +293,7 @@ return {
     },
     {
       name = "Font",
-      description = "",
+      description = "Font, font texture and GlyphInfo array data",
       fields = {
         {
           name = "baseSize",
@@ -329,7 +329,7 @@ return {
     },
     {
       name = "Camera3D",
-      description = "",
+      description = "Camera, defines position/orientation in 3d space",
       fields = {
         {
           name = "position",
@@ -360,7 +360,7 @@ return {
     },
     {
       name = "Camera2D",
-      description = "",
+      description = "Camera2D, defines position/orientation in 2d space",
       fields = {
         {
           name = "offset",
@@ -386,7 +386,7 @@ return {
     },
     {
       name = "Mesh",
-      description = "",
+      description = "Mesh, vertex data and vao/vbo",
       fields = {
         {
           name = "vertexCount",
@@ -467,7 +467,7 @@ return {
     },
     {
       name = "Shader",
-      description = "",
+      description = "Shader",
       fields = {
         {
           name = "id",
@@ -483,7 +483,7 @@ return {
     },
     {
       name = "MaterialMap",
-      description = "",
+      description = "MaterialMap",
       fields = {
         {
           name = "texture",
@@ -504,7 +504,7 @@ return {
     },
     {
       name = "Material",
-      description = "",
+      description = "Material, includes shader and maps",
       fields = {
         {
           name = "shader",
@@ -525,7 +525,7 @@ return {
     },
     {
       name = "Transform",
-      description = "",
+      description = "Transform, vectex transformation data",
       fields = {
         {
           name = "translation",
@@ -546,7 +546,7 @@ return {
     },
     {
       name = "BoneInfo",
-      description = "",
+      description = "Bone, skeletal animation bone",
       fields = {
         {
           name = "name[32]",
@@ -562,7 +562,7 @@ return {
     },
     {
       name = "Model",
-      description = "",
+      description = "Model, meshes, materials and animation data",
       fields = {
         {
           name = "transform",
@@ -613,7 +613,7 @@ return {
     },
     {
       name = "ModelAnimation",
-      description = "",
+      description = "ModelAnimation",
       fields = {
         {
           name = "boneCount",
@@ -639,7 +639,7 @@ return {
     },
     {
       name = "Ray",
-      description = "",
+      description = "Ray, ray for raycasting",
       fields = {
         {
           name = "position",
@@ -655,7 +655,7 @@ return {
     },
     {
       name = "RayCollision",
-      description = "",
+      description = "RayCollision, ray hit information",
       fields = {
         {
           name = "hit",
@@ -681,7 +681,7 @@ return {
     },
     {
       name = "BoundingBox",
-      description = "",
+      description = "BoundingBox",
       fields = {
         {
           name = "min",
@@ -697,7 +697,7 @@ return {
     },
     {
       name = "Wave",
-      description = "",
+      description = "Wave, audio wave data",
       fields = {
         {
           name = "frameCount",
@@ -728,7 +728,7 @@ return {
     },
     {
       name = "AudioStream",
-      description = "",
+      description = "AudioStream, custom audio stream",
       fields = {
         {
           name = "buffer",
@@ -754,7 +754,7 @@ return {
     },
     {
       name = "Sound",
-      description = "",
+      description = "Sound",
       fields = {
         {
           name = "stream",
@@ -770,7 +770,7 @@ return {
     },
     {
       name = "Music",
-      description = "",
+      description = "Music, audio stream, anything longer than ~10 seconds should be streamed",
       fields = {
         {
           name = "stream",
@@ -801,7 +801,7 @@ return {
     },
     {
       name = "VrDeviceInfo",
-      description = "",
+      description = "VrDeviceInfo, Head-Mounted-Display device parameters",
       fields = {
         {
           name = "hResolution",
@@ -857,7 +857,7 @@ return {
     },
     {
       name = "VrStereoConfig",
-      description = "",
+      description = "VrStereoConfig, VR stereo rendering configuration for simulator",
       fields = {
         {
           name = "projection[2]",

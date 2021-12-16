@@ -91,7 +91,7 @@ typedef struct FunctionInfo {
 // Struct info data
 typedef struct StructInfo {
     char name[64];              // Struct name
-    char desc[64];              // Struct type description
+    char desc[128];             // Struct type description
     int fieldCount;             // Number of fields in the struct
     char fieldType[MAX_STRUCT_FIELDS][64];     // Field type
     char fieldName[MAX_STRUCT_FIELDS][64];     // Field name
@@ -101,7 +101,7 @@ typedef struct StructInfo {
 // Enum info data
 typedef struct EnumInfo {
     char name[64];              // Enum name
-    char desc[64];              // Enum description
+    char desc[128];             // Enum description
     int valueCount;             // Number of values in enumerator
     char valueName[MAX_ENUM_VALUES][64];    // Value name definition
     int valueInteger[MAX_ENUM_VALUES];      // Value integer
@@ -242,7 +242,11 @@ int main(int argc, char* argv[])
     {
         char **linesPtr = &lines[structLines[i]];
 
-        // TODO: Get struct description
+        // Parse struct description
+        if (linesPtr[-1][0] == '/')
+        {
+            MemoryCopy(structs[i].desc, linesPtr[-1], TextLength(linesPtr[-1]));
+        }
 
         // Get struct name: typedef struct name {
         const int TDS_LEN = 15; // length of "typedef struct name"
