@@ -139,7 +139,7 @@ static void GetDataTypeAndName(const char *typeName, int typeNameLen, char *type
 static unsigned int TextLength(const char *text);           // Get text length in bytes, check for \0 character
 static bool IsTextEqual(const char *text1, const char *text2, unsigned int count);
 static void MemoryCopy(void *dest, const void *src, unsigned int count);
-static char* EscapeBackslashes(char *text);
+static char *EscapeBackslashes(char *text);                 // Replace '\' by "\\" when exporting to JSON and XML
 
 static void ExportParsedData(const char *fileName, int format); // Export parsed data in desired format
 
@@ -765,18 +765,26 @@ static bool IsTextEqual(const char *text1, const char *text2, unsigned int count
 }
 
 // Escape backslashes in a string, writing the escaped string into a static buffer
-static char* EscapeBackslashes(char *text)
+static char *EscapeBackslashes(char *text)
 {
-    static char buf[256];
-    char *a = text;
-    char *b = buf;
-    do
+    static char buffer[256] = { 0 };
+    
+    int count = 0;
+    
+    for (int i = 0; (text[i] != '\0') && (i < 255); i++, count++)
     {
-        if (*a == '\\') *b++ = '\\';
-        *b++ = *a;
+        buffer[count] = text[i];
+        
+        if (text[i] == '\\') 
+        {
+            buffer[count + 1] = '\\';
+            count++;
+        }
     }
-    while (*a++);
-    return buf;
+    
+    buffer[count] = '\0';
+    
+    return buffer;
 }
 
 /*
