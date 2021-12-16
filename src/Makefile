@@ -144,16 +144,6 @@ ifeq ($(PLATFORM),PLATFORM_DRM)
     endif
 endif
 
-# RAYLIB_SRC_PATH adjustment for different platforms.
-# If using GNU make, we can get the full path to the top of the tree. Windows? BSD?
-# Required for ldconfig or other tools that do not perform path expansion.
-ifeq ($(PLATFORM), $(filter $(PLATFORM),PLATFORM_DESKTOP PLATFORM_RPI))
-    ifeq ($(PLATFORM_OS),LINUX)
-        RAYLIB_PREFIX  ?= ..
-        RAYLIB_SRC_PATH = $(realpath $(RAYLIB_PREFIX))
-    endif
-endif
-
 ifeq ($(PLATFORM),PLATFORM_WEB)
     # Emscripten required variables
     EMSDK_PATH         ?= C:/emsdk
