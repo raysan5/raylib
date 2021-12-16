@@ -764,7 +764,7 @@ static bool IsTextEqual(const char *text1, const char *text2, unsigned int count
     return result;
 }
 
-// Escape backslashes in a string into a static buffer
+// Escape backslashes in a string, writing the escaped string into a static buffer
 static char* EscapeBackslashes(char *text)
 {
     static char buf[256];
