@@ -249,7 +249,7 @@ int main(int argc, char* argv[])
         }
 
         // Get struct name: typedef struct name {
-        const int TDS_LEN = 15; // length of "typedef struct name"
+        const int TDS_LEN = 15; // length of "typedef struct "
         for (int c = TDS_LEN; c < 64 + TDS_LEN; c++)
         {
             if (linesPtr[0][c] == '{')
