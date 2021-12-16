@@ -453,6 +453,13 @@ typedef struct Music {
     void *ctxData;              // Audio context data, depends on type
 } Music;
 
+typedef struct AudioDeviceInfo
+{
+    unsigned int sampleRate;
+    unsigned int channels;
+    unsigned int bufferSize;
+} AudioDeviceInfo;
+
 // VrDeviceInfo, Head-Mounted-Display device parameters
 typedef struct VrDeviceInfo {
     int hResolution;                // Horizontal resolution in pixels
@@ -1469,7 +1476,7 @@ RLAPI RayCollision GetRayCollisionQuad(Ray ray, Vector3 p1, Vector3 p2, Vector3 
 //------------------------------------------------------------------------------------
 
 // Audio device management functions
-RLAPI void InitAudioDevice(void);                                     // Initialize audio device and context
+RLAPI AudioDeviceInfo InitAudioDevice(void);                          // Initialize audio device and context
 RLAPI void CloseAudioDevice(void);                                    // Close the audio device and context
 RLAPI bool IsAudioDeviceReady(void);                                  // Check if audio device has been initialized successfully
 RLAPI void SetMasterVolume(float volume);                             // Set master volume (listener)

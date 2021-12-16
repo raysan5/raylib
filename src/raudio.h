@@ -114,6 +114,13 @@ typedef struct Music {
     void *ctxData;              // Audio context data, depends on type
 } Music;
 
+typedef struct AudioDeviceInfo
+{
+    unsigned int sampleRate;
+    unsigned int channels;
+    unsigned int bufferSize;
+} AudioDeviceInfo;
+
 //----------------------------------------------------------------------------------
 // Global Variables Definition
 //----------------------------------------------------------------------------------
@@ -128,7 +135,7 @@ extern "C" {            // Prevents name mangling of functions
 #endif
 
 // Audio device management functions
-void InitAudioDevice(void);                                     // Initialize audio device and context
+AudioDeviceInfo InitAudioDevice(void);                          // Initialize audio device and context
 void CloseAudioDevice(void);                                    // Close the audio device and context
 bool IsAudioDeviceReady(void);                                  // Check if audio device has been initialized successfully
 void SetMasterVolume(float volume);                             // Set master volume (listener)
@@ -193,6 +200,7 @@ void SetAudioStreamBufferSizeDefault(int size);                 // Default size 
 void SetAudioStreamCallback(AudioStream stream, void callback(void*, unsigned int, void*), void* callbackData);  // Audio thread callback to request new data
 void AddAudioStreamProcessor(AudioStream stream, void (*process)(float*, unsigned int));
 void RemoveAudioStreamProcessor(AudioStream stream, void (*process)(float*, unsigned int));
+
 #ifdef __cplusplus
 }
 #endif

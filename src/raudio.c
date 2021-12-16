@@ -418,8 +418,13 @@ void UntrackAudioBuffer(AudioBuffer *buffer);
 // Module Functions Definition - Audio Device initialization and Closing
 //----------------------------------------------------------------------------------
 // Initialize audio device
-void InitAudioDevice(void)
+AudioDeviceInfo InitAudioDevice(void)
 {
+    AudioDeviceInfo deviceInfo;
+    deviceInfo.sampleRate = 0;
+    deviceInfo.channels = 0;
+    deviceInfo.bufferSize = 0;
+
     // Init audio context
     ma_context_config ctxConfig = ma_context_config_init();
     ctxConfig.logCallback = OnLog;
@@ -428,7 +433,7 @@ void InitAudioDevice(void)
     if (result != MA_SUCCESS)
     {
         TRACELOG(LOG_WARNING, "AUDIO: Failed to initialize context");
-        return;
+        return deviceInfo;
     }
 
     // Init audio device
@@ -449,7 +454,7 @@ void InitAudioDevice(void)
     {
         TRACELOG(LOG_WARNING, "AUDIO: Failed to initialize playback device");
         ma_context_uninit(&AUDIO.System.context);
-        return;
+        return deviceInfo;
     }
 
     // Keep the device running the whole time. May want to consider doing something a bit smarter and only have the device running
@@ -460,7 +465,7 @@ void InitAudioDevice(void)
         TRACELOG(LOG_WARNING, "AUDIO: Failed to start playback device");
         ma_device_uninit(&AUDIO.System.device);
         ma_context_uninit(&AUDIO.System.context);
-        return;
+        return deviceInfo;
     }
 
     // Mixing happens on a seperate thread which means we need to synchronize. I'm using a mutex here to make things simple, but may
@@ -470,7 +475,7 @@ void InitAudioDevice(void)
         TRACELOG(LOG_WARNING, "AUDIO: Failed to create mutex for mixing");
         ma_device_uninit(&AUDIO.System.device);
         ma_context_uninit(&AUDIO.System.context);
-        return;
+        return deviceInfo;
     }
 
     // Init dummy audio buffers pool for multichannel sound playing
@@ -489,6 +494,11 @@ void InitAudioDevice(void)
     TRACELOG(LOG_INFO, "    > Periods size:  %d", AUDIO.System.device.playback.internalPeriodSizeInFrames*AUDIO.System.device.playback.internalPeriods);
 
     AUDIO.System.isReady = true;
+
+    deviceInfo.sampleRate = AUDIO.System.device.playback.internalSampleRate;
+    deviceInfo.channels = AUDIO.System.device.playback.channels;
+    deviceInfo.bufferSize = AUDIO.System.device.playback.internalPeriodSizeInFrames;
+    return deviceInfo;
 }
 
 // Close the audio device for all contexts
@@ -2195,6 +2205,7 @@ static ma_uint32 ReadAudioBufferFramesInInternalFormat(AudioBuffer *audioBuffer,
     if (audioBuffer->audioCallback)
     {
         audioBuffer->audioCallback(framesOut, frameCount, audioBuffer->audioCallbackData);
+        audioBuffer->framesProcessed += frameCount;
         return frameCount;
     }
 
