@@ -2253,6 +2253,7 @@ void jar_xm_reset(jar_xm_context_t* ctx) {
     for (uint16_t i = 0; i < jar_xm_get_number_of_channels(ctx); i++) {
         jar_xm_cut_note(&ctx->channels[i]);
     }
+    ctx->generated_samples = 0;
     ctx->current_row = 0;
     ctx->current_table_index = 0;
     ctx->current_tick = 0;
