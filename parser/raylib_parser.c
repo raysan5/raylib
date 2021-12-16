@@ -164,8 +164,7 @@ int main(int argc, char* argv[])
     char **funcLines = (char **)malloc(MAX_FUNCS_TO_PARSE*sizeof(char *));
 
     // Structs data (multiple lines), selected from "buffer"
-    char **structLines = (char **)malloc(MAX_STRUCTS_TO_PARSE*sizeof(char *));
-    for (int i = 0; i < MAX_STRUCTS_TO_PARSE; i++) structLines[i] = (char *)calloc(MAX_STRUCT_LINE_LENGTH, sizeof(char));
+    int *structLines = (int *)malloc(MAX_STRUCTS_TO_PARSE*sizeof(int));
 
     // Enums lines pointers, selected from buffer "lines"
     int *enumLines = (int *)malloc(MAX_ENUMS_TO_PARSE*sizeof(int));
@@ -185,52 +184,34 @@ int main(int argc, char* argv[])
         }
     }
 
-    // Read structs data (multiple lines, read directly from buffer)
-    // TODO: Parse structs data from "lines" instead of "buffer" -> Easier to get struct definition and description
-    for (int i = 0; i < length; i++)
+    // Read struct lines
+    for (int i = 0; i < linesCount; i++)
     {
-        // Read struct data (starting with "typedef struct", ending with '} ... ;')
-        // NOTE: We read it directly from buffer
-        if (IsTextEqual(buffer + i, "typedef struct", 14))
+        // Find structs (starting with "typedef struct ... {", ending with '} ... ;')
+        if (IsTextEqual(lines[i], "typedef struct", 14))
         {
             int j = 0;
             bool validStruct = false;
 
             // WARNING: Typedefs between types: typedef Vector4 Quaternion;
+            // (maybe we could export these too?)
 
-            for (int c = 0; c < 128; c++)
+            for (int c = 0; c < MAX_LINE_LENGTH; c++)
             {
-                if (buffer[i + c] == '{')
+                char v = lines[i][c];
+                if (v == '{') validStruct = true;
+                if (v == '{' || v == ';' || v == '\0')
                 {
-                    validStruct = true;
-                    break;
-                }
-                else if (buffer[i + c] == ';')
-                {
-                    // Not valid struct:
+                    // Not valid struct if it ends without '{':
                     // i.e typedef struct rAudioBuffer rAudioBuffer; -> Typedef and forward declaration
-                    i += c;
                     break;
                 }
             }
-
-            if (validStruct)
-            {
-                while (buffer[i + j] != '}')
-                {
-                    structLines[structCount][j] = buffer[i + j];
-                    j++;
-                }
-
-                while (buffer[i + j] != '\n')
-                {
-                    structLines[structCount][j] = buffer[i + j];
-                    j++;
-                }
-
-                i += j;
-                structCount++;
-            }
+            if (!validStruct) continue;
+            structLines[structCount] = i;
+            while (lines[i][0] != '}') i++;
+            while (lines[i][0] != '\0') i++;
+            structCount++;
         }
     }
 
@@ -259,44 +240,32 @@ int main(int argc, char* argv[])
 
     for (int i = 0; i < structCount; i++)
     {
-        int structLineOffset = 0;
+        char **linesPtr = &lines[structLines[i]];
 
         // TODO: Get struct description
 
         // Get struct name: typedef struct name {
-        for (int c = 15; c < 64 + 15; c++)
+        const int TDS_LEN = 15; // length of "typedef struct name"
+        for (int c = TDS_LEN; c < 64 + TDS_LEN; c++)
         {
-            if (structLines[i][c] == '{')
+            if (linesPtr[0][c] == '{')
             {
-                structLineOffset = c + 2;
-
-                MemoryCopy(structs[i].name, &structLines[i][15], c - 15 - 1);
+                MemoryCopy(structs[i].name, &linesPtr[0][TDS_LEN], c - TDS_LEN - 1);
                 break;
             }
         }
 
         // Get struct fields and count them -> fields finish with ;
-        int j = 0;
-        while (structLines[i][structLineOffset + j] != '}')
+        int l = 1;
+        while (linesPtr[l][0] != '}')
         {
             // WARNING: Some structs have empty spaces and comments -> OK, processed
-
-            int fieldStart = 0;
-            if ((structLines[i][structLineOffset + j] != ' ') && (structLines[i][structLineOffset + j] != '\n')) fieldStart = structLineOffset + j;
-
-            if (fieldStart != 0)
+            if ((linesPtr[l][0] != ' ') && (linesPtr[l][0] != '\0'))
             {
                 // Scan one field line
-                int c = 0;
+                char *fieldLine = linesPtr[l];
                 int fieldEndPos = 0;
-                char fieldLine[256] = { 0 };
-
-                while (structLines[i][structLineOffset + j] != '\n')
-                {
-                    if (structLines[i][structLineOffset + j] == ';') fieldEndPos = c;
-                    fieldLine[c] = structLines[i][structLineOffset + j];
-                    c++; j++;
-                }
+                while (fieldLine[fieldEndPos] != ';') fieldEndPos++;
 
                 if (fieldLine[0] != '/')    // Field line is not a comment
                 {
@@ -321,12 +290,11 @@ int main(int argc, char* argv[])
                 }
             }
 
-            j++;
+            l++;
         }
 
     }
 
-    for (int i = 0; i < MAX_STRUCTS_TO_PARSE; i++) free(structLines[i]);
     free(structLines);
 
     // Enum info data
