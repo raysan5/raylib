@@ -1,59 +1,59 @@
 <?xml version="1.0" encoding="Windows-1252" ?>
 <raylibAPI>
     <Structs count="31">
-        <Struct name="Vector2" fieldCount="2" desc="">
+        <Struct name="Vector2" fieldCount="2" desc="Vector2, 2 components">
             <Field type="float" name="x" desc="Vector x component" />
             <Field type="float" name="y" desc="Vector y component" />
         </Struct>
-        <Struct name="Vector3" fieldCount="3" desc="">
+        <Struct name="Vector3" fieldCount="3" desc="Vector3, 3 components">
             <Field type="float" name="x" desc="Vector x component" />
             <Field type="float" name="y" desc="Vector y component" />
             <Field type="float" name="z" desc="Vector z component" />
         </Struct>
-        <Struct name="Vector4" fieldCount="4" desc="">
+        <Struct name="Vector4" fieldCount="4" desc="Vector4, 4 components">
             <Field type="float" name="x" desc="Vector x component" />
             <Field type="float" name="y" desc="Vector y component" />
             <Field type="float" name="z" desc="Vector z component" />
             <Field type="float" name="w" desc="Vector w component" />
         </Struct>
-        <Struct name="Matrix" fieldCount="4" desc="">
+        <Struct name="Matrix" fieldCount="4" desc="Matrix, 4x4 components, column major, OpenGL style, right handed">
             <Field type="float" name="m0, m4, m8, m12" desc="Matrix first row (4 components)" />
             <Field type="float" name="m1, m5, m9, m13" desc="Matrix second row (4 components)" />
             <Field type="float" name="m2, m6, m10, m14" desc="Matrix third row (4 components)" />
             <Field type="float" name="m3, m7, m11, m15" desc="Matrix fourth row (4 components)" />
         </Struct>
-        <Struct name="Color" fieldCount="4" desc="">
+        <Struct name="Color" fieldCount="4" desc="Color, 4 components, R8G8B8A8 (32bit)">
             <Field type="unsigned char" name="r" desc="Color red value" />
             <Field type="unsigned char" name="g" desc="Color green value" />
             <Field type="unsigned char" name="b" desc="Color blue value" />
             <Field type="unsigned char" name="a" desc="Color alpha value" />
         </Struct>
-        <Struct name="Rectangle" fieldCount="4" desc="">
+        <Struct name="Rectangle" fieldCount="4" desc="Rectangle, 4 components">
             <Field type="float" name="x" desc="Rectangle top-left corner position x" />
             <Field type="float" name="y" desc="Rectangle top-left corner position y" />
             <Field type="float" name="width" desc="Rectangle width" />
             <Field type="float" name="height" desc="Rectangle height" />
         </Struct>
-        <Struct name="Image" fieldCount="5" desc="">
+        <Struct name="Image" fieldCount="5" desc="Image, pixel data stored in CPU memory (RAM)">
             <Field type="void *" name="data" desc="Image raw data" />
             <Field type="int" name="width" desc="Image base width" />
             <Field type="int" name="height" desc="Image base height" />
             <Field type="int" name="mipmaps" desc="Mipmap levels, 1 by default" />
             <Field type="int" name="format" desc="Data format (PixelFormat type)" />
         </Struct>
-        <Struct name="Texture" fieldCount="5" desc="">
+        <Struct name="Texture" fieldCount="5" desc="Texture, tex data stored in GPU memory (VRAM)">
             <Field type="unsigned int" name="id" desc="OpenGL texture id" />
             <Field type="int" name="width" desc="Texture base width" />
             <Field type="int" name="height" desc="Texture base height" />
             <Field type="int" name="mipmaps" desc="Mipmap levels, 1 by default" />
             <Field type="int" name="format" desc="Data format (PixelFormat type)" />
         </Struct>
-        <Struct name="RenderTexture" fieldCount="3" desc="">
+        <Struct name="RenderTexture" fieldCount="3" desc="RenderTexture, fbo for texture rendering">
             <Field type="unsigned int" name="id" desc="OpenGL framebuffer object id" />
             <Field type="Texture" name="texture" desc="Color buffer attachment texture" />
             <Field type="Texture" name="depth" desc="Depth buffer attachment texture" />
         </Struct>
-        <Struct name="NPatchInfo" fieldCount="6" desc="">
+        <Struct name="NPatchInfo" fieldCount="6" desc="NPatchInfo, n-patch layout info">
             <Field type="Rectangle" name="source" desc="Texture source rectangle" />
             <Field type="int" name="left" desc="Left border offset" />
             <Field type="int" name="top" desc="Top border offset" />
@@ -61,14 +61,14 @@
             <Field type="int" name="bottom" desc="Bottom border offset" />
             <Field type="int" name="layout" desc="Layout of the n-patch: 3x3, 1x3 or 3x1" />
         </Struct>
-        <Struct name="GlyphInfo" fieldCount="5" desc="">
+        <Struct name="GlyphInfo" fieldCount="5" desc="GlyphInfo, font characters glyphs info">
             <Field type="int" name="value" desc="Character value (Unicode)" />
             <Field type="int" name="offsetX" desc="Character offset X when drawing" />
             <Field type="int" name="offsetY" desc="Character offset Y when drawing" />
             <Field type="int" name="advanceX" desc="Character advance position X" />
             <Field type="Image" name="image" desc="Character image data" />
         </Struct>
-        <Struct name="Font" fieldCount="6" desc="">
+        <Struct name="Font" fieldCount="6" desc="Font, font texture and GlyphInfo array data">
             <Field type="int" name="baseSize" desc="Base size (default chars height)" />
             <Field type="int" name="glyphCount" desc="Number of glyph characters" />
             <Field type="int" name="glyphPadding" desc="Padding around the glyph characters" />
@@ -76,20 +76,20 @@
             <Field type="Rectangle *" name="recs" desc="Rectangles in texture for the glyphs" />
             <Field type="GlyphInfo *" name="glyphs" desc="Glyphs info data" />
         </Struct>
-        <Struct name="Camera3D" fieldCount="5" desc="">
+        <Struct name="Camera3D" fieldCount="5" desc="Camera, defines position/orientation in 3d space">
             <Field type="Vector3" name="position" desc="Camera position" />
             <Field type="Vector3" name="target" desc="Camera target it looks-at" />
             <Field type="Vector3" name="up" desc="Camera up vector (rotation over its axis)" />
             <Field type="float" name="fovy" desc="Camera field-of-view apperture in Y (degrees) in perspective, used as near plane width in orthographic" />
             <Field type="int" name="projection" desc="Camera projection: CAMERA_PERSPECTIVE or CAMERA_ORTHOGRAPHIC" />
         </Struct>
-        <Struct name="Camera2D" fieldCount="4" desc="">
+        <Struct name="Camera2D" fieldCount="4" desc="Camera2D, defines position/orientation in 2d space">
             <Field type="Vector2" name="offset" desc="Camera offset (displacement from target)" />
             <Field type="Vector2" name="target" desc="Camera target (rotation and zoom origin)" />
             <Field type="float" name="rotation" desc="Camera rotation in degrees" />
             <Field type="float" name="zoom" desc="Camera zoom (scaling), should be 1.0f by default" />
         </Struct>
-        <Struct name="Mesh" fieldCount="15" desc="">
+        <Struct name="Mesh" fieldCount="15" desc="Mesh, vertex data and vao/vbo">
             <Field type="int" name="vertexCount" desc="Number of vertices stored in arrays" />
             <Field type="int" name="triangleCount" desc="Number of triangles stored (indexed or not)" />
             <Field type="float *" name="vertices" desc="Vertex position (XYZ - 3 components per vertex) (shader-location = 0)" />
@@ -106,30 +106,30 @@
             <Field type="unsigned int" name="vaoId" desc="OpenGL Vertex Array Object id" />
             <Field type="unsigned int *" name="vboId" desc="OpenGL Vertex Buffer Objects id (default vertex data)" />
         </Struct>
-        <Struct name="Shader" fieldCount="2" desc="">
+        <Struct name="Shader" fieldCount="2" desc="Shader">
             <Field type="unsigned int" name="id" desc="Shader program id" />
             <Field type="int *" name="locs" desc="Shader locations array (RL_MAX_SHADER_LOCATIONS)" />
         </Struct>
-        <Struct name="MaterialMap" fieldCount="3" desc="">
+        <Struct name="MaterialMap" fieldCount="3" desc="MaterialMap">
             <Field type="Texture2D" name="texture" desc="Material map texture" />
             <Field type="Color" name="color" desc="Material map color" />
             <Field type="float" name="value" desc="Material map value" />
         </Struct>
-        <Struct name="Material" fieldCount="3" desc="">
+        <Struct name="Material" fieldCount="3" desc="Material, includes shader and maps">
             <Field type="Shader" name="shader" desc="Material shader" />
             <Field type="MaterialMap *" name="maps" desc="Material maps array (MAX_MATERIAL_MAPS)" />
             <Field type="float" name="params[4]" desc="Material generic parameters (if required)" />
         </Struct>
-        <Struct name="Transform" fieldCount="3" desc="">
+        <Struct name="Transform" fieldCount="3" desc="Transform, vectex transformation data">
             <Field type="Vector3" name="translation" desc="Translation" />
             <Field type="Quaternion" name="rotation" desc="Rotation" />
             <Field type="Vector3" name="scale" desc="Scale" />
         </Struct>
-        <Struct name="BoneInfo" fieldCount="2" desc="">
+        <Struct name="BoneInfo" fieldCount="2" desc="Bone, skeletal animation bone">
             <Field type="char" name="name[32]" desc="Bone name" />
             <Field type="int" name="parent" desc="Bone parent" />
         </Struct>
-        <Struct name="Model" fieldCount="9" desc="">
+        <Struct name="Model" fieldCount="9" desc="Model, meshes, materials and animation data">
             <Field type="Matrix" name="transform" desc="Local transform matrix" />
             <Field type="int" name="meshCount" desc="Number of meshes" />
             <Field type="int" name="materialCount" desc="Number of materials" />
@@ -140,51 +140,51 @@
             <Field type="BoneInfo *" name="bones" desc="Bones information (skeleton)" />
             <Field type="Transform *" name="bindPose" desc="Bones base transformation (pose)" />
         </Struct>
-        <Struct name="ModelAnimation" fieldCount="4" desc="">
+        <Struct name="ModelAnimation" fieldCount="4" desc="ModelAnimation">
             <Field type="int" name="boneCount" desc="Number of bones" />
             <Field type="int" name="frameCount" desc="Number of animation frames" />
             <Field type="BoneInfo *" name="bones" desc="Bones information (skeleton)" />
             <Field type="Transform **" name="framePoses" desc="Poses array by frame" />
         </Struct>
-        <Struct name="Ray" fieldCount="2" desc="">
+        <Struct name="Ray" fieldCount="2" desc="Ray, ray for raycasting">
             <Field type="Vector3" name="position" desc="Ray position (origin)" />
             <Field type="Vector3" name="direction" desc="Ray direction" />
         </Struct>
-        <Struct name="RayCollision" fieldCount="4" desc="">
+        <Struct name="RayCollision" fieldCount="4" desc="RayCollision, ray hit information">
             <Field type="bool" name="hit" desc="Did the ray hit something?" />
             <Field type="float" name="distance" desc="Distance to nearest hit" />
             <Field type="Vector3" name="point" desc="Point of nearest hit" />
             <Field type="Vector3" name="normal" desc="Surface normal of hit" />
         </Struct>
-        <Struct name="BoundingBox" fieldCount="2" desc="">
+        <Struct name="BoundingBox" fieldCount="2" desc="BoundingBox">
             <Field type="Vector3" name="min" desc="Minimum vertex box-corner" />
             <Field type="Vector3" name="max" desc="Maximum vertex box-corner" />
         </Struct>
-        <Struct name="Wave" fieldCount="5" desc="">
+        <Struct name="Wave" fieldCount="5" desc="Wave, audio wave data">
             <Field type="unsigned int" name="frameCount" desc="Total number of frames (considering channels)" />
             <Field type="unsigned int" name="sampleRate" desc="Frequency (samples per second)" />
             <Field type="unsigned int" name="sampleSize" desc="Bit depth (bits per sample): 8, 16, 32 (24 not supported)" />
             <Field type="unsigned int" name="channels" desc="Number of channels (1-mono, 2-stereo, ...)" />
             <Field type="void *" name="data" desc="Buffer data pointer" />
         </Struct>
-        <Struct name="AudioStream" fieldCount="4" desc="">
+        <Struct name="AudioStream" fieldCount="4" desc="AudioStream, custom audio stream">
             <Field type="rAudioBuffer *" name="buffer" desc="Pointer to internal data used by the audio system" />
             <Field type="unsigned int" name="sampleRate" desc="Frequency (samples per second)" />
             <Field type="unsigned int" name="sampleSize" desc="Bit depth (bits per sample): 8, 16, 32 (24 not supported)" />
             <Field type="unsigned int" name="channels" desc="Number of channels (1-mono, 2-stereo, ...)" />
         </Struct>
-        <Struct name="Sound" fieldCount="2" desc="">
+        <Struct name="Sound" fieldCount="2" desc="Sound">
             <Field type="AudioStream" name="stream" desc="Audio stream" />
             <Field type="unsigned int" name="frameCount" desc="Total number of frames (considering channels)" />
         </Struct>
-        <Struct name="Music" fieldCount="5" desc="">
+        <Struct name="Music" fieldCount="5" desc="Music, audio stream, anything longer than ~10 seconds should be streamed">
             <Field type="AudioStream" name="stream" desc="Audio stream" />
             <Field type="unsigned int" name="frameCount" desc="Total number of frames (considering channels)" />
             <Field type="bool" name="looping" desc="Music looping enable" />
             <Field type="int" name="ctxType" desc="Type of music context (audio filetype)" />
             <Field type="void *" name="ctxData" desc="Audio context data, depends on type" />
         </Struct>
-        <Struct name="VrDeviceInfo" fieldCount="10" desc="">
+        <Struct name="VrDeviceInfo" fieldCount="10" desc="VrDeviceInfo, Head-Mounted-Display device parameters">
             <Field type="int" name="hResolution" desc="Horizontal resolution in pixels" />
             <Field type="int" name="vResolution" desc="Vertical resolution in pixels" />
             <Field type="float" name="hScreenSize" desc="Horizontal size in meters" />
@@ -196,7 +196,7 @@
             <Field type="float" name="lensDistortionValues[4]" desc="Lens distortion constant parameters" />
             <Field type="float" name="chromaAbCorrection[4]" desc="Chromatic aberration correction parameters" />
         </Struct>
-        <Struct name="VrStereoConfig" fieldCount="8" desc="">
+        <Struct name="VrStereoConfig" fieldCount="8" desc="VrStereoConfig, VR stereo rendering configuration for simulator">
             <Field type="Matrix" name="projection[2]" desc="VR projection matrices (per eye)" />
             <Field type="Matrix" name="viewOffset[2]" desc="VR view offset matrices (per eye)" />
             <Field type="float" name="leftLensCenter[2]" desc="VR left lens center" />

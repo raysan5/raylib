@@ -3,46 +3,46 @@ Structures found: 31
 
 Struct 01: Vector2 (2 fields)
   Name: Vector2
-  Description: 
+  Description: Vector2, 2 components
   Field[1]: float x // Vector x component
   Field[2]: float y // Vector y component
 Struct 02: Vector3 (3 fields)
   Name: Vector3
-  Description: 
+  Description: Vector3, 3 components
   Field[1]: float x // Vector x component
   Field[2]: float y // Vector y component
   Field[3]: float z // Vector z component
 Struct 03: Vector4 (4 fields)
   Name: Vector4
-  Description: 
+  Description: Vector4, 4 components
   Field[1]: float x // Vector x component
   Field[2]: float y // Vector y component
   Field[3]: float z // Vector z component
   Field[4]: float w // Vector w component
 Struct 04: Matrix (4 fields)
   Name: Matrix
-  Description: 
+  Description: Matrix, 4x4 components, column major, OpenGL style, right handed
   Field[1]: float m0, m4, m8, m12 // Matrix first row (4 components)
   Field[2]: float m1, m5, m9, m13 // Matrix second row (4 components)
   Field[3]: float m2, m6, m10, m14 // Matrix third row (4 components)
   Field[4]: float m3, m7, m11, m15 // Matrix fourth row (4 components)
 Struct 05: Color (4 fields)
   Name: Color
-  Description: 
+  Description: Color, 4 components, R8G8B8A8 (32bit)
   Field[1]: unsigned char r // Color red value
   Field[2]: unsigned char g // Color green value
   Field[3]: unsigned char b // Color blue value
   Field[4]: unsigned char a // Color alpha value
 Struct 06: Rectangle (4 fields)
   Name: Rectangle
-  Description: 
+  Description: Rectangle, 4 components
   Field[1]: float x // Rectangle top-left corner position x
   Field[2]: float y // Rectangle top-left corner position y
   Field[3]: float width // Rectangle width
   Field[4]: float height // Rectangle height
 Struct 07: Image (5 fields)
   Name: Image
-  Description: 
+  Description: Image, pixel data stored in CPU memory (RAM)
   Field[1]: void * data // Image raw data
   Field[2]: int width // Image base width
   Field[3]: int height // Image base height
@@ -50,7 +50,7 @@ Struct 07: Image (5 fields)
   Field[5]: int format // Data format (PixelFormat type)
 Struct 08: Texture (5 fields)
   Name: Texture
-  Description: 
+  Description: Texture, tex data stored in GPU memory (VRAM)
   Field[1]: unsigned int id // OpenGL texture id
   Field[2]: int width // Texture base width
   Field[3]: int height // Texture base height
@@ -58,13 +58,13 @@ Struct 08: Texture (5 fields)
   Field[5]: int format // Data format (PixelFormat type)
 Struct 09: RenderTexture (3 fields)
   Name: RenderTexture
-  Description: 
+  Description: RenderTexture, fbo for texture rendering
   Field[1]: unsigned int id // OpenGL framebuffer object id
   Field[2]: Texture texture // Color buffer attachment texture
   Field[3]: Texture depth // Depth buffer attachment texture
 Struct 10: NPatchInfo (6 fields)
   Name: NPatchInfo
-  Description: 
+  Description: NPatchInfo, n-patch layout info
   Field[1]: Rectangle source // Texture source rectangle
   Field[2]: int left // Left border offset
   Field[3]: int top // Top border offset
@@ -73,7 +73,7 @@ Struct 10: NPatchInfo (6 fields)
   Field[6]: int layout // Layout of the n-patch: 3x3, 1x3 or 3x1
 Struct 11: GlyphInfo (5 fields)
   Name: GlyphInfo
-  Description: 
+  Description: GlyphInfo, font characters glyphs info
   Field[1]: int value // Character value (Unicode)
   Field[2]: int offsetX // Character offset X when drawing
   Field[3]: int offsetY // Character offset Y when drawing
@@ -81,7 +81,7 @@ Struct 11: GlyphInfo (5 fields)
   Field[5]: Image image // Character image data
 Struct 12: Font (6 fields)
   Name: Font
-  Description: 
+  Description: Font, font texture and GlyphInfo array data
   Field[1]: int baseSize // Base size (default chars height)
   Field[2]: int glyphCount // Number of glyph characters
   Field[3]: int glyphPadding // Padding around the glyph characters
@@ -90,7 +90,7 @@ Struct 12: Font (6 fields)
   Field[6]: GlyphInfo * glyphs // Glyphs info data
 Struct 13: Camera3D (5 fields)
   Name: Camera3D
-  Description: 
+  Description: Camera, defines position/orientation in 3d space
   Field[1]: Vector3 position // Camera position
   Field[2]: Vector3 target // Camera target it looks-at
   Field[3]: Vector3 up // Camera up vector (rotation over its axis)
@@ -98,14 +98,14 @@ Struct 13: Camera3D (5 fields)
   Field[5]: int projection // Camera projection: CAMERA_PERSPECTIVE or CAMERA_ORTHOGRAPHIC
 Struct 14: Camera2D (4 fields)
   Name: Camera2D
-  Description: 
+  Description: Camera2D, defines position/orientation in 2d space
   Field[1]: Vector2 offset // Camera offset (displacement from target)
   Field[2]: Vector2 target // Camera target (rotation and zoom origin)
   Field[3]: float rotation // Camera rotation in degrees
   Field[4]: float zoom // Camera zoom (scaling), should be 1.0f by default
 Struct 15: Mesh (15 fields)
   Name: Mesh
-  Description: 
+  Description: Mesh, vertex data and vao/vbo
   Field[1]: int vertexCount // Number of vertices stored in arrays
   Field[2]: int triangleCount // Number of triangles stored (indexed or not)
   Field[3]: float * vertices // Vertex position (XYZ - 3 components per vertex) (shader-location = 0)
@@ -123,35 +123,35 @@ Struct 15: Mesh (15 fields)
   Field[15]: unsigned int * vboId // OpenGL Vertex Buffer Objects id (default vertex data)
 Struct 16: Shader (2 fields)
   Name: Shader
-  Description: 
+  Description: Shader
   Field[1]: unsigned int id // Shader program id
   Field[2]: int * locs // Shader locations array (RL_MAX_SHADER_LOCATIONS)
 Struct 17: MaterialMap (3 fields)
   Name: MaterialMap
-  Description: 
+  Description: MaterialMap
   Field[1]: Texture2D texture // Material map texture
   Field[2]: Color color // Material map color
   Field[3]: float value // Material map value
 Struct 18: Material (3 fields)
   Name: Material
-  Description: 
+  Description: Material, includes shader and maps
   Field[1]: Shader shader // Material shader
   Field[2]: MaterialMap * maps // Material maps array (MAX_MATERIAL_MAPS)
   Field[3]: float params[4] // Material generic parameters (if required)
 Struct 19: Transform (3 fields)
   Name: Transform
-  Description: 
+  Description: Transform, vectex transformation data
   Field[1]: Vector3 translation // Translation
   Field[2]: Quaternion rotation // Rotation
   Field[3]: Vector3 scale // Scale
 Struct 20: BoneInfo (2 fields)
   Name: BoneInfo
-  Description: 
+  Description: Bone, skeletal animation bone
   Field[1]: char name[32] // Bone name
   Field[2]: int parent // Bone parent
 Struct 21: Model (9 fields)
   Name: Model
-  Description: 
+  Description: Model, meshes, materials and animation data
   Field[1]: Matrix transform // Local transform matrix
   Field[2]: int meshCount // Number of meshes
   Field[3]: int materialCount // Number of materials
@@ -163,31 +163,31 @@ Struct 21: Model (9 fields)
   Field[9]: Transform * bindPose // Bones base transformation (pose)
 Struct 22: ModelAnimation (4 fields)
   Name: ModelAnimation
-  Description: 
+  Description: ModelAnimation
   Field[1]: int boneCount // Number of bones
   Field[2]: int frameCount // Number of animation frames
   Field[3]: BoneInfo * bones // Bones information (skeleton)
   Field[4]: Transform ** framePoses // Poses array by frame
 Struct 23: Ray (2 fields)
   Name: Ray
-  Description: 
+  Description: Ray, ray for raycasting
   Field[1]: Vector3 position // Ray position (origin)
   Field[2]: Vector3 direction // Ray direction
 Struct 24: RayCollision (4 fields)
   Name: RayCollision
-  Description: 
+  Description: RayCollision, ray hit information
   Field[1]: bool hit // Did the ray hit something?
   Field[2]: float distance // Distance to nearest hit
   Field[3]: Vector3 point // Point of nearest hit
   Field[4]: Vector3 normal // Surface normal of hit
 Struct 25: BoundingBox (2 fields)
   Name: BoundingBox
-  Description: 
+  Description: BoundingBox
   Field[1]: Vector3 min // Minimum vertex box-corner
   Field[2]: Vector3 max // Maximum vertex box-corner
 Struct 26: Wave (5 fields)
   Name: Wave
-  Description: 
+  Description: Wave, audio wave data
   Field[1]: unsigned int frameCount // Total number of frames (considering channels)
   Field[2]: unsigned int sampleRate // Frequency (samples per second)
   Field[3]: unsigned int sampleSize // Bit depth (bits per sample): 8, 16, 32 (24 not supported)
@@ -195,19 +195,19 @@ Struct 26: Wave (5 fields)
   Field[5]: void * data // Buffer data pointer
 Struct 27: AudioStream (4 fields)
   Name: AudioStream
-  Description: 
+  Description: AudioStream, custom audio stream
   Field[1]: rAudioBuffer * buffer // Pointer to internal data used by the audio system
   Field[2]: unsigned int sampleRate // Frequency (samples per second)
   Field[3]: unsigned int sampleSize // Bit depth (bits per sample): 8, 16, 32 (24 not supported)
   Field[4]: unsigned int channels // Number of channels (1-mono, 2-stereo, ...)
 Struct 28: Sound (2 fields)
   Name: Sound
-  Description: 
+  Description: Sound
   Field[1]: AudioStream stream // Audio stream
   Field[2]: unsigned int frameCount // Total number of frames (considering channels)
 Struct 29: Music (5 fields)
   Name: Music
-  Description: 
+  Description: Music, audio stream, anything longer than ~10 seconds should be streamed
   Field[1]: AudioStream stream // Audio stream
   Field[2]: unsigned int frameCount // Total number of frames (considering channels)
   Field[3]: bool looping // Music looping enable
@@ -215,7 +215,7 @@ Struct 29: Music (5 fields)
   Field[5]: void * ctxData // Audio context data, depends on type
 Struct 30: VrDeviceInfo (10 fields)
   Name: VrDeviceInfo
-  Description: 
+  Description: VrDeviceInfo, Head-Mounted-Display device parameters
   Field[1]: int hResolution // Horizontal resolution in pixels
   Field[2]: int vResolution // Vertical resolution in pixels
   Field[3]: float hScreenSize // Horizontal size in meters
@@ -228,7 +228,7 @@ Struct 30: VrDeviceInfo (10 fields)
   Field[10]: float chromaAbCorrection[4] // Chromatic aberration correction parameters
 Struct 31: VrStereoConfig (8 fields)
   Name: VrStereoConfig
-  Description: 
+  Description: VrStereoConfig, VR stereo rendering configuration for simulator
   Field[1]: Matrix projection[2] // VR projection matrices (per eye)
   Field[2]: Matrix viewOffset[2] // VR view offset matrices (per eye)
   Field[3]: float leftLensCenter[2] // VR left lens center
