@@ -140,7 +140,7 @@ static void GetDataTypeAndName(const char *typeName, int typeNameLen, char *type
 static unsigned int TextLength(const char *text);           // Get text length in bytes, check for \0 character
 static bool IsTextEqual(const char *text1, const char *text2, unsigned int count);
 static void MemoryCopy(void *dest, const void *src, unsigned int count);
-static char* CharReplace(char* text, char search, char replace);
+static char* EscapeBackslashes(char *text);
 
 static void ExportParsedData(const char *fileName, int format); // Export parsed data in desired format
 
@@ -765,13 +765,19 @@ static bool IsTextEqual(const char *text1, const char *text2, unsigned int count
     return result;
 }
 
-// Search and replace a character within a string.
-static char* CharReplace(char* text, char search, char replace)
+// Escape backslashes in a string into a static buffer
+static char* EscapeBackslashes(char *text)
 {
-    for (int i = 0; text[i] != '\0'; i++)
-        if (text[i] == search)
-            text[i] = replace;
-    return text;
+    static char buf[256];
+    char *a = text;
+    char *b = buf;
+    do
+    {
+        if (*a == '\\') *b++ = '\\';
+        *b++ = *a;
+    }
+    while (*a++);
+    return buf;
 }
 
 /*
@@ -826,44 +832,6 @@ static char *TextReplace(char *text, const char *replace, const char *by)
 }
 */
 
-// Like fprintf, but supports only %i and %S. %S prints an escaped JSON-like string.
-static void FPrintfEscapes(FILE *file, const char *format, ...) {
-    va_list args;
-    va_start(args, format);
-    for (const char *c = format; *c; c++)
-    {
-        if (*c == '%')
-        {
-            c++;
-            switch (*c)
-            {
-                case 'S': {
-                    const char *str = va_arg(args, char *);
-                    putc('"', file);
-                    for (; *str; str++)
-                    {
-                        if ((*str == '\\') || (*str == '"'))
-                        {
-                            putc('\\', file);
-                        }
-                        putc(*str, file);
-                    }
-                    putc('"', file);
-                    break;
-                }
-                case 'i': {
-                    fprintf(file, "%i", va_arg(args, int));
-                    break;
-                }
-                default: {
-                    fprintf(stderr, "WARNING: Unsupported format specifier used: %c\n", *c);
-                }
-            }
-        }
-        else putc(*c, file);
-    }
-}
-
 // Export parsed data in desired format
 static void ExportParsedData(const char *fileName, int format)
 {
@@ -913,17 +881,17 @@ static void ExportParsedData(const char *fileName, int format)
             fprintf(outFile, "  structs = {\n");
             for (int i = 0; i < structCount; i++)
             {
-                FPrintfEscapes(outFile, "    {\n");
-                FPrintfEscapes(outFile, "      name = %S,\n", structs[i].name);
-                FPrintfEscapes(outFile, "      description = %S,\n", structs[i].desc);
-                FPrintfEscapes(outFile, "      fields = {\n");
+                fprintf(outFile, "    {\n");
+                fprintf(outFile, "      name = \"%s\",\n", structs[i].name);
+                fprintf(outFile, "      description = \"%s\",\n", EscapeBackslashes(structs[i].desc + 3));
+                fprintf(outFile, "      fields = {\n");
                 for (int f = 0; f < structs[i].fieldCount; f++)
                 {
-                    FPrintfEscapes(outFile, "        {\n");
-                    FPrintfEscapes(outFile, "          name = %S,\n", structs[i].fieldName[f]),
-                    FPrintfEscapes(outFile, "          type = %S,\n", structs[i].fieldType[f]),
-                    FPrintfEscapes(outFile, "          description = %S\n", structs[i].fieldDesc[f] + 3),
-                    FPrintfEscapes(outFile, "        }");
+                    fprintf(outFile, "        {\n");
+                    fprintf(outFile, "          name = \"%s\",\n", structs[i].fieldName[f]);
+                    fprintf(outFile, "          type = \"%s\",\n", structs[i].fieldType[f]);
+                    fprintf(outFile, "          description = \"%s\"\n", EscapeBackslashes(structs[i].fieldDesc[f] + 3));
+                    fprintf(outFile, "        }");
                     if (f < structs[i].fieldCount - 1) fprintf(outFile, ",\n");
                     else fprintf(outFile, "\n");
                 }
@@ -938,17 +906,17 @@ static void ExportParsedData(const char *fileName, int format)
             fprintf(outFile, "  enums = {\n");
             for (int i = 0; i < enumCount; i++)
             {
-                FPrintfEscapes(outFile, "    {\n");
-                FPrintfEscapes(outFile, "      name = %S,\n", enums[i].name);
-                FPrintfEscapes(outFile, "      description = %S,\n", enums[i].desc + 3);
-                FPrintfEscapes(outFile, "      values = {\n");
+                fprintf(outFile, "    {\n");
+                fprintf(outFile, "      name = \"%s\",\n", enums[i].name);
+                fprintf(outFile, "      description = \"%s\",\n", EscapeBackslashes(enums[i].desc + 3));
+                fprintf(outFile, "      values = {\n");
                 for (int e = 0; e < enums[i].valueCount; e++)
                 {
-                    FPrintfEscapes(outFile, "        {\n");
-                    FPrintfEscapes(outFile, "          name = %S,\n", enums[i].valueName[e]),
-                    FPrintfEscapes(outFile, "          value = %i,\n", enums[i].valueInteger[e]),
-                    FPrintfEscapes(outFile, "          description = %S\n", enums[i].valueDesc[e] + 3),
-                    FPrintfEscapes(outFile, "        }");
+                    fprintf(outFile, "        {\n");
+                    fprintf(outFile, "          name = \"%s\",\n", enums[i].valueName[e]);
+                    fprintf(outFile, "          value = %i,\n", enums[i].valueInteger[e]);
+                    fprintf(outFile, "          description = \"%s\"\n", EscapeBackslashes(enums[i].valueDesc[e] + 3));
+                    fprintf(outFile, "        }");
                     if (e < enums[i].valueCount - 1) fprintf(outFile, ",\n");
                     else fprintf(outFile, "\n");
                 }
@@ -963,10 +931,10 @@ static void ExportParsedData(const char *fileName, int format)
             fprintf(outFile, "  functions = {\n");
             for (int i = 0; i < funcCount; i++)
             {
-                FPrintfEscapes(outFile, "    {\n");
-                FPrintfEscapes(outFile, "      name = %S,\n", funcs[i].name);
-                FPrintfEscapes(outFile, "      description = %S,\n", funcs[i].desc + 3);
-                FPrintfEscapes(outFile, "      returnType = %S", funcs[i].retType);
+                fprintf(outFile, "    {\n");
+                fprintf(outFile, "      name = \"%s\",\n", funcs[i].name);
+                fprintf(outFile, "      description = \"%s\",\n", EscapeBackslashes(funcs[i].desc + 3));
+                fprintf(outFile, "      returnType = \"%s\"", funcs[i].retType);
 
                 if (funcs[i].paramCount == 0) fprintf(outFile, "\n");
                 else
@@ -974,7 +942,7 @@ static void ExportParsedData(const char *fileName, int format)
                     fprintf(outFile, ",\n      params = {\n");
                     for (int p = 0; p < funcs[i].paramCount; p++)
                     {
-                        FPrintfEscapes(outFile, "        {name = %S, type = %S}", funcs[i].paramName[p], funcs[i].paramType[p]);
+                        fprintf(outFile, "        {name = \"%s\", type = \"%s\"}", funcs[i].paramName[p], funcs[i].paramType[p]);
                         if (p < funcs[i].paramCount - 1) fprintf(outFile, ",\n");
                         else fprintf(outFile, "\n");
                     }
@@ -996,17 +964,17 @@ static void ExportParsedData(const char *fileName, int format)
             fprintf(outFile, "  \"structs\": [\n");
             for (int i = 0; i < structCount; i++)
             {
-                FPrintfEscapes(outFile, "    {\n");
-                FPrintfEscapes(outFile, "      \"name\": %S,\n", structs[i].name);
-                FPrintfEscapes(outFile, "      \"description\": %S,\n", structs[i].desc);
-                FPrintfEscapes(outFile, "      \"fields\": [\n");
+                fprintf(outFile, "    {\n");
+                fprintf(outFile, "      \"name\": \"%s\",\n", structs[i].name);
+                fprintf(outFile, "      \"description\": \"%s\",\n", EscapeBackslashes(structs[i].desc + 3));
+                fprintf(outFile, "      \"fields\": [\n");
                 for (int f = 0; f < structs[i].fieldCount; f++)
                 {
-                    FPrintfEscapes(outFile, "        {\n");
-                    FPrintfEscapes(outFile, "          \"name\": %S,\n", structs[i].fieldName[f]),
-                    FPrintfEscapes(outFile, "          \"type\": %S,\n", structs[i].fieldType[f]),
-                    FPrintfEscapes(outFile, "          \"description\": %S\n", structs[i].fieldDesc[f] + 3),
-                    FPrintfEscapes(outFile, "        }");
+                    fprintf(outFile, "        {\n");
+                    fprintf(outFile, "          \"name\": \"%s\",\n", structs[i].fieldName[f]);
+                    fprintf(outFile, "          \"type\": \"%s\",\n", structs[i].fieldType[f]);
+                    fprintf(outFile, "          \"description\": \"%s\"\n", EscapeBackslashes(structs[i].fieldDesc[f] + 3));
+                    fprintf(outFile, "        }");
                     if (f < structs[i].fieldCount - 1) fprintf(outFile, ",\n");
                     else fprintf(outFile, "\n");
                 }
@@ -1021,17 +989,17 @@ static void ExportParsedData(const char *fileName, int format)
             fprintf(outFile, "  \"enums\": [\n");
             for (int i = 0; i < enumCount; i++)
             {
-                FPrintfEscapes(outFile, "    {\n");
-                FPrintfEscapes(outFile, "      \"name\": %S,\n", enums[i].name);
-                FPrintfEscapes(outFile, "      \"description\": %S,\n", enums[i].desc + 3);
-                FPrintfEscapes(outFile, "      \"values\": [\n");
+                fprintf(outFile, "    {\n");
+                fprintf(outFile, "      \"name\": \"%s\",\n", enums[i].name);
+                fprintf(outFile, "      \"description\": \"%s\",\n", EscapeBackslashes(enums[i].desc + 3));
+                fprintf(outFile, "      \"values\": [\n");
                 for (int e = 0; e < enums[i].valueCount; e++)
                 {
-                    FPrintfEscapes(outFile, "        {\n");
-                    FPrintfEscapes(outFile, "          \"name\": %S,\n", enums[i].valueName[e]),
-                    FPrintfEscapes(outFile, "          \"value\": %i,\n", enums[i].valueInteger[e]),
-                    FPrintfEscapes(outFile, "          \"description\": %S\n", enums[i].valueDesc[e] + 3),
-                    FPrintfEscapes(outFile, "        }");
+                    fprintf(outFile, "        {\n");
+                    fprintf(outFile, "          \"name\": \"%s\",\n", enums[i].valueName[e]);
+                    fprintf(outFile, "          \"value\": %i,\n", enums[i].valueInteger[e]);
+                    fprintf(outFile, "          \"description\": \"%s\"\n", EscapeBackslashes(enums[i].valueDesc[e] + 3));
+                    fprintf(outFile, "        }");
                     if (e < enums[i].valueCount - 1) fprintf(outFile, ",\n");
                     else fprintf(outFile, "\n");
                 }
@@ -1046,10 +1014,10 @@ static void ExportParsedData(const char *fileName, int format)
             fprintf(outFile, "  \"functions\": [\n");
             for (int i = 0; i < funcCount; i++)
             {
-                FPrintfEscapes(outFile, "    {\n");
-                FPrintfEscapes(outFile, "      \"name\": %S,\n", funcs[i].name);
-                FPrintfEscapes(outFile, "      \"description\": %S,\n", funcs[i].desc + 3);
-                FPrintfEscapes(outFile, "      \"returnType\": %S", funcs[i].retType);
+                fprintf(outFile, "    {\n");
+                fprintf(outFile, "      \"name\": \"%s\",\n", funcs[i].name);
+                fprintf(outFile, "      \"description\": \"%s\",\n", EscapeBackslashes(funcs[i].desc + 3));
+                fprintf(outFile, "      \"returnType\": \"%s\"", funcs[i].retType);
 
                 if (funcs[i].paramCount == 0) fprintf(outFile, "\n");
                 else
@@ -1057,9 +1025,7 @@ static void ExportParsedData(const char *fileName, int format)
                     fprintf(outFile, ",\n      \"params\": {\n");
                     for (int p = 0; p < funcs[i].paramCount; p++)
                     {
-                        // WARNING: JSON is not explicitly ordered, and most JSON libraries treat it unordered.
-                        // Order definitely matters for function parameters, but that's not respected here.
-                        FPrintfEscapes(outFile, "        %S: %S", funcs[i].paramName[p], funcs[i].paramType[p]);
+                        fprintf(outFile, "        \"%s\": \"%s\"", funcs[i].paramName[p], funcs[i].paramType[p]);
                         if (p < funcs[i].paramCount - 1) fprintf(outFile, ",\n");
                         else fprintf(outFile, "\n");
                     }
