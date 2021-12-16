@@ -798,7 +798,7 @@ char* jar_xm_load_module(jar_xm_context_t* ctx, const char* moddata, size_t modd
     mod->num_patterns = READ_U16(offset + 10);
     mod->num_instruments = READ_U16(offset + 12);
     mod->patterns = (jar_xm_pattern_t*)mempool;
-    mod->linear_interpolation = 0; // Linear interpolation can be set after loading
+    mod->linear_interpolation = 1; // Linear interpolation can be set after loading
     mod->ramping = 1; // ramping can be set after loading
     mempool += mod->num_patterns * sizeof(jar_xm_pattern_t);
     mempool = ALIGN_PTR(mempool, 16);
