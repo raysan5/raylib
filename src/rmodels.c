@@ -1649,13 +1649,13 @@ bool ExportMesh(Mesh mesh, const char *fileName)
     if (IsFileExtension(fileName, ".obj"))
     {
         // Estimated data size, it should be enough...
-        int dataSize = mesh.vertexCount/3*(int)strlen("v 0000.00f 0000.00f 0000.00f") +
-                       mesh.vertexCount/2*(int)strlen("vt 0.000f 0.00f") +
-                       mesh.vertexCount/3*(int)strlen("vn 0.000f 0.00f 0.00f") +
-                       mesh.triangleCount/3*(int)strlen("f 00000/00000/00000 00000/00000/00000 00000/00000/00000");
+        int dataSize = mesh.vertexCount*(int)strlen("v 0000.00f 0000.00f 0000.00f") +
+                       mesh.vertexCount*(int)strlen("vt 0.000f 0.00f") +
+                       mesh.vertexCount*(int)strlen("vn 0.000f 0.00f 0.00f") +
+                       mesh.triangleCount*(int)strlen("f 00000/00000/00000 00000/00000/00000 00000/00000/00000");
 
         // NOTE: Text data buffer size is estimated considering mesh data size
-        char *txtData = (char *)RL_CALLOC(dataSize + 2000, sizeof(char));
+        char *txtData = (char *)RL_CALLOC(dataSize*2 + 2000, sizeof(char));
 
         int byteCount = 0;
         byteCount += sprintf(txtData + byteCount, "# //////////////////////////////////////////////////////////////////////////////////\n");
@@ -1665,7 +1665,7 @@ bool ExportMesh(Mesh mesh, const char *fileName)
         byteCount += sprintf(txtData + byteCount, "# // more info and bugs-report:  github.com/raysan5/raylib                        //\n");
         byteCount += sprintf(txtData + byteCount, "# // feedback and support:       ray[at]raylib.com                                //\n");
         byteCount += sprintf(txtData + byteCount, "# //                                                                              //\n");
-        byteCount += sprintf(txtData + byteCount, "# // Copyright (c) 2018 Ramon Santamaria (@raysan5)                               //\n");
+        byteCount += sprintf(txtData + byteCount, "# // Copyright (c) 2018-2021 Ramon Santamaria (@raysan5)                          //\n");
         byteCount += sprintf(txtData + byteCount, "# //                                                                              //\n");
         byteCount += sprintf(txtData + byteCount, "# //////////////////////////////////////////////////////////////////////////////////\n\n");
         byteCount += sprintf(txtData + byteCount, "# Vertex Count:     %i\n", mesh.vertexCount);
@@ -1688,9 +1688,22 @@ bool ExportMesh(Mesh mesh, const char *fileName)
             byteCount += sprintf(txtData + byteCount, "vn %.3f %.3f %.3f\n", mesh.normals[v], mesh.normals[v + 1], mesh.normals[v + 2]);
         }
 
-        for (int i = 0; i < mesh.triangleCount; i++)
+        if (mesh.indices != NULL)
         {
-            byteCount += sprintf(txtData + byteCount, "f %i/%i/%i %i/%i/%i %i/%i/%i\n", i, i, i, i + 1, i + 1, i + 1, i + 2, i + 2, i + 2);
+            for (int i = 0, v = 0; i < mesh.triangleCount; i++, v += 3)
+            {
+                byteCount += sprintf(txtData + byteCount, "f %i/%i/%i %i/%i/%i %i/%i/%i\n", 
+                    mesh.indices[v] + 1, mesh.indices[v] + 1, mesh.indices[v] + 1,
+                    mesh.indices[v + 1] + 1, mesh.indices[v + 1] + 1, mesh.indices[v + 1] + 1,
+                    mesh.indices[v + 2] + 1, mesh.indices[v + 2] + 1, mesh.indices[v + 2] + 1);
+            }
+        }
+        else
+        {
+            for (int i = 0, v = 1; i < mesh.triangleCount; i++, v += 3)
+            {
+                byteCount += sprintf(txtData + byteCount, "f %i/%i/%i %i/%i/%i %i/%i/%i\n", v, v, v, v + 1, v + 1, v + 1, v + 2, v + 2, v + 2);
+            }
         }
 
         byteCount += sprintf(txtData + byteCount, "\n");
@@ -2252,14 +2265,14 @@ Mesh GenMeshCube(float width, float height, float length)
     int k = 0;
 
     // Indices can be initialized right now
-    for (int i = 0; i < 36; i+=6)
+    for (int i = 0; i < 36; i += 6)
     {
         mesh.indices[i] = 4*k;
-        mesh.indices[i+1] = 4*k+1;
-        mesh.indices[i+2] = 4*k+2;
-        mesh.indices[i+3] = 4*k;
-        mesh.indices[i+4] = 4*k+2;
-        mesh.indices[i+5] = 4*k+3;
+        mesh.indices[i + 1] = 4*k + 1;
+        mesh.indices[i + 2] = 4*k + 2;
+        mesh.indices[i + 3] = 4*k;
+        mesh.indices[i + 4] = 4*k + 2;
+        mesh.indices[i + 5] = 4*k + 3;
 
         k++;
     }

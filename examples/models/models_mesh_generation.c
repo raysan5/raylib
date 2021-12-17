@@ -5,64 +5,15 @@
 *   This example has been created using raylib 1.8 (www.raylib.com)
 *   raylib is licensed under an unmodified zlib/libpng license (View raylib.h for details)
 *
-*   Copyright (c) 2017 Ramon Santamaria (Ray San)
+*   Copyright (c) 2017-2021 Ramon Santamaria (@raysan5)
 *
 ********************************************************************************************/
 
 #include "raylib.h"
 
-#define NUM_MODELS  9      // Parametric 3d shapes to generate
+#define NUM_MODELS  9               // Parametric 3d shapes to generate
 
-void AllocateMeshData(Mesh* mesh, int triangleCount)
-{
-    mesh->vertexCount = triangleCount * 3;
-    mesh->triangleCount = triangleCount;
-
-    mesh->vertices = (float*)MemAlloc(mesh->vertexCount * 3 * sizeof(float));
-    mesh->texcoords = (float*)MemAlloc(mesh->vertexCount * 2 * sizeof(float));
-    mesh->normals = (float*)MemAlloc(mesh->vertexCount * 3 * sizeof(float));
-}
-
-// generate a simple triangle mesh from code
-Mesh MakeMesh()
-{
-    Mesh mesh = { 0 };
-    AllocateMeshData(&mesh, 1);
-
-    // vertex at the origin
-    mesh.vertices[0] = 0;
-    mesh.vertices[1] = 0;
-    mesh.vertices[2] = 0;
-    mesh.normals[0] = 0;
-    mesh.normals[1] = 1;
-    mesh.normals[2] = 0;
-    mesh.texcoords[0] = 0;
-    mesh.texcoords[1] = 0;
-
-    // vertex at 1,0,2
-    mesh.vertices[3] = 1;
-    mesh.vertices[4] = 0;
-    mesh.vertices[5] = 2;
-    mesh.normals[3] = 0;
-    mesh.normals[4] = 1;
-    mesh.normals[5] = 0;
-    mesh.texcoords[2] = 0.5f;
-    mesh.texcoords[3] = 1.0f;
-
-    // vertex at 2,0,0
-    mesh.vertices[6] = 2;
-    mesh.vertices[7] = 0;
-    mesh.vertices[8] = 0;
-    mesh.normals[6] = 0;
-    mesh.normals[7] = 1;
-    mesh.normals[8] = 0;
-    mesh.texcoords[4] = 1;
-    mesh.texcoords[5] =0;
-
-    UploadMesh(&mesh, false);
-
-    return mesh;
-}
+static Mesh GenMeshCustom(void);    // Generate a simple triangle mesh from code
 
 int main(void)
 {
@@ -88,7 +39,18 @@ int main(void)
     models[5] = LoadModelFromMesh(GenMeshTorus(0.25f, 4.0f, 16, 32));
     models[6] = LoadModelFromMesh(GenMeshKnot(1.0f, 2.0f, 16, 128));
     models[7] = LoadModelFromMesh(GenMeshPoly(5, 2.0f));
-    models[8] = LoadModelFromMesh(MakeMesh());
+    models[8] = LoadModelFromMesh(GenMeshCustom());
+    
+    // Generated meshes could be exported as .obj files
+    //ExportMesh(models[0].meshes[0], "plane.obj");
+    //ExportMesh(models[1].meshes[0], "cube.obj");
+    //ExportMesh(models[2].meshes[0], "sphere.obj");
+    //ExportMesh(models[3].meshes[0], "hemisphere.obj");
+    //ExportMesh(models[4].meshes[0], "cylinder.obj");
+    //ExportMesh(models[5].meshes[0], "torus.obj");
+    //ExportMesh(models[6].meshes[0], "knot.obj");
+    //ExportMesh(models[7].meshes[0], "poly.obj");
+    //ExportMesh(models[8].meshes[0], "custom.obj");
 
     // Set checked texture as default diffuse component for all models material
     for (int i = 0; i < NUM_MODELS; i++) models[i].materials[0].maps[MATERIAL_MAP_DIFFUSE].texture = texture;
@@ -157,7 +119,7 @@ int main(void)
                 case 5: DrawText("TORUS", 680, 10, 20, DARKBLUE); break;
                 case 6: DrawText("KNOT", 680, 10, 20, DARKBLUE); break;
                 case 7: DrawText("POLY", 680, 10, 20, DARKBLUE); break;
-                case 8: DrawText("Parametric(custom)", 580, 10, 20, DARKBLUE); break;
+                case 8: DrawText("Custom (triangle)", 580, 10, 20, DARKBLUE); break;
                 default: break;
             }
 
@@ -176,4 +138,50 @@ int main(void)
     //--------------------------------------------------------------------------------------
 
     return 0;
+}
+
+// Generate a simple triangle mesh from code
+static Mesh GenMeshCustom(void)
+{
+    Mesh mesh = { 0 };
+    mesh.triangleCount = 1;
+    mesh.vertexCount = mesh.triangleCount*3;
+    mesh.vertices = (float *)MemAlloc(mesh.vertexCount*3*sizeof(float));    // 3 vertices, 3 coordinates each (x, y, z)
+    mesh.texcoords = (float *)MemAlloc(mesh.vertexCount*2*sizeof(float));   // 3 vertices, 2 coordinates each (x, y)
+    mesh.normals = (float *)MemAlloc(mesh.vertexCount*3*sizeof(float));     // 3 vertices, 3 coordinates each (x, y, z)
+
+    // Vertex at (0, 0, 0)
+    mesh.vertices[0] = 0;
+    mesh.vertices[1] = 0;
+    mesh.vertices[2] = 0;
+    mesh.normals[0] = 0;
+    mesh.normals[1] = 1;
+    mesh.normals[2] = 0;
+    mesh.texcoords[0] = 0;
+    mesh.texcoords[1] = 0;
+
+    // Vertex at (1, 0, 2)
+    mesh.vertices[3] = 1;
+    mesh.vertices[4] = 0;
+    mesh.vertices[5] = 2;
+    mesh.normals[3] = 0;
+    mesh.normals[4] = 1;
+    mesh.normals[5] = 0;
+    mesh.texcoords[2] = 0.5f;
+    mesh.texcoords[3] = 1.0f;
+
+    // Vertex at (2, 0, 0)
+    mesh.vertices[6] = 2;
+    mesh.vertices[7] = 0;
+    mesh.vertices[8] = 0;
+    mesh.normals[6] = 0;
+    mesh.normals[7] = 1;
+    mesh.normals[8] = 0;
+    mesh.texcoords[4] = 1;
+    mesh.texcoords[5] =0;
+
+    // Upload mesh data from CPU (RAM) to GPU (VRAM) memory
+    UploadMesh(&mesh, false);
+
+    return mesh;
 }
