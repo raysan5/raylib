@@ -1275,7 +1275,8 @@ RLAPI void ImageDrawTextEx(Image *dst, Font font, const char *text, Vector2 posi
 RLAPI Texture2D LoadTexture(const char *fileName);                                                       // Load texture from file into GPU memory (VRAM)
 RLAPI Texture2D LoadTextureFromImage(Image image);                                                       // Load texture from image data
 RLAPI TextureCubemap LoadTextureCubemap(Image image, int layout);                                        // Load cubemap from image, multiple image cubemap layouts supported
-RLAPI RenderTexture2D LoadRenderTexture(int width, int height);                                          // Load texture for rendering (framebuffer)
+RLAPI RenderTexture2D LoadRenderTexture(int width, int height);                                          // Load texture for rendering (framebuffer) with RGBA pixel format and depthbuffer
+RLAPI RenderTexture2D LoadRenderTextureEx(int width, int height, int format, int useDepth);              // Load texture for rendering (framebuffer) with custom pixel format and optional framebuffer
 RLAPI void UnloadTexture(Texture2D texture);                                                             // Unload texture from GPU memory (VRAM)
 RLAPI void UnloadRenderTexture(RenderTexture2D target);                                                  // Unload render texture from GPU memory (VRAM)
 RLAPI void UpdateTexture(Texture2D texture, const void *pixels);                                         // Update GPU texture with new data

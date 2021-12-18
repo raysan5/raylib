@@ -2968,6 +2968,12 @@ TextureCubemap LoadTextureCubemap(Image image, int layout)
 // NOTE: Render texture is loaded by default with RGBA color attachment and depth RenderBuffer
 RenderTexture2D LoadRenderTexture(int width, int height)
 {
+    return LoadRenderTextureEx(width, height, PIXELFORMAT_UNCOMPRESSED_R8G8B8A8, 1);
+}
+
+// Load texture for rendering (framebuffer)
+RenderTexture2D LoadRenderTextureEx(int width, int height, int format, int useDepth)
+{
     RenderTexture2D target = { 0 };
 
     target.id = rlLoadFramebuffer(width, height);   // Load an empty framebuffer
@@ -2977,22 +2983,27 @@ RenderTexture2D LoadRenderTexture(int width, int height)
         rlEnableFramebuffer(target.id);
 
         // Create color texture (default to RGBA)
-        target.texture.id = rlLoadTexture(NULL, width, height, PIXELFORMAT_UNCOMPRESSED_R8G8B8A8, 1);
+        target.texture.id = rlLoadTexture(NULL, width, height, format, 1);
         target.texture.width = width;
         target.texture.height = height;
-        target.texture.format = PIXELFORMAT_UNCOMPRESSED_R8G8B8A8;
+        target.texture.format = format;
         target.texture.mipmaps = 1;
 
         // Create depth renderbuffer/texture
-        target.depth.id = rlLoadTextureDepth(width, height, true);
-        target.depth.width = width;
-        target.depth.height = height;
-        target.depth.format = 19;       //DEPTH_COMPONENT_24BIT?
-        target.depth.mipmaps = 1;
+        if(useDepth)
+        {
+            target.depth.id = rlLoadTextureDepth(width, height, true);
+            target.depth.width = width;
+            target.depth.height = height;
+            target.depth.format = 19;       //DEPTH_COMPONENT_24BIT?
+            target.depth.mipmaps = 1;
+            
+            // Attach depth renderbuffer/texture to FBO
+            rlFramebufferAttach(target.id, target.depth.id, RL_ATTACHMENT_DEPTH, RL_ATTACHMENT_RENDERBUFFER, 0);
+        }
 
-        // Attach color texture and depth renderbuffer/texture to FBO
+        // Attach color texture to FBO
         rlFramebufferAttach(target.id, target.texture.id, RL_ATTACHMENT_COLOR_CHANNEL0, RL_ATTACHMENT_TEXTURE2D, 0);
-        rlFramebufferAttach(target.id, target.depth.id, RL_ATTACHMENT_DEPTH, RL_ATTACHMENT_RENDERBUFFER, 0);
 
         // Check if fbo is complete with attachments (valid)
         if (rlFramebufferComplete(target.id)) TRACELOG(LOG_INFO, "FBO: [ID %i] Framebuffer object created successfully", target.id);
