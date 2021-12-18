@@ -2108,7 +2108,7 @@ void ImageFloodFill(Image *dst, int startPosX, int startPosY, Color color){
             {x - 1, y},
         };
         
-        Color sc = *((Color *)start_pixel_address);
+        Color sc = GetPixelColor(start_pixel_address, dst->format);
         
         for(int n = 0; n < 4; n++)
         {
