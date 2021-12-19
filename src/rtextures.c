@@ -2908,6 +2908,7 @@ TextureCubemap LoadTextureCubemap(Image image, int layout)
         cubemap.height = cubemap.width;
     }
 
+    // Layout provided or already auto-detected
     if (layout != CUBEMAP_LAYOUT_AUTO_DETECT)
     {
         int size = cubemap.width;
@@ -2918,7 +2919,7 @@ TextureCubemap LoadTextureCubemap(Image image, int layout)
 
         if (layout == CUBEMAP_LAYOUT_LINE_VERTICAL)
         {
-            faces = image;
+            faces = ImageCopy(image);
             for (int i = 0; i < 6; i++) faceRecs[i].y = (float)size*i;
         }
         else if (layout == CUBEMAP_LAYOUT_PANORAMA)
@@ -2953,9 +2954,9 @@ TextureCubemap LoadTextureCubemap(Image image, int layout)
             ImageFormat(&faces, image.format);
 
             // NOTE: Image formating does not work with compressed textures
+            
+            for (int i = 0; i < 6; i++) ImageDraw(&faces, image, faceRecs[i], (Rectangle){ 0, (float)size*i, (float)size, (float)size }, WHITE);
         }
-
-        for (int i = 0; i < 6; i++) ImageDraw(&faces, image, faceRecs[i], (Rectangle){ 0, (float)size*i, (float)size, (float)size }, WHITE);
 
         cubemap.id = rlLoadTextureCubemap(faces.data, size, faces.format);
         if (cubemap.id == 0) TRACELOG(LOG_WARNING, "IMAGE: Failed to load cubemap image");
