@@ -2428,13 +2428,13 @@ Mesh GenMeshCylinder(float radius, float height, int slices)
         par_shapes_mesh *cylinder = par_shapes_create_cylinder(slices, 8);
         par_shapes_scale(cylinder, radius, radius, height);
         par_shapes_rotate(cylinder, -PI/2.0f, (float[]){ 1, 0, 0 });
-        par_shapes_rotate(cylinder, PI/2.0f, (float[]){ 0, 1, 0 });
 
         // Generate an orientable disk shape (top cap)
         par_shapes_mesh *capTop = par_shapes_create_disk(radius, slices, (float[]){ 0, 0, 0 }, (float[]){ 0, 0, 1 });
         capTop->tcoords = PAR_MALLOC(float, 2*capTop->npoints);
         for (int i = 0; i < 2*capTop->npoints; i++) capTop->tcoords[i] = 0.0f;
         par_shapes_rotate(capTop, -PI/2.0f, (float[]){ 1, 0, 0 });
+        par_shapes_rotate(capTop, 90*DEG2RAD, (float[]){ 0, 1, 0 });
         par_shapes_translate(capTop, 0, height, 0);
 
         // Generate an orientable disk shape (bottom cap)
@@ -2442,6 +2442,7 @@ Mesh GenMeshCylinder(float radius, float height, int slices)
         capBottom->tcoords = PAR_MALLOC(float, 2*capBottom->npoints);
         for (int i = 0; i < 2*capBottom->npoints; i++) capBottom->tcoords[i] = 0.95f;
         par_shapes_rotate(capBottom, PI/2.0f, (float[]){ 1, 0, 0 });
+        par_shapes_rotate(capBottom, -90*DEG2RAD, (float[]){ 0, 1, 0 });
 
         par_shapes_merge_and_free(cylinder, capTop);
         par_shapes_merge_and_free(cylinder, capBottom);
