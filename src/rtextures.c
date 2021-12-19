@@ -2919,8 +2919,7 @@ TextureCubemap LoadTextureCubemap(Image image, int layout)
 
         if (layout == CUBEMAP_LAYOUT_LINE_VERTICAL)
         {
-            faces = ImageCopy(image);
-            for (int i = 0; i < 6; i++) faceRecs[i].y = (float)size*i;
+            faces = ImageCopy(image);       // Image data already follows expected convention
         }
         else if (layout == CUBEMAP_LAYOUT_PANORAMA)
         {
@@ -2958,6 +2957,8 @@ TextureCubemap LoadTextureCubemap(Image image, int layout)
             for (int i = 0; i < 6; i++) ImageDraw(&faces, image, faceRecs[i], (Rectangle){ 0, (float)size*i, (float)size, (float)size }, WHITE);
         }
 
+        // NOTE: Cubemap data is expected to be provided as 6 images in a single data array,
+        // one after the other (that's a vertical image), following convention: +X, -X, +Y, -Y, +Z, -Z
         cubemap.id = rlLoadTextureCubemap(faces.data, size, faces.format);
         if (cubemap.id == 0) TRACELOG(LOG_WARNING, "IMAGE: Failed to load cubemap image");
 
