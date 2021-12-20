@@ -606,7 +606,6 @@ android_native_app_glue.o : $(NATIVE_APP_GLUE)/android_native_app_glue.c
 # for compilation and enable runtime linking with -rpath, LD_LIBRARY_PATH, or ldconfig.
 # HINT: Add -L$(RAYLIB_INSTALL_PATH) -I$(RAYLIB_H_INSTALL_PATH) to your own makefiles.
 # See below and ../examples/Makefile for more information.
-# TODO: Add other platforms. Remove sudo requirement, i.e. add USER mode.
 
 # RAYLIB_INSTALL_PATH should be the desired full path to libraylib. No relative paths.
 DESTDIR ?= /usr/local
