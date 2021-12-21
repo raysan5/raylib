@@ -1714,6 +1714,8 @@ bool CheckCollisionLines(Vector2 startPos1, Vector2 endPos1, Vector2 startPos2, 
     return collision;
 }
 
+
+
 // Check if point belongs to line created between two points [p1] and [p2] with defined margin in pixels [threshold]
 bool CheckCollisionPointLine(Vector2 point, Vector2 p1, Vector2 p2, int threshold)
 {
@@ -1731,6 +1733,23 @@ bool CheckCollisionPointLine(Vector2 point, Vector2 p1, Vector2 p2, int threshol
         else collision = (dyl > 0)? ((p1.y <= point.y) && (point.y <= p2.y)) : ((p2.y <= point.y) && (point.y <= p1.y));
     }
 
+    return collision;
+}
+
+bool CheckCollisionRayLine(Vector2 rayPosition, Vector2 rayDirection, Vector2 startPos, Vector2 endPos, Vector2 *collisionPoint)
+{    
+    bool collision = false;
+    Vector2 offsetPosition;
+    offsetPosition.x = rayPosition.x + rayDirection.x;
+    offsetPosition.y = rayPosition.y + rayDirection.y;
+
+    float denom = (startPos.x - endPos.x)*(rayPosition.y-offsetPosition.y) - (startPos.y - endPos.y)*(rayPosition.x-offsetPosition.x);
+    if (denom == 0) return collision;
+    float t = ((startPos.x - rayPosition.x)*(rayPosition.y - offsetPosition.y) - (startPos.y-rayPosition.y)*(rayPosition.x-offsetPosition.x)) / denom;
+    float u = ((startPos.x - rayPosition.x)*(startPos.y - endPos.y) - (startPos.y-rayPosition.y)*(startPos.x - endPos.x)) / denom;
+    collision = (t >= 0 && t <= 1 && u >= 0);
+    if (collision)
+        *collisionPoint = (Vector2){startPos.x + t * (endPos.x-startPos.x),startPos.y + t * (endPos.y-startPos.y)};
     return collision;
 }
 
