@@ -1039,8 +1039,8 @@ void PlaySoundMulti(Sound sound)
     AUDIO.MultiChannel.channels[index] = AUDIO.MultiChannel.poolCounter;
     AUDIO.MultiChannel.poolCounter++;
 
-    AUDIO.MultiChannel.pool[index]->volume = sound.stream.buffer->volume;
-    AUDIO.MultiChannel.pool[index]->pitch = sound.stream.buffer->pitch;
+    SetAudioBufferVolume(AUDIO.MultiChannel.pool[index], sound.stream.buffer->volume);
+    SetAudioBufferPitch(AUDIO.MultiChannel.pool[index], sound.stream.buffer->pitch);
     AUDIO.MultiChannel.pool[index]->looping = sound.stream.buffer->looping;
     AUDIO.MultiChannel.pool[index]->usage = sound.stream.buffer->usage;
     AUDIO.MultiChannel.pool[index]->isSubBufferProcessed[0] = false;
