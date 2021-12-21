@@ -899,7 +899,8 @@ bool ExportWave(Wave wave, const char *fileName)
         drwav wav = { 0 };
         drwav_data_format format = { 0 };
         format.container = drwav_container_riff;
-        format.format = DR_WAVE_FORMAT_PCM;
+        if (wave.sampleSize == 32) format.format = DR_WAVE_FORMAT_IEEE_FLOAT;
+        else format.format = DR_WAVE_FORMAT_PCM;
         format.channels = wave.channels;
         format.sampleRate = wave.sampleRate;
         format.bitsPerSample = wave.sampleSize;
