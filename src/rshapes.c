@@ -1739,16 +1739,15 @@ bool CheckCollisionPointLine(Vector2 point, Vector2 p1, Vector2 p2, int threshol
 bool CheckCollisionRayLine(Vector2 rayPosition, Vector2 rayDirection, Vector2 startPos, Vector2 endPos, Vector2 *collisionPoint)
 {    
     bool collision = false;
-    Vector2 offsetPosition;
-    offsetPosition.x = rayPosition.x + rayDirection.x;
-    offsetPosition.y = rayPosition.y + rayDirection.y;
+    float offsetPositionX = rayPosition.x + rayDirection.x;
+    float offsetPositionY = rayPosition.y + rayDirection.y;
 
-    float denom = (startPos.x - endPos.x)*(rayPosition.y-offsetPosition.y) - (startPos.y - endPos.y)*(rayPosition.x-offsetPosition.x);
+    float denom = (startPos.x - endPos.x)*(rayPosition.y-offsetPositionY) - (startPos.y - endPos.y)*(rayPosition.x-offsetPositionX);
     if (denom == 0) return collision;
-    float t = ((startPos.x - rayPosition.x)*(rayPosition.y - offsetPosition.y) - (startPos.y-rayPosition.y)*(rayPosition.x-offsetPosition.x)) / denom;
+    float t = ((startPos.x - rayPosition.x)*(rayPosition.y - offsetPositionY) - (startPos.y-rayPosition.y)*(rayPosition.x-offsetPositionY)) / denom;
     float u = ((startPos.x - rayPosition.x)*(startPos.y - endPos.y) - (startPos.y-rayPosition.y)*(startPos.x - endPos.x)) / denom;
     collision = (t >= 0 && t <= 1 && u >= 0);
-    if (collision)
+    if (collision && collisionPoint != NULL)
         *collisionPoint = (Vector2){startPos.x + t * (endPos.x-startPos.x),startPos.y + t * (endPos.y-startPos.y)};
     return collision;
 }
