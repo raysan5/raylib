@@ -283,7 +283,7 @@ ifeq ($(PLATFORM_OS), LINUX)
 endif
 
 ifeq ($(RAYLIB_BUILD_MODE),DEBUG)
-    CFLAGS += -g
+    CFLAGS += -g -D_DEBUG
 endif
 
 ifeq ($(RAYLIB_BUILD_MODE),RELEASE)

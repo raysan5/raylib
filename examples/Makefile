@@ -204,7 +204,7 @@ endif
 CFLAGS += -Wall -std=c99 -D_DEFAULT_SOURCE -Wno-missing-braces -Wunused-result
 
 ifeq ($(BUILD_MODE),DEBUG)
-    CFLAGS += -g
+    CFLAGS += -g -D_DEBUG
     ifeq ($(PLATFORM),PLATFORM_WEB)
         CFLAGS += -s ASSERTIONS=1 --profiling
     endif
