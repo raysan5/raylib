@@ -2073,29 +2073,30 @@ void ImageColorReplace(Image *image, Color color, Color replace)
 
     ImageFormat(image, format);
 }
+
 // Flood-fills from the given position
 void ImageFloodFill(Image *dst, int startPosX, int startPosY, Color color)
 {
     if ((dst->data == NULL) || (startPosX < 0) || (startPosX >= dst->width) || (startPosY < 0) || (startPosY >= dst->height)) return;
 
     int bpp = GetPixelDataSize(1,1,dst->format);
-    void *start_pixel_address = (dst->data + bpp*(startPosX + dst->width*startPosY));
+    void *startPixelAddress = (dst->data + bpp*(startPosX + dst->width*startPosY));
 
-    Color startColor = GetPixelColor(start_pixel_address, dst->format);
+    Color startColor = GetPixelColor(startPixelAddress, dst->format);
     if (startColor.r == color.r && startColor.g == color.g && startColor.b == color.b && startColor.a == color.a) return;
 
     // x,y array for pixels which we just flood-filled, conservatively sized
     // TODO: research and implement ring buffer, size could maybe be as low as ~5 * smallest image side
-    int *a_star_edge_list = RL_MALLOC(dst->width*dst->height*2*sizeof(*a_star_edge_list));
-    if (a_star_edge_list == NULL) return;
-    a_star_edge_list[0] = startPosX;
-    a_star_edge_list[1] = startPosY;
+    int *aStarEdgeList = RL_MALLOC(dst->width*dst->height*2*sizeof(*aStarEdgeList));
+    if (aStarEdgeList == NULL) return;
+    aStarEdgeList[0] = startPosX;
+    aStarEdgeList[1] = startPosY;
 
-    for (int flood = 0, pool = 1; flood < pool; flood+=2)
+    for (int flood = 0, pool = 2; flood < pool; flood+=2)
     {
-        int x = a_star_edge_list[flood].x;
-        int y = a_star_edge_list[flood].y;
-        void *pixel_address = 0;
+        int x = aStarEdgeList[flood].x;
+        int y = aStarEdgeList[flood].y;
+        void *pixelAddress = 0;
 
         // clockwise check and color the 4 neighbours, then record
         int neighbours[4*2] = {
@@ -2105,29 +2106,29 @@ void ImageFloodFill(Image *dst, int startPosX, int startPosY, Color color)
             x - 1, y,
         };
 
-        Color sc = GetPixelColor(start_pixel_address, dst->format);
+        Color sc = GetPixelColor(startPixelAddress, dst->format);
 
         for (int n = 0; n < 4*2; n+=2)
         {
             if (!((neighbours[n] < 0) || (neighbours[n] >= dst->width) || (neighbours[n + 1] < 0) || (neighbours[n + 1] >= dst->height) || ((neighbours[n] == startPosX) && (neighbours[n + 1] == startPosY))))
             {
-                pixel_address = (dst->data + bpp*(neighbours[n] + dst->width*neighbours[n + 1]));
+                pixelAddress = (dst->data + bpp*(neighbours[n] + dst->width*neighbours[n + 1]));
 
-                Color cc = GetPixelColor(pixel_address, dst->format);
+                Color cc = GetPixelColor(pixelAdress, dst->format);
                 if (cc.r == sc.r && cc.g == sc.g && cc.b == sc.b && cc.a == sc.a)
                 {
-                    a_star_edge_list[pool] = neighbours[n];
-                    a_star_edge_list[pool + 1] = neighbours[n + 1];
-                    SetPixelColor(pixel_address, color, dst->format);
+                    aStarEdgeList[pool] = neighbours[n];
+                    aStarEdgeList[pool + 1] = neighbours[n + 1];
+                    SetPixelColor(pixelAddress, color, dst->format);
                     pool += 2;
                 }
             }
         }
     }
     // color the center last
-    SetPixelColor(start_pixel_address, color, dst->format);
+    SetPixelColor(startPixelAddress, color, dst->format);
 
-    RL_FREE(a_star_edge_list);
+    RL_FREE(aStarEdgeList);
 }
 #endif      // SUPPORT_IMAGE_MANIPULATION
 
