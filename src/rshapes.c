@@ -1736,20 +1736,50 @@ bool CheckCollisionPointLine(Vector2 point, Vector2 p1, Vector2 p2, int threshol
     return collision;
 }
 
-bool CheckCollisionRayLine(Vector2 rayPosition, Vector2 rayDirection, Vector2 startPos, Vector2 endPos, Vector2 *collisionPoint)
+RayCollision2D CheckCollisionRayLine(Ray2D cast, Vector2 startPos, Vector2 endPos) // Returns collision data between ray and line segment
 {    
-    bool collision = false;
-    float offsetPositionX = rayPosition.x + rayDirection.x;
-    float offsetPositionY = rayPosition.y + rayDirection.y;
+    float offsetPositionY = cast.position.x + cast.direction.x;
+    float offsetPositionY = cast.position.y + cast.direction.y;
 
-    float denom = (startPos.x - endPos.x)*(rayPosition.y-offsetPositionY) - (startPos.y - endPos.y)*(rayPosition.x-offsetPositionX);
-    if (denom == 0) return collision;
-    float t = ((startPos.x - rayPosition.x)*(rayPosition.y - offsetPositionY) - (startPos.y-rayPosition.y)*(rayPosition.x-offsetPositionY)) / denom;
-    float u = ((startPos.x - rayPosition.x)*(startPos.y - endPos.y) - (startPos.y-rayPosition.y)*(startPos.x - endPos.x)) / denom;
-    collision = (t >= 0 && t <= 1 && u >= 0);
-    if (collision && collisionPoint != NULL)
-        *collisionPoint = (Vector2){startPos.x + t * (endPos.x-startPos.x),startPos.y + t * (endPos.y-startPos.y)};
-    return collision;
+    float denom = (startPos.x - endPos.x)*(cast.position.y-offsetPositionY) - (startPos.y - endPos.y)*(cast.position.x-offsetPositionY);
+    if (denom == 0)
+    {
+        return (RayCollision2D){false, -1, (Vector2){0,0}};
+    }
+    float t = ((startPos.x - cast.position.x)*(cast.position.y - offsetPositionY) - (startPos.y-cast.position.y)*(cast.position.x-offsetPositionY)) / denom;
+    float u = ((startPos.x - cast.position.x)*(startPos.y - endPos.y) - (startPos.y-cast.position.y)*(startPos.x - endPos.x)) / denom;
+    if (t >= 0 && t <= 1 && u >= 0)
+    {
+        Vector2 point = (Vector2){startPos.x + t * (endPos.x-startPos.x),startPos.y + t * (endPos.y-startPos.y)};
+        return (RayCollision2D){true, sqrtf((cast.position.x - point.x)*(cast.position.x - point.x) + (cast.position.y - point.y)*(cast.position.y - point.y)), point};
+    }
+    else
+    {
+        return (RayCollision2D){false, -1, (Vector2){0,0}};
+    }
+}
+
+RayCollision2D CastRay2D(Ray2D cast, Vector2 *startPoints, Vector2 *endPoints, int totalSegments) // Returns closest ray being cast on an array of segments.
+{    
+    
+    RayCollision2D closest;
+    closest.hit = false;
+    RayCollision2D collide = CastRay2D(cast, startPoints[0], endPoints[0]);
+    float shortestDist = collide.distance + 1;
+    for (int i = 1; i < totalBoundaries; ++i)
+    {
+        collide = CastRay2D(cast, startPoints[i], endPoints[i]);
+        if(collide.hit && (collide.distance < shortestDist))
+        {
+            shortestDist = collide.distance;
+            closest = collide;
+        } 
+    }
+    if (closest.hit)
+    {
+        return closest;
+    }
+    else return (RayCollision2D){false, -1, (Vector2){0,0}};
 }
 
 // Get collision rectangle for two rectangles collision
