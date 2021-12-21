@@ -410,6 +410,21 @@ typedef struct RayCollision {
     Vector3 normal;         // Surface normal of hit
 } RayCollision;
 
+//Ray2D, ray for 2D raycasting
+typedef struct Ray2D 
+{
+    Vector2 position;       // Ray position (origin)
+    Vector2 direction;      // Ray direction
+} Ray2D;
+
+// RayCollision2D, Ray2D hit information
+typedef struct RayCollision2D  
+{
+    bool hit;               // Did the ray hit something?
+    float distance;         // Distance to nearest hit
+    Vector2 point;          // Point of nearest hit
+} RayCollision2D;
+
 // BoundingBox
 typedef struct BoundingBox {
     Vector3 min;            // Minimum vertex box-corner
@@ -1191,7 +1206,8 @@ RLAPI bool CheckCollisionPointRec(Vector2 point, Rectangle rec);                
 RLAPI bool CheckCollisionPointCircle(Vector2 point, Vector2 center, float radius);                       // Check if point is inside circle
 RLAPI bool CheckCollisionPointTriangle(Vector2 point, Vector2 p1, Vector2 p2, Vector2 p3);               // Check if point is inside a triangle
 RLAPI bool CheckCollisionLines(Vector2 startPos1, Vector2 endPos1, Vector2 startPos2, Vector2 endPos2, Vector2 *collisionPoint); // Check the collision between two lines defined by two points each, returns collision point by reference
-bool CheckCollisionRayLine(Vector2 rayPosition, Vector2 rayDirection, Vector2 startPos, Vector2 endPos, Vector2 *collisionPoint)// Check the collision between a ray defined by a position + direction, and a line segment, returns collision point by reference
+RayCollision2D CheckCollisionRayLine(Ray2D cast, Vector2 startPos, Vector2 endPos); // Returns collision data from ray cast on a line segment. 
+RayCollision2D CastRay2D(Ray2D cast, Vector2 *startPoints, Vector2 *endPoints, int totalBoundaries); // Returns the closesst collision data from ray cast on specified line segments. 
 RLAPI bool CheckCollisionPointLine(Vector2 point, Vector2 p1, Vector2 p2, int threshold);                // Check if point belongs to line created between two points [p1] and [p2] with defined margin in pixels [threshold]
 RLAPI Rectangle GetCollisionRec(Rectangle rec1, Rectangle rec2);                                         // Get collision rectangle for two rectangles collision
 
