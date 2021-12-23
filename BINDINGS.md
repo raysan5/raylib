@@ -46,7 +46,7 @@ Some people ported raylib to other languages in form of bindings or wrappers to 
 | raylib-freebasic   | **4.0** | [FreeBASIC](https://www.freebasic.net/) | MIT | https://github.com/WIITD/raylib-freebasic     |
 | raylib-cr          | **4.0** | [Crystal](https://crystal-lang.org/)    | Apache-2.0 | https://github.com/sol-vin/raylib-cr |
 | dart-raylib        | **4.0** | [Dart](https://dart.dev/)               | MIT | https://gitlab.com/wolfenrain/dart-raylib   |
-| raylib-scopes      | auto    | [Scopes](https://scopes.rocks)          | MIT | https://github.com/salotz/raylib-scopes   |
+| raylib-scopes      | auto    | [Scopes](http://scopes.rocks)          | MIT | https://github.com/salotz/raylib-scopes   |
 
 ### Utility Wrapers
 These are utility wrappers for specific languages, they are not required to use raylib in the language but may adapt the raylib API to be more inline with the language's pardigm.
