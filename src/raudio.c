@@ -862,7 +862,7 @@ Sound LoadSoundFromWave(Wave wave)
 // Unload wave data
 void UnloadWave(Wave wave)
 {
-    if (wave.data != NULL) RL_FREE(wave.data);
+    RL_FREE(wave.data);
     //TRACELOG(LOG_INFO, "WAVE: Unloaded wave data from RAM");
 }
 
