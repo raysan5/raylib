@@ -457,7 +457,7 @@ Image LoadImageFromScreen(void)
 // Unload image from CPU memory (RAM)
 void UnloadImage(Image image)
 {
-    RL_FREE(image.data);
+    if (image.data != NULL) RL_FREE(image.data);
 }
 
 // Export image data to file
