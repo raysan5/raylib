@@ -931,6 +931,24 @@ void DrawTextCodepoint(Font font, int codepoint, Vector2 position, float fontSiz
     DrawTexturePro(font.texture, srcRec, dstRec, (Vector2){ 0, 0 }, 0.0f, tint);
 }
 
+// Draw text with a shadow
+void DrawTextShadowed (const char* text, Vector2 position, Vector2 offset, float fontSize, float spacing, Color tint, Color shadowTint)
+{
+    // Draw the shadow
+    DrawText (text, position.x + offset.x, position.y + offset.y, fontSize, shadowTint);
+    // Draw the actual text
+    DrawText (text, position.x, position.y, fontSize, tint);
+}
+
+// Draw text with a shadow using Font parameter
+void DrawTextShadowedEx (Font font, const char* text, Vector2 position, Vector2 offset, float fontSize, float spacing, Color tint, Color shadowTint)
+{
+    // Draw the shadow
+    DrawTextEx (font, text, (Vector2){position.x + offset.x, position.y + offset.y}, fontSize, spacing, shadowTint);
+    // Draw the actual text
+    DrawTextEx (font, text, position, fontSize, spacing, tint);
+}
+
 // Measure string width for default font
 int MeasureText(const char *text, int fontSize)
 {
