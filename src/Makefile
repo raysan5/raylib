@@ -65,6 +65,11 @@ RAYLIB_LIB_NAME      ?= raylib
 # Define resource file for DLL properties
 RAYLIB_RES_FILE      ?= ./raylib.dll.rc.data
 
+# Define external config flags
+# NOTE: It will override config.h flags with the provided ones,
+# if NONE, default config.h flags are used
+RAYLIB_CONFIG_FLAGS  ?= NONE
+
 # Define raylib platform
 # Options:  PLATFORM_DESKTOP, PLATFORM_RPI, PLATFORM_ANDROID, PLATFORM_WEB
 PLATFORM             ?= PLATFORM_DESKTOP
@@ -271,6 +276,10 @@ endif
 #  -Werror=pointer-arith    catch unportable code that does direct arithmetic on void pointers
 #  -fno-strict-aliasing     jar_xm.h does shady stuff (breaks strict aliasing)
 CFLAGS = -Wall -D_DEFAULT_SOURCE -Wno-missing-braces -Werror=pointer-arith -fno-strict-aliasing
+
+ifneq ($(RAYLIB_CONFIG_FLAGS), NONE)
+    CFLAGS += -DEXTERNAL_CONFIG_FLAGS $(RAYLIB_CONFIG_FLAGS)
+endif
 
 ifeq ($(PLATFORM), PLATFORM_WEB)
     CFLAGS += -std=gnu99
