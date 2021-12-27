@@ -187,7 +187,7 @@ ifeq ($(PLATFORM),PLATFORM_WEB)
 endif
 
 # Define default make program
-MAKE = make
+MAKE ?= make
 
 ifeq ($(PLATFORM),PLATFORM_DESKTOP)
     ifeq ($(PLATFORM_OS),WINDOWS)
@@ -210,7 +210,7 @@ endif
 #  -std=gnu99           defines C language mode (GNU C from 1999 revision)
 #  -Wno-missing-braces  ignore invalid warning (GCC bug 53119)
 #  -D_DEFAULT_SOURCE    use with -std=c99 on Linux and PLATFORM_WEB, required for timespec
-CFLAGS += -Wall -std=c99 -D_DEFAULT_SOURCE -Wno-missing-braces -Wunused-result
+CFLAGS = -Wall -std=c99 -D_DEFAULT_SOURCE -Wno-missing-braces -Wunused-result
 
 ifeq ($(BUILD_MODE),DEBUG)
     CFLAGS += -g -D_DEBUG
@@ -284,12 +284,12 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
     endif
     ifeq ($(PLATFORM_OS),BSD)
         # Consider -L$(RAYLIB_INSTALL_PATH)
-        LDFLAGS += -L. -Lsrc -L/usr/local/lib
+        LDFLAGS += -Lsrc -L/usr/local/lib
     endif
     ifeq ($(PLATFORM_OS),LINUX)
         # Reset everything.
         # Precedence: immediately local, installed version, raysan5 provided libs
-        LDFLAGS = -L. -L$(RAYLIB_INSTALL_PATH) -L$(RAYLIB_RELEASE_PATH) -L$(RAYLIB_PATH)
+        LDFLAGS += -L$(RAYLIB_INSTALL_PATH)
     endif
 endif
 ifeq ($(PLATFORM),PLATFORM_WEB)
