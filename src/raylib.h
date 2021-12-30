@@ -925,6 +925,7 @@ RLAPI void SetWindowPosition(int x, int y);                       // Set window 
 RLAPI void SetWindowMonitor(int monitor);                         // Set monitor for the current window (fullscreen mode)
 RLAPI void SetWindowMinSize(int width, int height);               // Set window minimum dimensions (for FLAG_WINDOW_RESIZABLE)
 RLAPI void SetWindowSize(int width, int height);                  // Set window dimensions
+RLAPI void SetWindowOpacity(float opacity);                       // Set window opacity, value opacity is between 0.0 and 1.0 (only PLATFORM_DESKTOP)
 RLAPI void *GetWindowHandle(void);                                // Get native window handle
 RLAPI int GetScreenWidth(void);                                   // Get current screen width
 RLAPI int GetScreenHeight(void);                                  // Get current screen height
