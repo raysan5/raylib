@@ -1331,8 +1331,6 @@ RLAPI void DrawText(const char *text, int posX, int posY, int fontSize, Color co
 RLAPI void DrawTextEx(Font font, const char *text, Vector2 position, float fontSize, float spacing, Color tint); // Draw text using font and additional parameters
 RLAPI void DrawTextPro(Font font, const char *text, Vector2 position, Vector2 origin, float rotation, float fontSize, float spacing, Color tint); // Draw text using Font and pro parameters (rotation)
 RLAPI void DrawTextCodepoint(Font font, int codepoint, Vector2 position, float fontSize, Color tint); // Draw one character (codepoint)
-RLAPI void DrawTextShadowed (const char* text, Vector2 position, Vector2 offset, float fontSize, float spacing, Color tint, Color shadowTint); // Draw text with a shadow
-RLAPI void DrawTextShadowedEx (Font font, const char* text, Vector2 position, Vector2 offset, float fontSize, float spacing, Color tint, Color shadowTint); // Draw text with a shadow using Font parameter
 
 // Text font info functions
 RLAPI int MeasureText(const char *text, int fontSize);                                      // Measure string width for default font
