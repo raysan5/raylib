@@ -22,13 +22,14 @@ The following people are currently [**sponsoring raylib**](https://github.com/sp
  - Níckolas Daniel da Silva ([@nawarian](https://github.com/nawarian) - [thephp.website](https://thephp.website/))
  - kenzie ([@sme-ek](https://github.com/sme-ek))
  - Allan Regush ([@AllanRegush](https://github.com/AllanRegush))
- - Jeffery Myers ([@JeffM2501](https://github.com/ProfJski))
- - Ryan Roden-Corrent ([@rcorre](https://github.com/ProfJski))
- - michaelfiber ([@michaelfiber](https://github.com/ProfJski))
- - Nikhilesh S ([@nikki93](https://github.com/ProfJski))
- - kevinabraun ([@kevinabraun](https://github.com/ProfJski))
- - Matthew Owens ([@MatthewOwens](https://github.com/ProfJski))
- - Tim Eilers ([@eilerstim](https://github.com/ProfJski))
+ - Jeffery Myers ([@JeffM2501](https://github.com/JeffM2501))
+ - Ryan Roden-Corrent ([@rcorre](https://github.com/rcorre))
+ - michaelfiber ([@michaelfiber](https://github.com/michaelfiber))
+ - Nikhilesh S ([@nikki93](https://github.com/nikki93))
+ - kevinabraun ([@kevinabraun](https://github.com/kevinabraun))
+ - Matthew Owens ([@MatthewOwens](https://github.com/MatthewOwens))
+ - Tim Eilers ([@eilerstim](https://github.com/eilerstim))
+ - Laurentino Luna ([@catmanl](https://github.com/catmanl))
 
 ### Past raylib GitHub Sponsors
 

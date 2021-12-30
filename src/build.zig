@@ -28,7 +28,6 @@ pub fn build(b: *std.build.Builder) void {
     raylib.addCSourceFiles(&.{
         "raudio.c",
         "rcore.c",
-        "rglfw.c",
         "rmodels.c",
         "rshapes.c",
         "rtext.c",
@@ -38,17 +37,30 @@ pub fn build(b: *std.build.Builder) void {
 
     switch (raylib.target.toTarget().os.tag) {
         .windows => {
+            raylib.addCSourceFiles(&.{"rglfw.c"}, raylib_flags);
             raylib.linkSystemLibrary("winmm");
             raylib.linkSystemLibrary("gdi32");
             raylib.linkSystemLibrary("opengl32");
             raylib.addIncludeDir("external/glfw/deps/mingw");
         },
         .linux => {
+            raylib.addCSourceFiles(&.{"rglfw.c"}, raylib_flags);
             raylib.linkSystemLibrary("GL");
             raylib.linkSystemLibrary("rt");
             raylib.linkSystemLibrary("dl");
             raylib.linkSystemLibrary("m");
             raylib.linkSystemLibrary("X11");
+        },
+        .macos => {
+            // On macos rglfw.c include Objective-C files.
+            const raylib_flags_extra_macos = &[_][]const u8{
+                "-ObjC",
+            };
+            raylib.addCSourceFiles(
+                &.{"rglfw.c"},
+                raylib_flags ++ raylib_flags_extra_macos,
+            );
+            raylib.linkFramework("Foundation");
         },
         else => {
             @panic("Unsupported OS");

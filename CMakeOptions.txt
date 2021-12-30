@@ -27,6 +27,13 @@ endif()
 option(INCLUDE_EVERYTHING "Include everything disabled by default (for CI usage" OFF)
 set(OFF ${INCLUDE_EVERYTHING} CACHE INTERNAL "Replace any OFF by default with \${OFF} to have it covered by this option")
 
+# raylib modules included
+cmake_dependent_option(SUPPORT_MODULE_RSHAPES "Include module: rshapes" ON CUSTOMIZE_BUILD ON)
+cmake_dependent_option(SUPPORT_MODULE_RTEXTURES "Include module: rtextures" ON CUSTOMIZE_BUILD ON)
+cmake_dependent_option(SUPPORT_MODULE_RTEXT "Include module: rtext" ON CUSTOMIZE_BUILD ON)
+cmake_dependent_option(SUPPORT_MODULE_RMODELS "Include module: rmodels" ON CUSTOMIZE_BUILD ON)
+cmake_dependent_option(SUPPORT_MODULE_RAUDIO "Include module: raudio" ON CUSTOMIZE_BUILD ON)
+
 # rcore.c
 cmake_dependent_option(SUPPORT_CAMERA_SYSTEM "Provide camera module (rcamera.h) with multiple predefined cameras: free, 1st/3rd person, orbital" ON CUSTOMIZE_BUILD ON)
 cmake_dependent_option(SUPPORT_GESTURES_SYSTEM "Gestures module is included (rgestures.h) to support gestures detection: tap, hold, swipe, drag" ON CUSTOMIZE_BUILD ON)
@@ -57,6 +64,7 @@ cmake_dependent_option(SUPPORT_FILEFORMAT_BMP "Support loading BMP as textures" 
 cmake_dependent_option(SUPPORT_FILEFORMAT_TGA "Support loading TGA as textures" ${OFF} CUSTOMIZE_BUILD OFF)
 cmake_dependent_option(SUPPORT_FILEFORMAT_JPG "Support loading JPG as textures" ${OFF} CUSTOMIZE_BUILD OFF)
 cmake_dependent_option(SUPPORT_FILEFORMAT_GIF "Support loading GIF as textures" ${OFF} CUSTOMIZE_BUILD OFF)
+cmake_dependent_option(SUPPORT_FILEFORMAT_QOI "Support loading QOI as textures" ${OFF} CUSTOMIZE_BUILD OFF)
 cmake_dependent_option(SUPPORT_FILEFORMAT_PSD "Support loading PSD as textures" ${OFF} CUSTOMIZE_BUILD OFF)
 cmake_dependent_option(SUPPORT_FILEFORMAT_PKM "Support loading PKM as textures" ${OFF} CUSTOMIZE_BUILD OFF)
 cmake_dependent_option(SUPPORT_FILEFORMAT_PVR "Support loading PVR as textures" ${OFF} CUSTOMIZE_BUILD OFF)

@@ -61,6 +61,15 @@ USE_EXTERNAL_GLFW     ?= FALSE
 # by default it uses X11 windowing system
 USE_WAYLAND_DISPLAY   ?= FALSE
 
+# Use cross-compiler for PLATFORM_RPI
+ifeq ($(PLATFORM),PLATFORM_RPI)
+    USE_RPI_CROSS_COMPILER ?= FALSE
+    ifeq ($(USE_RPI_CROSS_COMPILER),TRUE)
+        RPI_TOOLCHAIN ?= C:/SysGCC/Raspberry
+        RPI_TOOLCHAIN_SYSROOT ?= $(RPI_TOOLCHAIN)/arm-linux-gnueabihf/sysroot
+    endif
+endif
+
 # Determine PLATFORM_OS in case PLATFORM_DESKTOP selected
 ifeq ($(PLATFORM),PLATFORM_DESKTOP)
     # No uname.exe on MinGW!, but OS=Windows_NT on Windows!
@@ -178,7 +187,7 @@ ifeq ($(PLATFORM),PLATFORM_WEB)
 endif
 
 # Define default make program
-MAKE = make
+MAKE ?= make
 
 ifeq ($(PLATFORM),PLATFORM_DESKTOP)
     ifeq ($(PLATFORM_OS),WINDOWS)
@@ -201,10 +210,10 @@ endif
 #  -std=gnu99           defines C language mode (GNU C from 1999 revision)
 #  -Wno-missing-braces  ignore invalid warning (GCC bug 53119)
 #  -D_DEFAULT_SOURCE    use with -std=c99 on Linux and PLATFORM_WEB, required for timespec
-CFLAGS += -Wall -std=c99 -D_DEFAULT_SOURCE -Wno-missing-braces -Wunused-result
+CFLAGS = -Wall -std=c99 -D_DEFAULT_SOURCE -Wno-missing-braces -Wunused-result
 
 ifeq ($(BUILD_MODE),DEBUG)
-    CFLAGS += -g
+    CFLAGS += -g -D_DEBUG
     ifeq ($(PLATFORM),PLATFORM_WEB)
         CFLAGS += -s ASSERTIONS=1 --profiling
     endif
@@ -243,9 +252,9 @@ INCLUDE_PATHS = -I. -I$(RAYLIB_PATH)/src -I$(RAYLIB_PATH)/src/external -I$(RAYLI
 # Define additional directories containing required header files
 ifeq ($(PLATFORM),PLATFORM_RPI)
     # RPI required libraries
-    INCLUDE_PATHS += -I/opt/vc/include
-    INCLUDE_PATHS += -I/opt/vc/include/interface/vmcs_host/linux
-    INCLUDE_PATHS += -I/opt/vc/include/interface/vcos/pthreads
+    INCLUDE_PATHS += -I$(RPI_TOOLCHAIN_SYSROOT)/opt/vc/include
+    INCLUDE_PATHS += -I$(RPI_TOOLCHAIN_SYSROOT)/opt/vc/include/interface/vmcs_host/linux
+    INCLUDE_PATHS += -I$(RPI_TOOLCHAIN_SYSROOT)/opt/vc/include/interface/vcos/pthreads
 endif
 ifeq ($(PLATFORM),PLATFORM_DRM)
     # DRM required libraries
@@ -275,12 +284,12 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
     endif
     ifeq ($(PLATFORM_OS),BSD)
         # Consider -L$(RAYLIB_INSTALL_PATH)
-        LDFLAGS += -L. -Lsrc -L/usr/local/lib
+        LDFLAGS += -Lsrc -L/usr/local/lib
     endif
     ifeq ($(PLATFORM_OS),LINUX)
         # Reset everything.
         # Precedence: immediately local, installed version, raysan5 provided libs
-        LDFLAGS = -L. -L$(RAYLIB_INSTALL_PATH) -L$(RAYLIB_RELEASE_PATH) -L$(RAYLIB_PATH)
+        LDFLAGS += -L$(RAYLIB_INSTALL_PATH)
     endif
 endif
 ifeq ($(PLATFORM),PLATFORM_WEB)
@@ -310,7 +319,7 @@ ifeq ($(PLATFORM),PLATFORM_WEB)
     EXT = .html
 endif
 ifeq ($(PLATFORM),PLATFORM_RPI)
-    LDFLAGS += -L/opt/vc/lib
+    LDFLAGS += -L$(RPI_TOOLCHAIN_SYSROOT)/opt/vc/lib
 endif
 
 # Define any libraries required on linking
@@ -364,6 +373,9 @@ ifeq ($(PLATFORM),PLATFORM_RPI)
     # Libraries for Raspberry Pi compiling
     # NOTE: Required packages: libasound2-dev (ALSA)
     LDLIBS = -lraylib -lbrcmGLESv2 -lbrcmEGL -lpthread -lrt -lm -lbcm_host -ldl
+    ifeq ($(USE_RPI_CROSS_COMPILER),TRUE)
+        LDLIBS += -lvchiq_arm -lvcos
+    endif
 endif
 ifeq ($(PLATFORM),PLATFORM_DRM)
     # Libraries for DRM compiling

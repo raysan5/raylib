@@ -4,6 +4,9 @@
 *
 *   CONFIGURATION:
 *
+*   #define SUPPORT_MODULE_RTEXT
+*       rtext module is included in the build
+*
 *   #define SUPPORT_FILEFORMAT_FNT
 *   #define SUPPORT_FILEFORMAT_TTF
 *       Selected desired fileformats to be supported for loading. Some of those formats are
@@ -52,6 +55,8 @@
 #if !defined(EXTERNAL_CONFIG_FLAGS)
     #include "config.h"     // Defines module configuration flags
 #endif
+
+#if defined(SUPPORT_MODULE_RTEXT)
 
 #include "utils.h"          // Required for: LoadFileText()
 #include "rlgl.h"           // OpenGL abstraction layer to OpenGL 1.1, 2.1, 3.3+ or ES2 -> Only DrawTextPro()
@@ -311,7 +316,7 @@ Font LoadFont(const char *fileName)
     Font font = { 0 };
 
 #if defined(SUPPORT_FILEFORMAT_TTF)
-    if (IsFileExtension(fileName, ".ttf;.otf")) font = LoadFontEx(fileName, FONT_TTF_DEFAULT_SIZE, NULL, FONT_TTF_DEFAULT_NUMCHARS);
+    if (IsFileExtension(fileName, ".ttf") || IsFileExtension(fileName, ".otf")) font = LoadFontEx(fileName, FONT_TTF_DEFAULT_SIZE, NULL, FONT_TTF_DEFAULT_NUMCHARS);
     else
 #endif
 #if defined(SUPPORT_FILEFORMAT_FNT)
@@ -917,8 +922,8 @@ void DrawTextCodepoint(Font font, int codepoint, Vector2 position, float fontSiz
 
     // Character destination rectangle on screen
     // NOTE: We consider glyphPadding on drawing
-    Rectangle dstRec = { position.x + font.glyphs[index].offsetX*scaleFactor - (float)font.glyphPadding*scaleFactor,
-                      position.y + font.glyphs[index].offsetY*scaleFactor - (float)font.glyphPadding*scaleFactor,
+    Rectangle dstRec = { (int)position.x + font.glyphs[index].offsetX*scaleFactor - (float)font.glyphPadding*scaleFactor,
+                      (int)position.y + font.glyphs[index].offsetY*scaleFactor - (float)font.glyphPadding*scaleFactor,
                       (font.recs[index].width + 2.0f*font.glyphPadding)*scaleFactor,
                       (font.recs[index].height + 2.0f*font.glyphPadding)*scaleFactor };
 
@@ -1593,7 +1598,7 @@ int GetCodepoint(const char *text, int *bytesProcessed)
         if (((octet == 0xe0) && !((octet1 >= 0xa0) && (octet1 <= 0xbf))) ||
             ((octet == 0xed) && !((octet1 >= 0x80) && (octet1 <= 0x9f)))) { *bytesProcessed = 2; return code; }
 
-        if ((octet >= 0xe0) && (0 <= 0xef))
+        if ((octet >= 0xe0) && (octet <= 0xef))
         {
             code = ((octet & 0xf) << 12) | ((octet1 & 0x3f) << 6) | (octet2 & 0x3f);
             *bytesProcessed = 3;
@@ -1795,3 +1800,5 @@ static Font LoadBMFont(const char *fileName)
     return font;
 }
 #endif
+
+#endif      // SUPPORT_MODULE_RTEXT
