@@ -1575,6 +1575,16 @@ void SetWindowSize(int width, int height)
 #endif
 }
 
+// Set window opacity, value opacity is between 0.0 and 1.0
+void SetWindowOpacity(float opacity)
+{
+#if defined(PLATFORM_DESKTOP)
+    if (opacity >= 1.0f) opacity = 1.0f;
+    else if (opacity <= 0.0f) opacity = 0.0f;
+    glfwSetWindowOpacity(CORE.Window.handle, opacity);
+#endif
+}
+
 // Get current screen width
 int GetScreenWidth(void)
 {
