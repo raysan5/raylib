@@ -5538,7 +5538,7 @@ static EM_BOOL EmscriptenFullscreenChangeCallback(int eventType, const Emscripte
 }
 
 // Register window resize event
-static EM_BOOL EmscriptenWindowResizedCallback(int eventType, const void *reserved, void *userData)
+static EM_BOOL EmscriptenWindowResizedCallback(int eventType, const EmscriptenUiEvent *event, void *userData)
 {
     // TODO.
 
