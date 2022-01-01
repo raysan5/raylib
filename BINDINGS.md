@@ -30,7 +30,7 @@ Some people ported raylib to other languages in form of bindings or wrappers to 
 | raylib-php         | 3.5     | [PHP](https://en.wikipedia.org/wiki/PHP) | Zlib | https://github.com/joseph-montanez/raylib-php   |
 | raylib-phpcpp      | 3.5     | [PHP](https://en.wikipedia.org/wiki/PHP) | Zlib | https://github.com/oraoto/raylib-phpcpp         |
 | raylib-factor      | 3.5     | [Factor](https://factorcode.org/)        | MIT  | https://github.com/ArnautDaniel/raylib-factor   |
-| gforth-raylib      | 3.5     | [Gforth](https://gforth.org/)            | ?    | https://github.com/ArnautDaniel/gforth-raylib   |
+| gforth-raylib      | 3.5     | [Gforth](https://gforth.org/)            | MIT  | https://github.com/ArnautDaniel/gforth-raylib   |
 | hxRaylib           | 4.0     | [Haxe](https://haxe.org/)                | Zlib | https://github.com/ForeignSasquatch/hxRaylib    |
 | raylib-wren        | **4.0** | [Wren](http://wren.io/)              | ISC | https://github.com/TSnake41/raylib-wren              |
 | raylib_odin_bindings | 4.0-dev | [Odin](https://odin-lang.org/)     | MIT | https://github.com/Deathbat2190/raylib_odin_bindings |
