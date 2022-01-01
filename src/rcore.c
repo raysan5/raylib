@@ -3671,10 +3671,10 @@ float GetMouseWheelMove(void)
     return 0.0f;
 #endif
 #if defined(PLATFORM_WEB)
-    return CORE.Input.Mouse.previousWheelMove/100.0f;
+    return CORE.Input.Mouse.currentWheelMove/100.0f;
 #endif
 
-    return CORE.Input.Mouse.previousWheelMove;
+    return CORE.Input.Mouse.currentWheelMove;
 }
 
 // Set mouse cursor
