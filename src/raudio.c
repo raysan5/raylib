@@ -985,6 +985,9 @@ bool ExportWaveAsCode(Wave wave, const char *fileName)
     success = SaveFileText(fileName, txtData);
 
     RL_FREE(txtData);
+    
+    if (success != 0) TRACELOG(LOG_INFO, "FILEIO: [%s] Wave as code exported successfully", fileName);
+    else TRACELOG(LOG_WARNING, "FILEIO: [%s] Failed to export wave as code", fileName);
 
     return success;
 }

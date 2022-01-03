@@ -592,8 +592,8 @@ bool ExportImageAsCode(Image image, const char *fileName)
 
 #endif      // SUPPORT_IMAGE_EXPORT
 
-    if (success != 0) TRACELOG(LOG_INFO, "FILEIO: [%s] Image exported successfully", fileName);
-    else TRACELOG(LOG_WARNING, "FILEIO: [%s] Failed to export image", fileName);
+    if (success != 0) TRACELOG(LOG_INFO, "FILEIO: [%s] Image as code exported successfully", fileName);
+    else TRACELOG(LOG_WARNING, "FILEIO: [%s] Failed to export image as code", fileName);
 
     return success;
 }
