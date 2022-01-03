@@ -4507,6 +4507,16 @@ static bool InitGraphicsDevice(int width, int height)
     rlLoadExtensions(eglGetProcAddress);
 #endif
 
+#if defined(PLATFORM_DESKTOP)
+    // Check if gamepads are ready
+    // NOTE: We register gamepads here to make sure that ready state of the gamepads represents the glfw state before the first call to EndDrawing()
+    for (int i = 0; i < MAX_GAMEPADS; i++)
+    {
+        if (glfwJoystickPresent(i)) CORE.Input.Gamepad.ready[i] = true;
+        else CORE.Input.Gamepad.ready[i] = false;
+    }
+#endif
+
     // Initialize OpenGL context (states and resources)
     // NOTE: CORE.Window.currentFbo.width and CORE.Window.currentFbo.height not used, just stored as globals in rlgl
     rlglInit(CORE.Window.currentFbo.width, CORE.Window.currentFbo.height);
