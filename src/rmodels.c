@@ -57,6 +57,7 @@
 #include <stdlib.h>         // Required for: malloc(), free()
 #include <string.h>         // Required for: memcmp(), strlen()
 #include <math.h>           // Required for: sinf(), cosf(), sqrtf(), fabsf()
+#include <simd.h>
 
 #if defined(SUPPORT_FILEFORMAT_OBJ) || defined(SUPPORT_FILEFORMAT_MTL)
     #define TINYOBJ_MALLOC RL_MALLOC
@@ -1372,7 +1373,7 @@ void DrawMesh(Mesh mesh, Material material, Matrix transform)
         rlSetUniformMatrix(material.shader.locs[SHADER_LOC_MATRIX_MVP], matModelViewProjection);
 
         // Draw mesh
-        if (mesh.indices != NULL) rlDrawVertexArrayElements(0, mesh.triangleCount*3, 0);
+        if (mesh.indices != NULL) rlDrawVertexArrayElements(0, mesh.triangleCount*3, mesh.indices);
         else rlDrawVertexArray(0, mesh.vertexCount);
     }
 
@@ -1402,6 +1403,257 @@ void DrawMesh(Mesh mesh, Material material, Matrix transform)
     rlSetMatrixProjection(matProjection);
 #endif
 }
+
+
+// Draw a 3d mesh with material and transform in simd
+void DrawMesh_simd(Mesh mesh, Material material, Matrix transform)
+{
+#if defined(GRAPHICS_API_OPENGL_11)
+    #define GL_VERTEX_ARRAY         0x8074
+    #define GL_NORMAL_ARRAY         0x8075
+    #define GL_COLOR_ARRAY          0x8076
+    #define GL_TEXTURE_COORD_ARRAY  0x8078
+
+    rlEnableTexture(material.maps[MATERIAL_MAP_DIFFUSE].texture.id);
+
+    rlEnableStatePointer(GL_VERTEX_ARRAY, mesh.vertices);
+    rlEnableStatePointer(GL_TEXTURE_COORD_ARRAY, mesh.texcoords);
+    rlEnableStatePointer(GL_NORMAL_ARRAY, mesh.normals);
+    rlEnableStatePointer(GL_COLOR_ARRAY, mesh.colors);
+
+    rlPushMatrix();
+        rlMultMatrixf(MatrixToFloat(transform));
+        rlColor4ub(material.maps[MATERIAL_MAP_DIFFUSE].color.r,
+                   material.maps[MATERIAL_MAP_DIFFUSE].color.g,
+                   material.maps[MATERIAL_MAP_DIFFUSE].color.b,
+                   material.maps[MATERIAL_MAP_DIFFUSE].color.a);
+
+        if (mesh.indices != NULL) rlDrawVertexArrayElements(0, mesh.triangleCount*3, mesh.indices);
+        else rlDrawVertexArray(0, mesh.vertexCount);
+    rlPopMatrix();
+
+    rlDisableStatePointer(GL_VERTEX_ARRAY);
+    rlDisableStatePointer(GL_TEXTURE_COORD_ARRAY);
+    rlDisableStatePointer(GL_NORMAL_ARRAY);
+    rlDisableStatePointer(GL_COLOR_ARRAY);
+
+    rlDisableTexture();
+#endif
+
+#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
+    // Bind shader program
+    rlEnableShader(material.shader.id);
+
+    // Send required data to shader (matrices, values)
+    //-----------------------------------------------------
+    // Upload to shader material.colDiffuse
+    if (material.shader.locs[SHADER_LOC_COLOR_DIFFUSE] != -1)
+    {
+        __simd_f values = {
+            material.maps[MATERIAL_MAP_DIFFUSE].color.r,///255.0f,
+            material.maps[MATERIAL_MAP_DIFFUSE].color.g,///255.0f,
+            material.maps[MATERIAL_MAP_DIFFUSE].color.b,///255.0f,
+            material.maps[MATERIAL_MAP_DIFFUSE].color.a///255.0f
+        };
+
+			__simd_f divide_by = __simd_f_set_ps1(255.0f);
+
+			values = values / divide_by;
+
+
+        float values_float[4] = {
+            ((float*)&values)[0],///255.0f,
+            ((float*)&values)[1],///255.0f,
+            ((float*)&values)[2],///255.0f,
+            ((float*)&values)[3]///255.0f
+        };
+
+
+        rlSetUniform(material.shader.locs[SHADER_LOC_COLOR_DIFFUSE], values_float, SHADER_UNIFORM_VEC4, 1);
+    }
+
+    // Upload to shader material.colSpecular (if location available)
+    if (material.shader.locs[SHADER_LOC_COLOR_SPECULAR] != -1)
+    {
+        __simd_f values = {
+            material.maps[MATERIAL_MAP_DIFFUSE].color.r,///255.0f,
+            material.maps[MATERIAL_MAP_DIFFUSE].color.g,///255.0f,
+            material.maps[MATERIAL_MAP_DIFFUSE].color.b,///255.0f,
+            material.maps[MATERIAL_MAP_DIFFUSE].color.a///255.0f
+        };
+
+			__simd_f divide_by = __simd_f_set_ps1(255.0f);
+
+			values = values / divide_by;
+
+
+        float values_float[4] = {
+            ((float*)&values)[0],///255.0f,
+            ((float*)&values)[1],///255.0f,
+            ((float*)&values)[2],///255.0f,
+            ((float*)&values)[3]///255.0f
+        };
+
+        rlSetUniform(material.shader.locs[SHADER_LOC_COLOR_SPECULAR], values_float, SHADER_UNIFORM_VEC4, 1);
+    }
+
+    // Get a copy of current matrices to work with,
+    // just in case stereo render is required and we need to modify them
+    // NOTE: At this point the modelview matrix just contains the view matrix (camera)
+    // That's because BeginMode3D() sets it and there is no model-drawing function
+    // that modifies it, all use rlPushMatrix() and rlPopMatrix()
+    Matrix matModel = MatrixIdentity();
+    Matrix matView = rlGetMatrixModelview();
+    Matrix matModelView = MatrixIdentity();
+    Matrix matProjection = rlGetMatrixProjection();
+
+    // Upload view and projection matrices (if locations available)
+    if (material.shader.locs[SHADER_LOC_MATRIX_VIEW] != -1) rlSetUniformMatrix(material.shader.locs[SHADER_LOC_MATRIX_VIEW], matView);
+    if (material.shader.locs[SHADER_LOC_MATRIX_PROJECTION] != -1) rlSetUniformMatrix(material.shader.locs[SHADER_LOC_MATRIX_PROJECTION], matProjection);
+
+    // Model transformation matrix is send to shader uniform location: SHADER_LOC_MATRIX_MODEL
+    if (material.shader.locs[SHADER_LOC_MATRIX_MODEL] != -1) rlSetUniformMatrix(material.shader.locs[SHADER_LOC_MATRIX_MODEL], transform);
+
+    // Accumulate several model transformations:
+    //    transform: model transformation provided (includes DrawModel() params combined with model.transform)
+    //    rlGetMatrixTransform(): rlgl internal transform matrix due to push/pop matrix stack
+    matModel = MatrixMultiply(transform, rlGetMatrixTransform());
+
+    // Get model-view matrix
+    matModelView = MatrixMultiply(matModel, matView);
+
+    // Upload model normal matrix (if locations available)
+    if (material.shader.locs[SHADER_LOC_MATRIX_NORMAL] != -1) rlSetUniformMatrix(material.shader.locs[SHADER_LOC_MATRIX_NORMAL], MatrixTranspose(MatrixInvert(matModel)));
+    //-----------------------------------------------------
+
+    // Bind active texture maps (if available)
+    for (int i = 0; i < MAX_MATERIAL_MAPS; i++)
+    {
+        if (material.maps[i].texture.id > 0)
+        {
+            // Select current shader texture slot
+            rlActiveTextureSlot(i);
+
+            // Enable texture for active slot
+            if ((i == MATERIAL_MAP_IRRADIANCE) ||
+                (i == MATERIAL_MAP_PREFILTER) ||
+                (i == MATERIAL_MAP_CUBEMAP)) rlEnableTextureCubemap(material.maps[i].texture.id);
+            else rlEnableTexture(material.maps[i].texture.id);
+
+            rlSetUniform(material.shader.locs[SHADER_LOC_MAP_DIFFUSE + i], &i, SHADER_UNIFORM_INT, 1);
+        }
+    }
+
+    // Try binding vertex array objects (VAO)
+    // or use VBOs if not possible
+    if (!rlEnableVertexArray(mesh.vaoId))
+    {
+        // Bind mesh VBO data: vertex position (shader-location = 0)
+        rlEnableVertexBuffer(mesh.vboId[0]);
+        rlSetVertexAttribute(material.shader.locs[SHADER_LOC_VERTEX_POSITION], 3, RL_FLOAT, 0, 0, 0);
+        rlEnableVertexAttribute(material.shader.locs[SHADER_LOC_VERTEX_POSITION]);
+
+        // Bind mesh VBO data: vertex texcoords (shader-location = 1)
+        rlEnableVertexBuffer(mesh.vboId[1]);
+        rlSetVertexAttribute(material.shader.locs[SHADER_LOC_VERTEX_TEXCOORD01], 2, RL_FLOAT, 0, 0, 0);
+        rlEnableVertexAttribute(material.shader.locs[SHADER_LOC_VERTEX_TEXCOORD01]);
+
+        if (material.shader.locs[SHADER_LOC_VERTEX_NORMAL] != -1)
+        {
+            // Bind mesh VBO data: vertex normals (shader-location = 2)
+            rlEnableVertexBuffer(mesh.vboId[2]);
+            rlSetVertexAttribute(material.shader.locs[SHADER_LOC_VERTEX_NORMAL], 3, RL_FLOAT, 0, 0, 0);
+            rlEnableVertexAttribute(material.shader.locs[SHADER_LOC_VERTEX_NORMAL]);
+        }
+
+        // Bind mesh VBO data: vertex colors (shader-location = 3, if available)
+        if (material.shader.locs[SHADER_LOC_VERTEX_COLOR] != -1)
+        {
+            if (mesh.vboId[3] != 0)
+            {
+                rlEnableVertexBuffer(mesh.vboId[3]);
+                rlSetVertexAttribute(material.shader.locs[SHADER_LOC_VERTEX_COLOR], 4, RL_UNSIGNED_BYTE, 1, 0, 0);
+                rlEnableVertexAttribute(material.shader.locs[SHADER_LOC_VERTEX_COLOR]);
+            }
+            else
+            {
+                // Set default value for unused attribute
+                // NOTE: Required when using default shader and no VAO support
+                float value[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
+                rlSetVertexAttributeDefault(material.shader.locs[SHADER_LOC_VERTEX_COLOR], value, SHADER_ATTRIB_VEC2, 4);
+                rlDisableVertexAttribute(material.shader.locs[SHADER_LOC_VERTEX_COLOR]);
+            }
+        }
+
+        // Bind mesh VBO data: vertex tangents (shader-location = 4, if available)
+        if (material.shader.locs[SHADER_LOC_VERTEX_TANGENT] != -1)
+        {
+            rlEnableVertexBuffer(mesh.vboId[4]);
+            rlSetVertexAttribute(material.shader.locs[SHADER_LOC_VERTEX_TANGENT], 4, RL_FLOAT, 0, 0, 0);
+            rlEnableVertexAttribute(material.shader.locs[SHADER_LOC_VERTEX_TANGENT]);
+        }
+
+        // Bind mesh VBO data: vertex texcoords2 (shader-location = 5, if available)
+        if (material.shader.locs[SHADER_LOC_VERTEX_TEXCOORD02] != -1)
+        {
+            rlEnableVertexBuffer(mesh.vboId[5]);
+            rlSetVertexAttribute(material.shader.locs[SHADER_LOC_VERTEX_TEXCOORD02], 2, RL_FLOAT, 0, 0, 0);
+            rlEnableVertexAttribute(material.shader.locs[SHADER_LOC_VERTEX_TEXCOORD02]);
+        }
+
+        if (mesh.indices != NULL) rlEnableVertexBufferElement(mesh.vboId[6]);
+    }
+
+    int eyeCount = 1;
+    if (rlIsStereoRenderEnabled()) eyeCount = 2;
+
+    for (int eye = 0; eye < eyeCount; eye++)
+    {
+        // Calculate model-view-projection matrix (MVP)
+        Matrix matModelViewProjection = MatrixIdentity();
+        if (eyeCount == 1) matModelViewProjection = MatrixMultiply(matModelView, matProjection);
+        else
+        {
+            // Setup current eye viewport (half screen width)
+            rlViewport(eye*rlGetFramebufferWidth()/2, 0, rlGetFramebufferWidth()/2, rlGetFramebufferHeight());
+            matModelViewProjection = MatrixMultiply(MatrixMultiply(matModelView, rlGetMatrixViewOffsetStereo(eye)), rlGetMatrixProjectionStereo(eye));
+        }
+
+        // Send combined model-view-projection matrix to shader
+        rlSetUniformMatrix(material.shader.locs[SHADER_LOC_MATRIX_MVP], matModelViewProjection);
+
+        // Draw mesh
+        if (mesh.indices != NULL) rlDrawVertexArrayElements(0, mesh.triangleCount*3, mesh.indices);
+        else rlDrawVertexArray(0, mesh.vertexCount);
+    }
+
+    // Unbind all binded texture maps
+    for (int i = 0; i < MAX_MATERIAL_MAPS; i++)
+    {
+        // Select current shader texture slot
+        rlActiveTextureSlot(i);
+
+        // Disable texture for active slot
+        if ((i == MATERIAL_MAP_IRRADIANCE) ||
+            (i == MATERIAL_MAP_PREFILTER) ||
+            (i == MATERIAL_MAP_CUBEMAP)) rlDisableTextureCubemap();
+        else rlDisableTexture();
+    }
+
+    // Disable all possible vertex array objects (or VBOs)
+    rlDisableVertexArray();
+    rlDisableVertexBuffer();
+    rlDisableVertexBufferElement();
+
+    // Disable shader program
+    rlDisableShader();
+
+    // Restore rlgl internal modelview and projection matrices
+    rlSetMatrixModelview(matView);
+    rlSetMatrixProjection(matProjection);
+#endif
+}
+
 
 // Draw multiple mesh instances with material and different transforms
 void DrawMeshInstanced(Mesh mesh, Material material, Matrix *transforms, int instances)
@@ -3294,6 +3546,117 @@ void DrawModelEx(Model model, Vector3 position, Vector3 rotationAxis, float rota
         model.materials[model.meshMaterial[i]].maps[MATERIAL_MAP_DIFFUSE].color = color;
     }
 }
+
+
+
+// Draw a model with extended parameters using sse and sse2 simd instruction set
+void DrawModelEx_simd(Model model[], Vector3_simd position, Vector3_simd rotationAxis, __simd_f rotationAngle, Vector3_simd scale, Color_float_simd tint)
+{
+    // Calculate transformation matrix from function parameters
+    // Get transform matrix (rotation -> scale -> translation)
+
+
+
+    Matrix_simd matScale = MatrixScale_simd(scale.x, scale.y, scale.z);
+    Matrix_simd matRotation = MatrixRotate_simd(rotationAxis, __simd_f_mul_ps(rotationAngle, __simd_f_set_ps1(DEG2RAD)));
+    Matrix_simd matTranslation = MatrixTranslate_simd(position.x, position.y, position.z);
+
+    Matrix_simd matTransform = MatrixMultiply_simd(MatrixMultiply_simd(matScale, matRotation), matTranslation);
+
+    // Combine model transformation matrix (model.transform) with matrix generated by function parameters (matTransform)
+		Matrix model_transform[__simd_32_size] = {0};
+
+		for(unsigned int i=0; i< __simd_32_size; i++){
+			model_transform[i] = model[i].transform;
+		}
+
+		Matrix_simd model_transform_simd = Matrix_to_Matrix_simd(model_transform);
+
+		model_transform_simd = MatrixMultiply_simd(model_transform_simd, matTransform);
+
+		Matrix *model_transform_ptr = Matrix_simd_to_Matrix(model_transform_simd);
+
+		for(unsigned int i=0; i<__simd_32_size; i++)
+			model[i].transform = model_transform_ptr[i];
+
+
+		Color color_arr[__simd_32_size] = {0};
+
+
+		Color_float_simd colorTint = {WHITE.r, WHITE.g, WHITE.b, WHITE.a};
+
+		for(unsigned int i=0; i < __simd_32_size; i++){
+
+			unsigned int j_max = floorf((float)model[i].meshCount/(float)__simd_32_size);
+  	  for (unsigned int j = 0; j < j_max; j++)
+    	{
+
+				for(unsigned int a=0; a < __simd_32_size; a++){
+					color_arr[a] = model[i].materials[model[i].
+												 meshMaterial[j*__simd_32_size+a]].maps[MATERIAL_MAP_DIFFUSE].color;
+
+				}
+
+        Color_float_simd color_simd = Color_to_Color_float_simd(color_arr);
+
+
+        colorTint.r = (((color_simd.r/255.0)*(tint.r/255.0))*255.0f);
+        colorTint.g = (((color_simd.g/255.0)*(tint.g/255.0))*255.0f);
+        colorTint.b = (((color_simd.b/255.0)*(tint.b/255.0))*255.0f);
+        colorTint.a = (((color_simd.a/255.0)*(tint.a/255.0))*255.0f);
+
+				Color * color_tint= Color_float_simd_to_Color(colorTint);
+
+				for(unsigned int a=0; a<__simd_32_size; a++){
+        model[i].materials[model[i].meshMaterial[j*__simd_32_size+a]].
+					maps[MATERIAL_MAP_DIFFUSE].color = color_tint[a];
+        DrawMesh_simd(model[i].meshes[j*__simd_32_size+a], model[i].
+								 materials[model[i].meshMaterial[j*__simd_32_size+a]], model[i].transform);
+        model[i].materials[model[i].meshMaterial[j*__simd_32_size+a]].
+					maps[MATERIAL_MAP_DIFFUSE].color = color_arr[a];
+				}
+
+    }
+
+
+				unsigned int j = {0};
+				j = j_max * __simd_32_size;
+
+				unsigned int j_max_2 = {0};
+				j_max_2 = model[i].meshCount;
+
+			if(j_max_2 - j){
+
+				for(unsigned int a=0; a < (j_max_2 - j); a++){
+					color_arr[a] = model[i].materials[model[i].
+												 meshMaterial[j+a]].maps[MATERIAL_MAP_DIFFUSE].color;
+
+				}
+
+        Color_float_simd color_simd = Color_to_Color_float_simd(color_arr);
+
+        colorTint.r = (((color_simd.r/255.0)*(tint.r/255.0))*255.0f);
+        colorTint.g = (((color_simd.g/255.0)*(tint.g/255.0))*255.0f);
+        colorTint.b = (((color_simd.b/255.0)*(tint.b/255.0))*255.0f);
+        colorTint.a = (((color_simd.a/255.0)*(tint.a/255.0))*255.0f);
+
+				Color * color_tint= Color_float_simd_to_Color(colorTint);
+
+				for(unsigned int a=0; a < (j_max_2-j); a++){
+        model[i].materials[model[i].meshMaterial[j+a]].
+					maps[MATERIAL_MAP_DIFFUSE].color = color_tint[a];
+        DrawMesh_simd(model[i].meshes[j+a], model[i].
+								 materials[model[i].meshMaterial[j+a]], model[i].transform);
+        model[i].materials[model[i].meshMaterial[j+a]].
+					maps[MATERIAL_MAP_DIFFUSE].color = color_arr[a];
+				}
+			}
+
+
+		}
+}
+
+
 
 // Draw a model wires (with texture if set)
 void DrawModelWires(Model model, Vector3 position, float scale, Color tint)

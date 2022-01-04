@@ -47,6 +47,9 @@
 #ifndef RAYMATH_H
 #define RAYMATH_H
 
+
+
+
 #if defined(RAYMATH_IMPLEMENTATION) && defined(RAYMATH_STATIC_INLINE)
     #error "Specifying both RAYMATH_IMPLEMENTATION and RAYMATH_STATIC_INLINE is contradictory"
 #endif
@@ -154,7 +157,19 @@ typedef struct float16 {
     float v[16];
 } float16;
 
+
+
+//color structs
+#if !defined(RL_COLOR_TYPE)
+typedef struct Color {
+  unsigned char r, g, b, a;
+}Color;
+#define RL_COLOR_TYPE
+#endif
+
+
 #include <math.h>       // Required for: sinf(), cosf(), tan(), atan2f(), sqrtf(), fminf(), fmaxf(), fabs()
+#include <simd.h>
 
 //----------------------------------------------------------------------------------
 // Module Functions Definition - Utils math
@@ -1846,5 +1861,308 @@ RMAPI Quaternion QuaternionTransform(Quaternion q, Matrix mat)
 
     return result;
 }
+
+
+//simd math functions
+
+
+RMAPI Color_float_simd Color_to_Color_float_simd(Color color[]){
+
+  Color_float_simd result = {0};
+
+  for(unsigned int i=0; i < __simd_32_size; i++){
+    ((float*)&result.r)[i] = color[i].r;
+    ((float*)&result.g)[i] = color[i].g;
+    ((float*)&result.b)[i] = color[i].b;
+    ((float*)&result.a)[i] = color[i].a;
+  }
+
+  return result;
+}
+
+RMAPI Color *Color_float_simd_to_Color(Color_float_simd color_simd){
+
+  Color *result = malloc(sizeof(Color) * __simd_32_size);
+
+  for(unsigned int i=0; i < __simd_32_size; i++){
+
+    result[i].r = ((float*)&color_simd.r)[i];
+    result[i].g = ((float*)&color_simd.g)[i];
+    result[i].b = ((float*)&color_simd.b)[i];
+    result[i].a = ((float*)&color_simd.a)[i];
+
+  }
+
+  return result;
+}
+
+
+RMAPI Matrix_simd Matrix_to_Matrix_simd(Matrix matrix[]){
+
+  Matrix_simd result = {0};
+
+  for(unsigned int i=0; i < __simd_32_size; i++){
+
+    ((float*)&result.m0)[i] = matrix[i].m0;
+    ((float*)&result.m1)[i] = matrix[i].m1;
+    ((float*)&result.m2)[i] = matrix[i].m2;
+    ((float*)&result.m3)[i] = matrix[i].m3;
+    ((float*)&result.m4)[i] = matrix[i].m4;
+    ((float*)&result.m5)[i] = matrix[i].m5;
+    ((float*)&result.m6)[i] = matrix[i].m6;
+    ((float*)&result.m7)[i] = matrix[i].m7;
+    ((float*)&result.m8)[i] = matrix[i].m8;
+    ((float*)&result.m9)[i] = matrix[i].m9;
+    ((float*)&result.m10)[i] = matrix[i].m10;
+    ((float*)&result.m11)[i] = matrix[i].m11;
+    ((float*)&result.m12)[i] = matrix[i].m12;
+    ((float*)&result.m13)[i] = matrix[i].m13;
+    ((float*)&result.m14)[i] = matrix[i].m14;
+    ((float*)&result.m15)[i] = matrix[i].m15;
+
+  }
+
+  return result;
+
+}
+
+RMAPI Matrix *Matrix_simd_to_Matrix(Matrix_simd matrix_simd){
+
+  Matrix *result = malloc(sizeof(Matrix) * __simd_32_size);
+
+  for(unsigned int i=0; i < __simd_32_size; i++){
+
+    result[i].m0 = ((float*)&matrix_simd.m0)[i];
+    result[i].m1 = ((float*)&matrix_simd.m1)[i];
+    result[i].m2 = ((float*)&matrix_simd.m2)[i];
+    result[i].m3 = ((float*)&matrix_simd.m3)[i];
+    result[i].m4 = ((float*)&matrix_simd.m4)[i];
+    result[i].m5 = ((float*)&matrix_simd.m5)[i];
+    result[i].m6 = ((float*)&matrix_simd.m6)[i];
+    result[i].m7 = ((float*)&matrix_simd.m7)[i];
+    result[i].m8 = ((float*)&matrix_simd.m8)[i];
+    result[i].m9 = ((float*)&matrix_simd.m9)[i];
+    result[i].m10 = ((float*)&matrix_simd.m10)[i];
+    result[i].m11 = ((float*)&matrix_simd.m11)[i];
+    result[i].m12 = ((float*)&matrix_simd.m12)[i];
+    result[i].m13 = ((float*)&matrix_simd.m13)[i];
+    result[i].m14 = ((float*)&matrix_simd.m14)[i];
+    result[i].m15 = ((float*)&matrix_simd.m15)[i];
+
+  }
+
+  return result;
+
+}
+
+
+
+RMAPI Matrix_simd MatrixTranslate_simd(__simd_f x, __simd_f y, __simd_f z)
+{
+	Matrix_simd result = { __simd_f_set_ps1(1.0f), __simd_f_set_ps1(0.0f), __simd_f_set_ps1(0.0f), x,
+			       __simd_f_set_ps1(0.0f), __simd_f_set_ps1(1.0f), __simd_f_set_ps1(0.0f), y,
+			       __simd_f_set_ps1(0.0f), __simd_f_set_ps1(0.0f), __simd_f_set_ps1(1.0f), z,
+			       __simd_f_set_ps1(0.0f), __simd_f_set_ps1(0.0f), __simd_f_set_ps1(0.0f), __simd_f_set_ps1(1.0f) };
+
+	return result;
+}
+
+
+
+
+RMAPI Matrix_simd MatrixScale_simd(__simd_f x, __simd_f y, __simd_f z)
+{
+
+
+
+	Matrix_simd result = { x,		       __simd_f_set_ps1(0.0f), __simd_f_set_ps1(0.0f), __simd_f_set_ps1(0.0f),
+			       __simd_f_set_ps1(0.0f), y,		       __simd_f_set_ps1(0.0f), __simd_f_set_ps1(0.0f),
+			       __simd_f_set_ps1(0.0f), __simd_f_set_ps1(0.0f), z,		       __simd_f_set_ps1(0.0f),
+			       __simd_f_set_ps1(0.0f), __simd_f_set_ps1(0.0f), __simd_f_set_ps1(0.0f), __simd_f_set_ps1(1.0f) };
+
+	/*
+	   Matrix_simd result = {0};
+	   for(unsigned int i=0; i < arr_size; i++){
+	   ((float*)&result.m0)[i] = x[i];
+	   ((float*)&result.m5)[i] = y[i];
+	   ((float*)&result.m10)[i] = z[i];
+	   }
+
+	   result.m1 = __simd_f_set_ps1(0.0f);
+	   result.m2 = __simd_f_set_ps1(0.0f);
+	   result.m3 = __simd_f_set_ps1(0.0f);
+	   result.m4 = __simd_f_set_ps1(0.0f);
+	   result.m6 = __simd_f_set_ps1(0.0f);
+	   result.m7 = __simd_f_set_ps1(0.0f);
+	   result.m8 = __simd_f_set_ps1(0.0f);
+	   result.m9 = __simd_f_set_ps1(0.0f);
+	   result.m11 = __simd_f_set_ps1(0.0f);
+	   result.m12 = __simd_f_set_ps1(0.0f);
+	   result.m13 = __simd_f_set_ps1(0.0f);
+	   result.m14 = __simd_f_set_ps1(0.0f);
+	   result.m15 = __simd_f_set_ps1(1.0f);
+
+	 */
+	return result;
+}
+
+
+RMAPI Matrix_simd MatrixRotate_simd(Vector3_simd axis, __simd_f angle)
+{
+	Matrix_simd result = { 0 };
+
+	__simd_f x = axis.x, y = axis.y, z = axis.z;
+
+	__simd_f lengthSquared = __simd_f_add_ps(__simd_f_add_ps(__simd_f_mul_ps(x, x),
+								 __simd_f_mul_ps(y, y)),
+						 __simd_f_mul_ps(z, z));
+
+	__simd_f if_0 = __simd_f_and_ps(
+		__simd_f_and_ps(
+			__simd_f_cmpare_not_equal_ps(lengthSquared, __simd_f_set_ps1(1.0f)),
+			__simd_f_cmpare_not_equal_ps(lengthSquared, __simd_f_set_ps1(0.0f))),
+		__simd_f_set_ps1(1.0f));
+
+    lengthSquared = lengthSquared * if_0 + 1 * (__simd_f_not_and_ps(if_0, __simd_f_set_ps1(1.0f)));
+		__simd_f ilength = __simd_f_reciprocal_sqrt_ps(lengthSquared)*if_0+
+                       0*(__simd_f_not_and_ps(if_0, __simd_f_set_ps1(1.0f)));
+		x = (__simd_f_mul_ps(x, ilength)*if_0)+x*(__simd_f_not_and_ps(if_0, __simd_f_set_ps1(1.0f)));
+		y = (__simd_f_mul_ps(y, ilength)*if_0)+y*(__simd_f_not_and_ps(if_0, __simd_f_set_ps1(1.0f)));
+		z = (__simd_f_mul_ps(z, ilength)*if_0)+z*(__simd_f_not_and_ps(if_0, __simd_f_set_ps1(1.0f)));
+
+
+	__simd_f sinres = { 0 };
+	__simd_f cosres = { 0 };
+
+	for (unsigned int i = 0; i < __simd_32_size; i++) {
+		((float*)&sinres)[i] = sinf(((float*)&angle)[i]);
+		((float*)&cosres)[i] = cosf(((float*)&angle)[i]);
+	}
+
+	__simd_f t = __simd_f_sub_ps(__simd_f_set_ps1(1.0f), cosres);
+
+
+	/*
+	   result.m0 = x*x*t + cosres;
+	   result.m1 = y*x*t + z*sinres;
+	   result.m2 = z*x*t - y*sinres;
+	   result.m3 = 0.0f;
+
+	   result.m4 = x*y*t - z*sinres;
+	   result.m5 = y*y*t + cosres;
+	   result.m6 = z*y*t + x*sinres;
+	   result.m7 = 0.0f;
+
+	   result.m8 = x*z*t + y*sinres;
+	   result.m9 = y*z*t - x*sinres;
+	   result.m10 = z*z*t + cosres;
+	   result.m11 = 0.0f;
+
+	   result.m12 = 0.0f;
+	   result.m13 = 0.0f;
+	   result.m14 = 0.0f;
+	   result.m15 = 1.0f;
+
+	 */
+
+
+	result.m0 = __simd_f_add_ps(__simd_f_mul_ps(__simd_f_mul_ps(x, x), t), cosres);
+	result.m1 = __simd_f_add_ps(__simd_f_mul_ps(__simd_f_mul_ps(y, x), t), __simd_f_mul_ps(z, sinres));
+	result.m2 = __simd_f_sub_ps(__simd_f_mul_ps(__simd_f_mul_ps(z, x), t), __simd_f_mul_ps(y, sinres));
+	result.m3 = __simd_f_set_ps1(0.0f);
+
+	result.m4 = __simd_f_sub_ps(__simd_f_mul_ps(__simd_f_mul_ps(x, y), t), __simd_f_mul_ps(z, sinres));
+	result.m5 = __simd_f_add_ps(__simd_f_mul_ps(__simd_f_mul_ps(y, y), t), cosres);
+	result.m6 = __simd_f_add_ps(__simd_f_mul_ps(__simd_f_mul_ps(z, y), t), __simd_f_mul_ps(x, sinres));
+	result.m7 = __simd_f_set_ps1(0.0f);
+
+	result.m8 = __simd_f_add_ps(__simd_f_mul_ps(__simd_f_mul_ps(x, z), t), __simd_f_mul_ps(y, sinres));
+	result.m9 = __simd_f_sub_ps(__simd_f_mul_ps(__simd_f_mul_ps(y, z), t), __simd_f_mul_ps(x, sinres));
+	result.m10 = __simd_f_add_ps(__simd_f_mul_ps(__simd_f_mul_ps(z, z), t), cosres);
+	result.m11 = __simd_f_set_ps1(0.0f);
+
+	result.m12 = __simd_f_set_ps1(0.0f);
+	result.m13 = __simd_f_set_ps1(0.0f);
+	result.m14 = __simd_f_set_ps1(0.0f);
+	result.m15 = __simd_f_set_ps1(1.0f);
+
+	return result;
+}
+
+
+
+RMAPI Matrix_simd MatrixMultiply_simd(Matrix_simd left, Matrix_simd right)
+{
+	Matrix_simd result = { 0 };
+
+	result.m0 = __simd_f_add_ps(
+		__simd_f_add_ps(__simd_f_mul_ps(left.m0, right.m0), __simd_f_mul_ps(left.m1, right.m4)),
+		__simd_f_add_ps(__simd_f_mul_ps(left.m2, right.m8), __simd_f_mul_ps(left.m3, right.m12)));
+
+	result.m1 = __simd_f_add_ps(
+		__simd_f_add_ps(__simd_f_mul_ps(left.m0, right.m1), __simd_f_mul_ps(left.m1, right.m5)),
+		__simd_f_add_ps(__simd_f_mul_ps(left.m2, right.m9), __simd_f_mul_ps(left.m3, right.m13)));
+
+	result.m2 = __simd_f_add_ps(
+		__simd_f_add_ps(__simd_f_mul_ps(left.m0, right.m2), __simd_f_mul_ps(left.m1, right.m6)),
+		__simd_f_add_ps(__simd_f_mul_ps(left.m2, right.m10), __simd_f_mul_ps(left.m3, right.m14)));
+
+	result.m3 = __simd_f_add_ps(
+		__simd_f_add_ps(__simd_f_mul_ps(left.m0, right.m3), __simd_f_mul_ps(left.m1, right.m7)),
+		__simd_f_add_ps(__simd_f_mul_ps(left.m2, right.m11), __simd_f_mul_ps(left.m3, right.m15)));
+
+	result.m4 = __simd_f_add_ps(
+		__simd_f_add_ps(__simd_f_mul_ps(left.m4, right.m0), __simd_f_mul_ps(left.m5, right.m4)),
+		__simd_f_add_ps(__simd_f_mul_ps(left.m6, right.m8), __simd_f_mul_ps(left.m7, right.m12)));
+
+	result.m5 = __simd_f_add_ps(
+		__simd_f_add_ps(__simd_f_mul_ps(left.m4, right.m1), __simd_f_mul_ps(left.m5, right.m5)),
+		__simd_f_add_ps(__simd_f_mul_ps(left.m6, right.m9), __simd_f_mul_ps(left.m7, right.m13)));
+
+	result.m6 = __simd_f_add_ps(
+		__simd_f_add_ps(__simd_f_mul_ps(left.m4, right.m2), __simd_f_mul_ps(left.m5, right.m6)),
+		__simd_f_add_ps(__simd_f_mul_ps(left.m6, right.m10), __simd_f_mul_ps(left.m7, right.m14)));
+
+	result.m7 = __simd_f_add_ps(
+		__simd_f_add_ps(__simd_f_mul_ps(left.m4, right.m3), __simd_f_mul_ps(left.m5, right.m7)),
+		__simd_f_add_ps(__simd_f_mul_ps(left.m6, right.m11), __simd_f_mul_ps(left.m7, right.m15)));
+
+	result.m8 = __simd_f_add_ps(
+		__simd_f_add_ps(__simd_f_mul_ps(left.m8, right.m0), __simd_f_mul_ps(left.m9, right.m4)),
+		__simd_f_add_ps(__simd_f_mul_ps(left.m10, right.m8), __simd_f_mul_ps(left.m11, right.m12)));
+
+	result.m9 = __simd_f_add_ps(
+		__simd_f_add_ps(__simd_f_mul_ps(left.m8, right.m1), __simd_f_mul_ps(left.m9, right.m5)),
+		__simd_f_add_ps(__simd_f_mul_ps(left.m10, right.m9), __simd_f_mul_ps(left.m11, right.m13)));
+
+	result.m10 = __simd_f_add_ps(
+		__simd_f_add_ps(__simd_f_mul_ps(left.m8, right.m2), __simd_f_mul_ps(left.m9, right.m6)),
+		__simd_f_add_ps(__simd_f_mul_ps(left.m10, right.m10), __simd_f_mul_ps(left.m11, right.m14)));
+
+	result.m11 = __simd_f_add_ps(
+		__simd_f_add_ps(__simd_f_mul_ps(left.m8, right.m3), __simd_f_mul_ps(left.m9, right.m7)),
+		__simd_f_add_ps(__simd_f_mul_ps(left.m10, right.m11), __simd_f_mul_ps(left.m11, right.m15)));
+
+	result.m12 = __simd_f_add_ps(
+		__simd_f_add_ps(__simd_f_mul_ps(left.m12, right.m0), __simd_f_mul_ps(left.m13, right.m4)),
+		__simd_f_add_ps(__simd_f_mul_ps(left.m14, right.m8), __simd_f_mul_ps(left.m15, right.m12)));
+
+	result.m13 = __simd_f_add_ps(
+		__simd_f_add_ps(__simd_f_mul_ps(left.m12, right.m1), __simd_f_mul_ps(left.m13, right.m5)),
+		__simd_f_add_ps(__simd_f_mul_ps(left.m14, right.m9), __simd_f_mul_ps(left.m15, right.m13)));
+
+	result.m14 = __simd_f_add_ps(
+		__simd_f_add_ps(__simd_f_mul_ps(left.m12, right.m2), __simd_f_mul_ps(left.m13, right.m6)),
+		__simd_f_add_ps(__simd_f_mul_ps(left.m14, right.m10), __simd_f_mul_ps(left.m15, right.m14)));
+
+	result.m15 = __simd_f_add_ps(
+		__simd_f_add_ps(__simd_f_mul_ps(left.m12, right.m3), __simd_f_mul_ps(left.m13, right.m7)),
+		__simd_f_add_ps(__simd_f_mul_ps(left.m14, right.m11), __simd_f_mul_ps(left.m15, right.m15)));
+
+	return result;
+}
+
+
+
 
 #endif  // RAYMATH_H
