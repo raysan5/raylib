@@ -867,8 +867,8 @@ static void ExportParsedData(const char *fileName, int format)
                 for (int f = 0; f < structs[i].fieldCount; f++)
                 {
                     fprintf(outFile, "        {\n");
-                    fprintf(outFile, "          name = \"%s\",\n", structs[i].fieldName[f]);
                     fprintf(outFile, "          type = \"%s\",\n", structs[i].fieldType[f]);
+                    fprintf(outFile, "          name = \"%s\",\n", structs[i].fieldName[f]);
                     fprintf(outFile, "          description = \"%s\"\n", EscapeBackslashes(structs[i].fieldDesc[f] + 3));
                     fprintf(outFile, "        }");
                     if (f < structs[i].fieldCount - 1) fprintf(outFile, ",\n");
@@ -921,7 +921,7 @@ static void ExportParsedData(const char *fileName, int format)
                     fprintf(outFile, ",\n      params = {\n");
                     for (int p = 0; p < funcs[i].paramCount; p++)
                     {
-                        fprintf(outFile, "        {name = \"%s\", type = \"%s\"}", funcs[i].paramName[p], funcs[i].paramType[p]);
+                        fprintf(outFile, "        {type = \"%s\", name = \"%s\"}", funcs[i].paramType[p], funcs[i].paramName[p]);
                         if (p < funcs[i].paramCount - 1) fprintf(outFile, ",\n");
                         else fprintf(outFile, "\n");
                     }
@@ -950,8 +950,8 @@ static void ExportParsedData(const char *fileName, int format)
                 for (int f = 0; f < structs[i].fieldCount; f++)
                 {
                     fprintf(outFile, "        {\n");
-                    fprintf(outFile, "          \"name\": \"%s\",\n", structs[i].fieldName[f]);
                     fprintf(outFile, "          \"type\": \"%s\",\n", structs[i].fieldType[f]);
+                    fprintf(outFile, "          \"name\": \"%s\",\n", structs[i].fieldName[f]);
                     fprintf(outFile, "          \"description\": \"%s\"\n", EscapeBackslashes(structs[i].fieldDesc[f] + 3));
                     fprintf(outFile, "        }");
                     if (f < structs[i].fieldCount - 1) fprintf(outFile, ",\n");
@@ -1001,14 +1001,17 @@ static void ExportParsedData(const char *fileName, int format)
                 if (funcs[i].paramCount == 0) fprintf(outFile, "\n");
                 else
                 {
-                    fprintf(outFile, ",\n      \"params\": {\n");
+                    fprintf(outFile, ",\n      \"params\": [\n");
                     for (int p = 0; p < funcs[i].paramCount; p++)
                     {
-                        fprintf(outFile, "        \"%s\": \"%s\"", funcs[i].paramName[p], funcs[i].paramType[p]);
+                        fprintf(outFile, "        {\n");
+                        fprintf(outFile, "          \"type\": \"%s\",\n", funcs[i].paramType[p]);
+                        fprintf(outFile, "          \"name\": \"%s\"\n", funcs[i].paramName[p]);
+                        fprintf(outFile, "        }");
                         if (p < funcs[i].paramCount - 1) fprintf(outFile, ",\n");
                         else fprintf(outFile, "\n");
                     }
-                    fprintf(outFile, "      }\n");
+                    fprintf(outFile, "      ]\n");
                 }
                 fprintf(outFile, "    }");
 
