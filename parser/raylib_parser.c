@@ -1001,14 +1001,17 @@ static void ExportParsedData(const char *fileName, int format)
                 if (funcs[i].paramCount == 0) fprintf(outFile, "\n");
                 else
                 {
-                    fprintf(outFile, ",\n      \"params\": {\n");
+                    fprintf(outFile, ",\n      \"params\": [\n");
                     for (int p = 0; p < funcs[i].paramCount; p++)
                     {
-                        fprintf(outFile, "        \"%s\": \"%s\"", funcs[i].paramName[p], funcs[i].paramType[p]);
+                        fprintf(outFile, "        {\n");
+                        fprintf(outFile, "          \"name\": \"%s\",\n", funcs[i].paramName[p]);
+                        fprintf(outFile, "          \"type\": \"%s\"\n", funcs[i].paramType[p]);
+                        fprintf(outFile, "        }");
                         if (p < funcs[i].paramCount - 1) fprintf(outFile, ",\n");
                         else fprintf(outFile, "\n");
                     }
-                    fprintf(outFile, "      }\n");
+                    fprintf(outFile, "      ]\n");
                 }
                 fprintf(outFile, "    }");
 

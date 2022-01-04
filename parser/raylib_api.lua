@@ -2551,7 +2551,7 @@ return {
     },
     {
       name = "SetWindowState",
-      description = "Set window configuration state using flags",
+      description = "Set window configuration state using flags (only PLATFORM_DESKTOP)",
       returnType = "void",
       params = {
         {name = "flags", type = "unsigned int"}
@@ -2634,6 +2634,14 @@ return {
       params = {
         {name = "width", type = "int"},
         {name = "height", type = "int"}
+      }
+    },
+    {
+      name = "SetWindowOpacity",
+      description = "Set window opacity [0.0f..1.0f] (only PLATFORM_DESKTOP)",
+      returnType = "void",
+      params = {
+        {name = "opacity", type = "float"}
       }
     },
     {
@@ -5264,7 +5272,7 @@ return {
     },
     {
       name = "LoadFontEx",
-      description = "Load font from file with extended parameters",
+      description = "Load font from file with extended parameters, use NULL for fontChars and 0 for glyphCount to load the default character set",
       returnType = "Font",
       params = {
         {name = "fileName", type = "const char *"},
@@ -5333,10 +5341,19 @@ return {
     },
     {
       name = "UnloadFont",
-      description = "Unload Font from GPU memory (VRAM)",
+      description = "Unload font from GPU memory (VRAM)",
       returnType = "void",
       params = {
         {name = "font", type = "Font"}
+      }
+    },
+    {
+      name = "ExportFontAsCode",
+      description = "Export font as code file, returns true on success",
+      returnType = "bool",
+      params = {
+        {name = "font", type = "Font"},
+        {name = "fileName", type = "const char *"}
       }
     },
     {
