@@ -85,7 +85,7 @@ typedef struct FunctionInfo {
     int paramCount;             // Number of function parameters
     char paramType[MAX_FUNCTION_PARAMETERS][32];   // Parameters type
     char paramName[MAX_FUNCTION_PARAMETERS][32];   // Parameters name
-    char paramDesc[MAX_FUNCTION_PARAMETERS][8];    // Parameters description
+    char paramDesc[MAX_FUNCTION_PARAMETERS][128];  // Parameters description
 } FunctionInfo;
 
 // Struct info data
@@ -105,7 +105,7 @@ typedef struct EnumInfo {
     int valueCount;             // Number of values in enumerator
     char valueName[MAX_ENUM_VALUES][64];    // Value name definition
     int valueInteger[MAX_ENUM_VALUES];      // Value integer
-    char valueDesc[MAX_ENUM_VALUES][128];    // Value description
+    char valueDesc[MAX_ENUM_VALUES][128];   // Value description
 } EnumInfo;
 
 // Output format for parsed data
