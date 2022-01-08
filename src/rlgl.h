@@ -3550,19 +3550,22 @@ unsigned int rlLoadShaderCode(const char *vsCode, const char *fsCode)
     if ((vertexShaderId == RLGL.State.defaultVShaderId) && (fragmentShaderId == RLGL.State.defaultFShaderId)) id = RLGL.State.defaultShaderId;
     else
     {
-        id = rlLoadShaderProgram(vertexShaderId, fragmentShaderId);
+        if ((vertexShaderId != 0) && (fragmentShaderId != 0))
+        {
+            id = rlLoadShaderProgram(vertexShaderId, fragmentShaderId);
 
-        if (vertexShaderId != RLGL.State.defaultVShaderId)
-        {
-            // Detach shader before deletion to make sure memory is freed
-            glDetachShader(id, vertexShaderId);
-            glDeleteShader(vertexShaderId);
-        }
-        if (fragmentShaderId != RLGL.State.defaultFShaderId)
-        {
-            // Detach shader before deletion to make sure memory is freed
-            glDetachShader(id, fragmentShaderId);
-            glDeleteShader(fragmentShaderId);
+            if (vertexShaderId != RLGL.State.defaultVShaderId)
+            {
+                // Detach shader before deletion to make sure memory is freed
+                glDetachShader(id, vertexShaderId);
+                glDeleteShader(vertexShaderId);
+            }
+            if (fragmentShaderId != RLGL.State.defaultFShaderId)
+            {
+                // Detach shader before deletion to make sure memory is freed
+                glDetachShader(id, fragmentShaderId);
+                glDeleteShader(fragmentShaderId);
+            }
         }
 
         if (id == 0)
