@@ -542,6 +542,60 @@
             <Value name="NPATCH_THREE_PATCH_HORIZONTAL" integer="2" desc="Npatch layout: 3x1 tiles" />
         </Enum>
     </Enums>
+    <Defines count="52">
+        <Define name="RAYLIB_H" type="GUARD" />
+        <Define name="RAYLIB_VERSION" type="STRING" />
+        <Define name="RLAPI" type="UNKNOWN" />
+        <Define name="PI" type="FLOAT" />
+        <Define name="DEG2RAD" type="UNKNOWN" />
+        <Define name="RAD2DEG" type="UNKNOWN" />
+        <Define name="RL_MALLOC(sz)" type="MACRO" />
+        <Define name="RL_CALLOC(n,sz)" type="MACRO" />
+        <Define name="RL_REALLOC(ptr,sz)" type="MACRO" />
+        <Define name="RL_FREE(ptr)" type="MACRO" />
+        <Define name="CLITERAL(type)" type="MACRO" />
+        <Define name="RL_COLOR_TYPE" type="GUARD" />
+        <Define name="RL_RECTANGLE_TYPE" type="GUARD" />
+        <Define name="RL_VECTOR2_TYPE" type="GUARD" />
+        <Define name="RL_VECTOR3_TYPE" type="GUARD" />
+        <Define name="RL_VECTOR4_TYPE" type="GUARD" />
+        <Define name="RL_QUATERNION_TYPE" type="GUARD" />
+        <Define name="RL_MATRIX_TYPE" type="GUARD" />
+        <Define name="LIGHTGRAY" type="COLOR" />
+        <Define name="GRAY" type="COLOR" />
+        <Define name="DARKGRAY" type="COLOR" />
+        <Define name="YELLOW" type="COLOR" />
+        <Define name="GOLD" type="COLOR" />
+        <Define name="ORANGE" type="COLOR" />
+        <Define name="PINK" type="COLOR" />
+        <Define name="RED" type="COLOR" />
+        <Define name="MAROON" type="COLOR" />
+        <Define name="GREEN" type="COLOR" />
+        <Define name="LIME" type="COLOR" />
+        <Define name="DARKGREEN" type="COLOR" />
+        <Define name="SKYBLUE" type="COLOR" />
+        <Define name="BLUE" type="COLOR" />
+        <Define name="DARKBLUE" type="COLOR" />
+        <Define name="PURPLE" type="COLOR" />
+        <Define name="VIOLET" type="COLOR" />
+        <Define name="DARKPURPLE" type="COLOR" />
+        <Define name="BEIGE" type="COLOR" />
+        <Define name="BROWN" type="COLOR" />
+        <Define name="DARKBROWN" type="COLOR" />
+        <Define name="WHITE" type="COLOR" />
+        <Define name="BLACK" type="COLOR" />
+        <Define name="BLANK" type="COLOR" />
+        <Define name="MAGENTA" type="COLOR" />
+        <Define name="RAYWHITE" type="COLOR" />
+        <Define name="RL_BOOL_TYPE" type="GUARD" />
+        <Define name="MOUSE_LEFT_BUTTON" type="UNKNOWN" />
+        <Define name="MOUSE_RIGHT_BUTTON" type="UNKNOWN" />
+        <Define name="MOUSE_MIDDLE_BUTTON" type="UNKNOWN" />
+        <Define name="MATERIAL_MAP_DIFFUSE" type="UNKNOWN" />
+        <Define name="MATERIAL_MAP_SPECULAR" type="UNKNOWN" />
+        <Define name="SHADER_LOC_MAP_DIFFUSE" type="UNKNOWN" />
+        <Define name="SHADER_LOC_MAP_SPECULAR" type="UNKNOWN" />
+    </Defines>
     <Functions count="491">
         <Function name="InitWindow" retType="void" paramCount="3" desc="Initialize window and OpenGL context">
             <Param type="int" name="width" desc="" />

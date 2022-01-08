@@ -2485,6 +2485,216 @@ return {
       }
     }
   },
+  defs = {
+    {
+      name = "RAYLIB_H",
+      type = "GUARD"
+    },
+    {
+      name = "RAYLIB_VERSION",
+      type = "STRING"
+    },
+    {
+      name = "RLAPI",
+      type = "UNKNOWN"
+    },
+    {
+      name = "PI",
+      type = "FLOAT"
+    },
+    {
+      name = "DEG2RAD",
+      type = "UNKNOWN"
+    },
+    {
+      name = "RAD2DEG",
+      type = "UNKNOWN"
+    },
+    {
+      name = "RL_MALLOC(sz)",
+      type = "MACRO"
+    },
+    {
+      name = "RL_CALLOC(n,sz)",
+      type = "MACRO"
+    },
+    {
+      name = "RL_REALLOC(ptr,sz)",
+      type = "MACRO"
+    },
+    {
+      name = "RL_FREE(ptr)",
+      type = "MACRO"
+    },
+    {
+      name = "CLITERAL(type)",
+      type = "MACRO"
+    },
+    {
+      name = "RL_COLOR_TYPE",
+      type = "GUARD"
+    },
+    {
+      name = "RL_RECTANGLE_TYPE",
+      type = "GUARD"
+    },
+    {
+      name = "RL_VECTOR2_TYPE",
+      type = "GUARD"
+    },
+    {
+      name = "RL_VECTOR3_TYPE",
+      type = "GUARD"
+    },
+    {
+      name = "RL_VECTOR4_TYPE",
+      type = "GUARD"
+    },
+    {
+      name = "RL_QUATERNION_TYPE",
+      type = "GUARD"
+    },
+    {
+      name = "RL_MATRIX_TYPE",
+      type = "GUARD"
+    },
+    {
+      name = "LIGHTGRAY",
+      type = "COLOR"
+    },
+    {
+      name = "GRAY",
+      type = "COLOR"
+    },
+    {
+      name = "DARKGRAY",
+      type = "COLOR"
+    },
+    {
+      name = "YELLOW",
+      type = "COLOR"
+    },
+    {
+      name = "GOLD",
+      type = "COLOR"
+    },
+    {
+      name = "ORANGE",
+      type = "COLOR"
+    },
+    {
+      name = "PINK",
+      type = "COLOR"
+    },
+    {
+      name = "RED",
+      type = "COLOR"
+    },
+    {
+      name = "MAROON",
+      type = "COLOR"
+    },
+    {
+      name = "GREEN",
+      type = "COLOR"
+    },
+    {
+      name = "LIME",
+      type = "COLOR"
+    },
+    {
+      name = "DARKGREEN",
+      type = "COLOR"
+    },
+    {
+      name = "SKYBLUE",
+      type = "COLOR"
+    },
+    {
+      name = "BLUE",
+      type = "COLOR"
+    },
+    {
+      name = "DARKBLUE",
+      type = "COLOR"
+    },
+    {
+      name = "PURPLE",
+      type = "COLOR"
+    },
+    {
+      name = "VIOLET",
+      type = "COLOR"
+    },
+    {
+      name = "DARKPURPLE",
+      type = "COLOR"
+    },
+    {
+      name = "BEIGE",
+      type = "COLOR"
+    },
+    {
+      name = "BROWN",
+      type = "COLOR"
+    },
+    {
+      name = "DARKBROWN",
+      type = "COLOR"
+    },
+    {
+      name = "WHITE",
+      type = "COLOR"
+    },
+    {
+      name = "BLACK",
+      type = "COLOR"
+    },
+    {
+      name = "BLANK",
+      type = "COLOR"
+    },
+    {
+      name = "MAGENTA",
+      type = "COLOR"
+    },
+    {
+      name = "RAYWHITE",
+      type = "COLOR"
+    },
+    {
+      name = "RL_BOOL_TYPE",
+      type = "GUARD"
+    },
+    {
+      name = "MOUSE_LEFT_BUTTON",
+      type = "UNKNOWN"
+    },
+    {
+      name = "MOUSE_RIGHT_BUTTON",
+      type = "UNKNOWN"
+    },
+    {
+      name = "MOUSE_MIDDLE_BUTTON",
+      type = "UNKNOWN"
+    },
+    {
+      name = "MATERIAL_MAP_DIFFUSE",
+      type = "UNKNOWN"
+    },
+    {
+      name = "MATERIAL_MAP_SPECULAR",
+      type = "UNKNOWN"
+    },
+    {
+      name = "SHADER_LOC_MAP_DIFFUSE",
+      type = "UNKNOWN"
+    },
+    {
+      name = "SHADER_LOC_MAP_SPECULAR",
+      type = "UNKNOWN"
+    },
+  },
   functions = {
     {
       name = "InitWindow",
