@@ -12,7 +12,7 @@
 *
 ********************************************************************************************
 *
-*   The shader makes alpha holes in the forground to give the apearance of a top
+*   The shader makes alpha holes in the forground to give the appearance of a top
 *   down look at a spotlight casting a pool of light...
 *
 *   The right hand side of the screen there is just enough light to see whats
