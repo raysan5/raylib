@@ -160,15 +160,14 @@
     #define _POSIX_C_SOURCE 199309L // Required for: CLOCK_MONOTONIC if compiled with c99 without gnu ext.
 #endif
 
-
-// platform specific defines to handle GetApplicationDirectory
+// Platform specific defines to handle GetApplicationDirectory()
 #if defined (PLATFORM_DESKTOP)
     #if defined(_WIN32)
         #ifndef MAX_PATH
             #define MAX_PATH 1025
         #endif
-        void* LoadLibraryA(void* lpLibFileName);
-        void* LoadLibraryW(void* lpLibFileName);
+        void *LoadLibraryA(void *lpLibFileName);
+        void *LoadLibraryW(void *lpLibFileName);
 
         #ifdef UNICODE
             #define LoadLibrary  LoadLibraryW
@@ -176,20 +175,20 @@
             #define LoadLibrary  LoadLibraryA
         #endif // !UNICODE
 
-        void* GetProcAddress(void* hModule, void* lpProcName);
+        void *GetProcAddress(void *hModule, void *lpProcName);
 
-        void* GetCurrentProcess(void);
-        bool FreeLibrary(void* hLibModule);
+        void *GetCurrentProcess(void);
+        bool FreeLibrary(void *hLibModule);
 
-        int  WideCharToMultiByte(unsigned int cp, unsigned long flags, const unsigned short* widestr, int cchwide, char* str, int cbmb, const char* defchar, int* used_default);
+        int  WideCharToMultiByte(unsigned int cp, unsigned long flags, const unsigned short *widestr, int cchwide, char *str, int cbmb, const char *defchar, int *used_default);
 
-        const char PathDelim = '\\';
+        const char pathDelim = '\\';
     #elif defined(__linux__)
         #include <unistd.h>
-        const char PathDelim = '/';
+        const char pathDelim = '/';
     #elif defined(__APPLE__)
         #include <sys/syslimits.h>
-        const char PathDelim = '/';
+        const char pathDelim = '/';
     #endif // OSs
 #endif // PLATFORM_DESKTOP
 
@@ -3002,7 +3001,7 @@ const char *GetWorkingDirectory(void)
     return path;
 }
 
-const char* GetApplicationDirectory(void)
+const char *GetApplicationDirectory(void)
 {
 	static char appDir[MAX_FILEPATH_LENGTH] = { 0 };
 	memset(appDir, 0, MAX_FILEPATH_LENGTH);
@@ -3011,7 +3010,8 @@ const char* GetApplicationDirectory(void)
 	typedef unsigned long(*GetModuleFileNameFunc)(void*, void*, void*, unsigned long);
 
 	GetModuleFileNameFunc getModuleFileNameExWPtr = NULL;
-	void* lib = LoadLibrary(L"psapi.dll");
+	void *lib = LoadLibrary(L"psapi.dll");
+
 	if (lib == NULL)
 	{
 		appDir[0] = '\\';
@@ -3034,7 +3034,6 @@ const char* GetApplicationDirectory(void)
 #if defined (UNICODE)
 			unsigned short widePath[MAX_PATH];
 			len = getModuleFileNameExWPtr(GetCurrentProcess(), NULL, widePath, MAX_PATH);
-
 			len = WideCharToMultiByte(0, 0, widePath, len, appDir, MAX_PATH, NULL, NULL);
 #else
 			len = getModuleFileNameExWPtr(GetCurrentProcess(), NULL, appDir, MAX_PATH);
@@ -3051,12 +3050,13 @@ const char* GetApplicationDirectory(void)
 				}
 			}
 		}
+
 		FreeLibrary(lib);
 	}
 #elif defined(__linux__)
 	unsigned int size = sizeof(appDir);
-
 	ssize_t len = readlink("/proc/self/exe", appDir, size);
+
 	if (len > 0)
 	{
 		for (int i = len; i >= 0; --i)
