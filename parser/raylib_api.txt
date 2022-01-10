@@ -242,7 +242,7 @@ Enums found: 21
 
 Enum 01: ConfigFlags (14 values)
   Name: ConfigFlags
- Description: System/Window config flags
+  Description: System/Window config flags
   Value[FLAG_VSYNC_HINT]: 64
   Value[FLAG_FULLSCREEN_MODE]: 2
   Value[FLAG_WINDOW_RESIZABLE]: 4
@@ -259,7 +259,7 @@ Enum 01: ConfigFlags (14 values)
   Value[FLAG_INTERLACED_HINT]: 65536
 Enum 02: TraceLogLevel (8 values)
   Name: TraceLogLevel
- Description: Trace log level
+  Description: Trace log level
   Value[LOG_ALL]: 0
   Value[LOG_TRACE]: 1
   Value[LOG_DEBUG]: 2
@@ -270,7 +270,7 @@ Enum 02: TraceLogLevel (8 values)
   Value[LOG_NONE]: 7
 Enum 03: KeyboardKey (110 values)
   Name: KeyboardKey
- Description: Keyboard keys (US keyboard layout)
+  Description: Keyboard keys (US keyboard layout)
   Value[KEY_NULL]: 0
   Value[KEY_APOSTROPHE]: 39
   Value[KEY_COMMA]: 44
@@ -383,7 +383,7 @@ Enum 03: KeyboardKey (110 values)
   Value[KEY_VOLUME_DOWN]: 25
 Enum 04: MouseButton (7 values)
   Name: MouseButton
- Description: Mouse buttons
+  Description: Mouse buttons
   Value[MOUSE_BUTTON_LEFT]: 0
   Value[MOUSE_BUTTON_RIGHT]: 1
   Value[MOUSE_BUTTON_MIDDLE]: 2
@@ -393,7 +393,7 @@ Enum 04: MouseButton (7 values)
   Value[MOUSE_BUTTON_BACK]: 6
 Enum 05: MouseCursor (11 values)
   Name: MouseCursor
- Description: Mouse cursor
+  Description: Mouse cursor
   Value[MOUSE_CURSOR_DEFAULT]: 0
   Value[MOUSE_CURSOR_ARROW]: 1
   Value[MOUSE_CURSOR_IBEAM]: 2
@@ -407,7 +407,7 @@ Enum 05: MouseCursor (11 values)
   Value[MOUSE_CURSOR_NOT_ALLOWED]: 10
 Enum 06: GamepadButton (18 values)
   Name: GamepadButton
- Description: Gamepad buttons
+  Description: Gamepad buttons
   Value[GAMEPAD_BUTTON_UNKNOWN]: 0
   Value[GAMEPAD_BUTTON_LEFT_FACE_UP]: 1
   Value[GAMEPAD_BUTTON_LEFT_FACE_RIGHT]: 2
@@ -428,7 +428,7 @@ Enum 06: GamepadButton (18 values)
   Value[GAMEPAD_BUTTON_RIGHT_THUMB]: 17
 Enum 07: GamepadAxis (6 values)
   Name: GamepadAxis
- Description: Gamepad axis
+  Description: Gamepad axis
   Value[GAMEPAD_AXIS_LEFT_X]: 0
   Value[GAMEPAD_AXIS_LEFT_Y]: 1
   Value[GAMEPAD_AXIS_RIGHT_X]: 2
@@ -437,7 +437,7 @@ Enum 07: GamepadAxis (6 values)
   Value[GAMEPAD_AXIS_RIGHT_TRIGGER]: 5
 Enum 08: MaterialMapIndex (11 values)
   Name: MaterialMapIndex
- Description: Material map index
+  Description: Material map index
   Value[MATERIAL_MAP_ALBEDO]: 0
   Value[MATERIAL_MAP_METALNESS]: 1
   Value[MATERIAL_MAP_NORMAL]: 2
@@ -451,7 +451,7 @@ Enum 08: MaterialMapIndex (11 values)
   Value[MATERIAL_MAP_BRDF]: 10
 Enum 09: ShaderLocationIndex (26 values)
   Name: ShaderLocationIndex
- Description: Shader location index
+  Description: Shader location index
   Value[SHADER_LOC_VERTEX_POSITION]: 0
   Value[SHADER_LOC_VERTEX_TEXCOORD01]: 1
   Value[SHADER_LOC_VERTEX_TEXCOORD02]: 2
@@ -480,7 +480,7 @@ Enum 09: ShaderLocationIndex (26 values)
   Value[SHADER_LOC_MAP_BRDF]: 25
 Enum 10: ShaderUniformDataType (9 values)
   Name: ShaderUniformDataType
- Description: Shader uniform data type
+  Description: Shader uniform data type
   Value[SHADER_UNIFORM_FLOAT]: 0
   Value[SHADER_UNIFORM_VEC2]: 1
   Value[SHADER_UNIFORM_VEC3]: 2
@@ -492,14 +492,14 @@ Enum 10: ShaderUniformDataType (9 values)
   Value[SHADER_UNIFORM_SAMPLER2D]: 8
 Enum 11: ShaderAttributeDataType (4 values)
   Name: ShaderAttributeDataType
- Description: Shader attribute data types
+  Description: Shader attribute data types
   Value[SHADER_ATTRIB_FLOAT]: 0
   Value[SHADER_ATTRIB_VEC2]: 1
   Value[SHADER_ATTRIB_VEC3]: 2
   Value[SHADER_ATTRIB_VEC4]: 3
 Enum 12: PixelFormat (21 values)
   Name: PixelFormat
- Description: Pixel formats
+  Description: Pixel formats
   Value[PIXELFORMAT_UNCOMPRESSED_GRAYSCALE]: 1
   Value[PIXELFORMAT_UNCOMPRESSED_GRAY_ALPHA]: 2
   Value[PIXELFORMAT_UNCOMPRESSED_R5G6B5]: 3
@@ -523,7 +523,7 @@ Enum 12: PixelFormat (21 values)
   Value[PIXELFORMAT_COMPRESSED_ASTC_8x8_RGBA]: 21
 Enum 13: TextureFilter (6 values)
   Name: TextureFilter
- Description: Texture parameters: filter mode
+  Description: Texture parameters: filter mode
   Value[TEXTURE_FILTER_POINT]: 0
   Value[TEXTURE_FILTER_BILINEAR]: 1
   Value[TEXTURE_FILTER_TRILINEAR]: 2
@@ -532,14 +532,14 @@ Enum 13: TextureFilter (6 values)
   Value[TEXTURE_FILTER_ANISOTROPIC_16X]: 5
 Enum 14: TextureWrap (4 values)
   Name: TextureWrap
- Description: Texture parameters: wrap mode
+  Description: Texture parameters: wrap mode
   Value[TEXTURE_WRAP_REPEAT]: 0
   Value[TEXTURE_WRAP_CLAMP]: 1
   Value[TEXTURE_WRAP_MIRROR_REPEAT]: 2
   Value[TEXTURE_WRAP_MIRROR_CLAMP]: 3
 Enum 15: CubemapLayout (6 values)
   Name: CubemapLayout
- Description: Cubemap layouts
+  Description: Cubemap layouts
   Value[CUBEMAP_LAYOUT_AUTO_DETECT]: 0
   Value[CUBEMAP_LAYOUT_LINE_VERTICAL]: 1
   Value[CUBEMAP_LAYOUT_LINE_HORIZONTAL]: 2
@@ -548,13 +548,13 @@ Enum 15: CubemapLayout (6 values)
   Value[CUBEMAP_LAYOUT_PANORAMA]: 5
 Enum 16: FontType (3 values)
   Name: FontType
- Description: Font type, defines generation method
+  Description: Font type, defines generation method
   Value[FONT_DEFAULT]: 0
   Value[FONT_BITMAP]: 1
   Value[FONT_SDF]: 2
 Enum 17: BlendMode (6 values)
   Name: BlendMode
- Description: Color blending modes (pre-defined)
+  Description: Color blending modes (pre-defined)
   Value[BLEND_ALPHA]: 0
   Value[BLEND_ADDITIVE]: 1
   Value[BLEND_MULTIPLIED]: 2
@@ -563,7 +563,7 @@ Enum 17: BlendMode (6 values)
   Value[BLEND_CUSTOM]: 5
 Enum 18: Gesture (11 values)
   Name: Gesture
- Description: Gesture
+  Description: Gesture
   Value[GESTURE_NONE]: 0
   Value[GESTURE_TAP]: 1
   Value[GESTURE_DOUBLETAP]: 2
@@ -577,7 +577,7 @@ Enum 18: Gesture (11 values)
   Value[GESTURE_PINCH_OUT]: 512
 Enum 19: CameraMode (5 values)
   Name: CameraMode
- Description: Camera system modes
+  Description: Camera system modes
   Value[CAMERA_CUSTOM]: 0
   Value[CAMERA_FREE]: 1
   Value[CAMERA_ORBITAL]: 2
@@ -585,12 +585,12 @@ Enum 19: CameraMode (5 values)
   Value[CAMERA_THIRD_PERSON]: 4
 Enum 20: CameraProjection (2 values)
   Name: CameraProjection
- Description: Camera projection
+  Description: Camera projection
   Value[CAMERA_PERSPECTIVE]: 0
   Value[CAMERA_ORTHOGRAPHIC]: 1
 Enum 21: NPatchLayout (3 values)
   Name: NPatchLayout
- Description: N-patch layout
+  Description: N-patch layout
   Value[NPATCH_NINE_PATCH]: 0
   Value[NPATCH_THREE_PATCH_VERTICAL]: 1
   Value[NPATCH_THREE_PATCH_HORIZONTAL]: 2
@@ -3699,156 +3699,260 @@ Defines found: 52
 Define 001: RAYLIB_H
   Name: RAYLIB_H
   Type: GUARD
+  Value: 
+  Description: 
 Define 002: RAYLIB_VERSION
   Name: RAYLIB_VERSION
   Type: STRING
+  Value: "4.1-dev"
+  Description: 
 Define 003: RLAPI
   Name: RLAPI
   Type: UNKNOWN
+  Value: __declspec(dllexport)
+  Description: We are building the library as a Win32 shared library (.dll)
 Define 004: PI
   Name: PI
   Type: FLOAT
+  Value: 3.14159265358979323846f
+  Description: 
 Define 005: DEG2RAD
   Name: DEG2RAD
   Type: UNKNOWN
+  Value: (PI/180.0f)
+  Description: 
 Define 006: RAD2DEG
   Name: RAD2DEG
   Type: UNKNOWN
+  Value: (180.0f/PI)
+  Description: 
 Define 007: RL_MALLOC(sz)
   Name: RL_MALLOC(sz)
   Type: MACRO
+  Value: malloc(sz)
+  Description: 
 Define 008: RL_CALLOC(n,sz)
   Name: RL_CALLOC(n,sz)
   Type: MACRO
+  Value: calloc(n,sz)
+  Description: 
 Define 009: RL_REALLOC(ptr,sz)
   Name: RL_REALLOC(ptr,sz)
   Type: MACRO
+  Value: realloc(ptr,sz)
+  Description: 
 Define 010: RL_FREE(ptr)
   Name: RL_FREE(ptr)
   Type: MACRO
+  Value: free(ptr)
+  Description: 
 Define 011: CLITERAL(type)
   Name: CLITERAL(type)
   Type: MACRO
+  Value: type
+  Description: 
 Define 012: RL_COLOR_TYPE
   Name: RL_COLOR_TYPE
   Type: GUARD
+  Value: 
+  Description: 
 Define 013: RL_RECTANGLE_TYPE
   Name: RL_RECTANGLE_TYPE
   Type: GUARD
+  Value: 
+  Description: 
 Define 014: RL_VECTOR2_TYPE
   Name: RL_VECTOR2_TYPE
   Type: GUARD
+  Value: 
+  Description: 
 Define 015: RL_VECTOR3_TYPE
   Name: RL_VECTOR3_TYPE
   Type: GUARD
+  Value: 
+  Description: 
 Define 016: RL_VECTOR4_TYPE
   Name: RL_VECTOR4_TYPE
   Type: GUARD
+  Value: 
+  Description: 
 Define 017: RL_QUATERNION_TYPE
   Name: RL_QUATERNION_TYPE
   Type: GUARD
+  Value: 
+  Description: 
 Define 018: RL_MATRIX_TYPE
   Name: RL_MATRIX_TYPE
   Type: GUARD
+  Value: 
+  Description: 
 Define 019: LIGHTGRAY
   Name: LIGHTGRAY
   Type: COLOR
+  Value: CLITERAL(Color){ 200, 200, 200, 255 }
+  Description: Light Gray
 Define 020: GRAY
   Name: GRAY
   Type: COLOR
+  Value: CLITERAL(Color){ 130, 130, 130, 255 }
+  Description: Gray
 Define 021: DARKGRAY
   Name: DARKGRAY
   Type: COLOR
+  Value: CLITERAL(Color){ 80, 80, 80, 255 }
+  Description: Dark Gray
 Define 022: YELLOW
   Name: YELLOW
   Type: COLOR
+  Value: CLITERAL(Color){ 253, 249, 0, 255 }
+  Description: Yellow
 Define 023: GOLD
   Name: GOLD
   Type: COLOR
+  Value: CLITERAL(Color){ 255, 203, 0, 255 }
+  Description: Gold
 Define 024: ORANGE
   Name: ORANGE
   Type: COLOR
+  Value: CLITERAL(Color){ 255, 161, 0, 255 }
+  Description: Orange
 Define 025: PINK
   Name: PINK
   Type: COLOR
+  Value: CLITERAL(Color){ 255, 109, 194, 255 }
+  Description: Pink
 Define 026: RED
   Name: RED
   Type: COLOR
+  Value: CLITERAL(Color){ 230, 41, 55, 255 }
+  Description: Red
 Define 027: MAROON
   Name: MAROON
   Type: COLOR
+  Value: CLITERAL(Color){ 190, 33, 55, 255 }
+  Description: Maroon
 Define 028: GREEN
   Name: GREEN
   Type: COLOR
+  Value: CLITERAL(Color){ 0, 228, 48, 255 }
+  Description: Green
 Define 029: LIME
   Name: LIME
   Type: COLOR
+  Value: CLITERAL(Color){ 0, 158, 47, 255 }
+  Description: Lime
 Define 030: DARKGREEN
   Name: DARKGREEN
   Type: COLOR
+  Value: CLITERAL(Color){ 0, 117, 44, 255 }
+  Description: Dark Green
 Define 031: SKYBLUE
   Name: SKYBLUE
   Type: COLOR
+  Value: CLITERAL(Color){ 102, 191, 255, 255 }
+  Description: Sky Blue
 Define 032: BLUE
   Name: BLUE
   Type: COLOR
+  Value: CLITERAL(Color){ 0, 121, 241, 255 }
+  Description: Blue
 Define 033: DARKBLUE
   Name: DARKBLUE
   Type: COLOR
+  Value: CLITERAL(Color){ 0, 82, 172, 255 }
+  Description: Dark Blue
 Define 034: PURPLE
   Name: PURPLE
   Type: COLOR
+  Value: CLITERAL(Color){ 200, 122, 255, 255 }
+  Description: Purple
 Define 035: VIOLET
   Name: VIOLET
   Type: COLOR
+  Value: CLITERAL(Color){ 135, 60, 190, 255 }
+  Description: Violet
 Define 036: DARKPURPLE
   Name: DARKPURPLE
   Type: COLOR
+  Value: CLITERAL(Color){ 112, 31, 126, 255 }
+  Description: Dark Purple
 Define 037: BEIGE
   Name: BEIGE
   Type: COLOR
+  Value: CLITERAL(Color){ 211, 176, 131, 255 }
+  Description: Beige
 Define 038: BROWN
   Name: BROWN
   Type: COLOR
+  Value: CLITERAL(Color){ 127, 106, 79, 255 }
+  Description: Brown
 Define 039: DARKBROWN
   Name: DARKBROWN
   Type: COLOR
+  Value: CLITERAL(Color){ 76, 63, 47, 255 }
+  Description: Dark Brown
 Define 040: WHITE
   Name: WHITE
   Type: COLOR
+  Value: CLITERAL(Color){ 255, 255, 255, 255 }
+  Description: White
 Define 041: BLACK
   Name: BLACK
   Type: COLOR
+  Value: CLITERAL(Color){ 0, 0, 0, 255 }
+  Description: Black
 Define 042: BLANK
   Name: BLANK
   Type: COLOR
+  Value: CLITERAL(Color){ 0, 0, 0, 0 }
+  Description: Blank (Transparent)
 Define 043: MAGENTA
   Name: MAGENTA
   Type: COLOR
+  Value: CLITERAL(Color){ 255, 0, 255, 255 }
+  Description: Magenta
 Define 044: RAYWHITE
   Name: RAYWHITE
   Type: COLOR
+  Value: CLITERAL(Color){ 245, 245, 245, 255 }
+  Description: My own White (raylib logo)
 Define 045: RL_BOOL_TYPE
   Name: RL_BOOL_TYPE
   Type: GUARD
+  Value: 
+  Description: 
 Define 046: MOUSE_LEFT_BUTTON
   Name: MOUSE_LEFT_BUTTON
   Type: UNKNOWN
+  Value: MOUSE_BUTTON_LEFT
+  Description: 
 Define 047: MOUSE_RIGHT_BUTTON
   Name: MOUSE_RIGHT_BUTTON
   Type: UNKNOWN
+  Value: MOUSE_BUTTON_RIGHT
+  Description: 
 Define 048: MOUSE_MIDDLE_BUTTON
   Name: MOUSE_MIDDLE_BUTTON
   Type: UNKNOWN
+  Value: MOUSE_BUTTON_MIDDLE
+  Description: 
 Define 049: MATERIAL_MAP_DIFFUSE
   Name: MATERIAL_MAP_DIFFUSE
   Type: UNKNOWN
+  Value: MATERIAL_MAP_ALBEDO
+  Description: 
 Define 050: MATERIAL_MAP_SPECULAR
   Name: MATERIAL_MAP_SPECULAR
   Type: UNKNOWN
+  Value: MATERIAL_MAP_METALNESS
+  Description: 
 Define 051: SHADER_LOC_MAP_DIFFUSE
   Name: SHADER_LOC_MAP_DIFFUSE
   Type: UNKNOWN
+  Value: SHADER_LOC_MAP_ALBEDO
+  Description: 
 Define 052: SHADER_LOC_MAP_SPECULAR
   Name: SHADER_LOC_MAP_SPECULAR
   Type: UNKNOWN
+  Value: SHADER_LOC_MAP_METALNESS
+  Description: 
