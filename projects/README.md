@@ -6,7 +6,7 @@ IDE | Platform(s) | Source | Example(s)
 ----| ------------| :-------: | :-----:
 [4coder](http://4coder.net/) | Windows | ❌ | ✔️
 [Builder](https://wiki.gnome.org/Apps/Builder) | Linux | ❌ | ✔️
-[CMake](https://cmake.org/) | Windows, Linux, macOS | ✔️ | ✔️
+[CMake](https://cmake.org/) | Windows, Linux, macOS, Web | ✔️ | ✔️
 [CodeBlocks](http://www.codeblocks.org/) | Windows, Linux, macOS | ❌ | ✔️
 [Geany](https://www.geany.org/) | Windows, Linux | ✔️ | ✔️
 [Notepad++](https://notepad-plus-plus.org/) | Windows | ✔️ | ✔️
