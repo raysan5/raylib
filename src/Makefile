@@ -34,13 +34,15 @@
 #
 #**************************************************************************************************
 
-# Please read the wiki to know how to compile raylib, because there are different methods.
+# NOTE: Highly recommended to read the raylib Wiki to know how to compile raylib for different platforms
 # https://github.com/raysan5/raylib/wiki
 
 .PHONY: all clean install uninstall
 
 # Define required environment variables
 #------------------------------------------------------------------------------------------------
+# Define target platform: PLATFORM_DESKTOP, PLATFORM_RPI, PLATFORM_DRM, PLATFORM_ANDROID, PLATFORM_WEB
+PLATFORM           ?= PLATFORM_DESKTOP
 
 # Define required raylib variables
 RAYLIB_VERSION        = 4.0.0
@@ -70,10 +72,6 @@ RAYLIB_RES_FILE      ?= ./raylib.dll.rc.data
 # if NONE, default config.h flags are used
 RAYLIB_CONFIG_FLAGS  ?= NONE
 
-# Define raylib platform
-# Options:  PLATFORM_DESKTOP, PLATFORM_RPI, PLATFORM_ANDROID, PLATFORM_WEB
-PLATFORM             ?= PLATFORM_DESKTOP
-
 # To define additional cflags: Use make CUSTOM_CFLAGS=""
 
 # Include raylib modules on compilation
@@ -87,11 +85,11 @@ RAYLIB_MODULE_RAYGUI_PATH ?= $(RAYLIB_SRC_PATH)/extras
 RAYLIB_MODULE_PHYSAC_PATH ?= $(RAYLIB_SRC_PATH)/extras
 
 # Use external GLFW library instead of rglfw module
-USE_EXTERNAL_GLFW    ?= FALSE
+USE_EXTERNAL_GLFW     ?= FALSE
 
-# Use Wayland display server protocol on Linux desktop
-# by default it uses X11 windowing system
-USE_WAYLAND_DISPLAY  ?= FALSE
+# Use Wayland display server protocol on Linux desktop (by default it uses X11 windowing system)
+# NOTE: This variable is only used for PLATFORM_OS: LINUX
+USE_WAYLAND_DISPLAY   ?= FALSE
 
 # Use cross-compiler for PLATFORM_RPI
 ifeq ($(PLATFORM),PLATFORM_RPI)
@@ -102,9 +100,8 @@ ifeq ($(PLATFORM),PLATFORM_RPI)
     endif
 endif
 
-# Determine if the file has root access (only for installing raylib)
-# "whoami" prints the name of the user that calls him (so, if it is the root
-# user, "whoami" prints "root").
+# Determine if the file has root access (only required to install raylib)
+# "whoami" prints the name of the user that calls him (so, if it is the root user, "whoami" prints "root")
 ROOT = $(shell whoami)
 
 # By default we suppose we are working on Windows
@@ -276,6 +273,7 @@ endif
 #  -std=c99                 defines C language mode (standard C from 1999 revision)
 #  -std=gnu99               defines C language mode (GNU C from 1999 revision)
 #  -Wno-missing-braces      ignore invalid warning (GCC bug 53119)
+#  -Wno-unused-value        ignore unused return values of some functions (i.e. fread())
 #  -D_DEFAULT_SOURCE        use with -std=c99 on Linux and PLATFORM_WEB, required for timespec
 #  -Werror=pointer-arith    catch unportable code that does direct arithmetic on void pointers
 #  -fno-strict-aliasing     jar_xm.h does shady stuff (breaks strict aliasing)
@@ -380,8 +378,8 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
 endif
 
 # Define include paths for required headers: INCLUDE_PATHS
-#------------------------------------------------------------------------------------------------
 # NOTE: Several external required libraries (stb and others)
+#------------------------------------------------------------------------------------------------
 INCLUDE_PATHS = -I. -Iexternal/glfw/include -Iexternal/glfw/deps/mingw
 
 # Define additional directories containing required header files
@@ -391,13 +389,11 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
     endif
 endif
 ifeq ($(PLATFORM),PLATFORM_RPI)
-    # RPI required libraries
     INCLUDE_PATHS += -I$(RPI_TOOLCHAIN_SYSROOT)/opt/vc/include
     INCLUDE_PATHS += -I$(RPI_TOOLCHAIN_SYSROOT)/opt/vc/include/interface/vmcs_host/linux
     INCLUDE_PATHS += -I$(RPI_TOOLCHAIN_SYSROOT)/opt/vc/include/interface/vcos/pthreads
 endif
 ifeq ($(PLATFORM),PLATFORM_DRM)
-    # DRM required libraries
     INCLUDE_PATHS += -I/usr/include/libdrm
 endif
 ifeq ($(PLATFORM),PLATFORM_ANDROID)
