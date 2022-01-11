@@ -2797,7 +2797,7 @@ return {
       type = "UNKNOWN",
       value = "SHADER_LOC_MAP_METALNESS",
       description = ""
-    },
+    }
   },
   functions = {
     {

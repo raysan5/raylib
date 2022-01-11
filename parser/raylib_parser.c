@@ -112,7 +112,7 @@ typedef struct EnumInfo {
 } EnumInfo;
 
 // Type of parsed define
-typedef enum { UNKNOWN = 0, MACRO, GUARD, INT, FLOAT, DOUBLE, CHAR, STRING, COLOR } DefineType;
+typedef enum { UNKNOWN = 0, MACRO, GUARD, INT, LONG, FLOAT, DOUBLE, CHAR, STRING, COLOR } DefineType;
 
 // Define info data
 typedef struct DefineInfo {
@@ -482,15 +482,19 @@ int main(int argc, char* argv[])
         else if (linePtr[j] == '\'') defines[defineIndex].type = CHAR;
         else if (IsTextEqual(linePtr+j, "CLITERAL(Color)", 15)) defines[defineIndex].type = COLOR;
         else if (isdigit(linePtr[j])) { // Parsing numbers
-            bool isFloat = false;
-            while (linePtr[j] != ' ' && linePtr[j] != '\t' && linePtr[j] != '\n' && linePtr[j] != '\r') {
+            bool isFloat = false, isNumber = true;
+            while (linePtr[j] != ' ' && linePtr[j] != '\t' && linePtr[j] != '\0') {
+                char ch = linePtr[j];
+                if (ch == '.') isFloat = true;
+                if (!(isdigit(ch)||(ch >= 'a' && ch <= 'f')||(ch >= 'A' && ch <= 'F')||ch=='x'||ch=='L'||ch=='.'||ch=='+'||ch=='-')) isNumber = false;
                 j++;
-                if (linePtr[j] == '.') isFloat = true;
             }
-            if (isFloat) {
-                defines[defineIndex].type = linePtr[j-1] == 'f' ? FLOAT : DOUBLE;
-            } else {
-                defines[defineIndex].type = INT;
+            if (isNumber) {
+                if (isFloat) {
+                    defines[defineIndex].type = linePtr[j-1] == 'f' ? FLOAT : DOUBLE;
+                } else {
+                    defines[defineIndex].type = linePtr[j-1] == 'L' ? LONG : INT;
+                }
             }
         }
 
@@ -883,6 +887,7 @@ static const char *StrDefineType(DefineType type)
         case GUARD:   return "GUARD";
         case MACRO:   return "MACRO";
         case INT:     return "INT";
+        case LONG:    return "LONG";
         case FLOAT:   return "FLOAT";
         case DOUBLE:  return "DOUBLE";
         case CHAR:    return "CHAR";
@@ -1058,18 +1063,18 @@ static void ExportParsedData(const char *fileName, int format)
                 fprintf(outFile, "      type = \"%s\",\n", StrDefineType(defines[i].type));
                 if (defines[i].type == INT || defines[i].type == DOUBLE || defines[i].type == STRING) {
                     fprintf(outFile, "      value = %s,\n", defines[i].value);
-                } else if (defines[i].type == FLOAT) {
+                } else if (defines[i].type == FLOAT || defines[i].type == LONG) {
                     int n = TextLength(defines[i].value);
                     defines[i].value[n-1] = '\0';
                     fprintf(outFile, "      value = %s,\n", defines[i].value);
-                    defines[i].value[n-1] = 'f';
+                    defines[i].value[n-1] = defines[i].type == FLOAT ? 'f' : 'L';
                 } else {
                     fprintf(outFile, "      value = \"%s\",\n", defines[i].value);
                 }
 								fprintf(outFile, "      description = \"%s\"\n", defines[i].desc + 3);
                 fprintf(outFile, "    }");
 
-                if (i < funcCount - 1) fprintf(outFile, ",\n");
+                if (i < defineCount - 1) fprintf(outFile, ",\n");
                 else fprintf(outFile, "\n");
             }
             fprintf(outFile, "  },\n");
@@ -1166,11 +1171,11 @@ static void ExportParsedData(const char *fileName, int format)
                 fprintf(outFile, "      \"type\": \"%s\",\n", StrDefineType(defines[i].type));
                 if (defines[i].type == INT || defines[i].type == DOUBLE || defines[i].type == STRING) {
                     fprintf(outFile, "      \"value\": %s,\n", defines[i].value);
-                } else if (defines[i].type == FLOAT) {
+                } else if (defines[i].type == FLOAT || defines[i].type == LONG) {
                     int n = TextLength(defines[i].value);
                     defines[i].value[n-1] = '\0';
                     fprintf(outFile, "      \"value\": %s,\n", defines[i].value);
-                    defines[i].value[n-1] = 'f';
+                    defines[i].value[n-1] = defines[i].type == FLOAT ? 'f' : 'L';
                 } else {
                     fprintf(outFile, "      \"value\": \"%s\",\n", defines[i].value);
                 }
