@@ -15,32 +15,32 @@
 #  Many thanks to Milan Nikolic (@gen2brain) for implementing Android platform pipeline.
 #  Many thanks to Emanuele Petriglia for his contribution on GNU/Linux pipeline.
 #
-#  Copyright (c) 2014-2022 Ramon Santamaria (@raysan5)
+#   Copyright (c) 2013-2022 Ramon Santamaria (@raysan5)
 #
-#  This software is provided "as-is", without any express or implied warranty.
-#  In no event will the authors be held liable for any damages arising from
-#  the use of this software.
+#   This software is provided "as-is", without any express or implied warranty. In no event
+#   will the authors be held liable for any damages arising from the use of this software.
 #
-#  Permission is granted to anyone to use this software for any purpose,
-#  including commercial applications, and to alter it and redistribute it
-#  freely, subject to the following restrictions:
+#   Permission is granted to anyone to use this software for any purpose, including commercial
+#   applications, and to alter it and redistribute it freely, subject to the following restrictions:
 #
-#    1. The origin of this software must not be misrepresented; you must not
-#    claim that you wrote the original software. If you use this software in a
-#    product, an acknowledgment in the product documentation would be
-#    appreciated but is not required.
+#     1. The origin of this software must not be misrepresented; you must not claim that you
+#     wrote the original software. If you use this software in a product, an acknowledgment
+#     in the product documentation would be appreciated but is not required.
 #
-#    2. Altered source versions must be plainly marked as such, and must not
-#    be misrepresented as being the original software.
+#     2. Altered source versions must be plainly marked as such, and must not be misrepresented
+#     as being the original software.
 #
-#    3. This notice may not be removed or altered from any source distribution.
+#     3. This notice may not be removed or altered from any source distribution.
 #
-#******************************************************************************
+#**************************************************************************************************
 
 # Please read the wiki to know how to compile raylib, because there are different methods.
 # https://github.com/raysan5/raylib/wiki
 
 .PHONY: all clean install uninstall
+
+# Define required environment variables
+#------------------------------------------------------------------------------------------------
 
 # Define required raylib variables
 RAYLIB_VERSION        = 4.0.0
@@ -220,7 +220,8 @@ ifeq ($(PLATFORM),PLATFORM_ANDROID)
     GRAPHICS = GRAPHICS_API_OPENGL_ES2
 endif
 
-# Define default C compiler and archiver to pack library
+# Define default C compiler and archiver to pack library: CC, AR
+#------------------------------------------------------------------------------------------------
 CC = gcc
 AR = ar
 
@@ -266,7 +267,8 @@ ifeq ($(PLATFORM),PLATFORM_ANDROID)
     AR = $(ANDROID_TOOLCHAIN)/bin/llvm-ar
 endif
 
-# Define compiler flags:
+# Define compiler flags: CFLAGS
+#------------------------------------------------------------------------------------------------
 #  -O1                      defines optimization level
 #  -g                       include debug information on compilation
 #  -s                       strip unnecessary data from build
@@ -377,7 +379,8 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
     endif
 endif
 
-# Define include paths for required headers
+# Define include paths for required headers: INCLUDE_PATHS
+#------------------------------------------------------------------------------------------------
 # NOTE: Several external required libraries (stb and others)
 INCLUDE_PATHS = -I. -Iexternal/glfw/include -Iexternal/glfw/deps/mingw
 
@@ -418,7 +421,9 @@ ifeq ($(PLATFORM),PLATFORM_ANDROID)
     endif
 endif
 
-# Define linker flags (required for dynamic library generation)
+# Define library paths containing required libs: LDFLAGS
+# NOTE: This is only required for dynamic library generation
+#------------------------------------------------------------------------------------------------
 LDFLAGS = -L. -L$(RAYLIB_RELEASE_PATH)
 
 ifeq ($(PLATFORM),PLATFORM_DESKTOP)
@@ -452,7 +457,9 @@ ifeq ($(PLATFORM),PLATFORM_ANDROID)
     LDFLAGS += -Wl,-undefined,dynamic_lookup
 endif
 
-# Define linker libraries (required for dynamic library generation)
+# Define libraries required on linking: LDLIBS
+# NOTE: This is only required for dynamic library generation
+#------------------------------------------------------------------------------------------------
 ifeq ($(PLATFORM),PLATFORM_DESKTOP)
     ifeq ($(PLATFORM_OS),WINDOWS)
         LDLIBS = -static-libgcc -lopengl32 -lgdi32 -lwinmm
@@ -485,13 +492,8 @@ ifeq ($(PLATFORM),PLATFORM_ANDROID)
     LDLIBS = -llog -landroid -lEGL -lGLESv2 -lOpenSLES -lc -lm
 endif
 
-# Define all object files required with a wildcard
-# The wildcard takes all files that finish with ".c",
-# and replaces extentions with ".o", that are the object files
-# NOTE: Some objects depend on the PLATFORM to be added or not!
-# OBJS = $(patsubst %.c, %.o, $(wildcard *.c))
-
-# Define object required on compilation
+# Define source code object files required
+#------------------------------------------------------------------------------------------------
 OBJS = rcore.o \
        rshapes.o \
        rtextures.o \
@@ -520,6 +522,8 @@ ifeq ($(PLATFORM),PLATFORM_ANDROID)
     OBJS += android_native_app_glue.o
 endif
 
+# Define processes to execute
+#------------------------------------------------------------------------------------------------
 # Default target entry
 all: raylib
 

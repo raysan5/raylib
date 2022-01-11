@@ -22,18 +22,18 @@
 #**************************************************************************************************
 
 .PHONY: all clean
+# Define required environment variables
+#------------------------------------------------------------------------------------------------
 
 # Define required raylib variables
 PROJECT_NAME       ?= raylib_examples
 RAYLIB_VERSION     ?= 4.0.0
 RAYLIB_PATH        ?= ..
 
-# Define default options
-
 # One of PLATFORM_DESKTOP, PLATFORM_RPI, PLATFORM_ANDROID, PLATFORM_WEB
 PLATFORM           ?= PLATFORM_DESKTOP
 
-# Locations of your newly installed library and associated headers. See ../src/Makefile
+# Locations of your newly installed library and associated headers.
 # On Linux, if you have installed raylib but cannot compile the examples, check that
 # the *_INSTALL_PATH values here are the same as those in src/Makefile or point to known locations.
 # To enable system-wide compile-time and runtime linking to libraylib.so, run ../src/$ sudo make install RAYLIB_LIBTYPE_SHARED.
@@ -75,39 +75,39 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
     # No uname.exe on MinGW!, but OS=Windows_NT on Windows!
     # ifeq ($(UNAME),Msys) -> Windows
     ifeq ($(OS),Windows_NT)
-        PLATFORM_OS=WINDOWS
+        PLATFORM_OS = WINDOWS
     else
-        UNAMEOS=$(shell uname)
+        UNAMEOS = $(shell uname)
         ifeq ($(UNAMEOS),Linux)
-            PLATFORM_OS=LINUX
+            PLATFORM_OS = LINUX
         endif
         ifeq ($(UNAMEOS),FreeBSD)
-            PLATFORM_OS=BSD
+            PLATFORM_OS = BSD
         endif
         ifeq ($(UNAMEOS),OpenBSD)
-            PLATFORM_OS=BSD
+            PLATFORM_OS = BSD
         endif
         ifeq ($(UNAMEOS),NetBSD)
-            PLATFORM_OS=BSD
+            PLATFORM_OS = BSD
         endif
         ifeq ($(UNAMEOS),DragonFly)
-            PLATFORM_OS=BSD
+            PLATFORM_OS = BSD
         endif
         ifeq ($(UNAMEOS),Darwin)
-            PLATFORM_OS=OSX
+            PLATFORM_OS = OSX
         endif
     endif
 endif
 ifeq ($(PLATFORM),PLATFORM_RPI)
-    UNAMEOS=$(shell uname)
+    UNAMEOS = $(shell uname)
     ifeq ($(UNAMEOS),Linux)
-        PLATFORM_OS=LINUX
+        PLATFORM_OS = LINUX
     endif
 endif
 ifeq ($(PLATFORM),PLATFORM_DRM)
-    UNAMEOS=$(shell uname)
+    UNAMEOS = $(shell uname)
     ifeq ($(UNAMEOS),Linux)
-        PLATFORM_OS=LINUX
+        PLATFORM_OS = LINUX
     endif
 endif
 
@@ -158,8 +158,8 @@ RAYLIB_RELEASE_PATH 	?= $(RAYLIB_PATH)/src
 # Look for libraylib.so.1 => $(RAYLIB_INSTALL_PATH)/libraylib.so.1 or similar listing.
 EXAMPLE_RUNTIME_PATH   ?= $(RAYLIB_RELEASE_PATH)
 
-# Define default C compiler: gcc
-# NOTE: define g++ compiler if using C++
+# Define default C compiler: CC
+#------------------------------------------------------------------------------------------------
 CC = gcc
 
 ifeq ($(PLATFORM),PLATFORM_DESKTOP)
@@ -186,7 +186,8 @@ ifeq ($(PLATFORM),PLATFORM_WEB)
     CC = emcc
 endif
 
-# Define default make program
+# Define default make program: MAKE
+#------------------------------------------------------------------------------------------------
 MAKE ?= make
 
 ifeq ($(PLATFORM),PLATFORM_DESKTOP)
@@ -201,7 +202,8 @@ ifeq ($(PLATFORM),PLATFORM_WEB)
     MAKE = mingw32-make
 endif
 
-# Define compiler flags:
+# Define compiler flags: CFLAGS
+#------------------------------------------------------------------------------------------------
 #  -O1                  defines optimization level
 #  -g                   include debug information on compilation
 #  -s                   strip unnecessary data from build
@@ -245,7 +247,8 @@ ifeq ($(PLATFORM),PLATFORM_DRM)
     CFLAGS += -std=gnu99 -DEGL_NO_X11
 endif
 
-# Define include paths for required headers
+# Define include paths for required headers: INCLUDE_PATHS
+#------------------------------------------------------------------------------------------------
 # NOTE: Some external/extras libraries could be required (stb, physac, easings...)
 INCLUDE_PATHS = -I. -I$(RAYLIB_PATH)/src -I$(RAYLIB_PATH)/src/external -I$(RAYLIB_PATH)/src/extras
 
@@ -270,7 +273,8 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
     endif
 endif
 
-# Define library paths containing required libs.
+# Define library paths containing required libs: LDFLAGS
+#------------------------------------------------------------------------------------------------
 LDFLAGS = -L. -L$(RAYLIB_RELEASE_PATH) -L$(RAYLIB_PATH)/src
 
 ifeq ($(PLATFORM),PLATFORM_DESKTOP)
@@ -322,8 +326,9 @@ ifeq ($(PLATFORM),PLATFORM_RPI)
     LDFLAGS += -L$(RPI_TOOLCHAIN_SYSROOT)/opt/vc/lib
 endif
 
-# Define any libraries required on linking
-# if you want to link libraries (libname.so or libname.a), use the -lname
+# Define libraries required on linking: LDLIBS
+# NOTE: To link libraries (lib<name>.so or lib<name>.a), use -l<name>
+#------------------------------------------------------------------------------------------------
 ifeq ($(PLATFORM),PLATFORM_DESKTOP)
     ifeq ($(PLATFORM_OS),WINDOWS)
         # Libraries for Windows desktop compilation
@@ -387,7 +392,8 @@ ifeq ($(PLATFORM),PLATFORM_WEB)
     LDLIBS = $(RAYLIB_RELEASE_PATH)/libraylib.a
 endif
 
-# Define all object files required
+# Define source code object files required
+#------------------------------------------------------------------------------------------------
 CORE = \
     core/core_basic_window \
     core/core_basic_screen_manager \
@@ -526,6 +532,8 @@ PHYSICS = \
 
 CURRENT_MAKEFILE = $(lastword $(MAKEFILE_LIST))
 
+# Define processes to execute
+#------------------------------------------------------------------------------------------------
 # Default target entry
 all: $(CORE) $(SHAPES) $(TEXT) $(TEXTURES) $(MODELS) $(SHADERS) $(AUDIO) $(PHYSICS)
 
