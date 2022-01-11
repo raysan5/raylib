@@ -26,17 +26,17 @@
 # Define required environment variables
 #------------------------------------------------------------------------------------------------
 # Define target platform: PLATFORM_DESKTOP, PLATFORM_RPI, PLATFORM_DRM, PLATFORM_ANDROID, PLATFORM_WEB
-PLATFORM           ?= PLATFORM_DESKTOP
+PLATFORM              ?= PLATFORM_DESKTOP
 
 # Define required raylib variables
-PROJECT_NAME       ?= raylib_examples
-RAYLIB_VERSION     ?= 4.0.0
-RAYLIB_PATH        ?= ..
+PROJECT_NAME          ?= raylib_examples
+RAYLIB_VERSION        ?= 4.0.0
+RAYLIB_PATH           ?= ..
 
 # Locations of raylib.h and libraylib.a/libraylib.so
 # NOTE: Those variables are only used for PLATFORM_OS: LINUX, BSD
 RAYLIB_INCLUDE_PATH   ?= /usr/local/include
-RAYLIB_LIBRARY_PATH   ?= /usr/local/lib
+RAYLIB_LIB_PATH       ?= /usr/local/lib
 
 # Library type compilation: STATIC (.a) or SHARED (.so/.dll)
 RAYLIB_LIBTYPE        ?= STATIC
@@ -262,10 +262,10 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
         endif
     endif
     ifeq ($(PLATFORM_OS),LINUX)
-        LDFLAGS += -L$(RAYLIB_LIBRARY_PATH)
+        LDFLAGS += -L$(RAYLIB_LIB_PATH)
     endif
     ifeq ($(PLATFORM_OS),BSD)
-        LDFLAGS += -Lsrc -L$(RAYLIB_LIBRARY_PATH)
+        LDFLAGS += -Lsrc -L$(RAYLIB_LIB_PATH)
     endif
 endif
 ifeq ($(PLATFORM),PLATFORM_WEB)
