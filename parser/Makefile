@@ -22,6 +22,7 @@ parse:
 	./raylib_parser -i ../src/extras/physac.h -o physac_api.$(EXTENSION) -f $(FORMAT) -d PHYSACDEF
 	./raylib_parser -i ../src/extras/raygui.h -o raygui_api.$(EXTENSION) -f $(FORMAT) -d RAYGUIAPI
 	./raylib_parser -i ../src/extras/rmem.h -o rmem_api.$(EXTENSION) -f $(FORMAT) -d RMEMAPI
+	./raylib_parser -i ../src/rlgl.h -o rlgl_api.$(EXTENSION) -f $(FORMAT) -d RLAPI
 
 clean:
 	rm -f raylib_parser *.json *.txt *.xml *.lua

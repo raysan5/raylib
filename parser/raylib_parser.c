@@ -120,6 +120,7 @@ typedef struct DefineInfo {
     DefineType type;  // Define type
 		char value[256];  // Define value
     char desc[128];   // Define description
+    bool isHex;       // Define is hex number (for types INT, LONG)
 } DefineInfo;
 
 // Output format for parsed data
@@ -482,10 +483,11 @@ int main(int argc, char* argv[])
         else if (linePtr[j] == '\'') defines[defineIndex].type = CHAR;
         else if (IsTextEqual(linePtr+j, "CLITERAL(Color)", 15)) defines[defineIndex].type = COLOR;
         else if (isdigit(linePtr[j])) { // Parsing numbers
-            bool isFloat = false, isNumber = true;
+            bool isFloat = false, isNumber = true, isHex = false;
             while (linePtr[j] != ' ' && linePtr[j] != '\t' && linePtr[j] != '\0') {
                 char ch = linePtr[j];
                 if (ch == '.') isFloat = true;
+                if (ch == 'x') isHex = true;
                 if (!(isdigit(ch)||(ch >= 'a' && ch <= 'f')||(ch >= 'A' && ch <= 'F')||ch=='x'||ch=='L'||ch=='.'||ch=='+'||ch=='-')) isNumber = false;
                 j++;
             }
@@ -494,6 +496,7 @@ int main(int argc, char* argv[])
                     defines[defineIndex].type = linePtr[j-1] == 'f' ? FLOAT : DOUBLE;
                 } else {
                     defines[defineIndex].type = linePtr[j-1] == 'L' ? LONG : INT;
+                    defines[defineIndex].isHex = isHex;
                 }
             }
         }
@@ -501,7 +504,8 @@ int main(int argc, char* argv[])
         // Extracting value
         while (linePtr[j] != '\\' && linePtr[j] != '\0' && !(linePtr[j] == '/' && linePtr[j+1] == '/')) j++;
         int defineValueEnd = j-1;
-				while (linePtr[defineValueEnd] == ' ' || linePtr[defineValueEnd] == '\t') defineValueEnd--; // Remove trailing spaces and tabs
+        while (linePtr[defineValueEnd] == ' ' || linePtr[defineValueEnd] == '\t') defineValueEnd--; // Remove trailing spaces and tabs
+        if (defines[defineIndex].type == LONG || defines[defineIndex].type == FLOAT) defineValueEnd--; // Remove number postfix
         int valueLen = defineValueEnd - defineValueStart + 1;
         if (valueLen > 255) valueLen = 255;
 
@@ -1061,13 +1065,8 @@ static void ExportParsedData(const char *fileName, int format)
                 fprintf(outFile, "    {\n");
                 fprintf(outFile, "      name = \"%s\",\n", defines[i].name);
                 fprintf(outFile, "      type = \"%s\",\n", StrDefineType(defines[i].type));
-                if (defines[i].type == INT || defines[i].type == DOUBLE || defines[i].type == STRING) {
+                if (defines[i].type == INT || defines[i].type == LONG || defines[i].type == FLOAT || defines[i].type == DOUBLE || defines[i].type == STRING) {
                     fprintf(outFile, "      value = %s,\n", defines[i].value);
-                } else if (defines[i].type == FLOAT || defines[i].type == LONG) {
-                    int n = TextLength(defines[i].value);
-                    defines[i].value[n-1] = '\0';
-                    fprintf(outFile, "      value = %s,\n", defines[i].value);
-                    defines[i].value[n-1] = defines[i].type == FLOAT ? 'f' : 'L';
                 } else {
                     fprintf(outFile, "      value = \"%s\",\n", defines[i].value);
                 }
@@ -1169,13 +1168,10 @@ static void ExportParsedData(const char *fileName, int format)
                 fprintf(outFile, "    {\n");
                 fprintf(outFile, "      \"name\": \"%s\",\n", defines[i].name);
                 fprintf(outFile, "      \"type\": \"%s\",\n", StrDefineType(defines[i].type));
-                if (defines[i].type == INT || defines[i].type == DOUBLE || defines[i].type == STRING) {
+                if (defines[i].isHex) { // INT or LONG
+                    fprintf(outFile, "      \"value\": %ld,\n", strtol(defines[i].value, NULL, 16));
+                } else if (defines[i].type == INT || defines[i].type == LONG || defines[i].type == FLOAT || defines[i].type == DOUBLE || defines[i].type == STRING) {
                     fprintf(outFile, "      \"value\": %s,\n", defines[i].value);
-                } else if (defines[i].type == FLOAT || defines[i].type == LONG) {
-                    int n = TextLength(defines[i].value);
-                    defines[i].value[n-1] = '\0';
-                    fprintf(outFile, "      \"value\": %s,\n", defines[i].value);
-                    defines[i].value[n-1] = defines[i].type == FLOAT ? 'f' : 'L';
                 } else {
                     fprintf(outFile, "      \"value\": \"%s\",\n", defines[i].value);
                 }

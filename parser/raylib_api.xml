@@ -546,7 +546,7 @@
         <Define name="RAYLIB_H" type="GUARD" value="" desc="" />
         <Define name="RAYLIB_VERSION" type="STRING" value=""4.1-dev"" desc="" />
         <Define name="RLAPI" type="UNKNOWN" value="__declspec(dllexport)" desc="// We are building the library as a Win32 shared library (.dll)" />
-        <Define name="PI" type="FLOAT" value="3.14159265358979323846f" desc="" />
+        <Define name="PI" type="FLOAT" value="3.14159265358979323846" desc="" />
         <Define name="DEG2RAD" type="UNKNOWN" value="(PI/180.0f)" desc="" />
         <Define name="RAD2DEG" type="UNKNOWN" value="(180.0f/PI)" desc="" />
         <Define name="RL_MALLOC(sz)" type="MACRO" value="malloc(sz)" desc="" />

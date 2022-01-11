@@ -3714,7 +3714,7 @@ Define 003: RLAPI
 Define 004: PI
   Name: PI
   Type: FLOAT
-  Value: 3.14159265358979323846f
+  Value: 3.14159265358979323846
   Description: 
 Define 005: DEG2RAD
   Name: DEG2RAD
