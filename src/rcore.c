@@ -3261,7 +3261,7 @@ char *EncodeDataBase64(const unsigned char *data, int dataLength, int *outputLen
         encodedData[j++] = base64encodeTable[(triple >> 0*6) & 0x3F];
     }
 
-    for (int i = 0; i < modTable[dataLength%3]; i++) encodedData[*outputLength - 1 - i] = '=';
+    for (int i = 0; i < modTable[dataLength%3]; i++) encodedData[*outputLength - 1 - i] = '=';  // Padding character
 
     return encodedData;
 }
