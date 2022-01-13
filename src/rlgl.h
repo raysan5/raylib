@@ -3544,8 +3544,16 @@ unsigned int rlLoadShaderCode(const char *vsCode, const char *fsCode)
     unsigned int vertexShaderId = 0;
     unsigned int fragmentShaderId = 0;
 
-    if (vsCode != NULL) vertexShaderId = rlCompileShader(vsCode, GL_VERTEX_SHADER);
-    if (fsCode != NULL) fragmentShaderId = rlCompileShader(fsCode, GL_FRAGMENT_SHADER);
+    if (vsCode != NULL) {
+        vertexShaderId = rlCompileShader(vsCode, GL_VERTEX_SHADER);
+    } else {
+        vertexShaderId = RLGL.State.defaultVShaderId;
+    }
+    if (fsCode != NULL) {
+        fragmentShaderId = rlCompileShader(fsCode, GL_FRAGMENT_SHADER);
+    } else {
+        fragmentShaderId = RLGL.State.defaultFShaderId;
+    }
 
     // Load shader program if provided vertex/fragment shaders compile successfully
     if ((vertexShaderId != 0) && (fragmentShaderId != 0)) id = rlLoadShaderProgram(vertexShaderId, fragmentShaderId);
