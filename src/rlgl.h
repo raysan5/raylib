@@ -3544,61 +3544,66 @@ unsigned int rlLoadShaderCode(const char *vsCode, const char *fsCode)
     unsigned int vertexShaderId = 0;
     unsigned int fragmentShaderId = 0;
 
-    if (vsCode != NULL) {
-        vertexShaderId = rlCompileShader(vsCode, GL_VERTEX_SHADER);
-    } else {
-        vertexShaderId = RLGL.State.defaultVShaderId;
-    }
-    if (fsCode != NULL) {
-        fragmentShaderId = rlCompileShader(fsCode, GL_FRAGMENT_SHADER);
-    } else {
-        fragmentShaderId = RLGL.State.defaultFShaderId;
-    }
+    // Compile vertex shader (if provided)
+    if (vsCode != NULL) vertexShaderId = rlCompileShader(vsCode, GL_VERTEX_SHADER);
+    // In case no vertex shader was provided or compilation failed, we use default vertex shader
+    if (vertexShaderId == 0) vertexShaderId = RLGL.State.defaultVShaderId;
 
-    // Load shader program if provided vertex/fragment shaders compile successfully
-    if ((vertexShaderId != 0) && (fragmentShaderId != 0)) id = rlLoadShaderProgram(vertexShaderId, fragmentShaderId);
+    // Compile fragment shader (if provided)
+    if (fsCode != NULL) fragmentShaderId = rlCompileShader(fsCode, GL_FRAGMENT_SHADER);
+    // In case no fragment shader was provided or compilation failed, we use default fragment shader
+    if (fragmentShaderId == 0) fragmentShaderId = RLGL.State.defaultFShaderId;
 
-    // Once shader program is compiled, we can detach and delete vertex/fragment shaders
-    // NOTE: Vertex
-    if (vertexShaderId != 0)
-    {
-        // Detach shader before deletion to make sure memory is freed
-        glDetachShader(id, vertexShaderId);
-        glDeleteShader(vertexShaderId);
-    }
-    if (fragmentShaderId != 0)
-    {
-        // Detach shader before deletion to make sure memory is freed
-        glDetachShader(id, fragmentShaderId);
-        glDeleteShader(fragmentShaderId);
-    }
-
-    if (id == 0)
-    {
-        // In case shader loading fails, we return the default shader
-        TRACELOG(RL_LOG_WARNING, "SHADER: Failed to load custom shader code, using default shader");
-        id = RLGL.State.defaultShaderId;
-    }
+    // In case vertex and fragment shader are the default ones, no need to recompile, we can just assign the default shader program id
+    if ((vertexShaderId == RLGL.State.defaultVShaderId) && (fragmentShaderId == RLGL.State.defaultFShaderId)) id = RLGL.State.defaultShaderId;
     else
     {
-        // Get available shader uniforms
-        // NOTE: This information is useful for debug...
-        int uniformCount = -1;
-        glGetProgramiv(id, GL_ACTIVE_UNIFORMS, &uniformCount);
+        // One of or both shader are new, we need to compile a new shader program
+        id = rlLoadShaderProgram(vertexShaderId, fragmentShaderId);
 
-        for (int i = 0; i < uniformCount; i++)
+        // We can detach and delete vertex/fragment shaders (if not default ones)
+        // NOTE: We detach shader before deletion to make sure memory is freed
+        if (vertexShaderId != RLGL.State.defaultVShaderId)
         {
-            int namelen = -1;
-            int num = -1;
-            char name[256] = { 0 };     // Assume no variable names longer than 256
-            GLenum type = GL_ZERO;
-
-            // Get the name of the uniforms
-            glGetActiveUniform(id, i, sizeof(name) - 1, &namelen, &num, &type, name);
-
-            name[namelen] = 0;
-            TRACELOGD("SHADER: [ID %i] Active uniform (%s) set at location: %i", id, name, glGetUniformLocation(id, name));
+            glDetachShader(id, vertexShaderId);
+            glDeleteShader(vertexShaderId);
         }
+        if (fragmentShaderId != RLGL.State.defaultFShaderId)
+        {
+            glDetachShader(id, fragmentShaderId);
+            glDeleteShader(fragmentShaderId);
+        }
+
+        // In case shader program loading failed, we assign default shader
+        if (id == 0)
+        {
+            // In case shader loading fails, we return the default shader
+            TRACELOG(RL_LOG_WARNING, "SHADER: Failed to load custom shader code, using default shader");
+            id = RLGL.State.defaultShaderId;
+        }
+        /*
+        else
+        {
+            // Get available shader uniforms
+            // NOTE: This information is useful for debug...
+            int uniformCount = -1;
+            glGetProgramiv(id, GL_ACTIVE_UNIFORMS, &uniformCount);
+
+            for (int i = 0; i < uniformCount; i++)
+            {
+                int namelen = -1;
+                int num = -1;
+                char name[256] = { 0 };     // Assume no variable names longer than 256
+                GLenum type = GL_ZERO;
+
+                // Get the name of the uniforms
+                glGetActiveUniform(id, i, sizeof(name) - 1, &namelen, &num, &type, name);
+
+                name[namelen] = 0;
+                TRACELOGD("SHADER: [ID %i] Active uniform (%s) set at location: %i", id, name, glGetUniformLocation(id, name));
+            }
+        }
+        */
     }
 #endif
 
