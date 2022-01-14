@@ -166,29 +166,13 @@
         #ifndef MAX_PATH
             #define MAX_PATH 1025
         #endif
-        void *LoadLibraryA(void *lpLibFileName);
-        void *LoadLibraryW(void *lpLibFileName);
-
-        #ifdef UNICODE
-            #define LoadLibrary  LoadLibraryW
-        #else
-            #define LoadLibrary  LoadLibraryA
-        #endif // !UNICODE
-
-        void *GetProcAddress(void *hModule, void *lpProcName);
-
-        void *GetCurrentProcess(void);
-        bool FreeLibrary(void *hLibModule);
-
+        unsigned int GetModuleFileNameA( void* hModule, const char* lpFilename, unsigned int nSize);
+        unsigned int GetModuleFileNameW( void* hModule, const unsigned short* lpFilename, unsigned int nSize);
         int  WideCharToMultiByte(unsigned int cp, unsigned long flags, const unsigned short *widestr, int cchwide, char *str, int cbmb, const char *defchar, int *used_default);
-
-        const char pathDelim = '\\';
     #elif defined(__linux__)
         #include <unistd.h>
-        const char pathDelim = '/';
     #elif defined(__APPLE__)
         #include <sys/syslimits.h>
-        const char pathDelim = '/';
     #endif // OSs
 #endif // PLATFORM_DESKTOP
 
@@ -3003,86 +2987,75 @@ const char *GetWorkingDirectory(void)
 
 const char *GetApplicationDirectory(void)
 {
-	static char appDir[MAX_FILEPATH_LENGTH] = { 0 };
-	memset(appDir, 0, MAX_FILEPATH_LENGTH);
+    static char appDir[MAX_FILEPATH_LENGTH] = { 0 };
+    memset(appDir, 0, MAX_FILEPATH_LENGTH);
 
 #if defined(_WIN32)
-	typedef unsigned long(*GetModuleFileNameFunc)(void*, void*, void*, unsigned long);
-
-	GetModuleFileNameFunc getModuleFileNameExWPtr = NULL;
-	void *lib = LoadLibrary(L"psapi.dll");
-
-	if (lib == NULL)
-	{
-		appDir[0] = '\\';
-	}
-	else
-	{
+    int len = 0;
 #if defined (UNICODE)
-		getModuleFileNameExWPtr = (GetModuleFileNameFunc)GetProcAddress(lib, "GetModuleFileNameExW");
+    unsigned short widePath[MAX_PATH];
+    len = GetModuleFileNameW(NULL, widePath, MAX_PATH);
+    len = WideCharToMultiByte(0, 0, widePath, len, appDir, MAX_PATH, NULL, NULL);
 #else
-        getModuleFileNameExWPtr = (GetModuleFileNameFunc)GetProcAddress(lib, "GetModuleFileNameExA");
+    len = GetModuleFileNameA(NULL, appDir, MAX_PATH);
 #endif
+    if (len > 0)
+    {
+        for (int i = len; i >= 0; --i)
+        {
+            if (appDir[i] == '\\')
+            {
+                appDir[i + 1] = '\0';
+                i = -1;
+            }
+        }
+    }
+    else
+    {
+        appDir[0] = '.';
+        appDir[1] = '\\';
+    }
 
-		if (getModuleFileNameExWPtr == NULL)
-		{
-			appDir[0] = '\\';
-		}
-		else
-		{
-            int len = 0;
-#if defined (UNICODE)
-			unsigned short widePath[MAX_PATH];
-			len = getModuleFileNameExWPtr(GetCurrentProcess(), NULL, widePath, MAX_PATH);
-			len = WideCharToMultiByte(0, 0, widePath, len, appDir, MAX_PATH, NULL, NULL);
-#else
-			len = getModuleFileNameExWPtr(GetCurrentProcess(), NULL, appDir, MAX_PATH);
-#endif
-			if (len > 0)
-			{
-				for (int i = len; i >= 0; --i)
-				{
-					if (appDir[i] == '\\')
-					{
-						appDir[i + 1] = '\0';
-						i = -1;
-					}
-				}
-			}
-		}
-
-		FreeLibrary(lib);
-	}
 #elif defined(__linux__)
-	unsigned int size = sizeof(appDir);
-	ssize_t len = readlink("/proc/self/exe", appDir, size);
+    unsigned int size = sizeof(appDir);
+    ssize_t len = readlink("/proc/self/exe", appDir, size);
 
-	if (len > 0)
-	{
-		for (int i = len; i >= 0; --i)
-		{
-			if (appDir[i] == '/')
-			{
-				appDir[i + 1] = '\0';
-				i = -1;
-			}
-		}
-	}
+    if (len > 0)
+    {
+        for (int i = len; i >= 0; --i)
+        {
+            if (appDir[i] == '/')
+            {
+                appDir[i + 1] = '\0';
+                i = -1;
+            }
+        }
+    }
+    else
+    {
+        appDir[0] = '.';
+        appDir[1] = '/';
+    }
 #elif defined(__APPLE__)
-	uint32_t size = sizeof(appDir);
+    uint32_t size = sizeof(appDir);
 
-	if (_NSGetExecutablePath(appDir, &size) == 0)
-	{
-		int len = strlen(appDir);
-		for (int i = len; i >= 0; --i)
-		{
-			if (appDir[i] == '/')
-			{
-				appDir[i + 1] = '\0';
-				i = -1;
-			}
-		}
-	}
+    if (_NSGetExecutablePath(appDir, &size) == 0)
+    {
+        int len = strlen(appDir);
+        for (int i = len; i >= 0; --i)
+        {
+            if (appDir[i] == '/')
+            {
+                appDir[i + 1] = '\0';
+                i = -1;
+            }
+        }
+    }
+    else
+    {
+        appDir[0] = '.';
+        appDir[1] = '/';
+    }
 #endif
 
     return appDir;
