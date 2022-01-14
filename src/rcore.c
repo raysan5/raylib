@@ -3014,7 +3014,8 @@ const char *GetApplicationDirectory(void)
 
     if (lib == NULL)
     {
-        appDir[0] = '\\';
+        appDir[0] = '.';
+        appDir[1] = '\\';
     }
     else
     {
@@ -3026,7 +3027,8 @@ const char *GetApplicationDirectory(void)
 
         if (getModuleFileNameExWPtr == NULL)
         {
-            appDir[0] = '\\';
+            appDir[0] = '.';
+            appDir[1] = '\\';
         }
         else
         {
@@ -3049,6 +3051,11 @@ const char *GetApplicationDirectory(void)
                     }
                 }
             }
+            else
+            {
+                appDir[0] = '.';
+                appDir[1] = '\\';
+            }
         }
 
         FreeLibrary(lib);
@@ -3070,7 +3077,8 @@ const char *GetApplicationDirectory(void)
     }
     else
     {
-        appDir[0] = '/';
+        appDir[0] = '.';
+        appDir[1] = '/';
     }
 #elif defined(__APPLE__)
     uint32_t size = sizeof(appDir);
@@ -3089,7 +3097,8 @@ const char *GetApplicationDirectory(void)
     }
     else
     {
-        appDir[0] = '/';
+        appDir[0] = '.';
+        appDir[1] = '/';
     }
 #endif
 
