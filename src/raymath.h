@@ -335,7 +335,7 @@ RMAPI Vector2 Vector2Normalize(Vector2 v)
 }
 
 // Transforms a Vector2 by a given Matrix
-Vector2 Vector2Transform(Vector2 v, Matrix mat)
+RMAPI Vector2 Vector2Transform(Vector2 v, Matrix mat)
 {
 	Vector2 result = { 0 };
 
