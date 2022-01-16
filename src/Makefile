@@ -632,7 +632,7 @@ raudio.o : raudio.c raylib.h
 # Compile raygui module
 # NOTE: raygui header should be distributed with raylib.h
 raygui.o : raygui.c
-	$(CC) -c $< $(CFLAGS) $(INCLUDE_PATHS)
+	$(CC) -c $< $(CFLAGS) $(INCLUDE_PATHS) -DRAYGUI_IMPLEMENTATION
 raygui.c:
 	echo #define RAYGUI_IMPLEMENTATION > raygui.c
 	echo #include "$(RAYLIB_MODULE_RAYGUI_PATH)/raygui.h" >> raygui.c
@@ -640,7 +640,7 @@ raygui.c:
 # Compile physac module
 # NOTE: physac header should be distributed with raylib.h
 physac.o : physac.c
-	$(CC) -c $< $(CFLAGS) $(INCLUDE_PATHS)
+	$(CC) -c $< $(CFLAGS) $(INCLUDE_PATHS) -DPHYSAC_IMPLEMENTATION
 physac.c:
 	@echo #define PHYSAC_IMPLEMENTATION > physac.c
 	@echo #include "$(RAYLIB_MODULE_PHYSAC_PATH)/physac.h" >> physac.c
