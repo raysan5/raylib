@@ -317,7 +317,7 @@ struct rAudioBuffer {
 
     float volume;                   // Audio buffer volume
     float pitch;                    // Audio buffer pitch
-    float pan;                      // Audio buffer pan (0 to 1)
+    float pan;                      // Audio buffer pan (0.0f to 1.0f)
 
     bool playing;                   // Audio buffer state: AUDIO_PLAYING
     bool paused;                    // Audio buffer state: AUDIO_PAUSED
@@ -398,8 +398,8 @@ void StopAudioBuffer(AudioBuffer *buffer);
 void PauseAudioBuffer(AudioBuffer *buffer);
 void ResumeAudioBuffer(AudioBuffer *buffer);
 void SetAudioBufferVolume(AudioBuffer *buffer, float volume);
-void SetAudioBufferPan(AudioBuffer *buffer, float pan);
 void SetAudioBufferPitch(AudioBuffer *buffer, float pitch);
+void SetAudioBufferPan(AudioBuffer *buffer, float pan);
 void TrackAudioBuffer(AudioBuffer *buffer);
 void UntrackAudioBuffer(AudioBuffer *buffer);
 
@@ -645,12 +645,6 @@ void SetAudioBufferVolume(AudioBuffer *buffer, float volume)
     if (buffer != NULL) buffer->volume = volume;
 }
 
-// Set pan for an audio buffer
-void SetAudioBufferPan(AudioBuffer *buffer, float pan)
-{
-    if (buffer != NULL) buffer->pan = pan;
-}
-
 // Set pitch for an audio buffer
 void SetAudioBufferPitch(AudioBuffer *buffer, float pitch)
 {
@@ -665,6 +659,15 @@ void SetAudioBufferPitch(AudioBuffer *buffer, float pitch)
 
         buffer->pitch = pitch;
     }
+}
+
+// Set pan for an audio buffer
+void SetAudioBufferPan(AudioBuffer *buffer, float pan)
+{
+    if (pan < 0.0f) pan = 0.0f; 
+    else if (pan > 1.0f) pan = 1.0f;
+
+    if (buffer != NULL) buffer->pan = pan;
 }
 
 // Track audio buffer to linked list next position
@@ -2016,10 +2019,8 @@ void SetAudioStreamPitch(AudioStream stream, float pitch)
 // Set pan for audio stream
 void SetAudioStreamPan(AudioStream stream, float pan)
 {
-    if (pan < 0.0f) pan = 0.0f; else if (pan > 1.0f) pan = 1.0f;
     SetAudioBufferPan(stream.buffer, pan);
 }
-
 
 // Default size for new audio streams
 void SetAudioStreamBufferSizeDefault(int size)
