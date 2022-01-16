@@ -1,21 +1,13 @@
 /*******************************************************************************************
 *
-*   raylib [SHAPES] example - Top Down Lights
-*
-*   Welcome to raylib!
-*
-*   To test examples, just press F6 and execute raylib_compile_execute script
-*   Note that compiled executable is placed in the same folder as .c file
-*
-*   You can find all basic examples on C:\raylib\raylib\examples folder or
-*   raylib official webpage: www.raylib.com
-*
-*   Enjoy using raylib. :)
+*   raylib [shapes] example - top down lights
 *
 *   This example has been created using raylib 4.0 (www.raylib.com)
 *   raylib is licensed under an unmodified zlib/libpng license (View raylib.h for details)
 *
-*   Copyright (c) 2022 Jeffery Myers
+*   Example contributed by Vlad Adrian (@demizdor) and reviewed by Ramon Santamaria (@raysan5)
+*
+*   Copyright (c) 2022 Jeffery Myers (@JeffM2501)
 *
 ********************************************************************************************/
 
@@ -28,196 +20,177 @@
 #define RLGL_MIN 0x8007
 #define RLGL_MAX 0x8008
 
-#define MAX_BOXES 20
+#define MAX_BOXES     20
+#define MAX_SHADOWS   MAX_BOXES*3         // MAX_BOXES *3. Each box can cast up to two shadow volumes for the edges it is away from, and one for the box itself
+#define MAX_LIGHTS    16
 
-typedef struct  
-{
-    Vector2 Vertecies[4];
-}ShadowGeometry;
+// Shadow geometry type
+typedef struct ShadowGeometry {
+    Vector2 vertices[4];
+} ShadowGeometry;
 
-#define MAX_SHADOWS MAX_BOXES*3 // MAX_BOXES *3. Each box can cast up to two shadow volumes for the edges it is away from, and one for the box itself
+// Light info type
+typedef struct LightInfo {
+    bool active;                // Is this light slot active?
+    bool dirty;                 // Does this light need to be updated?
+    bool valid;                 // Is this light in a valid position?
 
-typedef struct 
-{
-    // is this light slot active
-    bool Active;
+    Vector2 position;           // Light position
+    RenderTexture mask;         // Alpha mask for the light
+    float outerRadius;          // The distance the light touches
+    Rectangle bounds;           // A cached rectangle of the light bounds to help with culling
 
-    // does this light need to be updated
-    bool Dirty;
+    ShadowGeometry shadows[MAX_SHADOWS];
+    int shadowCount;
+} LightInfo;
 
-    // is this light in a valid position
-    bool Valid;
 
-    // Light position
-    Vector2 Position;
+LightInfo lights[MAX_LIGHTS] = { 0 };
 
-    // alpha mask for the light
-    RenderTexture Mask;
-
-    // the distance the light touches
-    float OuterRadius;
-
-    // a cached rectangle of the light bounds to help with culling
-    Rectangle Bounds;
-
-    ShadowGeometry Shadows[MAX_SHADOWS];
-    int ShadowCount;
-}LightInfo;
-
-#define MAX_LIGHTS 16
-LightInfo Lights[MAX_LIGHTS] = { 0 };
-
-// move a light and mark it as dirty so that we update it's mask next frame
+// Move a light and mark it as dirty so that we update it's mask next frame
 void MoveLight(int slot, float x, float y)
 {
-    Lights[slot].Dirty = true;
-    Lights[slot].Position.x = x; 
-    Lights[slot].Position.y = y;
+    lights[slot].dirty = true;
+    lights[slot].position.x = x; 
+    lights[slot].position.y = y;
 
     // update the cached bounds
-    Lights[slot].Bounds.x = x - Lights[slot].OuterRadius;
-    Lights[slot].Bounds.y = y - Lights[slot].OuterRadius;
+    lights[slot].bounds.x = x - lights[slot].outerRadius;
+    lights[slot].bounds.y = y - lights[slot].outerRadius;
 }
 
-// compute a shadow volume for the edge
-// takes the edge and projects it back by the light radius and turns it into a quad
+// Compute a shadow volume for the edge
+// It takes the edge and projects it back by the light radius and turns it into a quad
 void ComputeShadowVolumeForEdge(int slot, Vector2 sp, Vector2 ep)
 {
-    if (Lights[slot].ShadowCount >= MAX_SHADOWS)
-        return;
+    if (lights[slot].shadowCount >= MAX_SHADOWS) return;
 
-    float extension = Lights[slot].OuterRadius*2;
+    float extension = lights[slot].outerRadius*2;
 
-    Vector2 spVector = Vector2Normalize(Vector2Subtract(sp, Lights[slot].Position));
+    Vector2 spVector = Vector2Normalize(Vector2Subtract(sp, lights[slot].position));
     Vector2 spProjection = Vector2Add(sp, Vector2Scale(spVector, extension));
 
-    Vector2 epVector = Vector2Normalize(Vector2Subtract(ep, Lights[slot].Position));
+    Vector2 epVector = Vector2Normalize(Vector2Subtract(ep, lights[slot].position));
     Vector2 epProjection = Vector2Add(ep, Vector2Scale(epVector, extension));
 
-    Lights[slot].Shadows[Lights[slot].ShadowCount].Vertecies[0] = sp;
-    Lights[slot].Shadows[Lights[slot].ShadowCount].Vertecies[1] = ep;
-    Lights[slot].Shadows[Lights[slot].ShadowCount].Vertecies[2] = epProjection;
-    Lights[slot].Shadows[Lights[slot].ShadowCount].Vertecies[3] = spProjection;
+    lights[slot].shadows[lights[slot].shadowCount].vertices[0] = sp;
+    lights[slot].shadows[lights[slot].shadowCount].vertices[1] = ep;
+    lights[slot].shadows[lights[slot].shadowCount].vertices[2] = epProjection;
+    lights[slot].shadows[lights[slot].shadowCount].vertices[3] = spProjection;
 
-    Lights[slot].ShadowCount++;
+    lights[slot].shadowCount++;
 }
 
-// draw the light and shadows to the mask for a light
-void UpdateLightMask(int slot)
+// Draw the light and shadows to the mask for a light
+void DrawLightMask(int slot)
 {
-    // use the light mask
-    BeginTextureMode(Lights[slot].Mask);
+    // Use the light mask
+    BeginTextureMode(lights[slot].mask);
 
-    ClearBackground(WHITE);
+        ClearBackground(WHITE);
 
-    // force the blend mode to only set the alpha of the destination
-    rlSetBlendFactors(RLGL_SRC_ALPHA, RLGL_SRC_ALPHA, RLGL_MIN);
-    rlSetBlendMode(BLEND_CUSTOM);
+        // Force the blend mode to only set the alpha of the destination
+        rlSetBlendFactors(RLGL_SRC_ALPHA, RLGL_SRC_ALPHA, RLGL_MIN);
+        rlSetBlendMode(BLEND_CUSTOM);
 
-    // if we are valid, then draw the light radius to the alpha mask
-    if (Lights[slot].Valid)
-        DrawCircleGradient((int)Lights[slot].Position.x, (int)Lights[slot].Position.y, Lights[slot].OuterRadius, ColorAlpha(WHITE, 0), WHITE);
-    rlDrawRenderBatchActive();
+        // If we are valid, then draw the light radius to the alpha mask
+        if (lights[slot].valid) DrawCircleGradient((int)lights[slot].position.x, (int)lights[slot].position.y, lights[slot].outerRadius, ColorAlpha(WHITE, 0), WHITE);
+        
+        rlDrawRenderBatchActive();
 
-    // cut out the shadows from the light radius by forcing the alpha to maximum
-    rlSetBlendMode(BLEND_ALPHA);
-    rlSetBlendFactors(RLGL_SRC_ALPHA, RLGL_SRC_ALPHA, RLGL_MAX);
-    rlSetBlendMode(BLEND_CUSTOM);
+        // Cut out the shadows from the light radius by forcing the alpha to maximum
+        rlSetBlendMode(BLEND_ALPHA);
+        rlSetBlendFactors(RLGL_SRC_ALPHA, RLGL_SRC_ALPHA, RLGL_MAX);
+        rlSetBlendMode(BLEND_CUSTOM);
 
-    // draw the shadows to the alpha mask
-    for (int i = 0; i < Lights[slot].ShadowCount; i++)
-    {
-        DrawTriangleFan(Lights[slot].Shadows[i].Vertecies, 4, WHITE);
-    }
+        // Draw the shadows to the alpha mask
+        for (int i = 0; i < lights[slot].shadowCount; i++)
+        {
+            DrawTriangleFan(lights[slot].shadows[i].vertices, 4, WHITE);
+        }
 
-    rlDrawRenderBatchActive();
-    // go back to normal blend mode
-    rlSetBlendMode(BLEND_ALPHA);
+        rlDrawRenderBatchActive();
+        
+        // Go back to normal blend mode
+        rlSetBlendMode(BLEND_ALPHA);
 
     EndTextureMode();
 }
 
-// setup a light
-void SetUpLight(int slot, float x, float y, float radius)
+// Setup a light
+void SetupLight(int slot, float x, float y, float radius)
 {
-    Lights[slot].Active = true;
-    Lights[slot].Valid = false; // the light must prove it is valid
-    Lights[slot].Mask = LoadRenderTexture(GetScreenWidth(), GetScreenHeight());
-    Lights[slot].OuterRadius = radius;
+    lights[slot].active = true;
+    lights[slot].valid = false;  // The light must prove it is valid
+    lights[slot].mask = LoadRenderTexture(GetScreenWidth(), GetScreenHeight());
+    lights[slot].outerRadius = radius;
 
-    Lights[slot].Bounds.width = radius * 2;
-    Lights[slot].Bounds.height = radius * 2;
+    lights[slot].bounds.width = radius * 2;
+    lights[slot].bounds.height = radius * 2;
 
     MoveLight(slot, x, y);
 
-    // force the render texture to have something in it
-    UpdateLightMask(slot);
+    // Force the render texture to have something in it
+    DrawLightMask(slot);
 }
 
-// see if a light needs to update it's mask
+// See if a light needs to update it's mask
 bool UpdateLight(int slot, Rectangle* boxes, int count)
 {
-    if (!Lights[slot].Active || !Lights[slot].Dirty)
-        return false;
+    if (!lights[slot].active || !lights[slot].dirty) return false;
 
-    Lights[slot].Dirty = false;
-    Lights[slot].ShadowCount = 0;
-    Lights[slot].Valid = false;
+    lights[slot].dirty = false;
+    lights[slot].shadowCount = 0;
+    lights[slot].valid = false;
 
     for (int i = 0; i < count; i++)
     {
-        // are we in a box, if so we are not valid
-        if (CheckCollisionPointRec(Lights[slot].Position, boxes[i]))
-            return false;
+        // Are we in a box? if so we are not valid
+        if (CheckCollisionPointRec(lights[slot].position, boxes[i])) return false;
 
-        // if this box is outside our bounds, we can skip it
-        if (!CheckCollisionRecs(Lights[slot].Bounds, boxes[i]))
-            continue;
+        // If this box is outside our bounds, we can skip it
+        if (!CheckCollisionRecs(lights[slot].bounds, boxes[i])) continue;
 
-        // check the edges that are on the same side we are, and cast shadow volumes out from them.
+        // Check the edges that are on the same side we are, and cast shadow volumes out from them
         
-        // top
+        // Top
         Vector2 sp = (Vector2){ boxes[i].x, boxes[i].y };
         Vector2 ep = (Vector2){ boxes[i].x + boxes[i].width, boxes[i].y };
 
-        if (Lights[slot].Position.y > ep.y)    
-            ComputeShadowVolumeForEdge(slot, sp, ep);
+        if (lights[slot].position.y > ep.y) ComputeShadowVolumeForEdge(slot, sp, ep);
 
-        // right
+        // Right
         sp = ep;
         ep.y += boxes[i].height;
-        if (Lights[slot].Position.x < ep.x)
-            ComputeShadowVolumeForEdge(slot, sp, ep);
+        if (lights[slot].position.x < ep.x) ComputeShadowVolumeForEdge(slot, sp, ep);
 
-        // bottom
+        // Bottom
         sp = ep;
         ep.x -= boxes[i].width;
-        if (Lights[slot].Position.y < ep.y)
-            ComputeShadowVolumeForEdge(slot, sp, ep);
+        if (lights[slot].position.y < ep.y) ComputeShadowVolumeForEdge(slot, sp, ep);
 
-        // left
+        // Left
         sp = ep;
         ep.y -= boxes[i].height;
-        if (Lights[slot].Position.x > ep.x)
-            ComputeShadowVolumeForEdge(slot, sp, ep);
+        if (lights[slot].position.x > ep.x) ComputeShadowVolumeForEdge(slot, sp, ep);
 
-        // the box itself
-        Lights[slot].Shadows[Lights[slot].ShadowCount].Vertecies[0] = (Vector2){ boxes[i].x, boxes[i].y };
-        Lights[slot].Shadows[Lights[slot].ShadowCount].Vertecies[1] = (Vector2){ boxes[i].x, boxes[i].y + boxes[i].height };
-        Lights[slot].Shadows[Lights[slot].ShadowCount].Vertecies[2] = (Vector2){ boxes[i].x + boxes[i].width, boxes[i].y + boxes[i].height };
-        Lights[slot].Shadows[Lights[slot].ShadowCount].Vertecies[3] = (Vector2){ boxes[i].x + boxes[i].width, boxes[i].y };
-        Lights[slot].ShadowCount++;
+        // The box itself
+        lights[slot].shadows[lights[slot].shadowCount].vertices[0] = (Vector2){ boxes[i].x, boxes[i].y };
+        lights[slot].shadows[lights[slot].shadowCount].vertices[1] = (Vector2){ boxes[i].x, boxes[i].y + boxes[i].height };
+        lights[slot].shadows[lights[slot].shadowCount].vertices[2] = (Vector2){ boxes[i].x + boxes[i].width, boxes[i].y + boxes[i].height };
+        lights[slot].shadows[lights[slot].shadowCount].vertices[3] = (Vector2){ boxes[i].x + boxes[i].width, boxes[i].y };
+        lights[slot].shadowCount++;
     }
 
-    Lights[slot].Valid = true;
+    lights[slot].valid = true;
 
-    UpdateLightMask(slot);
+    DrawLightMask(slot);
 
     return true;
 }
 
-// set up some boxes
-void SetupBoxes(Rectangle* boxes, int *count)
+// Set up some boxes
+void SetupBoxes(Rectangle *boxes, int *count)
 {
     boxes[0] = (Rectangle){ 150,80, 40, 40 };
     boxes[1] = (Rectangle){ 1200, 700, 40, 40 };
@@ -237,83 +210,83 @@ int main(void)
 {
     // Initialization
     //--------------------------------------------------------------------------------------
-    const int screenWidth = 1280;
-    const int screenHeight = 800;
-    InitWindow(screenWidth, screenHeight, "raylib [effects] example - top down lights");
-    SetTargetFPS(60);               // Set our game to run at 60 frames-per-second
+    const int screenWidth = 800;
+    const int screenHeight = 450;
+    
+    InitWindow(screenWidth, screenHeight, "raylib [shapes] example - top down lights");
 
-    // initialize our 'world' of boxes
-    Rectangle boxes[MAX_BOXES];
+    // Initialize our 'world' of boxes
     int boxCount = 0;
+    Rectangle boxes[MAX_BOXES] = { 0 };
     SetupBoxes(boxes, &boxCount);
 
-    // create a checkerboard ground texture
+    // Create a checkerboard ground texture
     Image img = GenImageChecked(64, 64, 32, 32, DARKBROWN, DARKGRAY);
     Texture2D backgroundTexture = LoadTextureFromImage(img);
     UnloadImage(img);
 
-    // create a global light mask to hold all the blended lights
+    // Create a global light mask to hold all the blended lights
     RenderTexture lightMask = LoadRenderTexture(GetScreenWidth(), GetScreenHeight());
 
-    // setup initial light
-    SetUpLight(0, 600, 400, 300);
+    // Setup initial light
+    SetupLight(0, 600, 400, 300);
     int nextLight = 1;
 
     bool showLines = false;
 
+    SetTargetFPS(60);               // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
 
     // Main game loop
     while (!WindowShouldClose())    // Detect window close button or ESC key
     {
         // Update
-        // drag light 0
-        if (IsMouseButtonDown(MOUSE_BUTTON_LEFT))
-            MoveLight(0, GetMousePosition().x, GetMousePosition().y);
+        //----------------------------------------------------------------------------------
+        // Drag light 0
+        if (IsMouseButtonDown(MOUSE_BUTTON_LEFT)) MoveLight(0, GetMousePosition().x, GetMousePosition().y);
 
-        // make a new light
-        if (IsMouseButtonPressed(MOUSE_BUTTON_RIGHT) && nextLight < MAX_LIGHTS)
+        // Make a new light
+        if (IsMouseButtonPressed(MOUSE_BUTTON_RIGHT) && (nextLight < MAX_LIGHTS))
         {
-            SetUpLight(nextLight, GetMousePosition().x, GetMousePosition().y, 200);
+            SetupLight(nextLight, GetMousePosition().x, GetMousePosition().y, 200);
             nextLight++;
         }
 
-        // toggle debug info
-        if (IsKeyPressed(KEY_F1))
-            showLines = !showLines;
+        // Toggle debug info
+        if (IsKeyPressed(KEY_F1)) showLines = !showLines;
 
-        // update the lights and keep track if any were dirty so we know if we need to update the master light mask
+        // Update the lights and keep track if any were dirty so we know if we need to update the master light mask
         bool dirtyLights = false;
         for (int i = 0; i < MAX_LIGHTS; i++)
         {
-            if (UpdateLight(i, boxes, boxCount))
-                dirtyLights = true;
+            if (UpdateLight(i, boxes, boxCount)) dirtyLights = true;
         }
 
-        // update the light mask
+        // Update the light mask
         if (dirtyLights)
         {
-            // build up the light mask
+            // Build up the light mask
             BeginTextureMode(lightMask);
-            ClearBackground(BLACK);
+            
+                ClearBackground(BLACK);
 
-            // force the blend mode to only set the alpha of the destination
-            rlSetBlendFactors(RLGL_SRC_ALPHA, RLGL_SRC_ALPHA, RLGL_MIN);
-            rlSetBlendMode(BLEND_CUSTOM);
+                // Force the blend mode to only set the alpha of the destination
+                rlSetBlendFactors(RLGL_SRC_ALPHA, RLGL_SRC_ALPHA, RLGL_MIN);
+                rlSetBlendMode(BLEND_CUSTOM);
 
-            // merge in all the light masks
-            for (int i = 0; i < MAX_LIGHTS; i++)
-            {
-                if (Lights[i].Active)
-                    DrawTextureRec(Lights[i].Mask.texture, (Rectangle){ 0, 0, (float)GetScreenWidth(), -(float)GetScreenHeight() }, Vector2Zero(), WHITE);
-            }
+                // Merge in all the light masks
+                for (int i = 0; i < MAX_LIGHTS; i++)
+                {
+                    if (lights[i].active) DrawTextureRec(lights[i].mask.texture, (Rectangle){ 0, 0, (float)GetScreenWidth(), -(float)GetScreenHeight() }, Vector2Zero(), WHITE);
+                }
 
-            rlDrawRenderBatchActive();
+                rlDrawRenderBatchActive();
 
-            // go back to normal
-            rlSetBlendMode(BLEND_ALPHA);
+                // Go back to normal blend
+                rlSetBlendMode(BLEND_ALPHA);
             EndTextureMode();
         }
+        //----------------------------------------------------------------------------------
 
         // Draw
         //----------------------------------------------------------------------------------
@@ -321,44 +294,42 @@ int main(void)
 
             ClearBackground(BLACK);
             
-            // draw the tile background
-            DrawTextureRec(backgroundTexture, (Rectangle){ 0,0,(float)GetScreenWidth(),(float)GetScreenHeight() }, Vector2Zero(), WHITE);
+            // Draw the tile background
+            DrawTextureRec(backgroundTexture, (Rectangle){ 0, 0, (float)GetScreenWidth(), (float)GetScreenHeight() }, Vector2Zero(), WHITE);
             
-            // overlay the shadows from all the lights
-            DrawTextureRec(lightMask.texture, (Rectangle){ 0, 0, (float)GetScreenWidth(), -(float)GetScreenHeight() }, Vector2Zero(), ColorAlpha(WHITE, showLines ? 0.75f : 1.0f));
+            // Overlay the shadows from all the lights
+            DrawTextureRec(lightMask.texture, (Rectangle){ 0, 0, (float)GetScreenWidth(), -(float)GetScreenHeight() }, Vector2Zero(), ColorAlpha(WHITE, showLines? 0.75f : 1.0f));
 
-            // draw the lights
+            // Draw the lights
             for (int i = 0; i < MAX_LIGHTS; i++)
             {
-                if (Lights[i].Active)
-                    DrawCircle((int)Lights[i].Position.x, (int)Lights[i].Position.y, 10, i == 0 ? YELLOW : WHITE);
+                if (lights[i].active) DrawCircle((int)lights[i].position.x, (int)lights[i].position.y, 10, (i == 0)? YELLOW : WHITE);
             }
 
             if (showLines)
             {
-                for (int s = 0; s < Lights[0].ShadowCount; s++)
+                for (int s = 0; s < lights[0].shadowCount; s++)
                 {
-                    DrawTriangleFan(Lights[0].Shadows[s].Vertecies, 4, DARKPURPLE);
+                    DrawTriangleFan(lights[0].shadows[s].vertices, 4, DARKPURPLE);
                 }
 
                 for (int b = 0; b < boxCount; b++)
                 {
-                    if (CheckCollisionRecs(boxes[b],Lights[0].Bounds))
-                        DrawRectangleRec(boxes[b], PURPLE);
+                    if (CheckCollisionRecs(boxes[b],lights[0].bounds)) DrawRectangleRec(boxes[b], PURPLE);
 
                     DrawRectangleLines((int)boxes[b].x, (int)boxes[b].y, (int)boxes[b].width, (int)boxes[b].height, DARKBLUE);
                 }
 
-                DrawText("(F1) Hide Shadow Volumes", 0, 60, 20, GREEN);
+                DrawText("(F1) Hide Shadow Volumes", 10, 50, 10, GREEN);
             }
             else
             {
-                DrawText("(F1) Show Shadow Volumes", 0, 60, 20, GREEN);
+                DrawText("(F1) Show Shadow Volumes", 10, 50, 10, GREEN);
             }
 
-            DrawFPS(0, 0);
-            DrawText("Drag to move light #1", 0, 20, 20, DARKGREEN);
-            DrawText("Right click to add new light", 0, 40, 20, DARKGREEN);
+            DrawFPS(screenWidth - 80, 10);
+            DrawText("Drag to move light #1", 10, 10, 10, DARKGREEN);
+            DrawText("Right click to add new light", 10, 30, 10, DARKGREEN);
         EndDrawing();
         //----------------------------------------------------------------------------------
     }
@@ -369,8 +340,7 @@ int main(void)
     UnloadRenderTexture(lightMask);
     for (int i = 0; i < MAX_LIGHTS; i++)
     {
-        if (Lights[i].Active)
-            UnloadRenderTexture(Lights[i].Mask);
+        if (lights[i].active) UnloadRenderTexture(lights[i].mask);
     }
 
     CloseWindow();        // Close window and OpenGL context
