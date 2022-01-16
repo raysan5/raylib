@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [effects] example - Top Down Lights
+*   raylib [SHAPES] example - Top Down Lights
 *
 *   Welcome to raylib!
 *
@@ -15,7 +15,7 @@
 *   This example has been created using raylib 4.0 (www.raylib.com)
 *   raylib is licensed under an unmodified zlib/libpng license (View raylib.h for details)
 *
-*   Copyright (c) 2021 Jeffery Myers
+*   Copyright (c) 2022 Jeffery Myers
 *
 ********************************************************************************************/
 

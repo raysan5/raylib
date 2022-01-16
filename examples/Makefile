@@ -421,7 +421,7 @@ SHAPES = \
     shapes/shapes_easings_rectangle_array \
     shapes/shapes_draw_ring \
     shapes/shapes_draw_circle_sector \
-    shapes/shapes_draw_rectangle_rounded
+    shapes/Sshapes_top_down_lights
 
 TEXTURES = \
     textures/textures_logo_raylib \
@@ -511,8 +511,6 @@ PHYSICS = \
     physics/physics_restitution \
     physics/physics_shatter
 
-EFFECTS = \
-    effects/top_down_lights
 
 CURRENT_MAKEFILE = $(lastword $(MAKEFILE_LIST))
 
@@ -527,7 +525,6 @@ models: $(MODELS)
 shaders: $(SHADERS)
 audio: $(AUDIO)
 physics: $(PHYSICS)
-effects: $(EFFECTS)
 
 # Generic compilation pattern
 # NOTE: Examples must be ready for Android compilation!
