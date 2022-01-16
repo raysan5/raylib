@@ -85,13 +85,13 @@ typedef struct FunctionInfo {
     int paramCount;             // Number of function parameters
     char paramType[MAX_FUNCTION_PARAMETERS][32];   // Parameters type
     char paramName[MAX_FUNCTION_PARAMETERS][32];   // Parameters name
-    char paramDesc[MAX_FUNCTION_PARAMETERS][8];    // Parameters description
+    char paramDesc[MAX_FUNCTION_PARAMETERS][128];  // Parameters description
 } FunctionInfo;
 
 // Struct info data
 typedef struct StructInfo {
     char name[64];              // Struct name
-    char desc[64];              // Struct type description
+    char desc[128];             // Struct type description
     int fieldCount;             // Number of fields in the struct
     char fieldType[MAX_STRUCT_FIELDS][64];     // Field type
     char fieldName[MAX_STRUCT_FIELDS][64];     // Field name
@@ -101,11 +101,11 @@ typedef struct StructInfo {
 // Enum info data
 typedef struct EnumInfo {
     char name[64];              // Enum name
-    char desc[64];              // Enum description
+    char desc[128];             // Enum description
     int valueCount;             // Number of values in enumerator
     char valueName[MAX_ENUM_VALUES][64];    // Value name definition
     int valueInteger[MAX_ENUM_VALUES];      // Value integer
-    char valueDesc[MAX_ENUM_VALUES][64];    // Value description
+    char valueDesc[MAX_ENUM_VALUES][128];   // Value description
 } EnumInfo;
 
 // Output format for parsed data
@@ -139,7 +139,7 @@ static void GetDataTypeAndName(const char *typeName, int typeNameLen, char *type
 static unsigned int TextLength(const char *text);           // Get text length in bytes, check for \0 character
 static bool IsTextEqual(const char *text1, const char *text2, unsigned int count);
 static void MemoryCopy(void *dest, const void *src, unsigned int count);
-static char* CharReplace(char* text, char search, char replace);
+static char *EscapeBackslashes(char *text);                 // Replace '\' by "\\" when exporting to JSON and XML
 
 static void ExportParsedData(const char *fileName, int format); // Export parsed data in desired format
 
@@ -164,8 +164,7 @@ int main(int argc, char* argv[])
     char **funcLines = (char **)malloc(MAX_FUNCS_TO_PARSE*sizeof(char *));
 
     // Structs data (multiple lines), selected from "buffer"
-    char **structLines = (char **)malloc(MAX_STRUCTS_TO_PARSE*sizeof(char *));
-    for (int i = 0; i < MAX_STRUCTS_TO_PARSE; i++) structLines[i] = (char *)calloc(MAX_STRUCT_LINE_LENGTH, sizeof(char));
+    int *structLines = (int *)malloc(MAX_STRUCTS_TO_PARSE*sizeof(int));
 
     // Enums lines pointers, selected from buffer "lines"
     int *enumLines = (int *)malloc(MAX_ENUMS_TO_PARSE*sizeof(int));
@@ -185,52 +184,34 @@ int main(int argc, char* argv[])
         }
     }
 
-    // Read structs data (multiple lines, read directly from buffer)
-    // TODO: Parse structs data from "lines" instead of "buffer" -> Easier to get struct definition
-    for (int i = 0; i < length; i++)
+    // Read struct lines
+    for (int i = 0; i < linesCount; i++)
     {
-        // Read struct data (starting with "typedef struct", ending with '} ... ;')
-        // NOTE: We read it directly from buffer
-        if (IsTextEqual(buffer + i, "typedef struct", 14))
+        // Find structs (starting with "typedef struct ... {", ending with '} ... ;')
+        if (IsTextEqual(lines[i], "typedef struct", 14))
         {
             int j = 0;
             bool validStruct = false;
 
             // WARNING: Typedefs between types: typedef Vector4 Quaternion;
+            // (maybe we could export these too?)
 
-            for (int c = 0; c < 128; c++)
+            for (int c = 0; c < MAX_LINE_LENGTH; c++)
             {
-                if (buffer[i + c] == '{')
+                char v = lines[i][c];
+                if (v == '{') validStruct = true;
+                if (v == '{' || v == ';' || v == '\0')
                 {
-                    validStruct = true;
-                    break;
-                }
-                else if (buffer[i + c] == ';')
-                {
-                    // Not valid struct:
+                    // Not valid struct if it ends without '{':
                     // i.e typedef struct rAudioBuffer rAudioBuffer; -> Typedef and forward declaration
-                    i += c;
                     break;
                 }
             }
-
-            if (validStruct)
-            {
-                while (buffer[i + j] != '}')
-                {
-                    structLines[structCount][j] = buffer[i + j];
-                    j++;
-                }
-
-                while (buffer[i + j] != '\n')
-                {
-                    structLines[structCount][j] = buffer[i + j];
-                    j++;
-                }
-
-                i += j;
-                structCount++;
-            }
+            if (!validStruct) continue;
+            structLines[structCount] = i;
+            while (lines[i][0] != '}') i++;
+            while (lines[i][0] != '\0') i++;
+            structCount++;
         }
     }
 
@@ -259,42 +240,36 @@ int main(int argc, char* argv[])
 
     for (int i = 0; i < structCount; i++)
     {
-        int structLineOffset = 0;
+        char **linesPtr = &lines[structLines[i]];
+
+        // Parse struct description
+        if (linesPtr[-1][0] == '/')
+        {
+            MemoryCopy(structs[i].desc, linesPtr[-1], TextLength(linesPtr[-1]));
+        }
 
         // Get struct name: typedef struct name {
-        for (int c = 15; c < 64 + 15; c++)
+        const int TDS_LEN = 15; // length of "typedef struct "
+        for (int c = TDS_LEN; c < 64 + TDS_LEN; c++)
         {
-            if (structLines[i][c] == '{')
+            if (linesPtr[0][c] == '{')
             {
-                structLineOffset = c + 2;
-
-                MemoryCopy(structs[i].name, &structLines[i][15], c - 15 - 1);
+                MemoryCopy(structs[i].name, &linesPtr[0][TDS_LEN], c - TDS_LEN - 1);
                 break;
             }
         }
 
         // Get struct fields and count them -> fields finish with ;
-        int j = 0;
-        while (structLines[i][structLineOffset + j] != '}')
+        int l = 1;
+        while (linesPtr[l][0] != '}')
         {
             // WARNING: Some structs have empty spaces and comments -> OK, processed
-
-            int fieldStart = 0;
-            if ((structLines[i][structLineOffset + j] != ' ') && (structLines[i][structLineOffset + j] != '\n')) fieldStart = structLineOffset + j;
-
-            if (fieldStart != 0)
+            if ((linesPtr[l][0] != ' ') && (linesPtr[l][0] != '\0'))
             {
                 // Scan one field line
-                int c = 0;
+                char *fieldLine = linesPtr[l];
                 int fieldEndPos = 0;
-                char fieldLine[256] = { 0 };
-
-                while (structLines[i][structLineOffset + j] != '\n')
-                {
-                    if (structLines[i][structLineOffset + j] == ';') fieldEndPos = c;
-                    fieldLine[c] = structLines[i][structLineOffset + j];
-                    c++; j++;
-                }
+                while (fieldLine[fieldEndPos] != ';') fieldEndPos++;
 
                 if (fieldLine[0] != '/')    // Field line is not a comment
                 {
@@ -319,12 +294,11 @@ int main(int argc, char* argv[])
                 }
             }
 
-            j++;
+            l++;
         }
 
     }
 
-    for (int i = 0; i < MAX_STRUCTS_TO_PARSE; i++) free(structLines[i]);
     free(structLines);
 
     // Enum info data
@@ -332,7 +306,20 @@ int main(int argc, char* argv[])
 
     for (int i = 0; i < enumCount; i++)
     {
-        // TODO: Get enum description from lines[enumLines[i] - 1]
+
+        // Parse enum description
+        // NOTE: This is not necessarily from the line immediately before,
+        // some of the enums have extra lines between the "description"
+        // and the typedef enum
+        for (int j = enumLines[i] - 1; j > 0; j--)
+        {
+            char *linePtr = lines[j];
+            if ((linePtr[0] != '/') || (linePtr[2] != ' '))
+            {
+                MemoryCopy(enums[i].desc, &lines[j + 1][0], sizeof(enums[i].desc) - 1);
+                break;
+            }
+        }
 
         for (int j = 1; j < MAX_ENUM_VALUES*2; j++)   // Maximum number of lines following enum first line
         {
@@ -367,7 +354,7 @@ int main(int argc, char* argv[])
                     //  '='  -> value is provided
                     //  ' '  -> value is equal to previous + 1, there could be a description if not '\0'
                     bool foundValue = false;
-                    while (linePtr[c] != '\0')
+                    while ((linePtr[c] != '\0') && (linePtr[c] != '/'))
                     {
                         if (linePtr[c] == '=') { foundValue = true; break; }
                         c++;
@@ -392,10 +379,16 @@ int main(int argc, char* argv[])
                         else enums[i].valueInteger[enums[i].valueCount] = atoi(integer);
                     }
                     else enums[i].valueInteger[enums[i].valueCount] = (enums[i].valueInteger[enums[i].valueCount - 1] + 1);
-
-                    // TODO: Parse value description if any
                 }
                 else enums[i].valueInteger[enums[i].valueCount] = (enums[i].valueInteger[enums[i].valueCount - 1] + 1);
+
+                // Look for description or end of line
+                while ((linePtr[c] != '/') && (linePtr[c] != '\0')) { c++; }
+                if (linePtr[c] == '/')
+                {
+                    // Parse value description
+                    MemoryCopy(enums[i].valueDesc[enums[i].valueCount], &linePtr[c], sizeof(enums[0].valueDesc[0]) - c - 1);
+                }
 
                 enums[i].valueCount++;
             }
@@ -743,13 +736,27 @@ static bool IsTextEqual(const char *text1, const char *text2, unsigned int count
     return result;
 }
 
-// Search and replace a character within a string.
-static char* CharReplace(char* text, char search, char replace)
+// Escape backslashes in a string, writing the escaped string into a static buffer
+static char *EscapeBackslashes(char *text)
 {
-    for (int i = 0; text[i] != '\0'; i++)
-        if (text[i] == search)
-            text[i] = replace;
-    return text;
+    static char buffer[256] = { 0 };
+    
+    int count = 0;
+    
+    for (int i = 0; (text[i] != '\0') && (i < 255); i++, count++)
+    {
+        buffer[count] = text[i];
+        
+        if (text[i] == '\\') 
+        {
+            buffer[count + 1] = '\\';
+            count++;
+        }
+    }
+    
+    buffer[count] = '\0';
+    
+    return buffer;
 }
 
 /*
@@ -855,14 +862,14 @@ static void ExportParsedData(const char *fileName, int format)
             {
                 fprintf(outFile, "    {\n");
                 fprintf(outFile, "      name = \"%s\",\n", structs[i].name);
-                fprintf(outFile, "      description = \"%s\",\n", structs[i].desc);
+                fprintf(outFile, "      description = \"%s\",\n", EscapeBackslashes(structs[i].desc + 3));
                 fprintf(outFile, "      fields = {\n");
                 for (int f = 0; f < structs[i].fieldCount; f++)
                 {
                     fprintf(outFile, "        {\n");
-                    fprintf(outFile, "          name = \"%s\",\n", structs[i].fieldName[f]),
-                    fprintf(outFile, "          type = \"%s\",\n", structs[i].fieldType[f]),
-                    fprintf(outFile, "          description = \"%s\"\n", structs[i].fieldDesc[f] + 3),
+                    fprintf(outFile, "          type = \"%s\",\n", structs[i].fieldType[f]);
+                    fprintf(outFile, "          name = \"%s\",\n", structs[i].fieldName[f]);
+                    fprintf(outFile, "          description = \"%s\"\n", EscapeBackslashes(structs[i].fieldDesc[f] + 3));
                     fprintf(outFile, "        }");
                     if (f < structs[i].fieldCount - 1) fprintf(outFile, ",\n");
                     else fprintf(outFile, "\n");
@@ -880,14 +887,14 @@ static void ExportParsedData(const char *fileName, int format)
             {
                 fprintf(outFile, "    {\n");
                 fprintf(outFile, "      name = \"%s\",\n", enums[i].name);
-                fprintf(outFile, "      description = \"%s\",\n", enums[i].desc + 3);
+                fprintf(outFile, "      description = \"%s\",\n", EscapeBackslashes(enums[i].desc + 3));
                 fprintf(outFile, "      values = {\n");
                 for (int e = 0; e < enums[i].valueCount; e++)
                 {
                     fprintf(outFile, "        {\n");
-                    fprintf(outFile, "          name = \"%s\",\n", enums[i].valueName[e]),
-                    fprintf(outFile, "          value = %i,\n", enums[i].valueInteger[e]),
-                    fprintf(outFile, "          description = \"%s\"\n", enums[i].valueDesc[e] + 3),
+                    fprintf(outFile, "          name = \"%s\",\n", enums[i].valueName[e]);
+                    fprintf(outFile, "          value = %i,\n", enums[i].valueInteger[e]);
+                    fprintf(outFile, "          description = \"%s\"\n", EscapeBackslashes(enums[i].valueDesc[e] + 3));
                     fprintf(outFile, "        }");
                     if (e < enums[i].valueCount - 1) fprintf(outFile, ",\n");
                     else fprintf(outFile, "\n");
@@ -905,7 +912,7 @@ static void ExportParsedData(const char *fileName, int format)
             {
                 fprintf(outFile, "    {\n");
                 fprintf(outFile, "      name = \"%s\",\n", funcs[i].name);
-                fprintf(outFile, "      description = \"%s\",\n", CharReplace(funcs[i].desc, '\\', ' ') + 3);
+                fprintf(outFile, "      description = \"%s\",\n", EscapeBackslashes(funcs[i].desc + 3));
                 fprintf(outFile, "      returnType = \"%s\"", funcs[i].retType);
 
                 if (funcs[i].paramCount == 0) fprintf(outFile, "\n");
@@ -914,7 +921,7 @@ static void ExportParsedData(const char *fileName, int format)
                     fprintf(outFile, ",\n      params = {\n");
                     for (int p = 0; p < funcs[i].paramCount; p++)
                     {
-                        fprintf(outFile, "        {name = \"%s\", type = \"%s\"}", funcs[i].paramName[p], funcs[i].paramType[p]);
+                        fprintf(outFile, "        {type = \"%s\", name = \"%s\"}", funcs[i].paramType[p], funcs[i].paramName[p]);
                         if (p < funcs[i].paramCount - 1) fprintf(outFile, ",\n");
                         else fprintf(outFile, "\n");
                     }
@@ -938,14 +945,14 @@ static void ExportParsedData(const char *fileName, int format)
             {
                 fprintf(outFile, "    {\n");
                 fprintf(outFile, "      \"name\": \"%s\",\n", structs[i].name);
-                fprintf(outFile, "      \"description\": \"%s\",\n", structs[i].desc);
+                fprintf(outFile, "      \"description\": \"%s\",\n", EscapeBackslashes(structs[i].desc + 3));
                 fprintf(outFile, "      \"fields\": [\n");
                 for (int f = 0; f < structs[i].fieldCount; f++)
                 {
                     fprintf(outFile, "        {\n");
-                    fprintf(outFile, "          \"name\": \"%s\",\n", structs[i].fieldName[f]),
-                    fprintf(outFile, "          \"type\": \"%s\",\n", structs[i].fieldType[f]),
-                    fprintf(outFile, "          \"description\": \"%s\"\n", structs[i].fieldDesc[f] + 3),
+                    fprintf(outFile, "          \"type\": \"%s\",\n", structs[i].fieldType[f]);
+                    fprintf(outFile, "          \"name\": \"%s\",\n", structs[i].fieldName[f]);
+                    fprintf(outFile, "          \"description\": \"%s\"\n", EscapeBackslashes(structs[i].fieldDesc[f] + 3));
                     fprintf(outFile, "        }");
                     if (f < structs[i].fieldCount - 1) fprintf(outFile, ",\n");
                     else fprintf(outFile, "\n");
@@ -963,14 +970,14 @@ static void ExportParsedData(const char *fileName, int format)
             {
                 fprintf(outFile, "    {\n");
                 fprintf(outFile, "      \"name\": \"%s\",\n", enums[i].name);
-                fprintf(outFile, "      \"description\": \"%s\",\n", enums[i].desc + 3);
+                fprintf(outFile, "      \"description\": \"%s\",\n", EscapeBackslashes(enums[i].desc + 3));
                 fprintf(outFile, "      \"values\": [\n");
                 for (int e = 0; e < enums[i].valueCount; e++)
                 {
                     fprintf(outFile, "        {\n");
-                    fprintf(outFile, "          \"name\": \"%s\",\n", enums[i].valueName[e]),
-                    fprintf(outFile, "          \"value\": %i,\n", enums[i].valueInteger[e]),
-                    fprintf(outFile, "          \"description\": \"%s\"\n", enums[i].valueDesc[e] + 3),
+                    fprintf(outFile, "          \"name\": \"%s\",\n", enums[i].valueName[e]);
+                    fprintf(outFile, "          \"value\": %i,\n", enums[i].valueInteger[e]);
+                    fprintf(outFile, "          \"description\": \"%s\"\n", EscapeBackslashes(enums[i].valueDesc[e] + 3));
                     fprintf(outFile, "        }");
                     if (e < enums[i].valueCount - 1) fprintf(outFile, ",\n");
                     else fprintf(outFile, "\n");
@@ -988,20 +995,23 @@ static void ExportParsedData(const char *fileName, int format)
             {
                 fprintf(outFile, "    {\n");
                 fprintf(outFile, "      \"name\": \"%s\",\n", funcs[i].name);
-                fprintf(outFile, "      \"description\": \"%s\",\n", CharReplace(funcs[i].desc, '\\', ' ') + 3);
+                fprintf(outFile, "      \"description\": \"%s\",\n", EscapeBackslashes(funcs[i].desc + 3));
                 fprintf(outFile, "      \"returnType\": \"%s\"", funcs[i].retType);
 
                 if (funcs[i].paramCount == 0) fprintf(outFile, "\n");
                 else
                 {
-                    fprintf(outFile, ",\n      \"params\": {\n");
+                    fprintf(outFile, ",\n      \"params\": [\n");
                     for (int p = 0; p < funcs[i].paramCount; p++)
                     {
-                        fprintf(outFile, "        \"%s\": \"%s\"", funcs[i].paramName[p], funcs[i].paramType[p]);
+                        fprintf(outFile, "        {\n");
+                        fprintf(outFile, "          \"type\": \"%s\",\n", funcs[i].paramType[p]);
+                        fprintf(outFile, "          \"name\": \"%s\"\n", funcs[i].paramName[p]);
+                        fprintf(outFile, "        }");
                         if (p < funcs[i].paramCount - 1) fprintf(outFile, ",\n");
                         else fprintf(outFile, "\n");
                     }
-                    fprintf(outFile, "      }\n");
+                    fprintf(outFile, "      ]\n");
                 }
                 fprintf(outFile, "    }");
 

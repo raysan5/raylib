@@ -85,7 +85,7 @@
 *
 *   LICENSE: zlib/libpng
 *
-*   Copyright (c) 2014-2021 Ramon Santamaria (@raysan5)
+*   Copyright (c) 2014-2022 Ramon Santamaria (@raysan5)
 *
 *   This software is provided "as-is", without any express or implied warranty. In no event
 *   will the authors be held liable for any damages arising from the use of this software.
@@ -433,7 +433,7 @@ typedef enum {
     RL_BLEND_MULTIPLIED,               // Blend textures multiplying colors
     RL_BLEND_ADD_COLORS,               // Blend textures adding colors (alternative)
     RL_BLEND_SUBTRACT_COLORS,          // Blend textures subtracting colors (alternative)
-    RL_BLEND_CUSTOM                    // Belnd textures using custom src/dst factors (use SetBlendModeCustom())
+    RL_BLEND_CUSTOM                    // Blend textures using custom src/dst factors (use rlSetBlendFactors())
 } rlBlendMode;
 
 // Shader location point type
@@ -3541,56 +3541,69 @@ unsigned int rlLoadShaderCode(const char *vsCode, const char *fsCode)
     unsigned int id = 0;
 
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
-    unsigned int vertexShaderId = RLGL.State.defaultVShaderId;
-    unsigned int fragmentShaderId = RLGL.State.defaultFShaderId;
+    unsigned int vertexShaderId = 0;
+    unsigned int fragmentShaderId = 0;
 
+    // Compile vertex shader (if provided)
     if (vsCode != NULL) vertexShaderId = rlCompileShader(vsCode, GL_VERTEX_SHADER);
-    if (fsCode != NULL) fragmentShaderId = rlCompileShader(fsCode, GL_FRAGMENT_SHADER);
+    // In case no vertex shader was provided or compilation failed, we use default vertex shader
+    if (vertexShaderId == 0) vertexShaderId = RLGL.State.defaultVShaderId;
 
+    // Compile fragment shader (if provided)
+    if (fsCode != NULL) fragmentShaderId = rlCompileShader(fsCode, GL_FRAGMENT_SHADER);
+    // In case no fragment shader was provided or compilation failed, we use default fragment shader
+    if (fragmentShaderId == 0) fragmentShaderId = RLGL.State.defaultFShaderId;
+
+    // In case vertex and fragment shader are the default ones, no need to recompile, we can just assign the default shader program id
     if ((vertexShaderId == RLGL.State.defaultVShaderId) && (fragmentShaderId == RLGL.State.defaultFShaderId)) id = RLGL.State.defaultShaderId;
     else
     {
+        // One of or both shader are new, we need to compile a new shader program
         id = rlLoadShaderProgram(vertexShaderId, fragmentShaderId);
 
+        // We can detach and delete vertex/fragment shaders (if not default ones)
+        // NOTE: We detach shader before deletion to make sure memory is freed
         if (vertexShaderId != RLGL.State.defaultVShaderId)
         {
-            // Detach shader before deletion to make sure memory is freed
             glDetachShader(id, vertexShaderId);
             glDeleteShader(vertexShaderId);
         }
         if (fragmentShaderId != RLGL.State.defaultFShaderId)
         {
-            // Detach shader before deletion to make sure memory is freed
             glDetachShader(id, fragmentShaderId);
             glDeleteShader(fragmentShaderId);
         }
 
+        // In case shader program loading failed, we assign default shader
         if (id == 0)
         {
-            TRACELOG(RL_LOG_WARNING, "SHADER: Failed to load custom shader code");
+            // In case shader loading fails, we return the default shader
+            TRACELOG(RL_LOG_WARNING, "SHADER: Failed to load custom shader code, using default shader");
             id = RLGL.State.defaultShaderId;
         }
-    }
+        /*
+        else
+        {
+            // Get available shader uniforms
+            // NOTE: This information is useful for debug...
+            int uniformCount = -1;
+            glGetProgramiv(id, GL_ACTIVE_UNIFORMS, &uniformCount);
 
-    // Get available shader uniforms
-    // NOTE: This information is useful for debug...
-    int uniformCount = -1;
+            for (int i = 0; i < uniformCount; i++)
+            {
+                int namelen = -1;
+                int num = -1;
+                char name[256] = { 0 };     // Assume no variable names longer than 256
+                GLenum type = GL_ZERO;
 
-    glGetProgramiv(id, GL_ACTIVE_UNIFORMS, &uniformCount);
+                // Get the name of the uniforms
+                glGetActiveUniform(id, i, sizeof(name) - 1, &namelen, &num, &type, name);
 
-    for (int i = 0; i < uniformCount; i++)
-    {
-        int namelen = -1;
-        int num = -1;
-        char name[256] = { 0 };     // Assume no variable names longer than 256
-        GLenum type = GL_ZERO;
-
-        // Get the name of the uniforms
-        glGetActiveUniform(id, i, sizeof(name) - 1, &namelen, &num, &type, name);
-
-        name[namelen] = 0;
-
-        TRACELOGD("SHADER: [ID %i] Active uniform (%s) set at location: %i", id, name, glGetUniformLocation(id, name));
+                name[namelen] = 0;
+                TRACELOGD("SHADER: [ID %i] Active uniform (%s) set at location: %i", id, name, glGetUniformLocation(id, name));
+            }
+        }
+        */
     }
 #endif
 
@@ -3899,6 +3912,8 @@ unsigned int rlLoadShaderBuffer(unsigned long long size, const void *data, int u
     glGenBuffers(1, &ssbo);
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo);
     glBufferData(GL_SHADER_STORAGE_BUFFER, size, data, usageHint? usageHint : RL_STREAM_COPY);
+    glClearBufferData(GL_SHADER_STORAGE_BUFFER, GL_R8UI, GL_RED_INTEGER, GL_UNSIGNED_BYTE, 0);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 #endif
 
     return ssbo;
@@ -4336,7 +4351,8 @@ static void rlLoadShaderDefault(void)
     "}                                  \n";
 #endif
 
-    // NOTE: Compiled vertex/fragment shaders are kept for re-use
+    // NOTE: Compiled vertex/fragment shaders are not deleted,
+    // they are kept for re-use as default shaders in case some shader loading fails
     RLGL.State.defaultVShaderId = rlCompileShader(defaultVShaderCode, GL_VERTEX_SHADER);     // Compile default vertex shader
     RLGL.State.defaultFShaderId = rlCompileShader(defaultFShaderCode, GL_FRAGMENT_SHADER);   // Compile default fragment shader
 

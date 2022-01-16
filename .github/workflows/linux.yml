@@ -60,11 +60,11 @@ jobs:
         cd ../../../raylib
         # ${{ matrix.ARCH }}-linux-gnu-gcc -v
       
-    # TODO: Support 32bit (i386) shared library building
+    # TODO: Support 32bit (i386) static/shared library building
     - name: Build Library
       run: |
         cd src
-        make PLATFORM=PLATFORM_DESKTOP CC=gcc RAYLIB_LIBTYPE=STATIC RAYLIB_RELEASE_PATH="../build/${{ env.RELEASE_NAME }}/lib" CFLAGS="-m32" -B
+        make PLATFORM=PLATFORM_DESKTOP CC=gcc RAYLIB_LIBTYPE=STATIC RAYLIB_RELEASE_PATH="../build/${{ env.RELEASE_NAME }}/lib" CUSTOM_CFLAGS="-m32" -B
         # make PLATFORM=PLATFORM_DESKTOP CC=gcc RAYLIB_LIBTYPE=SHARED RAYLIB_RELEASE_PATH="../build/${{ env.RELEASE_NAME }}/lib" -B
         cd ..
       if: matrix.bits == 32
