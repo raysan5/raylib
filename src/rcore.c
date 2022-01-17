@@ -392,6 +392,7 @@ typedef struct CoreData {
         bool fullscreen;                    // Check if fullscreen mode is enabled
         bool shouldClose;                   // Check if window set for closing
         bool resizedLastFrame;              // Check if window has been resized last frame
+        void (*resizeCallback)(void);       // Pointer to a function to call during resizing
 
         Point position;                     // Window position on screen (required on fullscreen toggle)
         Size display;                       // Display width and height (monitor, device-screen, LCD, ...)
@@ -4618,6 +4619,10 @@ static bool InitGraphicsDevice(int width, int height)
     return true;
 }
 
+void SetResizeCallback(void (*resizeCallback)(void)) {
+    CORE.Window.resizeCallback = resizeCallback;
+}
+
 // Set viewport for a provided width and height
 static void SetupViewport(int width, int height)
 {
@@ -4644,6 +4649,9 @@ static void SetupViewport(int width, int height)
 
     rlMatrixMode(RL_MODELVIEW);         // Switch back to modelview matrix
     rlLoadIdentity();                   // Reset current matrix (modelview)
+    if (CORE.Window.resizeCallback != NULL && CORE.Window.ready) {
+        CORE.Window.resizeCallback();
+    }
 }
 
 // Compute framebuffer size relative to screen size and display size

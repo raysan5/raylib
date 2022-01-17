@@ -392,6 +392,8 @@ CORE = \
     core/core_loading_thread \
     core/core_quat_conversion \
     core/core_window_flags \
+    core/core_resize_drawing \
+    core/core_resize_placeholder \
     core/core_split_screen \
     core/core_smooth_pixelperfect \
     core/core_custom_frame_control
