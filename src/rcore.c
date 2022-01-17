@@ -3006,7 +3006,7 @@ const char *GetApplicationDirectory(void)
             if (appDir[i] == '\\')
             {
                 appDir[i + 1] = '\0';
-                i = -1;
+                break;
             }
         }
     }
@@ -3027,7 +3027,7 @@ const char *GetApplicationDirectory(void)
             if (appDir[i] == '/')
             {
                 appDir[i + 1] = '\0';
-                i = -1;
+                break;
             }
         }
     }
@@ -3047,7 +3047,7 @@ const char *GetApplicationDirectory(void)
             if (appDir[i] == '/')
             {
                 appDir[i + 1] = '\0';
-                i = -1;
+                break;
             }
         }
     }
