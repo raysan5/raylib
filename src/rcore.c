@@ -166,9 +166,9 @@
         #ifndef MAX_PATH
             #define MAX_PATH 1025
         #endif
-        unsigned int GetModuleFileNameA( void* hModule, const char* lpFilename, unsigned int nSize);
-        unsigned int GetModuleFileNameW( void* hModule, const unsigned short* lpFilename, unsigned int nSize);
-        int  WideCharToMultiByte(unsigned int cp, unsigned long flags, const unsigned short *widestr, int cchwide, char *str, int cbmb, const char *defchar, int *used_default);
+    __declspec(dllimport) unsigned long __stdcall GetModuleFileNameA(void* hModule, void* lpFilename, unsigned long nSize);
+    __declspec(dllimport) unsigned long __stdcall GetModuleFileNameW(void* hModule, void* lpFilename, unsigned long nSize);
+    __declspec(dllimport) int __stdcall WideCharToMultiByte(unsigned int cp, unsigned long flags, void* widestr, int cchwide, void* str, int cbmb, void* defchar, int* used_default);
     #elif defined(__linux__)
         #include <unistd.h>
     #elif defined(__APPLE__)
@@ -3006,7 +3006,7 @@ const char *GetApplicationDirectory(void)
             if (appDir[i] == '\\')
             {
                 appDir[i + 1] = '\0';
-                i = -1;
+                break;
             }
         }
     }
@@ -3027,7 +3027,7 @@ const char *GetApplicationDirectory(void)
             if (appDir[i] == '/')
             {
                 appDir[i + 1] = '\0';
-                i = -1;
+                break;
             }
         }
     }
@@ -3047,7 +3047,7 @@ const char *GetApplicationDirectory(void)
             if (appDir[i] == '/')
             {
                 appDir[i + 1] = '\0';
-                i = -1;
+                break;
             }
         }
     }
