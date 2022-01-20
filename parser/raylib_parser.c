@@ -85,7 +85,7 @@ typedef struct FunctionInfo {
     int paramCount;             // Number of function parameters
     char paramType[MAX_FUNCTION_PARAMETERS][32];   // Parameters type
     char paramName[MAX_FUNCTION_PARAMETERS][32];   // Parameters name
-    char paramDesc[MAX_FUNCTION_PARAMETERS][8];    // Parameters description
+    char paramDesc[MAX_FUNCTION_PARAMETERS][128];  // Parameters description
 } FunctionInfo;
 
 // Struct info data
@@ -105,7 +105,7 @@ typedef struct EnumInfo {
     int valueCount;             // Number of values in enumerator
     char valueName[MAX_ENUM_VALUES][64];    // Value name definition
     int valueInteger[MAX_ENUM_VALUES];      // Value integer
-    char valueDesc[MAX_ENUM_VALUES][128];    // Value description
+    char valueDesc[MAX_ENUM_VALUES][128];   // Value description
 } EnumInfo;
 
 // Output format for parsed data
@@ -867,8 +867,8 @@ static void ExportParsedData(const char *fileName, int format)
                 for (int f = 0; f < structs[i].fieldCount; f++)
                 {
                     fprintf(outFile, "        {\n");
-                    fprintf(outFile, "          name = \"%s\",\n", structs[i].fieldName[f]);
                     fprintf(outFile, "          type = \"%s\",\n", structs[i].fieldType[f]);
+                    fprintf(outFile, "          name = \"%s\",\n", structs[i].fieldName[f]);
                     fprintf(outFile, "          description = \"%s\"\n", EscapeBackslashes(structs[i].fieldDesc[f] + 3));
                     fprintf(outFile, "        }");
                     if (f < structs[i].fieldCount - 1) fprintf(outFile, ",\n");
@@ -921,7 +921,7 @@ static void ExportParsedData(const char *fileName, int format)
                     fprintf(outFile, ",\n      params = {\n");
                     for (int p = 0; p < funcs[i].paramCount; p++)
                     {
-                        fprintf(outFile, "        {name = \"%s\", type = \"%s\"}", funcs[i].paramName[p], funcs[i].paramType[p]);
+                        fprintf(outFile, "        {type = \"%s\", name = \"%s\"}", funcs[i].paramType[p], funcs[i].paramName[p]);
                         if (p < funcs[i].paramCount - 1) fprintf(outFile, ",\n");
                         else fprintf(outFile, "\n");
                     }
@@ -950,8 +950,8 @@ static void ExportParsedData(const char *fileName, int format)
                 for (int f = 0; f < structs[i].fieldCount; f++)
                 {
                     fprintf(outFile, "        {\n");
-                    fprintf(outFile, "          \"name\": \"%s\",\n", structs[i].fieldName[f]);
                     fprintf(outFile, "          \"type\": \"%s\",\n", structs[i].fieldType[f]);
+                    fprintf(outFile, "          \"name\": \"%s\",\n", structs[i].fieldName[f]);
                     fprintf(outFile, "          \"description\": \"%s\"\n", EscapeBackslashes(structs[i].fieldDesc[f] + 3));
                     fprintf(outFile, "        }");
                     if (f < structs[i].fieldCount - 1) fprintf(outFile, ",\n");
@@ -1001,14 +1001,17 @@ static void ExportParsedData(const char *fileName, int format)
                 if (funcs[i].paramCount == 0) fprintf(outFile, "\n");
                 else
                 {
-                    fprintf(outFile, ",\n      \"params\": {\n");
+                    fprintf(outFile, ",\n      \"params\": [\n");
                     for (int p = 0; p < funcs[i].paramCount; p++)
                     {
-                        fprintf(outFile, "        \"%s\": \"%s\"", funcs[i].paramName[p], funcs[i].paramType[p]);
+                        fprintf(outFile, "        {\n");
+                        fprintf(outFile, "          \"type\": \"%s\",\n", funcs[i].paramType[p]);
+                        fprintf(outFile, "          \"name\": \"%s\"\n", funcs[i].paramName[p]);
+                        fprintf(outFile, "        }");
                         if (p < funcs[i].paramCount - 1) fprintf(outFile, ",\n");
                         else fprintf(outFile, "\n");
                     }
-                    fprintf(outFile, "      }\n");
+                    fprintf(outFile, "      ]\n");
                 }
                 fprintf(outFile, "    }");
 

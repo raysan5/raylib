@@ -25,12 +25,12 @@ Some people ported raylib to other languages in form of bindings or wrappers to 
 | pyraylib           | 3.7     | [Python](https://www.python.org/)    | Zlib    | https://github.com/Ho011/pyraylib         |
 | raylib-python-cffi | **4.0** | [Python](https://www.python.org/)    | EPL-2.0 | https://github.com/electronstudio/raylib-python-cffi |
 | jaylib             | **4.0** | [Java](https://en.wikipedia.org/wiki/Java_(programming_language)) | GPLv3 | https://github.com/electronstudio/jaylib/  |
-| raylib-j           | 3.7     | [Java](https://en.wikipedia.org/wiki/Java_(programming_language)) | ? | https://github.com/CreedVI/Raylib-J |
+| raylib-j           | **4.0** | [Java](https://en.wikipedia.org/wiki/Java_(programming_language)) | Zlib | https://github.com/CreedVI/Raylib-J |
 | node-raylib        | 3.5     | [Node.js](https://nodejs.org/en/)    | Zlib     | https://github.com/RobLoach/node-raylib         |
 | raylib-php         | 3.5     | [PHP](https://en.wikipedia.org/wiki/PHP) | Zlib | https://github.com/joseph-montanez/raylib-php   |
 | raylib-phpcpp      | 3.5     | [PHP](https://en.wikipedia.org/wiki/PHP) | Zlib | https://github.com/oraoto/raylib-phpcpp         |
 | raylib-factor      | 3.5     | [Factor](https://factorcode.org/)        | MIT  | https://github.com/ArnautDaniel/raylib-factor   |
-| gforth-raylib      | 3.5     | [Gforth](https://gforth.org/)            | ?    | https://github.com/ArnautDaniel/gforth-raylib   |
+| gforth-raylib      | 3.5     | [Gforth](https://gforth.org/)            | MIT  | https://github.com/ArnautDaniel/gforth-raylib   |
 | hxRaylib           | 4.0     | [Haxe](https://haxe.org/)                | Zlib | https://github.com/ForeignSasquatch/hxRaylib    |
 | raylib-wren        | **4.0** | [Wren](http://wren.io/)              | ISC | https://github.com/TSnake41/raylib-wren              |
 | raylib_odin_bindings | 4.0-dev | [Odin](https://odin-lang.org/)     | MIT | https://github.com/Deathbat2190/raylib_odin_bindings |

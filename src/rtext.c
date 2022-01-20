@@ -30,7 +30,7 @@
 *
 *   LICENSE: zlib/libpng
 *
-*   Copyright (c) 2013-2021 Ramon Santamaria (@raysan5)
+*   Copyright (c) 2013-2022 Ramon Santamaria (@raysan5)
 *
 *   This software is provided "as-is", without any express or implied warranty. In no event
 *   will the authors be held liable for any damages arising from the use of this software.
@@ -820,6 +820,161 @@ void UnloadFont(Font font)
         TRACELOGD("FONT: Unloaded font data from RAM and VRAM");
     }
 }
+
+// Export font as code file, returns true on success
+bool ExportFontAsCode(Font font, const char *fileName)
+{
+    bool success = false;
+    
+#ifndef TEXT_BYTES_PER_LINE
+    #define TEXT_BYTES_PER_LINE     20
+#endif
+
+    #define MAX_FONT_DATA_SIZE      1024*1024       // 1 MB
+
+    // Get file name from path
+    char fileNamePascal[256] = { 0 };
+    strcpy(fileNamePascal, TextToPascal(GetFileNameWithoutExt(fileName)));
+
+    // NOTE: Text data buffer size is estimated considering image data size in bytes
+    // and requiring 6 char bytes for every byte: "0x00, "
+    char *txtData = (char *)RL_CALLOC(MAX_FONT_DATA_SIZE, sizeof(char));
+
+    int byteCount = 0;
+    byteCount += sprintf(txtData + byteCount, "////////////////////////////////////////////////////////////////////////////////////////\n");
+    byteCount += sprintf(txtData + byteCount, "//                                                                                    //\n");
+    byteCount += sprintf(txtData + byteCount, "// FontAsCode exporter v1.0 - Font data exported as an array of bytes                 //\n");
+    byteCount += sprintf(txtData + byteCount, "//                                                                                    //\n");
+    byteCount += sprintf(txtData + byteCount, "// more info and bugs-report:  github.com/raysan5/raylib                              //\n");
+    byteCount += sprintf(txtData + byteCount, "// feedback and support:       ray[at]raylib.com                                      //\n");
+    byteCount += sprintf(txtData + byteCount, "//                                                                                    //\n");
+    byteCount += sprintf(txtData + byteCount, "// Copyright (c) 2018-2022 Ramon Santamaria (@raysan5)                                //\n");
+    byteCount += sprintf(txtData + byteCount, "//                                                                                    //\n");
+    byteCount += sprintf(txtData + byteCount, "// ---------------------------------------------------------------------------------- //\n");
+    byteCount += sprintf(txtData + byteCount, "//                                                                                    //\n");
+    byteCount += sprintf(txtData + byteCount, "// TODO: Fill the information and license of the exported font here:                  //\n");
+    byteCount += sprintf(txtData + byteCount, "//                                                                                    //\n");
+    byteCount += sprintf(txtData + byteCount, "// Font name:    ....                                                                 //\n");
+    byteCount += sprintf(txtData + byteCount, "// Font creator: ....                                                                 //\n");
+    byteCount += sprintf(txtData + byteCount, "// Font LICENSE: ....                                                                 //\n");
+    byteCount += sprintf(txtData + byteCount, "//                                                                                    //\n");
+    byteCount += sprintf(txtData + byteCount, "////////////////////////////////////////////////////////////////////////////////////////\n\n");
+
+    // Support font export and initialization
+    // NOTE: This mechanism is highly coupled to raylib
+    Image image = LoadImageFromTexture(font.texture);
+    if (image.format != PIXELFORMAT_UNCOMPRESSED_GRAY_ALPHA) TRACELOG(LOG_WARNING, "Font export as code: Font image format is not GRAY+ALPHA!");
+    int imageDataSize = GetPixelDataSize(image.width, image.height, image.format);
+    
+    // Image data is usually GRAYSCALE + ALPHA and can be reduced to GRAYSCALE
+    //ImageFormat(&image, PIXELFORMAT_UNCOMPRESSED_GRAYSCALE);
+
+#define SUPPORT_COMPRESSED_FONT_ATLAS
+#if defined(SUPPORT_COMPRESSED_FONT_ATLAS)
+    // WARNING: Data is compressed using raylib CompressData() DEFLATE,
+    // it requires to be decompressed with raylib DecompressData(), that requires
+    // compiling raylib with SUPPORT_COMPRESSION_API config flag enabled
+ 
+    // Compress font image data
+    int compDataSize = 0;
+    unsigned char *compData = CompressData(image.data, imageDataSize, &compDataSize);
+
+    // Save font image data (compressed)
+    byteCount += sprintf(txtData + byteCount, "#define COMPRESSED_DATA_SIZE_FONT_%s %i\n\n", TextToUpper(fileNamePascal), compDataSize);
+    byteCount += sprintf(txtData + byteCount, "// Font image pixels data compressed (DEFLATE)\n");
+    byteCount += sprintf(txtData + byteCount, "// NOTE: Original pixel data simplified to GRAYSCALE\n");
+    byteCount += sprintf(txtData + byteCount, "static unsigned char fontData_%s[COMPRESSED_DATA_SIZE_FONT_%s] = { ", fileNamePascal, TextToUpper(fileNamePascal));
+    for (int i = 0; i < compDataSize - 1; i++) byteCount += sprintf(txtData + byteCount, ((i%TEXT_BYTES_PER_LINE == 0)? "0x%02x,\n    " : "0x%02x, "), compData[i]);
+    byteCount += sprintf(txtData + byteCount, "0x%02x };\n\n", compData[compDataSize - 1]);
+    MemFree(compData);
+#else
+    // Save font image data (uncompressed)
+    byteCount += sprintf(txtData + byteCount, "// Font image pixels data\n");
+    byteCount += sprintf(txtData + byteCount, "// NOTE: 2 bytes per pixel, GRAY + ALPHA channels\n");
+    byteCount += sprintf(txtData + byteCount, "static unsigned char fontImageData_%s[%i] = { ", fileNamePascal, imageDataSize);
+    for (int i = 0; i < imageDataSize - 1; i++) byteCount += sprintf(txtData + byteCount, ((i%TEXT_BYTES_PER_LINE == 0)? "0x%02x,\n    " : "0x%02x, "), ((unsigned char *)imFont.data)[i]);
+    byteCount += sprintf(txtData + byteCount, "0x%02x };\n\n", ((unsigned char *)imFont.data)[imageDataSize - 1]);
+#endif
+
+    // Save font recs data
+    byteCount += sprintf(txtData + byteCount, "// Font characters rectangles data\n");
+    byteCount += sprintf(txtData + byteCount, "static const Rectangle fontRecs_%s[%i] = {\n", fileNamePascal, font.glyphCount);
+    for (int i = 0; i < font.glyphCount; i++)
+    {
+        byteCount += sprintf(txtData + byteCount, "    { %1.0f, %1.0f, %1.0f , %1.0f },\n", font.recs[i].x, font.recs[i].y, font.recs[i].width, font.recs[i].height);
+    }
+    byteCount += sprintf(txtData + byteCount, "};\n\n");
+
+    // Save font glyphs data
+    // NOTE: Glyphs image data not saved (grayscale pixels),
+    // it could be generated from image and recs
+    byteCount += sprintf(txtData + byteCount, "// Font glyphs info data\n");
+    byteCount += sprintf(txtData + byteCount, "// NOTE: No glyphs.image data provided\n");
+    byteCount += sprintf(txtData + byteCount, "static const GlyphInfo fontGlyphs_%s[%i] = {\n", fileNamePascal, font.glyphCount);
+    for (int i = 0; i < font.glyphCount; i++)
+    {
+        byteCount += sprintf(txtData + byteCount, "    { %i, %i, %i, %i, { 0 }},\n", font.glyphs[i].value, font.glyphs[i].offsetX, font.glyphs[i].offsetY, font.glyphs[i].advanceX);
+    }
+    byteCount += sprintf(txtData + byteCount, "};\n\n");
+
+    // Custom font loading function
+    byteCount += sprintf(txtData + byteCount, "// Font loading function: %s\n", fileNamePascal);
+    byteCount += sprintf(txtData + byteCount, "static Font LoadFont_%s(void)\n{\n", fileNamePascal);
+    byteCount += sprintf(txtData + byteCount, "    Font font = { 0 };\n\n");
+    byteCount += sprintf(txtData + byteCount, "    font.baseSize = %i;\n", font.baseSize);
+    byteCount += sprintf(txtData + byteCount, "    font.glyphCount = %i;\n", font.glyphCount);
+    byteCount += sprintf(txtData + byteCount, "    font.glyphPadding = %i;\n\n", FONT_TTF_DEFAULT_CHARS_PADDING);
+    byteCount += sprintf(txtData + byteCount, "    // Custom font loading\n");
+#if defined(SUPPORT_COMPRESSED_FONT_ATLAS)
+    byteCount += sprintf(txtData + byteCount, "    // NOTE: Compressed font image data (DEFLATE), it requires DecompressData() function\n");
+    byteCount += sprintf(txtData + byteCount, "    int fontDataSize_%s = 0;\n", fileNamePascal);
+    byteCount += sprintf(txtData + byteCount, "    unsigned char *data = DecompressData(fontData_%s, COMPRESSED_DATA_SIZE_FONT_%s, &fontDataSize_%s);\n", fileNamePascal, TextToUpper(fileNamePascal), fileNamePascal);
+    byteCount += sprintf(txtData + byteCount, "    Image imFont = { data, %i, %i, 1, %i };\n\n", image.width, image.height, image.format);
+#else
+    byteCount += sprintf(txtData + byteCount, "    Image imFont = { fontImageData_%s, %i, %i, 1, %i };\n\n", styleName, image.width, image.height, image.format);
+#endif
+    byteCount += sprintf(txtData + byteCount, "    // Load texture from image\n");
+    byteCount += sprintf(txtData + byteCount, "    font.texture = LoadTextureFromImage(imFont);\n");
+#if defined(SUPPORT_COMPRESSED_FONT_ATLAS)
+    byteCount += sprintf(txtData + byteCount, "    UnloadImage(imFont);  // Uncompressed data can be unloaded from memory\n\n");
+#endif
+    // We have two possible mechanisms to assign font.recs and font.glyphs data,
+    // that data is already available as global arrays, we two options to assign that data:
+    //  - 1. Data copy. This option consumes more memory and Font MUST be unloaded by user, requiring additional code.
+    //  - 2. Data assignment. This option consumes less memory and Font MUST NOT be unloaded by user because data is on protected DATA segment
+//#define SUPPORT_FONT_DATA_COPY
+#if defined(SUPPORT_FONT_DATA_COPY)
+    byteCount += sprintf(txtData + byteCount, "    // Copy glyph recs data from global fontRecs\n");
+    byteCount += sprintf(txtData + byteCount, "    // NOTE: Required to avoid issues if trying to free font\n");
+    byteCount += sprintf(txtData + byteCount, "    font.recs = (Rectangle *)malloc(font.glyphCount*sizeof(Rectangle));\n");
+    byteCount += sprintf(txtData + byteCount, "    memcpy(font.recs, fontRecs_%s, font.glyphCount*sizeof(Rectangle));\n\n", fileNamePascal);
+
+    byteCount += sprintf(txtData + byteCount, "    // Copy font glyph info data from global fontChars\n");
+    byteCount += sprintf(txtData + byteCount, "    // NOTE: Required to avoid issues if trying to free font\n");
+    byteCount += sprintf(txtData + byteCount, "    font.glyphs = (GlyphInfo *)malloc(font.glyphCount*sizeof(GlyphInfo));\n");
+    byteCount += sprintf(txtData + byteCount, "    memcpy(font.glyphs, fontGlyphs_%s, font.glyphCount*sizeof(GlyphInfo));\n\n", fileNamePascal);
+#else
+    byteCount += sprintf(txtData + byteCount, "    // Assign glyph recs and info data directly\n");
+    byteCount += sprintf(txtData + byteCount, "    // WARNING: This font data must not be unloaded\n");
+    byteCount += sprintf(txtData + byteCount, "    font.recs = fontRecs_%s;\n", fileNamePascal);
+    byteCount += sprintf(txtData + byteCount, "    font.glyphs = fontGlyphs_%s;\n\n", fileNamePascal);
+#endif
+    byteCount += sprintf(txtData + byteCount, "    return font;\n");
+    byteCount += sprintf(txtData + byteCount, "}\n\0");
+
+    UnloadImage(image);
+
+    // NOTE: Text data size exported is determined by '\0' (NULL) character
+    success = SaveFileText(fileName, txtData);
+
+    RL_FREE(txtData);
+
+    if (success != 0) TRACELOG(LOG_INFO, "FILEIO: [%s] Font as code exported successfully", fileName);
+    else TRACELOG(LOG_WARNING, "FILEIO: [%s] Failed to export font as code", fileName);
+
+    return success;
+}
+
 
 // Draw current FPS
 // NOTE: Uses default font
