@@ -732,6 +732,7 @@ typedef struct cgltf_data
 	cgltf_scene* scenes;
 	cgltf_size scenes_count;
 
+	unsigned int scene_id;
 	cgltf_scene* scene;
 
 	cgltf_animation* animations;
@@ -5758,7 +5759,8 @@ static int cgltf_parse_json_root(cgltf_options* options, jsmntok_t const* tokens
 		else if (cgltf_json_strcmp(tokens + i, json_chunk, "scene") == 0)
 		{
 			++i;
-			out_data->scene = CGLTF_PTRINDEX(cgltf_scene, cgltf_json_to_int(tokens + i, json_chunk));
+			out_data->scene_id = cgltf_json_to_int(tokens + i, json_chunk);
+			out_data->scene = CGLTF_PTRINDEX(cgltf_scene, out_data->scene_id);
 			++i;
 		}
 		else if (cgltf_json_strcmp(tokens + i, json_chunk, "animations") == 0)

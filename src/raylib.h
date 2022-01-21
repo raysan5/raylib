@@ -366,6 +366,13 @@ typedef struct Transform {
     Vector3 scale;          // Scale
 } Transform;
 
+//Scene
+typedef struct Scene {
+    int meshCount;          // Number of meshes
+    int *meshes;            // Scene meshes array
+    Transform *meshTransforms;  // transform matrices for meshes
+} Scene;
+
 // Bone, skeletal animation bone
 typedef struct BoneInfo {
     char name[32];          // Bone name
@@ -381,6 +388,11 @@ typedef struct Model {
     Mesh *meshes;           // Meshes array
     Material *materials;    // Materials array
     int *meshMaterial;      // Mesh material number
+
+    // Scene data
+    int sceneCount;         // Number of scenes
+    Scene *scenes;          // Scenes array
+    int scene;              // Scene should be displayed
 
     // Animation data
     int boneCount;          // Number of bones
