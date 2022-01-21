@@ -4723,8 +4723,8 @@ static Model LoadGLTF(const char *fileName)
         TRACELOG(LOG_DEBUG, "    > Buffers count: %i", data->buffers_count);
         TRACELOG(LOG_DEBUG, "    > Images count: %i", data->images_count);
         TRACELOG(LOG_DEBUG, "    > Textures count: %i", data->textures_count);
-        TRACELOG(LOG_DEBUG, "    > Nodes count: %1", data->nodes_count);
-        TRACELOG(LOG_DEBUG, "    > Scenes count: %1", data->scenes_count);
+        TRACELOG(LOG_DEBUG, "    > Nodes count: %i", data->nodes_count);
+        TRACELOG(LOG_DEBUG, "    > Scenes count: %i", data->scenes_count);
 
         // Force reading data buffers (fills buffer_view->buffer->data)
         // NOTE: If an uri is defined to base64 data or external path, it's automatically loaded -> TODO: Verify this assumption
