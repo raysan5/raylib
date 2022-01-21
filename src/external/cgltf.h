@@ -614,6 +614,7 @@ struct cgltf_node {
 	cgltf_node** children;
 	cgltf_size children_count;
 	cgltf_skin* skin;
+    int mesh_id;
 	cgltf_mesh* mesh;
 	cgltf_camera* camera;
 	cgltf_light* light;
@@ -635,6 +636,7 @@ struct cgltf_node {
 typedef struct cgltf_scene {
 	char* name;
 	cgltf_node** nodes;
+    int* node_ids;
 	cgltf_size nodes_count;
 	cgltf_extras extras;
 	cgltf_size extensions_count;
@@ -1930,6 +1932,7 @@ void cgltf_free(cgltf_data* data)
 	{
 		data->memory.free(data->memory.user_data, data->scenes[i].name);
 		data->memory.free(data->memory.user_data, data->scenes[i].nodes);
+        data->memory.free(data->memory.user_data, data->scenes[i].node_ids);
 
 		cgltf_free_extensions(data, data->scenes[i].extensions, data->scenes[i].extensions_count);
 	}
@@ -5066,7 +5069,8 @@ static int cgltf_parse_json_node(cgltf_options* options, jsmntok_t const* tokens
 		{
 			++i;
 			CGLTF_CHECK_TOKTYPE(tokens[i], JSMN_PRIMITIVE);
-			out_node->mesh = CGLTF_PTRINDEX(cgltf_mesh, cgltf_json_to_int(tokens + i, json_chunk));
+            out_node->mesh_id = cgltf_json_to_int(tokens + i, json_chunk);
+			out_node->mesh = CGLTF_PTRINDEX(cgltf_mesh, out_node->mesh_id);
 			++i;
 		}
 		else if (cgltf_json_strcmp(tokens+i, json_chunk, "skin") == 0)
@@ -5239,9 +5243,12 @@ static int cgltf_parse_json_scene(cgltf_options* options, jsmntok_t const* token
 			{
 				return i;
 			}
+            int size = out_scene->nodes_count * sizeof(int);
+            out_scene->node_ids = (int *)options->memory.alloc(options->memory.user_data, size);
 
 			for (cgltf_size k = 0; k < out_scene->nodes_count; ++k)
 			{
+                out_scene->node_ids[k] = cgltf_json_to_int(tokens + i, json_chunk);
 				out_scene->nodes[k] = CGLTF_PTRINDEX(cgltf_node, cgltf_json_to_int(tokens + i, json_chunk));
 				++i;
 			}

@@ -366,11 +366,23 @@ typedef struct Transform {
     Vector3 scale;          // Scale
 } Transform;
 
-//Scene
+// Mode Node
+typedef struct ModelNode {
+    /* Don't support node hierarchy for now
+    struct ModelNode *parent;   // Parent nodes;
+    struct ModelNode *children; // Children nodes array;
+     */
+    // every primitive in the glTF as a separate raylib mesh, so we need to covert mesh id in glTF to interval
+    int meshStart;                // Start position of the interval in the model mesh array;
+    int meshEnd;                  // End position of the interval in the model mesh array;
+    Transform transform;          // Transform for node meshes;
+    Matrix transformMatrix;       // Transform matrix for node meshes;
+} ModelNode;
+
+// Scene
 typedef struct Scene {
-    int meshCount;          // Number of meshes
-    int *meshes;            // Scene meshes array
-    Transform *meshTransforms;  // transform matrices for meshes
+    int nodeCount;          // Number of nodes
+    int *nodes;            // Scene nodes array
 } Scene;
 
 // Bone, skeletal animation bone
@@ -389,7 +401,9 @@ typedef struct Model {
     Material *materials;    // Materials array
     int *meshMaterial;      // Mesh material number
 
-    // Scene data
+    // Scene and node data
+    int nodeCount;          // Number of nodes;
+    ModelNode *nodes;       // Nodes array;
     int sceneCount;         // Number of scenes
     Scene *scenes;          // Scenes array
     int scene;              // Scene should be displayed
@@ -1426,6 +1440,10 @@ RLAPI void DrawModelEx(Model model, Vector3 position, Vector3 rotationAxis, floa
 RLAPI void DrawModelWires(Model model, Vector3 position, float scale, Color tint);                      // Draw a model wires (with texture if set)
 RLAPI void DrawModelWiresEx(Model model, Vector3 position, Vector3 rotationAxis, float rotationAngle, Vector3 scale, Color tint); // Draw a model wires (with texture if set) with extended parameters
 RLAPI void DrawBoundingBox(BoundingBox box, Color color);                                               // Draw bounding box (wires)
+RLAPI void DrawModelScene(Model model, int scene_id, Vector3 position, float scale, Color tint);        // Draw a model's scene (with texture if set)
+RLAPI void DrawModelSceneEx(Model model, int scene_id, Vector3 position, Vector3 rotationAxis, float rotationAngle, Vector3 scale, Color tint); // Draw a model's scene with extended parameters
+RLAPI void DrawModelSceneWires(Model model, int scene_id, Vector3 position, float scale, Color tint);   // Draw a model's scene wires (with texture if set)
+RLAPI void DrawModelSceneWiresEx(Model model, int scene_id, Vector3 position, Vector3 rotationAxis, float rotationAngle, Vector3 scale, Color tint); // Draw a model's scene wires (with texture if set) with extended parameters
 RLAPI void DrawBillboard(Camera camera, Texture2D texture, Vector3 position, float size, Color tint);   // Draw a billboard texture
 RLAPI void DrawBillboardRec(Camera camera, Texture2D texture, Rectangle source, Vector3 position, Vector2 size, Color tint); // Draw a billboard texture defined by source
 RLAPI void DrawBillboardPro(Camera camera, Texture2D texture, Rectangle source, Vector3 position, Vector3 up, Vector2 size, Vector2 origin, float rotation, Color tint); // Draw a billboard texture defined by source and rotation
