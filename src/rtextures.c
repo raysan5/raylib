@@ -4324,6 +4324,7 @@ static Image LoadPKM(const unsigned char *fileData, unsigned int fileSize)
 
 #if defined(SUPPORT_FILEFORMAT_KTX)
 // Load KTX compressed image data (ETC1/ETC2 compression)
+// TODO: Review KTX loading, many things changed!
 static Image LoadKTX(const unsigned char *fileData, unsigned int fileSize)
 {
     unsigned char *fileDataPtr = (unsigned char *)fileData;
@@ -4398,6 +4399,8 @@ static Image LoadKTX(const unsigned char *fileData, unsigned int fileSize)
             if (ktxHeader->glInternalFormat == 0x8D64) image.format = PIXELFORMAT_COMPRESSED_ETC1_RGB;
             else if (ktxHeader->glInternalFormat == 0x9274) image.format = PIXELFORMAT_COMPRESSED_ETC2_RGB;
             else if (ktxHeader->glInternalFormat == 0x9278) image.format = PIXELFORMAT_COMPRESSED_ETC2_EAC_RGBA;
+
+            // TODO: Support uncompressed data formats? Right now it returns format = 0!
         }
     }
 
@@ -4406,11 +4409,12 @@ static Image LoadKTX(const unsigned char *fileData, unsigned int fileSize)
 
 // Save image data as KTX file
 // NOTE: By default KTX 1.1 spec is used, 2.0 is still on draft (01Oct2018)
+// TODO: Review KTX saving, many things changed!
 static int SaveKTX(Image image, const char *fileName)
 {
     // KTX file Header (64 bytes)
     // v1.1 - https://www.khronos.org/opengles/sdk/tools/KTX/file_format_spec/
-    // v2.0 - http://github.khronos.org/KTX-Specification/ - still on draft, not ready for implementation
+    // v2.0 - http://github.khronos.org/KTX-Specification/ - Final specs by 2021-04-18
     typedef struct {
         char id[12];                        // Identifier: "«KTX 11»\r\n\x1A\n"             // KTX 2.0: "«KTX 22»\r\n\x1A\n"
         unsigned int endianness;            // Little endian: 0x01 0x02 0x03 0x04
