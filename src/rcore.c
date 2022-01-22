@@ -173,6 +173,7 @@
         #include <unistd.h>
     #elif defined(__APPLE__)
         #include <sys/syslimits.h>
+        #include <mach-o/dyld.h>
     #endif // OSs
 #endif // PLATFORM_DESKTOP
 
