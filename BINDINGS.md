@@ -36,7 +36,7 @@ Some people ported raylib to other languages in form of bindings or wrappers to 
 | raylib_odin_bindings | 4.0-dev | [Odin](https://odin-lang.org/)     | MIT | https://github.com/Deathbat2190/raylib_odin_bindings |
 | raylib-odin        | **4.0** | [Odin](https://odin-lang.org/)       | BSD-3Clause | https://github.com/odin-lang/Odin/tree/master/vendor/raylib  |
 | raylib.v           | **4.0** | [V](https://vlang.io/)               | Zlib     | https://github.com/irishgreencitrus/raylib.v |
-| raylib-ocaml       | 3.7     | [OCaml](https://ocaml.org/)          | MIT | https://github.com/tjammer/raylib-ocaml        |
+| raylib-ocaml       | **4.0** | [OCaml](https://ocaml.org/)          | MIT | https://github.com/tjammer/raylib-ocaml        |
 | raylib-swift       | 3.7     | [Swift](https://swift.org/)          | MIT | https://github.com/STREGAsGate/Raylib          |
 | hb-raylib          | 3.5     | [Harbour](https://harbour.github.io)                 | MIT | https://github.com/MarcosLeonardoMendezGerencir/hb-raylib |
 | Relib              | 3.5     | [ReCT](https://github.com/RedCubeDev-ByteSpace/ReCT) | ?   | https://github.com/RedCubeDev-ByteSpace/Relib |
