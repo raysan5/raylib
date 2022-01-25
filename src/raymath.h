@@ -318,6 +318,14 @@ RMAPI Vector2 Vector2Divide(Vector2 v1, Vector2 v2)
     return result;
 }
 
+// Divide vector by value
+RMAPI Vector2 Vector2DivideValue(Vector2 v, float div)
+{
+    Vector2 result = { v.x/div, v.y/div };
+
+    return result;
+}
+
 // Normalize provided vector
 RMAPI Vector2 Vector2Normalize(Vector2 v)
 {
