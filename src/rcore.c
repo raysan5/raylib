@@ -2851,6 +2851,23 @@ bool DirectoryExists(const char *dirPath)
     return result;
 }
 
+// Get file size in bytes
+int GetFileSize(const char *fileName)
+{
+    int size = 0;
+    
+    FILE *file = fopen(fileName, "rb");
+    
+    if (file != NULL)
+    {
+        fseek(file, 0L, SEEK_END);
+        size = (int)ftell(file);
+        fclose(file);
+    }
+
+    return size;
+}
+
 // Get pointer to extension for a filename string (includes the dot: .png)
 const char *GetFileExtension(const char *fileName)
 {
