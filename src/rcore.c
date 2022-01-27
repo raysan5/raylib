@@ -2851,8 +2851,9 @@ bool DirectoryExists(const char *dirPath)
     return result;
 }
 
-// Get file size in bytes
-int GetFileSize(const char *fileName)
+// Get file length in bytes
+// NOTE: GetFileSize() conflicts with windows.h
+int GetFileLength(const char *fileName)
 {
     int size = 0;
     
