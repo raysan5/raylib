@@ -924,6 +924,10 @@ void InitWindow(int width, int height, const char *title)
 void InitWindowAt(int width, int height, int x, int y, const char* title)
 {
 #if defined(PLATFORM_DESKTOP)
+    // Maintain borders
+    if(x <= 0) x = 0;
+    if(y <= 25) y = 25;
+
     SetConfigFlags(FLAG_WINDOW_HIDDEN);
     InitWindow(width, height, title);
     SetWindowPosition(x, y);
