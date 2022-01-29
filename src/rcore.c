@@ -928,10 +928,18 @@ void InitWindowAt(int width, int height, int x, int y, const char* title)
     if(x <= 0) x = 0;
     if(y <= 25) y = 25;
 
-    SetConfigFlags(FLAG_WINDOW_HIDDEN);
-    InitWindow(width, height, title);
-    SetWindowPosition(x, y);
-    glfwShowWindow(CORE.Window.handle);
+    if((CORE.Window.flags & FLAG_WINDOW_HIDDEN) > 0)
+    {
+        InitWindow(width, height, title);
+        SetWindowPosition(x, y);
+    }
+    else
+    {
+        SetConfigFlags(FLAG_WINDOW_HIDDEN);
+        InitWindow(width, height, title);
+        SetWindowPosition(x, y);
+        glfwShowWindow(CORE.Window.handle);
+    }
 #endif
 }
 
