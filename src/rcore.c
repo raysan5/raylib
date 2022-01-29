@@ -920,6 +920,17 @@ void InitWindow(int width, int height, const char *title)
 #endif        // PLATFORM_DESKTOP || PLATFORM_WEB || PLATFORM_RPI || PLATFORM_DRM
 }
 
+// Initialize window and OpenGL with an instance position (only PLATFORM_DESKTOP)
+void InitWindowAt(int width, int height, int x, int y, const char* title)
+{
+#if defined(PLATFORM_DESKTOP)
+    SetConfigFlags(FLAG_WINDOW_HIDDEN);
+    InitWindow(width, height, title);
+    SetWindowPosition(x, y);
+    glfwShowWindow(CORE.Window.handle);
+#endif
+}
+
 // Close window and unload OpenGL context
 void CloseWindow(void)
 {
