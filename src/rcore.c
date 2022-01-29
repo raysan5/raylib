@@ -173,6 +173,7 @@
         #include <unistd.h>
     #elif defined(__APPLE__)
         #include <sys/syslimits.h>
+        #include <mach-o/dyld.h>
     #endif // OSs
 #endif // PLATFORM_DESKTOP
 
@@ -2848,6 +2849,24 @@ bool DirectoryExists(const char *dirPath)
     }
 
     return result;
+}
+
+// Get file length in bytes
+// NOTE: GetFileSize() conflicts with windows.h
+int GetFileLength(const char *fileName)
+{
+    int size = 0;
+    
+    FILE *file = fopen(fileName, "rb");
+    
+    if (file != NULL)
+    {
+        fseek(file, 0L, SEEK_END);
+        size = (int)ftell(file);
+        fclose(file);
+    }
+
+    return size;
 }
 
 // Get pointer to extension for a filename string (includes the dot: .png)
