@@ -2,12 +2,13 @@
 
     raylib API parser
 
-    This parser scans raylib.h to get API information about structs, enums and functions.
+    This parser scans raylib.h to get API information about structs, enums, functions and defines.
     All data is divided into pieces, usually as strings. The following types are used for data:
 
      - struct FunctionInfo
      - struct StructInfo
      - struct EnumInfo
+     - struct DefInfo
 
     CONSTRAINTS:
 
@@ -62,10 +63,12 @@
 #include <stdlib.h>             // Required for: malloc(), calloc(), realloc(), free(), atoi(), strtol()
 #include <stdio.h>              // Required for: printf(), fopen(), fseek(), ftell(), fread(), fclose()
 #include <stdbool.h>            // Required for: bool
+#include <ctype.h>              // Required for: isdigit()
 
 #define MAX_FUNCS_TO_PARSE       512    // Maximum number of functions to parse
 #define MAX_STRUCTS_TO_PARSE      64    // Maximum number of structures to parse
 #define MAX_ENUMS_TO_PARSE        64    // Maximum number of enums to parse
+#define MAX_DEFINES_TO_PARSE    2048    // Maximum number of defines to parse
 
 #define MAX_LINE_LENGTH          512    // Maximum length of one line (including comments)
 #define MAX_STRUCT_LINE_LENGTH  2048    // Maximum length of one struct (multiple lines)
@@ -108,6 +111,18 @@ typedef struct EnumInfo {
     char valueDesc[MAX_ENUM_VALUES][128];   // Value description
 } EnumInfo;
 
+// Type of parsed define
+typedef enum { UNKNOWN = 0, MACRO, GUARD, INT, LONG, FLOAT, DOUBLE, CHAR, STRING, COLOR } DefineType;
+
+// Define info data
+typedef struct DefineInfo {
+    char name[64];    // Define name
+    DefineType type;  // Define type
+		char value[256];  // Define value
+    char desc[128];   // Define description
+    bool isHex;       // Define is hex number (for types INT, LONG)
+} DefineInfo;
+
 // Output format for parsed data
 typedef enum { DEFAULT = 0, JSON, XML, LUA } OutputFormat;
 
@@ -117,9 +132,11 @@ typedef enum { DEFAULT = 0, JSON, XML, LUA } OutputFormat;
 static int funcCount = 0;
 static int structCount = 0;
 static int enumCount = 0;
+static int defineCount = 0;
 static FunctionInfo *funcs = NULL;
 static StructInfo *structs = NULL;
 static EnumInfo *enums = NULL;
+static DefineInfo *defines = NULL;
 static char apiDefine[32] = "RLAPI\0";
 
 // Command line variables
@@ -142,6 +159,8 @@ static void MemoryCopy(void *dest, const void *src, unsigned int count);
 static char *EscapeBackslashes(char *text);                 // Replace '\' by "\\" when exporting to JSON and XML
 
 static void ExportParsedData(const char *fileName, int format); // Export parsed data in desired format
+
+static const char *StrDefineType(DefineType type);          // Get string of define type
 
 //------------------------------------------------------------------------------------
 // Program main entry point
@@ -168,6 +187,9 @@ int main(int argc, char* argv[])
 
     // Enums lines pointers, selected from buffer "lines"
     int *enumLines = (int *)malloc(MAX_ENUMS_TO_PARSE*sizeof(int));
+
+    // Defines lines pointers, selected from buffer "lines"
+    int *defineLines = (int *)malloc(MAX_DEFINES_TO_PARSE*sizeof(int));
 
     // Prepare required lines for parsing
     //--------------------------------------------------------------------------------------------------
@@ -228,7 +250,22 @@ int main(int argc, char* argv[])
         }
     }
 
-    // At this point we have all raylib structs, enums, functions lines data to start parsing
+    // Read const lines
+    for (int i = 0; i < linesCount; i++)
+    {
+        int j = 0;
+        while (lines[i][j] == ' ' || lines[i][j] == '\t') j++; // skip spaces and tabs in the begining
+        // Read define line
+        if (IsTextEqual(lines[i]+j, "#define ", 8))
+        {
+            // Keep the line position in the array of lines,
+            // so, we can scan that position and following lines
+            defineLines[defineCount] = i;
+            defineCount++;
+        }
+    }
+
+    // At this point we have all raylib structs, enums, functions, defines lines data to start parsing
 
     free(buffer);       // Unload text buffer
 
@@ -402,8 +439,93 @@ int main(int argc, char* argv[])
             }
         }
     }
-
     free(enumLines);
+
+    // Define info data
+    defines = (DefineInfo *)calloc(MAX_DEFINES_TO_PARSE, sizeof(DefineInfo));
+    int defineIndex = 0;
+
+    for (int i = 0; i < defineCount; i++)
+    {
+        char *linePtr = lines[defineLines[i]];
+        int j = 0;
+
+        while (linePtr[j] == ' ' || linePtr[j] == '\t') j++; // Skip spaces and tabs in the begining
+        j += 8;                                              // Skip "#define "
+        while (linePtr[j] == ' ' || linePtr[j] == '\t') j++; // Skip spaces and tabs after "#define "
+
+        // Extract name
+        int defineNameStart = j;
+        while (linePtr[j] != ' ' && linePtr[j] != '\t' && linePtr[j] != '\0') j++;
+        int defineNameEnd = j-1;
+
+        // Skip duplicates
+        int nameLen = defineNameEnd - defineNameStart + 1;
+        bool isDuplicate = false;
+        for (int k = 0; k < defineIndex; k++) {
+            if (nameLen == TextLength(defines[k].name) && IsTextEqual(defines[k].name, linePtr + defineNameStart, nameLen)) {
+                isDuplicate = true;
+                break;
+            }
+        }
+        if (isDuplicate) continue;
+
+        MemoryCopy(defines[defineIndex].name, linePtr + defineNameStart, nameLen);
+
+        // Determine type
+        if (linePtr[defineNameEnd] == ')') defines[defineIndex].type = MACRO;
+
+        while (linePtr[j] == ' ' || linePtr[j] == '\t') j++; // Skip spaces and tabs after name
+
+        int defineValueStart = j;
+        if (linePtr[j] == '\0' || linePtr == "/") defines[defineIndex].type = GUARD;
+        if (linePtr[j] == '"') defines[defineIndex].type = STRING;
+        else if (linePtr[j] == '\'') defines[defineIndex].type = CHAR;
+        else if (IsTextEqual(linePtr+j, "CLITERAL(Color)", 15)) defines[defineIndex].type = COLOR;
+        else if (isdigit(linePtr[j])) { // Parsing numbers
+            bool isFloat = false, isNumber = true, isHex = false;
+            while (linePtr[j] != ' ' && linePtr[j] != '\t' && linePtr[j] != '\0') {
+                char ch = linePtr[j];
+                if (ch == '.') isFloat = true;
+                if (ch == 'x') isHex = true;
+                if (!(isdigit(ch)||(ch >= 'a' && ch <= 'f')||(ch >= 'A' && ch <= 'F')||ch=='x'||ch=='L'||ch=='.'||ch=='+'||ch=='-')) isNumber = false;
+                j++;
+            }
+            if (isNumber) {
+                if (isFloat) {
+                    defines[defineIndex].type = linePtr[j-1] == 'f' ? FLOAT : DOUBLE;
+                } else {
+                    defines[defineIndex].type = linePtr[j-1] == 'L' ? LONG : INT;
+                    defines[defineIndex].isHex = isHex;
+                }
+            }
+        }
+
+        // Extracting value
+        while (linePtr[j] != '\\' && linePtr[j] != '\0' && !(linePtr[j] == '/' && linePtr[j+1] == '/')) j++;
+        int defineValueEnd = j-1;
+        while (linePtr[defineValueEnd] == ' ' || linePtr[defineValueEnd] == '\t') defineValueEnd--; // Remove trailing spaces and tabs
+        if (defines[defineIndex].type == LONG || defines[defineIndex].type == FLOAT) defineValueEnd--; // Remove number postfix
+        int valueLen = defineValueEnd - defineValueStart + 1;
+        if (valueLen > 255) valueLen = 255;
+
+        if (valueLen > 0) MemoryCopy(defines[defineIndex].value, linePtr + defineValueStart, valueLen);
+
+        // Extracting description
+        if (linePtr[j] == '/') {
+            int commentStart = j;
+            while (linePtr[j] != '\\' && linePtr[j] != '\0') j++;
+            int commentEnd = j-1;
+            int commentLen = commentEnd - commentStart + 1;
+            if (commentLen > 127) commentLen = 127;
+
+            MemoryCopy(defines[defineIndex].desc, linePtr + commentStart, commentLen);
+        }
+
+        defineIndex++;
+    }
+    defineCount = defineIndex;
+    free(defineLines);
 
     // Functions info data
     funcs = (FunctionInfo *)calloc(MAX_FUNCS_TO_PARSE, sizeof(FunctionInfo));
@@ -486,6 +608,7 @@ int main(int argc, char* argv[])
     // structs[] -> We have all the structs decomposed into pieces for further analysis
     // enums[]   -> We have all the enums decomposed into pieces for further analysis
     // funcs[]   -> We have all the functions decomposed into pieces for further analysis
+    // defines[] -> We have all the defines decomposed into pieces for further analysis
 
     // Process input file to output
     if (outFileName[0] == '\0') MemoryCopy(outFileName, "raylib_api.txt\0", 15);
@@ -759,6 +882,25 @@ static char *EscapeBackslashes(char *text)
     return buffer;
 }
 
+// Get string of define type
+static const char *StrDefineType(DefineType type)
+{
+    switch (type)
+    {
+        case UNKNOWN: return "UNKNOWN";
+        case GUARD:   return "GUARD";
+        case MACRO:   return "MACRO";
+        case INT:     return "INT";
+        case LONG:    return "LONG";
+        case FLOAT:   return "FLOAT";
+        case DOUBLE:  return "DOUBLE";
+        case CHAR:    return "CHAR";
+        case STRING:  return "STRING";
+        case COLOR:   return "COLOR";
+    }
+    return "";
+}
+
 /*
 // Replace text string
 // REQUIRES: strlen(), strstr(), strncpy(), strcpy() -> TODO: Replace by custom implementations!
@@ -836,7 +978,7 @@ static void ExportParsedData(const char *fileName, int format)
             {
                 fprintf(outFile, "Enum %02i: %s (%i values)\n", i + 1, enums[i].name, enums[i].valueCount);
                 fprintf(outFile, "  Name: %s\n", enums[i].name);
-                fprintf(outFile, " Description: %s\n", enums[i].desc + 3);
+                fprintf(outFile, "  Description: %s\n", enums[i].desc + 3);
                 for (int e = 0; e < enums[i].valueCount; e++) fprintf(outFile, "  Value[%s]: %i\n", enums[i].valueName[e], enums[i].valueInteger[e]);
             }
 
@@ -850,6 +992,16 @@ static void ExportParsedData(const char *fileName, int format)
                 fprintf(outFile, "  Description: %s\n", funcs[i].desc + 3);
                 for (int p = 0; p < funcs[i].paramCount; p++) fprintf(outFile, "  Param[%i]: %s (type: %s)\n", p + 1, funcs[i].paramName[p], funcs[i].paramType[p]);
                 if (funcs[i].paramCount == 0) fprintf(outFile, "  No input parameters\n");
+            }
+
+            fprintf(outFile, "\nDefines found: %i\n\n", defineCount);
+            for (int i = 0; i < defineCount; i++)
+            {
+                fprintf(outFile, "Define %03i: %s\n", i + 1, defines[i].name);
+                fprintf(outFile, "  Name: %s\n", defines[i].name);
+                fprintf(outFile, "  Type: %s\n", StrDefineType(defines[i].type));
+								fprintf(outFile, "  Value: %s\n", defines[i].value);
+								fprintf(outFile, "  Description: %s\n", defines[i].desc + 3);
             }
         } break;
         case LUA:
@@ -902,6 +1054,26 @@ static void ExportParsedData(const char *fileName, int format)
                 fprintf(outFile, "      }\n");
                 fprintf(outFile, "    }");
                 if (i < enumCount - 1) fprintf(outFile, ",\n");
+                else fprintf(outFile, "\n");
+            }
+            fprintf(outFile, "  },\n");
+
+            // Print defines info
+            fprintf(outFile, "  defines = {\n");
+            for (int i = 0; i < defineCount; i++)
+            {
+                fprintf(outFile, "    {\n");
+                fprintf(outFile, "      name = \"%s\",\n", defines[i].name);
+                fprintf(outFile, "      type = \"%s\",\n", StrDefineType(defines[i].type));
+                if (defines[i].type == INT || defines[i].type == LONG || defines[i].type == FLOAT || defines[i].type == DOUBLE || defines[i].type == STRING) {
+                    fprintf(outFile, "      value = %s,\n", defines[i].value);
+                } else {
+                    fprintf(outFile, "      value = \"%s\",\n", defines[i].value);
+                }
+								fprintf(outFile, "      description = \"%s\"\n", defines[i].desc + 3);
+                fprintf(outFile, "    }");
+
+                if (i < defineCount - 1) fprintf(outFile, ",\n");
                 else fprintf(outFile, "\n");
             }
             fprintf(outFile, "  },\n");
@@ -985,6 +1157,28 @@ static void ExportParsedData(const char *fileName, int format)
                 fprintf(outFile, "      ]\n");
                 fprintf(outFile, "    }");
                 if (i < enumCount - 1) fprintf(outFile, ",\n");
+                else fprintf(outFile, "\n");
+            }
+            fprintf(outFile, "  ],\n");
+
+            // Print defines info
+            fprintf(outFile, "  \"defines\": [\n");
+            for (int i = 0; i < defineCount; i++)
+            {
+                fprintf(outFile, "    {\n");
+                fprintf(outFile, "      \"name\": \"%s\",\n", defines[i].name);
+                fprintf(outFile, "      \"type\": \"%s\",\n", StrDefineType(defines[i].type));
+                if (defines[i].isHex) { // INT or LONG
+                    fprintf(outFile, "      \"value\": %ld,\n", strtol(defines[i].value, NULL, 16));
+                } else if (defines[i].type == INT || defines[i].type == LONG || defines[i].type == FLOAT || defines[i].type == DOUBLE || defines[i].type == STRING) {
+                    fprintf(outFile, "      \"value\": %s,\n", defines[i].value);
+                } else {
+                    fprintf(outFile, "      \"value\": \"%s\",\n", defines[i].value);
+                }
+								fprintf(outFile, "      \"description\": \"%s\"\n", defines[i].desc + 3);
+                fprintf(outFile, "    }");
+
+                if (i < defineCount - 1) fprintf(outFile, ",\n");
                 else fprintf(outFile, "\n");
             }
             fprintf(outFile, "  ],\n");
@@ -1076,6 +1270,14 @@ static void ExportParsedData(const char *fileName, int format)
                 fprintf(outFile, "        </Enum>\n");
             }
             fprintf(outFile, "    </Enums>\n");
+
+            // Print defines info
+            fprintf(outFile, "    <Defines count=\"%i\">\n", defineCount);
+            for (int i = 0; i < defineCount; i++)
+            {
+                fprintf(outFile, "        <Define name=\"%s\" type=\"%s\" value=\"%s\" desc=\"%s\" />\n", defines[i].name, StrDefineType(defines[i].type), defines[i].value, defines[i].desc);
+            }
+            fprintf(outFile, "    </Defines>\n");
 
             // Print functions info
             fprintf(outFile, "    <Functions count=\"%i\">\n", funcCount);
