@@ -1091,6 +1091,38 @@ void DrawTextCodepoint(Font font, int codepoint, Vector2 position, float fontSiz
     DrawTexturePro(font.texture, srcRec, dstRec, (Vector2){ 0, 0 }, 0.0f, tint);
 }
 
+// Draw multiple character (codepoints)
+void DrawTextCodepoints(Font font, int *codepoints, int count, Vector2 position, float fontSize, float spacing, Color tint)
+{
+    int textOffsetY = 0;            // Offset between lines (on line break '\n')
+    float textOffsetX = 0.0f;       // Offset X to next character to draw
+
+    float scaleFactor = fontSize/font.baseSize;         // Character quad scaling factor
+
+    for (int i = 0; i < count; i++)
+    {
+        int index = GetGlyphIndex(font, codepoints[i]);
+
+        if (codepoints[i] == '\n')
+        {
+            // NOTE: Fixed line spacing of 1.5 line-height
+            // TODO: Support custom line spacing defined by user
+            textOffsetY += (int)((font.baseSize + font.baseSize/2)*scaleFactor);
+            textOffsetX = 0.0f;
+        }
+        else
+        {
+            if ((codepoints[i] != ' ') && (codepoints[i] != '\t'))
+            {
+                DrawTextCodepoint(font, codepoints[i], (Vector2){ position.x + textOffsetX, position.y + textOffsetY }, fontSize, tint);
+            }
+
+            if (font.glyphs[index].advanceX == 0) textOffsetX += ((float)font.recs[index].width*scaleFactor + spacing);
+            else textOffsetX += ((float)font.glyphs[index].advanceX*scaleFactor + spacing);
+        }
+    }
+}
+
 // Measure string width for default font
 int MeasureText(const char *text, int fontSize)
 {

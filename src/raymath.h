@@ -282,7 +282,7 @@ RMAPI float Vector2Distance(Vector2 v1, Vector2 v2)
 RMAPI float Vector2Angle(Vector2 v1, Vector2 v2)
 {
     float result = atan2f(v2.y, v2.x) - atan2f(v1.y, v1.x);
-    
+
     return result;
 }
 
@@ -332,6 +332,21 @@ RMAPI Vector2 Vector2Normalize(Vector2 v)
     }
 
     return result;
+}
+
+// Transforms a Vector2 by a given Matrix
+RMAPI Vector2 Vector2Transform(Vector2 v, Matrix mat)
+{
+	Vector2 result = { 0 };
+
+	float x = v.x;
+	float y = v.y;
+	float z = 0;
+
+	result.x = mat.m0*x + mat.m4*y + mat.m8*z + mat.m12;
+	result.y = mat.m1*x + mat.m5*y + mat.m9*z + mat.m13;
+
+	return result;
 }
 
 // Calculate linear interpolation between two vectors
@@ -534,12 +549,12 @@ RMAPI float Vector3Distance(Vector3 v1, Vector3 v2)
 RMAPI float Vector3Angle(Vector3 v1, Vector3 v2)
 {
     float result = 0.0f;
-    
+
     Vector3 cross = { v1.y*v2.z - v1.z*v2.y, v1.z*v2.x - v1.x*v2.z, v1.x*v2.y - v1.y*v2.x };
     float len = sqrtf(cross.x*cross.x + cross.y*cross.y + cross.z*cross.z);
     float dot = (v1.x*v2.x + v1.y*v2.y + v1.z*v2.z);
     result = atan2f(len, dot);
-    
+
     return result;
 }
 
@@ -1475,8 +1490,7 @@ RMAPI Quaternion QuaternionInvert(Quaternion q)
 {
     Quaternion result = q;
 
-    float length = sqrtf(q.x*q.x + q.y*q.y + q.z*q.z + q.w*q.w);
-    float lengthSq = length*length;
+    float lengthSq = q.x*q.x + q.y*q.y + q.z*q.z + q.w*q.w;
 
     if (lengthSq != 0.0)
     {

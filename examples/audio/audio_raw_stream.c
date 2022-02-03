@@ -77,6 +77,9 @@ int main(void)
         {
             float fp = (float)(mousePosition.y);
             frequency = 40.0f + (float)(fp);
+
+            float pan = (float)(mousePosition.x) / (float)screenWidth;
+            SetAudioStreamPan(stream, pan);
         }
 
         // Rewrite the sine wave.
@@ -137,7 +140,7 @@ int main(void)
             ClearBackground(RAYWHITE);
 
             DrawText(TextFormat("sine frequency: %i",(int)frequency), GetScreenWidth() - 220, 10, 20, RED);
-            DrawText("click mouse button to change frequency", 10, 10, 20, DARKGRAY);
+            DrawText("click mouse button to change frequency or pan", 10, 10, 20, DARKGRAY);
 
             // Draw the current buffer state proportionate to the screen
             for (int i = 0; i < screenWidth; i++)
