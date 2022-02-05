@@ -41,6 +41,10 @@ set(raylib_sources
 # <root>/cmake/GlfwImport.cmake handles the details around the inclusion of glfw
 include(GlfwImport)
 
+# Sets additional platform options and link libraries for each platform
+# also selects the proper graphics API and version for that platform
+# Produces a variable LIBS_PRIVATE that will be used later
+include(LibraryConfigurations)
 
 if (USE_AUDIO)
     MESSAGE(STATUS "Audio Backend: miniaudio")
@@ -49,10 +53,6 @@ else ()
     MESSAGE(STATUS "Audio Backend: None (-DUSE_AUDIO=OFF)")
 endif ()
 
-# Sets additional platform options and link libraries for each platform
-# also selects the proper graphics API and version for that platform
-# Produces a variable LIBS_PRIVATE that will be used later
-include(LibraryConfigurations)
 
 add_library(raylib ${raylib_sources} ${raylib_public_headers})
 

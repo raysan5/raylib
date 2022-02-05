@@ -28,6 +28,10 @@ if (${PLATFORM} MATCHES "Desktop")
         endif ()
         
         set(LIBS_PRIVATE m pthread ${OPENGL_LIBRARIES} ${OSS_LIBRARY})
+
+        if (USE_AUDIO)
+            set(LIBS_PRIVATE ${LIBS_PRIVATE} dl)
+        endif ()
     endif ()
 
 elseif (${PLATFORM} MATCHES "Web")
