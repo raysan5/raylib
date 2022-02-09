@@ -113,6 +113,12 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
     # ifeq ($(UNAME),Msys) -> Windows
     ifeq ($(OS),Windows_NT)
         PLATFORM_OS = WINDOWS
+        # Make always tries to run build rules under sh.exe by default
+        # so targets like "make clean" will fail if sh.exe is present in PATH
+        # this ensures under Windows, build rules are executed using cmd.exe
+        # see README.W32 of GNU Make for more details
+        # WARNING: -e flag of make will override this
+        SHELL = cmd
     else
         UNAMEOS = $(shell uname)
         ifeq ($(UNAMEOS),Linux)
