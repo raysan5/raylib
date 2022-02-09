@@ -47,6 +47,19 @@ pub fn Pkg(srcdir: []const u8) type {
                     raylib.linkSystemLibrary("m");
                     raylib.linkSystemLibrary("X11");
                 },
+                .freebsd, .openbsd, .netbsd, .dragonfly => {
+                    raylib.addCSourceFiles(&.{srcdir ++ "/rglfw.c"}, raylib_flags);
+                    raylib.linkSystemLibrary("GL");
+                    raylib.linkSystemLibrary("rt");
+                    raylib.linkSystemLibrary("dl");
+                    raylib.linkSystemLibrary("m");
+                    raylib.linkSystemLibrary("X11");
+                    raylib.linkSystemLibrary("Xrandr");
+                    raylib.linkSystemLibrary("Xinerama");
+                    raylib.linkSystemLibrary("Xi");
+                    raylib.linkSystemLibrary("Xxf86vm");
+                    raylib.linkSystemLibrary("Xcursor");
+                },
                 .macos => {
                     // On macos rglfw.c include Objective-C files.
                     const raylib_flags_extra_macos = &[_][]const u8{
