@@ -731,6 +731,12 @@ endif
 # Clean everything
 clean:
 ifeq ($(PLATFORM_OS),WINDOWS)
+	# Make always tries to run build rules under sh.exe by default
+	# So if sh.exe is present in the PATH on windows, the del commands will fail
+	# see README.W32 of GNU Make for more details
+	# It is not specified earlier in the Makefile, because then cross-compilation
+	# will also fail.
+	SHELL = cmd
 	del *.o /s
 	cd $(RAYLIB_RELEASE_PATH)
 	del lib$(RAYLIB_LIB_NAME).a /s
