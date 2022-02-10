@@ -15,32 +15,34 @@
 #  Many thanks to Milan Nikolic (@gen2brain) for implementing Android platform pipeline.
 #  Many thanks to Emanuele Petriglia for his contribution on GNU/Linux pipeline.
 #
-#  Copyright (c) 2014-2022 Ramon Santamaria (@raysan5)
+#   Copyright (c) 2013-2022 Ramon Santamaria (@raysan5)
 #
-#  This software is provided "as-is", without any express or implied warranty.
-#  In no event will the authors be held liable for any damages arising from
-#  the use of this software.
+#   This software is provided "as-is", without any express or implied warranty. In no event
+#   will the authors be held liable for any damages arising from the use of this software.
 #
-#  Permission is granted to anyone to use this software for any purpose,
-#  including commercial applications, and to alter it and redistribute it
-#  freely, subject to the following restrictions:
+#   Permission is granted to anyone to use this software for any purpose, including commercial
+#   applications, and to alter it and redistribute it freely, subject to the following restrictions:
 #
-#    1. The origin of this software must not be misrepresented; you must not
-#    claim that you wrote the original software. If you use this software in a
-#    product, an acknowledgment in the product documentation would be
-#    appreciated but is not required.
+#     1. The origin of this software must not be misrepresented; you must not claim that you
+#     wrote the original software. If you use this software in a product, an acknowledgment
+#     in the product documentation would be appreciated but is not required.
 #
-#    2. Altered source versions must be plainly marked as such, and must not
-#    be misrepresented as being the original software.
+#     2. Altered source versions must be plainly marked as such, and must not be misrepresented
+#     as being the original software.
 #
-#    3. This notice may not be removed or altered from any source distribution.
+#     3. This notice may not be removed or altered from any source distribution.
 #
-#******************************************************************************
+#**************************************************************************************************
 
-# Please read the wiki to know how to compile raylib, because there are different methods.
+# NOTE: Highly recommended to read the raylib Wiki to know how to compile raylib for different platforms
 # https://github.com/raysan5/raylib/wiki
 
 .PHONY: all clean install uninstall
+
+# Define required environment variables
+#------------------------------------------------------------------------------------------------
+# Define target platform: PLATFORM_DESKTOP, PLATFORM_RPI, PLATFORM_DRM, PLATFORM_ANDROID, PLATFORM_WEB
+PLATFORM           ?= PLATFORM_DESKTOP
 
 # Define required raylib variables
 RAYLIB_VERSION        = 4.0.0
@@ -70,10 +72,6 @@ RAYLIB_RES_FILE      ?= ./raylib.dll.rc.data
 # if NONE, default config.h flags are used
 RAYLIB_CONFIG_FLAGS  ?= NONE
 
-# Define raylib platform
-# Options:  PLATFORM_DESKTOP, PLATFORM_RPI, PLATFORM_ANDROID, PLATFORM_WEB
-PLATFORM             ?= PLATFORM_DESKTOP
-
 # To define additional cflags: Use make CUSTOM_CFLAGS=""
 
 # Include raylib modules on compilation
@@ -87,11 +85,11 @@ RAYLIB_MODULE_RAYGUI_PATH ?= $(RAYLIB_SRC_PATH)/extras
 RAYLIB_MODULE_PHYSAC_PATH ?= $(RAYLIB_SRC_PATH)/extras
 
 # Use external GLFW library instead of rglfw module
-USE_EXTERNAL_GLFW    ?= FALSE
+USE_EXTERNAL_GLFW     ?= FALSE
 
-# Use Wayland display server protocol on Linux desktop
-# by default it uses X11 windowing system
-USE_WAYLAND_DISPLAY  ?= FALSE
+# Use Wayland display server protocol on Linux desktop (by default it uses X11 windowing system)
+# NOTE: This variable is only used for PLATFORM_OS: LINUX
+USE_WAYLAND_DISPLAY   ?= FALSE
 
 # Use cross-compiler for PLATFORM_RPI
 ifeq ($(PLATFORM),PLATFORM_RPI)
@@ -102,9 +100,8 @@ ifeq ($(PLATFORM),PLATFORM_RPI)
     endif
 endif
 
-# Determine if the file has root access (only for installing raylib)
-# "whoami" prints the name of the user that calls him (so, if it is the root
-# user, "whoami" prints "root").
+# Determine if the file has root access (only required to install raylib)
+# "whoami" prints the name of the user that calls him (so, if it is the root user, "whoami" prints "root")
 ROOT = $(shell whoami)
 
 # By default we suppose we are working on Windows
@@ -220,7 +217,8 @@ ifeq ($(PLATFORM),PLATFORM_ANDROID)
     GRAPHICS = GRAPHICS_API_OPENGL_ES2
 endif
 
-# Define default C compiler and archiver to pack library
+# Define default C compiler and archiver to pack library: CC, AR
+#------------------------------------------------------------------------------------------------
 CC = gcc
 AR = ar
 
@@ -266,7 +264,8 @@ ifeq ($(PLATFORM),PLATFORM_ANDROID)
     AR = $(ANDROID_TOOLCHAIN)/bin/llvm-ar
 endif
 
-# Define compiler flags:
+# Define compiler flags: CFLAGS
+#------------------------------------------------------------------------------------------------
 #  -O1                      defines optimization level
 #  -g                       include debug information on compilation
 #  -s                       strip unnecessary data from build
@@ -274,6 +273,7 @@ endif
 #  -std=c99                 defines C language mode (standard C from 1999 revision)
 #  -std=gnu99               defines C language mode (GNU C from 1999 revision)
 #  -Wno-missing-braces      ignore invalid warning (GCC bug 53119)
+#  -Wno-unused-value        ignore unused return values of some functions (i.e. fread())
 #  -D_DEFAULT_SOURCE        use with -std=c99 on Linux and PLATFORM_WEB, required for timespec
 #  -Werror=pointer-arith    catch unportable code that does direct arithmetic on void pointers
 #  -fno-strict-aliasing     jar_xm.h does shady stuff (breaks strict aliasing)
@@ -377,8 +377,9 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
     endif
 endif
 
-# Define include paths for required headers
+# Define include paths for required headers: INCLUDE_PATHS
 # NOTE: Several external required libraries (stb and others)
+#------------------------------------------------------------------------------------------------
 INCLUDE_PATHS = -I. -Iexternal/glfw/include -Iexternal/glfw/deps/mingw
 
 # Define additional directories containing required header files
@@ -388,13 +389,11 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
     endif
 endif
 ifeq ($(PLATFORM),PLATFORM_RPI)
-    # RPI required libraries
     INCLUDE_PATHS += -I$(RPI_TOOLCHAIN_SYSROOT)/opt/vc/include
     INCLUDE_PATHS += -I$(RPI_TOOLCHAIN_SYSROOT)/opt/vc/include/interface/vmcs_host/linux
     INCLUDE_PATHS += -I$(RPI_TOOLCHAIN_SYSROOT)/opt/vc/include/interface/vcos/pthreads
 endif
 ifeq ($(PLATFORM),PLATFORM_DRM)
-    # DRM required libraries
     INCLUDE_PATHS += -I/usr/include/libdrm
 endif
 ifeq ($(PLATFORM),PLATFORM_ANDROID)
@@ -418,7 +417,9 @@ ifeq ($(PLATFORM),PLATFORM_ANDROID)
     endif
 endif
 
-# Define linker flags (required for dynamic library generation)
+# Define library paths containing required libs: LDFLAGS
+# NOTE: This is only required for dynamic library generation
+#------------------------------------------------------------------------------------------------
 LDFLAGS = -L. -L$(RAYLIB_RELEASE_PATH)
 
 ifeq ($(PLATFORM),PLATFORM_DESKTOP)
@@ -452,7 +453,9 @@ ifeq ($(PLATFORM),PLATFORM_ANDROID)
     LDFLAGS += -Wl,-undefined,dynamic_lookup
 endif
 
-# Define linker libraries (required for dynamic library generation)
+# Define libraries required on linking: LDLIBS
+# NOTE: This is only required for dynamic library generation
+#------------------------------------------------------------------------------------------------
 ifeq ($(PLATFORM),PLATFORM_DESKTOP)
     ifeq ($(PLATFORM_OS),WINDOWS)
         LDLIBS = -static-libgcc -lopengl32 -lgdi32 -lwinmm
@@ -485,13 +488,8 @@ ifeq ($(PLATFORM),PLATFORM_ANDROID)
     LDLIBS = -llog -landroid -lEGL -lGLESv2 -lOpenSLES -lc -lm
 endif
 
-# Define all object files required with a wildcard
-# The wildcard takes all files that finish with ".c",
-# and replaces extentions with ".o", that are the object files
-# NOTE: Some objects depend on the PLATFORM to be added or not!
-# OBJS = $(patsubst %.c, %.o, $(wildcard *.c))
-
-# Define object required on compilation
+# Define source code object files required
+#------------------------------------------------------------------------------------------------
 OBJS = rcore.o \
        rshapes.o \
        rtextures.o \
@@ -520,6 +518,8 @@ ifeq ($(PLATFORM),PLATFORM_ANDROID)
     OBJS += android_native_app_glue.o
 endif
 
+# Define processes to execute
+#------------------------------------------------------------------------------------------------
 # Default target entry
 all: raylib
 

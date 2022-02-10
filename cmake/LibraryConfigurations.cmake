@@ -28,6 +28,10 @@ if (${PLATFORM} MATCHES "Desktop")
         endif ()
         
         set(LIBS_PRIVATE m pthread ${OPENGL_LIBRARIES} ${OSS_LIBRARY})
+
+        if (USE_AUDIO)
+            set(LIBS_PRIVATE ${LIBS_PRIVATE} dl)
+        endif ()
     endif ()
 
 elseif (${PLATFORM} MATCHES "Web")
@@ -40,10 +44,10 @@ elseif (${PLATFORM} MATCHES "Android")
     set(PLATFORM_CPP "PLATFORM_ANDROID")
     set(GRAPHICS "GRAPHICS_API_OPENGL_ES2")
     set(CMAKE_POSITION_INDEPENDENT_CODE ON)
-    
+    set(raylib_sources "${raylib_sources} ${ANDROID_NDK}/sources/android/native_app_glue/android_native_app_glue.c")
     add_definitions(-DANDROID -D__ANDROID_API__=21)
-    include_directories(external/android/native_app_glue)
-    set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,--exclude-libs,libatomic.a -Wl,--build-id -Wl,-z,noexecstack -Wl,-z,relro -Wl,-z,now -Wl,--warn-shared-textrel -Wl,--fatal-warnings -uANativeActivity_onCreate")
+    include_directories(${ANDROID_NDK}/sources/android/native_app_glue)
+    set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,--exclude-libs,libatomic.a -Wl,--build-id -Wl,-z,noexecstack -Wl,-z,relro -Wl,-z,now -Wl,--warn-shared-textrel -Wl,--fatal-warnings -u ANativeActivity_onCreate -Wl,-undefined,dynamic_lookup")
     
     find_library(OPENGL_LIBRARY OpenGL)
     set(LIBS_PRIVATE m log android EGL GLESv2 OpenSLES atomic c)

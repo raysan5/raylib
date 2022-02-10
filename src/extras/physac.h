@@ -5,7 +5,7 @@
 *   DESCRIPTION:
 *
 *   Physac is a small 2D physics engine written in pure C. The engine uses a fixed time-step thread loop
-*   to simluate physics. A physics step contains the following phases: get collision information,
+*   to simulate physics. A physics step contains the following phases: get collision information,
 *   apply dynamics, collision solving and position correction. It uses a very simple struct for physic
 *   bodies with a position vector to be used in any 3D rendering API.
 *
