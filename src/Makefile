@@ -114,6 +114,9 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
     # ifeq ($(UNAME),Msys) -> Windows
     ifeq ($(OS),Windows_NT)
         PLATFORM_OS = WINDOWS
+        ifndef PLATFORM_SHELL
+            PLATFORM_SHELL = cmd
+        endif
     else
         UNAMEOS = $(shell uname)
         ifeq ($(UNAMEOS),Linux)
@@ -134,6 +137,9 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
         ifeq ($(UNAMEOS),Darwin)
             PLATFORM_OS = OSX
         endif
+        ifndef PLATFORM_SHELL
+            PLATFORM_SHELL = cmd
+        endif
     endif
 endif
 ifeq ($(PLATFORM),PLATFORM_RPI)
@@ -141,20 +147,32 @@ ifeq ($(PLATFORM),PLATFORM_RPI)
     ifeq ($(UNAMEOS),Linux)
         PLATFORM_OS = LINUX
     endif
+    ifndef PLATFORM_SHELL
+        PLATFORM_SHELL = cmd
+    endif
 endif
 ifeq ($(PLATFORM),PLATFORM_DRM)
     UNAMEOS = $(shell uname)
     ifeq ($(UNAMEOS),Linux)
         PLATFORM_OS = LINUX
     endif
+    ifndef PLATFORM_SHELL
+        PLATFORM_SHELL = cmd
+    endif
 endif
 ifeq ($(PLATFORM),PLATFORM_WEB)
     ifeq ($(OS),Windows_NT)
         PLATFORM_OS = WINDOWS
+        ifndef PLATFORM_SHELL
+            PLATFORM_SHELL = cmd
+        endif
     else
         UNAMEOS = $(shell uname)
         ifeq ($(UNAMEOS),Linux)
             PLATFORM_OS = LINUX
+        endif
+        ifndef PLATFORM_SHELL
+            PLATFORM_SHELL = sh
         endif
     endif
 endif
@@ -739,22 +757,21 @@ else
 	@echo "Error: Root permissions needed for uninstallation. Try sudo make uninstall"
 endif
 
-.PHONY: clean_LINUX clean_WINDOWS clean_ANDROID clean_BSD clean_OSX
+.PHONY: clean_shell_cmd clean_shell_sh
 
 # Clean everything
-clean:	clean_$(PLATFORM_OS)
+clean:	clean_shell_$(PLATFORM_SHELL)
 	@echo "removed all generated files!"
 
-clean_LINUX clean_BSD clean_OSX:
+clean_shell_sh:
 	rm -fv *.o $(RAYLIB_RELEASE_PATH)/lib$(RAYLIB_LIB_NAME).a $(RAYLIB_RELEASE_PATH)/lib$(RAYLIB_LIB_NAME).bc $(RAYLIB_RELEASE_PATH)/lib$(RAYLIB_LIB_NAME).so*
-
-clean_ANDROID:
-	rm -fv *.o $(RAYLIB_RELEASE_PATH)/lib$(RAYLIB_LIB_NAME).a $(RAYLIB_RELEASE_PATH)/lib$(RAYLIB_LIB_NAME).bc $(RAYLIB_RELEASE_PATH)/lib$(RAYLIB_LIB_NAME).so*
+ifeq ($(PLATFORM),PLATFORM_ANDROID)
 	rm -rf $(ANDROID_TOOLCHAIN) $(NATIVE_APP_GLUE)/android_native_app_glue.o
+endif
 
 # Set specific target variable
-clean_WINDOWS: SHELL := cmd.exe
-clean_WINDOWS:
+clean_shell_cmd: SHELL=cmd
+clean_shell_cmd:
 	del *.o /s
 	cd $(RAYLIB_RELEASE_PATH) & \
 	del lib$(RAYLIB_LIB_NAME).a /s & \
