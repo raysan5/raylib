@@ -728,24 +728,24 @@ else
 	@echo "Error: Root permissions needed for uninstallation. Try sudo make uninstall"
 endif
 
+.PHONY: clean_LINUX clean_WINDOWS clean_ANDROID clean_BSD clean_OSX
+
 # Clean everything
-clean:
-ifeq ($(PLATFORM_OS),WINDOWS)
-	# Make always tries to run build rules under sh.exe by default
-	# So if sh.exe is present in the PATH on windows, the del commands will fail
-	# see README.W32 of GNU Make for more details
-	# It is not specified earlier in the Makefile, because then cross-compilation
-	# will also fail.
-	SHELL = cmd
+clean:	clean_$(PLATFORM_OS)
+	@echo "removed all generated files!"
+
+clean_LINUX clean_BSD clean_OSX:
+	rm -fv *.o $(RAYLIB_RELEASE_PATH)/lib$(RAYLIB_LIB_NAME).a $(RAYLIB_RELEASE_PATH)/lib$(RAYLIB_LIB_NAME).bc $(RAYLIB_RELEASE_PATH)/lib$(RAYLIB_LIB_NAME).so*
+
+clean_ANDROID:
+	rm -fv *.o $(RAYLIB_RELEASE_PATH)/lib$(RAYLIB_LIB_NAME).a $(RAYLIB_RELEASE_PATH)/lib$(RAYLIB_LIB_NAME).bc $(RAYLIB_RELEASE_PATH)/lib$(RAYLIB_LIB_NAME).so*
+	rm -rf $(ANDROID_TOOLCHAIN) $(NATIVE_APP_GLUE)/android_native_app_glue.o
+
+clean_WINDOWS: SHELL := cmd.exe
+
+clean_WINDOWS:
 	del *.o /s
 	cd $(RAYLIB_RELEASE_PATH)
 	del lib$(RAYLIB_LIB_NAME).a /s
 	del lib$(RAYLIB_LIB_NAME)dll.a /s
 	del $(RAYLIB_LIB_NAME).dll /s
-else
-	rm -fv *.o $(RAYLIB_RELEASE_PATH)/lib$(RAYLIB_LIB_NAME).a $(RAYLIB_RELEASE_PATH)/lib$(RAYLIB_LIB_NAME).bc $(RAYLIB_RELEASE_PATH)/lib$(RAYLIB_LIB_NAME).so*
-endif
-ifeq ($(PLATFORM),PLATFORM_ANDROID)
-	rm -rf $(ANDROID_TOOLCHAIN) $(NATIVE_APP_GLUE)/android_native_app_glue.o
-endif
-	@echo "removed all generated files!"
