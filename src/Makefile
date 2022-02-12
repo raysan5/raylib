@@ -745,7 +745,7 @@ clean_WINDOWS: SHELL := cmd.exe
 
 clean_WINDOWS:
 	del *.o /s
-	cd $(RAYLIB_RELEASE_PATH)
-	del lib$(RAYLIB_LIB_NAME).a /s
-	del lib$(RAYLIB_LIB_NAME)dll.a /s
+	cd $(RAYLIB_RELEASE_PATH) & \
+	del lib$(RAYLIB_LIB_NAME).a /s & \
+	del lib$(RAYLIB_LIB_NAME)dll.a /s & \
 	del $(RAYLIB_LIB_NAME).dll /s
