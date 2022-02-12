@@ -148,6 +148,16 @@ ifeq ($(PLATFORM),PLATFORM_DRM)
         PLATFORM_OS = LINUX
     endif
 endif
+ifeq ($(PLATFORM),PLATFORM_WEB)
+    ifeq ($(OS),Windows_NT)
+        PLATFORM_OS = WINDOWS
+    else
+        UNAMEOS = $(shell uname)
+        ifeq ($(UNAMEOS),Linux)
+            PLATFORM_OS = LINUX
+        endif
+    endif
+endif
 
 ifeq ($(PLATFORM),PLATFORM_WEB)
     # Emscripten required variables
