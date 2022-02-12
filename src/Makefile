@@ -106,6 +106,7 @@ ROOT = $(shell whoami)
 
 # By default we suppose we are working on Windows
 HOST_PLATFORM_OS ?= WINDOWS
+PLATFORM_OS ?= WINDOWS
 
 # Determine PLATFORM_OS in case PLATFORM_DESKTOP selected
 ifeq ($(PLATFORM),PLATFORM_DESKTOP)
@@ -741,8 +742,8 @@ clean_ANDROID:
 	rm -fv *.o $(RAYLIB_RELEASE_PATH)/lib$(RAYLIB_LIB_NAME).a $(RAYLIB_RELEASE_PATH)/lib$(RAYLIB_LIB_NAME).bc $(RAYLIB_RELEASE_PATH)/lib$(RAYLIB_LIB_NAME).so*
 	rm -rf $(ANDROID_TOOLCHAIN) $(NATIVE_APP_GLUE)/android_native_app_glue.o
 
+# Set specific target variable
 clean_WINDOWS: SHELL := cmd.exe
-
 clean_WINDOWS:
 	del *.o /s
 	cd $(RAYLIB_RELEASE_PATH) & \
