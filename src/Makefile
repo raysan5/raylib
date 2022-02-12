@@ -36,7 +36,6 @@
 
 # NOTE: Highly recommended to read the raylib Wiki to know how to compile raylib for different platforms
 # https://github.com/raysan5/raylib/wiki
-
 .PHONY: all clean install uninstall
 
 # Define required environment variables
@@ -106,6 +105,7 @@ ROOT = $(shell whoami)
 
 # By default we suppose we are working on Windows
 HOST_PLATFORM_OS ?= WINDOWS
+PLATFORM_OS ?= WINDOWS
 
 # Determine PLATFORM_OS in case PLATFORM_DESKTOP selected
 ifeq ($(PLATFORM),PLATFORM_DESKTOP)
@@ -146,6 +146,12 @@ ifeq ($(PLATFORM),PLATFORM_DRM)
     ifeq ($(UNAMEOS),Linux)
         PLATFORM_OS = LINUX
     endif
+endif
+
+ifeq ($(PLATFORM_OS),WINDOWS)
+    # Make uses by default Sh shell, if a different shell is required, it must be specified
+    # On Windows we set CMD as default shell to allow calling del command on clean target
+    SHELL := cmd
 endif
 
 ifeq ($(PLATFORM),PLATFORM_WEB)
@@ -731,12 +737,6 @@ endif
 # Clean everything
 clean:
 ifeq ($(PLATFORM_OS),WINDOWS)
-	# Make always tries to run build rules under sh.exe by default
-	# So if sh.exe is present in the PATH on windows, the del commands will fail
-	# see README.W32 of GNU Make for more details
-	# It is not specified earlier in the Makefile, because then cross-compilation
-	# will also fail.
-	SHELL = cmd
 	del *.o /s
 	cd $(RAYLIB_RELEASE_PATH)
 	del lib$(RAYLIB_LIB_NAME).a /s
