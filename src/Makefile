@@ -766,7 +766,7 @@ clean:	clean_shell_$(PLATFORM_SHELL)
 clean_shell_sh:
 	rm -fv *.o $(RAYLIB_RELEASE_PATH)/lib$(RAYLIB_LIB_NAME).a $(RAYLIB_RELEASE_PATH)/lib$(RAYLIB_LIB_NAME).bc $(RAYLIB_RELEASE_PATH)/lib$(RAYLIB_LIB_NAME).so*
 ifeq ($(PLATFORM),PLATFORM_ANDROID)
-	rm -rf $(ANDROID_TOOLCHAIN) $(NATIVE_APP_GLUE)/android_native_app_glue.o
+	rm -fv $(NATIVE_APP_GLUE)/android_native_app_glue.o
 endif
 
 # Set specific target variable
