@@ -960,7 +960,7 @@ bool ExportFontAsCode(Font font, const char *fileName)
     byteCount += sprintf(txtData + byteCount, "    font.glyphs = fontGlyphs_%s;\n\n", fileNamePascal);
 #endif
     byteCount += sprintf(txtData + byteCount, "    return font;\n");
-    byteCount += sprintf(txtData + byteCount, "}\n\0");
+    byteCount += sprintf(txtData + byteCount, "}\n");
 
     UnloadImage(image);
 
