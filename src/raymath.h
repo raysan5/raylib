@@ -189,7 +189,7 @@ RMAPI float Normalize(float value, float start, float end)
 // Remap input value within input range to output range
 RMAPI float Remap(float value, float inputStart, float inputEnd, float outputStart, float outputEnd)
 {
-    float result =(value - inputStart)/(inputEnd - inputStart)*(outputEnd - outputStart) + outputStart;
+    float result = (value - inputStart)/(inputEnd - inputStart)*(outputEnd - outputStart) + outputStart;
 
     return result;
 }
@@ -378,8 +378,11 @@ RMAPI Vector2 Vector2Rotate(Vector2 v, float angle)
 {
     Vector2 result = { 0 };
 
-    result.x = v.x*cosf(angle) - v.y*sinf(angle);
-    result.y = v.x*sinf(angle) + v.y*cosf(angle);
+    float cosres = cosf(angle);
+    float sinres = sinf(angle);
+
+    result.x = v.x*cosres - v.y*sinres;
+    result.y = v.x*sinres + v.y*cosres;
 
     return result;
 }
