@@ -42,7 +42,7 @@
 # Define required environment variables
 #------------------------------------------------------------------------------------------------
 # Define target platform: PLATFORM_DESKTOP, PLATFORM_RPI, PLATFORM_DRM, PLATFORM_ANDROID, PLATFORM_WEB
-PLATFORM           ?= PLATFORM_DESKTOP
+PLATFORM             ?= PLATFORM_DESKTOP
 
 # Define required raylib variables
 RAYLIB_VERSION        = 4.0.0
@@ -138,7 +138,7 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
             PLATFORM_OS = OSX
         endif
         ifndef PLATFORM_SHELL
-            PLATFORM_SHELL = cmd
+            PLATFORM_SHELL = sh
         endif
     endif
 endif
@@ -148,7 +148,7 @@ ifeq ($(PLATFORM),PLATFORM_RPI)
         PLATFORM_OS = LINUX
     endif
     ifndef PLATFORM_SHELL
-        PLATFORM_SHELL = cmd
+        PLATFORM_SHELL = sh
     endif
 endif
 ifeq ($(PLATFORM),PLATFORM_DRM)
@@ -157,7 +157,7 @@ ifeq ($(PLATFORM),PLATFORM_DRM)
         PLATFORM_OS = LINUX
     endif
     ifndef PLATFORM_SHELL
-        PLATFORM_SHELL = cmd
+        PLATFORM_SHELL = sh
     endif
 endif
 ifeq ($(PLATFORM),PLATFORM_WEB)
@@ -297,7 +297,7 @@ endif
 #------------------------------------------------------------------------------------------------
 #  -O1                      defines optimization level
 #  -g                       include debug information on compilation
-#  -s                       strip unnecessary data from build
+#  -s                       strip unnecessary data from build --> linker
 #  -Wall                    turns on most, but not all, compiler warnings
 #  -std=c99                 defines C language mode (standard C from 1999 revision)
 #  -std=gnu99               defines C language mode (GNU C from 1999 revision)
@@ -331,7 +331,7 @@ ifeq ($(RAYLIB_BUILD_MODE),RELEASE)
         CFLAGS += -Os
     endif
     ifeq ($(PLATFORM),PLATFORM_DESKTOP)
-        CFLAGS += -s -O1
+        CFLAGS += -O1
     endif
     ifeq ($(PLATFORM),PLATFORM_ANDROID)
         CFLAGS += -O2
