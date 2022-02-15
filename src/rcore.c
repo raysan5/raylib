@@ -6580,7 +6580,7 @@ static int FindNearestConnectorMode(const drmModeConnector *connector, uint widt
         TRACELOG(LOG_TRACE, "DISPLAY: DRM mode: %d %ux%u@%u %s", i, mode->hdisplay, mode->vdisplay, mode->vrefresh,
             (mode->flags & DRM_MODE_FLAG_INTERLACE) ? "interlaced" : "progressive");
 
-        if ((mode->hdisplay < width) || (mode->vdisplay < height) | (mode->vrefresh < fps))
+        if ((mode->hdisplay < width) || (mode->vdisplay < height) || (mode->vrefresh < fps))
         {
             TRACELOG(LOG_TRACE, "DISPLAY: DRM mode is too small");
             continue;
