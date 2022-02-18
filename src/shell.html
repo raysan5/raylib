@@ -3,14 +3,14 @@
   <head>
     <meta charset="utf-8">
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-    
+
     <title>raylib web game</title>
-    
+
     <meta name="title" content="raylib web game">
     <meta name="description" content="New raylib web videogame, developed using raylib videogames library">
     <meta name="keywords" content="raylib, games, html5, programming, C, C++, library, learn, videogames">
     <meta name="viewport" content="width=device-width">
-    
+
     <!-- Open Graph metatags for sharing -->
     <meta property="og:title" content="raylib web game">
     <meta property="og:image:type" content="image/png">
@@ -26,30 +26,30 @@
     <meta name="twitter:image" content="https://www.raylib.com/common/raylib_logo.png">
     <meta name="twitter:url" content="https://www.raylib.com/games.html">
     <meta name="twitter:description" content="New raylib web game, developed using raylib videogames library">
-    
+
     <!-- Favicon -->
     <link rel="shortcut icon" href="https://www.raylib.com/favicon.ico">
-    
+
     <style>
-      body { 
-        font-family: arial; 
-        margin: 0; 
+      body {
+        font-family: arial;
+        margin: 0;
         padding: none;
       }
-      
-      #header { 
-        width: 100%; 
-        height: 80px; 
-        background-color: #888888; 
+
+      #header {
+        width: 100%;
+        height: 80px;
+        background-color: #888888;
       }
-      
+
       /* NOTE: raylib logo is embedded in the page as base64 png image */
-      #logo { 
-        width:64px; 
-        height:64px; 
-        float:left; 
-        position:relative; 
-        margin:10px; 
+      #logo {
+        width:64px;
+        height:64px;
+        float:left;
+        position:relative;
+        margin:10px;
         background-image:url('data:image/png;base64,\
 iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAIAAAAlC+aJAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADs\
 MAAA7DAcdvqGQAAAAadEVYdFNvZnR3YXJlAFBhaW50Lk5FVCB2My41LjExR/NCNwAAA7JJREFUaEPtk0FyWzEMQ+37X7fZhxX4\
@@ -67,23 +67,23 @@ mlxfNFiP5mw4wlbMh4F5Ddxp5jNINBdCEz9zPOC1zD7Q0HBdmXndwv0TMtydEdzlWJT4VZ8Qt9Qn4/on
 jwE50AGjLCVuS8Yt4H7OgZLKK5EKOsLviEWJSL/+0uMi7gLUSBseYwqEbXvSHCec1CJvZPyHCmYQffaBBfOTCGHM2aEbZi1+gO\
 1XTWVXMnzrhAn5DSOZVsiQlHnSITKzGj6DeTcZWc/3oy7h9//PF4PL4BlvsWrb6RE+oAAAAASUVORK5CYII=');
       }
-      
+
       .emscripten { padding-right: 0; margin-left: auto; margin-right: auto; display: block; }
-      div.emscripten { text-align: center; }      
+      div.emscripten { text-align: center; }
       div.emscripten_border { border: 1px solid black; }
-      
+
       /* NOTE: Canvas *must not* have any border or padding, or mouse coords will be wrong */
-      canvas.emscripten { 
-        border: 0px none; 
-        background: black; 
+      canvas.emscripten {
+        border: 0px none;
+        background: black;
         width: 100%;
       }
-     
-      .spinner { 
-        height: 30px; 
-        width: 30px; 
-        margin: 0; 
-        margin-top: 20px; 
+
+      .spinner {
+        height: 30px;
+        width: 30px;
+        margin: 0;
+        margin-top: 20px;
         margin-left: 20px;
         display: inline-block;
         vertical-align: top;
@@ -114,7 +114,7 @@ jwE50AGjLCVuS8Yt4H7OgZLKK5EKOsLviEWJSL/+0uMi7gLUSBseYwqEbXvSHCec1CJvZPyHCmYQffaB
         from {transform: rotate(0deg);}
         to {transform: rotate(360deg);}
       }
-      
+
       #status {
         display: inline-block;
         vertical-align: top;
@@ -123,12 +123,12 @@ jwE50AGjLCVuS8Yt4H7OgZLKK5EKOsLviEWJSL/+0uMi7gLUSBseYwqEbXvSHCec1CJvZPyHCmYQffaB
         font-weight: bold;
         color: rgb(40, 40, 40);
       }
-      
+
       #progress {
         height: 0px;
         width: 0px;
       }
-      
+
       #controls {
         display: inline-block;
         float: right;
@@ -136,7 +136,7 @@ jwE50AGjLCVuS8Yt4H7OgZLKK5EKOsLviEWJSL/+0uMi7gLUSBseYwqEbXvSHCec1CJvZPyHCmYQffaB
         margin-top: 15px;
         margin-right: 20px;
       }
-      
+
       #output {
         width: 100%;
         height: 140px;
@@ -148,7 +148,7 @@ jwE50AGjLCVuS8Yt4H7OgZLKK5EKOsLviEWJSL/+0uMi7gLUSBseYwqEbXvSHCec1CJvZPyHCmYQffaB
         font-family: 'Lucida Console', Monaco, monospace;
         outline: none;
       }
-      
+
       input[type=button] {
         background-color: lightgray;
         border: 4px solid darkgray;
@@ -158,7 +158,7 @@ jwE50AGjLCVuS8Yt4H7OgZLKK5EKOsLviEWJSL/+0uMi7gLUSBseYwqEbXvSHCec1CJvZPyHCmYQffaB
         width: 140px;
         height: 50px;
       }
-      
+
       input[type=button]:hover {
         background-color: #f5f5f5ff;
         border-color: black;
@@ -168,7 +168,7 @@ jwE50AGjLCVuS8Yt4H7OgZLKK5EKOsLviEWJSL/+0uMi7gLUSBseYwqEbXvSHCec1CJvZPyHCmYQffaB
   <body>
     <div id="header">
         <a id="logo" href="https://www.raylib.com"></a>
-        
+
         <div class="spinner" id='spinner'></div>
         <div class="emscripten" id="status">Downloading...</div>
 
@@ -181,11 +181,11 @@ jwE50AGjLCVuS8Yt4H7OgZLKK5EKOsLviEWJSL/+0uMi7gLUSBseYwqEbXvSHCec1CJvZPyHCmYQffaB
           <progress value="0" max="100" id="progress" hidden=1></progress>
         </div>
     </div>
-    
+
     <div class="emscripten_border">
       <canvas class="emscripten" id="canvas" oncontextmenu="event.preventDefault()" tabindex=-1></canvas>
     </div>
-    
+
     <textarea id="output" rows="8"></textarea>
 
     <script type='text/javascript' src="https://cdn.jsdelivr.net/gh/eligrey/FileSaver.js/dist/FileSaver.min.js"> </script>
@@ -216,9 +216,9 @@ jwE50AGjLCVuS8Yt4H7OgZLKK5EKOsLviEWJSL/+0uMi7gLUSBseYwqEbXvSHCec1CJvZPyHCmYQffaB
             postRun: [],
             print: (function() {
                 var element = document.querySelector('#output');
-                
+
                 if (element) element.value = '';    // Clear browser cache
-                
+
                 return function(text) {
                     if (arguments.length > 1) text = Array.prototype.slice.call(arguments).join(' ');
                     // These replacements are necessary if you render to raw HTML
@@ -227,7 +227,7 @@ jwE50AGjLCVuS8Yt4H7OgZLKK5EKOsLviEWJSL/+0uMi7gLUSBseYwqEbXvSHCec1CJvZPyHCmYQffaB
                     //text = text.replace(/>/g, "&gt;");
                     //text = text.replace('\n', '<br>', 'g');
                     console.log(text);
-                    
+
                     if (element) {
                         element.value += text + "\n";
                         element.scrollTop = element.scrollHeight; // focus on bottom
@@ -236,7 +236,7 @@ jwE50AGjLCVuS8Yt4H7OgZLKK5EKOsLviEWJSL/+0uMi7gLUSBseYwqEbXvSHCec1CJvZPyHCmYQffaB
             })(),
             printErr: function(text) {
                 if (arguments.length > 1) text = Array.prototype.slice.call(arguments).join(' ');
-                
+
                 console.error(text);
             },
             canvas: (function() {
@@ -252,15 +252,15 @@ jwE50AGjLCVuS8Yt4H7OgZLKK5EKOsLviEWJSL/+0uMi7gLUSBseYwqEbXvSHCec1CJvZPyHCmYQffaB
             setStatus: function(text) {
                 if (!Module.setStatus.last) Module.setStatus.last = { time: Date.now(), text: '' };
                 if (text === Module.setStatus.last.text) return;
-                
+
                 var m = text.match(/([^(]+)\((\d+(\.\d+)?)\/(\d+)\)/);
                 var now = Date.now();
-                
+
                 if (m && now - Module.setStatus.last.time < 30) return; // If this is a progress update, skip it if too soon
-              
+
                 Module.setStatus.last.time = now;
                 Module.setStatus.last.text = text;
-                
+
                 if (m) {
                     text = m[1];
                     progressElement.value = parseInt(m[2])*100;
@@ -273,7 +273,7 @@ jwE50AGjLCVuS8Yt4H7OgZLKK5EKOsLviEWJSL/+0uMi7gLUSBseYwqEbXvSHCec1CJvZPyHCmYQffaB
                     progressElement.hidden = true;
                     if (!text) spinnerElement.style.display = 'none';
                 }
-                
+
                 statusElement.innerHTML = text;
             },
             totalDependencies: 0,
@@ -283,24 +283,24 @@ jwE50AGjLCVuS8Yt4H7OgZLKK5EKOsLviEWJSL/+0uMi7gLUSBseYwqEbXvSHCec1CJvZPyHCmYQffaB
             },
             //noInitialRun: true
         };
-        
+
         Module.setStatus('Downloading...');
-        
+
         window.onerror = function() {
             Module.setStatus('Exception thrown, see JavaScript console');
             spinnerElement.style.display = 'none';
             Module.setStatus = function(text) { if (text) Module.printErr('[post-exception status] ' + text); };
         };
     </script>
-    
+
     <!-- REF: https://developers.google.com/web/updates/2018/11/web-audio-autoplay -->
     <script type='text/javascript'>
         var audioBtn = document.querySelector('#btn-audio');
-        
+
         // An array of all contexts to resume on the page
         const audioContexList = [];
         (function() {
-            // A proxy object to intercept AudioContexts and 
+            // A proxy object to intercept AudioContexts and
             // add them to the array for tracking and resuming later
             self.AudioContext = new Proxy(self.AudioContext, {
                 construct(target, args) {
@@ -318,7 +318,7 @@ jwE50AGjLCVuS8Yt4H7OgZLKK5EKOsLviEWJSL/+0uMi7gLUSBseYwqEbXvSHCec1CJvZPyHCmYQffaB
                 if (ctx.state == "suspended") { ctx.resume(); resumed = true; }
                 else if (ctx.state == "running") ctx.suspend();
             });
-            
+
             if (resumed) audioBtn.value = "🔇 SUSPEND";
             else audioBtn.value = "🔈 RESUME";
         }

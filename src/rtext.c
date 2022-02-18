@@ -825,7 +825,7 @@ void UnloadFont(Font font)
 bool ExportFontAsCode(Font font, const char *fileName)
 {
     bool success = false;
-    
+
 #ifndef TEXT_BYTES_PER_LINE
     #define TEXT_BYTES_PER_LINE     20
 #endif
@@ -865,7 +865,7 @@ bool ExportFontAsCode(Font font, const char *fileName)
     Image image = LoadImageFromTexture(font.texture);
     if (image.format != PIXELFORMAT_UNCOMPRESSED_GRAY_ALPHA) TRACELOG(LOG_WARNING, "Font export as code: Font image format is not GRAY+ALPHA!");
     int imageDataSize = GetPixelDataSize(image.width, image.height, image.format);
-    
+
     // Image data is usually GRAYSCALE + ALPHA and can be reduced to GRAYSCALE
     //ImageFormat(&image, PIXELFORMAT_UNCOMPRESSED_GRAYSCALE);
 
@@ -874,7 +874,7 @@ bool ExportFontAsCode(Font font, const char *fileName)
     // WARNING: Data is compressed using raylib CompressData() DEFLATE,
     // it requires to be decompressed with raylib DecompressData(), that requires
     // compiling raylib with SUPPORT_COMPRESSION_API config flag enabled
- 
+
     // Compress font image data
     int compDataSize = 0;
     unsigned char *compData = CompressData(image.data, imageDataSize, &compDataSize);

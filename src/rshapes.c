@@ -6,12 +6,12 @@
 *     Shapes can be draw using 3 types of primitives: LINES, TRIANGLES and QUADS.
 *     Some functions implement two drawing options: TRIANGLES and QUADS, by default TRIANGLES
 *     are used but QUADS implementation can be selected with SUPPORT_QUADS_DRAW_MODE define
-*   
-*     Some functions define texture coordinates (rlTexCoord2f()) for the shapes and use a 
+*
+*     Some functions define texture coordinates (rlTexCoord2f()) for the shapes and use a
 *     user-provided texture with SetShapesTexture(), the pourpouse of this implementation
 *     is allowing to reduce draw calls when combined with a texture-atlas.
 *
-*     By default, raylib sets the default texture and rectangle at InitWindow()[rcore] to one 
+*     By default, raylib sets the default texture and rectangle at InitWindow()[rcore] to one
 *     white character of default font [rtext], this way, raylib text and shapes can be draw with
 *     a single draw call and it also allows users to configure it the same way with their own fonts.
 *
@@ -723,7 +723,7 @@ void DrawRectanglePro(Rectangle rec, Vector2 origin, float rotation, Color color
     rlCheckRenderBatchLimit(4);
 
     rlSetTexture(texShapes.id);
-    
+
     rlBegin(RL_QUADS);
 
         rlNormal3f(0.0f, 0.0f, 1.0f);
@@ -742,13 +742,13 @@ void DrawRectanglePro(Rectangle rec, Vector2 origin, float rotation, Color color
         rlVertex2f(topRight.x, topRight.y);
 
     rlEnd();
-    
+
     rlSetTexture(0);
 #else
     rlCheckRenderBatchLimit(6);
 
     rlBegin(RL_TRIANGLES);
-        
+
         rlColor4ub(color.r, color.g, color.b, color.a);
 
         rlVertex2f(topLeft.x, topLeft.y);
@@ -1609,7 +1609,7 @@ bool CheckCollisionPointRec(Vector2 point, Rectangle rec)
 bool CheckCollisionPointCircle(Vector2 point, Vector2 center, float radius)
 {
     bool collision = false;
-    
+
     collision = CheckCollisionCircles(point, 0, center, radius);
 
     return collision;
@@ -1681,7 +1681,7 @@ bool CheckCollisionCircleRec(Vector2 center, float radius, Rectangle rec)
                              (dy - rec.height/2.0f)*(dy - rec.height/2.0f);
 
     collision = (cornerDistanceSq <= (radius*radius));
-    
+
     return collision;
 }
 
@@ -1695,10 +1695,10 @@ bool CheckCollisionLines(Vector2 startPos1, Vector2 endPos1, Vector2 startPos2, 
     if (fabsf(div) >= FLT_EPSILON)
     {
         collision = true;
-        
+
         float xi = ((startPos2.x - endPos2.x)*(startPos1.x*endPos1.y - startPos1.y*endPos1.x) - (startPos1.x - endPos1.x)*(startPos2.x*endPos2.y - startPos2.y*endPos2.x))/div;
         float yi = ((startPos2.y - endPos2.y)*(startPos1.x*endPos1.y - startPos1.y*endPos1.x) - (startPos1.y - endPos1.y)*(startPos2.x*endPos2.y - startPos2.y*endPos2.x))/div;
-    
+
         if (((fabsf(startPos1.x - endPos1.x) > FLT_EPSILON) && (xi < fminf(startPos1.x, endPos1.x) || (xi > fmaxf(startPos1.x, endPos1.x)))) ||
             ((fabsf(startPos2.x - endPos2.x) > FLT_EPSILON) && (xi < fminf(startPos2.x, endPos2.x) || (xi > fmaxf(startPos2.x, endPos2.x)))) ||
             ((fabsf(startPos1.y - endPos1.y) > FLT_EPSILON) && (yi < fminf(startPos1.y, endPos1.y) || (yi > fmaxf(startPos1.y, endPos1.y)))) ||
