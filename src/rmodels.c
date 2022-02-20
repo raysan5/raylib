@@ -1404,7 +1404,7 @@ void DrawMesh(Mesh mesh, Material material, Matrix transform)
 }
 
 // Draw multiple mesh instances with material and different transforms
-void DrawMeshInstanced(Mesh mesh, Material material, Matrix *transforms, int instances)
+void DrawMeshInstanced(Mesh mesh, Material material, const Matrix *transforms, int instances)
 {
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     // Instancing required variables
