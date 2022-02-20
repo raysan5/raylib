@@ -3181,7 +3181,7 @@ long GetFileModTime(const char *fileName)
 }
 
 // Compress data (DEFLATE algorythm)
-unsigned char *CompressData(unsigned char *data, int dataLength, int *compDataLength)
+unsigned char *CompressData(const unsigned char *data, int dataLength, int *compDataLength)
 {
     #define COMPRESSION_QUALITY_DEFLATE  8
 
@@ -3201,7 +3201,7 @@ unsigned char *CompressData(unsigned char *data, int dataLength, int *compDataLe
 }
 
 // Decompress data (DEFLATE algorythm)
-unsigned char *DecompressData(unsigned char *compData, int compDataLength, int *dataLength)
+unsigned char *DecompressData(const unsigned char *compData, int compDataLength, int *dataLength)
 {
     unsigned char *data = NULL;
 
@@ -3259,7 +3259,7 @@ char *EncodeDataBase64(const unsigned char *data, int dataLength, int *outputLen
 }
 
 // Decode Base64 string data
-unsigned char *DecodeDataBase64(unsigned char *data, int *outputLength)
+unsigned char *DecodeDataBase64(const unsigned char *data, int *outputLength)
 {
     static const unsigned char base64decodeTable[] = {
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
