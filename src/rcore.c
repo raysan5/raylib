@@ -1903,9 +1903,11 @@ const char *GetClipboardText(void)
 {
 #if defined(PLATFORM_DESKTOP)
     return glfwGetClipboardString(CORE.Window.handle);
-#else
-    return NULL;
 #endif
+#if defined(PLATFORM_WEB)
+    return emscripten_run_script_string("navigator.clipboard.readText()");
+#endif
+    return NULL;
 }
 
 // Set clipboard text content
@@ -1913,6 +1915,9 @@ void SetClipboardText(const char *text)
 {
 #if defined(PLATFORM_DESKTOP)
     glfwSetClipboardString(CORE.Window.handle, text);
+#endif
+#if defined(PLATFORM_WEB)
+    emscripten_run_script(TextFormat("navigator.clipboard.writeText('%s')", text));
 #endif
 }
 
