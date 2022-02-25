@@ -752,6 +752,8 @@ void InitWindow(int width, int height, const char *title)
     TRACELOG(LOG_INFO, "    > raudio:.... not loaded (optional)");
 #endif
 
+    memset(&CORE, 0, sizeof(CoreData));  // Clean CORE object memory
+
     if ((title != NULL) && (title[0] != 0)) CORE.Window.title = title;
 
     // Initialize required global values different than 0
