@@ -752,7 +752,9 @@ void InitWindow(int width, int height, const char *title)
     TRACELOG(LOG_INFO, "    > raudio:.... not loaded (optional)");
 #endif
 
+#if !defined(PLATFORM_ANDROID)
     memset(&CORE, 0, sizeof(CoreData));  // Clean CORE object memory
+#endif
 
     if ((title != NULL) && (title[0] != 0)) CORE.Window.title = title;
 
