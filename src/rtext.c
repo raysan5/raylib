@@ -683,7 +683,7 @@ Image GenImageFontAtlas(const GlyphInfo *chars, Rectangle **charRecs, int glyphC
     // so image size would result bigger than default font type
     float requiredArea = 0;
     for (int i = 0; i < glyphCount; i++) requiredArea += ((chars[i].image.width + 2*padding)*(chars[i].image.height + 2*padding));
-    float guessSize = sqrtf(requiredArea)*1.3f;
+    float guessSize = sqrtf(requiredArea)*1.4f;
     int imageSize = (int)powf(2, ceilf(logf((float)guessSize)/logf(2)));  // Calculate next POT
 
     atlas.width = imageSize;   // Atlas bitmap width
@@ -730,7 +730,19 @@ Image GenImageFontAtlas(const GlyphInfo *chars, Rectangle **charRecs, int glyphC
                 // height is bigger than fontSize, it could be up to (fontSize + 8)
                 offsetY += (fontSize + 2*padding);
 
-                if (offsetY > (atlas.height - fontSize - padding)) break;
+                if (offsetY > (atlas.height - fontSize - padding))
+                {
+                    for(int j = i + 1; j < glyphCount; j++)
+                    {
+                        TRACELOG(LOG_WARNING, "FONT: Failed to package character (%i)", j);
+                        // make sure remaining recs contain valid data
+                        recs[j].x = 0;
+                        recs[j].y = 0;
+                        recs[j].width = 0;
+                        recs[j].height = 0;
+                    }
+                    break;
+                }
             }
         }
     }
