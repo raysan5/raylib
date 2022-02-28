@@ -47,6 +47,7 @@ Some people ported raylib to other languages in form of bindings or wrappers to 
 | raylib-cr          | **4.0** | [Crystal](https://crystal-lang.org/)    | Apache-2.0 | https://github.com/sol-vin/raylib-cr |
 | dart-raylib        | **4.0** | [Dart](https://dart.dev/)               | MIT | https://gitlab.com/wolfenrain/dart-raylib   |
 | raylib-scopes      | auto    | [Scopes](http://scopes.rocks)          | MIT | https://github.com/salotz/raylib-scopes   |
+| raylib-smallBasic  | 4.1-dev | [SmallBASIC](https://github.com/smallbasic/SmallBASIC) | GPLv3 | https://github.com/smallbasic/smallbasic.plugins/tree/master/raylib |
 
 ### Utility Wrapers
 These are utility wrappers for specific languages, they are not required to use raylib in the language but may adapt the raylib API to be more inline with the language's pardigm.
@@ -116,7 +117,6 @@ These are older raylib bindings that are more than 2 versions old or have not be
 | raylib-carp        | 3.0 | [Carp](https://github.com/carp-lang/Carp)           | https://github.com/pluckyporcupine/raylib-carp   |
 | raylib-fb          | 3.0 | [FreeBasic](https://www.freebasic.net/)    | https://github.com/IchMagBier/raylib-fb  |
 | raylib-purebasic   | 3.0 | [PureBasic](https://www.purebasic.com/)    | https://github.com/D-a-n-i-l-o/raylib-purebasic   |
-| raylib-smallBasic  | 3.1-dev | [SmallBASIC](https://github.com/smallbasic/SmallBASIC) | https://github.com/smallbasic/smallbasic.plugins/tree/master/raylib |
 | raylib-ats2        | 3.0 | [ATS2](http://www.ats-lang.org/)           | https://github.com/mephistopheles-8/raylib-ats2      |
 | raylib-beef        | 3.0 | [Beef](https://www.beeflang.org/)          | https://github.com/M0n7y5/raylib-beef    |
 | raylib-never       | 3.0 | [Never](https://github.com/never-lang/never) | https://github.com/never-lang/raylib-never |
