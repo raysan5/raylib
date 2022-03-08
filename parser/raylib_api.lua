@@ -2349,9 +2349,14 @@ return {
           description = "Blend textures subtracting colors (alternative)"
         },
         {
-          name = "BLEND_CUSTOM",
+          name = "BLEND_ALPHA_PREMUL",
           value = 5,
-          description = "Belnd textures using custom src/dst factors (use rlSetBlendMode())"
+          description = "Blend premultiplied textures considering alpha"
+        },
+        {
+          name = "BLEND_CUSTOM",
+          value = 6,
+          description = "Blend textures using custom src/dst factors (use rlSetBlendMode())"
         }
       }
     },
@@ -2483,6 +2488,320 @@ return {
           description = "Npatch layout: 3x1 tiles"
         }
       }
+    }
+  },
+  defines = {
+    {
+      name = "RAYLIB_H",
+      type = "GUARD",
+      value = "",
+      description = ""
+    },
+    {
+      name = "RAYLIB_VERSION",
+      type = "STRING",
+      value = "4.1-dev",
+      description = ""
+    },
+    {
+      name = "RLAPI",
+      type = "UNKNOWN",
+      value = "__declspec(dllexport)",
+      description = "We are building the library as a Win32 shared library (.dll)"
+    },
+    {
+      name = "PI",
+      type = "FLOAT",
+      value = 3.14159265358979323846,
+      description = ""
+    },
+    {
+      name = "DEG2RAD",
+      type = "UNKNOWN",
+      value = "(PI/180.0f)",
+      description = ""
+    },
+    {
+      name = "RAD2DEG",
+      type = "UNKNOWN",
+      value = "(180.0f/PI)",
+      description = ""
+    },
+    {
+      name = "RL_MALLOC(sz)",
+      type = "MACRO",
+      value = "malloc(sz)",
+      description = ""
+    },
+    {
+      name = "RL_CALLOC(n,sz)",
+      type = "MACRO",
+      value = "calloc(n,sz)",
+      description = ""
+    },
+    {
+      name = "RL_REALLOC(ptr,sz)",
+      type = "MACRO",
+      value = "realloc(ptr,sz)",
+      description = ""
+    },
+    {
+      name = "RL_FREE(ptr)",
+      type = "MACRO",
+      value = "free(ptr)",
+      description = ""
+    },
+    {
+      name = "CLITERAL(type)",
+      type = "MACRO",
+      value = "type",
+      description = ""
+    },
+    {
+      name = "RL_COLOR_TYPE",
+      type = "GUARD",
+      value = "",
+      description = ""
+    },
+    {
+      name = "RL_RECTANGLE_TYPE",
+      type = "GUARD",
+      value = "",
+      description = ""
+    },
+    {
+      name = "RL_VECTOR2_TYPE",
+      type = "GUARD",
+      value = "",
+      description = ""
+    },
+    {
+      name = "RL_VECTOR3_TYPE",
+      type = "GUARD",
+      value = "",
+      description = ""
+    },
+    {
+      name = "RL_VECTOR4_TYPE",
+      type = "GUARD",
+      value = "",
+      description = ""
+    },
+    {
+      name = "RL_QUATERNION_TYPE",
+      type = "GUARD",
+      value = "",
+      description = ""
+    },
+    {
+      name = "RL_MATRIX_TYPE",
+      type = "GUARD",
+      value = "",
+      description = ""
+    },
+    {
+      name = "LIGHTGRAY",
+      type = "COLOR",
+      value = "CLITERAL(Color){ 200, 200, 200, 255 }",
+      description = "Light Gray"
+    },
+    {
+      name = "GRAY",
+      type = "COLOR",
+      value = "CLITERAL(Color){ 130, 130, 130, 255 }",
+      description = "Gray"
+    },
+    {
+      name = "DARKGRAY",
+      type = "COLOR",
+      value = "CLITERAL(Color){ 80, 80, 80, 255 }",
+      description = "Dark Gray"
+    },
+    {
+      name = "YELLOW",
+      type = "COLOR",
+      value = "CLITERAL(Color){ 253, 249, 0, 255 }",
+      description = "Yellow"
+    },
+    {
+      name = "GOLD",
+      type = "COLOR",
+      value = "CLITERAL(Color){ 255, 203, 0, 255 }",
+      description = "Gold"
+    },
+    {
+      name = "ORANGE",
+      type = "COLOR",
+      value = "CLITERAL(Color){ 255, 161, 0, 255 }",
+      description = "Orange"
+    },
+    {
+      name = "PINK",
+      type = "COLOR",
+      value = "CLITERAL(Color){ 255, 109, 194, 255 }",
+      description = "Pink"
+    },
+    {
+      name = "RED",
+      type = "COLOR",
+      value = "CLITERAL(Color){ 230, 41, 55, 255 }",
+      description = "Red"
+    },
+    {
+      name = "MAROON",
+      type = "COLOR",
+      value = "CLITERAL(Color){ 190, 33, 55, 255 }",
+      description = "Maroon"
+    },
+    {
+      name = "GREEN",
+      type = "COLOR",
+      value = "CLITERAL(Color){ 0, 228, 48, 255 }",
+      description = "Green"
+    },
+    {
+      name = "LIME",
+      type = "COLOR",
+      value = "CLITERAL(Color){ 0, 158, 47, 255 }",
+      description = "Lime"
+    },
+    {
+      name = "DARKGREEN",
+      type = "COLOR",
+      value = "CLITERAL(Color){ 0, 117, 44, 255 }",
+      description = "Dark Green"
+    },
+    {
+      name = "SKYBLUE",
+      type = "COLOR",
+      value = "CLITERAL(Color){ 102, 191, 255, 255 }",
+      description = "Sky Blue"
+    },
+    {
+      name = "BLUE",
+      type = "COLOR",
+      value = "CLITERAL(Color){ 0, 121, 241, 255 }",
+      description = "Blue"
+    },
+    {
+      name = "DARKBLUE",
+      type = "COLOR",
+      value = "CLITERAL(Color){ 0, 82, 172, 255 }",
+      description = "Dark Blue"
+    },
+    {
+      name = "PURPLE",
+      type = "COLOR",
+      value = "CLITERAL(Color){ 200, 122, 255, 255 }",
+      description = "Purple"
+    },
+    {
+      name = "VIOLET",
+      type = "COLOR",
+      value = "CLITERAL(Color){ 135, 60, 190, 255 }",
+      description = "Violet"
+    },
+    {
+      name = "DARKPURPLE",
+      type = "COLOR",
+      value = "CLITERAL(Color){ 112, 31, 126, 255 }",
+      description = "Dark Purple"
+    },
+    {
+      name = "BEIGE",
+      type = "COLOR",
+      value = "CLITERAL(Color){ 211, 176, 131, 255 }",
+      description = "Beige"
+    },
+    {
+      name = "BROWN",
+      type = "COLOR",
+      value = "CLITERAL(Color){ 127, 106, 79, 255 }",
+      description = "Brown"
+    },
+    {
+      name = "DARKBROWN",
+      type = "COLOR",
+      value = "CLITERAL(Color){ 76, 63, 47, 255 }",
+      description = "Dark Brown"
+    },
+    {
+      name = "WHITE",
+      type = "COLOR",
+      value = "CLITERAL(Color){ 255, 255, 255, 255 }",
+      description = "White"
+    },
+    {
+      name = "BLACK",
+      type = "COLOR",
+      value = "CLITERAL(Color){ 0, 0, 0, 255 }",
+      description = "Black"
+    },
+    {
+      name = "BLANK",
+      type = "COLOR",
+      value = "CLITERAL(Color){ 0, 0, 0, 0 }",
+      description = "Blank (Transparent)"
+    },
+    {
+      name = "MAGENTA",
+      type = "COLOR",
+      value = "CLITERAL(Color){ 255, 0, 255, 255 }",
+      description = "Magenta"
+    },
+    {
+      name = "RAYWHITE",
+      type = "COLOR",
+      value = "CLITERAL(Color){ 245, 245, 245, 255 }",
+      description = "My own White (raylib logo)"
+    },
+    {
+      name = "RL_BOOL_TYPE",
+      type = "GUARD",
+      value = "",
+      description = ""
+    },
+    {
+      name = "MOUSE_LEFT_BUTTON",
+      type = "UNKNOWN",
+      value = "MOUSE_BUTTON_LEFT",
+      description = ""
+    },
+    {
+      name = "MOUSE_RIGHT_BUTTON",
+      type = "UNKNOWN",
+      value = "MOUSE_BUTTON_RIGHT",
+      description = ""
+    },
+    {
+      name = "MOUSE_MIDDLE_BUTTON",
+      type = "UNKNOWN",
+      value = "MOUSE_BUTTON_MIDDLE",
+      description = ""
+    },
+    {
+      name = "MATERIAL_MAP_DIFFUSE",
+      type = "UNKNOWN",
+      value = "MATERIAL_MAP_ALBEDO",
+      description = ""
+    },
+    {
+      name = "MATERIAL_MAP_SPECULAR",
+      type = "UNKNOWN",
+      value = "MATERIAL_MAP_METALNESS",
+      description = ""
+    },
+    {
+      name = "SHADER_LOC_MAP_DIFFUSE",
+      type = "UNKNOWN",
+      value = "SHADER_LOC_MAP_ALBEDO",
+      description = ""
+    },
+    {
+      name = "SHADER_LOC_MAP_SPECULAR",
+      type = "UNKNOWN",
+      value = "SHADER_LOC_MAP_METALNESS",
+      description = ""
     }
   },
   functions = {
@@ -3147,7 +3466,7 @@ return {
       params = {
         {type = "int", name = "logLevel"},
         {type = "const char *", name = "text"},
-        {type = "", name = ""}
+        {type = "...", name = "args"}
       }
     },
     {
@@ -3301,6 +3620,14 @@ return {
       }
     },
     {
+      name = "GetFileLength",
+      description = "Get file length in bytes (NOTE: GetFileSize() conflicts with windows.h)",
+      returnType = "int",
+      params = {
+        {type = "const char *", name = "fileName"}
+      }
+    },
+    {
       name = "GetFileExtension",
       description = "Get pointer to extension for a filename string (includes dot: '.png')",
       returnType = "const char *",
@@ -3343,6 +3670,11 @@ return {
     {
       name = "GetWorkingDirectory",
       description = "Get current working directory (uses static string)",
+      returnType = "const char *"
+    },
+    {
+      name = "GetApplicationDirectory",
+      description = "Get the directory if the running application (uses static string)",
       returnType = "const char *"
     },
     {
@@ -3398,7 +3730,7 @@ return {
       description = "Compress data (DEFLATE algorithm)",
       returnType = "unsigned char *",
       params = {
-        {type = "unsigned char *", name = "data"},
+        {type = "const unsigned char *", name = "data"},
         {type = "int", name = "dataLength"},
         {type = "int *", name = "compDataLength"}
       }
@@ -3408,7 +3740,7 @@ return {
       description = "Decompress data (DEFLATE algorithm)",
       returnType = "unsigned char *",
       params = {
-        {type = "unsigned char *", name = "compData"},
+        {type = "const unsigned char *", name = "compData"},
         {type = "int", name = "compDataLength"},
         {type = "int *", name = "dataLength"}
       }
@@ -3428,7 +3760,7 @@ return {
       description = "Decode Base64 string data",
       returnType = "unsigned char *",
       params = {
-        {type = "unsigned char *", name = "data"},
+        {type = "const unsigned char *", name = "data"},
         {type = "int *", name = "outputLength"}
       }
     },
@@ -5418,6 +5750,20 @@ return {
       }
     },
     {
+      name = "DrawTextCodepoints",
+      description = "Draw multiple character (codepoint)",
+      returnType = "void",
+      params = {
+        {type = "Font", name = "font"},
+        {type = "const int *", name = "codepoints"},
+        {type = "int", name = "count"},
+        {type = "Vector2", name = "position"},
+        {type = "float", name = "fontSize"},
+        {type = "float", name = "spacing"},
+        {type = "Color", name = "tint"}
+      }
+    },
+    {
       name = "MeasureText",
       description = "Measure string width for default font",
       returnType = "int",
@@ -5512,7 +5858,7 @@ return {
       description = "Encode text as codepoints array into UTF-8 text string (WARNING: memory must be freed!)",
       returnType = "char *",
       params = {
-        {type = "int *", name = "codepoints"},
+        {type = "const int *", name = "codepoints"},
         {type = "int", name = "length"}
       }
     },
@@ -5548,7 +5894,7 @@ return {
       returnType = "const char *",
       params = {
         {type = "const char *", name = "text"},
-        {type = "", name = ""}
+        {type = "...", name = "args"}
       }
     },
     {
@@ -6043,7 +6389,7 @@ return {
       params = {
         {type = "Mesh", name = "mesh"},
         {type = "int", name = "index"},
-        {type = "void *", name = "data"},
+        {type = "const void *", name = "data"},
         {type = "int", name = "dataSize"},
         {type = "int", name = "offset"}
       }
@@ -6073,7 +6419,7 @@ return {
       params = {
         {type = "Mesh", name = "mesh"},
         {type = "Material", name = "material"},
-        {type = "Matrix *", name = "transforms"},
+        {type = "const Matrix *", name = "transforms"},
         {type = "int", name = "instances"}
       }
     },
@@ -6294,7 +6640,7 @@ return {
       description = "Unload animation array data",
       returnType = "void",
       params = {
-        {type = "ModelAnimation*", name = "animations"},
+        {type = "ModelAnimation *", name = "animations"},
         {type = "unsigned int", name = "count"}
       }
     },
@@ -6576,14 +6922,12 @@ return {
       }
     },
     {
-      name = "WaveFormat",
-      description = "Convert wave data to desired format",
+      name = "SetSoundPan",
+      description = "Set pan for a sound (0.5 is center)",
       returnType = "void",
       params = {
-        {type = "Wave *", name = "wave"},
-        {type = "int", name = "sampleRate"},
-        {type = "int", name = "sampleSize"},
-        {type = "int", name = "channels"}
+        {type = "Sound", name = "sound"},
+        {type = "float", name = "pan"}
       }
     },
     {
@@ -6605,8 +6949,19 @@ return {
       }
     },
     {
+      name = "WaveFormat",
+      description = "Convert wave data to desired format",
+      returnType = "void",
+      params = {
+        {type = "Wave *", name = "wave"},
+        {type = "int", name = "sampleRate"},
+        {type = "int", name = "sampleSize"},
+        {type = "int", name = "channels"}
+      }
+    },
+    {
       name = "LoadWaveSamples",
-      description = "Load samples data from wave as a floats array",
+      description = "Load samples data from wave as a 32bit float data array",
       returnType = "float *",
       params = {
         {type = "Wave", name = "wave"}
@@ -6634,7 +6989,7 @@ return {
       returnType = "Music",
       params = {
         {type = "const char *", name = "fileType"},
-        {type = "unsigned char *", name = "data"},
+        {type = "const unsigned char *", name = "data"},
         {type = "int", name = "dataSize"}
       }
     },
@@ -6719,6 +7074,15 @@ return {
       params = {
         {type = "Music", name = "music"},
         {type = "float", name = "pitch"}
+      }
+    },
+    {
+      name = "SetMusicPan",
+      description = "Set pan for a music (0.5 is center)",
+      returnType = "void",
+      params = {
+        {type = "Music", name = "music"},
+        {type = "float", name = "pan"}
       }
     },
     {
@@ -6829,6 +7193,15 @@ return {
       params = {
         {type = "AudioStream", name = "stream"},
         {type = "float", name = "pitch"}
+      }
+    },
+    {
+      name = "SetAudioStreamPan",
+      description = "Set pan for audio stream (0.5 is centered)",
+      returnType = "void",
+      params = {
+        {type = "AudioStream", name = "stream"},
+        {type = "float", name = "pan"}
       }
     },
     {
