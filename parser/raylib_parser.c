@@ -820,6 +820,12 @@ static void GetDataTypeAndName(const char *typeName, int typeNameLen, char *type
             MemoryCopy(name, typeName + k + 1, typeNameLen - k - 1);
             break;
         }
+        else if (typeName[k] == '.' && typeNameLen == 3) // Handle varargs ...);
+        {
+            MemoryCopy(type, "...", 3);
+            MemoryCopy(name, "args", 4);
+	        break;
+        }
     }
 }
 
