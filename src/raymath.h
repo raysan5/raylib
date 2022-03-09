@@ -278,6 +278,14 @@ RMAPI float Vector2Distance(Vector2 v1, Vector2 v2)
     return result;
 }
 
+// Calculate square distance between two vectors
+RMAPI float Vector2DistanceSqr(Vector2 v1, Vector2 v2)
+{
+    float result = ((v1.x - v2.x)*(v1.x - v2.x) + (v1.y - v2.y)*(v1.y - v2.y));
+
+    return result;
+}
+
 // Calculate angle from two vectors
 RMAPI float Vector2Angle(Vector2 v1, Vector2 v2)
 {
@@ -544,6 +552,19 @@ RMAPI float Vector3Distance(Vector3 v1, Vector3 v2)
     float dy = v2.y - v1.y;
     float dz = v2.z - v1.z;
     result = sqrtf(dx*dx + dy*dy + dz*dz);
+
+    return result;
+}
+
+// Calculate square distance between two vectors
+RMAPI float Vector3DistanceSqr(Vector3 v1, Vector3 v2)
+{
+    float result = 0.0f;
+
+    float dx = v2.x - v1.x;
+    float dy = v2.y - v1.y;
+    float dz = v2.z - v1.z;
+    result = dx*dx + dy*dy + dz*dz;
 
     return result;
 }
