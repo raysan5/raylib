@@ -24,7 +24,7 @@ set -e
 while getopts ":hdusrcq" opt; do
     case $opt in
         h)
-            echo "Usage: ./linux-build.sh [-hdusrcqq]"
+            echo "Usage: ./build-rpi.sh [-hdusrcqq]"
             echo " -h  Show this information"
             echo " -d  Faster builds that have debug symbols, and enable warnings"
             echo " -u  Run upx* on the executable after compilation (before -r)"
@@ -39,10 +39,10 @@ while getopts ":hdusrcq" opt; do
             echo "  requires that you have upx installed and on your path, of course."
             echo ""
             echo "Examples:"
-            echo " Build a release build:                    ./linux-build.sh"
-            echo " Build a release build, full recompile:    ./linux-build.sh -c"
-            echo " Build a debug build and run:              ./linux-build.sh -d -r"
-            echo " Build in debug, run, don't print at all:  ./linux-build.sh -drqq"
+            echo " Build a release build:                    ./build-rpi.sh"
+            echo " Build a release build, full recompile:    ./build-rpi.sh -c"
+            echo " Build a debug build and run:              ./build-rpi.sh -d -r"
+            echo " Build in debug, run, don't print at all:  ./build-rpi.sh -drqq"
             exit 0
             ;;
         d)
@@ -120,7 +120,7 @@ if [ ! -d "$TEMP_DIR" ]; then
     mkdir -p $TEMP_DIR
     cd $TEMP_DIR
     RAYLIB_DEFINES="-D_DEFAULT_SOURCE -DPLATFORM_RPI -DGRAPHICS_API_OPENGL_ES2"
-    RAYLIB_C_FILES="$RAYLIB_SRC/core.c $RAYLIB_SRC/shapes.c $RAYLIB_SRC/textures.c $RAYLIB_SRC/text.c $RAYLIB_SRC/models.c $RAYLIB_SRC/utils.c $RAYLIB_SRC/raudio.c"
+    RAYLIB_C_FILES="$RAYLIB_SRC/rcore.c $RAYLIB_SRC/rshapes.c $RAYLIB_SRC/rtextures.c $RAYLIB_SRC/rtext.c $RAYLIB_SRC/rmodels.c $RAYLIB_SRC/utils.c $RAYLIB_SRC/raudio.c"
     RAYLIB_INCLUDE_FLAGS="-I$RAYLIB_SRC -I/opt/vc/include"
 
     if [ -n "$REALLY_QUIET" ]; then

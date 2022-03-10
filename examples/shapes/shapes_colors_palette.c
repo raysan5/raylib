@@ -79,10 +79,10 @@ int main(void)
 
                 if (IsKeyDown(KEY_SPACE) || colorState[i])
                 {
-                    DrawRectangle(colorsRecs[i].x, colorsRecs[i].y + colorsRecs[i].height - 26, colorsRecs[i].width, 20, BLACK);
+                    DrawRectangle((int)colorsRecs[i].x, (int)(colorsRecs[i].y + colorsRecs[i].height - 26), (int)colorsRecs[i].width, 20, BLACK);
                     DrawRectangleLinesEx(colorsRecs[i], 6, Fade(BLACK, 0.3f));
-                    DrawText(colorNames[i], colorsRecs[i].x + colorsRecs[i].width - MeasureText(colorNames[i], 10) - 12,
-                             colorsRecs[i].y + colorsRecs[i].height - 20, 10, colors[i]);
+                    DrawText(colorNames[i], (int)(colorsRecs[i].x + colorsRecs[i].width - MeasureText(colorNames[i], 10) - 12),
+                        (int)(colorsRecs[i].y + colorsRecs[i].height - 20), 10, colors[i]);
                 }
             }
 

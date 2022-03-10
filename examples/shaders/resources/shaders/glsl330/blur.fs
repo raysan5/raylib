@@ -24,8 +24,8 @@ void main()
 {
     // Texel color fetching from texture sampler
     vec3 texelColor = texture(texture0, fragTexCoord).rgb*weight[0];
-    
-    for (int i = 1; i < 3; i++) 
+
+    for (int i = 1; i < 3; i++)
     {
         texelColor += texture(texture0, fragTexCoord + vec2(offset[i])/renderWidth, 0.0).rgb*weight[i];
         texelColor += texture(texture0, fragTexCoord - vec2(offset[i])/renderWidth, 0.0).rgb*weight[i];

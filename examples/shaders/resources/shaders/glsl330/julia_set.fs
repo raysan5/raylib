@@ -51,7 +51,7 @@ void main()
       We use dot product (z.x * z.x + z.y * z.y) to determine the magnitude (length) squared.
       And once the magnitude squared is > 4, then magnitude > 2 is also true (saves computational power).
     *************************************************************************************************/
-    
+
     // The pixel coordinates are scaled so they are on the mandelbrot scale
     // NOTE: fragTexCoord already comes as normalized screen coordinates but offset must be normalized before scaling and zoom
     vec2 z = vec2((fragTexCoord.x + offset.x/screenDims.x)*2.5/zoom, (fragTexCoord.y + offset.y/screenDims.y)*1.5/zoom);
@@ -60,18 +60,18 @@ void main()
     for (iterations = 0; iterations < MAX_ITERATIONS; iterations++)
     {
         z = ComplexSquare(z) + c;  // Iterate function
-        
+
         if (dot(z, z) > 4.0) break;
     }
-    
+
     // Another few iterations decreases errors in the smoothing calculation.
     // See http://linas.org/art-gallery/escape/escape.html for more information.
     z = ComplexSquare(z) + c;
     z = ComplexSquare(z) + c;
-    
+
     // This last part smooths the color (again see link above).
     float smoothVal = float(iterations) + 1.0 - (log(log(length(z)))/log(2.0));
-    
+
     // Normalize the value so it is between 0 and 1.
     float norm = smoothVal/float(MAX_ITERATIONS);
 

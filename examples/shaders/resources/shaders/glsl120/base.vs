@@ -13,14 +13,14 @@ uniform mat4 mvp;
 varying vec2 fragTexCoord;
 varying vec4 fragColor;
 
-// NOTE: Add here your custom variables 
+// NOTE: Add here your custom variables
 
 void main()
 {
     // Send vertex attributes to fragment shader
     fragTexCoord = vertexTexCoord;
     fragColor = vertexColor;
-    
+
     // Calculate final vertex position
     gl_Position = mvp*vec4(vertexPosition, 1.0);
 }

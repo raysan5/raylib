@@ -1,8 +1,23 @@
 name: CMakeBuilds
 
 on:
+  workflow_dispatch:
   push:
+    paths:
+      - 'src/**'
+      - 'examples/**'
+      - '.github/workflows/cmake.yml'
+      - 'CMakeList.txt'
+      - 'CMakeOptions.txt'
+      - 'cmake/**'
   pull_request:
+    paths:
+      - 'src/**'
+      - 'examples/**'
+      - '.github/workflows/cmake.yml'
+      - 'CMakeList.txt'
+      - 'CMakeOptions.txt'
+      - 'cmake/**'
 
 env:
   # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)

@@ -21,7 +21,7 @@ void main()
 
     // Linearize depth value
     float depth = (2.0*zNear)/(zFar + zNear - z*(zFar - zNear));
-    
+
     // Calculate final fragment color
     finalColor = vec4(depth, depth, depth, 1.0f);
 }

@@ -22,6 +22,6 @@ void main()
 
     float x = fract(fragTexCoord.s);
     float final = smoothstep(divider - 0.1, divider + 0.1, x);
-    
+
     finalColor = mix(texelColor0, texelColor1, final);
 }

@@ -19,7 +19,7 @@ vec2 SampleSphericalMap(vec3 v)
 
 void main()
 {
-    // Normalize local position 
+    // Normalize local position
     vec2 uv = SampleSphericalMap(normalize(fragPosition));
 
     // Fetch color from texture map

@@ -1,18 +1,151 @@
 changelog
 ---------
 
-Current Release:    raylib 3.7.0 (26 April 2021)
+Current Release:    raylib 4.0.0 (05 November 2021)
 
 -------------------------------------------------------------------------
-Release:     raylib 4.0 (November? 2021)
+Release:     raylib 4.0 - 8th Anniversary Edition (05 November 2021)
 -------------------------------------------------------------------------
 KEY CHANGES:
- - 
- - 
- - 
+ - Naming consistency and coherency: Complete review of the library: sintax, naming, comments, decriptions, logs...
+ - Event Automation System: Support for input events recording and automatic re-playing, useful for automated testing and more!
+ - Custom game-loop control: Intended for advance users that want to control the events polling and the timming mechanisms
+ - rlgl 4.0: Completely decoupling from platform layer and raylib, intended for standalone usage as single-file header-only
+ - raymath 1.5: Complete review following new conventions, to make it more portable and self-contained
+ - raygui 3.0: Complete review and official new release, more portable and self-contained, intended for tools development
+ - raylib_parser: New tool to parse raylib.h and extract all required info into custom output formats (TXT, XML, JSON...)
+ - Zig and Odin official support
  
 Detailed changes:
-
+[core] ADDED: Support canvas resizing on web (#1840) by @skylersaleh
+[core] ADDED: GetMouseDelta() (#1832) by @adricoin2010
+[core] ADDED: Support additional mouse buttons (#1753) by @lambertwang
+[core] ADDED: SetRandomSeed() (#1994) by @TommiSinivuo
+[core] ADDED: GetTouchPointId() #1972
+[core] ADDED: EncodeDataBase64() and DecodeDataBase64()
+[core] REMOVED: PLATFORM_UWP, difficult to maintain
+[core] REMOVED: IsGamepadName()
+[core] RENAMED: SwapBuffers() to SwapScreenBuffer()
+[core] RENAMED: Wait() to WaitTime()
+[core] RENAMED: RayHitInfo to RayCollision (#1781)
+[core] RENAMED: GetRayCollisionGround() to GetRayCollisionQuad() (#1781)
+[core] REVIEWED: Support mouse wheel on x-axis (#1948)
+[core] REVIEWED: DisableCursor() on web by registering an empty mouse click event function in emscripten (#1900) by @grenappels
+[core] REVIEWED: LoadShader() and default locations and descriptions
+[core] REVIEWED: LoadShaderFromMemory() (#1851) by @Ruminant
+[core] REVIEWED: WaitTime(), avoid global variables dependency to make the function is self-contained (#1841)
+[core] REVIEWED: SetWindowSize() to work on web (#1847) by @nikki93
+[core] REVIEWED: Raspberry RPI/DRM keyboard blocking render loop (#1879) @luizpestana
+[core] REVIEWED: Android multi-touch (#1869) by @humbe
+[core] REVIEWED: Implemented GetGamepadName() for emscripten by @nbarkhina
+[core] REVIEWED: HighDPI support (#1987) by @ArnaudValensi
+[core] REVIEWED: KeyCallback(), register keys independently of the actions
+[rlgl] ADDED: GRAPHIC_API_OPENGL_43
+[rlgl] ADDED: rlUpdateVertexBufferElements() (#1915)
+[rlgl] ADDED: rlActiveDrawBuffers() (#1911)
+[rlgl] ADDED: rlEnableColorBlend()/rlDisableColorBlend()
+[rlgl] ADDED: rlGetPixelFormatName()
+[rlgl] REVIEWED: rlUpdateVertexBuffer (#1914) by @630Studios
+[rlgl] REVIEWED: rlDrawVertexArrayElements() (#1891)
+[rlgl] REVIEWED: Wrong normal matrix calculation (#1870)
+[raymath] ADDED: Vector3Angle()
+[raymath] REVIEWED: QuaternionFromAxisAngle() (#1892)
+[raymath] REVIEWED: QuaternionToMatrix() returning transposed result. (#1793) by @object71
+[shapes] ADDED: RenderPolyLinesEx() (#1758) by @lambertwang
+[shapes] ADDED: DrawLineBezierCubic() (#2021) by @SAOMDVN
+[textures] ADDED: GetImageColor() #2024
+[textures] REMOVED: GenImagePerlinNoise() 
+[textures] RENAMED: GetTextureData() to LoadImageFromTexture()
+[textures] RENAMED: GetScreenData() to LoadImageFromScreen()
+[textures] REVIEWED: ExportImage() to use SaveFileData() (#1779)
+[textures] REVIEWED: LoadImageAnim() #2005
+[text] ADDED: Security check in case of not valid font
+[text] ADDED: `GetGlyphInfo()` to get glyph info for a specific codepoint
+[text] ADDED: `GetGlyphAtlasRec()` to get glyph rectangle within the generated font atlas
+[text] ADDED: DrawTextPro() with text rotation support, WARNING: DrawTextPro() requires including `rlgl.h`, before it was only dependant on `textures` module.
+[text] ADDED: UnloadCodepoints() to safely free loaded codepoints
+[text] REMOVED: DrawTextRec() and DrawTextRecEx(), moved to example, those functions could be very specific depending on user needs so it's better to give the user the full source in case of special requirements instead of allowing a function with +10 input parameters.
+[text] RENAMED: struct `CharInfo` to `GlyphInfo`, actually that's the correct naming for the data contained. It contains the character glyph metrics and the glyph image; in the past it also contained rectangle within the font atlas but that data has been moved to `Font` struct directly, so, `GlyphInfo` is a more correct name.
+[text] RENAMED: `CodepointToUtf8()` to `CodepointToUTF8()`, capitalization of UTF-8 is the correct form, it would also require de hyphen but it can be omitted in this case.
+[text] RENAMED: `TextToUtf8()` to `TextCodepointsToUTF8` for consistency and more detail on the functionality.
+[text] RENAMED: GetCodepoints() to LoadCodepoints(), now codepoint array data is loaded dynamically instead of reusing a limited static buffer.
+[text] RENAMED: GetNextCodepoint() to GetCodepoint()
+[models] ADDED: MagikaVoxel VOX models loading
+[models] ADDED: GenMeshCone() (#1903)
+[models] ADDED: GetModelBoundingBox()
+[models] ADDED: DrawBillboardPro() (#1759) by @nobytesgiven
+[models] ADDED: DrawCubeTextureRec() (#2001) by @tdgroot
+[models] ADDED: DrawCylinderEx() and DrawCylinderWiresEx() (#2049) by @Horrowind
+[models] REMOVED: DrawBillboardEx()
+[models] RENAMED: MeshBoundingBox() to GetMeshBoundingBox()
+[models] RENAMED: MeshTangents() to GenMeshTangents()
+[models] RENAMED: MeshBinormals() to GenMeshBinormals()
+[models] REVIEWED: GenMeshTangents() (#1877) by @630Studios
+[models] REVIEWED: CheckCollisionBoxSphere() by @Crydsch
+[models] REVIEWED: GetRayCollisionQuad() by @Crydsch
+[models] REVIEWED: LoadGLTF(), fixed missing transformations and nonroot skinning by @MrDiver
+[models] REVIEWED: LoadGLTF(), rewriten from scratch, removed animations support (broken)
+[models] REVIEWED: Decouple DrawMesh() and DrawMeshInstanced() (#1958)
+[models] REVIEWED: Support vertex color attribute for GLTF and IQM (#1790) by @object71
+[models] REVIEWED: DrawBillboardPro() (#1941) by @GithubPrankster
+[models] REDESIGNED: Major review of glTF loading functionality (#1849) by @object71
+[audio] ADDED: SeekMusicStream() (#2006) by @GithubPrankster
+[audio] REMOVED: GetAudioStreamBufferSizeDefault()
+[audio] RENAMED: InitAudioStream() to LoadAudioStream()
+[audio] RENAMED: CloseAudioStream() to UnloadAudioStream()
+[audio] RENAMED: IsMusicPlaying() to IsMusicStreamPlaying()
+[audio] REVIEWED: ExportWaveAsCode()
+[audio] REDESIGNED: Use frameCount on audio instead of sampleCount
+[utils] REVIEWED: exit() on LOG_FATAL instead of LOG_ERROR (#1796)
+[examples] ADDED: core_custom_frame_control
+[examples] ADDED: core_basic_screen_manager
+[examples] ADDED: core_split_screen (#1806) by @JeffM2501
+[examples] ADDED: core_smooth_pixelperfect (#1771) by @NotManyIdeasDev
+[examples] ADDED: shaders_texture_outline (#1883) by @GoldenThumbs
+[examples] ADDED: models_loading_vox (#1940) by @procfxgen
+[examples] ADDED: rlgl_compute_shader by @TSnake41 (#2088)
+[examples] REMOVED: models_material_pbr
+[examples] REMOVED: models_gltf_animation
+[examples] REVIEWED: core_3d_picking
+[examples] REVIEWED: core_input_mouse
+[examples] REVIEWED: core_vr_simulator, RenderTexture usage
+[examples] REVIEWED: core_window_letterbox, RenderTexture usage
+[examples] REVIEWED: shapes_basic_shapes
+[examples] REVIEWED: shapes_logo_raylib_anim
+[examples] REVIEWED: textures_to_image
+[examples] REVIEWED: text_rectangle_bounds
+[examples] REVIEWED: text_unicode
+[examples] REVIEWED: text_draw_3d
+[examples] REVIEWED: models_loading
+[examples] REVIEWED: models_skybox (#1792) (#1778)
+[examples] REVIEWED: models_mesh_picking
+[examples] REVIEWED: models_yaw_pitch_roll
+[examples] REVIEWED: models_rlgl_solar_system
+[examples] REVIEWED: shaders_custom_uniform, RenderTexture usage
+[examples] REVIEWED: shaders_eratosthenes, RenderTexture usage
+[examples] REVIEWED: shaders_julia_set, RenderTexture usage
+[examples] REVIEWED: shaders_postprocessing, RenderTexture usage
+[examples] REVIEWED: shaders_basic_lighting, simplified (#1865)
+[examples] REVIEWED: audio_raw_stream.c
+[examples] REVIEWED: raudio_standalone
+[examples] REVIEWED: raylib_opengl_interop
+[examples] REVIEWED: rlgl_standalone.c
+[examples] REVIEWED: Resources licenses
+[examples] REVIEWED: models resources reorganization
+[templates] REMOVED: Moved to a separate repo: https://github.com/raysan5/raylib-game-template
+[build] ADDED: Zig build file (#2014) by @TommiSinivuo
+[build] ADDED: Android VS2019 solution (#2013) by @Kronka
+[build] REMOVED: VS2017 project, outdated
+[build] RENAMED: All raylib modules prefixed with 'r' (core -> rcore)
+[build] RENAMED: SUPPORT_MOUSE_CURSOR_NATIVE to SUPPORT_MOUSE_CURSOR_POINT
+[build] REVIEWED: examples/examples_template.c
+[build] REVIEWED: Makefile to latest Emscripten SDK r23
+[build] REVIEWED: Makefile for latest Android NDK r32 LTS
+[build] REVIEWED: raylib resource files
+[build] Moved some extra raylib libraries to /extras/ directory
+[*] UPDATED: Multiple bindings to latest version
+[*] UPDATED: Most external libraries to latest versions (except GLFW)
+[*] Multiple code improvements and fixes by multiple contributors!
 
 -------------------------------------------------------------------------
 Release:     raylib 3.7 (26 April 2021)

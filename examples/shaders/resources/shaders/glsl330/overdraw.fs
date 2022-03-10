@@ -15,12 +15,12 @@ out vec4 finalColor;
 
 void main()
 {
-    // To show overdraw, we just render all the fragments 
+    // To show overdraw, we just render all the fragments
     // with a solid color and some transparency
-    
-    // NOTE: This is not a postpro render, 
+
+    // NOTE: This is not a postpro render,
     // it will only render all screen texture in a plain color
-    
+
     finalColor = vec4(1.0, 0.0, 0.0, 0.2);
 }
 

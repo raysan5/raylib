@@ -1,8 +1,18 @@
 name: Android
 
 on:
+  workflow_dispatch:
   push:
+    workflow_dispatch:
+    paths:
+      - 'src/**'
+      - 'examples/**'
+      - '.github/workflows/android.yml'
   pull_request:
+    paths:
+      - 'src/**'
+      - 'examples/**'
+      - '.github/workflows/android.yml'
   release:
     types: [published]
 
@@ -50,6 +60,9 @@ jobs:
     - name: Generate Artifacts
       run: |
         cp -v ./src/raylib.h ./build/${{ env.RELEASE_NAME }}/include
+        cp -v ./src/raymath.h ./build/${{ env.RELEASE_NAME }}/include
+        cp -v ./src/rlgl.h ./build/${{ env.RELEASE_NAME }}/include
+        cp -v ./src/extras/raygui.h ./build/${{ env.RELEASE_NAME }}/include
         cp -v ./README.md ./build/${{ env.RELEASE_NAME }}/README.md
         cp -v ./LICENSE ./build/${{ env.RELEASE_NAME }}/LICENSE
         cd build

@@ -45,6 +45,7 @@ ipch/
 *.db
 *.opendb
 packages/
+!examples/models/resources/models/obj/
 
 # Ignore compiled binaries
 *.o
@@ -101,3 +102,13 @@ build
 GPATH
 GRTAGS
 GTAGS
+
+# Zig programming language
+zig-cache/
+zig-out/
+build/
+build-*/
+docgen_tmp/
+
+# Parser stuff
+parser/raylib_parser

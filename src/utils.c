@@ -11,7 +11,7 @@
 *
 *   LICENSE: zlib/libpng
 *
-*   Copyright (c) 2014-2021 Ramon Santamaria (@raysan5)
+*   Copyright (c) 2014-2022 Ramon Santamaria (@raysan5)
 *
 *   This software is provided "as-is", without any express or implied warranty. In no event
 *   will the authors be held liable for any damages arising from the use of this software.
@@ -79,8 +79,8 @@ void SetSaveFileTextCallback(SaveFileTextCallback callback) { saveFileText = cal
 
 
 #if defined(PLATFORM_ANDROID)
-static AAssetManager *assetManager = NULL;              // Android assets manager pointer
-static const char *internalDataPath = NULL;             // Android internal data path
+static AAssetManager *assetManager = NULL;          // Android assets manager pointer
+static const char *internalDataPath = NULL;         // Android internal data path
 #endif
 
 //----------------------------------------------------------------------------------
@@ -375,8 +375,8 @@ FILE *android_fopen(const char *fileName, const char *mode)
 {
     if (mode[0] == 'w')
     {
-        // TODO: fopen() is mapped to android_fopen() that only grants read access
-        // to assets directory through AAssetManager but we want to also be able to
+        // fopen() is mapped to android_fopen() that only grants read access to
+        // assets directory through AAssetManager but we want to also be able to
         // write data when required using the standard stdio FILE access functions
         // Ref: https://stackoverflow.com/questions/11294487/android-writing-saving-files-from-native-code-only
         #undef fopen

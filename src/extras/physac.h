@@ -5,7 +5,7 @@
 *   DESCRIPTION:
 *
 *   Physac is a small 2D physics engine written in pure C. The engine uses a fixed time-step thread loop
-*   to simluate physics. A physics step contains the following phases: get collision information,
+*   to simulate physics. A physics step contains the following phases: get collision information,
 *   apply dynamics, collision solving and position correction. It uses a very simple struct for physic
 *   bodies with a position vector to be used in any 3D rendering API.
 *
@@ -50,7 +50,7 @@
 *
 *   LICENSE: zlib/libpng
 *
-*   Copyright (c) 2016-2021 Victor Fisac (@victorfisac) and Ramon Santamaria (@raysan5)
+*   Copyright (c) 2016-2022 Victor Fisac (@victorfisac) and Ramon Santamaria (@raysan5)
 *
 *   This software is provided "as-is", without any express or implied warranty. In no event
 *   will the authors be held liable for any damages arising from the use of this software.
@@ -71,6 +71,16 @@
 
 #if !defined(PHYSAC_H)
 #define PHYSAC_H
+
+// Function specifiers in case library is build/used as a shared library (Windows)
+// NOTE: Microsoft specifiers to tell compiler that symbols are imported/exported from a .dll
+#if defined(_WIN32)
+    #if defined(BUILD_LIBTYPE_SHARED)
+        #define PHYSACDEF __declspec(dllexport)     // We are building the library as a Win32 shared library (.dll)
+    #elif defined(USE_LIBTYPE_SHARED)
+        #define PHYSACDEF __declspec(dllimport)     // We are using the library as a Win32 shared library (.dll)
+    #endif
+#endif
 
 #ifndef PHYSACDEF
     #define PHYSACDEF       // We are building or using physac as a static library

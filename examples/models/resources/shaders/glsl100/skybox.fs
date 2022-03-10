@@ -19,8 +19,8 @@ void main()
     else texelColor = textureCube(environmentMap, fragPosition);
 
     vec3 color = vec3(texelColor.x, texelColor.y, texelColor.z);
-    
-    if (doGamma)// Apply gamma correction
+
+    if (doGamma) // Apply gamma correction
     {
         color = color/(color + vec3(1.0));
         color = pow(color, vec3(1.0/2.2));

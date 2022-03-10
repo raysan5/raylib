@@ -303,16 +303,17 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\..\..\src\raudio.c" />
-    <ClCompile Include="..\..\..\src\core.c" />
-    <ClCompile Include="..\..\..\src\models.c" />
+    <ClCompile Include="..\..\..\src\rcore.c" />
+    <ClCompile Include="..\..\..\src\rmodels.c" />
     <ClCompile Include="..\..\..\src\rglfw.c" />
-    <ClCompile Include="..\..\..\src\shapes.c" />
-    <ClCompile Include="..\..\..\src\text.c" />
-    <ClCompile Include="..\..\..\src\textures.c" />
+    <ClCompile Include="..\..\..\src\rshapes.c" />
+    <ClCompile Include="..\..\..\src\rtext.c" />
+    <ClCompile Include="..\..\..\src\rtextures.c" />
     <ClCompile Include="..\..\..\src\utils.c" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\..\src\camera.h" />
+    <ClInclude Include="..\..\..\src\external\cgltf.h" />
+    <ClInclude Include="..\..\..\src\rcamera.h" />
     <ClInclude Include="..\..\..\src\config.h" />
     <ClInclude Include="..\..\..\src\external\glad.h" />
     <ClInclude Include="..\..\..\src\external\jar_mod.h" />
@@ -324,7 +325,7 @@
     <ClInclude Include="..\..\..\src\external\stb_rect_pack.h" />
     <ClInclude Include="..\..\..\src\external\stb_truetype.h" />
     <ClInclude Include="..\..\..\src\external\stb_vorbis.h" />
-    <ClInclude Include="..\..\..\src\gestures.h" />
+    <ClInclude Include="..\..\..\src\rgestures.h" />
     <ClInclude Include="..\..\..\src\raylib.h" />
     <ClInclude Include="..\..\..\src\raymath.h" />
     <ClInclude Include="..\..\..\src\rlgl.h" />

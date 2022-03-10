@@ -7,12 +7,13 @@
 *
 *   Example contributed by Berni (@Berni8k) and reviewed by Ramon Santamaria (@raysan5)
 *
-*   Copyright (c) 2017 Berni (@Berni8k) and Ramon Santamaria (@raysan5)
+*   Copyright (c) 2017-2021 Berni (@Berni8k) and Ramon Santamaria (@raysan5)
 *
 ********************************************************************************************/
 
 #include "raylib.h"
-#include "raymath.h"
+
+#include "raymath.h"        // Required for: MatrixRotateXYZ()
 
 int main(void)
 {
@@ -31,9 +32,9 @@ int main(void)
     camera.fovy = 30.0f;                                // Camera field-of-view Y
     camera.projection = CAMERA_PERSPECTIVE;             // Camera type
 
-    // Model loading
-    // NOTE: Diffuse map loaded automatically
-    Model model = LoadModel("resources/plane/plane.gltf");
+    Model model = LoadModel("resources/models/obj/plane.obj");                  // Load model
+    Texture2D texture = LoadTexture("resources/models/obj/plane_diffuse.png");  // Load model texture
+    model.materials[0].maps[MATERIAL_MAP_DIFFUSE].texture = texture;            // Set map diffuse texture
 
     float pitch = 0.0f;
     float roll = 0.0f;
@@ -78,7 +79,6 @@ int main(void)
         model.transform = MatrixRotateXYZ((Vector3){ DEG2RAD*pitch, DEG2RAD*yaw, DEG2RAD*roll });
         //----------------------------------------------------------------------------------
 
-
         // Draw
         //----------------------------------------------------------------------------------
         BeginDrawing();
@@ -88,7 +88,7 @@ int main(void)
             // Draw 3D model (recomended to draw 3D always before 2D)
             BeginMode3D(camera);
 
-                DrawModel(model, (Vector3){ 0.0f, 0.0f, 15.0f }, 0.25f, WHITE);   // Draw 3d model with texture
+                DrawModel(model, (Vector3){ 0.0f, -8.0f, 0.0f }, 1.0f, WHITE);   // Draw 3d model with texture
                 DrawGrid(10, 10.0f);
 
             EndMode3D();

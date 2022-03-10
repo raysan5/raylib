@@ -16,8 +16,8 @@ void main()
 {
     // Texel color fetching from texture sampler
     vec4 texelColor = texture2D(texture0, fragTexCoord);
-    
+
     // NOTE: Implement here your fragment shader code
-    
+
     gl_FragColor = texelColor*colDiffuse;
 }

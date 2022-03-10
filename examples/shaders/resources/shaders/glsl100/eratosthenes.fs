@@ -11,7 +11,7 @@ precision mediump float;
   Each integer is tested to see if it is a prime number.  Primes are colored white.
   Non-primes are colored with a color that indicates the smallest factor which evenly divdes our integer.
 
-  You can change the scale variable to make a larger or smaller grid.  
+  You can change the scale variable to make a larger or smaller grid.
   Total number of integers displayed = scale squared, so scale = 100 tests the first 10,000 integers.
 
   WARNING: If you make scale too large, your GPU may bog down!
@@ -27,11 +27,11 @@ vec4 Colorizer(float counter, float maxSize)
 {
     float red = 0.0, green = 0.0, blue = 0.0;
     float normsize = counter/maxSize;
-    
+
     red = smoothstep(0.3, 0.7, normsize);
     green = sin(3.14159*normsize);
     blue = 1.0 - smoothstep(0.0, 0.4, normsize);
-    
+
     return vec4(0.8*red, 0.8*green, 0.8*blue, 1.0);
 }
 
@@ -41,7 +41,7 @@ void main()
     float scale = 1000.0; // Makes 100x100 square grid. Change this variable to make a smaller or larger grid.
     float value = scale*floor(fragTexCoord.y*scale) + floor(fragTexCoord.x*scale);  // Group pixels into boxes representing integer values
     int valuei = int(value);
-    
+
     //if ((valuei == 0) || (valuei == 1) || (valuei == 2)) gl_FragColor = vec4(1.0);
     //else
     {

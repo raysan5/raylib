@@ -41,7 +41,7 @@ int main(void)
         if (state == 0)             // Move ball position X with easing
         {
             framesCounter++;
-            ballPositionX = EaseElasticOut(framesCounter, -100, screenWidth/2 + 100, 120);
+            ballPositionX = (int)EaseElasticOut((float)framesCounter, -100, screenWidth/2.0f + 100, 120);
 
             if (framesCounter >= 120)
             {
@@ -52,7 +52,7 @@ int main(void)
         else if (state == 1)        // Increase ball radius with easing
         {
             framesCounter++;
-            ballRadius = EaseElasticIn(framesCounter, 20, 500, 200);
+            ballRadius = (int)EaseElasticIn((float)framesCounter, 20, 500, 200);
 
             if (framesCounter >= 200)
             {
@@ -63,7 +63,7 @@ int main(void)
         else if (state == 2)        // Change ball alpha with easing (background color blending)
         {
             framesCounter++;
-            ballAlpha = EaseCubicOut(framesCounter, 0.0f, 1.0f, 200);
+            ballAlpha = EaseCubicOut((float)framesCounter, 0.0f, 1.0f, 200);
 
             if (framesCounter >= 200)
             {
@@ -93,7 +93,7 @@ int main(void)
             ClearBackground(RAYWHITE);
 
             if (state >= 2) DrawRectangle(0, 0, screenWidth, screenHeight, GREEN);
-            DrawCircle(ballPositionX, 200, ballRadius, Fade(RED, 1.0f - ballAlpha));
+            DrawCircle(ballPositionX, 200, (float)ballRadius, Fade(RED, 1.0f - ballAlpha));
 
             if (state == 3) DrawText("PRESS [ENTER] TO PLAY AGAIN!", 240, 200, 20, BLACK);
 
