@@ -54,8 +54,6 @@ int main(void)
     {
         // Update
         //----------------------------------------------------------------------------------
-        PollInputEvents();              // Poll input events (SUPPORT_CUSTOM_FRAME_CONTROL)
-        
         if (IsKeyPressed(KEY_SPACE)) pause = !pause;
         
         if (IsKeyPressed(KEY_UP)) targetFPS += 20;
@@ -113,6 +111,8 @@ int main(void)
         else deltaTime = updateDrawTime;    // Framerate could be variable
 
         previousTime = currentTime;
+
+        PollInputEvents();          // Poll input events (SUPPORT_CUSTOM_FRAME_CONTROL)
         //----------------------------------------------------------------------------------
     }
 
