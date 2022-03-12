@@ -664,11 +664,11 @@ raygui.o : raygui.c
 	$(CC) -c $< $(CFLAGS) $(INCLUDE_PATHS)
 raygui.c:
 ifeq ($(PLATFORM_SHELL), cmd)
-		@echo #define RAYGUI_IMPLEMENTATION > raygui.c
-		@echo #include "$(RAYLIB_MODULE_RAYGUI_PATH)/raygui.h" >> raygui.c
+	@echo #define RAYGUI_IMPLEMENTATION > raygui.c
+	@echo #include "$(RAYLIB_MODULE_RAYGUI_PATH)/raygui.h" >> raygui.c
 else
-		@echo "#define RAYGUI_IMPLEMENTATION" > raygui.c
-		@echo "#include \"$(RAYLIB_MODULE_RAYGUI_PATH)/raygui.h\"" >> raygui.c
+	@echo "#define RAYGUI_IMPLEMENTATION" > raygui.c
+	@echo "#include \"$(RAYLIB_MODULE_RAYGUI_PATH)/raygui.h\"" >> raygui.c
 endif
 
 # Compile physac module
