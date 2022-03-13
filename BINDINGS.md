@@ -21,6 +21,7 @@ Some people ported raylib to other languages in form of bindings or wrappers to 
 | nelua-raylib       | 4.0     | [nelua](https://nelua.io/)           | MIT | https://github.com/AKDev21/nelua-raylib       |
 | NimraylibNow!      | 4.0     | [Nim](https://nim-lang.org/)         | MIT | https://github.com/greenfork/nimraylib_now    |
 | raylib-Forever     | auto    | [Nim](https://nim-lang.org/)         | ? | https://github.com/Guevara-chan/Raylib-Forever  |
+| naylib             | auto    | [Nim](https://nim-lang.org/)         | MIT | https://github.com/planetis-m/naylib          |
 | Ray4Laz            | **4.0** | [Pascal](https://en.wikipedia.org/wiki/Pascal_(programming_language))| Zlib |  https://github.com/GuvaCode/Ray4Laz |
 | pyraylib           | 3.7     | [Python](https://www.python.org/)    | Zlib    | https://github.com/Ho011/pyraylib         |
 | raylib-python-cffi | **4.0** | [Python](https://www.python.org/)    | EPL-2.0 | https://github.com/electronstudio/raylib-python-cffi |
