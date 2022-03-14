@@ -3443,7 +3443,7 @@ void OpenURL(const char *url)
 #if defined(PLATFORM_DESKTOP)
         char *cmd = (char *)RL_CALLOC(strlen(url) + 10, sizeof(char));
     #if defined(_WIN32)
-        sprintf(cmd, "explorer %s", url);
+        sprintf(cmd, "explorer \"%s\"", url);
     #endif
     #if defined(__linux__) || defined(__FreeBSD__)
         sprintf(cmd, "xdg-open '%s'", url); // Alternatives: firefox, x-www-browser
