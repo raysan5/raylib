@@ -140,14 +140,14 @@ int main(void)
                     // Draw axis: left joystick
                     DrawCircle(319, 255, 35, BLACK);
                     DrawCircle(319, 255, 31, LIGHTGRAY);
-                    DrawCircle(319 + ((int)GetGamepadAxisMovement(0, GAMEPAD_AXIS_LEFT_X) * 20),
-                               255 + ((int)GetGamepadAxisMovement(0, GAMEPAD_AXIS_LEFT_Y) * 20), 25, BLACK);
+                    DrawCircle(319 + (int)(GetGamepadAxisMovement(0, GAMEPAD_AXIS_LEFT_X) * 20),
+                               255 + (int)(GetGamepadAxisMovement(0, GAMEPAD_AXIS_LEFT_Y) * 20), 25, BLACK);
 
                     // Draw axis: right joystick
                     DrawCircle(475, 255, 35, BLACK);
                     DrawCircle(475, 255, 31, LIGHTGRAY);
-                    DrawCircle(475 + ((int)GetGamepadAxisMovement(0, GAMEPAD_AXIS_RIGHT_X)*20),
-                               255 + ((int)GetGamepadAxisMovement(0, GAMEPAD_AXIS_RIGHT_Y)*20), 25, BLACK);
+                    DrawCircle(475 + (int)(GetGamepadAxisMovement(0, GAMEPAD_AXIS_RIGHT_X) * 20),
+                               255 + (int)(GetGamepadAxisMovement(0, GAMEPAD_AXIS_RIGHT_Y) * 20), 25, BLACK);
 
                     // Draw axis: left-right triggers
                     DrawRectangle(169, 48, 15, 70, GRAY);
