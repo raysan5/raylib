@@ -306,10 +306,9 @@ Image LoadImageFromMemory(const char *fileType, const unsigned char *fileData, i
 {
     Image image = { 0 };
 
-#if defined(SUPPORT_FILEFORMAT_PNG)
-    if ((strcmp(fileType, ".png") == 0)
-#else
     if ((false)
+#if defined(SUPPORT_FILEFORMAT_PNG)
+        || (strcmp(fileType, ".png") == 0)
 #endif
 #if defined(SUPPORT_FILEFORMAT_BMP)
         || (strcmp(fileType, ".bmp") == 0)
