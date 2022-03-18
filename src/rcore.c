@@ -242,6 +242,7 @@
     //#include <android/sensor.h>           // Required for: Android sensors functions (accelerometer, gyroscope, light...)
     #include <android/window.h>             // Required for: AWINDOW_FLAG_FULLSCREEN definition and others
     #include <android_native_app_glue.h>    // Required for: android_app struct and activity management
+    #include <jni.h>                        // Required for: JNIEnv and JavaVM [Used in OpenURL()]
 
     #include <EGL/egl.h>                    // Native platform windowing system interface
     //#include <GLES2/gl2.h>                // OpenGL ES 2.0 library (not required in this module, only in rlgl)
@@ -3457,6 +3458,29 @@ void OpenURL(const char *url)
 #endif
 #if defined(PLATFORM_WEB)
         emscripten_run_script(TextFormat("window.open('%s', '_blank')", url));
+#endif
+#if defined(PLATFORM_ANDROID)
+        JNIEnv *env = NULL;
+        JavaVM *vm = CORE.Android.app->activity->vm;
+        (*vm)->AttachCurrentThread(vm, &env, NULL);
+
+        jstring urlString = (*env)->NewStringUTF(env, url);
+        jclass uriClass = (*env)->FindClass(env, "android/net/Uri");
+        jmethodID uriParse = (*env)->GetStaticMethodID(env, uriClass, "parse", "(Ljava/lang/String;)Landroid/net/Uri;");
+        jobject uri = (*env)->CallStaticObjectMethod(env, uriClass, uriParse, urlString);
+
+        jclass intentClass = (*env)->FindClass(env, "android/content/Intent");
+        jfieldID actionViewId = (*env)->GetStaticFieldID(env, intentClass, "ACTION_VIEW", "Ljava/lang/String;");
+        jobject actionView = (*env)->GetStaticObjectField(env, intentClass, actionViewId);
+        jmethodID newIntent = (*env)->GetMethodID(env, intentClass, "<init>", "(Ljava/lang/String;Landroid/net/Uri;)V");
+        jobject intent = (*env)->AllocObject(env, intentClass);
+
+        (*env)->CallVoidMethod(env, intent, newIntent, actionView, uri);
+        jclass activityClass = (*env)->FindClass(env, "android/app/Activity");
+        jmethodID startActivity = (*env)->GetMethodID(env, activityClass, "startActivity", "(Landroid/content/Intent;)V");
+        (*env)->CallVoidMethod(env, CORE.Android.app->activity->clazz, startActivity, intent);
+
+        (*vm)->DetachCurrentThread(vm);
 #endif
     }
 }
