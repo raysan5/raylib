@@ -3471,6 +3471,8 @@ void DrawTextureNPatch(Texture2D texture, NPatchInfo nPatchInfo, Rectangle dest,
         coordD.x = (nPatchInfo.source.x + nPatchInfo.source.width)/width;
         coordD.y = (nPatchInfo.source.y + nPatchInfo.source.height)/height;
 
+        rlCheckRenderBatchLimit(9 * 3 * 2);         // Maxium number of verts that could happen
+
         rlSetTexture(texture.id);
 
         rlPushMatrix();
