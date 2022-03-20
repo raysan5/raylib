@@ -1958,25 +1958,25 @@ void ImageColorContrast(Image *image, float contrast)
         for (int x = 0; x < image->width; x++)
         {
             float pR = (float)pixels[y*image->width + x].r/255.0f;
-            pR -= 0.5;
+            pR -= 0.5f;
             pR *= contrast;
-            pR += 0.5;
+            pR += 0.5f;
             pR *= 255;
             if (pR < 0) pR = 0;
             if (pR > 255) pR = 255;
 
             float pG = (float)pixels[y*image->width + x].g/255.0f;
-            pG -= 0.5;
+            pG -= 0.5f;
             pG *= contrast;
-            pG += 0.5;
+            pG += 0.5f;
             pG *= 255;
             if (pG < 0) pG = 0;
             if (pG > 255) pG = 255;
 
             float pB = (float)pixels[y*image->width + x].b/255.0f;
-            pB -= 0.5;
+            pB -= 0.5f;
             pB *= contrast;
-            pB += 0.5;
+            pB += 0.5f;
             pB *= 255;
             if (pB < 0) pB = 0;
             if (pB > 255) pB = 255;

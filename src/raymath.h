@@ -498,14 +498,14 @@ RMAPI Vector3 Vector3Perpendicular(Vector3 v)
     float min = (float) fabs(v.x);
     Vector3 cardinalAxis = {1.0f, 0.0f, 0.0f};
 
-    if (fabs(v.y) < min)
+    if (fabsf(v.y) < min)
     {
         min = (float) fabs(v.y);
         Vector3 tmp = {0.0f, 1.0f, 0.0f};
         cardinalAxis = tmp;
     }
 
-    if (fabs(v.z) < min)
+    if (fabsf(v.z) < min)
     {
         Vector3 tmp = {0.0f, 0.0f, 1.0f};
         cardinalAxis = tmp;
@@ -1516,7 +1516,7 @@ RMAPI Quaternion QuaternionInvert(Quaternion q)
 
     float lengthSq = q.x*q.x + q.y*q.y + q.z*q.z + q.w*q.w;
 
-    if (lengthSq != 0.0)
+    if (lengthSq != 0.0f)
     {
         float invLength = 1.0f/lengthSq;
 
@@ -1619,14 +1619,14 @@ RMAPI Quaternion QuaternionSlerp(Quaternion q1, Quaternion q2, float amount)
         cosHalfTheta = -cosHalfTheta;
     }
 
-    if (fabs(cosHalfTheta) >= 1.0f) result = q1;
+    if (fabsf(cosHalfTheta) >= 1.0f) result = q1;
     else if (cosHalfTheta > 0.95f) result = QuaternionNlerp(q1, q2, amount);
     else
     {
         float halfTheta = acosf(cosHalfTheta);
         float sinHalfTheta = sqrtf(1.0f - cosHalfTheta*cosHalfTheta);
 
-        if (fabs(sinHalfTheta) < 0.001f)
+        if (fabsf(sinHalfTheta) < 0.001f)
         {
             result.x = (q1.x*0.5f + q2.x*0.5f);
             result.y = (q1.y*0.5f + q2.y*0.5f);
@@ -1792,7 +1792,7 @@ RMAPI Quaternion QuaternionFromAxisAngle(Vector3 axis, float angle)
 // Get the rotation angle and axis for a given quaternion
 RMAPI void QuaternionToAxisAngle(Quaternion q, Vector3 *outAxis, float *outAngle)
 {
-    if (fabs(q.w) > 1.0f)
+    if (fabsf(q.w) > 1.0f)
     {
         // QuaternionNormalize(q);
         float length = sqrtf(q.x*q.x + q.y*q.y + q.z*q.z + q.w*q.w);
