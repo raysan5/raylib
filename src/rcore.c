@@ -6647,6 +6647,7 @@ static int FindNearestConnectorMode(const drmModeConnector *connector, uint widt
 
 #if defined(SUPPORT_EVENTS_AUTOMATION)
 // NOTE: Loading happens over AutomationEvent *events
+// TODO: This system should probably be redesigned
 static void LoadAutomationEvents(const char *fileName)
 {
     //unsigned char fileId[4] = { 0 };

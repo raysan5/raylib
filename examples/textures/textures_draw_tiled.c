@@ -19,8 +19,8 @@ int main(int argc, char **argv)
 {
     // Initialization
     //--------------------------------------------------------------------------------------
-    int screenWidth = 800;
-    int screenHeight = 450;
+    const int screenWidth = 800;
+    const int screenHeight = 450;
 
     SetConfigFlags(FLAG_WINDOW_RESIZABLE); // Make the window resizable
     InitWindow(screenWidth, screenHeight, "raylib [textures] example - Draw part of a texture tiled");
