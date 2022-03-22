@@ -71,9 +71,6 @@ int main(int argc, char **argv)
     {
         // Update
         //----------------------------------------------------------------------------------
-        screenWidth = GetScreenWidth();
-        screenHeight = GetScreenHeight();
-
         // Handle mouse
         if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT))
         {
@@ -122,7 +119,7 @@ int main(int argc, char **argv)
             ClearBackground(RAYWHITE);
 
             // Draw the tiled area
-            DrawTextureTiled(texPattern, recPattern[activePattern], (Rectangle){(float)OPT_WIDTH+MARGIN_SIZE, (float)MARGIN_SIZE, screenWidth - OPT_WIDTH - 2.0f*MARGIN_SIZE, screenHeight - 2.0f*MARGIN_SIZE},
+            DrawTextureTiled(texPattern, recPattern[activePattern], (Rectangle){(float)OPT_WIDTH+MARGIN_SIZE, (float)MARGIN_SIZE, GetScreenWidth() - OPT_WIDTH - 2.0f*MARGIN_SIZE, screenHeight - 2.0f*MARGIN_SIZE},
                 (Vector2){0.0f, 0.0f}, rotation, scale, colors[activeCol]);
 
             // Draw options
