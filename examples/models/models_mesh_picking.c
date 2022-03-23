@@ -123,7 +123,7 @@ int main(void)
 
             // Check ray collision against model
             // NOTE: It considers model.transform matrix!
-            RayCollision meshHitInfo = GetRayCollisionModel(ray, tower);
+            RayCollision meshHitInfo = GetRayCollisionModel(ray, tower, MatrixIdentity());
 
             if (meshHitInfo.hit)
             {

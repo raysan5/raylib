@@ -3641,13 +3641,15 @@ RayCollision GetRayCollisionMesh(Ray ray, Mesh mesh, Matrix transform)
 }
 
 // Get collision info between ray and model
-RayCollision GetRayCollisionModel(Ray ray, Model model)
+RayCollision GetRayCollisionModel(Ray ray, Model model, Matrix transform)
 {
     RayCollision collision = { 0 };
 
+    Matrix mat = MatrixMultiply(model.transform, transform);
+
     for (int m = 0; m < model.meshCount; m++)
     {
-        RayCollision meshHitInfo = GetRayCollisionMesh(ray, model.meshes[m], model.transform);
+        RayCollision meshHitInfo = GetRayCollisionMesh(ray, model.meshes[m], mat);
 
         if (meshHitInfo.hit)
         {
