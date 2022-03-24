@@ -311,9 +311,11 @@ typedef enum {
     AUDIO_BUFFER_USAGE_STREAM
 } AudioBufferUsage;
 
-// Audio buffer structure
+// Audio buffer struct
 struct rAudioBuffer {
     ma_data_converter converter;    // Audio data converter
+    
+    AudioStreamCallback callback;   // Audio buffer callback for buffer filling on audio threads
 
     float volume;                   // Audio buffer volume
     float pitch;                    // Audio buffer pitch
@@ -555,10 +557,13 @@ AudioBuffer *LoadAudioBuffer(ma_format format, ma_uint32 channels, ma_uint32 sam
     audioBuffer->volume = 1.0f;
     audioBuffer->pitch = 1.0f;
     audioBuffer->pan = 0.5f;
+    
+    audioBuffer->callback = NULL;
 
     audioBuffer->playing = false;
     audioBuffer->paused = false;
     audioBuffer->looping = false;
+ 
     audioBuffer->usage = usage;
     audioBuffer->frameCursorPos = 0;
     audioBuffer->sizeInFrames = sizeInFrames;
@@ -2028,6 +2033,12 @@ void SetAudioStreamBufferSizeDefault(int size)
     AUDIO.Buffer.defaultSize = size;
 }
 
+// Audio thread callback to request new data
+void SetAudioStreamCallback(AudioStream stream, AudioStreamCallback callback)
+{
+    if (stream.buffer != NULL) stream.buffer->callback = callback;
+}
+
 //----------------------------------------------------------------------------------
 // Module specific Functions Definition
 //----------------------------------------------------------------------------------
@@ -2041,6 +2052,15 @@ static void OnLog(void *pUserData, ma_uint32 level, const char *pMessage)
 // Reads audio data from an AudioBuffer object in internal format.
 static ma_uint32 ReadAudioBufferFramesInInternalFormat(AudioBuffer *audioBuffer, void *framesOut, ma_uint32 frameCount)
 {
+    // Using audio buffer callback
+    if (audioBuffer->callback)
+    {
+        audioBuffer->callback(framesOut, frameCount);
+        audioBuffer->framesProcessed += frameCount;
+        
+        return frameCount;
+    }
+    
     ma_uint32 subBufferSizeInFrames = (audioBuffer->sizeInFrames > 1)? audioBuffer->sizeInFrames/2 : audioBuffer->sizeInFrames;
     ma_uint32 currentSubBufferIndex = audioBuffer->frameCursorPos/subBufferSizeInFrames;
 
