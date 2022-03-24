@@ -372,7 +372,7 @@ static AudioData AUDIO = {          // Global AUDIO context
 //----------------------------------------------------------------------------------
 // Module specific Functions Declaration
 //----------------------------------------------------------------------------------
-static void OnLog(ma_context *pContext, ma_device *pDevice, ma_uint32 logLevel, const char *message);
+static void OnLog(void *pUserData, ma_uint32 level, const char *pMessage);
 static void OnSendAudioDataToDevice(ma_device *pDevice, void *pFramesOut, const void *pFramesInput, ma_uint32 frameCount);
 static void MixAudioFrames(float *framesOut, const float *framesIn, ma_uint32 frameCount, AudioBuffer *buffer);
 
@@ -411,7 +411,7 @@ void InitAudioDevice(void)
 {
     // Init audio context
     ma_context_config ctxConfig = ma_context_config_init();
-    ctxConfig.logCallback = OnLog;
+    ma_log_callback_init(OnLog, NULL);
 
     ma_result result = ma_context_init(NULL, 0, &ctxConfig, &AUDIO.System.context);
     if (result != MA_SUCCESS)
@@ -492,7 +492,7 @@ void CloseAudioDevice(void)
             //UnloadAudioBuffer(AUDIO.MultiChannel.pool[i]);
             if (AUDIO.MultiChannel.pool[i] != NULL)
             {
-                ma_data_converter_uninit(&AUDIO.MultiChannel.pool[i]->converter);
+                ma_data_converter_uninit(&AUDIO.MultiChannel.pool[i]->converter, NULL);
                 UntrackAudioBuffer(AUDIO.MultiChannel.pool[i]);
                 //RL_FREE(buffer->data);    // Already unloaded by UnloadSound()
                 RL_FREE(AUDIO.MultiChannel.pool[i]);
@@ -541,9 +541,9 @@ AudioBuffer *LoadAudioBuffer(ma_format format, ma_uint32 channels, ma_uint32 sam
 
     // Audio data runs through a format converter
     ma_data_converter_config converterConfig = ma_data_converter_config_init(format, AUDIO_DEVICE_FORMAT, channels, AUDIO_DEVICE_CHANNELS, sampleRate, AUDIO.System.device.sampleRate);
-    converterConfig.resampling.allowDynamicSampleRate = true;        // Pitch shifting
+    converterConfig.allowDynamicSampleRate = true;
 
-    ma_result result = ma_data_converter_init(&converterConfig, &audioBuffer->converter);
+    ma_result result = ma_data_converter_init(&converterConfig, NULL, &audioBuffer->converter);
 
     if (result != MA_SUCCESS)
     {
@@ -580,7 +580,7 @@ void UnloadAudioBuffer(AudioBuffer *buffer)
 {
     if (buffer != NULL)
     {
-        ma_data_converter_uninit(&buffer->converter);
+        ma_data_converter_uninit(&buffer->converter, NULL);
         UntrackAudioBuffer(buffer);
         RL_FREE(buffer->data);
         RL_FREE(buffer);
@@ -654,8 +654,8 @@ void SetAudioBufferPitch(AudioBuffer *buffer, float pitch)
         // Note that this changes the duration of the sound:
         //  - higher pitches will make the sound faster
         //  - lower pitches make it slower
-        ma_uint32 outputSampleRate = (ma_uint32)((float)buffer->converter.config.sampleRateOut/pitch);
-        ma_data_converter_set_rate(&buffer->converter, buffer->converter.config.sampleRateIn, outputSampleRate);
+        ma_uint32 outputSampleRate = (ma_uint32)((float)buffer->converter.sampleRateOut/pitch);
+        ma_data_converter_set_rate(&buffer->converter, buffer->converter.sampleRateIn, outputSampleRate);
 
         buffer->pitch = pitch;
     }
@@ -894,7 +894,7 @@ void UpdateSound(Sound sound, const void *data, int sampleCount)
         StopAudioBuffer(sound.stream.buffer);
 
         // TODO: May want to lock/unlock this since this data buffer is read at mixing time
-        memcpy(sound.stream.buffer->data, data, sampleCount*ma_get_bytes_per_frame(sound.stream.buffer->converter.config.formatIn, sound.stream.buffer->converter.config.channelsIn));
+        memcpy(sound.stream.buffer->data, data, sampleCount*ma_get_bytes_per_frame(sound.stream.buffer->converter.formatIn, sound.stream.buffer->converter.channelsIn));
     }
 }
 
@@ -2033,12 +2033,9 @@ void SetAudioStreamBufferSizeDefault(int size)
 //----------------------------------------------------------------------------------
 
 // Log callback function
-static void OnLog(ma_context *pContext, ma_device *pDevice, ma_uint32 logLevel, const char *message)
+static void OnLog(void *pUserData, ma_uint32 level, const char *pMessage)
 {
-    (void)pContext;
-    (void)pDevice;
-
-    TRACELOG(LOG_WARNING, "miniaudio: %s", message);   // All log messages from miniaudio are errors
+    TRACELOG(LOG_WARNING, "miniaudio: %s", pMessage);   // All log messages from miniaudio are errors
 }
 
 // Reads audio data from an AudioBuffer object in internal format.
@@ -2055,7 +2052,7 @@ static ma_uint32 ReadAudioBufferFramesInInternalFormat(AudioBuffer *audioBuffer,
     isSubBufferProcessed[0] = audioBuffer->isSubBufferProcessed[0];
     isSubBufferProcessed[1] = audioBuffer->isSubBufferProcessed[1];
 
-    ma_uint32 frameSizeInBytes = ma_get_bytes_per_frame(audioBuffer->converter.config.formatIn, audioBuffer->converter.config.channelsIn);
+    ma_uint32 frameSizeInBytes = ma_get_bytes_per_frame(audioBuffer->converter.formatIn, audioBuffer->converter.channelsIn);
 
     // Fill out every frame until we find a buffer that's marked as processed. Then fill the remainder with 0
     ma_uint32 framesRead = 0;
@@ -2135,20 +2132,21 @@ static ma_uint32 ReadAudioBufferFramesInMixingFormat(AudioBuffer *audioBuffer, f
     // detail to remember here is that we never, ever attempt to read more input data than is required for the specified number of output
     // frames. This can be achieved with ma_data_converter_get_required_input_frame_count().
     ma_uint8 inputBuffer[4096] = { 0 };
-    ma_uint32 inputBufferFrameCap = sizeof(inputBuffer)/ma_get_bytes_per_frame(audioBuffer->converter.config.formatIn, audioBuffer->converter.config.channelsIn);
+    ma_uint32 inputBufferFrameCap = sizeof(inputBuffer)/ma_get_bytes_per_frame(audioBuffer->converter.formatIn, audioBuffer->converter.channelsIn);
 
     ma_uint32 totalOutputFramesProcessed = 0;
     while (totalOutputFramesProcessed < frameCount)
     {
         ma_uint64 outputFramesToProcessThisIteration = frameCount - totalOutputFramesProcessed;
+        ma_uint64 inputFramesToProcessThisIteration = 0;
 
-        ma_uint64 inputFramesToProcessThisIteration = ma_data_converter_get_required_input_frame_count(&audioBuffer->converter, outputFramesToProcessThisIteration);
+        ma_result result = ma_data_converter_get_required_input_frame_count(&audioBuffer->converter, outputFramesToProcessThisIteration, &inputFramesToProcessThisIteration);
         if (inputFramesToProcessThisIteration > inputBufferFrameCap)
         {
             inputFramesToProcessThisIteration = inputBufferFrameCap;
         }
 
-        float *runningFramesOut = framesOut + (totalOutputFramesProcessed*audioBuffer->converter.config.channelsOut);
+        float *runningFramesOut = framesOut + (totalOutputFramesProcessed*audioBuffer->converter.channelsOut);
 
         /* At this point we can convert the data to our mixing format. */
         ma_uint64 inputFramesProcessedThisIteration = ReadAudioBufferFramesInInternalFormat(audioBuffer, inputBuffer, (ma_uint32)inputFramesToProcessThisIteration);    /* Safe cast. */
@@ -2282,7 +2280,7 @@ static void MixAudioFrames(float *framesOut, const float *framesIn, ma_uint32 fr
             frameIn += 2;
         }
     }
-    else // pan is kinda meaningless
+    else  // pan is kinda meaningless
     {
         for (ma_uint32 iFrame = 0; iFrame < frameCount; ++iFrame)
         {
