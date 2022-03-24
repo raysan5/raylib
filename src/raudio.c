@@ -465,8 +465,7 @@ void InitAudioDevice(void)
     // Init dummy audio buffers pool for multichannel sound playing
     for (int i = 0; i < MAX_AUDIO_BUFFER_POOL_CHANNELS; i++)
     {
-        // WARNING: An empty audio buffer is created (data = 0)
-        // AudioBuffer data just points to loaded sound data
+        // WARNING: An empty audio buffer is created (data = 0) and added to list, AudioBuffer data is filled on PlaySoundMulti()
         AUDIO.MultiChannel.pool[i] = LoadAudioBuffer(AUDIO_DEVICE_FORMAT, AUDIO_DEVICE_CHANNELS, AUDIO.System.device.sampleRate, 0, AUDIO_BUFFER_USAGE_STATIC);
     }
 
@@ -1068,7 +1067,8 @@ void PlaySoundMulti(Sound sound)
     AUDIO.MultiChannel.pool[index]->isSubBufferProcessed[0] = false;
     AUDIO.MultiChannel.pool[index]->isSubBufferProcessed[1] = false;
     AUDIO.MultiChannel.pool[index]->sizeInFrames = sound.stream.buffer->sizeInFrames;
-    AUDIO.MultiChannel.pool[index]->data = sound.stream.buffer->data;
+
+    AUDIO.MultiChannel.pool[index]->data = sound.stream.buffer->data;       // Fill dummy track with data for playing
 
     PlayAudioBuffer(AUDIO.MultiChannel.pool[index]);
 }
@@ -2255,41 +2255,44 @@ static void OnSendAudioDataToDevice(ma_device *pDevice, void *pFramesOut, const 
     ma_mutex_unlock(&AUDIO.System.lock);
 }
 
-// This is the main mixing function. Mixing is pretty simple in this project - it's just an accumulation.
-// NOTE: framesOut is both an input and an output. It will be initially filled with zeros outside of this function.
+// Main mixing function, pretty simple in this project, just an accumulation
+// NOTE: framesOut is both an input and an output, it is initially filled with zeros outside of this function
 static void MixAudioFrames(float *framesOut, const float *framesIn, ma_uint32 frameCount, AudioBuffer *buffer)
 {
     const float localVolume = buffer->volume;
+    const ma_uint32 channels = AUDIO.System.device.playback.channels;
 
-    const ma_uint32 nChannels = AUDIO.System.device.playback.channels;
-    if (nChannels == 2)
+    if (channels == 2)  // We consider panning
     {
         const float left = buffer->pan;
         const float right = 1.0f - left;
 
-        // fast sine approximation in [0..1] for pan law: y = 0.5f * x * (3 - x * x);
-        const float levels[2] = { localVolume*0.5f*left*(3.0f-left*left), localVolume*0.5f*right*(3.0f-right*right) };
+        // Fast sine approximation in [0..1] for pan law: y = 0.5f*x*(3 - x*x);
+        const float levels[2] = { localVolume*0.5f*left*(3.0f - left*left), localVolume*0.5f*right*(3.0f - right*right) };
 
         float *frameOut = framesOut;
         const float *frameIn = framesIn;
-        for (ma_uint32 iFrame = 0; iFrame < frameCount; ++iFrame)
+
+        for (ma_uint32 frame = 0; frame < frameCount; frame++)
         {
             frameOut[0] += (frameIn[0]*levels[0]);
             frameOut[1] += (frameIn[1]*levels[1]);
+
             frameOut += 2;
             frameIn += 2;
         }
     }
-    else  // pan is kinda meaningless
+    else  // We do not consider panning
     {
-        for (ma_uint32 iFrame = 0; iFrame < frameCount; ++iFrame)
+        for (ma_uint32 frame = 0; frame < frameCount; frame++)
         {
-            for (ma_uint32 iChannel = 0; iChannel < nChannels; ++iChannel)
+            for (ma_uint32 c = 0; c < channels; c++)
             {
-                float *frameOut = framesOut + (iFrame * nChannels);
-                const float *frameIn = framesIn + (iFrame * nChannels);
+                float *frameOut = framesOut + (frame*channels);
+                const float *frameIn = framesIn + (frame*channels);
 
-                frameOut[iChannel] += (frameIn[iChannel] * localVolume);
+                // Output accumulates input multiplied by volume to provided output (usually 0)
+                frameOut[c] += (frameIn[c]*localVolume);
             }
         }
     }
