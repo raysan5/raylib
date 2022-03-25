@@ -33,8 +33,8 @@
 *
 *   OPTIONAL DEPENDENCIES (included):
 *       [rcore] msf_gif (Miles Fogle) for GIF recording
-*       [rcore] sinfl (Micha Mettke) for DEFLATE decompression algorythm
-*       [rcore] sdefl (Micha Mettke) for DEFLATE compression algorythm
+*       [rcore] sinfl (Micha Mettke) for DEFLATE decompression algorithm
+*       [rcore] sdefl (Micha Mettke) for DEFLATE compression algorithm
 *       [rtextures] stb_image (Sean Barret) for images loading (BMP, TGA, PNG, JPEG, HDR...)
 *       [rtextures] stb_image_write (Sean Barret) for image writing (BMP, TGA, PNG, JPG)
 *       [rtextures] stb_image_resize (Sean Barret) for image resizing algorithms
