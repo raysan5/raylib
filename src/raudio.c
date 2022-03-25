@@ -315,7 +315,7 @@ typedef enum {
 struct rAudioBuffer {
     ma_data_converter converter;    // Audio data converter
     
-    AudioStreamCallback callback;   // Audio buffer callback for buffer filling on audio threads
+    AudioCallback callback;   // Audio buffer callback for buffer filling on audio threads
 
     float volume;                   // Audio buffer volume
     float pitch;                    // Audio buffer pitch
@@ -2034,7 +2034,7 @@ void SetAudioStreamBufferSizeDefault(int size)
 }
 
 // Audio thread callback to request new data
-void SetAudioStreamCallback(AudioStream stream, AudioStreamCallback callback)
+void SetAudioStreamCallback(AudioStream stream, AudioCallback callback)
 {
     if (stream.buffer != NULL) stream.buffer->callback = callback;
 }
