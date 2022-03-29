@@ -992,11 +992,11 @@ bool ExportFontAsCode(Font font, const char *fileName)
 // NOTE: Uses default font
 void DrawFPS(int posX, int posY)
 {
-    Color color = LIME; // good fps
+    Color color = LIME;                         // Good FPS
     int fps = GetFPS();
 
-    if (fps < 30 && fps >= 15) color = ORANGE;  // warning FPS
-    else if (fps < 15) color = RED;    // bad FPS
+    if ((fps < 30) && (fps >= 15)) color = ORANGE;  // Warning FPS
+    else if (fps < 15) color = RED;             // Low FPS
 
     DrawText(TextFormat("%2i FPS", GetFPS()), posX, posY, 20, color);
 }
@@ -1383,7 +1383,7 @@ const char *TextSubtext(const char *text, int position, int length)
 
 // Replace text string
 // REQUIRES: strlen(), strstr(), strncpy(), strcpy()
-// WARNING: Returned buffer must be freed by the user (if return != NULL)
+// WARNING: Allocated memory should be manually freed
 char *TextReplace(char *text, const char *replace, const char *by)
 {
     // Sanity checks and initialization
