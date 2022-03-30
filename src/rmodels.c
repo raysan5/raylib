@@ -3640,25 +3640,6 @@ RayCollision GetRayCollisionMesh(Ray ray, Mesh mesh, Matrix transform)
     return collision;
 }
 
-// Get collision info between ray and model
-RayCollision GetRayCollisionModel(Ray ray, Model model)
-{
-    RayCollision collision = { 0 };
-
-    for (int m = 0; m < model.meshCount; m++)
-    {
-        RayCollision meshHitInfo = GetRayCollisionMesh(ray, model.meshes[m], model.transform);
-
-        if (meshHitInfo.hit)
-        {
-            // Save the closest hit mesh
-            if ((!collision.hit) || (collision.distance > meshHitInfo.distance)) collision = meshHitInfo;
-        }
-    }
-
-    return collision;
-}
-
 // Get collision info between ray and triangle
 // NOTE: The points are expected to be in counter-clockwise winding
 // NOTE: Based on https://en.wikipedia.org/wiki/M%C3%B6ller%E2%80%93Trumbore_intersection_algorithm
