@@ -1511,12 +1511,10 @@ RMAPI Quaternion QuaternionScale(Quaternion q, float mul)
 {
     Quaternion result = { 0 };
 
-    float qax = q.x, qay = q.y, qaz = q.z, qaw = q.w;
-
-    result.x = qax*mul + qaw*mul + qay*mul - qaz*mul;
-    result.y = qay*mul + qaw*mul + qaz*mul - qax*mul;
-    result.z = qaz*mul + qaw*mul + qax*mul - qay*mul;
-    result.w = qaw*mul - qax*mul - qay*mul - qaz*mul;
+    result.x = q.x*mul;
+    result.y = q.y*mul;
+    result.z = q.z*mul;
+    result.w = q.w*mul;
 
     return result;
 }
