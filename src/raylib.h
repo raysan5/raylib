@@ -428,10 +428,12 @@ typedef struct Wave {
 // Opaque structs declaration
 // NOTE: Actual structs are defined internally in raudio module
 typedef struct rAudioBuffer rAudioBuffer;
+typedef struct rAudioProcessor rAudioProcessor;
 
 // AudioStream, custom audio stream
 typedef struct AudioStream {
     rAudioBuffer *buffer;       // Pointer to internal data used by the audio system
+    rAudioProcessor *processor; // Pointer to internal data processor, useful for audio effects
 
     unsigned int sampleRate;    // Frequency (samples per second)
     unsigned int sampleSize;    // Bit depth (bits per sample): 8, 16, 32 (24 not supported)
@@ -1542,6 +1544,9 @@ RLAPI void SetAudioStreamPitch(AudioStream stream, float pitch);      // Set pit
 RLAPI void SetAudioStreamPan(AudioStream stream, float pan);          // Set pan for audio stream (0.5 is centered)
 RLAPI void SetAudioStreamBufferSizeDefault(int size);                 // Default size for new audio streams
 RLAPI void SetAudioStreamCallback(AudioStream stream, AudioCallback callback);  // Audio thread callback to request new data
+
+RLAPI void AttachAudioStreamProcessor(AudioStream stream, AudioCallback processor);
+RLAPI void DetachAudioStreamProcessor(AudioStream stream, AudioCallback processor);
 
 #if defined(__cplusplus)
 }

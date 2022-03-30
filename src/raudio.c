@@ -316,6 +316,7 @@ struct rAudioBuffer {
     ma_data_converter converter;    // Audio data converter
     
     AudioCallback callback;   // Audio buffer callback for buffer filling on audio threads
+    rAudioProcessor *processor;     // Audio processor
 
     float volume;                   // Audio buffer volume
     float pitch;                    // Audio buffer pitch
@@ -335,6 +336,14 @@ struct rAudioBuffer {
 
     rAudioBuffer *next;             // Next audio buffer on the list
     rAudioBuffer *prev;             // Previous audio buffer on the list
+};
+
+// Audio processor struct 
+// NOTE: Useful to apply effects to an AudioBuffer
+struct rAudioProcessor {
+    AudioCallback process;          // Processor callback function
+    rAudioProcessor *next;          // Next audio processor on the list
+    rAudioProcessor *prev;          // Previous audio processor on the list
 };
 
 #define AudioBuffer rAudioBuffer    // HACK: To avoid CoreAudio (macOS) symbol collision
@@ -559,6 +568,7 @@ AudioBuffer *LoadAudioBuffer(ma_format format, ma_uint32 channels, ma_uint32 sam
     audioBuffer->pan = 0.5f;
     
     audioBuffer->callback = NULL;
+    audioBuffer->processor = NULL;
 
     audioBuffer->playing = false;
     audioBuffer->paused = false;
@@ -2039,6 +2049,58 @@ void SetAudioStreamCallback(AudioStream stream, AudioCallback callback)
     if (stream.buffer != NULL) stream.buffer->callback = callback;
 }
 
+// Add processor to audio stream. Contrary to buffers, the order of processors is important.
+// The new processor must be added at the end. As there aren't supposed to be a lot of processors attached to
+// a given stream, we iterate through the list to find the end. That way we don't need a pointer to the last element.
+void AttachAudioStreamProcessor(AudioStream stream, AudioCallback process)
+{
+    ma_mutex_lock(&AUDIO.System.lock);
+
+    rAudioProcessor *processor = (rAudioProcessor *)RL_CALLOC(1, sizeof(rAudioProcessor));
+    processor->process = process;
+
+    rAudioProcessor *last = stream.buffer->processor;
+
+    while (last && last->next)
+    {
+        last = last->next;
+    }
+    if (last)
+    {
+        processor->prev = last;
+        last->next = processor;
+    }
+    else stream.buffer->processor = processor;
+
+    ma_mutex_unlock(&AUDIO.System.lock);
+}
+
+void DetachAudioStreamProcessor(AudioStream stream, AudioCallback process)
+{
+    ma_mutex_lock(&AUDIO.System.lock);
+
+    rAudioProcessor *processor = stream.buffer->processor;
+
+    while (processor)
+    {
+        rAudioProcessor *next = processor->next;
+        rAudioProcessor *prev = processor->prev;
+
+        if (processor->process == process)
+        {
+            if (stream.buffer->processor == processor) stream.buffer->processor = next;
+            if (prev) prev->next = next;
+            if (next) next->prev = prev;
+
+            RL_FREE(processor);
+        }
+
+        processor = next;
+    }
+
+    ma_mutex_unlock(&AUDIO.System.lock);
+}
+
 //----------------------------------------------------------------------------------
 // Module specific Functions Definition
 //----------------------------------------------------------------------------------
@@ -2234,6 +2296,14 @@ static void OnSendAudioDataToDevice(ma_device *pDevice, void *pFramesOut, const 
                     {
                         float *framesOut = (float *)pFramesOut + (framesRead*AUDIO.System.device.playback.channels);
                         float *framesIn = tempBuffer;
+
+                        // Apply processors chain if defined
+                        rAudioProcessor *processor = audioBuffer->processor;
+                        while (processor)
+                        {
+                            processor->process(framesIn, framesJustRead);
+                            processor = processor->next;
+                        }
 
                         MixAudioFrames(framesOut, framesIn, framesJustRead, audioBuffer);
 
