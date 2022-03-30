@@ -11,8 +11,10 @@
 
 #include "raylib.h"
 
+#include <stdlib.h>         // Required for: NULL
+
 // Audio effect: lowpass filter
-static void AudioProcessEffectLPF(float *buffer, unsigned int frames)
+static void AudioProcessEffectLPF(void *buffer, unsigned int frames)
 {
     static float low[2] = { 0.0f, 0.0f };
     static const float cutoff = 70.0f / 44100.0f; // 70 Hz lowpass filter
@@ -20,11 +22,11 @@ static void AudioProcessEffectLPF(float *buffer, unsigned int frames)
 
     for (unsigned int i = 0; i < frames*2; i += 2)
     {
-        float l = buffer[i], r = buffer[i + 1];
+        float l = ((float *)buffer)[i], r = ((float *)buffer)[i + 1];
         low[0] += k * (l - low[0]);
         low[1] += k * (r - low[1]);
-        buffer[i] = low[0];
-        buffer[i + 1] = low[1];
+        ((float *)buffer)[i] = low[0];
+        ((float *)buffer)[i + 1] = low[1];
     }
 }
 
@@ -34,7 +36,7 @@ static unsigned int delayReadIndex = 2;
 static unsigned int delayWriteIndex = 0;
 
 // Audio effect: delay
-static void AudioProcessEffectDelay(float *buffer, unsigned int frames)
+static void AudioProcessEffectDelay(void *buffer, unsigned int frames)
 {
     for (unsigned int i = 0; i < frames*2; i += 2)
     {
@@ -43,11 +45,11 @@ static void AudioProcessEffectDelay(float *buffer, unsigned int frames)
 
         if (delayReadIndex == delayBufferSize) delayReadIndex = 0;
 
-        buffer[i] = 0.5f*buffer[i] + 0.5f*leftDelay;
-        buffer[i + 1] = 0.5f*buffer[i + 1] + 0.5f*rightDelay;
+        ((float *)buffer)[i] = 0.5f*((float *)buffer)[i] + 0.5f*leftDelay;
+        ((float *)buffer)[i + 1] = 0.5f*((float *)buffer)[i + 1] + 0.5f*rightDelay;
 
-        delayBuffer[delayWriteIndex++] = buffer[i];
-        delayBuffer[delayWriteIndex++] = buffer[i + 1];
+        delayBuffer[delayWriteIndex++] = ((float *)buffer)[i];
+        delayBuffer[delayWriteIndex++] = ((float *)buffer)[i + 1];
         if (delayWriteIndex == delayBufferSize) delayWriteIndex = 0;
     }
 }
