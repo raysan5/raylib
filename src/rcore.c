@@ -1531,22 +1531,23 @@ void ClearWindowState(unsigned int flags)
 
 // Set icon for window (only PLATFORM_DESKTOP)
 // NOTE: Image must be in RGBA format, 8bit per channel
-void SetWindowIcon(Image image)
+void SetWindowIcons(Image *icons, int n)
 {
 #if defined(PLATFORM_DESKTOP)
-    if (image.format == PIXELFORMAT_UNCOMPRESSED_R8G8B8A8)
-    {
-        GLFWimage icon[1] = { 0 };
+        GLFWimage GLFWicons[n];
+        for (size_t i = 0; i < n; i++)
+        {
+            if (icons[i].format == PIXELFORMAT_UNCOMPRESSED_R8G8B8A8)
+            {
+                GLFWicons[i].width = icons[i].width;
+                GLFWicons[i].height = icons[i].height;
+                GLFWicons[i].pixels = (unsigned char *)icons[i].data;
+            }
+            else TRACELOG(LOG_WARNING, "GLFW: Window icon image at index [%d] must be in R8G8B8A8 format", i);
+        }
 
-        icon[0].width = image.width;
-        icon[0].height = image.height;
-        icon[0].pixels = (unsigned char *)image.data;
-
-        // NOTE 1: We only support one image icon
-        // NOTE 2: The specified image data is copied before this function returns
-        glfwSetWindowIcon(CORE.Window.handle, 1, icon);
-    }
-    else TRACELOG(LOG_WARNING, "GLFW: Window icon image must be in R8G8B8A8 pixel format");
+        // NOTE 1: The specified image data is copied before this function returns
+        glfwSetWindowIcon(CORE.Window.handle, n, GLFWicons);
 #endif
 }
 
