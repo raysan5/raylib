@@ -1534,20 +1534,20 @@ void ClearWindowState(unsigned int flags)
 void SetWindowIcons(Image *icons, int n)
 {
 #if defined(PLATFORM_DESKTOP)
-        GLFWimage GLFWicons[n];
-        for (size_t i = 0; i < n; i++)
+    GLFWimage GLFWicons[n];
+    for (size_t i = 0; i < n; i++)
+    {
+        if (icons[i].format == PIXELFORMAT_UNCOMPRESSED_R8G8B8A8)
         {
-            if (icons[i].format == PIXELFORMAT_UNCOMPRESSED_R8G8B8A8)
-            {
-                GLFWicons[i].width = icons[i].width;
-                GLFWicons[i].height = icons[i].height;
-                GLFWicons[i].pixels = (unsigned char *)icons[i].data;
-            }
-            else TRACELOG(LOG_WARNING, "GLFW: Window icon image at index [%d] must be in R8G8B8A8 format", i);
+            GLFWicons[i].width = icons[i].width;
+            GLFWicons[i].height = icons[i].height;
+            GLFWicons[i].pixels = (unsigned char *)icons[i].data;
         }
+        else TRACELOG(LOG_WARNING, "GLFW: Window icon image at index [%d] must be in R8G8B8A8 format", i);
+    }
 
-        // NOTE 1: The specified image data is copied before this function returns
-        glfwSetWindowIcon(CORE.Window.handle, n, GLFWicons);
+    // NOTE 1: The specified image data is copied before this function returns
+    glfwSetWindowIcon(CORE.Window.handle, n, GLFWicons);
 #endif
 }
 
