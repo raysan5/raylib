@@ -924,7 +924,7 @@ RLAPI void ToggleFullscreen(void);                                // Toggle wind
 RLAPI void MaximizeWindow(void);                                  // Set window state: maximized, if resizable (only PLATFORM_DESKTOP)
 RLAPI void MinimizeWindow(void);                                  // Set window state: minimized, if resizable (only PLATFORM_DESKTOP)
 RLAPI void RestoreWindow(void);                                   // Set window state: not minimized/maximized (only PLATFORM_DESKTOP)
-RLAPI void SetWindowIcon(Image image);                            // Set icon for window (only PLATFORM_DESKTOP)
+RLAPI void SetWindowIcons(Image *icons, int n);                    // Set icon for window (only PLATFORM_DESKTOP)
 RLAPI void SetWindowTitle(const char *title);                     // Set title for window (only PLATFORM_DESKTOP)
 RLAPI void SetWindowPosition(int x, int y);                       // Set window position on screen (only PLATFORM_DESKTOP)
 RLAPI void SetWindowMonitor(int monitor);                         // Set monitor for the current window (fullscreen mode)
