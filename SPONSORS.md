@@ -30,6 +30,7 @@ The following people are currently [**sponsoring raylib**](https://github.com/sp
  - Matthew Owens ([@MatthewOwens](https://github.com/MatthewOwens))
  - Tim Eilers ([@eilerstim](https://github.com/eilerstim))
  - Laurentino Luna ([@catmanl](https://github.com/catmanl))
+ - ZimonIsHim ([@ZimonIsHim](https://github.com/ZimonIsHim))
 
 ### Past raylib GitHub Sponsors
 
