@@ -78,7 +78,11 @@ int main(void)
 
     // Initialize framebuffer for stereo rendering
     // NOTE: Screen size should match HMD aspect ratio
-    RenderTexture2D target = LoadRenderTexture(GetScreenWidth(), GetScreenHeight());
+    RenderTexture2D target = LoadRenderTexture(device.hResolution, device.vResolution);
+
+    // The target's height is flipped (in the source Rectangle), due to OpenGL reasons
+    Rectangle sourceRec = { 0.0f, 0.0f, (float)target.texture.width, -(float)target.texture.height };
+    Rectangle destRec = { 0.0f, 0.0f, (float)GetScreenWidth(), (float)GetScreenHeight() };
 
     // Define the camera to look into our 3d world
     Camera camera = { 0 };
@@ -121,8 +125,7 @@ int main(void)
         BeginDrawing();
             ClearBackground(RAYWHITE);
             BeginShaderMode(distortion);
-                DrawTextureRec(target.texture, (Rectangle){ 0, 0, (float)target.texture.width,
-                              (float)-target.texture.height }, (Vector2){ 0.0f, 0.0f }, WHITE);
+                DrawTexturePro(target.texture, sourceRec, destRec, (Vector2){ 0.0f, 0.0f }, 0.0f, WHITE);
             EndShaderMode();
             DrawFPS(10, 10);
         EndDrawing();

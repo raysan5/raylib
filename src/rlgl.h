@@ -929,6 +929,11 @@ typedef struct rlglData {
 
         int framebufferWidth;               // Default framebuffer width
         int framebufferHeight;              // Default framebuffer height
+        
+        int viewportX;                      // Current opengl viewport offset x
+        int viewportY;                      // Current opengl viewport offset y
+        int viewportWidth;                  // Current opengl viewport width
+        int viewportHeight;                 // Current opengl viewport height
 
     } State;            // Renderer state
     struct {
@@ -1232,6 +1237,11 @@ void rlOrtho(double left, double right, double bottom, double top, double znear,
 // Set the viewport area (transformation from normalized device coordinates to window coordinates)
 void rlViewport(int x, int y, int width, int height)
 {
+    RLGL.State.viewportX = x;
+    RLGL.State.viewportY = y;
+    RLGL.State.viewportWidth = width;
+    RLGL.State.viewportHeight = height;
+
     glViewport(x, y, width, height);
 }
 
@@ -2494,6 +2504,11 @@ void rlDrawRenderBatch(rlRenderBatch *batch)
     Matrix matProjection = RLGL.State.projection;
     Matrix matModelView = RLGL.State.modelview;
 
+    int originalViewportX = RLGL.State.viewportX;
+    int originalViewportY = RLGL.State.viewportY;
+    int originalViewportWidth = RLGL.State.viewportWidth;
+    int originalViewportHeight = RLGL.State.viewportHeight;
+
     int eyeCount = 1;
     if (RLGL.State.stereoRender) eyeCount = 2;
 
@@ -2502,7 +2517,7 @@ void rlDrawRenderBatch(rlRenderBatch *batch)
         if (eyeCount == 2)
         {
             // Setup current eye viewport (half screen width)
-            rlViewport(eye*RLGL.State.framebufferWidth/2, 0, RLGL.State.framebufferWidth/2, RLGL.State.framebufferHeight);
+            rlViewport(originalViewportX + eye * originalViewportWidth / 2, originalViewportY, originalViewportWidth / 2, originalViewportHeight);
 
             // Set current eye view offset to modelview matrix
             rlSetMatrixModelview(rlMatrixMultiply(matModelView, RLGL.State.viewOffsetStereo[eye]));
@@ -2601,6 +2616,8 @@ void rlDrawRenderBatch(rlRenderBatch *batch)
 
         glUseProgram(0);    // Unbind shader program
     }
+
+    if (eyeCount == 2) rlViewport(originalViewportX, originalViewportY, originalViewportWidth, originalViewportHeight);
     //------------------------------------------------------------------------------------------------------------
 
     // Reset batch buffers
