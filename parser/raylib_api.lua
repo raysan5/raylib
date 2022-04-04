@@ -736,6 +736,11 @@ return {
           description = "Pointer to internal data used by the audio system"
         },
         {
+          type = "rAudioProcessor *",
+          name = "processor",
+          description = "Pointer to internal data processor, useful for audio effects"
+        },
+        {
           type = "unsigned int",
           name = "sampleRate",
           description = "Frequency (samples per second)"
@@ -6703,15 +6708,6 @@ return {
       }
     },
     {
-      name = "GetRayCollisionModel",
-      description = "Get collision info between ray and model",
-      returnType = "RayCollision",
-      params = {
-        {type = "Ray", name = "ray"},
-        {type = "Model", name = "model"}
-      }
-    },
-    {
       name = "GetRayCollisionMesh",
       description = "Get collision info between ray and mesh",
       returnType = "RayCollision",
@@ -7210,6 +7206,33 @@ return {
       returnType = "void",
       params = {
         {type = "int", name = "size"}
+      }
+    },
+    {
+      name = "SetAudioStreamCallback",
+      description = "Audio thread callback to request new data",
+      returnType = "void",
+      params = {
+        {type = "AudioStream", name = "stream"},
+        {type = "AudioCallback", name = "callback"}
+      }
+    },
+    {
+      name = "AttachAudioStreamProcessor",
+      description = "",
+      returnType = "void",
+      params = {
+        {type = "AudioStream", name = "stream"},
+        {type = "AudioCallback", name = "processor"}
+      }
+    },
+    {
+      name = "DetachAudioStreamProcessor",
+      description = "",
+      returnType = "void",
+      params = {
+        {type = "AudioStream", name = "stream"},
+        {type = "AudioCallback", name = "processor"}
       }
     }
   }
