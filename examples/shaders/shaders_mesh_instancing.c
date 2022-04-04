@@ -217,6 +217,12 @@ int main(void)
 
     // De-Initialization
     //--------------------------------------------------------------------------------------
+    // Free allocated matrices
+    RL_FREE(rotations);
+    RL_FREE(rotationsInc);
+    RL_FREE(translations);
+    RL_FREE(transforms);
+
     CloseWindow();        // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
 
