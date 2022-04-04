@@ -1281,7 +1281,16 @@ static void ExportParsedData(const char *fileName, int format)
             fprintf(outFile, "    <Defines count=\"%i\">\n", defineCount);
             for (int i = 0; i < defineCount; i++)
             {
-                fprintf(outFile, "        <Define name=\"%s\" type=\"%s\" value=\"%s\" desc=\"%s\" />\n", defines[i].name, StrDefineType(defines[i].type), defines[i].value, defines[i].desc);
+                fprintf(outFile, "        <Define name=\"%s\" type=\"%s\" ", defines[i].name, StrDefineType(defines[i].type));
+                if (defines[i].type == STRING)
+                {
+                    fprintf(outFile, "value=%s", defines[i].value);
+                }
+                else
+                {
+                    fprintf(outFile, "value=\"%s\"", defines[i].value);
+                }
+                fprintf(outFile, " desc=\"%s\" />\n", defines[i].desc + 3);
             }
             fprintf(outFile, "    </Defines>\n");
 
