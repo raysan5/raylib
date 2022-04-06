@@ -3187,7 +3187,7 @@ long GetFileModTime(const char *fileName)
 }
 
 // Compress data (DEFLATE algorythm)
-unsigned char *CompressData(const unsigned char *data, int dataLength, int *compDataLength)
+unsigned char *CompressData(const unsigned char *data, int dataSize, int *compDataSize)
 {
     #define COMPRESSION_QUALITY_DEFLATE  8
 
@@ -3196,40 +3196,40 @@ unsigned char *CompressData(const unsigned char *data, int dataLength, int *comp
 #if defined(SUPPORT_COMPRESSION_API)
     // Compress data and generate a valid DEFLATE stream
     struct sdefl sdefl = { 0 };
-    int bounds = sdefl_bound(dataLength);
+    int bounds = sdefl_bound(dataSize);
     compData = (unsigned char *)RL_CALLOC(bounds, 1);
-    *compDataLength = sdeflate(&sdefl, compData, data, dataLength, COMPRESSION_QUALITY_DEFLATE);   // Compression level 8, same as stbwi
+    *compDataSize = sdeflate(&sdefl, compData, data, dataSize, COMPRESSION_QUALITY_DEFLATE);   // Compression level 8, same as stbwi
 
-    TraceLog(LOG_INFO, "SYSTEM: Compress data: Original size: %i -> Comp. size: %i", dataLength, *compDataLength);
+    TraceLog(LOG_INFO, "SYSTEM: Compress data: Original size: %i -> Comp. size: %i", dataSize, *compDataSize);
 #endif
 
     return compData;
 }
 
 // Decompress data (DEFLATE algorythm)
-unsigned char *DecompressData(const unsigned char *compData, int compDataLength, int *dataLength)
+unsigned char *DecompressData(const unsigned char *compData, int compDataSize, int *dataSize)
 {
     unsigned char *data = NULL;
 
 #if defined(SUPPORT_COMPRESSION_API)
     // Decompress data from a valid DEFLATE stream
     data = RL_CALLOC(MAX_DECOMPRESSION_SIZE*1024*1024, 1);
-    int length = sinflate(data, MAX_DECOMPRESSION_SIZE, compData, compDataLength);
+    int length = sinflate(data, MAX_DECOMPRESSION_SIZE, compData, compDataSize);
     unsigned char *temp = RL_REALLOC(data, length);
 
     if (temp != NULL) data = temp;
     else TRACELOG(LOG_WARNING, "SYSTEM: Failed to re-allocate required decompression memory");
 
-    *dataLength = length;
+    *dataSize = length;
 
-    TraceLog(LOG_INFO, "SYSTEM: Decompress data: Comp. size: %i -> Original size: %i", compDataLength, *dataLength);
+    TraceLog(LOG_INFO, "SYSTEM: Decompress data: Comp. size: %i -> Original size: %i", compDataSize, *dataSize);
 #endif
 
     return data;
 }
 
 // Encode data to Base64 string
-char *EncodeDataBase64(const unsigned char *data, int dataLength, int *outputLength)
+char *EncodeDataBase64(const unsigned char *data, int dataSize, int *outputSize)
 {
     static const unsigned char base64encodeTable[] = {
         'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X',
@@ -3239,17 +3239,17 @@ char *EncodeDataBase64(const unsigned char *data, int dataLength, int *outputLen
 
     static const int modTable[] = { 0, 2, 1 };
 
-    *outputLength = 4*((dataLength + 2)/3);
+    *outputSize = 4*((dataSize + 2)/3);
 
-    char *encodedData = RL_MALLOC(*outputLength);
+    char *encodedData = RL_MALLOC(*outputSize);
 
     if (encodedData == NULL) return NULL;
 
-    for (int i = 0, j = 0; i < dataLength;)
+    for (int i = 0, j = 0; i < dataSize;)
     {
-        unsigned int octetA = (i < dataLength)? (unsigned char)data[i++] : 0;
-        unsigned int octetB = (i < dataLength)? (unsigned char)data[i++] : 0;
-        unsigned int octetC = (i < dataLength)? (unsigned char)data[i++] : 0;
+        unsigned int octetA = (i < dataSize)? (unsigned char)data[i++] : 0;
+        unsigned int octetB = (i < dataSize)? (unsigned char)data[i++] : 0;
+        unsigned int octetC = (i < dataSize)? (unsigned char)data[i++] : 0;
 
         unsigned int triple = (octetA << 0x10) + (octetB << 0x08) + octetC;
 
@@ -3259,13 +3259,13 @@ char *EncodeDataBase64(const unsigned char *data, int dataLength, int *outputLen
         encodedData[j++] = base64encodeTable[(triple >> 0*6) & 0x3F];
     }
 
-    for (int i = 0; i < modTable[dataLength%3]; i++) encodedData[*outputLength - 1 - i] = '=';  // Padding character
+    for (int i = 0; i < modTable[dataSize%3]; i++) encodedData[*outputSize - 1 - i] = '=';  // Padding character
 
     return encodedData;
 }
 
 // Decode Base64 string data
-unsigned char *DecodeDataBase64(const unsigned char *data, int *outputLength)
+unsigned char *DecodeDataBase64(const unsigned char *data, int *outputSize)
 {
     static const unsigned char base64decodeTable[] = {
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -3275,21 +3275,21 @@ unsigned char *DecodeDataBase64(const unsigned char *data, int *outputLength)
     };
 
     // Get output size of Base64 input data
-    int outLength = 0;
+    int outSize = 0;
     for (int i = 0; data[4*i] != 0; i++)
     {
         if (data[4*i + 3] == '=')
         {
-            if (data[4*i + 2] == '=') outLength += 1;
-            else outLength += 2;
+            if (data[4*i + 2] == '=') outSize += 1;
+            else outSize += 2;
         }
-        else outLength += 3;
+        else outSize += 3;
     }
 
     // Allocate memory to store decoded Base64 data
-    unsigned char *decodedData = (unsigned char *)RL_MALLOC(outLength);
+    unsigned char *decodedData = (unsigned char *)RL_MALLOC(outSize);
 
-    for (int i = 0; i < outLength/3; i++)
+    for (int i = 0; i < outSize/3; i++)
     {
         unsigned char a = base64decodeTable[(int)data[4*i]];
         unsigned char b = base64decodeTable[(int)data[4*i + 1]];
@@ -3301,24 +3301,24 @@ unsigned char *DecodeDataBase64(const unsigned char *data, int *outputLength)
         decodedData[3*i + 2] = (c << 6) | d;
     }
 
-    if (outLength%3 == 1)
+    if (outSize%3 == 1)
     {
-        int n = outLength/3;
+        int n = outSize/3;
         unsigned char a = base64decodeTable[(int)data[4*n]];
         unsigned char b = base64decodeTable[(int)data[4*n + 1]];
-        decodedData[outLength - 1] = (a << 2) | (b >> 4);
+        decodedData[outSize - 1] = (a << 2) | (b >> 4);
     }
-    else if (outLength%3 == 2)
+    else if (outSize%3 == 2)
     {
-        int n = outLength/3;
+        int n = outSize/3;
         unsigned char a = base64decodeTable[(int)data[4*n]];
         unsigned char b = base64decodeTable[(int)data[4*n + 1]];
         unsigned char c = base64decodeTable[(int)data[4*n + 2]];
-        decodedData[outLength - 2] = (a << 2) | (b >> 4);
-        decodedData[outLength - 1] = (b << 4) | (c >> 2);
+        decodedData[outSize - 2] = (a << 2) | (b >> 4);
+        decodedData[outSize - 1] = (b << 4) | (c >> 2);
     }
 
-    *outputLength = outLength;
+    *outputSize = outSize;
     return decodedData;
 }
 
