@@ -28,7 +28,7 @@ Some people ported raylib to other languages in form of bindings or wrappers to 
 | jaylib             | **4.0** | [Java](https://en.wikipedia.org/wiki/Java_(programming_language)) | GPLv3 | https://github.com/electronstudio/jaylib/  |
 | raylib-j           | **4.0** | [Java](https://en.wikipedia.org/wiki/Java_(programming_language)) | Zlib | https://github.com/CreedVI/Raylib-J |
 | raylib.jl          | **4.0** | [Julia](https://julialang.org/)      | Zlib | https://github.com/irishgreencitrus/raylib.jl |
-| node-raylib        | 3.5     | [Node.js](https://nodejs.org/en/)    | Zlib     | https://github.com/RobLoach/node-raylib         |
+| node-raylib        | **4.0** | [Node.js](https://nodejs.org/en/)    | Zlib     | https://github.com/RobLoach/node-raylib         |
 | raylib-php         | 3.5     | [PHP](https://en.wikipedia.org/wiki/PHP) | Zlib | https://github.com/joseph-montanez/raylib-php   |
 | raylib-phpcpp      | 3.5     | [PHP](https://en.wikipedia.org/wiki/PHP) | Zlib | https://github.com/oraoto/raylib-phpcpp         |
 | raylib-factor      | 3.5     | [Factor](https://factorcode.org/)        | MIT  | https://github.com/ArnautDaniel/raylib-factor   |
