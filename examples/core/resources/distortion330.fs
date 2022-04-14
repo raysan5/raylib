@@ -18,7 +18,7 @@ uniform vec2 leftScreenCenter = vec2(0.25, 0.5);
 uniform vec2 rightScreenCenter = vec2(0.75, 0.5);
 uniform vec2 scale = vec2(0.25, 0.45);
 uniform vec2 scaleIn = vec2(4, 2.2222);
-uniform vec4 hmdWarpParam = vec4(1, 0.22, 0.24, 0);
+uniform vec4 deviceWarpParam = vec4(1, 0.22, 0.24, 0);
 uniform vec4 chromaAbParam = vec4(0.996, -0.004, 1.014, 0.0);
 
 void main()
@@ -28,7 +28,7 @@ void main()
     vec2 screenCenter = fragTexCoord.x < 0.5? leftScreenCenter : rightScreenCenter;
     vec2 theta = (fragTexCoord - lensCenter)*scaleIn;
     float rSq = theta.x*theta.x + theta.y*theta.y;
-    vec2 theta1 = theta*(hmdWarpParam.x + hmdWarpParam.y*rSq + hmdWarpParam.z*rSq*rSq + hmdWarpParam.w*rSq*rSq*rSq);
+    vec2 theta1 = theta*(deviceWarpParam.x + deviceWarpParam.y*rSq + deviceWarpParam.z*rSq*rSq + deviceWarpParam.w*rSq*rSq*rSq);
     vec2 thetaBlue = theta1*(chromaAbParam.z + chromaAbParam.w*rSq);
     vec2 tcBlue = lensCenter + scale*thetaBlue;
 

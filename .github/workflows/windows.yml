@@ -1,8 +1,17 @@
 name: Windows
 
-on: 
+on:
+  workflow_dispatch:
   push:
+    paths:
+      - 'src/**'
+      - 'examples/**'
+      - '.github/workflows/windows.yml'
   pull_request:
+    paths:
+      - 'src/**'
+      - 'examples/**'
+      - '.github/workflows/windows.yml'
   release:
     types: [published]
 
@@ -93,6 +102,9 @@ jobs:
     - name: Generate Artifacts
       run: |
         copy /Y .\src\raylib.h .\build\${{ env.RELEASE_NAME }}\include\raylib.h
+        copy /Y .\src\raymath.h .\build\${{ env.RELEASE_NAME }}\include\raymath.h
+        copy /Y .\src\rlgl.h .\build\${{ env.RELEASE_NAME }}\include\rlgl.h
+        copy /Y .\src\extras\raygui.h .\build\${{ env.RELEASE_NAME }}\include\raygui.h
         copy /Y .\README.md .\build\${{ env.RELEASE_NAME }}\README.md
         copy /Y .\LICENSE .\build\${{ env.RELEASE_NAME }}\LICENSE
         cd build

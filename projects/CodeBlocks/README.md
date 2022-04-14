@@ -1,16 +1,22 @@
-# raylib for Code::Blocks
-**by D3nX**
-<br/>
-Hey! Here it is a project template to use with `Code::Blocks` =)
-<br/><br/>
-First, you need to download the [raylib installer](https://www.raylib.com) and run it. It will install raylib with the compiler.
-<br/><br/>
-Then, download the template, and open the project with `Code::Blocks`.
+# Raylib template for Code::Blocks
 
-Before running the template, make sure following set the raylib compiler for the IDE as show below:
-<br>
+1. Install Raylib. 
+
+On Windows you should install the **Windows Installer (with MinGW compiler)** package.
+On other platforms you can install however you like following the instructions in the wiki.
+
+    * https://github.com/raysan5/raylib/releases/download/4.0.0/raylib_installer_v400.mingw.exe
+    * https://github.com/raysan5/raylib/wiki/Working-on-GNU-Linux
+    * https://github.com/raysan5/raylib/wiki/Working-on-macOS
+
+2. Install and run Code::Blocks.
+
+3. **Windows only**: Select `Settings` `Compiler` `Toolchain executables`.
+Change `Compiler's instrallation directory` to `C:\raylib\MingGW`.  Do *not* press auto-detect.
+There is a screenshot below showing how it should look.  Press `OK`.
+
+4. Select `File` `Open` and open the `core_basic_windows.cbp` file.
+
 ![Compiler Settings](compiler_settings.png)
-<br/>
-Finally, you can run the program and enjoy raylib running on `Code::Blocks`!
-<br /><br />
-Hope it helped you =)
+
+For an example with resources, see https://github.com/electronstudio/raylib-game-template-codeblocks

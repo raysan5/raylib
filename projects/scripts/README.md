@@ -6,7 +6,7 @@ exception to this however, and that is Windows, because Windows
 doesn't have a built-in C compiler. On Windows, you'll need to install
 [Visual Studio][visual-studio] or the [build tools][vs-tools]. If you
 didn't install them in the default location, write your changes around
-line 101 of [`build-windows.bat`](build-windows.bat).
+line 38 of [`build-windows.bat`](build-windows.bat).
 
 ## Script customization
 First of all, the scripts have a few variables at the very top, which

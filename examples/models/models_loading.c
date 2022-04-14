@@ -4,17 +4,19 @@
 *
 *   raylib supports multiple models file formats:
 *
-*     - OBJ > Text file, must include vertex position-texcoords-normals information,
-*             if files references some .mtl materials file, it will be loaded (or try to)
-*     - GLTF > Modern text/binary file format, includes lot of information and it could
-*              also reference external files, raylib will try loading mesh and materials data
-*     - IQM > Binary file format including mesh vertex data but also animation data,
-*             raylib can load .iqm animations.
+*     - OBJ  > Text file format. Must include vertex position-texcoords-normals information,
+*              if files references some .mtl materials file, it will be loaded (or try to).
+*     - GLTF > Text/binary file format. Includes lot of information and it could
+*              also reference external files, raylib will try loading mesh and materials data.
+*     - IQM  > Binary file format. Includes mesh vertex data but also animation data,
+*              raylib can load .iqm animations.
+*     - VOX  > Binary file format. MagikaVoxel mesh format:
+*              https://github.com/ephtracy/voxel-model/blob/master/MagicaVoxel-file-format-vox.txt
 *
-*   This example has been created using raylib 2.6 (www.raylib.com)
+*   This example has been created using raylib 4.0 (www.raylib.com)
 *   raylib is licensed under an unmodified zlib/libpng license (View raylib.h for details)
 *
-*   Copyright (c) 2014-2019 Ramon Santamaria (@raysan5)
+*   Copyright (c) 2014-2021 Ramon Santamaria (@raysan5)
 *
 ********************************************************************************************/
 
@@ -37,13 +39,13 @@ int main(void)
     camera.fovy = 45.0f;                                // Camera field-of-view Y
     camera.projection = CAMERA_PERSPECTIVE;                   // Camera mode type
 
-    Model model = LoadModel("resources/models/castle.obj");                 // Load model
-    Texture2D texture = LoadTexture("resources/models/castle_diffuse.png"); // Load model texture
-    model.materials[0].maps[MATERIAL_MAP_DIFFUSE].texture = texture;                 // Set map diffuse texture
+    Model model = LoadModel("resources/models/obj/castle.obj");                 // Load model
+    Texture2D texture = LoadTexture("resources/models/obj/castle_diffuse.png"); // Load model texture
+    model.materials[0].maps[MATERIAL_MAP_DIFFUSE].texture = texture;            // Set map diffuse texture
 
-    Vector3 position = { 0.0f, 0.0f, 0.0f };                // Set model position
+    Vector3 position = { 0.0f, 0.0f, 0.0f };                    // Set model position
 
-    BoundingBox bounds = GetMeshBoundingBox(model.meshes[0]);  // Set model bounds
+    BoundingBox bounds = GetMeshBoundingBox(model.meshes[0]);   // Set model bounds
 
     // NOTE: bounds are calculated from the original size of the model,
     // if model is scaled on drawing, bounds must be also scaled
@@ -72,6 +74,8 @@ int main(void)
             {
                 if (IsFileExtension(droppedFiles[0], ".obj") ||
                     IsFileExtension(droppedFiles[0], ".gltf") ||
+                    IsFileExtension(droppedFiles[0], ".glb") ||
+                    IsFileExtension(droppedFiles[0], ".vox") ||
                     IsFileExtension(droppedFiles[0], ".iqm"))       // Model file formats supported
                 {
                     UnloadModel(model);                     // Unload previous model

@@ -2,18 +2,17 @@
 *
 *   raylib [rlgl] example - Using rlgl module as standalone module
 *
-*   NOTE: This example requires OpenGL 3.3 or ES2 versions for shaders support,
+*   rlgl library is an abstraction layer for multiple OpenGL versions (1.1, 2.1, 3.3 Core, ES 2.0)
+*   that provides a pseudo-OpenGL 1.1 immediate-mode style API (rlVertex, rlTranslate, rlRotate...)
+*
+*   NOTE: This example requires OpenGL 3.3 or OpenGL ES 2.0 for shaders support,
 *         OpenGL 1.1 does not support shaders but it can also be used.
 *
 *   DEPENDENCIES:
-*       rlgl.h    - OpenGL 1.1 immediate-mode style coding translation layer
-*       glad.h    - OpenGL extensions initialization library (required by rlgl)
-*       raymath.h - 3D math library (required by rlgl)
 *       glfw3     - Windows and context initialization library
-*
-*   rlgl library is provided as a single-file header-only library, this library
-*   allows coding in a pseudo-OpenGL 1.1 style while translating calls to multiple
-*   OpenGL versions backends (1.1, 2.1, 3.3, ES 2.0).
+*       rlgl.h    - OpenGL abstraction layer to OpenGL 1.1, 3.3 or ES2
+*       glad.h    - OpenGL extensions initialization library (required by rlgl)
+*       raymath.h - 3D math library
 *
 *   WINDOWS COMPILATION:
 *       gcc -o rlgl_standalone.exe rlgl_standalone.c -s -Iexternal\include -I..\..\src  \
@@ -21,15 +20,16 @@
 *
 *   APPLE COMPILATION:
 *       gcc -o rlgl_standalone rlgl_standalone.c -I../../src -Iexternal/include -Lexternal/lib \
-*           -lglfw3 -std=c99 -framework CoreVideo -framework OpenGL -framework OpenAL \
-*           -framework IOKit -framework Cocoa -Wno-deprecated-declarations
+*           -lglfw3 -framework CoreVideo -framework OpenGL -framework IOKit -framework Cocoa
+*           -Wno-deprecated-declarations -std=c99 -DGRAPHICS_API_OPENGL_33
+*
 *
 *   LICENSE: zlib/libpng
 *
 *   This example is licensed under an unmodified zlib/libpng license, which is an OSI-certified,
 *   BSD-like license that allows static linking with closed source software:
 *
-*   Copyright (c) 2014-2019 Ramon Santamaria (@raysan5)
+*   Copyright (c) 2014-2021 Ramon Santamaria (@raysan5)
 *
 *   This software is provided "as-is", without any express or implied warranty. In no event
 *   will the authors be held liable for any damages arising from the use of this software.
@@ -48,15 +48,25 @@
 *
 ********************************************************************************************/
 
+// NOTE: rlgl can be configured just re-defining the following values:
+//#define RL_DEFAULT_BATCH_BUFFER_ELEMENTS   8192    // Default internal render batch elements limits
+//#define RL_DEFAULT_BATCH_BUFFERS              1    // Default number of batch buffers (multi-buffering)
+//#define RL_DEFAULT_BATCH_DRAWCALLS          256    // Default number of batch draw calls (by state changes: mode, texture)
+//#define RL_DEFAULT_BATCH_MAX_TEXTURE_UNITS    4    // Maximum number of textures units that can be activated on batch drawing (SetShaderValueTexture())
+//#define RL_MAX_MATRIX_STACK_SIZE             32    // Maximum size of internal Matrix stack
+//#define RL_MAX_SHADER_LOCATIONS              32    // Maximum number of shader locations supported
+//#define RL_CULL_DISTANCE_NEAR              0.01    // Default projection matrix near cull distance
+//#define RL_CULL_DISTANCE_FAR             1000.0    // Default projection matrix far cull distance
+
 #define RLGL_IMPLEMENTATION
-#define RLGL_STANDALONE
-#define RLGL_SUPPORT_TRACELOG
-#include "rlgl.h"               // OpenGL 1.1 immediate-mode style coding
+#include "rlgl.h"               // OpenGL abstraction layer to OpenGL 1.1, 3.3+ or ES2
+
+#define RAYMATH_STATIC_INLINE
+#include "raymath.h"            // Vector2, Vector3, Quaternion and Matrix functionality
 
 #if defined(__EMSCRIPTEN__)
     #define GLFW_INCLUDE_ES2
 #endif
-
 #include "GLFW/glfw3.h"         // Windows/Context and inputs management
 
 #include <stdio.h>              // Required for: printf()
@@ -65,6 +75,9 @@
 #define RAYWHITE   (Color){ 245, 245, 245, 255 }   // My own White (raylib logo)
 #define DARKGRAY   (Color){ 80, 80, 80, 255 }      // Dark Gray
 
+//----------------------------------------------------------------------------------
+// Structures Definition
+//----------------------------------------------------------------------------------
 // Color, 4 components, R8G8B8A8 (32bit)
 typedef struct Color {
     unsigned char r;        // Color red value
@@ -93,6 +106,12 @@ static void DrawGrid(int slices, float spacing);
 static void DrawCube(Vector3 position, float width, float height, float length, Color color);
 static void DrawCubeWires(Vector3 position, float width, float height, float length, Color color);
 static void DrawRectangleV(Vector2 position, Vector2 size, Color color);
+
+// NOTE: We use raymath to get this functionality but it could be implemented in this module
+//static Matrix MatrixIdentity(void);
+//static Matrix MatrixOrtho(double left, double right, double bottom, double top, double near, double far);
+//static Matrix MatrixPerspective(double fovy, double aspect, double near, double far);
+//static Matrix MatrixLookAt(Vector3 eye, Vector3 target, Vector3 up);
 
 //----------------------------------------------------------------------------------
 // Main Entry point
@@ -124,7 +143,6 @@ int main(void)
 #if defined(__APPLE__)
     glfwWindowHint( GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE );
 #endif
-
 
     GLFWwindow *window = glfwCreateWindow(screenWidth, screenHeight, "rlgl standalone", NULL, NULL);
 
@@ -200,8 +218,8 @@ int main(void)
 
             // Draw '2D' elements in the scene (GUI)
             //-----------------------------------------------
-#define RLGL_CREATE_MATRIX_MANUALLY
-#if defined(RLGL_CREATE_MATRIX_MANUALLY)
+#define RLGL_SET_MATRIX_MANUALLY
+#if defined(RLGL_SET_MATRIX_MANUALLY)
             matProj = MatrixOrtho(0.0, screenWidth, screenHeight, 0.0, 0.0, 1.0);
             matView = MatrixIdentity();
 
@@ -218,7 +236,7 @@ int main(void)
 #endif
             DrawRectangleV((Vector2){ 10.0f, 10.0f }, (Vector2){ 780.0f, 20.0f }, DARKGRAY);
 
-            // Draw internal render batch buffers (3D data)
+            // Draw internal render batch buffers (2D data)
             rlDrawRenderBatchActive();
             //-----------------------------------------------
 

@@ -34,7 +34,7 @@ void main()
     // Draw circle layer
     vec3 color = vec3(0.9, 0.16, 0.21);
     vec4 layer2 = DrawCircle(fragCoord, position, radius, color);
-    
+
     // Blend the two layers
     finalColor = mix(layer1, layer2, layer2.a);
 }

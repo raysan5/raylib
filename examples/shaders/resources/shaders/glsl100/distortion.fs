@@ -23,13 +23,13 @@ void main()
     // The following two variables need to be set per eye
     vec2 LensCenter = fragTexCoord.x < 0.5 ? LeftLensCenter : RightLensCenter;
     vec2 ScreenCenter = fragTexCoord.x < 0.5 ? LeftScreenCenter : RightScreenCenter;
-    
+
     // Scales input texture coordinates for distortion: vec2 HmdWarp(vec2 fragTexCoord, vec2 LensCenter)
     vec2 theta = (fragTexCoord - LensCenter)*ScaleIn;   // Scales to [-1, 1]
     float rSq = theta.x*theta.x + theta.y*theta.y;
     vec2 theta1 = theta*(HmdWarpParam.x + HmdWarpParam.y*rSq + HmdWarpParam.z*rSq*rSq + HmdWarpParam.w*rSq*rSq*rSq);
     //vec2 tc = LensCenter + Scale*theta1;
-    
+
     // Detect whether blue texture coordinates are out of range since these will scaled out the furthest
     vec2 thetaBlue = theta1*(ChromaAbParam.z + ChromaAbParam.w*rSq);
     vec2 tcBlue = LensCenter + Scale*thetaBlue;

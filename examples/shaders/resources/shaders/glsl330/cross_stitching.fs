@@ -47,7 +47,7 @@ vec4 PostFX(sampler2D tex, vec2 uv)
         if (invert == 1) c = texture(tex, tlPos * vec2(1.0/renderWidth, 1.0/renderHeight)) * 1.4;
         else c = vec4(0.0, 0.0, 0.0, 1.0);
     }
-    
+
     return c;
 }
 

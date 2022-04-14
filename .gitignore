@@ -1,11 +1,6 @@
 # Ignore generated files
 # ...
 
-# Ignore all without extensions
-*
-!*.*
-!*/
-
 # Ignore VIM's backup generated files
 *.swp
 *.swo
@@ -50,6 +45,7 @@ ipch/
 *.db
 *.opendb
 packages/
+!examples/models/resources/models/obj/
 
 # Ignore compiled binaries
 *.o
@@ -57,6 +53,13 @@ packages/
 *.a
 *.bc
 *.so
+*.so.*
+
+# Ignore wasm data in examples/
+examples/**/*.wasm
+examples/**/*.data
+examples/**/*.js
+examples/**/*.html
 
 # Ignore files build by xcode
 *.mode*v*
@@ -91,3 +94,13 @@ build
 GPATH
 GRTAGS
 GTAGS
+
+# Zig programming language
+zig-cache/
+zig-out/
+build/
+build-*/
+docgen_tmp/
+
+# Parser stuff
+parser/raylib_parser

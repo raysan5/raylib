@@ -24,7 +24,7 @@ void main()
 {
     // Compute MVP for current instance
     mat4 mvpi = mvp*instanceTransform;
-    
+
     // Send vertex attributes to fragment shader
     fragPosition = vec3(mvpi*vec4(vertexPosition, 1.0));
     fragTexCoord = vertexTexCoord;

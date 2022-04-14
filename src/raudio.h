@@ -31,7 +31,7 @@
 *
 *   LICENSE: zlib/libpng
 *
-*   Copyright (c) 2014-2021 Ramon Santamaria (@raysan5)
+*   Copyright (c) 2014-2022 Ramon Santamaria (@raysan5)
 *
 *   This software is provided "as-is", without any express or implied warranty. In no event
 *   will the authors be held liable for any damages arising from the use of this software.
@@ -78,48 +78,41 @@
     #endif
 #endif
 
-// Wave type, defines audio wave data
+// Wave, audio wave data
 typedef struct Wave {
-    unsigned int sampleCount;       // Total number of samples
-    unsigned int sampleRate;        // Frequency (samples per second)
-    unsigned int sampleSize;        // Bit depth (bits per sample): 8, 16, 32 (24 not supported)
-    unsigned int channels;          // Number of channels (1-mono, 2-stereo)
-    void *data;                     // Buffer data pointer
+    unsigned int frameCount;    // Total number of frames (considering channels)
+    unsigned int sampleRate;    // Frequency (samples per second)
+    unsigned int sampleSize;    // Bit depth (bits per sample): 8, 16, 32 (24 not supported)
+    unsigned int channels;      // Number of channels (1-mono, 2-stereo, ...)
+    void *data;                 // Buffer data pointer
 } Wave;
 
 typedef struct rAudioBuffer rAudioBuffer;
 
-// Audio stream type
-// NOTE: Useful to create custom audio streams not bound to a specific file
+// AudioStream, custom audio stream
 typedef struct AudioStream {
-    unsigned int sampleRate;        // Frequency (samples per second)
-    unsigned int sampleSize;        // Bit depth (bits per sample): 8, 16, 32 (24 not supported)
-    unsigned int channels;          // Number of channels (1-mono, 2-stereo)
+    rAudioBuffer *buffer;       // Pointer to internal data used by the audio system
 
-    rAudioBuffer *buffer;           // Pointer to internal data used by the audio system
+    unsigned int sampleRate;    // Frequency (samples per second)
+    unsigned int sampleSize;    // Bit depth (bits per sample): 8, 16, 32 (24 not supported)
+    unsigned int channels;      // Number of channels (1-mono, 2-stereo, ...)
 } AudioStream;
 
-// Sound source type
+// Sound
 typedef struct Sound {
-    unsigned int sampleCount;       // Total number of samples
-    AudioStream stream;             // Audio stream
+    AudioStream stream;         // Audio stream
+    unsigned int frameCount;    // Total number of frames (considering channels)
 } Sound;
 
-// Music stream type (audio file streaming from memory)
-// NOTE: Anything longer than ~10 seconds should be streamed
+// Music, audio stream, anything longer than ~10 seconds should be streamed
 typedef struct Music {
-    int ctxType;                    // Type of music context (audio filetype)
-    void *ctxData;                  // Audio context data, depends on type
+    AudioStream stream;         // Audio stream
+    unsigned int frameCount;    // Total number of frames (considering channels)
+    bool looping;               // Music looping enable
 
-    bool looping;                   // Music looping enable
-    unsigned int sampleCount;       // Total number of samples
-
-    AudioStream stream;             // Audio stream
+    int ctxType;                // Type of music context (audio filetype)
+    void *ctxData;              // Audio context data, depends on type
 } Music;
-
-#ifdef __cplusplus
-extern "C" {            // Prevents name mangling of functions
-#endif
 
 //----------------------------------------------------------------------------------
 // Global Variables Definition
@@ -129,6 +122,10 @@ extern "C" {            // Prevents name mangling of functions
 //----------------------------------------------------------------------------------
 // Module Functions Declaration
 //----------------------------------------------------------------------------------
+
+#ifdef __cplusplus
+extern "C" {            // Prevents name mangling of functions
+#endif
 
 // Audio device management functions
 void InitAudioDevice(void);                                     // Initialize audio device and context
@@ -158,6 +155,7 @@ int GetSoundsPlaying(void);                                     // Get number of
 bool IsSoundPlaying(Sound sound);                               // Check if a sound is currently playing
 void SetSoundVolume(Sound sound, float volume);                 // Set volume for a sound (1.0 is max level)
 void SetSoundPitch(Sound sound, float pitch);                   // Set pitch for a sound (1.0 is base level)
+void SetSoundPan(Sound sound, float pan);                       // Set pan for a sound (0.0 to 1.0, 0.5=center)
 void WaveFormat(Wave *wave, int sampleRate, int sampleSize, int channels);  // Convert wave data to desired format
 Wave WaveCopy(Wave wave);                                       // Copy a wave to a new wave
 void WaveCrop(Wave *wave, int initSample, int finalSample);     // Crop a wave to defined samples range
@@ -174,7 +172,9 @@ void UpdateMusicStream(Music music);                            // Updates buffe
 void StopMusicStream(Music music);                              // Stop music playing
 void PauseMusicStream(Music music);                             // Pause music playing
 void ResumeMusicStream(Music music);                            // Resume playing paused music
+void SeekMusicStream(Music music, float position);              // Seek music to a position (in seconds)
 void SetMusicVolume(Music music, float volume);                 // Set volume for music (1.0 is max level)
+void SetMusicPan(Music sound, float pan);                       // Set pan for a music (0.0 to 1.0, 0.5=center)
 void SetMusicPitch(Music music, float pitch);                   // Set pitch for a music (1.0 is base level)
 float GetMusicTimeLength(Music music);                          // Get music time length (in seconds)
 float GetMusicTimePlayed(Music music);                          // Get current music time played (in seconds)
@@ -191,6 +191,7 @@ bool IsAudioStreamPlaying(AudioStream stream);                  // Check if audi
 void StopAudioStream(AudioStream stream);                       // Stop audio stream
 void SetAudioStreamVolume(AudioStream stream, float volume);    // Set volume for audio stream (1.0 is max level)
 void SetAudioStreamPitch(AudioStream stream, float pitch);      // Set pitch for audio stream (1.0 is base level)
+void SetAudioStreamPan(AudioStream strean, float pan);          // Set pan for audio stream  (0.0 to 1.0, 0.5=center)
 void SetAudioStreamBufferSizeDefault(int size);                 // Default size for new audio streams
 
 #ifdef __cplusplus

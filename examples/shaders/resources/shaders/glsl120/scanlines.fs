@@ -35,7 +35,7 @@ void main()
     // Scanlines method 2
     float globalPos = (fragTexCoord.y + offset) * frequency;
     float wavePos = cos((fract(globalPos) - 0.5)*3.14);
-    
+
     vec4 color = texture2D(texture0, fragTexCoord);
 
     gl_FragColor = mix(vec4(0.0, 0.3, 0.0, 0.0), color, wavePos);

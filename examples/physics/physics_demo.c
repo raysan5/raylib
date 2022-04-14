@@ -34,11 +34,11 @@ int main(void)
     InitPhysics();
 
     // Create floor rectangle physics body
-    PhysicsBody floor = CreatePhysicsBodyRectangle((Vector2){ screenWidth/2, screenHeight }, 500, 100, 10);
+    PhysicsBody floor = CreatePhysicsBodyRectangle((Vector2){ screenWidth/2.0f, (float)screenHeight }, 500, 100, 10);
     floor->enabled = false;         // Disable body state to convert it to static (no dynamics, but collisions)
 
     // Create obstacle circle physics body
-    PhysicsBody circle = CreatePhysicsBodyCircle((Vector2){ screenWidth/2, screenHeight/2 }, 45, 10);
+    PhysicsBody circle = CreatePhysicsBodyCircle((Vector2){ screenWidth/2.0f, screenHeight/2.0f }, 45, 10);
     circle->enabled = false;        // Disable body state to convert it to static (no dynamics, but collisions)
 
     SetTargetFPS(60);               // Set our game to run at 60 frames-per-second
@@ -55,16 +55,16 @@ int main(void)
         {
             ResetPhysics();
 
-            floor = CreatePhysicsBodyRectangle((Vector2){ screenWidth/2, screenHeight }, 500, 100, 10);
+            floor = CreatePhysicsBodyRectangle((Vector2){ screenWidth/2.0f, (float)screenHeight }, 500, 100, 10);
             floor->enabled = false;
 
-            circle = CreatePhysicsBodyCircle((Vector2){ screenWidth/2, screenHeight/2 }, 45, 10);
+            circle = CreatePhysicsBodyCircle((Vector2){ screenWidth/2.0f, screenHeight/2.0f }, 45, 10);
             circle->enabled = false;
         }
 
         // Physics body creation inputs
-        if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) CreatePhysicsBodyPolygon(GetMousePosition(), GetRandomValue(20, 80), GetRandomValue(3, 8), 10);
-        else if (IsMouseButtonPressed(MOUSE_BUTTON_RIGHT)) CreatePhysicsBodyCircle(GetMousePosition(), GetRandomValue(10, 45), 10);
+        if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) CreatePhysicsBodyPolygon(GetMousePosition(), (float)GetRandomValue(20, 80), GetRandomValue(3, 8), 10);
+        else if (IsMouseButtonPressed(MOUSE_BUTTON_RIGHT)) CreatePhysicsBodyCircle(GetMousePosition(), (float)GetRandomValue(10, 45), 10);
 
         // Destroy falling physics bodies
         int bodiesCount = GetPhysicsBodiesCount();

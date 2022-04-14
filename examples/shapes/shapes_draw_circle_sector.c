@@ -25,7 +25,7 @@ int main(void)
 
     InitWindow(screenWidth, screenHeight, "raylib [shapes] example - draw circle sector");
 
-    Vector2 center = {(GetScreenWidth() - 300)/2, GetScreenHeight()/2 };
+    Vector2 center = {(GetScreenWidth() - 300)/2.0f, GetScreenHeight()/2.0f };
 
     float outerRadius = 180.0f;
     float startAngle = 0.0f;
@@ -53,8 +53,8 @@ int main(void)
             DrawLine(500, 0, 500, GetScreenHeight(), Fade(LIGHTGRAY, 0.6f));
             DrawRectangle(500, 0, GetScreenWidth() - 500, GetScreenHeight(), Fade(LIGHTGRAY, 0.3f));
 
-            DrawCircleSector(center, outerRadius, startAngle, endAngle, segments, Fade(MAROON, 0.3));
-            DrawCircleSectorLines(center, outerRadius, startAngle, endAngle, segments, Fade(MAROON, 0.6));
+            DrawCircleSector(center, outerRadius, startAngle, endAngle, segments, Fade(MAROON, 0.3f));
+            DrawCircleSectorLines(center, outerRadius, startAngle, endAngle, segments, Fade(MAROON, 0.6f));
 
             // Draw GUI controls
             //------------------------------------------------------------------------------
@@ -62,7 +62,7 @@ int main(void)
             endAngle = GuiSliderBar((Rectangle){ 600, 70, 120, 20}, "EndAngle", NULL, endAngle, 0, 720);
 
             outerRadius = GuiSliderBar((Rectangle){ 600, 140, 120, 20}, "Radius", NULL, outerRadius, 0, 200);
-            segments = GuiSliderBar((Rectangle){ 600, 170, 120, 20}, "Segments", NULL, segments, 0, 100);
+            segments = (int)GuiSliderBar((Rectangle){ 600, 170, 120, 20}, "Segments", NULL, (float)segments, 0, 100);
             //------------------------------------------------------------------------------
 
             minSegments = (int)ceilf((endAngle - startAngle) / 90);

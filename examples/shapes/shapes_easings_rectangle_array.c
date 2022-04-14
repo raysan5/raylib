@@ -39,8 +39,8 @@ int main(void)
     {
         for (int x = 0; x < MAX_RECS_X; x++)
         {
-            recs[y*MAX_RECS_X + x].x = RECS_WIDTH/2 + RECS_WIDTH*x;
-            recs[y*MAX_RECS_X + x].y = RECS_HEIGHT/2 + RECS_HEIGHT*y;
+            recs[y*MAX_RECS_X + x].x = RECS_WIDTH/2.0f + RECS_WIDTH*x;
+            recs[y*MAX_RECS_X + x].y = RECS_HEIGHT/2.0f + RECS_HEIGHT*y;
             recs[y*MAX_RECS_X + x].width = RECS_WIDTH;
             recs[y*MAX_RECS_X + x].height = RECS_HEIGHT;
         }
@@ -64,15 +64,15 @@ int main(void)
 
             for (int i = 0; i < MAX_RECS_X*MAX_RECS_Y; i++)
             {
-                recs[i].height = EaseCircOut(framesCounter, RECS_HEIGHT, -RECS_HEIGHT, PLAY_TIME_IN_FRAMES);
-                recs[i].width = EaseCircOut(framesCounter, RECS_WIDTH, -RECS_WIDTH, PLAY_TIME_IN_FRAMES);
+                recs[i].height = EaseCircOut((float)framesCounter, RECS_HEIGHT, -RECS_HEIGHT, PLAY_TIME_IN_FRAMES);
+                recs[i].width = EaseCircOut((float)framesCounter, RECS_WIDTH, -RECS_WIDTH, PLAY_TIME_IN_FRAMES);
 
                 if (recs[i].height < 0) recs[i].height = 0;
                 if (recs[i].width < 0) recs[i].width = 0;
 
                 if ((recs[i].height == 0) && (recs[i].width == 0)) state = 1;   // Finish playing
 
-                rotation = EaseLinearIn(framesCounter, 0.0f, 360.0f, PLAY_TIME_IN_FRAMES);
+                rotation = EaseLinearIn((float)framesCounter, 0.0f, 360.0f, PLAY_TIME_IN_FRAMES);
             }
         }
         else if ((state == 1) && IsKeyPressed(KEY_SPACE))

@@ -1,3 +1,21 @@
+## Building the Examples
+
+The examples assume you have already built the `raylib` library in `../src`.
+
+### With GNU make
+
+- `make` builds all examples
+- `make [module]` builds all examples for a particular module (e.g `make core`)
+
+### With Zig
+
+The [Zig](https://ziglang.org/) toolchain can compile `C` and `C++` in addition to `Zig`.
+You may find it easier to use than other toolchains, especially when it comes to cross-compiling.
+
+- `zig build` to compile all examples
+- `zig build [module]` to compile all examples for a module (e.g. `zig build core`)
+- `zig build [example]` to compile _and run_ a particular example (e.g. `zig build core_basic_window`)
+
 ## EXAMPLES LIST
 
 ### category: core
@@ -110,7 +128,7 @@ Examples using raylib models functionality, including models loading/generation 
 | 72 | [models_cubicmap](models/models_cubicmap.c)                               | <img src="models/models_cubicmap.png" alt="models_cubicmap" width="200">                               | ray                                              |        |
 | 73 | [models_first_person_maze](models/models_first_person_maze.c)             | <img src="models/models_first_person_maze.png" alt="models_first_person_maze" width="200">             | ray                                              |        |
 | 74 | [models_geometric_shapes](models/models_geometric_shapes.c)               | <img src="models/models_geometric_shapes.png" alt="models_geometric_shapes" width="200">               | ray                                              |        |
-| 75 | [models_material_pbr](models/models_material_pbr.c)                       | <img src="models/models_material_pbr.png" alt="models_material_pbr" width="200">                       | ray                                              |        |
+| 75 | [...]()                       |                        | ray                                              |        |
 | 76 | [models_mesh_generation](models/models_mesh_generation.c)                 | <img src="models/models_mesh_generation.png" alt="models_mesh_generation" width="200">                 | ray                                              |        |
 | 77 | [models_mesh_picking](models/models_mesh_picking.c)                       | <img src="models/models_mesh_picking.png" alt="models_mesh_picking" width="200">                       | [Joel Davis](https://github.com/joeld42)         |        |
 | 78 | [models_loading](models/models_loading.c)                                 | <img src="models/models_loading.png" alt="models_loading" width="200">                                 | ray                                              |        |
@@ -169,22 +187,6 @@ Examples showing physics functionality with raylib. This functionality is provid
 | 109 | [physics_movement](physics/physics_movement.c)       | <img src="physics/physics_movement.png" alt="physics_movement" width="200">       | [Victor Fisac](https://github.com/victorfisac) |        |
 | 110 | [physics_restitution](physics/physics_restitution.c) | <img src="physics/physics_restitution.png" alt="physics_restitution" width="200"> | [Victor Fisac](https://github.com/victorfisac) |        |
 | 111 | [physics_shatter](physics/physics_shatter.c)         | <img src="physics/physics_shatter.png" alt="physics_shatter" width="200">         | [Victor Fisac](https://github.com/victorfisac) |        |
-
-### category: network
-
-Examples showing raylib network functionality. This functionality is provided by [rnet](../src/rnet.h) module.
-
-**Note that rnet module is under development and not ready yet.**
-
-| ## | example  | image  | developer  | new |
-|----|----------|--------|:----------:|:---:|
-| 112 | [network_ping_pong](network/network_ping_pong.c)       |       | [Jak Barnes](https://github.com/syphonx) |        |
-| 113 | [network_resolve_host](network/network_resolve_host.c) |       | [Jak Barnes](https://github.com/syphonx) |        |
-| 114 | [network_tcp_client](network/network_tcp_client.c)     |       | [Jak Barnes](https://github.com/syphonx) |        |
-| 115 | [network_tcp_server](network/network_tcp_server.c)     |       | [Jak Barnes](https://github.com/syphonx) |        |
-| 116 | [network_test](network/network_test.c)                 |       | [Jak Barnes](https://github.com/syphonx) |        |
-| 117 | [network_udp_client](network/network_udp_client.c)     |       | [Jak Barnes](https://github.com/syphonx) |        |
-| 118 | [network_udp_server](network/network_udp_server.c)     |       | [Jak Barnes](https://github.com/syphonx) |        |
 
 ### category: others
 

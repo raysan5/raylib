@@ -20,7 +20,7 @@ int main(void)
 
     InitWindow(screenWidth, screenHeight, "raylib [shapes] example - bouncing ball");
 
-    Vector2 ballPosition = { GetScreenWidth()/2, GetScreenHeight()/2 };
+    Vector2 ballPosition = { GetScreenWidth()/2.0f, GetScreenHeight()/2.0f };
     Vector2 ballSpeed = { 5.0f, 4.0f };
     int ballRadius = 20;
 
@@ -55,7 +55,7 @@ int main(void)
 
             ClearBackground(RAYWHITE);
 
-            DrawCircleV(ballPosition, ballRadius, MAROON);
+            DrawCircleV(ballPosition, (float)ballRadius, MAROON);
             DrawText("PRESS SPACE to PAUSE BALL MOVEMENT", 10, GetScreenHeight() - 25, 20, LIGHTGRAY);
 
             // On pause, we draw a blinking message

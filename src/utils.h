@@ -5,7 +5,7 @@
 *
 *   LICENSE: zlib/libpng
 *
-*   Copyright (c) 2014-2021 Ramon Santamaria (@raysan5)
+*   Copyright (c) 2014-2022 Ramon Santamaria (@raysan5)
 *
 *   This software is provided "as-is", without any express or implied warranty. In no event
 *   will the authors be held liable for any damages arising from the use of this software.
@@ -55,9 +55,7 @@
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
 //----------------------------------------------------------------------------------
-#ifdef __cplusplus
-extern "C" {            // Prevents name mangling of functions
-#endif
+//...
 
 //----------------------------------------------------------------------------------
 // Global Variables Definition
@@ -67,6 +65,10 @@ extern "C" {            // Prevents name mangling of functions
 //----------------------------------------------------------------------------------
 // Module Functions Declaration
 //----------------------------------------------------------------------------------
+#ifdef __cplusplus
+extern "C" {            // Prevents name mangling of functions
+#endif
+
 #if defined(PLATFORM_ANDROID)
 void InitAssetManager(AAssetManager *manager, const char *dataPath);   // Initialize asset manager from android app
 FILE *android_fopen(const char *fileName, const char *mode);           // Replacement for fopen() -> Read-only!

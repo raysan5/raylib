@@ -4,9 +4,9 @@
 :: .
 :: > Setup required Environment
 :: -------------------------------------
-set RAYLIB_INCLUDE_DIR=C:\GitHub\raylib\src
-set RAYLIB_LIB_DIR=C:\GitHub\raylib\src
-set RAYLIB_RES_FILE=C:\GitHub\raylib\raylib.rc.data
+set RAYLIB_INCLUDE_DIR=C:\raylib\src
+set RAYLIB_LIB_DIR=C:\raylib\src
+set RAYLIB_RES_FILE=C:\raylib\src\raylib.rc.data
 set COMPILER_DIR=C:\raylib\mingw\bin
 set PATH=%PATH%;%COMPILER_DIR%
 set FILENAME=%1

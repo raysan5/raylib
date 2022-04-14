@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en-us">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    
+    <title>raylib web game</title>
+    
+    <meta name="title" content="raylib web game">
+    <meta name="description" content="New raylib web videogame, developed using raylib videogames library">
+    <meta name="keywords" content="raylib, games, html5, programming, C, C++, library, learn, videogames">
+    <meta name="viewport" content="width=device-width">
+    
+    <!-- Open Graph metatags for sharing -->
+    <meta property="og:title" content="raylib web game">
+    <meta property="og:image:type" content="image/png">
+    <meta property="og:image" content="https://www.raylib.com/common/img/raylib_logo.png">
+    <meta property="og:site_name" content="raylib.com">
+    <meta property="og:url" content="https://www.raylib.com/games.html">
+    <meta property="og:description" content="New raylib web videogame, developed using raylib videogames library">
+
+    <!-- Twitter metatags for sharing -->
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:site" content="@raysan5">
+    <meta name="twitter:title" content="raylib web game">
+    <meta name="twitter:image" content="https://www.raylib.com/common/raylib_logo.png">
+    <meta name="twitter:url" content="https://www.raylib.com/games.html">
+    <meta name="twitter:description" content="New raylib web game, developed using raylib videogames library">
+    
+    <!-- Favicon -->
+    <link rel="shortcut icon" href="https://www.raylib.com/favicon.ico">
+    
+    <style>
+        body { margin: 0px; }
+        canvas.emscripten { border: 0px none; background-color: black; }
+    </style>
+    <script type='text/javascript' src="https://cdn.jsdelivr.net/gh/eligrey/FileSaver.js/dist/FileSaver.min.js"> </script>
+    <script type='text/javascript'>
+        function saveFileFromMEMFSToDisk(memoryFSname, localFSname)     // This can be called by C/C++ code
+        {
+            var isSafari = false; // Not supported, navigator.userAgent access is being restricted
+            //var isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+            var data = FS.readFile(memoryFSname);
+            var blob;
+
+            if (isSafari) blob = new Blob([data.buffer], { type: "application/octet-stream" });
+            else blob = new Blob([data.buffer], { type: "application/octet-binary" });
+
+            // NOTE: SaveAsDialog is a browser setting. For example, in Google Chrome,
+            // in Settings/Advanced/Downloads section you have a setting:
+            // 'Ask where to save each file before downloading' - which you can set true/false.
+            // If you enable this setting it would always ask you and bring the SaveAsDialog
+            saveAs(blob, localFSname);
+        }
+    </script>
+    </head>
+    <body>
+        <canvas class=emscripten id=canvas oncontextmenu=event.preventDefault() tabindex=-1></canvas>
+        <p id="output" />
+        <script>
+            var Module = {
+                print: (function() {
+                    var element = document.getElementById('output');
+                    if (element) element.value = ''; // clear browser cache
+                    return function(text) {
+                        if (arguments.length > 1) text = Array.prototype.slice.call(arguments).join(' ');
+                        console.log(text);
+                        if (element) {
+                          element.value += text + "\n";
+                          element.scrollTop = element.scrollHeight; // focus on bottom
+                        }
+                    };
+                })(),            
+                canvas: (function() {
+                    var canvas = document.getElementById('canvas');
+                    return canvas;
+                })()
+            };
+        </script>
+        {{{ SCRIPT }}}
+    </body>
+</html>

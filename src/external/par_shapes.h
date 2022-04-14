@@ -21,8 +21,7 @@
 // coordinates (one per vertex).  That's it!  If you need something fancier,
 // look elsewhere.
 //
-// The MIT License
-// Copyright (c) 2015 Philip Rideout
+// Distributed under the MIT License, see bottom of file.
 
 #ifndef PAR_SHAPES_H
 #define PAR_SHAPES_H
@@ -32,8 +31,7 @@ extern "C" {
 #endif
 
 #include <stdint.h>
-
-// Ray: commented to avoid conflict with raylib bool
+// Ray (@raysan5): Commented to avoid conflict with raylib bool
 /*
 #if !defined(_MSC_VER)
 # include <stdbool.h>
@@ -41,9 +39,9 @@ extern "C" {
 # if _MSC_VER >= 1800
 #  include <stdbool.h>
 # else // stdbool.h missing prior to MSVC++ 12.0 (VS2013)
-//#  define bool int      
-//#  define true 1
-//#  define false 0
+#  define bool int
+#  define true 1
+#  define false 0
 # endif
 #endif
 */
@@ -70,6 +68,14 @@ void par_shapes_free_mesh(par_shapes_mesh*);
 // slices, and "stacks" like a number of stacked rings.  Height and radius are
 // both 1.0, but they can easily be changed with par_shapes_scale.
 par_shapes_mesh* par_shapes_create_cylinder(int slices, int stacks);
+
+// Cone is similar to cylinder but the radius diminishes to zero as Z increases.
+// Again, height and radius are 1.0, but can be changed with par_shapes_scale.
+par_shapes_mesh* par_shapes_create_cone(int slices, int stacks);
+
+// Create a disk of radius 1.0 with texture coordinates and normals by squashing
+// a cone flat on the Z=0 plane.
+par_shapes_mesh* par_shapes_create_parametric_disk(int slices, int stacks);
 
 // Create a donut that sits on the Z=0 plane with the specified inner radius.
 // The outer radius can be controlled with par_shapes_scale.
@@ -172,6 +178,17 @@ par_shapes_mesh* par_shapes_weld(par_shapes_mesh const*, float epsilon,
 // Compute smooth normals by averaging adjacent facet normals.
 void par_shapes_compute_normals(par_shapes_mesh* m);
 
+// Global Config ---------------------------------------------------------------
+
+void par_shapes_set_epsilon_welded_normals(float epsilon);
+void par_shapes_set_epsilon_degenerate_sphere(float epsilon);
+
+// Advanced --------------------------------------------------------------------
+
+void par_shapes__compute_welded_normals(par_shapes_mesh* m);
+void par_shapes__connect(par_shapes_mesh* scene, par_shapes_mesh* cylinder,
+    int slices);
+
 #ifndef PAR_PI
 #define PAR_PI (3.14159265359)
 #define PAR_MIN(a, b) (a > b ? b : a)
@@ -205,11 +222,15 @@ void par_shapes_compute_normals(par_shapes_mesh* m);
 #include <math.h>
 #include <errno.h>
 
+static float par_shapes__epsilon_welded_normals = 0.001;
+static float par_shapes__epsilon_degenerate_sphere = 0.0001;
+
 static void par_shapes__sphere(float const* uv, float* xyz, void*);
 static void par_shapes__hemisphere(float const* uv, float* xyz, void*);
 static void par_shapes__plane(float const* uv, float* xyz, void*);
 static void par_shapes__klein(float const* uv, float* xyz, void*);
 static void par_shapes__cylinder(float const* uv, float* xyz, void*);
+static void par_shapes__cone(float const* uv, float* xyz, void*);
 static void par_shapes__torus(float const* uv, float* xyz, void*);
 static void par_shapes__trefoil(float const* uv, float* xyz, void*);
 
@@ -298,11 +319,12 @@ static float par_shapes__sqrdist3(float const* a, float const* b)
     return dx * dx + dy * dy + dz * dz;
 }
 
-static void par_shapes__compute_welded_normals(par_shapes_mesh* m)
+void par_shapes__compute_welded_normals(par_shapes_mesh* m)
 {
+    const float epsilon = par_shapes__epsilon_welded_normals;
     m->normals = PAR_MALLOC(float, m->npoints * 3);
     PAR_SHAPES_T* weldmap = PAR_MALLOC(PAR_SHAPES_T, m->npoints);
-    par_shapes_mesh* welded = par_shapes_weld(m, 0.01, weldmap);
+    par_shapes_mesh* welded = par_shapes_weld(m, epsilon, weldmap);
     par_shapes_compute_normals(welded);
     float* pdst = m->normals;
     for (int i = 0; i < m->npoints; i++, pdst += 3) {
@@ -325,6 +347,24 @@ par_shapes_mesh* par_shapes_create_cylinder(int slices, int stacks)
         stacks, 0);
 }
 
+par_shapes_mesh* par_shapes_create_cone(int slices, int stacks)
+{
+    if (slices < 3 || stacks < 1) {
+        return 0;
+    }
+    return par_shapes_create_parametric(par_shapes__cone, slices,
+        stacks, 0);
+}
+
+par_shapes_mesh* par_shapes_create_parametric_disk(int slices, int stacks)
+{
+    par_shapes_mesh* m = par_shapes_create_cone(slices, stacks);
+    if (m) {
+        par_shapes_scale(m, 1.0f, 1.0f, 0.0f);
+    }
+    return m;
+}
+
 par_shapes_mesh* par_shapes_create_parametric_sphere(int slices, int stacks)
 {
     if (slices < 3 || stacks < 3) {
@@ -332,7 +372,7 @@ par_shapes_mesh* par_shapes_create_parametric_sphere(int slices, int stacks)
     }
     par_shapes_mesh* m = par_shapes_create_parametric(par_shapes__sphere,
         slices, stacks, 0);
-    par_shapes_remove_degenerate(m, 0.0001);
+    par_shapes_remove_degenerate(m, par_shapes__epsilon_degenerate_sphere);
     return m;
 }
 
@@ -343,7 +383,7 @@ par_shapes_mesh* par_shapes_create_hemisphere(int slices, int stacks)
     }
     par_shapes_mesh* m = par_shapes_create_parametric(par_shapes__hemisphere,
         slices, stacks, 0);
-    par_shapes_remove_degenerate(m, 0.0001);
+    par_shapes_remove_degenerate(m, par_shapes__epsilon_degenerate_sphere);
     return m;
 }
 
@@ -579,6 +619,15 @@ static void par_shapes__cylinder(float const* uv, float* xyz, void* userdata)
     xyz[2] = uv[0];
 }
 
+static void par_shapes__cone(float const* uv, float* xyz, void* userdata)
+{
+    float r = 1.0f - uv[0];
+    float theta = uv[1] * 2 * PAR_PI;
+    xyz[0] = r * sinf(theta);
+    xyz[1] = r * cosf(theta);
+    xyz[2] = uv[0];
+}
+
 static void par_shapes__torus(float const* uv, float* xyz, void* userdata)
 {
     float major = 1;
@@ -618,6 +667,14 @@ static void par_shapes__trefoil(float const* uv, float* xyz, void* userdata)
     xyz[0] = x + d * (qvn[0] * cos(v) + ww[0] * sin(v));
     xyz[1] = y + d * (qvn[1] * cos(v) + ww[1] * sin(v));
     xyz[2] = z + d * ww[2] * sin(v);
+}
+
+void par_shapes_set_epsilon_welded_normals(float epsilon) {
+    par_shapes__epsilon_welded_normals = epsilon;
+}
+
+void par_shapes_set_epsilon_degenerate_sphere(float epsilon) {
+    par_shapes__epsilon_degenerate_sphere = epsilon;
 }
 
 void par_shapes_merge(par_shapes_mesh* dst, par_shapes_mesh const* src)
@@ -744,15 +801,15 @@ void par_shapes_rotate(par_shapes_mesh* mesh, float radians, float const* axis)
         p[1] = y;
         p[2] = z;
     }
-    p = mesh->normals;
-    if (p) {
-        for (int i = 0; i < mesh->npoints; i++, p += 3) {
-            float x = col0[0] * p[0] + col1[0] * p[1] + col2[0] * p[2];
-            float y = col0[1] * p[0] + col1[1] * p[1] + col2[1] * p[2];
-            float z = col0[2] * p[0] + col1[2] * p[1] + col2[2] * p[2];
-            p[0] = x;
-            p[1] = y;
-            p[2] = z;
+    float* n = mesh->normals;
+    if (n) {
+        for (int i = 0; i < mesh->npoints; i++, n += 3) {
+            float x = col0[0] * n[0] + col1[0] * n[1] + col2[0] * n[2];
+            float y = col0[1] * n[0] + col1[1] * n[1] + col2[1] * n[2];
+            float z = col0[2] * n[0] + col1[2] * n[1] + col2[2] * n[2];
+            n[0] = x;
+            n[1] = y;
+            n[2] = z;
         }
     }
 }
@@ -764,6 +821,27 @@ void par_shapes_scale(par_shapes_mesh* m, float x, float y, float z)
         *points++ *= x;
         *points++ *= y;
         *points++ *= z;
+    }
+    float* n = m->normals;
+    if (n && !(x == y && y == z)) {
+        bool x_zero = x == 0;
+        bool y_zero = y == 0;
+        bool z_zero = z == 0;
+        if (!x_zero && !y_zero && !z_zero) {
+            x = 1.0f / x;
+            y = 1.0f / y;
+            z = 1.0f / z;
+        } else {
+            x = x_zero && !y_zero && !z_zero;
+            y = y_zero && !x_zero && !z_zero;
+            z = z_zero && !x_zero && !y_zero;
+        }
+        for (int i = 0; i < m->npoints; i++, n += 3) {
+            n[0] *= x;
+            n[1] *= y;
+            n[2] *= z;
+            par_shapes__normalize3(n);
+        }
     }
 }
 
@@ -1098,8 +1176,8 @@ static par_shapes_mesh* par_shapes__apply_turtle(par_shapes_mesh* mesh,
     return m;
 }
 
-static void par_shapes__connect(par_shapes_mesh* scene,
-    par_shapes_mesh* cylinder, int slices)
+void par_shapes__connect(par_shapes_mesh* scene, par_shapes_mesh* cylinder,
+    int slices)
 {
     int stacks = 1;
     int npoints = (slices + 1) * (stacks + 1);
@@ -1118,7 +1196,8 @@ static void par_shapes__connect(par_shapes_mesh* scene,
     // Create the new triangle list.
     int ntriangles = scene->ntriangles + 2 * slices * stacks;
     PAR_SHAPES_T* triangles = PAR_MALLOC(PAR_SHAPES_T, ntriangles * 3);
-    memcpy(triangles, scene->triangles, 2 * scene->ntriangles * 3);
+    memcpy(triangles, scene->triangles,
+        sizeof(PAR_SHAPES_T) * scene->ntriangles * 3);
     int v = scene->npoints - (slices + 1);
     PAR_SHAPES_T* face = triangles + scene->ntriangles * 3;
     for (int stack = 0; stack < stacks; stack++) {
@@ -1154,7 +1233,7 @@ par_shapes_mesh* par_shapes_create_lsystem(char const* text, int slices,
     while (cmd) {
         char *arg = strtok(0, " ");
         if (!arg) {
-            //puts("lsystem error: unexpected end of program.");
+            puts("lsystem error: unexpected end of program.");
             break;
         }
         if (!strcmp(cmd, "rule")) {
@@ -1208,7 +1287,6 @@ par_shapes_mesh* par_shapes_create_lsystem(char const* text, int slices,
 
     // For testing purposes, dump out the parsed program.
     #ifdef TEST_PARSE
-    /*
     for (int i = 0; i < nrules; i++) {
         par_shapes__rule rule = rules[i];
         printf("rule %s.%d\n", rule.name, rule.weight);
@@ -1217,7 +1295,6 @@ par_shapes_mesh* par_shapes_create_lsystem(char const* text, int slices,
             printf("\t%s %s\n", cmd.cmd, cmd.arg);
         }
     }
-    */
     #endif
 
     // Instantiate the aggregated shape and the template shapes.
@@ -1258,7 +1335,8 @@ par_shapes_mesh* par_shapes_create_lsystem(char const* text, int slices,
 
         par_shapes__command* cmd = rule->commands + (frame->pc++);
         #ifdef DUMP_TRACE
-        //printf("%5s %5s %5s:%d  %03d\n", cmd->cmd, cmd->arg, rule->name, frame->pc - 1, stackptr);
+        printf("%5s %5s %5s:%d  %03d\n", cmd->cmd, cmd->arg, rule->name,
+            frame->pc - 1, stackptr);
         #endif
 
         float value;
@@ -1620,7 +1698,7 @@ static void par_shapes__weld_points(par_shapes_mesh* mesh, int gridsize,
                     PAR_SHAPES_T binvalue = *(bins + binindex);
                     if (binvalue > 0) {
                         if (nbins == 8) {
-                            //printf("Epsilon value is too large.\n");
+                            printf("Epsilon value is too large.\n");
                             break;
                         }
                         nearby[nbins++] = binindex;
@@ -1632,8 +1710,9 @@ static void par_shapes__weld_points(par_shapes_mesh* mesh, int gridsize,
         // Check for colocated points in each nearby bin.
         for (int b = 0; b < nbins; b++) {
             int binindex = nearby[b];
-            PAR_SHAPES_T binvalue = *(bins + binindex);
+            PAR_SHAPES_T binvalue = bins[binindex];
             PAR_SHAPES_T nindex = binvalue - 1;
+            assert(nindex < mesh->npoints);
             while (true) {
 
                 // If this isn't "self" and it's colocated, then weld it!
@@ -1699,6 +1778,9 @@ static void par_shapes__weld_points(par_shapes_mesh* mesh, int gridsize,
         PAR_SHAPES_T b = weldmap[tsrc[1]];
         PAR_SHAPES_T c = weldmap[tsrc[2]];
         if (a != b && a != c && b != c) {
+            assert(a < mesh->npoints);
+            assert(b < mesh->npoints);
+            assert(c < mesh->npoints);
             *tdst++ = a;
             *tdst++ = b;
             *tdst++ = c;
@@ -2049,3 +2131,25 @@ void par_shapes_remove_degenerate(par_shapes_mesh* mesh, float mintriarea)
 
 #endif // PAR_SHAPES_IMPLEMENTATION
 #endif // PAR_SHAPES_H
+
+// par_shapes is distributed under the MIT license:
+//
+// Copyright (c) 2019 Philip Rideout
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+// SOFTWARE.

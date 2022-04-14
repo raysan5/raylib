@@ -1,11 +1,18 @@
 name: Linux Examples
 
 on:
+  workflow_dispatch:
   push:
+    paths:
+      - 'src/**'
+      - 'examples/**'
+      - '.github/workflows/linux_examples.yml'
   pull_request:
     branches: [ master ]
     paths:
-    - 'examples/**'
+      - 'src/**'
+      - 'examples/**'
+      - '.github/workflows/linux_examples.yml'
 
 jobs:
   build:
