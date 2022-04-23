@@ -77,6 +77,10 @@
     #define PI 3.14159265358979323846f
 #endif
 
+#ifndef EPSILON
+    #define EPSILON 0.000001f
+#endif
+
 #ifndef DEG2RAD
     #define DEG2RAD (PI/180.0f)
 #endif
@@ -155,6 +159,7 @@ typedef struct float16 {
 } float16;
 
 #include <math.h>       // Required for: sinf(), cosf(), tan(), atan2f(), sqrtf(), fminf(), fmaxf(), fabs()
+#include <stdbool.h>    // Required for: bool, false, true
 
 //----------------------------------------------------------------------------------
 // Module Functions Definition - Utils math
@@ -190,6 +195,14 @@ RMAPI float Normalize(float value, float start, float end)
 RMAPI float Remap(float value, float inputStart, float inputEnd, float outputStart, float outputEnd)
 {
     float result = (value - inputStart)/(inputEnd - inputStart)*(outputEnd - outputStart) + outputStart;
+
+    return result;
+}
+
+// Check whether two given floats are almost equal
+RMAPI bool FloatEquals(float x, float y)
+{
+    bool result = (fabsf(x - y)) <= (EPSILON * fmaxf(1.0f, fmaxf(fabsf(x), fabsf(y))));
 
     return result;
 }
@@ -410,6 +423,63 @@ RMAPI Vector2 Vector2MoveTowards(Vector2 v, Vector2 target, float maxDistance)
 
     result.x = v.x + dx/dist*maxDistance;
     result.y = v.y + dy/dist*maxDistance;
+
+    return result;
+}
+
+// Invert the given vector
+RMAPI Vector2 Vector2Invert(Vector2 v)
+{
+    Vector2 result = { 1.0f / v.x, 1.0f / v.y };
+
+    return result;
+}
+
+// Clamp the components of the vector between
+// min and max values specified by the given vectors
+RMAPI Vector2 Vector2Clamp(Vector2 v, Vector2 min, Vector2 max)
+{
+    Vector2 result = { 0 };
+
+    result.x = fminf(max.x, fmaxf(min.x, v.x));
+    result.y = fminf(max.y, fmaxf(min.y, v.y));
+
+    return result;
+}
+
+// Clamp the magnitude of the vector between two
+// given min and max values
+RMAPI Vector2 Vector2ClampValue(Vector2 v, float minMag, float maxMag)
+{
+    Vector2 result = { 0 };
+
+    float length = (v.x * v.x) + (v.y * v.y);
+    if (length > 0.0f)
+    {
+        length = sqrtf(length);
+
+        if (length < minMag)
+        {
+            float scale = minMag / length;
+            result.x = v.x * scale;
+            result.y = v.y * scale;
+        }
+        else if (length > maxMag)
+        {
+            float scale = maxMag / length;
+            result.x = v.x * scale;
+            result.y = v.y * scale;
+        }
+    }
+
+    return result;
+}
+
+// Check whether two given vectors are almost equal
+RMAPI bool Vector2Equals(Vector2 p, Vector2 q)
+{
+    bool result = ((fabsf(p.x - q.x)) <= (EPSILON * fmaxf(1.0f, fmaxf(fabsf(p.x), fabsf(q.x))))) &&
+                  ((fabsf(p.y - q.y)) <= (EPSILON * fmaxf(1.0f, fmaxf(fabsf(p.y), fabsf(q.y)))));
 
     return result;
 }
@@ -849,6 +919,96 @@ RMAPI float3 Vector3ToFloatV(Vector3 v)
     buffer.v[2] = v.z;
 
     return buffer;
+}
+
+// Invert the given vector
+RMAPI Vector3 Vector3Invert(Vector3 v)
+{
+    Vector3 result = { 1.0f / v.x, 1.0f / v.y, 1.0f / v.z };
+
+    return result;
+}
+
+// Clamp the components of the vector between
+// min and max values specified by the given vectors
+RMAPI Vector3 Vector3Clamp(Vector3 v, Vector3 min, Vector3 max)
+{
+    Vector3 result = { 0 };
+
+    result.x = fminf(max.x, fmaxf(min.x, v.x));
+    result.y = fminf(max.y, fmaxf(min.y, v.y));
+    result.z = fminf(max.z, fmaxf(min.z, v.z));
+
+    return result;
+}
+
+// Clamp the magnitude of the vector between two
+// given min and max values
+RMAPI Vector3 Vector3ClampValue(Vector3 v, float minMag, float maxMag)
+{
+    Vector3 result = { 0 };
+
+    float length = (v.x * v.x) + (v.y * v.y) + (v.z * v.z);
+    if (length > 0.0f)
+    {
+        length = sqrtf(length);
+
+        if (length < minMag)
+        {
+            float scale = minMag / length;
+            result.x = v.x * scale;
+            result.y = v.y * scale;
+            result.z = v.z * scale;
+        }
+        else if (length > maxMag)
+        {
+            float scale = maxMag / length;
+            result.x = v.x * scale;
+            result.y = v.y * scale;
+            result.z = v.z * scale;
+        }
+    }
+
+    return result;
+}
+
+// Check whether two given vectors are almost equal
+RMAPI bool Vector3Equals(Vector3 p, Vector3 q)
+{
+    bool result = ((fabsf(p.x - q.x)) <= (EPSILON * fmaxf(1.0f, fmaxf(fabsf(p.x), fabsf(q.x))))) &&
+                  ((fabsf(p.y - q.y)) <= (EPSILON * fmaxf(1.0f, fmaxf(fabsf(p.y), fabsf(q.y))))) &&
+                  ((fabsf(p.z - q.z)) <= (EPSILON * fmaxf(1.0f, fmaxf(fabsf(p.z), fabsf(q.z)))));
+
+    return result;
+}
+
+// Compute the direction of a refracted ray where v specifies the
+// normalized direction of the incoming ray, n specifies the
+// normalized normal vector of the interface of two optical media,
+// and r specifies the ratio of the refractive index of the medium
+// from where the ray comes to the refractive index of the medium
+// on the other side of the surface
+RMAPI Vector3 Vector3Refract(Vector3 v, Vector3 n, float r)
+{
+    Vector3 result = { 0 };
+
+    float dot = v.x * n.x + v.y * n.y + v.z * n.z;
+
+    float d = 1.0f - r * r * (1.0f - dot * dot);
+    if (d < 0.0f)
+    {
+        // Total internal reflection
+        return result;
+    }
+    else
+    {
+        d = sqrtf(d);
+        v.x = r * v.x - (r * dot + d) * n.x;
+        v.y = r * v.y - (r * dot + d) * n.y;
+        v.z = r * v.z - (r * dot + d) * n.z;
+
+        return result;
+    }
 }
 
 //----------------------------------------------------------------------------------
@@ -1840,6 +2000,17 @@ RMAPI Quaternion QuaternionTransform(Quaternion q, Matrix mat)
     result.y = mat.m1*q.x + mat.m5*q.y + mat.m9*q.z + mat.m13*q.w;
     result.z = mat.m2*q.x + mat.m6*q.y + mat.m10*q.z + mat.m14*q.w;
     result.w = mat.m3*q.x + mat.m7*q.y + mat.m11*q.z + mat.m15*q.w;
+
+    return result;
+}
+
+// Check whether two given quaternions are almost equal
+RMAPI bool QuaternionEquals(Quaternion p, Quaternion q)
+{
+    bool result = ((fabsf(p.x - q.x)) <= (EPSILON * fmaxf(1.0f, fmaxf(fabsf(p.x), fabsf(q.x))))) &&
+                  ((fabsf(p.y - q.y)) <= (EPSILON * fmaxf(1.0f, fmaxf(fabsf(p.y), fabsf(q.y))))) &&
+                  ((fabsf(p.z - q.z)) <= (EPSILON * fmaxf(1.0f, fmaxf(fabsf(p.z), fabsf(q.z))))) &&
+                  ((fabsf(p.w - q.w)) <= (EPSILON * fmaxf(1.0f, fmaxf(fabsf(p.w), fabsf(q.w)))));
 
     return result;
 }
