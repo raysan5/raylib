@@ -447,8 +447,7 @@ RMAPI Vector2 Vector2Clamp(Vector2 v, Vector2 min, Vector2 max)
     return result;
 }
 
-// Clamp the magnitude of the vector between two
-// given min and max values
+// Clamp the magnitude of the vector between two min and max values
 RMAPI Vector2 Vector2ClampValue(Vector2 v, float min, float max)
 {
     Vector2 result = { 0 };
@@ -942,9 +941,8 @@ RMAPI Vector3 Vector3Clamp(Vector3 v, Vector3 min, Vector3 max)
     return result;
 }
 
-// Clamp the magnitude of the vector between two
-// given min and max values
-RMAPI Vector3 Vector3ClampValue(Vector3 v, float minMag, float maxMag)
+// Clamp the magnitude of the vector between two values
+RMAPI Vector3 Vector3ClampValue(Vector3 v, float min, float max)
 {
     Vector3 result = { 0 };
 
@@ -953,16 +951,16 @@ RMAPI Vector3 Vector3ClampValue(Vector3 v, float minMag, float maxMag)
     {
         length = sqrtf(length);
 
-        if (length < minMag)
+        if (length < min)
         {
-            float scale = minMag/length;
+            float scale = min/length;
             result.x = v.x*scale;
             result.y = v.y*scale;
             result.z = v.z*scale;
         }
-        else if (length > maxMag)
+        else if (length > max)
         {
-            float scale = maxMag/length;
+            float scale = max/length;
             result.x = v.x*scale;
             result.y = v.y*scale;
             result.z = v.z*scale;
