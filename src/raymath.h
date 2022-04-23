@@ -159,7 +159,6 @@ typedef struct float16 {
 } float16;
 
 #include <math.h>       // Required for: sinf(), cosf(), tan(), atan2f(), sqrtf(), fminf(), fmaxf(), fabs()
-#include <stdbool.h>    // Required for: bool, false, true
 
 //----------------------------------------------------------------------------------
 // Module Functions Definition - Utils math
@@ -200,9 +199,9 @@ RMAPI float Remap(float value, float inputStart, float inputEnd, float outputSta
 }
 
 // Check whether two given floats are almost equal
-RMAPI bool FloatEquals(float x, float y)
+RMAPI int FloatEquals(float x, float y)
 {
-    bool result = (fabsf(x - y)) <= (EPSILON*fmaxf(1.0f, fmaxf(fabsf(x), fabsf(y))));
+    int result = (fabsf(x - y)) <= (EPSILON*fmaxf(1.0f, fmaxf(fabsf(x), fabsf(y))));
 
     return result;
 }
@@ -475,9 +474,9 @@ RMAPI Vector2 Vector2ClampValue(Vector2 v, float min, float max)
 }
 
 // Check whether two given vectors are almost equal
-RMAPI bool Vector2Equals(Vector2 p, Vector2 q)
+RMAPI int Vector2Equals(Vector2 p, Vector2 q)
 {
-    bool result = ((fabsf(p.x - q.x)) <= (EPSILON*fmaxf(1.0f, fmaxf(fabsf(p.x), fabsf(q.x))))) &&
+    int result = ((fabsf(p.x - q.x)) <= (EPSILON*fmaxf(1.0f, fmaxf(fabsf(p.x), fabsf(q.x))))) &&
                   ((fabsf(p.y - q.y)) <= (EPSILON*fmaxf(1.0f, fmaxf(fabsf(p.y), fabsf(q.y)))));
 
     return result;
@@ -971,9 +970,9 @@ RMAPI Vector3 Vector3ClampValue(Vector3 v, float min, float max)
 }
 
 // Check whether two given vectors are almost equal
-RMAPI bool Vector3Equals(Vector3 p, Vector3 q)
+RMAPI int Vector3Equals(Vector3 p, Vector3 q)
 {
-    bool result = ((fabsf(p.x - q.x)) <= (EPSILON*fmaxf(1.0f, fmaxf(fabsf(p.x), fabsf(q.x))))) &&
+    int result = ((fabsf(p.x - q.x)) <= (EPSILON*fmaxf(1.0f, fmaxf(fabsf(p.x), fabsf(q.x))))) &&
                   ((fabsf(p.y - q.y)) <= (EPSILON*fmaxf(1.0f, fmaxf(fabsf(p.y), fabsf(q.y))))) &&
                   ((fabsf(p.z - q.z)) <= (EPSILON*fmaxf(1.0f, fmaxf(fabsf(p.z), fabsf(q.z)))));
 
@@ -2000,9 +1999,9 @@ RMAPI Quaternion QuaternionTransform(Quaternion q, Matrix mat)
 }
 
 // Check whether two given quaternions are almost equal
-RMAPI bool QuaternionEquals(Quaternion p, Quaternion q)
+RMAPI int QuaternionEquals(Quaternion p, Quaternion q)
 {
-    bool result = ((fabsf(p.x - q.x)) <= (EPSILON*fmaxf(1.0f, fmaxf(fabsf(p.x), fabsf(q.x))))) &&
+    int result = ((fabsf(p.x - q.x)) <= (EPSILON*fmaxf(1.0f, fmaxf(fabsf(p.x), fabsf(q.x))))) &&
                   ((fabsf(p.y - q.y)) <= (EPSILON*fmaxf(1.0f, fmaxf(fabsf(p.y), fabsf(q.y))))) &&
                   ((fabsf(p.z - q.z)) <= (EPSILON*fmaxf(1.0f, fmaxf(fabsf(p.z), fabsf(q.z))))) &&
                   ((fabsf(p.w - q.w)) <= (EPSILON*fmaxf(1.0f, fmaxf(fabsf(p.w), fabsf(q.w)))));
