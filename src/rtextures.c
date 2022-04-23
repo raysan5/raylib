@@ -1889,10 +1889,10 @@ void ImageColorTint(Image *image, Color color)
             unsigned char b = (unsigned char)(((float)pixels[index].b/255*cB)*255.0f);
             unsigned char a = (unsigned char)(((float)pixels[index].a/255*cA)*255.0f);
 
-            pixels[y*image->width + x].r = r;
-            pixels[y*image->width + x].g = g;
-            pixels[y*image->width + x].b = b;
-            pixels[y*image->width + x].a = a;
+            pixels[index].r = r;
+            pixels[index].g = g;
+            pixels[index].b = b;
+            pixels[index].a = a;
         }
     }
 
@@ -2411,7 +2411,20 @@ Color GetImageColor(Image image, int x, int y)
 // Clear image background with given color
 void ImageClearBackground(Image *dst, Color color)
 {
-    for (int i = 0; i < dst->width*dst->height; ++i) ImageDrawPixel(dst, i%dst->width, i/dst->width, color);
+    // Security check to avoid program crash
+    if ((dst->data == NULL) || (dst->width == 0) || (dst->height == 0)) return;
+
+    // Fill in first pixel based on image format
+    ImageDrawPixel(dst, 0, 0, color);
+
+    unsigned char *pSrcPixel = (unsigned char *)dst->data;
+    int bytesPerPixel = GetPixelDataSize(1, 1, dst->format);
+
+    // Repeat the first pixel data throughout the image
+    for (int i = 1; i < dst->width * dst->height; i++)
+    {
+        memcpy(pSrcPixel + i * bytesPerPixel, pSrcPixel, bytesPerPixel);
+    }
 }
 
 // Draw pixel within an image
@@ -2685,13 +2698,21 @@ void ImageDrawRectangleRec(Image *dst, Rectangle rec, Color color)
     int ey = sy + (int)rec.height;
 
     int sx = (int)rec.x;
-    int ex = sx + (int)rec.width;
+
+    int bytesPerPixel = GetPixelDataSize(1, 1, dst->format);
 
     for (int y = sy; y < ey; y++)
     {
-        for (int x = sx; x < ex; x++)
+        // Fill in the first pixel of the row based on image format
+        ImageDrawPixel(dst, sx, y, color);
+
+        int bytesOffset = ((y * dst->width) + sx) * bytesPerPixel;
+        unsigned char *pSrcPixel = (unsigned char *)dst->data + bytesOffset;
+
+        // Repeat the first pixel data throughout the row
+        for (int x = 1; x < (int)rec.width; x++)
         {
-            ImageDrawPixel(dst, x, y, color);
+            memcpy(pSrcPixel + x * bytesPerPixel, pSrcPixel, bytesPerPixel);
         }
     }
 }
