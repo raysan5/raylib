@@ -504,54 +504,6 @@ RMAPI Vector3 Vector3One(void)
     return result;
 }
 
-// Vector pointing toward the positive Y-axis
-RMAPI Vector3 Vector3Up(void)
-{
-    Vector3 result = { 0.0f, 1.0f, 0.0f };
-
-    return result;
-}
-
-// Vector pointing toward the negative Y-axis
-RMAPI Vector3 Vector3Down(void)
-{
-    Vector3 result = { 0.0f, -1.0f, 0.0f };
-
-    return result;
-}
-
-// Vector pointing toward the positive X-axis
-RMAPI Vector3 Vector3Right(void)
-{
-    Vector3 result = { 1.0f, 0.0f, 0.0f };
-
-    return result;
-}
-
-// Vector pointing toward the negative X-axis
-RMAPI Vector3 Vector3Left(void)
-{
-    Vector3 result = { -1.0f, 0.0f, 0.0f };
-
-    return result;
-}
-
-// Vector pointing toward the negative Z-axis
-RMAPI Vector3 Vector3Forward(void)
-{
-    Vector3 result = { 0.0f, 0.0f, -1.0f };
-
-    return result;
-}
-
-// Vector pointing toward the positive Z-axis
-RMAPI Vector3 Vector3Backward(void)
-{
-    Vector3 result = { 0.0f, 0.0f, 1.0f };
-
-    return result;
-}
-
 // Add two vectors
 RMAPI Vector3 Vector3Add(Vector3 v1, Vector3 v2)
 {
