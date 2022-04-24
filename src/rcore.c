@@ -5409,7 +5409,7 @@ static void MouseCursorPosCallback(GLFWwindow *window, double x, double y)
 // GLFW3 Scrolling Callback, runs on mouse wheel
 static void MouseScrollCallback(GLFWwindow *window, double xoffset, double yoffset)
 {
-    if ((float)xoffset != 0.0f) CORE.Input.Mouse.currentWheelMove = (float)xoffset;
+    if (fabs(xoffset)>fabs(yoffset)) CORE.Input.Mouse.currentWheelMove = (float)xoffset;
     else CORE.Input.Mouse.currentWheelMove = (float)yoffset;
 }
 
