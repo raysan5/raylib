@@ -927,13 +927,10 @@ typedef struct rlglData {
         int glBlendDstFactor;               // Blending destination factor
         int glBlendEquation;                // Blending equation
 
-        int framebufferWidth;               // Default framebuffer width
-        int framebufferHeight;              // Default framebuffer height
-        
-        int viewportX;                      // Current opengl viewport offset x
-        int viewportY;                      // Current opengl viewport offset y
-        int viewportWidth;                  // Current opengl viewport width
-        int viewportHeight;                 // Current opengl viewport height
+        int viewportX;                      // Current viewport offset x
+        int viewportY;                      // Current viewport offset y
+        int framebufferWidth;               // Current viewport width (framebuffer)
+        int framebufferHeight;              // Current viewport height (framebuffer)
 
     } State;            // Renderer state
     struct {
@@ -1239,8 +1236,8 @@ void rlViewport(int x, int y, int width, int height)
 {
     RLGL.State.viewportX = x;
     RLGL.State.viewportY = y;
-    RLGL.State.viewportWidth = width;
-    RLGL.State.viewportHeight = height;
+    RLGL.State.framebufferWidth = width;
+    RLGL.State.framebufferHeight = height;
 
     glViewport(x, y, width, height);
 }
