@@ -179,7 +179,7 @@
 
 #include <stdlib.h>                 // Required for: srand(), rand(), atexit()
 #include <stdio.h>                  // Required for: sprintf() [Used in OpenURL()]
-#include <string.h>                 // Required for: strrchr(), strcmp(), strlen()
+#include <string.h>                 // Required for: strrchr(), strcmp(), strlen(), memset()
 #include <time.h>                   // Required for: time() [Used in InitTimer()]
 #include <math.h>                   // Required for: tan() [Used in BeginMode3D()], atan2f() [Used in LoadVrStereoConfig()]
 
@@ -754,8 +754,9 @@ void InitWindow(int width, int height, const char *title)
 #endif
 
     if ((title != NULL) && (title[0] != 0)) CORE.Window.title = title;
-
-    // Initialize required global values different than 0
+    
+    // Initialize global input state
+    memset(&CORE.Input, 0, sizeof(CORE.Input));
     CORE.Input.Keyboard.exitKey = KEY_ESCAPE;
     CORE.Input.Mouse.scale = (Vector2){ 1.0f, 1.0f };
     CORE.Input.Mouse.cursor = MOUSE_CURSOR_ARROW;
