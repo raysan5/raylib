@@ -1232,6 +1232,7 @@ void rlOrtho(double left, double right, double bottom, double top, double znear,
 #endif
 
 // Set the viewport area (transformation from normalized device coordinates to window coordinates)
+// NOTE: We store current viewport dimensions
 void rlViewport(int x, int y, int width, int height)
 {
     RLGL.State.viewportX = x;
@@ -2501,11 +2502,6 @@ void rlDrawRenderBatch(rlRenderBatch *batch)
     Matrix matProjection = RLGL.State.projection;
     Matrix matModelView = RLGL.State.modelview;
 
-    int originalViewportX = RLGL.State.viewportX;
-    int originalViewportY = RLGL.State.viewportY;
-    int originalViewportWidth = RLGL.State.viewportWidth;
-    int originalViewportHeight = RLGL.State.viewportHeight;
-
     int eyeCount = 1;
     if (RLGL.State.stereoRender) eyeCount = 2;
 
@@ -2514,7 +2510,8 @@ void rlDrawRenderBatch(rlRenderBatch *batch)
         if (eyeCount == 2)
         {
             // Setup current eye viewport (half screen width)
-            rlViewport(originalViewportX + eye * originalViewportWidth / 2, originalViewportY, originalViewportWidth / 2, originalViewportHeight);
+            // NOTE: We use glViewport() because rlViewport() stores viewport measures in RLGL.State
+            glViewport(RLGL.State.viewportX + eye*RLGL.State.framebufferWidth/2, RLGL.State.viewportY, RLGL.State.framebufferWidth/2, RLGL.State.framebufferHeight);
 
             // Set current eye view offset to modelview matrix
             rlSetMatrixModelview(rlMatrixMultiply(matModelView, RLGL.State.viewOffsetStereo[eye]));
@@ -2614,7 +2611,8 @@ void rlDrawRenderBatch(rlRenderBatch *batch)
         glUseProgram(0);    // Unbind shader program
     }
 
-    if (eyeCount == 2) rlViewport(originalViewportX, originalViewportY, originalViewportWidth, originalViewportHeight);
+    // Restore viewport to default measures
+    if (eyeCount == 2) glViewport(RLGL.State.viewportX, RLGL.State.viewportY, RLGL.State.framebufferWidth, RLGL.State.framebufferHeight);
     //------------------------------------------------------------------------------------------------------------
 
     // Reset batch buffers
