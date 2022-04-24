@@ -2201,8 +2201,10 @@ void BeginTextureMode(RenderTexture2D target)
 
     rlEnableFramebuffer(target.id); // Enable render target
 
-    // Set viewport to framebuffer size
+    // Set viewport and RLGL internal framebuffer size
     rlViewport(0, 0, target.texture.width, target.texture.height);
+    rlSetFramebufferWidth(target.texture.width);
+    rlSetFramebufferHeight(target.texture.height);
 
     rlMatrixMode(RL_PROJECTION);    // Switch to projection matrix
     rlLoadIdentity();               // Reset current matrix (projection)

@@ -598,7 +598,9 @@ RLAPI void rlglInit(int width, int height);           // Initialize rlgl (buffer
 RLAPI void rlglClose(void);                           // De-inititialize rlgl (buffers, shaders, textures)
 RLAPI void rlLoadExtensions(void *loader);            // Load OpenGL extensions (loader function required)
 RLAPI int rlGetVersion(void);                         // Get current OpenGL version
+RLAPI int rlSetFramebufferWidth(int width);           // Set current framebuffer width
 RLAPI int rlGetFramebufferWidth(void);                // Get default framebuffer width
+RLAPI int rlSetFramebufferHeight(int height);         // Set current framebuffer height
 RLAPI int rlGetFramebufferHeight(void);               // Get default framebuffer height
 
 RLAPI unsigned int rlGetTextureIdDefault(void);       // Get default texture id
@@ -927,10 +929,8 @@ typedef struct rlglData {
         int glBlendDstFactor;               // Blending destination factor
         int glBlendEquation;                // Blending equation
 
-        int viewportX;                      // Current viewport offset x
-        int viewportY;                      // Current viewport offset y
-        int framebufferWidth;               // Current viewport width (framebuffer)
-        int framebufferHeight;              // Current viewport height (framebuffer)
+        int framebufferWidth;               // Current framebuffer width
+        int framebufferHeight;              // Current framebuffer height
 
     } State;            // Renderer state
     struct {
@@ -1235,11 +1235,6 @@ void rlOrtho(double left, double right, double bottom, double top, double znear,
 // NOTE: We store current viewport dimensions
 void rlViewport(int x, int y, int width, int height)
 {
-    RLGL.State.viewportX = x;
-    RLGL.State.viewportY = y;
-    RLGL.State.framebufferWidth = width;
-    RLGL.State.framebufferHeight = height;
-
     glViewport(x, y, width, height);
 }
 
@@ -2227,6 +2222,22 @@ int rlGetVersion(void)
     return glVersion;
 }
 
+// Set current framebuffer width
+int rlSetFramebufferWidth(int width)
+{
+#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
+    RLGL.State.framebufferWidth = width;
+#endif
+}
+
+// Set current framebuffer height
+int rlSetFramebufferHeight(int height)
+{
+#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
+    RLGL.State.framebufferHeight = height;
+#endif
+}
+
 // Get default framebuffer width
 int rlGetFramebufferWidth(void)
 {
@@ -2510,8 +2521,7 @@ void rlDrawRenderBatch(rlRenderBatch *batch)
         if (eyeCount == 2)
         {
             // Setup current eye viewport (half screen width)
-            // NOTE: We use glViewport() because rlViewport() stores viewport measures in RLGL.State
-            glViewport(RLGL.State.viewportX + eye*RLGL.State.framebufferWidth/2, RLGL.State.viewportY, RLGL.State.framebufferWidth/2, RLGL.State.framebufferHeight);
+            rlViewport(eye*RLGL.State.framebufferWidth/2, 0, RLGL.State.framebufferWidth/2, RLGL.State.framebufferHeight);
 
             // Set current eye view offset to modelview matrix
             rlSetMatrixModelview(rlMatrixMultiply(matModelView, RLGL.State.viewOffsetStereo[eye]));
@@ -2612,7 +2622,7 @@ void rlDrawRenderBatch(rlRenderBatch *batch)
     }
 
     // Restore viewport to default measures
-    if (eyeCount == 2) glViewport(RLGL.State.viewportX, RLGL.State.viewportY, RLGL.State.framebufferWidth, RLGL.State.framebufferHeight);
+    if (eyeCount == 2) rlViewport(0, 0, RLGL.State.framebufferWidth, RLGL.State.framebufferHeight);
     //------------------------------------------------------------------------------------------------------------
 
     // Reset batch buffers
