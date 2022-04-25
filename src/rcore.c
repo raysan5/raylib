@@ -4841,7 +4841,7 @@ void WaitTime(float ms)
         double currentTime = 0.0;
 
         // Partial busy wait loop (only a fraction of the total wait time)
-        while ((currentTime - previousTime) < busyWait/1000.0f) currentTime = GetTime();
+        while ((currentTime - previousTime) < (busyWait/1000.0f)) currentTime = GetTime();
     #endif
 #endif
 }
@@ -6473,7 +6473,7 @@ static void InitGamepad(void)
     {
         sprintf(gamepadDev, "%s%i", DEFAULT_GAMEPAD_DEV, i);
 
-        if ((CORE.Input.Gamepad.streamId[i] = open(gamepadDev, O_RDONLY|O_NONBLOCK)) < 0)
+        if ((CORE.Input.Gamepad.streamId[i] = open(gamepadDev, O_RDONLY | O_NONBLOCK)) < 0)
         {
             // NOTE: Only show message for first gamepad
             if (i == 0) TRACELOG(LOG_WARNING, "RPI: Failed to open Gamepad device, no gamepad available");
