@@ -598,9 +598,9 @@ RLAPI void rlglInit(int width, int height);           // Initialize rlgl (buffer
 RLAPI void rlglClose(void);                           // De-inititialize rlgl (buffers, shaders, textures)
 RLAPI void rlLoadExtensions(void *loader);            // Load OpenGL extensions (loader function required)
 RLAPI int rlGetVersion(void);                         // Get current OpenGL version
-RLAPI int rlSetFramebufferWidth(int width);           // Set current framebuffer width
+RLAPI void rlSetFramebufferWidth(int width);          // Set current framebuffer width
 RLAPI int rlGetFramebufferWidth(void);                // Get default framebuffer width
-RLAPI int rlSetFramebufferHeight(int height);         // Set current framebuffer height
+RLAPI void rlSetFramebufferHeight(int height);        // Set current framebuffer height
 RLAPI int rlGetFramebufferHeight(void);               // Get default framebuffer height
 
 RLAPI unsigned int rlGetTextureIdDefault(void);       // Get default texture id
@@ -2223,7 +2223,7 @@ int rlGetVersion(void)
 }
 
 // Set current framebuffer width
-int rlSetFramebufferWidth(int width)
+void rlSetFramebufferWidth(int width)
 {
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     RLGL.State.framebufferWidth = width;
@@ -2231,7 +2231,7 @@ int rlSetFramebufferWidth(int width)
 }
 
 // Set current framebuffer height
-int rlSetFramebufferHeight(int height)
+void rlSetFramebufferHeight(int height)
 {
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     RLGL.State.framebufferHeight = height;
