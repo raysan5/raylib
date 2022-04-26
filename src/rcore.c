@@ -5979,7 +5979,8 @@ static void InitEvdevInput(void)
     {
         while ((entity = readdir(directory)) != NULL)
         {
-            if (strncmp("event", entity->d_name, strlen("event")) == 0)         // Search for devices named "event*"
+            if ((strncmp("event", entity->d_name, strlen("event")) == 0) ||     // Search for devices named "event*"
+                (strncmp("mouse", entity->d_name, strlen("mouse")) == 0))       // Search for devices named "mouse*"
             {
                 sprintf(path, "%s%s", DEFAULT_EVDEV_PATH, entity->d_name);
                 ConfigureEvdevDevice(path);                                     // Configure the device if appropriate
