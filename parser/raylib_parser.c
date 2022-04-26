@@ -182,7 +182,7 @@ int main(int argc, char* argv[])
     // Function lines pointers, selected from buffer "lines"
     char **funcLines = (char **)malloc(MAX_FUNCS_TO_PARSE*sizeof(char *));
 
-    // Structs data (multiple lines), selected from "buffer"
+    // Structs lines pointers, selected from buffer "lines"
     int *structLines = (int *)malloc(MAX_STRUCTS_TO_PARSE*sizeof(int));
 
     // Enums lines pointers, selected from buffer "lines"
@@ -1000,6 +1000,7 @@ static void ExportParsedData(const char *fileName, int format)
                 if (funcs[i].paramCount == 0) fprintf(outFile, "  No input parameters\n");
             }
 
+            // Print defines info
             fprintf(outFile, "\nDefines found: %i\n\n", defineCount);
             for (int i = 0; i < defineCount; i++)
             {
@@ -1229,16 +1230,19 @@ static void ExportParsedData(const char *fileName, int format)
             <raylibAPI>
                 <Structs count="">
                     <Struct name="" fieldCount="" desc="">
-                        <Field type="" name="" desc="">
-                        <Field type="" name="" desc="">
+                        <Field type="" name="" desc="" />
+                        <Field type="" name="" desc="" />
                     </Struct>
                 <Structs>
                 <Enums count="">
                     <Enum name="" valueCount="" desc="">
-                        <Value name="" integer="" desc="">
-                        <Value name="" integer="" desc="">
+                        <Value name="" integer="" desc="" />
+                        <Value name="" integer="" desc="" />
                     </Enum>
                 </Enums>
+                <Defines count="">
+                    <Define name="" type="" value="" desc="" />
+                </Defines>
                 <Functions count="">
                     <Function name="" retType="" paramCount="" desc="">
                         <Param type="" name="" desc="" />
