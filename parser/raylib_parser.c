@@ -118,7 +118,7 @@ typedef enum { UNKNOWN = 0, MACRO, GUARD, INT, LONG, FLOAT, DOUBLE, CHAR, STRING
 typedef struct DefineInfo {
     char name[64];    // Define name
     DefineType type;  // Define type
-		char value[256];  // Define value
+    char value[256];  // Define value
     char desc[128];   // Define description
     bool isHex;       // Define is hex number (for types INT, LONG)
 } DefineInfo;
@@ -824,7 +824,7 @@ static void GetDataTypeAndName(const char *typeName, int typeNameLen, char *type
         {
             MemoryCopy(type, "...", 3);
             MemoryCopy(name, "args", 4);
-	        break;
+            break;
         }
     }
 }
@@ -1006,8 +1006,8 @@ static void ExportParsedData(const char *fileName, int format)
                 fprintf(outFile, "Define %03i: %s\n", i + 1, defines[i].name);
                 fprintf(outFile, "  Name: %s\n", defines[i].name);
                 fprintf(outFile, "  Type: %s\n", StrDefineType(defines[i].type));
-								fprintf(outFile, "  Value: %s\n", defines[i].value);
-								fprintf(outFile, "  Description: %s\n", defines[i].desc + 3);
+                fprintf(outFile, "  Value: %s\n", defines[i].value);
+                fprintf(outFile, "  Description: %s\n", defines[i].desc + 3);
             }
         } break;
         case LUA:
@@ -1076,7 +1076,7 @@ static void ExportParsedData(const char *fileName, int format)
                 } else {
                     fprintf(outFile, "      value = \"%s\",\n", defines[i].value);
                 }
-								fprintf(outFile, "      description = \"%s\"\n", defines[i].desc + 3);
+                fprintf(outFile, "      description = \"%s\"\n", defines[i].desc + 3);
                 fprintf(outFile, "    }");
 
                 if (i < defineCount - 1) fprintf(outFile, ",\n");
@@ -1181,7 +1181,7 @@ static void ExportParsedData(const char *fileName, int format)
                 } else {
                     fprintf(outFile, "      \"value\": \"%s\",\n", defines[i].value);
                 }
-								fprintf(outFile, "      \"description\": \"%s\"\n", defines[i].desc + 3);
+                fprintf(outFile, "      \"description\": \"%s\"\n", defines[i].desc + 3);
                 fprintf(outFile, "    }");
 
                 if (i < defineCount - 1) fprintf(outFile, ",\n");
