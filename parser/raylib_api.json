@@ -907,6 +907,33 @@
       ]
     }
   ],
+  "aliases": [
+    {
+      "type": "Vector4",
+      "name": "Quaternion",
+      "description": "Quaternion, 4 components (Vector4 alias)"
+    },
+    {
+      "type": "Texture",
+      "name": "Texture2D",
+      "description": "Texture2D, same as Texture"
+    },
+    {
+      "type": "Texture",
+      "name": "TextureCubemap",
+      "description": "TextureCubemap, same as Texture"
+    },
+    {
+      "type": "RenderTexture",
+      "name": "RenderTexture2D",
+      "description": "RenderTexture2D, same as RenderTexture"
+    },
+    {
+      "type": "Camera3D",
+      "name": "Camera",
+      "description": "Camera type fallback, defaults to Camera3D"
+    }
+  ],
   "enums": [
     {
       "name": "ConfigFlags",
@@ -4101,11 +4128,11 @@
         },
         {
           "type": "int",
-          "name": "dataLength"
+          "name": "dataSize"
         },
         {
           "type": "int *",
-          "name": "compDataLength"
+          "name": "compDataSize"
         }
       ]
     },
@@ -4120,11 +4147,11 @@
         },
         {
           "type": "int",
-          "name": "compDataLength"
+          "name": "compDataSize"
         },
         {
           "type": "int *",
-          "name": "dataLength"
+          "name": "dataSize"
         }
       ]
     },
@@ -4139,11 +4166,11 @@
         },
         {
           "type": "int",
-          "name": "dataLength"
+          "name": "dataSize"
         },
         {
           "type": "int *",
-          "name": "outputLength"
+          "name": "outputSize"
         }
       ]
     },
@@ -4158,7 +4185,7 @@
         },
         {
           "type": "int *",
-          "name": "outputLength"
+          "name": "outputSize"
         }
       ]
     },

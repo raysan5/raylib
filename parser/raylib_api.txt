@@ -239,6 +239,29 @@ Struct 31: VrStereoConfig (8 fields)
   Field[7]: float scale[2] // VR distortion scale
   Field[8]: float scaleIn[2] // VR distortion scale in
 
+Aliases found: 5
+
+Alias 001: Quaternion
+  Type: Vector4
+  Name: Quaternion
+  Description: Quaternion, 4 components (Vector4 alias)
+Alias 002: Texture2D
+  Type: Texture
+  Name: Texture2D
+  Description: Texture2D, same as Texture
+Alias 003: TextureCubemap
+  Type: Texture
+  Name: TextureCubemap
+  Description: TextureCubemap, same as Texture
+Alias 004: RenderTexture2D
+  Type: RenderTexture
+  Name: RenderTexture2D
+  Description: RenderTexture2D, same as RenderTexture
+Alias 005: Camera
+  Type: Camera3D
+  Name: Camera
+  Description: Camera type fallback, defaults to Camera3D
+
 Enums found: 21
 
 Enum 01: ConfigFlags (14 values)
@@ -1284,28 +1307,28 @@ Function 129: CompressData() (3 input parameters)
   Return type: unsigned char *
   Description: Compress data (DEFLATE algorithm)
   Param[1]: data (type: const unsigned char *)
-  Param[2]: dataLength (type: int)
-  Param[3]: compDataLength (type: int *)
+  Param[2]: dataSize (type: int)
+  Param[3]: compDataSize (type: int *)
 Function 130: DecompressData() (3 input parameters)
   Name: DecompressData
   Return type: unsigned char *
   Description: Decompress data (DEFLATE algorithm)
   Param[1]: compData (type: const unsigned char *)
-  Param[2]: compDataLength (type: int)
-  Param[3]: dataLength (type: int *)
+  Param[2]: compDataSize (type: int)
+  Param[3]: dataSize (type: int *)
 Function 131: EncodeDataBase64() (3 input parameters)
   Name: EncodeDataBase64
   Return type: char *
   Description: Encode data to Base64 string
   Param[1]: data (type: const unsigned char *)
-  Param[2]: dataLength (type: int)
-  Param[3]: outputLength (type: int *)
+  Param[2]: dataSize (type: int)
+  Param[3]: outputSize (type: int *)
 Function 132: DecodeDataBase64() (2 input parameters)
   Name: DecodeDataBase64
   Return type: unsigned char *
   Description: Decode Base64 string data
   Param[1]: data (type: const unsigned char *)
-  Param[2]: outputLength (type: int *)
+  Param[2]: outputSize (type: int *)
 Function 133: SaveStorageValue() (2 input parameters)
   Name: SaveStorageValue
   Return type: bool

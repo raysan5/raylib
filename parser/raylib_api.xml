@@ -208,6 +208,13 @@
             <Field type="float" name="scaleIn[2]" desc="VR distortion scale in" />
         </Struct>
     </Structs>
+    <Aliases count="5">
+        <Alias type="Quaternion" name="Vector4" desc="Quaternion, 4 components (Vector4 alias)" />
+        <Alias type="Texture2D" name="Texture" desc="Texture2D, same as Texture" />
+        <Alias type="TextureCubemap" name="Texture" desc="TextureCubemap, same as Texture" />
+        <Alias type="RenderTexture2D" name="RenderTexture" desc="RenderTexture2D, same as RenderTexture" />
+        <Alias type="Camera" name="Camera3D" desc="Camera type fallback, defaults to Camera3D" />
+    </Aliases>
     <Enums count="21">
         <Enum name="ConfigFlags" valueCount="14" desc="System/Window config flags">
             <Value name="FLAG_VSYNC_HINT" integer="64" desc="Set to try enabling V-Sync on GPU" />
@@ -977,22 +984,22 @@
         </Function>
         <Function name="CompressData" retType="unsigned char *" paramCount="3" desc="Compress data (DEFLATE algorithm)">
             <Param type="const unsigned char *" name="data" desc="" />
-            <Param type="int" name="dataLength" desc="" />
-            <Param type="int *" name="compDataLength" desc="" />
+            <Param type="int" name="dataSize" desc="" />
+            <Param type="int *" name="compDataSize" desc="" />
         </Function>
         <Function name="DecompressData" retType="unsigned char *" paramCount="3" desc="Decompress data (DEFLATE algorithm)">
             <Param type="const unsigned char *" name="compData" desc="" />
-            <Param type="int" name="compDataLength" desc="" />
-            <Param type="int *" name="dataLength" desc="" />
+            <Param type="int" name="compDataSize" desc="" />
+            <Param type="int *" name="dataSize" desc="" />
         </Function>
         <Function name="EncodeDataBase64" retType="char *" paramCount="3" desc="Encode data to Base64 string">
             <Param type="const unsigned char *" name="data" desc="" />
-            <Param type="int" name="dataLength" desc="" />
-            <Param type="int *" name="outputLength" desc="" />
+            <Param type="int" name="dataSize" desc="" />
+            <Param type="int *" name="outputSize" desc="" />
         </Function>
         <Function name="DecodeDataBase64" retType="unsigned char *" paramCount="2" desc="Decode Base64 string data">
             <Param type="const unsigned char *" name="data" desc="" />
-            <Param type="int *" name="outputLength" desc="" />
+            <Param type="int *" name="outputSize" desc="" />
         </Function>
         <Function name="SaveStorageValue" retType="bool" paramCount="2" desc="Save integer value to storage file (to defined position), returns true on success">
             <Param type="unsigned int" name="position" desc="" />

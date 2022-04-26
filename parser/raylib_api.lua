@@ -907,6 +907,33 @@ return {
       }
     }
   },
+  aliases = {
+    {
+      type = "Vector4",
+      name = "Quaternion",
+      description = "Quaternion, 4 components (Vector4 alias)"
+    },
+    {
+      type = "Texture",
+      name = "Texture2D",
+      description = "Texture2D, same as Texture"
+    },
+    {
+      type = "Texture",
+      name = "TextureCubemap",
+      description = "TextureCubemap, same as Texture"
+    },
+    {
+      type = "RenderTexture",
+      name = "RenderTexture2D",
+      description = "RenderTexture2D, same as RenderTexture"
+    },
+    {
+      type = "Camera3D",
+      name = "Camera",
+      description = "Camera type fallback, defaults to Camera3D"
+    }
+  },
   enums = {
     {
       name = "ConfigFlags",
@@ -3736,8 +3763,8 @@ return {
       returnType = "unsigned char *",
       params = {
         {type = "const unsigned char *", name = "data"},
-        {type = "int", name = "dataLength"},
-        {type = "int *", name = "compDataLength"}
+        {type = "int", name = "dataSize"},
+        {type = "int *", name = "compDataSize"}
       }
     },
     {
@@ -3746,8 +3773,8 @@ return {
       returnType = "unsigned char *",
       params = {
         {type = "const unsigned char *", name = "compData"},
-        {type = "int", name = "compDataLength"},
-        {type = "int *", name = "dataLength"}
+        {type = "int", name = "compDataSize"},
+        {type = "int *", name = "dataSize"}
       }
     },
     {
@@ -3756,8 +3783,8 @@ return {
       returnType = "char *",
       params = {
         {type = "const unsigned char *", name = "data"},
-        {type = "int", name = "dataLength"},
-        {type = "int *", name = "outputLength"}
+        {type = "int", name = "dataSize"},
+        {type = "int *", name = "outputSize"}
       }
     },
     {
@@ -3766,7 +3793,7 @@ return {
       returnType = "unsigned char *",
       params = {
         {type = "const unsigned char *", name = "data"},
-        {type = "int *", name = "outputLength"}
+        {type = "int *", name = "outputSize"}
       }
     },
     {
