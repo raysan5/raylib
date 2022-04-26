@@ -2,11 +2,12 @@
 
     raylib API parser
 
-    This parser scans raylib.h to get API information about structs, enums, functions and defines.
+    This parser scans raylib.h to get API information about structs, aliases, enums, functions and defines.
     All data is divided into pieces, usually as strings. The following types are used for data:
 
      - struct FunctionInfo
      - struct StructInfo
+     - struct AliasInfo
      - struct EnumInfo
      - struct DefInfo
 
@@ -67,6 +68,7 @@
 
 #define MAX_FUNCS_TO_PARSE       512    // Maximum number of functions to parse
 #define MAX_STRUCTS_TO_PARSE      64    // Maximum number of structures to parse
+#define MAX_ALIASES_TO_PARSE      64    // Maximum number of aliases to parse
 #define MAX_ENUMS_TO_PARSE        64    // Maximum number of enums to parse
 #define MAX_DEFINES_TO_PARSE    2048    // Maximum number of defines to parse
 
@@ -101,6 +103,13 @@ typedef struct StructInfo {
     char fieldDesc[MAX_STRUCT_FIELDS][128];    // Field description
 } StructInfo;
 
+// Alias info data
+typedef struct AliasInfo {
+    char type[64];              // Alias type
+    char name[64];              // Alias name
+    char desc[128];             // Alias description
+} AliasInfo;
+
 // Enum info data
 typedef struct EnumInfo {
     char name[64];              // Enum name
@@ -131,10 +140,12 @@ typedef enum { DEFAULT = 0, JSON, XML, LUA } OutputFormat;
 //----------------------------------------------------------------------------------
 static int funcCount = 0;
 static int structCount = 0;
+static int aliasCount = 0;
 static int enumCount = 0;
 static int defineCount = 0;
 static FunctionInfo *funcs = NULL;
 static StructInfo *structs = NULL;
+static AliasInfo *aliases = NULL;
 static EnumInfo *enums = NULL;
 static DefineInfo *defines = NULL;
 static char apiDefine[32] = "RLAPI\0";
@@ -185,6 +196,9 @@ int main(int argc, char* argv[])
     // Structs lines pointers, selected from buffer "lines"
     int *structLines = (int *)malloc(MAX_STRUCTS_TO_PARSE*sizeof(int));
 
+    // Aliases lines pointers, selected from buffer "lines"
+    int *aliasLines = (int *)malloc(MAX_ALIASES_TO_PARSE*sizeof(int));
+
     // Enums lines pointers, selected from buffer "lines"
     int *enumLines = (int *)malloc(MAX_ENUMS_TO_PARSE*sizeof(int));
 
@@ -215,9 +229,6 @@ int main(int argc, char* argv[])
             int j = 0;
             bool validStruct = false;
 
-            // WARNING: Typedefs between types: typedef Vector4 Quaternion;
-            // (maybe we could export these too?)
-
             for (int c = 0; c < MAX_LINE_LENGTH; c++)
             {
                 char v = lines[i][c];
@@ -234,6 +245,28 @@ int main(int argc, char* argv[])
             while (lines[i][0] != '}') i++;
             while (lines[i][0] != '\0') i++;
             structCount++;
+        }
+    }
+
+    // Read alias lines
+    for (int i = 0; i < linesCount; i++)
+    {
+        // Find aliases (lines with "typedef ... ...;")
+        if (IsTextEqual(lines[i], "typedef", 7))
+        {
+            int spaceCount = 0;
+            bool validAlias = false;
+
+            for (int c = 0; c < MAX_LINE_LENGTH; c++)
+            {
+                char v = lines[i][c];
+                if (v == ' ') spaceCount++;
+                if (v == ';' && spaceCount == 2) validAlias = true;
+                if (v == ';' || v == '(' || v == '\0') break;
+            }
+            if (!validAlias) continue;
+            aliasLines[aliasCount] = i;
+            aliasCount++;
         }
     }
 
@@ -335,8 +368,43 @@ int main(int argc, char* argv[])
         }
 
     }
-
     free(structLines);
+
+    // Alias info data
+    aliases = (AliasInfo *)calloc(MAX_ALIASES_TO_PARSE, sizeof(AliasInfo));
+    int aliasIndex = 0;
+
+    for (int i = 0; i < aliasCount; i++)
+    {
+        // Description from previous line
+        char *previousLinePtr = lines[aliasLines[i] - 1];
+        if (previousLinePtr[0] == '/') MemoryCopy(aliases[i].desc, previousLinePtr, MAX_LINE_LENGTH);
+    
+        char *linePtr = lines[aliasLines[i]];
+
+        // Skip "typedef "
+        int c = 8;
+
+        // Type
+        int typeStart = c;
+        while(linePtr[c] != ' ') c++;
+        int typeLen = c - typeStart;
+        MemoryCopy(aliases[i].type, linePtr + typeStart, typeLen);
+
+        // Skip space
+        c++;
+
+        // Name
+        int nameStart = c;
+        while(linePtr[c] != ';') c++;
+        int nameLen = c - nameStart;
+        MemoryCopy(aliases[i].name, linePtr + nameStart, nameLen);
+
+        // Description
+        while(linePtr[c] != '\0' && linePtr[c] != '/') c++;
+        if (linePtr[c] == '/') MemoryCopy(aliases[i].desc, linePtr + c, MAX_LINE_LENGTH);
+    }
+    free(aliasLines);
 
     // Enum info data
     enums = (EnumInfo *)calloc(MAX_ENUMS_TO_PARSE, sizeof(EnumInfo));
@@ -606,6 +674,7 @@ int main(int argc, char* argv[])
     // At this point, all raylib data has been parsed!
     //-----------------------------------------------------------------------------------------
     // structs[] -> We have all the structs decomposed into pieces for further analysis
+    // aliases[] -> We have all the aliases decomposed into pieces for further analysis
     // enums[]   -> We have all the enums decomposed into pieces for further analysis
     // funcs[]   -> We have all the functions decomposed into pieces for further analysis
     // defines[] -> We have all the defines decomposed into pieces for further analysis
@@ -624,7 +693,9 @@ int main(int argc, char* argv[])
 
     free(funcs);
     free(structs);
+    free(aliases);
     free(enums);
+    free(defines);
 }
 
 //----------------------------------------------------------------------------------
@@ -978,6 +1049,16 @@ static void ExportParsedData(const char *fileName, int format)
                 for (int f = 0; f < structs[i].fieldCount; f++) fprintf(outFile, "  Field[%i]: %s %s %s\n", f + 1, structs[i].fieldType[f], structs[i].fieldName[f], structs[i].fieldDesc[f]);
             }
 
+            // Print aliases info
+            fprintf(outFile, "\nAliases found: %i\n\n", aliasCount);
+            for (int i = 0; i < aliasCount; i++)
+            {
+                fprintf(outFile, "Alias %03i: %s\n", i + 1, aliases[i].name);
+                fprintf(outFile, "  Type: %s\n", aliases[i].type);
+                fprintf(outFile, "  Name: %s\n", aliases[i].name);
+                fprintf(outFile, "  Description: %s\n", aliases[i].desc + 3);
+            }
+
             // Print enums info
             fprintf(outFile, "\nEnums found: %i\n\n", enumCount);
             for (int i = 0; i < enumCount; i++)
@@ -1036,6 +1117,21 @@ static void ExportParsedData(const char *fileName, int format)
                 fprintf(outFile, "      }\n");
                 fprintf(outFile, "    }");
                 if (i < structCount - 1) fprintf(outFile, ",\n");
+                else fprintf(outFile, "\n");
+            }
+            fprintf(outFile, "  },\n");
+
+            // Print aliases info
+            fprintf(outFile, "  aliases = {\n");
+            for (int i = 0; i < aliasCount; i++)
+            {
+                fprintf(outFile, "    {\n");
+                fprintf(outFile, "      type = \"%s\",\n", aliases[i].type);
+                fprintf(outFile, "      name = \"%s\",\n", aliases[i].name);
+                fprintf(outFile, "      description = \"%s\"\n", aliases[i].desc + 3);
+                fprintf(outFile, "    }");
+
+                if (i < aliasCount - 1) fprintf(outFile, ",\n");
                 else fprintf(outFile, "\n");
             }
             fprintf(outFile, "  },\n");
@@ -1143,6 +1239,21 @@ static void ExportParsedData(const char *fileName, int format)
             }
             fprintf(outFile, "  ],\n");
 
+            // Print aliases info
+            fprintf(outFile, "  \"aliases\": [\n");
+            for (int i = 0; i < aliasCount; i++)
+            {
+                fprintf(outFile, "    {\n");
+                fprintf(outFile, "      \"type\": \"%s\",\n", aliases[i].type);
+                fprintf(outFile, "      \"name\": \"%s\",\n", aliases[i].name);
+                fprintf(outFile, "      \"description\": \"%s\"\n", aliases[i].desc + 3);
+                fprintf(outFile, "    }");
+
+                if (i < aliasCount - 1) fprintf(outFile, ",\n");
+                else fprintf(outFile, "\n");
+            }
+            fprintf(outFile, "  ],\n");
+
             // Print enums info
             fprintf(outFile, "  \"enums\": [\n");
             for (int i = 0; i < enumCount; i++)
@@ -1234,6 +1345,9 @@ static void ExportParsedData(const char *fileName, int format)
                         <Field type="" name="" desc="" />
                     </Struct>
                 <Structs>
+                <Aliases count="">
+                    <Alias type="" name="" desc="" />
+                </Aliases>
                 <Enums count="">
                     <Enum name="" valueCount="" desc="">
                         <Value name="" integer="" desc="" />
@@ -1267,6 +1381,14 @@ static void ExportParsedData(const char *fileName, int format)
                 fprintf(outFile, "        </Struct>\n");
             }
             fprintf(outFile, "    </Structs>\n");
+
+            // Print aliases info
+            fprintf(outFile, "    <Aliases count=\"%i\">\n", aliasCount);
+            for (int i = 0; i < aliasCount; i++)
+            {
+                fprintf(outFile, "        <Alias type=\"%s\" name=\"%s\" desc=\"%s\" />\n", aliases[i].name, aliases[i].type, aliases[i].desc + 3);
+            }
+            fprintf(outFile, "    </Aliases>\n");
 
             // Print enums info
             fprintf(outFile, "    <Enums count=\"%i\">\n", enumCount);
