@@ -2031,8 +2031,9 @@ void EndDrawing(void)
         {
             // Get image data for the current frame (from backbuffer)
             // NOTE: This process is quite slow... :(
-            unsigned char *screenData = rlReadScreenPixels(CORE.Window.screen.width, CORE.Window.screen.height);
-            msf_gif_frame(&gifState, screenData, 10, 16, CORE.Window.screen.width*4);
+            Vector2 scale = GetWindowScaleDPI();
+            unsigned char *screenData = rlReadScreenPixels(CORE.Window.render.width*scale.x, CORE.Window.render.height*scale.y);
+            msf_gif_frame(&gifState, screenData, 10, 16, CORE.Window.render.width*scale.x*4);
 
             RL_FREE(screenData);    // Free image data
         }
@@ -2754,8 +2755,9 @@ void SetConfigFlags(unsigned int flags)
 void TakeScreenshot(const char *fileName)
 {
 #if defined(SUPPORT_MODULE_RTEXTURES)
-    unsigned char *imgData = rlReadScreenPixels(CORE.Window.render.width, CORE.Window.render.height);
-    Image image = { imgData, CORE.Window.render.width, CORE.Window.render.height, 1, PIXELFORMAT_UNCOMPRESSED_R8G8B8A8 };
+    Vector2 scale = GetWindowScaleDPI();
+    unsigned char *imgData = rlReadScreenPixels(CORE.Window.render.width*scale.x, CORE.Window.render.height*scale.y);
+    Image image = { imgData, CORE.Window.render.width*scale.x, CORE.Window.render.height*scale.y, 1, PIXELFORMAT_UNCOMPRESSED_R8G8B8A8 };
 
     char path[2048] = { 0 };
     strcpy(path, TextFormat("%s/%s", CORE.Storage.basePath, fileName));
@@ -5266,7 +5268,8 @@ static void KeyCallback(GLFWwindow *window, int key, int scancode, int action, i
                 gifRecording = true;
                 gifFrameCounter = 0;
 
-                msf_gif_begin(&gifState, CORE.Window.screen.width, CORE.Window.screen.height);
+                Vector2 scale = GetWindowScaleDPI();
+                msf_gif_begin(&gifState, CORE.Window.render.width*scale.x, CORE.Window.render.height*scale.y);
                 screenshotCounter++;
 
                 TRACELOG(LOG_INFO, "SYSTEM: Start animated GIF recording: %s", TextFormat("screenrec%03i.gif", screenshotCounter));
