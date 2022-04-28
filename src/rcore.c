@@ -6140,7 +6140,7 @@ static void ConfigureEvdevDevice(char *device)
 
     // Decide what to do with the device
     //-------------------------------------------------------------------------------------------------------
-    if (worker->isKeyboard && CORE.Input.Keyboard.fd == -1)
+    if (worker->isKeyboard && (CORE.Input.Keyboard.fd == -1))
     {
         // Use the first keyboard encountered. This assumes that a device that says it's a keyboard is just a
         // keyboard. The keyboard is polled synchronously, whereas other input devices are polled in separate
