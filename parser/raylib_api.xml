@@ -16,11 +16,23 @@
             <Field type="float" name="z" desc="Vector z component" />
             <Field type="float" name="w" desc="Vector w component" />
         </Struct>
-        <Struct name="Matrix" fieldCount="4" desc="Matrix, 4x4 components, column major, OpenGL style, right handed">
-            <Field type="float" name="m0, m4, m8, m12" desc="Matrix first row (4 components)" />
-            <Field type="float" name="m1, m5, m9, m13" desc="Matrix second row (4 components)" />
-            <Field type="float" name="m2, m6, m10, m14" desc="Matrix third row (4 components)" />
-            <Field type="float" name="m3, m7, m11, m15" desc="Matrix fourth row (4 components)" />
+        <Struct name="Matrix" fieldCount="16" desc="Matrix, 4x4 components, column major, OpenGL style, right handed">
+            <Field type="float" name="m0" desc="Matrix first row (4 components)" />
+            <Field type="float" name="m4" desc="Matrix first row (4 components)" />
+            <Field type="float" name="m8" desc="Matrix first row (4 components)" />
+            <Field type="float" name="m12" desc="Matrix first row (4 components)" />
+            <Field type="float" name="m1" desc="Matrix second row (4 components)" />
+            <Field type="float" name="m5" desc="Matrix second row (4 components)" />
+            <Field type="float" name="m9" desc="Matrix second row (4 components)" />
+            <Field type="float" name="m13" desc="Matrix second row (4 components)" />
+            <Field type="float" name="m2" desc="Matrix third row (4 components)" />
+            <Field type="float" name="m6" desc="Matrix third row (4 components)" />
+            <Field type="float" name="m10" desc="Matrix third row (4 components)" />
+            <Field type="float" name="m14" desc="Matrix third row (4 components)" />
+            <Field type="float" name="m3" desc="Matrix fourth row (4 components)" />
+            <Field type="float" name="m7" desc="Matrix fourth row (4 components)" />
+            <Field type="float" name="m11" desc="Matrix fourth row (4 components)" />
+            <Field type="float" name="m15" desc="Matrix fourth row (4 components)" />
         </Struct>
         <Struct name="Color" fieldCount="4" desc="Color, 4 components, R8G8B8A8 (32bit)">
             <Field type="unsigned char" name="r" desc="Color red value" />

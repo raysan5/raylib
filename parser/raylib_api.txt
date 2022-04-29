@@ -19,13 +19,25 @@ Struct 03: Vector4 (4 fields)
   Field[2]: float y // Vector y component
   Field[3]: float z // Vector z component
   Field[4]: float w // Vector w component
-Struct 04: Matrix (4 fields)
+Struct 04: Matrix (16 fields)
   Name: Matrix
   Description: Matrix, 4x4 components, column major, OpenGL style, right handed
-  Field[1]: float m0, m4, m8, m12 // Matrix first row (4 components)
-  Field[2]: float m1, m5, m9, m13 // Matrix second row (4 components)
-  Field[3]: float m2, m6, m10, m14 // Matrix third row (4 components)
-  Field[4]: float m3, m7, m11, m15 // Matrix fourth row (4 components)
+  Field[1]: float m0 // Matrix first row (4 components)
+  Field[2]: float m4 // Matrix first row (4 components)
+  Field[3]: float m8 // Matrix first row (4 components)
+  Field[4]: float m12 // Matrix first row (4 components)
+  Field[5]: float m1 // Matrix second row (4 components)
+  Field[6]: float m5 // Matrix second row (4 components)
+  Field[7]: float m9 // Matrix second row (4 components)
+  Field[8]: float m13 // Matrix second row (4 components)
+  Field[9]: float m2 // Matrix third row (4 components)
+  Field[10]: float m6 // Matrix third row (4 components)
+  Field[11]: float m10 // Matrix third row (4 components)
+  Field[12]: float m14 // Matrix third row (4 components)
+  Field[13]: float m3 // Matrix fourth row (4 components)
+  Field[14]: float m7 // Matrix fourth row (4 components)
+  Field[15]: float m11 // Matrix fourth row (4 components)
+  Field[16]: float m15 // Matrix fourth row (4 components)
 Struct 05: Color (4 fields)
   Name: Color
   Description: Color, 4 components, R8G8B8A8 (32bit)
