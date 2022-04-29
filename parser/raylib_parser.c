@@ -361,6 +361,42 @@ int main(int argc, char* argv[])
                     }
 
                     structs[i].fieldCount++;
+
+                    // Split field names containing multiple fields (like Matrix)
+                    int originalIndex = structs[i].fieldCount - 1;
+                    int originalLength = -1;
+                    int lastStart;
+                    for (int c = 0; c < TextLength(structs[i].fieldName[originalIndex]) + 1; c++)
+                    {
+                        char v = structs[i].fieldName[originalIndex][c];
+                        bool isEndOfString = v == '\0';
+                        if (v == ',' || isEndOfString) {
+                            if (originalLength == -1) {
+                                // Save length of original field name
+                                // Don't truncate yet, still needed for copying
+                                originalLength = c;
+                            } else {
+                                // Copy field data from original field
+                                int nameLength = c - lastStart;
+                                MemoryCopy(structs[i].fieldName[structs[i].fieldCount], &(structs[i].fieldName[originalIndex][lastStart]), nameLength);
+                                MemoryCopy(structs[i].fieldType[structs[i].fieldCount], &(structs[i].fieldType[originalIndex][0]), TextLength(structs[i].fieldType[originalIndex]));
+                                MemoryCopy(structs[i].fieldDesc[structs[i].fieldCount], &(structs[i].fieldDesc[originalIndex][0]), TextLength(structs[i].fieldDesc[originalIndex]));
+                                structs[i].fieldCount++;
+                            }
+                            if (!isEndOfString) {
+                                // Skip comma and spaces
+                                c++;
+                                while (structs[i].fieldName[originalIndex][c] == ' ') c++;
+
+                                // Save position for next field
+                                lastStart = c;
+                            }
+                        }
+                    }
+                    // Set length of original field
+                    // This has no effect on fields that are on their own line
+                    // But it truncates the first field name of fields that share a line
+                    structs[i].fieldName[originalIndex][originalLength] = '\0';
                 }
             }
 
