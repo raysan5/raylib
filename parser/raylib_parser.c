@@ -370,12 +370,16 @@ int main(int argc, char* argv[])
                     {
                         char v = structs[i].fieldName[originalIndex][c];
                         bool isEndOfString = v == '\0';
-                        if (v == ',' || isEndOfString) {
-                            if (originalLength == -1) {
+                        if ((v == ',') || isEndOfString)
+                        {
+                            if (originalLength == -1)
+                            {
                                 // Save length of original field name
                                 // Don't truncate yet, still needed for copying
                                 originalLength = c;
-                            } else {
+                            }
+                            else
+                            {
                                 // Copy field data from original field
                                 int nameLength = c - lastStart;
                                 MemoryCopy(structs[i].fieldName[structs[i].fieldCount], &(structs[i].fieldName[originalIndex][lastStart]), nameLength);
@@ -383,7 +387,8 @@ int main(int argc, char* argv[])
                                 MemoryCopy(structs[i].fieldDesc[structs[i].fieldCount], &(structs[i].fieldDesc[originalIndex][0]), TextLength(structs[i].fieldDesc[originalIndex]));
                                 structs[i].fieldCount++;
                             }
-                            if (!isEndOfString) {
+                            if (!isEndOfString)
+                            {
                                 // Skip comma and spaces
                                 c++;
                                 while (structs[i].fieldName[originalIndex][c] == ' ') c++;
@@ -415,7 +420,7 @@ int main(int argc, char* argv[])
         // Description from previous line
         char *previousLinePtr = lines[aliasLines[i] - 1];
         if (previousLinePtr[0] == '/') MemoryCopy(aliases[i].desc, previousLinePtr, MAX_LINE_LENGTH);
-    
+
         char *linePtr = lines[aliasLines[i]];
 
         // Skip "typedef "
@@ -437,7 +442,7 @@ int main(int argc, char* argv[])
         MemoryCopy(aliases[i].name, linePtr + nameStart, nameLen);
 
         // Description
-        while(linePtr[c] != '\0' && linePtr[c] != '/') c++;
+        while((linePtr[c] != '\0') && (linePtr[c] != '/')) c++;
         if (linePtr[c] == '/') MemoryCopy(aliases[i].desc, linePtr + c, MAX_LINE_LENGTH);
     }
     free(aliasLines);
@@ -480,7 +485,11 @@ int main(int argc, char* argv[])
                 while ((linePtr[c] != ',') &&
                        (linePtr[c] != ' ') &&
                        (linePtr[c] != '=') &&
-                       (linePtr[c] != '\0')) { enums[i].valueName[enums[i].valueCount][c] = linePtr[c]; c++; }
+                       (linePtr[c] != '\0'))
+                {
+                    enums[i].valueName[enums[i].valueCount][c] = linePtr[c];
+                    c++;
+                }
 
                 // After the name we can have:
                 //  '='  -> value is provided
@@ -497,7 +506,11 @@ int main(int argc, char* argv[])
                     bool foundValue = false;
                     while ((linePtr[c] != '\0') && (linePtr[c] != '/'))
                     {
-                        if (linePtr[c] == '=') { foundValue = true; break; }
+                        if (linePtr[c] == '=')
+                        {
+                            foundValue = true;
+                            break;
+                        }
                         c++;
                     }
 
@@ -524,7 +537,7 @@ int main(int argc, char* argv[])
                 else enums[i].valueInteger[enums[i].valueCount] = (enums[i].valueInteger[enums[i].valueCount - 1] + 1);
 
                 // Look for description or end of line
-                while ((linePtr[c] != '/') && (linePtr[c] != '\0')) { c++; }
+                while ((linePtr[c] != '/') && (linePtr[c] != '\0')) c++;
                 if (linePtr[c] == '/')
                 {
                     // Parse value description
@@ -537,7 +550,11 @@ int main(int argc, char* argv[])
             {
                 // Get enum name from typedef
                 int c = 0;
-                while (linePtr[2 + c] != ';') { enums[i].name[c] = linePtr[2 + c]; c++; }
+                while (linePtr[2 + c] != ';')
+                {
+                    enums[i].name[c] = linePtr[2 + c];
+                    c++;
+                }
 
                 break;  // Enum ended, break for() loop
             }
@@ -554,20 +571,22 @@ int main(int argc, char* argv[])
         char *linePtr = lines[defineLines[i]];
         int j = 0;
 
-        while (linePtr[j] == ' ' || linePtr[j] == '\t') j++; // Skip spaces and tabs in the begining
-        j += 8;                                              // Skip "#define "
-        while (linePtr[j] == ' ' || linePtr[j] == '\t') j++; // Skip spaces and tabs after "#define "
+        while ((linePtr[j] == ' ') || (linePtr[j] == '\t')) j++; // Skip spaces and tabs in the begining
+        j += 8;                                                  // Skip "#define "
+        while ((linePtr[j] == ' ') || (linePtr[j] == '\t')) j++; // Skip spaces and tabs after "#define "
 
         // Extract name
         int defineNameStart = j;
-        while (linePtr[j] != ' ' && linePtr[j] != '\t' && linePtr[j] != '\0') j++;
+        while ((linePtr[j] != ' ') && (linePtr[j] != '\t') && (linePtr[j] != '\0')) j++;
         int defineNameEnd = j-1;
 
         // Skip duplicates
         int nameLen = defineNameEnd - defineNameStart + 1;
         bool isDuplicate = false;
-        for (int k = 0; k < defineIndex; k++) {
-            if (nameLen == TextLength(defines[k].name) && IsTextEqual(defines[k].name, linePtr + defineNameStart, nameLen)) {
+        for (int k = 0; k < defineIndex; k++)
+        {
+            if ((nameLen == TextLength(defines[k].name)) && IsTextEqual(defines[k].name, linePtr + defineNameStart, nameLen))
+            {
                 isDuplicate = true;
                 break;
             }
@@ -579,26 +598,39 @@ int main(int argc, char* argv[])
         // Determine type
         if (linePtr[defineNameEnd] == ')') defines[defineIndex].type = MACRO;
 
-        while (linePtr[j] == ' ' || linePtr[j] == '\t') j++; // Skip spaces and tabs after name
+        while ((linePtr[j] == ' ') || (linePtr[j] == '\t')) j++; // Skip spaces and tabs after name
 
         int defineValueStart = j;
-        if (linePtr[j] == '\0' || linePtr == "/") defines[defineIndex].type = GUARD;
+        if ((linePtr[j] == '\0') || (linePtr == "/")) defines[defineIndex].type = GUARD;
         if (linePtr[j] == '"') defines[defineIndex].type = STRING;
         else if (linePtr[j] == '\'') defines[defineIndex].type = CHAR;
         else if (IsTextEqual(linePtr+j, "CLITERAL(Color)", 15)) defines[defineIndex].type = COLOR;
-        else if (isdigit(linePtr[j])) { // Parsing numbers
+        else if (isdigit(linePtr[j])) // Parsing numbers
+        {
             bool isFloat = false, isNumber = true, isHex = false;
-            while (linePtr[j] != ' ' && linePtr[j] != '\t' && linePtr[j] != '\0') {
+            while ((linePtr[j] != ' ') && (linePtr[j] != '\t') && (linePtr[j] != '\0'))
+            {
                 char ch = linePtr[j];
                 if (ch == '.') isFloat = true;
                 if (ch == 'x') isHex = true;
-                if (!(isdigit(ch)||(ch >= 'a' && ch <= 'f')||(ch >= 'A' && ch <= 'F')||ch=='x'||ch=='L'||ch=='.'||ch=='+'||ch=='-')) isNumber = false;
+                if (!(isdigit(ch) ||
+                      ((ch >= 'a') && (ch <= 'f')) ||
+                      ((ch >= 'A') && (ch <= 'F')) ||
+                      (ch == 'x') ||
+                      (ch == 'L') ||
+                      (ch == '.') ||
+                      (ch == '+') ||
+                      (ch == '-'))) isNumber = false;
                 j++;
             }
-            if (isNumber) {
-                if (isFloat) {
+            if (isNumber)
+            {
+                if (isFloat)
+                {
                     defines[defineIndex].type = linePtr[j-1] == 'f' ? FLOAT : DOUBLE;
-                } else {
+                }
+                else
+                {
                     defines[defineIndex].type = linePtr[j-1] == 'L' ? LONG : INT;
                     defines[defineIndex].isHex = isHex;
                 }
@@ -606,19 +638,20 @@ int main(int argc, char* argv[])
         }
 
         // Extracting value
-        while (linePtr[j] != '\\' && linePtr[j] != '\0' && !(linePtr[j] == '/' && linePtr[j+1] == '/')) j++;
+        while ((linePtr[j] != '\\') && (linePtr[j] != '\0') && !((linePtr[j] == '/') && (linePtr[j+1] == '/'))) j++;
         int defineValueEnd = j-1;
-        while (linePtr[defineValueEnd] == ' ' || linePtr[defineValueEnd] == '\t') defineValueEnd--; // Remove trailing spaces and tabs
-        if (defines[defineIndex].type == LONG || defines[defineIndex].type == FLOAT) defineValueEnd--; // Remove number postfix
+        while ((linePtr[defineValueEnd] == ' ') || (linePtr[defineValueEnd] == '\t')) defineValueEnd--; // Remove trailing spaces and tabs
+        if ((defines[defineIndex].type == LONG) || (defines[defineIndex].type == FLOAT)) defineValueEnd--; // Remove number postfix
         int valueLen = defineValueEnd - defineValueStart + 1;
         if (valueLen > 255) valueLen = 255;
 
         if (valueLen > 0) MemoryCopy(defines[defineIndex].value, linePtr + defineValueStart, valueLen);
 
         // Extracting description
-        if (linePtr[j] == '/') {
+        if (linePtr[j] == '/')
+        {
             int commentStart = j;
-            while (linePtr[j] != '\\' && linePtr[j] != '\0') j++;
+            while ((linePtr[j] != '\\') && (linePtr[j] != '\0')) j++;
             int commentEnd = j-1;
             int commentLen = commentEnd - commentStart + 1;
             if (commentLen > 127) commentLen = 127;
@@ -914,7 +947,7 @@ static void GetDataTypeAndName(const char *typeName, int typeNameLen, char *type
 {
     for (int k = typeNameLen; k > 0; k--)
     {
-        if (typeName[k] == ' ' && typeName[k - 1] != ',')
+        if ((typeName[k] == ' ') && (typeName[k - 1] != ','))
         {
             // Function name starts at this point (and ret type finishes at this point)
             MemoryCopy(type, typeName, k);
@@ -927,7 +960,7 @@ static void GetDataTypeAndName(const char *typeName, int typeNameLen, char *type
             MemoryCopy(name, typeName + k + 1, typeNameLen - k - 1);
             break;
         }
-        else if (typeName[k] == '.' && typeNameLen == 3) // Handle varargs ...);
+        else if ((typeName[k] == '.') && (typeNameLen == 3)) // Handle varargs ...);
         {
             MemoryCopy(type, "...", 3);
             MemoryCopy(name, "args", 4);
@@ -1204,9 +1237,16 @@ static void ExportParsedData(const char *fileName, int format)
                 fprintf(outFile, "    {\n");
                 fprintf(outFile, "      name = \"%s\",\n", defines[i].name);
                 fprintf(outFile, "      type = \"%s\",\n", StrDefineType(defines[i].type));
-                if (defines[i].type == INT || defines[i].type == LONG || defines[i].type == FLOAT || defines[i].type == DOUBLE || defines[i].type == STRING) {
+                if ((defines[i].type == INT) ||
+                    (defines[i].type == LONG) ||
+                    (defines[i].type == FLOAT) ||
+                    (defines[i].type == DOUBLE) ||
+                    (defines[i].type == STRING))
+                {
                     fprintf(outFile, "      value = %s,\n", defines[i].value);
-                } else {
+                }
+                else
+                {
                     fprintf(outFile, "      value = \"%s\",\n", defines[i].value);
                 }
                 fprintf(outFile, "      description = \"%s\"\n", defines[i].desc + 3);
@@ -1322,11 +1362,20 @@ static void ExportParsedData(const char *fileName, int format)
                 fprintf(outFile, "    {\n");
                 fprintf(outFile, "      \"name\": \"%s\",\n", defines[i].name);
                 fprintf(outFile, "      \"type\": \"%s\",\n", StrDefineType(defines[i].type));
-                if (defines[i].isHex) { // INT or LONG
+                if (defines[i].isHex) // INT or LONG
+                {
                     fprintf(outFile, "      \"value\": %ld,\n", strtol(defines[i].value, NULL, 16));
-                } else if (defines[i].type == INT || defines[i].type == LONG || defines[i].type == FLOAT || defines[i].type == DOUBLE || defines[i].type == STRING) {
+                }
+                else if ((defines[i].type == INT) ||
+                         (defines[i].type == LONG) ||
+                         (defines[i].type == FLOAT) ||
+                         (defines[i].type == DOUBLE) ||
+                         (defines[i].type == STRING))
+                {
                     fprintf(outFile, "      \"value\": %s,\n", defines[i].value);
-                } else {
+                }
+                else
+                {
                     fprintf(outFile, "      \"value\": \"%s\",\n", defines[i].value);
                 }
                 fprintf(outFile, "      \"description\": \"%s\"\n", defines[i].desc + 3);
