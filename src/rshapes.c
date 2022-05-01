@@ -122,13 +122,24 @@ void DrawPixelV(Vector2 position, Color color)
 }
 
 // Draw a line
-void DrawLine(int startPosX, int startPosY, int endPosX, int endPosY, Color color)
+void DrawLine(int startPosX, int startPosY, int endPosX, int endPosY, Color color, float thick)
 {
-    rlBegin(RL_LINES);
-        rlColor4ub(color.r, color.g, color.b, color.a);
-        rlVertex2i(startPosX, startPosY);
-        rlVertex2i(endPosX, endPosY);
-    rlEnd();
+    Vector2 delta = { endPosX - startPosX, endPosY - startPosY };
+    float length = sqrtf(delta.x*delta.x + delta.y*delta.y);
+
+    if ((length > 0) && (thick > 0))
+    {
+        float scale = thick/(2*length);
+        Vector2 radius = { -scale*delta.y, scale*delta.x };
+        Vector2 strip[4] = {
+            { startPosX - radius.x, startPosY - radius.y },
+            { startPosX + radius.x, startPosY + radius.y },
+            { endPosX - radius.x, endPosY - radius.y },
+            { endPosX + radius.x, endPosY + radius.y }
+        };
+
+        DrawTriangleStrip(strip, 4, color);
+    }
 }
 
 // Draw a line  (Vector version)
@@ -139,6 +150,7 @@ void DrawLineV(Vector2 startPos, Vector2 endPos, Color color)
         rlVertex2f(startPos.x, startPos.y);
         rlVertex2f(endPos.x, endPos.y);
     rlEnd();
+
 }
 
 // Draw a line defining thickness

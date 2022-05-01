@@ -1155,7 +1155,7 @@ RLAPI void SetShapesTexture(Texture2D texture, Rectangle source);       // Set t
 // Basic shapes drawing functions
 RLAPI void DrawPixel(int posX, int posY, Color color);                                                   // Draw a pixel
 RLAPI void DrawPixelV(Vector2 position, Color color);                                                    // Draw a pixel (Vector version)
-RLAPI void DrawLine(int startPosX, int startPosY, int endPosX, int endPosY, Color color);                // Draw a line
+RLAPI void DrawLine(int startPosX, int startPosY, int endPosX, int endPosY, Color color, float thick);                // Draw a line
 RLAPI void DrawLineV(Vector2 startPos, Vector2 endPos, Color color);                                     // Draw a line (Vector version)
 RLAPI void DrawLineEx(Vector2 startPos, Vector2 endPos, float thick, Color color);                       // Draw a line defining thickness
 RLAPI void DrawLineBezier(Vector2 startPos, Vector2 endPos, float thick, Color color);                   // Draw a line using cubic-bezier curves in-out
