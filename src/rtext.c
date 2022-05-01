@@ -229,7 +229,7 @@ extern void LoadFontDefault(void)
     //------------------------------------------------------------------------------
 
     // Allocate space for our characters info data
-    // NOTE: This memory should be freed at end! --> CloseWindow()
+    // NOTE: This memory must be freed at end! --> Done by CloseWindow()
     defaultFont.glyphs = (GlyphInfo *)RL_MALLOC(defaultFont.glyphCount*sizeof(GlyphInfo));
     defaultFont.recs = (Rectangle *)RL_MALLOC(defaultFont.glyphCount*sizeof(Rectangle));
 
@@ -1383,7 +1383,7 @@ const char *TextSubtext(const char *text, int position, int length)
 
 // Replace text string
 // REQUIRES: strlen(), strstr(), strncpy(), strcpy()
-// WARNING: Allocated memory should be manually freed
+// WARNING: Allocated memory must be manually freed
 char *TextReplace(char *text, const char *replace, const char *by)
 {
     // Sanity checks and initialization
@@ -1432,7 +1432,7 @@ char *TextReplace(char *text, const char *replace, const char *by)
 }
 
 // Insert text in a specific position, moves all text forward
-// WARNING: Allocated memory should be manually freed
+// WARNING: Allocated memory must be manually freed
 char *TextInsert(const char *text, const char *insert, int position)
 {
     int textLen = TextLength(text);
@@ -1616,7 +1616,7 @@ const char *TextToPascal(const char *text)
 
 // Encode text codepoint into UTF-8 text
 // REQUIRES: memcpy()
-// WARNING: Allocated memory should be manually freed
+// WARNING: Allocated memory must be manually freed
 char *TextCodepointsToUTF8(const int *codepoints, int length)
 {
     // We allocate enough memory fo fit all possible codepoints
