@@ -52,6 +52,7 @@ Some people ported raylib to other languages in form of bindings or wrappers to 
 | raylib-smallBasic  | 4.1-dev | [SmallBASIC](https://github.com/smallbasic/SmallBASIC) | GPLv3 | https://github.com/smallbasic/smallbasic.plugins/tree/master/raylib |
 | raylib-zig         | **4.0** | [Zig](https://ziglang.org/)               | MIT | https://github.com/Not-Nik/raylib-zig     |
 | raylib.zig         | **4.1-dev** | [Zig](https://ziglang.org/)               | MIT | https://github.com/ryupold/raylib.zig |
+| racket-raylib      | **4.0** | [Racket](https://racket-lang.org/) | MIT/Apache-2.0 | https://github.com/eutro/racket-raylib |
 
 ### Utility Wrapers
 These are utility wrappers for specific languages, they are not required to use raylib in the language but may adapt the raylib API to be more inline with the language's pardigm.
