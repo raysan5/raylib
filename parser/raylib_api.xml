@@ -16,11 +16,23 @@
             <Field type="float" name="z" desc="Vector z component" />
             <Field type="float" name="w" desc="Vector w component" />
         </Struct>
-        <Struct name="Matrix" fieldCount="4" desc="Matrix, 4x4 components, column major, OpenGL style, right handed">
-            <Field type="float" name="m0, m4, m8, m12" desc="Matrix first row (4 components)" />
-            <Field type="float" name="m1, m5, m9, m13" desc="Matrix second row (4 components)" />
-            <Field type="float" name="m2, m6, m10, m14" desc="Matrix third row (4 components)" />
-            <Field type="float" name="m3, m7, m11, m15" desc="Matrix fourth row (4 components)" />
+        <Struct name="Matrix" fieldCount="16" desc="Matrix, 4x4 components, column major, OpenGL style, right handed">
+            <Field type="float" name="m0" desc="Matrix first row (4 components)" />
+            <Field type="float" name="m4" desc="Matrix first row (4 components)" />
+            <Field type="float" name="m8" desc="Matrix first row (4 components)" />
+            <Field type="float" name="m12" desc="Matrix first row (4 components)" />
+            <Field type="float" name="m1" desc="Matrix second row (4 components)" />
+            <Field type="float" name="m5" desc="Matrix second row (4 components)" />
+            <Field type="float" name="m9" desc="Matrix second row (4 components)" />
+            <Field type="float" name="m13" desc="Matrix second row (4 components)" />
+            <Field type="float" name="m2" desc="Matrix third row (4 components)" />
+            <Field type="float" name="m6" desc="Matrix third row (4 components)" />
+            <Field type="float" name="m10" desc="Matrix third row (4 components)" />
+            <Field type="float" name="m14" desc="Matrix third row (4 components)" />
+            <Field type="float" name="m3" desc="Matrix fourth row (4 components)" />
+            <Field type="float" name="m7" desc="Matrix fourth row (4 components)" />
+            <Field type="float" name="m11" desc="Matrix fourth row (4 components)" />
+            <Field type="float" name="m15" desc="Matrix fourth row (4 components)" />
         </Struct>
         <Struct name="Color" fieldCount="4" desc="Color, 4 components, R8G8B8A8 (32bit)">
             <Field type="unsigned char" name="r" desc="Color red value" />
@@ -208,6 +220,13 @@
             <Field type="float" name="scaleIn[2]" desc="VR distortion scale in" />
         </Struct>
     </Structs>
+    <Aliases count="5">
+        <Alias type="Quaternion" name="Vector4" desc="Quaternion, 4 components (Vector4 alias)" />
+        <Alias type="Texture2D" name="Texture" desc="Texture2D, same as Texture" />
+        <Alias type="TextureCubemap" name="Texture" desc="TextureCubemap, same as Texture" />
+        <Alias type="RenderTexture2D" name="RenderTexture" desc="RenderTexture2D, same as RenderTexture" />
+        <Alias type="Camera" name="Camera3D" desc="Camera type fallback, defaults to Camera3D" />
+    </Aliases>
     <Enums count="21">
         <Enum name="ConfigFlags" valueCount="14" desc="System/Window config flags">
             <Value name="FLAG_VSYNC_HINT" integer="64" desc="Set to try enabling V-Sync on GPU" />
@@ -977,22 +996,22 @@
         </Function>
         <Function name="CompressData" retType="unsigned char *" paramCount="3" desc="Compress data (DEFLATE algorithm)">
             <Param type="const unsigned char *" name="data" desc="" />
-            <Param type="int" name="dataLength" desc="" />
-            <Param type="int *" name="compDataLength" desc="" />
+            <Param type="int" name="dataSize" desc="" />
+            <Param type="int *" name="compDataSize" desc="" />
         </Function>
         <Function name="DecompressData" retType="unsigned char *" paramCount="3" desc="Decompress data (DEFLATE algorithm)">
             <Param type="const unsigned char *" name="compData" desc="" />
-            <Param type="int" name="compDataLength" desc="" />
-            <Param type="int *" name="dataLength" desc="" />
+            <Param type="int" name="compDataSize" desc="" />
+            <Param type="int *" name="dataSize" desc="" />
         </Function>
         <Function name="EncodeDataBase64" retType="char *" paramCount="3" desc="Encode data to Base64 string">
             <Param type="const unsigned char *" name="data" desc="" />
-            <Param type="int" name="dataLength" desc="" />
-            <Param type="int *" name="outputLength" desc="" />
+            <Param type="int" name="dataSize" desc="" />
+            <Param type="int *" name="outputSize" desc="" />
         </Function>
         <Function name="DecodeDataBase64" retType="unsigned char *" paramCount="2" desc="Decode Base64 string data">
             <Param type="const unsigned char *" name="data" desc="" />
-            <Param type="int *" name="outputLength" desc="" />
+            <Param type="int *" name="outputSize" desc="" />
         </Function>
         <Function name="SaveStorageValue" retType="bool" paramCount="2" desc="Save integer value to storage file (to defined position), returns true on success">
             <Param type="unsigned int" name="position" desc="" />

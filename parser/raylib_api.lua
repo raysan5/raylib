@@ -69,22 +69,82 @@ return {
       fields = {
         {
           type = "float",
-          name = "m0, m4, m8, m12",
+          name = "m0",
           description = "Matrix first row (4 components)"
         },
         {
           type = "float",
-          name = "m1, m5, m9, m13",
+          name = "m4",
+          description = "Matrix first row (4 components)"
+        },
+        {
+          type = "float",
+          name = "m8",
+          description = "Matrix first row (4 components)"
+        },
+        {
+          type = "float",
+          name = "m12",
+          description = "Matrix first row (4 components)"
+        },
+        {
+          type = "float",
+          name = "m1",
           description = "Matrix second row (4 components)"
         },
         {
           type = "float",
-          name = "m2, m6, m10, m14",
+          name = "m5",
+          description = "Matrix second row (4 components)"
+        },
+        {
+          type = "float",
+          name = "m9",
+          description = "Matrix second row (4 components)"
+        },
+        {
+          type = "float",
+          name = "m13",
+          description = "Matrix second row (4 components)"
+        },
+        {
+          type = "float",
+          name = "m2",
           description = "Matrix third row (4 components)"
         },
         {
           type = "float",
-          name = "m3, m7, m11, m15",
+          name = "m6",
+          description = "Matrix third row (4 components)"
+        },
+        {
+          type = "float",
+          name = "m10",
+          description = "Matrix third row (4 components)"
+        },
+        {
+          type = "float",
+          name = "m14",
+          description = "Matrix third row (4 components)"
+        },
+        {
+          type = "float",
+          name = "m3",
+          description = "Matrix fourth row (4 components)"
+        },
+        {
+          type = "float",
+          name = "m7",
+          description = "Matrix fourth row (4 components)"
+        },
+        {
+          type = "float",
+          name = "m11",
+          description = "Matrix fourth row (4 components)"
+        },
+        {
+          type = "float",
+          name = "m15",
           description = "Matrix fourth row (4 components)"
         }
       }
@@ -905,6 +965,33 @@ return {
           description = "VR distortion scale in"
         }
       }
+    }
+  },
+  aliases = {
+    {
+      type = "Vector4",
+      name = "Quaternion",
+      description = "Quaternion, 4 components (Vector4 alias)"
+    },
+    {
+      type = "Texture",
+      name = "Texture2D",
+      description = "Texture2D, same as Texture"
+    },
+    {
+      type = "Texture",
+      name = "TextureCubemap",
+      description = "TextureCubemap, same as Texture"
+    },
+    {
+      type = "RenderTexture",
+      name = "RenderTexture2D",
+      description = "RenderTexture2D, same as RenderTexture"
+    },
+    {
+      type = "Camera3D",
+      name = "Camera",
+      description = "Camera type fallback, defaults to Camera3D"
     }
   },
   enums = {
@@ -3736,8 +3823,8 @@ return {
       returnType = "unsigned char *",
       params = {
         {type = "const unsigned char *", name = "data"},
-        {type = "int", name = "dataLength"},
-        {type = "int *", name = "compDataLength"}
+        {type = "int", name = "dataSize"},
+        {type = "int *", name = "compDataSize"}
       }
     },
     {
@@ -3746,8 +3833,8 @@ return {
       returnType = "unsigned char *",
       params = {
         {type = "const unsigned char *", name = "compData"},
-        {type = "int", name = "compDataLength"},
-        {type = "int *", name = "dataLength"}
+        {type = "int", name = "compDataSize"},
+        {type = "int *", name = "dataSize"}
       }
     },
     {
@@ -3756,8 +3843,8 @@ return {
       returnType = "char *",
       params = {
         {type = "const unsigned char *", name = "data"},
-        {type = "int", name = "dataLength"},
-        {type = "int *", name = "outputLength"}
+        {type = "int", name = "dataSize"},
+        {type = "int *", name = "outputSize"}
       }
     },
     {
@@ -3766,7 +3853,7 @@ return {
       returnType = "unsigned char *",
       params = {
         {type = "const unsigned char *", name = "data"},
-        {type = "int *", name = "outputLength"}
+        {type = "int *", name = "outputSize"}
       }
     },
     {
