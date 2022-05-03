@@ -122,7 +122,7 @@ Struct 15: Mesh (15 fields)
   Field[2]: int triangleCount // Number of triangles stored (indexed or not)
   Field[3]: float * vertices // Vertex position (XYZ - 3 components per vertex) (shader-location = 0)
   Field[4]: float * texcoords // Vertex texture coordinates (UV - 2 components per vertex) (shader-location = 1)
-  Field[5]: float * texcoords2 // Vertex second texture coordinates (useful for lightmaps) (shader-location = 5)
+  Field[5]: float * texcoords2 // Vertex texture second coordinates (UV - 2 components per vertex) (shader-location = 5)
   Field[6]: float * normals // Vertex normals (XYZ - 3 components per vertex) (shader-location = 2)
   Field[7]: float * tangents // Vertex tangents (XYZW - 4 components per vertex) (shader-location = 4)
   Field[8]: unsigned char * colors // Vertex colors (RGBA - 4 components per vertex) (shader-location = 3)
@@ -1281,7 +1281,7 @@ Function 121: GetApplicationDirectory() (0 input parameters)
 Function 122: GetDirectoryFiles() (2 input parameters)
   Name: GetDirectoryFiles
   Return type: char **
-  Description: Get filenames in a directory path (memory should be freed)
+  Description: Get filenames in a directory path (memory must be freed)
   Param[1]: dirPath (type: const char *)
   Param[2]: count (type: int *)
 Function 123: ClearDirectoryFiles() (0 input parameters)
@@ -1302,7 +1302,7 @@ Function 125: IsFileDropped() (0 input parameters)
 Function 126: GetDroppedFiles() (1 input parameters)
   Name: GetDroppedFiles
   Return type: char **
-  Description: Get dropped files names (memory should be freed)
+  Description: Get dropped files names (memory must be freed)
   Param[1]: count (type: int *)
 Function 127: ClearDroppedFiles() (0 input parameters)
   Name: ClearDroppedFiles
@@ -1317,28 +1317,28 @@ Function 128: GetFileModTime() (1 input parameters)
 Function 129: CompressData() (3 input parameters)
   Name: CompressData
   Return type: unsigned char *
-  Description: Compress data (DEFLATE algorithm)
+  Description: Compress data (DEFLATE algorithm), memory must be MemFree()
   Param[1]: data (type: const unsigned char *)
   Param[2]: dataSize (type: int)
   Param[3]: compDataSize (type: int *)
 Function 130: DecompressData() (3 input parameters)
   Name: DecompressData
   Return type: unsigned char *
-  Description: Decompress data (DEFLATE algorithm)
+  Description: Decompress data (DEFLATE algorithm), memory must be MemFree()
   Param[1]: compData (type: const unsigned char *)
   Param[2]: compDataSize (type: int)
   Param[3]: dataSize (type: int *)
 Function 131: EncodeDataBase64() (3 input parameters)
   Name: EncodeDataBase64
   Return type: char *
-  Description: Encode data to Base64 string
+  Description: Encode data to Base64 string, memory must be MemFree()
   Param[1]: data (type: const unsigned char *)
   Param[2]: dataSize (type: int)
   Param[3]: outputSize (type: int *)
 Function 132: DecodeDataBase64() (2 input parameters)
   Name: DecodeDataBase64
   Return type: unsigned char *
-  Description: Decode Base64 string data
+  Description: Decode Base64 string data, memory must be MemFree()
   Param[1]: data (type: const unsigned char *)
   Param[2]: outputSize (type: int *)
 Function 133: SaveStorageValue() (2 input parameters)

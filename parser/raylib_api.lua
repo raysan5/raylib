@@ -471,7 +471,7 @@ return {
         {
           type = "float *",
           name = "texcoords2",
-          description = "Vertex second texture coordinates (useful for lightmaps) (shader-location = 5)"
+          description = "Vertex texture second coordinates (UV - 2 components per vertex) (shader-location = 5)"
         },
         {
           type = "float *",
@@ -3771,7 +3771,7 @@ return {
     },
     {
       name = "GetDirectoryFiles",
-      description = "Get filenames in a directory path (memory should be freed)",
+      description = "Get filenames in a directory path (memory must be freed)",
       returnType = "char **",
       params = {
         {type = "const char *", name = "dirPath"},
@@ -3798,7 +3798,7 @@ return {
     },
     {
       name = "GetDroppedFiles",
-      description = "Get dropped files names (memory should be freed)",
+      description = "Get dropped files names (memory must be freed)",
       returnType = "char **",
       params = {
         {type = "int *", name = "count"}
@@ -3819,7 +3819,7 @@ return {
     },
     {
       name = "CompressData",
-      description = "Compress data (DEFLATE algorithm)",
+      description = "Compress data (DEFLATE algorithm), memory must be MemFree()",
       returnType = "unsigned char *",
       params = {
         {type = "const unsigned char *", name = "data"},
@@ -3829,7 +3829,7 @@ return {
     },
     {
       name = "DecompressData",
-      description = "Decompress data (DEFLATE algorithm)",
+      description = "Decompress data (DEFLATE algorithm), memory must be MemFree()",
       returnType = "unsigned char *",
       params = {
         {type = "const unsigned char *", name = "compData"},
@@ -3839,7 +3839,7 @@ return {
     },
     {
       name = "EncodeDataBase64",
-      description = "Encode data to Base64 string",
+      description = "Encode data to Base64 string, memory must be MemFree()",
       returnType = "char *",
       params = {
         {type = "const unsigned char *", name = "data"},
@@ -3849,7 +3849,7 @@ return {
     },
     {
       name = "DecodeDataBase64",
-      description = "Decode Base64 string data",
+      description = "Decode Base64 string data, memory must be MemFree()",
       returnType = "unsigned char *",
       params = {
         {type = "const unsigned char *", name = "data"},
