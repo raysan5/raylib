@@ -76,7 +76,7 @@
 #define MAX_STRUCT_LINE_LENGTH  2048    // Maximum length of one struct (multiple lines)
 
 #define MAX_FUNCTION_PARAMETERS   12    // Maximum number of function parameters
-#define MAX_STRUCT_FIELDS         32    // Maximum number of struct fields
+#define MAX_STRUCT_FIELDS         64    // Maximum number of struct fields
 #define MAX_ENUM_VALUES          512    // Maximum number of enum values
 
 //----------------------------------------------------------------------------------
