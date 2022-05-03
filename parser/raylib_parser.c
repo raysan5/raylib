@@ -364,45 +364,99 @@ int main(int argc, char* argv[])
                     structs[i].fieldCount++;
 
                     // Split field names containing multiple fields (like Matrix)
+                    int additionalFields = 0;
                     int originalIndex = structs[i].fieldCount - 1;
-                    int originalLength = -1;
-                    int lastStart;
-                    for (int c = 0; c < TextLength(structs[i].fieldName[originalIndex]) + 1; c++)
+                    for (int c = 0; c < TextLength(structs[i].fieldName[originalIndex]); c++)
                     {
-                        char v = structs[i].fieldName[originalIndex][c];
-                        bool isEndOfString = v == '\0';
-                        if ((v == ',') || isEndOfString)
+                        if (structs[i].fieldName[originalIndex][c] == ',') additionalFields++;
+                    }
+                    if (additionalFields > 0)
+                    {
+                        int originalLength = -1;
+                        int lastStart;
+                        for (int c = 0; c < TextLength(structs[i].fieldName[originalIndex]) + 1; c++)
                         {
-                            if (originalLength == -1)
+                            char v = structs[i].fieldName[originalIndex][c];
+                            bool isEndOfString = (v == '\0');
+                            if ((v == ',') || isEndOfString)
                             {
-                                // Save length of original field name
-                                // Don't truncate yet, still needed for copying
-                                originalLength = c;
-                            }
-                            else
-                            {
-                                // Copy field data from original field
-                                int nameLength = c - lastStart;
-                                MemoryCopy(structs[i].fieldName[structs[i].fieldCount], &(structs[i].fieldName[originalIndex][lastStart]), nameLength);
-                                MemoryCopy(structs[i].fieldType[structs[i].fieldCount], &(structs[i].fieldType[originalIndex][0]), TextLength(structs[i].fieldType[originalIndex]));
-                                MemoryCopy(structs[i].fieldDesc[structs[i].fieldCount], &(structs[i].fieldDesc[originalIndex][0]), TextLength(structs[i].fieldDesc[originalIndex]));
-                                structs[i].fieldCount++;
-                            }
-                            if (!isEndOfString)
-                            {
-                                // Skip comma and spaces
-                                c++;
-                                while (structs[i].fieldName[originalIndex][c] == ' ') c++;
+                                if (originalLength == -1)
+                                {
+                                    // Save length of original field name
+                                    // Don't truncate yet, still needed for copying
+                                    originalLength = c;
+                                }
+                                else
+                                {
+                                    // Copy field data from original field
+                                    int nameLength = c - lastStart;
+                                    MemoryCopy(structs[i].fieldName[structs[i].fieldCount], &(structs[i].fieldName[originalIndex][lastStart]), nameLength);
+                                    MemoryCopy(structs[i].fieldType[structs[i].fieldCount], &(structs[i].fieldType[originalIndex][0]), TextLength(structs[i].fieldType[originalIndex]));
+                                    MemoryCopy(structs[i].fieldDesc[structs[i].fieldCount], &(structs[i].fieldDesc[originalIndex][0]), TextLength(structs[i].fieldDesc[originalIndex]));
+                                    structs[i].fieldCount++;
+                                }
+                                if (!isEndOfString)
+                                {
+                                    // Skip comma and spaces
+                                    c++;
+                                    while (structs[i].fieldName[originalIndex][c] == ' ') c++;
 
-                                // Save position for next field
-                                lastStart = c;
+                                    // Save position for next field
+                                    lastStart = c;
+                                }
                             }
                         }
+                        // Set length of original field to truncate the first field name
+                        structs[i].fieldName[originalIndex][originalLength] = '\0';
                     }
-                    // Set length of original field
-                    // This has no effect on fields that are on their own line
-                    // But it truncates the first field name of fields that share a line
-                    structs[i].fieldName[originalIndex][originalLength] = '\0';
+
+                    // Split field types containing multiple fields (like MemNode)
+                    additionalFields = 0;
+                    originalIndex = structs[i].fieldCount - 1;
+                    for (int c = 0; c < TextLength(structs[i].fieldType[originalIndex]); c++)
+                    {
+                        if (structs[i].fieldType[originalIndex][c] == ',') additionalFields++;
+                    }
+                    if (additionalFields > 0) {
+                        // Copy original name to last additional field
+                        structs[i].fieldCount += additionalFields;
+                        MemoryCopy(structs[i].fieldName[originalIndex + additionalFields], &(structs[i].fieldName[originalIndex][0]), TextLength(structs[i].fieldName[originalIndex]));
+
+                        // Copy names from type to additional fields
+                        int fieldsRemaining = additionalFields;
+                        int nameStart = -1;
+                        int nameEnd = -1;
+                        for (int k = TextLength(structs[i].fieldType[originalIndex]); k > 0; k--)
+                        {
+                            char v = structs[i].fieldType[originalIndex][k];
+                            if ((v == '*') || (v == ' ') || (v == ','))
+                            {
+                                if (nameEnd != -1) {
+                                    // Don't copy to last additional field
+                                    if (fieldsRemaining != additionalFields)
+                                    {
+                                        nameStart = k + 1;
+                                        MemoryCopy(structs[i].fieldName[originalIndex + fieldsRemaining], &(structs[i].fieldType[originalIndex][nameStart]), nameEnd - nameStart + 1);
+                                    }
+                                    nameEnd = -1;
+                                    fieldsRemaining--;
+                                }
+                            }
+                            else if (nameEnd == -1) nameEnd = k;
+                        }
+
+                        // Truncate original field type
+                        int fieldTypeLength = nameStart;
+                        structs[i].fieldType[originalIndex][fieldTypeLength] = '\0';
+
+                        // Set field type and description of additional fields
+                        for (int j = 1; j <= additionalFields; j++)
+                        {
+                            MemoryCopy(structs[i].fieldType[originalIndex + j], &(structs[i].fieldType[originalIndex][0]), fieldTypeLength);
+                            MemoryCopy(structs[i].fieldDesc[originalIndex + j], &(structs[i].fieldDesc[originalIndex][0]), TextLength(structs[i].fieldDesc[originalIndex]));
+                            
+                        }
+                    }
                 }
             }
 
