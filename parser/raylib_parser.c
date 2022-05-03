@@ -410,9 +410,9 @@ int main(int argc, char* argv[])
                                 {
                                     // Copy field data from original field
                                     int nameLength = c - lastStart;
-                                    MemoryCopy(structs[i].fieldName[structs[i].fieldCount], &(structs[i].fieldName[originalIndex][lastStart]), nameLength);
-                                    MemoryCopy(structs[i].fieldType[structs[i].fieldCount], &(structs[i].fieldType[originalIndex][0]), TextLength(structs[i].fieldType[originalIndex]));
-                                    MemoryCopy(structs[i].fieldDesc[structs[i].fieldCount], &(structs[i].fieldDesc[originalIndex][0]), TextLength(structs[i].fieldDesc[originalIndex]));
+                                    MemoryCopy(structs[i].fieldName[structs[i].fieldCount], &structs[i].fieldName[originalIndex][lastStart], nameLength);
+                                    MemoryCopy(structs[i].fieldType[structs[i].fieldCount], &structs[i].fieldType[originalIndex][0], TextLength(structs[i].fieldType[originalIndex]));
+                                    MemoryCopy(structs[i].fieldDesc[structs[i].fieldCount], &structs[i].fieldDesc[originalIndex][0], TextLength(structs[i].fieldDesc[originalIndex]));
                                     structs[i].fieldCount++;
                                 }
                                 if (!isEndOfString)
@@ -440,7 +440,7 @@ int main(int argc, char* argv[])
                     if (additionalFields > 0) {
                         // Copy original name to last additional field
                         structs[i].fieldCount += additionalFields;
-                        MemoryCopy(structs[i].fieldName[originalIndex + additionalFields], &(structs[i].fieldName[originalIndex][0]), TextLength(structs[i].fieldName[originalIndex]));
+                        MemoryCopy(structs[i].fieldName[originalIndex + additionalFields], &structs[i].fieldName[originalIndex][0], TextLength(structs[i].fieldName[originalIndex]));
 
                         // Copy names from type to additional fields
                         int fieldsRemaining = additionalFields;
@@ -456,7 +456,7 @@ int main(int argc, char* argv[])
                                     if (fieldsRemaining != additionalFields)
                                     {
                                         nameStart = k + 1;
-                                        MemoryCopy(structs[i].fieldName[originalIndex + fieldsRemaining], &(structs[i].fieldType[originalIndex][nameStart]), nameEnd - nameStart + 1);
+                                        MemoryCopy(structs[i].fieldName[originalIndex + fieldsRemaining], &structs[i].fieldType[originalIndex][nameStart], nameEnd - nameStart + 1);
                                     }
                                     nameEnd = -1;
                                     fieldsRemaining--;
@@ -472,8 +472,8 @@ int main(int argc, char* argv[])
                         // Set field type and description of additional fields
                         for (int j = 1; j <= additionalFields; j++)
                         {
-                            MemoryCopy(structs[i].fieldType[originalIndex + j], &(structs[i].fieldType[originalIndex][0]), fieldTypeLength);
-                            MemoryCopy(structs[i].fieldDesc[originalIndex + j], &(structs[i].fieldDesc[originalIndex][0]), TextLength(structs[i].fieldDesc[originalIndex]));
+                            MemoryCopy(structs[i].fieldType[originalIndex + j], &structs[i].fieldType[originalIndex][0], fieldTypeLength);
+                            MemoryCopy(structs[i].fieldDesc[originalIndex + j], &structs[i].fieldDesc[originalIndex][0], TextLength(structs[i].fieldDesc[originalIndex]));
                             
                         }
                     }
@@ -503,7 +503,7 @@ int main(int argc, char* argv[])
         int typeStart = c;
         while(linePtr[c] != ' ') c++;
         int typeLen = c - typeStart;
-        MemoryCopy(aliases[i].type, linePtr + typeStart, typeLen);
+        MemoryCopy(aliases[i].type, &linePtr[typeStart], typeLen);
 
         // Skip space
         c++;
@@ -512,10 +512,10 @@ int main(int argc, char* argv[])
         int nameStart = c;
         while(linePtr[c] != ';') c++;
         int nameLen = c - nameStart;
-        MemoryCopy(aliases[i].name, linePtr + nameStart, nameLen);
+        MemoryCopy(aliases[i].name, &linePtr[nameStart], nameLen);
 
         // Description
-        GetDescription(linePtr + c, aliases[i].desc);
+        GetDescription(&linePtr[c], aliases[i].desc);
     }
     free(aliasLines);
 
@@ -526,7 +526,7 @@ int main(int argc, char* argv[])
     {
         char *linePtr = lines[callbackLines[i]];
 
-        // Skip "typedef"
+        // Skip "typedef "
         int c = 8;
 
         // Return type
@@ -565,7 +565,7 @@ int main(int argc, char* argv[])
         }
 
         // Description
-        GetDescription(linePtr + c, callbacks[i].desc);
+        GetDescription(&linePtr[c], callbacks[i].desc);
     }
     free(callbackLines);
 
@@ -709,7 +709,7 @@ int main(int argc, char* argv[])
         bool isDuplicate = false;
         for (int k = 0; k < defineIndex; k++)
         {
-            if ((nameLen == TextLength(defines[k].name)) && IsTextEqual(defines[k].name, linePtr + defineNameStart, nameLen))
+            if ((nameLen == TextLength(defines[k].name)) && IsTextEqual(defines[k].name, &linePtr[defineNameStart], nameLen))
             {
                 isDuplicate = true;
                 break;
@@ -717,7 +717,7 @@ int main(int argc, char* argv[])
         }
         if (isDuplicate) continue;
 
-        MemoryCopy(defines[defineIndex].name, linePtr + defineNameStart, nameLen);
+        MemoryCopy(defines[defineIndex].name, &linePtr[defineNameStart], nameLen);
 
         // Determine type
         if (linePtr[defineNameEnd] == ')') defines[defineIndex].type = MACRO;
@@ -769,7 +769,7 @@ int main(int argc, char* argv[])
         int valueLen = defineValueEnd - defineValueStart + 1;
         if (valueLen > 255) valueLen = 255;
 
-        if (valueLen > 0) MemoryCopy(defines[defineIndex].value, linePtr + defineValueStart, valueLen);
+        if (valueLen > 0) MemoryCopy(defines[defineIndex].value, &linePtr[defineValueStart], valueLen);
 
         // Extracting description
         if ((linePtr[j] == '/') && linePtr[j + 1] == '/')
@@ -782,7 +782,7 @@ int main(int argc, char* argv[])
             int commentLen = commentEnd - commentStart + 1;
             if (commentLen > 127) commentLen = 127;
 
-            MemoryCopy(defines[defineIndex].desc, linePtr + commentStart, commentLen);
+            MemoryCopy(defines[defineIndex].desc, &linePtr[commentStart], commentLen);
         }
 
         defineIndex++;
@@ -1109,10 +1109,7 @@ static void GetDescription(const char *line, char *description)
         }
         c++;
     }
-    if (descStart != -1)
-    {
-        MemoryCopy(description, &(line[descStart]), c - descStart);
-    }
+    if (descStart != -1) MemoryCopy(description, &line[descStart], c - descStart);
 }
 
 // Get text length in bytes, check for \0 character
