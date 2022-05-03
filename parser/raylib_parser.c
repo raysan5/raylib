@@ -67,6 +67,7 @@
 #include <ctype.h>              // Required for: isdigit()
 
 #define MAX_FUNCS_TO_PARSE       512    // Maximum number of functions to parse
+#define MAX_CALLBACKS_TO_PARSE    64    // Maximum number of callbacks to parse
 #define MAX_STRUCTS_TO_PARSE      64    // Maximum number of structures to parse
 #define MAX_ALIASES_TO_PARSE      64    // Maximum number of aliases to parse
 #define MAX_ENUMS_TO_PARSE        64    // Maximum number of enums to parse
@@ -139,11 +140,13 @@ typedef enum { DEFAULT = 0, JSON, XML, LUA } OutputFormat;
 // Global Variables Definition
 //----------------------------------------------------------------------------------
 static int funcCount = 0;
+static int callbackCount = 0;
 static int structCount = 0;
 static int aliasCount = 0;
 static int enumCount = 0;
 static int defineCount = 0;
 static FunctionInfo *funcs = NULL;
+static FunctionInfo *callbacks = NULL;
 static StructInfo *structs = NULL;
 static AliasInfo *aliases = NULL;
 static EnumInfo *enums = NULL;
@@ -194,6 +197,9 @@ int main(int argc, char* argv[])
     // Function lines pointers, selected from buffer "lines"
     char **funcLines = (char **)malloc(MAX_FUNCS_TO_PARSE*sizeof(char *));
 
+    // Callbacks lines pointers, selected from buffer "lines"
+    int *callbackLines = (int *)malloc(MAX_CALLBACKS_TO_PARSE*sizeof(int));
+
     // Structs lines pointers, selected from buffer "lines"
     int *structLines = (int *)malloc(MAX_STRUCTS_TO_PARSE*sizeof(int));
 
@@ -218,6 +224,32 @@ int main(int argc, char* argv[])
             // Keep a pointer to the function line
             funcLines[funcCount] = lines[i];
             funcCount++;
+        }
+    }
+
+    // Read callback lines
+    for (int i = 0; i < linesCount; i++)
+    {
+        // Find callbacks (lines with "typedef ... (* ... )( ... );")
+        if (IsTextEqual(lines[i], "typedef", 7))
+        {
+            bool hasBeginning = false;
+            bool hasMiddle = false;
+            bool hasEnd = false;
+
+            for (int c = 0; c < MAX_LINE_LENGTH; c++)
+            {
+                if ((lines[i][c] == '(') && (lines[i][c + 1] == '*')) hasBeginning = true;
+                if ((lines[i][c] == ')') && (lines[i][c + 1] == '(')) hasMiddle = true;
+                if ((lines[i][c] == ')') && (lines[i][c + 1] == ';')) hasEnd = true;
+                if (hasEnd) break;
+            }
+
+            if (hasBeginning && hasMiddle && hasEnd)
+            {
+                callbackLines[callbackCount] = i;
+                callbackCount++;
+            }
         }
     }
 
@@ -457,7 +489,6 @@ int main(int argc, char* argv[])
 
     // Alias info data
     aliases = (AliasInfo *)calloc(MAX_ALIASES_TO_PARSE, sizeof(AliasInfo));
-    int aliasIndex = 0;
 
     for (int i = 0; i < aliasCount; i++)
     {
@@ -488,6 +519,55 @@ int main(int argc, char* argv[])
         GetDescription(linePtr + c, aliases[i].desc);
     }
     free(aliasLines);
+
+    // Callback info data
+    callbacks = (FunctionInfo *)calloc(MAX_CALLBACKS_TO_PARSE, sizeof(FunctionInfo));
+
+    for (int i = 0; i < callbackCount; i++)
+    {
+        char *linePtr = lines[callbackLines[i]];
+
+        // Skip "typedef"
+        int c = 8;
+
+        // Return type
+        int retTypeStart = c;
+        while(linePtr[c] != '(') c++;
+        int retTypeLen = c - retTypeStart;
+        while(linePtr[retTypeStart + retTypeLen - 1] == ' ') retTypeLen--;
+        MemoryCopy(callbacks[i].retType, &linePtr[retTypeStart], retTypeLen);
+
+        // Skip "(*"
+        c += 2;
+
+        // Name
+        int nameStart = c;
+        while(linePtr[c] != ')') c++;
+        int nameLen = c - nameStart;
+        MemoryCopy(callbacks[i].name, &linePtr[nameStart], nameLen);
+
+        // Skip ")("
+        c += 2;
+
+        // Params
+        int paramStart = c;
+        for (c; c < MAX_LINE_LENGTH; c++)
+        {
+            if ((linePtr[c] == ',') || (linePtr[c] == ')')) {
+                // Get parameter type + name, extract info
+                int paramLen = c - paramStart;
+                GetDataTypeAndName(&linePtr[paramStart], paramLen, callbacks[i].paramType[callbacks[i].paramCount], callbacks[i].paramName[callbacks[i].paramCount]);
+                callbacks[i].paramCount++;
+                paramStart = c + 1;
+                while(linePtr[paramStart] == ' ') paramStart++;
+            }
+            if (linePtr[c] == ')') break;
+        }
+
+        // Description
+        GetDescription(linePtr + c, callbacks[i].desc);
+    }
+    free(callbackLines);
 
     // Enum info data
     enums = (EnumInfo *)calloc(MAX_ENUMS_TO_PARSE, sizeof(EnumInfo));
@@ -781,11 +861,12 @@ int main(int argc, char* argv[])
 
     // At this point, all raylib data has been parsed!
     //-----------------------------------------------------------------------------------------
-    // structs[] -> We have all the structs decomposed into pieces for further analysis
-    // aliases[] -> We have all the aliases decomposed into pieces for further analysis
-    // enums[]   -> We have all the enums decomposed into pieces for further analysis
-    // funcs[]   -> We have all the functions decomposed into pieces for further analysis
-    // defines[] -> We have all the defines decomposed into pieces for further analysis
+    // structs[]   -> We have all the structs decomposed into pieces for further analysis
+    // aliases[]   -> We have all the aliases decomposed into pieces for further analysis
+    // enums[]     -> We have all the enums decomposed into pieces for further analysis
+    // funcs[]     -> We have all the functions decomposed into pieces for further analysis
+    // callbacks[] -> We have all the callbacks decomposed into pieces for further analysis
+    // defines[]   -> We have all the defines decomposed into pieces for further analysis
 
     // Process input file to output
     if (outFileName[0] == '\0') MemoryCopy(outFileName, "raylib_api.txt\0", 15);
@@ -800,6 +881,7 @@ int main(int argc, char* argv[])
     ExportParsedData(outFileName, outputFormat);
 
     free(funcs);
+    free(callbacks);
     free(structs);
     free(aliases);
     free(enums);
@@ -1217,6 +1299,18 @@ static void ExportParsedData(const char *fileName, int format)
                 if (funcs[i].paramCount == 0) fprintf(outFile, "  No input parameters\n");
             }
 
+            // Print callbacks info
+            fprintf(outFile, "\nCallbacks found: %i\n\n", callbackCount);
+            for (int i = 0; i < callbackCount; i++)
+            {
+                fprintf(outFile, "Callback %03i: %s() (%i input parameters)\n", i + 1, callbacks[i].name, callbacks[i].paramCount);
+                fprintf(outFile, "  Name: %s\n", callbacks[i].name);
+                fprintf(outFile, "  Return type: %s\n", callbacks[i].retType);
+                fprintf(outFile, "  Description: %s\n", callbacks[i].desc);
+                for (int p = 0; p < callbacks[i].paramCount; p++) fprintf(outFile, "  Param[%i]: %s (type: %s)\n", p + 1, callbacks[i].paramName[p], callbacks[i].paramType[p]);
+                if (callbacks[i].paramCount == 0) fprintf(outFile, "  No input parameters\n");
+            }
+
             // Print defines info
             fprintf(outFile, "\nDefines found: %i\n\n", defineCount);
             for (int i = 0; i < defineCount; i++)
@@ -1348,6 +1442,34 @@ static void ExportParsedData(const char *fileName, int format)
                 fprintf(outFile, "    }");
 
                 if (i < funcCount - 1) fprintf(outFile, ",\n");
+                else fprintf(outFile, "\n");
+            }
+            fprintf(outFile, "  },\n");
+
+            // Print callbacks info
+            fprintf(outFile, "  callbacks = {\n");
+            for (int i = 0; i < callbackCount; i++)
+            {
+                fprintf(outFile, "    {\n");
+                fprintf(outFile, "      name = \"%s\",\n", callbacks[i].name);
+                fprintf(outFile, "      description = \"%s\",\n", EscapeBackslashes(callbacks[i].desc));
+                fprintf(outFile, "      returnType = \"%s\"", callbacks[i].retType);
+
+                if (callbacks[i].paramCount == 0) fprintf(outFile, "\n");
+                else
+                {
+                    fprintf(outFile, ",\n      params = {\n");
+                    for (int p = 0; p < callbacks[i].paramCount; p++)
+                    {
+                        fprintf(outFile, "        {type = \"%s\", name = \"%s\"}", callbacks[i].paramType[p], callbacks[i].paramName[p]);
+                        if (p < callbacks[i].paramCount - 1) fprintf(outFile, ",\n");
+                        else fprintf(outFile, "\n");
+                    }
+                    fprintf(outFile, "      }\n");
+                }
+                fprintf(outFile, "    }");
+
+                if (i < callbackCount - 1) fprintf(outFile, ",\n");
                 else fprintf(outFile, "\n");
             }
             fprintf(outFile, "  }\n");
@@ -1482,6 +1604,37 @@ static void ExportParsedData(const char *fileName, int format)
                 if (i < funcCount - 1) fprintf(outFile, ",\n");
                 else fprintf(outFile, "\n");
             }
+            fprintf(outFile, "  ],\n");
+
+            // Print callbacks info
+            fprintf(outFile, "  \"callbacks\": [\n");
+            for (int i = 0; i < callbackCount; i++)
+            {
+                fprintf(outFile, "    {\n");
+                fprintf(outFile, "      \"name\": \"%s\",\n", callbacks[i].name);
+                fprintf(outFile, "      \"description\": \"%s\",\n", EscapeBackslashes(callbacks[i].desc));
+                fprintf(outFile, "      \"returnType\": \"%s\"", callbacks[i].retType);
+
+                if (callbacks[i].paramCount == 0) fprintf(outFile, "\n");
+                else
+                {
+                    fprintf(outFile, ",\n      \"params\": [\n");
+                    for (int p = 0; p < callbacks[i].paramCount; p++)
+                    {
+                        fprintf(outFile, "        {\n");
+                        fprintf(outFile, "          \"type\": \"%s\",\n", callbacks[i].paramType[p]);
+                        fprintf(outFile, "          \"name\": \"%s\"\n", callbacks[i].paramName[p]);
+                        fprintf(outFile, "        }");
+                        if (p < callbacks[i].paramCount - 1) fprintf(outFile, ",\n");
+                        else fprintf(outFile, "\n");
+                    }
+                    fprintf(outFile, "      ]\n");
+                }
+                fprintf(outFile, "    }");
+
+                if (i < callbackCount - 1) fprintf(outFile, ",\n");
+                else fprintf(outFile, "\n");
+            }
             fprintf(outFile, "  ]\n");
             fprintf(outFile, "}\n");
         } break;
@@ -1515,6 +1668,12 @@ static void ExportParsedData(const char *fileName, int format)
                         <Param type="" name="" desc="" />
                     </Function>
                 </Functions>
+                <Callbacks count="">
+                    <Callback name="" retType="" paramCount="" desc="">
+                        <Param type="" name="" desc="" />
+                        <Param type="" name="" desc="" />
+                    </Callback>
+                </Callbacks>
             </raylibAPI>
             */
 
@@ -1584,6 +1743,19 @@ static void ExportParsedData(const char *fileName, int format)
                 fprintf(outFile, "        </Function>\n");
             }
             fprintf(outFile, "    </Functions>\n");
+
+            // Print callbacks info
+            fprintf(outFile, "    <Callbacks count=\"%i\">\n", callbackCount);
+            for (int i = 0; i < callbackCount; i++)
+            {
+                fprintf(outFile, "        <Callback name=\"%s\" retType=\"%s\" paramCount=\"%i\" desc=\"%s\">\n", callbacks[i].name, callbacks[i].retType, callbacks[i].paramCount, callbacks[i].desc);
+                for (int p = 0; p < callbacks[i].paramCount; p++)
+                {
+                    fprintf(outFile, "            <Param type=\"%s\" name=\"%s\" desc=\"%s\" />\n", callbacks[i].paramType[p], callbacks[i].paramName[p], callbacks[i].paramDesc[p]);
+                }
+                fprintf(outFile, "        </Callback>\n");
+            }
+            fprintf(outFile, "    </Callbacks>\n");
 
             fprintf(outFile, "</raylibAPI>\n");
 
