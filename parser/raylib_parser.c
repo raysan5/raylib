@@ -577,7 +577,14 @@ int main(int argc, char* argv[])
 
         // Extract name
         int defineNameStart = j;
-        while ((linePtr[j] != ' ') && (linePtr[j] != '\t') && (linePtr[j] != '\0')) j++;
+        int openBraces = 0;
+        while (linePtr[j] != '\0')
+        {
+            if (((linePtr[j] == ' ') || (linePtr[j] == '\t')) && (openBraces == 0)) break;
+            if (linePtr[j] == '(') openBraces++;
+            if (linePtr[j] == ')') openBraces--;
+            j++;
+        }
         int defineNameEnd = j-1;
 
         // Skip duplicates
