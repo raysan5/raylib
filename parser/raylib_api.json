@@ -10556,5 +10556,101 @@
         }
       ]
     }
+  ],
+  "callbacks": [
+    {
+      "name": "TraceLogCallback",
+      "description": "Logging: Redirect trace log messages",
+      "returnType": "void",
+      "params": [
+        {
+          "type": "int",
+          "name": "logLevel"
+        },
+        {
+          "type": "const char *",
+          "name": "text"
+        },
+        {
+          "type": "va_list",
+          "name": "args"
+        }
+      ]
+    },
+    {
+      "name": "LoadFileDataCallback",
+      "description": "FileIO: Load binary data",
+      "returnType": "unsigned char *",
+      "params": [
+        {
+          "type": "const char *",
+          "name": "fileName"
+        },
+        {
+          "type": "unsigned int *",
+          "name": "bytesRead"
+        }
+      ]
+    },
+    {
+      "name": "SaveFileDataCallback",
+      "description": "FileIO: Save binary data",
+      "returnType": "bool",
+      "params": [
+        {
+          "type": "const char *",
+          "name": "fileName"
+        },
+        {
+          "type": "void *",
+          "name": "data"
+        },
+        {
+          "type": "unsigned int",
+          "name": "bytesToWrite"
+        }
+      ]
+    },
+    {
+      "name": "LoadFileTextCallback",
+      "description": "FileIO: Load text data",
+      "returnType": "char *",
+      "params": [
+        {
+          "type": "const char *",
+          "name": "fileName"
+        }
+      ]
+    },
+    {
+      "name": "SaveFileTextCallback",
+      "description": "FileIO: Save text data",
+      "returnType": "bool",
+      "params": [
+        {
+          "type": "const char *",
+          "name": "fileName"
+        },
+        {
+          "type": "char *",
+          "name": "text"
+        }
+      ]
+    },
+    {
+      "name": "AudioCallback",
+      "description": "",
+      "returnType": "void",
+      "params": [
+        {
+          "type": "void *",
+          "name": "bufferData"
+        },
+        {
+          "type": "unsigned int",
+          "name": "frames"
+        }
+      ]
+    }
   ]
 }

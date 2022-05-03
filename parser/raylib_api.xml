@@ -2695,4 +2695,31 @@
             <Param type="AudioCallback" name="processor" desc="" />
         </Function>
     </Functions>
+    <Callbacks count="6">
+        <Callback name="TraceLogCallback" retType="void" paramCount="3" desc="Logging: Redirect trace log messages">
+            <Param type="int" name="logLevel" desc="" />
+            <Param type="const char *" name="text" desc="" />
+            <Param type="va_list" name="args" desc="" />
+        </Callback>
+        <Callback name="LoadFileDataCallback" retType="unsigned char *" paramCount="2" desc="FileIO: Load binary data">
+            <Param type="const char *" name="fileName" desc="" />
+            <Param type="unsigned int *" name="bytesRead" desc="" />
+        </Callback>
+        <Callback name="SaveFileDataCallback" retType="bool" paramCount="3" desc="FileIO: Save binary data">
+            <Param type="const char *" name="fileName" desc="" />
+            <Param type="void *" name="data" desc="" />
+            <Param type="unsigned int" name="bytesToWrite" desc="" />
+        </Callback>
+        <Callback name="LoadFileTextCallback" retType="char *" paramCount="1" desc="FileIO: Load text data">
+            <Param type="const char *" name="fileName" desc="" />
+        </Callback>
+        <Callback name="SaveFileTextCallback" retType="bool" paramCount="2" desc="FileIO: Save text data">
+            <Param type="const char *" name="fileName" desc="" />
+            <Param type="char *" name="text" desc="" />
+        </Callback>
+        <Callback name="AudioCallback" retType="void" paramCount="2" desc="">
+            <Param type="void *" name="bufferData" desc="" />
+            <Param type="unsigned int" name="frames" desc="" />
+        </Callback>
+    </Callbacks>
 </raylibAPI>

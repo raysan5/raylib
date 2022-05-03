@@ -3782,6 +3782,46 @@ Function 499: DetachAudioStreamProcessor() (2 input parameters)
   Param[1]: stream (type: AudioStream)
   Param[2]: processor (type: AudioCallback)
 
+Callbacks found: 6
+
+Callback 001: TraceLogCallback() (3 input parameters)
+  Name: TraceLogCallback
+  Return type: void
+  Description: Logging: Redirect trace log messages
+  Param[1]: logLevel (type: int)
+  Param[2]: text (type: const char *)
+  Param[3]: args (type: va_list)
+Callback 002: LoadFileDataCallback() (2 input parameters)
+  Name: LoadFileDataCallback
+  Return type: unsigned char *
+  Description: FileIO: Load binary data
+  Param[1]: fileName (type: const char *)
+  Param[2]: bytesRead (type: unsigned int *)
+Callback 003: SaveFileDataCallback() (3 input parameters)
+  Name: SaveFileDataCallback
+  Return type: bool
+  Description: FileIO: Save binary data
+  Param[1]: fileName (type: const char *)
+  Param[2]: data (type: void *)
+  Param[3]: bytesToWrite (type: unsigned int)
+Callback 004: LoadFileTextCallback() (1 input parameters)
+  Name: LoadFileTextCallback
+  Return type: char *
+  Description: FileIO: Load text data
+  Param[1]: fileName (type: const char *)
+Callback 005: SaveFileTextCallback() (2 input parameters)
+  Name: SaveFileTextCallback
+  Return type: bool
+  Description: FileIO: Save text data
+  Param[1]: fileName (type: const char *)
+  Param[2]: text (type: char *)
+Callback 006: AudioCallback() (2 input parameters)
+  Name: AudioCallback
+  Return type: void
+  Description: 
+  Param[1]: bufferData (type: void *)
+  Param[2]: frames (type: unsigned int)
+
 Defines found: 52
 
 Define 001: RAYLIB_H
