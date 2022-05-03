@@ -728,7 +728,7 @@ int main(int argc, char* argv[])
         // Get function description
         for (int c = funcEnd; c < MAX_LINE_LENGTH; c++)
         {
-            if (funcLines[i][c] == '/')
+            if ((funcLines[i][c] == '/') && (funcLines[i][c + 1] == '/'))
             {
                 MemoryCopy(funcs[i].desc, &funcLines[i][c], 127);   // WARNING: Size could be too long for funcLines[i][c]?
                 break;
