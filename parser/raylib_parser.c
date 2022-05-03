@@ -260,8 +260,8 @@ int main(int argc, char* argv[])
             {
                 char v = lines[i][c];
                 if (v == ' ') spaceCount++;
-                if (v == ';' && spaceCount == 2) validAlias = true;
-                if (v == ';' || v == '(' || v == '\0') break;
+                if ((v == ';') && (spaceCount == 2)) validAlias = true;
+                if ((v == ';') || (v == '(') || (v == '\0')) break;
             }
             if (!validAlias) continue;
             aliasLines[aliasCount] = i;
@@ -273,7 +273,7 @@ int main(int argc, char* argv[])
     for (int i = 0; i < linesCount; i++)
     {
         // Read enum line
-        if (IsTextEqual(lines[i], "typedef enum {", 14) && lines[i][TextLength(lines[i])-1] != ';') // ignore inline enums
+        if (IsTextEqual(lines[i], "typedef enum {", 14) && (lines[i][TextLength(lines[i])-1] != ';')) // ignore inline enums
         {
             // Keep the line position in the array of lines,
             // so, we can scan that position and following lines
@@ -286,7 +286,7 @@ int main(int argc, char* argv[])
     for (int i = 0; i < linesCount; i++)
     {
         int j = 0;
-        while (lines[i][j] == ' ' || lines[i][j] == '\t') j++; // skip spaces and tabs in the begining
+        while ((lines[i][j] == ' ') || (lines[i][j] == '\t')) j++; // skip spaces and tabs in the begining
         // Read define line
         if (IsTextEqual(lines[i]+j, "#define ", 8))
         {
