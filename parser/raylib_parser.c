@@ -223,21 +223,20 @@ int main(int argc, char* argv[])
     // Read struct lines
     for (int i = 0; i < linesCount; i++)
     {
-        // Find structs (starting with "typedef struct ... {", ending with '} ... ;')
+        // Find structs
+        // starting with "typedef struct ... {" or "typedef struct ... ; \n struct ... {"
+        // ending with "} ... ;"
+        // i.e. excluding "typedef struct rAudioBuffer rAudioBuffer;" -> Typedef and forward declaration only
         if (IsTextEqual(lines[i], "typedef struct", 14))
         {
-            int j = 0;
-            bool validStruct = false;
-
-            for (int c = 0; c < MAX_LINE_LENGTH; c++)
+            bool validStruct = IsTextEqual(lines[i + 1], "struct", 6);
+            if (!validStruct)
             {
-                char v = lines[i][c];
-                if (v == '{') validStruct = true;
-                if (v == '{' || v == ';' || v == '\0')
+                for (int c = 0; c < MAX_LINE_LENGTH; c++)
                 {
-                    // Not valid struct if it ends without '{':
-                    // i.e typedef struct rAudioBuffer rAudioBuffer; -> Typedef and forward declaration
-                    break;
+                    char v = lines[i][c];
+                    if (v == '{') validStruct = true;
+                    if ((v == '{') || (v == ';') || (v == '\0')) break;
                 }
             }
             if (!validStruct) continue;
@@ -322,9 +321,11 @@ int main(int argc, char* argv[])
         const int TDS_LEN = 15; // length of "typedef struct "
         for (int c = TDS_LEN; c < 64 + TDS_LEN; c++)
         {
-            if (linesPtr[0][c] == '{')
+            if ((linesPtr[0][c] == '{') || (linesPtr[0][c] == ' '))
             {
-                MemoryCopy(structs[i].name, &linesPtr[0][TDS_LEN], c - TDS_LEN - 1);
+                int nameLen = c - TDS_LEN;
+                while (linesPtr[0][TDS_LEN + nameLen - 1] == ' ') nameLen--;
+                MemoryCopy(structs[i].name, &linesPtr[0][TDS_LEN], nameLen);
                 break;
             }
         }
@@ -341,7 +342,7 @@ int main(int argc, char* argv[])
                 int fieldEndPos = 0;
                 while (fieldLine[fieldEndPos] != ';') fieldEndPos++;
 
-                if (fieldLine[0] != '/')    // Field line is not a comment
+                if ((fieldLine[0] != '/') && !IsTextEqual(fieldLine, "struct", 6)) // Field line is not a comment and not a struct declaration
                 {
                     //printf("Struct field: %s_\n", fieldLine);     // OK!
 
