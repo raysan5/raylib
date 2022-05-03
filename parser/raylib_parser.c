@@ -194,22 +194,22 @@ int main(int argc, char* argv[])
     int linesCount = 0;
     char **lines = GetTextLines(buffer, length, &linesCount);
 
-    // Function lines pointers, selected from buffer "lines"
-    char **funcLines = (char **)malloc(MAX_FUNCS_TO_PARSE*sizeof(char *));
+    // Function line indices
+    int *funcLines = (int *)malloc(MAX_FUNCS_TO_PARSE*sizeof(int));
 
-    // Callbacks lines pointers, selected from buffer "lines"
+    // Callbacks line indices
     int *callbackLines = (int *)malloc(MAX_CALLBACKS_TO_PARSE*sizeof(int));
 
-    // Structs lines pointers, selected from buffer "lines"
+    // Structs line indices
     int *structLines = (int *)malloc(MAX_STRUCTS_TO_PARSE*sizeof(int));
 
-    // Aliases lines pointers, selected from buffer "lines"
+    // Aliases line indices
     int *aliasLines = (int *)malloc(MAX_ALIASES_TO_PARSE*sizeof(int));
 
-    // Enums lines pointers, selected from buffer "lines"
+    // Enums line indices
     int *enumLines = (int *)malloc(MAX_ENUMS_TO_PARSE*sizeof(int));
 
-    // Defines lines pointers, selected from buffer "lines"
+    // Defines line indices
     int *defineLines = (int *)malloc(MAX_DEFINES_TO_PARSE*sizeof(int));
 
     // Prepare required lines for parsing
@@ -221,8 +221,7 @@ int main(int argc, char* argv[])
         // Read function line (starting with `define`, i.e. for raylib.h "RLAPI")
         if (IsTextEqual(lines[i], apiDefine, TextLength(apiDefine)))
         {
-            // Keep a pointer to the function line
-            funcLines[funcCount] = lines[i];
+            funcLines[funcCount] = i;
             funcCount++;
         }
     }
@@ -553,7 +552,8 @@ int main(int argc, char* argv[])
         int paramStart = c;
         for (c; c < MAX_LINE_LENGTH; c++)
         {
-            if ((linePtr[c] == ',') || (linePtr[c] == ')')) {
+            if ((linePtr[c] == ',') || (linePtr[c] == ')'))
+            {
                 // Get parameter type + name, extract info
                 int paramLen = c - paramStart;
                 GetDataTypeAndName(&linePtr[paramStart], paramLen, callbacks[i].paramType[callbacks[i].paramCount], callbacks[i].paramName[callbacks[i].paramCount]);
@@ -795,13 +795,15 @@ int main(int argc, char* argv[])
 
     for (int i = 0; i < funcCount; i++)
     {
+        char *linePtr = lines[funcLines[i]];
+
         int funcParamsStart = 0;
         int funcEnd = 0;
 
         // Get return type and function name from func line
-        for (int c = 0; (c < MAX_LINE_LENGTH) && (funcLines[i][c] != '\n'); c++)
+        for (int c = 0; (c < MAX_LINE_LENGTH) && (linePtr[c] != '\n'); c++)
         {
-            if (funcLines[i][c] == '(')     // Starts function parameters
+            if (linePtr[c] == '(')     // Starts function parameters
             {
                 funcParamsStart = c + 1;
 
@@ -809,7 +811,7 @@ int main(int argc, char* argv[])
                 char funcRetTypeName[128] = { 0 };
                 int dc = TextLength(apiDefine) + 1;
                 int funcRetTypeNameLen = c - dc;     // Substract `define` ("RLAPI " for raylib.h)
-                MemoryCopy(funcRetTypeName, &funcLines[i][dc], funcRetTypeNameLen);
+                MemoryCopy(funcRetTypeName, &linePtr[dc], funcRetTypeNameLen);
 
                 GetDataTypeAndName(funcRetTypeName, funcRetTypeNameLen, funcs[i].retType, funcs[i].name);
                 break;
@@ -819,30 +821,30 @@ int main(int argc, char* argv[])
         // Get parameters from func line
         for (int c = funcParamsStart; c < MAX_LINE_LENGTH; c++)
         {
-            if (funcLines[i][c] == ',')     // Starts function parameters
+            if (linePtr[c] == ',')     // Starts function parameters
             {
                 // Get parameter type + name, extract info
                 char funcParamTypeName[128] = { 0 };
                 int funcParamTypeNameLen = c - funcParamsStart;
-                MemoryCopy(funcParamTypeName, &funcLines[i][funcParamsStart], funcParamTypeNameLen);
+                MemoryCopy(funcParamTypeName, &linePtr[funcParamsStart], funcParamTypeNameLen);
 
                 GetDataTypeAndName(funcParamTypeName, funcParamTypeNameLen, funcs[i].paramType[funcs[i].paramCount], funcs[i].paramName[funcs[i].paramCount]);
 
                 funcParamsStart = c + 1;
-                if (funcLines[i][c + 1] == ' ') funcParamsStart += 1;
+                if (linePtr[c + 1] == ' ') funcParamsStart += 1;
                 funcs[i].paramCount++;      // Move to next parameter
             }
-            else if (funcLines[i][c] == ')')
+            else if (linePtr[c] == ')')
             {
                 funcEnd = c + 2;
 
                 // Check if previous word is void
-                if ((funcLines[i][c - 4] == 'v') && (funcLines[i][c - 3] == 'o') && (funcLines[i][c - 2] == 'i') && (funcLines[i][c - 1] == 'd')) break;
+                if ((linePtr[c - 4] == 'v') && (linePtr[c - 3] == 'o') && (linePtr[c - 2] == 'i') && (linePtr[c - 1] == 'd')) break;
 
                 // Get parameter type + name, extract info
                 char funcParamTypeName[128] = { 0 };
                 int funcParamTypeNameLen = c - funcParamsStart;
-                MemoryCopy(funcParamTypeName, &funcLines[i][funcParamsStart], funcParamTypeNameLen);
+                MemoryCopy(funcParamTypeName, &linePtr[funcParamsStart], funcParamTypeNameLen);
 
                 GetDataTypeAndName(funcParamTypeName, funcParamTypeNameLen, funcs[i].paramType[funcs[i].paramCount], funcs[i].paramName[funcs[i].paramCount]);
 
@@ -852,12 +854,12 @@ int main(int argc, char* argv[])
         }
 
         // Get function description
-        GetDescription(&funcLines[i][funcEnd], funcs[i].desc);
+        GetDescription(&linePtr[funcEnd], funcs[i].desc);
     }
+    free(funcLines);
 
     for (int i = 0; i < linesCount; i++) free(lines[i]);
     free(lines);
-    free(funcLines);
 
     // At this point, all raylib data has been parsed!
     //-----------------------------------------------------------------------------------------
