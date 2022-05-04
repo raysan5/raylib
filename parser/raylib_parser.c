@@ -2,14 +2,14 @@
 
     raylib API parser
 
-    This parser scans raylib.h to get API information about structs, aliases, enums, functions and defines.
+    This parser scans raylib.h to get API information about defines, structs, aliases, enums, callbacks and functions.
     All data is divided into pieces, usually as strings. The following types are used for data:
 
-     - struct FunctionInfo
+     - struct DefineInfo
      - struct StructInfo
      - struct AliasInfo
      - struct EnumInfo
-     - struct DefInfo
+     - struct FunctionInfo
 
     CONSTRAINTS:
 
@@ -66,33 +66,34 @@
 #include <stdbool.h>            // Required for: bool
 #include <ctype.h>              // Required for: isdigit()
 
-#define MAX_FUNCS_TO_PARSE       512    // Maximum number of functions to parse
-#define MAX_CALLBACKS_TO_PARSE    64    // Maximum number of callbacks to parse
+#define MAX_DEFINES_TO_PARSE    2048    // Maximum number of defines to parse
 #define MAX_STRUCTS_TO_PARSE      64    // Maximum number of structures to parse
 #define MAX_ALIASES_TO_PARSE      64    // Maximum number of aliases to parse
 #define MAX_ENUMS_TO_PARSE        64    // Maximum number of enums to parse
-#define MAX_DEFINES_TO_PARSE    2048    // Maximum number of defines to parse
+#define MAX_CALLBACKS_TO_PARSE    64    // Maximum number of callbacks to parse
+#define MAX_FUNCS_TO_PARSE       512    // Maximum number of functions to parse
 
 #define MAX_LINE_LENGTH          512    // Maximum length of one line (including comments)
-#define MAX_STRUCT_LINE_LENGTH  2048    // Maximum length of one struct (multiple lines)
 
-#define MAX_FUNCTION_PARAMETERS   12    // Maximum number of function parameters
 #define MAX_STRUCT_FIELDS         64    // Maximum number of struct fields
 #define MAX_ENUM_VALUES          512    // Maximum number of enum values
+#define MAX_FUNCTION_PARAMETERS   12    // Maximum number of function parameters
 
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
 //----------------------------------------------------------------------------------
-// Function info data
-typedef struct FunctionInfo {
-    char name[64];              // Function name
-    char desc[128];             // Function description (comment at the end)
-    char retType[32];           // Return value type
-    int paramCount;             // Number of function parameters
-    char paramType[MAX_FUNCTION_PARAMETERS][32];   // Parameters type
-    char paramName[MAX_FUNCTION_PARAMETERS][32];   // Parameters name
-    char paramDesc[MAX_FUNCTION_PARAMETERS][128];  // Parameters description
-} FunctionInfo;
+
+// Type of parsed define
+typedef enum { UNKNOWN = 0, MACRO, GUARD, INT, LONG, FLOAT, DOUBLE, CHAR, STRING, COLOR } DefineType;
+
+// Define info data
+typedef struct DefineInfo {
+    char name[64];    // Define name
+    DefineType type;  // Define type
+    char value[256];  // Define value
+    char desc[128];   // Define description
+    bool isHex;       // Define is hex number (for types INT, LONG)
+} DefineInfo;
 
 // Struct info data
 typedef struct StructInfo {
@@ -121,17 +122,16 @@ typedef struct EnumInfo {
     char valueDesc[MAX_ENUM_VALUES][128];   // Value description
 } EnumInfo;
 
-// Type of parsed define
-typedef enum { UNKNOWN = 0, MACRO, GUARD, INT, LONG, FLOAT, DOUBLE, CHAR, STRING, COLOR } DefineType;
-
-// Define info data
-typedef struct DefineInfo {
-    char name[64];    // Define name
-    DefineType type;  // Define type
-    char value[256];  // Define value
-    char desc[128];   // Define description
-    bool isHex;       // Define is hex number (for types INT, LONG)
-} DefineInfo;
+// Function info data
+typedef struct FunctionInfo {
+    char name[64];              // Function name
+    char desc[128];             // Function description (comment at the end)
+    char retType[32];           // Return value type
+    int paramCount;             // Number of function parameters
+    char paramType[MAX_FUNCTION_PARAMETERS][32];   // Parameters type
+    char paramName[MAX_FUNCTION_PARAMETERS][32];   // Parameters name
+    char paramDesc[MAX_FUNCTION_PARAMETERS][128];  // Parameters description
+} FunctionInfo;
 
 // Output format for parsed data
 typedef enum { DEFAULT = 0, JSON, XML, LUA } OutputFormat;
@@ -139,21 +139,21 @@ typedef enum { DEFAULT = 0, JSON, XML, LUA } OutputFormat;
 //----------------------------------------------------------------------------------
 // Global Variables Definition
 //----------------------------------------------------------------------------------
-static int funcCount = 0;
-static int callbackCount = 0;
+static int defineCount = 0;
 static int structCount = 0;
 static int aliasCount = 0;
 static int enumCount = 0;
-static int defineCount = 0;
-static FunctionInfo *funcs = NULL;
-static FunctionInfo *callbacks = NULL;
+static int callbackCount = 0;
+static int funcCount = 0;
+static DefineInfo *defines = NULL;
 static StructInfo *structs = NULL;
 static AliasInfo *aliases = NULL;
 static EnumInfo *enums = NULL;
-static DefineInfo *defines = NULL;
-static char apiDefine[32] = "RLAPI\0";
+static FunctionInfo *callbacks = NULL;
+static FunctionInfo *funcs = NULL;
 
 // Command line variables
+static char apiDefine[32] = { 0 };         // Functions define (i.e. RLAPI for raylib.h, RMDEF for raymath.h, etc.)
 static char inFileName[512] = { 0 };       // Input file name (required in case of provided through CLI)
 static char outFileName[512] = { 0 };      // Output file name (required for file save/export)
 static int outputFormat = DEFAULT;
@@ -168,25 +168,25 @@ static char *LoadFileText(const char *fileName, int *length);
 static char **GetTextLines(const char *buffer, int length, int *linesCount);
 static void GetDataTypeAndName(const char *typeName, int typeNameLen, char *type, char *name);
 static void GetDescription(const char *source, char *description);
+static void MoveArraySize(char *name, char *type);          // Move array size from name to type
 static unsigned int TextLength(const char *text);           // Get text length in bytes, check for \0 character
 static bool IsTextEqual(const char *text1, const char *text2, unsigned int count);
 static void MemoryCopy(void *dest, const void *src, unsigned int count);
 static char *EscapeBackslashes(char *text);                 // Replace '\' by "\\" when exporting to JSON and XML
+static const char *StrDefineType(DefineType type);          // Get string of define type
 
 static void ExportParsedData(const char *fileName, int format); // Export parsed data in desired format
 
-static const char *StrDefineType(DefineType type);          // Get string of define type
-
-static void MoveArraySize(char *name, char *type);                // Move array size from name to type
-
-//------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------
 // Program main entry point
-//------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------
 int main(int argc, char* argv[])
 {
     if (argc > 1) ProcessCommandLine(argc, argv);
 
     if (inFileName[0] == '\0') MemoryCopy(inFileName, "../src/raylib.h\0", 16);
+    if (outFileName[0] == '\0') MemoryCopy(outFileName, "raylib_api.txt\0", 15);
+    if (apiDefine[0] == '\0') MemoryCopy(apiDefine, "RLAPI\0", 6);
 
     int length = 0;
     char *buffer = LoadFileText(inFileName, &length);
@@ -215,7 +215,7 @@ int main(int argc, char* argv[])
     int *funcLines = (int *)malloc(MAX_FUNCS_TO_PARSE*sizeof(int));
 
     // Prepare required lines for parsing
-    //--------------------------------------------------------------------------------------------------
+    //----------------------------------------------------------------------------------
 
     // Read define lines
     for (int i = 0; i < linesCount; i++)
@@ -331,12 +331,12 @@ int main(int argc, char* argv[])
         }
     }
 
-    // At this point we have all raylib structs, enums, functions, defines lines data to start parsing
+    // At this point we have all raylib defines, structs, aliases, enums, callbacks, functions lines data to start parsing
 
     free(buffer);       // Unload text buffer
 
     // Parsing raylib data
-    //--------------------------------------------------------------------------------------------------
+    //----------------------------------------------------------------------------------
 
     // Define info data
     defines = (DefineInfo *)calloc(MAX_DEFINES_TO_PARSE, sizeof(DefineInfo));
@@ -587,7 +587,6 @@ int main(int argc, char* argv[])
                         {
                             MemoryCopy(structs[i].fieldType[originalIndex + j], &structs[i].fieldType[originalIndex][0], fieldTypeLength);
                             MemoryCopy(structs[i].fieldDesc[originalIndex + j], &structs[i].fieldDesc[originalIndex][0], TextLength(structs[i].fieldDesc[originalIndex]));
-                            
                         }
                     }
                 }
@@ -881,16 +880,13 @@ int main(int argc, char* argv[])
     free(lines);
 
     // At this point, all raylib data has been parsed!
-    //-----------------------------------------------------------------------------------------
+    //----------------------------------------------------------------------------------
     // defines[]   -> We have all the defines decomposed into pieces for further analysis
     // structs[]   -> We have all the structs decomposed into pieces for further analysis
     // aliases[]   -> We have all the aliases decomposed into pieces for further analysis
     // enums[]     -> We have all the enums decomposed into pieces for further analysis
     // callbacks[] -> We have all the callbacks decomposed into pieces for further analysis
     // funcs[]     -> We have all the functions decomposed into pieces for further analysis
-
-    // Process input file to output
-    if (outFileName[0] == '\0') MemoryCopy(outFileName, "raylib_api.txt\0", 15);
 
     printf("\nInput file:       %s", inFileName);
     printf("\nOutput file:      %s", outFileName);
@@ -912,6 +908,7 @@ int main(int argc, char* argv[])
 //----------------------------------------------------------------------------------
 // Module Functions Definition
 //----------------------------------------------------------------------------------
+
 // Show command line usage info
 static void ShowCommandLineInfo(void)
 {
@@ -937,7 +934,7 @@ static void ShowCommandLineInfo(void)
     printf("                                      NOTE: If not specified, defaults to: raylib_api.txt\n\n");
     printf("    -f, --format <type>             : Define output format for parser data.\n");
     printf("                                      Supported types: DEFAULT, JSON, XML, LUA\n\n");
-    printf("    -d, --define <DEF>              : Define functions define (i.e. RLAPI for raylib.h, RMDEF for raymath.h, etc\n");
+    printf("    -d, --define <DEF>              : Define functions define (i.e. RLAPI for raylib.h, RMDEF for raymath.h, etc.)\n");
     printf("                                      NOTE: If not specified, defaults to: RLAPI\n\n");
 
     printf("\nEXAMPLES:\n\n");
@@ -958,6 +955,7 @@ static void ProcessCommandLine(int argc, char *argv[])
         {
             // Show info
             ShowCommandLineInfo();
+            exit(0);
         }
         else if (IsTextEqual(argv[i], "-i", 2) || IsTextEqual(argv[i], "--input", 7))
         {
@@ -1131,6 +1129,24 @@ static void GetDescription(const char *line, char *description)
     if (descStart != -1) MemoryCopy(description, &line[descStart], c - descStart);
 }
 
+// Move array size from name to type
+static void MoveArraySize(char *name, char *type)
+{
+    int nameLength = TextLength(name);
+    if (name[nameLength - 1] == ']')
+    {
+        for (int k = nameLength; k > 0; k--)
+        {
+            if (name[k] == '[')
+            {
+                int sizeLength = nameLength - k;
+                MemoryCopy(&type[TextLength(type)], &name[k], sizeLength);
+                name[k] = '\0';
+            }
+        }
+    }
+}
+
 // Get text length in bytes, check for \0 character
 static unsigned int TextLength(const char *text)
 {
@@ -1139,15 +1155,6 @@ static unsigned int TextLength(const char *text)
     if (text != NULL) while (*text++) length++;
 
     return length;
-}
-
-// Custom memcpy() to avoid <string.h>
-static void MemoryCopy(void *dest, const void *src, unsigned int count)
-{
-    char *srcPtr = (char *)src;
-    char *destPtr = (char *)dest;
-
-    for (unsigned int i = 0; i < count; i++) destPtr[i] = srcPtr[i];
 }
 
 // Compare two text strings, requires number of characters to compare
@@ -1165,6 +1172,15 @@ static bool IsTextEqual(const char *text1, const char *text2, unsigned int count
     }
 
     return result;
+}
+
+// Custom memcpy() to avoid <string.h>
+static void MemoryCopy(void *dest, const void *src, unsigned int count)
+{
+    char *srcPtr = (char *)src;
+    char *destPtr = (char *)dest;
+
+    for (unsigned int i = 0; i < count; i++) destPtr[i] = srcPtr[i];
 }
 
 // Escape backslashes in a string, writing the escaped string into a static buffer
@@ -1207,24 +1223,6 @@ static const char *StrDefineType(DefineType type)
         case COLOR:   return "COLOR";
     }
     return "";
-}
-
-// Move array size from name to type
-static void MoveArraySize(char *name, char *type)
-{
-    int nameLength = TextLength(name);
-    if (name[nameLength - 1] == ']')
-    {
-        for (int k = nameLength; k > 0; k--)
-        {
-            if (name[k] == '[')
-            {
-                int sizeLength = nameLength - k;
-                MemoryCopy(&type[TextLength(type)], &name[k], sizeLength);
-                name[k] = '\0';
-            }
-        }
-    }
 }
 
 /*
