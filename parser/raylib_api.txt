@@ -1,4 +1,267 @@
 
+Defines found: 52
+
+Define 001: RAYLIB_H
+  Name: RAYLIB_H
+  Type: GUARD
+  Value: 
+  Description: 
+Define 002: RAYLIB_VERSION
+  Name: RAYLIB_VERSION
+  Type: STRING
+  Value: "4.1-dev"
+  Description: 
+Define 003: RLAPI
+  Name: RLAPI
+  Type: UNKNOWN
+  Value: __declspec(dllexport)
+  Description: We are building the library as a Win32 shared library (.dll)
+Define 004: PI
+  Name: PI
+  Type: FLOAT
+  Value: 3.14159265358979323846
+  Description: 
+Define 005: DEG2RAD
+  Name: DEG2RAD
+  Type: UNKNOWN
+  Value: (PI/180.0f)
+  Description: 
+Define 006: RAD2DEG
+  Name: RAD2DEG
+  Type: UNKNOWN
+  Value: (180.0f/PI)
+  Description: 
+Define 007: RL_MALLOC(sz)
+  Name: RL_MALLOC(sz)
+  Type: MACRO
+  Value: malloc(sz)
+  Description: 
+Define 008: RL_CALLOC(n,sz)
+  Name: RL_CALLOC(n,sz)
+  Type: MACRO
+  Value: calloc(n,sz)
+  Description: 
+Define 009: RL_REALLOC(ptr,sz)
+  Name: RL_REALLOC(ptr,sz)
+  Type: MACRO
+  Value: realloc(ptr,sz)
+  Description: 
+Define 010: RL_FREE(ptr)
+  Name: RL_FREE(ptr)
+  Type: MACRO
+  Value: free(ptr)
+  Description: 
+Define 011: CLITERAL(type)
+  Name: CLITERAL(type)
+  Type: MACRO
+  Value: type
+  Description: 
+Define 012: RL_COLOR_TYPE
+  Name: RL_COLOR_TYPE
+  Type: GUARD
+  Value: 
+  Description: 
+Define 013: RL_RECTANGLE_TYPE
+  Name: RL_RECTANGLE_TYPE
+  Type: GUARD
+  Value: 
+  Description: 
+Define 014: RL_VECTOR2_TYPE
+  Name: RL_VECTOR2_TYPE
+  Type: GUARD
+  Value: 
+  Description: 
+Define 015: RL_VECTOR3_TYPE
+  Name: RL_VECTOR3_TYPE
+  Type: GUARD
+  Value: 
+  Description: 
+Define 016: RL_VECTOR4_TYPE
+  Name: RL_VECTOR4_TYPE
+  Type: GUARD
+  Value: 
+  Description: 
+Define 017: RL_QUATERNION_TYPE
+  Name: RL_QUATERNION_TYPE
+  Type: GUARD
+  Value: 
+  Description: 
+Define 018: RL_MATRIX_TYPE
+  Name: RL_MATRIX_TYPE
+  Type: GUARD
+  Value: 
+  Description: 
+Define 019: LIGHTGRAY
+  Name: LIGHTGRAY
+  Type: COLOR
+  Value: CLITERAL(Color){ 200, 200, 200, 255 }
+  Description: Light Gray
+Define 020: GRAY
+  Name: GRAY
+  Type: COLOR
+  Value: CLITERAL(Color){ 130, 130, 130, 255 }
+  Description: Gray
+Define 021: DARKGRAY
+  Name: DARKGRAY
+  Type: COLOR
+  Value: CLITERAL(Color){ 80, 80, 80, 255 }
+  Description: Dark Gray
+Define 022: YELLOW
+  Name: YELLOW
+  Type: COLOR
+  Value: CLITERAL(Color){ 253, 249, 0, 255 }
+  Description: Yellow
+Define 023: GOLD
+  Name: GOLD
+  Type: COLOR
+  Value: CLITERAL(Color){ 255, 203, 0, 255 }
+  Description: Gold
+Define 024: ORANGE
+  Name: ORANGE
+  Type: COLOR
+  Value: CLITERAL(Color){ 255, 161, 0, 255 }
+  Description: Orange
+Define 025: PINK
+  Name: PINK
+  Type: COLOR
+  Value: CLITERAL(Color){ 255, 109, 194, 255 }
+  Description: Pink
+Define 026: RED
+  Name: RED
+  Type: COLOR
+  Value: CLITERAL(Color){ 230, 41, 55, 255 }
+  Description: Red
+Define 027: MAROON
+  Name: MAROON
+  Type: COLOR
+  Value: CLITERAL(Color){ 190, 33, 55, 255 }
+  Description: Maroon
+Define 028: GREEN
+  Name: GREEN
+  Type: COLOR
+  Value: CLITERAL(Color){ 0, 228, 48, 255 }
+  Description: Green
+Define 029: LIME
+  Name: LIME
+  Type: COLOR
+  Value: CLITERAL(Color){ 0, 158, 47, 255 }
+  Description: Lime
+Define 030: DARKGREEN
+  Name: DARKGREEN
+  Type: COLOR
+  Value: CLITERAL(Color){ 0, 117, 44, 255 }
+  Description: Dark Green
+Define 031: SKYBLUE
+  Name: SKYBLUE
+  Type: COLOR
+  Value: CLITERAL(Color){ 102, 191, 255, 255 }
+  Description: Sky Blue
+Define 032: BLUE
+  Name: BLUE
+  Type: COLOR
+  Value: CLITERAL(Color){ 0, 121, 241, 255 }
+  Description: Blue
+Define 033: DARKBLUE
+  Name: DARKBLUE
+  Type: COLOR
+  Value: CLITERAL(Color){ 0, 82, 172, 255 }
+  Description: Dark Blue
+Define 034: PURPLE
+  Name: PURPLE
+  Type: COLOR
+  Value: CLITERAL(Color){ 200, 122, 255, 255 }
+  Description: Purple
+Define 035: VIOLET
+  Name: VIOLET
+  Type: COLOR
+  Value: CLITERAL(Color){ 135, 60, 190, 255 }
+  Description: Violet
+Define 036: DARKPURPLE
+  Name: DARKPURPLE
+  Type: COLOR
+  Value: CLITERAL(Color){ 112, 31, 126, 255 }
+  Description: Dark Purple
+Define 037: BEIGE
+  Name: BEIGE
+  Type: COLOR
+  Value: CLITERAL(Color){ 211, 176, 131, 255 }
+  Description: Beige
+Define 038: BROWN
+  Name: BROWN
+  Type: COLOR
+  Value: CLITERAL(Color){ 127, 106, 79, 255 }
+  Description: Brown
+Define 039: DARKBROWN
+  Name: DARKBROWN
+  Type: COLOR
+  Value: CLITERAL(Color){ 76, 63, 47, 255 }
+  Description: Dark Brown
+Define 040: WHITE
+  Name: WHITE
+  Type: COLOR
+  Value: CLITERAL(Color){ 255, 255, 255, 255 }
+  Description: White
+Define 041: BLACK
+  Name: BLACK
+  Type: COLOR
+  Value: CLITERAL(Color){ 0, 0, 0, 255 }
+  Description: Black
+Define 042: BLANK
+  Name: BLANK
+  Type: COLOR
+  Value: CLITERAL(Color){ 0, 0, 0, 0 }
+  Description: Blank (Transparent)
+Define 043: MAGENTA
+  Name: MAGENTA
+  Type: COLOR
+  Value: CLITERAL(Color){ 255, 0, 255, 255 }
+  Description: Magenta
+Define 044: RAYWHITE
+  Name: RAYWHITE
+  Type: COLOR
+  Value: CLITERAL(Color){ 245, 245, 245, 255 }
+  Description: My own White (raylib logo)
+Define 045: RL_BOOL_TYPE
+  Name: RL_BOOL_TYPE
+  Type: GUARD
+  Value: 
+  Description: 
+Define 046: MOUSE_LEFT_BUTTON
+  Name: MOUSE_LEFT_BUTTON
+  Type: UNKNOWN
+  Value: MOUSE_BUTTON_LEFT
+  Description: 
+Define 047: MOUSE_RIGHT_BUTTON
+  Name: MOUSE_RIGHT_BUTTON
+  Type: UNKNOWN
+  Value: MOUSE_BUTTON_RIGHT
+  Description: 
+Define 048: MOUSE_MIDDLE_BUTTON
+  Name: MOUSE_MIDDLE_BUTTON
+  Type: UNKNOWN
+  Value: MOUSE_BUTTON_MIDDLE
+  Description: 
+Define 049: MATERIAL_MAP_DIFFUSE
+  Name: MATERIAL_MAP_DIFFUSE
+  Type: UNKNOWN
+  Value: MATERIAL_MAP_ALBEDO
+  Description: 
+Define 050: MATERIAL_MAP_SPECULAR
+  Name: MATERIAL_MAP_SPECULAR
+  Type: UNKNOWN
+  Value: MATERIAL_MAP_METALNESS
+  Description: 
+Define 051: SHADER_LOC_MAP_DIFFUSE
+  Name: SHADER_LOC_MAP_DIFFUSE
+  Type: UNKNOWN
+  Value: SHADER_LOC_MAP_ALBEDO
+  Description: 
+Define 052: SHADER_LOC_MAP_SPECULAR
+  Name: SHADER_LOC_MAP_SPECULAR
+  Type: UNKNOWN
+  Value: SHADER_LOC_MAP_METALNESS
+  Description: 
+
 Structures found: 31
 
 Struct 01: Vector2 (2 fields)
@@ -631,6 +894,46 @@ Enum 21: NPatchLayout (3 values)
   Value[NPATCH_NINE_PATCH]: 0
   Value[NPATCH_THREE_PATCH_VERTICAL]: 1
   Value[NPATCH_THREE_PATCH_HORIZONTAL]: 2
+
+Callbacks found: 6
+
+Callback 001: TraceLogCallback() (3 input parameters)
+  Name: TraceLogCallback
+  Return type: void
+  Description: Logging: Redirect trace log messages
+  Param[1]: logLevel (type: int)
+  Param[2]: text (type: const char *)
+  Param[3]: args (type: va_list)
+Callback 002: LoadFileDataCallback() (2 input parameters)
+  Name: LoadFileDataCallback
+  Return type: unsigned char *
+  Description: FileIO: Load binary data
+  Param[1]: fileName (type: const char *)
+  Param[2]: bytesRead (type: unsigned int *)
+Callback 003: SaveFileDataCallback() (3 input parameters)
+  Name: SaveFileDataCallback
+  Return type: bool
+  Description: FileIO: Save binary data
+  Param[1]: fileName (type: const char *)
+  Param[2]: data (type: void *)
+  Param[3]: bytesToWrite (type: unsigned int)
+Callback 004: LoadFileTextCallback() (1 input parameters)
+  Name: LoadFileTextCallback
+  Return type: char *
+  Description: FileIO: Load text data
+  Param[1]: fileName (type: const char *)
+Callback 005: SaveFileTextCallback() (2 input parameters)
+  Name: SaveFileTextCallback
+  Return type: bool
+  Description: FileIO: Save text data
+  Param[1]: fileName (type: const char *)
+  Param[2]: text (type: char *)
+Callback 006: AudioCallback() (2 input parameters)
+  Name: AudioCallback
+  Return type: void
+  Description: 
+  Param[1]: bufferData (type: void *)
+  Param[2]: frames (type: unsigned int)
 
 Functions found: 499
 
@@ -3781,306 +4084,3 @@ Function 499: DetachAudioStreamProcessor() (2 input parameters)
   Description: 
   Param[1]: stream (type: AudioStream)
   Param[2]: processor (type: AudioCallback)
-
-Callbacks found: 6
-
-Callback 001: TraceLogCallback() (3 input parameters)
-  Name: TraceLogCallback
-  Return type: void
-  Description: Logging: Redirect trace log messages
-  Param[1]: logLevel (type: int)
-  Param[2]: text (type: const char *)
-  Param[3]: args (type: va_list)
-Callback 002: LoadFileDataCallback() (2 input parameters)
-  Name: LoadFileDataCallback
-  Return type: unsigned char *
-  Description: FileIO: Load binary data
-  Param[1]: fileName (type: const char *)
-  Param[2]: bytesRead (type: unsigned int *)
-Callback 003: SaveFileDataCallback() (3 input parameters)
-  Name: SaveFileDataCallback
-  Return type: bool
-  Description: FileIO: Save binary data
-  Param[1]: fileName (type: const char *)
-  Param[2]: data (type: void *)
-  Param[3]: bytesToWrite (type: unsigned int)
-Callback 004: LoadFileTextCallback() (1 input parameters)
-  Name: LoadFileTextCallback
-  Return type: char *
-  Description: FileIO: Load text data
-  Param[1]: fileName (type: const char *)
-Callback 005: SaveFileTextCallback() (2 input parameters)
-  Name: SaveFileTextCallback
-  Return type: bool
-  Description: FileIO: Save text data
-  Param[1]: fileName (type: const char *)
-  Param[2]: text (type: char *)
-Callback 006: AudioCallback() (2 input parameters)
-  Name: AudioCallback
-  Return type: void
-  Description: 
-  Param[1]: bufferData (type: void *)
-  Param[2]: frames (type: unsigned int)
-
-Defines found: 52
-
-Define 001: RAYLIB_H
-  Name: RAYLIB_H
-  Type: GUARD
-  Value: 
-  Description: 
-Define 002: RAYLIB_VERSION
-  Name: RAYLIB_VERSION
-  Type: STRING
-  Value: "4.1-dev"
-  Description: 
-Define 003: RLAPI
-  Name: RLAPI
-  Type: UNKNOWN
-  Value: __declspec(dllexport)
-  Description: We are building the library as a Win32 shared library (.dll)
-Define 004: PI
-  Name: PI
-  Type: FLOAT
-  Value: 3.14159265358979323846
-  Description: 
-Define 005: DEG2RAD
-  Name: DEG2RAD
-  Type: UNKNOWN
-  Value: (PI/180.0f)
-  Description: 
-Define 006: RAD2DEG
-  Name: RAD2DEG
-  Type: UNKNOWN
-  Value: (180.0f/PI)
-  Description: 
-Define 007: RL_MALLOC(sz)
-  Name: RL_MALLOC(sz)
-  Type: MACRO
-  Value: malloc(sz)
-  Description: 
-Define 008: RL_CALLOC(n,sz)
-  Name: RL_CALLOC(n,sz)
-  Type: MACRO
-  Value: calloc(n,sz)
-  Description: 
-Define 009: RL_REALLOC(ptr,sz)
-  Name: RL_REALLOC(ptr,sz)
-  Type: MACRO
-  Value: realloc(ptr,sz)
-  Description: 
-Define 010: RL_FREE(ptr)
-  Name: RL_FREE(ptr)
-  Type: MACRO
-  Value: free(ptr)
-  Description: 
-Define 011: CLITERAL(type)
-  Name: CLITERAL(type)
-  Type: MACRO
-  Value: type
-  Description: 
-Define 012: RL_COLOR_TYPE
-  Name: RL_COLOR_TYPE
-  Type: GUARD
-  Value: 
-  Description: 
-Define 013: RL_RECTANGLE_TYPE
-  Name: RL_RECTANGLE_TYPE
-  Type: GUARD
-  Value: 
-  Description: 
-Define 014: RL_VECTOR2_TYPE
-  Name: RL_VECTOR2_TYPE
-  Type: GUARD
-  Value: 
-  Description: 
-Define 015: RL_VECTOR3_TYPE
-  Name: RL_VECTOR3_TYPE
-  Type: GUARD
-  Value: 
-  Description: 
-Define 016: RL_VECTOR4_TYPE
-  Name: RL_VECTOR4_TYPE
-  Type: GUARD
-  Value: 
-  Description: 
-Define 017: RL_QUATERNION_TYPE
-  Name: RL_QUATERNION_TYPE
-  Type: GUARD
-  Value: 
-  Description: 
-Define 018: RL_MATRIX_TYPE
-  Name: RL_MATRIX_TYPE
-  Type: GUARD
-  Value: 
-  Description: 
-Define 019: LIGHTGRAY
-  Name: LIGHTGRAY
-  Type: COLOR
-  Value: CLITERAL(Color){ 200, 200, 200, 255 }
-  Description: Light Gray
-Define 020: GRAY
-  Name: GRAY
-  Type: COLOR
-  Value: CLITERAL(Color){ 130, 130, 130, 255 }
-  Description: Gray
-Define 021: DARKGRAY
-  Name: DARKGRAY
-  Type: COLOR
-  Value: CLITERAL(Color){ 80, 80, 80, 255 }
-  Description: Dark Gray
-Define 022: YELLOW
-  Name: YELLOW
-  Type: COLOR
-  Value: CLITERAL(Color){ 253, 249, 0, 255 }
-  Description: Yellow
-Define 023: GOLD
-  Name: GOLD
-  Type: COLOR
-  Value: CLITERAL(Color){ 255, 203, 0, 255 }
-  Description: Gold
-Define 024: ORANGE
-  Name: ORANGE
-  Type: COLOR
-  Value: CLITERAL(Color){ 255, 161, 0, 255 }
-  Description: Orange
-Define 025: PINK
-  Name: PINK
-  Type: COLOR
-  Value: CLITERAL(Color){ 255, 109, 194, 255 }
-  Description: Pink
-Define 026: RED
-  Name: RED
-  Type: COLOR
-  Value: CLITERAL(Color){ 230, 41, 55, 255 }
-  Description: Red
-Define 027: MAROON
-  Name: MAROON
-  Type: COLOR
-  Value: CLITERAL(Color){ 190, 33, 55, 255 }
-  Description: Maroon
-Define 028: GREEN
-  Name: GREEN
-  Type: COLOR
-  Value: CLITERAL(Color){ 0, 228, 48, 255 }
-  Description: Green
-Define 029: LIME
-  Name: LIME
-  Type: COLOR
-  Value: CLITERAL(Color){ 0, 158, 47, 255 }
-  Description: Lime
-Define 030: DARKGREEN
-  Name: DARKGREEN
-  Type: COLOR
-  Value: CLITERAL(Color){ 0, 117, 44, 255 }
-  Description: Dark Green
-Define 031: SKYBLUE
-  Name: SKYBLUE
-  Type: COLOR
-  Value: CLITERAL(Color){ 102, 191, 255, 255 }
-  Description: Sky Blue
-Define 032: BLUE
-  Name: BLUE
-  Type: COLOR
-  Value: CLITERAL(Color){ 0, 121, 241, 255 }
-  Description: Blue
-Define 033: DARKBLUE
-  Name: DARKBLUE
-  Type: COLOR
-  Value: CLITERAL(Color){ 0, 82, 172, 255 }
-  Description: Dark Blue
-Define 034: PURPLE
-  Name: PURPLE
-  Type: COLOR
-  Value: CLITERAL(Color){ 200, 122, 255, 255 }
-  Description: Purple
-Define 035: VIOLET
-  Name: VIOLET
-  Type: COLOR
-  Value: CLITERAL(Color){ 135, 60, 190, 255 }
-  Description: Violet
-Define 036: DARKPURPLE
-  Name: DARKPURPLE
-  Type: COLOR
-  Value: CLITERAL(Color){ 112, 31, 126, 255 }
-  Description: Dark Purple
-Define 037: BEIGE
-  Name: BEIGE
-  Type: COLOR
-  Value: CLITERAL(Color){ 211, 176, 131, 255 }
-  Description: Beige
-Define 038: BROWN
-  Name: BROWN
-  Type: COLOR
-  Value: CLITERAL(Color){ 127, 106, 79, 255 }
-  Description: Brown
-Define 039: DARKBROWN
-  Name: DARKBROWN
-  Type: COLOR
-  Value: CLITERAL(Color){ 76, 63, 47, 255 }
-  Description: Dark Brown
-Define 040: WHITE
-  Name: WHITE
-  Type: COLOR
-  Value: CLITERAL(Color){ 255, 255, 255, 255 }
-  Description: White
-Define 041: BLACK
-  Name: BLACK
-  Type: COLOR
-  Value: CLITERAL(Color){ 0, 0, 0, 255 }
-  Description: Black
-Define 042: BLANK
-  Name: BLANK
-  Type: COLOR
-  Value: CLITERAL(Color){ 0, 0, 0, 0 }
-  Description: Blank (Transparent)
-Define 043: MAGENTA
-  Name: MAGENTA
-  Type: COLOR
-  Value: CLITERAL(Color){ 255, 0, 255, 255 }
-  Description: Magenta
-Define 044: RAYWHITE
-  Name: RAYWHITE
-  Type: COLOR
-  Value: CLITERAL(Color){ 245, 245, 245, 255 }
-  Description: My own White (raylib logo)
-Define 045: RL_BOOL_TYPE
-  Name: RL_BOOL_TYPE
-  Type: GUARD
-  Value: 
-  Description: 
-Define 046: MOUSE_LEFT_BUTTON
-  Name: MOUSE_LEFT_BUTTON
-  Type: UNKNOWN
-  Value: MOUSE_BUTTON_LEFT
-  Description: 
-Define 047: MOUSE_RIGHT_BUTTON
-  Name: MOUSE_RIGHT_BUTTON
-  Type: UNKNOWN
-  Value: MOUSE_BUTTON_RIGHT
-  Description: 
-Define 048: MOUSE_MIDDLE_BUTTON
-  Name: MOUSE_MIDDLE_BUTTON
-  Type: UNKNOWN
-  Value: MOUSE_BUTTON_MIDDLE
-  Description: 
-Define 049: MATERIAL_MAP_DIFFUSE
-  Name: MATERIAL_MAP_DIFFUSE
-  Type: UNKNOWN
-  Value: MATERIAL_MAP_ALBEDO
-  Description: 
-Define 050: MATERIAL_MAP_SPECULAR
-  Name: MATERIAL_MAP_SPECULAR
-  Type: UNKNOWN
-  Value: MATERIAL_MAP_METALNESS
-  Description: 
-Define 051: SHADER_LOC_MAP_DIFFUSE
-  Name: SHADER_LOC_MAP_DIFFUSE
-  Type: UNKNOWN
-  Value: SHADER_LOC_MAP_ALBEDO
-  Description: 
-Define 052: SHADER_LOC_MAP_SPECULAR
-  Name: SHADER_LOC_MAP_SPECULAR
-  Type: UNKNOWN
-  Value: SHADER_LOC_MAP_METALNESS
-  Description: 
