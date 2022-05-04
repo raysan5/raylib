@@ -84,7 +84,22 @@
 //----------------------------------------------------------------------------------
 
 // Type of parsed define
-typedef enum { UNKNOWN = 0, MACRO, GUARD, INT, LONG, FLOAT, DOUBLE, CHAR, STRING, COLOR } DefineType;
+typedef enum {
+    UNKNOWN = 0,
+    MACRO,
+    GUARD,
+    INT,
+    INT_MATH,
+    LONG,
+    LONG_MATH,
+    FLOAT,
+    FLOAT_MATH,
+    DOUBLE,
+    DOUBLE_MATH,
+    CHAR,
+    STRING,
+    COLOR
+} DefineType;
 
 // Define info data
 typedef struct DefineInfo {
@@ -442,6 +457,124 @@ int main(int argc, char* argv[])
             if (commentLen > 127) commentLen = 127;
 
             MemoryCopy(defines[defineIndex].desc, &linePtr[commentStart], commentLen);
+        }
+
+        // Parse defines of type UNKNOWN to find calculated numbers
+        if (defines[defineIndex].type == UNKNOWN)
+        {
+            DefineType largestType = UNKNOWN;
+            bool isMath = true;
+            char *valuePtr = defines[defineIndex].value;
+
+            for (int c = 0; c < TextLength(valuePtr); c++)
+            {
+                char ch = valuePtr[c];
+
+                // Skip operators and whitespace
+                if ((ch == '(') ||
+                    (ch == ')') ||
+                    (ch == '+') ||
+                    (ch == '-') ||
+                    (ch == '*') ||
+                    (ch == '/') ||
+                    (ch == ' ') ||
+                    (ch == '\t')) continue;
+                
+                // Read number operand
+                else if (isdigit(ch))
+                {
+                    bool isNumber = true, isFloat = false;
+                    while (!((ch == '(') ||
+                             (ch == ')') ||
+                             (ch == '*') ||
+                             (ch == '/') ||
+                             (ch == ' ') ||
+                             (ch == '\t') ||
+                             (ch == '\0')))
+                    {
+                        if (ch == '.') isFloat = true;
+                        if (!(isdigit(ch) ||
+                            ((ch >= 'a') && (ch <= 'f')) ||
+                            ((ch >= 'A') && (ch <= 'F')) ||
+                            (ch == 'x') ||
+                            (ch == 'L') ||
+                            (ch == '.') ||
+                            (ch == '+') ||
+                            (ch == '-')))
+                        {
+                            isNumber = false;
+                            break;
+                        }
+                        c++;
+                        ch = valuePtr[c];
+                    }
+                    if (isNumber)
+                    {
+                        // Found a valid number -> update largestType
+                        DefineType numberType;
+                        if (isFloat) numberType = valuePtr[c - 1] == 'f' ? FLOAT_MATH : DOUBLE_MATH;
+                        else numberType = valuePtr[c - 1] == 'L' ? LONG_MATH : INT_MATH;
+                        
+                        if (numberType > largestType) largestType = numberType;
+                    }
+                    else
+                    {
+                        isMath = false;
+                        break;
+                    }
+                }
+
+                // Read string operand
+                else
+                {
+                    int operandStart = c;
+                    while (!((ch == '\0') ||
+                             (ch == ' ') ||
+                             (ch == '(') ||
+                             (ch == ')') ||
+                             (ch == '+') ||
+                             (ch == '-') ||
+                             (ch == '*') ||
+                             (ch == '/')))
+                    {
+                        c++;
+                        ch = valuePtr[c];
+                    }
+                    int operandEnd = c;
+                    int operandLength = operandEnd - operandStart;
+
+                    // Search previous defines for operand
+                    bool foundOperand = false;
+                    for (int previousDefineIndex = 0; previousDefineIndex < defineIndex; previousDefineIndex++)
+                    {
+                        if (IsTextEqual(defines[previousDefineIndex].name, &valuePtr[operandStart], operandLength))
+                        {
+                            if ((defines[previousDefineIndex].type >= INT) && (defines[previousDefineIndex].type <= DOUBLE_MATH))
+                            {
+                                // Found operand and it's a number -> update largestType
+                                if (defines[previousDefineIndex].type > largestType) largestType = defines[previousDefineIndex].type;
+                                foundOperand = true;
+                            }
+                            break;
+                        }
+                    }
+                    if (!foundOperand)
+                    {
+                        isMath = false;
+                        break;
+                    }
+                }
+            }
+
+            if (isMath)
+            {
+                // Define is a calculated number -> update type
+                if (largestType == INT) largestType = INT_MATH;
+                else if (largestType == LONG) largestType = LONG_MATH;
+                else if (largestType == FLOAT) largestType = FLOAT_MATH;
+                else if (largestType == DOUBLE) largestType = DOUBLE_MATH;
+                defines[defineIndex].type = largestType;
+            }
         }
 
         defineIndex++;
@@ -1211,16 +1344,20 @@ static const char *StrDefineType(DefineType type)
 {
     switch (type)
     {
-        case UNKNOWN: return "UNKNOWN";
-        case GUARD:   return "GUARD";
-        case MACRO:   return "MACRO";
-        case INT:     return "INT";
-        case LONG:    return "LONG";
-        case FLOAT:   return "FLOAT";
-        case DOUBLE:  return "DOUBLE";
-        case CHAR:    return "CHAR";
-        case STRING:  return "STRING";
-        case COLOR:   return "COLOR";
+        case UNKNOWN:     return "UNKNOWN";
+        case GUARD:       return "GUARD";
+        case MACRO:       return "MACRO";
+        case INT:         return "INT";
+        case INT_MATH:    return "INT_MATH";
+        case LONG:        return "LONG";
+        case LONG_MATH:   return "LONG_MATH";
+        case FLOAT:       return "FLOAT";
+        case FLOAT_MATH:  return "FLOAT_MATH";
+        case DOUBLE:      return "DOUBLE";
+        case DOUBLE_MATH: return "DOUBLE_MATH";
+        case CHAR:        return "CHAR";
+        case STRING:      return "STRING";
+        case COLOR:       return "COLOR";
     }
     return "";
 }
