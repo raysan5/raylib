@@ -177,6 +177,8 @@ static void ExportParsedData(const char *fileName, int format); // Export parsed
 
 static const char *StrDefineType(DefineType type);          // Get string of define type
 
+static void MoveArraySize(char *name, char *type);                // Move array size from name to type
+
 //------------------------------------------------------------------------------------
 // Program main entry point
 //------------------------------------------------------------------------------------
@@ -483,6 +485,11 @@ int main(int argc, char* argv[])
             l++;
         }
 
+        // Move array sizes from name to type
+        for (int j = 0; j < structs[i].fieldCount; j++)
+        {
+            MoveArraySize(structs[i].fieldName[j], structs[i].fieldType[j]);
+        }
     }
     free(structLines);
 
@@ -566,6 +573,12 @@ int main(int argc, char* argv[])
 
         // Description
         GetDescription(&linePtr[c], callbacks[i].desc);
+
+        // Move array sizes from name to type
+        for (int j = 0; j < callbacks[i].paramCount; j++)
+        {
+            MoveArraySize(callbacks[i].paramName[j], callbacks[i].paramType[j]);
+        }
     }
     free(callbackLines);
 
@@ -855,6 +868,12 @@ int main(int argc, char* argv[])
 
         // Get function description
         GetDescription(&linePtr[funcEnd], funcs[i].desc);
+
+        // Move array sizes from name to type
+        for (int j = 0; j < funcs[i].paramCount; j++)
+        {
+            MoveArraySize(funcs[i].paramName[j], funcs[i].paramType[j]);
+        }
     }
     free(funcLines);
 
@@ -1188,6 +1207,24 @@ static const char *StrDefineType(DefineType type)
         case COLOR:   return "COLOR";
     }
     return "";
+}
+
+// Move array size from name to type
+static void MoveArraySize(char *name, char *type)
+{
+    int nameLength = TextLength(name);
+    if (name[nameLength - 1] == ']')
+    {
+        for (int k = nameLength; k > 0; k--)
+        {
+            if (name[k] == '[')
+            {
+                int sizeLength = nameLength - k;
+                MemoryCopy(&type[TextLength(type)], &name[k], sizeLength);
+                name[k] = '\0';
+            }
+        }
+    }
 }
 
 /*
