@@ -338,6 +338,117 @@ int main(int argc, char* argv[])
     // Parsing raylib data
     //--------------------------------------------------------------------------------------------------
 
+    // Define info data
+    defines = (DefineInfo *)calloc(MAX_DEFINES_TO_PARSE, sizeof(DefineInfo));
+    int defineIndex = 0;
+
+    for (int i = 0; i < defineCount; i++)
+    {
+        char *linePtr = lines[defineLines[i]];
+        int j = 0;
+
+        while ((linePtr[j] == ' ') || (linePtr[j] == '\t')) j++; // Skip spaces and tabs in the begining
+        j += 8;                                                  // Skip "#define "
+        while ((linePtr[j] == ' ') || (linePtr[j] == '\t')) j++; // Skip spaces and tabs after "#define "
+
+        // Extract name
+        int defineNameStart = j;
+        int openBraces = 0;
+        while (linePtr[j] != '\0')
+        {
+            if (((linePtr[j] == ' ') || (linePtr[j] == '\t')) && (openBraces == 0)) break;
+            if (linePtr[j] == '(') openBraces++;
+            if (linePtr[j] == ')') openBraces--;
+            j++;
+        }
+        int defineNameEnd = j-1;
+
+        // Skip duplicates
+        int nameLen = defineNameEnd - defineNameStart + 1;
+        bool isDuplicate = false;
+        for (int k = 0; k < defineIndex; k++)
+        {
+            if ((nameLen == TextLength(defines[k].name)) && IsTextEqual(defines[k].name, &linePtr[defineNameStart], nameLen))
+            {
+                isDuplicate = true;
+                break;
+            }
+        }
+        if (isDuplicate) continue;
+
+        MemoryCopy(defines[defineIndex].name, &linePtr[defineNameStart], nameLen);
+
+        // Determine type
+        if (linePtr[defineNameEnd] == ')') defines[defineIndex].type = MACRO;
+
+        while ((linePtr[j] == ' ') || (linePtr[j] == '\t')) j++; // Skip spaces and tabs after name
+
+        int defineValueStart = j;
+        if ((linePtr[j] == '\0') || (linePtr == "/")) defines[defineIndex].type = GUARD;
+        if (linePtr[j] == '"') defines[defineIndex].type = STRING;
+        else if (linePtr[j] == '\'') defines[defineIndex].type = CHAR;
+        else if (IsTextEqual(linePtr+j, "CLITERAL(Color)", 15)) defines[defineIndex].type = COLOR;
+        else if (isdigit(linePtr[j])) // Parsing numbers
+        {
+            bool isFloat = false, isNumber = true, isHex = false;
+            while ((linePtr[j] != ' ') && (linePtr[j] != '\t') && (linePtr[j] != '\0'))
+            {
+                char ch = linePtr[j];
+                if (ch == '.') isFloat = true;
+                if (ch == 'x') isHex = true;
+                if (!(isdigit(ch) ||
+                      ((ch >= 'a') && (ch <= 'f')) ||
+                      ((ch >= 'A') && (ch <= 'F')) ||
+                      (ch == 'x') ||
+                      (ch == 'L') ||
+                      (ch == '.') ||
+                      (ch == '+') ||
+                      (ch == '-'))) isNumber = false;
+                j++;
+            }
+            if (isNumber)
+            {
+                if (isFloat)
+                {
+                    defines[defineIndex].type = linePtr[j-1] == 'f' ? FLOAT : DOUBLE;
+                }
+                else
+                {
+                    defines[defineIndex].type = linePtr[j-1] == 'L' ? LONG : INT;
+                    defines[defineIndex].isHex = isHex;
+                }
+            }
+        }
+
+        // Extracting value
+        while ((linePtr[j] != '\\') && (linePtr[j] != '\0') && !((linePtr[j] == '/') && (linePtr[j+1] == '/'))) j++;
+        int defineValueEnd = j-1;
+        while ((linePtr[defineValueEnd] == ' ') || (linePtr[defineValueEnd] == '\t')) defineValueEnd--; // Remove trailing spaces and tabs
+        if ((defines[defineIndex].type == LONG) || (defines[defineIndex].type == FLOAT)) defineValueEnd--; // Remove number postfix
+        int valueLen = defineValueEnd - defineValueStart + 1;
+        if (valueLen > 255) valueLen = 255;
+
+        if (valueLen > 0) MemoryCopy(defines[defineIndex].value, &linePtr[defineValueStart], valueLen);
+
+        // Extracting description
+        if ((linePtr[j] == '/') && linePtr[j + 1] == '/')
+        {
+            j += 2;
+            while (linePtr[j] == ' ') j++;
+            int commentStart = j;
+            while ((linePtr[j] != '\\') && (linePtr[j] != '\0')) j++;
+            int commentEnd = j-1;
+            int commentLen = commentEnd - commentStart + 1;
+            if (commentLen > 127) commentLen = 127;
+
+            MemoryCopy(defines[defineIndex].desc, &linePtr[commentStart], commentLen);
+        }
+
+        defineIndex++;
+    }
+    defineCount = defineIndex;
+    free(defineLines);
+
     // Structs info data
     structs = (StructInfo *)calloc(MAX_STRUCTS_TO_PARSE, sizeof(StructInfo));
 
@@ -526,62 +637,6 @@ int main(int argc, char* argv[])
     }
     free(aliasLines);
 
-    // Callback info data
-    callbacks = (FunctionInfo *)calloc(MAX_CALLBACKS_TO_PARSE, sizeof(FunctionInfo));
-
-    for (int i = 0; i < callbackCount; i++)
-    {
-        char *linePtr = lines[callbackLines[i]];
-
-        // Skip "typedef "
-        int c = 8;
-
-        // Return type
-        int retTypeStart = c;
-        while(linePtr[c] != '(') c++;
-        int retTypeLen = c - retTypeStart;
-        while(linePtr[retTypeStart + retTypeLen - 1] == ' ') retTypeLen--;
-        MemoryCopy(callbacks[i].retType, &linePtr[retTypeStart], retTypeLen);
-
-        // Skip "(*"
-        c += 2;
-
-        // Name
-        int nameStart = c;
-        while(linePtr[c] != ')') c++;
-        int nameLen = c - nameStart;
-        MemoryCopy(callbacks[i].name, &linePtr[nameStart], nameLen);
-
-        // Skip ")("
-        c += 2;
-
-        // Params
-        int paramStart = c;
-        for (c; c < MAX_LINE_LENGTH; c++)
-        {
-            if ((linePtr[c] == ',') || (linePtr[c] == ')'))
-            {
-                // Get parameter type + name, extract info
-                int paramLen = c - paramStart;
-                GetDataTypeAndName(&linePtr[paramStart], paramLen, callbacks[i].paramType[callbacks[i].paramCount], callbacks[i].paramName[callbacks[i].paramCount]);
-                callbacks[i].paramCount++;
-                paramStart = c + 1;
-                while(linePtr[paramStart] == ' ') paramStart++;
-            }
-            if (linePtr[c] == ')') break;
-        }
-
-        // Description
-        GetDescription(&linePtr[c], callbacks[i].desc);
-
-        // Move array sizes from name to type
-        for (int j = 0; j < callbacks[i].paramCount; j++)
-        {
-            MoveArraySize(callbacks[i].paramName[j], callbacks[i].paramType[j]);
-        }
-    }
-    free(callbackLines);
-
     // Enum info data
     enums = (EnumInfo *)calloc(MAX_ENUMS_TO_PARSE, sizeof(EnumInfo));
 
@@ -692,116 +747,61 @@ int main(int argc, char* argv[])
     }
     free(enumLines);
 
-    // Define info data
-    defines = (DefineInfo *)calloc(MAX_DEFINES_TO_PARSE, sizeof(DefineInfo));
-    int defineIndex = 0;
+    // Callback info data
+    callbacks = (FunctionInfo *)calloc(MAX_CALLBACKS_TO_PARSE, sizeof(FunctionInfo));
 
-    for (int i = 0; i < defineCount; i++)
+    for (int i = 0; i < callbackCount; i++)
     {
-        char *linePtr = lines[defineLines[i]];
-        int j = 0;
+        char *linePtr = lines[callbackLines[i]];
 
-        while ((linePtr[j] == ' ') || (linePtr[j] == '\t')) j++; // Skip spaces and tabs in the begining
-        j += 8;                                                  // Skip "#define "
-        while ((linePtr[j] == ' ') || (linePtr[j] == '\t')) j++; // Skip spaces and tabs after "#define "
+        // Skip "typedef "
+        int c = 8;
 
-        // Extract name
-        int defineNameStart = j;
-        int openBraces = 0;
-        while (linePtr[j] != '\0')
+        // Return type
+        int retTypeStart = c;
+        while(linePtr[c] != '(') c++;
+        int retTypeLen = c - retTypeStart;
+        while(linePtr[retTypeStart + retTypeLen - 1] == ' ') retTypeLen--;
+        MemoryCopy(callbacks[i].retType, &linePtr[retTypeStart], retTypeLen);
+
+        // Skip "(*"
+        c += 2;
+
+        // Name
+        int nameStart = c;
+        while(linePtr[c] != ')') c++;
+        int nameLen = c - nameStart;
+        MemoryCopy(callbacks[i].name, &linePtr[nameStart], nameLen);
+
+        // Skip ")("
+        c += 2;
+
+        // Params
+        int paramStart = c;
+        for (c; c < MAX_LINE_LENGTH; c++)
         {
-            if (((linePtr[j] == ' ') || (linePtr[j] == '\t')) && (openBraces == 0)) break;
-            if (linePtr[j] == '(') openBraces++;
-            if (linePtr[j] == ')') openBraces--;
-            j++;
-        }
-        int defineNameEnd = j-1;
-
-        // Skip duplicates
-        int nameLen = defineNameEnd - defineNameStart + 1;
-        bool isDuplicate = false;
-        for (int k = 0; k < defineIndex; k++)
-        {
-            if ((nameLen == TextLength(defines[k].name)) && IsTextEqual(defines[k].name, &linePtr[defineNameStart], nameLen))
+            if ((linePtr[c] == ',') || (linePtr[c] == ')'))
             {
-                isDuplicate = true;
-                break;
+                // Get parameter type + name, extract info
+                int paramLen = c - paramStart;
+                GetDataTypeAndName(&linePtr[paramStart], paramLen, callbacks[i].paramType[callbacks[i].paramCount], callbacks[i].paramName[callbacks[i].paramCount]);
+                callbacks[i].paramCount++;
+                paramStart = c + 1;
+                while(linePtr[paramStart] == ' ') paramStart++;
             }
+            if (linePtr[c] == ')') break;
         }
-        if (isDuplicate) continue;
 
-        MemoryCopy(defines[defineIndex].name, &linePtr[defineNameStart], nameLen);
+        // Description
+        GetDescription(&linePtr[c], callbacks[i].desc);
 
-        // Determine type
-        if (linePtr[defineNameEnd] == ')') defines[defineIndex].type = MACRO;
-
-        while ((linePtr[j] == ' ') || (linePtr[j] == '\t')) j++; // Skip spaces and tabs after name
-
-        int defineValueStart = j;
-        if ((linePtr[j] == '\0') || (linePtr == "/")) defines[defineIndex].type = GUARD;
-        if (linePtr[j] == '"') defines[defineIndex].type = STRING;
-        else if (linePtr[j] == '\'') defines[defineIndex].type = CHAR;
-        else if (IsTextEqual(linePtr+j, "CLITERAL(Color)", 15)) defines[defineIndex].type = COLOR;
-        else if (isdigit(linePtr[j])) // Parsing numbers
+        // Move array sizes from name to type
+        for (int j = 0; j < callbacks[i].paramCount; j++)
         {
-            bool isFloat = false, isNumber = true, isHex = false;
-            while ((linePtr[j] != ' ') && (linePtr[j] != '\t') && (linePtr[j] != '\0'))
-            {
-                char ch = linePtr[j];
-                if (ch == '.') isFloat = true;
-                if (ch == 'x') isHex = true;
-                if (!(isdigit(ch) ||
-                      ((ch >= 'a') && (ch <= 'f')) ||
-                      ((ch >= 'A') && (ch <= 'F')) ||
-                      (ch == 'x') ||
-                      (ch == 'L') ||
-                      (ch == '.') ||
-                      (ch == '+') ||
-                      (ch == '-'))) isNumber = false;
-                j++;
-            }
-            if (isNumber)
-            {
-                if (isFloat)
-                {
-                    defines[defineIndex].type = linePtr[j-1] == 'f' ? FLOAT : DOUBLE;
-                }
-                else
-                {
-                    defines[defineIndex].type = linePtr[j-1] == 'L' ? LONG : INT;
-                    defines[defineIndex].isHex = isHex;
-                }
-            }
+            MoveArraySize(callbacks[i].paramName[j], callbacks[i].paramType[j]);
         }
-
-        // Extracting value
-        while ((linePtr[j] != '\\') && (linePtr[j] != '\0') && !((linePtr[j] == '/') && (linePtr[j+1] == '/'))) j++;
-        int defineValueEnd = j-1;
-        while ((linePtr[defineValueEnd] == ' ') || (linePtr[defineValueEnd] == '\t')) defineValueEnd--; // Remove trailing spaces and tabs
-        if ((defines[defineIndex].type == LONG) || (defines[defineIndex].type == FLOAT)) defineValueEnd--; // Remove number postfix
-        int valueLen = defineValueEnd - defineValueStart + 1;
-        if (valueLen > 255) valueLen = 255;
-
-        if (valueLen > 0) MemoryCopy(defines[defineIndex].value, &linePtr[defineValueStart], valueLen);
-
-        // Extracting description
-        if ((linePtr[j] == '/') && linePtr[j + 1] == '/')
-        {
-            j += 2;
-            while (linePtr[j] == ' ') j++;
-            int commentStart = j;
-            while ((linePtr[j] != '\\') && (linePtr[j] != '\0')) j++;
-            int commentEnd = j-1;
-            int commentLen = commentEnd - commentStart + 1;
-            if (commentLen > 127) commentLen = 127;
-
-            MemoryCopy(defines[defineIndex].desc, &linePtr[commentStart], commentLen);
-        }
-
-        defineIndex++;
     }
-    defineCount = defineIndex;
-    free(defineLines);
+    free(callbackLines);
 
     // Functions info data
     funcs = (FunctionInfo *)calloc(MAX_FUNCS_TO_PARSE, sizeof(FunctionInfo));
@@ -882,12 +882,12 @@ int main(int argc, char* argv[])
 
     // At this point, all raylib data has been parsed!
     //-----------------------------------------------------------------------------------------
+    // defines[]   -> We have all the defines decomposed into pieces for further analysis
     // structs[]   -> We have all the structs decomposed into pieces for further analysis
     // aliases[]   -> We have all the aliases decomposed into pieces for further analysis
     // enums[]     -> We have all the enums decomposed into pieces for further analysis
-    // funcs[]     -> We have all the functions decomposed into pieces for further analysis
     // callbacks[] -> We have all the callbacks decomposed into pieces for further analysis
-    // defines[]   -> We have all the defines decomposed into pieces for further analysis
+    // funcs[]     -> We have all the functions decomposed into pieces for further analysis
 
     // Process input file to output
     if (outFileName[0] == '\0') MemoryCopy(outFileName, "raylib_api.txt\0", 15);
@@ -901,12 +901,12 @@ int main(int argc, char* argv[])
 
     ExportParsedData(outFileName, outputFormat);
 
-    free(funcs);
-    free(callbacks);
+    free(defines);
     free(structs);
     free(aliases);
     free(enums);
-    free(defines);
+    free(callbacks);
+    free(funcs);
 }
 
 //----------------------------------------------------------------------------------
