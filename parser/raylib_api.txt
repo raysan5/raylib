@@ -23,12 +23,12 @@ Define 004: PI
   Description: 
 Define 005: DEG2RAD
   Name: DEG2RAD
-  Type: UNKNOWN
+  Type: FLOAT_MATH
   Value: (PI/180.0f)
   Description: 
 Define 006: RAD2DEG
   Name: RAD2DEG
-  Type: UNKNOWN
+  Type: FLOAT_MATH
   Value: (180.0f/PI)
   Description: 
 Define 007: RL_MALLOC(sz)

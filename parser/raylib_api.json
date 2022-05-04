@@ -26,13 +26,13 @@
     },
     {
       "name": "DEG2RAD",
-      "type": "UNKNOWN",
+      "type": "FLOAT_MATH",
       "value": "(PI/180.0f)",
       "description": ""
     },
     {
       "name": "RAD2DEG",
-      "type": "UNKNOWN",
+      "type": "FLOAT_MATH",
       "value": "(180.0f/PI)",
       "description": ""
     },
