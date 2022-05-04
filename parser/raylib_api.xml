@@ -130,7 +130,7 @@
         <Struct name="Material" fieldCount="3" desc="Material, includes shader and maps">
             <Field type="Shader" name="shader" desc="Material shader" />
             <Field type="MaterialMap *" name="maps" desc="Material maps array (MAX_MATERIAL_MAPS)" />
-            <Field type="float" name="params[4]" desc="Material generic parameters (if required)" />
+            <Field type="float[4]" name="params" desc="Material generic parameters (if required)" />
         </Struct>
         <Struct name="Transform" fieldCount="3" desc="Transform, vectex transformation data">
             <Field type="Vector3" name="translation" desc="Translation" />
@@ -138,7 +138,7 @@
             <Field type="Vector3" name="scale" desc="Scale" />
         </Struct>
         <Struct name="BoneInfo" fieldCount="2" desc="Bone, skeletal animation bone">
-            <Field type="char" name="name[32]" desc="Bone name" />
+            <Field type="char[32]" name="name" desc="Bone name" />
             <Field type="int" name="parent" desc="Bone parent" />
         </Struct>
         <Struct name="Model" fieldCount="9" desc="Model, meshes, materials and animation data">
@@ -206,18 +206,18 @@
             <Field type="float" name="eyeToScreenDistance" desc="Distance between eye and display in meters" />
             <Field type="float" name="lensSeparationDistance" desc="Lens separation distance in meters" />
             <Field type="float" name="interpupillaryDistance" desc="IPD (distance between pupils) in meters" />
-            <Field type="float" name="lensDistortionValues[4]" desc="Lens distortion constant parameters" />
-            <Field type="float" name="chromaAbCorrection[4]" desc="Chromatic aberration correction parameters" />
+            <Field type="float[4]" name="lensDistortionValues" desc="Lens distortion constant parameters" />
+            <Field type="float[4]" name="chromaAbCorrection" desc="Chromatic aberration correction parameters" />
         </Struct>
         <Struct name="VrStereoConfig" fieldCount="8" desc="VrStereoConfig, VR stereo rendering configuration for simulator">
-            <Field type="Matrix" name="projection[2]" desc="VR projection matrices (per eye)" />
-            <Field type="Matrix" name="viewOffset[2]" desc="VR view offset matrices (per eye)" />
-            <Field type="float" name="leftLensCenter[2]" desc="VR left lens center" />
-            <Field type="float" name="rightLensCenter[2]" desc="VR right lens center" />
-            <Field type="float" name="leftScreenCenter[2]" desc="VR left screen center" />
-            <Field type="float" name="rightScreenCenter[2]" desc="VR right screen center" />
-            <Field type="float" name="scale[2]" desc="VR distortion scale" />
-            <Field type="float" name="scaleIn[2]" desc="VR distortion scale in" />
+            <Field type="Matrix[2]" name="projection" desc="VR projection matrices (per eye)" />
+            <Field type="Matrix[2]" name="viewOffset" desc="VR view offset matrices (per eye)" />
+            <Field type="float[2]" name="leftLensCenter" desc="VR left lens center" />
+            <Field type="float[2]" name="rightLensCenter" desc="VR right lens center" />
+            <Field type="float[2]" name="leftScreenCenter" desc="VR left screen center" />
+            <Field type="float[2]" name="rightScreenCenter" desc="VR right screen center" />
+            <Field type="float[2]" name="scale" desc="VR distortion scale" />
+            <Field type="float[2]" name="scaleIn" desc="VR distortion scale in" />
         </Struct>
     </Structs>
     <Aliases count="5">

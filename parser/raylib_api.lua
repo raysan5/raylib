@@ -577,8 +577,8 @@ return {
           description = "Material maps array (MAX_MATERIAL_MAPS)"
         },
         {
-          type = "float",
-          name = "params[4]",
+          type = "float[4]",
+          name = "params",
           description = "Material generic parameters (if required)"
         }
       }
@@ -609,8 +609,8 @@ return {
       description = "Bone, skeletal animation bone",
       fields = {
         {
-          type = "char",
-          name = "name[32]",
+          type = "char[32]",
+          name = "name",
           description = "Bone name"
         },
         {
@@ -909,13 +909,13 @@ return {
           description = "IPD (distance between pupils) in meters"
         },
         {
-          type = "float",
-          name = "lensDistortionValues[4]",
+          type = "float[4]",
+          name = "lensDistortionValues",
           description = "Lens distortion constant parameters"
         },
         {
-          type = "float",
-          name = "chromaAbCorrection[4]",
+          type = "float[4]",
+          name = "chromaAbCorrection",
           description = "Chromatic aberration correction parameters"
         }
       }
@@ -925,43 +925,43 @@ return {
       description = "VrStereoConfig, VR stereo rendering configuration for simulator",
       fields = {
         {
-          type = "Matrix",
-          name = "projection[2]",
+          type = "Matrix[2]",
+          name = "projection",
           description = "VR projection matrices (per eye)"
         },
         {
-          type = "Matrix",
-          name = "viewOffset[2]",
+          type = "Matrix[2]",
+          name = "viewOffset",
           description = "VR view offset matrices (per eye)"
         },
         {
-          type = "float",
-          name = "leftLensCenter[2]",
+          type = "float[2]",
+          name = "leftLensCenter",
           description = "VR left lens center"
         },
         {
-          type = "float",
-          name = "rightLensCenter[2]",
+          type = "float[2]",
+          name = "rightLensCenter",
           description = "VR right lens center"
         },
         {
-          type = "float",
-          name = "leftScreenCenter[2]",
+          type = "float[2]",
+          name = "leftScreenCenter",
           description = "VR left screen center"
         },
         {
-          type = "float",
-          name = "rightScreenCenter[2]",
+          type = "float[2]",
+          name = "rightScreenCenter",
           description = "VR right screen center"
         },
         {
-          type = "float",
-          name = "scale[2]",
+          type = "float[2]",
+          name = "scale",
           description = "VR distortion scale"
         },
         {
-          type = "float",
-          name = "scaleIn[2]",
+          type = "float[2]",
+          name = "scaleIn",
           description = "VR distortion scale in"
         }
       }

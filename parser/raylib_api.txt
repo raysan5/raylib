@@ -149,7 +149,7 @@ Struct 18: Material (3 fields)
   Description: Material, includes shader and maps
   Field[1]: Shader shader // Material shader
   Field[2]: MaterialMap * maps // Material maps array (MAX_MATERIAL_MAPS)
-  Field[3]: float params[4] // Material generic parameters (if required)
+  Field[3]: float[4] params // Material generic parameters (if required)
 Struct 19: Transform (3 fields)
   Name: Transform
   Description: Transform, vectex transformation data
@@ -159,7 +159,7 @@ Struct 19: Transform (3 fields)
 Struct 20: BoneInfo (2 fields)
   Name: BoneInfo
   Description: Bone, skeletal animation bone
-  Field[1]: char name[32] // Bone name
+  Field[1]: char[32] name // Bone name
   Field[2]: int parent // Bone parent
 Struct 21: Model (9 fields)
   Name: Model
@@ -237,19 +237,19 @@ Struct 30: VrDeviceInfo (10 fields)
   Field[6]: float eyeToScreenDistance // Distance between eye and display in meters
   Field[7]: float lensSeparationDistance // Lens separation distance in meters
   Field[8]: float interpupillaryDistance // IPD (distance between pupils) in meters
-  Field[9]: float lensDistortionValues[4] // Lens distortion constant parameters
-  Field[10]: float chromaAbCorrection[4] // Chromatic aberration correction parameters
+  Field[9]: float[4] lensDistortionValues // Lens distortion constant parameters
+  Field[10]: float[4] chromaAbCorrection // Chromatic aberration correction parameters
 Struct 31: VrStereoConfig (8 fields)
   Name: VrStereoConfig
   Description: VrStereoConfig, VR stereo rendering configuration for simulator
-  Field[1]: Matrix projection[2] // VR projection matrices (per eye)
-  Field[2]: Matrix viewOffset[2] // VR view offset matrices (per eye)
-  Field[3]: float leftLensCenter[2] // VR left lens center
-  Field[4]: float rightLensCenter[2] // VR right lens center
-  Field[5]: float leftScreenCenter[2] // VR left screen center
-  Field[6]: float rightScreenCenter[2] // VR right screen center
-  Field[7]: float scale[2] // VR distortion scale
-  Field[8]: float scaleIn[2] // VR distortion scale in
+  Field[1]: Matrix[2] projection // VR projection matrices (per eye)
+  Field[2]: Matrix[2] viewOffset // VR view offset matrices (per eye)
+  Field[3]: float[2] leftLensCenter // VR left lens center
+  Field[4]: float[2] rightLensCenter // VR right lens center
+  Field[5]: float[2] leftScreenCenter // VR left screen center
+  Field[6]: float[2] rightScreenCenter // VR right screen center
+  Field[7]: float[2] scale // VR distortion scale
+  Field[8]: float[2] scaleIn // VR distortion scale in
 
 Aliases found: 5
 
