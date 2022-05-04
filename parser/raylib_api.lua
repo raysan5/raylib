@@ -471,7 +471,7 @@ return {
         {
           type = "float *",
           name = "texcoords2",
-          description = "Vertex second texture coordinates (useful for lightmaps) (shader-location = 5)"
+          description = "Vertex texture second coordinates (UV - 2 components per vertex) (shader-location = 5)"
         },
         {
           type = "float *",
@@ -577,8 +577,8 @@ return {
           description = "Material maps array (MAX_MATERIAL_MAPS)"
         },
         {
-          type = "float",
-          name = "params[4]",
+          type = "float[4]",
+          name = "params",
           description = "Material generic parameters (if required)"
         }
       }
@@ -609,8 +609,8 @@ return {
       description = "Bone, skeletal animation bone",
       fields = {
         {
-          type = "char",
-          name = "name[32]",
+          type = "char[32]",
+          name = "name",
           description = "Bone name"
         },
         {
@@ -909,13 +909,13 @@ return {
           description = "IPD (distance between pupils) in meters"
         },
         {
-          type = "float",
-          name = "lensDistortionValues[4]",
+          type = "float[4]",
+          name = "lensDistortionValues",
           description = "Lens distortion constant parameters"
         },
         {
-          type = "float",
-          name = "chromaAbCorrection[4]",
+          type = "float[4]",
+          name = "chromaAbCorrection",
           description = "Chromatic aberration correction parameters"
         }
       }
@@ -925,43 +925,43 @@ return {
       description = "VrStereoConfig, VR stereo rendering configuration for simulator",
       fields = {
         {
-          type = "Matrix",
-          name = "projection[2]",
+          type = "Matrix[2]",
+          name = "projection",
           description = "VR projection matrices (per eye)"
         },
         {
-          type = "Matrix",
-          name = "viewOffset[2]",
+          type = "Matrix[2]",
+          name = "viewOffset",
           description = "VR view offset matrices (per eye)"
         },
         {
-          type = "float",
-          name = "leftLensCenter[2]",
+          type = "float[2]",
+          name = "leftLensCenter",
           description = "VR left lens center"
         },
         {
-          type = "float",
-          name = "rightLensCenter[2]",
+          type = "float[2]",
+          name = "rightLensCenter",
           description = "VR right lens center"
         },
         {
-          type = "float",
-          name = "leftScreenCenter[2]",
+          type = "float[2]",
+          name = "leftScreenCenter",
           description = "VR left screen center"
         },
         {
-          type = "float",
-          name = "rightScreenCenter[2]",
+          type = "float[2]",
+          name = "rightScreenCenter",
           description = "VR right screen center"
         },
         {
-          type = "float",
-          name = "scale[2]",
+          type = "float[2]",
+          name = "scale",
           description = "VR distortion scale"
         },
         {
-          type = "float",
-          name = "scaleIn[2]",
+          type = "float[2]",
+          name = "scaleIn",
           description = "VR distortion scale in"
         }
       }
@@ -3771,7 +3771,7 @@ return {
     },
     {
       name = "GetDirectoryFiles",
-      description = "Get filenames in a directory path (memory should be freed)",
+      description = "Get filenames in a directory path (memory must be freed)",
       returnType = "char **",
       params = {
         {type = "const char *", name = "dirPath"},
@@ -3798,7 +3798,7 @@ return {
     },
     {
       name = "GetDroppedFiles",
-      description = "Get dropped files names (memory should be freed)",
+      description = "Get dropped files names (memory must be freed)",
       returnType = "char **",
       params = {
         {type = "int *", name = "count"}
@@ -3819,7 +3819,7 @@ return {
     },
     {
       name = "CompressData",
-      description = "Compress data (DEFLATE algorithm)",
+      description = "Compress data (DEFLATE algorithm), memory must be MemFree()",
       returnType = "unsigned char *",
       params = {
         {type = "const unsigned char *", name = "data"},
@@ -3829,7 +3829,7 @@ return {
     },
     {
       name = "DecompressData",
-      description = "Decompress data (DEFLATE algorithm)",
+      description = "Decompress data (DEFLATE algorithm), memory must be MemFree()",
       returnType = "unsigned char *",
       params = {
         {type = "const unsigned char *", name = "compData"},
@@ -3839,7 +3839,7 @@ return {
     },
     {
       name = "EncodeDataBase64",
-      description = "Encode data to Base64 string",
+      description = "Encode data to Base64 string, memory must be MemFree()",
       returnType = "char *",
       params = {
         {type = "const unsigned char *", name = "data"},
@@ -3849,7 +3849,7 @@ return {
     },
     {
       name = "DecodeDataBase64",
-      description = "Decode Base64 string data",
+      description = "Decode Base64 string data, memory must be MemFree()",
       returnType = "unsigned char *",
       params = {
         {type = "const unsigned char *", name = "data"},
@@ -7320,6 +7320,63 @@ return {
       params = {
         {type = "AudioStream", name = "stream"},
         {type = "AudioCallback", name = "processor"}
+      }
+    }
+  },
+  callbacks = {
+    {
+      name = "TraceLogCallback",
+      description = "Logging: Redirect trace log messages",
+      returnType = "void",
+      params = {
+        {type = "int", name = "logLevel"},
+        {type = "const char *", name = "text"},
+        {type = "va_list", name = "args"}
+      }
+    },
+    {
+      name = "LoadFileDataCallback",
+      description = "FileIO: Load binary data",
+      returnType = "unsigned char *",
+      params = {
+        {type = "const char *", name = "fileName"},
+        {type = "unsigned int *", name = "bytesRead"}
+      }
+    },
+    {
+      name = "SaveFileDataCallback",
+      description = "FileIO: Save binary data",
+      returnType = "bool",
+      params = {
+        {type = "const char *", name = "fileName"},
+        {type = "void *", name = "data"},
+        {type = "unsigned int", name = "bytesToWrite"}
+      }
+    },
+    {
+      name = "LoadFileTextCallback",
+      description = "FileIO: Load text data",
+      returnType = "char *",
+      params = {
+        {type = "const char *", name = "fileName"}
+      }
+    },
+    {
+      name = "SaveFileTextCallback",
+      description = "FileIO: Save text data",
+      returnType = "bool",
+      params = {
+        {type = "const char *", name = "fileName"},
+        {type = "char *", name = "text"}
+      }
+    },
+    {
+      name = "AudioCallback",
+      description = "",
+      returnType = "void",
+      params = {
+        {type = "void *", name = "bufferData"},
+        {type = "unsigned int", name = "frames"}
       }
     }
   }

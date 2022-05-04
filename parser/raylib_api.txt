@@ -122,7 +122,7 @@ Struct 15: Mesh (15 fields)
   Field[2]: int triangleCount // Number of triangles stored (indexed or not)
   Field[3]: float * vertices // Vertex position (XYZ - 3 components per vertex) (shader-location = 0)
   Field[4]: float * texcoords // Vertex texture coordinates (UV - 2 components per vertex) (shader-location = 1)
-  Field[5]: float * texcoords2 // Vertex second texture coordinates (useful for lightmaps) (shader-location = 5)
+  Field[5]: float * texcoords2 // Vertex texture second coordinates (UV - 2 components per vertex) (shader-location = 5)
   Field[6]: float * normals // Vertex normals (XYZ - 3 components per vertex) (shader-location = 2)
   Field[7]: float * tangents // Vertex tangents (XYZW - 4 components per vertex) (shader-location = 4)
   Field[8]: unsigned char * colors // Vertex colors (RGBA - 4 components per vertex) (shader-location = 3)
@@ -149,7 +149,7 @@ Struct 18: Material (3 fields)
   Description: Material, includes shader and maps
   Field[1]: Shader shader // Material shader
   Field[2]: MaterialMap * maps // Material maps array (MAX_MATERIAL_MAPS)
-  Field[3]: float params[4] // Material generic parameters (if required)
+  Field[3]: float[4] params // Material generic parameters (if required)
 Struct 19: Transform (3 fields)
   Name: Transform
   Description: Transform, vectex transformation data
@@ -159,7 +159,7 @@ Struct 19: Transform (3 fields)
 Struct 20: BoneInfo (2 fields)
   Name: BoneInfo
   Description: Bone, skeletal animation bone
-  Field[1]: char name[32] // Bone name
+  Field[1]: char[32] name // Bone name
   Field[2]: int parent // Bone parent
 Struct 21: Model (9 fields)
   Name: Model
@@ -237,19 +237,19 @@ Struct 30: VrDeviceInfo (10 fields)
   Field[6]: float eyeToScreenDistance // Distance between eye and display in meters
   Field[7]: float lensSeparationDistance // Lens separation distance in meters
   Field[8]: float interpupillaryDistance // IPD (distance between pupils) in meters
-  Field[9]: float lensDistortionValues[4] // Lens distortion constant parameters
-  Field[10]: float chromaAbCorrection[4] // Chromatic aberration correction parameters
+  Field[9]: float[4] lensDistortionValues // Lens distortion constant parameters
+  Field[10]: float[4] chromaAbCorrection // Chromatic aberration correction parameters
 Struct 31: VrStereoConfig (8 fields)
   Name: VrStereoConfig
   Description: VrStereoConfig, VR stereo rendering configuration for simulator
-  Field[1]: Matrix projection[2] // VR projection matrices (per eye)
-  Field[2]: Matrix viewOffset[2] // VR view offset matrices (per eye)
-  Field[3]: float leftLensCenter[2] // VR left lens center
-  Field[4]: float rightLensCenter[2] // VR right lens center
-  Field[5]: float leftScreenCenter[2] // VR left screen center
-  Field[6]: float rightScreenCenter[2] // VR right screen center
-  Field[7]: float scale[2] // VR distortion scale
-  Field[8]: float scaleIn[2] // VR distortion scale in
+  Field[1]: Matrix[2] projection // VR projection matrices (per eye)
+  Field[2]: Matrix[2] viewOffset // VR view offset matrices (per eye)
+  Field[3]: float[2] leftLensCenter // VR left lens center
+  Field[4]: float[2] rightLensCenter // VR right lens center
+  Field[5]: float[2] leftScreenCenter // VR left screen center
+  Field[6]: float[2] rightScreenCenter // VR right screen center
+  Field[7]: float[2] scale // VR distortion scale
+  Field[8]: float[2] scaleIn // VR distortion scale in
 
 Aliases found: 5
 
@@ -1281,7 +1281,7 @@ Function 121: GetApplicationDirectory() (0 input parameters)
 Function 122: GetDirectoryFiles() (2 input parameters)
   Name: GetDirectoryFiles
   Return type: char **
-  Description: Get filenames in a directory path (memory should be freed)
+  Description: Get filenames in a directory path (memory must be freed)
   Param[1]: dirPath (type: const char *)
   Param[2]: count (type: int *)
 Function 123: ClearDirectoryFiles() (0 input parameters)
@@ -1302,7 +1302,7 @@ Function 125: IsFileDropped() (0 input parameters)
 Function 126: GetDroppedFiles() (1 input parameters)
   Name: GetDroppedFiles
   Return type: char **
-  Description: Get dropped files names (memory should be freed)
+  Description: Get dropped files names (memory must be freed)
   Param[1]: count (type: int *)
 Function 127: ClearDroppedFiles() (0 input parameters)
   Name: ClearDroppedFiles
@@ -1317,28 +1317,28 @@ Function 128: GetFileModTime() (1 input parameters)
 Function 129: CompressData() (3 input parameters)
   Name: CompressData
   Return type: unsigned char *
-  Description: Compress data (DEFLATE algorithm)
+  Description: Compress data (DEFLATE algorithm), memory must be MemFree()
   Param[1]: data (type: const unsigned char *)
   Param[2]: dataSize (type: int)
   Param[3]: compDataSize (type: int *)
 Function 130: DecompressData() (3 input parameters)
   Name: DecompressData
   Return type: unsigned char *
-  Description: Decompress data (DEFLATE algorithm)
+  Description: Decompress data (DEFLATE algorithm), memory must be MemFree()
   Param[1]: compData (type: const unsigned char *)
   Param[2]: compDataSize (type: int)
   Param[3]: dataSize (type: int *)
 Function 131: EncodeDataBase64() (3 input parameters)
   Name: EncodeDataBase64
   Return type: char *
-  Description: Encode data to Base64 string
+  Description: Encode data to Base64 string, memory must be MemFree()
   Param[1]: data (type: const unsigned char *)
   Param[2]: dataSize (type: int)
   Param[3]: outputSize (type: int *)
 Function 132: DecodeDataBase64() (2 input parameters)
   Name: DecodeDataBase64
   Return type: unsigned char *
-  Description: Decode Base64 string data
+  Description: Decode Base64 string data, memory must be MemFree()
   Param[1]: data (type: const unsigned char *)
   Param[2]: outputSize (type: int *)
 Function 133: SaveStorageValue() (2 input parameters)
@@ -3781,6 +3781,46 @@ Function 499: DetachAudioStreamProcessor() (2 input parameters)
   Description: 
   Param[1]: stream (type: AudioStream)
   Param[2]: processor (type: AudioCallback)
+
+Callbacks found: 6
+
+Callback 001: TraceLogCallback() (3 input parameters)
+  Name: TraceLogCallback
+  Return type: void
+  Description: Logging: Redirect trace log messages
+  Param[1]: logLevel (type: int)
+  Param[2]: text (type: const char *)
+  Param[3]: args (type: va_list)
+Callback 002: LoadFileDataCallback() (2 input parameters)
+  Name: LoadFileDataCallback
+  Return type: unsigned char *
+  Description: FileIO: Load binary data
+  Param[1]: fileName (type: const char *)
+  Param[2]: bytesRead (type: unsigned int *)
+Callback 003: SaveFileDataCallback() (3 input parameters)
+  Name: SaveFileDataCallback
+  Return type: bool
+  Description: FileIO: Save binary data
+  Param[1]: fileName (type: const char *)
+  Param[2]: data (type: void *)
+  Param[3]: bytesToWrite (type: unsigned int)
+Callback 004: LoadFileTextCallback() (1 input parameters)
+  Name: LoadFileTextCallback
+  Return type: char *
+  Description: FileIO: Load text data
+  Param[1]: fileName (type: const char *)
+Callback 005: SaveFileTextCallback() (2 input parameters)
+  Name: SaveFileTextCallback
+  Return type: bool
+  Description: FileIO: Save text data
+  Param[1]: fileName (type: const char *)
+  Param[2]: text (type: char *)
+Callback 006: AudioCallback() (2 input parameters)
+  Name: AudioCallback
+  Return type: void
+  Description: 
+  Param[1]: bufferData (type: void *)
+  Param[2]: frames (type: unsigned int)
 
 Defines found: 52
 

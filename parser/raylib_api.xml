@@ -106,7 +106,7 @@
             <Field type="int" name="triangleCount" desc="Number of triangles stored (indexed or not)" />
             <Field type="float *" name="vertices" desc="Vertex position (XYZ - 3 components per vertex) (shader-location = 0)" />
             <Field type="float *" name="texcoords" desc="Vertex texture coordinates (UV - 2 components per vertex) (shader-location = 1)" />
-            <Field type="float *" name="texcoords2" desc="Vertex second texture coordinates (useful for lightmaps) (shader-location = 5)" />
+            <Field type="float *" name="texcoords2" desc="Vertex texture second coordinates (UV - 2 components per vertex) (shader-location = 5)" />
             <Field type="float *" name="normals" desc="Vertex normals (XYZ - 3 components per vertex) (shader-location = 2)" />
             <Field type="float *" name="tangents" desc="Vertex tangents (XYZW - 4 components per vertex) (shader-location = 4)" />
             <Field type="unsigned char *" name="colors" desc="Vertex colors (RGBA - 4 components per vertex) (shader-location = 3)" />
@@ -130,7 +130,7 @@
         <Struct name="Material" fieldCount="3" desc="Material, includes shader and maps">
             <Field type="Shader" name="shader" desc="Material shader" />
             <Field type="MaterialMap *" name="maps" desc="Material maps array (MAX_MATERIAL_MAPS)" />
-            <Field type="float" name="params[4]" desc="Material generic parameters (if required)" />
+            <Field type="float[4]" name="params" desc="Material generic parameters (if required)" />
         </Struct>
         <Struct name="Transform" fieldCount="3" desc="Transform, vectex transformation data">
             <Field type="Vector3" name="translation" desc="Translation" />
@@ -138,7 +138,7 @@
             <Field type="Vector3" name="scale" desc="Scale" />
         </Struct>
         <Struct name="BoneInfo" fieldCount="2" desc="Bone, skeletal animation bone">
-            <Field type="char" name="name[32]" desc="Bone name" />
+            <Field type="char[32]" name="name" desc="Bone name" />
             <Field type="int" name="parent" desc="Bone parent" />
         </Struct>
         <Struct name="Model" fieldCount="9" desc="Model, meshes, materials and animation data">
@@ -206,18 +206,18 @@
             <Field type="float" name="eyeToScreenDistance" desc="Distance between eye and display in meters" />
             <Field type="float" name="lensSeparationDistance" desc="Lens separation distance in meters" />
             <Field type="float" name="interpupillaryDistance" desc="IPD (distance between pupils) in meters" />
-            <Field type="float" name="lensDistortionValues[4]" desc="Lens distortion constant parameters" />
-            <Field type="float" name="chromaAbCorrection[4]" desc="Chromatic aberration correction parameters" />
+            <Field type="float[4]" name="lensDistortionValues" desc="Lens distortion constant parameters" />
+            <Field type="float[4]" name="chromaAbCorrection" desc="Chromatic aberration correction parameters" />
         </Struct>
         <Struct name="VrStereoConfig" fieldCount="8" desc="VrStereoConfig, VR stereo rendering configuration for simulator">
-            <Field type="Matrix" name="projection[2]" desc="VR projection matrices (per eye)" />
-            <Field type="Matrix" name="viewOffset[2]" desc="VR view offset matrices (per eye)" />
-            <Field type="float" name="leftLensCenter[2]" desc="VR left lens center" />
-            <Field type="float" name="rightLensCenter[2]" desc="VR right lens center" />
-            <Field type="float" name="leftScreenCenter[2]" desc="VR left screen center" />
-            <Field type="float" name="rightScreenCenter[2]" desc="VR right screen center" />
-            <Field type="float" name="scale[2]" desc="VR distortion scale" />
-            <Field type="float" name="scaleIn[2]" desc="VR distortion scale in" />
+            <Field type="Matrix[2]" name="projection" desc="VR projection matrices (per eye)" />
+            <Field type="Matrix[2]" name="viewOffset" desc="VR view offset matrices (per eye)" />
+            <Field type="float[2]" name="leftLensCenter" desc="VR left lens center" />
+            <Field type="float[2]" name="rightLensCenter" desc="VR right lens center" />
+            <Field type="float[2]" name="leftScreenCenter" desc="VR left screen center" />
+            <Field type="float[2]" name="rightScreenCenter" desc="VR right screen center" />
+            <Field type="float[2]" name="scale" desc="VR distortion scale" />
+            <Field type="float[2]" name="scaleIn" desc="VR distortion scale in" />
         </Struct>
     </Structs>
     <Aliases count="5">
@@ -975,7 +975,7 @@
         </Function>
         <Function name="GetApplicationDirectory" retType="const char *" paramCount="0" desc="Get the directory if the running application (uses static string)">
         </Function>
-        <Function name="GetDirectoryFiles" retType="char **" paramCount="2" desc="Get filenames in a directory path (memory should be freed)">
+        <Function name="GetDirectoryFiles" retType="char **" paramCount="2" desc="Get filenames in a directory path (memory must be freed)">
             <Param type="const char *" name="dirPath" desc="" />
             <Param type="int *" name="count" desc="" />
         </Function>
@@ -986,7 +986,7 @@
         </Function>
         <Function name="IsFileDropped" retType="bool" paramCount="0" desc="Check if a file has been dropped into window">
         </Function>
-        <Function name="GetDroppedFiles" retType="char **" paramCount="1" desc="Get dropped files names (memory should be freed)">
+        <Function name="GetDroppedFiles" retType="char **" paramCount="1" desc="Get dropped files names (memory must be freed)">
             <Param type="int *" name="count" desc="" />
         </Function>
         <Function name="ClearDroppedFiles" retType="void" paramCount="0" desc="Clear dropped files paths buffer (free memory)">
@@ -994,22 +994,22 @@
         <Function name="GetFileModTime" retType="long" paramCount="1" desc="Get file modification time (last write time)">
             <Param type="const char *" name="fileName" desc="" />
         </Function>
-        <Function name="CompressData" retType="unsigned char *" paramCount="3" desc="Compress data (DEFLATE algorithm)">
+        <Function name="CompressData" retType="unsigned char *" paramCount="3" desc="Compress data (DEFLATE algorithm), memory must be MemFree()">
             <Param type="const unsigned char *" name="data" desc="" />
             <Param type="int" name="dataSize" desc="" />
             <Param type="int *" name="compDataSize" desc="" />
         </Function>
-        <Function name="DecompressData" retType="unsigned char *" paramCount="3" desc="Decompress data (DEFLATE algorithm)">
+        <Function name="DecompressData" retType="unsigned char *" paramCount="3" desc="Decompress data (DEFLATE algorithm), memory must be MemFree()">
             <Param type="const unsigned char *" name="compData" desc="" />
             <Param type="int" name="compDataSize" desc="" />
             <Param type="int *" name="dataSize" desc="" />
         </Function>
-        <Function name="EncodeDataBase64" retType="char *" paramCount="3" desc="Encode data to Base64 string">
+        <Function name="EncodeDataBase64" retType="char *" paramCount="3" desc="Encode data to Base64 string, memory must be MemFree()">
             <Param type="const unsigned char *" name="data" desc="" />
             <Param type="int" name="dataSize" desc="" />
             <Param type="int *" name="outputSize" desc="" />
         </Function>
-        <Function name="DecodeDataBase64" retType="unsigned char *" paramCount="2" desc="Decode Base64 string data">
+        <Function name="DecodeDataBase64" retType="unsigned char *" paramCount="2" desc="Decode Base64 string data, memory must be MemFree()">
             <Param type="const unsigned char *" name="data" desc="" />
             <Param type="int *" name="outputSize" desc="" />
         </Function>
@@ -2695,4 +2695,31 @@
             <Param type="AudioCallback" name="processor" desc="" />
         </Function>
     </Functions>
+    <Callbacks count="6">
+        <Callback name="TraceLogCallback" retType="void" paramCount="3" desc="Logging: Redirect trace log messages">
+            <Param type="int" name="logLevel" desc="" />
+            <Param type="const char *" name="text" desc="" />
+            <Param type="va_list" name="args" desc="" />
+        </Callback>
+        <Callback name="LoadFileDataCallback" retType="unsigned char *" paramCount="2" desc="FileIO: Load binary data">
+            <Param type="const char *" name="fileName" desc="" />
+            <Param type="unsigned int *" name="bytesRead" desc="" />
+        </Callback>
+        <Callback name="SaveFileDataCallback" retType="bool" paramCount="3" desc="FileIO: Save binary data">
+            <Param type="const char *" name="fileName" desc="" />
+            <Param type="void *" name="data" desc="" />
+            <Param type="unsigned int" name="bytesToWrite" desc="" />
+        </Callback>
+        <Callback name="LoadFileTextCallback" retType="char *" paramCount="1" desc="FileIO: Load text data">
+            <Param type="const char *" name="fileName" desc="" />
+        </Callback>
+        <Callback name="SaveFileTextCallback" retType="bool" paramCount="2" desc="FileIO: Save text data">
+            <Param type="const char *" name="fileName" desc="" />
+            <Param type="char *" name="text" desc="" />
+        </Callback>
+        <Callback name="AudioCallback" retType="void" paramCount="2" desc="">
+            <Param type="void *" name="bufferData" desc="" />
+            <Param type="unsigned int" name="frames" desc="" />
+        </Callback>
+    </Callbacks>
 </raylibAPI>
