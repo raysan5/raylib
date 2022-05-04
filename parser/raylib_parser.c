@@ -1288,6 +1288,17 @@ static void ExportParsedData(const char *fileName, int format)
     {
         case DEFAULT:
         {
+            // Print defines info
+            fprintf(outFile, "\nDefines found: %i\n\n", defineCount);
+            for (int i = 0; i < defineCount; i++)
+            {
+                fprintf(outFile, "Define %03i: %s\n", i + 1, defines[i].name);
+                fprintf(outFile, "  Name: %s\n", defines[i].name);
+                fprintf(outFile, "  Type: %s\n", StrDefineType(defines[i].type));
+                fprintf(outFile, "  Value: %s\n", defines[i].value);
+                fprintf(outFile, "  Description: %s\n", defines[i].desc);
+            }
+
             // Print structs info
             fprintf(outFile, "\nStructures found: %i\n\n", structCount);
             for (int i = 0; i < structCount; i++)
@@ -1323,18 +1334,6 @@ static void ExportParsedData(const char *fileName, int format)
                 for (int e = 0; e < enums[i].valueCount; e++) fprintf(outFile, "  Value[%s]: %i\n", enums[i].valueName[e], enums[i].valueInteger[e]);
             }
 
-            // Print functions info
-            fprintf(outFile, "\nFunctions found: %i\n\n", funcCount);
-            for (int i = 0; i < funcCount; i++)
-            {
-                fprintf(outFile, "Function %03i: %s() (%i input parameters)\n", i + 1, funcs[i].name, funcs[i].paramCount);
-                fprintf(outFile, "  Name: %s\n", funcs[i].name);
-                fprintf(outFile, "  Return type: %s\n", funcs[i].retType);
-                fprintf(outFile, "  Description: %s\n", funcs[i].desc);
-                for (int p = 0; p < funcs[i].paramCount; p++) fprintf(outFile, "  Param[%i]: %s (type: %s)\n", p + 1, funcs[i].paramName[p], funcs[i].paramType[p]);
-                if (funcs[i].paramCount == 0) fprintf(outFile, "  No input parameters\n");
-            }
-
             // Print callbacks info
             fprintf(outFile, "\nCallbacks found: %i\n\n", callbackCount);
             for (int i = 0; i < callbackCount; i++)
@@ -1347,173 +1346,52 @@ static void ExportParsedData(const char *fileName, int format)
                 if (callbacks[i].paramCount == 0) fprintf(outFile, "  No input parameters\n");
             }
 
-            // Print defines info
-            fprintf(outFile, "\nDefines found: %i\n\n", defineCount);
-            for (int i = 0; i < defineCount; i++)
+            // Print functions info
+            fprintf(outFile, "\nFunctions found: %i\n\n", funcCount);
+            for (int i = 0; i < funcCount; i++)
             {
-                fprintf(outFile, "Define %03i: %s\n", i + 1, defines[i].name);
-                fprintf(outFile, "  Name: %s\n", defines[i].name);
-                fprintf(outFile, "  Type: %s\n", StrDefineType(defines[i].type));
-                fprintf(outFile, "  Value: %s\n", defines[i].value);
-                fprintf(outFile, "  Description: %s\n", defines[i].desc);
+                fprintf(outFile, "Function %03i: %s() (%i input parameters)\n", i + 1, funcs[i].name, funcs[i].paramCount);
+                fprintf(outFile, "  Name: %s\n", funcs[i].name);
+                fprintf(outFile, "  Return type: %s\n", funcs[i].retType);
+                fprintf(outFile, "  Description: %s\n", funcs[i].desc);
+                for (int p = 0; p < funcs[i].paramCount; p++) fprintf(outFile, "  Param[%i]: %s (type: %s)\n", p + 1, funcs[i].paramName[p], funcs[i].paramType[p]);
+                if (funcs[i].paramCount == 0) fprintf(outFile, "  No input parameters\n");
             }
         } break;
-        case LUA:
+        case JSON:
         {
-            fprintf(outFile, "return {\n");
-
-            // Print structs info
-            fprintf(outFile, "  structs = {\n");
-            for (int i = 0; i < structCount; i++)
-            {
-                fprintf(outFile, "    {\n");
-                fprintf(outFile, "      name = \"%s\",\n", structs[i].name);
-                fprintf(outFile, "      description = \"%s\",\n", EscapeBackslashes(structs[i].desc));
-                fprintf(outFile, "      fields = {\n");
-                for (int f = 0; f < structs[i].fieldCount; f++)
-                {
-                    fprintf(outFile, "        {\n");
-                    fprintf(outFile, "          type = \"%s\",\n", structs[i].fieldType[f]);
-                    fprintf(outFile, "          name = \"%s\",\n", structs[i].fieldName[f]);
-                    fprintf(outFile, "          description = \"%s\"\n", EscapeBackslashes(structs[i].fieldDesc[f]));
-                    fprintf(outFile, "        }");
-                    if (f < structs[i].fieldCount - 1) fprintf(outFile, ",\n");
-                    else fprintf(outFile, "\n");
-                }
-                fprintf(outFile, "      }\n");
-                fprintf(outFile, "    }");
-                if (i < structCount - 1) fprintf(outFile, ",\n");
-                else fprintf(outFile, "\n");
-            }
-            fprintf(outFile, "  },\n");
-
-            // Print aliases info
-            fprintf(outFile, "  aliases = {\n");
-            for (int i = 0; i < aliasCount; i++)
-            {
-                fprintf(outFile, "    {\n");
-                fprintf(outFile, "      type = \"%s\",\n", aliases[i].type);
-                fprintf(outFile, "      name = \"%s\",\n", aliases[i].name);
-                fprintf(outFile, "      description = \"%s\"\n", aliases[i].desc);
-                fprintf(outFile, "    }");
-
-                if (i < aliasCount - 1) fprintf(outFile, ",\n");
-                else fprintf(outFile, "\n");
-            }
-            fprintf(outFile, "  },\n");
-
-            // Print enums info
-            fprintf(outFile, "  enums = {\n");
-            for (int i = 0; i < enumCount; i++)
-            {
-                fprintf(outFile, "    {\n");
-                fprintf(outFile, "      name = \"%s\",\n", enums[i].name);
-                fprintf(outFile, "      description = \"%s\",\n", EscapeBackslashes(enums[i].desc));
-                fprintf(outFile, "      values = {\n");
-                for (int e = 0; e < enums[i].valueCount; e++)
-                {
-                    fprintf(outFile, "        {\n");
-                    fprintf(outFile, "          name = \"%s\",\n", enums[i].valueName[e]);
-                    fprintf(outFile, "          value = %i,\n", enums[i].valueInteger[e]);
-                    fprintf(outFile, "          description = \"%s\"\n", EscapeBackslashes(enums[i].valueDesc[e]));
-                    fprintf(outFile, "        }");
-                    if (e < enums[i].valueCount - 1) fprintf(outFile, ",\n");
-                    else fprintf(outFile, "\n");
-                }
-                fprintf(outFile, "      }\n");
-                fprintf(outFile, "    }");
-                if (i < enumCount - 1) fprintf(outFile, ",\n");
-                else fprintf(outFile, "\n");
-            }
-            fprintf(outFile, "  },\n");
+            fprintf(outFile, "{\n");
 
             // Print defines info
-            fprintf(outFile, "  defines = {\n");
+            fprintf(outFile, "  \"defines\": [\n");
             for (int i = 0; i < defineCount; i++)
             {
                 fprintf(outFile, "    {\n");
-                fprintf(outFile, "      name = \"%s\",\n", defines[i].name);
-                fprintf(outFile, "      type = \"%s\",\n", StrDefineType(defines[i].type));
-                if ((defines[i].type == INT) ||
-                    (defines[i].type == LONG) ||
-                    (defines[i].type == FLOAT) ||
-                    (defines[i].type == DOUBLE) ||
-                    (defines[i].type == STRING))
+                fprintf(outFile, "      \"name\": \"%s\",\n", defines[i].name);
+                fprintf(outFile, "      \"type\": \"%s\",\n", StrDefineType(defines[i].type));
+                if (defines[i].isHex) // INT or LONG
                 {
-                    fprintf(outFile, "      value = %s,\n", defines[i].value);
+                    fprintf(outFile, "      \"value\": %ld,\n", strtol(defines[i].value, NULL, 16));
+                }
+                else if ((defines[i].type == INT) ||
+                         (defines[i].type == LONG) ||
+                         (defines[i].type == FLOAT) ||
+                         (defines[i].type == DOUBLE) ||
+                         (defines[i].type == STRING))
+                {
+                    fprintf(outFile, "      \"value\": %s,\n", defines[i].value);
                 }
                 else
                 {
-                    fprintf(outFile, "      value = \"%s\",\n", defines[i].value);
+                    fprintf(outFile, "      \"value\": \"%s\",\n", defines[i].value);
                 }
-                fprintf(outFile, "      description = \"%s\"\n", defines[i].desc);
+                fprintf(outFile, "      \"description\": \"%s\"\n", defines[i].desc);
                 fprintf(outFile, "    }");
 
                 if (i < defineCount - 1) fprintf(outFile, ",\n");
                 else fprintf(outFile, "\n");
             }
-            fprintf(outFile, "  },\n");
-
-            // Print functions info
-            fprintf(outFile, "  functions = {\n");
-            for (int i = 0; i < funcCount; i++)
-            {
-                fprintf(outFile, "    {\n");
-                fprintf(outFile, "      name = \"%s\",\n", funcs[i].name);
-                fprintf(outFile, "      description = \"%s\",\n", EscapeBackslashes(funcs[i].desc));
-                fprintf(outFile, "      returnType = \"%s\"", funcs[i].retType);
-
-                if (funcs[i].paramCount == 0) fprintf(outFile, "\n");
-                else
-                {
-                    fprintf(outFile, ",\n      params = {\n");
-                    for (int p = 0; p < funcs[i].paramCount; p++)
-                    {
-                        fprintf(outFile, "        {type = \"%s\", name = \"%s\"}", funcs[i].paramType[p], funcs[i].paramName[p]);
-                        if (p < funcs[i].paramCount - 1) fprintf(outFile, ",\n");
-                        else fprintf(outFile, "\n");
-                    }
-                    fprintf(outFile, "      }\n");
-                }
-                fprintf(outFile, "    }");
-
-                if (i < funcCount - 1) fprintf(outFile, ",\n");
-                else fprintf(outFile, "\n");
-            }
-            fprintf(outFile, "  },\n");
-
-            // Print callbacks info
-            fprintf(outFile, "  callbacks = {\n");
-            for (int i = 0; i < callbackCount; i++)
-            {
-                fprintf(outFile, "    {\n");
-                fprintf(outFile, "      name = \"%s\",\n", callbacks[i].name);
-                fprintf(outFile, "      description = \"%s\",\n", EscapeBackslashes(callbacks[i].desc));
-                fprintf(outFile, "      returnType = \"%s\"", callbacks[i].retType);
-
-                if (callbacks[i].paramCount == 0) fprintf(outFile, "\n");
-                else
-                {
-                    fprintf(outFile, ",\n      params = {\n");
-                    for (int p = 0; p < callbacks[i].paramCount; p++)
-                    {
-                        fprintf(outFile, "        {type = \"%s\", name = \"%s\"}", callbacks[i].paramType[p], callbacks[i].paramName[p]);
-                        if (p < callbacks[i].paramCount - 1) fprintf(outFile, ",\n");
-                        else fprintf(outFile, "\n");
-                    }
-                    fprintf(outFile, "      }\n");
-                }
-                fprintf(outFile, "    }");
-
-                if (i < callbackCount - 1) fprintf(outFile, ",\n");
-                else fprintf(outFile, "\n");
-            }
-            fprintf(outFile, "  }\n");
-            fprintf(outFile, "}\n");
-        } break;
-        case JSON:
-        {
-            fprintf(outFile, "{\n");
+            fprintf(outFile, "  ],\n");
 
             // Print structs info
             fprintf(outFile, "  \"structs\": [\n");
@@ -1580,33 +1458,33 @@ static void ExportParsedData(const char *fileName, int format)
             }
             fprintf(outFile, "  ],\n");
 
-            // Print defines info
-            fprintf(outFile, "  \"defines\": [\n");
-            for (int i = 0; i < defineCount; i++)
+            // Print callbacks info
+            fprintf(outFile, "  \"callbacks\": [\n");
+            for (int i = 0; i < callbackCount; i++)
             {
                 fprintf(outFile, "    {\n");
-                fprintf(outFile, "      \"name\": \"%s\",\n", defines[i].name);
-                fprintf(outFile, "      \"type\": \"%s\",\n", StrDefineType(defines[i].type));
-                if (defines[i].isHex) // INT or LONG
-                {
-                    fprintf(outFile, "      \"value\": %ld,\n", strtol(defines[i].value, NULL, 16));
-                }
-                else if ((defines[i].type == INT) ||
-                         (defines[i].type == LONG) ||
-                         (defines[i].type == FLOAT) ||
-                         (defines[i].type == DOUBLE) ||
-                         (defines[i].type == STRING))
-                {
-                    fprintf(outFile, "      \"value\": %s,\n", defines[i].value);
-                }
+                fprintf(outFile, "      \"name\": \"%s\",\n", callbacks[i].name);
+                fprintf(outFile, "      \"description\": \"%s\",\n", EscapeBackslashes(callbacks[i].desc));
+                fprintf(outFile, "      \"returnType\": \"%s\"", callbacks[i].retType);
+
+                if (callbacks[i].paramCount == 0) fprintf(outFile, "\n");
                 else
                 {
-                    fprintf(outFile, "      \"value\": \"%s\",\n", defines[i].value);
+                    fprintf(outFile, ",\n      \"params\": [\n");
+                    for (int p = 0; p < callbacks[i].paramCount; p++)
+                    {
+                        fprintf(outFile, "        {\n");
+                        fprintf(outFile, "          \"type\": \"%s\",\n", callbacks[i].paramType[p]);
+                        fprintf(outFile, "          \"name\": \"%s\"\n", callbacks[i].paramName[p]);
+                        fprintf(outFile, "        }");
+                        if (p < callbacks[i].paramCount - 1) fprintf(outFile, ",\n");
+                        else fprintf(outFile, "\n");
+                    }
+                    fprintf(outFile, "      ]\n");
                 }
-                fprintf(outFile, "      \"description\": \"%s\"\n", defines[i].desc);
                 fprintf(outFile, "    }");
 
-                if (i < defineCount - 1) fprintf(outFile, ",\n");
+                if (i < callbackCount - 1) fprintf(outFile, ",\n");
                 else fprintf(outFile, "\n");
             }
             fprintf(outFile, "  ],\n");
@@ -1640,37 +1518,6 @@ static void ExportParsedData(const char *fileName, int format)
                 if (i < funcCount - 1) fprintf(outFile, ",\n");
                 else fprintf(outFile, "\n");
             }
-            fprintf(outFile, "  ],\n");
-
-            // Print callbacks info
-            fprintf(outFile, "  \"callbacks\": [\n");
-            for (int i = 0; i < callbackCount; i++)
-            {
-                fprintf(outFile, "    {\n");
-                fprintf(outFile, "      \"name\": \"%s\",\n", callbacks[i].name);
-                fprintf(outFile, "      \"description\": \"%s\",\n", EscapeBackslashes(callbacks[i].desc));
-                fprintf(outFile, "      \"returnType\": \"%s\"", callbacks[i].retType);
-
-                if (callbacks[i].paramCount == 0) fprintf(outFile, "\n");
-                else
-                {
-                    fprintf(outFile, ",\n      \"params\": [\n");
-                    for (int p = 0; p < callbacks[i].paramCount; p++)
-                    {
-                        fprintf(outFile, "        {\n");
-                        fprintf(outFile, "          \"type\": \"%s\",\n", callbacks[i].paramType[p]);
-                        fprintf(outFile, "          \"name\": \"%s\"\n", callbacks[i].paramName[p]);
-                        fprintf(outFile, "        }");
-                        if (p < callbacks[i].paramCount - 1) fprintf(outFile, ",\n");
-                        else fprintf(outFile, "\n");
-                    }
-                    fprintf(outFile, "      ]\n");
-                }
-                fprintf(outFile, "    }");
-
-                if (i < callbackCount - 1) fprintf(outFile, ",\n");
-                else fprintf(outFile, "\n");
-            }
             fprintf(outFile, "  ]\n");
             fprintf(outFile, "}\n");
         } break;
@@ -1680,6 +1527,9 @@ static void ExportParsedData(const char *fileName, int format)
             /*
             <?xml version="1.0" encoding="Windows-1252" ?>
             <raylibAPI>
+                <Defines count="">
+                    <Define name="" type="" value="" desc="" />
+                </Defines>
                 <Structs count="">
                     <Struct name="" fieldCount="" desc="">
                         <Field type="" name="" desc="" />
@@ -1695,26 +1545,40 @@ static void ExportParsedData(const char *fileName, int format)
                         <Value name="" integer="" desc="" />
                     </Enum>
                 </Enums>
-                <Defines count="">
-                    <Define name="" type="" value="" desc="" />
-                </Defines>
-                <Functions count="">
-                    <Function name="" retType="" paramCount="" desc="">
-                        <Param type="" name="" desc="" />
-                        <Param type="" name="" desc="" />
-                    </Function>
-                </Functions>
                 <Callbacks count="">
                     <Callback name="" retType="" paramCount="" desc="">
                         <Param type="" name="" desc="" />
                         <Param type="" name="" desc="" />
                     </Callback>
                 </Callbacks>
+                <Functions count="">
+                    <Function name="" retType="" paramCount="" desc="">
+                        <Param type="" name="" desc="" />
+                        <Param type="" name="" desc="" />
+                    </Function>
+                </Functions>
             </raylibAPI>
             */
 
             fprintf(outFile, "<?xml version=\"1.0\" encoding=\"Windows-1252\" ?>\n");
             fprintf(outFile, "<raylibAPI>\n");
+
+            // Print defines info
+            fprintf(outFile, "    <Defines count=\"%i\">\n", defineCount);
+            for (int i = 0; i < defineCount; i++)
+            {
+                fprintf(outFile, "        <Define name=\"%s\" type=\"%s\" ", defines[i].name, StrDefineType(defines[i].type));
+                if (defines[i].type == STRING)
+                {
+                    fprintf(outFile, "value=%s", defines[i].value);
+                }
+                else
+                {
+                    fprintf(outFile, "value=\"%s\"", defines[i].value);
+                }
+                fprintf(outFile, " desc=\"%s\" />\n", defines[i].desc);
+            }
+            fprintf(outFile, "    </Defines>\n");
 
             // Print structs info
             fprintf(outFile, "    <Structs count=\"%i\">\n", structCount);
@@ -1750,22 +1614,18 @@ static void ExportParsedData(const char *fileName, int format)
             }
             fprintf(outFile, "    </Enums>\n");
 
-            // Print defines info
-            fprintf(outFile, "    <Defines count=\"%i\">\n", defineCount);
-            for (int i = 0; i < defineCount; i++)
+            // Print callbacks info
+            fprintf(outFile, "    <Callbacks count=\"%i\">\n", callbackCount);
+            for (int i = 0; i < callbackCount; i++)
             {
-                fprintf(outFile, "        <Define name=\"%s\" type=\"%s\" ", defines[i].name, StrDefineType(defines[i].type));
-                if (defines[i].type == STRING)
+                fprintf(outFile, "        <Callback name=\"%s\" retType=\"%s\" paramCount=\"%i\" desc=\"%s\">\n", callbacks[i].name, callbacks[i].retType, callbacks[i].paramCount, callbacks[i].desc);
+                for (int p = 0; p < callbacks[i].paramCount; p++)
                 {
-                    fprintf(outFile, "value=%s", defines[i].value);
+                    fprintf(outFile, "            <Param type=\"%s\" name=\"%s\" desc=\"%s\" />\n", callbacks[i].paramType[p], callbacks[i].paramName[p], callbacks[i].paramDesc[p]);
                 }
-                else
-                {
-                    fprintf(outFile, "value=\"%s\"", defines[i].value);
-                }
-                fprintf(outFile, " desc=\"%s\" />\n", defines[i].desc);
+                fprintf(outFile, "        </Callback>\n");
             }
-            fprintf(outFile, "    </Defines>\n");
+            fprintf(outFile, "    </Callbacks>\n");
 
             // Print functions info
             fprintf(outFile, "    <Functions count=\"%i\">\n", funcCount);
@@ -1780,21 +1640,161 @@ static void ExportParsedData(const char *fileName, int format)
             }
             fprintf(outFile, "    </Functions>\n");
 
-            // Print callbacks info
-            fprintf(outFile, "    <Callbacks count=\"%i\">\n", callbackCount);
-            for (int i = 0; i < callbackCount; i++)
-            {
-                fprintf(outFile, "        <Callback name=\"%s\" retType=\"%s\" paramCount=\"%i\" desc=\"%s\">\n", callbacks[i].name, callbacks[i].retType, callbacks[i].paramCount, callbacks[i].desc);
-                for (int p = 0; p < callbacks[i].paramCount; p++)
-                {
-                    fprintf(outFile, "            <Param type=\"%s\" name=\"%s\" desc=\"%s\" />\n", callbacks[i].paramType[p], callbacks[i].paramName[p], callbacks[i].paramDesc[p]);
-                }
-                fprintf(outFile, "        </Callback>\n");
-            }
-            fprintf(outFile, "    </Callbacks>\n");
-
             fprintf(outFile, "</raylibAPI>\n");
 
+        } break;
+        case LUA:
+        {
+            fprintf(outFile, "return {\n");
+
+            // Print defines info
+            fprintf(outFile, "  defines = {\n");
+            for (int i = 0; i < defineCount; i++)
+            {
+                fprintf(outFile, "    {\n");
+                fprintf(outFile, "      name = \"%s\",\n", defines[i].name);
+                fprintf(outFile, "      type = \"%s\",\n", StrDefineType(defines[i].type));
+                if ((defines[i].type == INT) ||
+                    (defines[i].type == LONG) ||
+                    (defines[i].type == FLOAT) ||
+                    (defines[i].type == DOUBLE) ||
+                    (defines[i].type == STRING))
+                {
+                    fprintf(outFile, "      value = %s,\n", defines[i].value);
+                }
+                else
+                {
+                    fprintf(outFile, "      value = \"%s\",\n", defines[i].value);
+                }
+                fprintf(outFile, "      description = \"%s\"\n", defines[i].desc);
+                fprintf(outFile, "    }");
+
+                if (i < defineCount - 1) fprintf(outFile, ",\n");
+                else fprintf(outFile, "\n");
+            }
+            fprintf(outFile, "  },\n");
+
+            // Print structs info
+            fprintf(outFile, "  structs = {\n");
+            for (int i = 0; i < structCount; i++)
+            {
+                fprintf(outFile, "    {\n");
+                fprintf(outFile, "      name = \"%s\",\n", structs[i].name);
+                fprintf(outFile, "      description = \"%s\",\n", EscapeBackslashes(structs[i].desc));
+                fprintf(outFile, "      fields = {\n");
+                for (int f = 0; f < structs[i].fieldCount; f++)
+                {
+                    fprintf(outFile, "        {\n");
+                    fprintf(outFile, "          type = \"%s\",\n", structs[i].fieldType[f]);
+                    fprintf(outFile, "          name = \"%s\",\n", structs[i].fieldName[f]);
+                    fprintf(outFile, "          description = \"%s\"\n", EscapeBackslashes(structs[i].fieldDesc[f]));
+                    fprintf(outFile, "        }");
+                    if (f < structs[i].fieldCount - 1) fprintf(outFile, ",\n");
+                    else fprintf(outFile, "\n");
+                }
+                fprintf(outFile, "      }\n");
+                fprintf(outFile, "    }");
+                if (i < structCount - 1) fprintf(outFile, ",\n");
+                else fprintf(outFile, "\n");
+            }
+            fprintf(outFile, "  },\n");
+
+            // Print aliases info
+            fprintf(outFile, "  aliases = {\n");
+            for (int i = 0; i < aliasCount; i++)
+            {
+                fprintf(outFile, "    {\n");
+                fprintf(outFile, "      type = \"%s\",\n", aliases[i].type);
+                fprintf(outFile, "      name = \"%s\",\n", aliases[i].name);
+                fprintf(outFile, "      description = \"%s\"\n", aliases[i].desc);
+                fprintf(outFile, "    }");
+
+                if (i < aliasCount - 1) fprintf(outFile, ",\n");
+                else fprintf(outFile, "\n");
+            }
+            fprintf(outFile, "  },\n");
+
+            // Print enums info
+            fprintf(outFile, "  enums = {\n");
+            for (int i = 0; i < enumCount; i++)
+            {
+                fprintf(outFile, "    {\n");
+                fprintf(outFile, "      name = \"%s\",\n", enums[i].name);
+                fprintf(outFile, "      description = \"%s\",\n", EscapeBackslashes(enums[i].desc));
+                fprintf(outFile, "      values = {\n");
+                for (int e = 0; e < enums[i].valueCount; e++)
+                {
+                    fprintf(outFile, "        {\n");
+                    fprintf(outFile, "          name = \"%s\",\n", enums[i].valueName[e]);
+                    fprintf(outFile, "          value = %i,\n", enums[i].valueInteger[e]);
+                    fprintf(outFile, "          description = \"%s\"\n", EscapeBackslashes(enums[i].valueDesc[e]));
+                    fprintf(outFile, "        }");
+                    if (e < enums[i].valueCount - 1) fprintf(outFile, ",\n");
+                    else fprintf(outFile, "\n");
+                }
+                fprintf(outFile, "      }\n");
+                fprintf(outFile, "    }");
+                if (i < enumCount - 1) fprintf(outFile, ",\n");
+                else fprintf(outFile, "\n");
+            }
+            fprintf(outFile, "  },\n");
+
+            // Print callbacks info
+            fprintf(outFile, "  callbacks = {\n");
+            for (int i = 0; i < callbackCount; i++)
+            {
+                fprintf(outFile, "    {\n");
+                fprintf(outFile, "      name = \"%s\",\n", callbacks[i].name);
+                fprintf(outFile, "      description = \"%s\",\n", EscapeBackslashes(callbacks[i].desc));
+                fprintf(outFile, "      returnType = \"%s\"", callbacks[i].retType);
+
+                if (callbacks[i].paramCount == 0) fprintf(outFile, "\n");
+                else
+                {
+                    fprintf(outFile, ",\n      params = {\n");
+                    for (int p = 0; p < callbacks[i].paramCount; p++)
+                    {
+                        fprintf(outFile, "        {type = \"%s\", name = \"%s\"}", callbacks[i].paramType[p], callbacks[i].paramName[p]);
+                        if (p < callbacks[i].paramCount - 1) fprintf(outFile, ",\n");
+                        else fprintf(outFile, "\n");
+                    }
+                    fprintf(outFile, "      }\n");
+                }
+                fprintf(outFile, "    }");
+
+                if (i < callbackCount - 1) fprintf(outFile, ",\n");
+                else fprintf(outFile, "\n");
+            }
+            fprintf(outFile, "  },\n");
+
+            // Print functions info
+            fprintf(outFile, "  functions = {\n");
+            for (int i = 0; i < funcCount; i++)
+            {
+                fprintf(outFile, "    {\n");
+                fprintf(outFile, "      name = \"%s\",\n", funcs[i].name);
+                fprintf(outFile, "      description = \"%s\",\n", EscapeBackslashes(funcs[i].desc));
+                fprintf(outFile, "      returnType = \"%s\"", funcs[i].retType);
+
+                if (funcs[i].paramCount == 0) fprintf(outFile, "\n");
+                else
+                {
+                    fprintf(outFile, ",\n      params = {\n");
+                    for (int p = 0; p < funcs[i].paramCount; p++)
+                    {
+                        fprintf(outFile, "        {type = \"%s\", name = \"%s\"}", funcs[i].paramType[p], funcs[i].paramName[p]);
+                        if (p < funcs[i].paramCount - 1) fprintf(outFile, ",\n");
+                        else fprintf(outFile, "\n");
+                    }
+                    fprintf(outFile, "      }\n");
+                }
+                fprintf(outFile, "    }");
+
+                if (i < funcCount - 1) fprintf(outFile, ",\n");
+                else fprintf(outFile, "\n");
+            }
+            fprintf(outFile, "  }\n");
+            fprintf(outFile, "}\n");
         } break;
         default: break;
     }
