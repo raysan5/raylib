@@ -196,11 +196,8 @@ int main(int argc, char* argv[])
     int linesCount = 0;
     char **lines = GetTextLines(buffer, length, &linesCount);
 
-    // Function line indices
-    int *funcLines = (int *)malloc(MAX_FUNCS_TO_PARSE*sizeof(int));
-
-    // Callbacks line indices
-    int *callbackLines = (int *)malloc(MAX_CALLBACKS_TO_PARSE*sizeof(int));
+    // Defines line indices
+    int *defineLines = (int *)malloc(MAX_DEFINES_TO_PARSE*sizeof(int));
 
     // Structs line indices
     int *structLines = (int *)malloc(MAX_STRUCTS_TO_PARSE*sizeof(int));
@@ -211,46 +208,27 @@ int main(int argc, char* argv[])
     // Enums line indices
     int *enumLines = (int *)malloc(MAX_ENUMS_TO_PARSE*sizeof(int));
 
-    // Defines line indices
-    int *defineLines = (int *)malloc(MAX_DEFINES_TO_PARSE*sizeof(int));
+    // Callbacks line indices
+    int *callbackLines = (int *)malloc(MAX_CALLBACKS_TO_PARSE*sizeof(int));
+
+    // Function line indices
+    int *funcLines = (int *)malloc(MAX_FUNCS_TO_PARSE*sizeof(int));
 
     // Prepare required lines for parsing
     //--------------------------------------------------------------------------------------------------
 
-    // Read function lines
+    // Read define lines
     for (int i = 0; i < linesCount; i++)
     {
-        // Read function line (starting with `define`, i.e. for raylib.h "RLAPI")
-        if (IsTextEqual(lines[i], apiDefine, TextLength(apiDefine)))
+        int j = 0;
+        while ((lines[i][j] == ' ') || (lines[i][j] == '\t')) j++; // skip spaces and tabs in the begining
+        // Read define line
+        if (IsTextEqual(lines[i]+j, "#define ", 8))
         {
-            funcLines[funcCount] = i;
-            funcCount++;
-        }
-    }
-
-    // Read callback lines
-    for (int i = 0; i < linesCount; i++)
-    {
-        // Find callbacks (lines with "typedef ... (* ... )( ... );")
-        if (IsTextEqual(lines[i], "typedef", 7))
-        {
-            bool hasBeginning = false;
-            bool hasMiddle = false;
-            bool hasEnd = false;
-
-            for (int c = 0; c < MAX_LINE_LENGTH; c++)
-            {
-                if ((lines[i][c] == '(') && (lines[i][c + 1] == '*')) hasBeginning = true;
-                if ((lines[i][c] == ')') && (lines[i][c + 1] == '(')) hasMiddle = true;
-                if ((lines[i][c] == ')') && (lines[i][c + 1] == ';')) hasEnd = true;
-                if (hasEnd) break;
-            }
-
-            if (hasBeginning && hasMiddle && hasEnd)
-            {
-                callbackLines[callbackCount] = i;
-                callbackCount++;
-            }
+            // Keep the line position in the array of lines,
+            // so, we can scan that position and following lines
+            defineLines[defineCount] = i;
+            defineCount++;
         }
     }
 
@@ -316,18 +294,40 @@ int main(int argc, char* argv[])
         }
     }
 
-    // Read const lines
+    // Read callback lines
     for (int i = 0; i < linesCount; i++)
     {
-        int j = 0;
-        while ((lines[i][j] == ' ') || (lines[i][j] == '\t')) j++; // skip spaces and tabs in the begining
-        // Read define line
-        if (IsTextEqual(lines[i]+j, "#define ", 8))
+        // Find callbacks (lines with "typedef ... (* ... )( ... );")
+        if (IsTextEqual(lines[i], "typedef", 7))
         {
-            // Keep the line position in the array of lines,
-            // so, we can scan that position and following lines
-            defineLines[defineCount] = i;
-            defineCount++;
+            bool hasBeginning = false;
+            bool hasMiddle = false;
+            bool hasEnd = false;
+
+            for (int c = 0; c < MAX_LINE_LENGTH; c++)
+            {
+                if ((lines[i][c] == '(') && (lines[i][c + 1] == '*')) hasBeginning = true;
+                if ((lines[i][c] == ')') && (lines[i][c + 1] == '(')) hasMiddle = true;
+                if ((lines[i][c] == ')') && (lines[i][c + 1] == ';')) hasEnd = true;
+                if (hasEnd) break;
+            }
+
+            if (hasBeginning && hasMiddle && hasEnd)
+            {
+                callbackLines[callbackCount] = i;
+                callbackCount++;
+            }
+        }
+    }
+
+    // Read function lines
+    for (int i = 0; i < linesCount; i++)
+    {
+        // Read function line (starting with `define`, i.e. for raylib.h "RLAPI")
+        if (IsTextEqual(lines[i], apiDefine, TextLength(apiDefine)))
+        {
+            funcLines[funcCount] = i;
+            funcCount++;
         }
     }
 
