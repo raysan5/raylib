@@ -754,7 +754,7 @@ void InitWindow(int width, int height, const char *title)
 #endif
 
     if ((title != NULL) && (title[0] != 0)) CORE.Window.title = title;
-    
+
     // Initialize global input state
     memset(&CORE.Input, 0, sizeof(CORE.Input));
     CORE.Input.Keyboard.exitKey = KEY_ESCAPE;
@@ -1184,7 +1184,7 @@ void ToggleFullscreen(void)
 
         int monitorCount = 0;
         int monitorIndex = GetCurrentMonitor();
-        GLFWmonitor **monitors = glfwGetMonitors(&monitorCount);      
+        GLFWmonitor **monitors = glfwGetMonitors(&monitorCount);
 
         // Use current monitor, so we correctly get the display the window is on
         GLFWmonitor *monitor = (monitorIndex < monitorCount)? monitors[monitorIndex] : NULL;
@@ -4875,7 +4875,7 @@ void SwapScreenBuffer(void)
         result = drmModeRmFB(CORE.Window.fd, CORE.Window.prevFB);
         if (result != 0) TRACELOG(LOG_ERROR, "DISPLAY: drmModeRmFB() failed with result: %d", result);
     }
-    
+
     CORE.Window.prevFB = fb;
 
     if (CORE.Window.prevBO) gbm_surface_release_buffer(CORE.Window.gbmSurface, CORE.Window.prevBO);

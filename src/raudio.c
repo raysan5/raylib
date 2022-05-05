@@ -314,7 +314,7 @@ typedef enum {
 // Audio buffer struct
 struct rAudioBuffer {
     ma_data_converter converter;    // Audio data converter
-    
+
     AudioCallback callback;   // Audio buffer callback for buffer filling on audio threads
     rAudioProcessor *processor;     // Audio processor
 
@@ -338,7 +338,7 @@ struct rAudioBuffer {
     rAudioBuffer *prev;             // Previous audio buffer on the list
 };
 
-// Audio processor struct 
+// Audio processor struct
 // NOTE: Useful to apply effects to an AudioBuffer
 struct rAudioProcessor {
     AudioCallback process;          // Processor callback function
@@ -566,14 +566,14 @@ AudioBuffer *LoadAudioBuffer(ma_format format, ma_uint32 channels, ma_uint32 sam
     audioBuffer->volume = 1.0f;
     audioBuffer->pitch = 1.0f;
     audioBuffer->pan = 0.5f;
-    
+
     audioBuffer->callback = NULL;
     audioBuffer->processor = NULL;
 
     audioBuffer->playing = false;
     audioBuffer->paused = false;
     audioBuffer->looping = false;
- 
+
     audioBuffer->usage = usage;
     audioBuffer->frameCursorPos = 0;
     audioBuffer->sizeInFrames = sizeInFrames;
@@ -2119,10 +2119,10 @@ static ma_uint32 ReadAudioBufferFramesInInternalFormat(AudioBuffer *audioBuffer,
     {
         audioBuffer->callback(framesOut, frameCount);
         audioBuffer->framesProcessed += frameCount;
-        
+
         return frameCount;
     }
-    
+
     ma_uint32 subBufferSizeInFrames = (audioBuffer->sizeInFrames > 1)? audioBuffer->sizeInFrames/2 : audioBuffer->sizeInFrames;
     ma_uint32 currentSubBufferIndex = audioBuffer->frameCursorPos/subBufferSizeInFrames;
 

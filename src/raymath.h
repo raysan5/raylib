@@ -357,16 +357,16 @@ RMAPI Vector2 Vector2Normalize(Vector2 v)
 // Transforms a Vector2 by a given Matrix
 RMAPI Vector2 Vector2Transform(Vector2 v, Matrix mat)
 {
-	Vector2 result = { 0 };
+    Vector2 result = { 0 };
 
-	float x = v.x;
-	float y = v.y;
-	float z = 0;
+    float x = v.x;
+    float y = v.y;
+    float z = 0;
 
-	result.x = mat.m0*x + mat.m4*y + mat.m8*z + mat.m12;
-	result.y = mat.m1*x + mat.m5*y + mat.m9*z + mat.m13;
+    result.x = mat.m0*x + mat.m4*y + mat.m8*z + mat.m12;
+    result.y = mat.m1*x + mat.m5*y + mat.m9*z + mat.m13;
 
-	return result;
+    return result;
 }
 
 // Calculate linear interpolation between two vectors
@@ -991,17 +991,17 @@ RMAPI Vector3 Vector3Refract(Vector3 v, Vector3 n, float r)
 
     float dot = v.x*n.x + v.y*n.y + v.z*n.z;
     float d = 1.0f - r*r*(1.0f - dot*dot);
-    
+
     if (d >= 0.0f)
     {
         d = sqrtf(d);
         v.x = r*v.x - (r*dot + d)*n.x;
         v.y = r*v.y - (r*dot + d)*n.y;
         v.z = r*v.z - (r*dot + d)*n.z;
-        
+
         result = v;
     }
-    
+
     return result;
 }
 
