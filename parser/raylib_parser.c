@@ -154,6 +154,7 @@ static FunctionInfo *funcs = NULL;
 
 // Command line variables
 static char apiDefine[32] = { 0 };         // Functions define (i.e. RLAPI for raylib.h, RMDEF for raymath.h, etc.)
+static char truncAfter[32] = { 0 };        // Truncate marker (i.e. "RLGL IMPLEMENTATION" for rlgl.h)
 static char inFileName[512] = { 0 };       // Input file name (required in case of provided through CLI)
 static char outFileName[512] = { 0 };      // Output file name (required for file save/export)
 static int outputFormat = DEFAULT;
@@ -171,6 +172,7 @@ static void GetDescription(const char *source, char *description);
 static void MoveArraySize(char *name, char *type);          // Move array size from name to type
 static unsigned int TextLength(const char *text);           // Get text length in bytes, check for \0 character
 static bool IsTextEqual(const char *text1, const char *text2, unsigned int count);
+static int TextFindIndex(const char *text, const char *find); // Find first text occurrence within a string
 static void MemoryCopy(void *dest, const void *src, unsigned int count);
 static char *EscapeBackslashes(char *text);                 // Replace '\' by "\\" when exporting to JSON and XML
 static const char *StrDefineType(DefineType type);          // Get string of define type
@@ -195,6 +197,19 @@ int main(int argc, char* argv[])
     // NOTE: GetTextLines() also removes leading spaces/tabs
     int linesCount = 0;
     char **lines = GetTextLines(buffer, length, &linesCount);
+
+    // Truncate lines
+    if (truncAfter[0] != '\0')
+    {
+        int newCount = -1;
+        for (int i = 0; i < linesCount; i++)
+        {
+            if (newCount > -1) free(lines[i]);
+            else if (TextFindIndex(lines[i], truncAfter) > -1) newCount = i;
+        }
+        if (newCount > -1) linesCount = newCount;
+        printf("Number of truncated text lines: %i\n", linesCount);
+    }
 
     // Defines line indices
     int *defineLines = (int *)malloc(MAX_DEFINES_TO_PARSE*sizeof(int));
@@ -936,6 +951,8 @@ static void ShowCommandLineInfo(void)
     printf("                                      Supported types: DEFAULT, JSON, XML, LUA\n\n");
     printf("    -d, --define <DEF>              : Define functions define (i.e. RLAPI for raylib.h, RMDEF for raymath.h, etc.)\n");
     printf("                                      NOTE: If not specified, defaults to: RLAPI\n\n");
+    printf("    -t, --truncate <after>          : Define string to truncate input after (i.e. \"RLGL IMPLEMENTATION\" for rlgl.h)\n");
+    printf("                                      NOTE: If not specified input is not truncated.\n\n");
 
     printf("\nEXAMPLES:\n\n");
     printf("    > raylib_parser --input raylib.h --output api.json\n");
@@ -996,6 +1013,15 @@ static void ProcessCommandLine(int argc, char *argv[])
                 i++;
             }
             else printf("WARNING: No define key provided\n");
+        }
+        else if (IsTextEqual(argv[i], "-t", 2) || IsTextEqual(argv[i], "--truncate", 10))
+        {
+            if (((i + 1) < argc) && (argv[i + 1][0] != '-'))
+            {
+                MemoryCopy(truncAfter, argv[i + 1], TextLength(argv[i + 1])); // Read truncate marker
+                truncAfter[TextLength(argv[i + 1])] = '\0';
+                i++;
+            }
         }
     }
 }
@@ -1172,6 +1198,20 @@ static bool IsTextEqual(const char *text1, const char *text2, unsigned int count
     }
 
     return result;
+}
+
+// Find first text occurrence within a string
+int TextFindIndex(const char *text, const char *find)
+{
+    int textLen = TextLength(text);
+    int findLen = TextLength(find);
+
+    for (int i = 0; i <= textLen - findLen; i++)
+    {
+        if (IsTextEqual(&text[i], find, findLen)) return i;
+    }
+
+    return -1;
 }
 
 // Custom memcpy() to avoid <string.h>
