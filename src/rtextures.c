@@ -37,7 +37,7 @@
 *   DEPENDENCIES:
 *       stb_image        - Multiple image formats loading (JPEG, PNG, BMP, TGA, PSD, GIF, PIC)
 *                          NOTE: stb_image has been slightly modified to support Android platform.
-*       stb_image_resize - Multiple image resize algorythms
+*       stb_image_resize - Multiple image resize algorithms
 *
 *
 *   LICENSE: zlib/libpng

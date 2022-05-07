@@ -25,7 +25,7 @@
 *
 *   DEPENDENCIES:
 *       stb_truetype  - Load TTF file and rasterize characters data
-*       stb_rect_pack - Rectangles packing algorythms, required for font atlas generation
+*       stb_rect_pack - Rectangles packing algorithms, required for font atlas generation
 *
 *
 *   LICENSE: zlib/libpng
@@ -695,7 +695,7 @@ Image GenImageFontAtlas(const GlyphInfo *chars, Rectangle **charRecs, int glyphC
     // DEBUG: We can see padding in the generated image setting a gray background...
     //for (int i = 0; i < atlas.width*atlas.height; i++) ((unsigned char *)atlas.data)[i] = 100;
 
-    if (packMethod == 0)   // Use basic packing algorythm
+    if (packMethod == 0)   // Use basic packing algorithm
     {
         int offsetX = padding;
         int offsetY = padding;
@@ -746,7 +746,7 @@ Image GenImageFontAtlas(const GlyphInfo *chars, Rectangle **charRecs, int glyphC
             }
         }
     }
-    else if (packMethod == 1)  // Use Skyline rect packing algorythm (stb_pack_rect)
+    else if (packMethod == 1)  // Use Skyline rect packing algorithm (stb_pack_rect)
     {
         stbrp_context *context = (stbrp_context *)RL_MALLOC(sizeof(*context));
         stbrp_node *nodes = (stbrp_node *)RL_MALLOC(glyphCount*sizeof(*nodes));

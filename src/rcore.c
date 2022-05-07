@@ -3189,7 +3189,7 @@ long GetFileModTime(const char *fileName)
     return 0;
 }
 
-// Compress data (DEFLATE algorythm)
+// Compress data (DEFLATE algorithm)
 unsigned char *CompressData(const unsigned char *data, int dataSize, int *compDataSize)
 {
     #define COMPRESSION_QUALITY_DEFLATE  8
@@ -3209,7 +3209,7 @@ unsigned char *CompressData(const unsigned char *data, int dataSize, int *compDa
     return compData;
 }
 
-// Decompress data (DEFLATE algorythm)
+// Decompress data (DEFLATE algorithm)
 unsigned char *DecompressData(const unsigned char *compData, int compDataSize, int *dataSize)
 {
     unsigned char *data = NULL;
