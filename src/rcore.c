@@ -507,6 +507,13 @@ static int dirFileCount = 0;                // Count directory files strings
 
 const char *raylibVersion = RAYLIB_VERSION; // raylib version symbol, it could be required for some bindings
 
+
+typedef enum {
+    KEY_STATE_UP = 0,
+    KEY_STATE_DOWN,
+    KEY_STATE_REPEAT
+} KeyState;
+
 #if defined(SUPPORT_SCREEN_CAPTURE)
 static int screenshotCounter = 0;           // Screenshots counter
 #endif
@@ -526,6 +533,7 @@ typedef enum AutomationEventType {
     INPUT_KEY_UP,                   // param[0]: key
     INPUT_KEY_DOWN,                 // param[0]: key
     INPUT_KEY_PRESSED,              // param[0]: key
+    INPUT_KEY_REPEAT,               // param[0]: key
     INPUT_KEY_RELEASED,             // param[0]: key
     INPUT_MOUSE_BUTTON_UP,          // param[0]: button
     INPUT_MOUSE_BUTTON_DOWN,        // param[0]: button
@@ -567,6 +575,7 @@ static const char *autoEventTypeName[] = {
     "INPUT_KEY_UP",
     "INPUT_KEY_DOWN",
     "INPUT_KEY_PRESSED",
+    "INPUT_KEY_REPEAT",
     "INPUT_KEY_RELEASED",
     "INPUT_MOUSE_BUTTON_UP",
     "INPUT_MOUSE_BUTTON_DOWN",
@@ -3496,7 +3505,7 @@ bool IsKeyPressed(int key)
 {
     bool pressed = false;
 
-    if ((CORE.Input.Keyboard.previousKeyState[key] == 0) && (CORE.Input.Keyboard.currentKeyState[key] == 1)) pressed = true;
+    if (!CORE.Input.Keyboard.previousKeyState[key] && CORE.Input.Keyboard.currentKeyState[key]) pressed = true;
 
     return pressed;
 }
@@ -3504,8 +3513,18 @@ bool IsKeyPressed(int key)
 // Check if a key is being pressed (key held down)
 bool IsKeyDown(int key)
 {
-    if (CORE.Input.Keyboard.currentKeyState[key] == 1) return true;
+    if (CORE.Input.Keyboard.currentKeyState[key]) return true;
     else return false;
+}
+
+// Check if a key is being pressed and is currently repeating
+bool IsKeyRepeating(int key)
+{
+    bool repeating = false;
+
+    if (CORE.Input.Keyboard.currentKeyState[key] == KEY_STATE_REPEAT) repeating = true;
+
+    return repeating;
 }
 
 // Check if a key has been released once
@@ -3513,7 +3532,7 @@ bool IsKeyReleased(int key)
 {
     bool released = false;
 
-    if ((CORE.Input.Keyboard.previousKeyState[key] == 1) && (CORE.Input.Keyboard.currentKeyState[key] == 0)) released = true;
+    if (CORE.Input.Keyboard.previousKeyState[key] && !CORE.Input.Keyboard.currentKeyState[key]) released = true;
 
     return released;
 }
@@ -3521,7 +3540,7 @@ bool IsKeyReleased(int key)
 // Check if a key is NOT being pressed (key not held down)
 bool IsKeyUp(int key)
 {
-    if (CORE.Input.Keyboard.currentKeyState[key] == 0) return true;
+    if (!CORE.Input.Keyboard.currentKeyState[key]) return true;
     else return false;
 }
 
@@ -4957,6 +4976,12 @@ void PollInputEvents(void)
     //for (int i = 0; i < MAX_TOUCH_POINTS; i++) CORE.Input.Touch.position[i] = (Vector2){ 0, 0 };
 
 #if defined(PLATFORM_DESKTOP)
+    // Clear all key repeats and set them back as regular key presses
+    for (int i = 0; i < MAX_KEYBOARD_KEYS; i++)
+    {
+        if (CORE.Input.Keyboard.currentKeyState[i] == KEY_STATE_REPEAT) CORE.Input.Keyboard.currentKeyState[i] = KEY_STATE_DOWN;
+    }
+
     // Check if gamepads are ready
     // NOTE: We do it here in case of disconnection
     for (int i = 0; i < MAX_GAMEPADS; i++)
@@ -5222,10 +5247,9 @@ static void WindowFocusCallback(GLFWwindow *window, int focused)
 // GLFW3 Keyboard Callback, runs on key pressed
 static void KeyCallback(GLFWwindow *window, int key, int scancode, int action, int mods)
 {
-    // WARNING: GLFW could return GLFW_REPEAT, we need to consider it as 1
-    // to work properly with our implementation (IsKeyDown/IsKeyUp checks)
-    if (action == GLFW_RELEASE) CORE.Input.Keyboard.currentKeyState[key] = 0;
-    else CORE.Input.Keyboard.currentKeyState[key] = 1;
+    if (action == GLFW_RELEASE) CORE.Input.Keyboard.currentKeyState[key] = KEY_STATE_UP;
+    else if (action == GLFW_PRESS) CORE.Input.Keyboard.currentKeyState[key] = KEY_STATE_DOWN;
+    else if (action == GLFW_REPEAT) CORE.Input.Keyboard.currentKeyState[key] = KEY_STATE_REPEAT;
 
     // Check if there is space available in the key queue
     if ((CORE.Input.Keyboard.keyPressedQueueCount < MAX_KEY_PRESSED_QUEUE) && (action == GLFW_PRESS))
@@ -6738,12 +6762,12 @@ static void RecordAutomationEvent(unsigned int frame)
         if (CORE.Input.Keyboard.currentKeyState[key])
         {
             events[eventCount].frame = frame;
-            events[eventCount].type = INPUT_KEY_DOWN;
+            events[eventCount].type = CORE.Input.Keyboard.currentKeyState[key] == KEY_STATE_REPEAT ? INPUT_KEY_REPEAT : INPUT_KEY_DOWN;
             events[eventCount].params[0] = key;
             events[eventCount].params[1] = 0;
             events[eventCount].params[2] = 0;
 
-            TRACELOG(LOG_INFO, "[%i] INPUT_KEY_DOWN: %i, %i, %i", events[eventCount].frame, events[eventCount].params[0], events[eventCount].params[1], events[eventCount].params[2]);
+            TRACELOG(LOG_INFO, "[%i] %s: %i, %i, %i, %i", events[eventCount].frame, CORE.Input.Keyboard.currentKeyState[key] == 2 ? "INPUT_KEY_REPEAT" : "INPUT_KEY_DOWN", events[eventCount].params[0], events[eventCount].params[1], events[eventCount].params[2]);
             eventCount++;
         }
     }
@@ -6940,8 +6964,9 @@ static void PlayAutomationEvent(unsigned int frame)
             switch (events[i].type)
             {
                 // Input events
-                case INPUT_KEY_UP: CORE.Input.Keyboard.currentKeyState[events[i].params[0]] = false; break;             // param[0]: key
-                case INPUT_KEY_DOWN: CORE.Input.Keyboard.currentKeyState[events[i].params[0]] = true; break;            // param[0]: key
+                case INPUT_KEY_UP: CORE.Input.Keyboard.currentKeyState[events[i].params[0]] = 0; break;                 // param[0]: key
+                case INPUT_KEY_DOWN: CORE.Input.Keyboard.currentKeyState[events[i].params[0]] = 1; break;               // param[0]: key
+                case INPUT_KEY_REPEAT: CORE.Input.Keyboard.currentKeyState[events[i].params[0]] = 2; break;             // param[0]: key
                 case INPUT_MOUSE_BUTTON_UP: CORE.Input.Mouse.currentButtonState[events[i].params[0]] = false; break;    // param[0]: key
                 case INPUT_MOUSE_BUTTON_DOWN: CORE.Input.Mouse.currentButtonState[events[i].params[0]] = true; break;   // param[0]: key
                 case INPUT_MOUSE_POSITION:      // param[0]: x, param[1]: y

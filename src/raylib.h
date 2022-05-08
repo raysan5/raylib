@@ -1082,6 +1082,7 @@ RLAPI void OpenURL(const char *url);                              // Open URL wi
 // Input-related functions: keyboard
 RLAPI bool IsKeyPressed(int key);                             // Check if a key has been pressed once
 RLAPI bool IsKeyDown(int key);                                // Check if a key is being pressed
+RLAPI bool IsKeyRepeating(int key);                           // Check if a key is being pressed and is currently repeating
 RLAPI bool IsKeyReleased(int key);                            // Check if a key has been released once
 RLAPI bool IsKeyUp(int key);                                  // Check if a key is NOT being pressed
 RLAPI void SetExitKey(int key);                               // Set a custom key to exit program (default is ESC)
