@@ -6591,7 +6591,7 @@ static int FindNearestConnectorMode(const drmModeConnector *connector, uint widt
         TRACELOG(LOG_TRACE, "DISPLAY: DRM mode: %d %ux%u@%u %s", i, mode->hdisplay, mode->vdisplay, mode->vrefresh,
             (mode->flags & DRM_MODE_FLAG_INTERLACE) ? "interlaced" : "progressive");
 
-        if ((mode->hdisplay < width) || (mode->vdisplay < height) || (mode->vrefresh < fps))
+        if ((mode->hdisplay < width) || (mode->vdisplay < height))
         {
             TRACELOG(LOG_TRACE, "DISPLAY: DRM mode is too small");
             continue;
@@ -6603,23 +6603,22 @@ static int FindNearestConnectorMode(const drmModeConnector *connector, uint widt
             continue;
         }
 
-        if ((mode->hdisplay >= width) && (mode->vdisplay >= height) && (mode->vrefresh >= fps))
+        if (nearestIndex < 0)
         {
-            const int widthDiff = mode->hdisplay - width;
-            const int heightDiff = mode->vdisplay - height;
-            const int fpsDiff = mode->vrefresh - fps;
+            nearestIndex = i;
+            continue;
+        }
 
-            if (nearestIndex < 0)
-            {
-                nearestIndex = i;
-                continue;
-            }
+        const int widthDiff = abs(mode->hdisplay - width);
+        const int heightDiff = abs(mode->vdisplay - height);
+        const int fpsDiff = abs(mode->vrefresh - fps);
 
-            const int nearestWidthDiff = CORE.Window.connector->modes[nearestIndex].hdisplay - width;
-            const int nearestHeightDiff = CORE.Window.connector->modes[nearestIndex].vdisplay - height;
-            const int nearestFpsDiff = CORE.Window.connector->modes[nearestIndex].vrefresh - fps;
+        const int nearestWidthDiff = abs(CORE.Window.connector->modes[nearestIndex].hdisplay - width);
+        const int nearestHeightDiff = abs(CORE.Window.connector->modes[nearestIndex].vdisplay - height);
+        const int nearestFpsDiff = abs(CORE.Window.connector->modes[nearestIndex].vrefresh - fps);
 
-            if ((widthDiff < nearestWidthDiff) || (heightDiff < nearestHeightDiff) || (fpsDiff < nearestFpsDiff)) nearestIndex = i;
+        if ((widthDiff < nearestWidthDiff) || (heightDiff < nearestHeightDiff) || (fpsDiff < nearestFpsDiff)) {
+            nearestIndex = i;
         }
     }
 
