@@ -394,6 +394,7 @@ typedef struct CoreData {
         bool fullscreen;                    // Check if fullscreen mode is enabled
         bool shouldClose;                   // Check if window set for closing
         bool resizedLastFrame;              // Check if window has been resized last frame
+        bool eventWaiting;                  // Wait for events before ending frame
 
         Point position;                     // Window position on screen (required on fullscreen toggle)
         Size display;                       // Display width and height (monitor, device-screen, LCD, ...)
@@ -761,6 +762,9 @@ void InitWindow(int width, int height, const char *title)
     CORE.Input.Mouse.scale = (Vector2){ 1.0f, 1.0f };
     CORE.Input.Mouse.cursor = MOUSE_CURSOR_ARROW;
     CORE.Input.Gamepad.lastButtonPressed = -1;
+#if defined(SUPPORT_EVENTS_WAITING)
+    CORE.Window.eventWaiting = true;
+#endif
 
 #if defined(PLATFORM_ANDROID)
     CORE.Window.screen.width = width;
@@ -1899,6 +1903,29 @@ const char *GetMonitorName(int monitor)
     return "";
 }
 
+// Set clipboard text content
+void SetClipboardText(const char *text)
+{
+#if defined(PLATFORM_DESKTOP)
+    glfwSetClipboardString(CORE.Window.handle, text);
+#endif
+#if defined(PLATFORM_WEB)
+    emscripten_run_script(TextFormat("navigator.clipboard.writeText('%s')", text));
+#endif
+}
+
+// Enable waiting for events on EndDrawing(), no automatic event polling
+void EnableEventWaiting(void)
+{
+    CORE.Window.eventWaiting = true;
+}
+
+// Disable waiting for events on EndDrawing(), automatic events polling
+RLAPI void DisableEventWaiting(void)
+{
+    CORE.Window.eventWaiting = false;
+}
+
 // Get clipboard text content
 // NOTE: returned string is allocated and freed by GLFW
 const char *GetClipboardText(void)
@@ -1912,16 +1939,7 @@ const char *GetClipboardText(void)
     return NULL;
 }
 
-// Set clipboard text content
-void SetClipboardText(const char *text)
-{
-#if defined(PLATFORM_DESKTOP)
-    glfwSetClipboardString(CORE.Window.handle, text);
-#endif
-#if defined(PLATFORM_WEB)
-    emscripten_run_script(TextFormat("navigator.clipboard.writeText('%s')", text));
-#endif
-}
+
 
 // Show mouse cursor
 void ShowCursor(void)
@@ -5038,11 +5056,8 @@ void PollInputEvents(void)
 
     CORE.Window.resizedLastFrame = false;
 
-#if defined(SUPPORT_EVENTS_WAITING)
-    glfwWaitEvents();
-#else
-    glfwPollEvents();       // Register keyboard/mouse events (callbacks)... and window events!
-#endif
+    if (CORE.Window.eventWaiting) glfwWaitEvents();     // Wait for in input events before continue (drawing is paused)
+    else glfwPollEvents();      // Poll input events: keyboard/mouse/window events (callbacks)
 #endif  // PLATFORM_DESKTOP
 
 #if defined(PLATFORM_WEB)
