@@ -2910,7 +2910,7 @@ const char *GetFileName(const char *filePath)
 // Get filename string without extension (uses static string)
 const char *GetFileNameWithoutExt(const char *filePath)
 {
-    #define MAX_FILENAMEWITHOUTEXT_LENGTH   128
+    #define MAX_FILENAMEWITHOUTEXT_LENGTH   256
 
     static char fileName[MAX_FILENAMEWITHOUTEXT_LENGTH] = { 0 };
     memset(fileName, 0, MAX_FILENAMEWITHOUTEXT_LENGTH);
