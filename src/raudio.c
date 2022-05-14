@@ -1206,8 +1206,7 @@ Wave WaveCopy(Wave wave)
 // NOTE: Security check in case of out-of-range
 void WaveCrop(Wave *wave, int initSample, int finalSample)
 {
-    if ((initSample >= 0) && (initSample < finalSample) &&
-        (finalSample > 0) && ((unsigned int)finalSample < (wave->frameCount*wave->channels)))
+    if ((initSample >= 0) && (initSample < finalSample) && ((unsigned int)finalSample < (wave->frameCount*wave->channels)))
     {
         int sampleCount = finalSample - initSample;
 
