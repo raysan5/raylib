@@ -222,7 +222,7 @@
             unsigned int __stdcall timeEndPeriod(unsigned int uPeriod);
         #endif
     #endif
-    #if defined(__linux__) || defined(__FreeBSD__)
+    #if defined(__linux__) || defined(__FreeBSD__) || defined(__OpenBSD__)
         #include <sys/time.h>               // Required for: timespec, nanosleep(), select() - POSIX
 
         //#define GLFW_EXPOSE_NATIVE_X11      // WARNING: Exposing Xlib.h > X.h results in dup symbols for Font type
@@ -3467,7 +3467,7 @@ void OpenURL(const char *url)
     #if defined(_WIN32)
         sprintf(cmd, "explorer \"%s\"", url);
     #endif
-    #if defined(__linux__) || defined(__FreeBSD__)
+    #if defined(__linux__) || defined(__FreeBSD__) || defined(__OpenBSD__)
         sprintf(cmd, "xdg-open '%s'", url); // Alternatives: firefox, x-www-browser
     #endif
     #if defined(__APPLE__)
@@ -4840,7 +4840,7 @@ void WaitTime(float ms)
     #if defined(_WIN32)
         Sleep((unsigned int)ms);
     #endif
-    #if defined(__linux__) || defined(__FreeBSD__) || defined(__EMSCRIPTEN__)
+    #if defined(__linux__) || defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__EMSCRIPTEN__)
         struct timespec req = { 0 };
         time_t sec = (int)(ms/1000.0f);
         ms -= (sec*1000);
