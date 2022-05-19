@@ -110,7 +110,7 @@ These are older raylib bindings that are more than 2 versions old or have not be
 | Euraylib           | 3.0 | [Euphoria](https://openeuphoria.org/)      | https://github.com/gAndy50/Euraylib          |
 | raylib-odin        | 3.0 | [Odin](https://odin-lang.org/)             | https://github.com/kevinw/raylib-odin     |
 | vraylib            | 3.5 | [V](https://vlang.io/)                     | https://github.com/waotzi/vraylib      |
-| raylib-jai         | 3.1-dev | [Jai](https://github.com/BSVino/JaiPrimer/blob/master/JaiPrimer.md)  | https://github.com/kevinw/raylib-jai   |
+| raylib-jai         | 3.1-dev | [Jai](https://github.com/BSVino/JaiPrimer/blob/master/JaiPrimer.md)  | https://github.com/kujukuju/raylib-jai   |
 | ray.zig            | 2.5 | [Zig](https://ziglang.org/)                | https://github.com/BitPuffin/zig-raylib-experiments |
 | raylib-Ada         | 3.0 | [Ada](https://www.adacore.com/about-ada)   | https://github.com/mimo/raylib-Ada        |
 | jaylib             | 3.0 | [Janet](https://janet-lang.org/)           | https://github.com/janet-lang/jaylib      |
