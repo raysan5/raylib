@@ -358,11 +358,11 @@ typedef struct rlRenderBatch {
     float currentDepth;         // Current depth value for next draw
 } rlRenderBatch;
 
-#if defined(__STDC__) && __STDC_VERSION__ >= 199901L
+#if (defined(__STDC__) && __STDC_VERSION__ >= 199901L) || (defined(_MSC_VER) && _MSC_VER >= 1800)
     #include <stdbool.h>
 #elif !defined(__cplusplus) && !defined(bool) && !defined(RL_BOOL_TYPE)
     // Boolean type
-    typedef enum bool { false, true } bool;
+typedef enum bool { false = 0, true = !false } bool;
 #endif
 
 #if !defined(RL_MATRIX_TYPE)

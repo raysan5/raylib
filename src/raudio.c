@@ -247,10 +247,6 @@ typedef struct tagBITMAPINFOHEADER {
     #include "external/dr_flac.h"       // FLAC loading functions
 #endif
 
-#if defined(_MSC_VER)
-    #undef bool
-#endif
-
 //----------------------------------------------------------------------------------
 // Defines and Macros
 //----------------------------------------------------------------------------------
