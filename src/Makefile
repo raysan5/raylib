@@ -509,9 +509,15 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
 endif
 ifeq ($(PLATFORM),PLATFORM_RPI)
     LDLIBS = -lbrcmGLESv2 -lbrcmEGL -lpthread -lrt -lm -lbcm_host -ldl
+    ifeq ($(RAYLIB_MODULE_AUDIO),TRUE)
+        LDLIBS += -latomic
+    endif
 endif
 ifeq ($(PLATFORM),PLATFORM_DRM)
     LDLIBS = -lGLESv2 -lEGL -ldrm -lgbm -lpthread -lrt -lm -ldl
+    ifeq ($(RAYLIB_MODULE_AUDIO),TRUE)
+        LDLIBS += -latomic
+    endif
 endif
 ifeq ($(PLATFORM),PLATFORM_ANDROID)
     LDLIBS = -llog -landroid -lEGL -lGLESv2 -lOpenSLES -lc -lm

@@ -349,7 +349,7 @@ endif
 ifeq ($(PLATFORM),PLATFORM_RPI)
     # Libraries for Raspberry Pi compiling
     # NOTE: Required packages: libasound2-dev (ALSA)
-    LDLIBS = -lraylib -lbrcmGLESv2 -lbrcmEGL -lpthread -lrt -lm -lbcm_host -ldl
+    LDLIBS = -lraylib -lbrcmGLESv2 -lbrcmEGL -lpthread -lrt -lm -lbcm_host -ldl -latomic
     ifeq ($(USE_RPI_CROSS_COMPILER),TRUE)
         LDLIBS += -lvchiq_arm -lvcos
     endif
@@ -357,7 +357,7 @@ endif
 ifeq ($(PLATFORM),PLATFORM_DRM)
     # Libraries for DRM compiling
     # NOTE: Required packages: libasound2-dev (ALSA)
-    LDLIBS = -lraylib -lGLESv2 -lEGL -lpthread -lrt -lm -lgbm -ldrm -ldl
+    LDLIBS = -lraylib -lGLESv2 -lEGL -lpthread -lrt -lm -lgbm -ldrm -ldl -latomic
 endif
 ifeq ($(PLATFORM),PLATFORM_WEB)
     # Libraries for web (HTML5) compiling
