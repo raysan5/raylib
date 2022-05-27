@@ -24,8 +24,8 @@ int main(void)
 {
     // Initialization
     //--------------------------------------------------------------------------------------
-    int screenWidth = 800;
-    int screenHeight = 450;
+    const int screenWidth = 800;
+    const int screenHeight = 450;
 
     SetConfigFlags(FLAG_WINDOW_RESIZABLE);
     InitWindow(screenWidth, screenHeight, "raylib [shaders] example - raymarching shapes");
@@ -77,9 +77,7 @@ int main(void)
         // Check if screen is resized
         if (IsWindowResized())
         {
-            screenWidth = GetScreenWidth();
-            screenHeight = GetScreenHeight();
-            float resolution[2] = { (float)screenWidth, (float)screenHeight };
+            float resolution[2] = { (float)GetScreenWidth(), (float)GetScreenHeight() };
             SetShaderValue(shader, resolutionLoc, resolution, SHADER_UNIFORM_VEC2);
         }
         //----------------------------------------------------------------------------------
@@ -93,10 +91,10 @@ int main(void)
             // We only draw a white full-screen rectangle,
             // frame is generated in shader using raymarching
             BeginShaderMode(shader);
-                DrawRectangle(0, 0, screenWidth, screenHeight, WHITE);
+                DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), WHITE);
             EndShaderMode();
 
-            DrawText("(c) Raymarching shader by Iñigo Quilez. MIT License.", screenWidth - 280, screenHeight - 20, 10, BLACK);
+            DrawText("(c) Raymarching shader by Iñigo Quilez. MIT License.", GetScreenWidth() - 280, GetScreenHeight() - 20, 10, BLACK);
 
         EndDrawing();
         //----------------------------------------------------------------------------------

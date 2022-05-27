@@ -92,20 +92,20 @@ int main(void)
                     // Draw axis: left joystick
                     DrawCircle(259, 152, 39, BLACK);
                     DrawCircle(259, 152, 34, LIGHTGRAY);
-                    DrawCircle(259 + ((int)GetGamepadAxisMovement(0, GAMEPAD_AXIS_LEFT_X)*20),
-                               152 + ((int)GetGamepadAxisMovement(0, GAMEPAD_AXIS_LEFT_Y)*20), 25, BLACK);
+                    DrawCircle(259 + (int)(GetGamepadAxisMovement(0, GAMEPAD_AXIS_LEFT_X)*20),
+                               152 + (int)(GetGamepadAxisMovement(0, GAMEPAD_AXIS_LEFT_Y)*20), 25, BLACK);
 
                     // Draw axis: right joystick
                     DrawCircle(461, 237, 38, BLACK);
                     DrawCircle(461, 237, 33, LIGHTGRAY);
-                    DrawCircle(461 + ((int)GetGamepadAxisMovement(0, GAMEPAD_AXIS_RIGHT_X)*20),
-                               237 + ((int)GetGamepadAxisMovement(0, GAMEPAD_AXIS_RIGHT_Y)*20), 25, BLACK);
+                    DrawCircle(461 + (int)(GetGamepadAxisMovement(0, GAMEPAD_AXIS_RIGHT_X)*20),
+                               237 + (int)(GetGamepadAxisMovement(0, GAMEPAD_AXIS_RIGHT_Y)*20), 25, BLACK);
 
                     // Draw axis: left-right triggers
                     DrawRectangle(170, 30, 15, 70, GRAY);
                     DrawRectangle(604, 30, 15, 70, GRAY);
-                    DrawRectangle(170, 30, 15, (((1 + (int)GetGamepadAxisMovement(0, GAMEPAD_AXIS_LEFT_TRIGGER))/2)*70), RED);
-                    DrawRectangle(604, 30, 15, (((1 + (int)GetGamepadAxisMovement(0, GAMEPAD_AXIS_RIGHT_TRIGGER))/2)*70), RED);
+                    DrawRectangle(170, 30, 15, (int)(((1 + GetGamepadAxisMovement(0, GAMEPAD_AXIS_LEFT_TRIGGER))/2)*70), RED);
+                    DrawRectangle(604, 30, 15, (int)(((1 + GetGamepadAxisMovement(0, GAMEPAD_AXIS_RIGHT_TRIGGER))/2)*70), RED);
 
                     //DrawText(TextFormat("Xbox axis LT: %02.02f", GetGamepadAxisMovement(0, GAMEPAD_AXIS_LEFT_TRIGGER)), 10, 40, 10, BLACK);
                     //DrawText(TextFormat("Xbox axis RT: %02.02f", GetGamepadAxisMovement(0, GAMEPAD_AXIS_RIGHT_TRIGGER)), 10, 60, 10, BLACK);
@@ -140,20 +140,20 @@ int main(void)
                     // Draw axis: left joystick
                     DrawCircle(319, 255, 35, BLACK);
                     DrawCircle(319, 255, 31, LIGHTGRAY);
-                    DrawCircle(319 + ((int)GetGamepadAxisMovement(0, GAMEPAD_AXIS_LEFT_X) * 20),
-                               255 + ((int)GetGamepadAxisMovement(0, GAMEPAD_AXIS_LEFT_Y) * 20), 25, BLACK);
+                    DrawCircle(319 + (int)(GetGamepadAxisMovement(0, GAMEPAD_AXIS_LEFT_X) * 20),
+                               255 + (int)(GetGamepadAxisMovement(0, GAMEPAD_AXIS_LEFT_Y) * 20), 25, BLACK);
 
                     // Draw axis: right joystick
                     DrawCircle(475, 255, 35, BLACK);
                     DrawCircle(475, 255, 31, LIGHTGRAY);
-                    DrawCircle(475 + ((int)GetGamepadAxisMovement(0, GAMEPAD_AXIS_RIGHT_X)*20),
-                               255 + ((int)GetGamepadAxisMovement(0, GAMEPAD_AXIS_RIGHT_Y)*20), 25, BLACK);
+                    DrawCircle(475 + (int)(GetGamepadAxisMovement(0, GAMEPAD_AXIS_RIGHT_X) * 20),
+                               255 + (int)(GetGamepadAxisMovement(0, GAMEPAD_AXIS_RIGHT_Y) * 20), 25, BLACK);
 
                     // Draw axis: left-right triggers
                     DrawRectangle(169, 48, 15, 70, GRAY);
                     DrawRectangle(611, 48, 15, 70, GRAY);
-                    DrawRectangle(169, 48, 15, (((1 - (int)GetGamepadAxisMovement(0, GAMEPAD_AXIS_LEFT_TRIGGER)) / 2) * 70), RED);
-                    DrawRectangle(611, 48, 15, (((1 - (int)GetGamepadAxisMovement(0, GAMEPAD_AXIS_RIGHT_TRIGGER)) / 2) * 70), RED);
+                    DrawRectangle(169, 48, 15, (int)(((1 - GetGamepadAxisMovement(0, GAMEPAD_AXIS_LEFT_TRIGGER)) / 2) * 70), RED);
+                    DrawRectangle(611, 48, 15, (int)(((1 - GetGamepadAxisMovement(0, GAMEPAD_AXIS_RIGHT_TRIGGER)) / 2) * 70), RED);
                 }
                 else
                 {
