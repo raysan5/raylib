@@ -358,11 +358,11 @@ typedef struct rlRenderBatch {
     float currentDepth;         // Current depth value for next draw
 } rlRenderBatch;
 
-#if defined(__STDC__) && __STDC_VERSION__ >= 199901L
+#if (defined(__STDC__) && __STDC_VERSION__ >= 199901L) || (defined(_MSC_VER) && _MSC_VER >= 1800)
     #include <stdbool.h>
 #elif !defined(__cplusplus) && !defined(bool) && !defined(RL_BOOL_TYPE)
     // Boolean type
-    typedef enum bool { false, true } bool;
+typedef enum bool { false = 0, true = !false } bool;
 #endif
 
 #if !defined(RL_MATRIX_TYPE)
@@ -598,7 +598,9 @@ RLAPI void rlglInit(int width, int height);           // Initialize rlgl (buffer
 RLAPI void rlglClose(void);                           // De-inititialize rlgl (buffers, shaders, textures)
 RLAPI void rlLoadExtensions(void *loader);            // Load OpenGL extensions (loader function required)
 RLAPI int rlGetVersion(void);                         // Get current OpenGL version
+RLAPI void rlSetFramebufferWidth(int width);          // Set current framebuffer width
 RLAPI int rlGetFramebufferWidth(void);                // Get default framebuffer width
+RLAPI void rlSetFramebufferHeight(int height);        // Set current framebuffer height
 RLAPI int rlGetFramebufferHeight(void);               // Get default framebuffer height
 
 RLAPI unsigned int rlGetTextureIdDefault(void);       // Get default texture id
@@ -927,8 +929,8 @@ typedef struct rlglData {
         int glBlendDstFactor;               // Blending destination factor
         int glBlendEquation;                // Blending equation
 
-        int framebufferWidth;               // Default framebuffer width
-        int framebufferHeight;              // Default framebuffer height
+        int framebufferWidth;               // Current framebuffer width
+        int framebufferHeight;              // Current framebuffer height
 
     } State;            // Renderer state
     struct {
@@ -1230,6 +1232,7 @@ void rlOrtho(double left, double right, double bottom, double top, double znear,
 #endif
 
 // Set the viewport area (transformation from normalized device coordinates to window coordinates)
+// NOTE: We store current viewport dimensions
 void rlViewport(int x, int y, int width, int height)
 {
     glViewport(x, y, width, height);
@@ -1537,7 +1540,7 @@ void rlTextureParameters(unsigned int id, int param, int value)
             if (value <= RLGL.ExtSupported.maxAnisotropyLevel) glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, (float)value);
             else if (RLGL.ExtSupported.maxAnisotropyLevel > 0.0f)
             {
-                TRACELOG(RL_LOG_WARNING, "GL: Maximum anisotropic filter level supported is %iX", id, RLGL.ExtSupported.maxAnisotropyLevel);
+                TRACELOG(RL_LOG_WARNING, "GL: Maximum anisotropic filter level supported is %iX", id, (int)RLGL.ExtSupported.maxAnisotropyLevel);
                 glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, (float)value);
             }
             else TRACELOG(RL_LOG_WARNING, "GL: Anisotropic filtering not supported");
@@ -2219,6 +2222,22 @@ int rlGetVersion(void)
     return glVersion;
 }
 
+// Set current framebuffer width
+void rlSetFramebufferWidth(int width)
+{
+#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
+    RLGL.State.framebufferWidth = width;
+#endif
+}
+
+// Set current framebuffer height
+void rlSetFramebufferHeight(int height)
+{
+#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
+    RLGL.State.framebufferHeight = height;
+#endif
+}
+
 // Get default framebuffer width
 int rlGetFramebufferWidth(void)
 {
@@ -2601,6 +2620,9 @@ void rlDrawRenderBatch(rlRenderBatch *batch)
 
         glUseProgram(0);    // Unbind shader program
     }
+
+    // Restore viewport to default measures
+    if (eyeCount == 2) rlViewport(0, 0, RLGL.State.framebufferWidth, RLGL.State.framebufferHeight);
     //------------------------------------------------------------------------------------------------------------
 
     // Reset batch buffers
@@ -3088,7 +3110,7 @@ void rlGenTextureMipmaps(unsigned int id, int width, int height, int format, int
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     if ((texIsPOT) || (RLGL.ExtSupported.texNPOT))
     {
-        //glHint(GL_GENERATE_MIPMAP_HINT, GL_DONT_CARE);   // Hint for mipmaps generation algorythm: GL_FASTEST, GL_NICEST, GL_DONT_CARE
+        //glHint(GL_GENERATE_MIPMAP_HINT, GL_DONT_CARE);   // Hint for mipmaps generation algorithm: GL_FASTEST, GL_NICEST, GL_DONT_CARE
         glGenerateMipmap(GL_TEXTURE_2D);    // Generate mipmaps automatically
 
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);

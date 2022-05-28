@@ -121,9 +121,22 @@ int main(void)
             cursorColor = ORANGE;
             hitObjectName = "Box";
 
-            // Check ray collision against model
-            // NOTE: It considers model.transform matrix!
-            RayCollision meshHitInfo = GetRayCollisionModel(ray, tower);
+            // Check ray collision against model meshes
+            RayCollision meshHitInfo = { 0 };
+            for (int m = 0; m < tower.meshCount; m++)
+            {
+                // NOTE: We consider the model.transform for the collision check but 
+                // it can be checked against any transform Matrix, used when checking against same
+                // model drawn multiple times with multiple transforms
+                meshHitInfo = GetRayCollisionMesh(ray, tower.meshes[m], tower.transform);
+                if (meshHitInfo.hit)
+                {
+                    // Save the closest hit mesh
+                    if ((!collision.hit) || (collision.distance > meshHitInfo.distance)) collision = meshHitInfo;
+                    
+                    break;  // Stop once one mesh collision is detected, the colliding mesh is m
+                }
+            }
 
             if (meshHitInfo.hit)
             {
