@@ -437,7 +437,7 @@ ifeq ($(PLATFORM),PLATFORM_NX)
     LIBDIRS	:= $(PORTLIBS) $(LIBNX)
     ARCH	:=	-march=armv8-a+crc+crypto -mtune=cortex-a57 -mtp=soft -fPIC -ftls-model=local-exec
     CFLAGS	+=	-ffunction-sections -fdata-sections $(ARCH) $(foreach dir,$(LIBDIRS),-I$(dir)/include) -D__SWITCH__
-    INCLUDE_PATHS = -I.
+    INCLUDE_PATHS = -I. -I./switch-nx
 endif
 ifeq ($(PLATFORM),PLATFORM_DESKTOP)
     ifeq ($(PLATFORM_OS),BSD)

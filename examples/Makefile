@@ -253,6 +253,7 @@ INCLUDE_PATHS = -I. -I$(RAYLIB_PATH)/src -I$(RAYLIB_PATH)/src/external -I$(RAYLI
 
 # Define additional directories containing required header files
 ifeq ($(PLATFORM),PLATFORM_NX)
+    INCLUDE_PATHS += -I$(RAYLIB_PATH)/src/switch-nx
     LIBDIRS := $(PORTLIBS) $(LIBNX)
     ARCH    :=  -march=armv8-a+crc+crypto -mtune=cortex-a57 -mtp=soft -fPIE
     CFLAGS  +=  -ffunction-sections $(ARCH) $(foreach dir,$(LIBDIRS),-I$(dir)/include) -D__SWITCH__

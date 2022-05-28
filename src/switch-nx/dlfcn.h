@@ -1,0 +1,3 @@
+/*
+Required file to make miniaudio.h compile to Switch
+*/

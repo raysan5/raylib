@@ -3774,6 +3774,9 @@ typedef ma_uint16 wchar_t;
     #ifdef __EMSCRIPTEN__
         #define MA_EMSCRIPTEN
     #endif
+    #ifdef __SWITCH__
+        #define MA_SWITCH
+    #endif
 #endif
 
 
@@ -6091,6 +6094,9 @@ This section contains the APIs for device playback and capture. Here is where yo
 #if defined(MA_EMSCRIPTEN)
     #define MA_SUPPORT_WEBAUDIO
 #endif
+#if defined(MA_SWITCH)
+    #define MA_SUPPORT_SDL
+#endif
 
 /* All platforms should support custom backends. */
 #define MA_SUPPORT_CUSTOM
@@ -6140,6 +6146,9 @@ This section contains the APIs for device playback and capture. Here is where yo
 #if defined(MA_SUPPORT_WEBAUDIO) && !defined(MA_NO_WEBAUDIO) && (!defined(MA_ENABLE_ONLY_SPECIFIC_BACKENDS) || defined(MA_ENABLE_WEBAUDIO))
     #define MA_HAS_WEBAUDIO
 #endif
+#if defined(MA_SUPPORT_SDL) && !defined(MA_NO_SDL) && (!defined(MA_ENABLE_ONLY_SPECIFIC_BACKENDS) || defined(MA_ENABLE_SDL))
+    #define MA_HAS_SDL
+#endif
 #if defined(MA_SUPPORT_CUSTOM) && !defined(MA_NO_CUSTOM) && (!defined(MA_ENABLE_ONLY_SPECIFIC_BACKENDS) || defined(MA_ENABLE_CUSTOM))
     #define MA_HAS_CUSTOM
 #endif
@@ -6182,6 +6191,7 @@ typedef enum
     ma_backend_aaudio,
     ma_backend_opensl,
     ma_backend_webaudio,
+    ma_backend_sdl,
     ma_backend_custom,  /* <-- Custom backend, with callbacks defined by the context config. */
     ma_backend_null     /* <-- Must always be the last item. Lowest priority, and used as the terminator for backend enumeration. */
 } ma_backend;
@@ -6491,6 +6501,7 @@ typedef union
     ma_int32 aaudio;                /* AAudio uses a 32-bit integer for identification. */
     ma_uint32 opensl;               /* OpenSL|ES uses a 32-bit unsigned integer for identification. */
     char webaudio[32];              /* Web Audio always uses default devices for now, but if this changes it'll be a GUID. */
+    int sdl;                        /* SDL devices are identified with an index. */
     union
     {
         int i;
@@ -7141,6 +7152,19 @@ struct ma_context
             int _unused;
         } webaudio;
 #endif
+#ifdef MA_SUPPORT_SDL
+        struct
+        {
+            ma_handle hSDL;    // SDL
+            ma_proc SDL_InitSubSystem;
+            ma_proc SDL_QuitSubSystem;
+            ma_proc SDL_GetNumAudioDevices;
+            ma_proc SDL_GetAudioDeviceName;
+            ma_proc SDL_CloseAudioDevice;
+            ma_proc SDL_OpenAudioDevice;
+            ma_proc SDL_PauseAudioDevice;
+        } sdl;
+#endif
 #ifdef MA_SUPPORT_NULL
         struct
         {
@@ -7458,6 +7482,12 @@ struct ma_device
             int indexPlayback;              /* We use a factory on the JavaScript side to manage devices and use an index for JS/C interop. */
             int indexCapture;
         } webaudio;
+#endif
+#ifdef MA_SUPPORT_SDL
+        struct
+        {
+            ma_uint32 deviceID;
+        } sdl;
 #endif
 #ifdef MA_SUPPORT_NULL
         struct
@@ -15441,7 +15471,7 @@ static ma_result ma_thread_create__posix(ma_thread* pThread, ma_thread_priority 
     int result;
     pthread_attr_t* pAttr = NULL;
 
-#if !defined(__EMSCRIPTEN__)
+#if !defined(__EMSCRIPTEN__) && !defined(__SWITCH__)
     /* Try setting the thread priority. It's not critical if anything fails here. */
     pthread_attr_t attr;
     if (pthread_attr_init(&attr) == 0) {
@@ -17034,11 +17064,29 @@ not officially supporting this, but I'm leaving it here in case it's useful for 
 
 /* Disable run-time linking on certain backends. */
 #ifndef MA_NO_RUNTIME_LINKING
-    #if defined(MA_EMSCRIPTEN)
+    #if defined(MA_EMSCRIPTEN) || defined(__SWITCH__)
         #define MA_NO_RUNTIME_LINKING
     #endif
 #endif
 
+#ifdef MA_ENABLE_SDL
+    #define ML_HAS_SDL
+
+    // SDL headers are necessary if using compile-time linking.
+    #ifdef MA_NO_RUNTIME_LINKING
+        #ifdef __has_include
+            #ifdef MA_EMSCRIPTEN
+                #if !__has_include(<SDL/SDL_audio.h>)
+                    #undef MA_HAS_SDL
+                #endif
+            #else
+                #if !__has_include(<SDL2/SDL_audio.h>)
+                    #undef MA_HAS_SDL
+                #endif
+            #endif
+        #endif
+    #endif
+#endif
 
 MA_API void ma_device_info_add_native_data_format(ma_device_info* pDeviceInfo, ma_format format, ma_uint32 channels, ma_uint32 sampleRate, ma_uint32 flags)
 {
@@ -17073,6 +17121,7 @@ MA_API const char* ma_get_backend_name(ma_backend backend)
         case ma_backend_aaudio:     return "AAudio";
         case ma_backend_opensl:     return "OpenSL|ES";
         case ma_backend_webaudio:   return "Web Audio";
+        case ma_backend_sdl:        return "SDL";
         case ma_backend_custom:     return "Custom";
         case ma_backend_null:       return "Null";
         default:                    return "Unknown";
@@ -17165,6 +17214,12 @@ MA_API ma_bool32 ma_is_backend_enabled(ma_backend backend)
         #else
             return MA_FALSE;
         #endif
+        case ma_backend_sdl:
+        #if defined(MA_HAS_SDL)
+            return MA_TRUE;
+        #else
+            return MA_FALSE;
+        #endif
         case ma_backend_custom:
         #if defined(MA_HAS_CUSTOM)
             return MA_TRUE;
@@ -17233,6 +17288,7 @@ MA_API ma_bool32 ma_is_loopback_supported(ma_backend backend)
         case ma_backend_aaudio:     return MA_FALSE;
         case ma_backend_opensl:     return MA_FALSE;
         case ma_backend_webaudio:   return MA_FALSE;
+        case ma_backend_sdl:        return MA_FALSE;
         case ma_backend_custom:     return MA_FALSE;    /* <-- Will depend on the implementation of the backend. */
         case ma_backend_null:       return MA_FALSE;
         default:                    return MA_FALSE;
@@ -17542,6 +17598,7 @@ Timing
 Dynamic Linking
 
 *******************************************************************************/
+#ifndef MA_NO_RUNTIME_LINKING
 MA_API ma_handle ma_dlopen(ma_context* pContext, const char* filename)
 {
     ma_handle handle;
@@ -17613,7 +17670,7 @@ MA_API ma_proc ma_dlsym(ma_context* pContext, ma_handle handle, const char* symb
     (void)pContext; /* It's possible for pContext to be unused. */
     return proc;
 }
-
+#endif
 
 #if 0
 static ma_uint32 ma_get_closest_standard_sample_rate(ma_uint32 sampleRateIn)
@@ -38635,6 +38692,227 @@ static ma_result ma_context_init__webaudio(ma_context* pContext, const ma_contex
 
 
 
+/******************************************************************************
+
+SDL Backend
+
+******************************************************************************/
+#ifdef MA_HAS_SDL
+
+#define MA_SDL_INIT_AUDIO                      0x00000010
+#define MA_AUDIO_U8                            0x0008
+#define MA_AUDIO_S16                           0x8010
+#define MA_AUDIO_S32                           0x8020
+#define MA_AUDIO_F32                           0x8120
+#define MA_SDL_AUDIO_ALLOW_FREQUENCY_CHANGE    0x00000001
+#define MA_SDL_AUDIO_ALLOW_FORMAT_CHANGE       0x00000002
+#define MA_SDL_AUDIO_ALLOW_CHANNELS_CHANGE     0x00000004
+#define MA_SDL_AUDIO_ALLOW_ANY_CHANGE          (MA_SDL_AUDIO_ALLOW_FREQUENCY_CHANGE | MA_SDL_AUDIO_ALLOW_FORMAT_CHANGE | MA_SDL_AUDIO_ALLOW_CHANNELS_CHANGE)
+
+#include <SDL2/SDL.h>
+
+typedef int                   (* MA_PFN_SDL_InitSubSystem)(ma_uint32 flags);
+typedef void                  (* MA_PFN_SDL_QuitSubSystem)(ma_uint32 flags);
+typedef int                   (* MA_PFN_SDL_GetNumAudioDevices)(int iscapture);
+typedef const char*           (* MA_PFN_SDL_GetAudioDeviceName)(int index, int iscapture);
+typedef void                  (* MA_PFN_SDL_CloseAudioDevice)(SDL_AudioDeviceID dev);
+typedef SDL_AudioDeviceID     (* MA_PFN_SDL_OpenAudioDevice)(const char* device, int iscapture, const SDL_AudioSpec* desired, SDL_AudioSpec* obtained, int allowed_changes);
+typedef void                  (* MA_PFN_SDL_PauseAudioDevice)(SDL_AudioDeviceID dev, int pause_on);
+
+static SDL_AudioFormat ma_format_to_sdl(ma_format format)
+{
+    switch (format)
+    {
+        case ma_format_unknown: return 0;
+        case ma_format_u8:      return MA_AUDIO_U8;
+        case ma_format_s16:     return MA_AUDIO_S16;
+        case ma_format_s24:     return MA_AUDIO_S32;  // Closest match.
+        case ma_format_s32:     return MA_AUDIO_S32;
+        case ma_format_f32:     return MA_AUDIO_F32;
+        default:                return 0;
+    }
+}
+
+static ma_format ma_format_from_sdl(SDL_AudioFormat format)
+{
+    switch (format)
+    {
+        case MA_AUDIO_U8:  return ma_format_u8;
+        case MA_AUDIO_S16: return ma_format_s16;
+        case MA_AUDIO_S32: return ma_format_s32;
+        case MA_AUDIO_F32: return ma_format_f32;
+        default:           return ma_format_unknown;
+    }
+}
+
+static ma_result ma_context_get_device_info__sdl(ma_context* pContext, ma_device_type deviceType, const ma_device_id* pDeviceID, ma_device_info* pDeviceInfo)
+{
+    MA_ASSERT(pContext != NULL);
+    MA_ASSERT(deviceType == ma_device_type_playback);
+
+    pDeviceInfo->id.sdl = 0;
+    pDeviceInfo->isDefault = MA_TRUE;
+
+    SDL_AudioSpec desiredSpec, obtainedSpec;
+    MA_ZERO_OBJECT(&desiredSpec);
+
+    SDL_AudioDeviceID tempDeviceID = ((MA_PFN_SDL_OpenAudioDevice)pContext->sdl.SDL_OpenAudioDevice)(NULL, 0, &desiredSpec, &obtainedSpec, MA_SDL_AUDIO_ALLOW_ANY_CHANGE);
+    ((MA_PFN_SDL_CloseAudioDevice)pContext->sdl.SDL_CloseAudioDevice)(tempDeviceID);
+
+    ma_format format = ma_format_from_sdl(obtainedSpec.format);
+    if (format == ma_format_unknown) {
+        format = ma_format_f32;
+    }
+
+    pDeviceInfo->nativeDataFormatCount = 0;
+    ma_device_info_add_native_data_format(pDeviceInfo, format, obtainedSpec.channels, obtainedSpec.freq, 0);
+
+    return MA_SUCCESS;
+}
+
+
+static ma_result ma_device_uninit__sdl(ma_device* pDevice)
+{
+    MA_ASSERT(pDevice != NULL);
+
+    ((MA_PFN_SDL_CloseAudioDevice)pDevice->pContext->sdl.SDL_CloseAudioDevice)(pDevice->sdl.deviceID);
+
+    return MA_SUCCESS;
+}
+
+
+static void ma_audio_callback__sdl(void* pUserData, ma_uint8* pBuffer, int bufferSizeInBytes)
+{
+    ma_device* pDevice = (ma_device*)pUserData;
+    MA_ASSERT(pDevice != NULL);
+
+    ma_uint32 bytesPerFrame = ma_get_bytes_per_frame(pDevice->playback.internalFormat, pDevice->playback.internalChannels);
+    ma_uint32 frameCount = (ma_uint32)bufferSizeInBytes / bytesPerFrame;
+
+    ma_device_handle_backend_data_callback(pDevice, pBuffer, NULL, frameCount);
+}
+
+static ma_result ma_device_init__sdl(ma_device* pDevice, const ma_device_config* pConfig, ma_device_descriptor* pDescriptorPlayback, ma_device_descriptor* pDescriptorCapture)
+{
+    MA_ASSERT(pDevice != NULL);
+    MA_ASSERT(pConfig != NULL);
+    MA_ASSERT(pConfig->deviceType == ma_device_type_playback);
+
+    if (pDescriptorPlayback->sampleRate == 0) {
+        pDescriptorPlayback->sampleRate = MA_DEFAULT_SAMPLE_RATE;
+    }
+
+    pDescriptorPlayback->periodSizeInFrames = pDescriptorPlayback->periodCount * ma_calculate_buffer_size_in_frames_from_descriptor(pDescriptorPlayback, pDescriptorPlayback->sampleRate, pConfig->performanceProfile);
+
+    /* SDL wants the buffer size to be a power of 2 for some reason. */
+    if (pDescriptorPlayback->periodSizeInFrames > 32768) {
+        pDescriptorPlayback->periodSizeInFrames = 32768;
+    } else {
+        pDescriptorPlayback->periodSizeInFrames = ma_next_power_of_2(pDescriptorPlayback->periodSizeInFrames);
+    }
+
+    MA_ASSERT(pDescriptorPlayback->periodSizeInFrames <= 32768);
+
+    /* We now have enough information to set up the device. */
+    SDL_AudioSpec desiredSpec, obtainedSpec;
+    MA_ZERO_OBJECT(&desiredSpec);
+    desiredSpec.freq     = (int)pDescriptorPlayback->sampleRate;
+    desiredSpec.format   = ma_format_to_sdl(pDescriptorPlayback->format);
+    desiredSpec.channels = (ma_uint8)pDescriptorPlayback->channels;
+    desiredSpec.samples  = (ma_uint16)pDescriptorPlayback->periodSizeInFrames;
+    desiredSpec.callback = ma_audio_callback__sdl;
+    desiredSpec.userdata = pDevice;
+
+    /* We'll fall back to f32 if we don't have an appropriate mapping between SDL and miniaudio. */
+    if (desiredSpec.format == ma_format_unknown) {
+        desiredSpec.format = MA_AUDIO_F32;
+    }
+
+    pDevice->sdl.deviceID = ((MA_PFN_SDL_OpenAudioDevice)pDevice->pContext->sdl.SDL_OpenAudioDevice)(NULL, 0, &desiredSpec, &obtainedSpec, MA_SDL_AUDIO_ALLOW_ANY_CHANGE);
+
+    /* The descriptor needs to be updated with our actual settings. */
+    pDescriptorPlayback->format             = ma_format_from_sdl(obtainedSpec.format);
+    pDescriptorPlayback->channels           = obtainedSpec.channels;
+    pDescriptorPlayback->sampleRate         = (ma_uint32)obtainedSpec.freq;
+    ma_channel_map_init_standard(ma_standard_channel_map_default, pDescriptorPlayback->channelMap, ma_countof(pDescriptorPlayback->channelMap), pDescriptorPlayback->channels);
+    pDescriptorPlayback->periodSizeInFrames = obtainedSpec.samples;
+    pDescriptorPlayback->periodCount        = 1;    /* SDL doesn't use the notion of period counts, so just set to 1. */
+
+    return MA_SUCCESS;
+}
+
+static ma_result ma_device_start__sdl(ma_device* pDevice)
+{
+    MA_ASSERT(pDevice != NULL);
+
+    ((MA_PFN_SDL_PauseAudioDevice)pDevice->pContext->sdl.SDL_PauseAudioDevice)(pDevice->sdl.deviceID, 0);
+
+    return MA_SUCCESS;
+}
+
+static ma_result ma_device_stop__sdl(ma_device* pDevice)
+{
+    MA_ASSERT(pDevice != NULL);
+
+    ((MA_PFN_SDL_PauseAudioDevice)pDevice->pContext->sdl.SDL_PauseAudioDevice)(pDevice->sdl.deviceID, 1);
+
+    ma_device__set_state(pDevice, ma_device_state_stopped);
+    ma_stop_proc onStop = pDevice->onStop;
+    if (onStop) {
+        onStop(pDevice);
+    }
+
+    return MA_SUCCESS;
+}
+
+
+static ma_result ma_context_uninit__sdl(ma_context* pContext)
+{
+    MA_ASSERT(pContext != NULL);
+    MA_ASSERT(pContext->backend == ma_backend_sdl);
+
+    ((MA_PFN_SDL_QuitSubSystem)pContext->sdl.SDL_QuitSubSystem)(MA_SDL_INIT_AUDIO);
+
+    return MA_SUCCESS;
+}
+
+static ma_result ma_context_init__sdl(ma_context* pContext, const ma_context_config* pConfig, ma_backend_callbacks* pCallbacks)
+{
+    MA_ASSERT(pContext != NULL);
+
+    (void)pConfig; /* Unused. */
+
+    pContext->sdl.SDL_InitSubSystem      = (ma_proc)SDL_InitSubSystem;
+    pContext->sdl.SDL_QuitSubSystem      = (ma_proc)SDL_QuitSubSystem;
+    pContext->sdl.SDL_GetNumAudioDevices = (ma_proc)SDL_GetNumAudioDevices;
+    pContext->sdl.SDL_GetAudioDeviceName = (ma_proc)SDL_GetAudioDeviceName;
+    pContext->sdl.SDL_CloseAudioDevice   = (ma_proc)SDL_CloseAudioDevice;
+    pContext->sdl.SDL_OpenAudioDevice    = (ma_proc)SDL_OpenAudioDevice;
+    pContext->sdl.SDL_PauseAudioDevice   = (ma_proc)SDL_PauseAudioDevice;
+
+    int resultSDL = ((MA_PFN_SDL_InitSubSystem)pContext->sdl.SDL_InitSubSystem)(MA_SDL_INIT_AUDIO);
+    if (resultSDL != 0) {
+        return MA_ERROR;
+    }
+
+    pCallbacks->onContextInit             = ma_context_init__sdl;
+    pCallbacks->onContextUninit           = ma_context_uninit__sdl;
+    pCallbacks->onContextEnumerateDevices = NULL;
+    pCallbacks->onContextGetDeviceInfo    = ma_context_get_device_info__sdl;
+    pCallbacks->onDeviceInit              = ma_device_init__sdl;
+    pCallbacks->onDeviceUninit            = ma_device_uninit__sdl;
+    pCallbacks->onDeviceStart             = ma_device_start__sdl;
+    pCallbacks->onDeviceStop              = ma_device_stop__sdl;
+    pCallbacks->onDeviceRead              = NULL;
+    pCallbacks->onDeviceWrite             = NULL;
+    pCallbacks->onDeviceDataLoop          = NULL;
+
+    return MA_SUCCESS;
+}
+#endif  /* SDL */
+
+
+
 static ma_bool32 ma__is_channel_map_valid(const ma_channel* pChannelMap, ma_uint32 channels)
 {
     /* A blank channel map should be allowed, in which case it should use an appropriate default which will depend on context. */
@@ -39137,7 +39415,7 @@ static ma_result ma_context_init_backend_apis__nix(ma_context* pContext)
     pContext->posix.pthread_cond_signal         = (ma_proc)pthread_cond_signal;
     pContext->posix.pthread_attr_init           = (ma_proc)pthread_attr_init;
     pContext->posix.pthread_attr_destroy        = (ma_proc)pthread_attr_destroy;
-#if !defined(__EMSCRIPTEN__)
+#if !defined(__EMSCRIPTEN__) && !defined(__SWITCH__)
     pContext->posix.pthread_attr_setschedpolicy = (ma_proc)pthread_attr_setschedpolicy;
     pContext->posix.pthread_attr_getschedparam  = (ma_proc)pthread_attr_getschedparam;
     pContext->posix.pthread_attr_setschedparam  = (ma_proc)pthread_attr_setschedparam;
@@ -39474,6 +39752,12 @@ MA_API ma_result ma_context_init(const ma_backend backends[], ma_uint32 backendC
             case ma_backend_webaudio:
             {
                 pContext->callbacks.onContextInit = ma_context_init__webaudio;
+            } break;
+        #endif
+        #ifdef MA_HAS_SDL
+            case ma_backend_sdl:
+            {
+                pContext->callbacks.onContextInit = ma_context_init__sdl;
             } break;
         #endif
         #ifdef MA_HAS_CUSTOM
