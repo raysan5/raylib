@@ -524,7 +524,7 @@ Font LoadFontFromMemory(const char *fileType, const unsigned char *fileData, int
 
             UnloadImage(atlas);
 
-            TRACELOG(LOG_INFO, "FONT: Data loaded successfully (%i pixel size | %i glyphs)", font.baseSize, Ffont.glyphCount);
+            TRACELOG(LOG_INFO, "FONT: Data loaded successfully (%i pixel size | %i glyphs)", font.baseSize, font.glyphCount);
         }
         else font = GetFontDefault();
     }
