@@ -334,7 +334,11 @@ Font LoadFont(const char *fileName)
         TRACELOG(LOG_WARNING, "FONT: [%s] Failed to load font texture -> Using default font", fileName);
         font = GetFontDefault();
     }
-    else SetTextureFilter(font.texture, TEXTURE_FILTER_POINT);    // By default we set point filter (best performance)
+    else 
+    {
+        SetTextureFilter(font.texture, TEXTURE_FILTER_POINT);    // By default we set point filter (best performance)
+        TRACELOG(LOG_INFO, "FONT: Data loaded successfully (%i pixel size | %i glyphs)", FONT_TTF_DEFAULT_SIZE, FONT_TTF_DEFAULT_NUMCHARS);
+    }
 
     return font;
 }
@@ -520,7 +524,7 @@ Font LoadFontFromMemory(const char *fileType, const unsigned char *fileData, int
 
             UnloadImage(atlas);
 
-            // TRACELOG(LOG_INFO, "FONT: Font loaded successfully (%i glyphs)", font.glyphCount);
+            TRACELOG(LOG_INFO, "FONT: Data loaded successfully (%i pixel size | %i glyphs)", font.baseSize, font.glyphCount);
         }
         else font = GetFontDefault();
     }
