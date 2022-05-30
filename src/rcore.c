@@ -5253,7 +5253,7 @@ static void KeyCallback(GLFWwindow *window, int key, int scancode, int action, i
     }
 
     // Check the exit key to set close window
-    if ((key == CORE.Input.Keyboard.exitKey) && (action == GLFW_PRESS)) glfwSetWindowShouldClose(CORE.Window.handle, GLFW_TRUE);
+    if ((CORE.Window.flags & FLAG_DISABLE_EXIT_KEY) == 0 && (key == CORE.Input.Keyboard.exitKey) && (action == GLFW_PRESS)) glfwSetWindowShouldClose(CORE.Window.handle, GLFW_TRUE);
 
 #if defined(SUPPORT_SCREEN_CAPTURE)
     if ((key == GLFW_KEY_F12) && (action == GLFW_PRESS))
@@ -5882,7 +5882,7 @@ static void ProcessKeyboard(void)
         if (keysBuffer[i] == 0x1b)
         {
             // Check if ESCAPE key has been pressed to stop program
-            if (bufferByteCount == 1) CORE.Input.Keyboard.currentKeyState[CORE.Input.Keyboard.exitKey] = 1;
+            if (bufferByteCount == 1 && (CORE.Window.flags & FLAG_DISABLE_EXIT_KEY) == 0) CORE.Input.Keyboard.currentKeyState[CORE.Input.Keyboard.exitKey] = 1;
             else
             {
                 if (keysBuffer[i + 1] == 0x5b)    // Special function key
@@ -5957,7 +5957,7 @@ static void ProcessKeyboard(void)
     }
 
     // Check exit key (same functionality as GLFW3 KeyCallback())
-    if (CORE.Input.Keyboard.currentKeyState[CORE.Input.Keyboard.exitKey] == 1) CORE.Window.shouldClose = true;
+    if ((CORE.Window.flags & FLAG_DISABLE_EXIT_KEY) == 0 && CORE.Input.Keyboard.currentKeyState[CORE.Input.Keyboard.exitKey] == 1) CORE.Window.shouldClose = true;
 
 #if defined(SUPPORT_SCREEN_CAPTURE)
     // Check screen capture key (raylib key: KEY_F12)
@@ -6278,7 +6278,7 @@ static void PollKeyboardEvents(void)
                     }
                 #endif
 
-                    if (CORE.Input.Keyboard.currentKeyState[CORE.Input.Keyboard.exitKey] == 1) CORE.Window.shouldClose = true;
+                    if ((CORE.Window.flags & FLAG_DISABLE_EXIT_KEY) == 0 && CORE.Input.Keyboard.currentKeyState[CORE.Input.Keyboard.exitKey] == 1) CORE.Window.shouldClose = true;
 
                     TRACELOGD("RPI: KEY_%s ScanCode: %4i KeyCode: %4i", event.value == 0 ? "UP":"DOWN", event.code, keycode);
                 }
