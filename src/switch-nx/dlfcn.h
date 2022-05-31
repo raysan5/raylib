@@ -1,6 +1,12 @@
 /*
 Required file to make miniaudio.h compile to Switch
 */
+#ifndef dlfcn_h
+#define dlfcn_h
+
+#ifndef alloca
+#define alloca(s) __builtin_alloca(s)
+#endif
 
 #define RTLD_LAZY         0x00001
 #define RTLD_NOW          0x00002
@@ -19,3 +25,5 @@ char *dlerror(void);
 int pthread_attr_setschedpolicy(pthread_attr_t *, int) { return 0; }
 int sched_get_priority_max(int policy) { return 0; }
 int sched_get_priority_min(int policy) { return 0; }
+
+#endif
