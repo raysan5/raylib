@@ -396,7 +396,6 @@ ifeq ($(PLATFORM),PLATFORM_WEB)
 endif
 ifeq ($(PLATFORM),PLATFORM_NX)
     LDLIBS = -lraylib -lEGL -lGLESv2 -lglapi -ldrm_nouveau -lnx -lm
-    LDLIBS += `$(PREFIX)pkg-config --libs sdl2`
 endif
 
 # Define source code object files required

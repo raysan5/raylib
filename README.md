@@ -110,7 +110,7 @@ raylib is also available via multiple [package managers](https://github.com/rays
  - [Working for Android](https://github.com/raysan5/raylib/wiki/Working-for-Android)
  - [Working for Web (HTML5)](https://github.com/raysan5/raylib/wiki/Working-for-Web-(HTML5))
  - [Working anywhere with CMake](https://github.com/raysan5/raylib/wiki/Working-with-CMake)
- 
+
 *Note that Wiki is open for edit, if you find some issue while building raylib for your target platform, feel free to edit the Wiki or open and issue related to it.*
 
 #### Setup raylib with multiple IDEs

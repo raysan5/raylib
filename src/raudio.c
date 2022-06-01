@@ -164,6 +164,7 @@ typedef struct tagBITMAPINFOHEADER {
 #define MA_FREE RL_FREE
 
 #if defined(PLATFORM_NX)
+    #define MA_NO_RUNTIME_LINKING
     #define MA_ENABLE_ONLY_SPECIFIC_BACKENDS
     #define MA_ENABLE_CUSTOM
 #endif
@@ -176,7 +177,7 @@ typedef struct tagBITMAPINFOHEADER {
 //#define MA_DEBUG_OUTPUT
 #include "external/miniaudio.h"         // Audio device initialization and management
 #if defined(PLATFORM_NX)
-    #include "external/miniaudio_sdl.h"
+    #include <miniaudio_audren.h>       // Custom audio device for switch
 #endif
 #undef PlaySound                        // Win32 API: windows.h > mmsystem.h defines PlaySound macro
 
@@ -432,7 +433,7 @@ void InitAudioDevice(void)
     ma_backend backends[] = {
         ma_backend_custom
     };
-    ctxConfig.custom.onContextInit = ma_context_init__sdl;
+    ctxConfig.custom.onContextInit = ma_context_init__audren;
     ma_result result = ma_context_init(backends, sizeof(backends)/sizeof(backends[0]), &ctxConfig, &AUDIO.System.context);
 #else
     ma_result result = ma_context_init(NULL, 0, &ctxConfig, &AUDIO.System.context);
