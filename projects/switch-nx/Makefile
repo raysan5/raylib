@@ -64,8 +64,6 @@ ASFLAGS	:=	-g $(ARCH)
 LDFLAGS	=	-specs=$(DEVKITPRO)/libnx/switch.specs -g $(ARCH) -Wl,-Map,$(notdir $*.map)
 
 LIBS	:= -lraylib -lEGL -lGLESv2 -lglapi -ldrm_nouveau -lnx -lm
-# remove the next line if you dont need audio
-LIBS    += `$(PREFIX)pkg-config --libs sdl2`
 
 #---------------------------------------------------------------------------------
 # list of directories containing libraries, this must be the top level containing
