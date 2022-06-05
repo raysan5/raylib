@@ -2109,7 +2109,7 @@ void EndDrawing(void)
     // Wait for some milliseconds...
     if (CORE.Time.frame < CORE.Time.target)
     {
-        WaitTime((float)(CORE.Time.target - CORE.Time.frame)*1000.0f);
+        WaitTime(CORE.Time.target - CORE.Time.frame);
 
         CORE.Time.current = GetTime();
         double waitTime = CORE.Time.current - CORE.Time.previous;
@@ -4819,42 +4819,42 @@ static void InitTimer(void)
     CORE.Time.previous = GetTime();     // Get time as double
 }
 
-// Wait for some milliseconds (stop program execution)
+// Wait for some time (stop program execution)
 // NOTE: Sleep() granularity could be around 10 ms, it means, Sleep() could
 // take longer than expected... for that reason we use the busy wait loop
 // Ref: http://stackoverflow.com/questions/43057578/c-programming-win32-games-sleep-taking-longer-than-expected
 // Ref: http://www.geisswerks.com/ryan/FAQS/timing.html --> All about timming on Win32!
-void WaitTime(float ms)
+void WaitTime(double secondsToWait)
 {
 #if defined(SUPPORT_BUSY_WAIT_LOOP)
     double previousTime = GetTime();
     double currentTime = 0.0;
 
     // Busy wait loop
-    while ((currentTime - previousTime) < ms/1000.0f) currentTime = GetTime();
+    while ((currentTime - previousTime) < secondsToWait) currentTime = GetTime();
 #else
     #if defined(SUPPORT_PARTIALBUSY_WAIT_LOOP)
-        double destTime = GetTime() + ms/1000.0f;
-        double busyWait = ms*0.05;     // NOTE: We are using a busy wait of 5% of the time
-        ms -= (float)busyWait;
+        double destTime = GetTime() + secondsToWait;
+        double busyWait = secondsToWait*0.05;     // NOTE: We are using a busy wait of 5% of the time
+        double sleepingWait = secondsToWait - busyWait;
     #endif
 
     // System halt functions
     #if defined(_WIN32)
-        Sleep((unsigned int)ms);
+        Sleep((unsigned int)(sleepingWait*1000.0));
     #endif
     #if defined(__linux__) || defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__EMSCRIPTEN__)
         struct timespec req = { 0 };
-        time_t sec = (int)(ms/1000.0f);
-        ms -= (sec*1000);
+        time_t sec = sleepingWait;
+        long nsec = (sleepingWait - sec)*1000000000L;
         req.tv_sec = sec;
-        req.tv_nsec = ms*1000000L;
+        req.tv_nsec = nsec;
 
         // NOTE: Use nanosleep() on Unix platforms... usleep() it's deprecated.
         while (nanosleep(&req, &req) == -1) continue;
     #endif
     #if defined(__APPLE__)
-        usleep(ms*1000.0f);
+        usleep(sleepingWait*1000000.0);
     #endif
 
     #if defined(SUPPORT_PARTIALBUSY_WAIT_LOOP)
@@ -6452,7 +6452,7 @@ static void *EventThread(void *arg)
 #endif
         }
 
-        WaitTime(5);    // Sleep for 5ms to avoid hogging CPU time
+        WaitTime(0.005);    // Sleep for 5ms to avoid hogging CPU time
     }
 
     close(worker->fd);
@@ -6540,7 +6540,7 @@ static void *GamepadThread(void *arg)
                     }
                 }
             }
-            else WaitTime(1);    // Sleep for 1 ms to avoid hogging CPU time
+            else WaitTime(0.001);    // Sleep for 1 ms to avoid hogging CPU time
         }
     }
 
