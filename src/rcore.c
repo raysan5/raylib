@@ -4834,6 +4834,7 @@ void WaitTime(float ms)
     while ((currentTime - previousTime) < ms/1000.0f) currentTime = GetTime();
 #else
     #if defined(SUPPORT_PARTIALBUSY_WAIT_LOOP)
+        double destTime = GetTime() + ms/1000.0f;
         double busyWait = ms*0.05;     // NOTE: We are using a busy wait of 5% of the time
         ms -= (float)busyWait;
     #endif
@@ -4857,11 +4858,7 @@ void WaitTime(float ms)
     #endif
 
     #if defined(SUPPORT_PARTIALBUSY_WAIT_LOOP)
-        double previousTime = GetTime();
-        double currentTime = 0.0;
-
-        // Partial busy wait loop (only a fraction of the total wait time)
-        while ((currentTime - previousTime) < (busyWait/1000.0f)) currentTime = GetTime();
+        while (GetTime() < destTime) { }
     #endif
 #endif
 }
