@@ -6058,12 +6058,13 @@ static void ConfigureEvdevDevice(char *device)
     fd = open(device, O_RDONLY | O_NONBLOCK);
     if (fd < 0)
     {
-        TRACELOG(LOG_WARNING, "RPI: Failed to open input device %s", device);
+        TRACELOG(LOG_WARNING, "RPI: Failed to open input device: %s", device);
         return;
     }
     worker->fd = fd;
 
     // Grab number on the end of the devices name "event<N>"
+    // TODO: Grab number on the end of the device name "mouse<N>"
     int devNum = 0;
     char *ptrDevName = strrchr(device, 't');
     worker->eventNum = -1;
@@ -6072,6 +6073,7 @@ static void ConfigureEvdevDevice(char *device)
     {
         if (sscanf(ptrDevName, "t%d", &devNum) == 1) worker->eventNum = devNum;
     }
+    else worker->eventNum = 0;      // HACK for mouse0 device!
 
     // At this point we have a connection to the device, but we don't yet know what the device is.
     // It could be many things, even as simple as a power button...
