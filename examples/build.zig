@@ -93,7 +93,6 @@ pub fn build(b: *std.build.Builder) !void {
     all.dependOn(try add_module("core", b, target));
     all.dependOn(try add_module("models", b, target));
     all.dependOn(try add_module("others", b, target));
-    all.dependOn(try add_module("physics", b, target));
     all.dependOn(try add_module("shaders", b, target));
     all.dependOn(try add_module("shapes", b, target));
     all.dependOn(try add_module("text", b, target));
