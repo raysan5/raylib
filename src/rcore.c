@@ -404,7 +404,7 @@ typedef struct CoreData {
         Point renderOffset;                 // Offset from render area (must be divided by 2)
         Matrix screenScale;                 // Matrix to scale screen (framebuffer rendering)
 
-        char **dropFilesPath;               // Store dropped files paths as strings
+        char **dropFilepaths;               // Store dropped files paths as strings
         int dropFileCount;                  // Count dropped files strings
 
     } Window;
@@ -3109,7 +3109,7 @@ const char *GetApplicationDirectory(void)
     return appDir;
 }
 
-// Get filenames in a directory path
+// Load directory filepaths
 // NOTE: Files count is returned by parameters pointer
 char **LoadDirectoryFiles(const char *dirPath, int *fileCount)
 {
@@ -3144,7 +3144,7 @@ char **LoadDirectoryFiles(const char *dirPath, int *fileCount)
     return dirFilesPath;
 }
 
-// Clear directory files paths buffers
+// Unload directory filepaths
 void UnloadDirectoryFiles(void)
 {
     if (dirFileCount > 0)
@@ -3174,21 +3174,21 @@ bool IsFileDropped(void)
     else return false;
 }
 
-// Get dropped files names
-char **GetDroppedFiles(int *count)
+// Load dropped filepaths
+char **LoadDroppedFiles(int *count)
 {
     *count = CORE.Window.dropFileCount;
-    return CORE.Window.dropFilesPath;
+    return CORE.Window.dropFilepaths;
 }
 
-// Clear dropped files paths buffer
-void ClearDroppedFiles(void)
+// Unload dropped filepaths
+void UnloadDroppedFiles(void)
 {
     if (CORE.Window.dropFileCount > 0)
     {
-        for (int i = 0; i < CORE.Window.dropFileCount; i++) RL_FREE(CORE.Window.dropFilesPath[i]);
+        for (int i = 0; i < CORE.Window.dropFileCount; i++) RL_FREE(CORE.Window.dropFilepaths[i]);
 
-        RL_FREE(CORE.Window.dropFilesPath);
+        RL_FREE(CORE.Window.dropFilepaths);
 
         CORE.Window.dropFileCount = 0;
     }
@@ -5419,14 +5419,14 @@ static void CursorEnterCallback(GLFWwindow *window, int enter)
 // Everytime new files are dropped, old ones are discarded
 static void WindowDropCallback(GLFWwindow *window, int count, const char **paths)
 {
-    ClearDroppedFiles();
+    UnloadDroppedFiles();
 
-    CORE.Window.dropFilesPath = (char **)RL_MALLOC(count*sizeof(char *));
+    CORE.Window.dropFilepaths = (char **)RL_MALLOC(count*sizeof(char *));
 
     for (int i = 0; i < count; i++)
     {
-        CORE.Window.dropFilesPath[i] = (char *)RL_MALLOC(MAX_FILEPATH_LENGTH*sizeof(char));
-        strcpy(CORE.Window.dropFilesPath[i], paths[i]);
+        CORE.Window.dropFilepaths[i] = (char *)RL_MALLOC(MAX_FILEPATH_LENGTH*sizeof(char));
+        strcpy(CORE.Window.dropFilepaths[i], paths[i]);
     }
 
     CORE.Window.dropFileCount = count;

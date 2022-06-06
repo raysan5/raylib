@@ -142,7 +142,7 @@ int main(void)
         if (IsFileDropped())
         {
             int count = 0;
-            char **droppedFiles = GetDroppedFiles(&count);
+            char **droppedFiles = LoadDroppedFiles(&count);
 
             // NOTE: We only support first ttf file dropped
             if (IsFileExtension(droppedFiles[0], ".ttf"))
@@ -156,7 +156,7 @@ int main(void)
                 font = LoadFont(droppedFiles[0]);
                 fontSize = font.baseSize;
             }
-            ClearDroppedFiles();
+            UnloadDroppedFiles();
         }
 
         // Handle Events

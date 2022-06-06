@@ -1,6 +1,6 @@
 /**********************************************************************************************
 *
-*   raylib v4.1-dev - A simple and easy-to-use library to enjoy videogames programming (www.raylib.com)
+*   raylib v4.2-dev - A simple and easy-to-use library to enjoy videogames programming (www.raylib.com)
 *
 *   FEATURES:
 *       - NO external dependencies, all required libraries included with raylib
@@ -80,7 +80,7 @@
 
 #include <stdarg.h>     // Required for: va_list - Only used by TraceLogCallback
 
-#define RAYLIB_VERSION  "4.1-dev"
+#define RAYLIB_VERSION  "4.2-dev"
 
 // Function specifiers in case library is build/used as a shared library (Windows)
 // NOTE: Microsoft specifiers to tell compiler that symbols are imported/exported from a .dll
@@ -1058,11 +1058,11 @@ RLAPI const char *GetPrevDirectoryPath(const char *dirPath);      // Get previou
 RLAPI const char *GetWorkingDirectory(void);                      // Get current working directory (uses static string)
 RLAPI const char *GetApplicationDirectory(void);                  // Get the directory if the running application (uses static string)
 RLAPI bool ChangeDirectory(const char *dir);                      // Change working directory, return true on success
-RLAPI char **LoadDirectoryFiles(const char *dirPath, int *count); // Load filenames in a directory path
-RLAPI void UnloadDirectoryFiles(void);                            // Clear directory files paths buffers
+RLAPI char **LoadDirectoryFiles(const char *dirPath, int *count); // Load directory filepaths
+RLAPI void UnloadDirectoryFiles(void);                            // Unload directory filepaths
 RLAPI bool IsFileDropped(void);                                   // Check if a file has been dropped into window
-RLAPI char **GetDroppedFiles(int *count);                         // Get dropped files names (memory must be freed)
-RLAPI void ClearDroppedFiles(void);                               // Clear dropped files paths buffer (free memory)
+RLAPI char **LoadDroppedFiles(int *count);                        // Load dropped filepaths
+RLAPI void UnloadDroppedFiles(void);                              // Unload dropped filepaths
 RLAPI long GetFileModTime(const char *fileName);                  // Get file modification time (last write time)
 
 // Compression/Encoding functionality
