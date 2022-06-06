@@ -958,7 +958,7 @@ RLAPI void DisableEventWaiting(void);                             // Disable wai
 // To avoid that behaviour and control frame processes manually, enable in config.h: SUPPORT_CUSTOM_FRAME_CONTROL
 RLAPI void SwapScreenBuffer(void);                                // Swap back buffer with front buffer (screen drawing)
 RLAPI void PollInputEvents(void);                                 // Register all input events
-RLAPI void WaitTime(double waitSeconds);                          // Wait for some time (halt program execution)
+RLAPI void WaitTime(double seconds);                              // Wait for some time (halt program execution)
 
 // Cursor-related functions
 RLAPI void ShowCursor(void);                                      // Shows cursor

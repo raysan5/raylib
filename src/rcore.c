@@ -4824,20 +4824,20 @@ static void InitTimer(void)
 // take longer than expected... for that reason we use the busy wait loop
 // Ref: http://stackoverflow.com/questions/43057578/c-programming-win32-games-sleep-taking-longer-than-expected
 // Ref: http://www.geisswerks.com/ryan/FAQS/timing.html --> All about timming on Win32!
-void WaitTime(double waitSeconds)
+void WaitTime(double seconds)
 {
 #if defined(SUPPORT_BUSY_WAIT_LOOP)
     double previousTime = GetTime();
     double currentTime = 0.0;
 
     // Busy wait loop
-    while ((currentTime - previousTime) < waitSeconds) currentTime = GetTime();
+    while ((currentTime - previousTime) < seconds) currentTime = GetTime();
 #else
     #if defined(SUPPORT_PARTIALBUSY_WAIT_LOOP)
-        double destinationTime = GetTime() + waitSeconds;
-        double sleepSeconds = waitSeconds - waitSeconds*0.05;  // NOTE: We reserve a percentage of the time for busy waiting
+        double destinationTime = GetTime() + seconds;
+        double sleepSeconds = seconds - seconds*0.05;  // NOTE: We reserve a percentage of the time for busy waiting
     #else
-        double sleepSeconds = waitSeconds;
+        double sleepSeconds = seconds;
     #endif
 
     // System halt functions
