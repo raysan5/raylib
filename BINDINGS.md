@@ -53,6 +53,7 @@ Some people ported raylib to other languages in form of bindings or wrappers to 
 | raylib-zig         | **4.0** | [Zig](https://ziglang.org/)               | MIT | https://github.com/Not-Nik/raylib-zig     |
 | raylib.zig         | **4.1-dev** | [Zig](https://ziglang.org/)               | MIT | https://github.com/ryupold/raylib.zig |
 | racket-raylib      | **4.0** | [Racket](https://racket-lang.org/) | MIT/Apache-2.0 | https://github.com/eutro/racket-raylib |
+| cl-raylib          | **4.0** | [Common Lisp](https://common-lisp.net/)   | MIT | https://github.com/longlene/cl-raylib     |
 
 ### Utility Wrapers
 These are utility wrappers for specific languages, they are not required to use raylib in the language but may adapt the raylib API to be more inline with the language's pardigm.
@@ -103,7 +104,6 @@ These are older raylib bindings that are more than 2 versions old or have not be
 | raylib-php-ffi     | 2.4-dev | [PHP](https://en.wikipedia.org/wiki/PHP)      | https://github.com/oraoto/raylib-php-ffi      |
 | raylib-haxe        | 2.4 | [Haxe](https://haxe.org/)                  | https://github.com/ibilon/raylib-haxe           |
 | ringraylib         | 2.6 | [Ring](http://ring-lang.sourceforge.net/)  | https://github.com/ringpackages/ringraylib     |
-| cl-raylib          | 3.0 | [Common Lisp](https://common-lisp.net/)    | https://github.com/longlene/cl-raylib    |
 | raylib-scm         | 2.5 | [Chicken Scheme](https://www.call-cc.org/) | https://github.com/yashrk/raylib-scm     |
 | raylib-chibi       | 2.5 | [Chibi-Scheme](https://github.com/ashinn/chibi-scheme)   | https://github.com/VincentToups/raylib-chibi  |
 | raylib-gambit-scheme | 3.1-dev | [Gambit Scheme](https://github.com/gambit/gambit)   | https://github.com/georgjz/raylib-gambit-scheme  |
