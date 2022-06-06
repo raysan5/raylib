@@ -1057,9 +1057,9 @@ RLAPI const char *GetDirectoryPath(const char *filePath);         // Get full pa
 RLAPI const char *GetPrevDirectoryPath(const char *dirPath);      // Get previous directory path for a given path (uses static string)
 RLAPI const char *GetWorkingDirectory(void);                      // Get current working directory (uses static string)
 RLAPI const char *GetApplicationDirectory(void);                  // Get the directory if the running application (uses static string)
-RLAPI char **GetDirectoryFiles(const char *dirPath, int *count);  // Get filenames in a directory path (memory must be freed)
-RLAPI void ClearDirectoryFiles(void);                             // Clear directory files paths buffers (free memory)
 RLAPI bool ChangeDirectory(const char *dir);                      // Change working directory, return true on success
+RLAPI char **LoadDirectoryFiles(const char *dirPath, int *count); // Load filenames in a directory path
+RLAPI void UnloadDirectoryFiles(void);                            // Clear directory files paths buffers
 RLAPI bool IsFileDropped(void);                                   // Check if a file has been dropped into window
 RLAPI char **GetDroppedFiles(int *count);                         // Get dropped files names (memory must be freed)
 RLAPI void ClearDroppedFiles(void);                               // Clear dropped files paths buffer (free memory)

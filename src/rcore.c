@@ -189,9 +189,9 @@
     #define DIRENT_MALLOC RL_MALLOC
     #define DIRENT_FREE RL_FREE
 
-    #include "external/dirent.h"    // Required for: DIR, opendir(), closedir() [Used in GetDirectoryFiles()]
+    #include "external/dirent.h"    // Required for: DIR, opendir(), closedir() [Used in LoadDirectoryFiles()]
 #else
-    #include <dirent.h>             // Required for: DIR, opendir(), closedir() [Used in GetDirectoryFiles()]
+    #include <dirent.h>             // Required for: DIR, opendir(), closedir() [Used in LoadDirectoryFiles()]
 #endif
 
 #if defined(_WIN32)
@@ -3111,9 +3111,9 @@ const char *GetApplicationDirectory(void)
 
 // Get filenames in a directory path
 // NOTE: Files count is returned by parameters pointer
-char **GetDirectoryFiles(const char *dirPath, int *fileCount)
+char **LoadDirectoryFiles(const char *dirPath, int *fileCount)
 {
-    ClearDirectoryFiles();
+    UnloadDirectoryFiles();
 
     int counter = 0;
     struct dirent *entity;
@@ -3145,7 +3145,7 @@ char **GetDirectoryFiles(const char *dirPath, int *fileCount)
 }
 
 // Clear directory files paths buffers
-void ClearDirectoryFiles(void)
+void UnloadDirectoryFiles(void)
 {
     if (dirFileCount > 0)
     {
