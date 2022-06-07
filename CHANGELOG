@@ -37,7 +37,7 @@ Detailed changes:
 [core] REVIEWED: Initialize/reset CORE.inputs global state (#2360)
 [core] REVIEWED: MouseScrollCallback() (#2371)
 [core] REVIEWED: SwapScreenBuffers() for PLATFORM_DRM 
-[core] REVIEWED: WaitTIme(), fix regression causing video stuttering (#2503) by @flashback-fx
+[core] REVIEWED: WaitTime(), fix regression causing video stuttering (#2503) by @flashback-fx
 [core] REVIEWED: Mouse device support on PLATFORM_DRM (#2381)
 [core] REVIEWED: Support OpenBSD timming functions
 [core] REVIEWED: Improved boolean definitions (#2485) by @noodlecollie
