@@ -96,7 +96,7 @@ Detailed changes:
 [models] REVIEWED: DrawMesh*() issue (#2211)
 [models] REVIEWED: ExportMesh() (#2220)
 [models] REVIEWED: GenMeshCylinder() (#2225)
-[audio] ADDED: Panning support (#2205) by ptarabbia
+[audio] ADDED: SetSoundPan(), SetMusicPan(), SetAudioStreamPan(), panning support (#2205) by ptarabbia
 [audio] ADDED: Audio stream input callback (#2212) by ptarabbia 
 [audio] ADDED: Audio stream processors support (#2212) by ptarabbia 
 [audio] REVIEWED: GetMusicTimePlayed(), incorrect value after the stream restarted for XM audio (#2092 #2215) by @ptarabbia 
