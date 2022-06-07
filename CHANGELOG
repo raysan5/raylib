@@ -7,7 +7,7 @@ Current Release:    raylib 4.0.0 (05 November 2021)
 Release:     raylib 4.2 (June 2022)
 -------------------------------------------------------------------------
 KEY CHANGES:
- - ...
+ - ... 
  - rres 1.0
  - raygui 3.2
  - raylib_parser...
@@ -43,7 +43,6 @@ Detailed changes:
 [core] REVIEWED: TakeScreenshot(), use GetWindowScaleDPI() to calculate size in screenshot/recording (#2446) by @gulrak
 [core] REVIEWED: Remove fps requirement for drm connector selection (#2468) by @Crydsch
 [core] REVIEWED: OpenURL()
-
 [rlgl] ADDED: Premultiplied alpha blend mode (#2342) by @megagrump
 [rlgl] REVIEWED: VR rendering not taking render target size into account (#2424) by @FireFlyForLife
 [rlgl] REVIEWED: Set rlgl internal framebuffer (#2420)
@@ -55,8 +54,6 @@ Detailed changes:
 [rlgl] REVIEWED: Clear SSBO buffers on loading (#2185)
 [rlgl] REVIEWED: rlLoadShaderCode(), improved shader loading code
 [rlgl] REVIEWED: Comment notes about custom blend modes (#2260) by @glorantq
-
-
 [raymath] ADDED: Vector2Transform()
 [raymath] ADDED: Vector2DistanceSqr() (#2376) by @AnilBK
 [raymath] ADDED: Vector3DistanceSqr() (#2376) by @AnilBK
@@ -69,10 +66,8 @@ Detailed changes:
 [raymath] REVIEWED: QuaternionInvert(), code simplified (#2324) by @megagrump
 [raymath] REVIEWED: QuaternionScale() (#2419) by @tana
 [raymath] REVIEWED: Vector2Rotate(), optimized (#2340) by @jdeokkim
-
 [shapes] REVIEWED: CheckCollision*() consistency
 [shapes] REVIEWED: DrawRectanglePro(), support TRIANGLES drawing
-
 [textures] ADDED: Support for QOI image format
 [textures] REVIEWED: ImageColorTint(), GetImageColor(), ImageDrawRectangleRec(), optimized functions (#2429) by @AnilBK  
 [textures] REVIEWED: LoadTextureFromImage(), allow texture loading with no data transfer
@@ -83,14 +78,12 @@ Detailed changes:
 [textures] REVIEWED: LoadTextureCubemap() (#2223, #2224)
 [textures] REVIEWED: Export format for float 32bit
 [textures] REVIEWED: ExportImage(), support export ".jpeg" files
-
 [text] ADDED: ExportFontAsCode()
 [text] ADDED: DrawTextCodepoints() (#2308) by @siddharthroy12
 [text] REVIEWED: TextIsEqual(), protect from NULLs (#2121) by @lukekras
 [text] REVIEWED: LoadFontEx(), comment to specify how to get the default character set (#2221) by @JeffM2501 
 [text] REVIEWED: GenImageFontAtlas(), increase atlas size guesstimate by @megagrump
 [text] REVIEWED: GetCodepoint() (#2201)
-
 [models] ADDED: Reference code to load bones id and weight data for animations
 [models] `WARNING`: REMOVED: GetRayCollisionModel() (#2405)
 [models] REVIEWED: External library: vox_loader.h, 64bit issue (#2186)
@@ -102,7 +95,6 @@ Detailed changes:
 [models] REVIEWED: DrawMesh*() issue (#2211)
 [models] REVIEWED: ExportMesh() (#2220)
 [models] REVIEWED: GenMeshCylinder() (#2225)
-
 [audio] ADDED: Panning support (#2205) by ptarabbia
 [audio] ADDED: Audio stream input callback (#2212) by ptarabbia 
 [audio] ADDED: Audio stream processors support (#2212) by ptarabbia 
@@ -111,13 +103,10 @@ Detailed changes:
 [audio] REVIEWED: Fix crash with delay example (#2472) by @ptarabbia
 [audio] REVIEWED: PlaySoundMulti() (#2231)
 [audio] REVIEWED: ExportWaveAsCode()
-
 [utils] ADDED: ExportDataAsCode()
 [utils] REVIEWED: Force flush stdout after trace messages (#2465) by @nagy
-
 [easings] ADDED: Function descriptions (#2471) by @RobLoach
 [camera] REVIEWED: Fix free camera panning in the wrong direction (#2347) by @DavidLyhedDanielsson
-
 [examples] ADDED: shapes_top_down_lights (#2199) by JeffM2501
 [examples] REVIEWED: core_input_gamepad, improve joystick visualisation (#2390) by @kristianlm
 [examples] REVIEWED: textures_draw_tiled
@@ -125,7 +114,6 @@ Detailed changes:
 [examples] REVIEWED: shaders_raymarching
 [examples] REVIEWED: audio_raw_stream (#2205) by ptarabbia 
 [examples] REVIEWED: audio_music_stream
-
 [parser] ADDED: Defines to parser (#2269) by @iskolbin
 [parser] ADDED: Aliases to parser (#2444) by @lazaray
 [parser] ADDED: Parse struct descriptions (#2214) by @eutro
@@ -138,7 +126,6 @@ Detailed changes:
 [parser] REVIEWED: Fix memory leak in parser (#2136) by @ronnieholm
 [parser] REVIEWED: EscapeBackslashes()
 [parser] REVIEWED: Parser improvements (#2461 #2462) by @lazaray
-
 [build] ADDED: VS2022 project
 [build] ADDED: Support macOS by zig build system (#2175)
 [build] ADDED: Support custom modules selection on compilation
@@ -162,13 +149,11 @@ Detailed changes:
 [build] REVIEWED: Update raylib-config.cmake (#2374) by @marcogmaia
 [build] REVIEWED: Simplify build.zig to not require user to specify raylib path (#2383) by @Hejsil
 [build] REVIEWED: Fix OpenGL 4.3 graphics option in CMake (#2427) by @GoldenThumbs
-
 [misc] `WARNING`: REMOVED: physac from raylib sources/examples, use github.com/raysan5/physac
 [misc] `WARNING`: REMOVED: raygui from raylib/src/extras, use github.com/raysan5/raygui
 [misc] REVIEWED: Update external libraries to latest version released
 [misc] REVIEWED: Updated multiple bindings to raylib 4.0
 [misc] ADDED: Licenses to BINDINGS 
-
 [multi] `WARNING`: RENAMED: Some function input parameters from "length" to "size"
 [multi] REVIEWED: Multiple trace log messages
 [multi] REVIEWED: Some functions input parametes that should be const
