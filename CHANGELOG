@@ -17,6 +17,7 @@ Detailed changes:
 [core] ADDED: raylibVersion symbol, it could be required by some bindings (#2190)
 [core] ADDED: SetWindowOpacity() (#2254) by @tusharsingh09
 [core] ADDED: GetRenderWidth() and GetRenderHeight() by @ArnaudValensi
+[core] ADDED: EnableEventWaiting() and DisableEventWaiting()
 [core] ADDED: GetFileLength()
 [core] ADDED: Modules info at initialization
 [core] ADDED: Support clipboard copy/paste on web
