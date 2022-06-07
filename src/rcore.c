@@ -2050,8 +2050,8 @@ void EndDrawing(void)
             // Get image data for the current frame (from backbuffer)
             // NOTE: This process is quite slow... :(
             Vector2 scale = GetWindowScaleDPI();
-            unsigned char *screenData = rlReadScreenPixels(CORE.Window.render.width*scale.x, CORE.Window.render.height*scale.y);
-            msf_gif_frame(&gifState, screenData, 10, 16, CORE.Window.render.width*scale.x*4);
+            unsigned char *screenData = rlReadScreenPixels((int)((float)CORE.Window.render.width*scale.x), (int)((float)CORE.Window.render.height*scale.y));
+            msf_gif_frame(&gifState, screenData, 10, 16, (int)((float)CORE.Window.render.width*scale.x)*4);
 
             RL_FREE(screenData);    // Free image data
         }
@@ -2774,8 +2774,8 @@ void TakeScreenshot(const char *fileName)
 {
 #if defined(SUPPORT_MODULE_RTEXTURES)
     Vector2 scale = GetWindowScaleDPI();
-    unsigned char *imgData = rlReadScreenPixels(CORE.Window.render.width*scale.x, CORE.Window.render.height*scale.y);
-    Image image = { imgData, CORE.Window.render.width*scale.x, CORE.Window.render.height*scale.y, 1, PIXELFORMAT_UNCOMPRESSED_R8G8B8A8 };
+    unsigned char *imgData = rlReadScreenPixels((int)((float)CORE.Window.render.width*scale.x), (int)((float)CORE.Window.render.height*scale.y));
+    Image image = { imgData, (int)((float)CORE.Window.render.width*scale.x), (int)((float)CORE.Window.render.height*scale.y), 1, PIXELFORMAT_UNCOMPRESSED_R8G8B8A8 };
 
     char path[2048] = { 0 };
     strcpy(path, TextFormat("%s/%s", CORE.Storage.basePath, fileName));
@@ -4842,7 +4842,7 @@ void WaitTime(double seconds)
 
     // System halt functions
     #if defined(_WIN32)
-        Sleep((unsigned int)sleepSeconds*1000.0);
+        Sleep((unsigned long)(sleepSeconds*1000.0));
     #endif
     #if defined(__linux__) || defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__EMSCRIPTEN__)
         struct timespec req = { 0 };
@@ -5282,7 +5282,7 @@ static void KeyCallback(GLFWwindow *window, int key, int scancode, int action, i
                 gifFrameCounter = 0;
 
                 Vector2 scale = GetWindowScaleDPI();
-                msf_gif_begin(&gifState, CORE.Window.render.width*scale.x, CORE.Window.render.height*scale.y);
+                msf_gif_begin(&gifState, (int)((float)CORE.Window.render.width*scale.x), (int)((float)CORE.Window.render.height*scale.y));
                 screenshotCounter++;
 
                 TRACELOG(LOG_INFO, "SYSTEM: Start animated GIF recording: %s", TextFormat("screenrec%03i.gif", screenshotCounter));

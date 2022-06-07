@@ -4844,7 +4844,7 @@ static Model LoadGLTF(const char *fileName)
                             LOAD_ATTRIBUTE(attribute, 4, unsigned short, temp);
 
                             // Convert data to raylib color data type (4 bytes)
-                            for (int c = 0; c < attribute->count*4; c++) model.meshes[meshIndex].colors[c] = (unsigned char)(((float)temp[c]/65535.0f)*255.0f);
+                            for (unsigned int c = 0; c < attribute->count*4; c++) model.meshes[meshIndex].colors[c] = (unsigned char)(((float)temp[c]/65535.0f)*255.0f);
 
                             RL_FREE(temp);
                         }
@@ -4858,7 +4858,7 @@ static Model LoadGLTF(const char *fileName)
                             LOAD_ATTRIBUTE(attribute, 4, float, temp);
 
                             // Convert data to raylib color data type (4 bytes), we expect the color data normalized
-                            for (int c = 0; c < attribute->count*4; c++) model.meshes[meshIndex].colors[c] = (unsigned char)(temp[c]*255.0f);
+                            for (unsigned int c = 0; c < attribute->count*4; c++) model.meshes[meshIndex].colors[c] = (unsigned char)(temp[c]*255.0f);
 
                             RL_FREE(temp);
                         }
@@ -4893,7 +4893,7 @@ static Model LoadGLTF(const char *fileName)
                         LOAD_ATTRIBUTE(attribute, 1, unsigned int, temp);
 
                         // Convert data to raylib indices data type (unsigned short)
-                        for (int d = 0; d < attribute->count; d++) model.meshes[meshIndex].indices[d] = (unsigned short)temp[d];
+                        for (unsigned int d = 0; d < attribute->count; d++) model.meshes[meshIndex].indices[d] = (unsigned short)temp[d];
 
                         TRACELOG(LOG_WARNING, "MODEL: [%s] Indices data converted from u32 to u16, possible loss of data", fileName);
 
@@ -4905,7 +4905,7 @@ static Model LoadGLTF(const char *fileName)
 
                 // Assign to the primitive mesh the corresponding material index
                 // NOTE: If no material defined, mesh uses the already assigned default material (index: 0)
-                for (int m = 0; m < data->materials_count; m++)
+                for (unsigned int m = 0; m < data->materials_count; m++)
                 {
                     // The primitive actually keeps the pointer to the corresponding material,
                     // raylib instead assigns to the mesh the by its index, as loaded in model.materials array
