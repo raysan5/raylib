@@ -96,6 +96,7 @@ Detailed changes:
 [models] REVIEWED: DrawMesh*() issue (#2211)
 [models] REVIEWED: ExportMesh() (#2220)
 [models] REVIEWED: GenMeshCylinder() (#2225)
+[audio] `WARNING`: ADDED: rAudioProcessor pointer to AudioStream struct (used by Sound and Music structs)
 [audio] ADDED: SetSoundPan(), SetMusicPan(), SetAudioStreamPan(), panning support (#2205) by ptarabbia
 [audio] ADDED: Audio stream input callback (#2212) by ptarabbia 
 [audio] ADDED: Audio stream processors support (#2212) by ptarabbia 
