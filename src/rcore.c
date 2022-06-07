@@ -686,10 +686,6 @@ static void RecordAutomationEvent(unsigned int frame);      // Record frame even
 static void PlayAutomationEvent(unsigned int frame);        // Play frame events (from internal events array)
 #endif
 
-#if defined(SUPPORT_BUSY_WAIT_LOOP) || defined(SUPPORT_PARTIALBUSY_WAIT_LOOP)
-static void BusyWaitUntil(double destinationTime);
-#endif
-
 #if defined(_WIN32)
 // NOTE: We declare Sleep() function symbol to avoid including windows.h (kernel32.lib linkage required)
 void __stdcall Sleep(unsigned long msTimeout);              // Required for: WaitTime()
@@ -4835,7 +4831,7 @@ void WaitTime(double seconds)
 #endif
 
 #if defined(SUPPORT_BUSY_WAIT_LOOP)
-    BusyWaitUntil(destinationTime);
+    while (GetTime() < destinationTime) { }
 #else
     #if defined(SUPPORT_PARTIALBUSY_WAIT_LOOP)
         double sleepSeconds = seconds - seconds*0.05;  // NOTE: We reserve a percentage of the time for busy waiting
@@ -4862,17 +4858,10 @@ void WaitTime(double seconds)
     #endif
 
     #if defined(SUPPORT_PARTIALBUSY_WAIT_LOOP)
-        BusyWaitUntil(destinationTime);
+        while (GetTime() < destinationTime) { }
     #endif
 #endif
 }
-
-#if defined(SUPPORT_BUSY_WAIT_LOOP) || defined(SUPPORT_PARTIALBUSY_WAIT_LOOP)
-static void BusyWaitUntil(double destinationTime)
-{
-    while (GetTime() < destinationTime) { }
-}
-#endif
 
 // Swap back buffer with front buffer (screen drawing)
 void SwapScreenBuffer(void)
