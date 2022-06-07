@@ -4826,15 +4826,14 @@ static void InitTimer(void)
 // Ref: http://www.geisswerks.com/ryan/FAQS/timing.html --> All about timming on Win32!
 void WaitTime(double seconds)
 {
-#if defined(SUPPORT_BUSY_WAIT_LOOP)
-    double previousTime = GetTime();
-    double currentTime = 0.0;
+#if defined(SUPPORT_BUSY_WAIT_LOOP) || defined(SUPPORT_PARTIALBUSY_WAIT_LOOP)
+    double destinationTime = GetTime() + seconds;
+#endif
 
-    // Busy wait loop
-    while ((currentTime - previousTime) < seconds) currentTime = GetTime();
+#if defined(SUPPORT_BUSY_WAIT_LOOP)
+    while (GetTime() < destinationTime) { }
 #else
     #if defined(SUPPORT_PARTIALBUSY_WAIT_LOOP)
-        double destinationTime = GetTime() + seconds;
         double sleepSeconds = seconds - seconds*0.05;  // NOTE: We reserve a percentage of the time for busy waiting
     #else
         double sleepSeconds = seconds;
