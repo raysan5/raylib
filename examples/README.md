@@ -138,7 +138,6 @@ Examples using raylib models functionality, including models loading/generation 
 | 82 | [models_yaw_pitch_roll](models/models_yaw_pitch_roll.c)                   | <img src="models/models_yaw_pitch_roll.png" alt="models_yaw_pitch_roll" width="200">                   | [Berni](https://github.com/Berni8k)              | ⭐️    |
 | 83 | [models_heightmap](models/models_heightmap.c)                             | <img src="models/models_heightmap.png" alt="models_heightmap" width="200">                             | ray                                              |        |
 | 84 | [models_waving_cubes](models/models_waving_cubes.c)                       | <img src="models/models_waving_cubes.png" alt="models_waving_cubes" width="200">                       | [codecat](https://github.com/codecat)            |        |
-| -- | [models_gltf_model](models/models_gltf_model.c)                           | <img src="models/models_gltf_model.png" alt="models_gltf_model" width="200">                           | [object71](https://github.com/object71)          | ⭐️     |
 
 ### category: shaders
 
