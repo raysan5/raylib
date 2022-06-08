@@ -13,6 +13,12 @@ KEY CHANGES:
  - raylib_parser...
  
 Detailed changes:
+[multi] REVIEWED: Multiple trace log messages
+[multi] REVIEWED: Avoid some float to double promotions
+[multi] REVIEWED: Some functions input parametes that should be const
+[multi] REVIEWED: Variables initialization, all variables are initialized on declaration
+[multi] REVIEWED: Static array buffers are always re-initialized with memset()
+[multi] `WARNING`: RENAMED: Some function input parameters from "length" to "size"
 [core] ADDED: GetApplicatonDirectory() (#2256, #2285, #2290) by @JeffM2501
 [core] ADDED: raylibVersion symbol, it could be required by some bindings (#2190)
 [core] ADDED: SetWindowOpacity() (#2254) by @tusharsingh09
@@ -165,13 +171,6 @@ Detailed changes:
 [misc] `WARNING`: REMOVED: physac from raylib sources/examples, use github.com/raysan5/physac
 [misc] `WARNING`: REMOVED: raygui from raylib/src/extras, use github.com/raysan5/raygui
 [misc] REVIEWED: Update external libraries to latest version released
-
-[multi] `WARNING`: RENAMED: Some function input parameters from "length" to "size"
-[multi] REVIEWED: Multiple trace log messages
-[multi] REVIEWED: Some functions input parametes that should be const
-[multi] REVIEWED: Avoid some float to double promotions
-[multi] REVIEWED: Variables initialization, all variables are initialized on declaration
-[multi] REVIEWED: Static array buffers are always re-initialized with memset()
 
 -------------------------------------------------------------------------
 Release:     raylib 4.0 - 8th Anniversary Edition (05 November 2021)
