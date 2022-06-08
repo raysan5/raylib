@@ -128,6 +128,17 @@ Detailed changes:
 [parser] REVIEWED: Fix memory leak in parser (#2136) by @ronnieholm
 [parser] REVIEWED: EscapeBackslashes()
 [parser] REVIEWED: Parser improvements (#2461 #2462) by @lazaray
+[bindings] ADDED: License details for BINDINGS
+[bindings] ADDED: dart-raylib (#2149) by @wolfenrain
+[bindings] ADDED: raylib-cslo (#2169) by @jasonswearingen
+[bindings] ADDED: raylib-d (#2194) by @schveiguy
+[bindings] ADDED: raylib-guile (#2202) by @petelliott
+[bindings] ADDED: raylib-scopes (#2238) by @salotz
+[bindings] ADDED: naylib (Nim) (#2386) by @planetis-m
+[bindings] ADDED: raylib.jl (Julia) (#2403) by @irishgreencitrus
+[bindings] ADDED: raylib.zig (#2449) by @ryupold
+[bindings] ADDED: racket-raylib (#2454) by @eutro
+[bindings] REVIEWED: Multiple bindings updated to raylib 4.0
 [build] ADDED: VS2022 project
 [build] ADDED: Support macOS by zig build system (#2175)
 [build] ADDED: Support custom modules selection on compilation
@@ -154,8 +165,7 @@ Detailed changes:
 [misc] `WARNING`: REMOVED: physac from raylib sources/examples, use github.com/raysan5/physac
 [misc] `WARNING`: REMOVED: raygui from raylib/src/extras, use github.com/raysan5/raygui
 [misc] REVIEWED: Update external libraries to latest version released
-[misc] REVIEWED: Updated multiple bindings to raylib 4.0
-[misc] ADDED: Licenses to BINDINGS 
+
 [multi] `WARNING`: RENAMED: Some function input parameters from "length" to "size"
 [multi] REVIEWED: Multiple trace log messages
 [multi] REVIEWED: Some functions input parametes that should be const
