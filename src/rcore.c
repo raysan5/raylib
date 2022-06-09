@@ -1723,7 +1723,7 @@ int GetCurrentMonitor(void)
 #endif
 }
 
-// Get selected monitor width
+// Get selected monitor position
 Vector2 GetMonitorPosition(int monitor)
 {
 #if defined(PLATFORM_DESKTOP)
@@ -1742,7 +1742,7 @@ Vector2 GetMonitorPosition(int monitor)
     return (Vector2){ 0, 0 };
 }
 
-// Get selected monitor width (max available by monitor)
+// Get selected monitor width (currently used by monitor)
 int GetMonitorWidth(int monitor)
 {
 #if defined(PLATFORM_DESKTOP)
@@ -1751,11 +1751,8 @@ int GetMonitorWidth(int monitor)
 
     if ((monitor >= 0) && (monitor < monitorCount))
     {
-        int count = 0;
-        const GLFWvidmode *modes = glfwGetVideoModes(monitors[monitor], &count);
-
-        // We return the maximum resolution available, the last one in the modes array
-        if (count > 0) return modes[count - 1].width;
+        const GLFWvidmode *mode = glfwGetVideoMode(monitors[monitor]);
+        if(mode) return mode->width;
         else TRACELOG(LOG_WARNING, "GLFW: Failed to find video mode for selected monitor");
     }
     else TRACELOG(LOG_WARNING, "GLFW: Failed to find selected monitor");
@@ -1763,7 +1760,7 @@ int GetMonitorWidth(int monitor)
     return 0;
 }
 
-// Get selected monitor width (max available by monitor)
+// Get selected monitor height (currently used by monitor)
 int GetMonitorHeight(int monitor)
 {
 #if defined(PLATFORM_DESKTOP)
@@ -1772,11 +1769,8 @@ int GetMonitorHeight(int monitor)
 
     if ((monitor >= 0) && (monitor < monitorCount))
     {
-        int count = 0;
-        const GLFWvidmode *modes = glfwGetVideoModes(monitors[monitor], &count);
-
-        // We return the maximum resolution available, the last one in the modes array
-        if (count > 0) return modes[count - 1].height;
+        const GLFWvidmode *mode = glfwGetVideoMode(monitors[monitor]);
+        if(mode) return mode->height;
         else TRACELOG(LOG_WARNING, "GLFW: Failed to find video mode for selected monitor");
     }
     else TRACELOG(LOG_WARNING, "GLFW: Failed to find selected monitor");
