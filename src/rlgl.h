@@ -433,7 +433,7 @@ typedef enum {
     RL_BLEND_MULTIPLIED,               // Blend textures multiplying colors
     RL_BLEND_ADD_COLORS,               // Blend textures adding colors (alternative)
     RL_BLEND_SUBTRACT_COLORS,          // Blend textures subtracting colors (alternative)
-    RL_BLEND_ALPHA_PREMUL,             // Blend premultiplied textures considering alpha
+    RL_BLEND_ALPHA_PREMULTIPLY,        // Blend premultiplied textures considering alpha
     RL_BLEND_CUSTOM                    // Blend textures using custom src/dst factors (use rlSetBlendFactors())
 } rlBlendMode;
 
@@ -1783,7 +1783,7 @@ void rlSetBlendMode(int mode)
             case RL_BLEND_MULTIPLIED: glBlendFunc(GL_DST_COLOR, GL_ONE_MINUS_SRC_ALPHA); glBlendEquation(GL_FUNC_ADD); break;
             case RL_BLEND_ADD_COLORS: glBlendFunc(GL_ONE, GL_ONE); glBlendEquation(GL_FUNC_ADD); break;
             case RL_BLEND_SUBTRACT_COLORS: glBlendFunc(GL_ONE, GL_ONE); glBlendEquation(GL_FUNC_SUBTRACT); break;
-            case RL_BLEND_ALPHA_PREMUL: glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA); glBlendEquation(GL_FUNC_ADD); break;
+            case RL_BLEND_ALPHA_PREMULTIPLY: glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA); glBlendEquation(GL_FUNC_ADD); break;
             case RL_BLEND_CUSTOM:
             {
                 // NOTE: Using GL blend src/dst factors and GL equation configured with rlSetBlendFactors()

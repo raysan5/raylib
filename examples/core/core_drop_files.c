@@ -35,7 +35,7 @@ int main(void)
         //----------------------------------------------------------------------------------
         if (IsFileDropped())
         {
-            droppedFiles = GetDroppedFiles(&count);
+            droppedFiles = LoadDroppedFiles(&count);
         }
         //----------------------------------------------------------------------------------
 
@@ -67,7 +67,7 @@ int main(void)
 
     // De-Initialization
     //--------------------------------------------------------------------------------------
-    ClearDroppedFiles();    // Clear internal buffers
+    UnloadDroppedFiles();    // Clear internal buffers
 
     CloseWindow();          // Close window and OpenGL context
     //--------------------------------------------------------------------------------------

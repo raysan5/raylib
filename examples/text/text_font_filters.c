@@ -80,14 +80,14 @@ int main(void)
         if (IsFileDropped())
         {
             int count = 0;
-            char **droppedFiles = GetDroppedFiles(&count);
+            char **droppedFiles = LoadDroppedFiles(&count);
 
             // NOTE: We only support first ttf file dropped
             if (IsFileExtension(droppedFiles[0], ".ttf"))
             {
                 UnloadFont(font);
                 font = LoadFontEx(droppedFiles[0], (int)fontSize, 0, 0);
-                ClearDroppedFiles();
+                UnloadDroppedFiles();
             }
         }
         //----------------------------------------------------------------------------------
@@ -123,7 +123,7 @@ int main(void)
 
     // De-Initialization
     //--------------------------------------------------------------------------------------
-    ClearDroppedFiles();        // Clear internal buffers
+    UnloadDroppedFiles();        // Clear internal buffers
 
     UnloadFont(font);           // Font unloading
 
