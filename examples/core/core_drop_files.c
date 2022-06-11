@@ -53,7 +53,7 @@ int main(void)
             {
                 DrawText("Dropped files:", 100, 40, 20, DARKGRAY);
 
-                for (int i = 0; i < count; i++)
+                for (int i = 0; i < droppedFiles.count; i++)
                 {
                     if (i%2 == 0) DrawRectangle(0, 85 + 40*i, screenWidth, 40, Fade(LIGHTGRAY, 0.5f));
                     else DrawRectangle(0, 85 + 40*i, screenWidth, 40, Fade(LIGHTGRAY, 0.3f));
@@ -61,7 +61,7 @@ int main(void)
                     DrawText(droppedFiles.paths[i], 120, 100 + 40*i, 10, GRAY);
                 }
 
-                DrawText("Drop new files...", 100, 110 + 40*count, 20, DARKGRAY);
+                DrawText("Drop new files...", 100, 110 + 40*droppedFiles.count, 20, DARKGRAY);
             }
 
         EndDrawing();
