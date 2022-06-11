@@ -22,8 +22,7 @@ int main(void)
 
     InitWindow(screenWidth, screenHeight, "raylib [core] example - drop files");
 
-    int count = 0;
-    char **droppedFiles = { 0 };
+    FilePathList droppedFiles = { 0 };
 
     SetTargetFPS(60);               // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
@@ -35,7 +34,11 @@ int main(void)
         //----------------------------------------------------------------------------------
         if (IsFileDropped())
         {
-            droppedFiles = LoadDroppedFiles(&count);
+            // Is some files have been previously loaded, unload them
+            if (droppedFiles.count > 0) UnloadDroppedFiles(droppedFiles);
+            
+            // Load new dropped files
+            droppedFiles = LoadDroppedFiles();
         }
         //----------------------------------------------------------------------------------
 
@@ -55,7 +58,7 @@ int main(void)
                     if (i%2 == 0) DrawRectangle(0, 85 + 40*i, screenWidth, 40, Fade(LIGHTGRAY, 0.5f));
                     else DrawRectangle(0, 85 + 40*i, screenWidth, 40, Fade(LIGHTGRAY, 0.3f));
 
-                    DrawText(droppedFiles[i], 120, 100 + 40*i, 10, GRAY);
+                    DrawText(droppedFiles.paths[i], 120, 100 + 40*i, 10, GRAY);
                 }
 
                 DrawText("Drop new files...", 100, 110 + 40*count, 20, DARKGRAY);
@@ -67,7 +70,7 @@ int main(void)
 
     // De-Initialization
     //--------------------------------------------------------------------------------------
-    UnloadDroppedFiles();    // Clear internal buffers
+    UnloadDroppedFiles(droppedFiles); // Unload files memory
 
     CloseWindow();          // Close window and OpenGL context
     //--------------------------------------------------------------------------------------

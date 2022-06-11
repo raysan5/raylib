@@ -141,22 +141,22 @@ int main(void)
         // Handle font files dropped
         if (IsFileDropped())
         {
-            int count = 0;
-            char **droppedFiles = LoadDroppedFiles(&count);
+            FilePathList droppedFiles = LoadDroppedFiles();
 
             // NOTE: We only support first ttf file dropped
-            if (IsFileExtension(droppedFiles[0], ".ttf"))
+            if (IsFileExtension(droppedFiles.paths[0], ".ttf"))
             {
                 UnloadFont(font);
-                font = LoadFontEx(droppedFiles[0], fontSize, 0, 0);
+                font = LoadFontEx(droppedFiles.paths[0], fontSize, 0, 0);
             }
-            else if (IsFileExtension(droppedFiles[0], ".fnt"))
+            else if (IsFileExtension(droppedFiles.paths[0], ".fnt"))
             {
                 UnloadFont(font);
-                font = LoadFont(droppedFiles[0]);
+                font = LoadFont(droppedFiles.paths[0]);
                 fontSize = font.baseSize;
             }
-            UnloadDroppedFiles();
+            
+            UnloadDroppedFiles(droppedFiles);    // Unload filepaths from memory
         }
 
         // Handle Events

@@ -79,16 +79,16 @@ int main(void)
         // Load a dropped TTF file dynamically (at current fontSize)
         if (IsFileDropped())
         {
-            int count = 0;
-            char **droppedFiles = LoadDroppedFiles(&count);
+            FilePathList droppedFiles = LoadDroppedFiles();
 
             // NOTE: We only support first ttf file dropped
-            if (IsFileExtension(droppedFiles[0], ".ttf"))
+            if (IsFileExtension(droppedFiles.paths[0], ".ttf"))
             {
                 UnloadFont(font);
-                font = LoadFontEx(droppedFiles[0], (int)fontSize, 0, 0);
-                UnloadDroppedFiles();
+                font = LoadFontEx(droppedFiles.paths[0], (int)fontSize, 0, 0);
             }
+            
+            UnloadDroppedFiles(droppedFiles);    // Unload filepaths from memory
         }
         //----------------------------------------------------------------------------------
 

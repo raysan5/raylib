@@ -183,7 +183,12 @@
 #include <time.h>                   // Required for: time() [Used in InitTimer()]
 #include <math.h>                   // Required for: tan() [Used in BeginMode3D()], atan2f() [Used in LoadVrStereoConfig()]
 
-#include <sys/stat.h>               // Required for: stat() [Used in GetFileModTime()]
+#define _CRT_INTERNAL_NONSTDC_NAMES  1
+#include <sys/stat.h>               // Required for: stat(), S_ISREG [Used in GetFileModTime(), IsFilePath()]
+
+#if !defined(S_ISREG) && defined(S_IFMT) && defined(S_IFREG)
+    #define S_ISREG(m) (((m) & S_IFMT) == S_IFREG)
+#endif
 
 #if defined(PLATFORM_DESKTOP) && defined(_WIN32) && (defined(_MSC_VER) || defined(__TINYC__))
     #define DIRENT_MALLOC RL_MALLOC
@@ -294,11 +299,7 @@
 #endif
 
 #ifndef MAX_FILEPATH_LENGTH
-    #if defined(__linux__)
-        #define MAX_FILEPATH_LENGTH     4096        // Maximum length for filepaths (Linux PATH_MAX default value)
-    #else
-        #define MAX_FILEPATH_LENGTH      512        // Maximum length supported for filepaths
-    #endif
+    #define MAX_FILEPATH_LENGTH         4096        // Maximum length for filepaths (Linux PATH_MAX default value)
 #endif
 
 #ifndef MAX_KEYBOARD_KEYS
@@ -404,8 +405,8 @@ typedef struct CoreData {
         Point renderOffset;                 // Offset from render area (must be divided by 2)
         Matrix screenScale;                 // Matrix to scale screen (framebuffer rendering)
 
-        char **dropFilepaths;               // Store dropped files paths as strings
-        int dropFileCount;                  // Count dropped files strings
+        const char **dropFilepaths;         // Store dropped files paths pointers (provided by GLFW)
+        unsigned int dropFileCount;         // Count dropped files strings
 
     } Window;
 #if defined(PLATFORM_ANDROID)
@@ -501,12 +502,9 @@ typedef struct CoreData {
 //----------------------------------------------------------------------------------
 // Global Variables Definition
 //----------------------------------------------------------------------------------
-static CoreData CORE = { 0 };               // Global CORE state context
-
-static char **dirFilesPath = NULL;          // Store directory files paths as strings
-static int dirFileCount = 0;                // Count directory files strings
-
 const char *raylibVersion = RAYLIB_VERSION; // raylib version symbol, it could be required for some bindings
+
+static CoreData CORE = { 0 };               // Global CORE state context
 
 #if defined(SUPPORT_SCREEN_CAPTURE)
 static int screenshotCounter = 0;           // Screenshots counter
@@ -621,6 +619,9 @@ static void InitTimer(void);                            // Initialize timer (hi-
 static bool InitGraphicsDevice(int width, int height);  // Initialize graphics device
 static void SetupFramebuffer(int width, int height);    // Setup main framebuffer
 static void SetupViewport(int width, int height);       // Set viewport for a provided width and height
+
+static void ScanDirectoryFiles(const char *basePath, FilePathList *list, const char *filter);   // Scan all files and directories in a base path
+static void ScanDirectoryFilesRecursively(const char *basePath, FilePathList *list, const char *filter);  // Scan all files and directories recursively from a base path
 
 #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
 static void ErrorCallback(int error, const char *description);                             // GLFW3 Error Callback, runs on GLFW3 error
@@ -1418,6 +1419,13 @@ void SetWindowState(unsigned int flags)
     {
         TRACELOG(LOG_WARNING, "WINDOW: High DPI can only by configured before window initialization");
     }
+    
+    // State change: FLAG_WINDOW_MOUSE_PASSTHROUGH
+    if (((CORE.Window.flags & FLAG_WINDOW_MOUSE_PASSTHROUGH) != (flags & FLAG_WINDOW_MOUSE_PASSTHROUGH)) && ((flags & FLAG_WINDOW_MOUSE_PASSTHROUGH) > 0))
+    {
+        glfwSetWindowAttrib(CORE.Window.handle, GLFW_MOUSE_PASSTHROUGH, GLFW_TRUE);
+        CORE.Window.flags |= FLAG_WINDOW_MOUSE_PASSTHROUGH;
+    }
 
     // State change: FLAG_MSAA_4X_HINT
     if (((CORE.Window.flags & FLAG_MSAA_4X_HINT) != (flags & FLAG_MSAA_4X_HINT)) && ((flags & FLAG_MSAA_4X_HINT) > 0))
@@ -1518,6 +1526,13 @@ void ClearWindowState(unsigned int flags)
     if (((CORE.Window.flags & FLAG_WINDOW_HIGHDPI) > 0) && ((flags & FLAG_WINDOW_HIGHDPI) > 0))
     {
         TRACELOG(LOG_WARNING, "WINDOW: High DPI can only by configured before window initialization");
+    }
+    
+    // State change: FLAG_WINDOW_MOUSE_PASSTHROUGH
+    if (((CORE.Window.flags & FLAG_WINDOW_MOUSE_PASSTHROUGH) > 0) && ((flags & FLAG_WINDOW_MOUSE_PASSTHROUGH) > 0))
+    {
+        glfwSetWindowAttrib(CORE.Window.handle, GLFW_MOUSE_PASSTHROUGH, GLFW_FALSE);
+        CORE.Window.flags &= ~FLAG_WINDOW_MOUSE_PASSTHROUGH;
     }
 
     // State change: FLAG_MSAA_4X_HINT
@@ -3106,51 +3121,75 @@ const char *GetApplicationDirectory(void)
 }
 
 // Load directory filepaths
-// NOTE: Files count is returned by parameters pointer
-char **LoadDirectoryFiles(const char *dirPath, int *fileCount)
+// NOTE: Base path is prepended to the scanned filepaths
+// WARNING: Directory is scanned twice, first time to get files count
+// No recursive scanning is done!
+FilePathList LoadDirectoryFiles(const char *dirPath)
 {
-    UnloadDirectoryFiles();
-
-    int counter = 0;
+    FilePathList files = { 0 };
+    unsigned int fileCounter = 0;
+    
     struct dirent *entity;
     DIR *dir = opendir(dirPath);
 
     if (dir != NULL) // It's a directory
     {
-        // Count files
-        while ((entity = readdir(dir)) != NULL) counter++;
-
-        dirFileCount = counter;
-        *fileCount = dirFileCount;
+        // SCAN 1: Count files
+        while ((entity = readdir(dir)) != NULL) 
+        {
+            // NOTE: We skip '.' (current dir) and '..' (parent dir) filepaths
+            if ((strcmp(entity->d_name, ".") != 0) && (strcmp(entity->d_name, "..") != 0)) fileCounter++;
+        }
 
         // Memory allocation for dirFileCount
-        dirFilesPath = (char **)RL_MALLOC(dirFileCount*sizeof(char *));
-        for (int i = 0; i < dirFileCount; i++) dirFilesPath[i] = (char *)RL_MALLOC(MAX_FILEPATH_LENGTH*sizeof(char));
-
-        // Reset our position in the directory to the beginning
-        rewinddir(dir);
-
-        // Read file names
-        for (int i = 0; (entity = readdir(dir)) != NULL; i++) strcpy(dirFilesPath[i], entity->d_name);
+        files.paths = (char **)RL_MALLOC(fileCounter*sizeof(char *));
+        for (int i = 0; i < fileCounter; i++) files.paths[i] = (char *)RL_MALLOC(MAX_FILEPATH_LENGTH*sizeof(char));
 
         closedir(dir);
+        
+        // SCAN 2: Read filepaths
+        // NOTE: Directory paths are also registered
+        ScanDirectoryFiles(dirPath, &files, NULL);
+        
+        // Security check: read files.count should match fileCounter
+        if (files.count != fileCounter) TRACELOG(LOG_WARNING, "FILEIO: Read files count do not match memory allocated");
     }
     else TRACELOG(LOG_WARNING, "FILEIO: Failed to open requested directory");  // Maybe it's a file...
+    
+    
+    
+    return files;
+}
 
-    return dirFilesPath;
+// Load directory filepaths with extension filtering and recursive directory scan
+FilePathList LoadDirectoryFilesEx(const char *basePath, const char *filter, bool scanSubdirs)
+{
+    #define MAX_FILEPATH_COUNT         8192     // Maximum file paths scanned
+
+    FilePathList files = { 0 };
+
+    files.paths = (char **)RL_CALLOC(MAX_FILEPATH_COUNT, sizeof(char *));
+    for (int i = 0; i < MAX_FILEPATH_COUNT; i++) files.paths[i] = (char *)RL_CALLOC(MAX_FILEPATH_LENGTH, sizeof(char));
+
+    // WARNING: basePath is always prepended to scanned paths
+    if (scanSubdirs) ScanDirectoryFilesRecursively(basePath, &files, filter);
+    else ScanDirectoryFiles(basePath, &files, filter);
+    
+    // TODO: Filepath filtering
+    //if (IsFileExtension(files.paths[i], filter))
+
+    return files;
 }
 
 // Unload directory filepaths
-void UnloadDirectoryFiles(void)
+void UnloadDirectoryFiles(FilePathList files)
 {
-    if (dirFileCount > 0)
+    if (files.count > 0)
     {
-        for (int i = 0; i < dirFileCount; i++) RL_FREE(dirFilesPath[i]);
+        for (int i = 0; i < files.count; i++) RL_FREE(files.paths[i]);
 
-        RL_FREE(dirFilesPath);
+        RL_FREE(files.paths);
     }
-
-    dirFileCount = 0;
 }
 
 // Change working directory, returns true on success
@@ -3163,6 +3202,15 @@ bool ChangeDirectory(const char *dir)
     return (result == 0);
 }
 
+// Check if a given path point to a file
+bool IsPathFile(const char *path)
+{
+    struct stat pathStat = { 0 };
+    stat(path, &pathStat);
+
+    return S_ISREG(pathStat.st_mode);
+}
+
 // Check if a file has been dropped into window
 bool IsFileDropped(void)
 {
@@ -3171,22 +3219,37 @@ bool IsFileDropped(void)
 }
 
 // Load dropped filepaths
-char **LoadDroppedFiles(int *count)
+FilePathList LoadDroppedFiles(void)
 {
-    *count = CORE.Window.dropFileCount;
-    return CORE.Window.dropFilepaths;
+    FilePathList files = { 0 };
+
+    if (CORE.Window.dropFileCount > 0)
+    {
+        files.count = CORE.Window.dropFileCount;
+        files.paths = (char **)RL_CALLOC(files.count, sizeof(char *));
+        
+        for (int i = 0; i < files.count; i++) 
+        {
+            files.paths[i] = (char *)RL_CALLOC(MAX_FILEPATH_LENGTH, sizeof(char));
+            strcpy(files.paths[i], CORE.Window.dropFilepaths[i]);
+        }
+        
+        // WARNING: We reset drop file count after loading the stored paths,
+        // despite internally GLFW probably keeps the pointers until next drop
+        CORE.Window.dropFileCount;
+    }
+
+    return files;
 }
 
 // Unload dropped filepaths
-void UnloadDroppedFiles(void)
+void UnloadDroppedFiles(FilePathList files)
 {
-    if (CORE.Window.dropFileCount > 0)
+    if (files.count > 0)
     {
-        for (int i = 0; i < CORE.Window.dropFileCount; i++) RL_FREE(CORE.Window.dropFilepaths[i]);
+        for (int i = 0; i < files.count; i++) RL_FREE(files.paths[i]);
 
-        RL_FREE(CORE.Window.dropFilepaths);
-
-        CORE.Window.dropFileCount = 0;
+        RL_FREE(files.paths);
     }
 }
 
@@ -5168,6 +5231,90 @@ void PollInputEvents(void)
 #endif
 }
 
+// Scan all files and directories in a base path
+// WARNING: files.paths[] must be previously allocated and 
+// contain enough space to store all required paths
+static void ScanDirectoryFiles(const char *basePath, FilePathList *files, const char *filter)
+{
+    static char path[MAX_FILEPATH_LENGTH] = { 0 };
+    memset(path, 0, MAX_FILEPATH_LENGTH);
+    
+    struct dirent *dp = NULL;
+    DIR *dir = opendir(basePath);
+
+    if (dir != NULL)
+    {
+        while ((dp = readdir(dir)) != NULL)
+        {
+            if ((strcmp(dp->d_name, ".") != 0) &&
+                (strcmp(dp->d_name, "..") != 0))
+            {
+                sprintf(path, "%s/%s", basePath, dp->d_name);
+                
+                if (filter != NULL)
+                {
+                    if (IsFileExtension(path, filter))
+                    {
+                        strcpy(files->paths[files->count], path);
+                        files->count++;
+                    }
+                }
+                else
+                {
+                    strcpy(files->paths[files->count], path);
+                    files->count++;
+                }
+            }
+        }
+
+        closedir(dir);
+    }
+    else TRACELOG(LOG_WARNING, "FILEIO: Directory cannot be opened (%s)", basePath);
+}
+
+// Scan all files and directories recursively from a base path
+static void ScanDirectoryFilesRecursively(const char *basePath, FilePathList *files, const char *filter)
+{
+    static char path[MAX_FILEPATH_LENGTH] = { 0 };
+    memset(path, 0, MAX_FILEPATH_LENGTH);
+    
+    struct dirent *dp = NULL;
+    DIR *dir = opendir(basePath);
+
+    if (dir != NULL)
+    {
+        while ((dp = readdir(dir)) != NULL)
+        {
+            if ((strcmp(dp->d_name, ".") != 0) && (strcmp(dp->d_name, "..") != 0))
+            {
+                // Construct new path from our base path
+                sprintf(path, "%s/%s", basePath, dp->d_name);
+
+                if (IsPathFile(path))
+                {
+                    if (filter != NULL)
+                    {
+                        if (IsFileExtension(path, filter))
+                        {
+                            strcpy(files->paths[files->count], path);
+                            files->count++;
+                        }
+                    }
+                    else
+                    {
+                        strcpy(files->paths[files->count], path);
+                        files->count++;
+                    }
+                }
+                else ScanDirectoryFilesRecursively(path, files, filter);
+            }
+        }
+
+        closedir(dir);
+    }
+    else TRACELOG(LOG_WARNING, "FILEIO: Directory cannot be opened (%s)", basePath);
+}
+
 #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
 // GLFW3 Error Callback, runs on GLFW3 error
 static void ErrorCallback(int error, const char *description)
@@ -5418,16 +5565,7 @@ static void CursorEnterCallback(GLFWwindow *window, int enter)
 // Everytime new files are dropped, old ones are discarded
 static void WindowDropCallback(GLFWwindow *window, int count, const char **paths)
 {
-    UnloadDroppedFiles();
-
-    CORE.Window.dropFilepaths = (char **)RL_MALLOC(count*sizeof(char *));
-
-    for (int i = 0; i < count; i++)
-    {
-        CORE.Window.dropFilepaths[i] = (char *)RL_MALLOC(MAX_FILEPATH_LENGTH*sizeof(char));
-        strcpy(CORE.Window.dropFilepaths[i], paths[i]);
-    }
-
+    CORE.Window.dropFilepaths = paths;
     CORE.Window.dropFileCount = count;
 }
 #endif

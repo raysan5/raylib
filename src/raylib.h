@@ -482,6 +482,12 @@ typedef struct VrStereoConfig {
     float scaleIn[2];               // VR distortion scale in
 } VrStereoConfig;
 
+// File path list
+typedef struct FilePathList {
+    unsigned int count;             // Filepaths entries count
+    char **paths;                   // Filepaths entries
+} FilePathList;
+
 //----------------------------------------------------------------------------------
 // Enumerators Definition
 //----------------------------------------------------------------------------------
@@ -891,8 +897,8 @@ typedef enum {
 typedef void (*TraceLogCallback)(int logLevel, const char *text, va_list args);  // Logging: Redirect trace log messages
 typedef unsigned char *(*LoadFileDataCallback)(const char *fileName, unsigned int *bytesRead);      // FileIO: Load binary data
 typedef bool (*SaveFileDataCallback)(const char *fileName, void *data, unsigned int bytesToWrite);  // FileIO: Save binary data
-typedef char *(*LoadFileTextCallback)(const char *fileName);       // FileIO: Load text data
-typedef bool (*SaveFileTextCallback)(const char *fileName, char *text);     // FileIO: Save text data
+typedef char *(*LoadFileTextCallback)(const char *fileName);            // FileIO: Load text data
+typedef bool (*SaveFileTextCallback)(const char *fileName, char *text); // FileIO: Save text data
 
 //------------------------------------------------------------------------------------
 // Global Variables Definition
@@ -1059,11 +1065,13 @@ RLAPI const char *GetPrevDirectoryPath(const char *dirPath);      // Get previou
 RLAPI const char *GetWorkingDirectory(void);                      // Get current working directory (uses static string)
 RLAPI const char *GetApplicationDirectory(void);                  // Get the directory if the running application (uses static string)
 RLAPI bool ChangeDirectory(const char *dir);                      // Change working directory, return true on success
-RLAPI char **LoadDirectoryFiles(const char *dirPath, int *count); // Load directory filepaths
-RLAPI void UnloadDirectoryFiles(void);                            // Unload directory filepaths
+RLAPI bool IsPathFile(const char *path);                          // Check if a given path is a file or a directory
+RLAPI FilePathList LoadDirectoryFiles(const char *dirPath);       // Load directory filepaths
+RLAPI FilePathList LoadDirectoryFilesEx(const char *basePath, const char *filter, bool scanSubdirs); // Load directory filepaths with extension filtering and recursive directory scan
+RLAPI void UnloadDirectoryFiles(FilePathList files);              // Unload filepaths
 RLAPI bool IsFileDropped(void);                                   // Check if a file has been dropped into window
-RLAPI char **LoadDroppedFiles(int *count);                        // Load dropped filepaths
-RLAPI void UnloadDroppedFiles(void);                              // Unload dropped filepaths
+RLAPI FilePathList LoadDroppedFiles(void);                        // Load dropped filepaths
+RLAPI void UnloadDroppedFiles(FilePathList files);                // Unload dropped filepaths
 RLAPI long GetFileModTime(const char *fileName);                  // Get file modification time (last write time)
 
 // Compression/Encoding functionality
