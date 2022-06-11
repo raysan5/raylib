@@ -120,7 +120,7 @@ int main(void)
                         UnloadImage(img);
                     }
 
-                    TextCopy(skyboxFileName, droppedFiles[0]);
+                    TextCopy(skyboxFileName, droppedFiles.paths[0]);
                 }
             }
 
