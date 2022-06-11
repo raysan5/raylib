@@ -48,7 +48,7 @@ int main(void)
 
             ClearBackground(RAYWHITE);
 
-            if (count == 0) DrawText("Drop your files to this window!", 100, 40, 20, DARKGRAY);
+            if (droppedFiles.count == 0) DrawText("Drop your files to this window!", 100, 40, 20, DARKGRAY);
             else
             {
                 DrawText("Dropped files:", 100, 40, 20, DARKGRAY);
