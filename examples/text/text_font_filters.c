@@ -123,8 +123,6 @@ int main(void)
 
     // De-Initialization
     //--------------------------------------------------------------------------------------
-    UnloadDroppedFiles();        // Clear internal buffers
-
     UnloadFont(font);           // Font unloading
 
     CloseWindow();              // Close window and OpenGL context
