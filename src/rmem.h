@@ -16,6 +16,11 @@
 *       If not defined, the library is in header only mode and can be included in other headers
 *       or source files without problems. But only ONE file should hold the implementation.
 *
+*   DOCUMENTATION:
+*
+*       raylib Wiki: https://github.com/raysan5/raylib/wiki/raylib-memory-pool
+*       Usage example with raylib: https://github.com/raysan5/raylib/issues/1329
+*
 *   CHANGELOG:
 *
 *       v1.0: First version
