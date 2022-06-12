@@ -11,7 +11,7 @@
 
 #include "raylib.h"
 
-#include "extras/easings.h"            // Required for easing functions
+#include "easings.h"            // Required for easing functions
 
 int main(void)
 {
