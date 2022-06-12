@@ -456,8 +456,8 @@ typedef struct CoreData {
 
             char currentButtonState[MAX_MOUSE_BUTTONS];     // Registers current mouse button state
             char previousButtonState[MAX_MOUSE_BUTTONS];    // Registers previous mouse button state
-            float currentWheelMove;         // Registers current mouse wheel variation
-            float previousWheelMove;        // Registers previous mouse wheel variation
+            Vector2 currentWheelMove;       // Registers current mouse wheel variation
+            Vector2 previousWheelMove;      // Registers previous mouse wheel variation
 #if defined(PLATFORM_RPI) || defined(PLATFORM_DRM)
             // NOTE: currentButtonState[] can't be written directly due to multithreading, app could miss the update
             char currentButtonStateEvdev[MAX_MOUSE_BUTTONS]; // Holds the new mouse state for the next polling event to grab
@@ -531,7 +531,7 @@ typedef enum AutomationEventType {
     INPUT_MOUSE_BUTTON_UP,          // param[0]: button
     INPUT_MOUSE_BUTTON_DOWN,        // param[0]: button
     INPUT_MOUSE_POSITION,           // param[0]: x, param[1]: y
-    INPUT_MOUSE_WHEEL_MOTION,       // param[0]: delta
+    INPUT_MOUSE_WHEEL_MOTION,       // param[0]: x delta, param[1]: y delta
     INPUT_GAMEPAD_CONNECT,          // param[0]: gamepad
     INPUT_GAMEPAD_DISCONNECT,       // param[0]: gamepad
     INPUT_GAMEPAD_BUTTON_UP,        // param[0]: button
@@ -3829,8 +3829,28 @@ float GetMouseWheelMove(void)
 #if defined(PLATFORM_ANDROID)
     return 0.0f;
 #endif
+    Vector2 wm = CORE.Input.Mouse.currentWheelMove;
+    float result;
+    if (fabs(wm.x) > fabs(wm.y)) result = (float)wm.x;
+    else result = (float)wm.y;
+
 #if defined(PLATFORM_WEB)
-    return CORE.Input.Mouse.currentWheelMove/100.0f;
+    return result/100.0f;
+#endif
+
+    return result;
+}
+
+// Get mouse wheel movement X/Y as a vector
+Vector2 GetMouseWheelMoveV(void)
+{
+#if defined(PLATFORM_ANDROID)
+    return (Vector2){ 0.0f, 0.0f };
+#endif
+#if defined(PLATFORM_WEB)
+    Vector2 result = CORE.Input.Mouse.currentWheelMove;
+    result.x /= 100.0f;
+    result.y /= 100.0f;
 #endif
 
     return CORE.Input.Mouse.currentWheelMove;
@@ -4926,7 +4946,7 @@ void PollInputEvents(void)
 
     // Register previous mouse states
     CORE.Input.Mouse.previousWheelMove = CORE.Input.Mouse.currentWheelMove;
-    CORE.Input.Mouse.currentWheelMove = 0.0f;
+    CORE.Input.Mouse.currentWheelMove = (Vector2){ 0.0f, 0.0f };
     for (int i = 0; i < MAX_MOUSE_BUTTONS; i++)
     {
         CORE.Input.Mouse.previousButtonState[i] = CORE.Input.Mouse.currentButtonState[i];
@@ -4955,7 +4975,7 @@ void PollInputEvents(void)
 
     // Register previous mouse wheel state
     CORE.Input.Mouse.previousWheelMove = CORE.Input.Mouse.currentWheelMove;
-    CORE.Input.Mouse.currentWheelMove = 0.0f;
+    CORE.Input.Mouse.currentWheelMove = (Vector2){ 0.0f, 0.0f };
 
     // Register previous mouse position
     CORE.Input.Mouse.previousPosition = CORE.Input.Mouse.currentPosition;
@@ -5398,8 +5418,7 @@ static void MouseCursorPosCallback(GLFWwindow *window, double x, double y)
 // GLFW3 Scrolling Callback, runs on mouse wheel
 static void MouseScrollCallback(GLFWwindow *window, double xoffset, double yoffset)
 {
-    if (fabs(xoffset) > fabs(yoffset)) CORE.Input.Mouse.currentWheelMove = (float)xoffset;
-    else CORE.Input.Mouse.currentWheelMove = (float)yoffset;
+    CORE.Input.Mouse.currentWheelMove = (Vector2){ (float)xoffset, (float)yoffset };
 }
 
 // GLFW3 CursorEnter Callback, when cursor enters the window
@@ -6317,7 +6336,7 @@ static void *EventThread(void *arg)
                     gestureUpdate = true;
                 }
 
-                if (event.code == REL_WHEEL) CORE.Input.Mouse.currentWheelMove += event.value;
+                if (event.code == REL_WHEEL) CORE.Input.Mouse.currentWheelMove.y += event.value;
             }
 
             // Absolute movement parsing
@@ -6804,12 +6823,13 @@ static void RecordAutomationEvent(unsigned int frame)
     }
 
     // INPUT_MOUSE_WHEEL_MOTION
-    if ((int)CORE.Input.Mouse.currentWheelMove != (int)CORE.Input.Mouse.previousWheelMove)
+    if (((int)CORE.Input.Mouse.currentWheelMove.x != (int)CORE.Input.Mouse.previousWheelMove.x) ||
+        ((int)CORE.Input.Mouse.currentWheelMove.y != (int)CORE.Input.Mouse.previousWheelMove.y))
     {
         events[eventCount].frame = frame;
         events[eventCount].type = INPUT_MOUSE_WHEEL_MOTION;
-        events[eventCount].params[0] = (int)CORE.Input.Mouse.currentWheelMove;
-        events[eventCount].params[1] = 0;
+        events[eventCount].params[0] = (int)CORE.Input.Mouse.currentWheelMove.x;
+        events[eventCount].params[1] = (int)CORE.Input.Mouse.currentWheelMove.y;;
         events[eventCount].params[2] = 0;
 
         TRACELOG(LOG_INFO, "[%i] INPUT_MOUSE_WHEEL_MOTION: %i, %i, %i", events[eventCount].frame, events[eventCount].params[0], events[eventCount].params[1], events[eventCount].params[2]);
@@ -6961,7 +6981,11 @@ static void PlayAutomationEvent(unsigned int frame)
                     CORE.Input.Mouse.currentPosition.x = (float)events[i].params[0];
                     CORE.Input.Mouse.currentPosition.y = (float)events[i].params[1];
                 } break;
-                case INPUT_MOUSE_WHEEL_MOTION: CORE.Input.Mouse.currentWheelMove = (float)events[i].params[0]; break;   // param[0]: delta
+                case INPUT_MOUSE_WHEEL_MOTION:  // param[0]: x delta, param[1]: y delta
+                {
+                    CORE.Input.Mouse.currentWheelMove.x = (float)events[i].params[0]; break;
+                    CORE.Input.Mouse.currentWheelMove.y = (float)events[i].params[1]; break;
+                } break;
                 case INPUT_TOUCH_UP: CORE.Input.Touch.currentTouchState[events[i].params[0]] = false; break;            // param[0]: id
                 case INPUT_TOUCH_DOWN: CORE.Input.Touch.currentTouchState[events[i].params[0]] = true; break;           // param[0]: id
                 case INPUT_TOUCH_POSITION:      // param[0]: id, param[1]: x, param[2]: y
