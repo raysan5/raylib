@@ -484,6 +484,7 @@ typedef struct VrStereoConfig {
 
 // File path list
 typedef struct FilePathList {
+    unsigned int capacity;          // Filepaths max entries
     unsigned int count;             // Filepaths entries count
     char **paths;                   // Filepaths entries
 } FilePathList;

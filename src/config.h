@@ -74,6 +74,7 @@
 
 // rcore: Configuration values
 //------------------------------------------------------------------------------------
+#define MAX_FILEPATH_CAPACITY       8192        // Maximum file paths capacity
 #define MAX_FILEPATH_LENGTH         4096        // Maximum length for filepaths (Linux PATH_MAX default value)
 
 #define MAX_KEYBOARD_KEYS            512        // Maximum number of keyboard keys supported

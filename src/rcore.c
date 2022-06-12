@@ -298,6 +298,9 @@
     #define DEFAULT_EVDEV_PATH       "/dev/input/"  // Path to the linux input events
 #endif
 
+#ifndef MAX_FILEPATH_CAPACITY
+    #define MAX_FILEPATH_CAPACITY       8192        // Maximum capacity for filepath
+#endif
 #ifndef MAX_FILEPATH_LENGTH
     #define MAX_FILEPATH_LENGTH         4096        // Maximum length for filepaths (Linux PATH_MAX default value)
 #endif
@@ -1181,7 +1184,6 @@ bool IsWindowState(unsigned int flag)
 void ToggleFullscreen(void)
 {
 #if defined(PLATFORM_DESKTOP)
-    // TODO: glfwSetWindowMonitor() doesn't work properly (bugs)
     if (!CORE.Window.fullscreen)
     {
         // Store previous window position (in case we exit fullscreen)
@@ -3142,8 +3144,9 @@ FilePathList LoadDirectoryFiles(const char *dirPath)
         }
 
         // Memory allocation for dirFileCount
-        files.paths = (char **)RL_MALLOC(fileCounter*sizeof(char *));
-        for (int i = 0; i < fileCounter; i++) files.paths[i] = (char *)RL_MALLOC(MAX_FILEPATH_LENGTH*sizeof(char));
+        files.capacity = fileCounter;
+        files.paths = (char **)RL_MALLOC(files.capacity*sizeof(char *));
+        for (int i = 0; i < files.capacity; i++) files.paths[i] = (char *)RL_MALLOC(MAX_FILEPATH_LENGTH*sizeof(char));
 
         closedir(dir);
         
@@ -3152,31 +3155,26 @@ FilePathList LoadDirectoryFiles(const char *dirPath)
         ScanDirectoryFiles(dirPath, &files, NULL);
         
         // Security check: read files.count should match fileCounter
-        if (files.count != fileCounter) TRACELOG(LOG_WARNING, "FILEIO: Read files count do not match memory allocated");
+        if (files.count != files.capacity) TRACELOG(LOG_WARNING, "FILEIO: Read files count do not match capacity allocated");
     }
     else TRACELOG(LOG_WARNING, "FILEIO: Failed to open requested directory");  // Maybe it's a file...
-    
-    
     
     return files;
 }
 
 // Load directory filepaths with extension filtering and recursive directory scan
+// NOTE: On recursive loading we do not pre-scan for file count, we use MAX_FILEPATH_CAPACITY
 FilePathList LoadDirectoryFilesEx(const char *basePath, const char *filter, bool scanSubdirs)
 {
-    #define MAX_FILEPATH_COUNT         8192     // Maximum file paths scanned
-
     FilePathList files = { 0 };
 
-    files.paths = (char **)RL_CALLOC(MAX_FILEPATH_COUNT, sizeof(char *));
-    for (int i = 0; i < MAX_FILEPATH_COUNT; i++) files.paths[i] = (char *)RL_CALLOC(MAX_FILEPATH_LENGTH, sizeof(char));
+    files.capacity = MAX_FILEPATH_CAPACITY;
+    files.paths = (char **)RL_CALLOC(files.capacity, sizeof(char *));
+    for (int i = 0; i < files.capacity; i++) files.paths[i] = (char *)RL_CALLOC(MAX_FILEPATH_LENGTH, sizeof(char));
 
     // WARNING: basePath is always prepended to scanned paths
     if (scanSubdirs) ScanDirectoryFilesRecursively(basePath, &files, filter);
     else ScanDirectoryFiles(basePath, &files, filter);
-    
-    // TODO: Filepath filtering
-    //if (IsFileExtension(files.paths[i], filter))
 
     return files;
 }
@@ -3184,9 +3182,9 @@ FilePathList LoadDirectoryFilesEx(const char *basePath, const char *filter, bool
 // Unload directory filepaths
 void UnloadDirectoryFiles(FilePathList files)
 {
-    if (files.count > 0)
+    if (files.capacity > 0)
     {
-        for (int i = 0; i < files.count; i++) RL_FREE(files.paths[i]);
+        for (int i = 0; i < files.capacity; i++) RL_FREE(files.paths[i]);
 
         RL_FREE(files.paths);
     }
@@ -5283,7 +5281,7 @@ static void ScanDirectoryFilesRecursively(const char *basePath, FilePathList *fi
 
     if (dir != NULL)
     {
-        while ((dp = readdir(dir)) != NULL)
+        while (((dp = readdir(dir)) != NULL) && (files->count < files->capacity))
         {
             if ((strcmp(dp->d_name, ".") != 0) && (strcmp(dp->d_name, "..") != 0))
             {
@@ -5304,6 +5302,12 @@ static void ScanDirectoryFilesRecursively(const char *basePath, FilePathList *fi
                     {
                         strcpy(files->paths[files->count], path);
                         files->count++;
+                    }
+
+                    if (files->count >= files->capacity)
+                    {
+                        TRACELOG(LOG_WARNING, "FILEIO: Maximum filepath scan capacity reached (%i files)", files->capacity);
+                        break;
                     }
                 }
                 else ScanDirectoryFilesRecursively(path, files, filter);
@@ -5806,7 +5810,7 @@ static int32_t AndroidInputCallback(struct android_app *app, AInputEvent *event)
 // Register fullscreen change events
 static EM_BOOL EmscriptenFullscreenChangeCallback(int eventType, const EmscriptenFullscreenChangeEvent *event, void *userData)
 {
-    // TODO.
+    // TODO: Implement EmscriptenFullscreenChangeCallback()?
 
     return 1;   // The event was consumed by the callback handler
 }
@@ -5814,7 +5818,7 @@ static EM_BOOL EmscriptenFullscreenChangeCallback(int eventType, const Emscripte
 // Register window resize event
 static EM_BOOL EmscriptenWindowResizedCallback(int eventType, const EmscriptenUiEvent *event, void *userData)
 {
-    // TODO.
+    // TODO: Implement EmscriptenWindowResizedCallback()?
 
     return 1;   // The event was consumed by the callback handler
 }
@@ -6202,7 +6206,6 @@ static void ConfigureEvdevDevice(char *device)
     worker->fd = fd;
 
     // Grab number on the end of the devices name "event<N>"
-    // TODO: Grab number on the end of the device name "mouse<N>"
     int devNum = 0;
     char *ptrDevName = strrchr(device, 't');
     worker->eventNum = -1;
@@ -6211,7 +6214,7 @@ static void ConfigureEvdevDevice(char *device)
     {
         if (sscanf(ptrDevName, "t%d", &devNum) == 1) worker->eventNum = devNum;
     }
-    else worker->eventNum = 0;      // HACK for mouse0 device!
+    else worker->eventNum = 0;      // TODO: HACK: Grab number for mouse0 device!
 
     // At this point we have a connection to the device, but we don't yet know what the device is.
     // It could be many things, even as simple as a power button...
