@@ -3895,7 +3895,7 @@ float GetMouseWheelMove(void)
 #endif
 
 #if defined(PLATFORM_WEB)
-    result =/ 100.0f;
+    result /= 100.0f;
 #endif
 
     return result;
