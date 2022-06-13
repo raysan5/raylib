@@ -3337,7 +3337,7 @@ void DrawBillboardPro(Camera camera, Texture2D texture, Rectangle source, Vector
     // NOTE: Billboard size will maintain source rectangle aspect ratio, size will represent billboard width
     Vector2 sizeRatio = { size.x*(float)source.height/source.width, size.y };
 
-    Matrix matView = MatrixLookAt(camera.position, camera.target, camera.up);
+    Matrix matView = GetCameraMatrix(camera); // TODO use GetCameraViewMatrix()
 
     Vector3 right = { matView.m0, matView.m4, matView.m8 };
     //Vector3 up = { matView.m1, matView.m5, matView.m9 };

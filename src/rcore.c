@@ -2179,33 +2179,11 @@ void BeginMode3D(Camera3D camera)
     rlMatrixMode(RL_PROJECTION);    // Switch to projection matrix
     rlPushMatrix();                 // Save previous matrix, which contains the settings for the 2d ortho projection
     rlLoadIdentity();               // Reset current matrix (projection)
-
-    float aspect = (float)CORE.Window.currentFbo.width/(float)CORE.Window.currentFbo.height;
-
-    // NOTE: zNear and zFar values are important when computing depth buffer values
-    if (camera.projection == CAMERA_PERSPECTIVE)
-    {
-        // Setup perspective projection
-        double top = RL_CULL_DISTANCE_NEAR*tan(camera.fovy*0.5*DEG2RAD);
-        double right = top*aspect;
-
-        rlFrustum(-right, right, -top, top, RL_CULL_DISTANCE_NEAR, RL_CULL_DISTANCE_FAR);
-    }
-    else if (camera.projection == CAMERA_ORTHOGRAPHIC)
-    {
-        // Setup orthographic projection
-        double top = camera.fovy/2.0;
-        double right = top*aspect;
-
-        rlOrtho(-right, right, -top,top, RL_CULL_DISTANCE_NEAR, RL_CULL_DISTANCE_FAR);
-    }
+    rlMultMatrixf(MatrixToFloat(GetCameraProjectionMatrix(&camera))); // Multiply projection matrix by projection matrix (camera)
 
     rlMatrixMode(RL_MODELVIEW);     // Switch back to modelview matrix
     rlLoadIdentity();               // Reset current matrix (modelview)
-
-    // Setup Camera view
-    Matrix matView = MatrixLookAt(camera.position, camera.target, camera.up);
-    rlMultMatrixf(MatrixToFloat(matView));      // Multiply modelview matrix by view matrix (camera)
+    rlMultMatrixf(MatrixToFloat(GetCameraViewMatrix(&camera))); // Multiply modelview matrix by view matrix (camera)
 
     rlEnableDepthTest();            // Enable DEPTH_TEST for 3D
 }
@@ -2558,25 +2536,9 @@ Ray GetMouseRay(Vector2 mouse, Camera camera)
     // Store values in a vector
     Vector3 deviceCoords = { x, y, z };
 
-    // Calculate view matrix from camera look at
-    Matrix matView = MatrixLookAt(camera.position, camera.target, camera.up);
-
-    Matrix matProj = MatrixIdentity();
-
-    if (camera.projection == CAMERA_PERSPECTIVE)
-    {
-        // Calculate projection matrix from perspective
-        matProj = MatrixPerspective(camera.fovy*DEG2RAD, ((double)GetScreenWidth()/(double)GetScreenHeight()), RL_CULL_DISTANCE_NEAR, RL_CULL_DISTANCE_FAR);
-    }
-    else if (camera.projection == CAMERA_ORTHOGRAPHIC)
-    {
-        float aspect = (float)CORE.Window.screen.width/(float)CORE.Window.screen.height;
-        double top = camera.fovy/2.0;
-        double right = top*aspect;
-
-        // Calculate projection matrix from orthographic
-        matProj = MatrixOrtho(-right, right, -top, top, 0.01, 1000.0);
-    }
+    // Get camera matrices
+    Matrix matView = GetCameraViewMatrix(&camera);
+    Matrix matProj = GetCameraProjectionMatrix(&camera);
 
     // Unproject far/near points
     Vector3 nearPoint = Vector3Unproject((Vector3){ deviceCoords.x, deviceCoords.y, 0.0f }, matProj, matView);
@@ -2590,7 +2552,7 @@ Ray GetMouseRay(Vector2 mouse, Camera camera)
     // Calculate normalized direction vector
     Vector3 direction = Vector3Normalize(Vector3Subtract(farPoint, nearPoint));
 
-    if (camera.projection == CAMERA_PERSPECTIVE) ray.position = camera.position;
+    if (camera.projection == CAMERA_PERSPECTIVE) ray.position = GetCameraEyePosition(&camera);
     else if (camera.projection == CAMERA_ORTHOGRAPHIC) ray.position = cameraPlanePointerPos;
 
     // Apply calculated vectors to ray
@@ -2602,7 +2564,7 @@ Ray GetMouseRay(Vector2 mouse, Camera camera)
 // Get transform matrix for camera
 Matrix GetCameraMatrix(Camera camera)
 {
-    return MatrixLookAt(camera.position, camera.target, camera.up);
+    return GetCameraViewMatrix(&camera);
 }
 
 // Get camera 2d transform matrix
@@ -2662,8 +2624,8 @@ Vector2 GetWorldToScreenEx(Vector3 position, Camera camera, int width, int heigh
         matProj = MatrixOrtho(-right, right, -top, top, RL_CULL_DISTANCE_NEAR, RL_CULL_DISTANCE_FAR);
     }
 
-    // Calculate view matrix from camera look at (and transpose it)
-    Matrix matView = MatrixLookAt(camera.position, camera.target, camera.up);
+    // Get view matrix from camera
+    Matrix matView = GetCameraViewMatrix(&camera);
 
     // TODO: Why not use Vector3Transform(Vector3 v, Matrix mat)?
 

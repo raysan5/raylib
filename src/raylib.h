@@ -297,11 +297,13 @@ typedef struct Font {
 
 // Camera, defines position/orientation in 3d space
 typedef struct Camera3D {
-    Vector3 position;       // Camera position
-    Vector3 target;         // Camera target it looks-at
-    Vector3 up;             // Camera up vector (rotation over its axis)
-    float fovy;             // Camera field-of-view apperture in Y (degrees) in perspective, used as near plane width in orthographic
-    int projection;         // Camera projection: CAMERA_PERSPECTIVE or CAMERA_ORTHOGRAPHIC
+    int mode;
+    Vector3 target_position; // Camera target it looks at
+    float target_distance;   // Camera eye distance to target_position (set to 0 in free/fps mode)
+    Quaternion orientation;  // Camera orientation (its rotation in 3D)
+    float fovy;              // Camera field-of-view apperture in Y (degrees) in perspective, used as near plane width in orthographic
+    float aspect;            // Camera aspect ratio (typically window_width / window_height)
+    int projection;          // Camera projection: CAMERA_PERSPECTIVE or CAMERA_ORTHOGRAPHIC
 } Camera3D;
 
 typedef Camera3D Camera;    // Camera type fallback, defaults to Camera3D
@@ -1150,8 +1152,10 @@ RLAPI float GetGesturePinchAngle(void);                 // Get gesture pinch ang
 //------------------------------------------------------------------------------------
 // Camera System Functions (Module: rcamera)
 //------------------------------------------------------------------------------------
+RLAPI void InitializeCamera(Camera3D* camera, float aspect);
 RLAPI void SetCameraMode(Camera camera, int mode);      // Set camera mode (multiple camera modes available)
 RLAPI void UpdateCamera(Camera *camera);                // Update camera position for selected mode
+RLAPI Vector3 GetCameraFront(Camera* camera);
 
 RLAPI void SetCameraPanControl(int keyPan);             // Set camera pan key to combine with mouse movement (free camera)
 RLAPI void SetCameraAltControl(int keyAlt);             // Set camera alt key to combine with mouse movement (free camera)
