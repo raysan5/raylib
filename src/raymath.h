@@ -158,7 +158,7 @@ typedef struct float16 {
     float v[16];
 } float16;
 
-#include <math.h>       // Required for: sinf(), cosf(), tan(), atan2f(), sqrtf(), fmodf(), fminf(), fmaxf(), fabs()
+#include <math.h>       // Required for: sinf(), cosf(), tan(), atan2f(), sqrtf(), floor(), fminf(), fmaxf(), fabs()
 
 //----------------------------------------------------------------------------------
 // Module Functions Definition - Utils math
@@ -201,7 +201,7 @@ RMAPI float Remap(float value, float inputStart, float inputEnd, float outputSta
 // Wrap input value from min to max
 RMAPI float Wrap(float value, float min, float max)
 {
-	float result = min + fmodf(value - min, max - min);
+	float result = value - (max - min)*floor((value - min)/(max - min));
 
 	return result;
 }
