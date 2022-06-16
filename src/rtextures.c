@@ -3809,10 +3809,10 @@ Color ColorAlphaBlend(Color dst, Color src, Color tint)
     Color out = WHITE;
 
     // Apply color tint to source color
-    src.r = (unsigned char)(((unsigned int)src.r*(unsigned int)tint.r) >> 8);
-    src.g = (unsigned char)(((unsigned int)src.g*(unsigned int)tint.g) >> 8);
-    src.b = (unsigned char)(((unsigned int)src.b*(unsigned int)tint.b) >> 8);
-    src.a = (unsigned char)(((unsigned int)src.a*(unsigned int)tint.a) >> 8);
+    src.r = (unsigned char)(((unsigned int)src.r*((unsigned int)tint.r+1)) >> 8);
+    src.g = (unsigned char)(((unsigned int)src.g*((unsigned int)tint.g+1)) >> 8);
+    src.b = (unsigned char)(((unsigned int)src.b*((unsigned int)tint.b+1)) >> 8);
+    src.a = (unsigned char)(((unsigned int)src.a*((unsigned int)tint.a+1)) >> 8);
 
 //#define COLORALPHABLEND_FLOAT
 #define COLORALPHABLEND_INTEGERS
