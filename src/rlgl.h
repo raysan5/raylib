@@ -3113,9 +3113,6 @@ void rlGenTextureMipmaps(unsigned int id, int width, int height, int format, int
         //glHint(GL_GENERATE_MIPMAP_HINT, GL_DONT_CARE);   // Hint for mipmaps generation algorithm: GL_FASTEST, GL_NICEST, GL_DONT_CARE
         glGenerateMipmap(GL_TEXTURE_2D);    // Generate mipmaps automatically
 
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);   // Activate Trilinear filtering for mipmaps
-
         #define MIN(a,b) (((a)<(b))?(a):(b))
         #define MAX(a,b) (((a)>(b))?(a):(b))
 
@@ -3192,7 +3189,6 @@ void *rlReadTexturePixels(unsigned int id, int width, int height, int format)
 
     return pixels;
 }
-
 
 // Read screen pixel data (color buffer)
 unsigned char *rlReadScreenPixels(int width, int height)
