@@ -3234,7 +3234,7 @@ FilePathList LoadDroppedFiles(void)
         
         // WARNING: We reset drop file count after loading the stored paths,
         // despite internally GLFW probably keeps the pointers until next drop
-        CORE.Window.dropFileCount;
+        CORE.Window.dropFileCount = 0;
     }
 
     return files;
