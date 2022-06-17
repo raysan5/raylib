@@ -1152,8 +1152,8 @@ void WaveFormat(Wave *wave, int sampleRate, int sampleSize, int channels)
     ma_format formatOut = ((sampleSize == 8)? ma_format_u8 : ((sampleSize == 16)? ma_format_s16 : ma_format_f32));
 
     ma_uint32 frameCountIn = wave->frameCount;
-
     ma_uint32 frameCount = (ma_uint32)ma_convert_frames(NULL, 0, formatOut, channels, sampleRate, NULL, frameCountIn, formatIn, wave->channels, wave->sampleRate);
+    
     if (frameCount == 0)
     {
         TRACELOG(LOG_WARNING, "WAVE: Failed to get frame count for format conversion");
@@ -1173,6 +1173,7 @@ void WaveFormat(Wave *wave, int sampleRate, int sampleSize, int channels)
     wave->sampleSize = sampleSize;
     wave->sampleRate = sampleRate;
     wave->channels = channels;
+
     RL_FREE(wave->data);
     wave->data = data;
 }
