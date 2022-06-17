@@ -3221,21 +3221,8 @@ FilePathList LoadDroppedFiles(void)
 {
     FilePathList files = { 0 };
 
-    if (CORE.Window.dropFileCount > 0)
-    {
-        files.count = CORE.Window.dropFileCount;
-        files.paths = (char **)RL_CALLOC(files.count, sizeof(char *));
-        
-        for (int i = 0; i < files.count; i++) 
-        {
-            files.paths[i] = (char *)RL_CALLOC(MAX_FILEPATH_LENGTH, sizeof(char));
-            strcpy(files.paths[i], CORE.Window.dropFilepaths[i]);
-        }
-        
-        // WARNING: We reset drop file count after loading the stored paths,
-        // despite internally GLFW probably keeps the pointers until next drop
-        CORE.Window.dropFileCount = 0;
-    }
+    files.count = CORE.Window.dropFileCount;
+    files.paths = CORE.Window.dropFilepaths;
 
     return files;
 }
@@ -3243,11 +3230,16 @@ FilePathList LoadDroppedFiles(void)
 // Unload dropped filepaths
 void UnloadDroppedFiles(FilePathList files)
 {
+    // WARNING: files pointers are the same as internal ones
+    
     if (files.count > 0)
     {
         for (int i = 0; i < files.count; i++) RL_FREE(files.paths[i]);
 
         RL_FREE(files.paths);
+        
+        CORE.Window.dropFileCount = 0;
+        CORE.Window.dropFilepaths = NULL;
     }
 }
 
@@ -5583,12 +5575,28 @@ static void CursorEnterCallback(GLFWwindow *window, int enter)
 }
 
 // GLFW3 Window Drop Callback, runs when drop files into window
-// NOTE: Paths are stored in dynamic memory for further retrieval
-// Everytime new files are dropped, old ones are discarded
 static void WindowDropCallback(GLFWwindow *window, int count, const char **paths)
 {
-    CORE.Window.dropFilepaths = paths;
+    // In case previous dropped filepaths have not been freed, we free them
+    if (CORE.Window.dropFileCount > 0)
+    {
+        for (int i = 0; i < CORE.Window.dropFileCount; i++) RL_FREE(CORE.Window.dropFilepaths[i]);
+
+        RL_FREE(CORE.Window.dropFilepaths);
+        
+        CORE.Window.dropFileCount = 0;
+        CORE.Window.dropFilepaths = NULL;
+    }
+    
+    // WARNING: Paths are freed by GLFW when the callback returns, we must keep an internal copy
     CORE.Window.dropFileCount = count;
+    CORE.Window.dropFilepaths = (char **)RL_CALLOC(CORE.Window.dropFileCount, sizeof(char *));
+
+    for (int i = 0; i < CORE.Window.dropFileCount; i++)
+    {
+        CORE.Window.dropFilepaths[i] = (char *)RL_CALLOC(MAX_FILEPATH_LENGTH, sizeof(char));
+        strcpy(CORE.Window.dropFilepaths[i], paths[i]);
+    }
 }
 #endif
 
