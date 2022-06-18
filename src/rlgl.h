@@ -3475,7 +3475,7 @@ void rlDrawVertexArrayElements(int offset, int count, const void *buffer)
 // Draw vertex array instanced
 void rlDrawVertexArrayInstanced(int offset, int count, int instances)
 {
-#if defined(GRAPHICS_API_OPENGL_33)
+#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     glDrawArraysInstanced(GL_TRIANGLES, 0, count, instances);
 #endif
 }
@@ -3483,7 +3483,7 @@ void rlDrawVertexArrayInstanced(int offset, int count, int instances)
 // Draw vertex array elements instanced
 void rlDrawVertexArrayElementsInstanced(int offset, int count, const void *buffer, int instances)
 {
-#if defined(GRAPHICS_API_OPENGL_33)
+#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     glDrawElementsInstanced(GL_TRIANGLES, count, GL_UNSIGNED_SHORT, (const unsigned short *)buffer + offset, instances);
 #endif
 }
@@ -3535,7 +3535,7 @@ void rlSetVertexAttribute(unsigned int index, int compSize, int type, bool norma
 // Set vertex attribute divisor
 void rlSetVertexAttributeDivisor(unsigned int index, int divisor)
 {
-#if defined(GRAPHICS_API_OPENGL_33)
+#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     glVertexAttribDivisor(index, divisor);
 #endif
 }
