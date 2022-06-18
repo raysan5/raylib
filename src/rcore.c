@@ -2850,6 +2850,8 @@ bool FileExists(const char *fileName)
 // NOTE: Extensions checking is not case-sensitive
 bool IsFileExtension(const char *fileName, const char *ext)
 {
+    #define MAX_FILE_EXTENSION_SIZE  16
+    
     bool result = false;
     const char *fileExt = GetFileExtension(fileName);
 
@@ -2857,10 +2859,10 @@ bool IsFileExtension(const char *fileName, const char *ext)
     {
 #if defined(SUPPORT_MODULE_RTEXT) && defined(SUPPORT_TEXT_MANIPULATION)
         int extCount = 0;
-        const char **checkExts = TextSplit(ext, ';', &extCount); // WARNING: Module required: rtext
+        const char **checkExts = TextSplit(ext, ';', &extCount);  // WARNING: Module required: rtext
 
-        char fileExtLower[16] = { 0 };
-        strcpy(fileExtLower, TextToLower(fileExt));  // WARNING: Module required: rtext
+        char fileExtLower[MAX_FILE_EXTENSION_SIZE] = { 0 };
+        strncpy(fileExtLower, TextToLower(fileExt),MAX_FILE_EXTENSION_SIZE);  // WARNING: Module required: rtext
 
         for (int i = 0; i < extCount; i++)
         {
