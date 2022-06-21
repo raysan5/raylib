@@ -3672,7 +3672,7 @@ unsigned int rlCompileShader(const char *shaderCode, int type)
         if (maxLength > 0)
         {
             int length = 0;
-            char *log = RL_CALLOC(maxLength, sizeof(char));
+            char *log = (char *)RL_CALLOC(maxLength, sizeof(char));
             glGetShaderInfoLog(shader, maxLength, &length, log);
             TRACELOG(RL_LOG_WARNING, "SHADER: [ID %i] Compile error: %s", shader, log);
             RL_FREE(log);
@@ -3734,7 +3734,7 @@ unsigned int rlLoadShaderProgram(unsigned int vShaderId, unsigned int fShaderId)
         if (maxLength > 0)
         {
             int length = 0;
-            char *log = RL_CALLOC(maxLength, sizeof(char));
+            char *log = (char *)RL_CALLOC(maxLength, sizeof(char));
             glGetProgramInfoLog(program, maxLength, &length, log);
             TRACELOG(RL_LOG_WARNING, "SHADER: [ID %i] Link error: %s", program, log);
             RL_FREE(log);
@@ -3901,7 +3901,7 @@ unsigned int rlLoadComputeShaderProgram(unsigned int shaderId)
         if (maxLength > 0)
         {
             int length = 0;
-            char *log = RL_CALLOC(maxLength, sizeof(char));
+            char *log = (char *)RL_CALLOC(maxLength, sizeof(char));
             glGetProgramInfoLog(program, maxLength, &length, log);
             TRACELOG(RL_LOG_WARNING, "SHADER: [ID %i] Link error: %s", program, log);
             RL_FREE(log);
