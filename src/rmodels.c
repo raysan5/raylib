@@ -3396,7 +3396,7 @@ void DrawBillboardPro(Camera camera, Texture2D texture, Rectangle source, Vector
     bottomRight = Vector3Add(bottomRight, position);
     bottomLeft = Vector3Add(bottomLeft, position);
 
-    rlCheckRenderBatchLimit(4);
+    rlCheckRenderBatchLimit(8);
 
     rlSetTexture(texture.id);
 
