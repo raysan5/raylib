@@ -40,6 +40,9 @@ typedef struct GolUpdateSSBO {
     GolUpdateCmd commands[MAX_BUFFERED_TRANSFERTS];
 } GolUpdateSSBO;
 
+//------------------------------------------------------------------------------------
+// Program main entry point
+//------------------------------------------------------------------------------------
 int main(void)
 {
     // Initialization

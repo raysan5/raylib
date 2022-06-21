@@ -206,6 +206,9 @@ void SetupBoxes(Rectangle *boxes, int *count)
     *count = MAX_BOXES;
 }
 
+//------------------------------------------------------------------------------------
+// Program main entry point
+//------------------------------------------------------------------------------------
 int main(void)
 {
     // Initialization

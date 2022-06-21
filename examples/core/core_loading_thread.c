@@ -27,6 +27,9 @@ static void *LoadDataThread(void *arg);     // Loading data thread function decl
 
 static int dataProgress = 0;                // Data progress accumulator
 
+//------------------------------------------------------------------------------------
+// Program main entry point
+//------------------------------------------------------------------------------------
 int main(void)
 {
     // Initialization

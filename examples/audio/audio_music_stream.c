@@ -54,6 +54,9 @@ static void AudioProcessEffectDelay(void *buffer, unsigned int frames)
     }
 }
 
+//------------------------------------------------------------------------------------
+// Program main entry point
+//------------------------------------------------------------------------------------
 int main(void)
 {
     // Initialization

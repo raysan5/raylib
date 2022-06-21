@@ -15,6 +15,9 @@
 #define MARGIN_SIZE       8       // Size for the margins
 #define COLOR_SIZE       16       // Size of the color select buttons
 
+//------------------------------------------------------------------------------------
+// Program main entry point
+//------------------------------------------------------------------------------------
 int main(int argc, char **argv)
 {
     // Initialization

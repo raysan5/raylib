@@ -13,8 +13,11 @@
 
 #include "raylib.h"
 
-#include <math.h>
+#include <math.h>       // Required for: sinf()
 
+//------------------------------------------------------------------------------------
+// Program main entry point
+//------------------------------------------------------------------------------------
 int main()
 {
     // Initialization
