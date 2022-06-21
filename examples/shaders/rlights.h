@@ -49,6 +49,7 @@ typedef struct {
     Vector3 position;
     Vector3 target;
     Color color;
+    float attenuation;
     
     // Shader locations
     int enabledLoc;
@@ -56,6 +57,7 @@ typedef struct {
     int positionLoc;
     int targetLoc;
     int colorLoc;
+    int attenuationLoc;
 } Light;
 
 // Light type
