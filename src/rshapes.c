@@ -45,11 +45,13 @@
 *
 **********************************************************************************************/
 
-#include "raylib.h"     // Declares module functions
+#include "raylib.h"                 // Declares module functions
 
 // Check if config flags have been externally provided on compilation line
-#if !defined(EXTERNAL_CONFIG_FLAGS)
-    #include "config.h"         // Defines module configuration flags
+#if !defined(EXTERNAL_CONFIG_FLAGS) && !defined(EXTERNAL_CONFIG_FILE)
+    #include "config.h"             // Defines module configuration flags
+#elif defined(EXTERNAL_CONFIG_FILE)
+    #include EXTERNAL_CONFIG_FILE   // Defines module configuration flags in macro specified path
 #endif
 
 #if defined(SUPPORT_MODULE_RSHAPES)

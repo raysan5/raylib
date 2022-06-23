@@ -33,8 +33,10 @@
 #include "raylib.h"                     // WARNING: Required for: LogType enum
 
 // Check if config flags have been externally provided on compilation line
-#if !defined(EXTERNAL_CONFIG_FLAGS)
+#if !defined(EXTERNAL_CONFIG_FLAGS) && !defined(EXTERNAL_CONFIG_FILE)
     #include "config.h"                 // Defines module configuration flags
+#elif defined(EXTERNAL_CONFIG_FILE)
+    #include EXTERNAL_CONFIG_FILE       // Defines module configuration flags in macro specified path
 #endif
 
 #include "utils.h"

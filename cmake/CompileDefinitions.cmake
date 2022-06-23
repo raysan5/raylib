@@ -9,6 +9,11 @@ function(define_if target variable)
     endif ()
 endfunction()
 
+if (NOT ${EXTERNAL_CONFIG_FILE} STREQUAL "")
+    message(STATUS "Config file: ${EXTERNAL_CONFIG_FILE}")
+    target_compile_definitions("raylib" PUBLIC EXTERNAL_CONFIG_FILE=<${EXTERNAL_CONFIG_FILE}>)
+endif ()
+
 if (${CUSTOMIZE_BUILD})
     target_compile_definitions("raylib" PUBLIC EXTERNAL_CONFIG_FLAGS)
     define_if("raylib" USE_AUDIO)

@@ -71,14 +71,16 @@
 
 #if defined(RAUDIO_STANDALONE)
     #include "raudio.h"
-    #include <stdarg.h>         // Required for: va_list, va_start(), vfprintf(), va_end()
+    #include <stdarg.h>                 // Required for: va_list, va_start(), vfprintf(), va_end()
 #else
-    #include "raylib.h"         // Declares module functions
+    #include "raylib.h"                 // Declares module functions
     // Check if config flags have been externally provided on compilation line
-    #if !defined(EXTERNAL_CONFIG_FLAGS)
-        #include "config.h"     // Defines module configuration flags
+    #if !defined(EXTERNAL_CONFIG_FLAGS) && !defined(EXTERNAL_CONFIG_FILE)
+        #include "config.h"             // Defines module configuration flags
+    #elif defined(EXTERNAL_CONFIG_FILE)
+        #include EXTERNAL_CONFIG_FILE   // Defines module configuration flags in macro specified path
     #endif
-    #include "utils.h"          // Required for: fopen() Android mapping
+    #include "utils.h"                  // Required for: fopen() Android mapping
 #endif
 
 #if defined(SUPPORT_MODULE_RAUDIO)

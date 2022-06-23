@@ -26,6 +26,7 @@ endif()
 
 option(INCLUDE_EVERYTHING "Include everything disabled by default (for CI usage" OFF)
 set(OFF ${INCLUDE_EVERYTHING} CACHE INTERNAL "Replace any OFF by default with \${OFF} to have it covered by this option")
+set(EXTERNAL_CONFIG_FILE "" CACHE STRING "Change default config.h by config file at path")
 
 # raylib modules included
 cmake_dependent_option(SUPPORT_MODULE_RSHAPES "Include module: rshapes" ON CUSTOMIZE_BUILD ON)

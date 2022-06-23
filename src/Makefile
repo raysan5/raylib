@@ -72,6 +72,10 @@ RAYLIB_RES_FILE      ?= ./raylib.dll.rc.data
 # if NONE, default config.h flags are used
 RAYLIB_CONFIG_FLAGS  ?= NONE
 
+# Define external config file
+# NOTE: Will load supplied fine instead of default ./config.h
+RAYLIB_CONFIG_FILE  ?= NONE
+
 # To define additional cflags: Use make CUSTOM_CFLAGS=""
 
 # Include raylib modules on compilation
@@ -311,17 +315,22 @@ endif
 #  -fno-strict-aliasing     jar_xm.h does shady stuff (breaks strict aliasing)
 CFLAGS = -Wall -D_DEFAULT_SOURCE -D$(PLATFORM) -D$(GRAPHICS) -Wno-missing-braces -Werror=pointer-arith -fno-strict-aliasing $(CUSTOM_CFLAGS)
 
-ifneq ($(RAYLIB_CONFIG_FLAGS), NONE)
-    CFLAGS += -DEXTERNAL_CONFIG_FLAGS $(RAYLIB_CONFIG_FLAGS)
+ifneq ($(RAYLIB_CONFIG_FLAGS),NONE)
+    CFLAGS += -DEXTERNAL_CONFIG_FLAGS=$(RAYLIB_CONFIG_FLAGS)
 endif
 
-ifeq ($(PLATFORM), PLATFORM_WEB)
+ifneq ($(RAYLIB_CONFIG_FILE),NONE)
+    $(warning $(RAYLIB_CONFIG_FILE))
+    CFLAGS += -DEXTERNAL_CONFIG_FILE="<$(RAYLIB_CONFIG_FILE)>"
+endif
+
+ifeq ($(PLATFORM),PLATFORM_WEB)
     CFLAGS += -std=gnu99
 else
     CFLAGS += -std=c99
 endif
 
-ifeq ($(PLATFORM_OS), LINUX)
+ifeq ($(PLATFORM_OS),LINUX)
     CFLAGS += -fPIC
 endif
 
