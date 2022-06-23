@@ -2,7 +2,7 @@
 
 **raylib is a simple and easy-to-use library to enjoy videogames programming.**
 
-raylib is highly inspired by Borland BGI graphics lib and by XNA framework and it's specially well suited for prototyping, tooling, graphical applications, embedded systems and education.
+raylib is highly inspired by Borland BGI graphics lib and by XNA framework. It's specially well suited for prototyping, tooling, graphical applications, embedded systems and education.
 
 *NOTE for ADVENTURERS: raylib is a programming library to enjoy videogames programming; no fancy interface, no visual helpers, no debug button... just coding in the most pure spartan-programmers way.*
 
@@ -36,7 +36,7 @@ Ready to learn? Jump to [code examples!](https://www.raylib.com/examples.html)
 [![Windows Examples](https://github.com/raysan5/raylib/actions/workflows/windows_examples.yml/badge.svg)](https://github.com/raysan5/raylib/actions/workflows/windows_examples.yml)
 [![Linux Examples](https://github.com/raysan5/raylib/actions/workflows/linux_examples.yml/badge.svg)](https://github.com/raysan5/raylib/actions/workflows/linux_examples.yml)
 
-features
+Features
 --------
   - **NO external dependencies**, all required libraries are [bundled into raylib](https://github.com/raysan5/raylib/tree/master/src/external)
   - Multiple platforms supported: **Windows, Linux, MacOS, RPI, Android, HTML5... and more!**
@@ -56,7 +56,7 @@ features
   - Bindings to [+50 programming languages](https://github.com/raysan5/raylib/blob/master/BINDINGS.md)!
   - **Free and open source**.
 
-basic example
+Basic Example
 --------------
 This is a basic raylib example, it creates a window and it draws the text `"Congrats! You created your first window!"` in the middle of the screen. Check this example [running live on web here](https://www.raylib.com/examples/core/loader.html?name=core_basic_window).
 ```c
@@ -80,7 +80,7 @@ int main(void)
 }
 ```
 
-build and installation
+Build and Installation
 ----------------------
 
 raylib binary releases for Windows, Linux, macOS, Android and HTML5 are available at the [Github Releases page](https://github.com/raysan5/raylib/releases).
@@ -109,12 +109,12 @@ raylib has been developed on Windows platform using [Notepad++](https://notepad-
 
 [Projects directory](https://github.com/raysan5/raylib/tree/master/projects) contains several ready-to-use **project templates** to build raylib and code examples with multiple IDEs.
 
-*Note that there are lots of IDEs supported, some of the provided templates could require some review, please, if you find some issue with some template or you think they could be improved, feel free to send a PR or open a related issue.*
+*Note that there are lots of IDEs supported. Some of the provided templates could require some review, please, if you find some issue with some template or you think they could be improved, feel free to send a PR or open a related issue.*
 
-learning and docs
+Learning and Docs
 ------------------
 
-raylib is designed to be learned using [the examples](https://github.com/raysan5/raylib/tree/master/examples) as the main reference. There is no standard API documentation but there is a [**cheatsheet**](https://www.raylib.com/cheatsheet/cheatsheet.html) containing all the functions available on the library and a short description of each one of them, input parameters and result value names should be intuitive enough to understand how each function works. 
+raylib is designed to be learned using [the examples](https://github.com/raysan5/raylib/tree/master/examples) as the main reference. There is no standard API documentation but there is a [**cheatsheet**](https://www.raylib.com/cheatsheet/cheatsheet.html) containing all the functions available on the library and a short description of each one. Input parameters and result value names should be intuitive enough to understand how each function works. 
 
 Some additional documentation about raylib design can be found in raylib GitHub Wiki. Here the more relevant links:
 
@@ -125,7 +125,7 @@ Some additional documentation about raylib design can be found in raylib GitHub 
  - [raylib games collection](https://github.com/raysan5/raylib-games)
 
 
-contact and networks
+Contact and Networks
 ---------------------
 
 raylib is present in several networks and raylib community is growing everyday. If you are using raylib and enjoying it, feel free to join us in any of these networks. The most active network is our [Discord server](https://discord.gg/raylib)! :)
@@ -138,7 +138,7 @@ raylib is present in several networks and raylib community is growing everyday. 
  - Patreon: [https://www.patreon.com/raylib](https://www.patreon.com/raylib)
  - YouTube: [https://www.youtube.com/channel/raylib](https://www.youtube.com/c/raylib)
 
-license
+License
 -------
 
 raylib is licensed under an unmodified zlib/libpng license, which is an OSI-certified, BSD-like license that allows static linking with closed source software. Check [LICENSE](LICENSE) for further details.
