@@ -36,7 +36,7 @@ int main(void)
     InitWindow(screenWidth, screenHeight, "raylib [shaders] example - hot reloading");
 
     const char *fragShaderFileName = "resources/shaders/glsl%i/reload.fs";
-    long fragShaderFileModTime = GetFileModTime(TextFormat(fragShaderFileName, GLSL_VERSION));
+    time_t fragShaderFileModTime = (time_t)GetFileModTime(TextFormat(fragShaderFileName, GLSL_VERSION));
 
     // Load raymarching shader
     // NOTE: Defining 0 (NULL) for vertex shader forces usage of internal default vertex shader
@@ -72,7 +72,7 @@ int main(void)
         // Hot shader reloading
         if (shaderAutoReloading || (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)))
         {
-            long currentFragShaderModTime = GetFileModTime(TextFormat(fragShaderFileName, GLSL_VERSION));
+            time_t currentFragShaderModTime = (time_t)GetFileModTime(TextFormat(fragShaderFileName, GLSL_VERSION));
 
             // Check if shader file has been modified
             if (currentFragShaderModTime != fragShaderFileModTime)
