@@ -4010,7 +4010,7 @@ void rlCopyBuffersElements(unsigned int destId, unsigned int srcId, unsigned lon
 void rlBindImageTexture(unsigned int id, unsigned int index, unsigned int format, int readonly)
 {
 #if defined(GRAPHICS_API_OPENGL_43)
-    int glInternalFormat = 0, glFormat = 0, glType = 0;
+    unsigned int glInternalFormat = 0, glFormat = 0, glType = 0;
 
     rlGetGlTextureFormats(format, &glInternalFormat, &glFormat, &glType);
     glBindImageTexture(index, id, 0, 0, 0, readonly ? GL_READ_ONLY : GL_READ_WRITE, glInternalFormat);
