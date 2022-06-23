@@ -210,9 +210,9 @@ unsigned char *LoadFileData(const char *fileName, unsigned int *bytesRead)
 
                 if (ferror(file))
                 {
-                    TRACELOG(LOG_WARNING, "FILEIO: [%s] Failed to read file", fileName);
                     RL_FREE(data);
                     data = NULL;
+                    TRACELOG(LOG_WARNING, "FILEIO: [%s] Failed to read file", fileName);
                     break;
                 }
             }
@@ -334,28 +334,32 @@ char *LoadFileText(const char *fileName)
 
         if (file != NULL)
         {
-            // WARNING: When reading a file as 'text' file,
-            // text mode causes carriage return-linefeed translation...
-            // ...but using fseek() should return correct byte-offset
-            fseek(file, 0, SEEK_END);
-            unsigned int size = (unsigned int)ftell(file);
-            fseek(file, 0, SEEK_SET);
+            size_t charsRead = 0, charsAllocated = 0;
 
-            if (size > 0)
+            while (!feof(file))
             {
-                text = (char *)RL_MALLOC((size + 1)*sizeof(char));
-                unsigned int count = (unsigned int)fread(text, sizeof(char), size, file);
+                // TODO: Should granuality of forward allocation/reading be assumed to be 32
+                // or user should be given the ability to set it in config?
+                if (charsAllocated <= charsRead) text = (char *)RL_REALLOC(text, charsAllocated += 32);
 
-                // WARNING: \r\n is converted to \n on reading, so,
-                // read bytes count gets reduced by the number of lines
-                if (count < size) text = RL_REALLOC(text, count + 1);
+                // NOTE: fread() returns number of read elements instead of bytes, so we read [1 byte, size elements]
+                // NOTE: Platform specific newlines are handled in implementation specific manner
+                charsRead += fread(&text[charsRead], sizeof(char), 32, file);
 
-                // Zero-terminate the string
-                text[count] = '\0';
-
-                TRACELOG(LOG_INFO, "FILEIO: [%s] Text file loaded successfully", fileName);
+                if (ferror(file))
+                {
+                    RL_FREE(text);
+                    text = NULL;
+                    TRACELOG(LOG_WARNING, "FILEIO: [%s] Failed to read file", fileName);
+                    break;
+                }
             }
-            else TRACELOG(LOG_WARNING, "FILEIO: [%s] Failed to read text file", fileName);
+            if (text != NULL)
+            {
+                if (charsRead == charsAllocated) text = (char *)RL_REALLOC(text, charsAllocated += 1);
+                text[charsRead] = '\0';
+                TRACELOG(LOG_INFO, "FILEIO: [%s] File loaded successfully", fileName);
+            }
 
             fclose(file);
         }

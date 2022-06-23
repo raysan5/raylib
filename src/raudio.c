@@ -2438,9 +2438,9 @@ static unsigned char *LoadFileData(const char *fileName, unsigned int *bytesRead
 
                 if (ferror(file))
                 {
-                    TRACELOG(LOG_WARNING, "FILEIO: [%s] Failed to read file", fileName);
                     RL_FREE(data);
                     data = NULL;
+                    TRACELOG(LOG_WARNING, "FILEIO: [%s] Failed to read file", fileName);
                     break;
                 }
             }
