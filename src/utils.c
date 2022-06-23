@@ -197,24 +197,26 @@ unsigned char *LoadFileData(const char *fileName, unsigned int *bytesRead)
 
         if (file != NULL)
         {
-            // WARNING: On binary streams SEEK_END could not be found,
-            // using fseek() and ftell() could not work in some (rare) cases
-            fseek(file, 0, SEEK_END);
-            int size = ftell(file);
-            fseek(file, 0, SEEK_SET);
+            size_t bytesAllocated = 0;
 
-            if (size > 0)
+            while (!feof(file))
             {
-                data = (unsigned char *)RL_MALLOC(size*sizeof(unsigned char));
+                // TODO: Should granuality of forward allocation/reading be assumed to be 32
+                // or user should be given the ability to set it in config?
+                if (bytesAllocated <= *bytesRead) data = (unsigned char *)RL_REALLOC(data, bytesAllocated += 32);
 
                 // NOTE: fread() returns number of read elements instead of bytes, so we read [1 byte, size elements]
-                unsigned int count = (unsigned int)fread(data, sizeof(unsigned char), size, file);
-                *bytesRead = count;
+                *bytesRead += fread(&data[*bytesRead], sizeof(unsigned char), 32, file);
 
-                if (count != size) TRACELOG(LOG_WARNING, "FILEIO: [%s] File partially loaded", fileName);
-                else TRACELOG(LOG_INFO, "FILEIO: [%s] File loaded successfully", fileName);
+                if (ferror(file))
+                {
+                    TRACELOG(LOG_WARNING, "FILEIO: [%s] Failed to read file", fileName);
+                    RL_FREE(data);
+                    data = NULL;
+                    break;
+                }
             }
-            else TRACELOG(LOG_WARNING, "FILEIO: [%s] Failed to read file", fileName);
+            if (data != NULL) TRACELOG(LOG_INFO, "FILEIO: [%s] File loaded successfully", fileName);
 
             fclose(file);
         }
