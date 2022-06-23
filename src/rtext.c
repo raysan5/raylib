@@ -1051,7 +1051,7 @@ void DrawTextEx(Font font, const char *text, Vector2 position, float fontSize, f
         {
             // NOTE: Fixed line spacing of 1.5 line-height
             // TODO: Support custom line spacing defined by user
-            textOffsetY += (int)((font.baseSize + font.baseSize/2)*scaleFactor);
+            textOffsetY += (int)((font.baseSize + font.baseSize/2.0f)*scaleFactor);
             textOffsetX = 0.0f;
         }
         else
@@ -1123,7 +1123,7 @@ void DrawTextCodepoints(Font font, const int *codepoints, int count, Vector2 pos
         {
             // NOTE: Fixed line spacing of 1.5 line-height
             // TODO: Support custom line spacing defined by user
-            textOffsetY += (int)((font.baseSize + font.baseSize/2)*scaleFactor);
+            textOffsetY += (int)((font.baseSize + font.baseSize/2.0f)*scaleFactor);
             textOffsetX = 0.0f;
         }
         else
