@@ -1152,10 +1152,10 @@ RLAPI float GetGesturePinchAngle(void);                 // Get gesture pinch ang
 //------------------------------------------------------------------------------------
 // Camera System Functions (Module: rcamera)
 //------------------------------------------------------------------------------------
-RLAPI void InitializeCamera(Camera3D* camera, float aspect);
-RLAPI void SetCameraMode(Camera camera, int mode);      // Set camera mode (multiple camera modes available)
-RLAPI void UpdateCamera(Camera *camera);                // Update camera position for selected mode
-RLAPI Vector3 GetCameraFront(Camera* camera);
+RLAPI void InitializeCamera(Camera3D *camera, float aspect);
+RLAPI void SetCameraMode(Camera3D *camera, int mode);      // Set camera mode (multiple camera modes available)
+RLAPI void UpdateCamera(Camera3D*camera);                // Update camera position for selected mode
+RLAPI Vector3 GetCameraFront(Camera3D* camera);
 
 RLAPI void SetCameraPanControl(int keyPan);             // Set camera pan key to combine with mouse movement (free camera)
 RLAPI void SetCameraAltControl(int keyAlt);             // Set camera alt key to combine with mouse movement (free camera)
