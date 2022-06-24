@@ -2630,7 +2630,7 @@ Mesh GenMeshKnot(float radius, float size, int radSeg, int sides)
 // NOTE: Vertex data is uploaded to GPU
 Mesh GenMeshHeightmap(Image heightmap, Vector3 size)
 {
-    #define GRAY_VALUE(c) ((c.r+c.g+c.b)/3)
+    #define GRAY_VALUE(c) ((c.r+c.g+c.b)/3.0f)
 
     Mesh mesh = { 0 };
 
@@ -2653,8 +2653,6 @@ Mesh GenMeshHeightmap(Image heightmap, Vector3 size)
     int tcCounter = 0;      // Used to count texcoords float by float
     int nCounter = 0;       // Used to count normals float by float
 
-    int trisCounter = 0;
-
     Vector3 scaleFactor = { size.x/mapX, size.y/255.0f, size.z/mapZ };
 
     Vector3 vA = { 0 };
@@ -2671,15 +2669,15 @@ Mesh GenMeshHeightmap(Image heightmap, Vector3 size)
 
             // one triangle - 3 vertex
             mesh.vertices[vCounter] = (float)x*scaleFactor.x;
-            mesh.vertices[vCounter + 1] = (float)GRAY_VALUE(pixels[x + z*mapX])*scaleFactor.y;
+            mesh.vertices[vCounter + 1] = GRAY_VALUE(pixels[x + z*mapX])*scaleFactor.y;
             mesh.vertices[vCounter + 2] = (float)z*scaleFactor.z;
 
             mesh.vertices[vCounter + 3] = (float)x*scaleFactor.x;
-            mesh.vertices[vCounter + 4] = (float)GRAY_VALUE(pixels[x + (z + 1)*mapX])*scaleFactor.y;
+            mesh.vertices[vCounter + 4] = GRAY_VALUE(pixels[x + (z + 1)*mapX])*scaleFactor.y;
             mesh.vertices[vCounter + 5] = (float)(z + 1)*scaleFactor.z;
 
             mesh.vertices[vCounter + 6] = (float)(x + 1)*scaleFactor.x;
-            mesh.vertices[vCounter + 7] = (float)GRAY_VALUE(pixels[(x + 1) + z*mapX])*scaleFactor.y;
+            mesh.vertices[vCounter + 7] = GRAY_VALUE(pixels[(x + 1) + z*mapX])*scaleFactor.y;
             mesh.vertices[vCounter + 8] = (float)z*scaleFactor.z;
 
             // another triangle - 3 vertex
@@ -2692,7 +2690,7 @@ Mesh GenMeshHeightmap(Image heightmap, Vector3 size)
             mesh.vertices[vCounter + 14] = mesh.vertices[vCounter + 5];
 
             mesh.vertices[vCounter + 15] = (float)(x + 1)*scaleFactor.x;
-            mesh.vertices[vCounter + 16] = (float)GRAY_VALUE(pixels[(x + 1) + (z + 1)*mapX])*scaleFactor.y;
+            mesh.vertices[vCounter + 16] = GRAY_VALUE(pixels[(x + 1) + (z + 1)*mapX])*scaleFactor.y;
             mesh.vertices[vCounter + 17] = (float)(z + 1)*scaleFactor.z;
             vCounter += 18;     // 6 vertex, 18 floats
 
@@ -2749,7 +2747,6 @@ Mesh GenMeshHeightmap(Image heightmap, Vector3 size)
             }
 
             nCounter += 18;     // 6 vertex, 18 floats
-            trisCounter += 2;
         }
     }
 
