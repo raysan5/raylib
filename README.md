@@ -143,4 +143,4 @@ license
 
 raylib is licensed under an unmodified zlib/libpng license, which is an OSI-certified, BSD-like license that allows static linking with closed source software. Check [LICENSE](LICENSE) for further details.
 
-raylib uses libraries to manage window, graphics and inputs.The libraries are embedded in the [src/external](https://github.com/raysan5/raylib/tree/master/src/external) directory to support loading different file formats. Check [raylib dependencies LICENSES](https://github.com/raysan5/raylib/wiki/raylib-dependencies) on raylib Wiki for details.
+raylib uses a library to manage window, graphics and inputs.The libraries are compiled with raylib and avaible in the [src/external](https://github.com/raysan5/raylib/tree/master/src/external) directory to support loading different file formats. Check [raylib dependencies LICENSES](https://github.com/raysan5/raylib/wiki/raylib-dependencies) on raylib Wiki for details.
