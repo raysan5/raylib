@@ -8,8 +8,8 @@
 #    PLATFORM_DESKTOP:  OSX/macOS (arm64, x86_64)
 #    PLATFORM_DESKTOP:  FreeBSD, OpenBSD, NetBSD, DragonFly
 #    PLATFORM_ANDROID:  Android (arm, i686, arm64, x86_64)
-#    PLATFORM_RPI:      Raspberry Pi (Raspbian)
-#    PLATFORM_DRM:      Linux native mode, including Raspberry Pi 4 with V3D fkms driver
+#    PLATFORM_RPI:      Raspberry Pi (deprecated - RPI OS Buster only)
+#    PLATFORM_DRM:      Linux native mode, including Raspberry Pi (RPI OS Bullseye)
 #    PLATFORM_WEB:      HTML5 (Chrome, Firefox)
 #
 #  Many thanks to Milan Nikolic (@gen2brain) for implementing Android platform pipeline.

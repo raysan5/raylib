@@ -22,9 +22,11 @@
 *       Windowing and input system configured for Android device, app activity managed internally in this module.
 *       NOTE: OpenGL ES 2.0 is required and graphic device is managed by EGL
 *
-*   #define PLATFORM_RPI
+*   #define PLATFORM_RPI (deprecated - RPI OS Buster only)
 *       Windowing and input system configured for Raspberry Pi in native mode (no XWindow required),
 *       graphic device is managed by EGL and inputs are processed is raw mode, reading from /dev/input/
+*       WARNING: This platform is deprecated, since RPI OS Bullseye, the old Dispmanx libraries are not
+*       supported and you must be using PLATFORM_DRM
 *
 *   #define PLATFORM_DRM
 *       Windowing and input system configured for DRM native mode (RPI4 and other devices)
