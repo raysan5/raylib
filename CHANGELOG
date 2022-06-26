@@ -4,13 +4,13 @@ changelog
 Current Release:    raylib 4.0.0 (05 November 2021)
 
 -------------------------------------------------------------------------
-Release:     raylib 4.2 (June 2022)
+Release:     raylib 4.2 (July 2022)
 -------------------------------------------------------------------------
 KEY CHANGES:
- - ... 
  - rres 1.0
  - raygui 3.2
  - raylib_parser...
+ - REMOVED extras libraries
  
 Detailed changes:
 [multi] REVIEWED: Multiple trace log messages
@@ -28,11 +28,14 @@ Detailed changes:
 [core] ADDED: Modules info at initialization
 [core] ADDED: Support clipboard copy/paste on web
 [core] ADDED: Support OpenURL() on Android platform (#2396) by @futureapricot
+[core] ADDED: Support MOUSE_PASSTHROUGH (#2516)
+[core] ADDED: GetMouseWheelMoveV() (#2517) by @schveiguy
 [core] `WARNING`: RENAMED: GetDirectoryFiles() to LoadDirectoryFiles()
 [core] `WARNING`: RENAMED: `ClearDroppedFiles()` to `UnloadDroppedFiles()`
 [core] `WARNING`: RENAMED: GetDroppedFiles() to LoadDroppedFiles()
 [core] `WARNING`: RENAMED: `ClearDirectoryFiles()` to `UnloadDirectoryFiles()`
 [core] `WARNING`: REDESIGNED: WaitTime() argument from milliseconds to seconds (#2506) by @flashback-fx
+[core] REVIEWED: GetMonitorWidth()/GetMonitorHeight() by @gulrak
 [core] REVIEWED: GetDirectoryFiles(), maximum files allocation (#2126) by @ampers0x26
 [core] REVIEWED: Expose MAX_KEYBOARD_KEYS and MAX_MOUSE_BUTTONS (#2127)
 [core] REVIEWED: ExportMesh() (#2138)
@@ -49,7 +52,7 @@ Detailed changes:
 [core] REVIEWED: Improved boolean definitions (#2485) by @noodlecollie
 [core] REVIEWED: TakeScreenshot(), use GetWindowScaleDPI() to calculate size in screenshot/recording (#2446) by @gulrak
 [core] REVIEWED: Remove fps requirement for drm connector selection (#2468) by @Crydsch
-[core] REVIEWED: OpenURL()
+[core] REVIEWED: IsFileExtension() #2530
 [rlgl] ADDED: Premultiplied alpha blend mode (#2342) by @megagrump
 [rlgl] REVIEWED: VR rendering not taking render target size into account (#2424) by @FireFlyForLife
 [rlgl] REVIEWED: Set rlgl internal framebuffer (#2420)
@@ -61,6 +64,9 @@ Detailed changes:
 [rlgl] REVIEWED: Clear SSBO buffers on loading (#2185)
 [rlgl] REVIEWED: rlLoadShaderCode(), improved shader loading code
 [rlgl] REVIEWED: Comment notes about custom blend modes (#2260) by @glorantq
+[rlgl] REVIEWED: rlGenTextureMipmaps()
+[rlgl] REVIEWED: rlTextureParameters()
+[raymath] ADDED: Wrap() (#2522) by @Tekkitslime
 [raymath] ADDED: Vector2Transform()
 [raymath] ADDED: Vector2DistanceSqr() (#2376) by @AnilBK
 [raymath] ADDED: Vector3DistanceSqr() (#2376) by @AnilBK
@@ -85,12 +91,14 @@ Detailed changes:
 [textures] REVIEWED: LoadTextureCubemap() (#2223, #2224)
 [textures] REVIEWED: Export format for float 32bit
 [textures] REVIEWED: ExportImage(), support export ".jpeg" files
+[textures] REVIEWED: ColorAlphaBlend() (#2524) by @royqh1979
 [text] ADDED: ExportFontAsCode()
 [text] ADDED: DrawTextCodepoints() (#2308) by @siddharthroy12
 [text] REVIEWED: TextIsEqual(), protect from NULLs (#2121) by @lukekras
 [text] REVIEWED: LoadFontEx(), comment to specify how to get the default character set (#2221) by @JeffM2501 
 [text] REVIEWED: GenImageFontAtlas(), increase atlas size guesstimate by @megagrump
 [text] REVIEWED: GetCodepoint() (#2201)
+[text] REVIEWED: ExportFontAsCode() to use given font padding (#2525) by @TheTophatDemon
 [models] ADDED: Reference code to load bones id and weight data for animations
 [models] `WARNING`: REMOVED: GetRayCollisionModel() (#2405)
 [models] REVIEWED: External library: vox_loader.h, 64bit issue (#2186)
@@ -111,6 +119,7 @@ Detailed changes:
 [audio] REVIEWED: Fix crash with delay example (#2472) by @ptarabbia
 [audio] REVIEWED: PlaySoundMulti() (#2231)
 [audio] REVIEWED: ExportWaveAsCode()
+[audio] REVIEWED: UpdateMusicStream(), reduce dynamic allocations (#2532) by @dbechrd
 [utils] ADDED: ExportDataAsCode()
 [utils] REVIEWED: Force flush stdout after trace messages (#2465) by @nagy
 [easings] ADDED: Function descriptions (#2471) by @RobLoach
@@ -122,6 +131,8 @@ Detailed changes:
 [examples] REVIEWED: shaders_raymarching
 [examples] REVIEWED: audio_raw_stream (#2205) by ptarabbia 
 [examples] REVIEWED: audio_music_stream
+[examples] REVIEWED: shaders_mesh_instancing, simplified
+[examples] REVIEWED: shaders_basic_lighting, rlights.h simplified
 [parser] ADDED: Defines to parser (#2269) by @iskolbin
 [parser] ADDED: Aliases to parser (#2444) by @lazaray
 [parser] ADDED: Parse struct descriptions (#2214) by @eutro
