@@ -761,9 +761,6 @@ Image GenImageFontAtlas(const GlyphInfo *chars, Rectangle **charRecs, int glyphC
                     if (offsetY > (atlas.height - fontSize - padding))
                     {
                         // The current atlas is too small to hold all glyphs, so move to the next atlas size
-                        
-
-
                         currentRepeatCount++;
                         undersizedAtlasFlag = true;
                        
