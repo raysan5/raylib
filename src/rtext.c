@@ -690,6 +690,10 @@ Image GenImageFontAtlas(const GlyphInfo *chars, Rectangle **charRecs, int glyphC
     float guessSize = sqrtf(requiredArea)*1.4f;
     int imageSize = (int)powf(2, ceilf(logf((float)guessSize)/logf(2)));  // Calculate next POT
 
+    int currentRepeatCount = 0;
+    const int maxRepeatCount = 2;
+    bool undersizedAtlasFlag = false;
+
     atlas.width = imageSize;   // Atlas bitmap width
     atlas.height = imageSize;  // Atlas bitmap height
     atlas.data = (unsigned char *)RL_CALLOC(1, atlas.width*atlas.height);      // Create a bitmap to store characters (8 bpp)
@@ -701,52 +705,88 @@ Image GenImageFontAtlas(const GlyphInfo *chars, Rectangle **charRecs, int glyphC
 
     if (packMethod == 0)   // Use basic packing algorithm
     {
-        int offsetX = padding;
-        int offsetY = padding;
-
-        // NOTE: Using simple packaging, one char after another
-        for (int i = 0; i < glyphCount; i++)
+        // When the guesstimate of the atlas size is determined to be undersized,
+        // repeat the atlas generation process with an atlas data texture of a size
+        // that is double the previous size, up to a limit of `maxRepeatCount` times
+        while (currentRepeatCount < maxRepeatCount)
         {
-            // Copy pixel data from fc.data to atlas
-            for (int y = 0; y < chars[i].image.height; y++)
+            if (currentRepeatCount > 0) 
             {
-                for (int x = 0; x < chars[i].image.width; x++)
-                {
-                    ((unsigned char *)atlas.data)[(offsetY + y)*atlas.width + (offsetX + x)] = ((unsigned char *)chars[i].image.data)[y*chars[i].image.width + x];
-                }
+                // Recreate the atlas for the new, doubled size when all glyphs don't fit on the previous-sized atlas
+                // (but not on the first pass)
+                RL_FREE(atlas.data);
+                
+                atlas.width = atlas.width*2;   // Atlas bitmap width
+                atlas.height = atlas.height*2;  // Atlas bitmap height
+                atlas.data = (unsigned char *)RL_CALLOC(1, atlas.width*atlas.height);      // Create a bitmap to store characters (8 bpp)
+                TRACELOG(LOG_INFO, "FONT: Font atlas undersized, expanding atlas to %ix%i", atlas.width, atlas.height);
+                
+                undersizedAtlasFlag = false;
             }
 
-            // Fill chars rectangles in atlas info
-            recs[i].x = (float)offsetX;
-            recs[i].y = (float)offsetY;
-            recs[i].width = (float)chars[i].image.width;
-            recs[i].height = (float)chars[i].image.height;
+            int offsetX = padding;
+            int offsetY = padding;
 
-            // Move atlas position X for next character drawing
-            offsetX += (chars[i].image.width + 2*padding);
-
-            if (offsetX >= (atlas.width - chars[i].image.width - 2*padding))
+            // NOTE: Using simple packaging, one char after another
+            for (int i = 0; i < glyphCount; i++)
             {
-                offsetX = padding;
-
-                // NOTE: Be careful on offsetY for SDF fonts, by default SDF
-                // use an internal padding of 4 pixels, it means char rectangle
-                // height is bigger than fontSize, it could be up to (fontSize + 8)
-                offsetY += (fontSize + 2*padding);
-
-                if (offsetY > (atlas.height - fontSize - padding))
+                // Copy pixel data from fc.data to atlas
+                for (int y = 0; y < chars[i].image.height; y++)
                 {
-                    for(int j = i + 1; j < glyphCount; j++)
+                    for (int x = 0; x < chars[i].image.width; x++)
                     {
-                        TRACELOG(LOG_WARNING, "FONT: Failed to package character (%i)", j);
-                        // make sure remaining recs contain valid data
-                        recs[j].x = 0;
-                        recs[j].y = 0;
-                        recs[j].width = 0;
-                        recs[j].height = 0;
+                        ((unsigned char *)atlas.data)[(offsetY + y)*atlas.width + (offsetX + x)] = ((unsigned char *)chars[i].image.data)[y*chars[i].image.width + x];
                     }
-                    break;
                 }
+
+                // Fill chars rectangles in atlas info
+                recs[i].x = (float)offsetX;
+                recs[i].y = (float)offsetY;
+                recs[i].width = (float)chars[i].image.width;
+                recs[i].height = (float)chars[i].image.height;
+
+                // Move atlas position X for next character drawing
+                offsetX += (chars[i].image.width + 2*padding);
+
+                if (offsetX >= (atlas.width - chars[i].image.width - 2*padding))
+                {
+                    offsetX = padding;
+
+                    // NOTE: Be careful on offsetY for SDF fonts, by default SDF
+                    // use an internal padding of 4 pixels, it means char rectangle
+                    // height is bigger than fontSize, it could be up to (fontSize + 8)
+                    offsetY += (fontSize + 2*padding);
+
+                    if (offsetY > (atlas.height - fontSize - padding))
+                    {
+                        // The current atlas is too small to hold all glyphs, so move to the next atlas size
+                        
+
+
+                        currentRepeatCount++;
+                        undersizedAtlasFlag = true;
+                       
+                        // If the process repeats more times than the defined limit, abort and log the unpackaged characters
+                        for(int j = i + 1; j < glyphCount; j++)
+                        {
+                            if (currentRepeatCount > maxRepeatCount)
+                            {
+                                TRACELOG(LOG_WARNING, "FONT: Failed to package character (%i)", j);
+                            }
+                            // make sure remaining recs contain valid data
+                            recs[j].x = 0;
+                            recs[j].y = 0;
+                            recs[j].width = 0;
+                            recs[j].height = 0;
+                        }
+                        break;
+                    }
+                }
+            }
+            // After any pass, if all the glyphs fit, immediately end the packing process
+            if (!undersizedAtlasFlag)
+            {
+                break;
             }
         }
     }
