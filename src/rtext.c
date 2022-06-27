@@ -715,12 +715,13 @@ Image GenImageFontAtlas(const GlyphInfo *chars, Rectangle **charRecs, int glyphC
                 // Recreate the atlas for the new, doubled size when all glyphs don't fit on the previous-sized atlas
                 // (but not on the first pass)
                 RL_FREE(atlas.data);
+
+                TRACELOG(LOG_INFO, "FONT: Font atlas of size %ix%i undersized, expanding atlas to %ix%i", atlas.width, atlas.height, atlas.width*2, atlas.height*2);
                 
                 atlas.width = atlas.width*2;   // Atlas bitmap width
                 atlas.height = atlas.height*2;  // Atlas bitmap height
                 atlas.data = (unsigned char *)RL_CALLOC(1, atlas.width*atlas.height);      // Create a bitmap to store characters (8 bpp)
-                TRACELOG(LOG_INFO, "FONT: Font atlas undersized, expanding atlas to %ix%i", atlas.width, atlas.height);
-                
+                                                                                           //
                 undersizedAtlasFlag = false;
             }
 
