@@ -3332,7 +3332,7 @@ void DrawBillboardRec(Camera camera, Texture2D texture, Rectangle source, Vector
 void DrawBillboardPro(Camera camera, Texture2D texture, Rectangle source, Vector3 position, Vector3 up, Vector2 size, Vector2 origin, float rotation, Color tint)
 {
     // NOTE: Billboard size will maintain source rectangle aspect ratio, size will represent billboard width
-    Vector2 sizeRatio = { size.x*(float)source.height/source.width, size.y };
+    Vector2 sizeRatio = { size.x*(float)source.width/source.height, size.y };
 
     Matrix matView = MatrixLookAt(camera.position, camera.target, camera.up);
 
