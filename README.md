@@ -89,7 +89,7 @@ raylib is also available via multiple [package managers](https://github.com/rays
 
 #### Installing and building raylib on multiple platforms
 
-The [raylib Wiki](https://github.com/raysan5/raylib/wiki#development-platforms) contains detailed instructions on building and usage on multiple platforms.
+[raylib Wiki](https://github.com/raysan5/raylib/wiki#development-platforms) contains detailed instructions on building and usage on multiple platforms.
 
  - [Working on Windows](https://github.com/raysan5/raylib/wiki/Working-on-Windows)
  - [Working on macOS](https://github.com/raysan5/raylib/wiki/Working-on-macOS)
@@ -116,7 +116,7 @@ learning and docs
 
 raylib is designed to be learned using [the examples](https://github.com/raysan5/raylib/tree/master/examples) as the main reference. There is no standard API documentation but there is a [**cheatsheet**](https://www.raylib.com/cheatsheet/cheatsheet.html) containing all the functions available on the library a short description of each one of them, input parameters and result value names should be intuitive enough to understand how each function works. 
 
-Some additional documentation about raylib design can be found in the raylib GitHub Wiki. Here are the relevant links:
+Some additional documentation about raylib design can be found in   raylib GitHub Wiki. Here are the relevant links:
 
  - [raylib cheatsheet](https://www.raylib.com/cheatsheet/cheatsheet.html)
  - [raylib architecture](https://github.com/raysan5/raylib/wiki/raylib-architecture)
@@ -128,7 +128,7 @@ Some additional documentation about raylib design can be found in the raylib Git
 contact and networks
 ---------------------
 
-raylib is present in several networks and the raylib community is growing everyday. If you are using raylib and enjoying it, feel free to join us in any of these networks. The most active network is our [Discord server](https://discord.gg/raylib)! :)
+raylib is present in several networks and raylib community is growing everyday. If you are using raylib and enjoying it, feel free to join us in any of these networks. The most active network is our [Discord server](https://discord.gg/raylib)! :)
 
  - Webpage: [https://www.raylib.com](https://www.raylib.com)
  - Discord: [https://discord.gg/raylib](https://discord.gg/raylib)
@@ -143,4 +143,4 @@ license
 
 raylib is licensed under an unmodified zlib/libpng license, which is an OSI-certified, BSD-like license that allows static linking with closed source software. Check [LICENSE](LICENSE) for further details.
 
-raylib internally uses some libraries for window/graphics/inputs management and also to support different fileformats loading, all those libraries are embedded with and are available in [src/external](https://github.com/raysan5/raylib/tree/master/src/external) directory. Check [raylib dependencies LICENSES](https://github.com/raysan5/raylib/wiki/raylib-dependencies) on the raylib Wiki for details.
+raylib uses internally some libraries for window/graphics/inputs management and also to support different fileformats loading, all those libraries are embedded with and are available in [src/external](https://github.com/raysan5/raylib/tree/master/src/external) directory. Check [raylib dependencies LICENSES](https://github.com/raysan5/raylib/wiki/raylib-dependencies) on raylib Wiki for details.
