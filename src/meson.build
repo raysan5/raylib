@@ -9,7 +9,7 @@ raylib_src = [
   'utiles.c'
 ]
 
-ray_lib = static_library('raylib,
+ray_lib = library('raylib,
   raylib_src,
   include_directories: '.',
   install: true)
