@@ -1,5 +1,3 @@
-subdir('external')
-
 raylib_src = [
   'raudio.c',
   'rcore.c',
@@ -11,6 +9,9 @@ raylib_src = [
   'utiles.c'
 ]
 
-ray_lib = static_library('raylib, raylib_src, ray_externs, include_directories: '.')
+ray_lib = static_library('raylib,
+  raylib_src,
+  dependencies : [glfw_dep],
+  include_directories: '.')
 
 ray_dep = declare_dependency(link_with: ray_lib, include_directories: '.')
