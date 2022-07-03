@@ -11,8 +11,7 @@ raylib_src = [
 
 ray_lib = static_library('raylib,
   raylib_src,
-  dependencies : [glfw_dep],
-  include_directories: '.'
+  include_directories: '.',
   install: true)
 
 ray_dep = declare_dependency(link_with: ray_lib, include_directories: '.')
