@@ -31,9 +31,9 @@ Some people ported raylib to other languages in form of bindings or wrappers to 
 | node-raylib        | **4.0** | [Node.js](https://nodejs.org/en/)    | Zlib     | https://github.com/RobLoach/node-raylib         |
 | raylib-php         | 3.5     | [PHP](https://en.wikipedia.org/wiki/PHP) | Zlib | https://github.com/joseph-montanez/raylib-php   |
 | raylib-phpcpp      | 3.5     | [PHP](https://en.wikipedia.org/wiki/PHP) | Zlib | https://github.com/oraoto/raylib-phpcpp         |
-| raylib-factor      | 3.5     | [Factor](https://factorcode.org/)        | MIT  | https://github.com/ArnautDaniel/raylib-factor   |
+| raylib-factor      | **4.0**     | [Factor](https://factorcode.org/)        | BSD  | https://github.com/factor/factor/blob/master/extra/raylib/raylib.factor   |
 | gforth-raylib      | 3.5     | [Gforth](https://gforth.org/)            | MIT  | https://github.com/ArnautDaniel/gforth-raylib   |
-| hxRaylib           | 4.0     | [Haxe](https://haxe.org/)                | Zlib | https://github.com/ForeignSasquatch/hxRaylib    |
+| raylib-hx          | 4.0     | [Haxe](https://haxe.org/)                | Zlib | https://github.com/foreignsasquatch/raylib-hx    |
 | raylib-wren        | **4.0** | [Wren](http://wren.io/)              | ISC | https://github.com/TSnake41/raylib-wren              |
 | raylib_odin_bindings | 4.0-dev | [Odin](https://odin-lang.org/)     | MIT | https://github.com/Deathbat2190/raylib_odin_bindings |
 | raylib-odin        | **4.0** | [Odin](https://odin-lang.org/)       | BSD-3Clause | https://github.com/odin-lang/Odin/tree/master/vendor/raylib  |
@@ -44,13 +44,16 @@ Some people ported raylib to other languages in form of bindings or wrappers to 
 | Relib              | 3.5     | [ReCT](https://github.com/RedCubeDev-ByteSpace/ReCT) | ?   | https://github.com/RedCubeDev-ByteSpace/Relib |
 | rayex              | 3.7     | [elixir](https://elixir-lang.org/)      | Apache-2.0 | https://github.com/shiryel/rayex     |
 | kaylib             | 3.7     | [Kotlin/native](https://kotlinlang.org) | ? | https://github.com/electronstudio/kaylib      |
-| dlang_raylib       | 3.7     | [D](https://dlang.org)                  | ? |https://github.com/rc-05/dlang_raylib          |
+| dlang_raylib       | **4.0** | [D](https://dlang.org)                  | MPL-2.0 |https://github.com/rc-05/dlang_raylib          |
 | raylib-freebasic   | **4.0** | [FreeBASIC](https://www.freebasic.net/) | MIT | https://github.com/WIITD/raylib-freebasic     |
 | raylib-cr          | **4.0** | [Crystal](https://crystal-lang.org/)    | Apache-2.0 | https://github.com/sol-vin/raylib-cr |
 | dart-raylib        | **4.0** | [Dart](https://dart.dev/)               | MIT | https://gitlab.com/wolfenrain/dart-raylib   |
 | raylib-scopes      | auto    | [Scopes](http://scopes.rocks)          | MIT | https://github.com/salotz/raylib-scopes   |
 | raylib-smallBasic  | 4.1-dev | [SmallBASIC](https://github.com/smallbasic/SmallBASIC) | GPLv3 | https://github.com/smallbasic/smallbasic.plugins/tree/master/raylib |
 | raylib-zig         | **4.0** | [Zig](https://ziglang.org/)               | MIT | https://github.com/Not-Nik/raylib-zig     |
+| raylib.zig         | **4.1-dev** | [Zig](https://ziglang.org/)               | MIT | https://github.com/ryupold/raylib.zig |
+| racket-raylib      | **4.0** | [Racket](https://racket-lang.org/) | MIT/Apache-2.0 | https://github.com/eutro/racket-raylib |
+| cl-raylib          | **4.0** | [Common Lisp](https://common-lisp.net/)   | MIT | https://github.com/longlene/cl-raylib     |
 
 ### Utility Wrapers
 These are utility wrappers for specific languages, they are not required to use raylib in the language but may adapt the raylib API to be more inline with the language's pardigm.
@@ -101,14 +104,13 @@ These are older raylib bindings that are more than 2 versions old or have not be
 | raylib-php-ffi     | 2.4-dev | [PHP](https://en.wikipedia.org/wiki/PHP)      | https://github.com/oraoto/raylib-php-ffi      |
 | raylib-haxe        | 2.4 | [Haxe](https://haxe.org/)                  | https://github.com/ibilon/raylib-haxe           |
 | ringraylib         | 2.6 | [Ring](http://ring-lang.sourceforge.net/)  | https://github.com/ringpackages/ringraylib     |
-| cl-raylib          | 3.0 | [Common Lisp](https://common-lisp.net/)    | https://github.com/longlene/cl-raylib    |
 | raylib-scm         | 2.5 | [Chicken Scheme](https://www.call-cc.org/) | https://github.com/yashrk/raylib-scm     |
 | raylib-chibi       | 2.5 | [Chibi-Scheme](https://github.com/ashinn/chibi-scheme)   | https://github.com/VincentToups/raylib-chibi  |
 | raylib-gambit-scheme | 3.1-dev | [Gambit Scheme](https://github.com/gambit/gambit)   | https://github.com/georgjz/raylib-gambit-scheme  |
 | Euraylib           | 3.0 | [Euphoria](https://openeuphoria.org/)      | https://github.com/gAndy50/Euraylib          |
 | raylib-odin        | 3.0 | [Odin](https://odin-lang.org/)             | https://github.com/kevinw/raylib-odin     |
 | vraylib            | 3.5 | [V](https://vlang.io/)                     | https://github.com/waotzi/vraylib      |
-| raylib-jai         | 3.1-dev | [Jai](https://github.com/BSVino/JaiPrimer/blob/master/JaiPrimer.md)  | https://github.com/kevinw/raylib-jai   |
+| raylib-jai         | 3.1-dev | [Jai](https://github.com/BSVino/JaiPrimer/blob/master/JaiPrimer.md)  | https://github.com/kujukuju/raylib-jai   |
 | ray.zig            | 2.5 | [Zig](https://ziglang.org/)                | https://github.com/BitPuffin/zig-raylib-experiments |
 | raylib-Ada         | 3.0 | [Ada](https://www.adacore.com/about-ada)   | https://github.com/mimo/raylib-Ada        |
 | jaylib             | 3.0 | [Janet](https://janet-lang.org/)           | https://github.com/janet-lang/jaylib      |

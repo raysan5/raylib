@@ -64,6 +64,9 @@ typedef struct Star {
 void UpdateStar(Star *s);
 void ResetStar(Star *s);
 
+//------------------------------------------------------------------------------------
+// Program main entry point
+//------------------------------------------------------------------------------------
 int main(void)
 {
     // Initialization

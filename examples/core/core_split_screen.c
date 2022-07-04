@@ -40,6 +40,9 @@ void DrawScene(void)
     DrawCube(cameraPlayer2.position, 1, 1, 1, BLUE);
 }
 
+//------------------------------------------------------------------------------------
+// Program main entry point
+//------------------------------------------------------------------------------------
 int main(void)
 {
     // Initialization

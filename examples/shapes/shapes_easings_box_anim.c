@@ -11,8 +11,11 @@
 
 #include "raylib.h"
 
-#include "extras/easings.h"            // Required for easing functions
+#include "easings.h"            // Required for easing functions
 
+//------------------------------------------------------------------------------------
+// Program main entry point
+//------------------------------------------------------------------------------------
 int main(void)
 {
     // Initialization

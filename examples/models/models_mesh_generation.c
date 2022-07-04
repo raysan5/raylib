@@ -15,6 +15,9 @@
 
 static Mesh GenMeshCustom(void);    // Generate a simple triangle mesh from code
 
+//------------------------------------------------------------------------------------
+// Program main entry point
+//------------------------------------------------------------------------------------
 int main(void)
 {
     // Initialization

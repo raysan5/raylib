@@ -56,9 +56,7 @@ enum EasingTypes {
     EASING_NONE = NUM_EASING_TYPES
 };
 
-
 static float NoEase(float t, float b, float c, float d);  // NoEase function declaration, function used when "no easing" is selected for any axis
-
 
 // Easing functions reference data
 static const struct {
@@ -96,7 +94,9 @@ static const struct {
     [EASING_NONE] = { .name = "None", .func = NoEase },
 };
 
-
+//------------------------------------------------------------------------------------
+// Program main entry point
+//------------------------------------------------------------------------------------
 int main(void)
 {
     // Initialization

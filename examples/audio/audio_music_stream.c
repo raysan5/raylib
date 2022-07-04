@@ -54,6 +54,9 @@ static void AudioProcessEffectDelay(void *buffer, unsigned int frames)
     }
 }
 
+//------------------------------------------------------------------------------------
+// Program main entry point
+//------------------------------------------------------------------------------------
 int main(void)
 {
     // Initialization
@@ -68,15 +71,16 @@ int main(void)
     Music music = LoadMusicStream("resources/country.mp3");
 
     // Allocate buffer for the delay effect
-    delayBuffer = (float *)RL_CALLOC(48000*2, sizeof(float));   // 1 second delay (device sampleRate*channels)
+    delayBufferSize = 48000 * 2;
+    delayBuffer = (float *)RL_CALLOC(delayBufferSize, sizeof(float));   // 1 second delay (device sampleRate*channels)
 
     PlayMusicStream(music);
 
     float timePlayed = 0.0f;
     bool pause = false;
 
-    bool hasFilter = false;
-    bool hasDelay = false;
+    bool hasFilter = true;
+    bool hasDelay = true;
 
     SetTargetFPS(60);               // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------

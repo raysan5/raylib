@@ -138,7 +138,6 @@ Examples using raylib models functionality, including models loading/generation 
 | 82 | [models_yaw_pitch_roll](models/models_yaw_pitch_roll.c)                   | <img src="models/models_yaw_pitch_roll.png" alt="models_yaw_pitch_roll" width="200">                   | [Berni](https://github.com/Berni8k)              | ⭐️    |
 | 83 | [models_heightmap](models/models_heightmap.c)                             | <img src="models/models_heightmap.png" alt="models_heightmap" width="200">                             | ray                                              |        |
 | 84 | [models_waving_cubes](models/models_waving_cubes.c)                       | <img src="models/models_waving_cubes.png" alt="models_waving_cubes" width="200">                       | [codecat](https://github.com/codecat)            |        |
-| -- | [models_gltf_model](models/models_gltf_model.c)                           | <img src="models/models_gltf_model.png" alt="models_gltf_model" width="200">                           | [object71](https://github.com/object71)          | ⭐️     |
 
 ### category: shaders
 
@@ -175,18 +174,6 @@ Examples using raylib audio functionality, including sound/music loading and pla
 | 104 | [audio_raw_stream](audio/audio_raw_stream.c)                 | <img src="audio/audio_raw_stream.png" alt="audio_raw_stream" width="200">                 | ray                                          |        |
 | 105 | [audio_sound_loading](audio/audio_sound_loading.c)           | <img src="audio/audio_sound_loading.png" alt="audio_sound_loading" width="200">           | ray                                          |        |
 | 106 | [audio_multichannel_sound](audio/audio_multichannel_sound.c) | <img src="audio/audio_multichannel_sound.png" alt="audio_multichannel_sound" width="200"> | [Chris Camacho](https://github.com/codifies) | ⭐️     |
-
-### category: physics
-
-Examples showing physics functionality with raylib. This functionality is provided by [physac](https://github.com/victorfisac/Physac) library, included with raylib [sources](../src/physac.h). Note this library is not linked with raylib by default, it should be manually included in user code.
-
-| ## | example  | image  | developer  | new |
-|----|----------|--------|:----------:|:---:|
-| 107 | [physics_demo](physics/physics_demo.c)               | <img src="physics/physics_demo.png" alt="physics_demo" width="200">               | [Victor Fisac](https://github.com/victorfisac) |        |
-| 108 | [physics_friction](physics/physics_friction.c)       | <img src="physics/physics_friction.png" alt="physics_friction" width="200">       | [Victor Fisac](https://github.com/victorfisac) |        |
-| 109 | [physics_movement](physics/physics_movement.c)       | <img src="physics/physics_movement.png" alt="physics_movement" width="200">       | [Victor Fisac](https://github.com/victorfisac) |        |
-| 110 | [physics_restitution](physics/physics_restitution.c) | <img src="physics/physics_restitution.png" alt="physics_restitution" width="200"> | [Victor Fisac](https://github.com/victorfisac) |        |
-| 111 | [physics_shatter](physics/physics_shatter.c)         | <img src="physics/physics_shatter.png" alt="physics_shatter" width="200">         | [Victor Fisac](https://github.com/victorfisac) |        |
 
 ### category: others
 

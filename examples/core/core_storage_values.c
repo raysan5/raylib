@@ -17,6 +17,9 @@ typedef enum {
     STORAGE_POSITION_HISCORE    = 1
 } StorageData;
 
+//------------------------------------------------------------------------------------
+// Program main entry point
+//------------------------------------------------------------------------------------
 int main(void)
 {
     // Initialization

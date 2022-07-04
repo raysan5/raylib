@@ -13,6 +13,9 @@
 
 #define NUM_TEXTURES  6      // Currently we have 7 generation algorithms
 
+//------------------------------------------------------------------------------------
+// Program main entry point
+//------------------------------------------------------------------------------------
 int main(void)
 {
     // Initialization

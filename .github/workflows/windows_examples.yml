@@ -14,6 +14,9 @@ on:
       - 'examples/**'
       - '.github/workflows/windows_examples.yml'
     
+permissions:
+  contents: read
+
 jobs:
   build:
     runs-on: windows-latest

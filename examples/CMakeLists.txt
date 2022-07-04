@@ -106,6 +106,11 @@ elseif (${PLATFORM} MATCHES "Web")
     # does not generate HTML+JS+WASM files, only a non-working
     # and fat HTML
     string(REPLACE "-rdynamic" "" CMAKE_SHARED_LIBRARY_LINK_C_FLAGS "${CMAKE_SHARED_LIBRARY_LINK_C_FLAGS}")
+
+elseif (${PLATFORM} STREQUAL "DRM")
+    list(REMOVE_ITEM example_sources ${CMAKE_CURRENT_SOURCE_DIR}/others/rlgl_standalone.c)
+    list(REMOVE_ITEM example_sources ${CMAKE_CURRENT_SOURCE_DIR}/others/raylib_opengl_interop.c)
+
 endif ()
 
 include_directories(BEFORE SYSTEM others/external/include)
