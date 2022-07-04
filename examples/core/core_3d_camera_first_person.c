@@ -49,6 +49,9 @@ int main(void)
 
     SetCameraMode(camera, CAMERA_FIRST_PERSON); // Set a first person camera mode
 
+    // Catch cursor
+    DisableCursor();
+
     SetTargetFPS(60);                           // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
 
