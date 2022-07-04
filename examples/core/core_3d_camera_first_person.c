@@ -47,7 +47,7 @@ int main(void)
         colors[i] = (Color){ GetRandomValue(20, 255), GetRandomValue(10, 55), 30, 255 };
     }
 
-    SetCameraMode(camera, CAMERA_FIRST_PERSON); // Set a first person camera mode
+    SetCameraMode(&camera, CAMERA_FIRST_PERSON); // Set a first person camera mode
 
     // Catch cursor
     DisableCursor();
