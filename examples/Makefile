@@ -388,7 +388,6 @@ CORE = \
     core/core_storage_values \
     core/core_vr_simulator \
     core/core_loading_thread \
-    core/core_quat_conversion \
     core/core_window_flags \
     core/core_split_screen \
     core/core_smooth_pixelperfect \
