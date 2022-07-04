@@ -19,7 +19,6 @@
 #include "rlights.h"
 
 #include <stdlib.h>         // Required for: calloc(), free()
-#include <math.h>           // Required for: 
 
 #if defined(PLATFORM_DESKTOP)
     #define GLSL_VERSION            330
@@ -27,7 +26,7 @@
     #define GLSL_VERSION            100
 #endif
 
-#define MAX_INSTANCES  8000
+#define MAX_INSTANCES  10000
 
 //------------------------------------------------------------------------------------
 // Program main entry point
@@ -87,7 +86,9 @@ int main(void)
     matInstances.shader = shader;
     matInstances.maps[MATERIAL_MAP_DIFFUSE].color = RED;
 
-    // Create a defult material with default internal shader for non-instanced mesh drawing
+    // Load default material (using raylib intenral default shader) for non-instanced mesh drawing
+    // WARNING: Default shader enables vertex color attribute BUT GenMeshCube() does not generate vertex colors, so,
+    // when drawing the color attribute is disabled and a default color value is provided as input for thevertex attribute
     Material matDefault = LoadMaterialDefault();
     matDefault.maps[MATERIAL_MAP_DIFFUSE].color = BLUE;
 
