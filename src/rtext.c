@@ -690,7 +690,6 @@ Image GenImageFontAtlas(const GlyphInfo *chars, Rectangle **charRecs, int glyphC
     float guessSize = sqrtf(requiredArea)*1.4f;
     int imageSize = (int)powf(2, ceilf(logf((float)guessSize)/logf(2)));  // Calculate next POT
 
-    int currentRepeatCount = 0;
     const int maxRepeatCount = 2;
     bool undersizedAtlasFlag = false;
 
@@ -708,7 +707,7 @@ Image GenImageFontAtlas(const GlyphInfo *chars, Rectangle **charRecs, int glyphC
         // When the guesstimate of the atlas size is determined to be undersized,
         // repeat the atlas generation process with an atlas data texture of a size
         // that is double the previous size, up to a limit of `maxRepeatCount` times
-        while (currentRepeatCount < maxRepeatCount)
+        for (int currentRepeatCount = 0; currentRepeatCount <= maxRepeatCount; currentRepeatCount++)
         {
             if (currentRepeatCount > 0) 
             {
@@ -761,13 +760,12 @@ Image GenImageFontAtlas(const GlyphInfo *chars, Rectangle **charRecs, int glyphC
                     if (offsetY > (atlas.height - fontSize - padding))
                     {
                         // The current atlas is too small to hold all glyphs, so move to the next atlas size
-                        currentRepeatCount++;
                         undersizedAtlasFlag = true;
                        
                         // If the process repeats more times than the defined limit, abort and log the unpackaged characters
                         for(int j = i + 1; j < glyphCount; j++)
                         {
-                            if (currentRepeatCount > maxRepeatCount)
+                            if (currentRepeatCount == maxRepeatCount)
                             {
                                 TRACELOG(LOG_WARNING, "FONT: Failed to package character (%i)", j);
                             }
