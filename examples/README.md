@@ -46,7 +46,6 @@ Examples using raylib core platform functionality like window creation, inputs, 
 | 20 | [core_storage_values](core/core_storage_values.c)                 | <img src="core/core_storage_values.png" alt="core_storage_values" width="200">                 | ray                                               |        |
 | 21 | [core_vr_simulator](core/core_vr_simulator.c)                     | <img src="core/core_vr_simulator.png" alt="core_vr_simulator" width="200">                     | ray                                               | ⭐️     |
 | 22 | [core_loading_thread](core/core_loading_thread.c)                 | <img src="core/core_loading_thread.png" alt="core_loading_thread" width="200">                 | ray                                               |        |
-| 23 | [core/core_quat_conversion](core/core_quat_conversion.c)          | <img src="core/core_quat_conversion.png" alt="core_quat_conversion" width="200">               | [Chris Camacho](https://github.com/codifies)      |        |
 | 24 | [core/core_window_flags](core/core_window_flags.c)                | <img src="core/core_window_flags.png" alt="core_window_flags" width="200">                     | ray                                               |        | 
 
 ### category: shapes

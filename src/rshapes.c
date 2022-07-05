@@ -785,28 +785,26 @@ void DrawRectangleGradientEx(Rectangle rec, Color col1, Color col2, Color col3, 
 
     rlSetTexture(texShapes.id);
 
-    rlPushMatrix();
-        rlBegin(RL_QUADS);
-            rlNormal3f(0.0f, 0.0f, 1.0f);
+    rlBegin(RL_QUADS);
+        rlNormal3f(0.0f, 0.0f, 1.0f);
 
-            // NOTE: Default raylib font character 95 is a white square
-            rlColor4ub(col1.r, col1.g, col1.b, col1.a);
-            rlTexCoord2f(texShapesRec.x/texShapes.width, texShapesRec.y/texShapes.height);
-            rlVertex2f(rec.x, rec.y);
+        // NOTE: Default raylib font character 95 is a white square
+        rlColor4ub(col1.r, col1.g, col1.b, col1.a);
+        rlTexCoord2f(texShapesRec.x/texShapes.width, texShapesRec.y/texShapes.height);
+        rlVertex2f(rec.x, rec.y);
 
-            rlColor4ub(col2.r, col2.g, col2.b, col2.a);
-            rlTexCoord2f(texShapesRec.x/texShapes.width, (texShapesRec.y + texShapesRec.height)/texShapes.height);
-            rlVertex2f(rec.x, rec.y + rec.height);
+        rlColor4ub(col2.r, col2.g, col2.b, col2.a);
+        rlTexCoord2f(texShapesRec.x/texShapes.width, (texShapesRec.y + texShapesRec.height)/texShapes.height);
+        rlVertex2f(rec.x, rec.y + rec.height);
 
-            rlColor4ub(col3.r, col3.g, col3.b, col3.a);
-            rlTexCoord2f((texShapesRec.x + texShapesRec.width)/texShapes.width, (texShapesRec.y + texShapesRec.height)/texShapes.height);
-            rlVertex2f(rec.x + rec.width, rec.y + rec.height);
+        rlColor4ub(col3.r, col3.g, col3.b, col3.a);
+        rlTexCoord2f((texShapesRec.x + texShapesRec.width)/texShapes.width, (texShapesRec.y + texShapesRec.height)/texShapes.height);
+        rlVertex2f(rec.x + rec.width, rec.y + rec.height);
 
-            rlColor4ub(col4.r, col4.g, col4.b, col4.a);
-            rlTexCoord2f((texShapesRec.x + texShapesRec.width)/texShapes.width, texShapesRec.y/texShapes.height);
-            rlVertex2f(rec.x + rec.width, rec.y);
-        rlEnd();
-    rlPopMatrix();
+        rlColor4ub(col4.r, col4.g, col4.b, col4.a);
+        rlTexCoord2f((texShapesRec.x + texShapesRec.width)/texShapes.width, texShapesRec.y/texShapes.height);
+        rlVertex2f(rec.x + rec.width, rec.y);
+    rlEnd();
 
     rlSetTexture(0);
 }

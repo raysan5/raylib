@@ -152,7 +152,7 @@ void DrawLine3D(Vector3 startPos, Vector3 endPos, Color color)
     // WARNING: Be careful with internal buffer vertex alignment
     // when using RL_LINES or RL_TRIANGLES, data is aligned to fit
     // lines-triangles-quads in the same indexed buffers!!!
-    rlCheckRenderBatchLimit(8);
+    //rlCheckRenderBatchLimit(8);
 
     rlBegin(RL_LINES);
         rlColor4ub(color.r, color.g, color.b, color.a);
@@ -164,7 +164,7 @@ void DrawLine3D(Vector3 startPos, Vector3 endPos, Color color)
 // Draw a point in 3D space, actually a small line
 void DrawPoint3D(Vector3 position, Color color)
 {
-    rlCheckRenderBatchLimit(8);
+    //rlCheckRenderBatchLimit(8);
 
     rlPushMatrix();
         rlTranslatef(position.x, position.y, position.z);
@@ -179,7 +179,7 @@ void DrawPoint3D(Vector3 position, Color color)
 // Draw a circle in 3D world space
 void DrawCircle3D(Vector3 center, float radius, Vector3 rotationAxis, float rotationAngle, Color color)
 {
-    rlCheckRenderBatchLimit(2*36);
+    //rlCheckRenderBatchLimit(2*36);
 
     rlPushMatrix();
         rlTranslatef(center.x, center.y, center.z);
@@ -200,7 +200,7 @@ void DrawCircle3D(Vector3 center, float radius, Vector3 rotationAxis, float rota
 // Draw a color-filled triangle (vertex in counter-clockwise order!)
 void DrawTriangle3D(Vector3 v1, Vector3 v2, Vector3 v3, Color color)
 {
-    rlCheckRenderBatchLimit(8);
+    //rlCheckRenderBatchLimit(8);
 
     rlBegin(RL_TRIANGLES);
         rlColor4ub(color.r, color.g, color.b, color.a);
@@ -215,7 +215,7 @@ void DrawTriangleStrip3D(Vector3 *points, int pointCount, Color color)
 {
     if (pointCount >= 3)
     {
-        rlCheckRenderBatchLimit(3*(pointCount - 2));
+        //rlCheckRenderBatchLimit(3*(pointCount - 2));
 
         rlBegin(RL_TRIANGLES);
             rlColor4ub(color.r, color.g, color.b, color.a);
@@ -247,7 +247,7 @@ void DrawCube(Vector3 position, float width, float height, float length, Color c
     float y = 0.0f;
     float z = 0.0f;
 
-    rlCheckRenderBatchLimit(36);
+    //rlCheckRenderBatchLimit(36);
 
     rlPushMatrix();
         // NOTE: Transformation is applied in inverse order (scale -> rotate -> translate)
@@ -328,7 +328,7 @@ void DrawCubeWires(Vector3 position, float width, float height, float length, Co
     float y = 0.0f;
     float z = 0.0f;
 
-    rlCheckRenderBatchLimit(36);
+    //rlCheckRenderBatchLimit(36);
 
     rlPushMatrix();
         rlTranslatef(position.x, position.y, position.z);
@@ -405,7 +405,7 @@ void DrawCubeTexture(Texture2D texture, Vector3 position, float width, float hei
     float y = position.y;
     float z = position.z;
 
-    rlCheckRenderBatchLimit(36);
+    //rlCheckRenderBatchLimit(36);
 
     rlSetTexture(texture.id);
 
@@ -468,7 +468,7 @@ void DrawCubeTextureRec(Texture2D texture, Rectangle source, Vector3 position, f
     float texWidth = (float)texture.width;
     float texHeight = (float)texture.height;
 
-    rlCheckRenderBatchLimit(36);
+    //rlCheckRenderBatchLimit(36);
 
     rlSetTexture(texture.id);
 
@@ -555,8 +555,8 @@ void DrawSphere(Vector3 centerPos, float radius, Color color)
 // Draw sphere with extended parameters
 void DrawSphereEx(Vector3 centerPos, float radius, int rings, int slices, Color color)
 {
-    int numVertex = (rings + 2)*slices*6;
-    rlCheckRenderBatchLimit(numVertex);
+    //int numVertex = (rings + 2)*slices*6;
+    //rlCheckRenderBatchLimit(numVertex);
 
     rlPushMatrix();
         // NOTE: Transformation is applied in inverse order (scale -> translate)
@@ -598,8 +598,8 @@ void DrawSphereEx(Vector3 centerPos, float radius, int rings, int slices, Color 
 // Draw sphere wires
 void DrawSphereWires(Vector3 centerPos, float radius, int rings, int slices, Color color)
 {
-    int numVertex = (rings + 2)*slices*6;
-    rlCheckRenderBatchLimit(numVertex);
+    //int numVertex = (rings + 2)*slices*6;
+    //rlCheckRenderBatchLimit(numVertex);
 
     rlPushMatrix();
         // NOTE: Transformation is applied in inverse order (scale -> translate)
@@ -645,8 +645,8 @@ void DrawCylinder(Vector3 position, float radiusTop, float radiusBottom, float h
 {
     if (sides < 3) sides = 3;
 
-    int numVertex = sides*6;
-    rlCheckRenderBatchLimit(numVertex);
+    //int numVertex = sides*6;
+    //rlCheckRenderBatchLimit(numVertex);
 
     rlPushMatrix();
         rlTranslatef(position.x, position.y, position.z);
@@ -704,8 +704,8 @@ void DrawCylinderEx(Vector3 startPos, Vector3 endPos, float startRadius, float e
 {
     if (sides < 3) sides = 3;
 
-    int numVertex = sides*6;
-    rlCheckRenderBatchLimit(numVertex);
+    //int numVertex = sides*6;
+    //rlCheckRenderBatchLimit(numVertex);
 
     Vector3 direction = { endPos.x - startPos.x, endPos.y - startPos.y, endPos.z - startPos.z };
     if ((direction.x == 0) && (direction.y == 0) && (direction.z == 0)) return;
@@ -763,8 +763,8 @@ void DrawCylinderWires(Vector3 position, float radiusTop, float radiusBottom, fl
 {
     if (sides < 3) sides = 3;
 
-    int numVertex = sides*8;
-    rlCheckRenderBatchLimit(numVertex);
+    //int numVertex = sides*8;
+    //rlCheckRenderBatchLimit(numVertex);
 
     rlPushMatrix();
         rlTranslatef(position.x, position.y, position.z);
@@ -797,8 +797,8 @@ void DrawCylinderWiresEx(Vector3 startPos, Vector3 endPos, float startRadius, fl
 {
     if (sides < 3) sides = 3;
 
-    int numVertex = sides*6;
-    rlCheckRenderBatchLimit(numVertex);
+    //int numVertex = sides*6;
+    //rlCheckRenderBatchLimit(numVertex);
 
     Vector3 direction = { endPos.x - startPos.x, endPos.y - startPos.y, endPos.z - startPos.z };
     if ((direction.x == 0) && (direction.y == 0) && (direction.z == 0))return;
@@ -843,7 +843,7 @@ void DrawCylinderWiresEx(Vector3 startPos, Vector3 endPos, float startRadius, fl
 // Draw a plane
 void DrawPlane(Vector3 centerPos, Vector2 size, Color color)
 {
-    rlCheckRenderBatchLimit(4);
+    //rlCheckRenderBatchLimit(4);
 
     // NOTE: Plane is always created on XZ ground
     rlPushMatrix();
@@ -881,7 +881,7 @@ void DrawGrid(int slices, float spacing)
 {
     int halfSlices = slices/2;
 
-    rlCheckRenderBatchLimit((slices + 2)*4);
+    //rlCheckRenderBatchLimit((slices + 2)*4);
 
     rlBegin(RL_LINES);
         for (int i = -halfSlices; i <= halfSlices; i++)
@@ -1087,7 +1087,7 @@ void UploadMesh(Mesh *mesh, bool dynamic)
     mesh->vaoId = rlLoadVertexArray();
     rlEnableVertexArray(mesh->vaoId);
 
-    // NOTE: Attributes must be uploaded considering default locations points
+    // NOTE: Vertex attributes must be uploaded considering default locations points and available vertex data
 
     // Enable vertex attributes: position (shader-location = 0)
     void *vertices = mesh->animVertices != NULL ? mesh->animVertices : mesh->vertices;
@@ -1100,6 +1100,9 @@ void UploadMesh(Mesh *mesh, bool dynamic)
     rlSetVertexAttribute(1, 2, RL_FLOAT, 0, 0, 0);
     rlEnableVertexAttribute(1);
 
+    // WARNING: When setting default vertex attribute values, the values for each generic vertex attribute 
+    // is part of current state and it is maintained even if a different program object is used
+
     if (mesh->normals != NULL)
     {
         // Enable vertex attributes: normals (shader-location = 2)
@@ -1110,7 +1113,8 @@ void UploadMesh(Mesh *mesh, bool dynamic)
     }
     else
     {
-        // Default color vertex attribute set to WHITE
+        // Default vertex attribute: normal
+        // WARNING: Default value provided to shader if location available
         float value[3] = { 1.0f, 1.0f, 1.0f };
         rlSetVertexAttributeDefault(2, value, SHADER_ATTRIB_VEC3, 3);
         rlDisableVertexAttribute(2);
@@ -1125,8 +1129,9 @@ void UploadMesh(Mesh *mesh, bool dynamic)
     }
     else
     {
-        // Default color vertex attribute set to WHITE
-        float value[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
+        // Default vertex attribute: color
+        // WARNING: Default value provided to shader if location available
+        float value[4] = { 1.0f, 1.0f, 1.0f, 1.0f };    // WHITE
         rlSetVertexAttributeDefault(3, value, SHADER_ATTRIB_VEC4, 4);
         rlDisableVertexAttribute(3);
     }
@@ -1140,7 +1145,8 @@ void UploadMesh(Mesh *mesh, bool dynamic)
     }
     else
     {
-        // Default tangents vertex attribute
+        // Default vertex attribute: tangent
+        // WARNING: Default value provided to shader if location available
         float value[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
         rlSetVertexAttributeDefault(4, value, SHADER_ATTRIB_VEC4, 4);
         rlDisableVertexAttribute(4);
@@ -1155,7 +1161,8 @@ void UploadMesh(Mesh *mesh, bool dynamic)
     }
     else
     {
-        // Default texcoord2 vertex attribute
+        // Default vertex attribute: texcoord2
+        // WARNING: Default value provided to shader if location available
         float value[2] = { 0.0f, 0.0f };
         rlSetVertexAttributeDefault(5, value, SHADER_ATTRIB_VEC2, 2);
         rlDisableVertexAttribute(5);
@@ -1293,8 +1300,10 @@ void DrawMesh(Mesh mesh, Material material, Matrix transform)
         }
     }
 
-    // Try binding vertex array objects (VAO)
-    // or use VBOs if not possible
+    // Try binding vertex array objects (VAO) or use VBOs if not possible
+    // WARNING: UploadMesh() enables all vertex attributes available in mesh and sets default attribute values
+    // for shader expected vertex attributes that are not provided by the mesh (i.e. colors)
+    // This could be a dangerous approach because different meshes with different shaders can enable/disable some attributes
     if (!rlEnableVertexArray(mesh.vaoId))
     {
         // Bind mesh VBO data: vertex position (shader-location = 0)
@@ -1326,8 +1335,8 @@ void DrawMesh(Mesh mesh, Material material, Matrix transform)
             }
             else
             {
-                // Set default value for unused attribute
-                // NOTE: Required when using default shader and no VAO support
+                // Set default value for defined vertex attribute in shader but not provided by mesh
+                // WARNING: It could result in GPU undefined behaviour
                 float value[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
                 rlSetVertexAttributeDefault(material.shader.locs[SHADER_LOC_VERTEX_COLOR], value, SHADER_ATTRIB_VEC4, 4);
                 rlDisableVertexAttribute(material.shader.locs[SHADER_LOC_VERTEX_COLOR]);
@@ -1352,6 +1361,9 @@ void DrawMesh(Mesh mesh, Material material, Matrix transform)
 
         if (mesh.indices != NULL) rlEnableVertexBufferElement(mesh.vboId[6]);
     }
+
+    // WARNING: Disable vertex attribute color input if mesh can not provide that data (despite location being enabled in shader) 
+    if (mesh.vboId[3] == 0) rlDisableVertexAttribute(material.shader.locs[SHADER_LOC_VERTEX_COLOR]);
 
     int eyeCount = 1;
     if (rlIsStereoRenderEnabled()) eyeCount = 2;
@@ -1379,14 +1391,17 @@ void DrawMesh(Mesh mesh, Material material, Matrix transform)
     // Unbind all binded texture maps
     for (int i = 0; i < MAX_MATERIAL_MAPS; i++)
     {
-        // Select current shader texture slot
-        rlActiveTextureSlot(i);
+        if (material.maps[i].texture.id > 0)
+        {
+            // Select current shader texture slot
+            rlActiveTextureSlot(i);
 
-        // Disable texture for active slot
-        if ((i == MATERIAL_MAP_IRRADIANCE) ||
-            (i == MATERIAL_MAP_PREFILTER) ||
-            (i == MATERIAL_MAP_CUBEMAP)) rlDisableTextureCubemap();
-        else rlDisableTexture();
+            // Disable texture for active slot
+            if ((i == MATERIAL_MAP_IRRADIANCE) ||
+                (i == MATERIAL_MAP_PREFILTER) ||
+                (i == MATERIAL_MAP_CUBEMAP)) rlDisableTextureCubemap();
+            else rlDisableTexture();
+        }
     }
 
     // Disable all possible vertex array objects (or VBOs)
@@ -1568,6 +1583,9 @@ void DrawMeshInstanced(Mesh mesh, Material material, const Matrix *transforms, i
         if (mesh.indices != NULL) rlEnableVertexBufferElement(mesh.vboId[6]);
     }
 
+    // WARNING: Disable vertex attribute color input if mesh can not provide that data (despite location being enabled in shader) 
+    if (mesh.vboId[3] == 0) rlDisableVertexAttribute(material.shader.locs[SHADER_LOC_VERTEX_COLOR]);
+
     int eyeCount = 1;
     if (rlIsStereoRenderEnabled()) eyeCount = 2;
 
@@ -1594,14 +1612,17 @@ void DrawMeshInstanced(Mesh mesh, Material material, const Matrix *transforms, i
     // Unbind all binded texture maps
     for (int i = 0; i < MAX_MATERIAL_MAPS; i++)
     {
-        // Select current shader texture slot
-        rlActiveTextureSlot(i);
+        if (material.maps[i].texture.id > 0)
+        {
+            // Select current shader texture slot
+            rlActiveTextureSlot(i);
 
-        // Disable texture for active slot
-        if ((i == MATERIAL_MAP_IRRADIANCE) ||
-            (i == MATERIAL_MAP_PREFILTER) ||
-            (i == MATERIAL_MAP_CUBEMAP)) rlDisableTextureCubemap();
-        else rlDisableTexture();
+            // Disable texture for active slot
+            if ((i == MATERIAL_MAP_IRRADIANCE) ||
+                (i == MATERIAL_MAP_PREFILTER) ||
+                (i == MATERIAL_MAP_CUBEMAP)) rlDisableTextureCubemap();
+            else rlDisableTexture();
+        }
     }
 
     // Disable all possible vertex array objects (or VBOs)
@@ -3240,19 +3261,6 @@ void GenMeshTangents(Mesh *mesh)
     TRACELOG(LOG_INFO, "MESH: Tangents data computed and uploaded for provided mesh");
 }
 
-// Compute mesh binormals (aka bitangent)
-void GenMeshBinormals(Mesh *mesh)
-{
-    for (int i = 0; i < mesh->vertexCount; i++)
-    {
-        //Vector3 normal = { mesh->normals[i*3 + 0], mesh->normals[i*3 + 1], mesh->normals[i*3 + 2] };
-        //Vector3 tangent = { mesh->tangents[i*4 + 0], mesh->tangents[i*4 + 1], mesh->tangents[i*4 + 2] };
-        //Vector3 binormal = Vector3Scale(Vector3CrossProduct(normal, tangent), mesh->tangents[i*4 + 3]);
-
-        // TODO: Register computed binormal in mesh->binormal?
-    }
-}
-
 // Draw a model (with texture if set)
 void DrawModel(Model model, Vector3 position, float scale, Color tint)
 {
@@ -3332,7 +3340,7 @@ void DrawBillboardRec(Camera camera, Texture2D texture, Rectangle source, Vector
 void DrawBillboardPro(Camera camera, Texture2D texture, Rectangle source, Vector3 position, Vector3 up, Vector2 size, Vector2 origin, float rotation, Color tint)
 {
     // NOTE: Billboard size will maintain source rectangle aspect ratio, size will represent billboard width
-    Vector2 sizeRatio = { size.x*(float)source.height/source.width, size.y };
+    Vector2 sizeRatio = { size.x*(float)source.width/source.height, size.y };
 
     Matrix matView = MatrixLookAt(camera.position, camera.target, camera.up);
 
@@ -4945,6 +4953,10 @@ static Model LoadGLTF(const char *fileName)
                             model.meshes[meshIndex].boneIds = RL_CALLOC(model.meshes[meshIndex].vertexCount*4, sizeof(unsigned char));
 
                             // Load 4 components of unsigned char data type into mesh.boneIds
+                            // TODO: It seems LOAD_ATTRIBUTE() macro does not work as expected in some cases,
+                            // for cgltf_attribute_type_joints we have:
+                            //   - data.meshes[0] (256 vertices)
+                            //   - 256 values, provided as cgltf_type_vec4 of bytes (4 byte per joint, stride 4)
                             LOAD_ATTRIBUTE(attribute, 4, unsigned char, model.meshes[meshIndex].boneIds)
                         }
                         else TRACELOG(LOG_WARNING, "MODEL: [%s] Joint attribute data format not supported, use vec4 u8", fileName);
@@ -4959,6 +4971,9 @@ static Model LoadGLTF(const char *fileName)
                             model.meshes[meshIndex].boneWeights = RL_CALLOC(model.meshes[meshIndex].vertexCount*4, sizeof(float));
 
                             // Load 4 components of float data type into mesh.boneWeights
+                            // for cgltf_attribute_type_weights we have:
+                            //   - data.meshes[0] (256 vertices)
+                            //   - 256 values, provided as cgltf_type_vec4 of float (4 byte per joint, stride 16)
                             LOAD_ATTRIBUTE(attribute, 4, float, model.meshes[meshIndex].boneWeights)
                         }
                         else TRACELOG(LOG_WARNING, "MODEL: [%s] Joint weight attribute data format not supported, use vec4 float", fileName);

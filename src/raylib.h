@@ -1038,6 +1038,8 @@ RLAPI void *MemAlloc(int size);                                   // Internal me
 RLAPI void *MemRealloc(void *ptr, int size);                      // Internal memory reallocator
 RLAPI void MemFree(void *ptr);                                    // Internal memory free
 
+RLAPI void OpenURL(const char *url);                              // Open URL with default system browser (if available)
+
 // Set custom callbacks
 // WARNING: Callbacks setup is intended for advance users
 RLAPI void SetTraceLogCallback(TraceLogCallback callback);         // Set custom trace log
@@ -1080,12 +1082,6 @@ RLAPI unsigned char *CompressData(const unsigned char *data, int dataSize, int *
 RLAPI unsigned char *DecompressData(const unsigned char *compData, int compDataSize, int *dataSize);  // Decompress data (DEFLATE algorithm), memory must be MemFree()
 RLAPI char *EncodeDataBase64(const unsigned char *data, int dataSize, int *outputSize);               // Encode data to Base64 string, memory must be MemFree()
 RLAPI unsigned char *DecodeDataBase64(const unsigned char *data, int *outputSize);                    // Decode Base64 string data, memory must be MemFree()
-
-// Persistent storage management
-RLAPI bool SaveStorageValue(unsigned int position, int value);    // Save integer value to storage file (to defined position), returns true on success
-RLAPI int LoadStorageValue(unsigned int position);                // Load integer value from storage file (from defined position)
-
-RLAPI void OpenURL(const char *url);                              // Open URL with default system browser (if available)
 
 //------------------------------------------------------------------------------------
 // Input Handling Functions (Module: core)
@@ -1447,7 +1443,6 @@ RLAPI void DrawMeshInstanced(Mesh mesh, Material material, const Matrix *transfo
 RLAPI bool ExportMesh(Mesh mesh, const char *fileName);                                     // Export mesh data to file, returns true on success
 RLAPI BoundingBox GetMeshBoundingBox(Mesh mesh);                                            // Compute mesh bounding box limits
 RLAPI void GenMeshTangents(Mesh *mesh);                                                     // Compute mesh tangents
-RLAPI void GenMeshBinormals(Mesh *mesh);                                                    // Compute mesh binormals
 
 // Mesh generation functions
 RLAPI Mesh GenMeshPoly(int sides, float radius);                                            // Generate polygonal mesh

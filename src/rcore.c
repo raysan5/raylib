@@ -80,9 +80,6 @@
 *       provided by stb_image and stb_image_write libraries, so, those libraries must be enabled on textures module
 *       for linkage
 *
-*   #define SUPPORT_DATA_STORAGE
-*       Support saving binary data automatically to a generated storage.data file. This file is managed internally
-*
 *   #define SUPPORT_EVENTS_AUTOMATION
 *       Support automatic generated events, loading and recording of those events when required
 *
@@ -330,12 +327,6 @@
 #endif
 #ifndef MAX_CHAR_PRESSED_QUEUE
     #define MAX_CHAR_PRESSED_QUEUE        16        // Maximum number of characters in the char input queue
-#endif
-
-#if defined(SUPPORT_DATA_STORAGE)
-    #ifndef STORAGE_DATA_FILE
-        #define STORAGE_DATA_FILE  "storage.data"   // Automatic storage filename
-    #endif
 #endif
 
 #ifndef MAX_DECOMPRESSION_SIZE
@@ -3290,7 +3281,7 @@ unsigned char *DecompressData(const unsigned char *compData, int compDataSize, i
 #if defined(SUPPORT_COMPRESSION_API)
     // Decompress data from a valid DEFLATE stream
     data = RL_CALLOC(MAX_DECOMPRESSION_SIZE*1024*1024, 1);
-    int length = sinflate(data, MAX_DECOMPRESSION_SIZE, compData, compDataSize);
+    int length = sinflate(data, MAX_DECOMPRESSION_SIZE*1024*1024, compData, compDataSize);
     unsigned char *temp = RL_REALLOC(data, length);
 
     if (temp != NULL) data = temp;
@@ -3396,110 +3387,6 @@ unsigned char *DecodeDataBase64(const unsigned char *data, int *outputSize)
 
     *outputSize = outSize;
     return decodedData;
-}
-
-// Save integer value to storage file (to defined position)
-// NOTE: Storage positions is directly related to file memory layout (4 bytes each integer)
-bool SaveStorageValue(unsigned int position, int value)
-{
-    bool success = false;
-
-#if defined(SUPPORT_DATA_STORAGE)
-    char path[512] = { 0 };
-    strcpy(path, TextFormat("%s/%s", CORE.Storage.basePath, STORAGE_DATA_FILE));
-
-    unsigned int dataSize = 0;
-    unsigned int newDataSize = 0;
-    unsigned char *fileData = LoadFileData(path, &dataSize);
-    unsigned char *newFileData = NULL;
-
-    if (fileData != NULL)
-    {
-        if (dataSize <= (position*sizeof(int)))
-        {
-            // Increase data size up to position and store value
-            newDataSize = (position + 1)*sizeof(int);
-            newFileData = (unsigned char *)RL_REALLOC(fileData, newDataSize);
-
-            if (newFileData != NULL)
-            {
-                // RL_REALLOC succeded
-                int *dataPtr = (int *)newFileData;
-                dataPtr[position] = value;
-            }
-            else
-            {
-                // RL_REALLOC failed
-                TRACELOG(LOG_WARNING, "FILEIO: [%s] Failed to realloc data (%u), position in bytes (%u) bigger than actual file size", path, dataSize, position*sizeof(int));
-
-                // We store the old size of the file
-                newFileData = fileData;
-                newDataSize = dataSize;
-            }
-        }
-        else
-        {
-            // Store the old size of the file
-            newFileData = fileData;
-            newDataSize = dataSize;
-
-            // Replace value on selected position
-            int *dataPtr = (int *)newFileData;
-            dataPtr[position] = value;
-        }
-
-        success = SaveFileData(path, newFileData, newDataSize);
-        RL_FREE(newFileData);
-
-        TRACELOG(LOG_INFO, "FILEIO: [%s] Saved storage value: %i", path, value);
-    }
-    else
-    {
-        TRACELOG(LOG_INFO, "FILEIO: [%s] File created successfully", path);
-
-        dataSize = (position + 1)*sizeof(int);
-        fileData = (unsigned char *)RL_MALLOC(dataSize);
-        int *dataPtr = (int *)fileData;
-        dataPtr[position] = value;
-
-        success = SaveFileData(path, fileData, dataSize);
-        UnloadFileData(fileData);
-
-        TRACELOG(LOG_INFO, "FILEIO: [%s] Saved storage value: %i", path, value);
-    }
-#endif
-
-    return success;
-}
-
-// Load integer value from storage file (from defined position)
-// NOTE: If requested position could not be found, value 0 is returned
-int LoadStorageValue(unsigned int position)
-{
-    int value = 0;
-
-#if defined(SUPPORT_DATA_STORAGE)
-    char path[512] = { 0 };
-    strcpy(path, TextFormat("%s/%s", CORE.Storage.basePath, STORAGE_DATA_FILE));
-
-    unsigned int dataSize = 0;
-    unsigned char *fileData = LoadFileData(path, &dataSize);
-
-    if (fileData != NULL)
-    {
-        if (dataSize < (position*4)) TRACELOG(LOG_WARNING, "FILEIO: [%s] Failed to find storage position: %i", path, position);
-        else
-        {
-            int *dataPtr = (int *)fileData;
-            value = dataPtr[position];
-        }
-
-        UnloadFileData(fileData);
-
-        TRACELOG(LOG_INFO, "FILEIO: [%s] Loaded storage value: %i", path, value);
-    }
-#endif
-    return value;
 }
 
 // Open URL with default system browser (if available)
