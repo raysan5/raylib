@@ -45,7 +45,6 @@ cmake_dependent_option(SUPPORT_GIF_RECORDING "Allow automatic gif recording of c
 cmake_dependent_option(SUPPORT_BUSY_WAIT_LOOP "Use busy wait loop for timing sync instead of a high-resolution timer" OFF CUSTOMIZE_BUILD OFF)
 cmake_dependent_option(SUPPORT_EVENTS_WAITING "Wait for events passively (sleeping while no events) instead of polling them actively every frame" OFF CUSTOMIZE_BUILD OFF)
 cmake_dependent_option(SUPPORT_WINMM_HIGHRES_TIMER "Setting a higher resolution can improve the accuracy of time-out intervals in wait functions" OFF CUSTOMIZE_BUILD OFF)
-cmake_dependent_option(SUPPORT_DATA_STORAGE "Support for persistent data storage" ON CUSTOMIZE_BUILD ON)
 cmake_dependent_option(SUPPORT_COMPRESSION_API "Support for compression API" ON CUSTOMIZE_BUILD ON)
 
 # rshapes.c

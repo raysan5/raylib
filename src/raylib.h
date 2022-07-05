@@ -1081,10 +1081,6 @@ RLAPI unsigned char *DecompressData(const unsigned char *compData, int compDataS
 RLAPI char *EncodeDataBase64(const unsigned char *data, int dataSize, int *outputSize);               // Encode data to Base64 string, memory must be MemFree()
 RLAPI unsigned char *DecodeDataBase64(const unsigned char *data, int *outputSize);                    // Decode Base64 string data, memory must be MemFree()
 
-// Persistent storage management
-RLAPI bool SaveStorageValue(unsigned int position, int value);    // Save integer value to storage file (to defined position), returns true on success
-RLAPI int LoadStorageValue(unsigned int position);                // Load integer value from storage file (from defined position)
-
 RLAPI void OpenURL(const char *url);                              // Open URL with default system browser (if available)
 
 //------------------------------------------------------------------------------------
