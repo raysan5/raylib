@@ -60,9 +60,11 @@ jobs:
         make clean
         make PLATFORM=PLATFORM_DESKTOP RAYLIB_LIBTYPE=SHARED RAYLIB_LIB_NAME=raylib_x86_64 CUSTOM_CFLAGS="-target x86_64-apple-macos10.12 -DGL_SILENCE_DEPRECATION" CUSTOM_LDFLAGS="-target x86_64-apple-macos10.12" -B
         make PLATFORM=PLATFORM_DESKTOP RAYLIB_LIBTYPE=SHARED RAYLIB_LIB_NAME=raylib_arm64 CUSTOM_CFLAGS="-target arm64-apple-macos11 -DGL_SILENCE_DEPRECATION" CUSTOM_LDFLAGS="-target arm64-apple-macos11" -B
-        lipo -create -output ../build/${{ env.RELEASE_NAME }}/lib/libraylib.4.0.0.dylib libraylib_x86_64.4.0.0.dylib libraylib_arm64.4.0.0.dylib
-        ln -sv libraylib.4.0.0.dylib  ../build/${{ env.RELEASE_NAME }}/lib/libraylib.dylib
-        ln -sv libraylib.4.0.0.dylib  ../build/${{ env.RELEASE_NAME }}/lib/libraylib.400.dylib
+        RAYLIB_API_VERSION=`grep -Po 'RAYLIB_API_VERSION\s*=\s\K(.*)' Makefile`
+        RAYLIB_VERSION=`grep -Po 'RAYLIB_VERSION\s*=\s\K(.*)' Makefile`
+        lipo -create -output ../build/${{ env.RELEASE_NAME }}/lib/libraylib.${RAYLIB_VERSION}.dylib libraylib_x86_64.${RAYLIB_VERSION}.dylib libraylib_arm64.${RAYLIB_VERSION}.dylib
+        ln -sv libraylib.${RAYLIB_VERSION}.dylib  ../build/${{ env.RELEASE_NAME }}/lib/libraylib.dylib
+        ln -sv libraylib.${RAYLIB_VERSION}.dylib  ../build/${{ env.RELEASE_NAME }}/lib/libraylib.${RAYLIB_API_VERSION}.dylib
         cd ..
   
     - name: Generate Artifacts
