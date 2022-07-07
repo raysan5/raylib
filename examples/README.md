@@ -195,9 +195,9 @@ Examples showing raylib misc functionality that does not fit in other categories
 | 120 | [raudio_standalone](others/raudio_standalone.c) | <img src="others/raudio_standalone.png" alt="raudio_standalone" width="80"> | ⭐️⭐️⭐️☆ | 1.6 | **4.0** | [Ray](https://github.com/raysan5) | 
 | 121 | [rlgl_standalone](others/rlgl_standalone.c) | <img src="others/rlgl_standalone.png" alt="rlgl_standalone" width="80"> | ⭐️⭐️⭐️⭐️ | 1.6 | **4.0** | [Ray](https://github.com/raysan5) | 
 | 122 | [easings_testbed](others/easings_testbed.c) | <img src="others/easings_testbed.png" alt="easings_testbed" width="80"> | ⭐️⭐️⭐️☆ | 3.0 | 3.0 | [Juan Miguel López](https://github.com/flashback-fx) | 
-| 123 | [rlgl_compute_shader.c](others/rlgl_compute_shader.c.c) | <img src="others/rlgl_compute_shader.c.png" alt="rlgl_compute_shader.c" width="80"> | ⭐️⭐️⭐️⭐️ | **4.0** | **4.0** | [Teddy Astie](https://github.com/tsnake41) | 
-| 124 | [raylib_opengl_interop.c](others/raylib_opengl_interop.c.c) | <img src="others/raylib_opengl_interop.c.png" alt="raylib_opengl_interop.c" width="80"> | ⭐️⭐️⭐️⭐️ | **4.0** | **4.0** | [Stephan Soller](https://github.com/arkanis) | 
-| 125 | [embedded_files_loading.c](others/embedded_files_loading.c.c) | <img src="others/embedded_files_loading.c.png" alt="embedded_files_loading.c" width="80"> | ⭐️⭐️☆☆ | 3.5 | 3.5 | [Kristian Holmgren](https://github.com/defutura) |  
+| 123 | [rlgl_compute_shader](others/rlgl_compute_shader.c) | <img src="others/rlgl_compute_shader.png" alt="rlgl_compute_shader" width="80"> | ⭐️⭐️⭐️⭐️ | **4.0** | **4.0** | [Teddy Astie](https://github.com/tsnake41) | 
+| 124 | [raylib_opengl_interop](others/raylib_opengl_interop.c) | <img src="others/raylib_opengl_interop.png" alt="raylib_opengl_interop" width="80"> | ⭐️⭐️⭐️⭐️ | **4.0** | **4.0** | [Stephan Soller](https://github.com/arkanis) | 
+| 125 | [embedded_files_loading](others/embedded_files_loading.c) | <img src="others/embedded_files_loading.png" alt="embedded_files_loading" width="80"> | ⭐️⭐️☆☆ | 3.5 | 3.5 | [Kristian Holmgren](https://github.com/defutura) | 
 
 As always contributions are welcome, feel free to send new examples! Here it is an [examples template](examples_template.c) to start with!
 
