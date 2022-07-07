@@ -10,7 +10,8 @@ KEY CHANGES:
  - rres 1.0
  - raygui 3.2
  - raylib_parser...
- - REMOVED extras libraries
+ - REMOVED extras libraries (physac)
+ - UPDATED: examples: Assigned **DIFFICULTY LEVELS**!
  
 Detailed changes:
 [multi] REVIEWED: Multiple trace log messages
@@ -30,6 +31,7 @@ Detailed changes:
 [core] ADDED: Support OpenURL() on Android platform (#2396) by @futureapricot
 [core] ADDED: Support MOUSE_PASSTHROUGH (#2516)
 [core] ADDED: GetMouseWheelMoveV() (#2517) by @schveiguy
+[core] `WARNING`: REMOVED: LoadStorageValue() / SaveStorageValue(), moved to example
 [core] `WARNING`: RENAMED: GetDirectoryFiles() to LoadDirectoryFiles()
 [core] `WARNING`: RENAMED: `ClearDroppedFiles()` to `UnloadDroppedFiles()`
 [core] `WARNING`: RENAMED: GetDroppedFiles() to LoadDroppedFiles()
@@ -101,6 +103,7 @@ Detailed changes:
 [text] REVIEWED: ExportFontAsCode() to use given font padding (#2525) by @TheTophatDemon
 [models] ADDED: Reference code to load bones id and weight data for animations
 [models] `WARNING`: REMOVED: GetRayCollisionModel() (#2405)
+[models] REMOVED: GenMeshBinormals()
 [models] REVIEWED: External library: vox_loader.h, 64bit issue (#2186)
 [models] REVIEWED: Material color loading when no texture material is available (#2298) by @royqh1979
 [models] REVIEWED: Fix Undefined Symbol _ftelli64 in cgltf (#2319) by @audinue
@@ -124,7 +127,13 @@ Detailed changes:
 [utils] REVIEWED: Force flush stdout after trace messages (#2465) by @nagy
 [easings] ADDED: Function descriptions (#2471) by @RobLoach
 [camera] REVIEWED: Fix free camera panning in the wrong direction (#2347) by @DavidLyhedDanielsson
+[examples] ADDED: core_window_should_close
 [examples] ADDED: shapes_top_down_lights (#2199) by JeffM2501
+[examples] ADDED: textures_fog_of_war
+[examples] ADDED: textures_gif_player
+[examples] ADDED: text_codepoints_loading
+[examples] REMOVED: core_quat_conversion, not working properly
+[examples] RENAMED: textures_rectangle -> textures_sprite_anim
 [examples] REVIEWED: core_input_gamepad, improve joystick visualisation (#2390) by @kristianlm
 [examples] REVIEWED: textures_draw_tiled
 [examples] REVIEWED: shaders_mesh_instancing, free allocated matrices (#2425) by @AnilBK
