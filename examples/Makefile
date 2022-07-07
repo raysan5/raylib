@@ -413,7 +413,6 @@ SHAPES = \
 TEXTURES = \
     textures/textures_logo_raylib \
     textures/textures_mouse_painting \
-    textures/textures_rectangle \
     textures/textures_srcrec_dstrec \
     textures/textures_image_drawing \
     textures/textures_image_generation \
@@ -425,12 +424,14 @@ TEXTURES = \
     textures/textures_particles_blending \
     textures/textures_npatch_drawing \
     textures/textures_background_scrolling \
+    textures/textures_sprite_anim \
     textures/textures_sprite_button \
     textures/textures_sprite_explosion \
     textures/textures_bunnymark \
     textures/textures_blend_modes \
     textures/textures_draw_tiled \
-    textures/textures_polygon
+    textures/textures_polygon \
+    textures/textures_gif_anim
 
 TEXT = \
     text/text_raylib_fonts \

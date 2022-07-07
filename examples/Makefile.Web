@@ -427,7 +427,6 @@ SHAPES = \
 TEXTURES = \
     textures/textures_logo_raylib \
     textures/textures_mouse_painting \
-    textures/textures_rectangle \
     textures/textures_srcrec_dstrec \
     textures/textures_image_drawing \
     textures/textures_image_generation \
@@ -439,6 +438,7 @@ TEXTURES = \
     textures/textures_particles_blending \
     textures/textures_npatch_drawing \
     textures/textures_background_scrolling \
+    textures/textures_sprite_anim \
     textures/textures_sprite_button \
     textures/textures_sprite_explosion \
     textures/textures_bunnymark \
@@ -659,7 +659,7 @@ textures/textures_logo_raylib: textures/textures_logo_raylib.c
 textures/textures_mouse_painting: textures/textures_mouse_painting.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
-textures/textures_rectangle: textures/textures_rectangle.c
+textures/textures_sprite_anim: textures/textures_sprite_anim.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
     --preload-file textures/resources/scarfy.png@resources/scarfy.png
 

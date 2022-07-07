@@ -37,9 +37,9 @@
   <PropertyGroup Label="Globals">
     <ProjectGuid>{C25D2CC6-80CA-4C8A-BE3B-2E0F4EA5D0CC}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
-    <RootNamespace>textures_rectangle</RootNamespace>
+    <RootNamespace>textures_sprite_anim</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
-    <ProjectName>textures_rectangle</ProjectName>
+    <ProjectName>textures_sprite_anim</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -374,7 +374,7 @@
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\..\examples\textures\textures_rectangle.c" />
+    <ClCompile Include="..\..\..\examples\textures\textures_sprite_anim.c" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\raylib\raylib.vcxproj">

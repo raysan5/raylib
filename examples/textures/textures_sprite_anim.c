@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [textures] example - Texture loading and drawing a part defined by a rectangle
+*   raylib [textures] example - Sprite animation
 *
 *   This example has been created using raylib 1.3 (www.raylib.com)
 *   raylib is licensed under an unmodified zlib/libpng license (View raylib.h for details)
@@ -24,7 +24,7 @@ int main(void)
     const int screenWidth = 800;
     const int screenHeight = 450;
 
-    InitWindow(screenWidth, screenHeight, "raylib [texture] example - texture rectangle");
+    InitWindow(screenWidth, screenHeight, "raylib [texture] example - sprite anim");
 
     // NOTE: Textures MUST be loaded after Window initialization (OpenGL context is required)
     Texture2D scarfy = LoadTexture("resources/scarfy.png");        // Texture loading
@@ -56,6 +56,7 @@ int main(void)
             frameRec.x = (float)currentFrame*(float)scarfy.width/6;
         }
 
+        // Control frames speed
         if (IsKeyPressed(KEY_RIGHT)) framesSpeed++;
         else if (IsKeyPressed(KEY_LEFT)) framesSpeed--;
 

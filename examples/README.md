@@ -77,7 +77,6 @@ Examples using raylib textures functionality, including image/textures loading/g
 | ## | example                                                                   | image                                                                                                  | developer                                        | new |
 |----|---------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------|:------------------------------------------------:|:---:|
 | 40 | [textures_logo_raylib](textures/textures_logo_raylib.c)                   | <img src="textures/textures_logo_raylib.png" alt="textures_logo_raylib" width="200">                   | ray                                              |     |
-| 41 | [textures_rectangle](textures/textures_rectangle.c)                       | <img src="textures/textures_rectangle.png" alt="textures_rectangle" width="200">                       | ray                                              |     |
 | 42 | [textures_srcrec_dstrec](textures/textures_srcrec_dstrec.c)               | <img src="textures/textures_srcrec_dstrec.png" alt="textures_srcrec_dstrec" width="200">               | ray                                              |     |
 | 43 | [textures_image_drawing](textures/textures_image_drawing.c)               | <img src="textures/textures_image_drawing.png" alt="textures_image_drawing" width="200">               | ray                                              |     |
 | 44 | [textures_image_generation](textures/textures_image_generation.c)         | <img src="textures/textures_image_generation.png" alt="textures_image_generation" width="200">         | ray                                              |     |
@@ -89,6 +88,7 @@ Examples using raylib textures functionality, including image/textures loading/g
 | 50 | [textures_particles_blending](textures/textures_particles_blending.c)     | <img src="textures/textures_particles_blending.png" alt="textures_particles_blending" width="200">     | ray                                              |     |
 | 51 | [textures_npatch_drawing](textures/textures_npatch_drawing.c)             | <img src="textures/textures_npatch_drawing.png" alt="textures_npatch_drawing" width="200">             | [Jorge A. Gomes](https://github.com/overdev)     |     |
 | 52 | [textures_background_scrolling](textures/textures_background_scrolling.c) | <img src="textures/textures_background_scrolling.png" alt="textures_background_scrolling" width="200"> | ray                                              |     |
+| 41 | [textures_sprite_anim](textures/textures_sprite_anim.c)                   | <img src="textures/textures_sprite_anim.png" alt="textures_sprite_anim" width="200">                   | ray                                              |     |
 | 53 | [textures_sprite_button](textures/textures_sprite_button.c)               | <img src="textures/textures_sprite_button.png" alt="textures_sprite_button" width="200">               | ray                                              |     |
 | 54 | [textures_sprite_explosion](textures/textures_sprite_explosion.c)         | <img src="textures/textures_sprite_explosion.png" alt="textures_sprite_explosion" width="200">         | ray                                              |     |
 | 55 | [textures_bunnymark](textures/textures_bunnymark.c)                       | <img src="textures/textures_bunnymark.png" alt="textures_bunnymark" width="200">                       | ray                                              |     |
@@ -96,6 +96,8 @@ Examples using raylib textures functionality, including image/textures loading/g
 | 57 | [textures_blend_modes](textures/textures_blend_modes.c)                   | <img src="textures/textures_blend_modes.png" alt="textures_blend_modes" width="200">                   | [Karlo Licudine](https://github.com/accidentalrebel) |     |
 | 58 | [textures_draw_tiled](textures/textures_draw_tiled.c)                     | <img src="textures/textures_draw_tiled.png" alt="textures_draw_tiled" width="200">                     | [Vlad Adrian](https://github.com/demizdor)       |       |
 | -- | [textures_poly](textures/textures_poly.c)                                 | <img src="textures/textures_poly.png" alt="textures_poly" width="200">                                 | [Chris Camacho](https://github.com/codifies)     | ⭐️   |
+| -- | [textures_gif_anim](textures/textures_gif_anim.c)                         | <img src="textures/textures_gif_anim.png" alt="textures_gif_anim" width="200">                         | [Chris Camacho](https://github.com/codifies)     | ⭐️   |
+
 
 ### category: text
 
