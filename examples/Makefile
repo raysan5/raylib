@@ -381,7 +381,6 @@ CORE = \
     core/core_3d_picking \
     core/core_world_screen \
     core/core_custom_logging \
-    core/core_window_letterbox \
     core/core_drop_files \
     core/core_random_values \
     core/core_scissor_test \
@@ -389,6 +388,8 @@ CORE = \
     core/core_vr_simulator \
     core/core_loading_thread \
     core/core_window_flags \
+    core/core_window_letterbox \
+    core/core_window_should_close \
     core/core_split_screen \
     core/core_smooth_pixelperfect \
     core/core_custom_frame_control
@@ -408,6 +409,7 @@ SHAPES = \
     shapes/shapes_easings_rectangle_array \
     shapes/shapes_draw_ring \
     shapes/shapes_draw_circle_sector \
+    shapes/shapes_draw_rectangle_rounded \
     shapes/shapes_top_down_lights
 
 TEXTURES = \
@@ -431,7 +433,8 @@ TEXTURES = \
     textures/textures_blend_modes \
     textures/textures_draw_tiled \
     textures/textures_polygon \
-    textures/textures_gif_player
+    textures/textures_gif_player \
+    textures/textures_fog_of_war
 
 TEXT = \
     text/text_raylib_fonts \
@@ -444,7 +447,8 @@ TEXT = \
     text/text_writing_anim \
     text/text_rectangle_bounds \
     text/text_unicode \
-    text/text_draw_3d
+    text/text_draw_3d \
+    text/text_codepoints_loading
 
 MODELS = \
     models/models_animation \
