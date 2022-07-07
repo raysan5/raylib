@@ -85,8 +85,8 @@ int main(void)
 
             DrawTexture(texture, screenWidth/2 - texture.width/2, 40, WHITE);
 
-            DrawText("raylib logo and sound loaded from header files", 65, 320, 20, LIGHTGRAY);
-            DrawText("Press SPACE to PLAY the sound!", 200, 360, 20, LIGHTGRAY);
+            DrawText("raylib logo and sound loaded from header files", 150, 320, 20, LIGHTGRAY);
+            DrawText("Press SPACE to PLAY the sound!", 220, 370, 20, LIGHTGRAY);
 
         EndDrawing();
         //----------------------------------------------------------------------------------
