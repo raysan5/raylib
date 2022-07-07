@@ -96,7 +96,7 @@ Examples using raylib textures functionality, including image/textures loading/g
 | 57 | [textures_blend_modes](textures/textures_blend_modes.c)                   | <img src="textures/textures_blend_modes.png" alt="textures_blend_modes" width="200">                   | [Karlo Licudine](https://github.com/accidentalrebel) |     |
 | 58 | [textures_draw_tiled](textures/textures_draw_tiled.c)                     | <img src="textures/textures_draw_tiled.png" alt="textures_draw_tiled" width="200">                     | [Vlad Adrian](https://github.com/demizdor)       |       |
 | -- | [textures_poly](textures/textures_poly.c)                                 | <img src="textures/textures_poly.png" alt="textures_poly" width="200">                                 | [Chris Camacho](https://github.com/codifies)     | ⭐️   |
-| -- | [textures_gif_anim](textures/textures_gif_anim.c)                         | <img src="textures/textures_gif_anim.png" alt="textures_gif_anim" width="200">                         | [Chris Camacho](https://github.com/codifies)     | ⭐️   |
+| -- | [textures_gif_player](textures/textures_gif_player.c)                         | <img src="textures/textures_gif_player.png" alt="textures_gif_player" width="200">                         | [Chris Camacho](https://github.com/codifies)     | ⭐️   |
 
 
 ### category: text

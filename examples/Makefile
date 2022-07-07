@@ -431,7 +431,7 @@ TEXTURES = \
     textures/textures_blend_modes \
     textures/textures_draw_tiled \
     textures/textures_polygon \
-    textures/textures_gif_anim
+    textures/textures_gif_player
 
 TEXT = \
     text/text_raylib_fonts \
