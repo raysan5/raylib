@@ -53,16 +53,36 @@ jobs:
       run: |
         cd src
         clang --version
-        make PLATFORM=PLATFORM_DESKTOP RAYLIB_LIBTYPE=STATIC RAYLIB_LIB_NAME=raylib_x86_64 CUSTOM_CFLAGS="-target x86_64-apple-macos10.12 -DGL_SILENCE_DEPRECATION"
-        make PLATFORM=PLATFORM_DESKTOP RAYLIB_LIBTYPE=STATIC RAYLIB_LIB_NAME=raylib_arm64 CUSTOM_CFLAGS="-target arm64-apple-macos11 -DGL_SILENCE_DEPRECATION" -B
-        lipo -create -output ../build/${{ env.RELEASE_NAME }}/lib/libraylib.a libraylib_x86_64.a libraylib_arm64.a
-        make clean
-        make PLATFORM=PLATFORM_DESKTOP RAYLIB_LIBTYPE=SHARED RAYLIB_LIB_NAME=raylib_x86_64 CUSTOM_CFLAGS="-target x86_64-apple-macos10.12 -DGL_SILENCE_DEPRECATION" CUSTOM_LDFLAGS="-target x86_64-apple-macos10.12" -B
-        make PLATFORM=PLATFORM_DESKTOP RAYLIB_LIBTYPE=SHARED RAYLIB_LIB_NAME=raylib_arm64 CUSTOM_CFLAGS="-target arm64-apple-macos11 -DGL_SILENCE_DEPRECATION" CUSTOM_LDFLAGS="-target arm64-apple-macos11" -B
+        
+        # Extract version numbers from Makefile
         brew install grep
         RAYLIB_API_VERSION=`ggrep -Po 'RAYLIB_API_VERSION\s*=\s\K(.*)' Makefile`
         RAYLIB_VERSION=`ggrep -Po 'RAYLIB_VERSION\s*=\s\K(.*)' Makefile`
-        lipo -create -output ../build/${{ env.RELEASE_NAME }}/lib/libraylib.${RAYLIB_VERSION}.dylib libraylib_x86_64.${RAYLIB_VERSION}.dylib libraylib_arm64.${RAYLIB_VERSION}.dylib
+        
+        # Build raylib x86_64 static
+        make PLATFORM=PLATFORM_DESKTOP RAYLIB_LIBTYPE=STATIC CUSTOM_CFLAGS="-target x86_64-apple-macos10.12 -DGL_SILENCE_DEPRECATION"
+        mv libraylib.a /tmp/libraylib_x86_64.a
+        make clean
+        
+        # Build raylib arm64 static
+        make PLATFORM=PLATFORM_DESKTOP RAYLIB_LIBTYPE=STATIC CUSTOM_CFLAGS="-target arm64-apple-macos11 -DGL_SILENCE_DEPRECATION" -B
+        mv libraylib.a /tmp/libraylib_arm64.a
+        make clean
+        
+        # Join x86_64 and arm64 static
+        lipo -create -output ../build/${{ env.RELEASE_NAME }}/lib/libraylib.a /tmp/libraylib_x86_64.a /tmp/libraylib_arm64.a
+        
+        # Build raylib x86_64 dynamic
+        make PLATFORM=PLATFORM_DESKTOP RAYLIB_LIBTYPE=SHARED CUSTOM_CFLAGS="-target x86_64-apple-macos10.12 -DGL_SILENCE_DEPRECATION" CUSTOM_LDFLAGS="-target x86_64-apple-macos10.12" -B
+        mv libraylib.${RAYLIB_VERSION}.dylib /tmp/libraylib_x86_64.${RAYLIB_VERSION}.dylib
+        make clean
+        
+        # Build raylib arm64 dynamic
+        make PLATFORM=PLATFORM_DESKTOP RAYLIB_LIBTYPE=SHARED CUSTOM_CFLAGS="-target arm64-apple-macos11 -DGL_SILENCE_DEPRECATION" CUSTOM_LDFLAGS="-target arm64-apple-macos11" -B
+        mv libraylib.${RAYLIB_VERSION}.dylib /tmp/libraylib_arm64.${RAYLIB_VERSION}.dylib
+        
+        # Join x86_64 and arm64 dynamic
+        lipo -create -output ../build/${{ env.RELEASE_NAME }}/lib/libraylib.${RAYLIB_VERSION}.dylib /tmp/libraylib_x86_64.${RAYLIB_VERSION}.dylib /tmp/libraylib_arm64.${RAYLIB_VERSION}.dylib
         ln -sv libraylib.${RAYLIB_VERSION}.dylib  ../build/${{ env.RELEASE_NAME }}/lib/libraylib.dylib
         ln -sv libraylib.${RAYLIB_VERSION}.dylib  ../build/${{ env.RELEASE_NAME }}/lib/libraylib.${RAYLIB_API_VERSION}.dylib
         cd ..
