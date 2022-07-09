@@ -13,6 +13,9 @@
 
 #define NUM_FRAMES  3       // Number of frames (rectangles) for the button sprite texture
 
+//------------------------------------------------------------------------------------
+// Program main entry point
+//------------------------------------------------------------------------------------
 int main(void)
 {
     // Initialization

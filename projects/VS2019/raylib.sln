@@ -9,7 +9,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "examples", "examples", "{87
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "core_basic_window", "examples\core_basic_window.vcxproj", "{0981CA98-E4A5-4DF1-987F-A41D09131EFC}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "textures_rectangle", "examples\textures_rectangle.vcxproj", "{C25D2CC6-80CA-4C8A-BE3B-2E0F4EA5D0CC}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "textures_sprite_anim", "examples\textures_sprite_anim.vcxproj", "{C25D2CC6-80CA-4C8A-BE3B-2E0F4EA5D0CC}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "textures_srcrec_dstrec", "examples\textures_srcrec_dstrec.vcxproj", "{103B292B-049B-4B15-85A1-9F902840DB2C}"
 EndProject
@@ -145,8 +145,6 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "textures_background_scrolli
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "text", "text", "{8D3C83B7-F1E0-4C2E-9E34-EE5F6AB2502A}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "physics", "physics", "{D6B669E2-68D0-4E62-83D1-E14DDD6A356F}"
-EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "other", "other", "{E9D708A5-9C1F-4B84-A795-C5F191801762}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "text_writing_anim", "examples\text_writing_anim.vcxproj", "{F6FD9C75-AAA7-48C9-B19D-FD37C8FB9B7E}"
@@ -200,16 +198,6 @@ EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "shapes_easings_rectangle_array", "examples\shapes_easings_rectangle_array.vcxproj", "{1EDD4BCF-345C-4065-8CBD-7285224293C3}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "top_down_lights", "examples\shapes_top_down_lights.vcxproj", "{67A9CF3B-A5E8-442E-A437-ED74A08CA312}"
-EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "physics_demo", "examples\physics_demo.vcxproj", "{581F89BD-FBB9-4699-B8DB-EB38E6DEE097}"
-EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "physics_friction", "examples\physics_friction.vcxproj", "{A6260ED4-5361-4B61-B6B9-8D8119457BA4}"
-EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "physics_movement", "examples\physics_movement.vcxproj", "{29817904-E3D3-4C28-BD8D-A3A09DD199D2}"
-EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "physics_restitution", "examples\physics_restitution.vcxproj", "{C7A235DF-460E-4816-9F3B-E0DEFA376EF1}"
-EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "physics_shatter", "examples\physics_shatter.vcxproj", "{F272EF74-990E-4637-AF9E-77DC7139D95D}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "shaders_basic_lighting", "examples\shaders_basic_lighting.vcxproj", "{A6B2A11B-0669-4AF5-A025-8DD02DBBE5EA}"
 EndProject

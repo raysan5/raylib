@@ -37,7 +37,7 @@
 *   DEPENDENCIES:
 *       stb_image        - Multiple image formats loading (JPEG, PNG, BMP, TGA, PSD, GIF, PIC)
 *                          NOTE: stb_image has been slightly modified to support Android platform.
-*       stb_image_resize - Multiple image resize algorythms
+*       stb_image_resize - Multiple image resize algorithms
 *
 *
 *   LICENSE: zlib/libpng
@@ -133,7 +133,7 @@
 #if defined(SUPPORT_FILEFORMAT_QOI)
     #define QOI_MALLOC RL_MALLOC
     #define QOI_FREE RL_FREE
-    
+
     #define QOI_IMPLEMENTATION
     #include "external/qoi.h"
 #endif
@@ -306,10 +306,9 @@ Image LoadImageFromMemory(const char *fileType, const unsigned char *fileData, i
 {
     Image image = { 0 };
 
-#if defined(SUPPORT_FILEFORMAT_PNG)
-    if ((strcmp(fileType, ".png") == 0)
-#else
     if ((false)
+#if defined(SUPPORT_FILEFORMAT_PNG)
+        || (strcmp(fileType, ".png") == 0)
 #endif
 #if defined(SUPPORT_FILEFORMAT_BMP)
         || (strcmp(fileType, ".bmp") == 0)
@@ -375,7 +374,7 @@ Image LoadImageFromMemory(const char *fileType, const unsigned char *fileData, i
     }
 #endif
 #if defined(SUPPORT_FILEFORMAT_QOI)
-    else if (strcmp(fileType, ".qoi") == 0) 
+    else if (strcmp(fileType, ".qoi") == 0)
     {
         qoi_desc desc = { 0 };
         image.data = qoi_decode(fileData, dataSize, &desc, 4);
@@ -500,7 +499,7 @@ bool ExportImage(Image image, const char *fileName)
     else if (IsFileExtension(fileName, ".tga")) success = stbi_write_tga(fileName, image.width, image.height, channels, imgData);
 #endif
 #if defined(SUPPORT_FILEFORMAT_JPG)
-    else if (IsFileExtension(fileName, ".jpg") || 
+    else if (IsFileExtension(fileName, ".jpg") ||
              IsFileExtension(fileName, ".jpeg")) success = stbi_write_jpg(fileName, image.width, image.height, channels, imgData, 90);  // JPG quality: between 1 and 100
 #endif
 #if defined(SUPPORT_FILEFORMAT_QOI)
@@ -510,11 +509,11 @@ bool ExportImage(Image image, const char *fileName)
         if (image.format == PIXELFORMAT_UNCOMPRESSED_R8G8B8) channels = 3;
         else if (image.format == PIXELFORMAT_UNCOMPRESSED_R8G8B8A8) channels = 4;
         else TRACELOG(LOG_WARNING, "IMAGE: Image pixel format must be R8G8B8 or R8G8B8A8");
-        
+
         if ((channels == 3) || (channels == 4))
         {
             qoi_desc desc = { 0 };
-            desc.width = image.width; 
+            desc.width = image.width;
             desc.height = image.height;
             desc.channels = channels;
             desc.colorspace = QOI_SRGB;
@@ -1890,10 +1889,10 @@ void ImageColorTint(Image *image, Color color)
             unsigned char b = (unsigned char)(((float)pixels[index].b/255*cB)*255.0f);
             unsigned char a = (unsigned char)(((float)pixels[index].a/255*cA)*255.0f);
 
-            pixels[y*image->width + x].r = r;
-            pixels[y*image->width + x].g = g;
-            pixels[y*image->width + x].b = b;
-            pixels[y*image->width + x].a = a;
+            pixels[index].r = r;
+            pixels[index].g = g;
+            pixels[index].b = b;
+            pixels[index].a = a;
         }
     }
 
@@ -1959,25 +1958,25 @@ void ImageColorContrast(Image *image, float contrast)
         for (int x = 0; x < image->width; x++)
         {
             float pR = (float)pixels[y*image->width + x].r/255.0f;
-            pR -= 0.5;
+            pR -= 0.5f;
             pR *= contrast;
-            pR += 0.5;
+            pR += 0.5f;
             pR *= 255;
             if (pR < 0) pR = 0;
             if (pR > 255) pR = 255;
 
             float pG = (float)pixels[y*image->width + x].g/255.0f;
-            pG -= 0.5;
+            pG -= 0.5f;
             pG *= contrast;
-            pG += 0.5;
+            pG += 0.5f;
             pG *= 255;
             if (pG < 0) pG = 0;
             if (pG > 255) pG = 255;
 
             float pB = (float)pixels[y*image->width + x].b/255.0f;
-            pB -= 0.5;
+            pB -= 0.5f;
             pB *= contrast;
-            pB += 0.5;
+            pB += 0.5f;
             pB *= 255;
             if (pB < 0) pB = 0;
             if (pB > 255) pB = 255;
@@ -2412,7 +2411,20 @@ Color GetImageColor(Image image, int x, int y)
 // Clear image background with given color
 void ImageClearBackground(Image *dst, Color color)
 {
-    for (int i = 0; i < dst->width*dst->height; ++i) ImageDrawPixel(dst, i%dst->width, i/dst->width, color);
+    // Security check to avoid program crash
+    if ((dst->data == NULL) || (dst->width == 0) || (dst->height == 0)) return;
+
+    // Fill in first pixel based on image format
+    ImageDrawPixel(dst, 0, 0, color);
+
+    unsigned char *pSrcPixel = (unsigned char *)dst->data;
+    int bytesPerPixel = GetPixelDataSize(1, 1, dst->format);
+
+    // Repeat the first pixel data throughout the image
+    for (int i = 1; i < dst->width * dst->height; i++)
+    {
+        memcpy(pSrcPixel + i * bytesPerPixel, pSrcPixel, bytesPerPixel);
+    }
 }
 
 // Draw pixel within an image
@@ -2686,13 +2698,21 @@ void ImageDrawRectangleRec(Image *dst, Rectangle rec, Color color)
     int ey = sy + (int)rec.height;
 
     int sx = (int)rec.x;
-    int ex = sx + (int)rec.width;
+
+    int bytesPerPixel = GetPixelDataSize(1, 1, dst->format);
 
     for (int y = sy; y < ey; y++)
     {
-        for (int x = sx; x < ex; x++)
+        // Fill in the first pixel of the row based on image format
+        ImageDrawPixel(dst, sx, y, color);
+
+        int bytesOffset = ((y * dst->width) + sx) * bytesPerPixel;
+        unsigned char *pSrcPixel = (unsigned char *)dst->data + bytesOffset;
+
+        // Repeat the first pixel data throughout the row
+        for (int x = 1; x < (int)rec.width; x++)
         {
-            ImageDrawPixel(dst, x, y, color);
+            memcpy(pSrcPixel + x * bytesPerPixel, pSrcPixel, bytesPerPixel);
         }
     }
 }
@@ -2771,7 +2791,7 @@ void ImageDraw(Image *dst, Image src, Rectangle srcRec, Rectangle dstRec, Color 
         //    [x] Consider fast path: same src/dst format with no alpha -> direct line copy
         //    [-] GetPixelColor(): Get Vector4 instead of Color, easier for ColorAlphaBlend()
         //    [ ] Support f32bit channels drawing
-        
+
         // TODO: Support PIXELFORMAT_UNCOMPRESSED_R32, PIXELFORMAT_UNCOMPRESSED_R32G32B32, PIXELFORMAT_UNCOMPRESSED_R32G32B32A32
 
         Color colSrc, colDst, blend;
@@ -2954,7 +2974,7 @@ TextureCubemap LoadTextureCubemap(Image image, int layout)
             ImageFormat(&faces, image.format);
 
             // NOTE: Image formating does not work with compressed textures
-            
+
             for (int i = 0; i < 6; i++) ImageDraw(&faces, image, faceRecs[i], (Rectangle){ 0, (float)size*i, (float)size, (float)size }, WHITE);
         }
 
@@ -3472,6 +3492,8 @@ void DrawTextureNPatch(Texture2D texture, NPatchInfo nPatchInfo, Rectangle dest,
         coordD.x = (nPatchInfo.source.x + nPatchInfo.source.width)/width;
         coordD.y = (nPatchInfo.source.y + nPatchInfo.source.height)/height;
 
+        rlCheckRenderBatchLimit(9 * 3 * 2);         // Maxium number of verts that could happen
+
         rlSetTexture(texture.id);
 
         rlPushMatrix();
@@ -3787,10 +3809,10 @@ Color ColorAlphaBlend(Color dst, Color src, Color tint)
     Color out = WHITE;
 
     // Apply color tint to source color
-    src.r = (unsigned char)(((unsigned int)src.r*(unsigned int)tint.r) >> 8);
-    src.g = (unsigned char)(((unsigned int)src.g*(unsigned int)tint.g) >> 8);
-    src.b = (unsigned char)(((unsigned int)src.b*(unsigned int)tint.b) >> 8);
-    src.a = (unsigned char)(((unsigned int)src.a*(unsigned int)tint.a) >> 8);
+    src.r = (unsigned char)(((unsigned int)src.r*((unsigned int)tint.r+1)) >> 8);
+    src.g = (unsigned char)(((unsigned int)src.g*((unsigned int)tint.g+1)) >> 8);
+    src.b = (unsigned char)(((unsigned int)src.b*((unsigned int)tint.b+1)) >> 8);
+    src.a = (unsigned char)(((unsigned int)src.a*((unsigned int)tint.a+1)) >> 8);
 
 //#define COLORALPHABLEND_FLOAT
 #define COLORALPHABLEND_INTEGERS

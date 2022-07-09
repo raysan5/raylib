@@ -14,7 +14,7 @@
 
 #include "raylib.h"
 
-#include "extras/easings.h"            // Required for easing functions
+#include "easings.h"            // Required for easing functions
 
 #define RECS_WIDTH              50
 #define RECS_HEIGHT             50
@@ -24,6 +24,9 @@
 
 #define PLAY_TIME_IN_FRAMES     240                 // At 60 fps = 4 seconds
 
+//------------------------------------------------------------------------------------
+// Program main entry point
+//------------------------------------------------------------------------------------
 int main(void)
 {
     // Initialization

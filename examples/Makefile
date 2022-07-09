@@ -226,9 +226,9 @@ ifeq ($(PLATFORM),PLATFORM_DRM)
 endif
 
 # Define include paths for required headers: INCLUDE_PATHS
-# NOTE: Some external/extras libraries could be required (stb, physac, easings...)
+# NOTE: Some external/extras libraries could be required (stb, easings...)
 #------------------------------------------------------------------------------------------------
-INCLUDE_PATHS = -I. -I$(RAYLIB_PATH)/src -I$(RAYLIB_PATH)/src/external -I$(RAYLIB_PATH)/src/extras
+INCLUDE_PATHS = -I. -I$(RAYLIB_PATH)/src -I$(RAYLIB_PATH)/src/external
 
 # Define additional directories containing required header files
 ifeq ($(PLATFORM),PLATFORM_DESKTOP)
@@ -306,8 +306,6 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
         # Libraries for Windows desktop compilation
         # NOTE: WinMM library required to set high-res timer resolution
         LDLIBS = -lraylib -lopengl32 -lgdi32 -lwinmm
-        # Required for physac examples
-        LDLIBS += -static -lpthread
     endif
     ifeq ($(PLATFORM_OS),LINUX)
         # Libraries for Debian GNU/Linux desktop compiling
@@ -349,7 +347,7 @@ endif
 ifeq ($(PLATFORM),PLATFORM_RPI)
     # Libraries for Raspberry Pi compiling
     # NOTE: Required packages: libasound2-dev (ALSA)
-    LDLIBS = -lraylib -lbrcmGLESv2 -lbrcmEGL -lpthread -lrt -lm -lbcm_host -ldl
+    LDLIBS = -lraylib -lbrcmGLESv2 -lbrcmEGL -lpthread -lrt -lm -lbcm_host -ldl -latomic
     ifeq ($(USE_RPI_CROSS_COMPILER),TRUE)
         LDLIBS += -lvchiq_arm -lvcos
     endif
@@ -357,7 +355,7 @@ endif
 ifeq ($(PLATFORM),PLATFORM_DRM)
     # Libraries for DRM compiling
     # NOTE: Required packages: libasound2-dev (ALSA)
-    LDLIBS = -lraylib -lGLESv2 -lEGL -lpthread -lrt -lm -lgbm -ldrm -ldl
+    LDLIBS = -lraylib -lGLESv2 -lEGL -lpthread -lrt -lm -lgbm -ldrm -ldl -latomic
 endif
 ifeq ($(PLATFORM),PLATFORM_WEB)
     # Libraries for web (HTML5) compiling
@@ -383,15 +381,15 @@ CORE = \
     core/core_3d_picking \
     core/core_world_screen \
     core/core_custom_logging \
-    core/core_window_letterbox \
     core/core_drop_files \
     core/core_random_values \
     core/core_scissor_test \
     core/core_storage_values \
     core/core_vr_simulator \
     core/core_loading_thread \
-    core/core_quat_conversion \
     core/core_window_flags \
+    core/core_window_letterbox \
+    core/core_window_should_close \
     core/core_split_screen \
     core/core_smooth_pixelperfect \
     core/core_custom_frame_control
@@ -411,12 +409,12 @@ SHAPES = \
     shapes/shapes_easings_rectangle_array \
     shapes/shapes_draw_ring \
     shapes/shapes_draw_circle_sector \
+    shapes/shapes_draw_rectangle_rounded \
     shapes/shapes_top_down_lights
 
 TEXTURES = \
     textures/textures_logo_raylib \
     textures/textures_mouse_painting \
-    textures/textures_rectangle \
     textures/textures_srcrec_dstrec \
     textures/textures_image_drawing \
     textures/textures_image_generation \
@@ -428,12 +426,15 @@ TEXTURES = \
     textures/textures_particles_blending \
     textures/textures_npatch_drawing \
     textures/textures_background_scrolling \
+    textures/textures_sprite_anim \
     textures/textures_sprite_button \
     textures/textures_sprite_explosion \
     textures/textures_bunnymark \
     textures/textures_blend_modes \
     textures/textures_draw_tiled \
-    textures/textures_polygon
+    textures/textures_polygon \
+    textures/textures_gif_player \
+    textures/textures_fog_of_war
 
 TEXT = \
     text/text_raylib_fonts \
@@ -446,7 +447,8 @@ TEXT = \
     text/text_writing_anim \
     text/text_rectangle_bounds \
     text/text_unicode \
-    text/text_draw_3d
+    text/text_draw_3d \
+    text/text_codepoints_loading
 
 MODELS = \
     models/models_animation \
@@ -494,20 +496,12 @@ AUDIO = \
     audio/audio_sound_loading \
     audio/audio_multichannel_sound
 
-PHYSICS = \
-    physics/physics_demo \
-    physics/physics_friction \
-    physics/physics_movement \
-    physics/physics_restitution \
-    physics/physics_shatter
-
-
 CURRENT_MAKEFILE = $(lastword $(MAKEFILE_LIST))
 
 # Define processes to execute
 #------------------------------------------------------------------------------------------------
 # Default target entry
-all: $(CORE) $(SHAPES) $(TEXT) $(TEXTURES) $(MODELS) $(SHADERS) $(AUDIO) $(PHYSICS)
+all: $(CORE) $(SHAPES) $(TEXT) $(TEXTURES) $(MODELS) $(SHADERS) $(AUDIO)
 
 core: $(CORE)
 shapes: $(SHAPES)
@@ -516,7 +510,6 @@ text: $(TEXT)
 models: $(MODELS)
 shaders: $(SHADERS)
 audio: $(AUDIO)
-physics: $(PHYSICS)
 
 # Generic compilation pattern
 # NOTE: Examples must be ready for Android compilation!

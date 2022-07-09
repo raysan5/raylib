@@ -1,4 +1,318 @@
 return {
+  defines = {
+    {
+      name = "RAYLIB_H",
+      type = "GUARD",
+      value = "",
+      description = ""
+    },
+    {
+      name = "RAYLIB_VERSION",
+      type = "STRING",
+      value = "4.1-dev",
+      description = ""
+    },
+    {
+      name = "RLAPI",
+      type = "UNKNOWN",
+      value = "__declspec(dllexport)",
+      description = "We are building the library as a Win32 shared library (.dll)"
+    },
+    {
+      name = "PI",
+      type = "FLOAT",
+      value = 3.14159265358979323846,
+      description = ""
+    },
+    {
+      name = "DEG2RAD",
+      type = "FLOAT_MATH",
+      value = "(PI/180.0f)",
+      description = ""
+    },
+    {
+      name = "RAD2DEG",
+      type = "FLOAT_MATH",
+      value = "(180.0f/PI)",
+      description = ""
+    },
+    {
+      name = "RL_MALLOC(sz)",
+      type = "MACRO",
+      value = "malloc(sz)",
+      description = ""
+    },
+    {
+      name = "RL_CALLOC(n,sz)",
+      type = "MACRO",
+      value = "calloc(n,sz)",
+      description = ""
+    },
+    {
+      name = "RL_REALLOC(ptr,sz)",
+      type = "MACRO",
+      value = "realloc(ptr,sz)",
+      description = ""
+    },
+    {
+      name = "RL_FREE(ptr)",
+      type = "MACRO",
+      value = "free(ptr)",
+      description = ""
+    },
+    {
+      name = "CLITERAL(type)",
+      type = "MACRO",
+      value = "type",
+      description = ""
+    },
+    {
+      name = "RL_COLOR_TYPE",
+      type = "GUARD",
+      value = "",
+      description = ""
+    },
+    {
+      name = "RL_RECTANGLE_TYPE",
+      type = "GUARD",
+      value = "",
+      description = ""
+    },
+    {
+      name = "RL_VECTOR2_TYPE",
+      type = "GUARD",
+      value = "",
+      description = ""
+    },
+    {
+      name = "RL_VECTOR3_TYPE",
+      type = "GUARD",
+      value = "",
+      description = ""
+    },
+    {
+      name = "RL_VECTOR4_TYPE",
+      type = "GUARD",
+      value = "",
+      description = ""
+    },
+    {
+      name = "RL_QUATERNION_TYPE",
+      type = "GUARD",
+      value = "",
+      description = ""
+    },
+    {
+      name = "RL_MATRIX_TYPE",
+      type = "GUARD",
+      value = "",
+      description = ""
+    },
+    {
+      name = "LIGHTGRAY",
+      type = "COLOR",
+      value = "CLITERAL(Color){ 200, 200, 200, 255 }",
+      description = "Light Gray"
+    },
+    {
+      name = "GRAY",
+      type = "COLOR",
+      value = "CLITERAL(Color){ 130, 130, 130, 255 }",
+      description = "Gray"
+    },
+    {
+      name = "DARKGRAY",
+      type = "COLOR",
+      value = "CLITERAL(Color){ 80, 80, 80, 255 }",
+      description = "Dark Gray"
+    },
+    {
+      name = "YELLOW",
+      type = "COLOR",
+      value = "CLITERAL(Color){ 253, 249, 0, 255 }",
+      description = "Yellow"
+    },
+    {
+      name = "GOLD",
+      type = "COLOR",
+      value = "CLITERAL(Color){ 255, 203, 0, 255 }",
+      description = "Gold"
+    },
+    {
+      name = "ORANGE",
+      type = "COLOR",
+      value = "CLITERAL(Color){ 255, 161, 0, 255 }",
+      description = "Orange"
+    },
+    {
+      name = "PINK",
+      type = "COLOR",
+      value = "CLITERAL(Color){ 255, 109, 194, 255 }",
+      description = "Pink"
+    },
+    {
+      name = "RED",
+      type = "COLOR",
+      value = "CLITERAL(Color){ 230, 41, 55, 255 }",
+      description = "Red"
+    },
+    {
+      name = "MAROON",
+      type = "COLOR",
+      value = "CLITERAL(Color){ 190, 33, 55, 255 }",
+      description = "Maroon"
+    },
+    {
+      name = "GREEN",
+      type = "COLOR",
+      value = "CLITERAL(Color){ 0, 228, 48, 255 }",
+      description = "Green"
+    },
+    {
+      name = "LIME",
+      type = "COLOR",
+      value = "CLITERAL(Color){ 0, 158, 47, 255 }",
+      description = "Lime"
+    },
+    {
+      name = "DARKGREEN",
+      type = "COLOR",
+      value = "CLITERAL(Color){ 0, 117, 44, 255 }",
+      description = "Dark Green"
+    },
+    {
+      name = "SKYBLUE",
+      type = "COLOR",
+      value = "CLITERAL(Color){ 102, 191, 255, 255 }",
+      description = "Sky Blue"
+    },
+    {
+      name = "BLUE",
+      type = "COLOR",
+      value = "CLITERAL(Color){ 0, 121, 241, 255 }",
+      description = "Blue"
+    },
+    {
+      name = "DARKBLUE",
+      type = "COLOR",
+      value = "CLITERAL(Color){ 0, 82, 172, 255 }",
+      description = "Dark Blue"
+    },
+    {
+      name = "PURPLE",
+      type = "COLOR",
+      value = "CLITERAL(Color){ 200, 122, 255, 255 }",
+      description = "Purple"
+    },
+    {
+      name = "VIOLET",
+      type = "COLOR",
+      value = "CLITERAL(Color){ 135, 60, 190, 255 }",
+      description = "Violet"
+    },
+    {
+      name = "DARKPURPLE",
+      type = "COLOR",
+      value = "CLITERAL(Color){ 112, 31, 126, 255 }",
+      description = "Dark Purple"
+    },
+    {
+      name = "BEIGE",
+      type = "COLOR",
+      value = "CLITERAL(Color){ 211, 176, 131, 255 }",
+      description = "Beige"
+    },
+    {
+      name = "BROWN",
+      type = "COLOR",
+      value = "CLITERAL(Color){ 127, 106, 79, 255 }",
+      description = "Brown"
+    },
+    {
+      name = "DARKBROWN",
+      type = "COLOR",
+      value = "CLITERAL(Color){ 76, 63, 47, 255 }",
+      description = "Dark Brown"
+    },
+    {
+      name = "WHITE",
+      type = "COLOR",
+      value = "CLITERAL(Color){ 255, 255, 255, 255 }",
+      description = "White"
+    },
+    {
+      name = "BLACK",
+      type = "COLOR",
+      value = "CLITERAL(Color){ 0, 0, 0, 255 }",
+      description = "Black"
+    },
+    {
+      name = "BLANK",
+      type = "COLOR",
+      value = "CLITERAL(Color){ 0, 0, 0, 0 }",
+      description = "Blank (Transparent)"
+    },
+    {
+      name = "MAGENTA",
+      type = "COLOR",
+      value = "CLITERAL(Color){ 255, 0, 255, 255 }",
+      description = "Magenta"
+    },
+    {
+      name = "RAYWHITE",
+      type = "COLOR",
+      value = "CLITERAL(Color){ 245, 245, 245, 255 }",
+      description = "My own White (raylib logo)"
+    },
+    {
+      name = "RL_BOOL_TYPE",
+      type = "GUARD",
+      value = "",
+      description = ""
+    },
+    {
+      name = "MOUSE_LEFT_BUTTON",
+      type = "UNKNOWN",
+      value = "MOUSE_BUTTON_LEFT",
+      description = ""
+    },
+    {
+      name = "MOUSE_RIGHT_BUTTON",
+      type = "UNKNOWN",
+      value = "MOUSE_BUTTON_RIGHT",
+      description = ""
+    },
+    {
+      name = "MOUSE_MIDDLE_BUTTON",
+      type = "UNKNOWN",
+      value = "MOUSE_BUTTON_MIDDLE",
+      description = ""
+    },
+    {
+      name = "MATERIAL_MAP_DIFFUSE",
+      type = "UNKNOWN",
+      value = "MATERIAL_MAP_ALBEDO",
+      description = ""
+    },
+    {
+      name = "MATERIAL_MAP_SPECULAR",
+      type = "UNKNOWN",
+      value = "MATERIAL_MAP_METALNESS",
+      description = ""
+    },
+    {
+      name = "SHADER_LOC_MAP_DIFFUSE",
+      type = "UNKNOWN",
+      value = "SHADER_LOC_MAP_ALBEDO",
+      description = ""
+    },
+    {
+      name = "SHADER_LOC_MAP_SPECULAR",
+      type = "UNKNOWN",
+      value = "SHADER_LOC_MAP_METALNESS",
+      description = ""
+    }
+  },
   structs = {
     {
       name = "Vector2",
@@ -69,22 +383,82 @@ return {
       fields = {
         {
           type = "float",
-          name = "m0, m4, m8, m12",
+          name = "m0",
           description = "Matrix first row (4 components)"
         },
         {
           type = "float",
-          name = "m1, m5, m9, m13",
+          name = "m4",
+          description = "Matrix first row (4 components)"
+        },
+        {
+          type = "float",
+          name = "m8",
+          description = "Matrix first row (4 components)"
+        },
+        {
+          type = "float",
+          name = "m12",
+          description = "Matrix first row (4 components)"
+        },
+        {
+          type = "float",
+          name = "m1",
           description = "Matrix second row (4 components)"
         },
         {
           type = "float",
-          name = "m2, m6, m10, m14",
+          name = "m5",
+          description = "Matrix second row (4 components)"
+        },
+        {
+          type = "float",
+          name = "m9",
+          description = "Matrix second row (4 components)"
+        },
+        {
+          type = "float",
+          name = "m13",
+          description = "Matrix second row (4 components)"
+        },
+        {
+          type = "float",
+          name = "m2",
           description = "Matrix third row (4 components)"
         },
         {
           type = "float",
-          name = "m3, m7, m11, m15",
+          name = "m6",
+          description = "Matrix third row (4 components)"
+        },
+        {
+          type = "float",
+          name = "m10",
+          description = "Matrix third row (4 components)"
+        },
+        {
+          type = "float",
+          name = "m14",
+          description = "Matrix third row (4 components)"
+        },
+        {
+          type = "float",
+          name = "m3",
+          description = "Matrix fourth row (4 components)"
+        },
+        {
+          type = "float",
+          name = "m7",
+          description = "Matrix fourth row (4 components)"
+        },
+        {
+          type = "float",
+          name = "m11",
+          description = "Matrix fourth row (4 components)"
+        },
+        {
+          type = "float",
+          name = "m15",
           description = "Matrix fourth row (4 components)"
         }
       }
@@ -411,7 +785,7 @@ return {
         {
           type = "float *",
           name = "texcoords2",
-          description = "Vertex second texture coordinates (useful for lightmaps) (shader-location = 5)"
+          description = "Vertex texture second coordinates (UV - 2 components per vertex) (shader-location = 5)"
         },
         {
           type = "float *",
@@ -517,8 +891,8 @@ return {
           description = "Material maps array (MAX_MATERIAL_MAPS)"
         },
         {
-          type = "float",
-          name = "params[4]",
+          type = "float[4]",
+          name = "params",
           description = "Material generic parameters (if required)"
         }
       }
@@ -549,8 +923,8 @@ return {
       description = "Bone, skeletal animation bone",
       fields = {
         {
-          type = "char",
-          name = "name[32]",
+          type = "char[32]",
+          name = "name",
           description = "Bone name"
         },
         {
@@ -736,6 +1110,11 @@ return {
           description = "Pointer to internal data used by the audio system"
         },
         {
+          type = "rAudioProcessor *",
+          name = "processor",
+          description = "Pointer to internal data processor, useful for audio effects"
+        },
+        {
           type = "unsigned int",
           name = "sampleRate",
           description = "Frequency (samples per second)"
@@ -844,13 +1223,13 @@ return {
           description = "IPD (distance between pupils) in meters"
         },
         {
-          type = "float",
-          name = "lensDistortionValues[4]",
+          type = "float[4]",
+          name = "lensDistortionValues",
           description = "Lens distortion constant parameters"
         },
         {
-          type = "float",
-          name = "chromaAbCorrection[4]",
+          type = "float[4]",
+          name = "chromaAbCorrection",
           description = "Chromatic aberration correction parameters"
         }
       }
@@ -860,46 +1239,73 @@ return {
       description = "VrStereoConfig, VR stereo rendering configuration for simulator",
       fields = {
         {
-          type = "Matrix",
-          name = "projection[2]",
+          type = "Matrix[2]",
+          name = "projection",
           description = "VR projection matrices (per eye)"
         },
         {
-          type = "Matrix",
-          name = "viewOffset[2]",
+          type = "Matrix[2]",
+          name = "viewOffset",
           description = "VR view offset matrices (per eye)"
         },
         {
-          type = "float",
-          name = "leftLensCenter[2]",
+          type = "float[2]",
+          name = "leftLensCenter",
           description = "VR left lens center"
         },
         {
-          type = "float",
-          name = "rightLensCenter[2]",
+          type = "float[2]",
+          name = "rightLensCenter",
           description = "VR right lens center"
         },
         {
-          type = "float",
-          name = "leftScreenCenter[2]",
+          type = "float[2]",
+          name = "leftScreenCenter",
           description = "VR left screen center"
         },
         {
-          type = "float",
-          name = "rightScreenCenter[2]",
+          type = "float[2]",
+          name = "rightScreenCenter",
           description = "VR right screen center"
         },
         {
-          type = "float",
-          name = "scale[2]",
+          type = "float[2]",
+          name = "scale",
           description = "VR distortion scale"
         },
         {
-          type = "float",
-          name = "scaleIn[2]",
+          type = "float[2]",
+          name = "scaleIn",
           description = "VR distortion scale in"
         }
       }
+    }
+  },
+  aliases = {
+    {
+      type = "Vector4",
+      name = "Quaternion",
+      description = "Quaternion, 4 components (Vector4 alias)"
+    },
+    {
+      type = "Texture",
+      name = "Texture2D",
+      description = "Texture2D, same as Texture"
+    },
+    {
+      type = "Texture",
+      name = "TextureCubemap",
+      description = "TextureCubemap, same as Texture"
+    },
+    {
+      type = "RenderTexture",
+      name = "RenderTexture2D",
+      description = "RenderTexture2D, same as RenderTexture"
+    },
+    {
+      type = "Camera3D",
+      name = "Camera",
+      description = "Camera type fallback, defaults to Camera3D"
     }
   },
   enums = {
@@ -2349,9 +2755,14 @@ return {
           description = "Blend textures subtracting colors (alternative)"
         },
         {
-          name = "BLEND_CUSTOM",
+          name = "BLEND_ALPHA_PREMUL",
           value = 5,
-          description = "Belnd textures using custom src/dst factors (use rlSetBlendMode())"
+          description = "Blend premultiplied textures considering alpha"
+        },
+        {
+          name = "BLEND_CUSTOM",
+          value = 6,
+          description = "Blend textures using custom src/dst factors (use rlSetBlendMode())"
         }
       }
     },
@@ -2482,6 +2893,63 @@ return {
           value = 2,
           description = "Npatch layout: 3x1 tiles"
         }
+      }
+    }
+  },
+  callbacks = {
+    {
+      name = "TraceLogCallback",
+      description = "Logging: Redirect trace log messages",
+      returnType = "void",
+      params = {
+        {type = "int", name = "logLevel"},
+        {type = "const char *", name = "text"},
+        {type = "va_list", name = "args"}
+      }
+    },
+    {
+      name = "LoadFileDataCallback",
+      description = "FileIO: Load binary data",
+      returnType = "unsigned char *",
+      params = {
+        {type = "const char *", name = "fileName"},
+        {type = "unsigned int *", name = "bytesRead"}
+      }
+    },
+    {
+      name = "SaveFileDataCallback",
+      description = "FileIO: Save binary data",
+      returnType = "bool",
+      params = {
+        {type = "const char *", name = "fileName"},
+        {type = "void *", name = "data"},
+        {type = "unsigned int", name = "bytesToWrite"}
+      }
+    },
+    {
+      name = "LoadFileTextCallback",
+      description = "FileIO: Load text data",
+      returnType = "char *",
+      params = {
+        {type = "const char *", name = "fileName"}
+      }
+    },
+    {
+      name = "SaveFileTextCallback",
+      description = "FileIO: Save text data",
+      returnType = "bool",
+      params = {
+        {type = "const char *", name = "fileName"},
+        {type = "char *", name = "text"}
+      }
+    },
+    {
+      name = "AudioCallback",
+      description = "",
+      returnType = "void",
+      params = {
+        {type = "void *", name = "bufferData"},
+        {type = "unsigned int", name = "frames"}
       }
     }
   },
@@ -3147,7 +3615,7 @@ return {
       params = {
         {type = "int", name = "logLevel"},
         {type = "const char *", name = "text"},
-        {type = "", name = ""}
+        {type = "...", name = "args"}
       }
     },
     {
@@ -3301,6 +3769,14 @@ return {
       }
     },
     {
+      name = "GetFileLength",
+      description = "Get file length in bytes (NOTE: GetFileSize() conflicts with windows.h)",
+      returnType = "int",
+      params = {
+        {type = "const char *", name = "fileName"}
+      }
+    },
+    {
       name = "GetFileExtension",
       description = "Get pointer to extension for a filename string (includes dot: '.png')",
       returnType = "const char *",
@@ -3346,8 +3822,13 @@ return {
       returnType = "const char *"
     },
     {
+      name = "GetApplicationDirectory",
+      description = "Get the directory if the running application (uses static string)",
+      returnType = "const char *"
+    },
+    {
       name = "GetDirectoryFiles",
-      description = "Get filenames in a directory path (memory should be freed)",
+      description = "Get filenames in a directory path (memory must be freed)",
       returnType = "char **",
       params = {
         {type = "const char *", name = "dirPath"},
@@ -3374,7 +3855,7 @@ return {
     },
     {
       name = "GetDroppedFiles",
-      description = "Get dropped files names (memory should be freed)",
+      description = "Get dropped files names (memory must be freed)",
       returnType = "char **",
       params = {
         {type = "int *", name = "count"}
@@ -3395,41 +3876,41 @@ return {
     },
     {
       name = "CompressData",
-      description = "Compress data (DEFLATE algorithm)",
+      description = "Compress data (DEFLATE algorithm), memory must be MemFree()",
       returnType = "unsigned char *",
       params = {
-        {type = "unsigned char *", name = "data"},
-        {type = "int", name = "dataLength"},
-        {type = "int *", name = "compDataLength"}
+        {type = "const unsigned char *", name = "data"},
+        {type = "int", name = "dataSize"},
+        {type = "int *", name = "compDataSize"}
       }
     },
     {
       name = "DecompressData",
-      description = "Decompress data (DEFLATE algorithm)",
+      description = "Decompress data (DEFLATE algorithm), memory must be MemFree()",
       returnType = "unsigned char *",
       params = {
-        {type = "unsigned char *", name = "compData"},
-        {type = "int", name = "compDataLength"},
-        {type = "int *", name = "dataLength"}
+        {type = "const unsigned char *", name = "compData"},
+        {type = "int", name = "compDataSize"},
+        {type = "int *", name = "dataSize"}
       }
     },
     {
       name = "EncodeDataBase64",
-      description = "Encode data to Base64 string",
+      description = "Encode data to Base64 string, memory must be MemFree()",
       returnType = "char *",
       params = {
         {type = "const unsigned char *", name = "data"},
-        {type = "int", name = "dataLength"},
-        {type = "int *", name = "outputLength"}
+        {type = "int", name = "dataSize"},
+        {type = "int *", name = "outputSize"}
       }
     },
     {
       name = "DecodeDataBase64",
-      description = "Decode Base64 string data",
+      description = "Decode Base64 string data, memory must be MemFree()",
       returnType = "unsigned char *",
       params = {
-        {type = "unsigned char *", name = "data"},
-        {type = "int *", name = "outputLength"}
+        {type = "const unsigned char *", name = "data"},
+        {type = "int *", name = "outputSize"}
       }
     },
     {
@@ -5418,6 +5899,20 @@ return {
       }
     },
     {
+      name = "DrawTextCodepoints",
+      description = "Draw multiple character (codepoint)",
+      returnType = "void",
+      params = {
+        {type = "Font", name = "font"},
+        {type = "const int *", name = "codepoints"},
+        {type = "int", name = "count"},
+        {type = "Vector2", name = "position"},
+        {type = "float", name = "fontSize"},
+        {type = "float", name = "spacing"},
+        {type = "Color", name = "tint"}
+      }
+    },
+    {
       name = "MeasureText",
       description = "Measure string width for default font",
       returnType = "int",
@@ -5512,7 +6007,7 @@ return {
       description = "Encode text as codepoints array into UTF-8 text string (WARNING: memory must be freed!)",
       returnType = "char *",
       params = {
-        {type = "int *", name = "codepoints"},
+        {type = "const int *", name = "codepoints"},
         {type = "int", name = "length"}
       }
     },
@@ -5548,7 +6043,7 @@ return {
       returnType = "const char *",
       params = {
         {type = "const char *", name = "text"},
-        {type = "", name = ""}
+        {type = "...", name = "args"}
       }
     },
     {
@@ -6043,7 +6538,7 @@ return {
       params = {
         {type = "Mesh", name = "mesh"},
         {type = "int", name = "index"},
-        {type = "void *", name = "data"},
+        {type = "const void *", name = "data"},
         {type = "int", name = "dataSize"},
         {type = "int", name = "offset"}
       }
@@ -6073,7 +6568,7 @@ return {
       params = {
         {type = "Mesh", name = "mesh"},
         {type = "Material", name = "material"},
-        {type = "Matrix *", name = "transforms"},
+        {type = "const Matrix *", name = "transforms"},
         {type = "int", name = "instances"}
       }
     },
@@ -6294,7 +6789,7 @@ return {
       description = "Unload animation array data",
       returnType = "void",
       params = {
-        {type = "ModelAnimation*", name = "animations"},
+        {type = "ModelAnimation *", name = "animations"},
         {type = "unsigned int", name = "count"}
       }
     },
@@ -6354,15 +6849,6 @@ return {
       params = {
         {type = "Ray", name = "ray"},
         {type = "BoundingBox", name = "box"}
-      }
-    },
-    {
-      name = "GetRayCollisionModel",
-      description = "Get collision info between ray and model",
-      returnType = "RayCollision",
-      params = {
-        {type = "Ray", name = "ray"},
-        {type = "Model", name = "model"}
       }
     },
     {
@@ -6576,14 +7062,12 @@ return {
       }
     },
     {
-      name = "WaveFormat",
-      description = "Convert wave data to desired format",
+      name = "SetSoundPan",
+      description = "Set pan for a sound (0.5 is center)",
       returnType = "void",
       params = {
-        {type = "Wave *", name = "wave"},
-        {type = "int", name = "sampleRate"},
-        {type = "int", name = "sampleSize"},
-        {type = "int", name = "channels"}
+        {type = "Sound", name = "sound"},
+        {type = "float", name = "pan"}
       }
     },
     {
@@ -6605,8 +7089,19 @@ return {
       }
     },
     {
+      name = "WaveFormat",
+      description = "Convert wave data to desired format",
+      returnType = "void",
+      params = {
+        {type = "Wave *", name = "wave"},
+        {type = "int", name = "sampleRate"},
+        {type = "int", name = "sampleSize"},
+        {type = "int", name = "channels"}
+      }
+    },
+    {
       name = "LoadWaveSamples",
-      description = "Load samples data from wave as a floats array",
+      description = "Load samples data from wave as a 32bit float data array",
       returnType = "float *",
       params = {
         {type = "Wave", name = "wave"}
@@ -6634,7 +7129,7 @@ return {
       returnType = "Music",
       params = {
         {type = "const char *", name = "fileType"},
-        {type = "unsigned char *", name = "data"},
+        {type = "const unsigned char *", name = "data"},
         {type = "int", name = "dataSize"}
       }
     },
@@ -6719,6 +7214,15 @@ return {
       params = {
         {type = "Music", name = "music"},
         {type = "float", name = "pitch"}
+      }
+    },
+    {
+      name = "SetMusicPan",
+      description = "Set pan for a music (0.5 is center)",
+      returnType = "void",
+      params = {
+        {type = "Music", name = "music"},
+        {type = "float", name = "pan"}
       }
     },
     {
@@ -6832,11 +7336,47 @@ return {
       }
     },
     {
+      name = "SetAudioStreamPan",
+      description = "Set pan for audio stream (0.5 is centered)",
+      returnType = "void",
+      params = {
+        {type = "AudioStream", name = "stream"},
+        {type = "float", name = "pan"}
+      }
+    },
+    {
       name = "SetAudioStreamBufferSizeDefault",
       description = "Default size for new audio streams",
       returnType = "void",
       params = {
         {type = "int", name = "size"}
+      }
+    },
+    {
+      name = "SetAudioStreamCallback",
+      description = "Audio thread callback to request new data",
+      returnType = "void",
+      params = {
+        {type = "AudioStream", name = "stream"},
+        {type = "AudioCallback", name = "callback"}
+      }
+    },
+    {
+      name = "AttachAudioStreamProcessor",
+      description = "",
+      returnType = "void",
+      params = {
+        {type = "AudioStream", name = "stream"},
+        {type = "AudioCallback", name = "processor"}
+      }
+    },
+    {
+      name = "DetachAudioStreamProcessor",
+      description = "",
+      returnType = "void",
+      params = {
+        {type = "AudioStream", name = "stream"},
+        {type = "AudioCallback", name = "processor"}
       }
     }
   }

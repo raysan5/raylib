@@ -23,6 +23,9 @@ typedef struct {
     bool active;        // NOTE: Use it to activate/deactive particle
 } Particle;
 
+//------------------------------------------------------------------------------------
+// Program main entry point
+//------------------------------------------------------------------------------------
 int main(void)
 {
     // Initialization

@@ -113,9 +113,9 @@ static void DrawRectangleV(Vector2 position, Vector2 size, Color color);
 //static Matrix MatrixPerspective(double fovy, double aspect, double near, double far);
 //static Matrix MatrixLookAt(Vector3 eye, Vector3 target, Vector3 up);
 
-//----------------------------------------------------------------------------------
-// Main Entry point
-//----------------------------------------------------------------------------------
+//------------------------------------------------------------------------------------
+// Program main entry point
+//------------------------------------------------------------------------------------
 int main(void)
 {
     // Initialization

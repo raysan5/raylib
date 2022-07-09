@@ -18,7 +18,7 @@
 *     - Functions are always self-contained, no function use another raymath function inside,
 *       required code is directly re-implemented inside
 *     - Functions input parameters are always received by value (2 unavoidable exceptions)
-*     - Functions use always a "result" anmed variable for return
+*     - Functions use always a "result" variable for return
 *     - Functions are always defined inline
 *     - Angles are always in radians (DEG2RAD/RAD2DEG macros provided for convenience)
 *
@@ -75,6 +75,10 @@
 //----------------------------------------------------------------------------------
 #ifndef PI
     #define PI 3.14159265358979323846f
+#endif
+
+#ifndef EPSILON
+    #define EPSILON 0.000001f
 #endif
 
 #ifndef DEG2RAD
@@ -154,7 +158,7 @@ typedef struct float16 {
     float v[16];
 } float16;
 
-#include <math.h>       // Required for: sinf(), cosf(), tan(), atan2f(), sqrtf(), fminf(), fmaxf(), fabs()
+#include <math.h>       // Required for: sinf(), cosf(), tan(), atan2f(), sqrtf(), floor(), fminf(), fmaxf(), fabs()
 
 //----------------------------------------------------------------------------------
 // Module Functions Definition - Utils math
@@ -189,7 +193,23 @@ RMAPI float Normalize(float value, float start, float end)
 // Remap input value within input range to output range
 RMAPI float Remap(float value, float inputStart, float inputEnd, float outputStart, float outputEnd)
 {
-    float result =(value - inputStart)/(inputEnd - inputStart)*(outputEnd - outputStart) + outputStart;
+    float result = (value - inputStart)/(inputEnd - inputStart)*(outputEnd - outputStart) + outputStart;
+
+    return result;
+}
+
+// Wrap input value from min to max
+RMAPI float Wrap(float value, float min, float max)
+{
+	float result = value - (max - min)*floor((value - min)/(max - min));
+
+	return result;
+}
+
+// Check whether two given floats are almost equal
+RMAPI int FloatEquals(float x, float y)
+{
+    int result = (fabsf(x - y)) <= (EPSILON*fmaxf(1.0f, fmaxf(fabsf(x), fabsf(y))));
 
     return result;
 }
@@ -278,11 +298,19 @@ RMAPI float Vector2Distance(Vector2 v1, Vector2 v2)
     return result;
 }
 
+// Calculate square distance between two vectors
+RMAPI float Vector2DistanceSqr(Vector2 v1, Vector2 v2)
+{
+    float result = ((v1.x - v2.x)*(v1.x - v2.x) + (v1.y - v2.y)*(v1.y - v2.y));
+
+    return result;
+}
+
 // Calculate angle from two vectors
 RMAPI float Vector2Angle(Vector2 v1, Vector2 v2)
 {
     float result = atan2f(v2.y, v2.x) - atan2f(v1.y, v1.x);
-    
+
     return result;
 }
 
@@ -337,16 +365,16 @@ RMAPI Vector2 Vector2Normalize(Vector2 v)
 // Transforms a Vector2 by a given Matrix
 RMAPI Vector2 Vector2Transform(Vector2 v, Matrix mat)
 {
-	Vector2 result = { 0 };
+    Vector2 result = { 0 };
 
-	float x = v.x;
-	float y = v.y;
-	float z = 0;
+    float x = v.x;
+    float y = v.y;
+    float z = 0;
 
-	result.x = mat.m0*x + mat.m4*y + mat.m8*z + mat.m12;
-	result.y = mat.m1*x + mat.m5*y + mat.m9*z + mat.m13;
+    result.x = mat.m0*x + mat.m4*y + mat.m8*z + mat.m12;
+    result.y = mat.m1*x + mat.m5*y + mat.m9*z + mat.m13;
 
-	return result;
+    return result;
 }
 
 // Calculate linear interpolation between two vectors
@@ -378,8 +406,11 @@ RMAPI Vector2 Vector2Rotate(Vector2 v, float angle)
 {
     Vector2 result = { 0 };
 
-    result.x = v.x*cosf(angle) - v.y*sinf(angle);
-    result.y = v.x*sinf(angle) + v.y*cosf(angle);
+    float cosres = cosf(angle);
+    float sinres = sinf(angle);
+
+    result.x = v.x*cosres - v.y*sinres;
+    result.y = v.x*sinres + v.y*cosres;
 
     return result;
 }
@@ -399,6 +430,62 @@ RMAPI Vector2 Vector2MoveTowards(Vector2 v, Vector2 target, float maxDistance)
 
     result.x = v.x + dx/dist*maxDistance;
     result.y = v.y + dy/dist*maxDistance;
+
+    return result;
+}
+
+// Invert the given vector
+RMAPI Vector2 Vector2Invert(Vector2 v)
+{
+    Vector2 result = { 1.0f/v.x, 1.0f/v.y };
+
+    return result;
+}
+
+// Clamp the components of the vector between
+// min and max values specified by the given vectors
+RMAPI Vector2 Vector2Clamp(Vector2 v, Vector2 min, Vector2 max)
+{
+    Vector2 result = { 0 };
+
+    result.x = fminf(max.x, fmaxf(min.x, v.x));
+    result.y = fminf(max.y, fmaxf(min.y, v.y));
+
+    return result;
+}
+
+// Clamp the magnitude of the vector between two min and max values
+RMAPI Vector2 Vector2ClampValue(Vector2 v, float min, float max)
+{
+    Vector2 result = { 0 };
+
+    float length = (v.x*v.x) + (v.y*v.y);
+    if (length > 0.0f)
+    {
+        length = sqrtf(length);
+
+        if (length < min)
+        {
+            float scale = min/length;
+            result.x = v.x*scale;
+            result.y = v.y*scale;
+        }
+        else if (length > max)
+        {
+            float scale = max/length;
+            result.x = v.x*scale;
+            result.y = v.y*scale;
+        }
+    }
+
+    return result;
+}
+
+// Check whether two given vectors are almost equal
+RMAPI int Vector2Equals(Vector2 p, Vector2 q)
+{
+    int result = ((fabsf(p.x - q.x)) <= (EPSILON*fmaxf(1.0f, fmaxf(fabsf(p.x), fabsf(q.x))))) &&
+                  ((fabsf(p.y - q.y)) <= (EPSILON*fmaxf(1.0f, fmaxf(fabsf(p.y), fabsf(q.y)))));
 
     return result;
 }
@@ -487,14 +574,14 @@ RMAPI Vector3 Vector3Perpendicular(Vector3 v)
     float min = (float) fabs(v.x);
     Vector3 cardinalAxis = {1.0f, 0.0f, 0.0f};
 
-    if (fabs(v.y) < min)
+    if (fabsf(v.y) < min)
     {
         min = (float) fabs(v.y);
         Vector3 tmp = {0.0f, 1.0f, 0.0f};
         cardinalAxis = tmp;
     }
 
-    if (fabs(v.z) < min)
+    if (fabsf(v.z) < min)
     {
         Vector3 tmp = {0.0f, 0.0f, 1.0f};
         cardinalAxis = tmp;
@@ -545,16 +632,29 @@ RMAPI float Vector3Distance(Vector3 v1, Vector3 v2)
     return result;
 }
 
+// Calculate square distance between two vectors
+RMAPI float Vector3DistanceSqr(Vector3 v1, Vector3 v2)
+{
+    float result = 0.0f;
+
+    float dx = v2.x - v1.x;
+    float dy = v2.y - v1.y;
+    float dz = v2.z - v1.z;
+    result = dx*dx + dy*dy + dz*dz;
+
+    return result;
+}
+
 // Calculate angle between two vectors
 RMAPI float Vector3Angle(Vector3 v1, Vector3 v2)
 {
     float result = 0.0f;
-    
+
     Vector3 cross = { v1.y*v2.z - v1.z*v2.y, v1.z*v2.x - v1.x*v2.z, v1.x*v2.y - v1.y*v2.x };
     float len = sqrtf(cross.x*cross.x + cross.y*cross.y + cross.z*cross.z);
     float dot = (v1.x*v2.x + v1.y*v2.y + v1.z*v2.z);
     result = atan2f(len, dot);
-    
+
     return result;
 }
 
@@ -827,6 +927,92 @@ RMAPI float3 Vector3ToFloatV(Vector3 v)
     return buffer;
 }
 
+// Invert the given vector
+RMAPI Vector3 Vector3Invert(Vector3 v)
+{
+    Vector3 result = { 1.0f/v.x, 1.0f/v.y, 1.0f/v.z };
+
+    return result;
+}
+
+// Clamp the components of the vector between
+// min and max values specified by the given vectors
+RMAPI Vector3 Vector3Clamp(Vector3 v, Vector3 min, Vector3 max)
+{
+    Vector3 result = { 0 };
+
+    result.x = fminf(max.x, fmaxf(min.x, v.x));
+    result.y = fminf(max.y, fmaxf(min.y, v.y));
+    result.z = fminf(max.z, fmaxf(min.z, v.z));
+
+    return result;
+}
+
+// Clamp the magnitude of the vector between two values
+RMAPI Vector3 Vector3ClampValue(Vector3 v, float min, float max)
+{
+    Vector3 result = { 0 };
+
+    float length = (v.x*v.x) + (v.y*v.y) + (v.z*v.z);
+    if (length > 0.0f)
+    {
+        length = sqrtf(length);
+
+        if (length < min)
+        {
+            float scale = min/length;
+            result.x = v.x*scale;
+            result.y = v.y*scale;
+            result.z = v.z*scale;
+        }
+        else if (length > max)
+        {
+            float scale = max/length;
+            result.x = v.x*scale;
+            result.y = v.y*scale;
+            result.z = v.z*scale;
+        }
+    }
+
+    return result;
+}
+
+// Check whether two given vectors are almost equal
+RMAPI int Vector3Equals(Vector3 p, Vector3 q)
+{
+    int result = ((fabsf(p.x - q.x)) <= (EPSILON*fmaxf(1.0f, fmaxf(fabsf(p.x), fabsf(q.x))))) &&
+                  ((fabsf(p.y - q.y)) <= (EPSILON*fmaxf(1.0f, fmaxf(fabsf(p.y), fabsf(q.y))))) &&
+                  ((fabsf(p.z - q.z)) <= (EPSILON*fmaxf(1.0f, fmaxf(fabsf(p.z), fabsf(q.z)))));
+
+    return result;
+}
+
+// Compute the direction of a refracted ray where v specifies the
+// normalized direction of the incoming ray, n specifies the
+// normalized normal vector of the interface of two optical media,
+// and r specifies the ratio of the refractive index of the medium
+// from where the ray comes to the refractive index of the medium
+// on the other side of the surface
+RMAPI Vector3 Vector3Refract(Vector3 v, Vector3 n, float r)
+{
+    Vector3 result = { 0 };
+
+    float dot = v.x*n.x + v.y*n.y + v.z*n.z;
+    float d = 1.0f - r*r*(1.0f - dot*dot);
+
+    if (d >= 0.0f)
+    {
+        d = sqrtf(d);
+        v.x = r*v.x - (r*dot + d)*n.x;
+        v.y = r*v.y - (r*dot + d)*n.y;
+        v.z = r*v.z - (r*dot + d)*n.z;
+
+        result = v;
+    }
+
+    return result;
+}
+
 //----------------------------------------------------------------------------------
 // Module Functions Definition - Matrix math
 //----------------------------------------------------------------------------------
@@ -928,45 +1114,6 @@ RMAPI Matrix MatrixInvert(Matrix mat)
     result.m13 = (a00*b09 - a01*b07 + a02*b06)*invDet;
     result.m14 = (-a30*b03 + a31*b01 - a32*b00)*invDet;
     result.m15 = (a20*b03 - a21*b01 + a22*b00)*invDet;
-
-    return result;
-}
-
-// Normalize provided matrix
-RMAPI Matrix MatrixNormalize(Matrix mat)
-{
-    Matrix result = { 0 };
-
-    // Cache the matrix values (speed optimization)
-    float a00 = mat.m0, a01 = mat.m1, a02 = mat.m2, a03 = mat.m3;
-    float a10 = mat.m4, a11 = mat.m5, a12 = mat.m6, a13 = mat.m7;
-    float a20 = mat.m8, a21 = mat.m9, a22 = mat.m10, a23 = mat.m11;
-    float a30 = mat.m12, a31 = mat.m13, a32 = mat.m14, a33 = mat.m15;
-
-    // MatrixDeterminant(mat)
-    float det = a30*a21*a12*a03 - a20*a31*a12*a03 - a30*a11*a22*a03 + a10*a31*a22*a03 +
-                a20*a11*a32*a03 - a10*a21*a32*a03 - a30*a21*a02*a13 + a20*a31*a02*a13 +
-                a30*a01*a22*a13 - a00*a31*a22*a13 - a20*a01*a32*a13 + a00*a21*a32*a13 +
-                a30*a11*a02*a23 - a10*a31*a02*a23 - a30*a01*a12*a23 + a00*a31*a12*a23 +
-                a10*a01*a32*a23 - a00*a11*a32*a23 - a20*a11*a02*a33 + a10*a21*a02*a33 +
-                a20*a01*a12*a33 - a00*a21*a12*a33 - a10*a01*a22*a33 + a00*a11*a22*a33;
-
-    result.m0 = mat.m0/det;
-    result.m1 = mat.m1/det;
-    result.m2 = mat.m2/det;
-    result.m3 = mat.m3/det;
-    result.m4 = mat.m4/det;
-    result.m5 = mat.m5/det;
-    result.m6 = mat.m6/det;
-    result.m7 = mat.m7/det;
-    result.m8 = mat.m8/det;
-    result.m9 = mat.m9/det;
-    result.m10 = mat.m10/det;
-    result.m11 = mat.m11/det;
-    result.m12 = mat.m12/det;
-    result.m13 = mat.m13/det;
-    result.m14 = mat.m14/det;
-    result.m15 = mat.m15/det;
 
     return result;
 }
@@ -1490,10 +1637,9 @@ RMAPI Quaternion QuaternionInvert(Quaternion q)
 {
     Quaternion result = q;
 
-    float length = sqrtf(q.x*q.x + q.y*q.y + q.z*q.z + q.w*q.w);
-    float lengthSq = length*length;
+    float lengthSq = q.x*q.x + q.y*q.y + q.z*q.z + q.w*q.w;
 
-    if (lengthSq != 0.0)
+    if (lengthSq != 0.0f)
     {
         float invLength = 1.0f/lengthSq;
 
@@ -1527,12 +1673,10 @@ RMAPI Quaternion QuaternionScale(Quaternion q, float mul)
 {
     Quaternion result = { 0 };
 
-    float qax = q.x, qay = q.y, qaz = q.z, qaw = q.w;
-
-    result.x = qax*mul + qaw*mul + qay*mul - qaz*mul;
-    result.y = qay*mul + qaw*mul + qaz*mul - qax*mul;
-    result.z = qaz*mul + qaw*mul + qax*mul - qay*mul;
-    result.w = qaw*mul - qax*mul - qay*mul - qaz*mul;
+    result.x = q.x*mul;
+    result.y = q.y*mul;
+    result.z = q.z*mul;
+    result.w = q.w*mul;
 
     return result;
 }
@@ -1596,14 +1740,14 @@ RMAPI Quaternion QuaternionSlerp(Quaternion q1, Quaternion q2, float amount)
         cosHalfTheta = -cosHalfTheta;
     }
 
-    if (fabs(cosHalfTheta) >= 1.0f) result = q1;
+    if (fabsf(cosHalfTheta) >= 1.0f) result = q1;
     else if (cosHalfTheta > 0.95f) result = QuaternionNlerp(q1, q2, amount);
     else
     {
         float halfTheta = acosf(cosHalfTheta);
         float sinHalfTheta = sqrtf(1.0f - cosHalfTheta*cosHalfTheta);
 
-        if (fabs(sinHalfTheta) < 0.001f)
+        if (fabsf(sinHalfTheta) < 0.001f)
         {
             result.x = (q1.x*0.5f + q2.x*0.5f);
             result.y = (q1.y*0.5f + q2.y*0.5f);
@@ -1769,7 +1913,7 @@ RMAPI Quaternion QuaternionFromAxisAngle(Vector3 axis, float angle)
 // Get the rotation angle and axis for a given quaternion
 RMAPI void QuaternionToAxisAngle(Quaternion q, Vector3 *outAxis, float *outAngle)
 {
-    if (fabs(q.w) > 1.0f)
+    if (fabsf(q.w) > 1.0f)
     {
         // QuaternionNormalize(q);
         float length = sqrtf(q.x*q.x + q.y*q.y + q.z*q.z + q.w*q.w);
@@ -1858,6 +2002,17 @@ RMAPI Quaternion QuaternionTransform(Quaternion q, Matrix mat)
     result.y = mat.m1*q.x + mat.m5*q.y + mat.m9*q.z + mat.m13*q.w;
     result.z = mat.m2*q.x + mat.m6*q.y + mat.m10*q.z + mat.m14*q.w;
     result.w = mat.m3*q.x + mat.m7*q.y + mat.m11*q.z + mat.m15*q.w;
+
+    return result;
+}
+
+// Check whether two given quaternions are almost equal
+RMAPI int QuaternionEquals(Quaternion p, Quaternion q)
+{
+    int result = ((fabsf(p.x - q.x)) <= (EPSILON*fmaxf(1.0f, fmaxf(fabsf(p.x), fabsf(q.x))))) &&
+                  ((fabsf(p.y - q.y)) <= (EPSILON*fmaxf(1.0f, fmaxf(fabsf(p.y), fabsf(q.y))))) &&
+                  ((fabsf(p.z - q.z)) <= (EPSILON*fmaxf(1.0f, fmaxf(fabsf(p.z), fabsf(q.z))))) &&
+                  ((fabsf(p.w - q.w)) <= (EPSILON*fmaxf(1.0f, fmaxf(fabsf(p.w), fabsf(q.w)))));
 
     return result;
 }

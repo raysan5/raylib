@@ -62,6 +62,7 @@ string (REPLACE ";" " " raylib_LDFLAGS "${raylib_LDFLAGS}")
 set_target_properties(raylib
   PROPERTIES
   IMPORTED_LOCATION             "${raylib_LIBRARIES}"
+  IMPORTED_IMPLIB               "${raylib_LIBRARIES}"
   INTERFACE_INCLUDE_DIRECTORIES "${raylib_INCLUDE_DIRS}"
   INTERFACE_LINK_LIBRARIES      "${raylib_LDFLAGS}"
   INTERFACE_COMPILE_OPTIONS     "${raylib_DEFINITIONS}"

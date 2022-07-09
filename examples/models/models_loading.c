@@ -22,6 +22,9 @@
 
 #include "raylib.h"
 
+//------------------------------------------------------------------------------------
+// Program main entry point
+//------------------------------------------------------------------------------------
 int main(void)
 {
     // Initialization
@@ -67,35 +70,34 @@ int main(void)
         // Load new models/textures on drag&drop
         if (IsFileDropped())
         {
-            int count = 0;
-            char **droppedFiles = GetDroppedFiles(&count);
+            FilePathList droppedFiles = LoadDroppedFiles();
 
-            if (count == 1) // Only support one file dropped
+            if (droppedFiles.count == 1) // Only support one file dropped
             {
-                if (IsFileExtension(droppedFiles[0], ".obj") ||
-                    IsFileExtension(droppedFiles[0], ".gltf") ||
-                    IsFileExtension(droppedFiles[0], ".glb") ||
-                    IsFileExtension(droppedFiles[0], ".vox") ||
-                    IsFileExtension(droppedFiles[0], ".iqm"))       // Model file formats supported
+                if (IsFileExtension(droppedFiles.paths[0], ".obj") ||
+                    IsFileExtension(droppedFiles.paths[0], ".gltf") ||
+                    IsFileExtension(droppedFiles.paths[0], ".glb") ||
+                    IsFileExtension(droppedFiles.paths[0], ".vox") ||
+                    IsFileExtension(droppedFiles.paths[0], ".iqm"))       // Model file formats supported
                 {
-                    UnloadModel(model);                     // Unload previous model
-                    model = LoadModel(droppedFiles[0]);     // Load new model
+                    UnloadModel(model);                         // Unload previous model
+                    model = LoadModel(droppedFiles.paths[0]);   // Load new model
                     model.materials[0].maps[MATERIAL_MAP_DIFFUSE].texture = texture; // Set current map diffuse texture
 
                     bounds = GetMeshBoundingBox(model.meshes[0]);
 
                     // TODO: Move camera position from target enough distance to visualize model properly
                 }
-                else if (IsFileExtension(droppedFiles[0], ".png"))  // Texture file formats supported
+                else if (IsFileExtension(droppedFiles.paths[0], ".png"))  // Texture file formats supported
                 {
                     // Unload current model texture and load new one
                     UnloadTexture(texture);
-                    texture = LoadTexture(droppedFiles[0]);
+                    texture = LoadTexture(droppedFiles.paths[0]);
                     model.materials[0].maps[MATERIAL_MAP_DIFFUSE].texture = texture;
                 }
             }
 
-            ClearDroppedFiles();    // Clear internal buffers
+            UnloadDroppedFiles(droppedFiles);    // Unload filepaths from memory
         }
 
         // Select model on mouse click

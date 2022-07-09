@@ -8,8 +8,8 @@
 #    PLATFORM_DESKTOP:  OSX/macOS (arm64, x86_64)
 #    PLATFORM_DESKTOP:  FreeBSD, OpenBSD, NetBSD, DragonFly
 #    PLATFORM_ANDROID:  Android (arm, i686, arm64, x86_64)
-#    PLATFORM_RPI:      Raspberry Pi (Raspbian)
-#    PLATFORM_DRM:      Linux native mode, including Raspberry Pi 4 with V3D fkms driver
+#    PLATFORM_RPI:      Raspberry Pi (deprecated - RPI OS Buster only)
+#    PLATFORM_DRM:      Linux native mode, including Raspberry Pi (RPI OS Bullseye)
 #    PLATFORM_WEB:      HTML5 (Chrome, Firefox)
 #
 #  Many thanks to Milan Nikolic (@gen2brain) for implementing Android platform pipeline.
@@ -42,7 +42,7 @@
 # Define required environment variables
 #------------------------------------------------------------------------------------------------
 # Define target platform: PLATFORM_DESKTOP, PLATFORM_RPI, PLATFORM_DRM, PLATFORM_ANDROID, PLATFORM_WEB
-PLATFORM           ?= PLATFORM_DESKTOP
+PLATFORM             ?= PLATFORM_DESKTOP
 
 # Define required raylib variables
 RAYLIB_VERSION        = 4.0.0
@@ -81,8 +81,11 @@ RAYLIB_MODULE_MODELS ?= TRUE
 RAYLIB_MODULE_RAYGUI ?= FALSE
 RAYLIB_MODULE_PHYSAC ?= FALSE
 
-RAYLIB_MODULE_RAYGUI_PATH ?= $(RAYLIB_SRC_PATH)/extras
-RAYLIB_MODULE_PHYSAC_PATH ?= $(RAYLIB_SRC_PATH)/extras
+# NOTE: Additional libraries have been moved to their own repos:
+# raygui: https://github.com/raysan5/raygui
+# physac: https://github.com/raysan5/physac
+RAYLIB_MODULE_RAYGUI_PATH ?= $(RAYLIB_SRC_PATH)/../../raygui/src
+RAYLIB_MODULE_PHYSAC_PATH ?= $(RAYLIB_SRC_PATH)/../../physac/src
 
 # Use external GLFW library instead of rglfw module
 USE_EXTERNAL_GLFW     ?= FALSE
@@ -106,6 +109,7 @@ ROOT = $(shell whoami)
 
 # By default we suppose we are working on Windows
 HOST_PLATFORM_OS ?= WINDOWS
+PLATFORM_OS ?= WINDOWS
 
 # Determine PLATFORM_OS in case PLATFORM_DESKTOP selected
 ifeq ($(PLATFORM),PLATFORM_DESKTOP)
@@ -113,6 +117,9 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
     # ifeq ($(UNAME),Msys) -> Windows
     ifeq ($(OS),Windows_NT)
         PLATFORM_OS = WINDOWS
+        ifndef PLATFORM_SHELL
+            PLATFORM_SHELL = cmd
+        endif
     else
         UNAMEOS = $(shell uname)
         ifeq ($(UNAMEOS),Linux)
@@ -133,6 +140,9 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
         ifeq ($(UNAMEOS),Darwin)
             PLATFORM_OS = OSX
         endif
+        ifndef PLATFORM_SHELL
+            PLATFORM_SHELL = sh
+        endif
     endif
 endif
 ifeq ($(PLATFORM),PLATFORM_RPI)
@@ -140,11 +150,33 @@ ifeq ($(PLATFORM),PLATFORM_RPI)
     ifeq ($(UNAMEOS),Linux)
         PLATFORM_OS = LINUX
     endif
+    ifndef PLATFORM_SHELL
+        PLATFORM_SHELL = sh
+    endif
 endif
 ifeq ($(PLATFORM),PLATFORM_DRM)
     UNAMEOS = $(shell uname)
     ifeq ($(UNAMEOS),Linux)
         PLATFORM_OS = LINUX
+    endif
+    ifndef PLATFORM_SHELL
+        PLATFORM_SHELL = sh
+    endif
+endif
+ifeq ($(PLATFORM),PLATFORM_WEB)
+    ifeq ($(OS),Windows_NT)
+        PLATFORM_OS = WINDOWS
+        ifndef PLATFORM_SHELL
+            PLATFORM_SHELL = cmd
+        endif
+    else
+        UNAMEOS = $(shell uname)
+        ifeq ($(UNAMEOS),Linux)
+            PLATFORM_OS = LINUX
+        endif
+        ifndef PLATFORM_SHELL
+            PLATFORM_SHELL = sh
+        endif
     endif
 endif
 
@@ -268,7 +300,7 @@ endif
 #------------------------------------------------------------------------------------------------
 #  -O1                      defines optimization level
 #  -g                       include debug information on compilation
-#  -s                       strip unnecessary data from build
+#  -s                       strip unnecessary data from build --> linker
 #  -Wall                    turns on most, but not all, compiler warnings
 #  -std=c99                 defines C language mode (standard C from 1999 revision)
 #  -std=gnu99               defines C language mode (GNU C from 1999 revision)
@@ -302,7 +334,7 @@ ifeq ($(RAYLIB_BUILD_MODE),RELEASE)
         CFLAGS += -Os
     endif
     ifeq ($(PLATFORM),PLATFORM_DESKTOP)
-        CFLAGS += -s -O1
+        CFLAGS += -O1
     endif
     ifeq ($(PLATFORM),PLATFORM_ANDROID)
         CFLAGS += -O2
@@ -420,7 +452,7 @@ endif
 # Define library paths containing required libs: LDFLAGS
 # NOTE: This is only required for dynamic library generation
 #------------------------------------------------------------------------------------------------
-LDFLAGS = -L. -L$(RAYLIB_RELEASE_PATH)
+LDFLAGS = $(CUSTOM_LDFLAGS) -L. -L$(RAYLIB_RELEASE_PATH)
 
 ifeq ($(PLATFORM),PLATFORM_DESKTOP)
     ifeq ($(PLATFORM_OS),WINDOWS)
@@ -480,9 +512,15 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
 endif
 ifeq ($(PLATFORM),PLATFORM_RPI)
     LDLIBS = -lbrcmGLESv2 -lbrcmEGL -lpthread -lrt -lm -lbcm_host -ldl
+    ifeq ($(RAYLIB_MODULE_AUDIO),TRUE)
+        LDLIBS += -latomic
+    endif
 endif
 ifeq ($(PLATFORM),PLATFORM_DRM)
     LDLIBS = -lGLESv2 -lEGL -ldrm -lgbm -lpthread -lrt -lm -ldl
+    ifeq ($(RAYLIB_MODULE_AUDIO),TRUE)
+        LDLIBS += -latomic
+    endif
 endif
 ifeq ($(PLATFORM),PLATFORM_ANDROID)
     LDLIBS = -llog -landroid -lEGL -lGLESv2 -lOpenSLES -lc -lm
@@ -634,17 +672,26 @@ raudio.o : raudio.c raylib.h
 raygui.o : raygui.c
 	$(CC) -c $< $(CFLAGS) $(INCLUDE_PATHS)
 raygui.c:
-	echo #define RAYGUI_IMPLEMENTATION > raygui.c
-	echo #include "$(RAYLIB_MODULE_RAYGUI_PATH)/raygui.h" >> raygui.c
+ifeq ($(PLATFORM_SHELL), cmd)
+	@echo #define RAYGUI_IMPLEMENTATION > raygui.c
+	@echo #include "$(RAYLIB_MODULE_RAYGUI_PATH)/raygui.h" >> raygui.c
+else
+	@echo "#define RAYGUI_IMPLEMENTATION" > raygui.c
+	@echo "#include \"$(RAYLIB_MODULE_RAYGUI_PATH)/raygui.h\"" >> raygui.c
+endif
 
 # Compile physac module
 # NOTE: physac header should be distributed with raylib.h
 physac.o : physac.c
 	$(CC) -c $< $(CFLAGS) $(INCLUDE_PATHS)
 physac.c:
+ifeq ($(PLATFORM_SHELL), cmd)
 	@echo #define PHYSAC_IMPLEMENTATION > physac.c
 	@echo #include "$(RAYLIB_MODULE_PHYSAC_PATH)/physac.h" >> physac.c
-
+else
+	@echo "#define PHYSAC_IMPLEMENTATION" > physac.c
+	@echo "#include \"$(RAYLIB_MODULE_PHYSAC_PATH)/physac.h\"" >> physac.c
+endif
 # Compile android_native_app_glue module
 android_native_app_glue.o : $(NATIVE_APP_GLUE)/android_native_app_glue.c
 	$(CC) -c $< $(CFLAGS) $(INCLUDE_PATHS)
@@ -691,7 +738,6 @@ ifeq ($(ROOT),root)
 		cp --update raylib.h $(RAYLIB_H_INSTALL_PATH)/raylib.h
 		cp --update raymath.h $(RAYLIB_H_INSTALL_PATH)/raymath.h
 		cp --update rlgl.h $(RAYLIB_H_INSTALL_PATH)/rlgl.h
-		cp --update extras/physac.h $(RAYLIB_H_INSTALL_PATH)/physac.h
 		@echo "raylib development files installed/updated!"
     else
 		@echo "This function currently works on GNU/Linux systems. Add yours today (^;"
@@ -719,7 +765,6 @@ ifeq ($(ROOT),root)
 		rm --force --interactive --verbose $(RAYLIB_H_INSTALL_PATH)/raylib.h
 		rm --force --interactive --verbose $(RAYLIB_H_INSTALL_PATH)/raymath.h
 		rm --force --interactive --verbose $(RAYLIB_H_INSTALL_PATH)/rlgl.h
-		rm --force --interactive --verbose $(RAYLIB_H_INSTALL_PATH)/physac.h
 		@echo "raylib development files removed!"
         else
 		@echo "This function currently works on GNU/Linux systems. Add yours today (^;"
@@ -728,18 +773,23 @@ else
 	@echo "Error: Root permissions needed for uninstallation. Try sudo make uninstall"
 endif
 
+.PHONY: clean_shell_cmd clean_shell_sh
+
 # Clean everything
-clean:
-ifeq ($(PLATFORM_OS),WINDOWS)
-	del *.o /s
-	cd $(RAYLIB_RELEASE_PATH)
-	del lib$(RAYLIB_LIB_NAME).a /s
-	del lib$(RAYLIB_LIB_NAME)dll.a /s
-	del $(RAYLIB_LIB_NAME).dll /s
-else
-	rm -fv *.o $(RAYLIB_RELEASE_PATH)/lib$(RAYLIB_LIB_NAME).a $(RAYLIB_RELEASE_PATH)/lib$(RAYLIB_LIB_NAME).bc $(RAYLIB_RELEASE_PATH)/lib$(RAYLIB_LIB_NAME).so*
-endif
-ifeq ($(PLATFORM),PLATFORM_ANDROID)
-	rm -rf $(ANDROID_TOOLCHAIN) $(NATIVE_APP_GLUE)/android_native_app_glue.o
-endif
+clean:	clean_shell_$(PLATFORM_SHELL)
 	@echo "removed all generated files!"
+
+clean_shell_sh:
+	rm -fv *.o $(RAYLIB_RELEASE_PATH)/lib$(RAYLIB_LIB_NAME).a $(RAYLIB_RELEASE_PATH)/lib$(RAYLIB_LIB_NAME).bc $(RAYLIB_RELEASE_PATH)/lib$(RAYLIB_LIB_NAME).so*
+ifeq ($(PLATFORM),PLATFORM_ANDROID)
+	rm -fv $(NATIVE_APP_GLUE)/android_native_app_glue.o
+endif
+
+# Set specific target variable
+clean_shell_cmd: SHELL=cmd
+clean_shell_cmd:
+	del *.o /s
+	cd $(RAYLIB_RELEASE_PATH) & \
+	del lib$(RAYLIB_LIB_NAME).a /s & \
+	del lib$(RAYLIB_LIB_NAME)dll.a /s & \
+	del $(RAYLIB_LIB_NAME).dll /s

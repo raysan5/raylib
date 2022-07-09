@@ -15,6 +15,9 @@
 
 #include "raylib.h"
 
+//------------------------------------------------------------------------------------
+// Program main entry point
+//------------------------------------------------------------------------------------
 int main(void)
 {
     // Initialization
@@ -79,16 +82,16 @@ int main(void)
         // Load a dropped TTF file dynamically (at current fontSize)
         if (IsFileDropped())
         {
-            int count = 0;
-            char **droppedFiles = GetDroppedFiles(&count);
+            FilePathList droppedFiles = LoadDroppedFiles();
 
             // NOTE: We only support first ttf file dropped
-            if (IsFileExtension(droppedFiles[0], ".ttf"))
+            if (IsFileExtension(droppedFiles.paths[0], ".ttf"))
             {
                 UnloadFont(font);
-                font = LoadFontEx(droppedFiles[0], (int)fontSize, 0, 0);
-                ClearDroppedFiles();
+                font = LoadFontEx(droppedFiles.paths[0], (int)fontSize, 0, 0);
             }
+            
+            UnloadDroppedFiles(droppedFiles);    // Unload filepaths from memory
         }
         //----------------------------------------------------------------------------------
 
@@ -123,8 +126,6 @@ int main(void)
 
     // De-Initialization
     //--------------------------------------------------------------------------------------
-    ClearDroppedFiles();        // Clear internal buffers
-
     UnloadFont(font);           // Font unloading
 
     CloseWindow();              // Close window and OpenGL context

@@ -40,6 +40,9 @@ typedef struct GolUpdateSSBO {
     GolUpdateCmd commands[MAX_BUFFERED_TRANSFERTS];
 } GolUpdateSSBO;
 
+//------------------------------------------------------------------------------------
+// Program main entry point
+//------------------------------------------------------------------------------------
 int main(void)
 {
     // Initialization
@@ -55,27 +58,25 @@ int main(void)
     unsigned int golLogicProgram = rlLoadComputeShaderProgram(golLogicShader);
     UnloadFileText(golLogicCode);
 
-    // Game of Life logic compute shader
+    // Game of Life logic render shader
     Shader golRenderShader = LoadShader(NULL, "resources/shaders/glsl430/gol_render.glsl");
     int resUniformLoc = GetShaderLocation(golRenderShader, "resolution");
 
-    // Game of Life transfert shader
+    // Game of Life transfert shader (CPU<->GPU download and upload)
     char *golTransfertCode = LoadFileText("resources/shaders/glsl430/gol_transfert.glsl");
     unsigned int golTransfertShader = rlCompileShader(golTransfertCode, RL_COMPUTE_SHADER);
     unsigned int golTransfertProgram = rlLoadComputeShaderProgram(golTransfertShader);
     UnloadFileText(golTransfertCode);
 
-    // SSBOs
+    // Load shader storage buffer object (SSBO), id returned
     unsigned int ssboA = rlLoadShaderBuffer(GOL_WIDTH*GOL_WIDTH*sizeof(unsigned int), NULL, RL_DYNAMIC_COPY);
     unsigned int ssboB = rlLoadShaderBuffer(GOL_WIDTH*GOL_WIDTH*sizeof(unsigned int), NULL, RL_DYNAMIC_COPY);
-
-    struct GolUpdateSSBO transfertBuffer;
-    transfertBuffer.count = 0;
-
-    int transfertSSBO = rlLoadShaderBuffer(sizeof(struct GolUpdateSSBO), NULL, RL_DYNAMIC_COPY);
+    unsigned int ssboTransfert = rlLoadShaderBuffer(sizeof(GolUpdateSSBO), NULL, RL_DYNAMIC_COPY);
+    
+    GolUpdateSSBO transfertBuffer = { 0 };
 
     // Create a white texture of the size of the window to update 
-    // each pixel of the window using the fragment shader
+    // each pixel of the window using the fragment shader: golRenderShader
     Image whiteImage = GenImageColor(GOL_WIDTH, GOL_WIDTH, WHITE);
     Texture whiteTex = LoadTextureFromImage(whiteImage);
     UnloadImage(whiteImage);
@@ -98,18 +99,16 @@ int main(void)
             transfertBuffer.commands[transfertBuffer.count].enabled = IsMouseButtonDown(MOUSE_BUTTON_LEFT);
             transfertBuffer.count++;
         }
-        else if (transfertBuffer.count > 0)
+        else if (transfertBuffer.count > 0)  // Process transfert buffer
         {
-            // Process transfert buffer
-
             // Send SSBO buffer to GPU
-            rlUpdateShaderBufferElements(transfertSSBO, &transfertBuffer, sizeof(struct GolUpdateSSBO), 0);
+            rlUpdateShaderBufferElements(ssboTransfert, &transfertBuffer, sizeof(GolUpdateSSBO), 0);
             
-            // Process ssbo command
+            // Process ssbo commands on GPU
             rlEnableShader(golTransfertProgram);
             rlBindShaderBuffer(ssboA, 1);
-            rlBindShaderBuffer(transfertSSBO, 3);
-            rlComputeShaderDispatch(transfertBuffer.count, 1, 1); // each GPU unit will process a command
+            rlBindShaderBuffer(ssboTransfert, 3);
+            rlComputeShaderDispatch(transfertBuffer.count, 1, 1); // Each GPU unit will process a command!
             rlDisableShader();
 
             transfertBuffer.count = 0;
@@ -157,7 +156,7 @@ int main(void)
     // Unload shader buffers objects.
     rlUnloadShaderBuffer(ssboA);
     rlUnloadShaderBuffer(ssboB);
-    rlUnloadShaderBuffer(transfertSSBO);
+    rlUnloadShaderBuffer(ssboTransfert);
 
     // Unload compute shader programs
     rlUnloadShaderProgram(golTransfertProgram);

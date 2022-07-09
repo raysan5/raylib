@@ -238,8 +238,8 @@ ifeq ($(PLATFORM),PLATFORM_DRM)
 endif
 
 # Define include paths for required headers
-# NOTE: Some external/extras libraries could be required (stb, physac, easings...)
-INCLUDE_PATHS = -I. -I$(RAYLIB_PATH)/src -I$(RAYLIB_PATH)/src/external -I$(RAYLIB_PATH)/src/extras
+# NOTE: Some external/extras libraries could be required (stb, easings...)
+INCLUDE_PATHS = -I. -I$(RAYLIB_PATH)/src -I$(RAYLIB_PATH)/src/external
 
 # Define additional directories containing required header files
 ifeq ($(PLATFORM),PLATFORM_RPI)
@@ -324,8 +324,6 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
         # Libraries for Windows desktop compilation
         # NOTE: WinMM library required to set high-res timer resolution
         LDLIBS = -lraylib -lopengl32 -lgdi32 -lwinmm
-        # Required for physac examples
-        LDLIBS += -static -lpthread
     endif
     ifeq ($(PLATFORM_OS),LINUX)
         # Libraries for Debian GNU/Linux desktop compiling
@@ -404,7 +402,6 @@ CORE = \
     core/core_storage_values \
     core/core_vr_simulator \
     core/core_loading_thread \
-    core/core_quat_conversion \
     core/core_window_flags \
     core/core_split_screen \
     core/core_smooth_pixelperfect \
@@ -430,7 +427,6 @@ SHAPES = \
 TEXTURES = \
     textures/textures_logo_raylib \
     textures/textures_mouse_painting \
-    textures/textures_rectangle \
     textures/textures_srcrec_dstrec \
     textures/textures_image_drawing \
     textures/textures_image_generation \
@@ -442,6 +438,7 @@ TEXTURES = \
     textures/textures_particles_blending \
     textures/textures_npatch_drawing \
     textures/textures_background_scrolling \
+    textures/textures_sprite_anim \
     textures/textures_sprite_button \
     textures/textures_sprite_explosion \
     textures/textures_bunnymark \
@@ -508,17 +505,10 @@ AUDIO = \
     audio/audio_sound_loading \
     audio/audio_multichannel_sound
 
-PHYSICS = \
-    physics/physics_demo \
-    physics/physics_friction \
-    physics/physics_movement \
-    physics/physics_restitution \
-    physics/physics_shatter
-
 CURRENT_MAKEFILE = $(lastword $(MAKEFILE_LIST))
 
 # Default target entry
-all: $(CORE) $(SHAPES) $(TEXT) $(TEXTURES) $(MODELS) $(SHADERS) $(AUDIO) $(PHYSICS)
+all: $(CORE) $(SHAPES) $(TEXT) $(TEXTURES) $(MODELS) $(SHADERS) $(AUDIO)
 
 core: $(CORE)
 shapes: $(SHAPES)
@@ -527,7 +517,6 @@ text: $(TEXT)
 models: $(MODELS)
 shaders: $(SHADERS)
 audio: $(AUDIO)
-physics: $(PHYSICS)
 
 # Compile CORE examples
 core/core_basic_window: core/core_basic_window.c
@@ -604,9 +593,6 @@ core/core_vr_simulator: core/core_vr_simulator.c
 core/core_loading_thread: core/core_loading_thread.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) -s USE_PTHREADS=1
 
-core/core_quat_conversion: core/core_quat_conversion.c
-	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
-
 core/core_window_flags: core/core_window_flags.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
@@ -673,7 +659,7 @@ textures/textures_logo_raylib: textures/textures_logo_raylib.c
 textures/textures_mouse_painting: textures/textures_mouse_painting.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
-textures/textures_rectangle: textures/textures_rectangle.c
+textures/textures_sprite_anim: textures/textures_sprite_anim.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
     --preload-file textures/resources/scarfy.png@resources/scarfy.png
 
@@ -1006,23 +992,6 @@ audio/audio_multichannel_sound: audio/audio_multichannel_sound.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
     --preload-file audio/resources/sound.wav@resources/sound.wav \
     --preload-file audio/resources/target.ogg@resources/target.ogg
-
-# Compile PHYSICS examples
-physics/physics_demo: physics/physics_demo.c
-	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) -DPHYSAC_AVOID_TIMMING_SYSTEM
-
-physics/physics_friction: physics/physics_friction.c
-	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) -DPHYSAC_AVOID_TIMMING_SYSTEM
-
-physics/physics_movement: physics/physics_movement.c
-	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) -DPHYSAC_AVOID_TIMMING_SYSTEM
-
-physics/physics_restitution: physics/physics_restitution.c
-	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) -DPHYSAC_AVOID_TIMMING_SYSTEM
-
-physics/physics_shatter: physics/physics_shatter.c
-	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) -DPHYSAC_AVOID_TIMMING_SYSTEM
-
 
 # Clean everything
 clean:

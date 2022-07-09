@@ -17,7 +17,7 @@
 #include <time.h>                   // Required for: time_t, tm, time(), localtime(), strftime()
 
 // Custom logging funtion
-void LogCustom(int msgType, const char *text, va_list args)
+void CustomLog(int msgType, const char *text, va_list args)
 {
     char timeStr[64] = { 0 };
     time_t now = time(NULL);
@@ -39,16 +39,18 @@ void LogCustom(int msgType, const char *text, va_list args)
     printf("\n");
 }
 
-int main(int argc, char* argv[])
+//------------------------------------------------------------------------------------
+// Program main entry point
+//------------------------------------------------------------------------------------
+int main(void)
 {
     // Initialization
     //--------------------------------------------------------------------------------------
     const int screenWidth = 800;
     const int screenHeight = 450;
 
-    // First thing we do is setting our custom logger to ensure everything raylib logs
-    // will use our own logger instead of its internal one
-    SetTraceLogCallback(LogCustom);
+    // Set custom logger
+    SetTraceLogCallback(CustomLog);
 
     InitWindow(screenWidth, screenHeight, "raylib [core] example - custom logging");
 

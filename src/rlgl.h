@@ -358,11 +358,11 @@ typedef struct rlRenderBatch {
     float currentDepth;         // Current depth value for next draw
 } rlRenderBatch;
 
-#if defined(__STDC__) && __STDC_VERSION__ >= 199901L
+#if (defined(__STDC__) && __STDC_VERSION__ >= 199901L) || (defined(_MSC_VER) && _MSC_VER >= 1800)
     #include <stdbool.h>
 #elif !defined(__cplusplus) && !defined(bool) && !defined(RL_BOOL_TYPE)
     // Boolean type
-    typedef enum bool { false, true } bool;
+typedef enum bool { false = 0, true = !false } bool;
 #endif
 
 #if !defined(RL_MATRIX_TYPE)
@@ -433,6 +433,7 @@ typedef enum {
     RL_BLEND_MULTIPLIED,               // Blend textures multiplying colors
     RL_BLEND_ADD_COLORS,               // Blend textures adding colors (alternative)
     RL_BLEND_SUBTRACT_COLORS,          // Blend textures subtracting colors (alternative)
+    RL_BLEND_ALPHA_PREMULTIPLY,        // Blend premultiplied textures considering alpha
     RL_BLEND_CUSTOM                    // Blend textures using custom src/dst factors (use rlSetBlendFactors())
 } rlBlendMode;
 
@@ -597,7 +598,9 @@ RLAPI void rlglInit(int width, int height);           // Initialize rlgl (buffer
 RLAPI void rlglClose(void);                           // De-inititialize rlgl (buffers, shaders, textures)
 RLAPI void rlLoadExtensions(void *loader);            // Load OpenGL extensions (loader function required)
 RLAPI int rlGetVersion(void);                         // Get current OpenGL version
+RLAPI void rlSetFramebufferWidth(int width);          // Set current framebuffer width
 RLAPI int rlGetFramebufferWidth(void);                // Get default framebuffer width
+RLAPI void rlSetFramebufferHeight(int height);        // Set current framebuffer height
 RLAPI int rlGetFramebufferHeight(void);               // Get default framebuffer height
 
 RLAPI unsigned int rlGetTextureIdDefault(void);       // Get default texture id
@@ -619,25 +622,26 @@ RLAPI void rlSetTexture(unsigned int id);           // Set current texture for r
 
 // Vertex buffers management
 RLAPI unsigned int rlLoadVertexArray(void);                               // Load vertex array (vao) if supported
-RLAPI unsigned int rlLoadVertexBuffer(void *buffer, int size, bool dynamic);            // Load a vertex buffer attribute
-RLAPI unsigned int rlLoadVertexBufferElement(void *buffer, int size, bool dynamic);     // Load a new attributes element buffer
-RLAPI void rlUpdateVertexBuffer(unsigned int bufferId, void *data, int dataSize, int offset);    // Update GPU buffer with new data
+RLAPI unsigned int rlLoadVertexBuffer(const void *buffer, int size, bool dynamic);            // Load a vertex buffer attribute
+RLAPI unsigned int rlLoadVertexBufferElement(const void *buffer, int size, bool dynamic);     // Load a new attributes element buffer
+RLAPI void rlUpdateVertexBuffer(unsigned int bufferId, const void *data, int dataSize, int offset);     // Update GPU buffer with new data
+RLAPI void rlUpdateVertexBufferElements(unsigned int id, const void *data, int dataSize, int offset);   // Update vertex buffer elements with new data
 RLAPI void rlUnloadVertexArray(unsigned int vaoId);
 RLAPI void rlUnloadVertexBuffer(unsigned int vboId);
-RLAPI void rlSetVertexAttribute(unsigned int index, int compSize, int type, bool normalized, int stride, void *pointer);
+RLAPI void rlSetVertexAttribute(unsigned int index, int compSize, int type, bool normalized, int stride, const void *pointer);
 RLAPI void rlSetVertexAttributeDivisor(unsigned int index, int divisor);
 RLAPI void rlSetVertexAttributeDefault(int locIndex, const void *value, int attribType, int count); // Set vertex attribute default value
 RLAPI void rlDrawVertexArray(int offset, int count);
-RLAPI void rlDrawVertexArrayElements(int offset, int count, void *buffer);
+RLAPI void rlDrawVertexArrayElements(int offset, int count, const void *buffer);
 RLAPI void rlDrawVertexArrayInstanced(int offset, int count, int instances);
-RLAPI void rlDrawVertexArrayElementsInstanced(int offset, int count, void *buffer, int instances);
+RLAPI void rlDrawVertexArrayElementsInstanced(int offset, int count, const void *buffer, int instances);
 
 // Textures management
-RLAPI unsigned int rlLoadTexture(void *data, int width, int height, int format, int mipmapCount); // Load texture in GPU
+RLAPI unsigned int rlLoadTexture(const void *data, int width, int height, int format, int mipmapCount); // Load texture in GPU
 RLAPI unsigned int rlLoadTextureDepth(int width, int height, bool useRenderBuffer);               // Load depth texture/renderbuffer (to be attached to fbo)
-RLAPI unsigned int rlLoadTextureCubemap(void *data, int size, int format);                        // Load texture cubemap
+RLAPI unsigned int rlLoadTextureCubemap(const void *data, int size, int format);                        // Load texture cubemap
 RLAPI void rlUpdateTexture(unsigned int id, int offsetX, int offsetY, int width, int height, int format, const void *data);  // Update GPU texture with new data
-RLAPI void rlGetGlTextureFormats(int format, int *glInternalFormat, int *glFormat, int *glType);  // Get OpenGL internal formats
+RLAPI void rlGetGlTextureFormats(int format, unsigned int *glInternalFormat, unsigned int *glFormat, unsigned int *glType);  // Get OpenGL internal formats
 RLAPI const char *rlGetPixelFormatName(unsigned int format);              // Get name string for pixel format
 RLAPI void rlUnloadTexture(unsigned int id);                              // Unload texture from GPU memory
 RLAPI void rlGenTextureMipmaps(unsigned int id, int width, int height, int format, int *mipmaps); // Generate mipmap data for selected texture
@@ -925,8 +929,8 @@ typedef struct rlglData {
         int glBlendDstFactor;               // Blending destination factor
         int glBlendEquation;                // Blending equation
 
-        int framebufferWidth;               // Default framebuffer width
-        int framebufferHeight;              // Default framebuffer height
+        int framebufferWidth;               // Current framebuffer width
+        int framebufferHeight;              // Current framebuffer height
 
     } State;            // Renderer state
     struct {
@@ -1228,6 +1232,7 @@ void rlOrtho(double left, double right, double bottom, double top, double znear,
 #endif
 
 // Set the viewport area (transformation from normalized device coordinates to window coordinates)
+// NOTE: We store current viewport dimensions
 void rlViewport(int x, int y, int width, int height)
 {
     glViewport(x, y, width, height);
@@ -1511,6 +1516,11 @@ void rlDisableTextureCubemap(void)
 void rlTextureParameters(unsigned int id, int param, int value)
 {
     glBindTexture(GL_TEXTURE_2D, id);
+    
+#if !defined(GRAPHICS_API_OPENGL_11)
+    // Reset anisotropy filter, in case it was set
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, 1.0f);
+#endif
 
     switch (param)
     {
@@ -1535,7 +1545,7 @@ void rlTextureParameters(unsigned int id, int param, int value)
             if (value <= RLGL.ExtSupported.maxAnisotropyLevel) glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, (float)value);
             else if (RLGL.ExtSupported.maxAnisotropyLevel > 0.0f)
             {
-                TRACELOG(RL_LOG_WARNING, "GL: Maximum anisotropic filter level supported is %iX", id, RLGL.ExtSupported.maxAnisotropyLevel);
+                TRACELOG(RL_LOG_WARNING, "GL: Maximum anisotropic filter level supported is %iX", id, (int)RLGL.ExtSupported.maxAnisotropyLevel);
                 glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, (float)value);
             }
             else TRACELOG(RL_LOG_WARNING, "GL: Anisotropic filtering not supported");
@@ -1778,10 +1788,11 @@ void rlSetBlendMode(int mode)
             case RL_BLEND_MULTIPLIED: glBlendFunc(GL_DST_COLOR, GL_ONE_MINUS_SRC_ALPHA); glBlendEquation(GL_FUNC_ADD); break;
             case RL_BLEND_ADD_COLORS: glBlendFunc(GL_ONE, GL_ONE); glBlendEquation(GL_FUNC_ADD); break;
             case RL_BLEND_SUBTRACT_COLORS: glBlendFunc(GL_ONE, GL_ONE); glBlendEquation(GL_FUNC_SUBTRACT); break;
-            case RL_BLEND_CUSTOM: 
+            case RL_BLEND_ALPHA_PREMULTIPLY: glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA); glBlendEquation(GL_FUNC_ADD); break;
+            case RL_BLEND_CUSTOM:
             {
                 // NOTE: Using GL blend src/dst factors and GL equation configured with rlSetBlendFactors()
-                glBlendFunc(RLGL.State.glBlendSrcFactor, RLGL.State.glBlendDstFactor); glBlendEquation(RLGL.State.glBlendEquation); 
+                glBlendFunc(RLGL.State.glBlendSrcFactor, RLGL.State.glBlendDstFactor); glBlendEquation(RLGL.State.glBlendEquation);
             } break;
             default: break;
         }
@@ -2216,6 +2227,22 @@ int rlGetVersion(void)
     return glVersion;
 }
 
+// Set current framebuffer width
+void rlSetFramebufferWidth(int width)
+{
+#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
+    RLGL.State.framebufferWidth = width;
+#endif
+}
+
+// Set current framebuffer height
+void rlSetFramebufferHeight(int height)
+{
+#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
+    RLGL.State.framebufferHeight = height;
+#endif
+}
+
 // Get default framebuffer width
 int rlGetFramebufferWidth(void)
 {
@@ -2598,6 +2625,9 @@ void rlDrawRenderBatch(rlRenderBatch *batch)
 
         glUseProgram(0);    // Unbind shader program
     }
+
+    // Restore viewport to default measures
+    if (eyeCount == 2) rlViewport(0, 0, RLGL.State.framebufferWidth, RLGL.State.framebufferHeight);
     //------------------------------------------------------------------------------------------------------------
 
     // Reset batch buffers
@@ -2680,7 +2710,7 @@ bool rlCheckRenderBatchLimit(int vCount)
 // Textures data management
 //-----------------------------------------------------------------------------------------
 // Convert image data to OpenGL texture (returns OpenGL valid Id)
-unsigned int rlLoadTexture(void *data, int width, int height, int format, int mipmapCount)
+unsigned int rlLoadTexture(const void *data, int width, int height, int format, int mipmapCount)
 {
     glBindTexture(GL_TEXTURE_2D, 0);    // Free any old binding
 
@@ -2742,7 +2772,7 @@ unsigned int rlLoadTexture(void *data, int width, int height, int format, int mi
     {
         unsigned int mipSize = rlGetPixelDataSize(mipWidth, mipHeight, format);
 
-        int glInternalFormat, glFormat, glType;
+        unsigned int glInternalFormat, glFormat, glType;
         rlGetGlTextureFormats(format, &glInternalFormat, &glFormat, &glType);
 
         TRACELOGD("TEXTURE: Load mipmap level %i (%i x %i), size: %i, offset: %i", i, mipWidth, mipHeight, mipSize, mipOffset);
@@ -2882,7 +2912,7 @@ unsigned int rlLoadTextureDepth(int width, int height, bool useRenderBuffer)
 // Load texture cubemap
 // NOTE: Cubemap data is expected to be 6 images in a single data array (one after the other),
 // expected the following convention: +X, -X, +Y, -Y, +Z, -Z
-unsigned int rlLoadTextureCubemap(void *data, int size, int format)
+unsigned int rlLoadTextureCubemap(const void *data, int size, int format)
 {
     unsigned int id = 0;
 
@@ -2892,7 +2922,7 @@ unsigned int rlLoadTextureCubemap(void *data, int size, int format)
     glGenTextures(1, &id);
     glBindTexture(GL_TEXTURE_CUBE_MAP, id);
 
-    int glInternalFormat, glFormat, glType;
+    unsigned int glInternalFormat, glFormat, glType;
     rlGetGlTextureFormats(format, &glInternalFormat, &glFormat, &glType);
 
     if (glInternalFormat != -1)
@@ -2964,7 +2994,7 @@ void rlUpdateTexture(unsigned int id, int offsetX, int offsetY, int width, int h
 {
     glBindTexture(GL_TEXTURE_2D, id);
 
-    int glInternalFormat, glFormat, glType;
+    unsigned int glInternalFormat, glFormat, glType;
     rlGetGlTextureFormats(format, &glInternalFormat, &glFormat, &glType);
 
     if ((glInternalFormat != -1) && (format < RL_PIXELFORMAT_COMPRESSED_DXT1_RGB))
@@ -2975,11 +3005,11 @@ void rlUpdateTexture(unsigned int id, int offsetX, int offsetY, int width, int h
 }
 
 // Get OpenGL internal formats and data type from raylib PixelFormat
-void rlGetGlTextureFormats(int format, int *glInternalFormat, int *glFormat, int *glType)
+void rlGetGlTextureFormats(int format, unsigned int *glInternalFormat, unsigned int *glFormat, unsigned int *glType)
 {
-    *glInternalFormat = -1;
-    *glFormat = -1;
-    *glType = -1;
+    *glInternalFormat = 0;
+    *glFormat = 0;
+    *glType = 0;
 
     switch (format)
     {
@@ -3085,14 +3115,11 @@ void rlGenTextureMipmaps(unsigned int id, int width, int height, int format, int
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     if ((texIsPOT) || (RLGL.ExtSupported.texNPOT))
     {
-        //glHint(GL_GENERATE_MIPMAP_HINT, GL_DONT_CARE);   // Hint for mipmaps generation algorythm: GL_FASTEST, GL_NICEST, GL_DONT_CARE
+        //glHint(GL_GENERATE_MIPMAP_HINT, GL_DONT_CARE);   // Hint for mipmaps generation algorithm: GL_FASTEST, GL_NICEST, GL_DONT_CARE
         glGenerateMipmap(GL_TEXTURE_2D);    // Generate mipmaps automatically
 
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);   // Activate Trilinear filtering for mipmaps
-
-        #define MIN(a,b) (((a)<(b))?(a):(b))
-        #define MAX(a,b) (((a)>(b))?(a):(b))
+        #define MIN(a,b) (((a)<(b))? (a):(b))
+        #define MAX(a,b) (((a)>(b))? (a):(b))
 
         *mipmaps = 1 + (int)floor(log(MAX(width, height))/log(2));
         TRACELOG(RL_LOG_INFO, "TEXTURE: [ID %i] Mipmaps generated automatically, total: %i", id, *mipmaps);
@@ -3125,7 +3152,7 @@ void *rlReadTexturePixels(unsigned int id, int width, int height, int format)
     // GL_UNPACK_ALIGNMENT affects operations that write to OpenGL memory (glTexImage, etc.)
     glPixelStorei(GL_PACK_ALIGNMENT, 1);
 
-    int glInternalFormat, glFormat, glType;
+    unsigned int glInternalFormat, glFormat, glType;
     rlGetGlTextureFormats(format, &glInternalFormat, &glFormat, &glType);
     unsigned int size = rlGetPixelDataSize(width, height, format);
 
@@ -3167,7 +3194,6 @@ void *rlReadTexturePixels(unsigned int id, int width, int height, int format)
 
     return pixels;
 }
-
 
 // Read screen pixel data (color buffer)
 unsigned char *rlReadScreenPixels(int width, int height)
@@ -3317,7 +3343,7 @@ void rlUnloadFramebuffer(unsigned int id)
 // Vertex data management
 //-----------------------------------------------------------------------------------------
 // Load a new attributes buffer
-unsigned int rlLoadVertexBuffer(void *buffer, int size, bool dynamic)
+unsigned int rlLoadVertexBuffer(const void *buffer, int size, bool dynamic)
 {
     unsigned int id = 0;
 
@@ -3331,7 +3357,7 @@ unsigned int rlLoadVertexBuffer(void *buffer, int size, bool dynamic)
 }
 
 // Load a new attributes element buffer
-unsigned int rlLoadVertexBufferElement(void *buffer, int size, bool dynamic)
+unsigned int rlLoadVertexBufferElement(const void *buffer, int size, bool dynamic)
 {
     unsigned int id = 0;
 
@@ -3378,7 +3404,7 @@ void rlDisableVertexBufferElement(void)
 
 // Update vertex buffer with new data
 // NOTE: dataSize and offset must be provided in bytes
-void rlUpdateVertexBuffer(unsigned int id, void *data, int dataSize, int offset)
+void rlUpdateVertexBuffer(unsigned int id, const void *data, int dataSize, int offset)
 {
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     glBindBuffer(GL_ARRAY_BUFFER, id);
@@ -3388,7 +3414,7 @@ void rlUpdateVertexBuffer(unsigned int id, void *data, int dataSize, int offset)
 
 // Update vertex buffer elements with new data
 // NOTE: dataSize and offset must be provided in bytes
-void rlUpdateVertexBufferElements(unsigned int id, void *data, int dataSize, int offset)
+void rlUpdateVertexBufferElements(unsigned int id, const void *data, int dataSize, int offset)
 {
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, id);
@@ -3441,9 +3467,9 @@ void rlDrawVertexArray(int offset, int count)
 }
 
 // Draw vertex array elements
-void rlDrawVertexArrayElements(int offset, int count, void *buffer)
+void rlDrawVertexArrayElements(int offset, int count, const void *buffer)
 {
-    glDrawElements(GL_TRIANGLES, count, GL_UNSIGNED_SHORT, (unsigned short *)buffer + offset);
+    glDrawElements(GL_TRIANGLES, count, GL_UNSIGNED_SHORT, (const unsigned short *)buffer + offset);
 }
 
 // Draw vertex array instanced
@@ -3455,10 +3481,10 @@ void rlDrawVertexArrayInstanced(int offset, int count, int instances)
 }
 
 // Draw vertex array elements instanced
-void rlDrawVertexArrayElementsInstanced(int offset, int count, void *buffer, int instances)
+void rlDrawVertexArrayElementsInstanced(int offset, int count, const void *buffer, int instances)
 {
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
-    glDrawElementsInstanced(GL_TRIANGLES, count, GL_UNSIGNED_SHORT, (unsigned short *)buffer + offset, instances);
+    glDrawElementsInstanced(GL_TRIANGLES, count, GL_UNSIGNED_SHORT, (const unsigned short *)buffer + offset, instances);
 #endif
 }
 
@@ -3499,7 +3525,7 @@ unsigned int rlLoadVertexArray(void)
 }
 
 // Set vertex attribute
-void rlSetVertexAttribute(unsigned int index, int compSize, int type, bool normalized, int stride, void *pointer)
+void rlSetVertexAttribute(unsigned int index, int compSize, int type, bool normalized, int stride, const void *pointer)
 {
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     glVertexAttribPointer(index, compSize, type, normalized, stride, pointer);
@@ -3646,7 +3672,7 @@ unsigned int rlCompileShader(const char *shaderCode, int type)
         if (maxLength > 0)
         {
             int length = 0;
-            char *log = RL_CALLOC(maxLength, sizeof(char));
+            char *log = (char *)RL_CALLOC(maxLength, sizeof(char));
             glGetShaderInfoLog(shader, maxLength, &length, log);
             TRACELOG(RL_LOG_WARNING, "SHADER: [ID %i] Compile error: %s", shader, log);
             RL_FREE(log);
@@ -3708,7 +3734,7 @@ unsigned int rlLoadShaderProgram(unsigned int vShaderId, unsigned int fShaderId)
         if (maxLength > 0)
         {
             int length = 0;
-            char *log = RL_CALLOC(maxLength, sizeof(char));
+            char *log = (char *)RL_CALLOC(maxLength, sizeof(char));
             glGetProgramInfoLog(program, maxLength, &length, log);
             TRACELOG(RL_LOG_WARNING, "SHADER: [ID %i] Link error: %s", program, log);
             RL_FREE(log);
@@ -3875,7 +3901,7 @@ unsigned int rlLoadComputeShaderProgram(unsigned int shaderId)
         if (maxLength > 0)
         {
             int length = 0;
-            char *log = RL_CALLOC(maxLength, sizeof(char));
+            char *log = (char *)RL_CALLOC(maxLength, sizeof(char));
             glGetProgramInfoLog(program, maxLength, &length, log);
             TRACELOG(RL_LOG_WARNING, "SHADER: [ID %i] Link error: %s", program, log);
             RL_FREE(log);
@@ -3911,7 +3937,7 @@ void rlComputeShaderDispatch(unsigned int groupX, unsigned int groupY, unsigned 
 unsigned int rlLoadShaderBuffer(unsigned long long size, const void *data, int usageHint)
 {
     unsigned int ssbo = 0;
-    
+
 #if defined(GRAPHICS_API_OPENGL_43)
     glGenBuffers(1, &ssbo);
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo);
@@ -3944,7 +3970,7 @@ void rlUpdateShaderBufferElements(unsigned int id, const void *data, unsigned lo
 unsigned long long rlGetShaderBufferSize(unsigned int id)
 {
     long long size = 0;
-    
+
 #if defined(GRAPHICS_API_OPENGL_43)
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, id);
     glGetInteger64v(GL_SHADER_STORAGE_BUFFER_SIZE, &size);
@@ -3984,7 +4010,7 @@ void rlCopyBuffersElements(unsigned int destId, unsigned int srcId, unsigned lon
 void rlBindImageTexture(unsigned int id, unsigned int index, unsigned int format, int readonly)
 {
 #if defined(GRAPHICS_API_OPENGL_43)
-    int glInternalFormat = 0, glFormat = 0, glType = 0;
+    unsigned int glInternalFormat = 0, glFormat = 0, glType = 0;
 
     rlGetGlTextureFormats(format, &glInternalFormat, &glFormat, &glType);
     glBindImageTexture(index, id, 0, 0, 0, readonly ? GL_READ_ONLY : GL_READ_WRITE, glInternalFormat);

@@ -19,7 +19,7 @@ Operators | value1 - value2 | `int res = value - 5;`
 Enum | TitleCase | `enum TextureFormat`
 Enum members | ALL_CAPS | `PIXELFORMAT_UNCOMPRESSED_R8G8B8`
 Struct | TitleCase | `struct Texture2D`, `struct Material`
-Struct members |lowerCase | `texture.width`, `color.r`
+Struct members | lowerCase | `texture.width`, `color.r`
 Functions | TitleCase | `InitWindow()`, `LoadImageFromMemory()`
 Functions params | lowerCase | `width`, `height`
 Ternary Operator | (condition)? result1 : result2 | `printf("Value is 0: %s", (value == 0)? "yes" : "no");`
@@ -52,7 +52,7 @@ switch (value)
 ```
  - All conditions checks are **always between parenthesis** but not boolean values:
 ```c
-if ((value > 1) && (value < 50) && valueActive))
+if ((value > 1) && (value < 50) && valueActive)
 {
 
 }
@@ -92,4 +92,3 @@ resources/characters/enemy_slime.png
 resources/common/font_arial.ttf
 resources/common/gui.png
 ```
-

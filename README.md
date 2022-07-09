@@ -12,15 +12,19 @@ Ready to learn? Jump to [code examples!](https://www.raylib.com/examples.html)
 
 <br>
 
-[![GitHub contributors](https://img.shields.io/github/contributors/raysan5/raylib)](https://github.com/raysan5/raylib/graphs/contributors)
-[![GitHub All Releases](https://img.shields.io/github/downloads/raysan5/raylib/total)](https://github.com/raysan5/raylib/releases)
+[![GitHub Contributors](https://img.shields.io/github/contributors/raysan5/raylib)](https://github.com/raysan5/raylib/graphs/contributors)
+[![GitHub Releases Downloads](https://img.shields.io/github/downloads/raysan5/raylib/total)](https://github.com/raysan5/raylib/releases)
+[![GitHub Stars](https://img.shields.io/github/stars/raysan5/raylib?style=flat&label=stars)](https://github.com/raysan5/raylib/stargazers)
 [![GitHub commits since tagged version](https://img.shields.io/github/commits-since/raysan5/raylib/4.0.0)](https://github.com/raysan5/raylib/commits/master)
+[![Packaging Status](https://repology.org/badge/tiny-repos/raylib.svg)](https://repology.org/project/raylib/versions)
 [![License](https://img.shields.io/badge/license-zlib%2Flibpng-blue.svg)](LICENSE)
 
-[![Chat on Discord](https://img.shields.io/discord/426912293134270465.svg?logo=discord)](https://discord.gg/raylib)
-[![GitHub stars](https://img.shields.io/github/stars/raysan5/raylib?style=social)](https://github.com/raysan5/raylib/stargazers)
-[![Twitter Follow](https://img.shields.io/twitter/follow/raysan5?style=social)](https://twitter.com/raysan5)
-[![Subreddit subscribers](https://img.shields.io/reddit/subreddit-subscribers/raylib?style=social)](https://www.reddit.com/r/raylib/)
+[![Discord Members](https://img.shields.io/discord/426912293134270465.svg?label=Discord&logo=discord)](https://discord.gg/raylib)
+[![Subreddit Subscribers](https://img.shields.io/reddit/subreddit-subscribers/raylib?label=reddit%20r%2Fraylib&logo=reddit)](https://www.reddit.com/r/raylib/)
+[![Youtube Subscribers](https://img.shields.io/youtube/channel/subscribers/UC8WIBkhYb5sBNqXO1mZ7WSQ?style=flat&label=Youtube&logo=youtube)](https://www.youtube.com/c/raylib)
+[![Twitch Status](https://img.shields.io/twitch/status/raysan5?style=flat&label=Twitch&logo=twitch)](https://www.twitch.tv/raysan5)
+[![Twitter Followers](https://img.shields.io/twitter/follow/raysan5?style=flat&label=@raysan5&color=1da1f2&logo=twitter)](https://twitter.com/raysan5)
+
 
 [![Windows](https://github.com/raysan5/raylib/workflows/Windows/badge.svg)](https://github.com/raysan5/raylib/actions?query=workflow%3AWindows)
 [![Linux](https://github.com/raysan5/raylib/workflows/Linux/badge.svg)](https://github.com/raysan5/raylib/actions?query=workflow%3ALinux)
@@ -97,7 +101,7 @@ raylib is also available via multiple [package managers](https://github.com/rays
  - [Working for Web (HTML5)](https://github.com/raysan5/raylib/wiki/Working-for-Web-(HTML5))
  - [Working anywhere with CMake](https://github.com/raysan5/raylib/wiki/Working-with-CMake)
 
-*Note that Wiki is open for edit, if you find some issue while building raylib for your target platform, feel free to edit the Wiki or open and issue related to it.*
+*Note that the Wiki is open for edit, if you find some issues while building raylib for your target platform, feel free to edit the Wiki or open an issue related to it.*
 
 #### Setup raylib with multiple IDEs
 
@@ -105,14 +109,14 @@ raylib has been developed on Windows platform using [Notepad++](https://notepad-
 
 [Projects directory](https://github.com/raysan5/raylib/tree/master/projects) contains several ready-to-use **project templates** to build raylib and code examples with multiple IDEs.
 
-*Note that there are lots of IDEs supported, some of the provided templates could require some review, please, if you find some issue with some template or you think they could be improved, feel free to send a PR or open a related issue.*
+*Note that there are lots of IDEs supported, some of the provided templates could require some review, so please, if you find some issue with a template or you think they could be improved, feel free to send a PR or open a related issue.*
 
 learning and docs
 ------------------
 
-raylib is designed to be learned using [the examples](https://github.com/raysan5/raylib/tree/master/examples) as the main reference. There is no standard API documentation but there is a [**cheatsheet**](https://www.raylib.com/cheatsheet/cheatsheet.html) containing all the functions available on the library and a short description of each one of them, input parameters and result value names should be intuitive enough to understand how each function works. 
+raylib is designed to be learned using [the examples](https://github.com/raysan5/raylib/tree/master/examples) as the main reference. There is no standard API documentation but there is a [**cheatsheet**](https://www.raylib.com/cheatsheet/cheatsheet.html) containing all the functions available on the library a short description of each one of them, input parameters and result value names should be intuitive enough to understand how each function works. 
 
-Some additional documentation about raylib design can be found in raylib GitHub Wiki. Here the more relevant links:
+Some additional documentation about raylib design can be found in raylib GitHub Wiki. Here are the relevant links:
 
  - [raylib cheatsheet](https://www.raylib.com/cheatsheet/cheatsheet.html)
  - [raylib architecture](https://github.com/raysan5/raylib/wiki/raylib-architecture)
