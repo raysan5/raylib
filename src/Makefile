@@ -456,9 +456,9 @@ LDFLAGS = $(CUSTOM_LDFLAGS) -L. -L$(RAYLIB_RELEASE_PATH)
 
 ifeq ($(PLATFORM),PLATFORM_DESKTOP)
     ifeq ($(PLATFORM_OS),WINDOWS)
-    	ifneq ($(CC), tcc)
-	        LDFLAGS += -Wl,--out-implib,$(RAYLIB_RELEASE_PATH)/lib$(RAYLIB_LIB_NAME)dll.a
-	    endif
+        ifneq ($(CC), tcc)
+            LDFLAGS += -Wl,--out-implib,$(RAYLIB_RELEASE_PATH)/lib$(RAYLIB_LIB_NAME)dll.a
+        endif
     endif
     ifeq ($(PLATFORM_OS),OSX)
         LDFLAGS += -compatibility_version $(RAYLIB_API_VERSION) -current_version $(RAYLIB_VERSION)
@@ -492,11 +492,11 @@ endif
 #------------------------------------------------------------------------------------------------
 ifeq ($(PLATFORM),PLATFORM_DESKTOP)
     ifeq ($(PLATFORM_OS),WINDOWS)
-    	ifeq ($(CC), tcc)
-	        LDLIBS = -lopengl32 -lgdi32 -lwinmm -lshell32
-	    else
-	        LDLIBS = -static-libgcc -lopengl32 -lgdi32 -lwinmm
-	    endif
+        ifeq ($(CC), tcc)
+            LDLIBS = -lopengl32 -lgdi32 -lwinmm -lshell32
+        else
+            LDLIBS = -static-libgcc -lopengl32 -lgdi32 -lwinmm
+        endif
     endif
     ifeq ($(PLATFORM_OS),LINUX)
         LDLIBS = -lGL -lc -lm -lpthread -ldl -lrt
