@@ -263,10 +263,6 @@ typedef struct tagBITMAPINFOHEADER {
 #ifndef MAX_AUDIO_BUFFER_POOL_CHANNELS
     #define MAX_AUDIO_BUFFER_POOL_CHANNELS    16    // Audio pool channels
 #endif
-#ifndef DEFAULT_AUDIO_BUFFER_SIZE
-    #define DEFAULT_AUDIO_BUFFER_SIZE       4096    // Default audio buffer size
-#endif
-
 
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
