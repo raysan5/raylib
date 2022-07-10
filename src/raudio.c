@@ -1745,6 +1745,9 @@ void UpdateMusicStream(Music music)
 
     while (IsAudioStreamProcessed(music.stream))
     {
+        // WARNING: If audio needs to loop but the frames left are less than the actual size of buffer to fill,
+        // the buffer is only partially filled and no refill is done until next frame call, generating a silence
+        // TODO: Possible solution: In case of music loop, fill frames left + frames from start to fill the buffer to process
         if (framesLeft >= subBufferSizeInFrames) frameCountToStream = subBufferSizeInFrames;
         else frameCountToStream = framesLeft;
 
