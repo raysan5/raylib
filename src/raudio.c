@@ -1729,8 +1729,9 @@ void UpdateMusicStream(Music music)
     unsigned int subBufferSizeInFrames = music.stream.buffer->sizeInFrames/2;
 
     // NOTE: Using dynamic allocation because it could require more than 16KB
-    size_t pcmSize = subBufferSizeInFrames * music.stream.channels * music.stream.sampleSize / 8;
-    if (AUDIO.System.pcmCapacity < pcmSize) {
+    unsigned int pcmSize = subBufferSizeInFrames*music.stream.channels*music.stream.sampleSize/8;
+    if (AUDIO.System.pcmCapacity < pcmSize) 
+    {
         RL_FREE(AUDIO.System.pcm);
         AUDIO.System.pcm = RL_CALLOC(1, pcmSize);
         AUDIO.System.pcmCapacity = pcmSize;
