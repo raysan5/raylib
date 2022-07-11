@@ -571,6 +571,8 @@ RLAPI void rlEnableDepthMask(void);                     // Enable depth write
 RLAPI void rlDisableDepthMask(void);                    // Disable depth write
 RLAPI void rlEnableBackfaceCulling(void);               // Enable backface culling
 RLAPI void rlDisableBackfaceCulling(void);              // Disable backface culling
+RLAPI void rlToggleFrontCulling(void);                  // Toggle front culling
+RLAPI void rlToggleBackCulling(void);                   // Toggle back culling
 RLAPI void rlEnableScissorTest(void);                   // Enable scissor test
 RLAPI void rlDisableScissorTest(void);                  // Disable scissor test
 RLAPI void rlScissor(int x, int y, int width, int height); // Scissor test
@@ -1649,6 +1651,12 @@ void rlEnableBackfaceCulling(void) { glEnable(GL_CULL_FACE); }
 
 // Disable backface culling
 void rlDisableBackfaceCulling(void) { glDisable(GL_CULL_FACE); }
+
+// Toggle front culling
+void rlToggleFrontCulling(void) { glCullFace(GL_FRONT); }
+
+// Toggle back culling
+void rlToggleBackCulling(void) { glCullFace(GL_BACK); }
 
 // Enable scissor test
 void rlEnableScissorTest(void) { glEnable(GL_SCISSOR_TEST); }
