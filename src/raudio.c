@@ -1,6 +1,6 @@
 /**********************************************************************************************
 *
-*   raudio v1.0 - A simple and easy-to-use audio library based on miniaudio
+*   raudio v1.1 - A simple and easy-to-use audio library based on miniaudio
 *
 *   FEATURES:
 *       - Manage audio device (init/close)
@@ -307,7 +307,7 @@ typedef enum {
 struct rAudioBuffer {
     ma_data_converter converter;    // Audio data converter
 
-    AudioCallback callback;   // Audio buffer callback for buffer filling on audio threads
+    AudioCallback callback;         // Audio buffer callback for buffer filling on audio threads
     rAudioProcessor *processor;     // Audio processor
 
     float volume;                   // Audio buffer volume
@@ -316,7 +316,7 @@ struct rAudioBuffer {
 
     bool playing;                   // Audio buffer state: AUDIO_PLAYING
     bool paused;                    // Audio buffer state: AUDIO_PAUSED
-    bool looping;                   // Audio buffer looping, always true for AudioStreams
+    bool looping;                   // Audio buffer looping, default to true for AudioStreams
     int usage;                      // Audio buffer usage mode: STATIC or STREAM
 
     bool isSubBufferProcessed[2];   // SubBuffer processed (virtual double buffer)
@@ -347,8 +347,8 @@ typedef struct AudioData {
         ma_device device;           // miniaudio device
         ma_mutex lock;              // miniaudio mutex lock
         bool isReady;               // Check if audio device is ready
-        size_t pcmCapacity;
-        void *pcm;
+        size_t pcmBufferSize;       // Pre-allocated buffer size
+        void *pcmBuffer;            // Pre-allocated buffer to read audio data from file/memory
     } System;
     struct {
         AudioBuffer *first;         // Pointer to first AudioBuffer in the list
@@ -508,7 +508,7 @@ void CloseAudioDevice(void)
         ma_context_uninit(&AUDIO.System.context);
 
         AUDIO.System.isReady = false;
-        RL_FREE(AUDIO.System.pcm);
+        RL_FREE(AUDIO.System.pcmBuffer);
 
         TRACELOG(LOG_INFO, "AUDIO: Device closed successfully");
     }
@@ -1953,7 +1953,7 @@ void UpdateAudioStream(AudioStream stream, const void *data, int frameCount)
             ma_uint32 subBufferSizeInFrames = stream.buffer->sizeInFrames/2;
             unsigned char *subBuffer = stream.buffer->data + ((subBufferSizeInFrames*stream.channels*(stream.sampleSize/8))*subBufferToUpdate);
 
-            // TODO: Get total frames processed on this buffer... DOES NOT WORK.
+            // Total frames processed in buffer is always the complete size, filled with 0 if required
             stream.buffer->framesProcessed += subBufferSizeInFrames;
 
             // Does this API expect a whole buffer to be updated in one go?
