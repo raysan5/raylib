@@ -45,6 +45,7 @@ Some people ported raylib to other languages in form of bindings or wrappers to 
 | rayex              | 3.7     | [elixir](https://elixir-lang.org/)      | Apache-2.0 | https://github.com/shiryel/rayex     |
 | kaylib             | 3.7     | [Kotlin/native](https://kotlinlang.org) | ? | https://github.com/electronstudio/kaylib      |
 | dlang_raylib       | **4.0** | [D](https://dlang.org)                  | MPL-2.0 |https://github.com/rc-05/dlang_raylib          |
+| haxe-raylib        | **4.0** | [Haxe](https://haxe.org/)                 | MPL-2.0 |https://github.com/rc-05/haxe-raylib          |
 | raylib-freebasic   | **4.0** | [FreeBASIC](https://www.freebasic.net/) | MIT | https://github.com/WIITD/raylib-freebasic     |
 | raylib-cr          | **4.0** | [Crystal](https://crystal-lang.org/)    | Apache-2.0 | https://github.com/sol-vin/raylib-cr |
 | dart-raylib        | **4.0** | [Dart](https://dart.dev/)               | MIT | https://gitlab.com/wolfenrain/dart-raylib   |
