@@ -2776,19 +2776,23 @@ void SetConfigFlags(unsigned int flags)
 
 // NOTE TRACELOG() function is located in [utils.h]
 
-#if defined(SUPPORT_SCREEN_CAPTURE)
 // Get current screen capture key
 int GetScreenCaptureKey(void)
 {
-    return key;
+#if defined(SUPPORT_SCREEN_CAPTURE)
+    return screenCaptureKey;
+#else
+    return 0;
+#endif
 }
 
 // Set screen capture key
 void SetScreenCaptureKey(int key)
 {
+#if defined(SUPPORT_SCREEN_CAPTURE)
     if (key > 0) screenCaptureKey = key;
-}
 #endif
+}
 
 // Takes a screenshot of current screen (saved a .png)
 void TakeScreenshot(const char *fileName)
