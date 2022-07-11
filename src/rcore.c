@@ -503,6 +503,7 @@ const char *raylibVersion = RAYLIB_VERSION; // raylib version symbol, it could b
 static CoreData CORE = { 0 };               // Global CORE state context
 
 #if defined(SUPPORT_SCREEN_CAPTURE)
+static int screenCaptureKey = KEY_F12;      // Default screen capture key: F12
 static int screenshotCounter = 0;           // Screenshots counter
 #endif
 
@@ -2774,6 +2775,20 @@ void SetConfigFlags(unsigned int flags)
 }
 
 // NOTE TRACELOG() function is located in [utils.h]
+
+#if defined(SUPPORT_SCREEN_CAPTURE)
+// Get current screen capture key
+int GetScreenCaptureKey(void)
+{
+    return key;
+}
+
+// Set screen capture key
+void SetScreenCaptureKey(int key)
+{
+    if (key > 0) screenCaptureKey = key;
+}
+#endif
 
 // Takes a screenshot of current screen (saved a .png)
 void TakeScreenshot(const char *fileName)
@@ -5306,7 +5321,7 @@ static void KeyCallback(GLFWwindow *window, int key, int scancode, int action, i
     if ((key == CORE.Input.Keyboard.exitKey) && (action == GLFW_PRESS)) glfwSetWindowShouldClose(CORE.Window.handle, GLFW_TRUE);
 
 #if defined(SUPPORT_SCREEN_CAPTURE)
-    if ((key == GLFW_KEY_F12) && (action == GLFW_PRESS))
+    if ((key == screenCaptureKey) && (action == GLFW_PRESS))
     {
 #if defined(SUPPORT_GIF_RECORDING)
         if (mods == GLFW_MOD_CONTROL)
@@ -6016,8 +6031,8 @@ static void ProcessKeyboard(void)
     if (CORE.Input.Keyboard.currentKeyState[CORE.Input.Keyboard.exitKey] == 1) CORE.Window.shouldClose = true;
 
 #if defined(SUPPORT_SCREEN_CAPTURE)
-    // Check screen capture key (raylib key: KEY_F12)
-    if (CORE.Input.Keyboard.currentKeyState[301] == 1)
+    // Check screen capture key
+    if (CORE.Input.Keyboard.currentKeyState[screenCaptureKey] == 1)
     {
         TakeScreenshot(TextFormat("screenshot%03i.png", screenshotCounter));
         screenshotCounter++;
@@ -6327,8 +6342,8 @@ static void PollKeyboardEvents(void)
                     }
 
                 #if defined(SUPPORT_SCREEN_CAPTURE)
-                    // Check screen capture key (raylib key: KEY_F12)
-                    if (CORE.Input.Keyboard.currentKeyState[301] == 1)
+                    // Check screen capture key
+                    if (CORE.Input.Keyboard.currentKeyState[screenCaptureKey] == 1)
                     {
                         TakeScreenshot(TextFormat("screenshot%03i.png", screenshotCounter));
                         screenshotCounter++;
