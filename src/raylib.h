@@ -1033,6 +1033,8 @@ RLAPI double GetTime(void);                                       // Get elapsed
 RLAPI int GetRandomValue(int min, int max);                       // Get a random value between min and max (both included)
 RLAPI void SetRandomSeed(unsigned int seed);                      // Set the seed for the random number generator
 RLAPI void TakeScreenshot(const char *fileName);                  // Takes a screenshot of current screen (filename extension defines format)
+RLAPI int GetScreenCaptureKey(void);                              // Get current screen capture key
+RLAPI void SetScreenCaptureKey(int key);                          // Set screen capture key
 RLAPI void SetConfigFlags(unsigned int flags);                    // Setup init configuration flags (view FLAGS)
 
 RLAPI void TraceLog(int logLevel, const char *text, ...);         // Show trace log messages (LOG_DEBUG, LOG_INFO, LOG_WARNING, LOG_ERROR...)
