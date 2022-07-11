@@ -1724,28 +1724,34 @@ void UpdateMusicStream(Music music)
     bool streamEnding = false;
     unsigned int subBufferSizeInFrames = music.stream.buffer->sizeInFrames/2;
 
-    // NOTE: Using dynamic allocation because it could require more than 16KB
+    // On first call of this function we lazily pre-allocated a temp buffer to read audio files/memory data in
     unsigned int pcmSize = subBufferSizeInFrames*music.stream.channels*music.stream.sampleSize/8;
-    if (AUDIO.System.pcmCapacity < pcmSize) 
+    if (AUDIO.System.pcmBufferSize < pcmSize) 
     {
-        RL_FREE(AUDIO.System.pcm);
-        AUDIO.System.pcm = RL_CALLOC(1, pcmSize);
-        AUDIO.System.pcmCapacity = pcmSize;
+        RL_FREE(AUDIO.System.pcmBuffer);
+        AUDIO.System.pcmBuffer = RL_CALLOC(1, pcmSize);
+        AUDIO.System.pcmBufferSize = pcmSize;
     }
 
-    int frameCountToStream = 0;    // Total size of data in frames to be streamed
+    int framesLeft = music.frameCount - music.stream.buffer->framesProcessed;  // Frames left to be processed
+    int framesToStream = 0;                 // Total frames to be streamed
+    unsigned int framesLoopingExtra = 0;    // In case music requires to loop, we could need to add more frames from beginning to fill buffer
 
-    // TODO: Get the framesLeft using framesProcessed... but first, get total frames processed correctly...
-    //ma_uint32 frameSizeInBytes = ma_get_bytes_per_sample(music.stream.buffer->dsp.formatConverterIn.config.formatIn)*music.stream.buffer->dsp.formatConverterIn.config.channels;
-    unsigned int framesLeft = music.frameCount - music.stream.buffer->framesProcessed;
-
-    while (IsAudioStreamProcessed(music.stream))
+    // Check both sub-buffers to check if they require refilling
+    for (int i = 0; i < 2; i++)
     {
-        // WARNING: If audio needs to loop but the frames left are less than the actual size of buffer to fill,
-        // the buffer is only partially filled and no refill is done until next frame call, generating a silence
-        // TODO: Possible solution: In case of music loop, fill frames left + frames from start to fill the buffer to process
-        if (framesLeft >= subBufferSizeInFrames) frameCountToStream = subBufferSizeInFrames;
-        else frameCountToStream = framesLeft;
+        if ((music.stream.buffer != NULL) && !music.stream.buffer->isSubBufferProcessed[i]) continue; // No refilling required, move to next sub-buffer
+
+        if (framesLeft >= subBufferSizeInFrames) framesToStream = subBufferSizeInFrames;
+        else 
+        {
+            framesToStream = framesLeft;
+
+            // WARNING: If audio needs to loop but the frames left are less than the actual size of buffer to fill,
+            // the buffer is only partially filled and no refill is done until next frame call, generating a silence
+            // SOLUTION: In case of music loop, fill frames left + frames from start to fill the buffer to process
+            if (music.looping) framesLoopingExtra = subBufferSizeInFrames - framesLeft;
+        }
 
         switch (music.ctxType)
         {
@@ -1753,8 +1759,18 @@ void UpdateMusicStream(Music music)
             case MUSIC_AUDIO_WAV:
             {
                 // NOTE: Returns the number of samples to process (not required)
-                if (music.stream.sampleSize == 16) drwav_read_pcm_frames_s16((drwav *)music.ctxData, frameCountToStream, (short *)AUDIO.System.pcm);
-                else if (music.stream.sampleSize == 32) drwav_read_pcm_frames_f32((drwav *)music.ctxData, frameCountToStream, (float *)AUDIO.System.pcm);
+                if (music.stream.sampleSize == 16) drwav_read_pcm_frames_s16((drwav *)music.ctxData, framesToStream, (short *)AUDIO.System.pcmBuffer);
+                else if (music.stream.sampleSize == 32) drwav_read_pcm_frames_f32((drwav *)music.ctxData, framesToStream, (float *)AUDIO.System.pcmBuffer);
+
+                if (framesLoopingExtra > 0)
+                {
+                    drwav_seek_to_pcm_frame((drwav *)music.ctxData, 0);
+
+                    if (music.stream.sampleSize == 16) drwav_read_pcm_frames_s16((drwav *)music.ctxData, framesLoopingExtra, (short *)AUDIO.System.pcmBuffer + framesToStream*music.stream.channels);
+                    else if (music.stream.sampleSize == 32) drwav_read_pcm_frames_f32((drwav *)music.ctxData, framesLoopingExtra, (float *)AUDIO.System.pcmBuffer + framesToStream*music.stream.channels);
+                    
+                    framesToStream += framesLoopingExtra;
+                }
 
             } break;
         #endif
@@ -1762,7 +1778,9 @@ void UpdateMusicStream(Music music)
             case MUSIC_AUDIO_OGG:
             {
                 // NOTE: Returns the number of samples to process (be careful! we ask for number of shorts!)
-                stb_vorbis_get_samples_short_interleaved((stb_vorbis *)music.ctxData, music.stream.channels, (short *)AUDIO.System.pcm, frameCountToStream*music.stream.channels);
+                stb_vorbis_get_samples_short_interleaved((stb_vorbis *)music.ctxData, music.stream.channels, (short *)AUDIO.System.pcmBuffer, framesToStream*music.stream.channels);
+
+                // stb_vorbis_seek_start((stb_vorbis *)music.ctxData);
 
             } break;
         #endif
@@ -1772,12 +1790,16 @@ void UpdateMusicStream(Music music)
                 // NOTE: Returns the number of samples to process (not required)
                 drflac_read_pcm_frames_s16((drflac *)music.ctxData, frameCountToStream*music.stream.channels, (short *)AUDIO.System.pcm);
 
+                // drflac_seek_to_pcm_frame((drflac *)music.ctxData, 0);
+
             } break;
         #endif
         #if defined(SUPPORT_FILEFORMAT_MP3)
             case MUSIC_AUDIO_MP3:
             {
-                drmp3_read_pcm_frames_f32((drmp3 *)music.ctxData, frameCountToStream, (float *)AUDIO.System.pcm);
+                drmp3_read_pcm_frames_f32((drmp3 *)music.ctxData, framesToStream, (float *)AUDIO.System.pcmBuffer);
+
+                //drmp3_seek_to_pcm_frame((drmp3 *)music.ctxData, 0);
 
             } break;
         #endif
@@ -1785,9 +1807,11 @@ void UpdateMusicStream(Music music)
             case MUSIC_MODULE_XM:
             {
                 // NOTE: Internally we consider 2 channels generation, so sampleCount/2
-                if (AUDIO_DEVICE_FORMAT == ma_format_f32) jar_xm_generate_samples((jar_xm_context_t *)music.ctxData, (float *)AUDIO.System.pcm, frameCountToStream);
-                else if (AUDIO_DEVICE_FORMAT == ma_format_s16) jar_xm_generate_samples_16bit((jar_xm_context_t *)music.ctxData, (short *)AUDIO.System.pcm, frameCountToStream);
-                else if (AUDIO_DEVICE_FORMAT == ma_format_u8) jar_xm_generate_samples_8bit((jar_xm_context_t *)music.ctxData, (char *)AUDIO.System.pcm, frameCountToStream);
+                if (AUDIO_DEVICE_FORMAT == ma_format_f32) jar_xm_generate_samples((jar_xm_context_t *)music.ctxData, (float *)AUDIO.System.pcmBuffer, framesToStream);
+                else if (AUDIO_DEVICE_FORMAT == ma_format_s16) jar_xm_generate_samples_16bit((jar_xm_context_t *)music.ctxData, (short *)AUDIO.System.pcmBuffer, framesToStream);
+                else if (AUDIO_DEVICE_FORMAT == ma_format_u8) jar_xm_generate_samples_8bit((jar_xm_context_t *)music.ctxData, (char *)AUDIO.System.pcmBuffer, framesToStream);
+
+                //jar_xm_reset((jar_xm_context_t *)music.ctxData);
 
             } break;
         #endif
@@ -1795,18 +1819,20 @@ void UpdateMusicStream(Music music)
             case MUSIC_MODULE_MOD:
             {
                 // NOTE: 3rd parameter (nbsample) specify the number of stereo 16bits samples you want, so sampleCount/2
-                jar_mod_fillbuffer((jar_mod_context_t *)music.ctxData, (short *)AUDIO.System.pcm, frameCountToStream, 0);
+                jar_mod_fillbuffer((jar_mod_context_t *)music.ctxData, (short *)AUDIO.System.pcmBuffer, framesToStream, 0);
+
+                //jar_mod_seek_start((jar_mod_context_t *)music.ctxData);
+
             } break;
         #endif
             default: break;
         }
 
-        UpdateAudioStream(music.stream, AUDIO.System.pcm, frameCountToStream);
+        UpdateAudioStream(music.stream, AUDIO.System.pcmBuffer, framesToStream);
 
-        framesLeft -= frameCountToStream;
-
-        if (framesLeft <= 0)
+        if (framesLeft <= subBufferSizeInFrames)
         {
+            // Streaming is ending, we filled latest frames from input
             streamEnding = true;
             break;
         }
@@ -1815,8 +1841,16 @@ void UpdateMusicStream(Music music)
     // Reset audio stream for looping
     if (streamEnding)
     {
-        StopMusicStream(music);                     // Stop music (and reset)
-        if (music.looping) PlayMusicStream(music);  // Play again
+        if (music.looping)
+        {
+            PlayMusicStream(music);     // Play again
+
+            // Set cursor offset to extra frames filled previously
+            music.stream.buffer->frameCursorPos = framesLoopingExtra;
+
+            // TODO: It's not working properly... :(
+        }
+        else StopMusicStream(music);    // Stop music (and reset)
     }
     else
     {
