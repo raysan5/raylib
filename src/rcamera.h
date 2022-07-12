@@ -150,6 +150,9 @@ void SetCameraMoveControls(int keyFront, int keyBack,
 // Defines and Macros
 //----------------------------------------------------------------------------------
 
+#define CAMERA_MOVE_SPEED                               0.09f
+#define CAMERA_ROTATION_SPEED                           0.03f
+
 // Camera mouse movement sensitivity
 #define CAMERA_MOUSE_MOVE_SENSITIVITY                   0.5f    // TODO: it should be independant of framerate
 #define CAMERA_MOUSE_SCROLL_SENSITIVITY                 1.5f
@@ -213,6 +216,7 @@ typedef enum {
 //----------------------------------------------------------------------------------
 // Module specific Functions Declaration
 //----------------------------------------------------------------------------------
+
 // Rotates the given vector around the given axis
 // Note: angle must be provided in radians
 Vector3 Vector3RotateAxis(Vector3 v, Vector3 axis, float angle) { // TODO there is a better way without the intermediate matrix
@@ -225,43 +229,43 @@ Vector3 Vector3RotateAxis(Vector3 v, Vector3 axis, float angle) { // TODO there 
 //----------------------------------------------------------------------------------
 
 // TODO declare all functions in raylib.h and standalone "header"
-void CameraPitch(Camera3D* camera, float angle);
-void CameraYaw(Camera3D* camera, float angle);
-void CameraRoll(Camera3D* camera, float angle);
+void CameraPitch(Camera3D *camera, float angle);
+void CameraYaw(Camera3D *camera, float angle);
+void CameraRoll(Camera3D *camera, float angle);
 
 // Select camera mode (multiple camera modes available)
-void SetCameraMode(Camera3D* camera, int mode)
+void SetCameraMode(Camera3D *camera, int mode)
 {
     camera->mode = mode;
 
-    // TODO 
-
-    // TODO Reset roll and fix overrotation (i.e. somersaults)
-
+    // Reset roll
+    camera->up = (Vector3){ 0.0f, 1.0f, 0.0f };
 }
 
-// Returns the cameras current forward vector (normalized)
-Vector3 GetCameraForward(Camera3D* camera) {
+// Returns the cameras forward vector (normalized)
+Vector3 GetCameraForward(Camera3D *camera)
+{
     return Vector3Normalize(Vector3Subtract(camera->target, camera->position));
 }
 
-// Returns the cameras current up vector (normalized)
-Vector3 GetCameraUp(Camera3D* camera) {
-    // Note: The up vector might not be perpendicular to the forward vector
-    Vector3 forward = Vector3Subtract(camera->target, camera->position);
-    Vector3OrthoNormalize(&forward, &camera->up);
-    return camera->up;
+// Returns the cameras up vector (normalized)
+// Note: The up vector might not be perpendicular to the forward vector
+Vector3 GetCameraUp(Camera3D *camera)
+{
+    return Vector3Normalize(camera->up);
 }
 
-// Returns the cameras current right vector (normalized)
-Vector3 GetCameraRight(Camera3D* camera) {
+// Returns the cameras right vector (normalized)
+Vector3 GetCameraRight(Camera3D *camera)
+{
     Vector3 forward = GetCameraForward(camera);
     Vector3 up = GetCameraUp(camera);
     return Vector3CrossProduct(forward, up);
 }
 
-// Moves the camera in its current forward vector direction
-void CameraMoveForward(Camera3D *camera, float distance) {
+// Moves the camera in its forward direction
+void CameraMoveForward(Camera3D *camera, float distance)
+{
     Vector3 forward = GetCameraForward(camera);
 
     if (camera->mode == CAMERA_FIRST_PERSON ||
@@ -272,24 +276,30 @@ void CameraMoveForward(Camera3D *camera, float distance) {
         forward = Vector3Normalize(forward);
     }
 
+    // Scale by distance
     forward = Vector3Scale(forward, distance);
 
+    // Move position and target
     camera->position = Vector3Add(camera->position, forward);
     camera->target = Vector3Add(camera->target, forward);
 }
 
-// Moves the camera in its current up vector direction
-void CameraMoveUp(Camera3D *camera, float distance) {
+// Moves the camera in its up direction
+void CameraMoveUp(Camera3D *camera, float distance)
+{
     Vector3 up = GetCameraUp(camera);
     
+    // Scale by distance
     up = Vector3Scale(up, distance);
 
+    // Move position and target
     camera->position = Vector3Add(camera->position, up);
     camera->target = Vector3Add(camera->target, up);
 }
 
-// Moves the camera target in its current right vector direction
-void CameraMoveRight(Camera3D *camera, float distance) {
+// Moves the camera target in its current right direction
+void CameraMoveRight(Camera3D *camera, float distance)
+{
     Vector3 right = GetCameraRight(camera);
 
     if (camera->mode == CAMERA_FIRST_PERSON ||
@@ -300,75 +310,136 @@ void CameraMoveRight(Camera3D *camera, float distance) {
         right = Vector3Normalize(right);
     }
 
+    // Scale by distance
     right = Vector3Scale(right, distance);
 
+    // Move position and target
     camera->position = Vector3Add(camera->position, right);
     camera->target = Vector3Add(camera->target, right);
 }
 
-// Rotates the camera around its current up vector
+// Moves the camera position closer/farther to/from the camera target
+void CameraZoom(Camera3D *camera, float delta)
+{
+    float distance = Vector3Distance(camera->position, camera->target);
+
+    // Apply delta
+    distance += delta;
+
+    // Distance must be greater than 0
+    if (distance < 0) distance = 0.001f;
+
+    // Set new distance by moving the position along the forward vector
+    Vector3 forward = GetCameraForward(camera);
+    camera->position = Vector3Add(camera->target, Vector3Scale(forward, -distance));
+}
+
+// Rotates the camera around its up vector
 // Yaw is "looking left and right"
 // Note: angle must be provided in radians
-void CameraYaw(Camera3D *camera, float angle) {
+void CameraYaw(Camera3D *camera, float angle)
+{
     // Rotation axis
     Vector3 up = GetCameraUp(camera);
 
+    // View vector
     Vector3 target_position = Vector3Subtract(camera->target, camera->position);
 
-    // Rotate target
+    // Rotate view vector around up axis
     target_position = Vector3RotateAxis(target_position, up, angle);
-    camera->target = Vector3Add(camera->position, target_position);
+
+    if (camera->mode == CAMERA_FREE ||
+        camera->mode == CAMERA_FIRST_PERSON)
+    {
+        // Move target relative to position
+        camera->target = Vector3Add(camera->position, target_position);
+    }
+    else if (camera->mode == CAMERA_THIRD_PERSON ||
+             camera->mode == CAMERA_ORBITAL)
+    {
+        // Move position relative to target
+        camera->position = Vector3Subtract(camera->target, target_position);
+    }
 }
 
-// Rotates the camera around its current right vector
+// Rotates the camera around its right vector
 // Pitch is "looking up and down"
 // Note: angle must be provided in radians
-void CameraPitch(Camera3D *camera, float angle) {
-    
+void CameraPitch(Camera3D *camera, float angle)
+{
+    // Up direction
+    Vector3 up = GetCameraUp(camera);
+
+    // View vector
+    Vector3 target_position = Vector3Subtract(camera->target, camera->position);
+
     if (camera->mode == CAMERA_FIRST_PERSON ||
         camera->mode == CAMERA_THIRD_PERSON ||
         camera->mode == CAMERA_ORBITAL)
     {
         // In these camera modes we clamp the Pitch angle
         // to allow only viewing straight up or down.
-        // i.e. prevent somersaults
 
-        // TODO
+        // Clamp view up
+        float max_angle_up = Vector3Angle(up, target_position);
+        max_angle_up -= 0.001f; // avoid numerical errors
+        if (angle > max_angle_up) angle = max_angle_up;
+
+        // Clamp view down
+        float max_angle_down = Vector3Angle(Vector3Negate(up), target_position);
+        max_angle_down *= -1.0f; // downwards angle is negative
+        max_angle_down += 0.001f; // avoid numerical errors
+        if (angle < max_angle_down) angle = max_angle_down;
     }
 
     // Rotation axis
     Vector3 right = GetCameraRight(camera);
 
-    Vector3 target_position = Vector3Subtract(camera->target, camera->position);
-
-    // Rotate target
+    // Rotate view vector around right axis
     target_position = Vector3RotateAxis(target_position, right, angle);
-    camera->target = Vector3Add(camera->position, target_position);
 
-    // Rotate up direction
-    camera->up = Vector3RotateAxis(camera->up, right, angle);
+    if (camera->mode == CAMERA_FREE)
+    {
+        // Move target relative to position
+        camera->target = Vector3Add(camera->position, target_position);
+
+        // Rotate up direction around right axis
+        camera->up = Vector3RotateAxis(camera->up, right, angle);
+    }
+    else if (camera->mode == CAMERA_FIRST_PERSON)
+    {
+        // Move target relative to position
+        camera->target = Vector3Add(camera->position, target_position);
+    }
+    else if (camera->mode == CAMERA_THIRD_PERSON ||
+             camera->mode == CAMERA_ORBITAL)
+    {
+        // Move position relative to target
+        camera->position = Vector3Subtract(camera->target, target_position);
+    }
 }
 
-// Rotates the camera around its current forward vector
+// Rotates the camera around its forward vector
 // Roll is "turning your head sideways to the left or right"
 // Note: angle must be provided in radians
-void CameraRoll(Camera3D *camera, float angle) {
+void CameraRoll(Camera3D *camera, float angle)
+{
     // Rotation axis
     Vector3 forward = GetCameraForward(camera);
 
-    // Rotate up direction
+    // Rotate up direction around forward axis
     camera->up = Vector3RotateAxis(camera->up, forward, angle);
 }
 
-// Returns the current camera view matrix
-Matrix GetCameraViewMatrix(Camera3D* camera) {
-    // Note: MatrixLookAt normalizes up internally
-    //       TODO review up needs to be perpendicular?
+// Returns the camera view matrix
+Matrix GetCameraViewMatrix(Camera3D *camera)
+{
     return MatrixLookAt(camera->position, camera->target, camera->up);
 }
 
-// Returns the current camera projection matrix
-Matrix GetCameraProjectionMatrix(Camera3D* camera, float aspect) {
+// Returns the camera projection matrix
+Matrix GetCameraProjectionMatrix(Camera3D *camera, float aspect)
+{
     if (camera->projection == CAMERA_PERSPECTIVE)
     {
         return MatrixPerspective(camera->fovy * DEG2RAD, aspect, CAMERA_CULL_DISTANCE_NEAR, CAMERA_CULL_DISTANCE_FAR);
@@ -383,48 +454,40 @@ Matrix GetCameraProjectionMatrix(Camera3D* camera, float aspect) {
     return MatrixIdentity();
 }
 
-static bool on_init = true;
-void UpdateCamera(Camera3D* camera) {
-
-    // TODO review
-    const float CAMERA_MOVE_SPEED = 0.03f;
-
-    // TODO Input detection is raylib-dependant
-
+static int init_frames = 3;
+void UpdateCamera(Camera3D *camera)
+{
     // Avoid inital mouse "jump"
-    if (on_init) {
+    if (init_frames > 0) {
         SetMousePosition(0, 0);
-        on_init = false;
+        init_frames--;
+        return;
     }
     Vector2 mousePositionDelta = GetMouseDelta();
     
     // Camera movement
-    if (IsKeyDown(KEY_W)) CameraMoveForward(camera, CAMERA_MOVE_SPEED * 3);
-    if (IsKeyDown(KEY_S)) CameraMoveForward(camera, -CAMERA_MOVE_SPEED * 3);
-    if (IsKeyDown(KEY_D)) CameraMoveRight(camera, CAMERA_MOVE_SPEED * 3);
-    if (IsKeyDown(KEY_A)) CameraMoveRight(camera, -CAMERA_MOVE_SPEED * 3);
-    if (IsKeyDown(KEY_SPACE)) CameraMoveUp(camera, CAMERA_MOVE_SPEED * 3);
-    if (IsKeyDown(KEY_LEFT_CONTROL)) CameraMoveUp(camera, -CAMERA_MOVE_SPEED * 3);
+    if (IsKeyDown(KEY_W)) CameraMoveForward(camera, CAMERA_MOVE_SPEED);
+    if (IsKeyDown(KEY_S)) CameraMoveForward(camera, -CAMERA_MOVE_SPEED);
+    if (IsKeyDown(KEY_D)) CameraMoveRight(camera, CAMERA_MOVE_SPEED);
+    if (IsKeyDown(KEY_A)) CameraMoveRight(camera, -CAMERA_MOVE_SPEED);
+    if (IsKeyDown(KEY_SPACE)) CameraMoveUp(camera, CAMERA_MOVE_SPEED);
+    if (IsKeyDown(KEY_LEFT_CONTROL)) CameraMoveUp(camera, -CAMERA_MOVE_SPEED);
 
     // Camera rotation
-    if (IsKeyDown(KEY_DOWN)) CameraPitch(camera, -CAMERA_MOVE_SPEED);
-    if (IsKeyDown(KEY_UP)) CameraPitch(camera, CAMERA_MOVE_SPEED);
-    if (IsKeyDown(KEY_RIGHT)) CameraYaw(camera, -CAMERA_MOVE_SPEED);
-    if (IsKeyDown(KEY_LEFT)) CameraYaw(camera, CAMERA_MOVE_SPEED);
-    if (IsKeyDown(KEY_Q)) CameraRoll(camera, -CAMERA_MOVE_SPEED);
-    if (IsKeyDown(KEY_E)) CameraRoll(camera, CAMERA_MOVE_SPEED);
-
+    if (IsKeyDown(KEY_DOWN)) CameraPitch(camera, -CAMERA_ROTATION_SPEED);
+    if (IsKeyDown(KEY_UP)) CameraPitch(camera, CAMERA_ROTATION_SPEED);
+    if (IsKeyDown(KEY_RIGHT)) CameraYaw(camera, -CAMERA_ROTATION_SPEED);
+    if (IsKeyDown(KEY_LEFT)) CameraYaw(camera, CAMERA_ROTATION_SPEED);
+    if (IsKeyDown(KEY_Q)) CameraRoll(camera, -CAMERA_ROTATION_SPEED);
+    if (IsKeyDown(KEY_E)) CameraRoll(camera, CAMERA_ROTATION_SPEED);
 
     CameraYaw(camera, mousePositionDelta.x * -CAMERA_MOUSE_MOVE_SENSITIVITY);
     CameraPitch(camera, mousePositionDelta.y * -CAMERA_MOUSE_MOVE_SENSITIVITY);
 
-#if 0
-
-    // Adjust camera target_distance
-    camera->target_distance -= GetMouseWheelMove();
-    if (IsKeyPressed(KEY_KP_SUBTRACT)) camera->target_distance -= 1.0f;
-    if (IsKeyPressed(KEY_KP_ADD)) camera->target_distance += 1.0f;
-
+    // Zoom target distance
+    CameraZoom(camera, -GetMouseWheelMove());
+    if (IsKeyPressed(KEY_KP_SUBTRACT)) CameraZoom(camera, 2.0f);
+    if (IsKeyPressed(KEY_KP_ADD)) CameraZoom(camera, -2.0f);
 
     // Switch camera mode
     if (IsKeyPressed(KEY_ONE)) SetCameraMode(camera, CAMERA_FREE);
@@ -436,24 +499,32 @@ void UpdateCamera(Camera3D* camera) {
     if (IsKeyPressed(KEY_P)) {
         if (camera->projection == CAMERA_PERSPECTIVE) {
             // Create isometric view
-            InitializeCamera(camera, camera->aspect);
             camera->mode = CAMERA_THIRD_PERSON;
+            // Note: The target distance is related to the render distance in the orthographic projection
+            camera->position = (Vector3){ 0.0f, 2.0f, -100.0f };
+            camera->target = (Vector3){ 0.0f, 2.0f, 0.0f };
+            camera->up = (Vector3){ 0.0f, 1.0f, 0.0f };
             camera->projection = CAMERA_ORTHOGRAPHIC;
-            camera->fovy = 20.0f; // near plane width in orthografic
-            camera->target_distance = 100.0f; // influences only clip distance
+            camera->fovy = 20.0f; // near plane width in CAMERA_ORTHOGRAPHIC
             CameraYaw(camera, -135 * DEG2RAD);
-            CameraPitch(camera, 45 * DEG2RAD);
+            CameraPitch(camera, -45 * DEG2RAD);
         }
-        else if (camera->projection == CAMERA_ORTHOGRAPHIC) {
-            // Reset default view
-            InitializeCamera(camera, camera->aspect);
+        else if (camera->projection == CAMERA_ORTHOGRAPHIC)
+        {
+            // Reset to default view
+             camera->mode = CAMERA_THIRD_PERSON;
+            // Note: The target distance is related to the render distance in the orthographic projection
+            camera->position = (Vector3){ 0.0f, 2.0f, 10.0f };
+            camera->target = (Vector3){ 0.0f, 2.0f, 0.0f };
+            camera->up = (Vector3){ 0.0f, 1.0f, 0.0f };
+            camera->projection = CAMERA_PERSPECTIVE;
+            camera->fovy = 60.0f;
         }
     }
-#endif
 
 }
 
-// TODO can we provide compatibility with the old rcamera usage?
+// TODO how can we provide compatibility with the old rcamera usage?
 #if 0
 
 // Set camera pan key to combine with mouse movement (free camera)

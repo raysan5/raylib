@@ -29,11 +29,14 @@ int main(void)
 
     // Define the camera to look into our 3d world (position, target, up vector)
     Camera camera = { 0 };
-    camera.position = (Vector3){ 4.0f, 2.0f, 4.0f };
-    camera.target = (Vector3){ 0.0f, 1.8f, 0.0f };
+    camera.position = (Vector3){ 0.0f, 2.0f, 4.0f };
+    camera.target = (Vector3){ 0.0f, 2.0f, 0.0f };
     camera.up = (Vector3){ 0.0f, 1.0f, 0.0f };
     camera.fovy = 60.0f;
     camera.projection = CAMERA_PERSPECTIVE;
+    
+    // Set a first person camera mode
+    SetCameraMode(&camera, CAMERA_FIRST_PERSON);
 
     // Generates some random columns
     float heights[MAX_COLUMNS] = { 0 };
@@ -46,8 +49,6 @@ int main(void)
         positions[i] = (Vector3){ (float)GetRandomValue(-15, 15), heights[i]/2.0f, (float)GetRandomValue(-15, 15) };
         colors[i] = (Color){ GetRandomValue(20, 255), GetRandomValue(10, 55), 30, 255 };
     }
-
-    SetCameraMode(&camera, CAMERA_FIRST_PERSON); // Set a first person camera mode
 
     // Catch cursor
     DisableCursor();
@@ -83,14 +84,39 @@ int main(void)
                     DrawCubeWires(positions[i], 2.0f, heights[i], 2.0f, MAROON);
                 }
 
+                // Draw player cube
+                if (camera.mode == CAMERA_THIRD_PERSON)
+                {
+                    DrawCube(camera.target, 0.5f, 0.5f, 0.5f, PURPLE);
+                    DrawCubeWires(camera.target, 0.5f, 0.5f, 0.5f, DARKPURPLE);
+                }
+
             EndMode3D();
 
-            DrawRectangle( 10, 10, 220, 70, Fade(SKYBLUE, 0.5f));
-            DrawRectangleLines( 10, 10, 220, 70, BLUE);
+            // Draw info boxes
+            DrawRectangle(5, 5, 330, 100, Fade(SKYBLUE, 0.5f));
+            DrawRectangleLines(5, 5, 330, 100, BLUE);
 
-            DrawText("First person camera default controls:", 20, 20, 10, BLACK);
-            DrawText("- Move with keys: W, A, S, D", 40, 40, 10, DARKGRAY);
-            DrawText("- Mouse move to look around", 40, 60, 10, DARKGRAY);
+            DrawText("Camera controls:", 15, 15, 10, BLACK);
+            DrawText("- Move keys: W, A, S, D, Space, Left-Ctrl", 15, 30, 10, BLACK);
+            DrawText("- Look around: arrow keys or mouse", 15, 45, 10, BLACK);
+            DrawText("- Camera mode keys: 1, 2, 3, 4", 15, 60, 10, BLACK);
+            DrawText("- Zoom keys: num-plus, num-minus or mouse scroll", 15, 75, 10, BLACK);
+            DrawText("- Camera projection key: P", 15, 90, 10, BLACK);
+
+            DrawRectangle(600, 5, 195, 100, Fade(SKYBLUE, 0.5f));
+            DrawRectangleLines(600, 5, 195, 100, BLUE);
+
+            DrawText("Camera status:", 610, 15, 10, BLACK);
+            DrawText(TextFormat("- Mode: %s", (camera.mode == CAMERA_FREE) ? "FREE" :
+                                              (camera.mode == CAMERA_FIRST_PERSON) ? "FIRST_PERSON" :
+                                              (camera.mode == CAMERA_THIRD_PERSON) ? "THIRD_PERSON" :
+                                              (camera.mode == CAMERA_ORBITAL) ? "ORBITAL" : "CUSTOM"), 610, 30, 10, BLACK);
+            DrawText(TextFormat("- Projection: %s", (camera.projection == CAMERA_PERSPECTIVE) ? "PERSPECTIVE" :
+                                                    (camera.projection == CAMERA_ORTHOGRAPHIC) ? "ORTHOGRAPHIC" : "CUSTOM"), 610, 45, 10, BLACK);
+            DrawText(TextFormat("- Position: (%06.3f, %06.3f, %06.3f)", camera.position.x, camera.position.y, camera.position.z), 610, 60, 10, BLACK);
+            DrawText(TextFormat("- Target: (%06.3f, %06.3f, %06.3f)", camera.target.x, camera.target.y, camera.target.z), 610, 75, 10, BLACK);
+            DrawText(TextFormat("- Up: (%06.3f, %06.3f, %06.3f)", camera.up.x, camera.up.y, camera.up.z), 610, 90, 10, BLACK);
 
         EndDrawing();
         //----------------------------------------------------------------------------------
