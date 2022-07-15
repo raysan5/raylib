@@ -237,8 +237,6 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "embedded_files_loading", "e
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "easings_testbed", "examples\easings_testbed.vcxproj", "{E1B6D565-9D7C-46B7-9202-ECF54974DE50}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "raudio_standalone", "examples\raudio_standalone.vcxproj", "{6237BEDE-BAAA-4A06-9C5E-8089BAA14C8B}"
-EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "rlgl_standalone", "examples\rlgl_standalone.vcxproj", "{C8765523-58F8-4C8E-9914-693396F6F0FF}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "core_split_screen", "examples\core_split_screen.vcxproj", "{946A1700-C7AA-46F0-AEF2-67C98B5722AC}"
