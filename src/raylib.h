@@ -113,6 +113,7 @@
 #endif
 
 // Allow custom memory allocators
+// NOTE: Require recompiling raylib sources
 #ifndef RL_MALLOC
     #define RL_MALLOC(sz)       malloc(sz)
 #endif
