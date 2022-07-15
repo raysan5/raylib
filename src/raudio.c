@@ -71,9 +71,9 @@
 
 #if defined(RAUDIO_STANDALONE)
     #include "raudio.h"
-    #include <stdarg.h>         // Required for: va_list, va_start(), vfprintf(), va_end()
 #else
     #include "raylib.h"         // Declares module functions
+
     // Check if config flags have been externally provided on compilation line
     #if !defined(EXTERNAL_CONFIG_FLAGS)
         #include "config.h"     // Defines module configuration flags
