@@ -1760,7 +1760,6 @@ void UpdateMusicStream(Music music)
         #if defined(SUPPORT_FILEFORMAT_WAV)
             case MUSIC_AUDIO_WAV:
             {
-                // NOTE: Returns the number of samples to process (not required)
                 if (music.stream.sampleSize == 16) {
                     while (true) {
                         int frameCountRed = drwav_read_pcm_frames_s16((drwav*)music.ctxData, frameCountStillNeeded, (short*)(AUDIO.System.pcmBuffer + frameCountRedTotal * frameSize));
@@ -1792,30 +1791,49 @@ void UpdateMusicStream(Music music)
         #if defined(SUPPORT_FILEFORMAT_OGG)
             case MUSIC_AUDIO_OGG:
             {
-                // NOTE: Returns the number of samples to process (be careful! we ask for number of shorts!)
-                stb_vorbis_get_samples_short_interleaved((stb_vorbis *)music.ctxData, music.stream.channels, (short *)AUDIO.System.pcmBuffer, framesToStream*music.stream.channels);
-
-                // stb_vorbis_seek_start((stb_vorbis *)music.ctxData);
-
+                while (true) {
+                    int frameCountRed = stb_vorbis_get_samples_short_interleaved((stb_vorbis*)music.ctxData, music.stream.channels, (short*)(AUDIO.System.pcmBuffer + frameCountRedTotal * frameSize), frameCountStillNeeded * music.stream.channels);
+                    frameCountRedTotal += frameCountRed;
+                    frameCountStillNeeded -= frameCountRed;
+                    if (frameCountStillNeeded == 0) {
+                        break;
+                    }
+                    else {
+                        stb_vorbis_seek_start((stb_vorbis*)music.ctxData);
+                    }
+                }
             } break;
         #endif
         #if defined(SUPPORT_FILEFORMAT_FLAC)
             case MUSIC_AUDIO_FLAC:
             {
-                // NOTE: Returns the number of samples to process (not required)
-                drflac_read_pcm_frames_s16((drflac *)music.ctxData, frameCountToStream*music.stream.channels, (short *)AUDIO.System.pcm);
-
-                // drflac_seek_to_pcm_frame((drflac *)music.ctxData, 0);
-
+                while (true) {
+                    int frameCountRed = drflac_read_pcm_frames_s16((drflac*)music.ctxData, frameCountStillNeeded, (short*)(AUDIO.System.pcmBuffer + frameCountRedTotal * frameSize));
+                    frameCountRedTotal += frameCountRed;
+                    frameCountStillNeeded -= frameCountRed;
+                    if (frameCountStillNeeded == 0) {
+                        break;
+                    }
+                    else {
+                        drflac_seek_to_pcm_frame((drflac*)music.ctxData, 0);
+                    }
+                }
             } break;
         #endif
         #if defined(SUPPORT_FILEFORMAT_MP3)
             case MUSIC_AUDIO_MP3:
             {
-                drmp3_read_pcm_frames_f32((drmp3 *)music.ctxData, framesToStream, (float *)AUDIO.System.pcmBuffer);
-
-                //drmp3_seek_to_pcm_frame((drmp3 *)music.ctxData, 0);
-
+                while (true) {
+                    int frameCountRed = drmp3_read_pcm_frames_f32((drmp3*)music.ctxData, frameCountStillNeeded, (float*)(AUDIO.System.pcmBuffer + frameCountRedTotal * frameSize));
+                    frameCountRedTotal += frameCountRed;
+                    frameCountStillNeeded -= frameCountRed;
+                    if (frameCountStillNeeded == 0) {
+                        break;
+                    }
+                    else {
+                        drmp3_seek_to_pcm_frame((drmp3*)music.ctxData, 0);
+                    }
+                }
             } break;
         #endif
         #if defined(SUPPORT_FILEFORMAT_XM)
