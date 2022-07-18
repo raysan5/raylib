@@ -99,7 +99,7 @@ int main(void)
 
     Vector3 cubePosition = { 0.0f, 0.0f, 0.0f };
 
-    SetCameraMode(camera, CAMERA_FIRST_PERSON);         // Set first person camera mode
+    SetCameraMode(&camera, CAMERA_FIRST_PERSON);         // Set first person camera mode
 
     SetTargetFPS(90);                   // Set our game to run at 90 frames-per-second
     //--------------------------------------------------------------------------------------

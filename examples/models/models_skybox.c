@@ -87,7 +87,7 @@ int main(void)
         UnloadImage(img);
     }
 
-    SetCameraMode(camera, CAMERA_FIRST_PERSON);  // Set a first person camera mode
+    SetCameraMode(&camera, CAMERA_FIRST_PERSON);  // Set a first person camera mode
 
     SetTargetFPS(60);                       // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------

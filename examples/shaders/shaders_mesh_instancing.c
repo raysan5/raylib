@@ -95,7 +95,7 @@ int main(void)
     matDefault.maps[MATERIAL_MAP_DIFFUSE].color = BLUE;
 
     // Set an orbital camera mode
-    SetCameraMode(camera, CAMERA_ORBITAL);  
+    SetCameraMode(&camera, CAMERA_ORBITAL);  
 
     SetTargetFPS(60);                      // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------

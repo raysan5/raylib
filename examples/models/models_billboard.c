@@ -36,7 +36,7 @@ int main(void)
     Texture2D bill = LoadTexture("resources/billboard.png");     // Our texture billboard
     Vector3 billPosition = { 0.0f, 2.0f, 0.0f };                 // Position where draw billboard
 
-    SetCameraMode(camera, CAMERA_ORBITAL);  // Set an orbital camera mode
+    SetCameraMode(&camera, CAMERA_ORBITAL);  // Set an orbital camera mode
 
     SetTargetFPS(60);                       // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------

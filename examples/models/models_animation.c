@@ -54,7 +54,7 @@ int main(void)
     ModelAnimation *anims = LoadModelAnimations("resources/models/iqm/guyanim.iqm", &animsCount);
     int animFrameCounter = 0;
 
-    SetCameraMode(camera, CAMERA_FREE); // Set free camera mode
+    SetCameraMode(&camera, CAMERA_FREE); // Set free camera mode
 
     SetTargetFPS(60);                   // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------

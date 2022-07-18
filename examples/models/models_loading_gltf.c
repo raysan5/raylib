@@ -38,7 +38,7 @@ int main(void)
 
     Vector3 position = { 0.0f, 0.0f, 0.0f };    // Set model position
 
-    SetCameraMode(camera, CAMERA_FREE); // Set free camera mode
+    SetCameraMode(&camera, CAMERA_FREE); // Set free camera mode
 
     SetTargetFPS(60);                   // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------

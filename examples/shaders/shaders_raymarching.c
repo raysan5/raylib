@@ -41,7 +41,7 @@ int main(void)
     camera.up = (Vector3){ 0.0f, 1.0f, 0.0f };          // Camera up vector (rotation towards target)
     camera.fovy = 65.0f;                                // Camera field-of-view Y
 
-    SetCameraMode(camera, CAMERA_FREE);                 // Set camera mode
+    SetCameraMode(&camera, CAMERA_FREE);                 // Set camera mode
 
     // Load raymarching shader
     // NOTE: Defining 0 (NULL) for vertex shader forces usage of internal default vertex shader

@@ -23,7 +23,7 @@ int main(void)
     const int screenWidth = 800;
     const int screenHeight = 450;
 
-    InitWindow(screenWidth, screenHeight, "raylib [core] example - 3d camera free");
+    InitWindow(screenWidth, screenHeight, "raylib [core] example - core world screen");
 
     // Define the camera to look into our 3d world
     Camera camera = { 0 };
@@ -36,7 +36,7 @@ int main(void)
     Vector3 cubePosition = { 0.0f, 0.0f, 0.0f };
     Vector2 cubeScreenPosition = { 0.0f, 0.0f };
 
-    SetCameraMode(camera, CAMERA_FREE); // Set a free camera mode
+    SetCameraMode(&camera, CAMERA_FREE); // Set a free camera mode
 
     SetTargetFPS(60);                   // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------

@@ -57,7 +57,7 @@ int main(void)
     // NOTE: bounds are calculated from the original size of the model,
     // if model is scaled on drawing, bounds must be also scaled
 
-    SetCameraMode(camera, CAMERA_FREE);     // Set a free camera mode
+    SetCameraMode(&camera, CAMERA_FREE);     // Set a free camera mode
 
     bool selected = false;          // Selected object flag
 
