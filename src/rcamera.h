@@ -532,7 +532,8 @@ void UpdateCamera(Camera3D *camera)
         }
     }
 
-    if (IsKeyDown(KEY_W)) ViewBobbing(camera);
+    // Apply view bobbing when moving around (per default only active in CAMERA_FIRST_PERSON)
+    if (IsKeyDown(KEY_W) || IsKeyDown(KEY_A) || IsKeyDown(KEY_S) || IsKeyDown(KEY_D)) CameraViewBobbing(camera);
 }
 
 #endif // !CAMERA_STANDALONE
