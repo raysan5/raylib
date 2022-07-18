@@ -439,7 +439,7 @@ void CameraViewBobbing(Camera3D* camera)
         camera->target.y = camera->target.y - 0.25f * sinf((camera->swingCounter - 1) / CAMERA_FIRST_PERSON_STEP_TRIGONOMETRIC_DIVIDER) / CAMERA_FIRST_PERSON_STEP_DIVIDER;
 
         // Update counter for next frame
-        camera->swingCounter %= INT_MAX; // Counter must be positive
+        camera->swingCounter %= 2147483647 /* INT_MAX */; // Counter must be positive
         camera->swingCounter++;
     }
 }
