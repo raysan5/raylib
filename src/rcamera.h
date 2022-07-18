@@ -172,46 +172,27 @@ void SetCameraMoveControls(int keyFront, int keyBack,
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
 //----------------------------------------------------------------------------------
-// Camera move modes (first person and third person cameras)
+// Camera actions
 typedef enum {
-    MOVE_FORWARD = 0,
-    MOVE_BACK,
-    MOVE_RIGHT,
-    MOVE_LEFT,
-    MOVE_UP,
-    MOVE_DOWN
-} CameraMove;
+    CAMERA_MOVE_FORWARD = 0,
+    CAMERA_MOVE_BACK,
+    CAMERA_MOVE_RIGHT,
+    CAMERA_MOVE_LEFT,
+    CAMERA_MOVE_UP,
+    CAMERA_MOVE_DOWN,
+    CAMERA_YAW_RIGHT,
+    CAMERA_YAW_LEFT,
+    CAMERA_PITCH_UP,
+    CAMERA_PITCH_DOWN,
+    CAMERA_ROLL_RIGHT,
+    CAMERA_ROLL_LEFT,
+} CameraActions;
 
-// Camera global state context data [56 bytes]
-// typedef struct {
-//     unsigned int mode;              // Current camera mode
-//     float targetDistance;           // Camera distance from position to target
-//     float playerEyesPosition;       // Player eyes position from ground (in meters)
-//     Vector2 angle;                  // Camera angle in plane XZ
-//     Vector2 previousMousePosition;  // Previous mouse position
-
-//     // Camera movement control keys
-//     int moveControl[6];             // Move controls (CAMERA_FIRST_PERSON)
-//     int smoothZoomControl;          // Smooth zoom control key
-//     int altControl;                 // Alternative control key
-//     int panControl;                 // Pan view control key
-// } CameraData;
 
 //----------------------------------------------------------------------------------
 // Global Variables Definition
 //----------------------------------------------------------------------------------
 
-// static CameraData CAMERA = {        // Global CAMERA state context
-//     .mode = 0,
-//     .targetDistance = 0,
-//     .playerEyesPosition = 1.85f,
-//     .angle = { 0 },
-//     .previousMousePosition = { 0 },
-//     .moveControl = { 'W', 'S', 'D', 'A', 'E', 'Q' },
-//     .smoothZoomControl = 341,       // raylib: KEY_LEFT_CONTROL
-//     .altControl = 342,              // raylib: KEY_LEFT_ALT
-//     .panControl = 2                 // raylib: MOUSE_BUTTON_MIDDLE
-// };
 
 //----------------------------------------------------------------------------------
 // Module specific Functions Declaration
@@ -240,6 +221,16 @@ void SetCameraMode(Camera3D *camera, int mode)
 
     // Reset roll
     camera->up = (Vector3){ 0.0f, 1.0f, 0.0f };
+
+    // Enable view bobbing in CAMERA_FIRST_PERSON
+    if (camera->mode == CAMERA_FIRST_PERSON)
+    {
+        camera->swingCounter = 1; // Enable
+    }
+    else
+    {
+        camera->swingCounter = 0; // Disable
+    }
 }
 
 // Returns the cameras forward vector (normalized)
@@ -431,6 +422,22 @@ void CameraRoll(Camera3D *camera, float angle)
     camera->up = Vector3RotateAxis(camera->up, forward, angle);
 }
 
+// Moves camera slightly to simulate a walking motion
+// Note: Only active if camera->swingCounter > 0
+void CameraViewBobbing(Camera3D* camera)
+{
+    if (camera->swingCounter > 0)
+    {
+        // NOTE: We delay the target movement relative to the position movement to create a little pitch with each step.
+        camera->position.y = camera->position.y - 0.25f * sinf((camera->swingCounter + 1) / CAMERA_FIRST_PERSON_STEP_TRIGONOMETRIC_DIVIDER) / CAMERA_FIRST_PERSON_STEP_DIVIDER;
+        camera->target.y = camera->target.y - 0.25f * sinf((camera->swingCounter - 1) / CAMERA_FIRST_PERSON_STEP_TRIGONOMETRIC_DIVIDER) / CAMERA_FIRST_PERSON_STEP_DIVIDER;
+
+        // Update counter for next frame
+        camera->swingCounter %= INT_MAX; // Counter must be positive
+        camera->swingCounter++;
+    }
+}
+
 // Returns the camera view matrix
 Matrix GetCameraViewMatrix(Camera3D *camera)
 {
@@ -454,7 +461,10 @@ Matrix GetCameraProjectionMatrix(Camera3D *camera, float aspect)
     return MatrixIdentity();
 }
 
-static int init_frames = 3;
+
+#ifndef CAMERA_STANDALONE
+
+static int init_frames = 3; // TODO review and remove
 void UpdateCamera(Camera3D *camera)
 {
     // Avoid inital mouse "jump"
@@ -522,31 +532,10 @@ void UpdateCamera(Camera3D *camera)
         }
     }
 
+    if (IsKeyDown(KEY_W)) ViewBobbing(camera);
 }
 
-// TODO how can we provide compatibility with the old rcamera usage?
-#if 0
-
-// Set camera pan key to combine with mouse movement (free camera)
-void SetCameraPanControl(int keyPan) { CAMERA.panControl = keyPan; }
-
-// Set camera alt key to combine with mouse movement (free camera)
-void SetCameraAltControl(int keyAlt) { CAMERA.altControl = keyAlt; }
-
-// Set camera smooth zoom key to combine with mouse (free camera)
-void SetCameraSmoothZoomControl(int szoomKey) { CAMERA.smoothZoomControl = szoomKey; }
-
-// Set camera move controls (1st person and 3rd person cameras)
-void SetCameraMoveControls(int keyFront, int keyBack, int keyRight, int keyLeft, int keyUp, int keyDown)
-{
-    CAMERA.moveControl[MOVE_FRONT] = keyFront;
-    CAMERA.moveControl[MOVE_BACK] = keyBack;
-    CAMERA.moveControl[MOVE_RIGHT] = keyRight;
-    CAMERA.moveControl[MOVE_LEFT] = keyLeft;
-    CAMERA.moveControl[MOVE_UP] = keyUp;
-    CAMERA.moveControl[MOVE_DOWN] = keyDown;
-}
-#endif
+#endif // !CAMERA_STANDALONE
 
 
 #endif // CAMERA_IMPLEMENTATION
