@@ -98,7 +98,7 @@ int main(void)
     camera.fovy = 45.0f;                                    // Camera field-of-view Y
     camera.projection = CAMERA_PERSPECTIVE;                 // Camera mode type
 
-    SetCameraMode(camera, CAMERA_ORBITAL);
+    SetCameraMode(&camera, CAMERA_ORBITAL);
 
     Vector3 cubePosition = { 0.0f, 1.0f, 0.0f };
     Vector3 cubeSize = { 2.0f, 2.0f, 2.0f };
