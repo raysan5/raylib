@@ -181,12 +181,12 @@ int main(void)
             if (spin)
             {
                 camera.position = (Vector3){ -10.0f, 15.0f, -10.0f };   // Camera position
-                SetCameraMode(camera, CAMERA_ORBITAL);
+                SetCameraMode(&camera, CAMERA_ORBITAL);
             }
             else
             {
                 camera.position = (Vector3){ 10.0f, 10.0f, -10.0f };   // Camera position
-                SetCameraMode(camera, CAMERA_FREE);
+                SetCameraMode(&camera, CAMERA_FREE);
             }
         }
 
