@@ -231,6 +231,12 @@ void SetCameraMode(Camera3D *camera, int mode)
     {
         camera->swingCounter = 0; // Disable
     }
+
+    // Catch cursor
+#ifndef CAMERA_STANDALONE
+    // Note: This is engine specific functionality
+    DisableCursor();
+#endif
 }
 
 // Returns the cameras forward vector (normalized)
