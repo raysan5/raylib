@@ -375,7 +375,7 @@ CORE = \
     core/core_input_gestures \
     core/core_2d_camera \
     core/core_2d_camera_platformer \
-	core/core_2d_camera_mouse_zoom \
+    core/core_2d_camera_mouse_zoom \
     core/core_3d_camera_mode \
     core/core_3d_camera_free \
     core/core_3d_camera_first_person \
