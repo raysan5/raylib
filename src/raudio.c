@@ -1733,8 +1733,8 @@ void UpdateMusicStream(Music music)
         AUDIO.System.pcmBufferSize = pcmSize;
     }
 
-    int framesLeft = music.frameCount - music.stream.buffer->framesProcessed;  // Frames left to be processed
-    int framesToStream = 0;                 // Total frames to be streamed
+    unsigned int framesLeft = music.frameCount - music.stream.buffer->framesProcessed;  // Frames left to be processed
+    unsigned int framesToStream = 0;                 // Total frames to be streamed
     unsigned int framesLoopingExtra = 0;    // In case music requires to loop, we could need to add more frames from beginning to fill buffer
 
     // Check both sub-buffers to check if they require refilling

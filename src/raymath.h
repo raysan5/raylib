@@ -201,7 +201,7 @@ RMAPI float Remap(float value, float inputStart, float inputEnd, float outputSta
 // Wrap input value from min to max
 RMAPI float Wrap(float value, float min, float max)
 {
-	float result = value - (max - min)*floor((value - min)/(max - min));
+	float result = value - (max - min)*floorf((value - min)/(max - min));
 
 	return result;
 }
