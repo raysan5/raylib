@@ -5,12 +5,14 @@
 *   NOTE: This example requires raylib OpenGL 4.3 versions for compute shaders support,
 *         shaders used in this example are #version 430 (OpenGL 4.3)
 *
-*   This example has been created using raylib 4.0 (www.raylib.com)
-*   raylib is licensed under an unmodified zlib/libpng license (View raylib.h for details)
+*   Example originally created with raylib 4.0, last time updated with raylib 2.5
 *
 *   Example contributed by Teddy Astie (@tsnake41) and reviewed by Ramon Santamaria (@raysan5)
 *
-*   Copyright (c) 2021 Teddy Astie (@tsnake41)
+*   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
+*   BSD-like license that allows static linking with closed source software
+*
+*   Copyright (c) 2021-2022 Teddy Astie (@tsnake41)
 *
 ********************************************************************************************/
 

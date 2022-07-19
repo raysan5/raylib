@@ -1,11 +1,13 @@
 /*******************************************************************************************
 *
-*   raylib [shaders] example - mesh instancing
+*   raylib [shaders] example - Mesh instancing
 *
-*   This example has been created using raylib 3.7 (www.raylib.com)
-*   raylib is licensed under an unmodified zlib/libpng license (View raylib.h for details)
+*   Example originally created with raylib 3.7, last time updated with raylib 4.2
 *
 *   Example contributed by @seanpringle and reviewed by Max (@moliad) and Ramon Santamaria (@raysan5)
+*
+*   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
+*   BSD-like license that allows static linking with closed source software
 *
 *   Copyright (c) 2020-2022 @seanpringle, Max (@moliad) and Ramon Santamaria (@raysan5)
 *

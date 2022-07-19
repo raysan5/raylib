@@ -2,12 +2,14 @@
 *
 *   raylib [core] example - Windows drop files
 *
-*   This example only works on platforms that support drag & drop (Windows, Linux, OSX, Html5?)
+*   NOTE: This example only works on platforms that support drag & drop (Windows, Linux, OSX, Html5?)
 *
-*   This example has been created using raylib 1.3 (www.raylib.com)
-*   raylib is licensed under an unmodified zlib/libpng license (View raylib.h for details)
+*   Example originally created with raylib 1.3, last time updated with raylib 4.2
 *
-*   Copyright (c) 2015 Ramon Santamaria (@raysan5)
+*   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
+*   BSD-like license that allows static linking with closed source software
+*
+*   Copyright (c) 2015-2022 Ramon Santamaria (@raysan5)
 *
 ********************************************************************************************/
 

@@ -7,21 +7,14 @@
 *
 *   NOTE: Shaders used in this example are #version 330 (OpenGL 3.3).
 *
-*   This example has been created using raylib 2.5 (www.raylib.com)
-*   raylib is licensed under an unmodified zlib/libpng license (View raylib.h for details)
+*   Example originally created with raylib 2.5, last time updated with raylib 3.7
 *
 *   Example contributed by Chris Camacho (@chriscamacho) and reviewed by Ramon Santamaria (@raysan5)
 *
-*   Chris Camacho (@chriscamacho -  http://bedroomcoders.co.uk/) notes:
+*   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
+*   BSD-like license that allows static linking with closed source software
 *
-*   This is based on the PBR lighting example, but greatly simplified to aid learning...
-*   actually there is very little of the PBR example left!
-*   When I first looked at the bewildering complexity of the PBR example I feared
-*   I would never understand how I could do simple lighting with raylib however its
-*   a testement to the authors of raylib (including rlights.h) that the example
-*   came together fairly quickly.
-*
-*   Copyright (c) 2019 Chris Camacho (@chriscamacho) and Ramon Santamaria (@raysan5)
+*   Copyright (c) 2019-2022 Chris Camacho (@chriscamacho) and Ramon Santamaria (@raysan5)
 *
 ********************************************************************************************/
 

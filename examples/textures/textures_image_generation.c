@@ -2,10 +2,12 @@
 *
 *   raylib [textures] example - Procedural images generation
 *
-*   This example has been created using raylib 1.8 (www.raylib.com)
-*   raylib is licensed under an unmodified zlib/libpng license (View raylib.h for details)
+*   Example originally created with raylib 1.8, last time updated with raylib 1.8
 *
-*   Copyright (c) 2O17-2021 Wilhem Barbier (@nounoursheureux) and Ramon Santamaria (@raysan5)
+*   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
+*   BSD-like license that allows static linking with closed source software
+*
+*   Copyright (c) 2O17-2022 Wilhem Barbier (@nounoursheureux) and Ramon Santamaria (@raysan5)
 *
 ********************************************************************************************/
 

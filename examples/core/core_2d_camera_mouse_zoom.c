@@ -2,11 +2,12 @@
 *
 *   raylib [core] example - 2d camera mouse zoom
 *
-*   This example was originally created with raylib 4.2, last time updated for raylib 4.2
+*   Example originally created with raylib 4.2, last time updated with raylib 4.2
 *
-*   raylib is licensed under an unmodified zlib/libpng license (View raylib.h for details)
+*   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
+*   BSD-like license that allows static linking with closed source software
 *
-*   Copyright (c) 2022 Jeffery Myers
+*   Copyright (c) 2022 Jeffery Myers (@JeffM2501)
 *
 ********************************************************************************************/
 

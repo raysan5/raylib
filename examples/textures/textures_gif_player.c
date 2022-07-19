@@ -2,8 +2,10 @@
 *
 *   raylib [textures] example - gif playing
 *
-*   This example has been created using raylib 4.2 (www.raylib.com)
-*   raylib is licensed under an unmodified zlib/libpng license (View raylib.h for details)
+*   Example originally created with raylib 4.2, last time updated with raylib 4.2
+*
+*   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
+*   BSD-like license that allows static linking with closed source software
 *
 *   Copyright (c) 2021-2022 Ramon Santamaria (@raysan5)
 *

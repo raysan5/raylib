@@ -2,7 +2,7 @@
 *
 *   raylib [models] example - Models loading
 *
-*   raylib supports multiple models file formats:
+*   NOTE: raylib supports multiple models file formats:
 *
 *     - OBJ  > Text file format. Must include vertex position-texcoords-normals information,
 *              if files references some .mtl materials file, it will be loaded (or try to).
@@ -13,10 +13,12 @@
 *     - VOX  > Binary file format. MagikaVoxel mesh format:
 *              https://github.com/ephtracy/voxel-model/blob/master/MagicaVoxel-file-format-vox.txt
 *
-*   This example has been created using raylib 4.0 (www.raylib.com)
-*   raylib is licensed under an unmodified zlib/libpng license (View raylib.h for details)
+*   Example originally created with raylib 2.0, last time updated with raylib 4.2
 *
-*   Copyright (c) 2014-2021 Ramon Santamaria (@raysan5)
+*   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
+*   BSD-like license that allows static linking with closed source software
+*
+*   Copyright (c) 2014-2022 Ramon Santamaria (@raysan5)
 *
 ********************************************************************************************/
 
