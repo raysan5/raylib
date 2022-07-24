@@ -2,8 +2,6 @@
 *
 *   rcamera - Basic camera system for multiple camera modes
 *
-*   NOTE: Memory footprint of this library is aproximately ??? TODO bytes (global variables)
-*
 *   CONFIGURATION:
 *
 *   #define CAMERA_IMPLEMENTATION
@@ -88,8 +86,6 @@
         int type;               // Camera type, defines projection type: CAMERA_PERSPECTIVE or CAMERA_ORTHOGRAPHIC
     } Camera3D;
 
-    typedef Camera3D Camera;    // Camera type fallback, defaults to Camera3D
-
     // Camera system modes
     typedef enum {
         CAMERA_CUSTOM = 0,
@@ -109,7 +105,7 @@
 //----------------------------------------------------------------------------------
 // Global Variables Definition
 //----------------------------------------------------------------------------------
-//...
+
 
 //----------------------------------------------------------------------------------
 // Module Functions Declaration
@@ -120,15 +116,20 @@ extern "C" {            // Prevents name mangling of functions
 #endif
 
 #if defined(CAMERA_STANDALONE)
-void SetCameraMode(Camera camera, int mode);                // Set camera mode (multiple camera modes available)
-void UpdateCamera(Camera *camera);                          // Update camera position for selected mode
-
-void SetCameraPanControl(int keyPan);                       // Set camera pan key to combine with mouse movement (free camera)
-void SetCameraAltControl(int keyAlt);                       // Set camera alt key to combine with mouse movement (free camera)
-void SetCameraSmoothZoomControl(int szoomKey);              // Set camera smooth zoom key to combine with mouse (free camera)
-void SetCameraMoveControls(int keyFront, int keyBack,
-                           int keyRight, int keyLeft,
-                           int keyUp, int keyDown);         // Set camera move controls (1st person and 3rd person cameras)
+void SetCameraMode(Camera3D* camera, int mode);
+Vector3 GetCameraForward(Camera3D* camera);
+Vector3 GetCameraUp(Camera3D* camera);
+Vector3 GetCameraRight(Camera3D* camera);
+void CameraMoveForward(Camera3D* camera, float distance);
+void CameraMoveUp(Camera3D* camera, float distance);
+void CameraMoveRight(Camera3D* camera, float distance);
+void CameraZoom(Camera3D* camera, float delta);
+void CameraYaw(Camera3D* camera, float angle);
+void CameraPitch(Camera3D* camera, float angle);
+void CameraRoll(Camera3D* camera, float angle);
+void CameraViewBobbing(Camera3D* camera);
+Matrix GetCameraViewMatrix(Camera3D* camera);
+Matrix GetCameraProjectionMatrix(Camera3D* camera, float aspect);
 #endif
 
 #if defined(__cplusplus)
@@ -172,21 +173,22 @@ void SetCameraMoveControls(int keyFront, int keyBack,
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
 //----------------------------------------------------------------------------------
+// TODO review
 // Camera actions
-typedef enum {
-    CAMERA_MOVE_FORWARD = 0,
-    CAMERA_MOVE_BACK,
-    CAMERA_MOVE_RIGHT,
-    CAMERA_MOVE_LEFT,
-    CAMERA_MOVE_UP,
-    CAMERA_MOVE_DOWN,
-    CAMERA_YAW_RIGHT,
-    CAMERA_YAW_LEFT,
-    CAMERA_PITCH_UP,
-    CAMERA_PITCH_DOWN,
-    CAMERA_ROLL_RIGHT,
-    CAMERA_ROLL_LEFT,
-} CameraActions;
+//typedef enum {
+//    CAMERA_MOVE_FORWARD = 0,
+//    CAMERA_MOVE_BACK,
+//    CAMERA_MOVE_RIGHT,
+//    CAMERA_MOVE_LEFT,
+//    CAMERA_MOVE_UP,
+//    CAMERA_MOVE_DOWN,
+//    CAMERA_YAW_RIGHT,
+//    CAMERA_YAW_LEFT,
+//    CAMERA_PITCH_UP,
+//    CAMERA_PITCH_DOWN,
+//    CAMERA_ROLL_RIGHT,
+//    CAMERA_ROLL_LEFT,
+//} CameraActions;
 
 
 //----------------------------------------------------------------------------------
@@ -208,11 +210,6 @@ Vector3 Vector3RotateAxis(Vector3 v, Vector3 axis, float angle) { // TODO there 
 //----------------------------------------------------------------------------------
 // Module Functions Definition
 //----------------------------------------------------------------------------------
-
-// TODO declare all functions in raylib.h and standalone "header"
-void CameraPitch(Camera3D *camera, float angle);
-void CameraYaw(Camera3D *camera, float angle);
-void CameraRoll(Camera3D *camera, float angle);
 
 // Select camera mode (multiple camera modes available)
 void SetCameraMode(Camera3D *camera, int mode)
@@ -471,6 +468,8 @@ Matrix GetCameraProjectionMatrix(Camera3D *camera, float aspect)
 #ifndef CAMERA_STANDALONE
 
 static int init_frames = 3; // TODO review and remove
+
+// Update camera position for selected mode
 void UpdateCamera(Camera3D *camera)
 {
     // Avoid inital mouse "jump"
