@@ -1802,30 +1802,60 @@ RMAPI Quaternion QuaternionFromMatrix(Matrix mat)
 {
     Quaternion result = { 0 };
 
-    if ((mat.m0 > mat.m5) && (mat.m0 > mat.m10))
-    {
-        float s = sqrtf(1.0f + mat.m0 - mat.m5 - mat.m10)*2;
+    float fourWSquaredMinus1 = mat.m0 + mat.m5 + mat.m10;
+    float fourXSquaredMinus1 = mat.m0 - mat.m5 - mat.m10;
+    float fourYSquaredMinus1 = mat.m5 - mat.m0 - mat.m10;
+    float fourZSquaredMinus1 = mat.m10 - mat.m0 - mat.m5;
 
-        result.x = 0.25f*s;
-        result.y = (mat.m4 + mat.m1)/s;
-        result.z = (mat.m2 + mat.m8)/s;
-        result.w = (mat.m9 - mat.m6)/s;
-    }
-    else if (mat.m5 > mat.m10)
+    int biggestIndex = 0;
+    float fourBiggestSquaredMinus1 = fourWSquaredMinus1;
+    if (fourXSquaredMinus1 > fourBiggestSquaredMinus1)
     {
-        float s = sqrtf(1.0f + mat.m5 - mat.m0 - mat.m10)*2;
-        result.x = (mat.m4 + mat.m1)/s;
-        result.y = 0.25f*s;
-        result.z = (mat.m9 + mat.m6)/s;
-        result.w = (mat.m2 - mat.m8)/s;
+        fourBiggestSquaredMinus1 = fourXSquaredMinus1;
+        biggestIndex = 1;
     }
-    else
+
+    if (fourYSquaredMinus1 > fourBiggestSquaredMinus1)
     {
-        float s = sqrtf(1.0f + mat.m10 - mat.m0 - mat.m5)*2;
-        result.x = (mat.m2 + mat.m8)/s;
-        result.y = (mat.m9 + mat.m6)/s;
-        result.z = 0.25f*s;
-        result.w = (mat.m4 - mat.m1)/s;
+        fourBiggestSquaredMinus1 = fourYSquaredMinus1;
+        biggestIndex = 2;
+    }
+
+    if (fourZSquaredMinus1 > fourBiggestSquaredMinus1)
+    {
+        fourBiggestSquaredMinus1 = fourZSquaredMinus1;
+        biggestIndex = 3;
+    }
+
+    float biggestVal = sqrtf(fourBiggestSquaredMinus1 + 1.0f) * 0.5f;
+    float mult = 0.25f / biggestVal;
+
+    switch (biggestIndex)
+    {
+        case 0:
+            result.w = biggestVal;
+            result.x = (mat.m6 - mat.m9) * mult;
+            result.y = (mat.m8 - mat.m2) * mult;
+            result.z = (mat.m1 - mat.m4) * mult;
+            break;
+        case 1:
+            result.x = biggestVal;
+            result.w = (mat.m6 - mat.m9) * mult;
+            result.y = (mat.m1 + mat.m4) * mult;
+            result.z = (mat.m8 + mat.m2) * mult;
+            break;
+        case 2:
+            result.y = biggestVal;
+            result.w = (mat.m8 - mat.m2) * mult;
+            result.x = (mat.m1 + mat.m4) * mult;
+            result.z = (mat.m6 + mat.m9) * mult;
+            break;
+        case 3:
+            result.z = biggestVal;
+            result.w = (mat.m1 - mat.m4) * mult;
+            result.x = (mat.m8 + mat.m2) * mult;
+            result.y = (mat.m6 + mat.m9) * mult;
+            break;
     }
 
     return result;
@@ -2009,10 +2039,14 @@ RMAPI Quaternion QuaternionTransform(Quaternion q, Matrix mat)
 // Check whether two given quaternions are almost equal
 RMAPI int QuaternionEquals(Quaternion p, Quaternion q)
 {
-    int result = ((fabsf(p.x - q.x)) <= (EPSILON*fmaxf(1.0f, fmaxf(fabsf(p.x), fabsf(q.x))))) &&
+    int result = (((fabsf(p.x - q.x)) <= (EPSILON*fmaxf(1.0f, fmaxf(fabsf(p.x), fabsf(q.x))))) &&
                   ((fabsf(p.y - q.y)) <= (EPSILON*fmaxf(1.0f, fmaxf(fabsf(p.y), fabsf(q.y))))) &&
                   ((fabsf(p.z - q.z)) <= (EPSILON*fmaxf(1.0f, fmaxf(fabsf(p.z), fabsf(q.z))))) &&
-                  ((fabsf(p.w - q.w)) <= (EPSILON*fmaxf(1.0f, fmaxf(fabsf(p.w), fabsf(q.w)))));
+                  ((fabsf(p.w - q.w)) <= (EPSILON*fmaxf(1.0f, fmaxf(fabsf(p.w), fabsf(q.w)))))) || 
+                  (((fabsf(p.x + q.x)) <= (EPSILON*fmaxf(1.0f, fmaxf(fabsf(p.x), fabsf(q.x))))) &&
+                  ((fabsf(p.y + q.y)) <= (EPSILON*fmaxf(1.0f, fmaxf(fabsf(p.y), fabsf(q.y))))) &&
+                  ((fabsf(p.z + q.z)) <= (EPSILON*fmaxf(1.0f, fmaxf(fabsf(p.z), fabsf(q.z))))) &&
+                  ((fabsf(p.w + q.w)) <= (EPSILON*fmaxf(1.0f, fmaxf(fabsf(p.w), fabsf(q.w))))));
 
     return result;
 }
