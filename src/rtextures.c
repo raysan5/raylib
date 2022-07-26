@@ -879,7 +879,7 @@ Image ImageFromImage(Image image, Rectangle rec)
     result.format = image.format;
     result.mipmaps = 1;
 
-    for (int y = 0; y < rec.height; y++)
+    for (int y = 0; y < (int)rec.height; y++)
     {
         memcpy(((unsigned char *)result.data) + y*(int)rec.width*bytesPerPixel, ((unsigned char *)image.data) + ((y + (int)rec.y)*image.width + (int)rec.x)*bytesPerPixel, (int)rec.width*bytesPerPixel);
     }
