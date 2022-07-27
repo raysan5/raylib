@@ -875,7 +875,7 @@ Image ImageFromImage(Image image, Rectangle rec)
 
     result.width = (int)rec.width;
     result.height = (int)rec.height;
-    result.data = RL_CALLOC((int)(rec.width*rec.height)*bytesPerPixel, 1);
+    result.data = RL_CALLOC((int)rec.width*(int)rec.height*bytesPerPixel, 1);
     result.format = image.format;
     result.mipmaps = 1;
 
