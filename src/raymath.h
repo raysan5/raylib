@@ -1326,8 +1326,8 @@ RMAPI Matrix MatrixRotateX(float angle)
     float sinres = sinf(angle);
 
     result.m5 = cosres;
-    result.m6 = -sinres;
-    result.m9 = sinres;
+    result.m6 = sinres;
+    result.m9 = -sinres;
     result.m10 = cosres;
 
     return result;
@@ -1346,8 +1346,8 @@ RMAPI Matrix MatrixRotateY(float angle)
     float sinres = sinf(angle);
 
     result.m0 = cosres;
-    result.m2 = sinres;
-    result.m8 = -sinres;
+    result.m2 = -sinres;
+    result.m8 = sinres;
     result.m10 = cosres;
 
     return result;
@@ -1366,12 +1366,13 @@ RMAPI Matrix MatrixRotateZ(float angle)
     float sinres = sinf(angle);
 
     result.m0 = cosres;
-    result.m1 = -sinres;
-    result.m4 = sinres;
+    result.m1 = sinres;
+    result.m4 = -sinres;
     result.m5 = cosres;
 
     return result;
 }
+
 
 // Get xyz-rotation matrix
 // NOTE: Angle must be provided in radians
@@ -1390,15 +1391,15 @@ RMAPI Matrix MatrixRotateXYZ(Vector3 angle)
     float sinx = sinf(-angle.x);
 
     result.m0 = cosz*cosy;
-    result.m4 = (cosz*siny*sinx) - (sinz*cosx);
-    result.m8 = (cosz*siny*cosx) + (sinz*sinx);
+    result.m1 = (cosz*siny*sinx) - (sinz*cosx);
+    result.m2 = (cosz*siny*cosx) + (sinz*sinx);
 
-    result.m1 = sinz*cosy;
+    result.m4 = sinz*cosy;
     result.m5 = (sinz*siny*sinx) + (cosz*cosx);
-    result.m9 = (sinz*siny*cosx) - (cosz*sinx);
+    result.m6 = (sinz*siny*cosx) - (cosz*sinx);
 
-    result.m2 = -siny;
-    result.m6 = cosy*sinx;
+    result.m8 = -siny;
+    result.m9 = cosy*sinx;
     result.m10= cosy*cosx;
 
     return result;
@@ -1418,23 +1419,23 @@ RMAPI Matrix MatrixRotateZYX(Vector3 angle)
     float sx = sinf(angle.x);
 
     result.m0 = cz*cy;
-    result.m1 = cz*sy*sx - cx*sz;
-    result.m2 = sz*sx + cz*cx*sy;
-    result.m3 = 0;
-
-    result.m4 = cy*sz;
-    result.m5 = cz*cx + sz*sy*sx;
-    result.m6 = cx*sz*sy - cz*sx;
-    result.m7 = 0;
-
-    result.m8 = -sy;
-    result.m9 = cy*sx;
-    result.m10 = cy*cx;
-    result.m11 = 0;
-
+    result.m4 = cz*sy*sx - cx*sz;
+    result.m8 = sz*sx + cz*cx*sy;
     result.m12 = 0;
+
+    result.m1 = cy*sz;
+    result.m5 = cz*cx + sz*sy*sx;
+    result.m9 = cx*sz*sy - cz*sx;
     result.m13 = 0;
+
+    result.m2 = -sy;
+    result.m6 = cy*sx;
+    result.m10 = cy*cx;
     result.m14 = 0;
+
+    result.m3 = 0;
+    result.m7 = 0;
+    result.m11 = 0;
     result.m15 = 1;
 
     return result;
