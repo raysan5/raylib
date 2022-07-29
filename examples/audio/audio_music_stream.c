@@ -78,11 +78,11 @@ int main(void)
 
     PlayMusicStream(music);
 
-    float timePlayed = 0.0f;
-    bool pause = false;
 
     bool hasFilter = true;
     bool hasDelay = true;
+    float timePlayed = 0.0f;        // Time played normalized [0.0f..1.0f]
+    bool pause = false;             // Music playing paused
 
     SetTargetFPS(60);               // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
@@ -125,11 +125,10 @@ int main(void)
             if (hasDelay) AttachAudioStreamProcessor(music.stream, AudioProcessEffectDelay);
             else DetachAudioStreamProcessor(music.stream, AudioProcessEffectDelay);
         }
+        // Get normalized time played for current music stream
+        timePlayed = GetMusicTimePlayed(music)/GetMusicTimeLength(music);
 
-        // Get timePlayed scaled to bar dimensions (400 pixels)
-        timePlayed = GetMusicTimePlayed(music)/GetMusicTimeLength(music)*400;
-
-        if (timePlayed > 400) StopMusicStream(music);
+        if (timePlayed > 1.0f) timePlayed = 1.0f;   // Make sure time played is no longer than music
         //----------------------------------------------------------------------------------
 
         // Draw
@@ -141,7 +140,7 @@ int main(void)
             DrawText("MUSIC SHOULD BE PLAYING!", 255, 150, 20, LIGHTGRAY);
 
             DrawRectangle(200, 200, 400, 12, LIGHTGRAY);
-            DrawRectangle(200, 200, (int)timePlayed, 12, MAROON);
+            DrawRectangle(200, 200, (int)(timePlayed*400.0f), 12, MAROON);
             DrawRectangleLines(200, 200, 400, 12, GRAY);
 
             DrawText("PRESS SPACE TO RESTART MUSIC", 215, 250, 20, LIGHTGRAY);
