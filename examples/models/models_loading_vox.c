@@ -2,12 +2,14 @@
 *
 *   raylib [models] example - Load models vox (MagicaVoxel)
 *
-*   This example has been created using raylib 4.0 (www.raylib.com)
-*   raylib is licensed under an unmodified zlib/libpng license (View raylib.h for details)
+*   Example originally created with raylib 4.0, last time updated with raylib 4.0
 *
 *   Example contributed by Johann Nadalutti (@procfxgen) and reviewed by Ramon Santamaria (@raysan5)
 *
-*   Copyright (c) 2021 Johann Nadalutti (@procfxgen) and Ramon Santamaria (@raysan5)
+*   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
+*   BSD-like license that allows static linking with closed source software
+*
+*   Copyright (c) 2021-2022 Johann Nadalutti (@procfxgen) and Ramon Santamaria (@raysan5)
 *
 ********************************************************************************************/
 

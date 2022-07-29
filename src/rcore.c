@@ -3141,7 +3141,7 @@ FilePathList LoadDirectoryFiles(const char *dirPath)
         // Memory allocation for dirFileCount
         files.capacity = fileCounter;
         files.paths = (char **)RL_MALLOC(files.capacity*sizeof(char *));
-        for (int i = 0; i < files.capacity; i++) files.paths[i] = (char *)RL_MALLOC(MAX_FILEPATH_LENGTH*sizeof(char));
+        for (unsigned int i = 0; i < files.capacity; i++) files.paths[i] = (char *)RL_MALLOC(MAX_FILEPATH_LENGTH*sizeof(char));
 
         closedir(dir);
         
@@ -3165,7 +3165,7 @@ FilePathList LoadDirectoryFilesEx(const char *basePath, const char *filter, bool
 
     files.capacity = MAX_FILEPATH_CAPACITY;
     files.paths = (char **)RL_CALLOC(files.capacity, sizeof(char *));
-    for (int i = 0; i < files.capacity; i++) files.paths[i] = (char *)RL_CALLOC(MAX_FILEPATH_LENGTH, sizeof(char));
+    for (unsigned int i = 0; i < files.capacity; i++) files.paths[i] = (char *)RL_CALLOC(MAX_FILEPATH_LENGTH, sizeof(char));
 
     // WARNING: basePath is always prepended to scanned paths
     if (scanSubdirs) ScanDirectoryFilesRecursively(basePath, &files, filter);
@@ -3179,7 +3179,7 @@ void UnloadDirectoryFiles(FilePathList files)
 {
     if (files.capacity > 0)
     {
-        for (int i = 0; i < files.capacity; i++) RL_FREE(files.paths[i]);
+        for (unsigned int i = 0; i < files.capacity; i++) RL_FREE(files.paths[i]);
 
         RL_FREE(files.paths);
     }
@@ -3229,7 +3229,7 @@ void UnloadDroppedFiles(FilePathList files)
     
     if (files.count > 0)
     {
-        for (int i = 0; i < files.count; i++) RL_FREE(files.paths[i]);
+        for (unsigned int i = 0; i < files.count; i++) RL_FREE(files.paths[i]);
 
         RL_FREE(files.paths);
         
@@ -5471,7 +5471,7 @@ static void WindowDropCallback(GLFWwindow *window, int count, const char **paths
     // In case previous dropped filepaths have not been freed, we free them
     if (CORE.Window.dropFileCount > 0)
     {
-        for (int i = 0; i < CORE.Window.dropFileCount; i++) RL_FREE(CORE.Window.dropFilepaths[i]);
+        for (unsigned int i = 0; i < CORE.Window.dropFileCount; i++) RL_FREE(CORE.Window.dropFilepaths[i]);
 
         RL_FREE(CORE.Window.dropFilepaths);
         
@@ -5483,7 +5483,7 @@ static void WindowDropCallback(GLFWwindow *window, int count, const char **paths
     CORE.Window.dropFileCount = count;
     CORE.Window.dropFilepaths = (char **)RL_CALLOC(CORE.Window.dropFileCount, sizeof(char *));
 
-    for (int i = 0; i < CORE.Window.dropFileCount; i++)
+    for (unsigned int i = 0; i < CORE.Window.dropFileCount; i++)
     {
         CORE.Window.dropFilepaths[i] = (char *)RL_CALLOC(MAX_FILEPATH_LENGTH, sizeof(char));
         strcpy(CORE.Window.dropFilepaths[i], paths[i]);

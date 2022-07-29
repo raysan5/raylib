@@ -2,10 +2,12 @@
 *
 *   raylib example - procedural mesh generation
 *
-*   This example has been created using raylib 1.8 (www.raylib.com)
-*   raylib is licensed under an unmodified zlib/libpng license (View raylib.h for details)
+*   Example originally created with raylib 1.8, last time updated with raylib 4.0
 *
-*   Copyright (c) 2017-2021 Ramon Santamaria (@raysan5)
+*   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
+*   BSD-like license that allows static linking with closed source software
+*
+*   Copyright (c) 2017-2022 Ramon Santamaria (@raysan5)
 *
 ********************************************************************************************/
 

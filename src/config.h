@@ -6,7 +6,7 @@
 *
 *   LICENSE: zlib/libpng
 *
-*   Copyright (c) 2018-2021 Ahmad Fatoum & Ramon Santamaria (@raysan5)
+*   Copyright (c) 2018-2022 Ahmad Fatoum & Ramon Santamaria (@raysan5)
 *
 *   This software is provided "as-is", without any express or implied warranty. In no event
 *   will the authors be held liable for any damages arising from the use of this software.
@@ -83,8 +83,6 @@
 #define MAX_TOUCH_POINTS               8        // Maximum number of touch points supported
 #define MAX_KEY_PRESSED_QUEUE         16        // Maximum number of keys in the key input queue
 #define MAX_CHAR_PRESSED_QUEUE        16        // Maximum number of characters in the char input queue
-
-#define STORAGE_DATA_FILE  "storage.data"       // Automatic storage filename
 
 #define MAX_DECOMPRESSION_SIZE        64        // Max size allocated for decompression in MB
 

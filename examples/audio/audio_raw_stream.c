@@ -2,12 +2,14 @@
 *
 *   raylib [audio] example - Raw audio streaming
 *
-*   This example has been created using raylib 1.6 (www.raylib.com)
-*   raylib is licensed under an unmodified zlib/libpng license (View raylib.h for details)
+*   Example originally created with raylib 1.6, last time updated with raylib 4.2
 *
 *   Example created by Ramon Santamaria (@raysan5) and reviewed by James Hofmann (@triplefox)
 *
-*   Copyright (c) 2015-2019 Ramon Santamaria (@raysan5) and James Hofmann (@triplefox)
+*   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
+*   BSD-like license that allows static linking with closed source software
+*
+*   Copyright (c) 2015-2022 Ramon Santamaria (@raysan5) and James Hofmann (@triplefox)
 *
 ********************************************************************************************/
 
