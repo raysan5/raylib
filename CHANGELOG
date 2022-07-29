@@ -54,7 +54,8 @@ Detailed changes:
 [core] REVIEWED: Improved boolean definitions (#2485) by @noodlecollie
 [core] REVIEWED: TakeScreenshot(), use GetWindowScaleDPI() to calculate size in screenshot/recording (#2446) by @gulrak
 [core] REVIEWED: Remove fps requirement for drm connector selection (#2468) by @Crydsch
-[core] REVIEWED: IsFileExtension() #2530
+[core] REVIEWED: IsFileExtension() (#2530)
+[camera] REVIEWED: Some camera improvements (#2563) 
 [rlgl] ADDED: Premultiplied alpha blend mode (#2342) by @megagrump
 [rlgl] REVIEWED: VR rendering not taking render target size into account (#2424) by @FireFlyForLife
 [rlgl] REVIEWED: Set rlgl internal framebuffer (#2420)
@@ -73,6 +74,7 @@ Detailed changes:
 [raymath] ADDED: Vector2DistanceSqr() (#2376) by @AnilBK
 [raymath] ADDED: Vector3DistanceSqr() (#2376) by @AnilBK
 [raymath] ADDED: Vector2ClampValue(), Vector3ClampValue() (#2428) by @saccharineboi 
+[raymath] ADDED: Vector3RotateByAxisAngle() (#2590) by @Crydsch
 [raymath] `WARNING`: REDESIGNED: Vector2Angle() returns radians instead of degrees (#2193) by @schveiguy
 [raymath] `WARNING`: REMOVED: MatrixNormalize() (#2412)
 [raymath] REVIEWED: Fix inverse length in Vector2Normalize() (#2189) by @HarriP
@@ -81,6 +83,8 @@ Detailed changes:
 [raymath] REVIEWED: QuaternionInvert(), code simplified (#2324) by @megagrump
 [raymath] REVIEWED: QuaternionScale() (#2419) by @tana
 [raymath] REVIEWED: Vector2Rotate(), optimized (#2340) by @jdeokkim
+[raymath] REVIEWED: QuaternionFromMatrix(), QuaternionEquals() (#2591) by @kirigirihitomi
+[raymath] REVIEWED: MatrixRotate*() (#2595, #2599) by @GoodNike
 [shapes] REVIEWED: CheckCollision*() consistency
 [shapes] REVIEWED: DrawRectanglePro(), support TRIANGLES drawing
 [textures] ADDED: Support for QOI image format
@@ -94,12 +98,15 @@ Detailed changes:
 [textures] REVIEWED: Export format for float 32bit
 [textures] REVIEWED: ExportImage(), support export ".jpeg" files
 [textures] REVIEWED: ColorAlphaBlend() (#2524) by @royqh1979
+[textures] REVIEWED: ImageResize() (#2572)
+[textures] REVIEWED: ImageFromImage() (#2594) by @wiertek
 [text] ADDED: ExportFontAsCode()
 [text] ADDED: DrawTextCodepoints() (#2308) by @siddharthroy12
 [text] REVIEWED: TextIsEqual(), protect from NULLs (#2121) by @lukekras
 [text] REVIEWED: LoadFontEx(), comment to specify how to get the default character set (#2221) by @JeffM2501 
 [text] REVIEWED: GenImageFontAtlas(), increase atlas size guesstimate by @megagrump
 [text] REVIEWED: GetCodepoint() (#2201)
+[text] REVIEWED: GenImageFontAtlas() (#2556)
 [text] REVIEWED: ExportFontAsCode() to use given font padding (#2525) by @TheTophatDemon
 [models] ADDED: Reference code to load bones id and weight data for animations
 [models] `WARNING`: REMOVED: GetRayCollisionModel() (#2405)
@@ -123,16 +130,20 @@ Detailed changes:
 [audio] REVIEWED: PlaySoundMulti() (#2231)
 [audio] REVIEWED: ExportWaveAsCode()
 [audio] REVIEWED: UpdateMusicStream(), reduce dynamic allocations (#2532) by @dbechrd
+[audio] REVIEWED: UpdateMusicStream() to support proper stream looping (#2579) by @veins1
 [utils] ADDED: ExportDataAsCode()
 [utils] REVIEWED: Force flush stdout after trace messages (#2465) by @nagy
 [easings] ADDED: Function descriptions (#2471) by @RobLoach
 [camera] REVIEWED: Fix free camera panning in the wrong direction (#2347) by @DavidLyhedDanielsson
 [examples] ADDED: core_window_should_close
-[examples] ADDED: shapes_top_down_lights (#2199) by JeffM2501
+[examples] ADDED: core_2d_camera_mouse_zoom (#2583) by @JeffM2501
+[examples] ADDED: shapes_top_down_lights (#2199) by @JeffM2501
 [examples] ADDED: textures_fog_of_war
 [examples] ADDED: textures_gif_player
 [examples] ADDED: text_codepoints_loading
+[examples] ADDED: audio_stream_effects
 [examples] REMOVED: core_quat_conversion, not working properly
+[examples] REMOVED: raudio_standalone, moved to raudio repo
 [examples] RENAMED: textures_rectangle -> textures_sprite_anim
 [examples] REVIEWED: core_input_gamepad, improve joystick visualisation (#2390) by @kristianlm
 [examples] REVIEWED: textures_draw_tiled
@@ -142,6 +153,7 @@ Detailed changes:
 [examples] REVIEWED: audio_music_stream
 [examples] REVIEWED: shaders_mesh_instancing, simplified
 [examples] REVIEWED: shaders_basic_lighting, rlights.h simplified
+[examples] REVIEWED: All examples descriptions, included creation/update raylib versions
 [parser] ADDED: Defines to parser (#2269) by @iskolbin
 [parser] ADDED: Aliases to parser (#2444) by @lazaray
 [parser] ADDED: Parse struct descriptions (#2214) by @eutro
@@ -171,6 +183,8 @@ Detailed changes:
 [build] ADDED: Minimal web shell for WebAssembly compilation
 [build] ADDED: BSD support for zig builds (#2332) by @zigster64
 [build] ADDED: Repology badge (#2367) by @jubalh
+[build] ADDED: Support DLL compilation with TCC compiler (#2569) by @audinue
+[build] ADDED: Missing examples to VS2022 examples solution
 [build] REVIEWED: Fixed RPi make install (#2217) by @wereii
 [build] REVIEWED: Fix build results path on Linux and RPi (#2218) by @wereii
 [build] REVIEWED: Makefiles debug flag
