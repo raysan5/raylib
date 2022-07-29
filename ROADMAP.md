@@ -11,8 +11,9 @@ _Current version of raylib is complete and functional but there is always room f
 **raylib 4.x**
  - [ ] Redesign camera module (more flexible) ([#1143](https://github.com/raysan5/raylib/issues/1143), https://github.com/raysan5/raylib/discussions/2507)
  - [ ] Redesign gestures system, improve touch inputs management
- - [ ] Better documentation and improved examples
- - [ ] Focus on HTML5 ([raylib 5k gamejam](https://itch.io/jam/raylib-5k-gamejam)) and embedded platforms (RPI and similar SOCs)
+ - [ ] Redesign raudio module, implement miniaudio high-level provided features
+ - [x] Better documentation and improved examples
+ - [x] Focus on HTML5 ([raylib 5k gamejam](https://itch.io/jam/raylib-5k-gamejam)) and embedded platforms (RPI and similar SOCs)
  - [x] Additional support libraries: [raygui](https://github.com/raysan5/raygui), [rres](https://github.com/raysan5/rres)
 
 **raylib 4.0**
