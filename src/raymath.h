@@ -1313,7 +1313,8 @@ RMAPI Matrix MatrixRotate(Vector3 axis, float angle)
     return result;
 }
 
-// Get x-rotation matrix (angle in radians)
+// Get x-rotation matrix
+// NOTE: Angle must be provided in radians
 RMAPI Matrix MatrixRotateX(float angle)
 {
     Matrix result = { 1.0f, 0.0f, 0.0f, 0.0f,
@@ -1332,7 +1333,8 @@ RMAPI Matrix MatrixRotateX(float angle)
     return result;
 }
 
-// Get y-rotation matrix (angle in radians)
+// Get y-rotation matrix
+// NOTE: Angle must be provided in radians
 RMAPI Matrix MatrixRotateY(float angle)
 {
     Matrix result = { 1.0f, 0.0f, 0.0f, 0.0f,
@@ -1351,7 +1353,8 @@ RMAPI Matrix MatrixRotateY(float angle)
     return result;
 }
 
-// Get z-rotation matrix (angle in radians)
+// Get z-rotation matrix
+// NOTE: Angle must be provided in radians
 RMAPI Matrix MatrixRotateZ(float angle)
 {
     Matrix result = { 1.0f, 0.0f, 0.0f, 0.0f,
@@ -1370,21 +1373,21 @@ RMAPI Matrix MatrixRotateZ(float angle)
     return result;
 }
 
-
-// Get xyz-rotation matrix (angles in radians)
-RMAPI Matrix MatrixRotateXYZ(Vector3 ang)
+// Get xyz-rotation matrix
+// NOTE: Angle must be provided in radians
+RMAPI Matrix MatrixRotateXYZ(Vector3 angle)
 {
     Matrix result = { 1.0f, 0.0f, 0.0f, 0.0f,
                       0.0f, 1.0f, 0.0f, 0.0f,
                       0.0f, 0.0f, 1.0f, 0.0f,
                       0.0f, 0.0f, 0.0f, 1.0f }; // MatrixIdentity()
 
-    float cosz = cosf(-ang.z);
-    float sinz = sinf(-ang.z);
-    float cosy = cosf(-ang.y);
-    float siny = sinf(-ang.y);
-    float cosx = cosf(-ang.x);
-    float sinx = sinf(-ang.x);
+    float cosz = cosf(-angle.z);
+    float sinz = sinf(-angle.z);
+    float cosy = cosf(-angle.y);
+    float siny = sinf(-angle.y);
+    float cosx = cosf(-angle.x);
+    float sinx = sinf(-angle.x);
 
     result.m0 = cosz*cosy;
     result.m4 = (cosz*siny*sinx) - (sinz*cosx);
@@ -1401,17 +1404,18 @@ RMAPI Matrix MatrixRotateXYZ(Vector3 ang)
     return result;
 }
 
-// Get zyx-rotation matrix (angles in radians)
-RMAPI Matrix MatrixRotateZYX(Vector3 ang)
+// Get zyx-rotation matrix
+// NOTE: Angle must be provided in radians
+RMAPI Matrix MatrixRotateZYX(Vector3 angle)
 {
     Matrix result = { 0 };
 
-    float cz = cosf(ang.z);
-    float sz = sinf(ang.z);
-    float cy = cosf(ang.y);
-    float sy = sinf(ang.y);
-    float cx = cosf(ang.x);
-    float sx = sinf(ang.x);
+    float cz = cosf(angle.z);
+    float sz = sinf(angle.z);
+    float cy = cosf(angle.y);
+    float sy = sinf(angle.y);
+    float cx = cosf(angle.x);
+    float sx = sinf(angle.x);
 
     result.m0 = cz*cy;
     result.m1 = cz*sy*sx - cx*sz;
@@ -1480,7 +1484,7 @@ RMAPI Matrix MatrixFrustum(double left, double right, double bottom, double top,
 }
 
 // Get perspective projection matrix
-// NOTE: Angle should be provided in radians
+// NOTE: Fovy angle must be provided in radians
 RMAPI Matrix MatrixPerspective(double fovy, double aspect, double near, double far)
 {
     Matrix result = { 0 };
@@ -1947,7 +1951,7 @@ RMAPI Matrix QuaternionToMatrix(Quaternion q)
 }
 
 // Get rotation quaternion for an angle and axis
-// NOTE: angle must be provided in radians
+// NOTE: Angle must be provided in radians
 RMAPI Quaternion QuaternionFromAxisAngle(Vector3 axis, float angle)
 {
     Quaternion result = { 0.0f, 0.0f, 0.0f, 1.0f };
