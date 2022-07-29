@@ -63,8 +63,8 @@ int main(void)
         }
 
         // Plane yaw (y-axis) controls
-        if (IsKeyDown(KEY_S)) yaw += 1.0f;
-        else if (IsKeyDown(KEY_A)) yaw -= 1.0f;
+        if (IsKeyDown(KEY_S)) yaw -= 1.0f;
+        else if (IsKeyDown(KEY_A)) yaw += 1.0f;
         else
         {
             if (yaw > 0.0f) yaw -= 0.5f;
@@ -72,8 +72,8 @@ int main(void)
         }
 
         // Plane roll (z-axis) controls
-        if (IsKeyDown(KEY_LEFT)) roll += 1.0f;
-        else if (IsKeyDown(KEY_RIGHT)) roll -= 1.0f;
+        if (IsKeyDown(KEY_LEFT)) roll -= 1.0f;
+        else if (IsKeyDown(KEY_RIGHT)) roll += 1.0f;
         else
         {
             if (roll > 0.0f) roll -= 0.5f;
