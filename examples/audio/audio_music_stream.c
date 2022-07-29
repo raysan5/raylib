@@ -2,7 +2,7 @@
 *
 *   raylib [audio] example - Music playing (streaming)
 *
-*   Example originally created with raylib 1.3, last time updated with raylib 4.2
+*   Example originally created with raylib 1.3, last time updated with raylib 4.0
 *
 *   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
 *   BSD-like license that allows static linking with closed source software
@@ -12,49 +12,6 @@
 ********************************************************************************************/
 
 #include "raylib.h"
-
-#include <stdlib.h>         // Required for: NULL
-
-// Audio effect: lowpass filter
-static void AudioProcessEffectLPF(void *buffer, unsigned int frames)
-{
-    static float low[2] = { 0.0f, 0.0f };
-    static const float cutoff = 70.0f / 44100.0f; // 70 Hz lowpass filter
-    const float k = cutoff / (cutoff + 0.1591549431f); // RC filter formula
-
-    for (unsigned int i = 0; i < frames*2; i += 2)
-    {
-        float l = ((float *)buffer)[i], r = ((float *)buffer)[i + 1];
-        low[0] += k * (l - low[0]);
-        low[1] += k * (r - low[1]);
-        ((float *)buffer)[i] = low[0];
-        ((float *)buffer)[i + 1] = low[1];
-    }
-}
-
-static float *delayBuffer = NULL;
-static unsigned int delayBufferSize = 0;
-static unsigned int delayReadIndex = 2;
-static unsigned int delayWriteIndex = 0;
-
-// Audio effect: delay
-static void AudioProcessEffectDelay(void *buffer, unsigned int frames)
-{
-    for (unsigned int i = 0; i < frames*2; i += 2)
-    {
-        float leftDelay = delayBuffer[delayReadIndex++];    // ERROR: Reading buffer -> WHY??? Maybe thread related???
-        float rightDelay = delayBuffer[delayReadIndex++];
-
-        if (delayReadIndex == delayBufferSize) delayReadIndex = 0;
-
-        ((float *)buffer)[i] = 0.5f*((float *)buffer)[i] + 0.5f*leftDelay;
-        ((float *)buffer)[i + 1] = 0.5f*((float *)buffer)[i + 1] + 0.5f*rightDelay;
-
-        delayBuffer[delayWriteIndex++] = ((float *)buffer)[i];
-        delayBuffer[delayWriteIndex++] = ((float *)buffer)[i + 1];
-        if (delayWriteIndex == delayBufferSize) delayWriteIndex = 0;
-    }
-}
 
 //------------------------------------------------------------------------------------
 // Program main entry point
@@ -72,19 +29,12 @@ int main(void)
 
     Music music = LoadMusicStream("resources/country.mp3");
 
-    // Allocate buffer for the delay effect
-    delayBufferSize = 48000 * 2;
-    delayBuffer = (float *)RL_CALLOC(delayBufferSize, sizeof(float));   // 1 second delay (device sampleRate*channels)
-
     PlayMusicStream(music);
 
-
-    bool hasFilter = true;
-    bool hasDelay = true;
     float timePlayed = 0.0f;        // Time played normalized [0.0f..1.0f]
     bool pause = false;             // Music playing paused
 
-    SetTargetFPS(60);               // Set our game to run at 60 frames-per-second
+    SetTargetFPS(30);               // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
 
     // Main game loop
@@ -94,37 +44,6 @@ int main(void)
         //----------------------------------------------------------------------------------
         UpdateMusicStream(music);   // Update music buffer with new stream data
 
-        // Restart music playing (stop and play)
-        if (IsKeyPressed(KEY_SPACE))
-        {
-            StopMusicStream(music);
-            PlayMusicStream(music);
-        }
-
-        // Pause/Resume music playing
-        if (IsKeyPressed(KEY_P))
-        {
-            pause = !pause;
-
-            if (pause) PauseMusicStream(music);
-            else ResumeMusicStream(music);
-        }
-
-        // Add/Remove effect: lowpass filter
-        if (IsKeyPressed(KEY_F))
-        {
-            hasFilter = !hasFilter;
-            if (hasFilter) AttachAudioStreamProcessor(music.stream, AudioProcessEffectLPF);
-            else DetachAudioStreamProcessor(music.stream, AudioProcessEffectLPF);
-        }
-
-        // Add/Remove effect: delay
-        if (IsKeyPressed(KEY_D))
-        {
-            hasDelay = !hasDelay;
-            if (hasDelay) AttachAudioStreamProcessor(music.stream, AudioProcessEffectDelay);
-            else DetachAudioStreamProcessor(music.stream, AudioProcessEffectDelay);
-        }
         // Get normalized time played for current music stream
         timePlayed = GetMusicTimePlayed(music)/GetMusicTimeLength(music);
 
@@ -155,8 +74,6 @@ int main(void)
     UnloadMusicStream(music);   // Unload music stream buffers from RAM
 
     CloseAudioDevice();         // Close audio device (music streaming is automatically stopped)
-
-    RL_FREE(delayBuffer);       // Free delay buffer
 
     CloseWindow();              // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
