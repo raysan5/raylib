@@ -1725,7 +1725,8 @@ void UpdateMusicStream(Music music)
     unsigned int subBufferSizeInFrames = music.stream.buffer->sizeInFrames/2;
 
     // On first call of this function we lazily pre-allocated a temp buffer to read audio files/memory data in
-    unsigned int pcmSize = subBufferSizeInFrames*music.stream.channels*music.stream.sampleSize/8;
+    int frameSize = music.stream.channels*music.stream.sampleSize/8;
+    unsigned int pcmSize = subBufferSizeInFrames*frameSize;
     if (AUDIO.System.pcmBufferSize < pcmSize) 
     {
         RL_FREE(AUDIO.System.pcmBuffer);
@@ -1733,74 +1734,85 @@ void UpdateMusicStream(Music music)
         AUDIO.System.pcmBufferSize = pcmSize;
     }
 
-    unsigned int framesLeft = music.frameCount - music.stream.buffer->framesProcessed;  // Frames left to be processed
-    unsigned int framesToStream = 0;                 // Total frames to be streamed
-    unsigned int framesLoopingExtra = 0;    // In case music requires to loop, we could need to add more frames from beginning to fill buffer
+    int framesLeft = music.frameCount - music.stream.buffer->framesProcessed;  // Frames left to be processed
+    int framesToStream = 0;                 // Total frames to be streamed
 
     // Check both sub-buffers to check if they require refilling
     for (int i = 0; i < 2; i++)
     {
         if ((music.stream.buffer != NULL) && !music.stream.buffer->isSubBufferProcessed[i]) continue; // No refilling required, move to next sub-buffer
 
-        if (framesLeft >= subBufferSizeInFrames) framesToStream = subBufferSizeInFrames;
-        else 
-        {
-            framesToStream = framesLeft;
+        if ((framesLeft >= subBufferSizeInFrames) || music.looping) framesToStream = subBufferSizeInFrames;
+        else framesToStream = framesLeft;
 
-            // WARNING: If audio needs to loop but the frames left are less than the actual size of buffer to fill,
-            // the buffer is only partially filled and no refill is done until next frame call, generating a silence
-            // SOLUTION: In case of music loop, fill frames left + frames from start to fill the buffer to process
-            if (music.looping) framesLoopingExtra = subBufferSizeInFrames - framesLeft;
-        }
-
+        int frameCountStillNeeded = framesToStream;
+        int frameCountRedTotal = 0;
         switch (music.ctxType)
         {
         #if defined(SUPPORT_FILEFORMAT_WAV)
             case MUSIC_AUDIO_WAV:
             {
-                // NOTE: Returns the number of samples to process (not required)
-                if (music.stream.sampleSize == 16) drwav_read_pcm_frames_s16((drwav *)music.ctxData, framesToStream, (short *)AUDIO.System.pcmBuffer);
-                else if (music.stream.sampleSize == 32) drwav_read_pcm_frames_f32((drwav *)music.ctxData, framesToStream, (float *)AUDIO.System.pcmBuffer);
-
-                if (framesLoopingExtra > 0)
+                if (music.stream.sampleSize == 16)
                 {
-                    drwav_seek_to_pcm_frame((drwav *)music.ctxData, 0);
-
-                    if (music.stream.sampleSize == 16) drwav_read_pcm_frames_s16((drwav *)music.ctxData, framesLoopingExtra, (short *)AUDIO.System.pcmBuffer + framesToStream*music.stream.channels);
-                    else if (music.stream.sampleSize == 32) drwav_read_pcm_frames_f32((drwav *)music.ctxData, framesLoopingExtra, (float *)AUDIO.System.pcmBuffer + framesToStream*music.stream.channels);
-                    
-                    framesToStream += framesLoopingExtra;
+                    while (true)
+                    {
+                        int frameCountRed = drwav_read_pcm_frames_s16((drwav *)music.ctxData, frameCountStillNeeded, (short *)((char *)AUDIO.System.pcmBuffer + frameCountRedTotal*frameSize));
+                        frameCountRedTotal += frameCountRed;
+                        frameCountStillNeeded -= frameCountRed;
+                        if (frameCountStillNeeded == 0) break;
+                        else drwav_seek_to_pcm_frame((drwav *)music.ctxData, 0);
+                    }
                 }
-
+                else if (music.stream.sampleSize == 32)
+                {
+                    while (true)
+                    {
+                        int frameCountRed = drwav_read_pcm_frames_f32((drwav *)music.ctxData, frameCountStillNeeded, (float *)((char *)AUDIO.System.pcmBuffer + frameCountRedTotal*frameSize));
+                        frameCountRedTotal += frameCountRed;
+                        frameCountStillNeeded -= frameCountRed;
+                        if (frameCountStillNeeded == 0) break;
+                        else drwav_seek_to_pcm_frame((drwav *)music.ctxData, 0);
+                    }
+                }
             } break;
         #endif
         #if defined(SUPPORT_FILEFORMAT_OGG)
             case MUSIC_AUDIO_OGG:
             {
-                // NOTE: Returns the number of samples to process (be careful! we ask for number of shorts!)
-                stb_vorbis_get_samples_short_interleaved((stb_vorbis *)music.ctxData, music.stream.channels, (short *)AUDIO.System.pcmBuffer, framesToStream*music.stream.channels);
-
-                // stb_vorbis_seek_start((stb_vorbis *)music.ctxData);
-
+                while (true)
+                {
+                    int frameCountRed = stb_vorbis_get_samples_short_interleaved((stb_vorbis *)music.ctxData, music.stream.channels, (short *)((char *)AUDIO.System.pcmBuffer + frameCountRedTotal*frameSize), frameCountStillNeeded*music.stream.channels);
+                    frameCountRedTotal += frameCountRed;
+                    frameCountStillNeeded -= frameCountRed;
+                    if (frameCountStillNeeded == 0) break;
+                    else stb_vorbis_seek_start((stb_vorbis *)music.ctxData);
+                }
             } break;
         #endif
         #if defined(SUPPORT_FILEFORMAT_FLAC)
             case MUSIC_AUDIO_FLAC:
             {
-                // NOTE: Returns the number of samples to process (not required)
-                drflac_read_pcm_frames_s16((drflac *)music.ctxData, frameCountToStream*music.stream.channels, (short *)AUDIO.System.pcm);
-
-                // drflac_seek_to_pcm_frame((drflac *)music.ctxData, 0);
-
+                while (true)
+                {
+                    int frameCountRed = drflac_read_pcm_frames_s16((drflac *)music.ctxData, frameCountStillNeeded, (short *)((char *)AUDIO.System.pcmBuffer + frameCountRedTotal*frameSize));
+                    frameCountRedTotal += frameCountRed;
+                    frameCountStillNeeded -= frameCountRed;
+                    if (frameCountStillNeeded == 0) break;
+                    else drflac_seek_to_pcm_frame((drflac *)music.ctxData, 0);
+                }
             } break;
         #endif
         #if defined(SUPPORT_FILEFORMAT_MP3)
             case MUSIC_AUDIO_MP3:
             {
-                drmp3_read_pcm_frames_f32((drmp3 *)music.ctxData, framesToStream, (float *)AUDIO.System.pcmBuffer);
-
-                //drmp3_seek_to_pcm_frame((drmp3 *)music.ctxData, 0);
-
+                while (true)
+                {
+                    int frameCountRed = drmp3_read_pcm_frames_f32((drmp3 *)music.ctxData, frameCountStillNeeded, (float *)((char *)AUDIO.System.pcmBuffer + frameCountRedTotal*frameSize));
+                    frameCountRedTotal += frameCountRed;
+                    frameCountStillNeeded -= frameCountRed;
+                    if (frameCountStillNeeded == 0) break;
+                    else drmp3_seek_to_pcm_frame((drmp3 *)music.ctxData, 0);
+                }
             } break;
         #endif
         #if defined(SUPPORT_FILEFORMAT_XM)
@@ -1841,16 +1853,7 @@ void UpdateMusicStream(Music music)
     // Reset audio stream for looping
     if (streamEnding)
     {
-        if (music.looping)
-        {
-            PlayMusicStream(music);     // Play again
-
-            // Set cursor offset to extra frames filled previously
-            music.stream.buffer->frameCursorPos = framesLoopingExtra;
-
-            // TODO: It's not working properly... :(
-        }
-        else StopMusicStream(music);    // Stop music (and reset)
+        if (!music.looping) StopMusicStream(music);
     }
     else
     {
