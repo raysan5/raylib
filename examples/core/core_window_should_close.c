@@ -38,7 +38,7 @@ int main()
     {
         // Update
         //----------------------------------------------------------------------------------
-        // Detect if X-button or KEY_ESCAPE have been presssed to close window
+        // Detect if X-button or KEY_ESCAPE have been pressed to close window
         if (WindowShouldClose() || IsKeyPressed(KEY_ESCAPE)) exitWindowRequested = true;
         
         if (exitWindowRequested)
