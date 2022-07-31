@@ -29,7 +29,7 @@ int main(void)
 
     InitWindow(screenWidth, screenHeight, "raylib [textures] example - mouse painting");
 
-    // Colours to choose from
+    // Colors to choose from
     Color colors[MAX_COLORS_COUNT] = {
         RAYWHITE, YELLOW, GOLD, ORANGE, PINK, RED, MAROON, GREEN, LIME, DARKGREEN,
         SKYBLUE, BLUE, DARKBLUE, PURPLE, VIOLET, DARKPURPLE, BEIGE, BROWN, DARKBROWN,
