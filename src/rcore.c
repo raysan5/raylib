@@ -57,9 +57,6 @@
 *       WARNING: Reconfiguring standard input could lead to undesired effects, like breaking other running processes or
 *       blocking the device if not restored properly. Use with care.
 *
-*   #define SUPPORT_MOUSE_CURSOR_POINT
-*       Draw a mouse pointer on screen
-*
 *   #define SUPPORT_BUSY_WAIT_LOOP
 *       Use busy wait loop for timing sync, if not defined, a high-resolution timer is setup and used
 *
@@ -2033,15 +2030,6 @@ void BeginDrawing(void)
 void EndDrawing(void)
 {
     rlDrawRenderBatchActive();      // Update and draw internal render batch
-
-#if defined(SUPPORT_MODULE_RSHAPES) && defined(SUPPORT_MOUSE_CURSOR_POINT)
-    // Draw a small rectangle on mouse position for user reference
-    if (!CORE.Input.Mouse.cursorHidden)
-    {
-        DrawRectangle(CORE.Input.Mouse.currentPosition.x, CORE.Input.Mouse.currentPosition.y, 3, 3, MAROON);    // WARNING: Module required: rshapes
-        rlDrawRenderBatchActive();  // Update and draw internal render batch
-    }
-#endif
 
 #if defined(SUPPORT_GIF_RECORDING)
     // Draw record indicator

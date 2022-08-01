@@ -185,6 +185,7 @@ Detailed changes:
 [build] ADDED: Repology badge (#2367) by @jubalh
 [build] ADDED: Support DLL compilation with TCC compiler (#2569) by @audinue
 [build] ADDED: Missing examples to VS2022 examples solution
+[build] REMOVED: SUPPORT_MOUSE_CURSOR_POINT config option
 [build] REVIEWED: Fixed RPi make install (#2217) by @wereii
 [build] REVIEWED: Fix build results path on Linux and RPi (#2218) by @wereii
 [build] REVIEWED: Makefiles debug flag
