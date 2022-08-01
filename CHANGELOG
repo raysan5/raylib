@@ -4,14 +4,14 @@ changelog
 Current Release:    raylib 4.0.0 (05 November 2021)
 
 -------------------------------------------------------------------------
-Release:     raylib 4.2 (July 2022)
+Release:     raylib 4.2 (August 2022)
 -------------------------------------------------------------------------
 KEY CHANGES:
- - rres 1.0
- - raygui 3.2
- - raylib_parser...
- - REMOVED extras libraries (physac)
- - UPDATED: examples: Assigned **DIFFICULTY LEVELS**!
+ - rres 1.0: A custom resource-processing and packaging file format, including tooling and raylib integration examples
+ - raygui 3.2: New version of the immediate-mode gui system for tools development with raylib
+ - raylib_parser: Multiple improvements of the raylib parser to automatize bindings generation
+ - REMOVED extras libraries (raygui, physac, raudio.h...) moved to independent separate repos
+ - UPDATED: examples: Added creation and update raylib versions and assigned **DIFFICULTY LEVELS**!
  
 Detailed changes:
 [multi] REVIEWED: Multiple trace log messages
