@@ -482,7 +482,7 @@ void UpdateCamera(Camera *camera)
             // Camera position update
             // NOTE: On CAMERA_FIRST_PERSON player Y-movement is limited to player 'eyes position'
             camera->position.y = CAMERA.playerEyesPosition;
-            
+
             // Camera swinging (y-movement), only when walking (some key pressed)
             for (int i = 0; i < 6; i++) if (direction[i]) { swingCounter += GetFrameTime(); break; }
             camera->position.y -= sinf(2*PI*CAMERA_FIRST_PERSON_STEP_FREQUENCY*swingCounter)*CAMERA_FIRST_PERSON_SWINGING_DELTA;

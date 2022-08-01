@@ -1416,9 +1416,9 @@ void ImageResize(Image *image, int newWidth, int newHeight)
 
     // Check if we can use a fast path on image scaling
     // It can be for 8 bit per channel images with 1 to 4 channels per pixel
-    if ((image->format == PIXELFORMAT_UNCOMPRESSED_GRAYSCALE) || 
-        (image->format == PIXELFORMAT_UNCOMPRESSED_GRAY_ALPHA) || 
-        (image->format == PIXELFORMAT_UNCOMPRESSED_R8G8B8) || 
+    if ((image->format == PIXELFORMAT_UNCOMPRESSED_GRAYSCALE) ||
+        (image->format == PIXELFORMAT_UNCOMPRESSED_GRAY_ALPHA) ||
+        (image->format == PIXELFORMAT_UNCOMPRESSED_R8G8B8) ||
         (image->format == PIXELFORMAT_UNCOMPRESSED_R8G8B8A8))
     {
         int bytesPerPixel = GetPixelDataSize(1, 1, image->format);

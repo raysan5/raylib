@@ -1516,7 +1516,7 @@ void rlDisableTextureCubemap(void)
 void rlTextureParameters(unsigned int id, int param, int value)
 {
     glBindTexture(GL_TEXTURE_2D, id);
-    
+
 #if !defined(GRAPHICS_API_OPENGL_11)
     // Reset anisotropy filter, in case it was set
     glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, 1.0f);

@@ -1411,7 +1411,7 @@ void SetWindowState(unsigned int flags)
     {
         TRACELOG(LOG_WARNING, "WINDOW: High DPI can only by configured before window initialization");
     }
-    
+
     // State change: FLAG_WINDOW_MOUSE_PASSTHROUGH
     if (((CORE.Window.flags & FLAG_WINDOW_MOUSE_PASSTHROUGH) != (flags & FLAG_WINDOW_MOUSE_PASSTHROUGH)) && ((flags & FLAG_WINDOW_MOUSE_PASSTHROUGH) > 0))
     {
@@ -1519,7 +1519,7 @@ void ClearWindowState(unsigned int flags)
     {
         TRACELOG(LOG_WARNING, "WINDOW: High DPI can only by configured before window initialization");
     }
-    
+
     // State change: FLAG_WINDOW_MOUSE_PASSTHROUGH
     if (((CORE.Window.flags & FLAG_WINDOW_MOUSE_PASSTHROUGH) > 0) && ((flags & FLAG_WINDOW_MOUSE_PASSTHROUGH) > 0))
     {
@@ -1759,7 +1759,7 @@ int GetMonitorWidth(int monitor)
     if ((monitor >= 0) && (monitor < monitorCount))
     {
         const GLFWvidmode *mode = glfwGetVideoMode(monitors[monitor]);
-        
+
         if (mode) return mode->width;
         else TRACELOG(LOG_WARNING, "GLFW: Failed to find video mode for selected monitor");
     }
@@ -1778,7 +1778,7 @@ int GetMonitorHeight(int monitor)
     if ((monitor >= 0) && (monitor < monitorCount))
     {
         const GLFWvidmode *mode = glfwGetVideoMode(monitors[monitor]);
-        
+
         if (mode) return mode->height;
         else TRACELOG(LOG_WARNING, "GLFW: Failed to find video mode for selected monitor");
     }
@@ -2832,7 +2832,7 @@ bool FileExists(const char *fileName)
 bool IsFileExtension(const char *fileName, const char *ext)
 {
     #define MAX_FILE_EXTENSION_SIZE  16
-    
+
     bool result = false;
     const char *fileExt = GetFileExtension(fileName);
 
@@ -3113,14 +3113,14 @@ FilePathList LoadDirectoryFiles(const char *dirPath)
 {
     FilePathList files = { 0 };
     unsigned int fileCounter = 0;
-    
+
     struct dirent *entity;
     DIR *dir = opendir(dirPath);
 
     if (dir != NULL) // It's a directory
     {
         // SCAN 1: Count files
-        while ((entity = readdir(dir)) != NULL) 
+        while ((entity = readdir(dir)) != NULL)
         {
             // NOTE: We skip '.' (current dir) and '..' (parent dir) filepaths
             if ((strcmp(entity->d_name, ".") != 0) && (strcmp(entity->d_name, "..") != 0)) fileCounter++;
@@ -3132,16 +3132,16 @@ FilePathList LoadDirectoryFiles(const char *dirPath)
         for (unsigned int i = 0; i < files.capacity; i++) files.paths[i] = (char *)RL_MALLOC(MAX_FILEPATH_LENGTH*sizeof(char));
 
         closedir(dir);
-        
+
         // SCAN 2: Read filepaths
         // NOTE: Directory paths are also registered
         ScanDirectoryFiles(dirPath, &files, NULL);
-        
+
         // Security check: read files.count should match fileCounter
         if (files.count != files.capacity) TRACELOG(LOG_WARNING, "FILEIO: Read files count do not match capacity allocated");
     }
     else TRACELOG(LOG_WARNING, "FILEIO: Failed to open requested directory");  // Maybe it's a file...
-    
+
     return files;
 }
 
@@ -3214,13 +3214,13 @@ FilePathList LoadDroppedFiles(void)
 void UnloadDroppedFiles(FilePathList files)
 {
     // WARNING: files pointers are the same as internal ones
-    
+
     if (files.count > 0)
     {
         for (unsigned int i = 0; i < files.count; i++) RL_FREE(files.paths[i]);
 
         RL_FREE(files.paths);
-        
+
         CORE.Window.dropFileCount = 0;
         CORE.Window.dropFilepaths = NULL;
     }
@@ -3759,7 +3759,7 @@ void SetMouseScale(float scaleX, float scaleY)
 float GetMouseWheelMove(void)
 {
     float result = 0.0f;
-    
+
 #if !defined(PLATFORM_ANDROID)
     if (fabsf(CORE.Input.Mouse.currentWheelMove.x) > fabsf(CORE.Input.Mouse.currentWheelMove.y)) result = (float)CORE.Input.Mouse.currentWheelMove.x;
     else result = (float)CORE.Input.Mouse.currentWheelMove.y;
@@ -3987,7 +3987,7 @@ static bool InitGraphicsDevice(int width, int height)
     #endif
     }
     else glfwWindowHint(GLFW_SCALE_TO_MONITOR, GLFW_FALSE);
-    
+
     // Mouse passthrough
     if ((CORE.Window.flags & FLAG_WINDOW_MOUSE_PASSTHROUGH) > 0) glfwWindowHint(GLFW_MOUSE_PASSTHROUGH, GLFW_TRUE);
     else glfwWindowHint(GLFW_MOUSE_PASSTHROUGH, GLFW_FALSE);
@@ -5118,13 +5118,13 @@ void PollInputEvents(void)
 }
 
 // Scan all files and directories in a base path
-// WARNING: files.paths[] must be previously allocated and 
+// WARNING: files.paths[] must be previously allocated and
 // contain enough space to store all required paths
 static void ScanDirectoryFiles(const char *basePath, FilePathList *files, const char *filter)
 {
     static char path[MAX_FILEPATH_LENGTH] = { 0 };
     memset(path, 0, MAX_FILEPATH_LENGTH);
-    
+
     struct dirent *dp = NULL;
     DIR *dir = opendir(basePath);
 
@@ -5136,7 +5136,7 @@ static void ScanDirectoryFiles(const char *basePath, FilePathList *files, const 
                 (strcmp(dp->d_name, "..") != 0))
             {
                 sprintf(path, "%s/%s", basePath, dp->d_name);
-                
+
                 if (filter != NULL)
                 {
                     if (IsFileExtension(path, filter))
@@ -5163,7 +5163,7 @@ static void ScanDirectoryFilesRecursively(const char *basePath, FilePathList *fi
 {
     static char path[MAX_FILEPATH_LENGTH] = { 0 };
     memset(path, 0, MAX_FILEPATH_LENGTH);
-    
+
     struct dirent *dp = NULL;
     DIR *dir = opendir(basePath);
 
@@ -5460,11 +5460,11 @@ static void WindowDropCallback(GLFWwindow *window, int count, const char **paths
         for (unsigned int i = 0; i < CORE.Window.dropFileCount; i++) RL_FREE(CORE.Window.dropFilepaths[i]);
 
         RL_FREE(CORE.Window.dropFilepaths);
-        
+
         CORE.Window.dropFileCount = 0;
         CORE.Window.dropFilepaths = NULL;
     }
-    
+
     // WARNING: Paths are freed by GLFW when the callback returns, we must keep an internal copy
     CORE.Window.dropFileCount = count;
     CORE.Window.dropFilepaths = (char **)RL_CALLOC(CORE.Window.dropFileCount, sizeof(char *));

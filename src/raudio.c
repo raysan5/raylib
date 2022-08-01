@@ -1152,7 +1152,7 @@ void WaveFormat(Wave *wave, int sampleRate, int sampleSize, int channels)
 
     ma_uint32 frameCountIn = wave->frameCount;
     ma_uint32 frameCount = (ma_uint32)ma_convert_frames(NULL, 0, formatOut, channels, sampleRate, NULL, frameCountIn, formatIn, wave->channels, wave->sampleRate);
-    
+
     if (frameCount == 0)
     {
         TRACELOG(LOG_WARNING, "WAVE: Failed to get frame count for format conversion");
@@ -1727,7 +1727,7 @@ void UpdateMusicStream(Music music)
     // On first call of this function we lazily pre-allocated a temp buffer to read audio files/memory data in
     int frameSize = music.stream.channels*music.stream.sampleSize/8;
     unsigned int pcmSize = subBufferSizeInFrames*frameSize;
-    if (AUDIO.System.pcmBufferSize < pcmSize) 
+    if (AUDIO.System.pcmBufferSize < pcmSize)
     {
         RL_FREE(AUDIO.System.pcmBuffer);
         AUDIO.System.pcmBuffer = RL_CALLOC(1, pcmSize);

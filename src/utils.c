@@ -311,7 +311,7 @@ bool ExportDataAsCode(const char *data, unsigned int size, const char *fileName)
     if (success != 0) TRACELOG(LOG_INFO, "FILEIO: [%s] Data as code exported successfully", fileName);
     else TRACELOG(LOG_WARNING, "FILEIO: [%s] Failed to export data as code", fileName);
 
-    return success; 
+    return success;
 }
 
 // Load text data from file, returns a '\0' terminated string
