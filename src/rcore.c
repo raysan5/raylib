@@ -4911,9 +4911,10 @@ void PollInputEvents(void)
     UpdateGestures();
 #endif
 
-    // Reset keys/chars pressed registered
+    // Reset keys/chars pressed/repeated registered
     CORE.Input.Keyboard.keyPressedQueueCount = 0;
     CORE.Input.Keyboard.charPressedQueueCount = 0;
+    CORE.Input.Keyboard.keyRepeatedQueueCount = 0;
 
 #if !(defined(PLATFORM_RPI) || defined(PLATFORM_DRM))
     // Reset last gamepad button/axis registered state
@@ -4924,6 +4925,9 @@ void PollInputEvents(void)
 #if defined(PLATFORM_RPI) || defined(PLATFORM_DRM)
     // Register previous keys states
     for (int i = 0; i < MAX_KEYBOARD_KEYS; i++) CORE.Input.Keyboard.previousKeyState[i] = CORE.Input.Keyboard.currentKeyState[i];
+
+    // Clear previous repeated keys
+    memset(CORE.Input.Keyboard.repeatedKeyState, 0, MAX_KEYBOARD_KEYS * (sizeof(char)));
 
     PollKeyboardEvents();
 
@@ -4957,7 +4961,6 @@ void PollInputEvents(void)
     for (int i = 0; i < MAX_MOUSE_BUTTONS; i++) CORE.Input.Mouse.previousButtonState[i] = CORE.Input.Mouse.currentButtonState[i];
 
     // Clear previous repeated keys
-    // for (int i = 0; i < MAX_KEYBOARD_KEYS; i++) CORE.Input.Keyboard.repeatedKeyState[i] = 0;
     memset(CORE.Input.Keyboard.repeatedKeyState, 0, MAX_KEYBOARD_KEYS * (sizeof(char)));
 
     // Register previous mouse wheel state
@@ -5139,6 +5142,9 @@ void PollInputEvents(void)
     // Register previous keys states
     // NOTE: Android supports up to 260 keys
     for (int i = 0; i < 260; i++) CORE.Input.Keyboard.previousKeyState[i] = CORE.Input.Keyboard.currentKeyState[i];
+
+    // Clear previous repeated keys
+    memset(CORE.Input.Keyboard.repeatedKeyState, 0, 260 * (sizeof(char)));
 
     // Android ALooper_pollAll() variables
     int pollResult = 0;
