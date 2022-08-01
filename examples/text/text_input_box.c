@@ -2,7 +2,7 @@
 *
 *   raylib [text] example - Input Box
 *
-*   Example originally created with raylib 1.7, last time updated with raylib 3.5
+*   Example originally created with raylib 1.7, last time updated with raylib 4.0
 *
 *   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
 *   BSD-like license that allows static linking with closed source software
@@ -35,7 +35,7 @@ int main(void)
 
     int framesCounter = 0;
 
-    SetTargetFPS(10);               // Set our game to run at 10 frames-per-second
+    SetTargetFPS(30);               // Set our game to run at 30 frames-per-second
     //--------------------------------------------------------------------------------------
 
     // Main game loop
@@ -68,7 +68,7 @@ int main(void)
                 key = GetCharPressed();  // Check next character in the queue
             }
 
-            if (IsKeyPressed(KEY_BACKSPACE))
+            if (IsKeyRepeated(KEY_BACKSPACE))
             {
                 letterCount--;
                 if (letterCount < 0) letterCount = 0;
@@ -117,16 +117,4 @@ int main(void)
     //--------------------------------------------------------------------------------------
 
     return 0;
-}
-
-// Check if any key is pressed
-// NOTE: We limit keys check to keys between 32 (KEY_SPACE) and 126
-bool IsAnyKeyPressed()
-{
-    bool keyPressed = false;
-    int key = GetKeyPressed();
-
-    if ((key >= 32) && (key <= 126)) keyPressed = true;
-
-    return keyPressed;
 }
