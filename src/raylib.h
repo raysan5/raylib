@@ -1,6 +1,6 @@
 /**********************************************************************************************
 *
-*   raylib v4.2-dev - A simple and easy-to-use library to enjoy videogames programming (www.raylib.com)
+*   raylib v4.2 - A simple and easy-to-use library to enjoy videogames programming (www.raylib.com)
 *
 *   FEATURES:
 *       - NO external dependencies, all required libraries included with raylib
@@ -80,7 +80,7 @@
 
 #include <stdarg.h>     // Required for: va_list - Only used by TraceLogCallback
 
-#define RAYLIB_VERSION  "4.2-dev"
+#define RAYLIB_VERSION  "4.2"
 
 // Function specifiers in case library is build/used as a shared library (Windows)
 // NOTE: Microsoft specifiers to tell compiler that symbols are imported/exported from a .dll
