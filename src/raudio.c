@@ -1734,14 +1734,13 @@ void UpdateMusicStream(Music music)
         AUDIO.System.pcmBufferSize = pcmSize;
     }
 
-    int framesLeft = music.frameCount - music.stream.buffer->framesProcessed;  // Frames left to be processed
-    int framesToStream = 0;                 // Total frames to be streamed
-
     // Check both sub-buffers to check if they require refilling
     for (int i = 0; i < 2; i++)
     {
         if ((music.stream.buffer != NULL) && !music.stream.buffer->isSubBufferProcessed[i]) continue; // No refilling required, move to next sub-buffer
 
+        unsigned int framesLeft = music.frameCount - music.stream.buffer->framesProcessed;  // Frames left to be processed
+        unsigned int framesToStream = 0;                 // Total frames to be streamed
         if ((framesLeft >= subBufferSizeInFrames) || music.looping) framesToStream = subBufferSizeInFrames;
         else framesToStream = framesLeft;
 
@@ -1760,7 +1759,7 @@ void UpdateMusicStream(Music music)
                         frameCountRedTotal += frameCountRed;
                         frameCountStillNeeded -= frameCountRed;
                         if (frameCountStillNeeded == 0) break;
-                        else drwav_seek_to_pcm_frame((drwav *)music.ctxData, 0);
+                        else drwav_seek_to_first_pcm_frame((drwav *)music.ctxData);
                     }
                 }
                 else if (music.stream.sampleSize == 32)
@@ -1771,7 +1770,7 @@ void UpdateMusicStream(Music music)
                         frameCountRedTotal += frameCountRed;
                         frameCountStillNeeded -= frameCountRed;
                         if (frameCountStillNeeded == 0) break;
-                        else drwav_seek_to_pcm_frame((drwav *)music.ctxData, 0);
+                        else drwav_seek_to_first_pcm_frame((drwav *)music.ctxData);
                     }
                 }
             } break;
@@ -1798,7 +1797,7 @@ void UpdateMusicStream(Music music)
                     frameCountRedTotal += frameCountRed;
                     frameCountStillNeeded -= frameCountRed;
                     if (frameCountStillNeeded == 0) break;
-                    else drflac_seek_to_pcm_frame((drflac *)music.ctxData, 0);
+                    else drflac__seek_to_first_frame((drflac *)music.ctxData);
                 }
             } break;
         #endif
@@ -1811,7 +1810,7 @@ void UpdateMusicStream(Music music)
                     frameCountRedTotal += frameCountRed;
                     frameCountStillNeeded -= frameCountRed;
                     if (frameCountStillNeeded == 0) break;
-                    else drmp3_seek_to_pcm_frame((drmp3 *)music.ctxData, 0);
+                    else drmp3_seek_to_start_of_stream((drmp3 *)music.ctxData);
                 }
             } break;
         #endif
@@ -1842,6 +1841,8 @@ void UpdateMusicStream(Music music)
 
         UpdateAudioStream(music.stream, AUDIO.System.pcmBuffer, framesToStream);
 
+        music.stream.buffer->framesProcessed = music.stream.buffer->framesProcessed%music.frameCount;
+
         if (framesLeft <= subBufferSizeInFrames)
         {
             // Streaming is ending, we filled latest frames from input
@@ -1850,7 +1851,6 @@ void UpdateMusicStream(Music music)
         }
     }
 
-    // Reset audio stream for looping
     if (streamEnding)
     {
         if (!music.looping) StopMusicStream(music);
