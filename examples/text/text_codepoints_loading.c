@@ -36,11 +36,11 @@ int main(void)
     const int screenHeight = 450;
 
     InitWindow(screenWidth, screenHeight, "raylib [text] example - codepoints loading");
-    
+
     // Get codepoints from text
     int codepointCount = 0;
     int *codepoints = LoadCodepoints(text, &codepointCount);
-    
+
     // Removed duplicate codepoints to generate smaller font atlas
     int codepointsNoDupsCount = 0;
     int *codepointsNoDups = CodepointRemoveDuplicates(codepoints, codepointCount, &codepointsNoDupsCount);
@@ -49,13 +49,13 @@ int main(void)
     // Load font containing all the provided codepoint glyphs
     // A texture font atlas is automatically generated
     Font font = LoadFontEx("resources/DotGothic16-Regular.ttf", 36, codepointsNoDups, codepointsNoDupsCount);
-    
+
     // Set bilinear scale filter for better font scaling
     SetTextureFilter(font.texture, TEXTURE_FILTER_BILINEAR);
 
     // Free codepoints, atlas has already been generated
     free(codepointsNoDups);
-   
+
     bool showFontAtlas = false;
 
     SetTargetFPS(60);               // Set our game to run at 60 frames-per-second
@@ -74,7 +74,7 @@ int main(void)
         BeginDrawing();
 
             ClearBackground(RAYWHITE);
-            
+
             DrawRectangle(0, 0, GetScreenWidth(), 70, BLACK);
             DrawText(TextFormat("Total codepoints contained in provided text: %i", codepointCount), 10, 10, 20, GREEN);
             DrawText(TextFormat("Total codepoints required for font atlas (duplicates excluded): %i", codepointsNoDupsCount), 10, 40, 20, GREEN);
@@ -90,20 +90,20 @@ int main(void)
                 // Draw provided text with laoded font, containing all required codepoint glyphs
                 DrawTextEx(font, text, (Vector2) { 160, 110 }, 48, 5, BLACK);
             }
-            
+
             DrawText("Press SPACE to toggle font atlas view!", 10, GetScreenHeight() - 30, 20, GRAY);
 
         EndDrawing();
         //----------------------------------------------------------------------------------
     }
-    
+
     // De-Initialization
     //--------------------------------------------------------------------------------------
     UnloadFont(font);     // Unload font
-    
+
     CloseWindow();        // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
-    
+
     return 0;
 }
 
@@ -130,9 +130,9 @@ static int *CodepointRemoveDuplicates(int *codepoints, int codepointCount, int *
         }
     }
 
-    // NOTE: The size of codepointsNoDups is the same as original array but 
+    // NOTE: The size of codepointsNoDups is the same as original array but
     // only required positions are filled (codepointsNoDupsCount)
-    
+
     *codepointsResultCount = codepointsNoDupsCount;
     return codepointsNoDups;
 }

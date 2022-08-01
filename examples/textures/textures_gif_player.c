@@ -27,22 +27,22 @@ int main(void)
     const int screenHeight = 450;
 
     InitWindow(screenWidth, screenHeight, "raylib [textures] example - gif playing");
-    
+
     int animFrames = 0;
-    
+
     // Load all GIF animation frames into a single Image
     // NOTE: GIF data is always loaded as RGBA (32bit) by default
     // NOTE: Frames are just appended one after another in image.data memory
     Image imScarfyAnim = LoadImageAnim("resources/scarfy_run.gif", &animFrames);
-    
+
     // Load texture from image
     // NOTE: We will update this texture when required with next frame data
     // WARNING: It's not recommended to use this technique for sprites animation,
     // use spritesheets instead, like illustrated in textures_sprite_anim example
     Texture2D texScarfyAnim = LoadTextureFromImage(imScarfyAnim);
-    
+
     unsigned int nextFrameDataOffset = 0;  // Current byte offset to next frame in image.data
-    
+
     int currentAnimFrame = 0;       // Current animation frame to load and draw
     int frameDelay = 8;             // Frame delay to switch between animation frames
     int frameCounter = 0;           // General frames counter
@@ -56,23 +56,23 @@ int main(void)
         // Update
         //----------------------------------------------------------------------------------
         frameCounter++;
-        if (frameCounter >= frameDelay) 
+        if (frameCounter >= frameDelay)
         {
             // Move to next frame
             // NOTE: If final frame is reached we return to first frame
             currentAnimFrame++;
             if (currentAnimFrame >= animFrames) currentAnimFrame = 0;
-        
+
             // Get memory offset position for next frame data in image.data
             nextFrameDataOffset = imScarfyAnim.width*imScarfyAnim.height*4*currentAnimFrame;
-            
+
             // Update GPU texture data with next frame image data
             // WARNING: Data size (frame size) and pixel format must match already created texture
             UpdateTexture(texScarfyAnim, ((unsigned char *)imScarfyAnim.data) + nextFrameDataOffset);
-            
+
             frameCounter = 0;
         }
-        
+
         // Control frames delay
         if (IsKeyPressed(KEY_RIGHT)) frameDelay++;
         else if (IsKeyPressed(KEY_LEFT)) frameDelay--;
@@ -90,7 +90,7 @@ int main(void)
             DrawText(TextFormat("TOTAL GIF FRAMES:  %02i", animFrames), 50, 30, 20, LIGHTGRAY);
             DrawText(TextFormat("CURRENT FRAME: %02i", currentAnimFrame), 50, 60, 20, GRAY);
             DrawText(TextFormat("CURRENT FRAME IMAGE.DATA OFFSET: %02i", nextFrameDataOffset), 50, 90, 20, GRAY);
-            
+
             DrawText("FRAMES DELAY: ", 100, 305, 10, DARKGRAY);
             DrawText(TextFormat("%02i frames", frameDelay), 620, 305, 10, DARKGRAY);
             DrawText("PRESS RIGHT/LEFT KEYS to CHANGE SPEED!", 290, 350, 10, DARKGRAY);
@@ -113,7 +113,7 @@ int main(void)
     //--------------------------------------------------------------------------------------
     UnloadTexture(texScarfyAnim);   // Unload texture
     UnloadImage(imScarfyAnim);      // Unload image (contains all frames)
-    
+
     CloseWindow();                  // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
 
