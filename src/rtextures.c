@@ -4574,7 +4574,7 @@ static Image LoadPVR(const unsigned char *fileData, unsigned int fileSize)
         unsigned int flags;
         unsigned char channels[4];      // pixelFormat high part
         unsigned char channelDepth[4];  // pixelFormat low part
-        unsigned int colourSpace;
+        unsigned int colorSpace;
         unsigned int channelType;
         unsigned int height;
         unsigned int width;
