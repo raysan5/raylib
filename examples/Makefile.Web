@@ -603,6 +603,15 @@ core/core_smooth_pixelperfect: core/core_smooth_pixelperfect.c
 core/core_custom_frame_control: core/core_custom_frame_control.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
+core/core_window_should_close: core/core_window_should_close.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
+
+core/core_smooth_pixelperfect: core/core_smooth_pixelperfect.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
+
+core/core_custom_frame_control: core/core_custom_frame_control.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
+
 # Compile SHAPES examples
 shapes/shapes_basic_shapes: shapes/shapes_basic_shapes.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
@@ -647,6 +656,9 @@ shapes/shapes_draw_circle_sector: shapes/shapes_draw_circle_sector.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
 shapes/shapes_draw_rectangle_rounded: shapes/shapes_draw_rectangle_rounded.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
+
+shapes/shapes_top_down_lights: shapes/shapes_top_down_lights.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
 # Compile TEXTURES examples
@@ -736,6 +748,13 @@ textures/textures_polygon: textures/textures_polygon.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
     --preload-file textures/resources/cat.png@resources/cat.png
 
+textures/textures_gif_player: textures/textures_gif_player.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
+    --preload-file textures/resources/scarfy_run.gif@resources/scarfy_run.gif
+
+textures/textures_fog_of_war: textures/textures_fog_of_war.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
+
 # Compile TEXT examples
 text/text_raylib_fonts: text/text_raylib_fonts.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
@@ -789,10 +808,14 @@ text/text_unicode: text/text_unicode.c
     --preload-file text/resources/noto_cjk.png@resources/noto_cjk.png \
     --preload-file text/resources/symbola.fnt@resources/symbola.fnt \
     --preload-file text/resources/symbola.png@resources/symbola.png
-    
+
 text/text_draw_3d: text/text_draw_3d.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
     --preload-file text/resources/shaders/glsl100/alpha_discard.fs@resources/shaders/glsl100/alpha_discard.fs
+
+text/text_codepoints_loading: text/text_codepoints_loading.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
+    --preload-file text/resources/DotGothic16-Regular.ttf@resources/DotGothic16-Regular.ttf
 
 # Compile MODELS examples
 models/models_animation: models/models_animation.c
@@ -958,12 +981,12 @@ shaders/shaders_mesh_instancing: shaders/shaders_mesh_instancing.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
     --preload-file shaders/resources/shaders/glsl100/base_lighting_instanced.vs@resources/shaders/glsl100/base_lighting_instanced.vs \
     --preload-file shaders/resources/shaders/glsl100/lighting.fs@resources/shaders/glsl100/lighting.fs
-    
+
 
 shaders/shaders_multi_sample2d: shaders/shaders_multi_sample2d.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
     --preload-file shaders/resources/shaders/glsl100/color_mix.fs@resources/shaders/glsl100/color_mix.fs
-    
+
 shaders/shaders_texture_outline: shaders/shaders_texture_outline.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
     --preload-file shaders/resources/shaders/glsl100/outline.fs@resources/shaders/glsl100/outline.fs \
@@ -990,6 +1013,10 @@ audio/audio_multichannel_sound: audio/audio_multichannel_sound.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
     --preload-file audio/resources/sound.wav@resources/sound.wav \
     --preload-file audio/resources/target.ogg@resources/target.ogg
+
+audio/audio_stream_effects: audio/audio_stream_effects.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) -s TOTAL_MEMORY=67108864 \
+    --preload-file audio/resources/country.mp3@resources/country.mp3
 
 # Clean everything
 clean:
