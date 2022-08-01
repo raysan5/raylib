@@ -4629,8 +4629,6 @@ static bool InitGraphicsDevice(int width, int height)
     // NOTE: It updated CORE.Window.render.width and CORE.Window.render.height
     SetupViewport(CORE.Window.currentFbo.width, CORE.Window.currentFbo.height);
 
-    ClearBackground(RAYWHITE);      // Default background color for raylib games :P
-
 #if defined(PLATFORM_ANDROID)
     CORE.Window.ready = true;
 #endif
