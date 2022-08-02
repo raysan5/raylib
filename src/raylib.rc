@@ -1,8 +1,8 @@
 GLFW_ICON ICON "raylib.ico"
 
 1 VERSIONINFO
-FILEVERSION     4,0,0,0
-PRODUCTVERSION  4,0,0,0
+FILEVERSION     4,2,0,0
+PRODUCTVERSION  4,2,0,0
 BEGIN
   BLOCK "StringFileInfo"
   BEGIN
@@ -11,12 +11,12 @@ BEGIN
     BEGIN
 	  //VALUE "CompanyName", "raylib technologies"
       VALUE "FileDescription", "raylib application (www.raylib.com)"
-      VALUE "FileVersion", "4.0.0"
+      VALUE "FileVersion", "4.2.0"
       VALUE "InternalName", "raylib app"
       VALUE "LegalCopyright", "(c) 2022 Ramon Santamaria (@raysan5)"
       //VALUE "OriginalFilename", "raylib_app.exe"
       VALUE "ProductName", "raylib app"
-      VALUE "ProductVersion", "4.0.0"
+      VALUE "ProductVersion", "4.2.0"
     END
   END
   BLOCK "VarFileInfo"

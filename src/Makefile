@@ -45,8 +45,8 @@
 PLATFORM             ?= PLATFORM_DESKTOP
 
 # Define required raylib variables
-RAYLIB_VERSION        = 4.0.0
-RAYLIB_API_VERSION    = 400
+RAYLIB_VERSION        = 4.2.0
+RAYLIB_API_VERSION    = 420
 
 # Define raylib source code path
 RAYLIB_SRC_PATH      ?= ../src
