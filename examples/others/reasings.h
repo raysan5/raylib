@@ -1,11 +1,11 @@
 /*******************************************************************************************
 *
-*   raylib easings (header only file)
+*   reasings - raylib easings library, based on Robert Penner library
 *
 *   Useful easing functions for values animation
 *
 *   This header uses:
-*       #define EASINGS_STATIC_INLINE       // Inlines all functions code, so it runs faster.
+*       #define REASINGS_STATIC_INLINE      // Inlines all functions code, so it runs faster.
 *                                           // This requires lots of memory on system.
 *   How to use:
 *   The four inputs t,b,c,d are defined as follows:
@@ -60,7 +60,7 @@
 *   OF THE POSSIBILITY OF SUCH DAMAGE.
 *   ---------------------------------------------------------------------------------
 *
-*   Copyright (c) 2015 Ramon Santamaria
+*   Copyright (c) 2015-2022 Ramon Santamaria (@raysan5)
 *
 *   This software is provided "as-is", without any express or implied warranty. In no event
 *   will the authors be held liable for any damages arising from the use of this software.
@@ -79,12 +79,12 @@
 *
 **********************************************************************************************/
 
-#ifndef EASINGS_H
-#define EASINGS_H
+#ifndef REASINGS_H
+#define REASINGS_H
 
-#define EASINGS_STATIC_INLINE     // NOTE: By default, compile functions as static inline
+#define REASINGS_STATIC_INLINE     // NOTE: By default, compile functions as static inline
 
-#if defined(EASINGS_STATIC_INLINE)
+#if defined(REASINGS_STATIC_INLINE)
     #define EASEDEF static inline
 #else
     #define EASEDEF extern
@@ -260,4 +260,4 @@ EASEDEF float EaseElasticInOut(float t, float b, float c, float d) // Ease: Elas
 }
 #endif
 
-#endif // EASINGS_H
+#endif // REASINGS_H
