@@ -96,7 +96,7 @@
     #define PI 3.14159265358979323846f //Required as PI is not always defined in math.h
 #endif
 
-#ifdef __cplusplus
+#if defined(__cplusplus)
 extern "C" {            // Prevents name mangling of functions
 #endif
 
@@ -256,7 +256,7 @@ EASEDEF float EaseElasticInOut(float t, float b, float c, float d) // Ease: Elas
     return (postFix*sinf((t*d-s)*(2.0f*PI)/p)*0.5f + c + b);
 }
 
-#ifdef __cplusplus
+#if defined(__cplusplus)
 }
 #endif
 

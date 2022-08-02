@@ -118,7 +118,7 @@ typedef struct {
 // Module Functions Declaration
 //----------------------------------------------------------------------------------
 
-#ifdef __cplusplus
+#if defined(__cplusplus)
 extern "C" {            // Prevents name mangling of functions
 #endif
 
@@ -137,7 +137,7 @@ Vector2 GetGesturePinchVector(void);                    // Get gesture pinch del
 float GetGesturePinchAngle(void);                       // Get gesture pinch angle
 #endif
 
-#ifdef __cplusplus
+#if defined(__cplusplus)
 }
 #endif
 

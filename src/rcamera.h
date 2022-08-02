@@ -103,7 +103,7 @@
 // Module Functions Declaration
 //----------------------------------------------------------------------------------
 
-#ifdef __cplusplus
+#if defined(__cplusplus)
 extern "C" {            // Prevents name mangling of functions
 #endif
 
@@ -119,7 +119,7 @@ void SetCameraMoveControls(int keyFront, int keyBack,
                            int keyUp, int keyDown);         // Set camera move controls (1st person and 3rd person cameras)
 #endif
 
-#ifdef __cplusplus
+#if defined(__cplusplus)
 }
 #endif
 
