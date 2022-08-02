@@ -135,6 +135,11 @@ int main(void)
             {
                 data[i] = (short)(sinf(((2*PI*(float)i/waveLength)))*32000);
             }
+            // Make sure the rest of the line is flat
+            for (int j = waveLength*2; j < MAX_SAMPLES; j++)
+            {
+                data[j] = (short)0;
+            }
 
             // Scale read cursor's position to minimize transition artifacts
             //readCursor = (int)(readCursor * ((float)waveLength / (float)oldWavelength));
