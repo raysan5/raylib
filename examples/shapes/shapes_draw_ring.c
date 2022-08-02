@@ -38,7 +38,6 @@ int main(void)
     float startAngle = 0.0f;
     float endAngle = 360.0f;
     int segments = 0;
-    int minSegments = 4;
 
     bool drawRing = true;
     bool drawRingLines = false;
@@ -83,7 +82,7 @@ int main(void)
             drawCircleLines = GuiCheckBox((Rectangle){ 600, 380, 20, 20 }, "Draw CircleLines", drawCircleLines);
             //------------------------------------------------------------------------------
 
-            int minSegments = (int)ceilf((endAngle - startAngle) / 90);
+            int minSegments = (int)ceilf((endAngle - startAngle)/90);
             DrawText(TextFormat("MODE: %s", (segments >= minSegments)? "MANUAL" : "AUTO"), 600, 270, 10, (segments >= minSegments)? MAROON : DARKGRAY);
 
             DrawFPS(10, 10);
