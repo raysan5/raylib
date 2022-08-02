@@ -12,7 +12,53 @@ Check `raylib_parser.c` for details about those structs.
 
 ## Command Line
 
-_TODO_
+```
+//////////////////////////////////////////////////////////////////////////////////
+//                                                                              //
+// raylib API parser                                                            //
+//                                                                              //
+// more info and bugs-report: github.com/raysan5/raylib/parser                  //
+//                                                                              //
+// Copyright (c) 2021-2022 Ramon Santamaria (@raysan5)                          //
+//                                                                              //
+//////////////////////////////////////////////////////////////////////////////////
+
+USAGE:
+
+    > raylib_parser [--help] [--input <filename.h>] [--output <filename.ext>] [--format <type>]
+
+OPTIONS:
+
+    -h, --help                      : Show tool version and command line usage help
+
+    -i, --input <filename.h>        : Define input header file to parse.
+                                      NOTE: If not specified, defaults to: raylib.h
+
+    -o, --output <filename.ext>     : Define output file and format.
+                                      Supported extensions: .txt, .json, .xml, .h
+                                      NOTE: If not specified, defaults to: raylib_api.txt
+
+    -f, --format <type>             : Define output format for parser data.
+                                      Supported types: DEFAULT, JSON, XML, LUA
+
+    -d, --define <DEF>              : Define functions specifiers (i.e. RLAPI for raylib.h, RMDEF for raymath.h, etc.)
+                                      NOTE: If no specifier defined, defaults to: RLAPI
+
+    -t, --truncate <after>          : Define string to truncate input after (i.e. "RLGL IMPLEMENTATION" for rlgl.h)
+                                      NOTE: If not specified, the full input file is parsed.
+
+
+EXAMPLES:
+
+    > raylib_parser --input raylib.h --output api.json
+        Process <raylib.h> to generate <api.json>
+
+    > raylib_parser --output raylib_data.info --format XML
+        Process <raylib.h> to generate <raylib_data.info> as XML text data
+
+    > raylib_parser --input raymath.h --output raymath_data.info --format XML
+        Process <raymath.h> to generate <raymath_data.info> as XML text data
+```
 
 ## Constraints
 
