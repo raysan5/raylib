@@ -393,7 +393,7 @@ int main(int argc, char* argv[])
         int defineNameEnd = j-1;
 
         // Skip duplicates
-        int nameLen = defineNameEnd - defineNameStart + 1;
+        unsigned int nameLen = defineNameEnd - defineNameStart + 1;
         bool isDuplicate = false;
         for (int k = 0; k < defineIndex; k++)
         {
@@ -413,7 +413,7 @@ int main(int argc, char* argv[])
         while ((linePtr[j] == ' ') || (linePtr[j] == '\t')) j++; // Skip spaces and tabs after name
 
         int defineValueStart = j;
-        if ((linePtr[j] == '\0') || (linePtr == "/")) defines[defineIndex].type = GUARD;
+        if ((linePtr[j] == '\0') || (linePtr[j] == '/')) defines[defineIndex].type = GUARD;
         if (linePtr[j] == '"') defines[defineIndex].type = STRING;
         else if (linePtr[j] == '\'') defines[defineIndex].type = CHAR;
         else if (IsTextEqual(linePtr+j, "CLITERAL(Color)", 15)) defines[defineIndex].type = COLOR;
@@ -476,11 +476,11 @@ int main(int argc, char* argv[])
         // Parse defines of type UNKNOWN to find calculated numbers
         if (defines[defineIndex].type == UNKNOWN)
         {
-            DefineType largestType = UNKNOWN;
+            int largestType = UNKNOWN;
             bool isMath = true;
             char *valuePtr = defines[defineIndex].value;
 
-            for (int c = 0; c < TextLength(valuePtr); c++)
+            for (unsigned int c = 0; c < TextLength(valuePtr); c++)
             {
                 char ch = valuePtr[c];
 
@@ -525,7 +525,7 @@ int main(int argc, char* argv[])
                     if (isNumber)
                     {
                         // Found a valid number -> update largestType
-                        DefineType numberType;
+                        int numberType;
                         if (isFloat) numberType = valuePtr[c - 1] == 'f' ? FLOAT_MATH : DOUBLE_MATH;
                         else numberType = valuePtr[c - 1] == 'L' ? LONG_MATH : INT_MATH;
                         
@@ -537,9 +537,7 @@ int main(int argc, char* argv[])
                         break;
                     }
                 }
-
-                // Read string operand
-                else
+                else    // Read string operand
                 {
                     int operandStart = c;
                     while (!((ch == '\0') ||
@@ -646,15 +644,16 @@ int main(int argc, char* argv[])
                     // Split field names containing multiple fields (like Matrix)
                     int additionalFields = 0;
                     int originalIndex = structs[i].fieldCount - 1;
-                    for (int c = 0; c < TextLength(structs[i].fieldName[originalIndex]); c++)
+                    for (unsigned int c = 0; c < TextLength(structs[i].fieldName[originalIndex]); c++)
                     {
                         if (structs[i].fieldName[originalIndex][c] == ',') additionalFields++;
                     }
+                    
                     if (additionalFields > 0)
                     {
                         int originalLength = -1;
                         int lastStart;
-                        for (int c = 0; c < TextLength(structs[i].fieldName[originalIndex]) + 1; c++)
+                        for (unsigned int c = 0; c < TextLength(structs[i].fieldName[originalIndex]) + 1; c++)
                         {
                             char v = structs[i].fieldName[originalIndex][c];
                             bool isEndOfString = (v == '\0');
@@ -693,11 +692,13 @@ int main(int argc, char* argv[])
                     // Split field types containing multiple fields (like MemNode)
                     additionalFields = 0;
                     originalIndex = structs[i].fieldCount - 1;
-                    for (int c = 0; c < TextLength(structs[i].fieldType[originalIndex]); c++)
+                    for (unsigned int c = 0; c < TextLength(structs[i].fieldType[originalIndex]); c++)
                     {
                         if (structs[i].fieldType[originalIndex][c] == ',') additionalFields++;
                     }
-                    if (additionalFields > 0) {
+                    
+                    if (additionalFields > 0)
+                    {
                         // Copy original name to last additional field
                         structs[i].fieldCount += additionalFields;
                         MemoryCopy(structs[i].fieldName[originalIndex + additionalFields], &structs[i].fieldName[originalIndex][0], TextLength(structs[i].fieldName[originalIndex]));
@@ -901,7 +902,7 @@ int main(int argc, char* argv[])
         char *linePtr = lines[callbackLines[i]];
 
         // Skip "typedef "
-        int c = 8;
+        unsigned int c = 8;
 
         // Return type
         int retTypeStart = c;
@@ -924,7 +925,7 @@ int main(int argc, char* argv[])
 
         // Params
         int paramStart = c;
-        for (c; c < MAX_LINE_LENGTH; c++)
+        for (; c < MAX_LINE_LENGTH; c++)
         {
             if ((linePtr[c] == ',') || (linePtr[c] == ')'))
             {
