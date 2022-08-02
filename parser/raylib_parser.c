@@ -47,7 +47,6 @@
     OTHER NOTES:
 
      - This parser could work with other C header files if mentioned constraints are followed.
-
      - This parser does not require <string.h> library, all data is parsed directly from char buffers.
 
     LICENSE: zlib/libpng
@@ -103,11 +102,11 @@ typedef enum {
 
 // Define info data
 typedef struct DefineInfo {
-    char name[64];    // Define name
-    DefineType type;  // Define type
-    char value[256];  // Define value
-    char desc[128];   // Define description
-    bool isHex;       // Define is hex number (for types INT, LONG)
+    char name[64];              // Define name
+    int type;                   // Define type
+    char value[256];            // Define value
+    char desc[128];             // Define description
+    bool isHex;                 // Define is hex number (for types INT, LONG)
 } DefineInfo;
 
 // Struct info data
@@ -1066,7 +1065,7 @@ static void ShowCommandLineInfo(void)
     printf("//                                                                              //\n");
     printf("// more info and bugs-report: github.com/raysan5/raylib/parser                  //\n");
     printf("//                                                                              //\n");
-    printf("// Copyright (c) 2021 Ramon Santamaria (@raysan5)                               //\n");
+    printf("// Copyright (c) 2021-2022 Ramon Santamaria (@raysan5)                          //\n");
     printf("//                                                                              //\n");
     printf("//////////////////////////////////////////////////////////////////////////////////\n\n");
 
