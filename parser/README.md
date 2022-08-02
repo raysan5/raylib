@@ -1,8 +1,9 @@
 # raylib parser
 
-This parser scans [`raylib.h`](../src/raylib.h) to get information about `structs`, `enums` and `functions`.
+This parser scans [`raylib.h`](../src/raylib.h) to get information about `defines`, `structs`, `enums` and `functions`.
 All data is separated into parts, usually as strings. The following types are used for data:
 
+ - `struct DefineInfo`
  - `struct FunctionInfo`
  - `struct StructInfo`
  - `struct EnumInfo`
