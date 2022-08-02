@@ -1070,7 +1070,7 @@ static void ShowCommandLineInfo(void)
     printf("//////////////////////////////////////////////////////////////////////////////////\n\n");
 
     printf("USAGE:\n\n");
-    printf("    > raylib_parser [--help] [--input <filename.h>] [--output <filename.ext>] [--format <type>] [--define <DEF>]\n");
+    printf("    > raylib_parser [--help] [--input <filename.h>] [--output <filename.ext>] [--format <type>]\n");
 
     printf("\nOPTIONS:\n\n");
     printf("    -h, --help                      : Show tool version and command line usage help\n\n");
@@ -1081,10 +1081,10 @@ static void ShowCommandLineInfo(void)
     printf("                                      NOTE: If not specified, defaults to: raylib_api.txt\n\n");
     printf("    -f, --format <type>             : Define output format for parser data.\n");
     printf("                                      Supported types: DEFAULT, JSON, XML, LUA\n\n");
-    printf("    -d, --define <DEF>              : Define functions define (i.e. RLAPI for raylib.h, RMDEF for raymath.h, etc.)\n");
-    printf("                                      NOTE: If not specified, defaults to: RLAPI\n\n");
+    printf("    -d, --define <DEF>              : Define functions specifiers (i.e. RLAPI for raylib.h, RMDEF for raymath.h, etc.)\n");
+    printf("                                      NOTE: If no specifier defined, defaults to: RLAPI\n\n");
     printf("    -t, --truncate <after>          : Define string to truncate input after (i.e. \"RLGL IMPLEMENTATION\" for rlgl.h)\n");
-    printf("                                      NOTE: If not specified input is not truncated.\n\n");
+    printf("                                      NOTE: If not specified, the full input file is parsed.\n\n");
 
     printf("\nEXAMPLES:\n\n");
     printf("    > raylib_parser --input raylib.h --output api.json\n");
