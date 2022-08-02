@@ -3765,26 +3765,17 @@ float GetMouseWheelMove(void)
     else result = (float)CORE.Input.Mouse.currentWheelMove.y;
 #endif
 
-#if defined(PLATFORM_WEB)
-    result /= 100.0f;
-#endif
-
     return result;
 }
 
 // Get mouse wheel movement X/Y as a vector
 Vector2 GetMouseWheelMoveV(void)
 {
-#if defined(PLATFORM_ANDROID)
-    return (Vector2){ 0.0f, 0.0f };
-#endif
-#if defined(PLATFORM_WEB)
-    Vector2 result = CORE.Input.Mouse.currentWheelMove;
-    result.x /= 100.0f;
-    result.y /= 100.0f;
-#endif
+    Vector2 result = { 0 };
+   
+    result = CORE.Input.Mouse.currentWheelMove;
 
-    return CORE.Input.Mouse.currentWheelMove;
+    return result;
 }
 
 // Set mouse cursor
