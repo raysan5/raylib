@@ -717,7 +717,7 @@ RLAPI void rlLoadDrawQuad(void);     // Load and draw a quad
         #include <OpenGL/glext.h>       // OpenGL extensions library
     #else
         // APIENTRY for OpenGL function pointer declarations is required
-        #ifndef APIENTRY
+        #if !defined(APIENTRY)
             #if defined(_WIN32)
                 #define APIENTRY __stdcall
             #else
