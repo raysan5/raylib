@@ -316,6 +316,7 @@ ifneq ($(RAYLIB_CONFIG_FLAGS), NONE)
 endif
 
 ifeq ($(PLATFORM), PLATFORM_WEB)
+    # NOTE: When using multi-threading in the user code, it requires -pthread enabled
     CFLAGS += -std=gnu99
 else
     CFLAGS += -std=c99

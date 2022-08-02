@@ -591,6 +591,8 @@ core/core_vr_simulator: core/core_vr_simulator.c
 
 # NOTE: To use multi-threading raylib must be compiled with multi-theading support (-s USE_PTHREADS=1)
 # WARNING: For security reasons multi-threading is not supported on browsers, it requires cross-origin isolation (Oct.2021)
+# WARNING: It requires raylib to be compiled using -pthread, so atomic operations and thread-local data (if any) 
+# in its source were transformed to non-atomic operations and non-thread-local data
 core/core_loading_thread: core/core_loading_thread.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) -s USE_PTHREADS=1
 
