@@ -66,7 +66,7 @@ int main(void)
     {
         // Update
         //----------------------------------------------------------------------------------
-        UpdateCamera(&camera);              // Update camera
+        UpdateCamera(&camera);
 
         float cameraPos[3] = { camera.position.x, camera.position.y, camera.position.z };
         float cameraTarget[3] = { camera.target.x, camera.target.y, camera.target.z };

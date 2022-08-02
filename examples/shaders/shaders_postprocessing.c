@@ -118,7 +118,7 @@ int main(void)
     {
         // Update
         //----------------------------------------------------------------------------------
-        UpdateCamera(&camera);              // Update camera
+        UpdateCamera(&camera);
 
         if (IsKeyPressed(KEY_RIGHT)) currentShader++;
         else if (IsKeyPressed(KEY_LEFT)) currentShader--;

@@ -57,7 +57,7 @@ int main(void)
         //----------------------------------------------------------------------------------
         Vector3 oldCamPos = camera.position;    // Store old camera position
 
-        UpdateCamera(&camera);      // Update camera
+        UpdateCamera(&camera);
 
         // Check player collision (we simplify to 2D collision detection)
         Vector2 playerPos = { camera.position.x, camera.position.z };

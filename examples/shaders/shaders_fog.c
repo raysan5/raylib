@@ -94,7 +94,7 @@ int main(void)
     {
         // Update
         //----------------------------------------------------------------------------------
-        UpdateCamera(&camera);              // Update camera
+        UpdateCamera(&camera);
 
         if (IsKeyDown(KEY_UP))
         {

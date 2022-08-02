@@ -78,6 +78,8 @@ int main(void)
     {
         // Update
         //----------------------------------------------------------------------------------
+        UpdateCamera(&camera);
+        
         Vector2 mousePosition = GetMousePosition();
 
         swirlCenter[0] = mousePosition.x;
@@ -85,8 +87,6 @@ int main(void)
 
         // Send new value to the shader to be used on drawing
         SetShaderValue(shader, swirlCenterLoc, swirlCenter, SHADER_UNIFORM_VEC2);
-
-        UpdateCamera(&camera);          // Update camera
         //----------------------------------------------------------------------------------
 
         // Draw

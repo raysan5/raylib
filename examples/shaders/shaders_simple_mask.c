@@ -93,6 +93,8 @@ int main(void)
     {
         // Update
         //----------------------------------------------------------------------------------
+        UpdateCamera(&camera);
+        
         framesCounter++;
         rotation.x += 0.01f;
         rotation.y += 0.005f;
@@ -103,8 +105,6 @@ int main(void)
 
         // Rotate one of the models
         model1.transform = MatrixRotateXYZ(rotation);
-
-        UpdateCamera(&camera);
         //----------------------------------------------------------------------------------
 
         // Draw

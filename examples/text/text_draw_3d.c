@@ -141,6 +141,8 @@ int main(void)
     {
         // Update
         //----------------------------------------------------------------------------------
+        UpdateCamera(&camera);
+        
         // Handle font files dropped
         if (IsFileDropped())
         {
@@ -265,7 +267,6 @@ int main(void)
         // Measure 3D text so we can center it
         tbox = MeasureTextWave3D(font, text, fontSize, fontSpacing, lineSpacing);
 
-        UpdateCamera(&camera);          // Update camera
         quads = 0;                      // Reset quad counter
         time += GetFrameTime();         // Update timer needed by `DrawTextWave3D()`
         //----------------------------------------------------------------------------------

@@ -78,7 +78,7 @@ int main(void)
     {
         // Update
         //----------------------------------------------------------------------------------
-        UpdateCamera(&camera);      // Update internal camera and our camera
+        UpdateCamera(&camera);
 
         if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT))
         {

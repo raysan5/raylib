@@ -79,7 +79,7 @@ int main(void)
     {
         // Update
         //----------------------------------------------------------------------------------
-        UpdateCamera(&camera);      // Update our camera to orbit
+        UpdateCamera(&camera);
 
         // Cycle between models on mouse click
         if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) currentModel = (currentModel + 1)%MAX_VOX_FILES;

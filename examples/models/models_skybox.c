@@ -97,7 +97,7 @@ int main(void)
     {
         // Update
         //----------------------------------------------------------------------------------
-        UpdateCamera(&camera);              // Update camera
+        UpdateCamera(&camera);
 
         // Load new cubemap texture on drag&drop
         if (IsFileDropped())

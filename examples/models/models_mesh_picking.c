@@ -73,7 +73,7 @@ int main(void)
     {
         // Update
         //----------------------------------------------------------------------------------
-        UpdateCamera(&camera);          // Update camera
+        UpdateCamera(&camera);
 
         // Display information about closest hit
         RayCollision collision = { 0 };
