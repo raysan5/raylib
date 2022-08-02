@@ -548,6 +548,9 @@ core/core_2d_camera: core/core_2d_camera.c
 
 core/core_2d_camera_platformer: core/core_2d_camera_platformer.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
+    
+core/core_2d_camera_mouse_zoom: core/core_2d_camera_mouse_zoom.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
 core/core_3d_camera_mode: core/core_3d_camera_mode.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
