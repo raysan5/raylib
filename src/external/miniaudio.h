@@ -1,6 +1,6 @@
 /*
 Audio playback and capture library. Choice of public domain or MIT-0. See license statements at the end of this file.
-miniaudio - v0.11.8 - 2022-02-12
+miniaudio - v0.11.9 - 2022-04-20
 
 David Reid - mackron@gmail.com
 
@@ -400,7 +400,13 @@ the be started and/or stopped at a specific time. This can be done with the foll
 The start/stop time needs to be specified based on the absolute timer which is controlled by the
 engine. The current global time time in PCM frames can be retrieved with `ma_engine_get_time()`.
 The engine's global time can be changed with `ma_engine_set_time()` for synchronization purposes if
-required.
+required. Note that scheduling a start time still requires an explicit call to `ma_sound_start()`
+before anything will play:
+
+    ```c
+    ma_sound_set_start_time_in_pcm_frames(&sound, ma_engine_get_time(&engine) + (ma_engine_get_sample_rate(&engine) * 2);
+    ma_sound_start(&sound);
+    ```
 
 The third parameter of `ma_sound_init_from_file()` is a set of flags that control how the sound be
 loaded and a few options on which features should be enabled for that sound. By default, the sound
@@ -1392,6 +1398,9 @@ can be useful to schedule a sound to start or stop:
     // Stop the sound in 2 seconds from now.
     ma_sound_set_stop_time_in_pcm_frames(&sound, ma_engine_get_time(&engine) + (ma_engine_get_sample_rate(&engine) * 2));
     ```
+
+Note that scheduling a start time still requires an explicit call to `ma_sound_start()` before
+anything will play.
 
 The time is specified in global time which is controlled by the engine. You can get the engine's
 current time with `ma_engine_get_time()`. The engine's global time is incremented automatically as
@@ -3631,7 +3640,7 @@ extern "C" {
 
 #define MA_VERSION_MAJOR    0
 #define MA_VERSION_MINOR    11
-#define MA_VERSION_REVISION 8
+#define MA_VERSION_REVISION 9
 #define MA_VERSION_STRING   MA_XSTRINGIFY(MA_VERSION_MAJOR) "." MA_XSTRINGIFY(MA_VERSION_MINOR) "." MA_XSTRINGIFY(MA_VERSION_REVISION)
 
 #if defined(_MSC_VER) && !defined(__clang__)
@@ -3788,9 +3797,15 @@ typedef ma_uint16 wchar_t;
     I am using "__inline__" only when we're compiling in strict ANSI mode.
     */
     #if defined(__STRICT_ANSI__)
-        #define MA_INLINE __inline__ __attribute__((always_inline))
+        #define MA_GNUC_INLINE_HINT __inline__
     #else
-        #define MA_INLINE inline __attribute__((always_inline))
+        #define MA_GNUC_INLINE_HINT inline
+    #endif
+
+    #if (__GNUC__ > 3 || (__GNUC__ == 3 && __GNUC_MINOR__ >= 2)) || defined(__clang__)
+        #define MA_INLINE MA_GNUC_INLINE_HINT __attribute__((always_inline))
+    #else
+        #define MA_INLINE MA_GNUC_INLINE_HINT
     #endif
 #elif defined(__WATCOMC__)
     #define MA_INLINE __inline
@@ -4346,6 +4361,7 @@ MA_API ma_result ma_biquad_init_preallocated(const ma_biquad_config* pConfig, vo
 MA_API ma_result ma_biquad_init(const ma_biquad_config* pConfig, const ma_allocation_callbacks* pAllocationCallbacks, ma_biquad* pBQ);
 MA_API void ma_biquad_uninit(ma_biquad* pBQ, const ma_allocation_callbacks* pAllocationCallbacks);
 MA_API ma_result ma_biquad_reinit(const ma_biquad_config* pConfig, ma_biquad* pBQ);
+MA_API ma_result ma_biquad_clear_cache(ma_biquad* pBQ);
 MA_API ma_result ma_biquad_process_pcm_frames(ma_biquad* pBQ, void* pFramesOut, const void* pFramesIn, ma_uint64 frameCount);
 MA_API ma_uint32 ma_biquad_get_latency(const ma_biquad* pBQ);
 
@@ -4384,6 +4400,7 @@ MA_API ma_result ma_lpf1_init_preallocated(const ma_lpf1_config* pConfig, void* 
 MA_API ma_result ma_lpf1_init(const ma_lpf1_config* pConfig, const ma_allocation_callbacks* pAllocationCallbacks, ma_lpf1* pLPF);
 MA_API void ma_lpf1_uninit(ma_lpf1* pLPF, const ma_allocation_callbacks* pAllocationCallbacks);
 MA_API ma_result ma_lpf1_reinit(const ma_lpf1_config* pConfig, ma_lpf1* pLPF);
+MA_API ma_result ma_lpf1_clear_cache(ma_lpf1* pLPF);
 MA_API ma_result ma_lpf1_process_pcm_frames(ma_lpf1* pLPF, void* pFramesOut, const void* pFramesIn, ma_uint64 frameCount);
 MA_API ma_uint32 ma_lpf1_get_latency(const ma_lpf1* pLPF);
 
@@ -4397,6 +4414,7 @@ MA_API ma_result ma_lpf2_init_preallocated(const ma_lpf2_config* pConfig, void* 
 MA_API ma_result ma_lpf2_init(const ma_lpf2_config* pConfig, const ma_allocation_callbacks* pAllocationCallbacks, ma_lpf2* pLPF);
 MA_API void ma_lpf2_uninit(ma_lpf2* pLPF, const ma_allocation_callbacks* pAllocationCallbacks);
 MA_API ma_result ma_lpf2_reinit(const ma_lpf2_config* pConfig, ma_lpf2* pLPF);
+MA_API ma_result ma_lpf2_clear_cache(ma_lpf2* pLPF);
 MA_API ma_result ma_lpf2_process_pcm_frames(ma_lpf2* pLPF, void* pFramesOut, const void* pFramesIn, ma_uint64 frameCount);
 MA_API ma_uint32 ma_lpf2_get_latency(const ma_lpf2* pLPF);
 
@@ -4432,6 +4450,7 @@ MA_API ma_result ma_lpf_init_preallocated(const ma_lpf_config* pConfig, void* pH
 MA_API ma_result ma_lpf_init(const ma_lpf_config* pConfig, const ma_allocation_callbacks* pAllocationCallbacks, ma_lpf* pLPF);
 MA_API void ma_lpf_uninit(ma_lpf* pLPF, const ma_allocation_callbacks* pAllocationCallbacks);
 MA_API ma_result ma_lpf_reinit(const ma_lpf_config* pConfig, ma_lpf* pLPF);
+MA_API ma_result ma_lpf_clear_cache(ma_lpf* pLPF);
 MA_API ma_result ma_lpf_process_pcm_frames(ma_lpf* pLPF, void* pFramesOut, const void* pFramesIn, ma_uint64 frameCount);
 MA_API ma_uint32 ma_lpf_get_latency(const ma_lpf* pLPF);
 
@@ -5071,6 +5090,7 @@ MA_API ma_uint64 ma_linear_resampler_get_input_latency(const ma_linear_resampler
 MA_API ma_uint64 ma_linear_resampler_get_output_latency(const ma_linear_resampler* pResampler);
 MA_API ma_result ma_linear_resampler_get_required_input_frame_count(const ma_linear_resampler* pResampler, ma_uint64 outputFrameCount, ma_uint64* pInputFrameCount);
 MA_API ma_result ma_linear_resampler_get_expected_output_frame_count(const ma_linear_resampler* pResampler, ma_uint64 inputFrameCount, ma_uint64* pOutputFrameCount);
+MA_API ma_result ma_linear_resampler_reset(ma_linear_resampler* pResampler);
 
 
 typedef struct ma_resampler_config ma_resampler_config;
@@ -5087,6 +5107,7 @@ typedef struct
     ma_uint64 (* onGetOutputLatency           )(void* pUserData, const ma_resampling_backend* pBackend);                                                            /* Optional. Latency will be reported as 0. */
     ma_result (* onGetRequiredInputFrameCount )(void* pUserData, const ma_resampling_backend* pBackend, ma_uint64 outputFrameCount, ma_uint64* pInputFrameCount);   /* Optional. Latency mitigation will be disabled. */
     ma_result (* onGetExpectedOutputFrameCount)(void* pUserData, const ma_resampling_backend* pBackend, ma_uint64 inputFrameCount, ma_uint64* pOutputFrameCount);   /* Optional. Latency mitigation will be disabled. */
+    ma_result (* onReset                      )(void* pUserData, ma_resampling_backend* pBackend);
 } ma_resampling_backend_vtable;
 
 typedef enum
@@ -5205,6 +5226,11 @@ Calculates the number of whole output frames that would be output after fully re
 input frames.
 */
 MA_API ma_result ma_resampler_get_expected_output_frame_count(const ma_resampler* pResampler, ma_uint64 inputFrameCount, ma_uint64* pOutputFrameCount);
+
+/*
+Resets the resampler's timer and clears it's internal cache.
+*/
+MA_API ma_result ma_resampler_reset(ma_resampler* pResampler);
 
 
 /**************************************************************************************************************************************************************
@@ -5345,6 +5371,7 @@ MA_API ma_result ma_data_converter_get_required_input_frame_count(const ma_data_
 MA_API ma_result ma_data_converter_get_expected_output_frame_count(const ma_data_converter* pConverter, ma_uint64 inputFrameCount, ma_uint64* pOutputFrameCount);
 MA_API ma_result ma_data_converter_get_input_channel_map(const ma_data_converter* pConverter, ma_channel* pChannelMap, size_t channelMapCap);
 MA_API ma_result ma_data_converter_get_output_channel_map(const ma_data_converter* pConverter, ma_channel* pChannelMap, size_t channelMapCap);
+MA_API ma_result ma_data_converter_reset(ma_data_converter* pConverter);
 
 
 /************************************************************************************************************************************************************
@@ -5909,7 +5936,7 @@ struct ma_job
                 /*ma_resource_manager_data_buffer_node**/ void* pDataBufferNode;
                 char* pFilePath;
                 wchar_t* pFilePathW;
-                ma_bool32 decode;                               /* When set to true, the data buffer will be decoded. Otherwise it'll be encoded and will use a decoder for the connector. */
+                ma_uint32 flags;                                /* Resource manager data source flags that were used when initializing the data buffer. */
                 ma_async_notification* pInitNotification;       /* Signalled when the data buffer has been initialized and the format/channels/rate can be retrieved. */
                 ma_async_notification* pDoneNotification;       /* Signalled when the data buffer has been fully decoded. Will be passed through to MA_JOB_TYPE_RESOURCE_MANAGER_PAGE_DATA_BUFFER_NODE when decoding. */
                 ma_fence* pInitFence;                           /* Released when initialization of the decoder is complete. */
@@ -5938,6 +5965,11 @@ struct ma_job
                 ma_async_notification* pDoneNotification;       /* Signalled when the data buffer has been fully decoded. */
                 ma_fence* pInitFence;                           /* Released when the data buffer has been initialized and the format/channels/rate can be retrieved. */
                 ma_fence* pDoneFence;                           /* Released when the data buffer has been fully decoded. */
+                ma_uint64 rangeBegInPCMFrames;
+                ma_uint64 rangeEndInPCMFrames;
+                ma_uint64 loopPointBegInPCMFrames;
+                ma_uint64 loopPointEndInPCMFrames;
+                ma_uint32 isLooping;
             } loadDataBuffer;
             struct
             {
@@ -9303,17 +9335,17 @@ MA_API ma_result ma_data_source_get_length_in_pcm_frames(ma_data_source* pDataSo
 MA_API ma_result ma_data_source_get_cursor_in_seconds(ma_data_source* pDataSource, float* pCursor);
 MA_API ma_result ma_data_source_get_length_in_seconds(ma_data_source* pDataSource, float* pLength);
 MA_API ma_result ma_data_source_set_looping(ma_data_source* pDataSource, ma_bool32 isLooping);
-MA_API ma_bool32 ma_data_source_is_looping(ma_data_source* pDataSource);
+MA_API ma_bool32 ma_data_source_is_looping(const ma_data_source* pDataSource);
 MA_API ma_result ma_data_source_set_range_in_pcm_frames(ma_data_source* pDataSource, ma_uint64 rangeBegInFrames, ma_uint64 rangeEndInFrames);
-MA_API void ma_data_source_get_range_in_pcm_frames(ma_data_source* pDataSource, ma_uint64* pRangeBegInFrames, ma_uint64* pRangeEndInFrames);
+MA_API void ma_data_source_get_range_in_pcm_frames(const ma_data_source* pDataSource, ma_uint64* pRangeBegInFrames, ma_uint64* pRangeEndInFrames);
 MA_API ma_result ma_data_source_set_loop_point_in_pcm_frames(ma_data_source* pDataSource, ma_uint64 loopBegInFrames, ma_uint64 loopEndInFrames);
-MA_API void ma_data_source_get_loop_point_in_pcm_frames(ma_data_source* pDataSource, ma_uint64* pLoopBegInFrames, ma_uint64* pLoopEndInFrames);
+MA_API void ma_data_source_get_loop_point_in_pcm_frames(const ma_data_source* pDataSource, ma_uint64* pLoopBegInFrames, ma_uint64* pLoopEndInFrames);
 MA_API ma_result ma_data_source_set_current(ma_data_source* pDataSource, ma_data_source* pCurrentDataSource);
-MA_API ma_data_source* ma_data_source_get_current(ma_data_source* pDataSource);
+MA_API ma_data_source* ma_data_source_get_current(const ma_data_source* pDataSource);
 MA_API ma_result ma_data_source_set_next(ma_data_source* pDataSource, ma_data_source* pNextDataSource);
-MA_API ma_data_source* ma_data_source_get_next(ma_data_source* pDataSource);
+MA_API ma_data_source* ma_data_source_get_next(const ma_data_source* pDataSource);
 MA_API ma_result ma_data_source_set_next_callback(ma_data_source* pDataSource, ma_data_source_get_next_proc onGetNext);
-MA_API ma_data_source_get_next_proc ma_data_source_get_next_callback(ma_data_source* pDataSource);
+MA_API ma_data_source_get_next_proc ma_data_source_get_next_callback(const ma_data_source* pDataSource);
 
 
 typedef struct
@@ -9321,6 +9353,7 @@ typedef struct
     ma_data_source_base ds;
     ma_format format;
     ma_uint32 channels;
+    ma_uint32 sampleRate;
     ma_uint64 cursor;
     ma_uint64 sizeInFrames;
     const void* pData;
@@ -9344,6 +9377,7 @@ typedef struct
 {
     ma_format format;
     ma_uint32 channels;
+    ma_uint32 sampleRate;
     ma_uint64 sizeInFrames;
     const void* pData;  /* If set to NULL, will allocate a block of memory for you. */
     ma_allocation_callbacks allocationCallbacks;
@@ -9861,10 +9895,11 @@ typedef struct ma_resource_manager_data_source      ma_resource_manager_data_sou
 
 typedef enum
 {
-    MA_RESOURCE_MANAGER_DATA_SOURCE_FLAG_STREAM    = 0x00000001,    /* When set, does not load the entire data source in memory. Disk I/O will happen on job threads. */
-    MA_RESOURCE_MANAGER_DATA_SOURCE_FLAG_DECODE    = 0x00000002,    /* Decode data before storing in memory. When set, decoding is done at the resource manager level rather than the mixing thread. Results in faster mixing, but higher memory usage. */
-    MA_RESOURCE_MANAGER_DATA_SOURCE_FLAG_ASYNC     = 0x00000004,    /* When set, the resource manager will load the data source asynchronously. */
-    MA_RESOURCE_MANAGER_DATA_SOURCE_FLAG_WAIT_INIT = 0x00000008     /* When set, waits for initialization of the underlying data source before returning from ma_resource_manager_data_source_init(). */
+    MA_RESOURCE_MANAGER_DATA_SOURCE_FLAG_STREAM         = 0x00000001,   /* When set, does not load the entire data source in memory. Disk I/O will happen on job threads. */
+    MA_RESOURCE_MANAGER_DATA_SOURCE_FLAG_DECODE         = 0x00000002,   /* Decode data before storing in memory. When set, decoding is done at the resource manager level rather than the mixing thread. Results in faster mixing, but higher memory usage. */
+    MA_RESOURCE_MANAGER_DATA_SOURCE_FLAG_ASYNC          = 0x00000004,   /* When set, the resource manager will load the data source asynchronously. */
+    MA_RESOURCE_MANAGER_DATA_SOURCE_FLAG_WAIT_INIT      = 0x00000008,   /* When set, waits for initialization of the underlying data source before returning from ma_resource_manager_data_source_init(). */
+    MA_RESOURCE_MANAGER_DATA_SOURCE_FLAG_UNKNOWN_LENGTH = 0x00000010    /* Gives the resource manager a hint that the length of the data source is unknown and calling `ma_data_source_get_length_in_pcm_frames()` should be avoided. */
 } ma_resource_manager_data_source_flags;
 
 
@@ -10734,7 +10769,7 @@ struct ma_sound
 {
     ma_engine_node engineNode;          /* Must be the first member for compatibility with the ma_node API. */
     ma_data_source* pDataSource;
-    ma_uint64 seekTarget;               /* The PCM frame index to seek to in the mixing thread. Set to (~(ma_uint64)0) to not perform any seeking. */
+    MA_ATOMIC(8, ma_uint64) seekTarget; /* The PCM frame index to seek to in the mixing thread. Set to (~(ma_uint64)0) to not perform any seeking. */
     MA_ATOMIC(4, ma_bool32) atEnd;
     ma_bool8 ownsDataSource;
 
@@ -32382,6 +32417,12 @@ static ma_result ma_device__untrack__coreaudio(ma_device* pDevice)
 -(void)dealloc
 {
     [self remove_handler];
+
+    #if defined(__has_feature)
+        #if !__has_feature(objc_arc)
+            [super dealloc];
+        #endif
+    #endif
 }
 
 -(void)remove_handler
@@ -43671,6 +43712,23 @@ MA_API ma_result ma_biquad_reinit(const ma_biquad_config* pConfig, ma_biquad* pB
     return MA_SUCCESS;
 }
 
+MA_API ma_result ma_biquad_clear_cache(ma_biquad* pBQ)
+{
+    if (pBQ == NULL) {
+        return MA_INVALID_ARGS;
+    }
+
+    if (pBQ->format == ma_format_f32) {
+        pBQ->pR1->f32 = 0;
+        pBQ->pR2->f32 = 0;
+    } else {
+        pBQ->pR1->s32 = 0;
+        pBQ->pR2->s32 = 0;
+    }
+
+    return MA_SUCCESS;
+}
+
 static MA_INLINE void ma_biquad_process_pcm_frame_f32__direct_form_2_transposed(ma_biquad* pBQ, float* pY, const float* pX)
 {
     ma_uint32 c;
@@ -43972,6 +44030,21 @@ MA_API ma_result ma_lpf1_reinit(const ma_lpf1_config* pConfig, ma_lpf1* pLPF)
     return MA_SUCCESS;
 }
 
+MA_API ma_result ma_lpf1_clear_cache(ma_lpf1* pLPF)
+{
+    if (pLPF == NULL) {
+        return MA_INVALID_ARGS;
+    }
+
+    if (pLPF->format == ma_format_f32) {
+        pLPF->a.f32 = 0;
+    } else {
+        pLPF->a.s32 = 0;
+    }
+
+    return MA_SUCCESS;
+}
+
 static MA_INLINE void ma_lpf1_process_pcm_frame_f32(ma_lpf1* pLPF, float* pY, const float* pX)
 {
     ma_uint32 c;
@@ -44173,6 +44246,17 @@ MA_API ma_result ma_lpf2_reinit(const ma_lpf2_config* pConfig, ma_lpf2* pLPF)
     if (result != MA_SUCCESS) {
         return result;
     }
+
+    return MA_SUCCESS;
+}
+
+MA_API ma_result ma_lpf2_clear_cache(ma_lpf2* pLPF)
+{
+    if (pLPF == NULL) {
+        return MA_INVALID_ARGS;
+    }
+
+    ma_biquad_clear_cache(&pLPF->bq);
 
     return MA_SUCCESS;
 }
@@ -44518,6 +44602,26 @@ MA_API void ma_lpf_uninit(ma_lpf* pLPF, const ma_allocation_callbacks* pAllocati
 MA_API ma_result ma_lpf_reinit(const ma_lpf_config* pConfig, ma_lpf* pLPF)
 {
     return ma_lpf_reinit__internal(pConfig, NULL, pLPF, /*isNew*/MA_FALSE);
+}
+
+MA_API ma_result ma_lpf_clear_cache(ma_lpf* pLPF)
+{
+    ma_uint32 ilpf1;
+    ma_uint32 ilpf2;
+
+    if (pLPF == NULL) {
+        return MA_INVALID_ARGS;
+    }
+
+    for (ilpf1 = 0; ilpf1 < pLPF->lpf1Count; ilpf1 += 1) {
+        ma_lpf1_clear_cache(&pLPF->pLPF1[ilpf1]);
+    }
+
+    for (ilpf2 = 0; ilpf2 < pLPF->lpf2Count; ilpf2 += 1) {
+        ma_lpf2_clear_cache(&pLPF->pLPF2[ilpf2]);
+    }
+
+    return MA_SUCCESS;
 }
 
 static MA_INLINE void ma_lpf_process_pcm_frame_f32(ma_lpf* pLPF, float* pY, const void* pX)
@@ -49694,6 +49798,38 @@ MA_API ma_result ma_linear_resampler_get_expected_output_frame_count(const ma_li
     return MA_SUCCESS;
 }
 
+MA_API ma_result ma_linear_resampler_reset(ma_linear_resampler* pResampler)
+{
+    ma_uint32 iChannel;
+
+    if (pResampler == NULL) {
+        return MA_INVALID_ARGS;
+    }
+
+    /* Timers need to be cleared back to zero. */
+    pResampler->inTimeInt  = 1;  /* Set this to one to force an input sample to always be loaded for the first output frame. */
+    pResampler->inTimeFrac = 0;
+
+    /* Cached samples need to be cleared. */
+    if (pResampler->config.format == ma_format_f32) {
+        for (iChannel = 0; iChannel < pResampler->config.channels; iChannel += 1) {
+            pResampler->x0.f32[iChannel] = 0;
+            pResampler->x1.f32[iChannel] = 0;
+        }
+    } else {
+        for (iChannel = 0; iChannel < pResampler->config.channels; iChannel += 1) {
+            pResampler->x0.s16[iChannel] = 0;
+            pResampler->x1.s16[iChannel] = 0;
+        }
+    }
+
+    /* The low pass filter needs to have it's cache reset. */
+    ma_lpf_clear_cache(&pResampler->lpf);
+
+    return MA_SUCCESS;
+}
+
+
 
 /* Linear resampler backend vtable. */
 static ma_linear_resampler_config ma_resampling_backend_get_config__linear(const ma_resampler_config* pConfig)
@@ -49786,6 +49922,13 @@ static ma_result ma_resampling_backend_get_expected_output_frame_count__linear(v
     return ma_linear_resampler_get_expected_output_frame_count((const ma_linear_resampler*)pBackend, inputFrameCount, pOutputFrameCount);
 }
 
+static ma_result ma_resampling_backend_reset__linear(void* pUserData, ma_resampling_backend* pBackend)
+{
+    (void)pUserData;
+
+    return ma_linear_resampler_reset((ma_linear_resampler*)pBackend);
+}
+
 static ma_resampling_backend_vtable g_ma_linear_resampler_vtable =
 {
     ma_resampling_backend_get_heap_size__linear,
@@ -49796,7 +49939,8 @@ static ma_resampling_backend_vtable g_ma_linear_resampler_vtable =
     ma_resampling_backend_get_input_latency__linear,
     ma_resampling_backend_get_output_latency__linear,
     ma_resampling_backend_get_required_input_frame_count__linear,
-    ma_resampling_backend_get_expected_output_frame_count__linear
+    ma_resampling_backend_get_expected_output_frame_count__linear,
+    ma_resampling_backend_reset__linear
 };
 
 
@@ -50095,6 +50239,19 @@ MA_API ma_result ma_resampler_get_expected_output_frame_count(const ma_resampler
     }
 
     return pResampler->pBackendVTable->onGetExpectedOutputFrameCount(pResampler->pBackendUserData, pResampler->pBackend, inputFrameCount, pOutputFrameCount);
+}
+
+MA_API ma_result ma_resampler_reset(ma_resampler* pResampler)
+{
+    if (pResampler == NULL) {
+        return MA_INVALID_ARGS;
+    }
+
+    if (pResampler->pBackendVTable == NULL || pResampler->pBackendVTable->onReset == NULL) {
+        return MA_NOT_IMPLEMENTED;
+    }
+
+    return pResampler->pBackendVTable->onReset(pResampler->pBackendUserData, pResampler->pBackend);
 }
 
 /**************************************************************************************************************************************************************
@@ -52637,6 +52794,20 @@ MA_API ma_result ma_data_converter_get_output_channel_map(const ma_data_converte
     return MA_SUCCESS;
 }
 
+MA_API ma_result ma_data_converter_reset(ma_data_converter* pConverter)
+{
+    if (pConverter == NULL) {
+        return MA_INVALID_ARGS;
+    }
+
+    /* There's nothing to do if we're not resampling. */
+    if (pConverter->hasResampler == MA_FALSE) {
+        return MA_SUCCESS;
+    }
+
+    return ma_resampler_reset(&pConverter->resampler);
+}
+
 
 
 /**************************************************************************************************************************************************************
@@ -54946,9 +55117,9 @@ MA_API ma_result ma_data_source_set_looping(ma_data_source* pDataSource, ma_bool
     return pDataSourceBase->vtable->onSetLooping(pDataSource, isLooping);
 }
 
-MA_API ma_bool32 ma_data_source_is_looping(ma_data_source* pDataSource)
+MA_API ma_bool32 ma_data_source_is_looping(const ma_data_source* pDataSource)
 {
-    ma_data_source_base* pDataSourceBase = (ma_data_source_base*)pDataSource;
+    const ma_data_source_base* pDataSourceBase = (const ma_data_source_base*)pDataSource;
 
     if (pDataSource == NULL) {
         return MA_FALSE;
@@ -55024,9 +55195,9 @@ MA_API ma_result ma_data_source_set_range_in_pcm_frames(ma_data_source* pDataSou
     return MA_SUCCESS;
 }
 
-MA_API void ma_data_source_get_range_in_pcm_frames(ma_data_source* pDataSource, ma_uint64* pRangeBegInFrames, ma_uint64* pRangeEndInFrames)
+MA_API void ma_data_source_get_range_in_pcm_frames(const ma_data_source* pDataSource, ma_uint64* pRangeBegInFrames, ma_uint64* pRangeEndInFrames)
 {
-    ma_data_source_base* pDataSourceBase = (ma_data_source_base*)pDataSource;
+    const ma_data_source_base* pDataSourceBase = (const ma_data_source_base*)pDataSource;
 
     if (pDataSource == NULL) {
         return;
@@ -55068,9 +55239,9 @@ MA_API ma_result ma_data_source_set_loop_point_in_pcm_frames(ma_data_source* pDa
     return MA_SUCCESS;
 }
 
-MA_API void ma_data_source_get_loop_point_in_pcm_frames(ma_data_source* pDataSource, ma_uint64* pLoopBegInFrames, ma_uint64* pLoopEndInFrames)
+MA_API void ma_data_source_get_loop_point_in_pcm_frames(const ma_data_source* pDataSource, ma_uint64* pLoopBegInFrames, ma_uint64* pLoopEndInFrames)
 {
-    ma_data_source_base* pDataSourceBase = (ma_data_source_base*)pDataSource;
+    const ma_data_source_base* pDataSourceBase = (const ma_data_source_base*)pDataSource;
 
     if (pDataSource == NULL) {
         return;
@@ -55098,9 +55269,9 @@ MA_API ma_result ma_data_source_set_current(ma_data_source* pDataSource, ma_data
     return MA_SUCCESS;
 }
 
-MA_API ma_data_source* ma_data_source_get_current(ma_data_source* pDataSource)
+MA_API ma_data_source* ma_data_source_get_current(const ma_data_source* pDataSource)
 {
-    ma_data_source_base* pDataSourceBase = (ma_data_source_base*)pDataSource;
+    const ma_data_source_base* pDataSourceBase = (const ma_data_source_base*)pDataSource;
 
     if (pDataSource == NULL) {
         return NULL;
@@ -55122,9 +55293,9 @@ MA_API ma_result ma_data_source_set_next(ma_data_source* pDataSource, ma_data_so
     return MA_SUCCESS;
 }
 
-MA_API ma_data_source* ma_data_source_get_next(ma_data_source* pDataSource)
+MA_API ma_data_source* ma_data_source_get_next(const ma_data_source* pDataSource)
 {
-    ma_data_source_base* pDataSourceBase = (ma_data_source_base*)pDataSource;
+    const ma_data_source_base* pDataSourceBase = (const ma_data_source_base*)pDataSource;
 
     if (pDataSource == NULL) {
         return NULL;
@@ -55146,9 +55317,9 @@ MA_API ma_result ma_data_source_set_next_callback(ma_data_source* pDataSource, m
     return MA_SUCCESS;
 }
 
-MA_API ma_data_source_get_next_proc ma_data_source_get_next_callback(ma_data_source* pDataSource)
+MA_API ma_data_source_get_next_proc ma_data_source_get_next_callback(const ma_data_source* pDataSource)
 {
-    ma_data_source_base* pDataSourceBase = (ma_data_source_base*)pDataSource;
+    const ma_data_source_base* pDataSourceBase = (const ma_data_source_base*)pDataSource;
 
     if (pDataSource == NULL) {
         return NULL;
@@ -55185,7 +55356,7 @@ static ma_result ma_audio_buffer_ref__data_source_on_get_data_format(ma_data_sou
 
     *pFormat     = pAudioBufferRef->format;
     *pChannels   = pAudioBufferRef->channels;
-    *pSampleRate = 0;   /* There is no notion of a sample rate with audio buffers. */
+    *pSampleRate = pAudioBufferRef->sampleRate;
     ma_channel_map_init_standard(ma_standard_channel_map_default, pChannelMap, channelMapCap, pAudioBufferRef->channels);
 
     return MA_SUCCESS;
@@ -55241,6 +55412,7 @@ MA_API ma_result ma_audio_buffer_ref_init(ma_format format, ma_uint32 channels, 
 
     pAudioBufferRef->format       = format;
     pAudioBufferRef->channels     = channels;
+    pAudioBufferRef->sampleRate   = 0;  /* TODO: Version 0.12. Set this to sampleRate. */
     pAudioBufferRef->cursor       = 0;
     pAudioBufferRef->sizeInFrames = sizeInFrames;
     pAudioBufferRef->pData        = pData;
@@ -55293,7 +55465,7 @@ MA_API ma_uint64 ma_audio_buffer_ref_read_pcm_frames(ma_audio_buffer_ref* pAudio
         }
 
         if (pFramesOut != NULL) {
-            ma_copy_pcm_frames(pFramesOut, ma_offset_ptr(pAudioBufferRef->pData, pAudioBufferRef->cursor * ma_get_bytes_per_frame(pAudioBufferRef->format, pAudioBufferRef->channels)), framesToRead, pAudioBufferRef->format, pAudioBufferRef->channels);
+            ma_copy_pcm_frames(ma_offset_ptr(pFramesOut, totalFramesRead * ma_get_bytes_per_frame(pAudioBufferRef->format, pAudioBufferRef->channels)), ma_offset_ptr(pAudioBufferRef->pData, pAudioBufferRef->cursor * ma_get_bytes_per_frame(pAudioBufferRef->format, pAudioBufferRef->channels)), framesToRead, pAudioBufferRef->format, pAudioBufferRef->channels);
         }
 
         totalFramesRead += framesToRead;
@@ -55451,10 +55623,11 @@ MA_API ma_audio_buffer_config ma_audio_buffer_config_init(ma_format format, ma_u
     ma_audio_buffer_config config;
 
     MA_ZERO_OBJECT(&config);
-    config.format = format;
-    config.channels = channels;
+    config.format       = format;
+    config.channels     = channels;
+    config.sampleRate   = 0;    /* TODO: Version 0.12. Set this to sampleRate. */
     config.sizeInFrames = sizeInFrames;
-    config.pData = pData;
+    config.pData        = pData;
     ma_allocation_callbacks_init_copy(&config.allocationCallbacks, pAllocationCallbacks);
 
     return config;
@@ -55482,6 +55655,9 @@ static ma_result ma_audio_buffer_init_ex(const ma_audio_buffer_config* pConfig, 
     if (result != MA_SUCCESS) {
         return result;
     }
+
+    /* TODO: Version 0.12. Set this in ma_audio_buffer_ref_init() instead of here. */
+    pAudioBuffer->ref.sampleRate = pConfig->sampleRate;
 
     ma_allocation_callbacks_init_copy(&pAudioBuffer->allocationCallbacks, &pConfig->allocationCallbacks);
 
@@ -57023,7 +57199,7 @@ extern "C" {
 #define DRWAV_XSTRINGIFY(x)     DRWAV_STRINGIFY(x)
 #define DRWAV_VERSION_MAJOR     0
 #define DRWAV_VERSION_MINOR     13
-#define DRWAV_VERSION_REVISION  5
+#define DRWAV_VERSION_REVISION  6
 #define DRWAV_VERSION_STRING    DRWAV_XSTRINGIFY(DRWAV_VERSION_MAJOR) "." DRWAV_XSTRINGIFY(DRWAV_VERSION_MINOR) "." DRWAV_XSTRINGIFY(DRWAV_VERSION_REVISION)
 #include <stddef.h>
 typedef   signed char           drwav_int8;
@@ -57558,7 +57734,7 @@ extern "C" {
 #define DRFLAC_XSTRINGIFY(x)     DRFLAC_STRINGIFY(x)
 #define DRFLAC_VERSION_MAJOR     0
 #define DRFLAC_VERSION_MINOR     12
-#define DRFLAC_VERSION_REVISION  37
+#define DRFLAC_VERSION_REVISION  38
 #define DRFLAC_VERSION_STRING    DRFLAC_XSTRINGIFY(DRFLAC_VERSION_MAJOR) "." DRFLAC_XSTRINGIFY(DRFLAC_VERSION_MINOR) "." DRFLAC_XSTRINGIFY(DRFLAC_VERSION_REVISION)
 #include <stddef.h>
 typedef   signed char           drflac_int8;
@@ -57919,7 +58095,7 @@ extern "C" {
 #define DRMP3_XSTRINGIFY(x)     DRMP3_STRINGIFY(x)
 #define DRMP3_VERSION_MAJOR     0
 #define DRMP3_VERSION_MINOR     6
-#define DRMP3_VERSION_REVISION  32
+#define DRMP3_VERSION_REVISION  33
 #define DRMP3_VERSION_STRING    DRMP3_XSTRINGIFY(DRMP3_VERSION_MAJOR) "." DRMP3_XSTRINGIFY(DRMP3_VERSION_MINOR) "." DRMP3_XSTRINGIFY(DRMP3_VERSION_REVISION)
 #include <stddef.h>
 typedef   signed char           drmp3_int8;
@@ -58043,9 +58219,14 @@ typedef drmp3_int32 drmp3_result;
     #define DRMP3_INLINE __forceinline
 #elif defined(__GNUC__)
     #if defined(__STRICT_ANSI__)
-        #define DRMP3_INLINE __inline__ __attribute__((always_inline))
+        #define DRMP3_GNUC_INLINE_HINT __inline__
     #else
-        #define DRMP3_INLINE inline __attribute__((always_inline))
+        #define DRMP3_GNUC_INLINE_HINT inline
+    #endif
+    #if (__GNUC__ > 3 || (__GNUC__ == 3 && __GNUC_MINOR__ >= 2)) || defined(__clang__)
+        #define DRMP3_INLINE DRMP3_GNUC_INLINE_HINT __attribute__((always_inline))
+    #else
+        #define DRMP3_INLINE DRMP3_GNUC_INLINE_HINT
     #endif
 #elif defined(__WATCOMC__)
     #define DRMP3_INLINE __inline
@@ -62219,6 +62400,7 @@ MA_API ma_result ma_decoder_seek_to_pcm_frame(ma_decoder* pDecoder, ma_uint64 fr
         ma_result result;
         ma_uint64 internalFrameIndex;
         ma_uint32 internalSampleRate;
+        ma_uint64 currentFrameIndex;
 
         result = ma_data_source_get_data_format(pDecoder->pBackend, NULL, NULL, &internalSampleRate, NULL, 0);
         if (result != MA_SUCCESS) {
@@ -62231,9 +62413,16 @@ MA_API ma_result ma_decoder_seek_to_pcm_frame(ma_decoder* pDecoder, ma_uint64 fr
             internalFrameIndex = ma_calculate_frame_count_after_resampling(internalSampleRate, pDecoder->outputSampleRate, frameIndex);
         }
 
-        result = ma_data_source_seek_to_pcm_frame(pDecoder->pBackend, internalFrameIndex);
-        if (result == MA_SUCCESS) {
-            pDecoder->readPointerInPCMFrames = frameIndex;
+        /* Only seek if we're requesting a different frame to what we're currently sitting on. */
+        ma_data_source_get_cursor_in_pcm_frames(pDecoder->pBackend, &currentFrameIndex);
+        if (currentFrameIndex != internalFrameIndex) {
+            result = ma_data_source_seek_to_pcm_frame(pDecoder->pBackend, internalFrameIndex);
+            if (result == MA_SUCCESS) {
+                pDecoder->readPointerInPCMFrames = frameIndex;
+            }
+
+            /* Reset the data converter so that any cached data in the resampler is cleared. */
+            ma_data_converter_reset(&pDecoder->converter);
         }
 
         return result;
@@ -64779,11 +64968,12 @@ static ma_data_source* ma_resource_manager_data_buffer_get_connector(ma_resource
     };
 }
 
-static ma_result ma_resource_manager_data_buffer_init_connector(ma_resource_manager_data_buffer* pDataBuffer, ma_async_notification* pInitNotification, ma_fence* pInitFence)
+static ma_result ma_resource_manager_data_buffer_init_connector(ma_resource_manager_data_buffer* pDataBuffer, const ma_resource_manager_data_source_config* pConfig, ma_async_notification* pInitNotification, ma_fence* pInitFence)
 {
     ma_result result;
 
     MA_ASSERT(pDataBuffer != NULL);
+    MA_ASSERT(pConfig     != NULL);
     MA_ASSERT(pDataBuffer->isConnectorInitialized == MA_FALSE);
 
     /* The underlying data buffer must be initialized before we'll be able to know how to initialize the backend. */
@@ -64837,7 +65027,9 @@ static ma_result ma_resource_manager_data_buffer_init_connector(ma_resource_mana
         Make sure the looping state is set before returning in order to handle the case where the
         loop state was set on the data buffer before the connector was initialized.
         */
-        ma_data_source_set_looping(ma_resource_manager_data_buffer_get_connector(pDataBuffer), ma_resource_manager_data_buffer_is_looping(pDataBuffer));
+        ma_data_source_set_range_in_pcm_frames(pDataBuffer, pConfig->rangeBegInPCMFrames, pConfig->rangeEndInPCMFrames);
+        ma_data_source_set_loop_point_in_pcm_frames(pDataBuffer, pConfig->loopPointBegInPCMFrames, pConfig->loopPointEndInPCMFrames);
+        ma_data_source_set_looping(pDataBuffer, pConfig->isLooping);
 
         pDataBuffer->isConnectorInitialized = MA_TRUE;
 
@@ -64923,7 +65115,7 @@ static ma_result ma_resource_manager_data_buffer_node_init_supply_encoded(ma_res
     return MA_SUCCESS;
 }
 
-static ma_result ma_resource_manager_data_buffer_node_init_supply_decoded(ma_resource_manager* pResourceManager, ma_resource_manager_data_buffer_node* pDataBufferNode, const char* pFilePath, const wchar_t* pFilePathW, ma_decoder** ppDecoder)
+static ma_result ma_resource_manager_data_buffer_node_init_supply_decoded(ma_resource_manager* pResourceManager, ma_resource_manager_data_buffer_node* pDataBufferNode, const char* pFilePath, const wchar_t* pFilePathW, ma_uint32 flags, ma_decoder** ppDecoder)
 {
     ma_result result = MA_SUCCESS;
     ma_decoder* pDecoder;
@@ -64953,9 +65145,13 @@ static ma_result ma_resource_manager_data_buffer_node_init_supply_decoded(ma_res
     allocated buffer, whereas a paged buffer is a linked list of paged-sized buffers. The latter
     is used when the length of a sound is unknown until a full decode has been performed.
     */
-    result = ma_decoder_get_length_in_pcm_frames(pDecoder, &totalFrameCount);
-    if (result != MA_SUCCESS) {
-        return result;
+    if ((flags & MA_RESOURCE_MANAGER_DATA_SOURCE_FLAG_UNKNOWN_LENGTH) == 0) {
+        result = ma_decoder_get_length_in_pcm_frames(pDecoder, &totalFrameCount);
+        if (result != MA_SUCCESS) {
+            return result;
+        }
+    } else {
+        totalFrameCount = 0;
     }
 
     if (totalFrameCount > 0) {
@@ -65197,7 +65393,7 @@ static ma_result ma_resource_manager_data_buffer_node_acquire_critical_section(m
             job.data.resourceManager.loadDataBufferNode.pDataBufferNode   = pDataBufferNode;
             job.data.resourceManager.loadDataBufferNode.pFilePath         = pFilePathCopy;
             job.data.resourceManager.loadDataBufferNode.pFilePathW        = pFilePathWCopy;
-            job.data.resourceManager.loadDataBufferNode.decode            =  (flags & MA_RESOURCE_MANAGER_DATA_SOURCE_FLAG_DECODE   ) != 0;
+            job.data.resourceManager.loadDataBufferNode.flags             = flags;
             job.data.resourceManager.loadDataBufferNode.pInitNotification = ((flags & MA_RESOURCE_MANAGER_DATA_SOURCE_FLAG_WAIT_INIT) != 0) ? pInitNotification : NULL;
             job.data.resourceManager.loadDataBufferNode.pDoneNotification = NULL;
             job.data.resourceManager.loadDataBufferNode.pInitFence        = pInitFence;
@@ -65323,7 +65519,7 @@ static ma_result ma_resource_manager_data_buffer_node_acquire(ma_resource_manage
                 } else {
                     /* Decoding. We do this the same way as we do when loading asynchronously. */
                     ma_decoder* pDecoder;
-                    result = ma_resource_manager_data_buffer_node_init_supply_decoded(pResourceManager, pDataBufferNode, pFilePath, pFilePathW, &pDecoder);
+                    result = ma_resource_manager_data_buffer_node_init_supply_decoded(pResourceManager, pDataBufferNode, pFilePath, pFilePathW, flags, &pDecoder);
                     if (result != MA_SUCCESS) {
                         goto done;
                     }
@@ -65525,7 +65721,15 @@ static ma_result ma_resource_manager_data_buffer_cb__get_length_in_pcm_frames(ma
 
 static ma_result ma_resource_manager_data_buffer_cb__set_looping(ma_data_source* pDataSource, ma_bool32 isLooping)
 {
-    return ma_resource_manager_data_buffer_set_looping((ma_resource_manager_data_buffer*)pDataSource, isLooping);
+    ma_resource_manager_data_buffer* pDataBuffer = (ma_resource_manager_data_buffer*)pDataSource;
+    MA_ASSERT(pDataBuffer != NULL);
+
+    c89atomic_exchange_32(&pDataBuffer->isLooping, isLooping);
+
+    /* The looping state needs to be set on the connector as well or else looping won't work when we read audio data. */
+    ma_data_source_set_looping(ma_resource_manager_data_buffer_get_connector(pDataBuffer), isLooping);
+
+    return MA_SUCCESS;
 }
 
 static ma_data_source_vtable g_ma_resource_manager_data_buffer_vtable =
@@ -65615,7 +65819,7 @@ static ma_result ma_resource_manager_data_buffer_init_ex_internal(ma_resource_ma
         /* If we're loading asynchronously we need to post a job to the job queue to initialize the connector. */
         if (async == MA_FALSE || ma_resource_manager_data_buffer_node_result(pDataBufferNode) == MA_SUCCESS) {
             /* Loading synchronously or the data has already been fully loaded. We can just initialize the connector from here without a job. */
-            result = ma_resource_manager_data_buffer_init_connector(pDataBuffer, NULL, NULL);
+            result = ma_resource_manager_data_buffer_init_connector(pDataBuffer, pConfig, NULL, NULL);
             c89atomic_exchange_i32(&pDataBuffer->result, result);
 
             ma_resource_manager_pipeline_notifications_signal_all_notifications(&notifications);
@@ -65641,11 +65845,16 @@ static ma_result ma_resource_manager_data_buffer_init_ex_internal(ma_resource_ma
 
             job = ma_job_init(MA_JOB_TYPE_RESOURCE_MANAGER_LOAD_DATA_BUFFER);
             job.order = ma_resource_manager_data_buffer_next_execution_order(pDataBuffer);
-            job.data.resourceManager.loadDataBuffer.pDataBuffer       = pDataBuffer;
-            job.data.resourceManager.loadDataBuffer.pInitNotification = ((flags & MA_RESOURCE_MANAGER_DATA_SOURCE_FLAG_WAIT_INIT) != 0) ? &initNotification : notifications.init.pNotification;
-            job.data.resourceManager.loadDataBuffer.pDoneNotification = notifications.done.pNotification;
-            job.data.resourceManager.loadDataBuffer.pInitFence        = notifications.init.pFence;
-            job.data.resourceManager.loadDataBuffer.pDoneFence        = notifications.done.pFence;
+            job.data.resourceManager.loadDataBuffer.pDataBuffer             = pDataBuffer;
+            job.data.resourceManager.loadDataBuffer.pInitNotification       = ((flags & MA_RESOURCE_MANAGER_DATA_SOURCE_FLAG_WAIT_INIT) != 0) ? &initNotification : notifications.init.pNotification;
+            job.data.resourceManager.loadDataBuffer.pDoneNotification       = notifications.done.pNotification;
+            job.data.resourceManager.loadDataBuffer.pInitFence              = notifications.init.pFence;
+            job.data.resourceManager.loadDataBuffer.pDoneFence              = notifications.done.pFence;
+            job.data.resourceManager.loadDataBuffer.rangeBegInPCMFrames     = pConfig->rangeBegInPCMFrames;
+            job.data.resourceManager.loadDataBuffer.rangeEndInPCMFrames     = pConfig->rangeEndInPCMFrames;
+            job.data.resourceManager.loadDataBuffer.loopPointBegInPCMFrames = pConfig->loopPointBegInPCMFrames;
+            job.data.resourceManager.loadDataBuffer.loopPointEndInPCMFrames = pConfig->loopPointEndInPCMFrames;
+            job.data.resourceManager.loadDataBuffer.isLooping               = pConfig->isLooping;
 
             result = ma_resource_manager_post_job(pResourceManager, &job);
             if (result != MA_SUCCESS) {
@@ -66035,25 +66244,12 @@ MA_API ma_result ma_resource_manager_data_buffer_result(const ma_resource_manage
 
 MA_API ma_result ma_resource_manager_data_buffer_set_looping(ma_resource_manager_data_buffer* pDataBuffer, ma_bool32 isLooping)
 {
-    if (pDataBuffer == NULL) {
-        return MA_INVALID_ARGS;
-    }
-
-    c89atomic_exchange_32(&pDataBuffer->isLooping, isLooping);
-
-    /* The looping state needs to be set on the connector as well or else looping won't work when we read audio data. */
-    ma_data_source_set_looping(ma_resource_manager_data_buffer_get_connector(pDataBuffer), isLooping);
-
-    return MA_SUCCESS;
+    return ma_data_source_set_looping(pDataBuffer, isLooping);
 }
 
 MA_API ma_bool32 ma_resource_manager_data_buffer_is_looping(const ma_resource_manager_data_buffer* pDataBuffer)
 {
-    if (pDataBuffer == NULL) {
-        return MA_FALSE;
-    }
-
-    return c89atomic_load_32((ma_bool32*)&pDataBuffer->isLooping);
+    return ma_data_source_is_looping(pDataBuffer);
 }
 
 MA_API ma_result ma_resource_manager_data_buffer_get_available_frames(ma_resource_manager_data_buffer* pDataBuffer, ma_uint64* pAvailableFrames)
@@ -66239,7 +66435,12 @@ static ma_result ma_resource_manager_data_stream_cb__get_length_in_pcm_frames(ma
 
 static ma_result ma_resource_manager_data_stream_cb__set_looping(ma_data_source* pDataSource, ma_bool32 isLooping)
 {
-    return ma_resource_manager_data_stream_set_looping((ma_resource_manager_data_stream*)pDataSource, isLooping);
+    ma_resource_manager_data_stream* pDataStream = (ma_resource_manager_data_stream*)pDataSource;
+    MA_ASSERT(pDataStream != NULL);
+
+    c89atomic_exchange_32(&pDataStream->isLooping, isLooping);
+
+    return MA_SUCCESS;
 }
 
 static ma_data_source_vtable g_ma_resource_manager_data_stream_vtable =
@@ -66708,6 +66909,14 @@ MA_API ma_result ma_resource_manager_data_stream_seek_to_pcm_frame(ma_resource_m
         return MA_INVALID_OPERATION;
     }
 
+    /* If we're not already seeking and we're sitting on the same frame, just make this a no-op. */
+    if (c89atomic_load_32(&pDataStream->seekCounter) == 0) {
+        if (c89atomic_load_64(&pDataStream->absoluteCursor) == frameIndex) {
+            return MA_SUCCESS;
+        }
+    }
+
+
     /* Increment the seek counter first to indicate to read_paged_pcm_frames() and map_paged_pcm_frames() that we are in the middle of a seek and MA_BUSY should be returned. */
     c89atomic_fetch_add_32(&pDataStream->seekCounter, 1);
 
@@ -66852,13 +67061,7 @@ MA_API ma_result ma_resource_manager_data_stream_result(const ma_resource_manage
 
 MA_API ma_result ma_resource_manager_data_stream_set_looping(ma_resource_manager_data_stream* pDataStream, ma_bool32 isLooping)
 {
-    if (pDataStream == NULL) {
-        return MA_INVALID_ARGS;
-    }
-
-    c89atomic_exchange_32(&pDataStream->isLooping, isLooping);
-
-    return MA_SUCCESS;
+    return ma_data_source_set_looping(pDataStream, isLooping);
 }
 
 MA_API ma_bool32 ma_resource_manager_data_stream_is_looping(const ma_resource_manager_data_stream* pDataStream)
@@ -67220,7 +67423,7 @@ static ma_result ma_job_process__resource_manager__load_data_buffer_node(ma_job*
     will determine that the node is available for data delivery and the data buffer connectors can be
     initialized. Therefore, it's important that it is set after the data supply has been initialized.
     */
-    if (pJob->data.resourceManager.loadDataBufferNode.decode) {
+    if ((pJob->data.resourceManager.loadDataBufferNode.flags & MA_RESOURCE_MANAGER_DATA_SOURCE_FLAG_DECODE) != 0) {
         /*
         Decoding. This is the complex case because we're not going to be doing the entire decoding
         process here. Instead it's going to be split of multiple jobs and loaded in pages. The
@@ -67239,7 +67442,7 @@ static ma_result ma_job_process__resource_manager__load_data_buffer_node(ma_job*
         ma_job pageDataBufferNodeJob;
 
         /* Allocate the decoder by initializing a decoded data supply. */
-        result = ma_resource_manager_data_buffer_node_init_supply_decoded(pResourceManager, pDataBufferNode, pJob->data.resourceManager.loadDataBufferNode.pFilePath, pJob->data.resourceManager.loadDataBufferNode.pFilePathW, &pDecoder);
+        result = ma_resource_manager_data_buffer_node_init_supply_decoded(pResourceManager, pDataBufferNode, pJob->data.resourceManager.loadDataBufferNode.pFilePath, pJob->data.resourceManager.loadDataBufferNode.pFilePathW, pJob->data.resourceManager.loadDataBufferNode.flags, &pDecoder);
 
         /*
         Don't ever propagate an MA_BUSY result code or else the resource manager will think the
@@ -67485,7 +67688,15 @@ static ma_result ma_job_process__resource_manager__load_data_buffer(ma_job* pJob
 
         if (dataSupplyType != ma_resource_manager_data_supply_type_unknown) {
             /* We can now initialize the connector. If this fails, we need to abort. It's very rare for this to fail. */
-            result = ma_resource_manager_data_buffer_init_connector(pDataBuffer, pJob->data.resourceManager.loadDataBuffer.pInitNotification, pJob->data.resourceManager.loadDataBuffer.pInitFence);
+            ma_resource_manager_data_source_config dataSourceConfig;    /* For setting initial looping state and range. */
+            dataSourceConfig = ma_resource_manager_data_source_config_init();
+            dataSourceConfig.rangeBegInPCMFrames     = pJob->data.resourceManager.loadDataBuffer.rangeBegInPCMFrames;
+            dataSourceConfig.rangeEndInPCMFrames     = pJob->data.resourceManager.loadDataBuffer.rangeEndInPCMFrames;
+            dataSourceConfig.loopPointBegInPCMFrames = pJob->data.resourceManager.loadDataBuffer.loopPointBegInPCMFrames;
+            dataSourceConfig.loopPointEndInPCMFrames = pJob->data.resourceManager.loadDataBuffer.loopPointEndInPCMFrames;
+            dataSourceConfig.isLooping               = pJob->data.resourceManager.loadDataBuffer.isLooping;
+
+            result = ma_resource_manager_data_buffer_init_connector(pDataBuffer, &dataSourceConfig, pJob->data.resourceManager.loadDataBuffer.pInitNotification, pJob->data.resourceManager.loadDataBuffer.pInitFence);
             if (result != MA_SUCCESS) {
                 ma_log_postf(ma_resource_manager_get_log(pResourceManager), MA_LOG_LEVEL_ERROR, "Failed to initialize connector for data buffer. %s.\n", ma_result_description(result));
                 goto done;
@@ -67608,9 +67819,13 @@ static ma_result ma_job_process__resource_manager__load_data_stream(ma_job* pJob
     }
 
     /* Retrieve the total length of the file before marking the decoder are loaded. */
-    result = ma_decoder_get_length_in_pcm_frames(&pDataStream->decoder, &pDataStream->totalLengthInPCMFrames);
-    if (result != MA_SUCCESS) {
-        goto done;  /* Failed to retrieve the length. */
+    if ((pDataStream->flags & MA_RESOURCE_MANAGER_DATA_SOURCE_FLAG_UNKNOWN_LENGTH) == 0) {
+        result = ma_decoder_get_length_in_pcm_frames(&pDataStream->decoder, &pDataStream->totalLengthInPCMFrames);
+        if (result != MA_SUCCESS) {
+            goto done;  /* Failed to retrieve the length. */
+        }
+    } else {
+        pDataStream->totalLengthInPCMFrames = 0;
     }
 
     /*
@@ -70969,6 +71184,7 @@ static void ma_engine_node_process_pcm_frames__sound(ma_node* pNode, const float
     ma_uint32 dataSourceChannels;
     ma_uint8 temp[MA_DATA_CONVERTER_STACK_BUFFER_SIZE];
     ma_uint32 tempCapInFrames;
+    ma_uint64 seekTarget;
 
     /* This is a data source node which means no input buses. */
     (void)ppFramesIn;
@@ -70982,13 +71198,14 @@ static void ma_engine_node_process_pcm_frames__sound(ma_node* pNode, const float
     }
 
     /* If we're seeking, do so now before reading. */
-    if (pSound->seekTarget != MA_SEEK_TARGET_NONE) {
-        ma_data_source_seek_to_pcm_frame(pSound->pDataSource, pSound->seekTarget);
+    seekTarget = c89atomic_load_64(&pSound->seekTarget);
+    if (seekTarget != MA_SEEK_TARGET_NONE) {
+        ma_data_source_seek_to_pcm_frame(pSound->pDataSource, seekTarget);
 
         /* Any time-dependant effects need to have their times updated. */
-        ma_node_set_time(pSound, pSound->seekTarget);
+        ma_node_set_time(pSound, seekTarget);
 
-        pSound->seekTarget  = MA_SEEK_TARGET_NONE;
+        c89atomic_exchange_64(&pSound->seekTarget, MA_SEEK_TARGET_NONE);
     }
 
     /*
@@ -73143,24 +73360,8 @@ MA_API ma_result ma_sound_seek_to_pcm_frame(ma_sound* pSound, ma_uint64 frameInd
         return MA_INVALID_OPERATION;
     }
 
-    /*
-    Resource manager data sources are thread safe which means we can just seek immediately. However, we cannot guarantee that other data sources are
-    thread safe as well so in that case we'll need to get the mixing thread to seek for us to ensure we don't try seeking at the same time as reading.
-    */
-#ifndef MA_NO_RESOURCE_MANAGER
-    if (pSound->pDataSource == pSound->pResourceManagerDataSource) {
-        ma_result result = ma_resource_manager_data_source_seek_to_pcm_frame(pSound->pResourceManagerDataSource, frameIndex);
-        if (result != MA_SUCCESS) {
-            return result;
-        }
-
-        /* Time dependant effects need to have their timers updated. */
-        return ma_node_set_time(&pSound->engineNode, frameIndex);
-    }
-#endif
-
-    /* Getting here means the data source is not a resource manager data source so we'll need to get the mixing thread to do the seeking for us. */
-    pSound->seekTarget = frameIndex;
+    /* We can't be seeking while reading at the same time. We just set the seek target and get the mixing thread to do the actual seek. */
+    c89atomic_exchange_64(&pSound->seekTarget, frameIndex);
 
     return MA_SUCCESS;
 }
@@ -73624,9 +73825,14 @@ code below please report the bug to the respective repository for the relevant p
     #define DRWAV_INLINE __forceinline
 #elif defined(__GNUC__)
     #if defined(__STRICT_ANSI__)
-        #define DRWAV_INLINE __inline__ __attribute__((always_inline))
+        #define DRWAV_GNUC_INLINE_HINT __inline__
     #else
-        #define DRWAV_INLINE inline __attribute__((always_inline))
+        #define DRWAV_GNUC_INLINE_HINT inline
+    #endif
+    #if (__GNUC__ > 3 || (__GNUC__ == 3 && __GNUC_MINOR__ >= 2)) || defined(__clang__)
+        #define DRWAV_INLINE DRWAV_GNUC_INLINE_HINT __attribute__((always_inline))
+    #else
+        #define DRWAV_INLINE DRWAV_GNUC_INLINE_HINT
     #endif
 #elif defined(__WATCOMC__)
     #define DRWAV_INLINE __inline
@@ -74116,7 +74322,7 @@ DRWAV_PRIVATE drwav_bool32 drwav__read_fmt(drwav_read_proc onRead, drwav_seek_pr
     fmtOut->extendedSize       = 0;
     fmtOut->validBitsPerSample = 0;
     fmtOut->channelMask        = 0;
-    memset(fmtOut->subFormat, 0, sizeof(fmtOut->subFormat));
+    DRWAV_ZERO_MEMORY(fmtOut->subFormat, sizeof(fmtOut->subFormat));
     if (header.sizeInBytes > 16) {
         drwav_uint8 fmt_cbSize[2];
         int bytesReadSoFar = 0;
@@ -74249,7 +74455,7 @@ DRWAV_PRIVATE void drwav__metadata_request_extra_memory_for_stage_2(drwav__metad
 DRWAV_PRIVATE drwav_result drwav__metadata_alloc(drwav__metadata_parser* pParser, drwav_allocation_callbacks* pAllocationCallbacks)
 {
     if (pParser->extraCapacity != 0 || pParser->metadataCount != 0) {
-        free(pParser->pData);
+        pAllocationCallbacks->onFree(pParser->pData, pAllocationCallbacks->pUserData);
         pParser->pData = (drwav_uint8*)pAllocationCallbacks->onMalloc(drwav__metadata_memory_capacity(pParser), pAllocationCallbacks->pUserData);
         pParser->pDataCursor = pParser->pData;
         if (pParser->pData == NULL) {
@@ -74383,6 +74589,14 @@ DRWAV_PRIVATE drwav_uint64 drwav__read_acid_to_metadata_obj(drwav__metadata_pars
     }
     return bytesRead;
 }
+DRWAV_PRIVATE size_t drwav__strlen(const char* str)
+{
+    size_t result = 0;
+    while (*str++) {
+        result += 1;
+    }
+    return result;
+}
 DRWAV_PRIVATE size_t drwav__strlen_clamped(const char* str, size_t maxToRead)
 {
     size_t result = 0;
@@ -74397,7 +74611,7 @@ DRWAV_PRIVATE char* drwav__metadata_copy_string(drwav__metadata_parser* pParser,
     if (len) {
         char* result = (char*)drwav__metadata_get_memory(pParser, len + 1, 1);
         DRWAV_ASSERT(result != NULL);
-        memcpy(result, str, len);
+        DRWAV_COPY_MEMORY(result, str, len);
         result[len] = '\0';
         return result;
     } else {
@@ -74527,7 +74741,7 @@ DRWAV_PRIVATE drwav_uint64 drwav__read_bext_to_metadata_obj(drwav__metadata_pars
                 pMetadata->data.bext.pCodingHistory = (char*)drwav__metadata_get_memory(pParser, extraBytes + 1, 1);
                 DRWAV_ASSERT(pMetadata->data.bext.pCodingHistory != NULL);
                 bytesRead += drwav__metadata_parser_read(pParser, pMetadata->data.bext.pCodingHistory, extraBytes, NULL);
-                pMetadata->data.bext.codingHistorySize = (drwav_uint32)strlen(pMetadata->data.bext.pCodingHistory);
+                pMetadata->data.bext.codingHistorySize = (drwav_uint32)drwav__strlen(pMetadata->data.bext.pCodingHistory);
             } else {
                 pMetadata->data.bext.pCodingHistory    = NULL;
                 pMetadata->data.bext.codingHistorySize = 0;
@@ -74744,19 +74958,19 @@ DRWAV_PRIVATE drwav_uint64 drwav__metadata_process_chunk(drwav__metadata_parser*
                 if (bytesJustRead != DRWAV_BEXT_DESCRIPTION_BYTES) {
                     return bytesRead;
                 }
-                allocSizeNeeded += strlen(buffer) + 1;
+                allocSizeNeeded += drwav__strlen(buffer) + 1;
                 buffer[DRWAV_BEXT_ORIGINATOR_NAME_BYTES] = '\0';
                 bytesJustRead = drwav__metadata_parser_read(pParser, buffer, DRWAV_BEXT_ORIGINATOR_NAME_BYTES, &bytesRead);
                 if (bytesJustRead != DRWAV_BEXT_ORIGINATOR_NAME_BYTES) {
                     return bytesRead;
                 }
-                allocSizeNeeded += strlen(buffer) + 1;
+                allocSizeNeeded += drwav__strlen(buffer) + 1;
                 buffer[DRWAV_BEXT_ORIGINATOR_REF_BYTES] = '\0';
                 bytesJustRead = drwav__metadata_parser_read(pParser, buffer, DRWAV_BEXT_ORIGINATOR_REF_BYTES, &bytesRead);
                 if (bytesJustRead != DRWAV_BEXT_ORIGINATOR_REF_BYTES) {
                     return bytesRead;
                 }
-                allocSizeNeeded += strlen(buffer) + 1;
+                allocSizeNeeded += drwav__strlen(buffer) + 1;
                 allocSizeNeeded += (size_t)pChunkHeader->sizeInBytes - DRWAV_BEXT_BYTES;
                 drwav__metadata_request_extra_memory_for_stage_2(pParser, allocSizeNeeded, 1);
                 pParser->metadataCount += 1;
@@ -75023,7 +75237,7 @@ DRWAV_PRIVATE drwav_bool32 drwav_init__internal(drwav* pWav, drwav_chunk_proc on
     if (translatedFormatTag == DR_WAVE_FORMAT_EXTENSIBLE) {
         translatedFormatTag = drwav_bytes_to_u16(fmt.subFormat + 0);
     }
-    memset(&metadataParser, 0, sizeof(metadataParser));
+    DRWAV_ZERO_MEMORY(&metadataParser, sizeof(metadataParser));
     if (!sequential && pWav->allowedMetadataTypes != drwav_metadata_type_none && (pWav->container == drwav_container_riff || pWav->container == drwav_container_rf64)) {
         drwav_uint64 cursorForMetadata = cursor;
         metadataParser.onRead = pWav->onRead;
@@ -75455,7 +75669,7 @@ DRWAV_PRIVATE size_t drwav__write_or_count_metadata(drwav* pWav, drwav_metadata*
                 bytesWritten += drwav__write_or_count_u16ne_to_le(pWav, pMetadata->data.bext.maxTruePeakLevel);
                 bytesWritten += drwav__write_or_count_u16ne_to_le(pWav, pMetadata->data.bext.maxMomentaryLoudness);
                 bytesWritten += drwav__write_or_count_u16ne_to_le(pWav, pMetadata->data.bext.maxShortTermLoudness);
-                memset(reservedBuf, 0, sizeof(reservedBuf));
+                DRWAV_ZERO_MEMORY(reservedBuf, sizeof(reservedBuf));
                 bytesWritten += drwav__write_or_count(pWav, reservedBuf, sizeof(reservedBuf));
                 if (pMetadata->data.bext.codingHistorySize > 0) {
                     bytesWritten += drwav__write_or_count(pWav, pMetadata->data.bext.pCodingHistory, pMetadata->data.bext.codingHistorySize);
@@ -78686,9 +78900,14 @@ DRWAV_API drwav_bool32 drwav_fourcc_equal(const drwav_uint8* a, const char* b)
     #define DRFLAC_INLINE __forceinline
 #elif defined(__GNUC__)
     #if defined(__STRICT_ANSI__)
-        #define DRFLAC_INLINE __inline__ __attribute__((always_inline))
+        #define DRFLAC_GNUC_INLINE_HINT __inline__
     #else
-        #define DRFLAC_INLINE inline __attribute__((always_inline))
+        #define DRFLAC_GNUC_INLINE_HINT inline
+    #endif
+    #if (__GNUC__ > 3 || (__GNUC__ == 3 && __GNUC_MINOR__ >= 2)) || defined(__clang__)
+        #define DRFLAC_INLINE DRFLAC_GNUC_INLINE_HINT __attribute__((always_inline))
+    #else
+        #define DRFLAC_INLINE DRFLAC_GNUC_INLINE_HINT
     #endif
 #elif defined(__WATCOMC__)
     #define DRFLAC_INLINE __inline
@@ -83630,7 +83849,7 @@ static drflac* drflac_open_with_metadata_private(drflac_read_proc onRead, drflac
 #ifndef DR_FLAC_NO_OGG
     if (init.container == drflac_container_ogg) {
         drflac_oggbs* pInternalOggbs = (drflac_oggbs*)((drflac_uint8*)pFlac->pDecodedSamples + decodedSamplesAllocationSize + seektableSize);
-        *pInternalOggbs = oggbs;
+        DRFLAC_COPY_MEMORY(pInternalOggbs, &oggbs, sizeof(oggbs));
         pFlac->bs.onRead = drflac__on_read_ogg;
         pFlac->bs.onSeek = drflac__on_seek_ogg;
         pFlac->bs.pUserData = (void*)pInternalOggbs;
@@ -88368,7 +88587,11 @@ static void drmp3d_synth(float *xl, drmp3d_sample_t *dstl, int nch, float *lins)
             vst1_lane_s16(dstl + (49 + i)*nch, pcmb, 2);
 #endif
 #else
+        #if DRMP3_HAVE_SSE
             static const drmp3_f4 g_scale = { 1.0f/32768.0f, 1.0f/32768.0f, 1.0f/32768.0f, 1.0f/32768.0f };
+        #else
+            const drmp3_f4 g_scale = vdupq_n_f32(1.0f/32768.0f);
+        #endif
             a = DRMP3_VMUL(a, g_scale);
             b = DRMP3_VMUL(b, g_scale);
 #if DRMP3_HAVE_SSE
@@ -88642,7 +88865,6 @@ DRMP3_API void drmp3dec_f32_to_s16(const float *in, drmp3_int16 *out, size_t num
         }
     }
 }
-#include <math.h>
 #if defined(SIZE_MAX)
     #define DRMP3_SIZE_MAX  SIZE_MAX
 #else
@@ -88687,18 +88909,6 @@ static DRMP3_INLINE drmp3_uint32 drmp3_gcf_u32(drmp3_uint32 a, drmp3_uint32 b)
         }
     }
     return a;
-}
-static DRMP3_INLINE double drmp3_sin(double x)
-{
-    return sin(x);
-}
-static DRMP3_INLINE double drmp3_exp(double x)
-{
-    return exp(x);
-}
-static DRMP3_INLINE double drmp3_cos(double x)
-{
-    return drmp3_sin((DRMP3_PI_D*0.5) - x);
 }
 static void* drmp3__malloc_default(size_t sz, void* pUserData)
 {
