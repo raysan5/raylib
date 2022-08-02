@@ -125,7 +125,7 @@ int main(void)
         if (frequency != oldFrequency)
         {
             // Compute wavelength. Limit size in both directions.
-            int oldWavelength = waveLength;
+            //int oldWavelength = waveLength;
             waveLength = (int)(22050/frequency);
             if (waveLength > MAX_SAMPLES/2) waveLength = MAX_SAMPLES/2;
             if (waveLength < 1) waveLength = 1;
