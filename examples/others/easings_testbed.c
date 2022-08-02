@@ -13,9 +13,9 @@
 *
 ********************************************************************************************/
 
-#include <raylib.h>
+#include "raylib.h"
 
-#include "easings.h"
+#include "reasings.h"       // Required for easing functions
 
 #define FONT_SIZE         20
 
