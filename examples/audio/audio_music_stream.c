@@ -43,6 +43,22 @@ int main(void)
         // Update
         //----------------------------------------------------------------------------------
         UpdateMusicStream(music);   // Update music buffer with new stream data
+        
+        // Restart music playing (stop and play)
+        if (IsKeyPressed(KEY_SPACE))
+        {
+            StopMusicStream(music);
+            PlayMusicStream(music);
+        }
+
+        // Pause/Resume music playing
+        if (IsKeyPressed(KEY_P))
+        {
+            pause = !pause;
+
+            if (pause) PauseMusicStream(music);
+            else ResumeMusicStream(music);
+        }
 
         // Get normalized time played for current music stream
         timePlayed = GetMusicTimePlayed(music)/GetMusicTimeLength(music);
