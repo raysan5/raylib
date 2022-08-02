@@ -735,12 +735,12 @@ textures/textures_bunnymark: textures/textures_bunnymark.c
     --preload-file textures/resources/wabbit_alpha.png@resources/wabbit_alpha.png
 
 textures/textures_blend_modes: textures/textures_blend_modes.c
-	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) -s ASYNCIFY \
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
     --preload-file textures/resources/cyberpunk_street_background.png@resources/cyberpunk_street_background.png \
     --preload-file textures/resources/cyberpunk_street_foreground.png@resources/cyberpunk_street_foreground.png
 
 textures/textures_draw_tiled: textures/textures_draw_tiled.c
-	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) -s ASYNCIFY \
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
     --preload-file textures/resources/patterns.png@resources/patterns.png
 
 textures/textures_polygon: textures/textures_polygon.c
@@ -864,14 +864,7 @@ models/models_loading_vox: models/models_loading_vox.c
 
 models/models_loading_gltf: models/models_loading_gltf.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) -s TOTAL_MEMORY=67108864 \
-    --preload-file models/resources/models/gltf/raylib_32x32.glb@resources/models/gltf/raylib_32x32.glb \
-    --preload-file models/resources/models/gltf/girl.glb@resources/models/gltf/girl.glb \
-    --preload-file models/resources/models/gltf/rigged_figure.glb@resources/models/gltf/rigged_figure.glb \
-    --preload-file models/resources/models/gltf/GearboxAssy.glb@resources/models/gltf/GearboxAssy.glb \
-    --preload-file models/resources/models/gltf/BoxAnimated.glb@resources/models/gltf/BoxAnimated.glb \
-    --preload-file models/resources/models/gltf/AnimatedTriangle.gltf@resources/models/gltf/AnimatedTriangle.gltf \
-    --preload-file models/resources/models/gltf/AnimatedMorphCube.glb@resources/models/gltf/AnimatedMorphCube.glb \
-    --preload-file models/resources/models/gltf/vertex_colored_object.glb@resources/models/gltf/vertex_colored_object.glb
+    --preload-file models/resources/models/gltf/robot.glb@resources/models/gltf/robot.glb
 
 models/models_orthographic_projection: models/models_orthographic_projection.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
@@ -889,7 +882,7 @@ models/models_skybox: models/models_skybox.c
 
 models/models_yaw_pitch_roll: models/models_yaw_pitch_roll.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) -s TOTAL_MEMORY=67108864 \
-    --preload-file models/resources/models/obj/plane.gltf@resources/modelsobj/plane.gltf \
+    --preload-file models/resources/models/obj/plane.obj@resources/models/obj/plane.obj \
     --preload-file models/resources/models/obj/plane_diffuse.png@resources/models/obj/plane_diffuse.png
 
 models/models_heightmap: models/models_heightmap.c
