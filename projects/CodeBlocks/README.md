@@ -12,7 +12,7 @@ On other platforms you can install however you like following the instructions i
 2. Install and run Code::Blocks.
 
 3. **Windows only**: Select `Settings` `Compiler` `Toolchain executables`.
-Change `Compiler's instrallation directory` to `C:\raylib\MingGW`.  Do *not* press auto-detect.
+Change `Compiler's installation directory` to `C:\raylib\MingGW`.  Do *not* press auto-detect.
 There is a screenshot below showing how it should look.  Press `OK`.
 
 4. Select `File` `Open` and open the `core_basic_windows.cbp` file.
