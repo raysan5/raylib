@@ -176,6 +176,7 @@ Detailed changes:
 [bindings] ADDED: raylib.jl (Julia) (#2403) by @irishgreencitrus
 [bindings] ADDED: raylib.zig (#2449) by @ryupold
 [bindings] ADDED: racket-raylib (#2454) by @eutro
+[bindings] ADDED: raylibr (#2611) by @ramiromagno
 [bindings] REVIEWED: Multiple bindings updated to raylib 4.0
 [build] ADDED: VS2022 project
 [build] ADDED: Support macOS by zig build system (#2175)
@@ -203,8 +204,11 @@ Detailed changes:
 [build] REVIEWED: Update raylib-config.cmake (#2374) by @marcogmaia
 [build] REVIEWED: Simplify build.zig to not require user to specify raylib path (#2383) by @Hejsil
 [build] REVIEWED: Fix OpenGL 4.3 graphics option in CMake (#2427) by @GoldenThumbs
-[misc] `WARNING`: REMOVED: physac from raylib sources/examples, use github.com/raysan5/physac
-[misc] `WARNING`: REMOVED: raygui from raylib/src/extras, use github.com/raysan5/raygui
+[extras] `WARNING`: REMOVED: physac from raylib sources/examples, use github.com/raysan5/physac
+[extras] `WARNING`: REMOVED: raygui from raylib/src/extras, use github.com/raysan5/raygui
+[extras] `WARNING`: REMOVED: rmem from raylib/src/extras, moved to github.com/raylib-extras/rmem
+[extras] `WARNING`: REMOVED: easings from raylib/src/extras, moved to examples dir as reasings
+[extras] `WARNING`: REMOVED: raudio.h from raylib/src, moved to github.com/raysan5/raudio
 [misc] REVIEWED: Update external libraries to latest version released
 
 -------------------------------------------------------------------------
