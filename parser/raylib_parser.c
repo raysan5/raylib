@@ -54,7 +54,7 @@
     raylib-parser is licensed under an unmodified zlib/libpng license, which is an OSI-certified,
     BSD-like license that allows static linking with closed source software:
 
-    Copyright (c) 2021 Ramon Santamaria (@raysan5)
+    Copyright (c) 2021-2022 Ramon Santamaria (@raysan5)
 
 **********************************************************************************************/
 
@@ -1042,6 +1042,7 @@ int main(int argc, char* argv[])
     else if (outputFormat == JSON) printf("\nOutput format:    JSON\n\n");
     else if (outputFormat == XML) printf("\nOutput format:    XML\n\n");
     else if (outputFormat == LUA) printf("\nOutput format:    LUA\n\n");
+    else if (outputFormat == CODE) printf("\nOutput format:    CODE\n\n");
 
     ExportParsedData(outFileName, outputFormat);
 
@@ -1078,10 +1079,10 @@ static void ShowCommandLineInfo(void)
     printf("    -i, --input <filename.h>        : Define input header file to parse.\n");
     printf("                                      NOTE: If not specified, defaults to: raylib.h\n\n");
     printf("    -o, --output <filename.ext>     : Define output file and format.\n");
-    printf("                                      Supported extensions: .txt, .json, .xml, .h\n");
+    printf("                                      Supported extensions: .txt, .json, .xml, .lua, .h\n");
     printf("                                      NOTE: If not specified, defaults to: raylib_api.txt\n\n");
     printf("    -f, --format <type>             : Define output format for parser data.\n");
-    printf("                                      Supported types: DEFAULT, JSON, XML, LUA\n\n");
+    printf("                                      Supported types: DEFAULT, JSON, XML, LUA, CODE\n\n");
     printf("    -d, --define <DEF>              : Define functions specifiers (i.e. RLAPI for raylib.h, RMDEF for raymath.h, etc.)\n");
     printf("                                      NOTE: If no specifier defined, defaults to: RLAPI\n\n");
     printf("    -t, --truncate <after>          : Define string to truncate input after (i.e. \"RLGL IMPLEMENTATION\" for rlgl.h)\n");
@@ -1134,6 +1135,7 @@ static void ProcessCommandLine(int argc, char *argv[])
                 else if (IsTextEqual(argv[i + 1], "JSON\0", 5)) outputFormat = JSON;
                 else if (IsTextEqual(argv[i + 1], "XML\0", 4)) outputFormat = XML;
                 else if (IsTextEqual(argv[i + 1], "LUA\0", 4)) outputFormat = LUA;
+                else if (IsTextEqual(argv[i + 1], "CODE\0", 4)) outputFormat = CODE;
             }
             else printf("WARNING: No format parameters provided\n");
         }
@@ -1971,6 +1973,7 @@ static void ExportParsedData(const char *fileName, int format)
             fprintf(outFile, "  }\n");
             fprintf(outFile, "}\n");
         } break;
+        case CODE:
         default: break;
     }
 
