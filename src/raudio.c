@@ -1915,7 +1915,13 @@ float GetMusicTimePlayed(Music music)
     #endif
         {
             //ma_uint32 frameSizeInBytes = ma_get_bytes_per_sample(music.stream.buffer->dsp.formatConverterIn.config.formatIn)*music.stream.buffer->dsp.formatConverterIn.config.channels;
-            unsigned int framesPlayed = music.stream.buffer->framesProcessed;
+            int framesProcessed = (int)music.stream.buffer->framesProcessed;
+            int subBufferSize = (int)music.stream.buffer->sizeInFrames/2;
+            int framesInFirstBuffer = music.stream.buffer->isSubBufferProcessed[0]? 0 : subBufferSize;
+            int framesInSecondBuffer = music.stream.buffer->isSubBufferProcessed[1]? 0 : subBufferSize;
+            int framesSentToMix = music.stream.buffer->frameCursorPos%subBufferSize;
+            int framesPlayed = (framesProcessed - framesInFirstBuffer - framesInSecondBuffer + framesSentToMix)%(int)music.frameCount;
+            if (framesPlayed < 0) framesPlayed += music.frameCount;
             secondsPlayed = (float)framesPlayed/music.stream.sampleRate;
         }
     }
