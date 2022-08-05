@@ -1667,16 +1667,16 @@ void StopMusicStream(Music music)
     switch (music.ctxType)
     {
 #if defined(SUPPORT_FILEFORMAT_WAV)
-        case MUSIC_AUDIO_WAV: drwav_seek_to_pcm_frame((drwav *)music.ctxData, 0); break;
+        case MUSIC_AUDIO_WAV: drwav_seek_to_first_pcm_frame((drwav *)music.ctxData); break;
 #endif
 #if defined(SUPPORT_FILEFORMAT_OGG)
         case MUSIC_AUDIO_OGG: stb_vorbis_seek_start((stb_vorbis *)music.ctxData); break;
 #endif
 #if defined(SUPPORT_FILEFORMAT_FLAC)
-        case MUSIC_AUDIO_FLAC: drflac_seek_to_pcm_frame((drflac *)music.ctxData, 0); break;
+        case MUSIC_AUDIO_FLAC: drflac__seek_to_first_frame((drflac *)music.ctxData); break;
 #endif
 #if defined(SUPPORT_FILEFORMAT_MP3)
-        case MUSIC_AUDIO_MP3: drmp3_seek_to_pcm_frame((drmp3 *)music.ctxData, 0); break;
+        case MUSIC_AUDIO_MP3: drmp3_seek_to_start_of_stream((drmp3 *)music.ctxData); break;
 #endif
 #if defined(SUPPORT_FILEFORMAT_XM)
         case MUSIC_MODULE_XM: jar_xm_reset((jar_xm_context_t *)music.ctxData); break;
@@ -1721,7 +1721,6 @@ void UpdateMusicStream(Music music)
 {
     if (music.stream.buffer == NULL) return;
 
-    bool streamEnding = false;
     unsigned int subBufferSizeInFrames = music.stream.buffer->sizeInFrames/2;
 
     // On first call of this function we lazily pre-allocated a temp buffer to read audio files/memory data in
@@ -1845,22 +1844,18 @@ void UpdateMusicStream(Music music)
 
         if (framesLeft <= subBufferSizeInFrames)
         {
-            // Streaming is ending, we filled latest frames from input
-            streamEnding = true;
-            break;
+            if (!music.looping)
+            {
+                // Streaming is ending, we filled latest frames from input
+                StopMusicStream(music);
+                return;
+            }
         }
     }
 
-    if (streamEnding)
-    {
-        if (!music.looping) StopMusicStream(music);
-    }
-    else
-    {
-        // NOTE: In case window is minimized, music stream is stopped,
-        // just make sure to play again on window restore
-        if (IsMusicStreamPlaying(music)) PlayMusicStream(music);
-    }
+    // NOTE: In case window is minimized, music stream is stopped,
+    // just make sure to play again on window restore
+    if (IsMusicStreamPlaying(music)) PlayMusicStream(music);
 }
 
 // Check if any music is playing
@@ -2003,9 +1998,7 @@ void UpdateAudioStream(AudioStream stream, const void *data, int frameCount)
             // Assuming so, but if not will need to change this logic.
             if (subBufferSizeInFrames >= (ma_uint32)frameCount)
             {
-                ma_uint32 framesToWrite = subBufferSizeInFrames;
-
-                if (framesToWrite > (ma_uint32)frameCount) framesToWrite = (ma_uint32)frameCount;
+                ma_uint32 framesToWrite = (ma_uint32)frameCount;
 
                 ma_uint32 bytesToWrite = framesToWrite*stream.channels*(stream.sampleSize/8);
                 memcpy(subBuffer, data, bytesToWrite);
