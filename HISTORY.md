@@ -368,7 +368,7 @@ notes on raylib 4.2 - 9th Anniversary Edition
 
 Here we go again! New raylib release! Nine months after latest raylib, here it is a new version. It was supposed to be just a small update but, actually, it's a huge update with lots of changes a improvements. It's also the update with more contributors to date.
 
-Some numbers to start:
+Some numbers to start with:
 
  - **+190** closed issues (for a TOTAL of **+1220**!)
  - **+500** commits since previous RELEASE
@@ -376,4 +376,21 @@ Some numbers to start:
  - **+60** functions REVIEWED/REDESIGNED
  - **+70** new contributors (for a TOTAL of **+350**!)
 
-_TODO_
+Highlights for `raylib 4.2`:
+
+ - [**`rres 1.0`**](https://github.com/raysan5/rres): 
+
+ - [**`raygui 3.2`**](https://github.com/raysan5/raygui): The **official raylib immediate-mode gui library** has been updated to a new version... It has been simplified and constrained for a better focus on its task: provide a simple and easy-to-use immediate-mode-gui library for small tools development.
+
+ - [**`raylib_parser`**](https://github.com/raysan5/raylib/tree/master/parser): Added **new tool to parse `raylib.h`** and tokenize its enums, structs and functions, extracting all required info (name, params, descriptions...) into custom output formats (TXT, XML, JSON...) for further processing. This tool is specially useful to **automatize bindings generation**. Hopefully, this tool will make life easier to binding creators to update their bindings for raylib 4.0 or adding new ones!
+
+ - **raylib extra libraries cleanup**:
+
+ - **raylib examples review**: 7 new examples added, 2 removed and 
+
+ - **New file system API**:
+
+ - **New audio stream processors API**:
+
+ - 
+
