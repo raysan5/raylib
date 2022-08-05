@@ -9,7 +9,13 @@ return {
     {
       name = "RAYLIB_VERSION",
       type = "STRING",
-      value = "4.1-dev",
+      value = "4.2",
+      description = ""
+    },
+    {
+      name = "__declspec(x)",
+      type = "MACRO",
+      value = "__attribute__((x))",
       description = ""
     },
     {
@@ -1279,6 +1285,27 @@ return {
           description = "VR distortion scale in"
         }
       }
+    },
+    {
+      name = "FilePathList",
+      description = "File path list",
+      fields = {
+        {
+          type = "unsigned int",
+          name = "capacity",
+          description = "Filepaths max entries"
+        },
+        {
+          type = "unsigned int",
+          name = "count",
+          description = "Filepaths entries count"
+        },
+        {
+          type = "char **",
+          name = "paths",
+          description = "Filepaths entries"
+        }
+      }
     }
   },
   aliases = {
@@ -1372,6 +1399,11 @@ return {
           name = "FLAG_WINDOW_HIGHDPI",
           value = 8192,
           description = "Set to support HighDPI"
+        },
+        {
+          name = "FLAG_WINDOW_MOUSE_PASSTHROUGH",
+          value = 16384,
+          description = "Set to support mouse passthrough, only supported when FLAG_WINDOW_UNDECORATED"
         },
         {
           name = "FLAG_MSAA_4X_HINT",
@@ -2755,7 +2787,7 @@ return {
           description = "Blend textures subtracting colors (alternative)"
         },
         {
-          name = "BLEND_ALPHA_PREMUL",
+          name = "BLEND_ALPHA_PREMULTIPLY",
           value = 5,
           description = "Blend premultiplied textures considering alpha"
         },
@@ -3157,7 +3189,7 @@ return {
     },
     {
       name = "GetMonitorWidth",
-      description = "Get specified monitor width (max available by monitor)",
+      description = "Get specified monitor width (current video mode used by monitor)",
       returnType = "int",
       params = {
         {type = "int", name = "monitor"}
@@ -3165,7 +3197,7 @@ return {
     },
     {
       name = "GetMonitorHeight",
-      description = "Get specified monitor height (max available by monitor)",
+      description = "Get specified monitor height (current video mode used by monitor)",
       returnType = "int",
       params = {
         {type = "int", name = "monitor"}
@@ -3227,6 +3259,16 @@ return {
       returnType = "const char *"
     },
     {
+      name = "EnableEventWaiting",
+      description = "Enable waiting for events on EndDrawing(), no automatic event polling",
+      returnType = "void"
+    },
+    {
+      name = "DisableEventWaiting",
+      description = "Disable waiting for events on EndDrawing(), automatic events polling",
+      returnType = "void"
+    },
+    {
       name = "SwapScreenBuffer",
       description = "Swap back buffer with front buffer (screen drawing)",
       returnType = "void"
@@ -3238,10 +3280,10 @@ return {
     },
     {
       name = "WaitTime",
-      description = "Wait for some milliseconds (halt program execution)",
+      description = "Wait for some time (halt program execution)",
       returnType = "void",
       params = {
-        {type = "float", name = "ms"}
+        {type = "double", name = "seconds"}
       }
     },
     {
@@ -3524,6 +3566,15 @@ return {
       }
     },
     {
+      name = "GetScreenToWorld2D",
+      description = "Get the world space position for a 2d camera screen space position",
+      returnType = "Vector2",
+      params = {
+        {type = "Vector2", name = "position"},
+        {type = "Camera2D", name = "camera"}
+      }
+    },
+    {
       name = "GetWorldToScreenEx",
       description = "Get size position for a 3d world space position",
       returnType = "Vector2",
@@ -3537,15 +3588,6 @@ return {
     {
       name = "GetWorldToScreen2D",
       description = "Get the screen space position for a 2d camera world space position",
-      returnType = "Vector2",
-      params = {
-        {type = "Vector2", name = "position"},
-        {type = "Camera2D", name = "camera"}
-      }
-    },
-    {
-      name = "GetScreenToWorld2D",
-      description = "Get the world space position for a 2d camera screen space position",
       returnType = "Vector2",
       params = {
         {type = "Vector2", name = "position"},
@@ -3652,6 +3694,14 @@ return {
       }
     },
     {
+      name = "OpenURL",
+      description = "Open URL with default system browser (if available)",
+      returnType = "void",
+      params = {
+        {type = "const char *", name = "url"}
+      }
+    },
+    {
       name = "SetTraceLogCallback",
       description = "Set custom trace log",
       returnType = "void",
@@ -3716,6 +3766,16 @@ return {
         {type = "const char *", name = "fileName"},
         {type = "void *", name = "data"},
         {type = "unsigned int", name = "bytesToWrite"}
+      }
+    },
+    {
+      name = "ExportDataAsCode",
+      description = "Export data to code (.h), returns true on success",
+      returnType = "bool",
+      params = {
+        {type = "const char *", name = "data"},
+        {type = "unsigned int", name = "size"},
+        {type = "const char *", name = "fileName"}
       }
     },
     {
@@ -3827,20 +3887,6 @@ return {
       returnType = "const char *"
     },
     {
-      name = "GetDirectoryFiles",
-      description = "Get filenames in a directory path (memory must be freed)",
-      returnType = "char **",
-      params = {
-        {type = "const char *", name = "dirPath"},
-        {type = "int *", name = "count"}
-      }
-    },
-    {
-      name = "ClearDirectoryFiles",
-      description = "Clear directory files paths buffers (free memory)",
-      returnType = "void"
-    },
-    {
       name = "ChangeDirectory",
       description = "Change working directory, return true on success",
       returnType = "bool",
@@ -3849,22 +3895,56 @@ return {
       }
     },
     {
+      name = "IsPathFile",
+      description = "Check if a given path is a file or a directory",
+      returnType = "bool",
+      params = {
+        {type = "const char *", name = "path"}
+      }
+    },
+    {
+      name = "LoadDirectoryFiles",
+      description = "Load directory filepaths",
+      returnType = "FilePathList",
+      params = {
+        {type = "const char *", name = "dirPath"}
+      }
+    },
+    {
+      name = "LoadDirectoryFilesEx",
+      description = "Load directory filepaths with extension filtering and recursive directory scan",
+      returnType = "FilePathList",
+      params = {
+        {type = "const char *", name = "basePath"},
+        {type = "const char *", name = "filter"},
+        {type = "bool", name = "scanSubdirs"}
+      }
+    },
+    {
+      name = "UnloadDirectoryFiles",
+      description = "Unload filepaths",
+      returnType = "void",
+      params = {
+        {type = "FilePathList", name = "files"}
+      }
+    },
+    {
       name = "IsFileDropped",
       description = "Check if a file has been dropped into window",
       returnType = "bool"
     },
     {
-      name = "GetDroppedFiles",
-      description = "Get dropped files names (memory must be freed)",
-      returnType = "char **",
-      params = {
-        {type = "int *", name = "count"}
-      }
+      name = "LoadDroppedFiles",
+      description = "Load dropped filepaths",
+      returnType = "FilePathList"
     },
     {
-      name = "ClearDroppedFiles",
-      description = "Clear dropped files paths buffer (free memory)",
-      returnType = "void"
+      name = "UnloadDroppedFiles",
+      description = "Unload dropped filepaths",
+      returnType = "void",
+      params = {
+        {type = "FilePathList", name = "files"}
+      }
     },
     {
       name = "GetFileModTime",
@@ -3911,31 +3991,6 @@ return {
       params = {
         {type = "const unsigned char *", name = "data"},
         {type = "int *", name = "outputSize"}
-      }
-    },
-    {
-      name = "SaveStorageValue",
-      description = "Save integer value to storage file (to defined position), returns true on success",
-      returnType = "bool",
-      params = {
-        {type = "unsigned int", name = "position"},
-        {type = "int", name = "value"}
-      }
-    },
-    {
-      name = "LoadStorageValue",
-      description = "Load integer value from storage file (from defined position)",
-      returnType = "int",
-      params = {
-        {type = "unsigned int", name = "position"}
-      }
-    },
-    {
-      name = "OpenURL",
-      description = "Open URL with default system browser (if available)",
-      returnType = "void",
-      params = {
-        {type = "const char *", name = "url"}
       }
     },
     {
@@ -4151,8 +4206,13 @@ return {
     },
     {
       name = "GetMouseWheelMove",
-      description = "Get mouse wheel movement Y",
+      description = "Get mouse wheel movement for X or Y, whichever is larger",
       returnType = "float"
+    },
+    {
+      name = "GetMouseWheelMoveV",
+      description = "Get mouse wheel movement for both X and Y",
+      returnType = "Vector2"
     },
     {
       name = "SetMouseCursor",
@@ -6592,14 +6652,6 @@ return {
     {
       name = "GenMeshTangents",
       description = "Compute mesh tangents",
-      returnType = "void",
-      params = {
-        {type = "Mesh *", name = "mesh"}
-      }
-    },
-    {
-      name = "GenMeshBinormals",
-      description = "Compute mesh binormals",
       returnType = "void",
       params = {
         {type = "Mesh *", name = "mesh"}
