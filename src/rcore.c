@@ -4070,14 +4070,6 @@ static bool InitGraphicsDevice(int width, int height)
                 }
             }
         }
-
-#if defined(PLATFORM_DESKTOP)
-        // If we are windowed fullscreen, ensures that window does not minimize when focus is lost
-        if ((CORE.Window.screen.height == CORE.Window.display.height) && (CORE.Window.screen.width == CORE.Window.display.width))
-        {
-            glfwWindowHint(GLFW_AUTO_ICONIFY, 0);
-        }
-#endif
         TRACELOG(LOG_WARNING, "SYSTEM: Closest fullscreen videomode: %i x %i", CORE.Window.display.width, CORE.Window.display.height);
 
         // NOTE: ISSUE: Closest videomode could not match monitor aspect-ratio, for example,
@@ -4099,6 +4091,13 @@ static bool InitGraphicsDevice(int width, int height)
     }
     else
     {
+#if defined(PLATFORM_DESKTOP)
+        // If we are windowed fullscreen, ensures that window does not minimize when focus is lost
+        if ((CORE.Window.screen.height == CORE.Window.display.height) && (CORE.Window.screen.width == CORE.Window.display.width))
+        {
+            glfwWindowHint(GLFW_AUTO_ICONIFY, 0);
+        }
+#endif
         // No-fullscreen window creation
         CORE.Window.handle = glfwCreateWindow(CORE.Window.screen.width, CORE.Window.screen.height, (CORE.Window.title != 0)? CORE.Window.title : " ", NULL, NULL);
 
