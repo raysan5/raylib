@@ -25,7 +25,7 @@
 
 # Define required raylib variables
 PROJECT_NAME       ?= game
-RAYLIB_VERSION     ?= 4.0.0
+RAYLIB_VERSION     ?= 4.2.0
 RAYLIB_PATH        ?= ..\..
 
 # Define default options

@@ -1,11 +1,11 @@
-# Raylib template for Code::Blocks
+# raylib template for Code::Blocks
 
-1. Install Raylib. 
+1. Install raylib. 
 
 On Windows you should install the **Windows Installer (with MinGW compiler)** package.
 On other platforms you can install however you like following the instructions in the wiki.
 
-    * https://github.com/raysan5/raylib/releases/download/4.0.0/raylib_installer_v400.mingw.exe
+    * https://github.com/raysan5/raylib/releases/download/4.2.0/raylib_installer_v420.mingw.exe
     * https://github.com/raysan5/raylib/wiki/Working-on-GNU-Linux
     * https://github.com/raysan5/raylib/wiki/Working-on-macOS
 
