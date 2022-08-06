@@ -7,7 +7,6 @@ Some people ported raylib to other languages in form of bindings or wrappers to 
 |  name              | raylib version  | language  | license    | repo                                                      |
 |:------------------:|:---------------:|:---------:|:----------:|-----------------------------------------------------------|
 | raylib             | **4.0** | [C/C++](https://en.wikipedia.org/wiki/C_(programming_language))    | Zlib | https://github.com/raysan5/raylib          |
-https://github.com/GuvaCode/Ray4Laz 
 | raylib-boo         | 3.7     | [Boo](http://boo-language.github.io/)| MIT | https://github.com/Rabios/raylib-boo          |
 | Raylib-cs          | **4.0** | [C#](https://en.wikipedia.org/wiki/C_Sharp_(programming_language)) | Zlib | https://github.com/ChrisDill/Raylib-cs     |
 | Raylib-CsLo        | **4.0** | [C#](https://en.wikipedia.org/wiki/C_Sharp_(programming_language)) | MPL-2.0 | https://github.com/NotNotTech/Raylib-CsLo  |
