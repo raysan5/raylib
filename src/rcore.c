@@ -5265,6 +5265,8 @@ static void WindowFocusCallback(GLFWwindow *window, int focused)
 // GLFW3 Keyboard Callback, runs on key pressed
 static void KeyCallback(GLFWwindow *window, int key, int scancode, int action, int mods)
 {
+    if (key < 0) return;    // Security check, macOS fn key generates -1
+    
     // WARNING: GLFW could return GLFW_REPEAT, we need to consider it as 1
     // to work properly with our implementation (IsKeyDown/IsKeyUp checks)
     if (action == GLFW_RELEASE) CORE.Input.Keyboard.currentKeyState[key] = 0;
