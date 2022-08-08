@@ -177,6 +177,7 @@ Detailed changes:
 [bindings] ADDED: raylib.zig (#2449) by @ryupold
 [bindings] ADDED: racket-raylib (#2454) by @eutro
 [bindings] ADDED: raylibr (#2611) by @ramiromagno
+[bindings] ADDED: Raylib.4.0.Pascal (#2617) by @sysrpl
 [bindings] REVIEWED: Multiple bindings updated to raylib 4.0
 [build] ADDED: VS2022 project
 [build] ADDED: Support macOS by zig build system (#2175)
@@ -186,6 +187,7 @@ Detailed changes:
 [build] ADDED: Repology badge (#2367) by @jubalh
 [build] ADDED: Support DLL compilation with TCC compiler (#2569) by @audinue
 [build] ADDED: Missing examples to VS2022 examples solution
+[build] REMOVED: VS2019 project (unmaintained)
 [build] REMOVED: SUPPORT_MOUSE_CURSOR_POINT config option
 [build] REVIEWED: Fixed RPi make install (#2217) by @wereii
 [build] REVIEWED: Fix build results path on Linux and RPi (#2218) by @wereii
