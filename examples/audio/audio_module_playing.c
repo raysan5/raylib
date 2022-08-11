@@ -42,7 +42,7 @@ int main(void)
     Color colors[14] = { ORANGE, RED, GOLD, LIME, BLUE, VIOLET, BROWN, LIGHTGRAY, PINK,
                          YELLOW, GREEN, SKYBLUE, PURPLE, BEIGE };
 
-    // Creates ome circles for visual effect
+    // Creates some circles for visual effect
     CircleWave circles[MAX_CIRCLES] = { 0 };
 
     for (int i = MAX_CIRCLES - 1; i >= 0; i--)
