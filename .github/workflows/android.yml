@@ -42,9 +42,6 @@ jobs:
       shell: bash
       if: github.event_name == 'release' && github.event.action == 'published'
       
-    - name: Checkout Android NDK
-      uses: actions/checkout@v2
-      
     - name: Setup Android NDK
       id: setup-ndk
       uses: nttld/setup-ndk@v1
