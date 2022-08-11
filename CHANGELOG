@@ -1,10 +1,10 @@
 changelog
 ---------
 
-Current Release:    raylib 4.0.0 (05 November 2021)
+Current Release:    raylib 4.2.0 (11 August 2022)
 
 -------------------------------------------------------------------------
-Release:     raylib 4.2 (August 2022)
+Release:     raylib 4.2 (11 August 2022)
 -------------------------------------------------------------------------
 KEY CHANGES:
  - REMOVED: extras libraries (raygui, physac, rrem, reasings, raudio.h) moved to independent separate repos
@@ -12,8 +12,11 @@ KEY CHANGES:
  - rres 1.0: A custom resource-processing and packaging file format, including tooling and raylib integration examples
  - raygui 3.2: New version of the immediate-mode gui system for tools development with raylib
  - raylib_parser: Multiple improvements of the raylib parser to automatize bindings generation
+ - ADDED: New file system API: Reviewed to be more aligned with raylib conventions and one advance function added
+ - ADDED: New audio stream processors API (_experimental_): Allowing to add custom audio stream data processors using callbacks
 
 Detailed changes:
+[multi] ADDED: Frequently Asked Questions (FAQ.md)
 [multi] REVIEWED: Multiple trace log messages
 [multi] REVIEWED: Avoid some float to double promotions
 [multi] REVIEWED: Some functions input parametes that should be const
@@ -209,9 +212,9 @@ Detailed changes:
 [extras] `WARNING`: REMOVED: physac from raylib sources/examples, use github.com/raysan5/physac
 [extras] `WARNING`: REMOVED: raygui from raylib/src/extras, use github.com/raysan5/raygui
 [extras] `WARNING`: REMOVED: rmem from raylib/src/extras, moved to github.com/raylib-extras/rmem
-[extras] `WARNING`: REMOVED: easings from raylib/src/extras, moved to examples dir as reasings
+[extras] `WARNING`: REMOVED: easings from raylib/src/extras, moved to github.com/raylib-extras/reasings
 [extras] `WARNING`: REMOVED: raudio.h from raylib/src, moved to github.com/raysan5/raudio
-[misc] REVIEWED: Update external libraries to latest version released
+[misc] REVIEWED: Update some external libraries to latest versions
 
 -------------------------------------------------------------------------
 Release:     raylib 4.0 - 8th Anniversary Edition (05 November 2021)
