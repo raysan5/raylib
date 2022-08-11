@@ -42,7 +42,7 @@ Some people ported raylib to other languages in form of bindings or wrappers to 
 | Ray4Laz            | **4.0** | [Pascal](https://en.wikipedia.org/wiki/Pascal_(programming_language))| Zlib |  https://github.com/GuvaCode/Ray4Laz |
 | Raylib.4.0.Pascal  | **4.0** | [Free Pascal](https://en.wikipedia.org/wiki/Free_Pascal)| Zlib |  https://github.com/sysrpl/Raylib.4.0.Pascal |
 | pyraylib           | 3.7     | [Python](https://www.python.org/)    | Zlib    | https://github.com/Ho011/pyraylib         |
-| raylib-python-cffi | **4.0** | [Python](https://www.python.org/)    | EPL-2.0 | https://github.com/electronstudio/raylib-python-cffi |
+| raylib-python-cffi | **4.2** | [Python](https://www.python.org/)    | EPL-2.0 | https://github.com/electronstudio/raylib-python-cffi |
 | raylib-php         | 3.5     | [PHP](https://en.wikipedia.org/wiki/PHP) | Zlib | https://github.com/joseph-montanez/raylib-php   |
 | raylib-phpcpp      | 3.5     | [PHP](https://en.wikipedia.org/wiki/PHP) | Zlib | https://github.com/oraoto/raylib-phpcpp         |
 | raylibr            | **4.0** | [R](https://www.r-project.org)       | MIT | https://github.com/jeroenjanssens/raylibr         |
