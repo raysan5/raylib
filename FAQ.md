@@ -39,7 +39,7 @@ Yes, raylib can be used to create any kind of application, not just videogames. 
 
 ### How can I learn to use raylib? Is there some official documentation or tutorials?
 
-raylib does not provide a "standard" API reference documentation like other libraries, all of the raylib functionality is exposed in a simple [cheatsheet](https://www.raylib.com/cheatsheet/cheatsheet.html). Most of the functions are self-explanatori and the required parameters are very intuitive. It's also highly recommended to take a look to [`raylib.h`](https://github.com/raysan5/raylib/blob/master/src/raylib.h) header file or even the source code, that is very clean and organized, intended for teaching.
+raylib does not provide a "standard" API reference documentation like other libraries, all of the raylib functionality is exposed in a simple [cheatsheet](https://www.raylib.com/cheatsheet/cheatsheet.html). Most of the functions are self-explanatory and the required parameters are very intuitive. It's also highly recommended to take a look to [`raylib.h`](https://github.com/raysan5/raylib/blob/master/src/raylib.h) header file or even the source code, that is very clean and organized, intended for teaching.
 
 raylib also provides a big [collection of examples](https://www.raylib.com/examples.html), to showcase the multiple functionality usage (+120 examples). Examples are categorized by the internal module functionality and also define an estimated level of difficulty to guide the users checking them.
 
@@ -103,7 +103,7 @@ To develop raylib programs you only need a text editor (with recommended code sy
 
 A [raylib Windows Installer](https://raysan5.itch.io/raylib) package is distributed including the Notepad++ editor and MinGW (GCC) compiler pre-configured for Windows for new users as an starter-pack but for more advance configurations with other editors/compilers, [raylib Wiki](https://github.com/raysan5/raylib/wiki) provides plenty of configuration tutorials.
 
-### Which are raylib external dependencies?
+### What are raylib's external dependencies?
 
 raylib is self-contained, it has no external dependencies to build it. But internally raylib uses several libraries from other developers, mostly used to load specific file-formats.
 
