@@ -363,34 +363,35 @@ Those are some of the key features for this new release but actually there is wa
 
 Undoubtely, **this is the best raylib ever**. Enjoy gamedev/tools/graphics programming! :)
 
-notes on raylib 4.2 - 9th Anniversary Edition
----------------------------------------------
+notes on raylib 4.2
+-------------------
 
-Here we go again! New raylib release! Nine months after latest raylib, here it is a new version. It was supposed to be just a small update but, actually, it's a huge update with lots of changes a improvements. It's also the update with more contributors to date.
+**New raylib release!** Nine months after latest raylib, here it is a new version. It was supposed to be just a small update but, actually, it's a huge update with lots of changes a improvements. It has been possible thanks to the many contributors that has helped with issues and improvements, it's the **update with more contributors to date** and that's amazing!
 
 Some numbers to start with:
 
- - **+190** closed issues (for a TOTAL of **+1220**!)
- - **+500** commits since previous RELEASE
+ - **+200** closed issues (for a TOTAL of **1230**!)
+ - **+540** commits since previous RELEASE (for a TOTAL of **+6000**!)
  - **+20** functions ADDED to raylib API (for a TOTAL of **502**!)
  - **+60** functions REVIEWED/REDESIGNED
- - **+70** new contributors (for a TOTAL of **+350**!)
+ - **+70** new contributors (for a TOTAL of **+360**!)
 
 Highlights for `raylib 4.2`:
 
- - [**`rres 1.0`**](https://github.com/raysan5/rres): 
+ - **raylib extra libraries cleanup**: raylib has been on diet and all the _extra_ libraries included on previous releases have been removed from raylib. Now raylib only includes the original **7** raylib modules: `rcore`, `rlgl`, `rshapes`, `rtextures`, `rtext`, `rmodels` and `raudio`. But no worries, _extra_ libraries have not been deleted, they have been moved to their own repos for better maintainability and more focus on its functionality. The libraries moved out from raylib repo are: [`raygui`](https://github.com/raysan5/raygui), [`physac`](https://github.com/raysan5/physac), [`rmem`](https://github.com/raylib-extras/rmem), [`reasings`](https://github.com/raylib-extras/reasings) and [`raudio`](https://github.com/raysan5/raudio) (standalone mode). On that same line, a new **amazing GitHub group:** [`raylib-extras`](https://github.com/raylib-extras) has been created by @JeffM2501 to contain raylib extra libraries as well as other raylib add-ons provided by the community. Jeff has done an amazing work on that line, providing multiple libraries and examples for raylib, like [custom first-person and third person camera systems](https://github.com/raylib-extras/extras-c/tree/main/cameras), [Dear ImGui raylib integration](https://github.com/raylib-extras/rlImGui), [multiple specific examples](https://github.com/raylib-extras/examples-c) and even a complete [RPG Game Example](https://github.com/raylib-extras/RPGExample)! Great work Jeff! :D
+ 
+ - **raylib examples review**: The +120 raylib examples have been reviewed to add clearer information about when the were first created (raylib version used) and when they were updated for the last time. But the greatest improvement for users has been the **addition of an estimated difficulty level** for every example, [web has been updated accordingly](https://www.raylib.com/examples.html) to reflect those difficulty levels. Now examples are classified with **1 to 4 stars** depending on difficulty to help users with their learning process. Personally, I think this "small" addition could be a game-changer to better guide new users on the library adoption! Additionally, this new raylib release includes 7 new examples; the most interesting one: [`text_codepoints_loading`](https://www.raylib.com/examples/text/loader.html?name=text_codepoints_loading) that illustrates how to load and draw custom codepoints from a font file, very useful for Asian languages. 
 
- - [**`raygui 3.2`**](https://github.com/raysan5/raygui): The **official raylib immediate-mode gui library** has been updated to a new version... It has been simplified and constrained for a better focus on its task: provide a simple and easy-to-use immediate-mode-gui library for small tools development.
+ - [**`rres 1.0`**](https://github.com/raysan5/rres): New `rres` **resources packaging file-format**, including a [`rres-raylib`](https://github.com/raysan5/rres/blob/master/src/rres-raylib.h) library implementation and [`rrespacker`](https://raylibtech.itch.io/rrespacker) tool. `rres` file format has been [under development for +8 years](https://github.com/raysan5/rres#design-history) and it was originally created to be part of raylib. It was highly inspired by _XNA XNB_ resources file format but design has changed a lot along the years. This first release of the format specs is engine-agnostic and has been designed to be portable to any engine, including lots of professional features like data processing, compression and encryption.
 
- - [**`raylib_parser`**](https://github.com/raysan5/raylib/tree/master/parser): Added **new tool to parse `raylib.h`** and tokenize its enums, structs and functions, extracting all required info (name, params, descriptions...) into custom output formats (TXT, XML, JSON...) for further processing. This tool is specially useful to **automatize bindings generation**. Hopefully, this tool will make life easier to binding creators to update their bindings for raylib 4.0 or adding new ones!
+ - [**`raygui 3.2`**](https://github.com/raysan5/raygui): The **official raylib immediate-mode gui library** designed for tools development has been updated to a new version aligned with raylib 4.2. Multiple controls have been reviewed for library consistency, now all controls follow a similar function signature. It has been battle-tested with the development of +8 published tools in the last months. The tools can be seen and used for free in the [raylib technologies tools page](https://raylibtech.itch.io/). Worth mentioning that several of those **tools have been open sourced** for anyone to use, compile, contribute or learn how the code works.
+ 
+ - [**`raylib_parser`**](https://github.com/raysan5/raylib/tree/master/parser): Multiple contributors **using the tool to automatize bindings creation** have contributed with improvements of this **tool to parse `raylib.h`** (and other raylib-style headers) to tokenize its enums, structs and functions. Processed data can be exported to custom file formats (i.e XML, JSON, LUA) for bindings generation or even docs generation if required.
 
- - **raylib extra libraries cleanup**:
+ - **New file system API**: Current API has been redesigned to be more comprehensive and better aligned with raylib naming conventions, two new functions are provided `LoadDirectoryFiles()`/`LoadDirectoryFilesEx()` to load a `FilePathList` for provided path, supporting extension filtering and recursive directory scan. `LoadDroppedFiles()` has been renamed to better reflect its internal functionality. Now, all raylib functions that start with `Load*()` allocate memory internally and a equivalent `Unload*()` function is defined to take care of that memory internally when not required any more!
 
- - **raylib examples review**: 7 new examples added, 2 removed and 
+ - **New audio stream processors API** (_experimental_): Now real-time audio stream data processors can be added using callbacks to played Music. It allows users to create custom effects for audio like delays of low-pass-filtering (example provided). The new API uses a callback system and it's still _ highly experimental_, it differs from the usual level of complexity that provides raylib and it is intended for advance users. It could change in the future but, actually, `raudio` module is in the spotlight for future updates; [miniaudio](https://github.com/mackron/miniaudio) implements a new higher-level API that can be useful in the future for raylib.
 
- - **New file system API**:
+As always, there are more improvements than the key features listed, make sure to check raylib [CHANGELOG](CHANGELOG) for the detailed list of changes; for this release a `WARNING` flag has been added to all the changes that could affect bindings or productivity code. **raylib keeps improving one more version** and a special focus on maintainability has been put on the library for the future. Specific/advance functionality will be provided through **raylib-extras** repos and raylib main repo devlelopment will be focused on what made raylib popular: being a simple and easy-to-use library to **enjoy videogames programming**.
 
- - **New audio stream processors API**:
-
- - 
-
+**Enjoy gamedev/tools/graphics programming!** :)
