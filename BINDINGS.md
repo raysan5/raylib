@@ -25,7 +25,7 @@ Some people ported raylib to other languages in form of bindings or wrappers to 
 | gforth-raylib      | 3.5     | [Gforth](https://gforth.org/)            | MIT  | https://github.com/ArnautDaniel/gforth-raylib   |
 | raylib-hx          | 4.0     | [Haxe](https://haxe.org/)                | Zlib | https://github.com/foreignsasquatch/raylib-hx    |
 | hb-raylib          | 3.5     | [Harbour](https://harbour.github.io)                 | MIT | https://github.com/MarcosLeonardoMendezGerencir/hb-raylib |
-| jaylib             | **4.0** | [Java](https://en.wikipedia.org/wiki/Java_(programming_language)) | GPLv3 | https://github.com/electronstudio/jaylib/  |
+| jaylib             | **4.2** | [Java](https://en.wikipedia.org/wiki/Java_(programming_language)) | GPLv3+CE | https://github.com/electronstudio/jaylib/  |
 | raylib-j           | **4.0** | [Java](https://en.wikipedia.org/wiki/Java_(programming_language)) | Zlib | https://github.com/CreedVI/Raylib-J |
 | raylib.jl          | **4.0** | [Julia](https://julialang.org/)      | Zlib | https://github.com/irishgreencitrus/raylib.jl |
 | kaylib             | 3.7     | [Kotlin/native](https://kotlinlang.org) | ? | https://github.com/electronstudio/kaylib      |
