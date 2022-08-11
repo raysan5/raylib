@@ -48,9 +48,6 @@ jobs:
       with:
         ndk-version: r25
         add-to-path: false
-        
-    - name: Add Android NDK to path
-      run: ./build.sh
       env:
         ANDROID_NDK_HOME: ${{ steps.setup-ndk.outputs.ndk-path }}
 
