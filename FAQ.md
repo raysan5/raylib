@@ -11,7 +11,7 @@
 - [What programming languages can I use with raylib?](#what-programming-languages-can-i-use-with-raylib)
 - [Why is it coded in C?](#why-is-it-coded-in-c)
 - [Is raylib a videogames engine?](#is-raylib-a-videogames-engine)
-- [What provides raylib that other engines or libraries don't?](#what-provides-raylib-that-other-engines-or-libraries-dont)
+- [What does raylib provide that other engines or libraries don't?](#what-provides-raylib-that-other-engines-or-libraries-dont)
 - [How does raylib compare to Unity/Unreal/Godot?](#how-does-raylib-compare-to-unityunrealgodot)
 - [What development tools are required for raylib?](#what-development-tools-are-required-for-raylib)
 - [Which are raylib external dependencies?](#which-are-raylib-external-dependencies)
@@ -39,7 +39,7 @@ Yes, raylib can be used to create any kind of application, not only videogames. 
 
 ### How can I lean to use raylib? Is there some official documentation or tutorials?
 
-raylib does not provide an "standard" API reference documentation like other libraries, all the raylib functionality is exposed in a simple [cheatsheet](https://www.raylib.com/cheatsheet/cheatsheet.html). Most of the functions are self-explanatori and the required parameters are very intuitive. It's also highly recommended to take a look to [`raylib.h`](https://github.com/raysan5/raylib/blob/master/src/raylib.h) file header or even also the source code, that is very clean and organized, intended for teaching.
+raylib does not provide a "standard" API reference documentation like other libraries, all the raylib functionality is exposed in a simple [cheatsheet](https://www.raylib.com/cheatsheet/cheatsheet.html). Most of the functions are self-explanatory and the required parameters are very intuitive. It's also highly recommended to take a look at [`raylib.h`](https://github.com/raysan5/raylib/blob/master/src/raylib.h) file header or even also the source code. It is very clean and organized, intended for teaching.
 
 raylib also provides a big [collection of examples](https://www.raylib.com/examples.html), to showcase the multiple functionality usage (+120 examples). Examples are categorized by the internal module functionality and also define an estimated level of difficulty to guide the users checking them.
 
@@ -77,7 +77,7 @@ Also note that raylib is a low-level library that can be easily ported to any pl
 
 ### What programming languages can I use with raylib?
 
-raylib original version is coded in C language (using some C99 features) but it has been binded to +60 programming languages. Check [BINDINGS.md](https://github.com/raysan5/raylib/blob/master/BINDINGS.md) for details.
+raylib original version is coded in C language (using some C99 features) but it has bindings to +60 programming languages. Check [BINDINGS.md](https://github.com/raysan5/raylib/blob/master/BINDINGS.md) for details.
 
 ### Why is it coded in C?
 
@@ -87,9 +87,9 @@ It's a simple language, no high-level code abstractions like [OOP](https://en.wi
 
 I personally consider raylib a graphics library with some high-level features rather than an engine. The line that separates a library/framework from an engine could be very confusing; raylib provides all the required functionality to create simple games or small applications but it does not provide 3 elements that I personally consider any "engine" should provide: Screen manager, GameObject/Entity manager and Resource Manager. Still, most users could do not need those elements or just code simple approaches by their own.
 
-### What provides raylib that other engines or libraries don't?
+### What does raylib provide that other engines or libraries don't?
 
-I would say "simplicity" and "enjoyment" at a really low-level of coding but actually is up to the user to discover it, to try it and to see if it fits their needs. raylib is not good for everyone but it worths a try.
+I would say "simplicity" and "enjoyment" at a really low-level of coding but actually is up to the user to discover it, to try it and to see if it fits their needs. raylib is not good for everyone but it is worth a try.
 
 ### How does raylib compare to Unity/Unreal/Godot?
 
@@ -101,11 +101,11 @@ raylib is a simple programming library, with no integrated tools or editors. It 
 
 To develop raylib programs you only need a text editor (with recommended code syntax highlighting) and a compiler.
 
-A [raylib Windows Installer](https://raysan5.itch.io/raylib) package is distributed including Notepad++ editor and MinGW (GCC) compiler pre-configured for Windows for new users as an starter-pack but for more advance configurations with other editors/compilers, [raylib Wiki](https://github.com/raysan5/raylib/wiki) provides plenty of configuration tutorials.
+A [raylib Windows Installer](https://raysan5.itch.io/raylib) package is distributed including Notepad++ editor and MinGW-w64 (GCC) compiler pre-configured for Windows for new users as an starter-pack but for more advance configurations with other editors/compilers, [raylib Wiki](https://github.com/raysan5/raylib/wiki) provides plenty of configuration tutorials.
 
 ### Which are raylib external dependencies?
 
-raylib is self-contained, it has no external dependencies to build it. But insternally raylib uses several libraries from other developers, mostly used to load specific file-formats.
+raylib is self-contained, it has no external dependencies to build it. But internally raylib uses several libraries from other developers, mostly used to load specific file-formats.
 
 A detailed list of raylib dependencies could be found in [raylib Wiki](https://github.com/raysan5/raylib/wiki/raylib-dependencies).
 
