@@ -42,14 +42,18 @@ jobs:
       shell: bash
       if: github.event_name == 'release' && github.event.action == 'published'
       
-    - name: Setup Android NDK
+    - name: Checkout Android NDK
       uses: actions/checkout@v2
-    - uses: nttld/setup-ndk@v1
+      
+    - name: Setup Android NDK
       id: setup-ndk
+      uses: nttld/setup-ndk@v1
       with:
         ndk-version: r29
         add-to-path: false
-    - run: ./build.sh
+        
+    - name: Add Android NDK to path
+      run: ./build.sh
       env:
         ANDROID_NDK_HOME: ${{ steps.setup-ndk.outputs.ndk-path }}
 
