@@ -555,7 +555,7 @@ void DrawSphere(Vector3 centerPos, float radius, Color color)
 // Draw sphere with extended parameters
 void DrawSphereEx(Vector3 centerPos, float radius, int rings, int slices, Color color)
 {
-    //int numVertex = (rings + 2)*slices*6;
+    int numVertex = (rings + 2)*slices*6;
     rlCheckRenderBatchLimit(numVertex);
 
     rlPushMatrix();
@@ -598,7 +598,7 @@ void DrawSphereEx(Vector3 centerPos, float radius, int rings, int slices, Color 
 // Draw sphere wires
 void DrawSphereWires(Vector3 centerPos, float radius, int rings, int slices, Color color)
 {
-    //int numVertex = (rings + 2)*slices*6;
+    int numVertex = (rings + 2)*slices*6;
     rlCheckRenderBatchLimit(numVertex);
 
     rlPushMatrix();
@@ -645,7 +645,7 @@ void DrawCylinder(Vector3 position, float radiusTop, float radiusBottom, float h
 {
     if (sides < 3) sides = 3;
 
-    //int numVertex = sides*6;
+    int numVertex = sides*6;
     rlCheckRenderBatchLimit(numVertex);
 
     rlPushMatrix();
@@ -704,7 +704,7 @@ void DrawCylinderEx(Vector3 startPos, Vector3 endPos, float startRadius, float e
 {
     if (sides < 3) sides = 3;
 
-    //int numVertex = sides*6;
+    int numVertex = sides*6;
     rlCheckRenderBatchLimit(numVertex);
 
     Vector3 direction = { endPos.x - startPos.x, endPos.y - startPos.y, endPos.z - startPos.z };
@@ -763,7 +763,7 @@ void DrawCylinderWires(Vector3 position, float radiusTop, float radiusBottom, fl
 {
     if (sides < 3) sides = 3;
 
-    //int numVertex = sides*8;
+    int numVertex = sides*8;
     rlCheckRenderBatchLimit(numVertex);
 
     rlPushMatrix();
@@ -797,7 +797,7 @@ void DrawCylinderWiresEx(Vector3 startPos, Vector3 endPos, float startRadius, fl
 {
     if (sides < 3) sides = 3;
 
-    //int numVertex = sides*6;
+    int numVertex = sides*6;
     rlCheckRenderBatchLimit(numVertex);
 
     Vector3 direction = { endPos.x - startPos.x, endPos.y - startPos.y, endPos.z - startPos.z };
