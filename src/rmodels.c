@@ -1100,7 +1100,7 @@ void UploadMesh(Mesh *mesh, bool dynamic)
     rlSetVertexAttribute(1, 2, RL_FLOAT, 0, 0, 0);
     rlEnableVertexAttribute(1);
 
-    // WARNING: When setting default vertex attribute values, the values for each generic vertex attribute 
+    // WARNING: When setting default vertex attribute values, the values for each generic vertex attribute
     // is part of current state and it is maintained even if a different program object is used
 
     if (mesh->normals != NULL)
@@ -1362,7 +1362,7 @@ void DrawMesh(Mesh mesh, Material material, Matrix transform)
         if (mesh.indices != NULL) rlEnableVertexBufferElement(mesh.vboId[6]);
     }
 
-    // WARNING: Disable vertex attribute color input if mesh can not provide that data (despite location being enabled in shader) 
+    // WARNING: Disable vertex attribute color input if mesh can not provide that data (despite location being enabled in shader)
     if (mesh.vboId[3] == 0) rlDisableVertexAttribute(material.shader.locs[SHADER_LOC_VERTEX_COLOR]);
 
     int eyeCount = 1;
@@ -1583,7 +1583,7 @@ void DrawMeshInstanced(Mesh mesh, Material material, const Matrix *transforms, i
         if (mesh.indices != NULL) rlEnableVertexBufferElement(mesh.vboId[6]);
     }
 
-    // WARNING: Disable vertex attribute color input if mesh can not provide that data (despite location being enabled in shader) 
+    // WARNING: Disable vertex attribute color input if mesh can not provide that data (despite location being enabled in shader)
     if (mesh.vboId[3] == 0) rlDisableVertexAttribute(material.shader.locs[SHADER_LOC_VERTEX_COLOR]);
 
     int eyeCount = 1;

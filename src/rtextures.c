@@ -3643,7 +3643,7 @@ void DrawTexturePoly(Texture2D texture, Vector2 center, Vector2 *points, Vector2
 
     rlSetTexture(texture.id);
 
-    // Texturing is only supported on QUADs
+    // Texturing is only supported on RL_QUADS
     rlBegin(RL_QUADS);
 
         rlColor4ub(tint.r, tint.g, tint.b, tint.a);
