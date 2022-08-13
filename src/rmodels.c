@@ -152,7 +152,7 @@ void DrawLine3D(Vector3 startPos, Vector3 endPos, Color color)
     // WARNING: Be careful with internal buffer vertex alignment
     // when using RL_LINES or RL_TRIANGLES, data is aligned to fit
     // lines-triangles-quads in the same indexed buffers!!!
-    //rlCheckRenderBatchLimit(8);
+    rlCheckRenderBatchLimit(8);
 
     rlBegin(RL_LINES);
         rlColor4ub(color.r, color.g, color.b, color.a);
@@ -164,7 +164,7 @@ void DrawLine3D(Vector3 startPos, Vector3 endPos, Color color)
 // Draw a point in 3D space, actually a small line
 void DrawPoint3D(Vector3 position, Color color)
 {
-    //rlCheckRenderBatchLimit(8);
+    rlCheckRenderBatchLimit(8);
 
     rlPushMatrix();
         rlTranslatef(position.x, position.y, position.z);
@@ -179,7 +179,7 @@ void DrawPoint3D(Vector3 position, Color color)
 // Draw a circle in 3D world space
 void DrawCircle3D(Vector3 center, float radius, Vector3 rotationAxis, float rotationAngle, Color color)
 {
-    //rlCheckRenderBatchLimit(2*36);
+    rlCheckRenderBatchLimit(2*36);
 
     rlPushMatrix();
         rlTranslatef(center.x, center.y, center.z);
@@ -200,7 +200,7 @@ void DrawCircle3D(Vector3 center, float radius, Vector3 rotationAxis, float rota
 // Draw a color-filled triangle (vertex in counter-clockwise order!)
 void DrawTriangle3D(Vector3 v1, Vector3 v2, Vector3 v3, Color color)
 {
-    //rlCheckRenderBatchLimit(8);
+    rlCheckRenderBatchLimit(8);
 
     rlBegin(RL_TRIANGLES);
         rlColor4ub(color.r, color.g, color.b, color.a);
@@ -215,7 +215,7 @@ void DrawTriangleStrip3D(Vector3 *points, int pointCount, Color color)
 {
     if (pointCount >= 3)
     {
-        //rlCheckRenderBatchLimit(3*(pointCount - 2));
+        rlCheckRenderBatchLimit(3*(pointCount - 2));
 
         rlBegin(RL_TRIANGLES);
             rlColor4ub(color.r, color.g, color.b, color.a);
@@ -247,7 +247,7 @@ void DrawCube(Vector3 position, float width, float height, float length, Color c
     float y = 0.0f;
     float z = 0.0f;
 
-    //rlCheckRenderBatchLimit(36);
+    rlCheckRenderBatchLimit(36);
 
     rlPushMatrix();
         // NOTE: Transformation is applied in inverse order (scale -> rotate -> translate)
@@ -328,7 +328,7 @@ void DrawCubeWires(Vector3 position, float width, float height, float length, Co
     float y = 0.0f;
     float z = 0.0f;
 
-    //rlCheckRenderBatchLimit(36);
+    rlCheckRenderBatchLimit(36);
 
     rlPushMatrix();
         rlTranslatef(position.x, position.y, position.z);
@@ -405,7 +405,7 @@ void DrawCubeTexture(Texture2D texture, Vector3 position, float width, float hei
     float y = position.y;
     float z = position.z;
 
-    //rlCheckRenderBatchLimit(36);
+    rlCheckRenderBatchLimit(36);
 
     rlSetTexture(texture.id);
 
@@ -468,7 +468,7 @@ void DrawCubeTextureRec(Texture2D texture, Rectangle source, Vector3 position, f
     float texWidth = (float)texture.width;
     float texHeight = (float)texture.height;
 
-    //rlCheckRenderBatchLimit(36);
+    rlCheckRenderBatchLimit(36);
 
     rlSetTexture(texture.id);
 
@@ -556,7 +556,7 @@ void DrawSphere(Vector3 centerPos, float radius, Color color)
 void DrawSphereEx(Vector3 centerPos, float radius, int rings, int slices, Color color)
 {
     //int numVertex = (rings + 2)*slices*6;
-    //rlCheckRenderBatchLimit(numVertex);
+    rlCheckRenderBatchLimit(numVertex);
 
     rlPushMatrix();
         // NOTE: Transformation is applied in inverse order (scale -> translate)
@@ -599,7 +599,7 @@ void DrawSphereEx(Vector3 centerPos, float radius, int rings, int slices, Color 
 void DrawSphereWires(Vector3 centerPos, float radius, int rings, int slices, Color color)
 {
     //int numVertex = (rings + 2)*slices*6;
-    //rlCheckRenderBatchLimit(numVertex);
+    rlCheckRenderBatchLimit(numVertex);
 
     rlPushMatrix();
         // NOTE: Transformation is applied in inverse order (scale -> translate)
@@ -646,7 +646,7 @@ void DrawCylinder(Vector3 position, float radiusTop, float radiusBottom, float h
     if (sides < 3) sides = 3;
 
     //int numVertex = sides*6;
-    //rlCheckRenderBatchLimit(numVertex);
+    rlCheckRenderBatchLimit(numVertex);
 
     rlPushMatrix();
         rlTranslatef(position.x, position.y, position.z);
@@ -705,7 +705,7 @@ void DrawCylinderEx(Vector3 startPos, Vector3 endPos, float startRadius, float e
     if (sides < 3) sides = 3;
 
     //int numVertex = sides*6;
-    //rlCheckRenderBatchLimit(numVertex);
+    rlCheckRenderBatchLimit(numVertex);
 
     Vector3 direction = { endPos.x - startPos.x, endPos.y - startPos.y, endPos.z - startPos.z };
     if ((direction.x == 0) && (direction.y == 0) && (direction.z == 0)) return;
@@ -764,7 +764,7 @@ void DrawCylinderWires(Vector3 position, float radiusTop, float radiusBottom, fl
     if (sides < 3) sides = 3;
 
     //int numVertex = sides*8;
-    //rlCheckRenderBatchLimit(numVertex);
+    rlCheckRenderBatchLimit(numVertex);
 
     rlPushMatrix();
         rlTranslatef(position.x, position.y, position.z);
@@ -798,7 +798,7 @@ void DrawCylinderWiresEx(Vector3 startPos, Vector3 endPos, float startRadius, fl
     if (sides < 3) sides = 3;
 
     //int numVertex = sides*6;
-    //rlCheckRenderBatchLimit(numVertex);
+    rlCheckRenderBatchLimit(numVertex);
 
     Vector3 direction = { endPos.x - startPos.x, endPos.y - startPos.y, endPos.z - startPos.z };
     if ((direction.x == 0) && (direction.y == 0) && (direction.z == 0))return;
@@ -843,7 +843,7 @@ void DrawCylinderWiresEx(Vector3 startPos, Vector3 endPos, float startRadius, fl
 // Draw a plane
 void DrawPlane(Vector3 centerPos, Vector2 size, Color color)
 {
-    //rlCheckRenderBatchLimit(4);
+    rlCheckRenderBatchLimit(4);
 
     // NOTE: Plane is always created on XZ ground
     rlPushMatrix();
@@ -881,7 +881,7 @@ void DrawGrid(int slices, float spacing)
 {
     int halfSlices = slices/2;
 
-    //rlCheckRenderBatchLimit((slices + 2)*4);
+    rlCheckRenderBatchLimit((slices + 2)*4);
 
     rlBegin(RL_LINES);
         for (int i = -halfSlices; i <= halfSlices; i++)
