@@ -148,7 +148,7 @@ typedef struct FunctionInfo {
 } FunctionInfo;
 
 // Output format for parsed data
-typedef enum { DEFAULT = 0, JSON, XML, LUA } OutputFormat;
+typedef enum { DEFAULT = 0, JSON, XML, LUA, CODE } OutputFormat;
 
 //----------------------------------------------------------------------------------
 // Global Variables Definition
