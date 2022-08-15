@@ -153,6 +153,7 @@ int main(void)
         {
             Image image = LoadImageFromTexture(target.texture);
             ImageFlipVertical(&image);
+            ImageCrop(&image, (Rectangle){0, 50, GetScreenWidth(), GetScreenWidth()});
             ExportImage(image, "my_amazing_texture_painting.png");
             UnloadImage(image);
             showSaveMessage = true;
