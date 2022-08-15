@@ -55,7 +55,7 @@ Some people ported raylib to other languages in form of bindings or wrappers to 
 | raylib.v           | **4.0** | [V](https://vlang.io/)               | Zlib     | https://github.com/irishgreencitrus/raylib.v |
 | raylib-wren        | **4.0** | [Wren](http://wren.io/)              | ISC | https://github.com/TSnake41/raylib-wren              |
 | raylib-zig         | **4.0** | [Zig](https://ziglang.org/)               | MIT | https://github.com/Not-Nik/raylib-zig     |
-| raylib.zig         | **4.1-dev** | [Zig](https://ziglang.org/)               | MIT | https://github.com/ryupold/raylib.zig |
+| raylib.zig         | **4.2** | [Zig](https://ziglang.org/)               | MIT | https://github.com/ryupold/raylib.zig |
 | hare-raylib        | auto    | [Hare](https://harelang.org/)        | Zlib | https://git.sr.ht/~evantj/hare-raylib       |
 
 
