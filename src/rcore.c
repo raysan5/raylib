@@ -237,6 +237,12 @@
         //#define GLFW_EXPOSE_NATIVE_COCOA    // WARNING: Fails due to type redefinition
         #include "GLFW/glfw3native.h"       // Required for: glfwGetCocoaWindow()
     #endif
+    
+    // TODO: HACK: Added flag if not provided by GLFW when using external library
+    // Latest GLFW release (GLFW 3.3.8) does not implement this flag, it was added for 3.4.0-dev
+    #if !defined(GLFW_MOUSE_PASSTHROUGH)
+        #define GLFW_MOUSE_PASSTHROUGH      0x0002000D
+    #endif
 #endif
 
 #if defined(PLATFORM_ANDROID)
