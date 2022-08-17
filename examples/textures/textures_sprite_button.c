@@ -2,12 +2,10 @@
 *
 *   raylib [textures] example - sprite button
 *
-*   Example originally created with raylib 2.5, last time updated with raylib 2.5
+*   This example has been created using raylib 2.5 (www.raylib.com)
+*   raylib is licensed under an unmodified zlib/libpng license (View raylib.h for details)
 *
-*   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
-*   BSD-like license that allows static linking with closed source software
-*
-*   Copyright (c) 2019-2022 Ramon Santamaria (@raysan5)
+*   Copyright (c) 2019 Ramon Santamaria (@raysan5)
 *
 ********************************************************************************************/
 
@@ -15,9 +13,6 @@
 
 #define NUM_FRAMES  3       // Number of frames (rectangles) for the button sprite texture
 
-//------------------------------------------------------------------------------------
-// Program main entry point
-//------------------------------------------------------------------------------------
 int main(void)
 {
     // Initialization
@@ -41,6 +36,7 @@ int main(void)
 
     int btnState = 0;               // Button state: 0-NORMAL, 1-MOUSE_HOVER, 2-PRESSED
     bool btnAction = false;         // Button action should be activated
+	bool btnPressed = false;		// Check if button has been actually pressed
 
     Vector2 mousePoint = { 0.0f, 0.0f };
 
@@ -54,16 +50,27 @@ int main(void)
         //----------------------------------------------------------------------------------
         mousePoint = GetMousePosition();
         btnAction = false;
+		if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && CheckCollisionPointRec(mousePoint, btnBounds)) btnPressed = true;
 
         // Check button state
         if (CheckCollisionPointRec(mousePoint, btnBounds))
         {
-            if (IsMouseButtonDown(MOUSE_BUTTON_LEFT)) btnState = 2;
+            if (btnPressed && IsMouseButtonDown(MOUSE_BUTTON_LEFT)) btnState = 2;
             else btnState = 1;
 
-            if (IsMouseButtonReleased(MOUSE_BUTTON_LEFT)) btnAction = true;
+            if (btnPressed && IsMouseButtonReleased(MOUSE_BUTTON_LEFT))
+			{
+				btnAction = true;
+				btnPressed = false;
+			}
         }
-        else btnState = 0;
+        else if (btnPressed)
+		{
+			btnAction = true;
+			btnState = 0;
+			btnPressed = false;
+		}
+		else btnState = 0;
 
         if (btnAction)
         {
