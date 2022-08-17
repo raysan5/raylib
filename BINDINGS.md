@@ -27,7 +27,7 @@ Some people ported raylib to other languages in form of bindings or wrappers to 
 | hb-raylib          | 3.5     | [Harbour](https://harbour.github.io)                 | MIT | https://github.com/MarcosLeonardoMendezGerencir/hb-raylib |
 | jaylib             | **4.2** | [Java](https://en.wikipedia.org/wiki/Java_(programming_language)) | GPLv3+CE | https://github.com/electronstudio/jaylib/  |
 | raylib-j           | **4.0** | [Java](https://en.wikipedia.org/wiki/Java_(programming_language)) | Zlib | https://github.com/CreedVI/Raylib-J |
-| raylib.jl          | **4.0** | [Julia](https://julialang.org/)      | Zlib | https://github.com/irishgreencitrus/raylib.jl |
+| raylib.jl          | **4.2** | [Julia](https://julialang.org/)      | Zlib | https://github.com/irishgreencitrus/raylib.jl |
 | kaylib             | 3.7     | [Kotlin/native](https://kotlinlang.org) | ? | https://github.com/electronstudio/kaylib      |
 | raylib-lua         | **4.0** | [Lua](http://www.lua.org/)           | ISC | https://github.com/TSnake41/raylib-lua        |
 | raylua             | **4.0** | [Lua](http://www.lua.org/)           | MIT | https://github.com/Rabios/raylua              |
@@ -52,7 +52,7 @@ Some people ported raylib to other languages in form of bindings or wrappers to 
 | raylib-swift       | **4.0**     | [Swift](https://swift.org/)          | MIT | https://github.com/STREGAsGate/Raylib          |
 | raylib-scopes      | auto    | [Scopes](http://scopes.rocks)          | MIT | https://github.com/salotz/raylib-scopes   |
 | raylib-smallBasic  | 4.1-dev | [SmallBASIC](https://github.com/smallbasic/SmallBASIC) | GPLv3 | https://github.com/smallbasic/smallbasic.plugins/tree/master/raylib |
-| raylib.v           | **4.0** | [V](https://vlang.io/)               | Zlib     | https://github.com/irishgreencitrus/raylib.v |
+| raylib.v           | **4.2** | [V](https://vlang.io/)               | Zlib     | https://github.com/irishgreencitrus/raylib.v |
 | raylib-wren        | **4.0** | [Wren](http://wren.io/)              | ISC | https://github.com/TSnake41/raylib-wren              |
 | raylib-zig         | **4.0** | [Zig](https://ziglang.org/)               | MIT | https://github.com/Not-Nik/raylib-zig     |
 | raylib.zig         | **4.2** | [Zig](https://ziglang.org/)               | MIT | https://github.com/ryupold/raylib.zig |
