@@ -36,7 +36,7 @@ int main(void)
 
     int btnState = 0;               // Button state: 0-NORMAL, 1-MOUSE_HOVER, 2-PRESSED
     bool btnAction = false;         // Button action should be activated
-	bool btnPressed = false;		// Check if button has been actually pressed
+    bool btnPressed = false;		// Check if button has been actually pressed
 
     Vector2 mousePoint = { 0.0f, 0.0f };
 
@@ -50,7 +50,7 @@ int main(void)
         //----------------------------------------------------------------------------------
         mousePoint = GetMousePosition();
         btnAction = false;
-		if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && CheckCollisionPointRec(mousePoint, btnBounds)) btnPressed = true;
+        if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && CheckCollisionPointRec(mousePoint, btnBounds)) btnPressed = true;
 
         // Check button state
         if (CheckCollisionPointRec(mousePoint, btnBounds))
@@ -59,18 +59,18 @@ int main(void)
             else btnState = 1;
 
             if (btnPressed && IsMouseButtonReleased(MOUSE_BUTTON_LEFT))
-			{
-				btnAction = true;
-				btnPressed = false;
-			}
+            {
+                btnAction = true;
+                btnPressed = false;
+            }
         }
         else if (btnPressed)
-		{
-			btnAction = true;
-			btnState = 0;
-			btnPressed = false;
-		}
-		else btnState = 0;
+        {
+            btnAction = true;
+            btnState = 0;
+            btnPressed = false;
+        }
+        else btnState = 0;
 
         if (btnAction)
         {
