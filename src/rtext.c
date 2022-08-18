@@ -818,9 +818,12 @@ Image GenImageFontAtlas(const GlyphInfo *chars, Rectangle **charRecs, int glyphC
 // Unload font glyphs info data (RAM)
 void UnloadFontData(GlyphInfo *glyphs, int glyphCount)
 {
-    for (int i = 0; i < glyphCount; i++) UnloadImage(glyphs[i].image);
+    if (glyphs != NULL)
+    {
+        for (int i = 0; i < glyphCount; i++) UnloadImage(glyphs[i].image);
 
-    RL_FREE(glyphs);
+        RL_FREE(glyphs);
+    }
 }
 
 // Unload Font from GPU memory (VRAM)
@@ -1142,7 +1145,7 @@ void DrawTextCodepoints(Font font, const int *codepoints, int count, Vector2 pos
 // Measure string width for default font
 int MeasureText(const char *text, int fontSize)
 {
-    Vector2 vec = { 0.0f, 0.0f };
+    Vector2 textSize = { 0.0f, 0.0f };
 
     // Check if default font has been loaded
     if (GetFontDefault().texture.id != 0)
@@ -1151,15 +1154,19 @@ int MeasureText(const char *text, int fontSize)
         if (fontSize < defaultFontSize) fontSize = defaultFontSize;
         int spacing = fontSize/defaultFontSize;
 
-        vec = MeasureTextEx(GetFontDefault(), text, (float)fontSize, (float)spacing);
+        textSize = MeasureTextEx(GetFontDefault(), text, (float)fontSize, (float)spacing);
     }
 
-    return (int)vec.x;
+    return (int)textSize.x;
 }
 
 // Measure string size for Font
 Vector2 MeasureTextEx(Font font, const char *text, float fontSize, float spacing)
 {
+    Vector2 textSize = { 0 };
+
+    if ((font.texture.id == 0) || (text == NULL)) return textSize;
+
     int size = TextLength(text);    // Get size in bytes of text
     int tempByteCounter = 0;        // Used to count longer text line num chars
     int byteCounter = 0;
@@ -1204,11 +1211,10 @@ Vector2 MeasureTextEx(Font font, const char *text, float fontSize, float spacing
 
     if (tempTextWidth < textWidth) tempTextWidth = textWidth;
 
-    Vector2 vec = { 0 };
-    vec.x = tempTextWidth*scaleFactor + (float)((tempByteCounter - 1)*spacing); // Adds chars spacing to measure
-    vec.y = textHeight*scaleFactor;
+    textSize.x = tempTextWidth*scaleFactor + (float)((tempByteCounter - 1)*spacing); // Adds chars spacing to measure
+    textSize.y = textHeight*scaleFactor;
 
-    return vec;
+    return textSize;
 }
 
 // Get index position for a unicode character on font
