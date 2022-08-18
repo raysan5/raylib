@@ -2712,9 +2712,9 @@ bool rlCheckRenderBatchLimit(int vCount)
 // Convert image data to OpenGL texture (returns OpenGL valid Id)
 unsigned int rlLoadTexture(const void *data, int width, int height, int format, int mipmapCount)
 {
-    glBindTexture(GL_TEXTURE_2D, 0);    // Free any old binding
-
     unsigned int id = 0;
+
+    glBindTexture(GL_TEXTURE_2D, 0);    // Free any old binding
 
     // Check texture format support by OpenGL 1.1 (compressed textures not supported)
 #if defined(GRAPHICS_API_OPENGL_11)
