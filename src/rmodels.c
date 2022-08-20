@@ -12,6 +12,7 @@
 *   #define SUPPORT_FILEFORMAT_IQM
 *   #define SUPPORT_FILEFORMAT_GLTF
 *   #define SUPPORT_FILEFORMAT_VOX
+*   #define SUPPORT_FILEFORMAT_M3D
 *       Selected desired fileformats to be supported for model data loading.
 *
 *   #define SUPPORT_MESH_GENERATION
@@ -86,6 +87,19 @@
     #include "external/vox_loader.h"    // VOX file format loading (MagikaVoxel)
 #endif
 
+#if defined(SUPPORT_FILEFORMAT_M3D)
+    #define M3D_MALLOC RL_MALLOC
+    #define M3D_REALLOC RL_REALLOC
+    #define M3D_FREE RL_FREE
+	
+    // Let the M3D loader know about stb_image is used in this project, 
+	// to allow it to use on textures loading
+    #include "external/stb_image.h"
+
+    #define M3D_IMPLEMENTATION
+    #include "external/m3d.h"           // Model3D file format loading
+#endif
+
 #if defined(SUPPORT_MESH_GENERATION)
     #define PAR_MALLOC(T, N) ((T*)RL_MALLOC(N*sizeof(T)))
     #define PAR_CALLOC(T, N) ((T*)RL_CALLOC(N*sizeof(T), 1))
@@ -140,6 +154,9 @@ static Model LoadGLTF(const char *fileName);    // Load GLTF mesh data
 #endif
 #if defined(SUPPORT_FILEFORMAT_VOX)
 static Model LoadVOX(const char *filename);     // Load VOX mesh data
+#endif
+#if defined(SUPPORT_FILEFORMAT_M3D)
+static Model LoadM3D(const char *filename);     // Load M3D mesh data
 #endif
 
 //----------------------------------------------------------------------------------
@@ -5096,6 +5113,158 @@ static Model LoadVOX(const char *fileName)
     // Free buffers
     Vox_FreeArrays(&voxarray);
     UnloadFileData(fileData);
+
+    return model;
+}
+#endif
+
+#if defined(SUPPORT_FILEFORMAT_M3D)
+// Hook LoadFileData()/UnloadFileData() calls to M3D loaders
+unsigned char *m3d_loaderhook(char *fn, unsigned int *len) { return LoadFileData((const char *)fn, len); }
+void m3d_freehook(void *data) { UnloadFileData((unsigned char *)data); }
+
+// Load M3D mesh data
+static Model LoadM3D(const char *fileName)
+{
+    Model model = { 0 };
+
+    m3d_t *m3d = NULL;
+    m3dp_t *prop = NULL;
+    unsigned int bytesRead = 0;
+    unsigned char *fileData = LoadFileData(fileName, &bytesRead);
+    int i, j, k, l, mi = -2;
+
+    if (fileData != NULL)
+    {
+        m3d = m3d_load(fileData, m3d_loaderhook, m3d_freehook, NULL);
+
+        if (!m3d || (m3d->errcode != M3D_SUCCESS))
+        {
+            TRACELOG(LOG_WARNING, "MODEL: [%s] Failed to load M3D data", fileName);
+            return model;
+        } 
+        else TRACELOG(LOG_INFO, "MODEL: [%s] M3D data loaded successfully: %i faces/%i materials", fileName, m3d->numface, m3d->nummaterial);
+
+        if (m3d->nummaterial > 0)
+        {
+            model.meshCount = model.materialCount = m3d->nummaterial;
+            TRACELOG(LOG_INFO, "MODEL: model has %i material meshes", model.materialCount);
+        } 
+        else
+        {
+            model.meshCount = model.materialCount = 1;
+            TRACELOG(LOG_INFO, "MODEL: No materials, putting all meshes in a default material");
+        }
+
+        model.meshes = (Mesh *)RL_CALLOC(model.meshCount, sizeof(Mesh));
+        model.meshMaterial = (int *)RL_CALLOC(model.meshCount, sizeof(int));
+        model.materials = (Material *)RL_CALLOC(model.meshCount + 1, sizeof(Material));
+        
+        // Map no material to index 0 with default shader, everything else materialid + 1
+        model.materials[0] = LoadMaterialDefault();
+        model.materials[0].maps[MATERIAL_MAP_DIFFUSE].texture = (Texture2D){ rlGetTextureIdDefault(), 1, 1, 1, PIXELFORMAT_UNCOMPRESSED_R8G8B8A8 };
+
+        for (i = l = 0, k = -1; i < m3d->numface; i++, l++) 
+        {
+            // Materials are grouped together
+            if (mi != m3d->face[i].materialid)
+            {
+                k++;
+                mi = m3d->face[i].materialid;
+                
+                for (j = i, l = 0; (j < m3d->numface) && (mi == m3d->face[j].materialid); j++, l++);
+                
+                model.meshes[k].vertexCount = l*3;
+                model.meshes[k].triangleCount = l;
+                model.meshes[k].vertices = (float *)RL_CALLOC(model.meshes[k].vertexCount*3, sizeof(float));
+                model.meshes[k].texcoords = (float *)RL_CALLOC(model.meshes[k].vertexCount*2, sizeof(float));
+                model.meshes[k].normals = (float *)RL_CALLOC(model.meshes[k].vertexCount*3, sizeof(float));
+                model.meshMaterial[k] = mi + 1;
+                l = 0;
+            }
+            
+            // Process meshes per material, add triangles
+            model.meshes[k].vertices[l * 9 + 0] = m3d->vertex[m3d->face[i].vertex[0]].x;
+            model.meshes[k].vertices[l * 9 + 1] = m3d->vertex[m3d->face[i].vertex[0]].y;
+            model.meshes[k].vertices[l * 9 + 2] = m3d->vertex[m3d->face[i].vertex[0]].z;
+            model.meshes[k].vertices[l * 9 + 3] = m3d->vertex[m3d->face[i].vertex[1]].x;
+            model.meshes[k].vertices[l * 9 + 4] = m3d->vertex[m3d->face[i].vertex[1]].y;
+            model.meshes[k].vertices[l * 9 + 5] = m3d->vertex[m3d->face[i].vertex[1]].z;
+            model.meshes[k].vertices[l * 9 + 6] = m3d->vertex[m3d->face[i].vertex[2]].x;
+            model.meshes[k].vertices[l * 9 + 7] = m3d->vertex[m3d->face[i].vertex[2]].y;
+            model.meshes[k].vertices[l * 9 + 8] = m3d->vertex[m3d->face[i].vertex[2]].z;
+            
+            if (m3d->face[i].texcoord[0] != M3D_UNDEF)
+            {
+                model.meshes[k].texcoords[l * 6 + 0] = m3d->tmap[m3d->face[i].texcoord[0]].u;
+                model.meshes[k].texcoords[l * 6 + 1] = m3d->tmap[m3d->face[i].texcoord[0]].v;
+                model.meshes[k].texcoords[l * 6 + 2] = m3d->tmap[m3d->face[i].texcoord[1]].u;
+                model.meshes[k].texcoords[l * 6 + 3] = m3d->tmap[m3d->face[i].texcoord[1]].v;
+                model.meshes[k].texcoords[l * 6 + 4] = m3d->tmap[m3d->face[i].texcoord[2]].u;
+                model.meshes[k].texcoords[l * 6 + 5] = m3d->tmap[m3d->face[i].texcoord[2]].v;
+            }
+            
+            if (m3d->face[i].normal[0] != M3D_UNDEF)
+            {
+                model.meshes[k].normals[l * 9 + 0] = m3d->vertex[m3d->face[i].normal[0]].x;
+                model.meshes[k].normals[l * 9 + 1] = m3d->vertex[m3d->face[i].normal[0]].y;
+                model.meshes[k].normals[l * 9 + 2] = m3d->vertex[m3d->face[i].normal[0]].z;
+                model.meshes[k].normals[l * 9 + 3] = m3d->vertex[m3d->face[i].normal[1]].x;
+                model.meshes[k].normals[l * 9 + 4] = m3d->vertex[m3d->face[i].normal[1]].y;
+                model.meshes[k].normals[l * 9 + 5] = m3d->vertex[m3d->face[i].normal[1]].z;
+                model.meshes[k].normals[l * 9 + 6] = m3d->vertex[m3d->face[i].normal[2]].x;
+                model.meshes[k].normals[l * 9 + 7] = m3d->vertex[m3d->face[i].normal[2]].y;
+                model.meshes[k].normals[l * 9 + 8] = m3d->vertex[m3d->face[i].normal[2]].z;
+            }
+        }
+
+        for (i = 0; i < m3d->nummaterial; i++)
+        {
+            model.materials[i + 1] = LoadMaterialDefault();
+            model.materials[i + 1].maps[MATERIAL_MAP_DIFFUSE].texture = (Texture2D){ rlGetTextureIdDefault(), 1, 1, 1, PIXELFORMAT_UNCOMPRESSED_R8G8B8A8 };
+            
+            for (j = 0; j < m3d->material[i].numprop; j++)
+            {
+                prop = &m3d->material[i].prop[j];
+                
+                switch (prop->type)
+                {
+                    case m3dp_Kd:
+                    {
+                        memcpy(&model.materials[i + 1].maps[MATERIAL_MAP_DIFFUSE].color, &prop->value.color, 4);
+                        model.materials[i + 1].maps[MATERIAL_MAP_DIFFUSE].value = 0.0f;
+                    } break;
+                    case m3dp_Ks:
+                    {
+                        memcpy(&model.materials[i + 1].maps[MATERIAL_MAP_SPECULAR].color, &prop->value.color, 4);
+                        model.materials[i + 1].maps[MATERIAL_MAP_SPECULAR].value = 0.0f;
+                    } break;
+                    case m3dp_Ke:
+                    {
+                        memcpy(&model.materials[i + 1].maps[MATERIAL_MAP_EMISSION].color, &prop->value.color, 4);
+                        model.materials[i + 1].maps[MATERIAL_MAP_EMISSION].value = 0.0f;
+                    } break;
+                    case m3dp_Pm:
+                    {
+                        model.materials[i + 1].maps[MATERIAL_MAP_METALNESS].value = prop->value.fnum;
+                    } break;
+                    case m3dp_Pr:
+                    {
+                        model.materials[i + 1].maps[MATERIAL_MAP_ROUGHNESS].value = prop->value.fnum;
+                    } break;
+                    case m3dp_Ps:
+                    {
+                        model.materials[i + 1].maps[MATERIAL_MAP_NORMAL].color = WHITE;
+                        model.materials[i + 1].maps[MATERIAL_MAP_NORMAL].value = prop->value.fnum;
+                    } break;
+                    default: break;
+                }
+            }
+        }
+
+        m3d_free(m3d);
+        UnloadFileData(fileData);
+    }
 
     return model;
 }

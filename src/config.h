@@ -192,6 +192,7 @@
 #define SUPPORT_FILEFORMAT_IQM      1
 #define SUPPORT_FILEFORMAT_GLTF     1
 #define SUPPORT_FILEFORMAT_VOX      1
+#define SUPPORT_FILEFORMAT_M3D      1
 // Support procedural mesh generation functions, uses external par_shapes.h library
 // NOTE: Some generated meshes DO NOT include generated texture coordinates
 #define SUPPORT_MESH_GENERATION     1
