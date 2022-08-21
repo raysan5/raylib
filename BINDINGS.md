@@ -64,7 +64,7 @@ Some people ported raylib to other languages in form of bindings or wrappers to 
 These are utility wrappers for specific languages, they are not required to use raylib in the language but may adapt the raylib API to be more inline with the language's pardigm.
 |  name              | raylib version | language  | license | repo                                                         |
 |:------------------:|:-------------: | :--------:|:-------:|:-------------------------------------------------------------|
-| raylib-cpp         | **4.0** | [C++](https://en.wikipedia.org/wiki/C%2B%2B)  | Zlib | https://github.com/robloach/raylib-cpp  |
+| raylib-cpp         | **4.2** | [C++](https://en.wikipedia.org/wiki/C%2B%2B)  | Zlib | https://github.com/robloach/raylib-cpp  |
 
 ### Older or Unmaintained Language Bindings
 These are older raylib bindings that are more than 2 versions old or have not been maintained.
