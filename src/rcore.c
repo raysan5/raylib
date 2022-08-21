@@ -214,8 +214,12 @@
 
     // Support retrieving native window handlers
     #if defined(_WIN32)
+        typedef void *PVOID;
+        typedef PVOID HANDLE;
+        typedef HANDLE HWND;
         #define GLFW_EXPOSE_NATIVE_WIN32
-        #include "GLFW/glfw3native.h"       // WARNING: It requires customization to avoid windows.h inclusion!
+        #define GLFW_NATIVE_INCLUDE_NONE // To avoid some symbols re-definition in windows.h
+        #include "GLFW/glfw3native.h"
 
         #if defined(SUPPORT_WINMM_HIGHRES_TIMER) && !defined(SUPPORT_BUSY_WAIT_LOOP)
             // NOTE: Those functions require linking with winmm library
