@@ -91,8 +91,8 @@
     #define M3D_MALLOC RL_MALLOC
     #define M3D_REALLOC RL_REALLOC
     #define M3D_FREE RL_FREE
-	
-    // Let the M3D loader know about stb_image is used in this project, 
+
+    // Let the M3D loader know about stb_image is used in this project,
 	// to allow it to use on textures loading
     #include "external/stb_image.h"
 
@@ -943,6 +943,9 @@ Model LoadModel(const char *fileName)
 #endif
 #if defined(SUPPORT_FILEFORMAT_VOX)
     if (IsFileExtension(fileName, ".vox")) model = LoadVOX(fileName);
+#endif
+#if defined(SUPPORT_FILEFORMAT_M3D)
+    if (IsFileExtension(fileName, ".m3d")) model = LoadM3D(fileName);
 #endif
 
     // Make sure model transform is set to identity matrix!
@@ -5142,14 +5145,14 @@ static Model LoadM3D(const char *fileName)
         {
             TRACELOG(LOG_WARNING, "MODEL: [%s] Failed to load M3D data", fileName);
             return model;
-        } 
+        }
         else TRACELOG(LOG_INFO, "MODEL: [%s] M3D data loaded successfully: %i faces/%i materials", fileName, m3d->numface, m3d->nummaterial);
 
         if (m3d->nummaterial > 0)
         {
             model.meshCount = model.materialCount = m3d->nummaterial;
             TRACELOG(LOG_INFO, "MODEL: model has %i material meshes", model.materialCount);
-        } 
+        }
         else
         {
             model.meshCount = model.materialCount = 1;
@@ -5159,21 +5162,21 @@ static Model LoadM3D(const char *fileName)
         model.meshes = (Mesh *)RL_CALLOC(model.meshCount, sizeof(Mesh));
         model.meshMaterial = (int *)RL_CALLOC(model.meshCount, sizeof(int));
         model.materials = (Material *)RL_CALLOC(model.meshCount + 1, sizeof(Material));
-        
+
         // Map no material to index 0 with default shader, everything else materialid + 1
         model.materials[0] = LoadMaterialDefault();
         model.materials[0].maps[MATERIAL_MAP_DIFFUSE].texture = (Texture2D){ rlGetTextureIdDefault(), 1, 1, 1, PIXELFORMAT_UNCOMPRESSED_R8G8B8A8 };
 
-        for (i = l = 0, k = -1; i < m3d->numface; i++, l++) 
+        for (i = l = 0, k = -1; i < m3d->numface; i++, l++)
         {
             // Materials are grouped together
             if (mi != m3d->face[i].materialid)
             {
                 k++;
                 mi = m3d->face[i].materialid;
-                
+
                 for (j = i, l = 0; (j < m3d->numface) && (mi == m3d->face[j].materialid); j++, l++);
-                
+
                 model.meshes[k].vertexCount = l*3;
                 model.meshes[k].triangleCount = l;
                 model.meshes[k].vertices = (float *)RL_CALLOC(model.meshes[k].vertexCount*3, sizeof(float));
@@ -5182,18 +5185,18 @@ static Model LoadM3D(const char *fileName)
                 model.meshMaterial[k] = mi + 1;
                 l = 0;
             }
-            
+
             // Process meshes per material, add triangles
-            model.meshes[k].vertices[l * 9 + 0] = m3d->vertex[m3d->face[i].vertex[0]].x;
-            model.meshes[k].vertices[l * 9 + 1] = m3d->vertex[m3d->face[i].vertex[0]].y;
-            model.meshes[k].vertices[l * 9 + 2] = m3d->vertex[m3d->face[i].vertex[0]].z;
-            model.meshes[k].vertices[l * 9 + 3] = m3d->vertex[m3d->face[i].vertex[1]].x;
-            model.meshes[k].vertices[l * 9 + 4] = m3d->vertex[m3d->face[i].vertex[1]].y;
-            model.meshes[k].vertices[l * 9 + 5] = m3d->vertex[m3d->face[i].vertex[1]].z;
-            model.meshes[k].vertices[l * 9 + 6] = m3d->vertex[m3d->face[i].vertex[2]].x;
-            model.meshes[k].vertices[l * 9 + 7] = m3d->vertex[m3d->face[i].vertex[2]].y;
-            model.meshes[k].vertices[l * 9 + 8] = m3d->vertex[m3d->face[i].vertex[2]].z;
-            
+            model.meshes[k].vertices[l * 9 + 0] = m3d->vertex[m3d->face[i].vertex[0]].x*m3d->scale;
+            model.meshes[k].vertices[l * 9 + 1] = m3d->vertex[m3d->face[i].vertex[0]].y*m3d->scale;
+            model.meshes[k].vertices[l * 9 + 2] = m3d->vertex[m3d->face[i].vertex[0]].z*m3d->scale;
+            model.meshes[k].vertices[l * 9 + 3] = m3d->vertex[m3d->face[i].vertex[1]].x*m3d->scale;
+            model.meshes[k].vertices[l * 9 + 4] = m3d->vertex[m3d->face[i].vertex[1]].y*m3d->scale;
+            model.meshes[k].vertices[l * 9 + 5] = m3d->vertex[m3d->face[i].vertex[1]].z*m3d->scale;
+            model.meshes[k].vertices[l * 9 + 6] = m3d->vertex[m3d->face[i].vertex[2]].x*m3d->scale;
+            model.meshes[k].vertices[l * 9 + 7] = m3d->vertex[m3d->face[i].vertex[2]].y*m3d->scale;
+            model.meshes[k].vertices[l * 9 + 8] = m3d->vertex[m3d->face[i].vertex[2]].z*m3d->scale;
+
             if (m3d->face[i].texcoord[0] != M3D_UNDEF)
             {
                 model.meshes[k].texcoords[l * 6 + 0] = m3d->tmap[m3d->face[i].texcoord[0]].u;
@@ -5203,7 +5206,7 @@ static Model LoadM3D(const char *fileName)
                 model.meshes[k].texcoords[l * 6 + 4] = m3d->tmap[m3d->face[i].texcoord[2]].u;
                 model.meshes[k].texcoords[l * 6 + 5] = m3d->tmap[m3d->face[i].texcoord[2]].v;
             }
-            
+
             if (m3d->face[i].normal[0] != M3D_UNDEF)
             {
                 model.meshes[k].normals[l * 9 + 0] = m3d->vertex[m3d->face[i].normal[0]].x;
@@ -5222,11 +5225,11 @@ static Model LoadM3D(const char *fileName)
         {
             model.materials[i + 1] = LoadMaterialDefault();
             model.materials[i + 1].maps[MATERIAL_MAP_DIFFUSE].texture = (Texture2D){ rlGetTextureIdDefault(), 1, 1, 1, PIXELFORMAT_UNCOMPRESSED_R8G8B8A8 };
-            
+
             for (j = 0; j < m3d->material[i].numprop; j++)
             {
                 prop = &m3d->material[i].prop[j];
-                
+
                 switch (prop->type)
                 {
                     case m3dp_Kd:
@@ -5238,6 +5241,10 @@ static Model LoadM3D(const char *fileName)
                     {
                         memcpy(&model.materials[i + 1].maps[MATERIAL_MAP_SPECULAR].color, &prop->value.color, 4);
                         model.materials[i + 1].maps[MATERIAL_MAP_SPECULAR].value = 0.0f;
+                    } break;
+                    case m3dp_Ns:
+                    {
+                        model.materials[i + 1].maps[MATERIAL_MAP_SPECULAR].value = prop->value.fnum;
                     } break;
                     case m3dp_Ke:
                     {
@@ -5257,7 +5264,29 @@ static Model LoadM3D(const char *fileName)
                         model.materials[i + 1].maps[MATERIAL_MAP_NORMAL].color = WHITE;
                         model.materials[i + 1].maps[MATERIAL_MAP_NORMAL].value = prop->value.fnum;
                     } break;
-                    default: break;
+                    default:
+                    {
+                        if (prop->type >= 128)
+                        {
+                            Image image = { 0 };
+                            image.data = m3d->texture[prop->value.textureid].d;
+                            image.width = m3d->texture[prop->value.textureid].w; 
+                            image.height = m3d->texture[prop->value.textureid].h;
+                            image.mipmaps = 1;
+                            image.format = (m3d->texture[prop->value.textureid].f == 4)? PIXELFORMAT_UNCOMPRESSED_R8G8B8A8 : 
+                                           ((m3d->texture[prop->value.textureid].f == 3)? PIXELFORMAT_UNCOMPRESSED_R8G8B8 : 
+                                           ((m3d->texture[prop->value.textureid].f == 2)? PIXELFORMAT_UNCOMPRESSED_GRAY_ALPHA : PIXELFORMAT_UNCOMPRESSED_GRAYSCALE));
+
+                            switch (prop->type)
+                            {
+                                case m3dp_map_Kd: model.materials[i + 1].maps[MATERIAL_MAP_DIFFUSE].texture = LoadTextureFromImage(image); break;
+                                case m3dp_map_Ks: model.materials[i + 1].maps[MATERIAL_MAP_SPECULAR].texture = LoadTextureFromImage(image); break;
+                                case m3dp_map_Ke: model.materials[i + 1].maps[MATERIAL_MAP_EMISSION].texture = LoadTextureFromImage(image); break;
+                                case m3dp_map_Km: model.materials[i + 1].maps[MATERIAL_MAP_NORMAL].texture = LoadTextureFromImage(image); break;
+                                default: break;
+                            }
+                        }
+                    } break;
                 }
             }
         }
