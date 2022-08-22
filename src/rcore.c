@@ -1692,7 +1692,7 @@ int GetMonitorCount(void)
 #endif
 }
 
-// Get number of monitors
+// Get current connected monitor
 int GetCurrentMonitor(void)
 {
 #if defined(PLATFORM_DESKTOP)
@@ -1718,6 +1718,9 @@ int GetCurrentMonitor(void)
         int x = 0;
         int y = 0;
 
+        int best_overlap = 0;
+        int best_monitor = 0;
+
         glfwGetWindowPos(CORE.Window.handle, &x, &y);
 
         for (int i = 0; i < monitorCount; i++)
@@ -1730,9 +1733,32 @@ int GetCurrentMonitor(void)
 
             monitor = monitors[i];
             glfwGetMonitorWorkarea(monitor, &mx, &my, &width, &height);
-            if (x >= mx && x <= (mx + width) && y >= my && y <= (my + height))
-                return i;
+
+            int x1 = x;
+            if (x1 < mx) x1 = mx;
+            if (x1 > mx + width) x1 = mx + width;
+
+            int x2 = x + CORE.Window.screen.width;
+            if (x2 < mx) x2 = mx;
+            if (x2 > mx + width) x2 = mx + width;
+
+            int y1 = y;
+            if (y1 < my) y1 = my;
+            if (y1 > my + height) y1 = my + height;
+
+            int y2 = y + CORE.Window.screen.height;
+            if (y2 < my) y2 = my;
+            if (y2 > my + height) y2 = my + height;
+
+            int overlap = (x2 - x1) * (y2 - y1);
+
+            if (overlap > best_overlap)
+            {
+                best_overlap = overlap;
+                best_monitor = i;
+            }
         }
+        return best_monitor;
     }
     return 0;
 #else
