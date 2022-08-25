@@ -43,7 +43,7 @@
             </Overload>
         </KeyWord>
         <KeyWord name="SetWindowState" func="yes">
-            <Overload retVal="void" descr="Set window configuration state using flags">
+            <Overload retVal="void" descr="Set window configuration state using flags (only PLATFORM_DESKTOP)">
                 <Param name="unsigned int flags" />
             </Overload>
         </KeyWord>
@@ -97,6 +97,11 @@
                 <Param name="int height" />
             </Overload>
         </KeyWord>
+        <KeyWord name="SetWindowOpacity" func="yes">
+            <Overload retVal="void" descr="Set window opacity [0.0f..1.0f] (only PLATFORM_DESKTOP)">
+                <Param name="float opacity" />
+            </Overload>
+        </KeyWord>
         <KeyWord name="GetWindowHandle" func="yes">
             <Overload retVal="void" descr="Get native window handle"></Overload>
         </KeyWord>
@@ -105,6 +110,12 @@
         </KeyWord>
         <KeyWord name="GetScreenHeight" func="yes">
             <Overload retVal="int" descr="Get current screen height"></Overload>
+        </KeyWord>
+        <KeyWord name="GetRenderWidth" func="yes">
+            <Overload retVal="int" descr="Get current render width (it considers HiDPI)"></Overload>
+        </KeyWord>
+        <KeyWord name="GetRenderHeight" func="yes">
+            <Overload retVal="int" descr="Get current render height (it considers HiDPI)"></Overload>
         </KeyWord>
         <KeyWord name="GetMonitorCount" func="yes">
             <Overload retVal="int" descr="Get number of connected monitors"></Overload>
@@ -118,12 +129,12 @@
             </Overload>
         </KeyWord>
         <KeyWord name="GetMonitorWidth" func="yes">
-            <Overload retVal="int" descr="Get specified monitor width (max available by monitor)">
+            <Overload retVal="int" descr="Get specified monitor width (current video mode used by monitor)">
                 <Param name="int monitor" />
             </Overload>
         </KeyWord>
         <KeyWord name="GetMonitorHeight" func="yes">
-            <Overload retVal="int" descr="Get specified monitor height (max available by monitor)">
+            <Overload retVal="int" descr="Get specified monitor height (current video mode used by monitor)">
                 <Param name="int monitor" />
             </Overload>
         </KeyWord>
@@ -161,6 +172,12 @@
         <KeyWord name="GetClipboardText" func="yes">
             <Overload retVal="const char" descr="Get clipboard text content"></Overload>
         </KeyWord>
+        <KeyWord name="EnableEventWaiting" func="yes">
+            <Overload retVal="void" descr="Enable waiting for events on EndDrawing(), no automatic event polling"></Overload>
+        </KeyWord>
+        <KeyWord name="DisableEventWaiting" func="yes">
+            <Overload retVal="void" descr="Disable waiting for events on EndDrawing(), automatic events polling"></Overload>
+        </KeyWord>
 
         <!-- Custom frame control functions -->
         <!-- NOTE: Those functions are intended for advance users that want full control over the frame processing -->
@@ -173,8 +190,8 @@
             <Overload retVal="void" descr="Register all input events"></Overload>
         </KeyWord>
         <KeyWord name="WaitTime" func="yes">
-            <Overload retVal="void" descr="Wait for some milliseconds (halt program execution)">
-                <Param name="float ms" />
+            <Overload retVal="void" descr="Wait for some time (halt program execution)">
+                <Param name="double seconds" />
             </Overload>
         </KeyWord>
 
@@ -368,6 +385,12 @@
                 <Param name="Camera camera" />
             </Overload>
         </KeyWord>
+        <KeyWord name="GetScreenToWorld2D" func="yes">
+            <Overload retVal="Vector2" descr="Get the world space position for a 2d camera screen space position">
+                <Param name="Vector2 position" />
+                <Param name="Camera2D camera" />
+            </Overload>
+        </KeyWord>
         <KeyWord name="GetWorldToScreenEx" func="yes">
             <Overload retVal="Vector2" descr="Get size position for a 3d world space position">
                 <Param name="Vector3 position" />
@@ -378,12 +401,6 @@
         </KeyWord>
         <KeyWord name="GetWorldToScreen2D" func="yes">
             <Overload retVal="Vector2" descr="Get the screen space position for a 2d camera world space position">
-                <Param name="Vector2 position" />
-                <Param name="Camera2D camera" />
-            </Overload>
-        </KeyWord>
-        <KeyWord name="GetScreenToWorld2D" func="yes">
-            <Overload retVal="Vector2" descr="Get the world space position for a 2d camera screen space position">
                 <Param name="Vector2 position" />
                 <Param name="Camera2D camera" />
             </Overload>
@@ -452,6 +469,12 @@
             <Overload retVal="void" descr="Internal memory free"></Overload>
         </KeyWord>
 
+        <KeyWord name="OpenURL" func="yes">
+            <Overload retVal="void" descr="Open URL with default system browser (if available)">
+                <Param name="const char *url" />
+            </Overload>
+        </KeyWord>
+
         <!-- Set custom callbacks -->
         <!-- WARNING: Callbacks setup is intended for advance users -->
         <KeyWord name="SetTraceLogCallback" func="yes">
@@ -496,6 +519,13 @@
             <Overload retVal="bool" descr="Save data to file from byte array (write), returns true on success">
                 <Param name="const char *fileName" /></Overload>
         </KeyWord>
+        <KeyWord name="ExportDataAsCode" func="yes">
+            <Overload retVal="bool" descr="Export data to code (.h), returns true on success">
+                <Param name="const char *data" />
+                <Param name="unsigned int size" />
+                <Param name="const char *fileName" />
+            </Overload>
+        </KeyWord>
         <KeyWord name="LoadFileText" func="yes">
             <Overload retVal="char" descr="Load text data from file (read), returns a '\0' terminated string">
                 <Param name="const char *fileName" />
@@ -528,6 +558,11 @@
                 <Param name="const char *ext" />
             </Overload>
         </KeyWord>
+        <KeyWord name="GetFileLength" func="yes">
+            <Overload retVal="int" descr="Get file length in bytes (NOTE: GetFileSize() conflicts with windows.h)">
+                <Param name="const char *fileName" />
+            </Overload>
+        </KeyWord>
         <KeyWord name="GetFileExtension" func="yes">
             <Overload retVal="const char" descr="Get pointer to extension for a filename string (includes dot: '.png')">
                 <Param name="const char *fileName" />
@@ -556,30 +591,46 @@
         <KeyWord name="GetWorkingDirectory" func="yes">
             <Overload retVal="const char" descr="Get current working directory (uses static string)"></Overload>
         </KeyWord>
-        <KeyWord name="GetDirectoryFiles" func="yes">
-            <Overload retVal="char" descr="Get filenames in a directory path (memory should be freed)">
-                <Param name="const char *dirPath" />
-                <Param name="int *count" />
-            </Overload>
-        </KeyWord>
-        <KeyWord name="ClearDirectoryFiles" func="yes">
-            <Overload retVal="void" descr="Clear directory files paths buffers (free memory)"></Overload>
+        <KeyWord name="GetApplicationDirectory" func="yes">
+            <Overload retVal="const char" descr="Get the directory if the running application (uses static string)"></Overload>
         </KeyWord>
         <KeyWord name="ChangeDirectory" func="yes">
             <Overload retVal="bool" descr="Change working directory, return true on success">
                 <Param name="const char *dir" />
             </Overload>
         </KeyWord>
+        <KeyWord name="IsPathFile" func="yes">
+            <Overload retVal="bool" descr="Check if a given path is a file or a directory">
+                <Param name="const char *path" />
+            </Overload>
+        </KeyWord>
+        <KeyWord name="LoadDirectoryFiles" func="yes">
+            <Overload retVal="FilePathList" descr="Load directory filepaths">
+                <Param name="const char *dirPath" />
+            </Overload>
+        </KeyWord>
+        <KeyWord name="LoadDirectoryFilesEx" func="yes">
+            <Overload retVal="FilePathList" descr="Load directory filepaths with extension filtering and recursive directory scan">
+                <Param name="const char *basePath" />
+                <Param name="const char *filter" />
+                <Param name="bool scanSubdirs" />
+            </Overload>
+        </KeyWord>
+        <KeyWord name="UnloadDirectoryFiles" func="yes">
+            <Overload retVal="void" descr="Unload filepaths">
+                <Param name="FilePathList files" />
+            </Overload>
+        </KeyWord>
         <KeyWord name="IsFileDropped" func="yes">
             <Overload retVal="bool" descr="Check if a file has been dropped into window"></Overload>
         </KeyWord>
-        <KeyWord name="GetDroppedFiles" func="yes">
-            <Overload retVal="char" descr="Get dropped files names (memory should be freed)">
-                <Param name="int *count" />
-            </Overload>
+        <KeyWord name="LoadDroppedFiles" func="yes">
+            <Overload retVal="FilePathList" descr="Load dropped filepaths"></Overload>
         </KeyWord>
-        <KeyWord name="ClearDroppedFiles" func="yes">
-            <Overload retVal="void" descr="Clear dropped files paths buffer (free memory)"></Overload>
+        <KeyWord name="UnloadDroppedFiles" func="yes">
+            <Overload retVal="void" descr="Unload dropped filepaths">
+                <Param name="FilePathList files" />
+            </Overload>
         </KeyWord>
         <KeyWord name="GetFileModTime" func="yes">
             <Overload retVal="long" descr="Get file modification time (last write time)">
@@ -589,49 +640,30 @@
 
         <!-- Compression/Encoding functionality -->
         <KeyWord name="char *CompressData" func="yes">
-            <Overload retVal="unsigned" descr="Compress data (DEFLATE algorithm)">
-                <Param name="unsigned char *data" />
-                <Param name="int dataLength" />
-                <Param name="int *compDataLength" />
+            <Overload retVal="unsigned" descr="Compress data (DEFLATE algorithm), memory must be MemFree()">
+                <Param name="const unsigned char" />
+                <Param name="int dataSize" />
+                <Param name="int *compDataSize" />
             </Overload>
         </KeyWord>
         <KeyWord name="char *DecompressData" func="yes">
-            <Overload retVal="unsigned" descr="Decompress data (DEFLATE algorithm)">
-                <Param name="unsigned char *compData" />
-                <Param name="int compDataLength" />
-                <Param name="int *dataLength" />
+            <Overload retVal="unsigned" descr="Decompress data (DEFLATE algorithm), memory must be MemFree()">
+                <Param name="const unsigned char" />
+                <Param name="int compDataSize" />
+                <Param name="int *dataSize" />
             </Overload>
         </KeyWord>
         <KeyWord name="EncodeDataBase64" func="yes">
-            <Overload retVal="char" descr="Encode data to Base64 string">
+            <Overload retVal="char" descr="Encode data to Base64 string, memory must be MemFree()">
                 <Param name="const unsigned char" />
-                <Param name="int dataLength" />
-                <Param name="int *outputLength" />
+                <Param name="int dataSize" />
+                <Param name="int *outputSize" />
             </Overload>
         </KeyWord>
         <KeyWord name="char *DecodeDataBase64" func="yes">
-            <Overload retVal="unsigned" descr="Decode Base64 string data">
-                <Param name="unsigned char *data" />
-                <Param name="int *outputLength" />
-            </Overload>
-        </KeyWord>
-
-        <!-- Persistent storage management -->
-        <KeyWord name="SaveStorageValue" func="yes">
-            <Overload retVal="bool" descr="Save integer value to storage file (to defined position), returns true on success">
-                <Param name="unsigned int position" />
-                <Param name="int value" />
-            </Overload>
-        </KeyWord>
-        <KeyWord name="LoadStorageValue" func="yes">
-            <Overload retVal="int" descr="Load integer value from storage file (from defined position)">
-                <Param name="unsigned int position" />
-            </Overload>
-        </KeyWord>
-
-        <KeyWord name="OpenURL" func="yes">
-            <Overload retVal="void" descr="Open URL with default system browser (if available)">
-                <Param name="const char *url" />
+            <Overload retVal="unsigned" descr="Decode Base64 string data, memory must be MemFree()">
+                <Param name="const unsigned char" />
+                <Param name="int *outputSize" />
             </Overload>
         </KeyWord>
 
@@ -779,7 +811,10 @@
             </Overload>
         </KeyWord>
         <KeyWord name="GetMouseWheelMove" func="yes">
-            <Overload retVal="float" descr="Get mouse wheel movement Y"></Overload>
+            <Overload retVal="float" descr="Get mouse wheel movement for X or Y, whichever is larger"></Overload>
+        </KeyWord>
+        <KeyWord name="GetMouseWheelMoveV" func="yes">
+            <Overload retVal="Vector2" descr="Get mouse wheel movement for both X and Y"></Overload>
         </KeyWord>
         <KeyWord name="SetMouseCursor" func="yes">
             <Overload retVal="void" descr="Set mouse cursor">
@@ -1945,7 +1980,7 @@
             </Overload>
         </KeyWord>
         <KeyWord name="LoadFontEx" func="yes">
-            <Overload retVal="Font" descr="Load font from file with extended parameters">
+            <Overload retVal="Font" descr="Load font from file with extended parameters, use NULL for fontChars and 0 for glyphCount to load the default character set">
                 <Param name="const char *fileName" />
                 <Param name="int fontSize" />
                 <Param name="int *fontChars" />
@@ -1996,8 +2031,14 @@
             </Overload>
         </KeyWord>
         <KeyWord name="UnloadFont" func="yes">
-            <Overload retVal="void" descr="Unload Font from GPU memory (VRAM)">
+            <Overload retVal="void" descr="Unload font from GPU memory (VRAM)">
                 <Param name="Font font" />
+            </Overload>
+        </KeyWord>
+        <KeyWord name="ExportFontAsCode" func="yes">
+            <Overload retVal="bool" descr="Export font as code file, returns true on success">
+                <Param name="Font font" />
+                <Param name="const char *fileName" />
             </Overload>
         </KeyWord>
 
@@ -2045,6 +2086,17 @@
                 <Param name="int codepoint" />
                 <Param name="Vector2 position" />
                 <Param name="float fontSize" />
+                <Param name="Color tint" />
+            </Overload>
+        </KeyWord>
+        <KeyWord name="DrawTextCodepoints" func="yes">
+            <Overload retVal="void" descr="Draw multiple character (codepoint)">
+                <Param name="Font font" />
+                <Param name="const int *codepoints" />
+                <Param name="int count" />
+                <Param name="Vector2 position" />
+                <Param name="float fontSize" />
+                <Param name="float spacing" />
                 <Param name="Color tint" />
             </Overload>
         </KeyWord>
@@ -2114,7 +2166,7 @@
         </KeyWord>
         <KeyWord name="TextCodepointsToUTF8" func="yes">
             <Overload retVal="char" descr="Encode text as codepoints array into UTF-8 text string (WARNING: memory must be freed!)">
-                <Param name="int *codepoints" />
+                <Param name="const int *codepoints" />
                 <Param name="int length" />
             </Overload>
         </KeyWord>
@@ -2510,7 +2562,11 @@
         <KeyWord name="UpdateMeshBuffer" func="yes">
             <Overload retVal="void" descr="Update mesh vertex data in GPU for a specific buffer index">
                 <Param name="Mesh mesh" />
-                <Param name="int index" /></Overload>
+                <Param name="int index" />
+                <Param name="const void *data" />
+                <Param name="int dataSize" />
+                <Param name="int offset" />
+            </Overload>
         </KeyWord>
         <KeyWord name="UnloadMesh" func="yes">
             <Overload retVal="void" descr="Unload mesh data from CPU and GPU">
@@ -2528,7 +2584,7 @@
             <Overload retVal="void" descr="Draw multiple mesh instances with material and different transforms">
                 <Param name="Mesh mesh" />
                 <Param name="Material material" />
-                <Param name="Matrix *transforms" />
+                <Param name="const Matrix *transforms" />
                 <Param name="int instances" />
             </Overload>
         </KeyWord>
@@ -2545,11 +2601,6 @@
         </KeyWord>
         <KeyWord name="GenMeshTangents" func="yes">
             <Overload retVal="void" descr="Compute mesh tangents">
-                <Param name="Mesh *mesh" />
-            </Overload>
-        </KeyWord>
-        <KeyWord name="GenMeshBinormals" func="yes">
-            <Overload retVal="void" descr="Compute mesh binormals">
                 <Param name="Mesh *mesh" />
             </Overload>
         </KeyWord>
@@ -2684,7 +2735,7 @@
         </KeyWord>
         <KeyWord name="UnloadModelAnimations" func="yes">
             <Overload retVal="void" descr="Unload animation array data">
-                <Param name="ModelAnimation* animations" />
+                <Param name="ModelAnimation *animations" />
                 <Param name="unsigned int count" />
             </Overload>
         </KeyWord>
@@ -2728,12 +2779,6 @@
             <Overload retVal="RayCollision" descr="Get collision info between ray and box">
                 <Param name="Ray ray" />
                 <Param name="BoundingBox box" />
-            </Overload>
-        </KeyWord>
-        <KeyWord name="GetRayCollisionModel" func="yes">
-            <Overload retVal="RayCollision" descr="Get collision info between ray and model">
-                <Param name="Ray ray" />
-                <Param name="Model model" />
             </Overload>
         </KeyWord>
         <KeyWord name="GetRayCollisionMesh" func="yes">
@@ -2883,12 +2928,10 @@
                 <Param name="float pitch" />
             </Overload>
         </KeyWord>
-        <KeyWord name="WaveFormat" func="yes">
-            <Overload retVal="void" descr="Convert wave data to desired format">
-                <Param name="Wave *wave" />
-                <Param name="int sampleRate" />
-                <Param name="int sampleSize" />
-                <Param name="int channels" />
+        <KeyWord name="SetSoundPan" func="yes">
+            <Overload retVal="void" descr="Set pan for a sound (0.5 is center)">
+                <Param name="Sound sound" />
+                <Param name="float pan" />
             </Overload>
         </KeyWord>
         <KeyWord name="WaveCopy" func="yes">
@@ -2903,8 +2946,16 @@
                 <Param name="int finalSample" />
             </Overload>
         </KeyWord>
+        <KeyWord name="WaveFormat" func="yes">
+            <Overload retVal="void" descr="Convert wave data to desired format">
+                <Param name="Wave *wave" />
+                <Param name="int sampleRate" />
+                <Param name="int sampleSize" />
+                <Param name="int channels" />
+            </Overload>
+        </KeyWord>
         <KeyWord name="LoadWaveSamples" func="yes">
-            <Overload retVal="float" descr="Load samples data from wave as a floats array">
+            <Overload retVal="float" descr="Load samples data from wave as a 32bit float data array">
                 <Param name="Wave wave" />
             </Overload>
         </KeyWord>
@@ -2923,7 +2974,7 @@
         <KeyWord name="LoadMusicStreamFromMemory" func="yes">
             <Overload retVal="Music" descr="Load music stream from data">
                 <Param name="const char *fileType" />
-                <Param name="unsigned char *data" />
+                <Param name="const unsigned char" />
                 <Param name="int dataSize" />
             </Overload>
         </KeyWord>
@@ -2978,6 +3029,12 @@
             <Overload retVal="void" descr="Set pitch for a music (1.0 is base level)">
                 <Param name="Music music" />
                 <Param name="float pitch" />
+            </Overload>
+        </KeyWord>
+        <KeyWord name="SetMusicPan" func="yes">
+            <Overload retVal="void" descr="Set pan for a music (0.5 is center)">
+                <Param name="Music music" />
+                <Param name="float pan" />
             </Overload>
         </KeyWord>
         <KeyWord name="GetMusicTimeLength" func="yes">
@@ -3053,8 +3110,35 @@
                 <Param name="float pitch" />
             </Overload>
         </KeyWord>
+        <KeyWord name="SetAudioStreamPan" func="yes">
+            <Overload retVal="void" descr="Set pan for audio stream (0.5 is centered)">
+                <Param name="AudioStream stream" />
+                <Param name="float pan" />
+            </Overload>
+        </KeyWord>
         <KeyWord name="SetAudioStreamBufferSizeDefault" func="yes">
             <Overload retVal="void" descr="Default size for new audio streams">
                 <Param name="int size" />
             </Overload>
         </KeyWord>
+        <KeyWord name="SetAudioStreamCallback" func="yes">
+            <Overload retVal="void" descr="Audio thread callback to request new data">
+                <Param name="AudioStream stream" />
+                <Param name="AudioCallback callback" />
+            </Overload>
+        </KeyWord>
+
+        <KeyWord name="AttachAudioStreamProcessor" func="yes">
+            <Overload retVal="void" descr="Attach audio stream processor to stream">
+                <Param name="AudioStream stream" />
+                <Param name="AudioCallback processor" />
+            </Overload>
+        </KeyWord>
+        <KeyWord name="DetachAudioStreamProcessor" func="yes">
+            <Overload retVal="void" descr="Detach audio stream processor from stream">
+                <Param name="AudioStream stream" />
+                <Param name="AudioCallback processor" />
+            </Overload>
+        </KeyWord>
+
+

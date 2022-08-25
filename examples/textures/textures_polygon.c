@@ -2,13 +2,14 @@
 *
 *   raylib [shapes] example - Draw Textured Polygon
 *
-*   This example has been created using raylib 3.7 (www.raylib.com)
-*   raylib is licensed under an unmodified zlib/libpng license (View raylib.h for details)
+*   Example originally created with raylib 3.7, last time updated with raylib 3.7
 *
-*   Example contributed by Chris Camacho (@codifies - bedroomcoders.co.uk) and
-*   reviewed by Ramon Santamaria (@raysan5)
+*   Example contributed by Chris Camacho (@codifies) and reviewed by Ramon Santamaria (@raysan5)
 *
-*   Copyright (c) 2021 Chris Camacho (@codifies) and Ramon Santamaria (@raysan5)
+*   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
+*   BSD-like license that allows static linking with closed source software
+*
+*   Copyright (c) 2021-2022 Chris Camacho (@codifies) and Ramon Santamaria (@raysan5)
 *
 ********************************************************************************************/
 
@@ -17,6 +18,9 @@
 
 #define MAX_POINTS  11      // 10 points and back to the start
 
+//------------------------------------------------------------------------------------
+// Program main entry point
+//------------------------------------------------------------------------------------
 int main(void)
 {
     // Initialization

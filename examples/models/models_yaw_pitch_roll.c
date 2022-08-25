@@ -2,12 +2,14 @@
 *
 *   raylib [models] example - Plane rotations (yaw, pitch, roll)
 *
-*   This example has been created using raylib 1.8 (www.raylib.com)
-*   raylib is licensed under an unmodified zlib/libpng license (View raylib.h for details)
+*   Example originally created with raylib 1.8, last time updated with raylib 4.0
 *
 *   Example contributed by Berni (@Berni8k) and reviewed by Ramon Santamaria (@raysan5)
 *
-*   Copyright (c) 2017-2021 Berni (@Berni8k) and Ramon Santamaria (@raysan5)
+*   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
+*   BSD-like license that allows static linking with closed source software
+*
+*   Copyright (c) 2017-2022 Berni (@Berni8k) and Ramon Santamaria (@raysan5)
 *
 ********************************************************************************************/
 
@@ -15,6 +17,9 @@
 
 #include "raymath.h"        // Required for: MatrixRotateXYZ()
 
+//------------------------------------------------------------------------------------
+// Program main entry point
+//------------------------------------------------------------------------------------
 int main(void)
 {
     // Initialization
@@ -58,8 +63,8 @@ int main(void)
         }
 
         // Plane yaw (y-axis) controls
-        if (IsKeyDown(KEY_S)) yaw += 1.0f;
-        else if (IsKeyDown(KEY_A)) yaw -= 1.0f;
+        if (IsKeyDown(KEY_S)) yaw -= 1.0f;
+        else if (IsKeyDown(KEY_A)) yaw += 1.0f;
         else
         {
             if (yaw > 0.0f) yaw -= 0.5f;
@@ -67,8 +72,8 @@ int main(void)
         }
 
         // Plane roll (z-axis) controls
-        if (IsKeyDown(KEY_LEFT)) roll += 1.0f;
-        else if (IsKeyDown(KEY_RIGHT)) roll -= 1.0f;
+        if (IsKeyDown(KEY_LEFT)) roll -= 1.0f;
+        else if (IsKeyDown(KEY_RIGHT)) roll += 1.0f;
         else
         {
             if (roll > 0.0f) roll -= 0.5f;

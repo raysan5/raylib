@@ -158,7 +158,7 @@ typedef struct float16 {
     float v[16];
 } float16;
 
-#include <math.h>       // Required for: sinf(), cosf(), tan(), atan2f(), sqrtf(), fminf(), fmaxf(), fabs()
+#include <math.h>       // Required for: sinf(), cosf(), tan(), atan2f(), sqrtf(), floor(), fminf(), fmaxf(), fabs()
 
 //----------------------------------------------------------------------------------
 // Module Functions Definition - Utils math
@@ -194,6 +194,14 @@ RMAPI float Normalize(float value, float start, float end)
 RMAPI float Remap(float value, float inputStart, float inputEnd, float outputStart, float outputEnd)
 {
     float result = (value - inputStart)/(inputEnd - inputStart)*(outputEnd - outputStart) + outputStart;
+
+    return result;
+}
+
+// Wrap input value from min to max
+RMAPI float Wrap(float value, float min, float max)
+{
+    float result = value - (max - min)*floorf((value - min)/(max - min));
 
     return result;
 }
@@ -449,7 +457,7 @@ RMAPI Vector2 Vector2Clamp(Vector2 v, Vector2 min, Vector2 max)
 // Clamp the magnitude of the vector between two min and max values
 RMAPI Vector2 Vector2ClampValue(Vector2 v, float min, float max)
 {
-    Vector2 result = { 0 };
+    Vector2 result = v;
 
     float length = (v.x*v.x) + (v.y*v.y);
     if (length > 0.0f)
@@ -745,6 +753,58 @@ RMAPI Vector3 Vector3RotateByQuaternion(Vector3 v, Quaternion q)
     return result;
 }
 
+// Rotates a vector around an axis
+RMAPI Vector3 Vector3RotateByAxisAngle(Vector3 v, Vector3 axis, float angle)
+{
+    // Using Euler-Rodrigues Formula
+    // Ref.: https://en.wikipedia.org/w/index.php?title=Euler%E2%80%93Rodrigues_formula
+
+    Vector3 result = v;
+
+    // Vector3Normalize(axis);
+    float length = sqrtf(axis.x * axis.x + axis.y * axis.y + axis.z * axis.z);
+    if (length == 0.0f) length = 1.0f;
+    float ilength = 1.0f / length;
+    axis.x *= ilength;
+    axis.y *= ilength;
+    axis.z *= ilength;
+
+    angle /= 2.0f;
+    float a = sinf(angle);
+    float b = axis.x * a;
+    float c = axis.y * a;
+    float d = axis.z * a;
+    a = cosf(angle);
+    Vector3 w = { b, c, d };
+
+    // Vector3CrossProduct(w, v)
+    Vector3 wv = { w.y * v.z - w.z * v.y, w.z * v.x - w.x * v.z, w.x * v.y - w.y * v.x };
+
+    // Vector3CrossProduct(w, wv)
+    Vector3 wwv = { w.y * wv.z - w.z * wv.y, w.z * wv.x - w.x * wv.z, w.x * wv.y - w.y * wv.x };
+
+    // Vector3Scale(wv, 2 * a)
+    a *= 2;
+    wv.x *= a;
+    wv.y *= a;
+    wv.z *= a;
+
+    // Vector3Scale(wwv, 2)
+    wwv.x *= 2;
+    wwv.y *= 2;
+    wwv.z *= 2;
+
+    result.x += wv.x;
+    result.y += wv.y;
+    result.z += wv.z;
+
+    result.x += wwv.x;
+    result.y += wwv.y;
+    result.z += wwv.z;
+
+    return result;
+}
+
 // Calculate linear interpolation between two vectors
 RMAPI Vector3 Vector3Lerp(Vector3 v1, Vector3 v2, float amount)
 {
@@ -943,7 +1003,7 @@ RMAPI Vector3 Vector3Clamp(Vector3 v, Vector3 min, Vector3 max)
 // Clamp the magnitude of the vector between two values
 RMAPI Vector3 Vector3ClampValue(Vector3 v, float min, float max)
 {
-    Vector3 result = { 0 };
+    Vector3 result = v;
 
     float length = (v.x*v.x) + (v.y*v.y) + (v.z*v.z);
     if (length > 0.0f)
@@ -1253,7 +1313,8 @@ RMAPI Matrix MatrixRotate(Vector3 axis, float angle)
     return result;
 }
 
-// Get x-rotation matrix (angle in radians)
+// Get x-rotation matrix
+// NOTE: Angle must be provided in radians
 RMAPI Matrix MatrixRotateX(float angle)
 {
     Matrix result = { 1.0f, 0.0f, 0.0f, 0.0f,
@@ -1265,14 +1326,15 @@ RMAPI Matrix MatrixRotateX(float angle)
     float sinres = sinf(angle);
 
     result.m5 = cosres;
-    result.m6 = -sinres;
-    result.m9 = sinres;
+    result.m6 = sinres;
+    result.m9 = -sinres;
     result.m10 = cosres;
 
     return result;
 }
 
-// Get y-rotation matrix (angle in radians)
+// Get y-rotation matrix
+// NOTE: Angle must be provided in radians
 RMAPI Matrix MatrixRotateY(float angle)
 {
     Matrix result = { 1.0f, 0.0f, 0.0f, 0.0f,
@@ -1284,14 +1346,15 @@ RMAPI Matrix MatrixRotateY(float angle)
     float sinres = sinf(angle);
 
     result.m0 = cosres;
-    result.m2 = sinres;
-    result.m8 = -sinres;
+    result.m2 = -sinres;
+    result.m8 = sinres;
     result.m10 = cosres;
 
     return result;
 }
 
-// Get z-rotation matrix (angle in radians)
+// Get z-rotation matrix
+// NOTE: Angle must be provided in radians
 RMAPI Matrix MatrixRotateZ(float angle)
 {
     Matrix result = { 1.0f, 0.0f, 0.0f, 0.0f,
@@ -1303,74 +1366,76 @@ RMAPI Matrix MatrixRotateZ(float angle)
     float sinres = sinf(angle);
 
     result.m0 = cosres;
-    result.m1 = -sinres;
-    result.m4 = sinres;
+    result.m1 = sinres;
+    result.m4 = -sinres;
     result.m5 = cosres;
 
     return result;
 }
 
 
-// Get xyz-rotation matrix (angles in radians)
-RMAPI Matrix MatrixRotateXYZ(Vector3 ang)
+// Get xyz-rotation matrix
+// NOTE: Angle must be provided in radians
+RMAPI Matrix MatrixRotateXYZ(Vector3 angle)
 {
     Matrix result = { 1.0f, 0.0f, 0.0f, 0.0f,
                       0.0f, 1.0f, 0.0f, 0.0f,
                       0.0f, 0.0f, 1.0f, 0.0f,
                       0.0f, 0.0f, 0.0f, 1.0f }; // MatrixIdentity()
 
-    float cosz = cosf(-ang.z);
-    float sinz = sinf(-ang.z);
-    float cosy = cosf(-ang.y);
-    float siny = sinf(-ang.y);
-    float cosx = cosf(-ang.x);
-    float sinx = sinf(-ang.x);
+    float cosz = cosf(-angle.z);
+    float sinz = sinf(-angle.z);
+    float cosy = cosf(-angle.y);
+    float siny = sinf(-angle.y);
+    float cosx = cosf(-angle.x);
+    float sinx = sinf(-angle.x);
 
     result.m0 = cosz*cosy;
-    result.m4 = (cosz*siny*sinx) - (sinz*cosx);
-    result.m8 = (cosz*siny*cosx) + (sinz*sinx);
+    result.m1 = (cosz*siny*sinx) - (sinz*cosx);
+    result.m2 = (cosz*siny*cosx) + (sinz*sinx);
 
-    result.m1 = sinz*cosy;
+    result.m4 = sinz*cosy;
     result.m5 = (sinz*siny*sinx) + (cosz*cosx);
-    result.m9 = (sinz*siny*cosx) - (cosz*sinx);
+    result.m6 = (sinz*siny*cosx) - (cosz*sinx);
 
-    result.m2 = -siny;
-    result.m6 = cosy*sinx;
+    result.m8 = -siny;
+    result.m9 = cosy*sinx;
     result.m10= cosy*cosx;
 
     return result;
 }
 
-// Get zyx-rotation matrix (angles in radians)
-RMAPI Matrix MatrixRotateZYX(Vector3 ang)
+// Get zyx-rotation matrix
+// NOTE: Angle must be provided in radians
+RMAPI Matrix MatrixRotateZYX(Vector3 angle)
 {
     Matrix result = { 0 };
 
-    float cz = cosf(ang.z);
-    float sz = sinf(ang.z);
-    float cy = cosf(ang.y);
-    float sy = sinf(ang.y);
-    float cx = cosf(ang.x);
-    float sx = sinf(ang.x);
+    float cz = cosf(angle.z);
+    float sz = sinf(angle.z);
+    float cy = cosf(angle.y);
+    float sy = sinf(angle.y);
+    float cx = cosf(angle.x);
+    float sx = sinf(angle.x);
 
     result.m0 = cz*cy;
-    result.m1 = cz*sy*sx - cx*sz;
-    result.m2 = sz*sx + cz*cx*sy;
-    result.m3 = 0;
-
-    result.m4 = cy*sz;
-    result.m5 = cz*cx + sz*sy*sx;
-    result.m6 = cx*sz*sy - cz*sx;
-    result.m7 = 0;
-
-    result.m8 = -sy;
-    result.m9 = cy*sx;
-    result.m10 = cy*cx;
-    result.m11 = 0;
-
+    result.m4 = cz*sy*sx - cx*sz;
+    result.m8 = sz*sx + cz*cx*sy;
     result.m12 = 0;
+
+    result.m1 = cy*sz;
+    result.m5 = cz*cx + sz*sy*sx;
+    result.m9 = cx*sz*sy - cz*sx;
     result.m13 = 0;
+
+    result.m2 = -sy;
+    result.m6 = cy*sx;
+    result.m10 = cy*cx;
     result.m14 = 0;
+
+    result.m3 = 0;
+    result.m7 = 0;
+    result.m11 = 0;
     result.m15 = 1;
 
     return result;
@@ -1420,7 +1485,7 @@ RMAPI Matrix MatrixFrustum(double left, double right, double bottom, double top,
 }
 
 // Get perspective projection matrix
-// NOTE: Angle should be provided in radians
+// NOTE: Fovy angle must be provided in radians
 RMAPI Matrix MatrixPerspective(double fovy, double aspect, double near, double far)
 {
     Matrix result = { 0 };
@@ -1794,30 +1859,60 @@ RMAPI Quaternion QuaternionFromMatrix(Matrix mat)
 {
     Quaternion result = { 0 };
 
-    if ((mat.m0 > mat.m5) && (mat.m0 > mat.m10))
-    {
-        float s = sqrtf(1.0f + mat.m0 - mat.m5 - mat.m10)*2;
+    float fourWSquaredMinus1 = mat.m0 + mat.m5 + mat.m10;
+    float fourXSquaredMinus1 = mat.m0 - mat.m5 - mat.m10;
+    float fourYSquaredMinus1 = mat.m5 - mat.m0 - mat.m10;
+    float fourZSquaredMinus1 = mat.m10 - mat.m0 - mat.m5;
 
-        result.x = 0.25f*s;
-        result.y = (mat.m4 + mat.m1)/s;
-        result.z = (mat.m2 + mat.m8)/s;
-        result.w = (mat.m9 - mat.m6)/s;
-    }
-    else if (mat.m5 > mat.m10)
+    int biggestIndex = 0;
+    float fourBiggestSquaredMinus1 = fourWSquaredMinus1;
+    if (fourXSquaredMinus1 > fourBiggestSquaredMinus1)
     {
-        float s = sqrtf(1.0f + mat.m5 - mat.m0 - mat.m10)*2;
-        result.x = (mat.m4 + mat.m1)/s;
-        result.y = 0.25f*s;
-        result.z = (mat.m9 + mat.m6)/s;
-        result.w = (mat.m2 - mat.m8)/s;
+        fourBiggestSquaredMinus1 = fourXSquaredMinus1;
+        biggestIndex = 1;
     }
-    else
+
+    if (fourYSquaredMinus1 > fourBiggestSquaredMinus1)
     {
-        float s = sqrtf(1.0f + mat.m10 - mat.m0 - mat.m5)*2;
-        result.x = (mat.m2 + mat.m8)/s;
-        result.y = (mat.m9 + mat.m6)/s;
-        result.z = 0.25f*s;
-        result.w = (mat.m4 - mat.m1)/s;
+        fourBiggestSquaredMinus1 = fourYSquaredMinus1;
+        biggestIndex = 2;
+    }
+
+    if (fourZSquaredMinus1 > fourBiggestSquaredMinus1)
+    {
+        fourBiggestSquaredMinus1 = fourZSquaredMinus1;
+        biggestIndex = 3;
+    }
+
+    float biggestVal = sqrtf(fourBiggestSquaredMinus1 + 1.0f) * 0.5f;
+    float mult = 0.25f / biggestVal;
+
+    switch (biggestIndex)
+    {
+        case 0:
+            result.w = biggestVal;
+            result.x = (mat.m6 - mat.m9) * mult;
+            result.y = (mat.m8 - mat.m2) * mult;
+            result.z = (mat.m1 - mat.m4) * mult;
+            break;
+        case 1:
+            result.x = biggestVal;
+            result.w = (mat.m6 - mat.m9) * mult;
+            result.y = (mat.m1 + mat.m4) * mult;
+            result.z = (mat.m8 + mat.m2) * mult;
+            break;
+        case 2:
+            result.y = biggestVal;
+            result.w = (mat.m8 - mat.m2) * mult;
+            result.x = (mat.m1 + mat.m4) * mult;
+            result.z = (mat.m6 + mat.m9) * mult;
+            break;
+        case 3:
+            result.z = biggestVal;
+            result.w = (mat.m1 - mat.m4) * mult;
+            result.x = (mat.m8 + mat.m2) * mult;
+            result.y = (mat.m6 + mat.m9) * mult;
+            break;
     }
 
     return result;
@@ -1857,7 +1952,7 @@ RMAPI Matrix QuaternionToMatrix(Quaternion q)
 }
 
 // Get rotation quaternion for an angle and axis
-// NOTE: angle must be provided in radians
+// NOTE: Angle must be provided in radians
 RMAPI Quaternion QuaternionFromAxisAngle(Vector3 axis, float angle)
 {
     Quaternion result = { 0.0f, 0.0f, 0.0f, 1.0f };
@@ -2001,10 +2096,14 @@ RMAPI Quaternion QuaternionTransform(Quaternion q, Matrix mat)
 // Check whether two given quaternions are almost equal
 RMAPI int QuaternionEquals(Quaternion p, Quaternion q)
 {
-    int result = ((fabsf(p.x - q.x)) <= (EPSILON*fmaxf(1.0f, fmaxf(fabsf(p.x), fabsf(q.x))))) &&
+    int result = (((fabsf(p.x - q.x)) <= (EPSILON*fmaxf(1.0f, fmaxf(fabsf(p.x), fabsf(q.x))))) &&
                   ((fabsf(p.y - q.y)) <= (EPSILON*fmaxf(1.0f, fmaxf(fabsf(p.y), fabsf(q.y))))) &&
                   ((fabsf(p.z - q.z)) <= (EPSILON*fmaxf(1.0f, fmaxf(fabsf(p.z), fabsf(q.z))))) &&
-                  ((fabsf(p.w - q.w)) <= (EPSILON*fmaxf(1.0f, fmaxf(fabsf(p.w), fabsf(q.w)))));
+                  ((fabsf(p.w - q.w)) <= (EPSILON*fmaxf(1.0f, fmaxf(fabsf(p.w), fabsf(q.w)))))) ||
+                  (((fabsf(p.x + q.x)) <= (EPSILON*fmaxf(1.0f, fmaxf(fabsf(p.x), fabsf(q.x))))) &&
+                  ((fabsf(p.y + q.y)) <= (EPSILON*fmaxf(1.0f, fmaxf(fabsf(p.y), fabsf(q.y))))) &&
+                  ((fabsf(p.z + q.z)) <= (EPSILON*fmaxf(1.0f, fmaxf(fabsf(p.z), fabsf(q.z))))) &&
+                  ((fabsf(p.w + q.w)) <= (EPSILON*fmaxf(1.0f, fmaxf(fabsf(p.w), fabsf(q.w))))));
 
     return result;
 }

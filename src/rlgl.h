@@ -641,7 +641,7 @@ RLAPI unsigned int rlLoadTexture(const void *data, int width, int height, int fo
 RLAPI unsigned int rlLoadTextureDepth(int width, int height, bool useRenderBuffer);               // Load depth texture/renderbuffer (to be attached to fbo)
 RLAPI unsigned int rlLoadTextureCubemap(const void *data, int size, int format);                        // Load texture cubemap
 RLAPI void rlUpdateTexture(unsigned int id, int offsetX, int offsetY, int width, int height, int format, const void *data);  // Update GPU texture with new data
-RLAPI void rlGetGlTextureFormats(int format, int *glInternalFormat, int *glFormat, int *glType);  // Get OpenGL internal formats
+RLAPI void rlGetGlTextureFormats(int format, unsigned int *glInternalFormat, unsigned int *glFormat, unsigned int *glType);  // Get OpenGL internal formats
 RLAPI const char *rlGetPixelFormatName(unsigned int format);              // Get name string for pixel format
 RLAPI void rlUnloadTexture(unsigned int id);                              // Unload texture from GPU memory
 RLAPI void rlGenTextureMipmaps(unsigned int id, int width, int height, int format, int *mipmaps); // Generate mipmap data for selected texture
@@ -717,7 +717,7 @@ RLAPI void rlLoadDrawQuad(void);     // Load and draw a quad
         #include <OpenGL/glext.h>       // OpenGL extensions library
     #else
         // APIENTRY for OpenGL function pointer declarations is required
-        #ifndef APIENTRY
+        #if !defined(APIENTRY)
             #if defined(_WIN32)
                 #define APIENTRY __stdcall
             #else
@@ -1516,6 +1516,11 @@ void rlDisableTextureCubemap(void)
 void rlTextureParameters(unsigned int id, int param, int value)
 {
     glBindTexture(GL_TEXTURE_2D, id);
+
+#if !defined(GRAPHICS_API_OPENGL_11)
+    // Reset anisotropy filter, in case it was set
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, 1.0f);
+#endif
 
     switch (param)
     {
@@ -2707,9 +2712,9 @@ bool rlCheckRenderBatchLimit(int vCount)
 // Convert image data to OpenGL texture (returns OpenGL valid Id)
 unsigned int rlLoadTexture(const void *data, int width, int height, int format, int mipmapCount)
 {
-    glBindTexture(GL_TEXTURE_2D, 0);    // Free any old binding
-
     unsigned int id = 0;
+
+    glBindTexture(GL_TEXTURE_2D, 0);    // Free any old binding
 
     // Check texture format support by OpenGL 1.1 (compressed textures not supported)
 #if defined(GRAPHICS_API_OPENGL_11)
@@ -2767,7 +2772,7 @@ unsigned int rlLoadTexture(const void *data, int width, int height, int format, 
     {
         unsigned int mipSize = rlGetPixelDataSize(mipWidth, mipHeight, format);
 
-        int glInternalFormat, glFormat, glType;
+        unsigned int glInternalFormat, glFormat, glType;
         rlGetGlTextureFormats(format, &glInternalFormat, &glFormat, &glType);
 
         TRACELOGD("TEXTURE: Load mipmap level %i (%i x %i), size: %i, offset: %i", i, mipWidth, mipHeight, mipSize, mipOffset);
@@ -2917,7 +2922,7 @@ unsigned int rlLoadTextureCubemap(const void *data, int size, int format)
     glGenTextures(1, &id);
     glBindTexture(GL_TEXTURE_CUBE_MAP, id);
 
-    int glInternalFormat, glFormat, glType;
+    unsigned int glInternalFormat, glFormat, glType;
     rlGetGlTextureFormats(format, &glInternalFormat, &glFormat, &glType);
 
     if (glInternalFormat != -1)
@@ -2989,7 +2994,7 @@ void rlUpdateTexture(unsigned int id, int offsetX, int offsetY, int width, int h
 {
     glBindTexture(GL_TEXTURE_2D, id);
 
-    int glInternalFormat, glFormat, glType;
+    unsigned int glInternalFormat, glFormat, glType;
     rlGetGlTextureFormats(format, &glInternalFormat, &glFormat, &glType);
 
     if ((glInternalFormat != -1) && (format < RL_PIXELFORMAT_COMPRESSED_DXT1_RGB))
@@ -3000,11 +3005,11 @@ void rlUpdateTexture(unsigned int id, int offsetX, int offsetY, int width, int h
 }
 
 // Get OpenGL internal formats and data type from raylib PixelFormat
-void rlGetGlTextureFormats(int format, int *glInternalFormat, int *glFormat, int *glType)
+void rlGetGlTextureFormats(int format, unsigned int *glInternalFormat, unsigned int *glFormat, unsigned int *glType)
 {
-    *glInternalFormat = -1;
-    *glFormat = -1;
-    *glType = -1;
+    *glInternalFormat = 0;
+    *glFormat = 0;
+    *glType = 0;
 
     switch (format)
     {
@@ -3113,11 +3118,8 @@ void rlGenTextureMipmaps(unsigned int id, int width, int height, int format, int
         //glHint(GL_GENERATE_MIPMAP_HINT, GL_DONT_CARE);   // Hint for mipmaps generation algorithm: GL_FASTEST, GL_NICEST, GL_DONT_CARE
         glGenerateMipmap(GL_TEXTURE_2D);    // Generate mipmaps automatically
 
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);   // Activate Trilinear filtering for mipmaps
-
-        #define MIN(a,b) (((a)<(b))?(a):(b))
-        #define MAX(a,b) (((a)>(b))?(a):(b))
+        #define MIN(a,b) (((a)<(b))? (a):(b))
+        #define MAX(a,b) (((a)>(b))? (a):(b))
 
         *mipmaps = 1 + (int)floor(log(MAX(width, height))/log(2));
         TRACELOG(RL_LOG_INFO, "TEXTURE: [ID %i] Mipmaps generated automatically, total: %i", id, *mipmaps);
@@ -3150,7 +3152,7 @@ void *rlReadTexturePixels(unsigned int id, int width, int height, int format)
     // GL_UNPACK_ALIGNMENT affects operations that write to OpenGL memory (glTexImage, etc.)
     glPixelStorei(GL_PACK_ALIGNMENT, 1);
 
-    int glInternalFormat, glFormat, glType;
+    unsigned int glInternalFormat, glFormat, glType;
     rlGetGlTextureFormats(format, &glInternalFormat, &glFormat, &glType);
     unsigned int size = rlGetPixelDataSize(width, height, format);
 
@@ -3192,7 +3194,6 @@ void *rlReadTexturePixels(unsigned int id, int width, int height, int format)
 
     return pixels;
 }
-
 
 // Read screen pixel data (color buffer)
 unsigned char *rlReadScreenPixels(int width, int height)
@@ -3671,7 +3672,7 @@ unsigned int rlCompileShader(const char *shaderCode, int type)
         if (maxLength > 0)
         {
             int length = 0;
-            char *log = RL_CALLOC(maxLength, sizeof(char));
+            char *log = (char *)RL_CALLOC(maxLength, sizeof(char));
             glGetShaderInfoLog(shader, maxLength, &length, log);
             TRACELOG(RL_LOG_WARNING, "SHADER: [ID %i] Compile error: %s", shader, log);
             RL_FREE(log);
@@ -3733,7 +3734,7 @@ unsigned int rlLoadShaderProgram(unsigned int vShaderId, unsigned int fShaderId)
         if (maxLength > 0)
         {
             int length = 0;
-            char *log = RL_CALLOC(maxLength, sizeof(char));
+            char *log = (char *)RL_CALLOC(maxLength, sizeof(char));
             glGetProgramInfoLog(program, maxLength, &length, log);
             TRACELOG(RL_LOG_WARNING, "SHADER: [ID %i] Link error: %s", program, log);
             RL_FREE(log);
@@ -3900,7 +3901,7 @@ unsigned int rlLoadComputeShaderProgram(unsigned int shaderId)
         if (maxLength > 0)
         {
             int length = 0;
-            char *log = RL_CALLOC(maxLength, sizeof(char));
+            char *log = (char *)RL_CALLOC(maxLength, sizeof(char));
             glGetProgramInfoLog(program, maxLength, &length, log);
             TRACELOG(RL_LOG_WARNING, "SHADER: [ID %i] Link error: %s", program, log);
             RL_FREE(log);
@@ -4009,7 +4010,7 @@ void rlCopyBuffersElements(unsigned int destId, unsigned int srcId, unsigned lon
 void rlBindImageTexture(unsigned int id, unsigned int index, unsigned int format, int readonly)
 {
 #if defined(GRAPHICS_API_OPENGL_43)
-    int glInternalFormat = 0, glFormat = 0, glType = 0;
+    unsigned int glInternalFormat = 0, glFormat = 0, glType = 0;
 
     rlGetGlTextureFormats(format, &glInternalFormat, &glFormat, &glType);
     glBindImageTexture(index, id, 0, 0, 0, readonly ? GL_READ_ONLY : GL_READ_WRITE, glInternalFormat);

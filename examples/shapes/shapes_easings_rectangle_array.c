@@ -5,16 +5,18 @@
 *   NOTE: This example requires 'easings.h' library, provided on raylib/src. Just copy
 *   the library to same directory as example or make sure it's available on include path.
 *
-*   This example has been created using raylib 2.0 (www.raylib.com)
-*   raylib is licensed under an unmodified zlib/libpng license (View raylib.h for details)
+*   Example originally created with raylib 2.0, last time updated with raylib 2.5
 *
-*   Copyright (c) 2014-2019 Ramon Santamaria (@raysan5)
+*   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
+*   BSD-like license that allows static linking with closed source software
+*
+*   Copyright (c) 2014-2022 Ramon Santamaria (@raysan5)
 *
 ********************************************************************************************/
 
 #include "raylib.h"
 
-#include "extras/easings.h"            // Required for easing functions
+#include "reasings.h"            // Required for easing functions
 
 #define RECS_WIDTH              50
 #define RECS_HEIGHT             50
@@ -24,6 +26,9 @@
 
 #define PLAY_TIME_IN_FRAMES     240                 // At 60 fps = 4 seconds
 
+//------------------------------------------------------------------------------------
+// Program main entry point
+//------------------------------------------------------------------------------------
 int main(void)
 {
     // Initialization

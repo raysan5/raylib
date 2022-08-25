@@ -2,10 +2,12 @@
 *
 *   raylib [models] example - first person maze
 *
-*   This example has been created using raylib 2.5 (www.raylib.com)
-*   raylib is licensed under an unmodified zlib/libpng license (View raylib.h for details)
+*   Example originally created with raylib 2.5, last time updated with raylib 3.5
 *
-*   Copyright (c) 2019 Ramon Santamaria (@raysan5)
+*   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
+*   BSD-like license that allows static linking with closed source software
+*
+*   Copyright (c) 2019-2022 Ramon Santamaria (@raysan5)
 *
 ********************************************************************************************/
 
@@ -13,6 +15,9 @@
 
 #include <stdlib.h>           // Required for: free()
 
+//------------------------------------------------------------------------------------
+// Program main entry point
+//------------------------------------------------------------------------------------
 int main(void)
 {
     // Initialization
@@ -52,7 +57,7 @@ int main(void)
         //----------------------------------------------------------------------------------
         Vector3 oldCamPos = camera.position;    // Store old camera position
 
-        UpdateCamera(&camera);      // Update camera
+        UpdateCamera(&camera);
 
         // Check player collision (we simplify to 2D collision detection)
         Vector2 playerPos = { camera.position.x, camera.position.z };

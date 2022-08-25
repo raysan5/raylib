@@ -8,8 +8,8 @@
 #    PLATFORM_DESKTOP:  OSX/macOS (arm64, x86_64)
 #    PLATFORM_DESKTOP:  FreeBSD, OpenBSD, NetBSD, DragonFly
 #    PLATFORM_ANDROID:  Android (arm, i686, arm64, x86_64)
-#    PLATFORM_RPI:      Raspberry Pi (Raspbian)
-#    PLATFORM_DRM:      Linux native mode, including Raspberry Pi 4 with V3D fkms driver
+#    PLATFORM_RPI:      Raspberry Pi (deprecated - RPI OS Buster only)
+#    PLATFORM_DRM:      Linux native mode, including Raspberry Pi (RPI OS Bullseye)
 #    PLATFORM_WEB:      HTML5 (Chrome, Firefox)
 #    PLATFORM_NX:       Switch LibNX
 #
@@ -46,8 +46,8 @@
 PLATFORM             ?= PLATFORM_DESKTOP
 
 # Define required raylib variables
-RAYLIB_VERSION        = 4.0.0
-RAYLIB_API_VERSION    = 400
+RAYLIB_VERSION        = 4.2.0
+RAYLIB_API_VERSION    = 420
 
 # Define raylib source code path
 RAYLIB_SRC_PATH      ?= ../src
@@ -196,7 +196,7 @@ ifeq ($(PLATFORM),PLATFORM_WEB)
     CLANG_PATH          = $(EMSDK_PATH)/upstream/bin
     PYTHON_PATH         = $(EMSDK_PATH)/python/3.9.2-1_64bit
     NODE_PATH           = $(EMSDK_PATH)/node/14.15.5_64bit/bin
-    export PATH         = $(EMSDK_PATH);$(EMSCRIPTEN_PATH);$(CLANG_PATH);$(NODE_PATH);$(PYTHON_PATH);C:\raylib\MinGW\bin:$$(PATH)
+    export PATH         := $(EMSDK_PATH):$(EMSCRIPTEN_PATH):$(CLANG_PATH):$(NODE_PATH):$(PYTHON_PATH):C:\raylib\MinGW\bin:$(PATH)
 endif
 
 ifeq ($(PLATFORM),PLATFORM_ANDROID)
@@ -334,6 +334,7 @@ ifneq ($(RAYLIB_CONFIG_FLAGS), NONE)
 endif
 
 ifeq ($(PLATFORM), PLATFORM_WEB)
+    # NOTE: When using multi-threading in the user code, it requires -pthread enabled
     CFLAGS += -std=gnu99
 else
     CFLAGS += -std=c99
@@ -479,11 +480,13 @@ endif
 # Define library paths containing required libs: LDFLAGS
 # NOTE: This is only required for dynamic library generation
 #------------------------------------------------------------------------------------------------
-LDFLAGS = -L. -L$(RAYLIB_RELEASE_PATH)
+LDFLAGS = $(CUSTOM_LDFLAGS) -L. -L$(RAYLIB_RELEASE_PATH)
 
 ifeq ($(PLATFORM),PLATFORM_DESKTOP)
     ifeq ($(PLATFORM_OS),WINDOWS)
-        LDFLAGS += -Wl,--out-implib,$(RAYLIB_RELEASE_PATH)/lib$(RAYLIB_LIB_NAME)dll.a
+        ifneq ($(CC), tcc)
+            LDFLAGS += -Wl,--out-implib,$(RAYLIB_RELEASE_PATH)/lib$(RAYLIB_LIB_NAME)dll.a
+        endif
     endif
     ifeq ($(PLATFORM_OS),OSX)
         LDFLAGS += -compatibility_version $(RAYLIB_API_VERSION) -current_version $(RAYLIB_VERSION)
@@ -496,7 +499,7 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
     endif
 endif
 ifeq ($(PLATFORM),PLATFORM_RPI)
-    LDFLAGS += -Wl,-soname,lib$(RAYLIB_LIB_NAME).so.$(RAYLIB_API_VERSION) -L$(RPI_TOOLCHAIN_SYSROOT)/opt/vc/lib 
+    LDFLAGS += -Wl,-soname,lib$(RAYLIB_LIB_NAME).so.$(RAYLIB_API_VERSION) -L$(RPI_TOOLCHAIN_SYSROOT)/opt/vc/lib
 endif
 ifeq ($(PLATFORM),PLATFORM_DRM)
     LDFLAGS += -Wl,-soname,lib$(RAYLIB_LIB_NAME).so.$(RAYLIB_API_VERSION)
@@ -517,13 +520,19 @@ endif
 #------------------------------------------------------------------------------------------------
 ifeq ($(PLATFORM),PLATFORM_DESKTOP)
     ifeq ($(PLATFORM_OS),WINDOWS)
-        LDLIBS = -static-libgcc -lopengl32 -lgdi32 -lwinmm
+        ifeq ($(CC), tcc)
+            LDLIBS = -lopengl32 -lgdi32 -lwinmm -lshell32
+        else
+            LDLIBS = -static-libgcc -lopengl32 -lgdi32 -lwinmm
+        endif
     endif
     ifeq ($(PLATFORM_OS),LINUX)
         LDLIBS = -lGL -lc -lm -lpthread -ldl -lrt
         ifeq ($(USE_WAYLAND_DISPLAY),FALSE)
             LDLIBS += -lX11
         endif
+        # TODO: On ARM 32bit arch, miniaudio requires atomics library
+        #LDLIBS += -latomic
     endif
     ifeq ($(PLATFORM_OS),OSX)
         LDLIBS = -framework OpenGL -framework Cocoa -framework IOKit -framework CoreAudio -framework CoreVideo
@@ -775,7 +784,6 @@ ifeq ($(ROOT),root)
 		cp --update raylib.h $(RAYLIB_H_INSTALL_PATH)/raylib.h
 		cp --update raymath.h $(RAYLIB_H_INSTALL_PATH)/raymath.h
 		cp --update rlgl.h $(RAYLIB_H_INSTALL_PATH)/rlgl.h
-		cp --update extras/physac.h $(RAYLIB_H_INSTALL_PATH)/physac.h
 		@echo "raylib development files installed/updated!"
     else
 		@echo "This function currently works on GNU/Linux systems. Add yours today (^;"
@@ -803,7 +811,6 @@ ifeq ($(ROOT),root)
 		rm --force --interactive --verbose $(RAYLIB_H_INSTALL_PATH)/raylib.h
 		rm --force --interactive --verbose $(RAYLIB_H_INSTALL_PATH)/raymath.h
 		rm --force --interactive --verbose $(RAYLIB_H_INSTALL_PATH)/rlgl.h
-		rm --force --interactive --verbose $(RAYLIB_H_INSTALL_PATH)/physac.h
 		@echo "raylib development files removed!"
         else
 		@echo "This function currently works on GNU/Linux systems. Add yours today (^;"

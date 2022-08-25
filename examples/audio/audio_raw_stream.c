@@ -2,12 +2,14 @@
 *
 *   raylib [audio] example - Raw audio streaming
 *
-*   This example has been created using raylib 1.6 (www.raylib.com)
-*   raylib is licensed under an unmodified zlib/libpng license (View raylib.h for details)
+*   Example originally created with raylib 1.6, last time updated with raylib 4.2
 *
 *   Example created by Ramon Santamaria (@raysan5) and reviewed by James Hofmann (@triplefox)
 *
-*   Copyright (c) 2015-2019 Ramon Santamaria (@raysan5) and James Hofmann (@triplefox)
+*   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
+*   BSD-like license that allows static linking with closed source software
+*
+*   Copyright (c) 2015-2022 Ramon Santamaria (@raysan5) and James Hofmann (@triplefox)
 *
 ********************************************************************************************/
 
@@ -49,7 +51,9 @@ void AudioInputCallback(void *buffer, unsigned int frames)
     }
 }
 
-
+//------------------------------------------------------------------------------------
+// Program main entry point
+//------------------------------------------------------------------------------------
 int main(void)
 {
     // Initialization
@@ -121,7 +125,7 @@ int main(void)
         if (frequency != oldFrequency)
         {
             // Compute wavelength. Limit size in both directions.
-            int oldWavelength = waveLength;
+            //int oldWavelength = waveLength;
             waveLength = (int)(22050/frequency);
             if (waveLength > MAX_SAMPLES/2) waveLength = MAX_SAMPLES/2;
             if (waveLength < 1) waveLength = 1;
@@ -130,6 +134,11 @@ int main(void)
             for (int i = 0; i < waveLength*2; i++)
             {
                 data[i] = (short)(sinf(((2*PI*(float)i/waveLength)))*32000);
+            }
+            // Make sure the rest of the line is flat
+            for (int j = waveLength*2; j < MAX_SAMPLES; j++)
+            {
+                data[j] = (short)0;
             }
 
             // Scale read cursor's position to minimize transition artifacts

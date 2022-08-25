@@ -8,10 +8,12 @@
 *                - PLAYSTATION(R)3 Controller
 *         Check raylib.h for buttons configuration
 *
-*   This example has been created using raylib 2.5 (www.raylib.com)
-*   raylib is licensed under an unmodified zlib/libpng license (View raylib.h for details)
+*   Example originally created with raylib 1.1, last time updated with raylib 4.2
 *
-*   Copyright (c) 2013-2019 Ramon Santamaria (@raysan5)
+*   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
+*   BSD-like license that allows static linking with closed source software
+*
+*   Copyright (c) 2013-2022 Ramon Santamaria (@raysan5)
 *
 ********************************************************************************************/
 
@@ -27,6 +29,9 @@
     #define PS3_NAME_ID         "PLAYSTATION(R)3 Controller"
 #endif
 
+//------------------------------------------------------------------------------------
+// Program main entry point
+//------------------------------------------------------------------------------------
 int main(void)
 {
     // Initialization

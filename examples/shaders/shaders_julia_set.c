@@ -1,18 +1,20 @@
 /*******************************************************************************************
 *
-*   raylib [shaders] example - julia sets
+*   raylib [shaders] example - Julia sets
 *
 *   NOTE: This example requires raylib OpenGL 3.3 or ES2 versions for shaders support,
 *         OpenGL 1.1 does not support shaders, recompile raylib to OpenGL 3.3 version.
 *
 *   NOTE: Shaders used in this example are #version 330 (OpenGL 3.3).
 *
-*   This example has been created using raylib 2.5 (www.raylib.com)
-*   raylib is licensed under an unmodified zlib/libpng license (View raylib.h for details)
+*   Example originally created with raylib 2.5, last time updated with raylib 4.0
 *
 *   Example contributed by eggmund (@eggmund) and reviewed by Ramon Santamaria (@raysan5)
 *
-*   Copyright (c) 2019 eggmund (@eggmund) and Ramon Santamaria (@raysan5)
+*   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
+*   BSD-like license that allows static linking with closed source software
+*
+*   Copyright (c) 2019-2022 eggmund (@eggmund) and Ramon Santamaria (@raysan5)
 *
 ********************************************************************************************/
 
@@ -35,6 +37,9 @@ const float pointsOfInterest[6][2] =
     { -0.70176f, -0.3842f },
 };
 
+//------------------------------------------------------------------------------------
+// Program main entry point
+//------------------------------------------------------------------------------------
 int main(void)
 {
     // Initialization

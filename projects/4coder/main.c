@@ -12,7 +12,6 @@ int main() {
     cam.target = (Vector3){ 0.0f, 0.0f, 0.0f };
     cam.up = (Vector3){ 0.0f, 1.f, 0.0f };
     cam.fovy = 60.0f;
-    cam.type = CAMERA_PERSPECTIVE;
 
     Vector3 cubePos = { 0.0f, 0.0f, 0.0f };
 

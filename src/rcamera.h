@@ -103,7 +103,7 @@
 // Module Functions Declaration
 //----------------------------------------------------------------------------------
 
-#ifdef __cplusplus
+#if defined(__cplusplus)
 extern "C" {            // Prevents name mangling of functions
 #endif
 
@@ -119,7 +119,7 @@ void SetCameraMoveControls(int keyFront, int keyBack,
                            int keyUp, int keyDown);         // Set camera move controls (1st person and 3rd person cameras)
 #endif
 
-#ifdef __cplusplus
+#if defined(__cplusplus)
 }
 #endif
 
@@ -150,7 +150,7 @@ void SetCameraMoveControls(int keyFront, int keyBack,
 #endif
 
 // Camera mouse movement sensitivity
-#define CAMERA_MOUSE_MOVE_SENSITIVITY                   0.003f
+#define CAMERA_MOUSE_MOVE_SENSITIVITY                   0.5f    // TODO: it should be independant of framerate
 #define CAMERA_MOUSE_SCROLL_SENSITIVITY                 1.5f
 
 // FREE_CAMERA
@@ -163,7 +163,7 @@ void SetCameraMoveControls(int keyFront, int keyBack,
 #define CAMERA_FREE_PANNING_DIVIDER                     5.1f
 
 // ORBITAL_CAMERA
-#define CAMERA_ORBITAL_SPEED                            0.01f       // Radians per frame
+#define CAMERA_ORBITAL_SPEED                            0.5f       // Radians per second
 
 // FIRST_PERSON
 //#define CAMERA_FIRST_PERSON_MOUSE_SENSITIVITY           0.003f
@@ -171,9 +171,11 @@ void SetCameraMoveControls(int keyFront, int keyBack,
 #define CAMERA_FIRST_PERSON_MIN_CLAMP                   89.0f
 #define CAMERA_FIRST_PERSON_MAX_CLAMP                  -89.0f
 
-#define CAMERA_FIRST_PERSON_STEP_TRIGONOMETRIC_DIVIDER  8.0f
-#define CAMERA_FIRST_PERSON_STEP_DIVIDER                30.0f
-#define CAMERA_FIRST_PERSON_WAVING_DIVIDER              200.0f
+// When walking, y-position of the player moves up-down at step frequency (swinging) but
+// also the body slightly tilts left-right on every step, when all the body weight is left over one foot (tilting)
+#define CAMERA_FIRST_PERSON_STEP_FREQUENCY               1.8f       // Step frequency when walking (steps per second)
+#define CAMERA_FIRST_PERSON_SWINGING_DELTA               0.03f      // Maximum up-down swinging distance when walking
+#define CAMERA_FIRST_PERSON_TILTING_DELTA                0.005f     // Maximum left-right tilting distance when walking
 
 // THIRD_PERSON
 //#define CAMERA_THIRD_PERSON_MOUSE_SENSITIVITY           0.003f
@@ -183,7 +185,7 @@ void SetCameraMoveControls(int keyFront, int keyBack,
 #define CAMERA_THIRD_PERSON_OFFSET                      (Vector3){ 0.4f, 0.0f, 0.0f }
 
 // PLAYER (used by camera)
-#define PLAYER_MOVEMENT_SENSITIVITY                     20.0f
+#define PLAYER_MOVEMENT_SENSITIVITY                     2.0f
 
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
@@ -204,7 +206,6 @@ typedef struct {
     float targetDistance;           // Camera distance from position to target
     float playerEyesPosition;       // Player eyes position from ground (in meters)
     Vector2 angle;                  // Camera angle in plane XZ
-    Vector2 previousMousePosition;  // Previous mouse position
 
     // Camera movement control keys
     int moveControl[6];             // Move controls (CAMERA_FIRST_PERSON)
@@ -221,7 +222,6 @@ static CameraData CAMERA = {        // Global CAMERA state context
     .targetDistance = 0,
     .playerEyesPosition = 1.85f,
     .angle = { 0 },
-    .previousMousePosition = { 0 },
     .moveControl = { 'W', 'S', 'D', 'A', 'E', 'Q' },
     .smoothZoomControl = 341,       // raylib: KEY_LEFT_CONTROL
     .altControl = 342,              // raylib: KEY_LEFT_ALT
@@ -265,8 +265,6 @@ void SetCameraMode(Camera camera, int mode)
 
     CAMERA.playerEyesPosition = camera.position.y;          // Init player eyes position to camera Y position
 
-    CAMERA.previousMousePosition = GetMousePosition();      // Init mouse position
-
     // Lock cursor for first person and third person cameras
     if ((mode == CAMERA_FIRST_PERSON) || (mode == CAMERA_THIRD_PERSON)) DisableCursor();
     else EnableCursor();
@@ -281,13 +279,12 @@ void SetCameraMode(Camera camera, int mode)
 //       Keys:  IsKeyDown()
 void UpdateCamera(Camera *camera)
 {
-    static int swingCounter = 0;    // Used for 1st person swinging movement
+    static float swingCounter = 0.0f;    // Used for 1st person swinging movement
 
     // TODO: Compute CAMERA.targetDistance and CAMERA.angle here (?)
 
     // Mouse movement detection
-    Vector2 mousePositionDelta = { 0.0f, 0.0f };
-    Vector2 mousePosition = GetMousePosition();
+    Vector2 mousePositionDelta = GetMouseDelta();
     float mouseWheelMove = GetMouseWheelMove();
 
     // Keys input detection
@@ -301,14 +298,6 @@ void UpdateCamera(Camera *camera)
                           IsKeyDown(CAMERA.moveControl[MOVE_LEFT]),
                           IsKeyDown(CAMERA.moveControl[MOVE_UP]),
                           IsKeyDown(CAMERA.moveControl[MOVE_DOWN]) };
-
-    if (CAMERA.mode != CAMERA_CUSTOM)
-    {
-        mousePositionDelta.x = mousePosition.x - CAMERA.previousMousePosition.x;
-        mousePositionDelta.y = mousePosition.y - CAMERA.previousMousePosition.y;
-
-        CAMERA.previousMousePosition = mousePosition;
-    }
 
     // Support for multiple automatic camera modes
     // NOTE: In case of CAMERA_CUSTOM nothing happens here, user must update it manually
@@ -402,7 +391,7 @@ void UpdateCamera(Camera *camera)
         } break;
         case CAMERA_ORBITAL:        // Camera just orbits around target, only zoom allowed
         {
-            CAMERA.angle.x += CAMERA_ORBITAL_SPEED;      // Camera orbit angle
+            CAMERA.angle.x += CAMERA_ORBITAL_SPEED*GetFrameTime();      // Camera orbit angle
             CAMERA.targetDistance -= (mouseWheelMove*CAMERA_MOUSE_SCROLL_SENSITIVITY);   // Camera zoom
 
             // Camera distance clamp
@@ -419,20 +408,20 @@ void UpdateCamera(Camera *camera)
             camera->position.x += (sinf(CAMERA.angle.x)*direction[MOVE_BACK] -
                                    sinf(CAMERA.angle.x)*direction[MOVE_FRONT] -
                                    cosf(CAMERA.angle.x)*direction[MOVE_LEFT] +
-                                   cosf(CAMERA.angle.x)*direction[MOVE_RIGHT])/PLAYER_MOVEMENT_SENSITIVITY;
+                                   cosf(CAMERA.angle.x)*direction[MOVE_RIGHT])*PLAYER_MOVEMENT_SENSITIVITY*GetFrameTime();
 
             camera->position.y += (sinf(CAMERA.angle.y)*direction[MOVE_FRONT] -
                                    sinf(CAMERA.angle.y)*direction[MOVE_BACK] +
-                                   1.0f*direction[MOVE_UP] - 1.0f*direction[MOVE_DOWN])/PLAYER_MOVEMENT_SENSITIVITY;
+                                   1.0f*direction[MOVE_UP] - 1.0f*direction[MOVE_DOWN])*PLAYER_MOVEMENT_SENSITIVITY*GetFrameTime();
 
             camera->position.z += (cosf(CAMERA.angle.x)*direction[MOVE_BACK] -
                                    cosf(CAMERA.angle.x)*direction[MOVE_FRONT] +
                                    sinf(CAMERA.angle.x)*direction[MOVE_LEFT] -
-                                   sinf(CAMERA.angle.x)*direction[MOVE_RIGHT])/PLAYER_MOVEMENT_SENSITIVITY;
+                                   sinf(CAMERA.angle.x)*direction[MOVE_RIGHT])*PLAYER_MOVEMENT_SENSITIVITY*GetFrameTime();
 
             // Camera orientation calculation
-            CAMERA.angle.x += (mousePositionDelta.x*-CAMERA_MOUSE_MOVE_SENSITIVITY);
-            CAMERA.angle.y += (mousePositionDelta.y*-CAMERA_MOUSE_MOVE_SENSITIVITY);
+            CAMERA.angle.x -= mousePositionDelta.x*CAMERA_MOUSE_MOVE_SENSITIVITY*GetFrameTime();
+            CAMERA.angle.y -= mousePositionDelta.y*CAMERA_MOUSE_MOVE_SENSITIVITY*GetFrameTime();
 
             // Angle clamp
             if (CAMERA.angle.y > CAMERA_FIRST_PERSON_MIN_CLAMP*DEG2RAD) CAMERA.angle.y = CAMERA_FIRST_PERSON_MIN_CLAMP*DEG2RAD;
@@ -490,15 +479,17 @@ void UpdateCamera(Camera *camera)
             camera->target.y = camera->position.y - matTransform.m13;
             camera->target.z = camera->position.z - matTransform.m14;
 
-            // If movement detected (some key pressed), increase swinging
-            for (int i = 0; i < 6; i++) if (direction[i]) { swingCounter++; break; }
-
             // Camera position update
             // NOTE: On CAMERA_FIRST_PERSON player Y-movement is limited to player 'eyes position'
-            camera->position.y = CAMERA.playerEyesPosition - sinf(swingCounter/CAMERA_FIRST_PERSON_STEP_TRIGONOMETRIC_DIVIDER)/CAMERA_FIRST_PERSON_STEP_DIVIDER;
+            camera->position.y = CAMERA.playerEyesPosition;
 
-            camera->up.x = sinf(swingCounter/(CAMERA_FIRST_PERSON_STEP_TRIGONOMETRIC_DIVIDER*2))/CAMERA_FIRST_PERSON_WAVING_DIVIDER;
-            camera->up.z = -sinf(swingCounter/(CAMERA_FIRST_PERSON_STEP_TRIGONOMETRIC_DIVIDER*2))/CAMERA_FIRST_PERSON_WAVING_DIVIDER;
+            // Camera swinging (y-movement), only when walking (some key pressed)
+            for (int i = 0; i < 6; i++) if (direction[i]) { swingCounter += GetFrameTime(); break; }
+            camera->position.y -= sinf(2*PI*CAMERA_FIRST_PERSON_STEP_FREQUENCY*swingCounter)*CAMERA_FIRST_PERSON_SWINGING_DELTA;
+
+            // Camera waiving (xz-movement), only when walking (some key pressed)
+            camera->up.x = sinf(2*PI*CAMERA_FIRST_PERSON_STEP_FREQUENCY*swingCounter)*CAMERA_FIRST_PERSON_TILTING_DELTA;
+            camera->up.z = -sinf(2*PI*CAMERA_FIRST_PERSON_STEP_FREQUENCY*swingCounter)*CAMERA_FIRST_PERSON_TILTING_DELTA;
 
         } break;
         case CAMERA_THIRD_PERSON:   // Camera moves as in a third-person game, following target at a distance, controls are configurable
@@ -506,16 +497,16 @@ void UpdateCamera(Camera *camera)
             camera->position.x += (sinf(CAMERA.angle.x)*direction[MOVE_BACK] -
                                    sinf(CAMERA.angle.x)*direction[MOVE_FRONT] -
                                    cosf(CAMERA.angle.x)*direction[MOVE_LEFT] +
-                                   cosf(CAMERA.angle.x)*direction[MOVE_RIGHT])/PLAYER_MOVEMENT_SENSITIVITY;
+                                   cosf(CAMERA.angle.x)*direction[MOVE_RIGHT])*PLAYER_MOVEMENT_SENSITIVITY*GetFrameTime();
 
             camera->position.y += (sinf(CAMERA.angle.y)*direction[MOVE_FRONT] -
                                    sinf(CAMERA.angle.y)*direction[MOVE_BACK] +
-                                   1.0f*direction[MOVE_UP] - 1.0f*direction[MOVE_DOWN])/PLAYER_MOVEMENT_SENSITIVITY;
+                                   1.0f*direction[MOVE_UP] - 1.0f*direction[MOVE_DOWN])*PLAYER_MOVEMENT_SENSITIVITY*GetFrameTime();
 
             camera->position.z += (cosf(CAMERA.angle.x)*direction[MOVE_BACK] -
                                    cosf(CAMERA.angle.x)*direction[MOVE_FRONT] +
                                    sinf(CAMERA.angle.x)*direction[MOVE_LEFT] -
-                                   sinf(CAMERA.angle.x)*direction[MOVE_RIGHT])/PLAYER_MOVEMENT_SENSITIVITY;
+                                   sinf(CAMERA.angle.x)*direction[MOVE_RIGHT])*PLAYER_MOVEMENT_SENSITIVITY*GetFrameTime();
 
             // Camera orientation calculation
             CAMERA.angle.x += (mousePositionDelta.x*-CAMERA_MOUSE_MOVE_SENSITIVITY);

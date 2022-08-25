@@ -1,6 +1,6 @@
 /**********************************************************************************************
 *
-*   raudio v1.0 - A simple and easy-to-use audio library based on miniaudio
+*   raudio v1.1 - A simple and easy-to-use audio library based on miniaudio
 *
 *   FEATURES:
 *       - Manage audio device (init/close)
@@ -71,9 +71,9 @@
 
 #if defined(RAUDIO_STANDALONE)
     #include "raudio.h"
-    #include <stdarg.h>         // Required for: va_list, va_start(), vfprintf(), va_end()
 #else
     #include "raylib.h"         // Declares module functions
+
     // Check if config flags have been externally provided on compilation line
     #if !defined(EXTERNAL_CONFIG_FLAGS)
         #include "config.h"     // Defines module configuration flags
@@ -187,21 +187,21 @@ typedef struct tagBITMAPINFOHEADER {
 
 #if defined(RAUDIO_STANDALONE)
     #ifndef TRACELOG
-        #define TRACELOG(level, ...) (void)0
+        #define TRACELOG(level, ...)    printf(__VA_ARGS__)
     #endif
 
     // Allow custom memory allocators
     #ifndef RL_MALLOC
-        #define RL_MALLOC(sz)       malloc(sz)
+        #define RL_MALLOC(sz)           malloc(sz)
     #endif
     #ifndef RL_CALLOC
-        #define RL_CALLOC(n,sz)     calloc(n,sz)
+        #define RL_CALLOC(n,sz)         calloc(n,sz)
     #endif
     #ifndef RL_REALLOC
-        #define RL_REALLOC(ptr,sz)  realloc(ptr,sz)
+        #define RL_REALLOC(ptr,sz)      realloc(ptr,sz)
     #endif
     #ifndef RL_FREE
-        #define RL_FREE(ptr)        free(ptr)
+        #define RL_FREE(ptr)            free(ptr)
     #endif
 #endif
 
@@ -272,10 +272,6 @@ typedef struct tagBITMAPINFOHEADER {
 #ifndef MAX_AUDIO_BUFFER_POOL_CHANNELS
     #define MAX_AUDIO_BUFFER_POOL_CHANNELS    16    // Audio pool channels
 #endif
-#ifndef DEFAULT_AUDIO_BUFFER_SIZE
-    #define DEFAULT_AUDIO_BUFFER_SIZE       4096    // Default audio buffer size
-#endif
-
 
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
@@ -320,7 +316,7 @@ typedef enum {
 struct rAudioBuffer {
     ma_data_converter converter;    // Audio data converter
 
-    AudioCallback callback;   // Audio buffer callback for buffer filling on audio threads
+    AudioCallback callback;         // Audio buffer callback for buffer filling on audio threads
     rAudioProcessor *processor;     // Audio processor
 
     float volume;                   // Audio buffer volume
@@ -329,7 +325,7 @@ struct rAudioBuffer {
 
     bool playing;                   // Audio buffer state: AUDIO_PLAYING
     bool paused;                    // Audio buffer state: AUDIO_PAUSED
-    bool looping;                   // Audio buffer looping, always true for AudioStreams
+    bool looping;                   // Audio buffer looping, default to true for AudioStreams
     int usage;                      // Audio buffer usage mode: STATIC or STREAM
 
     bool isSubBufferProcessed[2];   // SubBuffer processed (virtual double buffer)
@@ -360,6 +356,8 @@ typedef struct AudioData {
         ma_device device;           // miniaudio device
         ma_mutex lock;              // miniaudio mutex lock
         bool isReady;               // Check if audio device is ready
+        size_t pcmBufferSize;       // Pre-allocated buffer size
+        void *pcmBuffer;            // Pre-allocated buffer to read audio data from file/memory
     } System;
     struct {
         AudioBuffer *first;         // Pointer to first AudioBuffer in the list
@@ -527,6 +525,7 @@ void CloseAudioDevice(void)
         ma_context_uninit(&AUDIO.System.context);
 
         AUDIO.System.isReady = false;
+        RL_FREE(AUDIO.System.pcmBuffer);
 
         TRACELOG(LOG_INFO, "AUDIO: Device closed successfully");
     }
@@ -1169,8 +1168,8 @@ void WaveFormat(Wave *wave, int sampleRate, int sampleSize, int channels)
     ma_format formatOut = ((sampleSize == 8)? ma_format_u8 : ((sampleSize == 16)? ma_format_s16 : ma_format_f32));
 
     ma_uint32 frameCountIn = wave->frameCount;
-
     ma_uint32 frameCount = (ma_uint32)ma_convert_frames(NULL, 0, formatOut, channels, sampleRate, NULL, frameCountIn, formatIn, wave->channels, wave->sampleRate);
+
     if (frameCount == 0)
     {
         TRACELOG(LOG_WARNING, "WAVE: Failed to get frame count for format conversion");
@@ -1190,6 +1189,7 @@ void WaveFormat(Wave *wave, int sampleRate, int sampleSize, int channels)
     wave->sampleSize = sampleSize;
     wave->sampleRate = sampleRate;
     wave->channels = channels;
+
     RL_FREE(wave->data);
     wave->data = data;
 }
@@ -1638,7 +1638,7 @@ void UnloadMusicStream(Music music)
         else if (music.ctxType == MUSIC_AUDIO_FLAC) drflac_free((drflac *)music.ctxData, NULL);
 #endif
 #if defined(SUPPORT_FILEFORMAT_MP3)
-    else if (music.ctxType == MUSIC_AUDIO_MP3) { drmp3_uninit((drmp3 *)music.ctxData); RL_FREE(music.ctxData); }
+        else if (music.ctxType == MUSIC_AUDIO_MP3) { drmp3_uninit((drmp3 *)music.ctxData); RL_FREE(music.ctxData); }
 #endif
 #if defined(SUPPORT_FILEFORMAT_XM)
         else if (music.ctxType == MUSIC_MODULE_XM) jar_xm_free_context((jar_xm_context_t *)music.ctxData);
@@ -1684,16 +1684,16 @@ void StopMusicStream(Music music)
     switch (music.ctxType)
     {
 #if defined(SUPPORT_FILEFORMAT_WAV)
-        case MUSIC_AUDIO_WAV: drwav_seek_to_pcm_frame((drwav *)music.ctxData, 0); break;
+        case MUSIC_AUDIO_WAV: drwav_seek_to_first_pcm_frame((drwav *)music.ctxData); break;
 #endif
 #if defined(SUPPORT_FILEFORMAT_OGG)
         case MUSIC_AUDIO_OGG: stb_vorbis_seek_start((stb_vorbis *)music.ctxData); break;
 #endif
 #if defined(SUPPORT_FILEFORMAT_FLAC)
-        case MUSIC_AUDIO_FLAC: drflac_seek_to_pcm_frame((drflac *)music.ctxData, 0); break;
+        case MUSIC_AUDIO_FLAC: drflac__seek_to_first_frame((drflac *)music.ctxData); break;
 #endif
 #if defined(SUPPORT_FILEFORMAT_MP3)
-        case MUSIC_AUDIO_MP3: drmp3_seek_to_pcm_frame((drmp3 *)music.ctxData, 0); break;
+        case MUSIC_AUDIO_MP3: drmp3_seek_to_start_of_stream((drmp3 *)music.ctxData); break;
 #endif
 #if defined(SUPPORT_FILEFORMAT_XM)
         case MUSIC_MODULE_XM: jar_xm_reset((jar_xm_context_t *)music.ctxData); break;
@@ -1738,64 +1738,107 @@ void UpdateMusicStream(Music music)
 {
     if (music.stream.buffer == NULL) return;
 
-    bool streamEnding = false;
     unsigned int subBufferSizeInFrames = music.stream.buffer->sizeInFrames/2;
 
-    // NOTE: Using dynamic allocation because it could require more than 16KB
-    void *pcm = RL_CALLOC(subBufferSizeInFrames*music.stream.channels*music.stream.sampleSize/8, 1);
-
-    int frameCountToStream = 0;    // Total size of data in frames to be streamed
-
-    // TODO: Get the framesLeft using framesProcessed... but first, get total frames processed correctly...
-    //ma_uint32 frameSizeInBytes = ma_get_bytes_per_sample(music.stream.buffer->dsp.formatConverterIn.config.formatIn)*music.stream.buffer->dsp.formatConverterIn.config.channels;
-    unsigned int framesLeft = music.frameCount - music.stream.buffer->framesProcessed;
-
-    while (IsAudioStreamProcessed(music.stream))
+    // On first call of this function we lazily pre-allocated a temp buffer to read audio files/memory data in
+    int frameSize = music.stream.channels*music.stream.sampleSize/8;
+    unsigned int pcmSize = subBufferSizeInFrames*frameSize;
+    if (AUDIO.System.pcmBufferSize < pcmSize)
     {
-        if (framesLeft >= subBufferSizeInFrames) frameCountToStream = subBufferSizeInFrames;
-        else frameCountToStream = framesLeft;
+        RL_FREE(AUDIO.System.pcmBuffer);
+        AUDIO.System.pcmBuffer = RL_CALLOC(1, pcmSize);
+        AUDIO.System.pcmBufferSize = pcmSize;
+    }
 
+    // Check both sub-buffers to check if they require refilling
+    for (int i = 0; i < 2; i++)
+    {
+        if ((music.stream.buffer != NULL) && !music.stream.buffer->isSubBufferProcessed[i]) continue; // No refilling required, move to next sub-buffer
+
+        unsigned int framesLeft = music.frameCount - music.stream.buffer->framesProcessed;  // Frames left to be processed
+        unsigned int framesToStream = 0;                 // Total frames to be streamed
+        if ((framesLeft >= subBufferSizeInFrames) || music.looping) framesToStream = subBufferSizeInFrames;
+        else framesToStream = framesLeft;
+
+        int frameCountStillNeeded = framesToStream;
+        int frameCountRedTotal = 0;
         switch (music.ctxType)
         {
         #if defined(SUPPORT_FILEFORMAT_WAV)
             case MUSIC_AUDIO_WAV:
             {
-                // NOTE: Returns the number of samples to process (not required)
-                if (music.stream.sampleSize == 16) drwav_read_pcm_frames_s16((drwav *)music.ctxData, frameCountToStream, (short *)pcm);
-                else if (music.stream.sampleSize == 32) drwav_read_pcm_frames_f32((drwav *)music.ctxData, frameCountToStream, (float *)pcm);
-
+                if (music.stream.sampleSize == 16)
+                {
+                    while (true)
+                    {
+                        int frameCountRed = drwav_read_pcm_frames_s16((drwav *)music.ctxData, frameCountStillNeeded, (short *)((char *)AUDIO.System.pcmBuffer + frameCountRedTotal*frameSize));
+                        frameCountRedTotal += frameCountRed;
+                        frameCountStillNeeded -= frameCountRed;
+                        if (frameCountStillNeeded == 0) break;
+                        else drwav_seek_to_first_pcm_frame((drwav *)music.ctxData);
+                    }
+                }
+                else if (music.stream.sampleSize == 32)
+                {
+                    while (true)
+                    {
+                        int frameCountRed = drwav_read_pcm_frames_f32((drwav *)music.ctxData, frameCountStillNeeded, (float *)((char *)AUDIO.System.pcmBuffer + frameCountRedTotal*frameSize));
+                        frameCountRedTotal += frameCountRed;
+                        frameCountStillNeeded -= frameCountRed;
+                        if (frameCountStillNeeded == 0) break;
+                        else drwav_seek_to_first_pcm_frame((drwav *)music.ctxData);
+                    }
+                }
             } break;
         #endif
         #if defined(SUPPORT_FILEFORMAT_OGG)
             case MUSIC_AUDIO_OGG:
             {
-                // NOTE: Returns the number of samples to process (be careful! we ask for number of shorts!)
-                stb_vorbis_get_samples_short_interleaved((stb_vorbis *)music.ctxData, music.stream.channels, (short *)pcm, frameCountToStream*music.stream.channels);
-
+                while (true)
+                {
+                    int frameCountRed = stb_vorbis_get_samples_short_interleaved((stb_vorbis *)music.ctxData, music.stream.channels, (short *)((char *)AUDIO.System.pcmBuffer + frameCountRedTotal*frameSize), frameCountStillNeeded*music.stream.channels);
+                    frameCountRedTotal += frameCountRed;
+                    frameCountStillNeeded -= frameCountRed;
+                    if (frameCountStillNeeded == 0) break;
+                    else stb_vorbis_seek_start((stb_vorbis *)music.ctxData);
+                }
             } break;
         #endif
         #if defined(SUPPORT_FILEFORMAT_FLAC)
             case MUSIC_AUDIO_FLAC:
             {
-                // NOTE: Returns the number of samples to process (not required)
-                drflac_read_pcm_frames_s16((drflac *)music.ctxData, frameCountToStream*music.stream.channels, (short *)pcm);
-
+                while (true)
+                {
+                    int frameCountRed = drflac_read_pcm_frames_s16((drflac *)music.ctxData, frameCountStillNeeded, (short *)((char *)AUDIO.System.pcmBuffer + frameCountRedTotal*frameSize));
+                    frameCountRedTotal += frameCountRed;
+                    frameCountStillNeeded -= frameCountRed;
+                    if (frameCountStillNeeded == 0) break;
+                    else drflac__seek_to_first_frame((drflac *)music.ctxData);
+                }
             } break;
         #endif
         #if defined(SUPPORT_FILEFORMAT_MP3)
             case MUSIC_AUDIO_MP3:
             {
-                drmp3_read_pcm_frames_f32((drmp3 *)music.ctxData, frameCountToStream, (float *)pcm);
-
+                while (true)
+                {
+                    int frameCountRed = drmp3_read_pcm_frames_f32((drmp3 *)music.ctxData, frameCountStillNeeded, (float *)((char *)AUDIO.System.pcmBuffer + frameCountRedTotal*frameSize));
+                    frameCountRedTotal += frameCountRed;
+                    frameCountStillNeeded -= frameCountRed;
+                    if (frameCountStillNeeded == 0) break;
+                    else drmp3_seek_to_start_of_stream((drmp3 *)music.ctxData);
+                }
             } break;
         #endif
         #if defined(SUPPORT_FILEFORMAT_XM)
             case MUSIC_MODULE_XM:
             {
                 // NOTE: Internally we consider 2 channels generation, so sampleCount/2
-                if (AUDIO_DEVICE_FORMAT == ma_format_f32) jar_xm_generate_samples((jar_xm_context_t *)music.ctxData, (float *)pcm, frameCountToStream);
-                else if (AUDIO_DEVICE_FORMAT == ma_format_s16) jar_xm_generate_samples_16bit((jar_xm_context_t *)music.ctxData, (short *)pcm, frameCountToStream);
-                else if (AUDIO_DEVICE_FORMAT == ma_format_u8) jar_xm_generate_samples_8bit((jar_xm_context_t *)music.ctxData, (char *)pcm, frameCountToStream);
+                if (AUDIO_DEVICE_FORMAT == ma_format_f32) jar_xm_generate_samples((jar_xm_context_t *)music.ctxData, (float *)AUDIO.System.pcmBuffer, framesToStream);
+                else if (AUDIO_DEVICE_FORMAT == ma_format_s16) jar_xm_generate_samples_16bit((jar_xm_context_t *)music.ctxData, (short *)AUDIO.System.pcmBuffer, framesToStream);
+                else if (AUDIO_DEVICE_FORMAT == ma_format_u8) jar_xm_generate_samples_8bit((jar_xm_context_t *)music.ctxData, (char *)AUDIO.System.pcmBuffer, framesToStream);
+
+                //jar_xm_reset((jar_xm_context_t *)music.ctxData);
 
             } break;
         #endif
@@ -1803,38 +1846,33 @@ void UpdateMusicStream(Music music)
             case MUSIC_MODULE_MOD:
             {
                 // NOTE: 3rd parameter (nbsample) specify the number of stereo 16bits samples you want, so sampleCount/2
-                jar_mod_fillbuffer((jar_mod_context_t *)music.ctxData, (short *)pcm, frameCountToStream, 0);
+                jar_mod_fillbuffer((jar_mod_context_t *)music.ctxData, (short *)AUDIO.System.pcmBuffer, framesToStream, 0);
+
+                //jar_mod_seek_start((jar_mod_context_t *)music.ctxData);
+
             } break;
         #endif
             default: break;
         }
 
-        UpdateAudioStream(music.stream, pcm, frameCountToStream);
+        UpdateAudioStream(music.stream, AUDIO.System.pcmBuffer, framesToStream);
 
-        framesLeft -= frameCountToStream;
+        music.stream.buffer->framesProcessed = music.stream.buffer->framesProcessed%music.frameCount;
 
-        if (framesLeft <= 0)
+        if (framesLeft <= subBufferSizeInFrames)
         {
-            streamEnding = true;
-            break;
+            if (!music.looping)
+            {
+                // Streaming is ending, we filled latest frames from input
+                StopMusicStream(music);
+                return;
+            }
         }
     }
 
-    // Free allocated pcm data
-    RL_FREE(pcm);
-
-    // Reset audio stream for looping
-    if (streamEnding)
-    {
-        StopMusicStream(music);                     // Stop music (and reset)
-        if (music.looping) PlayMusicStream(music);  // Play again
-    }
-    else
-    {
-        // NOTE: In case window is minimized, music stream is stopped,
-        // just make sure to play again on window restore
-        if (IsMusicStreamPlaying(music)) PlayMusicStream(music);
-    }
+    // NOTE: In case window is minimized, music stream is stopped,
+    // just make sure to play again on window restore
+    if (IsMusicStreamPlaying(music)) PlayMusicStream(music);
 }
 
 // Check if any music is playing
@@ -1889,7 +1927,13 @@ float GetMusicTimePlayed(Music music)
     #endif
         {
             //ma_uint32 frameSizeInBytes = ma_get_bytes_per_sample(music.stream.buffer->dsp.formatConverterIn.config.formatIn)*music.stream.buffer->dsp.formatConverterIn.config.channels;
-            unsigned int framesPlayed = music.stream.buffer->framesProcessed;
+            int framesProcessed = (int)music.stream.buffer->framesProcessed;
+            int subBufferSize = (int)music.stream.buffer->sizeInFrames/2;
+            int framesInFirstBuffer = music.stream.buffer->isSubBufferProcessed[0]? 0 : subBufferSize;
+            int framesInSecondBuffer = music.stream.buffer->isSubBufferProcessed[1]? 0 : subBufferSize;
+            int framesSentToMix = music.stream.buffer->frameCursorPos%subBufferSize;
+            int framesPlayed = (framesProcessed - framesInFirstBuffer - framesInSecondBuffer + framesSentToMix)%(int)music.frameCount;
+            if (framesPlayed < 0) framesPlayed += music.frameCount;
             secondsPlayed = (float)framesPlayed/music.stream.sampleRate;
         }
     }
@@ -1964,16 +2008,14 @@ void UpdateAudioStream(AudioStream stream, const void *data, int frameCount)
             ma_uint32 subBufferSizeInFrames = stream.buffer->sizeInFrames/2;
             unsigned char *subBuffer = stream.buffer->data + ((subBufferSizeInFrames*stream.channels*(stream.sampleSize/8))*subBufferToUpdate);
 
-            // TODO: Get total frames processed on this buffer... DOES NOT WORK.
+            // Total frames processed in buffer is always the complete size, filled with 0 if required
             stream.buffer->framesProcessed += subBufferSizeInFrames;
 
             // Does this API expect a whole buffer to be updated in one go?
             // Assuming so, but if not will need to change this logic.
             if (subBufferSizeInFrames >= (ma_uint32)frameCount)
             {
-                ma_uint32 framesToWrite = subBufferSizeInFrames;
-
-                if (framesToWrite > (ma_uint32)frameCount) framesToWrite = (ma_uint32)frameCount;
+                ma_uint32 framesToWrite = (ma_uint32)frameCount;
 
                 ma_uint32 bytesToWrite = framesToWrite*stream.channels*(stream.sampleSize/8);
                 memcpy(subBuffer, data, bytesToWrite);
@@ -2232,7 +2274,7 @@ static ma_uint32 ReadAudioBufferFramesInMixingFormat(AudioBuffer *audioBuffer, f
         ma_uint64 outputFramesToProcessThisIteration = frameCount - totalOutputFramesProcessed;
         ma_uint64 inputFramesToProcessThisIteration = 0;
 
-        ma_result result = ma_data_converter_get_required_input_frame_count(&audioBuffer->converter, outputFramesToProcessThisIteration, &inputFramesToProcessThisIteration);
+        (void)ma_data_converter_get_required_input_frame_count(&audioBuffer->converter, outputFramesToProcessThisIteration, &inputFramesToProcessThisIteration);
         if (inputFramesToProcessThisIteration > inputBufferFrameCap)
         {
             inputFramesToProcessThisIteration = inputBufferFrameCap;

@@ -12,6 +12,7 @@
 *   #define SUPPORT_FILEFORMAT_IQM
 *   #define SUPPORT_FILEFORMAT_GLTF
 *   #define SUPPORT_FILEFORMAT_VOX
+*   #define SUPPORT_FILEFORMAT_M3D
 *       Selected desired fileformats to be supported for model data loading.
 *
 *   #define SUPPORT_MESH_GENERATION
@@ -86,6 +87,19 @@
     #include "external/vox_loader.h"    // VOX file format loading (MagikaVoxel)
 #endif
 
+#if defined(SUPPORT_FILEFORMAT_M3D)
+    #define M3D_MALLOC RL_MALLOC
+    #define M3D_REALLOC RL_REALLOC
+    #define M3D_FREE RL_FREE
+
+    // Let the M3D loader know about stb_image is used in this project,
+	// to allow it to use on textures loading
+    #include "external/stb_image.h"
+
+    #define M3D_IMPLEMENTATION
+    #include "external/m3d.h"           // Model3D file format loading
+#endif
+
 #if defined(SUPPORT_MESH_GENERATION)
     #define PAR_MALLOC(T, N) ((T*)RL_MALLOC(N*sizeof(T)))
     #define PAR_CALLOC(T, N) ((T*)RL_CALLOC(N*sizeof(T), 1))
@@ -140,6 +154,9 @@ static Model LoadGLTF(const char *fileName);    // Load GLTF mesh data
 #endif
 #if defined(SUPPORT_FILEFORMAT_VOX)
 static Model LoadVOX(const char *filename);     // Load VOX mesh data
+#endif
+#if defined(SUPPORT_FILEFORMAT_M3D)
+static Model LoadM3D(const char *filename);     // Load M3D mesh data
 #endif
 
 //----------------------------------------------------------------------------------
@@ -927,6 +944,9 @@ Model LoadModel(const char *fileName)
 #if defined(SUPPORT_FILEFORMAT_VOX)
     if (IsFileExtension(fileName, ".vox")) model = LoadVOX(fileName);
 #endif
+#if defined(SUPPORT_FILEFORMAT_M3D)
+    if (IsFileExtension(fileName, ".m3d")) model = LoadM3D(fileName);
+#endif
 
     // Make sure model transform is set to identity matrix!
     model.transform = MatrixIdentity();
@@ -1087,7 +1107,7 @@ void UploadMesh(Mesh *mesh, bool dynamic)
     mesh->vaoId = rlLoadVertexArray();
     rlEnableVertexArray(mesh->vaoId);
 
-    // NOTE: Attributes must be uploaded considering default locations points
+    // NOTE: Vertex attributes must be uploaded considering default locations points and available vertex data
 
     // Enable vertex attributes: position (shader-location = 0)
     void *vertices = mesh->animVertices != NULL ? mesh->animVertices : mesh->vertices;
@@ -1100,6 +1120,9 @@ void UploadMesh(Mesh *mesh, bool dynamic)
     rlSetVertexAttribute(1, 2, RL_FLOAT, 0, 0, 0);
     rlEnableVertexAttribute(1);
 
+    // WARNING: When setting default vertex attribute values, the values for each generic vertex attribute
+    // is part of current state and it is maintained even if a different program object is used
+
     if (mesh->normals != NULL)
     {
         // Enable vertex attributes: normals (shader-location = 2)
@@ -1110,7 +1133,8 @@ void UploadMesh(Mesh *mesh, bool dynamic)
     }
     else
     {
-        // Default color vertex attribute set to WHITE
+        // Default vertex attribute: normal
+        // WARNING: Default value provided to shader if location available
         float value[3] = { 1.0f, 1.0f, 1.0f };
         rlSetVertexAttributeDefault(2, value, SHADER_ATTRIB_VEC3, 3);
         rlDisableVertexAttribute(2);
@@ -1125,8 +1149,9 @@ void UploadMesh(Mesh *mesh, bool dynamic)
     }
     else
     {
-        // Default color vertex attribute set to WHITE
-        float value[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
+        // Default vertex attribute: color
+        // WARNING: Default value provided to shader if location available
+        float value[4] = { 1.0f, 1.0f, 1.0f, 1.0f };    // WHITE
         rlSetVertexAttributeDefault(3, value, SHADER_ATTRIB_VEC4, 4);
         rlDisableVertexAttribute(3);
     }
@@ -1140,7 +1165,8 @@ void UploadMesh(Mesh *mesh, bool dynamic)
     }
     else
     {
-        // Default tangents vertex attribute
+        // Default vertex attribute: tangent
+        // WARNING: Default value provided to shader if location available
         float value[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
         rlSetVertexAttributeDefault(4, value, SHADER_ATTRIB_VEC4, 4);
         rlDisableVertexAttribute(4);
@@ -1155,7 +1181,8 @@ void UploadMesh(Mesh *mesh, bool dynamic)
     }
     else
     {
-        // Default texcoord2 vertex attribute
+        // Default vertex attribute: texcoord2
+        // WARNING: Default value provided to shader if location available
         float value[2] = { 0.0f, 0.0f };
         rlSetVertexAttributeDefault(5, value, SHADER_ATTRIB_VEC2, 2);
         rlDisableVertexAttribute(5);
@@ -1293,8 +1320,10 @@ void DrawMesh(Mesh mesh, Material material, Matrix transform)
         }
     }
 
-    // Try binding vertex array objects (VAO)
-    // or use VBOs if not possible
+    // Try binding vertex array objects (VAO) or use VBOs if not possible
+    // WARNING: UploadMesh() enables all vertex attributes available in mesh and sets default attribute values
+    // for shader expected vertex attributes that are not provided by the mesh (i.e. colors)
+    // This could be a dangerous approach because different meshes with different shaders can enable/disable some attributes
     if (!rlEnableVertexArray(mesh.vaoId))
     {
         // Bind mesh VBO data: vertex position (shader-location = 0)
@@ -1326,8 +1355,8 @@ void DrawMesh(Mesh mesh, Material material, Matrix transform)
             }
             else
             {
-                // Set default value for unused attribute
-                // NOTE: Required when using default shader and no VAO support
+                // Set default value for defined vertex attribute in shader but not provided by mesh
+                // WARNING: It could result in GPU undefined behaviour
                 float value[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
                 rlSetVertexAttributeDefault(material.shader.locs[SHADER_LOC_VERTEX_COLOR], value, SHADER_ATTRIB_VEC4, 4);
                 rlDisableVertexAttribute(material.shader.locs[SHADER_LOC_VERTEX_COLOR]);
@@ -1352,6 +1381,9 @@ void DrawMesh(Mesh mesh, Material material, Matrix transform)
 
         if (mesh.indices != NULL) rlEnableVertexBufferElement(mesh.vboId[6]);
     }
+
+    // WARNING: Disable vertex attribute color input if mesh can not provide that data (despite location being enabled in shader)
+    if (mesh.vboId[3] == 0) rlDisableVertexAttribute(material.shader.locs[SHADER_LOC_VERTEX_COLOR]);
 
     int eyeCount = 1;
     if (rlIsStereoRenderEnabled()) eyeCount = 2;
@@ -1379,14 +1411,17 @@ void DrawMesh(Mesh mesh, Material material, Matrix transform)
     // Unbind all binded texture maps
     for (int i = 0; i < MAX_MATERIAL_MAPS; i++)
     {
-        // Select current shader texture slot
-        rlActiveTextureSlot(i);
+        if (material.maps[i].texture.id > 0)
+        {
+            // Select current shader texture slot
+            rlActiveTextureSlot(i);
 
-        // Disable texture for active slot
-        if ((i == MATERIAL_MAP_IRRADIANCE) ||
-            (i == MATERIAL_MAP_PREFILTER) ||
-            (i == MATERIAL_MAP_CUBEMAP)) rlDisableTextureCubemap();
-        else rlDisableTexture();
+            // Disable texture for active slot
+            if ((i == MATERIAL_MAP_IRRADIANCE) ||
+                (i == MATERIAL_MAP_PREFILTER) ||
+                (i == MATERIAL_MAP_CUBEMAP)) rlDisableTextureCubemap();
+            else rlDisableTexture();
+        }
     }
 
     // Disable all possible vertex array objects (or VBOs)
@@ -1568,6 +1603,9 @@ void DrawMeshInstanced(Mesh mesh, Material material, const Matrix *transforms, i
         if (mesh.indices != NULL) rlEnableVertexBufferElement(mesh.vboId[6]);
     }
 
+    // WARNING: Disable vertex attribute color input if mesh can not provide that data (despite location being enabled in shader)
+    if (mesh.vboId[3] == 0) rlDisableVertexAttribute(material.shader.locs[SHADER_LOC_VERTEX_COLOR]);
+
     int eyeCount = 1;
     if (rlIsStereoRenderEnabled()) eyeCount = 2;
 
@@ -1594,14 +1632,17 @@ void DrawMeshInstanced(Mesh mesh, Material material, const Matrix *transforms, i
     // Unbind all binded texture maps
     for (int i = 0; i < MAX_MATERIAL_MAPS; i++)
     {
-        // Select current shader texture slot
-        rlActiveTextureSlot(i);
+        if (material.maps[i].texture.id > 0)
+        {
+            // Select current shader texture slot
+            rlActiveTextureSlot(i);
 
-        // Disable texture for active slot
-        if ((i == MATERIAL_MAP_IRRADIANCE) ||
-            (i == MATERIAL_MAP_PREFILTER) ||
-            (i == MATERIAL_MAP_CUBEMAP)) rlDisableTextureCubemap();
-        else rlDisableTexture();
+            // Disable texture for active slot
+            if ((i == MATERIAL_MAP_IRRADIANCE) ||
+                (i == MATERIAL_MAP_PREFILTER) ||
+                (i == MATERIAL_MAP_CUBEMAP)) rlDisableTextureCubemap();
+            else rlDisableTexture();
+        }
     }
 
     // Disable all possible vertex array objects (or VBOs)
@@ -2630,7 +2671,7 @@ Mesh GenMeshKnot(float radius, float size, int radSeg, int sides)
 // NOTE: Vertex data is uploaded to GPU
 Mesh GenMeshHeightmap(Image heightmap, Vector3 size)
 {
-    #define GRAY_VALUE(c) ((c.r+c.g+c.b)/3)
+    #define GRAY_VALUE(c) ((c.r+c.g+c.b)/3.0f)
 
     Mesh mesh = { 0 };
 
@@ -2653,8 +2694,6 @@ Mesh GenMeshHeightmap(Image heightmap, Vector3 size)
     int tcCounter = 0;      // Used to count texcoords float by float
     int nCounter = 0;       // Used to count normals float by float
 
-    int trisCounter = 0;
-
     Vector3 scaleFactor = { size.x/mapX, size.y/255.0f, size.z/mapZ };
 
     Vector3 vA = { 0 };
@@ -2671,15 +2710,15 @@ Mesh GenMeshHeightmap(Image heightmap, Vector3 size)
 
             // one triangle - 3 vertex
             mesh.vertices[vCounter] = (float)x*scaleFactor.x;
-            mesh.vertices[vCounter + 1] = (float)GRAY_VALUE(pixels[x + z*mapX])*scaleFactor.y;
+            mesh.vertices[vCounter + 1] = GRAY_VALUE(pixels[x + z*mapX])*scaleFactor.y;
             mesh.vertices[vCounter + 2] = (float)z*scaleFactor.z;
 
             mesh.vertices[vCounter + 3] = (float)x*scaleFactor.x;
-            mesh.vertices[vCounter + 4] = (float)GRAY_VALUE(pixels[x + (z + 1)*mapX])*scaleFactor.y;
+            mesh.vertices[vCounter + 4] = GRAY_VALUE(pixels[x + (z + 1)*mapX])*scaleFactor.y;
             mesh.vertices[vCounter + 5] = (float)(z + 1)*scaleFactor.z;
 
             mesh.vertices[vCounter + 6] = (float)(x + 1)*scaleFactor.x;
-            mesh.vertices[vCounter + 7] = (float)GRAY_VALUE(pixels[(x + 1) + z*mapX])*scaleFactor.y;
+            mesh.vertices[vCounter + 7] = GRAY_VALUE(pixels[(x + 1) + z*mapX])*scaleFactor.y;
             mesh.vertices[vCounter + 8] = (float)z*scaleFactor.z;
 
             // another triangle - 3 vertex
@@ -2692,7 +2731,7 @@ Mesh GenMeshHeightmap(Image heightmap, Vector3 size)
             mesh.vertices[vCounter + 14] = mesh.vertices[vCounter + 5];
 
             mesh.vertices[vCounter + 15] = (float)(x + 1)*scaleFactor.x;
-            mesh.vertices[vCounter + 16] = (float)GRAY_VALUE(pixels[(x + 1) + (z + 1)*mapX])*scaleFactor.y;
+            mesh.vertices[vCounter + 16] = GRAY_VALUE(pixels[(x + 1) + (z + 1)*mapX])*scaleFactor.y;
             mesh.vertices[vCounter + 17] = (float)(z + 1)*scaleFactor.z;
             vCounter += 18;     // 6 vertex, 18 floats
 
@@ -2749,7 +2788,6 @@ Mesh GenMeshHeightmap(Image heightmap, Vector3 size)
             }
 
             nCounter += 18;     // 6 vertex, 18 floats
-            trisCounter += 2;
         }
     }
 
@@ -3243,19 +3281,6 @@ void GenMeshTangents(Mesh *mesh)
     TRACELOG(LOG_INFO, "MESH: Tangents data computed and uploaded for provided mesh");
 }
 
-// Compute mesh binormals (aka bitangent)
-void GenMeshBinormals(Mesh *mesh)
-{
-    for (int i = 0; i < mesh->vertexCount; i++)
-    {
-        //Vector3 normal = { mesh->normals[i*3 + 0], mesh->normals[i*3 + 1], mesh->normals[i*3 + 2] };
-        //Vector3 tangent = { mesh->tangents[i*4 + 0], mesh->tangents[i*4 + 1], mesh->tangents[i*4 + 2] };
-        //Vector3 binormal = Vector3Scale(Vector3CrossProduct(normal, tangent), mesh->tangents[i*4 + 3]);
-
-        // TODO: Register computed binormal in mesh->binormal?
-    }
-}
-
 // Draw a model (with texture if set)
 void DrawModel(Model model, Vector3 position, float scale, Color tint)
 {
@@ -3335,7 +3360,7 @@ void DrawBillboardRec(Camera camera, Texture2D texture, Rectangle source, Vector
 void DrawBillboardPro(Camera camera, Texture2D texture, Rectangle source, Vector3 position, Vector3 up, Vector2 size, Vector2 origin, float rotation, Color tint)
 {
     // NOTE: Billboard size will maintain source rectangle aspect ratio, size will represent billboard width
-    Vector2 sizeRatio = { size.x*(float)source.height/source.width, size.y };
+    Vector2 sizeRatio = { size.x*(float)source.width/source.height, size.y };
 
     Matrix matView = MatrixLookAt(camera.position, camera.target, camera.up);
 
@@ -3396,7 +3421,7 @@ void DrawBillboardPro(Camera camera, Texture2D texture, Rectangle source, Vector
     bottomRight = Vector3Add(bottomRight, position);
     bottomLeft = Vector3Add(bottomLeft, position);
 
-    rlCheckRenderBatchLimit(4);
+    rlCheckRenderBatchLimit(8);
 
     rlSetTexture(texture.id);
 
@@ -4948,6 +4973,10 @@ static Model LoadGLTF(const char *fileName)
                             model.meshes[meshIndex].boneIds = RL_CALLOC(model.meshes[meshIndex].vertexCount*4, sizeof(unsigned char));
 
                             // Load 4 components of unsigned char data type into mesh.boneIds
+                            // TODO: It seems LOAD_ATTRIBUTE() macro does not work as expected in some cases,
+                            // for cgltf_attribute_type_joints we have:
+                            //   - data.meshes[0] (256 vertices)
+                            //   - 256 values, provided as cgltf_type_vec4 of bytes (4 byte per joint, stride 4)
                             LOAD_ATTRIBUTE(attribute, 4, unsigned char, model.meshes[meshIndex].boneIds)
                         }
                         else TRACELOG(LOG_WARNING, "MODEL: [%s] Joint attribute data format not supported, use vec4 u8", fileName);
@@ -4962,6 +4991,9 @@ static Model LoadGLTF(const char *fileName)
                             model.meshes[meshIndex].boneWeights = RL_CALLOC(model.meshes[meshIndex].vertexCount*4, sizeof(float));
 
                             // Load 4 components of float data type into mesh.boneWeights
+                            // for cgltf_attribute_type_weights we have:
+                            //   - data.meshes[0] (256 vertices)
+                            //   - 256 values, provided as cgltf_type_vec4 of float (4 byte per joint, stride 16)
                             LOAD_ATTRIBUTE(attribute, 4, float, model.meshes[meshIndex].boneWeights)
                         }
                         else TRACELOG(LOG_WARNING, "MODEL: [%s] Joint weight attribute data format not supported, use vec4 float", fileName);
@@ -5084,6 +5116,184 @@ static Model LoadVOX(const char *fileName)
     // Free buffers
     Vox_FreeArrays(&voxarray);
     UnloadFileData(fileData);
+
+    return model;
+}
+#endif
+
+#if defined(SUPPORT_FILEFORMAT_M3D)
+// Hook LoadFileData()/UnloadFileData() calls to M3D loaders
+unsigned char *m3d_loaderhook(char *fn, unsigned int *len) { return LoadFileData((const char *)fn, len); }
+void m3d_freehook(void *data) { UnloadFileData((unsigned char *)data); }
+
+// Load M3D mesh data
+static Model LoadM3D(const char *fileName)
+{
+    Model model = { 0 };
+
+    m3d_t *m3d = NULL;
+    m3dp_t *prop = NULL;
+    unsigned int bytesRead = 0;
+    unsigned char *fileData = LoadFileData(fileName, &bytesRead);
+    int i, j, k, l, mi = -2;
+
+    if (fileData != NULL)
+    {
+        m3d = m3d_load(fileData, m3d_loaderhook, m3d_freehook, NULL);
+
+        if (!m3d || (m3d->errcode != M3D_SUCCESS))
+        {
+            TRACELOG(LOG_WARNING, "MODEL: [%s] Failed to load M3D data", fileName);
+            return model;
+        }
+        else TRACELOG(LOG_INFO, "MODEL: [%s] M3D data loaded successfully: %i faces/%i materials", fileName, m3d->numface, m3d->nummaterial);
+
+        if (m3d->nummaterial > 0)
+        {
+            model.meshCount = model.materialCount = m3d->nummaterial;
+            TRACELOG(LOG_INFO, "MODEL: model has %i material meshes", model.materialCount);
+        }
+        else
+        {
+            model.meshCount = model.materialCount = 1;
+            TRACELOG(LOG_INFO, "MODEL: No materials, putting all meshes in a default material");
+        }
+
+        model.meshes = (Mesh *)RL_CALLOC(model.meshCount, sizeof(Mesh));
+        model.meshMaterial = (int *)RL_CALLOC(model.meshCount, sizeof(int));
+        model.materials = (Material *)RL_CALLOC(model.meshCount + 1, sizeof(Material));
+
+        // Map no material to index 0 with default shader, everything else materialid + 1
+        model.materials[0] = LoadMaterialDefault();
+        model.materials[0].maps[MATERIAL_MAP_DIFFUSE].texture = (Texture2D){ rlGetTextureIdDefault(), 1, 1, 1, PIXELFORMAT_UNCOMPRESSED_R8G8B8A8 };
+
+        for (i = l = 0, k = -1; i < m3d->numface; i++, l++)
+        {
+            // Materials are grouped together
+            if (mi != m3d->face[i].materialid)
+            {
+                k++;
+                mi = m3d->face[i].materialid;
+
+                for (j = i, l = 0; (j < m3d->numface) && (mi == m3d->face[j].materialid); j++, l++);
+
+                model.meshes[k].vertexCount = l*3;
+                model.meshes[k].triangleCount = l;
+                model.meshes[k].vertices = (float *)RL_CALLOC(model.meshes[k].vertexCount*3, sizeof(float));
+                model.meshes[k].texcoords = (float *)RL_CALLOC(model.meshes[k].vertexCount*2, sizeof(float));
+                model.meshes[k].normals = (float *)RL_CALLOC(model.meshes[k].vertexCount*3, sizeof(float));
+                model.meshMaterial[k] = mi + 1;
+                l = 0;
+            }
+
+            // Process meshes per material, add triangles
+            model.meshes[k].vertices[l * 9 + 0] = m3d->vertex[m3d->face[i].vertex[0]].x*m3d->scale;
+            model.meshes[k].vertices[l * 9 + 1] = m3d->vertex[m3d->face[i].vertex[0]].y*m3d->scale;
+            model.meshes[k].vertices[l * 9 + 2] = m3d->vertex[m3d->face[i].vertex[0]].z*m3d->scale;
+            model.meshes[k].vertices[l * 9 + 3] = m3d->vertex[m3d->face[i].vertex[1]].x*m3d->scale;
+            model.meshes[k].vertices[l * 9 + 4] = m3d->vertex[m3d->face[i].vertex[1]].y*m3d->scale;
+            model.meshes[k].vertices[l * 9 + 5] = m3d->vertex[m3d->face[i].vertex[1]].z*m3d->scale;
+            model.meshes[k].vertices[l * 9 + 6] = m3d->vertex[m3d->face[i].vertex[2]].x*m3d->scale;
+            model.meshes[k].vertices[l * 9 + 7] = m3d->vertex[m3d->face[i].vertex[2]].y*m3d->scale;
+            model.meshes[k].vertices[l * 9 + 8] = m3d->vertex[m3d->face[i].vertex[2]].z*m3d->scale;
+
+            if (m3d->face[i].texcoord[0] != M3D_UNDEF)
+            {
+                model.meshes[k].texcoords[l * 6 + 0] = m3d->tmap[m3d->face[i].texcoord[0]].u;
+                model.meshes[k].texcoords[l * 6 + 1] = m3d->tmap[m3d->face[i].texcoord[0]].v;
+                model.meshes[k].texcoords[l * 6 + 2] = m3d->tmap[m3d->face[i].texcoord[1]].u;
+                model.meshes[k].texcoords[l * 6 + 3] = m3d->tmap[m3d->face[i].texcoord[1]].v;
+                model.meshes[k].texcoords[l * 6 + 4] = m3d->tmap[m3d->face[i].texcoord[2]].u;
+                model.meshes[k].texcoords[l * 6 + 5] = m3d->tmap[m3d->face[i].texcoord[2]].v;
+            }
+
+            if (m3d->face[i].normal[0] != M3D_UNDEF)
+            {
+                model.meshes[k].normals[l * 9 + 0] = m3d->vertex[m3d->face[i].normal[0]].x;
+                model.meshes[k].normals[l * 9 + 1] = m3d->vertex[m3d->face[i].normal[0]].y;
+                model.meshes[k].normals[l * 9 + 2] = m3d->vertex[m3d->face[i].normal[0]].z;
+                model.meshes[k].normals[l * 9 + 3] = m3d->vertex[m3d->face[i].normal[1]].x;
+                model.meshes[k].normals[l * 9 + 4] = m3d->vertex[m3d->face[i].normal[1]].y;
+                model.meshes[k].normals[l * 9 + 5] = m3d->vertex[m3d->face[i].normal[1]].z;
+                model.meshes[k].normals[l * 9 + 6] = m3d->vertex[m3d->face[i].normal[2]].x;
+                model.meshes[k].normals[l * 9 + 7] = m3d->vertex[m3d->face[i].normal[2]].y;
+                model.meshes[k].normals[l * 9 + 8] = m3d->vertex[m3d->face[i].normal[2]].z;
+            }
+        }
+
+        for (i = 0; i < m3d->nummaterial; i++)
+        {
+            model.materials[i + 1] = LoadMaterialDefault();
+            model.materials[i + 1].maps[MATERIAL_MAP_DIFFUSE].texture = (Texture2D){ rlGetTextureIdDefault(), 1, 1, 1, PIXELFORMAT_UNCOMPRESSED_R8G8B8A8 };
+
+            for (j = 0; j < m3d->material[i].numprop; j++)
+            {
+                prop = &m3d->material[i].prop[j];
+
+                switch (prop->type)
+                {
+                    case m3dp_Kd:
+                    {
+                        memcpy(&model.materials[i + 1].maps[MATERIAL_MAP_DIFFUSE].color, &prop->value.color, 4);
+                        model.materials[i + 1].maps[MATERIAL_MAP_DIFFUSE].value = 0.0f;
+                    } break;
+                    case m3dp_Ks:
+                    {
+                        memcpy(&model.materials[i + 1].maps[MATERIAL_MAP_SPECULAR].color, &prop->value.color, 4);
+                        model.materials[i + 1].maps[MATERIAL_MAP_SPECULAR].value = 0.0f;
+                    } break;
+                    case m3dp_Ns:
+                    {
+                        model.materials[i + 1].maps[MATERIAL_MAP_SPECULAR].value = prop->value.fnum;
+                    } break;
+                    case m3dp_Ke:
+                    {
+                        memcpy(&model.materials[i + 1].maps[MATERIAL_MAP_EMISSION].color, &prop->value.color, 4);
+                        model.materials[i + 1].maps[MATERIAL_MAP_EMISSION].value = 0.0f;
+                    } break;
+                    case m3dp_Pm:
+                    {
+                        model.materials[i + 1].maps[MATERIAL_MAP_METALNESS].value = prop->value.fnum;
+                    } break;
+                    case m3dp_Pr:
+                    {
+                        model.materials[i + 1].maps[MATERIAL_MAP_ROUGHNESS].value = prop->value.fnum;
+                    } break;
+                    case m3dp_Ps:
+                    {
+                        model.materials[i + 1].maps[MATERIAL_MAP_NORMAL].color = WHITE;
+                        model.materials[i + 1].maps[MATERIAL_MAP_NORMAL].value = prop->value.fnum;
+                    } break;
+                    default:
+                    {
+                        if (prop->type >= 128)
+                        {
+                            Image image = { 0 };
+                            image.data = m3d->texture[prop->value.textureid].d;
+                            image.width = m3d->texture[prop->value.textureid].w; 
+                            image.height = m3d->texture[prop->value.textureid].h;
+                            image.mipmaps = 1;
+                            image.format = (m3d->texture[prop->value.textureid].f == 4)? PIXELFORMAT_UNCOMPRESSED_R8G8B8A8 : 
+                                           ((m3d->texture[prop->value.textureid].f == 3)? PIXELFORMAT_UNCOMPRESSED_R8G8B8 : 
+                                           ((m3d->texture[prop->value.textureid].f == 2)? PIXELFORMAT_UNCOMPRESSED_GRAY_ALPHA : PIXELFORMAT_UNCOMPRESSED_GRAYSCALE));
+
+                            switch (prop->type)
+                            {
+                                case m3dp_map_Kd: model.materials[i + 1].maps[MATERIAL_MAP_DIFFUSE].texture = LoadTextureFromImage(image); break;
+                                case m3dp_map_Ks: model.materials[i + 1].maps[MATERIAL_MAP_SPECULAR].texture = LoadTextureFromImage(image); break;
+                                case m3dp_map_Ke: model.materials[i + 1].maps[MATERIAL_MAP_EMISSION].texture = LoadTextureFromImage(image); break;
+                                case m3dp_map_Km: model.materials[i + 1].maps[MATERIAL_MAP_NORMAL].texture = LoadTextureFromImage(image); break;
+                                default: break;
+                            }
+                        }
+                    } break;
+                }
+            }
+        }
+
+        m3d_free(m3d);
+        UnloadFileData(fileData);
+    }
 
     return model;
 }

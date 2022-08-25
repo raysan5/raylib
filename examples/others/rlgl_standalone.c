@@ -29,7 +29,7 @@
 *   This example is licensed under an unmodified zlib/libpng license, which is an OSI-certified,
 *   BSD-like license that allows static linking with closed source software:
 *
-*   Copyright (c) 2014-2021 Ramon Santamaria (@raysan5)
+*   Copyright (c) 2014-2022 Ramon Santamaria (@raysan5)
 *
 *   This software is provided "as-is", without any express or implied warranty. In no event
 *   will the authors be held liable for any damages arising from the use of this software.
@@ -113,9 +113,9 @@ static void DrawRectangleV(Vector2 position, Vector2 size, Color color);
 //static Matrix MatrixPerspective(double fovy, double aspect, double near, double far);
 //static Matrix MatrixLookAt(Vector3 eye, Vector3 target, Vector3 up);
 
-//----------------------------------------------------------------------------------
-// Main Entry point
-//----------------------------------------------------------------------------------
+//------------------------------------------------------------------------------------
+// Program main entry point
+//------------------------------------------------------------------------------------
 int main(void)
 {
     // Initialization

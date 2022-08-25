@@ -2,13 +2,14 @@
 *
 *   raylib [shaders] example - OpenGL point particle system
 *
-*   This example has been created using raylib 3.8 (www.raylib.com)
-*   raylib is licensed under an unmodified zlib/libpng license (View raylib.h for details)
+*   Example originally created with raylib 3.8, last time updated with raylib 2.5
 *
-*   Example contributed by Stephan Soller (@arkanis -  http://arkanis.de/)
-*   and reviewed by Ramon Santamaria (@raysan5)
+*   Example contributed by Stephan Soller (@arkanis) and reviewed by Ramon Santamaria (@raysan5)
 *
-*   Copyright (c) 2021 Stephan Soller (@arkanis) and Ramon Santamaria (@raysan5)
+*   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
+*   BSD-like license that allows static linking with closed source software
+*
+*   Copyright (c) 2021-2022 Stephan Soller (@arkanis) and Ramon Santamaria (@raysan5)
 *
 ********************************************************************************************
 *
@@ -49,7 +50,10 @@ typedef struct Particle {
     float period;
 } Particle;
 
-int main()
+//------------------------------------------------------------------------------------
+// Program main entry point
+//------------------------------------------------------------------------------------
+int main(void)
 {
     // Initialization
     //--------------------------------------------------------------------------------------

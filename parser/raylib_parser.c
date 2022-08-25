@@ -47,7 +47,6 @@
     OTHER NOTES:
 
      - This parser could work with other C header files if mentioned constraints are followed.
-
      - This parser does not require <string.h> library, all data is parsed directly from char buffers.
 
     LICENSE: zlib/libpng
@@ -55,7 +54,7 @@
     raylib-parser is licensed under an unmodified zlib/libpng license, which is an OSI-certified,
     BSD-like license that allows static linking with closed source software:
 
-    Copyright (c) 2021 Ramon Santamaria (@raysan5)
+    Copyright (c) 2021-2022 Ramon Santamaria (@raysan5)
 
 **********************************************************************************************/
 
@@ -103,11 +102,11 @@ typedef enum {
 
 // Define info data
 typedef struct DefineInfo {
-    char name[64];    // Define name
-    DefineType type;  // Define type
-    char value[256];  // Define value
-    char desc[128];   // Define description
-    bool isHex;       // Define is hex number (for types INT, LONG)
+    char name[64];              // Define name
+    int type;                   // Define type
+    char value[256];            // Define value
+    char desc[128];             // Define description
+    bool isHex;                 // Define is hex number (for types INT, LONG)
 } DefineInfo;
 
 // Struct info data
@@ -149,7 +148,7 @@ typedef struct FunctionInfo {
 } FunctionInfo;
 
 // Output format for parsed data
-typedef enum { DEFAULT = 0, JSON, XML, LUA } OutputFormat;
+typedef enum { DEFAULT = 0, JSON, XML, LUA, CODE } OutputFormat;
 
 //----------------------------------------------------------------------------------
 // Global Variables Definition
@@ -394,7 +393,7 @@ int main(int argc, char* argv[])
         int defineNameEnd = j-1;
 
         // Skip duplicates
-        int nameLen = defineNameEnd - defineNameStart + 1;
+        unsigned int nameLen = defineNameEnd - defineNameStart + 1;
         bool isDuplicate = false;
         for (int k = 0; k < defineIndex; k++)
         {
@@ -414,7 +413,7 @@ int main(int argc, char* argv[])
         while ((linePtr[j] == ' ') || (linePtr[j] == '\t')) j++; // Skip spaces and tabs after name
 
         int defineValueStart = j;
-        if ((linePtr[j] == '\0') || (linePtr == "/")) defines[defineIndex].type = GUARD;
+        if ((linePtr[j] == '\0') || (linePtr[j] == '/')) defines[defineIndex].type = GUARD;
         if (linePtr[j] == '"') defines[defineIndex].type = STRING;
         else if (linePtr[j] == '\'') defines[defineIndex].type = CHAR;
         else if (IsTextEqual(linePtr+j, "CLITERAL(Color)", 15)) defines[defineIndex].type = COLOR;
@@ -477,11 +476,11 @@ int main(int argc, char* argv[])
         // Parse defines of type UNKNOWN to find calculated numbers
         if (defines[defineIndex].type == UNKNOWN)
         {
-            DefineType largestType = UNKNOWN;
+            int largestType = UNKNOWN;
             bool isMath = true;
             char *valuePtr = defines[defineIndex].value;
 
-            for (int c = 0; c < TextLength(valuePtr); c++)
+            for (unsigned int c = 0; c < TextLength(valuePtr); c++)
             {
                 char ch = valuePtr[c];
 
@@ -526,7 +525,7 @@ int main(int argc, char* argv[])
                     if (isNumber)
                     {
                         // Found a valid number -> update largestType
-                        DefineType numberType;
+                        int numberType;
                         if (isFloat) numberType = valuePtr[c - 1] == 'f' ? FLOAT_MATH : DOUBLE_MATH;
                         else numberType = valuePtr[c - 1] == 'L' ? LONG_MATH : INT_MATH;
                         
@@ -538,9 +537,7 @@ int main(int argc, char* argv[])
                         break;
                     }
                 }
-
-                // Read string operand
-                else
+                else    // Read string operand
                 {
                     int operandStart = c;
                     while (!((ch == '\0') ||
@@ -647,15 +644,16 @@ int main(int argc, char* argv[])
                     // Split field names containing multiple fields (like Matrix)
                     int additionalFields = 0;
                     int originalIndex = structs[i].fieldCount - 1;
-                    for (int c = 0; c < TextLength(structs[i].fieldName[originalIndex]); c++)
+                    for (unsigned int c = 0; c < TextLength(structs[i].fieldName[originalIndex]); c++)
                     {
                         if (structs[i].fieldName[originalIndex][c] == ',') additionalFields++;
                     }
+                    
                     if (additionalFields > 0)
                     {
                         int originalLength = -1;
                         int lastStart;
-                        for (int c = 0; c < TextLength(structs[i].fieldName[originalIndex]) + 1; c++)
+                        for (unsigned int c = 0; c < TextLength(structs[i].fieldName[originalIndex]) + 1; c++)
                         {
                             char v = structs[i].fieldName[originalIndex][c];
                             bool isEndOfString = (v == '\0');
@@ -694,11 +692,13 @@ int main(int argc, char* argv[])
                     // Split field types containing multiple fields (like MemNode)
                     additionalFields = 0;
                     originalIndex = structs[i].fieldCount - 1;
-                    for (int c = 0; c < TextLength(structs[i].fieldType[originalIndex]); c++)
+                    for (unsigned int c = 0; c < TextLength(structs[i].fieldType[originalIndex]); c++)
                     {
                         if (structs[i].fieldType[originalIndex][c] == ',') additionalFields++;
                     }
-                    if (additionalFields > 0) {
+                    
+                    if (additionalFields > 0)
+                    {
                         // Copy original name to last additional field
                         structs[i].fieldCount += additionalFields;
                         MemoryCopy(structs[i].fieldName[originalIndex + additionalFields], &structs[i].fieldName[originalIndex][0], TextLength(structs[i].fieldName[originalIndex]));
@@ -902,7 +902,7 @@ int main(int argc, char* argv[])
         char *linePtr = lines[callbackLines[i]];
 
         // Skip "typedef "
-        int c = 8;
+        unsigned int c = 8;
 
         // Return type
         int retTypeStart = c;
@@ -925,7 +925,7 @@ int main(int argc, char* argv[])
 
         // Params
         int paramStart = c;
-        for (c; c < MAX_LINE_LENGTH; c++)
+        for (; c < MAX_LINE_LENGTH; c++)
         {
             if ((linePtr[c] == ',') || (linePtr[c] == ')'))
             {
@@ -1042,6 +1042,7 @@ int main(int argc, char* argv[])
     else if (outputFormat == JSON) printf("\nOutput format:    JSON\n\n");
     else if (outputFormat == XML) printf("\nOutput format:    XML\n\n");
     else if (outputFormat == LUA) printf("\nOutput format:    LUA\n\n");
+    else if (outputFormat == CODE) printf("\nOutput format:    CODE\n\n");
 
     ExportParsedData(outFileName, outputFormat);
 
@@ -1066,26 +1067,26 @@ static void ShowCommandLineInfo(void)
     printf("//                                                                              //\n");
     printf("// more info and bugs-report: github.com/raysan5/raylib/parser                  //\n");
     printf("//                                                                              //\n");
-    printf("// Copyright (c) 2021 Ramon Santamaria (@raysan5)                               //\n");
+    printf("// Copyright (c) 2021-2022 Ramon Santamaria (@raysan5)                          //\n");
     printf("//                                                                              //\n");
     printf("//////////////////////////////////////////////////////////////////////////////////\n\n");
 
     printf("USAGE:\n\n");
-    printf("    > raylib_parser [--help] [--input <filename.h>] [--output <filename.ext>] [--format <type>] [--define <DEF>]\n");
+    printf("    > raylib_parser [--help] [--input <filename.h>] [--output <filename.ext>] [--format <type>]\n");
 
     printf("\nOPTIONS:\n\n");
     printf("    -h, --help                      : Show tool version and command line usage help\n\n");
     printf("    -i, --input <filename.h>        : Define input header file to parse.\n");
     printf("                                      NOTE: If not specified, defaults to: raylib.h\n\n");
     printf("    -o, --output <filename.ext>     : Define output file and format.\n");
-    printf("                                      Supported extensions: .txt, .json, .xml, .h\n");
+    printf("                                      Supported extensions: .txt, .json, .xml, .lua, .h\n");
     printf("                                      NOTE: If not specified, defaults to: raylib_api.txt\n\n");
     printf("    -f, --format <type>             : Define output format for parser data.\n");
-    printf("                                      Supported types: DEFAULT, JSON, XML, LUA\n\n");
-    printf("    -d, --define <DEF>              : Define functions define (i.e. RLAPI for raylib.h, RMDEF for raymath.h, etc.)\n");
-    printf("                                      NOTE: If not specified, defaults to: RLAPI\n\n");
+    printf("                                      Supported types: DEFAULT, JSON, XML, LUA, CODE\n\n");
+    printf("    -d, --define <DEF>              : Define functions specifiers (i.e. RLAPI for raylib.h, RMDEF for raymath.h, etc.)\n");
+    printf("                                      NOTE: If no specifier defined, defaults to: RLAPI\n\n");
     printf("    -t, --truncate <after>          : Define string to truncate input after (i.e. \"RLGL IMPLEMENTATION\" for rlgl.h)\n");
-    printf("                                      NOTE: If not specified input is not truncated.\n\n");
+    printf("                                      NOTE: If not specified, the full input file is parsed.\n\n");
 
     printf("\nEXAMPLES:\n\n");
     printf("    > raylib_parser --input raylib.h --output api.json\n");
@@ -1134,6 +1135,7 @@ static void ProcessCommandLine(int argc, char *argv[])
                 else if (IsTextEqual(argv[i + 1], "JSON\0", 5)) outputFormat = JSON;
                 else if (IsTextEqual(argv[i + 1], "XML\0", 4)) outputFormat = XML;
                 else if (IsTextEqual(argv[i + 1], "LUA\0", 4)) outputFormat = LUA;
+                else if (IsTextEqual(argv[i + 1], "CODE\0", 4)) outputFormat = CODE;
             }
             else printf("WARNING: No format parameters provided\n");
         }
@@ -1971,6 +1973,7 @@ static void ExportParsedData(const char *fileName, int format)
             fprintf(outFile, "  }\n");
             fprintf(outFile, "}\n");
         } break;
+        case CODE:
         default: break;
     }
 

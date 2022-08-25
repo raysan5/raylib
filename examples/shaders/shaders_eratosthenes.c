@@ -2,24 +2,26 @@
 *
 *   raylib [shaders] example - Sieve of Eratosthenes
 *
-*   Sieve of Eratosthenes, the earliest known (ancient Greek) prime number sieve.
+*   NOTE: Sieve of Eratosthenes, the earliest known (ancient Greek) prime number sieve.
 *
-*   "Sift the twos and sift the threes,
-*    The Sieve of Eratosthenes.
-*    When the multiples sublime,
-*    the numbers that are left are prime."
+*       "Sift the twos and sift the threes,
+*        The Sieve of Eratosthenes.
+*        When the multiples sublime,
+*        the numbers that are left are prime."
 *
 *   NOTE: This example requires raylib OpenGL 3.3 or ES2 versions for shaders support,
 *         OpenGL 1.1 does not support shaders, recompile raylib to OpenGL 3.3 version.
 *
 *   NOTE: Shaders used in this example are #version 330 (OpenGL 3.3).
 *
-*   This example has been created using raylib 2.5 (www.raylib.com)
-*   raylib is licensed under an unmodified zlib/libpng license (View raylib.h for details)
+*   Example originally created with raylib 2.5, last time updated with raylib 4.0
 *
 *   Example contributed by ProfJski and reviewed by Ramon Santamaria (@raysan5)
 *
-*   Copyright (c) 2019 ProfJski and Ramon Santamaria (@raysan5)
+*   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
+*   BSD-like license that allows static linking with closed source software
+*
+*   Copyright (c) 2019-2022 ProfJski and Ramon Santamaria (@raysan5)
 *
 ********************************************************************************************/
 
@@ -31,6 +33,9 @@
     #define GLSL_VERSION            100
 #endif
 
+//------------------------------------------------------------------------------------
+// Program main entry point
+//------------------------------------------------------------------------------------
 int main(void)
 {
     // Initialization

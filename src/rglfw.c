@@ -37,7 +37,7 @@
 // _GLFW_OSMESA     to use the OSMesa API (headless and non-interactive)
 // _GLFW_MIR        experimental, not supported at this moment
 
-#if defined(_WIN32)
+#if defined(_WIN32) || defined(__CYGWIN__)
     #define _GLFW_WIN32
 #endif
 #if defined(__linux__)
@@ -65,7 +65,7 @@
 #include "external/glfw/src/vulkan.c"
 #include "external/glfw/src/window.c"
 
-#if defined(_WIN32)
+#if defined(_WIN32) || defined(__CYGWIN__)
     #include "external/glfw/src/win32_init.c"
     #include "external/glfw/src/win32_joystick.c"
     #include "external/glfw/src/win32_monitor.c"

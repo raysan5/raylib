@@ -23,9 +23,11 @@
 *       Windowing and input system configured for Android device, app activity managed internally in this module.
 *       NOTE: OpenGL ES 2.0 is required and graphic device is managed by EGL
 *
-*   #define PLATFORM_RPI
+*   #define PLATFORM_RPI (deprecated - RPI OS Buster only)
 *       Windowing and input system configured for Raspberry Pi in native mode (no XWindow required),
 *       graphic device is managed by EGL and inputs are processed is raw mode, reading from /dev/input/
+*       WARNING: This platform is deprecated, since RPI OS Bullseye, the old Dispmanx libraries are not
+*       supported and you must be using PLATFORM_DRM
 *
 *   #define PLATFORM_DRM
 *       Windowing and input system configured for DRM native mode (RPI4 and other devices)
@@ -60,9 +62,6 @@
 *       WARNING: Reconfiguring standard input could lead to undesired effects, like breaking other running processes or
 *       blocking the device if not restored properly. Use with care.
 *
-*   #define SUPPORT_MOUSE_CURSOR_POINT
-*       Draw a mouse pointer on screen
-*
 *   #define SUPPORT_BUSY_WAIT_LOOP
 *       Use busy wait loop for timing sync, if not defined, a high-resolution timer is setup and used
 *
@@ -82,9 +81,6 @@
 *       Support CompressData() and DecompressData() functions, those functions use zlib implementation
 *       provided by stb_image and stb_image_write libraries, so, those libraries must be enabled on textures module
 *       for linkage
-*
-*   #define SUPPORT_DATA_STORAGE
-*       Support saving binary data automatically to a generated storage.data file. This file is managed internally
 *
 *   #define SUPPORT_EVENTS_AUTOMATION
 *       Support automatic generated events, loading and recording of those events when required
@@ -188,7 +184,12 @@
 #include <time.h>                   // Required for: time() [Used in InitTimer()]
 #include <math.h>                   // Required for: tan() [Used in BeginMode3D()], atan2f() [Used in LoadVrStereoConfig()]
 
-#include <sys/stat.h>               // Required for: stat() [Used in GetFileModTime()]
+#define _CRT_INTERNAL_NONSTDC_NAMES  1
+#include <sys/stat.h>               // Required for: stat(), S_ISREG [Used in GetFileModTime(), IsFilePath()]
+
+#if !defined(S_ISREG) && defined(S_IFMT) && defined(S_IFREG)
+    #define S_ISREG(m) (((m) & S_IFMT) == S_IFREG)
+#endif
 
 #if defined(PLATFORM_DESKTOP) && defined(_WIN32) && (defined(_MSC_VER) || defined(__TINYC__))
     #define DIRENT_MALLOC RL_MALLOC
@@ -218,8 +219,12 @@
 
     // Support retrieving native window handlers
     #if defined(_WIN32)
+        typedef void *PVOID;
+        typedef PVOID HANDLE;
+        typedef HANDLE HWND;
         #define GLFW_EXPOSE_NATIVE_WIN32
-        #include "GLFW/glfw3native.h"       // WARNING: It requires customization to avoid windows.h inclusion!
+        #define GLFW_NATIVE_INCLUDE_NONE // To avoid some symbols re-definition in windows.h
+        #include "GLFW/glfw3native.h"
 
         #if defined(SUPPORT_WINMM_HIGHRES_TIMER) && !defined(SUPPORT_BUSY_WAIT_LOOP)
             // NOTE: Those functions require linking with winmm library
@@ -240,6 +245,12 @@
 
         //#define GLFW_EXPOSE_NATIVE_COCOA    // WARNING: Fails due to type redefinition
         #include "GLFW/glfw3native.h"       // Required for: glfwGetCocoaWindow()
+    #endif
+    
+    // TODO: HACK: Added flag if not provided by GLFW when using external library
+    // Latest GLFW release (GLFW 3.3.8) does not implement this flag, it was added for 3.4.0-dev
+    #if !defined(GLFW_MOUSE_PASSTHROUGH)
+        #define GLFW_MOUSE_PASSTHROUGH      0x0002000D
     #endif
 #endif
 
@@ -308,12 +319,11 @@
     #define DEFAULT_EVDEV_PATH       "/dev/input/"  // Path to the linux input events
 #endif
 
+#ifndef MAX_FILEPATH_CAPACITY
+    #define MAX_FILEPATH_CAPACITY       8192        // Maximum capacity for filepath
+#endif
 #ifndef MAX_FILEPATH_LENGTH
-    #if defined(__linux__)
-        #define MAX_FILEPATH_LENGTH     4096        // Maximum length for filepaths (Linux PATH_MAX default value)
-    #else
-        #define MAX_FILEPATH_LENGTH      512        // Maximum length supported for filepaths
-    #endif
+    #define MAX_FILEPATH_LENGTH         4096        // Maximum length for filepaths (Linux PATH_MAX default value)
 #endif
 
 #ifndef MAX_KEYBOARD_KEYS
@@ -339,12 +349,6 @@
 #endif
 #ifndef MAX_CHAR_PRESSED_QUEUE
     #define MAX_CHAR_PRESSED_QUEUE        16        // Maximum number of characters in the char input queue
-#endif
-
-#if defined(SUPPORT_DATA_STORAGE)
-    #ifndef STORAGE_DATA_FILE
-        #define STORAGE_DATA_FILE  "storage.data"   // Automatic storage filename
-    #endif
 #endif
 
 #ifndef MAX_DECOMPRESSION_SIZE
@@ -422,8 +426,8 @@ typedef struct CoreData {
         Point renderOffset;                 // Offset from render area (must be divided by 2)
         Matrix screenScale;                 // Matrix to scale screen (framebuffer rendering)
 
-        char **dropFilepaths;               // Store dropped files paths as strings
-        int dropFileCount;                  // Count dropped files strings
+        char **dropFilepaths;         // Store dropped files paths pointers (provided by GLFW)
+        unsigned int dropFileCount;         // Count dropped files strings
 
     } Window;
 #if defined(PLATFORM_ANDROID)
@@ -474,8 +478,8 @@ typedef struct CoreData {
 
             char currentButtonState[MAX_MOUSE_BUTTONS];     // Registers current mouse button state
             char previousButtonState[MAX_MOUSE_BUTTONS];    // Registers previous mouse button state
-            float currentWheelMove;         // Registers current mouse wheel variation
-            float previousWheelMove;        // Registers previous mouse wheel variation
+            Vector2 currentWheelMove;       // Registers current mouse wheel variation
+            Vector2 previousWheelMove;      // Registers previous mouse wheel variation
 #if defined(PLATFORM_RPI) || defined(PLATFORM_DRM)
             // NOTE: currentButtonState[] can't be written directly due to multithreading, app could miss the update
             char currentButtonStateEvdev[MAX_MOUSE_BUTTONS]; // Holds the new mouse state for the next polling event to grab
@@ -522,12 +526,9 @@ typedef struct CoreData {
 //----------------------------------------------------------------------------------
 // Global Variables Definition
 //----------------------------------------------------------------------------------
-static CoreData CORE = { 0 };               // Global CORE state context
-
-static char **dirFilesPath = NULL;          // Store directory files paths as strings
-static int dirFileCount = 0;                // Count directory files strings
-
 const char *raylibVersion = RAYLIB_VERSION; // raylib version symbol, it could be required for some bindings
+
+static CoreData CORE = { 0 };               // Global CORE state context
 
 #if defined(SUPPORT_SCREEN_CAPTURE)
 static int screenshotCounter = 0;           // Screenshots counter
@@ -552,7 +553,7 @@ typedef enum AutomationEventType {
     INPUT_MOUSE_BUTTON_UP,          // param[0]: button
     INPUT_MOUSE_BUTTON_DOWN,        // param[0]: button
     INPUT_MOUSE_POSITION,           // param[0]: x, param[1]: y
-    INPUT_MOUSE_WHEEL_MOTION,       // param[0]: delta
+    INPUT_MOUSE_WHEEL_MOTION,       // param[0]: x delta, param[1]: y delta
     INPUT_GAMEPAD_CONNECT,          // param[0]: gamepad
     INPUT_GAMEPAD_DISCONNECT,       // param[0]: gamepad
     INPUT_GAMEPAD_BUTTON_UP,        // param[0]: button
@@ -642,6 +643,9 @@ static void InitTimer(void);                            // Initialize timer (hi-
 static bool InitGraphicsDevice(int width, int height);  // Initialize graphics device
 static void SetupFramebuffer(int width, int height);    // Setup main framebuffer
 static void SetupViewport(int width, int height);       // Set viewport for a provided width and height
+
+static void ScanDirectoryFiles(const char *basePath, FilePathList *list, const char *filter);   // Scan all files and directories in a base path
+static void ScanDirectoryFilesRecursively(const char *basePath, FilePathList *list, const char *filter);  // Scan all files and directories recursively from a base path
 
 #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
 static void ErrorCallback(int error, const char *description);                             // GLFW3 Error Callback, runs on GLFW3 error
@@ -1217,7 +1221,6 @@ bool IsWindowState(unsigned int flag)
 void ToggleFullscreen(void)
 {
 #if defined(PLATFORM_DESKTOP)
-    // TODO: glfwSetWindowMonitor() doesn't work properly (bugs)
     if (!CORE.Window.fullscreen)
     {
         // Store previous window position (in case we exit fullscreen)
@@ -1456,6 +1459,13 @@ void SetWindowState(unsigned int flags)
         TRACELOG(LOG_WARNING, "WINDOW: High DPI can only by configured before window initialization");
     }
 
+    // State change: FLAG_WINDOW_MOUSE_PASSTHROUGH
+    if (((CORE.Window.flags & FLAG_WINDOW_MOUSE_PASSTHROUGH) != (flags & FLAG_WINDOW_MOUSE_PASSTHROUGH)) && ((flags & FLAG_WINDOW_MOUSE_PASSTHROUGH) > 0))
+    {
+        glfwSetWindowAttrib(CORE.Window.handle, GLFW_MOUSE_PASSTHROUGH, GLFW_TRUE);
+        CORE.Window.flags |= FLAG_WINDOW_MOUSE_PASSTHROUGH;
+    }
+
     // State change: FLAG_MSAA_4X_HINT
     if (((CORE.Window.flags & FLAG_MSAA_4X_HINT) != (flags & FLAG_MSAA_4X_HINT)) && ((flags & FLAG_MSAA_4X_HINT) > 0))
     {
@@ -1555,6 +1565,13 @@ void ClearWindowState(unsigned int flags)
     if (((CORE.Window.flags & FLAG_WINDOW_HIGHDPI) > 0) && ((flags & FLAG_WINDOW_HIGHDPI) > 0))
     {
         TRACELOG(LOG_WARNING, "WINDOW: High DPI can only by configured before window initialization");
+    }
+
+    // State change: FLAG_WINDOW_MOUSE_PASSTHROUGH
+    if (((CORE.Window.flags & FLAG_WINDOW_MOUSE_PASSTHROUGH) > 0) && ((flags & FLAG_WINDOW_MOUSE_PASSTHROUGH) > 0))
+    {
+        glfwSetWindowAttrib(CORE.Window.handle, GLFW_MOUSE_PASSTHROUGH, GLFW_FALSE);
+        CORE.Window.flags &= ~FLAG_WINDOW_MOUSE_PASSTHROUGH;
     }
 
     // State change: FLAG_MSAA_4X_HINT
@@ -1760,7 +1777,7 @@ int GetCurrentMonitor(void)
 #endif
 }
 
-// Get selected monitor width
+// Get selected monitor position
 Vector2 GetMonitorPosition(int monitor)
 {
 #if defined(PLATFORM_DESKTOP)
@@ -1779,7 +1796,7 @@ Vector2 GetMonitorPosition(int monitor)
     return (Vector2){ 0, 0 };
 }
 
-// Get selected monitor width (max available by monitor)
+// Get selected monitor width (currently used by monitor)
 int GetMonitorWidth(int monitor)
 {
 #if defined(PLATFORM_DESKTOP)
@@ -1788,11 +1805,9 @@ int GetMonitorWidth(int monitor)
 
     if ((monitor >= 0) && (monitor < monitorCount))
     {
-        int count = 0;
-        const GLFWvidmode *modes = glfwGetVideoModes(monitors[monitor], &count);
+        const GLFWvidmode *mode = glfwGetVideoMode(monitors[monitor]);
 
-        // We return the maximum resolution available, the last one in the modes array
-        if (count > 0) return modes[count - 1].width;
+        if (mode) return mode->width;
         else TRACELOG(LOG_WARNING, "GLFW: Failed to find video mode for selected monitor");
     }
     else TRACELOG(LOG_WARNING, "GLFW: Failed to find selected monitor");
@@ -1800,7 +1815,7 @@ int GetMonitorWidth(int monitor)
     return 0;
 }
 
-// Get selected monitor width (max available by monitor)
+// Get selected monitor height (currently used by monitor)
 int GetMonitorHeight(int monitor)
 {
 #if defined(PLATFORM_DESKTOP)
@@ -1809,11 +1824,9 @@ int GetMonitorHeight(int monitor)
 
     if ((monitor >= 0) && (monitor < monitorCount))
     {
-        int count = 0;
-        const GLFWvidmode *modes = glfwGetVideoModes(monitors[monitor], &count);
+        const GLFWvidmode *mode = glfwGetVideoMode(monitors[monitor]);
 
-        // We return the maximum resolution available, the last one in the modes array
-        if (count > 0) return modes[count - 1].height;
+        if (mode) return mode->height;
         else TRACELOG(LOG_WARNING, "GLFW: Failed to find video mode for selected monitor");
     }
     else TRACELOG(LOG_WARNING, "GLFW: Failed to find selected monitor");
@@ -2064,15 +2077,6 @@ void BeginDrawing(void)
 void EndDrawing(void)
 {
     rlDrawRenderBatchActive();      // Update and draw internal render batch
-
-#if defined(SUPPORT_MODULE_RSHAPES) && defined(SUPPORT_MOUSE_CURSOR_POINT)
-    // Draw a small rectangle on mouse position for user reference
-    if (!CORE.Input.Mouse.cursorHidden)
-    {
-        DrawRectangle(CORE.Input.Mouse.currentPosition.x, CORE.Input.Mouse.currentPosition.y, 3, 3, MAROON);    // WARNING: Module required: rshapes
-        rlDrawRenderBatchActive();  // Update and draw internal render batch
-    }
-#endif
 
 #if defined(SUPPORT_GIF_RECORDING)
     // Draw record indicator
@@ -2874,6 +2878,8 @@ bool FileExists(const char *fileName)
 // NOTE: Extensions checking is not case-sensitive
 bool IsFileExtension(const char *fileName, const char *ext)
 {
+    #define MAX_FILE_EXTENSION_SIZE  16
+
     bool result = false;
     const char *fileExt = GetFileExtension(fileName);
 
@@ -2881,10 +2887,10 @@ bool IsFileExtension(const char *fileName, const char *ext)
     {
 #if defined(SUPPORT_MODULE_RTEXT) && defined(SUPPORT_TEXT_MANIPULATION)
         int extCount = 0;
-        const char **checkExts = TextSplit(ext, ';', &extCount); // WARNING: Module required: rtext
+        const char **checkExts = TextSplit(ext, ';', &extCount);  // WARNING: Module required: rtext
 
-        char fileExtLower[16] = { 0 };
-        strcpy(fileExtLower, TextToLower(fileExt));  // WARNING: Module required: rtext
+        char fileExtLower[MAX_FILE_EXTENSION_SIZE + 1] = { 0 };
+        strncpy(fileExtLower, TextToLower(fileExt),MAX_FILE_EXTENSION_SIZE);  // WARNING: Module required: rtext
 
         for (int i = 0; i < extCount; i++)
         {
@@ -3147,51 +3153,71 @@ const char *GetApplicationDirectory(void)
 }
 
 // Load directory filepaths
-// NOTE: Files count is returned by parameters pointer
-char **LoadDirectoryFiles(const char *dirPath, int *fileCount)
+// NOTE: Base path is prepended to the scanned filepaths
+// WARNING: Directory is scanned twice, first time to get files count
+// No recursive scanning is done!
+FilePathList LoadDirectoryFiles(const char *dirPath)
 {
-    UnloadDirectoryFiles();
+    FilePathList files = { 0 };
+    unsigned int fileCounter = 0;
 
-    int counter = 0;
     struct dirent *entity;
     DIR *dir = opendir(dirPath);
 
     if (dir != NULL) // It's a directory
     {
-        // Count files
-        while ((entity = readdir(dir)) != NULL) counter++;
-
-        dirFileCount = counter;
-        *fileCount = dirFileCount;
+        // SCAN 1: Count files
+        while ((entity = readdir(dir)) != NULL)
+        {
+            // NOTE: We skip '.' (current dir) and '..' (parent dir) filepaths
+            if ((strcmp(entity->d_name, ".") != 0) && (strcmp(entity->d_name, "..") != 0)) fileCounter++;
+        }
 
         // Memory allocation for dirFileCount
-        dirFilesPath = (char **)RL_MALLOC(dirFileCount*sizeof(char *));
-        for (int i = 0; i < dirFileCount; i++) dirFilesPath[i] = (char *)RL_MALLOC(MAX_FILEPATH_LENGTH*sizeof(char));
-
-        // Reset our position in the directory to the beginning
-        rewinddir(dir);
-
-        // Read file names
-        for (int i = 0; (entity = readdir(dir)) != NULL; i++) strcpy(dirFilesPath[i], entity->d_name);
+        files.capacity = fileCounter;
+        files.paths = (char **)RL_MALLOC(files.capacity*sizeof(char *));
+        for (unsigned int i = 0; i < files.capacity; i++) files.paths[i] = (char *)RL_MALLOC(MAX_FILEPATH_LENGTH*sizeof(char));
 
         closedir(dir);
+
+        // SCAN 2: Read filepaths
+        // NOTE: Directory paths are also registered
+        ScanDirectoryFiles(dirPath, &files, NULL);
+
+        // Security check: read files.count should match fileCounter
+        if (files.count != files.capacity) TRACELOG(LOG_WARNING, "FILEIO: Read files count do not match capacity allocated");
     }
     else TRACELOG(LOG_WARNING, "FILEIO: Failed to open requested directory");  // Maybe it's a file...
 
-    return dirFilesPath;
+    return files;
+}
+
+// Load directory filepaths with extension filtering and recursive directory scan
+// NOTE: On recursive loading we do not pre-scan for file count, we use MAX_FILEPATH_CAPACITY
+FilePathList LoadDirectoryFilesEx(const char *basePath, const char *filter, bool scanSubdirs)
+{
+    FilePathList files = { 0 };
+
+    files.capacity = MAX_FILEPATH_CAPACITY;
+    files.paths = (char **)RL_CALLOC(files.capacity, sizeof(char *));
+    for (unsigned int i = 0; i < files.capacity; i++) files.paths[i] = (char *)RL_CALLOC(MAX_FILEPATH_LENGTH, sizeof(char));
+
+    // WARNING: basePath is always prepended to scanned paths
+    if (scanSubdirs) ScanDirectoryFilesRecursively(basePath, &files, filter);
+    else ScanDirectoryFiles(basePath, &files, filter);
+
+    return files;
 }
 
 // Unload directory filepaths
-void UnloadDirectoryFiles(void)
+void UnloadDirectoryFiles(FilePathList files)
 {
-    if (dirFileCount > 0)
+    if (files.capacity > 0)
     {
-        for (int i = 0; i < dirFileCount; i++) RL_FREE(dirFilesPath[i]);
+        for (unsigned int i = 0; i < files.capacity; i++) RL_FREE(files.paths[i]);
 
-        RL_FREE(dirFilesPath);
+        RL_FREE(files.paths);
     }
-
-    dirFileCount = 0;
 }
 
 // Change working directory, returns true on success
@@ -3204,6 +3230,15 @@ bool ChangeDirectory(const char *dir)
     return (result == 0);
 }
 
+// Check if a given path point to a file
+bool IsPathFile(const char *path)
+{
+    struct stat pathStat = { 0 };
+    stat(path, &pathStat);
+
+    return S_ISREG(pathStat.st_mode);
+}
+
 // Check if a file has been dropped into window
 bool IsFileDropped(void)
 {
@@ -3212,22 +3247,29 @@ bool IsFileDropped(void)
 }
 
 // Load dropped filepaths
-char **LoadDroppedFiles(int *count)
+FilePathList LoadDroppedFiles(void)
 {
-    *count = CORE.Window.dropFileCount;
-    return CORE.Window.dropFilepaths;
+    FilePathList files = { 0 };
+
+    files.count = CORE.Window.dropFileCount;
+    files.paths = CORE.Window.dropFilepaths;
+
+    return files;
 }
 
 // Unload dropped filepaths
-void UnloadDroppedFiles(void)
+void UnloadDroppedFiles(FilePathList files)
 {
-    if (CORE.Window.dropFileCount > 0)
-    {
-        for (int i = 0; i < CORE.Window.dropFileCount; i++) RL_FREE(CORE.Window.dropFilepaths[i]);
+    // WARNING: files pointers are the same as internal ones
 
-        RL_FREE(CORE.Window.dropFilepaths);
+    if (files.count > 0)
+    {
+        for (unsigned int i = 0; i < files.count; i++) RL_FREE(files.paths[i]);
+
+        RL_FREE(files.paths);
 
         CORE.Window.dropFileCount = 0;
+        CORE.Window.dropFilepaths = NULL;
     }
 }
 
@@ -3274,7 +3316,7 @@ unsigned char *DecompressData(const unsigned char *compData, int compDataSize, i
 #if defined(SUPPORT_COMPRESSION_API)
     // Decompress data from a valid DEFLATE stream
     data = RL_CALLOC(MAX_DECOMPRESSION_SIZE*1024*1024, 1);
-    int length = sinflate(data, MAX_DECOMPRESSION_SIZE, compData, compDataSize);
+    int length = sinflate(data, MAX_DECOMPRESSION_SIZE*1024*1024, compData, compDataSize);
     unsigned char *temp = RL_REALLOC(data, length);
 
     if (temp != NULL) data = temp;
@@ -3380,110 +3422,6 @@ unsigned char *DecodeDataBase64(const unsigned char *data, int *outputSize)
 
     *outputSize = outSize;
     return decodedData;
-}
-
-// Save integer value to storage file (to defined position)
-// NOTE: Storage positions is directly related to file memory layout (4 bytes each integer)
-bool SaveStorageValue(unsigned int position, int value)
-{
-    bool success = false;
-
-#if defined(SUPPORT_DATA_STORAGE)
-    char path[512] = { 0 };
-    strcpy(path, TextFormat("%s/%s", CORE.Storage.basePath, STORAGE_DATA_FILE));
-
-    unsigned int dataSize = 0;
-    unsigned int newDataSize = 0;
-    unsigned char *fileData = LoadFileData(path, &dataSize);
-    unsigned char *newFileData = NULL;
-
-    if (fileData != NULL)
-    {
-        if (dataSize <= (position*sizeof(int)))
-        {
-            // Increase data size up to position and store value
-            newDataSize = (position + 1)*sizeof(int);
-            newFileData = (unsigned char *)RL_REALLOC(fileData, newDataSize);
-
-            if (newFileData != NULL)
-            {
-                // RL_REALLOC succeded
-                int *dataPtr = (int *)newFileData;
-                dataPtr[position] = value;
-            }
-            else
-            {
-                // RL_REALLOC failed
-                TRACELOG(LOG_WARNING, "FILEIO: [%s] Failed to realloc data (%u), position in bytes (%u) bigger than actual file size", path, dataSize, position*sizeof(int));
-
-                // We store the old size of the file
-                newFileData = fileData;
-                newDataSize = dataSize;
-            }
-        }
-        else
-        {
-            // Store the old size of the file
-            newFileData = fileData;
-            newDataSize = dataSize;
-
-            // Replace value on selected position
-            int *dataPtr = (int *)newFileData;
-            dataPtr[position] = value;
-        }
-
-        success = SaveFileData(path, newFileData, newDataSize);
-        RL_FREE(newFileData);
-
-        TRACELOG(LOG_INFO, "FILEIO: [%s] Saved storage value: %i", path, value);
-    }
-    else
-    {
-        TRACELOG(LOG_INFO, "FILEIO: [%s] File created successfully", path);
-
-        dataSize = (position + 1)*sizeof(int);
-        fileData = (unsigned char *)RL_MALLOC(dataSize);
-        int *dataPtr = (int *)fileData;
-        dataPtr[position] = value;
-
-        success = SaveFileData(path, fileData, dataSize);
-        UnloadFileData(fileData);
-
-        TRACELOG(LOG_INFO, "FILEIO: [%s] Saved storage value: %i", path, value);
-    }
-#endif
-
-    return success;
-}
-
-// Load integer value from storage file (from defined position)
-// NOTE: If requested position could not be found, value 0 is returned
-int LoadStorageValue(unsigned int position)
-{
-    int value = 0;
-
-#if defined(SUPPORT_DATA_STORAGE)
-    char path[512] = { 0 };
-    strcpy(path, TextFormat("%s/%s", CORE.Storage.basePath, STORAGE_DATA_FILE));
-
-    unsigned int dataSize = 0;
-    unsigned char *fileData = LoadFileData(path, &dataSize);
-
-    if (fileData != NULL)
-    {
-        if (dataSize < (position*4)) TRACELOG(LOG_WARNING, "FILEIO: [%s] Failed to find storage position: %i", path, position);
-        else
-        {
-            int *dataPtr = (int *)fileData;
-            value = dataPtr[position];
-        }
-
-        UnloadFileData(fileData);
-
-        TRACELOG(LOG_INFO, "FILEIO: [%s] Loaded storage value: %i", path, value);
-    }
-#endif
-    return value;
 }
 
 // Open URL with default system browser (if available)
@@ -3867,14 +3805,24 @@ void SetMouseScale(float scaleX, float scaleY)
 // Get mouse wheel movement Y
 float GetMouseWheelMove(void)
 {
-#if defined(PLATFORM_ANDROID)
-    return 0.0f;
-#endif
-#if defined(PLATFORM_WEB)
-    return CORE.Input.Mouse.currentWheelMove/100.0f;
+    float result = 0.0f;
+
+#if !defined(PLATFORM_ANDROID)
+    if (fabsf(CORE.Input.Mouse.currentWheelMove.x) > fabsf(CORE.Input.Mouse.currentWheelMove.y)) result = (float)CORE.Input.Mouse.currentWheelMove.x;
+    else result = (float)CORE.Input.Mouse.currentWheelMove.y;
 #endif
 
-    return CORE.Input.Mouse.currentWheelMove;
+    return result;
+}
+
+// Get mouse wheel movement X/Y as a vector
+Vector2 GetMouseWheelMoveV(void)
+{
+    Vector2 result = { 0 };
+   
+    result = CORE.Input.Mouse.currentWheelMove;
+
+    return result;
 }
 
 // Set mouse cursor
@@ -4077,6 +4025,10 @@ static bool InitGraphicsDevice(int width, int height)
     #endif
     }
     else glfwWindowHint(GLFW_SCALE_TO_MONITOR, GLFW_FALSE);
+
+    // Mouse passthrough
+    if ((CORE.Window.flags & FLAG_WINDOW_MOUSE_PASSTHROUGH) > 0) glfwWindowHint(GLFW_MOUSE_PASSTHROUGH, GLFW_TRUE);
+    else glfwWindowHint(GLFW_MOUSE_PASSTHROUGH, GLFW_FALSE);
 #endif
 
     if (CORE.Window.flags & FLAG_MSAA_4X_HINT)
@@ -4165,14 +4117,6 @@ static bool InitGraphicsDevice(int width, int height)
                 }
             }
         }
-
-#if defined(PLATFORM_DESKTOP)
-        // If we are windowed fullscreen, ensures that window does not minimize when focus is lost
-        if ((CORE.Window.screen.height == CORE.Window.display.height) && (CORE.Window.screen.width == CORE.Window.display.width))
-        {
-            glfwWindowHint(GLFW_AUTO_ICONIFY, 0);
-        }
-#endif
         TRACELOG(LOG_WARNING, "SYSTEM: Closest fullscreen videomode: %i x %i", CORE.Window.display.width, CORE.Window.display.height);
 
         // NOTE: ISSUE: Closest videomode could not match monitor aspect-ratio, for example,
@@ -4194,6 +4138,13 @@ static bool InitGraphicsDevice(int width, int height)
     }
     else
     {
+#if defined(PLATFORM_DESKTOP)
+        // If we are windowed fullscreen, ensures that window does not minimize when focus is lost
+        if ((CORE.Window.screen.height == CORE.Window.display.height) && (CORE.Window.screen.width == CORE.Window.display.width))
+        {
+            glfwWindowHint(GLFW_AUTO_ICONIFY, 0);
+        }
+#endif
         // No-fullscreen window creation
         CORE.Window.handle = glfwCreateWindow(CORE.Window.screen.width, CORE.Window.screen.height, (CORE.Window.title != 0)? CORE.Window.title : " ", NULL, NULL);
 
@@ -4731,8 +4682,6 @@ static bool InitGraphicsDevice(int width, int height)
     // NOTE: It updated CORE.Window.render.width and CORE.Window.render.height
     SetupViewport(CORE.Window.currentFbo.width, CORE.Window.currentFbo.height);
 
-    ClearBackground(RAYWHITE);      // Default background color for raylib games :P
-
 #if defined(PLATFORM_ANDROID)
     CORE.Window.ready = true;
 #endif
@@ -4983,7 +4932,7 @@ void PollInputEvents(void)
 
     // Register previous mouse states
     CORE.Input.Mouse.previousWheelMove = CORE.Input.Mouse.currentWheelMove;
-    CORE.Input.Mouse.currentWheelMove = 0.0f;
+    CORE.Input.Mouse.currentWheelMove = (Vector2){ 0.0f, 0.0f };
     for (int i = 0; i < MAX_MOUSE_BUTTONS; i++)
     {
         CORE.Input.Mouse.previousButtonState[i] = CORE.Input.Mouse.currentButtonState[i];
@@ -5012,7 +4961,7 @@ void PollInputEvents(void)
 
     // Register previous mouse wheel state
     CORE.Input.Mouse.previousWheelMove = CORE.Input.Mouse.currentWheelMove;
-    CORE.Input.Mouse.currentWheelMove = 0.0f;
+    CORE.Input.Mouse.currentWheelMove = (Vector2){ 0.0f, 0.0f };
 
     // Register previous mouse position
     CORE.Input.Mouse.previousPosition = CORE.Input.Mouse.currentPosition;
@@ -5421,6 +5370,96 @@ void PollInputEvents(void)
 #endif
 }
 
+// Scan all files and directories in a base path
+// WARNING: files.paths[] must be previously allocated and
+// contain enough space to store all required paths
+static void ScanDirectoryFiles(const char *basePath, FilePathList *files, const char *filter)
+{
+    static char path[MAX_FILEPATH_LENGTH] = { 0 };
+    memset(path, 0, MAX_FILEPATH_LENGTH);
+
+    struct dirent *dp = NULL;
+    DIR *dir = opendir(basePath);
+
+    if (dir != NULL)
+    {
+        while ((dp = readdir(dir)) != NULL)
+        {
+            if ((strcmp(dp->d_name, ".") != 0) &&
+                (strcmp(dp->d_name, "..") != 0))
+            {
+                sprintf(path, "%s/%s", basePath, dp->d_name);
+
+                if (filter != NULL)
+                {
+                    if (IsFileExtension(path, filter))
+                    {
+                        strcpy(files->paths[files->count], path);
+                        files->count++;
+                    }
+                }
+                else
+                {
+                    strcpy(files->paths[files->count], path);
+                    files->count++;
+                }
+            }
+        }
+
+        closedir(dir);
+    }
+    else TRACELOG(LOG_WARNING, "FILEIO: Directory cannot be opened (%s)", basePath);
+}
+
+// Scan all files and directories recursively from a base path
+static void ScanDirectoryFilesRecursively(const char *basePath, FilePathList *files, const char *filter)
+{
+    static char path[MAX_FILEPATH_LENGTH] = { 0 };
+    memset(path, 0, MAX_FILEPATH_LENGTH);
+
+    struct dirent *dp = NULL;
+    DIR *dir = opendir(basePath);
+
+    if (dir != NULL)
+    {
+        while (((dp = readdir(dir)) != NULL) && (files->count < files->capacity))
+        {
+            if ((strcmp(dp->d_name, ".") != 0) && (strcmp(dp->d_name, "..") != 0))
+            {
+                // Construct new path from our base path
+                sprintf(path, "%s/%s", basePath, dp->d_name);
+
+                if (IsPathFile(path))
+                {
+                    if (filter != NULL)
+                    {
+                        if (IsFileExtension(path, filter))
+                        {
+                            strcpy(files->paths[files->count], path);
+                            files->count++;
+                        }
+                    }
+                    else
+                    {
+                        strcpy(files->paths[files->count], path);
+                        files->count++;
+                    }
+
+                    if (files->count >= files->capacity)
+                    {
+                        TRACELOG(LOG_WARNING, "FILEIO: Maximum filepath scan capacity reached (%i files)", files->capacity);
+                        break;
+                    }
+                }
+                else ScanDirectoryFilesRecursively(path, files, filter);
+            }
+        }
+
+        closedir(dir);
+    }
+    else TRACELOG(LOG_WARNING, "FILEIO: Directory cannot be opened (%s)", basePath);
+}
+
 #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
 // GLFW3 Error Callback, runs on GLFW3 error
 static void ErrorCallback(int error, const char *description)
@@ -5489,6 +5528,8 @@ static void WindowFocusCallback(GLFWwindow *window, int focused)
 // GLFW3 Keyboard Callback, runs on key pressed
 static void KeyCallback(GLFWwindow *window, int key, int scancode, int action, int mods)
 {
+    if (key < 0) return;    // Security check, macOS fn key generates -1
+    
     // WARNING: GLFW could return GLFW_REPEAT, we need to consider it as 1
     // to work properly with our implementation (IsKeyDown/IsKeyUp checks)
     if (action == GLFW_RELEASE) CORE.Input.Keyboard.currentKeyState[key] = 0;
@@ -5655,8 +5696,7 @@ static void MouseCursorPosCallback(GLFWwindow *window, double x, double y)
 // GLFW3 Scrolling Callback, runs on mouse wheel
 static void MouseScrollCallback(GLFWwindow *window, double xoffset, double yoffset)
 {
-    if (fabs(xoffset) > fabs(yoffset)) CORE.Input.Mouse.currentWheelMove = (float)xoffset;
-    else CORE.Input.Mouse.currentWheelMove = (float)yoffset;
+    CORE.Input.Mouse.currentWheelMove = (Vector2){ (float)xoffset, (float)yoffset };
 }
 
 // GLFW3 CursorEnter Callback, when cursor enters the window
@@ -5667,21 +5707,28 @@ static void CursorEnterCallback(GLFWwindow *window, int enter)
 }
 
 // GLFW3 Window Drop Callback, runs when drop files into window
-// NOTE: Paths are stored in dynamic memory for further retrieval
-// Everytime new files are dropped, old ones are discarded
 static void WindowDropCallback(GLFWwindow *window, int count, const char **paths)
 {
-    UnloadDroppedFiles();
-
-    CORE.Window.dropFilepaths = (char **)RL_MALLOC(count*sizeof(char *));
-
-    for (int i = 0; i < count; i++)
+    // In case previous dropped filepaths have not been freed, we free them
+    if (CORE.Window.dropFileCount > 0)
     {
-        CORE.Window.dropFilepaths[i] = (char *)RL_MALLOC(MAX_FILEPATH_LENGTH*sizeof(char));
-        strcpy(CORE.Window.dropFilepaths[i], paths[i]);
+        for (unsigned int i = 0; i < CORE.Window.dropFileCount; i++) RL_FREE(CORE.Window.dropFilepaths[i]);
+
+        RL_FREE(CORE.Window.dropFilepaths);
+
+        CORE.Window.dropFileCount = 0;
+        CORE.Window.dropFilepaths = NULL;
     }
 
+    // WARNING: Paths are freed by GLFW when the callback returns, we must keep an internal copy
     CORE.Window.dropFileCount = count;
+    CORE.Window.dropFilepaths = (char **)RL_CALLOC(CORE.Window.dropFileCount, sizeof(char *));
+
+    for (unsigned int i = 0; i < CORE.Window.dropFileCount; i++)
+    {
+        CORE.Window.dropFilepaths[i] = (char *)RL_CALLOC(MAX_FILEPATH_LENGTH, sizeof(char));
+        strcpy(CORE.Window.dropFilepaths[i], paths[i]);
+    }
 }
 #endif
 
@@ -5921,7 +5968,7 @@ static int32_t AndroidInputCallback(struct android_app *app, AInputEvent *event)
 // Register fullscreen change events
 static EM_BOOL EmscriptenFullscreenChangeCallback(int eventType, const EmscriptenFullscreenChangeEvent *event, void *userData)
 {
-    // TODO.
+    // TODO: Implement EmscriptenFullscreenChangeCallback()?
 
     return 1;   // The event was consumed by the callback handler
 }
@@ -5929,7 +5976,7 @@ static EM_BOOL EmscriptenFullscreenChangeCallback(int eventType, const Emscripte
 // Register window resize event
 static EM_BOOL EmscriptenWindowResizedCallback(int eventType, const EmscriptenUiEvent *event, void *userData)
 {
-    // TODO.
+    // TODO: Implement EmscriptenWindowResizedCallback()?
 
     return 1;   // The event was consumed by the callback handler
 }
@@ -6317,7 +6364,6 @@ static void ConfigureEvdevDevice(char *device)
     worker->fd = fd;
 
     // Grab number on the end of the devices name "event<N>"
-    // TODO: Grab number on the end of the device name "mouse<N>"
     int devNum = 0;
     char *ptrDevName = strrchr(device, 't');
     worker->eventNum = -1;
@@ -6326,7 +6372,7 @@ static void ConfigureEvdevDevice(char *device)
     {
         if (sscanf(ptrDevName, "t%d", &devNum) == 1) worker->eventNum = devNum;
     }
-    else worker->eventNum = 0;      // HACK for mouse0 device!
+    else worker->eventNum = 0;      // TODO: HACK: Grab number for mouse0 device!
 
     // At this point we have a connection to the device, but we don't yet know what the device is.
     // It could be many things, even as simple as a power button...
@@ -6574,7 +6620,7 @@ static void *EventThread(void *arg)
                     gestureUpdate = true;
                 }
 
-                if (event.code == REL_WHEEL) CORE.Input.Mouse.currentWheelMove += event.value;
+                if (event.code == REL_WHEEL) CORE.Input.Mouse.currentWheelMove.y += event.value;
             }
 
             // Absolute movement parsing
@@ -7061,12 +7107,13 @@ static void RecordAutomationEvent(unsigned int frame)
     }
 
     // INPUT_MOUSE_WHEEL_MOTION
-    if ((int)CORE.Input.Mouse.currentWheelMove != (int)CORE.Input.Mouse.previousWheelMove)
+    if (((int)CORE.Input.Mouse.currentWheelMove.x != (int)CORE.Input.Mouse.previousWheelMove.x) ||
+        ((int)CORE.Input.Mouse.currentWheelMove.y != (int)CORE.Input.Mouse.previousWheelMove.y))
     {
         events[eventCount].frame = frame;
         events[eventCount].type = INPUT_MOUSE_WHEEL_MOTION;
-        events[eventCount].params[0] = (int)CORE.Input.Mouse.currentWheelMove;
-        events[eventCount].params[1] = 0;
+        events[eventCount].params[0] = (int)CORE.Input.Mouse.currentWheelMove.x;
+        events[eventCount].params[1] = (int)CORE.Input.Mouse.currentWheelMove.y;;
         events[eventCount].params[2] = 0;
 
         TRACELOG(LOG_INFO, "[%i] INPUT_MOUSE_WHEEL_MOTION: %i, %i, %i", events[eventCount].frame, events[eventCount].params[0], events[eventCount].params[1], events[eventCount].params[2]);
@@ -7218,7 +7265,11 @@ static void PlayAutomationEvent(unsigned int frame)
                     CORE.Input.Mouse.currentPosition.x = (float)events[i].params[0];
                     CORE.Input.Mouse.currentPosition.y = (float)events[i].params[1];
                 } break;
-                case INPUT_MOUSE_WHEEL_MOTION: CORE.Input.Mouse.currentWheelMove = (float)events[i].params[0]; break;   // param[0]: delta
+                case INPUT_MOUSE_WHEEL_MOTION:  // param[0]: x delta, param[1]: y delta
+                {
+                    CORE.Input.Mouse.currentWheelMove.x = (float)events[i].params[0]; break;
+                    CORE.Input.Mouse.currentWheelMove.y = (float)events[i].params[1]; break;
+                } break;
                 case INPUT_TOUCH_UP: CORE.Input.Touch.currentTouchState[events[i].params[0]] = false; break;            // param[0]: id
                 case INPUT_TOUCH_DOWN: CORE.Input.Touch.currentTouchState[events[i].params[0]] = true; break;           // param[0]: id
                 case INPUT_TOUCH_POSITION:      // param[0]: id, param[1]: x, param[2]: y

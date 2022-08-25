@@ -7,10 +7,7 @@ fn add_module(comptime module: []const u8, b: *std.build.Builder, target: std.zi
     const mode = b.standardReleaseOptions();
 
     const all = b.step(module, "All " ++ module ++ " examples");
-    const dir = try std.fs.cwd().openDir(
-        module,
-        .{ .iterate = true },
-    );
+    const dir = try std.fs.cwd().openIterableDir(module, .{});
     var iter = dir.iterate();
     while (try iter.next()) |entry| {
         if (entry.kind != .File) continue;

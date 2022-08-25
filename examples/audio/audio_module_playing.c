@@ -2,10 +2,12 @@
 *
 *   raylib [audio] example - Module playing (streaming)
 *
-*   This example has been created using raylib 1.5 (www.raylib.com)
-*   raylib is licensed under an unmodified zlib/libpng license (View raylib.h for details)
+*   Example originally created with raylib 1.5, last time updated with raylib 3.5
 *
-*   Copyright (c) 2016 Ramon Santamaria (@raysan5)
+*   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
+*   BSD-like license that allows static linking with closed source software
+*
+*   Copyright (c) 2016-2022 Ramon Santamaria (@raysan5)
 *
 ********************************************************************************************/
 
@@ -21,6 +23,9 @@ typedef struct {
     Color color;
 } CircleWave;
 
+//------------------------------------------------------------------------------------
+// Program main entry point
+//------------------------------------------------------------------------------------
 int main(void)
 {
     // Initialization
@@ -37,7 +42,7 @@ int main(void)
     Color colors[14] = { ORANGE, RED, GOLD, LIME, BLUE, VIOLET, BROWN, LIGHTGRAY, PINK,
                          YELLOW, GREEN, SKYBLUE, PURPLE, BEIGE };
 
-    // Creates ome circles for visual effect
+    // Creates some circles for visual effect
     CircleWave circles[MAX_CIRCLES] = { 0 };
 
     for (int i = MAX_CIRCLES - 1; i >= 0; i--)

@@ -875,11 +875,11 @@ Image ImageFromImage(Image image, Rectangle rec)
 
     result.width = (int)rec.width;
     result.height = (int)rec.height;
-    result.data = RL_CALLOC((int)(rec.width*rec.height)*bytesPerPixel, 1);
+    result.data = RL_CALLOC((int)rec.width*(int)rec.height*bytesPerPixel, 1);
     result.format = image.format;
     result.mipmaps = 1;
 
-    for (int y = 0; y < rec.height; y++)
+    for (int y = 0; y < (int)rec.height; y++)
     {
         memcpy(((unsigned char *)result.data) + y*(int)rec.width*bytesPerPixel, ((unsigned char *)image.data) + ((y + (int)rec.y)*image.width + (int)rec.x)*bytesPerPixel, (int)rec.width*bytesPerPixel);
     }
@@ -1414,10 +1414,12 @@ void ImageResize(Image *image, int newWidth, int newHeight)
     // Security check to avoid program crash
     if ((image->data == NULL) || (image->width == 0) || (image->height == 0)) return;
 
-    bool fastPath = true;
-    if ((image->format != PIXELFORMAT_UNCOMPRESSED_GRAYSCALE) && (image->format != PIXELFORMAT_UNCOMPRESSED_GRAY_ALPHA) && (image->format != PIXELFORMAT_UNCOMPRESSED_R8G8B8) && (image->format != PIXELFORMAT_UNCOMPRESSED_R8G8B8A8)) fastPath = true;
-
-    if (fastPath)
+    // Check if we can use a fast path on image scaling
+    // It can be for 8 bit per channel images with 1 to 4 channels per pixel
+    if ((image->format == PIXELFORMAT_UNCOMPRESSED_GRAYSCALE) ||
+        (image->format == PIXELFORMAT_UNCOMPRESSED_GRAY_ALPHA) ||
+        (image->format == PIXELFORMAT_UNCOMPRESSED_R8G8B8) ||
+        (image->format == PIXELFORMAT_UNCOMPRESSED_R8G8B8A8))
     {
         int bytesPerPixel = GetPixelDataSize(1, 1, image->format);
         unsigned char *output = (unsigned char *)RL_MALLOC(newWidth*newHeight*bytesPerPixel);
@@ -3641,7 +3643,7 @@ void DrawTexturePoly(Texture2D texture, Vector2 center, Vector2 *points, Vector2
 
     rlSetTexture(texture.id);
 
-    // Texturing is only supported on QUADs
+    // Texturing is only supported on RL_QUADS
     rlBegin(RL_QUADS);
 
         rlColor4ub(tint.r, tint.g, tint.b, tint.a);
@@ -3809,10 +3811,10 @@ Color ColorAlphaBlend(Color dst, Color src, Color tint)
     Color out = WHITE;
 
     // Apply color tint to source color
-    src.r = (unsigned char)(((unsigned int)src.r*(unsigned int)tint.r) >> 8);
-    src.g = (unsigned char)(((unsigned int)src.g*(unsigned int)tint.g) >> 8);
-    src.b = (unsigned char)(((unsigned int)src.b*(unsigned int)tint.b) >> 8);
-    src.a = (unsigned char)(((unsigned int)src.a*(unsigned int)tint.a) >> 8);
+    src.r = (unsigned char)(((unsigned int)src.r*((unsigned int)tint.r+1)) >> 8);
+    src.g = (unsigned char)(((unsigned int)src.g*((unsigned int)tint.g+1)) >> 8);
+    src.b = (unsigned char)(((unsigned int)src.b*((unsigned int)tint.b+1)) >> 8);
+    src.a = (unsigned char)(((unsigned int)src.a*((unsigned int)tint.a+1)) >> 8);
 
 //#define COLORALPHABLEND_FLOAT
 #define COLORALPHABLEND_INTEGERS
@@ -4572,7 +4574,7 @@ static Image LoadPVR(const unsigned char *fileData, unsigned int fileSize)
         unsigned int flags;
         unsigned char channels[4];      // pixelFormat high part
         unsigned char channelDepth[4];  // pixelFormat low part
-        unsigned int colourSpace;
+        unsigned int colorSpace;
         unsigned int channelType;
         unsigned int height;
         unsigned int width;

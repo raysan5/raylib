@@ -2,18 +2,20 @@
 *
 *   raylib [models] example - Load 3d model with animations and play them
 *
-*   This example has been created using raylib 2.5 (www.raylib.com)
-*   raylib is licensed under an unmodified zlib/libpng license (View raylib.h for details)
+*   Example originally created with raylib 2.5, last time updated with raylib 3.5
 *
 *   Example contributed by Culacant (@culacant) and reviewed by Ramon Santamaria (@raysan5)
 *
-*   Copyright (c) 2019 Culacant (@culacant) and Ramon Santamaria (@raysan5)
+*   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
+*   BSD-like license that allows static linking with closed source software
+*
+*   Copyright (c) 2019-2022 Culacant (@culacant) and Ramon Santamaria (@raysan5)
 *
 ********************************************************************************************
 *
-* To export a model from blender, make sure it is not posed, the vertices need to be in the
-* same position as they would be in edit mode.
-* and that the scale of your models is set to 0. Scaling can be done from the export menu.
+*   NOTE: To export a model from blender, make sure it is not posed, the vertices need to be 
+*         in the same position as they would be in edit mode and the scale of your models is 
+*         set to 0. Scaling can be done from the export menu.
 *
 ********************************************************************************************/
 
@@ -21,7 +23,9 @@
 
 #include <stdlib.h>
 
-
+//------------------------------------------------------------------------------------
+// Program main entry point
+//------------------------------------------------------------------------------------
 int main(void)
 {
     // Initialization
