@@ -5335,11 +5335,11 @@ void PollInputEvents(void)
 
         CORE.Input.Mouse.previousWheelMove = CORE.Input.Mouse.currentWheelMove;
         if (kHeld & HidNpadButton_L) {
-            CORE.Input.Mouse.currentWheelMove = -1.0f;
+            CORE.Input.Mouse.currentWheelMove = (Vector2){ 0.0f, -1.0f };
         } else if (kHeld & HidNpadButton_R) {
-            CORE.Input.Mouse.currentWheelMove = 1.0f;
+            CORE.Input.Mouse.currentWheelMove = (Vector2){ 0.0f, 1.0f };
         } else {
-            CORE.Input.Mouse.currentWheelMove = 0.0f;
+            CORE.Input.Mouse.currentWheelMove = (Vector2){ 0.0f, 0.0f };
         }
 
         CORE.Input.Mouse.previousPosition.x = CORE.Input.Mouse.currentPosition.x;
