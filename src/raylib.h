@@ -1172,6 +1172,7 @@ RLAPI int GetCharPressed(void);                               // Get char presse
 RLAPI void SetExitKey(int key);                               // Set a custom key to exit program (default is ESC)
 RLAPI void SetPreeditCallback(PreeditCallback callback);      // Set a callback for preedit
 RLAPI void SetPreeditCursorRectangle(int x, int y, int w, int h); // Set the preedit cursor area that is used to decide the position of the candidate window
+RLAPI void GetPreeditCursorRectangle(int *x, int *y, int *w, int *h); // Get the preedit cursor area
 
 // Input-related functions: gamepads
 RLAPI bool IsGamepadAvailable(int gamepad);                                        // Check if a gamepad is available

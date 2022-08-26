@@ -609,6 +609,12 @@ void SetPreeditCursorRectangle(int x, int y, int w, int h)
     TRACELOG(LOG_WARNING, "SetPreeditCursorRectangle() not implemented on target platform");
 }
 
+// Get the preedit cursor area
+void GetPreeditCursorRectangle(int *x, int *y, int *w, int *h)
+{
+    TRACELOG(LOG_WARNING, "GetPreeditCursorRectangle() not implemented on target platform");
+}
+
 // Set internal gamepad mappings
 int SetGamepadMappings(const char *mappings)
 {

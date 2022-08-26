@@ -1049,6 +1049,12 @@ void SetPreeditCursorRectangle(int x, int y, int w, int h)
     glfwSetPreeditCursorRectangle(platform.handle, x, y, w, h);
 }
 
+// Get the preedit cursor area
+void GetPreeditCursorRectangle(int *x, int *y, int *w, int *h)
+{
+    glfwGetPreeditCursorRectangle(platform.handle, x, y, w, h);
+}
+
 // Set internal gamepad mappings
 int SetGamepadMappings(const char *mappings)
 {
