@@ -622,6 +622,12 @@ bool IsImeOn(void)
     return false;
 }
 
+// Set IME status
+void SetImeStatus(bool on)
+{
+    TRACELOG(LOG_WARNING, "SetImeStatus() not implemented on target platform");
+}
+
 // Set internal gamepad mappings
 int SetGamepadMappings(const char *mappings)
 {

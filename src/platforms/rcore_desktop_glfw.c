@@ -1062,6 +1062,13 @@ bool IsImeOn(void)
     return false;
 }
 
+// Set IME status
+void SetImeStatus(bool on)
+{
+    if (on) glfwSetInputMode(platform.handle, GLFW_IME, GLFW_TRUE);
+    else glfwSetInputMode(platform.handle, GLFW_IME, GLFW_FALSE);
+}
+
 // Set internal gamepad mappings
 int SetGamepadMappings(const char *mappings)
 {
