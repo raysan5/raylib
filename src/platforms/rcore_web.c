@@ -875,6 +875,12 @@ void SetImeStatus(bool on)
     else glfwSetInputMode(platform.handle, GLFW_IME, GLFW_FALSE);
 }
 
+// Reset preedit text
+void ResetPreedit(void)
+{
+    glfwResetPreeditText(platform.handle);
+}
+
 // Set internal gamepad mappings
 int SetGamepadMappings(const char *mappings)
 {

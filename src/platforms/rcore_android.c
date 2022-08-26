@@ -632,6 +632,12 @@ void SetImeStatus(bool on)
     TRACELOG(LOG_WARNING, "SetImeStatus() not implemented on target platform");
 }
 
+// Reset preedit text
+void ResetPreedit(void)
+{
+    TRACELOG(LOG_WARNING, "ResetPreedit() not implemented on target platform");
+}
+
 // Set internal gamepad mappings
 int SetGamepadMappings(const char *mappings)
 {
