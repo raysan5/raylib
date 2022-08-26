@@ -1865,6 +1865,9 @@ static void *_m3dstbi__png_load(_m3dstbi__context *s, int *x, int *y, int *comp,
 #define stbi__png_load _m3dstbi__png_load
 #define stbi_zlib_decode_malloc_guesssize_headerflag _m3dstbi_zlib_decode_malloc_guesssize_headerflag
 #endif
+#if !defined(M3D_NOIMPORTER) && defined(STBI_INCLUDE_STB_IMAGE_H) && !defined(STB_IMAGE_IMPLEMENTATION)
+#error "stb_image.h included without STB_IMAGE_IMPLEMENTATION. Sorry, we need some stuff defined inside the ifguard for proper integration"
+#endif
 
 #if defined(M3D_EXPORTER) && !defined(INCLUDE_STB_IMAGE_WRITE_H)
 /* zlib_compressor from
@@ -2165,11 +2168,9 @@ M3D_INDEX _m3d_gettx(m3d_t *model, m3dread_t readfilecb, m3dfree_t freecb, char 
     unsigned int i, len = 0;
     unsigned char *buff = NULL;
     char *fn2;
-#ifdef STBI__PNG_TYPE
     unsigned int w, h;
     stbi__context s;
     stbi__result_info ri;
-#endif
 
     /* do we have loaded this texture already? */
     for(i = 0; i < model->numtexture; i++)
@@ -2212,7 +2213,6 @@ M3D_INDEX _m3d_gettx(m3d_t *model, m3dread_t readfilecb, m3dfree_t freecb, char 
     model->texture[i].w = model->texture[i].h = 0; model->texture[i].d = NULL;
     if(buff) {
         if(buff[0] == 0x89 && buff[1] == 'P' && buff[2] == 'N' && buff[3] == 'G') {
-#ifdef STBI__PNG_TYPE
             s.read_from_callbacks = 0;
             s.img_buffer = s.img_buffer_original = (unsigned char *) buff;
             s.img_buffer_end = s.img_buffer_original_end = (unsigned char *) buff+len;
@@ -2223,7 +2223,6 @@ M3D_INDEX _m3d_gettx(m3d_t *model, m3dread_t readfilecb, m3dfree_t freecb, char 
             model->texture[i].w = w;
             model->texture[i].h = h;
             model->texture[i].f = (uint8_t)len;
-#endif
         } else {
 #ifdef M3D_TX_INTERP
             if((model->errcode = M3D_TX_INTERP(fn, buff, len, &model->texture[i])) != M3D_SUCCESS) {
@@ -3225,7 +3224,7 @@ asciiend:
 
     /* parse header */
     data += sizeof(m3dhdr_t);
-    M3D_LOG(data);
+    M3D_LOG((char*)data);
     model->name = (char*)data;
     for(; data < end && *data; data++) {}; data++;
     model->license = (char*)data;
@@ -3264,12 +3263,12 @@ asciiend:
     }
     if((sizeof(M3D_INDEX) == 2 && (model->vi_s > 2 || model->si_s > 2 || model->ci_s > 2 || model->ti_s > 2 ||
         model->bi_s > 2 || model->sk_s > 2 || model->fc_s > 2 || model->hi_s > 2 || model->fi_s > 2)) ||
-       (sizeof(M3D_VOXEL) == 2 && model->vp_s > 2)) {
+       (sizeof(M3D_VOXEL) < (size_t)model->vp_s && model->vp_s != 8)) {
         M3D_LOG("32 bit indices not supported, unable to load model");
         M3D_FREE(model);
         return NULL;
     }
-    if(model->vi_s > 4 || model->si_s > 4) {
+    if(model->vi_s > 4 || model->si_s > 4 || model->vp_s == 4) {
         M3D_LOG("Invalid index size, unable to load model");
         M3D_FREE(model);
         return NULL;
@@ -3346,12 +3345,12 @@ memerr:         M3D_LOG("Out of memory");
             for(i = 0, data += sizeof(m3dchunk_t); data < chunk; i++) {
                 switch(model->vc_s) {
                     case 1:
-                        model->tmap[i].u = (M3D_FLOAT)(data[0]) / (M3D_FLOAT)255.0;
-                        model->tmap[i].v = (M3D_FLOAT)(data[1]) / (M3D_FLOAT)255.0;
+                        model->tmap[i].u = (M3D_FLOAT)((uint8_t)data[0]) / (M3D_FLOAT)255.0;
+                        model->tmap[i].v = (M3D_FLOAT)((uint8_t)data[1]) / (M3D_FLOAT)255.0;
                     break;
                     case 2:
-                        model->tmap[i].u = (M3D_FLOAT)(*((int16_t*)(data+0))) / (M3D_FLOAT)65535.0;
-                        model->tmap[i].v = (M3D_FLOAT)(*((int16_t*)(data+2))) / (M3D_FLOAT)65535.0;
+                        model->tmap[i].u = (M3D_FLOAT)(*((uint16_t*)(data+0))) / (M3D_FLOAT)65535.0;
+                        model->tmap[i].v = (M3D_FLOAT)(*((uint16_t*)(data+2))) / (M3D_FLOAT)65535.0;
                     break;
                     case 4:
                         model->tmap[i].u = (M3D_FLOAT)(*((float*)(data+0)));
@@ -5219,7 +5218,7 @@ memerr: if(vrtxidx) M3D_FREE(vrtxidx);
         if(model->preview.data && model->preview.length) {
             sl = _m3d_safestr(sn, 0);
             if(sl) {
-                ptr -= (uintptr_t)out; len = (unsigned int)((uintptr_t)ptr + (uintptr_t)20);
+                ptr -= (uintptr_t)out; len = (unsigned int)((uintptr_t)ptr + (uintptr_t)20 + strlen(sl));
                 out = (unsigned char*)M3D_REALLOC(out, len); ptr += (uintptr_t)out;
                 if(!out) { setlocale(LC_NUMERIC, ol); goto memerr; }
                 ptr += sprintf(ptr, "Preview\r\n%s.png\r\n\r\n", sl);

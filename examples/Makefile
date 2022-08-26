@@ -466,6 +466,7 @@ MODELS = \
     models/models_loading \
     models/models_loading_vox \
     models/models_loading_gltf \
+    models/models_loading_m3d \
     models/models_orthographic_projection \
     models/models_rlgl_solar_system \
     models/models_skybox \
