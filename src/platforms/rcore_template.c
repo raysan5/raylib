@@ -377,6 +377,13 @@ void GetPreeditCursorRectangle(int *x, int *y, int *w, int *h)
     TRACELOG(LOG_WARNING, "GetPreeditCursorRectangle() not implemented on target platform");
 }
 
+// Check if IME is ON
+bool IsImeOn(void)
+{
+    TRACELOG(LOG_WARNING, "IsImeOn() not implemented on target platform");
+    return false;
+}
+
 // Set internal gamepad mappings
 int SetGamepadMappings(const char *mappings)
 {

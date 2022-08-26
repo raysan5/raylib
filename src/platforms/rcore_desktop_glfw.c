@@ -1055,6 +1055,13 @@ void GetPreeditCursorRectangle(int *x, int *y, int *w, int *h)
     glfwGetPreeditCursorRectangle(platform.handle, x, y, w, h);
 }
 
+// Check if IME is ON
+bool IsImeOn(void)
+{
+    if (glfwGetInputMode(platform.handle, GLFW_IME) == GLFW_TRUE) return true;
+    return false;
+}
+
 // Set internal gamepad mappings
 int SetGamepadMappings(const char *mappings)
 {

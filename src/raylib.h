@@ -1173,6 +1173,7 @@ RLAPI void SetExitKey(int key);                               // Set a custom ke
 RLAPI void SetPreeditCallback(PreeditCallback callback);      // Set a callback for preedit
 RLAPI void SetPreeditCursorRectangle(int x, int y, int w, int h); // Set the preedit cursor area that is used to decide the position of the candidate window
 RLAPI void GetPreeditCursorRectangle(int *x, int *y, int *w, int *h); // Get the preedit cursor area
+RLAPI bool IsImeOn(void);                                     // Check if IME is ON
 
 // Input-related functions: gamepads
 RLAPI bool IsGamepadAvailable(int gamepad);                                        // Check if a gamepad is available
