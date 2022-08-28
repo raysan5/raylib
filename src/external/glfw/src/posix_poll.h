@@ -26,7 +26,6 @@
 // It is fine to use C99 in this file because it will not be built with VS
 //========================================================================
 
-#define _GNU_SOURCE     // @raysan5: Required for ppoll()
 #include <poll.h>
 
 GLFWbool _glfwPollPOSIX(struct pollfd* fds, nfds_t count, double* timeout);
