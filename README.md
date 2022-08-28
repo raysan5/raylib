@@ -12,10 +12,9 @@ Ready to learn? Jump to [code examples!](https://www.raylib.com/examples.html)
 
 <br>
 
-[![GitHub Contributors](https://img.shields.io/github/contributors/raysan5/raylib)](https://github.com/raysan5/raylib/graphs/contributors)
 [![GitHub Releases Downloads](https://img.shields.io/github/downloads/raysan5/raylib/total)](https://github.com/raysan5/raylib/releases)
 [![GitHub Stars](https://img.shields.io/github/stars/raysan5/raylib?style=flat&label=stars)](https://github.com/raysan5/raylib/stargazers)
-[![GitHub commits since tagged version](https://img.shields.io/github/commits-since/raysan5/raylib/4.0.0)](https://github.com/raysan5/raylib/commits/master)
+[![GitHub commits since tagged version](https://img.shields.io/github/commits-since/raysan5/raylib/4.2.0)](https://github.com/raysan5/raylib/commits/master)
 [![Packaging Status](https://repology.org/badge/tiny-repos/raylib.svg)](https://repology.org/project/raylib/versions)
 [![License](https://img.shields.io/badge/license-zlib%2Flibpng-blue.svg)](LICENSE)
 
