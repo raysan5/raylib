@@ -29,6 +29,7 @@
 #define _GNU_SOURCE
 
 #include "internal.h"
+#include "posix_poll.h"
 
 #include <signal.h>
 #include <time.h>
