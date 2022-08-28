@@ -1,7 +1,7 @@
 //========================================================================
-// GLFW 3.4 - www.glfw.org
+// GLFW 3.4 POSIX - www.glfw.org
 //------------------------------------------------------------------------
-// Copyright (c) 2016-2017 Camilla Löwy <elmindreda@glfw.org>
+// Copyright (c) 2021 Camilla Löwy <elmindreda@glfw.org>
 //
 // This software is provided 'as-is', without any express or implied
 // warranty. In no event will the authors be held liable for any damages
@@ -28,31 +28,24 @@
 
 #include "internal.h"
 
+#include <dlfcn.h>
 
 //////////////////////////////////////////////////////////////////////////
 //////                       GLFW platform API                      //////
 //////////////////////////////////////////////////////////////////////////
 
-GLFWbool _glfwInitJoysticksNull(void)
+void* _glfwPlatformLoadModule(const char* path)
 {
-    return GLFW_TRUE;
+    return dlopen(path, RTLD_LAZY | RTLD_LOCAL);
 }
 
-void _glfwTerminateJoysticksNull(void)
+void _glfwPlatformFreeModule(void* module)
 {
+    dlclose(module);
 }
 
-GLFWbool _glfwPollJoystickNull(_GLFWjoystick* js, int mode)
+GLFWproc _glfwPlatformGetModuleSymbol(void* module, const char* name)
 {
-    return GLFW_FALSE;
-}
-
-const char* _glfwGetMappingNameNull(void)
-{
-    return "";
-}
-
-void _glfwUpdateGamepadGUIDNull(char* guid)
-{
+    return dlsym(module, name);
 }
 

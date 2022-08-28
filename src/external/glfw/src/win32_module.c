@@ -1,7 +1,7 @@
 //========================================================================
-// GLFW 3.4 - www.glfw.org
+// GLFW 3.4 Win32 - www.glfw.org
 //------------------------------------------------------------------------
-// Copyright (c) 2016-2017 Camilla Löwy <elmindreda@glfw.org>
+// Copyright (c) 2021 Camilla Löwy <elmindreda@glfw.org>
 //
 // This software is provided 'as-is', without any express or implied
 // warranty. In no event will the authors be held liable for any damages
@@ -23,36 +23,27 @@
 //    distribution.
 //
 //========================================================================
-// It is fine to use C99 in this file because it will not be built with VS
+// Please use C89 style variable declarations in this file because VS 2010
 //========================================================================
 
 #include "internal.h"
-
 
 //////////////////////////////////////////////////////////////////////////
 //////                       GLFW platform API                      //////
 //////////////////////////////////////////////////////////////////////////
 
-GLFWbool _glfwInitJoysticksNull(void)
+void* _glfwPlatformLoadModule(const char* path)
 {
-    return GLFW_TRUE;
+    return LoadLibraryA(path);
 }
 
-void _glfwTerminateJoysticksNull(void)
+void _glfwPlatformFreeModule(void* module)
 {
+    FreeLibrary((HMODULE) module);
 }
 
-GLFWbool _glfwPollJoystickNull(_GLFWjoystick* js, int mode)
+GLFWproc _glfwPlatformGetModuleSymbol(void* module, const char* name)
 {
-    return GLFW_FALSE;
-}
-
-const char* _glfwGetMappingNameNull(void)
-{
-    return "";
-}
-
-void _glfwUpdateGamepadGUIDNull(char* guid)
-{
+    return (GLFWproc) GetProcAddress((HMODULE) module, name);
 }
 

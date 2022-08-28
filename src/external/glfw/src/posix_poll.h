@@ -1,7 +1,7 @@
 //========================================================================
-// GLFW 3.4 - www.glfw.org
+// GLFW 3.4 POSIX - www.glfw.org
 //------------------------------------------------------------------------
-// Copyright (c) 2016-2017 Camilla Löwy <elmindreda@glfw.org>
+// Copyright (c) 2022 Camilla Löwy <elmindreda@glfw.org>
 //
 // This software is provided 'as-is', without any express or implied
 // warranty. In no event will the authors be held liable for any damages
@@ -26,33 +26,7 @@
 // It is fine to use C99 in this file because it will not be built with VS
 //========================================================================
 
-#include "internal.h"
+#include <poll.h>
 
-
-//////////////////////////////////////////////////////////////////////////
-//////                       GLFW platform API                      //////
-//////////////////////////////////////////////////////////////////////////
-
-GLFWbool _glfwInitJoysticksNull(void)
-{
-    return GLFW_TRUE;
-}
-
-void _glfwTerminateJoysticksNull(void)
-{
-}
-
-GLFWbool _glfwPollJoystickNull(_GLFWjoystick* js, int mode)
-{
-    return GLFW_FALSE;
-}
-
-const char* _glfwGetMappingNameNull(void)
-{
-    return "";
-}
-
-void _glfwUpdateGamepadGUIDNull(char* guid)
-{
-}
+GLFWbool _glfwPollPOSIX(struct pollfd* fds, nfds_t count, double* timeout);
 

@@ -59,6 +59,7 @@
 #define _GLFW_MESSAGE_SIZE      1024
 
 typedef int GLFWbool;
+typedef void (*GLFWproc)(void);
 
 typedef struct _GLFWerror       _GLFWerror;
 typedef struct _GLFWinitconfig  _GLFWinitconfig;
@@ -67,6 +68,7 @@ typedef struct _GLFWctxconfig   _GLFWctxconfig;
 typedef struct _GLFWfbconfig    _GLFWfbconfig;
 typedef struct _GLFWcontext     _GLFWcontext;
 typedef struct _GLFWwindow      _GLFWwindow;
+typedef struct _GLFWplatform    _GLFWplatform;
 typedef struct _GLFWlibrary     _GLFWlibrary;
 typedef struct _GLFWmonitor     _GLFWmonitor;
 typedef struct _GLFWcursor      _GLFWcursor;
@@ -75,13 +77,6 @@ typedef struct _GLFWmapping     _GLFWmapping;
 typedef struct _GLFWjoystick    _GLFWjoystick;
 typedef struct _GLFWtls         _GLFWtls;
 typedef struct _GLFWmutex       _GLFWmutex;
-
-typedef void (* _GLFWmakecontextcurrentfun)(_GLFWwindow*);
-typedef void (* _GLFWswapbuffersfun)(_GLFWwindow*);
-typedef void (* _GLFWswapintervalfun)(int);
-typedef int (* _GLFWextensionsupportedfun)(const char*);
-typedef GLFWglproc (* _GLFWgetprocaddressfun)(const char*);
-typedef void (* _GLFWdestroycontextfun)(_GLFWwindow*);
 
 #define GL_VERSION 0x1f02
 #define GL_NONE 0
@@ -112,6 +107,165 @@ typedef void (APIENTRY * PFNGLCLEARPROC)(GLbitfield);
 typedef const GLubyte* (APIENTRY * PFNGLGETSTRINGPROC)(GLenum);
 typedef void (APIENTRY * PFNGLGETINTEGERVPROC)(GLenum,GLint*);
 typedef const GLubyte* (APIENTRY * PFNGLGETSTRINGIPROC)(GLenum,GLuint);
+
+#if defined(_GLFW_WIN32)
+ #define EGLAPIENTRY __stdcall
+#else
+ #define EGLAPIENTRY
+#endif
+
+#define EGL_SUCCESS 0x3000
+#define EGL_NOT_INITIALIZED 0x3001
+#define EGL_BAD_ACCESS 0x3002
+#define EGL_BAD_ALLOC 0x3003
+#define EGL_BAD_ATTRIBUTE 0x3004
+#define EGL_BAD_CONFIG 0x3005
+#define EGL_BAD_CONTEXT 0x3006
+#define EGL_BAD_CURRENT_SURFACE 0x3007
+#define EGL_BAD_DISPLAY 0x3008
+#define EGL_BAD_MATCH 0x3009
+#define EGL_BAD_NATIVE_PIXMAP 0x300a
+#define EGL_BAD_NATIVE_WINDOW 0x300b
+#define EGL_BAD_PARAMETER 0x300c
+#define EGL_BAD_SURFACE 0x300d
+#define EGL_CONTEXT_LOST 0x300e
+#define EGL_COLOR_BUFFER_TYPE 0x303f
+#define EGL_RGB_BUFFER 0x308e
+#define EGL_SURFACE_TYPE 0x3033
+#define EGL_WINDOW_BIT 0x0004
+#define EGL_RENDERABLE_TYPE 0x3040
+#define EGL_OPENGL_ES_BIT 0x0001
+#define EGL_OPENGL_ES2_BIT 0x0004
+#define EGL_OPENGL_BIT 0x0008
+#define EGL_ALPHA_SIZE 0x3021
+#define EGL_BLUE_SIZE 0x3022
+#define EGL_GREEN_SIZE 0x3023
+#define EGL_RED_SIZE 0x3024
+#define EGL_DEPTH_SIZE 0x3025
+#define EGL_STENCIL_SIZE 0x3026
+#define EGL_SAMPLES 0x3031
+#define EGL_OPENGL_ES_API 0x30a0
+#define EGL_OPENGL_API 0x30a2
+#define EGL_NONE 0x3038
+#define EGL_RENDER_BUFFER 0x3086
+#define EGL_SINGLE_BUFFER 0x3085
+#define EGL_EXTENSIONS 0x3055
+#define EGL_CONTEXT_CLIENT_VERSION 0x3098
+#define EGL_NATIVE_VISUAL_ID 0x302e
+#define EGL_NO_SURFACE ((EGLSurface) 0)
+#define EGL_NO_DISPLAY ((EGLDisplay) 0)
+#define EGL_NO_CONTEXT ((EGLContext) 0)
+#define EGL_DEFAULT_DISPLAY ((EGLNativeDisplayType) 0)
+
+#define EGL_CONTEXT_OPENGL_FORWARD_COMPATIBLE_BIT_KHR 0x00000002
+#define EGL_CONTEXT_OPENGL_CORE_PROFILE_BIT_KHR 0x00000001
+#define EGL_CONTEXT_OPENGL_COMPATIBILITY_PROFILE_BIT_KHR 0x00000002
+#define EGL_CONTEXT_OPENGL_DEBUG_BIT_KHR 0x00000001
+#define EGL_CONTEXT_OPENGL_RESET_NOTIFICATION_STRATEGY_KHR 0x31bd
+#define EGL_NO_RESET_NOTIFICATION_KHR 0x31be
+#define EGL_LOSE_CONTEXT_ON_RESET_KHR 0x31bf
+#define EGL_CONTEXT_OPENGL_ROBUST_ACCESS_BIT_KHR 0x00000004
+#define EGL_CONTEXT_MAJOR_VERSION_KHR 0x3098
+#define EGL_CONTEXT_MINOR_VERSION_KHR 0x30fb
+#define EGL_CONTEXT_OPENGL_PROFILE_MASK_KHR 0x30fd
+#define EGL_CONTEXT_FLAGS_KHR 0x30fc
+#define EGL_CONTEXT_OPENGL_NO_ERROR_KHR 0x31b3
+#define EGL_GL_COLORSPACE_KHR 0x309d
+#define EGL_GL_COLORSPACE_SRGB_KHR 0x3089
+#define EGL_CONTEXT_RELEASE_BEHAVIOR_KHR 0x2097
+#define EGL_CONTEXT_RELEASE_BEHAVIOR_NONE_KHR 0
+#define EGL_CONTEXT_RELEASE_BEHAVIOR_FLUSH_KHR 0x2098
+#define EGL_PLATFORM_X11_EXT 0x31d5
+#define EGL_PLATFORM_WAYLAND_EXT 0x31d8
+#define EGL_PRESENT_OPAQUE_EXT 0x31df
+#define EGL_PLATFORM_ANGLE_ANGLE 0x3202
+#define EGL_PLATFORM_ANGLE_TYPE_ANGLE 0x3203
+#define EGL_PLATFORM_ANGLE_TYPE_OPENGL_ANGLE 0x320d
+#define EGL_PLATFORM_ANGLE_TYPE_OPENGLES_ANGLE 0x320e
+#define EGL_PLATFORM_ANGLE_TYPE_D3D9_ANGLE 0x3207
+#define EGL_PLATFORM_ANGLE_TYPE_D3D11_ANGLE 0x3208
+#define EGL_PLATFORM_ANGLE_TYPE_VULKAN_ANGLE 0x3450
+#define EGL_PLATFORM_ANGLE_TYPE_METAL_ANGLE 0x3489
+#define EGL_PLATFORM_ANGLE_NATIVE_PLATFORM_TYPE_ANGLE 0x348f
+
+typedef int EGLint;
+typedef unsigned int EGLBoolean;
+typedef unsigned int EGLenum;
+typedef void* EGLConfig;
+typedef void* EGLContext;
+typedef void* EGLDisplay;
+typedef void* EGLSurface;
+
+typedef void* EGLNativeDisplayType;
+typedef void* EGLNativeWindowType;
+
+// EGL function pointer typedefs
+typedef EGLBoolean (EGLAPIENTRY * PFN_eglGetConfigAttrib)(EGLDisplay,EGLConfig,EGLint,EGLint*);
+typedef EGLBoolean (EGLAPIENTRY * PFN_eglGetConfigs)(EGLDisplay,EGLConfig*,EGLint,EGLint*);
+typedef EGLDisplay (EGLAPIENTRY * PFN_eglGetDisplay)(EGLNativeDisplayType);
+typedef EGLint (EGLAPIENTRY * PFN_eglGetError)(void);
+typedef EGLBoolean (EGLAPIENTRY * PFN_eglInitialize)(EGLDisplay,EGLint*,EGLint*);
+typedef EGLBoolean (EGLAPIENTRY * PFN_eglTerminate)(EGLDisplay);
+typedef EGLBoolean (EGLAPIENTRY * PFN_eglBindAPI)(EGLenum);
+typedef EGLContext (EGLAPIENTRY * PFN_eglCreateContext)(EGLDisplay,EGLConfig,EGLContext,const EGLint*);
+typedef EGLBoolean (EGLAPIENTRY * PFN_eglDestroySurface)(EGLDisplay,EGLSurface);
+typedef EGLBoolean (EGLAPIENTRY * PFN_eglDestroyContext)(EGLDisplay,EGLContext);
+typedef EGLSurface (EGLAPIENTRY * PFN_eglCreateWindowSurface)(EGLDisplay,EGLConfig,EGLNativeWindowType,const EGLint*);
+typedef EGLBoolean (EGLAPIENTRY * PFN_eglMakeCurrent)(EGLDisplay,EGLSurface,EGLSurface,EGLContext);
+typedef EGLBoolean (EGLAPIENTRY * PFN_eglSwapBuffers)(EGLDisplay,EGLSurface);
+typedef EGLBoolean (EGLAPIENTRY * PFN_eglSwapInterval)(EGLDisplay,EGLint);
+typedef const char* (EGLAPIENTRY * PFN_eglQueryString)(EGLDisplay,EGLint);
+typedef GLFWglproc (EGLAPIENTRY * PFN_eglGetProcAddress)(const char*);
+#define eglGetConfigAttrib _glfw.egl.GetConfigAttrib
+#define eglGetConfigs _glfw.egl.GetConfigs
+#define eglGetDisplay _glfw.egl.GetDisplay
+#define eglGetError _glfw.egl.GetError
+#define eglInitialize _glfw.egl.Initialize
+#define eglTerminate _glfw.egl.Terminate
+#define eglBindAPI _glfw.egl.BindAPI
+#define eglCreateContext _glfw.egl.CreateContext
+#define eglDestroySurface _glfw.egl.DestroySurface
+#define eglDestroyContext _glfw.egl.DestroyContext
+#define eglCreateWindowSurface _glfw.egl.CreateWindowSurface
+#define eglMakeCurrent _glfw.egl.MakeCurrent
+#define eglSwapBuffers _glfw.egl.SwapBuffers
+#define eglSwapInterval _glfw.egl.SwapInterval
+#define eglQueryString _glfw.egl.QueryString
+#define eglGetProcAddress _glfw.egl.GetProcAddress
+
+typedef EGLDisplay (EGLAPIENTRY * PFNEGLGETPLATFORMDISPLAYEXTPROC)(EGLenum,void*,const EGLint*);
+typedef EGLSurface (EGLAPIENTRY * PFNEGLCREATEPLATFORMWINDOWSURFACEEXTPROC)(EGLDisplay,EGLConfig,void*,const EGLint*);
+#define eglGetPlatformDisplayEXT _glfw.egl.GetPlatformDisplayEXT
+#define eglCreatePlatformWindowSurfaceEXT _glfw.egl.CreatePlatformWindowSurfaceEXT
+
+#define OSMESA_RGBA 0x1908
+#define OSMESA_FORMAT 0x22
+#define OSMESA_DEPTH_BITS 0x30
+#define OSMESA_STENCIL_BITS 0x31
+#define OSMESA_ACCUM_BITS 0x32
+#define OSMESA_PROFILE 0x33
+#define OSMESA_CORE_PROFILE 0x34
+#define OSMESA_COMPAT_PROFILE 0x35
+#define OSMESA_CONTEXT_MAJOR_VERSION 0x36
+#define OSMESA_CONTEXT_MINOR_VERSION 0x37
+
+typedef void* OSMesaContext;
+typedef void (*OSMESAproc)(void);
+
+typedef OSMesaContext (GLAPIENTRY * PFN_OSMesaCreateContextExt)(GLenum,GLint,GLint,GLint,OSMesaContext);
+typedef OSMesaContext (GLAPIENTRY * PFN_OSMesaCreateContextAttribs)(const int*,OSMesaContext);
+typedef void (GLAPIENTRY * PFN_OSMesaDestroyContext)(OSMesaContext);
+typedef int (GLAPIENTRY * PFN_OSMesaMakeCurrent)(OSMesaContext,void*,int,int,int);
+typedef int (GLAPIENTRY * PFN_OSMesaGetColorBuffer)(OSMesaContext,int*,int*,int*,void**);
+typedef int (GLAPIENTRY * PFN_OSMesaGetDepthBuffer)(OSMesaContext,int*,int*,int*,void**);
+typedef GLFWglproc (GLAPIENTRY * PFN_OSMesaGetProcAddress)(const char*);
+#define OSMesaCreateContextExt _glfw.osmesa.CreateContextExt
+#define OSMesaCreateContextAttribs _glfw.osmesa.CreateContextAttribs
+#define OSMesaDestroyContext _glfw.osmesa.DestroyContext
+#define OSMesaMakeCurrent _glfw.osmesa.MakeCurrent
+#define OSMesaGetColorBuffer _glfw.osmesa.GetColorBuffer
+#define OSMesaGetDepthBuffer _glfw.osmesa.GetDepthBuffer
+#define OSMesaGetProcAddress _glfw.osmesa.GetProcAddress
 
 #define VK_NULL_HANDLE 0
 
@@ -170,32 +324,11 @@ typedef struct VkExtensionProperties
 
 typedef void (APIENTRY * PFN_vkVoidFunction)(void);
 
-#if defined(_GLFW_VULKAN_STATIC)
-  PFN_vkVoidFunction vkGetInstanceProcAddr(VkInstance,const char*);
-  VkResult vkEnumerateInstanceExtensionProperties(const char*,uint32_t*,VkExtensionProperties*);
-#else
-  typedef PFN_vkVoidFunction (APIENTRY * PFN_vkGetInstanceProcAddr)(VkInstance,const char*);
-  typedef VkResult (APIENTRY * PFN_vkEnumerateInstanceExtensionProperties)(const char*,uint32_t*,VkExtensionProperties*);
-  #define vkEnumerateInstanceExtensionProperties _glfw.vk.EnumerateInstanceExtensionProperties
-  #define vkGetInstanceProcAddr _glfw.vk.GetInstanceProcAddr
-#endif
+typedef PFN_vkVoidFunction (APIENTRY * PFN_vkGetInstanceProcAddr)(VkInstance,const char*);
+typedef VkResult (APIENTRY * PFN_vkEnumerateInstanceExtensionProperties)(const char*,uint32_t*,VkExtensionProperties*);
+#define vkGetInstanceProcAddr _glfw.vk.GetInstanceProcAddr
 
-#if defined(_GLFW_COCOA)
- #include "cocoa_platform.h"
-#elif defined(_GLFW_WIN32)
- #include "win32_platform.h"
-#elif defined(_GLFW_X11)
- #include "x11_platform.h"
-#elif defined(_GLFW_WAYLAND)
- #include "wl_platform.h"
-#elif defined(_GLFW_OSMESA)
- #include "null_platform.h"
-#else
- #error "No supported window creation API selected"
-#endif
-
-#include "egl_context.h"
-#include "osmesa_context.h"
+#include "platform.h"
 
 // Constructs a version number string from the public header macros
 #define _GLFW_CONCAT_VERSION(m, n, r) #m "." #n "." #r
@@ -219,12 +352,12 @@ typedef void (APIENTRY * PFN_vkVoidFunction)(void);
     }
 
 // Swaps the provided pointers
-#define _GLFW_SWAP_POINTERS(x, y) \
-    {                             \
-        void* t;                  \
-        t = x;                    \
-        x = y;                    \
-        y = t;                    \
+#define _GLFW_SWAP(type, x, y) \
+    {                          \
+        type t;                \
+        t = x;                 \
+        x = y;                 \
+        y = t;                 \
     }
 
 // Per-thread error structure
@@ -244,6 +377,8 @@ struct _GLFWinitconfig
 {
     GLFWbool      hatButtons;
     int           angleType;
+    int           platformID;
+    PFN_vkGetInstanceProcAddr vulkanLoader;
     struct {
         GLFWbool  menubar;
         GLFWbool  chdir;
@@ -261,6 +396,8 @@ struct _GLFWinitconfig
 //
 struct _GLFWwndconfig
 {
+    int           xpos;
+    int           ypos;
     int           width;
     int           height;
     const char*   title;
@@ -286,6 +423,9 @@ struct _GLFWwndconfig
     struct {
         GLFWbool  keymenu;
     } win32;
+    struct {
+        char      appId[256];
+    } wl;
 };
 
 // Context configuration
@@ -357,19 +497,29 @@ struct _GLFWcontext
     PFNGLGETINTEGERVPROC GetIntegerv;
     PFNGLGETSTRINGPROC   GetString;
 
-    _GLFWmakecontextcurrentfun  makeCurrent;
-    _GLFWswapbuffersfun         swapBuffers;
-    _GLFWswapintervalfun        swapInterval;
-    _GLFWextensionsupportedfun  extensionSupported;
-    _GLFWgetprocaddressfun      getProcAddress;
-    _GLFWdestroycontextfun      destroy;
+    void (*makeCurrent)(_GLFWwindow*);
+    void (*swapBuffers)(_GLFWwindow*);
+    void (*swapInterval)(int);
+    int (*extensionSupported)(const char*);
+    GLFWglproc (*getProcAddress)(const char*);
+    void (*destroy)(_GLFWwindow*);
 
-    // This is defined in the context API's context.h
-    _GLFW_PLATFORM_CONTEXT_STATE;
-    // This is defined in egl_context.h
-    _GLFWcontextEGL egl;
-    // This is defined in osmesa_context.h
-    _GLFWcontextOSMesa osmesa;
+    struct {
+        EGLConfig       config;
+        EGLContext      handle;
+        EGLSurface      surface;
+        void*           client;
+    } egl;
+
+    struct {
+        OSMesaContext   handle;
+        int             width;
+        int             height;
+        void*           buffer;
+    } osmesa;
+
+    // This is defined in platform.h
+    GLFW_PLATFORM_CONTEXT_STATE
 };
 
 // Window and context structure
@@ -428,8 +578,8 @@ struct _GLFWwindow
         GLFWdropfun               drop;
     } callbacks;
 
-    // This is defined in the window API's platform.h
-    _GLFW_PLATFORM_WINDOW_STATE;
+    // This is defined in platform.h
+    GLFW_PLATFORM_WINDOW_STATE
 };
 
 // Monitor structure
@@ -452,8 +602,8 @@ struct _GLFWmonitor
     GLFWgammaramp   originalRamp;
     GLFWgammaramp   currentRamp;
 
-    // This is defined in the window API's platform.h
-    _GLFW_PLATFORM_MONITOR_STATE;
+    // This is defined in platform.h
+    GLFW_PLATFORM_MONITOR_STATE
 };
 
 // Cursor structure
@@ -461,9 +611,8 @@ struct _GLFWmonitor
 struct _GLFWcursor
 {
     _GLFWcursor*    next;
-
-    // This is defined in the window API's platform.h
-    _GLFW_PLATFORM_CURSOR_STATE;
+    // This is defined in platform.h
+    GLFW_PLATFORM_CURSOR_STATE
 };
 
 // Gamepad mapping element structure
@@ -490,7 +639,8 @@ struct _GLFWmapping
 //
 struct _GLFWjoystick
 {
-    GLFWbool        present;
+    GLFWbool        allocated;
+    GLFWbool        connected;
     float*          axes;
     int             axisCount;
     unsigned char*  buttons;
@@ -502,24 +652,108 @@ struct _GLFWjoystick
     char            guid[33];
     _GLFWmapping*   mapping;
 
-    // This is defined in the joystick API's joystick.h
-    _GLFW_PLATFORM_JOYSTICK_STATE;
+    // This is defined in platform.h
+    GLFW_PLATFORM_JOYSTICK_STATE
 };
 
 // Thread local storage structure
 //
 struct _GLFWtls
 {
-    // This is defined in the platform's thread.h
-    _GLFW_PLATFORM_TLS_STATE;
+    // This is defined in platform.h
+    GLFW_PLATFORM_TLS_STATE
 };
 
 // Mutex structure
 //
 struct _GLFWmutex
 {
-    // This is defined in the platform's thread.h
-    _GLFW_PLATFORM_MUTEX_STATE;
+    // This is defined in platform.h
+    GLFW_PLATFORM_MUTEX_STATE
+};
+
+// Platform API structure
+//
+struct _GLFWplatform
+{
+    int platformID;
+    // init
+    GLFWbool (*init)(void);
+    void (*terminate)(void);
+    // input
+    void (*getCursorPos)(_GLFWwindow*,double*,double*);
+    void (*setCursorPos)(_GLFWwindow*,double,double);
+    void (*setCursorMode)(_GLFWwindow*,int);
+    void (*setRawMouseMotion)(_GLFWwindow*,GLFWbool);
+    GLFWbool (*rawMouseMotionSupported)(void);
+    GLFWbool (*createCursor)(_GLFWcursor*,const GLFWimage*,int,int);
+    GLFWbool (*createStandardCursor)(_GLFWcursor*,int);
+    void (*destroyCursor)(_GLFWcursor*);
+    void (*setCursor)(_GLFWwindow*,_GLFWcursor*);
+    const char* (*getScancodeName)(int);
+    int (*getKeyScancode)(int);
+    void (*setClipboardString)(const char*);
+    const char* (*getClipboardString)(void);
+    GLFWbool (*initJoysticks)(void);
+    void (*terminateJoysticks)(void);
+    GLFWbool (*pollJoystick)(_GLFWjoystick*,int);
+    const char* (*getMappingName)(void);
+    void (*updateGamepadGUID)(char*);
+    // monitor
+    void (*freeMonitor)(_GLFWmonitor*);
+    void (*getMonitorPos)(_GLFWmonitor*,int*,int*);
+    void (*getMonitorContentScale)(_GLFWmonitor*,float*,float*);
+    void (*getMonitorWorkarea)(_GLFWmonitor*,int*,int*,int*,int*);
+    GLFWvidmode* (*getVideoModes)(_GLFWmonitor*,int*);
+    void (*getVideoMode)(_GLFWmonitor*,GLFWvidmode*);
+    GLFWbool (*getGammaRamp)(_GLFWmonitor*,GLFWgammaramp*);
+    void (*setGammaRamp)(_GLFWmonitor*,const GLFWgammaramp*);
+    // window
+    GLFWbool (*createWindow)(_GLFWwindow*,const _GLFWwndconfig*,const _GLFWctxconfig*,const _GLFWfbconfig*);
+    void (*destroyWindow)(_GLFWwindow*);
+    void (*setWindowTitle)(_GLFWwindow*,const char*);
+    void (*setWindowIcon)(_GLFWwindow*,int,const GLFWimage*);
+    void (*getWindowPos)(_GLFWwindow*,int*,int*);
+    void (*setWindowPos)(_GLFWwindow*,int,int);
+    void (*getWindowSize)(_GLFWwindow*,int*,int*);
+    void (*setWindowSize)(_GLFWwindow*,int,int);
+    void (*setWindowSizeLimits)(_GLFWwindow*,int,int,int,int);
+    void (*setWindowAspectRatio)(_GLFWwindow*,int,int);
+    void (*getFramebufferSize)(_GLFWwindow*,int*,int*);
+    void (*getWindowFrameSize)(_GLFWwindow*,int*,int*,int*,int*);
+    void (*getWindowContentScale)(_GLFWwindow*,float*,float*);
+    void (*iconifyWindow)(_GLFWwindow*);
+    void (*restoreWindow)(_GLFWwindow*);
+    void (*maximizeWindow)(_GLFWwindow*);
+    void (*showWindow)(_GLFWwindow*);
+    void (*hideWindow)(_GLFWwindow*);
+    void (*requestWindowAttention)(_GLFWwindow*);
+    void (*focusWindow)(_GLFWwindow*);
+    void (*setWindowMonitor)(_GLFWwindow*,_GLFWmonitor*,int,int,int,int,int);
+    GLFWbool (*windowFocused)(_GLFWwindow*);
+    GLFWbool (*windowIconified)(_GLFWwindow*);
+    GLFWbool (*windowVisible)(_GLFWwindow*);
+    GLFWbool (*windowMaximized)(_GLFWwindow*);
+    GLFWbool (*windowHovered)(_GLFWwindow*);
+    GLFWbool (*framebufferTransparent)(_GLFWwindow*);
+    float (*getWindowOpacity)(_GLFWwindow*);
+    void (*setWindowResizable)(_GLFWwindow*,GLFWbool);
+    void (*setWindowDecorated)(_GLFWwindow*,GLFWbool);
+    void (*setWindowFloating)(_GLFWwindow*,GLFWbool);
+    void (*setWindowOpacity)(_GLFWwindow*,float);
+    void (*setWindowMousePassthrough)(_GLFWwindow*,GLFWbool);
+    void (*pollEvents)(void);
+    void (*waitEvents)(void);
+    void (*waitEventsTimeout)(double);
+    void (*postEmptyEvent)(void);
+    // EGL
+    EGLenum (*getEGLPlatform)(EGLint**);
+    EGLNativeDisplayType (*getEGLNativeDisplay)(void);
+    EGLNativeWindowType (*getEGLNativeWindow)(_GLFWwindow*);
+    // vulkan
+    void (*getRequiredInstanceExtensions)(char**);
+    GLFWbool (*getPhysicalDevicePresentationSupport)(VkInstance,VkPhysicalDevice,uint32_t);
+    VkResult (*createWindowSurface)(VkInstance,_GLFWwindow*,const VkAllocationCallbacks*,VkSurfaceKHR*);
 };
 
 // Library global data
@@ -527,6 +761,9 @@ struct _GLFWmutex
 struct _GLFWlibrary
 {
     GLFWbool            initialized;
+    GLFWallocator       allocator;
+
+    _GLFWplatform       platform;
 
     struct {
         _GLFWinitconfig init;
@@ -554,30 +791,80 @@ struct _GLFWlibrary
 
     struct {
         uint64_t        offset;
-        // This is defined in the platform's time.h
-        _GLFW_PLATFORM_LIBRARY_TIMER_STATE;
+        // This is defined in platform.h
+        GLFW_PLATFORM_LIBRARY_TIMER_STATE
     } timer;
+
+    struct {
+        EGLenum         platform;
+        EGLDisplay      display;
+        EGLint          major, minor;
+        GLFWbool        prefix;
+
+        GLFWbool        KHR_create_context;
+        GLFWbool        KHR_create_context_no_error;
+        GLFWbool        KHR_gl_colorspace;
+        GLFWbool        KHR_get_all_proc_addresses;
+        GLFWbool        KHR_context_flush_control;
+        GLFWbool        EXT_client_extensions;
+        GLFWbool        EXT_platform_base;
+        GLFWbool        EXT_platform_x11;
+        GLFWbool        EXT_platform_wayland;
+        GLFWbool        EXT_present_opaque;
+        GLFWbool        ANGLE_platform_angle;
+        GLFWbool        ANGLE_platform_angle_opengl;
+        GLFWbool        ANGLE_platform_angle_d3d;
+        GLFWbool        ANGLE_platform_angle_vulkan;
+        GLFWbool        ANGLE_platform_angle_metal;
+
+        void*           handle;
+
+        PFN_eglGetConfigAttrib      GetConfigAttrib;
+        PFN_eglGetConfigs           GetConfigs;
+        PFN_eglGetDisplay           GetDisplay;
+        PFN_eglGetError             GetError;
+        PFN_eglInitialize           Initialize;
+        PFN_eglTerminate            Terminate;
+        PFN_eglBindAPI              BindAPI;
+        PFN_eglCreateContext        CreateContext;
+        PFN_eglDestroySurface       DestroySurface;
+        PFN_eglDestroyContext       DestroyContext;
+        PFN_eglCreateWindowSurface  CreateWindowSurface;
+        PFN_eglMakeCurrent          MakeCurrent;
+        PFN_eglSwapBuffers          SwapBuffers;
+        PFN_eglSwapInterval         SwapInterval;
+        PFN_eglQueryString          QueryString;
+        PFN_eglGetProcAddress       GetProcAddress;
+
+        PFNEGLGETPLATFORMDISPLAYEXTPROC GetPlatformDisplayEXT;
+        PFNEGLCREATEPLATFORMWINDOWSURFACEEXTPROC CreatePlatformWindowSurfaceEXT;
+    } egl;
+
+    struct {
+        void*           handle;
+
+        PFN_OSMesaCreateContextExt      CreateContextExt;
+        PFN_OSMesaCreateContextAttribs  CreateContextAttribs;
+        PFN_OSMesaDestroyContext        DestroyContext;
+        PFN_OSMesaMakeCurrent           MakeCurrent;
+        PFN_OSMesaGetColorBuffer        GetColorBuffer;
+        PFN_OSMesaGetDepthBuffer        GetDepthBuffer;
+        PFN_OSMesaGetProcAddress        GetProcAddress;
+
+    } osmesa;
 
     struct {
         GLFWbool        available;
         void*           handle;
         char*           extensions[2];
-#if !defined(_GLFW_VULKAN_STATIC)
-        PFN_vkEnumerateInstanceExtensionProperties EnumerateInstanceExtensionProperties;
         PFN_vkGetInstanceProcAddr GetInstanceProcAddr;
-#endif
         GLFWbool        KHR_surface;
-#if defined(_GLFW_WIN32)
         GLFWbool        KHR_win32_surface;
-#elif defined(_GLFW_COCOA)
         GLFWbool        MVK_macos_surface;
         GLFWbool        EXT_metal_surface;
-#elif defined(_GLFW_X11)
         GLFWbool        KHR_xlib_surface;
         GLFWbool        KHR_xcb_surface;
-#elif defined(_GLFW_WAYLAND)
         GLFWbool        KHR_wayland_surface;
-#endif
     } vk;
 
     struct {
@@ -585,16 +872,10 @@ struct _GLFWlibrary
         GLFWjoystickfun joystick;
     } callbacks;
 
-    // This is defined in the window API's platform.h
-    _GLFW_PLATFORM_LIBRARY_WINDOW_STATE;
-    // This is defined in the context API's context.h
-    _GLFW_PLATFORM_LIBRARY_CONTEXT_STATE;
-    // This is defined in the platform's joystick.h
-    _GLFW_PLATFORM_LIBRARY_JOYSTICK_STATE;
-    // This is defined in egl_context.h
-    _GLFWlibraryEGL egl;
-    // This is defined in osmesa_context.h
-    _GLFWlibraryOSMesa osmesa;
+    // These are defined in platform.h
+    GLFW_PLATFORM_LIBRARY_WINDOW_STATE
+    GLFW_PLATFORM_LIBRARY_CONTEXT_STATE
+    GLFW_PLATFORM_LIBRARY_JOYSTICK_STATE
 };
 
 // Global state shared between compilation units of GLFW
@@ -606,107 +887,9 @@ extern _GLFWlibrary _glfw;
 //////                       GLFW platform API                      //////
 //////////////////////////////////////////////////////////////////////////
 
-int _glfwPlatformInit(void);
-void _glfwPlatformTerminate(void);
-const char* _glfwPlatformGetVersionString(void);
-
-void _glfwPlatformGetCursorPos(_GLFWwindow* window, double* xpos, double* ypos);
-void _glfwPlatformSetCursorPos(_GLFWwindow* window, double xpos, double ypos);
-void _glfwPlatformSetCursorMode(_GLFWwindow* window, int mode);
-void _glfwPlatformSetRawMouseMotion(_GLFWwindow *window, GLFWbool enabled);
-GLFWbool _glfwPlatformRawMouseMotionSupported(void);
-int _glfwPlatformCreateCursor(_GLFWcursor* cursor,
-                              const GLFWimage* image, int xhot, int yhot);
-int _glfwPlatformCreateStandardCursor(_GLFWcursor* cursor, int shape);
-void _glfwPlatformDestroyCursor(_GLFWcursor* cursor);
-void _glfwPlatformSetCursor(_GLFWwindow* window, _GLFWcursor* cursor);
-
-const char* _glfwPlatformGetScancodeName(int scancode);
-int _glfwPlatformGetKeyScancode(int key);
-
-void _glfwPlatformFreeMonitor(_GLFWmonitor* monitor);
-void _glfwPlatformGetMonitorPos(_GLFWmonitor* monitor, int* xpos, int* ypos);
-void _glfwPlatformGetMonitorContentScale(_GLFWmonitor* monitor,
-                                         float* xscale, float* yscale);
-void _glfwPlatformGetMonitorWorkarea(_GLFWmonitor* monitor, int* xpos, int* ypos, int *width, int *height);
-GLFWvidmode* _glfwPlatformGetVideoModes(_GLFWmonitor* monitor, int* count);
-void _glfwPlatformGetVideoMode(_GLFWmonitor* monitor, GLFWvidmode* mode);
-GLFWbool _glfwPlatformGetGammaRamp(_GLFWmonitor* monitor, GLFWgammaramp* ramp);
-void _glfwPlatformSetGammaRamp(_GLFWmonitor* monitor, const GLFWgammaramp* ramp);
-
-void _glfwPlatformSetClipboardString(const char* string);
-const char* _glfwPlatformGetClipboardString(void);
-
-GLFWbool _glfwPlatformInitJoysticks(void);
-void _glfwPlatformTerminateJoysticks(void);
-int _glfwPlatformPollJoystick(_GLFWjoystick* js, int mode);
-void _glfwPlatformUpdateGamepadGUID(char* guid);
-
+void _glfwPlatformInitTimer(void);
 uint64_t _glfwPlatformGetTimerValue(void);
 uint64_t _glfwPlatformGetTimerFrequency(void);
-
-int _glfwPlatformCreateWindow(_GLFWwindow* window,
-                              const _GLFWwndconfig* wndconfig,
-                              const _GLFWctxconfig* ctxconfig,
-                              const _GLFWfbconfig* fbconfig);
-void _glfwPlatformDestroyWindow(_GLFWwindow* window);
-void _glfwPlatformSetWindowTitle(_GLFWwindow* window, const char* title);
-void _glfwPlatformSetWindowIcon(_GLFWwindow* window,
-                                int count, const GLFWimage* images);
-void _glfwPlatformGetWindowPos(_GLFWwindow* window, int* xpos, int* ypos);
-void _glfwPlatformSetWindowPos(_GLFWwindow* window, int xpos, int ypos);
-void _glfwPlatformGetWindowSize(_GLFWwindow* window, int* width, int* height);
-void _glfwPlatformSetWindowSize(_GLFWwindow* window, int width, int height);
-void _glfwPlatformSetWindowSizeLimits(_GLFWwindow* window,
-                                      int minwidth, int minheight,
-                                      int maxwidth, int maxheight);
-void _glfwPlatformSetWindowAspectRatio(_GLFWwindow* window, int numer, int denom);
-void _glfwPlatformGetFramebufferSize(_GLFWwindow* window, int* width, int* height);
-void _glfwPlatformGetWindowFrameSize(_GLFWwindow* window,
-                                     int* left, int* top,
-                                     int* right, int* bottom);
-void _glfwPlatformGetWindowContentScale(_GLFWwindow* window,
-                                        float* xscale, float* yscale);
-void _glfwPlatformIconifyWindow(_GLFWwindow* window);
-void _glfwPlatformRestoreWindow(_GLFWwindow* window);
-void _glfwPlatformMaximizeWindow(_GLFWwindow* window);
-void _glfwPlatformShowWindow(_GLFWwindow* window);
-void _glfwPlatformHideWindow(_GLFWwindow* window);
-void _glfwPlatformRequestWindowAttention(_GLFWwindow* window);
-void _glfwPlatformFocusWindow(_GLFWwindow* window);
-void _glfwPlatformSetWindowMonitor(_GLFWwindow* window, _GLFWmonitor* monitor,
-                                   int xpos, int ypos, int width, int height,
-                                   int refreshRate);
-int _glfwPlatformWindowFocused(_GLFWwindow* window);
-int _glfwPlatformWindowIconified(_GLFWwindow* window);
-int _glfwPlatformWindowVisible(_GLFWwindow* window);
-int _glfwPlatformWindowMaximized(_GLFWwindow* window);
-int _glfwPlatformWindowHovered(_GLFWwindow* window);
-int _glfwPlatformFramebufferTransparent(_GLFWwindow* window);
-float _glfwPlatformGetWindowOpacity(_GLFWwindow* window);
-void _glfwPlatformSetWindowResizable(_GLFWwindow* window, GLFWbool enabled);
-void _glfwPlatformSetWindowDecorated(_GLFWwindow* window, GLFWbool enabled);
-void _glfwPlatformSetWindowFloating(_GLFWwindow* window, GLFWbool enabled);
-void _glfwPlatformSetWindowMousePassthrough(_GLFWwindow* window, GLFWbool enabled);
-void _glfwPlatformSetWindowOpacity(_GLFWwindow* window, float opacity);
-
-void _glfwPlatformPollEvents(void);
-void _glfwPlatformWaitEvents(void);
-void _glfwPlatformWaitEventsTimeout(double timeout);
-void _glfwPlatformPostEmptyEvent(void);
-
-EGLenum _glfwPlatformGetEGLPlatform(EGLint** attribs);
-EGLNativeDisplayType _glfwPlatformGetEGLNativeDisplay(void);
-EGLNativeWindowType _glfwPlatformGetEGLNativeWindow(_GLFWwindow* window);
-
-void _glfwPlatformGetRequiredInstanceExtensions(char** extensions);
-int _glfwPlatformGetPhysicalDevicePresentationSupport(VkInstance instance,
-                                                      VkPhysicalDevice device,
-                                                      uint32_t queuefamily);
-VkResult _glfwPlatformCreateWindowSurface(VkInstance instance,
-                                          _GLFWwindow* window,
-                                          const VkAllocationCallbacks* allocator,
-                                          VkSurfaceKHR* surface);
 
 GLFWbool _glfwPlatformCreateTls(_GLFWtls* tls);
 void _glfwPlatformDestroyTls(_GLFWtls* tls);
@@ -717,6 +900,10 @@ GLFWbool _glfwPlatformCreateMutex(_GLFWmutex* mutex);
 void _glfwPlatformDestroyMutex(_GLFWmutex* mutex);
 void _glfwPlatformLockMutex(_GLFWmutex* mutex);
 void _glfwPlatformUnlockMutex(_GLFWmutex* mutex);
+
+void* _glfwPlatformLoadModule(const char* path);
+void _glfwPlatformFreeModule(void* module);
+GLFWproc _glfwPlatformGetModuleSymbol(void* module, const char* name);
 
 
 //////////////////////////////////////////////////////////////////////////
@@ -738,7 +925,7 @@ void _glfwInputWindowMonitor(_GLFWwindow* window, _GLFWmonitor* monitor);
 void _glfwInputKey(_GLFWwindow* window,
                    int key, int scancode, int action, int mods);
 void _glfwInputChar(_GLFWwindow* window,
-                    unsigned int codepoint, int mods, GLFWbool plain);
+                    uint32_t codepoint, int mods, GLFWbool plain);
 void _glfwInputScroll(_GLFWwindow* window, double xoffset, double yoffset);
 void _glfwInputMouseClick(_GLFWwindow* window, int button, int action, int mods);
 void _glfwInputCursorPos(_GLFWwindow* window, double xpos, double ypos);
@@ -764,6 +951,8 @@ void _glfwInputError(int code, const char* format, ...);
 //////                       GLFW internal API                      //////
 //////////////////////////////////////////////////////////////////////////
 
+GLFWbool _glfwSelectPlatform(int platformID, _GLFWplatform* platform);
+
 GLFWbool _glfwStringInExtensionString(const char* string, const char* extensions);
 const _GLFWfbconfig* _glfwChooseFBConfig(const _GLFWfbconfig* desired,
                                          const _GLFWfbconfig* alternatives,
@@ -781,6 +970,7 @@ void _glfwAllocGammaArrays(GLFWgammaramp* ramp, unsigned int size);
 void _glfwFreeGammaArrays(GLFWgammaramp* ramp);
 void _glfwSplitBPP(int bpp, int* red, int* green, int* blue);
 
+void _glfwInitGamepadMappings(void);
 _GLFWjoystick* _glfwAllocJoystick(const char* name,
                                   const char* guid,
                                   int axisCount,
@@ -789,11 +979,38 @@ _GLFWjoystick* _glfwAllocJoystick(const char* name,
 void _glfwFreeJoystick(_GLFWjoystick* js);
 void _glfwCenterCursorInContentArea(_GLFWwindow* window);
 
+GLFWbool _glfwInitEGL(void);
+void _glfwTerminateEGL(void);
+GLFWbool _glfwCreateContextEGL(_GLFWwindow* window,
+                               const _GLFWctxconfig* ctxconfig,
+                               const _GLFWfbconfig* fbconfig);
+#if defined(_GLFW_X11)
+GLFWbool _glfwChooseVisualEGL(const _GLFWwndconfig* wndconfig,
+                              const _GLFWctxconfig* ctxconfig,
+                              const _GLFWfbconfig* fbconfig,
+                              Visual** visual, int* depth);
+#endif /*_GLFW_X11*/
+
+GLFWbool _glfwInitOSMesa(void);
+void _glfwTerminateOSMesa(void);
+GLFWbool _glfwCreateContextOSMesa(_GLFWwindow* window,
+                                  const _GLFWctxconfig* ctxconfig,
+                                  const _GLFWfbconfig* fbconfig);
+
 GLFWbool _glfwInitVulkan(int mode);
 void _glfwTerminateVulkan(void);
 const char* _glfwGetVulkanResultString(VkResult result);
 
+size_t _glfwEncodeUTF8(char* s, uint32_t codepoint);
+char** _glfwParseUriList(char* text, int* count);
+
 char* _glfw_strdup(const char* source);
+int _glfw_min(int a, int b);
+int _glfw_max(int a, int b);
 float _glfw_fminf(float a, float b);
 float _glfw_fmaxf(float a, float b);
+
+void* _glfw_calloc(size_t count, size_t size);
+void* _glfw_realloc(void* pointer, size_t size);
+void _glfw_free(void* pointer);
 

@@ -32,23 +32,16 @@
 
 
 //////////////////////////////////////////////////////////////////////////
-//////                       GLFW internal API                      //////
+//////                       GLFW platform API                      //////
 //////////////////////////////////////////////////////////////////////////
 
-// Initialise timer
-//
-void _glfwInitTimerNS(void)
+void _glfwPlatformInitTimer(void)
 {
     mach_timebase_info_data_t info;
     mach_timebase_info(&info);
 
     _glfw.timer.ns.frequency = (info.denom * 1e9) / info.numer;
 }
-
-
-//////////////////////////////////////////////////////////////////////////
-//////                       GLFW platform API                      //////
-//////////////////////////////////////////////////////////////////////////
 
 uint64_t _glfwPlatformGetTimerValue(void)
 {
