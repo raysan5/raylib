@@ -29,7 +29,7 @@
 #define _GNU_SOURCE
 
 #include "internal.h"
-#include "posix_poll.h"
+#include "posix_poll.h"     // @raysan5: Required for poll(), ppoll()
 
 #include <signal.h>
 #include <time.h>
