@@ -115,22 +115,19 @@
 extern "C" {            // Prevents name mangling of functions
 #endif
 
-#if defined(CAMERA_STANDALONE)
-void SetCameraMode(Camera3D* camera, int mode);
 Vector3 GetCameraForward(Camera3D* camera);
 Vector3 GetCameraUp(Camera3D* camera);
 Vector3 GetCameraRight(Camera3D* camera);
-void CameraMoveForward(Camera3D* camera, float distance);
+void CameraMoveForward(Camera3D* camera, float distance, bool moveInWorldPlane);
 void CameraMoveUp(Camera3D* camera, float distance);
-void CameraMoveRight(Camera3D* camera, float distance);
+void CameraMoveRight(Camera3D* camera, float distance, bool moveInWorldPlane);
 void CameraZoom(Camera3D* camera, float delta);
-void CameraYaw(Camera3D* camera, float angle);
-void CameraPitch(Camera3D* camera, float angle);
+void CameraYaw(Camera3D* camera, float angle, bool rotateAroundTarget);
+void CameraPitch(Camera3D* camera, float angle, bool lockView, bool rotateAroundTarget, bool rotateUp);
 void CameraRoll(Camera3D* camera, float angle);
 void CameraViewBobbing(Camera3D* camera);
 Matrix GetCameraViewMatrix(Camera3D* camera);
 Matrix GetCameraProjectionMatrix(Camera3D* camera, float aspect);
-#endif
 
 #if defined(__cplusplus)
 }
@@ -173,22 +170,6 @@ Matrix GetCameraProjectionMatrix(Camera3D* camera, float aspect);
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
 //----------------------------------------------------------------------------------
-// TODO review
-// Camera actions
-//typedef enum {
-//    CAMERA_MOVE_FORWARD = 0,
-//    CAMERA_MOVE_BACK,
-//    CAMERA_MOVE_RIGHT,
-//    CAMERA_MOVE_LEFT,
-//    CAMERA_MOVE_UP,
-//    CAMERA_MOVE_DOWN,
-//    CAMERA_YAW_RIGHT,
-//    CAMERA_YAW_LEFT,
-//    CAMERA_PITCH_UP,
-//    CAMERA_PITCH_DOWN,
-//    CAMERA_ROLL_RIGHT,
-//    CAMERA_ROLL_LEFT,
-//} CameraActions;
 
 
 //----------------------------------------------------------------------------------
@@ -202,6 +183,7 @@ Matrix GetCameraProjectionMatrix(Camera3D* camera, float aspect);
 
 // Rotates the given vector around the given axis
 // Note: angle must be provided in radians
+// TODO remove after rebase (available in raymath now)
 Vector3 Vector3RotateByAxisAngle(Vector3 v, Vector3 axis, float angle)
 {
     // Using Euler-Rodrigues Formula
@@ -256,31 +238,6 @@ Vector3 Vector3RotateByAxisAngle(Vector3 v, Vector3 axis, float angle)
 //----------------------------------------------------------------------------------
 // Module Functions Definition
 //----------------------------------------------------------------------------------
-
-// Select camera mode (multiple camera modes available)
-void SetCameraMode(Camera3D *camera, int mode)
-{
-    camera->mode = mode;
-
-    // Reset roll
-    camera->up = (Vector3){ 0.0f, 1.0f, 0.0f };
-
-    // Enable view bobbing in CAMERA_FIRST_PERSON
-    if (camera->mode == CAMERA_FIRST_PERSON)
-    {
-        camera->swingCounter = 1; // Enable
-    }
-    else
-    {
-        camera->swingCounter = 0; // Disable
-    }
-
-    // Catch cursor
-#ifndef CAMERA_STANDALONE
-    // Note: This is engine specific functionality
-    DisableCursor();
-#endif
-}
 
 // Returns the cameras forward vector (normalized)
 Vector3 GetCameraForward(Camera3D *camera)
@@ -511,7 +468,8 @@ Matrix GetCameraProjectionMatrix(Camera3D *camera, float aspect)
 static int init_frames = 3; // TODO review and remove
 
 // Update camera position for selected mode
-void UpdateCamera(Camera3D *camera)
+// Camera mode: CAMERA_FREE, CAMERA_FIRST_PERSON, CAMERA_THIRD_PERSON, CAMERA_ORBITAL or CUSTOM
+void UpdateCamera(Camera3D *camera, int mode)
 {
     // Avoid inital mouse "jump"
     if (init_frames > 0) {
@@ -521,10 +479,10 @@ void UpdateCamera(Camera3D *camera)
     }
     Vector2 mousePositionDelta = GetMouseDelta();
 
-    bool moveInWorldPlane = camera->mode == CAMERA_FIRST_PERSON || camera->mode == CAMERA_THIRD_PERSON;
-    bool rotateAroundTarget = camera->mode == CAMERA_THIRD_PERSON || camera->mode == CAMERA_ORBITAL;
-    bool lockView = camera->mode == CAMERA_FIRST_PERSON || camera->mode == CAMERA_THIRD_PERSON || camera->mode == CAMERA_ORBITAL;
-    bool rotateUp = camera->mode == CAMERA_FREE;
+    bool moveInWorldPlane = mode == CAMERA_FIRST_PERSON || mode == CAMERA_THIRD_PERSON;
+    bool rotateAroundTarget = mode == CAMERA_THIRD_PERSON || mode == CAMERA_ORBITAL;
+    bool lockView = mode == CAMERA_FIRST_PERSON || mode == CAMERA_THIRD_PERSON || mode == CAMERA_ORBITAL;
+    bool rotateUp = mode == CAMERA_FREE;
     
     // Camera movement
     if (IsKeyDown(KEY_W)) CameraMoveForward(camera, CAMERA_MOVE_SPEED, moveInWorldPlane);
@@ -550,38 +508,6 @@ void UpdateCamera(Camera3D *camera)
     if (IsKeyPressed(KEY_KP_SUBTRACT)) CameraZoom(camera, 2.0f);
     if (IsKeyPressed(KEY_KP_ADD)) CameraZoom(camera, -2.0f);
 
-    // Switch camera mode
-    if (IsKeyPressed(KEY_ONE)) SetCameraMode(camera, CAMERA_FREE);
-    if (IsKeyPressed(KEY_TWO)) SetCameraMode(camera, CAMERA_FIRST_PERSON);
-    if (IsKeyPressed(KEY_THREE)) SetCameraMode(camera, CAMERA_THIRD_PERSON);
-    if (IsKeyPressed(KEY_FOUR)) SetCameraMode(camera, CAMERA_ORBITAL);
-
-    // Switch camera projection
-    if (IsKeyPressed(KEY_P)) {
-        if (camera->projection == CAMERA_PERSPECTIVE) {
-            // Create isometric view
-            camera->mode = CAMERA_THIRD_PERSON;
-            // Note: The target distance is related to the render distance in the orthographic projection
-            camera->position = (Vector3){ 0.0f, 2.0f, -100.0f };
-            camera->target = (Vector3){ 0.0f, 2.0f, 0.0f };
-            camera->up = (Vector3){ 0.0f, 1.0f, 0.0f };
-            camera->projection = CAMERA_ORTHOGRAPHIC;
-            camera->fovy = 20.0f; // near plane width in CAMERA_ORTHOGRAPHIC
-            CameraYaw(camera, -135 * DEG2RAD, rotateAroundTarget);
-            CameraPitch(camera, -45 * DEG2RAD, lockView, rotateAroundTarget, rotateUp);
-        }
-        else if (camera->projection == CAMERA_ORTHOGRAPHIC)
-        {
-            // Reset to default view
-             camera->mode = CAMERA_THIRD_PERSON;
-            // Note: The target distance is related to the render distance in the orthographic projection
-            camera->position = (Vector3){ 0.0f, 2.0f, 10.0f };
-            camera->target = (Vector3){ 0.0f, 2.0f, 0.0f };
-            camera->up = (Vector3){ 0.0f, 1.0f, 0.0f };
-            camera->projection = CAMERA_PERSPECTIVE;
-            camera->fovy = 60.0f;
-        }
-    }
 
     // Apply view bobbing when moving around (per default only active in CAMERA_FIRST_PERSON)
     if (IsKeyDown(KEY_W) || IsKeyDown(KEY_A) || IsKeyDown(KEY_S) || IsKeyDown(KEY_D)) CameraViewBobbing(camera);

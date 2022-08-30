@@ -307,7 +307,6 @@ typedef struct Camera3D {
     Vector3 up;             // Camera up vector (rotation around the view axis)
     float fovy;             // Camera field-of-view apperture in Y (degrees) in perspective, used as near plane width in orthographic
     int projection;         // Camera projection: CAMERA_PERSPECTIVE or CAMERA_ORTHOGRAPHIC
-    int mode;               // Camera mode: CAMERA_FREE, CAMERA_FIRST_PERSON, CAMERA_THIRD_PERSON, CAMERA_ORBITAL or CUSTOM
     int swingCounter;       // Camera view-bobbing. Set to 0 to deactivate.
 } Camera3D;
 
@@ -1153,8 +1152,7 @@ RLAPI float GetGesturePinchAngle(void);                 // Get gesture pinch ang
 //------------------------------------------------------------------------------------
 // Camera System Functions (Module: rcamera)
 //------------------------------------------------------------------------------------
-RLAPI void SetCameraMode(Camera3D* camera, int mode);   // Set camera mode (multiple camera modes available)
-RLAPI void UpdateCamera(Camera3D *camera);              // Update camera position for selected mode
+RLAPI void UpdateCamera(Camera3D *camera, int mode);              // Update camera position for selected mode
 
 //------------------------------------------------------------------------------------
 // Basic Shapes Drawing Functions (Module: shapes)
