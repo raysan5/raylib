@@ -304,12 +304,11 @@ Vector3 GetCameraRight(Camera3D *camera)
 }
 
 // Moves the camera in its forward direction
-void CameraMoveForward(Camera3D *camera, float distance)
+void CameraMoveForward(Camera3D *camera, float distance, bool moveInWorldPlane)
 {
     Vector3 forward = GetCameraForward(camera);
 
-    if (camera->mode == CAMERA_FIRST_PERSON ||
-        camera->mode == CAMERA_THIRD_PERSON)
+    if (moveInWorldPlane)
     {
         // Project vector onto world plane
         forward.y = 0;
@@ -338,12 +337,11 @@ void CameraMoveUp(Camera3D *camera, float distance)
 }
 
 // Moves the camera target in its current right direction
-void CameraMoveRight(Camera3D *camera, float distance)
+void CameraMoveRight(Camera3D *camera, float distance, bool moveInWorldPlane)
 {
     Vector3 right = GetCameraRight(camera);
 
-    if (camera->mode == CAMERA_FIRST_PERSON ||
-        camera->mode == CAMERA_THIRD_PERSON)
+    if (moveInWorldPlane)
     {
         // Project vector onto world plane
         right.y = 0;
@@ -376,8 +374,9 @@ void CameraZoom(Camera3D *camera, float delta)
 
 // Rotates the camera around its up vector
 // Yaw is "looking left and right"
+// If rotateAroundTarget is false, the camera rotates around its position
 // Note: angle must be provided in radians
-void CameraYaw(Camera3D *camera, float angle)
+void CameraYaw(Camera3D *camera, float angle, bool rotateAroundTarget)
 {
     // Rotation axis
     Vector3 up = GetCameraUp(camera);
@@ -388,24 +387,25 @@ void CameraYaw(Camera3D *camera, float angle)
     // Rotate view vector around up axis
     target_position = Vector3RotateByAxisAngle(target_position, up, angle);
 
-    if (camera->mode == CAMERA_FREE ||
-        camera->mode == CAMERA_FIRST_PERSON)
-    {
-        // Move target relative to position
-        camera->target = Vector3Add(camera->position, target_position);
-    }
-    else if (camera->mode == CAMERA_THIRD_PERSON ||
-             camera->mode == CAMERA_ORBITAL)
+    if (rotateAroundTarget)
     {
         // Move position relative to target
         camera->position = Vector3Subtract(camera->target, target_position);
+    }
+    else // rotate around camera.position
+    {
+        // Move target relative to position
+        camera->target = Vector3Add(camera->position, target_position);
     }
 }
 
 // Rotates the camera around its right vector
 // Pitch is "looking up and down"
+// lockView prevents camera overrotation (aka "somersaults")
+// If rotateAroundTarget is false, the camera rotates around its position
+// rotateUp rotates the up direction as well (typically only usefull in CAMERA_FREE)
 // Note: angle must be provided in radians
-void CameraPitch(Camera3D *camera, float angle)
+void CameraPitch(Camera3D *camera, float angle, bool lockView, bool rotateAroundTarget, bool rotateUp)
 {
     // Up direction
     Vector3 up = GetCameraUp(camera);
@@ -413,9 +413,7 @@ void CameraPitch(Camera3D *camera, float angle)
     // View vector
     Vector3 target_position = Vector3Subtract(camera->target, camera->position);
 
-    if (camera->mode == CAMERA_FIRST_PERSON ||
-        camera->mode == CAMERA_THIRD_PERSON ||
-        camera->mode == CAMERA_ORBITAL)
+    if (lockView)
     {
         // In these camera modes we clamp the Pitch angle
         // to allow only viewing straight up or down.
@@ -438,24 +436,21 @@ void CameraPitch(Camera3D *camera, float angle)
     // Rotate view vector around right axis
     target_position = Vector3RotateByAxisAngle(target_position, right, angle);
 
-    if (camera->mode == CAMERA_FREE)
-    {
-        // Move target relative to position
-        camera->target = Vector3Add(camera->position, target_position);
-
-        // Rotate up direction around right axis
-        camera->up = Vector3RotateByAxisAngle(camera->up, right, angle);
-    }
-    else if (camera->mode == CAMERA_FIRST_PERSON)
-    {
-        // Move target relative to position
-        camera->target = Vector3Add(camera->position, target_position);
-    }
-    else if (camera->mode == CAMERA_THIRD_PERSON ||
-             camera->mode == CAMERA_ORBITAL)
+    if (rotateAroundTarget)
     {
         // Move position relative to target
         camera->position = Vector3Subtract(camera->target, target_position);
+    }
+    else // rotate around camera.position
+    {
+        // Move target relative to position
+        camera->target = Vector3Add(camera->position, target_position);
+    }
+
+    if (rotateUp)
+    {
+        // Rotate up direction around right axis
+        camera->up = Vector3RotateByAxisAngle(camera->up, right, angle);
     }
 }
 
@@ -525,25 +520,30 @@ void UpdateCamera(Camera3D *camera)
         return;
     }
     Vector2 mousePositionDelta = GetMouseDelta();
+
+    bool moveInWorldPlane = camera->mode == CAMERA_FIRST_PERSON || camera->mode == CAMERA_THIRD_PERSON;
+    bool rotateAroundTarget = camera->mode == CAMERA_THIRD_PERSON || camera->mode == CAMERA_ORBITAL;
+    bool lockView = camera->mode == CAMERA_FIRST_PERSON || camera->mode == CAMERA_THIRD_PERSON || camera->mode == CAMERA_ORBITAL;
+    bool rotateUp = camera->mode == CAMERA_FREE;
     
     // Camera movement
-    if (IsKeyDown(KEY_W)) CameraMoveForward(camera, CAMERA_MOVE_SPEED);
-    if (IsKeyDown(KEY_S)) CameraMoveForward(camera, -CAMERA_MOVE_SPEED);
-    if (IsKeyDown(KEY_D)) CameraMoveRight(camera, CAMERA_MOVE_SPEED);
-    if (IsKeyDown(KEY_A)) CameraMoveRight(camera, -CAMERA_MOVE_SPEED);
+    if (IsKeyDown(KEY_W)) CameraMoveForward(camera, CAMERA_MOVE_SPEED, moveInWorldPlane);
+    if (IsKeyDown(KEY_S)) CameraMoveForward(camera, -CAMERA_MOVE_SPEED, moveInWorldPlane);
+    if (IsKeyDown(KEY_D)) CameraMoveRight(camera, CAMERA_MOVE_SPEED, moveInWorldPlane);
+    if (IsKeyDown(KEY_A)) CameraMoveRight(camera, -CAMERA_MOVE_SPEED, moveInWorldPlane);
     if (IsKeyDown(KEY_SPACE)) CameraMoveUp(camera, CAMERA_MOVE_SPEED);
     if (IsKeyDown(KEY_LEFT_CONTROL)) CameraMoveUp(camera, -CAMERA_MOVE_SPEED);
 
     // Camera rotation
-    if (IsKeyDown(KEY_DOWN)) CameraPitch(camera, -CAMERA_ROTATION_SPEED);
-    if (IsKeyDown(KEY_UP)) CameraPitch(camera, CAMERA_ROTATION_SPEED);
-    if (IsKeyDown(KEY_RIGHT)) CameraYaw(camera, -CAMERA_ROTATION_SPEED);
-    if (IsKeyDown(KEY_LEFT)) CameraYaw(camera, CAMERA_ROTATION_SPEED);
+    if (IsKeyDown(KEY_DOWN)) CameraPitch(camera, -CAMERA_ROTATION_SPEED, lockView, rotateAroundTarget, rotateUp);
+    if (IsKeyDown(KEY_UP)) CameraPitch(camera, CAMERA_ROTATION_SPEED, lockView, rotateAroundTarget, rotateUp);
+    if (IsKeyDown(KEY_RIGHT)) CameraYaw(camera, -CAMERA_ROTATION_SPEED, rotateAroundTarget);
+    if (IsKeyDown(KEY_LEFT)) CameraYaw(camera, CAMERA_ROTATION_SPEED, rotateAroundTarget);
     if (IsKeyDown(KEY_Q)) CameraRoll(camera, -CAMERA_ROTATION_SPEED);
     if (IsKeyDown(KEY_E)) CameraRoll(camera, CAMERA_ROTATION_SPEED);
 
-    CameraYaw(camera, mousePositionDelta.x * -CAMERA_MOUSE_MOVE_SENSITIVITY);
-    CameraPitch(camera, mousePositionDelta.y * -CAMERA_MOUSE_MOVE_SENSITIVITY);
+    CameraYaw(camera, mousePositionDelta.x * -CAMERA_MOUSE_MOVE_SENSITIVITY, rotateAroundTarget);
+    CameraPitch(camera, mousePositionDelta.y * -CAMERA_MOUSE_MOVE_SENSITIVITY, lockView, rotateAroundTarget, rotateUp);
 
     // Zoom target distance
     CameraZoom(camera, -GetMouseWheelMove());
@@ -567,8 +567,8 @@ void UpdateCamera(Camera3D *camera)
             camera->up = (Vector3){ 0.0f, 1.0f, 0.0f };
             camera->projection = CAMERA_ORTHOGRAPHIC;
             camera->fovy = 20.0f; // near plane width in CAMERA_ORTHOGRAPHIC
-            CameraYaw(camera, -135 * DEG2RAD);
-            CameraPitch(camera, -45 * DEG2RAD);
+            CameraYaw(camera, -135 * DEG2RAD, rotateAroundTarget);
+            CameraPitch(camera, -45 * DEG2RAD, lockView, rotateAroundTarget, rotateUp);
         }
         else if (camera->projection == CAMERA_ORTHOGRAPHIC)
         {
