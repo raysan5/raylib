@@ -77,7 +77,6 @@ jobs:
       uses: microsoft/setup-msbuild@v1.0.2
       if: matrix.compiler == 'msvc16'
 
-    # NOTE: The MinGW-w64 compiler provided by the host only supports 64bit compilation
     - name: Build Library (MinGW-w64)
       run: |
         cd src
@@ -89,7 +88,7 @@ jobs:
         make PLATFORM=PLATFORM_DESKTOP CC=${{ matrix.ARCH }}-w64-mingw32-gcc.exe RAYLIB_LIBTYPE=SHARED RAYLIB_RELEASE_PATH="../build/${{ env.RELEASE_NAME }}/lib" -B
         cd ..
       shell: cmd
-      if: matrix.compiler == 'mingw-w64' && matrix.bits == '64'
+      if: matrix.compiler == 'mingw-w64'
 
     - name: Build Library (MSVC16)
       run: |
