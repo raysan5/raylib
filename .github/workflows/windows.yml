@@ -92,7 +92,7 @@ jobs:
         make PLATFORM=PLATFORM_DESKTOP CC=${{ matrix.ARCH }}-w64-mingw32-gcc.exe RAYLIB_LIBTYPE=SHARED RAYLIB_RELEASE_PATH="../build/${{ env.RELEASE_NAME }}/lib" -B
         cd ..
       shell: cmd
-      if: matrix.compiler == 'mingw-w64' && bits == '64'
+      if: matrix.compiler == 'mingw-w64' && matrix.bits == '64'
 
     - name: Build Library (MSVC16)
       run: |
