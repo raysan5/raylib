@@ -4302,6 +4302,7 @@ static Model LoadIQM(const char *fileName)
     RL_FREE(blendi);
     RL_FREE(blendw);
     RL_FREE(ijoint);
+    RL_FREE(color);
 
     return model;
 }
