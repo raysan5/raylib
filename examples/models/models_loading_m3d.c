@@ -18,13 +18,14 @@
 #include "raylib.h"
 
 #include <stdlib.h>
+#include <stdio.h>
 
 //------------------------------------------------------------------------------------
 // Program main entry point
 //------------------------------------------------------------------------------------
 int main(int argc, char **argv)
 {
-    char *model_fn = argc > 1 ? argv[1] : "resources/models/m3d/suzanne.m3d";
+    char *model_fn = argc > 1 ? argv[1] : "resources/models/m3d/seagull.m3d";
 
     // Initialization
     //--------------------------------------------------------------------------------------
@@ -46,7 +47,7 @@ int main(int argc, char **argv)
     Model model = LoadModel(model_fn); // Load the animated model mesh and basic data
 
     // Load animation data
-    unsigned int animsCount = 0;
+    unsigned int animsCount = 0, animsSkel = 1, animsMesh = 1;
     ModelAnimation *anims = LoadModelAnimations(model_fn, &animsCount);
     int animFrameCounter = 0, animId = 0;
 
@@ -71,6 +72,15 @@ int main(int argc, char **argv)
                 animFrameCounter++;
                 UpdateModelAnimation(model, anims[animId], animFrameCounter);
                 if (animFrameCounter >= anims[animId].frameCount) animFrameCounter = 0;
+                //printf("anim %u, frame %u / %u\n",animId,animFrameCounter,anims[animId].frameCount);
+            }
+            if (IsKeyDown(KEY_S))
+            {
+                animsSkel ^= 1;
+            }
+            if (IsKeyDown(KEY_M))
+            {
+                animsMesh ^= 1;
             }
 
             // Select animation on mouse click
@@ -92,11 +102,16 @@ int main(int argc, char **argv)
 
             BeginMode3D(camera);
 
-                DrawModel(model, position, 1.0f, WHITE);        // Draw 3d model with texture
-                if(anims)
+                if (animsMesh)
+                    DrawModel(model, position, 1.0f, WHITE);        // Draw 3d model with texture
+
+                if (anims && animsSkel)
                     for (int i = 0; i < model.boneCount; i++)
                     {
-                        DrawCube(anims[animId].framePoses[animFrameCounter][i].translation, 0.2f, 0.2f, 0.2f, RED);
+                        DrawCube(anims[animId].framePoses[animFrameCounter][i].translation, 0.05f, 0.05f, 0.05f, RED);
+                        if (anims[animId].bones[i].parent >= 0)
+                            DrawLine3D(anims[animId].framePoses[animFrameCounter][i].translation,
+                                anims[animId].framePoses[animFrameCounter][anims[animId].bones[i].parent].translation, RED);
                     }
 
                 DrawGrid(10, 1.0f);         // Draw a grid
@@ -105,7 +120,7 @@ int main(int argc, char **argv)
 
             DrawText("PRESS SPACE to PLAY MODEL ANIMATION", 10, GetScreenHeight() - 30, 10, MAROON);
             DrawText("MOUSE LEFT BUTTON to CYCLE THROUGH ANIMATIONS", 10, GetScreenHeight() - 20, 10, DARKGRAY);
-            DrawText("(c) Suzanne 3D model by blender", screenWidth - 200, screenHeight - 20, 10, GRAY);
+            DrawText("(c) Seagull model by Scorched3D", screenWidth - 200, screenHeight - 20, 10, GRAY);
 
         EndDrawing();
         //----------------------------------------------------------------------------------

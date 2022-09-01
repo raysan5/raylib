@@ -5371,6 +5371,15 @@ static Model LoadM3D(const char *fileName)
                 // TODO: if the orientation quaternion not normalized, then that's encoding scaling
                 model.bindPose[i].rotation = QuaternionNormalize(model.bindPose[i].rotation);
                 model.bindPose[i].scale.x = model.bindPose[i].scale.y = model.bindPose[i].scale.z = 1.0f;
+
+                // Child bones are stored in parent bone relative space, convert that into model space
+                if (model.bones[i].parent >= 0)
+                {
+                    model.bindPose[i].rotation = QuaternionMultiply(model.bindPose[model.bones[i].parent].rotation, model.bindPose[i].rotation);
+                    model.bindPose[i].translation = Vector3RotateByQuaternion(model.bindPose[i].translation, model.bindPose[model.bones[i].parent].rotation);
+                    model.bindPose[i].translation = Vector3Add(model.bindPose[i].translation, model.bindPose[model.bones[i].parent].translation);
+                    model.bindPose[i].scale = Vector3Multiply(model.bindPose[i].scale, model.bindPose[model.bones[i].parent].scale);
+                }
             }
         }
 
@@ -5463,6 +5472,15 @@ static ModelAnimation *LoadModelAnimationsM3D(const char *fileName, unsigned int
                         animations[a].framePoses[i][j].rotation.w = m3d->vertex[pose[j].ori].w;
                         animations[a].framePoses[i][j].rotation = QuaternionNormalize(animations[a].framePoses[i][j].rotation);
                         animations[a].framePoses[i][j].scale.x = animations[a].framePoses[i][j].scale.y = animations[a].framePoses[i][j].scale.z = 1.0f;
+
+						// Child bones are stored in parent bone relative space, convert that into model space
+                        if (animations[a].bones[j].parent >= 0)
+                        {
+                            animations[a].framePoses[i][j].rotation = QuaternionMultiply(animations[a].framePoses[i][animations[a].bones[j].parent].rotation, animations[a].framePoses[i][j].rotation);
+                            animations[a].framePoses[i][j].translation = Vector3RotateByQuaternion(animations[a].framePoses[i][j].translation, animations[a].framePoses[i][animations[a].bones[j].parent].rotation);
+                            animations[a].framePoses[i][j].translation = Vector3Add(animations[a].framePoses[i][j].translation, animations[a].framePoses[i][animations[a].bones[j].parent].translation);
+                            animations[a].framePoses[i][j].scale = Vector3Multiply(animations[a].framePoses[i][j].scale, animations[a].framePoses[i][animations[a].bones[j].parent].scale);
+                        }
                     }
                     RL_FREE(pose);
                 }
