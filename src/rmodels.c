@@ -5264,17 +5264,27 @@ static Model LoadM3D(const char *fileName)
             }
 
             // Add skin (vertex / bone weight pairs)
-            if (m3d->numbone && m3d->numskin) {
-                for (n = 0; n < 3; n++) {
+            if (m3d->numbone && m3d->numskin)
+            {
+                for (n = 0; n < 3; n++)
+                {
                     int skinid = m3d->vertex[m3d->face[i].vertex[n]].skinid;
-                    // check if there's a skin for this mesh, should be, just failsafe
+
+                    // Check if there is a skin for this mesh, should be, just failsafe
                     if (skinid != M3D_UNDEF && skinid < m3d->numskin)
                     {
                         for (j = 0; j < 4; j++)
                         {
-                            model.meshes[k].boneIds[l * 12 + n * 4 + j] = m3d->skin[skinid].boneid[j];
-                            model.meshes[k].boneWeights[l * 12 + n * 4 + j] = m3d->skin[skinid].weight[j];
+                            model.meshes[k].boneIds[l*12 + n*4 + j] = m3d->skin[skinid].boneid[j];
+                            model.meshes[k].boneWeights[l*12 + n*4 + j] = m3d->skin[skinid].weight[j];
                         }
+                    }
+                    else
+                    {
+                        // raylib does not handle boneless meshes with skeletal animations, so
+                        // we put all vertices without a bone into a special "no bone" bone
+                        model.meshes[k].boneIds[l * 12 + n * 4] = m3d->numbone;
+                        model.meshes[k].boneWeights[l * 12 + n * 4] = 1.0f;
                     }
                 }
             }
@@ -5352,11 +5362,12 @@ static Model LoadM3D(const char *fileName)
         }
 
         // Load bones
-        if(m3d->numbone)
+        if (m3d->numbone)
         {
-            model.boneCount = m3d->numbone;
-            model.bones = RL_MALLOC(m3d->numbone*sizeof(BoneInfo));
-            model.bindPose = RL_MALLOC(m3d->numbone*sizeof(Transform));
+            model.boneCount = m3d->numbone + 1;
+            model.bones = RL_CALLOC(model.boneCount, sizeof(BoneInfo));
+            model.bindPose = RL_CALLOC(model.boneCount, sizeof(Transform));
+
             for (i = 0; i < m3d->numbone; i++)
             {
                 model.bones[i].parent = m3d->bone[i].parent;
@@ -5381,6 +5392,18 @@ static Model LoadM3D(const char *fileName)
                     model.bindPose[i].scale = Vector3Multiply(model.bindPose[i].scale, model.bindPose[model.bones[i].parent].scale);
                 }
             }
+
+            // Add a special "no bone" bone
+            model.bones[i].parent = -1;
+            strcpy(model.bones[i].name, "NO BONE");
+            model.bindPose[i].translation.x = 0.0f;
+            model.bindPose[i].translation.y = 0.0f;
+            model.bindPose[i].translation.z = 0.0f;
+            model.bindPose[i].rotation.x = 0.0f;
+            model.bindPose[i].rotation.y = 0.0f;
+            model.bindPose[i].rotation.z = 0.0f;
+            model.bindPose[i].rotation.w = 1.0f;
+            model.bindPose[i].scale.x = model.bindPose[i].scale.y = model.bindPose[i].scale.z = 1.0f;
         }
 
         // Load bone-pose default mesh into animation vertices. These will be updated when UpdateModelAnimation gets
@@ -5440,8 +5463,8 @@ static ModelAnimation *LoadModelAnimationsM3D(const char *fileName, unsigned int
         for (unsigned int a = 0; a < m3d->numaction; a++)
         {
             animations[a].frameCount = m3d->action[a].durationmsec / M3D_ANIMDELAY;
-            animations[a].boneCount = m3d->numbone;
-            animations[a].bones = RL_MALLOC(m3d->numbone*sizeof(BoneInfo));
+            animations[a].boneCount = m3d->numbone + 1;
+            animations[a].bones = RL_MALLOC((m3d->numbone + 1)*sizeof(BoneInfo));
             animations[a].framePoses = RL_MALLOC(animations[a].frameCount*sizeof(Transform *));
             // strncpy(animations[a].name, m3d->action[a].name, sizeof(animations[a].name));
             TRACELOG(LOG_INFO, "MODEL: [%s] animation #%i: %i msec, %i frames", fileName, a, m3d->action[a].durationmsec, animations[a].frameCount);
@@ -5452,11 +5475,15 @@ static ModelAnimation *LoadModelAnimationsM3D(const char *fileName, unsigned int
                 strncpy(animations[a].bones[i].name, m3d->bone[i].name, sizeof(animations[a].bones[i].name));
             }
 
+            // A special, never transformed "no bone" bone, used for boneless vertices
+            animations[a].bones[i].parent = -1;
+            strcpy(animations[a].bones[i].name, "NO BONE");
+
             // M3D stores frames at arbitrary intervals with sparse skeletons. We need full skeletons at
             // regular intervals, so let the M3D SDK do the heavy lifting and calculate interpolated bones
             for (i = 0; i < animations[a].frameCount; i++)
             {
-                animations[a].framePoses[i] = RL_MALLOC(m3d->numbone*sizeof(Transform));
+                animations[a].framePoses[i] = RL_MALLOC((m3d->numbone + 1)*sizeof(Transform));
 
                 m3db_t *pose = m3d_pose(m3d, a, i * M3D_ANIMDELAY);
                 if (pose != NULL)
@@ -5473,7 +5500,7 @@ static ModelAnimation *LoadModelAnimationsM3D(const char *fileName, unsigned int
                         animations[a].framePoses[i][j].rotation = QuaternionNormalize(animations[a].framePoses[i][j].rotation);
                         animations[a].framePoses[i][j].scale.x = animations[a].framePoses[i][j].scale.y = animations[a].framePoses[i][j].scale.z = 1.0f;
 
-						// Child bones are stored in parent bone relative space, convert that into model space
+                        // Child bones are stored in parent bone relative space, convert that into model space
                         if (animations[a].bones[j].parent >= 0)
                         {
                             animations[a].framePoses[i][j].rotation = QuaternionMultiply(animations[a].framePoses[i][animations[a].bones[j].parent].rotation, animations[a].framePoses[i][j].rotation);
@@ -5482,6 +5509,16 @@ static ModelAnimation *LoadModelAnimationsM3D(const char *fileName, unsigned int
                             animations[a].framePoses[i][j].scale = Vector3Multiply(animations[a].framePoses[i][j].scale, animations[a].framePoses[i][animations[a].bones[j].parent].scale);
                         }
                     }
+
+                    // Default transform for the "no bone" bone
+                    animations[a].framePoses[i][j].translation.x = 0.0f;
+                    animations[a].framePoses[i][j].translation.y = 0.0f;
+                    animations[a].framePoses[i][j].translation.z = 0.0f;
+                    animations[a].framePoses[i][j].rotation.x = 0.0f;
+                    animations[a].framePoses[i][j].rotation.y = 0.0f;
+                    animations[a].framePoses[i][j].rotation.z = 0.0f;
+                    animations[a].framePoses[i][j].rotation.w = 1.0f;
+                    animations[a].framePoses[i][j].scale.x = animations[a].framePoses[i][j].scale.y = animations[a].framePoses[i][j].scale.z = 1.0f;
                     RL_FREE(pose);
                 }
             }
