@@ -98,11 +98,12 @@ int main(void)
     camera.fovy = 45.0f;                                    // Camera field-of-view Y
     camera.projection = CAMERA_PERSPECTIVE;                 // Camera mode type
 
-    SetCameraMode(&camera, CAMERA_ORBITAL);
+    int camera_mode = CAMERA_ORBITAL;
 
     Vector3 cubePosition = { 0.0f, 1.0f, 0.0f };
     Vector3 cubeSize = { 2.0f, 2.0f, 2.0f };
 
+    DisableCursor();                    // Catch cursor
     SetTargetFPS(60);                   // Set our game to run at 60 frames-per-second
 
     // Use the default font
@@ -141,7 +142,7 @@ int main(void)
     {
         // Update
         //----------------------------------------------------------------------------------
-        UpdateCamera(&camera);
+        UpdateCamera(&camera, camera_mode);
         
         // Handle font files dropped
         if (IsFileDropped())
@@ -181,12 +182,12 @@ int main(void)
             if (spin)
             {
                 camera.position = (Vector3){ -10.0f, 15.0f, -10.0f };   // Camera position
-                SetCameraMode(&camera, CAMERA_ORBITAL);
+                camera_mode = CAMERA_ORBITAL;
             }
             else
             {
                 camera.position = (Vector3){ 10.0f, 10.0f, -10.0f };   // Camera position
-                SetCameraMode(&camera, CAMERA_FREE);
+                camera_mode = CAMERA_FREE;
             }
         }
 

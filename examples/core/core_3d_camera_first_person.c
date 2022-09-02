@@ -51,9 +51,7 @@ int main(void)
         colors[i] = (Color){ GetRandomValue(20, 255), GetRandomValue(10, 55), 30, 255 };
     }
 
-    // Catch cursor
-    DisableCursor();
-
+    DisableCursor();                            // Catch cursor
     SetTargetFPS(60);                           // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
 

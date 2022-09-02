@@ -69,8 +69,7 @@ int main(void)
 
     int currentModel = 0;
 
-    SetCameraMode(&camera, CAMERA_ORBITAL);  // Set a orbital camera mode
-
+    DisableCursor();                            // Catch cursor
     SetTargetFPS(60);               // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
 
@@ -79,7 +78,7 @@ int main(void)
     {
         // Update
         //----------------------------------------------------------------------------------
-        UpdateCamera(&camera);
+        UpdateCamera(&camera, CAMERA_ORBITAL);
 
         // Cycle between models on mouse click
         if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) currentModel = (currentModel + 1)%MAX_VOX_FILES;

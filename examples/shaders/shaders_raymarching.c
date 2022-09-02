@@ -41,8 +41,6 @@ int main(void)
     camera.up = (Vector3){ 0.0f, 1.0f, 0.0f };          // Camera up vector (rotation towards target)
     camera.fovy = 65.0f;                                // Camera field-of-view Y
 
-    SetCameraMode(&camera, CAMERA_FREE);                 // Set camera mode
-
     // Load raymarching shader
     // NOTE: Defining 0 (NULL) for vertex shader forces usage of internal default vertex shader
     Shader shader = LoadShader(0, TextFormat("resources/shaders/glsl%i/raymarching.fs", GLSL_VERSION));
@@ -58,6 +56,7 @@ int main(void)
 
     float runTime = 0.0f;
 
+    DisableCursor();                            // Catch cursor
     SetTargetFPS(60);                       // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
 
@@ -66,7 +65,7 @@ int main(void)
     {
         // Update
         //----------------------------------------------------------------------------------
-        UpdateCamera(&camera);
+        UpdateCamera(&camera, CAMERA_FIRST_PERSON);
 
         float cameraPos[3] = { camera.position.x, camera.position.y, camera.position.z };
         float cameraTarget[3] = { camera.target.x, camera.target.y, camera.target.z };

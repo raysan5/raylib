@@ -64,9 +64,7 @@ int main(void)
     Vector3 sp = (Vector3){ -30.0f, 5.0f, 5.0f };
     float sr = 4.0f;
 
-    SetCameraMode(&camera, CAMERA_FREE); // Set a free camera mode
-    EnableCursor();                      // Disable camera controls
-
+    EnableCursor();                     // Disable camera controls
     SetTargetFPS(60);                   // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
     // Main game loop
@@ -74,7 +72,7 @@ int main(void)
     {
         // Update
         //----------------------------------------------------------------------------------
-        if (IsCursorHidden()) UpdateCamera(&camera);          // Update camera
+        if (IsCursorHidden()) UpdateCamera(&camera, CAMERA_FIRST_PERSON);          // Update camera
 
         // Toggle camera controls
         if (IsMouseButtonPressed(MOUSE_BUTTON_RIGHT))

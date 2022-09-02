@@ -36,8 +36,7 @@ int main(void)
     Vector3 cubePosition = { 0.0f, 0.0f, 0.0f };
     Vector2 cubeScreenPosition = { 0.0f, 0.0f };
 
-    SetCameraMode(&camera, CAMERA_FREE); // Set a free camera mode
-
+    DisableCursor();                            // Catch cursor
     SetTargetFPS(60);                   // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
 
@@ -46,7 +45,7 @@ int main(void)
     {
         // Update
         //----------------------------------------------------------------------------------
-        UpdateCamera(&camera);
+        UpdateCamera(&camera, CAMERA_THIRD_PERSON);
 
         // Calculate cube screen space position (with a little offset to be in top)
         cubeScreenPosition = GetWorldToScreen((Vector3){cubePosition.x, cubePosition.y + 2.5f, cubePosition.z}, camera);

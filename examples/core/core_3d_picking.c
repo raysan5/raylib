@@ -40,8 +40,7 @@ int main(void)
 
     RayCollision collision = { 0 };
 
-    SetCameraMode(&camera, CAMERA_FREE); // Set a free camera mode
-    EnableCursor();                      // Disable camera controls
+    EnableCursor();                     // Disable camera controls
 
     SetTargetFPS(60);                   // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
@@ -51,7 +50,7 @@ int main(void)
     {
         // Update
         //----------------------------------------------------------------------------------
-        if (IsCursorHidden()) UpdateCamera(&camera);          // Update camera
+        if (IsCursorHidden()) UpdateCamera(&camera, CAMERA_FIRST_PERSON);          // Update camera
 
         // Toggle camera controls
         if (IsMouseButtonPressed(MOUSE_BUTTON_RIGHT))

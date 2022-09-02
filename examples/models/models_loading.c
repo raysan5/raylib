@@ -57,10 +57,9 @@ int main(void)
     // NOTE: bounds are calculated from the original size of the model,
     // if model is scaled on drawing, bounds must be also scaled
 
-    SetCameraMode(&camera, CAMERA_FREE);     // Set a free camera mode
-
     bool selected = false;          // Selected object flag
 
+    DisableCursor();                // Catch cursor
     SetTargetFPS(60);               // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
 
@@ -69,7 +68,7 @@ int main(void)
     {
         // Update
         //----------------------------------------------------------------------------------
-        UpdateCamera(&camera);
+        UpdateCamera(&camera, CAMERA_FIRST_PERSON);
 
         // Load new models/textures on drag&drop
         if (IsFileDropped())
