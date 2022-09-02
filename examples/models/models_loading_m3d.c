@@ -54,8 +54,7 @@ int main(void)
     int animFrameCounter = 0, animId = 0;
     ModelAnimation *anims = LoadModelAnimations(modelFileName, &animsCount); // Load skeletal animation data
 
-    SetCameraMode(camera, CAMERA_FREE);     // Set free camera mode
-
+    DisableCursor();                        // Catch cursor
     SetTargetFPS(60);                       // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
 
@@ -64,7 +63,7 @@ int main(void)
     {
         // Update
         //----------------------------------------------------------------------------------
-        UpdateCamera(&camera);
+        UpdateCamera(&camera, CAMERA_FIRST_PERSON);
 
         if (animsCount)
         {
