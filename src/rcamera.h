@@ -152,20 +152,18 @@ Matrix GetCameraProjectionMatrix(Camera3D* camera, float aspect);
 #define CAMERA_ROTATION_SPEED                           0.03f
 
 // Camera mouse movement sensitivity
-#define CAMERA_MOUSE_MOVE_SENSITIVITY                   0.5f    // TODO: it should be independant of framerate
+#define CAMERA_MOUSE_MOVE_SENSITIVITY                   0.003f    // TODO: it should be independant of framerate
 #define CAMERA_MOUSE_SCROLL_SENSITIVITY                 1.5f
 
 #define CAMERA_ORBITAL_SPEED                            0.01f       // Radians per frame
 
 
-// When walking, y-position of the player moves up-down at step frequency (swinging) but
-// also the body slightly tilts left-right on every step, when all the body weight is left over one foot (tilting)
-#define CAMERA_FIRST_PERSON_STEP_FREQUENCY               1.8f       // Step frequency when walking (steps per second)
-#define CAMERA_FIRST_PERSON_SWINGING_DELTA               0.03f      // Maximum up-down swinging distance when walking
-#define CAMERA_FIRST_PERSON_TILTING_DELTA                0.005f     // Maximum left-right tilting distance when walking
+#define CAMERA_FIRST_PERSON_STEP_TRIGONOMETRIC_DIVIDER  8.0f
+#define CAMERA_FIRST_PERSON_STEP_DIVIDER                30.0f
+#define CAMERA_FIRST_PERSON_WAVING_DIVIDER              200.0f
 
 // PLAYER (used by camera)
-#define PLAYER_MOVEMENT_SENSITIVITY                     2.0f
+#define PLAYER_MOVEMENT_SENSITIVITY                     20.0f
 
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
@@ -181,59 +179,6 @@ Matrix GetCameraProjectionMatrix(Camera3D* camera, float aspect);
 // Module specific Functions Declaration
 //----------------------------------------------------------------------------------
 
-// Rotates the given vector around the given axis
-// Note: angle must be provided in radians
-// TODO remove after rebase (available in raymath now)
-Vector3 Vector3RotateByAxisAngle(Vector3 v, Vector3 axis, float angle)
-{
-    // Using Euler-Rodrigues Formula
-    // Ref.: https://en.wikipedia.org/w/index.php?title=Euler%E2%80%93Rodrigues_formula
-
-    Vector3 result = v;
-
-    // Vector3Normalize(axis);
-    float length = sqrtf(axis.x * axis.x + axis.y * axis.y + axis.z * axis.z);
-    if (length == 0.0f) length = 1.0f;
-    float ilength = 1.0f / length;
-    axis.x *= ilength;
-    axis.y *= ilength;
-    axis.z *= ilength;
-
-    angle /= 2.0f;
-    float a = sinf(angle);
-    float b = axis.x * a;
-    float c = axis.y * a;
-    float d = axis.z * a;
-    a = cosf(angle);
-    Vector3 w = { b, c, d };
-
-    // Vector3CrossProduct(w, v)
-    Vector3 wv = { w.y * v.z - w.z * v.y, w.z * v.x - w.x * v.z, w.x * v.y - w.y * v.x };
-
-    // Vector3CrossProduct(w, wv)
-    Vector3 wwv = { w.y * wv.z - w.z * wv.y, w.z * wv.x - w.x * wv.z, w.x * wv.y - w.y * wv.x };
-
-    // Vector3Scale(wv, 2 * a)
-    a *= 2;
-    wv.x *= a;
-    wv.y *= a;
-    wv.z *= a;
-
-    // Vector3Scale(wwv, 2)
-    wwv.x *= 2;
-    wwv.y *= 2;
-    wwv.z *= 2;
-
-    result.x += wv.x;
-    result.y += wv.y;
-    result.z += wv.z;
-
-    result.x += wwv.x;
-    result.y += wwv.y;
-    result.z += wwv.z;
-
-    return result;
-}
 
 //----------------------------------------------------------------------------------
 // Module Functions Definition
@@ -510,7 +455,7 @@ void UpdateCamera(Camera3D *camera, int mode)
 
 
     // Apply view bobbing when moving around (per default only active in CAMERA_FIRST_PERSON)
-    if (IsKeyDown(KEY_W) || IsKeyDown(KEY_A) || IsKeyDown(KEY_S) || IsKeyDown(KEY_D)) CameraViewBobbing(camera);
+    if (mode == CAMERA_FIRST_PERSON && (IsKeyDown(KEY_W) || IsKeyDown(KEY_A) || IsKeyDown(KEY_S) || IsKeyDown(KEY_D))) CameraViewBobbing(camera);
 }
 
 #endif // !CAMERA_STANDALONE
