@@ -1631,6 +1631,26 @@ bool CheckCollisionPointTriangle(Vector2 point, Vector2 p1, Vector2 p2, Vector2 
     return collision;
 }
 
+// Detects if point is within a polygon described by array of vertices
+bool CheckCollisionPointPolygon(Vector2 point, Vector2 *vertices, int verticesCount)
+{
+    // http://jeffreythompson.org/collision-detection/poly-point.php
+
+    bool collision = false;
+    
+    if (verticesCount > 2) {
+        for (int i = 0; i < verticesCount; i++) {
+            Vector2 vc = vertices[i];
+            Vector2 vn = vertices[i + 1];
+            if (((vc.y >= point.y && vn.y < point.y) || (vc.y < point.y && vn.y >= point.y)) &&
+                 (point.x < (vn.x-vc.x)*(point.y-vc.y) / (vn.y-vc.y)+vc.x)) {
+                    collision = !collision;
+            }
+        }
+    }
+    return collision;
+}
+
 // Check collision between two rectangles
 bool CheckCollisionRecs(Rectangle rec1, Rectangle rec2)
 {
