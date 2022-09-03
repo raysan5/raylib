@@ -2812,6 +2812,19 @@ int GetRandomValue(int min, int max)
     return (rand()%(abs(max - min) + 1) + min);
 }
 
+// Get a random float value between min and max (both included)
+float GetRandomFloat(float min, float max)
+{
+    if (min > max)
+    {
+        float tmp = max;
+        max = min;
+        min = tmp;
+    }
+
+    return min + ((float)rand() / (float)RAND_MAX) * (max - min);
+}
+
 // Set the seed for the random number generator
 void SetRandomSeed(unsigned int seed)
 {
