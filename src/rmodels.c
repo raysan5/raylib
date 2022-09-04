@@ -5372,9 +5372,9 @@ static Model LoadM3D(const char *fileName)
             {
                 model.bones[i].parent = m3d->bone[i].parent;
                 strncpy(model.bones[i].name, m3d->bone[i].name, sizeof(model.bones[i].name));
-                model.bindPose[i].translation.x = m3d->vertex[m3d->bone[i].pos].x;
-                model.bindPose[i].translation.y = m3d->vertex[m3d->bone[i].pos].y;
-                model.bindPose[i].translation.z = m3d->vertex[m3d->bone[i].pos].z;
+                model.bindPose[i].translation.x = m3d->vertex[m3d->bone[i].pos].x*m3d->scale;
+                model.bindPose[i].translation.y = m3d->vertex[m3d->bone[i].pos].y*m3d->scale;
+                model.bindPose[i].translation.z = m3d->vertex[m3d->bone[i].pos].z*m3d->scale;
                 model.bindPose[i].rotation.x = m3d->vertex[m3d->bone[i].ori].x;
                 model.bindPose[i].rotation.y = m3d->vertex[m3d->bone[i].ori].y;
                 model.bindPose[i].rotation.z = m3d->vertex[m3d->bone[i].ori].z;
@@ -5490,9 +5490,9 @@ static ModelAnimation *LoadModelAnimationsM3D(const char *fileName, unsigned int
                 {
                     for (j = 0; j < m3d->numbone; j++)
                     {
-                        animations[a].framePoses[i][j].translation.x = m3d->vertex[pose[j].pos].x;
-                        animations[a].framePoses[i][j].translation.y = m3d->vertex[pose[j].pos].y;
-                        animations[a].framePoses[i][j].translation.z = m3d->vertex[pose[j].pos].z;
+                        animations[a].framePoses[i][j].translation.x = m3d->vertex[pose[j].pos].x*m3d->scale;
+                        animations[a].framePoses[i][j].translation.y = m3d->vertex[pose[j].pos].y*m3d->scale;
+                        animations[a].framePoses[i][j].translation.z = m3d->vertex[pose[j].pos].z*m3d->scale;
                         animations[a].framePoses[i][j].rotation.x = m3d->vertex[pose[j].ori].x;
                         animations[a].framePoses[i][j].rotation.y = m3d->vertex[pose[j].ori].y;
                         animations[a].framePoses[i][j].rotation.z = m3d->vertex[pose[j].ori].z;
