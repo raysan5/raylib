@@ -12,6 +12,8 @@
 *              raylib can load .iqm animations.
 *     - VOX  > Binary file format. MagikaVoxel mesh format:
 *              https://github.com/ephtracy/voxel-model/blob/master/MagicaVoxel-file-format-vox.txt
+*     - M3D  > Binary file format. Model 3D format:
+*              https://bztsrc.gitlab.io/model3d
 *
 *   Example originally created with raylib 2.0, last time updated with raylib 4.2
 *
@@ -80,7 +82,8 @@ int main(void)
                     IsFileExtension(droppedFiles.paths[0], ".gltf") ||
                     IsFileExtension(droppedFiles.paths[0], ".glb") ||
                     IsFileExtension(droppedFiles.paths[0], ".vox") ||
-                    IsFileExtension(droppedFiles.paths[0], ".iqm"))       // Model file formats supported
+                    IsFileExtension(droppedFiles.paths[0], ".iqm") ||
+                    IsFileExtension(droppedFiles.paths[0], ".m3d"))       // Model file formats supported
                 {
                     UnloadModel(model);                         // Unload previous model
                     model = LoadModel(droppedFiles.paths[0]);   // Load new model

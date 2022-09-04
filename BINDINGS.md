@@ -20,7 +20,7 @@ Some people ported raylib to other languages in form of bindings or wrappers to 
 | rayex              | 3.7     | [elixir](https://elixir-lang.org/)      | Apache-2.0 | https://github.com/shiryel/rayex     |
 | raylib-factor      | **4.0**     | [Factor](https://factorcode.org/)        | BSD  | https://github.com/factor/factor/blob/master/extra/raylib/raylib.factor   |
 | raylib-freebasic   | **4.2** | [FreeBASIC](https://www.freebasic.net/) | MIT | https://github.com/WIITD/raylib-freebasic     |
-| raylib-go          | **4.0** | [Go](https://golang.org/)            | Zlib | https://github.com/gen2brain/raylib-go       |
+| raylib-go          | **4.2** | [Go](https://golang.org/)            | Zlib | https://github.com/gen2brain/raylib-go       |
 | raylib-guile       | auto    | [Guile](https://www.gnu.org/software/guile/) | Zlib | https://github.com/petelliott/raylib-guile |
 | gforth-raylib      | 3.5     | [Gforth](https://gforth.org/)            | MIT  | https://github.com/ArnautDaniel/gforth-raylib   |
 | raylib-hx          | 4.0     | [Haxe](https://haxe.org/)                | Zlib | https://github.com/foreignsasquatch/raylib-hx    |
@@ -32,7 +32,7 @@ Some people ported raylib to other languages in form of bindings or wrappers to 
 | raylib-lua         | **4.0** | [Lua](http://www.lua.org/)           | ISC | https://github.com/TSnake41/raylib-lua        |
 | raylua             | **4.0** | [Lua](http://www.lua.org/)           | MIT | https://github.com/Rabios/raylua              |
 | nelua-raylib       | 4.0     | [nelua](https://nelua.io/)           | MIT | https://github.com/AKDev21/nelua-raylib       |
-| NimraylibNow!      | 4.0     | [Nim](https://nim-lang.org/)         | MIT | https://github.com/greenfork/nimraylib_now    |
+| NimraylibNow!      | 4.2     | [Nim](https://nim-lang.org/)         | MIT | https://github.com/greenfork/nimraylib_now    |
 | raylib-Forever     | auto    | [Nim](https://nim-lang.org/)         | ? | https://github.com/Guevara-chan/Raylib-Forever  |
 | naylib             | auto    | [Nim](https://nim-lang.org/)         | MIT | https://github.com/planetis-m/naylib          |
 | node-raylib        | **4.0** | [Node.js](https://nodejs.org/en/)    | Zlib     | https://github.com/RobLoach/node-raylib         |

@@ -48,16 +48,6 @@
 //
 GLFWbool _glfwIsValidContextConfig(const _GLFWctxconfig* ctxconfig)
 {
-    if (ctxconfig->share)
-    {
-        if (ctxconfig->client == GLFW_NO_API ||
-            ctxconfig->share->context.client == GLFW_NO_API)
-        {
-            _glfwInputError(GLFW_NO_WINDOW_CONTEXT, NULL);
-            return GLFW_FALSE;
-        }
-    }
-
     if (ctxconfig->source != GLFW_NATIVE_CONTEXT_API &&
         ctxconfig->source != GLFW_EGL_CONTEXT_API &&
         ctxconfig->source != GLFW_OSMESA_CONTEXT_API)
@@ -76,6 +66,23 @@ GLFWbool _glfwIsValidContextConfig(const _GLFWctxconfig* ctxconfig)
                         "Invalid client API 0x%08X",
                         ctxconfig->client);
         return GLFW_FALSE;
+    }
+
+    if (ctxconfig->share)
+    {
+        if (ctxconfig->client == GLFW_NO_API ||
+            ctxconfig->share->context.client == GLFW_NO_API)
+        {
+            _glfwInputError(GLFW_NO_WINDOW_CONTEXT, NULL);
+            return GLFW_FALSE;
+        }
+
+        if (ctxconfig->source != ctxconfig->share->context.source)
+        {
+            _glfwInputError(GLFW_INVALID_ENUM,
+                            "Context creation APIs do not match between contexts");
+            return GLFW_FALSE;
+        }
     }
 
     if (ctxconfig->client == GLFW_OPENGL_API)
@@ -609,9 +616,11 @@ GLFWbool _glfwStringInExtensionString(const char* string, const char* extensions
 GLFWAPI void glfwMakeContextCurrent(GLFWwindow* handle)
 {
     _GLFWwindow* window = (_GLFWwindow*) handle;
-    _GLFWwindow* previous = _glfwPlatformGetTls(&_glfw.contextSlot);
+    _GLFWwindow* previous;
 
     _GLFW_REQUIRE_INIT();
+
+    previous = _glfwPlatformGetTls(&_glfw.contextSlot);
 
     if (window && window->context.client == GLFW_NO_API)
     {

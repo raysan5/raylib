@@ -526,7 +526,7 @@ typedef struct CoreData {
 //----------------------------------------------------------------------------------
 // Global Variables Definition
 //----------------------------------------------------------------------------------
-const char *raylibVersion = RAYLIB_VERSION; // raylib version symbol, it could be required for some bindings
+RLAPI const char *raylib_version = RAYLIB_VERSION;  // raylib version exported symbol, required for some bindings
 
 static CoreData CORE = { 0 };               // Global CORE state context
 

@@ -110,7 +110,7 @@ int main(void)
             waitTime = (1.0f/(float)targetFPS) - updateDrawTime;
             if (waitTime > 0.0) 
             {
-                WaitTime((float)waitTime*1000.0f);
+                WaitTime((float)waitTime);
                 currentTime = GetTime();
                 deltaTime = (float)(currentTime - previousTime);
             }

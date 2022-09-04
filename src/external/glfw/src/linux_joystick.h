@@ -28,10 +28,10 @@
 #include <linux/limits.h>
 #include <regex.h>
 
-#define _GLFW_PLATFORM_JOYSTICK_STATE         _GLFWjoystickLinux linjs
-#define _GLFW_PLATFORM_LIBRARY_JOYSTICK_STATE _GLFWlibraryLinux  linjs
+#define GLFW_LINUX_JOYSTICK_STATE         _GLFWjoystickLinux linjs;
+#define GLFW_LINUX_LIBRARY_JOYSTICK_STATE _GLFWlibraryLinux  linjs;
 
-#define _GLFW_PLATFORM_MAPPING_NAME "Linux"
+#define GLFW_BUILD_LINUX_MAPPINGS
 
 // Linux-specific joystick data
 //
@@ -56,4 +56,10 @@ typedef struct _GLFWlibraryLinux
 } _GLFWlibraryLinux;
 
 void _glfwDetectJoystickConnectionLinux(void);
+
+GLFWbool _glfwInitJoysticksLinux(void);
+void _glfwTerminateJoysticksLinux(void);
+GLFWbool _glfwPollJoystickLinux(_GLFWjoystick* js, int mode);
+const char* _glfwGetMappingNameLinux(void);
+void _glfwUpdateGamepadGUIDLinux(char* guid);
 

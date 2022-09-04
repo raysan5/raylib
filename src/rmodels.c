@@ -92,10 +92,6 @@
     #define M3D_REALLOC RL_REALLOC
     #define M3D_FREE RL_FREE
 
-    // Let the M3D loader know about stb_image is used in this project,
-	// to allow it to use on textures loading
-    #include "external/stb_image.h"
-
     #define M3D_IMPLEMENTATION
     #include "external/m3d.h"           // Model3D file format loading
 #endif
@@ -157,6 +153,7 @@ static Model LoadVOX(const char *filename);     // Load VOX mesh data
 #endif
 #if defined(SUPPORT_FILEFORMAT_M3D)
 static Model LoadM3D(const char *filename);     // Load M3D mesh data
+static ModelAnimation *LoadModelAnimationsM3D(const char *fileName, unsigned int *animCount);    // Load M3D animation data
 #endif
 
 //----------------------------------------------------------------------------------
@@ -1861,6 +1858,9 @@ ModelAnimation *LoadModelAnimations(const char *fileName, unsigned int *animCoun
 
 #if defined(SUPPORT_FILEFORMAT_IQM)
     if (IsFileExtension(fileName, ".iqm")) animations = LoadModelAnimationsIQM(fileName, animCount);
+#endif
+#if defined(SUPPORT_FILEFORMAT_M3D)
+    if (IsFileExtension(fileName, ".m3d")) animations = LoadModelAnimationsM3D(fileName, animCount);
 #endif
 #if defined(SUPPORT_FILEFORMAT_GLTF)
     //if (IsFileExtension(fileName, ".gltf;.glb")) animations = LoadModelAnimationGLTF(fileName, animCount);
@@ -4302,6 +4302,7 @@ static Model LoadIQM(const char *fileName)
     RL_FREE(blendi);
     RL_FREE(blendw);
     RL_FREE(ijoint);
+    RL_FREE(color);
 
     return model;
 }
@@ -5135,18 +5136,28 @@ static Model LoadM3D(const char *fileName)
     m3dp_t *prop = NULL;
     unsigned int bytesRead = 0;
     unsigned char *fileData = LoadFileData(fileName, &bytesRead);
-    int i, j, k, l, mi = -2;
+    int i, j, k, l, n, mi = -2;
 
     if (fileData != NULL)
     {
         m3d = m3d_load(fileData, m3d_loaderhook, m3d_freehook, NULL);
 
-        if (!m3d || (m3d->errcode != M3D_SUCCESS))
+        if (!m3d || M3D_ERR_ISFATAL(m3d->errcode))
         {
-            TRACELOG(LOG_WARNING, "MODEL: [%s] Failed to load M3D data", fileName);
+            TRACELOG(LOG_WARNING, "MODEL: [%s] Failed to load M3D data, error code %d", fileName, m3d ? m3d->errcode : -2);
+            if (m3d) m3d_free(m3d);
+            UnloadFileData(fileData);
             return model;
         }
         else TRACELOG(LOG_INFO, "MODEL: [%s] M3D data loaded successfully: %i faces/%i materials", fileName, m3d->numface, m3d->nummaterial);
+
+        // no face? this is probably just a material library
+        if (!m3d->numface)
+        {
+            m3d_free(m3d);
+            UnloadFileData(fileData);
+            return model;
+        }
 
         if (m3d->nummaterial > 0)
         {
@@ -5161,17 +5172,25 @@ static Model LoadM3D(const char *fileName)
 
         model.meshes = (Mesh *)RL_CALLOC(model.meshCount, sizeof(Mesh));
         model.meshMaterial = (int *)RL_CALLOC(model.meshCount, sizeof(int));
-        model.materials = (Material *)RL_CALLOC(model.meshCount + 1, sizeof(Material));
+        model.materials = (Material *)RL_CALLOC(model.materialCount + 1, sizeof(Material));
 
         // Map no material to index 0 with default shader, everything else materialid + 1
         model.materials[0] = LoadMaterialDefault();
-        model.materials[0].maps[MATERIAL_MAP_DIFFUSE].texture = (Texture2D){ rlGetTextureIdDefault(), 1, 1, 1, PIXELFORMAT_UNCOMPRESSED_R8G8B8A8 };
 
         for (i = l = 0, k = -1; i < m3d->numface; i++, l++)
         {
             // Materials are grouped together
             if (mi != m3d->face[i].materialid)
             {
+                // there should be only one material switch per material kind, but be bulletproof for unoptimal model files
+                if (k + 1 >= model.meshCount)
+                {
+                    model.meshCount++;
+                    model.meshes = (Mesh *)RL_REALLOC(model.meshes, model.meshCount*sizeof(Mesh));
+                    memset(&model.meshes[model.meshCount - 1], 0, sizeof(Mesh));
+                    model.meshMaterial = (int *)RL_REALLOC(model.meshMaterial, model.meshCount*sizeof(int));
+                }
+
                 k++;
                 mi = m3d->face[i].materialid;
 
@@ -5182,6 +5201,19 @@ static Model LoadM3D(const char *fileName)
                 model.meshes[k].vertices = (float *)RL_CALLOC(model.meshes[k].vertexCount*3, sizeof(float));
                 model.meshes[k].texcoords = (float *)RL_CALLOC(model.meshes[k].vertexCount*2, sizeof(float));
                 model.meshes[k].normals = (float *)RL_CALLOC(model.meshes[k].vertexCount*3, sizeof(float));
+                // without material, we rely on vertex colors
+                if (mi == M3D_UNDEF && model.meshes[k].colors == NULL)
+                {
+                    model.meshes[k].colors = RL_CALLOC(model.meshes[k].vertexCount*4, sizeof(unsigned char));
+                    for (j = 0; j < model.meshes[k].vertexCount*4; j += 4) memcpy(&model.meshes[k].colors[j], &WHITE, 4);
+                }
+                if (m3d->numbone && m3d->numskin)
+                {
+                    model.meshes[k].boneIds = (unsigned char *)RL_CALLOC(model.meshes[k].vertexCount*4, sizeof(unsigned char));
+                    model.meshes[k].boneWeights = (float *)RL_CALLOC(model.meshes[k].vertexCount*4, sizeof(float));
+                    model.meshes[k].animVertices = (float *)RL_CALLOC(model.meshes[k].vertexCount*3, sizeof(float));
+                    model.meshes[k].animNormals = (float *)RL_CALLOC(model.meshes[k].vertexCount*3, sizeof(float));
+                }
                 model.meshMaterial[k] = mi + 1;
                 l = 0;
             }
@@ -5197,14 +5229,25 @@ static Model LoadM3D(const char *fileName)
             model.meshes[k].vertices[l * 9 + 7] = m3d->vertex[m3d->face[i].vertex[2]].y*m3d->scale;
             model.meshes[k].vertices[l * 9 + 8] = m3d->vertex[m3d->face[i].vertex[2]].z*m3d->scale;
 
+            if (mi == M3D_UNDEF)
+            {
+                // without vertex color (full transparency), we use the default color
+                if (m3d->vertex[m3d->face[i].vertex[0]].color & 0xFF000000)
+                    memcpy(&model.meshes[k].colors[l * 12 + 0], &m3d->vertex[m3d->face[i].vertex[0]].color, 4);
+                if (m3d->vertex[m3d->face[i].vertex[1]].color & 0xFF000000)
+                    memcpy(&model.meshes[k].colors[l * 12 + 4], &m3d->vertex[m3d->face[i].vertex[1]].color, 4);
+                if (m3d->vertex[m3d->face[i].vertex[2]].color & 0xFF000000)
+                    memcpy(&model.meshes[k].colors[l * 12 + 8], &m3d->vertex[m3d->face[i].vertex[2]].color, 4);
+            }
+
             if (m3d->face[i].texcoord[0] != M3D_UNDEF)
             {
                 model.meshes[k].texcoords[l * 6 + 0] = m3d->tmap[m3d->face[i].texcoord[0]].u;
-                model.meshes[k].texcoords[l * 6 + 1] = m3d->tmap[m3d->face[i].texcoord[0]].v;
+                model.meshes[k].texcoords[l * 6 + 1] = 1.0 - m3d->tmap[m3d->face[i].texcoord[0]].v;
                 model.meshes[k].texcoords[l * 6 + 2] = m3d->tmap[m3d->face[i].texcoord[1]].u;
-                model.meshes[k].texcoords[l * 6 + 3] = m3d->tmap[m3d->face[i].texcoord[1]].v;
+                model.meshes[k].texcoords[l * 6 + 3] = 1.0 - m3d->tmap[m3d->face[i].texcoord[1]].v;
                 model.meshes[k].texcoords[l * 6 + 4] = m3d->tmap[m3d->face[i].texcoord[2]].u;
-                model.meshes[k].texcoords[l * 6 + 5] = m3d->tmap[m3d->face[i].texcoord[2]].v;
+                model.meshes[k].texcoords[l * 6 + 5] = 1.0 - m3d->tmap[m3d->face[i].texcoord[2]].v;
             }
 
             if (m3d->face[i].normal[0] != M3D_UNDEF)
@@ -5219,12 +5262,38 @@ static Model LoadM3D(const char *fileName)
                 model.meshes[k].normals[l * 9 + 7] = m3d->vertex[m3d->face[i].normal[2]].y;
                 model.meshes[k].normals[l * 9 + 8] = m3d->vertex[m3d->face[i].normal[2]].z;
             }
+
+            // Add skin (vertex / bone weight pairs)
+            if (m3d->numbone && m3d->numskin)
+            {
+                for (n = 0; n < 3; n++)
+                {
+                    int skinid = m3d->vertex[m3d->face[i].vertex[n]].skinid;
+
+                    // Check if there is a skin for this mesh, should be, just failsafe
+                    if (skinid != M3D_UNDEF && skinid < m3d->numskin)
+                    {
+                        for (j = 0; j < 4; j++)
+                        {
+                            model.meshes[k].boneIds[l*12 + n*4 + j] = m3d->skin[skinid].boneid[j];
+                            model.meshes[k].boneWeights[l*12 + n*4 + j] = m3d->skin[skinid].weight[j];
+                        }
+                    }
+                    else
+                    {
+                        // raylib does not handle boneless meshes with skeletal animations, so
+                        // we put all vertices without a bone into a special "no bone" bone
+                        model.meshes[k].boneIds[l * 12 + n * 4] = m3d->numbone;
+                        model.meshes[k].boneWeights[l * 12 + n * 4] = 1.0f;
+                    }
+                }
+            }
         }
 
+        // Load materials
         for (i = 0; i < m3d->nummaterial; i++)
         {
             model.materials[i + 1] = LoadMaterialDefault();
-            model.materials[i + 1].maps[MATERIAL_MAP_DIFFUSE].texture = (Texture2D){ rlGetTextureIdDefault(), 1, 1, 1, PIXELFORMAT_UNCOMPRESSED_R8G8B8A8 };
 
             for (j = 0; j < m3d->material[i].numprop; j++)
             {
@@ -5240,7 +5309,6 @@ static Model LoadM3D(const char *fileName)
                     case m3dp_Ks:
                     {
                         memcpy(&model.materials[i + 1].maps[MATERIAL_MAP_SPECULAR].color, &prop->value.color, 4);
-                        model.materials[i + 1].maps[MATERIAL_MAP_SPECULAR].value = 0.0f;
                     } break;
                     case m3dp_Ns:
                     {
@@ -5270,11 +5338,11 @@ static Model LoadM3D(const char *fileName)
                         {
                             Image image = { 0 };
                             image.data = m3d->texture[prop->value.textureid].d;
-                            image.width = m3d->texture[prop->value.textureid].w; 
+                            image.width = m3d->texture[prop->value.textureid].w;
                             image.height = m3d->texture[prop->value.textureid].h;
                             image.mipmaps = 1;
-                            image.format = (m3d->texture[prop->value.textureid].f == 4)? PIXELFORMAT_UNCOMPRESSED_R8G8B8A8 : 
-                                           ((m3d->texture[prop->value.textureid].f == 3)? PIXELFORMAT_UNCOMPRESSED_R8G8B8 : 
+                            image.format = (m3d->texture[prop->value.textureid].f == 4)? PIXELFORMAT_UNCOMPRESSED_R8G8B8A8 :
+                                           ((m3d->texture[prop->value.textureid].f == 3)? PIXELFORMAT_UNCOMPRESSED_R8G8B8 :
                                            ((m3d->texture[prop->value.textureid].f == 2)? PIXELFORMAT_UNCOMPRESSED_GRAY_ALPHA : PIXELFORMAT_UNCOMPRESSED_GRAYSCALE));
 
                             switch (prop->type)
@@ -5283,6 +5351,8 @@ static Model LoadM3D(const char *fileName)
                                 case m3dp_map_Ks: model.materials[i + 1].maps[MATERIAL_MAP_SPECULAR].texture = LoadTextureFromImage(image); break;
                                 case m3dp_map_Ke: model.materials[i + 1].maps[MATERIAL_MAP_EMISSION].texture = LoadTextureFromImage(image); break;
                                 case m3dp_map_Km: model.materials[i + 1].maps[MATERIAL_MAP_NORMAL].texture = LoadTextureFromImage(image); break;
+                                case m3dp_map_Ka: model.materials[i + 1].maps[MATERIAL_MAP_OCCLUSION].texture = LoadTextureFromImage(image); break;
+                                case m3dp_map_Pm: model.materials[i + 1].maps[MATERIAL_MAP_ROUGHNESS].texture = LoadTextureFromImage(image); break;
                                 default: break;
                             }
                         }
@@ -5291,11 +5361,174 @@ static Model LoadM3D(const char *fileName)
             }
         }
 
+        // Load bones
+        if (m3d->numbone)
+        {
+            model.boneCount = m3d->numbone + 1;
+            model.bones = RL_CALLOC(model.boneCount, sizeof(BoneInfo));
+            model.bindPose = RL_CALLOC(model.boneCount, sizeof(Transform));
+
+            for (i = 0; i < m3d->numbone; i++)
+            {
+                model.bones[i].parent = m3d->bone[i].parent;
+                strncpy(model.bones[i].name, m3d->bone[i].name, sizeof(model.bones[i].name));
+                model.bindPose[i].translation.x = m3d->vertex[m3d->bone[i].pos].x;
+                model.bindPose[i].translation.y = m3d->vertex[m3d->bone[i].pos].y;
+                model.bindPose[i].translation.z = m3d->vertex[m3d->bone[i].pos].z;
+                model.bindPose[i].rotation.x = m3d->vertex[m3d->bone[i].ori].x;
+                model.bindPose[i].rotation.y = m3d->vertex[m3d->bone[i].ori].y;
+                model.bindPose[i].rotation.z = m3d->vertex[m3d->bone[i].ori].z;
+                model.bindPose[i].rotation.w = m3d->vertex[m3d->bone[i].ori].w;
+                // TODO: if the orientation quaternion not normalized, then that's encoding scaling
+                model.bindPose[i].rotation = QuaternionNormalize(model.bindPose[i].rotation);
+                model.bindPose[i].scale.x = model.bindPose[i].scale.y = model.bindPose[i].scale.z = 1.0f;
+
+                // Child bones are stored in parent bone relative space, convert that into model space
+                if (model.bones[i].parent >= 0)
+                {
+                    model.bindPose[i].rotation = QuaternionMultiply(model.bindPose[model.bones[i].parent].rotation, model.bindPose[i].rotation);
+                    model.bindPose[i].translation = Vector3RotateByQuaternion(model.bindPose[i].translation, model.bindPose[model.bones[i].parent].rotation);
+                    model.bindPose[i].translation = Vector3Add(model.bindPose[i].translation, model.bindPose[model.bones[i].parent].translation);
+                    model.bindPose[i].scale = Vector3Multiply(model.bindPose[i].scale, model.bindPose[model.bones[i].parent].scale);
+                }
+            }
+
+            // Add a special "no bone" bone
+            model.bones[i].parent = -1;
+            strcpy(model.bones[i].name, "NO BONE");
+            model.bindPose[i].translation.x = 0.0f;
+            model.bindPose[i].translation.y = 0.0f;
+            model.bindPose[i].translation.z = 0.0f;
+            model.bindPose[i].rotation.x = 0.0f;
+            model.bindPose[i].rotation.y = 0.0f;
+            model.bindPose[i].rotation.z = 0.0f;
+            model.bindPose[i].rotation.w = 1.0f;
+            model.bindPose[i].scale.x = model.bindPose[i].scale.y = model.bindPose[i].scale.z = 1.0f;
+        }
+
+        // Load bone-pose default mesh into animation vertices. These will be updated when UpdateModelAnimation gets
+        // called, but not before, however DrawMesh uses these if they exists (so not good if they are left empty).
+        if (m3d->numbone && m3d->numskin)
+        {
+            for(i = 0; i < model.meshCount; i++)
+            {
+                memcpy(model.meshes[i].animVertices, model.meshes[i].vertices, model.meshes[i].vertexCount*3*sizeof(float));
+                memcpy(model.meshes[i].animNormals, model.meshes[i].normals, model.meshes[i].vertexCount*3*sizeof(float));
+            }
+        }
+
         m3d_free(m3d);
         UnloadFileData(fileData);
     }
 
     return model;
+}
+
+// Load M3D animation data
+#define M3D_ANIMDELAY 17    // that's roughly ~1000 msec / 60 FPS (16.666666* msec)
+static ModelAnimation *LoadModelAnimationsM3D(const char *fileName, unsigned int *animCount)
+{
+    m3d_t *m3d = NULL;
+    unsigned int bytesRead = 0;
+    unsigned char *fileData = LoadFileData(fileName, &bytesRead);
+    ModelAnimation *animations = NULL;
+    int i, j;
+
+    *animCount = 0;
+
+    if (fileData != NULL)
+    {
+        m3d = m3d_load(fileData, m3d_loaderhook, m3d_freehook, NULL);
+
+        if (!m3d || M3D_ERR_ISFATAL(m3d->errcode))
+        {
+            TRACELOG(LOG_WARNING, "MODEL: [%s] Failed to load M3D data, error code %d", fileName, m3d ? m3d->errcode : -2);
+            UnloadFileData(fileData);
+            return NULL;
+        }
+        else TRACELOG(LOG_INFO, "MODEL: [%s] M3D data loaded successfully: %i animations, %i bones, %i skins", fileName,
+            m3d->numaction, m3d->numbone, m3d->numskin);
+
+        // no animation or bone+skin?
+        if (!m3d->numaction || !m3d->numbone || !m3d->numskin)
+        {
+            m3d_free(m3d);
+            UnloadFileData(fileData);
+            return NULL;
+        }
+
+        animations = RL_MALLOC(m3d->numaction*sizeof(ModelAnimation));
+        *animCount = m3d->numaction;
+
+        for (unsigned int a = 0; a < m3d->numaction; a++)
+        {
+            animations[a].frameCount = m3d->action[a].durationmsec / M3D_ANIMDELAY;
+            animations[a].boneCount = m3d->numbone + 1;
+            animations[a].bones = RL_MALLOC((m3d->numbone + 1)*sizeof(BoneInfo));
+            animations[a].framePoses = RL_MALLOC(animations[a].frameCount*sizeof(Transform *));
+            // strncpy(animations[a].name, m3d->action[a].name, sizeof(animations[a].name));
+            TRACELOG(LOG_INFO, "MODEL: [%s] animation #%i: %i msec, %i frames", fileName, a, m3d->action[a].durationmsec, animations[a].frameCount);
+
+            for (i = 0; i < m3d->numbone; i++)
+            {
+                animations[a].bones[i].parent = m3d->bone[i].parent;
+                strncpy(animations[a].bones[i].name, m3d->bone[i].name, sizeof(animations[a].bones[i].name));
+            }
+
+            // A special, never transformed "no bone" bone, used for boneless vertices
+            animations[a].bones[i].parent = -1;
+            strcpy(animations[a].bones[i].name, "NO BONE");
+
+            // M3D stores frames at arbitrary intervals with sparse skeletons. We need full skeletons at
+            // regular intervals, so let the M3D SDK do the heavy lifting and calculate interpolated bones
+            for (i = 0; i < animations[a].frameCount; i++)
+            {
+                animations[a].framePoses[i] = RL_MALLOC((m3d->numbone + 1)*sizeof(Transform));
+
+                m3db_t *pose = m3d_pose(m3d, a, i * M3D_ANIMDELAY);
+                if (pose != NULL)
+                {
+                    for (j = 0; j < m3d->numbone; j++)
+                    {
+                        animations[a].framePoses[i][j].translation.x = m3d->vertex[pose[j].pos].x;
+                        animations[a].framePoses[i][j].translation.y = m3d->vertex[pose[j].pos].y;
+                        animations[a].framePoses[i][j].translation.z = m3d->vertex[pose[j].pos].z;
+                        animations[a].framePoses[i][j].rotation.x = m3d->vertex[pose[j].ori].x;
+                        animations[a].framePoses[i][j].rotation.y = m3d->vertex[pose[j].ori].y;
+                        animations[a].framePoses[i][j].rotation.z = m3d->vertex[pose[j].ori].z;
+                        animations[a].framePoses[i][j].rotation.w = m3d->vertex[pose[j].ori].w;
+                        animations[a].framePoses[i][j].rotation = QuaternionNormalize(animations[a].framePoses[i][j].rotation);
+                        animations[a].framePoses[i][j].scale.x = animations[a].framePoses[i][j].scale.y = animations[a].framePoses[i][j].scale.z = 1.0f;
+
+                        // Child bones are stored in parent bone relative space, convert that into model space
+                        if (animations[a].bones[j].parent >= 0)
+                        {
+                            animations[a].framePoses[i][j].rotation = QuaternionMultiply(animations[a].framePoses[i][animations[a].bones[j].parent].rotation, animations[a].framePoses[i][j].rotation);
+                            animations[a].framePoses[i][j].translation = Vector3RotateByQuaternion(animations[a].framePoses[i][j].translation, animations[a].framePoses[i][animations[a].bones[j].parent].rotation);
+                            animations[a].framePoses[i][j].translation = Vector3Add(animations[a].framePoses[i][j].translation, animations[a].framePoses[i][animations[a].bones[j].parent].translation);
+                            animations[a].framePoses[i][j].scale = Vector3Multiply(animations[a].framePoses[i][j].scale, animations[a].framePoses[i][animations[a].bones[j].parent].scale);
+                        }
+                    }
+
+                    // Default transform for the "no bone" bone
+                    animations[a].framePoses[i][j].translation.x = 0.0f;
+                    animations[a].framePoses[i][j].translation.y = 0.0f;
+                    animations[a].framePoses[i][j].translation.z = 0.0f;
+                    animations[a].framePoses[i][j].rotation.x = 0.0f;
+                    animations[a].framePoses[i][j].rotation.y = 0.0f;
+                    animations[a].framePoses[i][j].rotation.z = 0.0f;
+                    animations[a].framePoses[i][j].rotation.w = 1.0f;
+                    animations[a].framePoses[i][j].scale.x = animations[a].framePoses[i][j].scale.y = animations[a].framePoses[i][j].scale.z = 1.0f;
+                    RL_FREE(pose);
+                }
+            }
+        }
+
+        m3d_free(m3d);
+        UnloadFileData(fileData);
+    }
+
+    return animations;
 }
 #endif
 

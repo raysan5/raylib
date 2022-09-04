@@ -27,60 +27,33 @@
 // It is fine to use C99 in this file because it will not be built with VS
 //========================================================================
 
-#define _POSIX_C_SOURCE 199309L
-
 #include "internal.h"
 
 #include <unistd.h>
 #include <sys/time.h>
-#include <time.h>
-
-
-//////////////////////////////////////////////////////////////////////////
-//////                       GLFW internal API                      //////
-//////////////////////////////////////////////////////////////////////////
-
-// Initialise timer
-//
-void _glfwInitTimerPOSIX(void)
-{
-#if defined(_POSIX_TIMERS) && defined(_POSIX_MONOTONIC_CLOCK)
-    struct timespec ts;
-
-    if (clock_gettime(CLOCK_MONOTONIC, &ts) == 0)
-    {
-        _glfw.timer.posix.monotonic = GLFW_TRUE;
-        _glfw.timer.posix.frequency = 1000000000;
-    }
-    else
-#endif
-    {
-        _glfw.timer.posix.monotonic = GLFW_FALSE;
-        _glfw.timer.posix.frequency = 1000000;
-    }
-}
 
 
 //////////////////////////////////////////////////////////////////////////
 //////                       GLFW platform API                      //////
 //////////////////////////////////////////////////////////////////////////
 
+void _glfwPlatformInitTimer(void)
+{
+    _glfw.timer.posix.clock = CLOCK_REALTIME;
+    _glfw.timer.posix.frequency = 1000000000;
+
+#if defined(_POSIX_MONOTONIC_CLOCK)
+    struct timespec ts;
+    if (clock_gettime(CLOCK_MONOTONIC, &ts) == 0)
+        _glfw.timer.posix.clock = CLOCK_MONOTONIC;
+#endif
+}
+
 uint64_t _glfwPlatformGetTimerValue(void)
 {
-#if defined(_POSIX_TIMERS) && defined(_POSIX_MONOTONIC_CLOCK)
-    if (_glfw.timer.posix.monotonic)
-    {
-        struct timespec ts;
-        clock_gettime(CLOCK_MONOTONIC, &ts);
-        return (uint64_t) ts.tv_sec * (uint64_t) 1000000000 + (uint64_t) ts.tv_nsec;
-    }
-    else
-#endif
-    {
-        struct timeval tv;
-        gettimeofday(&tv, NULL);
-        return (uint64_t) tv.tv_sec * (uint64_t) 1000000 + (uint64_t) tv.tv_usec;
-    }
+    struct timespec ts;
+    clock_gettime(_glfw.timer.posix.clock, &ts);
+    return (uint64_t) ts.tv_sec * _glfw.timer.posix.frequency + (uint64_t) ts.tv_nsec;
 }
 
 uint64_t _glfwPlatformGetTimerFrequency(void)
