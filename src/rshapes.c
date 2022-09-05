@@ -106,8 +106,8 @@ void DrawPixel(int posX, int posY, Color color)
 {
     rlBegin(RL_LINES);
         rlColor4ub(color.r, color.g, color.b, color.a);
-        rlVertex2i(posX, posY);
-        rlVertex2i(posX + 1, posY + 1);
+        rlVertex2f(posX, posY);
+        rlVertex2f(posX + 1, posY + 1);
     rlEnd();
 }
 
@@ -126,8 +126,8 @@ void DrawLine(int startPosX, int startPosY, int endPosX, int endPosY, Color colo
 {
     rlBegin(RL_LINES);
         rlColor4ub(color.r, color.g, color.b, color.a);
-        rlVertex2i(startPosX, startPosY);
-        rlVertex2i(endPosX, endPosY);
+        rlVertex2f(startPosX, startPosY);
+        rlVertex2f(endPosX, endPosY);
     rlEnd();
 }
 
@@ -786,17 +786,17 @@ void DrawRectangleLines(int posX, int posY, int width, int height, Color color)
 #else
     rlBegin(RL_LINES);
         rlColor4ub(color.r, color.g, color.b, color.a);
-        rlVertex2i(posX + 1, posY + 1);
-        rlVertex2i(posX + width, posY + 1);
+        rlVertex2f(posX + 1, posY + 1);
+        rlVertex2f(posX + width, posY + 1);
 
-        rlVertex2i(posX + width, posY + 1);
-        rlVertex2i(posX + width, posY + height);
+        rlVertex2f(posX + width, posY + 1);
+        rlVertex2f(posX + width, posY + height);
 
-        rlVertex2i(posX + width, posY + height);
-        rlVertex2i(posX + 1, posY + height);
+        rlVertex2f(posX + width, posY + height);
+        rlVertex2f(posX + 1, posY + height);
 
-        rlVertex2i(posX + 1, posY + height);
-        rlVertex2i(posX + 1, posY + 1);
+        rlVertex2f(posX + 1, posY + height);
+        rlVertex2f(posX + 1, posY + 1);
     rlEnd();
 #endif
 }
