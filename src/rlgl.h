@@ -243,7 +243,7 @@
 #define RL_TEXTURE_FILTER_LINEAR_MIP_NEAREST    0x2701      // GL_LINEAR_MIPMAP_NEAREST
 #define RL_TEXTURE_FILTER_MIP_LINEAR            0x2703      // GL_LINEAR_MIPMAP_LINEAR
 #define RL_TEXTURE_FILTER_ANISOTROPIC           0x3000      // Anisotropic filter (custom identifier)
-#define RL_TEXTURE_MIPMAP_BIAS_RATIO            0x4000      // Texture mipmap bias (percentage ratio)
+#define RL_TEXTURE_MIPMAP_BIAS_RATIO            0x4000      // Texture mipmap bias, percentage ratio (custom identifier)
 
 #define RL_TEXTURE_WRAP_REPEAT                  0x2901      // GL_REPEAT
 #define RL_TEXTURE_WRAP_CLAMP                   0x812F      // GL_CLAMP_TO_EDGE
@@ -283,37 +283,23 @@
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
 //----------------------------------------------------------------------------------
-typedef enum {
-    OPENGL_11 = 1,
-    OPENGL_21,
-    OPENGL_33,
-    OPENGL_43,
-    OPENGL_ES_20
-} rlGlVersion;
+#if (defined(__STDC__) && __STDC_VERSION__ >= 199901L) || (defined(_MSC_VER) && _MSC_VER >= 1800)
+    #include <stdbool.h>
+#elif !defined(__cplusplus) && !defined(bool) && !defined(RL_BOOL_TYPE)
+    // Boolean type
+typedef enum bool { false = 0, true = !false } bool;
+#endif
 
-typedef enum {
-    RL_ATTACHMENT_COLOR_CHANNEL0 = 0,
-    RL_ATTACHMENT_COLOR_CHANNEL1,
-    RL_ATTACHMENT_COLOR_CHANNEL2,
-    RL_ATTACHMENT_COLOR_CHANNEL3,
-    RL_ATTACHMENT_COLOR_CHANNEL4,
-    RL_ATTACHMENT_COLOR_CHANNEL5,
-    RL_ATTACHMENT_COLOR_CHANNEL6,
-    RL_ATTACHMENT_COLOR_CHANNEL7,
-    RL_ATTACHMENT_DEPTH = 100,
-    RL_ATTACHMENT_STENCIL = 200,
-} rlFramebufferAttachType;
-
-typedef enum {
-    RL_ATTACHMENT_CUBEMAP_POSITIVE_X = 0,
-    RL_ATTACHMENT_CUBEMAP_NEGATIVE_X,
-    RL_ATTACHMENT_CUBEMAP_POSITIVE_Y,
-    RL_ATTACHMENT_CUBEMAP_NEGATIVE_Y,
-    RL_ATTACHMENT_CUBEMAP_POSITIVE_Z,
-    RL_ATTACHMENT_CUBEMAP_NEGATIVE_Z,
-    RL_ATTACHMENT_TEXTURE2D = 100,
-    RL_ATTACHMENT_RENDERBUFFER = 200,
-} rlFramebufferAttachTextureType;
+#if !defined(RL_MATRIX_TYPE)
+// Matrix, 4x4 components, column major, OpenGL style, right handed
+typedef struct Matrix {
+    float m0, m4, m8, m12;      // Matrix first row (4 components)
+    float m1, m5, m9, m13;      // Matrix second row (4 components)
+    float m2, m6, m10, m14;     // Matrix third row (4 components)
+    float m3, m7, m11, m15;     // Matrix fourth row (4 components)
+} Matrix;
+#define RL_MATRIX_TYPE
+#endif
 
 // Dynamic vertex buffers (position + texcoords + colors + indices arrays)
 typedef struct rlVertexBuffer {
@@ -344,8 +330,8 @@ typedef struct rlDrawCall {
     //unsigned int shaderId;    // Shader id to be used on the draw -> Using RLGL.currentShaderId
     unsigned int textureId;     // Texture id to be used on the draw -> Use to create new draw call if changes
 
-    //Matrix projection;      // Projection matrix for this draw -> Using RLGL.projection by default
-    //Matrix modelview;       // Modelview matrix for this draw -> Using RLGL.modelview by default
+    //Matrix projection;        // Projection matrix for this draw -> Using RLGL.projection by default
+    //Matrix modelview;         // Modelview matrix for this draw -> Using RLGL.modelview by default
 } rlDrawCall;
 
 // rlRenderBatch type
@@ -359,38 +345,31 @@ typedef struct rlRenderBatch {
     float currentDepth;         // Current depth value for next draw
 } rlRenderBatch;
 
-#if (defined(__STDC__) && __STDC_VERSION__ >= 199901L) || (defined(_MSC_VER) && _MSC_VER >= 1800)
-    #include <stdbool.h>
-#elif !defined(__cplusplus) && !defined(bool) && !defined(RL_BOOL_TYPE)
-    // Boolean type
-typedef enum bool { false = 0, true = !false } bool;
-#endif
 
-#if !defined(RL_MATRIX_TYPE)
-// Matrix, 4x4 components, column major, OpenGL style, right handed
-typedef struct Matrix {
-    float m0, m4, m8, m12;  // Matrix first row (4 components)
-    float m1, m5, m9, m13;  // Matrix second row (4 components)
-    float m2, m6, m10, m14; // Matrix third row (4 components)
-    float m3, m7, m11, m15; // Matrix fourth row (4 components)
-} Matrix;
-#define RL_MATRIX_TYPE
-#endif
+// OpenGL version
+typedef enum {
+    RL_OPENGL_11 = 1,           // OpenGL 1.1
+    RL_OPENGL_21,               // OpenGL 2.1 (GLSL 120)
+    RL_OPENGL_33,               // OpenGL 3.3 (GLSL 330)
+    RL_OPENGL_43,               // OpenGL 4.3 (using GLSL 330)
+    RL_OPENGL_ES_20             // OpenGL ES 2.0 (GLSL 100)
+} rlGlVersion;
 
 // Trace log level
 // NOTE: Organized by priority level
 typedef enum {
-    RL_LOG_ALL = 0,            // Display all logs
-    RL_LOG_TRACE,              // Trace logging, intended for internal use only
-    RL_LOG_DEBUG,              // Debug logging, used for internal debugging, it should be disabled on release builds
-    RL_LOG_INFO,               // Info logging, used for program execution info
-    RL_LOG_WARNING,            // Warning logging, used on recoverable failures
-    RL_LOG_ERROR,              // Error logging, used on unrecoverable failures
-    RL_LOG_FATAL,              // Fatal logging, used to abort program: exit(EXIT_FAILURE)
-    RL_LOG_NONE                // Disable logging
+    RL_LOG_ALL = 0,             // Display all logs
+    RL_LOG_TRACE,               // Trace logging, intended for internal use only
+    RL_LOG_DEBUG,               // Debug logging, used for internal debugging, it should be disabled on release builds
+    RL_LOG_INFO,                // Info logging, used for program execution info
+    RL_LOG_WARNING,             // Warning logging, used on recoverable failures
+    RL_LOG_ERROR,               // Error logging, used on unrecoverable failures
+    RL_LOG_FATAL,               // Fatal logging, used to abort program: exit(EXIT_FAILURE)
+    RL_LOG_NONE                 // Disable logging
 } rlTraceLogLevel;
 
-// Texture formats (support depends on OpenGL version)
+// Texture pixel formats
+// NOTE: Support depends on OpenGL version
 typedef enum {
     RL_PIXELFORMAT_UNCOMPRESSED_GRAYSCALE = 1,     // 8 bit per pixel (no alpha)
     RL_PIXELFORMAT_UNCOMPRESSED_GRAY_ALPHA,        // 8*2 bpp (2 channels)
@@ -419,78 +398,105 @@ typedef enum {
 // NOTE 1: Filtering considers mipmaps if available in the texture
 // NOTE 2: Filter is accordingly set for minification and magnification
 typedef enum {
-    RL_TEXTURE_FILTER_POINT = 0,               // No filter, just pixel approximation
-    RL_TEXTURE_FILTER_BILINEAR,                // Linear filtering
-    RL_TEXTURE_FILTER_TRILINEAR,               // Trilinear filtering (linear with mipmaps)
-    RL_TEXTURE_FILTER_ANISOTROPIC_4X,          // Anisotropic filtering 4x
-    RL_TEXTURE_FILTER_ANISOTROPIC_8X,          // Anisotropic filtering 8x
-    RL_TEXTURE_FILTER_ANISOTROPIC_16X,         // Anisotropic filtering 16x
+    RL_TEXTURE_FILTER_POINT = 0,        // No filter, just pixel approximation
+    RL_TEXTURE_FILTER_BILINEAR,         // Linear filtering
+    RL_TEXTURE_FILTER_TRILINEAR,        // Trilinear filtering (linear with mipmaps)
+    RL_TEXTURE_FILTER_ANISOTROPIC_4X,   // Anisotropic filtering 4x
+    RL_TEXTURE_FILTER_ANISOTROPIC_8X,   // Anisotropic filtering 8x
+    RL_TEXTURE_FILTER_ANISOTROPIC_16X,  // Anisotropic filtering 16x
 } rlTextureFilter;
 
 // Color blending modes (pre-defined)
 typedef enum {
-    RL_BLEND_ALPHA = 0,                // Blend textures considering alpha (default)
-    RL_BLEND_ADDITIVE,                 // Blend textures adding colors
-    RL_BLEND_MULTIPLIED,               // Blend textures multiplying colors
-    RL_BLEND_ADD_COLORS,               // Blend textures adding colors (alternative)
-    RL_BLEND_SUBTRACT_COLORS,          // Blend textures subtracting colors (alternative)
-    RL_BLEND_ALPHA_PREMULTIPLY,        // Blend premultiplied textures considering alpha
-    RL_BLEND_CUSTOM                    // Blend textures using custom src/dst factors (use rlSetBlendFactors())
+    RL_BLEND_ALPHA = 0,                 // Blend textures considering alpha (default)
+    RL_BLEND_ADDITIVE,                  // Blend textures adding colors
+    RL_BLEND_MULTIPLIED,                // Blend textures multiplying colors
+    RL_BLEND_ADD_COLORS,                // Blend textures adding colors (alternative)
+    RL_BLEND_SUBTRACT_COLORS,           // Blend textures subtracting colors (alternative)
+    RL_BLEND_ALPHA_PREMULTIPLY,         // Blend premultiplied textures considering alpha
+    RL_BLEND_CUSTOM                     // Blend textures using custom src/dst factors (use rlSetBlendFactors())
 } rlBlendMode;
 
 // Shader location point type
 typedef enum {
-    RL_SHADER_LOC_VERTEX_POSITION = 0, // Shader location: vertex attribute: position
-    RL_SHADER_LOC_VERTEX_TEXCOORD01,   // Shader location: vertex attribute: texcoord01
-    RL_SHADER_LOC_VERTEX_TEXCOORD02,   // Shader location: vertex attribute: texcoord02
-    RL_SHADER_LOC_VERTEX_NORMAL,       // Shader location: vertex attribute: normal
-    RL_SHADER_LOC_VERTEX_TANGENT,      // Shader location: vertex attribute: tangent
-    RL_SHADER_LOC_VERTEX_COLOR,        // Shader location: vertex attribute: color
-    RL_SHADER_LOC_MATRIX_MVP,          // Shader location: matrix uniform: model-view-projection
-    RL_SHADER_LOC_MATRIX_VIEW,         // Shader location: matrix uniform: view (camera transform)
-    RL_SHADER_LOC_MATRIX_PROJECTION,   // Shader location: matrix uniform: projection
-    RL_SHADER_LOC_MATRIX_MODEL,        // Shader location: matrix uniform: model (transform)
-    RL_SHADER_LOC_MATRIX_NORMAL,       // Shader location: matrix uniform: normal
-    RL_SHADER_LOC_VECTOR_VIEW,         // Shader location: vector uniform: view
-    RL_SHADER_LOC_COLOR_DIFFUSE,       // Shader location: vector uniform: diffuse color
-    RL_SHADER_LOC_COLOR_SPECULAR,      // Shader location: vector uniform: specular color
-    RL_SHADER_LOC_COLOR_AMBIENT,       // Shader location: vector uniform: ambient color
-    RL_SHADER_LOC_MAP_ALBEDO,          // Shader location: sampler2d texture: albedo (same as: RL_SHADER_LOC_MAP_DIFFUSE)
-    RL_SHADER_LOC_MAP_METALNESS,       // Shader location: sampler2d texture: metalness (same as: RL_SHADER_LOC_MAP_SPECULAR)
-    RL_SHADER_LOC_MAP_NORMAL,          // Shader location: sampler2d texture: normal
-    RL_SHADER_LOC_MAP_ROUGHNESS,       // Shader location: sampler2d texture: roughness
-    RL_SHADER_LOC_MAP_OCCLUSION,       // Shader location: sampler2d texture: occlusion
-    RL_SHADER_LOC_MAP_EMISSION,        // Shader location: sampler2d texture: emission
-    RL_SHADER_LOC_MAP_HEIGHT,          // Shader location: sampler2d texture: height
-    RL_SHADER_LOC_MAP_CUBEMAP,         // Shader location: samplerCube texture: cubemap
-    RL_SHADER_LOC_MAP_IRRADIANCE,      // Shader location: samplerCube texture: irradiance
-    RL_SHADER_LOC_MAP_PREFILTER,       // Shader location: samplerCube texture: prefilter
-    RL_SHADER_LOC_MAP_BRDF             // Shader location: sampler2d texture: brdf
-} rlShaderLocationIndex;
-
-#define RL_SHADER_LOC_MAP_DIFFUSE      RL_SHADER_LOC_MAP_ALBEDO
-#define RL_SHADER_LOC_MAP_SPECULAR     RL_SHADER_LOC_MAP_METALNESS
-
-// Shader uniform data type
-typedef enum {
-    RL_SHADER_UNIFORM_FLOAT = 0,       // Shader uniform type: float
-    RL_SHADER_UNIFORM_VEC2,            // Shader uniform type: vec2 (2 float)
-    RL_SHADER_UNIFORM_VEC3,            // Shader uniform type: vec3 (3 float)
-    RL_SHADER_UNIFORM_VEC4,            // Shader uniform type: vec4 (4 float)
-    RL_SHADER_UNIFORM_INT,             // Shader uniform type: int
-    RL_SHADER_UNIFORM_IVEC2,           // Shader uniform type: ivec2 (2 int)
-    RL_SHADER_UNIFORM_IVEC3,           // Shader uniform type: ivec3 (3 int)
-    RL_SHADER_UNIFORM_IVEC4,           // Shader uniform type: ivec4 (4 int)
-    RL_SHADER_UNIFORM_SAMPLER2D        // Shader uniform type: sampler2d
+    RL_SHADER_LOC_VERTEX_POSITION = 0,  // Shader location: vertex attribute: position
+    RL_SHADER_LOC_VERTEX_TEXCOORD01,    // Shader location: vertex attribute: texcoord01
+    RL_SHADER_LOC_VERTEX_TEXCOORD02,    // Shader location: vertex attribute: texcoord02
+    RL_SHADER_LOC_VERTEX_NORMAL,        // Shader location: vertex attribute: normal
+    RL_SHADER_LOC_VERTEX_TANGENT,       // Shader location: vertex attribute: tangent
+    RL_SHADER_LOC_VERTEX_COLOR,         // Shader location: vertex attribute: color
+    RL_SHADER_LOC_MATRIX_MVP,           // Shader location: matrix uniform: model-view-projection
+    RL_SHADER_LOC_MATRIX_VIEW,          // Shader location: matrix uniform: view (camera transform)
+    RL_SHADER_LOC_MATRIX_PROJECTION,    // Shader location: matrix uniform: projection
+    RL_SHADER_LOC_MATRIX_MODEL,         // Shader location: matrix uniform: model (transform)
+    RL_SHADER_LOC_MATRIX_NORMAL,        // Shader location: matrix uniform: normal
+    RL_SHADER_LOC_VECTOR_VIEW,          // Shader location: vector uniform: view
+    RL_SHADER_LOC_COLOR_DIFFUSE,        // Shader location: vector uniform: diffuse color
+    RL_SHADER_LOC_COLOR_SPECULAR,       // Shader location: vector uniform: specular color
+    RL_SHADER_LOC_COLOR_AMBIENT,        // Shader location: vector uniform: ambient color
+    RL_SHADER_LOC_MAP_ALBEDO,           // Shader location: sampler2d texture: albedo (same as: RL_SHADER_LOC_MAP_DIFFUSE)
+    RL_SHADER_LOC_MAP_METALNESS,        // Shader location: sampler2d texture: metalness (same as: RL_SHADER_LOC_MAP_SPECULAR)
+    RL_SHADER_LOC_MAP_NORMAL,           // Shader location: sampler2d texture: normal
+    RL_SHADER_LOC_MAP_ROUGHNESS,        // Shader location: sampler2d texture: roughness
+    RL_SHADER_LOC_MAP_OCCLUSION,        // Shader location: sampler2d texture: occlusion
+    RL_SHADER_LOC_MAP_EMISSION,         // Shader location: sampler2d texture: emission
+    RL_SHADER_LOC_MAP_HEIGHT,           // Shader location: sampler2d texture: height
+    RL_SHADER_LOC_MAP_CUBEMAP,          // Shader location: samplerCube texture: cubemap
+    RL_SHADER_LOC_MAP_IRRADIANCE,       // Shader location: samplerCube texture: irradiance
+    RL_SHADER_LOC_MAP_PREFILTER,        // Shader location: samplerCube texture: prefilter
+    RL_SHADER_LOC_MAP_BRDF              // Shader location: sampler2d texture: brdf
+} rlShaderLocationIndex;    
+    
+#define RL_SHADER_LOC_MAP_DIFFUSE       RL_SHADER_LOC_MAP_ALBEDO
+#define RL_SHADER_LOC_MAP_SPECULAR      RL_SHADER_LOC_MAP_METALNESS
+    
+// Shader uniform data type 
+typedef enum {  
+    RL_SHADER_UNIFORM_FLOAT = 0,        // Shader uniform type: float
+    RL_SHADER_UNIFORM_VEC2,             // Shader uniform type: vec2 (2 float)
+    RL_SHADER_UNIFORM_VEC3,             // Shader uniform type: vec3 (3 float)
+    RL_SHADER_UNIFORM_VEC4,             // Shader uniform type: vec4 (4 float)
+    RL_SHADER_UNIFORM_INT,              // Shader uniform type: int
+    RL_SHADER_UNIFORM_IVEC2,            // Shader uniform type: ivec2 (2 int)
+    RL_SHADER_UNIFORM_IVEC3,            // Shader uniform type: ivec3 (3 int)
+    RL_SHADER_UNIFORM_IVEC4,            // Shader uniform type: ivec4 (4 int)
+    RL_SHADER_UNIFORM_SAMPLER2D         // Shader uniform type: sampler2d
 } rlShaderUniformDataType;
 
 // Shader attribute data types
 typedef enum {
-    RL_SHADER_ATTRIB_FLOAT = 0,        // Shader attribute type: float
-    RL_SHADER_ATTRIB_VEC2,             // Shader attribute type: vec2 (2 float)
-    RL_SHADER_ATTRIB_VEC3,             // Shader attribute type: vec3 (3 float)
-    RL_SHADER_ATTRIB_VEC4              // Shader attribute type: vec4 (4 float)
+    RL_SHADER_ATTRIB_FLOAT = 0,         // Shader attribute type: float
+    RL_SHADER_ATTRIB_VEC2,              // Shader attribute type: vec2 (2 float)
+    RL_SHADER_ATTRIB_VEC3,              // Shader attribute type: vec3 (3 float)
+    RL_SHADER_ATTRIB_VEC4               // Shader attribute type: vec4 (4 float)
 } rlShaderAttributeDataType;
+
+// Framebuffer attachment type
+// NOTE: By default up to 8 color channels defined but it can be more
+typedef enum {
+    RL_ATTACHMENT_COLOR_CHANNEL0 = 0,   // Framebuffer attachmment type: color 0
+    RL_ATTACHMENT_COLOR_CHANNEL1,       // Framebuffer attachmment type: color 1
+    RL_ATTACHMENT_COLOR_CHANNEL2,       // Framebuffer attachmment type: color 2
+    RL_ATTACHMENT_COLOR_CHANNEL3,       // Framebuffer attachmment type: color 3
+    RL_ATTACHMENT_COLOR_CHANNEL4,       // Framebuffer attachmment type: color 4
+    RL_ATTACHMENT_COLOR_CHANNEL5,       // Framebuffer attachmment type: color 5
+    RL_ATTACHMENT_COLOR_CHANNEL6,       // Framebuffer attachmment type: color 6
+    RL_ATTACHMENT_COLOR_CHANNEL7,       // Framebuffer attachmment type: color 7
+    RL_ATTACHMENT_DEPTH = 100,          // Framebuffer attachmment type: depth
+    RL_ATTACHMENT_STENCIL = 200,        // Framebuffer attachmment type: stencil
+} rlFramebufferAttachType;
+
+// Framebuffer texture attachment type
+typedef enum {
+    RL_ATTACHMENT_CUBEMAP_POSITIVE_X = 0, // Framebuffer texture attachment type: cubemap, +X side
+    RL_ATTACHMENT_CUBEMAP_NEGATIVE_X,   // Framebuffer texture attachment type: cubemap, -X side
+    RL_ATTACHMENT_CUBEMAP_POSITIVE_Y,   // Framebuffer texture attachment type: cubemap, +Y side
+    RL_ATTACHMENT_CUBEMAP_NEGATIVE_Y,   // Framebuffer texture attachment type: cubemap, -Y side
+    RL_ATTACHMENT_CUBEMAP_POSITIVE_Z,   // Framebuffer texture attachment type: cubemap, +Z side
+    RL_ATTACHMENT_CUBEMAP_NEGATIVE_Z,   // Framebuffer texture attachment type: cubemap, -Z side
+    RL_ATTACHMENT_TEXTURE2D = 100,      // Framebuffer texture attachment type: texture2d
+    RL_ATTACHMENT_RENDERBUFFER = 200,   // Framebuffer texture attachment type: renderbuffer
+} rlFramebufferAttachTextureType;
 
 //------------------------------------------------------------------------------------
 // Functions Declaration - Matrix operations
@@ -617,7 +623,7 @@ RLAPI void rlDrawRenderBatch(rlRenderBatch *batch);                         // D
 RLAPI void rlSetRenderBatchActive(rlRenderBatch *batch);                    // Set the active render batch for rlgl (NULL for default internal)
 RLAPI void rlDrawRenderBatchActive(void);                                   // Update and draw internal render batch
 RLAPI bool rlCheckRenderBatchLimit(int vCount);                             // Check internal buffer overflow for a given number of vertex
-RLAPI void rlSetTexture(unsigned int id);           // Set current texture for render batch and check buffers limits
+RLAPI void rlSetTexture(unsigned int id);               // Set current texture for render batch and check buffers limits
 
 //------------------------------------------------------------------------------------------------------------------------
 
@@ -2211,22 +2217,22 @@ int rlGetVersion(void)
 {
     int glVersion = 0;
 #if defined(GRAPHICS_API_OPENGL_11)
-    glVersion = OPENGL_11;
+    glVersion = RL_OPENGL_11;
 #endif
 #if defined(GRAPHICS_API_OPENGL_21)
     #if defined(__APPLE__)
-        glVersion = OPENGL_33;           // NOTE: Force OpenGL 3.3 on OSX
+        glVersion = RL_OPENGL_33;           // NOTE: Force OpenGL 3.3 on OSX
     #else
-        glVersion = OPENGL_21;
+        glVersion = RL_OPENGL_21;
     #endif
 #elif defined(GRAPHICS_API_OPENGL_33)
-    glVersion = OPENGL_33;
+    glVersion = RL_OPENGL_33;
 #endif
 #if defined(GRAPHICS_API_OPENGL_43)
-    glVersion = OPENGL_43;
+    glVersion = RL_OPENGL_43;
 #endif
 #if defined(GRAPHICS_API_OPENGL_ES2)
-    glVersion = OPENGL_ES_20;
+    glVersion = RL_OPENGL_ES_20;
 #endif
     return glVersion;
 }

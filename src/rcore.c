@@ -2339,7 +2339,7 @@ VrStereoConfig LoadVrStereoConfig(VrDeviceInfo device)
 {
     VrStereoConfig config = { 0 };
 
-    if ((rlGetVersion() == OPENGL_33) || (rlGetVersion() == OPENGL_ES_20))
+    if ((rlGetVersion() == RL_OPENGL_33) || (rlGetVersion() == RL_OPENGL_ES_20))
     {
         // Compute aspect ratio
         float aspect = ((float)device.hResolution*0.5f)/(float)device.vResolution;
@@ -4006,12 +4006,12 @@ static bool InitGraphicsDevice(int width, int height)
     // For example, if using OpenGL 1.1, driver can provide a 4.3 context forward compatible.
 
     // Check selection OpenGL version
-    if (rlGetVersion() == OPENGL_21)
+    if (rlGetVersion() == RL_OPENGL_21)
     {
         glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 2);          // Choose OpenGL major version (just hint)
         glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1);          // Choose OpenGL minor version (just hint)
     }
-    else if (rlGetVersion() == OPENGL_33)
+    else if (rlGetVersion() == RL_OPENGL_33)
     {
         glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);          // Choose OpenGL major version (just hint)
         glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);          // Choose OpenGL minor version (just hint)
@@ -4024,7 +4024,7 @@ static bool InitGraphicsDevice(int width, int height)
 #endif
         //glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GLFW_TRUE); // Request OpenGL DEBUG context
     }
-    else if (rlGetVersion() == OPENGL_43)
+    else if (rlGetVersion() == RL_OPENGL_43)
     {
         glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);          // Choose OpenGL major version (just hint)
         glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);          // Choose OpenGL minor version (just hint)
@@ -4034,7 +4034,7 @@ static bool InitGraphicsDevice(int width, int height)
         glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GLFW_TRUE);   // Enable OpenGL Debug Context
 #endif
     }
-    else if (rlGetVersion() == OPENGL_ES_20)                    // Request OpenGL ES 2.0 context
+    else if (rlGetVersion() == RL_OPENGL_ES_20)                    // Request OpenGL ES 2.0 context
     {
         glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 2);
         glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
