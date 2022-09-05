@@ -238,8 +238,6 @@ void DrawLineStrip(Vector2 *points, int pointCount, Color color)
 {
     if (pointCount >= 2)
     {
-        rlCheckRenderBatchLimit(pointCount);
-
         rlBegin(RL_LINES);
             rlColor4ub(color.r, color.g, color.b, color.a);
 
@@ -287,8 +285,6 @@ void DrawCircleSector(Vector2 center, float radius, float startAngle, float endA
     float angle = startAngle;
 
 #if defined(SUPPORT_QUADS_DRAW_MODE)
-    rlCheckRenderBatchLimit(4*segments/2);
-
     rlSetTexture(texShapes.id);
 
     rlBegin(RL_QUADS);
@@ -333,8 +329,6 @@ void DrawCircleSector(Vector2 center, float radius, float startAngle, float endA
 
     rlSetTexture(0);
 #else
-    rlCheckRenderBatchLimit(3*segments);
-
     rlBegin(RL_TRIANGLES);
         for (int i = 0; i < segments; i++)
         {
@@ -377,13 +371,7 @@ void DrawCircleSectorLines(Vector2 center, float radius, float startAngle, float
 
     float stepLength = (endAngle - startAngle)/(float)segments;
     float angle = startAngle;
-
-    // Hide the cap lines when the circle is full
     bool showCapLines = true;
-    int limit = 2*(segments + 2);
-    if ((int)(endAngle - startAngle)%360 == 0) { limit = 2*segments; showCapLines = false; }
-
-    rlCheckRenderBatchLimit(limit);
 
     rlBegin(RL_LINES);
         if (showCapLines)
@@ -416,8 +404,6 @@ void DrawCircleSectorLines(Vector2 center, float radius, float startAngle, float
 // NOTE: Gradient goes from center (color1) to border (color2)
 void DrawCircleGradient(int centerX, int centerY, float radius, Color color1, Color color2)
 {
-    rlCheckRenderBatchLimit(3*36);
-
     rlBegin(RL_TRIANGLES);
         for (int i = 0; i < 360; i += 10)
         {
@@ -441,8 +427,6 @@ void DrawCircleV(Vector2 center, float radius, Color color)
 // Draw circle outline
 void DrawCircleLines(int centerX, int centerY, float radius, Color color)
 {
-    rlCheckRenderBatchLimit(2*36);
-
     rlBegin(RL_LINES);
         rlColor4ub(color.r, color.g, color.b, color.a);
 
@@ -458,8 +442,6 @@ void DrawCircleLines(int centerX, int centerY, float radius, Color color)
 // Draw ellipse
 void DrawEllipse(int centerX, int centerY, float radiusH, float radiusV, Color color)
 {
-    rlCheckRenderBatchLimit(3*36);
-
     rlBegin(RL_TRIANGLES);
         for (int i = 0; i < 360; i += 10)
         {
@@ -474,8 +456,6 @@ void DrawEllipse(int centerX, int centerY, float radiusH, float radiusV, Color c
 // Draw ellipse outline
 void DrawEllipseLines(int centerX, int centerY, float radiusH, float radiusV, Color color)
 {
-    rlCheckRenderBatchLimit(2*36);
-
     rlBegin(RL_LINES);
         for (int i = 0; i < 360; i += 10)
         {
@@ -532,8 +512,6 @@ void DrawRing(Vector2 center, float innerRadius, float outerRadius, float startA
     float angle = startAngle;
 
 #if defined(SUPPORT_QUADS_DRAW_MODE)
-    rlCheckRenderBatchLimit(4*segments);
-
     rlSetTexture(texShapes.id);
 
     rlBegin(RL_QUADS);
@@ -559,8 +537,6 @@ void DrawRing(Vector2 center, float innerRadius, float outerRadius, float startA
 
     rlSetTexture(0);
 #else
-    rlCheckRenderBatchLimit(6*segments);
-
     rlBegin(RL_TRIANGLES);
         for (int i = 0; i < segments; i++)
         {
@@ -623,12 +599,7 @@ void DrawRingLines(Vector2 center, float innerRadius, float outerRadius, float s
 
     float stepLength = (endAngle - startAngle)/(float)segments;
     float angle = startAngle;
-
     bool showCapLines = true;
-    int limit = 4*(segments + 1);
-    if ((int)(endAngle - startAngle)%360 == 0) { limit = 4*segments; showCapLines = false; }
-
-    rlCheckRenderBatchLimit(limit);
 
     rlBegin(RL_LINES);
         if (showCapLines)
@@ -720,8 +691,6 @@ void DrawRectanglePro(Rectangle rec, Vector2 origin, float rotation, Color color
     }
 
 #if defined(SUPPORT_QUADS_DRAW_MODE)
-    rlCheckRenderBatchLimit(4);
-
     rlSetTexture(texShapes.id);
 
     rlBegin(RL_QUADS);
@@ -745,8 +714,6 @@ void DrawRectanglePro(Rectangle rec, Vector2 origin, float rotation, Color color
 
     rlSetTexture(0);
 #else
-    rlCheckRenderBatchLimit(6);
-
     rlBegin(RL_TRIANGLES);
 
         rlColor4ub(color.r, color.g, color.b, color.a);
@@ -781,8 +748,6 @@ void DrawRectangleGradientH(int posX, int posY, int width, int height, Color col
 // NOTE: Colors refer to corners, starting at top-lef corner and counter-clockwise
 void DrawRectangleGradientEx(Rectangle rec, Color col1, Color col2, Color col3, Color col4)
 {
-    rlCheckRenderBatchLimit(4);
-
     rlSetTexture(texShapes.id);
 
     rlBegin(RL_QUADS);
@@ -923,8 +888,6 @@ void DrawRectangleRounded(Rectangle rec, float roundness, int segments, Color co
     const float angles[4] = { 180.0f, 90.0f, 0.0f, 270.0f };
 
 #if defined(SUPPORT_QUADS_DRAW_MODE)
-    rlCheckRenderBatchLimit(16*segments/2 + 5*4);
-
     rlSetTexture(texShapes.id);
 
     rlBegin(RL_QUADS);
@@ -1022,8 +985,6 @@ void DrawRectangleRounded(Rectangle rec, float roundness, int segments, Color co
     rlEnd();
     rlSetTexture(0);
 #else
-    rlCheckRenderBatchLimit(12*segments + 5*6); // 4 corners with 3 vertices per segment + 5 rectangles with 6 vertices each
-
     rlBegin(RL_TRIANGLES);
 
         // Draw all of the 4 corners: [1] Upper Left Corner, [3] Upper Right Corner, [5] Lower Right Corner, [7] Lower Left Corner
@@ -1155,8 +1116,6 @@ void DrawRectangleRoundedLines(Rectangle rec, float roundness, int segments, flo
     if (lineThick > 1)
     {
 #if defined(SUPPORT_QUADS_DRAW_MODE)
-        rlCheckRenderBatchLimit(4*4*segments + 4*4); // 4 corners with 4 vertices for each segment + 4 rectangles with 4 vertices each
-
         rlSetTexture(texShapes.id);
 
         rlBegin(RL_QUADS);
@@ -1229,8 +1188,6 @@ void DrawRectangleRoundedLines(Rectangle rec, float roundness, int segments, flo
         rlEnd();
         rlSetTexture(0);
 #else
-        rlCheckRenderBatchLimit(4*6*segments + 4*6); // 4 corners with 6(2*3) vertices for each segment + 4 rectangles with 6 vertices each
-
         rlBegin(RL_TRIANGLES);
 
             // Draw all of the 4 corners first: Upper Left Corner, Upper Right Corner, Lower Right Corner, Lower Left Corner
@@ -1296,8 +1253,6 @@ void DrawRectangleRoundedLines(Rectangle rec, float roundness, int segments, flo
     else
     {
         // Use LINES to draw the outline
-        rlCheckRenderBatchLimit(8*segments + 4*2); // 4 corners with 2 vertices for each segment + 4 rectangles with 2 vertices each
-
         rlBegin(RL_LINES);
 
             // Draw all of the 4 corners first: Upper Left Corner, Upper Right Corner, Lower Right Corner, Lower Left Corner
@@ -1332,8 +1287,6 @@ void DrawRectangleRoundedLines(Rectangle rec, float roundness, int segments, flo
 void DrawTriangle(Vector2 v1, Vector2 v2, Vector2 v3, Color color)
 {
 #if defined(SUPPORT_QUADS_DRAW_MODE)
-    rlCheckRenderBatchLimit(4);
-
     rlSetTexture(texShapes.id);
 
     rlBegin(RL_QUADS);
@@ -1354,8 +1307,6 @@ void DrawTriangle(Vector2 v1, Vector2 v2, Vector2 v3, Color color)
 
     rlSetTexture(0);
 #else
-    rlCheckRenderBatchLimit(3);
-
     rlBegin(RL_TRIANGLES);
         rlColor4ub(color.r, color.g, color.b, color.a);
         rlVertex2f(v1.x, v1.y);
@@ -1369,8 +1320,6 @@ void DrawTriangle(Vector2 v1, Vector2 v2, Vector2 v3, Color color)
 // NOTE: Vertex must be provided in counter-clockwise order
 void DrawTriangleLines(Vector2 v1, Vector2 v2, Vector2 v3, Color color)
 {
-    rlCheckRenderBatchLimit(6);
-
     rlBegin(RL_LINES);
         rlColor4ub(color.r, color.g, color.b, color.a);
         rlVertex2f(v1.x, v1.y);
@@ -1391,8 +1340,6 @@ void DrawTriangleFan(Vector2 *points, int pointCount, Color color)
 {
     if (pointCount >= 3)
     {
-        rlCheckRenderBatchLimit((pointCount - 2)*4);
-
         rlSetTexture(texShapes.id);
         rlBegin(RL_QUADS);
             rlColor4ub(color.r, color.g, color.b, color.a);
@@ -1422,8 +1369,6 @@ void DrawTriangleStrip(Vector2 *points, int pointCount, Color color)
 {
     if (pointCount >= 3)
     {
-        rlCheckRenderBatchLimit(3*(pointCount - 2));
-
         rlBegin(RL_TRIANGLES);
             rlColor4ub(color.r, color.g, color.b, color.a);
 
@@ -1451,12 +1396,6 @@ void DrawPoly(Vector2 center, int sides, float radius, float rotation, Color col
 {
     if (sides < 3) sides = 3;
     float centralAngle = 0.0f;
-
-#if defined(SUPPORT_QUADS_DRAW_MODE)
-    rlCheckRenderBatchLimit(4*sides); // Each side is a quad
-#else
-    rlCheckRenderBatchLimit(3*sides);
-#endif
 
     rlPushMatrix();
         rlTranslatef(center.x, center.y, 0.0f);
@@ -1508,8 +1447,6 @@ void DrawPolyLines(Vector2 center, int sides, float radius, float rotation, Colo
     if (sides < 3) sides = 3;
     float centralAngle = 0.0f;
 
-    rlCheckRenderBatchLimit(2*sides);
-
     rlPushMatrix();
         rlTranslatef(center.x, center.y, 0.0f);
         rlRotatef(rotation, 0.0f, 0.0f, 1.0f);
@@ -1533,12 +1470,6 @@ void DrawPolyLinesEx(Vector2 center, int sides, float radius, float rotation, fl
     float centralAngle = 0.0f;
     float exteriorAngle = 360.0f/(float)sides;
     float innerRadius = radius - (lineThick*cosf(DEG2RAD*exteriorAngle/2.0f));
-
-#if defined(SUPPORT_QUADS_DRAW_MODE)
-    rlCheckRenderBatchLimit(4*sides);
-#else
-    rlCheckRenderBatchLimit(6*sides);
-#endif
 
     rlPushMatrix();
         rlTranslatef(center.x, center.y, 0.0f);

@@ -3362,8 +3362,6 @@ void DrawTexturePro(Texture2D texture, Rectangle source, Rectangle dest, Vector2
             bottomRight.y = y + (dx + dest.width)*sinRotation + (dy + dest.height)*cosRotation;
         }
 
-        rlCheckRenderBatchLimit(4);     // Make sure there is enough free space on the batch buffer
-
         rlSetTexture(texture.id);
         rlBegin(RL_QUADS);
 
@@ -3493,8 +3491,6 @@ void DrawTextureNPatch(Texture2D texture, NPatchInfo nPatchInfo, Rectangle dest,
         coordC.y = (nPatchInfo.source.y + nPatchInfo.source.height - bottomBorder)/height;
         coordD.x = (nPatchInfo.source.x + nPatchInfo.source.width)/width;
         coordD.y = (nPatchInfo.source.y + nPatchInfo.source.height)/height;
-
-        rlCheckRenderBatchLimit(9 * 3 * 2);         // Maxium number of verts that could happen
 
         rlSetTexture(texture.id);
 
@@ -3639,8 +3635,6 @@ void DrawTextureNPatch(Texture2D texture, NPatchInfo nPatchInfo, Rectangle dest,
 // without crossing perimeter, points must be in anticlockwise order
 void DrawTexturePoly(Texture2D texture, Vector2 center, Vector2 *points, Vector2 *texcoords, int pointCount, Color tint)
 {
-    rlCheckRenderBatchLimit((pointCount - 1)*4);
-
     rlSetTexture(texture.id);
 
     // Texturing is only supported on RL_QUADS

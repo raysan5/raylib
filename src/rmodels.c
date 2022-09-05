@@ -163,11 +163,6 @@ static ModelAnimation *LoadModelAnimationsM3D(const char *fileName, unsigned int
 // Draw a line in 3D world space
 void DrawLine3D(Vector3 startPos, Vector3 endPos, Color color)
 {
-    // WARNING: Be careful with internal buffer vertex alignment
-    // when using RL_LINES or RL_TRIANGLES, data is aligned to fit
-    // lines-triangles-quads in the same indexed buffers!!!
-    rlCheckRenderBatchLimit(8);
-
     rlBegin(RL_LINES);
         rlColor4ub(color.r, color.g, color.b, color.a);
         rlVertex3f(startPos.x, startPos.y, startPos.z);
@@ -178,8 +173,6 @@ void DrawLine3D(Vector3 startPos, Vector3 endPos, Color color)
 // Draw a point in 3D space, actually a small line
 void DrawPoint3D(Vector3 position, Color color)
 {
-    rlCheckRenderBatchLimit(8);
-
     rlPushMatrix();
         rlTranslatef(position.x, position.y, position.z);
         rlBegin(RL_LINES);
@@ -193,8 +186,6 @@ void DrawPoint3D(Vector3 position, Color color)
 // Draw a circle in 3D world space
 void DrawCircle3D(Vector3 center, float radius, Vector3 rotationAxis, float rotationAngle, Color color)
 {
-    rlCheckRenderBatchLimit(2*36);
-
     rlPushMatrix();
         rlTranslatef(center.x, center.y, center.z);
         rlRotatef(rotationAngle, rotationAxis.x, rotationAxis.y, rotationAxis.z);
@@ -214,8 +205,6 @@ void DrawCircle3D(Vector3 center, float radius, Vector3 rotationAxis, float rota
 // Draw a color-filled triangle (vertex in counter-clockwise order!)
 void DrawTriangle3D(Vector3 v1, Vector3 v2, Vector3 v3, Color color)
 {
-    rlCheckRenderBatchLimit(8);
-
     rlBegin(RL_TRIANGLES);
         rlColor4ub(color.r, color.g, color.b, color.a);
         rlVertex3f(v1.x, v1.y, v1.z);
@@ -227,30 +216,27 @@ void DrawTriangle3D(Vector3 v1, Vector3 v2, Vector3 v3, Color color)
 // Draw a triangle strip defined by points
 void DrawTriangleStrip3D(Vector3 *points, int pointCount, Color color)
 {
-    if (pointCount >= 3)
-    {
-        rlCheckRenderBatchLimit(3*(pointCount - 2));
+    if (pointCount < 3) return;
 
-        rlBegin(RL_TRIANGLES);
-            rlColor4ub(color.r, color.g, color.b, color.a);
+    rlBegin(RL_TRIANGLES);
+        rlColor4ub(color.r, color.g, color.b, color.a);
 
-            for (int i = 2; i < pointCount; i++)
+        for (int i = 2; i < pointCount; i++)
+        {
+            if ((i%2) == 0)
             {
-                if ((i%2) == 0)
-                {
-                    rlVertex3f(points[i].x, points[i].y, points[i].z);
-                    rlVertex3f(points[i - 2].x, points[i - 2].y, points[i - 2].z);
-                    rlVertex3f(points[i - 1].x, points[i - 1].y, points[i - 1].z);
-                }
-                else
-                {
-                    rlVertex3f(points[i].x, points[i].y, points[i].z);
-                    rlVertex3f(points[i - 1].x, points[i - 1].y, points[i - 1].z);
-                    rlVertex3f(points[i - 2].x, points[i - 2].y, points[i - 2].z);
-                }
+                rlVertex3f(points[i].x, points[i].y, points[i].z);
+                rlVertex3f(points[i - 2].x, points[i - 2].y, points[i - 2].z);
+                rlVertex3f(points[i - 1].x, points[i - 1].y, points[i - 1].z);
             }
-        rlEnd();
-    }
+            else
+            {
+                rlVertex3f(points[i].x, points[i].y, points[i].z);
+                rlVertex3f(points[i - 1].x, points[i - 1].y, points[i - 1].z);
+                rlVertex3f(points[i - 2].x, points[i - 2].y, points[i - 2].z);
+            }
+        }
+    rlEnd();
 }
 
 // Draw cube
@@ -260,8 +246,6 @@ void DrawCube(Vector3 position, float width, float height, float length, Color c
     float x = 0.0f;
     float y = 0.0f;
     float z = 0.0f;
-
-    rlCheckRenderBatchLimit(36);
 
     rlPushMatrix();
         // NOTE: Transformation is applied in inverse order (scale -> rotate -> translate)
@@ -342,65 +326,67 @@ void DrawCubeWires(Vector3 position, float width, float height, float length, Co
     float y = 0.0f;
     float z = 0.0f;
 
-    rlCheckRenderBatchLimit(36);
-
     rlPushMatrix();
         rlTranslatef(position.x, position.y, position.z);
 
         rlBegin(RL_LINES);
             rlColor4ub(color.r, color.g, color.b, color.a);
 
-            // Front face -----------------------------------------------------
+            // Front face
+            //------------------------------------------------------------------
             // Bottom line
-            rlVertex3f(x-width/2, y-height/2, z+length/2);  // Bottom left
-            rlVertex3f(x+width/2, y-height/2, z+length/2);  // Bottom right
+            rlVertex3f(x - width/2, y - height/2, z + length/2);  // Bottom left
+            rlVertex3f(x + width/2, y - height/2, z + length/2);  // Bottom right
 
             // Left line
-            rlVertex3f(x+width/2, y-height/2, z+length/2);  // Bottom right
-            rlVertex3f(x+width/2, y+height/2, z+length/2);  // Top right
+            rlVertex3f(x + width/2, y - height/2, z + length/2);  // Bottom right
+            rlVertex3f(x + width/2, y + height/2, z + length/2);  // Top right
 
             // Top line
-            rlVertex3f(x+width/2, y+height/2, z+length/2);  // Top right
-            rlVertex3f(x-width/2, y+height/2, z+length/2);  // Top left
+            rlVertex3f(x + width/2, y + height/2, z + length/2);  // Top right
+            rlVertex3f(x - width/2, y + height/2, z + length/2);  // Top left
 
             // Right line
-            rlVertex3f(x-width/2, y+height/2, z+length/2);  // Top left
-            rlVertex3f(x-width/2, y-height/2, z+length/2);  // Bottom left
+            rlVertex3f(x - width/2, y + height/2, z + length/2);  // Top left
+            rlVertex3f(x - width/2, y - height/2, z + length/2);  // Bottom left
 
-            // Back face ------------------------------------------------------
+            // Back face
+            //------------------------------------------------------------------
             // Bottom line
-            rlVertex3f(x-width/2, y-height/2, z-length/2);  // Bottom left
-            rlVertex3f(x+width/2, y-height/2, z-length/2);  // Bottom right
+            rlVertex3f(x - width/2, y - height/2, z - length/2);  // Bottom left
+            rlVertex3f(x + width/2, y - height/2, z - length/2);  // Bottom right
 
             // Left line
-            rlVertex3f(x+width/2, y-height/2, z-length/2);  // Bottom right
-            rlVertex3f(x+width/2, y+height/2, z-length/2);  // Top right
+            rlVertex3f(x + width/2, y - height/2, z - length/2);  // Bottom right
+            rlVertex3f(x + width/2, y + height/2, z - length/2);  // Top right
 
             // Top line
-            rlVertex3f(x+width/2, y+height/2, z-length/2);  // Top right
-            rlVertex3f(x-width/2, y+height/2, z-length/2);  // Top left
+            rlVertex3f(x + width/2, y + height/2, z - length/2);  // Top right
+            rlVertex3f(x - width/2, y + height/2, z - length/2);  // Top left
 
             // Right line
-            rlVertex3f(x-width/2, y+height/2, z-length/2);  // Top left
-            rlVertex3f(x-width/2, y-height/2, z-length/2);  // Bottom left
+            rlVertex3f(x - width/2, y + height/2, z - length/2);  // Top left
+            rlVertex3f(x - width/2, y - height/2, z - length/2);  // Bottom left
 
-            // Top face -------------------------------------------------------
+            // Top face
+            //------------------------------------------------------------------
             // Left line
-            rlVertex3f(x-width/2, y+height/2, z+length/2);  // Top left front
-            rlVertex3f(x-width/2, y+height/2, z-length/2);  // Top left back
+            rlVertex3f(x - width/2, y + height/2, z + length/2);  // Top left front
+            rlVertex3f(x - width/2, y + height/2, z - length/2);  // Top left back
 
             // Right line
-            rlVertex3f(x+width/2, y+height/2, z+length/2);  // Top right front
-            rlVertex3f(x+width/2, y+height/2, z-length/2);  // Top right back
+            rlVertex3f(x + width/2, y + height/2, z + length/2);  // Top right front
+            rlVertex3f(x + width/2, y + height/2, z - length/2);  // Top right back
 
-            // Bottom face  ---------------------------------------------------
+            // Bottom face
+            //------------------------------------------------------------------
             // Left line
-            rlVertex3f(x-width/2, y-height/2, z+length/2);  // Top left front
-            rlVertex3f(x-width/2, y-height/2, z-length/2);  // Top left back
+            rlVertex3f(x - width/2, y - height/2, z + length/2);  // Top left front
+            rlVertex3f(x - width/2, y - height/2, z - length/2);  // Top left back
 
             // Right line
-            rlVertex3f(x+width/2, y-height/2, z+length/2);  // Top right front
-            rlVertex3f(x+width/2, y-height/2, z-length/2);  // Top right back
+            rlVertex3f(x + width/2, y - height/2, z + length/2);  // Top right front
+            rlVertex3f(x + width/2, y - height/2, z - length/2);  // Top right back
         rlEnd();
     rlPopMatrix();
 }
@@ -419,8 +405,6 @@ void DrawCubeTexture(Texture2D texture, Vector3 position, float width, float hei
     float y = position.y;
     float z = position.z;
 
-    rlCheckRenderBatchLimit(36);
-
     rlSetTexture(texture.id);
 
     //rlPushMatrix();
@@ -432,37 +416,37 @@ void DrawCubeTexture(Texture2D texture, Vector3 position, float width, float hei
         rlBegin(RL_QUADS);
             rlColor4ub(color.r, color.g, color.b, color.a);
             // Front Face
-            rlNormal3f(0.0f, 0.0f, 1.0f);                  // Normal Pointing Towards Viewer
+            rlNormal3f(0.0f, 0.0f, 1.0f);       // Normal Pointing Towards Viewer
             rlTexCoord2f(0.0f, 0.0f); rlVertex3f(x - width/2, y - height/2, z + length/2);  // Bottom Left Of The Texture and Quad
             rlTexCoord2f(1.0f, 0.0f); rlVertex3f(x + width/2, y - height/2, z + length/2);  // Bottom Right Of The Texture and Quad
             rlTexCoord2f(1.0f, 1.0f); rlVertex3f(x + width/2, y + height/2, z + length/2);  // Top Right Of The Texture and Quad
             rlTexCoord2f(0.0f, 1.0f); rlVertex3f(x - width/2, y + height/2, z + length/2);  // Top Left Of The Texture and Quad
             // Back Face
-            rlNormal3f(0.0f, 0.0f, - 1.0f);                  // Normal Pointing Away From Viewer
+            rlNormal3f(0.0f, 0.0f, - 1.0f);     // Normal Pointing Away From Viewer
             rlTexCoord2f(1.0f, 0.0f); rlVertex3f(x - width/2, y - height/2, z - length/2);  // Bottom Right Of The Texture and Quad
             rlTexCoord2f(1.0f, 1.0f); rlVertex3f(x - width/2, y + height/2, z - length/2);  // Top Right Of The Texture and Quad
             rlTexCoord2f(0.0f, 1.0f); rlVertex3f(x + width/2, y + height/2, z - length/2);  // Top Left Of The Texture and Quad
             rlTexCoord2f(0.0f, 0.0f); rlVertex3f(x + width/2, y - height/2, z - length/2);  // Bottom Left Of The Texture and Quad
             // Top Face
-            rlNormal3f(0.0f, 1.0f, 0.0f);                  // Normal Pointing Up
+            rlNormal3f(0.0f, 1.0f, 0.0f);       // Normal Pointing Up
             rlTexCoord2f(0.0f, 1.0f); rlVertex3f(x - width/2, y + height/2, z - length/2);  // Top Left Of The Texture and Quad
             rlTexCoord2f(0.0f, 0.0f); rlVertex3f(x - width/2, y + height/2, z + length/2);  // Bottom Left Of The Texture and Quad
             rlTexCoord2f(1.0f, 0.0f); rlVertex3f(x + width/2, y + height/2, z + length/2);  // Bottom Right Of The Texture and Quad
             rlTexCoord2f(1.0f, 1.0f); rlVertex3f(x + width/2, y + height/2, z - length/2);  // Top Right Of The Texture and Quad
             // Bottom Face
-            rlNormal3f(0.0f, - 1.0f, 0.0f);                  // Normal Pointing Down
+            rlNormal3f(0.0f, - 1.0f, 0.0f);     // Normal Pointing Down
             rlTexCoord2f(1.0f, 1.0f); rlVertex3f(x - width/2, y - height/2, z - length/2);  // Top Right Of The Texture and Quad
             rlTexCoord2f(0.0f, 1.0f); rlVertex3f(x + width/2, y - height/2, z - length/2);  // Top Left Of The Texture and Quad
             rlTexCoord2f(0.0f, 0.0f); rlVertex3f(x + width/2, y - height/2, z + length/2);  // Bottom Left Of The Texture and Quad
             rlTexCoord2f(1.0f, 0.0f); rlVertex3f(x - width/2, y - height/2, z + length/2);  // Bottom Right Of The Texture and Quad
             // Right face
-            rlNormal3f(1.0f, 0.0f, 0.0f);                  // Normal Pointing Right
+            rlNormal3f(1.0f, 0.0f, 0.0f);       // Normal Pointing Right
             rlTexCoord2f(1.0f, 0.0f); rlVertex3f(x + width/2, y - height/2, z - length/2);  // Bottom Right Of The Texture and Quad
             rlTexCoord2f(1.0f, 1.0f); rlVertex3f(x + width/2, y + height/2, z - length/2);  // Top Right Of The Texture and Quad
             rlTexCoord2f(0.0f, 1.0f); rlVertex3f(x + width/2, y + height/2, z + length/2);  // Top Left Of The Texture and Quad
             rlTexCoord2f(0.0f, 0.0f); rlVertex3f(x + width/2, y - height/2, z + length/2);  // Bottom Left Of The Texture and Quad
             // Left Face
-            rlNormal3f( - 1.0f, 0.0f, 0.0f);                  // Normal Pointing Left
+            rlNormal3f( - 1.0f, 0.0f, 0.0f);    // Normal Pointing Left
             rlTexCoord2f(0.0f, 0.0f); rlVertex3f(x - width/2, y - height/2, z - length/2);  // Bottom Left Of The Texture and Quad
             rlTexCoord2f(1.0f, 0.0f); rlVertex3f(x - width/2, y - height/2, z + length/2);  // Bottom Right Of The Texture and Quad
             rlTexCoord2f(1.0f, 1.0f); rlVertex3f(x - width/2, y + height/2, z + length/2);  // Top Right Of The Texture and Quad
@@ -481,8 +465,6 @@ void DrawCubeTextureRec(Texture2D texture, Rectangle source, Vector3 position, f
     float z = position.z;
     float texWidth = (float)texture.width;
     float texHeight = (float)texture.height;
-
-    rlCheckRenderBatchLimit(36);
 
     rlSetTexture(texture.id);
 
@@ -569,9 +551,6 @@ void DrawSphere(Vector3 centerPos, float radius, Color color)
 // Draw sphere with extended parameters
 void DrawSphereEx(Vector3 centerPos, float radius, int rings, int slices, Color color)
 {
-    int numVertex = (rings + 2)*slices*6;
-    rlCheckRenderBatchLimit(numVertex);
-
     rlPushMatrix();
         // NOTE: Transformation is applied in inverse order (scale -> translate)
         rlTranslatef(centerPos.x, centerPos.y, centerPos.z);
@@ -612,9 +591,6 @@ void DrawSphereEx(Vector3 centerPos, float radius, int rings, int slices, Color 
 // Draw sphere wires
 void DrawSphereWires(Vector3 centerPos, float radius, int rings, int slices, Color color)
 {
-    int numVertex = (rings + 2)*slices*6;
-    rlCheckRenderBatchLimit(numVertex);
-
     rlPushMatrix();
         // NOTE: Transformation is applied in inverse order (scale -> translate)
         rlTranslatef(centerPos.x, centerPos.y, centerPos.z);
@@ -658,9 +634,6 @@ void DrawSphereWires(Vector3 centerPos, float radius, int rings, int slices, Col
 void DrawCylinder(Vector3 position, float radiusTop, float radiusBottom, float height, int sides, Color color)
 {
     if (sides < 3) sides = 3;
-
-    int numVertex = sides*6;
-    rlCheckRenderBatchLimit(numVertex);
 
     rlPushMatrix();
         rlTranslatef(position.x, position.y, position.z);
@@ -718,9 +691,6 @@ void DrawCylinderEx(Vector3 startPos, Vector3 endPos, float startRadius, float e
 {
     if (sides < 3) sides = 3;
 
-    int numVertex = sides*6;
-    rlCheckRenderBatchLimit(numVertex);
-
     Vector3 direction = { endPos.x - startPos.x, endPos.y - startPos.y, endPos.z - startPos.z };
     if ((direction.x == 0) && (direction.y == 0) && (direction.z == 0)) return;
 
@@ -777,9 +747,6 @@ void DrawCylinderWires(Vector3 position, float radiusTop, float radiusBottom, fl
 {
     if (sides < 3) sides = 3;
 
-    int numVertex = sides*8;
-    rlCheckRenderBatchLimit(numVertex);
-
     rlPushMatrix();
         rlTranslatef(position.x, position.y, position.z);
 
@@ -810,9 +777,6 @@ void DrawCylinderWires(Vector3 position, float radiusTop, float radiusBottom, fl
 void DrawCylinderWiresEx(Vector3 startPos, Vector3 endPos, float startRadius, float endRadius, int sides, Color color)
 {
     if (sides < 3) sides = 3;
-
-    int numVertex = sides*6;
-    rlCheckRenderBatchLimit(numVertex);
 
     Vector3 direction = { endPos.x - startPos.x, endPos.y - startPos.y, endPos.z - startPos.z };
     if ((direction.x == 0) && (direction.y == 0) && (direction.z == 0))return;
@@ -853,12 +817,9 @@ void DrawCylinderWiresEx(Vector3 startPos, Vector3 endPos, float startRadius, fl
     rlEnd();
 }
 
-
 // Draw a plane
 void DrawPlane(Vector3 centerPos, Vector2 size, Color color)
 {
-    rlCheckRenderBatchLimit(4);
-
     // NOTE: Plane is always created on XZ ground
     rlPushMatrix();
         rlTranslatef(centerPos.x, centerPos.y, centerPos.z);
@@ -894,8 +855,6 @@ void DrawRay(Ray ray, Color color)
 void DrawGrid(int slices, float spacing)
 {
     int halfSlices = slices/2;
-
-    rlCheckRenderBatchLimit((slices + 2)*4);
 
     rlBegin(RL_LINES);
         for (int i = -halfSlices; i <= halfSlices; i++)
@@ -3420,8 +3379,6 @@ void DrawBillboardPro(Camera camera, Texture2D texture, Rectangle source, Vector
     topRight = Vector3Add(topRight, position);
     bottomRight = Vector3Add(bottomRight, position);
     bottomLeft = Vector3Add(bottomLeft, position);
-
-    rlCheckRenderBatchLimit(8);
 
     rlSetTexture(texture.id);
 

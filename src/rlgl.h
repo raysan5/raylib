@@ -1,6 +1,6 @@
 /**********************************************************************************************
 *
-*   rlgl v4.0 - A multi-OpenGL abstraction layer with an immediate-mode style API
+*   rlgl v4.2 - A multi-OpenGL abstraction layer with an immediate-mode style API
 *
 *   An abstraction layer for multiple OpenGL versions (1.1, 2.1, 3.3 Core, 4.3 Core, ES 2.0)
 *   that provides a pseudo-OpenGL 1.1 immediate-mode style API (rlVertex, rlTranslate, rlRotate...)
@@ -107,7 +107,7 @@
 #ifndef RLGL_H
 #define RLGL_H
 
-#define RLGL_VERSION  "4.0"
+#define RLGL_VERSION  "4.2"
 
 // Function specifiers in case library is build/used as a shared library (Windows)
 // NOTE: Microsoft specifiers to tell compiler that symbols are imported/exported from a .dll
@@ -344,7 +344,6 @@ typedef struct rlRenderBatch {
     int drawCounter;            // Draw calls counter
     float currentDepth;         // Current depth value for next draw
 } rlRenderBatch;
-
 
 // OpenGL version
 typedef enum {
@@ -601,18 +600,18 @@ RLAPI void rlSetBlendFactors(int glSrcFactor, int glDstFactor, int glEquation); 
 // Functions Declaration - rlgl functionality
 //------------------------------------------------------------------------------------
 // rlgl initialization functions
-RLAPI void rlglInit(int width, int height);           // Initialize rlgl (buffers, shaders, textures, states)
-RLAPI void rlglClose(void);                           // De-inititialize rlgl (buffers, shaders, textures)
-RLAPI void rlLoadExtensions(void *loader);            // Load OpenGL extensions (loader function required)
-RLAPI int rlGetVersion(void);                         // Get current OpenGL version
-RLAPI void rlSetFramebufferWidth(int width);          // Set current framebuffer width
-RLAPI int rlGetFramebufferWidth(void);                // Get default framebuffer width
-RLAPI void rlSetFramebufferHeight(int height);        // Set current framebuffer height
-RLAPI int rlGetFramebufferHeight(void);               // Get default framebuffer height
+RLAPI void rlglInit(int width, int height);             // Initialize rlgl (buffers, shaders, textures, states)
+RLAPI void rlglClose(void);                             // De-inititialize rlgl (buffers, shaders, textures)
+RLAPI void rlLoadExtensions(void *loader);              // Load OpenGL extensions (loader function required)
+RLAPI int rlGetVersion(void);                           // Get current OpenGL version
+RLAPI void rlSetFramebufferWidth(int width);            // Set current framebuffer width
+RLAPI int rlGetFramebufferWidth(void);                  // Get default framebuffer width
+RLAPI void rlSetFramebufferHeight(int height);          // Set current framebuffer height
+RLAPI int rlGetFramebufferHeight(void);                 // Get default framebuffer height
 
-RLAPI unsigned int rlGetTextureIdDefault(void);       // Get default texture id
-RLAPI unsigned int rlGetShaderIdDefault(void);        // Get default shader id
-RLAPI int *rlGetShaderLocsDefault(void);              // Get default shader locations
+RLAPI unsigned int rlGetTextureIdDefault(void);         // Get default texture id
+RLAPI unsigned int rlGetShaderIdDefault(void);          // Get default shader id
+RLAPI int *rlGetShaderLocsDefault(void);                // Get default shader locations
 
 // Render batch management
 // NOTE: rlgl provides a default render batch to behave like OpenGL 1.1 immediate mode
@@ -623,6 +622,7 @@ RLAPI void rlDrawRenderBatch(rlRenderBatch *batch);                         // D
 RLAPI void rlSetRenderBatchActive(rlRenderBatch *batch);                    // Set the active render batch for rlgl (NULL for default internal)
 RLAPI void rlDrawRenderBatchActive(void);                                   // Update and draw internal render batch
 RLAPI bool rlCheckRenderBatchLimit(int vCount);                             // Check internal buffer overflow for a given number of vertex
+
 RLAPI void rlSetTexture(unsigned int id);               // Set current texture for render batch and check buffers limits
 
 //------------------------------------------------------------------------------------------------------------------------
@@ -1313,17 +1313,6 @@ void rlEnd(void)
     // as well as depth buffer bit-depth (16bit or 24bit or 32bit)
     // Correct increment formula would be: depthInc = (zfar - znear)/pow(2, bits)
     RLGL.currentBatch->currentDepth += (1.0f/20000.0f);
-
-    // Verify internal buffers limits
-    // NOTE: This check is combined with usage of rlCheckRenderBatchLimit()
-    if (RLGL.State.vertexCounter >= (RLGL.currentBatch->vertexBuffer[RLGL.currentBatch->currentBuffer].elementCount*4 - 4))
-    {
-        // WARNING: If we are between rlPushMatrix() and rlPopMatrix() and we need to force a rlDrawRenderBatch(),
-        // we need to call rlPopMatrix() before to recover *RLGL.State.currentMatrix (RLGL.State.modelview) for the next forced draw call!
-        // If we have multiple matrix pushed, it will require "RLGL.State.stackCounter" pops before launching the draw
-        for (int i = RLGL.State.stackCounter; i >= 0; i--) rlPopMatrix();
-        rlDrawRenderBatch(RLGL.currentBatch);
-    }
 }
 
 // Define one vertex (position)
@@ -1342,32 +1331,51 @@ void rlVertex3f(float x, float y, float z)
         tz = RLGL.State.transform.m2*x + RLGL.State.transform.m6*y + RLGL.State.transform.m10*z + RLGL.State.transform.m14;
     }
 
-    // Verify that current vertex buffer elements limit has not been reached
-    if (RLGL.State.vertexCounter < (RLGL.currentBatch->vertexBuffer[RLGL.currentBatch->currentBuffer].elementCount*4))
+    // WARNING: We can't break primitives when launching a new batch.
+    // RL_LINES comes in pairs, RL_TRIANGLES come in groups of 3 vertices and RL_QUADS come in groups of 4 vertices.
+    // We must check current draw.mode when a new vertex is required and finish the batch only if the draw.mode draw.vertexCount is %2, %3 or %4
+    if (RLGL.State.vertexCounter > (RLGL.currentBatch->vertexBuffer[RLGL.currentBatch->currentBuffer].elementCount*4 - 4))
     {
-        // Add vertices
-        RLGL.currentBatch->vertexBuffer[RLGL.currentBatch->currentBuffer].vertices[3*RLGL.State.vertexCounter] = tx;
-        RLGL.currentBatch->vertexBuffer[RLGL.currentBatch->currentBuffer].vertices[3*RLGL.State.vertexCounter + 1] = ty;
-        RLGL.currentBatch->vertexBuffer[RLGL.currentBatch->currentBuffer].vertices[3*RLGL.State.vertexCounter + 2] = tz;
-
-        // Add current texcoord
-        RLGL.currentBatch->vertexBuffer[RLGL.currentBatch->currentBuffer].texcoords[2*RLGL.State.vertexCounter] = RLGL.State.texcoordx;
-        RLGL.currentBatch->vertexBuffer[RLGL.currentBatch->currentBuffer].texcoords[2*RLGL.State.vertexCounter + 1] = RLGL.State.texcoordy;
-
-        // TODO: Add current normal
-        // By default rlVertexBuffer type does not store normals
-
-        // Add current color
-        RLGL.currentBatch->vertexBuffer[RLGL.currentBatch->currentBuffer].colors[4*RLGL.State.vertexCounter] = RLGL.State.colorr;
-        RLGL.currentBatch->vertexBuffer[RLGL.currentBatch->currentBuffer].colors[4*RLGL.State.vertexCounter + 1] = RLGL.State.colorg;
-        RLGL.currentBatch->vertexBuffer[RLGL.currentBatch->currentBuffer].colors[4*RLGL.State.vertexCounter + 2] = RLGL.State.colorb;
-        RLGL.currentBatch->vertexBuffer[RLGL.currentBatch->currentBuffer].colors[4*RLGL.State.vertexCounter + 3] = RLGL.State.colora;
-
-        RLGL.State.vertexCounter++;
-
-        RLGL.currentBatch->draws[RLGL.currentBatch->drawCounter - 1].vertexCount++;
+        if ((RLGL.currentBatch->draws[RLGL.currentBatch->drawCounter - 1].mode == RL_LINES) &&
+            (RLGL.currentBatch->draws[RLGL.currentBatch->drawCounter - 1].vertexCount%2 == 0))
+        {
+            // Reached the maximum number of vertices for RL_LINES drawing
+            // Launch a draw call but keep current state for next vertices comming
+            // NOTE: We add +1 vertex to the check for security
+            rlCheckRenderBatchLimit(2 + 1);
+        }
+        else if ((RLGL.currentBatch->draws[RLGL.currentBatch->drawCounter - 1].mode == RL_TRIANGLES) &&
+            (RLGL.currentBatch->draws[RLGL.currentBatch->drawCounter - 1].vertexCount%3 == 0))
+        {
+            rlCheckRenderBatchLimit(3 + 1);
+        }
+        else if ((RLGL.currentBatch->draws[RLGL.currentBatch->drawCounter - 1].mode == RL_QUADS) &&
+            (RLGL.currentBatch->draws[RLGL.currentBatch->drawCounter - 1].vertexCount%4 == 0))
+        {
+            rlCheckRenderBatchLimit(4 + 1);
+        }
     }
-    else TRACELOG(RL_LOG_ERROR, "RLGL: Batch elements overflow");
+
+    // Add vertices
+    RLGL.currentBatch->vertexBuffer[RLGL.currentBatch->currentBuffer].vertices[3*RLGL.State.vertexCounter] = tx;
+    RLGL.currentBatch->vertexBuffer[RLGL.currentBatch->currentBuffer].vertices[3*RLGL.State.vertexCounter + 1] = ty;
+    RLGL.currentBatch->vertexBuffer[RLGL.currentBatch->currentBuffer].vertices[3*RLGL.State.vertexCounter + 2] = tz;
+
+    // Add current texcoord
+    RLGL.currentBatch->vertexBuffer[RLGL.currentBatch->currentBuffer].texcoords[2*RLGL.State.vertexCounter] = RLGL.State.texcoordx;
+    RLGL.currentBatch->vertexBuffer[RLGL.currentBatch->currentBuffer].texcoords[2*RLGL.State.vertexCounter + 1] = RLGL.State.texcoordy;
+
+    // TODO: Add current normal
+    // By default rlVertexBuffer type does not store normals
+
+    // Add current color
+    RLGL.currentBatch->vertexBuffer[RLGL.currentBatch->currentBuffer].colors[4*RLGL.State.vertexCounter] = RLGL.State.colorr;
+    RLGL.currentBatch->vertexBuffer[RLGL.currentBatch->currentBuffer].colors[4*RLGL.State.vertexCounter + 1] = RLGL.State.colorg;
+    RLGL.currentBatch->vertexBuffer[RLGL.currentBatch->currentBuffer].colors[4*RLGL.State.vertexCounter + 2] = RLGL.State.colorb;
+    RLGL.currentBatch->vertexBuffer[RLGL.currentBatch->currentBuffer].colors[4*RLGL.State.vertexCounter + 3] = RLGL.State.colora;
+
+    RLGL.State.vertexCounter++;
+    RLGL.currentBatch->draws[RLGL.currentBatch->drawCounter - 1].vertexCount++;
 }
 
 // Define one vertex (position)
@@ -2702,10 +2710,12 @@ bool rlCheckRenderBatchLimit(int vCount)
     if ((RLGL.State.vertexCounter + vCount) >=
         (RLGL.currentBatch->vertexBuffer[RLGL.currentBatch->currentBuffer].elementCount*4))
     {
+        overflow = true;
+
+        // Store current primitive drawing mode and texture id
         int currentMode = RLGL.currentBatch->draws[RLGL.currentBatch->drawCounter - 1].mode;
         int currentTexture = RLGL.currentBatch->draws[RLGL.currentBatch->drawCounter - 1].textureId;
 
-        overflow = true;
         rlDrawRenderBatch(RLGL.currentBatch);    // NOTE: Stereo rendering is checked inside
 
         // Restore state of last batch so we can continue adding vertices
