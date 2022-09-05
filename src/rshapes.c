@@ -1395,129 +1395,114 @@ void DrawTriangleStrip(Vector2 *points, int pointCount, Color color)
 void DrawPoly(Vector2 center, int sides, float radius, float rotation, Color color)
 {
     if (sides < 3) sides = 3;
-    float centralAngle = 0.0f;
-
-    rlPushMatrix();
-        rlTranslatef(center.x, center.y, 0.0f);
-        rlRotatef(rotation, 0.0f, 0.0f, 1.0f);
+    float centralAngle = rotation;
 
 #if defined(SUPPORT_QUADS_DRAW_MODE)
-        rlSetTexture(texShapes.id);
+    rlSetTexture(texShapes.id);
 
-        rlBegin(RL_QUADS);
-            for (int i = 0; i < sides; i++)
-            {
-                rlColor4ub(color.r, color.g, color.b, color.a);
+    rlBegin(RL_QUADS);
+        for (int i = 0; i < sides; i++)
+        {
+            rlColor4ub(color.r, color.g, color.b, color.a);
 
-                rlTexCoord2f(texShapesRec.x/texShapes.width, texShapesRec.y/texShapes.height);
-                rlVertex2f(0, 0);
+            rlTexCoord2f(texShapesRec.x/texShapes.width, texShapesRec.y/texShapes.height);
+            rlVertex2f(center.x, center.y);
 
-                rlTexCoord2f(texShapesRec.x/texShapes.width, (texShapesRec.y + texShapesRec.height)/texShapes.height);
-                rlVertex2f(sinf(DEG2RAD*centralAngle)*radius, cosf(DEG2RAD*centralAngle)*radius);
+            rlTexCoord2f(texShapesRec.x/texShapes.width, (texShapesRec.y + texShapesRec.height)/texShapes.height);
+            rlVertex2f(center.x + sinf(DEG2RAD*centralAngle)*radius, center.y + cosf(DEG2RAD*centralAngle)*radius);
 
-                rlTexCoord2f((texShapesRec.x + texShapesRec.width)/texShapes.width, (texShapesRec.y + texShapesRec.height)/texShapes.height);
-                rlVertex2f(sinf(DEG2RAD*centralAngle)*radius, cosf(DEG2RAD*centralAngle)*radius);
+            rlTexCoord2f((texShapesRec.x + texShapesRec.width)/texShapes.width, (texShapesRec.y + texShapesRec.height)/texShapes.height);
+            rlVertex2f(center.x + sinf(DEG2RAD*centralAngle)*radius, center.y + cosf(DEG2RAD*centralAngle)*radius);
 
-                centralAngle += 360.0f/(float)sides;
-                rlTexCoord2f((texShapesRec.x + texShapesRec.width)/texShapes.width, texShapesRec.y/texShapes.height);
-                rlVertex2f(sinf(DEG2RAD*centralAngle)*radius, cosf(DEG2RAD*centralAngle)*radius);
-            }
-        rlEnd();
-        rlSetTexture(0);
+            centralAngle += 360.0f/(float)sides;
+            rlTexCoord2f((texShapesRec.x + texShapesRec.width)/texShapes.width, texShapesRec.y/texShapes.height);
+            rlVertex2f(center.x + sinf(DEG2RAD*centralAngle)*radius, center.y + cosf(DEG2RAD*centralAngle)*radius);
+        }
+    rlEnd();
+    rlSetTexture(0);
 #else
-        rlBegin(RL_TRIANGLES);
-            for (int i = 0; i < sides; i++)
-            {
-                rlColor4ub(color.r, color.g, color.b, color.a);
+    rlBegin(RL_TRIANGLES);
+        for (int i = 0; i < sides; i++)
+        {
+            rlColor4ub(color.r, color.g, color.b, color.a);
 
-                rlVertex2f(0, 0);
-                rlVertex2f(sinf(DEG2RAD*centralAngle)*radius, cosf(DEG2RAD*centralAngle)*radius);
+            rlVertex2f(center.x, center.y);
+            rlVertex2f(center.x + sinf(DEG2RAD*centralAngle)*radius, center.y + cosf(DEG2RAD*centralAngle)*radius);
 
-                centralAngle += 360.0f/(float)sides;
-                rlVertex2f(sinf(DEG2RAD*centralAngle)*radius, cosf(DEG2RAD*centralAngle)*radius);
-            }
-        rlEnd();
+            centralAngle += 360.0f/(float)sides;
+            rlVertex2f(center.x + sinf(DEG2RAD*centralAngle)*radius, center.y + cosf(DEG2RAD*centralAngle)*radius);
+        }
+    rlEnd();
 #endif
-    rlPopMatrix();
 }
 
 // Draw a polygon outline of n sides
 void DrawPolyLines(Vector2 center, int sides, float radius, float rotation, Color color)
 {
     if (sides < 3) sides = 3;
-    float centralAngle = 0.0f;
+    float centralAngle = rotation;
 
-    rlPushMatrix();
-        rlTranslatef(center.x, center.y, 0.0f);
-        rlRotatef(rotation, 0.0f, 0.0f, 1.0f);
+    rlBegin(RL_LINES);
+        for (int i = 0; i < sides; i++)
+        {
+            rlColor4ub(color.r, color.g, color.b, color.a);
 
-        rlBegin(RL_LINES);
-            for (int i = 0; i < sides; i++)
-            {
-                rlColor4ub(color.r, color.g, color.b, color.a);
-
-                rlVertex2f(sinf(DEG2RAD*centralAngle)*radius, cosf(DEG2RAD*centralAngle)*radius);
-                centralAngle += 360.0f/(float)sides;
-                rlVertex2f(sinf(DEG2RAD*centralAngle)*radius, cosf(DEG2RAD*centralAngle)*radius);
-            }
-        rlEnd();
-    rlPopMatrix();
+            rlVertex2f(center.x + sinf(DEG2RAD*centralAngle)*radius, center.y + cosf(DEG2RAD*centralAngle)*radius);
+            centralAngle += 360.0f/(float)sides;
+            rlVertex2f(center.x + sinf(DEG2RAD*centralAngle)*radius, center.y + cosf(DEG2RAD*centralAngle)*radius);
+        }
+    rlEnd();
 }
 
 void DrawPolyLinesEx(Vector2 center, int sides, float radius, float rotation, float lineThick, Color color)
 {
     if (sides < 3) sides = 3;
-    float centralAngle = 0.0f;
+    float centralAngle = rotation;
     float exteriorAngle = 360.0f/(float)sides;
     float innerRadius = radius - (lineThick*cosf(DEG2RAD*exteriorAngle/2.0f));
 
-    rlPushMatrix();
-        rlTranslatef(center.x, center.y, 0.0f);
-        rlRotatef(rotation, 0.0f, 0.0f, 1.0f);
-
 #if defined(SUPPORT_QUADS_DRAW_MODE)
-        rlSetTexture(texShapes.id);
+    rlSetTexture(texShapes.id);
 
-        rlBegin(RL_QUADS);
-            for (int i = 0; i < sides; i++)
-            {
-                rlColor4ub(color.r, color.g, color.b, color.a);
+    rlBegin(RL_QUADS);
+        for (int i = 0; i < sides; i++)
+        {
+            rlColor4ub(color.r, color.g, color.b, color.a);
 
-                rlTexCoord2f(texShapesRec.x/texShapes.width, texShapesRec.y/texShapes.height);
-                rlVertex2f(sinf(DEG2RAD*centralAngle)*innerRadius, cosf(DEG2RAD*centralAngle)*innerRadius);
+            rlTexCoord2f(texShapesRec.x/texShapes.width, texShapesRec.y/texShapes.height);
+            rlVertex2f(center.x + sinf(DEG2RAD*centralAngle)*innerRadius, center.y + cosf(DEG2RAD*centralAngle)*innerRadius);
 
-                rlTexCoord2f(texShapesRec.x/texShapes.width, (texShapesRec.y + texShapesRec.height)/texShapes.height);
-                rlVertex2f(sinf(DEG2RAD*centralAngle)*radius, cosf(DEG2RAD*centralAngle)*radius);
+            rlTexCoord2f(texShapesRec.x/texShapes.width, (texShapesRec.y + texShapesRec.height)/texShapes.height);
+            rlVertex2f(center.x + sinf(DEG2RAD*centralAngle)*radius, center.y + cosf(DEG2RAD*centralAngle)*radius);
 
-                centralAngle += exteriorAngle;
-                rlTexCoord2f((texShapesRec.x + texShapesRec.width)/texShapes.width, texShapesRec.y/texShapes.height);
-                rlVertex2f(sinf(DEG2RAD*centralAngle)*radius, cosf(DEG2RAD*centralAngle)*radius);
+            centralAngle += exteriorAngle;
+            rlTexCoord2f((texShapesRec.x + texShapesRec.width)/texShapes.width, texShapesRec.y/texShapes.height);
+            rlVertex2f(center.x + sinf(DEG2RAD*centralAngle)*radius, center.y + cosf(DEG2RAD*centralAngle)*radius);
 
-                rlTexCoord2f((texShapesRec.x + texShapesRec.width)/texShapes.width, (texShapesRec.y + texShapesRec.height)/texShapes.height);
-                rlVertex2f(sinf(DEG2RAD*centralAngle)*innerRadius, cosf(DEG2RAD*centralAngle)*innerRadius);
-            }
-        rlEnd();
-        rlSetTexture(0);
+            rlTexCoord2f((texShapesRec.x + texShapesRec.width)/texShapes.width, (texShapesRec.y + texShapesRec.height)/texShapes.height);
+            rlVertex2f(center.x + sinf(DEG2RAD*centralAngle)*innerRadius, center.y + cosf(DEG2RAD*centralAngle)*innerRadius);
+        }
+    rlEnd();
+    rlSetTexture(0);
 #else
-        rlBegin(RL_TRIANGLES);
-            for (int i = 0; i < sides; i++)
-            {
-                rlColor4ub(color.r, color.g, color.b, color.a);
-                float nextAngle = centralAngle + exteriorAngle;
+    rlBegin(RL_TRIANGLES);
+        for (int i = 0; i < sides; i++)
+        {
+            rlColor4ub(color.r, color.g, color.b, color.a);
+            float nextAngle = centralAngle + exteriorAngle;
 
-                rlVertex2f(sinf(DEG2RAD*centralAngle)*radius, cosf(DEG2RAD*centralAngle)*radius);
-                rlVertex2f(sinf(DEG2RAD*centralAngle)*innerRadius, cosf(DEG2RAD*centralAngle)*innerRadius);
-                rlVertex2f(sinf(DEG2RAD*nextAngle)*radius, cosf(DEG2RAD*nextAngle)*radius);
+            rlVertex2f(center.x + sinf(DEG2RAD*centralAngle)*radius, center.y + cosf(DEG2RAD*centralAngle)*radius);
+            rlVertex2f(center.x + sinf(DEG2RAD*centralAngle)*innerRadius, center.y + cosf(DEG2RAD*centralAngle)*innerRadius);
+            rlVertex2f(center.x + sinf(DEG2RAD*nextAngle)*radius, center.y + cosf(DEG2RAD*nextAngle)*radius);
 
-                rlVertex2f(sinf(DEG2RAD*centralAngle)*innerRadius, cosf(DEG2RAD*centralAngle)*innerRadius);
-                rlVertex2f(sinf(DEG2RAD*nextAngle)*radius, cosf(DEG2RAD*nextAngle)*radius);
-                rlVertex2f(sinf(DEG2RAD*nextAngle)*innerRadius, cosf(DEG2RAD*nextAngle)*innerRadius);
+            rlVertex2f(center.x + sinf(DEG2RAD*centralAngle)*innerRadius, center.y + cosf(DEG2RAD*centralAngle)*innerRadius);
+            rlVertex2f(center.x + sinf(DEG2RAD*nextAngle)*radius, center.y + cosf(DEG2RAD*nextAngle)*radius);
+            rlVertex2f(center.x + sinf(DEG2RAD*nextAngle)*innerRadius, center.y + cosf(DEG2RAD*nextAngle)*innerRadius);
 
-                centralAngle = nextAngle;
-            }
-        rlEnd();
+            centralAngle = nextAngle;
+        }
+    rlEnd();
 #endif
-    rlPopMatrix();
 }
 
 //----------------------------------------------------------------------------------
