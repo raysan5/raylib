@@ -1039,8 +1039,8 @@ RLAPI void SetConfigFlags(unsigned int flags);                    // Setup init 
 
 RLAPI void TraceLog(int logLevel, const char *text, ...);         // Show trace log messages (LOG_DEBUG, LOG_INFO, LOG_WARNING, LOG_ERROR...)
 RLAPI void SetTraceLogLevel(int logLevel);                        // Set the current threshold (minimum) log level
-RLAPI void *MemAlloc(int size);                                   // Internal memory allocator
-RLAPI void *MemRealloc(void *ptr, int size);                      // Internal memory reallocator
+RLAPI void *MemAlloc(unsigned int size);                          // Internal memory allocator
+RLAPI void *MemRealloc(void *ptr, unsigned int size);             // Internal memory reallocator
 RLAPI void MemFree(void *ptr);                                    // Internal memory free
 
 RLAPI void OpenURL(const char *url);                              // Open URL with default system browser (if available)
