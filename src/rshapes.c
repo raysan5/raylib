@@ -1555,7 +1555,7 @@ bool CheckCollisionPointPoly(Vector2 point, Vector2 *points, int pointCount)
     
     if (pointCount > 2)
     {
-        for (int i = 0; i < pointCount; i++)
+        for (int i = 0; i < pointCount - 1; i++)
         {
             Vector2 vc = points[i];
             Vector2 vn = points[i + 1];
