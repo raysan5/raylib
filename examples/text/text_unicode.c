@@ -153,7 +153,7 @@ static int hovered = -1, selected = -1;
 //------------------------------------------------------------------------------------
 // Program main entry point
 //------------------------------------------------------------------------------------
-int main(int argc, char **argv)
+int main(void)
 {
     // Initialization
     //--------------------------------------------------------------------------------------
@@ -267,6 +267,7 @@ int main(int argc, char **argv)
                     a = b;
                     b = tmp;
                 }
+                
                 if (msgRect.x + msgRect.width > screenWidth) msgRect.x -= (msgRect.x + msgRect.width) - screenWidth + 10;
 
                 // Draw chat bubble
@@ -286,11 +287,11 @@ int main(int argc, char **argv)
                 DrawText(info, (int)pos.x, (int)pos.y, 10, RAYWHITE);
             }
             //------------------------------------------------------------------------------
-
+            
             // Draw the info text
             DrawText("These emojis have something to tell you, click each to find out!", (screenWidth - 650)/2, screenHeight - 40, 20, GRAY);
             DrawText("Each emoji is a unicode character from a font, not a texture... Press [SPACEBAR] to refresh", (screenWidth - 484)/2, screenHeight - 16, 10, GRAY);
-
+            
         EndDrawing();
         //----------------------------------------------------------------------------------
     }
