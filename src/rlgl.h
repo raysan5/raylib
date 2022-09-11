@@ -2029,13 +2029,16 @@ void rlLoadExtensions(void *loader)
     RLGL.ExtSupported.texAnisoFilter = true;
     RLGL.ExtSupported.texMirrorClamp = true;
     #if defined(GRAPHICS_API_OPENGL_43)
-    if (GLAD_GL_ARB_compute_shader) RLGL.ExtSupported.computeShader = true;
-    if (GLAD_GL_ARB_shader_storage_buffer_object) RLGL.ExtSupported.ssbo = true;
+    RLGL.ExtSupported.computeShader = GLAD_GL_ARB_compute_shader;
+    RLGL.ExtSupported.ssbo = GLAD_GL_ARB_shader_storage_buffer_object;
     #endif
-    #if !defined(__APPLE__)
+    #if defined(__APPLE__)
+    // Apple provides its own extension macros
+    RLGL.ExtSupported.texCompDXT = GL_EXT_texture_compression_s3tc;
+    #else
     // NOTE: With GLAD, we can check if an extension is supported using the GLAD_GL_xxx booleans
-    if (GLAD_GL_EXT_texture_compression_s3tc) RLGL.ExtSupported.texCompDXT = true;  // Texture compression: DXT
-    if (GLAD_GL_ARB_ES3_compatibility) RLGL.ExtSupported.texCompETC2 = true;        // Texture compression: ETC2/EAC
+    RLGL.ExtSupported.texCompDXT = GLAD_GL_EXT_texture_compression_s3tc;  // Texture compression: DXT
+    RLGL.ExtSupported.texCompETC2 = GLAD_GL_ARB_ES3_compatibility;        // Texture compression: ETC2/EAC
     #endif
 #endif  // GRAPHICS_API_OPENGL_33
 
