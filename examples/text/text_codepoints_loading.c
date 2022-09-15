@@ -24,7 +24,6 @@ static char *text = "いろはにほへと　ちりぬるを\nわかよたれそ
 // Remove codepoint duplicates if requested
 static int *CodepointRemoveDuplicates(int *codepoints, int codepointCount, int *codepointResultCount);
 
-
 //------------------------------------------------------------------------------------
 // Program main entry point
 //------------------------------------------------------------------------------------
