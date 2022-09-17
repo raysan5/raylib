@@ -6,7 +6,7 @@ Some people ported raylib to other languages in form of bindings or wrappers to 
 
 |  name              | raylib version  | language  | license    | repo                                                      |
 |:------------------:|:---------------:|:---------:|:----------:|-----------------------------------------------------------|
-| raylib             | **4.0** | [C/C++](https://en.wikipedia.org/wiki/C_(programming_language))    | Zlib | https://github.com/raysan5/raylib          |
+| raylib             | **4.2** | [C/C++](https://en.wikipedia.org/wiki/C_(programming_language))    | Zlib | https://github.com/raysan5/raylib          |
 | raylib-boo         | 3.7     | [Boo](http://boo-language.github.io/)| MIT | https://github.com/Rabios/raylib-boo          |
 | Raylib-cs          | **4.0** | [C#](https://en.wikipedia.org/wiki/C_Sharp_(programming_language)) | Zlib | https://github.com/ChrisDill/Raylib-cs     |
 | Raylib-CsLo        | **4.0** | [C#](https://en.wikipedia.org/wiki/C_Sharp_(programming_language)) | MPL-2.0 | https://github.com/NotNotTech/Raylib-CsLo  |
@@ -15,7 +15,7 @@ Some people ported raylib to other languages in form of bindings or wrappers to 
 | dart-raylib        | **4.0** | [Dart](https://dart.dev/)               | MIT | https://gitlab.com/wolfenrain/dart-raylib   |
 | bindbc-raylib3     | **4.0** | [D](https://dlang.org/)              | BSL-1.0 | https://github.com/o3o/bindbc-raylib3     |
 | dray               | **4.0** | [D](https://dlang.org/)              | Apache-2.0 | https://github.com/xdrie/dray          |
-| raylib-d           | **4.0** | [D](https://dlang.org/)              | Zlib | https://github.com/schveiguy/raylib-d        |
+| raylib-d           | **4.2** | [D](https://dlang.org/)              | Zlib | https://github.com/schveiguy/raylib-d        |
 | dlang_raylib       | **4.0** | [D](https://dlang.org)                  | MPL-2.0 |https://github.com/rc-05/dlang_raylib          |
 | rayex              | 3.7     | [elixir](https://elixir-lang.org/)      | Apache-2.0 | https://github.com/shiryel/rayex     |
 | raylib-factor      | **4.0**     | [Factor](https://factorcode.org/)        | BSD  | https://github.com/factor/factor/blob/master/extra/raylib/raylib.factor   |
@@ -29,7 +29,7 @@ Some people ported raylib to other languages in form of bindings or wrappers to 
 | raylib-j           | **4.0** | [Java](https://en.wikipedia.org/wiki/Java_(programming_language)) | Zlib | https://github.com/CreedVI/Raylib-J |
 | raylib.jl          | **4.2** | [Julia](https://julialang.org/)      | Zlib | https://github.com/irishgreencitrus/raylib.jl |
 | kaylib             | 3.7     | [Kotlin/native](https://kotlinlang.org) | ? | https://github.com/electronstudio/kaylib      |
-| raylib-lua         | **4.0** | [Lua](http://www.lua.org/)           | ISC | https://github.com/TSnake41/raylib-lua        |
+| raylib-lua         | **4.2** | [Lua](http://www.lua.org/)           | ISC | https://github.com/TSnake41/raylib-lua        |
 | raylua             | **4.0** | [Lua](http://www.lua.org/)           | MIT | https://github.com/Rabios/raylua              |
 | nelua-raylib       | 4.0     | [nelua](https://nelua.io/)           | MIT | https://github.com/AKDev21/nelua-raylib       |
 | NimraylibNow!      | 4.2     | [Nim](https://nim-lang.org/)         | MIT | https://github.com/greenfork/nimraylib_now    |
@@ -54,7 +54,7 @@ Some people ported raylib to other languages in form of bindings or wrappers to 
 | raylib-smallBasic  | 4.1-dev | [SmallBASIC](https://github.com/smallbasic/SmallBASIC) | GPLv3 | https://github.com/smallbasic/smallbasic.plugins/tree/master/raylib |
 | raylib.v           | **4.2** | [V](https://vlang.io/)               | Zlib     | https://github.com/irishgreencitrus/raylib.v |
 | raylib-wren        | **4.0** | [Wren](http://wren.io/)              | ISC | https://github.com/TSnake41/raylib-wren              |
-| raylib-zig         | **4.0** | [Zig](https://ziglang.org/)               | MIT | https://github.com/Not-Nik/raylib-zig     |
+| raylib-zig         | **4.2** | [Zig](https://ziglang.org/)               | MIT | https://github.com/Not-Nik/raylib-zig     |
 | raylib.zig         | **4.2** | [Zig](https://ziglang.org/)               | MIT | https://github.com/ryupold/raylib.zig |
 | hare-raylib        | auto    | [Hare](https://harelang.org/)        | Zlib | https://git.sr.ht/~evantj/hare-raylib       |
 
