@@ -2027,8 +2027,8 @@ void rlLoadExtensions(void *loader)
     RLGL.ExtSupported.maxDepthBits = 32;
     RLGL.ExtSupported.texAnisoFilter = CORE_OPENGL_33 || GLAD_GL_EXT_texture_filter_anisotropic;
     RLGL.ExtSupported.texMirrorClamp = CORE_OPENGL_33 || GLAD_GL_EXT_texture_mirror_clamp;
-    RLGL.ExtSupported.texCompASTC = CORE_OPENGL_33 || (GLAD_GL_KHR_texture_compression_astc_hdr && GLAD_GL_KHR_texture_compression_astc_ldr);
     // Optional OpenGL 3.3 extensions
+    RLGL.ExtSupported.texCompASTC = GLAD_GL_KHR_texture_compression_astc_hdr && GLAD_GL_KHR_texture_compression_astc_ldr;
     RLGL.ExtSupported.texCompDXT = GLAD_GL_EXT_texture_compression_s3tc;  // Texture compression: DXT
     RLGL.ExtSupported.texCompETC2 = GLAD_GL_ARB_ES3_compatibility;        // Texture compression: ETC2/EAC
     #if defined(GRAPHICS_API_OPENGL_43)
@@ -2226,11 +2226,7 @@ int rlGetVersion(void)
     glVersion = RL_OPENGL_11;
 #endif
 #if defined(GRAPHICS_API_OPENGL_21)
-    #if defined(__APPLE__)
-        glVersion = RL_OPENGL_33;           // NOTE: Force OpenGL 3.3 on OSX
-    #else
-        glVersion = RL_OPENGL_21;
-    #endif
+    glVersion = RL_OPENGL_21;
 #elif defined(GRAPHICS_API_OPENGL_33)
     glVersion = RL_OPENGL_33;
 #endif
