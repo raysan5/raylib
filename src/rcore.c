@@ -5580,6 +5580,32 @@ static void AndroidCommandCallback(struct android_app *app, int32_t cmd)
     }
 }
 
+static GamepadButton AndroidTranslateGamepadButton(int button)
+{
+    switch (button)
+    {
+        case AKEYCODE_BUTTON_A: return GAMEPAD_BUTTON_RIGHT_FACE_DOWN;
+        case AKEYCODE_BUTTON_B: return GAMEPAD_BUTTON_RIGHT_FACE_RIGHT;
+        case AKEYCODE_BUTTON_X: return GAMEPAD_BUTTON_RIGHT_FACE_LEFT;
+        case AKEYCODE_BUTTON_Y: return GAMEPAD_BUTTON_RIGHT_FACE_UP;
+        case AKEYCODE_BUTTON_L1: return GAMEPAD_BUTTON_LEFT_TRIGGER_1;
+        case AKEYCODE_BUTTON_R1: return GAMEPAD_BUTTON_RIGHT_TRIGGER_1;
+        case AKEYCODE_BUTTON_L2: return GAMEPAD_BUTTON_LEFT_TRIGGER_2;
+        case AKEYCODE_BUTTON_R2: return GAMEPAD_BUTTON_RIGHT_TRIGGER_2;
+        case AKEYCODE_BUTTON_THUMBL: return GAMEPAD_BUTTON_LEFT_THUMB;
+        case AKEYCODE_BUTTON_THUMBR: return GAMEPAD_BUTTON_RIGHT_THUMB;
+        case AKEYCODE_BUTTON_START: return GAMEPAD_BUTTON_MIDDLE_RIGHT;
+        case AKEYCODE_BUTTON_SELECT: return GAMEPAD_BUTTON_MIDDLE_LEFT;
+        case AKEYCODE_BUTTON_MODE: return GAMEPAD_BUTTON_MIDDLE;
+        // On some (most?) gamepads dpad events are reported as axis motion instead
+        case AKEYCODE_DPAD_DOWN: return GAMEPAD_BUTTON_LEFT_FACE_DOWN;
+        case AKEYCODE_DPAD_RIGHT: return GAMEPAD_BUTTON_LEFT_FACE_RIGHT;
+        case AKEYCODE_DPAD_LEFT: return GAMEPAD_BUTTON_LEFT_FACE_LEFT;
+        case AKEYCODE_DPAD_UP: return GAMEPAD_BUTTON_LEFT_FACE_UP;
+        default: return GAMEPAD_BUTTON_UNKNOWN;
+    }
+}
+
 // ANDROID: Get input events
 static int32_t AndroidInputCallback(struct android_app *app, AInputEvent *event)
 {
@@ -5595,32 +5621,84 @@ static int32_t AndroidInputCallback(struct android_app *app, AInputEvent *event)
         if (((source & AINPUT_SOURCE_JOYSTICK) == AINPUT_SOURCE_JOYSTICK) ||
             ((source & AINPUT_SOURCE_GAMEPAD) == AINPUT_SOURCE_GAMEPAD))
         {
-            // Get first touch position
-            CORE.Input.Touch.position[0].x = AMotionEvent_getX(event, 0);
-            CORE.Input.Touch.position[0].y = AMotionEvent_getY(event, 0);
+            // For now we'll assume a single gamepad which we "detect" on its input event
+            CORE.Input.Gamepad.ready[0] = true;
 
-            // Get second touch position
-            CORE.Input.Touch.position[1].x = AMotionEvent_getX(event, 1);
-            CORE.Input.Touch.position[1].y = AMotionEvent_getY(event, 1);
+            CORE.Input.Gamepad.axisState[0][GAMEPAD_AXIS_LEFT_X] = AMotionEvent_getAxisValue(
+                    event, AMOTION_EVENT_AXIS_X, 0);
+            CORE.Input.Gamepad.axisState[0][GAMEPAD_AXIS_LEFT_Y] = AMotionEvent_getAxisValue(
+                    event, AMOTION_EVENT_AXIS_Y, 0);
+            CORE.Input.Gamepad.axisState[0][GAMEPAD_AXIS_RIGHT_X] = AMotionEvent_getAxisValue(
+                    event, AMOTION_EVENT_AXIS_Z, 0);
+            CORE.Input.Gamepad.axisState[0][GAMEPAD_AXIS_RIGHT_Y] = AMotionEvent_getAxisValue(
+                    event, AMOTION_EVENT_AXIS_RZ, 0);
+            CORE.Input.Gamepad.axisState[0][GAMEPAD_AXIS_LEFT_TRIGGER] = AMotionEvent_getAxisValue(
+                    event, AMOTION_EVENT_AXIS_BRAKE, 0) * 2.0f - 1.0f;
+            CORE.Input.Gamepad.axisState[0][GAMEPAD_AXIS_RIGHT_TRIGGER] = AMotionEvent_getAxisValue(
+                    event, AMOTION_EVENT_AXIS_GAS, 0) * 2.0f - 1.0f;
 
-            int32_t keycode = AKeyEvent_getKeyCode(event);
-            if (AKeyEvent_getAction(event) == AKEY_EVENT_ACTION_DOWN)
+            // dpad is reported as an axis on android
+            float dpadX = AMotionEvent_getAxisValue(event, AMOTION_EVENT_AXIS_HAT_X, 0);
+            float dpadY = AMotionEvent_getAxisValue(event, AMOTION_EVENT_AXIS_HAT_Y, 0);
+
+            if (dpadX == 1.0f)
             {
-                CORE.Input.Keyboard.currentKeyState[keycode] = 1;   // Key down
-
-                CORE.Input.Keyboard.keyPressedQueue[CORE.Input.Keyboard.keyPressedQueueCount] = keycode;
-                CORE.Input.Keyboard.keyPressedQueueCount++;
+                CORE.Input.Gamepad.currentButtonState[0][GAMEPAD_BUTTON_LEFT_FACE_RIGHT] = 1;
+                CORE.Input.Gamepad.currentButtonState[0][GAMEPAD_BUTTON_LEFT_FACE_LEFT] = 0;
             }
-            else CORE.Input.Keyboard.currentKeyState[keycode] = 0;  // Key up
+            else if (dpadX == -1.0f)
+            {
+                CORE.Input.Gamepad.currentButtonState[0][GAMEPAD_BUTTON_LEFT_FACE_RIGHT] = 0;
+                CORE.Input.Gamepad.currentButtonState[0][GAMEPAD_BUTTON_LEFT_FACE_LEFT] = 1;
+            }
+            else
+            {
+                CORE.Input.Gamepad.currentButtonState[0][GAMEPAD_BUTTON_LEFT_FACE_RIGHT] = 0;
+                CORE.Input.Gamepad.currentButtonState[0][GAMEPAD_BUTTON_LEFT_FACE_LEFT] = 0;
+            }
 
-            // Stop processing gamepad buttons
-            return 1;
+            if (dpadY == 1.0f)
+            {
+                CORE.Input.Gamepad.currentButtonState[0][GAMEPAD_BUTTON_LEFT_FACE_DOWN] = 1;
+                CORE.Input.Gamepad.currentButtonState[0][GAMEPAD_BUTTON_LEFT_FACE_UP] = 0;
+            }
+            else if (dpadY == -1.0f)
+            {
+                CORE.Input.Gamepad.currentButtonState[0][GAMEPAD_BUTTON_LEFT_FACE_DOWN] = 0;
+                CORE.Input.Gamepad.currentButtonState[0][GAMEPAD_BUTTON_LEFT_FACE_UP] = 1;
+            }
+            else
+            {
+                CORE.Input.Gamepad.currentButtonState[0][GAMEPAD_BUTTON_LEFT_FACE_DOWN] = 0;
+                CORE.Input.Gamepad.currentButtonState[0][GAMEPAD_BUTTON_LEFT_FACE_UP] = 0;
+            }
+
+            return 1; // Handled gamepad axis motion
         }
     }
     else if (type == AINPUT_EVENT_TYPE_KEY)
     {
         int32_t keycode = AKeyEvent_getKeyCode(event);
         //int32_t AKeyEvent_getMetaState(event);
+
+        // Handle gamepad button presses and releases
+        if (((source & AINPUT_SOURCE_JOYSTICK) == AINPUT_SOURCE_JOYSTICK) ||
+            ((source & AINPUT_SOURCE_GAMEPAD) == AINPUT_SOURCE_GAMEPAD))
+        {
+            // For now we'll assume a single gamepad which we "detect" on its input event
+            CORE.Input.Gamepad.ready[0] = true;
+
+            GamepadButton button = AndroidTranslateGamepadButton(keycode);
+            if (button == GAMEPAD_BUTTON_UNKNOWN)
+                return 1;
+
+            if (AKeyEvent_getAction(event) == AKEY_EVENT_ACTION_DOWN)
+            {
+                CORE.Input.Gamepad.currentButtonState[0][button] = 1;
+            }
+            else CORE.Input.Gamepad.currentButtonState[0][button] = 0;  // Key up
+            return 1; // Handled gamepad button
+        }
 
         // Save current button and its state
         // NOTE: Android key action is 0 for down and 1 for up
