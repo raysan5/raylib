@@ -444,13 +444,13 @@ typedef enum {
     RL_SHADER_LOC_MAP_IRRADIANCE,       // Shader location: samplerCube texture: irradiance
     RL_SHADER_LOC_MAP_PREFILTER,        // Shader location: samplerCube texture: prefilter
     RL_SHADER_LOC_MAP_BRDF              // Shader location: sampler2d texture: brdf
-} rlShaderLocationIndex;    
-    
+} rlShaderLocationIndex;
+
 #define RL_SHADER_LOC_MAP_DIFFUSE       RL_SHADER_LOC_MAP_ALBEDO
 #define RL_SHADER_LOC_MAP_SPECULAR      RL_SHADER_LOC_MAP_METALNESS
-    
+
 // Shader uniform data type 
-typedef enum {  
+typedef enum {
     RL_SHADER_UNIFORM_FLOAT = 0,        // Shader uniform type: float
     RL_SHADER_UNIFORM_VEC2,             // Shader uniform type: vec2 (2 float)
     RL_SHADER_UNIFORM_VEC3,             // Shader uniform type: vec3 (3 float)
@@ -741,16 +741,11 @@ RLAPI void rlLoadDrawQuad(void);     // Load and draw a quad
 #endif
 
 #if defined(GRAPHICS_API_OPENGL_33)
-    #if defined(__APPLE__)
-        #include <OpenGL/gl3.h>         // OpenGL 3 library for OSX
-        #include <OpenGL/gl3ext.h>      // OpenGL 3 extensions library for OSX
-    #else
-        #define GLAD_MALLOC RL_MALLOC
-        #define GLAD_FREE RL_FREE
+    #define GLAD_MALLOC RL_MALLOC
+    #define GLAD_FREE RL_FREE
 
-        #define GLAD_GL_IMPLEMENTATION
-        #include "external/glad.h"      // GLAD extensions loading library, includes OpenGL headers
-    #endif
+    #define GLAD_GL_IMPLEMENTATION
+    #include "external/glad.h"      // GLAD extensions loading library, includes OpenGL headers
 #endif
 
 #if defined(GRAPHICS_API_OPENGL_ES2)
@@ -2001,10 +1996,8 @@ void rlLoadExtensions(void *loader)
 {
 #if defined(GRAPHICS_API_OPENGL_33)     // Also defined for GRAPHICS_API_OPENGL_21
     // NOTE: glad is generated and contains only required OpenGL 3.3 Core extensions (and lower versions)
-    #if !defined(__APPLE__)
-        if (gladLoadGL((GLADloadfunc)loader) == 0) TRACELOG(RL_LOG_WARNING, "GLAD: Cannot load OpenGL extensions");
-        else TRACELOG(RL_LOG_INFO, "GLAD: OpenGL extensions loaded successfully");
-    #endif
+    if (gladLoadGL((GLADloadfunc)loader) == 0) TRACELOG(RL_LOG_WARNING, "GLAD: Cannot load OpenGL extensions");
+    else TRACELOG(RL_LOG_INFO, "GLAD: OpenGL extensions loaded successfully");
 
     // Get number of supported extensions
     GLint numExt = 0;
@@ -2018,6 +2011,18 @@ void rlLoadExtensions(void *loader)
     for (int i = 0; i < numExt; i++) TRACELOG(RL_LOG_INFO, "    %s", glGetStringi(GL_EXTENSIONS, i));
 #endif
 
+#if defined(GRAPHICS_API_OPENGL_21)
+    // Register supported extensions flags
+    // Optional OpenGL 2.1 extensions
+    RLGL.ExtSupported.vao = GLAD_GL_ARB_vertex_array_object;
+    RLGL.ExtSupported.instancing = (GLAD_GL_EXT_draw_instanced && GLAD_GL_ARB_instanced_arrays);
+    RLGL.ExtSupported.texNPOT = GLAD_GL_ARB_texture_non_power_of_two;
+    RLGL.ExtSupported.texFloat32 = GLAD_GL_ARB_texture_float;
+    RLGL.ExtSupported.texDepth = GLAD_GL_ARB_depth_texture;
+    RLGL.ExtSupported.maxDepthBits = 32;
+    RLGL.ExtSupported.texAnisoFilter = GLAD_GL_EXT_texture_filter_anisotropic;
+    RLGL.ExtSupported.texMirrorClamp = GLAD_GL_EXT_texture_mirror_clamp;
+#else
     // Register supported extensions flags
     // OpenGL 3.3 extensions supported by default (core)
     RLGL.ExtSupported.vao = true;
@@ -2028,18 +2033,17 @@ void rlLoadExtensions(void *loader)
     RLGL.ExtSupported.maxDepthBits = 32;
     RLGL.ExtSupported.texAnisoFilter = true;
     RLGL.ExtSupported.texMirrorClamp = true;
+#endif
+
+    // Optional OpenGL 3.3 extensions
+    RLGL.ExtSupported.texCompASTC = GLAD_GL_KHR_texture_compression_astc_hdr && GLAD_GL_KHR_texture_compression_astc_ldr;
+    RLGL.ExtSupported.texCompDXT = GLAD_GL_EXT_texture_compression_s3tc;  // Texture compression: DXT
+    RLGL.ExtSupported.texCompETC2 = GLAD_GL_ARB_ES3_compatibility;        // Texture compression: ETC2/EAC
     #if defined(GRAPHICS_API_OPENGL_43)
     RLGL.ExtSupported.computeShader = GLAD_GL_ARB_compute_shader;
     RLGL.ExtSupported.ssbo = GLAD_GL_ARB_shader_storage_buffer_object;
     #endif
-    #if defined(__APPLE__)
-    // Apple provides its own extension macros
-    RLGL.ExtSupported.texCompDXT = GL_EXT_texture_compression_s3tc;
-    #else
-    // NOTE: With GLAD, we can check if an extension is supported using the GLAD_GL_xxx booleans
-    RLGL.ExtSupported.texCompDXT = GLAD_GL_EXT_texture_compression_s3tc;  // Texture compression: DXT
-    RLGL.ExtSupported.texCompETC2 = GLAD_GL_ARB_ES3_compatibility;        // Texture compression: ETC2/EAC
-    #endif
+
 #endif  // GRAPHICS_API_OPENGL_33
 
 #if defined(GRAPHICS_API_OPENGL_ES2)
@@ -2205,12 +2209,10 @@ void rlLoadExtensions(void *loader)
 #else   // RLGL_SHOW_GL_DETAILS_INFO
 
     // Show some basic info about GL supported features
-    #if defined(GRAPHICS_API_OPENGL_ES2)
     if (RLGL.ExtSupported.vao) TRACELOG(RL_LOG_INFO, "GL: VAO extension detected, VAO functions loaded successfully");
     else TRACELOG(RL_LOG_WARNING, "GL: VAO extension not found, VAO not supported");
     if (RLGL.ExtSupported.texNPOT) TRACELOG(RL_LOG_INFO, "GL: NPOT textures extension detected, full NPOT textures supported");
     else TRACELOG(RL_LOG_WARNING, "GL: NPOT textures extension not found, limited NPOT support (no-mipmaps, no-repeat)");
-    #endif
     if (RLGL.ExtSupported.texCompDXT) TRACELOG(RL_LOG_INFO, "GL: DXT compressed textures supported");
     if (RLGL.ExtSupported.texCompETC1) TRACELOG(RL_LOG_INFO, "GL: ETC1 compressed textures supported");
     if (RLGL.ExtSupported.texCompETC2) TRACELOG(RL_LOG_INFO, "GL: ETC2/EAC compressed textures supported");
@@ -2231,11 +2233,7 @@ int rlGetVersion(void)
     glVersion = RL_OPENGL_11;
 #endif
 #if defined(GRAPHICS_API_OPENGL_21)
-    #if defined(__APPLE__)
-        glVersion = RL_OPENGL_33;           // NOTE: Force OpenGL 3.3 on OSX
-    #else
-        glVersion = RL_OPENGL_21;
-    #endif
+    glVersion = RL_OPENGL_21;
 #elif defined(GRAPHICS_API_OPENGL_33)
     glVersion = RL_OPENGL_33;
 #endif

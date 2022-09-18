@@ -3986,9 +3986,9 @@ static bool InitGraphicsDevice(int width, int height)
         glfwWindowHint(GLFW_SAMPLES, 4);   // Tries to enable multisampling x4 (MSAA), default is 0
     }
 
-    // NOTE: When asking for an OpenGL context version, most drivers provide highest supported version
-    // with forward compatibility to older OpenGL versions.
-    // For example, if using OpenGL 1.1, driver can provide a 4.3 context forward compatible.
+    // NOTE: When asking for an OpenGL context version, most drivers provide the highest supported version
+    // with backward compatibility to older OpenGL versions.
+    // For example, if using OpenGL 1.1, driver can provide a 4.3 backwards compatible context.
 
     // Check selection OpenGL version
     if (rlGetVersion() == RL_OPENGL_21)
