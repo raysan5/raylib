@@ -2012,21 +2012,29 @@ void rlLoadExtensions(void *loader)
 #endif
 
 #if defined(GRAPHICS_API_OPENGL_21)
-#define CORE_OPENGL_33 false
+    // Register supported extensions flags
+    // Optional OpenGL 2.1 extensions
+    RLGL.ExtSupported.vao = GLAD_GL_ARB_vertex_array_object;
+    RLGL.ExtSupported.instancing = (GLAD_GL_EXT_draw_instanced && GLAD_GL_ARB_instanced_arrays);
+    RLGL.ExtSupported.texNPOT = GLAD_GL_ARB_texture_non_power_of_two;
+    RLGL.ExtSupported.texFloat32 = GLAD_GL_ARB_texture_float;
+    RLGL.ExtSupported.texDepth = GLAD_GL_ARB_depth_texture;
+    RLGL.ExtSupported.maxDepthBits = 32;
+    RLGL.ExtSupported.texAnisoFilter = GLAD_GL_EXT_texture_filter_anisotropic;
+    RLGL.ExtSupported.texMirrorClamp = GLAD_GL_EXT_texture_mirror_clamp;
 #else
-#define CORE_OPENGL_33 true
+    // Register supported extensions flags
+    // OpenGL 3.3 extensions supported by default (core)
+    RLGL.ExtSupported.vao = true;
+    RLGL.ExtSupported.instancing = true;
+    RLGL.ExtSupported.texNPOT = true;
+    RLGL.ExtSupported.texFloat32 = true;
+    RLGL.ExtSupported.texDepth = true;
+    RLGL.ExtSupported.maxDepthBits = 32;
+    RLGL.ExtSupported.texAnisoFilter = true;
+    RLGL.ExtSupported.texMirrorClamp = true;
 #endif
 
-    // Register supported extensions flags
-    // OpenGL 3.3 extensions supported by default (core) or optional in OpenGL 2.1
-    RLGL.ExtSupported.vao = CORE_OPENGL_33 || GLAD_GL_ARB_vertex_array_object;
-    RLGL.ExtSupported.instancing = CORE_OPENGL_33 || (GLAD_GL_EXT_draw_instanced && GLAD_GL_ARB_instanced_arrays);
-    RLGL.ExtSupported.texNPOT = CORE_OPENGL_33 || GLAD_GL_ARB_texture_non_power_of_two;
-    RLGL.ExtSupported.texFloat32 = CORE_OPENGL_33 || GLAD_GL_ARB_texture_float;
-    RLGL.ExtSupported.texDepth = CORE_OPENGL_33 || GLAD_GL_ARB_depth_texture;
-    RLGL.ExtSupported.maxDepthBits = 32;
-    RLGL.ExtSupported.texAnisoFilter = CORE_OPENGL_33 || GLAD_GL_EXT_texture_filter_anisotropic;
-    RLGL.ExtSupported.texMirrorClamp = CORE_OPENGL_33 || GLAD_GL_EXT_texture_mirror_clamp;
     // Optional OpenGL 3.3 extensions
     RLGL.ExtSupported.texCompASTC = GLAD_GL_KHR_texture_compression_astc_hdr && GLAD_GL_KHR_texture_compression_astc_ldr;
     RLGL.ExtSupported.texCompDXT = GLAD_GL_EXT_texture_compression_s3tc;  // Texture compression: DXT
@@ -2036,7 +2044,6 @@ void rlLoadExtensions(void *loader)
     RLGL.ExtSupported.ssbo = GLAD_GL_ARB_shader_storage_buffer_object;
     #endif
 
-#undef CORE_OPENGL_33
 #endif  // GRAPHICS_API_OPENGL_33
 
 #if defined(GRAPHICS_API_OPENGL_ES2)
