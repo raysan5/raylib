@@ -5484,7 +5484,14 @@ static void AndroidCommandCallback(struct android_app *app, int32_t cmd)
                     // Reset screen scaling to full display size
                     EGLint displayFormat = 0;
                     eglGetConfigAttrib(CORE.Window.device, CORE.Window.config, EGL_NATIVE_VISUAL_ID, &displayFormat);
-                    ANativeWindow_setBuffersGeometry(app->window, CORE.Window.render.width, CORE.Window.render.height, displayFormat);
+
+                    // Adding renderOffset here feels rather hackish, but the viewport scaling is wrong after the
+                    // context rebinding if the screen is scaled unless offsets are added. There's probably a more
+                    // appropriate way to fix this
+                    ANativeWindow_setBuffersGeometry(app->window,
+                        CORE.Window.render.width + CORE.Window.renderOffset.x,
+                        CORE.Window.render.height + CORE.Window.renderOffset.y,
+                        displayFormat);
 
                     // Recreate display surface and re-attach OpenGL context
                     CORE.Window.surface = eglCreateWindowSurface(CORE.Window.device, CORE.Window.config, app->window, NULL);
