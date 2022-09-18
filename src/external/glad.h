@@ -8327,7 +8327,7 @@ static int glad_gl_get_extensions( int version, const char **out_exts, unsigned 
         }
         glad_glGetIntegerv(GL_NUM_EXTENSIONS, (int*) &num_exts_i);
         if (num_exts_i > 0) {
-            exts_i = (char **) malloc(num_exts_i * (sizeof *exts_i));
+            exts_i = (char **) GLAD_MALLOC(num_exts_i * (sizeof *exts_i));
         }
         if (exts_i == NULL) {
             return 0;
@@ -8336,7 +8336,7 @@ static int glad_gl_get_extensions( int version, const char **out_exts, unsigned 
             const char *gl_str_tmp = (const char*) glad_glGetStringi(GL_EXTENSIONS, index);
             size_t len = strlen(gl_str_tmp) + 1;
 
-            char *local_str = (char*) malloc(len * sizeof(char));
+            char *local_str = (char*) GLAD_MALLOC(len * sizeof(char));
             if(local_str != NULL) {
                 memcpy(local_str, gl_str_tmp, len * sizeof(char));
             }
@@ -8354,9 +8354,9 @@ static void glad_gl_free_extensions(char **exts_i, unsigned int num_exts_i) {
     if (exts_i != NULL) {
         unsigned int index;
         for(index = 0; index < num_exts_i; index++) {
-            free((void *) (exts_i[index]));
+            GLAD_FREE((void *) (exts_i[index]));
         }
-        free((void *)exts_i);
+        GLAD_FREE((void *)exts_i);
         exts_i = NULL;
     }
 }
