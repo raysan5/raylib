@@ -5755,9 +5755,6 @@ static int32_t AndroidInputCallback(struct android_app *app, AInputEvent *event)
     int32_t action = AMotionEvent_getAction(event);
     unsigned int flags = action & AMOTION_EVENT_ACTION_MASK;
 
-    if (flags == AMOTION_EVENT_ACTION_DOWN || flags == AMOTION_EVENT_ACTION_MOVE) CORE.Input.Touch.currentTouchState[MOUSE_BUTTON_LEFT] = 1;
-    else if (flags == AMOTION_EVENT_ACTION_UP) CORE.Input.Touch.currentTouchState[MOUSE_BUTTON_LEFT] = 0;
-
 #if defined(SUPPORT_GESTURES_SYSTEM)        // PLATFORM_ANDROID
     GestureEvent gestureEvent = { 0 };
 
@@ -5778,6 +5775,25 @@ static int32_t AndroidInputCallback(struct android_app *app, AInputEvent *event)
     // Gesture data is sent to gestures system for processing
     ProcessGestureEvent(gestureEvent);
 #endif
+
+    int32_t pointerIndex = (action & AMOTION_EVENT_ACTION_POINTER_INDEX_MASK) >> AMOTION_EVENT_ACTION_POINTER_INDEX_SHIFT;
+
+    if (flags == AMOTION_EVENT_ACTION_POINTER_UP || flags == AMOTION_EVENT_ACTION_UP)
+    {
+        // One of the touchpoints is released, remove it from touch point arrays
+        for (int i = pointerIndex; (i < CORE.Input.Touch.pointCount-1) && (i < MAX_TOUCH_POINTS); i++)
+        {
+            CORE.Input.Touch.pointId[i] = CORE.Input.Touch.pointId[i+1];
+            CORE.Input.Touch.position[i] = CORE.Input.Touch.position[i+1];
+        }
+        CORE.Input.Touch.pointCount--;
+    }
+
+    // When all touchpoints are tapped and released really quickly, this event is generated
+    if (flags == AMOTION_EVENT_ACTION_CANCEL) CORE.Input.Touch.pointCount = 0;
+
+    if (CORE.Input.Touch.pointCount > 0) CORE.Input.Touch.currentTouchState[MOUSE_BUTTON_LEFT] = 1;
+    else CORE.Input.Touch.currentTouchState[MOUSE_BUTTON_LEFT] = 0;
 
     return 0;
 }
