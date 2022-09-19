@@ -3082,6 +3082,7 @@ void rlUnloadTexture(unsigned int id)
 }
 
 // Generate mipmap data for selected texture
+// NOTE: Only supports GPU mipmap generation
 void rlGenTextureMipmaps(unsigned int id, int width, int height, int format, int *mipmaps)
 {
     glBindTexture(GL_TEXTURE_2D, id);
