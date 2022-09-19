@@ -990,14 +990,12 @@ static void rlUnloadShaderDefault(void);    // Unload default shader
 static char *rlGetCompressedFormatName(int format); // Get compressed format official GL identifier name
 #endif  // RLGL_SHOW_GL_DETAILS_INFO
 #endif  // GRAPHICS_API_OPENGL_33 || GRAPHICS_API_OPENGL_ES2
-#if defined(GRAPHICS_API_OPENGL_11)
-static int rlGenTextureMipmapsData(unsigned char *data, int baseWidth, int baseHeight);         // Generate mipmaps data on CPU side
-static unsigned char *rlGenNextMipmapData(unsigned char *srcData, int srcWidth, int srcHeight); // Generate next mipmap level on CPU side
-#endif
+
 static int rlGetPixelDataSize(int width, int height, int format);   // Get pixel data size in bytes (image or texture)
+
 // Auxiliar matrix math functions
-static Matrix rlMatrixIdentity(void);                             // Get identity matrix
-static Matrix rlMatrixMultiply(Matrix left, Matrix right);    // Multiply two matrices
+static Matrix rlMatrixIdentity(void);                       // Get identity matrix
+static Matrix rlMatrixMultiply(Matrix left, Matrix right);  // Multiply two matrices
 
 //----------------------------------------------------------------------------------
 // Module Functions Definition - Matrix operations
@@ -3094,45 +3092,6 @@ void rlGenTextureMipmaps(unsigned int id, int width, int height, int format, int
     if (((width > 0) && ((width & (width - 1)) == 0)) &&
         ((height > 0) && ((height & (height - 1)) == 0))) texIsPOT = true;
 
-#if defined(GRAPHICS_API_OPENGL_11)
-    if (texIsPOT)
-    {
-        // WARNING: Manual mipmap generation only works for RGBA 32bit textures!
-        if (format == RL_PIXELFORMAT_UNCOMPRESSED_R8G8B8A8)
-        {
-            // Retrieve texture data from VRAM
-            void *texData = rlReadTexturePixels(id, width, height, format);
-
-            // NOTE: Texture data size is reallocated to fit mipmaps data
-            // NOTE: CPU mipmap generation only supports RGBA 32bit data
-            int mipmapCount = rlGenTextureMipmapsData(texData, width, height);
-
-            int size = width*height*4;
-            int offset = size;
-
-            int mipWidth = width/2;
-            int mipHeight = height/2;
-
-            // Load the mipmaps
-            for (int level = 1; level < mipmapCount; level++)
-            {
-                glTexImage2D(GL_TEXTURE_2D, level, GL_RGBA8, mipWidth, mipHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, (unsigned char *)texData + offset);
-
-                size = mipWidth*mipHeight*4;
-                offset += size;
-
-                mipWidth /= 2;
-                mipHeight /= 2;
-            }
-
-            *mipmaps = mipmapCount + 1;
-            RL_FREE(texData); // Once mipmaps have been generated and data has been uploaded to GPU VRAM, we can discard RAM data
-
-            TRACELOG(RL_LOG_WARNING, "TEXTURE: [ID %i] Mipmaps generated manually on CPU side, total: %i", id, *mipmaps);
-        }
-        else TRACELOG(RL_LOG_WARNING, "TEXTURE: [ID %i] Failed to generate mipmaps for provided texture format", id);
-    }
-#endif
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     if ((texIsPOT) || (RLGL.ExtSupported.texNPOT))
     {
@@ -4521,132 +4480,6 @@ static char *rlGetCompressedFormatName(int format)
 #endif  // RLGL_SHOW_GL_DETAILS_INFO
 
 #endif  // GRAPHICS_API_OPENGL_33 || GRAPHICS_API_OPENGL_ES2
-
-#if defined(GRAPHICS_API_OPENGL_11)
-// Mipmaps data is generated after image data
-// NOTE: Only works with RGBA (4 bytes) data!
-static int rlGenTextureMipmapsData(unsigned char *data, int baseWidth, int baseHeight)
-{
-    int mipmapCount = 1;                // Required mipmap levels count (including base level)
-    int width = baseWidth;
-    int height = baseHeight;
-    int size = baseWidth*baseHeight*4;  // Size in bytes (will include mipmaps...), RGBA only
-
-    // Count mipmap levels required
-    while ((width != 1) && (height != 1))
-    {
-        width /= 2;
-        height /= 2;
-
-        TRACELOGD("TEXTURE: Next mipmap size: %i x %i", width, height);
-
-        mipmapCount++;
-
-        size += (width*height*4);       // Add mipmap size (in bytes)
-    }
-
-    TRACELOGD("TEXTURE: Total mipmaps required: %i", mipmapCount);
-    TRACELOGD("TEXTURE: Total size of data required: %i", size);
-
-    unsigned char *temp = RL_REALLOC(data, size);
-
-    if (temp != NULL) data = temp;
-    else TRACELOG(RL_LOG_WARNING, "TEXTURE: Failed to re-allocate required mipmaps memory");
-
-    width = baseWidth;
-    height = baseHeight;
-    size = (width*height*4);    // RGBA: 4 bytes
-
-    // Generate mipmaps
-    // NOTE: Every mipmap data is stored after data (RGBA - 4 bytes)
-    unsigned char *image = (unsigned char *)RL_MALLOC(width*height*4);
-    unsigned char *mipmap = NULL;
-    int offset = 0;
-
-    for (int i = 0; i < size; i += 4)
-    {
-        image[i] = data[i];
-        image[i + 1] = data[i + 1];
-        image[i + 2] = data[i + 2];
-        image[i + 3] = data[i + 3];
-    }
-
-    TRACELOGD("TEXTURE: Mipmap base size (%ix%i)", width, height);
-
-    for (int mip = 1; mip < mipmapCount; mip++)
-    {
-        mipmap = rlGenNextMipmapData(image, width, height);
-
-        offset += (width*height*4); // Size of last mipmap
-
-        width /= 2;
-        height /= 2;
-        size = (width*height*4);    // Mipmap size to store after offset
-
-        // Add mipmap to data
-        for (int i = 0; i < size; i += 4)
-        {
-            data[offset + i] = mipmap[i];
-            data[offset + i + 1] = mipmap[i + 1];
-            data[offset + i + 2] = mipmap[i + 2];
-            data[offset + i + 3] = mipmap[i + 3];
-        }
-
-        RL_FREE(image);
-
-        image = mipmap;
-        mipmap = NULL;
-    }
-
-    RL_FREE(mipmap);       // free mipmap data
-
-    return mipmapCount;
-}
-
-// Manual mipmap generation (basic scaling algorithm)
-static unsigned char *rlGenNextMipmapData(unsigned char *srcData, int srcWidth, int srcHeight)
-{
-    int x2 = 0;
-    int y2 = 0;
-    unsigned char prow[4] = { 0 };
-    unsigned char pcol[4] = { 0 };
-
-    int width = srcWidth/2;
-    int height = srcHeight/2;
-
-    unsigned char *mipmap = (unsigned char *)RL_MALLOC(width*height*4);
-
-    // Scaling algorithm works perfectly (box-filter)
-    for (int y = 0; y < height; y++)
-    {
-        y2 = 2*y;
-
-        for (int x = 0; x < width; x++)
-        {
-            x2 = 2*x;
-
-            prow[0] = (srcData[(y2*srcWidth + x2)*4 + 0] + srcData[(y2*srcWidth + x2 + 1)*4 + 0])/2;
-            prow[1] = (srcData[(y2*srcWidth + x2)*4 + 1] + srcData[(y2*srcWidth + x2 + 1)*4 + 1])/2;
-            prow[2] = (srcData[(y2*srcWidth + x2)*4 + 2] + srcData[(y2*srcWidth + x2 + 1)*4 + 2])/2;
-            prow[3] = (srcData[(y2*srcWidth + x2)*4 + 3] + srcData[(y2*srcWidth + x2 + 1)*4 + 3])/2;
-
-            pcol[0] = (srcData[((y2 + 1)*srcWidth + x2)*4 + 0] + srcData[((y2 + 1)*srcWidth + x2 + 1)*4 + 0])/2;
-            pcol[1] = (srcData[((y2 + 1)*srcWidth + x2)*4 + 1] + srcData[((y2 + 1)*srcWidth + x2 + 1)*4 + 1])/2;
-            pcol[2] = (srcData[((y2 + 1)*srcWidth + x2)*4 + 2] + srcData[((y2 + 1)*srcWidth + x2 + 1)*4 + 2])/2;
-            pcol[3] = (srcData[((y2 + 1)*srcWidth + x2)*4 + 3] + srcData[((y2 + 1)*srcWidth + x2 + 1)*4 + 3])/2;
-
-            mipmap[(y*width + x)*4 + 0] = (prow[0] + pcol[0])/2;
-            mipmap[(y*width + x)*4 + 1] = (prow[1] + pcol[1])/2;
-            mipmap[(y*width + x)*4 + 2] = (prow[2] + pcol[2])/2;
-            mipmap[(y*width + x)*4 + 3] = (prow[3] + pcol[3])/2;
-        }
-    }
-
-    TRACELOGD("TEXTURE: Mipmap generated successfully (%ix%i)", width, height);
-
-    return mipmap;
-}
-#endif  // GRAPHICS_API_OPENGL_11
 
 // Get pixel data size in bytes (image or texture)
 // NOTE: Size depends on pixel format
