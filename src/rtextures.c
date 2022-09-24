@@ -70,12 +70,12 @@
 
 #if defined(SUPPORT_MODULE_RTEXTURES)
 
-#include "utils.h"              // Required for: TRACELOG() and fopen() Android mapping
+#include "utils.h"              // Required for: TRACELOG()
 #include "rlgl.h"               // OpenGL abstraction layer to OpenGL 1.1, 3.3 or ES2
 
 #include <stdlib.h>             // Required for: malloc(), free()
 #include <string.h>             // Required for: strlen() [Used in ImageTextEx()], strcmp() [Used in LoadImageFromMemory()]
-#include <math.h>               // Required for: fabsf()
+#include <math.h>               // Required for: fabsf() [Used in DrawTextureRec()]
 #include <stdio.h>              // Required for: sprintf() [Used in ExportImageAsCode()]
 
 // Support only desired texture formats on stb_image
@@ -104,6 +104,22 @@
     #define STBI_NO_HDR
 #endif
 
+#if defined(SUPPORT_FILEFORMAT_DDS)
+    #define RL_GPUTEX_SUPPORT_DDS
+#endif
+#if defined(SUPPORT_FILEFORMAT_PKM)
+    #define RL_GPUTEX_SUPPORT_PKM
+#endif
+#if defined(SUPPORT_FILEFORMAT_KTX)
+    #define RL_GPUTEX_SUPPORT_KTX
+#endif
+#if defined(SUPPORT_FILEFORMAT_PVR)
+    #define RL_GPUTEX_SUPPORT_PVR
+#endif
+#if defined(SUPPORT_FILEFORMAT_ASTC)
+    #define RL_GPUTEX_SUPPORT_ASTC
+#endif
+
 // Image fileformats not supported by default
 #define STBI_NO_PIC
 #define STBI_NO_PNM             // Image format .ppm and .pgm
@@ -130,6 +146,17 @@
                                             // NOTE: Used to read image data (multiple formats support)
 #endif
 
+#if (defined(SUPPORT_FILEFORMAT_DDS) || \
+     defined(SUPPORT_FILEFORMAT_PKM) || \
+     defined(SUPPORT_FILEFORMAT_KTX) || \
+     defined(SUPPORT_FILEFORMAT_PVR) || \
+     defined(SUPPORT_FILEFORMAT_ASTC))
+
+    #define RL_GPUTEX_IMPLEMENTATION
+    #include "external/rl_gputex.h"         // Required for: rl_load_xxx_from_memory()
+                                            // NOTE: Used to read compressed textures data (multiple formats support)
+#endif
+
 #if defined(SUPPORT_FILEFORMAT_QOI)
     #define QOI_MALLOC RL_MALLOC
     #define QOI_FREE RL_FREE
@@ -145,6 +172,11 @@
 
     #define STB_IMAGE_WRITE_IMPLEMENTATION
     #include "external/stb_image_write.h"   // Required for: stbi_write_*()
+#endif
+
+#if defined(SUPPORT_IMAGE_GENERATION)
+    #define STB_PERLIN_IMPLEMENTATION
+    #include "external/stb_perlin.h"        // Required for: stb_perlin_fbm_noise3
 #endif
 
 #if defined(SUPPORT_IMAGE_MANIPULATION)
@@ -180,23 +212,6 @@
 //----------------------------------------------------------------------------------
 // Module specific Functions Declaration
 //----------------------------------------------------------------------------------
-#if defined(SUPPORT_FILEFORMAT_DDS)
-static Image LoadDDS(const unsigned char *fileData, unsigned int fileSize);   // Load DDS file data
-#endif
-#if defined(SUPPORT_FILEFORMAT_PKM)
-static Image LoadPKM(const unsigned char *fileData, unsigned int fileSize);   // Load PKM file data
-#endif
-#if defined(SUPPORT_FILEFORMAT_KTX)
-static Image LoadKTX(const unsigned char *fileData, unsigned int fileSize);   // Load KTX file data
-static int SaveKTX(Image image, const char *fileName);  // Save image data as KTX file
-#endif
-#if defined(SUPPORT_FILEFORMAT_PVR)
-static Image LoadPVR(const unsigned char *fileData, unsigned int fileSize);   // Load PVR file data
-#endif
-#if defined(SUPPORT_FILEFORMAT_ASTC)
-static Image LoadASTC(const unsigned char *fileData, unsigned int fileSize);  // Load ASTC file data
-#endif
-
 static Vector4 *LoadImageDataNormalized(Image image);       // Load pixel data from image as Vector4 array (float normalized)
 
 //----------------------------------------------------------------------------------
@@ -328,7 +343,7 @@ Image LoadImageFromMemory(const char *fileType, const unsigned char *fileData, i
 #if defined(SUPPORT_FILEFORMAT_PSD)
         || (strcmp(fileType, ".psd") == 0)
 #endif
-       )
+        )
     {
 #if defined(STBI_REQUIRED)
         // NOTE: Using stb_image to load images (Supports multiple image formats)
@@ -385,19 +400,35 @@ Image LoadImageFromMemory(const char *fileType, const unsigned char *fileData, i
     }
 #endif
 #if defined(SUPPORT_FILEFORMAT_DDS)
-    else if (strcmp(fileType, ".dds") == 0) image = LoadDDS(fileData, dataSize);
+    else if (strcmp(fileType, ".dds") == 0)
+    {
+        int format = 0;
+        image.data = rl_load_dds_from_memory(fileData, dataSize, &image.width, &image.height, &image.format, &image.mipmaps);
+    }
 #endif
 #if defined(SUPPORT_FILEFORMAT_PKM)
-    else if (strcmp(fileType, ".pkm") == 0) image = LoadPKM(fileData, dataSize);
+    else if (strcmp(fileType, ".pkm") == 0)
+    {
+        image.data = rl_load_pkm_from_memory(fileData, dataSize, &image.width, &image.height, &image.format, &image.mipmaps);
+    }
 #endif
 #if defined(SUPPORT_FILEFORMAT_KTX)
-    else if (strcmp(fileType, ".ktx") == 0) image = LoadKTX(fileData, dataSize);
+    else if (strcmp(fileType, ".ktx") == 0)
+    {
+        image.data = rl_load_ktx_from_memory(fileData, dataSize, &image.width, &image.height, &image.format, &image.mipmaps);
+    }
 #endif
 #if defined(SUPPORT_FILEFORMAT_PVR)
-    else if (strcmp(fileType, ".pvr") == 0) image = LoadPVR(fileData, dataSize);
+    else if (strcmp(fileType, ".pvr") == 0)
+    {
+        image.data = rl_load_pvr_from_memory(fileData, dataSize, &image.width, &image.height, &image.format, &image.mipmaps);
+    }
 #endif
 #if defined(SUPPORT_FILEFORMAT_ASTC)
-    else if (strcmp(fileType, ".astc") == 0) image = LoadASTC(fileData, dataSize);
+    else if (strcmp(fileType, ".astc") == 0)
+    {
+        image.data = rl_load_astc_from_memory(fileData, dataSize, &image.width, &image.height, &image.format, &image.mipmaps);
+    }
 #endif
     else TRACELOG(LOG_WARNING, "IMAGE: Data format not supported");
 
@@ -523,7 +554,10 @@ bool ExportImage(Image image, const char *fileName)
     }
 #endif
 #if defined(SUPPORT_FILEFORMAT_KTX)
-    else if (IsFileExtension(fileName, ".ktx")) success = SaveKTX(image, fileName);
+    else if (IsFileExtension(fileName, ".ktx"))
+    {
+        success = rl_save_ktx(fileName, image.data, image.width, image.height, image.format, image.mipmaps);
+    }
 #endif
     else if (IsFileExtension(fileName, ".raw"))
     {
@@ -747,6 +781,42 @@ Image GenImageWhiteNoise(int width, int height, float factor)
     {
         if (GetRandomValue(0, 99) < (int)(factor*100.0f)) pixels[i] = WHITE;
         else pixels[i] = BLACK;
+    }
+
+    Image image = {
+        .data = pixels,
+        .width = width,
+        .height = height,
+        .format = PIXELFORMAT_UNCOMPRESSED_R8G8B8A8,
+        .mipmaps = 1
+    };
+
+    return image;
+}
+
+// Generate image: perlin noise
+Image GenImagePerlinNoise(int width, int height, int offsetX, int offsetY, float scale)
+{
+    Color *pixels = (Color *)RL_MALLOC(width*height*sizeof(Color));
+
+    for (int y = 0; y < height; y++)
+    {
+        for (int x = 0; x < width; x++)
+        {
+            float nx = (float)(x + offsetX)*scale/(float)width;
+            float ny = (float)(y + offsetY)*scale/(float)height;
+
+            // Typical values to start playing with:
+            //   lacunarity = ~2.0   -- spacing between successive octaves (use exactly 2.0 for wrapping output)
+            //   gain       =  0.5   -- relative weighting applied to each successive octave
+            //   octaves    =  6     -- number of "octaves" of noise3() to sum
+
+            // NOTE: We need to translate the data from [-1..1] to [0..1]
+            float p = (stb_perlin_fbm_noise3(nx, ny, 1.0f, 2.0f, 0.5f, 6) + 1.0f)/2.0f;
+
+            int intensity = (int)(p*255.0f);
+            pixels[y*width + x] = (Color){ intensity, intensity, intensity, 255 };
+        }
     }
 
     Image image = {
@@ -1168,8 +1238,8 @@ Image ImageTextEx(Font font, const char *text, float fontSize, float spacing, Co
     {
         // Get next codepoint from byte string and glyph index in font
         int codepointByteCount = 0;
-        int codepoint = GetCodepoint(&text[i], &codepointByteCount);    // WARNING: Module required: rtext
-        int index = GetGlyphIndex(font, codepoint);                     // WARNING: Module required: rtext
+        int codepoint = GetCodepointNext(&text[i], &codepointByteCount);    // WARNING: Module required: rtext
+        int index = GetGlyphIndex(font, codepoint);                         // WARNING: Module required: rtext
 
         // NOTE: Normally we exit the decoding sequence as soon as a bad byte is found (and return 0x3f)
         // but we need to draw all of the bad bytes using the '?' symbol moving one byte
@@ -2646,9 +2716,40 @@ void ImageDrawLineV(Image *dst, Vector2 start, Vector2 end, Color color)
 }
 
 // Draw circle within an image
-void ImageDrawCircle(Image *dst, int centerX, int centerY, int radius, Color color)
+void ImageDrawCircle(Image* dst, int centerX, int centerY, int radius, Color color)
 {
-    int x = 0, y = radius;
+    int x = 0;
+    int y = radius;
+    int decesionParameter = 3 - 2*radius;
+
+    while (y >= x)
+    {
+        ImageDrawRectangle(dst, centerX - x, centerY + y, x*2, 1, color);
+        ImageDrawRectangle(dst, centerX - x, centerY - y, x*2, 1, color);
+        ImageDrawRectangle(dst, centerX - y, centerY + x, y*2, 1, color);
+        ImageDrawRectangle(dst, centerX - y, centerY - x, y*2, 1, color);
+        x++;
+
+        if (decesionParameter > 0)
+        {
+            y--;
+            decesionParameter = decesionParameter + 4*(x - y) + 10;
+        } 
+        else decesionParameter = decesionParameter + 4*x + 6;
+    }
+}
+
+// Draw circle within an image (Vector version)
+void ImageDrawCircleV(Image* dst, Vector2 center, int radius, Color color)
+{
+    ImageDrawCircle(dst, (int)center.x, (int)center.y, radius, color);
+}
+
+// Draw circle outline within an image
+void ImageDrawCircleLines(Image *dst, int centerX, int centerY, int radius, Color color)
+{
+    int x = 0;
+    int y = radius;
     int decesionParameter = 3 - 2*radius;
 
     while (y >= x)
@@ -2672,10 +2773,10 @@ void ImageDrawCircle(Image *dst, int centerX, int centerY, int radius, Color col
     }
 }
 
-// Draw circle within an image (Vector version)
-void ImageDrawCircleV(Image *dst, Vector2 center, int radius, Color color)
+// Draw circle outline within an image (Vector version)
+void ImageDrawCircleLinesV(Image *dst, Vector2 center, int radius, Color color)
 {
-    ImageDrawCircle(dst, (int)center.x, (int)center.y, radius, color);
+    ImageDrawCircleLines(dst, (int)center.x, (int)center.y, radius, color);
 }
 
 // Draw rectangle within an image
@@ -3181,19 +3282,19 @@ void SetTextureWrap(Texture2D texture, int wrap)
 //------------------------------------------------------------------------------------
 // Texture drawing functions
 //------------------------------------------------------------------------------------
-// Draw a Texture2D
+// Draw a texture
 void DrawTexture(Texture2D texture, int posX, int posY, Color tint)
 {
     DrawTextureEx(texture, (Vector2){ (float)posX, (float)posY }, 0.0f, 1.0f, tint);
 }
 
-// Draw a Texture2D with position defined as Vector2
+// Draw a texture with position defined as Vector2
 void DrawTextureV(Texture2D texture, Vector2 position, Color tint)
 {
     DrawTextureEx(texture, position, 0, 1.0f, tint);
 }
 
-// Draw a Texture2D with extended parameters
+// Draw a texture with extended parameters
 void DrawTextureEx(Texture2D texture, Vector2 position, float rotation, float scale, Color tint)
 {
     Rectangle source = { 0.0f, 0.0f, (float)texture.width, (float)texture.height };
@@ -3210,104 +3311,6 @@ void DrawTextureRec(Texture2D texture, Rectangle source, Vector2 position, Color
     Vector2 origin = { 0.0f, 0.0f };
 
     DrawTexturePro(texture, source, dest, origin, 0.0f, tint);
-}
-
-// Draw texture quad with tiling and offset parameters
-// NOTE: Tiling and offset should be provided considering normalized texture values [0..1]
-// i.e tiling = { 1.0f, 1.0f } refers to all texture, offset = { 0.5f, 0.5f } moves texture origin to center
-void DrawTextureQuad(Texture2D texture, Vector2 tiling, Vector2 offset, Rectangle quad, Color tint)
-{
-    // WARNING: This solution only works if TEXTURE_WRAP_REPEAT is supported,
-    // NPOT textures supported is required and OpenGL ES 2.0 could not support it
-    Rectangle source = { offset.x*texture.width, offset.y*texture.height, tiling.x*texture.width, tiling.y*texture.height };
-    Vector2 origin = { 0.0f, 0.0f };
-
-    DrawTexturePro(texture, source, quad, origin, 0.0f, tint);
-}
-
-// Draw part of a texture (defined by a rectangle) with rotation and scale tiled into dest.
-// NOTE: For tilling a whole texture DrawTextureQuad() is better
-void DrawTextureTiled(Texture2D texture, Rectangle source, Rectangle dest, Vector2 origin, float rotation, float scale, Color tint)
-{
-    if ((texture.id <= 0) || (scale <= 0.0f)) return;  // Wanna see a infinite loop?!...just delete this line!
-    if ((source.width == 0) || (source.height == 0)) return;
-
-    int tileWidth = (int)(source.width*scale), tileHeight = (int)(source.height*scale);
-    if ((dest.width < tileWidth) && (dest.height < tileHeight))
-    {
-        // Can fit only one tile
-        DrawTexturePro(texture, (Rectangle){source.x, source.y, ((float)dest.width/tileWidth)*source.width, ((float)dest.height/tileHeight)*source.height},
-                    (Rectangle){dest.x, dest.y, dest.width, dest.height}, origin, rotation, tint);
-    }
-    else if (dest.width <= tileWidth)
-    {
-        // Tiled vertically (one column)
-        int dy = 0;
-        for (;dy+tileHeight < dest.height; dy += tileHeight)
-        {
-            DrawTexturePro(texture, (Rectangle){source.x, source.y, ((float)dest.width/tileWidth)*source.width, source.height}, (Rectangle){dest.x, dest.y + dy, dest.width, (float)tileHeight}, origin, rotation, tint);
-        }
-
-        // Fit last tile
-        if (dy < dest.height)
-        {
-            DrawTexturePro(texture, (Rectangle){source.x, source.y, ((float)dest.width/tileWidth)*source.width, ((float)(dest.height - dy)/tileHeight)*source.height},
-                        (Rectangle){dest.x, dest.y + dy, dest.width, dest.height - dy}, origin, rotation, tint);
-        }
-    }
-    else if (dest.height <= tileHeight)
-    {
-        // Tiled horizontally (one row)
-        int dx = 0;
-        for (;dx+tileWidth < dest.width; dx += tileWidth)
-        {
-            DrawTexturePro(texture, (Rectangle){source.x, source.y, source.width, ((float)dest.height/tileHeight)*source.height}, (Rectangle){dest.x + dx, dest.y, (float)tileWidth, dest.height}, origin, rotation, tint);
-        }
-
-        // Fit last tile
-        if (dx < dest.width)
-        {
-            DrawTexturePro(texture, (Rectangle){source.x, source.y, ((float)(dest.width - dx)/tileWidth)*source.width, ((float)dest.height/tileHeight)*source.height},
-                        (Rectangle){dest.x + dx, dest.y, dest.width - dx, dest.height}, origin, rotation, tint);
-        }
-    }
-    else
-    {
-        // Tiled both horizontally and vertically (rows and columns)
-        int dx = 0;
-        for (;dx+tileWidth < dest.width; dx += tileWidth)
-        {
-            int dy = 0;
-            for (;dy+tileHeight < dest.height; dy += tileHeight)
-            {
-                DrawTexturePro(texture, source, (Rectangle){dest.x + dx, dest.y + dy, (float)tileWidth, (float)tileHeight}, origin, rotation, tint);
-            }
-
-            if (dy < dest.height)
-            {
-                DrawTexturePro(texture, (Rectangle){source.x, source.y, source.width, ((float)(dest.height - dy)/tileHeight)*source.height},
-                    (Rectangle){dest.x + dx, dest.y + dy, (float)tileWidth, dest.height - dy}, origin, rotation, tint);
-            }
-        }
-
-        // Fit last column of tiles
-        if (dx < dest.width)
-        {
-            int dy = 0;
-            for (;dy+tileHeight < dest.height; dy += tileHeight)
-            {
-                DrawTexturePro(texture, (Rectangle){source.x, source.y, ((float)(dest.width - dx)/tileWidth)*source.width, source.height},
-                        (Rectangle){dest.x + dx, dest.y + dy, dest.width - dx, (float)tileHeight}, origin, rotation, tint);
-            }
-
-            // Draw final tile in the bottom right corner
-            if (dy < dest.height)
-            {
-                DrawTexturePro(texture, (Rectangle){source.x, source.y, ((float)(dest.width - dx)/tileWidth)*source.width, ((float)(dest.height - dy)/tileHeight)*source.height},
-                    (Rectangle){dest.x + dx, dest.y + dy, dest.width - dx, dest.height - dy}, origin, rotation, tint);
-            }
-        }
-    }
 }
 
 // Draw a part of a texture (defined by a rectangle) with 'pro' parameters
@@ -3430,6 +3433,104 @@ void DrawTexturePro(Texture2D texture, Rectangle source, Rectangle dest, Vector2
         rlPopMatrix();
         rlSetTexture(0);
         */
+    }
+}
+
+// Draw texture quad with tiling and offset parameters
+// NOTE: Tiling and offset should be provided considering normalized texture values [0..1]
+// i.e tiling = { 1.0f, 1.0f } refers to all texture, offset = { 0.5f, 0.5f } moves texture origin to center
+void DrawTextureQuad(Texture2D texture, Vector2 tiling, Vector2 offset, Rectangle quad, Color tint)
+{
+    // WARNING: This solution only works if TEXTURE_WRAP_REPEAT is supported,
+    // NPOT textures supported is required and OpenGL ES 2.0 could not support it
+    Rectangle source = { offset.x*texture.width, offset.y*texture.height, tiling.x*texture.width, tiling.y*texture.height };
+    Vector2 origin = { 0.0f, 0.0f };
+
+    DrawTexturePro(texture, source, quad, origin, 0.0f, tint);
+}
+
+// Draw part of a texture (defined by a rectangle) with rotation and scale tiled into dest.
+// NOTE: For tilling a whole texture DrawTextureQuad() is better
+void DrawTextureTiled(Texture2D texture, Rectangle source, Rectangle dest, Vector2 origin, float rotation, float scale, Color tint)
+{
+    if ((texture.id <= 0) || (scale <= 0.0f)) return;  // Wanna see a infinite loop?!...just delete this line!
+    if ((source.width == 0) || (source.height == 0)) return;
+
+    int tileWidth = (int)(source.width*scale), tileHeight = (int)(source.height*scale);
+    if ((dest.width < tileWidth) && (dest.height < tileHeight))
+    {
+        // Can fit only one tile
+        DrawTexturePro(texture, (Rectangle){source.x, source.y, ((float)dest.width/tileWidth)*source.width, ((float)dest.height/tileHeight)*source.height},
+                    (Rectangle){dest.x, dest.y, dest.width, dest.height}, origin, rotation, tint);
+    }
+    else if (dest.width <= tileWidth)
+    {
+        // Tiled vertically (one column)
+        int dy = 0;
+        for (;dy+tileHeight < dest.height; dy += tileHeight)
+        {
+            DrawTexturePro(texture, (Rectangle){source.x, source.y, ((float)dest.width/tileWidth)*source.width, source.height}, (Rectangle){dest.x, dest.y + dy, dest.width, (float)tileHeight}, origin, rotation, tint);
+        }
+
+        // Fit last tile
+        if (dy < dest.height)
+        {
+            DrawTexturePro(texture, (Rectangle){source.x, source.y, ((float)dest.width/tileWidth)*source.width, ((float)(dest.height - dy)/tileHeight)*source.height},
+                        (Rectangle){dest.x, dest.y + dy, dest.width, dest.height - dy}, origin, rotation, tint);
+        }
+    }
+    else if (dest.height <= tileHeight)
+    {
+        // Tiled horizontally (one row)
+        int dx = 0;
+        for (;dx+tileWidth < dest.width; dx += tileWidth)
+        {
+            DrawTexturePro(texture, (Rectangle){source.x, source.y, source.width, ((float)dest.height/tileHeight)*source.height}, (Rectangle){dest.x + dx, dest.y, (float)tileWidth, dest.height}, origin, rotation, tint);
+        }
+
+        // Fit last tile
+        if (dx < dest.width)
+        {
+            DrawTexturePro(texture, (Rectangle){source.x, source.y, ((float)(dest.width - dx)/tileWidth)*source.width, ((float)dest.height/tileHeight)*source.height},
+                        (Rectangle){dest.x + dx, dest.y, dest.width - dx, dest.height}, origin, rotation, tint);
+        }
+    }
+    else
+    {
+        // Tiled both horizontally and vertically (rows and columns)
+        int dx = 0;
+        for (;dx+tileWidth < dest.width; dx += tileWidth)
+        {
+            int dy = 0;
+            for (;dy+tileHeight < dest.height; dy += tileHeight)
+            {
+                DrawTexturePro(texture, source, (Rectangle){dest.x + dx, dest.y + dy, (float)tileWidth, (float)tileHeight}, origin, rotation, tint);
+            }
+
+            if (dy < dest.height)
+            {
+                DrawTexturePro(texture, (Rectangle){source.x, source.y, source.width, ((float)(dest.height - dy)/tileHeight)*source.height},
+                    (Rectangle){dest.x + dx, dest.y + dy, (float)tileWidth, dest.height - dy}, origin, rotation, tint);
+            }
+        }
+
+        // Fit last column of tiles
+        if (dx < dest.width)
+        {
+            int dy = 0;
+            for (;dy+tileHeight < dest.height; dy += tileHeight)
+            {
+                DrawTexturePro(texture, (Rectangle){source.x, source.y, ((float)(dest.width - dx)/tileWidth)*source.width, source.height},
+                        (Rectangle){dest.x + dx, dest.y + dy, dest.width - dx, (float)tileHeight}, origin, rotation, tint);
+            }
+
+            // Draw final tile in the bottom right corner
+            if (dy < dest.height)
+            {
+                DrawTexturePro(texture, (Rectangle){source.x, source.y, ((float)(dest.width - dx)/tileWidth)*source.width, ((float)(dest.height - dy)/tileHeight)*source.height},
+                    (Rectangle){dest.x + dx, dest.y + dy, dest.width - dx, dest.height - dy}, origin, rotation, tint);
+            }
+        }
     }
 }
 
@@ -4065,678 +4166,6 @@ int GetPixelDataSize(int width, int height, int format)
 //----------------------------------------------------------------------------------
 // Module specific Functions Definition
 //----------------------------------------------------------------------------------
-#if defined(SUPPORT_FILEFORMAT_DDS)
-// Loading DDS image data (compressed or uncompressed)
-static Image LoadDDS(const unsigned char *fileData, unsigned int fileSize)
-{
-    unsigned char *fileDataPtr = (unsigned char *)fileData;
-
-    // Required extension:
-    // GL_EXT_texture_compression_s3tc
-
-    // Supported tokens (defined by extensions)
-    // GL_COMPRESSED_RGB_S3TC_DXT1_EXT      0x83F0
-    // GL_COMPRESSED_RGBA_S3TC_DXT1_EXT     0x83F1
-    // GL_COMPRESSED_RGBA_S3TC_DXT3_EXT     0x83F2
-    // GL_COMPRESSED_RGBA_S3TC_DXT5_EXT     0x83F3
-
-    #define FOURCC_DXT1 0x31545844  // Equivalent to "DXT1" in ASCII
-    #define FOURCC_DXT3 0x33545844  // Equivalent to "DXT3" in ASCII
-    #define FOURCC_DXT5 0x35545844  // Equivalent to "DXT5" in ASCII
-
-    // DDS Pixel Format
-    typedef struct {
-        unsigned int size;
-        unsigned int flags;
-        unsigned int fourCC;
-        unsigned int rgbBitCount;
-        unsigned int rBitMask;
-        unsigned int gBitMask;
-        unsigned int bBitMask;
-        unsigned int aBitMask;
-    } DDSPixelFormat;
-
-    // DDS Header (124 bytes)
-    typedef struct {
-        unsigned int size;
-        unsigned int flags;
-        unsigned int height;
-        unsigned int width;
-        unsigned int pitchOrLinearSize;
-        unsigned int depth;
-        unsigned int mipmapCount;
-        unsigned int reserved1[11];
-        DDSPixelFormat ddspf;
-        unsigned int caps;
-        unsigned int caps2;
-        unsigned int caps3;
-        unsigned int caps4;
-        unsigned int reserved2;
-    } DDSHeader;
-
-    Image image = { 0 };
-
-    if (fileDataPtr != NULL)
-    {
-        // Verify the type of file
-        unsigned char *ddsHeaderId = fileDataPtr;
-        fileDataPtr += 4;
-
-        if ((ddsHeaderId[0] != 'D') || (ddsHeaderId[1] != 'D') || (ddsHeaderId[2] != 'S') || (ddsHeaderId[3] != ' '))
-        {
-            TRACELOG(LOG_WARNING, "IMAGE: DDS file data not valid");
-        }
-        else
-        {
-            DDSHeader *ddsHeader = (DDSHeader *)fileDataPtr;
-
-            TRACELOGD("IMAGE: DDS file data info:");
-            TRACELOGD("    > Header size:        %i", sizeof(DDSHeader));
-            TRACELOGD("    > Pixel format size:  %i", ddsHeader->ddspf.size);
-            TRACELOGD("    > Pixel format flags: 0x%x", ddsHeader->ddspf.flags);
-            TRACELOGD("    > File format:        0x%x", ddsHeader->ddspf.fourCC);
-            TRACELOGD("    > File bit count:     0x%x", ddsHeader->ddspf.rgbBitCount);
-
-            fileDataPtr += sizeof(DDSHeader);   // Skip header
-
-            image.width = ddsHeader->width;
-            image.height = ddsHeader->height;
-
-            if (ddsHeader->mipmapCount == 0) image.mipmaps = 1;      // Parameter not used
-            else image.mipmaps = ddsHeader->mipmapCount;
-
-            if (ddsHeader->ddspf.rgbBitCount == 16)     // 16bit mode, no compressed
-            {
-                if (ddsHeader->ddspf.flags == 0x40)         // no alpha channel
-                {
-                    int dataSize = image.width*image.height*sizeof(unsigned short);
-                    image.data = (unsigned short *)RL_MALLOC(dataSize);
-
-                    memcpy(image.data, fileDataPtr, dataSize);
-
-                    image.format = PIXELFORMAT_UNCOMPRESSED_R5G6B5;
-                }
-                else if (ddsHeader->ddspf.flags == 0x41)        // with alpha channel
-                {
-                    if (ddsHeader->ddspf.aBitMask == 0x8000)    // 1bit alpha
-                    {
-                        int dataSize = image.width*image.height*sizeof(unsigned short);
-                        image.data = (unsigned short *)RL_MALLOC(dataSize);
-
-                        memcpy(image.data, fileDataPtr, dataSize);
-
-                        unsigned char alpha = 0;
-
-                        // NOTE: Data comes as A1R5G5B5, it must be reordered to R5G5B5A1
-                        for (int i = 0; i < image.width*image.height; i++)
-                        {
-                            alpha = ((unsigned short *)image.data)[i] >> 15;
-                            ((unsigned short *)image.data)[i] = ((unsigned short *)image.data)[i] << 1;
-                            ((unsigned short *)image.data)[i] += alpha;
-                        }
-
-                        image.format = PIXELFORMAT_UNCOMPRESSED_R5G5B5A1;
-                    }
-                    else if (ddsHeader->ddspf.aBitMask == 0xf000)   // 4bit alpha
-                    {
-                        int dataSize = image.width*image.height*sizeof(unsigned short);
-                        image.data = (unsigned short *)RL_MALLOC(dataSize);
-
-                        memcpy(image.data, fileDataPtr, dataSize);
-
-                        unsigned char alpha = 0;
-
-                        // NOTE: Data comes as A4R4G4B4, it must be reordered R4G4B4A4
-                        for (int i = 0; i < image.width*image.height; i++)
-                        {
-                            alpha = ((unsigned short *)image.data)[i] >> 12;
-                            ((unsigned short *)image.data)[i] = ((unsigned short *)image.data)[i] << 4;
-                            ((unsigned short *)image.data)[i] += alpha;
-                        }
-
-                        image.format = PIXELFORMAT_UNCOMPRESSED_R4G4B4A4;
-                    }
-                }
-            }
-            else if (ddsHeader->ddspf.flags == 0x40 && ddsHeader->ddspf.rgbBitCount == 24)   // DDS_RGB, no compressed
-            {
-                int dataSize = image.width*image.height*3*sizeof(unsigned char);
-                image.data = (unsigned short *)RL_MALLOC(dataSize);
-
-                memcpy(image.data, fileDataPtr, dataSize);
-
-                image.format = PIXELFORMAT_UNCOMPRESSED_R8G8B8;
-            }
-            else if (ddsHeader->ddspf.flags == 0x41 && ddsHeader->ddspf.rgbBitCount == 32) // DDS_RGBA, no compressed
-            {
-                int dataSize = image.width*image.height*4*sizeof(unsigned char);
-                image.data = (unsigned short *)RL_MALLOC(dataSize);
-
-                memcpy(image.data, fileDataPtr, dataSize);
-
-                unsigned char blue = 0;
-
-                // NOTE: Data comes as A8R8G8B8, it must be reordered R8G8B8A8 (view next comment)
-                // DirecX understand ARGB as a 32bit DWORD but the actual memory byte alignment is BGRA
-                // So, we must realign B8G8R8A8 to R8G8B8A8
-                for (int i = 0; i < image.width*image.height*4; i += 4)
-                {
-                    blue = ((unsigned char *)image.data)[i];
-                    ((unsigned char *)image.data)[i] = ((unsigned char *)image.data)[i + 2];
-                    ((unsigned char *)image.data)[i + 2] = blue;
-                }
-
-                image.format = PIXELFORMAT_UNCOMPRESSED_R8G8B8A8;
-            }
-            else if (((ddsHeader->ddspf.flags == 0x04) || (ddsHeader->ddspf.flags == 0x05)) && (ddsHeader->ddspf.fourCC > 0)) // Compressed
-            {
-                int dataSize = 0;
-
-                // Calculate data size, including all mipmaps
-                if (ddsHeader->mipmapCount > 1) dataSize = ddsHeader->pitchOrLinearSize*2;
-                else dataSize = ddsHeader->pitchOrLinearSize;
-
-                image.data = (unsigned char *)RL_MALLOC(dataSize*sizeof(unsigned char));
-
-                memcpy(image.data, fileDataPtr, dataSize);
-
-                switch (ddsHeader->ddspf.fourCC)
-                {
-                    case FOURCC_DXT1:
-                    {
-                        if (ddsHeader->ddspf.flags == 0x04) image.format = PIXELFORMAT_COMPRESSED_DXT1_RGB;
-                        else image.format = PIXELFORMAT_COMPRESSED_DXT1_RGBA;
-                    } break;
-                    case FOURCC_DXT3: image.format = PIXELFORMAT_COMPRESSED_DXT3_RGBA; break;
-                    case FOURCC_DXT5: image.format = PIXELFORMAT_COMPRESSED_DXT5_RGBA; break;
-                    default: break;
-                }
-            }
-        }
-    }
-
-    return image;
-}
-#endif
-
-#if defined(SUPPORT_FILEFORMAT_PKM)
-// Loading PKM image data (ETC1/ETC2 compression)
-// NOTE: KTX is the standard Khronos Group compression format (ETC1/ETC2, mipmaps)
-// PKM is a much simpler file format used mainly to contain a single ETC1/ETC2 compressed image (no mipmaps)
-static Image LoadPKM(const unsigned char *fileData, unsigned int fileSize)
-{
-    unsigned char *fileDataPtr = (unsigned char *)fileData;
-
-    // Required extensions:
-    // GL_OES_compressed_ETC1_RGB8_texture  (ETC1) (OpenGL ES 2.0)
-    // GL_ARB_ES3_compatibility  (ETC2/EAC) (OpenGL ES 3.0)
-
-    // Supported tokens (defined by extensions)
-    // GL_ETC1_RGB8_OES                 0x8D64
-    // GL_COMPRESSED_RGB8_ETC2          0x9274
-    // GL_COMPRESSED_RGBA8_ETC2_EAC     0x9278
-
-    // PKM file (ETC1) Header (16 bytes)
-    typedef struct {
-        char id[4];                 // "PKM "
-        char version[2];            // "10" or "20"
-        unsigned short format;      // Data format (big-endian) (Check list below)
-        unsigned short width;       // Texture width (big-endian) (origWidth rounded to multiple of 4)
-        unsigned short height;      // Texture height (big-endian) (origHeight rounded to multiple of 4)
-        unsigned short origWidth;   // Original width (big-endian)
-        unsigned short origHeight;  // Original height (big-endian)
-    } PKMHeader;
-
-    // Formats list
-    // version 10: format: 0=ETC1_RGB, [1=ETC1_RGBA, 2=ETC1_RGB_MIP, 3=ETC1_RGBA_MIP] (not used)
-    // version 20: format: 0=ETC1_RGB, 1=ETC2_RGB, 2=ETC2_RGBA_OLD, 3=ETC2_RGBA, 4=ETC2_RGBA1, 5=ETC2_R, 6=ETC2_RG, 7=ETC2_SIGNED_R, 8=ETC2_SIGNED_R
-
-    // NOTE: The extended width and height are the widths rounded up to a multiple of 4.
-    // NOTE: ETC is always 4bit per pixel (64 bit for each 4x4 block of pixels)
-
-    Image image = { 0 };
-
-    if (fileDataPtr != NULL)
-    {
-        PKMHeader *pkmHeader = (PKMHeader *)fileDataPtr;
-
-        if ((pkmHeader->id[0] != 'P') || (pkmHeader->id[1] != 'K') || (pkmHeader->id[2] != 'M') || (pkmHeader->id[3] != ' '))
-        {
-            TRACELOG(LOG_WARNING, "IMAGE: PKM file data not valid");
-        }
-        else
-        {
-            fileDataPtr += sizeof(PKMHeader);   // Skip header
-
-            // NOTE: format, width and height come as big-endian, data must be swapped to little-endian
-            pkmHeader->format = ((pkmHeader->format & 0x00FF) << 8) | ((pkmHeader->format & 0xFF00) >> 8);
-            pkmHeader->width = ((pkmHeader->width & 0x00FF) << 8) | ((pkmHeader->width & 0xFF00) >> 8);
-            pkmHeader->height = ((pkmHeader->height & 0x00FF) << 8) | ((pkmHeader->height & 0xFF00) >> 8);
-
-            TRACELOGD("IMAGE: PKM file data info:");
-            TRACELOGD("    > Image width:  %i", pkmHeader->width);
-            TRACELOGD("    > Image height: %i", pkmHeader->height);
-            TRACELOGD("    > Image format: %i", pkmHeader->format);
-
-            image.width = pkmHeader->width;
-            image.height = pkmHeader->height;
-            image.mipmaps = 1;
-
-            int bpp = 4;
-            if (pkmHeader->format == 3) bpp = 8;
-
-            int dataSize = image.width*image.height*bpp/8;  // Total data size in bytes
-
-            image.data = (unsigned char *)RL_MALLOC(dataSize*sizeof(unsigned char));
-
-            memcpy(image.data, fileDataPtr, dataSize);
-
-            if (pkmHeader->format == 0) image.format = PIXELFORMAT_COMPRESSED_ETC1_RGB;
-            else if (pkmHeader->format == 1) image.format = PIXELFORMAT_COMPRESSED_ETC2_RGB;
-            else if (pkmHeader->format == 3) image.format = PIXELFORMAT_COMPRESSED_ETC2_EAC_RGBA;
-        }
-    }
-
-    return image;
-}
-#endif
-
-#if defined(SUPPORT_FILEFORMAT_KTX)
-// Load KTX compressed image data (ETC1/ETC2 compression)
-// TODO: Review KTX loading, many things changed!
-static Image LoadKTX(const unsigned char *fileData, unsigned int fileSize)
-{
-    unsigned char *fileDataPtr = (unsigned char *)fileData;
-
-    // Required extensions:
-    // GL_OES_compressed_ETC1_RGB8_texture  (ETC1)
-    // GL_ARB_ES3_compatibility  (ETC2/EAC)
-
-    // Supported tokens (defined by extensions)
-    // GL_ETC1_RGB8_OES                 0x8D64
-    // GL_COMPRESSED_RGB8_ETC2          0x9274
-    // GL_COMPRESSED_RGBA8_ETC2_EAC     0x9278
-
-    // KTX file Header (64 bytes)
-    // v1.1 - https://www.khronos.org/opengles/sdk/tools/KTX/file_format_spec/
-    // v2.0 - http://github.khronos.org/KTX-Specification/
-
-    // TODO: Support KTX 2.2 specs!
-
-    typedef struct {
-        char id[12];                        // Identifier: "«KTX 11»\r\n\x1A\n"
-        unsigned int endianness;            // Little endian: 0x01 0x02 0x03 0x04
-        unsigned int glType;                // For compressed textures, glType must equal 0
-        unsigned int glTypeSize;            // For compressed texture data, usually 1
-        unsigned int glFormat;              // For compressed textures is 0
-        unsigned int glInternalFormat;      // Compressed internal format
-        unsigned int glBaseInternalFormat;  // Same as glFormat (RGB, RGBA, ALPHA...)
-        unsigned int width;                 // Texture image width in pixels
-        unsigned int height;                // Texture image height in pixels
-        unsigned int depth;                 // For 2D textures is 0
-        unsigned int elements;              // Number of array elements, usually 0
-        unsigned int faces;                 // Cubemap faces, for no-cubemap = 1
-        unsigned int mipmapLevels;          // Non-mipmapped textures = 1
-        unsigned int keyValueDataSize;      // Used to encode any arbitrary data...
-    } KTXHeader;
-
-    // NOTE: Before start of every mipmap data block, we have: unsigned int dataSize
-
-    Image image = { 0 };
-
-    if (fileDataPtr != NULL)
-    {
-        KTXHeader *ktxHeader = (KTXHeader *)fileDataPtr;
-
-        if ((ktxHeader->id[1] != 'K') || (ktxHeader->id[2] != 'T') || (ktxHeader->id[3] != 'X') ||
-            (ktxHeader->id[4] != ' ') || (ktxHeader->id[5] != '1') || (ktxHeader->id[6] != '1'))
-        {
-            TRACELOG(LOG_WARNING, "IMAGE: KTX file data not valid");
-        }
-        else
-        {
-            fileDataPtr += sizeof(KTXHeader);           // Move file data pointer
-
-            image.width = ktxHeader->width;
-            image.height = ktxHeader->height;
-            image.mipmaps = ktxHeader->mipmapLevels;
-
-            TRACELOGD("IMAGE: KTX file data info:");
-            TRACELOGD("    > Image width:  %i", ktxHeader->width);
-            TRACELOGD("    > Image height: %i", ktxHeader->height);
-            TRACELOGD("    > Image format: 0x%x", ktxHeader->glInternalFormat);
-
-            fileDataPtr += ktxHeader->keyValueDataSize; // Skip value data size
-
-            int dataSize = ((int *)fileDataPtr)[0];
-            fileDataPtr += sizeof(int);
-
-            image.data = (unsigned char *)RL_MALLOC(dataSize*sizeof(unsigned char));
-
-            memcpy(image.data, fileDataPtr, dataSize);
-
-            if (ktxHeader->glInternalFormat == 0x8D64) image.format = PIXELFORMAT_COMPRESSED_ETC1_RGB;
-            else if (ktxHeader->glInternalFormat == 0x9274) image.format = PIXELFORMAT_COMPRESSED_ETC2_RGB;
-            else if (ktxHeader->glInternalFormat == 0x9278) image.format = PIXELFORMAT_COMPRESSED_ETC2_EAC_RGBA;
-
-            // TODO: Support uncompressed data formats? Right now it returns format = 0!
-        }
-    }
-
-    return image;
-}
-
-// Save image data as KTX file
-// NOTE: By default KTX 1.1 spec is used, 2.0 is still on draft (01Oct2018)
-// TODO: Review KTX saving, many things changed!
-static int SaveKTX(Image image, const char *fileName)
-{
-    // KTX file Header (64 bytes)
-    // v1.1 - https://www.khronos.org/opengles/sdk/tools/KTX/file_format_spec/
-    // v2.0 - http://github.khronos.org/KTX-Specification/ - Final specs by 2021-04-18
-    typedef struct {
-        char id[12];                        // Identifier: "«KTX 11»\r\n\x1A\n"             // KTX 2.0: "«KTX 22»\r\n\x1A\n"
-        unsigned int endianness;            // Little endian: 0x01 0x02 0x03 0x04
-        unsigned int glType;                // For compressed textures, glType must equal 0
-        unsigned int glTypeSize;            // For compressed texture data, usually 1
-        unsigned int glFormat;              // For compressed textures is 0
-        unsigned int glInternalFormat;      // Compressed internal format
-        unsigned int glBaseInternalFormat;  // Same as glFormat (RGB, RGBA, ALPHA...)       // KTX 2.0: UInt32 vkFormat
-        unsigned int width;                 // Texture image width in pixels
-        unsigned int height;                // Texture image height in pixels
-        unsigned int depth;                 // For 2D textures is 0
-        unsigned int elements;              // Number of array elements, usually 0
-        unsigned int faces;                 // Cubemap faces, for no-cubemap = 1
-        unsigned int mipmapLevels;          // Non-mipmapped textures = 1
-        unsigned int keyValueDataSize;      // Used to encode any arbitrary data...         // KTX 2.0: UInt32 levelOrder - ordering of the mipmap levels, usually 0
-                                                                                            // KTX 2.0: UInt32 supercompressionScheme - 0 (None), 1 (Crunch CRN), 2 (Zlib DEFLATE)...
-        // KTX 2.0 defines additional header elements...
-    } KTXHeader;
-
-    // Calculate file dataSize required
-    int dataSize = sizeof(KTXHeader);
-
-    for (int i = 0, width = image.width, height = image.height; i < image.mipmaps; i++)
-    {
-        dataSize += GetPixelDataSize(width, height, image.format);
-        width /= 2; height /= 2;
-    }
-
-    unsigned char *fileData = RL_CALLOC(dataSize, 1);
-    unsigned char *fileDataPtr = fileData;
-
-    KTXHeader ktxHeader = { 0 };
-
-    // KTX identifier (v1.1)
-    //unsigned char id[12] = { '«', 'K', 'T', 'X', ' ', '1', '1', '»', '\r', '\n', '\x1A', '\n' };
-    //unsigned char id[12] = { 0xAB, 0x4B, 0x54, 0x58, 0x20, 0x31, 0x31, 0xBB, 0x0D, 0x0A, 0x1A, 0x0A };
-
-    const char ktxIdentifier[12] = { 0xAB, 'K', 'T', 'X', ' ', '1', '1', 0xBB, '\r', '\n', 0x1A, '\n' };
-
-    // Get the image header
-    memcpy(ktxHeader.id, ktxIdentifier, 12);  // KTX 1.1 signature
-    ktxHeader.endianness = 0;
-    ktxHeader.glType = 0;                     // Obtained from image.format
-    ktxHeader.glTypeSize = 1;
-    ktxHeader.glFormat = 0;                   // Obtained from image.format
-    ktxHeader.glInternalFormat = 0;           // Obtained from image.format
-    ktxHeader.glBaseInternalFormat = 0;
-    ktxHeader.width = image.width;
-    ktxHeader.height = image.height;
-    ktxHeader.depth = 0;
-    ktxHeader.elements = 0;
-    ktxHeader.faces = 1;
-    ktxHeader.mipmapLevels = image.mipmaps;   // If it was 0, it means mipmaps should be generated on loading (not for compressed formats)
-    ktxHeader.keyValueDataSize = 0;           // No extra data after the header
-
-    rlGetGlTextureFormats(image.format, &ktxHeader.glInternalFormat, &ktxHeader.glFormat, &ktxHeader.glType);   // rlgl module function
-    ktxHeader.glBaseInternalFormat = ktxHeader.glFormat;    // KTX 1.1 only
-
-    // NOTE: We can save into a .ktx all PixelFormats supported by raylib, including compressed formats like DXT, ETC or ASTC
-
-    if (ktxHeader.glFormat == -1) TRACELOG(LOG_WARNING, "IMAGE: GL format not supported for KTX export (%i)", ktxHeader.glFormat);
-    else
-    {
-        memcpy(fileDataPtr, &ktxHeader, sizeof(KTXHeader));
-        fileDataPtr += sizeof(KTXHeader);
-
-        int width = image.width;
-        int height = image.height;
-        int dataOffset = 0;
-
-        // Save all mipmaps data
-        for (int i = 0; i < image.mipmaps; i++)
-        {
-            unsigned int dataSize = GetPixelDataSize(width, height, image.format);
-
-            memcpy(fileDataPtr, &dataSize, sizeof(unsigned int));
-            memcpy(fileDataPtr + 4, (unsigned char *)image.data + dataOffset, dataSize);
-
-            width /= 2;
-            height /= 2;
-            dataOffset += dataSize;
-            fileDataPtr += (4 + dataSize);
-        }
-    }
-
-    int success = SaveFileData(fileName, fileData, dataSize);
-
-    RL_FREE(fileData);    // Free file data buffer
-
-    // If all data has been written correctly to file, success = 1
-    return success;
-}
-#endif
-
-#if defined(SUPPORT_FILEFORMAT_PVR)
-// Loading PVR image data (uncompressed or PVRT compression)
-// NOTE: PVR v2 not supported, use PVR v3 instead
-static Image LoadPVR(const unsigned char *fileData, unsigned int fileSize)
-{
-    unsigned char *fileDataPtr = (unsigned char *)fileData;
-
-    // Required extension:
-    // GL_IMG_texture_compression_pvrtc
-
-    // Supported tokens (defined by extensions)
-    // GL_COMPRESSED_RGB_PVRTC_4BPPV1_IMG       0x8C00
-    // GL_COMPRESSED_RGBA_PVRTC_4BPPV1_IMG      0x8C02
-
-#if 0   // Not used...
-    // PVR file v2 Header (52 bytes)
-    typedef struct {
-        unsigned int headerLength;
-        unsigned int height;
-        unsigned int width;
-        unsigned int numMipmaps;
-        unsigned int flags;
-        unsigned int dataLength;
-        unsigned int bpp;
-        unsigned int bitmaskRed;
-        unsigned int bitmaskGreen;
-        unsigned int bitmaskBlue;
-        unsigned int bitmaskAlpha;
-        unsigned int pvrTag;
-        unsigned int numSurfs;
-    } PVRHeaderV2;
-#endif
-
-    // PVR file v3 Header (52 bytes)
-    // NOTE: After it could be metadata (15 bytes?)
-    typedef struct {
-        char id[4];
-        unsigned int flags;
-        unsigned char channels[4];      // pixelFormat high part
-        unsigned char channelDepth[4];  // pixelFormat low part
-        unsigned int colorSpace;
-        unsigned int channelType;
-        unsigned int height;
-        unsigned int width;
-        unsigned int depth;
-        unsigned int numSurfaces;
-        unsigned int numFaces;
-        unsigned int numMipmaps;
-        unsigned int metaDataSize;
-    } PVRHeaderV3;
-
-#if 0   // Not used...
-    // Metadata (usually 15 bytes)
-    typedef struct {
-        unsigned int devFOURCC;
-        unsigned int key;
-        unsigned int dataSize;      // Not used?
-        unsigned char *data;        // Not used?
-    } PVRMetadata;
-#endif
-
-    Image image = { 0 };
-
-    if (fileDataPtr != NULL)
-    {
-        // Check PVR image version
-        unsigned char pvrVersion = fileDataPtr[0];
-
-        // Load different PVR data formats
-        if (pvrVersion == 0x50)
-        {
-            PVRHeaderV3 *pvrHeader = (PVRHeaderV3 *)fileDataPtr;
-
-            if ((pvrHeader->id[0] != 'P') || (pvrHeader->id[1] != 'V') || (pvrHeader->id[2] != 'R') || (pvrHeader->id[3] != 3))
-            {
-                TRACELOG(LOG_WARNING, "IMAGE: PVR file data not valid");
-            }
-            else
-            {
-                fileDataPtr += sizeof(PVRHeaderV3);   // Skip header
-
-                image.width = pvrHeader->width;
-                image.height = pvrHeader->height;
-                image.mipmaps = pvrHeader->numMipmaps;
-
-                // Check data format
-                if (((pvrHeader->channels[0] == 'l') && (pvrHeader->channels[1] == 0)) && (pvrHeader->channelDepth[0] == 8)) image.format = PIXELFORMAT_UNCOMPRESSED_GRAYSCALE;
-                else if (((pvrHeader->channels[0] == 'l') && (pvrHeader->channels[1] == 'a')) && ((pvrHeader->channelDepth[0] == 8) && (pvrHeader->channelDepth[1] == 8))) image.format = PIXELFORMAT_UNCOMPRESSED_GRAY_ALPHA;
-                else if ((pvrHeader->channels[0] == 'r') && (pvrHeader->channels[1] == 'g') && (pvrHeader->channels[2] == 'b'))
-                {
-                    if (pvrHeader->channels[3] == 'a')
-                    {
-                        if ((pvrHeader->channelDepth[0] == 5) && (pvrHeader->channelDepth[1] == 5) && (pvrHeader->channelDepth[2] == 5) && (pvrHeader->channelDepth[3] == 1)) image.format = PIXELFORMAT_UNCOMPRESSED_R5G5B5A1;
-                        else if ((pvrHeader->channelDepth[0] == 4) && (pvrHeader->channelDepth[1] == 4) && (pvrHeader->channelDepth[2] == 4) && (pvrHeader->channelDepth[3] == 4)) image.format = PIXELFORMAT_UNCOMPRESSED_R4G4B4A4;
-                        else if ((pvrHeader->channelDepth[0] == 8) && (pvrHeader->channelDepth[1] == 8) && (pvrHeader->channelDepth[2] == 8) && (pvrHeader->channelDepth[3] == 8)) image.format = PIXELFORMAT_UNCOMPRESSED_R8G8B8A8;
-                    }
-                    else if (pvrHeader->channels[3] == 0)
-                    {
-                        if ((pvrHeader->channelDepth[0] == 5) && (pvrHeader->channelDepth[1] == 6) && (pvrHeader->channelDepth[2] == 5)) image.format = PIXELFORMAT_UNCOMPRESSED_R5G6B5;
-                        else if ((pvrHeader->channelDepth[0] == 8) && (pvrHeader->channelDepth[1] == 8) && (pvrHeader->channelDepth[2] == 8)) image.format = PIXELFORMAT_UNCOMPRESSED_R8G8B8;
-                    }
-                }
-                else if (pvrHeader->channels[0] == 2) image.format = PIXELFORMAT_COMPRESSED_PVRT_RGB;
-                else if (pvrHeader->channels[0] == 3) image.format = PIXELFORMAT_COMPRESSED_PVRT_RGBA;
-
-                fileDataPtr += pvrHeader->metaDataSize;    // Skip meta data header
-
-                // Calculate data size (depends on format)
-                int bpp = 0;
-                switch (image.format)
-                {
-                    case PIXELFORMAT_UNCOMPRESSED_GRAYSCALE: bpp = 8; break;
-                    case PIXELFORMAT_UNCOMPRESSED_GRAY_ALPHA:
-                    case PIXELFORMAT_UNCOMPRESSED_R5G5B5A1:
-                    case PIXELFORMAT_UNCOMPRESSED_R5G6B5:
-                    case PIXELFORMAT_UNCOMPRESSED_R4G4B4A4: bpp = 16; break;
-                    case PIXELFORMAT_UNCOMPRESSED_R8G8B8A8: bpp = 32; break;
-                    case PIXELFORMAT_UNCOMPRESSED_R8G8B8: bpp = 24; break;
-                    case PIXELFORMAT_COMPRESSED_PVRT_RGB:
-                    case PIXELFORMAT_COMPRESSED_PVRT_RGBA: bpp = 4; break;
-                    default: break;
-                }
-
-                int dataSize = image.width*image.height*bpp/8;  // Total data size in bytes
-                image.data = (unsigned char *)RL_MALLOC(dataSize*sizeof(unsigned char));
-
-                memcpy(image.data, fileDataPtr, dataSize);
-            }
-        }
-        else if (pvrVersion == 52) TRACELOG(LOG_INFO, "IMAGE: PVRv2 format not supported, update your files to PVRv3");
-    }
-
-    return image;
-}
-#endif
-
-#if defined(SUPPORT_FILEFORMAT_ASTC)
-// Load ASTC compressed image data (ASTC compression)
-static Image LoadASTC(const unsigned char *fileData, unsigned int fileSize)
-{
-    unsigned char *fileDataPtr = (unsigned char *)fileData;
-
-    // Required extensions:
-    // GL_KHR_texture_compression_astc_hdr
-    // GL_KHR_texture_compression_astc_ldr
-
-    // Supported tokens (defined by extensions)
-    // GL_COMPRESSED_RGBA_ASTC_4x4_KHR      0x93b0
-    // GL_COMPRESSED_RGBA_ASTC_8x8_KHR      0x93b7
-
-    // ASTC file Header (16 bytes)
-    typedef struct {
-        unsigned char id[4];        // Signature: 0x13 0xAB 0xA1 0x5C
-        unsigned char blockX;       // Block X dimensions
-        unsigned char blockY;       // Block Y dimensions
-        unsigned char blockZ;       // Block Z dimensions (1 for 2D images)
-        unsigned char width[3];     // Image width in pixels (24bit value)
-        unsigned char height[3];    // Image height in pixels (24bit value)
-        unsigned char length[3];    // Image Z-size (1 for 2D images)
-    } ASTCHeader;
-
-    Image image = { 0 };
-
-    if (fileDataPtr != NULL)
-    {
-        ASTCHeader *astcHeader = (ASTCHeader *)fileDataPtr;
-
-        if ((astcHeader->id[3] != 0x5c) || (astcHeader->id[2] != 0xa1) || (astcHeader->id[1] != 0xab) || (astcHeader->id[0] != 0x13))
-        {
-            TRACELOG(LOG_WARNING, "IMAGE: ASTC file data not valid");
-        }
-        else
-        {
-            fileDataPtr += sizeof(ASTCHeader);   // Skip header
-
-            // NOTE: Assuming Little Endian (could it be wrong?)
-            image.width = 0x00000000 | ((int)astcHeader->width[2] << 16) | ((int)astcHeader->width[1] << 8) | ((int)astcHeader->width[0]);
-            image.height = 0x00000000 | ((int)astcHeader->height[2] << 16) | ((int)astcHeader->height[1] << 8) | ((int)astcHeader->height[0]);
-
-            TRACELOGD("IMAGE: ASTC file data info:");
-            TRACELOGD("    > Image width:  %i", image.width);
-            TRACELOGD("    > Image height: %i", image.height);
-            TRACELOGD("    > Image blocks: %ix%i", astcHeader->blockX, astcHeader->blockY);
-
-            image.mipmaps = 1;      // NOTE: ASTC format only contains one mipmap level
-
-            // NOTE: Each block is always stored in 128bit so we can calculate the bpp
-            int bpp = 128/(astcHeader->blockX*astcHeader->blockY);
-
-            // NOTE: Currently we only support 2 blocks configurations: 4x4 and 8x8
-            if ((bpp == 8) || (bpp == 2))
-            {
-                int dataSize = image.width*image.height*bpp/8;  // Data size in bytes
-
-                image.data = (unsigned char *)RL_MALLOC(dataSize*sizeof(unsigned char));
-
-                memcpy(image.data, fileDataPtr, dataSize);
-
-                if (bpp == 8) image.format = PIXELFORMAT_COMPRESSED_ASTC_4x4_RGBA;
-                else if (bpp == 2) image.format = PIXELFORMAT_COMPRESSED_ASTC_8x8_RGBA;
-            }
-            else TRACELOG(LOG_WARNING, "IMAGE: ASTC block size configuration not supported");
-        }
-    }
-
-    return image;
-}
-#endif
-
 // Get pixel data from image as Vector4 array (float normalized)
 static Vector4 *LoadImageDataNormalized(Image image)
 {

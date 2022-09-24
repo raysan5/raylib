@@ -57,6 +57,10 @@ int main(void)
 
     bool showFontAtlas = false;
 
+    int codepointSize = 0;
+    int codepoint = 0;
+    char *ptr = text;
+
     SetTargetFPS(60);               // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
 
@@ -66,6 +70,20 @@ int main(void)
         // Update
         //----------------------------------------------------------------------------------
         if (IsKeyPressed(KEY_SPACE)) showFontAtlas = !showFontAtlas;
+
+        // Testing code: getting next and previous codepoints on provided text
+        if (IsKeyPressed(KEY_RIGHT))
+        {
+            // Get next codepoint in string and move pointer
+            codepoint = GetCodepointNext(ptr, &codepointSize);
+            ptr += codepointSize;
+        }
+        else if (IsKeyPressed(KEY_LEFT))
+        {
+            // Get previous codepoint in string and move pointer
+            codepoint = GetCodepointPrevious(ptr, &codepointSize);
+            ptr -= codepointSize;
+        }
         //----------------------------------------------------------------------------------
 
         // Draw

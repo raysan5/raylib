@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [cpre] example - loading thread
+*   raylib [core] example - loading thread
 *
 *   NOTE: This example requires linking with pthreads library on MinGW, 
 *   it can be accomplished passing -static parameter to compiler

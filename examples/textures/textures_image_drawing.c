@@ -42,7 +42,7 @@ int main(void)
 
     // Draw on the image with a few image draw methods
     ImageDrawPixel(&parrots, 10, 10, RAYWHITE);
-    ImageDrawCircle(&parrots, 10, 10, 5, RAYWHITE);
+    ImageDrawCircleLines(&parrots, 10, 10, 5, RAYWHITE);
     ImageDrawRectangle(&parrots, 5, 20, 10, 10, RAYWHITE);
 
     UnloadImage(cat);       // Unload image from RAM
