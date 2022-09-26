@@ -177,6 +177,9 @@ void DrawLineBezier(Vector2 startPos, Vector2 endPos, float thick, Color color)
 
         DrawLineEx(previous, current, thick, color);
 
+        if (thick > 1)
+            DrawCircleV(current, thick / 2, color);
+
         previous = current;
     }
 }
@@ -203,6 +206,9 @@ void DrawLineBezierQuad(Vector2 startPos, Vector2 endPos, Vector2 controlPos, fl
 
         DrawLineEx(previous, current, thick, color);
 
+        if (thick > 1)
+            DrawCircleV(current, thick / 2, color);
+
         previous = current;
     }
 }
@@ -228,6 +234,9 @@ void DrawLineBezierCubic(Vector2 startPos, Vector2 endPos, Vector2 startControlP
         current.x = a*startPos.x + b*startControlPos.x + c*endControlPos.x + d*endPos.x;
 
         DrawLineEx(previous, current, thick, color);
+
+        if (thick > 1)
+            DrawCircleV(current, thick / 2, color);
 
         previous = current;
     }
