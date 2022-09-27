@@ -1989,8 +1989,6 @@ const char *GetClipboardText(void)
     return NULL;
 }
 
-
-
 // Show mouse cursor
 void ShowCursor(void)
 {
@@ -4173,6 +4171,8 @@ static bool InitGraphicsDevice(int width, int height)
     glfwSetScrollCallback(CORE.Window.handle, MouseScrollCallback);
     glfwSetCursorEnterCallback(CORE.Window.handle, CursorEnterCallback);
 
+    glfwSetInputMode(CORE.Window.handle, GLFW_LOCK_KEY_MODS, GLFW_TRUE);    // Enable lock keys modifiers (CAPS, NUM)
+
     glfwMakeContextCurrent(CORE.Window.handle);
 
 #if !defined(PLATFORM_WEB)
@@ -5519,6 +5519,10 @@ static void KeyCallback(GLFWwindow *window, int key, int scancode, int action, i
     // to work properly with our implementation (IsKeyDown/IsKeyUp checks)
     if (action == GLFW_RELEASE) CORE.Input.Keyboard.currentKeyState[key] = 0;
     else CORE.Input.Keyboard.currentKeyState[key] = 1;
+
+    // WARNING: Check if CAPS/NUM key modifiers are enabled and force down state for those keys
+    if (((key == KEY_CAPS_LOCK) && ((mods & GLFW_MOD_CAPS_LOCK) > 0)) ||
+        ((key == KEY_NUM_LOCK) && ((mods & GLFW_MOD_NUM_LOCK) > 0))) CORE.Input.Keyboard.currentKeyState[key] = 1;
 
     // Check if there is space available in the key queue
     if ((CORE.Input.Keyboard.keyPressedQueueCount < MAX_KEY_PRESSED_QUEUE) && (action == GLFW_PRESS))

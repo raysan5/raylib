@@ -2630,7 +2630,7 @@ Mesh GenMeshKnot(float radius, float size, int radSeg, int sides)
 // NOTE: Vertex data is uploaded to GPU
 Mesh GenMeshHeightmap(Image heightmap, Vector3 size)
 {
-    #define GRAY_VALUE(c) ((c.r+c.g+c.b)/3.0f)
+    #define GRAY_VALUE(c) ((float)(c.r + c.g + c.b)/3.0f)
 
     Mesh mesh = { 0 };
 
@@ -2640,7 +2640,7 @@ Mesh GenMeshHeightmap(Image heightmap, Vector3 size)
     Color *pixels = LoadImageColors(heightmap);
 
     // NOTE: One vertex per pixel
-    mesh.triangleCount = (mapX-1)*(mapZ-1)*2;    // One quad every four pixels
+    mesh.triangleCount = (mapX - 1)*(mapZ - 1)*2;    // One quad every four pixels
 
     mesh.vertexCount = mesh.triangleCount*3;
 
@@ -2653,7 +2653,7 @@ Mesh GenMeshHeightmap(Image heightmap, Vector3 size)
     int tcCounter = 0;      // Used to count texcoords float by float
     int nCounter = 0;       // Used to count normals float by float
 
-    Vector3 scaleFactor = { size.x/mapX, size.y/255.0f, size.z/mapZ };
+    Vector3 scaleFactor = { size.x/(mapX - 1), size.y/255.0f, size.z/(mapZ - 1) };
 
     Vector3 vA = { 0 };
     Vector3 vB = { 0 };
@@ -2680,7 +2680,7 @@ Mesh GenMeshHeightmap(Image heightmap, Vector3 size)
             mesh.vertices[vCounter + 7] = GRAY_VALUE(pixels[(x + 1) + z*mapX])*scaleFactor.y;
             mesh.vertices[vCounter + 8] = (float)z*scaleFactor.z;
 
-            // another triangle - 3 vertex
+            // Another triangle - 3 vertex
             mesh.vertices[vCounter + 9] = mesh.vertices[vCounter + 6];
             mesh.vertices[vCounter + 10] = mesh.vertices[vCounter + 7];
             mesh.vertices[vCounter + 11] = mesh.vertices[vCounter + 8];
