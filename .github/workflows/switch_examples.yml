@@ -1,13 +1,7 @@
 name: Switch Examples
 
 on:
-  workflow_dispatch:
   push:
-    paths:
-      - 'src/**'
-      - 'examples/**'
-      - '.github/workflows/switch_examples.yml'
-  pull_request:
     branches: [ master ]
     paths:
       - 'src/**'
