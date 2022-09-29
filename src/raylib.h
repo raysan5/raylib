@@ -305,7 +305,7 @@ typedef struct Camera3D {
     Vector3 position;       // Camera position
     Vector3 target;         // Camera target it looks-at
     Vector3 up;             // Camera up vector (rotation over its axis)
-    float fovy;             // Camera field-of-view apperture in Y (degrees) in perspective, used as near plane width in orthographic
+    float fovy;             // Camera field-of-view aperture in Y (degrees) in perspective, used as near plane width in orthographic
     int projection;         // Camera projection: CAMERA_PERSPECTIVE or CAMERA_ORTHOGRAPHIC
 } Camera3D;
 
@@ -663,7 +663,7 @@ typedef enum {
     MOUSE_BUTTON_MIDDLE  = 2,       // Mouse button middle (pressed wheel)
     MOUSE_BUTTON_SIDE    = 3,       // Mouse button side (advanced mouse device)
     MOUSE_BUTTON_EXTRA   = 4,       // Mouse button extra (advanced mouse device)
-    MOUSE_BUTTON_FORWARD = 5,       // Mouse button fordward (advanced mouse device)
+    MOUSE_BUTTON_FORWARD = 5,       // Mouse button forward (advanced mouse device)
     MOUSE_BUTTON_BACK    = 6,       // Mouse button back (advanced mouse device)
 } MouseButton;
 
@@ -967,7 +967,7 @@ RLAPI void DisableEventWaiting(void);                             // Disable wai
 
 // Custom frame control functions
 // NOTE: Those functions are intended for advance users that want full control over the frame processing
-// By default EndDrawing() does this job: draws everything + SwapScreenBuffer() + manage frame timming + PollInputEvents()
+// By default EndDrawing() does this job: draws everything + SwapScreenBuffer() + manage frame timing + PollInputEvents()
 // To avoid that behaviour and control frame processes manually, enable in config.h: SUPPORT_CUSTOM_FRAME_CONTROL
 RLAPI void SwapScreenBuffer(void);                                // Swap back buffer with front buffer (screen drawing)
 RLAPI void PollInputEvents(void);                                 // Register all input events
