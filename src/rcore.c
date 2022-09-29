@@ -1695,49 +1695,58 @@ int GetMonitorCount(void)
 // Get number of monitors
 int GetCurrentMonitor(void)
 {
+    int index = 0;
+
 #if defined(PLATFORM_DESKTOP)
     int monitorCount;
-    GLFWmonitor** monitors = glfwGetMonitors(&monitorCount);
-    GLFWmonitor* monitor = NULL;
+    GLFWmonitor **monitors = glfwGetMonitors(&monitorCount);
+    GLFWmonitor *monitor = NULL;
 
-    if (monitorCount == 1) // easy out
-        return 0;
-
-    if (IsWindowFullscreen())
+    if (monitorCount > 1)
     {
-        monitor = glfwGetWindowMonitor(CORE.Window.handle);
-        for (int i = 0; i < monitorCount; i++)
+        if (IsWindowFullscreen())
         {
-            if (monitors[i] == monitor)
-                return i;
+            // Get the handle of the monitor that the specified window is in full screen on
+            monitor = glfwGetWindowMonitor(CORE.Window.handle);
+            
+            for (int i = 0; i < monitorCount; i++)
+            {
+                if (monitors[i] == monitor)
+                { 
+                    index = i; 
+                    break;
+                }
+            }
         }
-        return 0;
-    }
-    else
-    {
-        int x = 0;
-        int y = 0;
-
-        glfwGetWindowPos(CORE.Window.handle, &x, &y);
-
-        for (int i = 0; i < monitorCount; i++)
+        else
         {
-            int mx = 0;
-            int my = 0;
+            int x = 0;
+            int y = 0;
 
-            int width = 0;
-            int height = 0;
+            glfwGetWindowPos(CORE.Window.handle, &x, &y);
 
-            monitor = monitors[i];
-            glfwGetMonitorWorkarea(monitor, &mx, &my, &width, &height);
-            if (x >= mx && x <= (mx + width) && y >= my && y <= (my + height))
-                return i;
+            for (int i = 0; i < monitorCount; i++)
+            {
+                int mx = 0;
+                int my = 0;
+
+                int width = 0;
+                int height = 0;
+
+                monitor = monitors[i];
+                glfwGetMonitorWorkarea(monitor, &mx, &my, &width, &height);
+                
+                if (x >= mx && x <= (mx + width) && y >= my && y <= (my + height))
+                {
+                    index = i;
+                    break;
+                }
+            }
         }
     }
-    return 0;
-#else
-    return 0;
 #endif
+
+    return index;
 }
 
 // Get selected monitor position
@@ -1745,7 +1754,7 @@ Vector2 GetMonitorPosition(int monitor)
 {
 #if defined(PLATFORM_DESKTOP)
     int monitorCount;
-    GLFWmonitor** monitors = glfwGetMonitors(&monitorCount);
+    GLFWmonitor **monitors = glfwGetMonitors(&monitorCount);
 
     if ((monitor >= 0) && (monitor < monitorCount))
     {
@@ -1815,7 +1824,7 @@ int GetMonitorPhysicalWidth(int monitor)
     return 0;
 }
 
-// Get primary monitor physical height in millimetres
+// Get selected monitor physical height in millimetres
 int GetMonitorPhysicalHeight(int monitor)
 {
 #if defined(PLATFORM_DESKTOP)
@@ -1833,6 +1842,7 @@ int GetMonitorPhysicalHeight(int monitor)
     return 0;
 }
 
+// Get selected monitor refresh rate
 int GetMonitorRefreshRate(int monitor)
 {
 #if defined(PLATFORM_DESKTOP)
@@ -1866,7 +1876,7 @@ Vector2 GetWindowPosition(void)
     return (Vector2){ (float)x, (float)y };
 }
 
-// Get window scale DPI factor
+// Get window scale DPI factor for current monitor
 Vector2 GetWindowScaleDPI(void)
 {
     Vector2 scale = { 1.0f, 1.0f };
@@ -1900,7 +1910,7 @@ Vector2 GetWindowScaleDPI(void)
     return scale;
 }
 
-// Get the human-readable, UTF-8 encoded name of the primary monitor
+// Get the human-readable, UTF-8 encoded name of the selected monitor
 const char *GetMonitorName(int monitor)
 {
 #if defined(PLATFORM_DESKTOP)
@@ -3897,30 +3907,6 @@ static bool InitGraphicsDevice(int width, int height)
         return false;
     }
 
-    // NOTE: Getting video modes is not implemented in emscripten GLFW3 version
-#if defined(PLATFORM_DESKTOP)
-    // Find monitor resolution
-    GLFWmonitor *monitor = glfwGetPrimaryMonitor();
-    if (!monitor)
-    {
-        TRACELOG(LOG_WARNING, "GLFW: Failed to get primary monitor");
-        return false;
-    }
-    const GLFWvidmode *mode = glfwGetVideoMode(monitor);
-
-    CORE.Window.display.width = mode->width;
-    CORE.Window.display.height = mode->height;
-
-    // Set screen width/height to the display width/height if they are 0
-    if (CORE.Window.screen.width == 0) CORE.Window.screen.width = CORE.Window.display.width;
-    if (CORE.Window.screen.height == 0) CORE.Window.screen.height = CORE.Window.display.height;
-#endif  // PLATFORM_DESKTOP
-
-#if defined(PLATFORM_WEB)
-    CORE.Window.display.width = CORE.Window.screen.width;
-    CORE.Window.display.height = CORE.Window.screen.height;
-#endif  // PLATFORM_WEB
-
     glfwDefaultWindowHints();                       // Set default windows hints
     //glfwWindowHint(GLFW_RED_BITS, 8);             // Framebuffer red color component bits
     //glfwWindowHint(GLFW_GREEN_BITS, 8);           // Framebuffer green color component bits
@@ -4037,6 +4023,31 @@ static bool InitGraphicsDevice(int width, int height)
     if (MAX_GAMEPADS > 0) glfwSetJoystickCallback(NULL);
 #endif
 
+#if defined(PLATFORM_DESKTOP)
+    // Find monitor resolution
+    GLFWmonitor *monitor = glfwGetPrimaryMonitor();
+    if (!monitor)
+    {
+        TRACELOG(LOG_WARNING, "GLFW: Failed to get primary monitor");
+        return false;
+    }
+
+    const GLFWvidmode *mode = glfwGetVideoMode(monitor);
+
+    CORE.Window.display.width = mode->width;
+    CORE.Window.display.height = mode->height;
+
+    // Set screen width/height to the display width/height if they are 0
+    if (CORE.Window.screen.width == 0) CORE.Window.screen.width = CORE.Window.display.width;
+    if (CORE.Window.screen.height == 0) CORE.Window.screen.height = CORE.Window.display.height;
+#endif  // PLATFORM_DESKTOP
+
+#if defined(PLATFORM_WEB)
+    // NOTE: Getting video modes is not implemented in emscripten GLFW3 version
+    CORE.Window.display.width = CORE.Window.screen.width;
+    CORE.Window.display.height = CORE.Window.screen.height;
+#endif  // PLATFORM_WEB
+
     if (CORE.Window.fullscreen)
     {
         // remember center for switchinging from fullscreen to window
@@ -4126,6 +4137,7 @@ static bool InitGraphicsDevice(int width, int height)
     glfwSetWindowIconifyCallback(CORE.Window.handle, WindowIconifyCallback);
     glfwSetWindowFocusCallback(CORE.Window.handle, WindowFocusCallback);
     glfwSetDropCallback(CORE.Window.handle, WindowDropCallback);
+    
     // Set input callback events
     glfwSetKeyCallback(CORE.Window.handle, KeyCallback);
     glfwSetCharCallback(CORE.Window.handle, CharCallback);
@@ -4258,6 +4270,7 @@ static bool InitGraphicsDevice(int width, int height)
             drmModeFreeConnector(con);
         }
     }
+    
     if (!CORE.Window.connector)
     {
         TRACELOG(LOG_WARNING, "DISPLAY: No suitable DRM connector found");
@@ -4303,18 +4316,20 @@ static bool InitGraphicsDevice(int width, int height)
 
     const bool allowInterlaced = CORE.Window.flags & FLAG_INTERLACED_HINT;
     const int fps = (CORE.Time.target > 0) ? (1.0/CORE.Time.target) : 60;
-    // try to find an exact matching mode
+    
+    // Try to find an exact matching mode
     CORE.Window.modeIndex = FindExactConnectorMode(CORE.Window.connector, CORE.Window.screen.width, CORE.Window.screen.height, fps, allowInterlaced);
-    // if nothing found, try to find a nearly matching mode
-    if (CORE.Window.modeIndex < 0)
-        CORE.Window.modeIndex = FindNearestConnectorMode(CORE.Window.connector, CORE.Window.screen.width, CORE.Window.screen.height, fps, allowInterlaced);
-    // if nothing found, try to find an exactly matching mode including interlaced
-    if (CORE.Window.modeIndex < 0)
-        CORE.Window.modeIndex = FindExactConnectorMode(CORE.Window.connector, CORE.Window.screen.width, CORE.Window.screen.height, fps, true);
-    // if nothing found, try to find a nearly matching mode including interlaced
-    if (CORE.Window.modeIndex < 0)
-        CORE.Window.modeIndex = FindNearestConnectorMode(CORE.Window.connector, CORE.Window.screen.width, CORE.Window.screen.height, fps, true);
-    // if nothing found, there is no suitable mode
+    
+    // If nothing found, try to find a nearly matching mode
+    if (CORE.Window.modeIndex < 0) CORE.Window.modeIndex = FindNearestConnectorMode(CORE.Window.connector, CORE.Window.screen.width, CORE.Window.screen.height, fps, allowInterlaced);
+    
+    // If nothing found, try to find an exactly matching mode including interlaced
+    if (CORE.Window.modeIndex < 0) CORE.Window.modeIndex = FindExactConnectorMode(CORE.Window.connector, CORE.Window.screen.width, CORE.Window.screen.height, fps, true);
+    
+    // If nothing found, try to find a nearly matching mode including interlaced
+    if (CORE.Window.modeIndex < 0) CORE.Window.modeIndex = FindNearestConnectorMode(CORE.Window.connector, CORE.Window.screen.width, CORE.Window.screen.height, fps, true);
+    
+    // If nothing found, there is no suitable mode
     if (CORE.Window.modeIndex < 0)
     {
         TRACELOG(LOG_WARNING, "DISPLAY: Failed to find a suitable DRM connector mode");
