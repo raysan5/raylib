@@ -151,6 +151,7 @@ float GetGesturePinchAngle(void);                       // Get gesture pinch ang
 
 #if defined(GESTURES_IMPLEMENTATION)
 
+#if defined(GESTURES_STANDALONE)
 #if defined(_WIN32)
     #if defined(__cplusplus)
     extern "C" {        // Prevents name mangling of functions
@@ -174,6 +175,7 @@ float GetGesturePinchAngle(void);                       // Get gesture pinch ang
 #if defined(__APPLE__)                  // macOS also defines __MACH__
     #include <mach/clock.h>             // Required for: clock_get_time()
     #include <mach/mach.h>              // Required for: mach_timespec_t
+#endif
 #endif
 
 //----------------------------------------------------------------------------------
@@ -526,6 +528,9 @@ static double rgGetCurrentTime(void)
 {
     double time = 0;
 
+#if !defined(GESTURES_STANDALONE)
+    time = GetTime();
+#else
 #if defined(_WIN32)
     unsigned long long int clockFrequency, currentTime;
 
@@ -558,6 +563,7 @@ static double rgGetCurrentTime(void)
     unsigned long long int nowTime = (unsigned long long int)now.tv_sec*1000000000LLU + (unsigned long long int)now.tv_nsec;     // Time in nanoseconds
 
     time = ((double)nowTime/1000000.0);     // Time in miliseconds
+#endif
 #endif
 
     return time;
