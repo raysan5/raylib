@@ -402,7 +402,6 @@ Image LoadImageFromMemory(const char *fileType, const unsigned char *fileData, i
 #if defined(SUPPORT_FILEFORMAT_DDS)
     else if (strcmp(fileType, ".dds") == 0)
     {
-        int format = 0;
         image.data = rl_load_dds_from_memory(fileData, dataSize, &image.width, &image.height, &image.format, &image.mipmaps);
     }
 #endif
