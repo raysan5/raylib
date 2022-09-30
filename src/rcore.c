@@ -4109,8 +4109,10 @@ static bool InitGraphicsDevice(int width, int height)
         {
 #if defined(PLATFORM_DESKTOP)
             // Center window on screen
-            int windowPosX = CORE.Window.display.width/2 - CORE.Window.screen.width/2;
-            int windowPosY = CORE.Window.display.height/2 - CORE.Window.screen.height/2;
+            int windowPosX, windowPosY;
+            glfwGetMonitorPos(monitor, &windowPosX, &windowPosY);
+            windowPosX += CORE.Window.display.width/2 - CORE.Window.screen.width/2;
+            windowPosY += CORE.Window.display.height/2 - CORE.Window.screen.height/2;
 
             if (windowPosX < 0) windowPosX = 0;
             if (windowPosY < 0) windowPosY = 0;
