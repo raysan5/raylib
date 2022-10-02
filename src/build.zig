@@ -8,6 +8,7 @@ pub fn addRaylib(b: *std.build.Builder, target: std.zig.CrossTarget) *std.build.
     const raylib_flags = &[_][]const u8{
         "-std=gnu99",
         "-DPLATFORM_DESKTOP",
+        "-D_GNU_SOURCE",
         "-DGL_SILENCE_DEPRECATION=199309L",
         "-fno-sanitize=undefined", // https://github.com/raysan5/raylib/issues/1891
     };
