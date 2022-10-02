@@ -175,6 +175,8 @@ void DrawLineBezier(Vector2 startPos, Vector2 endPos, float thick, Color color)
         current.y = EaseCubicInOut((float)i, startPos.y, endPos.y - startPos.y, (float)BEZIER_LINE_DIVISIONS);
         current.x = previous.x + (endPos.x - startPos.x)/ (float)BEZIER_LINE_DIVISIONS;
 
+        // TODO: Avoid drawing the line by pieces, it generates gaps for big thicks,
+        // Custom "triangle-strip" implementation should be used, check DrawTriangleStrip() for reference
         DrawLineEx(previous, current, thick, color);
 
         previous = current;
@@ -201,6 +203,8 @@ void DrawLineBezierQuad(Vector2 startPos, Vector2 endPos, Vector2 controlPos, fl
         current.y = a*startPos.y + b*controlPos.y + c*endPos.y;
         current.x = a*startPos.x + b*controlPos.x + c*endPos.x;
 
+        // TODO: Avoid drawing the line by pieces, it generates gaps for big thicks,
+        // Custom "triangle-strip" implementation should be used, check DrawTriangleStrip() for reference
         DrawLineEx(previous, current, thick, color);
 
         previous = current;
@@ -227,6 +231,8 @@ void DrawLineBezierCubic(Vector2 startPos, Vector2 endPos, Vector2 startControlP
         current.y = a*startPos.y + b*startControlPos.y + c*endControlPos.y + d*endPos.y;
         current.x = a*startPos.x + b*startControlPos.x + c*endControlPos.x + d*endPos.x;
 
+        // TODO: Avoid drawing the line by pieces, it generates gaps for big thicks,
+        // Custom "triangle-strip" implementation should be used, check DrawTriangleStrip() for reference
         DrawLineEx(previous, current, thick, color);
 
         previous = current;
