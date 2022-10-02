@@ -241,7 +241,7 @@
         //#define GLFW_EXPOSE_NATIVE_COCOA    // WARNING: Fails due to type redefinition
         #include "GLFW/glfw3native.h"       // Required for: glfwGetCocoaWindow()
     #endif
-    
+
     // TODO: HACK: Added flag if not provided by GLFW when using external library
     // Latest GLFW release (GLFW 3.3.8) does not implement this flag, it was added for 3.4.0-dev
     #if !defined(GLFW_MOUSE_PASSTHROUGH)
@@ -1708,12 +1708,12 @@ int GetCurrentMonitor(void)
         {
             // Get the handle of the monitor that the specified window is in full screen on
             monitor = glfwGetWindowMonitor(CORE.Window.handle);
-            
+
             for (int i = 0; i < monitorCount; i++)
             {
                 if (monitors[i] == monitor)
-                { 
-                    index = i; 
+                {
+                    index = i;
                     break;
                 }
             }
@@ -1735,7 +1735,7 @@ int GetCurrentMonitor(void)
 
                 monitor = monitors[i];
                 glfwGetMonitorWorkarea(monitor, &mx, &my, &width, &height);
-                
+
                 if (x >= mx && x <= (mx + width) && y >= my && y <= (my + height))
                 {
                     index = i;
@@ -3790,7 +3790,7 @@ float GetMouseWheelMove(void)
 Vector2 GetMouseWheelMoveV(void)
 {
     Vector2 result = { 0 };
-   
+
     result = CORE.Input.Mouse.currentWheelMove;
 
     return result;
@@ -4107,18 +4107,6 @@ static bool InitGraphicsDevice(int width, int height)
 
         if (CORE.Window.handle)
         {
-#if defined(PLATFORM_DESKTOP)
-            // Center window on screen
-            int windowPosX, windowPosY;
-            glfwGetMonitorPos(monitor, &windowPosX, &windowPosY);
-            windowPosX += CORE.Window.display.width/2 - CORE.Window.screen.width/2;
-            windowPosY += CORE.Window.display.height/2 - CORE.Window.screen.height/2;
-
-            if (windowPosX < 0) windowPosX = 0;
-            if (windowPosY < 0) windowPosY = 0;
-
-            glfwSetWindowPos(CORE.Window.handle, windowPosX, windowPosY);
-#endif
             CORE.Window.render.width = CORE.Window.screen.width;
             CORE.Window.render.height = CORE.Window.screen.height;
         }
@@ -4139,7 +4127,7 @@ static bool InitGraphicsDevice(int width, int height)
     glfwSetWindowIconifyCallback(CORE.Window.handle, WindowIconifyCallback);
     glfwSetWindowFocusCallback(CORE.Window.handle, WindowFocusCallback);
     glfwSetDropCallback(CORE.Window.handle, WindowDropCallback);
-    
+
     // Set input callback events
     glfwSetKeyCallback(CORE.Window.handle, KeyCallback);
     glfwSetCharCallback(CORE.Window.handle, CharCallback);
@@ -4272,7 +4260,7 @@ static bool InitGraphicsDevice(int width, int height)
             drmModeFreeConnector(con);
         }
     }
-    
+
     if (!CORE.Window.connector)
     {
         TRACELOG(LOG_WARNING, "DISPLAY: No suitable DRM connector found");
@@ -4318,19 +4306,19 @@ static bool InitGraphicsDevice(int width, int height)
 
     const bool allowInterlaced = CORE.Window.flags & FLAG_INTERLACED_HINT;
     const int fps = (CORE.Time.target > 0) ? (1.0/CORE.Time.target) : 60;
-    
+
     // Try to find an exact matching mode
     CORE.Window.modeIndex = FindExactConnectorMode(CORE.Window.connector, CORE.Window.screen.width, CORE.Window.screen.height, fps, allowInterlaced);
-    
+
     // If nothing found, try to find a nearly matching mode
     if (CORE.Window.modeIndex < 0) CORE.Window.modeIndex = FindNearestConnectorMode(CORE.Window.connector, CORE.Window.screen.width, CORE.Window.screen.height, fps, allowInterlaced);
-    
+
     // If nothing found, try to find an exactly matching mode including interlaced
     if (CORE.Window.modeIndex < 0) CORE.Window.modeIndex = FindExactConnectorMode(CORE.Window.connector, CORE.Window.screen.width, CORE.Window.screen.height, fps, true);
-    
+
     // If nothing found, try to find a nearly matching mode including interlaced
     if (CORE.Window.modeIndex < 0) CORE.Window.modeIndex = FindNearestConnectorMode(CORE.Window.connector, CORE.Window.screen.width, CORE.Window.screen.height, fps, true);
-    
+
     // If nothing found, there is no suitable mode
     if (CORE.Window.modeIndex < 0)
     {
@@ -5278,7 +5266,7 @@ static void WindowFocusCallback(GLFWwindow *window, int focused)
 static void KeyCallback(GLFWwindow *window, int key, int scancode, int action, int mods)
 {
     if (key < 0) return;    // Security check, macOS fn key generates -1
-    
+
     // WARNING: GLFW could return GLFW_REPEAT, we need to consider it as 1
     // to work properly with our implementation (IsKeyDown/IsKeyUp checks)
     if (action == GLFW_RELEASE) CORE.Input.Keyboard.currentKeyState[key] = 0;
