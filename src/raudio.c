@@ -509,7 +509,9 @@ void CloseAudioDevice(void)
 
         AUDIO.System.isReady = false;
         RL_FREE(AUDIO.System.pcmBuffer);
-
+        AUDIO.System.pcmBuffer = NULL;
+        AUDIO.System.pcmBufferSize = 0;
+        
         TRACELOG(LOG_INFO, "AUDIO: Device closed successfully");
     }
     else TRACELOG(LOG_WARNING, "AUDIO: Device could not be closed, not currently initialized");
