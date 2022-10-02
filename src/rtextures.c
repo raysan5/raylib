@@ -187,6 +187,13 @@
     #include "external/stb_image_resize.h"  // Required for: stbir_resize_uint8() [ImageResize()]
 #endif
 
+#define NANOSVG_IMPLEMENTATION	// Expands implementation
+#include "external/nanosvg.h"
+
+#define NANOSVGRAST_IMPLEMENTATION
+#include "external/nanosvgrast.h"
+
+
 //----------------------------------------------------------------------------------
 // Defines and Macros
 //----------------------------------------------------------------------------------
@@ -274,6 +281,88 @@ Image LoadImageRaw(const char *fileName, int width, int height, int format, int 
 
     return image;
 }
+
+// Load image from SVG file data with default size from SVG
+Image LoadImageSvg(const char* fileName)
+{
+    Image image = { 0 };
+
+    unsigned int dataSize = 0;
+    unsigned char* fileData = LoadFileData(fileName, &dataSize);
+
+    if (fileData != NULL)
+    {
+    	struct NSVGimage* svgImage = nsvgParse(fileData, "px", 96.0f);
+
+        const int width = (int)svgImage->width;
+        const int height = (int)svgImage->height;
+        // Delete
+        nsvgDelete(svgImage);
+
+        return LoadImageSvgWithSize(fileName, width, height);
+    }
+
+
+    return image;
+}
+
+// Load an image from SVG file data with a custom size
+Image LoadImageSvgWithSize(const char* fileName, int width, int height)
+{
+    Image image = { 0 };
+
+    unsigned int dataSize = 0;
+    unsigned char* fileData = LoadFileData(fileName, &dataSize);
+
+    if (fileData != NULL)
+    {
+        struct NSVGimage* svgImage = nsvgParse(fileData, "px", 96.0f);
+
+        
+
+        // Allocate memory for image
+        unsigned char* img = malloc(width * height * 4);
+
+        // Calculate scales for both the width and the height
+        const float scaleWidth = width / svgImage->width;
+        const float scaleHeight = height / svgImage->height;
+
+        // Set the largest of the 2 scales to be the scale to use
+    	const float scale = (scaleHeight > scaleWidth) ? scaleWidth : scaleHeight;
+
+        int offsetX = 0;
+        int offsetY = 0;
+
+        if (scaleHeight > scaleWidth)
+        {
+            offsetY = (height - svgImage->height * scale) / 2;
+        }
+    	else
+        {
+            offsetX = (width - svgImage->width * scale) / 2;
+        }
+
+
+    	// Rasterize
+        struct NSVGrasterizer* rast = nsvgCreateRasterizer();
+        nsvgRasterize(rast, svgImage, (int)offsetX, (int)offsetY, scale, img, width, height, width * 4);
+
+        // Populate image struct with all data
+        image.data = img;
+        image.width = width;
+        image.height = height;
+        image.mipmaps = 1;
+        image.format = PIXELFORMAT_UNCOMPRESSED_R8G8B8A8;
+
+
+        // Delete
+        nsvgDelete(svgImage);
+        RL_FREE(fileData);
+    }
+
+    return image;
+}
+
 
 // Load animated image data
 //  - Image.data buffer includes all frames: [image#0][image#1][image#2][...]
