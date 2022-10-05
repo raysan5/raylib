@@ -450,7 +450,7 @@ typedef enum {
 #define RL_SHADER_LOC_MAP_DIFFUSE       RL_SHADER_LOC_MAP_ALBEDO
 #define RL_SHADER_LOC_MAP_SPECULAR      RL_SHADER_LOC_MAP_METALNESS
 
-// Shader uniform data type 
+// Shader uniform data type
 typedef enum {
     RL_SHADER_UNIFORM_FLOAT = 0,        // Shader uniform type: float
     RL_SHADER_UNIFORM_VEC2,             // Shader uniform type: vec2 (2 float)
@@ -1814,14 +1814,14 @@ void rlSetBlendMode(int mode)
             {
                 // NOTE: Using GL blend src/dst factors and GL equation configured with rlSetBlendFactors()
                 glBlendFunc(RLGL.State.glBlendSrcFactor, RLGL.State.glBlendDstFactor); glBlendEquation(RLGL.State.glBlendEquation);
-                
+
             } break;
             case RL_BLEND_CUSTOM_SEPARATE:
             {
                 // NOTE: Using GL blend src/dst factors and GL equation configured with rlSetBlendFactorsSeparate()
                 glBlendFuncSeparate(RLGL.State.glBlendSrcFactorRGB, RLGL.State.glBlendDestFactorRGB, RLGL.State.glBlendSrcFactorAlpha, RLGL.State.glBlendDestFactorAlpha);
                 glBlendEquationSeparate(RLGL.State.glBlendEquationRGB, RLGL.State.glBlendEquationAlpha);
-                
+
             } break;
             default: break;
         }
@@ -1843,7 +1843,7 @@ void rlSetBlendFactors(int glSrcFactor, int glDstFactor, int glEquation)
         RLGL.State.glBlendSrcFactor = glSrcFactor;
         RLGL.State.glBlendDstFactor = glDstFactor;
         RLGL.State.glBlendEquation = glEquation;
-        
+
         RLGL.State.glCustomBlendModeModified = true;
     }
 #endif
@@ -1866,7 +1866,7 @@ void rlSetBlendFactorsSeparate(int glSrcRGB, int glDstRGB, int glSrcAlpha, int g
         RLGL.State.glBlendDestFactorAlpha = glDstAlpha;
         RLGL.State.glBlendEquationRGB = glEqRGB;
         RLGL.State.glBlendEquationAlpha = glEqAlpha;
-        
+
         RLGL.State.glCustomBlendModeModified = true;
     }
 #endif
