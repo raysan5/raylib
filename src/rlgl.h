@@ -1832,41 +1832,43 @@ void rlSetBlendMode(int mode)
 #endif
 }
 
-// Set blending mode factor and equation used by glBlendFuncSeparate and glBlendEquationSeparate
-void rlSetBlendFactorsSeparate(int glSrcRGB, int glDstRGB, int glSrcAlpha, int glDstAlpha, int glEqRGB, int glEqAlpha)
-{
-#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
-    if ((RLGL.State.glBlendSrcFactorRGB == glSrcRGB) && 
-        (RLGL.State.glBlendDestFactorRGB == glDstRGB) && 
-        (RLGL.State.glBlendSrcFactorAlpha == glSrcAlpha) &&
-        (RLGL.State.glBlendDestFactorAlpha == glDstAlpha) &&
-        (RLGL.State.glBlendEquationRGB == glEqRGB) &&
-        (RLGL.State.glBlendEquationAlpha == glEqAlpha)) return;
-        
-    RLGL.State.glBlendSrcFactorRGB = glSrcRGB;
-    RLGL.State.glBlendDestFactorRGB = glDstRGB;
-    RLGL.State.glBlendSrcFactorAlpha = glSrcAlpha;
-    RLGL.State.glBlendDestFactorAlpha = glDstAlpha;
-    RLGL.State.glBlendEquationRGB = glEqRGB;
-    RLGL.State.glBlendEquationAlpha = glEqAlpha;
-    
-    RLGL.State.glCustomBlendModeModified = true;
-#endif
-}
-
 // Set blending mode factor and equation
 void rlSetBlendFactors(int glSrcFactor, int glDstFactor, int glEquation)
 {
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
-    if ((RLGL.State.glBlendSrcFactor == glSrcFactor) && 
-        (RLGL.State.glBlendDstFactor == glDstFactor) &&
-        (RLGL.State.glBlendEquation == glEquation)) return;
+    if ((RLGL.State.glBlendSrcFactor != glSrcFactor) ||
+        (RLGL.State.glBlendDstFactor != glDstFactor) ||
+        (RLGL.State.glBlendEquation != glEquation))
+    {
+        RLGL.State.glBlendSrcFactor = glSrcFactor;
+        RLGL.State.glBlendDstFactor = glDstFactor;
+        RLGL.State.glBlendEquation = glEquation;
+        
+        RLGL.State.glCustomBlendModeModified = true;
+    }
+#endif
+}
 
-    RLGL.State.glBlendSrcFactor = glSrcFactor;
-    RLGL.State.glBlendDstFactor = glDstFactor;
-    RLGL.State.glBlendEquation = glEquation;
-    
-    RLGL.State.glCustomBlendModeModified = true;
+// Set blending mode factor and equation separately for RGB and alpha
+void rlSetBlendFactorsSeparate(int glSrcRGB, int glDstRGB, int glSrcAlpha, int glDstAlpha, int glEqRGB, int glEqAlpha)
+{
+#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
+    if ((RLGL.State.glBlendSrcFactorRGB != glSrcRGB) ||
+        (RLGL.State.glBlendDestFactorRGB != glDstRGB) ||
+        (RLGL.State.glBlendSrcFactorAlpha != glSrcAlpha) ||
+        (RLGL.State.glBlendDestFactorAlpha != glDstAlpha) ||
+        (RLGL.State.glBlendEquationRGB != glEqRGB) ||
+        (RLGL.State.glBlendEquationAlpha != glEqAlpha))
+    {
+        RLGL.State.glBlendSrcFactorRGB = glSrcRGB;
+        RLGL.State.glBlendDestFactorRGB = glDstRGB;
+        RLGL.State.glBlendSrcFactorAlpha = glSrcAlpha;
+        RLGL.State.glBlendDestFactorAlpha = glDstAlpha;
+        RLGL.State.glBlendEquationRGB = glEqRGB;
+        RLGL.State.glBlendEquationAlpha = glEqAlpha;
+        
+        RLGL.State.glCustomBlendModeModified = true;
+    }
 #endif
 }
 
