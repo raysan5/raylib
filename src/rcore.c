@@ -630,6 +630,7 @@ static void ScanDirectoryFilesRecursively(const char *basePath, FilePathList *li
 static void ErrorCallback(int error, const char *description);                             // GLFW3 Error Callback, runs on GLFW3 error
 // Window callbacks events
 static void WindowSizeCallback(GLFWwindow *window, int width, int height);                 // GLFW3 WindowSize Callback, runs when window is resized
+static void SetWindowSizeInner(int width, int height);                                     // Save window size value.
 #if !defined(PLATFORM_WEB)
 static void WindowMaximizeCallback(GLFWwindow* window, int maximized);                     // GLFW3 Window Maximize Callback, runs when window is maximized
 #endif
@@ -1621,6 +1622,7 @@ void SetWindowSize(int width, int height)
 {
 #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
     glfwSetWindowSize(CORE.Window.handle, width, height);
+    SetWindowSizeInner(width, height);
 #endif
 }
 
@@ -5217,7 +5219,13 @@ static void WindowSizeCallback(GLFWwindow *window, int width, int height)
 
     if (IsWindowFullscreen()) return;
 
-    // Set current screen size
+    SetWindowSizeInner(width, height);
+
+    // NOTE: Postprocessing texture is not scaled to new size
+}
+
+static void SetWindowSizeInner(int width, int height)
+{
 #if defined(__APPLE__)
     CORE.Window.screen.width = width;
     CORE.Window.screen.height = height;
@@ -5235,8 +5243,6 @@ static void WindowSizeCallback(GLFWwindow *window, int width, int height)
         CORE.Window.screen.height = height;
     }
 #endif
-
-    // NOTE: Postprocessing texture is not scaled to new size
 }
 
 // GLFW3 WindowIconify Callback, runs when window is minimized/restored
