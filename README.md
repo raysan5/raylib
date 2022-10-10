@@ -1,6 +1,6 @@
 <img align="left" src="https://github.com/raysan5/raylib/blob/master/logo/raylib_logo_animation.gif" width="288px">
 
-**raylib is a simple and easy-to-use library to enjoy videogames programming.**
+**raylib is a simple and easy-to-use library to enjoy videogames programming. This will give you open-source video game code. **
 
 raylib is highly inspired by Borland BGI graphics lib and by XNA framework and it's specially well suited for prototyping, tooling, graphical applications, embedded systems and education.
 
