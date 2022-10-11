@@ -364,7 +364,7 @@ typedef struct Material {
     float params[4];        // Material generic parameters (if required)
 } Material;
 
-// Transform, vectex transformation data
+// Transform, vertex transformation data
 typedef struct Transform {
     Vector3 translation;    // Translation
     Quaternion rotation;    // Rotation
