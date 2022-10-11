@@ -263,6 +263,6 @@ static void DrawTextBoxedSelectable(Font font, const char *text, Rectangle rec, 
             }
         }
 
-        textOffsetX += glyphWidth;
+        if ((textOffsetX != 0) || (codepoint != ' ')) textOffsetX += glyphWidth;  // avoid leading spaces
     }
 }
