@@ -67,7 +67,7 @@ revision history:
 #define VOX_SUCCESS (0)
 #define VOX_ERROR_FILE_NOT_FOUND (-1)
 #define VOX_ERROR_INVALID_FORMAT (-2)
-#define VOX_ERROR_FILE_VERSION_TOO_OLD (-3)
+#define VOX_ERROR_FILE_VERSION_NOT_MATCH (-3)
 
 // VoxColor, 4 components, R8G8B8A8 (32bit)
 typedef struct {
@@ -538,31 +538,26 @@ int Vox_LoadFromMemory(unsigned char* pvoxData, unsigned int voxDataSize, VoxArr
 	// @raysan5: Reviewed (unsigned long) -> (unsigned int), possible issue with Ubuntu 18.04 64bit
 
 	// @raysan5: reviewed signature loading
-	unsigned char signature[4] = { 0 };
 
 	unsigned char* fileData = pvoxData;
 	unsigned char* fileDataPtr = fileData;
 	unsigned char* endfileDataPtr = fileData + voxDataSize;
 
-	signature[0] = fileDataPtr[0];
-	signature[1] = fileDataPtr[1];
-	signature[2] = fileDataPtr[2];
-	signature[3] = fileDataPtr[3];
-	fileDataPtr += 4;
-
-	if ((signature[0] != 'V') && (signature[0] != 'O') && (signature[0] != 'X') && (signature[0] != ' '))
+	if (strncmp((char*)fileDataPtr, "VOX ", 4) != 0)
 	{
 		return VOX_ERROR_INVALID_FORMAT; //"Not an MagicaVoxel File format"
 	}
+
+	fileDataPtr += 4;
 
 	// @raysan5: reviewed version loading
 	unsigned int version = 0;
 	version = ((unsigned int*)fileDataPtr)[0];
 	fileDataPtr += 4;
 
-	if (version < 150)
+	if (version != 150)
 	{
-		return VOX_ERROR_FILE_VERSION_TOO_OLD; //"MagicaVoxel version too old"
+		return VOX_ERROR_FILE_VERSION_NOT_MATCH; //"MagicaVoxel version doesn't match"
 	}
 
 
