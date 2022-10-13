@@ -1229,6 +1229,7 @@ Image ImageTextEx(Font font, const char *text, float fontSize, float spacing, Co
 
     // NOTE: Text image is generated at font base size, later scaled to desired font size
     Vector2 imSize = MeasureTextEx(font, text, (float)font.baseSize, spacing);  // WARNING: Module required: rtext
+    Vector2 textSize = MeasureTextEx(font, text, fontSize, spacing);
 
     // Create image to store text
     imText = GenImageColor((int)imSize.x, (int)imSize.y, BLANK);
@@ -1267,9 +1268,9 @@ Image ImageTextEx(Font font, const char *text, float fontSize, float spacing, Co
     }
 
     // Scale image depending on text size
-    if (fontSize > imSize.y)
+    if (textSize.y != imSize.y)
     {
-        float scaleFactor = fontSize/imSize.y;
+        float scaleFactor = textSize.y / imSize.y;
         TRACELOG(LOG_INFO, "IMAGE: Text scaled by factor: %f", scaleFactor);
 
         // Using nearest-neighbor scaling algorithm for default font
