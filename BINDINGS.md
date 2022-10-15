@@ -54,6 +54,7 @@ Some people ported raylib to other languages in form of bindings or wrappers to 
 | raylib-swift       | **4.0**     | [Swift](https://swift.org/)          | MIT | https://github.com/STREGAsGate/Raylib          |
 | raylib-scopes      | auto    | [Scopes](http://scopes.rocks)          | MIT | https://github.com/salotz/raylib-scopes   |
 | raylib-smallBasic  | 4.1-dev | [SmallBASIC](https://github.com/smallbasic/SmallBASIC) | GPLv3 | https://github.com/smallbasic/smallbasic.plugins/tree/master/raylib |
+| raylib-umka        | **4.2** | [Umka](https://github.com/vtereshkov/umka-lang) | Zlib | https://github.com/robloach/raylib-umka |
 | raylib.v           | **4.2** | [V](https://vlang.io/)               | Zlib     | https://github.com/irishgreencitrus/raylib.v |
 | raylib-wren        | **4.0** | [Wren](http://wren.io/)              | ISC | https://github.com/TSnake41/raylib-wren              |
 | raylib-zig         | **4.2** | [Zig](https://ziglang.org/)               | MIT | https://github.com/Not-Nik/raylib-zig     |
