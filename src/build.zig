@@ -9,7 +9,7 @@ pub fn addRaylib(b: *std.build.Builder, target: std.zig.CrossTarget) *std.build.
         "-fno-sanitize=undefined", // https://github.com/raysan5/raylib/issues/1891
     };
 
-    const raylib = b.addStaticLibrary("raylib", srcdir ++ "/raylib.h");
+    const raylib = b.addStaticLibrary("raylib", null);
     raylib.setTarget(target);
     raylib.linkLibC();
 
