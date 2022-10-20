@@ -893,6 +893,25 @@ Image GenImageCellular(int width, int height, int tileSize)
 
     return image;
 }
+
+// Generate image: grayscale image from text data
+Image GenImageText(int width, int height, const char *text)
+{
+    Image image = { 0 };
+    
+    int textLength = TextLength(text);
+    int imageViewSize = width*height;
+
+    image.width = width;
+    image.height = height;
+    image.format = PIXELFORMAT_UNCOMPRESSED_GRAYSCALE;
+    image.data = RL_CALLOC(imageViewSize, 1);
+    image.mipmaps = 1;
+
+    memcpy(image.data, text, (textLength > imageViewSize)? imageViewSize : textLength);
+
+    return image;
+}
 #endif      // SUPPORT_IMAGE_GENERATION
 
 //------------------------------------------------------------------------------------
