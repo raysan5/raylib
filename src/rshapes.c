@@ -211,7 +211,7 @@ void DrawLineBezier(Vector2 startPos, Vector2 endPos, float thick, Color color)
         double dx = current.x-previous.x;
         double size = 0.5*thick/sqrt(dx*dx+dy*dy);
 
-        f (i==1) {
+        if (i==1) {
             pts[0].x = previous.x+dy*size;
             pts[0].y = previous.y-dx*size;
             pts[1].x = previous.x-dy*size;
