@@ -1557,18 +1557,12 @@ bool CheckCollisionPointRec(Vector2 point, Rectangle rec)
 // Check if point is inside circle
 bool CheckCollisionPointCircle(Vector2 point, Vector2 center, float radius)
 {
-    bool collision = false;
-
-    collision = CheckCollisionCircles(point, 0, center, radius);
-
-    return collision;
+    return CheckCollisionCircles(point, 0, center, radius);
 }
 
 // Check if point is inside a triangle defined by three points (p1, p2, p3)
 bool CheckCollisionPointTriangle(Vector2 point, Vector2 p1, Vector2 p2, Vector2 p3)
 {
-    bool collision = false;
-
     float alpha = ((p2.y - p3.y)*(point.x - p3.x) + (p3.x - p2.x)*(point.y - p3.y)) /
                   ((p2.y - p3.y)*(p1.x - p3.x) + (p3.x - p2.x)*(p1.y - p3.y));
 
@@ -1577,9 +1571,7 @@ bool CheckCollisionPointTriangle(Vector2 point, Vector2 p1, Vector2 p2, Vector2 
 
     float gamma = 1.0f - alpha - beta;
 
-    if ((alpha > 0) && (beta > 0) && (gamma > 0)) collision = true;
-
-    return collision;
+    return ((alpha > 0) && (beta > 0) && (gamma > 0));
 }
 
 // Check if point is within a polygon described by array of vertices
@@ -1606,35 +1598,25 @@ bool CheckCollisionPointPoly(Vector2 point, Vector2 *points, int pointCount)
 // Check collision between two rectangles
 bool CheckCollisionRecs(Rectangle rec1, Rectangle rec2)
 {
-    bool collision = false;
-
-    if ((rec1.x < (rec2.x + rec2.width) && (rec1.x + rec1.width) > rec2.x) &&
-        (rec1.y < (rec2.y + rec2.height) && (rec1.y + rec1.height) > rec2.y)) collision = true;
-
-    return collision;
+    return ((rec1.x < (rec2.x + rec2.width) && (rec1.x + rec1.width) > rec2.x) &&
+            (rec1.y < (rec2.y + rec2.height) && (rec1.y + rec1.height) > rec2.y));
 }
 
 // Check collision between two circles
 bool CheckCollisionCircles(Vector2 center1, float radius1, Vector2 center2, float radius2)
 {
-    bool collision = false;
-
     float dx = center2.x - center1.x;      // X distance between centers
     float dy = center2.y - center1.y;      // Y distance between centers
 
-    float distance = sqrtf(dx*dx + dy*dy); // Distance between centers
-
-    if (distance <= (radius1 + radius2)) collision = true;
-
-    return collision;
+    // A collision has occurred if the scalar distance between the center of each circle
+    // is less than or equal to the sum of their radii.
+    return (sqrtf(dx*dx + dy*dy) <= (radius1 + radius2));
 }
 
 // Check collision between circle and rectangle
 // NOTE: Reviewed version to take into account corner limit case
 bool CheckCollisionCircleRec(Vector2 center, float radius, Rectangle rec)
 {
-    bool collision = false;
-
     int recCenterX = (int)(rec.x + rec.width/2.0f);
     int recCenterY = (int)(rec.y + rec.height/2.0f);
 
@@ -1650,9 +1632,7 @@ bool CheckCollisionCircleRec(Vector2 center, float radius, Rectangle rec)
     float cornerDistanceSq = (dx - rec.width/2.0f)*(dx - rec.width/2.0f) +
                              (dy - rec.height/2.0f)*(dy - rec.height/2.0f);
 
-    collision = (cornerDistanceSq <= (radius*radius));
-
-    return collision;
+    return cornerDistanceSq <= (radius*radius);
 }
 
 // Check the collision between two lines defined by two points each, returns collision point by reference
