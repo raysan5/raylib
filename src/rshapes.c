@@ -207,11 +207,12 @@ void DrawLineBezier(Vector2 startPos, Vector2 endPos, float thick, Color color)
         current.y = EaseCubicInOut((float)i, startPos.y, endPos.y - startPos.y, (float)BEZIER_LINE_DIVISIONS);
         current.x = previous.x + (endPos.x - startPos.x)/ (float)BEZIER_LINE_DIVISIONS;
 
-        double dy = current.y-previous.y;
-        double dx = current.x-previous.x;
-        double size = 0.5*thick/sqrt(dx*dx+dy*dy);
+        float dy = current.y-previous.y;
+        float dx = current.x-previous.x;
+        float size = 0.5*thick/sqrt(dx*dx+dy*dy);
 
-        if (i==1) {
+        if (i==1)
+        {
             pts[0].x = previous.x+dy*size;
             pts[0].y = previous.y-dx*size;
             pts[1].x = previous.x-dy*size;
@@ -252,11 +253,12 @@ void DrawLineBezierQuad(Vector2 startPos, Vector2 endPos, Vector2 controlPos, fl
         current.y = a*startPos.y + b*controlPos.y + c*endPos.y;
         current.x = a*startPos.x + b*controlPos.x + c*endPos.x;
 
-        double dy = current.y-previous.y;
-        double dx = current.x-previous.x;
-        double size = 0.5*thick/sqrt(dx*dx+dy*dy);
+        float dy = current.y-previous.y;
+        float dx = current.x-previous.x;
+        float size = 0.5*thick/sqrt(dx*dx+dy*dy);
 
-        if (i==1) {
+        if (i==1)
+        {
             pts[0].x = previous.x+dy*size;
             pts[0].y = previous.y-dx*size;
             pts[1].x = previous.x-dy*size;
@@ -297,11 +299,12 @@ void DrawLineBezierCubic(Vector2 startPos, Vector2 endPos, Vector2 startControlP
         current.y = a*startPos.y + b*startControlPos.y + c*endControlPos.y + d*endPos.y;
         current.x = a*startPos.x + b*startControlPos.x + c*endControlPos.x + d*endPos.x;
 
-        double dy = current.y-previous.y;
-        double dx = current.x-previous.x;
-        double size = 0.5*thick/sqrt(dx*dx+dy*dy);
+        float dy = current.y-previous.y;
+        float dx = current.x-previous.x;
+        float size = 0.5*thick/sqrt(dx*dx+dy*dy);
         
-        if (i==1) {
+        if (i==1)
+        {
             pts[0].x = previous.x+dy*size;
             pts[0].y = previous.y-dx*size;
             pts[1].x = previous.x-dy*size;
