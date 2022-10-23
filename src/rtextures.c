@@ -194,6 +194,10 @@
     #define PIXELFORMAT_UNCOMPRESSED_R5G5B5A1_ALPHA_THRESHOLD  50    // Threshold over 255 to set alpha as 0
 #endif
 
+#ifndef GAUSSIAN_BLUR_ITERATIONS
+    #define GAUSSIAN_BLUR_ITERATIONS  4    // Number of box blur iterations to approximate gaussian blur
+#endif
+
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
 //----------------------------------------------------------------------------------
@@ -1492,6 +1496,147 @@ void ImageAlphaPremultiply(Image *image)
     image->format = PIXELFORMAT_UNCOMPRESSED_R8G8B8A8;
 
     ImageFormat(image, format);
+}
+
+// Apply box blur
+void ImageBlurBox(Image *image, int blurSize) {
+    // Security check to avoid program crash
+    if ((image->data == NULL) || (image->width == 0) || (image->height == 0)) return;
+
+    ImageAlphaPremultiply(image);
+
+    Color *pixels = LoadImageColors(*image);
+    Color *pixelsCopy = LoadImageColors(*image);
+
+    // Horizontal box blur
+    for (int row = 0; row < image->height; row++)
+    {
+        float avgR = 0.0f;
+        float avgG = 0.0f;
+        float avgB = 0.0f;
+        float avgAlpha = 0.0f;
+        int convolutionSize = blurSize+1;
+
+        for (int i = 0; i < blurSize+1; i++) 
+        {
+            avgR += pixelsCopy[row*image->width + i].r;
+            avgG += pixelsCopy[row*image->width + i].g;
+            avgB += pixelsCopy[row*image->width + i].b;
+            avgAlpha += pixelsCopy[row*image->width + i].a;
+        }
+
+        pixels[row*image->width].r = (unsigned char) (avgR/convolutionSize);
+        pixels[row*image->width].g = (unsigned char) (avgG/convolutionSize);
+        pixels[row*image->width].b = (unsigned char) (avgB/convolutionSize);
+        pixels[row*image->width].a = (unsigned char) (avgAlpha/convolutionSize);
+
+        for (int x = 1; x < image->width; x++)
+        {
+            if (x-blurSize >= 0)
+            {
+                avgR -= pixelsCopy[row*image->width + x-blurSize].r;
+                avgG -= pixelsCopy[row*image->width + x-blurSize].g;
+                avgB -= pixelsCopy[row*image->width + x-blurSize].b;
+                avgAlpha -= pixelsCopy[row*image->width + x-blurSize].a;
+                convolutionSize--;
+            }
+
+            if (x+blurSize < image->width)
+            {
+                avgR += pixelsCopy[row*image->width + x+blurSize].r;
+                avgG += pixelsCopy[row*image->width + x+blurSize].g;
+                avgB += pixelsCopy[row*image->width + x+blurSize].b;
+                avgAlpha += pixelsCopy[row*image->width + x+blurSize].a;
+                convolutionSize++;
+            }
+
+            pixels[row*image->width + x].r = (unsigned char) (avgR/convolutionSize);
+            pixels[row*image->width + x].g = (unsigned char) (avgG/convolutionSize);
+            pixels[row*image->width + x].b = (unsigned char) (avgB/convolutionSize);
+            pixels[row*image->width + x].a = (unsigned char) (avgAlpha/convolutionSize);
+        }
+    }
+
+    // Vertical box blur
+    for (int col = 0; col < image->width; col++)
+    {
+        float avgR = 0.0f;
+        float avgG = 0.0f;
+        float avgB = 0.0f;
+        float avgAlpha = 0.0f;
+        int convolutionSize = blurSize+1;
+
+        for (int i = 0; i < blurSize+1; i++) 
+        {
+            avgR += pixels[i*image->width + col].r;
+            avgG += pixels[i*image->width + col].g;
+            avgB += pixels[i*image->width + col].b;
+            avgAlpha += pixels[i*image->width + col].a;
+        }
+
+        pixelsCopy[col].r = (unsigned char) (avgR/convolutionSize);
+        pixelsCopy[col].g = (unsigned char) (avgG/convolutionSize);
+        pixelsCopy[col].b = (unsigned char) (avgB/convolutionSize);
+        pixelsCopy[col].a = (unsigned char) (avgAlpha/convolutionSize);
+
+        for (int y = 1; y < image->height; y++)
+        {
+            if (y-blurSize >= 0)
+            {
+                avgR -= pixels[(y-blurSize)*image->width + col].r;
+                avgG -= pixels[(y-blurSize)*image->width + col].g;
+                avgB -= pixels[(y-blurSize)*image->width + col].b;
+                avgAlpha -= pixels[(y-blurSize)*image->width + col].a;
+                convolutionSize--;
+            }
+            if (y+blurSize < image->height)
+            {
+                avgR += pixels[(y+blurSize)*image->width + col].r;
+                avgG += pixels[(y+blurSize)*image->width + col].g;
+                avgB += pixels[(y+blurSize)*image->width + col].b;
+                avgAlpha += pixels[(y+blurSize)*image->width + col].a;
+                convolutionSize++;
+            }
+
+            pixelsCopy[y*image->width + col].r = (unsigned char) (avgR/convolutionSize);
+            pixelsCopy[y*image->width + col].g = (unsigned char) (avgG/convolutionSize);
+            pixelsCopy[y*image->width + col].b = (unsigned char) (avgB/convolutionSize);
+            pixelsCopy[y*image->width + col].a = (unsigned char) (avgAlpha/convolutionSize);
+        }
+    }
+
+    // Reverse premultiply
+    for (int i = 0; i < image->width*image->height; i++)
+    {
+        if (pixelsCopy[i].a == 0)
+        {
+            pixelsCopy[i].r = 0;
+            pixelsCopy[i].g = 0;
+            pixelsCopy[i].b = 0;
+        }
+        else if (pixelsCopy[i].a < 255)
+        {
+            float alpha = (float)pixelsCopy[i].a/255.0f;
+            pixelsCopy[i].r = (unsigned char)((float)pixelsCopy[i].r/alpha);
+            pixelsCopy[i].g = (unsigned char)((float)pixelsCopy[i].g/alpha);
+            pixelsCopy[i].b = (unsigned char)((float)pixelsCopy[i].b/alpha);
+        }
+    }
+
+    int format = image->format;
+    RL_FREE(image->data);
+
+    UnloadImageColors(pixels);
+
+    image->data = pixelsCopy;
+    image->format = PIXELFORMAT_UNCOMPRESSED_R8G8B8A8;
+
+    ImageFormat(image, format);
+}
+
+void ImageBlurGaussian(Image *image, int blurSize)
+{
+    for (int i = 0; i < GAUSSIAN_BLUR_ITERATIONS; i++) ImageBlurBox(image, blurSize);
 }
 
 // Resize and image to new size
