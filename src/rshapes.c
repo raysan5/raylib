@@ -58,6 +58,7 @@
 
 #include <math.h>       // Required for: sinf(), asinf(), cosf(), acosf(), sqrtf(), fabsf()
 #include <float.h>      // Required for: FLT_EPSILON
+#include <stdlib.h>     // Required for: RL_FREE
 
 //----------------------------------------------------------------------------------
 // Defines and Macros
@@ -197,6 +198,8 @@ void DrawLineBezier(Vector2 startPos, Vector2 endPos, float thick, Color color)
     Vector2 previous = startPos;
     Vector2 current = { 0 };
 
+    Vector2 points[2*BEZIER_LINE_DIVISIONS + 2] = { 0 };
+
     for (int i = 1; i <= BEZIER_LINE_DIVISIONS; i++)
     {
         // Cubic easing in-out
@@ -204,12 +207,27 @@ void DrawLineBezier(Vector2 startPos, Vector2 endPos, float thick, Color color)
         current.y = EaseCubicInOut((float)i, startPos.y, endPos.y - startPos.y, (float)BEZIER_LINE_DIVISIONS);
         current.x = previous.x + (endPos.x - startPos.x)/ (float)BEZIER_LINE_DIVISIONS;
 
-        // TODO: Avoid drawing the line by pieces, it generates gaps for big thicks,
-        // Custom "triangle-strip" implementation should be used, check DrawTriangleStrip() for reference
-        DrawLineEx(previous, current, thick, color);
+        float dy = current.y-previous.y;
+        float dx = current.x-previous.x;
+        float size = 0.5*thick/sqrt(dx*dx+dy*dy);
+
+        if (i==1)
+        {
+            points[0].x = previous.x+dy*size;
+            points[0].y = previous.y-dx*size;
+            points[1].x = previous.x-dy*size;
+            points[1].y = previous.y+dx*size;
+        }
+
+        points[2*i+1].x = current.x-dy*size;
+        points[2*i+1].y = current.y+dx*size;
+        points[2*i].x = current.x+dy*size;
+        points[2*i].y = current.y-dx*size;
 
         previous = current;
     }
+
+    DrawTriangleStrip(points, 2*BEZIER_LINE_DIVISIONS+2, color);
 }
 
 // Draw line using quadratic bezier curves with a control point
@@ -220,6 +238,8 @@ void DrawLineBezierQuad(Vector2 startPos, Vector2 endPos, Vector2 controlPos, fl
     Vector2 previous = startPos;
     Vector2 current = { 0 };
     float t = 0.0f;
+
+    Vector2 points[2*BEZIER_LINE_DIVISIONS + 2] = { 0 };
 
     for (int i = 0; i <= BEZIER_LINE_DIVISIONS; i++)
     {
@@ -232,12 +252,27 @@ void DrawLineBezierQuad(Vector2 startPos, Vector2 endPos, Vector2 controlPos, fl
         current.y = a*startPos.y + b*controlPos.y + c*endPos.y;
         current.x = a*startPos.x + b*controlPos.x + c*endPos.x;
 
-        // TODO: Avoid drawing the line by pieces, it generates gaps for big thicks,
-        // Custom "triangle-strip" implementation should be used, check DrawTriangleStrip() for reference
-        DrawLineEx(previous, current, thick, color);
+        float dy = current.y-previous.y;
+        float dx = current.x-previous.x;
+        float size = 0.5*thick/sqrt(dx*dx+dy*dy);
+
+        if (i==1)
+        {
+            points[0].x = previous.x+dy*size;
+            points[0].y = previous.y-dx*size;
+            points[1].x = previous.x-dy*size;
+            points[1].y = previous.y+dx*size;
+        }
+
+        points[2*i+1].x = current.x-dy*size;
+        points[2*i+1].y = current.y+dx*size;
+        points[2*i].x = current.x+dy*size;
+        points[2*i].y = current.y-dx*size;
 
         previous = current;
     }
+
+    DrawTriangleStrip(points, 2*BEZIER_LINE_DIVISIONS+2, color);
 }
 
 // Draw line using cubic bezier curves with 2 control points
@@ -248,6 +283,8 @@ void DrawLineBezierCubic(Vector2 startPos, Vector2 endPos, Vector2 startControlP
     Vector2 previous = startPos;
     Vector2 current = { 0 };
     float t = 0.0f;
+
+    Vector2 points[2*BEZIER_LINE_DIVISIONS + 2] = { 0 };
 
     for (int i = 0; i <= BEZIER_LINE_DIVISIONS; i++)
     {
@@ -260,12 +297,27 @@ void DrawLineBezierCubic(Vector2 startPos, Vector2 endPos, Vector2 startControlP
         current.y = a*startPos.y + b*startControlPos.y + c*endControlPos.y + d*endPos.y;
         current.x = a*startPos.x + b*startControlPos.x + c*endControlPos.x + d*endPos.x;
 
-        // TODO: Avoid drawing the line by pieces, it generates gaps for big thicks,
-        // Custom "triangle-strip" implementation should be used, check DrawTriangleStrip() for reference
-        DrawLineEx(previous, current, thick, color);
+        float dy = current.y-previous.y;
+        float dx = current.x-previous.x;
+        float size = 0.5*thick/sqrt(dx*dx+dy*dy);
+        
+        if (i==1)
+        {
+            points[0].x = previous.x+dy*size;
+            points[0].y = previous.y-dx*size;
+            points[1].x = previous.x-dy*size;
+            points[1].y = previous.y+dx*size;
+        }
+
+        points[2*i+1].x = current.x-dy*size;
+        points[2*i+1].y = current.y+dx*size;
+        points[2*i].x = current.x+dy*size;
+        points[2*i].y = current.y-dx*size;
 
         previous = current;
     }
+
+    DrawTriangleStrip(points, 2*BEZIER_LINE_DIVISIONS+2, color);
 }
 
 // Draw lines sequence
