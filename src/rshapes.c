@@ -198,7 +198,7 @@ void DrawLineBezier(Vector2 startPos, Vector2 endPos, float thick, Color color)
     Vector2 previous = startPos;
     Vector2 current = { 0 };
 
-    Vector2* pts = RL_MALLOC((2*BEZIER_LINE_DIVISIONS+2)*sizeof(Vector2));
+    Vector2 points[2*BEZIER_LINE_DIVISIONS + 2] = { 0 };
 
     for (int i = 1; i <= BEZIER_LINE_DIVISIONS; i++)
     {
@@ -213,22 +213,21 @@ void DrawLineBezier(Vector2 startPos, Vector2 endPos, float thick, Color color)
 
         if (i==1)
         {
-            pts[0].x = previous.x+dy*size;
-            pts[0].y = previous.y-dx*size;
-            pts[1].x = previous.x-dy*size;
-            pts[1].y = previous.y+dx*size;
+            points[0].x = previous.x+dy*size;
+            points[0].y = previous.y-dx*size;
+            points[1].x = previous.x-dy*size;
+            points[1].y = previous.y+dx*size;
         }
 
-        pts[2*i+1].x = current.x-dy*size;
-        pts[2*i+1].y = current.y+dx*size;
-        pts[2*i].x = current.x+dy*size;
-        pts[2*i].y = current.y-dx*size;
+        points[2*i+1].x = current.x-dy*size;
+        points[2*i+1].y = current.y+dx*size;
+        points[2*i].x = current.x+dy*size;
+        points[2*i].y = current.y-dx*size;
 
         previous = current;
     }
 
-    DrawTriangleStrip(pts, 2*BEZIER_LINE_DIVISIONS+2, color);
-    RL_FREE(pts);
+    DrawTriangleStrip(points, 2*BEZIER_LINE_DIVISIONS+2, color);
 }
 
 // Draw line using quadratic bezier curves with a control point
@@ -240,7 +239,7 @@ void DrawLineBezierQuad(Vector2 startPos, Vector2 endPos, Vector2 controlPos, fl
     Vector2 current = { 0 };
     float t = 0.0f;
 
-    Vector2* pts = RL_MALLOC((2*BEZIER_LINE_DIVISIONS+2)*sizeof(Vector2));
+    Vector2 points[2*BEZIER_LINE_DIVISIONS + 2] = { 0 };
 
     for (int i = 0; i <= BEZIER_LINE_DIVISIONS; i++)
     {
@@ -259,22 +258,21 @@ void DrawLineBezierQuad(Vector2 startPos, Vector2 endPos, Vector2 controlPos, fl
 
         if (i==1)
         {
-            pts[0].x = previous.x+dy*size;
-            pts[0].y = previous.y-dx*size;
-            pts[1].x = previous.x-dy*size;
-            pts[1].y = previous.y+dx*size;
+            points[0].x = previous.x+dy*size;
+            points[0].y = previous.y-dx*size;
+            points[1].x = previous.x-dy*size;
+            points[1].y = previous.y+dx*size;
         }
 
-        pts[2*i+1].x = current.x-dy*size;
-        pts[2*i+1].y = current.y+dx*size;
-        pts[2*i].x = current.x+dy*size;
-        pts[2*i].y = current.y-dx*size;
+        points[2*i+1].x = current.x-dy*size;
+        points[2*i+1].y = current.y+dx*size;
+        points[2*i].x = current.x+dy*size;
+        points[2*i].y = current.y-dx*size;
 
         previous = current;
     }
 
-    DrawTriangleStrip(pts, 2*BEZIER_LINE_DIVISIONS+2, color);
-    RL_FREE(pts);
+    DrawTriangleStrip(points, 2*BEZIER_LINE_DIVISIONS+2, color);
 }
 
 // Draw line using cubic bezier curves with 2 control points
@@ -286,7 +284,7 @@ void DrawLineBezierCubic(Vector2 startPos, Vector2 endPos, Vector2 startControlP
     Vector2 current = { 0 };
     float t = 0.0f;
 
-    Vector2* pts = RL_MALLOC((2*BEZIER_LINE_DIVISIONS+2)*sizeof(Vector2));
+    Vector2 points[2*BEZIER_LINE_DIVISIONS + 2] = { 0 };
 
     for (int i = 0; i <= BEZIER_LINE_DIVISIONS; i++)
     {
@@ -305,22 +303,21 @@ void DrawLineBezierCubic(Vector2 startPos, Vector2 endPos, Vector2 startControlP
         
         if (i==1)
         {
-            pts[0].x = previous.x+dy*size;
-            pts[0].y = previous.y-dx*size;
-            pts[1].x = previous.x-dy*size;
-            pts[1].y = previous.y+dx*size;
+            points[0].x = previous.x+dy*size;
+            points[0].y = previous.y-dx*size;
+            points[1].x = previous.x-dy*size;
+            points[1].y = previous.y+dx*size;
         }
 
-        pts[2*i+1].x = current.x-dy*size;
-        pts[2*i+1].y = current.y+dx*size;
-        pts[2*i].x = current.x+dy*size;
-        pts[2*i].y = current.y-dx*size;
+        points[2*i+1].x = current.x-dy*size;
+        points[2*i+1].y = current.y+dx*size;
+        points[2*i].x = current.x+dy*size;
+        points[2*i].y = current.y-dx*size;
 
         previous = current;
     }
 
-    DrawTriangleStrip(pts, 2*BEZIER_LINE_DIVISIONS+2, color);
-    RL_FREE(pts);
+    DrawTriangleStrip(points, 2*BEZIER_LINE_DIVISIONS+2, color);
 }
 
 // Draw lines sequence
