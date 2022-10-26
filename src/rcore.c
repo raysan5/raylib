@@ -3411,7 +3411,7 @@ void OpenURL(const char *url)
     else
     {
 #if defined(PLATFORM_DESKTOP)
-        char *cmd = (char *)RL_CALLOC(strlen(url) + 10, sizeof(char));
+        char *cmd = (char *)RL_CALLOC(strlen(url) + 32, sizeof(char));
     #if defined(_WIN32)
         sprintf(cmd, "explorer \"%s\"", url);
     #endif
