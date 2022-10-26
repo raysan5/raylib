@@ -11,6 +11,7 @@ Some people ported raylib to other languages in form of bindings or wrappers to 
 | Raylib-cs          | **4.2** | [C#](https://en.wikipedia.org/wiki/C_Sharp_(programming_language)) | Zlib | https://github.com/ChrisDill/Raylib-cs     |
 | Raylib-CsLo        | **4.2** | [C#](https://en.wikipedia.org/wiki/C_Sharp_(programming_language)) | MPL-2.0 | https://github.com/NotNotTech/Raylib-CsLo  |
 | cl-raylib          | **4.0** | [Common Lisp](https://common-lisp.net/)   | MIT | https://github.com/longlene/cl-raylib     |
+| chez-raylib        | auto    | [Chez Scheme](https://cisco.github.io/ChezScheme/) | GPLv3 | https://github.com/Yunoinsky/chez-raylib |
 | raylib-cr          | **4.5-dev (7e7939e)** | [Crystal](https://crystal-lang.org/)    | Apache-2.0 | https://github.com/sol-vin/raylib-cr |
 | raylib-c3          | **4.5-dev** | [C3](https://c3-lang.org/)    | MIT | https://github.com/Its-Kenta/Raylib-C3 |
 | dart-raylib        | **4.0** | [Dart](https://dart.dev/)               | MIT | https://gitlab.com/wolfenrain/dart-raylib   |
