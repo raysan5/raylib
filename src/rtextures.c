@@ -1506,7 +1506,6 @@ void ImageBlurGaussian(Image *image, int blurSize) {
     ImageAlphaPremultiply(image);
 
     Color *pixels = LoadImageColors(*image);
-    Color *pixelsCopy = LoadImageColors(*image);
 
     // Loop switches between pixelsCopy1 and pixelsCopy2
     Vector4 *pixelsCopy1 = RL_MALLOC((image->height)*(image->width)*sizeof(Vector4));
@@ -1623,14 +1622,14 @@ void ImageBlurGaussian(Image *image, int blurSize) {
     // Reverse premultiply
     for (int i = 0; i < (image->width)*(image->height); i++)
     {
-        if (pixelsCopy1[i].w == 0)
+        if (pixelsCopy1[i].w == 0.0f)
         {
             pixels[i].r = 0;
             pixels[i].g = 0;
             pixels[i].b = 0;
             pixels[i].a = 0;
         }
-        else if (pixelsCopy1[i].w < 255.0f)
+        else if (pixelsCopy1[i].w <= 255.0f)
         {
             float alpha = (float)pixelsCopy1[i].w/255.0f;
             pixels[i].r = (unsigned char)((float)pixelsCopy1[i].x/alpha);
