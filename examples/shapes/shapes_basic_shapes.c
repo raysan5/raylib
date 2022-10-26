@@ -51,7 +51,7 @@ int main(void)
             DrawCircleGradient(screenWidth/5, 220, 60, GREEN, SKYBLUE);
             DrawCircleLines(screenWidth/5, 340, 80, DARKBLUE);
 
-            // Rectangle shapes and ines
+            // Rectangle shapes and lines
             DrawRectangle(screenWidth/4*2 - 60, 100, 120, 60, RED);
             DrawRectangleGradientH(screenWidth/4*2 - 90, 170, 180, 130, MAROON, GOLD);
             DrawRectangleLines(screenWidth/4*2 - 40, 320, 80, 60, ORANGE);  // NOTE: Uses QUADS internally, not lines
