@@ -85,7 +85,9 @@ int main(void)
                 {
                     DrawBillboard(camera, bill, billPositionStatic, 2.0f, WHITE);
                     DrawBillboardPro(camera, bill, source, billPositionRotating, billUp, (Vector2) {1.0f, 1.0f}, rotateOrigin, rotation, WHITE);
-                } else {
+                } 
+                else
+                {
                     DrawBillboardPro(camera, bill, source, billPositionRotating, billUp, (Vector2) {1.0f, 1.0f}, rotateOrigin, rotation, WHITE);
                     DrawBillboard(camera, bill, billPositionStatic, 2.0f, WHITE);
                 }
