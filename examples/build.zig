@@ -35,16 +35,16 @@ fn add_module(comptime module: []const u8, b: *std.build.Builder, target: std.zi
             else => @panic("Unsupported OS"),
         });
 
-        exe.addIncludeDir("../src");
-        exe.addIncludeDir("../src/external");
-        exe.addIncludeDir("../src/external/glfw/include");
+        exe.addIncludePath("../src");
+        exe.addIncludePath("../src/external");
+        exe.addIncludePath("../src/external/glfw/include");
 
         switch (exe.target.toTarget().os.tag) {
             .windows => {
                 exe.linkSystemLibrary("winmm");
                 exe.linkSystemLibrary("gdi32");
                 exe.linkSystemLibrary("opengl32");
-                exe.addIncludeDir("external/glfw/deps/mingw");
+                exe.addIncludePath("external/glfw/deps/mingw");
             },
             .linux => {
                 exe.linkSystemLibrary("GL");
