@@ -270,7 +270,7 @@ bool SaveFileData(const char *fileName, void *data, unsigned int bytesToWrite)
 }
 
 // Export data to code (.h), returns true on success
-bool ExportDataAsCode(const char *data, unsigned int size, const char *fileName)
+bool ExportDataAsCode(const unsigned char *data, unsigned int size, const char *fileName)
 {
     bool success = false;
 
