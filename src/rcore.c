@@ -1937,18 +1937,6 @@ void SetClipboardText(const char *text)
 #endif
 }
 
-// Enable waiting for events on EndDrawing(), no automatic event polling
-void EnableEventWaiting(void)
-{
-    CORE.Window.eventWaiting = true;
-}
-
-// Disable waiting for events on EndDrawing(), automatic events polling
-void DisableEventWaiting(void)
-{
-    CORE.Window.eventWaiting = false;
-}
-
 // Get clipboard text content
 // NOTE: returned string is allocated and freed by GLFW
 const char *GetClipboardText(void)
@@ -1960,6 +1948,18 @@ const char *GetClipboardText(void)
     return emscripten_run_script_string("navigator.clipboard.readText()");
 #endif
     return NULL;
+}
+
+// Enable waiting for events on EndDrawing(), no automatic event polling
+void EnableEventWaiting(void)
+{
+    CORE.Window.eventWaiting = true;
+}
+
+// Disable waiting for events on EndDrawing(), automatic events polling
+void DisableEventWaiting(void)
+{
+    CORE.Window.eventWaiting = false;
 }
 
 // Show mouse cursor
@@ -3288,6 +3288,9 @@ unsigned char *DecompressData(const unsigned char *compData, int compDataSize, i
     // Decompress data from a valid DEFLATE stream
     data = RL_CALLOC(MAX_DECOMPRESSION_SIZE*1024*1024, 1);
     int length = sinflate(data, MAX_DECOMPRESSION_SIZE*1024*1024, compData, compDataSize);
+
+    // WARNING: RL_REALLOC can make (and leave) data copies in memory, be careful with sensitive compressed data!
+    // TODO: Use a different approach, create another buffer, copy data manually to it and wipe original buffer memory
     unsigned char *temp = RL_REALLOC(data, length);
 
     if (temp != NULL) data = temp;
