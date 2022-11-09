@@ -64,6 +64,10 @@ pub fn addRaylib(b: *std.build.Builder, target: std.zig.CrossTarget) *std.build.
                 raylib_flags ++ raylib_flags_extra_macos,
             );
             raylib.linkFramework("Foundation");
+            raylib.linkFramework("CoreServices");
+            raylib.linkFramework("CoreGraphics");
+            raylib.linkFramework("AppKit");
+            raylib.linkFramework("IOKit");
         },
         else => {
             @panic("Unsupported OS");
