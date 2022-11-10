@@ -2117,13 +2117,14 @@ void UpdateModelAnimation(Model model, ModelAnimation anim, int frame)
         for (int m = 0; m < model.meshCount; m++)
         {
             Mesh mesh = model.meshes[m];
+            
             if (mesh.boneIds == NULL || mesh.boneWeights == NULL)
             {
-                TRACELOG(LOG_WARNING, "MODEL: UpdateModelAnimation Mesh %i has no connection to bones",m);
+                TRACELOG(LOG_WARNING, "MODEL: UpdateModelAnimation(): Mesh %i has no connection to bones", m);
                 continue;
             }
 
-            bool updated = false; // set to true when anim vertex information is updated
+            bool updated = false;           // Flag to check when anim vertex information is updated
             Vector3 animVertex = { 0 };
             Vector3 animNormal = { 0 };
 
@@ -2140,13 +2141,13 @@ void UpdateModelAnimation(Model model, ModelAnimation anim, int frame)
             float boneWeight = 0.0;
 
             const int vValues = mesh.vertexCount*3;
-            for (int vCounter = 0; vCounter < vValues; vCounter+=3)
+            for (int vCounter = 0; vCounter < vValues; vCounter += 3)
             {
                 mesh.animVertices[vCounter] = 0;
                 mesh.animVertices[vCounter + 1] = 0;
                 mesh.animVertices[vCounter + 2] = 0;
 
-                if (mesh.animNormals!=NULL)
+                if (mesh.animNormals != NULL)
                 {
                     mesh.animNormals[vCounter] = 0;
                     mesh.animNormals[vCounter + 1] = 0;
@@ -2157,16 +2158,15 @@ void UpdateModelAnimation(Model model, ModelAnimation anim, int frame)
                 for (int j = 0; j < 4; j++, boneCounter++)
                 {
                     boneWeight = mesh.boneWeights[boneCounter];
-                    // early stop when no transformation will be applied
-                    if (boneWeight == 0.0f)
-                    {
-                        continue;
-                    }
+                    
+                    // Early stop when no transformation will be applied
+                    if (boneWeight == 0.0f) continue;
+
                     boneId = mesh.boneIds[boneCounter];
                     //int boneIdParent = model.bones[boneId].parent;
                     inTranslation = model.bindPose[boneId].translation;
                     inRotation = model.bindPose[boneId].rotation;
-                    // inScale = model.bindPose[boneId].scale;
+                    //inScale = model.bindPose[boneId].scale;
                     outTranslation = anim.framePoses[frame][boneId].translation;
                     outRotation = anim.framePoses[frame][boneId].rotation;
                     outScale = anim.framePoses[frame][boneId].scale;
@@ -2178,7 +2178,7 @@ void UpdateModelAnimation(Model model, ModelAnimation anim, int frame)
                     animVertex = Vector3Subtract(animVertex, inTranslation);
                     animVertex = Vector3RotateByQuaternion(animVertex, QuaternionMultiply(outRotation, QuaternionInvert(inRotation)));
                     animVertex = Vector3Add(animVertex, outTranslation);
-//                     animVertex = Vector3Transform(animVertex, model.transform);
+                    //animVertex = Vector3Transform(animVertex, model.transform);
                     mesh.animVertices[vCounter] += animVertex.x*boneWeight;
                     mesh.animVertices[vCounter + 1] += animVertex.y*boneWeight;
                     mesh.animVertices[vCounter + 2] += animVertex.z*boneWeight;
@@ -2198,10 +2198,11 @@ void UpdateModelAnimation(Model model, ModelAnimation anim, int frame)
             }
 
             // Upload new vertex data to GPU for model drawing
-            // Only update data when values changed.
-            if (updated){
-                rlUpdateVertexBuffer(mesh.vboId[0], mesh.animVertices, mesh.vertexCount*3*sizeof(float), 0);    // Update vertex position
-                rlUpdateVertexBuffer(mesh.vboId[2], mesh.animNormals, mesh.vertexCount*3*sizeof(float), 0);     // Update vertex normals
+            // NOTE: Only update data when values changed
+            if (updated)
+            {
+                rlUpdateVertexBuffer(mesh.vboId[0], mesh.animVertices, mesh.vertexCount*3*sizeof(float), 0); // Update vertex position
+                rlUpdateVertexBuffer(mesh.vboId[2], mesh.animNormals, mesh.vertexCount*3*sizeof(float), 0);  // Update vertex normals
             }
         }
     }

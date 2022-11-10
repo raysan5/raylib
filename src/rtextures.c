@@ -1297,6 +1297,7 @@ Image ImageTextEx(Font font, const char *text, float fontSize, float spacing, Co
         TRACELOG(LOG_INFO, "IMAGE: Text scaled by factor: %f", scaleFactor);
 
         // Using nearest-neighbor scaling algorithm for default font
+        // TODO: Allow defining the preferred scaling mechanism externally
         // WARNING: Module required: rtext
         if (font.texture.id == GetFontDefault().texture.id) ImageResizeNN(&imText, (int)(imSize.x*scaleFactor), (int)(imSize.y*scaleFactor));
         else ImageResize(&imText, (int)(imSize.x*scaleFactor), (int)(imSize.y*scaleFactor));
