@@ -118,6 +118,7 @@ static void WindowContentScaleCallback(GLFWwindow *window, float scalex, float s
 // Input callbacks events
 static void KeyCallback(GLFWwindow *window, int key, int scancode, int action, int mods);  // GLFW3 Keyboard Callback, runs on key pressed
 static void CharCallback(GLFWwindow *window, unsigned int codepoint);                      // GLFW3 Char Callback, runs on key pressed (get codepoint value)
+static void PreeditCallbackInner(GLFWwindow *window, int preeditLength, unsigned int *preeditString, int blockCount, int *blockSizes, int focusedBlock, int caret); // GLFW3 Preedit Callback
 static void MouseButtonCallback(GLFWwindow *window, int button, int action, int mods);     // GLFW3 Mouse Button Callback, runs on mouse button pressed
 static void MouseCursorPosCallback(GLFWwindow *window, double x, double y);                // GLFW3 Cursor Position Callback, runs on mouse move
 static void MouseScrollCallback(GLFWwindow *window, double xoffset, double yoffset);       // GLFW3 Scrolling Callback, runs on mouse wheel
@@ -1598,6 +1599,7 @@ int InitPlatform(void)
     // Set input callback events
     glfwSetKeyCallback(platform.handle, KeyCallback);
     glfwSetCharCallback(platform.handle, CharCallback);
+    glfwSetPreeditCallback(platform.handle, PreeditCallbackInner);
     glfwSetMouseButtonCallback(platform.handle, MouseButtonCallback);
     glfwSetCursorPosCallback(platform.handle, MouseCursorPosCallback);   // Track mouse position changes
     glfwSetScrollCallback(platform.handle, MouseScrollCallback);
@@ -1780,6 +1782,13 @@ static void CharCallback(GLFWwindow *window, unsigned int codepoint)
         CORE.Input.Keyboard.charPressedQueue[CORE.Input.Keyboard.charPressedQueueCount] = codepoint;
         CORE.Input.Keyboard.charPressedQueueCount++;
     }
+}
+
+// GLFW3 Preedit Callback
+static void PreeditCallbackInner(GLFWwindow *window, int preeditLength, unsigned int *preeditString, int blockCount, int *blockSizes, int focusedBlock, int caret)
+{
+    if (!CORE.Input.Keyboard.preeditCallback) return;
+    CORE.Input.Keyboard.preeditCallback(preeditLength, (int *)preeditString, blockCount, blockSizes, focusedBlock, caret);
 }
 
 // GLFW3 Mouse Button Callback, runs on mouse button pressed
