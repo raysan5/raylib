@@ -47,6 +47,8 @@ Some people ported raylib to other languages in form of bindings or wrappers to 
 | Raylib.4.0.Pascal  | **4.0** | [Free Pascal](https://en.wikipedia.org/wiki/Free_Pascal)| Zlib |  https://github.com/sysrpl/Raylib.4.0.Pascal |
 | pyraylib           | 3.7     | [Python](https://www.python.org/)    | Zlib    | https://github.com/Ho011/pyraylib         |
 | raylib-python-cffi | **4.2** | [Python](https://www.python.org/)    | EPL-2.0 | https://github.com/electronstudio/raylib-python-cffi |
+| raylibpyctbg     | **4.2** | [Python](https://www.python.org/)          | MIT | https://github.com/overdev/raylibpyctbg                |
+| raylib-py          | **4.2** | [Python](https://www.python.org/)          | MIT | https://github.com/overdev/raylib-py       |
 | raylib-python-ctypes | **4.2** | [Python](https://www.python.org/)    | MIT | https://github.com/sDos280/raylib-python-ctypes |
 | raylib-php         | 3.5     | [PHP](https://en.wikipedia.org/wiki/PHP) | Zlib | https://github.com/joseph-montanez/raylib-php   |
 | raylib-phpcpp      | 3.5     | [PHP](https://en.wikipedia.org/wiki/PHP) | Zlib | https://github.com/oraoto/raylib-phpcpp         |
@@ -103,8 +105,6 @@ These are older raylib bindings that are more than 2 versions old or have not be
 | raylib-ruby        | 2.6 | [Ruby](https://www.ruby-lang.org/en/) | https://github.com/a0/raylib-ruby        |
 | raylib-ruby-ffi    | 2.0 | [Ruby](https://www.ruby-lang.org/en/) | https://github.com/D3nX/raylib-ruby-ffi      |
 | raylib-mruby       | 2.5-dev | [mruby](https://github.com/mruby/mruby)  | https://github.com/lihaochen910/raylib-mruby    |
-| raylib-py-ctbg     | 2.6 | [Python](https://www.python.org/)          | https://github.com/overdev/raylib-py-ctbg                |
-| raylib-py          | 2.0 | [Python](https://www.python.org/)          | https://github.com/overdev/raylib-py       |
 | raylib-java        | 2.0 | [Java](https://en.wikipedia.org/wiki/Java_(programming_language))           | https://github.com/XoanaIO/raylib-java   |
 | clj-raylib         | 3.0 | [Clojure](https://clojure.org/)            | https://github.com/lsevero/clj-raylib       |
 | QuickJS-raylib     | 3.0 | [QuickJS](https://bellard.org/quickjs/)    | https://github.com/sntg-p/QuickJS-raylib    |
