@@ -498,6 +498,12 @@ typedef enum {
     RL_ATTACHMENT_RENDERBUFFER = 200,   // Framebuffer texture attachment type: renderbuffer
 } rlFramebufferAttachTextureType;
 
+// Face culling mode
+typedef enum {
+    RL_FRONT = 0,
+    RL_BACK
+} rlCullMode;
+
 //------------------------------------------------------------------------------------
 // Functions Declaration - Matrix operations
 //------------------------------------------------------------------------------------
@@ -578,6 +584,7 @@ RLAPI void rlEnableDepthMask(void);                     // Enable depth write
 RLAPI void rlDisableDepthMask(void);                    // Disable depth write
 RLAPI void rlEnableBackfaceCulling(void);               // Enable backface culling
 RLAPI void rlDisableBackfaceCulling(void);              // Disable backface culling
+RLAPI void rlCullFace(rlCullMode mode);                      // Set face culling mode
 RLAPI void rlEnableScissorTest(void);                   // Enable scissor test
 RLAPI void rlDisableScissorTest(void);                  // Disable scissor test
 RLAPI void rlScissor(int x, int y, int width, int height); // Scissor test
@@ -1670,6 +1677,18 @@ void rlEnableBackfaceCulling(void) { glEnable(GL_CULL_FACE); }
 
 // Disable backface culling
 void rlDisableBackfaceCulling(void) { glDisable(GL_CULL_FACE); }
+
+// Set face culling mode
+void rlCullFace(rlCullMode mode) {
+    switch (mode) {
+    case RL_BACK:
+        glCullFace(GL_BACK);
+        break;
+    case RL_FRONT:
+        glCullFace(GL_FRONT);
+        break;
+    }
+}
 
 // Enable scissor test
 void rlEnableScissorTest(void) { glEnable(GL_SCISSOR_TEST); }
