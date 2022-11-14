@@ -2816,6 +2816,13 @@ int GetRandomValue(int min, int max)
         max = min;
         min = tmp;
     }
+    
+    // WARNING: Ranges higher than RAND_MAX will return invalid results. More specifically, if (max - min) > INT_MAX there will
+    // be an overflow, and otherwise if (max - min) > RAND_MAX the random value will incorrectly never exceed a certain threshold.
+    if ((unsigned int)(max - min) > (unsigned int)RAND_MAX)
+    {
+        TRACELOG(LOG_WARNING, "Invalid GetRandomValue arguments. Range should not be higher than %i.", RAND_MAX);
+    }
 
     return (rand()%(abs(max - min) + 1) + min);
 }
