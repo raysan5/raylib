@@ -500,8 +500,8 @@ typedef enum {
 
 // Face culling mode
 typedef enum {
-    RL_FRONT = 0,
-    RL_BACK
+    RL_CULL_FACE_FRONT = 0,
+    RL_CULL_FACE_BACK
 } rlCullMode;
 
 //------------------------------------------------------------------------------------
@@ -584,7 +584,7 @@ RLAPI void rlEnableDepthMask(void);                     // Enable depth write
 RLAPI void rlDisableDepthMask(void);                    // Disable depth write
 RLAPI void rlEnableBackfaceCulling(void);               // Enable backface culling
 RLAPI void rlDisableBackfaceCulling(void);              // Disable backface culling
-RLAPI void rlCullFace(rlCullMode mode);                      // Set face culling mode
+RLAPI void rlSetCullFace(int mode);                     // Set face culling mode
 RLAPI void rlEnableScissorTest(void);                   // Enable scissor test
 RLAPI void rlDisableScissorTest(void);                  // Disable scissor test
 RLAPI void rlScissor(int x, int y, int width, int height); // Scissor test
@@ -1679,14 +1679,13 @@ void rlEnableBackfaceCulling(void) { glEnable(GL_CULL_FACE); }
 void rlDisableBackfaceCulling(void) { glDisable(GL_CULL_FACE); }
 
 // Set face culling mode
-void rlCullFace(rlCullMode mode) {
-    switch (mode) {
-    case RL_BACK:
-        glCullFace(GL_BACK);
-        break;
-    case RL_FRONT:
-        glCullFace(GL_FRONT);
-        break;
+void rlSetCullFace(int mode)
+{
+    switch (mode)
+    {
+        case RL_CULL_FACE_BACK: glCullFace(GL_BACK); break;
+        case RL_CULL_FACE_FRONT: glCullFace(GL_FRONT); break;
+        default: break;
     }
 }
 
