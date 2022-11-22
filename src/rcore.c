@@ -3188,14 +3188,12 @@ FilePathList LoadDirectoryFilesEx(const char *basePath, const char *filter, bool
 }
 
 // Unload directory filepaths
+// WARNING: files.count is not reseted to 0 after unloading
 void UnloadDirectoryFiles(FilePathList files)
 {
-    if (files.count > 0)
-    {
-        for (unsigned int i = 0; i < files.count; i++) RL_FREE(files.paths[i]);
+    for (unsigned int i = 0; i < files.capacity; i++) RL_FREE(files.paths[i]);
 
-        RL_FREE(files.paths);
-    }
+    RL_FREE(files.paths);
 }
 
 // Change working directory, returns true on success
