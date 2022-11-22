@@ -2,7 +2,7 @@
 *
 *   raylib [core] example - custom frame control
 *
-*   WARNING: This is an example for advance users willing to have full control over
+*   NOTE: WARNING: This is an example for advance users willing to have full control over
 *   the frame processes. By default, EndDrawing() calls the following processes:
 *       1. Draw remaining batch data: rlDrawRenderBatchActive()
 *       2. SwapScreenBuffer()
@@ -17,15 +17,20 @@
 *       - SetTargetFPS()
 *       - GetFPS()
 *
-*   This example has been created using raylib 3.8 (www.raylib.com)
-*   raylib is licensed under an unmodified zlib/libpng license (View raylib.h for details)
+*   Example originally created with raylib 4.0, last time updated with raylib 4.0
 *
-*   Copyright (c) 2021 Ramon Santamaria (@raysan5)
+*   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
+*   BSD-like license that allows static linking with closed source software
+*
+*   Copyright (c) 2021-2022 Ramon Santamaria (@raysan5)
 *
 ********************************************************************************************/
 
 #include "raylib.h"
 
+//------------------------------------------------------------------------------------
+// Program main entry point
+//------------------------------------------------------------------------------------
 int main(void)
 {
     // Initialization
@@ -105,7 +110,7 @@ int main(void)
             waitTime = (1.0f/(float)targetFPS) - updateDrawTime;
             if (waitTime > 0.0) 
             {
-                WaitTime((float)waitTime*1000.0f);
+                WaitTime((float)waitTime);
                 currentTime = GetTime();
                 deltaTime = (float)(currentTime - previousTime);
             }

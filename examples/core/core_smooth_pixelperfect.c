@@ -2,13 +2,15 @@
 *
 *   raylib [core] example - smooth pixel-perfect camera
 *
-*   This example has been created using raylib 3.7 (www.raylib.com)
-*   raylib is licensed under an unmodified zlib/libpng license (View raylib.h for details)
-*
+*   Example originally created with raylib 3.7, last time updated with raylib 4.0
+*   
 *   Example contributed by Giancamillo Alessandroni (@NotManyIdeasDev) and
 *   reviewed by Ramon Santamaria (@raysan5)
 *
-*   Copyright (c) 2021 Giancamillo Alessandroni (@NotManyIdeasDev) and Ramon Santamaria (@raysan5)
+*   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
+*   BSD-like license that allows static linking with closed source software
+*
+*   Copyright (c) 2021-2022 Giancamillo Alessandroni (@NotManyIdeasDev) and Ramon Santamaria (@raysan5)
 *
 ********************************************************************************************/
 
@@ -16,6 +18,9 @@
 
 #include <math.h>       // Required for: sinf(), cosf()
 
+//------------------------------------------------------------------------------------
+// Program main entry point
+//------------------------------------------------------------------------------------
 int main(void)
 {
     // Initialization

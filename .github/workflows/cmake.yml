@@ -23,6 +23,9 @@ env:
   # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)
   BUILD_TYPE: Release
 
+permissions:
+  contents: read
+
 jobs:
   build_windows:
     name: Windows Build
@@ -33,7 +36,7 @@ jobs:
     runs-on: windows-latest
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
       - name: Create Build Environment
         # Some projects don't allow in-source building, so create a separate build directory

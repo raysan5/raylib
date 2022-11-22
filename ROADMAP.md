@@ -1,19 +1,20 @@
 # raylib roadmap
 
-Here it is a wish-list with features and ideas to improve the library. Note that features listed here are usually long term improvements or just describe a route to follow for the library. There are also some additional places to look for raylib improvements of ideas:
+Here it is a wishlist with features and ideas to improve the library. Note that features listed here are usually long term improvements or just describe a route to follow for the library. There are also some additional places to look for raylib improvements and ideas:
 
  - [GitHub Issues](https://github.com/raysan5/raylib/issues) has several open issues for possible improvements or bugs to fix.
  - [raylib source code](https://github.com/raysan5/raylib/tree/master/src) has multiple *TODO* comments around code with pending things to review or improve. 
- - [raylib wishlist](https://github.com/raysan5/raylib/discussions/1502) is open to everyone to ask for improvements, feel free to check and comment.
+ - raylib wishlists discussions (https://github.com/raysan5/raylib/discussions/1502, https://github.com/raysan5/raylib/discussions/2272) are open to everyone to ask for improvements, feel free to check and comment.
 
-_Current version of raylib is complete and functional but, as always, there is lot of room for improvement._
+_Current version of raylib is complete and functional but there is always room for improvements._
 
 **raylib 4.x**
- - [ ] Redesign camera module (more flexible) ([#1143](https://github.com/raysan5/raylib/issues/1143))
+ - [ ] Redesign camera module (more flexible) ([#1143](https://github.com/raysan5/raylib/issues/1143), https://github.com/raysan5/raylib/discussions/2507)
  - [ ] Redesign gestures system, improve touch inputs management
- - [ ] Better documentation and improved examples
- - [ ] Focus on HTML5 and embedded platforms
- - [ ] Additional support libraries: [raygui](https://github.com/raysan5/raygui), [rres](https://github.com/raysan5/rres)...
+ - [ ] Redesign raudio module, implement miniaudio high-level provided features
+ - [x] Better documentation and improved examples
+ - [x] Focus on HTML5 ([raylib 5k gamejam](https://itch.io/jam/raylib-5k-gamejam)) and embedded platforms (RPI and similar SOCs)
+ - [x] Additional support libraries: [raygui](https://github.com/raysan5/raygui), [rres](https://github.com/raysan5/rres)
 
 **raylib 4.0**
  - [x] Improved consistency and coherency in raylib API

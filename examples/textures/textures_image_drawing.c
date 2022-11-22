@@ -4,15 +4,20 @@
 *
 *   NOTE: Images are loaded in CPU memory (RAM); textures are loaded in GPU memory (VRAM)
 *
-*   This example has been created using raylib 1.4 (www.raylib.com)
-*   raylib is licensed under an unmodified zlib/libpng license (View raylib.h for details)
+*   Example originally created with raylib 1.4, last time updated with raylib 1.4
 *
-*   Copyright (c) 2016 Ramon Santamaria (@raysan5)
+*   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
+*   BSD-like license that allows static linking with closed source software
+*
+*   Copyright (c) 2016-2022 Ramon Santamaria (@raysan5)
 *
 ********************************************************************************************/
 
 #include "raylib.h"
 
+//------------------------------------------------------------------------------------
+// Program main entry point
+//------------------------------------------------------------------------------------
 int main(void)
 {
     // Initialization
@@ -37,7 +42,7 @@ int main(void)
 
     // Draw on the image with a few image draw methods
     ImageDrawPixel(&parrots, 10, 10, RAYWHITE);
-    ImageDrawCircle(&parrots, 10, 10, 5, RAYWHITE);
+    ImageDrawCircleLines(&parrots, 10, 10, 5, RAYWHITE);
     ImageDrawRectangle(&parrots, 5, 20, 10, 10, RAYWHITE);
 
     UnloadImage(cat);       // Unload image from RAM

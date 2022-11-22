@@ -2,10 +2,12 @@
 *
 *   raylib example - particles blending
 *
-*   This example has been created using raylib 1.7 (www.raylib.com)
-*   raylib is licensed under an unmodified zlib/libpng license (View raylib.h for details)
+*   Example originally created with raylib 1.7, last time updated with raylib 3.5
 *
-*   Copyright (c) 2017 Ramon Santamaria (@raysan5)
+*   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
+*   BSD-like license that allows static linking with closed source software
+*
+*   Copyright (c) 2017-2022 Ramon Santamaria (@raysan5)
 *
 ********************************************************************************************/
 
@@ -23,6 +25,9 @@ typedef struct {
     bool active;        // NOTE: Use it to activate/deactive particle
 } Particle;
 
+//------------------------------------------------------------------------------------
+// Program main entry point
+//------------------------------------------------------------------------------------
 int main(void)
 {
     // Initialization

@@ -7,13 +7,14 @@
 *
 *   NOTE: Shaders used in this example are #version 330 (OpenGL 3.3).
 *
-*   This example has been created using raylib 3.8 (www.raylib.com)
-*   raylib is licensed under an unmodified zlib/libpng license (View raylib.h for details)
+*   Example originally created with raylib 3.0, last time updated with raylib 4.2
 *
-*   Example contributed by Chris Camacho (@codifies, http://bedroomcoders.co.uk/) and 
-*   reviewed by Ramon Santamaria (@raysan5)
+*   Example contributed by Chris Camacho (@codifies) and reviewed by Ramon Santamaria (@raysan5)
 *
-*   Copyright (c) 2019-2021 Chris Camacho (@codifies) and Ramon Santamaria (@raysan5)
+*   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
+*   BSD-like license that allows static linking with closed source software
+*
+*   Copyright (c) 2019-2022 Chris Camacho (@codifies) and Ramon Santamaria (@raysan5)
 *
 ********************************************************************************************/
 
@@ -30,6 +31,9 @@
     #define GLSL_VERSION            100
 #endif
 
+//------------------------------------------------------------------------------------
+// Program main entry point
+//------------------------------------------------------------------------------------
 int main(void)
 {
     // Initialization
@@ -52,10 +56,10 @@ int main(void)
     Model model = LoadModelFromMesh(GenMeshPlane(10.0f, 10.0f, 3, 3));
     Model cube = LoadModelFromMesh(GenMeshCube(2.0f, 4.0f, 2.0f));
     
-    Shader shader = LoadShader(TextFormat("resources/shaders/glsl%i/base_lighting.vs", GLSL_VERSION),
+    // Load basic lighting shader
+    Shader shader = LoadShader(TextFormat("resources/shaders/glsl%i/lighting.vs", GLSL_VERSION),
                                TextFormat("resources/shaders/glsl%i/lighting.fs", GLSL_VERSION));
-
-    // Get some required shader loactions
+    // Get some required shader locations
     shader.locs[SHADER_LOC_VECTOR_VIEW] = GetShaderLocation(shader, "viewPos");
     // NOTE: "matModel" location name is automatically assigned on shader loading, 
     // no need to get the location again if using that uniform name
@@ -69,7 +73,7 @@ int main(void)
     model.materials[0].shader = shader;
     cube.materials[0].shader = shader;
 
-    // Using 4 point lights: gold, red, green and blue
+    // Create lights
     Light lights[MAX_LIGHTS] = { 0 };
     lights[0] = CreateLight(LIGHT_POINT, (Vector3){ -2, 1, -2 }, Vector3Zero(), YELLOW, shader);
     lights[1] = CreateLight(LIGHT_POINT, (Vector3){ 2, 1, 2 }, Vector3Zero(), RED, shader);
@@ -86,7 +90,11 @@ int main(void)
     {
         // Update
         //----------------------------------------------------------------------------------
-        UpdateCamera(&camera);              // Update camera
+        UpdateCamera(&camera);
+
+        // Update the shader with the camera view vector (points towards { 0.0f, 0.0f, 0.0f })
+        float cameraPos[3] = { camera.position.x, camera.position.y, camera.position.z };
+        SetShaderValue(shader, shader.locs[SHADER_LOC_VECTOR_VIEW], cameraPos, SHADER_UNIFORM_VEC3);
         
         // Check key inputs to enable/disable lights
         if (IsKeyPressed(KEY_Y)) { lights[0].enabled = !lights[0].enabled; }
@@ -95,14 +103,7 @@ int main(void)
         if (IsKeyPressed(KEY_B)) { lights[3].enabled = !lights[3].enabled; }
         
         // Update light values (actually, only enable/disable them)
-        UpdateLightValues(shader, lights[0]);
-        UpdateLightValues(shader, lights[1]);
-        UpdateLightValues(shader, lights[2]);
-        UpdateLightValues(shader, lights[3]);
-
-        // Update the shader with the camera view vector (points towards { 0.0f, 0.0f, 0.0f })
-        float cameraPos[3] = { camera.position.x, camera.position.y, camera.position.z };
-        SetShaderValue(shader, shader.locs[SHADER_LOC_VECTOR_VIEW], cameraPos, SHADER_UNIFORM_VEC3);
+        for (int i = 0; i < MAX_LIGHTS; i++) UpdateLightValues(shader, lights[i]);
         //----------------------------------------------------------------------------------
 
         // Draw
@@ -116,15 +117,12 @@ int main(void)
                 DrawModel(model, Vector3Zero(), 1.0f, WHITE);
                 DrawModel(cube, Vector3Zero(), 1.0f, WHITE);
 
-                // Draw markers to show where the lights are
-                if (lights[0].enabled) DrawSphereEx(lights[0].position, 0.2f, 8, 8, YELLOW);
-                else DrawSphereWires(lights[0].position, 0.2f, 8, 8, ColorAlpha(YELLOW, 0.3f));
-                if (lights[1].enabled) DrawSphereEx(lights[1].position, 0.2f, 8, 8, RED);
-                else DrawSphereWires(lights[1].position, 0.2f, 8, 8, ColorAlpha(RED, 0.3f));
-                if (lights[2].enabled) DrawSphereEx(lights[2].position, 0.2f, 8, 8, GREEN);
-                else DrawSphereWires(lights[2].position, 0.2f, 8, 8, ColorAlpha(GREEN, 0.3f));
-                if (lights[3].enabled) DrawSphereEx(lights[3].position, 0.2f, 8, 8, BLUE);
-                else DrawSphereWires(lights[3].position, 0.2f, 8, 8, ColorAlpha(BLUE, 0.3f));
+                // Draw spheres to show where the lights are
+                for (int i = 0; i < MAX_LIGHTS; i++)
+                {
+                    if (lights[i].enabled) DrawSphereEx(lights[i].position, 0.2f, 8, 8, lights[i].color);
+                    else DrawSphereWires(lights[i].position, 0.2f, 8, 8, ColorAlpha(lights[i].color, 0.3f));
+                }
 
                 DrawGrid(10, 1.0f);
 

@@ -3,7 +3,6 @@ name: Android
 on:
   workflow_dispatch:
   push:
-    workflow_dispatch:
     paths:
       - 'src/**'
       - 'examples/**'
@@ -16,8 +15,13 @@ on:
   release:
     types: [published]
 
+permissions:
+  contents: read
+
 jobs:
   build:
+    permissions:
+      contents: write  # for actions/upload-release-asset to upload release asset
     runs-on: windows-latest
     strategy:
       fail-fast: false
@@ -37,6 +41,15 @@ jobs:
         echo "RELEASE_NAME=raylib-${{ github.event.release.tag_name }}_android_api29_${{ matrix.ARCH }}" >> $GITHUB_ENV
       shell: bash
       if: github.event_name == 'release' && github.event.action == 'published'
+      
+    - name: Setup Android NDK
+      id: setup-ndk
+      uses: nttld/setup-ndk@v1
+      with:
+        ndk-version: r25
+        add-to-path: false
+      env:
+        ANDROID_NDK_HOME: ${{ steps.setup-ndk.outputs.ndk-path }}
 
     - name: Setup Environment
       run: | 
@@ -52,8 +65,8 @@ jobs:
     - name: Build Library
       run: |
         cd src
-        make PLATFORM=PLATFORM_ANDROID ANDROID_ARCH=${{ matrix.ARCH }} ANDROID_API_VERSION=29 ANDROID_NDK="C:\PROGRA~2\Android\android-sdk\ndk-bundle" RAYLIB_LIBTYPE=STATIC RAYLIB_RELEASE_PATH="../build/${{ env.RELEASE_NAME }}/lib"
-        make PLATFORM=PLATFORM_ANDROID ANDROID_ARCH=${{ matrix.ARCH }} ANDROID_API_VERSION=29 ANDROID_NDK="C:\PROGRA~2\Android\android-sdk\ndk-bundle" RAYLIB_LIBTYPE=SHARED RAYLIB_RELEASE_PATH="../build/${{ env.RELEASE_NAME }}/lib" -B
+        make PLATFORM=PLATFORM_ANDROID ANDROID_ARCH=${{ matrix.ARCH }} ANDROID_API_VERSION=29 ANDROID_NDK=${{ env.ANDROID_NDK_HOME }} RAYLIB_LIBTYPE=STATIC RAYLIB_RELEASE_PATH="../build/${{ env.RELEASE_NAME }}/lib"
+        make PLATFORM=PLATFORM_ANDROID ANDROID_ARCH=${{ matrix.ARCH }} ANDROID_API_VERSION=29 ANDROID_NDK=${{ env.ANDROID_NDK_HOME }} RAYLIB_LIBTYPE=SHARED RAYLIB_RELEASE_PATH="../build/${{ env.RELEASE_NAME }}/lib" -B
         cd ..
       shell: cmd
   
@@ -62,7 +75,7 @@ jobs:
         cp -v ./src/raylib.h ./build/${{ env.RELEASE_NAME }}/include
         cp -v ./src/raymath.h ./build/${{ env.RELEASE_NAME }}/include
         cp -v ./src/rlgl.h ./build/${{ env.RELEASE_NAME }}/include
-        cp -v ./src/extras/raygui.h ./build/${{ env.RELEASE_NAME }}/include
+        cp -v ./CHANGELOG ./build/${{ env.RELEASE_NAME }}/CHANGELOG
         cp -v ./README.md ./build/${{ env.RELEASE_NAME }}/README.md
         cp -v ./LICENSE ./build/${{ env.RELEASE_NAME }}/LICENSE
         cd build

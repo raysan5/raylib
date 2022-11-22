@@ -2,7 +2,7 @@
 *
 *   raylib [models] example - Models loading
 *
-*   raylib supports multiple models file formats:
+*   NOTE: raylib supports multiple models file formats:
 *
 *     - OBJ  > Text file format. Must include vertex position-texcoords-normals information,
 *              if files references some .mtl materials file, it will be loaded (or try to).
@@ -12,16 +12,23 @@
 *              raylib can load .iqm animations.
 *     - VOX  > Binary file format. MagikaVoxel mesh format:
 *              https://github.com/ephtracy/voxel-model/blob/master/MagicaVoxel-file-format-vox.txt
+*     - M3D  > Binary file format. Model 3D format:
+*              https://bztsrc.gitlab.io/model3d
 *
-*   This example has been created using raylib 4.0 (www.raylib.com)
-*   raylib is licensed under an unmodified zlib/libpng license (View raylib.h for details)
+*   Example originally created with raylib 2.0, last time updated with raylib 4.2
 *
-*   Copyright (c) 2014-2021 Ramon Santamaria (@raysan5)
+*   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
+*   BSD-like license that allows static linking with closed source software
+*
+*   Copyright (c) 2014-2022 Ramon Santamaria (@raysan5)
 *
 ********************************************************************************************/
 
 #include "raylib.h"
 
+//------------------------------------------------------------------------------------
+// Program main entry point
+//------------------------------------------------------------------------------------
 int main(void)
 {
     // Initialization
@@ -67,35 +74,35 @@ int main(void)
         // Load new models/textures on drag&drop
         if (IsFileDropped())
         {
-            int count = 0;
-            char **droppedFiles = GetDroppedFiles(&count);
+            FilePathList droppedFiles = LoadDroppedFiles();
 
-            if (count == 1) // Only support one file dropped
+            if (droppedFiles.count == 1) // Only support one file dropped
             {
-                if (IsFileExtension(droppedFiles[0], ".obj") ||
-                    IsFileExtension(droppedFiles[0], ".gltf") ||
-                    IsFileExtension(droppedFiles[0], ".glb") ||
-                    IsFileExtension(droppedFiles[0], ".vox") ||
-                    IsFileExtension(droppedFiles[0], ".iqm"))       // Model file formats supported
+                if (IsFileExtension(droppedFiles.paths[0], ".obj") ||
+                    IsFileExtension(droppedFiles.paths[0], ".gltf") ||
+                    IsFileExtension(droppedFiles.paths[0], ".glb") ||
+                    IsFileExtension(droppedFiles.paths[0], ".vox") ||
+                    IsFileExtension(droppedFiles.paths[0], ".iqm") ||
+                    IsFileExtension(droppedFiles.paths[0], ".m3d"))       // Model file formats supported
                 {
-                    UnloadModel(model);                     // Unload previous model
-                    model = LoadModel(droppedFiles[0]);     // Load new model
+                    UnloadModel(model);                         // Unload previous model
+                    model = LoadModel(droppedFiles.paths[0]);   // Load new model
                     model.materials[0].maps[MATERIAL_MAP_DIFFUSE].texture = texture; // Set current map diffuse texture
 
                     bounds = GetMeshBoundingBox(model.meshes[0]);
 
                     // TODO: Move camera position from target enough distance to visualize model properly
                 }
-                else if (IsFileExtension(droppedFiles[0], ".png"))  // Texture file formats supported
+                else if (IsFileExtension(droppedFiles.paths[0], ".png"))  // Texture file formats supported
                 {
                     // Unload current model texture and load new one
                     UnloadTexture(texture);
-                    texture = LoadTexture(droppedFiles[0]);
+                    texture = LoadTexture(droppedFiles.paths[0]);
                     model.materials[0].maps[MATERIAL_MAP_DIFFUSE].texture = texture;
                 }
             }
 
-            ClearDroppedFiles();    // Clear internal buffers
+            UnloadDroppedFiles(droppedFiles);    // Unload filepaths from memory
         }
 
         // Select model on mouse click

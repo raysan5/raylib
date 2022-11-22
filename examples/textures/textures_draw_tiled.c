@@ -2,12 +2,17 @@
 *
 *   raylib [textures] example - Draw part of the texture tiled
 *
-*   This example has been created using raylib 3.0 (www.raylib.com)
-*   raylib is licensed under an unmodified zlib/libpng license (View raylib.h for details)
+*   Example originally created with raylib 3.0, last time updated with raylib 4.2
 *
-*   Copyright (c) 2020 Vlad Adrian (@demizdor) and Ramon Santamaria (@raysan5)
+*   Example contributed by Vlad Adrian (@demizdor) and reviewed by Ramon Santamaria (@raysan5)
+*
+*   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
+*   BSD-like license that allows static linking with closed source software
+*
+*   Copyright (c) 2020-2022 Vlad Adrian (@demizdor) and Ramon Santamaria (@raysan5)
 *
 ********************************************************************************************/
+
 #include "raylib.h"
 
 #define SIZEOF(A) (sizeof(A)/sizeof(A[0]))
@@ -15,12 +20,18 @@
 #define MARGIN_SIZE       8       // Size for the margins
 #define COLOR_SIZE       16       // Size of the color select buttons
 
-int main(int argc, char **argv)
+// Draw part of a texture (defined by a rectangle) with rotation and scale tiled into dest.
+void DrawTextureTiled(Texture2D texture, Rectangle source, Rectangle dest, Vector2 origin, float rotation, float scale, Color tint);
+
+//------------------------------------------------------------------------------------
+// Program main entry point
+//------------------------------------------------------------------------------------
+int main(void)
 {
     // Initialization
     //--------------------------------------------------------------------------------------
-    int screenWidth = 800;
-    int screenHeight = 450;
+    const int screenWidth = 800;
+    const int screenHeight = 450;
 
     SetConfigFlags(FLAG_WINDOW_RESIZABLE); // Make the window resizable
     InitWindow(screenWidth, screenHeight, "raylib [textures] example - Draw part of a texture tiled");
@@ -71,9 +82,6 @@ int main(int argc, char **argv)
     {
         // Update
         //----------------------------------------------------------------------------------
-        screenWidth = GetScreenWidth();
-        screenHeight = GetScreenHeight();
-
         // Handle mouse
         if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT))
         {
@@ -122,11 +130,11 @@ int main(int argc, char **argv)
             ClearBackground(RAYWHITE);
 
             // Draw the tiled area
-            DrawTextureTiled(texPattern, recPattern[activePattern], (Rectangle){(float)OPT_WIDTH+MARGIN_SIZE, (float)MARGIN_SIZE, screenWidth - OPT_WIDTH - 2.0f*MARGIN_SIZE, screenHeight - 2.0f*MARGIN_SIZE},
+            DrawTextureTiled(texPattern, recPattern[activePattern], (Rectangle){(float)OPT_WIDTH+MARGIN_SIZE, (float)MARGIN_SIZE, GetScreenWidth() - OPT_WIDTH - 2.0f*MARGIN_SIZE, GetScreenHeight() - 2.0f*MARGIN_SIZE},
                 (Vector2){0.0f, 0.0f}, rotation, scale, colors[activeCol]);
 
             // Draw options
-            DrawRectangle(MARGIN_SIZE, MARGIN_SIZE, OPT_WIDTH - MARGIN_SIZE, screenHeight - 2*MARGIN_SIZE, ColorAlpha(LIGHTGRAY, 0.5f));
+            DrawRectangle(MARGIN_SIZE, MARGIN_SIZE, OPT_WIDTH - MARGIN_SIZE, GetScreenHeight() - 2*MARGIN_SIZE, ColorAlpha(LIGHTGRAY, 0.5f));
 
             DrawText("Select Pattern", 2 + MARGIN_SIZE, 30 + MARGIN_SIZE, 10, BLACK);
             DrawTexture(texPattern, 2 + MARGIN_SIZE, 40 + MARGIN_SIZE, BLACK);
@@ -163,3 +171,86 @@ int main(int argc, char **argv)
     return 0;
 }
 
+// Draw part of a texture (defined by a rectangle) with rotation and scale tiled into dest.
+void DrawTextureTiled(Texture2D texture, Rectangle source, Rectangle dest, Vector2 origin, float rotation, float scale, Color tint)
+{
+    if ((texture.id <= 0) || (scale <= 0.0f)) return;  // Wanna see a infinite loop?!...just delete this line!
+    if ((source.width == 0) || (source.height == 0)) return;
+
+    int tileWidth = (int)(source.width*scale), tileHeight = (int)(source.height*scale);
+    if ((dest.width < tileWidth) && (dest.height < tileHeight))
+    {
+        // Can fit only one tile
+        DrawTexturePro(texture, (Rectangle){source.x, source.y, ((float)dest.width/tileWidth)*source.width, ((float)dest.height/tileHeight)*source.height},
+                    (Rectangle){dest.x, dest.y, dest.width, dest.height}, origin, rotation, tint);
+    }
+    else if (dest.width <= tileWidth)
+    {
+        // Tiled vertically (one column)
+        int dy = 0;
+        for (;dy+tileHeight < dest.height; dy += tileHeight)
+        {
+            DrawTexturePro(texture, (Rectangle){source.x, source.y, ((float)dest.width/tileWidth)*source.width, source.height}, (Rectangle){dest.x, dest.y + dy, dest.width, (float)tileHeight}, origin, rotation, tint);
+        }
+
+        // Fit last tile
+        if (dy < dest.height)
+        {
+            DrawTexturePro(texture, (Rectangle){source.x, source.y, ((float)dest.width/tileWidth)*source.width, ((float)(dest.height - dy)/tileHeight)*source.height},
+                        (Rectangle){dest.x, dest.y + dy, dest.width, dest.height - dy}, origin, rotation, tint);
+        }
+    }
+    else if (dest.height <= tileHeight)
+    {
+        // Tiled horizontally (one row)
+        int dx = 0;
+        for (;dx+tileWidth < dest.width; dx += tileWidth)
+        {
+            DrawTexturePro(texture, (Rectangle){source.x, source.y, source.width, ((float)dest.height/tileHeight)*source.height}, (Rectangle){dest.x + dx, dest.y, (float)tileWidth, dest.height}, origin, rotation, tint);
+        }
+
+        // Fit last tile
+        if (dx < dest.width)
+        {
+            DrawTexturePro(texture, (Rectangle){source.x, source.y, ((float)(dest.width - dx)/tileWidth)*source.width, ((float)dest.height/tileHeight)*source.height},
+                        (Rectangle){dest.x + dx, dest.y, dest.width - dx, dest.height}, origin, rotation, tint);
+        }
+    }
+    else
+    {
+        // Tiled both horizontally and vertically (rows and columns)
+        int dx = 0;
+        for (;dx+tileWidth < dest.width; dx += tileWidth)
+        {
+            int dy = 0;
+            for (;dy+tileHeight < dest.height; dy += tileHeight)
+            {
+                DrawTexturePro(texture, source, (Rectangle){dest.x + dx, dest.y + dy, (float)tileWidth, (float)tileHeight}, origin, rotation, tint);
+            }
+
+            if (dy < dest.height)
+            {
+                DrawTexturePro(texture, (Rectangle){source.x, source.y, source.width, ((float)(dest.height - dy)/tileHeight)*source.height},
+                    (Rectangle){dest.x + dx, dest.y + dy, (float)tileWidth, dest.height - dy}, origin, rotation, tint);
+            }
+        }
+
+        // Fit last column of tiles
+        if (dx < dest.width)
+        {
+            int dy = 0;
+            for (;dy+tileHeight < dest.height; dy += tileHeight)
+            {
+                DrawTexturePro(texture, (Rectangle){source.x, source.y, ((float)(dest.width - dx)/tileWidth)*source.width, source.height},
+                        (Rectangle){dest.x + dx, dest.y + dy, dest.width - dx, (float)tileHeight}, origin, rotation, tint);
+            }
+
+            // Draw final tile in the bottom right corner
+            if (dy < dest.height)
+            {
+                DrawTexturePro(texture, (Rectangle){source.x, source.y, ((float)(dest.width - dx)/tileWidth)*source.width, ((float)(dest.height - dy)/tileHeight)*source.height},
+                    (Rectangle){dest.x + dx, dest.y + dy, dest.width - dx, dest.height - dy}, origin, rotation, tint);
+            }
+        }
+    }
+}

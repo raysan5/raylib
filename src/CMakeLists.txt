@@ -1,7 +1,7 @@
 # Setup the project and settings
 project(raylib C)
-set(PROJECT_VERSION 4.0.0)
-set(API_VERSION 400)
+set(PROJECT_VERSION 4.2.0)
+set(API_VERSION 420)
 
 include(GNUInstallDirs)
 include(JoinPaths)
@@ -25,7 +25,6 @@ set(raylib_public_headers
     raylib.h
     rlgl.h
     raymath.h
-    raudio.h
     )
 
 # Sources to be compiled

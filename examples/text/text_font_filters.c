@@ -2,19 +2,24 @@
 *
 *   raylib [text] example - Font filters
 *
-*   After font loading, font texture atlas filter could be configured for a softer
+*   NOTE: After font loading, font texture atlas filter could be configured for a softer
 *   display of the font when scaling it to different sizes, that way, it's not required
 *   to generate multiple fonts at multiple sizes (as long as the scaling is not very different)
 *
-*   This example has been created using raylib 1.3.0 (www.raylib.com)
-*   raylib is licensed under an unmodified zlib/libpng license (View raylib.h for details)
+*   Example originally created with raylib 1.3, last time updated with raylib 4.2
 *
-*   Copyright (c) 2015 Ramon Santamaria (@raysan5)
+*   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
+*   BSD-like license that allows static linking with closed source software
+*
+*   Copyright (c) 2015-2022 Ramon Santamaria (@raysan5)
 *
 ********************************************************************************************/
 
 #include "raylib.h"
 
+//------------------------------------------------------------------------------------
+// Program main entry point
+//------------------------------------------------------------------------------------
 int main(void)
 {
     // Initialization
@@ -79,16 +84,16 @@ int main(void)
         // Load a dropped TTF file dynamically (at current fontSize)
         if (IsFileDropped())
         {
-            int count = 0;
-            char **droppedFiles = GetDroppedFiles(&count);
+            FilePathList droppedFiles = LoadDroppedFiles();
 
             // NOTE: We only support first ttf file dropped
-            if (IsFileExtension(droppedFiles[0], ".ttf"))
+            if (IsFileExtension(droppedFiles.paths[0], ".ttf"))
             {
                 UnloadFont(font);
-                font = LoadFontEx(droppedFiles[0], (int)fontSize, 0, 0);
-                ClearDroppedFiles();
+                font = LoadFontEx(droppedFiles.paths[0], (int)fontSize, 0, 0);
             }
+            
+            UnloadDroppedFiles(droppedFiles);    // Unload filepaths from memory
         }
         //----------------------------------------------------------------------------------
 
@@ -123,8 +128,6 @@ int main(void)
 
     // De-Initialization
     //--------------------------------------------------------------------------------------
-    ClearDroppedFiles();        // Clear internal buffers
-
     UnloadFont(font);           // Font unloading
 
     CloseWindow();              // Close window and OpenGL context

@@ -2,10 +2,12 @@
 *
 *   raylib [models] example - Skybox loading and drawing
 *
-*   This example has been created using raylib 3.5 (www.raylib.com)
-*   raylib is licensed under an unmodified zlib/libpng license (View raylib.h for details)
+*   Example originally created with raylib 1.8, last time updated with raylib 4.0
 *
-*   Copyright (c) 2017-2020 Ramon Santamaria (@raysan5)
+*   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
+*   BSD-like license that allows static linking with closed source software
+*
+*   Copyright (c) 2017-2022 Ramon Santamaria (@raysan5)
 *
 ********************************************************************************************/
 
@@ -23,6 +25,9 @@
 // Generate cubemap (6 faces) from equirectangular (panorama) texture
 static TextureCubemap GenTextureCubemap(Shader shader, Texture2D panorama, int size, int format);
 
+//------------------------------------------------------------------------------------
+// Program main entry point
+//------------------------------------------------------------------------------------
 int main(void)
 {
     // Initialization
@@ -92,23 +97,22 @@ int main(void)
     {
         // Update
         //----------------------------------------------------------------------------------
-        UpdateCamera(&camera);              // Update camera
+        UpdateCamera(&camera);
 
         // Load new cubemap texture on drag&drop
         if (IsFileDropped())
         {
-            int count = 0;
-            char **droppedFiles = GetDroppedFiles(&count);
+            FilePathList droppedFiles = LoadDroppedFiles();
 
-            if (count == 1)         // Only support one file dropped
+            if (droppedFiles.count == 1)         // Only support one file dropped
             {
-                if (IsFileExtension(droppedFiles[0], ".png;.jpg;.hdr;.bmp;.tga"))
+                if (IsFileExtension(droppedFiles.paths[0], ".png;.jpg;.hdr;.bmp;.tga"))
                 {
                     // Unload current cubemap texture and load new one
                     UnloadTexture(skybox.materials[0].maps[MATERIAL_MAP_CUBEMAP].texture);
                     if (useHDR)
                     {
-                        Texture2D panorama = LoadTexture(droppedFiles[0]);
+                        Texture2D panorama = LoadTexture(droppedFiles.paths[0]);
 
                         // Generate cubemap from panorama texture
                         skybox.materials[0].maps[MATERIAL_MAP_CUBEMAP].texture = GenTextureCubemap(shdrCubemap, panorama, 1024, PIXELFORMAT_UNCOMPRESSED_R8G8B8A8);
@@ -116,16 +120,16 @@ int main(void)
                     }
                     else
                     {
-                        Image img = LoadImage(droppedFiles[0]);
+                        Image img = LoadImage(droppedFiles.paths[0]);
                         skybox.materials[0].maps[MATERIAL_MAP_CUBEMAP].texture = LoadTextureCubemap(img, CUBEMAP_LAYOUT_AUTO_DETECT);
                         UnloadImage(img);
                     }
 
-                    TextCopy(skyboxFileName, droppedFiles[0]);
+                    TextCopy(skyboxFileName, droppedFiles.paths[0]);
                 }
             }
 
-            ClearDroppedFiles();    // Clear internal buffers
+            UnloadDroppedFiles(droppedFiles);    // Unload filepaths from memory
         }
         //----------------------------------------------------------------------------------
 

@@ -2,32 +2,27 @@
 *
 *   raylib [core] example - window scale letterbox (and virtual mouse)
 *
-*   This example has been created using raylib 2.5 (www.raylib.com)
-*   raylib is licensed under an unmodified zlib/libpng license (View raylib.h for details)
+*   Example originally created with raylib 2.5, last time updated with raylib 4.0
 *
 *   Example contributed by Anata (@anatagawa) and reviewed by Ramon Santamaria (@raysan5)
 *
-*   Copyright (c) 2019 Anata (@anatagawa) and Ramon Santamaria (@raysan5)
+*   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
+*   BSD-like license that allows static linking with closed source software
+*
+*   Copyright (c) 2019-2022 Anata (@anatagawa) and Ramon Santamaria (@raysan5)
 *
 ********************************************************************************************/
 
 #include "raylib.h"
 
-#define max(a, b) ((a)>(b)? (a) : (b))
-#define min(a, b) ((a)<(b)? (a) : (b))
+#include "raymath.h"        // Required for: Vector2Clamp()
 
-// Clamp Vector2 value with min and max and return a new vector2
-// NOTE: Required for virtual mouse, to clamp inside virtual game size
-Vector2 ClampValue(Vector2 value, Vector2 min, Vector2 max)
-{
-    Vector2 result = value;
-    result.x = (result.x > max.x)? max.x : result.x;
-    result.x = (result.x < min.x)? min.x : result.x;
-    result.y = (result.y > max.y)? max.y : result.y;
-    result.y = (result.y < min.y)? min.y : result.y;
-    return result;
-}
+#define MAX(a, b) ((a)>(b)? (a) : (b))
+#define MIN(a, b) ((a)<(b)? (a) : (b))
 
+//------------------------------------------------------------------------------------
+// Program main entry point
+//------------------------------------------------------------------------------------
 int main(void)
 {
     const int windowWidth = 800;
@@ -57,7 +52,7 @@ int main(void)
         // Update
         //----------------------------------------------------------------------------------
         // Compute required framebuffer scaling
-        float scale = min((float)GetScreenWidth()/gameScreenWidth, (float)GetScreenHeight()/gameScreenHeight);
+        float scale = MIN((float)GetScreenWidth()/gameScreenWidth, (float)GetScreenHeight()/gameScreenHeight);
 
         if (IsKeyPressed(KEY_SPACE))
         {
@@ -70,7 +65,7 @@ int main(void)
         Vector2 virtualMouse = { 0 };
         virtualMouse.x = (mouse.x - (GetScreenWidth() - (gameScreenWidth*scale))*0.5f)/scale;
         virtualMouse.y = (mouse.y - (GetScreenHeight() - (gameScreenHeight*scale))*0.5f)/scale;
-        virtualMouse = ClampValue(virtualMouse, (Vector2){ 0, 0 }, (Vector2){ (float)gameScreenWidth, (float)gameScreenHeight });
+        virtualMouse = Vector2Clamp(virtualMouse, (Vector2){ 0, 0 }, (Vector2){ (float)gameScreenWidth, (float)gameScreenHeight });
 
         // Apply the same transformation as the virtual mouse to the real mouse (i.e. to work with raygui)
         //SetMouseOffset(-(GetScreenWidth() - (gameScreenWidth*scale))*0.5f, -(GetScreenHeight() - (gameScreenHeight*scale))*0.5f);

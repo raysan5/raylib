@@ -1,13 +1,15 @@
 /*******************************************************************************************
 *
-*   raylib [text] example - Using unicode with raylib
+*   raylib [text] example - Unicode
 *
-*   This example has been created using raylib 2.5 (www.raylib.com)
-*   raylib is licensed under an unmodified zlib/libpng license (View raylib.h for details)
+*   Example originally created with raylib 2.5, last time updated with raylib 4.0
 *
 *   Example contributed by Vlad Adrian (@demizdor) and reviewed by Ramon Santamaria (@raysan5)
 *
-*   Copyright (c) 2019 Vlad Adrian (@demizdor) and Ramon Santamaria (@raysan5)
+*   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
+*   BSD-like license that allows static linking with closed source software
+*
+*   Copyright (c) 2019-2022 Vlad Adrian (@demizdor) and Ramon Santamaria (@raysan5)
 *
 ********************************************************************************************/
 
@@ -148,10 +150,10 @@ struct {
 
 static int hovered = -1, selected = -1;
 
-//--------------------------------------------------------------------------------------
-// Main entry point
-//--------------------------------------------------------------------------------------
-int main(int argc, char **argv)
+//------------------------------------------------------------------------------------
+// Program main entry point
+//------------------------------------------------------------------------------------
+int main(void)
 {
     // Initialization
     //--------------------------------------------------------------------------------------
@@ -265,6 +267,7 @@ int main(int argc, char **argv)
                     a = b;
                     b = tmp;
                 }
+                
                 if (msgRect.x + msgRect.width > screenWidth) msgRect.x -= (msgRect.x + msgRect.width) - screenWidth + 10;
 
                 // Draw chat bubble
@@ -284,11 +287,11 @@ int main(int argc, char **argv)
                 DrawText(info, (int)pos.x, (int)pos.y, 10, RAYWHITE);
             }
             //------------------------------------------------------------------------------
-
+            
             // Draw the info text
             DrawText("These emojis have something to tell you, click each to find out!", (screenWidth - 650)/2, screenHeight - 40, 20, GRAY);
             DrawText("Each emoji is a unicode character from a font, not a texture... Press [SPACEBAR] to refresh", (screenWidth - 484)/2, screenHeight - 16, 10, GRAY);
-
+            
         EndDrawing();
         //----------------------------------------------------------------------------------
     }

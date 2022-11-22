@@ -2,15 +2,20 @@
 *
 *   raylib [audio] example - Music playing (streaming)
 *
-*   This example has been created using raylib 1.3 (www.raylib.com)
-*   raylib is licensed under an unmodified zlib/libpng license (View raylib.h for details)
+*   Example originally created with raylib 1.3, last time updated with raylib 4.0
 *
-*   Copyright (c) 2015 Ramon Santamaria (@raysan5)
+*   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
+*   BSD-like license that allows static linking with closed source software
+*
+*   Copyright (c) 2015-2022 Ramon Santamaria (@raysan5)
 *
 ********************************************************************************************/
 
 #include "raylib.h"
 
+//------------------------------------------------------------------------------------
+// Program main entry point
+//------------------------------------------------------------------------------------
 int main(void)
 {
     // Initialization
@@ -26,10 +31,10 @@ int main(void)
 
     PlayMusicStream(music);
 
-    float timePlayed = 0.0f;
-    bool pause = false;
+    float timePlayed = 0.0f;        // Time played normalized [0.0f..1.0f]
+    bool pause = false;             // Music playing paused
 
-    SetTargetFPS(60);               // Set our game to run at 60 frames-per-second
+    SetTargetFPS(30);               // Set our game to run at 30 frames-per-second
     //--------------------------------------------------------------------------------------
 
     // Main game loop
@@ -38,7 +43,7 @@ int main(void)
         // Update
         //----------------------------------------------------------------------------------
         UpdateMusicStream(music);   // Update music buffer with new stream data
-
+        
         // Restart music playing (stop and play)
         if (IsKeyPressed(KEY_SPACE))
         {
@@ -55,10 +60,10 @@ int main(void)
             else ResumeMusicStream(music);
         }
 
-        // Get timePlayed scaled to bar dimensions (400 pixels)
-        timePlayed = GetMusicTimePlayed(music)/GetMusicTimeLength(music)*400;
+        // Get normalized time played for current music stream
+        timePlayed = GetMusicTimePlayed(music)/GetMusicTimeLength(music);
 
-        if (timePlayed > 400) StopMusicStream(music);
+        if (timePlayed > 1.0f) timePlayed = 1.0f;   // Make sure time played is no longer than music
         //----------------------------------------------------------------------------------
 
         // Draw
@@ -70,7 +75,7 @@ int main(void)
             DrawText("MUSIC SHOULD BE PLAYING!", 255, 150, 20, LIGHTGRAY);
 
             DrawRectangle(200, 200, 400, 12, LIGHTGRAY);
-            DrawRectangle(200, 200, (int)timePlayed, 12, MAROON);
+            DrawRectangle(200, 200, (int)(timePlayed*400.0f), 12, MAROON);
             DrawRectangleLines(200, 200, 400, 12, GRAY);
 
             DrawText("PRESS SPACE TO RESTART MUSIC", 215, 250, 20, LIGHTGRAY);

@@ -15,8 +15,13 @@ on:
   release:
     types: [published]
 
+permissions:
+  contents: read
+
 jobs:
   build:
+    permissions:
+      contents: write  # for actions/upload-release-asset to upload release asset
     runs-on: windows-latest
     strategy:
       fail-fast: false
@@ -28,12 +33,10 @@ jobs:
         - compiler: mingw-w64
           bits: 32
           ARCH: "i686"
-          COMPILER_PATH: "C:\\msys64\\mingw32\\bin"
           WINDRES_ARCH: pe-i386
         - compiler: mingw-w64
           bits: 64
           ARCH: "x86_64"
-          COMPILER_PATH: "C:\\msys64\\mingw64\\bin"
           WINDRES_ARCH: pe-x86-64
         - compiler: msvc16
           bits: 32
@@ -77,11 +80,11 @@ jobs:
     - name: Build Library (MinGW-w64)
       run: |
         cd src
-        set PATH=%PATH%;${{ matrix.COMPILER_PATH }}
         ${{ matrix.ARCH }}-w64-mingw32-gcc.exe --version
-        ${{ matrix.COMPILER_PATH }}/windres.exe --version
+        windres.exe --version
+        dir C:\msys64\mingw64\bin
         make PLATFORM=PLATFORM_DESKTOP CC=${{ matrix.ARCH }}-w64-mingw32-gcc.exe RAYLIB_LIBTYPE=STATIC RAYLIB_RELEASE_PATH="../build/${{ env.RELEASE_NAME }}/lib"
-        ${{ matrix.COMPILER_PATH }}/windres.exe -i raylib.dll.rc -o raylib.dll.rc.data -O coff --target=${{ matrix.WINDRES_ARCH }}
+        windres.exe -i raylib.dll.rc -o raylib.dll.rc.data -O coff --target=${{ matrix.WINDRES_ARCH }}
         make PLATFORM=PLATFORM_DESKTOP CC=${{ matrix.ARCH }}-w64-mingw32-gcc.exe RAYLIB_LIBTYPE=SHARED RAYLIB_RELEASE_PATH="../build/${{ env.RELEASE_NAME }}/lib" -B
         cd ..
       shell: cmd
@@ -89,7 +92,7 @@ jobs:
 
     - name: Build Library (MSVC16)
       run: |
-        cd projects/VS2019
+        cd projects/VS2022
         msbuild.exe raylib.sln /target:raylib /property:Configuration=Release /property:Platform=${{ matrix.ARCH }}
         copy /Y .\build\raylib\bin\${{ matrix.VSARCHPATH }}\Release\raylib.lib .\..\..\build\${{ env.RELEASE_NAME }}\lib\raylib.lib
         msbuild.exe raylib.sln /target:raylib /property:Configuration=Release.DLL /property:Platform=${{ matrix.ARCH }}
@@ -104,7 +107,7 @@ jobs:
         copy /Y .\src\raylib.h .\build\${{ env.RELEASE_NAME }}\include\raylib.h
         copy /Y .\src\raymath.h .\build\${{ env.RELEASE_NAME }}\include\raymath.h
         copy /Y .\src\rlgl.h .\build\${{ env.RELEASE_NAME }}\include\rlgl.h
-        copy /Y .\src\extras\raygui.h .\build\${{ env.RELEASE_NAME }}\include\raygui.h
+        copy /Y .\CHANGELOG .\build\${{ env.RELEASE_NAME }}\CHANGELOG
         copy /Y .\README.md .\build\${{ env.RELEASE_NAME }}\README.md
         copy /Y .\LICENSE .\build\${{ env.RELEASE_NAME }}\LICENSE
         cd build

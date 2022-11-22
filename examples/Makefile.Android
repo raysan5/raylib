@@ -48,7 +48,7 @@ ifeq ($(ANDROID_ARCH),ARM64)
     ANDROID_ARCH_NAME   = arm64-v8a
 endif
 ifeq ($(ANDROID_ARCH),x86)
-    ANDROID_ARCH_NAME   = i686
+    ANDROID_ARCH_NAME   = x86
 endif
 ifeq ($(ANDROID_ARCH),x86_64)
     ANDROID_ARCH_NAME   = x86_64

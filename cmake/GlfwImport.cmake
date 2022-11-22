@@ -28,6 +28,8 @@ if(NOT glfw3_FOUND AND NOT USE_EXTERNAL_GLFW STREQUAL "ON" AND "${PLATFORM}" MAT
     
     list(APPEND raylib_sources $<TARGET_OBJECTS:glfw>)
     include_directories(BEFORE SYSTEM external/glfw/include)
+elseif("${PLATFORM}" STREQUAL "DRM")
+    MESSAGE(STATUS "No GLFW required on PLATFORM_DRM")
 else()
     MESSAGE(STATUS "Using external GLFW")
     set(GLFW_PKG_DEPS glfw3)

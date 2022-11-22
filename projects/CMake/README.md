@@ -11,10 +11,8 @@ To compile the example, use one of the following dependending on your build targ
 Use the following to build for desktop:
 
 ``` bash
-mkdir build
-cd build
-cmake ..
-make
+cmake -B build
+cmake --build build
 ```
 
 ### Web

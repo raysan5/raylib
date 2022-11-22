@@ -2,18 +2,19 @@
 *
 *   raylib [core] example - split screen
 *
-*   This example has been created using raylib 3.7 (www.raylib.com)
-*   raylib is licensed under an unmodified zlib/libpng license (View raylib.h for details)
+*   Example originally created with raylib 3.7, last time updated with raylib 4.0
 *
 *   Example contributed by Jeffery Myers (@JeffM2501) and reviewed by Ramon Santamaria (@raysan5)
 *
-*   Copyright (c) 2021 Jeffery Myers (@JeffM2501)
+*   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
+*   BSD-like license that allows static linking with closed source software
+*
+*   Copyright (c) 2021-2022 Jeffery Myers (@JeffM2501)
 *
 ********************************************************************************************/
 
 #include "raylib.h"
 
-Texture2D textureGrid = { 0 };
 Camera cameraPlayer1 = { 0 };
 Camera cameraPlayer2 = { 0 };
 
@@ -30,8 +31,8 @@ void DrawScene(void)
     {
         for (float z = -count*spacing; z <= count*spacing; z += spacing)
         {
-            DrawCubeTexture(textureGrid, (Vector3) { x, 1.5f, z }, 1, 1, 1, GREEN);
-            DrawCubeTexture(textureGrid, (Vector3) { x, 0.5f, z }, 0.25f, 1, 0.25f, BROWN);
+            DrawCube((Vector3) { x, 1.5f, z }, 1, 1, 1, LIME);
+            DrawCube((Vector3) { x, 0.5f, z }, 0.25f, 1, 0.25f, BROWN);
         }
     }
 
@@ -40,6 +41,9 @@ void DrawScene(void)
     DrawCube(cameraPlayer2.position, 1, 1, 1, BLUE);
 }
 
+//------------------------------------------------------------------------------------
+// Program main entry point
+//------------------------------------------------------------------------------------
 int main(void)
 {
     // Initialization
@@ -48,13 +52,6 @@ int main(void)
     const int screenHeight = 450;
 
     InitWindow(screenWidth, screenHeight, "raylib [core] example - split screen");
-
-    // Generate a simple texture to use for trees
-    Image img = GenImageChecked(256, 256, 32, 32, DARKGRAY, WHITE);
-    textureGrid = LoadTextureFromImage(img);
-    UnloadImage(img);
-    SetTextureFilter(textureGrid, TEXTURE_FILTER_ANISOTROPIC_16X);
-    SetTextureWrap(textureGrid, TEXTURE_WRAP_CLAMP);
 
     // Setup player 1 camera and screen
     cameraPlayer1.fovy = 45.0f;
@@ -146,7 +143,6 @@ int main(void)
     //--------------------------------------------------------------------------------------
     UnloadRenderTexture(screenPlayer1); // Unload render texture
     UnloadRenderTexture(screenPlayer2); // Unload render texture
-    UnloadTexture(textureGrid);         // Unload texture
 
     CloseWindow();                      // Close window and OpenGL context
     //--------------------------------------------------------------------------------------

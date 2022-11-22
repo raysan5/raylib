@@ -6,7 +6,7 @@
 *
 *   LICENSE: zlib/libpng
 *
-*   Copyright (c) 2018-2021 Ahmad Fatoum & Ramon Santamaria (@raysan5)
+*   Copyright (c) 2018-2022 Ahmad Fatoum & Ramon Santamaria (@raysan5)
 *
 *   This software is provided "as-is", without any express or implied warranty. In no event
 *   will the authors be held liable for any damages arising from the use of this software.
@@ -46,8 +46,6 @@
 #define SUPPORT_MOUSE_GESTURES      1
 // Reconfigure standard input to receive key inputs, works with SSH connection.
 #define SUPPORT_SSH_KEYBOARD_RPI    1
-// Draw a mouse pointer on screen
-//#define SUPPORT_MOUSE_CURSOR_POINT   1
 // Setting a higher resolution can improve the accuracy of time-out intervals in wait functions.
 // However, it can also reduce overall system performance, because the thread scheduler switches tasks more often.
 #define SUPPORT_WINMM_HIGHRES_TIMER 1
@@ -63,8 +61,6 @@
 #define SUPPORT_GIF_RECORDING       1
 // Support CompressData() and DecompressData() functions
 #define SUPPORT_COMPRESSION_API     1
-// Support saving binary data automatically to a generated storage.data file. This file is managed internally.
-#define SUPPORT_DATA_STORAGE        1
 // Support automatic generated events, loading and recording of those events when required
 //#define SUPPORT_EVENTS_AUTOMATION     1
 // Support custom frame control, only for advance users
@@ -74,11 +70,8 @@
 
 // rcore: Configuration values
 //------------------------------------------------------------------------------------
-#if defined(__linux__)
-    #define MAX_FILEPATH_LENGTH     4096        // Maximum length for filepaths (Linux PATH_MAX default value)
-#else
-    #define MAX_FILEPATH_LENGTH      512        // Maximum length supported for filepaths
-#endif
+#define MAX_FILEPATH_CAPACITY       8192        // Maximum file paths capacity
+#define MAX_FILEPATH_LENGTH         4096        // Maximum length for filepaths (Linux PATH_MAX default value)
 
 #define MAX_KEYBOARD_KEYS            512        // Maximum number of keyboard keys supported
 #define MAX_MOUSE_BUTTONS              8        // Maximum number of mouse buttons supported
@@ -88,8 +81,6 @@
 #define MAX_TOUCH_POINTS               8        // Maximum number of touch points supported
 #define MAX_KEY_PRESSED_QUEUE         16        // Maximum number of keys in the key input queue
 #define MAX_CHAR_PRESSED_QUEUE        16        // Maximum number of characters in the char input queue
-
-#define STORAGE_DATA_FILE  "storage.data"       // Automatic storage filename
 
 #define MAX_DECOMPRESSION_SIZE        64        // Max size allocated for decompression in MB
 
@@ -201,6 +192,7 @@
 #define SUPPORT_FILEFORMAT_IQM      1
 #define SUPPORT_FILEFORMAT_GLTF     1
 #define SUPPORT_FILEFORMAT_VOX      1
+#define SUPPORT_FILEFORMAT_M3D      1
 // Support procedural mesh generation functions, uses external par_shapes.h library
 // NOTE: Some generated meshes DO NOT include generated texture coordinates
 #define SUPPORT_MESH_GENERATION     1

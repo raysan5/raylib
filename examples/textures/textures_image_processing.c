@@ -4,10 +4,12 @@
 *
 *   NOTE: Images are loaded in CPU memory (RAM); textures are loaded in GPU memory (VRAM)
 *
-*   This example has been created using raylib 3.5 (www.raylib.com)
-*   raylib is licensed under an unmodified zlib/libpng license (View raylib.h for details)
+*   Example originally created with raylib 1.4, last time updated with raylib 3.5
 *
-*   Copyright (c) 2016 Ramon Santamaria (@raysan5)
+*   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
+*   BSD-like license that allows static linking with closed source software
+*
+*   Copyright (c) 2016-2022 Ramon Santamaria (@raysan5)
 *
 ********************************************************************************************/
 
@@ -15,7 +17,7 @@
 
 #include <stdlib.h>             // Required for: free()
 
-#define NUM_PROCESSES    8
+#define NUM_PROCESSES    9
 
 typedef enum {
     NONE = 0,
@@ -24,6 +26,7 @@ typedef enum {
     COLOR_INVERT,
     COLOR_CONTRAST,
     COLOR_BRIGHTNESS,
+    GAUSSIAN_BLUR,
     FLIP_VERTICAL,
     FLIP_HORIZONTAL
 } ImageProcess;
@@ -35,10 +38,14 @@ static const char *processText[] = {
     "COLOR INVERT",
     "COLOR CONTRAST",
     "COLOR BRIGHTNESS",
+    "GAUSSIAN BLUR",
     "FLIP VERTICAL",
     "FLIP HORIZONTAL"
 };
 
+//------------------------------------------------------------------------------------
+// Program main entry point
+//------------------------------------------------------------------------------------
 int main(void)
 {
     // Initialization
@@ -120,6 +127,7 @@ int main(void)
                 case COLOR_INVERT: ImageColorInvert(&imCopy); break;
                 case COLOR_CONTRAST: ImageColorContrast(&imCopy, -40); break;
                 case COLOR_BRIGHTNESS: ImageColorBrightness(&imCopy, -80); break;
+                case GAUSSIAN_BLUR: ImageBlurGaussian(&imCopy, 10); break;
                 case FLIP_VERTICAL: ImageFlipVertical(&imCopy); break;
                 case FLIP_HORIZONTAL: ImageFlipHorizontal(&imCopy); break;
                 default: break;

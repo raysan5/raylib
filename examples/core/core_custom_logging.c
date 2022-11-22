@@ -2,12 +2,14 @@
 *
 *   raylib [core] example - Custom logging
 *
-*   This example has been created using raylib 2.1 (www.raylib.com)
-*   raylib is licensed under an unmodified zlib/libpng license (View raylib.h for details)
+*   Example originally created with raylib 2.5, last time updated with raylib 2.5
 *
 *   Example contributed by Pablo Marcos Oltra (@pamarcos) and reviewed by Ramon Santamaria (@raysan5)
 *
-*   Copyright (c) 2018 Pablo Marcos Oltra (@pamarcos) and Ramon Santamaria (@raysan5)
+*   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
+*   BSD-like license that allows static linking with closed source software
+*
+*   Copyright (c) 2018-2022 Pablo Marcos Oltra (@pamarcos) and Ramon Santamaria (@raysan5)
 *
 ********************************************************************************************/
 
@@ -16,8 +18,8 @@
 #include <stdio.h>                  // Required for: fopen(), fclose(), fputc(), fwrite(), printf(), fprintf(), funopen()
 #include <time.h>                   // Required for: time_t, tm, time(), localtime(), strftime()
 
-// Custom logging funtion
-void LogCustom(int msgType, const char *text, va_list args)
+// Custom logging function
+void CustomLog(int msgType, const char *text, va_list args)
 {
     char timeStr[64] = { 0 };
     time_t now = time(NULL);
@@ -39,16 +41,18 @@ void LogCustom(int msgType, const char *text, va_list args)
     printf("\n");
 }
 
-int main(int argc, char* argv[])
+//------------------------------------------------------------------------------------
+// Program main entry point
+//------------------------------------------------------------------------------------
+int main(void)
 {
     // Initialization
     //--------------------------------------------------------------------------------------
     const int screenWidth = 800;
     const int screenHeight = 450;
 
-    // First thing we do is setting our custom logger to ensure everything raylib logs
-    // will use our own logger instead of its internal one
-    SetTraceLogCallback(LogCustom);
+    // Set custom logger
+    SetTraceLogCallback(CustomLog);
 
     InitWindow(screenWidth, screenHeight, "raylib [core] example - custom logging");
 

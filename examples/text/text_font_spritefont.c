@@ -2,24 +2,30 @@
 *
 *   raylib [text] example - Sprite font loading
 *
-*   Loaded sprite fonts have been generated following XNA SpriteFont conventions:
+*   NOTE: Sprite fonts should be generated following this conventions:
+*
 *     - Characters must be ordered starting with character 32 (Space)
 *     - Every character must be contained within the same Rectangle height
 *     - Every character and every line must be separated by the same distance (margin/padding)
 *     - Rectangles must be defined by a MAGENTA color background
 *
-*   If following this constraints, a font can be provided just by an image,
-*   this is quite handy to avoid additional information files (like BMFonts use).
+*   Following those constraints, a font can be provided just by an image,
+*   this is quite handy to avoid additional font descriptor files (like BMFonts use).
 *
-*   This example has been created using raylib 1.0 (www.raylib.com)
-*   raylib is licensed under an unmodified zlib/libpng license (View raylib.h for details)
+*   Example originally created with raylib 1.0, last time updated with raylib 1.0
 *
-*   Copyright (c) 2014 Ramon Santamaria (@raysan5)
+*   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
+*   BSD-like license that allows static linking with closed source software
+*
+*   Copyright (c) 2014-2022 Ramon Santamaria (@raysan5)
 *
 ********************************************************************************************/
 
 #include "raylib.h"
 
+//------------------------------------------------------------------------------------
+// Program main entry point
+//------------------------------------------------------------------------------------
 int main(void)
 {
     // Initialization

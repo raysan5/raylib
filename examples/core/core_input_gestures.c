@@ -2,18 +2,22 @@
 *
 *   raylib [core] example - Input Gestures Detection
 *
-*   This example has been created using raylib 1.4 (www.raylib.com)
-*   raylib is licensed under an unmodified zlib/libpng license (View raylib.h for details)
+*   Example originally created with raylib 1.4, last time updated with raylib 4.2
 *
-*   Copyright (c) 2016 Ramon Santamaria (@raysan5)
+*   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
+*   BSD-like license that allows static linking with closed source software
+*
+*   Copyright (c) 2016-2022 Ramon Santamaria (@raysan5)
 *
 ********************************************************************************************/
 
 #include "raylib.h"
-#include <string.h>
 
 #define MAX_GESTURE_STRINGS   20
 
+//------------------------------------------------------------------------------------
+// Program main entry point
+//------------------------------------------------------------------------------------
 int main(void)
 {
     // Initialization
@@ -53,16 +57,16 @@ int main(void)
                 // Store gesture string
                 switch (currentGesture)
                 {
-                    case GESTURE_TAP: strcpy(gestureStrings[gesturesCount], "GESTURE TAP"); break;
-                    case GESTURE_DOUBLETAP: strcpy(gestureStrings[gesturesCount], "GESTURE DOUBLETAP"); break;
-                    case GESTURE_HOLD: strcpy(gestureStrings[gesturesCount], "GESTURE HOLD"); break;
-                    case GESTURE_DRAG: strcpy(gestureStrings[gesturesCount], "GESTURE DRAG"); break;
-                    case GESTURE_SWIPE_RIGHT: strcpy(gestureStrings[gesturesCount], "GESTURE SWIPE RIGHT"); break;
-                    case GESTURE_SWIPE_LEFT: strcpy(gestureStrings[gesturesCount], "GESTURE SWIPE LEFT"); break;
-                    case GESTURE_SWIPE_UP: strcpy(gestureStrings[gesturesCount], "GESTURE SWIPE UP"); break;
-                    case GESTURE_SWIPE_DOWN: strcpy(gestureStrings[gesturesCount], "GESTURE SWIPE DOWN"); break;
-                    case GESTURE_PINCH_IN: strcpy(gestureStrings[gesturesCount], "GESTURE PINCH IN"); break;
-                    case GESTURE_PINCH_OUT: strcpy(gestureStrings[gesturesCount], "GESTURE PINCH OUT"); break;
+                    case GESTURE_TAP: TextCopy(gestureStrings[gesturesCount], "GESTURE TAP"); break;
+                    case GESTURE_DOUBLETAP: TextCopy(gestureStrings[gesturesCount], "GESTURE DOUBLETAP"); break;
+                    case GESTURE_HOLD: TextCopy(gestureStrings[gesturesCount], "GESTURE HOLD"); break;
+                    case GESTURE_DRAG: TextCopy(gestureStrings[gesturesCount], "GESTURE DRAG"); break;
+                    case GESTURE_SWIPE_RIGHT: TextCopy(gestureStrings[gesturesCount], "GESTURE SWIPE RIGHT"); break;
+                    case GESTURE_SWIPE_LEFT: TextCopy(gestureStrings[gesturesCount], "GESTURE SWIPE LEFT"); break;
+                    case GESTURE_SWIPE_UP: TextCopy(gestureStrings[gesturesCount], "GESTURE SWIPE UP"); break;
+                    case GESTURE_SWIPE_DOWN: TextCopy(gestureStrings[gesturesCount], "GESTURE SWIPE DOWN"); break;
+                    case GESTURE_PINCH_IN: TextCopy(gestureStrings[gesturesCount], "GESTURE PINCH IN"); break;
+                    case GESTURE_PINCH_OUT: TextCopy(gestureStrings[gesturesCount], "GESTURE PINCH OUT"); break;
                     default: break;
                 }
 
@@ -71,7 +75,7 @@ int main(void)
                 // Reset gestures strings
                 if (gesturesCount >= MAX_GESTURE_STRINGS)
                 {
-                    for (int i = 0; i < MAX_GESTURE_STRINGS; i++) strcpy(gestureStrings[i], "\0");
+                    for (int i = 0; i < MAX_GESTURE_STRINGS; i++) TextCopy(gestureStrings[i], "\0");
 
                     gesturesCount = 0;
                 }

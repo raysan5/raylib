@@ -2,17 +2,22 @@
 *
 *   raylib [core] example - Windows drop files
 *
-*   This example only works on platforms that support drag & drop (Windows, Linux, OSX, Html5?)
+*   NOTE: This example only works on platforms that support drag & drop (Windows, Linux, OSX, Html5?)
 *
-*   This example has been created using raylib 1.3 (www.raylib.com)
-*   raylib is licensed under an unmodified zlib/libpng license (View raylib.h for details)
+*   Example originally created with raylib 1.3, last time updated with raylib 4.2
 *
-*   Copyright (c) 2015 Ramon Santamaria (@raysan5)
+*   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
+*   BSD-like license that allows static linking with closed source software
+*
+*   Copyright (c) 2015-2022 Ramon Santamaria (@raysan5)
 *
 ********************************************************************************************/
 
 #include "raylib.h"
 
+//------------------------------------------------------------------------------------
+// Program main entry point
+//------------------------------------------------------------------------------------
 int main(void)
 {
     // Initialization
@@ -22,8 +27,7 @@ int main(void)
 
     InitWindow(screenWidth, screenHeight, "raylib [core] example - drop files");
 
-    int count = 0;
-    char **droppedFiles = { 0 };
+    FilePathList droppedFiles = { 0 };
 
     SetTargetFPS(60);               // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
@@ -35,7 +39,11 @@ int main(void)
         //----------------------------------------------------------------------------------
         if (IsFileDropped())
         {
-            droppedFiles = GetDroppedFiles(&count);
+            // Is some files have been previously loaded, unload them
+            if (droppedFiles.count > 0) UnloadDroppedFiles(droppedFiles);
+            
+            // Load new dropped files
+            droppedFiles = LoadDroppedFiles();
         }
         //----------------------------------------------------------------------------------
 
@@ -45,20 +53,20 @@ int main(void)
 
             ClearBackground(RAYWHITE);
 
-            if (count == 0) DrawText("Drop your files to this window!", 100, 40, 20, DARKGRAY);
+            if (droppedFiles.count == 0) DrawText("Drop your files to this window!", 100, 40, 20, DARKGRAY);
             else
             {
                 DrawText("Dropped files:", 100, 40, 20, DARKGRAY);
 
-                for (int i = 0; i < count; i++)
+                for (int i = 0; i < droppedFiles.count; i++)
                 {
                     if (i%2 == 0) DrawRectangle(0, 85 + 40*i, screenWidth, 40, Fade(LIGHTGRAY, 0.5f));
                     else DrawRectangle(0, 85 + 40*i, screenWidth, 40, Fade(LIGHTGRAY, 0.3f));
 
-                    DrawText(droppedFiles[i], 120, 100 + 40*i, 10, GRAY);
+                    DrawText(droppedFiles.paths[i], 120, 100 + 40*i, 10, GRAY);
                 }
 
-                DrawText("Drop new files...", 100, 110 + 40*count, 20, DARKGRAY);
+                DrawText("Drop new files...", 100, 110 + 40*droppedFiles.count, 20, DARKGRAY);
             }
 
         EndDrawing();
@@ -67,7 +75,7 @@ int main(void)
 
     // De-Initialization
     //--------------------------------------------------------------------------------------
-    ClearDroppedFiles();    // Clear internal buffers
+    UnloadDroppedFiles(droppedFiles); // Unload files memory
 
     CloseWindow();          // Close window and OpenGL context
     //--------------------------------------------------------------------------------------

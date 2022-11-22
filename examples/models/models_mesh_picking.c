@@ -2,12 +2,14 @@
 *
 *   raylib [models] example - Mesh picking in 3d mode, ground plane, triangle, mesh
 *
-*   This example has been created using raylib 1.7 (www.raylib.com)
-*   raylib is licensed under an unmodified zlib/libpng license (View raylib.h for details)
+*   Example originally created with raylib 1.7, last time updated with raylib 4.0
 *
 *   Example contributed by Joel Davis (@joeld42) and reviewed by Ramon Santamaria (@raysan5)
 *
-*   Copyright (c) 2017 Joel Davis (@joeld42) and Ramon Santamaria (@raysan5)
+*   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
+*   BSD-like license that allows static linking with closed source software
+*
+*   Copyright (c) 2017-2022 Joel Davis (@joeld42) and Ramon Santamaria (@raysan5)
 *
 ********************************************************************************************/
 
@@ -16,6 +18,9 @@
 
 #define FLT_MAX     340282346638528859811704183484516925440.0f     // Maximum value of a float, from bit pattern 01111111011111111111111111111111
 
+//------------------------------------------------------------------------------------
+// Program main entry point
+//------------------------------------------------------------------------------------
 int main(void)
 {
     // Initialization
@@ -68,7 +73,7 @@ int main(void)
     {
         // Update
         //----------------------------------------------------------------------------------
-        UpdateCamera(&camera);          // Update camera
+        UpdateCamera(&camera);
 
         // Display information about closest hit
         RayCollision collision = { 0 };
@@ -121,9 +126,22 @@ int main(void)
             cursorColor = ORANGE;
             hitObjectName = "Box";
 
-            // Check ray collision against model
-            // NOTE: It considers model.transform matrix!
-            RayCollision meshHitInfo = GetRayCollisionModel(ray, tower);
+            // Check ray collision against model meshes
+            RayCollision meshHitInfo = { 0 };
+            for (int m = 0; m < tower.meshCount; m++)
+            {
+                // NOTE: We consider the model.transform for the collision check but 
+                // it can be checked against any transform Matrix, used when checking against same
+                // model drawn multiple times with multiple transforms
+                meshHitInfo = GetRayCollisionMesh(ray, tower.meshes[m], tower.transform);
+                if (meshHitInfo.hit)
+                {
+                    // Save the closest hit mesh
+                    if ((!collision.hit) || (collision.distance > meshHitInfo.distance)) collision = meshHitInfo;
+                    
+                    break;  // Stop once one mesh collision is detected, the colliding mesh is m
+                }
+            }
 
             if (meshHitInfo.hit)
             {

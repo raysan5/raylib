@@ -2,12 +2,14 @@
 *
 *   raylib [others] example - Embedded files loading (Wave and Image)
 *
-*   This example has been created using raylib 3.0 (www.raylib.com)
-*   raylib is licensed under an unmodified zlib/libpng license (View raylib.h for details)
+*   Example originally created with raylib 3.0, last time updated with raylib 2.5
 *
 *   Example contributed by Kristian Holmgren (@defutura) and reviewed by Ramon Santamaria (@raysan5)
 *
-*   Copyright (c) 2020 Kristian Holmgren (@defutura) and Ramon Santamaria (@raysan5)
+*   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
+*   BSD-like license that allows static linking with closed source software
+*
+*   Copyright (c) 2020-2022 Kristian Holmgren (@defutura) and Ramon Santamaria (@raysan5)
 *
 ********************************************************************************************/
 
@@ -16,6 +18,9 @@
 #include "resources/audio_data.h"   // Wave file exported with ExportWaveAsCode()
 #include "resources/image_data.h"   // Image file exported with ExportImageAsCode()
 
+//------------------------------------------------------------------------------------
+// Program main entry point
+//------------------------------------------------------------------------------------
 int main(void)
 {
     // Initialization
@@ -82,8 +87,8 @@ int main(void)
 
             DrawTexture(texture, screenWidth/2 - texture.width/2, 40, WHITE);
 
-            DrawText("raylib logo and sound loaded from header files", 65, 320, 20, LIGHTGRAY);
-            DrawText("Press SPACE to PLAY the sound!", 200, 360, 20, LIGHTGRAY);
+            DrawText("raylib logo and sound loaded from header files", 150, 320, 20, LIGHTGRAY);
+            DrawText("Press SPACE to PLAY the sound!", 220, 370, 20, LIGHTGRAY);
 
         EndDrawing();
         //----------------------------------------------------------------------------------
