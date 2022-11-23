@@ -1173,7 +1173,7 @@ void rlScalef(float x, float y, float z)
 }
 
 // Multiply the current matrix by another matrix
-void rlMultMatrixf(float *matf)
+void rlMultMatrixf(const float *matf)
 {
     // Matrix creation from array
     Matrix mat = { matf[0], matf[4], matf[8], matf[12],
