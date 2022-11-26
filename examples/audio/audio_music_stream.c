@@ -34,7 +34,7 @@ int main(void)
     float timePlayed = 0.0f;        // Time played normalized [0.0f..1.0f]
     bool pause = false;             // Music playing paused
 
-    SetTargetFPS(30);               // Set our game to run at 60 frames-per-second
+    SetTargetFPS(30);               // Set our game to run at 30 frames-per-second
     //--------------------------------------------------------------------------------------
 
     // Main game loop

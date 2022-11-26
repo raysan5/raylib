@@ -207,6 +207,12 @@ int main(int argc, char* argv[])
     int length = 0;
     char *buffer = LoadFileText(inFileName, &length);
 
+    if (buffer == NULL)
+    {
+	    printf("Could not read input file: %s\n", inFileName);
+	    return 1;
+    }
+
     // Preprocess buffer to get separate lines
     // NOTE: GetTextLines() also removes leading spaces/tabs
     int linesCount = 0;

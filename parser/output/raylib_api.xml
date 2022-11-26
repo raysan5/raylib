@@ -2,7 +2,7 @@
 <raylibAPI>
     <Defines count="53">
         <Define name="RAYLIB_H" type="GUARD" value="" desc="" />
-        <Define name="RAYLIB_VERSION" type="STRING" value="4.2" desc="" />
+        <Define name="RAYLIB_VERSION" type="STRING" value="4.5-dev" desc="" />
         <Define name="__declspec(x)" type="MACRO" value="__attribute__((x))" desc="" />
         <Define name="RLAPI" type="UNKNOWN" value="__declspec(dllexport)" desc="We are building the library as a Win32 shared library (.dll)" />
         <Define name="PI" type="FLOAT" value="3.14159265358979323846" desc="" />
@@ -147,7 +147,7 @@
             <Field type="Vector3" name="position" desc="Camera position" />
             <Field type="Vector3" name="target" desc="Camera target it looks-at" />
             <Field type="Vector3" name="up" desc="Camera up vector (rotation over its axis)" />
-            <Field type="float" name="fovy" desc="Camera field-of-view apperture in Y (degrees) in perspective, used as near plane width in orthographic" />
+            <Field type="float" name="fovy" desc="Camera field-of-view aperture in Y (degrees) in perspective, used as near plane width in orthographic" />
             <Field type="int" name="projection" desc="Camera projection: CAMERA_PERSPECTIVE or CAMERA_ORTHOGRAPHIC" />
         </Struct>
         <Struct name="Camera2D" fieldCount="4" desc="Camera2D, defines position/orientation in 2d space">
@@ -187,7 +187,7 @@
             <Field type="MaterialMap *" name="maps" desc="Material maps array (MAX_MATERIAL_MAPS)" />
             <Field type="float[4]" name="params" desc="Material generic parameters (if required)" />
         </Struct>
-        <Struct name="Transform" fieldCount="3" desc="Transform, vectex transformation data">
+        <Struct name="Transform" fieldCount="3" desc="Transform, vertex transformation data">
             <Field type="Vector3" name="translation" desc="Translation" />
             <Field type="Quaternion" name="rotation" desc="Rotation" />
             <Field type="Vector3" name="scale" desc="Scale" />
@@ -433,7 +433,7 @@
             <Value name="MOUSE_BUTTON_MIDDLE" integer="2" desc="Mouse button middle (pressed wheel)" />
             <Value name="MOUSE_BUTTON_SIDE" integer="3" desc="Mouse button side (advanced mouse device)" />
             <Value name="MOUSE_BUTTON_EXTRA" integer="4" desc="Mouse button extra (advanced mouse device)" />
-            <Value name="MOUSE_BUTTON_FORWARD" integer="5" desc="Mouse button fordward (advanced mouse device)" />
+            <Value name="MOUSE_BUTTON_FORWARD" integer="5" desc="Mouse button forward (advanced mouse device)" />
             <Value name="MOUSE_BUTTON_BACK" integer="6" desc="Mouse button back (advanced mouse device)" />
         </Enum>
         <Enum name="MouseCursor" valueCount="11" desc="Mouse cursor">
@@ -585,7 +585,7 @@
             <Value name="FONT_BITMAP" integer="1" desc="Bitmap font generation, no anti-aliasing" />
             <Value name="FONT_SDF" integer="2" desc="SDF font generation, requires external shader" />
         </Enum>
-        <Enum name="BlendMode" valueCount="7" desc="Color blending modes (pre-defined)">
+        <Enum name="BlendMode" valueCount="8" desc="Color blending modes (pre-defined)">
             <Value name="BLEND_ALPHA" integer="0" desc="Blend textures considering alpha (default)" />
             <Value name="BLEND_ADDITIVE" integer="1" desc="Blend textures adding colors" />
             <Value name="BLEND_MULTIPLIED" integer="2" desc="Blend textures multiplying colors" />
@@ -593,6 +593,7 @@
             <Value name="BLEND_SUBTRACT_COLORS" integer="4" desc="Blend textures subtracting colors (alternative)" />
             <Value name="BLEND_ALPHA_PREMULTIPLY" integer="5" desc="Blend premultiplied textures considering alpha" />
             <Value name="BLEND_CUSTOM" integer="6" desc="Blend textures using custom src/dst factors (use rlSetBlendMode())" />
+            <Value name="BLEND_CUSTOM_SEPARATE" integer="7" desc="Blend textures using custom rgb/alpha separate src/dst factors (use rlSetBlendModeSeparate())" />
         </Enum>
         <Enum name="Gesture" valueCount="11" desc="Gesture">
             <Value name="GESTURE_NONE" integer="0" desc="No gesture" />
@@ -651,7 +652,7 @@
             <Param type="unsigned int" name="frames" desc="" />
         </Callback>
     </Callbacks>
-    <Functions count="502">
+    <Functions count="509">
         <Function name="InitWindow" retType="void" paramCount="3" desc="Initialize window and OpenGL context">
             <Param type="int" name="width" desc="" />
             <Param type="int" name="height" desc="" />
@@ -935,11 +936,11 @@
             <Param type="int" name="logLevel" desc="" />
         </Function>
         <Function name="MemAlloc" retType="void *" paramCount="1" desc="Internal memory allocator">
-            <Param type="int" name="size" desc="" />
+            <Param type="unsigned int" name="size" desc="" />
         </Function>
         <Function name="MemRealloc" retType="void *" paramCount="2" desc="Internal memory reallocator">
             <Param type="void *" name="ptr" desc="" />
-            <Param type="int" name="size" desc="" />
+            <Param type="unsigned int" name="size" desc="" />
         </Function>
         <Function name="MemFree" retType="void" paramCount="1" desc="Internal memory free">
             <Param type="void *" name="ptr" desc="" />
@@ -1486,6 +1487,11 @@
             <Param type="Vector2" name="p2" desc="" />
             <Param type="Vector2" name="p3" desc="" />
         </Function>
+        <Function name="CheckCollisionPointPoly" retType="bool" paramCount="3" desc="Check if point is within a polygon described by array of vertices">
+            <Param type="Vector2" name="point" desc="" />
+            <Param type="Vector2 *" name="points" desc="" />
+            <Param type="int" name="pointCount" desc="" />
+        </Function>
         <Function name="CheckCollisionLines" retType="bool" paramCount="5" desc="Check the collision between two lines defined by two points each, returns collision point by reference">
             <Param type="Vector2" name="startPos1" desc="" />
             <Param type="Vector2" name="endPos1" desc="" />
@@ -1574,6 +1580,13 @@
             <Param type="int" name="width" desc="" />
             <Param type="int" name="height" desc="" />
             <Param type="float" name="factor" desc="" />
+        </Function>
+        <Function name="GenImagePerlinNoise" retType="Image" paramCount="5" desc="Generate image: perlin noise">
+            <Param type="int" name="width" desc="" />
+            <Param type="int" name="height" desc="" />
+            <Param type="int" name="offsetX" desc="" />
+            <Param type="int" name="offsetY" desc="" />
+            <Param type="float" name="scale" desc="" />
         </Function>
         <Function name="GenImageCellular" retType="Image" paramCount="3" desc="Generate image: cellular algorithm, bigger tileSize means bigger cells">
             <Param type="int" name="width" desc="" />
@@ -1742,14 +1755,27 @@
             <Param type="Vector2" name="end" desc="" />
             <Param type="Color" name="color" desc="" />
         </Function>
-        <Function name="ImageDrawCircle" retType="void" paramCount="5" desc="Draw circle within an image">
+        <Function name="ImageDrawCircle" retType="void" paramCount="5" desc="Draw a filled circle within an image">
             <Param type="Image *" name="dst" desc="" />
             <Param type="int" name="centerX" desc="" />
             <Param type="int" name="centerY" desc="" />
             <Param type="int" name="radius" desc="" />
             <Param type="Color" name="color" desc="" />
         </Function>
-        <Function name="ImageDrawCircleV" retType="void" paramCount="4" desc="Draw circle within an image (Vector version)">
+        <Function name="ImageDrawCircleV" retType="void" paramCount="4" desc="Draw a filled circle within an image (Vector version)">
+            <Param type="Image *" name="dst" desc="" />
+            <Param type="Vector2" name="center" desc="" />
+            <Param type="int" name="radius" desc="" />
+            <Param type="Color" name="color" desc="" />
+        </Function>
+        <Function name="ImageDrawCircleLines" retType="void" paramCount="5" desc="Draw circle outline within an image">
+            <Param type="Image *" name="dst" desc="" />
+            <Param type="int" name="centerX" desc="" />
+            <Param type="int" name="centerY" desc="" />
+            <Param type="int" name="radius" desc="" />
+            <Param type="Color" name="color" desc="" />
+        </Function>
+        <Function name="ImageDrawCircleLinesV" retType="void" paramCount="4" desc="Draw circle outline within an image (Vector version)">
             <Param type="Image *" name="dst" desc="" />
             <Param type="Vector2" name="center" desc="" />
             <Param type="int" name="radius" desc="" />
@@ -2073,6 +2099,13 @@
             <Param type="Font" name="font" desc="" />
             <Param type="int" name="codepoint" desc="" />
         </Function>
+        <Function name="LoadUTF8" retType="char *" paramCount="2" desc="Load UTF-8 text encoded from codepoints array">
+            <Param type="const int *" name="codepoints" desc="" />
+            <Param type="int" name="length" desc="" />
+        </Function>
+        <Function name="UnloadUTF8" retType="void" paramCount="1" desc="Unload UTF-8 text encoded from codepoints array">
+            <Param type="char *" name="text" desc="" />
+        </Function>
         <Function name="LoadCodepoints" retType="int *" paramCount="2" desc="Load all codepoints from a UTF-8 text string, codepoints count returned by parameter">
             <Param type="const char *" name="text" desc="" />
             <Param type="int *" name="count" desc="" />
@@ -2085,15 +2118,19 @@
         </Function>
         <Function name="GetCodepoint" retType="int" paramCount="2" desc="Get next codepoint in a UTF-8 encoded string, 0x3f('?') is returned on failure">
             <Param type="const char *" name="text" desc="" />
-            <Param type="int *" name="bytesProcessed" desc="" />
+            <Param type="int *" name="codepointSize" desc="" />
+        </Function>
+        <Function name="GetCodepointNext" retType="int" paramCount="2" desc="Get next codepoint in a UTF-8 encoded string, 0x3f('?') is returned on failure">
+            <Param type="const char *" name="text" desc="" />
+            <Param type="int *" name="codepointSize" desc="" />
+        </Function>
+        <Function name="GetCodepointPrevious" retType="int" paramCount="2" desc="Get previous codepoint in a UTF-8 encoded string, 0x3f('?') is returned on failure">
+            <Param type="const char *" name="text" desc="" />
+            <Param type="int *" name="codepointSize" desc="" />
         </Function>
         <Function name="CodepointToUTF8" retType="const char *" paramCount="2" desc="Encode one codepoint into UTF-8 byte array (array length returned as parameter)">
             <Param type="int" name="codepoint" desc="" />
-            <Param type="int *" name="byteSize" desc="" />
-        </Function>
-        <Function name="TextCodepointsToUTF8" retType="char *" paramCount="2" desc="Encode text as codepoints array into UTF-8 text string (WARNING: memory must be freed!)">
-            <Param type="const int *" name="codepoints" desc="" />
-            <Param type="int" name="length" desc="" />
+            <Param type="int *" name="utf8Size" desc="" />
         </Function>
         <Function name="TextCopy" retType="int" paramCount="2" desc="Copy one string to another, returns bytes copied">
             <Param type="char *" name="dst" desc="" />
@@ -2729,11 +2766,11 @@
             <Param type="AudioStream" name="stream" desc="" />
             <Param type="AudioCallback" name="callback" desc="" />
         </Function>
-        <Function name="AttachAudioStreamProcessor" retType="void" paramCount="2" desc="">
+        <Function name="AttachAudioStreamProcessor" retType="void" paramCount="2" desc="Attach audio stream processor to stream">
             <Param type="AudioStream" name="stream" desc="" />
             <Param type="AudioCallback" name="processor" desc="" />
         </Function>
-        <Function name="DetachAudioStreamProcessor" retType="void" paramCount="2" desc="">
+        <Function name="DetachAudioStreamProcessor" retType="void" paramCount="2" desc="Detach audio stream processor from stream">
             <Param type="AudioStream" name="stream" desc="" />
             <Param type="AudioCallback" name="processor" desc="" />
         </Function>

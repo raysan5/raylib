@@ -58,6 +58,7 @@
 
 #include <math.h>       // Required for: sinf(), asinf(), cosf(), acosf(), sqrtf(), fabsf()
 #include <float.h>      // Required for: FLT_EPSILON
+#include <stdlib.h>     // Required for: RL_FREE
 
 //----------------------------------------------------------------------------------
 // Defines and Macros
@@ -104,21 +105,50 @@ void SetShapesTexture(Texture2D texture, Rectangle source)
 // Draw a pixel
 void DrawPixel(int posX, int posY, Color color)
 {
-    rlBegin(RL_LINES);
-        rlColor4ub(color.r, color.g, color.b, color.a);
-        rlVertex2f(posX, posY);
-        rlVertex2f(posX + 1, posY + 1);
-    rlEnd();
+  DrawPixelV((Vector2){ posX, posY }, color);
 }
 
 // Draw a pixel (Vector version)
 void DrawPixelV(Vector2 position, Color color)
 {
-    rlBegin(RL_LINES);
+#if defined(SUPPORT_QUADS_DRAW_MODE)
+    rlSetTexture(texShapes.id);
+
+    rlBegin(RL_QUADS);
+
+        rlNormal3f(0.0f, 0.0f, 1.0f);
         rlColor4ub(color.r, color.g, color.b, color.a);
+
+        rlTexCoord2f(texShapesRec.x/texShapes.width, texShapesRec.y/texShapes.height);
         rlVertex2f(position.x, position.y);
-        rlVertex2f(position.x + 1.0f, position.y + 1.0f);
+
+        rlTexCoord2f(texShapesRec.x/texShapes.width, (texShapesRec.y + texShapesRec.height)/texShapes.height);
+        rlVertex2f(position.x, position.y + 1);
+
+        rlTexCoord2f((texShapesRec.x + texShapesRec.width)/texShapes.width, (texShapesRec.y + texShapesRec.height)/texShapes.height);
+        rlVertex2f(position.x + 1, position.y + 1);
+
+        rlTexCoord2f((texShapesRec.x + texShapesRec.width)/texShapes.width, texShapesRec.y/texShapes.height);
+        rlVertex2f(position.x + 1, position.y);
+
     rlEnd();
+
+    rlSetTexture(0);
+#else
+    rlBegin(RL_TRIANGLES);
+
+        rlColor4ub(color.r, color.g, color.b, color.a);
+
+        rlVertex2f(position.x, position.y);
+        rlVertex2f(position.x, position.y + 1);
+        rlVertex2f(position.x + 1, position.y);
+
+        rlVertex2f(position.x + 1, position.y);
+        rlVertex2f(position.x, position.y + 1);
+        rlVertex2f(position.x + 1, position.y + 1);
+
+    rlEnd();
+#endif
 }
 
 // Draw a line
@@ -168,6 +198,8 @@ void DrawLineBezier(Vector2 startPos, Vector2 endPos, float thick, Color color)
     Vector2 previous = startPos;
     Vector2 current = { 0 };
 
+    Vector2 points[2*BEZIER_LINE_DIVISIONS + 2] = { 0 };
+
     for (int i = 1; i <= BEZIER_LINE_DIVISIONS; i++)
     {
         // Cubic easing in-out
@@ -175,10 +207,27 @@ void DrawLineBezier(Vector2 startPos, Vector2 endPos, float thick, Color color)
         current.y = EaseCubicInOut((float)i, startPos.y, endPos.y - startPos.y, (float)BEZIER_LINE_DIVISIONS);
         current.x = previous.x + (endPos.x - startPos.x)/ (float)BEZIER_LINE_DIVISIONS;
 
-        DrawLineEx(previous, current, thick, color);
+        float dy = current.y-previous.y;
+        float dx = current.x-previous.x;
+        float size = 0.5*thick/sqrt(dx*dx+dy*dy);
+
+        if (i==1)
+        {
+            points[0].x = previous.x+dy*size;
+            points[0].y = previous.y-dx*size;
+            points[1].x = previous.x-dy*size;
+            points[1].y = previous.y+dx*size;
+        }
+
+        points[2*i+1].x = current.x-dy*size;
+        points[2*i+1].y = current.y+dx*size;
+        points[2*i].x = current.x+dy*size;
+        points[2*i].y = current.y-dx*size;
 
         previous = current;
     }
+
+    DrawTriangleStrip(points, 2*BEZIER_LINE_DIVISIONS+2, color);
 }
 
 // Draw line using quadratic bezier curves with a control point
@@ -189,6 +238,8 @@ void DrawLineBezierQuad(Vector2 startPos, Vector2 endPos, Vector2 controlPos, fl
     Vector2 previous = startPos;
     Vector2 current = { 0 };
     float t = 0.0f;
+
+    Vector2 points[2*BEZIER_LINE_DIVISIONS + 2] = { 0 };
 
     for (int i = 0; i <= BEZIER_LINE_DIVISIONS; i++)
     {
@@ -201,10 +252,27 @@ void DrawLineBezierQuad(Vector2 startPos, Vector2 endPos, Vector2 controlPos, fl
         current.y = a*startPos.y + b*controlPos.y + c*endPos.y;
         current.x = a*startPos.x + b*controlPos.x + c*endPos.x;
 
-        DrawLineEx(previous, current, thick, color);
+        float dy = current.y-previous.y;
+        float dx = current.x-previous.x;
+        float size = 0.5*thick/sqrt(dx*dx+dy*dy);
+
+        if (i==1)
+        {
+            points[0].x = previous.x+dy*size;
+            points[0].y = previous.y-dx*size;
+            points[1].x = previous.x-dy*size;
+            points[1].y = previous.y+dx*size;
+        }
+
+        points[2*i+1].x = current.x-dy*size;
+        points[2*i+1].y = current.y+dx*size;
+        points[2*i].x = current.x+dy*size;
+        points[2*i].y = current.y-dx*size;
 
         previous = current;
     }
+
+    DrawTriangleStrip(points, 2*BEZIER_LINE_DIVISIONS+2, color);
 }
 
 // Draw line using cubic bezier curves with 2 control points
@@ -215,6 +283,8 @@ void DrawLineBezierCubic(Vector2 startPos, Vector2 endPos, Vector2 startControlP
     Vector2 previous = startPos;
     Vector2 current = { 0 };
     float t = 0.0f;
+
+    Vector2 points[2*BEZIER_LINE_DIVISIONS + 2] = { 0 };
 
     for (int i = 0; i <= BEZIER_LINE_DIVISIONS; i++)
     {
@@ -227,10 +297,27 @@ void DrawLineBezierCubic(Vector2 startPos, Vector2 endPos, Vector2 startControlP
         current.y = a*startPos.y + b*startControlPos.y + c*endControlPos.y + d*endPos.y;
         current.x = a*startPos.x + b*startControlPos.x + c*endControlPos.x + d*endPos.x;
 
-        DrawLineEx(previous, current, thick, color);
+        float dy = current.y-previous.y;
+        float dx = current.x-previous.x;
+        float size = 0.5*thick/sqrt(dx*dx+dy*dy);
+        
+        if (i==1)
+        {
+            points[0].x = previous.x+dy*size;
+            points[0].y = previous.y-dx*size;
+            points[1].x = previous.x-dy*size;
+            points[1].y = previous.y+dx*size;
+        }
+
+        points[2*i+1].x = current.x-dy*size;
+        points[2*i+1].y = current.y+dx*size;
+        points[2*i].x = current.x+dy*size;
+        points[2*i].y = current.y-dx*size;
 
         previous = current;
     }
+
+    DrawTriangleStrip(points, 2*BEZIER_LINE_DIVISIONS+2, color);
 }
 
 // Draw lines sequence

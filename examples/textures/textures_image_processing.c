@@ -17,7 +17,7 @@
 
 #include <stdlib.h>             // Required for: free()
 
-#define NUM_PROCESSES    8
+#define NUM_PROCESSES    9
 
 typedef enum {
     NONE = 0,
@@ -26,6 +26,7 @@ typedef enum {
     COLOR_INVERT,
     COLOR_CONTRAST,
     COLOR_BRIGHTNESS,
+    GAUSSIAN_BLUR,
     FLIP_VERTICAL,
     FLIP_HORIZONTAL
 } ImageProcess;
@@ -37,6 +38,7 @@ static const char *processText[] = {
     "COLOR INVERT",
     "COLOR CONTRAST",
     "COLOR BRIGHTNESS",
+    "GAUSSIAN BLUR",
     "FLIP VERTICAL",
     "FLIP HORIZONTAL"
 };
@@ -125,6 +127,7 @@ int main(void)
                 case COLOR_INVERT: ImageColorInvert(&imCopy); break;
                 case COLOR_CONTRAST: ImageColorContrast(&imCopy, -40); break;
                 case COLOR_BRIGHTNESS: ImageColorBrightness(&imCopy, -80); break;
+                case GAUSSIAN_BLUR: ImageBlurGaussian(&imCopy, 10); break;
                 case FLIP_VERTICAL: ImageFlipVertical(&imCopy); break;
                 case FLIP_HORIZONTAL: ImageFlipHorizontal(&imCopy); break;
                 default: break;

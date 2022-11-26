@@ -9,7 +9,7 @@ return {
     {
       name = "RAYLIB_VERSION",
       type = "STRING",
-      value = "4.2",
+      value = "4.5-dev",
       description = ""
     },
     {
@@ -729,7 +729,7 @@ return {
         {
           type = "float",
           name = "fovy",
-          description = "Camera field-of-view apperture in Y (degrees) in perspective, used as near plane width in orthographic"
+          description = "Camera field-of-view aperture in Y (degrees) in perspective, used as near plane width in orthographic"
         },
         {
           type = "int",
@@ -905,7 +905,7 @@ return {
     },
     {
       name = "Transform",
-      description = "Transform, vectex transformation data",
+      description = "Transform, vertex transformation data",
       fields = {
         {
           type = "Vector3",
@@ -2051,7 +2051,7 @@ return {
         {
           name = "MOUSE_BUTTON_FORWARD",
           value = 5,
-          description = "Mouse button fordward (advanced mouse device)"
+          description = "Mouse button forward (advanced mouse device)"
         },
         {
           name = "MOUSE_BUTTON_BACK",
@@ -2795,6 +2795,11 @@ return {
           name = "BLEND_CUSTOM",
           value = 6,
           description = "Blend textures using custom src/dst factors (use rlSetBlendMode())"
+        },
+        {
+          name = "BLEND_CUSTOM_SEPARATE",
+          value = 7,
+          description = "Blend textures using custom rgb/alpha separate src/dst factors (use rlSetBlendModeSeparate())"
         }
       }
     },
@@ -3673,7 +3678,7 @@ return {
       description = "Internal memory allocator",
       returnType = "void *",
       params = {
-        {type = "int", name = "size"}
+        {type = "unsigned int", name = "size"}
       }
     },
     {
@@ -3682,7 +3687,7 @@ return {
       returnType = "void *",
       params = {
         {type = "void *", name = "ptr"},
-        {type = "int", name = "size"}
+        {type = "unsigned int", name = "size"}
       }
     },
     {
@@ -4847,6 +4852,16 @@ return {
       }
     },
     {
+      name = "CheckCollisionPointPoly",
+      description = "Check if point is within a polygon described by array of vertices",
+      returnType = "bool",
+      params = {
+        {type = "Vector2", name = "point"},
+        {type = "Vector2 *", name = "points"},
+        {type = "int", name = "pointCount"}
+      }
+    },
+    {
       name = "CheckCollisionLines",
       description = "Check the collision between two lines defined by two points each, returns collision point by reference",
       returnType = "bool",
@@ -5021,6 +5036,18 @@ return {
         {type = "int", name = "width"},
         {type = "int", name = "height"},
         {type = "float", name = "factor"}
+      }
+    },
+    {
+      name = "GenImagePerlinNoise",
+      description = "Generate image: perlin noise",
+      returnType = "Image",
+      params = {
+        {type = "int", name = "width"},
+        {type = "int", name = "height"},
+        {type = "int", name = "offsetX"},
+        {type = "int", name = "offsetY"},
+        {type = "float", name = "scale"}
       }
     },
     {
@@ -5382,7 +5409,7 @@ return {
     },
     {
       name = "ImageDrawCircle",
-      description = "Draw circle within an image",
+      description = "Draw a filled circle within an image",
       returnType = "void",
       params = {
         {type = "Image *", name = "dst"},
@@ -5394,7 +5421,30 @@ return {
     },
     {
       name = "ImageDrawCircleV",
-      description = "Draw circle within an image (Vector version)",
+      description = "Draw a filled circle within an image (Vector version)",
+      returnType = "void",
+      params = {
+        {type = "Image *", name = "dst"},
+        {type = "Vector2", name = "center"},
+        {type = "int", name = "radius"},
+        {type = "Color", name = "color"}
+      }
+    },
+    {
+      name = "ImageDrawCircleLines",
+      description = "Draw circle outline within an image",
+      returnType = "void",
+      params = {
+        {type = "Image *", name = "dst"},
+        {type = "int", name = "centerX"},
+        {type = "int", name = "centerY"},
+        {type = "int", name = "radius"},
+        {type = "Color", name = "color"}
+      }
+    },
+    {
+      name = "ImageDrawCircleLinesV",
+      description = "Draw circle outline within an image (Vector version)",
       returnType = "void",
       params = {
         {type = "Image *", name = "dst"},
@@ -6020,6 +6070,23 @@ return {
       }
     },
     {
+      name = "LoadUTF8",
+      description = "Load UTF-8 text encoded from codepoints array",
+      returnType = "char *",
+      params = {
+        {type = "const int *", name = "codepoints"},
+        {type = "int", name = "length"}
+      }
+    },
+    {
+      name = "UnloadUTF8",
+      description = "Unload UTF-8 text encoded from codepoints array",
+      returnType = "void",
+      params = {
+        {type = "char *", name = "text"}
+      }
+    },
+    {
       name = "LoadCodepoints",
       description = "Load all codepoints from a UTF-8 text string, codepoints count returned by parameter",
       returnType = "int *",
@@ -6050,7 +6117,25 @@ return {
       returnType = "int",
       params = {
         {type = "const char *", name = "text"},
-        {type = "int *", name = "bytesProcessed"}
+        {type = "int *", name = "codepointSize"}
+      }
+    },
+    {
+      name = "GetCodepointNext",
+      description = "Get next codepoint in a UTF-8 encoded string, 0x3f('?') is returned on failure",
+      returnType = "int",
+      params = {
+        {type = "const char *", name = "text"},
+        {type = "int *", name = "codepointSize"}
+      }
+    },
+    {
+      name = "GetCodepointPrevious",
+      description = "Get previous codepoint in a UTF-8 encoded string, 0x3f('?') is returned on failure",
+      returnType = "int",
+      params = {
+        {type = "const char *", name = "text"},
+        {type = "int *", name = "codepointSize"}
       }
     },
     {
@@ -6059,16 +6144,7 @@ return {
       returnType = "const char *",
       params = {
         {type = "int", name = "codepoint"},
-        {type = "int *", name = "byteSize"}
-      }
-    },
-    {
-      name = "TextCodepointsToUTF8",
-      description = "Encode text as codepoints array into UTF-8 text string (WARNING: memory must be freed!)",
-      returnType = "char *",
-      params = {
-        {type = "const int *", name = "codepoints"},
-        {type = "int", name = "length"}
+        {type = "int *", name = "utf8Size"}
       }
     },
     {
@@ -7415,7 +7491,7 @@ return {
     },
     {
       name = "AttachAudioStreamProcessor",
-      description = "",
+      description = "Attach audio stream processor to stream",
       returnType = "void",
       params = {
         {type = "AudioStream", name = "stream"},
@@ -7424,7 +7500,7 @@ return {
     },
     {
       name = "DetachAudioStreamProcessor",
-      description = "",
+      description = "Detach audio stream processor from stream",
       returnType = "void",
       params = {
         {type = "AudioStream", name = "stream"},

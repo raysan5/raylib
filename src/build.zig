@@ -1,20 +1,16 @@
 const std = @import("std");
 
 pub fn addRaylib(b: *std.build.Builder, target: std.zig.CrossTarget) *std.build.LibExeObjStep {
-    // Standard release options allow the person running `zig build` to select
-    // between Debug, ReleaseSafe, ReleaseFast, and ReleaseSmall.
-    const mode = b.standardReleaseOptions();
-
     const raylib_flags = &[_][]const u8{
         "-std=gnu99",
         "-DPLATFORM_DESKTOP",
+        "-D_GNU_SOURCE",
         "-DGL_SILENCE_DEPRECATION=199309L",
         "-fno-sanitize=undefined", // https://github.com/raysan5/raylib/issues/1891
     };
 
-    const raylib = b.addStaticLibrary("raylib", srcdir ++ "/raylib.h");
+    const raylib = b.addStaticLibrary("raylib", null);
     raylib.setTarget(target);
-    raylib.setBuildMode(mode);
     raylib.linkLibC();
 
     raylib.addIncludePath(srcdir ++ "/external/glfw/include");
@@ -68,6 +64,10 @@ pub fn addRaylib(b: *std.build.Builder, target: std.zig.CrossTarget) *std.build.
                 raylib_flags ++ raylib_flags_extra_macos,
             );
             raylib.linkFramework("Foundation");
+            raylib.linkFramework("CoreServices");
+            raylib.linkFramework("CoreGraphics");
+            raylib.linkFramework("AppKit");
+            raylib.linkFramework("IOKit");
         },
         else => {
             @panic("Unsupported OS");
@@ -89,8 +89,8 @@ pub fn build(b: *std.build.Builder) void {
     lib.install();
 }
 
-const srcdir = getSrcDir();
-
-fn getSrcDir() []const u8 {
-    return std.fs.path.dirname(@src().file) orelse ".";
-}
+const srcdir = struct{
+    fn getSrcDir() []const u8 {
+        return std.fs.path.dirname(@src().file).?;
+    }
+}.getSrcDir();

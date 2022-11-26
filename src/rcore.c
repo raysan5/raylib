@@ -246,7 +246,7 @@
         //#define GLFW_EXPOSE_NATIVE_COCOA    // WARNING: Fails due to type redefinition
         #include "GLFW/glfw3native.h"       // Required for: glfwGetCocoaWindow()
     #endif
-    
+
     // TODO: HACK: Added flag if not provided by GLFW when using external library
     // Latest GLFW release (GLFW 3.3.8) does not implement this flag, it was added for 3.4.0-dev
     #if !defined(GLFW_MOUSE_PASSTHROUGH)
@@ -1732,49 +1732,58 @@ int GetMonitorCount(void)
 // Get number of monitors
 int GetCurrentMonitor(void)
 {
+    int index = 0;
+
 #if defined(PLATFORM_DESKTOP)
     int monitorCount;
-    GLFWmonitor** monitors = glfwGetMonitors(&monitorCount);
-    GLFWmonitor* monitor = NULL;
+    GLFWmonitor **monitors = glfwGetMonitors(&monitorCount);
+    GLFWmonitor *monitor = NULL;
 
-    if (monitorCount == 1) // easy out
-        return 0;
-
-    if (IsWindowFullscreen())
+    if (monitorCount > 1)
     {
-        monitor = glfwGetWindowMonitor(CORE.Window.handle);
-        for (int i = 0; i < monitorCount; i++)
+        if (IsWindowFullscreen())
         {
-            if (monitors[i] == monitor)
-                return i;
+            // Get the handle of the monitor that the specified window is in full screen on
+            monitor = glfwGetWindowMonitor(CORE.Window.handle);
+
+            for (int i = 0; i < monitorCount; i++)
+            {
+                if (monitors[i] == monitor)
+                {
+                    index = i;
+                    break;
+                }
+            }
         }
-        return 0;
-    }
-    else
-    {
-        int x = 0;
-        int y = 0;
-
-        glfwGetWindowPos(CORE.Window.handle, &x, &y);
-
-        for (int i = 0; i < monitorCount; i++)
+        else
         {
-            int mx = 0;
-            int my = 0;
+            int x = 0;
+            int y = 0;
 
-            int width = 0;
-            int height = 0;
+            glfwGetWindowPos(CORE.Window.handle, &x, &y);
 
-            monitor = monitors[i];
-            glfwGetMonitorWorkarea(monitor, &mx, &my, &width, &height);
-            if (x >= mx && x <= (mx + width) && y >= my && y <= (my + height))
-                return i;
+            for (int i = 0; i < monitorCount; i++)
+            {
+                int mx = 0;
+                int my = 0;
+
+                int width = 0;
+                int height = 0;
+
+                monitor = monitors[i];
+                glfwGetMonitorWorkarea(monitor, &mx, &my, &width, &height);
+
+                if (x >= mx && x <= (mx + width) && y >= my && y <= (my + height))
+                {
+                    index = i;
+                    break;
+                }
+            }
         }
     }
-    return 0;
-#else
-    return 0;
 #endif
+
+    return index;
 }
 
 // Get selected monitor position
@@ -1782,7 +1791,7 @@ Vector2 GetMonitorPosition(int monitor)
 {
 #if defined(PLATFORM_DESKTOP)
     int monitorCount;
-    GLFWmonitor** monitors = glfwGetMonitors(&monitorCount);
+    GLFWmonitor **monitors = glfwGetMonitors(&monitorCount);
 
     if ((monitor >= 0) && (monitor < monitorCount))
     {
@@ -1852,7 +1861,7 @@ int GetMonitorPhysicalWidth(int monitor)
     return 0;
 }
 
-// Get primary monitor physical height in millimetres
+// Get selected monitor physical height in millimetres
 int GetMonitorPhysicalHeight(int monitor)
 {
 #if defined(PLATFORM_DESKTOP)
@@ -1870,6 +1879,7 @@ int GetMonitorPhysicalHeight(int monitor)
     return 0;
 }
 
+// Get selected monitor refresh rate
 int GetMonitorRefreshRate(int monitor)
 {
 #if defined(PLATFORM_DESKTOP)
@@ -1903,7 +1913,7 @@ Vector2 GetWindowPosition(void)
     return (Vector2){ (float)x, (float)y };
 }
 
-// Get window scale DPI factor
+// Get window scale DPI factor for current monitor
 Vector2 GetWindowScaleDPI(void)
 {
     Vector2 scale = { 1.0f, 1.0f };
@@ -1937,7 +1947,7 @@ Vector2 GetWindowScaleDPI(void)
     return scale;
 }
 
-// Get the human-readable, UTF-8 encoded name of the primary monitor
+// Get the human-readable, UTF-8 encoded name of the selected monitor
 const char *GetMonitorName(int monitor)
 {
 #if defined(PLATFORM_DESKTOP)
@@ -1964,18 +1974,6 @@ void SetClipboardText(const char *text)
 #endif
 }
 
-// Enable waiting for events on EndDrawing(), no automatic event polling
-void EnableEventWaiting(void)
-{
-    CORE.Window.eventWaiting = true;
-}
-
-// Disable waiting for events on EndDrawing(), automatic events polling
-void DisableEventWaiting(void)
-{
-    CORE.Window.eventWaiting = false;
-}
-
 // Get clipboard text content
 // NOTE: returned string is allocated and freed by GLFW
 const char *GetClipboardText(void)
@@ -1987,6 +1985,18 @@ const char *GetClipboardText(void)
     return emscripten_run_script_string("navigator.clipboard.readText()");
 #endif
     return NULL;
+}
+
+// Enable waiting for events on EndDrawing(), no automatic event polling
+void EnableEventWaiting(void)
+{
+    CORE.Window.eventWaiting = true;
+}
+
+// Disable waiting for events on EndDrawing(), automatic events polling
+void DisableEventWaiting(void)
+{
+    CORE.Window.eventWaiting = false;
 }
 
 // Show mouse cursor
@@ -2843,6 +2853,13 @@ int GetRandomValue(int min, int max)
         max = min;
         min = tmp;
     }
+    
+    // WARNING: Ranges higher than RAND_MAX will return invalid results. More specifically, if (max - min) > INT_MAX there will
+    // be an overflow, and otherwise if (max - min) > RAND_MAX the random value will incorrectly never exceed a certain threshold.
+    if ((unsigned int)(max - min) > (unsigned int)RAND_MAX)
+    {
+        TRACELOG(LOG_WARNING, "Invalid GetRandomValue arguments. Range should not be higher than %i.", RAND_MAX);
+    }
 
     return (rand()%(abs(max - min) + 1) + min);
 }
@@ -3208,14 +3225,12 @@ FilePathList LoadDirectoryFilesEx(const char *basePath, const char *filter, bool
 }
 
 // Unload directory filepaths
+// WARNING: files.count is not reseted to 0 after unloading
 void UnloadDirectoryFiles(FilePathList files)
 {
-    if (files.capacity > 0)
-    {
-        for (unsigned int i = 0; i < files.capacity; i++) RL_FREE(files.paths[i]);
+    for (unsigned int i = 0; i < files.capacity; i++) RL_FREE(files.paths[i]);
 
-        RL_FREE(files.paths);
-    }
+    RL_FREE(files.paths);
 }
 
 // Change working directory, returns true on success
@@ -3315,6 +3330,9 @@ unsigned char *DecompressData(const unsigned char *compData, int compDataSize, i
     // Decompress data from a valid DEFLATE stream
     data = RL_CALLOC(MAX_DECOMPRESSION_SIZE*1024*1024, 1);
     int length = sinflate(data, MAX_DECOMPRESSION_SIZE*1024*1024, compData, compDataSize);
+
+    // WARNING: RL_REALLOC can make (and leave) data copies in memory, be careful with sensitive compressed data!
+    // TODO: Use a different approach, create another buffer, copy data manually to it and wipe original buffer memory
     unsigned char *temp = RL_REALLOC(data, length);
 
     if (temp != NULL) data = temp;
@@ -3438,7 +3456,7 @@ void OpenURL(const char *url)
     else
     {
 #if defined(PLATFORM_DESKTOP)
-        char *cmd = (char *)RL_CALLOC(strlen(url) + 10, sizeof(char));
+        char *cmd = (char *)RL_CALLOC(strlen(url) + 32, sizeof(char));
     #if defined(_WIN32)
         sprintf(cmd, "explorer \"%s\"", url);
     #endif
@@ -3817,7 +3835,7 @@ float GetMouseWheelMove(void)
 Vector2 GetMouseWheelMoveV(void)
 {
     Vector2 result = { 0 };
-   
+
     result = CORE.Input.Mouse.currentWheelMove;
 
     return result;
@@ -3933,30 +3951,6 @@ static bool InitGraphicsDevice(int width, int height)
         TRACELOG(LOG_WARNING, "GLFW: Failed to initialize GLFW");
         return false;
     }
-
-    // NOTE: Getting video modes is not implemented in emscripten GLFW3 version
-#if defined(PLATFORM_DESKTOP)
-    // Find monitor resolution
-    GLFWmonitor *monitor = glfwGetPrimaryMonitor();
-    if (!monitor)
-    {
-        TRACELOG(LOG_WARNING, "GLFW: Failed to get primary monitor");
-        return false;
-    }
-    const GLFWvidmode *mode = glfwGetVideoMode(monitor);
-
-    CORE.Window.display.width = mode->width;
-    CORE.Window.display.height = mode->height;
-
-    // Set screen width/height to the display width/height if they are 0
-    if (CORE.Window.screen.width == 0) CORE.Window.screen.width = CORE.Window.display.width;
-    if (CORE.Window.screen.height == 0) CORE.Window.screen.height = CORE.Window.display.height;
-#endif  // PLATFORM_DESKTOP
-
-#if defined(PLATFORM_WEB)
-    CORE.Window.display.width = CORE.Window.screen.width;
-    CORE.Window.display.height = CORE.Window.screen.height;
-#endif  // PLATFORM_WEB
 
     glfwDefaultWindowHints();                       // Set default windows hints
     //glfwWindowHint(GLFW_RED_BITS, 8);             // Framebuffer red color component bits
@@ -4074,6 +4068,31 @@ static bool InitGraphicsDevice(int width, int height)
     if (MAX_GAMEPADS > 0) glfwSetJoystickCallback(NULL);
 #endif
 
+#if defined(PLATFORM_DESKTOP)
+    // Find monitor resolution
+    GLFWmonitor *monitor = glfwGetPrimaryMonitor();
+    if (!monitor)
+    {
+        TRACELOG(LOG_WARNING, "GLFW: Failed to get primary monitor");
+        return false;
+    }
+
+    const GLFWvidmode *mode = glfwGetVideoMode(monitor);
+
+    CORE.Window.display.width = mode->width;
+    CORE.Window.display.height = mode->height;
+
+    // Set screen width/height to the display width/height if they are 0
+    if (CORE.Window.screen.width == 0) CORE.Window.screen.width = CORE.Window.display.width;
+    if (CORE.Window.screen.height == 0) CORE.Window.screen.height = CORE.Window.display.height;
+#endif  // PLATFORM_DESKTOP
+
+#if defined(PLATFORM_WEB)
+    // NOTE: Getting video modes is not implemented in emscripten GLFW3 version
+    CORE.Window.display.width = CORE.Window.screen.width;
+    CORE.Window.display.height = CORE.Window.screen.height;
+#endif  // PLATFORM_WEB
+
     if (CORE.Window.fullscreen)
     {
         // remember center for switchinging from fullscreen to window
@@ -4133,16 +4152,6 @@ static bool InitGraphicsDevice(int width, int height)
 
         if (CORE.Window.handle)
         {
-#if defined(PLATFORM_DESKTOP)
-            // Center window on screen
-            int windowPosX = CORE.Window.display.width/2 - CORE.Window.screen.width/2;
-            int windowPosY = CORE.Window.display.height/2 - CORE.Window.screen.height/2;
-
-            if (windowPosX < 0) windowPosX = 0;
-            if (windowPosY < 0) windowPosY = 0;
-
-            glfwSetWindowPos(CORE.Window.handle, windowPosX, windowPosY);
-#endif
             CORE.Window.render.width = CORE.Window.screen.width;
             CORE.Window.render.height = CORE.Window.screen.height;
         }
@@ -4163,6 +4172,7 @@ static bool InitGraphicsDevice(int width, int height)
     glfwSetWindowIconifyCallback(CORE.Window.handle, WindowIconifyCallback);
     glfwSetWindowFocusCallback(CORE.Window.handle, WindowFocusCallback);
     glfwSetDropCallback(CORE.Window.handle, WindowDropCallback);
+
     // Set input callback events
     glfwSetKeyCallback(CORE.Window.handle, KeyCallback);
     glfwSetCharCallback(CORE.Window.handle, CharCallback);
@@ -4171,11 +4181,11 @@ static bool InitGraphicsDevice(int width, int height)
     glfwSetScrollCallback(CORE.Window.handle, MouseScrollCallback);
     glfwSetCursorEnterCallback(CORE.Window.handle, CursorEnterCallback);
 
-    glfwSetInputMode(CORE.Window.handle, GLFW_LOCK_KEY_MODS, GLFW_TRUE);    // Enable lock keys modifiers (CAPS, NUM)
-
     glfwMakeContextCurrent(CORE.Window.handle);
 
 #if !defined(PLATFORM_WEB)
+    glfwSetInputMode(CORE.Window.handle, GLFW_LOCK_KEY_MODS, GLFW_TRUE);    // Enable lock keys modifiers (CAPS, NUM)
+
     glfwSwapInterval(0);        // No V-Sync by default
 #endif
 
@@ -4295,6 +4305,7 @@ static bool InitGraphicsDevice(int width, int height)
             drmModeFreeConnector(con);
         }
     }
+
     if (!CORE.Window.connector)
     {
         TRACELOG(LOG_WARNING, "DISPLAY: No suitable DRM connector found");
@@ -4340,18 +4351,20 @@ static bool InitGraphicsDevice(int width, int height)
 
     const bool allowInterlaced = CORE.Window.flags & FLAG_INTERLACED_HINT;
     const int fps = (CORE.Time.target > 0) ? (1.0/CORE.Time.target) : 60;
-    // try to find an exact matching mode
+
+    // Try to find an exact matching mode
     CORE.Window.modeIndex = FindExactConnectorMode(CORE.Window.connector, CORE.Window.screen.width, CORE.Window.screen.height, fps, allowInterlaced);
-    // if nothing found, try to find a nearly matching mode
-    if (CORE.Window.modeIndex < 0)
-        CORE.Window.modeIndex = FindNearestConnectorMode(CORE.Window.connector, CORE.Window.screen.width, CORE.Window.screen.height, fps, allowInterlaced);
-    // if nothing found, try to find an exactly matching mode including interlaced
-    if (CORE.Window.modeIndex < 0)
-        CORE.Window.modeIndex = FindExactConnectorMode(CORE.Window.connector, CORE.Window.screen.width, CORE.Window.screen.height, fps, true);
-    // if nothing found, try to find a nearly matching mode including interlaced
-    if (CORE.Window.modeIndex < 0)
-        CORE.Window.modeIndex = FindNearestConnectorMode(CORE.Window.connector, CORE.Window.screen.width, CORE.Window.screen.height, fps, true);
-    // if nothing found, there is no suitable mode
+
+    // If nothing found, try to find a nearly matching mode
+    if (CORE.Window.modeIndex < 0) CORE.Window.modeIndex = FindNearestConnectorMode(CORE.Window.connector, CORE.Window.screen.width, CORE.Window.screen.height, fps, allowInterlaced);
+
+    // If nothing found, try to find an exactly matching mode including interlaced
+    if (CORE.Window.modeIndex < 0) CORE.Window.modeIndex = FindExactConnectorMode(CORE.Window.connector, CORE.Window.screen.width, CORE.Window.screen.height, fps, true);
+
+    // If nothing found, try to find a nearly matching mode including interlaced
+    if (CORE.Window.modeIndex < 0) CORE.Window.modeIndex = FindNearestConnectorMode(CORE.Window.connector, CORE.Window.screen.width, CORE.Window.screen.height, fps, true);
+
+    // If nothing found, there is no suitable mode
     if (CORE.Window.modeIndex < 0)
     {
         TRACELOG(LOG_WARNING, "DISPLAY: Failed to find a suitable DRM connector mode");
@@ -5514,15 +5527,17 @@ static void WindowFocusCallback(GLFWwindow *window, int focused)
 static void KeyCallback(GLFWwindow *window, int key, int scancode, int action, int mods)
 {
     if (key < 0) return;    // Security check, macOS fn key generates -1
-    
+
     // WARNING: GLFW could return GLFW_REPEAT, we need to consider it as 1
     // to work properly with our implementation (IsKeyDown/IsKeyUp checks)
     if (action == GLFW_RELEASE) CORE.Input.Keyboard.currentKeyState[key] = 0;
     else CORE.Input.Keyboard.currentKeyState[key] = 1;
 
+#if !defined(PLATFORM_WEB)
     // WARNING: Check if CAPS/NUM key modifiers are enabled and force down state for those keys
     if (((key == KEY_CAPS_LOCK) && ((mods & GLFW_MOD_CAPS_LOCK) > 0)) ||
         ((key == KEY_NUM_LOCK) && ((mods & GLFW_MOD_NUM_LOCK) > 0))) CORE.Input.Keyboard.currentKeyState[key] = 1;
+#endif
 
     // Check if there is space available in the key queue
     if ((CORE.Input.Keyboard.keyPressedQueueCount < MAX_KEY_PRESSED_QUEUE) && (action == GLFW_PRESS))

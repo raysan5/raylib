@@ -58,7 +58,7 @@
 
 #if defined(SUPPORT_MODULE_RTEXT)
 
-#include "utils.h"          // Required for: LoadFileText()
+#include "utils.h"          // Required for: LoadFile*()
 #include "rlgl.h"           // OpenGL abstraction layer to OpenGL 1.1, 2.1, 3.3+ or ES2 -> Only DrawTextPro()
 
 #include <stdlib.h>         // Required for: malloc(), free()
@@ -359,7 +359,7 @@ Font LoadFontEx(const char *fileName, int fontSize, int *fontChars, int glyphCou
         // Loading font from memory data
         font = LoadFontFromMemory(GetFileExtension(fileName), fileData, fileSize, fontSize, fontChars, glyphCount);
 
-        RL_FREE(fileData);
+        UnloadFileData(fileData);
     }
     else font = GetFontDefault();
 

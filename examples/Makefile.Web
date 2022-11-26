@@ -279,11 +279,12 @@ ifeq ($(PLATFORM),PLATFORM_WEB)
     # -s ASYNCIFY                # lets synchronous C/C++ code interact with asynchronous JS
     # -s FORCE_FILESYSTEM=1      # force filesystem to load/save files data
     # -s ASSERTIONS=1            # enable runtime checks for common memory allocation errors (-O1 and above turn it off)
+    # -s EXPORTED_RUNTIME_METHODS=ccall  # require exporting some LEGACY_RUNTIME functions, ccall() is required by miniaudio
     # --profiling                # include information for code profiling
     # --memory-init-file 0       # to avoid an external memory initialization code file (.mem)
     # --preload-file resources   # specify a resources folder for data compilation
     # --source-map-base          # allow debugging in browser with source map
-    LDFLAGS += -s USE_GLFW=3 -s ASYNCIFY
+    LDFLAGS += -s USE_GLFW=3 -s ASYNCIFY -s EXPORTED_RUNTIME_METHODS=ccall
 
     # NOTE: Simple raylib examples are compiled to be interpreter with asyncify, that way,
     # we can compile same code for ALL platforms with no change required, but, working on bigger
@@ -328,6 +329,9 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
         ifeq ($(RAYLIB_LIBTYPE),SHARED)
             LDLIBS += -lc
         endif
+        
+        # NOTE: On ARM 32bit arch, miniaudio requires atomics library
+        LDLIBS += -latomic
     endif
     ifeq ($(PLATFORM_OS),OSX)
         # Libraries for OSX 10.9 desktop compiling
@@ -466,6 +470,7 @@ MODELS = \
     models/models_loading \
     models/models_loading_vox \
     models/models_loading_gltf \
+    models/models_loading_m3d \
     models/models_orthographic_projection \
     models/models_rlgl_solar_system \
     models/models_skybox \

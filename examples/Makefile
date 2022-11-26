@@ -357,7 +357,7 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
             LDLIBS += -lc
         endif
         
-        # TODO: On ARM 32bit arch, miniaudio requires atomics library
+        # NOTE: On ARM 32bit arch, miniaudio requires atomics library
         LDLIBS += -latomic
     endif
     ifeq ($(PLATFORM_OS),OSX)
