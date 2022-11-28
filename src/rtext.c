@@ -199,11 +199,11 @@ extern void LoadFontDefault(void)
     // Re-construct image from defaultFontData and generate OpenGL texture
     //----------------------------------------------------------------------
     Image imFont = {
-        .data = calloc(128*128, 2),  // 2 bytes per pixel (gray + alpha)
+        .data = RL_CALLOC(128*128, 2),  // 2 bytes per pixel (gray + alpha)
         .width = 128,
         .height = 128,
-        .format = PIXELFORMAT_UNCOMPRESSED_GRAY_ALPHA,
-        .mipmaps = 1
+        .mipmaps = 1,
+        .format = PIXELFORMAT_UNCOMPRESSED_GRAY_ALPHA
     };
 
     // Fill image.data with defaultFontData (convert from bit to pixel!)
@@ -454,8 +454,8 @@ Font LoadFontFromImage(Image image, Color key, int firstChar)
         .data = pixels,
         .width = image.width,
         .height = image.height,
-        .format = PIXELFORMAT_UNCOMPRESSED_R8G8B8A8,
-        .mipmaps = 1
+        .mipmaps = 1,
+        .format = PIXELFORMAT_UNCOMPRESSED_R8G8B8A8
     };
 
     // Set font with all data parsed from image
@@ -620,11 +620,11 @@ GlyphInfo *LoadFontData(const unsigned char *fileData, int dataSize, int fontSiz
                 if (ch == 32)
                 {
                     Image imSpace = {
-                        .data = calloc(chars[i].advanceX*fontSize, 2),
+                        .data = RL_CALLOC(chars[i].advanceX*fontSize, 2),
                         .width = chars[i].advanceX,
                         .height = fontSize,
-                        .format = PIXELFORMAT_UNCOMPRESSED_GRAYSCALE,
-                        .mipmaps = 1
+                        .mipmaps = 1,
+                        .format = PIXELFORMAT_UNCOMPRESSED_GRAYSCALE
                     };
 
                     chars[i].image = imSpace;
@@ -896,7 +896,7 @@ bool ExportFontAsCode(Font font, const char *fileName)
 
     // Compress font image data
     int compDataSize = 0;
-    unsigned char *compData = CompressData(image.data, imageDataSize, &compDataSize);
+    unsigned char *compData = CompressData((const unsigned char *)image.data, imageDataSize, &compDataSize);
 
     // Save font image data (compressed)
     byteCount += sprintf(txtData + byteCount, "#define COMPRESSED_DATA_SIZE_FONT_%s %i\n\n", TextToUpper(fileNamePascal), compDataSize);
@@ -1665,7 +1665,7 @@ int *LoadCodepoints(const char *text, int *count)
     int codepointCount = 0;
 
     // Allocate a big enough buffer to store as many codepoints as text bytes
-    int *codepoints = RL_CALLOC(textLength, sizeof(int));
+    int *codepoints = (int *)RL_CALLOC(textLength, sizeof(int));
 
     for (int i = 0; i < textLength; codepointCount++)
     {
@@ -1674,7 +1674,7 @@ int *LoadCodepoints(const char *text, int *count)
     }
 
     // Re-allocate buffer to the actual number of codepoints loaded
-    void *temp = RL_REALLOC(codepoints, codepointCount*sizeof(int));
+    int *temp = (int *)RL_REALLOC(codepoints, codepointCount*sizeof(int));
     if (temp != NULL) codepoints = temp;
 
     *count = codepointCount;
@@ -1992,7 +1992,7 @@ static Font LoadBMFont(const char *fileName)
     if (lastSlash != NULL)
     {
         // NOTE: We need some extra space to avoid memory corruption on next allocations!
-        imPath = RL_CALLOC(TextLength(fileName) - TextLength(lastSlash) + TextLength(imFileName) + 4, 1);
+        imPath = (char *)RL_CALLOC(TextLength(fileName) - TextLength(lastSlash) + TextLength(imFileName) + 4, 1);
         memcpy(imPath, fileName, TextLength(fileName) - TextLength(lastSlash) + 1);
         memcpy(imPath + TextLength(fileName) - TextLength(lastSlash) + 1, imFileName, TextLength(imFileName));
     }
@@ -2006,11 +2006,11 @@ static Font LoadBMFont(const char *fileName)
     {
         // Convert image to GRAYSCALE + ALPHA, using the mask as the alpha channel
         Image imFontAlpha = {
-            .data = calloc(imFont.width*imFont.height, 2),
+            .data = RL_CALLOC(imFont.width*imFont.height, 2),
             .width = imFont.width,
             .height = imFont.height,
-            .format = PIXELFORMAT_UNCOMPRESSED_GRAY_ALPHA,
-            .mipmaps = 1
+            .mipmaps = 1,
+            .format = PIXELFORMAT_UNCOMPRESSED_GRAY_ALPHA
         };
 
         for (int p = 0, i = 0; p < (imFont.width*imFont.height*2); p += 2, i++)
