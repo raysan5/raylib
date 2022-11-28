@@ -76,7 +76,7 @@ if (${CUSTOMIZE_BUILD})
     target_compile_definitions("raylib" PUBLIC "MAX_KEY_PRESSED_QUEUE=16")
     
     target_compile_definitions("raylib" PUBLIC "STORAGE_DATA_FILE=\"storage.data\"")
-    target_compile_definitions("raylib" PUBLIC "MAX_KEY_PRESSED_QUEUE=16")
+    target_compile_definitions("raylib" PUBLIC "MAX_CHAR_PRESSED_QUEUE=16")
     target_compile_definitions("raylib" PUBLIC "MAX_DECOMPRESSION_SIZE=64")
     
     if (${GRAPHICS} MATCHES "GRAPHICS_API_OPENGL_33" OR ${GRAPHICS} MATCHES "GRAPHICS_API_OPENGL_11")
