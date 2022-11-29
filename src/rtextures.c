@@ -16,6 +16,7 @@
 *   #define SUPPORT_FILEFORMAT_PSD
 *   #define SUPPORT_FILEFORMAT_PIC
 *   #define SUPPORT_FILEFORMAT_HDR
+*   #define SUPPORT_FILEFORMAT_PNM
 *   #define SUPPORT_FILEFORMAT_DDS
 *   #define SUPPORT_FILEFORMAT_PKM
 *   #define SUPPORT_FILEFORMAT_KTX
@@ -103,6 +104,9 @@
 #if !defined(SUPPORT_FILEFORMAT_HDR)
     #define STBI_NO_HDR
 #endif
+#if !defined(SUPPORT_FILEFORMAT_PNM)
+    #define STBI_NO_PNM
+#endif
 
 #if defined(SUPPORT_FILEFORMAT_DDS)
     #define RL_GPUTEX_SUPPORT_DDS
@@ -135,7 +139,8 @@
      defined(SUPPORT_FILEFORMAT_PSD) || \
      defined(SUPPORT_FILEFORMAT_GIF) || \
      defined(SUPPORT_FILEFORMAT_PIC) || \
-     defined(SUPPORT_FILEFORMAT_HDR))
+     defined(SUPPORT_FILEFORMAT_HDR) || \
+     defined(SUPPORT_FILEFORMAT_PNM))
 
     #define STBI_MALLOC RL_MALLOC
     #define STBI_FREE RL_FREE
@@ -234,6 +239,7 @@ Image LoadImage(const char *fileName)
     defined(SUPPORT_FILEFORMAT_GIF) || \
     defined(SUPPORT_FILEFORMAT_PIC) || \
     defined(SUPPORT_FILEFORMAT_HDR) || \
+    defined(SUPPORT_FILEFORMAT_PNM) || \
     defined(SUPPORT_FILEFORMAT_PSD)
 
     #define STBI_REQUIRED
@@ -343,6 +349,9 @@ Image LoadImageFromMemory(const char *fileType, const unsigned char *fileData, i
 #endif
 #if defined(SUPPORT_FILEFORMAT_PIC)
         || (strcmp(fileType, ".pic") == 0)
+#endif
+#if defined(SUPPORT_FILEFORMAT_PNM)
+        || ((strcmp(fileType, ".ppm") == 0) || (strcmp(fileType, ".pgm") == 0))
 #endif
 #if defined(SUPPORT_FILEFORMAT_PSD)
         || (strcmp(fileType, ".psd") == 0)
