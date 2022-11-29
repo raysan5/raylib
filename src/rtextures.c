@@ -14,8 +14,8 @@
 *   #define SUPPORT_FILEFORMAT_GIF
 *   #define SUPPORT_FILEFORMAT_QOI
 *   #define SUPPORT_FILEFORMAT_PSD
-*   #define SUPPORT_FILEFORMAT_PIC
 *   #define SUPPORT_FILEFORMAT_HDR
+*   #define SUPPORT_FILEFORMAT_PIC
 *   #define SUPPORT_FILEFORMAT_PNM
 *   #define SUPPORT_FILEFORMAT_DDS
 *   #define SUPPORT_FILEFORMAT_PKM
@@ -125,9 +125,6 @@
 #endif
 
 // Image fileformats not supported by default
-#define STBI_NO_PIC
-#define STBI_NO_PNM             // Image format .ppm and .pgm
-
 #if defined(__TINYC__)
     #define STBI_NO_SIMD
 #endif
@@ -138,8 +135,8 @@
      defined(SUPPORT_FILEFORMAT_JPG) || \
      defined(SUPPORT_FILEFORMAT_PSD) || \
      defined(SUPPORT_FILEFORMAT_GIF) || \
-     defined(SUPPORT_FILEFORMAT_PIC) || \
      defined(SUPPORT_FILEFORMAT_HDR) || \
+     defined(SUPPORT_FILEFORMAT_PIC) || \
      defined(SUPPORT_FILEFORMAT_PNM))
 
     #define STBI_MALLOC RL_MALLOC
