@@ -2446,10 +2446,6 @@ Shader LoadShader(const char *vsFileName, const char *fsFileName)
 Shader LoadShaderFromMemory(const char *vsCode, const char *fsCode)
 {
     Shader shader = { 0 };
-    shader.locs = (int *)RL_CALLOC(RL_MAX_SHADER_LOCATIONS, sizeof(int));
-
-    // NOTE: All locations must be reseted to -1 (no location)
-    for (int i = 0; i < RL_MAX_SHADER_LOCATIONS; i++) shader.locs[i] = -1;
 
     shader.id = rlLoadShaderCode(vsCode, fsCode);
 
@@ -2465,6 +2461,11 @@ Shader LoadShaderFromMemory(const char *vsCode, const char *fsCode)
         //          vertex texcoord2 location   = 5
 
         // NOTE: If any location is not found, loc point becomes -1
+        
+        shader.locs = (int *)RL_CALLOC(RL_MAX_SHADER_LOCATIONS, sizeof(int));
+
+        // All locations reseted to -1 (no location)
+        for (int i = 0; i < RL_MAX_SHADER_LOCATIONS; i++) shader.locs[i] = -1;
 
         // Get handles to GLSL input attibute locations
         shader.locs[SHADER_LOC_VERTEX_POSITION] = rlGetLocationAttrib(shader.id, RL_DEFAULT_SHADER_ATTRIB_NAME_POSITION);
@@ -2497,6 +2498,8 @@ void UnloadShader(Shader shader)
     if (shader.id != rlGetShaderIdDefault())
     {
         rlUnloadShaderProgram(shader.id);
+        
+        // NOTE: If shader loading failed, it should be 0
         RL_FREE(shader.locs);
     }
 }

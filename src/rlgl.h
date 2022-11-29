@@ -3643,12 +3643,14 @@ unsigned int rlLoadShaderCode(const char *vsCode, const char *fsCode)
         // NOTE: We detach shader before deletion to make sure memory is freed
         if (vertexShaderId != RLGL.State.defaultVShaderId)
         {
-            glDetachShader(id, vertexShaderId);
+            // WARNING: Shader program linkage could fail and returned id is 0
+            if (id > 0) glDetachShader(id, vertexShaderId);
             glDeleteShader(vertexShaderId);
         }
         if (fragmentShaderId != RLGL.State.defaultFShaderId)
         {
-            glDetachShader(id, fragmentShaderId);
+            // WARNING: Shader program linkage could fail and returned id is 0
+            if (id > 0) glDetachShader(id, fragmentShaderId);
             glDeleteShader(fragmentShaderId);
         }
 
