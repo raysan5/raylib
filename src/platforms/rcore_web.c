@@ -848,6 +848,13 @@ void OpenURL(const char *url)
 // Module Functions Definition: Inputs
 //----------------------------------------------------------------------------------
 
+// Set the preedit cursor area.
+// This is used to decide the position of the candidate window.
+void SetPreeditCursorRectangle(int x, int y, int w, int h)
+{
+    glfwSetPreeditCursorRectangle(platform.handle, x, y, w, h);
+}
+
 // Set internal gamepad mappings
 int SetGamepadMappings(const char *mappings)
 {
