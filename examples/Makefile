@@ -51,6 +51,13 @@ USE_EXTERNAL_GLFW     ?= FALSE
 # NOTE: This variable is only used for PLATFORM_OS: LINUX
 USE_WAYLAND_DISPLAY   ?= FALSE
 
+# PLATFORM_WEB: Default properties
+BUILD_WEB_ASYNCIFY    ?= FALSE
+BUILD_WEB_SHELL       ?= minshell.html
+BUILD_WEB_HEAP_SIZE   ?= 134217728
+BUILD_WEB_RESOURCES   ?= TRUE
+BUILD_WEB_RESOURCES_PATH  ?= $(dir $<)resources@resources
+
 # Use cross-compiler for PLATFORM_RPI
 ifeq ($(PLATFORM),PLATFORM_RPI)
     USE_RPI_CROSS_COMPILER ?= FALSE
@@ -195,9 +202,13 @@ ifeq ($(BUILD_MODE),DEBUG)
     endif
 else
     ifeq ($(PLATFORM),PLATFORM_WEB)
-        CFLAGS += -Os
+        ifeq ($(BUILD_WEB_ASYNCIFY),TRUE)
+            CFLAGS += -O3
+        else
+            CFLAGS += -Os
+        endif
     else
-        CFLAGS += -s -O1
+        CFLAGS += -s -O2
     endif
 endif
 
@@ -283,16 +294,32 @@ ifeq ($(PLATFORM),PLATFORM_WEB)
     # --memory-init-file 0       # to avoid an external memory initialization code file (.mem)
     # --preload-file resources   # specify a resources folder for data compilation
     # --source-map-base          # allow debugging in browser with source map
-    LDFLAGS += -s USE_GLFW=3 -s ASYNCIFY -s TOTAL_MEMORY=67108864 -s FORCE_FILESYSTEM=1 --preload-file $(dir $<)resources@resources
+    LDFLAGS += -s USE_GLFW=3 -s TOTAL_MEMORY=$(BUILD_WEB_HEAP_SIZE) -s FORCE_FILESYSTEM=1
+    
+    # Build using asyncify
+    ifeq ($(BUILD_WEB_ASYNCIFY),TRUE)
+        LDFLAGS += -s ASYNCIFY
+    endif
+    
+    # Add resources building if required
+    ifeq ($(BUILD_WEB_RESOURCES),TRUE)
+        LDFLAGS += --preload-file $(BUILD_WEB_RESOURCES_PATH)
+    endif
+    
+    # Add debug mode flags if required
+    ifeq ($(BUILD_MODE),DEBUG)
+        LDFLAGS += -s ASSERTIONS=1 --profiling
+    endif
 
+    # Define a custom shell .html and output extension
+    LDFLAGS += --shell-file $(BUILD_WEB_SHELL)
+    EXT = .html
+    
     # NOTE: Simple raylib examples are compiled to be interpreter with asyncify, that way,
     # we can compile same code for ALL platforms with no change required, but, working on bigger
     # projects, code needs to be refactored to avoid a blocking while() loop, moving Update and Draw
     # logic to a self contained function: UpdateDrawFrame(), check core_basic_window_web.c for reference.
 
-    # Define a custom shell .html and output extension
-    LDFLAGS += --shell-file $(RAYLIB_PATH)/src/shell.html
-    EXT = .html
 endif
 ifeq ($(PLATFORM),PLATFORM_RPI)
     LDFLAGS += -L$(RPI_TOOLCHAIN_SYSROOT)/opt/vc/lib
