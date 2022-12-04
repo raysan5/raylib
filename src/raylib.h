@@ -1331,6 +1331,7 @@ RLAPI Vector4 ColorNormalize(Color color);                                  // G
 RLAPI Color ColorFromNormalized(Vector4 normalized);                        // Get Color from normalized values [0..1]
 RLAPI Vector3 ColorToHSV(Color color);                                      // Get HSV values for a Color, hue [0..360], saturation/value [0..1]
 RLAPI Color ColorFromHSV(float hue, float saturation, float value);         // Get a Color from HSV values, hue [0..360], saturation/value [0..1]
+RLAPI Color ColorBrightness(Color color, float factor);                     // Get color with brightness correction, brightness factor goes from 0.0f to 1.0f
 RLAPI Color ColorAlpha(Color color, float alpha);                           // Get color with alpha applied, alpha goes from 0.0f to 1.0f
 RLAPI Color ColorAlphaBlend(Color dst, Color src, Color tint);              // Get src alpha-blended into dst color with tint
 RLAPI Color GetColor(unsigned int hexValue);                                // Get Color structure from hexadecimal value

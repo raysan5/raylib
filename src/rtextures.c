@@ -3944,6 +3944,39 @@ Color ColorFromHSV(float hue, float saturation, float value)
     return color;
 }
 
+// Get color with brightness correction, brightness factor goes from 0.0f to 1.0f
+Color ColorBrightness(Color color, float factor)
+{
+    Color result = color;
+    
+    if (factor > 1.0f) factor = 1.0f;
+    else if (factor < -1.0f) factor = -1.0f;
+    
+    float red = (float)color.r;
+    float green = (float)color.g;
+    float blue = (float)color.b;
+
+    if (factor < 0.0f)
+    {
+        factor = 1.0f + factor;
+        red *= factor;
+        green *= factor;
+        blue *= factor;
+    }
+    else
+    {
+        red = (255 - red)*factor + red;
+        green = (255 - green)*factor + green;
+        blue = (255 - blue)*factor + blue;
+    }
+    
+    result.r = (unsigned char)red;
+    result.g = (unsigned char)green;
+    result.b = (unsigned char)blue;
+
+    return result;
+}
+
 // Get color with alpha applied, alpha goes from 0.0f to 1.0f
 Color ColorAlpha(Color color, float alpha)
 {
