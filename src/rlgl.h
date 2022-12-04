@@ -264,7 +264,7 @@
 #define RL_UNSIGNED_BYTE                        0x1401      // GL_UNSIGNED_BYTE
 #define RL_FLOAT                                0x1406      // GL_FLOAT
 
-// Buffer usage hint
+// GL buffer usage hint
 #define RL_STREAM_DRAW                          0x88E0      // GL_STREAM_DRAW
 #define RL_STREAM_READ                          0x88E1      // GL_STREAM_READ
 #define RL_STREAM_COPY                          0x88E2      // GL_STREAM_COPY
@@ -279,6 +279,37 @@
 #define RL_FRAGMENT_SHADER                      0x8B30      // GL_FRAGMENT_SHADER
 #define RL_VERTEX_SHADER                        0x8B31      // GL_VERTEX_SHADER
 #define RL_COMPUTE_SHADER                       0x91B9      // GL_COMPUTE_SHADER
+
+// GL blending factors
+#define RL_ZERO                                 0           // GL_ZERO
+#define RL_ONE                                  1           // GL_ONE  
+#define RL_SRC_COLOR                            0x0300      // GL_SRC_COLOR            
+#define RL_ONE_MINUS_SRC_COLOR                  0x0301      // GL_ONE_MINUS_SRC_COLOR 
+#define RL_SRC_ALPHA                            0x0302      // GL_SRC_ALPHA           
+#define RL_ONE_MINUS_SRC_ALPHA                  0x0303      // GL_ONE_MINUS_SRC_ALPHA 
+#define RL_DST_ALPHA                            0x0304      // GL_DST_ALPHA           
+#define RL_ONE_MINUS_DST_ALPHA                  0x0305      // GL_ONE_MINUS_DST_ALPHA 
+#define RL_DST_COLOR                            0x0306      // GL_DST_COLOR           
+#define RL_ONE_MINUS_DST_COLOR                  0x0307      // GL_ONE_MINUS_DST_COLOR 
+#define RL_SRC_ALPHA_SATURATE                   0x0308      // GL_SRC_ALPHA_SATURATE  
+#define RL_CONSTANT_COLOR                       0x8001      // GL_CONSTANT_COLOR          
+#define RL_ONE_MINUS_CONSTANT_COLOR             0x8002      // GL_ONE_MINUS_CONSTANT_COLOR
+#define RL_CONSTANT_ALPHA                       0x8003      // GL_CONSTANT_ALPHA          
+#define RL_ONE_MINUS_CONSTANT_ALPHA             0x8004      // GL_ONE_MINUS_CONSTANT_ALPHA
+
+// GL blending functions/equations
+#define RL_FUNC_ADD                             0x8006      // GL_FUNC_ADD             
+#define RL_FUNC_SUBTRACT                        0x800A      // GL_FUNC_SUBTRACT        
+#define RL_FUNC_REVERSE_SUBTRACT                0x800B      // GL_FUNC_REVERSE_SUBTRACT
+#define RL_BLEND_EQUATION                       0x8009      // GL_BLEND_EQUATION       
+#define RL_BLEND_EQUATION_RGB                   0x8009      // GL_BLEND_EQUATION_RGB   // (Same as BLEND_EQUATION)
+#define RL_BLEND_EQUATION_ALPHA                 0x883D      // GL_BLEND_EQUATION_ALPHA 
+#define RL_BLEND_DST_RGB                        0x80C8      // GL_BLEND_DST_RGB        
+#define RL_BLEND_SRC_RGB                        0x80C9      // GL_BLEND_SRC_RGB        
+#define RL_BLEND_DST_ALPHA                      0x80CA      // GL_BLEND_DST_ALPHA      
+#define RL_BLEND_SRC_ALPHA                      0x80CB      // GL_BLEND_SRC_ALPHA                   
+#define RL_BLEND_COLOR                          0x8005      // GL_BLEND_COLOR               
+
 
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
