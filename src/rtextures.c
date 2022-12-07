@@ -3944,7 +3944,30 @@ Color ColorFromHSV(float hue, float saturation, float value)
     return color;
 }
 
-// Get color with brightness correction, brightness factor goes from 0.0f to 1.0f
+// Get color multiplied with another color
+Color ColorTint(Color color, Color tint)
+{
+    Color result = color;
+
+    float cR = (float)tint.r/255;
+    float cG = (float)tint.g/255;
+    float cB = (float)tint.b/255;
+    float cA = (float)tint.a/255;
+
+    unsigned char r = (unsigned char)(((float)color.r/255*cR)*255.0f);
+    unsigned char g = (unsigned char)(((float)color.g/255*cG)*255.0f);
+    unsigned char b = (unsigned char)(((float)color.b/255*cB)*255.0f);
+    unsigned char a = (unsigned char)(((float)color.a/255*cA)*255.0f);
+
+    result.r = r;
+    result.g = g;
+    result.b = b;
+    result.a = a;
+
+    return result;
+}
+
+// Get color with brightness correction, brightness factor goes from -1.0f to 1.0f
 Color ColorBrightness(Color color, float factor)
 {
     Color result = color;
@@ -3973,6 +3996,49 @@ Color ColorBrightness(Color color, float factor)
     result.r = (unsigned char)red;
     result.g = (unsigned char)green;
     result.b = (unsigned char)blue;
+
+    return result;
+}
+
+// Get color with contrast correction
+// NOTE: Contrast values between -1.0f and 1.0f
+Color ColorContrast(Color color, float contrast)
+{
+    Color result = color;
+    
+    if (contrast < -1.0f) contrast = -1.0f;
+    else if (contrast > 1.0f) contrast = 1.0f;
+
+    contrast = (1.0f + contrast);
+    contrast *= contrast;
+
+    float pR = (float)color.r/255.0f;
+    pR -= 0.5f;
+    pR *= contrast;
+    pR += 0.5f;
+    pR *= 255;
+    if (pR < 0) pR = 0;
+    else if (pR > 255) pR = 255;
+
+    float pG = (float)color.g/255.0f;
+    pG -= 0.5f;
+    pG *= contrast;
+    pG += 0.5f;
+    pG *= 255;
+    if (pG < 0) pG = 0;
+    else if (pG > 255) pG = 255;
+
+    float pB = (float)color.b/255.0f;
+    pB -= 0.5f;
+    pB *= contrast;
+    pB += 0.5f;
+    pB *= 255;
+    if (pB < 0) pB = 0;
+    else if (pB > 255) pB = 255;
+
+    result.r = (unsigned char)pR;
+    result.g = (unsigned char)pG;
+    result.b = (unsigned char)pB;
 
     return result;
 }
