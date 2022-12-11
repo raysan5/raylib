@@ -1,3 +1,12 @@
+# Set OpenGL_GL_PREFERENCE to new "GLVND" even when legacy library exists and
+# cmake is <= 3.10
+#
+# See https://cmake.org/cmake/help/latest/policy/CMP0072.html for more
+# information.
+if(POLICY CMP0072)
+  cmake_policy(SET CMP0072 NEW)
+endif()
+
 if (${PLATFORM} MATCHES "Desktop")
     set(PLATFORM_CPP "PLATFORM_DESKTOP")
 
