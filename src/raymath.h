@@ -309,7 +309,7 @@ RMAPI float Vector2DistanceSqr(Vector2 v1, Vector2 v2)
 // Calculate angle from two vectors
 RMAPI float Vector2Angle(Vector2 v1, Vector2 v2)
 {
-    float result = atan2f(v2.y, v2.x) - atan2f(v1.y, v1.x);
+    float result = -acos(v1.x*v2.x + v1.y*v2.y);
 
     return result;
 }
