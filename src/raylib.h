@@ -140,13 +140,13 @@
 // Other modules (raymath, rlgl) also require some of those types, so,
 // to be able to use those other modules as standalone (not depending on raylib)
 // this defines are very useful for internal check and avoid type (re)definitions
-#define RL_COLOR_TYPE
-#define RL_RECTANGLE_TYPE
-#define RL_VECTOR2_TYPE
-#define RL_VECTOR3_TYPE
-#define RL_VECTOR4_TYPE
-#define RL_QUATERNION_TYPE
-#define RL_MATRIX_TYPE
+// #define RL_COLOR_TYPE
+// #define RL_RECTANGLE_TYPE
+// #define RL_VECTOR2_TYPE
+// #define RL_VECTOR3_TYPE
+// #define RL_VECTOR4_TYPE
+// #define RL_QUATERNION_TYPE
+// #define RL_MATRIX_TYPE
 
 // Some Basic Colors
 // NOTE: Custom raylib color palette for amazing visuals on WHITE background
@@ -189,19 +189,26 @@
     #define RL_BOOL_TYPE
 #endif
 
+#if !defined(RL_VECTOR2_TYPE)
 // Vector2, 2 components
 typedef struct Vector2 {
     float x;                // Vector x component
     float y;                // Vector y component
 } Vector2;
+#define RL_VECTOR2_TYPE
+#endif
 
+#if !defined(RL_VECTOR3_TYPE)
 // Vector3, 3 components
 typedef struct Vector3 {
     float x;                // Vector x component
     float y;                // Vector y component
     float z;                // Vector z component
 } Vector3;
+#define RL_VECTOR3_TYPE
+#endif
 
+#if !defined(RL_VECTOR4_TYPE)
 // Vector4, 4 components
 typedef struct Vector4 {
     float x;                // Vector x component
@@ -209,10 +216,16 @@ typedef struct Vector4 {
     float z;                // Vector z component
     float w;                // Vector w component
 } Vector4;
+#define RL_VECTOR4_TYPE
+#endif
 
+#if !defined(RL_QUATERNION_TYPE)
 // Quaternion, 4 components (Vector4 alias)
 typedef Vector4 Quaternion;
+#define RL_QUATERNION_TYPE
+#endif
 
+#if !defined(RL_MATRIX_TYPE)
 // Matrix, 4x4 components, column major, OpenGL style, right handed
 typedef struct Matrix {
     float m0, m4, m8, m12;  // Matrix first row (4 components)
@@ -220,6 +233,8 @@ typedef struct Matrix {
     float m2, m6, m10, m14; // Matrix third row (4 components)
     float m3, m7, m11, m15; // Matrix fourth row (4 components)
 } Matrix;
+#define RL_MATRIX_TYPE
+#endif
 
 // Color, 4 components, R8G8B8A8 (32bit)
 typedef struct Color {
