@@ -313,7 +313,7 @@ RMAPI float Vector2Angle(Vector2 v1, Vector2 v2)
     float dotProduct = v1.x*v2.x + v1.y*v2.y;
 
     float t = dotProduct < -1 ? -1 : dotProduct;
-    float result = acos(t > max ? max : t;);
+    float result = acos(t > max ? max : t);
 
     return result;
 }
