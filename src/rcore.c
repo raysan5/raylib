@@ -307,6 +307,7 @@ typedef struct CoreData {
             int charPressedQueueCount;      // Input characters queue count
 
             PreeditCallback preeditCallback; // Preedit callback
+            PreeditCandidateCallback preeditCandidateCallback; // Preedit candidate callback
 
         } Keyboard;
         struct {
@@ -2869,6 +2870,12 @@ int GetCharPressed(void)
 void SetPreeditCallback(PreeditCallback callback)
 {
     CORE.Input.Keyboard.preeditCallback = callback;
+}
+
+// Set a callback for preedit candidate
+void SetPreeditCandidateCallback(PreeditCandidateCallback callback)
+{
+    CORE.Input.Keyboard.preeditCandidateCallback = callback;
 }
 
 // Set a custom key to exit program

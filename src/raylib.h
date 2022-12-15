@@ -533,6 +533,7 @@ typedef struct AutomationEventList {
 typedef enum {
     FLAG_VSYNC_HINT         = 0x00000040,   // Set to try enabling V-Sync on GPU
     FLAG_FULLSCREEN_MODE    = 0x00000002,   // Set to run program in fullscreen
+    FLAG_MANAGE_PREEDIT_CANDIDATE = 0x00020000, // Set to manage the drawing of preedit candidates by the application side
     FLAG_WINDOW_RESIZABLE   = 0x00000004,   // Set to allow resizable window
     FLAG_WINDOW_UNDECORATED = 0x00000008,   // Set to disable window decoration (frame and buttons)
     FLAG_WINDOW_HIDDEN      = 0x00000080,   // Set to hide window
@@ -1152,6 +1153,7 @@ RLAPI void PlayAutomationEvent(AutomationEvent event);                          
 //------------------------------------------------------------------------------------
 // Input Handling Functions (Module: core)
 //------------------------------------------------------------------------------------
+
 // Callback for preedit text.
 // preeditLength: The length of preedit text
 // preeditString: The preedit text (unicode)
@@ -1160,6 +1162,13 @@ RLAPI void PlayAutomationEvent(AutomationEvent event);                          
 // focusedBlock: The index of the current converting block
 // caret: The index of the caret in preeditString
 typedef void (*PreeditCallback)(int preeditLength, int *preeditString, int blockCount, int *blockSizes, int focusedBlock, int caret);
+
+// Callback for preedit candidate, which is called only when `FLAG_MANAGE_PREEDIT_CANDIDATE` ConfigFlag is enabled on Win32
+// candidatesCount: The number of all preedit candidates
+// selectedIndex: The index of the currently selected candidate in the all candidates
+// pageStart: The index of the first candidate on the current displaying page
+// pageSize: The number of the candidates on the current displaying page
+typedef void (*PreeditCandidateCallback)(int candidatesCount, int selectedIndex, int pageStart, int pageSize);
 
 // Input-related functions: keyboard
 RLAPI bool IsKeyPressed(int key);                             // Check if a key has been pressed once
@@ -1176,6 +1185,8 @@ RLAPI void GetPreeditCursorRectangle(int *x, int *y, int *w, int *h); // Get the
 RLAPI bool IsImeOn(void);                                     // Check if IME is ON
 RLAPI void SetImeStatus(bool on);                             // Set IME status
 RLAPI void ResetPreedit(void);                                // Reset preedit text
+RLAPI void SetPreeditCandidateCallback(PreeditCandidateCallback callback); // Set a callback for preedit candidates
+RLAPI int *GetPreeditCandidate(int index, int *textCount);    // Get the text of the preedie candidate. This can be used only when `FLAG_MANAGE_PREEDIT_CANDIDATE` ConfigFlag is enabled on Win32
 
 // Input-related functions: gamepads
 RLAPI bool IsGamepadAvailable(int gamepad);                                        // Check if a gamepad is available
