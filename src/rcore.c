@@ -151,7 +151,7 @@
     #include "external/sdefl.h"     // Deflate (RFC 1951) compressor
 #endif
 
-#if (defined(__linux__) || defined(PLATFORM_WEB)) && _POSIX_C_SOURCE < 199309L
+#if (defined(__linux__) || defined(PLATFORM_WEB)) && (_POSIX_C_SOURCE < 199309L)
     #undef _POSIX_C_SOURCE
     #define _POSIX_C_SOURCE 199309L // Required for: CLOCK_MONOTONIC if compiled with c99 without gnu ext.
 #endif
@@ -2813,6 +2813,9 @@ void TakeScreenshot(const char *fileName)
 }
 
 // Get a random value between min and max (both included)
+// WARNING: Ranges higher than RAND_MAX will return invalid results
+// More specifically, if (max - min) > INT_MAX there will be an overflow, 
+// and otherwise if (max - min) > RAND_MAX the random value will incorrectly never exceed a certain threshold
 int GetRandomValue(int min, int max)
 {
     if (min > max)
@@ -2821,9 +2824,6 @@ int GetRandomValue(int min, int max)
         max = min;
         min = tmp;
     }
-    
-    // WARNING: Ranges higher than RAND_MAX will return invalid results. More specifically, if (max - min) > INT_MAX there will
-    // be an overflow, and otherwise if (max - min) > RAND_MAX the random value will incorrectly never exceed a certain threshold.
     if ((unsigned int)(max - min) > (unsigned int)RAND_MAX)
     {
         TRACELOG(LOG_WARNING, "Invalid GetRandomValue arguments. Range should not be higher than %i.", RAND_MAX);
