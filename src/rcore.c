@@ -2824,9 +2824,10 @@ int GetRandomValue(int min, int max)
         max = min;
         min = tmp;
     }
+    
     if ((unsigned int)(max - min) > (unsigned int)RAND_MAX)
     {
-        TRACELOG(LOG_WARNING, "Invalid GetRandomValue arguments. Range should not be higher than %i.", RAND_MAX);
+        TRACELOG(LOG_WARNING, "Invalid GetRandomValue() arguments, range should not be higher than %i", RAND_MAX);
     }
 
     return (rand()%(abs(max - min) + 1) + min);
