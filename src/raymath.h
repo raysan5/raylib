@@ -307,15 +307,23 @@ RMAPI float Vector2DistanceSqr(Vector2 v1, Vector2 v2)
 }
 
 // Calculate angle from two vectors
-// Parameters need to be normalized
+// NOTE: Parameters need to be normalized
+// Current implementation should be aligned with glm::angle
 RMAPI float Vector2Angle(Vector2 v1, Vector2 v2)
 {
-    float dotProduct = v1.x*v2.x + v1.y*v2.y; // Dot product
+    float result = 0.0f;
+    
+    float dot = v1.x*v2.x + v1.y*v2.y;      // Dot product
 
-    float t = dotProduct < -1 ? -1 : dotProduct; // Clamp
-    if (t > 1) t = 1;
+    float dotClamp = (dot < -1.0f)? -1.0f : dot;  // Clamp
+    if (dotClamp > 1.0f) dotClamp = 1.0f;
 
-    float result = acosf(t);
+    result = acosf(dotClamp);
+    
+    // Alternative implementation, more costly
+    //float v1Length = sqrtf((v1.x*v1.x) + (v1.y*v1.y));
+    //float v2Length = sqrtf((v2.x*v2.x) + (v2.y*v2.y));
+    //float result = -acosf((v1.x*v2.x + v1.y*v2.y)/(v1Length*v2Length));
 
     return result;
 }
