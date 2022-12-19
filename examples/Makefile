@@ -521,7 +521,7 @@ SHADERS = \
     shaders/shaders_hot_reloading \
     shaders/shaders_mesh_instancing \
     shaders/shaders_multi_sample2d \
-    shaders/write_depth
+    shaders/shaders_write_depth
 
 AUDIO = \
     audio/audio_module_playing \
