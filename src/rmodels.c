@@ -146,7 +146,7 @@ static ModelAnimation *LoadModelAnimationsIQM(const char *fileName, unsigned int
 #endif
 #if defined(SUPPORT_FILEFORMAT_GLTF)
 static Model LoadGLTF(const char *fileName);    // Load GLTF mesh data
-//static ModelAnimation *LoadModelAnimationGLTF(const char *fileName, unsigned int *animCount);    // Load GLTF animation data
+static ModelAnimation *LoadModelAnimationsGLTF(const char *fileName, unsigned int *animCount);    // Load GLTF animation data
 #endif
 #if defined(SUPPORT_FILEFORMAT_VOX)
 static Model LoadVOX(const char *filename);     // Load VOX mesh data
@@ -1955,7 +1955,7 @@ ModelAnimation *LoadModelAnimations(const char *fileName, unsigned int *animCoun
     if (IsFileExtension(fileName, ".m3d")) animations = LoadModelAnimationsM3D(fileName, animCount);
 #endif
 #if defined(SUPPORT_FILEFORMAT_GLTF)
-    //if (IsFileExtension(fileName, ".gltf;.glb")) animations = LoadModelAnimationGLTF(fileName, animCount);
+    if (IsFileExtension(fileName, ".gltf;.glb")) animations = LoadModelAnimationsGLTF(fileName, animCount);
 #endif
 
     return animations;
@@ -3829,6 +3829,19 @@ RayCollision GetRayCollisionQuad(Ray ray, Vector3 p1, Vector3 p2, Vector3 p3, Ve
     return collision;
 }
 
+static void BuildPoseFromParentJoints(BoneInfo *bones, int boneCount, Transform *transforms) {
+    for (int i = 0; i < boneCount; i++)
+    {
+        if (bones[i].parent >= 0)
+        {
+            transforms[i].rotation = QuaternionMultiply(transforms[bones[i].parent].rotation, transforms[i].rotation);
+            transforms[i].translation = Vector3RotateByQuaternion(transforms[i].translation, transforms[bones[i].parent].rotation);
+            transforms[i].translation = Vector3Add(transforms[i].translation, transforms[bones[i].parent].translation);
+            transforms[i].scale = Vector3Multiply(transforms[i].scale, transforms[bones[i].parent].scale);
+        }
+    }
+}
+
 //----------------------------------------------------------------------------------
 // Module specific Functions Definition
 //----------------------------------------------------------------------------------
@@ -4370,17 +4383,7 @@ static Model LoadIQM(const char *fileName)
         model.bindPose[i].scale.z = ijoint[i].scale[2];
     }
 
-    // Build bind pose from parent joints
-    for (int i = 0; i < model.boneCount; i++)
-    {
-        if (model.bones[i].parent >= 0)
-        {
-            model.bindPose[i].rotation = QuaternionMultiply(model.bindPose[model.bones[i].parent].rotation, model.bindPose[i].rotation);
-            model.bindPose[i].translation = Vector3RotateByQuaternion(model.bindPose[i].translation, model.bindPose[model.bones[i].parent].rotation);
-            model.bindPose[i].translation = Vector3Add(model.bindPose[i].translation, model.bindPose[model.bones[i].parent].translation);
-            model.bindPose[i].scale = Vector3Multiply(model.bindPose[i].scale, model.bindPose[model.bones[i].parent].scale);
-        }
-    }
+    BuildPoseFromParentJoints(model.bones, model.boneCount, model.bindPose);
 
     RL_FREE(fileData);
 
@@ -4679,6 +4682,28 @@ static Image LoadImageFromCgltfImage(cgltf_image *cgltfImage, const char *texPat
     }
 
     return image;
+}
+
+static BoneInfo *LoadGLTFBoneInfo(cgltf_skin skin, int *boneCount) {
+    *boneCount = skin.joints_count;
+    BoneInfo *bones = RL_MALLOC(skin.joints_count * sizeof(BoneInfo));
+
+    for(unsigned int i = 0; i < skin.joints_count; i++) {
+        cgltf_node node = *skin.joints[i];
+        strncpy(bones[i].name, node.name, sizeof(bones[i].name));
+
+        // find parent bone index
+        unsigned int parentIndex = -1;
+        for(unsigned int j = 0; j < skin.joints_count; j++) {
+            if(skin.joints[j] == node.parent) {
+                parentIndex = j;
+                break;
+            }
+        }
+        bones[i].parent = parentIndex;
+    }
+
+    return bones;
 }
 
 // Load glTF file into model struct, .gltf and .glb supported
@@ -5039,11 +5064,39 @@ static Model LoadGLTF(const char *fileName)
             }
         }
 
-/*
         // TODO: Load glTF meshes animation data
         // REF: https://www.khronos.org/registry/glTF/specs/2.0/glTF-2.0.html#skins
         // REF: https://www.khronos.org/registry/glTF/specs/2.0/glTF-2.0.html#skinned-mesh-attributes
         //----------------------------------------------------------------------------------------------------
+
+        if(data->skins_count > 0) {
+            if(data->skins_count != 1) {
+                TRACELOG(LOG_ERROR, "MODEL: [%s] can only load one skin (armature) per model, but gltf skins_count == %i", fileName, data->skins_count);
+            } else {
+                cgltf_skin skin = data->skins[0];
+                model.bones = LoadGLTFBoneInfo(skin, &model.boneCount);
+                model.bindPose = RL_MALLOC(model.boneCount * sizeof(Transform));
+
+                for(unsigned int i = 0; i < model.boneCount; i++) {
+                    cgltf_node node = *skin.joints[i];
+                    model.bindPose[i].translation.x = node.translation[0];
+                    model.bindPose[i].translation.y = node.translation[1];
+                    model.bindPose[i].translation.z = node.translation[2];
+
+                    model.bindPose[i].rotation.x = node.rotation[0];
+                    model.bindPose[i].rotation.y = node.rotation[1];
+                    model.bindPose[i].rotation.z = node.rotation[2];
+                    model.bindPose[i].rotation.w = node.rotation[3];
+
+                    model.bindPose[i].scale.x = node.scale[0];
+                    model.bindPose[i].scale.y = node.scale[1];
+                    model.bindPose[i].scale.z = node.scale[2];
+                }
+
+                BuildPoseFromParentJoints(model.bones, model.boneCount, model.bindPose);
+            }
+        }
+
         for (unsigned int i = 0, meshIndex = 0; i < data->meshes_count; i++)
         {
             for (unsigned int p = 0; p < data->meshes[i].primitives_count; p++)
@@ -5092,10 +5145,17 @@ static Model LoadGLTF(const char *fileName)
                     }
                 }
 
+                // Animated vertex data
+                model.meshes[meshIndex].animVertices = RL_CALLOC(model.meshes[i].vertexCount*3, sizeof(float));
+                memcpy(model.meshes[meshIndex].animVertices, model.meshes[meshIndex].vertices, model.meshes[meshIndex].vertexCount*sizeof(float)*3);
+                model.meshes[meshIndex].animNormals = RL_CALLOC(model.meshes[i].vertexCount*3, sizeof(float));
+                memcpy(model.meshes[meshIndex].animNormals, model.meshes[meshIndex].normals, model.meshes[meshIndex].vertexCount*sizeof(float)*3);
+
                 meshIndex++;       // Move to next mesh
             }
+
         }
-*/
+
         // Free all cgltf loaded data
         cgltf_free(data);
     }
@@ -5105,6 +5165,164 @@ static Model LoadGLTF(const char *fileName)
     UnloadFileData(fileData);
 
     return model;
+}
+
+static void GetGLTFPoseAtTime(cgltf_accessor* input, cgltf_accessor *output, float time, void *data) {
+    assert(input->count == output->count);
+
+    float tstart = 0;
+    float tend = 0;
+
+    int keyframe = 0; // defaults to first pose
+    for(int i = 0; i < input->count - 1; i++) {
+        cgltf_bool r1 = cgltf_accessor_read_float(input, i, &tstart, 1);
+        assert(r1);
+        cgltf_bool r2 = cgltf_accessor_read_float(input, i+1, &tend, 1);
+        assert(r2);
+
+        if(tstart <= time && time < tend) {
+            keyframe = i;
+            break;
+        }
+    }
+
+    float t = (time - tstart) / (tend - tstart);
+    t = t < 0 ? 0 : t;
+    t = t > 1 ? 1 : t;
+
+    assert(output->component_type == cgltf_component_type_r_32f);
+    if(output->type == cgltf_type_vec3) {
+        float tmp[3];
+        cgltf_accessor_read_float(output, keyframe, tmp, 3);
+        Vector3 v1 = {tmp[0], tmp[1], tmp[2]};
+        cgltf_accessor_read_float(output, keyframe+1, tmp, 3);
+        Vector3 v2 = {tmp[0], tmp[1], tmp[2]};
+        Vector3 *r = data;
+        *r = Vector3Lerp(v1, v2, t);
+    } else if (output->type == cgltf_type_vec4) {
+        float tmp[4];
+        cgltf_accessor_read_float(output, keyframe, tmp, 4);
+        Vector4 v1 = {tmp[0], tmp[1], tmp[2], tmp[3]};
+        cgltf_accessor_read_float(output, keyframe+1, tmp, 4);
+        Vector4 v2 = {tmp[0], tmp[1], tmp[2], tmp[3]};
+        Vector4 *r = data;
+        // only v4 is for rotations, so we know it's a quat.
+        *r = QuaternionSlerp(v1, v2, t);
+    }
+}
+
+#define GLTF_ANIMDELAY 17    // that's roughly ~1000 msec / 60 FPS (16.666666* msec)
+static ModelAnimation *LoadModelAnimationsGLTF(const char *fileName, unsigned int *animCount) {
+    // glTF file loading
+    unsigned int dataSize = 0;
+    unsigned char *fileData = LoadFileData(fileName, &dataSize);
+
+    ModelAnimation *animations = NULL;
+    // glTF data loading
+    cgltf_options options = { 0 };
+    cgltf_data *data = NULL;
+    cgltf_result result = cgltf_parse(&options, fileData, dataSize, &data);
+
+    result = cgltf_load_buffers(&options, data, fileName);
+    if (result != cgltf_result_success) TRACELOG(LOG_INFO, "MODEL: [%s] Failed to load animation buffers", fileName);
+
+    if(result == cgltf_result_success) {
+        if(data->skins_count == 1) {
+            cgltf_skin skin = data->skins[0];
+            *animCount = data->animations_count;
+            animations = RL_MALLOC(data->animations_count * sizeof(ModelAnimation));
+            for(unsigned int i = 0; i < data->animations_count; i++) {
+                animations[i].bones = LoadGLTFBoneInfo(skin, &animations[i].boneCount);
+
+                cgltf_animation animData = data->animations[i];
+
+                struct Channels {
+                    cgltf_animation_channel *translate;
+                    cgltf_animation_channel *rotate;
+                    cgltf_animation_channel *scale;
+                };
+
+                struct Channels *boneChannels = RL_CALLOC(animations[i].boneCount, sizeof(struct Channels));
+                float animDuration = 0;
+                for(unsigned int j = 0; j < animData.channels_count; j++) {
+                    cgltf_animation_channel channel = animData.channels[j];
+                    int boneIndex = -1;
+                    for(unsigned int k = 0; k < skin.joints_count; k++) {
+                        if(animData.channels[j].target_node == skin.joints[k]) {
+                            boneIndex = k;
+                            break;
+                        }
+                    }
+                    if(boneIndex == -1) {
+                        // animation channel for a node not in the armature.
+                        continue;
+                    }
+
+                    if(animData.channels[j].sampler->interpolation == cgltf_interpolation_type_linear) {
+                        if(channel.target_path == cgltf_animation_path_type_translation) {
+                            boneChannels[boneIndex].translate = &animData.channels[j];
+                        } else if(channel.target_path == cgltf_animation_path_type_rotation) {
+                            boneChannels[boneIndex].rotate = &animData.channels[j];
+                        } else if(channel.target_path == cgltf_animation_path_type_scale) {
+                            boneChannels[boneIndex].scale = &animData.channels[j];
+                        }
+                    } else TRACELOG(LOG_WARNING, "MODEL: [%s] Only linear interpolation curves are supported for GLTF animation.", fileName);
+
+
+                    float t;
+                    cgltf_bool r = cgltf_accessor_read_float(channel.sampler->input, channel.sampler->input->count - 1, &t, 1);
+                    assert(r);
+
+                    animDuration = t > animDuration ? t : animDuration;
+                }
+
+                animations[i].frameCount = (int)(animDuration * 1000 / GLTF_ANIMDELAY);
+                animations[i].framePoses = RL_MALLOC(animations[i].frameCount*sizeof(Transform *));
+
+                for(unsigned int j = 0; j < animations[i].frameCount; j++) {
+                    animations[i].framePoses[j] = RL_MALLOC(animations[i].boneCount*sizeof(Transform));
+                    float time = ((float) j * GLTF_ANIMDELAY) / 1000;
+                    for(unsigned int k = 0; k < animations[i].boneCount; k++) {
+                        Vector3 translation = {0, 0, 0};
+                        Quaternion rotation = {0, 0, 0, 1};
+                        Vector3 scale = {1, 1, 1};
+                        if(boneChannels[k].translate) {
+                            GetGLTFPoseAtTime(boneChannels[k].translate->sampler->input,
+                                    boneChannels[k].translate->sampler->output,
+                                    time,
+                                    &translation);
+                        }
+
+                        if(boneChannels[k].rotate) {
+                            GetGLTFPoseAtTime(boneChannels[k].rotate->sampler->input,
+                                    boneChannels[k].rotate->sampler->output,
+                                    time,
+                                    &rotation);
+                        }
+
+                        if(boneChannels[k].scale) {
+                            GetGLTFPoseAtTime(boneChannels[k].scale->sampler->input,
+                                    boneChannels[k].scale->sampler->output,
+                                    time,
+                                    &scale);
+                        }
+
+                        animations[i].framePoses[j][k] = (Transform){
+                            .translation = translation,
+                            .rotation = rotation,
+                            .scale = scale};
+                    }
+                    BuildPoseFromParentJoints(animations[i].bones, animations[i].boneCount, animations[i].framePoses[j]);
+                }
+
+                TRACELOG(LOG_INFO, "MODEL: [%s] Loaded animation: %s (%d frames, %fs)", fileName, animData.name, animations[i].frameCount, animDuration);
+                RL_FREE(boneChannels);
+            }
+        } else TRACELOG(LOG_ERROR, "MODEL: [%s] expected exactly one skin to load animation data from, but found %i", fileName, data->skins_count);
+        cgltf_free(data);
+    }
+
+    return animations;
 }
 #endif
 
