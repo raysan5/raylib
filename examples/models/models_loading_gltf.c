@@ -35,6 +35,9 @@ int main(void)
 
     // Loaf gltf model
     Model model = LoadModel("resources/models/gltf/robot.glb");
+    unsigned int animationCount;
+    ModelAnimation *modelAnimations = LoadModelAnimations("resources/models/gltf/robot.glb", &animationCount);
+    ModelAnimation anim = modelAnimations[0];
 
     Vector3 position = { 0.0f, 0.0f, 0.0f };    // Set model position
 
@@ -49,6 +52,7 @@ int main(void)
         // Update
         //----------------------------------------------------------------------------------
         UpdateCamera(&camera);
+        UpdateModelAnimation(model, anim, 2);
         //----------------------------------------------------------------------------------
 
         // Draw

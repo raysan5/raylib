@@ -5222,6 +5222,11 @@ static ModelAnimation *LoadModelAnimationsGLTF(const char *fileName, unsigned in
     cgltf_options options = { 0 };
     cgltf_data *data = NULL;
     cgltf_result result = cgltf_parse(&options, fileData, dataSize, &data);
+    if(result != cgltf_result_success) {
+        TRACELOG(LOG_WARNING, "MODEL: [%s] Failed to load glTF data", fileName);
+        *animCount = 0;
+        return NULL;
+    }
 
     result = cgltf_load_buffers(&options, data, fileName);
     if (result != cgltf_result_success) TRACELOG(LOG_INFO, "MODEL: [%s] Failed to load animation buffers", fileName);
