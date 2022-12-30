@@ -5146,10 +5146,10 @@ static Model LoadGLTF(const char *fileName)
                 }
 
                 // Animated vertex data
-                model.meshes[meshIndex].animVertices = RL_CALLOC(model.meshes[i].vertexCount*3, sizeof(float));
-                memcpy(model.meshes[meshIndex].animVertices, model.meshes[meshIndex].vertices, model.meshes[meshIndex].vertexCount*sizeof(float)*3);
-                model.meshes[meshIndex].animNormals = RL_CALLOC(model.meshes[i].vertexCount*3, sizeof(float));
-                memcpy(model.meshes[meshIndex].animNormals, model.meshes[meshIndex].normals, model.meshes[meshIndex].vertexCount*sizeof(float)*3);
+                model.meshes[meshIndex].animVertices = RL_CALLOC(model.meshes[meshIndex].vertexCount*3, sizeof(float));
+                memcpy(model.meshes[meshIndex].animVertices, model.meshes[meshIndex].vertices, model.meshes[meshIndex].vertexCount*3*sizeof(float));
+                model.meshes[meshIndex].animNormals = RL_CALLOC(model.meshes[meshIndex].vertexCount*3, sizeof(float));
+                memcpy(model.meshes[meshIndex].animNormals, model.meshes[meshIndex].normals, model.meshes[meshIndex].vertexCount*3*sizeof(float));
 
                 meshIndex++;       // Move to next mesh
             }
