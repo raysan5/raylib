@@ -2029,8 +2029,8 @@ void UpdateModelAnimation(Model model, ModelAnimation anim, int frame)
                     // Vertices processing
                     // NOTE: We use meshes.vertices (default vertex position) to calculate meshes.animVertices (animated vertex position)
                     animVertex = (Vector3){ mesh.vertices[vCounter], mesh.vertices[vCounter + 1], mesh.vertices[vCounter + 2] };
-                    animVertex = Vector3Multiply(animVertex, outScale);
                     animVertex = Vector3Subtract(animVertex, inTranslation);
+                    animVertex = Vector3Multiply(animVertex, outScale);
                     animVertex = Vector3RotateByQuaternion(animVertex, QuaternionMultiply(outRotation, QuaternionInvert(inRotation)));
                     animVertex = Vector3Add(animVertex, outTranslation);
                     //animVertex = Vector3Transform(animVertex, model.transform);
