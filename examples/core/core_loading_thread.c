@@ -72,7 +72,10 @@ int main(void)
                 if (atomic_load(&dataLoaded))
                 {
                     framesCounter = 0;
-                    pthread_join(threadId, NULL);
+                    int error = pthread_join(threadId, NULL);
+                    if (error != 0) TraceLog(LOG_ERROR, "Error joining loading thread");
+                    else TraceLog(LOG_INFO, "Loading thread terminated successfully");
+
                     state = STATE_FINISHED;
                 }
             } break;
