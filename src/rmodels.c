@@ -3834,6 +3834,9 @@ static void BuildPoseFromParentJoints(BoneInfo *bones, int boneCount, Transform 
     {
         if (bones[i].parent >= 0)
         {
+            // Assumes bones are topologically sorted and we've transformed
+            // the parent before this node.
+            assert(bones[i].parent < i);
             transforms[i].rotation = QuaternionMultiply(transforms[bones[i].parent].rotation, transforms[i].rotation);
             transforms[i].translation = Vector3RotateByQuaternion(transforms[i].translation, transforms[bones[i].parent].rotation);
             transforms[i].translation = Vector3Add(transforms[i].translation, transforms[bones[i].parent].translation);
@@ -4720,6 +4723,7 @@ static Model LoadGLTF(const char *fileName)
           - Supports PBR metallic/roughness flow, loads material textures, values and colors
                      PBR specular/glossiness flow and extended texture flows not supported
           - Supports multiple meshes per model (every primitives is loaded as a separate mesh)
+          - Supports basic animation
 
         RESTRICTIONS:
           - Only triangle meshes supported
@@ -5064,37 +5068,35 @@ static Model LoadGLTF(const char *fileName)
             }
         }
 
-        // TODO: Load glTF meshes animation data
+        // Load glTF meshes animation data
         // REF: https://www.khronos.org/registry/glTF/specs/2.0/glTF-2.0.html#skins
         // REF: https://www.khronos.org/registry/glTF/specs/2.0/glTF-2.0.html#skinned-mesh-attributes
         //----------------------------------------------------------------------------------------------------
 
-        if(data->skins_count > 0) {
-            if(data->skins_count != 1) {
-                TRACELOG(LOG_ERROR, "MODEL: [%s] can only load one skin (armature) per model, but gltf skins_count == %i", fileName, data->skins_count);
-            } else {
-                cgltf_skin skin = data->skins[0];
-                model.bones = LoadGLTFBoneInfo(skin, &model.boneCount);
-                model.bindPose = RL_MALLOC(model.boneCount * sizeof(Transform));
+        if(data->skins_count == 1) {
+            cgltf_skin skin = data->skins[0];
+            model.bones = LoadGLTFBoneInfo(skin, &model.boneCount);
+            model.bindPose = RL_MALLOC(model.boneCount * sizeof(Transform));
 
-                for(unsigned int i = 0; i < model.boneCount; i++) {
-                    cgltf_node node = *skin.joints[i];
-                    model.bindPose[i].translation.x = node.translation[0];
-                    model.bindPose[i].translation.y = node.translation[1];
-                    model.bindPose[i].translation.z = node.translation[2];
+            for(unsigned int i = 0; i < model.boneCount; i++) {
+                cgltf_node node = *skin.joints[i];
+                model.bindPose[i].translation.x = node.translation[0];
+                model.bindPose[i].translation.y = node.translation[1];
+                model.bindPose[i].translation.z = node.translation[2];
 
-                    model.bindPose[i].rotation.x = node.rotation[0];
-                    model.bindPose[i].rotation.y = node.rotation[1];
-                    model.bindPose[i].rotation.z = node.rotation[2];
-                    model.bindPose[i].rotation.w = node.rotation[3];
+                model.bindPose[i].rotation.x = node.rotation[0];
+                model.bindPose[i].rotation.y = node.rotation[1];
+                model.bindPose[i].rotation.z = node.rotation[2];
+                model.bindPose[i].rotation.w = node.rotation[3];
 
-                    model.bindPose[i].scale.x = node.scale[0];
-                    model.bindPose[i].scale.y = node.scale[1];
-                    model.bindPose[i].scale.z = node.scale[2];
-                }
-
-                BuildPoseFromParentJoints(model.bones, model.boneCount, model.bindPose);
+                model.bindPose[i].scale.x = node.scale[0];
+                model.bindPose[i].scale.y = node.scale[1];
+                model.bindPose[i].scale.z = node.scale[2];
             }
+
+            BuildPoseFromParentJoints(model.bones, model.boneCount, model.bindPose);
+        } else if(data->skins_count > 1) {
+            TRACELOG(LOG_ERROR, "MODEL: [%s] can only load one skin (armature) per model, but gltf skins_count == %i", fileName, data->skins_count);
         }
 
         for (unsigned int i = 0, meshIndex = 0; i < data->meshes_count; i++)
@@ -5270,6 +5272,8 @@ static ModelAnimation *LoadModelAnimationsGLTF(const char *fileName, unsigned in
                             boneChannels[boneIndex].rotate = &animData.channels[j];
                         } else if(channel.target_path == cgltf_animation_path_type_scale) {
                             boneChannels[boneIndex].scale = &animData.channels[j];
+                        } else {
+                            TRACELOG(LOG_WARNING, "MODEL: [%s] Unsupported target_path on channel %d's sampler for animation %d. Skipping.", fileName, j, i);
                         }
                     } else TRACELOG(LOG_WARNING, "MODEL: [%s] Only linear interpolation curves are supported for GLTF animation.", fileName);
 
