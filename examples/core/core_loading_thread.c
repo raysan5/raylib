@@ -72,6 +72,7 @@ int main(void)
                 if (atomic_load(&dataLoaded))
                 {
                     framesCounter = 0;
+                    pthread_join(threadId, NULL);
                     state = STATE_FINISHED;
                 }
             } break;
