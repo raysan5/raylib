@@ -7,9 +7,11 @@ varying vec4 fragColor;
 
 uniform sampler2D texture0;
 uniform vec4 colDiffuse;
+
 void main()
 {
     vec4 texelColor = texture2D(texture0, fragTexCoord);
+    
     gl_FragColor = texelColor*colDiffuse*fragColor;
-	gl_FragDepthEXT = 1.0 - gl_FragCoord.z;
+    gl_FragDepthEXT = 1.0 - gl_FragCoord.z;
 }
