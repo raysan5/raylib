@@ -35,6 +35,10 @@ int main(void)
 
     // Loaf gltf model
     Model model = LoadModel("resources/models/gltf/robot.glb");
+    unsigned int animsCount = 0;
+    ModelAnimation *modelAnimations = LoadModelAnimations("resources/models/gltf/robot.glb", &animsCount);
+
+    unsigned int animIndex = 0;
 
     Vector3 position = { 0.0f, 0.0f, 0.0f };    // Set model position
 
@@ -43,11 +47,26 @@ int main(void)
     SetTargetFPS(60);                   // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
 
+    unsigned int currentFrame = 0;
+
     // Main game loop
     while (!WindowShouldClose())        // Detect window close button or ESC key
     {
         // Update
         //----------------------------------------------------------------------------------
+        ModelAnimation anim = modelAnimations[animIndex];
+        if (IsKeyPressed(KEY_UP))
+        {
+            animIndex = (animIndex + 1) % animsCount;
+        }
+
+        if (IsKeyPressed(KEY_DOWN))
+        {
+            animIndex = (animIndex + animsCount - 1) % animsCount;
+        }
+
+        currentFrame = (currentFrame + 1) % anim.frameCount;
+        UpdateModelAnimation(model, anim, currentFrame);
         UpdateCamera(&camera);
         //----------------------------------------------------------------------------------
 
@@ -64,6 +83,8 @@ int main(void)
 
             EndMode3D();
 
+            DrawText("Use the up/down arrow keys to switch animation.", 10, 10, 20, WHITE);
+
         EndDrawing();
         //----------------------------------------------------------------------------------
     }
@@ -71,7 +92,7 @@ int main(void)
     // De-Initialization
     //--------------------------------------------------------------------------------------
     UnloadModel(model);         // Unload model and meshes/material
-    
+
     CloseWindow();              // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
 
