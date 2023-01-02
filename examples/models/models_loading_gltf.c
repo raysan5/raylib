@@ -56,21 +56,21 @@ int main(void)
     SetTargetFPS(60);                       // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
 
-
-
     // Main game loop
     while (!WindowShouldClose())            // Detect window close button or ESC key
     {
         // Update
         //----------------------------------------------------------------------------------
-        ModelAnimation anim = modelAnimations[animIndex];
-        
+        // Select current animation
         if (IsKeyPressed(KEY_UP)) animIndex = (animIndex + 1)%animsCount;
         else if (IsKeyPressed(KEY_DOWN)) animIndex = (animIndex + animsCount - 1)%animsCount;
-
+        
+        // Update model animation
+        ModelAnimation anim = modelAnimations[animIndex];
         animCurrentFrame = (animCurrentFrame + 1)%anim.frameCount;
         UpdateModelAnimation(model, anim, animCurrentFrame);
         
+        // Update camera
         UpdateCamera(&camera);
         //----------------------------------------------------------------------------------
 
@@ -82,8 +82,8 @@ int main(void)
 
             BeginMode3D(camera);
 
-                DrawModel(model, position, 1.0f, WHITE);
-                DrawGrid(10, 1.0f);         // Draw a grid
+                DrawModel(model, position, 1.0f, WHITE);    // Draw animated model
+                DrawGrid(10, 1.0f);
 
             EndMode3D();
 
