@@ -429,6 +429,7 @@ typedef struct CoreData {
 #endif
         struct {
             int exitKey;                    // Default exit key
+            int screenshotKey;              // Default screenshot key
             char currentKeyState[MAX_KEYBOARD_KEYS];        // Registers current frame key state
             char previousKeyState[MAX_KEYBOARD_KEYS];       // Registers previous frame key state
 
@@ -763,6 +764,7 @@ void InitWindow(int width, int height, const char *title)
     // Initialize global input state
     memset(&CORE.Input, 0, sizeof(CORE.Input));
     CORE.Input.Keyboard.exitKey = KEY_ESCAPE;
+    CORE.Input.Keyboard.screenshotKey = KEY_F12;
     CORE.Input.Mouse.scale = (Vector2){ 1.0f, 1.0f };
     CORE.Input.Mouse.cursor = MOUSE_CURSOR_ARROW;
     CORE.Input.Gamepad.lastButtonPressed = -1;
@@ -3558,6 +3560,15 @@ void SetExitKey(int key)
 #endif
 }
 
+// Set a custom key to take a screenshot
+// NOTE: default screenshotKey is F12
+void SetScreenshotKey(int key)
+{
+#if !defined(PLATFORM_ANDROID)
+    CORE.Input.Keyboard.screenshotKey = key;
+#endif
+}
+
 // NOTE: Gamepad support not implemented in emscripten GLFW3 (PLATFORM_WEB)
 
 // Check if a gamepad is available
@@ -5304,7 +5315,7 @@ static void KeyCallback(GLFWwindow *window, int key, int scancode, int action, i
     if ((key == CORE.Input.Keyboard.exitKey) && (action == GLFW_PRESS)) glfwSetWindowShouldClose(CORE.Window.handle, GLFW_TRUE);
 
 #if defined(SUPPORT_SCREEN_CAPTURE)
-    if ((key == GLFW_KEY_F12) && (action == GLFW_PRESS))
+    if ((key == CORE.Input.Keyboad.screenshotKey) && (action == GLFW_PRESS))
     {
 #if defined(SUPPORT_GIF_RECORDING)
         if (mods == GLFW_MOD_CONTROL)
@@ -6428,8 +6439,7 @@ static void PollKeyboardEvents(void)
                     }
 
                 #if defined(SUPPORT_SCREEN_CAPTURE)
-                    // Check screen capture key (raylib key: KEY_F12)
-                    if (CORE.Input.Keyboard.currentKeyState[301] == 1)
+                    if (CORE.Input.Keyboard.currentKeyState[CORE.Input.Keyboad.screenshotKey] == 1)
                     {
                         TakeScreenshot(TextFormat("screenshot%03i.png", screenshotCounter));
                         screenshotCounter++;
