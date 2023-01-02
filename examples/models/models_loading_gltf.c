@@ -27,46 +27,43 @@ int main(void)
 
     // Define the camera to look into our 3d world
     Camera camera = { 0 };
-    camera.position = (Vector3){ 10.0f, 10.0f, 10.0f }; // Camera position
-    camera.target = (Vector3){ 0.0f, 0.0f, 0.0f };      // Camera looking at point
+    camera.position = (Vector3){ 5.0f, 5.0f, 5.0f }; // Camera position
+    camera.target = (Vector3){ 0.0f, 2.0f, 0.0f };      // Camera looking at point
     camera.up = (Vector3){ 0.0f, 1.0f, 0.0f };          // Camera up vector (rotation towards target)
     camera.fovy = 45.0f;                                // Camera field-of-view Y
     camera.projection = CAMERA_PERSPECTIVE;             // Camera mode type
 
-    // Loaf gltf model
+    // Load gltf model
     Model model = LoadModel("resources/models/gltf/robot.glb");
+    
+    // Load gltf model animations
     unsigned int animsCount = 0;
-    ModelAnimation *modelAnimations = LoadModelAnimations("resources/models/gltf/robot.glb", &animsCount);
-
     unsigned int animIndex = 0;
+    unsigned int animCurrentFrame = 0;
+    ModelAnimation *modelAnimations = LoadModelAnimations("resources/models/gltf/robot.glb", &animsCount);
 
     Vector3 position = { 0.0f, 0.0f, 0.0f };    // Set model position
 
-    SetCameraMode(camera, CAMERA_FREE); // Set free camera mode
+    SetCameraMode(camera, CAMERA_FREE);     // Set free camera mode
 
-    SetTargetFPS(60);                   // Set our game to run at 60 frames-per-second
+    SetTargetFPS(60);                       // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
 
-    unsigned int currentFrame = 0;
+
 
     // Main game loop
-    while (!WindowShouldClose())        // Detect window close button or ESC key
+    while (!WindowShouldClose())            // Detect window close button or ESC key
     {
         // Update
         //----------------------------------------------------------------------------------
         ModelAnimation anim = modelAnimations[animIndex];
-        if (IsKeyPressed(KEY_UP))
-        {
-            animIndex = (animIndex + 1) % animsCount;
-        }
+        
+        if (IsKeyPressed(KEY_UP)) animIndex = (animIndex + 1)%animsCount;
+        else if (IsKeyPressed(KEY_DOWN)) animIndex = (animIndex + animsCount - 1)%animsCount;
 
-        if (IsKeyPressed(KEY_DOWN))
-        {
-            animIndex = (animIndex + animsCount - 1) % animsCount;
-        }
-
-        currentFrame = (currentFrame + 1) % anim.frameCount;
-        UpdateModelAnimation(model, anim, currentFrame);
+        animCurrentFrame = (animCurrentFrame + 1)%anim.frameCount;
+        UpdateModelAnimation(model, anim, animCurrentFrame);
+        
         UpdateCamera(&camera);
         //----------------------------------------------------------------------------------
 
@@ -74,7 +71,7 @@ int main(void)
         //----------------------------------------------------------------------------------
         BeginDrawing();
 
-            ClearBackground(SKYBLUE);
+            ClearBackground(RAYWHITE);
 
             BeginMode3D(camera);
 
@@ -83,7 +80,7 @@ int main(void)
 
             EndMode3D();
 
-            DrawText("Use the up/down arrow keys to switch animation.", 10, 10, 20, WHITE);
+            DrawText("Use the UP/DOWN arrow keys to switch animation", 10, 10, 20, GRAY);
 
         EndDrawing();
         //----------------------------------------------------------------------------------
