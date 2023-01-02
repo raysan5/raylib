@@ -1,6 +1,13 @@
 /*******************************************************************************************
 *
-*   raylib [models] example - loading gltf
+*   raylib [models] example - loading gltf with animations
+*
+*   LIMITATIONS:
+*     - Only supports 1 armature per file, and skips loading it if there are multiple armatures
+*     - Only supports linear interpolation (default method in Blender when checked 
+*       "Always Sample Animations" when exporting a GLTF file)
+*     - Only supports translation/rotation/scale animation channel.path, 
+*       weights not considered (i.e. morph targets)
 *
 *   Example originally created with raylib 3.7, last time updated with raylib 4.2
 *
