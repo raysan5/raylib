@@ -85,7 +85,7 @@ int main(void)
                 {
                     // Reset everything to launch again
                     atomic_store_explicit(&dataLoaded, false, memory_order_relaxed);
-                    dataProgress = 0;
+                    atomic_store_explicit(&dataProgress, 0, memory_order_relaxed);
                     state = STATE_WAITING;
                 }
             } break;
