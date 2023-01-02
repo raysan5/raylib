@@ -5173,8 +5173,8 @@ static Model LoadGLTF(const char *fileName)
 static void GetGLTFPoseAtTime(cgltf_accessor* input, cgltf_accessor *output, float time, void *data) {
     assert(input->count == output->count);
 
-    float tstart = 0;
-    float tend = 0;
+    float tstart = 0.0f;
+    float tend = 0.0f;
 
     int keyframe = 0; // defaults to first pose
     for (int i = 0; i < input->count - 1; i++) {
@@ -5190,12 +5190,12 @@ static void GetGLTFPoseAtTime(cgltf_accessor* input, cgltf_accessor *output, flo
     }
 
     float t = (time - tstart)/(tend - tstart);
-    t = (t < 0)? 0 : t;
-    t = (t > 1)? 1 : t;
+    t = (t < 0.0f)? 0.0f : t;
+    t = (t > 1.0f)? 1.0f : t;
 
     assert(output->component_type == cgltf_component_type_r_32f);
     if (output->type == cgltf_type_vec3) {
-        float tmp[3] = { 0 };
+        float tmp[3] = { 0.0f };
         cgltf_accessor_read_float(output, keyframe, tmp, 3);
         Vector3 v1 = {tmp[0], tmp[1], tmp[2]};
         cgltf_accessor_read_float(output, keyframe+1, tmp, 3);
@@ -5203,7 +5203,7 @@ static void GetGLTFPoseAtTime(cgltf_accessor* input, cgltf_accessor *output, flo
         Vector3 *r = data;
         *r = Vector3Lerp(v1, v2, t);
     } else if (output->type == cgltf_type_vec4) {
-        float tmp[4] = { 0 };
+        float tmp[4] = { 0.0f };
         cgltf_accessor_read_float(output, keyframe, tmp, 4);
         Vector4 v1 = {tmp[0], tmp[1], tmp[2], tmp[3]};
         cgltf_accessor_read_float(output, keyframe+1, tmp, 4);
@@ -5251,7 +5251,7 @@ static ModelAnimation *LoadModelAnimationsGLTF(const char *fileName, unsigned in
                 };
 
                 struct Channels *boneChannels = RL_CALLOC(animations[i].boneCount, sizeof(struct Channels));
-                float animDuration = 0;
+                float animDuration = 0.0f;
                 for (unsigned int j = 0; j < animData.channels_count; j++) {
                     cgltf_animation_channel channel = animData.channels[j];
                     int boneIndex = -1;
@@ -5279,19 +5279,19 @@ static ModelAnimation *LoadModelAnimationsGLTF(const char *fileName, unsigned in
                         }
                     } else TRACELOG(LOG_WARNING, "MODEL: [%s] Only linear interpolation curves are supported for GLTF animation.", fileName);
 
-                    float t;
+                    float t = 0.0f;
                     cgltf_bool r = cgltf_accessor_read_float(channel.sampler->input, channel.sampler->input->count - 1, &t, 1);
                     assert(r);
 
                     animDuration = (t > animDuration)? t : animDuration;
                 }
 
-                animations[i].frameCount = (int)(animDuration*1000/GLTF_ANIMDELAY);
+                animations[i].frameCount = (int)(animDuration*1000.0f/GLTF_ANIMDELAY);
                 animations[i].framePoses = RL_MALLOC(animations[i].frameCount*sizeof(Transform *));
 
                 for (unsigned int j = 0; j < animations[i].frameCount; j++) {
                     animations[i].framePoses[j] = RL_MALLOC(animations[i].boneCount*sizeof(Transform));
-                    float time = ((float) j*GLTF_ANIMDELAY)/1000;
+                    float time = ((float) j*GLTF_ANIMDELAY)/1000.0f;
                     for (unsigned int k = 0; k < animations[i].boneCount; k++) {
                         Vector3 translation = {0, 0, 0};
                         Quaternion rotation = {0, 0, 0, 1};
