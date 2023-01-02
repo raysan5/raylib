@@ -35,7 +35,7 @@ int main(void)
 
     // Loaf gltf model
     Model model = LoadModel("resources/models/gltf/robot.glb");
-    unsigned int animsCount;
+    unsigned int animsCount = 0;
     ModelAnimation *modelAnimations = LoadModelAnimations("resources/models/gltf/robot.glb", &animsCount);
 
     unsigned int animIndex = 0;
@@ -55,10 +55,11 @@ int main(void)
         // Update
         //----------------------------------------------------------------------------------
         ModelAnimation anim = modelAnimations[animIndex];
-        if(IsKeyPressed(KEY_UP)) {
+        if (IsKeyPressed(KEY_UP)) {
             animIndex = (animIndex + 1) % animsCount;
         }
-        if(IsKeyPressed(KEY_DOWN)) {
+
+        if (IsKeyPressed(KEY_DOWN)) {
             animIndex = (animIndex + animsCount - 1) % animsCount;
         }
 
