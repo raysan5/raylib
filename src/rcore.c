@@ -5315,7 +5315,7 @@ static void KeyCallback(GLFWwindow *window, int key, int scancode, int action, i
     if ((key == CORE.Input.Keyboard.exitKey) && (action == GLFW_PRESS)) glfwSetWindowShouldClose(CORE.Window.handle, GLFW_TRUE);
 
 #if defined(SUPPORT_SCREEN_CAPTURE)
-    if ((key == CORE.Input.Keyboad.screenshotKey) && (action == GLFW_PRESS))
+    if ((key == CORE.Input.Keyboard.screenshotKey) && (action == GLFW_PRESS))
     {
 #if defined(SUPPORT_GIF_RECORDING)
         if (mods == GLFW_MOD_CONTROL)
@@ -6439,7 +6439,7 @@ static void PollKeyboardEvents(void)
                     }
 
                 #if defined(SUPPORT_SCREEN_CAPTURE)
-                    if (CORE.Input.Keyboard.currentKeyState[CORE.Input.Keyboad.screenshotKey] == 1)
+                    if (CORE.Input.Keyboard.currentKeyState[CORE.Input.Keyboard.screenshotKey] == 1)
                     {
                         TakeScreenshot(TextFormat("screenshot%03i.png", screenshotCounter));
                         screenshotCounter++;
