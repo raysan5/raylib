@@ -23,10 +23,10 @@
 
 // Using C11 atomics for synchronization
 // NOTE: A plain bool (or any plain data type for that matter) can't be used for inter-thread synchronization
-static atomic_bool dataLoaded = ATOMIC_VAR_INIT(false); // Data Loaded completion indicator
+static atomic_bool dataLoaded = false; // Data Loaded completion indicator
 static void *LoadDataThread(void *arg);     // Loading data thread function declaration
 
-static int dataProgress = 0;                // Data progress accumulator
+static atomic_int dataProgress = 0;                // Data progress accumulator
 
 //------------------------------------------------------------------------------------
 // Program main entry point
@@ -69,7 +69,7 @@ int main(void)
             case STATE_LOADING:
             {
                 framesCounter++;
-                if (atomic_load(&dataLoaded))
+                if (atomic_load_explicit(&dataLoaded, memory_order_relaxed))
                 {
                     framesCounter = 0;
                     int error = pthread_join(threadId, NULL);
@@ -84,8 +84,8 @@ int main(void)
                 if (IsKeyPressed(KEY_ENTER))
                 {
                     // Reset everything to launch again
-                    atomic_store(&dataLoaded, false);
-                    dataProgress = 0;
+                    atomic_store_explicit(&dataLoaded, false, memory_order_relaxed);
+                    atomic_store_explicit(&dataProgress, 0, memory_order_relaxed);
                     state = STATE_WAITING;
                 }
             } break;
@@ -104,7 +104,7 @@ int main(void)
                 case STATE_WAITING: DrawText("PRESS ENTER to START LOADING DATA", 150, 170, 20, DARKGRAY); break;
                 case STATE_LOADING:
                 {
-                    DrawRectangle(150, 200, dataProgress, 60, SKYBLUE);
+                    DrawRectangle(150, 200, atomic_load_explicit(&dataProgress, memory_order_relaxed), 60, SKYBLUE);
                     if ((framesCounter/15)%2) DrawText("LOADING DATA...", 240, 210, 40, DARKBLUE);
 
                 } break;
@@ -145,11 +145,11 @@ static void *LoadDataThread(void *arg)
 
         // We accumulate time over a global variable to be used in
         // main thread as a progress bar
-        dataProgress = timeCounter/10;
+        atomic_store_explicit(&dataProgress, timeCounter/10, memory_order_relaxed);
     }
 
     // When data has finished loading, we set global variable
-    atomic_store(&dataLoaded, true);
+    atomic_store_explicit(&dataLoaded, true, memory_order_relaxed);
 
     return NULL;
 }
