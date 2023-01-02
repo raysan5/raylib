@@ -55,11 +55,13 @@ int main(void)
         // Update
         //----------------------------------------------------------------------------------
         ModelAnimation anim = modelAnimations[animIndex];
-        if (IsKeyPressed(KEY_UP)) {
+        if (IsKeyPressed(KEY_UP))
+        {
             animIndex = (animIndex + 1) % animsCount;
         }
 
-        if (IsKeyPressed(KEY_DOWN)) {
+        if (IsKeyPressed(KEY_DOWN))
+        {
             animIndex = (animIndex + animsCount - 1) % animsCount;
         }
 
