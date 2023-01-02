@@ -69,7 +69,7 @@ int main(void)
             case STATE_LOADING:
             {
                 framesCounter++;
-                if (atomic_load_explicit(&dataLoaded, memory_order_acquire))
+                if (atomic_load_explicit(&dataLoaded, memory_order_relaxed))
                 {
                     framesCounter = 0;
                     int error = pthread_join(threadId, NULL);
@@ -149,7 +149,7 @@ static void *LoadDataThread(void *arg)
     }
 
     // When data has finished loading, we set global variable
-    atomic_store_explicit(&dataLoaded, true, memory_order_release);
+    atomic_store_explicit(&dataLoaded, true, memory_order_relaxed);
 
     return NULL;
 }
