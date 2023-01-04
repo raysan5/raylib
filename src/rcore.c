@@ -1945,7 +1945,21 @@ const char *GetClipboardText(void)
     return glfwGetClipboardString(CORE.Window.handle);
 #endif
 #if defined(PLATFORM_WEB)
-    return emscripten_run_script_string("navigator.clipboard.readText()");
+    // Accessing clipboard data from browser is tricky due to security reasons
+    // The method to use is navigator.clipboard.readText() but this is an asynchronous method
+    // that will return at some moment after the function is called with the required data
+    emscripten_run_script_string("navigator.clipboard.readText() \
+        .then(text => { document.getElementById('clipboard').innerText = text; console.log('Pasted content: ', text); }) \
+        .catch(err => { console.error('Failed to read clipboard contents: ', err); });"
+    );
+    
+    // The main issue is getting that data, one approach could be using ASYNCIFY and wait
+    // for the data but it requires adding Asyncify emscripten library on compilation
+    
+    // Another approach could be just copy the data in a HTML text field and try to retrieve it
+    // later on if available... and clean it for future accesses
+
+    return NULL;
 #endif
     return NULL;
 }
