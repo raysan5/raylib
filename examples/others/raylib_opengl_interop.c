@@ -28,7 +28,7 @@
 
 #if defined(PLATFORM_DESKTOP)
     #if defined(GRAPHICS_API_OPENGL_ES2)
-        #include "gles2.h"       // Required for: OpenGL functionality 
+        #include "glad_gles2.h"       // Required for: OpenGL functionality 
         #define glGenVertexArrays glGenVertexArraysOES
         #define glBindVertexArray glBindVertexArrayOES
         #define glDeleteVertexArrays glDeleteVertexArraysOES

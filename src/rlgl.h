@@ -792,7 +792,7 @@ RLAPI void rlLoadDrawQuad(void);     // Load and draw a quad
 
     #if defined(PLATFORM_DESKTOP)
     #define GLAD_GLES2_IMPLEMENTATION
-    #include "external/gles2.h"
+    #include "external/glad_gles2.h"
     #else
     #define GL_GLEXT_PROTOTYPES
     //#include <EGL/egl.h>              // EGL library -> not required, platform layer
