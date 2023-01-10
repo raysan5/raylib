@@ -789,10 +789,16 @@ RLAPI void rlLoadDrawQuad(void);     // Load and draw a quad
 #endif
 
 #if defined(GRAPHICS_API_OPENGL_ES2)
+
+    #if defined(PLATFORM_DESKTOP)
+    #define GLAD_GLES2_IMPLEMENTATION
+    #include "external/glad_gles2.h"
+    #else
     #define GL_GLEXT_PROTOTYPES
     //#include <EGL/egl.h>              // EGL library -> not required, platform layer
     #include <GLES2/gl2.h>              // OpenGL ES 2.0 library
     #include <GLES2/gl2ext.h>           // OpenGL ES 2.0 extensions library
+    #endif
 
     // It seems OpenGL ES 2.0 instancing entry points are not defined on Raspberry Pi
     // provided headers (despite being defined in official Khronos GLES2 headers)
@@ -2144,6 +2150,12 @@ void rlLoadExtensions(void *loader)
 #endif  // GRAPHICS_API_OPENGL_33
 
 #if defined(GRAPHICS_API_OPENGL_ES2)
+
+    #if defined(PLATFORM_DESKTOP)
+    if (gladLoadGLES2((GLADloadfunc)loader) == 0) TRACELOG(RL_LOG_WARNING, "GLAD: Cannot load OpenGL ES2.0 functions");
+    else TRACELOG(RL_LOG_INFO, "GLAD: OpenGL ES2.0 loaded successfully");
+    #endif
+
     // Get supported extensions list
     GLint numExt = 0;
     const char **extList = RL_MALLOC(512*sizeof(const char *)); // Allocate 512 strings pointers (2 KB)
