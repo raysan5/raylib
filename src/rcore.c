@@ -4091,8 +4091,18 @@ static bool InitGraphicsDevice(int width, int height)
     if (CORE.Window.fullscreen)
     {
         // remember center for switchinging from fullscreen to window
-        CORE.Window.position.x = CORE.Window.display.width/2 - CORE.Window.screen.width/2;
-        CORE.Window.position.y = CORE.Window.display.height/2 - CORE.Window.screen.height/2;
+        if ((CORE.Window.screen.height == CORE.Window.display.height) && (CORE.Window.screen.width == CORE.Window.display.width))
+        {
+            // If screen width/height equal to the dislpay, we can't calclulate the window pos for toggling fullscreened/windowed.
+            // Toggling fullscreened/windowed with pos(0, 0) can cause problems in some platforms, such as X11.
+            CORE.Window.position.x = CORE.Window.display.width/4;
+            CORE.Window.position.y = CORE.Window.display.height/4;
+        }
+        else
+        {
+            CORE.Window.position.x = CORE.Window.display.width/2 - CORE.Window.screen.width/2;
+            CORE.Window.position.y = CORE.Window.display.height/2 - CORE.Window.screen.height/2;
+        }
 
         if (CORE.Window.position.x < 0) CORE.Window.position.x = 0;
         if (CORE.Window.position.y < 0) CORE.Window.position.y = 0;
