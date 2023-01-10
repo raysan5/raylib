@@ -155,6 +155,9 @@
     #undef _POSIX_C_SOURCE
     #define _POSIX_C_SOURCE 199309L // Required for: CLOCK_MONOTONIC if compiled with c99 without gnu ext.
 #endif
+#if defined(__linux__) && !defined(_GNU_SOURCE)
+    #define _GNU_SOURCE
+#endif
 
 // Platform specific defines to handle GetApplicationDirectory()
 #if defined (PLATFORM_DESKTOP)
