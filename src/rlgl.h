@@ -789,15 +789,16 @@ RLAPI void rlLoadDrawQuad(void);     // Load and draw a quad
 #endif
 
 #if defined(GRAPHICS_API_OPENGL_ES2)
-
+    // NOTE: OpenGL ES 2.0 can be enabled on PLATFORM_DESKTOP,
+    // in that case, functions are loaded from a custom glad for OpenGL ES 2.0 
     #if defined(PLATFORM_DESKTOP)
-    #define GLAD_GLES2_IMPLEMENTATION
-    #include "external/glad_gles2.h"
+        #define GLAD_GLES2_IMPLEMENTATION
+        #include "external/glad_gles2.h"
     #else
-    #define GL_GLEXT_PROTOTYPES
-    //#include <EGL/egl.h>              // EGL library -> not required, platform layer
-    #include <GLES2/gl2.h>              // OpenGL ES 2.0 library
-    #include <GLES2/gl2ext.h>           // OpenGL ES 2.0 extensions library
+        #define GL_GLEXT_PROTOTYPES
+        //#include <EGL/egl.h>          // EGL library -> not required, platform layer
+        #include <GLES2/gl2.h>          // OpenGL ES 2.0 library
+        #include <GLES2/gl2ext.h>       // OpenGL ES 2.0 extensions library
     #endif
 
     // It seems OpenGL ES 2.0 instancing entry points are not defined on Raspberry Pi
