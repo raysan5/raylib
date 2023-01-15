@@ -1136,6 +1136,10 @@ RLAPI int GetTouchY(void);                                    // Get touch posit
 RLAPI Vector2 GetTouchPosition(int index);                    // Get touch position XY for a touch point index (relative to screen size)
 RLAPI int GetTouchPointId(int index);                         // Get touch point identifier for given index
 RLAPI int GetTouchPointCount(void);                           // Get number of touch points
+bool IsTouchPointPressed(int index);                          // Check if a Touch point is pressed once (if the finger touch got in contact with the the screen once, a.k.a TAP, also found in gestures)
+bool IsTouchPointReleased(int index);                         // Check if a Touch point has been released once (if the finger touch was in contact with the screen and now is not anymore)
+bool IsTouchPointDown(int index);                             // Check if a Touch Point is being pressed (if the finger touch is in contact with the screen)
+bool IsTouchPointUp(int index);                               // Check if a Touch Point was released (if the finger touch no longer in contact with the screen)
 
 //------------------------------------------------------------------------------------
 // Gestures and Touch Handling Functions (Module: rgestures)

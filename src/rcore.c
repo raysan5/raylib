@@ -3907,6 +3907,40 @@ int GetTouchPointCount(void)
     return CORE.Input.Touch.pointCount;
 }
 
+// Check if a Touch point is pressed once (if the finger touch got in contact with the the screen once, a.k.a TAP, also found in gestures)
+bool IsTouchPointPressed(int index)
+{
+    // Compare the previous and current Touch point state
+    if ((CORE.Input.Touch.currentTouchState[index] == 1) && (CORE.Input.Touch.previousTouchState[index] == 0)) return true;
+
+    return false;
+}
+
+// Check if a Touch point has been released once (if the finger touch was in contact with the screen and now is not anymore)
+bool IsTouchPointReleased(int index)
+{
+    // Compare the previous and current Touch point state
+    if ((CORE.Input.Touch.currentTouchState[index] == 0) && (CORE.Input.Touch.previousTouchState[index] == 1)) return true;
+
+    return false;
+}
+
+// Check if a Touch Point is being pressed (if the finger touch is in contact with the screen)
+bool IsTouchPointDown(int index)
+{
+    // Get the state of the Touch point
+    if (CORE.Input.Touch.currentTouchState[index] == 1) return true;
+
+    return false;
+}
+
+// Check if a Touch Point was released (if the finger touch no longer in contact with the screen)
+bool IsTouchPointUp(int index)
+{
+    // Reverse the state of the IsTouchPointDown() function
+    return !IsTouchPointDown(index);
+}
+
 //----------------------------------------------------------------------------------
 // Module specific Functions Definition
 //----------------------------------------------------------------------------------
