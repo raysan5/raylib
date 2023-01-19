@@ -4,10 +4,10 @@
 :: .
 :: > Setup required Environment
 :: -------------------------------------
-set RAYLIB_INCLUDE_DIR=C:\raylib\src
-set RAYLIB_LIB_DIR=C:\raylib\src
-set RAYLIB_RES_FILE=C:\raylib\src\raylib.rc.data
-set COMPILER_DIR=C:\raylib\mingw\bin
+set RAYLIB_INCLUDE_DIR=C:\raylib\raylib\src
+set RAYLIB_LIB_DIR=C:\raylib\raylib\src
+set RAYLIB_RES_FILE=C:\raylib\raylib\src\raylib.rc.data
+set COMPILER_DIR=C:\raylib\w64devkit\bin
 set PATH=%PATH%;%COMPILER_DIR%
 :: Get full filename path for input file %1
 set FILENAME=%~f1
