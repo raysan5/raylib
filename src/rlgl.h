@@ -596,6 +596,7 @@ RLAPI void rlDisableTexture(void);                      // Disable texture
 RLAPI void rlEnableTextureCubemap(unsigned int id);     // Enable texture cubemap
 RLAPI void rlDisableTextureCubemap(void);               // Disable texture cubemap
 RLAPI void rlTextureParameters(unsigned int id, int param, int value); // Set texture parameters (filter, wrap)
+RLAPI void rlCubemapParameters(unsigned int id, int param, int value); // Set cubemap parameters (filter, wrap)
 
 // Shader state
 RLAPI void rlEnableShader(unsigned int id);             // Enable shader program
@@ -1622,6 +1623,54 @@ void rlTextureParameters(unsigned int id, int param, int value)
     }
 
     glBindTexture(GL_TEXTURE_2D, 0);
+}
+
+// Set cubemap parameters (wrap mode/filter mode)
+void rlCubemapParameters(unsigned int id, int param, int value)
+{
+    glBindTexture(GL_TEXTURE_CUBE_MAP, id);
+
+#if !defined(GRAPHICS_API_OPENGL_11)
+    // Reset anisotropy filter, in case it was set
+    glTexParameterf(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAX_ANISOTROPY_EXT, 1.0f);
+#endif
+
+    switch (param)
+    {
+        case RL_TEXTURE_WRAP_S:
+        case RL_TEXTURE_WRAP_T:
+        {
+            if (value == RL_TEXTURE_WRAP_MIRROR_CLAMP)
+            {
+#if !defined(GRAPHICS_API_OPENGL_11)
+                if (RLGL.ExtSupported.texMirrorClamp) glTexParameteri(GL_TEXTURE_CUBE_MAP, param, value);
+                else TRACELOG(RL_LOG_WARNING, "GL: Clamp mirror wrap mode not supported (GL_MIRROR_CLAMP_EXT)");
+#endif
+            }
+            else glTexParameteri(GL_TEXTURE_CUBE_MAP, param, value);
+
+        } break;
+        case RL_TEXTURE_MAG_FILTER:
+        case RL_TEXTURE_MIN_FILTER: glTexParameteri(GL_TEXTURE_CUBE_MAP, param, value); break;
+        case RL_TEXTURE_FILTER_ANISOTROPIC:
+        {
+#if !defined(GRAPHICS_API_OPENGL_11)
+            if (value <= RLGL.ExtSupported.maxAnisotropyLevel) glTexParameterf(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAX_ANISOTROPY_EXT, (float)value);
+            else if (RLGL.ExtSupported.maxAnisotropyLevel > 0.0f)
+            {
+                TRACELOG(RL_LOG_WARNING, "GL: Maximum anisotropic filter level supported is %iX", id, (int)RLGL.ExtSupported.maxAnisotropyLevel);
+                glTexParameterf(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAX_ANISOTROPY_EXT, (float)value);
+            }
+            else TRACELOG(RL_LOG_WARNING, "GL: Anisotropic filtering not supported");
+#endif
+        } break;
+#if defined(GRAPHICS_API_OPENGL_33)
+        case RL_TEXTURE_MIPMAP_BIAS_RATIO: glTexParameterf(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_LOD_BIAS, value/100.0f);
+#endif
+        default: break;
+    }
+
+    glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
 }
 
 // Enable shader program
