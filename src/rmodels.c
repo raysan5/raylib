@@ -102,8 +102,19 @@
     #define PAR_REALLOC(T, BUF, N) ((T*)RL_REALLOC(BUF, sizeof(T)*(N)))
     #define PAR_FREE RL_FREE
 
+#if defined(_MSC_VER ) // par shapes has 2 warnings on windows, so disable them just fof this file
+#pragma warning( push )
+#pragma warning( disable : 4244)
+#pragma warning( disable : 4305)
+#endif
+
     #define PAR_SHAPES_IMPLEMENTATION
     #include "external/par_shapes.h"    // Shapes 3d parametric generation
+
+#if defined(_MSC_VER )  // disable MSVC warning suppression for par shapes
+#pragma warning( pop ) 
+#endif
+
 #endif
 
 #if defined(_WIN32)
@@ -690,7 +701,7 @@ void DrawCapsule(Vector3 startPos, Vector3 endPos, float radius, int slices, int
     Vector3 capCenter = endPos;
 
     float baseSliceAngle = (2.0f*PI)/slices;
-    float baseRingAngle  = PI * 0.5 / rings; 
+    float baseRingAngle  = PI * 0.5f / rings; 
 
     rlBegin(RL_TRIANGLES);
         rlColor4ub(color.r, color.g, color.b, color.a);
@@ -833,7 +844,7 @@ void DrawCapsuleWires(Vector3 startPos, Vector3 endPos, float radius, int slices
     Vector3 capCenter = endPos;
 
     float baseSliceAngle = (2.0f*PI)/slices;
-    float baseRingAngle  = PI * 0.5 / rings; 
+    float baseRingAngle  = PI * 0.5f / rings; 
 
     rlBegin(RL_LINES);
         rlColor4ub(color.r, color.g, color.b, color.a);
@@ -5268,7 +5279,7 @@ static Model LoadM3D(const char *fileName)
         // Map no material to index 0 with default shader, everything else materialid + 1
         model.materials[0] = LoadMaterialDefault();
 
-        for (i = l = 0, k = -1; i < m3d->numface; i++, l++)
+        for (i = l = 0, k = -1; i < (int)m3d->numface; i++, l++)
         {
             // Materials are grouped together
             if (mi != m3d->face[i].materialid)
@@ -5285,7 +5296,7 @@ static Model LoadM3D(const char *fileName)
                 k++;
                 mi = m3d->face[i].materialid;
 
-                for (j = i, l = 0; (j < m3d->numface) && (mi == m3d->face[j].materialid); j++, l++);
+                for (j = i, l = 0; (j < (int)m3d->numface) && (mi == m3d->face[j].materialid); j++, l++);
 
                 model.meshes[k].vertexCount = l*3;
                 model.meshes[k].triangleCount = l;
@@ -5334,11 +5345,11 @@ static Model LoadM3D(const char *fileName)
             if (m3d->face[i].texcoord[0] != M3D_UNDEF)
             {
                 model.meshes[k].texcoords[l * 6 + 0] = m3d->tmap[m3d->face[i].texcoord[0]].u;
-                model.meshes[k].texcoords[l * 6 + 1] = 1.0 - m3d->tmap[m3d->face[i].texcoord[0]].v;
+                model.meshes[k].texcoords[l * 6 + 1] = 1.0f - m3d->tmap[m3d->face[i].texcoord[0]].v;
                 model.meshes[k].texcoords[l * 6 + 2] = m3d->tmap[m3d->face[i].texcoord[1]].u;
-                model.meshes[k].texcoords[l * 6 + 3] = 1.0 - m3d->tmap[m3d->face[i].texcoord[1]].v;
+                model.meshes[k].texcoords[l * 6 + 3] = 1.0f - m3d->tmap[m3d->face[i].texcoord[1]].v;
                 model.meshes[k].texcoords[l * 6 + 4] = m3d->tmap[m3d->face[i].texcoord[2]].u;
-                model.meshes[k].texcoords[l * 6 + 5] = 1.0 - m3d->tmap[m3d->face[i].texcoord[2]].v;
+                model.meshes[k].texcoords[l * 6 + 5] = 1.0f - m3d->tmap[m3d->face[i].texcoord[2]].v;
             }
 
             if (m3d->face[i].normal[0] != M3D_UNDEF)
@@ -5362,7 +5373,7 @@ static Model LoadM3D(const char *fileName)
                     int skinid = m3d->vertex[m3d->face[i].vertex[n]].skinid;
 
                     // Check if there is a skin for this mesh, should be, just failsafe
-                    if (skinid != M3D_UNDEF && skinid < m3d->numskin)
+                    if (skinid != M3D_UNDEF && skinid < (int)m3d->numskin)
                     {
                         for (j = 0; j < 4; j++)
                         {
@@ -5382,7 +5393,7 @@ static Model LoadM3D(const char *fileName)
         }
 
         // Load materials
-        for (i = 0; i < m3d->nummaterial; i++)
+        for (i = 0; i < (int)m3d->nummaterial; i++)
         {
             model.materials[i + 1] = LoadMaterialDefault();
 
@@ -5459,7 +5470,7 @@ static Model LoadM3D(const char *fileName)
             model.bones = RL_CALLOC(model.boneCount, sizeof(BoneInfo));
             model.bindPose = RL_CALLOC(model.boneCount, sizeof(Transform));
 
-            for (i = 0; i < m3d->numbone; i++)
+            for (i = 0; i < (int)m3d->numbone; i++)
             {
                 model.bones[i].parent = m3d->bone[i].parent;
                 strncpy(model.bones[i].name, m3d->bone[i].name, sizeof(model.bones[i].name));
@@ -5560,7 +5571,7 @@ static ModelAnimation *LoadModelAnimationsM3D(const char *fileName, unsigned int
             // strncpy(animations[a].name, m3d->action[a].name, sizeof(animations[a].name));
             TRACELOG(LOG_INFO, "MODEL: [%s] animation #%i: %i msec, %i frames", fileName, a, m3d->action[a].durationmsec, animations[a].frameCount);
 
-            for (i = 0; i < m3d->numbone; i++)
+            for (i = 0; i < (int)m3d->numbone; i++)
             {
                 animations[a].bones[i].parent = m3d->bone[i].parent;
                 strncpy(animations[a].bones[i].name, m3d->bone[i].name, sizeof(animations[a].bones[i].name));
@@ -5579,7 +5590,7 @@ static ModelAnimation *LoadModelAnimationsM3D(const char *fileName, unsigned int
                 m3db_t *pose = m3d_pose(m3d, a, i * M3D_ANIMDELAY);
                 if (pose != NULL)
                 {
-                    for (j = 0; j < m3d->numbone; j++)
+                    for (j = 0; j < (int)m3d->numbone; j++)
                     {
                         animations[a].framePoses[i][j].translation.x = m3d->vertex[pose[j].pos].x*m3d->scale;
                         animations[a].framePoses[i][j].translation.y = m3d->vertex[pose[j].pos].y*m3d->scale;
