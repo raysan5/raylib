@@ -198,7 +198,6 @@ typedef struct tagBITMAPINFOHEADER {
 
 #if defined(SUPPORT_FILEFORMAT_OGG)
     // TODO: Remap stb_vorbis malloc()/free() calls to RL_MALLOC/RL_FREE
-
     #define STB_VORBIS_IMPLEMENTATION
     #include "external/stb_vorbis.h"    // OGG loading functions
 #endif
@@ -207,8 +206,18 @@ typedef struct tagBITMAPINFOHEADER {
     #define JARXM_MALLOC RL_MALLOC
     #define JARXM_FREE RL_FREE
 
+#if defined(_MSC_VER ) // jar xm has  warnings on windows, so disable them just for this file
+#pragma warning( push )
+#pragma warning( disable : 4244)
+#endif
+
     #define JAR_XM_IMPLEMENTATION
     #include "external/jar_xm.h"        // XM loading functions
+
+#if defined(_MSC_VER )
+#pragma warning( pop )
+#endif
+
 #endif
 
 #if defined(SUPPORT_FILEFORMAT_MOD)
@@ -1756,7 +1765,7 @@ void UpdateMusicStream(Music music)
                 {
                     while (true)
                     {
-                        int frameCountRed = drwav_read_pcm_frames_s16((drwav *)music.ctxData, frameCountStillNeeded, (short *)((char *)AUDIO.System.pcmBuffer + frameCountRedTotal*frameSize));
+                        int frameCountRed = (int)drwav_read_pcm_frames_s16((drwav *)music.ctxData, frameCountStillNeeded, (short *)((char *)AUDIO.System.pcmBuffer + frameCountRedTotal*frameSize));
                         frameCountRedTotal += frameCountRed;
                         frameCountStillNeeded -= frameCountRed;
                         if (frameCountStillNeeded == 0) break;
@@ -1767,7 +1776,7 @@ void UpdateMusicStream(Music music)
                 {
                     while (true)
                     {
-                        int frameCountRed = drwav_read_pcm_frames_f32((drwav *)music.ctxData, frameCountStillNeeded, (float *)((char *)AUDIO.System.pcmBuffer + frameCountRedTotal*frameSize));
+                        int frameCountRed = (int)drwav_read_pcm_frames_f32((drwav *)music.ctxData, frameCountStillNeeded, (float *)((char *)AUDIO.System.pcmBuffer + frameCountRedTotal*frameSize));
                         frameCountRedTotal += frameCountRed;
                         frameCountStillNeeded -= frameCountRed;
                         if (frameCountStillNeeded == 0) break;
@@ -1807,7 +1816,7 @@ void UpdateMusicStream(Music music)
             {
                 while (true)
                 {
-                    int frameCountRed = drmp3_read_pcm_frames_f32((drmp3 *)music.ctxData, frameCountStillNeeded, (float *)((char *)AUDIO.System.pcmBuffer + frameCountRedTotal*frameSize));
+                    int frameCountRed = (int)drmp3_read_pcm_frames_f32((drmp3 *)music.ctxData, frameCountStillNeeded, (float *)((char *)AUDIO.System.pcmBuffer + frameCountRedTotal*frameSize));
                     frameCountRedTotal += frameCountRed;
                     frameCountStillNeeded -= frameCountRed;
                     if (frameCountStillNeeded == 0) break;

@@ -105,7 +105,7 @@ void SetShapesTexture(Texture2D texture, Rectangle source)
 // Draw a pixel
 void DrawPixel(int posX, int posY, Color color)
 {
-  DrawPixelV((Vector2){ posX, posY }, color);
+  DrawPixelV((Vector2){ (float)posX, (float)posY }, color);
 }
 
 // Draw a pixel (Vector version)
@@ -156,8 +156,8 @@ void DrawLine(int startPosX, int startPosY, int endPosX, int endPosY, Color colo
 {
     rlBegin(RL_LINES);
         rlColor4ub(color.r, color.g, color.b, color.a);
-        rlVertex2f(startPosX, startPosY);
-        rlVertex2f(endPosX, endPosY);
+        rlVertex2f((float)startPosX, (float)startPosY);
+        rlVertex2f((float)endPosX, (float)endPosY);
     rlEnd();
 }
 
@@ -209,7 +209,7 @@ void DrawLineBezier(Vector2 startPos, Vector2 endPos, float thick, Color color)
 
         float dy = current.y-previous.y;
         float dx = current.x-previous.x;
-        float size = 0.5*thick/sqrt(dx*dx+dy*dy);
+        float size = 0.5f*thick/sqrtf(dx*dx+dy*dy);
 
         if (i==1)
         {
@@ -254,7 +254,7 @@ void DrawLineBezierQuad(Vector2 startPos, Vector2 endPos, Vector2 controlPos, fl
 
         float dy = current.y-previous.y;
         float dx = current.x-previous.x;
-        float size = 0.5*thick/sqrt(dx*dx+dy*dy);
+        float size = 0.5f*thick/sqrtf(dx*dx+dy*dy);
 
         if (i==1)
         {
@@ -299,7 +299,7 @@ void DrawLineBezierCubic(Vector2 startPos, Vector2 endPos, Vector2 startControlP
 
         float dy = current.y-previous.y;
         float dx = current.x-previous.x;
-        float size = 0.5*thick/sqrt(dx*dx+dy*dy);
+        float size = 0.5f*thick/sqrtf(dx*dx+dy*dy);
         
         if (i==1)
         {
