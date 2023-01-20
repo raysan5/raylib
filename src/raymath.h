@@ -25,7 +25,7 @@
 *
 *   LICENSE: zlib/libpng
 *
-*   Copyright (c) 2015-2022 Ramon Santamaria (@raysan5)
+*   Copyright (c) 2015-2023 Ramon Santamaria (@raysan5)
 *
 *   This software is provided "as-is", without any express or implied warranty. In no event
 *   will the authors be held liable for any damages arising from the use of this software.
@@ -307,9 +307,23 @@ RMAPI float Vector2DistanceSqr(Vector2 v1, Vector2 v2)
 }
 
 // Calculate angle from two vectors
+// NOTE: Parameters need to be normalized
+// Current implementation should be aligned with glm::angle
 RMAPI float Vector2Angle(Vector2 v1, Vector2 v2)
 {
-    float result = atan2f(v2.y, v2.x) - atan2f(v1.y, v1.x);
+    float result = 0.0f;
+    
+    float dot = v1.x*v2.x + v1.y*v2.y;      // Dot product
+
+    float dotClamp = (dot < -1.0f)? -1.0f : dot;  // Clamp
+    if (dotClamp > 1.0f) dotClamp = 1.0f;
+
+    result = acosf(dotClamp);
+    
+    // Alternative implementation, more costly
+    //float v1Length = sqrtf((v1.x*v1.x) + (v1.y*v1.y));
+    //float v2Length = sqrtf((v2.x*v2.x) + (v2.y*v2.y));
+    //float result = -acosf((v1.x*v2.x + v1.y*v2.y)/(v1Length*v2Length));
 
     return result;
 }

@@ -2,7 +2,7 @@
 #
 #   raylib makefile for Desktop platforms, Raspberry Pi, Android and HTML5
 #
-#   Copyright (c) 2013-2022 Ramon Santamaria (@raysan5)
+#   Copyright (c) 2013-2023 Ramon Santamaria (@raysan5)
 #
 #   This software is provided "as-is", without any express or implied warranty. In no event
 #   will the authors be held liable for any damages arising from the use of this software.
@@ -52,8 +52,8 @@ USE_EXTERNAL_GLFW     ?= FALSE
 USE_WAYLAND_DISPLAY   ?= FALSE
 
 # PLATFORM_WEB: Default properties
-BUILD_WEB_ASYNCIFY    ?= FALSE
-BUILD_WEB_SHELL       ?= minshell.html
+BUILD_WEB_ASYNCIFY    ?= TRUE
+BUILD_WEB_SHELL       ?= $(RAYLIB_PATH)/src/minshell.html
 BUILD_WEB_HEAP_SIZE   ?= 134217728
 BUILD_WEB_RESOURCES   ?= TRUE
 BUILD_WEB_RESOURCES_PATH  ?= $(dir $<)resources@resources
@@ -460,6 +460,7 @@ TEXTURES = \
     textures/textures_sprite_anim \
     textures/textures_sprite_button \
     textures/textures_sprite_explosion \
+    textures/textures_textured_curve \
     textures/textures_bunnymark \
     textures/textures_blend_modes \
     textures/textures_draw_tiled \
@@ -519,7 +520,8 @@ SHADERS = \
     shaders/shaders_spotlight \
     shaders/shaders_hot_reloading \
     shaders/shaders_mesh_instancing \
-    shaders/shaders_multi_sample2d
+    shaders/shaders_multi_sample2d \
+    shaders/shaders_write_depth
 
 AUDIO = \
     audio/audio_module_playing \
