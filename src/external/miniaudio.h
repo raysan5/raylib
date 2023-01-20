@@ -3801,7 +3801,7 @@ typedef ma_uint16 wchar_t;
     #ifdef __APPLE__
         #define MA_APPLE
     #endif
-    #ifdef __ANDROID__
+    #if defined(ANDROID) || defined(__ANDROID__)
         #define MA_ANDROID
     #endif
     #ifdef __EMSCRIPTEN__
