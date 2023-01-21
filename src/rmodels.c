@@ -3937,12 +3937,12 @@ static Model LoadOBJ(const char *fileName)
         {
             model.materialCount = materialCount;
             model.materials = (Material *)RL_CALLOC(model.materialCount, sizeof(Material));
-            TraceLog(LOG_INFO, "MODEL: model has %i material meshes", materialCount);
+            TRACELOG(LOG_INFO, "MODEL: model has %i material meshes", materialCount);
         }
         else
         {
             model.meshCount = 1;
-            TraceLog(LOG_INFO, "MODEL: No materials, putting all meshes in a default material");
+            TRACELOG(LOG_INFO, "MODEL: No materials, putting all meshes in a default material");
         }
 
         model.meshes = (Mesh *)RL_CALLOC(model.meshCount, sizeof(Mesh));

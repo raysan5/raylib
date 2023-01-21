@@ -669,7 +669,7 @@ Image GenImageFontAtlas(const GlyphInfo *chars, Rectangle **charRecs, int glyphC
 
     if (chars == NULL)
     {
-        TraceLog(LOG_WARNING, "FONT: Provided chars info not valid, returning empty image atlas");
+        TRACELOG(LOG_WARNING, "FONT: Provided chars info not valid, returning empty image atlas");
         return atlas;
     }
 
