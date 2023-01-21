@@ -5603,13 +5603,7 @@ static Model LoadM3D(const char *fileName)
                 model.meshes[k].vertices = (float *)RL_CALLOC(model.meshes[k].vertexCount*3, sizeof(float));
                 model.meshes[k].texcoords = (float *)RL_CALLOC(model.meshes[k].vertexCount*2, sizeof(float));
                 model.meshes[k].normals = (float *)RL_CALLOC(model.meshes[k].vertexCount*3, sizeof(float));
-                
-                // without material, we rely on vertex colors
-                if (mi == M3D_UNDEF && model.meshes[k].colors == NULL)
-                {
-                    model.meshes[k].colors = RL_CALLOC(model.meshes[k].vertexCount*4, sizeof(unsigned char));
-                    for (j = 0; j < model.meshes[k].vertexCount*4; j += 4) memcpy(&model.meshes[k].colors[j], &WHITE, 4);
-                }
+                model.meshes[k].colors = RL_CALLOC(model.meshes[k].vertexCount*4, sizeof(unsigned char));
                 
                 if (m3d->numbone && m3d->numskin)
                 {
@@ -5634,16 +5628,13 @@ static Model LoadM3D(const char *fileName)
             model.meshes[k].vertices[l * 9 + 7] = m3d->vertex[m3d->face[i].vertex[2]].y*m3d->scale;
             model.meshes[k].vertices[l * 9 + 8] = m3d->vertex[m3d->face[i].vertex[2]].z*m3d->scale;
 
-            if (mi == M3D_UNDEF)
-            {
-                // without vertex color (full transparency), we use the default color
-                if (m3d->vertex[m3d->face[i].vertex[0]].color & 0xFF000000)
-                    memcpy(&model.meshes[k].colors[l * 12 + 0], &m3d->vertex[m3d->face[i].vertex[0]].color, 4);
-                if (m3d->vertex[m3d->face[i].vertex[1]].color & 0xFF000000)
-                    memcpy(&model.meshes[k].colors[l * 12 + 4], &m3d->vertex[m3d->face[i].vertex[1]].color, 4);
-                if (m3d->vertex[m3d->face[i].vertex[2]].color & 0xFF000000)
-                    memcpy(&model.meshes[k].colors[l * 12 + 8], &m3d->vertex[m3d->face[i].vertex[2]].color, 4);
-            }
+            // without vertex color (full transparency), we use the default color
+            if (m3d->vertex[m3d->face[i].vertex[0]].color & 0xFF000000)
+                memcpy(&model.meshes[k].colors[l * 12 + 0], &m3d->vertex[m3d->face[i].vertex[0]].color, 4);
+            if (m3d->vertex[m3d->face[i].vertex[1]].color & 0xFF000000)
+                memcpy(&model.meshes[k].colors[l * 12 + 4], &m3d->vertex[m3d->face[i].vertex[1]].color, 4);
+            if (m3d->vertex[m3d->face[i].vertex[2]].color & 0xFF000000)
+                memcpy(&model.meshes[k].colors[l * 12 + 8], &m3d->vertex[m3d->face[i].vertex[2]].color, 4);
 
             if (m3d->face[i].texcoord[0] != M3D_UNDEF)
             {
