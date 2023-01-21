@@ -1628,12 +1628,11 @@ void rlTextureParameters(unsigned int id, int param, int value)
 // Set cubemap parameters (wrap mode/filter mode)
 void rlCubemapParameters(unsigned int id, int param, int value)
 {
+#if !defined(GRAPHICS_API_OPENGL_11)
     glBindTexture(GL_TEXTURE_CUBE_MAP, id);
 
-#if !defined(GRAPHICS_API_OPENGL_11)
     // Reset anisotropy filter, in case it was set
     glTexParameterf(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAX_ANISOTROPY_EXT, 1.0f);
-#endif
 
     switch (param)
     {
@@ -1642,10 +1641,8 @@ void rlCubemapParameters(unsigned int id, int param, int value)
         {
             if (value == RL_TEXTURE_WRAP_MIRROR_CLAMP)
             {
-#if !defined(GRAPHICS_API_OPENGL_11)
                 if (RLGL.ExtSupported.texMirrorClamp) glTexParameteri(GL_TEXTURE_CUBE_MAP, param, value);
                 else TRACELOG(RL_LOG_WARNING, "GL: Clamp mirror wrap mode not supported (GL_MIRROR_CLAMP_EXT)");
-#endif
             }
             else glTexParameteri(GL_TEXTURE_CUBE_MAP, param, value);
 
@@ -1654,7 +1651,6 @@ void rlCubemapParameters(unsigned int id, int param, int value)
         case RL_TEXTURE_MIN_FILTER: glTexParameteri(GL_TEXTURE_CUBE_MAP, param, value); break;
         case RL_TEXTURE_FILTER_ANISOTROPIC:
         {
-#if !defined(GRAPHICS_API_OPENGL_11)
             if (value <= RLGL.ExtSupported.maxAnisotropyLevel) glTexParameterf(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAX_ANISOTROPY_EXT, (float)value);
             else if (RLGL.ExtSupported.maxAnisotropyLevel > 0.0f)
             {
@@ -1662,7 +1658,6 @@ void rlCubemapParameters(unsigned int id, int param, int value)
                 glTexParameterf(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAX_ANISOTROPY_EXT, (float)value);
             }
             else TRACELOG(RL_LOG_WARNING, "GL: Anisotropic filtering not supported");
-#endif
         } break;
 #if defined(GRAPHICS_API_OPENGL_33)
         case RL_TEXTURE_MIPMAP_BIAS_RATIO: glTexParameterf(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_LOD_BIAS, value/100.0f);
@@ -1671,6 +1666,7 @@ void rlCubemapParameters(unsigned int id, int param, int value)
     }
 
     glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
+#endif
 }
 
 // Enable shader program
