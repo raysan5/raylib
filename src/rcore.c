@@ -3310,7 +3310,7 @@ unsigned char *CompressData(const unsigned char *data, int dataSize, int *compDa
     compData = (unsigned char *)RL_CALLOC(bounds, 1);
     *compDataSize = sdeflate(&sdefl, compData, data, dataSize, COMPRESSION_QUALITY_DEFLATE);   // Compression level 8, same as stbwi
 
-    TraceLog(LOG_INFO, "SYSTEM: Compress data: Original size: %i -> Comp. size: %i", dataSize, *compDataSize);
+    TRACELOG(LOG_INFO, "SYSTEM: Compress data: Original size: %i -> Comp. size: %i", dataSize, *compDataSize);
 #endif
 
     return compData;
@@ -3335,7 +3335,7 @@ unsigned char *DecompressData(const unsigned char *compData, int compDataSize, i
 
     *dataSize = length;
 
-    TraceLog(LOG_INFO, "SYSTEM: Decompress data: Comp. size: %i -> Original size: %i", compDataSize, *dataSize);
+    TRACELOG(LOG_INFO, "SYSTEM: Decompress data: Comp. size: %i -> Original size: %i", compDataSize, *dataSize);
 #endif
 
     return data;
@@ -6854,7 +6854,7 @@ static void LoadAutomationEvents(const char *fileName)
     if ((fileId[0] == 'r') && (fileId[1] == 'E') && (fileId[2] == 'P') && (fileId[1] == ' '))
     {
         fread(&eventCount, sizeof(int), 1, repFile);
-        TraceLog(LOG_WARNING, "Events loaded: %i\n", eventCount);
+        TRACELOG(LOG_WARNING, "Events loaded: %i\n", eventCount);
         fread(events, sizeof(AutomationEvent), eventCount, repFile);
     }
 
