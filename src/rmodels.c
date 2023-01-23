@@ -4498,8 +4498,8 @@ static ModelAnimation *LoadModelAnimationsIQM(const char *fileName, unsigned int
     memcpy(framedata, fileDataPtr + iqmHeader->ofs_frames, iqmHeader->num_frames*iqmHeader->num_framechannels*sizeof(unsigned short));
 
     // joints
-    IQMJoint* joints = RL_MALLOC(iqmHeader->num_joints * sizeof(IQMJoint));
-    memcpy(joints, fileDataPtr + iqmHeader->ofs_joints, iqmHeader->num_joints * sizeof(IQMJoint));
+    IQMJoint *joints = RL_MALLOC(iqmHeader->num_joints*sizeof(IQMJoint));
+    memcpy(joints, fileDataPtr + iqmHeader->ofs_joints, iqmHeader->num_joints*sizeof(IQMJoint));
 
     for (unsigned int a = 0; a < iqmHeader->num_anims; a++)
     {
@@ -4512,8 +4512,10 @@ static ModelAnimation *LoadModelAnimationsIQM(const char *fileName, unsigned int
         for (unsigned int j = 0; j < iqmHeader->num_poses; j++)
         {
             // If animations and skeleton are in the same file, copy bone names to anim
-            if(iqmHeader->num_joints > 0)
-                memcpy(animations[a].bones[j].name, fileDataPtr + iqmHeader->ofs_text + joints[j].name, BONE_NAME_LENGTH * sizeof(char));
+            if (iqmHeader->num_joints > 0)
+                memcpy(animations[a].bones[j].name, fileDataPtr + iqmHeader->ofs_text + joints[j].name, BONE_NAME_LENGTH*sizeof(char));
+            else
+                strcpy(animations[a].bones[j].name, "ANIMJOINTNAME"); // default bone name otherwise
             animations[a].bones[j].parent = poses[j].parent;
         }
 
