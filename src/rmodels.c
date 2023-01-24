@@ -166,6 +166,9 @@ static Model LoadVOX(const char *filename);     // Load VOX mesh data
 static Model LoadM3D(const char *filename);     // Load M3D mesh data
 static ModelAnimation *LoadModelAnimationsM3D(const char *fileName, unsigned int *animCount);   // Load M3D animation data
 #endif
+#if defined(SUPPORT_FILEFORMAT_OBJ) || defined(SUPPORT_FILEFORMAT_MTL)
+static void ProcessMaterialsOBJ(Material *rayMaterials, tinyobj_material_t *materials, int materialCount);  // Process obj materials
+#endif
 
 //----------------------------------------------------------------------------------
 // Module Functions Definition
@@ -1862,10 +1865,9 @@ bool ExportMesh(Mesh mesh, const char *fileName)
     return success;
 }
 
-#if defined(SUPPORT_FILEFORMAT_MTL)
+#if defined(SUPPORT_FILEFORMAT_OBJ) || defined(SUPPORT_FILEFORMAT_MTL)
 // Process obj materials
-
-static void ProcessOBJMaterials(Material* rayMaterials, tinyobj_material_t* materials, int materialCount)
+static void ProcessMaterialsOBJ(Material *rayMaterials, tinyobj_material_t *materials, int materialCount)
 {
 	// Init model materials
 	for (unsigned int m = 0; m < materialCount; m++)
@@ -1880,23 +1882,23 @@ static void ProcessOBJMaterials(Material* rayMaterials, tinyobj_material_t* mate
 
 		if (materials[m].diffuse_texname != NULL) rayMaterials[m].maps[MATERIAL_MAP_DIFFUSE].texture = LoadTexture(materials[m].diffuse_texname);  //char *diffuse_texname; // map_Kd
 
-		rayMaterials[m].maps[MATERIAL_MAP_DIFFUSE].color = (Color){ (unsigned char)(materials[m].diffuse[0] * 255.0f), (unsigned char)(materials[m].diffuse[1] * 255.0f), (unsigned char)(materials[m].diffuse[2] * 255.0f), 255 }; //float diffuse[3];
+		rayMaterials[m].maps[MATERIAL_MAP_DIFFUSE].color = (Color){ (unsigned char)(materials[m].diffuse[0]*255.0f), (unsigned char)(materials[m].diffuse[1]*255.0f), (unsigned char)(materials[m].diffuse[2] * 255.0f), 255 }; //float diffuse[3];
 		rayMaterials[m].maps[MATERIAL_MAP_DIFFUSE].value = 0.0f;
 
 		if (materials[m].specular_texname != NULL) rayMaterials[m].maps[MATERIAL_MAP_SPECULAR].texture = LoadTexture(materials[m].specular_texname);  //char *specular_texname; // map_Ks
-		rayMaterials[m].maps[MATERIAL_MAP_SPECULAR].color = (Color){ (unsigned char)(materials[m].specular[0] * 255.0f), (unsigned char)(materials[m].specular[1] * 255.0f), (unsigned char)(materials[m].specular[2] * 255.0f), 255 }; //float specular[3];
+		rayMaterials[m].maps[MATERIAL_MAP_SPECULAR].color = (Color){ (unsigned char)(materials[m].specular[0]*255.0f), (unsigned char)(materials[m].specular[1]*255.0f), (unsigned char)(materials[m].specular[2] * 255.0f), 255 }; //float specular[3];
 		rayMaterials[m].maps[MATERIAL_MAP_SPECULAR].value = 0.0f;
 
 		if (materials[m].bump_texname != NULL) rayMaterials[m].maps[MATERIAL_MAP_NORMAL].texture = LoadTexture(materials[m].bump_texname);  //char *bump_texname; // map_bump, bump
 		rayMaterials[m].maps[MATERIAL_MAP_NORMAL].color = WHITE;
 		rayMaterials[m].maps[MATERIAL_MAP_NORMAL].value = materials[m].shininess;
 
-		rayMaterials[m].maps[MATERIAL_MAP_EMISSION].color = (Color){ (unsigned char)(materials[m].emission[0] * 255.0f), (unsigned char)(materials[m].emission[1] * 255.0f), (unsigned char)(materials[m].emission[2] * 255.0f), 255 }; //float emission[3];
+		rayMaterials[m].maps[MATERIAL_MAP_EMISSION].color = (Color){ (unsigned char)(materials[m].emission[0]*255.0f), (unsigned char)(materials[m].emission[1]*255.0f), (unsigned char)(materials[m].emission[2] * 255.0f), 255 }; //float emission[3];
 
 		if (materials[m].displacement_texname != NULL) rayMaterials[m].maps[MATERIAL_MAP_HEIGHT].texture = LoadTexture(materials[m].displacement_texname);  //char *displacement_texname; // disp
 	}
 }
-#endif 
+#endif
 
 // Load materials from model file
 Material *LoadMaterials(const char *fileName, int *materialCount)
@@ -1914,8 +1916,8 @@ Material *LoadMaterials(const char *fileName, int *materialCount)
         int result = tinyobj_parse_mtl_file(&mats, &count, fileName);
         if (result != TINYOBJ_SUCCESS) TRACELOG(LOG_WARNING, "MATERIAL: [%s] Failed to parse materials file", fileName);
 
-        materials = MemAlloc(sizeof(Material) * count);
-        ProcessOBJMaterials(materials, mats, count);
+        materials = MemAlloc(count*sizeof(Material));
+        ProcessMaterialsOBJ(materials, mats, count);
 
         tinyobj_materials_free(mats, count);
     }
@@ -3951,7 +3953,7 @@ static Model LoadOBJ(const char *fileName)
         // Count the faces for each material
         int *matFaces = RL_CALLOC(model.meshCount, sizeof(int));
 
-        // iff no materials are present use all faces on one mesh
+        // if no materials are present use all faces on one mesh
         if (materialCount > 0)
         {
             for (unsigned int fi = 0; fi < attrib.num_faces; fi++)
@@ -4027,7 +4029,7 @@ static Model LoadOBJ(const char *fileName)
         }
 
         // Init model materials
-		ProcessOBJMaterials(model.materials, materials, materialCount);
+		ProcessMaterialsOBJ(model.materials, materials, materialCount);
 
         tinyobj_attrib_free(&attrib);
         tinyobj_shapes_free(meshes, meshCount);
