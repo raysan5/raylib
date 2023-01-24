@@ -5,11 +5,11 @@
 *   An abstraction layer for multiple OpenGL versions (1.1, 2.1, 3.3 Core, 4.3 Core, ES 2.0)
 *   that provides a pseudo-OpenGL 1.1 immediate-mode style API (rlVertex, rlTranslate, rlRotate...)
 *
-*   When chosing an OpenGL backend different than OpenGL 1.1, some internal buffer are
+*   When choosing an OpenGL backend different than OpenGL 1.1, some internal buffer are
 *   initialized on rlglInit() to accumulate vertex data.
 *
 *   When an internal state change is required all the stored vertex data is renderer in batch,
-*   additioanlly, rlDrawRenderBatchActive() could be called to force flushing of the batch.
+*   additionally, rlDrawRenderBatchActive() could be called to force flushing of the batch.
 *
 *   Some additional resources are also loaded for convenience, here the complete list:
 *      - Default batch (RLGL.defaultBatch): RenderBatch system to accumulate vertex data
@@ -61,12 +61,11 @@
 *   When loading a shader, the following vertex attribute and uniform
 *   location names are tried to be set automatically:
 *
-*   #define RL_DEFAULT_SHADER_ATTRIB_NAME_POSITION     "vertexPosition"    // Binded by default to shader location: 0
-*   #define RL_DEFAULT_SHADER_ATTRIB_NAME_TEXCOORD     "vertexTexCoord"    // Binded by default to shader location: 1
-*   #define RL_DEFAULT_SHADER_ATTRIB_NAME_NORMAL       "vertexNormal"      // Binded by default to shader location: 2
-*   #define RL_DEFAULT_SHADER_ATTRIB_NAME_COLOR        "vertexColor"       // Binded by default to shader location: 3
-*   #define RL_DEFAULT_SHADER_ATTRIB_NAME_TANGENT      "vertexTangent"     // Binded by default to shader location: 4
-*   #define RL_DEFAULT_SHADER_ATTRIB_NAME_TEXCOORD2    "vertexTexCoord2"   // Binded by default to shader location: 5
+*   #define RL_DEFAULT_SHADER_ATTRIB_NAME_POSITION     "vertexPosition"    // Bound by default to shader location: 0
+*   #define RL_DEFAULT_SHADER_ATTRIB_NAME_TEXCOORD     "vertexTexCoord"    // Bound by default to shader location: 1
+*   #define RL_DEFAULT_SHADER_ATTRIB_NAME_NORMAL       "vertexNormal"      // Bound by default to shader location: 2
+*   #define RL_DEFAULT_SHADER_ATTRIB_NAME_COLOR        "vertexColor"       // Bound by default to shader location: 3
+*   #define RL_DEFAULT_SHADER_ATTRIB_NAME_TANGENT      "vertexTangent"     // Bound by default to shader location: 4
 *   #define RL_DEFAULT_SHADER_UNIFORM_NAME_MVP         "mvp"               // model-view-projection matrix
 *   #define RL_DEFAULT_SHADER_UNIFORM_NAME_VIEW        "matView"           // view matrix
 *   #define RL_DEFAULT_SHADER_UNIFORM_NAME_PROJECTION  "matProjection"     // projection matrix
@@ -505,16 +504,16 @@ typedef enum {
 // Framebuffer attachment type
 // NOTE: By default up to 8 color channels defined but it can be more
 typedef enum {
-    RL_ATTACHMENT_COLOR_CHANNEL0 = 0,   // Framebuffer attachmment type: color 0
-    RL_ATTACHMENT_COLOR_CHANNEL1,       // Framebuffer attachmment type: color 1
-    RL_ATTACHMENT_COLOR_CHANNEL2,       // Framebuffer attachmment type: color 2
-    RL_ATTACHMENT_COLOR_CHANNEL3,       // Framebuffer attachmment type: color 3
-    RL_ATTACHMENT_COLOR_CHANNEL4,       // Framebuffer attachmment type: color 4
-    RL_ATTACHMENT_COLOR_CHANNEL5,       // Framebuffer attachmment type: color 5
-    RL_ATTACHMENT_COLOR_CHANNEL6,       // Framebuffer attachmment type: color 6
-    RL_ATTACHMENT_COLOR_CHANNEL7,       // Framebuffer attachmment type: color 7
-    RL_ATTACHMENT_DEPTH = 100,          // Framebuffer attachmment type: depth
-    RL_ATTACHMENT_STENCIL = 200,        // Framebuffer attachmment type: stencil
+    RL_ATTACHMENT_COLOR_CHANNEL0 = 0,   // Framebuffer attachment type: color 0
+    RL_ATTACHMENT_COLOR_CHANNEL1,       // Framebuffer attachment type: color 1
+    RL_ATTACHMENT_COLOR_CHANNEL2,       // Framebuffer attachment type: color 2
+    RL_ATTACHMENT_COLOR_CHANNEL3,       // Framebuffer attachment type: color 3
+    RL_ATTACHMENT_COLOR_CHANNEL4,       // Framebuffer attachment type: color 4
+    RL_ATTACHMENT_COLOR_CHANNEL5,       // Framebuffer attachment type: color 5
+    RL_ATTACHMENT_COLOR_CHANNEL6,       // Framebuffer attachment type: color 6
+    RL_ATTACHMENT_COLOR_CHANNEL7,       // Framebuffer attachment type: color 7
+    RL_ATTACHMENT_DEPTH = 100,          // Framebuffer attachment type: depth
+    RL_ATTACHMENT_STENCIL = 200,        // Framebuffer attachment type: stencil
 } rlFramebufferAttachType;
 
 // Framebuffer texture attachment type
@@ -545,7 +544,7 @@ extern "C" {            // Prevents name mangling of functions
 
 RLAPI void rlMatrixMode(int mode);                    // Choose the current matrix to be transformed
 RLAPI void rlPushMatrix(void);                        // Push the current matrix to stack
-RLAPI void rlPopMatrix(void);                         // Pop lattest inserted matrix from stack
+RLAPI void rlPopMatrix(void);                         // Pop latest inserted matrix from stack
 RLAPI void rlLoadIdentity(void);                      // Reset current matrix to identity matrix
 RLAPI void rlTranslatef(float x, float y, float z);   // Multiply the current matrix by a translation matrix
 RLAPI void rlRotatef(float angle, float x, float y, float z);  // Multiply the current matrix by a rotation matrix
@@ -642,7 +641,7 @@ RLAPI void rlSetBlendFactorsSeparate(int glSrcRGB, int glDstRGB, int glSrcAlpha,
 //------------------------------------------------------------------------------------
 // rlgl initialization functions
 RLAPI void rlglInit(int width, int height);             // Initialize rlgl (buffers, shaders, textures, states)
-RLAPI void rlglClose(void);                             // De-inititialize rlgl (buffers, shaders, textures)
+RLAPI void rlglClose(void);                             // De-initialize rlgl (buffers, shaders, textures)
 RLAPI void rlLoadExtensions(void *loader);              // Load OpenGL extensions (loader function required)
 RLAPI int rlGetVersion(void);                           // Get current OpenGL version
 RLAPI void rlSetFramebufferWidth(int width);            // Set current framebuffer width
@@ -716,7 +715,7 @@ RLAPI void rlSetShader(unsigned int id, int *locs);                             
 
 // Compute shader management
 RLAPI unsigned int rlLoadComputeShaderProgram(unsigned int shaderId);           // Load compute shader program
-RLAPI void rlComputeShaderDispatch(unsigned int groupX, unsigned int groupY, unsigned int groupZ);  // Dispatch compute shader (equivalent to *draw* for graphics pilepine)
+RLAPI void rlComputeShaderDispatch(unsigned int groupX, unsigned int groupY, unsigned int groupZ);  // Dispatch compute shader (equivalent to *draw* for graphics pipeline)
 
 // Shader buffer storage object management (ssbo)
 RLAPI unsigned int rlLoadShaderBuffer(unsigned int size, const void *data, int usageHint); // Load shader storage buffer object (SSBO)
@@ -892,22 +891,22 @@ RLAPI void rlLoadDrawQuad(void);     // Load and draw a quad
 
 // Default shader vertex attribute names to set location points
 #ifndef RL_DEFAULT_SHADER_ATTRIB_NAME_POSITION
-    #define RL_DEFAULT_SHADER_ATTRIB_NAME_POSITION     "vertexPosition"    // Binded by default to shader location: 0
+    #define RL_DEFAULT_SHADER_ATTRIB_NAME_POSITION     "vertexPosition"    // Bound by default to shader location: 0
 #endif
 #ifndef RL_DEFAULT_SHADER_ATTRIB_NAME_TEXCOORD
-    #define RL_DEFAULT_SHADER_ATTRIB_NAME_TEXCOORD     "vertexTexCoord"    // Binded by default to shader location: 1
+    #define RL_DEFAULT_SHADER_ATTRIB_NAME_TEXCOORD     "vertexTexCoord"    // Bound by default to shader location: 1
 #endif
 #ifndef RL_DEFAULT_SHADER_ATTRIB_NAME_NORMAL
-    #define RL_DEFAULT_SHADER_ATTRIB_NAME_NORMAL       "vertexNormal"      // Binded by default to shader location: 2
+    #define RL_DEFAULT_SHADER_ATTRIB_NAME_NORMAL       "vertexNormal"      // Bound by default to shader location: 2
 #endif
 #ifndef RL_DEFAULT_SHADER_ATTRIB_NAME_COLOR
-    #define RL_DEFAULT_SHADER_ATTRIB_NAME_COLOR        "vertexColor"       // Binded by default to shader location: 3
+    #define RL_DEFAULT_SHADER_ATTRIB_NAME_COLOR        "vertexColor"       // Bound by default to shader location: 3
 #endif
 #ifndef RL_DEFAULT_SHADER_ATTRIB_NAME_TANGENT
-    #define RL_DEFAULT_SHADER_ATTRIB_NAME_TANGENT      "vertexTangent"     // Binded by default to shader location: 4
+    #define RL_DEFAULT_SHADER_ATTRIB_NAME_TANGENT      "vertexTangent"     // Bound by default to shader location: 4
 #endif
 #ifndef RL_DEFAULT_SHADER_ATTRIB_NAME_TEXCOORD2
-    #define RL_DEFAULT_SHADER_ATTRIB_NAME_TEXCOORD2    "vertexTexCoord2"   // Binded by default to shader location: 5
+    #define RL_DEFAULT_SHADER_ATTRIB_NAME_TEXCOORD2    "vertexTexCoord2"   // Bound by default to shader location: 5
 #endif
 
 #ifndef RL_DEFAULT_SHADER_UNIFORM_NAME_MVP
@@ -2767,7 +2766,7 @@ void rlDrawRenderBatch(rlRenderBatch *batch)
 
             for (int i = 0, vertexOffset = 0; i < batch->drawCounter; i++)
             {
-                // Bind current draw call texture, activated as GL_TEXTURE0 and binded to sampler2D texture0 by default
+                // Bind current draw call texture, activated as GL_TEXTURE0 and Bound to sampler2D texture0 by default
                 glBindTexture(GL_TEXTURE_2D, batch->draws[i].textureId);
 
                 if ((batch->draws[i].mode == RL_LINES) || (batch->draws[i].mode == RL_TRIANGLES)) glDrawArrays(batch->draws[i].mode, vertexOffset, batch->draws[i].vertexCount);
@@ -3856,7 +3855,7 @@ unsigned int rlLoadShaderProgram(unsigned int vShaderId, unsigned int fShaderId)
     glAttachShader(program, vShaderId);
     glAttachShader(program, fShaderId);
 
-    // NOTE: Default attribute shader locations must be binded before linking
+    // NOTE: Default attribute shader locations must be Bound before linking
     glBindAttribLocation(program, 0, RL_DEFAULT_SHADER_ATTRIB_NAME_POSITION);
     glBindAttribLocation(program, 1, RL_DEFAULT_SHADER_ATTRIB_NAME_TEXCOORD);
     glBindAttribLocation(program, 2, RL_DEFAULT_SHADER_ATTRIB_NAME_NORMAL);
