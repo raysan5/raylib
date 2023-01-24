@@ -3939,12 +3939,12 @@ static Model LoadOBJ(const char *fileName)
         {
             model.materialCount = materialCount;
             model.materials = (Material *)RL_CALLOC(model.materialCount, sizeof(Material));
-            TraceLog(LOG_INFO, "MODEL: model has %i material meshes", materialCount);
+            TRACELOG(LOG_INFO, "MODEL: model has %i material meshes", materialCount);
         }
         else
         {
             model.meshCount = 1;
-            TraceLog(LOG_INFO, "MODEL: No materials, putting all meshes in a default material");
+            TRACELOG(LOG_INFO, "MODEL: No materials, putting all meshes in a default material");
         }
 
         model.meshes = (Mesh *)RL_CALLOC(model.meshCount, sizeof(Mesh));
@@ -4452,6 +4452,12 @@ static ModelAnimation *LoadModelAnimationsIQM(const char *fileName, unsigned int
         unsigned int num_extensions, ofs_extensions;
     } IQMHeader;
 
+    typedef struct IQMJoint {
+        unsigned int name;
+        int parent;
+        float translate[3], rotate[4], scale[3];
+    } IQMJoint;
+
     typedef struct IQMPose {
         int parent;
         unsigned int mask;
@@ -4505,6 +4511,10 @@ static ModelAnimation *LoadModelAnimationsIQM(const char *fileName, unsigned int
     //fread(framedata, iqmHeader->num_frames*iqmHeader->num_framechannels*sizeof(unsigned short), 1, iqmFile);
     memcpy(framedata, fileDataPtr + iqmHeader->ofs_frames, iqmHeader->num_frames*iqmHeader->num_framechannels*sizeof(unsigned short));
 
+    // joints
+    IQMJoint *joints = RL_MALLOC(iqmHeader->num_joints*sizeof(IQMJoint));
+    memcpy(joints, fileDataPtr + iqmHeader->ofs_joints, iqmHeader->num_joints*sizeof(IQMJoint));
+
     for (unsigned int a = 0; a < iqmHeader->num_anims; a++)
     {
         animations[a].frameCount = anim[a].num_frames;
@@ -4515,7 +4525,11 @@ static ModelAnimation *LoadModelAnimationsIQM(const char *fileName, unsigned int
 
         for (unsigned int j = 0; j < iqmHeader->num_poses; j++)
         {
-            strcpy(animations[a].bones[j].name, "ANIMJOINTNAME");
+            // If animations and skeleton are in the same file, copy bone names to anim
+            if (iqmHeader->num_joints > 0)
+                memcpy(animations[a].bones[j].name, fileDataPtr + iqmHeader->ofs_text + joints[j].name, BONE_NAME_LENGTH*sizeof(char));
+            else
+                strcpy(animations[a].bones[j].name, "ANIMJOINTNAME"); // default bone name otherwise
             animations[a].bones[j].parent = poses[j].parent;
         }
 
@@ -4629,6 +4643,7 @@ static ModelAnimation *LoadModelAnimationsIQM(const char *fileName, unsigned int
 
     RL_FREE(fileData);
 
+    RL_FREE(joints);
     RL_FREE(framedata);
     RL_FREE(poses);
     RL_FREE(anim);
