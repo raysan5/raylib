@@ -24,7 +24,8 @@
 *     3. This notice may not be removed or altered from any source distribution.
 *
 **********************************************************************************************/
-
+#ifndef CONFIG_H
+#define CONFIG_H
 //------------------------------------------------------------------------------------
 // Module selection - Some modules could be avoided
 // Mandatory modules: rcore, rlgl, utils
@@ -236,3 +237,5 @@
 // utils: Configuration values
 //------------------------------------------------------------------------------------
 #define MAX_TRACELOG_MSG_LENGTH          128    // Max length of one trace-log message
+
+#endif // CONFIG_H
