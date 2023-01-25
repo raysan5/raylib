@@ -4687,7 +4687,7 @@ static Image LoadImageFromCgltfImage(cgltf_image *cgltfImage, const char *texPat
                 if (result == cgltf_result_success)
                 {
                     image = LoadImageFromMemory(".png", (unsigned char *)data, outSize);
-                    MemFree((cgltf_data*)data);
+                    MemFree(data);
                 }
             }
         }
