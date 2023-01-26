@@ -166,6 +166,9 @@ static Model LoadVOX(const char *filename);     // Load VOX mesh data
 static Model LoadM3D(const char *filename);     // Load M3D mesh data
 static ModelAnimation *LoadModelAnimationsM3D(const char *fileName, unsigned int *animCount);   // Load M3D animation data
 #endif
+#if defined(SUPPORT_FILEFORMAT_OBJ) || defined(SUPPORT_FILEFORMAT_MTL)
+static void ProcessMaterialsOBJ(Material *rayMaterials, tinyobj_material_t *materials, int materialCount);  // Process obj materials
+#endif
 
 //----------------------------------------------------------------------------------
 // Module Functions Definition
@@ -1862,10 +1865,9 @@ bool ExportMesh(Mesh mesh, const char *fileName)
     return success;
 }
 
-#if defined(SUPPORT_FILEFORMAT_MTL)
+#if defined(SUPPORT_FILEFORMAT_OBJ) || defined(SUPPORT_FILEFORMAT_MTL)
 // Process obj materials
-
-static void ProcessOBJMaterials(Material* rayMaterials, tinyobj_material_t* materials, int materialCount)
+static void ProcessMaterialsOBJ(Material *rayMaterials, tinyobj_material_t *materials, int materialCount)
 {
 	// Init model materials
 	for (unsigned int m = 0; m < materialCount; m++)
@@ -1880,23 +1882,23 @@ static void ProcessOBJMaterials(Material* rayMaterials, tinyobj_material_t* mate
 
 		if (materials[m].diffuse_texname != NULL) rayMaterials[m].maps[MATERIAL_MAP_DIFFUSE].texture = LoadTexture(materials[m].diffuse_texname);  //char *diffuse_texname; // map_Kd
 
-		rayMaterials[m].maps[MATERIAL_MAP_DIFFUSE].color = (Color){ (unsigned char)(materials[m].diffuse[0] * 255.0f), (unsigned char)(materials[m].diffuse[1] * 255.0f), (unsigned char)(materials[m].diffuse[2] * 255.0f), 255 }; //float diffuse[3];
+		rayMaterials[m].maps[MATERIAL_MAP_DIFFUSE].color = (Color){ (unsigned char)(materials[m].diffuse[0]*255.0f), (unsigned char)(materials[m].diffuse[1]*255.0f), (unsigned char)(materials[m].diffuse[2] * 255.0f), 255 }; //float diffuse[3];
 		rayMaterials[m].maps[MATERIAL_MAP_DIFFUSE].value = 0.0f;
 
 		if (materials[m].specular_texname != NULL) rayMaterials[m].maps[MATERIAL_MAP_SPECULAR].texture = LoadTexture(materials[m].specular_texname);  //char *specular_texname; // map_Ks
-		rayMaterials[m].maps[MATERIAL_MAP_SPECULAR].color = (Color){ (unsigned char)(materials[m].specular[0] * 255.0f), (unsigned char)(materials[m].specular[1] * 255.0f), (unsigned char)(materials[m].specular[2] * 255.0f), 255 }; //float specular[3];
+		rayMaterials[m].maps[MATERIAL_MAP_SPECULAR].color = (Color){ (unsigned char)(materials[m].specular[0]*255.0f), (unsigned char)(materials[m].specular[1]*255.0f), (unsigned char)(materials[m].specular[2] * 255.0f), 255 }; //float specular[3];
 		rayMaterials[m].maps[MATERIAL_MAP_SPECULAR].value = 0.0f;
 
 		if (materials[m].bump_texname != NULL) rayMaterials[m].maps[MATERIAL_MAP_NORMAL].texture = LoadTexture(materials[m].bump_texname);  //char *bump_texname; // map_bump, bump
 		rayMaterials[m].maps[MATERIAL_MAP_NORMAL].color = WHITE;
 		rayMaterials[m].maps[MATERIAL_MAP_NORMAL].value = materials[m].shininess;
 
-		rayMaterials[m].maps[MATERIAL_MAP_EMISSION].color = (Color){ (unsigned char)(materials[m].emission[0] * 255.0f), (unsigned char)(materials[m].emission[1] * 255.0f), (unsigned char)(materials[m].emission[2] * 255.0f), 255 }; //float emission[3];
+		rayMaterials[m].maps[MATERIAL_MAP_EMISSION].color = (Color){ (unsigned char)(materials[m].emission[0]*255.0f), (unsigned char)(materials[m].emission[1]*255.0f), (unsigned char)(materials[m].emission[2] * 255.0f), 255 }; //float emission[3];
 
 		if (materials[m].displacement_texname != NULL) rayMaterials[m].maps[MATERIAL_MAP_HEIGHT].texture = LoadTexture(materials[m].displacement_texname);  //char *displacement_texname; // disp
 	}
 }
-#endif 
+#endif
 
 // Load materials from model file
 Material *LoadMaterials(const char *fileName, int *materialCount)
@@ -1914,8 +1916,8 @@ Material *LoadMaterials(const char *fileName, int *materialCount)
         int result = tinyobj_parse_mtl_file(&mats, &count, fileName);
         if (result != TINYOBJ_SUCCESS) TRACELOG(LOG_WARNING, "MATERIAL: [%s] Failed to parse materials file", fileName);
 
-        materials = MemAlloc(sizeof(Material) * count);
-        ProcessOBJMaterials(materials, mats, count);
+        materials = MemAlloc(count*sizeof(Material));
+        ProcessMaterialsOBJ(materials, mats, count);
 
         tinyobj_materials_free(mats, count);
     }
@@ -3937,12 +3939,12 @@ static Model LoadOBJ(const char *fileName)
         {
             model.materialCount = materialCount;
             model.materials = (Material *)RL_CALLOC(model.materialCount, sizeof(Material));
-            TraceLog(LOG_INFO, "MODEL: model has %i material meshes", materialCount);
+            TRACELOG(LOG_INFO, "MODEL: model has %i material meshes", materialCount);
         }
         else
         {
             model.meshCount = 1;
-            TraceLog(LOG_INFO, "MODEL: No materials, putting all meshes in a default material");
+            TRACELOG(LOG_INFO, "MODEL: No materials, putting all meshes in a default material");
         }
 
         model.meshes = (Mesh *)RL_CALLOC(model.meshCount, sizeof(Mesh));
@@ -3951,7 +3953,7 @@ static Model LoadOBJ(const char *fileName)
         // Count the faces for each material
         int *matFaces = RL_CALLOC(model.meshCount, sizeof(int));
 
-        // iff no materials are present use all faces on one mesh
+        // if no materials are present use all faces on one mesh
         if (materialCount > 0)
         {
             for (unsigned int fi = 0; fi < attrib.num_faces; fi++)
@@ -4027,7 +4029,7 @@ static Model LoadOBJ(const char *fileName)
         }
 
         // Init model materials
-		ProcessOBJMaterials(model.materials, materials, materialCount);
+		ProcessMaterialsOBJ(model.materials, materials, materialCount);
 
         tinyobj_attrib_free(&attrib);
         tinyobj_shapes_free(meshes, meshCount);
@@ -4450,6 +4452,12 @@ static ModelAnimation *LoadModelAnimationsIQM(const char *fileName, unsigned int
         unsigned int num_extensions, ofs_extensions;
     } IQMHeader;
 
+    typedef struct IQMJoint {
+        unsigned int name;
+        int parent;
+        float translate[3], rotate[4], scale[3];
+    } IQMJoint;
+
     typedef struct IQMPose {
         int parent;
         unsigned int mask;
@@ -4503,6 +4511,10 @@ static ModelAnimation *LoadModelAnimationsIQM(const char *fileName, unsigned int
     //fread(framedata, iqmHeader->num_frames*iqmHeader->num_framechannels*sizeof(unsigned short), 1, iqmFile);
     memcpy(framedata, fileDataPtr + iqmHeader->ofs_frames, iqmHeader->num_frames*iqmHeader->num_framechannels*sizeof(unsigned short));
 
+    // joints
+    IQMJoint *joints = RL_MALLOC(iqmHeader->num_joints*sizeof(IQMJoint));
+    memcpy(joints, fileDataPtr + iqmHeader->ofs_joints, iqmHeader->num_joints*sizeof(IQMJoint));
+
     for (unsigned int a = 0; a < iqmHeader->num_anims; a++)
     {
         animations[a].frameCount = anim[a].num_frames;
@@ -4513,7 +4525,11 @@ static ModelAnimation *LoadModelAnimationsIQM(const char *fileName, unsigned int
 
         for (unsigned int j = 0; j < iqmHeader->num_poses; j++)
         {
-            strcpy(animations[a].bones[j].name, "ANIMJOINTNAME");
+            // If animations and skeleton are in the same file, copy bone names to anim
+            if (iqmHeader->num_joints > 0)
+                memcpy(animations[a].bones[j].name, fileDataPtr + iqmHeader->ofs_text + joints[j].name, BONE_NAME_LENGTH*sizeof(char));
+            else
+                strcpy(animations[a].bones[j].name, "ANIMJOINTNAME"); // default bone name otherwise
             animations[a].bones[j].parent = poses[j].parent;
         }
 
@@ -4627,6 +4643,7 @@ static ModelAnimation *LoadModelAnimationsIQM(const char *fileName, unsigned int
 
     RL_FREE(fileData);
 
+    RL_FREE(joints);
     RL_FREE(framedata);
     RL_FREE(poses);
     RL_FREE(anim);
@@ -4670,7 +4687,7 @@ static Image LoadImageFromCgltfImage(cgltf_image *cgltfImage, const char *texPat
                 if (result == cgltf_result_success)
                 {
                     image = LoadImageFromMemory(".png", (unsigned char *)data, outSize);
-                    MemFree((cgltf_data*)data);
+                    MemFree(data);
                 }
             }
         }
