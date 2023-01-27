@@ -1511,7 +1511,7 @@ Rectangle GuiScrollPanel(Rectangle bounds, const char *text, Rectangle content, 
 
     float horizontalMin = hasHorizontalScrollBar? ((GuiGetStyle(LISTVIEW, SCROLLBAR_SIDE) == SCROLLBAR_LEFT_SIDE)? (float)-verticalScrollBarWidth : 0) - (float)GuiGetStyle(DEFAULT, BORDER_WIDTH) : (((float)GuiGetStyle(LISTVIEW, SCROLLBAR_SIDE) == SCROLLBAR_LEFT_SIDE)? (float)-verticalScrollBarWidth : 0) - (float)GuiGetStyle(DEFAULT, BORDER_WIDTH);
     float horizontalMax = hasHorizontalScrollBar? content.width - bounds.width + (float)verticalScrollBarWidth + GuiGetStyle(DEFAULT, BORDER_WIDTH) - (((float)GuiGetStyle(LISTVIEW, SCROLLBAR_SIDE) == SCROLLBAR_LEFT_SIDE)? (float)verticalScrollBarWidth : 0) : (float)-GuiGetStyle(DEFAULT, BORDER_WIDTH);
-    float verticalMin = hasVerticalScrollBar? 0 : -1;
+    float verticalMin = hasVerticalScrollBar? 0 : -1.0f;
     float verticalMax = hasVerticalScrollBar? content.height - bounds.height + (float)horizontalScrollBarWidth + (float)GuiGetStyle(DEFAULT, BORDER_WIDTH) : (float)-GuiGetStyle(DEFAULT, BORDER_WIDTH);
 
     // Update control
@@ -3205,8 +3205,8 @@ Vector2 GuiGrid(Rectangle bounds, const char *text, float spacing, int subdivs)
         if (CheckCollisionPointRec(mousePoint, bounds))
         {
             // NOTE: Cell values must be rounded to int
-            currentCell.x = (int)((mousePoint.x - bounds.x)/spacing);
-            currentCell.y = (int)((mousePoint.y - bounds.y)/spacing);
+            currentCell.x = (float)((mousePoint.x - bounds.x)/spacing);
+            currentCell.y = (float)((mousePoint.y - bounds.y)/spacing);
         }
     }
     //--------------------------------------------------------------------
@@ -3842,7 +3842,7 @@ static void GuiDrawText(const char *text, Rectangle bounds, int alignment, Color
 
         // NOTE: We get text size after icon has been processed
         // TODO: REVIEW: We consider text size in case of line breaks! -> MeasureTextEx() depends on raylib!
-        Vector2 textSize = MeasureTextEx(GuiGetFont(), text, GuiGetStyle(DEFAULT, TEXT_SIZE), GuiGetStyle(DEFAULT, TEXT_SPACING));
+        Vector2 textSize = MeasureTextEx(GuiGetFont(), text, (float)GuiGetStyle(DEFAULT, TEXT_SIZE), (float)GuiGetStyle(DEFAULT, TEXT_SPACING));
         //int textWidth = GetTextWidth(text);
         //int textHeight = GuiGetStyle(DEFAULT, TEXT_SIZE);
 

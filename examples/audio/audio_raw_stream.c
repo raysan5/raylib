@@ -43,7 +43,7 @@ void AudioInputCallback(void *buffer, unsigned int frames)
     float incr = audioFrequency/44100.0f;
     short *d = (short *)buffer;
 
-    for (int i = 0; i < frames; i++)
+    for (unsigned int i = 0; i < frames; i++)
     {
         d[i] = (short)(32000.0f*sinf(2*PI*sineIdx));
         sineIdx += incr;
