@@ -1870,7 +1870,7 @@ bool ExportMesh(Mesh mesh, const char *fileName)
 static void ProcessMaterialsOBJ(Material *rayMaterials, tinyobj_material_t *materials, int materialCount)
 {
 	// Init model materials
-	for (unsigned int m = 0; m < materialCount; m++)
+	for (int m = 0; m < materialCount; m++)
 	{
 		// Init material to default
 		// NOTE: Uses default shader, which only supports MATERIAL_MAP_DIFFUSE
