@@ -9,7 +9,7 @@
 *
 *     Note that some file formats (DDS, PVR, KTX) also support uncompressed data storage.
 *     In those cases data is loaded uncompressed and format is returned.
-* 
+*
 *   TODO:
 *     - Implement raylib function: rlGetGlTextureFormats(), required by rl_save_ktx_to_memory()
 *     - Review rl_load_ktx_from_memory() to support KTX v2.2 specs
@@ -771,7 +771,11 @@ void *rl_load_astc_from_memory(const unsigned char *file_data, unsigned int file
 // Module Internal Functions Definition
 //----------------------------------------------------------------------------------
 // Get pixel data size in bytes for certain pixel format
+#ifdef __GNUC__
+static inline int get_pixel_data_size(int width, int height, int format)
+#else
 static int get_pixel_data_size(int width, int height, int format)
+#endif // __GNUC__
 {
     int data_size = 0;       // Size in bytes
     int bpp = 0;            // Bits per pixel

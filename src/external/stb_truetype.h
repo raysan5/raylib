@@ -500,7 +500,11 @@ int main(int arg, char **argv)
 #define __STB_INCLUDE_STB_TRUETYPE_H__
 
 #ifdef STBTT_STATIC
+#ifdef __GNUC__
+#define STBTT_DEF static inline
+#else
 #define STBTT_DEF static
+#endif // __GNUC__
 #else
 #define STBTT_DEF extern
 #endif
