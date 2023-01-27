@@ -502,6 +502,12 @@ Image LoadImageFromScreen(void)
     return image;
 }
 
+// Check if an image is ready
+bool IsImageReady(Image image)
+{
+    return image.data != NULL;
+}
+
 // Unload image from CPU memory (RAM)
 void UnloadImage(Image image)
 {
