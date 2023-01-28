@@ -1109,6 +1109,12 @@ Model LoadModelFromMesh(Mesh mesh)
     return model;
 }
 
+// Check if a model is ready
+bool IsModelReady(Model model)
+{
+    return model.meshes != NULL && model.materials != NULL && model.meshMaterial != NULL && model.meshCount > 0 && model.materialCount > 0;
+}
+
 // Unload model (meshes/materials) from memory (RAM and/or VRAM)
 // NOTE: This function takes care of all model elements, for a detailed control
 // over them, use UnloadMesh() and UnloadMaterial()
@@ -1870,7 +1876,7 @@ bool ExportMesh(Mesh mesh, const char *fileName)
 static void ProcessMaterialsOBJ(Material *rayMaterials, tinyobj_material_t *materials, int materialCount)
 {
 	// Init model materials
-	for (unsigned int m = 0; m < materialCount; m++)
+	for (int m = 0; m < materialCount; m++)
 	{
 		// Init material to default
 		// NOTE: Uses default shader, which only supports MATERIAL_MAP_DIFFUSE
@@ -1948,6 +1954,12 @@ Material LoadMaterialDefault(void)
     material.maps[MATERIAL_MAP_SPECULAR].color = WHITE;   // Specular color
 
     return material;
+}
+
+// Check if a material is ready
+bool IsMaterialReady(Material material)
+{
+    return material.maps != NULL;
 }
 
 // Unload material from memory

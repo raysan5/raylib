@@ -70,7 +70,7 @@
 #define MAX_ALIASES_TO_PARSE      64    // Maximum number of aliases to parse
 #define MAX_ENUMS_TO_PARSE        64    // Maximum number of enums to parse
 #define MAX_CALLBACKS_TO_PARSE    64    // Maximum number of callbacks to parse
-#define MAX_FUNCS_TO_PARSE       512    // Maximum number of functions to parse
+#define MAX_FUNCS_TO_PARSE      1024    // Maximum number of functions to parse
 
 #define MAX_LINE_LENGTH          512    // Maximum length of one line (including comments)
 

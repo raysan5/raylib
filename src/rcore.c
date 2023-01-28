@@ -2509,6 +2509,12 @@ Shader LoadShaderFromMemory(const char *vsCode, const char *fsCode)
     return shader;
 }
 
+// Check if a shader is ready
+bool IsShaderReady(Shader shader)
+{
+    return shader.locs != NULL;
+}
+
 // Unload shader from GPU memory (VRAM)
 void UnloadShader(Shader shader)
 {

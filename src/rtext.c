@@ -535,6 +535,12 @@ Font LoadFontFromMemory(const char *fileType, const unsigned char *fileData, int
     return font;
 }
 
+// Check if a font is ready
+bool IsFontReady(Font font)
+{
+    return font.glyphs != NULL;
+}
+
 // Load font data for further use
 // NOTE: Requires TTF font memory data and can generate SDF data
 GlyphInfo *LoadFontData(const unsigned char *fileData, int dataSize, int fontSize, int *fontChars, int glyphCount, int type)

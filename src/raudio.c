@@ -836,6 +836,12 @@ Wave LoadWaveFromMemory(const char *fileType, const unsigned char *fileData, int
     return wave;
 }
 
+// Checks if wave data is ready
+bool IsWaveReady(Wave wave)
+{
+    return wave.data != NULL;
+}
+
 // Load sound from file
 // NOTE: The entire file is loaded to memory to be played (no-streaming)
 Sound LoadSound(const char *fileName)
@@ -890,6 +896,12 @@ Sound LoadSoundFromWave(Wave wave)
     }
 
     return sound;
+}
+
+// Checks if a sound is ready
+bool IsSoundReady(Sound sound)
+{
+    return sound.stream.buffer != NULL;
 }
 
 // Unload wave data
@@ -1614,6 +1626,12 @@ Music LoadMusicStreamFromMemory(const char *fileType, const unsigned char *data,
     return music;
 }
 
+// Checks if a music stream is ready
+bool IsMusicReady(Music music)
+{
+    return music.ctxData != NULL;
+}
+
 // Unload music stream
 void UnloadMusicStream(Music music)
 {
@@ -1965,6 +1983,12 @@ AudioStream LoadAudioStream(unsigned int sampleRate, unsigned int sampleSize, un
     else TRACELOG(LOG_WARNING, "STREAM: Failed to load audio buffer, stream could not be created");
 
     return stream;
+}
+
+// Checks if an audio stream is ready
+RLAPI bool IsAudioStreamReady(AudioStream stream)
+{
+    return stream.buffer != NULL;
 }
 
 // Unload audio stream and free memory
