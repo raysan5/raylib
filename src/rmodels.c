@@ -5632,7 +5632,11 @@ static Model LoadM3D(const char *fileName)
                 model.meshes[k].vertices = (float *)RL_CALLOC(model.meshes[k].vertexCount*3, sizeof(float));
                 model.meshes[k].texcoords = (float *)RL_CALLOC(model.meshes[k].vertexCount*2, sizeof(float));
                 model.meshes[k].normals = (float *)RL_CALLOC(model.meshes[k].vertexCount*3, sizeof(float));
-                model.meshes[k].colors = RL_CALLOC(model.meshes[k].vertexCount*4, sizeof(unsigned char));
+                
+                if(m3d->cmap != NULL || mi != M3D_UNDEF)
+                {
+                    model.meshes[k].colors = RL_CALLOC(model.meshes[k].vertexCount*4, sizeof(unsigned char));
+                }
                 
                 if (m3d->numbone && m3d->numskin)
                 {
