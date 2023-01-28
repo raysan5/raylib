@@ -903,7 +903,7 @@ RMAPI Vector3 Vector3Unproject(Vector3 source, Matrix projection, Matrix view)
 {
     Vector3 result = { 0 };
 
-    // Calculate unproject matrix (multiply view patrix by projection matrix) and invert it
+    // Calculate unproject matrix (multiply view matrix by projection matrix) and invert it
     Matrix matViewProj = {      // MatrixMultiply(view, projection);
         view.m0*projection.m0 + view.m1*projection.m4 + view.m2*projection.m8 + view.m3*projection.m12,
         view.m0*projection.m1 + view.m1*projection.m5 + view.m2*projection.m9 + view.m3*projection.m13,
