@@ -5660,14 +5660,17 @@ static Model LoadM3D(const char *fileName)
             model.meshes[k].vertices[l * 9 + 6] = m3d->vertex[m3d->face[i].vertex[2]].x*m3d->scale;
             model.meshes[k].vertices[l * 9 + 7] = m3d->vertex[m3d->face[i].vertex[2]].y*m3d->scale;
             model.meshes[k].vertices[l * 9 + 8] = m3d->vertex[m3d->face[i].vertex[2]].z*m3d->scale;
-
+            
             // without vertex color (full transparency), we use the default color
-            if (m3d->vertex[m3d->face[i].vertex[0]].color & 0xFF000000)
-                memcpy(&model.meshes[k].colors[l * 12 + 0], &m3d->vertex[m3d->face[i].vertex[0]].color, 4);
-            if (m3d->vertex[m3d->face[i].vertex[1]].color & 0xFF000000)
-                memcpy(&model.meshes[k].colors[l * 12 + 4], &m3d->vertex[m3d->face[i].vertex[1]].color, 4);
-            if (m3d->vertex[m3d->face[i].vertex[2]].color & 0xFF000000)
-                memcpy(&model.meshes[k].colors[l * 12 + 8], &m3d->vertex[m3d->face[i].vertex[2]].color, 4);
+            if(model.meshes[k].colors != NULL)
+            {
+                if (m3d->vertex[m3d->face[i].vertex[0]].color & 0xFF000000)
+                    memcpy(&model.meshes[k].colors[l * 12 + 0], &m3d->vertex[m3d->face[i].vertex[0]].color, 4);
+                if (m3d->vertex[m3d->face[i].vertex[1]].color & 0xFF000000)
+                    memcpy(&model.meshes[k].colors[l * 12 + 4], &m3d->vertex[m3d->face[i].vertex[1]].color, 4);
+                if (m3d->vertex[m3d->face[i].vertex[2]].color & 0xFF000000)
+                    memcpy(&model.meshes[k].colors[l * 12 + 8], &m3d->vertex[m3d->face[i].vertex[2]].color, 4);
+            }
 
             if (m3d->face[i].texcoord[0] != M3D_UNDEF)
             {
