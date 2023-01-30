@@ -3,7 +3,6 @@ const std = @import("std");
 pub fn addRaylib(b: *std.build.Builder, target: std.zig.CrossTarget) *std.build.LibExeObjStep {
     const raylib_flags = &[_][]const u8{
         "-std=gnu99",
-        "-DPLATFORM_DESKTOP",
         "-D_GNU_SOURCE",
         "-DGL_SILENCE_DEPRECATION=199309L",
         "-fno-sanitize=undefined", // https://github.com/raysan5/raylib/issues/1891
@@ -32,6 +31,8 @@ pub fn addRaylib(b: *std.build.Builder, target: std.zig.CrossTarget) *std.build.
             raylib.linkSystemLibrary("gdi32");
             raylib.linkSystemLibrary("opengl32");
             raylib.addIncludePath("external/glfw/deps/mingw");
+
+            raylib.defineCMacro("PLATFORM_DESKTOP", null);
         },
         .linux => {
             raylib.addCSourceFiles(&.{srcdir ++ "/rglfw.c"}, raylib_flags);
@@ -40,6 +41,8 @@ pub fn addRaylib(b: *std.build.Builder, target: std.zig.CrossTarget) *std.build.
             raylib.linkSystemLibrary("dl");
             raylib.linkSystemLibrary("m");
             raylib.linkSystemLibrary("X11");
+
+            raylib.defineCMacro("PLATFORM_DESKTOP", null);
         },
         .freebsd, .openbsd, .netbsd, .dragonfly => {
             raylib.addCSourceFiles(&.{srcdir ++ "/rglfw.c"}, raylib_flags);
@@ -53,6 +56,8 @@ pub fn addRaylib(b: *std.build.Builder, target: std.zig.CrossTarget) *std.build.
             raylib.linkSystemLibrary("Xi");
             raylib.linkSystemLibrary("Xxf86vm");
             raylib.linkSystemLibrary("Xcursor");
+
+            raylib.defineCMacro("PLATFORM_DESKTOP", null);
         },
         .macos => {
             // On macos rglfw.c include Objective-C files.
@@ -68,6 +73,24 @@ pub fn addRaylib(b: *std.build.Builder, target: std.zig.CrossTarget) *std.build.
             raylib.linkFramework("CoreGraphics");
             raylib.linkFramework("AppKit");
             raylib.linkFramework("IOKit");
+
+            raylib.defineCMacro("PLATFORM_DESKTOP", null);
+        },
+        .emscripten => {
+            raylib.defineCMacro("PLATFORM_WEB", null);
+            raylib.defineCMacro("GRAPHICS_API_OPENGL_ES2", null);
+
+            if (b.sysroot == null) {
+                @panic("Pass '--sysroot \"$EMSDK/upstream/emscripten\"' or '--sysroot \"/usr/local/opt/emscripten/libexec\"' on macOS");
+            }
+
+            const cache_include = std.fs.path.join(b.allocator, &.{ b.sysroot.?, "cache", "sysroot", "include" }) catch @panic("Out of memory");
+            defer b.allocator.free(cache_include);
+
+            var dir = std.fs.openDirAbsolute(cache_include, std.fs.Dir.OpenDirOptions{.access_sub_paths = true, .no_follow = true}) catch @panic("No emscripten cache. Generate it!");
+            dir.close();
+
+            raylib.addIncludePath(cache_include);
         },
         else => {
             @panic("Unsupported OS");
