@@ -126,7 +126,7 @@ ifeq ($(PLATFORM),PLATFORM_DRM)
 endif
 
 # Define raylib release directory for compiled library
-RAYLIB_RELEASE_PATH 	?= $(RAYLIB_PATH)/src
+RAYLIB_RELEASE_PATH    ?= $(RAYLIB_PATH)/src
 
 # Define default C compiler: CC
 #------------------------------------------------------------------------------------------------
@@ -547,7 +547,7 @@ endif
 
 # Clean everything
 clean:
-ifeq ($(PLATFORM),$(filter $(PLATFORM),PLATFORM_DESKTOP PLATFORM_WEB))
+ifeq ($(PLATFORM),PLATFORM_DESKTOP)
     ifeq ($(PLATFORM_OS),WINDOWS)
 		del *.o *.exe /s
     endif
@@ -568,5 +568,11 @@ ifeq ($(PLATFORM),PLATFORM_DRM)
 	find . -type f -executable -delete
 	rm -fv *.o
 endif
+ifeq ($(PLATFORM),PLATFORM_WEB)
+	ifeq ($(PLATFORM_OS),WINDOWS)
+		del *.wasm *.html *.js *.data
+	else
+		rm -f */*.wasm */*.html */*.js */*.data
+	endif
+endif
 	@echo Cleaning done
-

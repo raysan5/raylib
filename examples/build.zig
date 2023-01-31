@@ -2,6 +2,10 @@ const std = @import("std");
 const builtin = @import("builtin");
 
 fn add_module(comptime module: []const u8, b: *std.build.Builder, target: std.zig.CrossTarget) !*std.build.Step {
+    if (target.getOsTag() == .emscripten) {
+        @panic("Emscripten building via Zig unsupported");
+    }
+
     // Standard release options allow the person running `zig build` to select
     // between Debug, ReleaseSafe, ReleaseFast, and ReleaseSmall.
     const mode = b.standardReleaseOptions();
@@ -18,7 +22,7 @@ fn add_module(comptime module: []const u8, b: *std.build.Builder, target: std.zi
         // zig's mingw headers do not include pthread.h
         if (std.mem.eql(u8, "core_loading_thread", name) and target.getOsTag() == .windows) continue;
 
-        const exe = b.addSharedLibrary(name, null, std.build.LibExeObjStep.SharedLibKind.unversioned);
+        const exe = b.addExecutable(name, null);
         exe.addCSourceFile(path, &[_][]const u8{});
         exe.setTarget(target);
         exe.setBuildMode(mode);
@@ -35,7 +39,7 @@ fn add_module(comptime module: []const u8, b: *std.build.Builder, target: std.zi
         exe.addIncludePath("../src/external");
         exe.addIncludePath("../src/external/glfw/include");
 
-        switch (exe.target.toTarget().os.tag) {
+        switch (target.getOsTag()) {
             .windows => {
                 exe.linkSystemLibrary("winmm");
                 exe.linkSystemLibrary("gdi32");
@@ -63,22 +67,6 @@ fn add_module(comptime module: []const u8, b: *std.build.Builder, target: std.zi
 
                 exe.defineCMacro("PLATFORM_DESKTOP", null);
             },
-            .emscripten => {
-                exe.defineCMacro("PLATFORM_WEB", null);
-                exe.defineCMacro("GRAPHICS_API_OPENGL_ES2", null);
-
-                if (b.sysroot == null) {
-                    @panic("Pass '--sysroot \"$EMSDK/upstream/emscripten\"'S");
-                }
-
-                const cache_include = std.fs.path.join(b.allocator, &.{ b.sysroot.?, "cache", "sysroot", "include" }) catch @panic("Out of memory");
-                defer b.allocator.free(cache_include);
-
-                var d = std.fs.openDirAbsolute(cache_include, std.fs.Dir.OpenDirOptions{.access_sub_paths = true, .no_follow = true}) catch @panic("No emscripten cache. Generate it!");
-                d.close();
-
-                exe.addIncludePath(cache_include);
-            },
             else => {
                 @panic("Unsupported OS");
             },
@@ -86,12 +74,10 @@ fn add_module(comptime module: []const u8, b: *std.build.Builder, target: std.zi
 
         exe.setOutputDir(module);
 
-        if (exe.target.toTarget().os.tag != std.Target.Os.Tag.emscripten) {
-            var run = exe.run();
-            run.step.dependOn(&b.addInstallArtifact(exe).step);
-            run.cwd = module;
-            b.step(name, name).dependOn(&run.step);
-        }
+        var run = exe.run();
+        run.step.dependOn(&b.addInstallArtifact(exe).step);
+        run.cwd = module;
+        b.step(name, name).dependOn(&run.step);
         all.dependOn(&exe.step);
     }
     return all;
