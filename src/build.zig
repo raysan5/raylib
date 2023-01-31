@@ -24,7 +24,7 @@ pub fn addRaylib(b: *std.build.Builder, target: std.zig.CrossTarget) *std.build.
         srcdir ++ "/utils.c",
     }, raylib_flags);
 
-    switch (raylib.target.toTarget().os.tag) {
+    switch (target.getOsTag()) {
         .windows => {
             raylib.addCSourceFiles(&.{srcdir ++ "/rglfw.c"}, raylib_flags);
             raylib.linkSystemLibrary("winmm");
