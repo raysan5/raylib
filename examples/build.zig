@@ -18,13 +18,8 @@ fn add_module(comptime module: []const u8, b: *std.build.Builder, target: std.zi
         // zig's mingw headers do not include pthread.h
         if (std.mem.eql(u8, "core_loading_thread", name) and target.getOsTag() == .windows) continue;
 
-        const exe = b.addExecutable(name, null);
-        exe.addCSourceFile(path, switch (target.getOsTag()) {
-            .windows => &[_][]const u8{},
-            .linux => &[_][]const u8{},
-            .macos => &[_][]const u8{"-DPLATFORM_DESKTOP"},
-            else => @panic("Unsupported OS"),
-        });
+        const exe = b.addSharedLibrary(name, null, std.build.LibExeObjStep.SharedLibKind.unversioned);
+        exe.addCSourceFile(path, &[_][]const u8{});
         exe.setTarget(target);
         exe.setBuildMode(mode);
         exe.linkLibC();
@@ -32,6 +27,7 @@ fn add_module(comptime module: []const u8, b: *std.build.Builder, target: std.zi
             .windows => "../src/raylib.lib",
             .linux => "../src/libraylib.a",
             .macos => "../src/libraylib.a",
+            .emscripten => "../src/libraylib.a",
             else => @panic("Unsupported OS"),
         });
 
@@ -45,6 +41,8 @@ fn add_module(comptime module: []const u8, b: *std.build.Builder, target: std.zi
                 exe.linkSystemLibrary("gdi32");
                 exe.linkSystemLibrary("opengl32");
                 exe.addIncludePath("external/glfw/deps/mingw");
+
+                exe.defineCMacro("PLATFORM_DESKTOP", null);
             },
             .linux => {
                 exe.linkSystemLibrary("GL");
@@ -52,6 +50,8 @@ fn add_module(comptime module: []const u8, b: *std.build.Builder, target: std.zi
                 exe.linkSystemLibrary("dl");
                 exe.linkSystemLibrary("m");
                 exe.linkSystemLibrary("X11");
+
+                exe.defineCMacro("PLATFORM_DESKTOP", null);
             },
             .macos => {
                 exe.linkFramework("Foundation");
@@ -60,6 +60,24 @@ fn add_module(comptime module: []const u8, b: *std.build.Builder, target: std.zi
                 exe.linkFramework("CoreAudio");
                 exe.linkFramework("CoreVideo");
                 exe.linkFramework("IOKit");
+
+                exe.defineCMacro("PLATFORM_DESKTOP", null);
+            },
+            .emscripten => {
+                exe.defineCMacro("PLATFORM_WEB", null);
+                exe.defineCMacro("GRAPHICS_API_OPENGL_ES2", null);
+
+                if (b.sysroot == null) {
+                    @panic("Pass '--sysroot \"$EMSDK/upstream/emscripten\"'S");
+                }
+
+                const cache_include = std.fs.path.join(b.allocator, &.{ b.sysroot.?, "cache", "sysroot", "include" }) catch @panic("Out of memory");
+                defer b.allocator.free(cache_include);
+
+                var d = std.fs.openDirAbsolute(cache_include, std.fs.Dir.OpenDirOptions{.access_sub_paths = true, .no_follow = true}) catch @panic("No emscripten cache. Generate it!");
+                d.close();
+
+                exe.addIncludePath(cache_include);
             },
             else => {
                 @panic("Unsupported OS");
@@ -68,10 +86,12 @@ fn add_module(comptime module: []const u8, b: *std.build.Builder, target: std.zi
 
         exe.setOutputDir(module);
 
-        var run = exe.run();
-        run.step.dependOn(&b.addInstallArtifact(exe).step);
-        run.cwd = module;
-        b.step(name, name).dependOn(&run.step);
+        if (exe.target.toTarget().os.tag != std.Target.Os.Tag.emscripten) {
+            var run = exe.run();
+            run.step.dependOn(&b.addInstallArtifact(exe).step);
+            run.cwd = module;
+            b.step(name, name).dependOn(&run.step);
+        }
         all.dependOn(&exe.step);
     }
     return all;

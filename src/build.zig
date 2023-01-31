@@ -81,7 +81,7 @@ pub fn addRaylib(b: *std.build.Builder, target: std.zig.CrossTarget) *std.build.
             raylib.defineCMacro("GRAPHICS_API_OPENGL_ES2", null);
 
             if (b.sysroot == null) {
-                @panic("Pass '--sysroot \"$EMSDK/upstream/emscripten\"' or '--sysroot \"/usr/local/opt/emscripten/libexec\"' on macOS");
+                @panic("Pass '--sysroot \"$EMSDK/upstream/emscripten\"'");
             }
 
             const cache_include = std.fs.path.join(b.allocator, &.{ b.sysroot.?, "cache", "sysroot", "include" }) catch @panic("Out of memory");
