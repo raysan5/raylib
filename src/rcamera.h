@@ -150,7 +150,7 @@ void SetCameraMoveControls(int keyFront, int keyBack,
 #endif
 
 // Camera mouse movement sensitivity
-#define CAMERA_MOUSE_MOVE_SENSITIVITY                   0.5f    // TODO: it should be independant of framerate
+#define CAMERA_MOUSE_MOVE_SENSITIVITY                   0.5f    // TODO: it should be independent of framerate
 #define CAMERA_MOUSE_SCROLL_SENSITIVITY                 1.5f
 
 // FREE_CAMERA
@@ -158,7 +158,7 @@ void SetCameraMoveControls(int keyFront, int keyBack,
 #define CAMERA_FREE_DISTANCE_MIN_CLAMP                  0.3f
 #define CAMERA_FREE_DISTANCE_MAX_CLAMP                  120.0f
 #define CAMERA_FREE_MIN_CLAMP                           85.0f
-#define CAMERA_FREE_MAX_CLAMP                          -85.0f
+#define CAMERA_FREE_MAX_CLAMP                          (-85.0f)
 #define CAMERA_FREE_SMOOTH_ZOOM_SENSITIVITY             0.05f
 #define CAMERA_FREE_PANNING_DIVIDER                     5.1f
 
@@ -169,7 +169,7 @@ void SetCameraMoveControls(int keyFront, int keyBack,
 //#define CAMERA_FIRST_PERSON_MOUSE_SENSITIVITY           0.003f
 #define CAMERA_FIRST_PERSON_FOCUS_DISTANCE              25.0f
 #define CAMERA_FIRST_PERSON_MIN_CLAMP                   89.0f
-#define CAMERA_FIRST_PERSON_MAX_CLAMP                  -89.0f
+#define CAMERA_FIRST_PERSON_MAX_CLAMP                  (-89.0f)
 
 // When walking, y-position of the player moves up-down at step frequency (swinging) but
 // also the body slightly tilts left-right on every step, when all the body weight is left over one foot (tilting)
@@ -181,7 +181,7 @@ void SetCameraMoveControls(int keyFront, int keyBack,
 //#define CAMERA_THIRD_PERSON_MOUSE_SENSITIVITY           0.003f
 #define CAMERA_THIRD_PERSON_DISTANCE_CLAMP              1.2f
 #define CAMERA_THIRD_PERSON_MIN_CLAMP                   5.0f
-#define CAMERA_THIRD_PERSON_MAX_CLAMP                  -85.0f
+#define CAMERA_THIRD_PERSON_MAX_CLAMP                  (-85.0f)
 #define CAMERA_THIRD_PERSON_OFFSET                      (Vector3){ 0.4f, 0.0f, 0.0f }
 
 // PLAYER (used by camera)
@@ -313,45 +313,44 @@ void UpdateCamera(Camera *camera)
             }
 
             // Camera looking down
-            else if ((camera->position.y > camera->target.y) && (CAMERA.targetDistance == CAMERA_FREE_DISTANCE_MAX_CLAMP) && (mouseWheelMove < 0))
+            else if ((camera->position.y > camera->target.y))
             {
-                camera->target.x += mouseWheelMove*(camera->target.x - camera->position.x)*CAMERA_MOUSE_SCROLL_SENSITIVITY/CAMERA.targetDistance;
-                camera->target.y += mouseWheelMove*(camera->target.y - camera->position.y)*CAMERA_MOUSE_SCROLL_SENSITIVITY/CAMERA.targetDistance;
-                camera->target.z += mouseWheelMove*(camera->target.z - camera->position.z)*CAMERA_MOUSE_SCROLL_SENSITIVITY/CAMERA.targetDistance;
+                if (CAMERA.targetDistance == CAMERA_FREE_DISTANCE_MAX_CLAMP && mouseWheelMove < 0 || camera->target.y >= 0)
+                {
+                    camera->target.x +=
+                            mouseWheelMove * (camera->target.x - camera->position.x) * CAMERA_MOUSE_SCROLL_SENSITIVITY /
+                            CAMERA.targetDistance;
+                    camera->target.y +=
+                            mouseWheelMove * (camera->target.y - camera->position.y) * CAMERA_MOUSE_SCROLL_SENSITIVITY /
+                            CAMERA.targetDistance;
+                    camera->target.z +=
+                            mouseWheelMove * (camera->target.z - camera->position.z) * CAMERA_MOUSE_SCROLL_SENSITIVITY /
+                            CAMERA.targetDistance;
+                    // if (camera->target.y < 0) camera->target.y = -0.001;
+                }
+                else if ((camera->target.y < 0) && (mouseWheelMove > 0)) {
+                    CAMERA.targetDistance -= (mouseWheelMove * CAMERA_MOUSE_SCROLL_SENSITIVITY);
+                    if (CAMERA.targetDistance < CAMERA_FREE_DISTANCE_MIN_CLAMP)
+                        CAMERA.targetDistance = CAMERA_FREE_DISTANCE_MIN_CLAMP;
+                }
             }
-            else if ((camera->position.y > camera->target.y) && (camera->target.y >= 0))
-            {
-                camera->target.x += mouseWheelMove*(camera->target.x - camera->position.x)*CAMERA_MOUSE_SCROLL_SENSITIVITY/CAMERA.targetDistance;
-                camera->target.y += mouseWheelMove*(camera->target.y - camera->position.y)*CAMERA_MOUSE_SCROLL_SENSITIVITY/CAMERA.targetDistance;
-                camera->target.z += mouseWheelMove*(camera->target.z - camera->position.z)*CAMERA_MOUSE_SCROLL_SENSITIVITY/CAMERA.targetDistance;
 
-                // if (camera->target.y < 0) camera->target.y = -0.001;
-            }
-            else if ((camera->position.y > camera->target.y) && (camera->target.y < 0) && (mouseWheelMove > 0))
-            {
-                CAMERA.targetDistance -= (mouseWheelMove*CAMERA_MOUSE_SCROLL_SENSITIVITY);
-                if (CAMERA.targetDistance < CAMERA_FREE_DISTANCE_MIN_CLAMP) CAMERA.targetDistance = CAMERA_FREE_DISTANCE_MIN_CLAMP;
-            }
             // Camera looking up
-            else if ((camera->position.y < camera->target.y) && (CAMERA.targetDistance == CAMERA_FREE_DISTANCE_MAX_CLAMP) && (mouseWheelMove < 0))
+            else if (camera->position.y < camera->target.y)
             {
-                camera->target.x += mouseWheelMove*(camera->target.x - camera->position.x)*CAMERA_MOUSE_SCROLL_SENSITIVITY/CAMERA.targetDistance;
-                camera->target.y += mouseWheelMove*(camera->target.y - camera->position.y)*CAMERA_MOUSE_SCROLL_SENSITIVITY/CAMERA.targetDistance;
-                camera->target.z += mouseWheelMove*(camera->target.z - camera->position.z)*CAMERA_MOUSE_SCROLL_SENSITIVITY/CAMERA.targetDistance;
+                if (CAMERA.targetDistance == CAMERA_FREE_DISTANCE_MAX_CLAMP && mouseWheelMove < 0 || camera->target.y <= 0)
+                {
+                    camera->target.x += mouseWheelMove*(camera->target.x - camera->position.x)*CAMERA_MOUSE_SCROLL_SENSITIVITY/CAMERA.targetDistance;
+                    camera->target.y += mouseWheelMove*(camera->target.y - camera->position.y)*CAMERA_MOUSE_SCROLL_SENSITIVITY/CAMERA.targetDistance;
+                    camera->target.z += mouseWheelMove*(camera->target.z - camera->position.z)*CAMERA_MOUSE_SCROLL_SENSITIVITY/CAMERA.targetDistance;
+                }
+                else if (camera->target.y > 0 && mouseWheelMove > 0)
+                {
+                    CAMERA.targetDistance -= (mouseWheelMove*CAMERA_MOUSE_SCROLL_SENSITIVITY);
+                    if (CAMERA.targetDistance < CAMERA_FREE_DISTANCE_MIN_CLAMP) CAMERA.targetDistance = CAMERA_FREE_DISTANCE_MIN_CLAMP;
+                }
             }
-            else if ((camera->position.y < camera->target.y) && (camera->target.y <= 0))
-            {
-                camera->target.x += mouseWheelMove*(camera->target.x - camera->position.x)*CAMERA_MOUSE_SCROLL_SENSITIVITY/CAMERA.targetDistance;
-                camera->target.y += mouseWheelMove*(camera->target.y - camera->position.y)*CAMERA_MOUSE_SCROLL_SENSITIVITY/CAMERA.targetDistance;
-                camera->target.z += mouseWheelMove*(camera->target.z - camera->position.z)*CAMERA_MOUSE_SCROLL_SENSITIVITY/CAMERA.targetDistance;
 
-                // if (camera->target.y > 0) camera->target.y = 0.001;
-            }
-            else if ((camera->position.y < camera->target.y) && (camera->target.y > 0) && (mouseWheelMove > 0))
-            {
-                CAMERA.targetDistance -= (mouseWheelMove*CAMERA_MOUSE_SCROLL_SENSITIVITY);
-                if (CAMERA.targetDistance < CAMERA_FREE_DISTANCE_MIN_CLAMP) CAMERA.targetDistance = CAMERA_FREE_DISTANCE_MIN_CLAMP;
-            }
 
             // Input keys checks
             if (keyPan)
@@ -530,7 +529,7 @@ void UpdateCamera(Camera *camera)
             camera->position.z = cosf(CAMERA.angle.x)*CAMERA.targetDistance*cosf(CAMERA.angle.y) + camera->target.z;
 
         } break;
-        case CAMERA_CUSTOM: break;
+        case CAMERA_CUSTOM:
         default: break;
     }
 }

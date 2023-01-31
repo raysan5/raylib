@@ -230,7 +230,7 @@ void DrawLineBezier(Vector2 startPos, Vector2 endPos, float thick, Color color)
     DrawTriangleStrip(points, 2*BEZIER_LINE_DIVISIONS+2, color);
 }
 
-// Draw line using quadratic bezier curves with a control point
+// Draw line using quadratic Bézier curves with a control point
 void DrawLineBezierQuad(Vector2 startPos, Vector2 endPos, Vector2 controlPos, float thick, Color color)
 {
     const float step = 1.0f/BEZIER_LINE_DIVISIONS;
@@ -275,7 +275,7 @@ void DrawLineBezierQuad(Vector2 startPos, Vector2 endPos, Vector2 controlPos, fl
     DrawTriangleStrip(points, 2*BEZIER_LINE_DIVISIONS+2, color);
 }
 
-// Draw line using cubic bezier curves with 2 control points
+// Draw line using cubic Bézier curves with 2 control points
 void DrawLineBezierCubic(Vector2 startPos, Vector2 endPos, Vector2 startControlPos, Vector2 endControlPos, float thick, Color color)
 {
     const float step = 1.0f/BEZIER_LINE_DIVISIONS;
@@ -978,7 +978,7 @@ void DrawRectangleRounded(Rectangle rec, float roundness, int segments, Color co
     rlSetTexture(texShapes.id);
 
     rlBegin(RL_QUADS);
-        // Draw all of the 4 corners: [1] Upper Left Corner, [3] Upper Right Corner, [5] Lower Right Corner, [7] Lower Left Corner
+        // Draw all the 4 corners: [1] Upper Left Corner, [3] Upper Right Corner, [5] Lower Right Corner, [7] Lower Left Corner
         for (int k = 0; k < 4; ++k) // Hope the compiler is smart enough to unroll this loop
         {
             float angle = angles[k];
@@ -1207,7 +1207,7 @@ void DrawRectangleRoundedLines(Rectangle rec, float roundness, int segments, flo
 
         rlBegin(RL_QUADS);
 
-            // Draw all of the 4 corners first: Upper Left Corner, Upper Right Corner, Lower Right Corner, Lower Left Corner
+            // Draw all the 4 corners first: Upper Left Corner, Upper Right Corner, Lower Right Corner, Lower Left Corner
             for (int k = 0; k < 4; ++k) // Hope the compiler is smart enough to unroll this loop
             {
                 float angle = angles[k];
@@ -1342,7 +1342,7 @@ void DrawRectangleRoundedLines(Rectangle rec, float roundness, int segments, flo
         // Use LINES to draw the outline
         rlBegin(RL_LINES);
 
-            // Draw all of the 4 corners first: Upper Left Corner, Upper Right Corner, Lower Right Corner, Lower Left Corner
+            // Draw all the 4 corners first: Upper Left Corner, Upper Right Corner, Lower Right Corner, Lower Left Corner
             for (int k = 0; k < 4; ++k) // Hope the compiler is smart enough to unroll this loop
             {
                 float angle = angles[k];

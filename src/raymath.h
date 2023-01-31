@@ -312,14 +312,14 @@ RMAPI float Vector2DistanceSqr(Vector2 v1, Vector2 v2)
 RMAPI float Vector2Angle(Vector2 v1, Vector2 v2)
 {
     float result = 0.0f;
-    
+
     float dot = v1.x*v2.x + v1.y*v2.y;      // Dot product
 
     float dotClamp = (dot < -1.0f)? -1.0f : dot;  // Clamp
     if (dotClamp > 1.0f) dotClamp = 1.0f;
 
     result = acosf(dotClamp);
-    
+
     // Alternative implementation, more costly
     //float v1Length = sqrtf((v1.x*v1.x) + (v1.y*v1.y));
     //float v2Length = sqrtf((v2.x*v2.x) + (v2.y*v2.y));
@@ -585,12 +585,12 @@ RMAPI Vector3 Vector3Perpendicular(Vector3 v)
 {
     Vector3 result = { 0 };
 
-    float min = (float) fabs(v.x);
+    float min = fabsf(v.x);
     Vector3 cardinalAxis = {1.0f, 0.0f, 0.0f};
 
     if (fabsf(v.y) < min)
     {
-        min = (float) fabs(v.y);
+        min = fabsf(v.y);
         Vector3 tmp = {0.0f, 1.0f, 0.0f};
         cardinalAxis = tmp;
     }
@@ -903,7 +903,7 @@ RMAPI Vector3 Vector3Unproject(Vector3 source, Matrix projection, Matrix view)
 {
     Vector3 result = { 0 };
 
-    // Calculate unproject matrix (multiply view matrix by projection matrix) and invert it
+    // Calculate un-project matrix (multiply view matrix by projection matrix) and invert it
     Matrix matViewProj = {      // MatrixMultiply(view, projection);
         view.m0*projection.m0 + view.m1*projection.m4 + view.m2*projection.m8 + view.m3*projection.m12,
         view.m0*projection.m1 + view.m1*projection.m5 + view.m2*projection.m9 + view.m3*projection.m13,
@@ -966,7 +966,7 @@ RMAPI Vector3 Vector3Unproject(Vector3 source, Matrix projection, Matrix view)
     // Create quaternion from source point
     Quaternion quat = { source.x, source.y, source.z, 1.0f };
 
-    // Multiply quat point by unproject matrix
+    // Multiply quat point by un-project matrix
     Quaternion qtransformed = {     // QuaternionTransform(quat, matViewProjInv)
         matViewProjInv.m0*quat.x + matViewProjInv.m4*quat.y + matViewProjInv.m8*quat.z + matViewProjInv.m12*quat.w,
         matViewProjInv.m1*quat.x + matViewProjInv.m5*quat.y + matViewProjInv.m9*quat.z + matViewProjInv.m13*quat.w,
@@ -1926,6 +1926,8 @@ RMAPI Quaternion QuaternionFromMatrix(Matrix mat)
             result.w = (mat.m1 - mat.m4) * mult;
             result.x = (mat.m8 + mat.m2) * mult;
             result.y = (mat.m6 + mat.m9) * mult;
+            break;
+        default: /* Suppress warnings */
             break;
     }
 

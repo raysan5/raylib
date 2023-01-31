@@ -1125,7 +1125,7 @@ void UnloadModel(Model model)
 
     // Unload materials maps
     // NOTE: As the user could be sharing shaders and textures between models,
-    // we don't unload the material but just free it's maps,
+    // we don't unload the material but just free its maps,
     // the user is responsible for freeing models shaders and textures
     for (int i = 0; i < model.materialCount; i++) RL_FREE(model.materials[i].maps);
 
@@ -1146,7 +1146,7 @@ void UnloadModelKeepMeshes(Model model)
 {
     // Unload materials maps
     // NOTE: As the user could be sharing shaders and textures between models,
-    // we don't unload the material but just free it's maps,
+    // we don't unload the material but just free its maps,
     // the user is responsible for freeing models shaders and textures
     for (int i = 0; i < model.materialCount; i++) RL_FREE(model.materials[i].maps);
 
@@ -1230,7 +1230,7 @@ void UploadMesh(Mesh *mesh, bool dynamic)
     rlEnableVertexAttribute(1);
 
     // WARNING: When setting default vertex attribute values, the values for each generic vertex attribute
-    // is part of current state and it is maintained even if a different program object is used
+    // is part of current state, and it is maintained even if a different program object is used
 
     if (mesh->normals != NULL)
     {
@@ -1383,7 +1383,7 @@ void DrawMesh(Mesh mesh, Material material, Matrix transform)
     }
 
     // Get a copy of current matrices to work with,
-    // just in case stereo render is required and we need to modify them
+    // just in case stereo render is required, and we need to modify them
     // NOTE: At this point the modelview matrix just contains the view matrix (camera)
     // That's because BeginMode3D() sets it and there is no model-drawing function
     // that modifies it, all use rlPushMatrix() and rlPopMatrix()
@@ -1396,7 +1396,7 @@ void DrawMesh(Mesh mesh, Material material, Matrix transform)
     if (material.shader.locs[SHADER_LOC_MATRIX_VIEW] != -1) rlSetUniformMatrix(material.shader.locs[SHADER_LOC_MATRIX_VIEW], matView);
     if (material.shader.locs[SHADER_LOC_MATRIX_PROJECTION] != -1) rlSetUniformMatrix(material.shader.locs[SHADER_LOC_MATRIX_PROJECTION], matProjection);
 
-    // Model transformation matrix is send to shader uniform location: SHADER_LOC_MATRIX_MODEL
+    // Model transformation matrix is sent to shader uniform location: SHADER_LOC_MATRIX_MODEL
     if (material.shader.locs[SHADER_LOC_MATRIX_MODEL] != -1) rlSetUniformMatrix(material.shader.locs[SHADER_LOC_MATRIX_MODEL], transform);
 
     // Accumulate several model transformations:
@@ -1587,7 +1587,7 @@ void DrawMeshInstanced(Mesh mesh, Material material, const Matrix *transforms, i
     }
 
     // Get a copy of current matrices to work with,
-    // just in case stereo render is required and we need to modify them
+    // just in case stereo render is required, and we need to modify them
     // NOTE: At this point the modelview matrix just contains the view matrix (camera)
     // That's because BeginMode3D() sets it and there is no model-drawing function
     // that modifies it, all use rlPushMatrix() and rlPopMatrix()
@@ -1738,7 +1738,7 @@ void DrawMeshInstanced(Mesh mesh, Material material, const Matrix *transforms, i
         else rlDrawVertexArrayInstanced(0, mesh.vertexCount, instances);
     }
 
-    // Unbind all binded texture maps
+    // Unbind all bound texture maps
     for (int i = 0; i < MAX_MATERIAL_MAPS; i++)
     {
         if (material.maps[i].texture.id > 0)
@@ -2045,7 +2045,7 @@ void UpdateModelAnimation(Model model, ModelAnimation anim, int frame)
 
             int boneId = 0;
             int boneCounter = 0;
-            float boneWeight = 0.0;
+            float boneWeight = 0.0f;
 
             const int vValues = mesh.vertexCount*3;
             for (int vCounter = 0; vCounter < vValues; vCounter += 3)
@@ -2559,7 +2559,7 @@ Mesh GenMeshSphere(float radius, int rings, int slices)
     return mesh;
 }
 
-// Generate hemi-sphere mesh (half sphere, no bottom cap)
+// Generate hemisphere mesh (half sphere, no bottom cap)
 Mesh GenMeshHemiSphere(float radius, int rings, int slices)
 {
     Mesh mesh = { 0 };
@@ -3242,7 +3242,7 @@ Mesh GenMeshCubicmap(Image cubicmap, Vector3 cubeSize)
         }
     }
 
-    // Move data from mapVertices temp arays to vertices float array
+    // Move data from mapVertices temp arrays to vertices float array
     mesh.vertexCount = vCounter;
     mesh.triangleCount = vCounter/3;
 
@@ -3325,7 +3325,7 @@ BoundingBox GetMeshBoundingBox(Mesh mesh)
 }
 
 // Compute mesh tangents
-// NOTE: To calculate mesh tangents and binormals we need mesh vertex positions and texture coordinates
+// NOTE: To calculate mesh tangents and binomials we need mesh vertex positions and texture coordinates
 // Implementation base don: https://answers.unity.com/questions/7789/calculating-tangents-vector4.html
 void GenMeshTangents(Mesh *mesh)
 {
@@ -3727,8 +3727,8 @@ RayCollision GetRayCollisionBox(Ray ray, BoundingBox box)
     t[3] = (box.max.y - ray.position.y)*t[9];
     t[4] = (box.min.z - ray.position.z)*t[10];
     t[5] = (box.max.z - ray.position.z)*t[10];
-    t[6] = (float)fmax(fmax(fmin(t[0], t[1]), fmin(t[2], t[3])), fmin(t[4], t[5]));
-    t[7] = (float)fmin(fmin(fmax(t[0], t[1]), fmax(t[2], t[3])), fmax(t[4], t[5]));
+    t[6] = fmax(fmax(fminf(t[0], t[1]), fminf(t[2], t[3])), fminf(t[4], t[5]));
+    t[7] = fmin(fmin(fmaxf(t[0], t[1]), fmaxf(t[2], t[3])), fmaxf(t[4], t[5]));
 
     collision.hit = !((t[7] < 0) || (t[6] > t[7]));
     collision.distance = t[6];
@@ -3742,7 +3742,7 @@ RayCollision GetRayCollisionBox(Ray ray, BoundingBox box)
     // NOTE: We use an additional .01 to fix numerical errors
     collision.normal = Vector3Scale(collision.normal, 2.01f);
     collision.normal = Vector3Divide(collision.normal, Vector3Subtract(box.max, box.min));
-    // The relevant elemets of the vector are now slightly larger than 1.0f (or smaller than -1.0f)
+    // The relevant elements of the vector are now slightly larger than 1.0f (or smaller than -1.0f)
     // and the others are somewhere between -1.0 and 1.0 casting to int is exactly our wanted normal!
     collision.normal.x = (float)((int)collision.normal.x);
     collision.normal.y = (float)((int)collision.normal.y);
@@ -3842,7 +3842,7 @@ RayCollision GetRayCollisionTriangle(Ray ray, Vector3 p1, Vector3 p2, Vector3 p3
     // Calculate u parameter and test bound
     u = Vector3DotProduct(tv, p)*invDet;
 
-    // The intersection lies outside of the triangle
+    // The intersection lies outside the triangle
     if ((u < 0.0f) || (u > 1.0f)) return collision;
 
     // Prepare to test v parameter
@@ -3851,7 +3851,7 @@ RayCollision GetRayCollisionTriangle(Ray ray, Vector3 p1, Vector3 p2, Vector3 p3
     // Calculate V parameter and test bound
     v = Vector3DotProduct(ray.direction, q)*invDet;
 
-    // The intersection lies outside of the triangle
+    // The intersection lies outside the triangle
     if ((v < 0.0f) || ((u + v) > 1.0f)) return collision;
 
     t = Vector3DotProduct(edge2, q)*invDet;
@@ -4287,10 +4287,10 @@ static Model LoadIQM(const char *fileName)
                 for (unsigned int m = 0; m < iqmHeader->num_meshes; m++)
                 {
                     int vCounter = 0;
-                    for (unsigned int i = imesh[m].first_vertex*3; i < (imesh[m].first_vertex + imesh[m].num_vertexes)*3; i++)
+                    for (unsigned int j = imesh[m].first_vertex * 3; j < (imesh[m].first_vertex + imesh[m].num_vertexes) * 3; j++)
                     {
-                        model.meshes[m].vertices[vCounter] = vertex[i];
-                        model.meshes[m].animVertices[vCounter] = vertex[i];
+                        model.meshes[m].vertices[vCounter] = vertex[j];
+                        model.meshes[m].animVertices[vCounter] = vertex[j];
                         vCounter++;
                     }
                 }
@@ -4305,10 +4305,10 @@ static Model LoadIQM(const char *fileName)
                 for (unsigned int m = 0; m < iqmHeader->num_meshes; m++)
                 {
                     int vCounter = 0;
-                    for (unsigned int i = imesh[m].first_vertex*3; i < (imesh[m].first_vertex + imesh[m].num_vertexes)*3; i++)
+                    for (unsigned int j = imesh[m].first_vertex * 3; j < (imesh[m].first_vertex + imesh[m].num_vertexes) * 3; j++)
                     {
-                        model.meshes[m].normals[vCounter] = normal[i];
-                        model.meshes[m].animNormals[vCounter] = normal[i];
+                        model.meshes[m].normals[vCounter] = normal[j];
+                        model.meshes[m].animNormals[vCounter] = normal[j];
                         vCounter++;
                     }
                 }
@@ -4323,9 +4323,9 @@ static Model LoadIQM(const char *fileName)
                 for (unsigned int m = 0; m < iqmHeader->num_meshes; m++)
                 {
                     int vCounter = 0;
-                    for (unsigned int i = imesh[m].first_vertex*2; i < (imesh[m].first_vertex + imesh[m].num_vertexes)*2; i++)
+                    for (unsigned int j = imesh[m].first_vertex * 2; j < (imesh[m].first_vertex + imesh[m].num_vertexes) * 2; j++)
                     {
-                        model.meshes[m].texcoords[vCounter] = text[i];
+                        model.meshes[m].texcoords[vCounter] = text[j];
                         vCounter++;
                     }
                 }
@@ -4340,9 +4340,9 @@ static Model LoadIQM(const char *fileName)
                 for (unsigned int m = 0; m < iqmHeader->num_meshes; m++)
                 {
                     int boneCounter = 0;
-                    for (unsigned int i = imesh[m].first_vertex*4; i < (imesh[m].first_vertex + imesh[m].num_vertexes)*4; i++)
+                    for (unsigned int j = imesh[m].first_vertex * 4; j < (imesh[m].first_vertex + imesh[m].num_vertexes) * 4; j++)
                     {
-                        model.meshes[m].boneIds[boneCounter] = blendi[i];
+                        model.meshes[m].boneIds[boneCounter] = blendi[j];
                         boneCounter++;
                     }
                 }
@@ -4357,9 +4357,9 @@ static Model LoadIQM(const char *fileName)
                 for (unsigned int m = 0; m < iqmHeader->num_meshes; m++)
                 {
                     int boneCounter = 0;
-                    for (unsigned int i = imesh[m].first_vertex*4; i < (imesh[m].first_vertex + imesh[m].num_vertexes)*4; i++)
+                    for (unsigned int j = imesh[m].first_vertex * 4; j < (imesh[m].first_vertex + imesh[m].num_vertexes) * 4; j++)
                     {
-                        model.meshes[m].boneWeights[boneCounter] = blendw[i]/255.0f;
+                        model.meshes[m].boneWeights[boneCounter] = blendw[j] / 255.0f;
                         boneCounter++;
                     }
                 }
@@ -4376,9 +4376,9 @@ static Model LoadIQM(const char *fileName)
                     model.meshes[m].colors = RL_CALLOC(model.meshes[m].vertexCount*4, sizeof(unsigned char));
 
                     int vCounter = 0;
-                    for (unsigned int i = imesh[m].first_vertex*4; i < (imesh[m].first_vertex + imesh[m].num_vertexes)*4; i++)
+                    for (unsigned int j = imesh[m].first_vertex * 4; j < (imesh[m].first_vertex + imesh[m].num_vertexes) * 4; j++)
                     {
-                        model.meshes[m].colors[vCounter] = color[i];
+                        model.meshes[m].colors[vCounter] = color[j];
                         vCounter++;
                     }
                 }
@@ -4671,7 +4671,7 @@ static Image LoadImageFromCgltfImage(cgltf_image *cgltfImage, const char *texPat
 {
     Image image = { 0 };
 
-    if (cgltfImage->uri != NULL)     // Check if image data is provided as a uri (base64 or path)
+    if (cgltfImage->uri != NULL)     // Check if image data is provided as an uri (base64 or path)
     {
         if ((strlen(cgltfImage->uri) > 5) &&
             (cgltfImage->uri[0] == 'd') &&
@@ -5042,7 +5042,7 @@ static Model LoadGLTF(const char *fileName)
 
                             // Load data into a temp buffer to be converted to raylib data type
                             unsigned short *temp = RL_MALLOC(attribute->count*4*sizeof(unsigned short));
-                            LOAD_ATTRIBUTE(attribute, 4, unsigned short, temp);
+                            LOAD_ATTRIBUTE(attribute, 4, unsigned short, temp)
 
                             // Convert data to raylib color data type (4 bytes)
                             for (unsigned int c = 0; c < attribute->count*4; c++) model.meshes[meshIndex].colors[c] = (unsigned char)(((float)temp[c]/65535.0f)*255.0f);
@@ -5056,7 +5056,7 @@ static Model LoadGLTF(const char *fileName)
 
                             // Load data into a temp buffer to be converted to raylib data type
                             float *temp = RL_MALLOC(attribute->count*4*sizeof(float));
-                            LOAD_ATTRIBUTE(attribute, 4, float, temp);
+                            LOAD_ATTRIBUTE(attribute, 4, float, temp)
 
                             // Convert data to raylib color data type (4 bytes), we expect the color data normalized
                             for (unsigned int c = 0; c < attribute->count*4; c++) model.meshes[meshIndex].colors[c] = (unsigned char)(temp[c]*255.0f);
@@ -5091,7 +5091,7 @@ static Model LoadGLTF(const char *fileName)
 
                         // Load data into a temp buffer to be converted to raylib data type
                         unsigned int *temp = RL_MALLOC(attribute->count*sizeof(unsigned int));
-                        LOAD_ATTRIBUTE(attribute, 1, unsigned int, temp);
+                        LOAD_ATTRIBUTE(attribute, 1, unsigned int, temp)
 
                         // Convert data to raylib indices data type (unsigned short)
                         for (unsigned int d = 0; d < attribute->count; d++) model.meshes[meshIndex].indices[d] = (unsigned short)temp[d];
@@ -5110,7 +5110,7 @@ static Model LoadGLTF(const char *fileName)
                 {
                     // The primitive actually keeps the pointer to the corresponding material,
                     // raylib instead assigns to the mesh the by its index, as loaded in model.materials array
-                    // To get the index, we check if material pointers match and we assign the corresponding index,
+                    // To get the index, we check if material pointers match, and we assign the corresponding index,
                     // skipping index 0, the default material
                     if (&data->materials[m] == data->meshes[i].primitives[p].material)
                     {
@@ -5613,7 +5613,7 @@ static Model LoadM3D(const char *fileName)
             // Materials are grouped together
             if (mi != m3d->face[i].materialid)
             {
-                // there should be only one material switch per material kind, but be bulletproof for unoptimal model files
+                // there should be only one material switch per material kind, but be bulletproof for non-optimal model files
                 if (k + 1 >= model.meshCount)
                 {
                     model.meshCount++;
@@ -5842,7 +5842,7 @@ static Model LoadM3D(const char *fileName)
         }
 
         // Load bone-pose default mesh into animation vertices. These will be updated when UpdateModelAnimation gets
-        // called, but not before, however DrawMesh uses these if they exists (so not good if they are left empty).
+        // called, but not before, however DrawMesh uses these if they exist (so not good if they are left empty).
         if (m3d->numbone && m3d->numskin)
         {
             for(i = 0; i < model.meshCount; i++)

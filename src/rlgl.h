@@ -502,7 +502,7 @@ typedef enum {
 } rlShaderAttributeDataType;
 
 // Framebuffer attachment type
-// NOTE: By default up to 8 color channels defined but it can be more
+// NOTE: By default up to 8 color channels defined, but it can be more
 typedef enum {
     RL_ATTACHMENT_COLOR_CHANNEL0 = 0,   // Framebuffer attachment type: color 0
     RL_ATTACHMENT_COLOR_CHANNEL1,       // Framebuffer attachment type: color 1

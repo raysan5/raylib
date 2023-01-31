@@ -63,10 +63,10 @@
 static int logTypeLevel = LOG_INFO;                 // Minimum log type level
 
 static TraceLogCallback traceLog = NULL;            // TraceLog callback function pointer
-static LoadFileDataCallback loadFileData = NULL;    // LoadFileData callback funtion pointer
-static SaveFileDataCallback saveFileData = NULL;    // SaveFileText callback funtion pointer
-static LoadFileTextCallback loadFileText = NULL;    // LoadFileText callback funtion pointer
-static SaveFileTextCallback saveFileText = NULL;    // SaveFileText callback funtion pointer
+static LoadFileDataCallback loadFileData = NULL;    // LoadFileData callback function pointer
+static SaveFileDataCallback saveFileData = NULL;    // SaveFileText callback function pointer
+static LoadFileTextCallback loadFileText = NULL;    // LoadFileText callback function pointer
+static SaveFileTextCallback saveFileText = NULL;    // SaveFileText callback function pointer
 
 //----------------------------------------------------------------------------------
 // Functions to set internal callbacks
@@ -166,7 +166,7 @@ void *MemAlloc(unsigned int size)
     return ptr;
 }
 
-// Internal memory reallocator
+// Internal memory re-allocator
 void *MemRealloc(void *ptr, unsigned int size)
 {
     void *ret = RL_REALLOC(ptr, size);

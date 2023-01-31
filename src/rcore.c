@@ -626,8 +626,8 @@ static bool InitGraphicsDevice(int width, int height);  // Initialize graphics d
 static void SetupFramebuffer(int width, int height);    // Setup main framebuffer
 static void SetupViewport(int width, int height);       // Set viewport for a provided width and height
 
-static void ScanDirectoryFiles(const char *basePath, FilePathList *list, const char *filter);   // Scan all files and directories in a base path
-static void ScanDirectoryFilesRecursively(const char *basePath, FilePathList *list, const char *filter);  // Scan all files and directories recursively from a base path
+static void ScanDirectoryFiles(const char *basePath, FilePathList *files, const char *filter);   // Scan all files and directories in a base path
+static void ScanDirectoryFilesRecursively(const char *basePath, FilePathList *files, const char *filter);  // Scan all files and directories recursively from a base path
 
 #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
 static void ErrorCallback(int error, const char *description);                             // GLFW3 Error Callback, runs on GLFW3 error
@@ -864,7 +864,7 @@ void InitWindow(int width, int height, const char *title)
     LoadFontDefault();
     #if defined(SUPPORT_MODULE_RSHAPES)
     Rectangle rec = GetFontDefault().recs[95];
-    // NOTE: We setup a 1px padding on char rectangle to avoid pixel bleeding on MSAA filtering
+    // NOTE: We set up a 1px padding on char rectangle to avoid pixel bleeding on MSAA filtering
     SetShapesTexture(GetFontDefault().texture, (Rectangle){ rec.x + 1, rec.y + 1, rec.width - 2, rec.height - 2 }); // WARNING: Module required: rshapes
     #endif
 #else
@@ -1317,7 +1317,7 @@ void MaximizeWindow(void)
 void MinimizeWindow(void)
 {
 #if defined(PLATFORM_DESKTOP)
-    // NOTE: Following function launches callback that sets appropiate flag!
+    // NOTE: Following function launches callback that sets appropriate flag!
     glfwIconifyWindow(CORE.Window.handle);
 #endif
 }
@@ -2193,7 +2193,7 @@ void BeginMode3D(Camera3D camera)
     rlDrawRenderBatchActive();      // Update and draw internal render batch
 
     rlMatrixMode(RL_PROJECTION);    // Switch to projection matrix
-    rlPushMatrix();                 // Save previous matrix, which contains the settings for the 2d ortho projection
+    rlPushMatrix();                 // Save previous matrix, which contains the settings for the 2d orthogonal projection
     rlLoadIdentity();               // Reset current matrix (projection)
 
     float aspect = (float)CORE.Window.currentFbo.width/(float)CORE.Window.currentFbo.height;
@@ -2469,7 +2469,7 @@ Shader LoadShaderFromMemory(const char *vsCode, const char *fsCode)
     // After shader loading, we TRY to set default location names
     if (shader.id > 0)
     {
-        // Default shader attribute locations have been binded before linking:
+        // Default shader attribute locations have been bound before linking:
         //          vertex position location    = 0
         //          vertex texcoord location    = 1
         //          vertex normal location      = 2
@@ -2484,7 +2484,7 @@ Shader LoadShaderFromMemory(const char *vsCode, const char *fsCode)
         // All locations reseted to -1 (no location)
         for (int i = 0; i < RL_MAX_SHADER_LOCATIONS; i++) shader.locs[i] = -1;
 
-        // Get handles to GLSL input attibute locations
+        // Get handles to GLSL input attribute locations
         shader.locs[SHADER_LOC_VERTEX_POSITION] = rlGetLocationAttrib(shader.id, RL_DEFAULT_SHADER_ATTRIB_NAME_POSITION);
         shader.locs[SHADER_LOC_VERTEX_TEXCOORD01] = rlGetLocationAttrib(shader.id, RL_DEFAULT_SHADER_ATTRIB_NAME_TEXCOORD);
         shader.locs[SHADER_LOC_VERTEX_TEXCOORD02] = rlGetLocationAttrib(shader.id, RL_DEFAULT_SHADER_ATTRIB_NAME_TEXCOORD2);
@@ -2552,7 +2552,7 @@ void SetShaderValueV(Shader shader, int locIndex, const void *value, int uniform
     {
         rlEnableShader(shader.id);
         rlSetUniform(locIndex, value, uniformType, count);
-        //rlDisableShader();      // Avoid reseting current shader program, in case other uniforms are set
+        //rlDisableShader();      // Avoid resetting current shader program, in case other uniforms are set
     }
 }
 
@@ -2617,7 +2617,7 @@ Ray GetMouseRay(Vector2 mouse, Camera camera)
     Vector3 farPoint = Vector3Unproject((Vector3){ deviceCoords.x, deviceCoords.y, 1.0f }, matProj, matView);
 
     // Unproject the mouse cursor in the near plane.
-    // We need this as the source position because orthographic projects, compared to perspect doesn't have a
+    // We need this as the source position because orthographic projects, compared to perspective doesn't have a
     // convergence point, meaning that the "eye" of the camera is more like a plane than a point.
     Vector3 cameraPlanePointerPos = Vector3Unproject((Vector3){ deviceCoords.x, deviceCoords.y, -1.0f }, matProj, matView);
 
@@ -2754,7 +2754,7 @@ int GetFPS(void)
 
 #if !defined(SUPPORT_CUSTOM_FRAME_CONTROL)
     #define FPS_CAPTURE_FRAMES_COUNT    30      // 30 captures
-    #define FPS_AVERAGE_TIME_SECONDS   0.5f     // 500 millisecondes
+    #define FPS_AVERAGE_TIME_SECONDS   0.5f     // 500 milliseconds
     #define FPS_STEP (FPS_AVERAGE_TIME_SECONDS/FPS_CAPTURE_FRAMES_COUNT)
 
     static int index = 0;
@@ -2807,7 +2807,7 @@ double GetTime(void)
 
 // Setup window configuration flags (view FLAGS)
 // NOTE: This function is expected to be called before window creation,
-// because it setups some flags for the window creation process.
+// because it sets up some flags for the window creation process.
 // To configure window states after creation, just use SetWindowState()
 void SetConfigFlags(unsigned int flags)
 {
@@ -3032,7 +3032,7 @@ const char *GetDirectoryPath(const char *filePath)
     if (filePath[1] != ':' && filePath[0] != '\\' && filePath[0] != '/')
     {
         // For security, we set starting path to current directory,
-        // obtained path will be concated to this
+        // obtained path will be concat to this
         dirPath[0] = '.';
         dirPath[1] = '/';
     }
@@ -3168,8 +3168,8 @@ const char *GetApplicationDirectory(void)
     return appDir;
 }
 
-// Load directory filepaths
-// NOTE: Base path is prepended to the scanned filepaths
+// Load directory file paths
+// NOTE: Base path is prepended to the scanned file paths
 // WARNING: Directory is scanned twice, first time to get files count
 // No recursive scanning is done!
 FilePathList LoadDirectoryFiles(const char *dirPath)
@@ -3185,7 +3185,7 @@ FilePathList LoadDirectoryFiles(const char *dirPath)
         // SCAN 1: Count files
         while ((entity = readdir(dir)) != NULL)
         {
-            // NOTE: We skip '.' (current dir) and '..' (parent dir) filepaths
+            // NOTE: We skip '.' (current dir) and '..' (parent dir) file paths
             if ((strcmp(entity->d_name, ".") != 0) && (strcmp(entity->d_name, "..") != 0)) fileCounter++;
         }
 
@@ -3196,7 +3196,7 @@ FilePathList LoadDirectoryFiles(const char *dirPath)
 
         closedir(dir);
 
-        // SCAN 2: Read filepaths
+        // SCAN 2: Read file paths
         // NOTE: Directory paths are also registered
         ScanDirectoryFiles(dirPath, &files, NULL);
 
@@ -3208,7 +3208,7 @@ FilePathList LoadDirectoryFiles(const char *dirPath)
     return files;
 }
 
-// Load directory filepaths with extension filtering and recursive directory scan
+// Load directory file paths with extension filtering and recursive directory scan
 // NOTE: On recursive loading we do not pre-scan for file count, we use MAX_FILEPATH_CAPACITY
 FilePathList LoadDirectoryFilesEx(const char *basePath, const char *filter, bool scanSubdirs)
 {
@@ -3225,8 +3225,8 @@ FilePathList LoadDirectoryFilesEx(const char *basePath, const char *filter, bool
     return files;
 }
 
-// Unload directory filepaths
-// WARNING: files.count is not reseted to 0 after unloading
+// Unload directory file paths
+// WARNING: files.count is not reset to 0 after unloading
 void UnloadDirectoryFiles(FilePathList files)
 {
     for (unsigned int i = 0; i < files.capacity; i++) RL_FREE(files.paths[i]);
@@ -3260,7 +3260,7 @@ bool IsFileDropped(void)
     else return false;
 }
 
-// Load dropped filepaths
+// Load dropped file paths
 FilePathList LoadDroppedFiles(void)
 {
     FilePathList files = { 0 };
@@ -3271,7 +3271,7 @@ FilePathList LoadDroppedFiles(void)
     return files;
 }
 
-// Unload dropped filepaths
+// Unload dropped file paths
 void UnloadDroppedFiles(FilePathList files)
 {
     // WARNING: files pointers are the same as internal ones
@@ -4096,11 +4096,11 @@ static bool InitGraphicsDevice(int width, int height)
 
     if (CORE.Window.fullscreen)
     {
-        // remember center for switchinging from fullscreen to window
+        // remember center for switching from fullscreen to window
         if ((CORE.Window.screen.height == CORE.Window.display.height) && (CORE.Window.screen.width == CORE.Window.display.width))
         {
-            // If screen width/height equal to the dislpay, we can't calclulate the window pos for toggling fullscreened/windowed.
-            // Toggling fullscreened/windowed with pos(0, 0) can cause problems in some platforms, such as X11.
+            // If screen width/height equal to the display, we can't calculate the window pos for toggling full-screened/windowed.
+            // Toggling full-screened/windowed with pos(0, 0) can cause problems in some platforms, such as X11.
             CORE.Window.position.x = CORE.Window.display.width/4;
             CORE.Window.position.y = CORE.Window.display.height/4;
         }
@@ -4137,7 +4137,7 @@ static bool InitGraphicsDevice(int width, int height)
         // framebuffer is rendered correctly but once displayed on a 16:9 monitor, it gets stretched
         // by the sides to fit all monitor space...
 
-        // Try to setup the most appropiate fullscreen framebuffer for the requested screenWidth/screenHeight
+        // Try to setup the most appropriate fullscreen framebuffer for the requested screenWidth/screenHeight
         // It considers device display resolution mode and setups a framebuffer with black bars if required (render size/offset)
         // Modified global variables: CORE.Window.screen.width/CORE.Window.screen.height - CORE.Window.render.width/CORE.Window.render.height - CORE.Window.renderOffset.x/CORE.Window.renderOffset.y - CORE.Window.screenScale
         // TODO: It is a quite cumbersome solution to display size vs requested size, it should be reviewed or removed...
@@ -4204,7 +4204,7 @@ static bool InitGraphicsDevice(int width, int height)
     // NOTE: V-Sync can be enabled by graphic driver configuration
     if (CORE.Window.flags & FLAG_VSYNC_HINT)
     {
-        // WARNING: It seems to hits a critical render path in Intel HD Graphics
+        // WARNING: It seems to hit a critical render path in Intel HD Graphics
         glfwSwapInterval(1);
         TRACELOG(LOG_INFO, "DISPLAY: Trying to enable VSYNC");
     }
@@ -4216,11 +4216,11 @@ static bool InitGraphicsDevice(int width, int height)
     if ((CORE.Window.flags & FLAG_WINDOW_HIGHDPI) > 0)
     {
         // NOTE: On APPLE platforms system should manage window/input scaling and also framebuffer scaling
-        // Framebuffer scaling should be activated with: glfwWindowHint(GLFW_COCOA_RETINA_FRAMEBUFFER, GLFW_TRUE);
+        // Frame buffer scaling should be activated with: glfwWindowHint(GLFW_COCOA_RETINA_FRAMEBUFFER, GLFW_TRUE);
     #if !defined(__APPLE__)
         glfwGetFramebufferSize(CORE.Window.handle, &fbWidth, &fbHeight);
 
-        // Screen scaling matrix is required in case desired screen area is different than display area
+        // Screen scaling matrix is required in case desired screen area is different from display area
         CORE.Window.screenScale = MatrixScale((float)fbWidth/CORE.Window.screen.width, (float)fbHeight/CORE.Window.screen.height, 1.0f);
 
         // Mouse input scaling for the new screen size
@@ -4818,7 +4818,7 @@ static void InitTimer(void)
 // NOTE: Sleep() granularity could be around 10 ms, it means, Sleep() could
 // take longer than expected... for that reason we use the busy wait loop
 // Ref: http://stackoverflow.com/questions/43057578/c-programming-win32-games-sleep-taking-longer-than-expected
-// Ref: http://www.geisswerks.com/ryan/FAQS/timing.html --> All about timming on Win32!
+// Ref: http://www.geisswerks.com/ryan/FAQS/timing.html --> All about timing on Win32!
 void WaitTime(double seconds)
 {
 #if defined(SUPPORT_BUSY_WAIT_LOOP) || defined(SUPPORT_PARTIALBUSY_WAIT_LOOP)
@@ -4989,7 +4989,7 @@ void PollInputEvents(void)
             // NOTE: There is no callback available, so we get it manually
             // Get remapped buttons
             GLFWgamepadstate state = { 0 };
-            glfwGetGamepadState(i, &state); // This remapps all gamepads so they have their buttons mapped like an xbox controller
+            glfwGetGamepadState(i, &state); // This remaps all gamepads, so they have their buttons mapped like an xbox controller
 
             const unsigned char *buttons = state.buttons;
 
@@ -5413,7 +5413,7 @@ static void CharCallback(GLFWwindow *window, unsigned int key)
     //TRACELOG(LOG_DEBUG, "Char Callback: KEY:%i(%c)", key, key);
 
     // NOTE: Registers any key down considering OS keyboard layout but
-    // do not detects action events, those should be managed by user...
+    // do not detect action events, those should be managed by user...
     // Ref: https://github.com/glfw/glfw/issues/668#issuecomment-166794907
     // Ref: https://www.glfw.org/docs/latest/input_guide.html#input_char
 
@@ -5456,7 +5456,7 @@ static void MouseButtonCallback(GLFWwindow *window, int button, int action, int 
     gestureEvent.position[0].x /= (float)GetScreenWidth();
     gestureEvent.position[0].y /= (float)GetScreenHeight();
 
-    // Gesture data is sent to gestures system for processing
+    // Gesture data is sent to gesture system for processing
     ProcessGestureEvent(gestureEvent);
 #endif
 }
@@ -5487,7 +5487,7 @@ static void MouseCursorPosCallback(GLFWwindow *window, double x, double y)
     gestureEvent.position[0].x /= (float)GetScreenWidth();
     gestureEvent.position[0].y /= (float)GetScreenHeight();
 
-    // Gesture data is sent to gestures system for processing
+    // Gesture data is sent to gesture system for processing
     ProcessGestureEvent(gestureEvent);
 #endif
 }
@@ -5508,7 +5508,7 @@ static void CursorEnterCallback(GLFWwindow *window, int enter)
 // GLFW3 Window Drop Callback, runs when drop files into window
 static void WindowDropCallback(GLFWwindow *window, int count, const char **paths)
 {
-    // In case previous dropped filepaths have not been freed, we free them
+    // In case previous dropped file paths have not been freed, we free them
     if (CORE.Window.dropFileCount > 0)
     {
         for (unsigned int i = 0; i < CORE.Window.dropFileCount; i++) RL_FREE(CORE.Window.dropFilepaths[i]);

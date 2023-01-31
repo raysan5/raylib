@@ -306,7 +306,7 @@ typedef enum {
 #endif
 
 // NOTE: Different logic is used when feeding data to the playback device
-// depending on whether or not data is streamed (Music vs Sound)
+// depending on whether data is streamed or not (Music vs Sound)
 typedef enum {
     AUDIO_BUFFER_USAGE_STATIC = 0,
     AUDIO_BUFFER_USAGE_STREAM
@@ -466,7 +466,7 @@ void InitAudioDevice(void)
         return;
     }
 
-    // Mixing happens on a seperate thread which means we need to synchronize. I'm using a mutex here to make things simple, but may
+    // Mixing happens on a seperated thread which means we need to synchronize. I'm using a mutex here to make things simple, but may
     // want to look at something a bit smarter later on to keep everything real-time, if that's necessary.
     if (ma_mutex_init(&AUDIO.System.lock) != MA_SUCCESS)
     {
@@ -707,7 +707,7 @@ void TrackAudioBuffer(AudioBuffer *buffer)
     ma_mutex_unlock(&AUDIO.System.lock);
 }
 
-// Untrack audio buffer from linked list
+// Un-track audio buffer from linked list
 void UntrackAudioBuffer(AudioBuffer *buffer)
 {
     ma_mutex_lock(&AUDIO.System.lock);
@@ -882,7 +882,7 @@ Sound LoadSoundFromWave(Wave wave)
         if (audioBuffer == NULL)
         {
             TRACELOG(LOG_WARNING, "SOUND: Failed to create buffer");
-            return sound; // early return to avoid dereferencing the audioBuffer null pointer
+            return sound; // early return to avoid de-referencing the audioBuffer null pointer
         }
 
         frameCount = (ma_uint32)ma_convert_frames(audioBuffer->data, frameCount, AUDIO_DEVICE_FORMAT, AUDIO_DEVICE_CHANNELS, AUDIO.System.device.sampleRate, wave.data, frameCountIn, formatIn, wave.channels, wave.sampleRate);
@@ -1050,7 +1050,7 @@ void PlaySoundMulti(Sound sound)
     unsigned int oldAge = 0;
     int oldIndex = -1;
 
-    // find the first non playing pool entry
+    // find the first non-playing pool entry
     for (int i = 0; i < MAX_AUDIO_BUFFER_POOL_CHANNELS; i++)
     {
         if (AUDIO.MultiChannel.channels[i] > oldAge)
@@ -1066,7 +1066,7 @@ void PlaySoundMulti(Sound sound)
         }
     }
 
-    // If no none playing pool members can be index choose the oldest
+    // If no non-playing pool members can be indexed, choose the oldest
     if (index == -1)
     {
         TRACELOG(LOG_WARNING, "SOUND: Buffer pool is already full, count: %i", AUDIO.MultiChannel.poolCounter);
@@ -2000,8 +2000,8 @@ void UnloadAudioStream(AudioStream stream)
 }
 
 // Update audio stream buffers with data
-// NOTE 1: Only updates one buffer of the stream source: unqueue -> update -> queue
-// NOTE 2: To unqueue a buffer it needs to be processed: IsAudioStreamProcessed()
+// NOTE 1: Only updates one buffer of the stream source: un-queue -> update -> queue
+// NOTE 2: To un-queue a buffer it needs to be processed: IsAudioStreamProcessed()
 void UpdateAudioStream(AudioStream stream, const void *data, int frameCount)
 {
     if (stream.buffer != NULL)
@@ -2198,7 +2198,7 @@ static ma_uint32 ReadAudioBufferFramesInInternalFormat(AudioBuffer *audioBuffer,
 
     if (currentSubBufferIndex > 1) return 0;
 
-    // Another thread can update the processed state of buffers so
+    // Another thread can update the processed state of buffers so if
     // we just take a copy here to try and avoid potential synchronization problems
     bool isSubBufferProcessed[2] = { 0 };
     isSubBufferProcessed[0] = audioBuffer->isSubBufferProcessed[0];
@@ -2212,7 +2212,7 @@ static ma_uint32 ReadAudioBufferFramesInInternalFormat(AudioBuffer *audioBuffer,
     {
         // We break from this loop differently depending on the buffer's usage
         //  - For static buffers, we simply fill as much data as we can
-        //  - For streaming buffers we only fill the halves of the buffer that are processed
+        //  - For streaming buffers we only fill halves of the buffer that are processed
         //    Unprocessed halves must keep their audio data in-tact
         if (audioBuffer->usage == AUDIO_BUFFER_USAGE_STATIC)
         {
@@ -2269,7 +2269,7 @@ static ma_uint32 ReadAudioBufferFramesInInternalFormat(AudioBuffer *audioBuffer,
 
         // For static buffers we can fill the remaining frames with silence for safety, but we don't want
         // to report those frames as "read". The reason for this is that the caller uses the return value
-        // to know whether or not a non-looping sound has finished playback.
+        // to know whether a non-looping sound has finished playback or not.
         if (audioBuffer->usage != AUDIO_BUFFER_USAGE_STATIC) framesRead += totalFramesRemaining;
     }
 

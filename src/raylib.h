@@ -216,7 +216,7 @@ typedef struct Vector4 {
 // Quaternion, 4 components (Vector4 alias)
 typedef Vector4 Quaternion;
 
-// Matrix, 4x4 components, column major, OpenGL style, right handed
+// Matrix, 4x4 components, column major, OpenGL style, right-handed
 typedef struct Matrix {
     float m0, m4, m8, m12;  // Matrix first row (4 components)
     float m1, m5, m9, m13;  // Matrix second row (4 components)
@@ -413,8 +413,8 @@ typedef struct Ray {
 // RayCollision, ray hit information
 typedef struct RayCollision {
     bool hit;               // Did the ray hit something?
-    float distance;         // Distance to nearest hit
-    Vector3 point;          // Point of nearest hit
+    float distance;         // Distance to the nearest hit
+    Vector3 point;          // Point of the nearest hit
     Vector3 normal;         // Surface normal of hit
 } RayCollision;
 
@@ -428,7 +428,7 @@ typedef struct BoundingBox {
 typedef struct Wave {
     unsigned int frameCount;    // Total number of frames (considering channels)
     unsigned int sampleRate;    // Frequency (samples per second)
-    unsigned int sampleSize;    // Bit depth (bits per sample): 8, 16, 32 (24 not supported)
+    unsigned int sampleSize;    // The bit depth (bits per sample): 8, 16, 32 (24 not supported)
     unsigned int channels;      // Number of channels (1-mono, 2-stereo, ...)
     void *data;                 // Buffer data pointer
 } Wave;
@@ -444,7 +444,7 @@ typedef struct AudioStream {
     rAudioProcessor *processor; // Pointer to internal data processor, useful for audio effects
 
     unsigned int sampleRate;    // Frequency (samples per second)
-    unsigned int sampleSize;    // Bit depth (bits per sample): 8, 16, 32 (24 not supported)
+    unsigned int sampleSize;    // The bit depth (bits per sample): 8, 16, 32 (24 not supported)
     unsigned int channels;      // Number of channels (1-mono, 2-stereo, ...)
 } AudioStream;
 
@@ -492,9 +492,9 @@ typedef struct VrStereoConfig {
 
 // File path list
 typedef struct FilePathList {
-    unsigned int capacity;          // Filepaths max entries
-    unsigned int count;             // Filepaths entries count
-    char **paths;                   // Filepaths entries
+    unsigned int capacity;          // Filepath max entries
+    unsigned int count;             // Filepath entries count
+    char **paths;                   // Filepath entries
 } FilePathList;
 
 //----------------------------------------------------------------------------------
@@ -681,7 +681,7 @@ typedef enum {
     MOUSE_CURSOR_RESIZE_NS     = 6,     // Vertical resize/move arrow shape
     MOUSE_CURSOR_RESIZE_NWSE   = 7,     // Top-left to bottom-right diagonal resize/move arrow shape
     MOUSE_CURSOR_RESIZE_NESW   = 8,     // The top-right to bottom-left diagonal resize/move arrow shape
-    MOUSE_CURSOR_RESIZE_ALL    = 9,     // The omni-directional resize/move cursor shape
+    MOUSE_CURSOR_RESIZE_ALL    = 9,     // The omnidirectional resize/move cursor shape
     MOUSE_CURSOR_NOT_ALLOWED   = 10     // The operation-not-allowed shape
 } MouseCursor;
 
@@ -839,7 +839,7 @@ typedef enum {
 typedef enum {
     CUBEMAP_LAYOUT_AUTO_DETECT = 0,         // Automatically detect layout type
     CUBEMAP_LAYOUT_LINE_VERTICAL,           // Layout is defined by a vertical line with faces
-    CUBEMAP_LAYOUT_LINE_HORIZONTAL,         // Layout is defined by an horizontal line with faces
+    CUBEMAP_LAYOUT_LINE_HORIZONTAL,         // Layout is defined by a horizontal line with faces
     CUBEMAP_LAYOUT_CROSS_THREE_BY_FOUR,     // Layout is defined by a 3x4 cross with cubemap faces
     CUBEMAP_LAYOUT_CROSS_FOUR_BY_THREE,     // Layout is defined by a 4x3 cross with cubemap faces
     CUBEMAP_LAYOUT_PANORAMA                 // Layout is defined by a panorama image (equirectangular map)
@@ -903,7 +903,7 @@ typedef enum {
 } NPatchLayout;
 
 // Callbacks to hook some internal functions
-// WARNING: This callbacks are intended for advance users
+// WARNING: These callbacks are intended for advance users
 typedef void (*TraceLogCallback)(int logLevel, const char *text, va_list args);  // Logging: Redirect trace log messages
 typedef unsigned char *(*LoadFileDataCallback)(const char *fileName, unsigned int *bytesRead);      // FileIO: Load binary data
 typedef bool (*SaveFileDataCallback)(const char *fileName, void *data, unsigned int bytesToWrite);  // FileIO: Save binary data
@@ -1179,8 +1179,8 @@ RLAPI void DrawLine(int startPosX, int startPosY, int endPosX, int endPosY, Colo
 RLAPI void DrawLineV(Vector2 startPos, Vector2 endPos, Color color);                                     // Draw a line (Vector version)
 RLAPI void DrawLineEx(Vector2 startPos, Vector2 endPos, float thick, Color color);                       // Draw a line defining thickness
 RLAPI void DrawLineBezier(Vector2 startPos, Vector2 endPos, float thick, Color color);                   // Draw a line using cubic-bezier curves in-out
-RLAPI void DrawLineBezierQuad(Vector2 startPos, Vector2 endPos, Vector2 controlPos, float thick, Color color); // Draw line using quadratic bezier curves with a control point
-RLAPI void DrawLineBezierCubic(Vector2 startPos, Vector2 endPos, Vector2 startControlPos, Vector2 endControlPos, float thick, Color color); // Draw line using cubic bezier curves with 2 control points
+RLAPI void DrawLineBezierQuad(Vector2 startPos, Vector2 endPos, Vector2 controlPos, float thick, Color color); // Draw line using quadratic Bézier curves with a control point
+RLAPI void DrawLineBezierCubic(Vector2 startPos, Vector2 endPos, Vector2 startControlPos, Vector2 endControlPos, float thick, Color color); // Draw line using cubic Bézier curves with 2 control points
 RLAPI void DrawLineStrip(Vector2 *points, int pointCount, Color color);                                  // Draw lines sequence
 RLAPI void DrawCircle(int centerX, int centerY, float radius, Color color);                              // Draw a color-filled circle
 RLAPI void DrawCircleSector(Vector2 center, float radius, float startAngle, float endAngle, int segments, Color color);      // Draw a piece of a circle
@@ -1228,7 +1228,7 @@ RLAPI Rectangle GetCollisionRec(Rectangle rec1, Rectangle rec2);                
 //------------------------------------------------------------------------------------
 
 // Image loading functions
-// NOTE: This functions do not require GPU access
+// NOTE: These functions do not require GPU access
 RLAPI Image LoadImage(const char *fileName);                                                             // Load image from file into CPU memory (RAM)
 RLAPI Image LoadImageRaw(const char *fileName, int width, int height, int format, int headerSize);       // Load image from RAW file data
 RLAPI Image LoadImageAnim(const char *fileName, int *frames);                                            // Load image sequence from file (frames appended to image.data)
