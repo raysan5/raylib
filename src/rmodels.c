@@ -5633,13 +5633,9 @@ static Model LoadM3D(const char *fileName)
                 model.meshes[k].texcoords = (float *)RL_CALLOC(model.meshes[k].vertexCount*2, sizeof(float));
                 model.meshes[k].normals = (float *)RL_CALLOC(model.meshes[k].vertexCount*3, sizeof(float));
                 
-                // without material, we rely on vertex colors
-                if (mi == M3D_UNDEF && model.meshes[k].colors == NULL)
-                {
-                    model.meshes[k].colors = RL_CALLOC(model.meshes[k].vertexCount*4, sizeof(unsigned char));
-                    for (j = 0; j < model.meshes[k].vertexCount*4; j += 4) memcpy(&model.meshes[k].colors[j], &WHITE, 4);
-                }
-                
+                // If color map is provided, we allocate storage for vertex colors
+                if (m3d->cmap != NULL) model.meshes[k].colors = RL_CALLOC(model.meshes[k].vertexCount*4, sizeof(unsigned char));
+
                 if (m3d->numbone && m3d->numskin)
                 {
                     model.meshes[k].boneIds = (unsigned char *)RL_CALLOC(model.meshes[k].vertexCount*4, sizeof(unsigned char));
@@ -5653,25 +5649,25 @@ static Model LoadM3D(const char *fileName)
             }
 
             // Process meshes per material, add triangles
-            model.meshes[k].vertices[l * 9 + 0] = m3d->vertex[m3d->face[i].vertex[0]].x*m3d->scale;
-            model.meshes[k].vertices[l * 9 + 1] = m3d->vertex[m3d->face[i].vertex[0]].y*m3d->scale;
-            model.meshes[k].vertices[l * 9 + 2] = m3d->vertex[m3d->face[i].vertex[0]].z*m3d->scale;
-            model.meshes[k].vertices[l * 9 + 3] = m3d->vertex[m3d->face[i].vertex[1]].x*m3d->scale;
-            model.meshes[k].vertices[l * 9 + 4] = m3d->vertex[m3d->face[i].vertex[1]].y*m3d->scale;
-            model.meshes[k].vertices[l * 9 + 5] = m3d->vertex[m3d->face[i].vertex[1]].z*m3d->scale;
-            model.meshes[k].vertices[l * 9 + 6] = m3d->vertex[m3d->face[i].vertex[2]].x*m3d->scale;
-            model.meshes[k].vertices[l * 9 + 7] = m3d->vertex[m3d->face[i].vertex[2]].y*m3d->scale;
-            model.meshes[k].vertices[l * 9 + 8] = m3d->vertex[m3d->face[i].vertex[2]].z*m3d->scale;
-
-            if (mi == M3D_UNDEF)
+            model.meshes[k].vertices[l*9 + 0] = m3d->vertex[m3d->face[i].vertex[0]].x*m3d->scale;
+            model.meshes[k].vertices[l*9 + 1] = m3d->vertex[m3d->face[i].vertex[0]].y*m3d->scale;
+            model.meshes[k].vertices[l*9 + 2] = m3d->vertex[m3d->face[i].vertex[0]].z*m3d->scale;
+            model.meshes[k].vertices[l*9 + 3] = m3d->vertex[m3d->face[i].vertex[1]].x*m3d->scale;
+            model.meshes[k].vertices[l*9 + 4] = m3d->vertex[m3d->face[i].vertex[1]].y*m3d->scale;
+            model.meshes[k].vertices[l*9 + 5] = m3d->vertex[m3d->face[i].vertex[1]].z*m3d->scale;
+            model.meshes[k].vertices[l*9 + 6] = m3d->vertex[m3d->face[i].vertex[2]].x*m3d->scale;
+            model.meshes[k].vertices[l*9 + 7] = m3d->vertex[m3d->face[i].vertex[2]].y*m3d->scale;
+            model.meshes[k].vertices[l*9 + 8] = m3d->vertex[m3d->face[i].vertex[2]].z*m3d->scale;
+            
+            // without vertex color (full transparency), we use the default color
+            if (model.meshes[k].colors != NULL)
             {
-                // without vertex color (full transparency), we use the default color
                 if (m3d->vertex[m3d->face[i].vertex[0]].color & 0xFF000000)
-                    memcpy(&model.meshes[k].colors[l * 12 + 0], &m3d->vertex[m3d->face[i].vertex[0]].color, 4);
+                    memcpy(&model.meshes[k].colors[l*12 + 0], &m3d->vertex[m3d->face[i].vertex[0]].color, 4);
                 if (m3d->vertex[m3d->face[i].vertex[1]].color & 0xFF000000)
-                    memcpy(&model.meshes[k].colors[l * 12 + 4], &m3d->vertex[m3d->face[i].vertex[1]].color, 4);
+                    memcpy(&model.meshes[k].colors[l*12 + 4], &m3d->vertex[m3d->face[i].vertex[1]].color, 4);
                 if (m3d->vertex[m3d->face[i].vertex[2]].color & 0xFF000000)
-                    memcpy(&model.meshes[k].colors[l * 12 + 8], &m3d->vertex[m3d->face[i].vertex[2]].color, 4);
+                    memcpy(&model.meshes[k].colors[l*12 + 8], &m3d->vertex[m3d->face[i].vertex[2]].color, 4);
             }
 
             if (m3d->face[i].texcoord[0] != M3D_UNDEF)
