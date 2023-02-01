@@ -67,8 +67,8 @@ ifeq ($(PLATFORM),PLATFORM_RPI)
     endif
 endif
 
-# Determine PLATFORM_OS in case PLATFORM_DESKTOP selected
-ifeq ($(PLATFORM),PLATFORM_DESKTOP)
+# Determine PLATFORM_OS in case PLATFORM_DESKTOP or PLATFORM_WEB selected
+ifeq ($(PLATFORM),$(filter $(PLATFORM),PLATFORM_DESKTOP PLATFORM_WEB))
     # No uname.exe on MinGW!, but OS=Windows_NT on Windows!
     # ifeq ($(UNAME),Msys) -> Windows
     ifeq ($(OS),Windows_NT)
@@ -126,16 +126,18 @@ ifeq ($(PLATFORM),PLATFORM_DRM)
 endif
 
 # Define raylib release directory for compiled library
-RAYLIB_RELEASE_PATH 	?= $(RAYLIB_PATH)/src
+RAYLIB_RELEASE_PATH    ?= $(RAYLIB_PATH)/src
 
 ifeq ($(PLATFORM),PLATFORM_WEB)
-    # Emscripten required variables
-    EMSDK_PATH         ?= C:/emsdk
-    EMSCRIPTEN_PATH    ?= $(EMSDK_PATH)/upstream/emscripten
-    CLANG_PATH          = $(EMSDK_PATH)/upstream/bin
-    PYTHON_PATH         = $(EMSDK_PATH)/python/3.9.2-1_64bit
-    NODE_PATH           = $(EMSDK_PATH)/node/14.15.5_64bit/bin
-    export PATH         = $(EMSDK_PATH);$(EMSCRIPTEN_PATH);$(CLANG_PATH);$(NODE_PATH);$(PYTHON_PATH):$$(PATH)
+	ifeq ($(PLATFORM_OS),WINDOWS)
+        # Emscripten required variables
+		EMSDK_PATH         ?= C:/emsdk
+		EMSCRIPTEN_PATH    ?= $(EMSDK_PATH)/upstream/emscripten
+		CLANG_PATH          = $(EMSDK_PATH)/upstream/bin
+		PYTHON_PATH         = $(EMSDK_PATH)/python/3.9.2-1_64bit
+		NODE_PATH           = $(EMSDK_PATH)/node/14.15.5_64bit/bin
+		export PATH         = $(EMSDK_PATH);$(EMSCRIPTEN_PATH);$(CLANG_PATH);$(NODE_PATH);$(PYTHON_PATH):$$(PATH)
+	endif
 endif
 
 # Define default C compiler: CC
@@ -579,7 +581,10 @@ ifeq ($(PLATFORM),PLATFORM_DRM)
 	rm -fv *.o
 endif
 ifeq ($(PLATFORM),PLATFORM_WEB)
-	del *.o *.html *.js
+	ifeq ($(PLATFORM_OS),WINDOWS)
+		del *.wasm *.html *.js *.data
+	else
+		rm -f */*.wasm */*.html */*.js */*.data
+	endif
 endif
 	@echo Cleaning done
-

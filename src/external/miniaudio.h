@@ -1,6 +1,6 @@
 /*
 Audio playback and capture library. Choice of public domain or MIT-0. See license statements at the end of this file.
-miniaudio - v0.11.11 - TBD
+miniaudio - v0.11.11 - 2022-11-04
 
 David Reid - mackron@gmail.com
 
@@ -1273,6 +1273,14 @@ When streaming sounds, 2 seconds worth of audio data is stored in memory. Althou
 fine, it's inefficient to use streaming for short sounds. Streaming is useful for things like music
 tracks in games.
 
+When loading a sound from a file path, the engine will reference count the file to prevent it from
+being loaded if it's already in memory. When you uninitialize a sound, the reference count will be
+decremented, and if it hits zero, the sound will be unloaded from memory. This reference counting
+system is not used for streams. The engine will use a 64-bit hash of the file name when comparing
+file paths which means there's a small chance you might encounter a name collision. If this is an
+issue, you'll need to use a different name for one of the colliding file paths, or just not load
+from files and instead load from a data source.
+
 When you initialize a sound, if you specify a sound group the sound will be attached to that group
 automatically. If you set it to NULL, it will be automatically attached to the engine's endpoint.
 If you would instead rather leave the sound unattached by default, you can can specify the
@@ -1870,9 +1878,11 @@ A binary search tree (BST) is used for storing data buffers as it has good balan
 efficiency and simplicity. The key of the BST is a 64-bit hash of the file path that was passed
 into `ma_resource_manager_data_source_init()`. The advantage of using a hash is that it saves
 memory over storing the entire path, has faster comparisons, and results in a mostly balanced BST
-due to the random nature of the hash. The disadvantage is that file names are case-sensitive. If
-this is an issue, you should normalize your file names to upper- or lower-case before initializing
-your data sources.
+due to the random nature of the hash. The disadvantages are that file names are case-sensitive and
+there's a small chance of name collisions. If case-sensitivity is an issue, you should normalize
+your file names to upper- or lower-case before initializing your data sources. If name collisions
+become an issue, you'll need to change the name of one of the colliding names or just not use the
+resource manager.
 
 When a sound file has not already been loaded and the `MA_RESOURCE_MANAGER_DATA_SOURCE_FLAG_ASYNC`
 flag is excluded, the file will be decoded synchronously by the calling thread. There are two
@@ -22223,50 +22233,100 @@ static ma_result ma_device_read__wasapi(ma_device* pDevice, void* pFrames, ma_ui
         } else {
             /* We don't have any cached data pointer, so grab another one. */
             HRESULT hr;
-            DWORD flags;
+            DWORD flags = 0;
 
             /* First just ask WASAPI for a data buffer. If it's not available, we'll wait for more. */
             hr = ma_IAudioCaptureClient_GetBuffer((ma_IAudioCaptureClient*)pDevice->wasapi.pCaptureClient, (BYTE**)&pDevice->wasapi.pMappedBufferCapture, &pDevice->wasapi.mappedBufferCaptureCap, &flags, NULL, NULL);
             if (hr == S_OK) {
                 /* We got a data buffer. Continue to the next loop iteration which will then read from the mapped pointer. */
+                pDevice->wasapi.mappedBufferCaptureLen = pDevice->wasapi.mappedBufferCaptureCap;
+
+                /*
+                There have been reports that indicate that at times the AUDCLNT_BUFFERFLAGS_DATA_DISCONTINUITY is reported for every
+                call to IAudioCaptureClient_GetBuffer() above which results in spamming of the debug messages below. To partially
+                work around this, I'm only outputting these messages when MA_DEBUG_OUTPUT is explicitly defined. The better solution
+                would be to figure out why the flag is always getting reported.
+                */
+                #if defined(MA_DEBUG_OUTPUT)
+                {
+                    if (flags != 0) {
+                        ma_log_postf(ma_device_get_log(pDevice), MA_LOG_LEVEL_DEBUG, "[WASAPI] Capture Flags: %ld\n", flags);
+
+                        if ((flags & MA_AUDCLNT_BUFFERFLAGS_DATA_DISCONTINUITY) != 0) {
+                            ma_log_postf(ma_device_get_log(pDevice), MA_LOG_LEVEL_DEBUG, "[WASAPI] Data discontinuity (possible overrun). Attempting recovery. mappedBufferCaptureCap=%d\n", pDevice->wasapi.mappedBufferCaptureCap);
+                        }
+                    }
+                }
+                #endif
 
                 /* Overrun detection. */
                 if ((flags & MA_AUDCLNT_BUFFERFLAGS_DATA_DISCONTINUITY) != 0) {
                     /* Glitched. Probably due to an overrun. */
-                    ma_log_postf(ma_device_get_log(pDevice), MA_LOG_LEVEL_DEBUG, "[WASAPI] Data discontinuity (possible overrun). Attempting recovery. mappedBufferCaptureCap=%d\n", pDevice->wasapi.mappedBufferCaptureCap);
 
                     /*
-                    If we got an overrun it probably means we're straddling the end of the buffer. In order to prevent
-                    a never-ending sequence of glitches we're going to recover by completely clearing out the capture
-                    buffer.
+                    If we got an overrun it probably means we're straddling the end of the buffer. In normal capture
+                    mode this is the fault of the client application because they're responsible for ensuring data is
+                    processed fast enough. In duplex mode, however, the processing of audio is tied to the playback
+                    device, so this can possibly be the result of a timing de-sync.
+
+                    In capture mode we're not going to do any kind of recovery because the real fix is for the client
+                    application to process faster. In duplex mode, we'll treat this as a desync and reset the buffers
+                    to prevent a never-ending sequence of glitches due to straddling the end of the buffer.
                     */
-                    {
-                        ma_uint32 iterationCount = 4;   /* Safety to prevent an infinite loop. */
+                    if (pDevice->type == ma_device_type_duplex) {
+                        /*
+                        Experiment:
+
+                        If we empty out the *entire* buffer we may end up putting ourselves into an underrun position
+                        which isn't really any better than the overrun we're probably in right now. Instead we'll just
+                        empty out about half.
+                        */
                         ma_uint32 i;
+                        ma_uint32 periodCount = (pDevice->wasapi.actualBufferSizeInFramesCapture / pDevice->wasapi.periodSizeInFramesCapture);
+                        ma_uint32 iterationCount = periodCount / 2;
+                        if ((periodCount % 2) > 0) {
+                            iterationCount += 1;
+                        }
 
                         for (i = 0; i < iterationCount; i += 1) {
                             hr = ma_IAudioCaptureClient_ReleaseBuffer((ma_IAudioCaptureClient*)pDevice->wasapi.pCaptureClient, pDevice->wasapi.mappedBufferCaptureCap);
                             if (FAILED(hr)) {
+                                ma_log_postf(ma_device_get_log(pDevice), MA_LOG_LEVEL_DEBUG, "[WASAPI] Data discontinuity recovery: IAudioCaptureClient_ReleaseBuffer() failed with %d.\n", hr);
                                 break;
                             }
 
+                            flags = 0;
                             hr = ma_IAudioCaptureClient_GetBuffer((ma_IAudioCaptureClient*)pDevice->wasapi.pCaptureClient, (BYTE**)&pDevice->wasapi.pMappedBufferCapture, &pDevice->wasapi.mappedBufferCaptureCap, &flags, NULL, NULL);
                             if (hr == MA_AUDCLNT_S_BUFFER_EMPTY || FAILED(hr)) {
+                                /*
+                                The buffer has been completely emptied or an error occurred. In this case we'll need
+                                to reset the state of the mapped buffer which will trigger the next iteration to get
+                                a fresh buffer from WASAPI.
+                                */
+                                pDevice->wasapi.pMappedBufferCapture   = NULL;
+                                pDevice->wasapi.mappedBufferCaptureCap = 0;
+                                pDevice->wasapi.mappedBufferCaptureLen = 0;
+
+                                if (hr == MA_AUDCLNT_S_BUFFER_EMPTY) {
+                                    if ((flags & MA_AUDCLNT_BUFFERFLAGS_DATA_DISCONTINUITY) != 0) {
+                                        ma_log_postf(ma_device_get_log(pDevice), MA_LOG_LEVEL_DEBUG, "[WASAPI] Data discontinuity recovery: Buffer emptied, and data discontinuity still reported.\n");
+                                    } else {
+                                        ma_log_postf(ma_device_get_log(pDevice), MA_LOG_LEVEL_DEBUG, "[WASAPI] Data discontinuity recovery: Buffer emptied.\n");
+                                    }
+                                }
+
+                                if (FAILED(hr)) {
+                                    ma_log_postf(ma_device_get_log(pDevice), MA_LOG_LEVEL_DEBUG, "[WASAPI] Data discontinuity recovery: IAudioCaptureClient_GetBuffer() failed with %d.\n", hr);
+                                }
+
                                 break;
                             }
                         }
-                    }
 
-                    /* We should not have a valid buffer at this point so make sure everything is empty. */
-                    pDevice->wasapi.pMappedBufferCapture   = NULL;
-                    pDevice->wasapi.mappedBufferCaptureCap = 0;
-                    pDevice->wasapi.mappedBufferCaptureLen = 0;
-                } else {
-                    /* The data is clean. */
-                    pDevice->wasapi.mappedBufferCaptureLen = pDevice->wasapi.mappedBufferCaptureCap;
-
-                    if (flags != 0) {
-                        ma_log_postf(ma_device_get_log(pDevice), MA_LOG_LEVEL_DEBUG, "[WASAPI] Capture Flags: %ld\n", flags);
+                        /* If at this point we have a valid buffer mapped, make sure the buffer length is set appropriately. */
+                        if (pDevice->wasapi.pMappedBufferCapture != NULL) {
+                            pDevice->wasapi.mappedBufferCaptureLen = pDevice->wasapi.mappedBufferCaptureCap;
+                        }
                     }
                 }
 
@@ -22279,7 +22339,7 @@ static ma_result ma_device_read__wasapi(ma_device* pDevice, void* pFrames, ma_ui
                     microphone isn't delivering data for whatever reason. In this case we'll just
                     abort the read and return whatever we were able to get. The other situations is
                     loopback mode, in which case a timeout probably just means the nothing is playing
-                    through the speakers. 
+                    through the speakers.
                     */
 
                     /* Experiment: Use a shorter timeout for loopback mode. */
