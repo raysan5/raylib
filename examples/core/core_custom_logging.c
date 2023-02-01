@@ -9,7 +9,7 @@
 *   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
 *   BSD-like license that allows static linking with closed source software
 *
-*   Copyright (c) 2018-2022 Pablo Marcos Oltra (@pamarcos) and Ramon Santamaria (@raysan5)
+*   Copyright (c) 2018-2023 Pablo Marcos Oltra (@pamarcos) and Ramon Santamaria (@raysan5)
 *
 ********************************************************************************************/
 
@@ -18,7 +18,7 @@
 #include <stdio.h>                  // Required for: fopen(), fclose(), fputc(), fwrite(), printf(), fprintf(), funopen()
 #include <time.h>                   // Required for: time_t, tm, time(), localtime(), strftime()
 
-// Custom logging funtion
+// Custom logging function
 void CustomLog(int msgType, const char *text, va_list args)
 {
     char timeStr[64] = { 0 };

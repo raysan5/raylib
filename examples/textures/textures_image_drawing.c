@@ -9,7 +9,7 @@
 *   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
 *   BSD-like license that allows static linking with closed source software
 *
-*   Copyright (c) 2016-2022 Ramon Santamaria (@raysan5)
+*   Copyright (c) 2016-2023 Ramon Santamaria (@raysan5)
 *
 ********************************************************************************************/
 
@@ -42,7 +42,7 @@ int main(void)
 
     // Draw on the image with a few image draw methods
     ImageDrawPixel(&parrots, 10, 10, RAYWHITE);
-    ImageDrawCircle(&parrots, 10, 10, 5, RAYWHITE);
+    ImageDrawCircleLines(&parrots, 10, 10, 5, RAYWHITE);
     ImageDrawRectangle(&parrots, 5, 20, 10, 10, RAYWHITE);
 
     UnloadImage(cat);       // Unload image from RAM

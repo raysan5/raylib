@@ -15,7 +15,7 @@
 #  Many thanks to Milan Nikolic (@gen2brain) for implementing Android platform pipeline.
 #  Many thanks to Emanuele Petriglia for his contribution on GNU/Linux pipeline.
 #
-#   Copyright (c) 2013-2022 Ramon Santamaria (@raysan5)
+#   Copyright (c) 2013-2023 Ramon Santamaria (@raysan5)
 #
 #   This software is provided "as-is", without any express or implied warranty. In no event
 #   will the authors be held liable for any damages arising from the use of this software.
@@ -181,13 +181,15 @@ ifeq ($(PLATFORM),PLATFORM_WEB)
 endif
 
 ifeq ($(PLATFORM),PLATFORM_WEB)
-    # Emscripten required variables
-    EMSDK_PATH         ?= C:/emsdk
-    EMSCRIPTEN_PATH    ?= $(EMSDK_PATH)/upstream/emscripten
-    CLANG_PATH          = $(EMSDK_PATH)/upstream/bin
-    PYTHON_PATH         = $(EMSDK_PATH)/python/3.9.2-1_64bit
-    NODE_PATH           = $(EMSDK_PATH)/node/14.15.5_64bit/bin
-    export PATH         := $(EMSDK_PATH):$(EMSCRIPTEN_PATH):$(CLANG_PATH):$(NODE_PATH):$(PYTHON_PATH):C:\raylib\MinGW\bin:$(PATH)
+    ifeq ($(PLATFORM_OS), WINDOWS)
+        # Emscripten required variables
+        EMSDK_PATH         ?= C:/emsdk
+        EMSCRIPTEN_PATH    ?= $(EMSDK_PATH)/upstream/emscripten
+        CLANG_PATH         := $(EMSDK_PATH)/upstream/bin
+        PYTHON_PATH        := $(EMSDK_PATH)/python/3.9.2-1_64bit
+        NODE_PATH          := $(EMSDK_PATH)/node/14.15.5_64bit/bin
+        export PATH        := $(EMSDK_PATH);$(EMSCRIPTEN_PATH);$(CLANG_PATH);$(NODE_PATH);$(PYTHON_PATH);C:/raylib/MinGW/bin;$(PATH)
+    endif
 endif
 
 ifeq ($(PLATFORM),PLATFORM_ANDROID)
@@ -387,7 +389,7 @@ ifeq ($(PLATFORM),PLATFORM_ANDROID)
     # -Werror=format-security
     CFLAGS += -Wa,--noexecstack -Wformat -no-canonical-prefixes
     # Preprocessor macro definitions
-    CFLAGS += -DANDROID -DPLATFORM_ANDROID -D__ANDROID_API__=$(ANDROID_API_VERSION) -DMAL_NO_OSS
+    CFLAGS += -D__ANDROID__ -DPLATFORM_ANDROID -D__ANDROID_API__=$(ANDROID_API_VERSION) -DMAL_NO_OSS
 endif
 
 # Define required compilation flags for raylib SHARED lib
@@ -407,6 +409,24 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
     ifeq ($(PLATFORM_OS), LINUX)
         ifeq ($(USE_WAYLAND_DISPLAY),TRUE)
             CFLAGS += -D_GLFW_WAYLAND
+            LDFLAGS += $(shell pkg-config wayland-client wayland-cursor wayland-egl xkbcommon --libs)
+
+            WL_PROTOCOLS_DIR := $(shell pkg-config wayland-protocols --variable=pkgdatadir)
+            WL_CLIENT_DIR := $(shell pkg-config wayland-client --variable=pkgdatadir)
+
+            wl_generate = \
+                $(eval protocol=$(1)) \
+                $(eval basename=$(2)) \
+                $(shell wayland-scanner client-header $(protocol) $(RAYLIB_SRC_PATH)/$(basename).h) \
+                $(shell wayland-scanner private-code $(protocol) $(RAYLIB_SRC_PATH)/$(basename)-code.h)
+
+            $(call wl_generate, $(WL_CLIENT_DIR)/wayland.xml, wayland-client-protocol)
+            $(call wl_generate, $(WL_PROTOCOLS_DIR)/stable/xdg-shell/xdg-shell.xml, wayland-xdg-shell-client-protocol)
+            $(call wl_generate, $(WL_PROTOCOLS_DIR)/unstable/xdg-decoration/xdg-decoration-unstable-v1.xml, wayland-xdg-decoration-client-protocol)
+            $(call wl_generate, $(WL_PROTOCOLS_DIR)/stable/viewporter/viewporter.xml, wayland-viewporter-client-protocol)
+            $(call wl_generate, $(WL_PROTOCOLS_DIR)/unstable/relative-pointer/relative-pointer-unstable-v1.xml, wayland-relative-pointer-unstable-v1-client-protocol)
+            $(call wl_generate, $(WL_PROTOCOLS_DIR)/unstable/pointer-constraints/pointer-constraints-unstable-v1.xml, wayland-pointer-constraints-unstable-v1-client-protocol)
+            $(call wl_generate, $(WL_PROTOCOLS_DIR)/unstable/idle-inhibit/idle-inhibit-unstable-v1.xml, wayland-idle-inhibit-unstable-v1-client-protocol)
         endif
     endif
 endif

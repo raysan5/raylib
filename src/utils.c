@@ -11,7 +11,7 @@
 *
 *   LICENSE: zlib/libpng
 *
-*   Copyright (c) 2014-2022 Ramon Santamaria (@raysan5)
+*   Copyright (c) 2014-2023 Ramon Santamaria (@raysan5)
 *
 *   This software is provided "as-is", without any express or implied warranty. In no event
 *   will the authors be held liable for any damages arising from the use of this software.
@@ -160,14 +160,14 @@ void TraceLog(int logType, const char *text, ...)
 
 // Internal memory allocator
 // NOTE: Initializes to zero by default
-void *MemAlloc(int size)
+void *MemAlloc(unsigned int size)
 {
     void *ptr = RL_CALLOC(size, 1);
     return ptr;
 }
 
 // Internal memory reallocator
-void *MemRealloc(void *ptr, int size)
+void *MemRealloc(void *ptr, unsigned int size)
 {
     void *ret = RL_REALLOC(ptr, size);
     return ret;
@@ -270,7 +270,7 @@ bool SaveFileData(const char *fileName, void *data, unsigned int bytesToWrite)
 }
 
 // Export data to code (.h), returns true on success
-bool ExportDataAsCode(const char *data, unsigned int size, const char *fileName)
+bool ExportDataAsCode(const unsigned char *data, unsigned int size, const char *fileName)
 {
     bool success = false;
 
@@ -290,7 +290,7 @@ bool ExportDataAsCode(const char *data, unsigned int size, const char *fileName)
     byteCount += sprintf(txtData + byteCount, "// more info and bugs-report:  github.com/raysan5/raylib                              //\n");
     byteCount += sprintf(txtData + byteCount, "// feedback and support:       ray[at]raylib.com                                      //\n");
     byteCount += sprintf(txtData + byteCount, "//                                                                                    //\n");
-    byteCount += sprintf(txtData + byteCount, "// Copyright (c) 2022 Ramon Santamaria (@raysan5)                                     //\n");
+    byteCount += sprintf(txtData + byteCount, "// Copyright (c) 2022-2023 Ramon Santamaria (@raysan5)                                //\n");
     byteCount += sprintf(txtData + byteCount, "//                                                                                    //\n");
     byteCount += sprintf(txtData + byteCount, "////////////////////////////////////////////////////////////////////////////////////////\n\n");
 

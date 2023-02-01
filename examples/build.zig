@@ -2,6 +2,10 @@ const std = @import("std");
 const builtin = @import("builtin");
 
 fn add_module(comptime module: []const u8, b: *std.build.Builder, target: std.zig.CrossTarget) !*std.build.Step {
+    if (target.getOsTag() == .emscripten) {
+        @panic("Emscripten building via Zig unsupported");
+    }
+
     // Standard release options allow the person running `zig build` to select
     // between Debug, ReleaseSafe, ReleaseFast, and ReleaseSmall.
     const mode = b.standardReleaseOptions();
@@ -19,12 +23,7 @@ fn add_module(comptime module: []const u8, b: *std.build.Builder, target: std.zi
         if (std.mem.eql(u8, "core_loading_thread", name) and target.getOsTag() == .windows) continue;
 
         const exe = b.addExecutable(name, null);
-        exe.addCSourceFile(path, switch (target.getOsTag()) {
-            .windows => &[_][]const u8{},
-            .linux => &[_][]const u8{},
-            .macos => &[_][]const u8{"-DPLATFORM_DESKTOP"},
-            else => @panic("Unsupported OS"),
-        });
+        exe.addCSourceFile(path, &[_][]const u8{});
         exe.setTarget(target);
         exe.setBuildMode(mode);
         exe.linkLibC();
@@ -32,19 +31,22 @@ fn add_module(comptime module: []const u8, b: *std.build.Builder, target: std.zi
             .windows => "../src/raylib.lib",
             .linux => "../src/libraylib.a",
             .macos => "../src/libraylib.a",
+            .emscripten => "../src/libraylib.a",
             else => @panic("Unsupported OS"),
         });
 
-        exe.addIncludeDir("../src");
-        exe.addIncludeDir("../src/external");
-        exe.addIncludeDir("../src/external/glfw/include");
+        exe.addIncludePath("../src");
+        exe.addIncludePath("../src/external");
+        exe.addIncludePath("../src/external/glfw/include");
 
-        switch (exe.target.toTarget().os.tag) {
+        switch (target.getOsTag()) {
             .windows => {
                 exe.linkSystemLibrary("winmm");
                 exe.linkSystemLibrary("gdi32");
                 exe.linkSystemLibrary("opengl32");
-                exe.addIncludeDir("external/glfw/deps/mingw");
+                exe.addIncludePath("external/glfw/deps/mingw");
+
+                exe.defineCMacro("PLATFORM_DESKTOP", null);
             },
             .linux => {
                 exe.linkSystemLibrary("GL");
@@ -52,6 +54,8 @@ fn add_module(comptime module: []const u8, b: *std.build.Builder, target: std.zi
                 exe.linkSystemLibrary("dl");
                 exe.linkSystemLibrary("m");
                 exe.linkSystemLibrary("X11");
+
+                exe.defineCMacro("PLATFORM_DESKTOP", null);
             },
             .macos => {
                 exe.linkFramework("Foundation");
@@ -60,6 +64,8 @@ fn add_module(comptime module: []const u8, b: *std.build.Builder, target: std.zi
                 exe.linkFramework("CoreAudio");
                 exe.linkFramework("CoreVideo");
                 exe.linkFramework("IOKit");
+
+                exe.defineCMacro("PLATFORM_DESKTOP", null);
             },
             else => {
                 @panic("Unsupported OS");

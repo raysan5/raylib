@@ -9,12 +9,11 @@
 *   NOTES:
 *     - Model3D (M3D) fileformat specs: https://gitlab.com/bztsrc/model3d
 *     - Bender M3D exported: https://gitlab.com/bztsrc/model3d/-/tree/master/blender
-*       WARNING: Make sure to add "(action)" markers to the timeline if you want multiple animations.
-*   
+*
 *   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
 *   BSD-like license that allows static linking with closed source software
 *
-*   Copyright (c) 2022 bzt (@bztsrc)
+*   Copyright (c) 2022-2023 bzt (@bztsrc)
 *
 ********************************************************************************************/
 

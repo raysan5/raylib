@@ -10,7 +10,7 @@
 *   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
 *   BSD-like license that allows static linking with closed source software
 *
-*   Copyright (c) 2020-2022 Ramon Santamaria (@raysan5)
+*   Copyright (c) 2020-2023 Ramon Santamaria (@raysan5)
 *
 ********************************************************************************************/
 
@@ -38,7 +38,7 @@ int main(void)
     InitWindow(screenWidth, screenHeight, "raylib [shaders] example - hot reloading");
 
     const char *fragShaderFileName = "resources/shaders/glsl%i/reload.fs";
-    long fragShaderFileModTime = GetFileModTime(TextFormat(fragShaderFileName, GLSL_VERSION));
+    time_t fragShaderFileModTime = GetFileModTime(TextFormat(fragShaderFileName, GLSL_VERSION));
 
     // Load raymarching shader
     // NOTE: Defining 0 (NULL) for vertex shader forces usage of internal default vertex shader

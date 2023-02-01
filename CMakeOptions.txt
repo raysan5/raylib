@@ -57,6 +57,7 @@ cmake_dependent_option(SUPPORT_IMAGE_MANIPULATION "Support multiple image editin
 cmake_dependent_option(SUPPORT_FILEFORMAT_PNG "Support loading PNG as textures" ON CUSTOMIZE_BUILD ON)
 cmake_dependent_option(SUPPORT_FILEFORMAT_DDS "Support loading DDS as textures" ON CUSTOMIZE_BUILD ON)
 cmake_dependent_option(SUPPORT_FILEFORMAT_HDR "Support loading HDR as textures" ON CUSTOMIZE_BUILD ON)
+cmake_dependent_option(SUPPORT_FILEFORMAT_PNM "Support loading PNM as textures" ON CUSTOMIZE_BUILD ON)
 cmake_dependent_option(SUPPORT_FILEFORMAT_KTX "Support loading KTX as textures" ON CUSTOMIZE_BUILD ON)
 cmake_dependent_option(SUPPORT_FILEFORMAT_ASTC "Support loading ASTC as textures" ON CUSTOMIZE_BUILD ON)
 cmake_dependent_option(SUPPORT_FILEFORMAT_BMP "Support loading BMP as textures" ${OFF} CUSTOMIZE_BUILD OFF)

@@ -22,7 +22,7 @@
 *   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
 *   BSD-like license that allows static linking with closed source software
 *
-*   Copyright (c) 2021-2022 Vlad Adrian (@demizdor)
+*   Copyright (c) 2021-2023 Vlad Adrian (@demizdor)
 *
 ********************************************************************************************/
 
@@ -153,13 +153,13 @@ int main(void)
             if (IsFileExtension(droppedFiles.paths[0], ".ttf"))
             {
                 UnloadFont(font);
-                font = LoadFontEx(droppedFiles.paths[0], fontSize, 0, 0);
+                font = LoadFontEx(droppedFiles.paths[0], (int)fontSize, 0, 0);
             }
             else if (IsFileExtension(droppedFiles.paths[0], ".fnt"))
             {
                 UnloadFont(font);
                 font = LoadFont(droppedFiles.paths[0]);
-                fontSize = font.baseSize;
+                fontSize = (float)font.baseSize;
             }
             
             UnloadDroppedFiles(droppedFiles);    // Unload filepaths from memory
@@ -743,7 +743,7 @@ static Vector3 MeasureTextWave3D(Font font, const char* text, float fontSize, fl
 static Color GenerateRandomColor(float s, float v)
 {
     const float Phi = 0.618033988749895f; // Golden ratio conjugate
-    float h = GetRandomValue(0, 360);
+    float h = (float)GetRandomValue(0, 360);
     h = fmodf((h + h*Phi), 360.0f);
     return ColorFromHSV(h, s, v);
 }

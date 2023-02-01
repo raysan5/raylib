@@ -12,7 +12,7 @@
 *   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
 *   BSD-like license that allows static linking with closed source software
 *
-*   Copyright (c) 2021-2022 Teddy Astie (@tsnake41)
+*   Copyright (c) 2021-2023 Teddy Astie (@tsnake41)
 *
 ********************************************************************************************/
 
@@ -104,9 +104,9 @@ int main(void)
         else if (transfertBuffer.count > 0)  // Process transfert buffer
         {
             // Send SSBO buffer to GPU
-            rlUpdateShaderBufferElements(ssboTransfert, &transfertBuffer, sizeof(GolUpdateSSBO), 0);
+            rlUpdateShaderBuffer(ssboTransfert, &transfertBuffer, sizeof(GolUpdateSSBO), 0);
             
-            // Process ssbo commands on GPU
+            // Process SSBO commands on GPU
             rlEnableShader(golTransfertProgram);
             rlBindShaderBuffer(ssboA, 1);
             rlBindShaderBuffer(ssboTransfert, 3);

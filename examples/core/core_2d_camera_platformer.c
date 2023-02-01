@@ -9,7 +9,7 @@
 *   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
 *   BSD-like license that allows static linking with closed source software
 *
-*   Copyright (c) 2019-2022 arvyy (@arvyy)
+*   Copyright (c) 2019-2023 arvyy (@arvyy)
 *
 ********************************************************************************************/
 
@@ -177,7 +177,7 @@ void UpdatePlayer(Player *player, EnvItem *envItems, int envItemsLength, float d
             ei->rect.x <= p->x &&
             ei->rect.x + ei->rect.width >= p->x &&
             ei->rect.y >= p->y &&
-            ei->rect.y < p->y + player->speed*delta)
+            ei->rect.y <= p->y + player->speed*delta)
         {
             hitObstacle = 1;
             player->speed = 0.0f;

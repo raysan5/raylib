@@ -50,7 +50,7 @@
 *
 *   LICENSE: zlib/libpng
 *
-*   Copyright (c) 2013-2022 Ramon Santamaria (@raysan5)
+*   Copyright (c) 2013-2023 Ramon Santamaria (@raysan5)
 *
 *   This software is provided "as-is", without any express or implied warranty. In no event
 *   will the authors be held liable for any damages arising from the use of this software.
@@ -198,17 +198,25 @@ typedef struct tagBITMAPINFOHEADER {
 
 #if defined(SUPPORT_FILEFORMAT_OGG)
     // TODO: Remap stb_vorbis malloc()/free() calls to RL_MALLOC/RL_FREE
-
-    #define STB_VORBIS_IMPLEMENTATION
-    #include "external/stb_vorbis.h"    // OGG loading functions
+    #include "external/stb_vorbis.c"    // OGG loading functions
 #endif
 
 #if defined(SUPPORT_FILEFORMAT_XM)
     #define JARXM_MALLOC RL_MALLOC
     #define JARXM_FREE RL_FREE
 
+#if defined(_MSC_VER ) // jar xm has  warnings on windows, so disable them just for this file
+#pragma warning( push )
+#pragma warning( disable : 4244)
+#endif
+
     #define JAR_XM_IMPLEMENTATION
     #include "external/jar_xm.h"        // XM loading functions
+
+#if defined(_MSC_VER )
+#pragma warning( pop )
+#endif
+
 #endif
 
 #if defined(SUPPORT_FILEFORMAT_MOD)
@@ -509,7 +517,9 @@ void CloseAudioDevice(void)
 
         AUDIO.System.isReady = false;
         RL_FREE(AUDIO.System.pcmBuffer);
-
+        AUDIO.System.pcmBuffer = NULL;
+        AUDIO.System.pcmBufferSize = 0;
+        
         TRACELOG(LOG_INFO, "AUDIO: Device closed successfully");
     }
     else TRACELOG(LOG_WARNING, "AUDIO: Device could not be closed, not currently initialized");
@@ -825,6 +835,12 @@ Wave LoadWaveFromMemory(const char *fileType, const unsigned char *fileData, int
     return wave;
 }
 
+// Checks if wave data is ready
+bool IsWaveReady(Wave wave)
+{
+    return wave.data != NULL;
+}
+
 // Load sound from file
 // NOTE: The entire file is loaded to memory to be played (no-streaming)
 Sound LoadSound(const char *fileName)
@@ -879,6 +895,12 @@ Sound LoadSoundFromWave(Wave wave)
     }
 
     return sound;
+}
+
+// Checks if a sound is ready
+bool IsSoundReady(Sound sound)
+{
+    return sound.stream.buffer != NULL;
 }
 
 // Unload wave data
@@ -972,7 +994,7 @@ bool ExportWaveAsCode(Wave wave, const char *fileName)
     byteCount += sprintf(txtData + byteCount, "// more info and bugs-report:  github.com/raysan5/raylib                        //\n");
     byteCount += sprintf(txtData + byteCount, "// feedback and support:       ray[at]raylib.com                                //\n");
     byteCount += sprintf(txtData + byteCount, "//                                                                              //\n");
-    byteCount += sprintf(txtData + byteCount, "// Copyright (c) 2018-2022 Ramon Santamaria (@raysan5)                          //\n");
+    byteCount += sprintf(txtData + byteCount, "// Copyright (c) 2018-2023 Ramon Santamaria (@raysan5)                          //\n");
     byteCount += sprintf(txtData + byteCount, "//                                                                              //\n");
     byteCount += sprintf(txtData + byteCount, "//////////////////////////////////////////////////////////////////////////////////\n\n");
 
@@ -1603,6 +1625,12 @@ Music LoadMusicStreamFromMemory(const char *fileType, const unsigned char *data,
     return music;
 }
 
+// Checks if a music stream is ready
+bool IsMusicReady(Music music)
+{
+    return music.ctxData != NULL;
+}
+
 // Unload music stream
 void UnloadMusicStream(Music music)
 {
@@ -1754,7 +1782,7 @@ void UpdateMusicStream(Music music)
                 {
                     while (true)
                     {
-                        int frameCountRed = drwav_read_pcm_frames_s16((drwav *)music.ctxData, frameCountStillNeeded, (short *)((char *)AUDIO.System.pcmBuffer + frameCountRedTotal*frameSize));
+                        int frameCountRed = (int)drwav_read_pcm_frames_s16((drwav *)music.ctxData, frameCountStillNeeded, (short *)((char *)AUDIO.System.pcmBuffer + frameCountRedTotal*frameSize));
                         frameCountRedTotal += frameCountRed;
                         frameCountStillNeeded -= frameCountRed;
                         if (frameCountStillNeeded == 0) break;
@@ -1765,7 +1793,7 @@ void UpdateMusicStream(Music music)
                 {
                     while (true)
                     {
-                        int frameCountRed = drwav_read_pcm_frames_f32((drwav *)music.ctxData, frameCountStillNeeded, (float *)((char *)AUDIO.System.pcmBuffer + frameCountRedTotal*frameSize));
+                        int frameCountRed = (int)drwav_read_pcm_frames_f32((drwav *)music.ctxData, frameCountStillNeeded, (float *)((char *)AUDIO.System.pcmBuffer + frameCountRedTotal*frameSize));
                         frameCountRedTotal += frameCountRed;
                         frameCountStillNeeded -= frameCountRed;
                         if (frameCountStillNeeded == 0) break;
@@ -1805,7 +1833,7 @@ void UpdateMusicStream(Music music)
             {
                 while (true)
                 {
-                    int frameCountRed = drmp3_read_pcm_frames_f32((drmp3 *)music.ctxData, frameCountStillNeeded, (float *)((char *)AUDIO.System.pcmBuffer + frameCountRedTotal*frameSize));
+                    int frameCountRed = (int)drmp3_read_pcm_frames_f32((drmp3 *)music.ctxData, frameCountStillNeeded, (float *)((char *)AUDIO.System.pcmBuffer + frameCountRedTotal*frameSize));
                     frameCountRedTotal += frameCountRed;
                     frameCountStillNeeded -= frameCountRed;
                     if (frameCountStillNeeded == 0) break;
@@ -1954,6 +1982,12 @@ AudioStream LoadAudioStream(unsigned int sampleRate, unsigned int sampleSize, un
     else TRACELOG(LOG_WARNING, "STREAM: Failed to load audio buffer, stream could not be created");
 
     return stream;
+}
+
+// Checks if an audio stream is ready
+RLAPI bool IsAudioStreamReady(AudioStream stream)
+{
+    return stream.buffer != NULL;
 }
 
 // Unload audio stream and free memory

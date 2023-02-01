@@ -21,7 +21,7 @@
 *
 *   LICENSE: zlib/libpng
 *
-*   Copyright (c) 2015-2022 Ramon Santamaria (@raysan5)
+*   Copyright (c) 2015-2023 Ramon Santamaria (@raysan5)
 *
 *   This software is provided "as-is", without any express or implied warranty. In no event
 *   will the authors be held liable for any damages arising from the use of this software.
@@ -83,7 +83,7 @@
         Vector3 target;         // Camera target it looks-at
         Vector3 up;             // Camera up vector (rotation over its axis)
         float fovy;             // Camera field-of-view apperture in Y (degrees) in perspective, used as near plane width in orthographic
-        int type;               // Camera type, defines projection type: CAMERA_PERSPECTIVE or CAMERA_ORTHOGRAPHIC
+        int projection;         // Camera type, defines projection type: CAMERA_PERSPECTIVE or CAMERA_ORTHOGRAPHIC
     } Camera3D;
 
     // Camera system modes

@@ -1,23 +1,18 @@
 const std = @import("std");
 
 pub fn addRaylib(b: *std.build.Builder, target: std.zig.CrossTarget) *std.build.LibExeObjStep {
-    // Standard release options allow the person running `zig build` to select
-    // between Debug, ReleaseSafe, ReleaseFast, and ReleaseSmall.
-    const mode = b.standardReleaseOptions();
-
     const raylib_flags = &[_][]const u8{
         "-std=gnu99",
-        "-DPLATFORM_DESKTOP",
+        "-D_GNU_SOURCE",
         "-DGL_SILENCE_DEPRECATION=199309L",
         "-fno-sanitize=undefined", // https://github.com/raysan5/raylib/issues/1891
     };
 
-    const raylib = b.addStaticLibrary("raylib", srcdir ++ "/raylib.h");
+    const raylib = b.addStaticLibrary("raylib", null);
     raylib.setTarget(target);
-    raylib.setBuildMode(mode);
     raylib.linkLibC();
 
-    raylib.addIncludeDir(srcdir ++ "/external/glfw/include");
+    raylib.addIncludePath(srcdir ++ "/external/glfw/include");
 
     raylib.addCSourceFiles(&.{
         srcdir ++ "/raudio.c",
@@ -29,13 +24,15 @@ pub fn addRaylib(b: *std.build.Builder, target: std.zig.CrossTarget) *std.build.
         srcdir ++ "/utils.c",
     }, raylib_flags);
 
-    switch (raylib.target.toTarget().os.tag) {
+    switch (target.getOsTag()) {
         .windows => {
             raylib.addCSourceFiles(&.{srcdir ++ "/rglfw.c"}, raylib_flags);
             raylib.linkSystemLibrary("winmm");
             raylib.linkSystemLibrary("gdi32");
             raylib.linkSystemLibrary("opengl32");
-            raylib.addIncludeDir("external/glfw/deps/mingw");
+            raylib.addIncludePath("external/glfw/deps/mingw");
+
+            raylib.defineCMacro("PLATFORM_DESKTOP", null);
         },
         .linux => {
             raylib.addCSourceFiles(&.{srcdir ++ "/rglfw.c"}, raylib_flags);
@@ -44,6 +41,8 @@ pub fn addRaylib(b: *std.build.Builder, target: std.zig.CrossTarget) *std.build.
             raylib.linkSystemLibrary("dl");
             raylib.linkSystemLibrary("m");
             raylib.linkSystemLibrary("X11");
+
+            raylib.defineCMacro("PLATFORM_DESKTOP", null);
         },
         .freebsd, .openbsd, .netbsd, .dragonfly => {
             raylib.addCSourceFiles(&.{srcdir ++ "/rglfw.c"}, raylib_flags);
@@ -57,6 +56,8 @@ pub fn addRaylib(b: *std.build.Builder, target: std.zig.CrossTarget) *std.build.
             raylib.linkSystemLibrary("Xi");
             raylib.linkSystemLibrary("Xxf86vm");
             raylib.linkSystemLibrary("Xcursor");
+
+            raylib.defineCMacro("PLATFORM_DESKTOP", null);
         },
         .macos => {
             // On macos rglfw.c include Objective-C files.
@@ -68,6 +69,28 @@ pub fn addRaylib(b: *std.build.Builder, target: std.zig.CrossTarget) *std.build.
                 raylib_flags ++ raylib_flags_extra_macos,
             );
             raylib.linkFramework("Foundation");
+            raylib.linkFramework("CoreServices");
+            raylib.linkFramework("CoreGraphics");
+            raylib.linkFramework("AppKit");
+            raylib.linkFramework("IOKit");
+
+            raylib.defineCMacro("PLATFORM_DESKTOP", null);
+        },
+        .emscripten => {
+            raylib.defineCMacro("PLATFORM_WEB", null);
+            raylib.defineCMacro("GRAPHICS_API_OPENGL_ES2", null);
+
+            if (b.sysroot == null) {
+                @panic("Pass '--sysroot \"$EMSDK/upstream/emscripten\"'");
+            }
+
+            const cache_include = std.fs.path.join(b.allocator, &.{ b.sysroot.?, "cache", "sysroot", "include" }) catch @panic("Out of memory");
+            defer b.allocator.free(cache_include);
+
+            var dir = std.fs.openDirAbsolute(cache_include, std.fs.Dir.OpenDirOptions{.access_sub_paths = true, .no_follow = true}) catch @panic("No emscripten cache. Generate it!");
+            dir.close();
+
+            raylib.addIncludePath(cache_include);
         },
         else => {
             @panic("Unsupported OS");
@@ -89,8 +112,8 @@ pub fn build(b: *std.build.Builder) void {
     lib.install();
 }
 
-const srcdir = getSrcDir();
-
-fn getSrcDir() []const u8 {
-    return std.fs.path.dirname(@src().file) orelse ".";
-}
+const srcdir = struct{
+    fn getSrcDir() []const u8 {
+        return std.fs.path.dirname(@src().file).?;
+    }
+}.getSrcDir();

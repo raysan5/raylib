@@ -6,7 +6,7 @@
 *
 *   LICENSE: zlib/libpng
 *
-*   Copyright (c) 2018-2022 Ahmad Fatoum & Ramon Santamaria (@raysan5)
+*   Copyright (c) 2018-2023 Ahmad Fatoum & Ramon Santamaria (@raysan5)
 *
 *   This software is provided "as-is", without any express or implied warranty. In no event
 *   will the authors be held liable for any damages arising from the use of this software.
@@ -24,7 +24,8 @@
 *     3. This notice may not be removed or altered from any source distribution.
 *
 **********************************************************************************************/
-
+#ifndef CONFIG_H
+#define CONFIG_H
 //------------------------------------------------------------------------------------
 // Module selection - Some modules could be avoided
 // Mandatory modules: rcore, rlgl, utils
@@ -148,6 +149,8 @@
 //#define SUPPORT_FILEFORMAT_PSD      1
 #define SUPPORT_FILEFORMAT_DDS      1
 #define SUPPORT_FILEFORMAT_HDR      1
+//#define SUPPORT_FILEFORMAT_PIC      1
+//#define SUPPORT_FILEFORMAT_PNM      1
 //#define SUPPORT_FILEFORMAT_KTX      1
 //#define SUPPORT_FILEFORMAT_ASTC     1
 //#define SUPPORT_FILEFORMAT_PKM      1
@@ -234,3 +237,5 @@
 // utils: Configuration values
 //------------------------------------------------------------------------------------
 #define MAX_TRACELOG_MSG_LENGTH          128    // Max length of one trace-log message
+
+#endif // CONFIG_H
