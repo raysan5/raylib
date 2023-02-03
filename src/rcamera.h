@@ -405,6 +405,9 @@ void UpdateCamera(Camera *camera)
         } break;
         case CAMERA_FIRST_PERSON:   // Camera moves as in a first-person game, controls are configurable
         {
+            // NOTE: On CAMERA_FIRST_PERSON player Y-movement is limited to player 'eyes position'
+            camera->position.y = CAMERA.playerEyesPosition;
+
             camera->position.x += (sinf(CAMERA.angle.x)*direction[MOVE_BACK] -
                                    sinf(CAMERA.angle.x)*direction[MOVE_FRONT] -
                                    cosf(CAMERA.angle.x)*direction[MOVE_LEFT] +
@@ -478,10 +481,6 @@ void UpdateCamera(Camera *camera)
             camera->target.x = camera->position.x - matTransform.m12;
             camera->target.y = camera->position.y - matTransform.m13;
             camera->target.z = camera->position.z - matTransform.m14;
-
-            // Camera position update
-            // NOTE: On CAMERA_FIRST_PERSON player Y-movement is limited to player 'eyes position'
-            camera->position.y = CAMERA.playerEyesPosition;
 
             // Camera swinging (y-movement), only when walking (some key pressed)
             for (int i = 0; i < 6; i++) if (direction[i]) { swingCounter += GetFrameTime(); break; }
