@@ -21,10 +21,11 @@
 *
 *   #define SUPPORT_FILEFORMAT_WAV
 *   #define SUPPORT_FILEFORMAT_OGG
+*   #define SUPPORT_FILEFORMAT_MP3
+*   #define SUPPORT_FILEFORMAT_QOA
+*   #define SUPPORT_FILEFORMAT_FLAC
 *   #define SUPPORT_FILEFORMAT_XM
 *   #define SUPPORT_FILEFORMAT_MOD
-*   #define SUPPORT_FILEFORMAT_FLAC
-*   #define SUPPORT_FILEFORMAT_MP3
 *       Selected desired fileformats to be supported for loading. Some of those formats are
 *       supported by default, to remove support, just comment unrequired #define in this module
 *
@@ -196,37 +197,6 @@ typedef struct tagBITMAPINFOHEADER {
     #endif
 #endif
 
-#if defined(SUPPORT_FILEFORMAT_OGG)
-    // TODO: Remap stb_vorbis malloc()/free() calls to RL_MALLOC/RL_FREE
-    #include "external/stb_vorbis.c"    // OGG loading functions
-#endif
-
-#if defined(SUPPORT_FILEFORMAT_XM)
-    #define JARXM_MALLOC RL_MALLOC
-    #define JARXM_FREE RL_FREE
-
-#if defined(_MSC_VER ) // jar xm has  warnings on windows, so disable them just for this file
-#pragma warning( push )
-#pragma warning( disable : 4244)
-#endif
-
-    #define JAR_XM_IMPLEMENTATION
-    #include "external/jar_xm.h"        // XM loading functions
-
-#if defined(_MSC_VER )
-#pragma warning( pop )
-#endif
-
-#endif
-
-#if defined(SUPPORT_FILEFORMAT_MOD)
-    #define JARMOD_MALLOC RL_MALLOC
-    #define JARMOD_FREE RL_FREE
-
-    #define JAR_MOD_IMPLEMENTATION
-    #include "external/jar_mod.h"       // MOD loading functions
-#endif
-
 #if defined(SUPPORT_FILEFORMAT_WAV)
     #define DRWAV_MALLOC RL_MALLOC
     #define DRWAV_REALLOC RL_REALLOC
@@ -234,6 +204,11 @@ typedef struct tagBITMAPINFOHEADER {
 
     #define DR_WAV_IMPLEMENTATION
     #include "external/dr_wav.h"        // WAV loading functions
+#endif
+
+#if defined(SUPPORT_FILEFORMAT_OGG)
+    // TODO: Remap stb_vorbis malloc()/free() calls to RL_MALLOC/RL_FREE
+    #include "external/stb_vorbis.c"    // OGG loading functions
 #endif
 
 #if defined(SUPPORT_FILEFORMAT_MP3)
@@ -245,6 +220,14 @@ typedef struct tagBITMAPINFOHEADER {
     #include "external/dr_mp3.h"        // MP3 loading functions
 #endif
 
+#if defined(SUPPORT_FILEFORMAT_QOA)
+    #define QOA_MALLOC RL_MALLOC
+    #define QOA_FREE RL_FREE
+
+    #define QOA_IMPLEMENTATION
+    #include "external/qoa.h"           // QOA loading and saving functions
+#endif
+
 #if defined(SUPPORT_FILEFORMAT_FLAC)
     #define DRFLAC_MALLOC RL_MALLOC
     #define DRFLAC_REALLOC RL_REALLOC
@@ -253,6 +236,31 @@ typedef struct tagBITMAPINFOHEADER {
     #define DR_FLAC_IMPLEMENTATION
     #define DR_FLAC_NO_WIN32_IO
     #include "external/dr_flac.h"       // FLAC loading functions
+#endif
+
+#if defined(SUPPORT_FILEFORMAT_XM)
+    #define JARXM_MALLOC RL_MALLOC
+    #define JARXM_FREE RL_FREE
+
+    #if defined(_MSC_VER )              // jar_xm has warnings on windows, so disable them just for this file
+        #pragma warning( push )
+        #pragma warning( disable : 4244)
+    #endif
+
+    #define JAR_XM_IMPLEMENTATION
+    #include "external/jar_xm.h"        // XM loading functions
+
+    #if defined(_MSC_VER )
+        #pragma warning( pop )
+    #endif
+#endif
+
+#if defined(SUPPORT_FILEFORMAT_MOD)
+    #define JARMOD_MALLOC RL_MALLOC
+    #define JARMOD_FREE RL_FREE
+
+    #define JAR_MOD_IMPLEMENTATION
+    #include "external/jar_mod.h"       // MOD loading functions
 #endif
 
 //----------------------------------------------------------------------------------
@@ -285,6 +293,7 @@ typedef enum {
     MUSIC_AUDIO_OGG,        // OGG audio context
     MUSIC_AUDIO_FLAC,       // FLAC audio context
     MUSIC_AUDIO_MP3,        // MP3 audio context
+    MUSIC_AUDIO_QOA,        // QOA audio context
     MUSIC_MODULE_XM,        // XM module audio context
     MUSIC_MODULE_MOD        // MOD module audio context
 } MusicContextType;
@@ -795,19 +804,6 @@ Wave LoadWaveFromMemory(const char *fileType, const unsigned char *fileData, int
         else TRACELOG(LOG_WARNING, "WAVE: Failed to load OGG data");
     }
 #endif
-#if defined(SUPPORT_FILEFORMAT_FLAC)
-    else if (strcmp(fileType, ".flac") == 0)
-    {
-        unsigned long long int totalFrameCount = 0;
-
-        // NOTE: We are forcing conversion to 16bit sample size on reading
-        wave.data = drflac_open_memory_and_read_pcm_frames_s16(fileData, dataSize, &wave.channels, &wave.sampleRate, &totalFrameCount, NULL);
-        wave.sampleSize = 16;
-
-        if (wave.data != NULL) wave.frameCount = (unsigned int)totalFrameCount;
-        else TRACELOG(LOG_WARNING, "WAVE: Failed to load FLAC data");
-    }
-#endif
 #if defined(SUPPORT_FILEFORMAT_MP3)
     else if (strcmp(fileType, ".mp3") == 0)
     {
@@ -826,6 +822,38 @@ Wave LoadWaveFromMemory(const char *fileType, const unsigned char *fileData, int
         }
         else TRACELOG(LOG_WARNING, "WAVE: Failed to load MP3 data");
 
+    }
+#endif
+#if defined(SUPPORT_FILEFORMAT_QOA)
+    else if (strcmp(fileType, ".qoa") == 0)
+    {
+        qoa_desc qoa = { 0 };
+
+        // NOTE: Returned sample data is always 16 bit?
+        wave.data = qoa_decode(fileData, dataSize, &qoa);
+        wave.sampleSize = 16;
+        
+        if (wave.data != NULL)
+        {
+            wave.channels = qoa.channels;
+            wave.sampleRate = qoa.samplerate;
+            wave.frameCount = qoa.samples;
+        }
+        else TRACELOG(LOG_WARNING, "WAVE: Failed to load QOA data");
+
+    }
+#endif
+#if defined(SUPPORT_FILEFORMAT_FLAC)
+    else if (strcmp(fileType, ".flac") == 0)
+    {
+        unsigned long long int totalFrameCount = 0;
+
+        // NOTE: We are forcing conversion to 16bit sample size on reading
+        wave.data = drflac_open_memory_and_read_pcm_frames_s16(fileData, dataSize, &wave.channels, &wave.sampleRate, &totalFrameCount, NULL);
+        wave.sampleSize = 16;
+
+        if (wave.data != NULL) wave.frameCount = (unsigned int)totalFrameCount;
+        else TRACELOG(LOG_WARNING, "WAVE: Failed to load FLAC data");
     }
 #endif
     else TRACELOG(LOG_WARNING, "WAVE: Data format not supported");
@@ -1316,23 +1344,6 @@ Music LoadMusicStream(const char *fileName)
         }
     }
 #endif
-#if defined(SUPPORT_FILEFORMAT_FLAC)
-    else if (IsFileExtension(fileName, ".flac"))
-    {
-        music.ctxType = MUSIC_AUDIO_FLAC;
-        music.ctxData = drflac_open_file(fileName, NULL);
-
-        if (music.ctxData != NULL)
-        {
-            drflac *ctxFlac = (drflac *)music.ctxData;
-
-            music.stream = LoadAudioStream(ctxFlac->sampleRate, ctxFlac->bitsPerSample, ctxFlac->channels);
-            music.frameCount = (unsigned int)ctxFlac->totalPCMFrameCount;
-            music.looping = true;   // Looping enabled by default
-            musicLoaded = true;
-        }
-    }
-#endif
 #if defined(SUPPORT_FILEFORMAT_MP3)
     else if (IsFileExtension(fileName, ".mp3"))
     {
@@ -1346,6 +1357,45 @@ Music LoadMusicStream(const char *fileName)
         {
             music.stream = LoadAudioStream(ctxMp3->sampleRate, 32, ctxMp3->channels);
             music.frameCount = (unsigned int)drmp3_get_pcm_frame_count(ctxMp3);
+            music.looping = true;   // Looping enabled by default
+            musicLoaded = true;
+        }
+    }
+#endif
+#if defined(SUPPORT_FILEFORMAT_QOA)
+    else if (IsFileExtension(fileName, ".qoa"))
+    {
+        qoa_desc *ctxQoa = RL_CALLOC(1, sizeof(qoa_desc));
+
+        // TODO: QOA stream support: Init context from file
+
+        music.ctxType = MUSIC_AUDIO_QOA;
+        music.ctxData = ctxQoa;
+
+        if (result > 0)
+        {
+            music.stream = LoadAudioStream(ctxQoa->samplerate, 16, ctxQoa->channels);
+
+            // TODO: Read next frame(s) from QOA stream
+            //music.frameCount = qoa_decode_frame(const unsigned char *bytes, unsigned int size, ctxQoa, short *sample_data, unsigned int *frame_len);
+           
+            music.looping = true;   // Looping enabled by default
+            musicLoaded = true;
+        }
+    }
+#endif
+#if defined(SUPPORT_FILEFORMAT_FLAC)
+    else if (IsFileExtension(fileName, ".flac"))
+    {
+        music.ctxType = MUSIC_AUDIO_FLAC;
+        music.ctxData = drflac_open_file(fileName, NULL);
+
+        if (music.ctxData != NULL)
+        {
+            drflac *ctxFlac = (drflac *)music.ctxData;
+
+            music.stream = LoadAudioStream(ctxFlac->sampleRate, ctxFlac->bitsPerSample, ctxFlac->channels);
+            music.frameCount = (unsigned int)ctxFlac->totalPCMFrameCount;
             music.looping = true;   // Looping enabled by default
             musicLoaded = true;
         }
@@ -1408,11 +1458,14 @@ Music LoadMusicStream(const char *fileName)
     #if defined(SUPPORT_FILEFORMAT_OGG)
         else if (music.ctxType == MUSIC_AUDIO_OGG) stb_vorbis_close((stb_vorbis *)music.ctxData);
     #endif
-    #if defined(SUPPORT_FILEFORMAT_FLAC)
-        else if (music.ctxType == MUSIC_AUDIO_FLAC) drflac_free((drflac *)music.ctxData, NULL);
-    #endif
     #if defined(SUPPORT_FILEFORMAT_MP3)
         else if (music.ctxType == MUSIC_AUDIO_MP3) { drmp3_uninit((drmp3 *)music.ctxData); RL_FREE(music.ctxData); }
+    #endif
+    #if defined(SUPPORT_FILEFORMAT_QOA)
+        else if (music.ctxType == MUSIC_AUDIO_QOA) { /*TODO: Release QOA context data*/ RL_FREE(music.ctxData); }
+    #endif
+    #if defined(SUPPORT_FILEFORMAT_FLAC)
+        else if (music.ctxType == MUSIC_AUDIO_FLAC) drflac_free((drflac *)music.ctxData, NULL);
     #endif
     #if defined(SUPPORT_FILEFORMAT_XM)
         else if (music.ctxType == MUSIC_MODULE_XM) jar_xm_free_context((jar_xm_context_t *)music.ctxData);
@@ -1467,18 +1520,23 @@ Music LoadMusicStreamFromMemory(const char *fileType, const unsigned char *data,
         }
     }
 #endif
-#if defined(SUPPORT_FILEFORMAT_FLAC)
-    else if (strcmp(fileType, ".flac") == 0)
+#if defined(SUPPORT_FILEFORMAT_OGG)
+    else if (strcmp(fileType, ".ogg") == 0)
     {
-        music.ctxType = MUSIC_AUDIO_FLAC;
-        music.ctxData = drflac_open_memory((const void*)data, dataSize, NULL);
+        // Open ogg audio stream
+        music.ctxType = MUSIC_AUDIO_OGG;
+        //music.ctxData = stb_vorbis_open_filename(fileName, NULL, NULL);
+        music.ctxData = stb_vorbis_open_memory((const unsigned char *)data, dataSize, NULL, NULL);
 
         if (music.ctxData != NULL)
         {
-            drflac *ctxFlac = (drflac *)music.ctxData;
+            stb_vorbis_info info = stb_vorbis_get_info((stb_vorbis *)music.ctxData);  // Get Ogg file info
 
-            music.stream = LoadAudioStream(ctxFlac->sampleRate, ctxFlac->bitsPerSample, ctxFlac->channels);
-            music.frameCount = (unsigned int)ctxFlac->totalPCMFrameCount;
+            // OGG bit rate defaults to 16 bit, it's enough for compressed format
+            music.stream = LoadAudioStream(info.sample_rate, 16, info.channels);
+
+            // WARNING: It seems this function returns length in frames, not samples, so we multiply by channels
+            music.frameCount = (unsigned int)stb_vorbis_stream_length_in_samples((stb_vorbis *)music.ctxData);
             music.looping = true;   // Looping enabled by default
             musicLoaded = true;
         }
@@ -1502,23 +1560,40 @@ Music LoadMusicStreamFromMemory(const char *fileType, const unsigned char *data,
         }
     }
 #endif
-#if defined(SUPPORT_FILEFORMAT_OGG)
-    else if (strcmp(fileType, ".ogg") == 0)
+#if defined(SUPPORT_FILEFORMAT_QOA)
+    else if (strcmp(fileType, ".qoa") == 0)
     {
-        // Open ogg audio stream
-        music.ctxType = MUSIC_AUDIO_OGG;
-        //music.ctxData = stb_vorbis_open_filename(fileName, NULL, NULL);
-        music.ctxData = stb_vorbis_open_memory((const unsigned char *)data, dataSize, NULL, NULL);
+        qoa_desc *ctxQoa = RL_CALLOC(1, sizeof(qoa_desc));
+        
+        // TODO: Init QOA context data
+        
+        music.ctxType = MUSIC_AUDIO_QOA;
+        music.ctxData = ctxQoa;
+
+        if (success)
+        {
+            music.stream = LoadAudioStream(ctxQoa->samplerate, 16, ctxQoa->channels);
+            
+            // TODO: Read next frame(s) from QOA stream
+            //music.frameCount = qoa_decode_frame(const unsigned char *bytes, unsigned int size, ctxQoa, short *sample_data, unsigned int *frame_len);
+           
+            music.looping = true;   // Looping enabled by default
+            musicLoaded = true;
+        }
+    }
+#endif
+#if defined(SUPPORT_FILEFORMAT_FLAC)
+    else if (strcmp(fileType, ".flac") == 0)
+    {
+        music.ctxType = MUSIC_AUDIO_FLAC;
+        music.ctxData = drflac_open_memory((const void*)data, dataSize, NULL);
 
         if (music.ctxData != NULL)
         {
-            stb_vorbis_info info = stb_vorbis_get_info((stb_vorbis *)music.ctxData);  // Get Ogg file info
+            drflac *ctxFlac = (drflac *)music.ctxData;
 
-            // OGG bit rate defaults to 16 bit, it's enough for compressed format
-            music.stream = LoadAudioStream(info.sample_rate, 16, info.channels);
-
-            // WARNING: It seems this function returns length in frames, not samples, so we multiply by channels
-            music.frameCount = (unsigned int)stb_vorbis_stream_length_in_samples((stb_vorbis *)music.ctxData);
+            music.stream = LoadAudioStream(ctxFlac->sampleRate, ctxFlac->bitsPerSample, ctxFlac->channels);
+            music.frameCount = (unsigned int)ctxFlac->totalPCMFrameCount;
             music.looping = true;   // Looping enabled by default
             musicLoaded = true;
         }
@@ -1593,14 +1668,17 @@ Music LoadMusicStreamFromMemory(const char *fileType, const unsigned char *data,
     #if defined(SUPPORT_FILEFORMAT_WAV)
         else if (music.ctxType == MUSIC_AUDIO_WAV) drwav_uninit((drwav *)music.ctxData);
     #endif
-    #if defined(SUPPORT_FILEFORMAT_FLAC)
-        else if (music.ctxType == MUSIC_AUDIO_FLAC) drflac_free((drflac *)music.ctxData, NULL);
+    #if defined(SUPPORT_FILEFORMAT_OGG)
+        else if (music.ctxType == MUSIC_AUDIO_OGG) stb_vorbis_close((stb_vorbis *)music.ctxData);
     #endif
     #if defined(SUPPORT_FILEFORMAT_MP3)
         else if (music.ctxType == MUSIC_AUDIO_MP3) { drmp3_uninit((drmp3 *)music.ctxData); RL_FREE(music.ctxData); }
     #endif
-    #if defined(SUPPORT_FILEFORMAT_OGG)
-        else if (music.ctxType == MUSIC_AUDIO_OGG) stb_vorbis_close((stb_vorbis *)music.ctxData);
+    #if defined(SUPPORT_FILEFORMAT_QOA)
+        else if (music.ctxType == MUSIC_AUDIO_QOA) { /*TODO: Release QOA context*/ RL_FREE(music.ctxData); }
+    #endif
+    #if defined(SUPPORT_FILEFORMAT_FLAC)
+        else if (music.ctxType == MUSIC_AUDIO_FLAC) drflac_free((drflac *)music.ctxData, NULL);
     #endif
     #if defined(SUPPORT_FILEFORMAT_XM)
         else if (music.ctxType == MUSIC_MODULE_XM) jar_xm_free_context((jar_xm_context_t *)music.ctxData);
@@ -1645,11 +1723,14 @@ void UnloadMusicStream(Music music)
 #if defined(SUPPORT_FILEFORMAT_OGG)
         else if (music.ctxType == MUSIC_AUDIO_OGG) stb_vorbis_close((stb_vorbis *)music.ctxData);
 #endif
-#if defined(SUPPORT_FILEFORMAT_FLAC)
-        else if (music.ctxType == MUSIC_AUDIO_FLAC) drflac_free((drflac *)music.ctxData, NULL);
-#endif
 #if defined(SUPPORT_FILEFORMAT_MP3)
         else if (music.ctxType == MUSIC_AUDIO_MP3) { drmp3_uninit((drmp3 *)music.ctxData); RL_FREE(music.ctxData); }
+#endif
+#if defined(SUPPORT_FILEFORMAT_QOA)
+        else if (music.ctxType == MUSIC_AUDIO_QOA) { /*TODO: Release QOA context*/ RL_FREE(music.ctxData); }
+#endif
+#if defined(SUPPORT_FILEFORMAT_FLAC)
+        else if (music.ctxType == MUSIC_AUDIO_FLAC) drflac_free((drflac *)music.ctxData, NULL);
 #endif
 #if defined(SUPPORT_FILEFORMAT_XM)
         else if (music.ctxType == MUSIC_MODULE_XM) jar_xm_free_context((jar_xm_context_t *)music.ctxData);
@@ -1700,11 +1781,14 @@ void StopMusicStream(Music music)
 #if defined(SUPPORT_FILEFORMAT_OGG)
         case MUSIC_AUDIO_OGG: stb_vorbis_seek_start((stb_vorbis *)music.ctxData); break;
 #endif
-#if defined(SUPPORT_FILEFORMAT_FLAC)
-        case MUSIC_AUDIO_FLAC: drflac__seek_to_first_frame((drflac *)music.ctxData); break;
-#endif
 #if defined(SUPPORT_FILEFORMAT_MP3)
         case MUSIC_AUDIO_MP3: drmp3_seek_to_start_of_stream((drmp3 *)music.ctxData); break;
+#endif
+#if defined(SUPPORT_FILEFORMAT_QOA)
+        case MUSIC_AUDIO_QOA: /*TODO: Restart QOA context to beginning*/ break;
+#endif
+#if defined(SUPPORT_FILEFORMAT_FLAC)
+        case MUSIC_AUDIO_FLAC: drflac__seek_to_first_frame((drflac *)music.ctxData); break;
 #endif
 #if defined(SUPPORT_FILEFORMAT_XM)
         case MUSIC_MODULE_XM: jar_xm_reset((jar_xm_context_t *)music.ctxData); break;
@@ -1732,11 +1816,14 @@ void SeekMusicStream(Music music, float position)
 #if defined(SUPPORT_FILEFORMAT_OGG)
         case MUSIC_AUDIO_OGG: stb_vorbis_seek_frame((stb_vorbis *)music.ctxData, positionInFrames); break;
 #endif
-#if defined(SUPPORT_FILEFORMAT_FLAC)
-        case MUSIC_AUDIO_FLAC: drflac_seek_to_pcm_frame((drflac *)music.ctxData, positionInFrames); break;
-#endif
 #if defined(SUPPORT_FILEFORMAT_MP3)
         case MUSIC_AUDIO_MP3: drmp3_seek_to_pcm_frame((drmp3 *)music.ctxData, positionInFrames); break;
+#endif
+#if defined(SUPPORT_FILEFORMAT_QOA)
+        case MUSIC_AUDIO_QOA: /*TODO: Seek to specific QOA frame*/ break;
+#endif
+#if defined(SUPPORT_FILEFORMAT_FLAC)
+        case MUSIC_AUDIO_FLAC: drflac_seek_to_pcm_frame((drflac *)music.ctxData, positionInFrames); break;
 #endif
         default: break;
     }
@@ -1754,6 +1841,7 @@ void UpdateMusicStream(Music music)
     // On first call of this function we lazily pre-allocated a temp buffer to read audio files/memory data in
     int frameSize = music.stream.channels*music.stream.sampleSize/8;
     unsigned int pcmSize = subBufferSizeInFrames*frameSize;
+    
     if (AUDIO.System.pcmBufferSize < pcmSize)
     {
         RL_FREE(AUDIO.System.pcmBuffer);
@@ -1815,19 +1903,6 @@ void UpdateMusicStream(Music music)
                 }
             } break;
         #endif
-        #if defined(SUPPORT_FILEFORMAT_FLAC)
-            case MUSIC_AUDIO_FLAC:
-            {
-                while (true)
-                {
-                    int frameCountRed = drflac_read_pcm_frames_s16((drflac *)music.ctxData, frameCountStillNeeded, (short *)((char *)AUDIO.System.pcmBuffer + frameCountRedTotal*frameSize));
-                    frameCountRedTotal += frameCountRed;
-                    frameCountStillNeeded -= frameCountRed;
-                    if (frameCountStillNeeded == 0) break;
-                    else drflac__seek_to_first_frame((drflac *)music.ctxData);
-                }
-            } break;
-        #endif
         #if defined(SUPPORT_FILEFORMAT_MP3)
             case MUSIC_AUDIO_MP3:
             {
@@ -1838,6 +1913,25 @@ void UpdateMusicStream(Music music)
                     frameCountStillNeeded -= frameCountRed;
                     if (frameCountStillNeeded == 0) break;
                     else drmp3_seek_to_start_of_stream((drmp3 *)music.ctxData);
+                }
+            } break;
+        #endif
+        #if defined(SUPPORT_FILEFORMAT_QOA)
+            case MUSIC_AUDIO_QOA:
+            {
+                // TODO: Read QOA required framecount to fill buffer to keep music playing
+            } break;
+        #endif
+        #if defined(SUPPORT_FILEFORMAT_FLAC)
+            case MUSIC_AUDIO_FLAC:
+            {
+                while (true)
+                {
+                    int frameCountRed = drflac_read_pcm_frames_s16((drflac *)music.ctxData, frameCountStillNeeded, (short *)((char *)AUDIO.System.pcmBuffer + frameCountRedTotal*frameSize));
+                    frameCountRedTotal += frameCountRed;
+                    frameCountStillNeeded -= frameCountRed;
+                    if (frameCountStillNeeded == 0) break;
+                    else drflac__seek_to_first_frame((drflac *)music.ctxData);
                 }
             } break;
         #endif
