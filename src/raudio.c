@@ -986,6 +986,18 @@ bool ExportWave(Wave wave, const char *fileName)
         drwav_free(fileData, NULL);
     }
 #endif
+#if defined(SUPPORT_FILEFORMAT_QOA)
+    else if (IsFileExtension(fileName, ".qoa"))
+    {
+        qoa_desc qoa = { 0 };
+        qoa.channels = wave.channels;
+        qoa.samplerate = wave.sampleRate;
+        qoa.samples = wave.frameCount;
+        
+        // TODO: Review wave.data format required for export
+        success = qoa_write(fileName, wave.data, &qoa);
+    }
+#endif
     else if (IsFileExtension(fileName, ".raw"))
     {
         // Export raw sample data (without header)
