@@ -286,7 +286,7 @@ is filled with the description from the file header.
 
 The returned pixel data should be free()d after use. */
 
-void *qoi_decode(const void *data, int size, qoi_desc *desc, int channels);
+void *qoi_decode(const void *data, long size, qoi_desc *desc, int channels);
 
 
 #ifdef __cplusplus
@@ -485,13 +485,13 @@ void *qoi_encode(const void *data, const qoi_desc *desc, int *out_len) {
 	return bytes;
 }
 
-void *qoi_decode(const void *data, int size, qoi_desc *desc, int channels) {
+void *qoi_decode(const void *data, long size, qoi_desc *desc, int channels) {
 	const unsigned char *bytes;
 	unsigned int header_magic;
 	unsigned char *pixels;
 	qoi_rgba_t index[64];
 	qoi_rgba_t px;
-	int px_len, chunks_len, px_pos;
+	long px_len, chunks_len, px_pos;
 	int p = 0, run = 0;
 
 	if (
@@ -616,7 +616,7 @@ int qoi_write(const char *filename, const void *data, const qoi_desc *desc) {
 
 void *qoi_read(const char *filename, qoi_desc *desc, int channels) {
 	FILE *f = fopen(filename, "rb");
-	int size, bytes_read;
+	long size, bytes_read;
 	void *pixels, *data;
 
 	if (!f) {

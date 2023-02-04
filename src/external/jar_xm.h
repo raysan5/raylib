@@ -2196,7 +2196,7 @@ uint64_t jar_xm_get_remaining_samples(jar_xm_context_t* ctx) {
 
 int jar_xm_create_context_from_file(jar_xm_context_t** ctx, uint32_t rate, const char* filename) {
     FILE* xmf;
-    int size;
+    long size;
     int ret;
 
     xmf = fopen(filename, "rb");

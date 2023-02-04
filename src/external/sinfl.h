@@ -219,7 +219,7 @@ static int
 sinfl_peek(struct sinfl *s, int cnt) {
   assert(cnt >= 0 && cnt <= 56);
   assert(cnt <= s->bitcnt);
-  return s->bitbuf & ((1ull << cnt) - 1);
+  return (int)(s->bitbuf & ((1ull << cnt) - 1));
 }
 static void
 sinfl_consume(struct sinfl *s, int cnt) {

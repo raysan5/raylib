@@ -217,7 +217,7 @@ typedef struct tracker_state_
     int cur_pattern;
     int cur_pattern_pos;
     int cur_pattern_table_pos;
-    unsigned int buf_index;
+    unsigned long buf_index;
     track_state tracks[32];
 }tracker_state;
 
@@ -1114,7 +1114,7 @@ bool jar_mod_setcfg(jar_mod_context_t * modctx, int samplerate, int bits, int st
 }
 
 // make certain that mod_data stays in memory while playing
-static bool jar_mod_load( jar_mod_context_t * modctx, void * mod_data, int mod_data_size )
+static bool jar_mod_load( jar_mod_context_t * modctx, void * mod_data, mulong mod_data_size )
 {
     muint i, max;
     unsigned short t;
