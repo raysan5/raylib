@@ -829,18 +829,26 @@ Wave LoadWaveFromMemory(const char *fileType, const unsigned char *fileData, int
     {
         qoa_desc qoa = { 0 };
 
-        // NOTE: Returned sample data is always 16 bit?
-        wave.data = qoa_decode(fileData, dataSize, &qoa);
-        wave.sampleSize = 16;
-        
-        if (wave.data != NULL)
+        unsigned int result = qoa_decode_header(fileData, dataSize, &qoa);
+
+        if (result > 0)
         {
-            wave.channels = qoa.channels;
-            wave.sampleRate = qoa.samplerate;
+
+            // Calculate the total audio frame count
             wave.frameCount = qoa.samples;
+
+            // NOTE: Returned sample data is always 16 bit
+            wave.data = qoa_decode(fileData, dataSize, &qoa);
+            wave.sampleSize = 16;
+
+            if (wave.data != NULL)
+            {
+                wave.channels = qoa.channels;
+                wave.sampleRate = qoa.samplerate;
+            }
+            else TRACELOG(LOG_WARNING, "WAVE: Failed to load QOA data");
         }
         else TRACELOG(LOG_WARNING, "WAVE: Failed to load QOA data");
-
     }
 #endif
 #if defined(SUPPORT_FILEFORMAT_FLAC)
@@ -1380,6 +1388,7 @@ Music LoadMusicStream(const char *fileName)
         qoa_desc *ctxQoa = RL_CALLOC(1, sizeof(qoa_desc));
 
         // TODO: QOA stream support: Init context from file
+        int result = 0;
 
         music.ctxType = MUSIC_AUDIO_QOA;
         music.ctxData = ctxQoa;
@@ -1578,11 +1587,12 @@ Music LoadMusicStreamFromMemory(const char *fileType, const unsigned char *data,
         qoa_desc *ctxQoa = RL_CALLOC(1, sizeof(qoa_desc));
         
         // TODO: Init QOA context data
+        int result = 0;
         
         music.ctxType = MUSIC_AUDIO_QOA;
         music.ctxData = ctxQoa;
 
-        if (success)
+        if (result > 0)
         {
             music.stream = LoadAudioStream(ctxQoa->samplerate, 16, ctxQoa->channels);
             
