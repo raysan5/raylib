@@ -3032,7 +3032,7 @@ const char *GetDirectoryPath(const char *filePath)
     if (filePath[1] != ':' && filePath[0] != '\\' && filePath[0] != '/')
     {
         // For security, we set starting path to current directory,
-        // obtained path will be concated to this
+        // obtained path will be concatenated to this
         dirPath[0] = '.';
         dirPath[1] = '/';
     }
