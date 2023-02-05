@@ -1955,10 +1955,10 @@ const char *GetClipboardText(void)
         .then(text => { document.getElementById('clipboard').innerText = text; console.log('Pasted content: ', text); }) \
         .catch(err => { console.error('Failed to read clipboard contents: ', err); });"
     );
-    
+
     // The main issue is getting that data, one approach could be using ASYNCIFY and wait
     // for the data but it requires adding Asyncify emscripten library on compilation
-    
+
     // Another approach could be just copy the data in a HTML text field and try to retrieve it
     // later on if available... and clean it for future accesses
 
@@ -2478,7 +2478,7 @@ Shader LoadShaderFromMemory(const char *vsCode, const char *fsCode)
         //          vertex texcoord2 location   = 5
 
         // NOTE: If any location is not found, loc point becomes -1
-        
+
         shader.locs = (int *)RL_CALLOC(RL_MAX_SHADER_LOCATIONS, sizeof(int));
 
         // All locations reseted to -1 (no location)
@@ -2521,7 +2521,7 @@ void UnloadShader(Shader shader)
     if (shader.id != rlGetShaderIdDefault())
     {
         rlUnloadShaderProgram(shader.id);
-        
+
         // NOTE: If shader loading failed, it should be 0
         RL_FREE(shader.locs);
     }
@@ -2846,7 +2846,7 @@ void TakeScreenshot(const char *fileName)
 
 // Get a random value between min and max (both included)
 // WARNING: Ranges higher than RAND_MAX will return invalid results
-// More specifically, if (max - min) > INT_MAX there will be an overflow, 
+// More specifically, if (max - min) > INT_MAX there will be an overflow,
 // and otherwise if (max - min) > RAND_MAX the random value will incorrectly never exceed a certain threshold
 int GetRandomValue(int min, int max)
 {
@@ -2856,7 +2856,7 @@ int GetRandomValue(int min, int max)
         max = min;
         min = tmp;
     }
-    
+
     if ((unsigned int)(max - min) > (unsigned int)RAND_MAX)
     {
         TRACELOG(LOG_WARNING, "Invalid GetRandomValue() arguments, range should not be higher than %i", RAND_MAX);
@@ -5756,7 +5756,7 @@ static int32_t AndroidInputCallback(struct android_app *app, AInputEvent *event)
             CORE.Input.Gamepad.ready[0] = true;
 
             GamepadButton button = AndroidTranslateGamepadButton(keycode);
-            
+
             if (button == GAMEPAD_BUTTON_UNKNOWN) return 1;
 
             if (AKeyEvent_getAction(event) == AKEY_EVENT_ACTION_DOWN)
@@ -5764,7 +5764,7 @@ static int32_t AndroidInputCallback(struct android_app *app, AInputEvent *event)
                 CORE.Input.Gamepad.currentButtonState[0][button] = 1;
             }
             else CORE.Input.Gamepad.currentButtonState[0][button] = 0;  // Key up
-            
+
             return 1; // Handled gamepad button
         }
 

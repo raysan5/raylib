@@ -923,7 +923,7 @@ Image GenImageCellular(int width, int height, int tileSize)
 Image GenImageText(int width, int height, const char *text)
 {
     Image image = { 0 };
-    
+
     int textLength = TextLength(text);
     int imageViewSize = width*height;
 
@@ -1551,7 +1551,7 @@ void ImageBlurGaussian(Image *image, int blurSize) {
             float avgAlpha = 0.0f;
             int convolutionSize = blurSize+1;
 
-            for (int i = 0; i < blurSize+1; i++) 
+            for (int i = 0; i < blurSize+1; i++)
             {
                 avgR += pixelsCopy1[row*image->width + i].x;
                 avgG += pixelsCopy1[row*image->width + i].y;
@@ -1600,7 +1600,7 @@ void ImageBlurGaussian(Image *image, int blurSize) {
             float avgAlpha = 0.0f;
             int convolutionSize = blurSize+1;
 
-            for (int i = 0; i < blurSize+1; i++) 
+            for (int i = 0; i < blurSize+1; i++)
             {
                 avgR += pixelsCopy2[i*image->width + col].x;
                 avgG += pixelsCopy2[i*image->width + col].y;
@@ -2931,7 +2931,7 @@ void ImageDrawCircle(Image* dst, int centerX, int centerY, int radius, Color col
         {
             y--;
             decesionParameter = decesionParameter + 4*(x - y) + 10;
-        } 
+        }
         else decesionParameter = decesionParameter + 4*x + 6;
     }
 }
@@ -3998,10 +3998,10 @@ Color ColorTint(Color color, Color tint)
 Color ColorBrightness(Color color, float factor)
 {
     Color result = color;
-    
+
     if (factor > 1.0f) factor = 1.0f;
     else if (factor < -1.0f) factor = -1.0f;
-    
+
     float red = (float)color.r;
     float green = (float)color.g;
     float blue = (float)color.b;
@@ -4019,7 +4019,7 @@ Color ColorBrightness(Color color, float factor)
         green = (255 - green)*factor + green;
         blue = (255 - blue)*factor + blue;
     }
-    
+
     result.r = (unsigned char)red;
     result.g = (unsigned char)green;
     result.b = (unsigned char)blue;
@@ -4032,7 +4032,7 @@ Color ColorBrightness(Color color, float factor)
 Color ColorContrast(Color color, float contrast)
 {
     Color result = color;
-    
+
     if (contrast < -1.0f) contrast = -1.0f;
     else if (contrast > 1.0f) contrast = 1.0f;
 

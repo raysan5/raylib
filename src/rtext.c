@@ -1869,7 +1869,7 @@ int GetCodepointNext(const char *text, int *codepointSize)
     const char *ptr = text;
     int codepoint = 0x3f;       // Codepoint (defaults to '?')
     *codepointSize = 0;
-    
+
     // Get current codepoint and bytes processed
     if (0xf0 == (0xf8 & ptr[0]))
     {
@@ -1882,20 +1882,20 @@ int GetCodepointNext(const char *text, int *codepointSize)
         // 3 byte UTF-8 codepoint */
         codepoint = ((0x0f & ptr[0]) << 12) | ((0x3f & ptr[1]) << 6) | (0x3f & ptr[2]);
         *codepointSize = 3;
-    } 
+    }
     else if (0xc0 == (0xe0 & ptr[0]))
     {
         // 2 byte UTF-8 codepoint
         codepoint = ((0x1f & ptr[0]) << 6) | (0x3f & ptr[1]);
         *codepointSize = 2;
-    } 
+    }
     else
     {
         // 1 byte UTF-8 codepoint
         codepoint = ptr[0];
         *codepointSize = 1;
     }
-    
+
     return codepoint;
 }
 
@@ -1910,7 +1910,7 @@ int GetCodepointPrevious(const char *text, int *codepointSize)
     // Move to previous codepoint
     do ptr--;
     while (((0x80 & ptr[0]) != 0) && ((0xc0 & ptr[0]) ==  0x80));
-    
+
     codepoint = GetCodepointNext(ptr, &cpSize);
 
     if (codepoint != 0) *codepointSize = cpSize;

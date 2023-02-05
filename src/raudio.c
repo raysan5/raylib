@@ -528,7 +528,7 @@ void CloseAudioDevice(void)
         RL_FREE(AUDIO.System.pcmBuffer);
         AUDIO.System.pcmBuffer = NULL;
         AUDIO.System.pcmBufferSize = 0;
-        
+
         TRACELOG(LOG_INFO, "AUDIO: Device closed successfully");
     }
     else TRACELOG(LOG_WARNING, "AUDIO: Device could not be closed, not currently initialized");
@@ -829,26 +829,18 @@ Wave LoadWaveFromMemory(const char *fileType, const unsigned char *fileData, int
     {
         qoa_desc qoa = { 0 };
 
-        unsigned int result = qoa_decode_header(fileData, dataSize, &qoa);
+        // NOTE: Returned sample data is always 16 bit?
+        wave.data = qoa_decode(fileData, dataSize, &qoa);
+        wave.sampleSize = 16;
 
-        if (result > 0)
+        if (wave.data != NULL)
         {
-
-            // Calculate the total audio frame count
+            wave.channels = qoa.channels;
+            wave.sampleRate = qoa.samplerate;
             wave.frameCount = qoa.samples;
-
-            // NOTE: Returned sample data is always 16 bit
-            wave.data = qoa_decode(fileData, dataSize, &qoa);
-            wave.sampleSize = 16;
-
-            if (wave.data != NULL)
-            {
-                wave.channels = qoa.channels;
-                wave.sampleRate = qoa.samplerate;
-            }
-            else TRACELOG(LOG_WARNING, "WAVE: Failed to load QOA data");
         }
         else TRACELOG(LOG_WARNING, "WAVE: Failed to load QOA data");
+
     }
 #endif
 #if defined(SUPPORT_FILEFORMAT_FLAC)
@@ -1001,7 +993,7 @@ bool ExportWave(Wave wave, const char *fileName)
         qoa.channels = wave.channels;
         qoa.samplerate = wave.sampleRate;
         qoa.samples = wave.frameCount;
-        
+
         // TODO: Review wave.data format required for export
         success = qoa_write(fileName, wave.data, &qoa);
     }
@@ -1388,7 +1380,6 @@ Music LoadMusicStream(const char *fileName)
         qoa_desc *ctxQoa = RL_CALLOC(1, sizeof(qoa_desc));
 
         // TODO: QOA stream support: Init context from file
-        int result = 0;
 
         music.ctxType = MUSIC_AUDIO_QOA;
         music.ctxData = ctxQoa;
@@ -1399,7 +1390,7 @@ Music LoadMusicStream(const char *fileName)
 
             // TODO: Read next frame(s) from QOA stream
             //music.frameCount = qoa_decode_frame(const unsigned char *bytes, unsigned int size, ctxQoa, short *sample_data, unsigned int *frame_len);
-           
+
             music.looping = true;   // Looping enabled by default
             musicLoaded = true;
         }
@@ -1585,20 +1576,19 @@ Music LoadMusicStreamFromMemory(const char *fileType, const unsigned char *data,
     else if (strcmp(fileType, ".qoa") == 0)
     {
         qoa_desc *ctxQoa = RL_CALLOC(1, sizeof(qoa_desc));
-        
+
         // TODO: Init QOA context data
-        int result = 0;
-        
+
         music.ctxType = MUSIC_AUDIO_QOA;
         music.ctxData = ctxQoa;
 
-        if (result > 0)
+        if (success)
         {
             music.stream = LoadAudioStream(ctxQoa->samplerate, 16, ctxQoa->channels);
-            
+
             // TODO: Read next frame(s) from QOA stream
             //music.frameCount = qoa_decode_frame(const unsigned char *bytes, unsigned int size, ctxQoa, short *sample_data, unsigned int *frame_len);
-           
+
             music.looping = true;   // Looping enabled by default
             musicLoaded = true;
         }
@@ -1863,7 +1853,7 @@ void UpdateMusicStream(Music music)
     // On first call of this function we lazily pre-allocated a temp buffer to read audio files/memory data in
     int frameSize = music.stream.channels*music.stream.sampleSize/8;
     unsigned int pcmSize = subBufferSizeInFrames*frameSize;
-    
+
     if (AUDIO.System.pcmBufferSize < pcmSize)
     {
         RL_FREE(AUDIO.System.pcmBuffer);
