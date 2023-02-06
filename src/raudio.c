@@ -474,7 +474,7 @@ void InitAudioDevice(void)
         return;
     }
 
-    // Mixing happens on a seperate thread which means we need to synchronize. I'm using a mutex here to make things simple, but may
+    // Mixing happens on a separate thread which means we need to synchronize. I'm using a mutex here to make things simple, but may
     // want to look at something a bit smarter later on to keep everything real-time, if that's necessary.
     if (ma_mutex_init(&AUDIO.System.lock) != MA_SUCCESS)
     {
@@ -2107,8 +2107,8 @@ void UnloadAudioStream(AudioStream stream)
 }
 
 // Update audio stream buffers with data
-// NOTE 1: Only updates one buffer of the stream source: unqueue -> update -> queue
-// NOTE 2: To unqueue a buffer it needs to be processed: IsAudioStreamProcessed()
+// NOTE 1: Only updates one buffer of the stream source: dequeue -> update -> queue
+// NOTE 2: To dequeue a buffer it needs to be processed: IsAudioStreamProcessed()
 void UpdateAudioStream(AudioStream stream, const void *data, int frameCount)
 {
     if (stream.buffer != NULL)

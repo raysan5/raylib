@@ -1176,7 +1176,7 @@ void ImageFormat(Image *image, int newFormat)
                 } break;
                 case PIXELFORMAT_UNCOMPRESSED_R32:
                 {
-                    // WARNING: Image is converted to GRAYSCALE eqeuivalent 32bit
+                    // WARNING: Image is converted to GRAYSCALE equivalent 32bit
 
                     image->data = (float *)RL_MALLOC(image->width*image->height*sizeof(float));
 
@@ -1214,7 +1214,7 @@ void ImageFormat(Image *image, int newFormat)
             RL_FREE(pixels);
             pixels = NULL;
 
-            // In case original image had mipmaps, generate mipmaps for formated image
+            // In case original image had mipmaps, generate mipmaps for formatted image
             // NOTE: Original mipmaps are replaced by new ones, if custom mipmaps were used, they are lost
             if (image->mipmaps > 1)
             {
@@ -1331,7 +1331,7 @@ Image ImageTextEx(Font font, const char *text, float fontSize, float spacing, Co
 }
 
 // Crop image depending on alpha value
-// NOTE: Threshold is defined as a percentatge: 0.0f -> 1.0f
+// NOTE: Threshold is defined as a percentage: 0.0f -> 1.0f
 void ImageAlphaCrop(Image *image, float threshold)
 {
     // Security check to avoid program crash
@@ -2531,7 +2531,7 @@ void UnloadImagePalette(Color *colors)
 }
 
 // Get image alpha border rectangle
-// NOTE: Threshold is defined as a percentatge: 0.0f -> 1.0f
+// NOTE: Threshold is defined as a percentage: 0.0f -> 1.0f
 Rectangle GetImageAlphaBorder(Image image, float threshold)
 {
     Rectangle crop = { 0 };
@@ -3273,7 +3273,7 @@ TextureCubemap LoadTextureCubemap(Image image, int layout)
             faces = GenImageColor(size, size*6, MAGENTA);
             ImageFormat(&faces, image.format);
 
-            // NOTE: Image formating does not work with compressed textures
+            // NOTE: Image formatting does not work with compressed textures
 
             for (int i = 0; i < 6; i++) ImageDraw(&faces, image, faceRecs[i], (Rectangle){ 0, (float)size*i, (float)size, (float)size }, WHITE);
         }
@@ -3606,7 +3606,7 @@ void DrawTexturePro(Texture2D texture, Rectangle source, Rectangle dest, Vector2
         // NOTE: Vertex position can be transformed using matrices
         // but the process is way more costly than just calculating
         // the vertex positions manually, like done above.
-        // I leave here the old implementation for educational pourposes,
+        // I leave here the old implementation for educational purposes,
         // just in case someone wants to do some performance test
         /*
         rlSetTexture(texture.id);

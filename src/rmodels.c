@@ -1517,7 +1517,7 @@ void DrawMesh(Mesh mesh, Material material, Matrix transform)
         else rlDrawVertexArray(0, mesh.vertexCount);
     }
 
-    // Unbind all binded texture maps
+    // Unbind all bound texture maps
     for (int i = 0; i < MAX_MATERIAL_MAPS; i++)
     {
         if (material.maps[i].texture.id > 0)
@@ -1738,7 +1738,7 @@ void DrawMeshInstanced(Mesh mesh, Material material, const Matrix *transforms, i
         else rlDrawVertexArrayInstanced(0, mesh.vertexCount, instances);
     }
 
-    // Unbind all binded texture maps
+    // Unbind all bound texture maps
     for (int i = 0; i < MAX_MATERIAL_MAPS; i++)
     {
         if (material.maps[i].texture.id > 0)
@@ -2559,7 +2559,7 @@ Mesh GenMeshSphere(float radius, int rings, int slices)
     return mesh;
 }
 
-// Generate hemi-sphere mesh (half sphere, no bottom cap)
+// Generate hemisphere mesh (half sphere, no bottom cap)
 Mesh GenMeshHemiSphere(float radius, int rings, int slices)
 {
     Mesh mesh = { 0 };
@@ -3242,7 +3242,7 @@ Mesh GenMeshCubicmap(Image cubicmap, Vector3 cubeSize)
         }
     }
 
-    // Move data from mapVertices temp arays to vertices float array
+    // Move data from mapVertices temp arrays to vertices float array
     mesh.vertexCount = vCounter;
     mesh.triangleCount = vCounter/3;
 
@@ -3742,7 +3742,7 @@ RayCollision GetRayCollisionBox(Ray ray, BoundingBox box)
     // NOTE: We use an additional .01 to fix numerical errors
     collision.normal = Vector3Scale(collision.normal, 2.01f);
     collision.normal = Vector3Divide(collision.normal, Vector3Subtract(box.max, box.min));
-    // The relevant elemets of the vector are now slightly larger than 1.0f (or smaller than -1.0f)
+    // The relevant elements of the vector are now slightly larger than 1.0f (or smaller than -1.0f)
     // and the others are somewhere between -1.0 and 1.0 casting to int is exactly our wanted normal!
     collision.normal.x = (float)((int)collision.normal.x);
     collision.normal.y = (float)((int)collision.normal.y);
@@ -4959,7 +4959,7 @@ static Model LoadGLTF(const char *fileName)
 
                 for (unsigned int j = 0; j < data->meshes[i].primitives[p].attributes_count; j++)
                 {
-                    // Check the different attributes for every pimitive
+                    // Check the different attributes for every primitive
                     if (data->meshes[i].primitives[p].attributes[j].type == cgltf_attribute_type_position)      // POSITION
                     {
                         cgltf_accessor *attribute = data->meshes[i].primitives[p].attributes[j].data;
@@ -5613,7 +5613,7 @@ static Model LoadM3D(const char *fileName)
             // Materials are grouped together
             if (mi != m3d->face[i].materialid)
             {
-                // there should be only one material switch per material kind, but be bulletproof for unoptimal model files
+                // there should be only one material switch per material kind, but be bulletproof for non-optimal model files
                 if (k + 1 >= model.meshCount)
                 {
                     model.meshCount++;
