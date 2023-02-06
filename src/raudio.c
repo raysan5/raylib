@@ -1380,6 +1380,7 @@ Music LoadMusicStream(const char *fileName)
         qoa_desc *ctxQoa = RL_CALLOC(1, sizeof(qoa_desc));
 
         // TODO: QOA stream support: Init context from file
+        int result = 0;
 
         music.ctxType = MUSIC_AUDIO_QOA;
         music.ctxData = ctxQoa;
@@ -1578,11 +1579,12 @@ Music LoadMusicStreamFromMemory(const char *fileType, const unsigned char *data,
         qoa_desc *ctxQoa = RL_CALLOC(1, sizeof(qoa_desc));
 
         // TODO: Init QOA context data
+        int result = 0;
 
         music.ctxType = MUSIC_AUDIO_QOA;
         music.ctxData = ctxQoa;
 
-        if (success)
+        if (result > 0)
         {
             music.stream = LoadAudioStream(ctxQoa->samplerate, 16, ctxQoa->channels);
 
