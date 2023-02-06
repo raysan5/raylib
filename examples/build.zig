@@ -1,7 +1,7 @@
 const std = @import("std");
 const builtin = @import("builtin");
 
-fn add_module(comptime module: []const u8, b: *std.build.Builder, target: std.zig.CrossTarget, optimize: std.builtin.OptimizeMode) !*std.build.Step {
+fn add_module(comptime module: []const u8, b: *std.Build, target: std.zig.CrossTarget, optimize: std.builtin.OptimizeMode) !*std.Build.Step {
     if (target.getOsTag() == .emscripten) {
         @panic("Emscripten building via Zig unsupported");
     }
@@ -81,7 +81,7 @@ fn add_module(comptime module: []const u8, b: *std.build.Builder, target: std.zi
     return all;
 }
 
-pub fn build(b: *std.build.Builder) !void {
+pub fn build(b: *std.Build) !void {
     // Standard target options allows the person running `zig build` to choose
     // what target to build for. Here we do not override the defaults, which
     // means any target is allowed, and the default is native. Other options
