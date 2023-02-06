@@ -864,7 +864,7 @@ void InitWindow(int width, int height, const char *title)
     LoadFontDefault();
     #if defined(SUPPORT_MODULE_RSHAPES)
     Rectangle rec = GetFontDefault().recs[95];
-    // NOTE: We setup a 1px padding on char rectangle to avoid pixel bleeding on MSAA filtering
+    // NOTE: We set up a 1px padding on char rectangle to avoid pixel bleeding on MSAA filtering
     SetShapesTexture(GetFontDefault().texture, (Rectangle){ rec.x + 1, rec.y + 1, rec.width - 2, rec.height - 2 }); // WARNING: Module required: rshapes
     #endif
 #else
@@ -1416,13 +1416,13 @@ void SetWindowState(unsigned int flags)
     // State change: FLAG_WINDOW_TRANSPARENT
     if (((CORE.Window.flags & FLAG_WINDOW_TRANSPARENT) != (flags & FLAG_WINDOW_TRANSPARENT)) && ((flags & FLAG_WINDOW_TRANSPARENT) > 0))
     {
-        TRACELOG(LOG_WARNING, "WINDOW: Framebuffer transparency can only by configured before window initialization");
+        TRACELOG(LOG_WARNING, "WINDOW: Framebuffer transparency can only be configured before window initialization");
     }
 
     // State change: FLAG_WINDOW_HIGHDPI
     if (((CORE.Window.flags & FLAG_WINDOW_HIGHDPI) != (flags & FLAG_WINDOW_HIGHDPI)) && ((flags & FLAG_WINDOW_HIGHDPI) > 0))
     {
-        TRACELOG(LOG_WARNING, "WINDOW: High DPI can only by configured before window initialization");
+        TRACELOG(LOG_WARNING, "WINDOW: High DPI can only be configured before window initialization");
     }
 
     // State change: FLAG_WINDOW_MOUSE_PASSTHROUGH
@@ -1435,13 +1435,13 @@ void SetWindowState(unsigned int flags)
     // State change: FLAG_MSAA_4X_HINT
     if (((CORE.Window.flags & FLAG_MSAA_4X_HINT) != (flags & FLAG_MSAA_4X_HINT)) && ((flags & FLAG_MSAA_4X_HINT) > 0))
     {
-        TRACELOG(LOG_WARNING, "WINDOW: MSAA can only by configured before window initialization");
+        TRACELOG(LOG_WARNING, "WINDOW: MSAA can only be configured before window initialization");
     }
 
     // State change: FLAG_INTERLACED_HINT
     if (((CORE.Window.flags & FLAG_INTERLACED_HINT) != (flags & FLAG_INTERLACED_HINT)) && ((flags & FLAG_INTERLACED_HINT) > 0))
     {
-        TRACELOG(LOG_WARNING, "RPI: Interlaced mode can only by configured before window initialization");
+        TRACELOG(LOG_WARNING, "RPI: Interlaced mode can only be configured before window initialization");
     }
 #endif
 }
@@ -1524,13 +1524,13 @@ void ClearWindowState(unsigned int flags)
     // State change: FLAG_WINDOW_TRANSPARENT
     if (((CORE.Window.flags & FLAG_WINDOW_TRANSPARENT) > 0) && ((flags & FLAG_WINDOW_TRANSPARENT) > 0))
     {
-        TRACELOG(LOG_WARNING, "WINDOW: Framebuffer transparency can only by configured before window initialization");
+        TRACELOG(LOG_WARNING, "WINDOW: Framebuffer transparency can only be configured before window initialization");
     }
 
     // State change: FLAG_WINDOW_HIGHDPI
     if (((CORE.Window.flags & FLAG_WINDOW_HIGHDPI) > 0) && ((flags & FLAG_WINDOW_HIGHDPI) > 0))
     {
-        TRACELOG(LOG_WARNING, "WINDOW: High DPI can only by configured before window initialization");
+        TRACELOG(LOG_WARNING, "WINDOW: High DPI can only be configured before window initialization");
     }
 
     // State change: FLAG_WINDOW_MOUSE_PASSTHROUGH
@@ -1543,13 +1543,13 @@ void ClearWindowState(unsigned int flags)
     // State change: FLAG_MSAA_4X_HINT
     if (((CORE.Window.flags & FLAG_MSAA_4X_HINT) > 0) && ((flags & FLAG_MSAA_4X_HINT) > 0))
     {
-        TRACELOG(LOG_WARNING, "WINDOW: MSAA can only by configured before window initialization");
+        TRACELOG(LOG_WARNING, "WINDOW: MSAA can only be configured before window initialization");
     }
 
     // State change: FLAG_INTERLACED_HINT
     if (((CORE.Window.flags & FLAG_INTERLACED_HINT) > 0) && ((flags & FLAG_INTERLACED_HINT) > 0))
     {
-        TRACELOG(LOG_WARNING, "RPI: Interlaced mode can only by configured before window initialization");
+        TRACELOG(LOG_WARNING, "RPI: Interlaced mode can only be configured before window initialization");
     }
 #endif
 }
@@ -2807,7 +2807,7 @@ double GetTime(void)
 
 // Setup window configuration flags (view FLAGS)
 // NOTE: This function is expected to be called before window creation,
-// because it setups some flags for the window creation process.
+// because it sets up some flags for the window creation process.
 // To configure window states after creation, just use SetWindowState()
 void SetConfigFlags(unsigned int flags)
 {
@@ -4204,7 +4204,7 @@ static bool InitGraphicsDevice(int width, int height)
     // NOTE: V-Sync can be enabled by graphic driver configuration
     if (CORE.Window.flags & FLAG_VSYNC_HINT)
     {
-        // WARNING: It seems to hits a critical render path in Intel HD Graphics
+        // WARNING: It seems to hit a critical render path in Intel HD Graphics
         glfwSwapInterval(1);
         TRACELOG(LOG_INFO, "DISPLAY: Trying to enable VSYNC");
     }
@@ -4215,12 +4215,12 @@ static bool InitGraphicsDevice(int width, int height)
 #if defined(PLATFORM_DESKTOP)
     if ((CORE.Window.flags & FLAG_WINDOW_HIGHDPI) > 0)
     {
-        // NOTE: On APPLE platforms system should manage window/input scaling and also framebuffer scaling
+        // NOTE: On APPLE platforms system should manage window/input scaling and also framebuffer scaling.
         // Framebuffer scaling should be activated with: glfwWindowHint(GLFW_COCOA_RETINA_FRAMEBUFFER, GLFW_TRUE);
     #if !defined(__APPLE__)
         glfwGetFramebufferSize(CORE.Window.handle, &fbWidth, &fbHeight);
 
-        // Screen scaling matrix is required in case desired screen area is different than display area
+        // Screen scaling matrix is required in case desired screen area is different from display area
         CORE.Window.screenScale = MatrixScale((float)fbWidth/CORE.Window.screen.width, (float)fbHeight/CORE.Window.screen.height, 1.0f);
 
         // Mouse input scaling for the new screen size
@@ -5413,7 +5413,7 @@ static void CharCallback(GLFWwindow *window, unsigned int key)
     //TRACELOG(LOG_DEBUG, "Char Callback: KEY:%i(%c)", key, key);
 
     // NOTE: Registers any key down considering OS keyboard layout but
-    // do not detects action events, those should be managed by user...
+    // does not detect action events, those should be managed by user...
     // Ref: https://github.com/glfw/glfw/issues/668#issuecomment-166794907
     // Ref: https://www.glfw.org/docs/latest/input_guide.html#input_char
 
@@ -5456,7 +5456,7 @@ static void MouseButtonCallback(GLFWwindow *window, int button, int action, int 
     gestureEvent.position[0].x /= (float)GetScreenWidth();
     gestureEvent.position[0].y /= (float)GetScreenHeight();
 
-    // Gesture data is sent to gestures system for processing
+    // Gesture data is sent to gestures-system for processing
     ProcessGestureEvent(gestureEvent);
 #endif
 }
@@ -5487,7 +5487,7 @@ static void MouseCursorPosCallback(GLFWwindow *window, double x, double y)
     gestureEvent.position[0].x /= (float)GetScreenWidth();
     gestureEvent.position[0].y /= (float)GetScreenHeight();
 
-    // Gesture data is sent to gestures system for processing
+    // Gesture data is sent to gestures-system for processing
     ProcessGestureEvent(gestureEvent);
 #endif
 }

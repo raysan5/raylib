@@ -751,7 +751,7 @@ Image GenImageGradientRadial(int width, int height, float density, Color inner, 
             float factor = (dist - radius*density)/(radius*(1.0f - density));
 
             factor = (float)fmax(factor, 0.0f);
-            factor = (float)fmin(factor, 1.f); // dist can be bigger than radius so we have to check
+            factor = (float)fmin(factor, 1.f); // dist can be bigger than radius, so we have to check
 
             pixels[y*width + x].r = (int)((float)outer.r*factor + (float)inner.r*(1.0f - factor));
             pixels[y*width + x].g = (int)((float)outer.g*factor + (float)inner.g*(1.0f - factor));
@@ -898,7 +898,7 @@ Image GenImageCellular(int width, int height, int tileSize)
                 }
             }
 
-            // I made this up but it seems to give good results at all tile sizes
+            // I made this up, but it seems to give good results at all tile sizes
             int intensity = (int)(minDistance*256.0f/tileSize);
             if (intensity > 255) intensity = 255;
 
@@ -1269,7 +1269,7 @@ Image ImageTextEx(Font font, const char *text, float fontSize, float spacing, Co
     int size = (int)strlen(text);   // Get size in bytes of text
 
     int textOffsetX = 0;            // Image drawing position X
-    int textOffsetY = 0;            // Offset between lines (on line break '\n')
+    int textOffsetY = 0;            // Offset between lines (on linebreak '\n')
 
     // NOTE: Text image is generated at font base size, later scaled to desired font size
     Vector2 imSize = MeasureTextEx(font, text, (float)font.baseSize, spacing);  // WARNING: Module required: rtext
@@ -1286,7 +1286,7 @@ Image ImageTextEx(Font font, const char *text, float fontSize, float spacing, Co
         int index = GetGlyphIndex(font, codepoint);                         // WARNING: Module required: rtext
 
         // NOTE: Normally we exit the decoding sequence as soon as a bad byte is found (and return 0x3f)
-        // but we need to draw all of the bad bytes using the '?' symbol moving one byte
+        // but we need to draw all the bad bytes using the '?' symbol moving one byte
         if (codepoint == 0x3f) codepointByteCount = 1;
 
         if (codepoint == '\n')
@@ -1711,7 +1711,7 @@ void ImageResize(Image *image, int newWidth, int newHeight)
         Color *pixels = LoadImageColors(*image);
         Color *output = (Color *)RL_MALLOC(newWidth*newHeight*sizeof(Color));
 
-        // NOTE: Color data is casted to (unsigned char *), there shouldn't been any problem...
+        // NOTE: Color data is cast to (unsigned char *), there shouldn't been any problem...
         stbir_resize_uint8((unsigned char *)pixels, image->width, image->height, 0, (unsigned char *)output, newWidth, newHeight, 0, 4);
 
         int format = image->format;
@@ -1891,7 +1891,7 @@ void ImageMipmaps(Image *image)
 }
 
 // Dither image data to 16bpp or lower (Floyd-Steinberg dithering)
-// NOTE: In case selected bpp do not represent an known 16bit format,
+// NOTE: In case selected bpp do not represent a known 16bit format,
 // dithered data is stored in the LSB part of the unsigned short
 void ImageDither(Image *image, int rBpp, int gBpp, int bBpp, int aBpp)
 {
@@ -3049,7 +3049,7 @@ void ImageDraw(Image *dst, Image src, Rectangle srcRec, Rectangle dstRec, Color 
         if ((srcRec.y + srcRec.height) > src.height) srcRec.height = src.height - srcRec.y;
 
         // Check if source rectangle needs to be resized to destination rectangle
-        // In that case, we make a copy of source and we apply all required transform
+        // In that case, we make a copy of source, and we apply all required transform
         if (((int)srcRec.width != (int)dstRec.width) || ((int)srcRec.height != (int)dstRec.height))
         {
             srcMod = ImageFromImage(src, srcRec);   // Create image from another image
