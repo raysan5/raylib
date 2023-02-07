@@ -242,6 +242,7 @@
         #include <unistd.h>                 // Required for: usleep()
 
         //#define GLFW_EXPOSE_NATIVE_COCOA    // WARNING: Fails due to type redefinition
+        void *glfwGetCocoaWindow(GLFWwindow* handle);
         #include "GLFW/glfw3native.h"       // Required for: glfwGetCocoaWindow()
     #endif
 
@@ -1677,7 +1678,7 @@ void *GetWindowHandle(void)
 #endif
 #if defined(__APPLE__)
     // NOTE: Returned handle is: (objc_object *)
-    return NULL;    // TODO: return (void *)glfwGetCocoaWindow(window);
+    return (void *)glfwGetCocoaWindow(CORE.Window.handle);
 #endif
 
     return NULL;
