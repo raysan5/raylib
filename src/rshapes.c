@@ -978,7 +978,7 @@ void DrawRectangleRounded(Rectangle rec, float roundness, int segments, Color co
     rlSetTexture(texShapes.id);
 
     rlBegin(RL_QUADS);
-        // Draw all of the 4 corners: [1] Upper Left Corner, [3] Upper Right Corner, [5] Lower Right Corner, [7] Lower Left Corner
+        // Draw all the 4 corners: [1] Upper Left Corner, [3] Upper Right Corner, [5] Lower Right Corner, [7] Lower Left Corner
         for (int k = 0; k < 4; ++k) // Hope the compiler is smart enough to unroll this loop
         {
             float angle = angles[k];
@@ -1207,7 +1207,7 @@ void DrawRectangleRoundedLines(Rectangle rec, float roundness, int segments, flo
 
         rlBegin(RL_QUADS);
 
-            // Draw all of the 4 corners first: Upper Left Corner, Upper Right Corner, Lower Right Corner, Lower Left Corner
+            // Draw all the 4 corners first: Upper Left Corner, Upper Right Corner, Lower Right Corner, Lower Left Corner
             for (int k = 0; k < 4; ++k) // Hope the compiler is smart enough to unroll this loop
             {
                 float angle = angles[k];
@@ -1342,7 +1342,7 @@ void DrawRectangleRoundedLines(Rectangle rec, float roundness, int segments, flo
         // Use LINES to draw the outline
         rlBegin(RL_LINES);
 
-            // Draw all of the 4 corners first: Upper Left Corner, Upper Right Corner, Lower Right Corner, Lower Left Corner
+            // Draw all the 4 corners first: Upper Left Corner, Upper Right Corner, Lower Right Corner, Lower Left Corner
             for (int k = 0; k < 4; ++k) // Hope the compiler is smart enough to unroll this loop
             {
                 float angle = angles[k];

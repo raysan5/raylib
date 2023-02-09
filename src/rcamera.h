@@ -150,7 +150,7 @@ void SetCameraMoveControls(int keyFront, int keyBack,
 #endif
 
 // Camera mouse movement sensitivity
-#define CAMERA_MOUSE_MOVE_SENSITIVITY                   0.5f    // TODO: it should be independant of framerate
+#define CAMERA_MOUSE_MOVE_SENSITIVITY                   0.5f    // TODO: it should be independent of framerate
 #define CAMERA_MOUSE_SCROLL_SENSITIVITY                 1.5f
 
 // FREE_CAMERA
