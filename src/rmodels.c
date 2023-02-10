@@ -1125,7 +1125,7 @@ void UnloadModel(Model model)
 
     // Unload materials maps
     // NOTE: As the user could be sharing shaders and textures between models,
-    // we don't unload the material but just free it's maps,
+    // we don't unload the material but just free its maps,
     // the user is responsible for freeing models shaders and textures
     for (int i = 0; i < model.materialCount; i++) RL_FREE(model.materials[i].maps);
 
@@ -1146,7 +1146,7 @@ void UnloadModelKeepMeshes(Model model)
 {
     // Unload materials maps
     // NOTE: As the user could be sharing shaders and textures between models,
-    // we don't unload the material but just free it's maps,
+    // we don't unload the material but just free its maps,
     // the user is responsible for freeing models shaders and textures
     for (int i = 0; i < model.materialCount; i++) RL_FREE(model.materials[i].maps);
 
@@ -1230,7 +1230,7 @@ void UploadMesh(Mesh *mesh, bool dynamic)
     rlEnableVertexAttribute(1);
 
     // WARNING: When setting default vertex attribute values, the values for each generic vertex attribute
-    // is part of current state and it is maintained even if a different program object is used
+    // is part of current state, and it is maintained even if a different program object is used
 
     if (mesh->normals != NULL)
     {
@@ -1383,7 +1383,7 @@ void DrawMesh(Mesh mesh, Material material, Matrix transform)
     }
 
     // Get a copy of current matrices to work with,
-    // just in case stereo render is required and we need to modify them
+    // just in case stereo render is required, and we need to modify them
     // NOTE: At this point the modelview matrix just contains the view matrix (camera)
     // That's because BeginMode3D() sets it and there is no model-drawing function
     // that modifies it, all use rlPushMatrix() and rlPopMatrix()
@@ -1396,7 +1396,7 @@ void DrawMesh(Mesh mesh, Material material, Matrix transform)
     if (material.shader.locs[SHADER_LOC_MATRIX_VIEW] != -1) rlSetUniformMatrix(material.shader.locs[SHADER_LOC_MATRIX_VIEW], matView);
     if (material.shader.locs[SHADER_LOC_MATRIX_PROJECTION] != -1) rlSetUniformMatrix(material.shader.locs[SHADER_LOC_MATRIX_PROJECTION], matProjection);
 
-    // Model transformation matrix is send to shader uniform location: SHADER_LOC_MATRIX_MODEL
+    // Model transformation matrix is sent to shader uniform location: SHADER_LOC_MATRIX_MODEL
     if (material.shader.locs[SHADER_LOC_MATRIX_MODEL] != -1) rlSetUniformMatrix(material.shader.locs[SHADER_LOC_MATRIX_MODEL], transform);
 
     // Accumulate several model transformations:
@@ -1517,7 +1517,7 @@ void DrawMesh(Mesh mesh, Material material, Matrix transform)
         else rlDrawVertexArray(0, mesh.vertexCount);
     }
 
-    // Unbind all binded texture maps
+    // Unbind all bound texture maps
     for (int i = 0; i < MAX_MATERIAL_MAPS; i++)
     {
         if (material.maps[i].texture.id > 0)
@@ -1587,7 +1587,7 @@ void DrawMeshInstanced(Mesh mesh, Material material, const Matrix *transforms, i
     }
 
     // Get a copy of current matrices to work with,
-    // just in case stereo render is required and we need to modify them
+    // just in case stereo render is required, and we need to modify them
     // NOTE: At this point the modelview matrix just contains the view matrix (camera)
     // That's because BeginMode3D() sets it and there is no model-drawing function
     // that modifies it, all use rlPushMatrix() and rlPopMatrix()
@@ -1738,7 +1738,7 @@ void DrawMeshInstanced(Mesh mesh, Material material, const Matrix *transforms, i
         else rlDrawVertexArrayInstanced(0, mesh.vertexCount, instances);
     }
 
-    // Unbind all binded texture maps
+    // Unbind all bound texture maps
     for (int i = 0; i < MAX_MATERIAL_MAPS; i++)
     {
         if (material.maps[i].texture.id > 0)
@@ -2559,7 +2559,7 @@ Mesh GenMeshSphere(float radius, int rings, int slices)
     return mesh;
 }
 
-// Generate hemi-sphere mesh (half sphere, no bottom cap)
+// Generate hemisphere mesh (half sphere, no bottom cap)
 Mesh GenMeshHemiSphere(float radius, int rings, int slices)
 {
     Mesh mesh = { 0 };
@@ -3242,7 +3242,7 @@ Mesh GenMeshCubicmap(Image cubicmap, Vector3 cubeSize)
         }
     }
 
-    // Move data from mapVertices temp arays to vertices float array
+    // Move data from mapVertices temp arrays to vertices float array
     mesh.vertexCount = vCounter;
     mesh.triangleCount = vCounter/3;
 
@@ -3742,7 +3742,7 @@ RayCollision GetRayCollisionBox(Ray ray, BoundingBox box)
     // NOTE: We use an additional .01 to fix numerical errors
     collision.normal = Vector3Scale(collision.normal, 2.01f);
     collision.normal = Vector3Divide(collision.normal, Vector3Subtract(box.max, box.min));
-    // The relevant elemets of the vector are now slightly larger than 1.0f (or smaller than -1.0f)
+    // The relevant elements of the vector are now slightly larger than 1.0f (or smaller than -1.0f)
     // and the others are somewhere between -1.0 and 1.0 casting to int is exactly our wanted normal!
     collision.normal.x = (float)((int)collision.normal.x);
     collision.normal.y = (float)((int)collision.normal.y);
@@ -3842,7 +3842,7 @@ RayCollision GetRayCollisionTriangle(Ray ray, Vector3 p1, Vector3 p2, Vector3 p3
     // Calculate u parameter and test bound
     u = Vector3DotProduct(tv, p)*invDet;
 
-    // The intersection lies outside of the triangle
+    // The intersection lies outside the triangle
     if ((u < 0.0f) || (u > 1.0f)) return collision;
 
     // Prepare to test v parameter
@@ -3851,7 +3851,7 @@ RayCollision GetRayCollisionTriangle(Ray ray, Vector3 p1, Vector3 p2, Vector3 p3
     // Calculate V parameter and test bound
     v = Vector3DotProduct(ray.direction, q)*invDet;
 
-    // The intersection lies outside of the triangle
+    // The intersection lies outside the triangle
     if ((v < 0.0f) || ((u + v) > 1.0f)) return collision;
 
     t = Vector3DotProduct(edge2, q)*invDet;
@@ -4671,7 +4671,7 @@ static Image LoadImageFromCgltfImage(cgltf_image *cgltfImage, const char *texPat
 {
     Image image = { 0 };
 
-    if (cgltfImage->uri != NULL)     // Check if image data is provided as a uri (base64 or path)
+    if (cgltfImage->uri != NULL)     // Check if image data is provided as an uri (base64 or path)
     {
         if ((strlen(cgltfImage->uri) > 5) &&
             (cgltfImage->uri[0] == 'd') &&
@@ -4959,7 +4959,7 @@ static Model LoadGLTF(const char *fileName)
 
                 for (unsigned int j = 0; j < data->meshes[i].primitives[p].attributes_count; j++)
                 {
-                    // Check the different attributes for every pimitive
+                    // Check the different attributes for every primitive
                     if (data->meshes[i].primitives[p].attributes[j].type == cgltf_attribute_type_position)      // POSITION
                     {
                         cgltf_accessor *attribute = data->meshes[i].primitives[p].attributes[j].data;
@@ -5110,7 +5110,7 @@ static Model LoadGLTF(const char *fileName)
                 {
                     // The primitive actually keeps the pointer to the corresponding material,
                     // raylib instead assigns to the mesh the by its index, as loaded in model.materials array
-                    // To get the index, we check if material pointers match and we assign the corresponding index,
+                    // To get the index, we check if material pointers match, and we assign the corresponding index,
                     // skipping index 0, the default material
                     if (&data->materials[m] == data->meshes[i].primitives[p].material)
                     {
@@ -5613,7 +5613,7 @@ static Model LoadM3D(const char *fileName)
             // Materials are grouped together
             if (mi != m3d->face[i].materialid)
             {
-                // there should be only one material switch per material kind, but be bulletproof for unoptimal model files
+                // there should be only one material switch per material kind, but be bulletproof for non-optimal model files
                 if (k + 1 >= model.meshCount)
                 {
                     model.meshCount++;
@@ -5838,7 +5838,7 @@ static Model LoadM3D(const char *fileName)
         }
 
         // Load bone-pose default mesh into animation vertices. These will be updated when UpdateModelAnimation gets
-        // called, but not before, however DrawMesh uses these if they exists (so not good if they are left empty).
+        // called, but not before, however DrawMesh uses these if they exist (so not good if they are left empty).
         if (m3d->numbone && m3d->numskin)
         {
             for(i = 0; i < model.meshCount; i++)
