@@ -366,14 +366,17 @@ Font LoadFontEx(const char *fileName, int fontSize, int *fontChars, int glyphCou
     return font;
 }
 
+// Check equality of two colors
+inline bool ColorEqual(Color col1, Color col2) {
+	return (col1.r == col2.r) && (col1.g == col2.g) && (col1.b == col2.b) && (col1.a == col2.a);
+}
+
 // Load an Image font file (XNA style)
 Font LoadFontFromImage(Image image, Color key, int firstChar)
 {
 #ifndef MAX_GLYPHS_FROM_IMAGE
     #define MAX_GLYPHS_FROM_IMAGE   256     // Maximum number of glyphs supported on image scan
 #endif
-
-    #define COLOR_EQUAL(col1, col2) ((col1.r == col2.r) && (col1.g == col2.g) && (col1.b == col2.b) && (col1.a == col2.a))
 
     Font font = GetFontDefault();
 
@@ -395,10 +398,10 @@ Font LoadFontFromImage(Image image, Color key, int firstChar)
     {
         for (x = 0; x < image.width; x++)
         {
-            if (!COLOR_EQUAL(pixels[y*image.width + x], key)) break;
+            if (!ColorEqual(pixels[y*image.width + x], key)) break;
         }
 
-        if (!COLOR_EQUAL(pixels[y*image.width + x], key)) break;
+        if (!ColorEqual(pixels[y*image.width + x], key)) break;
     }
 
     if ((x == 0) || (y == 0)) return font;
@@ -409,7 +412,7 @@ Font LoadFontFromImage(Image image, Color key, int firstChar)
     int charHeight = 0;
     int j = 0;
 
-    while (!COLOR_EQUAL(pixels[(lineSpacing + j)*image.width + charSpacing], key)) j++;
+    while (!ColorEqual(pixels[(lineSpacing + j)*image.width + charSpacing], key)) j++;
 
     charHeight = j;
 
@@ -422,7 +425,7 @@ Font LoadFontFromImage(Image image, Color key, int firstChar)
     while ((lineSpacing + lineToRead*(charHeight + lineSpacing)) < image.height)
     {
         while ((xPosToRead < image.width) &&
-              !COLOR_EQUAL((pixels[(lineSpacing + (charHeight+lineSpacing)*lineToRead)*image.width + xPosToRead]), key))
+              !ColorEqual((pixels[(lineSpacing + (charHeight+lineSpacing)*lineToRead)*image.width + xPosToRead]), key))
         {
             tempCharValues[index] = firstChar + index;
 
@@ -432,7 +435,7 @@ Font LoadFontFromImage(Image image, Color key, int firstChar)
 
             int charWidth = 0;
 
-            while (!COLOR_EQUAL(pixels[(lineSpacing + (charHeight+lineSpacing)*lineToRead)*image.width + xPosToRead + charWidth], key)) charWidth++;
+            while (!ColorEqual(pixels[(lineSpacing + (charHeight+lineSpacing)*lineToRead)*image.width + xPosToRead + charWidth], key)) charWidth++;
 
             tempCharRecs[index].width = (float)charWidth;
 
@@ -447,7 +450,7 @@ Font LoadFontFromImage(Image image, Color key, int firstChar)
 
     // NOTE: We need to remove key color borders from image to avoid weird
     // artifacts on texture scaling when using TEXTURE_FILTER_BILINEAR or TEXTURE_FILTER_TRILINEAR
-    for (int i = 0; i < image.height*image.width; i++) if (COLOR_EQUAL(pixels[i], key)) pixels[i] = BLANK;
+    for (int i = 0; i < image.height*image.width; i++) if (ColorEqual(pixels[i], key)) pixels[i] = BLANK;
 
     // Create a new image with the processed color data (key color replaced by BLANK)
     Image fontClear = {
@@ -855,7 +858,7 @@ bool ExportFontAsCode(Font font, const char *fileName)
     #define TEXT_BYTES_PER_LINE     20
 #endif
 
-    #define MAX_FONT_DATA_SIZE      1024*1024       // 1 MB
+    #define MAX_FONT_DATA_SIZE      (1024*1024)       // 1 MB
 
     // Get file name from path
     char fileNamePascal[256] = { 0 };
