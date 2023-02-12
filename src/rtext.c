@@ -367,7 +367,7 @@ Font LoadFontEx(const char *fileName, int fontSize, int *fontChars, int glyphCou
 }
 
 // Check equality of two colors
-inline bool ColorEqual(Color col1, Color col2) {
+static inline bool ColorEqual(Color col1, Color col2) {
 	return (col1.r == col2.r) && (col1.g == col2.g) && (col1.b == col2.b) && (col1.a == col2.a);
 }
 
