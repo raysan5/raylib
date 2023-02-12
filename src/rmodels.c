@@ -5633,8 +5633,9 @@ static Model LoadM3D(const char *fileName)
                 model.meshes[k].texcoords = (float *)RL_CALLOC(model.meshes[k].vertexCount*2, sizeof(float));
                 model.meshes[k].normals = (float *)RL_CALLOC(model.meshes[k].vertexCount*3, sizeof(float));
 
-                // If color map is provided, we allocate storage for vertex colors
-                if (m3d->cmap != NULL) model.meshes[k].colors = RL_CALLOC(model.meshes[k].vertexCount*4, sizeof(unsigned char));
+                // If no map is provided, we allocate storage for vertex colors
+                // M3D specs only consider vertex colors if no material is provided
+                if (mi != M3D_UNDEF) model.meshes[k].colors = RL_CALLOC(model.meshes[k].vertexCount*4, sizeof(unsigned char));
 
                 if (m3d->numbone && m3d->numskin)
                 {
