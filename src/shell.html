@@ -32,9 +32,9 @@
 
     <style>
       body {
-        font-family: arial;
+        font-family: arial,serif;
         margin: 0;
-        padding: none;
+        padding: 0;
       }
 
       #header {
@@ -74,7 +74,7 @@ jwE50AGjLCVuS8Yt4H7OgZLKK5EKOsLviEWJSL/+0uMi7gLUSBseYwqEbXvSHCec1CJvZPyHCmYQffaB
 
       /* NOTE: Canvas *must not* have any border or padding, or mouse coords will be wrong */
       canvas.emscripten {
-        border: 0px none;
+        border: 0 none;
         background: black;
         width: 100%;
       }
@@ -82,9 +82,7 @@ jwE50AGjLCVuS8Yt4H7OgZLKK5EKOsLviEWJSL/+0uMi7gLUSBseYwqEbXvSHCec1CJvZPyHCmYQffaB
       .spinner {
         height: 30px;
         width: 30px;
-        margin: 0;
-        margin-top: 20px;
-        margin-left: 20px;
+        margin: 20px 0 0 20px;
         display: inline-block;
         vertical-align: top;
         -webkit-animation: rotation .8s linear infinite;
@@ -125,8 +123,8 @@ jwE50AGjLCVuS8Yt4H7OgZLKK5EKOsLviEWJSL/+0uMi7gLUSBseYwqEbXvSHCec1CJvZPyHCmYQffaB
       }
 
       #progress {
-        height: 0px;
-        width: 0px;
+        height: 0;
+        width: 0;
       }
 
       #controls {
@@ -140,8 +138,7 @@ jwE50AGjLCVuS8Yt4H7OgZLKK5EKOsLviEWJSL/+0uMi7gLUSBseYwqEbXvSHCec1CJvZPyHCmYQffaB
       #output {
         width: 100%;
         height: 140px;
-        margin: 0 auto;
-        margin-top: 10px;
+        margin: 10px auto 0;
         display: block;
         background-color: black;
         color: rgb(37, 174, 38);
@@ -173,12 +170,12 @@ jwE50AGjLCVuS8Yt4H7OgZLKK5EKOsLviEWJSL/+0uMi7gLUSBseYwqEbXvSHCec1CJvZPyHCmYQffaB
         <div class="emscripten" id="status">Downloading...</div>
 
         <span id='controls'>
-          <span><input type="button" value="🖵 FULLSCREEN" onclick="Module.requestFullscreen(false, false)"></span>
+          <span><input type="button" value="🖵 FULLSCREEN" onclick="Module.requestFullscreen()"></span>
           <span><input type="button" id="btn-audio" value="🔇 SUSPEND" onclick="toggleAudio()"></span>
         </span>
 
         <div class="emscripten">
-          <progress value="0" max="100" id="progress" hidden=1></progress>
+          <progress value="0" max="100" id="progress" hidden></progress>
         </div>
     </div>
 
@@ -192,10 +189,10 @@ jwE50AGjLCVuS8Yt4H7OgZLKK5EKOsLviEWJSL/+0uMi7gLUSBseYwqEbXvSHCec1CJvZPyHCmYQffaB
     <script type='text/javascript'>
         function saveFileFromMEMFSToDisk(memoryFSname, localFSname)     // This can be called by C/C++ code
         {
-            var isSafari = false; // Not supported, navigator.userAgent access is being restricted
+            const isSafari = false; // Not supported, navigator.userAgent access is being restricted
             //var isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
-            var data = FS.readFile(memoryFSname);
-            var blob;
+            const data = FS.readFile(memoryFSname);
+            let blob;
 
             if (isSafari) blob = new Blob([data.buffer], { type: "application/octet-stream" });
             else blob = new Blob([data.buffer], { type: "application/octet-binary" });
@@ -208,14 +205,14 @@ jwE50AGjLCVuS8Yt4H7OgZLKK5EKOsLviEWJSL/+0uMi7gLUSBseYwqEbXvSHCec1CJvZPyHCmYQffaB
         }
     </script>
     <script type='text/javascript'>
-        var statusElement = document.querySelector('#status');
-        var progressElement = document.querySelector('#progress');
-        var spinnerElement = document.querySelector('#spinner');
-        var Module = {
+        const statusElement = document.querySelector('#status');
+        const progressElement = document.querySelector('#progress');
+        const spinnerElement = document.querySelector('#spinner');
+        const Module = {
             preRun: [],
             postRun: [],
             print: (function() {
-                var element = document.querySelector('#output');
+                const element = document.querySelector('#output');
 
                 if (element) element.value = '';    // Clear browser cache
 
@@ -240,7 +237,7 @@ jwE50AGjLCVuS8Yt4H7OgZLKK5EKOsLviEWJSL/+0uMi7gLUSBseYwqEbXvSHCec1CJvZPyHCmYQffaB
                 console.error(text);
             },
             canvas: (function() {
-                var canvas = document.querySelector('#canvas');
+                const canvas = document.querySelector('#canvas');
 
                 // As a default initial behavior, pop up an alert when webgl context is lost.
                 // To make your application robust, you may want to override this behavior before shipping!
@@ -253,8 +250,8 @@ jwE50AGjLCVuS8Yt4H7OgZLKK5EKOsLviEWJSL/+0uMi7gLUSBseYwqEbXvSHCec1CJvZPyHCmYQffaB
                 if (!Module.setStatus.last) Module.setStatus.last = { time: Date.now(), text: '' };
                 if (text === Module.setStatus.last.text) return;
 
-                var m = text.match(/([^(]+)\((\d+(\.\d+)?)\/(\d+)\)/);
-                var now = Date.now();
+                const m = text.match(/([^(]+)\((\d+(\.\d+)?)\/(\d+)\)/);
+                const now = Date.now();
 
                 if (m && now - Module.setStatus.last.time < 30) return; // If this is a progress update, skip it if too soon
 
@@ -295,7 +292,7 @@ jwE50AGjLCVuS8Yt4H7OgZLKK5EKOsLviEWJSL/+0uMi7gLUSBseYwqEbXvSHCec1CJvZPyHCmYQffaB
 
     <!-- REF: https://developers.google.com/web/updates/2018/11/web-audio-autoplay -->
     <script type='text/javascript'>
-        var audioBtn = document.querySelector('#btn-audio');
+        const audioBtn = document.querySelector('#btn-audio');
 
         // An array of all contexts to resume on the page
         const audioContexList = [];
@@ -306,17 +303,17 @@ jwE50AGjLCVuS8Yt4H7OgZLKK5EKOsLviEWJSL/+0uMi7gLUSBseYwqEbXvSHCec1CJvZPyHCmYQffaB
                 construct(target, args) {
                     const result = new target(...args);
                     audioContexList.push(result);
-                    if (result.state == "suspended") audioBtn.value = "🔈 RESUME";
+                    if (result.state === "suspended") audioBtn.value = "🔈 RESUME";
                     return result;
                 }
             });
         })();
 
         function toggleAudio() {
-            var resumed = false;
+            let resumed = false;
             audioContexList.forEach(ctx => {
-                if (ctx.state == "suspended") { ctx.resume(); resumed = true; }
-                else if (ctx.state == "running") ctx.suspend();
+                if (ctx.state === "suspended") { ctx.resume(); resumed = true; }
+                else if (ctx.state === "running") ctx.suspend();
             });
 
             if (resumed) audioBtn.value = "🔇 SUSPEND";

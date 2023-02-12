@@ -31,17 +31,17 @@
     <link rel="shortcut icon" href="https://www.raylib.com/favicon.ico">
 
     <style>
-        body { margin: 0px; }
-        canvas.emscripten { border: 0px none; background-color: black; }
+        body { margin: 0; }
+        canvas.emscripten { border: 0 none; background-color: black; }
     </style>
     <script type='text/javascript' src="https://cdn.jsdelivr.net/gh/eligrey/FileSaver.js/dist/FileSaver.min.js"> </script>
     <script type='text/javascript'>
         function saveFileFromMEMFSToDisk(memoryFSname, localFSname)     // This can be called by C/C++ code
         {
-            var isSafari = false; // Not supported, navigator.userAgent access is being restricted
+            const isSafari = false; // Not supported, navigator.userAgent access is being restricted
             //var isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
-            var data = FS.readFile(memoryFSname);
-            var blob;
+            const data = FS.readFile(memoryFSname);
+            let blob;
 
             if (isSafari) blob = new Blob([data.buffer], { type: "application/octet-stream" });
             else blob = new Blob([data.buffer], { type: "application/octet-binary" });
@@ -56,26 +56,25 @@
     </head>
     <body>
         <canvas class=emscripten id=canvas oncontextmenu=event.preventDefault() tabindex=-1></canvas>
-        <p id="output" />
+        <p id="output"></p>
         <script>
-            var Module = {
-                print: (function() {
-                    var element = document.getElementById('output');
-                    if (element) element.value = ''; // clear browser cache
-                    return function(text) {
-                        if (arguments.length > 1) text = Array.prototype.slice.call(arguments).join(' ');
-                        console.log(text);
-                        if (element) {
-                          element.value += text + "\n";
-                          element.scrollTop = element.scrollHeight; // focus on bottom
-                        }
-                    };
-                })(),
-                canvas: (function() {
-                    var canvas = document.getElementById('canvas');
-                    return canvas;
-                })()
-            };
+          const Module = {
+            print: (function () {
+              const element = document.getElementById('output');
+              if (element) element.value = ''; // clear browser cache
+              return function (text) {
+                if (arguments.length > 1) text = Array.prototype.slice.call(arguments).join(' ');
+                console.log(text);
+                if (element) {
+                  element.value += text + "\n";
+                  element.scrollTop = element.scrollHeight; // focus on bottom
+                }
+              };
+            })(),
+            canvas: (function () {
+              return document.getElementById('canvas');
+            })()
+          };
         </script>
         {{{ SCRIPT }}}
     </body>
