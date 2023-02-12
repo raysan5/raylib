@@ -4287,10 +4287,10 @@ static Model LoadIQM(const char *fileName)
                 for (unsigned int m = 0; m < iqmHeader->num_meshes; m++)
                 {
                     int vCounter = 0;
-                    for (unsigned int i = imesh[m].first_vertex*3; i < (imesh[m].first_vertex + imesh[m].num_vertexes)*3; i++)
+                    for (unsigned int j = imesh[m].first_vertex*3; j < (imesh[m].first_vertex + imesh[m].num_vertexes)*3; j++)
                     {
-                        model.meshes[m].vertices[vCounter] = vertex[i];
-                        model.meshes[m].animVertices[vCounter] = vertex[i];
+                        model.meshes[m].vertices[vCounter] = vertex[j];
+                        model.meshes[m].animVertices[vCounter] = vertex[j];
                         vCounter++;
                     }
                 }
@@ -4305,10 +4305,10 @@ static Model LoadIQM(const char *fileName)
                 for (unsigned int m = 0; m < iqmHeader->num_meshes; m++)
                 {
                     int vCounter = 0;
-                    for (unsigned int i = imesh[m].first_vertex*3; i < (imesh[m].first_vertex + imesh[m].num_vertexes)*3; i++)
+                    for (unsigned int j = imesh[m].first_vertex * 3; j < (imesh[m].first_vertex + imesh[m].num_vertexes) * 3; j++)
                     {
-                        model.meshes[m].normals[vCounter] = normal[i];
-                        model.meshes[m].animNormals[vCounter] = normal[i];
+                        model.meshes[m].normals[vCounter] = normal[j];
+                        model.meshes[m].animNormals[vCounter] = normal[j];
                         vCounter++;
                     }
                 }
@@ -4323,9 +4323,9 @@ static Model LoadIQM(const char *fileName)
                 for (unsigned int m = 0; m < iqmHeader->num_meshes; m++)
                 {
                     int vCounter = 0;
-                    for (unsigned int i = imesh[m].first_vertex*2; i < (imesh[m].first_vertex + imesh[m].num_vertexes)*2; i++)
+                    for (unsigned int j = imesh[m].first_vertex * 2; j < (imesh[m].first_vertex + imesh[m].num_vertexes) * 2; j++)
                     {
-                        model.meshes[m].texcoords[vCounter] = text[i];
+                        model.meshes[m].texcoords[vCounter] = text[j];
                         vCounter++;
                     }
                 }
@@ -4340,9 +4340,9 @@ static Model LoadIQM(const char *fileName)
                 for (unsigned int m = 0; m < iqmHeader->num_meshes; m++)
                 {
                     int boneCounter = 0;
-                    for (unsigned int i = imesh[m].first_vertex*4; i < (imesh[m].first_vertex + imesh[m].num_vertexes)*4; i++)
+                    for (unsigned int j = imesh[m].first_vertex * 4; j < (imesh[m].first_vertex + imesh[m].num_vertexes) * 4; j++)
                     {
-                        model.meshes[m].boneIds[boneCounter] = blendi[i];
+                        model.meshes[m].boneIds[boneCounter] = blendi[j];
                         boneCounter++;
                     }
                 }
@@ -4357,9 +4357,9 @@ static Model LoadIQM(const char *fileName)
                 for (unsigned int m = 0; m < iqmHeader->num_meshes; m++)
                 {
                     int boneCounter = 0;
-                    for (unsigned int i = imesh[m].first_vertex*4; i < (imesh[m].first_vertex + imesh[m].num_vertexes)*4; i++)
+                    for (unsigned int j = imesh[m].first_vertex * 4; j < (imesh[m].first_vertex + imesh[m].num_vertexes) * 4; j++)
                     {
-                        model.meshes[m].boneWeights[boneCounter] = blendw[i]/255.0f;
+                        model.meshes[m].boneWeights[boneCounter] = blendw[j] / 255.0f;
                         boneCounter++;
                     }
                 }
@@ -4376,9 +4376,9 @@ static Model LoadIQM(const char *fileName)
                     model.meshes[m].colors = RL_CALLOC(model.meshes[m].vertexCount*4, sizeof(unsigned char));
 
                     int vCounter = 0;
-                    for (unsigned int i = imesh[m].first_vertex*4; i < (imesh[m].first_vertex + imesh[m].num_vertexes)*4; i++)
+                    for (unsigned int j = imesh[m].first_vertex * 4; j < (imesh[m].first_vertex + imesh[m].num_vertexes) * 4; j++)
                     {
-                        model.meshes[m].colors[vCounter] = color[i];
+                        model.meshes[m].colors[vCounter] = color[j];
                         vCounter++;
                     }
                 }

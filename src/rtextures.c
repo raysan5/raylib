@@ -1115,11 +1115,11 @@ void ImageFormat(Image *image, int newFormat)
                 {
                     image->data = (unsigned char *)RL_MALLOC(image->width*image->height*3*sizeof(unsigned char));
 
-                    for (int i = 0, k = 0; i < image->width*image->height*3; i += 3, k++)
+                    for (int i = 0, j = 0; i < image->width * image->height * 3; i += 3, j++)
                     {
-                        ((unsigned char *)image->data)[i] = (unsigned char)(pixels[k].x*255.0f);
-                        ((unsigned char *)image->data)[i + 1] = (unsigned char)(pixels[k].y*255.0f);
-                        ((unsigned char *)image->data)[i + 2] = (unsigned char)(pixels[k].z*255.0f);
+                        ((unsigned char *)image->data)[i] = (unsigned char)(pixels[j].x * 255.0f);
+                        ((unsigned char *)image->data)[i + 1] = (unsigned char)(pixels[j].y * 255.0f);
+                        ((unsigned char *)image->data)[i + 2] = (unsigned char)(pixels[j].z * 255.0f);
                     }
                 } break;
                 case PIXELFORMAT_UNCOMPRESSED_R5G5B5A1:
@@ -1166,12 +1166,12 @@ void ImageFormat(Image *image, int newFormat)
                 {
                     image->data = (unsigned char *)RL_MALLOC(image->width*image->height*4*sizeof(unsigned char));
 
-                    for (int i = 0, k = 0; i < image->width*image->height*4; i += 4, k++)
+                    for (int i = 0, j = 0; i < image->width * image->height * 4; i += 4, j++)
                     {
-                        ((unsigned char *)image->data)[i] = (unsigned char)(pixels[k].x*255.0f);
-                        ((unsigned char *)image->data)[i + 1] = (unsigned char)(pixels[k].y*255.0f);
-                        ((unsigned char *)image->data)[i + 2] = (unsigned char)(pixels[k].z*255.0f);
-                        ((unsigned char *)image->data)[i + 3] = (unsigned char)(pixels[k].w*255.0f);
+                        ((unsigned char *)image->data)[i] = (unsigned char)(pixels[j].x * 255.0f);
+                        ((unsigned char *)image->data)[i + 1] = (unsigned char)(pixels[j].y * 255.0f);
+                        ((unsigned char *)image->data)[i + 2] = (unsigned char)(pixels[j].z * 255.0f);
+                        ((unsigned char *)image->data)[i + 3] = (unsigned char)(pixels[j].w * 255.0f);
                     }
                 } break;
                 case PIXELFORMAT_UNCOMPRESSED_R32:
@@ -1189,23 +1189,23 @@ void ImageFormat(Image *image, int newFormat)
                 {
                     image->data = (float *)RL_MALLOC(image->width*image->height*3*sizeof(float));
 
-                    for (int i = 0, k = 0; i < image->width*image->height*3; i += 3, k++)
+                    for (int i = 0, j = 0; i < image->width * image->height * 3; i += 3, j++)
                     {
-                        ((float *)image->data)[i] = pixels[k].x;
-                        ((float *)image->data)[i + 1] = pixels[k].y;
-                        ((float *)image->data)[i + 2] = pixels[k].z;
+                        ((float *)image->data)[i] = pixels[j].x;
+                        ((float *)image->data)[i + 1] = pixels[j].y;
+                        ((float *)image->data)[i + 2] = pixels[j].z;
                     }
                 } break;
                 case PIXELFORMAT_UNCOMPRESSED_R32G32B32A32:
                 {
                     image->data = (float *)RL_MALLOC(image->width*image->height*4*sizeof(float));
 
-                    for (int i = 0, k = 0; i < image->width*image->height*4; i += 4, k++)
+                    for (int i = 0, j = 0; i < image->width * image->height * 4; i += 4, j++)
                     {
-                        ((float *)image->data)[i] = pixels[k].x;
-                        ((float *)image->data)[i + 1] = pixels[k].y;
-                        ((float *)image->data)[i + 2] = pixels[k].z;
-                        ((float *)image->data)[i + 3] = pixels[k].w;
+                        ((float *)image->data)[i] = pixels[j].x;
+                        ((float *)image->data)[i + 1] = pixels[j].y;
+                        ((float *)image->data)[i + 2] = pixels[j].z;
+                        ((float *)image->data)[i + 3] = pixels[j].w;
                     }
                 } break;
                 default: break;
