@@ -1886,8 +1886,8 @@ Vector2 GetWindowScaleDPI(void)
     Vector2 scale = { 1.0f, 1.0f };
 
 #if defined(PLATFORM_DESKTOP)
-    float xdpi = 1.0;
-    float ydpi = 1.0;
+    float xdpi = 1.0f;
+    float ydpi = 1.0f;
     Vector2 windowPos = GetWindowPosition();
 
     int monitorCount = 0;
@@ -4729,13 +4729,13 @@ static void SetupFramebuffer(int width, int height)
         if (widthRatio <= heightRatio)
         {
             CORE.Window.render.width = CORE.Window.display.width;
-            CORE.Window.render.height = (int)round((float)CORE.Window.screen.height*widthRatio);
+            CORE.Window.render.height = (int)roundf((float)CORE.Window.screen.height*widthRatio);
             CORE.Window.renderOffset.x = 0;
             CORE.Window.renderOffset.y = (CORE.Window.display.height - CORE.Window.render.height);
         }
         else
         {
-            CORE.Window.render.width = (int)round((float)CORE.Window.screen.width*heightRatio);
+            CORE.Window.render.width = (int)roundf((float)CORE.Window.screen.width*heightRatio);
             CORE.Window.render.height = CORE.Window.display.height;
             CORE.Window.renderOffset.x = (CORE.Window.display.width - CORE.Window.render.width);
             CORE.Window.renderOffset.y = 0;
@@ -4770,13 +4770,13 @@ static void SetupFramebuffer(int width, int height)
         if (displayRatio <= screenRatio)
         {
             CORE.Window.render.width = CORE.Window.screen.width;
-            CORE.Window.render.height = (int)round((float)CORE.Window.screen.width/displayRatio);
+            CORE.Window.render.height = (int)roundf((float)CORE.Window.screen.width/displayRatio);
             CORE.Window.renderOffset.x = 0;
             CORE.Window.renderOffset.y = (CORE.Window.render.height - CORE.Window.screen.height);
         }
         else
         {
-            CORE.Window.render.width = (int)round((float)CORE.Window.screen.height*displayRatio);
+            CORE.Window.render.width = (int)roundf((float)CORE.Window.screen.height*displayRatio);
             CORE.Window.render.height = CORE.Window.screen.height;
             CORE.Window.renderOffset.x = (CORE.Window.render.width - CORE.Window.screen.width);
             CORE.Window.renderOffset.y = 0;

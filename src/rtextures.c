@@ -750,8 +750,8 @@ Image GenImageGradientRadial(int width, int height, float density, Color inner, 
             float dist = hypotf((float)x - centerX, (float)y - centerY);
             float factor = (dist - radius*density)/(radius*(1.0f - density));
 
-            factor = (float)fmax(factor, 0.0f);
-            factor = (float)fmin(factor, 1.f); // dist can be bigger than radius, so we have to check
+            factor = fmaxf(factor, 0.0f);
+            factor = fminf(factor, 1.f); // dist can be bigger than radius, so we have to check
 
             pixels[y*width + x].r = (int)((float)outer.r*factor + (float)inner.r*(1.0f - factor));
             pixels[y*width + x].g = (int)((float)outer.g*factor + (float)inner.g*(1.0f - factor));
@@ -893,8 +893,8 @@ Image GenImageCellular(int width, int height, int tileSize)
 
                     Vector2 neighborSeed = seeds[(tileY + j)*seedsPerRow + tileX + i];
 
-                    float dist = (float)hypot(x - (int)neighborSeed.x, y - (int)neighborSeed.y);
-                    minDistance = (float)fmin(minDistance, dist);
+                    float dist = hypotf(x - (int)neighborSeed.x, y - (int)neighborSeed.y);
+                    minDistance = fminf(minDistance, dist);
                 }
             }
 
@@ -1103,9 +1103,9 @@ void ImageFormat(Image *image, int newFormat)
 
                     for (int i = 0; i < image->width*image->height; i++)
                     {
-                        r = (unsigned char)(round(pixels[i].x*31.0f));
-                        g = (unsigned char)(round(pixels[i].y*63.0f));
-                        b = (unsigned char)(round(pixels[i].z*31.0f));
+                        r = (unsigned char)(roundf(pixels[i].x*31.0f));
+                        g = (unsigned char)(roundf(pixels[i].y*63.0f));
+                        b = (unsigned char)(roundf(pixels[i].z*31.0f));
 
                         ((unsigned short *)image->data)[i] = (unsigned short)r << 11 | (unsigned short)g << 5 | (unsigned short)b;
                     }
@@ -1133,9 +1133,9 @@ void ImageFormat(Image *image, int newFormat)
 
                     for (int i = 0; i < image->width*image->height; i++)
                     {
-                        r = (unsigned char)(round(pixels[i].x*31.0f));
-                        g = (unsigned char)(round(pixels[i].y*31.0f));
-                        b = (unsigned char)(round(pixels[i].z*31.0f));
+                        r = (unsigned char)(roundf(pixels[i].x*31.0f));
+                        g = (unsigned char)(roundf(pixels[i].y*31.0f));
+                        b = (unsigned char)(roundf(pixels[i].z*31.0f));
                         a = (pixels[i].w > ((float)PIXELFORMAT_UNCOMPRESSED_R5G5B5A1_ALPHA_THRESHOLD/255.0f))? 1 : 0;
 
                         ((unsigned short *)image->data)[i] = (unsigned short)r << 11 | (unsigned short)g << 6 | (unsigned short)b << 1 | (unsigned short)a;
@@ -1153,10 +1153,10 @@ void ImageFormat(Image *image, int newFormat)
 
                     for (int i = 0; i < image->width*image->height; i++)
                     {
-                        r = (unsigned char)(round(pixels[i].x*15.0f));
-                        g = (unsigned char)(round(pixels[i].y*15.0f));
-                        b = (unsigned char)(round(pixels[i].z*15.0f));
-                        a = (unsigned char)(round(pixels[i].w*15.0f));
+                        r = (unsigned char)(roundf(pixels[i].x*15.0f));
+                        g = (unsigned char)(roundf(pixels[i].y*15.0f));
+                        b = (unsigned char)(roundf(pixels[i].z*15.0f));
+                        a = (unsigned char)(roundf(pixels[i].w*15.0f));
 
                         ((unsigned short *)image->data)[i] = (unsigned short)r << 12 | (unsigned short)g << 8 | (unsigned short)b << 4 | (unsigned short)a;
                     }
@@ -1372,9 +1372,9 @@ void ImageAlphaClear(Image *image, Color color, float threshold)
             {
                 unsigned char thresholdValue = ((threshold < 0.5f)? 0 : 1);
 
-                unsigned char r = (unsigned char)(round((float)color.r*31.0f));
-                unsigned char g = (unsigned char)(round((float)color.g*31.0f));
-                unsigned char b = (unsigned char)(round((float)color.b*31.0f));
+                unsigned char r = (unsigned char)(roundf((float)color.r*31.0f));
+                unsigned char g = (unsigned char)(roundf((float)color.g*31.0f));
+                unsigned char b = (unsigned char)(roundf((float)color.b*31.0f));
                 unsigned char a = (color.a < 128)? 0 : 1;
 
                 for (int i = 0; i < image->width*image->height; i++)
@@ -1389,10 +1389,10 @@ void ImageAlphaClear(Image *image, Color color, float threshold)
             {
                 unsigned char thresholdValue = (unsigned char)(threshold*15.0f);
 
-                unsigned char r = (unsigned char)(round((float)color.r*15.0f));
-                unsigned char g = (unsigned char)(round((float)color.g*15.0f));
-                unsigned char b = (unsigned char)(round((float)color.b*15.0f));
-                unsigned char a = (unsigned char)(round((float)color.a*15.0f));
+                unsigned char r = (unsigned char)(roundf((float)color.r*15.0f));
+                unsigned char g = (unsigned char)(roundf((float)color.g*15.0f));
+                unsigned char b = (unsigned char)(roundf((float)color.b*15.0f));
+                unsigned char a = (unsigned char)(roundf((float)color.a*15.0f));
 
                 for (int i = 0; i < image->width*image->height; i++)
                 {
@@ -1946,7 +1946,7 @@ void ImageDither(Image *image, int rBpp, int gBpp, int bBpp, int aBpp)
             {
                 oldPixel = pixels[y*image->width + x];
 
-                // NOTE: New pixel obtained by bits truncate, it would be better to round values (check ImageFormat())
+                // NOTE: New pixel obtained by bits truncate, it would be better to roundf values (check ImageFormat())
                 newPixel.r = oldPixel.r >> (8 - rBpp);     // R bits
                 newPixel.g = oldPixel.g >> (8 - gBpp);     // G bits
                 newPixel.b = oldPixel.b >> (8 - bBpp);     // B bits
@@ -2384,9 +2384,9 @@ Color *LoadImageColors(Image image)
                 {
                     unsigned short pixel = ((unsigned short *)image.data)[i];
 
-                    pixels[i].r = (unsigned char)((float)((pixel & 0b1111100000000000) >> 11)*(255/31));
-                    pixels[i].g = (unsigned char)((float)((pixel & 0b0000011111000000) >> 6)*(255/31));
-                    pixels[i].b = (unsigned char)((float)((pixel & 0b0000000000111110) >> 1)*(255/31));
+                    pixels[i].r = (unsigned char)((float)((pixel & 0b1111100000000000) >> 11)*(255.f/31));
+                    pixels[i].g = (unsigned char)((float)((pixel & 0b0000011111000000) >> 6)*(255.f/31));
+                    pixels[i].b = (unsigned char)((float)((pixel & 0b0000000000111110) >> 1)*(255.f/31));
                     pixels[i].a = (unsigned char)((pixel & 0b0000000000000001)*255);
 
                 } break;
@@ -2394,9 +2394,9 @@ Color *LoadImageColors(Image image)
                 {
                     unsigned short pixel = ((unsigned short *)image.data)[i];
 
-                    pixels[i].r = (unsigned char)((float)((pixel & 0b1111100000000000) >> 11)*(255/31));
-                    pixels[i].g = (unsigned char)((float)((pixel & 0b0000011111100000) >> 5)*(255/63));
-                    pixels[i].b = (unsigned char)((float)(pixel & 0b0000000000011111)*(255/31));
+                    pixels[i].r = (unsigned char)((float)((pixel & 0b1111100000000000) >> 11)*(255.f/31));
+                    pixels[i].g = (unsigned char)((float)((pixel & 0b0000011111100000) >> 5)*(255.f/63));
+                    pixels[i].b = (unsigned char)((float)(pixel & 0b0000000000011111)*(255.f/31));
                     pixels[i].a = 255;
 
                 } break;
@@ -2404,10 +2404,10 @@ Color *LoadImageColors(Image image)
                 {
                     unsigned short pixel = ((unsigned short *)image.data)[i];
 
-                    pixels[i].r = (unsigned char)((float)((pixel & 0b1111000000000000) >> 12)*(255/15));
-                    pixels[i].g = (unsigned char)((float)((pixel & 0b0000111100000000) >> 8)*(255/15));
-                    pixels[i].b = (unsigned char)((float)((pixel & 0b0000000011110000) >> 4)*(255/15));
-                    pixels[i].a = (unsigned char)((float)(pixel & 0b0000000000001111)*(255/15));
+                    pixels[i].r = (unsigned char)((float)((pixel & 0b1111000000000000) >> 12)*(255.f/15));
+                    pixels[i].g = (unsigned char)((float)((pixel & 0b0000111100000000) >> 8)*(255.f/15));
+                    pixels[i].b = (unsigned char)((float)((pixel & 0b0000000011110000) >> 4)*(255.f/15));
+                    pixels[i].a = (unsigned char)((float)(pixel & 0b0000000000001111)*(255.f/15));
 
                 } break;
                 case PIXELFORMAT_UNCOMPRESSED_R8G8B8A8:
@@ -2600,9 +2600,9 @@ Color GetImageColor(Image image, int x, int y)
             {
                 unsigned short pixel = ((unsigned short *)image.data)[y*image.width + x];
 
-                color.r = (unsigned char)((float)((pixel & 0b1111100000000000) >> 11)*(255/31));
-                color.g = (unsigned char)((float)((pixel & 0b0000011111000000) >> 6)*(255/31));
-                color.b = (unsigned char)((float)((pixel & 0b0000000000111110) >> 1)*(255/31));
+                color.r = (unsigned char)((float)((pixel & 0b1111100000000000) >> 11)*(255.f/31));
+                color.g = (unsigned char)((float)((pixel & 0b0000011111000000) >> 6)*(255.f/31));
+                color.b = (unsigned char)((float)((pixel & 0b0000000000111110) >> 1)*(255.f/31));
                 color.a = (unsigned char)((pixel & 0b0000000000000001)*255);
 
             } break;
@@ -2610,9 +2610,9 @@ Color GetImageColor(Image image, int x, int y)
             {
                 unsigned short pixel = ((unsigned short *)image.data)[y*image.width + x];
 
-                color.r = (unsigned char)((float)((pixel & 0b1111100000000000) >> 11)*(255/31));
-                color.g = (unsigned char)((float)((pixel & 0b0000011111100000) >> 5)*(255/63));
-                color.b = (unsigned char)((float)(pixel & 0b0000000000011111)*(255/31));
+                color.r = (unsigned char)((float)((pixel & 0b1111100000000000) >> 11)*(255.f/31));
+                color.g = (unsigned char)((float)((pixel & 0b0000011111100000) >> 5)*(255.f/63));
+                color.b = (unsigned char)((float)(pixel & 0b0000000000011111)*(255.f/31));
                 color.a = 255;
 
             } break;
@@ -2620,10 +2620,10 @@ Color GetImageColor(Image image, int x, int y)
             {
                 unsigned short pixel = ((unsigned short *)image.data)[y*image.width + x];
 
-                color.r = (unsigned char)((float)((pixel & 0b1111000000000000) >> 12)*(255/15));
-                color.g = (unsigned char)((float)((pixel & 0b0000111100000000) >> 8)*(255/15));
-                color.b = (unsigned char)((float)((pixel & 0b0000000011110000) >> 4)*(255/15));
-                color.a = (unsigned char)((float)(pixel & 0b0000000000001111)*(255/15));
+                color.r = (unsigned char)((float)((pixel & 0b1111000000000000) >> 12)*(255.f/15));
+                color.g = (unsigned char)((float)((pixel & 0b0000111100000000) >> 8)*(255.f/15));
+                color.b = (unsigned char)((float)((pixel & 0b0000000011110000) >> 4)*(255.f/15));
+                color.a = (unsigned char)((float)(pixel & 0b0000000000001111)*(255.f/15));
 
             } break;
             case PIXELFORMAT_UNCOMPRESSED_R8G8B8A8:
@@ -2729,9 +2729,9 @@ void ImageDrawPixel(Image *dst, int x, int y, Color color)
             // NOTE: Calculate R5G6B5 equivalent color
             Vector3 coln = { (float)color.r/255.0f, (float)color.g/255.0f, (float)color.b/255.0f };
 
-            unsigned char r = (unsigned char)(round(coln.x*31.0f));
-            unsigned char g = (unsigned char)(round(coln.y*63.0f));
-            unsigned char b = (unsigned char)(round(coln.z*31.0f));
+            unsigned char r = (unsigned char)(roundf(coln.x*31.0f));
+            unsigned char g = (unsigned char)(roundf(coln.y*63.0f));
+            unsigned char b = (unsigned char)(roundf(coln.z*31.0f));
 
             ((unsigned short *)dst->data)[y*dst->width + x] = (unsigned short)r << 11 | (unsigned short)g << 5 | (unsigned short)b;
 
@@ -2741,9 +2741,9 @@ void ImageDrawPixel(Image *dst, int x, int y, Color color)
             // NOTE: Calculate R5G5B5A1 equivalent color
             Vector4 coln = { (float)color.r/255.0f, (float)color.g/255.0f, (float)color.b/255.0f, (float)color.a/255.0f };
 
-            unsigned char r = (unsigned char)(round(coln.x*31.0f));
-            unsigned char g = (unsigned char)(round(coln.y*31.0f));
-            unsigned char b = (unsigned char)(round(coln.z*31.0f));
+            unsigned char r = (unsigned char)(roundf(coln.x*31.0f));
+            unsigned char g = (unsigned char)(roundf(coln.y*31.0f));
+            unsigned char b = (unsigned char)(roundf(coln.z*31.0f));
             unsigned char a = (coln.w > ((float)PIXELFORMAT_UNCOMPRESSED_R5G5B5A1_ALPHA_THRESHOLD/255.0f))? 1 : 0;
 
             ((unsigned short *)dst->data)[y*dst->width + x] = (unsigned short)r << 11 | (unsigned short)g << 6 | (unsigned short)b << 1 | (unsigned short)a;
@@ -2754,10 +2754,10 @@ void ImageDrawPixel(Image *dst, int x, int y, Color color)
             // NOTE: Calculate R5G5B5A1 equivalent color
             Vector4 coln = { (float)color.r/255.0f, (float)color.g/255.0f, (float)color.b/255.0f, (float)color.a/255.0f };
 
-            unsigned char r = (unsigned char)(round(coln.x*15.0f));
-            unsigned char g = (unsigned char)(round(coln.y*15.0f));
-            unsigned char b = (unsigned char)(round(coln.z*15.0f));
-            unsigned char a = (unsigned char)(round(coln.w*15.0f));
+            unsigned char r = (unsigned char)(roundf(coln.x*15.0f));
+            unsigned char g = (unsigned char)(roundf(coln.y*15.0f));
+            unsigned char b = (unsigned char)(roundf(coln.z*15.0f));
+            unsigned char a = (unsigned char)(roundf(coln.w*15.0f));
 
             ((unsigned short *)dst->data)[y*dst->width + x] = (unsigned short)r << 12 | (unsigned short)g << 8 | (unsigned short)b << 4 | (unsigned short)a;
 
@@ -4158,26 +4158,26 @@ Color GetPixelColor(void *srcPtr, int format)
         case PIXELFORMAT_UNCOMPRESSED_GRAY_ALPHA: color = (Color){ ((unsigned char *)srcPtr)[0], ((unsigned char *)srcPtr)[0], ((unsigned char *)srcPtr)[0], ((unsigned char *)srcPtr)[1] }; break;
         case PIXELFORMAT_UNCOMPRESSED_R5G6B5:
         {
-            color.r = (unsigned char)((((unsigned short *)srcPtr)[0] >> 11)*255/31);
-            color.g = (unsigned char)(((((unsigned short *)srcPtr)[0] >> 5) & 0b0000000000111111)*255/63);
-            color.b = (unsigned char)((((unsigned short *)srcPtr)[0] & 0b0000000000011111)*255/31);
+            color.r = (unsigned char)((((unsigned short *)srcPtr)[0] >> 11)*255.f/31);
+            color.g = (unsigned char)(((((unsigned short *)srcPtr)[0] >> 5) & 0b0000000000111111)*255.f/63);
+            color.b = (unsigned char)((((unsigned short *)srcPtr)[0] & 0b0000000000011111)*255.f/31);
             color.a = 255;
 
         } break;
         case PIXELFORMAT_UNCOMPRESSED_R5G5B5A1:
         {
-            color.r = (unsigned char)((((unsigned short *)srcPtr)[0] >> 11)*255/31);
-            color.g = (unsigned char)(((((unsigned short *)srcPtr)[0] >> 6) & 0b0000000000011111)*255/31);
-            color.b = (unsigned char)((((unsigned short *)srcPtr)[0] & 0b0000000000011111)*255/31);
+            color.r = (unsigned char)((((unsigned short *)srcPtr)[0] >> 11)*255.f/31);
+            color.g = (unsigned char)(((((unsigned short *)srcPtr)[0] >> 6) & 0b0000000000011111)*255.f/31);
+            color.b = (unsigned char)((((unsigned short *)srcPtr)[0] & 0b0000000000011111)*255.f/31);
             color.a = (((unsigned short *)srcPtr)[0] & 0b0000000000000001)? 255 : 0;
 
         } break;
         case PIXELFORMAT_UNCOMPRESSED_R4G4B4A4:
         {
-            color.r = (unsigned char)((((unsigned short *)srcPtr)[0] >> 12)*255/15);
-            color.g = (unsigned char)(((((unsigned short *)srcPtr)[0] >> 8) & 0b0000000000001111)*255/15);
-            color.b = (unsigned char)(((((unsigned short *)srcPtr)[0] >> 4) & 0b0000000000001111)*255/15);
-            color.a = (unsigned char)((((unsigned short *)srcPtr)[0] & 0b0000000000001111)*255/15);
+            color.r = (unsigned char)((((unsigned short *)srcPtr)[0] >> 12)*255.f/15);
+            color.g = (unsigned char)(((((unsigned short *)srcPtr)[0] >> 8) & 0b0000000000001111)*255.f/15);
+            color.b = (unsigned char)(((((unsigned short *)srcPtr)[0] >> 4) & 0b0000000000001111)*255.f/15);
+            color.a = (unsigned char)((((unsigned short *)srcPtr)[0] & 0b0000000000001111)*255.f/15);
 
         } break;
         case PIXELFORMAT_UNCOMPRESSED_R8G8B8A8: color = (Color){ ((unsigned char *)srcPtr)[0], ((unsigned char *)srcPtr)[1], ((unsigned char *)srcPtr)[2], ((unsigned char *)srcPtr)[3] }; break;
@@ -4244,9 +4244,9 @@ void SetPixelColor(void *dstPtr, Color color, int format)
             // NOTE: Calculate R5G6B5 equivalent color
             Vector3 coln = { (float)color.r/255.0f, (float)color.g/255.0f, (float)color.b/255.0f };
 
-            unsigned char r = (unsigned char)(round(coln.x*31.0f));
-            unsigned char g = (unsigned char)(round(coln.y*63.0f));
-            unsigned char b = (unsigned char)(round(coln.z*31.0f));
+            unsigned char r = (unsigned char)(roundf(coln.x*31.0f));
+            unsigned char g = (unsigned char)(roundf(coln.y*63.0f));
+            unsigned char b = (unsigned char)(roundf(coln.z*31.0f));
 
             ((unsigned short *)dstPtr)[0] = (unsigned short)r << 11 | (unsigned short)g << 5 | (unsigned short)b;
 
@@ -4256,9 +4256,9 @@ void SetPixelColor(void *dstPtr, Color color, int format)
             // NOTE: Calculate R5G5B5A1 equivalent color
             Vector4 coln = { (float)color.r/255.0f, (float)color.g/255.0f, (float)color.b/255.0f, (float)color.a/255.0f };
 
-            unsigned char r = (unsigned char)(round(coln.x*31.0f));
-            unsigned char g = (unsigned char)(round(coln.y*31.0f));
-            unsigned char b = (unsigned char)(round(coln.z*31.0f));
+            unsigned char r = (unsigned char)(roundf(coln.x*31.0f));
+            unsigned char g = (unsigned char)(roundf(coln.y*31.0f));
+            unsigned char b = (unsigned char)(roundf(coln.z*31.0f));
             unsigned char a = (coln.w > ((float)PIXELFORMAT_UNCOMPRESSED_R5G5B5A1_ALPHA_THRESHOLD/255.0f))? 1 : 0;
 
             ((unsigned short *)dstPtr)[0] = (unsigned short)r << 11 | (unsigned short)g << 6 | (unsigned short)b << 1 | (unsigned short)a;
@@ -4269,10 +4269,10 @@ void SetPixelColor(void *dstPtr, Color color, int format)
             // NOTE: Calculate R5G5B5A1 equivalent color
             Vector4 coln = { (float)color.r/255.0f, (float)color.g/255.0f, (float)color.b/255.0f, (float)color.a/255.0f };
 
-            unsigned char r = (unsigned char)(round(coln.x*15.0f));
-            unsigned char g = (unsigned char)(round(coln.y*15.0f));
-            unsigned char b = (unsigned char)(round(coln.z*15.0f));
-            unsigned char a = (unsigned char)(round(coln.w*15.0f));
+            unsigned char r = (unsigned char)(roundf(coln.x*15.0f));
+            unsigned char g = (unsigned char)(roundf(coln.y*15.0f));
+            unsigned char b = (unsigned char)(roundf(coln.z*15.0f));
+            unsigned char a = (unsigned char)(roundf(coln.w*15.0f));
 
             ((unsigned short *)dstPtr)[0] = (unsigned short)r << 12 | (unsigned short)g << 8 | (unsigned short)b << 4 | (unsigned short)a;
 
