@@ -9,14 +9,13 @@ Release:     raylib 4.5 (xx February 2023) -WIP-
 KEY CHANGES:
  - ADDED: M3D model format support with animations
  - ADDED: GLTF animation support
+ - ADDED: QOA audio format support (import/export) -WIP-
  - rlgl redesign to avoid render batch triangles limits pre-check: rlCheckRenderBatchLimit()
  - rshapes simplification to minimize the requirement of rlgl functionality, now it only depends on 6 functions 
  - rl_gputex.h: Compressed textures loading, required by rtextures module, has been moved to a separate self-contained library
  - raygui 3.5: New version of the immediate-mode gui system for tools development with raylib
 
-
 Detailed changes:
-
 [core] ADDED: RAYLIB_VERSION_* values to raylib.h (#2856) by @RobLoach
 [core] ADDED: Basic gamepad support for Android (#2709) by @deniska
 [core] ADDED: Support CAPS/NUM lock keys registering if locked
