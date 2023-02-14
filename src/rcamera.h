@@ -48,11 +48,11 @@
 //----------------------------------------------------------------------------------
 //...
 #if defined(CAMERA_STANDALONE)
-#define CAMERA_CULL_DISTANCE_NEAR 0.01
-#define CAMERA_CULL_DISTANCE_FAR 1000.0
+#define CAMERA_CULL_DISTANCE_NEAR      0.01
+#define CAMERA_CULL_DISTANCE_FAR    1000.0
 #else
-#define CAMERA_CULL_DISTANCE_NEAR  RL_CULL_DISTANCE_NEAR
-#define CAMERA_CULL_DISTANCE_FAR  RL_CULL_DISTANCE_FAR
+#define CAMERA_CULL_DISTANCE_NEAR   RL_CULL_DISTANCE_NEAR
+#define CAMERA_CULL_DISTANCE_FAR    RL_CULL_DISTANCE_FAR
 #endif
 
 //----------------------------------------------------------------------------------
@@ -145,8 +145,22 @@ Matrix GetCameraProjectionMatrix(Camera* camera, float aspect);
 
 #if defined(CAMERA_IMPLEMENTATION)
 
+#include "raymath.h"        // Required for vector maths:
+                            // Vector3Add()
+                            // Vector3Subtract()
+                            // Vector3Scale()
+                            // Vector3Normalize()
+                            // Vector3Distance()
+                            // Vector3CrossProduct()
+                            // Vector3RotateByAxisAngle()
+                            // Vector3Angle()
+                            // Vector3Negate()
+                            // MatrixLookAt()
+                            // MatrixPerspective()
+                            // MatrixOrtho()
+                            // MatrixIdentity()
 
-#include "raymath.h"        // Required for some vector maths
+// raylib input functionality required: GetMouseDelta(), GetMouseWheelMove(), IsKeyDown(), IsKeyPressed()
 
 //----------------------------------------------------------------------------------
 // Defines and Macros
@@ -171,12 +185,12 @@ Matrix GetCameraProjectionMatrix(Camera* camera, float aspect);
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
 //----------------------------------------------------------------------------------
-
+//...
 
 //----------------------------------------------------------------------------------
 // Global Variables Definition
 //----------------------------------------------------------------------------------
-
+//...
 
 //----------------------------------------------------------------------------------
 // Module specific Functions Declaration
@@ -186,7 +200,6 @@ Matrix GetCameraProjectionMatrix(Camera* camera, float aspect);
 //----------------------------------------------------------------------------------
 // Module Functions Definition
 //----------------------------------------------------------------------------------
-
 // Returns the cameras forward vector (normalized)
 Vector3 GetCameraForward(Camera *camera)
 {
