@@ -2017,6 +2017,8 @@ void EnableCursor(void)
 #if defined(PLATFORM_WEB)
     emscripten_exit_pointerlock();
 #endif
+    // Set cursor position in the middle
+    SetMousePosition(CORE.Window.screen.width/2, CORE.Window.screen.height/2);
 
     CORE.Input.Mouse.cursorHidden = false;
 }
@@ -2026,17 +2028,12 @@ void DisableCursor(void)
 {
 #if defined(PLATFORM_DESKTOP)
     glfwSetInputMode(CORE.Window.handle, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-
-    // Set cursor position in the middle of screen and update delta accordingly
-    SetMousePosition(CORE.Window.screen.width/2, CORE.Window.screen.height/2);
-    CORE.Input.Mouse.currentPosition.x = CORE.Window.screen.width/2;
-    CORE.Input.Mouse.currentPosition.y = CORE.Window.screen.width/2;
-    CORE.Input.Mouse.previousPosition.x = CORE.Input.Mouse.currentPosition.x;
-    CORE.Input.Mouse.previousPosition.y = CORE.Input.Mouse.currentPosition.y;
 #endif
 #if defined(PLATFORM_WEB)
     emscripten_request_pointerlock("#canvas", 1);
 #endif
+    // Set cursor position in the middle
+    SetMousePosition(CORE.Window.screen.width/2, CORE.Window.screen.height/2);
 
     CORE.Input.Mouse.cursorHidden = true;
 }
@@ -3809,6 +3806,8 @@ Vector2 GetMouseDelta(void)
 void SetMousePosition(int x, int y)
 {
     CORE.Input.Mouse.currentPosition = (Vector2){ (float)x, (float)y };
+    CORE.Input.Mouse.previousPosition = CORE.Input.Mouse.currentPosition;
+
 #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
     // NOTE: emscripten not implemented
     glfwSetCursorPos(CORE.Window.handle, CORE.Input.Mouse.currentPosition.x, CORE.Input.Mouse.currentPosition.y);
