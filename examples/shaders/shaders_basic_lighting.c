@@ -50,7 +50,7 @@ int main(void)
     camera.target = (Vector3){ 0.0f, 0.5f, 0.0f };      // Camera looking at point
     camera.up = (Vector3){ 0.0f, 1.0f, 0.0f };          // Camera up vector (rotation towards target)
     camera.fovy = 45.0f;                                // Camera field-of-view Y
-    camera.projection = CAMERA_PERSPECTIVE;             // Camera mode type
+    camera.projection = CAMERA_PERSPECTIVE;             // Camera projection type
 
     // Load plane model from a generated mesh
     Model model = LoadModelFromMesh(GenMeshPlane(10.0f, 10.0f, 3, 3));
@@ -80,12 +80,12 @@ int main(void)
     lights[2] = CreateLight(LIGHT_POINT, (Vector3){ -2, 1, 2 }, Vector3Zero(), GREEN, shader);
     lights[3] = CreateLight(LIGHT_POINT, (Vector3){ 2, 1, -2 }, Vector3Zero(), BLUE, shader);
 
-    DisableCursor();                        // Catch cursor
-    SetTargetFPS(60);                       // Set our game to run at 60 frames-per-second
+    DisableCursor();                    // Limit cursor to relative movement inside the window
+    SetTargetFPS(60);                   // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
 
     // Main game loop
-    while (!WindowShouldClose())            // Detect window close button or ESC key
+    while (!WindowShouldClose())        // Detect window close button or ESC key
     {
         // Update
         //----------------------------------------------------------------------------------

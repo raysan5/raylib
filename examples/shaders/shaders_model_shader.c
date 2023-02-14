@@ -42,11 +42,11 @@ int main(void)
 
     // Define the camera to look into our 3d world
     Camera camera = { 0 };
-    camera.position = (Vector3){ 4.0f, 4.0f, 4.0f };
-    camera.target = (Vector3){ 0.0f, 1.0f, -1.0f };
-    camera.up = (Vector3){ 0.0f, 1.0f, 0.0f };
-    camera.fovy = 45.0f;
-    camera.projection = CAMERA_PERSPECTIVE;
+    camera.position = (Vector3){ 4.0f, 4.0f, 4.0f };    // Camera position
+    camera.target = (Vector3){ 0.0f, 1.0f, -1.0f };     // Camera looking at point
+    camera.up = (Vector3){ 0.0f, 1.0f, 0.0f };          // Camera up vector (rotation towards target)
+    camera.fovy = 45.0f;                                // Camera field-of-view Y
+    camera.projection = CAMERA_PERSPECTIVE;             // Camera projection type
 
     Model model = LoadModel("resources/models/watermill.obj");                   // Load OBJ model
     Texture2D texture = LoadTexture("resources/models/watermill_diffuse.png");   // Load model texture
@@ -60,12 +60,12 @@ int main(void)
 
     Vector3 position = { 0.0f, 0.0f, 0.0f };    // Set model position
 
-    DisableCursor();                            // Catch cursor
-    SetTargetFPS(60);                           // Set our game to run at 60 frames-per-second
+    DisableCursor();                    // Limit cursor to relative movement inside the window
+    SetTargetFPS(60);                   // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
 
     // Main game loop
-    while (!WindowShouldClose())                // Detect window close button or ESC key
+    while (!WindowShouldClose())        // Detect window close button or ESC key
     {
         // Update
         //----------------------------------------------------------------------------------

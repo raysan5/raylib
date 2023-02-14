@@ -34,11 +34,11 @@ int main(void)
 
     // Define the camera to look into our 3d world
     Camera camera = { 0 };
-    camera.position = (Vector3){ 5.0f, 5.0f, 5.0f }; // Camera position
+    camera.position = (Vector3){ 5.0f, 5.0f, 5.0f };    // Camera position
     camera.target = (Vector3){ 0.0f, 2.0f, 0.0f };      // Camera looking at point
     camera.up = (Vector3){ 0.0f, 1.0f, 0.0f };          // Camera up vector (rotation towards target)
     camera.fovy = 45.0f;                                // Camera field-of-view Y
-    camera.projection = CAMERA_PERSPECTIVE;             // Camera mode type
+    camera.projection = CAMERA_PERSPECTIVE;             // Camera projection type
 
     // Load gltf model
     Model model = LoadModel("resources/models/gltf/robot.glb");
@@ -51,11 +51,13 @@ int main(void)
 
     Vector3 position = { 0.0f, 0.0f, 0.0f };    // Set model position
 
-    SetTargetFPS(60);                       // Set our game to run at 60 frames-per-second
+    DisableCursor();                    // Limit cursor to relative movement inside the window
+
+    SetTargetFPS(60);                   // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
 
     // Main game loop
-    while (!WindowShouldClose())            // Detect window close button or ESC key
+    while (!WindowShouldClose())        // Detect window close button or ESC key
     {
         // Update
         //----------------------------------------------------------------------------------

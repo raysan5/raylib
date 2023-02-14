@@ -45,11 +45,12 @@ int main(void)
     InitWindow(screenWidth, screenHeight, "raylib [shaders] example - fog");
 
     // Define the camera to look into our 3d world
-    Camera camera = {
-        (Vector3){ 2.0f, 2.0f, 6.0f },      // position
-        (Vector3){ 0.0f, 0.5f, 0.0f },      // target
-        (Vector3){ 0.0f, 1.0f, 0.0f },      // up
-        45.0f, CAMERA_PERSPECTIVE };        // fov, type
+    Camera camera = { 0 };
+    camera.position = (Vector3){ 2.0f, 2.0f, 6.0f };    // Camera position
+    camera.target = (Vector3){ 0.0f, 0.5f, 0.0f };      // Camera looking at point
+    camera.up = (Vector3){ 0.0f, 1.0f, 0.0f };          // Camera up vector (rotation towards target)
+    camera.fovy = 45.0f;                                // Camera field-of-view Y
+    camera.projection = CAMERA_PERSPECTIVE;             // Camera projection type
 
     // Load models and texture
     Model modelA = LoadModelFromMesh(GenMeshTorus(0.4f, 1.0f, 16, 32));
@@ -84,12 +85,12 @@ int main(void)
     // Using just 1 point lights
     CreateLight(LIGHT_POINT, (Vector3){ 0, 2, 6 }, Vector3Zero(), WHITE, shader);
 
-    DisableCursor();                        // Catch cursor
-    SetTargetFPS(60);                       // Set our game to run at 60 frames-per-second
+    DisableCursor();                    // Limit cursor to relative movement inside the window
+    SetTargetFPS(60);                   // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
 
     // Main game loop
-    while (!WindowShouldClose())            // Detect window close button or ESC key
+    while (!WindowShouldClose())        // Detect window close button or ESC key
     {
         // Update
         //----------------------------------------------------------------------------------

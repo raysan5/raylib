@@ -75,13 +75,18 @@ int main(void)
     InitWindow(screenWidth, screenHeight, "raylib [shaders] example - postprocessing shader");
 
     // Define the camera to look into our 3d world
-    Camera camera = { { 2.0f, 3.0f, 2.0f }, { 0.0f, 1.0f, 0.0f }, { 0.0f, 1.0f, 0.0f }, 45.0f, 0 };
+    Camera camera = { 0 };
+    camera.position = (Vector3){ 2.0f, 3.0f, 2.0f };    // Camera position
+    camera.target = (Vector3){ 0.0f, 1.0f, 0.0f };      // Camera looking at point
+    camera.up = (Vector3){ 0.0f, 1.0f, 0.0f };          // Camera up vector (rotation towards target)
+    camera.fovy = 45.0f;                                // Camera field-of-view Y
+    camera.projection = CAMERA_PERSPECTIVE;             // Camera projection type
 
     Model model = LoadModel("resources/models/church.obj");                 // Load OBJ model
     Texture2D texture = LoadTexture("resources/models/church_diffuse.png"); // Load model texture (diffuse map)
-    model.materials[0].maps[MATERIAL_MAP_DIFFUSE].texture = texture;                     // Set model diffuse texture
+    model.materials[0].maps[MATERIAL_MAP_DIFFUSE].texture = texture;        // Set model diffuse texture
 
-    Vector3 position = { 0.0f, 0.0f, 0.0f };                             // Set model position
+    Vector3 position = { 0.0f, 0.0f, 0.0f };            // Set model position
 
     // Load all postpro shaders
     // NOTE 1: All postpro shader use the base vertex shader (DEFAULT_VERTEX_SHADER)
@@ -107,12 +112,12 @@ int main(void)
     // Create a RenderTexture2D to be used for render to texture
     RenderTexture2D target = LoadRenderTexture(screenWidth, screenHeight);
 
-    DisableCursor();                        // Catch cursor
-    SetTargetFPS(60);                       // Set our game to run at 60 frames-per-second
+    DisableCursor();                    // Limit cursor to relative movement inside the window
+    SetTargetFPS(60);                   // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
 
     // Main game loop
-    while (!WindowShouldClose())            // Detect window close button or ESC key
+    while (!WindowShouldClose())        // Detect window close button or ESC key
     {
         // Update
         //----------------------------------------------------------------------------------

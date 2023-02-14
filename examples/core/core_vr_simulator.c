@@ -95,12 +95,12 @@ int main(void)
     camera.target = (Vector3){ 0.0f, 2.0f, 0.0f };      // Camera looking at point
     camera.up = (Vector3){ 0.0f, 1.0f, 0.0f };          // Camera up vector
     camera.fovy = 60.0f;                                // Camera field-of-view Y
-    camera.projection = CAMERA_PERSPECTIVE;             // Camera type
-    camera.swingCounter = 1;                            // Enable view bobbing
+    camera.projection = CAMERA_PERSPECTIVE;             // Camera projection type
 
     Vector3 cubePosition = { 0.0f, 0.0f, 0.0f };
 
-    DisableCursor();                    // Catch cursor
+    DisableCursor();                    // Limit cursor to relative movement inside the window
+
     SetTargetFPS(90);                   // Set our game to run at 90 frames-per-second
     //--------------------------------------------------------------------------------------
 

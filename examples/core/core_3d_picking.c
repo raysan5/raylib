@@ -31,16 +31,13 @@ int main(void)
     camera.target = (Vector3){ 0.0f, 0.0f, 0.0f };      // Camera looking at point
     camera.up = (Vector3){ 0.0f, 1.0f, 0.0f };          // Camera up vector (rotation towards target)
     camera.fovy = 45.0f;                                // Camera field-of-view Y
-    camera.projection = CAMERA_PERSPECTIVE;                   // Camera mode type
+    camera.projection = CAMERA_PERSPECTIVE;             // Camera projection type
 
     Vector3 cubePosition = { 0.0f, 1.0f, 0.0f };
     Vector3 cubeSize = { 2.0f, 2.0f, 2.0f };
 
     Ray ray = { 0 };                    // Picking line ray
-
-    RayCollision collision = { 0 };
-
-    EnableCursor();                     // Disable camera controls
+    RayCollision collision = { 0 };     // Ray collision hit info
 
     SetTargetFPS(60);                   // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
@@ -50,7 +47,7 @@ int main(void)
     {
         // Update
         //----------------------------------------------------------------------------------
-        if (IsCursorHidden()) UpdateCamera(&camera, CAMERA_FIRST_PERSON);          // Update camera
+        if (IsCursorHidden()) UpdateCamera(&camera, CAMERA_FIRST_PERSON);
 
         // Toggle camera controls
         if (IsMouseButtonPressed(MOUSE_BUTTON_RIGHT))

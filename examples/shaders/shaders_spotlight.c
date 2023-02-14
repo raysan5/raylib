@@ -29,10 +29,8 @@
 ********************************************************************************************/
 
 #include "raylib.h"
-#include "raymath.h"
 
-#include <stddef.h>
-#include <stdint.h>
+#include "raymath.h"
 
 #if defined(PLATFORM_DESKTOP)
     #define GLSL_VERSION            330
@@ -44,26 +42,26 @@
 #define MAX_STARS       400
 
 // Spot data
-typedef struct {
-    Vector2 pos;
-    Vector2 vel;
+typedef struct Spot {
+    Vector2 position;
+    Vector2 speed;
     float inner;
     float radius;
 
     // Shader locations
-    unsigned int posLoc;
+    unsigned int positionLoc;
     unsigned int innerLoc;
     unsigned int radiusLoc;
 } Spot;
 
 // Stars in the star field have a position and velocity
 typedef struct Star {
-    Vector2 pos;
-    Vector2 vel;
+    Vector2 position;
+    Vector2 speed;
 } Star;
 
-void UpdateStar(Star *s);
-void ResetStar(Star *s);
+static void UpdateStar(Star *s);
+static void ResetStar(Star *s);
 
 //------------------------------------------------------------------------------------
 // Program main entry point
@@ -75,7 +73,7 @@ int main(void)
     const int screenWidth = 800;
     const int screenHeight = 450;
 
-    InitWindow(screenWidth, screenHeight, "raylib - shader spotlight");
+    InitWindow(screenWidth, screenHeight, "raylib [shaders] example - shader spotlight");
     HideCursor();
 
     Texture texRay = LoadTexture("resources/raysan.png");
@@ -108,7 +106,7 @@ int main(void)
         innerName[6] = '0' + i;
         radiusName[6] = '0' + i;
 
-        spots[i].posLoc = GetShaderLocation(shdrSpot, posName);
+        spots[i].positionLoc = GetShaderLocation(shdrSpot, posName);
         spots[i].innerLoc = GetShaderLocation(shdrSpot, innerName);
         spots[i].radiusLoc = GetShaderLocation(shdrSpot, radiusName);
 
@@ -124,20 +122,20 @@ int main(void)
     // and initialize the shader locations
     for (int i = 0; i < MAX_SPOTS; i++)
     {
-        spots[i].pos.x = (float)GetRandomValue(64, screenWidth - 64);
-        spots[i].pos.y = (float)GetRandomValue(64, screenHeight - 64);
-        spots[i].vel = (Vector2){ 0, 0 };
+        spots[i].position.x = (float)GetRandomValue(64, screenWidth - 64);
+        spots[i].position.y = (float)GetRandomValue(64, screenHeight - 64);
+        spots[i].speed = (Vector2){ 0, 0 };
 
-        while ((fabs(spots[i].vel.x) + fabs(spots[i].vel.y)) < 2)
+        while ((fabs(spots[i].speed.x) + fabs(spots[i].speed.y)) < 2)
         {
-            spots[i].vel.x = GetRandomValue(-400, 40) / 10.0f;
-            spots[i].vel.y = GetRandomValue(-400, 40) / 10.0f;
+            spots[i].speed.x = GetRandomValue(-400, 40) / 10.0f;
+            spots[i].speed.y = GetRandomValue(-400, 40) / 10.0f;
         }
 
         spots[i].inner = 28.0f * (i + 1);
         spots[i].radius = 48.0f * (i + 1);
 
-        SetShaderValue(shdrSpot, spots[i].posLoc, &spots[i].pos.x, SHADER_UNIFORM_VEC2);
+        SetShaderValue(shdrSpot, spots[i].positionLoc, &spots[i].position.x, SHADER_UNIFORM_VEC2);
         SetShaderValue(shdrSpot, spots[i].innerLoc, &spots[i].inner, SHADER_UNIFORM_FLOAT);
         SetShaderValue(shdrSpot, spots[i].radiusLoc, &spots[i].radius, SHADER_UNIFORM_FLOAT);
     }
@@ -161,21 +159,21 @@ int main(void)
             if (i == 0)
             {
                 Vector2 mp = GetMousePosition();
-                spots[i].pos.x = mp.x;
-                spots[i].pos.y = screenHeight - mp.y;
+                spots[i].position.x = mp.x;
+                spots[i].position.y = screenHeight - mp.y;
             }
             else
             {
-                spots[i].pos.x += spots[i].vel.x;
-                spots[i].pos.y += spots[i].vel.y;
+                spots[i].position.x += spots[i].speed.x;
+                spots[i].position.y += spots[i].speed.y;
 
-                if (spots[i].pos.x < 64) spots[i].vel.x = -spots[i].vel.x;
-                if (spots[i].pos.x > (screenWidth - 64)) spots[i].vel.x = -spots[i].vel.x;
-                if (spots[i].pos.y < 64) spots[i].vel.y = -spots[i].vel.y;
-                if (spots[i].pos.y > (screenHeight - 64)) spots[i].vel.y = -spots[i].vel.y;
+                if (spots[i].position.x < 64) spots[i].speed.x = -spots[i].speed.x;
+                if (spots[i].position.x > (screenWidth - 64)) spots[i].speed.x = -spots[i].speed.x;
+                if (spots[i].position.y < 64) spots[i].speed.y = -spots[i].speed.y;
+                if (spots[i].position.y > (screenHeight - 64)) spots[i].speed.y = -spots[i].speed.y;
             }
 
-            SetShaderValue(shdrSpot, spots[i].posLoc, &spots[i].pos.x, SHADER_UNIFORM_VEC2);
+            SetShaderValue(shdrSpot, spots[i].positionLoc, &spots[i].position.x, SHADER_UNIFORM_VEC2);
         }
 
         // Draw
@@ -188,7 +186,7 @@ int main(void)
             for (int n = 0; n < MAX_STARS; n++)
             {
                 // Single pixel is just too small these days!
-                DrawRectangle((int)stars[n].pos.x, (int)stars[n].pos.y, 2, 2, WHITE);
+                DrawRectangle((int)stars[n].position.x, (int)stars[n].position.y, 2, 2, WHITE);
             }
 
             for (int i = 0; i < 16; i++)
@@ -213,7 +211,6 @@ int main(void)
             DrawText("Pitch Black", (int)(screenWidth*0.2f), screenHeight/2, 20, GREEN);
             DrawText("Dark", (int)(screenWidth*.66f), screenHeight/2, 20, GREEN);
 
-
         EndDrawing();
         //----------------------------------------------------------------------------------
     }
@@ -230,26 +227,26 @@ int main(void)
 }
 
 
-void ResetStar(Star *s)
+static void ResetStar(Star *s)
 {
-    s->pos = (Vector2){ GetScreenWidth()/2.0f, GetScreenHeight()/2.0f };
+    s->position = (Vector2){ GetScreenWidth()/2.0f, GetScreenHeight()/2.0f };
 
     do
     {
-        s->vel.x = (float)GetRandomValue(-1000, 1000)/100.0f;
-        s->vel.y = (float)GetRandomValue(-1000, 1000)/100.0f;
+        s->speed.x = (float)GetRandomValue(-1000, 1000)/100.0f;
+        s->speed.y = (float)GetRandomValue(-1000, 1000)/100.0f;
 
-    } while (!(fabs(s->vel.x) + (fabs(s->vel.y) > 1)));
+    } while (!(fabs(s->speed.x) + (fabs(s->speed.y) > 1)));
 
-    s->pos = Vector2Add(s->pos, Vector2Multiply(s->vel, (Vector2){ 8.0f, 8.0f }));
+    s->position = Vector2Add(s->position, Vector2Multiply(s->speed, (Vector2){ 8.0f, 8.0f }));
 }
 
-void UpdateStar(Star *s)
+static void UpdateStar(Star *s)
 {
-    s->pos = Vector2Add(s->pos, s->vel);
+    s->position = Vector2Add(s->position, s->speed);
 
-    if ((s->pos.x < 0) || (s->pos.x > GetScreenWidth()) ||
-        (s->pos.y < 0) || (s->pos.y > GetScreenHeight()))
+    if ((s->position.x < 0) || (s->position.x > GetScreenWidth()) ||
+        (s->position.y < 0) || (s->position.y > GetScreenHeight()))
     {
         ResetStar(s);
     }

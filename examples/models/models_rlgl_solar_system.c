@@ -43,11 +43,11 @@ int main(void)
 
     // Define the camera to look into our 3d world
     Camera camera = { 0 };
-    camera.position = (Vector3){ 16.0f, 16.0f, 16.0f };
-    camera.target = (Vector3){ 0.0f, 0.0f, 0.0f };
-    camera.up = (Vector3){ 0.0f, 1.0f, 0.0f };
-    camera.fovy = 45.0f;
-    camera.projection = CAMERA_PERSPECTIVE;
+    camera.position = (Vector3){ 16.0f, 16.0f, 16.0f }; // Camera position
+    camera.target = (Vector3){ 0.0f, 0.0f, 0.0f };      // Camera looking at point
+    camera.up = (Vector3){ 0.0f, 1.0f, 0.0f };          // Camera up vector (rotation towards target)
+    camera.fovy = 45.0f;                                // Camera field-of-view Y
+    camera.projection = CAMERA_PERSPECTIVE;             // Camera projection type
 
     float rotationSpeed = 0.2f;         // General system rotation speed
 
@@ -56,7 +56,8 @@ int main(void)
     float moonRotation = 0.0f;          // Rotation of moon around itself
     float moonOrbitRotation = 0.0f;     // Rotation of moon around earth in degrees
 
-    DisableCursor();                    // Catch cursor
+    DisableCursor();                    // Limit cursor to relative movement inside the window
+
     SetTargetFPS(60);                   // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
 

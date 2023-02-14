@@ -30,13 +30,12 @@ int main(void)
 
     // Define the camera to look into our 3d world (position, target, up vector)
     Camera camera = { 0 };
-    camera.position = (Vector3){ 0.0f, 2.0f, 4.0f };
-    camera.target = (Vector3){ 0.0f, 2.0f, 0.0f };
-    camera.up = (Vector3){ 0.0f, 1.0f, 0.0f };
-    camera.fovy = 60.0f;
-    camera.projection = CAMERA_PERSPECTIVE;
-    camera.swingCounter = 1; // Enable view bobbing
-    
+    camera.position = (Vector3){ 0.0f, 2.0f, 4.0f };    // Camera position
+    camera.target = (Vector3){ 0.0f, 2.0f, 0.0f };      // Camera looking at point
+    camera.up = (Vector3){ 0.0f, 1.0f, 0.0f };          // Camera up vector (rotation towards target)
+    camera.fovy = 60.0f;                                // Camera field-of-view Y
+    camera.projection = CAMERA_PERSPECTIVE;             // Camera projection type
+
     int cameraMode = CAMERA_FIRST_PERSON;
 
     // Generates some random columns
@@ -51,36 +50,46 @@ int main(void)
         colors[i] = (Color){ GetRandomValue(20, 255), GetRandomValue(10, 55), 30, 255 };
     }
 
-    DisableCursor();                            // Catch cursor
-    SetTargetFPS(60);                           // Set our game to run at 60 frames-per-second
+    DisableCursor();                    // Limit cursor to relative movement inside the window
+
+    SetTargetFPS(60);                   // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
 
     // Main game loop
-    while (!WindowShouldClose())                // Detect window close button or ESC key
+    while (!WindowShouldClose())        // Detect window close button or ESC key
     {
         // Update
         //----------------------------------------------------------------------------------
         // Switch camera mode
-        if (IsKeyPressed(KEY_ONE)) {
+        if (IsKeyPressed(KEY_ONE))
+        {
             cameraMode = CAMERA_FREE;
             camera.up = (Vector3){ 0.0f, 1.0f, 0.0f }; // Reset roll
         }
-        if (IsKeyPressed(KEY_TWO)) {
+
+        if (IsKeyPressed(KEY_TWO))
+        {
             cameraMode = CAMERA_FIRST_PERSON;
             camera.up = (Vector3){ 0.0f, 1.0f, 0.0f }; // Reset roll
         }
-        if (IsKeyPressed(KEY_THREE)) {
+
+        if (IsKeyPressed(KEY_THREE))
+        {
             cameraMode = CAMERA_THIRD_PERSON;
             camera.up = (Vector3){ 0.0f, 1.0f, 0.0f }; // Reset roll
         }
-        if (IsKeyPressed(KEY_FOUR)) {
+
+        if (IsKeyPressed(KEY_FOUR))
+        {
             cameraMode = CAMERA_ORBITAL;
             camera.up = (Vector3){ 0.0f, 1.0f, 0.0f }; // Reset roll
         }
 
         // Switch camera projection
-        if (IsKeyPressed(KEY_P)) {
-            if (camera.projection == CAMERA_PERSPECTIVE) {
+        if (IsKeyPressed(KEY_P))
+        {
+            if (camera.projection == CAMERA_PERSPECTIVE)
+            {
                 // Create isometric view
                 cameraMode = CAMERA_THIRD_PERSON;
                 // Note: The target distance is related to the render distance in the orthographic projection

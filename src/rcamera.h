@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   rcamera - Basic camera system for multiple camera modes
+*   rcamera - Basic camera system with support for multiple camera modes
 *
 *   CONFIGURATION:
 *
@@ -15,13 +15,13 @@
 *
 *   CONTRIBUTORS:
 *       Ramon Santamaria:   Supervision, review, update and maintenance
-*       Christoph Wagner:   Redesign (2022)
+*       Christoph Wagner:   Complete redesign, using raymath (2022)
 *       Marc Palau:         Initial implementation (2014)
 *
 *
 *   LICENSE: zlib/libpng
 *
-*   Copyright (c) 2015-2023 Ramon Santamaria (@raysan5)
+*   Copyright (c) 2022-2023 Christoph Wagner (@Crydsch) & Ramon Santamaria (@raysan5)
 *
 *   This software is provided "as-is", without any express or implied warranty. In no event
 *   will the authors be held liable for any damages arising from the use of this software.
@@ -42,9 +42,6 @@
 
 #ifndef RCAMERA_H
 #define RCAMERA_H
-
-// The only dependency // TODO review standalone mode
-#include "raymath.h"
 
 //----------------------------------------------------------------------------------
 // Defines and Macros
@@ -86,6 +83,8 @@
         int projection;         // Camera type, defines projection type: CAMERA_PERSPECTIVE or CAMERA_ORTHOGRAPHIC
     } Camera3D;
 
+    typedef Camera3D Camera;    // Camera type fallback, defaults to Camera3D
+
     // Camera system modes
     typedef enum {
         CAMERA_CUSTOM = 0,
@@ -115,19 +114,21 @@
 extern "C" {            // Prevents name mangling of functions
 #endif
 
-Vector3 GetCameraForward(Camera3D* camera);
-Vector3 GetCameraUp(Camera3D* camera);
-Vector3 GetCameraRight(Camera3D* camera);
-void CameraMoveForward(Camera3D* camera, float distance, bool moveInWorldPlane);
-void CameraMoveUp(Camera3D* camera, float distance);
-void CameraMoveRight(Camera3D* camera, float distance, bool moveInWorldPlane);
-void CameraZoom(Camera3D* camera, float delta);
-void CameraYaw(Camera3D* camera, float angle, bool rotateAroundTarget);
-void CameraPitch(Camera3D* camera, float angle, bool lockView, bool rotateAroundTarget, bool rotateUp);
-void CameraRoll(Camera3D* camera, float angle);
-void CameraViewBobbing(Camera3D* camera);
-Matrix GetCameraViewMatrix(Camera3D* camera);
-Matrix GetCameraProjectionMatrix(Camera3D* camera, float aspect);
+Vector3 GetCameraForward(Camera *camera);
+Vector3 GetCameraUp(Camera *camera);
+Vector3 GetCameraRight(Camera *camera);
+
+void CameraMoveForward(Camera *camera, float distance, bool moveInWorldPlane);
+void CameraMoveUp(Camera *camera, float distance);
+void CameraMoveRight(Camera *camera, float distance, bool moveInWorldPlane);
+void CameraMoveToTarget(Camera *camera, float delta);
+
+void CameraYaw(Camera *camera, float angle, bool rotateAroundTarget);
+void CameraPitch(Camera *camera, float angle, bool lockView, bool rotateAroundTarget, bool rotateUp);
+void CameraRoll(Camera *camera, float angle);
+
+Matrix GetCameraViewMatrix(Camera *camera);
+Matrix GetCameraProjectionMatrix(Camera* camera, float aspect);
 
 #if defined(__cplusplus)
 }
@@ -144,10 +145,12 @@ Matrix GetCameraProjectionMatrix(Camera3D* camera, float aspect);
 
 #if defined(CAMERA_IMPLEMENTATION)
 
+
+#include "raymath.h"        // Required for some vector maths
+
 //----------------------------------------------------------------------------------
 // Defines and Macros
 //----------------------------------------------------------------------------------
-
 #define CAMERA_MOVE_SPEED                               0.09f
 #define CAMERA_ROTATION_SPEED                           0.03f
 
@@ -185,20 +188,20 @@ Matrix GetCameraProjectionMatrix(Camera3D* camera, float aspect);
 //----------------------------------------------------------------------------------
 
 // Returns the cameras forward vector (normalized)
-Vector3 GetCameraForward(Camera3D *camera)
+Vector3 GetCameraForward(Camera *camera)
 {
     return Vector3Normalize(Vector3Subtract(camera->target, camera->position));
 }
 
 // Returns the cameras up vector (normalized)
 // Note: The up vector might not be perpendicular to the forward vector
-Vector3 GetCameraUp(Camera3D *camera)
+Vector3 GetCameraUp(Camera *camera)
 {
     return Vector3Normalize(camera->up);
 }
 
 // Returns the cameras right vector (normalized)
-Vector3 GetCameraRight(Camera3D *camera)
+Vector3 GetCameraRight(Camera *camera)
 {
     Vector3 forward = GetCameraForward(camera);
     Vector3 up = GetCameraUp(camera);
@@ -206,7 +209,7 @@ Vector3 GetCameraRight(Camera3D *camera)
 }
 
 // Moves the camera in its forward direction
-void CameraMoveForward(Camera3D *camera, float distance, bool moveInWorldPlane)
+void CameraMoveForward(Camera *camera, float distance, bool moveInWorldPlane)
 {
     Vector3 forward = GetCameraForward(camera);
 
@@ -226,7 +229,7 @@ void CameraMoveForward(Camera3D *camera, float distance, bool moveInWorldPlane)
 }
 
 // Moves the camera in its up direction
-void CameraMoveUp(Camera3D *camera, float distance)
+void CameraMoveUp(Camera *camera, float distance)
 {
     Vector3 up = GetCameraUp(camera);
     
@@ -239,7 +242,7 @@ void CameraMoveUp(Camera3D *camera, float distance)
 }
 
 // Moves the camera target in its current right direction
-void CameraMoveRight(Camera3D *camera, float distance, bool moveInWorldPlane)
+void CameraMoveRight(Camera *camera, float distance, bool moveInWorldPlane)
 {
     Vector3 right = GetCameraRight(camera);
 
@@ -259,7 +262,7 @@ void CameraMoveRight(Camera3D *camera, float distance, bool moveInWorldPlane)
 }
 
 // Moves the camera position closer/farther to/from the camera target
-void CameraZoom(Camera3D *camera, float delta)
+void CameraMoveToTarget(Camera *camera, float delta)
 {
     float distance = Vector3Distance(camera->position, camera->target);
 
@@ -278,7 +281,7 @@ void CameraZoom(Camera3D *camera, float delta)
 // Yaw is "looking left and right"
 // If rotateAroundTarget is false, the camera rotates around its position
 // Note: angle must be provided in radians
-void CameraYaw(Camera3D *camera, float angle, bool rotateAroundTarget)
+void CameraYaw(Camera *camera, float angle, bool rotateAroundTarget)
 {
     // Rotation axis
     Vector3 up = GetCameraUp(camera);
@@ -307,7 +310,7 @@ void CameraYaw(Camera3D *camera, float angle, bool rotateAroundTarget)
 // If rotateAroundTarget is false, the camera rotates around its position
 // rotateUp rotates the up direction as well (typically only usefull in CAMERA_FREE)
 // Note: angle must be provided in radians
-void CameraPitch(Camera3D *camera, float angle, bool lockView, bool rotateAroundTarget, bool rotateUp)
+void CameraPitch(Camera *camera, float angle, bool lockView, bool rotateAroundTarget, bool rotateUp)
 {
     // Up direction
     Vector3 up = GetCameraUp(camera);
@@ -359,7 +362,7 @@ void CameraPitch(Camera3D *camera, float angle, bool lockView, bool rotateAround
 // Rotates the camera around its forward vector
 // Roll is "turning your head sideways to the left or right"
 // Note: angle must be provided in radians
-void CameraRoll(Camera3D *camera, float angle)
+void CameraRoll(Camera *camera, float angle)
 {
     // Rotation axis
     Vector3 forward = GetCameraForward(camera);
@@ -368,30 +371,14 @@ void CameraRoll(Camera3D *camera, float angle)
     camera->up = Vector3RotateByAxisAngle(camera->up, forward, angle);
 }
 
-// Moves camera slightly to simulate a walking motion
-// Note: Only active if camera->swingCounter > 0
-void CameraViewBobbing(Camera3D *camera)
-{
-    if (camera->swingCounter > 0)
-    {
-        // NOTE: We delay the target movement relative to the position movement to create a little pitch with each step.
-        camera->position.y = camera->position.y - 0.25f * sinf((camera->swingCounter + 1) / CAMERA_FIRST_PERSON_STEP_TRIGONOMETRIC_DIVIDER) / CAMERA_FIRST_PERSON_STEP_DIVIDER;
-        camera->target.y = camera->target.y - 0.25f * sinf((camera->swingCounter - 1) / CAMERA_FIRST_PERSON_STEP_TRIGONOMETRIC_DIVIDER) / CAMERA_FIRST_PERSON_STEP_DIVIDER;
-
-        // Update counter for next frame
-        camera->swingCounter %= 2147483647 /* INT_MAX */; // Counter must be positive
-        camera->swingCounter++;
-    }
-}
-
 // Returns the camera view matrix
-Matrix GetCameraViewMatrix(Camera3D *camera)
+Matrix GetCameraViewMatrix(Camera *camera)
 {
     return MatrixLookAt(camera->position, camera->target, camera->up);
 }
 
 // Returns the camera projection matrix
-Matrix GetCameraProjectionMatrix(Camera3D *camera, float aspect)
+Matrix GetCameraProjectionMatrix(Camera *camera, float aspect)
 {
     if (camera->projection == CAMERA_PERSPECTIVE)
     {
@@ -407,11 +394,10 @@ Matrix GetCameraProjectionMatrix(Camera3D *camera, float aspect)
     return MatrixIdentity();
 }
 
-
 #ifndef CAMERA_STANDALONE
 // Update camera position for selected mode
 // Camera mode: CAMERA_FREE, CAMERA_FIRST_PERSON, CAMERA_THIRD_PERSON, CAMERA_ORBITAL or CUSTOM
-void UpdateCamera(Camera3D *camera, int mode)
+void UpdateCamera(Camera *camera, int mode)
 {
     Vector2 mousePositionDelta = GetMouseDelta();
 
@@ -422,11 +408,11 @@ void UpdateCamera(Camera3D *camera, int mode)
     
     // Camera movement
     if (IsKeyDown(KEY_W)) CameraMoveForward(camera, CAMERA_MOVE_SPEED, moveInWorldPlane);
+    if (IsKeyDown(KEY_A)) CameraMoveRight(camera, -CAMERA_MOVE_SPEED, moveInWorldPlane);
     if (IsKeyDown(KEY_S)) CameraMoveForward(camera, -CAMERA_MOVE_SPEED, moveInWorldPlane);
     if (IsKeyDown(KEY_D)) CameraMoveRight(camera, CAMERA_MOVE_SPEED, moveInWorldPlane);
-    if (IsKeyDown(KEY_A)) CameraMoveRight(camera, -CAMERA_MOVE_SPEED, moveInWorldPlane);
-    if (IsKeyDown(KEY_SPACE)) CameraMoveUp(camera, CAMERA_MOVE_SPEED);
-    if (IsKeyDown(KEY_LEFT_CONTROL)) CameraMoveUp(camera, -CAMERA_MOVE_SPEED);
+    //if (IsKeyDown(KEY_SPACE)) CameraMoveUp(camera, CAMERA_MOVE_SPEED);
+    //if (IsKeyDown(KEY_LEFT_CONTROL)) CameraMoveUp(camera, -CAMERA_MOVE_SPEED);
 
     // Camera rotation
     if (IsKeyDown(KEY_DOWN)) CameraPitch(camera, -CAMERA_ROTATION_SPEED, lockView, rotateAroundTarget, rotateUp);
@@ -436,17 +422,13 @@ void UpdateCamera(Camera3D *camera, int mode)
     if (IsKeyDown(KEY_Q)) CameraRoll(camera, -CAMERA_ROTATION_SPEED);
     if (IsKeyDown(KEY_E)) CameraRoll(camera, CAMERA_ROTATION_SPEED);
 
-    CameraYaw(camera, mousePositionDelta.x * -CAMERA_MOUSE_MOVE_SENSITIVITY, rotateAroundTarget);
-    CameraPitch(camera, mousePositionDelta.y * -CAMERA_MOUSE_MOVE_SENSITIVITY, lockView, rotateAroundTarget, rotateUp);
+    CameraYaw(camera, -mousePositionDelta.x*CAMERA_MOUSE_MOVE_SENSITIVITY, rotateAroundTarget);
+    CameraPitch(camera, -mousePositionDelta.y*CAMERA_MOUSE_MOVE_SENSITIVITY, lockView, rotateAroundTarget, rotateUp);
 
     // Zoom target distance
-    CameraZoom(camera, -GetMouseWheelMove());
-    if (IsKeyPressed(KEY_KP_SUBTRACT)) CameraZoom(camera, 2.0f);
-    if (IsKeyPressed(KEY_KP_ADD)) CameraZoom(camera, -2.0f);
-
-
-    // Apply view bobbing when moving around (per default only active in CAMERA_FIRST_PERSON)
-    if (mode == CAMERA_FIRST_PERSON && (IsKeyDown(KEY_W) || IsKeyDown(KEY_A) || IsKeyDown(KEY_S) || IsKeyDown(KEY_D))) CameraViewBobbing(camera);
+    CameraMoveToTarget(camera, -GetMouseWheelMove());
+    if (IsKeyPressed(KEY_KP_SUBTRACT)) CameraMoveToTarget(camera, 2.0f);
+    if (IsKeyPressed(KEY_KP_ADD)) CameraMoveToTarget(camera, -2.0f);
 }
 #endif // !CAMERA_STANDALONE
 

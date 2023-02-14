@@ -21,8 +21,6 @@
 
 #include "raylib.h"
 
-#include <stdlib.h>
-
 //------------------------------------------------------------------------------------
 // Program main entry point
 //------------------------------------------------------------------------------------
@@ -102,15 +100,11 @@ int main(void)
 
     // De-Initialization
     //--------------------------------------------------------------------------------------
-    UnloadTexture(texture);     // Unload texture
+    UnloadTexture(texture);                     // Unload texture
+    UnloadModelAnimations(anims, animsCount);   // Unload model animations data
+    UnloadModel(model);                         // Unload model
 
-    // Unload model animations data
-    for (unsigned int i = 0; i < animsCount; i++) UnloadModelAnimation(anims[i]);
-    RL_FREE(anims);
-
-    UnloadModel(model);         // Unload model
-
-    CloseWindow();              // Close window and OpenGL context
+    CloseWindow();                  // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
 
     return 0;

@@ -43,7 +43,7 @@ int main(void)
     camera.target = (Vector3){ 0.0f, 0.0f, 0.0f };      // Camera looking at point
     camera.up = (Vector3){ 0.0f, 1.0f, 0.0f };          // Camera up vector (rotation towards target)
     camera.fovy = 45.0f;                                // Camera field-of-view Y
-    camera.projection = CAMERA_PERSPECTIVE;             // Camera mode type
+    camera.projection = CAMERA_PERSPECTIVE;             // Camera projection type
 
     // Load MagicaVoxel files
     Model models[MAX_VOX_FILES] = { 0 };
@@ -69,7 +69,8 @@ int main(void)
 
     int currentModel = 0;
 
-    DisableCursor();                            // Catch cursor
+    DisableCursor();                // Limit cursor to relative movement inside the window
+
     SetTargetFPS(60);               // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
 

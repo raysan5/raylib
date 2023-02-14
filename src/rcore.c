@@ -925,6 +925,8 @@ void InitWindow(int width, int height, const char *title)
 
     CORE.Input.Mouse.currentPosition.x = (float)CORE.Window.screen.width/2.0f;
     CORE.Input.Mouse.currentPosition.y = (float)CORE.Window.screen.height/2.0f;
+    
+    SetMousePosition((int)CORE.Input.Mouse.currentPosition.x, (int)CORE.Input.Mouse.currentPosition.x);
 
 #if defined(SUPPORT_EVENTS_AUTOMATION)
     events = (AutomationEvent *)malloc(MAX_CODE_AUTOMATION_EVENTS*sizeof(AutomationEvent));
@@ -2024,6 +2026,13 @@ void DisableCursor(void)
 {
 #if defined(PLATFORM_DESKTOP)
     glfwSetInputMode(CORE.Window.handle, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+
+    // Set cursor position in the middle of screen and update delta accordingly
+    SetMousePosition(CORE.Window.screen.width/2, CORE.Window.screen.height/2);
+    CORE.Input.Mouse.currentPosition.x = CORE.Window.screen.width/2;
+    CORE.Input.Mouse.currentPosition.y = CORE.Window.screen.width/2;
+    CORE.Input.Mouse.previousPosition.x = CORE.Input.Mouse.currentPosition.x;
+    CORE.Input.Mouse.previousPosition.y = CORE.Input.Mouse.currentPosition.y;
 #endif
 #if defined(PLATFORM_WEB)
     emscripten_request_pointerlock("#canvas", 1);
@@ -2189,7 +2198,7 @@ void EndMode2D(void)
 }
 
 // Initializes 3D mode with custom camera (3D)
-void BeginMode3D(Camera3D camera)
+void BeginMode3D(Camera camera)
 {
     rlDrawRenderBatchActive();      // Update and draw internal render batch
 
@@ -3788,7 +3797,7 @@ Vector2 GetMousePosition(void)
 // Get mouse delta between frames
 Vector2 GetMouseDelta(void)
 {
-    Vector2 delta = {0};
+    Vector2 delta = { 0 };
 
     delta.x = CORE.Input.Mouse.currentPosition.x - CORE.Input.Mouse.previousPosition.x;
     delta.y = CORE.Input.Mouse.currentPosition.y - CORE.Input.Mouse.previousPosition.y;

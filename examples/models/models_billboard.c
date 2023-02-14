@@ -28,15 +28,15 @@ int main(void)
 
     // Define the camera to look into our 3d world
     Camera camera = { 0 };
-    camera.position = (Vector3){ 5.0f, 4.0f, 5.0f };
-    camera.target = (Vector3){ 0.0f, 2.0f, 0.0f };
-    camera.up = (Vector3){ 0.0f, 1.0f, 0.0f };
-    camera.fovy = 45.0f;
-    camera.projection = CAMERA_PERSPECTIVE;
+    camera.position = (Vector3){ 5.0f, 4.0f, 5.0f };    // Camera position
+    camera.target = (Vector3){ 0.0f, 2.0f, 0.0f };      // Camera looking at point
+    camera.up = (Vector3){ 0.0f, 1.0f, 0.0f };          // Camera up vector (rotation towards target)
+    camera.fovy = 45.0f;                                // Camera field-of-view Y
+    camera.projection = CAMERA_PERSPECTIVE;             // Camera projection type
 
-    Texture2D bill = LoadTexture("resources/billboard.png");     // Our billboard texture
-    Vector3 billPositionStatic = { 0.0f, 2.0f, 0.0f };                 // Position of billboard
-    Vector3 billPositionRotating = { 1.0f, 2.0f, 1.0f };
+    Texture2D bill = LoadTexture("resources/billboard.png");    // Our billboard texture
+    Vector3 billPositionStatic = { 0.0f, 2.0f, 0.0f };          // Position of static billboard
+    Vector3 billPositionRotating = { 1.0f, 2.0f, 1.0f };        // Position of rotating billboard
 
     // Entire billboard texture, source is used to take a segment from a larger texture.
     Rectangle source = { 0.0f, 0.0f, (float)bill.width, (float)bill.height };
@@ -55,11 +55,13 @@ int main(void)
     float distanceRotating;
     float rotation = 0.0f;
 
-    SetTargetFPS(60);                       // Set our game to run at 60 frames-per-second
+    DisableCursor();                    // Limit cursor to relative movement inside the window
+
+    SetTargetFPS(60);                   // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
 
     // Main game loop
-    while (!WindowShouldClose())            // Detect window close button or ESC key
+    while (!WindowShouldClose())        // Detect window close button or ESC key
     {
         // Update
         //----------------------------------------------------------------------------------
