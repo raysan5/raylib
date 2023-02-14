@@ -14,6 +14,7 @@
 ********************************************************************************************/
 
 #include "raylib.h"
+
 #include "rlgl.h"
 
 #if defined(PLATFORM_DESKTOP)
@@ -27,9 +28,9 @@
 //------------------------------------------------------------------------------------
 // Load custom render texture, create a writable depth texture buffer
 static RenderTexture2D LoadRenderTextureDepthTex(int width, int height);
+
 // Unload render texture from GPU memory (VRAM)
 static void UnloadRenderTextureDepthTex(RenderTexture2D target);
-
 
 //------------------------------------------------------------------------------------
 // Program main entry point
@@ -55,20 +56,19 @@ int main(void)
         .target = (Vector3){ 0.0f, 0.5f, 0.0f },      // Camera looking at point
         .up = (Vector3){ 0.0f, 1.0f, 0.0f },          // Camera up vector (rotation towards target)
         .fovy = 45.0f,                                // Camera field-of-view Y
-        .projection = CAMERA_PERSPECTIVE              // Camera mode type
+        .projection = CAMERA_PERSPECTIVE              // Camera projection type
     };
     
-    SetCameraMode(camera, CAMERA_ORBITAL);
-    
-    SetTargetFPS(60);
+    DisableCursor();                    // Limit cursor to relative movement inside the window
+    SetTargetFPS(60);                   // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
 
     // Main game loop
-    while (!WindowShouldClose())    // Detect window close button or ESC key
+    while (!WindowShouldClose())        // Detect window close button or ESC key
     {
         // Update
         //----------------------------------------------------------------------------------
-        UpdateCamera(&camera);
+        UpdateCamera(&camera, CAMERA_ORBITAL);
         //----------------------------------------------------------------------------------
         
         // Draw
