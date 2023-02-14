@@ -40,7 +40,7 @@ int main(void)
 
     RayCollision collision = { 0 };
 
-    SetCameraMode(camera, CAMERA_FREE); // Set a free camera mode
+    EnableCursor();                     // Disable camera controls
 
     SetTargetFPS(60);                   // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
@@ -50,7 +50,14 @@ int main(void)
     {
         // Update
         //----------------------------------------------------------------------------------
-        UpdateCamera(&camera);
+        if (IsCursorHidden()) UpdateCamera(&camera, CAMERA_FIRST_PERSON);          // Update camera
+
+        // Toggle camera controls
+        if (IsMouseButtonPressed(MOUSE_BUTTON_RIGHT))
+        {
+            if (IsCursorHidden()) EnableCursor();
+            else DisableCursor();
+        }
 
         if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT))
         {
@@ -93,9 +100,11 @@ int main(void)
 
             EndMode3D();
 
-            DrawText("Try selecting the box with mouse!", 240, 10, 20, DARKGRAY);
+            DrawText("Try clicking on the box with your mouse!", 240, 10, 20, DARKGRAY);
 
             if (collision.hit) DrawText("BOX SELECTED", (screenWidth - MeasureText("BOX SELECTED", 30)) / 2, (int)(screenHeight * 0.1f), 30, GREEN);
+
+            DrawText("Right click mouse to toggle camera controls", 10, 430, 10, GRAY);
 
             DrawFPS(10, 10);
 

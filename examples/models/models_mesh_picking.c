@@ -64,8 +64,7 @@ int main(void)
     Vector3 sp = (Vector3){ -30.0f, 5.0f, 5.0f };
     float sr = 4.0f;
 
-    SetCameraMode(camera, CAMERA_FREE); // Set a free camera mode
-
+    EnableCursor();                     // Disable camera controls
     SetTargetFPS(60);                   // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
     // Main game loop
@@ -73,7 +72,14 @@ int main(void)
     {
         // Update
         //----------------------------------------------------------------------------------
-        UpdateCamera(&camera);
+        if (IsCursorHidden()) UpdateCamera(&camera, CAMERA_FIRST_PERSON);          // Update camera
+
+        // Toggle camera controls
+        if (IsMouseButtonPressed(MOUSE_BUTTON_RIGHT))
+        {
+            if (IsCursorHidden()) EnableCursor();
+            else DisableCursor();
+        }
 
         // Display information about closest hit
         RayCollision collision = { 0 };
@@ -219,7 +225,7 @@ int main(void)
                     DrawText(TextFormat("Barycenter: %3.2f %3.2f %3.2f",  bary.x, bary.y, bary.z), 10, ypos + 45, 10, BLACK);
             }
 
-            DrawText("Use Mouse to Move Camera", 10, 430, 10, GRAY);
+            DrawText("Right click mouse to toggle camera controls", 10, 430, 10, GRAY);
 
             DrawText("(c) Turret 3D model by Alberto Cano", screenWidth - 200, screenHeight - 20, 10, GRAY);
 

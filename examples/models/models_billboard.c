@@ -48,14 +48,13 @@ int main(void)
     // Here we choose to rotate around the image center
     // NOTE: (-1, 1) is the range where origin.x, origin.y is inside the texture
     Vector2 rotateOrigin = { 0.0f };
-    SetCameraMode(camera, CAMERA_ORBITAL);  // Set an orbital camera mode
 
     // Distance is needed for the correct billboard draw order
     // Larger distance (further away from the camera) should be drawn prior to smaller distance.
     float distanceStatic;
     float distanceRotating;
-
     float rotation = 0.0f;
+
     SetTargetFPS(60);                       // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
 
@@ -64,7 +63,8 @@ int main(void)
     {
         // Update
         //----------------------------------------------------------------------------------
-        UpdateCamera(&camera);
+        UpdateCamera(&camera, CAMERA_ORBITAL);
+
         rotation += 0.4f;
         distanceStatic = Vector3Distance(camera.position, billPositionStatic);
         distanceRotating = Vector3Distance(camera.position, billPositionRotating);

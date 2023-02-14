@@ -42,8 +42,7 @@ int main(void)
 
     UnloadImage(image);     // Unload cubesmap image from RAM, already uploaded to VRAM
 
-    SetCameraMode(camera, CAMERA_ORBITAL);  // Set an orbital camera mode
-
+    DisableCursor();                        // Catch cursor
     SetTargetFPS(60);                       // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
 
@@ -52,7 +51,7 @@ int main(void)
     {
         // Update
         //----------------------------------------------------------------------------------
-        UpdateCamera(&camera);
+        UpdateCamera(&camera, CAMERA_ORBITAL);
         //----------------------------------------------------------------------------------
 
         // Draw

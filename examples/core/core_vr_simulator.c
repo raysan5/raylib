@@ -96,11 +96,11 @@ int main(void)
     camera.up = (Vector3){ 0.0f, 1.0f, 0.0f };          // Camera up vector
     camera.fovy = 60.0f;                                // Camera field-of-view Y
     camera.projection = CAMERA_PERSPECTIVE;             // Camera type
+    camera.swingCounter = 1;                            // Enable view bobbing
 
     Vector3 cubePosition = { 0.0f, 0.0f, 0.0f };
 
-    SetCameraMode(camera, CAMERA_FIRST_PERSON);         // Set first person camera mode
-
+    DisableCursor();                    // Catch cursor
     SetTargetFPS(90);                   // Set our game to run at 90 frames-per-second
     //--------------------------------------------------------------------------------------
 
@@ -109,7 +109,7 @@ int main(void)
     {
         // Update
         //----------------------------------------------------------------------------------
-        UpdateCamera(&camera);
+        UpdateCamera(&camera, CAMERA_FIRST_PERSON);
         //----------------------------------------------------------------------------------
 
         // Draw

@@ -85,6 +85,7 @@ int main(void)
     int framesCounter = 0;
     Vector3 rotation = { 0 };       // Model rotation angles
 
+    DisableCursor();                            // Catch cursor
     SetTargetFPS(60);               // Set  to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
 
@@ -93,7 +94,7 @@ int main(void)
     {
         // Update
         //----------------------------------------------------------------------------------
-        UpdateCamera(&camera);
+        UpdateCamera(&camera, CAMERA_FIRST_PERSON);
         
         framesCounter++;
         rotation.x += 0.01f;

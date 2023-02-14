@@ -51,8 +51,6 @@ int main(void)
 
     Vector3 position = { 0.0f, 0.0f, 0.0f };    // Set model position
 
-    SetCameraMode(camera, CAMERA_FREE);     // Set free camera mode
-
     SetTargetFPS(60);                       // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
 
@@ -61,6 +59,7 @@ int main(void)
     {
         // Update
         //----------------------------------------------------------------------------------
+        UpdateCamera(&camera, CAMERA_THIRD_PERSON);
         // Select current animation
         if (IsKeyPressed(KEY_UP)) animIndex = (animIndex + 1)%animsCount;
         else if (IsKeyPressed(KEY_DOWN)) animIndex = (animIndex + animsCount - 1)%animsCount;
@@ -69,9 +68,6 @@ int main(void)
         ModelAnimation anim = modelAnimations[animIndex];
         animCurrentFrame = (animCurrentFrame + 1)%anim.frameCount;
         UpdateModelAnimation(model, anim, animCurrentFrame);
-        
-        // Update camera
-        UpdateCamera(&camera);
         //----------------------------------------------------------------------------------
 
         // Draw

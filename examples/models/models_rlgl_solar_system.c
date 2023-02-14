@@ -49,8 +49,6 @@ int main(void)
     camera.fovy = 45.0f;
     camera.projection = CAMERA_PERSPECTIVE;
 
-    SetCameraMode(camera, CAMERA_FREE);
-
     float rotationSpeed = 0.2f;         // General system rotation speed
 
     float earthRotation = 0.0f;         // Rotation of earth around itself (days) in degrees
@@ -58,6 +56,7 @@ int main(void)
     float moonRotation = 0.0f;          // Rotation of moon around itself
     float moonOrbitRotation = 0.0f;     // Rotation of moon around earth in degrees
 
+    DisableCursor();                    // Catch cursor
     SetTargetFPS(60);                   // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
 
@@ -66,7 +65,7 @@ int main(void)
     {
         // Update
         //----------------------------------------------------------------------------------
-        UpdateCamera(&camera);
+        UpdateCamera(&camera, CAMERA_ORBITAL);
 
         earthRotation += (5.0f*rotationSpeed);
         earthOrbitRotation += (365/360.0f*(5.0f*rotationSpeed)*rotationSpeed);

@@ -45,8 +45,7 @@ int main(void)
 
     Vector3 mapPosition = { -16.0f, 0.0f, -8.0f };  // Set model position
 
-    SetCameraMode(camera, CAMERA_FIRST_PERSON);     // Set camera mode
-
+    DisableCursor();                // Catch cursor
     SetTargetFPS(60);               // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
 
@@ -57,7 +56,7 @@ int main(void)
         //----------------------------------------------------------------------------------
         Vector3 oldCamPos = camera.position;    // Store old camera position
 
-        UpdateCamera(&camera);
+        UpdateCamera(&camera, CAMERA_FIRST_PERSON);
 
         // Check player collision (we simplify to 2D collision detection)
         Vector2 playerPos = { camera.position.x, camera.position.z };

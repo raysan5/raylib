@@ -107,9 +107,7 @@ int main(void)
     // Create a RenderTexture2D to be used for render to texture
     RenderTexture2D target = LoadRenderTexture(screenWidth, screenHeight);
 
-    // Setup orbital camera
-    SetCameraMode(camera, CAMERA_ORBITAL);  // Set an orbital camera mode
-
+    DisableCursor();                        // Catch cursor
     SetTargetFPS(60);                       // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
 
@@ -118,7 +116,7 @@ int main(void)
     {
         // Update
         //----------------------------------------------------------------------------------
-        UpdateCamera(&camera);
+        UpdateCamera(&camera, CAMERA_ORBITAL);
 
         if (IsKeyPressed(KEY_RIGHT)) currentShader++;
         else if (IsKeyPressed(KEY_LEFT)) currentShader--;

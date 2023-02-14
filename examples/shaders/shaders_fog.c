@@ -84,8 +84,7 @@ int main(void)
     // Using just 1 point lights
     CreateLight(LIGHT_POINT, (Vector3){ 0, 2, 6 }, Vector3Zero(), WHITE, shader);
 
-    SetCameraMode(camera, CAMERA_ORBITAL);  // Set an orbital camera mode
-
+    DisableCursor();                        // Catch cursor
     SetTargetFPS(60);                       // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
 
@@ -94,7 +93,7 @@ int main(void)
     {
         // Update
         //----------------------------------------------------------------------------------
-        UpdateCamera(&camera);
+        UpdateCamera(&camera, CAMERA_ORBITAL);
 
         if (IsKeyDown(KEY_UP))
         {

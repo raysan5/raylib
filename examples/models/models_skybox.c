@@ -87,8 +87,7 @@ int main(void)
         UnloadImage(img);
     }
 
-    SetCameraMode(camera, CAMERA_FIRST_PERSON);  // Set a first person camera mode
-
+    DisableCursor();                        // Catch cursor
     SetTargetFPS(60);                       // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
 
@@ -97,7 +96,7 @@ int main(void)
     {
         // Update
         //----------------------------------------------------------------------------------
-        UpdateCamera(&camera);
+        UpdateCamera(&camera, CAMERA_FIRST_PERSON);
 
         // Load new cubemap texture on drag&drop
         if (IsFileDropped())

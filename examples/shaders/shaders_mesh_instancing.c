@@ -94,9 +94,7 @@ int main(void)
     Material matDefault = LoadMaterialDefault();
     matDefault.maps[MATERIAL_MAP_DIFFUSE].color = BLUE;
 
-    // Set an orbital camera mode
-    SetCameraMode(camera, CAMERA_ORBITAL);  
-
+    DisableCursor();                       // Catch cursor
     SetTargetFPS(60);                      // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
 
@@ -105,7 +103,7 @@ int main(void)
     {
         // Update
         //----------------------------------------------------------------------------------
-        UpdateCamera(&camera);
+        UpdateCamera(&camera, CAMERA_ORBITAL);
 
         // Update the light shader with the camera view position
         float cameraPos[3] = { camera.position.x, camera.position.y, camera.position.z };
