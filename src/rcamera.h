@@ -370,7 +370,7 @@ void CameraRoll(Camera3D *camera, float angle)
 
 // Moves camera slightly to simulate a walking motion
 // Note: Only active if camera->swingCounter > 0
-void CameraViewBobbing(Camera3D* camera)
+void CameraViewBobbing(Camera3D *camera)
 {
     if (camera->swingCounter > 0)
     {
@@ -409,19 +409,10 @@ Matrix GetCameraProjectionMatrix(Camera3D *camera, float aspect)
 
 
 #ifndef CAMERA_STANDALONE
-
-static int init_frames = 3; // TODO review and remove
-
 // Update camera position for selected mode
 // Camera mode: CAMERA_FREE, CAMERA_FIRST_PERSON, CAMERA_THIRD_PERSON, CAMERA_ORBITAL or CUSTOM
 void UpdateCamera(Camera3D *camera, int mode)
 {
-    // Avoid inital mouse "jump"
-    if (init_frames > 0) {
-        SetMousePosition(0, 0);
-        init_frames--;
-        return;
-    }
     Vector2 mousePositionDelta = GetMouseDelta();
 
     bool moveInWorldPlane = mode == CAMERA_FIRST_PERSON || mode == CAMERA_THIRD_PERSON;
@@ -457,8 +448,6 @@ void UpdateCamera(Camera3D *camera, int mode)
     // Apply view bobbing when moving around (per default only active in CAMERA_FIRST_PERSON)
     if (mode == CAMERA_FIRST_PERSON && (IsKeyDown(KEY_W) || IsKeyDown(KEY_A) || IsKeyDown(KEY_S) || IsKeyDown(KEY_D))) CameraViewBobbing(camera);
 }
-
 #endif // !CAMERA_STANDALONE
-
 
 #endif // CAMERA_IMPLEMENTATION

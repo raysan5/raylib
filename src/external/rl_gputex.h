@@ -477,10 +477,10 @@ int rl_save_ktx(const char *file_name, void *data, int width, int height, int fo
     // Calculate file data_size required
     int data_size = sizeof(ktx_header);
 
-    for (int i = 0, width = width, height = height; i < mipmaps; i++)
+    for (int i = 0, w = width, h = height; i < mipmaps; i++)
     {
-        data_size += get_pixel_data_size(width, height, format);
-        width /= 2; height /= 2;
+        data_size += get_pixel_data_size(w, h, format);
+        w /= 2; h /= 2;
     }
 
     unsigned char *file_data = RL_CALLOC(data_size, 1);

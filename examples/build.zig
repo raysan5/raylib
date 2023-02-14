@@ -1,14 +1,10 @@
 const std = @import("std");
 const builtin = @import("builtin");
 
-fn add_module(comptime module: []const u8, b: *std.build.Builder, target: std.zig.CrossTarget) !*std.build.Step {
+fn add_module(comptime module: []const u8, b: *std.Build, target: std.zig.CrossTarget, optimize: std.builtin.OptimizeMode) !*std.Build.Step {
     if (target.getOsTag() == .emscripten) {
         @panic("Emscripten building via Zig unsupported");
     }
-
-    // Standard release options allow the person running `zig build` to select
-    // between Debug, ReleaseSafe, ReleaseFast, and ReleaseSmall.
-    const mode = b.standardReleaseOptions();
 
     const all = b.step(module, "All " ++ module ++ " examples");
     const dir = try std.fs.cwd().openIterableDir(module, .{});
@@ -22,10 +18,12 @@ fn add_module(comptime module: []const u8, b: *std.build.Builder, target: std.zi
         // zig's mingw headers do not include pthread.h
         if (std.mem.eql(u8, "core_loading_thread", name) and target.getOsTag() == .windows) continue;
 
-        const exe = b.addExecutable(name, null);
+        const exe = b.addExecutable(.{
+            .name = name,
+            .target = target,
+            .optimize = optimize,
+        });
         exe.addCSourceFile(path, &[_][]const u8{});
-        exe.setTarget(target);
-        exe.setBuildMode(mode);
         exe.linkLibC();
         exe.addObjectFile(switch (target.getOsTag()) {
             .windows => "../src/raylib.lib",
@@ -83,21 +81,25 @@ fn add_module(comptime module: []const u8, b: *std.build.Builder, target: std.zi
     return all;
 }
 
-pub fn build(b: *std.build.Builder) !void {
+pub fn build(b: *std.Build) !void {
     // Standard target options allows the person running `zig build` to choose
     // what target to build for. Here we do not override the defaults, which
     // means any target is allowed, and the default is native. Other options
     // for restricting supported target set are available.
     const target = b.standardTargetOptions(.{});
+    // Standard optimization options allow the person running `zig build` to select
+    // between Debug, ReleaseSafe, ReleaseFast, and ReleaseSmall. Here we do not
+    // set a preferred release mode, allowing the user to decide how to optimize.
+    const optimize = b.standardOptimizeOption(.{});
 
     const all = b.getInstallStep();
 
-    all.dependOn(try add_module("audio", b, target));
-    all.dependOn(try add_module("core", b, target));
-    all.dependOn(try add_module("models", b, target));
-    all.dependOn(try add_module("others", b, target));
-    all.dependOn(try add_module("shaders", b, target));
-    all.dependOn(try add_module("shapes", b, target));
-    all.dependOn(try add_module("text", b, target));
-    all.dependOn(try add_module("textures", b, target));
+    all.dependOn(try add_module("audio", b, target, optimize));
+    all.dependOn(try add_module("core", b, target, optimize));
+    all.dependOn(try add_module("models", b, target, optimize));
+    all.dependOn(try add_module("others", b, target, optimize));
+    all.dependOn(try add_module("shaders", b, target, optimize));
+    all.dependOn(try add_module("shapes", b, target, optimize));
+    all.dependOn(try add_module("text", b, target, optimize));
+    all.dependOn(try add_module("textures", b, target, optimize));
 }

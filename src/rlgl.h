@@ -281,33 +281,33 @@
 
 // GL blending factors
 #define RL_ZERO                                 0           // GL_ZERO
-#define RL_ONE                                  1           // GL_ONE  
-#define RL_SRC_COLOR                            0x0300      // GL_SRC_COLOR            
-#define RL_ONE_MINUS_SRC_COLOR                  0x0301      // GL_ONE_MINUS_SRC_COLOR 
-#define RL_SRC_ALPHA                            0x0302      // GL_SRC_ALPHA           
-#define RL_ONE_MINUS_SRC_ALPHA                  0x0303      // GL_ONE_MINUS_SRC_ALPHA 
-#define RL_DST_ALPHA                            0x0304      // GL_DST_ALPHA           
-#define RL_ONE_MINUS_DST_ALPHA                  0x0305      // GL_ONE_MINUS_DST_ALPHA 
-#define RL_DST_COLOR                            0x0306      // GL_DST_COLOR           
-#define RL_ONE_MINUS_DST_COLOR                  0x0307      // GL_ONE_MINUS_DST_COLOR 
-#define RL_SRC_ALPHA_SATURATE                   0x0308      // GL_SRC_ALPHA_SATURATE  
-#define RL_CONSTANT_COLOR                       0x8001      // GL_CONSTANT_COLOR          
+#define RL_ONE                                  1           // GL_ONE
+#define RL_SRC_COLOR                            0x0300      // GL_SRC_COLOR
+#define RL_ONE_MINUS_SRC_COLOR                  0x0301      // GL_ONE_MINUS_SRC_COLOR
+#define RL_SRC_ALPHA                            0x0302      // GL_SRC_ALPHA
+#define RL_ONE_MINUS_SRC_ALPHA                  0x0303      // GL_ONE_MINUS_SRC_ALPHA
+#define RL_DST_ALPHA                            0x0304      // GL_DST_ALPHA
+#define RL_ONE_MINUS_DST_ALPHA                  0x0305      // GL_ONE_MINUS_DST_ALPHA
+#define RL_DST_COLOR                            0x0306      // GL_DST_COLOR
+#define RL_ONE_MINUS_DST_COLOR                  0x0307      // GL_ONE_MINUS_DST_COLOR
+#define RL_SRC_ALPHA_SATURATE                   0x0308      // GL_SRC_ALPHA_SATURATE
+#define RL_CONSTANT_COLOR                       0x8001      // GL_CONSTANT_COLOR
 #define RL_ONE_MINUS_CONSTANT_COLOR             0x8002      // GL_ONE_MINUS_CONSTANT_COLOR
-#define RL_CONSTANT_ALPHA                       0x8003      // GL_CONSTANT_ALPHA          
+#define RL_CONSTANT_ALPHA                       0x8003      // GL_CONSTANT_ALPHA
 #define RL_ONE_MINUS_CONSTANT_ALPHA             0x8004      // GL_ONE_MINUS_CONSTANT_ALPHA
 
 // GL blending functions/equations
-#define RL_FUNC_ADD                             0x8006      // GL_FUNC_ADD             
-#define RL_FUNC_SUBTRACT                        0x800A      // GL_FUNC_SUBTRACT        
+#define RL_FUNC_ADD                             0x8006      // GL_FUNC_ADD
+#define RL_FUNC_SUBTRACT                        0x800A      // GL_FUNC_SUBTRACT
 #define RL_FUNC_REVERSE_SUBTRACT                0x800B      // GL_FUNC_REVERSE_SUBTRACT
-#define RL_BLEND_EQUATION                       0x8009      // GL_BLEND_EQUATION       
+#define RL_BLEND_EQUATION                       0x8009      // GL_BLEND_EQUATION
 #define RL_BLEND_EQUATION_RGB                   0x8009      // GL_BLEND_EQUATION_RGB   // (Same as BLEND_EQUATION)
-#define RL_BLEND_EQUATION_ALPHA                 0x883D      // GL_BLEND_EQUATION_ALPHA 
-#define RL_BLEND_DST_RGB                        0x80C8      // GL_BLEND_DST_RGB        
-#define RL_BLEND_SRC_RGB                        0x80C9      // GL_BLEND_SRC_RGB        
-#define RL_BLEND_DST_ALPHA                      0x80CA      // GL_BLEND_DST_ALPHA      
-#define RL_BLEND_SRC_ALPHA                      0x80CB      // GL_BLEND_SRC_ALPHA                   
-#define RL_BLEND_COLOR                          0x8005      // GL_BLEND_COLOR               
+#define RL_BLEND_EQUATION_ALPHA                 0x883D      // GL_BLEND_EQUATION_ALPHA
+#define RL_BLEND_DST_RGB                        0x80C8      // GL_BLEND_DST_RGB
+#define RL_BLEND_SRC_RGB                        0x80C9      // GL_BLEND_SRC_RGB
+#define RL_BLEND_DST_ALPHA                      0x80CA      // GL_BLEND_DST_ALPHA
+#define RL_BLEND_SRC_ALPHA                      0x80CB      // GL_BLEND_SRC_ALPHA
+#define RL_BLEND_COLOR                          0x8005      // GL_BLEND_COLOR
 
 
 //----------------------------------------------------------------------------------
@@ -502,7 +502,7 @@ typedef enum {
 } rlShaderAttributeDataType;
 
 // Framebuffer attachment type
-// NOTE: By default up to 8 color channels defined but it can be more
+// NOTE: By default up to 8 color channels defined, but it can be more
 typedef enum {
     RL_ATTACHMENT_COLOR_CHANNEL0 = 0,   // Framebuffer attachment type: color 0
     RL_ATTACHMENT_COLOR_CHANNEL1,       // Framebuffer attachment type: color 1
@@ -790,7 +790,7 @@ RLAPI void rlLoadDrawQuad(void);     // Load and draw a quad
 
 #if defined(GRAPHICS_API_OPENGL_ES2)
     // NOTE: OpenGL ES 2.0 can be enabled on PLATFORM_DESKTOP,
-    // in that case, functions are loaded from a custom glad for OpenGL ES 2.0 
+    // in that case, functions are loaded from a custom glad for OpenGL ES 2.0
     #if defined(PLATFORM_DESKTOP)
         #define GLAD_GLES2_IMPLEMENTATION
         #include "external/glad_gles2.h"
@@ -3042,7 +3042,7 @@ unsigned int rlLoadTextureDepth(int width, int height, bool useRenderBuffer)
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     // In case depth textures not supported, we force renderbuffer usage
     if (!RLGL.ExtSupported.texDepth) useRenderBuffer = true;
-    
+
     // NOTE: We let the implementation to choose the best bit-depth
     // Possible formats: GL_DEPTH_COMPONENT16, GL_DEPTH_COMPONENT24, GL_DEPTH_COMPONENT32 and GL_DEPTH_COMPONENT32F
     unsigned int glInternalFormat = GL_DEPTH_COMPONENT;

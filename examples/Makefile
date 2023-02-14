@@ -523,7 +523,8 @@ SHADERS = \
     shaders/shaders_hot_reloading \
     shaders/shaders_mesh_instancing \
     shaders/shaders_multi_sample2d \
-    shaders/shaders_write_depth
+    shaders/shaders_write_depth \
+    shaders/shaders_hybrid_render
 
 AUDIO = \
     audio/audio_module_playing \
@@ -581,10 +582,10 @@ ifeq ($(PLATFORM),PLATFORM_DRM)
 	rm -fv *.o
 endif
 ifeq ($(PLATFORM),PLATFORM_WEB)
-	ifeq ($(PLATFORM_OS),WINDOWS)
+    ifeq ($(PLATFORM_OS),WINDOWS)
 		del *.wasm *.html *.js *.data
-	else
+    else
 		rm -f */*.wasm */*.html */*.js */*.data
-	endif
+    endif
 endif
 	@echo Cleaning done

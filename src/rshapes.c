@@ -300,7 +300,7 @@ void DrawLineBezierCubic(Vector2 startPos, Vector2 endPos, Vector2 startControlP
         float dy = current.y-previous.y;
         float dx = current.x-previous.x;
         float size = 0.5f*thick/sqrtf(dx*dx+dy*dy);
-        
+
         if (i==1)
         {
             points[0].x = previous.x+dy*size;
@@ -978,7 +978,7 @@ void DrawRectangleRounded(Rectangle rec, float roundness, int segments, Color co
     rlSetTexture(texShapes.id);
 
     rlBegin(RL_QUADS);
-        // Draw all of the 4 corners: [1] Upper Left Corner, [3] Upper Right Corner, [5] Lower Right Corner, [7] Lower Left Corner
+        // Draw all the 4 corners: [1] Upper Left Corner, [3] Upper Right Corner, [5] Lower Right Corner, [7] Lower Left Corner
         for (int k = 0; k < 4; ++k) // Hope the compiler is smart enough to unroll this loop
         {
             float angle = angles[k];
@@ -1207,7 +1207,7 @@ void DrawRectangleRoundedLines(Rectangle rec, float roundness, int segments, flo
 
         rlBegin(RL_QUADS);
 
-            // Draw all of the 4 corners first: Upper Left Corner, Upper Right Corner, Lower Right Corner, Lower Left Corner
+            // Draw all the 4 corners first: Upper Left Corner, Upper Right Corner, Lower Right Corner, Lower Left Corner
             for (int k = 0; k < 4; ++k) // Hope the compiler is smart enough to unroll this loop
             {
                 float angle = angles[k];
@@ -1342,7 +1342,7 @@ void DrawRectangleRoundedLines(Rectangle rec, float roundness, int segments, flo
         // Use LINES to draw the outline
         rlBegin(RL_LINES);
 
-            // Draw all of the 4 corners first: Upper Left Corner, Upper Right Corner, Lower Right Corner, Lower Left Corner
+            // Draw all the 4 corners first: Upper Left Corner, Upper Right Corner, Lower Right Corner, Lower Left Corner
             for (int k = 0; k < 4; ++k) // Hope the compiler is smart enough to unroll this loop
             {
                 float angle = angles[k];
@@ -1639,19 +1639,19 @@ bool CheckCollisionPointTriangle(Vector2 point, Vector2 p1, Vector2 p2, Vector2 
 bool CheckCollisionPointPoly(Vector2 point, Vector2 *points, int pointCount)
 {
     bool collision = false;
-    
+
     if (pointCount > 2)
     {
         for (int i = 0; i < pointCount - 1; i++)
         {
             Vector2 vc = points[i];
             Vector2 vn = points[i + 1];
-            
+
             if ((((vc.y >= point.y) && (vn.y < point.y)) || ((vc.y < point.y) && (vn.y >= point.y))) &&
                  (point.x < ((vn.x - vc.x)*(point.y - vc.y)/(vn.y - vc.y) + vc.x))) collision = !collision;
         }
     }
-    
+
     return collision;
 }
 

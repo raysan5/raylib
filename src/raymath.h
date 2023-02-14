@@ -311,7 +311,7 @@ RMAPI float Vector2DistanceSqr(Vector2 v1, Vector2 v2)
 RMAPI float Vector2Angle(Vector2 v1, Vector2 v2)
 {
     float result = atan2f(v2.y - v1.y, v2.x - v1.x);
-  
+
     return result;
 }
 
@@ -321,14 +321,14 @@ RMAPI float Vector2Angle(Vector2 v1, Vector2 v2)
 RMAPI float Vector2LineAngle(Vector2 start, Vector2 end)
 {
     float result = 0.0f;
-    
+
     float dot = start.x*end.x + start.y*end.y;      // Dot product
 
     float dotClamp = (dot < -1.0f)? -1.0f : dot;    // Clamp
     if (dotClamp > 1.0f) dotClamp = 1.0f;
 
     result = acosf(dotClamp);
-    
+
     // Alternative implementation, more costly
     //float v1Length = sqrtf((start.x*start.x) + (start.y*start.y));
     //float v2Length = sqrtf((end.x*end.x) + (end.y*end.y));
@@ -912,7 +912,7 @@ RMAPI Vector3 Vector3Unproject(Vector3 source, Matrix projection, Matrix view)
 {
     Vector3 result = { 0 };
 
-    // Calculate unproject matrix (multiply view matrix by projection matrix) and invert it
+    // Calculate unprojected matrix (multiply view matrix by projection matrix) and invert it
     Matrix matViewProj = {      // MatrixMultiply(view, projection);
         view.m0*projection.m0 + view.m1*projection.m4 + view.m2*projection.m8 + view.m3*projection.m12,
         view.m0*projection.m1 + view.m1*projection.m5 + view.m2*projection.m9 + view.m3*projection.m13,
@@ -975,7 +975,7 @@ RMAPI Vector3 Vector3Unproject(Vector3 source, Matrix projection, Matrix view)
     // Create quaternion from source point
     Quaternion quat = { source.x, source.y, source.z, 1.0f };
 
-    // Multiply quat point by unproject matrix
+    // Multiply quat point by unprojecte matrix
     Quaternion qtransformed = {     // QuaternionTransform(quat, matViewProjInv)
         matViewProjInv.m0*quat.x + matViewProjInv.m4*quat.y + matViewProjInv.m8*quat.z + matViewProjInv.m12*quat.w,
         matViewProjInv.m1*quat.x + matViewProjInv.m5*quat.y + matViewProjInv.m9*quat.z + matViewProjInv.m13*quat.w,

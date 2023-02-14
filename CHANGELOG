@@ -9,14 +9,13 @@ Release:     raylib 4.5 (xx February 2023) -WIP-
 KEY CHANGES:
  - ADDED: M3D model format support with animations
  - ADDED: GLTF animation support
+ - ADDED: QOA audio format support (import/export) -WIP-
  - rlgl redesign to avoid render batch triangles limits pre-check: rlCheckRenderBatchLimit()
  - rshapes simplification to minimize the requirement of rlgl functionality, now it only depends on 6 functions 
  - rl_gputex.h: Compressed textures loading, required by rtextures module, has been moved to a separate self-contained library
  - raygui 3.5: New version of the immediate-mode gui system for tools development with raylib
 
-
 Detailed changes:
-
 [core] ADDED: RAYLIB_VERSION_* values to raylib.h (#2856) by @RobLoach
 [core] ADDED: Basic gamepad support for Android (#2709) by @deniska
 [core] ADDED: Support CAPS/NUM lock keys registering if locked
@@ -43,6 +42,7 @@ Detailed changes:
 [core] REVIEWED: GetClipboardText() on PLATFORM_WEB, permissions issues
 [core] REVIEWED: Initial window position for display-sized fullscreen (#2742) by @daipom
 [core] REVIEWED: Sticky touches input (#2857) by @ImazighenGhost
+[core] REVIEWED: Enable GetWindowHandle() on macOS (#2915) by @Not-Nik
 [rlgl] ADDED: OpenGL ES 2.0 support on PLATFORM_DESKTOP (#2840) by @wtnbgo
 [rlgl] ADDED: Separate blending modes for color and alpha, BLEND_CUSTOM_SEPARATE (#2741)
 [rlgl] ADDED: rlSetBlendFactorsSeparate and custom blend mode modification checks (#2741) by @pure01fx
@@ -58,7 +58,8 @@ Detailed changes:
 [rlgl] REVIEWED: rlMultMatrixf(), use const pointer (#2807) by @planetis-m
 [rlgl] REVIEWED: Expose OpenGL blending mode factors and functions/equations
 [rlgl] REVIEWED: rLoadTextureDepth(), issue with depth textures on WebGL (#2824)
-[raymath] REVIEWED: Vector2Angle() (#2829, #2832) by @AlxHnr and @planetis-m
+[raymath] ADDED: Vector2LineAngle() (#2887)
+[raymath] REVIEWED: Vector2Angle() (#2829, #2832) by @AlxHnr, @planetis-m
 [shapes] ADDED: CheckCollisionPointPoly() (#2685) by @acejacek
 [shapes] REVIEWED: DrawPixel*(), use RL_QUADS/RL_TRIANGLES (#2750) by @hatkidchan
 [shapes] REVIEWED: DrawLineBezier*(), fix bezier line breaking (#2735, #2767) by @nobytesgiven
@@ -88,21 +89,29 @@ Detailed changes:
 [models] ADDED: GLTF animation support (#2844) by @charles-l
 [models] ADDED: DrawCapsule() and DrawCapsuleWires() (#2761) by @IanBand
 [models] ADDED: LoadMaterials(), MTL files loading, same code as OBJ loader (#2872) by @JeffM2501
+[models] REVIEWED: DrawMesh(), using SHADER_LOC_COLOR_SPECULAR as a material map (#2908) by @haved
+[models] REVIEWED: LoadM3D() vertex color support (#2878) by @GithubPrankster, @bztsrc
 [models] REVIEWED: GenMeshHeightmap() (#2716)
 [models] REVIEWED: LoadIQM() (#2676)
 [models] REVIEWED: Simplify .vox signature check (#2752) by @CrezyDud
 [models] REVIEWED: LoadIQM(), support bone names loading if available (#2882) by @PencilAmazing
 [models] `WARNING`: REMOVED: DrawCubeTexture(), DrawCubeTextureRec(), functions moved to new example: `models_draw_cube_texture`
+[audio] ADDED: IsWaveReady()`, IsSoundReady(), IsMusicReady() (#2892) by @RobLoach
 [audio] REVIEWED: Clear PCM buffer state when closing audio device (#2736) by @veins1
 [audio] REVIEWED: Android backend selected (#2118, #2875) by @planetis-m
+[multi] ADDED: IsShaderReady(), IsImageReady(), IsFontReady() (#2892) by @RobLoach
+[multi] ADDED: IsModelReady(), IsMaterialReady(), IsTextureReady(), IsRenderTextureReady() (#2895) by @RobLoach
 [multi] REVIEWED: Multiple code/comment typos by @sDos280
+[multi] REVIEWED: Grammar mistakes and typos (#2914) by @stickM4N
 [multi] REVIEWED: Use TRACELOG() macro instead of TraceLog() in internal modules (#2881) by @RobLoach
 [examples] ADDED: textures_textured_curve (#2821) by @JeffM2501
 [examples] ADDED: shaders_write_depth (#2836) by @BugraAlptekinSari
+[examples] ADDED: shaders_hybrid_render (#2919) by @BugraAlptekinSari
 [examples] RENAMED: Several shaders for naming consistency (#2707)
 [examples] RENAMED: lighting_instanced.fs to lighting_instancing.fs (glsl100) (#2805) by @gtrxAC
 [examples] REVIEWED: core_custom_logging.c (#2692) by @hartmannathan
 [examples] REVIEWED: core_camera_2d_platformer (#2687) by @skylar779
+[examples] REVIEWED: core_input_gamepad.c (#2903) by @planetis-m
 [examples] REVIEWED: core_custom_frame_control
 [examples] REVIEWED: text_rectangle_bounds (#2746) by @SzieberthAdam
 [examples] REVIEWED: textures_image_processing, added gaussian blurring (#2775) by @nobytesgiven
@@ -114,6 +123,9 @@ Detailed changes:
 [build] ADDED: Packaging for distros with deb-based and rpm-based packages (#2877) by @KOLANICH
 [build] ADDED: Linkage library -latomic on Linux (only required for ARM32)
 [build] ADDED: Required frameworks on macOS (#2793) by @SpexGuy
+[build] ADDED: WASM support for Zig build (#2901) by @Not-Nik
+[build] REVIEWED: config.h format and inconsistencies
+[build] REVIEWED: Zig build to latest master, avoid deprecated functions (#2910) by @star-tek-mb
 [build] REVIEWED: CMake project template to easily target raylib version (#2700) by @RobLoach
 [build] REVIEWED: PATH for PLATFORM_WEB target (#2647) by @futureapricot
 [build] REVIEWED: build.zig to let user decide how to set build mode and linker fixes by @InKryption
@@ -141,7 +153,7 @@ Detailed changes:
 [bindings] ADDED: TurboRaylib (Object Pascal) by @turborium
 [bindings] ADDED: Kaylib (Kotlin/Native) by @Its-Kenta
 [bindings] ADDED: Raylib-Nelua (Nelua) by @Its-Kenta
-[misc] REVIEWED: Update some external libraries to latest versions
+[misc] REVIEWED: Update external libraries to latest versions
 
 -------------------------------------------------------------------------
 Release:     raylib 4.2 (11 August 2022)

@@ -112,7 +112,7 @@
     #include "external/par_shapes.h"    // Shapes 3d parametric generation
 
 #if defined(_MSC_VER )  // disable MSVC warning suppression for par shapes
-#pragma warning( pop ) 
+#pragma warning( pop )
 #endif
 
 #endif
@@ -692,7 +692,7 @@ void DrawCapsule(Vector3 startPos, Vector3 endPos, float radius, int slices, int
     if (slices < 3) slices = 3;
 
     Vector3 direction = { endPos.x - startPos.x, endPos.y - startPos.y, endPos.z - startPos.z };
-    
+
     // draw a sphere if start and end points are the same
     bool sphereCase = (direction.x == 0) && (direction.y == 0) && (direction.z == 0);
     if (sphereCase) direction = (Vector3){0.0f, 1.0f, 0.0f};
@@ -704,7 +704,7 @@ void DrawCapsule(Vector3 startPos, Vector3 endPos, float radius, int slices, int
     Vector3 capCenter = endPos;
 
     float baseSliceAngle = (2.0f*PI)/slices;
-    float baseRingAngle  = PI * 0.5f / rings; 
+    float baseRingAngle  = PI * 0.5f / rings;
 
     rlBegin(RL_TRIANGLES);
         rlColor4ub(color.r, color.g, color.b, color.a);
@@ -714,7 +714,7 @@ void DrawCapsule(Vector3 startPos, Vector3 endPos, float radius, int slices, int
         {
             for (int i = 0; i < rings; i++)
             {
-                for (int j = 0; j < slices; j++) 
+                for (int j = 0; j < slices; j++)
                 {
 
                     // we build up the rings from capCenter in the direction of the 'direction' vector we computed earlier
@@ -725,32 +725,32 @@ void DrawCapsule(Vector3 startPos, Vector3 endPos, float radius, int slices, int
                     // compute the four vertices
                     float ringSin1 = sinf(baseSliceAngle*(j + 0))*cosf(baseRingAngle * ( i + 0 ));
                     float ringCos1 = cosf(baseSliceAngle*(j + 0))*cosf(baseRingAngle * ( i + 0 ));
-                    Vector3 w1 = (Vector3){ 
+                    Vector3 w1 = (Vector3){
                         capCenter.x + (sinf(baseRingAngle * ( i + 0 ))*b0.x + ringSin1*b1.x + ringCos1*b2.x) * radius,
-                        capCenter.y + (sinf(baseRingAngle * ( i + 0 ))*b0.y + ringSin1*b1.y + ringCos1*b2.y) * radius, 
+                        capCenter.y + (sinf(baseRingAngle * ( i + 0 ))*b0.y + ringSin1*b1.y + ringCos1*b2.y) * radius,
                         capCenter.z + (sinf(baseRingAngle * ( i + 0 ))*b0.z + ringSin1*b1.z + ringCos1*b2.z) * radius
                     };
                     float ringSin2 = sinf(baseSliceAngle*(j + 1))*cosf(baseRingAngle * ( i + 0 ));
                     float ringCos2 = cosf(baseSliceAngle*(j + 1))*cosf(baseRingAngle * ( i + 0 ));
-                    Vector3 w2 = (Vector3){ 
-                        capCenter.x + (sinf(baseRingAngle * ( i + 0 ))*b0.x + ringSin2*b1.x + ringCos2*b2.x) * radius, 
-                        capCenter.y + (sinf(baseRingAngle * ( i + 0 ))*b0.y + ringSin2*b1.y + ringCos2*b2.y) * radius, 
-                        capCenter.z + (sinf(baseRingAngle * ( i + 0 ))*b0.z + ringSin2*b1.z + ringCos2*b2.z) * radius 
+                    Vector3 w2 = (Vector3){
+                        capCenter.x + (sinf(baseRingAngle * ( i + 0 ))*b0.x + ringSin2*b1.x + ringCos2*b2.x) * radius,
+                        capCenter.y + (sinf(baseRingAngle * ( i + 0 ))*b0.y + ringSin2*b1.y + ringCos2*b2.y) * radius,
+                        capCenter.z + (sinf(baseRingAngle * ( i + 0 ))*b0.z + ringSin2*b1.z + ringCos2*b2.z) * radius
                     };
 
                     float ringSin3 = sinf(baseSliceAngle*(j + 0))*cosf(baseRingAngle * ( i + 1 ));
                     float ringCos3 = cosf(baseSliceAngle*(j + 0))*cosf(baseRingAngle * ( i + 1 ));
-                    Vector3 w3 = (Vector3){ 
-                        capCenter.x + (sinf(baseRingAngle * ( i + 1 ))*b0.x + ringSin3*b1.x + ringCos3*b2.x) * radius, 
-                        capCenter.y + (sinf(baseRingAngle * ( i + 1 ))*b0.y + ringSin3*b1.y + ringCos3*b2.y) * radius, 
-                        capCenter.z + (sinf(baseRingAngle * ( i + 1 ))*b0.z + ringSin3*b1.z + ringCos3*b2.z) * radius 
+                    Vector3 w3 = (Vector3){
+                        capCenter.x + (sinf(baseRingAngle * ( i + 1 ))*b0.x + ringSin3*b1.x + ringCos3*b2.x) * radius,
+                        capCenter.y + (sinf(baseRingAngle * ( i + 1 ))*b0.y + ringSin3*b1.y + ringCos3*b2.y) * radius,
+                        capCenter.z + (sinf(baseRingAngle * ( i + 1 ))*b0.z + ringSin3*b1.z + ringCos3*b2.z) * radius
                     };
                     float ringSin4 = sinf(baseSliceAngle*(j + 1))*cosf(baseRingAngle * ( i + 1 ));
                     float ringCos4 = cosf(baseSliceAngle*(j + 1))*cosf(baseRingAngle * ( i + 1 ));
-                    Vector3 w4 = (Vector3){ 
-                        capCenter.x + (sinf(baseRingAngle * ( i + 1 ))*b0.x + ringSin4*b1.x + ringCos4*b2.x) * radius, 
-                        capCenter.y + (sinf(baseRingAngle * ( i + 1 ))*b0.y + ringSin4*b1.y + ringCos4*b2.y) * radius, 
-                        capCenter.z + (sinf(baseRingAngle * ( i + 1 ))*b0.z + ringSin4*b1.z + ringCos4*b2.z) * radius 
+                    Vector3 w4 = (Vector3){
+                        capCenter.x + (sinf(baseRingAngle * ( i + 1 ))*b0.x + ringSin4*b1.x + ringCos4*b2.x) * radius,
+                        capCenter.y + (sinf(baseRingAngle * ( i + 1 ))*b0.y + ringSin4*b1.y + ringCos4*b2.y) * radius,
+                        capCenter.z + (sinf(baseRingAngle * ( i + 1 ))*b0.z + ringSin4*b1.z + ringCos4*b2.z) * radius
                     };
 
                     // make sure cap triangle normals are facing outwards
@@ -759,10 +759,10 @@ void DrawCapsule(Vector3 startPos, Vector3 endPos, float radius, int slices, int
                         rlVertex3f(w1.x, w1.y, w1.z);
                         rlVertex3f(w2.x, w2.y, w2.z);
                         rlVertex3f(w3.x, w3.y, w3.z);
-                        
-                        rlVertex3f(w2.x, w2.y, w2.z);   
-                        rlVertex3f(w4.x, w4.y, w4.z);  
-                        rlVertex3f(w3.x, w3.y, w3.z); 
+
+                        rlVertex3f(w2.x, w2.y, w2.z);
+                        rlVertex3f(w4.x, w4.y, w4.z);
+                        rlVertex3f(w3.x, w3.y, w3.z);
                     }
                     else
                     {
@@ -770,9 +770,9 @@ void DrawCapsule(Vector3 startPos, Vector3 endPos, float radius, int slices, int
                         rlVertex3f(w3.x, w3.y, w3.z);
                         rlVertex3f(w2.x, w2.y, w2.z);
 
-                        rlVertex3f(w2.x, w2.y, w2.z);  
-                        rlVertex3f(w3.x, w3.y, w3.z);  
-                        rlVertex3f(w4.x, w4.y, w4.z);     
+                        rlVertex3f(w2.x, w2.y, w2.z);
+                        rlVertex3f(w3.x, w3.y, w3.z);
+                        rlVertex3f(w4.x, w4.y, w4.z);
                     }
                 }
             }
@@ -782,37 +782,37 @@ void DrawCapsule(Vector3 startPos, Vector3 endPos, float radius, int slices, int
         // render middle
         if (!sphereCase)
         {
-            for (int j = 0; j < slices; j++) 
+            for (int j = 0; j < slices; j++)
             {
                 // compute the four vertices
                 float ringSin1 = sinf(baseSliceAngle*(j + 0))*radius;
                 float ringCos1 = cosf(baseSliceAngle*(j + 0))*radius;
-                Vector3 w1 = { 
+                Vector3 w1 = {
                     startPos.x + ringSin1*b1.x + ringCos1*b2.x,
-                    startPos.y + ringSin1*b1.y + ringCos1*b2.y, 
-                    startPos.z + ringSin1*b1.z + ringCos1*b2.z 
+                    startPos.y + ringSin1*b1.y + ringCos1*b2.y,
+                    startPos.z + ringSin1*b1.z + ringCos1*b2.z
                 };
                 float ringSin2 = sinf(baseSliceAngle*(j + 1))*radius;
                 float ringCos2 = cosf(baseSliceAngle*(j + 1))*radius;
-                Vector3 w2 = { 
-                    startPos.x + ringSin2*b1.x + ringCos2*b2.x, 
-                    startPos.y + ringSin2*b1.y + ringCos2*b2.y, 
-                    startPos.z + ringSin2*b1.z + ringCos2*b2.z 
+                Vector3 w2 = {
+                    startPos.x + ringSin2*b1.x + ringCos2*b2.x,
+                    startPos.y + ringSin2*b1.y + ringCos2*b2.y,
+                    startPos.z + ringSin2*b1.z + ringCos2*b2.z
                 };
 
                 float ringSin3 = sinf(baseSliceAngle*(j + 0))*radius;
                 float ringCos3 = cosf(baseSliceAngle*(j + 0))*radius;
-                Vector3 w3 = { 
-                    endPos.x + ringSin3*b1.x + ringCos3*b2.x, 
-                    endPos.y + ringSin3*b1.y + ringCos3*b2.y, 
-                    endPos.z + ringSin3*b1.z + ringCos3*b2.z 
+                Vector3 w3 = {
+                    endPos.x + ringSin3*b1.x + ringCos3*b2.x,
+                    endPos.y + ringSin3*b1.y + ringCos3*b2.y,
+                    endPos.z + ringSin3*b1.z + ringCos3*b2.z
                 };
                 float ringSin4 = sinf(baseSliceAngle*(j + 1))*radius;
                 float ringCos4 = cosf(baseSliceAngle*(j + 1))*radius;
-                Vector3 w4 = { 
-                    endPos.x + ringSin4*b1.x + ringCos4*b2.x, 
-                    endPos.y + ringSin4*b1.y + ringCos4*b2.y, 
-                    endPos.z + ringSin4*b1.z + ringCos4*b2.z 
+                Vector3 w4 = {
+                    endPos.x + ringSin4*b1.x + ringCos4*b2.x,
+                    endPos.y + ringSin4*b1.y + ringCos4*b2.y,
+                    endPos.z + ringSin4*b1.z + ringCos4*b2.z
                 };
                                                                         //          w2 x.-----------x startPos
                 rlVertex3f(w1.x, w1.y, w1.z);                         // |           |\'.  T0    /
@@ -847,7 +847,7 @@ void DrawCapsuleWires(Vector3 startPos, Vector3 endPos, float radius, int slices
     Vector3 capCenter = endPos;
 
     float baseSliceAngle = (2.0f*PI)/slices;
-    float baseRingAngle  = PI * 0.5f / rings; 
+    float baseRingAngle  = PI * 0.5f / rings;
 
     rlBegin(RL_LINES);
         rlColor4ub(color.r, color.g, color.b, color.a);
@@ -857,7 +857,7 @@ void DrawCapsuleWires(Vector3 startPos, Vector3 endPos, float radius, int slices
         {
             for (int i = 0; i < rings; i++)
             {
-                for (int j = 0; j < slices; j++) 
+                for (int j = 0; j < slices; j++)
                 {
 
                     // we build up the rings from capCenter in the direction of the 'direction' vector we computed earlier
@@ -868,32 +868,32 @@ void DrawCapsuleWires(Vector3 startPos, Vector3 endPos, float radius, int slices
                     // compute the four vertices
                     float ringSin1 = sinf(baseSliceAngle*(j + 0))*cosf(baseRingAngle * ( i + 0 ));
                     float ringCos1 = cosf(baseSliceAngle*(j + 0))*cosf(baseRingAngle * ( i + 0 ));
-                    Vector3 w1 = (Vector3){ 
+                    Vector3 w1 = (Vector3){
                         capCenter.x + (sinf(baseRingAngle * ( i + 0 ))*b0.x + ringSin1*b1.x + ringCos1*b2.x) * radius,
-                        capCenter.y + (sinf(baseRingAngle * ( i + 0 ))*b0.y + ringSin1*b1.y + ringCos1*b2.y) * radius, 
+                        capCenter.y + (sinf(baseRingAngle * ( i + 0 ))*b0.y + ringSin1*b1.y + ringCos1*b2.y) * radius,
                         capCenter.z + (sinf(baseRingAngle * ( i + 0 ))*b0.z + ringSin1*b1.z + ringCos1*b2.z) * radius
                     };
                     float ringSin2 = sinf(baseSliceAngle*(j + 1))*cosf(baseRingAngle * ( i + 0 ));
                     float ringCos2 = cosf(baseSliceAngle*(j + 1))*cosf(baseRingAngle * ( i + 0 ));
-                    Vector3 w2 = (Vector3){ 
-                        capCenter.x + (sinf(baseRingAngle * ( i + 0 ))*b0.x + ringSin2*b1.x + ringCos2*b2.x) * radius, 
-                        capCenter.y + (sinf(baseRingAngle * ( i + 0 ))*b0.y + ringSin2*b1.y + ringCos2*b2.y) * radius, 
-                        capCenter.z + (sinf(baseRingAngle * ( i + 0 ))*b0.z + ringSin2*b1.z + ringCos2*b2.z) * radius 
+                    Vector3 w2 = (Vector3){
+                        capCenter.x + (sinf(baseRingAngle * ( i + 0 ))*b0.x + ringSin2*b1.x + ringCos2*b2.x) * radius,
+                        capCenter.y + (sinf(baseRingAngle * ( i + 0 ))*b0.y + ringSin2*b1.y + ringCos2*b2.y) * radius,
+                        capCenter.z + (sinf(baseRingAngle * ( i + 0 ))*b0.z + ringSin2*b1.z + ringCos2*b2.z) * radius
                     };
 
                     float ringSin3 = sinf(baseSliceAngle*(j + 0))*cosf(baseRingAngle * ( i + 1 ));
                     float ringCos3 = cosf(baseSliceAngle*(j + 0))*cosf(baseRingAngle * ( i + 1 ));
-                    Vector3 w3 = (Vector3){ 
-                        capCenter.x + (sinf(baseRingAngle * ( i + 1 ))*b0.x + ringSin3*b1.x + ringCos3*b2.x) * radius, 
-                        capCenter.y + (sinf(baseRingAngle * ( i + 1 ))*b0.y + ringSin3*b1.y + ringCos3*b2.y) * radius, 
-                        capCenter.z + (sinf(baseRingAngle * ( i + 1 ))*b0.z + ringSin3*b1.z + ringCos3*b2.z) * radius 
+                    Vector3 w3 = (Vector3){
+                        capCenter.x + (sinf(baseRingAngle * ( i + 1 ))*b0.x + ringSin3*b1.x + ringCos3*b2.x) * radius,
+                        capCenter.y + (sinf(baseRingAngle * ( i + 1 ))*b0.y + ringSin3*b1.y + ringCos3*b2.y) * radius,
+                        capCenter.z + (sinf(baseRingAngle * ( i + 1 ))*b0.z + ringSin3*b1.z + ringCos3*b2.z) * radius
                     };
                     float ringSin4 = sinf(baseSliceAngle*(j + 1))*cosf(baseRingAngle * ( i + 1 ));
                     float ringCos4 = cosf(baseSliceAngle*(j + 1))*cosf(baseRingAngle * ( i + 1 ));
-                    Vector3 w4 = (Vector3){ 
-                        capCenter.x + (sinf(baseRingAngle * ( i + 1 ))*b0.x + ringSin4*b1.x + ringCos4*b2.x) * radius, 
-                        capCenter.y + (sinf(baseRingAngle * ( i + 1 ))*b0.y + ringSin4*b1.y + ringCos4*b2.y) * radius, 
-                        capCenter.z + (sinf(baseRingAngle * ( i + 1 ))*b0.z + ringSin4*b1.z + ringCos4*b2.z) * radius 
+                    Vector3 w4 = (Vector3){
+                        capCenter.x + (sinf(baseRingAngle * ( i + 1 ))*b0.x + ringSin4*b1.x + ringCos4*b2.x) * radius,
+                        capCenter.y + (sinf(baseRingAngle * ( i + 1 ))*b0.y + ringSin4*b1.y + ringCos4*b2.y) * radius,
+                        capCenter.z + (sinf(baseRingAngle * ( i + 1 ))*b0.z + ringSin4*b1.z + ringCos4*b2.z) * radius
                     };
 
                     rlVertex3f(w1.x, w1.y, w1.z);
@@ -904,12 +904,12 @@ void DrawCapsuleWires(Vector3 startPos, Vector3 endPos, float radius, int slices
 
                     rlVertex3f(w1.x, w1.y, w1.z);
                     rlVertex3f(w3.x, w3.y, w3.z);
-                    
-                    rlVertex3f(w2.x, w2.y, w2.z);   
-                    rlVertex3f(w4.x, w4.y, w4.z); 
+
+                    rlVertex3f(w2.x, w2.y, w2.z);
+                    rlVertex3f(w4.x, w4.y, w4.z);
 
                     rlVertex3f(w3.x, w3.y, w3.z);
-                    rlVertex3f(w4.x, w4.y, w4.z); 
+                    rlVertex3f(w4.x, w4.y, w4.z);
                 }
             }
             capCenter = startPos;
@@ -918,46 +918,46 @@ void DrawCapsuleWires(Vector3 startPos, Vector3 endPos, float radius, int slices
         // render middle
         if (!sphereCase)
         {
-            for (int j = 0; j < slices; j++) 
+            for (int j = 0; j < slices; j++)
             {
                 // compute the four vertices
                 float ringSin1 = sinf(baseSliceAngle*(j + 0))*radius;
                 float ringCos1 = cosf(baseSliceAngle*(j + 0))*radius;
-                Vector3 w1 = { 
+                Vector3 w1 = {
                     startPos.x + ringSin1*b1.x + ringCos1*b2.x,
-                    startPos.y + ringSin1*b1.y + ringCos1*b2.y, 
-                    startPos.z + ringSin1*b1.z + ringCos1*b2.z 
+                    startPos.y + ringSin1*b1.y + ringCos1*b2.y,
+                    startPos.z + ringSin1*b1.z + ringCos1*b2.z
                 };
                 float ringSin2 = sinf(baseSliceAngle*(j + 1))*radius;
                 float ringCos2 = cosf(baseSliceAngle*(j + 1))*radius;
-                Vector3 w2 = { 
-                    startPos.x + ringSin2*b1.x + ringCos2*b2.x, 
-                    startPos.y + ringSin2*b1.y + ringCos2*b2.y, 
-                    startPos.z + ringSin2*b1.z + ringCos2*b2.z 
+                Vector3 w2 = {
+                    startPos.x + ringSin2*b1.x + ringCos2*b2.x,
+                    startPos.y + ringSin2*b1.y + ringCos2*b2.y,
+                    startPos.z + ringSin2*b1.z + ringCos2*b2.z
                 };
 
                 float ringSin3 = sinf(baseSliceAngle*(j + 0))*radius;
                 float ringCos3 = cosf(baseSliceAngle*(j + 0))*radius;
-                Vector3 w3 = { 
-                    endPos.x + ringSin3*b1.x + ringCos3*b2.x, 
-                    endPos.y + ringSin3*b1.y + ringCos3*b2.y, 
-                    endPos.z + ringSin3*b1.z + ringCos3*b2.z 
+                Vector3 w3 = {
+                    endPos.x + ringSin3*b1.x + ringCos3*b2.x,
+                    endPos.y + ringSin3*b1.y + ringCos3*b2.y,
+                    endPos.z + ringSin3*b1.z + ringCos3*b2.z
                 };
                 float ringSin4 = sinf(baseSliceAngle*(j + 1))*radius;
                 float ringCos4 = cosf(baseSliceAngle*(j + 1))*radius;
-                Vector3 w4 = { 
-                    endPos.x + ringSin4*b1.x + ringCos4*b2.x, 
-                    endPos.y + ringSin4*b1.y + ringCos4*b2.y, 
-                    endPos.z + ringSin4*b1.z + ringCos4*b2.z 
+                Vector3 w4 = {
+                    endPos.x + ringSin4*b1.x + ringCos4*b2.x,
+                    endPos.y + ringSin4*b1.y + ringCos4*b2.y,
+                    endPos.z + ringSin4*b1.z + ringCos4*b2.z
                 };
 
-                rlVertex3f(w1.x, w1.y, w1.z); 
+                rlVertex3f(w1.x, w1.y, w1.z);
                 rlVertex3f(w3.x, w3.y, w3.z);
 
-                rlVertex3f(w2.x, w2.y, w2.z); 
-                rlVertex3f(w4.x, w4.y, w4.z); 
+                rlVertex3f(w2.x, w2.y, w2.z);
+                rlVertex3f(w4.x, w4.y, w4.z);
 
-                rlVertex3f(w2.x, w2.y, w2.z); 
+                rlVertex3f(w2.x, w2.y, w2.z);
                 rlVertex3f(w3.x, w3.y, w3.z);
             }
         }
@@ -1125,7 +1125,7 @@ void UnloadModel(Model model)
 
     // Unload materials maps
     // NOTE: As the user could be sharing shaders and textures between models,
-    // we don't unload the material but just free it's maps,
+    // we don't unload the material but just free its maps,
     // the user is responsible for freeing models shaders and textures
     for (int i = 0; i < model.materialCount; i++) RL_FREE(model.materials[i].maps);
 
@@ -1146,7 +1146,7 @@ void UnloadModelKeepMeshes(Model model)
 {
     // Unload materials maps
     // NOTE: As the user could be sharing shaders and textures between models,
-    // we don't unload the material but just free it's maps,
+    // we don't unload the material but just free its maps,
     // the user is responsible for freeing models shaders and textures
     for (int i = 0; i < model.materialCount; i++) RL_FREE(model.materials[i].maps);
 
@@ -1230,7 +1230,7 @@ void UploadMesh(Mesh *mesh, bool dynamic)
     rlEnableVertexAttribute(1);
 
     // WARNING: When setting default vertex attribute values, the values for each generic vertex attribute
-    // is part of current state and it is maintained even if a different program object is used
+    // is part of current state, and it is maintained even if a different program object is used
 
     if (mesh->normals != NULL)
     {
@@ -1383,7 +1383,7 @@ void DrawMesh(Mesh mesh, Material material, Matrix transform)
     }
 
     // Get a copy of current matrices to work with,
-    // just in case stereo render is required and we need to modify them
+    // just in case stereo render is required, and we need to modify them
     // NOTE: At this point the modelview matrix just contains the view matrix (camera)
     // That's because BeginMode3D() sets it and there is no model-drawing function
     // that modifies it, all use rlPushMatrix() and rlPopMatrix()
@@ -1396,7 +1396,7 @@ void DrawMesh(Mesh mesh, Material material, Matrix transform)
     if (material.shader.locs[SHADER_LOC_MATRIX_VIEW] != -1) rlSetUniformMatrix(material.shader.locs[SHADER_LOC_MATRIX_VIEW], matView);
     if (material.shader.locs[SHADER_LOC_MATRIX_PROJECTION] != -1) rlSetUniformMatrix(material.shader.locs[SHADER_LOC_MATRIX_PROJECTION], matProjection);
 
-    // Model transformation matrix is send to shader uniform location: SHADER_LOC_MATRIX_MODEL
+    // Model transformation matrix is sent to shader uniform location: SHADER_LOC_MATRIX_MODEL
     if (material.shader.locs[SHADER_LOC_MATRIX_MODEL] != -1) rlSetUniformMatrix(material.shader.locs[SHADER_LOC_MATRIX_MODEL], transform);
 
     // Accumulate several model transformations:
@@ -1517,7 +1517,7 @@ void DrawMesh(Mesh mesh, Material material, Matrix transform)
         else rlDrawVertexArray(0, mesh.vertexCount);
     }
 
-    // Unbind all binded texture maps
+    // Unbind all bound texture maps
     for (int i = 0; i < MAX_MATERIAL_MAPS; i++)
     {
         if (material.maps[i].texture.id > 0)
@@ -1587,7 +1587,7 @@ void DrawMeshInstanced(Mesh mesh, Material material, const Matrix *transforms, i
     }
 
     // Get a copy of current matrices to work with,
-    // just in case stereo render is required and we need to modify them
+    // just in case stereo render is required, and we need to modify them
     // NOTE: At this point the modelview matrix just contains the view matrix (camera)
     // That's because BeginMode3D() sets it and there is no model-drawing function
     // that modifies it, all use rlPushMatrix() and rlPopMatrix()
@@ -1738,7 +1738,7 @@ void DrawMeshInstanced(Mesh mesh, Material material, const Matrix *transforms, i
         else rlDrawVertexArrayInstanced(0, mesh.vertexCount, instances);
     }
 
-    // Unbind all binded texture maps
+    // Unbind all bound texture maps
     for (int i = 0; i < MAX_MATERIAL_MAPS; i++)
     {
         if (material.maps[i].texture.id > 0)
@@ -1875,34 +1875,34 @@ bool ExportMesh(Mesh mesh, const char *fileName)
 // Process obj materials
 static void ProcessMaterialsOBJ(Material *rayMaterials, tinyobj_material_t *materials, int materialCount)
 {
-	// Init model materials
-	for (int m = 0; m < materialCount; m++)
-	{
-		// Init material to default
-		// NOTE: Uses default shader, which only supports MATERIAL_MAP_DIFFUSE
-		rayMaterials[m] = LoadMaterialDefault();
+    // Init model materials
+    for (int m = 0; m < materialCount; m++)
+    {
+        // Init material to default
+        // NOTE: Uses default shader, which only supports MATERIAL_MAP_DIFFUSE
+        rayMaterials[m] = LoadMaterialDefault();
 
-		// Get default texture, in case no texture is defined
-		// NOTE: rlgl default texture is a 1x1 pixel UNCOMPRESSED_R8G8B8A8
-		rayMaterials[m].maps[MATERIAL_MAP_DIFFUSE].texture = (Texture2D){ rlGetTextureIdDefault(), 1, 1, 1, PIXELFORMAT_UNCOMPRESSED_R8G8B8A8 };
+        // Get default texture, in case no texture is defined
+        // NOTE: rlgl default texture is a 1x1 pixel UNCOMPRESSED_R8G8B8A8
+        rayMaterials[m].maps[MATERIAL_MAP_DIFFUSE].texture = (Texture2D){ rlGetTextureIdDefault(), 1, 1, 1, PIXELFORMAT_UNCOMPRESSED_R8G8B8A8 };
 
-		if (materials[m].diffuse_texname != NULL) rayMaterials[m].maps[MATERIAL_MAP_DIFFUSE].texture = LoadTexture(materials[m].diffuse_texname);  //char *diffuse_texname; // map_Kd
+        if (materials[m].diffuse_texname != NULL) rayMaterials[m].maps[MATERIAL_MAP_DIFFUSE].texture = LoadTexture(materials[m].diffuse_texname);  //char *diffuse_texname; // map_Kd
 
-		rayMaterials[m].maps[MATERIAL_MAP_DIFFUSE].color = (Color){ (unsigned char)(materials[m].diffuse[0]*255.0f), (unsigned char)(materials[m].diffuse[1]*255.0f), (unsigned char)(materials[m].diffuse[2] * 255.0f), 255 }; //float diffuse[3];
-		rayMaterials[m].maps[MATERIAL_MAP_DIFFUSE].value = 0.0f;
+        rayMaterials[m].maps[MATERIAL_MAP_DIFFUSE].color = (Color){ (unsigned char)(materials[m].diffuse[0]*255.0f), (unsigned char)(materials[m].diffuse[1]*255.0f), (unsigned char)(materials[m].diffuse[2] * 255.0f), 255 }; //float diffuse[3];
+        rayMaterials[m].maps[MATERIAL_MAP_DIFFUSE].value = 0.0f;
 
-		if (materials[m].specular_texname != NULL) rayMaterials[m].maps[MATERIAL_MAP_SPECULAR].texture = LoadTexture(materials[m].specular_texname);  //char *specular_texname; // map_Ks
-		rayMaterials[m].maps[MATERIAL_MAP_SPECULAR].color = (Color){ (unsigned char)(materials[m].specular[0]*255.0f), (unsigned char)(materials[m].specular[1]*255.0f), (unsigned char)(materials[m].specular[2] * 255.0f), 255 }; //float specular[3];
-		rayMaterials[m].maps[MATERIAL_MAP_SPECULAR].value = 0.0f;
+        if (materials[m].specular_texname != NULL) rayMaterials[m].maps[MATERIAL_MAP_SPECULAR].texture = LoadTexture(materials[m].specular_texname);  //char *specular_texname; // map_Ks
+        rayMaterials[m].maps[MATERIAL_MAP_SPECULAR].color = (Color){ (unsigned char)(materials[m].specular[0]*255.0f), (unsigned char)(materials[m].specular[1]*255.0f), (unsigned char)(materials[m].specular[2] * 255.0f), 255 }; //float specular[3];
+        rayMaterials[m].maps[MATERIAL_MAP_SPECULAR].value = 0.0f;
 
-		if (materials[m].bump_texname != NULL) rayMaterials[m].maps[MATERIAL_MAP_NORMAL].texture = LoadTexture(materials[m].bump_texname);  //char *bump_texname; // map_bump, bump
-		rayMaterials[m].maps[MATERIAL_MAP_NORMAL].color = WHITE;
-		rayMaterials[m].maps[MATERIAL_MAP_NORMAL].value = materials[m].shininess;
+        if (materials[m].bump_texname != NULL) rayMaterials[m].maps[MATERIAL_MAP_NORMAL].texture = LoadTexture(materials[m].bump_texname);  //char *bump_texname; // map_bump, bump
+        rayMaterials[m].maps[MATERIAL_MAP_NORMAL].color = WHITE;
+        rayMaterials[m].maps[MATERIAL_MAP_NORMAL].value = materials[m].shininess;
 
-		rayMaterials[m].maps[MATERIAL_MAP_EMISSION].color = (Color){ (unsigned char)(materials[m].emission[0]*255.0f), (unsigned char)(materials[m].emission[1]*255.0f), (unsigned char)(materials[m].emission[2] * 255.0f), 255 }; //float emission[3];
+        rayMaterials[m].maps[MATERIAL_MAP_EMISSION].color = (Color){ (unsigned char)(materials[m].emission[0]*255.0f), (unsigned char)(materials[m].emission[1]*255.0f), (unsigned char)(materials[m].emission[2] * 255.0f), 255 }; //float emission[3];
 
-		if (materials[m].displacement_texname != NULL) rayMaterials[m].maps[MATERIAL_MAP_HEIGHT].texture = LoadTexture(materials[m].displacement_texname);  //char *displacement_texname; // disp
-	}
+        if (materials[m].displacement_texname != NULL) rayMaterials[m].maps[MATERIAL_MAP_HEIGHT].texture = LoadTexture(materials[m].displacement_texname);  //char *displacement_texname; // disp
+    }
 }
 #endif
 
@@ -2024,7 +2024,7 @@ void UpdateModelAnimation(Model model, ModelAnimation anim, int frame)
         for (int m = 0; m < model.meshCount; m++)
         {
             Mesh mesh = model.meshes[m];
-            
+
             if (mesh.boneIds == NULL || mesh.boneWeights == NULL)
             {
                 TRACELOG(LOG_WARNING, "MODEL: UpdateModelAnimation(): Mesh %i has no connection to bones", m);
@@ -2065,7 +2065,7 @@ void UpdateModelAnimation(Model model, ModelAnimation anim, int frame)
                 for (int j = 0; j < 4; j++, boneCounter++)
                 {
                     boneWeight = mesh.boneWeights[boneCounter];
-                    
+
                     // Early stop when no transformation will be applied
                     if (boneWeight == 0.0f) continue;
 
@@ -2559,7 +2559,7 @@ Mesh GenMeshSphere(float radius, int rings, int slices)
     return mesh;
 }
 
-// Generate hemi-sphere mesh (half sphere, no bottom cap)
+// Generate hemisphere mesh (half sphere, no bottom cap)
 Mesh GenMeshHemiSphere(float radius, int rings, int slices)
 {
     Mesh mesh = { 0 };
@@ -3242,7 +3242,7 @@ Mesh GenMeshCubicmap(Image cubicmap, Vector3 cubeSize)
         }
     }
 
-    // Move data from mapVertices temp arays to vertices float array
+    // Move data from mapVertices temp arrays to vertices float array
     mesh.vertexCount = vCounter;
     mesh.triangleCount = vCounter/3;
 
@@ -3742,7 +3742,7 @@ RayCollision GetRayCollisionBox(Ray ray, BoundingBox box)
     // NOTE: We use an additional .01 to fix numerical errors
     collision.normal = Vector3Scale(collision.normal, 2.01f);
     collision.normal = Vector3Divide(collision.normal, Vector3Subtract(box.max, box.min));
-    // The relevant elemets of the vector are now slightly larger than 1.0f (or smaller than -1.0f)
+    // The relevant elements of the vector are now slightly larger than 1.0f (or smaller than -1.0f)
     // and the others are somewhere between -1.0 and 1.0 casting to int is exactly our wanted normal!
     collision.normal.x = (float)((int)collision.normal.x);
     collision.normal.y = (float)((int)collision.normal.y);
@@ -3842,7 +3842,7 @@ RayCollision GetRayCollisionTriangle(Ray ray, Vector3 p1, Vector3 p2, Vector3 p3
     // Calculate u parameter and test bound
     u = Vector3DotProduct(tv, p)*invDet;
 
-    // The intersection lies outside of the triangle
+    // The intersection lies outside the triangle
     if ((u < 0.0f) || (u > 1.0f)) return collision;
 
     // Prepare to test v parameter
@@ -3851,7 +3851,7 @@ RayCollision GetRayCollisionTriangle(Ray ray, Vector3 p1, Vector3 p2, Vector3 p3
     // Calculate V parameter and test bound
     v = Vector3DotProduct(ray.direction, q)*invDet;
 
-    // The intersection lies outside of the triangle
+    // The intersection lies outside the triangle
     if ((v < 0.0f) || ((u + v) > 1.0f)) return collision;
 
     t = Vector3DotProduct(edge2, q)*invDet;
@@ -4041,7 +4041,7 @@ static Model LoadOBJ(const char *fileName)
         }
 
         // Init model materials
-		ProcessMaterialsOBJ(model.materials, materials, materialCount);
+        ProcessMaterialsOBJ(model.materials, materials, materialCount);
 
         tinyobj_attrib_free(&attrib);
         tinyobj_shapes_free(meshes, meshCount);
@@ -4671,7 +4671,7 @@ static Image LoadImageFromCgltfImage(cgltf_image *cgltfImage, const char *texPat
 {
     Image image = { 0 };
 
-    if (cgltfImage->uri != NULL)     // Check if image data is provided as a uri (base64 or path)
+    if (cgltfImage->uri != NULL)     // Check if image data is provided as an uri (base64 or path)
     {
         if ((strlen(cgltfImage->uri) > 5) &&
             (cgltfImage->uri[0] == 'd') &&
@@ -4748,7 +4748,7 @@ static BoneInfo *LoadBoneInfoGLTF(cgltf_skin skin, int *boneCount)
 
         // Find parent bone index
         unsigned int parentIndex = -1;
-        
+
         for (unsigned int j = 0; j < skin.joints_count; j++)
         {
             if (skin.joints[j] == node.parent)
@@ -4959,7 +4959,7 @@ static Model LoadGLTF(const char *fileName)
 
                 for (unsigned int j = 0; j < data->meshes[i].primitives[p].attributes_count; j++)
                 {
-                    // Check the different attributes for every pimitive
+                    // Check the different attributes for every primitive
                     if (data->meshes[i].primitives[p].attributes[j].type == cgltf_attribute_type_position)      // POSITION
                     {
                         cgltf_accessor *attribute = data->meshes[i].primitives[p].attributes[j].data;
@@ -5110,7 +5110,7 @@ static Model LoadGLTF(const char *fileName)
                 {
                     // The primitive actually keeps the pointer to the corresponding material,
                     // raylib instead assigns to the mesh the by its index, as loaded in model.materials array
-                    // To get the index, we check if material pointers match and we assign the corresponding index,
+                    // To get the index, we check if material pointers match, and we assign the corresponding index,
                     // skipping index 0, the default material
                     if (&data->materials[m] == data->meshes[i].primitives[p].material)
                     {
@@ -5238,12 +5238,12 @@ static bool GetPoseAtTimeGLTF(cgltf_accessor *input, cgltf_accessor *output, flo
     float tstart = 0.0f;
     float tend = 0.0f;
     int keyframe = 0;       // Defaults to first pose
-    
+
     for (int i = 0; i < input->count - 1; i++)
     {
         cgltf_bool r1 = cgltf_accessor_read_float(input, i, &tstart, 1);
         if (!r1) return false;
-        
+
         cgltf_bool r2 = cgltf_accessor_read_float(input, i + 1, &tend, 1);
         if (!r2) return false;
 
@@ -5278,11 +5278,11 @@ static bool GetPoseAtTimeGLTF(cgltf_accessor *input, cgltf_accessor *output, flo
         cgltf_accessor_read_float(output, keyframe+1, tmp, 4);
         Vector4 v2 = {tmp[0], tmp[1], tmp[2], tmp[3]};
         Vector4 *r = data;
-        
+
         // Only v4 is for rotations, so we know it's a quat
         *r = QuaternionSlerp(v1, v2, t);
     }
-    
+
     return true;
 }
 
@@ -5295,12 +5295,12 @@ static ModelAnimation *LoadModelAnimationsGLTF(const char *fileName, unsigned in
     unsigned char *fileData = LoadFileData(fileName, &dataSize);
 
     ModelAnimation *animations = NULL;
-    
+
     // glTF data loading
     cgltf_options options = { 0 };
     cgltf_data *data = NULL;
     cgltf_result result = cgltf_parse(&options, fileData, dataSize, &data);
-    
+
     if (result != cgltf_result_success)
     {
         TRACELOG(LOG_WARNING, "MODEL: [%s] Failed to load glTF data", fileName);
@@ -5318,7 +5318,7 @@ static ModelAnimation *LoadModelAnimationsGLTF(const char *fileName, unsigned in
             cgltf_skin skin = data->skins[0];
             *animCount = (int)data->animations_count;
             animations = RL_MALLOC(data->animations_count*sizeof(ModelAnimation));
-            
+
             for (unsigned int i = 0; i < data->animations_count; i++)
             {
                 animations[i].bones = LoadBoneInfoGLTF(skin, &animations[i].boneCount);
@@ -5333,12 +5333,12 @@ static ModelAnimation *LoadModelAnimationsGLTF(const char *fileName, unsigned in
 
                 struct Channels *boneChannels = RL_CALLOC(animations[i].boneCount, sizeof(struct Channels));
                 float animDuration = 0.0f;
-                
+
                 for (unsigned int j = 0; j < animData.channels_count; j++)
                 {
                     cgltf_animation_channel channel = animData.channels[j];
                     int boneIndex = -1;
-                    
+
                     for (unsigned int k = 0; k < skin.joints_count; k++)
                     {
                         if (animData.channels[j].target_node == skin.joints[k])
@@ -5372,12 +5372,12 @@ static ModelAnimation *LoadModelAnimationsGLTF(const char *fileName, unsigned in
                         {
                             TRACELOG(LOG_WARNING, "MODEL: [%s] Unsupported target_path on channel %d's sampler for animation %d. Skipping.", fileName, j, i);
                         }
-                    } 
+                    }
                     else TRACELOG(LOG_WARNING, "MODEL: [%s] Only linear interpolation curves are supported for GLTF animation.", fileName);
 
                     float t = 0.0f;
                     cgltf_bool r = cgltf_accessor_read_float(channel.sampler->input, channel.sampler->input->count - 1, &t, 1);
-                    
+
                     if (!r)
                     {
                         TRACELOG(LOG_WARNING, "MODEL: [%s] Failed to load input time", fileName);
@@ -5394,13 +5394,13 @@ static ModelAnimation *LoadModelAnimationsGLTF(const char *fileName, unsigned in
                 {
                     animations[i].framePoses[j] = RL_MALLOC(animations[i].boneCount*sizeof(Transform));
                     float time = ((float) j*GLTF_ANIMDELAY)/1000.0f;
-                    
+
                     for (int k = 0; k < animations[i].boneCount; k++)
                     {
                         Vector3 translation = {0, 0, 0};
                         Quaternion rotation = {0, 0, 0, 1};
                         Vector3 scale = {1, 1, 1};
-                        
+
                         if (boneChannels[k].translate)
                         {
                             if (!GetPoseAtTimeGLTF(boneChannels[k].translate->sampler->input, boneChannels[k].translate->sampler->output, time, &translation))
@@ -5438,7 +5438,7 @@ static ModelAnimation *LoadModelAnimationsGLTF(const char *fileName, unsigned in
                 TRACELOG(LOG_INFO, "MODEL: [%s] Loaded animation: %s (%d frames, %fs)", fileName, animData.name, animations[i].frameCount, animDuration);
                 RL_FREE(boneChannels);
             }
-        } 
+        }
         else TRACELOG(LOG_ERROR, "MODEL: [%s] expected exactly one skin to load animation data from, but found %i", fileName, data->skins_count);
 
         cgltf_free(data);
@@ -5613,7 +5613,7 @@ static Model LoadM3D(const char *fileName)
             // Materials are grouped together
             if (mi != m3d->face[i].materialid)
             {
-                // there should be only one material switch per material kind, but be bulletproof for unoptimal model files
+                // there should be only one material switch per material kind, but be bulletproof for non-optimal model files
                 if (k + 1 >= model.meshCount)
                 {
                     model.meshCount++;
@@ -5632,9 +5632,10 @@ static Model LoadM3D(const char *fileName)
                 model.meshes[k].vertices = (float *)RL_CALLOC(model.meshes[k].vertexCount*3, sizeof(float));
                 model.meshes[k].texcoords = (float *)RL_CALLOC(model.meshes[k].vertexCount*2, sizeof(float));
                 model.meshes[k].normals = (float *)RL_CALLOC(model.meshes[k].vertexCount*3, sizeof(float));
-                
-                // If color map is provided, we allocate storage for vertex colors
-                if (m3d->cmap != NULL) model.meshes[k].colors = RL_CALLOC(model.meshes[k].vertexCount*4, sizeof(unsigned char));
+
+                // If no map is provided, we allocate storage for vertex colors
+                // M3D specs only consider vertex colors if no material is provided
+                if (mi != M3D_UNDEF) model.meshes[k].colors = RL_CALLOC(model.meshes[k].vertexCount*4, sizeof(unsigned char));
 
                 if (m3d->numbone && m3d->numskin)
                 {
@@ -5643,7 +5644,7 @@ static Model LoadM3D(const char *fileName)
                     model.meshes[k].animVertices = (float *)RL_CALLOC(model.meshes[k].vertexCount*3, sizeof(float));
                     model.meshes[k].animNormals = (float *)RL_CALLOC(model.meshes[k].vertexCount*3, sizeof(float));
                 }
-                
+
                 model.meshMaterial[k] = mi + 1;
                 l = 0;
             }
@@ -5658,7 +5659,7 @@ static Model LoadM3D(const char *fileName)
             model.meshes[k].vertices[l*9 + 6] = m3d->vertex[m3d->face[i].vertex[2]].x*m3d->scale;
             model.meshes[k].vertices[l*9 + 7] = m3d->vertex[m3d->face[i].vertex[2]].y*m3d->scale;
             model.meshes[k].vertices[l*9 + 8] = m3d->vertex[m3d->face[i].vertex[2]].z*m3d->scale;
-            
+
             // without vertex color (full transparency), we use the default color
             if (model.meshes[k].colors != NULL)
             {
@@ -5809,7 +5810,7 @@ static Model LoadM3D(const char *fileName)
                 model.bindPose[i].rotation.y = m3d->vertex[m3d->bone[i].ori].y;
                 model.bindPose[i].rotation.z = m3d->vertex[m3d->bone[i].ori].z;
                 model.bindPose[i].rotation.w = m3d->vertex[m3d->bone[i].ori].w;
-                
+
                 // TODO: if the orientation quaternion not normalized, then that's encoding scaling
                 model.bindPose[i].rotation = QuaternionNormalize(model.bindPose[i].rotation);
                 model.bindPose[i].scale.x = model.bindPose[i].scale.y = model.bindPose[i].scale.z = 1.0f;
@@ -5838,7 +5839,7 @@ static Model LoadM3D(const char *fileName)
         }
 
         // Load bone-pose default mesh into animation vertices. These will be updated when UpdateModelAnimation gets
-        // called, but not before, however DrawMesh uses these if they exists (so not good if they are left empty).
+        // called, but not before, however DrawMesh uses these if they exist (so not good if they are left empty).
         if (m3d->numbone && m3d->numskin)
         {
             for(i = 0; i < model.meshCount; i++)
@@ -5918,7 +5919,7 @@ static ModelAnimation *LoadModelAnimationsM3D(const char *fileName, unsigned int
                 animations[a].framePoses[i] = RL_MALLOC((m3d->numbone + 1)*sizeof(Transform));
 
                 m3db_t *pose = m3d_pose(m3d, a, i*M3D_ANIMDELAY);
-                
+
                 if (pose != NULL)
                 {
                     for (j = 0; j < (int)m3d->numbone; j++)
