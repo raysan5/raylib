@@ -52,24 +52,24 @@ int main(void)
 
     InitWindow(screenWidth, screenHeight, "raylib [shaders] example - write depth buffer");
 
-    // This Shader calculates pixel depth and color using raymarch.
-    Shader raymarch_shader = LoadShader(0, TextFormat("resources/shaders/glsl%i/hybrid_raymarch.fs", GLSL_VERSION));
-    // This Shader is a standard rasterization fragment shader with the addition of depth writing. You are required to write depth for all shaders if one shader does it.
-    Shader raster_shader = LoadShader(0, TextFormat("resources/shaders/glsl%i/hybrid_raster.fs", GLSL_VERSION));
+    // This Shader calculates pixel depth and color using raymarch
+    Shader shdrRaymarch = LoadShader(0, TextFormat("resources/shaders/glsl%i/hybrid_raymarch.fs", GLSL_VERSION));
+
+    // This Shader is a standard rasterization fragment shader with the addition of depth writing
+    // You are required to write depth for all shaders if one shader does it
+    Shader shdrRaster = LoadShader(0, TextFormat("resources/shaders/glsl%i/hybrid_raster.fs", GLSL_VERSION));
 
     // Declare Struct used to store camera locs.
-    RayLocs march_locs = {0};
+    RayLocs marchLocs = {0};
 
     // Fill the struct with shader locs.
-    march_locs.camPos = GetShaderLocation(raymarch_shader, "camPos");
-    march_locs.camDir = GetShaderLocation(raymarch_shader, "camDir");
-    march_locs.screenCenter = GetShaderLocation(raymarch_shader, "screenCenter");
+    marchLocs.camPos = GetShaderLocation(shdrRaymarch, "camPos");
+    marchLocs.camDir = GetShaderLocation(shdrRaymarch, "camDir");
+    marchLocs.screenCenter = GetShaderLocation(shdrRaymarch, "screenCenter");
 
-    {   // Transfer screenCenter position to shader. Which is used to calculate ray direction. 
-        Vector2 screenCenter = {.x = screenWidth/2.0, .y = screenHeight/2.0};
-        SetShaderValue(raymarch_shader, march_locs.screenCenter , &screenCenter , SHADER_UNIFORM_VEC2);
-    }
-
+    // Transfer screenCenter position to shader. Which is used to calculate ray direction. 
+    Vector2 screenCenter = {.x = screenWidth/2.0, .y = screenHeight/2.0};
+    SetShaderValue(shdrRaymarch, marchLocs.screenCenter , &screenCenter , SHADER_UNIFORM_VEC2);
 
     // Use Customized function to create writable depth texture buffer
     RenderTexture2D target = LoadRenderTextureDepthTex(screenWidth, screenHeight);
@@ -80,15 +80,14 @@ int main(void)
         .target = (Vector3){ 0.0f, 0.5f, 0.0f },      // Camera looking at point
         .up = (Vector3){ 0.0f, 1.0f, 0.0f },          // Camera up vector (rotation towards target)
         .fovy = 45.0f,                                // Camera field-of-view Y
-        .projection = CAMERA_PERSPECTIVE              // Camera mode type
+        .projection = CAMERA_PERSPECTIVE              // Camera projection type
     };
     
     // Camera FOV is pre-calculated in the camera Distance.
     double camDist = 1.0/(tan(camera.fovy*0.5*DEG2RAD));
-
-    SetCameraMode(camera, CAMERA_FIRST_PERSON);
     
-    SetTargetFPS(60);
+    DisableCursor();                // Limit cursor to relative movement inside the window
+    SetTargetFPS(60);               // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
 
     // Main game loop
@@ -96,33 +95,31 @@ int main(void)
     {
         // Update
         //----------------------------------------------------------------------------------
-        UpdateCamera(&camera);
+        UpdateCamera(&camera, CAMERA_ORBITAL);
 
-        //Update Camera Postion in the ray march shader.
-        SetShaderValue(raymarch_shader, march_locs.camPos, &(camera.position), RL_SHADER_UNIFORM_VEC3);
+        // Update Camera Postion in the ray march shader.
+        SetShaderValue(shdrRaymarch, marchLocs.camPos, &(camera.position), RL_SHADER_UNIFORM_VEC3);
         
-        {   // Update Camera Looking Vector. Vector length determines FOV.
-            Vector3 camDir = Vector3Scale( Vector3Normalize( Vector3Subtract(camera.target, camera.position)) , camDist);
-            SetShaderValue(raymarch_shader, march_locs.camDir, &(camDir), RL_SHADER_UNIFORM_VEC3);
-        }
+        // Update Camera Looking Vector. Vector length determines FOV.
+        Vector3 camDir = Vector3Scale( Vector3Normalize( Vector3Subtract(camera.target, camera.position)) , camDist);
+        SetShaderValue(shdrRaymarch, marchLocs.camDir, &(camDir), RL_SHADER_UNIFORM_VEC3);
         //----------------------------------------------------------------------------------
         
         // Draw
         //----------------------------------------------------------------------------------
-        
         // Draw into our custom render texture (framebuffer)
         BeginTextureMode(target);
             ClearBackground(WHITE);
 
             // Raymarch Scene
             rlEnableDepthTest(); //Manually enable Depth Test to handle multiple rendering methods.
-            BeginShaderMode(raymarch_shader);
+            BeginShaderMode(shdrRaymarch);
                 DrawRectangleRec((Rectangle){0,0,screenWidth,screenHeight},WHITE);
             EndShaderMode();
             
             // Raserize Scene
             BeginMode3D(camera);
-                BeginShaderMode(raster_shader);
+                BeginShaderMode(shdrRaster);
                     DrawCubeWiresV((Vector3){ 0.0f, 0.5f, 1.0f }, (Vector3){ 1.0f, 1.0f, 1.0f }, RED);
                     DrawCubeV((Vector3){ 0.0f, 0.5f, 1.0f }, (Vector3){ 1.0f, 1.0f, 1.0f }, PURPLE);
                     DrawCubeWiresV((Vector3){ 0.0f, 0.5f, -1.0f }, (Vector3){ 1.0f, 1.0f, 1.0f }, DARKGREEN);
@@ -145,8 +142,8 @@ int main(void)
     // De-Initialization
     //--------------------------------------------------------------------------------------
     UnloadRenderTextureDepthTex(target);
-    UnloadShader(raymarch_shader);
-    UnloadShader(raster_shader);
+    UnloadShader(shdrRaymarch);
+    UnloadShader(shdrRaster);
 
     CloseWindow();        // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
