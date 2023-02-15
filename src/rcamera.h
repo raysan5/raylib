@@ -423,10 +423,10 @@ void UpdateCamera(Camera *camera, int mode)
     if (mode == CAMERA_ORBITAL)
     {
         // Orbital can just orbit
-        Matrix rotatation = MatrixRotate(GetCameraUp(camera), CAMERA_ORBITAL_SPEED*GetFrameTime());
-        Vector3 viewVector = Vector3Subtract(camera->position, camera->target);
-        viewVector = Vector3Transform(viewVector, rotatation);
-        camera->position = Vector3Add(camera->target, viewVector);
+        Matrix rotation = MatrixRotate(GetCameraUp(camera), CAMERA_ORBITAL_SPEED*GetFrameTime());
+        Vector3 view = Vector3Subtract(camera->position, camera->target);
+        view = Vector3Transform(view, rotation);
+        camera->position = Vector3Add(camera->target, view);
     }
     else
     {
@@ -438,8 +438,8 @@ void UpdateCamera(Camera *camera, int mode)
         if (IsKeyDown(KEY_Q)) CameraRoll(camera, -CAMERA_ROTATION_SPEED);
         if (IsKeyDown(KEY_E)) CameraRoll(camera, CAMERA_ROTATION_SPEED);
 
-        CameraYaw(camera, -mousePositionDelta.x * CAMERA_MOUSE_MOVE_SENSITIVITY, rotateAroundTarget);
-        CameraPitch(camera, -mousePositionDelta.y * CAMERA_MOUSE_MOVE_SENSITIVITY, lockView, rotateAroundTarget, rotateUp);
+        CameraYaw(camera, -mousePositionDelta.x*CAMERA_MOUSE_MOVE_SENSITIVITY, rotateAroundTarget);
+        CameraPitch(camera, -mousePositionDelta.y*CAMERA_MOUSE_MOVE_SENSITIVITY, lockView, rotateAroundTarget, rotateUp);
   
         // Camera movement
         if (IsKeyDown(KEY_W)) CameraMoveForward(camera, CAMERA_MOVE_SPEED, moveInWorldPlane);
