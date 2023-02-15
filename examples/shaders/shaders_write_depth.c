@@ -59,7 +59,6 @@ int main(void)
         .projection = CAMERA_PERSPECTIVE              // Camera projection type
     };
     
-    DisableCursor();                    // Limit cursor to relative movement inside the window
     SetTargetFPS(60);                   // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
 

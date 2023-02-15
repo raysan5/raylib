@@ -94,7 +94,6 @@ int main(void)
     Material matDefault = LoadMaterialDefault();
     matDefault.maps[MATERIAL_MAP_DIFFUSE].color = BLUE;
 
-    DisableCursor();                    // Limit cursor to relative movement inside the window
     SetTargetFPS(60);                   // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
 

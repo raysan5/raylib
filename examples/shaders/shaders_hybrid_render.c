@@ -86,7 +86,6 @@ int main(void)
     // Camera FOV is pre-calculated in the camera Distance.
     double camDist = 1.0/(tan(camera.fovy*0.5*DEG2RAD));
     
-    DisableCursor();                // Limit cursor to relative movement inside the window
     SetTargetFPS(60);               // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
 
