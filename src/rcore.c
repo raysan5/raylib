@@ -849,6 +849,7 @@ void InitWindow(int width, int height, const char *title)
         TRACELOG(LOG_FATAL, "Failed to initialize Graphic Device");
         return;
     }
+    else SetWindowPosition(GetMonitorWidth(GetCurrentMonitor())/2 - CORE.Window.screen.width/2, GetMonitorHeight(GetCurrentMonitor())/2 - CORE.Window.screen.height/2);
 
     // Initialize hi-res timer
     InitTimer();
@@ -923,10 +924,7 @@ void InitWindow(int width, int height, const char *title)
     emscripten_set_gamepaddisconnected_callback(NULL, 1, EmscriptenGamepadCallback);
 #endif
 
-    CORE.Input.Mouse.currentPosition.x = (float)CORE.Window.screen.width/2.0f;
-    CORE.Input.Mouse.currentPosition.y = (float)CORE.Window.screen.height/2.0f;
-    
-    SetMousePosition((int)CORE.Input.Mouse.currentPosition.x, (int)CORE.Input.Mouse.currentPosition.x);
+    SetMousePosition(CORE.Window.screen.width/2, CORE.Window.screen.height/2);
 
 #if defined(SUPPORT_EVENTS_AUTOMATION)
     events = (AutomationEvent *)malloc(MAX_CODE_AUTOMATION_EVENTS*sizeof(AutomationEvent));
