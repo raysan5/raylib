@@ -56,8 +56,6 @@ int main(void)
     float moonRotation = 0.0f;          // Rotation of moon around itself
     float moonOrbitRotation = 0.0f;     // Rotation of moon around earth in degrees
 
-    DisableCursor();                    // Limit cursor to relative movement inside the window
-
     SetTargetFPS(60);                   // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
 
