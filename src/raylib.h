@@ -895,6 +895,22 @@ typedef enum {
     CAMERA_ORTHOGRAPHIC             // Orthographic projection
 } CameraProjection;
 
+typedef enum {
+    CAMERA_INPUT_FORWARD = 0,
+    CAMERA_INPUT_BACK,
+    CAMERA_INPUT_LEFT,
+    CAMERA_INPUT_RIGHT,
+    CAMERA_INPUT_PITCH_UP,
+    CAMERA_INPUT_PITCH_DOWN,
+    CAMERA_INPUT_YAW_LEFT,
+    CAMERA_INPUT_YAW_RIGHT,
+	CAMERA_INPUT_ROLL_LEFT,
+	CAMERA_INPUT_ROLL_RIGHT,
+	CAMERA_INPUT_ZOOM_IN,
+	CAMERA_INPUT_ZOOM_OUT,
+}CameraInputKeys;
+#define CAMERA_MAX_INPUT_KEYS 12
+
 // N-patch layout
 typedef enum {
     NPATCH_NINE_PATCH = 0,          // Npatch layout: 3x3 tiles

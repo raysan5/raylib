@@ -838,6 +838,9 @@ void InitWindow(int width, int height, const char *title)
         }
     }
 #endif
+#if defined(SUPPORT_CAMERA_SYSTEM)
+    CameraSetup();
+#endif
 #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB) || defined(PLATFORM_RPI) || defined(PLATFORM_DRM)
     // Initialize graphics device (display device and OpenGL context)
     // NOTE: returns true if window and graphic device has been initialized successfully

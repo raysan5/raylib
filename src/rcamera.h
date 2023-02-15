@@ -99,6 +99,22 @@
         CAMERA_PERSPECTIVE = 0,
         CAMERA_ORTHOGRAPHIC
     } CameraProjection;
+
+	typedef enum {
+		CAMERA_INPUT_FORWARD = 0,
+		CAMERA_INPUT_BACK,
+		CAMERA_INPUT_LEFT,
+		CAMERA_INPUT_RIGHT,
+		CAMERA_INPUT_PITCH_UP,
+		CAMERA_INPUT_PITCH_DOWN,
+		CAMERA_INPUT_YAW_LEFT,
+		CAMERA_INPUT_YAW_RIGHT,
+		CAMERA_INPUT_ROLL_LEFT,
+		CAMERA_INPUT_ROLL_RIGHT,
+		CAMERA_INPUT_ZOOM_IN,
+		CAMERA_INPUT_ZOOM_OUT,
+	}CameraInputKeys;
+#define CAMERA_MAX_INPUT_KEYS 12
 #endif
 
 //----------------------------------------------------------------------------------
@@ -129,6 +145,9 @@ void CameraRoll(Camera *camera, float angle);
 
 Matrix GetCameraViewMatrix(Camera *camera);
 Matrix GetCameraProjectionMatrix(Camera* camera, float aspect);
+
+void CameraSetup();
+void SetCameraInputKey(int input, int key);
 
 #if defined(__cplusplus)
 }
@@ -192,6 +211,8 @@ Matrix GetCameraProjectionMatrix(Camera* camera, float aspect);
 //----------------------------------------------------------------------------------
 //...
 
+static int CameraInputMap[CAMERA_MAX_INPUT_KEYS] = { 0 };
+
 //----------------------------------------------------------------------------------
 // Module specific Functions Declaration
 //----------------------------------------------------------------------------------
@@ -200,6 +221,33 @@ Matrix GetCameraProjectionMatrix(Camera* camera, float aspect);
 //----------------------------------------------------------------------------------
 // Module Functions Definition
 //----------------------------------------------------------------------------------
+
+// initializes the camera input keys used in UpdateCamera
+void CameraSetup()
+{
+    CameraInputMap[CAMERA_INPUT_FORWARD] = KEY_W;
+	CameraInputMap[CAMERA_INPUT_BACK] = KEY_S;
+	CameraInputMap[CAMERA_INPUT_LEFT] = KEY_A;
+	CameraInputMap[CAMERA_INPUT_RIGHT] = KEY_D;
+	CameraInputMap[CAMERA_INPUT_PITCH_UP] = KEY_UP;
+	CameraInputMap[CAMERA_INPUT_PITCH_DOWN] = KEY_DOWN;
+	CameraInputMap[CAMERA_INPUT_YAW_LEFT] = KEY_LEFT;
+	CameraInputMap[CAMERA_INPUT_YAW_RIGHT] = KEY_RIGHT;
+	CameraInputMap[CAMERA_INPUT_ROLL_LEFT] = KEY_Q;
+	CameraInputMap[CAMERA_INPUT_ROLL_RIGHT] = KEY_E;
+	CameraInputMap[CAMERA_INPUT_ZOOM_IN] = KEY_KP_SUBTRACT;
+	CameraInputMap[CAMERA_INPUT_ZOOM_OUT] = KEY_KP_ADD;
+}
+
+// Sets the input key mapping
+void SetCameraInputKey(int input, int key)
+{
+    if (input < 0 || input >= CAMERA_MAX_INPUT_KEYS)
+        return;
+
+    CameraInputMap[input] = key;
+}
+
 // Returns the cameras forward vector (normalized)
 Vector3 GetCameraForward(Camera *camera)
 {
@@ -420,28 +468,28 @@ void UpdateCamera(Camera *camera, int mode)
     bool rotateUp = mode == CAMERA_FREE;
 
     // Camera rotation
-    if (IsKeyDown(KEY_DOWN)) CameraPitch(camera, -CAMERA_ROTATION_SPEED, lockView, rotateAroundTarget, rotateUp);
-    if (IsKeyDown(KEY_UP)) CameraPitch(camera, CAMERA_ROTATION_SPEED, lockView, rotateAroundTarget, rotateUp);
-    if (IsKeyDown(KEY_RIGHT)) CameraYaw(camera, -CAMERA_ROTATION_SPEED, rotateAroundTarget);
-    if (IsKeyDown(KEY_LEFT)) CameraYaw(camera, CAMERA_ROTATION_SPEED, rotateAroundTarget);
-    if (IsKeyDown(KEY_Q)) CameraRoll(camera, -CAMERA_ROTATION_SPEED);
-    if (IsKeyDown(KEY_E)) CameraRoll(camera, CAMERA_ROTATION_SPEED);
+    if (IsKeyDown(CameraInputMap[CAMERA_INPUT_PITCH_DOWN])) CameraPitch(camera, -CAMERA_ROTATION_SPEED, lockView, rotateAroundTarget, rotateUp);
+    if (IsKeyDown(CameraInputMap[CAMERA_INPUT_PITCH_UP])) CameraPitch(camera, CAMERA_ROTATION_SPEED, lockView, rotateAroundTarget, rotateUp);
+    if (IsKeyDown(CameraInputMap[CAMERA_INPUT_YAW_RIGHT])) CameraYaw(camera, -CAMERA_ROTATION_SPEED, rotateAroundTarget);
+    if (IsKeyDown(CameraInputMap[CAMERA_INPUT_YAW_LEFT])) CameraYaw(camera, CAMERA_ROTATION_SPEED, rotateAroundTarget);
+    if (IsKeyDown(CameraInputMap[CAMERA_INPUT_ROLL_LEFT])) CameraRoll(camera, -CAMERA_ROTATION_SPEED);
+    if (IsKeyDown(CameraInputMap[CAMERA_INPUT_ROLL_RIGHT])) CameraRoll(camera, CAMERA_ROTATION_SPEED);
 
     CameraYaw(camera, -mousePositionDelta.x*CAMERA_MOUSE_MOVE_SENSITIVITY, rotateAroundTarget);
     CameraPitch(camera, -mousePositionDelta.y*CAMERA_MOUSE_MOVE_SENSITIVITY, lockView, rotateAroundTarget, rotateUp);
 
     // Camera movement
-    if (IsKeyDown(KEY_W)) CameraMoveForward(camera, CAMERA_MOVE_SPEED, moveInWorldPlane);
-    if (IsKeyDown(KEY_A)) CameraMoveRight(camera, -CAMERA_MOVE_SPEED, moveInWorldPlane);
-    if (IsKeyDown(KEY_S)) CameraMoveForward(camera, -CAMERA_MOVE_SPEED, moveInWorldPlane);
-    if (IsKeyDown(KEY_D)) CameraMoveRight(camera, CAMERA_MOVE_SPEED, moveInWorldPlane);
+    if (IsKeyDown(CameraInputMap[CAMERA_INPUT_FORWARD])) CameraMoveForward(camera, CAMERA_MOVE_SPEED, moveInWorldPlane);
+    if (IsKeyDown(CameraInputMap[CAMERA_INPUT_LEFT])) CameraMoveRight(camera, -CAMERA_MOVE_SPEED, moveInWorldPlane);
+    if (IsKeyDown(CameraInputMap[CAMERA_INPUT_BACK])) CameraMoveForward(camera, -CAMERA_MOVE_SPEED, moveInWorldPlane);
+    if (IsKeyDown(CameraInputMap[CAMERA_INPUT_RIGHT])) CameraMoveRight(camera, CAMERA_MOVE_SPEED, moveInWorldPlane);
     //if (IsKeyDown(KEY_SPACE)) CameraMoveUp(camera, CAMERA_MOVE_SPEED);
     //if (IsKeyDown(KEY_LEFT_CONTROL)) CameraMoveUp(camera, -CAMERA_MOVE_SPEED);
     
     // Zoom target distance
     CameraMoveToTarget(camera, -GetMouseWheelMove());
-    if (IsKeyPressed(KEY_KP_SUBTRACT)) CameraMoveToTarget(camera, 2.0f);
-    if (IsKeyPressed(KEY_KP_ADD)) CameraMoveToTarget(camera, -2.0f);
+    if (IsKeyPressed(CameraInputMap[CAMERA_INPUT_ZOOM_IN])) CameraMoveToTarget(camera, 2.0f);
+    if (IsKeyPressed(CameraInputMap[CAMERA_INPUT_ZOOM_OUT])) CameraMoveToTarget(camera, -2.0f);
 }
 #endif // !CAMERA_STANDALONE
 
