@@ -160,7 +160,12 @@ Matrix GetCameraProjectionMatrix(Camera* camera, float aspect);
                             // MatrixOrtho()
                             // MatrixIdentity()
 
-// raylib required functionality: GetMouseDelta(), GetMouseWheelMove(), IsKeyDown(), IsKeyPressed(), GetFrameTime()
+// raylib required functionality: 
+                            // GetMouseDelta()
+                            // GetMouseWheelMove()
+                            // IsKeyDown()
+                            // IsKeyPressed()
+                            // GetFrameTime()
 
 //----------------------------------------------------------------------------------
 // Defines and Macros
@@ -396,12 +401,13 @@ Matrix GetCameraProjectionMatrix(Camera *camera, float aspect)
 {
     if (camera->projection == CAMERA_PERSPECTIVE)
     {
-        return MatrixPerspective(camera->fovy * DEG2RAD, aspect, CAMERA_CULL_DISTANCE_NEAR, CAMERA_CULL_DISTANCE_FAR);
+        return MatrixPerspective(camera->fovy*DEG2RAD, aspect, CAMERA_CULL_DISTANCE_NEAR, CAMERA_CULL_DISTANCE_FAR);
     }
     else if (camera->projection == CAMERA_ORTHOGRAPHIC)
     {
-        double top = camera->fovy / 2.0;
-        double right = top * aspect;
+        double top = camera->fovy/2.0;
+        double right = top*aspect;
+
         return MatrixOrtho(-right, right, -top, top, CAMERA_CULL_DISTANCE_NEAR, CAMERA_CULL_DISTANCE_FAR);
     }
     
@@ -415,10 +421,10 @@ void UpdateCamera(Camera *camera, int mode)
 {
     Vector2 mousePositionDelta = GetMouseDelta();
 
-    bool moveInWorldPlane = mode == CAMERA_FIRST_PERSON || mode == CAMERA_THIRD_PERSON;
-    bool rotateAroundTarget = mode == CAMERA_THIRD_PERSON || mode == CAMERA_ORBITAL;
-    bool lockView = mode == CAMERA_FIRST_PERSON || mode == CAMERA_THIRD_PERSON || mode == CAMERA_ORBITAL;
-    bool rotateUp = mode == CAMERA_FREE;
+    bool moveInWorldPlane = ((mode == CAMERA_FIRST_PERSON) || (mode == CAMERA_THIRD_PERSON));
+    bool rotateAroundTarget = ((mode == CAMERA_THIRD_PERSON) || (mode == CAMERA_ORBITAL));
+    bool lockView = ((mode == CAMERA_FIRST_PERSON) || (mode == CAMERA_THIRD_PERSON) || (mode == CAMERA_ORBITAL));
+    bool rotateUp = (mode == CAMERA_FREE);
     
     if (mode == CAMERA_ORBITAL)
     {
@@ -450,7 +456,7 @@ void UpdateCamera(Camera *camera, int mode)
         //if (IsKeyDown(KEY_LEFT_CONTROL)) CameraMoveUp(camera, -CAMERA_MOVE_SPEED);
     }
 
-    if (mode == CAMERA_THIRD_PERSON || mode == CAMERA_ORBITAL)
+    if ((mode == CAMERA_THIRD_PERSON) || (mode == CAMERA_ORBITAL))
     {
         // Zoom target distance
         CameraMoveToTarget(camera, -GetMouseWheelMove());
