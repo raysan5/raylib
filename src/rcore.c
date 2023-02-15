@@ -924,8 +924,6 @@ void InitWindow(int width, int height, const char *title)
     emscripten_set_gamepaddisconnected_callback(NULL, 1, EmscriptenGamepadCallback);
 #endif
 
-    SetMousePosition(CORE.Window.screen.width/2, CORE.Window.screen.height/2);
-
 #if defined(SUPPORT_EVENTS_AUTOMATION)
     events = (AutomationEvent *)malloc(MAX_CODE_AUTOMATION_EVENTS*sizeof(AutomationEvent));
     CORE.Time.frameCounter = 0;
