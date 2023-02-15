@@ -209,8 +209,8 @@ int main(int argc, char* argv[])
 
     if (buffer == NULL)
     {
-	    printf("Could not read input file: %s\n", inFileName);
-	    return 1;
+        printf("Could not read input file: %s\n", inFileName);
+        return 1;
     }
 
     // Preprocess buffer to get separate lines

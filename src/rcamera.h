@@ -160,7 +160,7 @@ Matrix GetCameraProjectionMatrix(Camera* camera, float aspect);
                             // MatrixOrtho()
                             // MatrixIdentity()
 
-// raylib input functionality required: GetMouseDelta(), GetMouseWheelMove(), IsKeyDown(), IsKeyPressed()
+// raylib required functionality: GetMouseDelta(), GetMouseWheelMove(), IsKeyDown(), IsKeyPressed(), GetFrameTime()
 
 //----------------------------------------------------------------------------------
 // Defines and Macros
@@ -195,7 +195,7 @@ Matrix GetCameraProjectionMatrix(Camera* camera, float aspect);
 //----------------------------------------------------------------------------------
 // Module specific Functions Declaration
 //----------------------------------------------------------------------------------
-
+//...
 
 //----------------------------------------------------------------------------------
 // Module Functions Definition
@@ -218,6 +218,7 @@ Vector3 GetCameraRight(Camera *camera)
 {
     Vector3 forward = GetCameraForward(camera);
     Vector3 up = GetCameraUp(camera);
+    
     return Vector3CrossProduct(forward, up);
 }
 
@@ -419,26 +420,26 @@ void UpdateCamera(Camera *camera, int mode)
     bool lockView = mode == CAMERA_FIRST_PERSON || mode == CAMERA_THIRD_PERSON || mode == CAMERA_ORBITAL;
     bool rotateUp = mode == CAMERA_FREE;
     
-	if (mode == CAMERA_ORBITAL)
-	{
-        // Obital can just orbit
-		Matrix rotatation = MatrixRotate(GetCameraUp(camera), CAMERA_ORBITAL_SPEED * GetFrameTime());
-		Vector3 viewVector = Vector3Subtract(camera->position, camera->target);
-		viewVector = Vector3Transform(viewVector, rotatation);
-		camera->position = Vector3Add(camera->target, viewVector);
-	}
+    if (mode == CAMERA_ORBITAL)
+    {
+        // Orbital can just orbit
+        Matrix rotatation = MatrixRotate(GetCameraUp(camera), CAMERA_ORBITAL_SPEED*GetFrameTime());
+        Vector3 viewVector = Vector3Subtract(camera->position, camera->target);
+        viewVector = Vector3Transform(viewVector, rotatation);
+        camera->position = Vector3Add(camera->target, viewVector);
+    }
     else
     {
-		// Camera rotation
-		if (IsKeyDown(KEY_DOWN)) CameraPitch(camera, -CAMERA_ROTATION_SPEED, lockView, rotateAroundTarget, rotateUp);
-		if (IsKeyDown(KEY_UP)) CameraPitch(camera, CAMERA_ROTATION_SPEED, lockView, rotateAroundTarget, rotateUp);
-		if (IsKeyDown(KEY_RIGHT)) CameraYaw(camera, -CAMERA_ROTATION_SPEED, rotateAroundTarget);
-		if (IsKeyDown(KEY_LEFT)) CameraYaw(camera, CAMERA_ROTATION_SPEED, rotateAroundTarget);
-		if (IsKeyDown(KEY_Q)) CameraRoll(camera, -CAMERA_ROTATION_SPEED);
-		if (IsKeyDown(KEY_E)) CameraRoll(camera, CAMERA_ROTATION_SPEED);
+        // Camera rotation
+        if (IsKeyDown(KEY_DOWN)) CameraPitch(camera, -CAMERA_ROTATION_SPEED, lockView, rotateAroundTarget, rotateUp);
+        if (IsKeyDown(KEY_UP)) CameraPitch(camera, CAMERA_ROTATION_SPEED, lockView, rotateAroundTarget, rotateUp);
+        if (IsKeyDown(KEY_RIGHT)) CameraYaw(camera, -CAMERA_ROTATION_SPEED, rotateAroundTarget);
+        if (IsKeyDown(KEY_LEFT)) CameraYaw(camera, CAMERA_ROTATION_SPEED, rotateAroundTarget);
+        if (IsKeyDown(KEY_Q)) CameraRoll(camera, -CAMERA_ROTATION_SPEED);
+        if (IsKeyDown(KEY_E)) CameraRoll(camera, CAMERA_ROTATION_SPEED);
 
-		CameraYaw(camera, -mousePositionDelta.x * CAMERA_MOUSE_MOVE_SENSITIVITY, rotateAroundTarget);
-		CameraPitch(camera, -mousePositionDelta.y * CAMERA_MOUSE_MOVE_SENSITIVITY, lockView, rotateAroundTarget, rotateUp);
+        CameraYaw(camera, -mousePositionDelta.x * CAMERA_MOUSE_MOVE_SENSITIVITY, rotateAroundTarget);
+        CameraPitch(camera, -mousePositionDelta.y * CAMERA_MOUSE_MOVE_SENSITIVITY, lockView, rotateAroundTarget, rotateUp);
   
         // Camera movement
         if (IsKeyDown(KEY_W)) CameraMoveForward(camera, CAMERA_MOVE_SPEED, moveInWorldPlane);
