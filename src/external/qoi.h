@@ -1,30 +1,10 @@
 /*
 
+Copyright (c) 2021, Dominic Szablewski - https://phoboslab.org
+SPDX-License-Identifier: MIT
+
+
 QOI - The "Quite OK Image" format for fast, lossless image compression
-
-Dominic Szablewski - https://phoboslab.org
-
-
--- LICENSE: The MIT License(MIT)
-
-Copyright(c) 2021 Dominic Szablewski
-
-Permission is hereby granted, free of charge, to any person obtaining a copy of
-this software and associated documentation files(the "Software"), to deal in
-the Software without restriction, including without limitation the rights to
-use, copy, modify, merge, publish, distribute, sublicense, and / or sell copies
-of the Software, and to permit persons to whom the Software is furnished to do
-so, subject to the following conditions :
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
-
 
 -- About
 
@@ -424,13 +404,12 @@ void *qoi_encode(const void *data, const qoi_desc *desc, int *out_len) {
 	channels = desc->channels;
 
 	for (px_pos = 0; px_pos < px_len; px_pos += channels) {
+		px.rgba.r = pixels[px_pos + 0];
+		px.rgba.g = pixels[px_pos + 1];
+		px.rgba.b = pixels[px_pos + 2];
+
 		if (channels == 4) {
-			px = *(qoi_rgba_t *)(pixels + px_pos);
-		}
-		else {
-			px.rgba.r = pixels[px_pos + 0];
-			px.rgba.g = pixels[px_pos + 1];
-			px.rgba.b = pixels[px_pos + 2];
+			px.rgba.a = pixels[px_pos + 3];
 		}
 
 		if (px.v == px_prev.v) {
@@ -598,13 +577,12 @@ void *qoi_decode(const void *data, int size, qoi_desc *desc, int channels) {
 			index[QOI_COLOR_HASH(px) % 64] = px;
 		}
 
+		pixels[px_pos + 0] = px.rgba.r;
+		pixels[px_pos + 1] = px.rgba.g;
+		pixels[px_pos + 2] = px.rgba.b;
+		
 		if (channels == 4) {
-			*(qoi_rgba_t*)(pixels + px_pos) = px;
-		}
-		else {
-			pixels[px_pos + 0] = px.rgba.r;
-			pixels[px_pos + 1] = px.rgba.g;
-			pixels[px_pos + 2] = px.rgba.b;
+			pixels[px_pos + 3] = px.rgba.a;
 		}
 	}
 

@@ -74,10 +74,25 @@ jobs:
 
     # Setup MSBuild.exe path if required
     - name: Setup MSBuild
-      uses: microsoft/setup-msbuild@v1.0.2
+      uses: microsoft/setup-msbuild@v1.1
       if: matrix.compiler == 'msvc16'
 
-    - name: Build Library (MinGW-w64)
+    - name: Build Library (MinGW-w64 32bit)
+      run: |
+        cd src
+        x86_64-w64-mingw32-gcc.exe --version
+        windres.exe --version
+        dir C:\msys64\mingw64\bin
+        make PLATFORM=PLATFORM_DESKTOP CC=x86_64-w64-mingw32-gcc.exe RAYLIB_LIBTYPE=STATIC RAYLIB_RELEASE_PATH="../build/${{ env.RELEASE_NAME }}/lib" CUSTOM_CFLAGS=-m32
+        //windres.exe -i raylib.dll.rc -o raylib.dll.rc.data -O coff --target=${{ matrix.WINDRES_ARCH }}
+        //make PLATFORM=PLATFORM_DESKTOP CC=${{ matrix.ARCH }}-w64-mingw32-gcc.exe RAYLIB_LIBTYPE=SHARED RAYLIB_RELEASE_PATH="../build/${{ env.RELEASE_NAME }}/lib" -B
+        cd ..
+      shell: cmd
+      if: |
+        matrix.compiler == 'mingw-w64' &&
+        matrix.bits == 32
+        
+    - name: Build Library (MinGW-w64 64bit)
       run: |
         cd src
         ${{ matrix.ARCH }}-w64-mingw32-gcc.exe --version
@@ -88,7 +103,9 @@ jobs:
         make PLATFORM=PLATFORM_DESKTOP CC=${{ matrix.ARCH }}-w64-mingw32-gcc.exe RAYLIB_LIBTYPE=SHARED RAYLIB_RELEASE_PATH="../build/${{ env.RELEASE_NAME }}/lib" -B
         cd ..
       shell: cmd
-      if: matrix.compiler == 'mingw-w64'
+      if: |
+        matrix.compiler == 'mingw-w64' &&
+        matrix.bits == 64
 
     - name: Build Library (MSVC16)
       run: |
@@ -116,7 +133,7 @@ jobs:
       shell: cmd
 
     - name: Upload Artifacts
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v3
       with:
         name: ${{ env.RELEASE_NAME }}.zip
         path: ./build/${{ env.RELEASE_NAME }}.zip

@@ -11,7 +11,7 @@
 *
 *   LICENSE: zlib/libpng
 *
-*   Copyright (c) 2014-2022 Ramon Santamaria (@raysan5)
+*   Copyright (c) 2014-2023 Ramon Santamaria (@raysan5)
 *
 *   This software is provided "as-is", without any express or implied warranty. In no event
 *   will the authors be held liable for any damages arising from the use of this software.
@@ -63,10 +63,10 @@
 static int logTypeLevel = LOG_INFO;                 // Minimum log type level
 
 static TraceLogCallback traceLog = NULL;            // TraceLog callback function pointer
-static LoadFileDataCallback loadFileData = NULL;    // LoadFileData callback funtion pointer
-static SaveFileDataCallback saveFileData = NULL;    // SaveFileText callback funtion pointer
-static LoadFileTextCallback loadFileText = NULL;    // LoadFileText callback funtion pointer
-static SaveFileTextCallback saveFileText = NULL;    // SaveFileText callback funtion pointer
+static LoadFileDataCallback loadFileData = NULL;    // LoadFileData callback function pointer
+static SaveFileDataCallback saveFileData = NULL;    // SaveFileText callback function pointer
+static LoadFileTextCallback loadFileText = NULL;    // LoadFileText callback function pointer
+static SaveFileTextCallback saveFileText = NULL;    // SaveFileText callback function pointer
 
 //----------------------------------------------------------------------------------
 // Functions to set internal callbacks
@@ -270,7 +270,7 @@ bool SaveFileData(const char *fileName, void *data, unsigned int bytesToWrite)
 }
 
 // Export data to code (.h), returns true on success
-bool ExportDataAsCode(const char *data, unsigned int size, const char *fileName)
+bool ExportDataAsCode(const unsigned char *data, unsigned int size, const char *fileName)
 {
     bool success = false;
 
@@ -290,7 +290,7 @@ bool ExportDataAsCode(const char *data, unsigned int size, const char *fileName)
     byteCount += sprintf(txtData + byteCount, "// more info and bugs-report:  github.com/raysan5/raylib                              //\n");
     byteCount += sprintf(txtData + byteCount, "// feedback and support:       ray[at]raylib.com                                      //\n");
     byteCount += sprintf(txtData + byteCount, "//                                                                                    //\n");
-    byteCount += sprintf(txtData + byteCount, "// Copyright (c) 2022 Ramon Santamaria (@raysan5)                                     //\n");
+    byteCount += sprintf(txtData + byteCount, "// Copyright (c) 2022-2023 Ramon Santamaria (@raysan5)                                //\n");
     byteCount += sprintf(txtData + byteCount, "//                                                                                    //\n");
     byteCount += sprintf(txtData + byteCount, "////////////////////////////////////////////////////////////////////////////////////////\n\n");
 

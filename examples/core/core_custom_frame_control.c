@@ -22,7 +22,7 @@
 *   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
 *   BSD-like license that allows static linking with closed source software
 *
-*   Copyright (c) 2021-2022 Ramon Santamaria (@raysan5)
+*   Copyright (c) 2021-2023 Ramon Santamaria (@raysan5)
 *
 ********************************************************************************************/
 
@@ -86,8 +86,8 @@ int main(void)
             
             DrawCircle((int)position, GetScreenHeight()/2 - 25, 50, RED);
             
-            DrawText(TextFormat("%03.0f ms", timeCounter*1000.0f), position - 40, GetScreenHeight()/2 - 100, 20, MAROON);
-            DrawText(TextFormat("PosX: %03.0f", position), position - 50, GetScreenHeight()/2 + 40, 20, BLACK);
+            DrawText(TextFormat("%03.0f ms", timeCounter*1000.0f), (int)position - 40, GetScreenHeight()/2 - 100, 20, MAROON);
+            DrawText(TextFormat("PosX: %03.0f", position), (int)position - 50, GetScreenHeight()/2 + 40, 20, BLACK);
             
             DrawText("Circle is moving at a constant 200 pixels/sec,\nindependently of the frame rate.", 10, 10, 20, DARKGRAY);
             DrawText("PRESS SPACE to PAUSE MOVEMENT", 10, GetScreenHeight() - 60, 20, GRAY);
@@ -115,7 +115,7 @@ int main(void)
                 deltaTime = (float)(currentTime - previousTime);
             }
         }
-        else deltaTime = updateDrawTime;    // Framerate could be variable
+        else deltaTime = (float)updateDrawTime;    // Framerate could be variable
 
         previousTime = currentTime;
         //----------------------------------------------------------------------------------

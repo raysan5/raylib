@@ -7,7 +7,7 @@
 *   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
 *   BSD-like license that allows static linking with closed source software
 *
-*   Copyright (c) 2017-2022 Ramon Santamaria (@raysan5)
+*   Copyright (c) 2017-2023 Ramon Santamaria (@raysan5)
 *
 ********************************************************************************************/
 
@@ -68,8 +68,6 @@ int main(void)
 
     int currentModel = 0;
 
-    SetCameraMode(camera, CAMERA_ORBITAL);  // Set a orbital camera mode
-
     SetTargetFPS(60);               // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
 
@@ -78,7 +76,7 @@ int main(void)
     {
         // Update
         //----------------------------------------------------------------------------------
-        UpdateCamera(&camera);
+        UpdateCamera(&camera, CAMERA_ORBITAL);
 
         if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT))
         {

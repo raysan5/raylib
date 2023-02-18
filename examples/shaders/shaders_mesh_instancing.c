@@ -9,7 +9,7 @@
 *   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
 *   BSD-like license that allows static linking with closed source software
 *
-*   Copyright (c) 2020-2022 @seanpringle, Max (@moliad) and Ramon Santamaria (@raysan5)
+*   Copyright (c) 2020-2023 @seanpringle, Max (@moliad) and Ramon Santamaria (@raysan5)
 *
 ********************************************************************************************/
 
@@ -44,11 +44,11 @@ int main(void)
 
     // Define the camera to look into our 3d world
     Camera camera = { 0 };
-    camera.position = (Vector3){ -125.0f, 125.0f, -125.0f };
-    camera.target = (Vector3){ 0.0f, 0.0f, 0.0f };
-    camera.up = (Vector3){ 0.0f, 1.0f, 0.0f };
-    camera.fovy = 45.0f;
-    camera.projection = CAMERA_PERSPECTIVE;
+    camera.position = (Vector3){ -125.0f, 125.0f, -125.0f };    // Camera position
+    camera.target = (Vector3){ 0.0f, 0.0f, 0.0f };              // Camera looking at point
+    camera.up = (Vector3){ 0.0f, 1.0f, 0.0f };                  // Camera up vector (rotation towards target)
+    camera.fovy = 45.0f;                                        // Camera field-of-view Y
+    camera.projection = CAMERA_PERSPECTIVE;                     // Camera projection type
 
     // Define mesh to be instanced
     Mesh cube = GenMeshCube(1.0f, 1.0f, 1.0f);
@@ -94,18 +94,15 @@ int main(void)
     Material matDefault = LoadMaterialDefault();
     matDefault.maps[MATERIAL_MAP_DIFFUSE].color = BLUE;
 
-    // Set an orbital camera mode
-    SetCameraMode(camera, CAMERA_ORBITAL);  
-
-    SetTargetFPS(60);                      // Set our game to run at 60 frames-per-second
+    SetTargetFPS(60);                   // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
 
     // Main game loop
-    while (!WindowShouldClose())            // Detect window close button or ESC key
+    while (!WindowShouldClose())        // Detect window close button or ESC key
     {
         // Update
         //----------------------------------------------------------------------------------
-        UpdateCamera(&camera);
+        UpdateCamera(&camera, CAMERA_ORBITAL);
 
         // Update the light shader with the camera view position
         float cameraPos[3] = { camera.position.x, camera.position.y, camera.position.z };

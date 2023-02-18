@@ -7,7 +7,7 @@
 *   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
 *   BSD-like license that allows static linking with closed source software
 *
-*   Copyright (c) 2017-2022 Ramon Santamaria (@raysan5)
+*   Copyright (c) 2017-2023 Ramon Santamaria (@raysan5)
 *
 ********************************************************************************************/
 
@@ -38,7 +38,12 @@ int main(void)
     InitWindow(screenWidth, screenHeight, "raylib [models] example - skybox loading and drawing");
 
     // Define the camera to look into our 3d world
-    Camera camera = { { 1.0f, 1.0f, 1.0f }, { 4.0f, 1.0f, 4.0f }, { 0.0f, 1.0f, 0.0f }, 45.0f, 0 };
+    Camera camera = { 0 };
+    camera.position = (Vector3){ 1.0f, 1.0f, 1.0f };    // Camera position
+    camera.target = (Vector3){ 4.0f, 1.0f, 4.0f };      // Camera looking at point
+    camera.up = (Vector3){ 0.0f, 1.0f, 0.0f };          // Camera up vector (rotation towards target)
+    camera.fovy = 45.0f;                                // Camera field-of-view Y
+    camera.projection = CAMERA_PERSPECTIVE;             // Camera projection type
 
     // Load skybox model
     Mesh cube = GenMeshCube(1.0f, 1.0f, 1.0f);
@@ -87,17 +92,17 @@ int main(void)
         UnloadImage(img);
     }
 
-    SetCameraMode(camera, CAMERA_FIRST_PERSON);  // Set a first person camera mode
+    DisableCursor();                    // Limit cursor to relative movement inside the window
 
-    SetTargetFPS(60);                       // Set our game to run at 60 frames-per-second
+    SetTargetFPS(60);                   // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
 
     // Main game loop
-    while (!WindowShouldClose())            // Detect window close button or ESC key
+    while (!WindowShouldClose())        // Detect window close button or ESC key
     {
         // Update
         //----------------------------------------------------------------------------------
-        UpdateCamera(&camera);
+        UpdateCamera(&camera, CAMERA_FIRST_PERSON);
 
         // Load new cubemap texture on drag&drop
         if (IsFileDropped())

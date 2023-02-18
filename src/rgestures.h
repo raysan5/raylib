@@ -24,7 +24,7 @@
 *
 *   LICENSE: zlib/libpng
 *
-*   Copyright (c) 2014-2022 Ramon Santamaria (@raysan5)
+*   Copyright (c) 2014-2023 Ramon Santamaria (@raysan5)
 *
 *   This software is provided "as-is", without any express or implied warranty. In no event
 *   will the authors be held liable for any damages arising from the use of this software.
@@ -249,7 +249,7 @@ static double rgGetCurrentTime(void);
 // Module Functions Definition
 //----------------------------------------------------------------------------------
 
-// Enable only desired getures to be detected
+// Enable only desired gestures to be detected
 void SetGesturesEnabled(unsigned int flags)
 {
     GESTURES.enabledFlags = flags;
@@ -300,7 +300,7 @@ void ProcessGestureEvent(GestureEvent event)
         {
             if (GESTURES.current == GESTURE_DRAG) GESTURES.Touch.upPosition = event.position[0];
 
-            // NOTE: GESTURES.Drag.intensity dependend on the resolution of the screen
+            // NOTE: GESTURES.Drag.intensity dependent on the resolution of the screen
             GESTURES.Drag.distance = rgVector2Distance(GESTURES.Touch.downPositionA, GESTURES.Touch.upPosition);
             GESTURES.Drag.intensity = GESTURES.Drag.distance/(float)((rgGetCurrentTime() - GESTURES.Swipe.timeDuration));
 
@@ -472,7 +472,7 @@ Vector2 GetGestureDragVector(void)
 }
 
 // Get drag angle
-// NOTE: Angle in degrees, horizontal-right is 0, counterclock-wise
+// NOTE: Angle in degrees, horizontal-right is 0, counterclockwise
 float GetGestureDragAngle(void)
 {
     // NOTE: drag angle is calculated on one touch points TOUCH_ACTION_UP
@@ -488,8 +488,8 @@ Vector2 GetGesturePinchVector(void)
     return GESTURES.Pinch.vector;
 }
 
-// Get angle beween two pinch points
-// NOTE: Angle in degrees, horizontal-right is 0, counterclock-wise
+// Get angle between two pinch points
+// NOTE: Angle in degrees, horizontal-right is 0, counterclockwise
 float GetGesturePinchAngle(void)
 {
     // NOTE: pinch angle is calculated on two touch points TOUCH_ACTION_MOVE

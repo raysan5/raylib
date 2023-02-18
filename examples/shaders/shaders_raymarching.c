@@ -10,7 +10,7 @@
 *   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
 *   BSD-like license that allows static linking with closed source software
 *
-*   Copyright (c) 2018-2022 Ramon Santamaria (@raysan5)
+*   Copyright (c) 2018-2023 Ramon Santamaria (@raysan5)
 *
 ********************************************************************************************/
 
@@ -40,8 +40,7 @@ int main(void)
     camera.target = (Vector3){ 0.0f, 0.0f, 0.7f };      // Camera looking at point
     camera.up = (Vector3){ 0.0f, 1.0f, 0.0f };          // Camera up vector (rotation towards target)
     camera.fovy = 65.0f;                                // Camera field-of-view Y
-
-    SetCameraMode(camera, CAMERA_FREE);                 // Set camera mode
+    camera.projection = CAMERA_PERSPECTIVE;             // Camera projection type
 
     // Load raymarching shader
     // NOTE: Defining 0 (NULL) for vertex shader forces usage of internal default vertex shader
@@ -58,15 +57,16 @@ int main(void)
 
     float runTime = 0.0f;
 
-    SetTargetFPS(60);                       // Set our game to run at 60 frames-per-second
+    DisableCursor();                    // Limit cursor to relative movement inside the window
+    SetTargetFPS(60);                   // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
 
     // Main game loop
-    while (!WindowShouldClose())            // Detect window close button or ESC key
+    while (!WindowShouldClose())        // Detect window close button or ESC key
     {
         // Update
         //----------------------------------------------------------------------------------
-        UpdateCamera(&camera);
+        UpdateCamera(&camera, CAMERA_FIRST_PERSON);
 
         float cameraPos[3] = { camera.position.x, camera.position.y, camera.position.z };
         float cameraTarget[3] = { camera.target.x, camera.target.y, camera.target.z };

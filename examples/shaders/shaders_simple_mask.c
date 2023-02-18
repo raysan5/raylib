@@ -9,7 +9,7 @@
 *   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
 *   BSD-like license that allows static linking with closed source software
 *
-*   Copyright (c) 2019-2022 Chris Camacho (@chriscamacho) and Ramon Santamaria (@raysan5)
+*   Copyright (c) 2019-2023 Chris Camacho (@chriscamacho) and Ramon Santamaria (@raysan5)
 *
 ********************************************************************************************
 *
@@ -39,15 +39,15 @@ int main(void)
     const int screenWidth = 800;
     const int screenHeight = 450;
 
-    InitWindow(screenWidth, screenHeight, "raylib - simple shader mask");
+    InitWindow(screenWidth, screenHeight, "raylib [shaders] example - simple shader mask");
 
     // Define the camera to look into our 3d world
     Camera camera = { 0 };
-    camera.position = (Vector3){ 0.0f, 1.0f, 2.0f };
-    camera.target = (Vector3){ 0.0f, 0.0f, 0.0f };
-    camera.up = (Vector3){ 0.0f, 1.0f, 0.0f };
-    camera.fovy = 45.0f;
-    camera.projection = CAMERA_PERSPECTIVE;
+    camera.position = (Vector3){ 0.0f, 1.0f, 2.0f };    // Camera position
+    camera.target = (Vector3){ 0.0f, 0.0f, 0.0f };      // Camera looking at point
+    camera.up = (Vector3){ 0.0f, 1.0f, 0.0f };          // Camera up vector (rotation towards target)
+    camera.fovy = 45.0f;                                // Camera field-of-view Y
+    camera.projection = CAMERA_PERSPECTIVE;             // Camera projection type
 
     // Define our three models to show the shader on
     Mesh torus = GenMeshTorus(0.3f, 1, 16, 32);
@@ -83,17 +83,18 @@ int main(void)
     model2.materials[0].shader = shader;
 
     int framesCounter = 0;
-    Vector3 rotation = { 0 };       // Model rotation angles
+    Vector3 rotation = { 0 };           // Model rotation angles
 
-    SetTargetFPS(60);               // Set  to run at 60 frames-per-second
+    DisableCursor();                    // Limit cursor to relative movement inside the window
+    SetTargetFPS(60);                   // Set  to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
 
     // Main game loop
-    while (!WindowShouldClose())    // Detect window close button or ESC key
+    while (!WindowShouldClose())        // Detect window close button or ESC key
     {
         // Update
         //----------------------------------------------------------------------------------
-        UpdateCamera(&camera);
+        UpdateCamera(&camera, CAMERA_FIRST_PERSON);
         
         framesCounter++;
         rotation.x += 0.01f;
@@ -115,9 +116,9 @@ int main(void)
 
             BeginMode3D(camera);
 
-                DrawModel(model1, (Vector3){0.5,0,0}, 1, WHITE);
-                DrawModelEx(model2, (Vector3){-.5,0,0}, (Vector3){1,1,0}, 50, (Vector3){1,1,1}, WHITE);
-                DrawModel(model3,(Vector3){0,0,-1.5}, 1, WHITE);
+                DrawModel(model1, (Vector3){ 0.5f, 0.0f, 0.0f }, 1, WHITE);
+                DrawModelEx(model2, (Vector3){ -0.5f, 0.0f, 0.0f }, (Vector3){ 1.0f, 1.0f, 0.0f }, 50, (Vector3){ 1.0f, 1.0f, 1.0f }, WHITE);
+                DrawModel(model3,(Vector3){ 0.0f, 0.0f, -1.5f }, 1, WHITE);
                 DrawGrid(10, 1.0f);        // Draw a grid
 
             EndMode3D();

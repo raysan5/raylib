@@ -7,7 +7,7 @@
 *   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
 *   BSD-like license that allows static linking with closed source software
 *
-*   Copyright (c) 2018-2022 Ramon Santamaria (@raysan5)
+*   Copyright (c) 2018-2023 Ramon Santamaria (@raysan5)
 *
 ********************************************************************************************/
 
@@ -51,7 +51,7 @@ int main(void)
 
     // Load map tiles (generating 2 random tile ids for testing)
     // NOTE: Map tile ids should be probably loaded from an external map file
-    for (int i = 0; i < map.tilesY*map.tilesX; i++) map.tileIds[i] = GetRandomValue(0, 1);
+    for (unsigned int i = 0; i < map.tilesY*map.tilesX; i++) map.tileIds[i] = GetRandomValue(0, 1);
 
     // Player position on the screen (pixel coordinates, not tile coordinates)
     Vector2 playerPosition = { 180, 130 };
@@ -80,12 +80,12 @@ int main(void)
 
         // Check player position to avoid moving outside tilemap limits
         if (playerPosition.x < 0) playerPosition.x = 0;
-        else if ((playerPosition.x + PLAYER_SIZE) > (map.tilesX*MAP_TILE_SIZE)) playerPosition.x = map.tilesX*MAP_TILE_SIZE - PLAYER_SIZE;
+        else if ((playerPosition.x + PLAYER_SIZE) > (map.tilesX*MAP_TILE_SIZE)) playerPosition.x = (float)map.tilesX*MAP_TILE_SIZE - PLAYER_SIZE;
         if (playerPosition.y < 0) playerPosition.y = 0;
-        else if ((playerPosition.y + PLAYER_SIZE) > (map.tilesY*MAP_TILE_SIZE)) playerPosition.y = map.tilesY*MAP_TILE_SIZE - PLAYER_SIZE;
+        else if ((playerPosition.y + PLAYER_SIZE) > (map.tilesY*MAP_TILE_SIZE)) playerPosition.y = (float)map.tilesY*MAP_TILE_SIZE - PLAYER_SIZE;
 
         // Previous visited tiles are set to partial fog
-        for (int i = 0; i < map.tilesX*map.tilesY; i++) if (map.tileFog[i] == 1) map.tileFog[i] = 2;
+        for (unsigned int i = 0; i < map.tilesX*map.tilesY; i++) if (map.tileFog[i] == 1) map.tileFog[i] = 2;
 
         // Get current tile position from player pixel position
         playerTileX = (int)((playerPosition.x + MAP_TILE_SIZE/2)/MAP_TILE_SIZE);
@@ -95,7 +95,7 @@ int main(void)
         // NOTE: We check tilemap limits to avoid processing tiles out-of-array-bounds (it could crash program)
         for (int y = (playerTileY - PLAYER_TILE_VISIBILITY); y < (playerTileY + PLAYER_TILE_VISIBILITY); y++)
             for (int x = (playerTileX - PLAYER_TILE_VISIBILITY); x < (playerTileX + PLAYER_TILE_VISIBILITY); x++)
-                if ((x >= 0) && (x < map.tilesX) && (y >= 0) && (y < map.tilesY)) map.tileFog[y*map.tilesX + x] = 1;
+                if ((x >= 0) && (x < (int)map.tilesX) && (y >= 0) && (y < (int)map.tilesY)) map.tileFog[y*map.tilesX + x] = 1;
         //----------------------------------------------------------------------------------
 
         // Draw
@@ -103,8 +103,8 @@ int main(void)
         // Draw fog of war to a small render texture for automatic smoothing on scaling
         BeginTextureMode(fogOfWar);
             ClearBackground(BLANK);
-            for (int y = 0; y < map.tilesY; y++)
-                for (int x = 0; x < map.tilesX; x++)
+            for (unsigned int y = 0; y < map.tilesY; y++)
+                for (unsigned int x = 0; x < map.tilesX; x++)
                     if (map.tileFog[y*map.tilesX + x] == 0) DrawRectangle(x, y, 1, 1, BLACK);
                     else if (map.tileFog[y*map.tilesX + x] == 2) DrawRectangle(x, y, 1, 1, Fade(BLACK, 0.8f));
         EndTextureMode();
@@ -113,9 +113,9 @@ int main(void)
 
             ClearBackground(RAYWHITE);
 
-            for (int y = 0; y < map.tilesY; y++)
+            for (unsigned int y = 0; y < map.tilesY; y++)
             {
-                for (int x = 0; x < map.tilesX; x++)
+                for (unsigned int x = 0; x < map.tilesX; x++)
                 {
                     // Draw tiles from id (and tile borders)
                     DrawRectangle(x*MAP_TILE_SIZE, y*MAP_TILE_SIZE, MAP_TILE_SIZE, MAP_TILE_SIZE,
@@ -129,8 +129,8 @@ int main(void)
 
 
             // Draw fog of war (scaled to full map, bilinear filtering)
-            DrawTexturePro(fogOfWar.texture, (Rectangle){ 0, 0, fogOfWar.texture.width, -fogOfWar.texture.height },
-                           (Rectangle){ 0, 0, map.tilesX*MAP_TILE_SIZE, map.tilesY*MAP_TILE_SIZE },
+            DrawTexturePro(fogOfWar.texture, (Rectangle){ 0, 0, (float)fogOfWar.texture.width, (float)-fogOfWar.texture.height },
+                           (Rectangle){ 0, 0, (float)map.tilesX*MAP_TILE_SIZE, (float)map.tilesY*MAP_TILE_SIZE },
                            (Vector2){ 0, 0 }, 0.0f, WHITE);
 
             // Draw player current tile

@@ -9,7 +9,7 @@
 *   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
 *   BSD-like license that allows static linking with closed source software
 *
-*   Copyright (c) 2019-2022 Berni (@Berni8k) and Ramon Santamaria (@raysan5)
+*   Copyright (c) 2019-2023 Berni (@Berni8k) and Ramon Santamaria (@raysan5)
 *
 ********************************************************************************************/
 
@@ -39,8 +39,12 @@ int main(void)
     {
         // Update
         //----------------------------------------------------------------------------------
-        // Get multiple touchpoints
-        for (int i = 0; i < MAX_TOUCH_POINTS; ++i) touchPositions[i] = GetTouchPosition(i);
+        // Get the touch point count ( how many fingers are touching the screen )
+        int tCount = GetTouchPointCount();
+        // Clamp touch points available ( set the maximum touch points allowed )
+        if(tCount > MAX_TOUCH_POINTS) tCount = MAX_TOUCH_POINTS;
+        // Get touch points positions
+        for (int i = 0; i < tCount; ++i) touchPositions[i] = GetTouchPosition(i);
         //----------------------------------------------------------------------------------
 
         // Draw
@@ -49,7 +53,7 @@ int main(void)
 
             ClearBackground(RAYWHITE);
             
-            for (int i = 0; i < MAX_TOUCH_POINTS; ++i)
+            for (int i = 0; i < tCount; ++i)
             {
                 // Make sure point is not (0, 0) as this means there is no touch for it
                 if ((touchPositions[i].x > 0) && (touchPositions[i].y > 0))

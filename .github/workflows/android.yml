@@ -82,7 +82,7 @@ jobs:
         tar -czvf ${{ env.RELEASE_NAME }}.tar.gz ${{ env.RELEASE_NAME }}
         
     - name: Upload Artifacts
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v3
       with:
         name: ${{ env.RELEASE_NAME }}.tar.gz
         path: ./build/${{ env.RELEASE_NAME }}.tar.gz

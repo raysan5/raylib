@@ -13,7 +13,7 @@
 *   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
 *   BSD-like license that allows static linking with closed source software
 *
-*   Copyright (c) 2022 bzt (@bztsrc)
+*   Copyright (c) 2022-2023 bzt (@bztsrc)
 *
 ********************************************************************************************/
 
@@ -33,11 +33,12 @@ int main(void)
 
     // Define the camera to look into our 3d world
     Camera camera = { 0 };
-    camera.position = (Vector3){ 1.5f, 1.5f, 1.5f }; // Camera position
+    camera.position = (Vector3){ 1.5f, 1.5f, 1.5f };    // Camera position
     camera.target = (Vector3){ 0.0f, 0.4f, 0.0f };      // Camera looking at point
     camera.up = (Vector3){ 0.0f, 1.0f, 0.0f };          // Camera up vector (rotation towards target)
     camera.fovy = 45.0f;                                // Camera field-of-view Y
-    camera.projection = CAMERA_PERSPECTIVE;             // Camera mode type
+    camera.projection = CAMERA_PERSPECTIVE;             // Camera projection type
+
     Vector3 position = { 0.0f, 0.0f, 0.0f };            // Set model position
     
     char modelFileName[128] = "resources/models/m3d/CesiumMan.m3d";
@@ -53,17 +54,17 @@ int main(void)
     int animFrameCounter = 0, animId = 0;
     ModelAnimation *anims = LoadModelAnimations(modelFileName, &animsCount); // Load skeletal animation data
 
-    SetCameraMode(camera, CAMERA_FREE);     // Set free camera mode
+    DisableCursor();                    // Limit cursor to relative movement inside the window
 
-    SetTargetFPS(60);                       // Set our game to run at 60 frames-per-second
+    SetTargetFPS(60);                   // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
 
     // Main game loop
-    while (!WindowShouldClose())            // Detect window close button or ESC key
+    while (!WindowShouldClose())        // Detect window close button or ESC key
     {
         // Update
         //----------------------------------------------------------------------------------
-        UpdateCamera(&camera);
+        UpdateCamera(&camera, CAMERA_FIRST_PERSON);
 
         if (animsCount)
         {
