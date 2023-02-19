@@ -372,6 +372,7 @@ typedef struct AudioData {
         AudioBuffer *last;          // Pointer to last AudioBuffer in the list
         int defaultSize;            // Default audio buffer size for audio streams
     } Buffer;
+    rAudioProcessor *mixed_processor;
     struct {
         unsigned int poolCounter;                               // AudioBuffer pointers pool counter
         AudioBuffer *pool[MAX_AUDIO_BUFFER_POOL_CHANNELS];      // Multichannel AudioBuffer pointers pool
@@ -388,7 +389,8 @@ static AudioData AUDIO = {          // Global AUDIO context
     // After some math, considering a sampleRate of 48000, a buffer refill rate of 1/60 seconds and a
     // standard double-buffering system, a 4096 samples buffer has been chosen, it should be enough
     // In case of music-stalls, just increase this number
-    .Buffer.defaultSize = 0
+    .Buffer.defaultSize = 0,
+    .mixed_processor = NULL
 };
 
 //----------------------------------------------------------------------------------
@@ -2278,6 +2280,60 @@ void DetachAudioStreamProcessor(AudioStream stream, AudioCallback process)
     ma_mutex_unlock(&AUDIO.System.lock);
 }
 
+// Add processor to audio pipeline. Order of processors is important
+// Works the same way as {Attach,Detach}AudioStreamProcessor functions, except
+// these two work on the already mixed output just before sending it to the
+// sound hardware.
+void AttachAudioMixedProcessor(AudioCallback process)
+{
+    ma_mutex_lock(&AUDIO.System.lock);
+
+    rAudioProcessor *processor = (rAudioProcessor *)RL_CALLOC(1, sizeof(rAudioProcessor));
+    processor->process = process;
+
+    rAudioProcessor *last = AUDIO.mixed_processor;
+
+    while (last && last->next)
+    {
+        last = last->next;
+    }
+    if (last)
+    {
+        processor->prev = last;
+        last->next = processor;
+    }
+    else AUDIO.mixed_processor = processor;
+
+    ma_mutex_unlock(&AUDIO.System.lock);
+}
+
+void DetachAudioMixedProcessor(AudioCallback process)
+{
+    ma_mutex_lock(&AUDIO.System.lock);
+
+    rAudioProcessor *processor = AUDIO.mixed_processor;
+
+    while (processor)
+    {
+        rAudioProcessor *next = processor->next;
+        rAudioProcessor *prev = processor->prev;
+
+        if (processor->process == process)
+        {
+            if (AUDIO.mixed_processor == processor) AUDIO.mixed_processor = next;
+            if (prev) prev->next = next;
+            if (next) next->prev = prev;
+
+            RL_FREE(processor);
+        }
+
+        processor = next;
+    }
+
+    ma_mutex_unlock(&AUDIO.System.lock);
+}
+
+
 //----------------------------------------------------------------------------------
 // Module specific Functions Definition
 //----------------------------------------------------------------------------------
@@ -2517,6 +2573,13 @@ static void OnSendAudioDataToDevice(ma_device *pDevice, void *pFramesOut, const 
                 if (framesToRead > 0) break;
             }
         }
+    }
+
+    rAudioProcessor *processor = AUDIO.mixed_processor;
+    while (processor)
+    {
+        processor->process(pFramesOut, frameCount);
+        processor = processor->next;
     }
 
     ma_mutex_unlock(&AUDIO.System.lock);
