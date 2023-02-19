@@ -372,7 +372,7 @@ typedef struct AudioData {
         AudioBuffer *last;          // Pointer to last AudioBuffer in the list
         int defaultSize;            // Default audio buffer size for audio streams
     } Buffer;
-    rAudioProcessor *mixed_processor;
+    rAudioProcessor *mixedProcessor;
     struct {
         unsigned int poolCounter;                               // AudioBuffer pointers pool counter
         AudioBuffer *pool[MAX_AUDIO_BUFFER_POOL_CHANNELS];      // Multichannel AudioBuffer pointers pool
@@ -390,7 +390,7 @@ static AudioData AUDIO = {          // Global AUDIO context
     // standard double-buffering system, a 4096 samples buffer has been chosen, it should be enough
     // In case of music-stalls, just increase this number
     .Buffer.defaultSize = 0,
-    .mixed_processor = NULL
+    .mixedProcessor = NULL
 };
 
 //----------------------------------------------------------------------------------
@@ -2291,7 +2291,7 @@ void AttachAudioMixedProcessor(AudioCallback process)
     rAudioProcessor *processor = (rAudioProcessor *)RL_CALLOC(1, sizeof(rAudioProcessor));
     processor->process = process;
 
-    rAudioProcessor *last = AUDIO.mixed_processor;
+    rAudioProcessor *last = AUDIO.mixedProcessor;
 
     while (last && last->next)
     {
@@ -2302,7 +2302,7 @@ void AttachAudioMixedProcessor(AudioCallback process)
         processor->prev = last;
         last->next = processor;
     }
-    else AUDIO.mixed_processor = processor;
+    else AUDIO.mixedProcessor = processor;
 
     ma_mutex_unlock(&AUDIO.System.lock);
 }
@@ -2311,7 +2311,7 @@ void DetachAudioMixedProcessor(AudioCallback process)
 {
     ma_mutex_lock(&AUDIO.System.lock);
 
-    rAudioProcessor *processor = AUDIO.mixed_processor;
+    rAudioProcessor *processor = AUDIO.mixedProcessor;
 
     while (processor)
     {
@@ -2320,7 +2320,7 @@ void DetachAudioMixedProcessor(AudioCallback process)
 
         if (processor->process == process)
         {
-            if (AUDIO.mixed_processor == processor) AUDIO.mixed_processor = next;
+            if (AUDIO.mixedProcessor == processor) AUDIO.mixedProcessor = next;
             if (prev) prev->next = next;
             if (next) next->prev = prev;
 
@@ -2575,7 +2575,7 @@ static void OnSendAudioDataToDevice(ma_device *pDevice, void *pFramesOut, const 
         }
     }
 
-    rAudioProcessor *processor = AUDIO.mixed_processor;
+    rAudioProcessor *processor = AUDIO.mixedProcessor;
     while (processor)
     {
         processor->process(pFramesOut, frameCount);
