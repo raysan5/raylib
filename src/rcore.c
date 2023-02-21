@@ -1832,6 +1832,12 @@ int GetMonitorWidth(int monitor)
     }
     else TRACELOG(LOG_WARNING, "GLFW: Failed to find selected monitor");
 #endif
+#if defined(PLATFORM_ANDROID)
+    if (CORE.Android.app->window != NULL)
+    {
+        return ANativeWindow_getWidth(CORE.Android.app->window);
+    }
+#endif
     return 0;
 }
 
@@ -1850,6 +1856,12 @@ int GetMonitorHeight(int monitor)
         else TRACELOG(LOG_WARNING, "GLFW: Failed to find video mode for selected monitor");
     }
     else TRACELOG(LOG_WARNING, "GLFW: Failed to find selected monitor");
+#endif
+#if defined(PLATFORM_ANDROID)
+    if (CORE.Android.app->window != NULL)
+    {
+        return ANativeWindow_getHeight(CORE.Android.app->window);
+    }
 #endif
     return 0;
 }
