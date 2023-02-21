@@ -3326,9 +3326,15 @@ BoundingBox GetMeshBoundingBox(Mesh mesh)
 
 // Compute mesh tangents
 // NOTE: To calculate mesh tangents and binormals we need mesh vertex positions and texture coordinates
-// Implementation base don: https://answers.unity.com/questions/7789/calculating-tangents-vector4.html
+// Implementation based on: https://answers.unity.com/questions/7789/calculating-tangents-vector4.html
 void GenMeshTangents(Mesh *mesh)
 {
+    if ((mesh->vertices == NULL) || (mesh->texcoords == NULL))
+    {
+        TRACELOG(LOG_WARNING, "MESH: Tangents generation requires texcoord vertex attribute data");
+        return;
+    }
+
     if (mesh->tangents == NULL) mesh->tangents = (float *)RL_MALLOC(mesh->vertexCount*4*sizeof(float));
     else
     {
