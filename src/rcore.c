@@ -2561,7 +2561,33 @@ Shader LoadShaderFromMemory(const char *vsCode, const char *fsCode)
 // Check if a shader is ready
 bool IsShaderReady(Shader shader)
 {
-    return shader.locs != NULL;
+    return ((shader.id > 0) &&          // Validate shader id (loaded successfully)
+            (shader.locs != NULL));     // Validate memory has been allocated for default shader locations
+
+    // The following locations are tried to be set automatically (locs[i] >= 0),
+    // any of them can be checked for validation but the only mandatory one is, afaik, SHADER_LOC_VERTEX_POSITION
+    // NOTE: Users can also setup manually their own attributes/uniforms and do not used the default raylib ones
+    
+    // Vertex shader attribute locations (default)
+    // shader.locs[SHADER_LOC_VERTEX_POSITION]      // Set by default internal shader
+    // shader.locs[SHADER_LOC_VERTEX_TEXCOORD01]    // Set by default internal shader
+    // shader.locs[SHADER_LOC_VERTEX_TEXCOORD02]
+    // shader.locs[SHADER_LOC_VERTEX_NORMAL]
+    // shader.locs[SHADER_LOC_VERTEX_TANGENT]
+    // shader.locs[SHADER_LOC_VERTEX_COLOR]         // Set by default internal shader
+
+    // Vertex shader uniform locations (default)
+    // shader.locs[SHADER_LOC_MATRIX_MVP]           // Set by default internal shader
+    // shader.locs[SHADER_LOC_MATRIX_VIEW]
+    // shader.locs[SHADER_LOC_MATRIX_PROJECTION]
+    // shader.locs[SHADER_LOC_MATRIX_MODEL]
+    // shader.locs[SHADER_LOC_MATRIX_NORMAL]
+
+    // Fragment shader uniform locations (default)
+    // shader.locs[SHADER_LOC_COLOR_DIFFUSE]        // Set by default internal shader
+    // shader.locs[SHADER_LOC_MAP_DIFFUSE]          // Set by default internal shader
+    // shader.locs[SHADER_LOC_MAP_SPECULAR]
+    // shader.locs[SHADER_LOC_MAP_NORMAL]
 }
 
 // Unload shader from GPU memory (VRAM)
