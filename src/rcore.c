@@ -1141,9 +1141,8 @@ bool IsWindowMinimized(void)
 {
 #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
     return ((CORE.Window.flags & FLAG_WINDOW_MINIMIZED) > 0);
-#else
-    return false;
 #endif
+    return false;
 }
 
 // Check if window has been maximized (only PLATFORM_DESKTOP)
@@ -1151,9 +1150,8 @@ bool IsWindowMaximized(void)
 {
 #if defined(PLATFORM_DESKTOP)
     return ((CORE.Window.flags & FLAG_WINDOW_MAXIMIZED) > 0);
-#else
-    return false;
 #endif
+    return false;
 }
 
 // Check if window has the focus
@@ -1161,9 +1159,11 @@ bool IsWindowFocused(void)
 {
 #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
     return ((CORE.Window.flags & FLAG_WINDOW_UNFOCUSED) == 0);
-#else
-    return true;
 #endif
+#if defined(PLATFORM_ANDROID)
+    return CORE.Android.appEnabled;
+#endif
+    return true;
 }
 
 // Check if window has been resizedLastFrame
