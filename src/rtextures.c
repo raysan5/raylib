@@ -30,7 +30,7 @@
 *
 *   #define SUPPORT_IMAGE_MANIPULATION
 *       Support multiple image editing functions to scale, adjust colors, flip, draw on images, crop...
-*       If not defined only three image editing functions supported: ImageFormat(), ImageAlphaMask(), ImageToPOT()
+*       If not defined only some image editing functions supported: ImageFormat(), ImageAlphaMask(), ImageResize*()
 *
 *   #define SUPPORT_IMAGE_GENERATION
 *       Support procedural image generation functionality (gradient, spot, perlin-noise, cellular)
@@ -190,13 +190,10 @@
     #include "external/stb_perlin.h"        // Required for: stb_perlin_fbm_noise3
 #endif
 
-#if defined(SUPPORT_IMAGE_MANIPULATION)
-    #define STBIR_MALLOC(size,c) ((void)(c), RL_MALLOC(size))
-    #define STBIR_FREE(ptr,c) ((void)(c), RL_FREE(ptr))
-
-    #define STB_IMAGE_RESIZE_IMPLEMENTATION
-    #include "external/stb_image_resize.h"  // Required for: stbir_resize_uint8() [ImageResize()]
-#endif
+#define STBIR_MALLOC(size,c) ((void)(c), RL_MALLOC(size))
+#define STBIR_FREE(ptr,c) ((void)(c), RL_FREE(ptr))
+#define STB_IMAGE_RESIZE_IMPLEMENTATION
+#include "external/stb_image_resize.h"  // Required for: stbir_resize_uint8() [ImageResize()]
 
 //----------------------------------------------------------------------------------
 // Defines and Macros
@@ -505,7 +502,11 @@ Image LoadImageFromScreen(void)
 // Check if an image is ready
 bool IsImageReady(Image image)
 {
-    return image.data != NULL && image.width > 0 && image.height > 0 && image.format > 0;
+    return ((image.data != NULL) &&     // Validate pixel data available
+            (image.width > 0) && 
+            (image.height > 0) &&       // Validate image size
+            (image.format > 0) &&       // Validate image format
+            (image.mipmaps > 0));       // Validate image mipmaps (at least 1 for basic mipmap level)
 }
 
 // Unload image from CPU memory (RAM)
@@ -1228,23 +1229,6 @@ void ImageFormat(Image *image, int newFormat)
     }
 }
 
-// Convert image to POT (power-of-two)
-// NOTE: It could be useful on OpenGL ES 2.0 (RPI, HTML5)
-void ImageToPOT(Image *image, Color fill)
-{
-    // Security check to avoid program crash
-    if ((image->data == NULL) || (image->width == 0) || (image->height == 0)) return;
-
-    // Calculate next power-of-two values
-    // NOTE: Just add the required amount of pixels at the right and bottom sides of image...
-    int potWidth = (int)powf(2, ceilf(logf((float)image->width)/logf(2)));
-    int potHeight = (int)powf(2, ceilf(logf((float)image->height)/logf(2)));
-
-    // Check if POT texture generation is required (if texture is not already POT)
-    if ((potWidth != image->width) || (potHeight != image->height)) ImageResizeCanvas(image, potWidth, potHeight, 0, 0, fill);
-}
-
-#if defined(SUPPORT_IMAGE_MANIPULATION)
 // Create an image from text (default font)
 Image ImageText(const char *text, int fontSize, Color color)
 {
@@ -1328,6 +1312,172 @@ Image ImageTextEx(Font font, const char *text, float fontSize, float spacing, Co
     TRACELOG(LOG_WARNING, "IMAGE: ImageTextEx() requires module: rtext");
 #endif
     return imText;
+}
+
+// Resize and image to new size using Nearest-Neighbor scaling algorithm
+void ImageResizeNN(Image *image,int newWidth,int newHeight)
+{
+    // Security check to avoid program crash
+    if ((image->data == NULL) || (image->width == 0) || (image->height == 0)) return;
+
+    Color *pixels = LoadImageColors(*image);
+    Color *output = (Color *)RL_MALLOC(newWidth*newHeight*sizeof(Color));
+
+    // EDIT: added +1 to account for an early rounding problem
+    int xRatio = (int)((image->width << 16)/newWidth) + 1;
+    int yRatio = (int)((image->height << 16)/newHeight) + 1;
+
+    int x2, y2;
+    for (int y = 0; y < newHeight; y++)
+    {
+        for (int x = 0; x < newWidth; x++)
+        {
+            x2 = ((x*xRatio) >> 16);
+            y2 = ((y*yRatio) >> 16);
+
+            output[(y*newWidth) + x] = pixels[(y2*image->width) + x2] ;
+        }
+    }
+
+    int format = image->format;
+
+    RL_FREE(image->data);
+
+    image->data = output;
+    image->width = newWidth;
+    image->height = newHeight;
+    image->format = PIXELFORMAT_UNCOMPRESSED_R8G8B8A8;
+
+    ImageFormat(image, format);  // Reformat 32bit RGBA image to original format
+
+    UnloadImageColors(pixels);
+}
+
+
+// Resize and image to new size
+// NOTE: Uses stb default scaling filters (both bicubic):
+// STBIR_DEFAULT_FILTER_UPSAMPLE    STBIR_FILTER_CATMULLROM
+// STBIR_DEFAULT_FILTER_DOWNSAMPLE  STBIR_FILTER_MITCHELL   (high-quality Catmull-Rom)
+void ImageResize(Image *image, int newWidth, int newHeight)
+{
+    // Security check to avoid program crash
+    if ((image->data == NULL) || (image->width == 0) || (image->height == 0)) return;
+
+    // Check if we can use a fast path on image scaling
+    // It can be for 8 bit per channel images with 1 to 4 channels per pixel
+    if ((image->format == PIXELFORMAT_UNCOMPRESSED_GRAYSCALE) ||
+        (image->format == PIXELFORMAT_UNCOMPRESSED_GRAY_ALPHA) ||
+        (image->format == PIXELFORMAT_UNCOMPRESSED_R8G8B8) ||
+        (image->format == PIXELFORMAT_UNCOMPRESSED_R8G8B8A8))
+    {
+        int bytesPerPixel = GetPixelDataSize(1, 1, image->format);
+        unsigned char *output = (unsigned char *)RL_MALLOC(newWidth*newHeight*bytesPerPixel);
+
+        switch (image->format)
+        {
+            case PIXELFORMAT_UNCOMPRESSED_GRAYSCALE: stbir_resize_uint8((unsigned char *)image->data, image->width, image->height, 0, output, newWidth, newHeight, 0, 1); break;
+            case PIXELFORMAT_UNCOMPRESSED_GRAY_ALPHA: stbir_resize_uint8((unsigned char *)image->data, image->width, image->height, 0, output, newWidth, newHeight, 0, 2); break;
+            case PIXELFORMAT_UNCOMPRESSED_R8G8B8: stbir_resize_uint8((unsigned char *)image->data, image->width, image->height, 0, output, newWidth, newHeight, 0, 3); break;
+            case PIXELFORMAT_UNCOMPRESSED_R8G8B8A8: stbir_resize_uint8((unsigned char *)image->data, image->width, image->height, 0, output, newWidth, newHeight, 0, 4); break;
+            default: break;
+        }
+
+        RL_FREE(image->data);
+        image->data = output;
+        image->width = newWidth;
+        image->height = newHeight;
+    }
+    else
+    {
+        // Get data as Color pixels array to work with it
+        Color *pixels = LoadImageColors(*image);
+        Color *output = (Color *)RL_MALLOC(newWidth*newHeight*sizeof(Color));
+
+        // NOTE: Color data is cast to (unsigned char *), there shouldn't been any problem...
+        stbir_resize_uint8((unsigned char *)pixels, image->width, image->height, 0, (unsigned char *)output, newWidth, newHeight, 0, 4);
+
+        int format = image->format;
+
+        UnloadImageColors(pixels);
+        RL_FREE(image->data);
+
+        image->data = output;
+        image->width = newWidth;
+        image->height = newHeight;
+        image->format = PIXELFORMAT_UNCOMPRESSED_R8G8B8A8;
+
+        ImageFormat(image, format);  // Reformat 32bit RGBA image to original format
+    }
+}
+
+// Resize canvas and fill with color
+// NOTE: Resize offset is relative to the top-left corner of the original image
+void ImageResizeCanvas(Image *image, int newWidth, int newHeight, int offsetX, int offsetY, Color fill)
+{
+    // Security check to avoid program crash
+    if ((image->data == NULL) || (image->width == 0) || (image->height == 0)) return;
+
+    if (image->mipmaps > 1) TRACELOG(LOG_WARNING, "Image manipulation only applied to base mipmap level");
+    if (image->format >= PIXELFORMAT_COMPRESSED_DXT1_RGB) TRACELOG(LOG_WARNING, "Image manipulation not supported for compressed formats");
+    else if ((newWidth != image->width) || (newHeight != image->height))
+    {
+        Rectangle srcRec = { 0, 0, (float)image->width, (float)image->height };
+        Vector2 dstPos = { (float)offsetX, (float)offsetY };
+
+        if (offsetX < 0)
+        {
+            srcRec.x = (float)-offsetX;
+            srcRec.width += (float)offsetX;
+            dstPos.x = 0;
+        }
+        else if ((offsetX + image->width) > newWidth) srcRec.width = (float)(newWidth - offsetX);
+
+        if (offsetY < 0)
+        {
+            srcRec.y = (float)-offsetY;
+            srcRec.height += (float)offsetY;
+            dstPos.y = 0;
+        }
+        else if ((offsetY + image->height) > newHeight) srcRec.height = (float)(newHeight - offsetY);
+
+        if (newWidth < srcRec.width) srcRec.width = (float)newWidth;
+        if (newHeight < srcRec.height) srcRec.height = (float)newHeight;
+
+        int bytesPerPixel = GetPixelDataSize(1, 1, image->format);
+        unsigned char *resizedData = (unsigned char *)RL_CALLOC(newWidth*newHeight*bytesPerPixel, 1);
+
+        // TODO: Fill resized canvas with fill color (must be formatted to image->format)
+
+        int dstOffsetSize = ((int)dstPos.y*newWidth + (int)dstPos.x)*bytesPerPixel;
+
+        for (int y = 0; y < (int)srcRec.height; y++)
+        {
+            memcpy(resizedData + dstOffsetSize, ((unsigned char *)image->data) + ((y + (int)srcRec.y)*image->width + (int)srcRec.x)*bytesPerPixel, (int)srcRec.width*bytesPerPixel);
+            dstOffsetSize += (newWidth*bytesPerPixel);
+        }
+
+        RL_FREE(image->data);
+        image->data = resizedData;
+        image->width = newWidth;
+        image->height = newHeight;
+    }
+}
+
+#if defined(SUPPORT_IMAGE_MANIPULATION)
+// Convert image to POT (power-of-two)
+// NOTE: It could be useful on OpenGL ES 2.0 (RPI, HTML5)
+void ImageToPOT(Image *image, Color fill)
+{
+    // Security check to avoid program crash
+    if ((image->data == NULL) || (image->width == 0) || (image->height == 0)) return;
+
+    // Calculate next power-of-two values
+    // NOTE: Just add the required amount of pixels at the right and bottom sides of image...
+    int potWidth = (int)powf(2, ceilf(logf((float)image->width)/logf(2)));
+    int potHeight = (int)powf(2, ceilf(logf((float)image->height)/logf(2)));
+
+    // Check if POT texture generation is required (if texture is not already POT)
+    if ((potWidth != image->width) || (potHeight != image->height)) ImageResizeCanvas(image, potWidth, potHeight, 0, 0, fill);
 }
 
 // Crop image depending on alpha value
@@ -1670,154 +1820,6 @@ void ImageBlurGaussian(Image *image, int blurSize) {
     image->format = PIXELFORMAT_UNCOMPRESSED_R8G8B8A8;
 
     ImageFormat(image, format);
-}
-
-// Resize and image to new size
-// NOTE: Uses stb default scaling filters (both bicubic):
-// STBIR_DEFAULT_FILTER_UPSAMPLE    STBIR_FILTER_CATMULLROM
-// STBIR_DEFAULT_FILTER_DOWNSAMPLE  STBIR_FILTER_MITCHELL   (high-quality Catmull-Rom)
-void ImageResize(Image *image, int newWidth, int newHeight)
-{
-    // Security check to avoid program crash
-    if ((image->data == NULL) || (image->width == 0) || (image->height == 0)) return;
-
-    // Check if we can use a fast path on image scaling
-    // It can be for 8 bit per channel images with 1 to 4 channels per pixel
-    if ((image->format == PIXELFORMAT_UNCOMPRESSED_GRAYSCALE) ||
-        (image->format == PIXELFORMAT_UNCOMPRESSED_GRAY_ALPHA) ||
-        (image->format == PIXELFORMAT_UNCOMPRESSED_R8G8B8) ||
-        (image->format == PIXELFORMAT_UNCOMPRESSED_R8G8B8A8))
-    {
-        int bytesPerPixel = GetPixelDataSize(1, 1, image->format);
-        unsigned char *output = (unsigned char *)RL_MALLOC(newWidth*newHeight*bytesPerPixel);
-
-        switch (image->format)
-        {
-            case PIXELFORMAT_UNCOMPRESSED_GRAYSCALE: stbir_resize_uint8((unsigned char *)image->data, image->width, image->height, 0, output, newWidth, newHeight, 0, 1); break;
-            case PIXELFORMAT_UNCOMPRESSED_GRAY_ALPHA: stbir_resize_uint8((unsigned char *)image->data, image->width, image->height, 0, output, newWidth, newHeight, 0, 2); break;
-            case PIXELFORMAT_UNCOMPRESSED_R8G8B8: stbir_resize_uint8((unsigned char *)image->data, image->width, image->height, 0, output, newWidth, newHeight, 0, 3); break;
-            case PIXELFORMAT_UNCOMPRESSED_R8G8B8A8: stbir_resize_uint8((unsigned char *)image->data, image->width, image->height, 0, output, newWidth, newHeight, 0, 4); break;
-            default: break;
-        }
-
-        RL_FREE(image->data);
-        image->data = output;
-        image->width = newWidth;
-        image->height = newHeight;
-    }
-    else
-    {
-        // Get data as Color pixels array to work with it
-        Color *pixels = LoadImageColors(*image);
-        Color *output = (Color *)RL_MALLOC(newWidth*newHeight*sizeof(Color));
-
-        // NOTE: Color data is cast to (unsigned char *), there shouldn't been any problem...
-        stbir_resize_uint8((unsigned char *)pixels, image->width, image->height, 0, (unsigned char *)output, newWidth, newHeight, 0, 4);
-
-        int format = image->format;
-
-        UnloadImageColors(pixels);
-        RL_FREE(image->data);
-
-        image->data = output;
-        image->width = newWidth;
-        image->height = newHeight;
-        image->format = PIXELFORMAT_UNCOMPRESSED_R8G8B8A8;
-
-        ImageFormat(image, format);  // Reformat 32bit RGBA image to original format
-    }
-}
-
-// Resize and image to new size using Nearest-Neighbor scaling algorithm
-void ImageResizeNN(Image *image,int newWidth,int newHeight)
-{
-    // Security check to avoid program crash
-    if ((image->data == NULL) || (image->width == 0) || (image->height == 0)) return;
-
-    Color *pixels = LoadImageColors(*image);
-    Color *output = (Color *)RL_MALLOC(newWidth*newHeight*sizeof(Color));
-
-    // EDIT: added +1 to account for an early rounding problem
-    int xRatio = (int)((image->width << 16)/newWidth) + 1;
-    int yRatio = (int)((image->height << 16)/newHeight) + 1;
-
-    int x2, y2;
-    for (int y = 0; y < newHeight; y++)
-    {
-        for (int x = 0; x < newWidth; x++)
-        {
-            x2 = ((x*xRatio) >> 16);
-            y2 = ((y*yRatio) >> 16);
-
-            output[(y*newWidth) + x] = pixels[(y2*image->width) + x2] ;
-        }
-    }
-
-    int format = image->format;
-
-    RL_FREE(image->data);
-
-    image->data = output;
-    image->width = newWidth;
-    image->height = newHeight;
-    image->format = PIXELFORMAT_UNCOMPRESSED_R8G8B8A8;
-
-    ImageFormat(image, format);  // Reformat 32bit RGBA image to original format
-
-    UnloadImageColors(pixels);
-}
-
-// Resize canvas and fill with color
-// NOTE: Resize offset is relative to the top-left corner of the original image
-void ImageResizeCanvas(Image *image, int newWidth, int newHeight, int offsetX, int offsetY, Color fill)
-{
-    // Security check to avoid program crash
-    if ((image->data == NULL) || (image->width == 0) || (image->height == 0)) return;
-
-    if (image->mipmaps > 1) TRACELOG(LOG_WARNING, "Image manipulation only applied to base mipmap level");
-    if (image->format >= PIXELFORMAT_COMPRESSED_DXT1_RGB) TRACELOG(LOG_WARNING, "Image manipulation not supported for compressed formats");
-    else if ((newWidth != image->width) || (newHeight != image->height))
-    {
-        Rectangle srcRec = { 0, 0, (float)image->width, (float)image->height };
-        Vector2 dstPos = { (float)offsetX, (float)offsetY };
-
-        if (offsetX < 0)
-        {
-            srcRec.x = (float)-offsetX;
-            srcRec.width += (float)offsetX;
-            dstPos.x = 0;
-        }
-        else if ((offsetX + image->width) > newWidth) srcRec.width = (float)(newWidth - offsetX);
-
-        if (offsetY < 0)
-        {
-            srcRec.y = (float)-offsetY;
-            srcRec.height += (float)offsetY;
-            dstPos.y = 0;
-        }
-        else if ((offsetY + image->height) > newHeight) srcRec.height = (float)(newHeight - offsetY);
-
-        if (newWidth < srcRec.width) srcRec.width = (float)newWidth;
-        if (newHeight < srcRec.height) srcRec.height = (float)newHeight;
-
-        int bytesPerPixel = GetPixelDataSize(1, 1, image->format);
-        unsigned char *resizedData = (unsigned char *)RL_CALLOC(newWidth*newHeight*bytesPerPixel, 1);
-
-        // TODO: Fill resized canvas with fill color (must be formatted to image->format)
-
-        int dstOffsetSize = ((int)dstPos.y*newWidth + (int)dstPos.x)*bytesPerPixel;
-
-        for (int y = 0; y < (int)srcRec.height; y++)
-        {
-            memcpy(resizedData + dstOffsetSize, ((unsigned char *)image->data) + ((y + (int)srcRec.y)*image->width + (int)srcRec.x)*bytesPerPixel, (int)srcRec.width*bytesPerPixel);
-            dstOffsetSize += (newWidth*bytesPerPixel);
-        }
-
-        RL_FREE(image->data);
-        image->data = resizedData;
-        image->width = newWidth;
-        image->height = newHeight;
-    }
 }
 
 // Generate all mipmap levels for a provided image
@@ -3333,7 +3335,13 @@ RenderTexture2D LoadRenderTexture(int width, int height)
 // Check if a texture is ready
 bool IsTextureReady(Texture2D texture)
 {
-    return texture.id > 0 && texture.width > 0 && texture.height > 0 && texture.format > 0;
+    // TODO: Validate maximum texture size supported by GPU?
+    
+    return ((texture.id > 0) &&         // Validate OpenGL id
+            (texture.width > 0) && 
+            (texture.height > 0) &&     // Validate texture size 
+            (texture.format > 0) &&     // Validate texture pixel format
+            (texture.mipmap > 0));      // Validate texture mipmaps (at least 1 for basic mipmap level)
 }
 
 // Unload texture from GPU memory (VRAM)
