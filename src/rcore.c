@@ -1554,23 +1554,69 @@ void ClearWindowState(unsigned int flags)
 }
 
 // Set icon for window (only PLATFORM_DESKTOP)
-// NOTE: Image must be in RGBA format, 8bit per channel
+// NOTE 1: Image must be in RGBA format, 8bit per channel
+// NOTE 2: Image is scaled by the OS for all required sizes 
 void SetWindowIcon(Image image)
 {
 #if defined(PLATFORM_DESKTOP)
-    if (image.format == PIXELFORMAT_UNCOMPRESSED_R8G8B8A8)
+    if (image.data == NULL)
     {
-        GLFWimage icon[1] = { 0 };
-
-        icon[0].width = image.width;
-        icon[0].height = image.height;
-        icon[0].pixels = (unsigned char *)image.data;
-
-        // NOTE 1: We only support one image icon
-        // NOTE 2: The specified image data is copied before this function returns
-        glfwSetWindowIcon(CORE.Window.handle, 1, icon);
+        // Revert to the default window icon, pass in an empty image array
+        glfwSetWindowIcon(CORE.Window.handle, 0, NULL);
     }
-    else TRACELOG(LOG_WARNING, "GLFW: Window icon image must be in R8G8B8A8 pixel format");
+    else
+    {
+        if (image.format == PIXELFORMAT_UNCOMPRESSED_R8G8B8A8)
+        {
+            GLFWimage icon[1] = { 0 };
+
+            icon[0].width = image.width;
+            icon[0].height = image.height;
+            icon[0].pixels = (unsigned char *)image.data;
+
+            // NOTE 1: We only support one image icon
+            // NOTE 2: The specified image data is copied before this function returns
+            glfwSetWindowIcon(CORE.Window.handle, 1, icon);
+        }
+        else TRACELOG(LOG_WARNING, "GLFW: Window icon image must be in R8G8B8A8 pixel format");
+    }
+#endif
+}
+
+// Set icon for window (multiple images, only PLATFORM_DESKTOP)
+// NOTE 1: Images must be in RGBA format, 8bit per channel
+// NOTE 2: The multiple images are used depending on provided sizes
+// Standard Windows icon sizes: 256, 128, 96, 64, 48, 32, 24, 16 
+void SetWindowIcons(Image *images, int count)
+{
+#if defined(PLATFORM_DESKTOP)
+    if ((images == NULL) || (count <= 0))
+    {
+        // Revert to the default window icon, pass in an empty image array
+        glfwSetWindowIcon(CORE.Window.handle, 0, NULL);
+    }
+    else
+    {
+        int valid = 0;
+        GLFWimage *icons = RL_CALLOC(count, sizeof(GLFWimage));
+
+        for (int i = 0; i < count; i++)
+        {
+            if (images[i].format == PIXELFORMAT_UNCOMPRESSED_R8G8B8A8)
+            {
+                icons[valid].width = images[i].width;
+                icons[valid].height = images[i].height;
+                icons[valid].pixels = (unsigned char *)images[i].data;
+
+                valid++;
+            }
+            else TRACELOG(LOG_WARNING, "GLFW: Window icon image must be in R8G8B8A8 pixel format");
+        }
+        // NOTE: Images data is copied internally before this function returns
+        glfwSetWindowIcon(CORE.Window.handle, valid, icons);
+
+        RL_FREE(icons);
+    }
 #endif
 }
 
