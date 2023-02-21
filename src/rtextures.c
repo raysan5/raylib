@@ -3341,7 +3341,7 @@ bool IsTextureReady(Texture2D texture)
             (texture.width > 0) && 
             (texture.height > 0) &&     // Validate texture size 
             (texture.format > 0) &&     // Validate texture pixel format
-            (texture.mipmap > 0));      // Validate texture mipmaps (at least 1 for basic mipmap level)
+            (texture.mipmaps > 0));     // Validate texture mipmaps (at least 1 for basic mipmap level)
 }
 
 // Unload texture from GPU memory (VRAM)
