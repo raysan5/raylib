@@ -69,6 +69,14 @@ examples/*/*.map
 examples/*/*.nacp
 examples/*/*.nro
 
+# Ignore switch files
+examples-switch/*/*.d
+examples-switch/*/*.elf
+examples-switch/*/*.lst
+examples-switch/*/*.map
+examples-switch/*/*.nacp
+examples-switch/*/*.nro
+
 # Ignore files build by xcode
 *.mode*v*
 *.pbxuser
