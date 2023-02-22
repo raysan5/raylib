@@ -1568,17 +1568,20 @@ const char *TextToUpper(const char *text)
     static char buffer[MAX_TEXT_BUFFER_LENGTH] = { 0 };
     memset(buffer, 0, MAX_TEXT_BUFFER_LENGTH);
 
-    for (int i = 0; i < MAX_TEXT_BUFFER_LENGTH; i++)
+    if (text != NULL)
     {
-        if (text[i] != '\0')
+        for (int i = 0; i < MAX_TEXT_BUFFER_LENGTH; i++)
         {
-            buffer[i] = (char)toupper(text[i]);
-            //if ((text[i] >= 'a') && (text[i] <= 'z')) buffer[i] = text[i] - 32;
+            if (text[i] != '\0')
+            {
+                buffer[i] = (char)toupper(text[i]);
+                //if ((text[i] >= 'a') && (text[i] <= 'z')) buffer[i] = text[i] - 32;
 
-            // TODO: Support UTF-8 diacritics to upper-case
-            //if ((text[i] >= 'à') && (text[i] <= 'ý')) buffer[i] = text[i] - 32;
+                // TODO: Support UTF-8 diacritics to upper-case
+                //if ((text[i] >= 'à') && (text[i] <= 'ý')) buffer[i] = text[i] - 32;
+            }
+            else { buffer[i] = '\0'; break; }
         }
-        else { buffer[i] = '\0'; break; }
     }
 
     return buffer;
@@ -1591,14 +1594,17 @@ const char *TextToLower(const char *text)
     static char buffer[MAX_TEXT_BUFFER_LENGTH] = { 0 };
     memset(buffer, 0, MAX_TEXT_BUFFER_LENGTH);
 
-    for (int i = 0; i < MAX_TEXT_BUFFER_LENGTH; i++)
+    if (text != NULL)
     {
-        if (text[i] != '\0')
+        for (int i = 0; i < MAX_TEXT_BUFFER_LENGTH; i++)
         {
-            buffer[i] = (char)tolower(text[i]);
-            //if ((text[i] >= 'A') && (text[i] <= 'Z')) buffer[i] = text[i] + 32;
+            if (text[i] != '\0')
+            {
+                buffer[i] = (char)tolower(text[i]);
+                //if ((text[i] >= 'A') && (text[i] <= 'Z')) buffer[i] = text[i] + 32;
+            }
+            else { buffer[i] = '\0'; break; }
         }
-        else { buffer[i] = '\0'; break; }
     }
 
     return buffer;
@@ -1611,20 +1617,23 @@ const char *TextToPascal(const char *text)
     static char buffer[MAX_TEXT_BUFFER_LENGTH] = { 0 };
     memset(buffer, 0, MAX_TEXT_BUFFER_LENGTH);
 
-    buffer[0] = (char)toupper(text[0]);
-
-    for (int i = 1, j = 1; i < MAX_TEXT_BUFFER_LENGTH; i++, j++)
+    if (text != NULL)
     {
-        if (text[j] != '\0')
+        buffer[0] = (char)toupper(text[0]);
+
+        for (int i = 1, j = 1; i < MAX_TEXT_BUFFER_LENGTH; i++, j++)
         {
-            if (text[j] != '_') buffer[i] = text[j];
-            else
+            if (text[j] != '\0')
             {
-                j++;
-                buffer[i] = (char)toupper(text[j]);
+                if (text[j] != '_') buffer[i] = text[j];
+                else
+                {
+                    j++;
+                    buffer[i] = (char)toupper(text[j]);
+                }
             }
+            else { buffer[i] = '\0'; break; }
         }
-        else { buffer[i] = '\0'; break; }
     }
 
     return buffer;
