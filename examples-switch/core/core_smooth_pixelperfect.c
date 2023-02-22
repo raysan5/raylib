@@ -25,8 +25,8 @@ int main(void)
 {
     // Initialization
     //--------------------------------------------------------------------------------------
-    const int screenWidth = 800;
-    const int screenHeight = 450;
+    const int screenWidth = 1280;
+    const int screenHeight = 720;
 
     const int virtualScreenWidth = 160;
     const int virtualScreenHeight = 90;

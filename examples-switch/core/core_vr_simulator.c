@@ -26,8 +26,8 @@ int main(void)
 {
     // Initialization
     //--------------------------------------------------------------------------------------
-    const int screenWidth = 800;
-    const int screenHeight = 450;
+    const int screenWidth = 1280;
+    const int screenHeight = 720;
 
     // NOTE: screenWidth/screenHeight should match VR device aspect ratio
     InitWindow(screenWidth, screenHeight, "raylib [core] example - vr simulator");

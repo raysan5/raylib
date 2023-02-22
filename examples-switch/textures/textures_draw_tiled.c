@@ -30,8 +30,8 @@ int main(void)
 {
     // Initialization
     //--------------------------------------------------------------------------------------
-    const int screenWidth = 800;
-    const int screenHeight = 450;
+    const int screenWidth = 1280;
+    const int screenHeight = 720;
 
     SetConfigFlags(FLAG_WINDOW_RESIZABLE); // Make the window resizable
     InitWindow(screenWidth, screenHeight, "raylib [textures] example - Draw part of a texture tiled");
