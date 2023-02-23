@@ -14,6 +14,7 @@
 ********************************************************************************************/
 
 #include "raylib.h"
+#include <switch.h>
 
 //------------------------------------------------------------------------------------
 // Program main entry point
@@ -25,16 +26,18 @@ int main(void)
     const int screenWidth = 1280;
     const int screenHeight = 720;
 
+    // Initialize resource directory
+    romfsInit();
     InitWindow(screenWidth, screenHeight, "raylib [textures] example - image drawing");
 
     // NOTE: Textures MUST be loaded after Window initialization (OpenGL context is required)
 
-    Image cat = LoadImage("resources/cat.png");             // Load image in CPU memory (RAM)
+    Image cat = LoadImage("romfs:/resources/cat.png");             // Load image in CPU memory (RAM)
     ImageCrop(&cat, (Rectangle){ 100, 10, 280, 380 });      // Crop an image piece
     ImageFlipHorizontal(&cat);                              // Flip cropped image horizontally
     ImageResize(&cat, 150, 200);                            // Resize flipped-cropped image
 
-    Image parrots = LoadImage("resources/parrots.png");     // Load image in CPU memory (RAM)
+    Image parrots = LoadImage("romfs:/resources/parrots.png");     // Load image in CPU memory (RAM)
 
     // Draw one image over the other with a scaling of 1.5f
     ImageDraw(&parrots, cat, (Rectangle){ 0, 0, (float)cat.width, (float)cat.height }, (Rectangle){ 30, 40, cat.width*1.5f, cat.height*1.5f }, WHITE);
@@ -91,6 +94,6 @@ int main(void)
 
     CloseWindow();                // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
-
+    romfsExit();
     return 0;
 }

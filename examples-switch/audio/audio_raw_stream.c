@@ -82,6 +82,8 @@ int main(void)
 
     // Position read in to determine next frequency
     Vector2 mousePosition = { -100.0f, -100.0f };
+    const int GAMEPAD = 0;
+    Vector2 thumbPosition = { screenWidth/2, screenHeight/2 };
 
     /*
     // Cycles per second (hz)
@@ -108,15 +110,20 @@ int main(void)
         // Update
         //----------------------------------------------------------------------------------
 
-        // Sample mouse input.
-        mousePosition = GetMousePosition();
-
-        if (IsMouseButtonDown(MOUSE_BUTTON_LEFT))
+        // Sample mouse input
+        if (IsGamepadAvailable(GAMEPAD))
         {
-            float fp = (float)(mousePosition.y);
+            thumbPosition.x += (float) GetGamepadAxisMovement(GAMEPAD, 0) * 15;
+            thumbPosition.y -= (float) GetGamepadAxisMovement(GAMEPAD, 1) * 15;
+        }
+        
+
+        if (IsGamepadButtonPressed(0, GAMEPAD_BUTTON_RIGHT_FACE_RIGHT))
+        {
+            float fp = (float)(thumbPosition.y);
             frequency = 40.0f + (float)(fp);
 
-            float pan = (float)(mousePosition.x) / (float)screenWidth;
+            float pan = (float)(thumbPosition.x) / (float)screenWidth;
             SetAudioStreamPan(stream, pan);
         }
 
@@ -185,7 +192,7 @@ int main(void)
             ClearBackground(RAYWHITE);
 
             DrawText(TextFormat("sine frequency: %i",(int)frequency), GetScreenWidth() - 220, 10, 20, RED);
-            DrawText("click mouse button to change frequency or pan", 10, 10, 20, DARKGRAY);
+            DrawText("Press A button to change frequency and pan with Left Thumbstick", 10, 10, 20, DARKGRAY);
 
             // Draw the current buffer state proportionate to the screen
             for (int i = 0; i < screenWidth; i++)
@@ -195,6 +202,7 @@ int main(void)
 
                 DrawPixelV(position, RED);
             }
+            DrawCircle(thumbPosition.x, thumbPosition.y, 20, DARKGRAY);
 
         EndDrawing();
         //----------------------------------------------------------------------------------

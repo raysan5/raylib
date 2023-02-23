@@ -34,6 +34,7 @@ int main(void)
     const int screenWidth = 1280;
     const int screenHeight = 720;
 
+    // Initialize resource directory
     romfsInit();
 
     SetConfigFlags(FLAG_MSAA_4X_HINT);  // NOTE: Try to enable MSAA 4X
@@ -58,7 +59,7 @@ int main(void)
         circles[i].color = colors[GetRandomValue(0, 13)];
     }
 
-    Music music = LoadMusicStream("resources/mini1111.xm");
+    Music music = LoadMusicStream("romfs:/resources/mini1111.xm");
     music.looping = false;
     float pitch = 1.0f;
 
@@ -78,14 +79,14 @@ int main(void)
         UpdateMusicStream(music);      // Update music buffer with new stream data
 
         // Restart music playing (stop and play)
-        if (IsKeyPressed(KEY_SPACE))
+        if (IsGamepadButtonPressed(0, GAMEPAD_BUTTON_RIGHT_FACE_LEFT))
         {
             StopMusicStream(music);
             PlayMusicStream(music);
         }
 
         // Pause/Resume music playing
-        if (IsKeyPressed(KEY_P))
+        if (IsGamepadButtonPressed(0, GAMEPAD_BUTTON_RIGHT_FACE_RIGHT))
         {
             pause = !pause;
 
@@ -93,8 +94,8 @@ int main(void)
             else ResumeMusicStream(music);
         }
 
-        if (IsKeyDown(KEY_DOWN)) pitch -= 0.01f;
-        else if (IsKeyDown(KEY_UP)) pitch += 0.01f;
+        if (IsGamepadButtonPressed(0, GAMEPAD_BUTTON_RIGHT_FACE_DOWN)) pitch -= 0.01f;
+        else if (IsGamepadButtonPressed(0, GAMEPAD_BUTTON_RIGHT_FACE_UP)) pitch += 0.01f;
 
         SetMusicPitch(music, pitch);
 

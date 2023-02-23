@@ -12,6 +12,7 @@
 ********************************************************************************************/
 
 #include "raylib.h"
+#include <switch.h>
 
 //------------------------------------------------------------------------------------
 // Program main entry point
@@ -23,11 +24,13 @@ int main(void)
     const int screenWidth = 1280;
     const int screenHeight = 720;
 
+    // Initialize resource directory
+    romfsInit();
     InitWindow(screenWidth, screenHeight, "raylib [audio] example - music playing (streaming)");
 
     InitAudioDevice();              // Initialize audio device
 
-    Music music = LoadMusicStream("resources/country.mp3");
+    Music music = LoadMusicStream("romfs:/resources/country.mp3");
 
     PlayMusicStream(music);
 
@@ -45,14 +48,14 @@ int main(void)
         UpdateMusicStream(music);   // Update music buffer with new stream data
         
         // Restart music playing (stop and play)
-        if (IsKeyPressed(KEY_SPACE))
+        if (IsGamepadButtonPressed(0, GAMEPAD_BUTTON_RIGHT_FACE_LEFT))
         {
             StopMusicStream(music);
             PlayMusicStream(music);
         }
 
         // Pause/Resume music playing
-        if (IsKeyPressed(KEY_P))
+        if (IsGamepadButtonPressed(0, GAMEPAD_BUTTON_RIGHT_FACE_RIGHT))
         {
             pause = !pause;
 
@@ -72,14 +75,14 @@ int main(void)
 
             ClearBackground(RAYWHITE);
 
-            DrawText("MUSIC SHOULD BE PLAYING!", 255, 150, 20, LIGHTGRAY);
+            DrawText("MUSIC SHOULD BE PLAYING!", screenWidth/2 - 150, screenHeight/2 - 50, 20, LIGHTGRAY);
 
-            DrawRectangle(200, 200, 400, 12, LIGHTGRAY);
-            DrawRectangle(200, 200, (int)(timePlayed*400.0f), 12, MAROON);
-            DrawRectangleLines(200, 200, 400, 12, GRAY);
+            DrawRectangle(screenWidth/2 - 200, screenHeight/2, 400, 12, LIGHTGRAY);
+            DrawRectangle(screenWidth/2 - 200, screenHeight/2, (int)(timePlayed*400.0f), 12, MAROON);
+            DrawRectangleLines(screenWidth/2 - 200, screenHeight/2, 400, 12, GRAY);
 
-            DrawText("PRESS SPACE TO RESTART MUSIC", 215, 250, 20, LIGHTGRAY);
-            DrawText("PRESS P TO PAUSE/RESUME MUSIC", 208, 280, 20, LIGHTGRAY);
+            DrawText("PRESS Y button TO RESTART MUSIC", screenWidth/2 -200, screenHeight/2 + 50, 20, LIGHTGRAY);
+            DrawText("PRESS A button TO PAUSE/RESUME MUSIC", screenWidth/2 -200, screenHeight/2 + 80, 20, LIGHTGRAY);
 
         EndDrawing();
         //----------------------------------------------------------------------------------
@@ -94,5 +97,6 @@ int main(void)
     CloseWindow();              // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
 
+    romfsExit();
     return 0;
 }

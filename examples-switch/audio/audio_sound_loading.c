@@ -12,6 +12,7 @@
 ********************************************************************************************/
 
 #include "raylib.h"
+#include <switch.h>
 
 //------------------------------------------------------------------------------------
 // Program main entry point
@@ -23,12 +24,14 @@ int main(void)
     const int screenWidth = 1280;
     const int screenHeight = 720;
 
+    // Initialize resource directory
+    romfsInit();
     InitWindow(screenWidth, screenHeight, "raylib [audio] example - sound loading and playing");
 
     InitAudioDevice();      // Initialize audio device
 
-    Sound fxWav = LoadSound("resources/sound.wav");         // Load WAV audio file
-    Sound fxOgg = LoadSound("resources/target.ogg");        // Load OGG audio file
+    Sound fxWav = LoadSound("romfs:/resources/sound.wav");         // Load WAV audio file
+    Sound fxOgg = LoadSound("romfs:/resources/target.ogg");        // Load OGG audio file
 
     SetTargetFPS(60);               // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
@@ -38,8 +41,8 @@ int main(void)
     {
         // Update
         //----------------------------------------------------------------------------------
-        if (IsKeyPressed(KEY_SPACE)) PlaySound(fxWav);      // Play WAV sound
-        if (IsKeyPressed(KEY_ENTER)) PlaySound(fxOgg);      // Play OGG sound
+        if (IsGamepadButtonPressed(0, GAMEPAD_BUTTON_RIGHT_FACE_RIGHT)) PlaySound(fxWav);      // Play WAV sound
+        if (IsGamepadButtonPressed(0, GAMEPAD_BUTTON_RIGHT_FACE_DOWN)) PlaySound(fxOgg);      // Play OGG sound
         //----------------------------------------------------------------------------------
 
         // Draw
@@ -48,8 +51,8 @@ int main(void)
 
             ClearBackground(RAYWHITE);
 
-            DrawText("Press SPACE to PLAY the WAV sound!", 200, 180, 20, LIGHTGRAY);
-            DrawText("Press ENTER to PLAY the OGG sound!", 200, 220, 20, LIGHTGRAY);
+            DrawText("Press button A to PLAY the WAV sound!", 200, 180, 20, LIGHTGRAY);
+            DrawText("Press button B to PLAY the OGG sound!", 200, 220, 20, LIGHTGRAY);
 
         EndDrawing();
         //----------------------------------------------------------------------------------
@@ -65,5 +68,6 @@ int main(void)
     CloseWindow();          // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
 
+    romfsExit();
     return 0;
 }

@@ -76,6 +76,9 @@ examples-switch/*/*.lst
 examples-switch/*/*.map
 examples-switch/*/*.nacp
 examples-switch/*/*.nro
+projects/switch-nx/*.elf
+projects/switch-nx/*.nacp
+projects/switch-nx/*.nro
 
 # Ignore files build by xcode
 *.mode*v*

@@ -51,6 +51,11 @@ USE_EXTERNAL_GLFW     ?= FALSE
 # NOTE: This variable is only used for PLATFORM_OS: LINUX
 USE_WAYLAND_DISPLAY   ?= FALSE
 
+# Define romfs folder location relative to Makefile
+ifeq ($(PLATFORM),PLATFORM_NX)
+    ROMFS		:=	romfs
+endif
+
 # Use cross-compiler for PLATFORM_RPI
 ifeq ($(PLATFORM),PLATFORM_RPI)
     USE_RPI_CROSS_COMPILER ?= FALSE
@@ -561,7 +566,7 @@ else ifeq ($(PLATFORM),PLATFORM_NX)
 	$(CXX) $@.o $(LDFLAGS) $(LDLIBS) -o $@.elf -D$(PLATFORM)
 	$(NM) -CSn $@.elf > $@.lst
 	nacptool --create "$(notdir $@)" "Raylib Example" "1.0.0" $@.nacp
-	elf2nro $@.elf $@.nro --icon=textures/resources/raylib_logo.jpg --nacp=$@.nacp
+	elf2nro $@.elf $@.nro --icon=textures/resources/raylib_logo.jpg --nacp=$@.nacp --romfsdir=$(CURDIR)/$(ROMFS)
 else
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 endif

@@ -14,6 +14,7 @@
 #include "raylib.h"
 
 #include <stdlib.h>         // Required for: NULL
+#include <switch.h>
 
 // Required delay effect variables
 static float *delayBuffer = NULL;
@@ -37,11 +38,13 @@ int main(void)
     const int screenWidth = 1280;
     const int screenHeight = 720;
 
+    // Initialize resource directory
+    romfsInit();
     InitWindow(screenWidth, screenHeight, "raylib [audio] example - stream effects");
 
     InitAudioDevice();              // Initialize audio device
 
-    Music music = LoadMusicStream("resources/country.mp3");
+    Music music = LoadMusicStream("romfs:/resources/country.mp3");
 
     // Allocate buffer for the delay effect
     delayBufferSize = 48000*2;      // 1 second delay (device sampleRate*channels)
@@ -66,14 +69,14 @@ int main(void)
         UpdateMusicStream(music);   // Update music buffer with new stream data
 
         // Restart music playing (stop and play)
-        if (IsKeyPressed(KEY_SPACE))
+        if (IsGamepadButtonPressed(0, GAMEPAD_BUTTON_RIGHT_FACE_LEFT))
         {
             StopMusicStream(music);
             PlayMusicStream(music);
         }
 
         // Pause/Resume music playing
-        if (IsKeyPressed(KEY_P))
+        if (IsGamepadButtonPressed(0, GAMEPAD_BUTTON_RIGHT_FACE_RIGHT))
         {
             pause = !pause;
 
@@ -82,7 +85,7 @@ int main(void)
         }
 
         // Add/Remove effect: lowpass filter
-        if (IsKeyPressed(KEY_F))
+        if (IsGamepadButtonPressed(0, GAMEPAD_BUTTON_RIGHT_FACE_UP))
         {
             enableEffectLPF = !enableEffectLPF;
             if (enableEffectLPF) AttachAudioStreamProcessor(music.stream, AudioProcessEffectLPF);
@@ -90,7 +93,7 @@ int main(void)
         }
 
         // Add/Remove effect: delay
-        if (IsKeyPressed(KEY_D))
+        if (IsGamepadButtonPressed(0, GAMEPAD_BUTTON_RIGHT_FACE_DOWN))
         {
             enableEffectDelay = !enableEffectDelay;
             if (enableEffectDelay) AttachAudioStreamProcessor(music.stream, AudioProcessEffectDelay);
@@ -109,17 +112,17 @@ int main(void)
 
             ClearBackground(RAYWHITE);
 
-            DrawText("MUSIC SHOULD BE PLAYING!", 245, 150, 20, LIGHTGRAY);
+            DrawText("MUSIC SHOULD BE PLAYING!", screenWidth/2 - 200, 230, 20, LIGHTGRAY);
 
-            DrawRectangle(200, 180, 400, 12, LIGHTGRAY);
-            DrawRectangle(200, 180, (int)(timePlayed*400.0f), 12, MAROON);
-            DrawRectangleLines(200, 180, 400, 12, GRAY);
+            DrawRectangle(screenWidth/2 - 200, 260, 400, 12, LIGHTGRAY);
+            DrawRectangle(screenWidth/2 - 200, 260, (int)(timePlayed*400.0f), 12, MAROON);
+            DrawRectangleLines(screenWidth/2 - 200, 260, 400, 12, GRAY);
 
-            DrawText("PRESS SPACE TO RESTART MUSIC", 215, 230, 20, LIGHTGRAY);
-            DrawText("PRESS P TO PAUSE/RESUME MUSIC", 208, 260, 20, LIGHTGRAY);
+            DrawText("PRESS Y button TO RESTART MUSIC", screenWidth/2 - 200, 310, 20, LIGHTGRAY);
+            DrawText("PRESS A button TO PAUSE/RESUME MUSIC", screenWidth/2 - 200, 340, 20, LIGHTGRAY);
             
-            DrawText(TextFormat("PRESS F TO TOGGLE LPF EFFECT: %s", enableEffectLPF? "ON" : "OFF"), 200, 320, 20, GRAY);
-            DrawText(TextFormat("PRESS D TO TOGGLE DELAY EFFECT: %s", enableEffectDelay? "ON" : "OFF"), 180, 350, 20, GRAY);
+            DrawText(TextFormat("PRESS X button TO TOGGLE LPF EFFECT: %s", enableEffectLPF? "ON" : "OFF"), screenWidth/2 - 200, 400, 20, GRAY);
+            DrawText(TextFormat("PRESS B button TO TOGGLE DELAY EFFECT: %s", enableEffectDelay? "ON" : "OFF"), screenWidth/2 - 200, 430, 20, GRAY);
 
         EndDrawing();
         //----------------------------------------------------------------------------------
@@ -136,6 +139,7 @@ int main(void)
     CloseWindow();              // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
 
+    romfsExit();
     return 0;
 }
 
