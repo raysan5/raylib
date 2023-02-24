@@ -1339,7 +1339,7 @@ int TextCopy(char *dst, const char *src)
 {
     int bytes = 0;
 
-    if (dst != NULL)
+    if ((src != NULL) && (dst != NULL))
     {
         while (*src != '\0')
         {
