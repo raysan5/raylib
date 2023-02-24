@@ -6996,7 +6996,7 @@ static void ExportAutomationEvents(const char *fileName)
     // Save as binary
     /*
     FILE *repFile = fopen(fileName, "wb");
-    fwrite(fileId, 4, 1, repFile);
+    fwrite(fileId, sizeof(unsigned char), 4, repFile);
     fwrite(&eventCount, sizeof(int), 1, repFile);
     fwrite(events, sizeof(AutomationEvent), eventCount, repFile);
     fclose(repFile);
