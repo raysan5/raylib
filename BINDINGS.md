@@ -79,6 +79,7 @@ These are utility wrappers for specific languages, they are not required to use 
 |:------------------:|:-------------: | :--------:|:-------:|:-------------------------------------------------------------|
 | raylib-cpp         | **4.2** | [C++](https://en.wikipedia.org/wiki/C%2B%2B)  | Zlib | https://github.com/robloach/raylib-cpp  |
 | claylib            | **4.2** | [Common Lisp](https://common-lisp.net/) | Zlib | https://github.com/defun-games/claylib |
+| raylib_misc        | 4.0     | [D](https://dlang.org/) | MIT | https://github.com/RealDoigt/raylib_misc |
 
 ### Older or Unmaintained Language Bindings
 These are older raylib bindings that are more than 2 versions old or have not been maintained.
