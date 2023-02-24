@@ -3473,7 +3473,7 @@ void rlUnloadFramebuffer(unsigned int id)
 
     unsigned int depthIdU = (unsigned int)depthId;
     if (depthType == GL_RENDERBUFFER) glDeleteRenderbuffers(1, &depthIdU);
-    else if (depthType == GL_RENDERBUFFER) glDeleteTextures(1, &depthIdU);
+    else if (depthType == GL_TEXTURE) glDeleteTextures(1, &depthIdU);
 
     // NOTE: If a texture object is deleted while its image is attached to the *currently bound* framebuffer,
     // the texture image is automatically detached from the currently bound framebuffer.
