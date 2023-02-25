@@ -4222,11 +4222,11 @@ static Model LoadIQM(const char *fileName)
     for (int i = 0; i < model.meshCount; i++)
     {
         //fseek(iqmFile, iqmHeader->ofs_text + imesh[i].name, SEEK_SET);
-        //fread(name, sizeof(char)*MESH_NAME_LENGTH, 1, iqmFile);
+        //fread(name, sizeof(char), MESH_NAME_LENGTH, iqmFile);
         memcpy(name, fileDataPtr + iqmHeader->ofs_text + imesh[i].name, MESH_NAME_LENGTH*sizeof(char));
 
         //fseek(iqmFile, iqmHeader->ofs_text + imesh[i].material, SEEK_SET);
-        //fread(material, sizeof(char)*MATERIAL_NAME_LENGTH, 1, iqmFile);
+        //fread(material, sizeof(char), MATERIAL_NAME_LENGTH, iqmFile);
         memcpy(material, fileDataPtr + iqmHeader->ofs_text + imesh[i].material, MATERIAL_NAME_LENGTH*sizeof(char));
 
         model.materials[i] = LoadMaterialDefault();
@@ -4254,7 +4254,7 @@ static Model LoadIQM(const char *fileName)
     // Triangles data processing
     tri = RL_MALLOC(iqmHeader->num_triangles*sizeof(IQMTriangle));
     //fseek(iqmFile, iqmHeader->ofs_triangles, SEEK_SET);
-    //fread(tri, iqmHeader->num_triangles*sizeof(IQMTriangle), 1, iqmFile);
+    //fread(tri, sizeof(IQMTriangle), iqmHeader->num_triangles, iqmFile);
     memcpy(tri, fileDataPtr + iqmHeader->ofs_triangles, iqmHeader->num_triangles*sizeof(IQMTriangle));
 
     for (int m = 0; m < model.meshCount; m++)
@@ -4276,7 +4276,7 @@ static Model LoadIQM(const char *fileName)
     // Vertex arrays data processing
     va = RL_MALLOC(iqmHeader->num_vertexarrays*sizeof(IQMVertexArray));
     //fseek(iqmFile, iqmHeader->ofs_vertexarrays, SEEK_SET);
-    //fread(va, iqmHeader->num_vertexarrays*sizeof(IQMVertexArray), 1, iqmFile);
+    //fread(va, sizeof(IQMVertexArray), iqmHeader->num_vertexarrays, iqmFile);
     memcpy(va, fileDataPtr + iqmHeader->ofs_vertexarrays, iqmHeader->num_vertexarrays*sizeof(IQMVertexArray));
 
     for (unsigned int i = 0; i < iqmHeader->num_vertexarrays; i++)
@@ -4395,7 +4395,7 @@ static Model LoadIQM(const char *fileName)
     // Bones (joints) data processing
     ijoint = RL_MALLOC(iqmHeader->num_joints*sizeof(IQMJoint));
     //fseek(iqmFile, iqmHeader->ofs_joints, SEEK_SET);
-    //fread(ijoint, iqmHeader->num_joints*sizeof(IQMJoint), 1, iqmFile);
+    //fread(ijoint, sizeof(IQMJoint), iqmHeader->num_joints, iqmFile);
     memcpy(ijoint, fileDataPtr + iqmHeader->ofs_joints, iqmHeader->num_joints*sizeof(IQMJoint));
 
     model.boneCount = iqmHeader->num_joints;
@@ -4407,7 +4407,7 @@ static Model LoadIQM(const char *fileName)
         // Bones
         model.bones[i].parent = ijoint[i].parent;
         //fseek(iqmFile, iqmHeader->ofs_text + ijoint[i].name, SEEK_SET);
-        //fread(model.bones[i].name, BONE_NAME_LENGTH*sizeof(char), 1, iqmFile);
+        //fread(model.bones[i].name, sizeof(char), BONE_NAME_LENGTH, iqmFile);
         memcpy(model.bones[i].name, fileDataPtr + iqmHeader->ofs_text + ijoint[i].name, BONE_NAME_LENGTH*sizeof(char));
 
         // Bind pose (base pose)
@@ -4511,14 +4511,14 @@ static ModelAnimation *LoadModelAnimationsIQM(const char *fileName, unsigned int
     // Get bones data
     IQMPose *poses = RL_MALLOC(iqmHeader->num_poses*sizeof(IQMPose));
     //fseek(iqmFile, iqmHeader->ofs_poses, SEEK_SET);
-    //fread(poses, iqmHeader->num_poses*sizeof(IQMPose), 1, iqmFile);
+    //fread(poses, sizeof(IQMPose), iqmHeader->num_poses, iqmFile);
     memcpy(poses, fileDataPtr + iqmHeader->ofs_poses, iqmHeader->num_poses*sizeof(IQMPose));
 
     // Get animations data
     *animCount = iqmHeader->num_anims;
     IQMAnim *anim = RL_MALLOC(iqmHeader->num_anims*sizeof(IQMAnim));
     //fseek(iqmFile, iqmHeader->ofs_anims, SEEK_SET);
-    //fread(anim, iqmHeader->num_anims*sizeof(IQMAnim), 1, iqmFile);
+    //fread(anim, sizeof(IQMAnim), iqmHeader->num_anims, iqmFile);
     memcpy(anim, fileDataPtr + iqmHeader->ofs_anims, iqmHeader->num_anims*sizeof(IQMAnim));
 
     ModelAnimation *animations = RL_MALLOC(iqmHeader->num_anims*sizeof(ModelAnimation));
@@ -4526,7 +4526,7 @@ static ModelAnimation *LoadModelAnimationsIQM(const char *fileName, unsigned int
     // frameposes
     unsigned short *framedata = RL_MALLOC(iqmHeader->num_frames*iqmHeader->num_framechannels*sizeof(unsigned short));
     //fseek(iqmFile, iqmHeader->ofs_frames, SEEK_SET);
-    //fread(framedata, iqmHeader->num_frames*iqmHeader->num_framechannels*sizeof(unsigned short), 1, iqmFile);
+    //fread(framedata, sizeof(unsigned short), iqmHeader->num_frames*iqmHeader->num_framechannels, iqmFile);
     memcpy(framedata, fileDataPtr + iqmHeader->ofs_frames, iqmHeader->num_frames*iqmHeader->num_framechannels*sizeof(unsigned short));
 
     // joints
