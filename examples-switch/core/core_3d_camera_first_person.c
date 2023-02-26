@@ -14,6 +14,8 @@
 #include "raylib.h"
 
 #define MAX_COLUMNS 20
+#define CAMERA_INVERTED_Y_TRUE                     -1.0f
+#define CAMERA_INVERTED_Y_FALSE                     1.0f
 
 //------------------------------------------------------------------------------------
 // Program main entry point
@@ -48,6 +50,7 @@ int main(void)
     }
 
     SetCameraMode(camera, CAMERA_FIRST_PERSON); // Set a first person camera mode
+    SetGamepadYAxisInverted(0, CAMERA_INVERTED_Y_FALSE);
 
     SetTargetFPS(60);                           // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
@@ -57,7 +60,11 @@ int main(void)
     {
         // Update
         //----------------------------------------------------------------------------------
-        UpdateCamera(&camera);
+        UpdateCameraGamepad(&camera, 0);
+        if (IsGamepadButtonPressed(0, GAMEPAD_BUTTON_RIGHT_TRIGGER_1))
+        {
+            SetGamepadYAxisInverted(0, -GetGamepadYAxisInverted(0));
+        }
         //----------------------------------------------------------------------------------
 
         // Draw
@@ -82,12 +89,13 @@ int main(void)
 
             EndMode3D();
 
-            DrawRectangle( 10, 10, 220, 70, Fade(SKYBLUE, 0.5f));
-            DrawRectangleLines( 10, 10, 220, 70, BLUE);
+            DrawRectangle( 10, 10, 220, 90, Fade(SKYBLUE, 0.5f));
+            DrawRectangleLines( 10, 10, 220, 90, BLUE);
 
             DrawText("First person camera default controls:", 20, 20, 10, BLACK);
-            DrawText("- Move with keys: W, A, S, D", 40, 40, 10, DARKGRAY);
-            DrawText("- Mouse move to look around", 40, 60, 10, DARKGRAY);
+            DrawText("- Move with Left Thumbstick", 40, 40, 10, DARKGRAY);
+            DrawText("- Look around with Right Thumbstick", 40, 60, 10, DARKGRAY);
+            DrawText("- Press R to invert Look Y-Axis", 40, 80, 10, DARKGRAY);
 
         EndDrawing();
         //----------------------------------------------------------------------------------

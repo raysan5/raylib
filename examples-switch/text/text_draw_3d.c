@@ -141,7 +141,7 @@ int main(void)
     {
         // Update
         //----------------------------------------------------------------------------------
-        UpdateCamera(&camera);
+        UpdateCameraGamepad(&camera, 0);
         
         // Handle font files dropped
         if (IsFileDropped())

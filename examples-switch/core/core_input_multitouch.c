@@ -56,7 +56,7 @@ int main(void)
                 {
                     // Draw circle and touch index number
                     DrawCircleV(touchPositions[i], 34, ORANGE);
-                    DrawText(TextFormat("%d", i), (int)touchPositions[i].x - 10, (int)touchPositions[i].y - 70, 40, BLACK);
+                    DrawText(TextFormat("%d", GetTouchPointId(i)), (int)touchPositions[i].x - 10, (int)touchPositions[i].y - 70, 40, BLACK);
                 }
             }
 

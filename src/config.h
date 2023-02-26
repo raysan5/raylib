@@ -71,6 +71,7 @@
 #define NX_SUPPORT_GAMEPAD_EMULATION       1
 // Enabling this flag allows debugging by USB, the application will wait for an USB connection to start
 //#define NX_USB_DEBUGGER                  1
+// #define ENABLE_DEV_EXIT     1   // Allows for exit when gamepad kbm emulation is disabled    
 
 // rcore: Configuration values
 //------------------------------------------------------------------------------------

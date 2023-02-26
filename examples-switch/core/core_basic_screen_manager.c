@@ -15,6 +15,7 @@
 
 #include "raylib.h"
 
+#define START_BUTTON                    GAMEPAD_BUTTON_MIDDLE_RIGHT
 //------------------------------------------------------------------------------------------
 // Types and Structures Definition
 //------------------------------------------------------------------------------------------
@@ -41,11 +42,16 @@ int main(void)
     SetTargetFPS(60);               // Set desired framerate (frames-per-second)
     //--------------------------------------------------------------------------------------
 
+    // Gesture detection for TAP
+    bool hasScreenBeenTouched = false;
+
     // Main game loop
     while (!WindowShouldClose())    // Detect window close button or ESC key
     {
         // Update
         //----------------------------------------------------------------------------------
+        bool isNextButtonPressed = IsGamepadButtonPressed(0, START_BUTTON);
+        
         switch(currentScreen)
         {
             case LOGO:
@@ -65,33 +71,38 @@ int main(void)
                 // TODO: Update TITLE screen variables here!
 
                 // Press enter to change to GAMEPLAY screen
-                if (IsKeyPressed(KEY_ENTER) || IsGestureDetected(GESTURE_TAP))
+                if (isNextButtonPressed || (!hasScreenBeenTouched && GetTouchPointCount() > 0))
                 {
                     currentScreen = GAMEPLAY;
+                    hasScreenBeenTouched = true;
                 }
             } break;
             case GAMEPLAY:
             {
                 // TODO: Update GAMEPLAY screen variables here!
-
                 // Press enter to change to ENDING screen
-                if (IsKeyPressed(KEY_ENTER) || IsGestureDetected(GESTURE_TAP))
+                if (isNextButtonPressed || (!hasScreenBeenTouched && GetTouchPointCount() > 0))
                 {
                     currentScreen = ENDING;
+                    hasScreenBeenTouched = true;
                 }
             } break;
             case ENDING:
             {
                 // TODO: Update ENDING screen variables here!
-
                 // Press enter to return to TITLE screen
-                if (IsKeyPressed(KEY_ENTER) || IsGestureDetected(GESTURE_TAP))
+                if (isNextButtonPressed || (!hasScreenBeenTouched && GetTouchPointCount() > 0))
                 {
                     currentScreen = TITLE;
+                    hasScreenBeenTouched = true;
                 }
             } break;
             default: break;
         }
+
+        // Reset TAP gesture
+        hasScreenBeenTouched = GetTouchPointCount() > 0;
+
         //----------------------------------------------------------------------------------
 
         // Draw
@@ -99,6 +110,8 @@ int main(void)
         BeginDrawing();
 
             ClearBackground(RAYWHITE);
+            const int horizontalCenter = screenHeight / 2;
+            int touchCount = GetTouchPointCount();
 
             switch(currentScreen)
             {
@@ -114,7 +127,7 @@ int main(void)
                     // TODO: Draw TITLE screen here!
                     DrawRectangle(0, 0, screenWidth, screenHeight, GREEN);
                     DrawText("TITLE SCREEN", 20, 20, 40, DARKGREEN);
-                    DrawText("PRESS ENTER or TAP to JUMP to GAMEPLAY SCREEN", 120, 220, 20, DARKGREEN);
+                    DrawText("PRESS START or TAP to JUMP to GAMEPLAY SCREEN", 120, horizontalCenter, 20, DARKGREEN);
 
                 } break;
                 case GAMEPLAY:
@@ -122,7 +135,7 @@ int main(void)
                     // TODO: Draw GAMEPLAY screen here!
                     DrawRectangle(0, 0, screenWidth, screenHeight, PURPLE);
                     DrawText("GAMEPLAY SCREEN", 20, 20, 40, MAROON);
-                    DrawText("PRESS ENTER or TAP to JUMP to ENDING SCREEN", 130, 220, 20, MAROON);
+                    DrawText("PRESS START or TAP to JUMP to ENDING SCREEN", 130, horizontalCenter, 20, MAROON);
 
                 } break;
                 case ENDING:
@@ -130,12 +143,17 @@ int main(void)
                     // TODO: Draw ENDING screen here!
                     DrawRectangle(0, 0, screenWidth, screenHeight, BLUE);
                     DrawText("ENDING SCREEN", 20, 20, 40, DARKBLUE);
-                    DrawText("PRESS ENTER or TAP to RETURN to TITLE SCREEN", 120, 220, 20, DARKBLUE);
+                    DrawText("PRESS START or TAP to RETURN to TITLE SCREEN", 120, horizontalCenter, 20, DARKBLUE);
 
                 } break;
                 default: break;
             }
-
+            for (int i = 0; i < touchCount; i++)
+            {
+                Vector2 touchPosition = GetTouchPosition(i);
+                DrawCircle(touchPosition.x, touchPosition.y, 75, RED);
+            }
+            
         EndDrawing();
         //----------------------------------------------------------------------------------
     }

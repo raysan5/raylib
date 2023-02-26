@@ -45,9 +45,9 @@ int main(void)
     {
         // Update
         //----------------------------------------------------------------------------------
-        UpdateCamera(&camera);
+        UpdateCameraGamepad(&camera, 0);
 
-        if (IsKeyDown('Z')) camera.target = (Vector3){ 0.0f, 0.0f, 0.0f };
+        if (IsGamepadButtonDown(0, GAMEPAD_BUTTON_RIGHT_FACE_UP)) camera.target = (Vector3){ 0.0f, 0.0f, 0.0f };
         //----------------------------------------------------------------------------------
 
         // Draw
@@ -69,11 +69,11 @@ int main(void)
             DrawRectangleLines( 10, 10, 320, 133, BLUE);
 
             DrawText("Free camera default controls:", 20, 20, 10, BLACK);
-            DrawText("- Mouse Wheel to Zoom in-out", 40, 40, 10, DARKGRAY);
-            DrawText("- Mouse Wheel Pressed to Pan", 40, 60, 10, DARKGRAY);
-            DrawText("- Alt + Mouse Wheel Pressed to Rotate", 40, 80, 10, DARKGRAY);
-            DrawText("- Alt + Ctrl + Mouse Wheel Pressed for Smooth Zoom", 40, 100, 10, DARKGRAY);
-            DrawText("- Z to zoom to (0, 0, 0)", 40, 120, 10, DARKGRAY);
+            DrawText("- R/L Bumpers to Zoom", 40, 40, 10, DARKGRAY);
+            DrawText("- Left Thumbstick to Pan", 40, 60, 10, DARKGRAY);
+            DrawText("- Right Thumbstick to Rotate", 40, 80, 10, DARKGRAY);
+            DrawText("- Hold button A for Smooth Zoom with Left Thumbstick", 40, 100, 10, DARKGRAY);
+            DrawText("- Press X button to zoom to (0, 0, 0)", 40, 120, 10, DARKGRAY);
 
         EndDrawing();
         //----------------------------------------------------------------------------------

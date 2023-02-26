@@ -60,15 +60,15 @@ int main(void)
         // Update
         //----------------------------------------------------------------------------------
         // Player movement
-        if (IsKeyDown(KEY_RIGHT)) player.x += 2;
-        else if (IsKeyDown(KEY_LEFT)) player.x -= 2;
+        if (GetGamepadAxisMovement(0, GAMEPAD_AXIS_LEFT_X) > 0) player.x += 2;
+        else if (GetGamepadAxisMovement(0, GAMEPAD_AXIS_LEFT_X) < 0) player.x -= 2;
 
         // Camera target follows player
         camera.target = (Vector2){ player.x + 20, player.y + 20 };
 
         // Camera rotation controls
-        if (IsKeyDown(KEY_A)) camera.rotation--;
-        else if (IsKeyDown(KEY_S)) camera.rotation++;
+        if (GetGamepadAxisMovement(0, GAMEPAD_AXIS_RIGHT_X) > 0) camera.rotation--;
+        else if (GetGamepadAxisMovement(0, GAMEPAD_AXIS_RIGHT_X) < 0) camera.rotation++;
 
         // Limit camera rotation to 80 degrees (-40 to 40)
         if (camera.rotation > 40) camera.rotation = 40;
@@ -119,9 +119,9 @@ int main(void)
 
             DrawText("Free 2d camera controls:", 20, 20, 10, BLACK);
             DrawText("- Right/Left to move Offset", 40, 40, 10, DARKGRAY);
-            DrawText("- Mouse Wheel to Zoom in-out", 40, 60, 10, DARKGRAY);
-            DrawText("- A / S to Rotate", 40, 80, 10, DARKGRAY);
-            DrawText("- R to reset Zoom and Rotation", 40, 100, 10, DARKGRAY);
+            DrawText("- R/L bumpers to Zoom in-out", 40, 60, 10, DARKGRAY);
+            DrawText("- Right thumbstick X-axis to Rotate", 40, 80, 10, DARKGRAY);
+            DrawText("- X button to reset Zoom and Rotation", 40, 100, 10, DARKGRAY);
 
         EndDrawing();
         //----------------------------------------------------------------------------------

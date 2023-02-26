@@ -50,14 +50,13 @@ int main(void)
     {
         // Update
         //----------------------------------------------------------------------------------
-        UpdateCamera(&camera);
+        UpdateCameraGamepad(&camera, 0);
 
-        if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT))
+        if (GetTouchPointCount() > 0)
         {
             if (!collision.hit)
             {
-                ray = GetMouseRay(GetMousePosition(), camera);
-
+                ray = GetMouseRay(GetTouchPosition(0), camera);
                 // Check collision between ray and box
                 collision = GetRayCollisionBox(ray,
                             (BoundingBox){(Vector3){ cubePosition.x - cubeSize.x/2, cubePosition.y - cubeSize.y/2, cubePosition.z - cubeSize.z/2 },
@@ -93,7 +92,7 @@ int main(void)
 
             EndMode3D();
 
-            DrawText("Try selecting the box with mouse!", 240, 10, 20, DARKGRAY);
+            DrawText("Try selecting the box by touching it!", 240, 10, 20, DARKGRAY);
 
             if (collision.hit) DrawText("BOX SELECTED", (screenWidth - MeasureText("BOX SELECTED", 30)) / 2, (int)(screenHeight * 0.1f), 30, GREEN);
 

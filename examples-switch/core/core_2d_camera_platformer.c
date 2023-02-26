@@ -106,7 +106,14 @@ int main(void)
 
         UpdatePlayer(&player, envItems, envItemsLength, deltaTime);
 
-        camera.zoom += ((float)GetMouseWheelMove()*0.05f);
+        if (IsGamepadButtonDown(0, GAMEPAD_BUTTON_RIGHT_TRIGGER_1))
+        {
+            camera.zoom += 0.05f;
+        }
+        else if (IsGamepadButtonDown(0, GAMEPAD_BUTTON_LEFT_TRIGGER_1))
+        {
+            camera.zoom -= 0.05f;
+        }
 
         if (camera.zoom > 3.0f) camera.zoom = 3.0f;
         else if (camera.zoom < 0.25f) camera.zoom = 0.25f;
@@ -117,7 +124,7 @@ int main(void)
             player.position = (Vector2){ 400, 280 };
         }
 
-        if (IsKeyPressed(KEY_C)) cameraOption = (cameraOption + 1)%cameraUpdatersLength;
+        if (IsGamepadButtonReleased(0, GAMEPAD_BUTTON_RIGHT_FACE_LEFT)) cameraOption = (cameraOption + 1)%cameraUpdatersLength;
 
         // Call update camera function by its pointer
         cameraUpdaters[cameraOption](&camera, &player, envItems, envItemsLength, deltaTime, screenWidth, screenHeight);
@@ -139,10 +146,10 @@ int main(void)
             EndMode2D();
 
             DrawText("Controls:", 20, 20, 10, BLACK);
-            DrawText("- Right/Left to move", 40, 40, 10, DARKGRAY);
-            DrawText("- Space to jump", 40, 60, 10, DARKGRAY);
-            DrawText("- Mouse Wheel to Zoom in-out, R to reset zoom", 40, 80, 10, DARKGRAY);
-            DrawText("- C to change camera mode", 40, 100, 10, DARKGRAY);
+            DrawText("- Right/Left thumbstick to move", 40, 40, 10, DARKGRAY);
+            DrawText("- A button to jump", 40, 60, 10, DARKGRAY);
+            DrawText("- R/L buttons to Zoom in-out, X to reset zoom", 40, 80, 10, DARKGRAY);
+            DrawText("- Y button to change camera mode", 40, 100, 10, DARKGRAY);
             DrawText("Current camera mode:", 20, 120, 10, BLACK);
             DrawText(cameraDescriptions[cameraOption], 40, 140, 10, DARKGRAY);
 
@@ -160,9 +167,9 @@ int main(void)
 
 void UpdatePlayer(Player *player, EnvItem *envItems, int envItemsLength, float delta)
 {
-    if (IsKeyDown(KEY_LEFT)) player->position.x -= PLAYER_HOR_SPD*delta;
-    if (IsKeyDown(KEY_RIGHT)) player->position.x += PLAYER_HOR_SPD*delta;
-    if (IsKeyDown(KEY_SPACE) && player->canJump)
+    if (GetGamepadAxisMovement(0, 0) < 0) player->position.x -= PLAYER_HOR_SPD*delta;
+    if (GetGamepadAxisMovement(0, 0) > 0) player->position.x += PLAYER_HOR_SPD*delta;
+    if (IsGamepadButtonPressed(0, GAMEPAD_BUTTON_RIGHT_FACE_RIGHT) && player->canJump)
     {
         player->speed = -PLAYER_JUMP_SPD;
         player->canJump = false;

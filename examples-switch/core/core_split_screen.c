@@ -59,6 +59,7 @@ int main(void)
     cameraPlayer1.target.y = 1.0f;
     cameraPlayer1.position.z = -3.0f;
     cameraPlayer1.position.y = 1.0f;
+    cameraPlayer1.projection = CAMERA_PERSPECTIVE;
 
     RenderTexture screenPlayer1 = LoadRenderTexture(screenWidth/2, screenHeight);
 
@@ -68,8 +69,12 @@ int main(void)
     cameraPlayer2.target.y = 3.0f;
     cameraPlayer2.position.x = -3.0f;
     cameraPlayer2.position.y = 3.0f;
+    cameraPlayer2.projection = CAMERA_PERSPECTIVE;
 
     RenderTexture screenPlayer2 = LoadRenderTexture(screenWidth / 2, screenHeight);
+
+    SetCameraMode(cameraPlayer1, CAMERA_FIRST_PERSON);
+    SetCameraMode(cameraPlayer2, CAMERA_FIRST_PERSON);
 
     // Build a flipped rectangle the size of the split view to use for drawing later
     Rectangle splitScreenRect = { 0.0f, 0.0f, (float)screenPlayer1.texture.width, (float)-screenPlayer1.texture.height };
@@ -84,31 +89,10 @@ int main(void)
         //----------------------------------------------------------------------------------
         // If anyone moves this frame, how far will they move based on the time since the last frame
         // this moves thigns at 10 world units per second, regardless of the actual FPS
-        float offsetThisFrame = 10.0f*GetFrameTime();
+        // float offsetThisFrame = 10.0f*GetFrameTime();
 
-        // Move Player1 forward and backwards (no turning)
-        if (IsKeyDown(KEY_W))
-        {
-            cameraPlayer1.position.z += offsetThisFrame;
-            cameraPlayer1.target.z += offsetThisFrame;
-        }
-        else if (IsKeyDown(KEY_S))
-        {
-            cameraPlayer1.position.z -= offsetThisFrame;
-            cameraPlayer1.target.z -= offsetThisFrame;
-        }
-
-        // Move Player2 forward and backwards (no turning)
-        if (IsKeyDown(KEY_UP))
-        {
-            cameraPlayer2.position.x += offsetThisFrame;
-            cameraPlayer2.target.x += offsetThisFrame;
-        }
-        else if (IsKeyDown(KEY_DOWN))
-        {
-            cameraPlayer2.position.x -= offsetThisFrame;
-            cameraPlayer2.target.x -= offsetThisFrame;
-        }
+        UpdateCameraGamepad(&cameraPlayer1, 0);
+        UpdateCameraGamepad(&cameraPlayer2, 1);
         //----------------------------------------------------------------------------------
 
         // Draw
@@ -119,16 +103,15 @@ int main(void)
             BeginMode3D(cameraPlayer1);
                 DrawScene();
             EndMode3D();
-            DrawText("PLAYER1 W/S to move", 10, 10, 20, RED);
+            DrawText("PLAYER1", 10, 10, 20, RED);
         EndTextureMode();
-
         // Draw Player2 view to the render texture
         BeginTextureMode(screenPlayer2);
             ClearBackground(SKYBLUE);
             BeginMode3D(cameraPlayer2);
                 DrawScene();
             EndMode3D();
-            DrawText("PLAYER2 UP/DOWN to move", 10, 10, 20, BLUE);
+            DrawText("PLAYER2", 10, 10, 20, BLUE);
         EndTextureMode();
 
         // Draw both views render textures to the screen side by side
@@ -136,6 +119,7 @@ int main(void)
             ClearBackground(BLACK);
             DrawTextureRec(screenPlayer1.texture, splitScreenRect, (Vector2){ 0, 0 }, WHITE);
             DrawTextureRec(screenPlayer2.texture, splitScreenRect, (Vector2){ screenWidth/2.0f, 0 }, WHITE);
+            DrawRectangle(screenWidth/2 - 5, 0, 10, 720, BLACK);
         EndDrawing();
     }
 
