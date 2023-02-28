@@ -296,7 +296,7 @@ Image LoadImageRaw(const char *fileName, int width, int height, int format, int 
 Image LoadImageAnim(const char *fileName, int *frames)
 {
     Image image = { 0 };
-    int frameCount = 1;
+    int frameCount = 0;
 
 #if defined(SUPPORT_FILEFORMAT_GIF)
     if (IsFileExtension(fileName, ".gif"))
@@ -320,7 +320,11 @@ Image LoadImageAnim(const char *fileName, int *frames)
 #else
     if (false) { }
 #endif
-    else image = LoadImage(fileName);
+    else 
+    {
+        image = LoadImage(fileName);
+        frameCount = 1;
+    }
 
     // TODO: Support APNG animated images
 
