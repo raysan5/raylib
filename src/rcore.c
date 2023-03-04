@@ -1718,7 +1718,8 @@ void *GetWindowHandle(void)
     // typedef unsigned long XID;
     // typedef XID Window;
     //unsigned long id = (unsigned long)glfwGetX11Window(window);
-    return NULL;    // TODO: Find a way to return value... cast to void *?
+    //return NULL;    // TODO: Find a way to return value... cast to void *?
+    return (void *)CORE.Window.handle;
 #endif
 #if defined(__APPLE__)
     // NOTE: Returned handle is: (objc_object *)
