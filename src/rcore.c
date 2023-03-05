@@ -1713,7 +1713,7 @@ void *GetWindowHandle(void)
     // NOTE: Returned handle is: void *HWND (windows.h)
     return glfwGetWin32Window(CORE.Window.handle);
 #endif
-#if defined(__linux__) && !defined(PLATFORM_DRM)
+#if defined(PLATFORM_DESKTOP) && defined(__linux__)
     // NOTE: Returned handle is: unsigned long Window (X.h)
     // typedef unsigned long XID;
     // typedef XID Window;
