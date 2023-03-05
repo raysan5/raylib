@@ -1003,13 +1003,17 @@ bool ExportWave(Wave wave, const char *fileName)
 #if defined(SUPPORT_FILEFORMAT_QOA)
     else if (IsFileExtension(fileName, ".qoa"))
     {
-        qoa_desc qoa = { 0 };
-        qoa.channels = wave.channels;
-        qoa.samplerate = wave.sampleRate;
-        qoa.samples = wave.frameCount;
+        if (wave.sampleSize == 16)
+        {
+            qoa_desc qoa = { 0 };
+            qoa.channels = wave.channels;
+            qoa.samplerate = wave.sampleRate;
+            qoa.samples = wave.frameCount;
 
-        // TODO: Review wave.data format required for export
-        success = qoa_write(fileName, wave.data, &qoa);
+            int bytesWritten = qoa_write(fileName, wave.data, &qoa);
+            if (bytesWritten > 0) success = true;
+        }
+        else TRACELOG(LOG_WARNING, "AUDIO: Wave data must be 16 bit per sample for QOA format export");
     }
 #endif
     else if (IsFileExtension(fileName, ".raw"))
