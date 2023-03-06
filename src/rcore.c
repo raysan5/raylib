@@ -2133,14 +2133,14 @@ void BeginEventRecording(bool displayText)
     eventsRecordingStartFrame = CORE.Time.frameCounter;
 }
 
-void StopEventRecording(char *fileName)
+void StopEventRecording(const char *fileName)
 {
     eventsTextDrawing = false;
     eventsRecording = false;
     ExportAutomationEvents(fileName);
 }
 
-void PlayEventRecording(char *fileName, bool displayText)
+void PlayEventRecording(const char *fileName, bool displayText)
 {
     eventsTextDrawing = displayText;
     eventsRecording = false;

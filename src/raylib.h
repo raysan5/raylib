@@ -1589,8 +1589,8 @@ RLAPI void DetachAudioMixedProcessor(AudioCallback processor); // Detach audio s
 // Event Recording & Replaying
 //------------------------------------------------------------------------------------
 RLAPI void BeginEventRecording(bool displayText);
-RLAPI void StopEventRecording(char *fileName);
-RLAPI void PlayEventRecording(char *fileName, bool displayText);
+RLAPI void StopEventRecording(const char *fileName);
+RLAPI void PlayEventRecording(const char *fileName, bool displayText);
 #endif
 
 #if defined(__cplusplus)
