@@ -604,8 +604,11 @@ typedef struct AutomationEvent {
 
 static AutomationEvent *events = NULL;        // Events array
 static unsigned int eventCount = 0;     // Events count
+static unsigned int eventsPlayed = 0;   // Count of events played
 static bool eventsPlaying = false;      // Play events
 static bool eventsRecording = false;    // Record events
+static bool eventsTextDrawing = false;  // Displaying events recording status
+static unsigned int eventsRecordingStartFrame = 0;
 
 //static short eventsEnabled = 0b0000001111111111;    // Events enabled for checking
 #endif
@@ -2122,6 +2125,31 @@ void BeginDrawing(void)
                                         // NOTE: Not required with OpenGL 3.3+
 }
 
+#if defined(SUPPORT_EVENTS_AUTOMATION)
+void BeginEventRecording(bool displayText)
+{
+    eventsRecording = true;
+    eventsTextDrawing = displayText;
+    eventsRecordingStartFrame = CORE.Time.frameCounter;
+}
+
+void StopEventRecording(char *fileName)
+{
+    eventsTextDrawing = false;
+    eventsRecording = false;
+    ExportAutomationEvents(fileName);
+}
+
+void PlayEventRecording(char *fileName, bool displayText)
+{
+    eventsTextDrawing = displayText;
+    eventsRecording = false;
+    eventsPlaying  = true;
+    LoadAutomationEvents(fileName);
+    TRACELOG(LOG_WARNING, "eventsPlaying enabled!");
+}
+#endif
+
 // End canvas drawing and swap buffers (double buffering)
 void EndDrawing(void)
 {
@@ -2164,7 +2192,7 @@ void EndDrawing(void)
     {
         gifFrameCounter++;
 
-        if (((gifFrameCounter/15)%2) == 1)
+        if (((gifFrameCounter/15)%2) == 1 && eventsTextDrawing)
         {
             DrawCircle(30, CORE.Window.screen.height - 20, 10, MAROON);
             DrawText("EVENTS RECORDING", 50, CORE.Window.screen.height - 25, 10, RED);
@@ -2176,7 +2204,7 @@ void EndDrawing(void)
     {
         gifFrameCounter++;
 
-        if (((gifFrameCounter/15)%2) == 1)
+        if (((gifFrameCounter/15)%2) == 1 && eventsTextDrawing)
         {
             DrawCircle(30, CORE.Window.screen.height - 20, 10, LIME);
             DrawText("EVENTS PLAYING", 50, CORE.Window.screen.height - 25, 10, GREEN);
@@ -2213,12 +2241,20 @@ void EndDrawing(void)
 
 #if defined(SUPPORT_EVENTS_AUTOMATION)
     // Events recording and playing logic
-    if (eventsRecording) RecordAutomationEvent(CORE.Time.frameCounter);
+    if (eventsRecording) RecordAutomationEvent(CORE.Time.frameCounter - eventsRecordingStartFrame);
     else if (eventsPlaying)
     {
         // TODO: When should we play? After/before/replace PollInputEvents()?
-        if (CORE.Time.frameCounter >= eventCount) eventsPlaying = false;
-        PlayAutomationEvent(CORE.Time.frameCounter);
+        //if (CORE.Time.frameCounter >= eventCount) eventsPlaying = false;
+        //PlayAutomationEvent(CORE.Time.frameCounter);
+        if(eventsPlayed >= eventCount)
+        {
+            eventsPlaying = false;
+            eventsPlayed = 0;
+        } else {
+            PlayAutomationEvent(eventsPlayed);
+            eventsPlayed++;
+        }
     }
 #endif
 
@@ -5481,17 +5517,17 @@ static void KeyCallback(GLFWwindow *window, int key, int scancode, int action, i
 #if defined(SUPPORT_EVENTS_AUTOMATION)
     if ((key == GLFW_KEY_F11) && (action == GLFW_PRESS))
     {
-        eventsRecording = !eventsRecording;
-
-        // On finish recording, we export events into a file
-        if (!eventsRecording) ExportAutomationEvents("eventsrec.rep");
+        if(!eventsRecording)
+        {
+            BeginEventRecording(true);
+        } else {
+            // On finish recording, we export events into a file
+            StopEventRecording("eventsrec.rep");
+        }
     }
     else if ((key == GLFW_KEY_F9) && (action == GLFW_PRESS))
     {
-        LoadAutomationEvents("eventsrec.rep");
-        eventsPlaying = true;
-
-        TRACELOG(LOG_WARNING, "eventsPlaying enabled!");
+        PlayEventRecording("eventsrec.rep", true);
     }
 #endif
 }
@@ -6986,6 +7022,7 @@ static void LoadAutomationEvents(const char *fileName)
     }
 
     TRACELOG(LOG_WARNING, "Events loaded: %i", eventCount);
+    TRACELOG(LOG_WARNING, "repFile: '%p'", repFile);
 }
 
 // Export recorded events into a file

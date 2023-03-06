@@ -1584,6 +1584,15 @@ RLAPI void DetachAudioStreamProcessor(AudioStream stream, AudioCallback processo
 RLAPI void AttachAudioMixedProcessor(AudioCallback processor); // Attach audio stream processor to the entire audio pipeline
 RLAPI void DetachAudioMixedProcessor(AudioCallback processor); // Detach audio stream processor from the entire audio pipeline
 
+#if defined(SUPPORT_EVENTS_AUTOMATION)
+//------------------------------------------------------------------------------------
+// Event Recording & Replaying
+//------------------------------------------------------------------------------------
+RLAPI void BeginEventRecording(bool displayText);
+RLAPI void StopEventRecording(char *fileName);
+RLAPI void PlayEventRecording(char *fileName, bool displayText);
+#endif
+
 #if defined(__cplusplus)
 }
 #endif
