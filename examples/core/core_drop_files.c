@@ -34,7 +34,7 @@ int main(void)
 
     int filePathCounter = 0;
     char *filePaths[MAX_FILEPATH_RECORDED] = { 0 }; // We will register a maximum of filepaths
-    
+
     // Allocate space for the required file paths
     for (int i = 0; i < MAX_FILEPATH_RECORDED; i++)
     {
@@ -94,7 +94,7 @@ int main(void)
 
     // De-Initialization
     //--------------------------------------------------------------------------------------
-    for (int i = 0; i < MAX_FILEPATH_RECORDED; i++) 
+    for (int i = 0; i < MAX_FILEPATH_RECORDED; i++)
     {
         RL_FREE(filePaths[i]); // Free allocated memory for all filepaths
     }

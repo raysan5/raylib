@@ -160,7 +160,7 @@ Matrix GetCameraProjectionMatrix(Camera* camera, float aspect);
                             // MatrixOrtho()
                             // MatrixIdentity()
 
-// raylib required functionality: 
+// raylib required functionality:
                             // GetMouseDelta()
                             // GetMouseWheelMove()
                             // IsKeyDown()
@@ -223,7 +223,7 @@ Vector3 GetCameraRight(Camera *camera)
 {
     Vector3 forward = GetCameraForward(camera);
     Vector3 up = GetCameraUp(camera);
-    
+
     return Vector3CrossProduct(forward, up);
 }
 
@@ -251,7 +251,7 @@ void CameraMoveForward(Camera *camera, float distance, bool moveInWorldPlane)
 void CameraMoveUp(Camera *camera, float distance)
 {
     Vector3 up = GetCameraUp(camera);
-    
+
     // Scale by distance
     up = Vector3Scale(up, distance);
 
@@ -410,7 +410,7 @@ Matrix GetCameraProjectionMatrix(Camera *camera, float aspect)
 
         return MatrixOrtho(-right, right, -top, top, CAMERA_CULL_DISTANCE_NEAR, CAMERA_CULL_DISTANCE_FAR);
     }
-    
+
     return MatrixIdentity();
 }
 
@@ -425,7 +425,7 @@ void UpdateCamera(Camera *camera, int mode)
     bool rotateAroundTarget = ((mode == CAMERA_THIRD_PERSON) || (mode == CAMERA_ORBITAL));
     bool lockView = ((mode == CAMERA_FIRST_PERSON) || (mode == CAMERA_THIRD_PERSON) || (mode == CAMERA_ORBITAL));
     bool rotateUp = (mode == CAMERA_FREE);
-    
+
     if (mode == CAMERA_ORBITAL)
     {
         // Orbital can just orbit
@@ -446,7 +446,7 @@ void UpdateCamera(Camera *camera, int mode)
 
         CameraYaw(camera, -mousePositionDelta.x*CAMERA_MOUSE_MOVE_SENSITIVITY, rotateAroundTarget);
         CameraPitch(camera, -mousePositionDelta.y*CAMERA_MOUSE_MOVE_SENSITIVITY, lockView, rotateAroundTarget, rotateUp);
-  
+
         // Camera movement
         if (IsKeyDown(KEY_W)) CameraMoveForward(camera, CAMERA_MOVE_SPEED, moveInWorldPlane);
         if (IsKeyDown(KEY_A)) CameraMoveRight(camera, -CAMERA_MOVE_SPEED, moveInWorldPlane);

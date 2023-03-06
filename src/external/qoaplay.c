@@ -7,19 +7,19 @@
 *   qoaplay also provides some functions to seek to a specific frame.
 *
 *   LICENSE: MIT License
-*   
+*
 *   Copyright (c) 2023 Dominic Szablewski (@phoboslab), reviewed by Ramon Santamaria (@raysan5)
-*   
+*
 *   Permission is hereby granted, free of charge, to any person obtaining a copy
 *   of this software and associated documentation files (the "Software"), to deal
 *   in the Software without restriction, including without limitation the rights
 *   to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
 *   copies of the Software, and to permit persons to whom the Software is
 *   furnished to do so, subject to the following conditions:
-*   
+*
 *   The above copyright notice and this permission notice shall be included in all
 *   copies or substantial portions of the Software.
-*   
+*
 *   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 *   IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 *   FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -121,7 +121,7 @@ qoaplay_desc *qoaplay_open(char *path)
 	qoa_ctx->info.channels = qoa.channels;
 	qoa_ctx->info.samplerate = qoa.samplerate;
 	qoa_ctx->info.samples = qoa.samples;
-    
+
 	return qoa_ctx;
 }
 
@@ -174,15 +174,15 @@ void qoaplay_close(qoaplay_desc *qoa_ctx)
 		QOA_FREE(qoa_ctx->file_data);
 		qoa_ctx->file_data_size = 0;
 	}
-    
+
 	QOA_FREE(qoa_ctx);
 }
 
 // Decode one frame from QOA data
 unsigned int qoaplay_decode_frame(qoaplay_desc *qoa_ctx)
-{    
+{
     if (qoa_ctx->file) qoa_ctx->buffer_len = fread(qoa_ctx->buffer, 1, qoa_max_frame_size(&qoa_ctx->info), qoa_ctx->file);
-    else 
+    else
     {
         qoa_ctx->buffer_len = qoa_max_frame_size(&qoa_ctx->info);
         memcpy(qoa_ctx->buffer, qoa_ctx->file_data + qoa_ctx->file_data_offset, qoa_ctx->buffer_len);
@@ -193,14 +193,14 @@ unsigned int qoaplay_decode_frame(qoaplay_desc *qoa_ctx)
 	qoa_decode_frame(qoa_ctx->buffer, qoa_ctx->buffer_len, &qoa_ctx->info, qoa_ctx->sample_data, &frame_len);
 	qoa_ctx->sample_data_pos = 0;
 	qoa_ctx->sample_data_len = frame_len;
-    
+
 	return frame_len;
 }
 
 // Rewind QOA file or memory pointer to beginning
 void qoaplay_rewind(qoaplay_desc *qoa_ctx)
 {
-	if (qoa_ctx->file) fseek(qoa_ctx->file, qoa_ctx->first_frame_pos, SEEK_SET);     
+	if (qoa_ctx->file) fseek(qoa_ctx->file, qoa_ctx->first_frame_pos, SEEK_SET);
     else qoa_ctx->file_data_offset = 0;
 
 	qoa_ctx->sample_position = 0;
@@ -213,7 +213,7 @@ unsigned int qoaplay_decode(qoaplay_desc *qoa_ctx, float *sample_data, int num_s
 {
 	int src_index = qoa_ctx->sample_data_pos*qoa_ctx->info.channels;
 	int dst_index = 0;
-    
+
 	for (int i = 0; i < num_samples; i++)
     {
 		// Do we have to decode more samples?
@@ -225,20 +225,20 @@ unsigned int qoaplay_decode(qoaplay_desc *qoa_ctx, float *sample_data, int num_s
 				qoaplay_rewind(qoa_ctx);
 				qoaplay_decode_frame(qoa_ctx);
 			}
-            
+
 			src_index = 0;
 		}
 
 		// Normalize to -1..1 floats and write to dest
-		for (int c = 0; c < qoa_ctx->info.channels; c++) 
+		for (int c = 0; c < qoa_ctx->info.channels; c++)
         {
 			sample_data[dst_index++] = qoa_ctx->sample_data[src_index++]/32768.0;
 		}
-        
+
 		qoa_ctx->sample_data_pos++;
 		qoa_ctx->sample_position++;
 	}
-    
+
 	return num_samples;
 }
 
@@ -272,7 +272,7 @@ void qoaplay_seek_frame(qoaplay_desc *qoa_ctx, int frame)
 	qoa_ctx->sample_data_pos = 0;
 
 	unsigned int offset = qoa_ctx->first_frame_pos + frame*qoa_max_frame_size(&qoa_ctx->info);
-    
+
 	if (qoa_ctx->file) fseek(qoa_ctx->file, offset, SEEK_SET);
     else qoa_ctx->file_data_offset = offset;
 }

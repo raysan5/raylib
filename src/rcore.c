@@ -1555,7 +1555,7 @@ void ClearWindowState(unsigned int flags)
 
 // Set icon for window (only PLATFORM_DESKTOP)
 // NOTE 1: Image must be in RGBA format, 8bit per channel
-// NOTE 2: Image is scaled by the OS for all required sizes 
+// NOTE 2: Image is scaled by the OS for all required sizes
 void SetWindowIcon(Image image)
 {
 #if defined(PLATFORM_DESKTOP)
@@ -1586,7 +1586,7 @@ void SetWindowIcon(Image image)
 // Set icon for window (multiple images, only PLATFORM_DESKTOP)
 // NOTE 1: Images must be in RGBA format, 8bit per channel
 // NOTE 2: The multiple images are used depending on provided sizes
-// Standard Windows icon sizes: 256, 128, 96, 64, 48, 32, 24, 16 
+// Standard Windows icon sizes: 256, 128, 96, 64, 48, 32, 24, 16
 void SetWindowIcons(Image *images, int count)
 {
 #if defined(PLATFORM_DESKTOP)
@@ -2580,7 +2580,7 @@ bool IsShaderReady(Shader shader)
     // The following locations are tried to be set automatically (locs[i] >= 0),
     // any of them can be checked for validation but the only mandatory one is, afaik, SHADER_LOC_VERTEX_POSITION
     // NOTE: Users can also setup manually their own attributes/uniforms and do not used the default raylib ones
-    
+
     // Vertex shader attribute locations (default)
     // shader.locs[SHADER_LOC_VERTEX_POSITION]      // Set by default internal shader
     // shader.locs[SHADER_LOC_VERTEX_TEXCOORD01]    // Set by default internal shader
