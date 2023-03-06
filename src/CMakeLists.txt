@@ -62,7 +62,7 @@ if (NOT BUILD_SHARED_LIBS)
     add_library(raylib_static ALIAS raylib)
 else()
     MESSAGE(STATUS "Building raylib shared library")
-    if (MSVC)
+    if (WIN32)
         target_compile_definitions(raylib
                                    PRIVATE $<BUILD_INTERFACE:BUILD_LIBTYPE_SHARED>
                                    INTERFACE $<INSTALL_INTERFACE:USE_LIBTYPE_SHARED>
