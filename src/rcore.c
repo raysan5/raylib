@@ -5598,25 +5598,28 @@ static void CursorEnterCallback(GLFWwindow *window, int enter)
 // GLFW3 Window Drop Callback, runs when drop files into window
 static void WindowDropCallback(GLFWwindow *window, int count, const char **paths)
 {
-    // In case previous dropped filepaths have not been freed, we free them
-    if (CORE.Window.dropFileCount > 0)
+    if (count > 0)
     {
-        for (unsigned int i = 0; i < CORE.Window.dropFileCount; i++) RL_FREE(CORE.Window.dropFilepaths[i]);
+        // In case previous dropped filepaths have not been freed, we free them
+        if (CORE.Window.dropFileCount > 0)
+        {
+            for (unsigned int i = 0; i < CORE.Window.dropFileCount; i++) RL_FREE(CORE.Window.dropFilepaths[i]);
 
-        RL_FREE(CORE.Window.dropFilepaths);
+            RL_FREE(CORE.Window.dropFilepaths);
 
-        CORE.Window.dropFileCount = 0;
-        CORE.Window.dropFilepaths = NULL;
-    }
+            CORE.Window.dropFileCount = 0;
+            CORE.Window.dropFilepaths = NULL;
+        }
 
-    // WARNING: Paths are freed by GLFW when the callback returns, we must keep an internal copy
-    CORE.Window.dropFileCount = count;
-    CORE.Window.dropFilepaths = (char **)RL_CALLOC(CORE.Window.dropFileCount, sizeof(char *));
+        // WARNING: Paths are freed by GLFW when the callback returns, we must keep an internal copy
+        CORE.Window.dropFileCount = count;
+        CORE.Window.dropFilepaths = (char **)RL_CALLOC(CORE.Window.dropFileCount, sizeof(char *));
 
-    for (unsigned int i = 0; i < CORE.Window.dropFileCount; i++)
-    {
-        CORE.Window.dropFilepaths[i] = (char *)RL_CALLOC(MAX_FILEPATH_LENGTH, sizeof(char));
-        strcpy(CORE.Window.dropFilepaths[i], paths[i]);
+        for (unsigned int i = 0; i < CORE.Window.dropFileCount; i++)
+        {
+            CORE.Window.dropFilepaths[i] = (char *)RL_CALLOC(MAX_FILEPATH_LENGTH, sizeof(char));
+            strcpy(CORE.Window.dropFilepaths[i], paths[i]);
+        }
     }
 }
 #endif
