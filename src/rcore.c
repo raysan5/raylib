@@ -1558,7 +1558,7 @@ void ClearWindowState(unsigned int flags)
 
 // Set icon for window (only PLATFORM_DESKTOP)
 // NOTE 1: Image must be in RGBA format, 8bit per channel
-// NOTE 2: Image is scaled by the OS for all required sizes 
+// NOTE 2: Image is scaled by the OS for all required sizes
 void SetWindowIcon(Image image)
 {
 #if defined(PLATFORM_DESKTOP)
@@ -1589,7 +1589,7 @@ void SetWindowIcon(Image image)
 // Set icon for window (multiple images, only PLATFORM_DESKTOP)
 // NOTE 1: Images must be in RGBA format, 8bit per channel
 // NOTE 2: The multiple images are used depending on provided sizes
-// Standard Windows icon sizes: 256, 128, 96, 64, 48, 32, 24, 16 
+// Standard Windows icon sizes: 256, 128, 96, 64, 48, 32, 24, 16
 void SetWindowIcons(Image *images, int count)
 {
 #if defined(PLATFORM_DESKTOP)
@@ -1716,12 +1716,13 @@ void *GetWindowHandle(void)
     // NOTE: Returned handle is: void *HWND (windows.h)
     return glfwGetWin32Window(CORE.Window.handle);
 #endif
-#if defined(__linux__)
+#if defined(PLATFORM_DESKTOP) && defined(__linux__)
     // NOTE: Returned handle is: unsigned long Window (X.h)
     // typedef unsigned long XID;
     // typedef XID Window;
     //unsigned long id = (unsigned long)glfwGetX11Window(window);
-    return NULL;    // TODO: Find a way to return value... cast to void *?
+    //return NULL;    // TODO: Find a way to return value... cast to void *?
+    return (void *)CORE.Window.handle;
 #endif
 #if defined(__APPLE__)
     // NOTE: Returned handle is: (objc_object *)
@@ -2615,7 +2616,7 @@ bool IsShaderReady(Shader shader)
     // The following locations are tried to be set automatically (locs[i] >= 0),
     // any of them can be checked for validation but the only mandatory one is, afaik, SHADER_LOC_VERTEX_POSITION
     // NOTE: Users can also setup manually their own attributes/uniforms and do not used the default raylib ones
-    
+
     // Vertex shader attribute locations (default)
     // shader.locs[SHADER_LOC_VERTEX_POSITION]      // Set by default internal shader
     // shader.locs[SHADER_LOC_VERTEX_TEXCOORD01]    // Set by default internal shader
@@ -5633,25 +5634,28 @@ static void CursorEnterCallback(GLFWwindow *window, int enter)
 // GLFW3 Window Drop Callback, runs when drop files into window
 static void WindowDropCallback(GLFWwindow *window, int count, const char **paths)
 {
-    // In case previous dropped filepaths have not been freed, we free them
-    if (CORE.Window.dropFileCount > 0)
+    if (count > 0)
     {
-        for (unsigned int i = 0; i < CORE.Window.dropFileCount; i++) RL_FREE(CORE.Window.dropFilepaths[i]);
+        // In case previous dropped filepaths have not been freed, we free them
+        if (CORE.Window.dropFileCount > 0)
+        {
+            for (unsigned int i = 0; i < CORE.Window.dropFileCount; i++) RL_FREE(CORE.Window.dropFilepaths[i]);
 
-        RL_FREE(CORE.Window.dropFilepaths);
+            RL_FREE(CORE.Window.dropFilepaths);
 
-        CORE.Window.dropFileCount = 0;
-        CORE.Window.dropFilepaths = NULL;
-    }
+            CORE.Window.dropFileCount = 0;
+            CORE.Window.dropFilepaths = NULL;
+        }
 
-    // WARNING: Paths are freed by GLFW when the callback returns, we must keep an internal copy
-    CORE.Window.dropFileCount = count;
-    CORE.Window.dropFilepaths = (char **)RL_CALLOC(CORE.Window.dropFileCount, sizeof(char *));
+        // WARNING: Paths are freed by GLFW when the callback returns, we must keep an internal copy
+        CORE.Window.dropFileCount = count;
+        CORE.Window.dropFilepaths = (char **)RL_CALLOC(CORE.Window.dropFileCount, sizeof(char *));
 
-    for (unsigned int i = 0; i < CORE.Window.dropFileCount; i++)
-    {
-        CORE.Window.dropFilepaths[i] = (char *)RL_CALLOC(MAX_FILEPATH_LENGTH, sizeof(char));
-        strcpy(CORE.Window.dropFilepaths[i], paths[i]);
+        for (unsigned int i = 0; i < CORE.Window.dropFileCount; i++)
+        {
+            CORE.Window.dropFilepaths[i] = (char *)RL_CALLOC(MAX_FILEPATH_LENGTH, sizeof(char));
+            strcpy(CORE.Window.dropFilepaths[i], paths[i]);
+        }
     }
 }
 #endif

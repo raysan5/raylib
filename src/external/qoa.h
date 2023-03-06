@@ -22,12 +22,12 @@ not in the file header. A decoder may peek into the first frame of the file to
 find these values.
 
 In a valid QOA file all frames have the same number of channels and the same
-samplerate. These restriction may be releaxed for streaming. This remains to 
+samplerate. These restrictions may be relaxed for streaming. This remains to 
 be decided.
 
 All values in a QOA file are BIG ENDIAN. Luckily, EVERYTHING in a QOA file,
 including the headers, is 64 bit aligned, so it's possible to read files with 
-just a read_u64() that does the byte swapping if neccessary.
+just a read_u64() that does the byte swapping if necessary.
 
 In pseudocode, the file layout is as follows:
 
@@ -66,7 +66,7 @@ Wheras the 64bit qoa_slice_t is defined as follows:
 `sf_index` defines the scalefactor to use for this slice as an index into the
 qoa_scalefactor_tab[16]
 
-`r00`--`r19` are the residuals for the individiual samples, divided by the
+`r00`--`r19` are the residuals for the individual samples, divided by the
 scalefactor and quantized by the qoa_quant_tab[].
 
 In the decoder, a prediction of the next sample is computed by multiplying the 
@@ -153,7 +153,7 @@ typedef unsigned long long qoa_uint64_t;
 
 
 /* The quant_tab provides an index into the dequant_tab for residuals in the
-range of -8 .. 8. It maps this range to just 3bits and becommes less accurate at 
+range of -8 .. 8. It maps this range to just 3bits and becomes less accurate at 
 the higher end. Note that the residual zero is identical to the lowest positive 
 value. This is mostly fine, since the qoa_div() function always rounds away 
 from zero. */
@@ -169,7 +169,7 @@ static int qoa_quant_tab[17] = {
 less accurate at the higher end. In theory, the highest scalefactor that we
 would need to encode the highest 16bit residual is (2**16)/8 = 8192. However we
 rely on the LMS filter to predict samples accurately enough that a maximum 
-residual of one quarter of the 16 bit range is high sufficent. I.e. with the 
+residual of one quarter of the 16 bit range is high sufficient. I.e. with the 
 scalefactor 2048 times the quant range of 8 we can encode residuals up to 2**14.
 
 The scalefactor values are computed as:
@@ -230,7 +230,7 @@ The next sample is predicted as the sum of (weight[i] * history[i]).
 
 The adjustment of the weights is done with a "Sign-Sign-LMS" that adds or
 subtracts the residual to each weight, based on the corresponding sample from 
-the history. This, suprisingly, is sufficent to get worthwhile predictions. 
+the history. This, surprisingly, is sufficient to get worthwhile predictions.
 
 This is all done with fixed point integers. Hence the right-shifts when updating
 the weights and calculating the prediction. */
@@ -369,7 +369,7 @@ unsigned int qoa_encode_frame(const short *sample_data, qoa_desc *qoa, unsigned 
 					int dequantized = qoa_dequant_tab[scalefactor][quantized];
 					int reconstructed = qoa_clamp(predicted + dequantized, -32768, 32767);
 
-					int error = (sample - reconstructed);
+					long long error = (sample - reconstructed);
 					current_error += error * error;
 					if (current_error > best_error) {
 						break;

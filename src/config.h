@@ -214,7 +214,7 @@
 #define SUPPORT_FILEFORMAT_WAV          1
 #define SUPPORT_FILEFORMAT_OGG          1
 #define SUPPORT_FILEFORMAT_MP3          1
-//#define SUPPORT_FILEFORMAT_QOA          1
+#define SUPPORT_FILEFORMAT_QOA          1
 //#define SUPPORT_FILEFORMAT_FLAC         1
 #define SUPPORT_FILEFORMAT_XM           1
 #define SUPPORT_FILEFORMAT_MOD          1
