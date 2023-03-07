@@ -100,6 +100,8 @@ Detailed changes:
 [models] ADDED: GLTF animation support (#2844) by @charles-l
 [models] ADDED: DrawCapsule() and DrawCapsuleWires() (#2761) by @IanBand
 [models] ADDED: LoadMaterials(), MTL files loading, same code as OBJ loader (#2872) by @JeffM2501
+[models] `WARNING`: REMOVED: UnloadModelKeepMeshes()
+[models] `WARNING`: REMOVED: DrawCubeTexture(), DrawCubeTextureRec(), functions moved to new example: `models_draw_cube_texture`
 [models] REVIEWED: DrawMesh(), using SHADER_LOC_COLOR_SPECULAR as a material map (#2908) by @haved
 [models] REVIEWED: LoadM3D() vertex color support (#2878) by @GithubPrankster, @bztsrc
 [models] REVIEWED: GenMeshHeightmap() (#2716)
@@ -107,7 +109,6 @@ Detailed changes:
 [models] REVIEWED: Simplify .vox signature check (#2752) by @CrezyDud
 [models] REVIEWED: LoadIQM(), support bone names loading if available (#2882) by @PencilAmazing
 [models] REVIEWED: GenMeshTangents(), avoid crash on missing texcoords data (#2927)
-[models] `WARNING`: REMOVED: DrawCubeTexture(), DrawCubeTextureRec(), functions moved to new example: `models_draw_cube_texture`
 [audio] ADDED: Full support for QOA audio file format
 [audio] ADDED: Mixed audio processor (#2929) by @hatkidchan
 [audio] ADDED: IsWaveReady()`, IsSoundReady(), IsMusicReady() (#2892) by @RobLoach
