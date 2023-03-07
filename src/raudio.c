@@ -485,13 +485,6 @@ void InitAudioDevice(void)
         return;
     }
 
-    // Init dummy audio buffers pool for multichannel sound playing
-    for (int i = 0; i < MAX_AUDIO_BUFFER_POOL_CHANNELS; i++)
-    {
-        // WARNING: An empty audio buffer is created (data = 0) and added to list, AudioBuffer data is filled on PlaySoundMulti()
-        AUDIO.MultiChannel.pool[i] = LoadAudioBuffer(AUDIO_DEVICE_FORMAT, AUDIO_DEVICE_CHANNELS, AUDIO.System.device.sampleRate, 0, AUDIO_BUFFER_USAGE_STATIC);
-    }
-
     TRACELOG(LOG_INFO, "AUDIO: Device initialized successfully");
     TRACELOG(LOG_INFO, "    > Backend:       miniaudio / %s", ma_get_backend_name(AUDIO.System.context.backend));
     TRACELOG(LOG_INFO, "    > Format:        %s -> %s", ma_get_format_name(AUDIO.System.device.playback.format), ma_get_format_name(AUDIO.System.device.playback.internalFormat));
@@ -507,20 +500,6 @@ void CloseAudioDevice(void)
 {
     if (AUDIO.System.isReady)
     {
-        // Unload dummy audio buffers pool
-        // WARNING: They can be pointing to already unloaded data
-        for (int i = 0; i < MAX_AUDIO_BUFFER_POOL_CHANNELS; i++)
-        {
-            //UnloadAudioBuffer(AUDIO.MultiChannel.pool[i]);
-            if (AUDIO.MultiChannel.pool[i] != NULL)
-            {
-                ma_data_converter_uninit(&AUDIO.MultiChannel.pool[i]->converter, NULL);
-                UntrackAudioBuffer(AUDIO.MultiChannel.pool[i]);
-                //RL_FREE(buffer->data);    // Already unloaded by UnloadSound()
-                RL_FREE(AUDIO.MultiChannel.pool[i]);
-            }
-        }
-
         ma_mutex_uninit(&AUDIO.System.lock);
         ma_device_uninit(&AUDIO.System.device);
         ma_context_uninit(&AUDIO.System.context);
