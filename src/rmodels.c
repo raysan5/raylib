@@ -1147,27 +1147,6 @@ void UnloadModel(Model model)
     TRACELOG(LOG_INFO, "MODEL: Unloaded model (and meshes) from RAM and VRAM");
 }
 
-// Unload model (but not meshes) from memory (RAM and/or VRAM)
-void UnloadModelKeepMeshes(Model model)
-{
-    // Unload materials maps
-    // NOTE: As the user could be sharing shaders and textures between models,
-    // we don't unload the material but just free its maps,
-    // the user is responsible for freeing models shaders and textures
-    for (int i = 0; i < model.materialCount; i++) RL_FREE(model.materials[i].maps);
-
-    // Unload arrays
-    RL_FREE(model.meshes);
-    RL_FREE(model.materials);
-    RL_FREE(model.meshMaterial);
-
-    // Unload animation data
-    RL_FREE(model.bones);
-    RL_FREE(model.bindPose);
-
-    TRACELOG(LOG_INFO, "MODEL: Unloaded model (but not meshes) from RAM and VRAM");
-}
-
 // Compute model bounding box limits (considers all meshes)
 BoundingBox GetModelBoundingBox(Model model)
 {
