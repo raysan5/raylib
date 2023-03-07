@@ -111,6 +111,7 @@ Detailed changes:
 [audio] ADDED: Full support for QOA audio file format
 [audio] ADDED: Mixed audio processor (#2929) by @hatkidchan
 [audio] ADDED: IsWaveReady()`, IsSoundReady(), IsMusicReady() (#2892) by @RobLoach
+[audio] `WARNING`: REMOVED: Multichannel audio API: PlaySoundMulti(), StopSoundMulti()
 [audio] REVIEWED: Clear PCM buffer state when closing audio device (#2736) by @veins1
 [audio] REVIEWED: Android backend selected (#2118, #2875) by @planetis-m
 [audio] REVIEWED: Change default threading model for COM objects in miniaudio
