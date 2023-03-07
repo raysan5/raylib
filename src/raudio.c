@@ -912,11 +912,11 @@ Sound LoadSoundFromWave(Wave wave)
 // Checks if a sound is ready
 bool IsSoundReady(Sound sound)
 {
-    return ((sound.frameCount > 0) &&       // Validate frame count
-        (sound.stream.buffer != NULL) &&    // Validate stream buffer
-        (sound.stream.sampleRate > 0) &&    // Validate sample rate is supported
-        (sound.stream.sampleSize > 0) &&    // Validate sample size is supported
-        (sound.stream.channels > 0));       // Validate number of channels supported
+    return ((sound.frameCount > 0) &&           // Validate frame count
+            (sound.stream.buffer != NULL) &&    // Validate stream buffer
+            (sound.stream.sampleRate > 0) &&    // Validate sample rate is supported
+            (sound.stream.sampleSize > 0) &&    // Validate sample size is supported
+            (sound.stream.channels > 0));       // Validate number of channels supported
 }
 
 // Unload wave data

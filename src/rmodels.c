@@ -1112,7 +1112,13 @@ Model LoadModelFromMesh(Mesh mesh)
 // Check if a model is ready
 bool IsModelReady(Model model)
 {
-    return model.meshes != NULL && model.materials != NULL && model.meshMaterial != NULL && model.meshCount > 0 && model.materialCount > 0;
+    return ((model.meshes != NULL) &&           // Validate model contains some mesh
+            (model.materials != NULL) &&        // Validate model contains some material (at least default one)
+            (model.meshMaterial != NULL) &&     // Validate mesh-material linkage
+            (model.meshCount > 0) &&            // Validate mesh count
+            (model.materialCount > 0));         // Validate material count
+            
+    // NOTE: This is a very general model validation, many elements could be validated from a model... 
 }
 
 // Unload model (meshes/materials) from memory (RAM and/or VRAM)
@@ -1959,7 +1965,8 @@ Material LoadMaterialDefault(void)
 // Check if a material is ready
 bool IsMaterialReady(Material material)
 {
-    return material.maps != NULL;
+    return ((material.maps != NULL) &&      // Validate material contain some map
+            (material.shader.id > 0));      // Validate material shader is valid
 }
 
 // Unload material from memory

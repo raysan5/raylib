@@ -3362,7 +3362,9 @@ void UnloadTexture(Texture2D texture)
 // Check if a render texture is ready
 bool IsRenderTextureReady(RenderTexture2D target)
 {
-    return target.id > 0 && IsTextureReady(target.depth) && IsTextureReady(target.texture);
+    return ((target.id > 0) &&                  // Validate OpenGL id
+            IsTextureReady(target.depth) &&     // Validate FBO depth texture/renderbuffer
+            IsTextureReady(target.texture));    // Validate FBO texture 
 }
 
 // Unload render texture from GPU memory (VRAM)
