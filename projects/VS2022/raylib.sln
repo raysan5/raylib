@@ -17,8 +17,6 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "textures_image_drawing", "e
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "audio_module_playing", "examples\audio_module_playing.vcxproj", "{E6784F91-4E4E-4956-A079-73FAB1AC7BE6}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "audio_multichannel_sound", "examples\audio_multichannel_sound.vcxproj", "{9875B0C8-3893-43F8-88B2-4BAAAE3E8E6F}"
-EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "audio_music_stream", "examples\audio_music_stream.vcxproj", "{BFB22AB2-041B-4A1B-80C0-1D4BE410C8A9}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "audio_raw_stream", "examples\audio_raw_stream.vcxproj", "{93A1F656-0D29-4C5E-B140-11F23FF5D6AB}"

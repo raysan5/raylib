@@ -531,7 +531,6 @@ AUDIO = \
     audio/audio_music_stream \
     audio/audio_raw_stream \
     audio/audio_sound_loading \
-    audio/audio_multichannel_sound \
     audio/audio_stream_effects
 
 CURRENT_MAKEFILE = $(lastword $(MAKEFILE_LIST))

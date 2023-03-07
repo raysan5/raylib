@@ -503,7 +503,6 @@ AUDIO = \
     audio/audio_music_stream \
     audio/audio_raw_stream \
     audio/audio_sound_loading \
-    audio/audio_multichannel_sound \
     audio/audio_stream_effects
 
 CURRENT_MAKEFILE = $(lastword $(MAKEFILE_LIST))
@@ -1002,11 +1001,6 @@ audio/audio_raw_stream: audio/audio_raw_stream.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) -s TOTAL_MEMORY=67108864
 
 audio/audio_sound_loading: audio/audio_sound_loading.c
-	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
-    --preload-file audio/resources/sound.wav@resources/sound.wav \
-    --preload-file audio/resources/target.ogg@resources/target.ogg
-
-audio/audio_multichannel_sound: audio/audio_multichannel_sound.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
     --preload-file audio/resources/sound.wav@resources/sound.wav \
     --preload-file audio/resources/target.ogg@resources/target.ogg
