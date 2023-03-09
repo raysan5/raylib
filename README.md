@@ -1,3 +1,13 @@
+raylib's Nintendo Switch Port
+--------
+This is the repository of the Nintendo Switch port of the raylib using LibNX running over the Atmosphere CFW (others CFW should work too), although it's still fully compatible with all the others platforms, i recommend you to get it from the [main repository](https://github.com/raysan5/raylib) if you are looking to build it for other platforms.
+
+Please, follow the wiki page in order to install and use it:
+
+ - [Working on Switch](https://github.com/lucaskyer/raylib-nx/wiki/Working-on-Switch)
+
+---
+
 <img align="left" src="https://github.com/raysan5/raylib/blob/master/logo/raylib_logo_animation.gif" width="288px">
 
 **raylib is a simple and easy-to-use library to enjoy videogames programming.**

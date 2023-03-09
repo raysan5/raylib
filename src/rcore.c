@@ -11,6 +11,7 @@
 *       - PLATFORM_RPI:     Raspberry Pi 0,1,2,3 (Raspbian, native mode)
 *       - PLATFORM_DRM:     Linux native mode, including Raspberry Pi 4 with V3D fkms driver
 *       - PLATFORM_WEB:     HTML5 with WebAssembly
+*       - PLATFORM_NX:      Switch LibNX
 *
 *   CONFIGURATION:
 *
@@ -35,6 +36,10 @@
 *   #define PLATFORM_WEB
 *       Windowing and input system configured for HTML5 (run on browser), code converted from C to asm.js
 *       using emscripten compiler. OpenGL ES 2.0 required for direct translation to WebGL equivalent code.
+*
+*   #define PLATFORM_NX
+*       Windowing and input system configured for libnx (Nintendo Switch)
+*       graphic device is managed by EGL and inputs are processed is raw mode, reading from /dev/input/
 *
 *   #define SUPPORT_DEFAULT_FONT (default)
 *       Default font is loaded on window initialization to be available for the user to render simple text.
@@ -298,6 +303,16 @@
     #include <emscripten/html5.h>       // Emscripten HTML5 library
 #endif
 
+#if defined(PLATFORM_NX)
+    #include <switch.h>
+    #include <EGL/egl.h>    // EGL library
+    #include <EGL/eglext.h> // EGL extensions
+    #include <GLES2/gl2.h>  // OpenGL ES 2.0 library
+    #if defined(NX_USB_DEBUGGER)
+        #include "nxusb.h"
+    #endif
+#endif
+
 //----------------------------------------------------------------------------------
 // Defines and Macros
 //----------------------------------------------------------------------------------
@@ -380,7 +395,7 @@ typedef struct CoreData {
 #if defined(PLATFORM_RPI)
         EGL_DISPMANX_WINDOW_T handle;       // Native window handle (graphic device)
 #endif
-#if defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI) || defined(PLATFORM_DRM)
+#if defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI) || defined(PLATFORM_DRM) || defined(PLATFORM_NX)
 #if defined(PLATFORM_DRM)
         int fd;                             // File descriptor for /dev/dri/...
         drmModeConnector *connector;        // Direct Rendering Manager (DRM) mode connector
@@ -391,6 +406,9 @@ typedef struct CoreData {
         struct gbm_bo *prevBO;              // Previous GBM buffer object (during frame swapping)
         uint32_t prevFB;                    // Previous GBM framebufer (during frame swapping)
 #endif  // PLATFORM_DRM
+#if defined(PLATFORM_NX)
+        NWindow *gbmSurface;                // GBM surface
+#endif
         EGLDisplay device;                  // Native display device (physical screen connection)
         EGLSurface surface;                 // Surface to draw on, framebuffers (connected to context)
         EGLContext context;                 // Graphic context, mode in which drawing can be done
@@ -477,6 +495,8 @@ typedef struct CoreData {
             Vector2 position[MAX_TOUCH_POINTS];         // Touch position on screen
             char currentTouchState[MAX_TOUCH_POINTS];   // Registers current touch state
             char previousTouchState[MAX_TOUCH_POINTS];  // Registers previous touch state
+            // PLATFORM_NX           
+            long int deltaTime[MAX_TOUCH_POINTS];
         } Touch;
         struct {
             int lastButtonPressed;          // Register last gamepad button pressed
@@ -490,6 +510,11 @@ typedef struct CoreData {
             pthread_t threadId;             // Gamepad reading thread id
             int streamId[MAX_GAMEPADS];     // Gamepad device file descriptor
 #endif
+#if defined(PLATFORM_NX)
+            PadState nxPad[MAX_GAMEPADS];   // Gamepad state holder
+            HidNpadStyleTag nxPadStyle[MAX_GAMEPADS];
+            float yInverted[MAX_GAMEPADS];  // True -1.f False 1.f
+#endif
         } Gamepad;
     } Input;
     struct {
@@ -499,7 +524,7 @@ typedef struct CoreData {
         double draw;                        // Time measure for frame draw
         double frame;                       // Time measure for one frame
         double target;                      // Desired time for one frame, if 0 not applied
-#if defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI) || defined(PLATFORM_DRM)
+#if defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI) || defined(PLATFORM_DRM) || defined(PLATFORM_NX)
         unsigned long long base;            // Base time measure for hi-res timer
 #endif
         unsigned int frameCounter;          // Frame counter
@@ -521,6 +546,10 @@ static int screenshotCounter = 0;           // Screenshots counter
 static int gifFrameCounter = 0;             // GIF frames counter
 static bool gifRecording = false;           // GIF recording state
 static MsfGifState gifState = { 0 };        // MSGIF context state
+#endif
+
+#if defined(PLATFORM_NX)
+    s32 prev_touchcount = 0;
 #endif
 
 #if defined(SUPPORT_EVENTS_AUTOMATION)
@@ -731,6 +760,9 @@ struct android_app *GetAndroidApp(void)
 // NOTE: data parameter could be used to pass any kind of required data to the initialization
 void InitWindow(int width, int height, const char *title)
 {
+#if defined(PLATFORM_NX) && defined(NX_USB_DEBUGGER)
+    NxUsbDebuggerInit();
+#endif
     TRACELOG(LOG_INFO, "Initializing raylib %s", RAYLIB_VERSION);
 
     TRACELOG(LOG_INFO, "Supported raylib modules:");
@@ -838,7 +870,7 @@ void InitWindow(int width, int height, const char *title)
         }
     }
 #endif
-#if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB) || defined(PLATFORM_RPI) || defined(PLATFORM_DRM)
+#if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB) || defined(PLATFORM_RPI) || defined(PLATFORM_DRM) || defined(PLATFORM_NX)
     // Initialize graphics device (display device and OpenGL context)
     // NOTE: returns true if window and graphic device has been initialized successfully
     CORE.Window.ready = InitGraphicsDevice(width, height);
@@ -892,6 +924,18 @@ void InitWindow(int width, int height, const char *title)
     InitEvdevInput();   // Evdev inputs initialization
     InitGamepad();      // Gamepad init
     InitKeyboard();     // Keyboard init (stdin)
+#endif
+
+#if defined(PLATFORM_NX)
+    // Configure our supported input layout
+    padConfigureInput(MAX_GAMEPADS, HidNpadStyleSet_NpadStandard);
+    // Initialize the gamepads
+    for (int i = 0; i < MAX_GAMEPADS; i++)
+    {
+        padInitialize(&CORE.Input.Gamepad.nxPad[i], i);
+    }
+    
+    hidInitializeTouchScreen();
 #endif
 
 #if defined(PLATFORM_WEB)
@@ -959,7 +1003,7 @@ void CloseWindow(void)
     timeEndPeriod(1);           // Restore time period
 #endif
 
-#if defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI)
+#if defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI) || defined(PLATFORM_NX)
     // Close surface, context and display
     if (CORE.Window.device != EGL_NO_DISPLAY)
     {
@@ -1078,6 +1122,9 @@ void CloseWindow(void)
 
     CORE.Window.ready = false;
     TRACELOG(LOG_INFO, "Window closed successfully");
+#if defined(PLATFORM_NX) && defined(NX_USB_DEBUGGER)
+    NxUsbDebuggerEnd();
+#endif
 }
 
 // Check if KEY_ESCAPE pressed or Close icon pressed
@@ -1109,7 +1156,10 @@ bool WindowShouldClose(void)
     else return true;
 #endif
 
-#if defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI) || defined(PLATFORM_DRM)
+#if defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI) || defined(PLATFORM_DRM) || defined(PLATFORM_NX)
+    #if defined(PLATFORM_NX)
+        if (!appletMainLoop()) return true;
+    #endif
     if (CORE.Window.ready) return CORE.Window.shouldClose;
     else return true;
 #endif
@@ -2883,7 +2933,7 @@ double GetTime(void)
     time = glfwGetTime();   // Elapsed time since glfwInit()
 #endif
 
-#if defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI) || defined(PLATFORM_DRM)
+#if defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI) || defined(PLATFORM_DRM) || defined(PLATFORM_NX)
     struct timespec ts = { 0 };
     clock_gettime(CLOCK_MONOTONIC, &ts);
     unsigned long long int nanoSeconds = (unsigned long long int)ts.tv_sec*1000000000LLU + (unsigned long long int)ts.tv_nsec;
@@ -3704,6 +3754,25 @@ const char *GetGamepadName(int gamepad)
 #if defined(PLATFORM_WEB)
     return CORE.Input.Gamepad.name[gamepad];
 #endif
+#if defined(PLATFORM_NX)
+    int type = CORE.Input.Gamepad.nxPadStyle[gamepad];
+    switch(type) {
+        case HidNpadStyleTag_NpadFullKey: return "Nintendo Switch Pro Controller";
+        case HidNpadStyleTag_NpadHandheld: return "Handheld Joy-Con controller";
+        case HidNpadStyleTag_NpadJoyDual: return "Dual Joy-Con controller";
+        case HidNpadStyleTag_NpadJoyLeft: return "Single Joy-Con left controller";
+        case HidNpadStyleTag_NpadJoyRight: return "Single Joy-Con right controller";
+        case HidNpadStyleTag_NpadGc: return "GameCube controller";
+        case HidNpadStyleTag_NpadPalma: return "Poké Ball Plus controller";
+        case HidNpadStyleTag_NpadLark: return "NES/Famicom controller";
+        case HidNpadStyleTag_NpadHandheldLark: return "Handheld NES/Famicom controller";
+        case HidNpadStyleTag_NpadLucia: return "SNES controller";
+        case HidNpadStyleTag_NpadLagon: return "N64 controller";
+        case HidNpadStyleTag_NpadLager: return "Sega Genesis controller";
+        case HidNpadStyleTag_NpadSystemExt: return "Generic external controller";
+        default: return "Generic controller";
+    }
+#endif
     return NULL;
 }
 
@@ -3729,6 +3798,21 @@ float GetGamepadAxisMovement(int gamepad, int axis)
 
     return value;
 }
+
+#if defined(PLATFORM_NX)
+void SetGamepadYAxisInverted(int gamepad, float yInverted)
+{        
+    if (yInverted == -1.0f || yInverted == 1.0f)
+    {
+        CORE.Input.Gamepad.yInverted[gamepad] = yInverted;
+    }
+}
+
+float GetGamepadYAxisInverted(int gamepad)
+{
+    return CORE.Input.Gamepad.yInverted[gamepad];
+}
+#endif
 
 // Check if a gamepad button has been pressed once
 bool IsGamepadButtonPressed(int gamepad, int button)
@@ -3914,13 +3998,24 @@ float GetMouseWheelMove(void)
 {
     float result = 0.0f;
 
-#if !defined(PLATFORM_ANDROID)
+#if !defined(PLATFORM_ANDROID) || !defined(PLATFORM_NX)
     if (fabsf(CORE.Input.Mouse.currentWheelMove.x) > fabsf(CORE.Input.Mouse.currentWheelMove.y)) result = (float)CORE.Input.Mouse.currentWheelMove.x;
     else result = (float)CORE.Input.Mouse.currentWheelMove.y;
 #endif
 
     return result;
 }
+
+#if defined(PLATFORM_NX)
+void SetCameraZoomFactor(Vector2 zoomFactor)
+{
+    CORE.Input.Mouse.currentWheelMove = zoomFactor;
+}
+void SetCameraPrevZoomFactor(Vector2 previousZoomFactor)
+{
+    CORE.Input.Mouse.previousWheelMove = previousZoomFactor;
+}
+#endif
 
 // Get mouse wheel movement X/Y as a vector
 Vector2 GetMouseWheelMoveV(void)
@@ -3950,7 +4045,7 @@ void SetMouseCursor(int cursor)
 // Get touch position X for touch point 0 (relative to screen size)
 int GetTouchX(void)
 {
-#if defined(PLATFORM_ANDROID) || defined(PLATFORM_WEB)
+#if defined(PLATFORM_ANDROID) || defined(PLATFORM_WEB) || defined(PLATFORM_NX)
     return (int)CORE.Input.Touch.position[0].x;
 #else   // PLATFORM_DESKTOP, PLATFORM_RPI, PLATFORM_DRM
     return GetMouseX();
@@ -3960,7 +4055,7 @@ int GetTouchX(void)
 // Get touch position Y for touch point 0 (relative to screen size)
 int GetTouchY(void)
 {
-#if defined(PLATFORM_ANDROID) || defined(PLATFORM_WEB)
+#if defined(PLATFORM_ANDROID) || defined(PLATFORM_WEB) || defined(PLATFORM_NX)
     return (int)CORE.Input.Touch.position[0].y;
 #else   // PLATFORM_DESKTOP, PLATFORM_RPI, PLATFORM_DRM
     return GetMouseY();
@@ -3979,7 +4074,7 @@ Vector2 GetTouchPosition(int index)
     // https://docs.microsoft.com/en-us/windows/win32/wintouch/getting-started-with-multi-touch-messages
     if (index == 0) position = GetMousePosition();
 #endif
-#if defined(PLATFORM_ANDROID) || defined(PLATFORM_WEB) || defined(PLATFORM_RPI) || defined(PLATFORM_DRM)
+#if defined(PLATFORM_ANDROID) || defined(PLATFORM_WEB) || defined(PLATFORM_RPI) || defined(PLATFORM_DRM) || defined(PLATFORM_NX)
     if (index < MAX_TOUCH_POINTS) position = CORE.Input.Touch.position[index];
     else TRACELOG(LOG_WARNING, "INPUT: Required touch point out of range (Max touch points: %i)", MAX_TOUCH_POINTS);
 #endif
@@ -4332,7 +4427,7 @@ static bool InitGraphicsDevice(int width, int height)
 
 #endif  // PLATFORM_DESKTOP || PLATFORM_WEB
 
-#if defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI) || defined(PLATFORM_DRM)
+#if defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI) || defined(PLATFORM_DRM) || defined(PLATFORM_NX)
     CORE.Window.fullscreen = true;
     CORE.Window.flags |= FLAG_FULLSCREEN_MODE;
 
@@ -4532,8 +4627,10 @@ static bool InitGraphicsDevice(int width, int height)
         //EGL_TRANSPARENT_TYPE, EGL_NONE, // Request transparent framebuffer (EGL_TRANSPARENT_RGB does not work on RPI)
         EGL_DEPTH_SIZE, 16,         // Depth buffer size (Required to use Depth testing!)
         //EGL_STENCIL_SIZE, 8,      // Stencil buffer size
+#if !defined(PLATFORM_NX)
         EGL_SAMPLE_BUFFERS, sampleBuffer,    // Activate MSAA
         EGL_SAMPLES, samples,       // 4x Antialiasing if activated (Free on MALI GPUs)
+#endif
         EGL_NONE
     };
 
@@ -4543,7 +4640,7 @@ static bool InitGraphicsDevice(int width, int height)
         EGL_NONE
     };
 
-#if defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI) || defined(PLATFORM_DRM)
+#if defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI) || defined(PLATFORM_DRM) || defined(PLATFORM_NX)
     EGLint numConfigs = 0;
 
     // Get an EGL device connection
@@ -4710,7 +4807,21 @@ static bool InitGraphicsDevice(int width, int height)
     //---------------------------------------------------------------------------------
 #endif  // PLATFORM_RPI
 
-#if defined(PLATFORM_DRM)
+#if defined(PLATFORM_NX)
+    CORE.Window.gbmSurface = nwindowGetDefault();
+    if (appletGetOperationMode() == AppletOperationMode_Console)
+    {
+        CORE.Window.display.width = 1920;
+        CORE.Window.display.height = 1080;
+    }
+    else if (appletGetOperationMode() == AppletOperationMode_Handheld)
+    {
+        CORE.Window.display.width = 1280;
+        CORE.Window.display.height = 720;
+    }
+#endif
+
+#if defined(PLATFORM_DRM) || defined(PLATFORM_NX)
     CORE.Window.surface = eglCreateWindowSurface(CORE.Window.device, CORE.Window.config, (EGLNativeWindowType)CORE.Window.gbmSurface, NULL);
     if (EGL_NO_SURFACE == CORE.Window.surface)
     {
@@ -4955,7 +5066,7 @@ void SwapScreenBuffer(void)
     glfwSwapBuffers(CORE.Window.handle);
 #endif
 
-#if defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI) || defined(PLATFORM_DRM)
+#if defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI) || defined(PLATFORM_DRM) || defined(PLATFORM_NX)
     eglSwapBuffers(CORE.Window.device, CORE.Window.surface);
 
 #if defined(PLATFORM_DRM)
@@ -4985,7 +5096,7 @@ void SwapScreenBuffer(void)
     CORE.Window.prevBO = bo;
 
 #endif  // PLATFORM_DRM
-#endif  // PLATFORM_ANDROID || PLATFORM_RPI || PLATFORM_DRM
+#endif  // PLATFORM_ANDROID || PLATFORM_RPI || PLATFORM_DRM || PLATFORM_NX
 }
 
 // Register all input events
@@ -5238,6 +5349,257 @@ void PollInputEvents(void)
         {
             //CORE.Window.shouldClose = true;
             //ANativeActivity_finish(CORE.Android.app->activity);
+        }
+    }
+#endif
+
+#if defined(PLATFORM_NX)
+/**
+ * Touch screen
+*/
+    HidTouchScreenState state = {0};
+    if (hidGetTouchScreenStates(&state, 1)) {
+        if (state.count != prev_touchcount)
+        {
+            prev_touchcount = state.count;
+        }
+        for(int i=0; i<state.count; i++)
+        {
+            CORE.Input.Touch.position[i].x = state.touches[i].x;
+            CORE.Input.Touch.position[i].y = state.touches[i].y;
+            CORE.Input.Touch.pointId[i] = state.touches[i].finger_id;
+
+            CORE.Input.Touch.deltaTime[i] = state.touches[i].delta_time;
+        }
+        CORE.Input.Touch.pointCount = state.count;
+    }
+
+/**
+ * Gamepad
+*/
+    for (int nxGamepadIndex = 0; nxGamepadIndex < MAX_GAMEPADS; nxGamepadIndex++)
+    {
+        // Scan the gamepad. This should be done once for each frame
+        padUpdate(&CORE.Input.Gamepad.nxPad[nxGamepadIndex]);
+        
+        CORE.Input.Gamepad.ready[nxGamepadIndex] = padIsConnected(&CORE.Input.Gamepad.nxPad[nxGamepadIndex]);
+        if (CORE.Input.Gamepad.ready[nxGamepadIndex]) {
+            CORE.Input.Gamepad.nxPadStyle[nxGamepadIndex] = hidGetNpadStyleSet(nxGamepadIndex);
+
+            // Returns the set of buttons that are currently pressed
+            u64 kHeld = padGetButtons(&CORE.Input.Gamepad.nxPad[nxGamepadIndex]);
+            u64 kButton;
+            for (int k = 0; k < MAX_GAMEPAD_BUTTONS; k++)
+            {
+                // Register previous gamepad states
+                CORE.Input.Gamepad.previousButtonState[nxGamepadIndex][k] = CORE.Input.Gamepad.currentButtonState[nxGamepadIndex][k];
+
+                // Check digital buttons
+                kButton = 0;
+                switch (k)
+                {
+                    case GAMEPAD_BUTTON_LEFT_FACE_UP: kButton = HidNpadButton_Up; break;
+                    case GAMEPAD_BUTTON_LEFT_FACE_RIGHT: kButton = HidNpadButton_Right; break;
+                    case GAMEPAD_BUTTON_LEFT_FACE_DOWN: kButton = HidNpadButton_Down; break;
+                    case GAMEPAD_BUTTON_LEFT_FACE_LEFT: kButton = HidNpadButton_Left; break;
+                    case GAMEPAD_BUTTON_RIGHT_FACE_UP: kButton = HidNpadButton_X; break;
+                    case GAMEPAD_BUTTON_RIGHT_FACE_RIGHT: kButton = HidNpadButton_A; break;
+                    case GAMEPAD_BUTTON_RIGHT_FACE_DOWN: kButton = HidNpadButton_B; break;
+                    case GAMEPAD_BUTTON_RIGHT_FACE_LEFT: kButton = HidNpadButton_Y; break;                
+                    case GAMEPAD_BUTTON_LEFT_TRIGGER_1: kButton = HidNpadButton_L; break;
+                    case GAMEPAD_BUTTON_LEFT_TRIGGER_2: kButton = HidNpadButton_ZL; break;
+                    case GAMEPAD_BUTTON_RIGHT_TRIGGER_1: kButton = HidNpadButton_R; break;
+                    case GAMEPAD_BUTTON_RIGHT_TRIGGER_2: kButton = HidNpadButton_ZR; break;
+                    case GAMEPAD_BUTTON_MIDDLE_LEFT: kButton = HidNpadButton_Minus; break;
+                    case GAMEPAD_BUTTON_MIDDLE_RIGHT: kButton = HidNpadButton_Plus; break;
+                    case GAMEPAD_BUTTON_LEFT_THUMB: kButton = HidNpadButton_StickL; break;
+                    case GAMEPAD_BUTTON_RIGHT_THUMB: kButton = HidNpadButton_StickR; break;
+                }
+                if (kHeld & kButton) {
+                    CORE.Input.Gamepad.currentButtonState[nxGamepadIndex][k] = 1;
+                    CORE.Input.Gamepad.lastButtonPressed = k;
+                } else {
+                    CORE.Input.Gamepad.currentButtonState[nxGamepadIndex][k] = 0;
+                }
+            }
+
+            // Check analogic axis and buttons
+            HidAnalogStickState kAxisL = padGetStickPos(&CORE.Input.Gamepad.nxPad[nxGamepadIndex], 0);
+            HidAnalogStickState kAxisR = padGetStickPos(&CORE.Input.Gamepad.nxPad[nxGamepadIndex], 1);
+
+            CORE.Input.Gamepad.axisState[nxGamepadIndex][GAMEPAD_AXIS_LEFT_X] = (float)kAxisL.x / 32767.0f;
+            CORE.Input.Gamepad.axisState[nxGamepadIndex][GAMEPAD_AXIS_LEFT_Y] = (float)kAxisL.y / 32767.0f;
+            CORE.Input.Gamepad.axisState[nxGamepadIndex][GAMEPAD_AXIS_RIGHT_X] = (float)kAxisR.x / 32767.0f;
+            CORE.Input.Gamepad.axisState[nxGamepadIndex][GAMEPAD_AXIS_RIGHT_Y] = (float)kAxisR.y / 32767.0f;
+            CORE.Input.Gamepad.axisState[nxGamepadIndex][GAMEPAD_AXIS_LEFT_TRIGGER] = (kHeld & HidNpadButton_ZL) ? 1.0f : 0.0f;
+            CORE.Input.Gamepad.axisState[nxGamepadIndex][GAMEPAD_AXIS_RIGHT_TRIGGER] = (kHeld & HidNpadButton_ZR) ? 1.0f : 0.0f;
+
+#if defined(ENABLE_DEV_EXIT)
+            if (kHeld & HidNpadButton_Plus && kHeld & HidNpadButton_Minus)
+            {
+                CORE.Window.shouldClose = true;
+            }
+#endif
+
+#if defined(NX_SUPPORT_GAMEPAD_EMULATION)
+
+            // Move Right (D key or right arrow)
+            CORE.Input.Keyboard.previousKeyState[KEY_RIGHT] = CORE.Input.Keyboard.currentKeyState[KEY_RIGHT];
+            CORE.Input.Keyboard.previousKeyState[KEY_D] = CORE.Input.Keyboard.currentKeyState[KEY_D];
+            if (kHeld & HidNpadButton_Right || kHeld & HidNpadButton_StickLRight) {
+                CORE.Input.Keyboard.currentKeyState[KEY_RIGHT] = 1;
+                CORE.Input.Keyboard.currentKeyState[KEY_D] = 1;
+            } else {
+                CORE.Input.Keyboard.currentKeyState[KEY_RIGHT] = 0;
+                CORE.Input.Keyboard.currentKeyState[KEY_D] = 0;
+            }
+
+            // Move Left (A key or left arrow)
+            CORE.Input.Keyboard.previousKeyState[KEY_LEFT] = CORE.Input.Keyboard.currentKeyState[KEY_LEFT];
+            CORE.Input.Keyboard.previousKeyState[KEY_A] = CORE.Input.Keyboard.currentKeyState[KEY_A];
+            if (kHeld & HidNpadButton_Left || kHeld & HidNpadButton_StickLLeft) {
+                CORE.Input.Keyboard.currentKeyState[KEY_LEFT] = 1;
+                CORE.Input.Keyboard.currentKeyState[KEY_A] = 1;
+            } else {
+                CORE.Input.Keyboard.currentKeyState[KEY_LEFT] = 0;
+                CORE.Input.Keyboard.currentKeyState[KEY_A] = 0;
+            }
+
+            // Move down (S key or down arrow)
+            CORE.Input.Keyboard.previousKeyState[KEY_DOWN] = CORE.Input.Keyboard.currentKeyState[KEY_DOWN];
+            CORE.Input.Keyboard.previousKeyState[KEY_S] = CORE.Input.Keyboard.currentKeyState[KEY_S];
+            if (kHeld & HidNpadButton_Down || kHeld & HidNpadButton_StickLDown) {
+                CORE.Input.Keyboard.currentKeyState[KEY_DOWN] = 1;
+                CORE.Input.Keyboard.currentKeyState[KEY_S] = 1;
+            } else {
+                CORE.Input.Keyboard.currentKeyState[KEY_DOWN] = 0;
+                CORE.Input.Keyboard.currentKeyState[KEY_S] = 0;
+            }
+
+            // Move up (W key or up arrow)
+            CORE.Input.Keyboard.previousKeyState[KEY_UP] = CORE.Input.Keyboard.currentKeyState[KEY_UP];
+            CORE.Input.Keyboard.previousKeyState[KEY_W] = CORE.Input.Keyboard.currentKeyState[KEY_W];
+            if (kHeld & HidNpadButton_Up || kHeld & HidNpadButton_StickLUp) {
+                CORE.Input.Keyboard.currentKeyState[KEY_UP] = 1;
+                CORE.Input.Keyboard.currentKeyState[KEY_W] = 1;
+            } else {
+                CORE.Input.Keyboard.currentKeyState[KEY_UP] = 0;
+                CORE.Input.Keyboard.currentKeyState[KEY_W] = 0;
+            }
+
+            // Gamepad Y (Q key)
+            CORE.Input.Keyboard.previousKeyState[KEY_Q] = CORE.Input.Keyboard.currentKeyState[KEY_Q];
+            if (kHeld & HidNpadButton_Y) {
+                CORE.Input.Keyboard.currentKeyState[KEY_Q] = 1;
+            } else {
+                CORE.Input.Keyboard.currentKeyState[KEY_Q] = 0;
+            }
+
+            // Gamepad A (E key)
+            CORE.Input.Keyboard.previousKeyState[KEY_E] = CORE.Input.Keyboard.currentKeyState[KEY_E];
+            if (kHeld & HidNpadButton_A) {
+                CORE.Input.Keyboard.currentKeyState[KEY_E] = 1;
+            } else {
+                CORE.Input.Keyboard.currentKeyState[KEY_E] = 0;
+            }
+
+            // Gamepad X (R key)
+            CORE.Input.Keyboard.previousKeyState[KEY_R] = CORE.Input.Keyboard.currentKeyState[KEY_R];
+            if (kHeld & HidNpadButton_X) {
+                CORE.Input.Keyboard.currentKeyState[KEY_R] = 1;
+            } else {
+                CORE.Input.Keyboard.currentKeyState[KEY_R] = 0;
+            }
+
+            // Gamepad B (F key)
+            CORE.Input.Keyboard.previousKeyState[KEY_F] = CORE.Input.Keyboard.currentKeyState[KEY_F];
+            if (kHeld & HidNpadButton_B) {
+                CORE.Input.Keyboard.currentKeyState[KEY_F] = 1;
+            } else {
+                CORE.Input.Keyboard.currentKeyState[KEY_F] = 0;
+            }
+
+            // Gamepad + and - (Escape)
+            CORE.Input.Keyboard.previousKeyState[KEY_ENTER] = CORE.Input.Keyboard.currentKeyState[KEY_ENTER];
+            CORE.Input.Keyboard.previousKeyState[KEY_SPACE] = CORE.Input.Keyboard.currentKeyState[KEY_SPACE];
+            CORE.Input.Keyboard.previousKeyState[KEY_ESCAPE] = CORE.Input.Keyboard.currentKeyState[KEY_ESCAPE];
+            if (kHeld & HidNpadButton_Plus && kHeld & HidNpadButton_Minus) {
+                CORE.Input.Keyboard.currentKeyState[KEY_ENTER] = 0;
+                CORE.Input.Keyboard.currentKeyState[KEY_SPACE] = 0;
+                CORE.Input.Keyboard.currentKeyState[KEY_ESCAPE] = 1;
+            } else {
+                if (kHeld & HidNpadButton_Plus) {
+                    CORE.Input.Keyboard.currentKeyState[KEY_ENTER] = 1;
+                } else {
+                    CORE.Input.Keyboard.currentKeyState[KEY_ENTER] = 0;
+                }
+                if (kHeld & HidNpadButton_Minus) {
+                    CORE.Input.Keyboard.currentKeyState[KEY_SPACE] = 1;
+                } else {
+                    CORE.Input.Keyboard.currentKeyState[KEY_SPACE] = 0;
+                }
+            }
+
+            // Gamepad Left Thumb (shift)
+            CORE.Input.Keyboard.previousKeyState[KEY_LEFT_SHIFT] = CORE.Input.Keyboard.currentKeyState[KEY_LEFT_SHIFT];
+            if (kHeld & GAMEPAD_BUTTON_LEFT_THUMB) {
+                CORE.Input.Keyboard.currentKeyState[KEY_LEFT_SHIFT] = 1;
+            } else {
+                CORE.Input.Keyboard.currentKeyState[KEY_LEFT_SHIFT] = 0;
+            }
+
+            // Gamepad ZL (mouse right)
+            CORE.Input.Mouse.previousButtonState[MOUSE_BUTTON_LEFT] = CORE.Input.Mouse.currentButtonState[MOUSE_BUTTON_LEFT];
+            if (kHeld & HidNpadButton_ZL) {
+                CORE.Input.Mouse.currentButtonState[MOUSE_BUTTON_RIGHT] = 1;
+            } else {
+                CORE.Input.Mouse.currentButtonState[MOUSE_BUTTON_RIGHT] = 0;
+            }
+
+            // Gamepad Right Thumb (mouse middle)
+            CORE.Input.Mouse.previousButtonState[MOUSE_BUTTON_MIDDLE] = CORE.Input.Mouse.currentButtonState[MOUSE_BUTTON_MIDDLE];
+            if (kHeld & GAMEPAD_BUTTON_RIGHT_THUMB) {
+                CORE.Input.Mouse.currentButtonState[MOUSE_BUTTON_MIDDLE] = 1;
+            } else {
+                CORE.Input.Mouse.currentButtonState[MOUSE_BUTTON_MIDDLE] = 0;
+            }
+
+            // Gamepad ZR (mouse left)
+            CORE.Input.Mouse.previousButtonState[MOUSE_BUTTON_RIGHT] = CORE.Input.Mouse.currentButtonState[MOUSE_BUTTON_RIGHT];
+            if (kHeld & HidNpadButton_ZR) {
+                CORE.Input.Mouse.currentButtonState[MOUSE_BUTTON_LEFT] = 1;
+            } else {
+                CORE.Input.Mouse.currentButtonState[MOUSE_BUTTON_LEFT] = 0;
+            }
+
+            // Gamepad L/R Bumpers (mouse wheel)
+            CORE.Input.Mouse.previousWheelMove = CORE.Input.Mouse.currentWheelMove;
+            if (kHeld & HidNpadButton_L) {
+                CORE.Input.Mouse.currentWheelMove = (Vector2){ 0.0f, -1.0f };
+            } else if (kHeld & HidNpadButton_R) {
+                CORE.Input.Mouse.currentWheelMove = (Vector2){ 0.0f, 1.0f };
+            } else {
+                CORE.Input.Mouse.currentWheelMove = (Vector2){ 0.0f, 0.0f };
+            }
+
+            // Gamepad Axis (mouse position)
+            CORE.Input.Mouse.previousPosition.x = CORE.Input.Mouse.currentPosition.x;
+            CORE.Input.Mouse.previousPosition.y = CORE.Input.Mouse.currentPosition.y;
+
+            CORE.Input.Mouse.currentPosition.x += CORE.Input.Gamepad.axisState[nxGamepadIndex][GAMEPAD_AXIS_RIGHT_X] * 10;
+            CORE.Input.Mouse.currentPosition.y -= CORE.Input.Gamepad.axisState[nxGamepadIndex][GAMEPAD_AXIS_RIGHT_Y] * 10;
+
+            // Clamp Mouse X to screen
+            if (CORE.Input.Mouse.currentPosition.x < 0) CORE.Input.Mouse.currentPosition.x = 0;
+            else if (CORE.Input.Mouse.currentPosition.x > CORE.Window.screen.width/CORE.Input.Mouse.scale.x) CORE.Input.Mouse.currentPosition.x = CORE.Window.screen.width/CORE.Input.Mouse.scale.x;
+
+            // Clamp Mouse Y to screen
+            if (CORE.Input.Mouse.currentPosition.y < 0) CORE.Input.Mouse.currentPosition.y = 0;
+            else if (CORE.Input.Mouse.currentPosition.y > CORE.Window.screen.height/CORE.Input.Mouse.scale.y) CORE.Input.Mouse.currentPosition.y = CORE.Window.screen.height/CORE.Input.Mouse.scale.y;
+
+            // Gamepad +/- pressed to exit
+            if (CORE.Input.Keyboard.currentKeyState[CORE.Input.Keyboard.exitKey] == 1) CORE.Window.shouldClose = true;
+#endif
         }
     }
 #endif

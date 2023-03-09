@@ -306,6 +306,7 @@ typedef struct Font {
 // Camera, defines position/orientation in 3d space
 typedef struct Camera3D {
     Vector3 position;       // Camera position
+    Vector2 angle;          // Camera angle (Required for splitscreen instead of shared global)
     Vector3 target;         // Camera target it looks-at
     Vector3 up;             // Camera up vector (rotation over its axis)
     float fovy;             // Camera field-of-view aperture in Y (degrees) in perspective, used as near plane width in orthographic
@@ -1118,6 +1119,8 @@ RLAPI int GetGamepadButtonPressed(void);                      // Get the last ga
 RLAPI int GetGamepadAxisCount(int gamepad);                   // Get gamepad axis count for a gamepad
 RLAPI float GetGamepadAxisMovement(int gamepad, int axis);    // Get axis movement value for a gamepad axis
 RLAPI int SetGamepadMappings(const char *mappings);           // Set internal gamepad mappings (SDL_GameControllerDB)
+RLAPI void SetGamepadYAxisInverted(int gamepad, float yInverted);
+RLAPI float GetGamepadYAxisInverted(int gamepad);
 
 // Input-related functions: mouse
 RLAPI bool IsMouseButtonPressed(int button);                  // Check if a mouse button has been pressed once
@@ -1158,7 +1161,18 @@ RLAPI float GetGesturePinchAngle(void);                 // Get gesture pinch ang
 // Camera System Functions (Module: rcamera)
 //------------------------------------------------------------------------------------
 RLAPI void UpdateCamera(Camera *camera, int mode);      // Update camera position for selected mode
+#if defined(PLATFORM_NX)
+RLAPI void SetCameraMode(Camera camera, int mode);      // Set camera mode (multiple camera modes available)
+RLAPI void UpdateCamera(Camera *camera);                // Update camera position for selected mode
+RLAPI void UpdateCameraGamepad(Camera *camera, int Gamepad);    // Update camera position for selected mode
+RLAPI void SetCameraZoomFactor(Vector2 zoomFactor);             // Gamepad equivalent of mousewheel
+RLAPI void SetCameraPrevZoomFactor(Vector2 previousZoomFactor); // Gamepad equivalent for automation
 
+RLAPI void SetCameraPanControl(int keyPan);             // Set camera pan key to combine with mouse movement (free camera)
+RLAPI void SetCameraAltControl(int keyAlt);             // Set camera alt key to combine with mouse movement (free camera)
+RLAPI void SetCameraSmoothZoomControl(int keySmoothZoom); // Set camera smooth zoom key to combine with mouse (free camera)
+RLAPI void SetCameraMoveControls(int keyFront, int keyBack, int keyRight, int keyLeft, int keyUp, int keyDown); // Set camera move controls (1st person and 3rd person cameras)
+#endif
 //------------------------------------------------------------------------------------
 // Basic Shapes Drawing Functions (Module: shapes)
 //------------------------------------------------------------------------------------

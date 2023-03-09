@@ -11,6 +11,7 @@
 #    PLATFORM_RPI:      Raspberry Pi (deprecated - RPI OS Buster only)
 #    PLATFORM_DRM:      Linux native mode, including Raspberry Pi (RPI OS Bullseye)
 #    PLATFORM_WEB:      HTML5 (Chrome, Firefox)
+#    PLATFORM_NX:       Switch LibNX
 #
 #  Many thanks to Milan Nikolic (@gen2brain) for implementing Android platform pipeline.
 #  Many thanks to Emanuele Petriglia for his contribution on GNU/Linux pipeline.
@@ -41,7 +42,7 @@
 
 # Define required environment variables
 #------------------------------------------------------------------------------------------------
-# Define target platform: PLATFORM_DESKTOP, PLATFORM_RPI, PLATFORM_DRM, PLATFORM_ANDROID, PLATFORM_WEB
+# Define target platform: PLATFORM_DESKTOP, PLATFORM_RPI, PLATFORM_DRM, PLATFORM_ANDROID, PLATFORM_WEB, PLATFORM_NX
 PLATFORM             ?= PLATFORM_DESKTOP
 
 # Define required raylib variables
@@ -177,6 +178,14 @@ ifeq ($(PLATFORM),PLATFORM_WEB)
         ifndef PLATFORM_SHELL
             PLATFORM_SHELL = sh
         endif
+ifeq ($(PLATFORM),PLATFORM_NX)
+    UNAMEOS = $(shell uname)
+    ifeq ($(UNAMEOS),Linux)
+        PLATFORM_OS = LINUX
+    endif
+    RAYLIB_LIBTYPE = STATIC
+    USE_EXTERNAL_GLFW = TRUE
+endif
     endif
 endif
 
@@ -250,6 +259,9 @@ ifeq ($(PLATFORM),PLATFORM_ANDROID)
     # By default use OpenGL ES 2.0 on Android
     GRAPHICS = GRAPHICS_API_OPENGL_ES2
 endif
+ifeq ($(PLATFORM),PLATFORM_NX)
+    GRAPHICS = GRAPHICS_API_OPENGL_ES2
+endif
 
 # Define default C compiler and archiver to pack library: CC, AR
 #------------------------------------------------------------------------------------------------
@@ -297,6 +309,12 @@ ifeq ($(PLATFORM),PLATFORM_ANDROID)
     # It seems from Android NDK r22 onwards we need to use llvm-ar
     AR = $(ANDROID_TOOLCHAIN)/bin/llvm-ar
 endif
+ifeq ($(PLATFORM),PLATFORM_NX)
+    ifeq ($(strip $(DEVKITPRO)),)
+        $(error "Please set DEVKITPRO in your environment. export DEVKITPRO=<path to>/devkitpro")
+    endif
+    include $(DEVKITPRO)/libnx/switch_rules
+endif
 
 # Define compiler flags: CFLAGS
 #------------------------------------------------------------------------------------------------
@@ -341,6 +359,9 @@ ifeq ($(RAYLIB_BUILD_MODE),RELEASE)
         CFLAGS += -O1
     endif
     ifeq ($(PLATFORM),PLATFORM_ANDROID)
+        CFLAGS += -O2
+    endif
+    ifeq ($(PLATFORM),PLATFORM_NX)
         CFLAGS += -O2
     endif
 endif
@@ -437,6 +458,12 @@ endif
 INCLUDE_PATHS = -I. -Iexternal/glfw/include -Iexternal/glfw/deps/mingw
 
 # Define additional directories containing required header files
+ifeq ($(PLATFORM),PLATFORM_NX)
+    LIBDIRS	:= $(PORTLIBS) $(LIBNX)
+    ARCH	:=	-march=armv8-a+crc+crypto -mtune=cortex-a57 -mtp=soft -fPIC -ftls-model=local-exec
+    CFLAGS	+=	-ffunction-sections -fdata-sections $(ARCH) $(foreach dir,$(LIBDIRS),-I$(dir)/include) -D__SWITCH__
+    INCLUDE_PATHS = -I. -I./switch-nx
+endif
 ifeq ($(PLATFORM),PLATFORM_DESKTOP)
     ifeq ($(PLATFORM_OS),BSD)
         INCLUDE_PATHS += -I/usr/local/include
@@ -581,7 +608,9 @@ endif
 ifeq ($(RAYLIB_MODULE_PHYSAC),TRUE)
     OBJS += physac.o
 endif
-
+ifeq ($(PLATFORM),PLATFORM_NX)
+    OBJS += nxusb.o
+endif
 ifeq ($(PLATFORM),PLATFORM_ANDROID)
     OBJS += android_native_app_glue.o
 endif
@@ -658,7 +687,7 @@ else
     else
         # Compile raylib static library version $(RAYLIB_VERSION)
         # WARNING: You should type "make clean" before doing this target.
-		$(AR) rcs $(RAYLIB_RELEASE_PATH)/lib$(RAYLIB_LIB_NAME).a $(OBJS)
+		$(AR) rc $(RAYLIB_RELEASE_PATH)/lib$(RAYLIB_LIB_NAME).a $(OBJS)
 		@echo "raylib static library generated (lib$(RAYLIB_LIB_NAME).a) in $(RAYLIB_RELEASE_PATH)!"
     endif
 endif
@@ -696,6 +725,10 @@ rmodels.o : rmodels.c raylib.h rlgl.h raymath.h
 # Compile audio module
 raudio.o : raudio.c raylib.h
 	$(CC) -c $< $(CFLAGS) $(INCLUDE_PATHS)
+
+# Compile switch usb module
+nxusb.o : nxusb.c nxusb.h raylib.h
+	$(CC) -c $< $(CFLAGS) $(INCLUDE_PATHS) -D$(PLATFORM)
 
 # Compile raygui module
 # NOTE: raygui header should be distributed with raylib.h
@@ -737,6 +770,10 @@ android_native_app_glue.o : $(NATIVE_APP_GLUE)/android_native_app_glue.c
 # for compilation and enable runtime linking with -rpath, LD_LIBRARY_PATH, or ldconfig.
 # HINT: Add -L$(RAYLIB_INSTALL_PATH) -I$(RAYLIB_H_INSTALL_PATH) to your own makefiles.
 # See below and ../examples/Makefile for more information.
+
+ifeq ($(PLATFORM),PLATFORM_NX)
+    DESTDIR ?= $(PORTLIBS)
+endif
 
 # RAYLIB_INSTALL_PATH should be the desired full path to libraylib. No relative paths.
 DESTDIR ?= /usr/local

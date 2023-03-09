@@ -1,0 +1,33 @@
+name: Switch Examples
+
+on:
+  push:
+    branches: [ master ]
+    paths:
+      - 'src/**'
+      - 'examples/**'
+      - '.github/workflows/switch_examples.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    container: devkitpro/devkita64:latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+    
+    - name: Build Library
+      run: |
+        cd src
+        make PLATFORM=PLATFORM_NX -j$(nproc)
+        cd ..
+        
+    - name: Build Examples
+      run: |
+        cd examples
+        make PLATFORM=PLATFORM_NX -B -j$(nproc)
+        cd ..

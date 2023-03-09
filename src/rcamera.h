@@ -174,9 +174,23 @@ Matrix GetCameraProjectionMatrix(Camera* camera, float aspect);
 #define CAMERA_ROTATION_SPEED                           0.03f
 
 // Camera mouse movement sensitivity
-#define CAMERA_MOUSE_MOVE_SENSITIVITY                   0.003f    // TODO: it should be independant of framerate
 #define CAMERA_MOUSE_SCROLL_SENSITIVITY                 1.5f
 
+#if defined(PLATFORM_NX)
+#define CAMERA_MOUSE_MOVE_SENSITIVITY                   0.001f
+// FREE_CAMERA
+#define CAMERA_FREE_MOUSE_SENSITIVITY                   0.01f
+#define CAMERA_FREE_DISTANCE_MIN_CLAMP                  0.3f
+#define CAMERA_FREE_DISTANCE_MAX_CLAMP                  120.0f
+#define CAMERA_FREE_MIN_CLAMP                           85.0f
+#define CAMERA_FREE_MAX_CLAMP                          -85.0f
+#define CAMERA_FREE_PANNING_DIVIDER                     5.1f
+#define CAMERA_FREE_SMOOTH_ZOOM_SENSITIVITY            -0.5f
+else
+#define CAMERA_MOUSE_MOVE_SENSITIVITY                   0.003f    // TODO: it should be independant of framerate
+#endif
+
+// ORBITAL_CAMERA
 #define CAMERA_ORBITAL_SPEED                            0.5f       // Radians per second
 
 
@@ -195,8 +209,22 @@ Matrix GetCameraProjectionMatrix(Camera* camera, float aspect);
 //----------------------------------------------------------------------------------
 // Global Variables Definition
 //----------------------------------------------------------------------------------
-//...
-
+#if defined(PLATFORM_NX)
+static CameraData CAMERA = {        // Global CAMERA state context
+    .mode = 0,
+    .targetDistance = 0,
+    .playerEyesPosition = 1.85f,
+    .angle = { 0 },
+    .moveControl = { 'W', 'S', 'D', 'A', 'E', 'Q' },
+#if defined(PLATFORM_NX)
+    .smoothZoomControl = GAMEPAD_BUTTON_RIGHT_FACE_RIGHT,    // Npad button A
+#else
+    .smoothZoomControl = 341,       // raylib: KEY_LEFT_CONTROL
+#endif
+    .altControl = 342,              // raylib: KEY_LEFT_ALT
+    .panControl = 2                 // raylib: MOUSE_BUTTON_MIDDLE
+};
+#endif
 //----------------------------------------------------------------------------------
 // Module specific Functions Declaration
 //----------------------------------------------------------------------------------
@@ -320,6 +348,285 @@ void CameraYaw(Camera *camera, float angle, bool rotateAroundTarget)
     {
         // Move target relative to position
         camera->target = Vector3Add(camera->position, target_position);
+    }
+}
+// Update camera depending on selected mode
+// NOTE: Camera controls depend on some raylib functions:
+//       System: EnableCursor(), DisableCursor()
+//       Mouse: IsMouseButtonDown(), GetMousePosition(), GetMouseWheelMove()
+//       Keys:  IsKeyDown()
+void UpdateCameraGamepad(Camera *camera, int gamepad)
+{
+    static float swingCounter[MAX_GAMEPADS] = { 0.0f, 0.0f, 0.0f, 0.0f };    // Used for 1st person swinging movement
+
+    // TODO: Compute CAMERA.targetDistance and CAMERA.angle here (?)
+
+    // Pan with Left Thumbstick
+    Vector2 leftStickDelta = {
+        -GetGamepadAxisMovement(gamepad, GAMEPAD_AXIS_LEFT_X), 
+        GetGamepadAxisMovement(gamepad, GAMEPAD_AXIS_LEFT_Y)
+    };
+    // Rotate with Right Thumbstick
+    Vector2 rightStickDelta = {
+        -GetGamepadAxisMovement(gamepad, GAMEPAD_AXIS_RIGHT_X), 
+        GetGamepadAxisMovement(gamepad, GAMEPAD_AXIS_RIGHT_Y)
+    };
+    float zoomFactor = GetMouseWheelMove();
+    bool szoomKey = IsGamepadButtonDown(gamepad, CAMERA.smoothZoomControl);   // Npad A
+
+    bool direction[4] = { 
+        GetGamepadAxisMovement(gamepad, GAMEPAD_AXIS_LEFT_Y) > 0,
+        GetGamepadAxisMovement(gamepad, GAMEPAD_AXIS_LEFT_Y) < 0,
+        GetGamepadAxisMovement(gamepad, GAMEPAD_AXIS_LEFT_X) > 0,
+        GetGamepadAxisMovement(gamepad, GAMEPAD_AXIS_LEFT_X) < 0
+    };
+
+    // Support for multiple automatic camera modes
+    // NOTE: In case of CAMERA_CUSTOM nothing happens here, user must update it manually
+    switch (CAMERA.mode)
+    {
+        case CAMERA_FREE:           // Camera free controls, using standard 3d-content-creation scheme
+        {
+            // Camera zoom
+            if ((CAMERA.targetDistance < CAMERA_FREE_DISTANCE_MAX_CLAMP) && (zoomFactor < 0))
+            {
+                CAMERA.targetDistance -= (zoomFactor*CAMERA_MOUSE_SCROLL_SENSITIVITY);
+                if (CAMERA.targetDistance > CAMERA_FREE_DISTANCE_MAX_CLAMP) CAMERA.targetDistance = CAMERA_FREE_DISTANCE_MAX_CLAMP;
+            }
+
+            // Camera looking down
+            else if ((camera->position.y > camera->target.y) && (CAMERA.targetDistance == CAMERA_FREE_DISTANCE_MAX_CLAMP) && (zoomFactor < 0))
+            {
+                camera->target.x += zoomFactor*(camera->target.x - camera->position.x)*CAMERA_MOUSE_SCROLL_SENSITIVITY/CAMERA.targetDistance;
+                camera->target.y += zoomFactor*(camera->target.y - camera->position.y)*CAMERA_MOUSE_SCROLL_SENSITIVITY/CAMERA.targetDistance;
+                camera->target.z += zoomFactor*(camera->target.z - camera->position.z)*CAMERA_MOUSE_SCROLL_SENSITIVITY/CAMERA.targetDistance;
+            }
+            else if ((camera->position.y > camera->target.y) && (camera->target.y >= 0))
+            {
+                camera->target.x += zoomFactor*(camera->target.x - camera->position.x)*CAMERA_MOUSE_SCROLL_SENSITIVITY/CAMERA.targetDistance;
+                camera->target.y += zoomFactor*(camera->target.y - camera->position.y)*CAMERA_MOUSE_SCROLL_SENSITIVITY/CAMERA.targetDistance;
+                camera->target.z += zoomFactor*(camera->target.z - camera->position.z)*CAMERA_MOUSE_SCROLL_SENSITIVITY/CAMERA.targetDistance;
+
+                // if (camera->target.y < 0) camera->target.y = -0.001;
+            }
+            else if ((camera->position.y > camera->target.y) && (camera->target.y < 0) && (zoomFactor > 0))
+            {
+                CAMERA.targetDistance -= (zoomFactor*CAMERA_MOUSE_SCROLL_SENSITIVITY);
+                if (CAMERA.targetDistance < CAMERA_FREE_DISTANCE_MIN_CLAMP) CAMERA.targetDistance = CAMERA_FREE_DISTANCE_MIN_CLAMP;
+            }
+            // Camera looking up
+            else if ((camera->position.y < camera->target.y) && (CAMERA.targetDistance == CAMERA_FREE_DISTANCE_MAX_CLAMP) && (zoomFactor < 0))
+            {
+                camera->target.x += zoomFactor*(camera->target.x - camera->position.x)*CAMERA_MOUSE_SCROLL_SENSITIVITY/CAMERA.targetDistance;
+                camera->target.y += zoomFactor*(camera->target.y - camera->position.y)*CAMERA_MOUSE_SCROLL_SENSITIVITY/CAMERA.targetDistance;
+                camera->target.z += zoomFactor*(camera->target.z - camera->position.z)*CAMERA_MOUSE_SCROLL_SENSITIVITY/CAMERA.targetDistance;
+            }
+            else if ((camera->position.y < camera->target.y) && (camera->target.y <= 0))
+            {
+                camera->target.x += zoomFactor*(camera->target.x - camera->position.x)*CAMERA_MOUSE_SCROLL_SENSITIVITY/CAMERA.targetDistance;
+                camera->target.y += zoomFactor*(camera->target.y - camera->position.y)*CAMERA_MOUSE_SCROLL_SENSITIVITY/CAMERA.targetDistance;
+                camera->target.z += zoomFactor*(camera->target.z - camera->position.z)*CAMERA_MOUSE_SCROLL_SENSITIVITY/CAMERA.targetDistance;
+
+                // if (camera->target.y > 0) camera->target.y = 0.001;
+            }
+            else if ((camera->position.y < camera->target.y) && (camera->target.y > 0) && (zoomFactor > 0))
+            {
+                CAMERA.targetDistance -= (zoomFactor*CAMERA_MOUSE_SCROLL_SENSITIVITY);
+                if (CAMERA.targetDistance < CAMERA_FREE_DISTANCE_MIN_CLAMP) CAMERA.targetDistance = CAMERA_FREE_DISTANCE_MIN_CLAMP;
+            }
+
+
+            // Camera rotation
+            CAMERA.angle.x += rightStickDelta.x*CAMERA_FREE_MOUSE_SENSITIVITY;
+            CAMERA.angle.y += rightStickDelta.y*CAMERA_FREE_MOUSE_SENSITIVITY;
+
+            // Angle clamp
+            if (CAMERA.angle.y > CAMERA_FREE_MIN_CLAMP*DEG2RAD) CAMERA.angle.y = CAMERA_FREE_MIN_CLAMP*DEG2RAD;
+            else if (CAMERA.angle.y < CAMERA_FREE_MAX_CLAMP*DEG2RAD) CAMERA.angle.y = CAMERA_FREE_MAX_CLAMP*DEG2RAD;
+            if (szoomKey)
+            {
+                // Camera smooth zoom
+                CAMERA.targetDistance += (leftStickDelta.y*CAMERA_FREE_SMOOTH_ZOOM_SENSITIVITY);
+            } else {
+                // Camera panning
+                camera->target.x += ((leftStickDelta.x*CAMERA_FREE_MOUSE_SENSITIVITY)*cosf(CAMERA.angle.x) + (leftStickDelta.y*-CAMERA_FREE_MOUSE_SENSITIVITY)*sinf(CAMERA.angle.x)*sinf(CAMERA.angle.y))*(CAMERA.targetDistance/CAMERA_FREE_PANNING_DIVIDER);
+                camera->target.y += ((leftStickDelta.y*CAMERA_FREE_MOUSE_SENSITIVITY)*cosf(CAMERA.angle.y))*(CAMERA.targetDistance/CAMERA_FREE_PANNING_DIVIDER);
+                camera->target.z += ((leftStickDelta.x*-CAMERA_FREE_MOUSE_SENSITIVITY)*sinf(CAMERA.angle.x) + (leftStickDelta.y*-CAMERA_FREE_MOUSE_SENSITIVITY)*cosf(CAMERA.angle.x)*sinf(CAMERA.angle.y))*(CAMERA.targetDistance/CAMERA_FREE_PANNING_DIVIDER);
+            }
+
+            // Update camera position with changes
+            camera->position.x = -sinf(CAMERA.angle.x)*CAMERA.targetDistance*cosf(CAMERA.angle.y) + camera->target.x;
+            camera->position.y = -sinf(CAMERA.angle.y)*CAMERA.targetDistance + camera->target.y;
+            camera->position.z = -cosf(CAMERA.angle.x)*CAMERA.targetDistance*cosf(CAMERA.angle.y) + camera->target.z;
+
+            // L/R Bumpers to zoom out/in
+            SetCameraPrevZoomFactor((Vector2) { 0.0f, zoomFactor });
+            if (IsGamepadButtonDown(gamepad, GAMEPAD_BUTTON_RIGHT_TRIGGER_1))
+            {
+                SetCameraZoomFactor((Vector2){ 0.0f, 1.0f });
+            } else if (IsGamepadButtonDown(gamepad, GAMEPAD_BUTTON_LEFT_TRIGGER_1))
+            {
+                SetCameraZoomFactor((Vector2){ 0.0f, -1.0f });
+            } else {
+                SetCameraZoomFactor((Vector2){ 0.0f, 0.0f });
+            }
+
+        } break;
+        case CAMERA_ORBITAL:        // Camera just orbits around target, only zoom allowed
+        {
+            CAMERA.angle.x += CAMERA_ORBITAL_SPEED*GetFrameTime();      // Camera orbit angle
+            CAMERA.targetDistance -= (zoomFactor*CAMERA_MOUSE_SCROLL_SENSITIVITY);   // Camera zoom
+
+            // Camera distance clamp
+            if (CAMERA.targetDistance < CAMERA_THIRD_PERSON_DISTANCE_CLAMP) CAMERA.targetDistance = CAMERA_THIRD_PERSON_DISTANCE_CLAMP;
+
+            // Update camera position with changes
+            camera->position.x = sinf(CAMERA.angle.x)*CAMERA.targetDistance*cosf(CAMERA.angle.y) + camera->target.x;
+            camera->position.y = ((CAMERA.angle.y <= 0.0f)? 1 : -1)*sinf(CAMERA.angle.y)*CAMERA.targetDistance*sinf(CAMERA.angle.y) + camera->target.y;
+            camera->position.z = cosf(CAMERA.angle.x)*CAMERA.targetDistance*cosf(CAMERA.angle.y) + camera->target.z;
+
+            // L/R Bumpers to zoom out/in
+            SetCameraPrevZoomFactor((Vector2) { 0.0f, zoomFactor });
+            if (IsGamepadButtonDown(gamepad, GAMEPAD_BUTTON_RIGHT_TRIGGER_1))
+            {
+                SetCameraZoomFactor((Vector2){ 0.0f, 1.0f });
+            } else if (IsGamepadButtonDown(gamepad, GAMEPAD_BUTTON_LEFT_TRIGGER_1))
+            {
+                SetCameraZoomFactor((Vector2){ 0.0f, -1.0f });
+            } else {
+                SetCameraZoomFactor((Vector2){ 0.0f, 0.0f });
+            }
+
+        } break;
+        case CAMERA_FIRST_PERSON:   // Camera moves as in a first-person game, controls are configurable
+        {
+            camera->position.x += (sinf(camera->angle.x)*direction[MOVE_BACK] -
+                                   sinf(camera->angle.x)*direction[MOVE_FRONT] -
+                                   cosf(camera->angle.x)*direction[MOVE_LEFT] +
+                                   cosf(camera->angle.x)*direction[MOVE_RIGHT])*PLAYER_MOVEMENT_SENSITIVITY*GetFrameTime();
+
+            camera->position.y += (sinf(camera->angle.y)*direction[MOVE_FRONT] -
+                                   sinf(CAMERA.angle.y)*direction[MOVE_BACK]) *PLAYER_MOVEMENT_SENSITIVITY*GetFrameTime();
+                                //    1.0f*direction[MOVE_UP] - 1.0f*direction[MOVE_DOWN])*PLAYER_MOVEMENT_SENSITIVITY*GetFrameTime();
+
+            camera->position.z += (cosf(camera->angle.x)*direction[MOVE_BACK] -
+                                   cosf(camera->angle.x)*direction[MOVE_FRONT] +
+                                   sinf(camera->angle.x)*direction[MOVE_LEFT] -
+                                   sinf(camera->angle.x)*direction[MOVE_RIGHT])*PLAYER_MOVEMENT_SENSITIVITY*GetFrameTime();
+
+            // Camera orientation calculation
+            camera->angle.x += rightStickDelta.x*CAMERA_MOUSE_MOVE_SENSITIVITY*GetFrameTime();
+            camera->angle.y += GetGamepadYAxisInverted(gamepad)*rightStickDelta.y*CAMERA_MOUSE_MOVE_SENSITIVITY*GetFrameTime();
+
+            // Angle clamp
+            if (camera->angle.y > CAMERA_FIRST_PERSON_MIN_CLAMP*DEG2RAD) camera->angle.y = CAMERA_FIRST_PERSON_MIN_CLAMP*DEG2RAD;
+            else if (camera->angle.y < CAMERA_FIRST_PERSON_MAX_CLAMP*DEG2RAD) camera->angle.y = CAMERA_FIRST_PERSON_MAX_CLAMP*DEG2RAD;
+
+            // Calculate translation matrix
+            Matrix matTranslation = { 1.0f, 0.0f, 0.0f, 0.0f,
+                                      0.0f, 1.0f, 0.0f, 0.0f,
+                                      0.0f, 0.0f, 1.0f, (CAMERA.targetDistance/CAMERA_FREE_PANNING_DIVIDER),
+                                      0.0f, 0.0f, 0.0f, 1.0f };
+
+            // Calculate rotation matrix
+            Matrix matRotation = { 1.0f, 0.0f, 0.0f, 0.0f,
+                                   0.0f, 1.0f, 0.0f, 0.0f,
+                                   0.0f, 0.0f, 1.0f, 0.0f,
+                                   0.0f, 0.0f, 0.0f, 1.0f };
+
+            float cosz = cosf(0.0f);
+            float sinz = sinf(0.0f);
+            float cosy = cosf(-(PI*2 - camera->angle.x));
+            float siny = sinf(-(PI*2 - camera->angle.x));
+            float cosx = cosf(-(PI*2 - camera->angle.y));
+            float sinx = sinf(-(PI*2 - camera->angle.y));
+
+            matRotation.m0 = cosz*cosy;
+            matRotation.m4 = (cosz*siny*sinx) - (sinz*cosx);
+            matRotation.m8 = (cosz*siny*cosx) + (sinz*sinx);
+            matRotation.m1 = sinz*cosy;
+            matRotation.m5 = (sinz*siny*sinx) + (cosz*cosx);
+            matRotation.m9 = (sinz*siny*cosx) - (cosz*sinx);
+            matRotation.m2 = -siny;
+            matRotation.m6 = cosy*sinx;
+            matRotation.m10= cosy*cosx;
+
+            // Multiply translation and rotation matrices
+            Matrix matTransform = { 0 };
+            matTransform.m0 = matTranslation.m0*matRotation.m0 + matTranslation.m1*matRotation.m4 + matTranslation.m2*matRotation.m8 + matTranslation.m3*matRotation.m12;
+            matTransform.m1 = matTranslation.m0*matRotation.m1 + matTranslation.m1*matRotation.m5 + matTranslation.m2*matRotation.m9 + matTranslation.m3*matRotation.m13;
+            matTransform.m2 = matTranslation.m0*matRotation.m2 + matTranslation.m1*matRotation.m6 + matTranslation.m2*matRotation.m10 + matTranslation.m3*matRotation.m14;
+            matTransform.m3 = matTranslation.m0*matRotation.m3 + matTranslation.m1*matRotation.m7 + matTranslation.m2*matRotation.m11 + matTranslation.m3*matRotation.m15;
+            matTransform.m4 = matTranslation.m4*matRotation.m0 + matTranslation.m5*matRotation.m4 + matTranslation.m6*matRotation.m8 + matTranslation.m7*matRotation.m12;
+            matTransform.m5 = matTranslation.m4*matRotation.m1 + matTranslation.m5*matRotation.m5 + matTranslation.m6*matRotation.m9 + matTranslation.m7*matRotation.m13;
+            matTransform.m6 = matTranslation.m4*matRotation.m2 + matTranslation.m5*matRotation.m6 + matTranslation.m6*matRotation.m10 + matTranslation.m7*matRotation.m14;
+            matTransform.m7 = matTranslation.m4*matRotation.m3 + matTranslation.m5*matRotation.m7 + matTranslation.m6*matRotation.m11 + matTranslation.m7*matRotation.m15;
+            matTransform.m8 = matTranslation.m8*matRotation.m0 + matTranslation.m9*matRotation.m4 + matTranslation.m10*matRotation.m8 + matTranslation.m11*matRotation.m12;
+            matTransform.m9 = matTranslation.m8*matRotation.m1 + matTranslation.m9*matRotation.m5 + matTranslation.m10*matRotation.m9 + matTranslation.m11*matRotation.m13;
+            matTransform.m10 = matTranslation.m8*matRotation.m2 + matTranslation.m9*matRotation.m6 + matTranslation.m10*matRotation.m10 + matTranslation.m11*matRotation.m14;
+            matTransform.m11 = matTranslation.m8*matRotation.m3 + matTranslation.m9*matRotation.m7 + matTranslation.m10*matRotation.m11 + matTranslation.m11*matRotation.m15;
+            matTransform.m12 = matTranslation.m12*matRotation.m0 + matTranslation.m13*matRotation.m4 + matTranslation.m14*matRotation.m8 + matTranslation.m15*matRotation.m12;
+            matTransform.m13 = matTranslation.m12*matRotation.m1 + matTranslation.m13*matRotation.m5 + matTranslation.m14*matRotation.m9 + matTranslation.m15*matRotation.m13;
+            matTransform.m14 = matTranslation.m12*matRotation.m2 + matTranslation.m13*matRotation.m6 + matTranslation.m14*matRotation.m10 + matTranslation.m15*matRotation.m14;
+            matTransform.m15 = matTranslation.m12*matRotation.m3 + matTranslation.m13*matRotation.m7 + matTranslation.m14*matRotation.m11 + matTranslation.m15*matRotation.m15;
+
+            camera->target.x = camera->position.x - matTransform.m12;
+            camera->target.y = camera->position.y - matTransform.m13;
+            camera->target.z = camera->position.z - matTransform.m14;
+
+            // Camera position update
+            // NOTE: On CAMERA_FIRST_PERSON player Y-movement is limited to player 'eyes position'
+            camera->position.y = CAMERA.playerEyesPosition;
+
+            // Camera swinging (y-movement), only when walking (some key pressed)
+            for (int i = 0; i < MAX_GAMEPADS; i++) {if (direction[i]){ swingCounter[gamepad] += GetFrameTime(); break; }}
+            camera->position.y -= sinf(2*PI*CAMERA_FIRST_PERSON_STEP_FREQUENCY*swingCounter[gamepad])*CAMERA_FIRST_PERSON_SWINGING_DELTA;
+
+            // Camera waiving (xz-movement), only when walking (some key pressed)
+            camera->up.x = sinf(2*PI*CAMERA_FIRST_PERSON_STEP_FREQUENCY*swingCounter[gamepad])*CAMERA_FIRST_PERSON_TILTING_DELTA;
+            camera->up.z = -sinf(2*PI*CAMERA_FIRST_PERSON_STEP_FREQUENCY*swingCounter[gamepad])*CAMERA_FIRST_PERSON_TILTING_DELTA;
+
+        } break;
+        case CAMERA_THIRD_PERSON:   // Camera moves as in a third-person game, following target at a distance, controls are configurable
+        {
+            camera->position.x += (sinf(CAMERA.angle.x)*direction[MOVE_BACK] -
+                                   sinf(CAMERA.angle.x)*direction[MOVE_FRONT] -
+                                   cosf(CAMERA.angle.x)*direction[MOVE_LEFT] +
+                                   cosf(CAMERA.angle.x)*direction[MOVE_RIGHT])*PLAYER_MOVEMENT_SENSITIVITY*GetFrameTime();
+
+            camera->position.y += (sinf(CAMERA.angle.y)*direction[MOVE_FRONT] -
+                                   sinf(CAMERA.angle.y)*direction[MOVE_BACK] +
+                                   1.0f*direction[MOVE_UP] - 1.0f*direction[MOVE_DOWN])*PLAYER_MOVEMENT_SENSITIVITY*GetFrameTime();
+
+            camera->position.z += (cosf(CAMERA.angle.x)*direction[MOVE_BACK] -
+                                   cosf(CAMERA.angle.x)*direction[MOVE_FRONT] +
+                                   sinf(CAMERA.angle.x)*direction[MOVE_LEFT] -
+                                   sinf(CAMERA.angle.x)*direction[MOVE_RIGHT])*PLAYER_MOVEMENT_SENSITIVITY*GetFrameTime();
+
+            // Camera orientation calculation
+            CAMERA.angle.x += (leftStickDelta.x*-CAMERA_MOUSE_MOVE_SENSITIVITY);
+            CAMERA.angle.y += (leftStickDelta.y*-CAMERA_MOUSE_MOVE_SENSITIVITY);
+
+            // Angle clamp
+            if (CAMERA.angle.y > CAMERA_THIRD_PERSON_MIN_CLAMP*DEG2RAD) CAMERA.angle.y = CAMERA_THIRD_PERSON_MIN_CLAMP*DEG2RAD;
+            else if (CAMERA.angle.y < CAMERA_THIRD_PERSON_MAX_CLAMP*DEG2RAD) CAMERA.angle.y = CAMERA_THIRD_PERSON_MAX_CLAMP*DEG2RAD;
+
+            // Camera zoom
+            CAMERA.targetDistance -= (zoomFactor*CAMERA_MOUSE_SCROLL_SENSITIVITY);
+
+            // Camera distance clamp
+            if (CAMERA.targetDistance < CAMERA_THIRD_PERSON_DISTANCE_CLAMP) CAMERA.targetDistance = CAMERA_THIRD_PERSON_DISTANCE_CLAMP;
+
+            camera->position.x = sinf(CAMERA.angle.x)*CAMERA.targetDistance*cosf(CAMERA.angle.y) + camera->target.x;
+
+            if (CAMERA.angle.y <= 0.0f) camera->position.y = sinf(CAMERA.angle.y)*CAMERA.targetDistance*sinf(CAMERA.angle.y) + camera->target.y;
+            else camera->position.y = -sinf(CAMERA.angle.y)*CAMERA.targetDistance*sinf(CAMERA.angle.y) + camera->target.y;
+
+            camera->position.z = cosf(CAMERA.angle.x)*CAMERA.targetDistance*cosf(CAMERA.angle.y) + camera->target.z;
+
+        } break;
+        case CAMERA_CUSTOM: break;
+        default: break;
     }
 }
 

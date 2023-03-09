@@ -25,7 +25,7 @@
 
 # Define required environment variables
 #------------------------------------------------------------------------------------------------
-# Define target platform: PLATFORM_DESKTOP, PLATFORM_RPI, PLATFORM_DRM, PLATFORM_ANDROID, PLATFORM_WEB
+# Define target platform: PLATFORM_DESKTOP, PLATFORM_RPI, PLATFORM_DRM, PLATFORM_ANDROID, PLATFORM_WEB, PLATFORM_NX
 PLATFORM              ?= PLATFORM_DESKTOP
 
 # Define required raylib variables
@@ -107,6 +107,14 @@ ifeq ($(PLATFORM),PLATFORM_DRM)
         PLATFORM_OS = LINUX
     endif
 endif
+ifeq ($(PLATFORM),PLATFORM_NX)
+    UNAMEOS = $(shell uname)
+    ifeq ($(UNAMEOS),Linux)
+        PLATFORM_OS = LINUX
+    endif
+    RAYLIB_LIBTYPE = STATIC
+    USE_EXTERNAL_GLFW = TRUE
+endif
 
 # RAYLIB_PATH adjustment for LINUX platform
 # TODO: Do we really need this?
@@ -140,6 +148,11 @@ ifeq ($(PLATFORM),PLATFORM_WEB)
 	endif
 endif
 
+ifeq ($(PLATFORM),PLATFORM_NX)
+    RAYLIB_PREFIX ?= ..
+    RAYLIB_PATH    = $(realpath $(RAYLIB_PREFIX))
+endif
+
 # Define default C compiler: CC
 #------------------------------------------------------------------------------------------------
 CC = gcc
@@ -166,6 +179,12 @@ ifeq ($(PLATFORM),PLATFORM_WEB)
     # WARNING: To compile to HTML5, code must be redesigned
     # to use emscripten.h and emscripten_set_main_loop()
     CC = emcc
+endif
+ifeq ($(PLATFORM),PLATFORM_NX)
+    ifeq ($(strip $(DEVKITPRO)),)
+        $(error "Please set DEVKITPRO in your environment. export DEVKITPRO=<path to>/devkitpro")
+    endif
+    include $(DEVKITPRO)/libnx/switch_rules
 endif
 
 # Define default make program: MAKE
@@ -209,6 +228,8 @@ else
         else
             CFLAGS += -Os
         endif
+    else ifeq ($(PLATFORM),PLATFORM_NX)
+        CFLAGS += -O2
     else
         CFLAGS += -s -O2
     endif
@@ -244,6 +265,12 @@ endif
 INCLUDE_PATHS = -I. -I$(RAYLIB_PATH)/src -I$(RAYLIB_PATH)/src/external
 
 # Define additional directories containing required header files
+ifeq ($(PLATFORM),PLATFORM_NX)
+    INCLUDE_PATHS += -I$(RAYLIB_PATH)/src/switch-nx
+    LIBDIRS := $(PORTLIBS) $(LIBNX)
+    ARCH    :=  -march=armv8-a+crc+crypto -mtune=cortex-a57 -mtp=soft -fPIE
+    CFLAGS  +=  -ffunction-sections $(ARCH) $(foreach dir,$(LIBDIRS),-I$(dir)/include) -D__SWITCH__
+endif
 ifeq ($(PLATFORM),PLATFORM_DESKTOP)
     ifeq ($(PLATFORM_OS),BSD)
         INCLUDE_PATHS += -I$(RAYLIB_INCLUDE_PATH)
@@ -327,6 +354,10 @@ ifeq ($(PLATFORM),PLATFORM_RPI)
     LDFLAGS += -L$(RPI_TOOLCHAIN_SYSROOT)/opt/vc/lib
 endif
 
+ifeq ($(PLATFORM),PLATFORM_NX)
+    LDFLAGS += -specs=$(DEVKITPRO)/libnx/switch.specs -g $(ARCH) -Wl,-Map,$*.map $(foreach dir,$(LIBDIRS),-L$(dir)/lib)
+endif
+
 # Define libraries required on linking: LDLIBS
 # NOTE: To link libraries (lib<name>.so or lib<name>.a), use -l<name>
 #------------------------------------------------------------------------------------------------
@@ -392,6 +423,9 @@ endif
 ifeq ($(PLATFORM),PLATFORM_WEB)
     # Libraries for web (HTML5) compiling
     LDLIBS = $(RAYLIB_RELEASE_PATH)/libraylib.a
+endif
+ifeq ($(PLATFORM),PLATFORM_NX)
+    LDLIBS = -lraylib -lEGL -lGLESv2 -lglapi -ldrm_nouveau -lnx -lm
 endif
 
 # Define source code object files required
@@ -553,6 +587,12 @@ audio: $(AUDIO)
 %: %.c
 ifeq ($(PLATFORM),PLATFORM_ANDROID)
 	$(MAKE) -f Makefile.Android PROJECT_NAME=$@ PROJECT_SOURCE_FILES=$<
+else ifeq ($(PLATFORM),PLATFORM_NX)
+	$(CC) -MMD -MP -MF $@.d -o $@.o -c $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
+	$(CXX) $@.o $(LDFLAGS) $(LDLIBS) -o $@.elf -D$(PLATFORM)
+	$(NM) -CSn $@.elf > $@.lst
+	nacptool --create "$(notdir $@)" "Raylib Example" "1.0.0" $@.nacp
+	elf2nro $@.elf $@.nro --icon=textures/resources/raylib_logo.jpg --nacp=$@.nacp
 else
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 endif
@@ -586,5 +626,15 @@ ifeq ($(PLATFORM),PLATFORM_WEB)
     else
 		rm -f */*.wasm */*.html */*.js */*.data
     endif
+endif
+ifeq ($(PLATFORM),PLATFORM_NX)
+	find . -type f \( \
+	-name "*.o" -o \
+	-name "*.d" -o \
+	-name "*.elf" -o \
+	-name "*.lst" -o \
+	-name "*.map" -o \
+	-name "*.nacp" -o \
+	-name "*.nro" \) -delete
 endif
 	@echo Cleaning done

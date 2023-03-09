@@ -164,6 +164,12 @@ typedef struct tagBITMAPINFOHEADER {
 #define MA_MALLOC RL_MALLOC
 #define MA_FREE RL_FREE
 
+#if defined(PLATFORM_NX)
+    #define MA_NO_RUNTIME_LINKING
+    #define MA_ENABLE_ONLY_SPECIFIC_BACKENDS
+    #define MA_ENABLE_CUSTOM
+#endif
+
 #define MA_NO_JACK
 #define MA_NO_WAV
 #define MA_NO_FLAC
@@ -175,6 +181,9 @@ typedef struct tagBITMAPINFOHEADER {
 #define MINIAUDIO_IMPLEMENTATION
 //#define MA_DEBUG_OUTPUT
 #include "external/miniaudio.h"         // Audio device initialization and management
+#if defined(PLATFORM_NX)
+    #include <miniaudio_audren.h>       // Custom audio device for switch
+#endif
 #undef PlaySound                        // Win32 API: windows.h > mmsystem.h defines PlaySound macro
 
 #include <stdlib.h>                     // Required for: malloc(), free()
@@ -436,7 +445,15 @@ void InitAudioDevice(void)
     ma_context_config ctxConfig = ma_context_config_init();
     ma_log_callback_init(OnLog, NULL);
 
+#if defined(PLATFORM_NX)
+    ma_backend backends[] = {
+        ma_backend_custom
+    };
+    ctxConfig.custom.onContextInit = ma_context_init__audren;
+    ma_result result = ma_context_init(backends, sizeof(backends)/sizeof(backends[0]), &ctxConfig, &AUDIO.System.context);
+#else
     ma_result result = ma_context_init(NULL, 0, &ctxConfig, &AUDIO.System.context);
+#endif
     if (result != MA_SUCCESS)
     {
         TRACELOG(LOG_WARNING, "AUDIO: Failed to initialize context");
