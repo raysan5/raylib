@@ -1163,7 +1163,6 @@ RLAPI float GetGesturePinchAngle(void);                 // Get gesture pinch ang
 RLAPI void UpdateCamera(Camera *camera, int mode);      // Update camera position for selected mode
 #if defined(PLATFORM_NX)
 RLAPI void SetCameraMode(Camera camera, int mode);      // Set camera mode (multiple camera modes available)
-RLAPI void UpdateCamera(Camera *camera);                // Update camera position for selected mode
 RLAPI void UpdateCameraGamepad(Camera *camera, int Gamepad);    // Update camera position for selected mode
 RLAPI void SetCameraZoomFactor(Vector2 zoomFactor);             // Gamepad equivalent of mousewheel
 RLAPI void SetCameraPrevZoomFactor(Vector2 previousZoomFactor); // Gamepad equivalent for automation

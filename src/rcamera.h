@@ -174,25 +174,10 @@ Matrix GetCameraProjectionMatrix(Camera* camera, float aspect);
 #define CAMERA_ROTATION_SPEED                           0.03f
 
 // Camera mouse movement sensitivity
+#define CAMERA_MOUSE_MOVE_SENSITIVITY                   0.003f    // TODO: it should be independant of framerate
 #define CAMERA_MOUSE_SCROLL_SENSITIVITY                 1.5f
 
-#if defined(PLATFORM_NX)
-#define CAMERA_MOUSE_MOVE_SENSITIVITY                   0.001f
-// FREE_CAMERA
-#define CAMERA_FREE_MOUSE_SENSITIVITY                   0.01f
-#define CAMERA_FREE_DISTANCE_MIN_CLAMP                  0.3f
-#define CAMERA_FREE_DISTANCE_MAX_CLAMP                  120.0f
-#define CAMERA_FREE_MIN_CLAMP                           85.0f
-#define CAMERA_FREE_MAX_CLAMP                          -85.0f
-#define CAMERA_FREE_PANNING_DIVIDER                     5.1f
-#define CAMERA_FREE_SMOOTH_ZOOM_SENSITIVITY            -0.5f
-else
-#define CAMERA_MOUSE_MOVE_SENSITIVITY                   0.003f    // TODO: it should be independant of framerate
-#endif
-
-// ORBITAL_CAMERA
 #define CAMERA_ORBITAL_SPEED                            0.5f       // Radians per second
-
 
 #define CAMERA_FIRST_PERSON_STEP_TRIGONOMETRIC_DIVIDER  8.0f
 #define CAMERA_FIRST_PERSON_STEP_DIVIDER                30.0f
@@ -201,15 +186,65 @@ else
 // PLAYER (used by camera)
 #define PLAYER_MOVEMENT_SENSITIVITY                     20.0f
 
+#if defined(PLATFORM_NX)
+// FREE_CAMERA
+#define CAMERA_FREE_MOUSE_SENSITIVITY                   0.01f
+#define CAMERA_FREE_DISTANCE_MIN_CLAMP                  0.3f
+#define CAMERA_FREE_DISTANCE_MAX_CLAMP                  120.0f
+#define CAMERA_FREE_MIN_CLAMP                           85.0f
+#define CAMERA_FREE_MAX_CLAMP                          -85.0f
+#define CAMERA_FREE_PANNING_DIVIDER                     5.1f
+#define CAMERA_FREE_SMOOTH_ZOOM_SENSITIVITY            -0.5f
+
+// THIRD_PERSON
+//#define CAMERA_THIRD_PERSON_MOUSE_SENSITIVITY           0.003f
+#define CAMERA_THIRD_PERSON_DISTANCE_CLAMP              1.2f
+#define CAMERA_THIRD_PERSON_MIN_CLAMP                   5.0f
+#define CAMERA_THIRD_PERSON_MAX_CLAMP                  -85.0f
+#define CAMERA_THIRD_PERSON_OFFSET                      (Vector3){ 0.4f, 0.0f, 0.0f }
+
+// FIRST_PERSON
+//#define CAMERA_FIRST_PERSON_MOUSE_SENSITIVITY           0.003f
+#define CAMERA_FIRST_PERSON_FOCUS_DISTANCE              25.0f
+#define CAMERA_FIRST_PERSON_MIN_CLAMP                   89.0f
+#define CAMERA_FIRST_PERSON_MAX_CLAMP                  -89.0f
+
+// When walking, y-position of the player moves up-down at step frequency (swinging) but
+// also the body slightly tilts left-right on every step, when all the body weight is left over one foot (tilting)
+#define CAMERA_FIRST_PERSON_STEP_FREQUENCY               1.8f       // Step frequency when walking (steps per second)
+#define CAMERA_FIRST_PERSON_SWINGING_DELTA               0.03f      // Maximum up-down swinging distance when walking
+#define CAMERA_FIRST_PERSON_TILTING_DELTA                0.005f     // Maximum left-right tilting distance when walking
+
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
 //----------------------------------------------------------------------------------
-//...
+// Camera move modes (first person and third person cameras)
+typedef enum {
+    MOVE_FRONT = 0,
+    MOVE_BACK,
+    MOVE_RIGHT,
+    MOVE_LEFT,
+    MOVE_UP,
+    MOVE_DOWN
+} CameraMove;
+
+// Camera global state context data [56 bytes]
+typedef struct {
+    unsigned int mode;              // Current camera mode
+    float targetDistance;           // Camera distance from position to target
+    float playerEyesPosition;       // Player eyes position from ground (in meters)
+    Vector2 angle;                  // Camera angle in plane XZ
+
+    // Camera movement control keys
+    int moveControl[6];             // Move controls (CAMERA_FIRST_PERSON)
+    int smoothZoomControl;          // Smooth zoom control key
+    int altControl;                 // Alternative control key
+    int panControl;                 // Pan view control key
+} CameraData;
 
 //----------------------------------------------------------------------------------
 // Global Variables Definition
 //----------------------------------------------------------------------------------
-#if defined(PLATFORM_NX)
 static CameraData CAMERA = {        // Global CAMERA state context
     .mode = 0,
     .targetDistance = 0,
@@ -225,6 +260,7 @@ static CameraData CAMERA = {        // Global CAMERA state context
     .panControl = 2                 // raylib: MOUSE_BUTTON_MIDDLE
 };
 #endif
+
 //----------------------------------------------------------------------------------
 // Module specific Functions Declaration
 //----------------------------------------------------------------------------------
@@ -350,6 +386,8 @@ void CameraYaw(Camera *camera, float angle, bool rotateAroundTarget)
         camera->target = Vector3Add(camera->position, target_position);
     }
 }
+
+#if defined(PLATFORM_NX)
 // Update camera depending on selected mode
 // NOTE: Camera controls depend on some raylib functions:
 //       System: EnableCursor(), DisableCursor()
@@ -629,6 +667,7 @@ void UpdateCameraGamepad(Camera *camera, int gamepad)
         default: break;
     }
 }
+#endif
 
 // Rotates the camera around its right vector
 // Pitch is "looking up and down"
