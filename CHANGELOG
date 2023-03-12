@@ -50,9 +50,11 @@ Detailed changes:
 [core] REVIEWED: GetMonitorWidth() and GetMonitorHeight() (#2934)
 [core] REVIEWED: GetWindowHandle() to return Linux window (#2938)
 [core] REVIEWED: WindowDropCallback(), additional security check (#2943)
+[core] REVIEWED: Security checks for emscripten_run_script() (#2954)
 [rcamera] REDESIGNED: New implementation from scratch (#2563) by @Crydsch
 [rcamera] REVIEWED: Make orbital camera work as expected (#2926) by @JeffM2501
 [rcamera] REVIEWED: Multiple reviews on the new implementation
+[rcamera] ADDED: UpdateCameraPro(), supporting custom user inputs
 [rlgl] ADDED: OpenGL ES 2.0 support on PLATFORM_DESKTOP (#2840) by @wtnbgo
 [rlgl] ADDED: Separate blending modes for color and alpha, BLEND_CUSTOM_SEPARATE (#2741)
 [rlgl] ADDED: rlSetBlendFactorsSeparate and custom blend mode modification checks (#2741) by @pure01fx
