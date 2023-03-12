@@ -123,15 +123,19 @@ int main(void)
         // This new camera function allows custom movement/rotation values to be directly provided
         // as input parameters, with this approach, rcamera module is internally independent of raylib inputs
         UpdateCameraPro(&camera,
-            (IsKeyDown(KEY_W) || IsKeyDown(KEY_UP))*0.1f -      // Move forward-backward
-            (IsKeyDown(KEY_S) || IsKeyDown(KEY_DOWN))*0.1f,    
-            (IsKeyDown(KEY_D) || IsKeyDown(KEY_RIGHT))*0.1f -   // Move right-left
-            (IsKeyDown(KEY_A) || IsKeyDown(KEY_LEFT))*0.1f,
-            0.0f,                                               // Move up-down
-            GetMouseWheelMove()*2.0f,                           // Move to target (zoom)
-            GetMouseDelta().x*0.05f,                            // Rotation: yaw
-            GetMouseDelta().y*0.05f,                            // Rotation: pitch
-            0.0f);                                              // Rotation: roll
+            (Vector3){
+                (IsKeyDown(KEY_W) || IsKeyDown(KEY_UP))*0.1f -      // Move forward-backward
+                (IsKeyDown(KEY_S) || IsKeyDown(KEY_DOWN))*0.1f,    
+                (IsKeyDown(KEY_D) || IsKeyDown(KEY_RIGHT))*0.1f -   // Move right-left
+                (IsKeyDown(KEY_A) || IsKeyDown(KEY_LEFT))*0.1f,
+                0.0f                                                // Move up-down
+            },
+            (Vector3){
+                GetMouseDelta().x*0.05f,                            // Rotation: yaw
+                GetMouseDelta().y*0.05f,                            // Rotation: pitch
+                0.0f                                                // Rotation: roll
+            },
+            GetMouseWheelMove()*2.0f);                              // Move to target (zoom)
 */
         //----------------------------------------------------------------------------------
 

@@ -471,25 +471,34 @@ void UpdateCamera(Camera *camera, int mode)
 #endif // !CAMERA_STANDALONE
 
 // Update camera movement, movement/rotation values should be provided by user
-void UpdateCameraPro(Camera *camera, float moveForward, float moveRightLeft, float moveUpDown, float moveToTarget, float yaw, float pitch, float roll)
+void UpdateCameraPro(Camera *camera, Vector3 movement, Vector3 rotation, float zoom)
 {
+    // Required values
+    // movement.x - Move forward/backward
+    // movement.y - Move right/left
+    // movement.z - Move up/down
+    // rotation.x - yaw
+    // rotation.y - pitch
+    // rotation.z - roll
+    // zoom - Move towards target
+
     bool lockView = true;
     bool rotateAroundTarget = false;
     bool rotateUp = false;
     bool moveInWorldPlane = true;
 
     // Camera rotation
-    CameraPitch(camera, -pitch*DEG2RAD, lockView, rotateAroundTarget, rotateUp);
-    CameraYaw(camera, -yaw*DEG2RAD, rotateAroundTarget);
-    CameraRoll(camera, roll*DEG2RAD);
+    CameraPitch(camera, -rotation.y*DEG2RAD, lockView, rotateAroundTarget, rotateUp);
+    CameraYaw(camera, -rotation.x*DEG2RAD, rotateAroundTarget);
+    CameraRoll(camera, rotation.z*DEG2RAD);
 
     // Camera movement
-    CameraMoveForward(camera, moveForward, moveInWorldPlane);
-    CameraMoveRight(camera, moveRightLeft, moveInWorldPlane);
-    CameraMoveUp(camera, moveUpDown);
+    CameraMoveForward(camera, movement.x, moveInWorldPlane);
+    CameraMoveRight(camera, movement.y, moveInWorldPlane);
+    CameraMoveUp(camera, movement.z);
 
     // Zoom target distance
-    CameraMoveToTarget(camera, moveToTarget);
+    CameraMoveToTarget(camera, zoom);
 }
 
 #endif // CAMERA_IMPLEMENTATION
