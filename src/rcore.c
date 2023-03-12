@@ -1717,7 +1717,7 @@ void *GetWindowHandle(void)
     // NOTE: Returned handle is: unsigned long Window (X.h)
     // typedef unsigned long XID;
     // typedef XID Window;
-    //unsigned long id = (unsigned long)glfwGetX11Window(window);
+    //unsigned long id = (unsigned long)glfwGetX11Window(CORE.Window.handle);
     //return NULL;    // TODO: Find a way to return value... cast to void *?
     return (void *)CORE.Window.handle;
 #endif
