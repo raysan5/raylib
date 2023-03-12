@@ -46,32 +46,35 @@
 //----------------------------------------------------------------------------------
 // Defines and Macros
 //----------------------------------------------------------------------------------
-//...
+// Function specifiers definition
+#ifndef RLAPI
+    #define RLAPI       // Functions defined as 'extern' by default (implicit specifiers)
+#endif
+
 #if defined(CAMERA_STANDALONE)
-#define CAMERA_CULL_DISTANCE_NEAR      0.01
-#define CAMERA_CULL_DISTANCE_FAR    1000.0
+    #define CAMERA_CULL_DISTANCE_NEAR      0.01
+    #define CAMERA_CULL_DISTANCE_FAR    1000.0
 #else
-#define CAMERA_CULL_DISTANCE_NEAR   RL_CULL_DISTANCE_NEAR
-#define CAMERA_CULL_DISTANCE_FAR    RL_CULL_DISTANCE_FAR
+    #define CAMERA_CULL_DISTANCE_NEAR   RL_CULL_DISTANCE_NEAR
+    #define CAMERA_CULL_DISTANCE_FAR    RL_CULL_DISTANCE_FAR
 #endif
 
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
 // NOTE: Below types are required for CAMERA_STANDALONE usage
 //----------------------------------------------------------------------------------
-// TODO review
 #if defined(CAMERA_STANDALONE)
-    // Vector2 type
+    // Vector2, 2 components
     typedef struct Vector2 {
-        float x;
-        float y;
+        float x;                // Vector x component
+        float y;                // Vector y component
     } Vector2;
 
-    // Vector3 type
+    // Vector3, 3 components
     typedef struct Vector3 {
-        float x;
-        float y;
-        float z;
+        float x;                // Vector x component
+        float y;                // Vector y component
+        float z;                // Vector z component
     } Vector3;
 
     // Camera type, defines a camera position/orientation in 3d space
@@ -80,31 +83,31 @@
         Vector3 target;         // Camera target it looks-at
         Vector3 up;             // Camera up vector (rotation over its axis)
         float fovy;             // Camera field-of-view apperture in Y (degrees) in perspective, used as near plane width in orthographic
-        int projection;         // Camera type, defines projection type: CAMERA_PERSPECTIVE or CAMERA_ORTHOGRAPHIC
+        int projection;         // Camera projection type: CAMERA_PERSPECTIVE or CAMERA_ORTHOGRAPHIC
     } Camera3D;
 
     typedef Camera3D Camera;    // Camera type fallback, defaults to Camera3D
 
+    // Camera projection
+    typedef enum {
+        CAMERA_PERSPECTIVE = 0, // Perspective projection
+        CAMERA_ORTHOGRAPHIC     // Orthographic projection
+    } CameraProjection;
+
     // Camera system modes
     typedef enum {
-        CAMERA_CUSTOM = 0,
-        CAMERA_FREE,
-        CAMERA_ORBITAL,
-        CAMERA_FIRST_PERSON,
-        CAMERA_THIRD_PERSON
+        CAMERA_CUSTOM = 0,      // Camera custom, controlled by user (UpdateCamera() does nothing)
+        CAMERA_FREE,            // Camera free mode
+        CAMERA_ORBITAL,         // Camera orbital, around target, zoom supported
+        CAMERA_FIRST_PERSON,    // Camera first person
+        CAMERA_THIRD_PERSON     // Camera third person
     } CameraMode;
-
-    // Camera projection modes
-    typedef enum {
-        CAMERA_PERSPECTIVE = 0,
-        CAMERA_ORTHOGRAPHIC
-    } CameraProjection;
 #endif
 
 //----------------------------------------------------------------------------------
 // Global Variables Definition
 //----------------------------------------------------------------------------------
-
+//...
 
 //----------------------------------------------------------------------------------
 // Module Functions Declaration
@@ -114,21 +117,23 @@
 extern "C" {            // Prevents name mangling of functions
 #endif
 
-Vector3 GetCameraForward(Camera *camera);
-Vector3 GetCameraUp(Camera *camera);
-Vector3 GetCameraRight(Camera *camera);
+RLAPI Vector3 GetCameraForward(Camera *camera);
+RLAPI Vector3 GetCameraUp(Camera *camera);
+RLAPI Vector3 GetCameraRight(Camera *camera);
 
-void CameraMoveForward(Camera *camera, float distance, bool moveInWorldPlane);
-void CameraMoveUp(Camera *camera, float distance);
-void CameraMoveRight(Camera *camera, float distance, bool moveInWorldPlane);
-void CameraMoveToTarget(Camera *camera, float delta);
+// Camera movement
+RLAPI void CameraMoveForward(Camera *camera, float distance, bool moveInWorldPlane);
+RLAPI void CameraMoveUp(Camera *camera, float distance);
+RLAPI void CameraMoveRight(Camera *camera, float distance, bool moveInWorldPlane);
+RLAPI void CameraMoveToTarget(Camera *camera, float delta);
 
-void CameraYaw(Camera *camera, float angle, bool rotateAroundTarget);
-void CameraPitch(Camera *camera, float angle, bool lockView, bool rotateAroundTarget, bool rotateUp);
-void CameraRoll(Camera *camera, float angle);
+// Camera rotation
+RLAPI void CameraYaw(Camera *camera, float angle, bool rotateAroundTarget);
+RLAPI void CameraPitch(Camera *camera, float angle, bool lockView, bool rotateAroundTarget, bool rotateUp);
+RLAPI void CameraRoll(Camera *camera, float angle);
 
-Matrix GetCameraViewMatrix(Camera *camera);
-Matrix GetCameraProjectionMatrix(Camera* camera, float aspect);
+RLAPI Matrix GetCameraViewMatrix(Camera *camera);
+RLAPI Matrix GetCameraProjectionMatrix(Camera* camera, float aspect);
 
 #if defined(__cplusplus)
 }
@@ -306,36 +311,35 @@ void CameraYaw(Camera *camera, float angle, bool rotateAroundTarget)
     Vector3 up = GetCameraUp(camera);
 
     // View vector
-    Vector3 target_position = Vector3Subtract(camera->target, camera->position);
+    Vector3 targetPosition = Vector3Subtract(camera->target, camera->position);
 
     // Rotate view vector around up axis
-    target_position = Vector3RotateByAxisAngle(target_position, up, angle);
+    targetPosition = Vector3RotateByAxisAngle(targetPosition, up, angle);
 
     if (rotateAroundTarget)
     {
         // Move position relative to target
-        camera->position = Vector3Subtract(camera->target, target_position);
+        camera->position = Vector3Subtract(camera->target, targetPosition);
     }
     else // rotate around camera.position
     {
         // Move target relative to position
-        camera->target = Vector3Add(camera->position, target_position);
+        camera->target = Vector3Add(camera->position, targetPosition);
     }
 }
 
-// Rotates the camera around its right vector
-// Pitch is "looking up and down"
-// lockView prevents camera overrotation (aka "somersaults")
-// If rotateAroundTarget is false, the camera rotates around its position
-// rotateUp rotates the up direction as well (typically only usefull in CAMERA_FREE)
-// Note: angle must be provided in radians
+// Rotates the camera around its right vector, pitch is "looking up and down"
+//  - lockView prevents camera overrotation (aka "somersaults")
+//  - rotateAroundTarget defines if rotation is around target or around its position
+//  - rotateUp rotates the up direction as well (typically only usefull in CAMERA_FREE)
+// NOTE: angle must be provided in radians
 void CameraPitch(Camera *camera, float angle, bool lockView, bool rotateAroundTarget, bool rotateUp)
 {
     // Up direction
     Vector3 up = GetCameraUp(camera);
 
     // View vector
-    Vector3 target_position = Vector3Subtract(camera->target, camera->position);
+    Vector3 targetPosition = Vector3Subtract(camera->target, camera->position);
 
     if (lockView)
     {
@@ -343,32 +347,32 @@ void CameraPitch(Camera *camera, float angle, bool lockView, bool rotateAroundTa
         // to allow only viewing straight up or down.
 
         // Clamp view up
-        float max_angle_up = Vector3Angle(up, target_position);
-        max_angle_up -= 0.001f; // avoid numerical errors
-        if (angle > max_angle_up) angle = max_angle_up;
+        float maxAngleUp = Vector3Angle(up, targetPosition);
+        maxAngleUp -= 0.001f; // avoid numerical errors
+        if (angle > maxAngleUp) angle = maxAngleUp;
 
         // Clamp view down
-        float max_angle_down = Vector3Angle(Vector3Negate(up), target_position);
-        max_angle_down *= -1.0f; // downwards angle is negative
-        max_angle_down += 0.001f; // avoid numerical errors
-        if (angle < max_angle_down) angle = max_angle_down;
+        float maxAngleDown = Vector3Angle(Vector3Negate(up), targetPosition);
+        maxAngleDown *= -1.0f; // downwards angle is negative
+        maxAngleDown += 0.001f; // avoid numerical errors
+        if (angle < maxAngleDown) angle = maxAngleDown;
     }
 
     // Rotation axis
     Vector3 right = GetCameraRight(camera);
 
     // Rotate view vector around right axis
-    target_position = Vector3RotateByAxisAngle(target_position, right, angle);
+    targetPosition = Vector3RotateByAxisAngle(targetPosition, right, angle);
 
     if (rotateAroundTarget)
     {
         // Move position relative to target
-        camera->position = Vector3Subtract(camera->target, target_position);
+        camera->position = Vector3Subtract(camera->target, targetPosition);
     }
     else // rotate around camera.position
     {
         // Move target relative to position
-        camera->target = Vector3Add(camera->position, target_position);
+        camera->target = Vector3Add(camera->position, targetPosition);
     }
 
     if (rotateUp)
@@ -465,5 +469,27 @@ void UpdateCamera(Camera *camera, int mode)
     }
 }
 #endif // !CAMERA_STANDALONE
+
+// Update camera movement, movement/rotation values should be provided by user
+void UpdateCameraPro(Camera *camera, float moveForward, float moveRightLeft, float moveUpDown, float moveToTarget, float yaw, float pitch, float roll)
+{
+    bool lockView = true;
+    bool rotateAroundTarget = false;
+    bool rotateUp = false;
+    bool moveInWorldPlane = true;
+
+    // Camera rotation
+    CameraPitch(camera, -pitch*DEG2RAD, lockView, rotateAroundTarget, rotateUp);
+    CameraYaw(camera, -yaw*DEG2RAD, rotateAroundTarget);
+    CameraRoll(camera, roll*DEG2RAD);
+
+    // Camera movement
+    CameraMoveForward(camera, moveForward, moveInWorldPlane);
+    CameraMoveRight(camera, moveRightLeft, moveInWorldPlane);
+    CameraMoveUp(camera, moveUpDown);
+
+    // Zoom target distance
+    CameraMoveToTarget(camera, moveToTarget);
+}
 
 #endif // CAMERA_IMPLEMENTATION
