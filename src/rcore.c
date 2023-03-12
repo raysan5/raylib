@@ -1994,7 +1994,9 @@ void SetClipboardText(const char *text)
     glfwSetClipboardString(CORE.Window.handle, text);
 #endif
 #if defined(PLATFORM_WEB)
-    emscripten_run_script(TextFormat("navigator.clipboard.writeText('%s')", text));
+    // Security check to (partially) avoid malicious code
+    if (strchr(text, '\'') != NULL) TRACELOG(LOG_WARNING, "SYSTEM: Provided Clipboard could be potentially malicious, avoid [\'] character");
+    else emscripten_run_script(TextFormat("navigator.clipboard.writeText('%s')", text));
 #endif
 }
 
@@ -2006,6 +2008,7 @@ const char *GetClipboardText(void)
     return glfwGetClipboardString(CORE.Window.handle);
 #endif
 #if defined(PLATFORM_WEB)
+/*
     // Accessing clipboard data from browser is tricky due to security reasons
     // The method to use is navigator.clipboard.readText() but this is an asynchronous method
     // that will return at some moment after the function is called with the required data
@@ -2019,7 +2022,7 @@ const char *GetClipboardText(void)
 
     // Another approach could be just copy the data in a HTML text field and try to retrieve it
     // later on if available... and clean it for future accesses
-
+*/
     return NULL;
 #endif
     return NULL;
@@ -2910,6 +2913,9 @@ void SetConfigFlags(unsigned int flags)
 void TakeScreenshot(const char *fileName)
 {
 #if defined(SUPPORT_MODULE_RTEXTURES)
+    // Security check to (partially) avoid malicious code on PLATFORM_WEB
+    if (strchr(fileName, '\'') != NULL) { TRACELOG(LOG_WARNING, "SYSTEM: Provided fileName could be potentially malicious, avoid [\'] character");  return; }
+
     Vector2 scale = GetWindowScaleDPI();
     unsigned char *imgData = rlReadScreenPixels((int)((float)CORE.Window.render.width*scale.x), (int)((float)CORE.Window.render.height*scale.y));
     Image image = { imgData, (int)((float)CORE.Window.render.width*scale.x), (int)((float)CORE.Window.render.height*scale.y), 1, PIXELFORMAT_UNCOMPRESSED_R8G8B8A8 };
@@ -3536,12 +3542,8 @@ unsigned char *DecodeDataBase64(const unsigned char *data, int *outputSize)
 // Ref: https://github.com/raysan5/raylib/issues/686
 void OpenURL(const char *url)
 {
-    // Small security check trying to avoid (partially) malicious code...
-    // sorry for the inconvenience when you hit this point...
-    if (strchr(url, '\'') != NULL)
-    {
-        TRACELOG(LOG_WARNING, "SYSTEM: Provided URL is not valid");
-    }
+    // Security check to (aprtially) avoid malicious code on PLATFORM_WEB
+    if (strchr(url, '\'') != NULL) TRACELOG(LOG_WARNING, "SYSTEM: Provided URL could be potentially malicious, avoid [\'] character");
     else
     {
 #if defined(PLATFORM_DESKTOP)
