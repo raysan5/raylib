@@ -4,7 +4,7 @@ changelog
 Current Release:    raylib 4.2.0 (11 August 2022)
 
 -------------------------------------------------------------------------
-Release:     raylib 4.5 (xx March 2023) -WIP-
+Release:     raylib 4.5 (16 March 2023)
 -------------------------------------------------------------------------
 KEY CHANGES:
  - ADDED: M3D model format support with animations
@@ -14,7 +14,6 @@ KEY CHANGES:
  - REDESIGNED: rlgl module to avoid render batch triangles limits pre-check: rlCheckRenderBatchLimit()
  - REDESIGNED: rshapes module to minimize the rlgl dependency, now only 6 low-level functions required!
  - ADDED: rl_gputex self-contained module for compressed textures loading, used by rtextures module
- - raygui 3.5: New version of the immediate-mode gui system for tools development with raylib
 
 Detailed changes:
 [core] ADDED: RAYLIB_VERSION_* values to raylib.h (#2856) by @RobLoach
