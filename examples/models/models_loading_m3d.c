@@ -2,7 +2,7 @@
 *
 *   raylib [models] example - Load models M3D
 *
-*   Example originally created with raylib 4.5-dev, last time updated with raylib 4.5-dev
+*   Example originally created with raylib 4.5, last time updated with raylib 4.5
 *
 *   Example contributed by bzt (@bztsrc) and reviewed by Ramon Santamaria (@raysan5)
 *
