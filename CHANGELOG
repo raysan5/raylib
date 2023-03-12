@@ -93,7 +93,6 @@ Detailed changes:
 [text] `WARNING`: RENAMED: TextCodepointsToUTF8() to LoadUTF8()
 [text] `WARNING`: RENAMED: GetCodepoint() -> GetCodepointNext()
 [text] REDESIGNED: GetCodepointNext()
-[text] REVIEWED text_codepoints_loading.c
 [text] REVIEWED: MeasureTextEx(), avoid crash on bad data
 [text] REVIEWED: UnloadFontData(), avoid crash on invalid font data
 [models] ADDED: Support M3D model file format (meshes and materials) (#2648) by @bztsrc
@@ -138,6 +137,7 @@ Detailed changes:
 [examples] REVIEWED: core_loading_thread, join thread on completion (#2845) by @planetis-m
 [examples] REVIEWED: models_loading_gltf
 [examples] REVIEWED: Shader lighting.fs for GLSL120 (#2651)
+[examples] REVIEWED: text_codepoints_loading.c
 [parser] REVIEWED: raylib-parser Makefile (#2765) by @Peter0x44
 [build] ADDED: Packaging for distros with deb-based and rpm-based packages (#2877) by @KOLANICH
 [build] ADDED: Linkage library -latomic on Linux (only required for ARM32)
