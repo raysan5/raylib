@@ -9,7 +9,7 @@ Here it is a wishlist with features and ideas to improve the library. Note that 
 _Current version of raylib is complete and functional but there is always room for improvements._
 
 **raylib 4.x**
- - [ ] Redesign camera module (more flexible) ([#1143](https://github.com/raysan5/raylib/issues/1143), https://github.com/raysan5/raylib/discussions/2507)
+ - [x] Redesign camera module (more flexible) ([#1143](https://github.com/raysan5/raylib/issues/1143), https://github.com/raysan5/raylib/discussions/2507)
  - [ ] Redesign gestures system, improve touch inputs management
  - [ ] Redesign raudio module, implement miniaudio high-level provided features
  - [x] Better documentation and improved examples
