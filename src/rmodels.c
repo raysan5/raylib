@@ -1117,8 +1117,8 @@ bool IsModelReady(Model model)
             (model.meshMaterial != NULL) &&     // Validate mesh-material linkage
             (model.meshCount > 0) &&            // Validate mesh count
             (model.materialCount > 0));         // Validate material count
-            
-    // NOTE: This is a very general model validation, many elements could be validated from a model... 
+
+    // NOTE: This is a very general model validation, many elements could be validated from a model...
 }
 
 // Unload model (meshes/materials) from memory (RAM and/or VRAM)

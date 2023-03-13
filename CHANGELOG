@@ -38,7 +38,7 @@ Detailed changes:
 [core] REVIEWED: GetKeyPressed(), out of range issue (#2814) by @daipom
 [core] REVIEWED: GetTime(), renamed variable 'time' to 'nanoSeconds' (#2816) by @jtainer
 [core] REVIEWED: LoadShaderFromMemory(), issue with shader linkage
-[core] REVIEWED: Avoid possible gamepad index as -1 (#2839) 
+[core] REVIEWED: Avoid possible gamepad index as -1 (#2839)
 [core] REVIEWED: SetShaderValue*(), avoid setup uniforms for invalid locations
 [core] REVIEWED: GetClipboardText() on PLATFORM_WEB, permissions issues
 [core] REVIEWED: Initial window position for display-sized fullscreen (#2742) by @daipom
@@ -60,7 +60,7 @@ Detailed changes:
 [rlgl] ADDED: RL_TEXTURE_MIPMAP_BIAS_RATIO support to `rlTextureParameters()` for OpenGL 3.3 #2674
 [rlgl] ADDED: rlCubemapParameters() (#2862) by @GithubPrankster
 [rlgl] ADDED: rlSetCullFace() (#2797) by @jtainer
-[rlgl] REMOVED: Mipmaps software generation for OpenGL 1.1 
+[rlgl] REMOVED: Mipmaps software generation for OpenGL 1.1
 [rlgl] REVIEWED: Check for extensions before enabling them (#2706) by @Not-Nik
 [rlgl] REVIEWED: SSBO usage to avoid long long data types
 [rlgl] REVIEWED: Enable DXT compression on __APPLE__ targets (#2694) by @Not-Nik
@@ -85,7 +85,7 @@ Detailed changes:
 [textures] ADDED: ImageBlurGaussian() (#2770) by @nobytesgiven
 [textures] REVIEWED: Image fileformat support: PIC, PNM
 [textures] REVIEWED: ImageTextEx() and ImageDrawTextEx() scaling (#2756) by @hatkidchan
-[textures] `WARNING`: REMOVED: DrawTextureQuad() 
+[textures] `WARNING`: REMOVED: DrawTextureQuad()
 [textures] `WARNING`: REMOVED: DrawTexturePoly(), function moved to example: `textures_polygon`
 [textures] `WARNING`: REMOVED: DrawTextureTiled(),function implementation moved to the textures_tiled.c
 [text] ADDED: GetCodepointPrevious()

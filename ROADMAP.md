@@ -3,8 +3,11 @@
 Here it is a wishlist with features and ideas to improve the library. Note that features listed here are usually long term improvements or just describe a route to follow for the library. There are also some additional places to look for raylib improvements and ideas:
 
  - [GitHub Issues](https://github.com/raysan5/raylib/issues) has several open issues for possible improvements or bugs to fix.
- - [raylib source code](https://github.com/raysan5/raylib/tree/master/src) has multiple *TODO* comments around code with pending things to review or improve. 
- - raylib wishlists discussions (https://github.com/raysan5/raylib/discussions/1502, https://github.com/raysan5/raylib/discussions/2272) are open to everyone to ask for improvements, feel free to check and comment.
+ - [raylib source code](https://github.com/raysan5/raylib/tree/master/src) has multiple *TODO* comments around code with pending things to review or improve.
+ - raylib wishlists discussions are open to everyone to ask for improvements, feel free to check and comment:
+    - [raylib wishlist 2021](https://github.com/raysan5/raylib/discussions/1502)
+    - [raylib wishlist 2022](https://github.com/raysan5/raylib/discussions/2272)
+    - [raylib 5.0 wishlist](https://github.com/raysan5/raylib/discussions/2952)
 
 _Current version of raylib is complete and functional but there is always room for improvements._
 
@@ -23,23 +26,23 @@ _Current version of raylib is complete and functional but there is always room f
  - Basic CPU/GPU stats system (memory, draws, time...) ([#1295](https://github.com/raysan5/raylib/issues/1295)) - _DISCARDED_
  - Software rendering backend (avoiding OpenGL) ([#1370](https://github.com/raysan5/raylib/issues/1370)) - _DISCARDED_
  - Network module (UDP): `rnet` ([#753](https://github.com/raysan5/raylib/issues/753)) - _DISCARDED_ - Use [nbnet](https://github.com/nathhB/nbnet).
- 
+
  **raylib 3.0**
  - [x] Custom memory allocators support
  - [x] Global variables moved to global context
  - [x] Optimize data structures for pass-by-value
  - [x] Trace log messages redesign ([#1065](https://github.com/raysan5/raylib/issues/1065))
  - [x] Continuous Integration using GitHub Actions
- 
+
 **raylib 2.5**
  - [x] Support Animated models
  - [x] Support glTF models file format
  - [x] Unicode support on text drawing
- 
+
 **raylib 2.0**
  - [x] Removed external dependencies (GLFW3 and OpenAL)
  - [x] Support TCC compiler (32bit and 64bit)
- 
+
 **raylib 1.8**
  - [x] Improved Materials system with PBR support
  - [x] Procedural image generation functions (spot, gradient, noise...)
@@ -50,7 +53,7 @@ _Current version of raylib is complete and functional but there is always room f
  - [x] Support configuration flags
  - [x] Improved build system for Android
  - [x] Gamepad support on HTML5
-    
+
 **raylib 1.6**
  - [x] Lua scripting support (raylib Lua wrapper)
  - [x] Redesigned audio module

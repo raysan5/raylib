@@ -543,8 +543,8 @@ bool IsFontReady(Font font)
             (font.glyphCount > 0) &&    // Validate font contains some glyph
             (font.recs != NULL) &&      // Validate font recs defining glyphs on texture atlas
             (font.glyphs != NULL));     // Validate glyph data is loaded
-            
-    // NOTE: Further validations could be done to verify if recs count and glyphs count 
+
+    // NOTE: Further validations could be done to verify if recs count and glyphs count
     // match glyphCount and to verify that data contained is valid (glyphs values, metrics...)
 }
 

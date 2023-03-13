@@ -3364,7 +3364,7 @@ bool IsRenderTextureReady(RenderTexture2D target)
 {
     return ((target.id > 0) &&                  // Validate OpenGL id
             IsTextureReady(target.depth) &&     // Validate FBO depth texture/renderbuffer
-            IsTextureReady(target.texture));    // Validate FBO texture 
+            IsTextureReady(target.texture));    // Validate FBO texture
 }
 
 // Unload render texture from GPU memory (VRAM)
