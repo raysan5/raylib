@@ -395,3 +395,18 @@ Highlights for `raylib 4.2`:
 As always, there are more improvements than the key features listed, make sure to check raylib [CHANGELOG](CHANGELOG) for the detailed list of changes; for this release a `WARNING` flag has been added to all the changes that could affect bindings or productivity code. **raylib keeps improving one more version** and a special focus on maintainability has been put on the library for the future. Specific/advance functionality will be provided through **raylib-extras** repos and raylib main repo devlelopment will be focused on what made raylib popular: being a simple and easy-to-use library to **enjoy videogames programming**.
 
 **Enjoy gamedev/tools/graphics programming!** :)
+
+notes on raylib 4.5
+-------------------
+
+It's been **7 months** since latest raylib release. As usual, **many parts of the library have been reviewed and improved** along those months. Many issues have been closed, staying under 10 open issues at the moment of this writting and also many PRs from contributors have been received, reviewed and merged into raylib library. Some new functions have been added and some others have been removed to improve library coherence and avoid moving too high level, giving the users the tools to implement advance functionality themselfs over raylib. Again, this is a big release with a considerable amount of changes and improvements. Here it is a small summary highlighting this new **rayib 4.5**.
+
+Some numbers for this release:
+
+ - **+100** closed issues (for a TOTAL of **+1340**!)
+ - **+350** commits since previous RELEASE (for a TOTAL of **+6350**!)
+ - **+25** functions ADDED to raylib API (for a TOTAL of **516**!)
+ - **+40** functions REVIEWED/REDESIGNED
+ - **+40** new contributors (for a TOTAL of **405**!)
+
+-WIP-
