@@ -45,8 +45,8 @@
 PLATFORM             ?= PLATFORM_DESKTOP
 
 # Define required raylib variables
-RAYLIB_VERSION        = 4.2.0
-RAYLIB_API_VERSION    = 420
+RAYLIB_VERSION        = 4.5.0
+RAYLIB_API_VERSION    = 450
 
 # Define raylib source code path
 RAYLIB_SRC_PATH      ?= ../src
@@ -231,8 +231,10 @@ endif
 ifeq ($(PLATFORM),PLATFORM_DESKTOP)
     # By default use OpenGL 3.3 on desktop platforms
     GRAPHICS ?= GRAPHICS_API_OPENGL_33
-    #GRAPHICS = GRAPHICS_API_OPENGL_11  # Uncomment to use OpenGL 1.1
-    #GRAPHICS = GRAPHICS_API_OPENGL_21  # Uncomment to use OpenGL 2.1
+    #GRAPHICS = GRAPHICS_API_OPENGL_11      # Uncomment to use OpenGL 1.1
+    #GRAPHICS = GRAPHICS_API_OPENGL_21      # Uncomment to use OpenGL 2.1
+    #GRAPHICS = GRAPHICS_API_OPENGL_43      # Uncomment to use OpenGL 4.3
+    #GRAPHICS = GRAPHICS_API_OPENGL_ES2     # Uncomment to use OpenGL ES 2.0 (ANGLE)
 endif
 ifeq ($(PLATFORM),PLATFORM_RPI)
     # On RPI OpenGL ES 2.0 must be used

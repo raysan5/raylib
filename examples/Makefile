@@ -30,7 +30,7 @@ PLATFORM              ?= PLATFORM_DESKTOP
 
 # Define required raylib variables
 PROJECT_NAME          ?= raylib_examples
-RAYLIB_VERSION        ?= 4.2.0
+RAYLIB_VERSION        ?= 4.5.0
 RAYLIB_PATH           ?= ..
 
 # Locations of raylib.h and libraylib.a/libraylib.so
@@ -129,7 +129,7 @@ endif
 RAYLIB_RELEASE_PATH    ?= $(RAYLIB_PATH)/src
 
 ifeq ($(PLATFORM),PLATFORM_WEB)
-	ifeq ($(PLATFORM_OS),WINDOWS)
+    ifeq ($(PLATFORM_OS),WINDOWS)
         # Emscripten required variables
 		EMSDK_PATH         ?= C:/emsdk
 		EMSCRIPTEN_PATH    ?= $(EMSDK_PATH)/upstream/emscripten
@@ -137,7 +137,7 @@ ifeq ($(PLATFORM),PLATFORM_WEB)
 		PYTHON_PATH         = $(EMSDK_PATH)/python/3.9.2-1_64bit
 		NODE_PATH           = $(EMSDK_PATH)/node/14.15.5_64bit/bin
 		export PATH         = $(EMSDK_PATH);$(EMSCRIPTEN_PATH);$(CLANG_PATH);$(NODE_PATH);$(PYTHON_PATH):$$(PATH)
-	endif
+    endif
 endif
 
 # Define default C compiler: CC
@@ -489,6 +489,7 @@ MODELS = \
     models/models_billboard \
     models/models_box_collisions \
     models/models_cubicmap \
+    models/models_draw_cube_texture \
     models/models_first_person_maze \
     models/models_geometric_shapes \
     models/models_mesh_generation \
@@ -531,7 +532,8 @@ AUDIO = \
     audio/audio_music_stream \
     audio/audio_raw_stream \
     audio/audio_sound_loading \
-    audio/audio_stream_effects
+    audio/audio_stream_effects \
+    audio/audio_mixed_processor
 
 CURRENT_MAKEFILE = $(lastword $(MAKEFILE_LIST))
 
