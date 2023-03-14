@@ -12,10 +12,12 @@ Here it is a wishlist with features and ideas to improve the library. Note that 
 _Current version of raylib is complete and functional but there is always room for improvements._
 
 **raylib 4.x**
- - [x] Redesign camera module (more flexible) ([#1143](https://github.com/raysan5/raylib/issues/1143), https://github.com/raysan5/raylib/discussions/2507)
+ - [ ] Split core module into separate platforms?
+ - [ ] Basic 2d software renderer, using `Image` provided API
  - [ ] Redesign gestures system, improve touch inputs management
- - [ ] Redesign raudio module, implement miniaudio high-level provided features
- - [x] Better documentation and improved examples
+ - [ ] Redesign audio module, implement miniaudio high-level provided features
+ - [x] Redesign camera module (more flexible) ([#1143](https://github.com/raysan5/raylib/issues/1143), https://github.com/raysan5/raylib/discussions/2507)
+ - [x] Better documentation and improved examples, reviewed webpage with examples complexity level
  - [x] Focus on HTML5 ([raylib 5k gamejam](https://itch.io/jam/raylib-5k-gamejam)) and embedded platforms (RPI and similar SOCs)
  - [x] Additional support libraries: [raygui](https://github.com/raysan5/raygui), [rres](https://github.com/raysan5/rres)
 
