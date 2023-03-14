@@ -7,13 +7,13 @@ Current Release:    raylib 4.5.0 (16 March 2023)
 Release:     raylib 4.5 (16 March 2023)
 -------------------------------------------------------------------------
 KEY CHANGES:
- - ADDED: M3D model format support with animations
- - ADDED: GLTF animation support
- - ADDED: QOA audio format support (import/export)
- - REDESIGNED: rcamera module, new implementation from scratch, simpler and more extendable
- - REDESIGNED: rlgl module to avoid render batch triangles limits pre-check: rlCheckRenderBatchLimit()
- - REDESIGNED: rshapes module to minimize the rlgl dependency, now only 6 low-level functions required!
- - ADDED: rl_gputex self-contained module for compressed textures loading, used by rtextures module
+ - ADDED: Improved ANGLE support on Desktop platforms
+ - ADDED: rcamera module, simpler and more extendable
+ - ADDED: Support for M3D models and M3D/GLTF animations
+ - ADDED: Support QOA audio format (import/export)
+ - ADDED: rl_gputex module for compressed textures loading
+ - REDESIGNED: rlgl module for automatic render-batch limits checking
+ - REDESIGNED: rshapes module to minimize the rlgl dependency
 
 Detailed changes:
 [core] ADDED: RAYLIB_VERSION_* values to raylib.h (#2856) by @RobLoach
@@ -122,8 +122,11 @@ Detailed changes:
 [multi] REVIEWED: Grammar mistakes and typos (#2914) by @stickM4N
 [multi] REVIEWED: Use TRACELOG() macro instead of TraceLog() in internal modules (#2881) by @RobLoach
 [examples] ADDED: textures_textured_curve (#2821) by @JeffM2501
+[examples] ADDED: models_draw_cube_texture
+[examples] ADDED: models_loading_m3d (#2648) by @bztsrc
 [examples] ADDED: shaders_write_depth (#2836) by @BugraAlptekinSari
 [examples] ADDED: shaders_hybrid_render (#2919) by @BugraAlptekinSari
+[examples] REMOVED: audio_multichannel_sound
 [examples] RENAMED: Several shaders for naming consistency (#2707)
 [examples] RENAMED: lighting_instanced.fs to lighting_instancing.fs (glsl100) (#2805) by @gtrxAC
 [examples] REVIEWED: core_custom_logging.c (#2692) by @hartmannathan
