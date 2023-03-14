@@ -210,7 +210,7 @@ else
             CFLAGS += -Os
         endif
     else
-        CFLAGS += -s -O2
+        CFLAGS += -O2
     endif
 endif
 
