@@ -1790,9 +1790,9 @@ void UpdateMusicStream(Music music)
                 {
                     while (true)
                     {
-                        int frameCountRed = (int)drwav_read_pcm_frames_s16((drwav *)music.ctxData, frameCountStillNeeded, (short *)((char *)AUDIO.System.pcmBuffer + frameCountReadTotal*frameSize));
-                        frameCountReadTotal += frameCountRed;
-                        frameCountStillNeeded -= frameCountRed;
+                        int frameCountRead = (int)drwav_read_pcm_frames_s16((drwav *)music.ctxData, frameCountStillNeeded, (short *)((char *)AUDIO.System.pcmBuffer + frameCountReadTotal*frameSize));
+                        frameCountReadTotal += frameCountRead;
+                        frameCountStillNeeded -= frameCountRead;
                         if (frameCountStillNeeded == 0) break;
                         else drwav_seek_to_first_pcm_frame((drwav *)music.ctxData);
                     }
@@ -1801,9 +1801,9 @@ void UpdateMusicStream(Music music)
                 {
                     while (true)
                     {
-                        int frameCountRed = (int)drwav_read_pcm_frames_f32((drwav *)music.ctxData, frameCountStillNeeded, (float *)((char *)AUDIO.System.pcmBuffer + frameCountReadTotal*frameSize));
-                        frameCountReadTotal += frameCountRed;
-                        frameCountStillNeeded -= frameCountRed;
+                        int frameCountRead = (int)drwav_read_pcm_frames_f32((drwav *)music.ctxData, frameCountStillNeeded, (float *)((char *)AUDIO.System.pcmBuffer + frameCountReadTotal*frameSize));
+                        frameCountReadTotal += frameCountRead;
+                        frameCountStillNeeded -= frameCountRead;
                         if (frameCountStillNeeded == 0) break;
                         else drwav_seek_to_first_pcm_frame((drwav *)music.ctxData);
                     }
@@ -1815,9 +1815,9 @@ void UpdateMusicStream(Music music)
             {
                 while (true)
                 {
-                    int frameCountRed = stb_vorbis_get_samples_short_interleaved((stb_vorbis *)music.ctxData, music.stream.channels, (short *)((char *)AUDIO.System.pcmBuffer + frameCountReadTotal*frameSize), frameCountStillNeeded*music.stream.channels);
-                    frameCountReadTotal += frameCountRed;
-                    frameCountStillNeeded -= frameCountRed;
+                    int frameCountRead = stb_vorbis_get_samples_short_interleaved((stb_vorbis *)music.ctxData, music.stream.channels, (short *)((char *)AUDIO.System.pcmBuffer + frameCountReadTotal*frameSize), frameCountStillNeeded*music.stream.channels);
+                    frameCountReadTotal += frameCountRead;
+                    frameCountStillNeeded -= frameCountRead;
                     if (frameCountStillNeeded == 0) break;
                     else stb_vorbis_seek_start((stb_vorbis *)music.ctxData);
                 }
