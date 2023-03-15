@@ -50,6 +50,7 @@ Detailed changes:
 [core] REVIEWED: GetWindowHandle() to return Linux window (#2938)
 [core] REVIEWED: WindowDropCallback(), additional security check (#2943)
 [core] REVIEWED: Security checks for emscripten_run_script() (#2954)
+[utils] REVIEWED: TraceLog() message size limit overflow
 [rcamera] REDESIGNED: New implementation from scratch (#2563) by @Crydsch
 [rcamera] REVIEWED: Make orbital camera work as expected (#2926) by @JeffM2501
 [rcamera] REVIEWED: Multiple reviews on the new implementation
@@ -177,7 +178,8 @@ Detailed changes:
 [bindings] ADDED: TurboRaylib (Object Pascal) by @turborium
 [bindings] ADDED: Kaylib (Kotlin/Native) by @Its-Kenta
 [bindings] ADDED: Raylib-Nelua (Nelua) by @Its-Kenta
-[bindings] ADDED: Cyber binding by @fubark
+[bindings] ADDED: Cyber (Cyber) by @fubark
+[bindings] ADDED: raylib-sunder (Sunder) by @ashn-dot-dev
 [misc] REVIEWED: Update external libraries to latest versions
 
 -------------------------------------------------------------------------
