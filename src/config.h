@@ -239,6 +239,6 @@
 
 // utils: Configuration values
 //------------------------------------------------------------------------------------
-#define MAX_TRACELOG_MSG_LENGTH       128       // Max length of one trace-log message
+#define MAX_TRACELOG_MSG_LENGTH       256       // Max length of one trace-log message
 
 #endif // CONFIG_H
