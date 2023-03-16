@@ -1,10 +1,10 @@
 changelog
 ---------
 
-Current Release:    raylib 4.5.0 (16 March 2023)
+Current Release:    raylib 4.5.0 (18 March 2023)
 
 -------------------------------------------------------------------------
-Release:     raylib 4.5 (16 March 2023)
+Release:     raylib 4.5 (18 March 2023)
 -------------------------------------------------------------------------
 KEY CHANGES:
  - ADDED: Improved ANGLE support on Desktop platforms
@@ -180,6 +180,7 @@ Detailed changes:
 [bindings] ADDED: Raylib-Nelua (Nelua) by @Its-Kenta
 [bindings] ADDED: Cyber (Cyber) by @fubark
 [bindings] ADDED: raylib-sunder (Sunder) by @ashn-dot-dev
+[bindings] ADDED: raylib BQN (#2962) by @Brian-ED
 [misc] REVIEWED: Update external libraries to latest versions
 
 -------------------------------------------------------------------------
