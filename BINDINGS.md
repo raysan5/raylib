@@ -71,7 +71,7 @@ Some people ported raylib to other languages in form of bindings or wrappers to 
 | raylib.zig         | **4.2** | [Zig](https://ziglang.org/)               | MIT | https://github.com/ryupold/raylib.zig |
 | hare-raylib        | auto    | [Hare](https://harelang.org/)        | Zlib | https://git.sr.ht/~evantj/hare-raylib       |
 | raylib-sunder      | auto    | [Sunder](https://github.com/ashn-dot-dev/sunder) | 0BSD | https://github.com/ashn-dot-dev/raylib-sunder |
-
+| rayed-bqn          | auto    | [BQN](https://mlochbaum.github.io/BQN/) | MIT | https://github.com/Brian-ED/rayed-bqn | 
 
 
 ### Utility Wrapers
