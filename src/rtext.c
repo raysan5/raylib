@@ -702,7 +702,7 @@ Image GenImageFontAtlas(const GlyphInfo *chars, Rectangle **charRecs, int glyphC
     do
     {
         imageSize *= 2;                                     // Double the size of image (to keep POT)
-        rowCount = imageSize/(fontSize + 2*padding) + 1;    // Calculate new row count for the new image size
+        rowCount = imageSize/(fontSize + 2*padding);        // Calculate new row count for the new image size
     }
     while (totalWidth > imageSize*rowCount);
 
