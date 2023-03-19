@@ -62,7 +62,7 @@ typedef struct {
 extern "C" {            // Prevents name mangling of functions
 #endif
 
-qoaplay_desc *qoaplay_open(char *path);
+qoaplay_desc *qoaplay_open(const char *path);
 qoaplay_desc *qoaplay_open_memory(const unsigned char *data, int data_size);
 void qoaplay_close(qoaplay_desc *qoa_ctx);
 
@@ -83,7 +83,7 @@ int qoaplay_get_frame(qoaplay_desc *qoa_ctx);
 //----------------------------------------------------------------------------------
 
 // Open QOA file, keep FILE pointer to keep reading from file
-qoaplay_desc *qoaplay_open(char *path)
+qoaplay_desc *qoaplay_open(const char *path)
 {
     FILE *file = fopen(path, "rb");
     if (!file) return NULL;
