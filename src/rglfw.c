@@ -108,6 +108,7 @@
     #include "external/glfw/src/posix_module.c"
     #include "external/glfw/src/posix_thread.c"
     #include "external/glfw/src/posix_time.c"
+    #include "external/glfw/src/posix_poll.c"
     #include "external/glfw/src/null_joystick.c"
     #include "external/glfw/src/xkb_unicode.c"
 
