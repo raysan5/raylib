@@ -15,6 +15,7 @@
 
 #include "raylib.h"
 
+// WARNING: This example does not build on Windows with MSVC compiler
 #include "pthread.h"                        // POSIX style threads management
 
 #include <stdatomic.h>                      // C11 atomic data types
