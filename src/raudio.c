@@ -377,11 +377,6 @@ typedef struct AudioData {
         int defaultSize;            // Default audio buffer size for audio streams
     } Buffer;
     rAudioProcessor *mixedProcessor;
-    struct {
-        unsigned int poolCounter;                               // AudioBuffer pointers pool counter
-        AudioBuffer *pool[MAX_AUDIO_BUFFER_POOL_CHANNELS];      // Multichannel AudioBuffer pointers pool
-        unsigned int channels[MAX_AUDIO_BUFFER_POOL_CHANNELS];  // AudioBuffer pool channels
-    } MultiChannel;
 } AudioData;
 
 //----------------------------------------------------------------------------------
@@ -490,13 +485,6 @@ void InitAudioDevice(void)
         return;
     }
 
-    // Init dummy audio buffers pool for multichannel sound playing
-    for (int i = 0; i < MAX_AUDIO_BUFFER_POOL_CHANNELS; i++)
-    {
-        // WARNING: An empty audio buffer is created (data = 0) and added to list, AudioBuffer data is filled on PlaySoundMulti()
-        AUDIO.MultiChannel.pool[i] = LoadAudioBuffer(AUDIO_DEVICE_FORMAT, AUDIO_DEVICE_CHANNELS, AUDIO.System.device.sampleRate, 0, AUDIO_BUFFER_USAGE_STATIC);
-    }
-
     TRACELOG(LOG_INFO, "AUDIO: Device initialized successfully");
     TRACELOG(LOG_INFO, "    > Backend:       miniaudio / %s", ma_get_backend_name(AUDIO.System.context.backend));
     TRACELOG(LOG_INFO, "    > Format:        %s -> %s", ma_get_format_name(AUDIO.System.device.playback.format), ma_get_format_name(AUDIO.System.device.playback.internalFormat));
@@ -512,20 +500,6 @@ void CloseAudioDevice(void)
 {
     if (AUDIO.System.isReady)
     {
-        // Unload dummy audio buffers pool
-        // WARNING: They can be pointing to already unloaded data
-        for (int i = 0; i < MAX_AUDIO_BUFFER_POOL_CHANNELS; i++)
-        {
-            //UnloadAudioBuffer(AUDIO.MultiChannel.pool[i]);
-            if (AUDIO.MultiChannel.pool[i] != NULL)
-            {
-                ma_data_converter_uninit(&AUDIO.MultiChannel.pool[i]->converter, NULL);
-                UntrackAudioBuffer(AUDIO.MultiChannel.pool[i]);
-                //RL_FREE(buffer->data);    // Already unloaded by UnloadSound()
-                RL_FREE(AUDIO.MultiChannel.pool[i]);
-            }
-        }
-
         ma_mutex_uninit(&AUDIO.System.lock);
         ma_device_uninit(&AUDIO.System.device);
         ma_context_uninit(&AUDIO.System.context);
@@ -938,11 +912,11 @@ Sound LoadSoundFromWave(Wave wave)
 // Checks if a sound is ready
 bool IsSoundReady(Sound sound)
 {
-    return ((sound.frameCount > 0) &&       // Validate frame count
-        (sound.stream.buffer != NULL) &&    // Validate stream buffer
-        (sound.stream.sampleRate > 0) &&    // Validate sample rate is supported
-        (sound.stream.sampleSize > 0) &&    // Validate sample size is supported
-        (sound.stream.channels > 0));       // Validate number of channels supported
+    return ((sound.frameCount > 0) &&           // Validate frame count
+            (sound.stream.buffer != NULL) &&    // Validate stream buffer
+            (sound.stream.sampleRate > 0) &&    // Validate sample rate is supported
+            (sound.stream.sampleSize > 0) &&    // Validate sample size is supported
+            (sound.stream.channels > 0));       // Validate number of channels supported
 }
 
 // Unload wave data
@@ -1098,88 +1072,6 @@ bool ExportWaveAsCode(Wave wave, const char *fileName)
 void PlaySound(Sound sound)
 {
     PlayAudioBuffer(sound.stream.buffer);
-}
-
-// Play a sound in the multichannel buffer pool
-void PlaySoundMulti(Sound sound)
-{
-    int index = -1;
-    unsigned int oldAge = 0;
-    int oldIndex = -1;
-
-    // find the first non-playing pool entry
-    for (int i = 0; i < MAX_AUDIO_BUFFER_POOL_CHANNELS; i++)
-    {
-        if (AUDIO.MultiChannel.channels[i] > oldAge)
-        {
-            oldAge = AUDIO.MultiChannel.channels[i];
-            oldIndex = i;
-        }
-
-        if (!IsAudioBufferPlaying(AUDIO.MultiChannel.pool[i]))
-        {
-            index = i;
-            break;
-        }
-    }
-
-    // If no none playing pool members can be indexed choose the oldest
-    if (index == -1)
-    {
-        TRACELOG(LOG_WARNING, "SOUND: Buffer pool is already full, count: %i", AUDIO.MultiChannel.poolCounter);
-
-        if (oldIndex == -1)
-        {
-            // Shouldn't be able to get here... but just in case something odd happens!
-            TRACELOG(LOG_WARNING, "SOUND: Buffer pool could not determine the oldest buffer not playing sound");
-            return;
-        }
-
-        index = oldIndex;
-
-        // Just in case...
-        StopAudioBuffer(AUDIO.MultiChannel.pool[index]);
-    }
-
-    // Experimentally mutex lock doesn't seem to be needed this makes sense
-    // as pool[index] isn't playing and the only stuff we're copying
-    // shouldn't be changing...
-
-    AUDIO.MultiChannel.channels[index] = AUDIO.MultiChannel.poolCounter;
-    AUDIO.MultiChannel.poolCounter++;
-
-    SetAudioBufferVolume(AUDIO.MultiChannel.pool[index], sound.stream.buffer->volume);
-    SetAudioBufferPitch(AUDIO.MultiChannel.pool[index], sound.stream.buffer->pitch);
-    SetAudioBufferPan(AUDIO.MultiChannel.pool[index], sound.stream.buffer->pan);
-
-    AUDIO.MultiChannel.pool[index]->looping = sound.stream.buffer->looping;
-    AUDIO.MultiChannel.pool[index]->usage = sound.stream.buffer->usage;
-    AUDIO.MultiChannel.pool[index]->isSubBufferProcessed[0] = false;
-    AUDIO.MultiChannel.pool[index]->isSubBufferProcessed[1] = false;
-    AUDIO.MultiChannel.pool[index]->sizeInFrames = sound.stream.buffer->sizeInFrames;
-
-    AUDIO.MultiChannel.pool[index]->data = sound.stream.buffer->data;       // Fill dummy track with data for playing
-
-    PlayAudioBuffer(AUDIO.MultiChannel.pool[index]);
-}
-
-// Stop any sound played with PlaySoundMulti()
-void StopSoundMulti(void)
-{
-    for (int i = 0; i < MAX_AUDIO_BUFFER_POOL_CHANNELS; i++) StopAudioBuffer(AUDIO.MultiChannel.pool[i]);
-}
-
-// Get number of sounds playing in the multichannel buffer pool
-int GetSoundsPlaying(void)
-{
-    int counter = 0;
-
-    for (int i = 0; i < MAX_AUDIO_BUFFER_POOL_CHANNELS; i++)
-    {
-        if (IsAudioBufferPlaying(AUDIO.MultiChannel.pool[i])) counter++;
-    }
-
-    return counter;
 }
 
 // Pause a sound
@@ -1898,9 +1790,9 @@ void UpdateMusicStream(Music music)
                 {
                     while (true)
                     {
-                        int frameCountRed = (int)drwav_read_pcm_frames_s16((drwav *)music.ctxData, frameCountStillNeeded, (short *)((char *)AUDIO.System.pcmBuffer + frameCountReadTotal*frameSize));
-                        frameCountReadTotal += frameCountRed;
-                        frameCountStillNeeded -= frameCountRed;
+                        int frameCountRead = (int)drwav_read_pcm_frames_s16((drwav *)music.ctxData, frameCountStillNeeded, (short *)((char *)AUDIO.System.pcmBuffer + frameCountReadTotal*frameSize));
+                        frameCountReadTotal += frameCountRead;
+                        frameCountStillNeeded -= frameCountRead;
                         if (frameCountStillNeeded == 0) break;
                         else drwav_seek_to_first_pcm_frame((drwav *)music.ctxData);
                     }
@@ -1909,9 +1801,9 @@ void UpdateMusicStream(Music music)
                 {
                     while (true)
                     {
-                        int frameCountRed = (int)drwav_read_pcm_frames_f32((drwav *)music.ctxData, frameCountStillNeeded, (float *)((char *)AUDIO.System.pcmBuffer + frameCountReadTotal*frameSize));
-                        frameCountReadTotal += frameCountRed;
-                        frameCountStillNeeded -= frameCountRed;
+                        int frameCountRead = (int)drwav_read_pcm_frames_f32((drwav *)music.ctxData, frameCountStillNeeded, (float *)((char *)AUDIO.System.pcmBuffer + frameCountReadTotal*frameSize));
+                        frameCountReadTotal += frameCountRead;
+                        frameCountStillNeeded -= frameCountRead;
                         if (frameCountStillNeeded == 0) break;
                         else drwav_seek_to_first_pcm_frame((drwav *)music.ctxData);
                     }
@@ -1923,9 +1815,9 @@ void UpdateMusicStream(Music music)
             {
                 while (true)
                 {
-                    int frameCountRed = stb_vorbis_get_samples_short_interleaved((stb_vorbis *)music.ctxData, music.stream.channels, (short *)((char *)AUDIO.System.pcmBuffer + frameCountReadTotal*frameSize), frameCountStillNeeded*music.stream.channels);
-                    frameCountReadTotal += frameCountRed;
-                    frameCountStillNeeded -= frameCountRed;
+                    int frameCountRead = stb_vorbis_get_samples_short_interleaved((stb_vorbis *)music.ctxData, music.stream.channels, (short *)((char *)AUDIO.System.pcmBuffer + frameCountReadTotal*frameSize), frameCountStillNeeded*music.stream.channels);
+                    frameCountReadTotal += frameCountRead;
+                    frameCountStillNeeded -= frameCountRead;
                     if (frameCountStillNeeded == 0) break;
                     else stb_vorbis_seek_start((stb_vorbis *)music.ctxData);
                 }

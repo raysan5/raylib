@@ -54,7 +54,7 @@
 // Defines and Macros
 //----------------------------------------------------------------------------------
 #ifndef MAX_TRACELOG_MSG_LENGTH
-    #define MAX_TRACELOG_MSG_LENGTH     128     // Max length of one trace-log message
+    #define MAX_TRACELOG_MSG_LENGTH     256         // Max length of one trace-log message
 #endif
 
 //----------------------------------------------------------------------------------
@@ -145,7 +145,8 @@ void TraceLog(int logType, const char *text, ...)
         default: break;
     }
 
-    strcat(buffer, text);
+    unsigned int textSize = strlen(text);
+    memcpy(buffer + strlen(buffer), text, (textSize < (MAX_TRACELOG_MSG_LENGTH - 12))? textSize : (MAX_TRACELOG_MSG_LENGTH - 12));
     strcat(buffer, "\n");
     vprintf(buffer, args);
     fflush(stdout);

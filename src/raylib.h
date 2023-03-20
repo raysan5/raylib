@@ -1,6 +1,6 @@
 /**********************************************************************************************
 *
-*   raylib v4.5-dev - A simple and easy-to-use library to enjoy videogames programming (www.raylib.com)
+*   raylib v4.5 - A simple and easy-to-use library to enjoy videogames programming (www.raylib.com)
 *
 *   FEATURES:
 *       - NO external dependencies, all required libraries included with raylib
@@ -84,7 +84,7 @@
 #define RAYLIB_VERSION_MAJOR 4
 #define RAYLIB_VERSION_MINOR 5
 #define RAYLIB_VERSION_PATCH 0
-#define RAYLIB_VERSION  "4.5-dev"
+#define RAYLIB_VERSION  "4.5"
 
 // Function specifiers in case library is build/used as a shared library (Windows)
 // NOTE: Microsoft specifiers to tell compiler that symbols are imported/exported from a .dll
@@ -1158,6 +1158,7 @@ RLAPI float GetGesturePinchAngle(void);                 // Get gesture pinch ang
 // Camera System Functions (Module: rcamera)
 //------------------------------------------------------------------------------------
 RLAPI void UpdateCamera(Camera *camera, int mode);      // Update camera position for selected mode
+RLAPI void UpdateCameraPro(Camera *camera, Vector3 movement, Vector3 rotation, float zoom); // Update camera movement/rotation
 
 //------------------------------------------------------------------------------------
 // Basic Shapes Drawing Functions (Module: shapes)
@@ -1440,7 +1441,6 @@ RLAPI Model LoadModel(const char *fileName);                                    
 RLAPI Model LoadModelFromMesh(Mesh mesh);                                                   // Load model from generated mesh (default material)
 RLAPI bool IsModelReady(Model model);                                                       // Check if a model is ready
 RLAPI void UnloadModel(Model model);                                                        // Unload model (including meshes) from memory (RAM and/or VRAM)
-RLAPI void UnloadModelKeepMeshes(Model model);                                              // Unload model (but not meshes) from memory (RAM and/or VRAM)
 RLAPI BoundingBox GetModelBoundingBox(Model model);                                         // Compute model bounding box limits (considers all meshes)
 
 // Model drawing functions
@@ -1530,9 +1530,6 @@ RLAPI void PlaySound(Sound sound);                                    // Play a 
 RLAPI void StopSound(Sound sound);                                    // Stop playing a sound
 RLAPI void PauseSound(Sound sound);                                   // Pause a sound
 RLAPI void ResumeSound(Sound sound);                                  // Resume a paused sound
-RLAPI void PlaySoundMulti(Sound sound);                               // Play a sound (using multichannel buffer pool)
-RLAPI void StopSoundMulti(void);                                      // Stop any sound playing (using multichannel buffer pool)
-RLAPI int GetSoundsPlaying(void);                                     // Get number of sounds playing in the multichannel
 RLAPI bool IsSoundPlaying(Sound sound);                               // Check if a sound is currently playing
 RLAPI void SetSoundVolume(Sound sound, float volume);                 // Set volume for a sound (1.0 is max level)
 RLAPI void SetSoundPitch(Sound sound, float pitch);                   // Set pitch for a sound (1.0 is base level)

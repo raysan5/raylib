@@ -1112,7 +1112,13 @@ Model LoadModelFromMesh(Mesh mesh)
 // Check if a model is ready
 bool IsModelReady(Model model)
 {
-    return model.meshes != NULL && model.materials != NULL && model.meshMaterial != NULL && model.meshCount > 0 && model.materialCount > 0;
+    return ((model.meshes != NULL) &&           // Validate model contains some mesh
+            (model.materials != NULL) &&        // Validate model contains some material (at least default one)
+            (model.meshMaterial != NULL) &&     // Validate mesh-material linkage
+            (model.meshCount > 0) &&            // Validate mesh count
+            (model.materialCount > 0));         // Validate material count
+
+    // NOTE: This is a very general model validation, many elements could be validated from a model...
 }
 
 // Unload model (meshes/materials) from memory (RAM and/or VRAM)
@@ -1139,27 +1145,6 @@ void UnloadModel(Model model)
     RL_FREE(model.bindPose);
 
     TRACELOG(LOG_INFO, "MODEL: Unloaded model (and meshes) from RAM and VRAM");
-}
-
-// Unload model (but not meshes) from memory (RAM and/or VRAM)
-void UnloadModelKeepMeshes(Model model)
-{
-    // Unload materials maps
-    // NOTE: As the user could be sharing shaders and textures between models,
-    // we don't unload the material but just free its maps,
-    // the user is responsible for freeing models shaders and textures
-    for (int i = 0; i < model.materialCount; i++) RL_FREE(model.materials[i].maps);
-
-    // Unload arrays
-    RL_FREE(model.meshes);
-    RL_FREE(model.materials);
-    RL_FREE(model.meshMaterial);
-
-    // Unload animation data
-    RL_FREE(model.bones);
-    RL_FREE(model.bindPose);
-
-    TRACELOG(LOG_INFO, "MODEL: Unloaded model (but not meshes) from RAM and VRAM");
 }
 
 // Compute model bounding box limits (considers all meshes)
@@ -1959,7 +1944,8 @@ Material LoadMaterialDefault(void)
 // Check if a material is ready
 bool IsMaterialReady(Material material)
 {
-    return material.maps != NULL;
+    return ((material.maps != NULL) &&      // Validate material contain some map
+            (material.shader.id > 0));      // Validate material shader is valid
 }
 
 // Unload material from memory

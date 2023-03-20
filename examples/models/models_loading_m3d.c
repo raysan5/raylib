@@ -2,7 +2,7 @@
 *
 *   raylib [models] example - Load models M3D
 *
-*   Example originally created with raylib 4.5-dev, last time updated with raylib 4.5-dev
+*   Example originally created with raylib 4.5, last time updated with raylib 4.5
 *
 *   Example contributed by bzt (@bztsrc) and reviewed by Ramon Santamaria (@raysan5)
 *
@@ -41,7 +41,7 @@ int main(void)
 
     Vector3 position = { 0.0f, 0.0f, 0.0f };            // Set model position
     
-    char modelFileName[128] = "resources/models/m3d/CesiumMan.m3d";
+    char modelFileName[128] = "resources/models/m3d/cesium_man.m3d";
     bool drawMesh = 1;
     bool drawSkeleton = 1;
     bool animPlaying = false;   // Store anim state, what to draw
