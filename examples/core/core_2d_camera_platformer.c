@@ -90,7 +90,7 @@ int main(void)
         "Follow player center",
         "Follow player center, but clamp to map edges",
         "Follow player center; smoothed",
-        "Follow player center horizontally; updateplayer center vertically after landing",
+        "Follow player center horizontally; update player center vertically after landing",
         "Player push camera on getting too close to screen edge"
     };
 
