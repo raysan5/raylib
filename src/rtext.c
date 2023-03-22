@@ -694,14 +694,19 @@ Image GenImageFontAtlas(const GlyphInfo *chars, Rectangle **charRecs, int glyphC
     // NOTE: Rectangles memory is loaded here!
     Rectangle *recs = (Rectangle *)RL_MALLOC(glyphCount*sizeof(Rectangle));
 
-    // Calculate image size based on required pixel area
-    // NOTE 1: Image is forced to be squared and POT... very conservative!
-    // NOTE 2: SDF font characters already contain an internal padding,
-    // so image size would result bigger than default font type
-    float requiredArea = 0;
-    for (int i = 0; i < glyphCount; i++) requiredArea += ((chars[i].image.width + 2*padding)*(fontSize + 2*padding));
-    float guessSize = sqrtf(requiredArea)*1.4f;
-    int imageSize = (int)powf(2, ceilf(logf((float)guessSize)/logf(2)));    // Calculate next POT
+    // Calculate image size based on total glyph width and glyph row count
+    int totalWidth = 0, maxGlyphWidth = 0;
+    for (int i = 0; i < glyphCount; i++)
+    {
+        if (chars[i].image.width > maxGlyphWidth) maxGlyphWidth = chars[i].image.width;
+        totalWidth += chars[i].image.width + 2*padding;
+    }
+    int rowCount = 0, imageSize = 64;  // A minimum starting value to avoid unnecessary calculation steps for very small images
+    while (totalWidth > (imageSize - maxGlyphWidth)*rowCount) // maxGlyphWidth is maximum possible space left at the end of row
+    {
+        imageSize *= 2;                                 // Double the size of image (to keep POT)
+        rowCount = imageSize/(fontSize + 2*padding);    // Calculate new row count for the new image size
+    }
 
     atlas.width = imageSize;   // Atlas bitmap width
     atlas.height = imageSize;  // Atlas bitmap height
