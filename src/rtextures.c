@@ -219,7 +219,7 @@
 //----------------------------------------------------------------------------------
 // Other Modules Functions Declaration (required by text)
 //----------------------------------------------------------------------------------
-// ...
+extern void LoadFontDefault(void);          // [Module: text] Loads default font, required by ImageDrawText()
 
 //----------------------------------------------------------------------------------
 // Module specific Functions Declaration
@@ -3152,6 +3152,9 @@ void ImageDraw(Image *dst, Image src, Rectangle srcRec, Rectangle dstRec, Color 
 void ImageDrawText(Image *dst, const char *text, int posX, int posY, int fontSize, Color color)
 {
 #if defined(SUPPORT_MODULE_RTEXT)
+    // Make sure default font is loaded to be used on image text drawing
+    if (GetFontDefault().texture.id == 0) LoadFontDefault();
+
     Vector2 position = { (float)posX, (float)posY };
     // NOTE: For default font, spacing is set to desired font size / default font size (10)
     ImageDrawTextEx(dst, GetFontDefault(), text, position, (float)fontSize, (float)fontSize/10, color);   // WARNING: Module required: rtext
