@@ -814,5 +814,4 @@ static int get_pixel_data_size(int width, int height, int format)
 
     return data_size;
 }
-
 #endif // RL_GPUTEX_IMPLEMENTATION
