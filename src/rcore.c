@@ -595,14 +595,14 @@ static const char *autoEventTypeName[] = {
     "ACTION_SETTARGETFPS"
 };
 
-// Automation Event (20 bytes)
+// Automation Event (24 bytes)
 typedef struct AutomationEvent {
     unsigned int frame;                 // Event frame
-    unsigned int type;                  // Event type (AutoEventType)
-    int params[3];                      // Event parameters (if required)
+    unsigned int type;                  // Event type (AutomationEventType)
+    int params[4];                      // Event parameters (if required)
 } AutomationEvent;
 
-static AutomationEvent *events = NULL;        // Events array
+static AutomationEvent *events = NULL;  // Events array
 static unsigned int eventCount = 0;     // Events count
 static bool eventsPlaying = false;      // Play events
 static bool eventsRecording = false;    // Record events
@@ -925,7 +925,7 @@ void InitWindow(int width, int height, const char *title)
 #endif
 
 #if defined(SUPPORT_EVENTS_AUTOMATION)
-    events = (AutomationEvent *)malloc(MAX_CODE_AUTOMATION_EVENTS*sizeof(AutomationEvent));
+    events = (AutomationEvent *)RL_CALLOC(MAX_CODE_AUTOMATION_EVENTS, sizeof(AutomationEvent));
     CORE.Time.frameCounter = 0;
 #endif
 
@@ -1073,7 +1073,7 @@ void CloseWindow(void)
 #endif
 
 #if defined(SUPPORT_EVENTS_AUTOMATION)
-    free(events);
+    RL_FREE(events);
 #endif
 
     CORE.Window.ready = false;
@@ -6945,11 +6945,11 @@ static int FindNearestConnectorMode(const drmModeConnector *connector, uint widt
 // TODO: This system should probably be redesigned
 static void LoadAutomationEvents(const char *fileName)
 {
-    //unsigned char fileId[4] = { 0 };
-
-    // Load binary
+    // Load events file (binary)
     /*
     FILE *repFile = fopen(fileName, "rb");
+    unsigned char fileId[4] = { 0 };
+    
     fread(fileId, 1, 4, repFile);
 
     if ((fileId[0] == 'r') && (fileId[1] == 'E') && (fileId[2] == 'P') && (fileId[1] == ' '))
@@ -6962,7 +6962,7 @@ static void LoadAutomationEvents(const char *fileName)
     fclose(repFile);
     */
 
-    // Load events (text file)
+    // Load events file (text)
     FILE *repFile = fopen(fileName, "rt");
 
     if (repFile != NULL)
