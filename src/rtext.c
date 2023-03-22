@@ -695,14 +695,20 @@ Image GenImageFontAtlas(const GlyphInfo *chars, Rectangle **charRecs, int glyphC
     Rectangle *recs = (Rectangle *)RL_MALLOC(glyphCount*sizeof(Rectangle));
 
     // Calculate image size based on total glyph width and glyph row count
-    int totalWidth = 0, maxGlyphWidth = 0;
+    int totalWidth = 0;
+    int maxGlyphWidth = 0;
+    
     for (int i = 0; i < glyphCount; i++)
     {
         if (chars[i].image.width > maxGlyphWidth) maxGlyphWidth = chars[i].image.width;
         totalWidth += chars[i].image.width + 2*padding;
     }
-    int rowCount = 0, imageSize = 64;  // A minimum starting value to avoid unnecessary calculation steps for very small images
-    while (totalWidth > (imageSize - maxGlyphWidth)*rowCount) // maxGlyphWidth is maximum possible space left at the end of row
+    
+    int rowCount = 0;
+    int imageSize = 64;  // Define minimum starting value to avoid unnecessary calculation steps for very small images
+    
+    // NOTE: maxGlyphWidth is maximum possible space left at the end of row
+    while (totalWidth > (imageSize - maxGlyphWidth)*rowCount) 
     {
         imageSize *= 2;                                 // Double the size of image (to keep POT)
         rowCount = imageSize/(fontSize + 2*padding);    // Calculate new row count for the new image size
