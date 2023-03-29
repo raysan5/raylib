@@ -694,14 +694,25 @@ Image GenImageFontAtlas(const GlyphInfo *chars, Rectangle **charRecs, int glyphC
     // NOTE: Rectangles memory is loaded here!
     Rectangle *recs = (Rectangle *)RL_MALLOC(glyphCount*sizeof(Rectangle));
 
-    // Calculate image size based on required pixel area
-    // NOTE 1: Image is forced to be squared and POT... very conservative!
-    // NOTE 2: SDF font characters already contain an internal padding,
-    // so image size would result bigger than default font type
-    float requiredArea = 0;
-    for (int i = 0; i < glyphCount; i++) requiredArea += ((chars[i].image.width + 2*padding)*(fontSize + 2*padding));
-    float guessSize = sqrtf(requiredArea)*1.4f;
-    int imageSize = (int)powf(2, ceilf(logf((float)guessSize)/logf(2)));    // Calculate next POT
+    // Calculate image size based on total glyph width and glyph row count
+    int totalWidth = 0;
+    int maxGlyphWidth = 0;
+    
+    for (int i = 0; i < glyphCount; i++)
+    {
+        if (chars[i].image.width > maxGlyphWidth) maxGlyphWidth = chars[i].image.width;
+        totalWidth += chars[i].image.width + 2*padding;
+    }
+    
+    int rowCount = 0;
+    int imageSize = 64;  // Define minimum starting value to avoid unnecessary calculation steps for very small images
+    
+    // NOTE: maxGlyphWidth is maximum possible space left at the end of row
+    while (totalWidth > (imageSize - maxGlyphWidth)*rowCount) 
+    {
+        imageSize *= 2;                                 // Double the size of image (to keep POT)
+        rowCount = imageSize/(fontSize + 2*padding);    // Calculate new row count for the new image size
+    }
 
     atlas.width = imageSize;   // Atlas bitmap width
     atlas.height = imageSize;  // Atlas bitmap height
@@ -720,24 +731,7 @@ Image GenImageFontAtlas(const GlyphInfo *chars, Rectangle **charRecs, int glyphC
         // NOTE: Using simple packaging, one char after another
         for (int i = 0; i < glyphCount; i++)
         {
-            // Copy pixel data from fc.data to atlas
-            for (int y = 0; y < chars[i].image.height; y++)
-            {
-                for (int x = 0; x < chars[i].image.width; x++)
-                {
-                    ((unsigned char *)atlas.data)[(offsetY + y)*atlas.width + (offsetX + x)] = ((unsigned char *)chars[i].image.data)[y*chars[i].image.width + x];
-                }
-            }
-
-            // Fill chars rectangles in atlas info
-            recs[i].x = (float)offsetX;
-            recs[i].y = (float)offsetY;
-            recs[i].width = (float)chars[i].image.width;
-            recs[i].height = (float)chars[i].image.height;
-
-            // Move atlas position X for next character drawing
-            offsetX += (chars[i].image.width + 2*padding);
-
+            // Check remaining space for glyph
             if (offsetX >= (atlas.width - chars[i].image.width - 2*padding))
             {
                 offsetX = padding;
@@ -761,6 +755,24 @@ Image GenImageFontAtlas(const GlyphInfo *chars, Rectangle **charRecs, int glyphC
                     break;
                 }
             }
+
+            // Copy pixel data from fc.data to atlas
+            for (int y = 0; y < chars[i].image.height; y++)
+            {
+                for (int x = 0; x < chars[i].image.width; x++)
+                {
+                    ((unsigned char *)atlas.data)[(offsetY + y)*atlas.width + (offsetX + x)] = ((unsigned char *)chars[i].image.data)[y*chars[i].image.width + x];
+                }
+            }
+
+            // Fill chars rectangles in atlas info
+            recs[i].x = (float)offsetX;
+            recs[i].y = (float)offsetY;
+            recs[i].width = (float)chars[i].image.width;
+            recs[i].height = (float)chars[i].image.height;
+
+            // Move atlas position X for next character drawing
+            offsetX += (chars[i].image.width + 2*padding);
         }
     }
     else if (packMethod == 1)  // Use Skyline rect packing algorithm (stb_pack_rect)
