@@ -1704,7 +1704,9 @@ int *LoadCodepoints(const char *text, int *count)
     for (int i = 0; i < textLength; codepointCount++)
     {
         codepoints[codepointCount] = GetCodepointNext(text + i, &codepointSize);
-        i += codepointSize;
+
+        if (codepoints[codepointCount] == 0x3f) i += 1;
+        else i += codepointSize;
     }
 
     // Re-allocate buffer to the actual number of codepoints loaded
@@ -1917,7 +1919,7 @@ int GetCodepointNext(const char *text, int *codepointSize)
         codepoint = ((0x1f & ptr[0]) << 6) | (0x3f & ptr[1]);
         *codepointSize = 2;
     }
-    else
+    else if (0x00 == (0x80 & ptr[0]))
     {
         // 1 byte UTF-8 codepoint
         codepoint = ptr[0];
