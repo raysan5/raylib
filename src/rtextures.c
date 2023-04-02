@@ -1273,10 +1273,6 @@ Image ImageTextEx(Font font, const char *text, float fontSize, float spacing, Co
         int codepoint = GetCodepointNext(&text[i], &codepointByteCount);    // WARNING: Module required: rtext
         int index = GetGlyphIndex(font, codepoint);                         // WARNING: Module required: rtext
 
-        // NOTE: Normally we exit the decoding sequence as soon as a bad byte is found (and return 0x3f)
-        // but we need to draw all the bad bytes using the '?' symbol moving one byte
-        if (codepoint == 0x3f) codepointByteCount = 1;
-
         if (codepoint == '\n')
         {
             // NOTE: Fixed line spacing of 1.5 line-height

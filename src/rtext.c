@@ -1071,10 +1071,6 @@ void DrawTextEx(Font font, const char *text, Vector2 position, float fontSize, f
         int codepoint = GetCodepointNext(&text[i], &codepointByteCount);
         int index = GetGlyphIndex(font, codepoint);
 
-        // NOTE: Normally we exit the decoding sequence as soon as a bad byte is found (and return 0x3f)
-        // but we need to draw all the bad bytes using the '?' symbol moving one byte
-        if (codepoint == 0x3f) codepointByteCount = 1;
-
         if (codepoint == '\n')
         {
             // NOTE: Fixed line spacing of 1.5 line-height
@@ -1213,9 +1209,6 @@ Vector2 MeasureTextEx(Font font, const char *text, float fontSize, float spacing
         letter = GetCodepointNext(&text[i], &next);
         index = GetGlyphIndex(font, letter);
 
-        // NOTE: normally we exit the decoding sequence as soon as a bad byte is found (and return 0x3f)
-        // but we need to draw all the bad bytes using the '?' symbol so to not skip any we set next = 1
-        if (letter == 0x3f) next = 1;
         i += next - 1;
 
         if (letter != '\n')
@@ -1704,9 +1697,7 @@ int *LoadCodepoints(const char *text, int *count)
     for (int i = 0; i < textLength; codepointCount++)
     {
         codepoints[codepointCount] = GetCodepointNext(text + i, &codepointSize);
-
-        if (codepoints[codepointCount] == 0x3f) i += 1;
-        else i += codepointSize;
+        i += codepointSize;
     }
 
     // Re-allocate buffer to the actual number of codepoints loaded
@@ -1736,8 +1727,7 @@ int GetCodepointCount(const char *text)
         int next = 0;
         int letter = GetCodepointNext(ptr, &next);
 
-        if (letter == 0x3f) ptr += 1;
-        else ptr += next;
+        ptr += next;
 
         length++;
     }
@@ -1898,7 +1888,7 @@ int GetCodepointNext(const char *text, int *codepointSize)
 {
     const char *ptr = text;
     int codepoint = 0x3f;       // Codepoint (defaults to '?')
-    *codepointSize = 0;
+    *codepointSize = 1;
 
     // Get current codepoint and bytes processed
     if (0xf0 == (0xf8 & ptr[0]))
