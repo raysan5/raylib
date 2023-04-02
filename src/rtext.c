@@ -1201,7 +1201,7 @@ Vector2 MeasureTextEx(Font font, const char *text, float fontSize, float spacing
     int letter = 0;                 // Current character
     int index = 0;                  // Index position in sprite font
 
-    for (int i = 0; i < size; i++)
+    for (int i = 0; i < size;)
     {
         byteCounter++;
 
@@ -1209,7 +1209,7 @@ Vector2 MeasureTextEx(Font font, const char *text, float fontSize, float spacing
         letter = GetCodepointNext(&text[i], &next);
         index = GetGlyphIndex(font, letter);
 
-        i += next - 1;
+        i += next;
 
         if (letter != '\n')
         {
