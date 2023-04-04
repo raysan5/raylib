@@ -1253,7 +1253,7 @@ int GetGlyphIndex(Font font, int codepoint)
 // Support charsets with any characters order
 #define SUPPORT_UNORDERED_CHARSET
 #if defined(SUPPORT_UNORDERED_CHARSET)
-    int index = GLYPH_NOTFOUND_CHAR_FALLBACK;
+    int index = GLYPH_NOTFOUND_CHAR_FALLBACK - 32;   // Index of '?' character (first character is space)
 
     for (int i = 0; i < font.glyphCount; i++)
     {
