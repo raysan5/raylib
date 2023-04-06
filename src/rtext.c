@@ -1239,17 +1239,17 @@ Vector2 MeasureTextEx(Font font, const char *text, float fontSize, float spacing
 // NOTE: If codepoint is not found in the font it fallbacks to '?'
 int GetGlyphIndex(Font font, int codepoint)
 {
-#ifndef GLYPH_NOTFOUND_CHAR_FALLBACK
-    #define GLYPH_NOTFOUND_CHAR_FALLBACK     63      // Character used if requested codepoint is not found: '?'
-#endif
-
-// Support charsets with any characters order
+    int index = 0;
+    
 #define SUPPORT_UNORDERED_CHARSET
 #if defined(SUPPORT_UNORDERED_CHARSET)
-    int index = GLYPH_NOTFOUND_CHAR_FALLBACK;
+    int fallbackIndex = 0;      // Get index of fallback glyph '?'
 
+    // Look for character index in the unordered charset
     for (int i = 0; i < font.glyphCount; i++)
     {
+        if (font.glyphs[i].value == 63) fallbackIndex = i;
+        
         if (font.glyphs[i].value == codepoint)
         {
             index = i;
@@ -1257,10 +1257,12 @@ int GetGlyphIndex(Font font, int codepoint)
         }
     }
 
-    return index;
+    if ((index == 0) && (font.glyphs[0].value != codepoint)) index = fallbackIndex;
 #else
-    return (codepoint - 32);
+    index = codepoint - 32;
 #endif
+
+    return index;
 }
 
 // Get glyph font info data for a codepoint (unicode character)
