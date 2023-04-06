@@ -1266,16 +1266,12 @@ Image ImageTextEx(Font font, const char *text, float fontSize, float spacing, Co
     // Create image to store text
     imText = GenImageColor((int)imSize.x, (int)imSize.y, BLANK);
 
-    for (int i = 0; i < size; i++)
+    for (int i = 0; i < size;)
     {
         // Get next codepoint from byte string and glyph index in font
         int codepointByteCount = 0;
         int codepoint = GetCodepointNext(&text[i], &codepointByteCount);    // WARNING: Module required: rtext
         int index = GetGlyphIndex(font, codepoint);                         // WARNING: Module required: rtext
-
-        // NOTE: Normally we exit the decoding sequence as soon as a bad byte is found (and return 0x3f)
-        // but we need to draw all the bad bytes using the '?' symbol moving one byte
-        if (codepoint == 0x3f) codepointByteCount = 1;
 
         if (codepoint == '\n')
         {
@@ -1296,7 +1292,7 @@ Image ImageTextEx(Font font, const char *text, float fontSize, float spacing, Co
             else textOffsetX += font.glyphs[index].advanceX + (int)spacing;
         }
 
-        i += (codepointByteCount - 1);   // Move text bytes counter to next codepoint
+        i += codepointByteCount;   // Move text bytes counter to next codepoint
     }
 
     // Scale image depending on text size
