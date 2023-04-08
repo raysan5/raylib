@@ -228,6 +228,14 @@ typedef struct tagBITMAPINFOHEADER {
     #define QOA_MALLOC RL_MALLOC
     #define QOA_FREE RL_FREE
 
+#if defined(_MSC_VER ) // par shapes has 2 warnings on windows, so disable them just fof this file
+#pragma warning( push )
+#pragma warning( disable : 4018)
+#pragma warning( disable : 4267)
+#pragma warning( disable : 4244)
+#endif
+
+
     #define QOA_IMPLEMENTATION
     #include "external/qoa.h"           // QOA loading and saving functions
     #include "external/qoaplay.c"       // QOA stream playing helper functions
