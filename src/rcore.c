@@ -2549,6 +2549,10 @@ Shader LoadShaderFromMemory(const char *vsCode, const char *fsCode)
         // All locations reset to -1 (no location)
         for (int i = 0; i < RL_MAX_SHADER_LOCATIONS; i++) shader.locs[i] = -1;
 
+        // Set to error log level so we don't warn if these aren't found, we don't want to spam the user with false warnings
+        int logLevel = GetTraceLogLevel();
+        SetTraceLogLevel(RL_LOG_ERROR);
+
         // Get handles to GLSL input attribute locations
         shader.locs[SHADER_LOC_VERTEX_POSITION] = rlGetLocationAttrib(shader.id, RL_DEFAULT_SHADER_ATTRIB_NAME_POSITION);
         shader.locs[SHADER_LOC_VERTEX_TEXCOORD01] = rlGetLocationAttrib(shader.id, RL_DEFAULT_SHADER_ATTRIB_NAME_TEXCOORD);
@@ -2569,6 +2573,8 @@ Shader LoadShaderFromMemory(const char *vsCode, const char *fsCode)
         shader.locs[SHADER_LOC_MAP_DIFFUSE] = rlGetLocationUniform(shader.id, RL_DEFAULT_SHADER_SAMPLER2D_NAME_TEXTURE0);  // SHADER_LOC_MAP_ALBEDO
         shader.locs[SHADER_LOC_MAP_SPECULAR] = rlGetLocationUniform(shader.id, RL_DEFAULT_SHADER_SAMPLER2D_NAME_TEXTURE1); // SHADER_LOC_MAP_METALNESS
         shader.locs[SHADER_LOC_MAP_NORMAL] = rlGetLocationUniform(shader.id, RL_DEFAULT_SHADER_SAMPLER2D_NAME_TEXTURE2);
+
+        SetTraceLogLevel(logLevel);
     }
 
     return shader;
