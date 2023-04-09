@@ -241,7 +241,7 @@ void DrawLineBezierQuad(Vector2 startPos, Vector2 endPos, Vector2 controlPos, fl
 
     Vector2 points[2*BEZIER_LINE_DIVISIONS + 2] = { 0 };
 
-    for (int i = 0; i <= BEZIER_LINE_DIVISIONS; i++)
+    for (int i = 1; i <= BEZIER_LINE_DIVISIONS; i++)
     {
         t = step*i;
         float a = powf(1 - t, 2);
@@ -286,7 +286,7 @@ void DrawLineBezierCubic(Vector2 startPos, Vector2 endPos, Vector2 startControlP
 
     Vector2 points[2*BEZIER_LINE_DIVISIONS + 2] = { 0 };
 
-    for (int i = 0; i <= BEZIER_LINE_DIVISIONS; i++)
+    for (int i = 1; i <= BEZIER_LINE_DIVISIONS; i++)
     {
         t = step*i;
         float a = powf(1 - t, 3);
