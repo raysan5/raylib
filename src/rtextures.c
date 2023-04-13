@@ -340,28 +340,30 @@ Image LoadImageFromMemory(const char *fileType, const unsigned char *fileData, i
 
     if ((false)
 #if defined(SUPPORT_FILEFORMAT_PNG)
-        || (strcmp(fileType, ".png") == 0)
+        || (strcmp(fileType, ".png") == 0) || (strcmp(fileType, ".PNG") == 0)
 #endif
 #if defined(SUPPORT_FILEFORMAT_BMP)
-        || (strcmp(fileType, ".bmp") == 0)
+        || (strcmp(fileType, ".bmp") == 0) || (strcmp(fileType, ".BMP") == 0)
 #endif
 #if defined(SUPPORT_FILEFORMAT_TGA)
-        || (strcmp(fileType, ".tga") == 0)
+        || (strcmp(fileType, ".tga") == 0) || (strcmp(fileType, ".TGA") == 0)
 #endif
 #if defined(SUPPORT_FILEFORMAT_JPG)
-        || ((strcmp(fileType, ".jpg") == 0) || (strcmp(fileType, ".jpeg") == 0))
+        || (strcmp(fileType, ".jpg") == 0) || (strcmp(fileType, ".jpeg") == 0)
+        || (strcmp(fileType, ".JPG") == 0) || (strcmp(fileType, ".JPEG") == 0)
 #endif
 #if defined(SUPPORT_FILEFORMAT_GIF)
-        || (strcmp(fileType, ".gif") == 0)
+        || (strcmp(fileType, ".gif") == 0) || (strcmp(fileType, ".GIF") == 0)
 #endif
 #if defined(SUPPORT_FILEFORMAT_PIC)
-        || (strcmp(fileType, ".pic") == 0)
+        || (strcmp(fileType, ".pic") == 0) || (strcmp(fileType, ".PIC") == 0)
 #endif
 #if defined(SUPPORT_FILEFORMAT_PNM)
-        || ((strcmp(fileType, ".ppm") == 0) || (strcmp(fileType, ".pgm") == 0))
+        || (strcmp(fileType, ".ppm") == 0) || (strcmp(fileType, ".pgm") == 0)
+        || (strcmp(fileType, ".PPM") == 0) || (strcmp(fileType, ".PGM") == 0)
 #endif
 #if defined(SUPPORT_FILEFORMAT_PSD)
-        || (strcmp(fileType, ".psd") == 0)
+        || (strcmp(fileType, ".psd") == 0) || (strcmp(fileType, ".PSD") == 0)
 #endif
         )
     {
@@ -386,7 +388,7 @@ Image LoadImageFromMemory(const char *fileType, const unsigned char *fileData, i
 #endif
     }
 #if defined(SUPPORT_FILEFORMAT_HDR)
-    else if (strcmp(fileType, ".hdr") == 0)
+    else if ((strcmp(fileType, ".hdr") == 0) || (strcmp(fileType, ".HDR") == 0))
     {
 #if defined(STBI_REQUIRED)
         if (fileData != NULL)
@@ -409,7 +411,7 @@ Image LoadImageFromMemory(const char *fileType, const unsigned char *fileData, i
     }
 #endif
 #if defined(SUPPORT_FILEFORMAT_QOI)
-    else if (strcmp(fileType, ".qoi") == 0)
+    else if ((strcmp(fileType, ".qoi") == 0) || (strcmp(fileType, ".QOI") == 0))
     {
         qoi_desc desc = { 0 };
         image.data = qoi_decode(fileData, dataSize, &desc, 4);
@@ -420,31 +422,31 @@ Image LoadImageFromMemory(const char *fileType, const unsigned char *fileData, i
     }
 #endif
 #if defined(SUPPORT_FILEFORMAT_DDS)
-    else if (strcmp(fileType, ".dds") == 0)
+    else if ((strcmp(fileType, ".dds") == 0) || (strcmp(fileType, ".DDS") == 0))
     {
         image.data = rl_load_dds_from_memory(fileData, dataSize, &image.width, &image.height, &image.format, &image.mipmaps);
     }
 #endif
 #if defined(SUPPORT_FILEFORMAT_PKM)
-    else if (strcmp(fileType, ".pkm") == 0)
+    else if ((strcmp(fileType, ".pkm") == 0) || (strcmp(fileType, ".PKM") == 0))
     {
         image.data = rl_load_pkm_from_memory(fileData, dataSize, &image.width, &image.height, &image.format, &image.mipmaps);
     }
 #endif
 #if defined(SUPPORT_FILEFORMAT_KTX)
-    else if (strcmp(fileType, ".ktx") == 0)
+    else if ((strcmp(fileType, ".ktx") == 0) || (strcmp(fileType, ".KTX") == 0))
     {
         image.data = rl_load_ktx_from_memory(fileData, dataSize, &image.width, &image.height, &image.format, &image.mipmaps);
     }
 #endif
 #if defined(SUPPORT_FILEFORMAT_PVR)
-    else if (strcmp(fileType, ".pvr") == 0)
+    else if ((strcmp(fileType, ".pvr") == 0) || (strcmp(fileType, ".PVR") == 0))
     {
         image.data = rl_load_pvr_from_memory(fileData, dataSize, &image.width, &image.height, &image.format, &image.mipmaps);
     }
 #endif
 #if defined(SUPPORT_FILEFORMAT_ASTC)
-    else if (strcmp(fileType, ".astc") == 0)
+    else if ((strcmp(fileType, ".astc") == 0) || (strcmp(fileType, ".ASTC") == 0))
     {
         image.data = rl_load_astc_from_memory(fileData, dataSize, &image.width, &image.height, &image.format, &image.mipmaps);
     }

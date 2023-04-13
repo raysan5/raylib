@@ -749,7 +749,7 @@ Wave LoadWaveFromMemory(const char *fileType, const unsigned char *fileData, int
 
     if (false) { }
 #if defined(SUPPORT_FILEFORMAT_WAV)
-    else if (strcmp(fileType, ".wav") == 0)
+    else if ((strcmp(fileType, ".wav") == 0) || (strcmp(fileType, ".WAV") == 0))
     {
         drwav wav = { 0 };
         bool success = drwav_init_memory(&wav, fileData, dataSize, NULL);
@@ -771,7 +771,7 @@ Wave LoadWaveFromMemory(const char *fileType, const unsigned char *fileData, int
     }
 #endif
 #if defined(SUPPORT_FILEFORMAT_OGG)
-    else if (strcmp(fileType, ".ogg") == 0)
+    else if ((strcmp(fileType, ".ogg") == 0) || (strcmp(fileType, ".OGG") == 0))
     {
         stb_vorbis *oggData = stb_vorbis_open_memory((unsigned char *)fileData, dataSize, NULL, NULL);
 
@@ -793,7 +793,7 @@ Wave LoadWaveFromMemory(const char *fileType, const unsigned char *fileData, int
     }
 #endif
 #if defined(SUPPORT_FILEFORMAT_MP3)
-    else if (strcmp(fileType, ".mp3") == 0)
+    else if ((strcmp(fileType, ".mp3") == 0) || (strcmp(fileType, ".MP3") == 0))
     {
         drmp3_config config = { 0 };
         unsigned long long int totalFrameCount = 0;
@@ -813,7 +813,7 @@ Wave LoadWaveFromMemory(const char *fileType, const unsigned char *fileData, int
     }
 #endif
 #if defined(SUPPORT_FILEFORMAT_QOA)
-    else if (strcmp(fileType, ".qoa") == 0)
+    else if ((strcmp(fileType, ".qoa") == 0) || (strcmp(fileType, ".QOA") == 0))
     {
         qoa_desc qoa = { 0 };
 
@@ -832,7 +832,7 @@ Wave LoadWaveFromMemory(const char *fileType, const unsigned char *fileData, int
     }
 #endif
 #if defined(SUPPORT_FILEFORMAT_FLAC)
-    else if (strcmp(fileType, ".flac") == 0)
+    else if ((strcmp(fileType, ".flac") == 0) || (strcmp(fileType, ".FLAC") == 0))
     {
         unsigned long long int totalFrameCount = 0;
 
@@ -1425,7 +1425,7 @@ Music LoadMusicStreamFromMemory(const char *fileType, const unsigned char *data,
 
     if (false) { }
 #if defined(SUPPORT_FILEFORMAT_WAV)
-    else if (strcmp(fileType, ".wav") == 0)
+    else if ((strcmp(fileType, ".wav") == 0) || (strcmp(fileType, ".WAV") == 0))
     {
         drwav *ctxWav = RL_CALLOC(1, sizeof(drwav));
 
@@ -1447,7 +1447,7 @@ Music LoadMusicStreamFromMemory(const char *fileType, const unsigned char *data,
     }
 #endif
 #if defined(SUPPORT_FILEFORMAT_OGG)
-    else if (strcmp(fileType, ".ogg") == 0)
+    else if ((strcmp(fileType, ".ogg") == 0) || (strcmp(fileType, ".OGG") == 0))
     {
         // Open ogg audio stream
         music.ctxType = MUSIC_AUDIO_OGG;
@@ -1469,7 +1469,7 @@ Music LoadMusicStreamFromMemory(const char *fileType, const unsigned char *data,
     }
 #endif
 #if defined(SUPPORT_FILEFORMAT_MP3)
-    else if (strcmp(fileType, ".mp3") == 0)
+    else if ((strcmp(fileType, ".mp3") == 0) || (strcmp(fileType, ".MP3") == 0))
     {
         drmp3 *ctxMp3 = RL_CALLOC(1, sizeof(drmp3));
         int success = drmp3_init_memory(ctxMp3, (const void*)data, dataSize, NULL);
@@ -1487,7 +1487,7 @@ Music LoadMusicStreamFromMemory(const char *fileType, const unsigned char *data,
     }
 #endif
 #if defined(SUPPORT_FILEFORMAT_QOA)
-    else if (strcmp(fileType, ".qoa") == 0)
+    else if ((strcmp(fileType, ".qoa") == 0) || (strcmp(fileType, ".QOA") == 0))
     {
         qoaplay_desc *ctxQoa = qoaplay_open_memory(data, dataSize);
         music.ctxType = MUSIC_AUDIO_QOA;
@@ -1505,7 +1505,7 @@ Music LoadMusicStreamFromMemory(const char *fileType, const unsigned char *data,
     }
 #endif
 #if defined(SUPPORT_FILEFORMAT_FLAC)
-    else if (strcmp(fileType, ".flac") == 0)
+    else if ((strcmp(fileType, ".flac") == 0) || (strcmp(fileType, ".FLAC") == 0))
     {
         music.ctxType = MUSIC_AUDIO_FLAC;
         music.ctxData = drflac_open_memory((const void*)data, dataSize, NULL);
@@ -1522,7 +1522,7 @@ Music LoadMusicStreamFromMemory(const char *fileType, const unsigned char *data,
     }
 #endif
 #if defined(SUPPORT_FILEFORMAT_XM)
-    else if (strcmp(fileType, ".xm") == 0)
+    else if ((strcmp(fileType, ".xm") == 0) || (strcmp(fileType, ".XM") == 0))
     {
         jar_xm_context_t *ctxXm = NULL;
         int result = jar_xm_create_context_safe(&ctxXm, (const char *)data, dataSize, AUDIO.System.device.sampleRate);
@@ -1547,7 +1547,7 @@ Music LoadMusicStreamFromMemory(const char *fileType, const unsigned char *data,
     }
 #endif
 #if defined(SUPPORT_FILEFORMAT_MOD)
-    else if (strcmp(fileType, ".mod") == 0)
+    else if ((strcmp(fileType, ".mod") == 0) || (strcmp(fileType, ".MOD") == 0))
     {
         jar_mod_context_t *ctxMod = (jar_mod_context_t *)RL_MALLOC(sizeof(jar_mod_context_t));
         int result = 0;
