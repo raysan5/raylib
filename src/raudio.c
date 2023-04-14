@@ -1040,7 +1040,7 @@ bool ExportWaveAsCode(Wave wave, const char *fileName)
 
     // Get file name from path and convert variable name to uppercase
     char varFileName[256] = { 0 };
-	strcpy(varFileName, GetFileNameWithoutExt(fileName));
+    strcpy(varFileName, GetFileNameWithoutExt(fileName));
     for (int i = 0; varFileName[i] != '\0'; i++) if (varFileName[i] >= 'a' && varFileName[i] <= 'z') { varFileName[i] = varFileName[i] - 32; }
 
     //Add wave information
