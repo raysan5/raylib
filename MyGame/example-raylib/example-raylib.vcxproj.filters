@@ -18,5 +18,11 @@
     <ClCompile Include="..\..\examples\shaders\shaders_basic_lighting.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="snake.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="snake_remake.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>
