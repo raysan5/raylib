@@ -6949,7 +6949,7 @@ static void LoadAutomationEvents(const char *fileName)
     /*
     FILE *repFile = fopen(fileName, "rb");
     unsigned char fileId[4] = { 0 };
-    
+
     fread(fileId, 1, 4, repFile);
 
     if ((fileId[0] == 'r') && (fileId[1] == 'E') && (fileId[2] == 'P') && (fileId[1] == ' '))

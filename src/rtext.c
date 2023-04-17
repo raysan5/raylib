@@ -697,18 +697,18 @@ Image GenImageFontAtlas(const GlyphInfo *chars, Rectangle **charRecs, int glyphC
     // Calculate image size based on total glyph width and glyph row count
     int totalWidth = 0;
     int maxGlyphWidth = 0;
-    
+
     for (int i = 0; i < glyphCount; i++)
     {
         if (chars[i].image.width > maxGlyphWidth) maxGlyphWidth = chars[i].image.width;
         totalWidth += chars[i].image.width + 2*padding;
     }
-    
+
     int rowCount = 0;
     int imageSize = 64;  // Define minimum starting value to avoid unnecessary calculation steps for very small images
-    
+
     // NOTE: maxGlyphWidth is maximum possible space left at the end of row
-    while (totalWidth > (imageSize - maxGlyphWidth)*rowCount) 
+    while (totalWidth > (imageSize - maxGlyphWidth)*rowCount)
     {
         imageSize *= 2;                                 // Double the size of image (to keep POT)
         rowCount = imageSize/(fontSize + 2*padding);    // Calculate new row count for the new image size
@@ -1240,7 +1240,7 @@ Vector2 MeasureTextEx(Font font, const char *text, float fontSize, float spacing
 int GetGlyphIndex(Font font, int codepoint)
 {
     int index = 0;
-    
+
 #define SUPPORT_UNORDERED_CHARSET
 #if defined(SUPPORT_UNORDERED_CHARSET)
     int fallbackIndex = 0;      // Get index of fallback glyph '?'
@@ -1249,7 +1249,7 @@ int GetGlyphIndex(Font font, int codepoint)
     for (int i = 0; i < font.glyphCount; i++)
     {
         if (font.glyphs[i].value == 63) fallbackIndex = i;
-        
+
         if (font.glyphs[i].value == codepoint)
         {
             index = i;
