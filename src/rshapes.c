@@ -1601,7 +1601,7 @@ bool CheckCollisionPointRec(Vector2 point, Rectangle rec)
 {
     bool collision = false;
 
-    if ((point.x >= rec.x) && (point.x <= (rec.x + rec.width)) && (point.y >= rec.y) && (point.y <= (rec.y + rec.height))) collision = true;
+    if ((point.x >= rec.x) && (point.x < (rec.x + rec.width)) && (point.y >= rec.y) && (point.y < (rec.y + rec.height))) collision = true;
 
     return collision;
 }
