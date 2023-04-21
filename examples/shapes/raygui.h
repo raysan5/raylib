@@ -3743,7 +3743,7 @@ static int GetTextWidth(const char *text)
     {
         if (text[0] == '#')
         {
-            for (int i = 1; (text[i] != '\0') && (i < 5); i++)
+            for (int i = 1; (i < 5) && (text[i] != '\0'); i++)
             {
                 if (text[i] == '#')
                 {
