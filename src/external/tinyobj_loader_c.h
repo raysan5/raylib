@@ -789,7 +789,7 @@ static int tinyobj_parse_and_index_mtl_file(tinyobj_material_t **materials_out,
 #ifdef _MSC_VER
       sscanf_s(token, "%s", namebuf, (unsigned)_countof(namebuf));
 #else
-      sscanf(token, "%s", namebuf);
+      sscanf(token, "%4095s", namebuf);
 #endif
       material.name = my_strdup(namebuf, (unsigned int) (line_end - token));
 
