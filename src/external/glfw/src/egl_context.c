@@ -279,7 +279,7 @@ static GLFWglproc getProcAddressEGL(const char* procname)
 {
     _GLFWwindow* window = _glfwPlatformGetTls(&_glfw.contextSlot);
 
-    if (window->context.egl.client)
+    if (window && window->context.egl.client)
     {
         GLFWglproc proc = (GLFWglproc)
             _glfwPlatformGetModuleSymbol(window->context.egl.client, procname);

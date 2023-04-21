@@ -189,13 +189,14 @@ static void swapBuffersGLX(_GLFWwindow* window)
 
 static void swapIntervalGLX(int interval)
 {
-    _GLFWwindow* window = _glfwPlatformGetTls(&_glfw.contextSlot);
-
     if (_glfw.glx.EXT_swap_control)
     {
-        _glfw.glx.SwapIntervalEXT(_glfw.x11.display,
-                                  window->context.glx.window,
-                                  interval);
+        _GLFWwindow *window = _glfwPlatformGetTls(&_glfw.contextSlot);
+        if (window) {
+            _glfw.glx.SwapIntervalEXT(_glfw.x11.display,
+                                      window->context.glx.window,
+                                      interval);
+        }
     }
     else if (_glfw.glx.MESA_swap_control)
         _glfw.glx.SwapIntervalMESA(interval);
