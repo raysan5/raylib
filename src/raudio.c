@@ -1389,7 +1389,7 @@ Music LoadMusicStream(const char *fileName)
         else if (music.ctxType == MUSIC_AUDIO_MP3) { drmp3_uninit((drmp3 *)music.ctxData); RL_FREE(music.ctxData); }
     #endif
     #if defined(SUPPORT_FILEFORMAT_QOA)
-        else if (music.ctxType == MUSIC_AUDIO_QOA) { /*TODO: Release QOA context data*/ RL_FREE(music.ctxData); }
+        else if (music.ctxType == MUSIC_AUDIO_QOA) qoaplay_close((qoaplay_desc *)music.ctxData);
     #endif
     #if defined(SUPPORT_FILEFORMAT_FLAC)
         else if (music.ctxType == MUSIC_AUDIO_FLAC) drflac_free((drflac *)music.ctxData, NULL);

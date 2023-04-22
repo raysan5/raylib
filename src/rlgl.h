@@ -1416,8 +1416,7 @@ void rlVertex3f(float x, float y, float z)
     RLGL.currentBatch->vertexBuffer[RLGL.currentBatch->currentBuffer].texcoords[2*RLGL.State.vertexCounter] = RLGL.State.texcoordx;
     RLGL.currentBatch->vertexBuffer[RLGL.currentBatch->currentBuffer].texcoords[2*RLGL.State.vertexCounter + 1] = RLGL.State.texcoordy;
 
-    // TODO: Add current normal
-    // By default rlVertexBuffer type does not store normals
+    // WARNING: By default rlVertexBuffer struct does not store normals
 
     // Add current color
     RLGL.currentBatch->vertexBuffer[RLGL.currentBatch->currentBuffer].colors[4*RLGL.State.vertexCounter] = RLGL.State.colorr;
@@ -2047,7 +2046,7 @@ void rlglInit(int width, int height)
     if ((glDebugMessageCallback != NULL) && (glDebugMessageControl != NULL))
     {
         glDebugMessageCallback(rlDebugMessageCallback, 0);
-        // glDebugMessageControl(GL_DEBUG_SOURCE_API, GL_DEBUG_TYPE_ERROR, GL_DEBUG_SEVERITY_HIGH, 0, 0, GL_TRUE); // TODO: Filter message
+        // glDebugMessageControl(GL_DEBUG_SOURCE_API, GL_DEBUG_TYPE_ERROR, GL_DEBUG_SEVERITY_HIGH, 0, 0, GL_TRUE);
 
         // Debug context options:
         //  - GL_DEBUG_OUTPUT - Faster version but not useful for breakpoints
@@ -2648,7 +2647,7 @@ void rlDrawRenderBatch(rlRenderBatch *batch)
     // Update batch vertex buffers
     //------------------------------------------------------------------------------------------------------------
     // NOTE: If there is not vertex data, buffers doesn't need to be updated (vertexCount > 0)
-    // TODO: If no data changed on the CPU arrays --> No need to re-update GPU arrays (change flag required)
+    // TODO: If no data changed on the CPU arrays --> No need to re-update GPU arrays (use a change detector flag?)
     if (RLGL.State.vertexCounter > 0)
     {
         // Activate elements VAO

@@ -326,8 +326,6 @@ Image LoadImageAnim(const char *fileName, int *frames)
         frameCount = 1;
     }
 
-    // TODO: Support APNG animated images
-
     *frames = frameCount;
     return image;
 }
@@ -1252,6 +1250,7 @@ Image ImageText(const char *text, int fontSize, Color color)
 }
 
 // Create an image from text (custom sprite font)
+// WARNING: Module required: rtext
 Image ImageTextEx(Font font, const char *text, float fontSize, float spacing, Color tint)
 {
     Image imText = { 0 };
@@ -1305,7 +1304,6 @@ Image ImageTextEx(Font font, const char *text, float fontSize, float spacing, Co
 
         // Using nearest-neighbor scaling algorithm for default font
         // TODO: Allow defining the preferred scaling mechanism externally
-        // WARNING: Module required: rtext
         if (font.texture.id == GetFontDefault().texture.id) ImageResizeNN(&imText, (int)(imSize.x*scaleFactor), (int)(imSize.y*scaleFactor));
         else ImageResize(&imText, (int)(imSize.x*scaleFactor), (int)(imSize.y*scaleFactor));
     }

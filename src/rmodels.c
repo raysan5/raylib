@@ -4525,7 +4525,7 @@ static ModelAnimation *LoadModelAnimationsIQM(const char *fileName, unsigned int
         animations[a].boneCount = iqmHeader->num_poses;
         animations[a].bones = RL_MALLOC(iqmHeader->num_poses*sizeof(BoneInfo));
         animations[a].framePoses = RL_MALLOC(anim[a].num_frames*sizeof(Transform *));
-        // animations[a].framerate = anim.framerate;     // TODO: Use framerate?
+        // animations[a].framerate = anim.framerate;     // TODO: Use animation framerate data?
 
         for (unsigned int j = 0; j < iqmHeader->num_poses; j++)
         {
@@ -4825,7 +4825,7 @@ static Model LoadGLTF(const char *fileName)
         TRACELOG(LOG_DEBUG, "    > Textures count: %i", data->textures_count);
 
         // Force reading data buffers (fills buffer_view->buffer->data)
-        // NOTE: If an uri is defined to base64 data or external path, it's automatically loaded -> TODO: Verify this assumption
+        // NOTE: If an uri is defined to base64 data or external path, it's automatically loaded
         result = cgltf_load_buffers(&options, data, fileName);
         if (result != cgltf_result_success) TRACELOG(LOG_INFO, "MODEL: [%s] Failed to load mesh/material buffers", fileName);
 
@@ -5517,7 +5517,6 @@ static Model LoadVOX(const char *fileName)
         memcpy(pmesh->vertices, pvertices, size);
 
         // Copy indices
-        // TODO: Compute globals indices array
         size = voxarray.indices.used*sizeof(unsigned short);
         pmesh->indices = RL_MALLOC(size);
         memcpy(pmesh->indices, pindices, size);
@@ -5803,7 +5802,7 @@ static Model LoadM3D(const char *fileName)
                 model.bindPose[i].rotation.z = m3d->vertex[m3d->bone[i].ori].z;
                 model.bindPose[i].rotation.w = m3d->vertex[m3d->bone[i].ori].w;
 
-                // TODO: if the orientation quaternion not normalized, then that's encoding scaling
+                // TODO: If the orientation quaternion is not normalized, then that's encoding scaling
                 model.bindPose[i].rotation = QuaternionNormalize(model.bindPose[i].rotation);
                 model.bindPose[i].scale.x = model.bindPose[i].scale.y = model.bindPose[i].scale.z = 1.0f;
 
