@@ -54,7 +54,7 @@ Some people ported raylib to other languages in form of bindings or wrappers to 
 | raylib-python-cffi | 4.2 | [Python](https://www.python.org/)    | EPL-2.0 | https://github.com/electronstudio/raylib-python-cffi |
 | raylibpyctbg     | **4.5** | [Python](https://www.python.org/)          | MIT | https://github.com/overdev/raylibpyctbg                |
 | raylib-py          | **4.5** | [Python](https://www.python.org/)          | MIT | https://github.com/overdev/raylib-py       |
-| raylib-python-ctypes | 4.2 | [Python](https://www.python.org/)    | MIT | https://github.com/sDos280/raylib-python-ctypes |
+| raylib-python-ctypes | 4.6-dev | [Python](https://www.python.org/)    | MIT | https://github.com/sDos280/raylib-python-ctypes |
 | raylib-php         | 3.5     | [PHP](https://en.wikipedia.org/wiki/PHP) | Zlib | https://github.com/joseph-montanez/raylib-php   |
 | raylib-phpcpp      | 3.5     | [PHP](https://en.wikipedia.org/wiki/PHP) | Zlib | https://github.com/oraoto/raylib-phpcpp         |
 | raylibr            | 4.0     | [R](https://www.r-project.org)       | MIT | https://github.com/jeroenjanssens/raylibr         |
