@@ -5944,11 +5944,12 @@ static int32_t AndroidInputCallback(struct android_app *app, AInputEvent *event)
     if (flags == AMOTION_EVENT_ACTION_POINTER_UP || flags == AMOTION_EVENT_ACTION_UP)
     {
         // One of the touchpoints is released, remove it from touch point arrays
-        for (int i = pointerIndex; (i < CORE.Input.Touch.pointCount-1) && (i < MAX_TOUCH_POINTS); i++)
+        for (int i = pointerIndex; (i < CORE.Input.Touch.pointCount - 1) && (i < MAX_TOUCH_POINTS); i++)
         {
             CORE.Input.Touch.pointId[i] = CORE.Input.Touch.pointId[i+1];
             CORE.Input.Touch.position[i] = CORE.Input.Touch.position[i+1];
         }
+
         CORE.Input.Touch.pointCount--;
     }
 
@@ -6720,20 +6721,22 @@ static void *EventThread(void *arg)
                 if (CORE.Input.Mouse.currentPosition.y < 0) CORE.Input.Mouse.currentPosition.y = 0;
                 if (CORE.Input.Mouse.currentPosition.y > CORE.Window.screen.height/CORE.Input.Mouse.scale.y) CORE.Input.Mouse.currentPosition.y = CORE.Window.screen.height/CORE.Input.Mouse.scale.y;
             }
+            
+            // Update touch point count
+            CORE.Input.Touch.pointCount = 0;
+            if (CORE.Input.Touch.position[0].x >= 0) CORE.Input.Touch.pointCount++;
+            if (CORE.Input.Touch.position[1].x >= 0) CORE.Input.Touch.pointCount++;
+            if (CORE.Input.Touch.position[2].x >= 0) CORE.Input.Touch.pointCount++;
+            if (CORE.Input.Touch.position[3].x >= 0) CORE.Input.Touch.pointCount++;
 
 #if defined(SUPPORT_GESTURES_SYSTEM)        // PLATFORM_RPI, PLATFORM_DRM
             if (gestureUpdate)
             {
                 GestureEvent gestureEvent = { 0 };
 
-                gestureEvent.pointCount = 0;
                 gestureEvent.touchAction = touchAction;
-
-                if (CORE.Input.Touch.position[0].x >= 0) gestureEvent.pointCount++;
-                if (CORE.Input.Touch.position[1].x >= 0) gestureEvent.pointCount++;
-                if (CORE.Input.Touch.position[2].x >= 0) gestureEvent.pointCount++;
-                if (CORE.Input.Touch.position[3].x >= 0) gestureEvent.pointCount++;
-
+                gestureEvent.pointCount = CORE.Input.Touch.pointCount;
+                
                 gestureEvent.pointId[0] = 0;
                 gestureEvent.pointId[1] = 1;
                 gestureEvent.pointId[2] = 2;
