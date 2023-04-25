@@ -525,6 +525,8 @@ bool ExportImage(Image image, const char *fileName)
 {
     int success = 0;
 
+    if ((image.width == 0) || (image.height == 0) || (image.data == NULL)) return success;
+
 #if defined(SUPPORT_IMAGE_EXPORT)
     int channels = 4;
     bool allocatedData = false;
