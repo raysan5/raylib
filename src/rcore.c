@@ -5376,6 +5376,13 @@ static void WindowSizeCallback(GLFWwindow *window, int width, int height)
 
         CORE.Window.screen.width = (unsigned int)(width/windowScaleDPI.x);
         CORE.Window.screen.height = (unsigned int)(height/windowScaleDPI.y);
+
+        int fbWidth = 0;
+        int fbHeight = 0;
+        glfwGetFramebufferSize(CORE.Window.handle, &fbWidth, &fbHeight);
+
+        CORE.Window.screenScale = MatrixScale((float)fbWidth/CORE.Window.screen.width, (float)fbHeight/CORE.Window.screen.height, 1.0f);
+        SetMouseScale((float)CORE.Window.screen.width/fbWidth, (float)CORE.Window.screen.height/fbHeight);
     }
     else
     {
