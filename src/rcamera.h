@@ -294,7 +294,7 @@ void CameraMoveToTarget(Camera *camera, float delta)
     distance += delta;
 
     // Distance must be greater than 0
-    if (distance < 0) distance = 0.001f;
+    if (distance <= 0) distance = 0.001f;
 
     // Set new distance by moving the position along the forward vector
     Vector3 forward = GetCameraForward(camera);
