@@ -3000,7 +3000,7 @@ bool IsFileExtension(const char *fileName, const char *ext)
         const char **checkExts = TextSplit(ext, ';', &extCount);  // WARNING: Module required: rtext
 
         char fileExtLower[MAX_FILE_EXTENSION_SIZE + 1] = { 0 };
-        strncpy(fileExtLower, TextToLower(fileExt),MAX_FILE_EXTENSION_SIZE);  // WARNING: Module required: rtext
+        strncpy(fileExtLower, TextToLower(fileExt), MAX_FILE_EXTENSION_SIZE);  // WARNING: Module required: rtext
 
         for (int i = 0; i < extCount; i++)
         {
