@@ -5,7 +5,7 @@ introduction
 
 I started developing videogames in 2006 and some years later I started teaching videogames development to young people with artistic profile, most of students had never written a single line of code.
 
-I decided to start with C language basis and, after searching for the most simple and easy-to-use library to teach videogames programming, I found [WinBGI](http://www.codecutter.net/tools/winbgim/); it was great and it worked very well with students, in just a couple of weeks, those students that had never written a single line of code were able to program (and understand) a simple PONG game, some of them even a BREAKOUT!
+I decided to start with C language basis and, after searching for the most simple and easy-to-use library to teach videogames programming, I found [WinBGI](https://winbgim.codecutter.org/); it was great and it worked very well with students, in just a couple of weeks, those students that had never written a single line of code were able to program (and understand) a simple PONG game, some of them even a BREAKOUT!
 
 But WinBGI was not the clearer and most organized library for my taste. There were lots of things I found confusing and some function names were not clear enough for most of the students; not to mention the lack of transparencies support and no hardware acceleration.
 
