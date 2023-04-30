@@ -1757,71 +1757,31 @@ bool CheckCollisionPointLine(Vector2 point, Vector2 p1, Vector2 p2, int threshol
 }
 
 // Get collision rectangle for two rectangles collision
-Rectangle GetCollisionRec(Rectangle rec1, Rectangle rec2)
-{
-    Rectangle rec = { 0, 0, 0, 0 };
+#define MIN_MACRO(X,Y) ((X) < (Y) ? (X) : (Y)) //Define ugly macros to get both gcc and clang
+#define MAX_MACRO(X,Y) ((X) > (Y) ? (X) : (Y)) //to reduce min and max to single instructions
+Rectangle GetCollisionRec(Rectangle rec1, Rectangle rec2) {
+    Rectangle overlap;
 
-    if (CheckCollisionRecs(rec1, rec2))
-    {
-        float dxx = fabsf(rec1.x - rec2.x);
-        float dyy = fabsf(rec1.y - rec2.y);
-
-        if (rec1.x <= rec2.x)
-        {
-            if (rec1.y <= rec2.y)
-            {
-                rec.x = rec2.x;
-                rec.y = rec2.y;
-                rec.width = rec1.width - dxx;
-                rec.height = rec1.height - dyy;
-            }
-            else
-            {
-                rec.x = rec2.x;
-                rec.y = rec1.y;
-                rec.width = rec1.width - dxx;
-                rec.height = rec2.height - dyy;
-            }
-        }
-        else
-        {
-            if (rec1.y <= rec2.y)
-            {
-                rec.x = rec1.x;
-                rec.y = rec2.y;
-                rec.width = rec2.width - dxx;
-                rec.height = rec1.height - dyy;
-            }
-            else
-            {
-                rec.x = rec1.x;
-                rec.y = rec1.y;
-                rec.width = rec2.width - dxx;
-                rec.height = rec2.height - dyy;
-            }
-        }
-
-        if (rec1.width > rec2.width)
-        {
-            if (rec.width >= rec2.width) rec.width = rec2.width;
-        }
-        else
-        {
-            if (rec.width >= rec1.width) rec.width = rec1.width;
-        }
-
-        if (rec1.height > rec2.height)
-        {
-            if (rec.height >= rec2.height) rec.height = rec2.height;
-        }
-        else
-        {
-           if (rec.height >= rec1.height) rec.height = rec1.height;
-        }
+    float left = MAX_MACRO(rec1.x, rec2.x);
+    float right = MIN_MACRO(rec1.x + rec1.width, rec2.x + rec2.width);
+    float top = MAX_MACRO(rec1.y, rec2.y);
+    float bottom = MIN_MACRO(rec1.y + rec1.height, rec2.y + rec2.height);
+    if (left < right && top < bottom) {
+        overlap.x = left;
+        overlap.y = top;
+        overlap.width = right - left;
+        overlap.height = bottom - top;
+    } else {
+        overlap.x = 0;
+        overlap.y = 0;
+        overlap.width = 0;
+        overlap.height = 0;
     }
 
-    return rec;
+    return overlap;
 }
+#undef MIN_MACRO //Undefine macros again
+#undef MAX_MACRO
 
 //----------------------------------------------------------------------------------
 // Module specific Functions Definition
