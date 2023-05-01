@@ -74,10 +74,10 @@ int main(void)
     unsigned int ssboA = rlLoadShaderBuffer(GOL_WIDTH*GOL_WIDTH*sizeof(unsigned int), NULL, RL_DYNAMIC_COPY);
     unsigned int ssboB = rlLoadShaderBuffer(GOL_WIDTH*GOL_WIDTH*sizeof(unsigned int), NULL, RL_DYNAMIC_COPY);
     unsigned int ssboTransfert = rlLoadShaderBuffer(sizeof(GolUpdateSSBO), NULL, RL_DYNAMIC_COPY);
-    
+
     GolUpdateSSBO transfertBuffer = { 0 };
 
-    // Create a white texture of the size of the window to update 
+    // Create a white texture of the size of the window to update
     // each pixel of the window using the fragment shader: golRenderShader
     Image whiteImage = GenImageColor(GOL_WIDTH, GOL_WIDTH, WHITE);
     Texture whiteTex = LoadTextureFromImage(whiteImage);
@@ -105,7 +105,7 @@ int main(void)
         {
             // Send SSBO buffer to GPU
             rlUpdateShaderBuffer(ssboTransfert, &transfertBuffer, sizeof(GolUpdateSSBO), 0);
-            
+
             // Process SSBO commands on GPU
             rlEnableShader(golTransfertProgram);
             rlBindShaderBuffer(ssboA, 1);
@@ -143,7 +143,7 @@ int main(void)
             BeginShaderMode(golRenderShader);
                 DrawTexture(whiteTex, 0, 0, WHITE);
             EndShaderMode();
-            
+
             DrawRectangleLines(GetMouseX() - brushSize/2, GetMouseY() - brushSize/2, brushSize, brushSize, RED);
 
             DrawText("Use Mouse wheel to increase/decrease brush size", 10, 10, 20, WHITE);
