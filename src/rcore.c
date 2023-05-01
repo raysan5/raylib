@@ -13,75 +13,75 @@
 *       - PLATFORM_WEB:     HTML5 with WebAssembly
 *
 *   CONFIGURATION:
+*       #define PLATFORM_DESKTOP
+*           Windowing and input system configured for desktop platforms:
+*               Windows, Linux, OSX, FreeBSD, OpenBSD, NetBSD, DragonFly
 *
-*   #define PLATFORM_DESKTOP
-*       Windowing and input system configured for desktop platforms: Windows, Linux, OSX, FreeBSD, OpenBSD, NetBSD, DragonFly
-*       NOTE: Oculus Rift CV1 requires PLATFORM_DESKTOP for mirror rendering - View [rlgl] module to enable it
+*       #define PLATFORM_ANDROID
+*           Windowing and input system configured for Android device, app activity managed internally in this module.
+*           NOTE: OpenGL ES 2.0 is required and graphic device is managed by EGL
 *
-*   #define PLATFORM_ANDROID
-*       Windowing and input system configured for Android device, app activity managed internally in this module.
-*       NOTE: OpenGL ES 2.0 is required and graphic device is managed by EGL
+*       #define PLATFORM_RPI (deprecated - RPI OS Buster only)
+*           Windowing and input system configured for Raspberry Pi in native mode (no XWindow required),
+*           graphic device is managed by EGL and inputs are processed is raw mode, reading from /dev/input/
+*           WARNING: This platform is deprecated, since RPI OS Bullseye, the old Dispmanx libraries are not
+*           supported and you must be using PLATFORM_DRM
 *
-*   #define PLATFORM_RPI (deprecated - RPI OS Buster only)
-*       Windowing and input system configured for Raspberry Pi in native mode (no XWindow required),
-*       graphic device is managed by EGL and inputs are processed is raw mode, reading from /dev/input/
-*       WARNING: This platform is deprecated, since RPI OS Bullseye, the old Dispmanx libraries are not
-*       supported and you must be using PLATFORM_DRM
+*       #define PLATFORM_DRM
+*           Windowing and input system configured for DRM native mode (RPI4 and other devices)
+*           graphic device is managed by EGL and inputs are processed is raw mode, reading from /dev/input/
 *
-*   #define PLATFORM_DRM
-*       Windowing and input system configured for DRM native mode (RPI4 and other devices)
-*       graphic device is managed by EGL and inputs are processed is raw mode, reading from /dev/input/
+*       #define PLATFORM_WEB
+*           Windowing and input system configured for HTML5 (run on browser), code converted from C to asm.js
+*           using emscripten compiler. OpenGL ES 2.0 required for direct translation to WebGL equivalent code.
 *
-*   #define PLATFORM_WEB
-*       Windowing and input system configured for HTML5 (run on browser), code converted from C to asm.js
-*       using emscripten compiler. OpenGL ES 2.0 required for direct translation to WebGL equivalent code.
+*       #define SUPPORT_DEFAULT_FONT (default)
+*           Default font is loaded on window initialization to be available for the user to render simple text.
+*           NOTE: If enabled, uses external module functions to load default raylib font (module: text)
 *
-*   #define SUPPORT_DEFAULT_FONT (default)
-*       Default font is loaded on window initialization to be available for the user to render simple text.
-*       NOTE: If enabled, uses external module functions to load default raylib font (module: text)
+*       #define SUPPORT_CAMERA_SYSTEM
+*           Camera module is included (rcamera.h) and multiple predefined cameras are available:
+*               free, 1st/3rd person, orbital, custom
 *
-*   #define SUPPORT_CAMERA_SYSTEM
-*       Camera module is included (rcamera.h) and multiple predefined cameras are available: free, 1st/3rd person, orbital
+*       #define SUPPORT_GESTURES_SYSTEM
+*           Gestures module is included (rgestures.h) to support gestures detection: tap, hold, swipe, drag
 *
-*   #define SUPPORT_GESTURES_SYSTEM
-*       Gestures module is included (rgestures.h) to support gestures detection: tap, hold, swipe, drag
+*       #define SUPPORT_MOUSE_GESTURES
+*           Mouse gestures are directly mapped like touches and processed by gestures system.
 *
-*   #define SUPPORT_MOUSE_GESTURES
-*       Mouse gestures are directly mapped like touches and processed by gestures system.
+*       #define SUPPORT_TOUCH_AS_MOUSE
+*           Touch input and mouse input are shared. Mouse functions also return touch information.
 *
-*   #define SUPPORT_TOUCH_AS_MOUSE
-*       Touch input and mouse input are shared. Mouse functions also return touch information.
+*       #define SUPPORT_SSH_KEYBOARD_RPI (Raspberry Pi only)
+*           Reconfigure standard input to receive key inputs, works with SSH connection.
+*           WARNING: Reconfiguring standard input could lead to undesired effects, like breaking other
+*           running processes orblocking the device if not restored properly. Use with care.
 *
-*   #define SUPPORT_SSH_KEYBOARD_RPI (Raspberry Pi only)
-*       Reconfigure standard input to receive key inputs, works with SSH connection.
-*       WARNING: Reconfiguring standard input could lead to undesired effects, like breaking other running processes or
-*       blocking the device if not restored properly. Use with care.
+*       #define SUPPORT_BUSY_WAIT_LOOP
+*           Use busy wait loop for timing sync, if not defined, a high-resolution timer is setup and used
 *
-*   #define SUPPORT_BUSY_WAIT_LOOP
-*       Use busy wait loop for timing sync, if not defined, a high-resolution timer is setup and used
+*       #define SUPPORT_PARTIALBUSY_WAIT_LOOP
+*           Use a partial-busy wait loop, in this case frame sleeps for most of the time and runs a busy-wait-loop at the end
 *
-*   #define SUPPORT_PARTIALBUSY_WAIT_LOOP
-*       Use a partial-busy wait loop, in this case frame sleeps for most of the time and runs a busy-wait-loop at the end
+*       #define SUPPORT_EVENTS_WAITING
+*           Wait for events passively (sleeping while no events) instead of polling them actively every frame
 *
-*   #define SUPPORT_EVENTS_WAITING
-*       Wait for events passively (sleeping while no events) instead of polling them actively every frame
+*       #define SUPPORT_SCREEN_CAPTURE
+*           Allow automatic screen capture of current screen pressing F12, defined in KeyCallback()
 *
-*   #define SUPPORT_SCREEN_CAPTURE
-*       Allow automatic screen capture of current screen pressing F12, defined in KeyCallback()
+*       #define SUPPORT_GIF_RECORDING
+*           Allow automatic gif recording of current screen pressing CTRL+F12, defined in KeyCallback()
 *
-*   #define SUPPORT_GIF_RECORDING
-*       Allow automatic gif recording of current screen pressing CTRL+F12, defined in KeyCallback()
+*       #define SUPPORT_COMPRESSION_API
+*           Support CompressData() and DecompressData() functions, those functions use zlib implementation
+*           provided by stb_image and stb_image_write libraries, so, those libraries must be enabled on textures module
+*           for linkage
 *
-*   #define SUPPORT_COMPRESSION_API
-*       Support CompressData() and DecompressData() functions, those functions use zlib implementation
-*       provided by stb_image and stb_image_write libraries, so, those libraries must be enabled on textures module
-*       for linkage
-*
-*   #define SUPPORT_EVENTS_AUTOMATION
-*       Support automatic generated events, loading and recording of those events when required
+*       #define SUPPORT_EVENTS_AUTOMATION
+*           Support automatic generated events, loading and recording of those events when required
 *
 *   DEPENDENCIES:
-*       rglfw    - Manage graphic device, OpenGL context and inputs on PLATFORM_DESKTOP (Windows, Linux, OSX. FreeBSD, OpenBSD, NetBSD, DragonFly)
+*       rglfw    - Manage graphic device, OpenGL context and inputs on PLATFORM_DESKTOP (Windows, Linux, OSX, FreeBSD...)
 *       raymath  - 3D math functionality (Vector2, Vector3, Matrix, Quaternion)
 *       camera   - Multiple 3D camera modes (free, orbital, 1st person, 3rd person)
 *       gestures - Gestures system for touch-ready devices (or simulated from mouse inputs)
@@ -6721,7 +6721,7 @@ static void *EventThread(void *arg)
                 if (CORE.Input.Mouse.currentPosition.y < 0) CORE.Input.Mouse.currentPosition.y = 0;
                 if (CORE.Input.Mouse.currentPosition.y > CORE.Window.screen.height/CORE.Input.Mouse.scale.y) CORE.Input.Mouse.currentPosition.y = CORE.Window.screen.height/CORE.Input.Mouse.scale.y;
             }
-            
+
             // Update touch point count
             CORE.Input.Touch.pointCount = 0;
             if (CORE.Input.Touch.position[0].x >= 0) CORE.Input.Touch.pointCount++;
@@ -6736,7 +6736,7 @@ static void *EventThread(void *arg)
 
                 gestureEvent.touchAction = touchAction;
                 gestureEvent.pointCount = CORE.Input.Touch.pointCount;
-                
+
                 gestureEvent.pointId[0] = 0;
                 gestureEvent.pointId[1] = 1;
                 gestureEvent.pointId[2] = 2;

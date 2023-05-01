@@ -2,25 +2,23 @@
 *
 *   raymath v1.5 - Math functions to work with Vector2, Vector3, Matrix and Quaternions
 *
-*   CONFIGURATION:
-*
-*   #define RAYMATH_IMPLEMENTATION
-*       Generates the implementation of the library into the included file.
-*       If not defined, the library is in header only mode and can be included in other headers
-*       or source files without problems. But only ONE file should hold the implementation.
-*
-*   #define RAYMATH_STATIC_INLINE
-*       Define static inline functions code, so #include header suffices for use.
-*       This may use up lots of memory.
-*
 *   CONVENTIONS:
-*
 *     - Functions are always self-contained, no function use another raymath function inside,
 *       required code is directly re-implemented inside
 *     - Functions input parameters are always received by value (2 unavoidable exceptions)
 *     - Functions use always a "result" variable for return
 *     - Functions are always defined inline
 *     - Angles are always in radians (DEG2RAD/RAD2DEG macros provided for convenience)
+*
+*   CONFIGURATION:
+*       #define RAYMATH_IMPLEMENTATION
+*           Generates the implementation of the library into the included file.
+*           If not defined, the library is in header only mode and can be included in other headers
+*           or source files without problems. But only ONE file should hold the implementation.
+*
+*       #define RAYMATH_STATIC_INLINE
+*           Define static inline functions code, so #include header suffices for use.
+*           This may use up lots of memory.
 *
 *
 *   LICENSE: zlib/libpng
@@ -703,7 +701,7 @@ RMAPI Vector3 Vector3Normalize(Vector3 v)
     Vector3 result = v;
 
     float length = sqrtf(v.x*v.x + v.y*v.y + v.z*v.z);
-    if (length != 0.0f) 
+    if (length != 0.0f)
     {
         float ilength = 1.0f/length;
 

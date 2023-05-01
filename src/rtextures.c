@@ -3,37 +3,36 @@
 *   rtextures - Basic functions to load and draw textures
 *
 *   CONFIGURATION:
+*       #define SUPPORT_MODULE_RTEXTURES
+*           rtextures module is included in the build
 *
-*   #define SUPPORT_MODULE_RTEXTURES
-*       rtextures module is included in the build
+*       #define SUPPORT_FILEFORMAT_BMP
+*       #define SUPPORT_FILEFORMAT_PNG
+*       #define SUPPORT_FILEFORMAT_TGA
+*       #define SUPPORT_FILEFORMAT_JPG
+*       #define SUPPORT_FILEFORMAT_GIF
+*       #define SUPPORT_FILEFORMAT_QOI
+*       #define SUPPORT_FILEFORMAT_PSD
+*       #define SUPPORT_FILEFORMAT_HDR
+*       #define SUPPORT_FILEFORMAT_PIC
+*       #define SUPPORT_FILEFORMAT_PNM
+*       #define SUPPORT_FILEFORMAT_DDS
+*       #define SUPPORT_FILEFORMAT_PKM
+*       #define SUPPORT_FILEFORMAT_KTX
+*       #define SUPPORT_FILEFORMAT_PVR
+*       #define SUPPORT_FILEFORMAT_ASTC
+*           Select desired fileformats to be supported for image data loading. Some of those formats are
+*           supported by default, to remove support, just comment unrequired #define in this module
 *
-*   #define SUPPORT_FILEFORMAT_BMP
-*   #define SUPPORT_FILEFORMAT_PNG
-*   #define SUPPORT_FILEFORMAT_TGA
-*   #define SUPPORT_FILEFORMAT_JPG
-*   #define SUPPORT_FILEFORMAT_GIF
-*   #define SUPPORT_FILEFORMAT_QOI
-*   #define SUPPORT_FILEFORMAT_PSD
-*   #define SUPPORT_FILEFORMAT_HDR
-*   #define SUPPORT_FILEFORMAT_PIC
-*   #define SUPPORT_FILEFORMAT_PNM
-*   #define SUPPORT_FILEFORMAT_DDS
-*   #define SUPPORT_FILEFORMAT_PKM
-*   #define SUPPORT_FILEFORMAT_KTX
-*   #define SUPPORT_FILEFORMAT_PVR
-*   #define SUPPORT_FILEFORMAT_ASTC
-*       Select desired fileformats to be supported for image data loading. Some of those formats are
-*       supported by default, to remove support, just comment unrequired #define in this module
+*       #define SUPPORT_IMAGE_EXPORT
+*           Support image export in multiple file formats
 *
-*   #define SUPPORT_IMAGE_EXPORT
-*       Support image export in multiple file formats
+*       #define SUPPORT_IMAGE_MANIPULATION
+*           Support multiple image editing functions to scale, adjust colors, flip, draw on images, crop...
+*           If not defined only some image editing functions supported: ImageFormat(), ImageAlphaMask(), ImageResize*()
 *
-*   #define SUPPORT_IMAGE_MANIPULATION
-*       Support multiple image editing functions to scale, adjust colors, flip, draw on images, crop...
-*       If not defined only some image editing functions supported: ImageFormat(), ImageAlphaMask(), ImageResize*()
-*
-*   #define SUPPORT_IMAGE_GENERATION
-*       Support procedural image generation functionality (gradient, spot, perlin-noise, cellular)
+*       #define SUPPORT_IMAGE_GENERATION
+*           Support procedural image generation functionality (gradient, spot, perlin-noise, cellular)
 *
 *   DEPENDENCIES:
 *       stb_image        - Multiple image formats loading (JPEG, PNG, BMP, TGA, PSD, GIF, PIC)

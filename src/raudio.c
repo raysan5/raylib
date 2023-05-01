@@ -11,23 +11,22 @@
 *       - Play/Stop/Pause/Resume loaded audio
 *
 *   CONFIGURATION:
+*       #define SUPPORT_MODULE_RAUDIO
+*           raudio module is included in the build
 *
-*   #define SUPPORT_MODULE_RAUDIO
-*       raudio module is included in the build
+*       #define RAUDIO_STANDALONE
+*           Define to use the module as standalone library (independently of raylib).
+*           Required types and functions are defined in the same module.
 *
-*   #define RAUDIO_STANDALONE
-*       Define to use the module as standalone library (independently of raylib).
-*       Required types and functions are defined in the same module.
-*
-*   #define SUPPORT_FILEFORMAT_WAV
-*   #define SUPPORT_FILEFORMAT_OGG
-*   #define SUPPORT_FILEFORMAT_MP3
-*   #define SUPPORT_FILEFORMAT_QOA
-*   #define SUPPORT_FILEFORMAT_FLAC
-*   #define SUPPORT_FILEFORMAT_XM
-*   #define SUPPORT_FILEFORMAT_MOD
-*       Selected desired fileformats to be supported for loading. Some of those formats are
-*       supported by default, to remove support, just comment unrequired #define in this module
+*       #define SUPPORT_FILEFORMAT_WAV
+*       #define SUPPORT_FILEFORMAT_OGG
+*       #define SUPPORT_FILEFORMAT_MP3
+*       #define SUPPORT_FILEFORMAT_QOA
+*       #define SUPPORT_FILEFORMAT_FLAC
+*       #define SUPPORT_FILEFORMAT_XM
+*       #define SUPPORT_FILEFORMAT_MOD
+*           Selected desired fileformats to be supported for loading. Some of those formats are
+*           supported by default, to remove support, just comment unrequired #define in this module
 *
 *   DEPENDENCIES:
 *       miniaudio.h  - Audio device management lib (https://github.com/mackron/miniaudio)
@@ -42,7 +41,7 @@
 *       David Reid (github: @mackron) (Nov. 2017):
 *           - Complete port to miniaudio library
 *
-*       Joshua Reisenauer (github: @kd7tck) (2015)
+*       Joshua Reisenauer (github: @kd7tck) (2015):
 *           - XM audio module support (jar_xm)
 *           - MOD audio module support (jar_mod)
 *           - Mixing channels support

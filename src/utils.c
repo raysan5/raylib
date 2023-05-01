@@ -3,10 +3,9 @@
 *   raylib.utils - Some common utility functions
 *
 *   CONFIGURATION:
-*
-*   #define SUPPORT_TRACELOG
-*       Show TraceLog() output messages
-*       NOTE: By default LOG_DEBUG traces not shown
+*       #define SUPPORT_TRACELOG
+*           Show TraceLog() output messages
+*           NOTE: By default LOG_DEBUG traces not shown
 *
 *
 *   LICENSE: zlib/libpng

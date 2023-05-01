@@ -3,15 +3,14 @@
 *   rcamera - Basic camera system with support for multiple camera modes
 *
 *   CONFIGURATION:
+*       #define CAMERA_IMPLEMENTATION
+*           Generates the implementation of the library into the included file.
+*           If not defined, the library is in header only mode and can be included in other headers
+*           or source files without problems. But only ONE file should hold the implementation.
 *
-*   #define CAMERA_IMPLEMENTATION
-*       Generates the implementation of the library into the included file.
-*       If not defined, the library is in header only mode and can be included in other headers
-*       or source files without problems. But only ONE file should hold the implementation.
-*
-*   #define CAMERA_STANDALONE
-*       If defined, the library can be used as standalone as a camera system but some
-*       functions must be redefined to manage inputs accordingly.
+*       #define CAMERA_STANDALONE
+*           If defined, the library can be used as standalone as a camera system but some
+*           functions must be redefined to manage inputs accordingly.
 *
 *   CONTRIBUTORS:
 *       Ramon Santamaria:   Supervision, review, update and maintenance

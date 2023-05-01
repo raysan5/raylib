@@ -3,25 +3,23 @@
 *   rtext - Basic functions to load fonts and draw text
 *
 *   CONFIGURATION:
+*       #define SUPPORT_MODULE_RTEXT
+*           rtext module is included in the build
 *
-*   #define SUPPORT_MODULE_RTEXT
-*       rtext module is included in the build
+*       #define SUPPORT_FILEFORMAT_FNT
+*       #define SUPPORT_FILEFORMAT_TTF
+*           Selected desired fileformats to be supported for loading. Some of those formats are
+*           supported by default, to remove support, just comment unrequired #define in this module
 *
-*   #define SUPPORT_FILEFORMAT_FNT
-*   #define SUPPORT_FILEFORMAT_TTF
-*       Selected desired fileformats to be supported for loading. Some of those formats are
-*       supported by default, to remove support, just comment unrequired #define in this module
+*       #define SUPPORT_DEFAULT_FONT
+*           Load default raylib font on initialization to be used by DrawText() and MeasureText().
+*           If no default font loaded, DrawTextEx() and MeasureTextEx() are required.
 *
-*   #define SUPPORT_DEFAULT_FONT
-*       Load default raylib font on initialization to be used by DrawText() and MeasureText().
-*       If no default font loaded, DrawTextEx() and MeasureTextEx() are required.
+*       #define TEXTSPLIT_MAX_TEXT_BUFFER_LENGTH
+*           TextSplit() function static buffer max size
 *
-*   #define TEXTSPLIT_MAX_TEXT_BUFFER_LENGTH
-*       TextSplit() function static buffer max size
-*
-*   #define MAX_TEXTSPLIT_COUNT
-*       TextSplit() function static substrings pointers array (pointing to static buffer)
-*
+*       #define MAX_TEXTSPLIT_COUNT
+*           TextSplit() function static substrings pointers array (pointing to static buffer)
 *
 *   DEPENDENCIES:
 *       stb_truetype  - Load TTF file and rasterize characters data

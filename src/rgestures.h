@@ -2,18 +2,15 @@
 *
 *   rgestures - Gestures system, gestures processing based on input events (touch/mouse)
 *
-*   NOTE: Memory footprint of this library is aproximately 128 bytes (global variables)
-*
 *   CONFIGURATION:
+*       #define GESTURES_IMPLEMENTATION
+*           Generates the implementation of the library into the included file.
+*           If not defined, the library is in header only mode and can be included in other headers
+*           or source files without problems. But only ONE file should hold the implementation.
 *
-*   #define GESTURES_IMPLEMENTATION
-*       Generates the implementation of the library into the included file.
-*       If not defined, the library is in header only mode and can be included in other headers
-*       or source files without problems. But only ONE file should hold the implementation.
-*
-*   #define GESTURES_STANDALONE
-*       If defined, the library can be used as standalone to process gesture events with
-*       no external dependencies.
+*       #define GESTURES_STANDALONE
+*           If defined, the library can be used as standalone to process gesture events with
+*           no external dependencies.
 *
 *   CONTRIBUTORS:
 *       Marc Palau:         Initial implementation (2014)
