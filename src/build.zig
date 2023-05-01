@@ -90,7 +90,7 @@ pub fn addRaylib(b: *std.Build, target: std.zig.CrossTarget, optimize: std.built
             const cache_include = std.fs.path.join(b.allocator, &.{ b.sysroot.?, "cache", "sysroot", "include" }) catch @panic("Out of memory");
             defer b.allocator.free(cache_include);
 
-            var dir = std.fs.openDirAbsolute(cache_include, std.fs.Dir.OpenDirOptions{.access_sub_paths = true, .no_follow = true}) catch @panic("No emscripten cache. Generate it!");
+            var dir = std.fs.openDirAbsolute(cache_include, std.fs.Dir.OpenDirOptions{ .access_sub_paths = true, .no_follow = true }) catch @panic("No emscripten cache. Generate it!");
             dir.close();
 
             raylib.addIncludePath(cache_include);
@@ -115,11 +115,11 @@ pub fn build(b: *std.Build) void {
     const optimize = b.standardOptimizeOption(.{});
 
     const lib = addRaylib(b, target, optimize);
-    lib.setOutputDir(srcdir);
-    lib.install();
+    lib.installHeader("src/raylib.h", "raylib.h");
+    b.installArtifact(lib);
 }
 
-const srcdir = struct{
+const srcdir = struct {
     fn getSrcDir() []const u8 {
         return std.fs.path.dirname(@src().file).?;
     }
