@@ -8,6 +8,7 @@
 *       It is like transposed versions of the matrices are used for all the maths
 *       It benefits some functions making them cache-friendly and also avoids matrix 
 *       transpositions sometimes required by OpenGL
+*       Example: In memory order, row0 is [m0 m4 m8 m12] but in semantic math row0 is [m0 m1 m2 m3]
 *     - Functions are always self-contained, no function use another raymath function inside,
 *       required code is directly re-implemented inside
 *     - Functions input parameters are always received by value (2 unavoidable exceptions)
