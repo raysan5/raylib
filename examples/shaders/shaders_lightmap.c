@@ -46,81 +46,82 @@ int main(void)
 
     // Define the camera to look into our 3d world
     Camera camera = { 0 };
-    camera.position = (Vector3){ 2.0f, 4.0f, 6.0f };    // Camera position
-    camera.target = (Vector3){ 0.0f, 0.5f, 0.0f };      // Camera looking at point
+    camera.position = (Vector3){ 4.0f, 6.0f, 8.0f };    // Camera position
+    camera.target = (Vector3){ 0.0f, 0.0f, 0.0f };      // Camera looking at point
     camera.up = (Vector3){ 0.0f, 1.0f, 0.0f };          // Camera up vector (rotation towards target)
     camera.fovy = 45.0f;                                // Camera field-of-view Y
     camera.projection = CAMERA_PERSPECTIVE;             // Camera projection type
 
-	Mesh mesh = GenMeshPlane((float)MAP_SIZE, (float)MAP_SIZE, 1, 1);
+    Mesh mesh = GenMeshPlane((float)MAP_SIZE, (float)MAP_SIZE, 1, 1);
 
-	// GenMeshPlane doesn't generate texcoords2 so we will upload them separately
-	mesh.texcoords2 = (float *)RL_MALLOC(mesh.vertexCount * 2 * sizeof(float));
+    // GenMeshPlane doesn't generate texcoords2 so we will upload them separately
+    mesh.texcoords2 = (float *)RL_MALLOC(mesh.vertexCount*2*sizeof(float));
 
-	// X						// Y
-	mesh.texcoords2[0] = 0.0f;	mesh.texcoords2[1] = 0.0f;
-	mesh.texcoords2[2] = 1.0f;	mesh.texcoords2[3] = 0.0f;
-	mesh.texcoords2[4] = 0.0f;	mesh.texcoords2[5] = 1.0f;
-	mesh.texcoords2[6] = 1.0f;	mesh.texcoords2[7] = 1.0f;
+    // X                          // Y
+    mesh.texcoords2[0] = 0.0f;    mesh.texcoords2[1] = 0.0f;
+    mesh.texcoords2[2] = 1.0f;    mesh.texcoords2[3] = 0.0f;
+    mesh.texcoords2[4] = 0.0f;    mesh.texcoords2[5] = 1.0f;
+    mesh.texcoords2[6] = 1.0f;    mesh.texcoords2[7] = 1.0f;
 
-	// Load a new texcoords2 attributes buffer
-	mesh.vboId[SHADER_LOC_VERTEX_TEXCOORD02] = rlLoadVertexBuffer(mesh.texcoords2, mesh.vertexCount*2*sizeof(float), false);
-	rlEnableVertexArray(mesh.vaoId);
-	// Index 5 is for texcoords2
-	rlSetVertexAttribute(5, 2, RL_FLOAT, 0, 0, 0);
-	rlEnableVertexAttribute(5);
-	rlDisableVertexArray();
+    // Load a new texcoords2 attributes buffer
+    mesh.vboId[SHADER_LOC_VERTEX_TEXCOORD02] = rlLoadVertexBuffer(mesh.texcoords2, mesh.vertexCount*2*sizeof(float), false);
+    rlEnableVertexArray(mesh.vaoId);
+    
+    // Index 5 is for texcoords2
+    rlSetVertexAttribute(5, 2, RL_FLOAT, 0, 0, 0);
+    rlEnableVertexAttribute(5);
+    rlDisableVertexArray();
 
     // Load lightmap shader
     Shader shader = LoadShader(TextFormat("resources/shaders/glsl%i/lightmap.vs", GLSL_VERSION),
                                TextFormat("resources/shaders/glsl%i/lightmap.fs", GLSL_VERSION));
 
-	Texture texture = LoadTexture("resources/cubicmap_atlas.png");
-	Texture light = LoadTexture("resources/spark_flame.png");
+    Texture texture = LoadTexture("resources/cubicmap_atlas.png");
+    Texture light = LoadTexture("resources/spark_flame.png");
 
-	GenTextureMipmaps(&texture);
-	SetTextureFilter(texture, TEXTURE_FILTER_TRILINEAR);
+    GenTextureMipmaps(&texture);
+    SetTextureFilter(texture, TEXTURE_FILTER_TRILINEAR);
 
-	RenderTexture lightmap = LoadRenderTexture(MAP_SIZE, MAP_SIZE);
+    RenderTexture lightmap = LoadRenderTexture(MAP_SIZE, MAP_SIZE);
 
-	SetTextureFilter(lightmap.texture, TEXTURE_FILTER_TRILINEAR);
+    SetTextureFilter(lightmap.texture, TEXTURE_FILTER_TRILINEAR);
 
- 	Material material = LoadMaterialDefault();
+    Material material = LoadMaterialDefault();
     material.shader = shader;
     material.maps[MATERIAL_MAP_ALBEDO].texture = texture;
     material.maps[MATERIAL_MAP_METALNESS].texture = lightmap.texture;
 
-	// Drawing to lightmap
-	BeginTextureMode(lightmap);
-		ClearBackground(BLACK);
+    // Drawing to lightmap
+    BeginTextureMode(lightmap);
+        ClearBackground(BLACK);
 
-		BeginBlendMode(BLEND_ADDITIVE);
-			DrawTexturePro(
-				light,
-				(Rectangle){ 0, 0, light.width, light.height },
-				(Rectangle){ 0, 0, 20, 20 },
-				(Vector2){ 10.0, 10.0 },
-				0.0,
-				RED
-			);
-			DrawTexturePro(
-				light,
-				(Rectangle){ 0, 0, light.width, light.height },
-				(Rectangle){ 8, 4, 20, 20 },
-				(Vector2){ 10.0, 10.0 },
-				0.0,
-				BLUE
-			);
-			DrawTexturePro(
-				light,
-				(Rectangle){ 0, 0, light.width, light.height },
-				(Rectangle){ 8, 8, 10, 10 },
-				(Vector2){ 5.0, 5.0 },
-				0.0,
-				GREEN
-			);
-		BeginBlendMode(BLEND_ALPHA);
-	EndTextureMode();
+        BeginBlendMode(BLEND_ADDITIVE);
+            DrawTexturePro(
+                light,
+                (Rectangle){ 0, 0, light.width, light.height },
+                (Rectangle){ 0, 0, 20, 20 },
+                (Vector2){ 10.0, 10.0 },
+                0.0,
+                RED
+            );
+            DrawTexturePro(
+                light,
+                (Rectangle){ 0, 0, light.width, light.height },
+                (Rectangle){ 8, 4, 20, 20 },
+                (Vector2){ 10.0, 10.0 },
+                0.0,
+                BLUE
+            );
+            DrawTexturePro(
+                light,
+                (Rectangle){ 0, 0, light.width, light.height },
+                (Rectangle){ 8, 8, 10, 10 },
+                (Vector2){ 5.0, 5.0 },
+                0.0,
+                GREEN
+            );
+        BeginBlendMode(BLEND_ALPHA);
+    EndTextureMode();
 
     SetTargetFPS(60);                   // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
@@ -139,26 +140,29 @@ int main(void)
             ClearBackground(RAYWHITE);
 
             BeginMode3D(camera);
-				DrawMesh(mesh, material, MatrixIdentity());
+                DrawMesh(mesh, material, MatrixIdentity());
             EndMode3D();
 
             DrawFPS(10, 10);
 
-			DrawTexturePro(
-				lightmap.texture,
-				(Rectangle){ 0, 0, MAP_SIZE, MAP_SIZE },
-				(Rectangle){ 0, 36, MAP_SIZE * 4, MAP_SIZE * 4 },
-				(Vector2){ 0.0, 0.0 },
-				0.0,
-				WHITE
-			);
+            DrawTexturePro(
+                lightmap.texture,
+                (Rectangle){ 0, 0, -MAP_SIZE, -MAP_SIZE },
+                (Rectangle){ GetRenderWidth() - MAP_SIZE*8 - 10, 10, MAP_SIZE*8, MAP_SIZE*8 },
+                (Vector2){ 0.0, 0.0 },
+                0.0,
+                WHITE);
+                
+            DrawText("lightmap", GetRenderWidth() - 66, 16 + MAP_SIZE*8, 10, GRAY);
+            DrawText("10x10 pixels", GetRenderWidth() - 76, 30 + MAP_SIZE*8, 10, GRAY);
+                
         EndDrawing();
         //----------------------------------------------------------------------------------
     }
 
     // De-Initialization
     //--------------------------------------------------------------------------------------
-    UnloadMesh(mesh);     	// Unload the mesh
+    UnloadMesh(mesh);       // Unload the mesh
     UnloadShader(shader);   // Unload shader
 
     CloseWindow();          // Close window and OpenGL context
