@@ -402,6 +402,7 @@ typedef struct ModelAnimation {
     int frameCount;         // Number of animation frames
     BoneInfo *bones;        // Bones information (skeleton)
     Transform **framePoses; // Poses array by frame
+    char name[32];          // Animation name
 } ModelAnimation;
 
 // Ray, ray for raycasting
