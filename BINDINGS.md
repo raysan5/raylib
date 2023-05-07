@@ -11,7 +11,7 @@ Some people ported raylib to other languages in form of bindings or wrappers to 
 | Raylib-cs          | **4.5** | [C#](https://en.wikipedia.org/wiki/C_Sharp_(programming_language)) | Zlib | https://github.com/ChrisDill/Raylib-cs     |
 | Raylib-CsLo        | 4.2     | [C#](https://en.wikipedia.org/wiki/C_Sharp_(programming_language)) | MPL-2.0 | https://github.com/NotNotTech/Raylib-CsLo  |
 | cl-raylib          | 4.0     | [Common Lisp](https://common-lisp.net/)   | MIT | https://github.com/longlene/cl-raylib     |
-| claylib/wrap       | 4.2     | [Common Lisp](https://common-lisp.net/)   | Zlib | https://github.com/defun-games/claylib |
+| claylib/wrap       | **4.5**     | [Common Lisp](https://common-lisp.net/)   | Zlib | https://github.com/defun-games/claylib |
 | chez-raylib        | **auto** | [Chez Scheme](https://cisco.github.io/ChezScheme/) | GPLv3 | https://github.com/Yunoinsky/chez-raylib |
 | raylib-cr          | **4.5-dev (7e7939e)** | [Crystal](https://crystal-lang.org/)    | Apache-2.0 | https://github.com/sol-vin/raylib-cr |
 | ray-cyber          | 4.5     | [Cyber](https://cyberscript.dev)  | MIT | https://github.com/fubark/ray-cyber |
@@ -80,7 +80,7 @@ These are utility wrappers for specific languages, they are not required to use 
 |  name              | raylib version | language  | license | repo                                                         |
 |:------------------:|:-------------: | :--------:|:-------:|:-------------------------------------------------------------|
 | raylib-cpp         | **4.5** | [C++](https://en.wikipedia.org/wiki/C%2B%2B)  | Zlib | https://github.com/robloach/raylib-cpp  |
-| claylib            | **4.2** | [Common Lisp](https://common-lisp.net/) | Zlib | https://github.com/defun-games/claylib |
+| claylib            | **4.5** | [Common Lisp](https://common-lisp.net/) | Zlib | https://github.com/defun-games/claylib |
 
 ### Older or Unmaintained Language Bindings
 These are older raylib bindings that are more than 2 versions old or have not been maintained.
