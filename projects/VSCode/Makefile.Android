@@ -50,7 +50,7 @@ PROJECT_BUILD_PATH     ?= android.$(PROJECT_NAME)
 PROJECT_RESOURCES_PATH ?= resources
 PROJECT_SOURCE_FILES   ?= raylib_game.c
 
-# Some source files are placed in directories, when compiling to some 
+# Some source files are placed in directories, when compiling to some
 # output directory other than source, that directory must pre-exist.
 # Here we get a list of required folders that need to be created on
 # code output folder $(PROJECT_BUILD_PATH)\obj to avoid GCC errors.
@@ -77,7 +77,7 @@ RAYLIB_LIB_PATH = $(RAYLIB_PATH)\src
 # Shared libs must be added to APK if required
 # NOTE: Generated NativeLoader.java automatically load those libraries
 ifeq ($(RAYLIB_LIBTYPE),SHARED)
-    PROJECT_SHARED_LIBS = lib/$(ANDROID_ARCH_NAME)/libraylib.so 
+    PROJECT_SHARED_LIBS = lib/$(ANDROID_ARCH_NAME)/libraylib.so
 endif
 
 # Compiler and archiver
@@ -109,8 +109,8 @@ CFLAGS += -DANDROID -DPLATFORM_ANDROID -D__ANDROID_API__=$(ANDROID_API_VERSION)
 INCLUDE_PATHS = -I. -I$(RAYLIB_PATH)/src -I$(RAYLIB_PATH)/src/external/android/native_app_glue
 
 # Linker options
-LDFLAGS = -Wl,-soname,lib$(PROJECT_LIBRARY_NAME).so -Wl,--exclude-libs,libatomic.a 
-LDFLAGS += -Wl,--build-id -Wl,--no-undefined -Wl,-z,noexecstack -Wl,-z,relro -Wl,-z,now -Wl,--warn-shared-textrel -Wl,--fatal-warnings 
+LDFLAGS = -Wl,-soname,lib$(PROJECT_LIBRARY_NAME).so -Wl,--exclude-libs,libatomic.a
+LDFLAGS += -Wl,--build-id -Wl,--no-undefined -Wl,-z,noexecstack -Wl,-z,relro -Wl,-z,now -Wl,--warn-shared-textrel -Wl,--fatal-warnings
 # Force linking of library module to define symbol
 LDFLAGS += -u ANativeActivity_onCreate
 # Library paths containing required libs
@@ -141,7 +141,7 @@ all: create_temp_project_dirs \
 
 # Create required temp directories for APK building
 create_temp_project_dirs:
-	if not exist $(PROJECT_BUILD_PATH) mkdir $(PROJECT_BUILD_PATH) 
+	if not exist $(PROJECT_BUILD_PATH) mkdir $(PROJECT_BUILD_PATH)
 	if not exist $(PROJECT_BUILD_PATH)\obj mkdir $(PROJECT_BUILD_PATH)\obj
 	if not exist $(PROJECT_BUILD_PATH)\src mkdir $(PROJECT_BUILD_PATH)\src
 	if not exist $(PROJECT_BUILD_PATH)\src\com mkdir $(PROJECT_BUILD_PATH)\src\com
@@ -163,15 +163,15 @@ create_temp_project_dirs:
 define create_dir
     if not exist $(PROJECT_BUILD_PATH)\obj\$(1) mkdir $(PROJECT_BUILD_PATH)\obj\$(1)
 endef
-    
+
 # Copy required shared libs for integration into APK
 # NOTE: If using shared libs they are loaded by generated NativeLoader.java
 copy_project_required_libs:
 ifeq ($(RAYLIB_LIBTYPE),SHARED)
-	copy /Y $(RAYLIB_LIB_PATH)\libraylib.so $(PROJECT_BUILD_PATH)\lib\$(ANDROID_ARCH_NAME)\libraylib.so 
+	copy /Y $(RAYLIB_LIB_PATH)\libraylib.so $(PROJECT_BUILD_PATH)\lib\$(ANDROID_ARCH_NAME)\libraylib.so
 endif
 ifeq ($(RAYLIB_LIBTYPE),STATIC)
-	copy /Y $(RAYLIB_LIB_PATH)\libraylib.a $(PROJECT_BUILD_PATH)\lib\$(ANDROID_ARCH_NAME)\libraylib.a 
+	copy /Y $(RAYLIB_LIB_PATH)\libraylib.a $(PROJECT_BUILD_PATH)\lib\$(ANDROID_ARCH_NAME)\libraylib.a
 endif
 
 # Copy project required resources: strings.xml, icon.png, assets
@@ -195,10 +195,10 @@ generate_loader_script:
 ifeq ($(RAYLIB_LIBTYPE),SHARED)
 	@echo         System.loadLibrary("raylib"); >> $(PROJECT_BUILD_PATH)/src/com/$(APP_COMPANY_NAME)/$(APP_PRODUCT_NAME)/NativeLoader.java
 endif
-	@echo         System.loadLibrary("$(PROJECT_LIBRARY_NAME)"); >> $(PROJECT_BUILD_PATH)/src/com/$(APP_COMPANY_NAME)/$(APP_PRODUCT_NAME)/NativeLoader.java 
+	@echo         System.loadLibrary("$(PROJECT_LIBRARY_NAME)"); >> $(PROJECT_BUILD_PATH)/src/com/$(APP_COMPANY_NAME)/$(APP_PRODUCT_NAME)/NativeLoader.java
 	@echo     } >> $(PROJECT_BUILD_PATH)/src/com/$(APP_COMPANY_NAME)/$(APP_PRODUCT_NAME)/NativeLoader.java
 	@echo } >> $(PROJECT_BUILD_PATH)/src/com/$(APP_COMPANY_NAME)/$(APP_PRODUCT_NAME)/NativeLoader.java
-    
+
 # Generate AndroidManifest.xml with all the required options
 # NOTE: Probably not the bet way to generate this file... but it works.
 generate_android_manifest:
@@ -225,7 +225,7 @@ generate_android_manifest:
 
 # Generate storekey for APK signing: $(PROJECT_NAME).keystore
 # NOTE: Configure here your Distinguished Names (-dname) if required!
-generate_apk_keystore: 
+generate_apk_keystore:
 	if not exist $(PROJECT_BUILD_PATH)/$(PROJECT_NAME).keystore $(JAVA_HOME)/bin/keytool -genkeypair -validity 1000 -dname "CN=$(APP_COMPANY_NAME),O=Android,C=ES" -keystore $(PROJECT_BUILD_PATH)/$(PROJECT_NAME).keystore -storepass $(APP_KEYSTORE_PASS) -keypass $(APP_KEYSTORE_PASS) -alias $(PROJECT_NAME)Key -keyalg RSA
 
 # Config project package and resource using AndroidManifest.xml and res/values/strings.xml
@@ -238,16 +238,16 @@ compile_native_app_glue:
 	$(CC) -c $(RAYLIB_PATH)/src/external/android/native_app_glue/android_native_app_glue.c -o $(PROJECT_BUILD_PATH)/obj/native_app_glue.o $(CFLAGS)
 	$(AR) rcs $(PROJECT_BUILD_PATH)/obj/libnative_app_glue.a $(PROJECT_BUILD_PATH)/obj/native_app_glue.o
 
-# Compile project code into a shared library: lib/lib$(PROJECT_LIBRARY_NAME).so 
+# Compile project code into a shared library: lib/lib$(PROJECT_LIBRARY_NAME).so
 compile_project_code: $(OBJS)
 	$(CC) -o $(PROJECT_BUILD_PATH)/lib/$(ANDROID_ARCH_NAME)/lib$(PROJECT_LIBRARY_NAME).so $(OBJS) -shared $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS)
 
 # Compile all .c files required into object (.o) files
 # NOTE: Those files will be linked into a shared library
 $(PROJECT_BUILD_PATH)/obj/%.o:%.c
-	$(CC) -c $^ -o $@ $(INCLUDE_PATHS) $(CFLAGS) --sysroot=$(ANDROID_TOOLCHAIN)/sysroot 
-    
-# Compile project .java code into .class (Java bytecode) 
+	$(CC) -c $^ -o $@ $(INCLUDE_PATHS) $(CFLAGS) --sysroot=$(ANDROID_TOOLCHAIN)/sysroot
+
+# Compile project .java code into .class (Java bytecode)
 compile_project_class:
 	$(JAVA_HOME)/bin/javac -verbose -source 1.7 -target 1.7 -d $(PROJECT_BUILD_PATH)/obj -bootclasspath $(JAVA_HOME)/jre/lib/rt.jar -classpath $(ANDROID_HOME)/platforms/android-$(ANDROID_API_VERSION)/android.jar;$(PROJECT_BUILD_PATH)/obj -sourcepath $(PROJECT_BUILD_PATH)/src $(PROJECT_BUILD_PATH)/src/com/$(APP_COMPANY_NAME)/$(APP_PRODUCT_NAME)/R.java $(PROJECT_BUILD_PATH)/src/com/$(APP_COMPANY_NAME)/$(APP_PRODUCT_NAME)/NativeLoader.java
 
@@ -263,11 +263,11 @@ create_project_apk_package:
 	$(ANDROID_BUILD_TOOLS)/aapt package -f -M $(PROJECT_BUILD_PATH)/AndroidManifest.xml -S $(PROJECT_BUILD_PATH)/res -A $(PROJECT_BUILD_PATH)/assets -I $(ANDROID_HOME)/platforms/android-$(ANDROID_API_VERSION)/android.jar -F $(PROJECT_BUILD_PATH)/bin/$(PROJECT_NAME).unsigned.apk $(PROJECT_BUILD_PATH)/bin
 	cd $(PROJECT_BUILD_PATH) && $(ANDROID_BUILD_TOOLS)/aapt add bin/$(PROJECT_NAME).unsigned.apk lib/$(ANDROID_ARCH_NAME)/lib$(PROJECT_LIBRARY_NAME).so $(PROJECT_SHARED_LIBS)
 
-# Create signed APK package using generated Key: bin/$(PROJECT_NAME).signed.apk 
+# Create signed APK package using generated Key: bin/$(PROJECT_NAME).signed.apk
 sign_project_apk_package:
 	$(JAVA_HOME)/bin/jarsigner -keystore $(PROJECT_BUILD_PATH)/$(PROJECT_NAME).keystore -storepass $(APP_KEYSTORE_PASS) -keypass $(APP_KEYSTORE_PASS) -signedjar $(PROJECT_BUILD_PATH)/bin/$(PROJECT_NAME).signed.apk $(PROJECT_BUILD_PATH)/bin/$(PROJECT_NAME).unsigned.apk $(PROJECT_NAME)Key
 
-# Create zip-aligned APK package: $(PROJECT_NAME).apk 
+# Create zip-aligned APK package: $(PROJECT_NAME).apk
 zipalign_project_apk_package:
 	$(ANDROID_BUILD_TOOLS)/zipalign -f 4 $(PROJECT_BUILD_PATH)/bin/$(PROJECT_NAME).signed.apk $(PROJECT_NAME).apk
 
@@ -275,7 +275,7 @@ zipalign_project_apk_package:
 # NOTE: Use -e (emulator) or -d (device) parameters if required
 install:
 	$(ANDROID_PLATFORM_TOOLS)/adb install --abi $(ANDROID_ARCH_NAME) -rds $(PROJECT_NAME).apk
-    
+
 # Check supported ABI for the device (armeabi-v7a, arm64-v8a, x86, x86_64)
 check_device_abi:
 	$(ANDROID_PLATFORM_TOOLS)/adb shell getprop ro.product.cpu.abi
@@ -284,7 +284,7 @@ check_device_abi:
 logcat:
 	$(ANDROID_PLATFORM_TOOLS)/adb logcat -c
 	$(ANDROID_PLATFORM_TOOLS)/adb logcat raylib:V *:S
-    
+
 # Install and monitorize $(PROJECT_NAME).apk to default emulator/device
 deploy:
 	$(ANDROID_PLATFORM_TOOLS)/adb install -r $(PROJECT_NAME).apk
