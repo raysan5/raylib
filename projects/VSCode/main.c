@@ -54,8 +54,6 @@ int main()
     camera.fovy = 60.0f;
     camera.projection = CAMERA_PERSPECTIVE;
 
-    SetCameraMode(camera, CAMERA_ORBITAL);
-
     //--------------------------------------------------------------------------------------
 
 #if defined(PLATFORM_WEB)
@@ -84,7 +82,7 @@ static void UpdateDrawFrame(void)
 {
     // Update
     //----------------------------------------------------------------------------------
-    UpdateCamera(&camera);
+    UpdateCamera(&camera, CAMERA_ORBITAL);
     //----------------------------------------------------------------------------------
 
     // Draw
