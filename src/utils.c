@@ -298,7 +298,7 @@ bool ExportDataAsCode(const unsigned char *data, unsigned int size, const char *
     char varFileName[256] = { 0 };
     strcpy(varFileName, GetFileNameWithoutExt(fileName));
     for (int i = 0; varFileName[i] != '\0'; i++) if ((varFileName[i] >= 'a') && (varFileName[i] <= 'z')) { varFileName[i] = varFileName[i] - 32; }
-    
+
     byteCount += sprintf(txtData + byteCount, "#define %s_DATA_SIZE     %i\n\n", varFileName, size);
 
     byteCount += sprintf(txtData + byteCount, "static unsigned char %s_DATA[%s_DATA_SIZE] = { ", varFileName, varFileName);

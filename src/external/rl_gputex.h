@@ -9,7 +9,7 @@
 *
 *     Note that some file formats (DDS, PVR, KTX) also support uncompressed data storage.
 *     In those cases data is loaded uncompressed and format is returned.
-* 
+*
 *   TODO:
 *     - Implement raylib function: rlGetGlTextureFormats(), required by rl_save_ktx_to_memory()
 *     - Review rl_load_ktx_from_memory() to support KTX v2.2 specs
