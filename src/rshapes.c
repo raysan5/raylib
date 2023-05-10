@@ -1756,28 +1756,27 @@ bool CheckCollisionPointLine(Vector2 point, Vector2 p1, Vector2 p2, int threshol
 }
 
 // Get collision rectangle for two rectangles collision
-Rectangle GetCollisionRec(Rectangle rec1, Rectangle rec2){
-    Rectangle overlap;
-    float left = ((rec1.x) > (rec2.x) ? (rec1.x) : (rec2.x));
+Rectangle GetCollisionRec(Rectangle rec1, Rectangle rec2)
+{
+    Rectangle overlap = { 0 };
+
+    float left = (rec1.x > rec2.x)? rec1.x : rec2.x;
     float right1 = rec1.x + rec1.width;
     float right2 = rec2.x + rec2.width;
-    float right = ((right1) < (right2) ? (right1) : (right2));
-    float top = ((rec1.y) > (rec2.y) ? (rec1.y) : (rec2.y));
+    float right = (right1 < right2)? right1 : right2;
+    float top = (rec1.y > rec2.y)? rec1.y : rec2.y;
     float bottom1 = rec1.y + rec1.height;
     float bottom2 = rec2.y + rec2.height;
-    float bottom = ((bottom1) < (bottom2) ? (bottom1) : (bottom2));
-    if (left < right && top < bottom){
-        overlap.x = (left);
-        overlap.y = (top);
-        overlap.width = (right - left );
-        overlap.height = (bottom - top);
+    float bottom = (bottom1 < bottom2)? bottom1 : bottom2;
+
+    if ((left < right) && (top < bottom))
+    {
+        overlap.x = left;
+        overlap.y = top;
+        overlap.width = right - left;
+        overlap.height = bottom - top;
     }
-    else{
-        overlap.x = 0;
-        overlap.y = 0;
-        overlap.width = 0;
-        overlap.height = 0;
-    }
+
     return overlap;
 }
 
