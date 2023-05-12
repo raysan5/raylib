@@ -1694,6 +1694,22 @@ int GetScreenHeight(void)
     return CORE.Window.screen.height;
 }
 
+// Get current client width
+int GetClientWidth(void)
+{
+    int width;
+    glfwGetWindowSize(CORE.Window.handle, &width, NULL);
+    return width;
+}
+
+// Get current client height
+int GetClientHeight(void)
+{
+    int height;
+    glfwGetWindowSize(CORE.Window.handle, NULL, &height);
+    return height;
+}
+
 // Get current render width which is equal to screen width * dpi scale
 int GetRenderWidth(void)
 {
