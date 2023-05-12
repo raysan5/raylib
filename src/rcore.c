@@ -441,6 +441,7 @@ typedef struct CoreData {
 
             int charPressedQueue[MAX_CHAR_PRESSED_QUEUE];   // Input characters queue (unicode)
             int charPressedQueueCount;      // Input characters queue count
+            bool useRepeats;                // If true, key repeats are treated as key presses
 
 #if defined(PLATFORM_RPI) || defined(PLATFORM_DRM)
             int defaultMode;                // Default keyboard mode
@@ -767,6 +768,7 @@ void InitWindow(int width, int height, const char *title)
     // Initialize global input state
     memset(&CORE.Input, 0, sizeof(CORE.Input));
     CORE.Input.Keyboard.exitKey = KEY_ESCAPE;
+    CORE.Input.Keyboard.useRepeats = false;
     CORE.Input.Mouse.scale = (Vector2){ 1.0f, 1.0f };
     CORE.Input.Mouse.cursor = MOUSE_CURSOR_ARROW;
     CORE.Input.Gamepad.lastButtonPressed = 0;       // GAMEPAD_BUTTON_UNKNOWN
@@ -3680,6 +3682,13 @@ void SetExitKey(int key)
 #endif
 }
 
+// Treat key repeats as key presses
+// NOTE: default is false
+void SetUseRepeats(bool useRepeats)
+{
+  CORE.Input.Keyboard.useRepeats = useRepeats;
+}
+
 // NOTE: Gamepad support not implemented in emscripten GLFW3 (PLATFORM_WEB)
 
 // Check if a gamepad is available
@@ -5427,7 +5436,8 @@ static void KeyCallback(GLFWwindow *window, int key, int scancode, int action, i
 #endif
 
     // Check if there is space available in the key queue
-    if ((CORE.Input.Keyboard.keyPressedQueueCount < MAX_KEY_PRESSED_QUEUE) && (action == GLFW_PRESS))
+    bool is_press = action == GLFW_PRESS || (CORE.Input.Keyboard.useRepeats && action == GLFW_REPEAT);
+    if ((CORE.Input.Keyboard.keyPressedQueueCount < MAX_KEY_PRESSED_QUEUE) && is_press)
     {
         // Add character to the queue
         CORE.Input.Keyboard.keyPressedQueue[CORE.Input.Keyboard.keyPressedQueueCount] = key;
