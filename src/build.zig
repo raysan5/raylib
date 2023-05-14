@@ -8,7 +8,11 @@ pub fn addRaylib(b: *std.build.Builder, target: std.zig.CrossTarget) *std.build.
         "-fno-sanitize=undefined", // https://github.com/raysan5/raylib/issues/1891
     };
 
-    const raylib = b.addStaticLibrary("raylib", null);
+    const raylib = b.addStaticLibrary(std.Build.StaticLibraryOptions{
+        .name = "raylib",
+        .target = target,
+        .optimize = b.standardOptimizeOption(.{ .preferred_optimize_mode = .ReleaseSafe }),
+    });
     raylib.linkLibC();
 
     raylib.addIncludePath(srcdir ++ "/external/glfw/include");
