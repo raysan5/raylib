@@ -1,5 +1,7 @@
 const std = @import("std");
 
+
+// This build script has been tested to work with zig master branch as of commit 87de821 or 14 May 2023
 pub fn addRaylib(b: *std.Build, target: std.zig.CrossTarget, optimize: std.builtin.OptimizeMode) *std.Build.CompileStep {
     const raylib_flags = &[_][]const u8{
         "-std=gnu99",
