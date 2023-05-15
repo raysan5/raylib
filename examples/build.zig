@@ -1,6 +1,7 @@
 const std = @import("std");
 const builtin = @import("builtin");
 
+// This has been tested to work with zig master branch as of commit 87de821 or May 14 2023
 fn add_module(comptime module: []const u8, b: *std.Build, target: std.zig.CrossTarget, optimize: std.builtin.OptimizeMode) !*std.Build.Step {
     if (target.getOsTag() == .emscripten) {
         @panic("Emscripten building via Zig unsupported");
