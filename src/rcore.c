@@ -718,6 +718,23 @@ void android_main(struct android_app *app)
 
     // NOTE: Return codes != 0 are skipped
     (void)main(1, (char *[]) { arg0, NULL });
+
+    // Finish native activity
+    ANativeActivity_finish(CORE.Android.app->activity);
+
+    // Android ALooper_pollAll() variables
+    int pollResult = 0;
+    int pollEvents = 0;
+
+    // Wait for app events to close
+    while (!CORE.Android.app->destroyRequested) {
+        while ((pollResult = ALooper_pollAll(0, NULL, &pollEvents, (void**)&CORE.Android.source)) >= 0) {
+            if (CORE.Android.source != NULL) CORE.Android.source->process(CORE.Android.app, CORE.Android.source);
+        }
+    }
+
+    // WARNING: Check for deallocation and ensure no other processes are running from the application.
+    exit(0); // Closes the application completely without going through Java
 }
 
 // NOTE: Add this to header (if apps really need it)
@@ -5728,8 +5745,9 @@ static void AndroidCommandCallback(struct android_app *app, int32_t cmd)
         case APP_CMD_STOP: break;
         case APP_CMD_DESTROY:
         {
-            // TODO: Finish activity?
-            //ANativeActivity_finish(CORE.Android.app->activity);
+            // NOTE 1: Call ANativeActivity_finish again to free resources unconditionally.
+            // NOTE 2: You can deallocate other things that are NativeActivity related here.
+            ANativeActivity_finish(CORE.Android.app->activity);
         } break;
         case APP_CMD_CONFIG_CHANGED:
         {
