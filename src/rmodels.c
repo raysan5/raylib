@@ -5434,7 +5434,7 @@ static ModelAnimation *LoadModelAnimationsGLTF(const char *fileName, unsigned in
 
         cgltf_free(data);
     }
-
+    UnloadFileData(fileData);
     return animations;
 }
 #endif
