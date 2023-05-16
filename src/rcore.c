@@ -727,14 +727,16 @@ void android_main(struct android_app *app)
     int pollEvents = 0;
 
     // Wait for app events to close
-    while (!CORE.Android.app->destroyRequested) {
-        while ((pollResult = ALooper_pollAll(0, NULL, &pollEvents, (void**)&CORE.Android.source)) >= 0) {
+    while (!CORE.Android.app->destroyRequested)
+    {
+        while ((pollResult = ALooper_pollAll(0, NULL, &pollEvents, (void **)&CORE.Android.source)) >= 0)
+        {
             if (CORE.Android.source != NULL) CORE.Android.source->process(CORE.Android.app, CORE.Android.source);
         }
     }
 
-    // WARNING: Check for deallocation and ensure no other processes are running from the application.
-    exit(0); // Closes the application completely without going through Java
+    // WARNING: Check for deallocation and ensure no other processes are running from the application
+    exit(0);    // Closes the application completely without going through Java
 }
 
 // NOTE: Add this to header (if apps really need it)
