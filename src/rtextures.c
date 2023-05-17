@@ -2046,7 +2046,7 @@ void ImageFlipHorizontal(Image *image)
         {
             for (int x = 0; x < image->width; x++)
             {
-                // OPTION 1: Move pixels with memcopy()
+                // OPTION 1: Move pixels with memcpy()
                 //memcpy(flippedData + (y*image->width + x)*bytesPerPixel, ((unsigned char *)image->data) + (y*image->width + (image->width - 1 - x))*bytesPerPixel, bytesPerPixel);
 
                 // OPTION 2: Just copy data pixel by pixel
