@@ -15,7 +15,7 @@ return {
     {
       name = "RAYLIB_VERSION_MINOR",
       type = "INT",
-      value = 5,
+      value = 6,
       description = ""
     },
     {
@@ -27,7 +27,7 @@ return {
     {
       name = "RAYLIB_VERSION",
       type = "STRING",
-      value = "4.5",
+      value = "4.6-dev",
       description = ""
     },
     {
@@ -1032,6 +1032,11 @@ return {
           type = "Transform **",
           name = "framePoses",
           description = "Poses array by frame"
+        },
+        {
+          type = "char[32]",
+          name = "name",
+          description = "Animation name"
         }
       }
     },
@@ -4991,25 +4996,15 @@ return {
       }
     },
     {
-      name = "GenImageGradientV",
-      description = "Generate image: vertical gradient",
+      name = "GenImageLinearGradient",
+      description = "Generate image: linear gradient",
       returnType = "Image",
       params = {
         {type = "int", name = "width"},
         {type = "int", name = "height"},
-        {type = "Color", name = "top"},
-        {type = "Color", name = "bottom"}
-      }
-    },
-    {
-      name = "GenImageGradientH",
-      description = "Generate image: horizontal gradient",
-      returnType = "Image",
-      params = {
-        {type = "int", name = "width"},
-        {type = "int", name = "height"},
-        {type = "Color", name = "left"},
-        {type = "Color", name = "right"}
+        {type = "int", name = "direction"},
+        {type = "Color", name = "start"},
+        {type = "Color", name = "end"}
       }
     },
     {

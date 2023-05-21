@@ -1378,20 +1378,13 @@
                 <Param name="Color color" />
             </Overload>
         </KeyWord>
-        <KeyWord name="GenImageGradientV" func="yes">
-            <Overload retVal="Image" descr="Generate image: vertical gradient">
+        <KeyWord name="GenImageLinearGradient" func="yes">
+            <Overload retVal="Image" descr="Generate image: linear gradient">
                 <Param name="int width" />
                 <Param name="int height" />
-                <Param name="Color top" />
-                <Param name="Color bottom" />
-            </Overload>
-        </KeyWord>
-        <KeyWord name="GenImageGradientH" func="yes">
-            <Overload retVal="Image" descr="Generate image: horizontal gradient">
-                <Param name="int width" />
-                <Param name="int height" />
-                <Param name="Color left" />
-                <Param name="Color right" />
+                <Param name="int direction" />
+                <Param name="Color start" />
+                <Param name="Color end" />
             </Overload>
         </KeyWord>
         <KeyWord name="GenImageGradientRadial" func="yes">

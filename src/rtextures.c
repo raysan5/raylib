@@ -684,48 +684,32 @@ Image GenImageColor(int width, int height, Color color)
 }
 
 #if defined(SUPPORT_IMAGE_GENERATION)
-// Generate image: vertical gradient
-Image GenImageGradientV(int width, int height, Color top, Color bottom)
+// Generate image: linear gradient
+Image GenImageLinearGradient(int width, int height, int direction, Color start, Color end)
 {
     Color *pixels = (Color *)RL_MALLOC(width*height*sizeof(Color));
 
-    for (int j = 0; j < height; j++)
+    float radianDirection = (float)(90 - direction) / 180.f * 3.14159f;
+    float cosDir = cos(radianDirection);
+    float sinDir = sin(radianDirection);
+
+    int i, j;
+    for (i = 0; i < width; i++)
     {
-        float factor = (float)j/(float)height;
-        for (int i = 0; i < width; i++)
+        for (j = 0; j < height; j++)
         {
-            pixels[j*width + i].r = (int)((float)bottom.r*factor + (float)top.r*(1.f - factor));
-            pixels[j*width + i].g = (int)((float)bottom.g*factor + (float)top.g*(1.f - factor));
-            pixels[j*width + i].b = (int)((float)bottom.b*factor + (float)top.b*(1.f - factor));
-            pixels[j*width + i].a = (int)((float)bottom.a*factor + (float)top.a*(1.f - factor));
-        }
-    }
+            // Calculate the relative position of the pixel along the gradient direction
+            float pos = (i * cosDir + j * sinDir) / (width * cosDir + height * sinDir);
 
-    Image image = {
-        .data = pixels,
-        .width = width,
-        .height = height,
-        .format = PIXELFORMAT_UNCOMPRESSED_R8G8B8A8,
-        .mipmaps = 1
-    };
+            float factor = pos;
+            factor = (factor > 1.f) ? 1.f : factor;  // Clamp to [0,1]
+            factor = (factor < 0.f) ? 0.f : factor;  // Clamp to [0,1]
 
-    return image;
-}
-
-// Generate image: horizontal gradient
-Image GenImageGradientH(int width, int height, Color left, Color right)
-{
-    Color *pixels = (Color *)RL_MALLOC(width*height*sizeof(Color));
-
-    for (int i = 0; i < width; i++)
-    {
-        float factor = (float)i/(float)width;
-        for (int j = 0; j < height; j++)
-        {
-            pixels[j*width + i].r = (int)((float)right.r*factor + (float)left.r*(1.f - factor));
-            pixels[j*width + i].g = (int)((float)right.g*factor + (float)left.g*(1.f - factor));
-            pixels[j*width + i].b = (int)((float)right.b*factor + (float)left.b*(1.f - factor));
-            pixels[j*width + i].a = (int)((float)right.a*factor + (float)left.a*(1.f - factor));
+            // Generate the color for this pixel
+            pixels[j * width + i].r = (int)((float)end.r*factor + (float)start.r*(1.f - factor));
+            pixels[j * width + i].g = (int)((float)end.g*factor + (float)start.g*(1.f - factor));
+            pixels[j * width + i].b = (int)((float)end.b*factor + (float)start.b*(1.f - factor));
+            pixels[j * width + i].a = (int)((float)end.a*factor + (float)start.a*(1.f - factor));
         }
     }
 
