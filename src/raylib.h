@@ -79,7 +79,7 @@
 #ifndef RAYLIB_H
 #define RAYLIB_H
 
-#include <stdarg.h>     // Required for: va_list - Only used by TraceLogCallback
+#include <stdarg.h>     // Required for: va_list and for using ellipsis notation (...) for functions with varying arguments
 
 #define RAYLIB_VERSION_MAJOR 4
 #define RAYLIB_VERSION_MINOR 6
@@ -790,6 +790,23 @@ typedef enum {
     SHADER_ATTRIB_VEC4              // Shader attribute type: vec4 (4 float)
 } ShaderAttributeDataType;
 
+// Noise types
+typedef enum {
+    NOISE_VALUE = 0,        // Value noise
+    NOISE_WHITE,            // White noise
+    NOISE_PERLIN,           // Perlin noise
+    NOISE_LAYERED_PERLIN    // Layered perlin noise
+} NoiseType;
+
+// Gradient types
+typedef enum {
+    GRADIENT_COLOR = 0,     // Color gradient
+    GRADIENT_LINEAR,        // Horizontal gradient
+    GRADIENT_RADIAL,         // Vertical gradient
+    GRADIENT_SQUARE,        // Square gradient
+    GRADIENT_CONICAL        // Conical gradient
+} GradientType;
+
 // Pixel formats
 // NOTE: Support depends on OpenGL version and platform
 typedef enum {
@@ -1243,8 +1260,7 @@ RLAPI Image GenImageGradientV(int width, int height, Color top, Color bottom);  
 RLAPI Image GenImageGradientH(int width, int height, Color left, Color right);                           // Generate image: horizontal gradient
 RLAPI Image GenImageGradientRadial(int width, int height, float density, Color inner, Color outer);      // Generate image: radial gradient
 RLAPI Image GenImageChecked(int width, int height, int checksX, int checksY, Color col1, Color col2);    // Generate image: checked
-RLAPI Image GenImageWhiteNoise(int width, int height, float factor);                                     // Generate image: white noise
-RLAPI Image GenImagePerlinNoise(int width, int height, int offsetX, int offsetY, float scale);           // Generate image: perlin noise
+RLAPI Image GenImageNoise(NoiseType type, int width, int height, ...);                                   // Generate image: noise
 RLAPI Image GenImageCellular(int width, int height, int tileSize);                                       // Generate image: cellular algorithm, bigger tileSize means bigger cells
 RLAPI Image GenImageText(int width, int height, const char *text);                                       // Generate image: grayscale image from text data
 

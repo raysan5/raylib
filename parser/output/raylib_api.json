@@ -15,7 +15,7 @@
     {
       "name": "RAYLIB_VERSION_MINOR",
       "type": "INT",
-      "value": 5,
+      "value": 6,
       "description": ""
     },
     {
@@ -27,7 +27,7 @@
     {
       "name": "RAYLIB_VERSION",
       "type": "STRING",
-      "value": "4.5",
+      "value": "4.6-dev",
       "description": ""
     },
     {
@@ -1032,6 +1032,11 @@
           "type": "Transform **",
           "name": "framePoses",
           "description": "Poses array by frame"
+        },
+        {
+          "type": "char[32]",
+          "name": "name",
+          "description": "Animation name"
         }
       ]
     },
@@ -2542,6 +2547,63 @@
           "name": "SHADER_ATTRIB_VEC4",
           "value": 3,
           "description": "Shader attribute type: vec4 (4 float)"
+        }
+      ]
+    },
+    {
+      "name": "NoiseType",
+      "description": "Noise types",
+      "values": [
+        {
+          "name": "NOISE_VALUE",
+          "value": 0,
+          "description": "Value noise"
+        },
+        {
+          "name": "NOISE_WHITE",
+          "value": 1,
+          "description": "White noise"
+        },
+        {
+          "name": "NOISE_PERLIN",
+          "value": 2,
+          "description": "Perlin noise"
+        },
+        {
+          "name": "NOISE_LAYERED_PERLIN",
+          "value": 3,
+          "description": "Layered perlin noise"
+        }
+      ]
+    },
+    {
+      "name": "GradientType",
+      "description": "Gradient types",
+      "values": [
+        {
+          "name": "GRADIENT_COLOR",
+          "value": 0,
+          "description": "Color gradient"
+        },
+        {
+          "name": "GRADIENT_LINEAR",
+          "value": 1,
+          "description": "Horizontal gradient"
+        },
+        {
+          "name": "GRADIENT_RADIAL",
+          "value": 2,
+          "description": "Vertical gradient"
+        },
+        {
+          "name": "GRADIENT_SQUARE",
+          "value": 3,
+          "description": "Square gradient"
+        },
+        {
+          "name": "GRADIENT_CONICAL",
+          "value": 4,
+          "description": "Conical gradient"
         }
       ]
     },
@@ -6340,10 +6402,14 @@
       ]
     },
     {
-      "name": "GenImageWhiteNoise",
-      "description": "Generate image: white noise",
+      "name": "GenImageNoise",
+      "description": "Generate image: noise",
       "returnType": "Image",
       "params": [
+        {
+          "type": "NoiseType",
+          "name": "type"
+        },
         {
           "type": "int",
           "name": "width"
@@ -6353,35 +6419,8 @@
           "name": "height"
         },
         {
-          "type": "float",
-          "name": "factor"
-        }
-      ]
-    },
-    {
-      "name": "GenImagePerlinNoise",
-      "description": "Generate image: perlin noise",
-      "returnType": "Image",
-      "params": [
-        {
-          "type": "int",
-          "name": "width"
-        },
-        {
-          "type": "int",
-          "name": "height"
-        },
-        {
-          "type": "int",
-          "name": "offsetX"
-        },
-        {
-          "type": "int",
-          "name": "offsetY"
-        },
-        {
-          "type": "float",
-          "name": "scale"
+          "type": "...",
+          "name": "args"
         }
       ]
     },

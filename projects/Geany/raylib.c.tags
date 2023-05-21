@@ -215,8 +215,7 @@ GenImageGradientV|Image|(int width, int height, Color top, Color bottom);|
 GenImageGradientH|Image|(int width, int height, Color left, Color right);|
 GenImageGradientRadial|Image|(int width, int height, float density, Color inner, Color outer);|
 GenImageChecked|Image|(int width, int height, int checksX, int checksY, Color col1, Color col2);|
-GenImageWhiteNoise|Image|(int width, int height, float factor);|
-GenImagePerlinNoise|Image|(int width, int height, int offsetX, int offsetY, float scale);|
+GenImageNoise|Image|(int width, int height, ... args);|
 GenImageCellular|Image|(int width, int height, int tileSize);|
 GenTextureMipmaps|void|(Texture2D *texture);|
 SetTextureFilter|void|(Texture2D texture, int filterMode);|

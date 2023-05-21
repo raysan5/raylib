@@ -1413,6 +1413,20 @@
                 <Param name="Color col2" />
             </Overload>
         </KeyWord>
+        <KeyWord name="GenImageNoise" func="yes">
+            <Overload retVal="Image" descr="Generate image: noise">
+                <Param name="NoiseType type" />
+                <Param name="int width" />
+                <Param name="int height" />
+                <Param name="float factor" />
+                <Param name="int offsetX" />
+                <Param name="int offsetY" />
+                <Param name="float scale" />
+                <Param name="float lacunarity" />
+                <Param name="float gain" />
+                <Param name="int octaves" />
+            </Overload>
+        </KeyWord>
         <KeyWord name="GenImageWhiteNoise" func="yes">
             <Overload retVal="Image" descr="Generate image: white noise">
                 <Param name="int width" />
