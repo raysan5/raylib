@@ -1549,7 +1549,7 @@
             <Param type="int" name="height" desc="" />
             <Param type="Color" name="color" desc="" />
         </Function>
-        <Function name="GenImageLinearGradient" retType="Image" paramCount="5" desc="Generate image: linear gradient">
+        <Function name="GenImageGradientLinear" retType="Image" paramCount="5" desc="Generate image: linear gradient">
             <Param type="int" name="width" desc="" />
             <Param type="int" name="height" desc="" />
             <Param type="int" name="direction" desc="" />

@@ -2416,8 +2416,8 @@ Function 245: GenImageColor() (3 input parameters)
   Param[1]: width (type: int)
   Param[2]: height (type: int)
   Param[3]: color (type: Color)
-Function 246: GenImageLinearGradient() (5 input parameters)
-  Name: GenImageLinearGradient
+Function 246: GenImageGradientLinear() (5 input parameters)
+  Name: GenImageGradientLinear
   Return type: Image
   Description: Generate image: linear gradient
   Param[1]: width (type: int)

@@ -4996,7 +4996,7 @@ return {
       }
     },
     {
-      name = "GenImageLinearGradient",
+      name = "GenImageGradientLinear",
       description = "Generate image: linear gradient",
       returnType = "Image",
       params = {

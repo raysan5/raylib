@@ -1378,7 +1378,7 @@
                 <Param name="Color color" />
             </Overload>
         </KeyWord>
-        <KeyWord name="GenImageLinearGradient" func="yes">
+        <KeyWord name="GenImageGradientLinear" func="yes">
             <Overload retVal="Image" descr="Generate image: linear gradient">
                 <Param name="int width" />
                 <Param name="int height" />

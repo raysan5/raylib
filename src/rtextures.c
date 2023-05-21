@@ -685,7 +685,10 @@ Image GenImageColor(int width, int height, Color color)
 
 #if defined(SUPPORT_IMAGE_GENERATION)
 // Generate image: linear gradient
-Image GenImageLinearGradient(int width, int height, int direction, Color start, Color end)
+// The direction value specifies the direction of the gradient (in degrees) 
+// with 0 being vertical (from top to bottom), 90 being horizontal (from left to right).
+// The gradient effectively rotates counter-clockwise by the specified amount.
+Image GenImageGradientLinear(int width, int height, int direction, Color start, Color end)
 {
     Color *pixels = (Color *)RL_MALLOC(width*height*sizeof(Color));
 
