@@ -13,7 +13,7 @@
 
 #include "raylib.h"
 
-#define NUM_TEXTURES  6      // Currently we have 7 generation algorithms
+#define NUM_TEXTURES  7      // Currently we have 7 generation algorithms
 
 //------------------------------------------------------------------------------------
 // Program main entry point
@@ -27,8 +27,9 @@ int main(void)
 
     InitWindow(screenWidth, screenHeight, "raylib [textures] example - procedural images generation");
 
-    Image verticalGradient = GenImageGradientV(screenWidth, screenHeight, RED, BLUE);
-    Image horizontalGradient = GenImageGradientH(screenWidth, screenHeight, RED, BLUE);
+    Image verticalGradient = GenImageGradientLinear(screenWidth, screenHeight, 0, RED, BLUE);
+    Image horizontalGradient = GenImageGradientLinear(screenWidth, screenHeight, 90, RED, BLUE);
+    Image diagonalGradient = GenImageGradientLinear(screenWidth, screenHeight, 45, RED, BLUE);
     Image radialGradient = GenImageGradientRadial(screenWidth, screenHeight, 0.0f, WHITE, BLACK);
     Image checked = GenImageChecked(screenWidth, screenHeight, 32, 32, RED, BLUE);
     Image whiteNoise = GenImageWhiteNoise(screenWidth, screenHeight, 0.5f);
@@ -38,10 +39,11 @@ int main(void)
 
     textures[0] = LoadTextureFromImage(verticalGradient);
     textures[1] = LoadTextureFromImage(horizontalGradient);
-    textures[2] = LoadTextureFromImage(radialGradient);
-    textures[3] = LoadTextureFromImage(checked);
-    textures[4] = LoadTextureFromImage(whiteNoise);
-    textures[5] = LoadTextureFromImage(cellular);
+    textures[2] = LoadTextureFromImage(diagonalGradient);
+    textures[3] = LoadTextureFromImage(radialGradient);
+    textures[4] = LoadTextureFromImage(checked);
+    textures[5] = LoadTextureFromImage(whiteNoise);
+    textures[6] = LoadTextureFromImage(cellular);
 
     // Unload image data (CPU RAM)
     UnloadImage(verticalGradient);
@@ -83,10 +85,11 @@ int main(void)
             {
                 case 0: DrawText("VERTICAL GRADIENT", 560, 10, 20, RAYWHITE); break;
                 case 1: DrawText("HORIZONTAL GRADIENT", 540, 10, 20, RAYWHITE); break;
-                case 2: DrawText("RADIAL GRADIENT", 580, 10, 20, LIGHTGRAY); break;
-                case 3: DrawText("CHECKED", 680, 10, 20, RAYWHITE); break;
-                case 4: DrawText("WHITE NOISE", 640, 10, 20, RED); break;
-                case 5: DrawText("CELLULAR", 670, 10, 20, RAYWHITE); break;
+                case 2: DrawText("DIAGONAL GRADIENT", 540, 10, 20, RAYWHITE); break;
+                case 3: DrawText("RADIAL GRADIENT", 580, 10, 20, LIGHTGRAY); break;
+                case 4: DrawText("CHECKED", 680, 10, 20, RAYWHITE); break;
+                case 5: DrawText("WHITE NOISE", 640, 10, 20, RED); break;
+                case 6: DrawText("CELLULAR", 670, 10, 20, RAYWHITE); break;
                 default: break;
             }
 
