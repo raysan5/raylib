@@ -668,17 +668,24 @@ bool ExportImageAsCode(Image image, const char *fileName)
 // Generate image: plain color
 Image GenImageColor(int width, int height, Color color)
 {
-    Color *pixels = (Color *)RL_CALLOC(width*height, sizeof(Color));
-
-    for (int i = 0; i < width*height; i++) pixels[i] = color;
-
     Image image = {
-        .data = pixels,
+        .data = NULL,
         .width = width,
         .height = height,
         .format = PIXELFORMAT_UNCOMPRESSED_R8G8B8A8,
         .mipmaps = 1
     };
+
+    if (height > INT_MAX / sizeof(Color)) {
+        return image;
+    }
+    Color *pixels = (Color *)RL_CALLOC(width, height*sizeof(Color));
+    if (pixels == NULL) {
+        return image;
+    }
+    image.data = pixels;
+
+    for (int i = 0; i < width*height; i++) pixels[i] = color;
 
     return image;
 }
