@@ -846,10 +846,14 @@ Image GenImagePerlinNoise(int width, int height, int offsetX, int offsetY, float
             //   octaves    =  6     -- number of "octaves" of noise3() to sum
             float p = stb_perlin_fbm_noise3(nx, ny, 1.0f, 2.0f, 0.5f, 6);
             
+            // Clamp between -1.0f and 1.0f
+            if(p < -1.0f) p = -1.0f;
+            if(p > 1.0f) p = 1.0f;
+
             // We need to normalize the data from [-1..1] to [0..1]
             float np = (p + 1.0f)/2.0f;
 
-            int intensity = (int)(np*255.0f);
+            int intensity = (int)(np*255.0);
             pixels[y*width + x] = (Color){ intensity, intensity, intensity, 255 };
         }
     }
