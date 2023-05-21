@@ -5101,7 +5101,6 @@ void PollInputEvents(void)
 
             // Get current gamepad state
             // NOTE: There is no callback available, so we get it manually
-            // Get remapped buttons
             GLFWgamepadstate state = { 0 };
             glfwGetGamepadState(i, &state); // This remapps all gamepads so they have their buttons mapped like an xbox controller
 
@@ -5109,7 +5108,7 @@ void PollInputEvents(void)
 
             for (int k = 0; (buttons != NULL) && (k < GLFW_GAMEPAD_BUTTON_DPAD_LEFT + 1) && (k < MAX_GAMEPAD_BUTTONS); k++)
             {
-                GamepadButton button = -1;
+                int button = -1;        // GamepadButton enum values assigned
 
                 switch (k)
                 {
