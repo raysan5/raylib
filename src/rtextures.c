@@ -765,15 +765,12 @@ Image GenImageGradientRadial(int width, int height, float density, Color inner, 
 }
 
 // Generate image: square gradient
-Image GenImageGradientSquare(int width, int height, int gradientWidth, int gradientHeight, float density, Color inner, Color outer)
+Image GenImageGradientSquare(int width, int height, float density, Color inner, Color outer)
 {
     Color *pixels = (Color *)RL_MALLOC(width*height*sizeof(Color));
 
     float centerX = (float)width/2.0f;
     float centerY = (float)height/2.0f;
-
-    float gradientCenterX = gradientWidth / 2.0f;
-    float gradientCenterY = gradientHeight / 2.0f;
 
     for (int y = 0; y < height; y++)
     {
@@ -784,8 +781,8 @@ Image GenImageGradientSquare(int width, int height, int gradientWidth, int gradi
             float distY = fabsf(y - centerY);
 
             // Normalize the distances by the dimensions of the gradient rectangle
-            float normalizedDistX = distX / gradientCenterX;
-            float normalizedDistY = distY / gradientCenterY;
+            float normalizedDistX = distX / centerX;
+            float normalizedDistY = distY / centerY;
 
             // Calculate the total normalized Manhattan distance
             float manhattanDist = fmax(normalizedDistX, normalizedDistY);

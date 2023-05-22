@@ -1400,8 +1400,6 @@
             <Overload retVal="Image" descr="Generate image: square gradient">
                 <Param name="int width" />
                 <Param name="int height" />
-                <Param name="int gradiantWidth" />
-                <Param name="int gradientHeight" />
                 <Param name="float density" />
                 <Param name="Color inner" />
                 <Param name="Color outer" />

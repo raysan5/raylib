@@ -6308,14 +6308,6 @@
           "name": "height"
         },
         {
-          "type": "int",
-          "name": "gradientWidth"
-        },
-        {
-          "type": "int",
-          "name": "gradientHeight"
-        },
-        {
           "type": "float",
           "name": "density"
         },

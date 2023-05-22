@@ -2434,17 +2434,15 @@ Function 247: GenImageGradientRadial() (5 input parameters)
   Param[3]: density (type: float)
   Param[4]: inner (type: Color)
   Param[5]: outer (type: Color)
-Function 248: GenImageGradientSquare() (7 input parameters)
+Function 248: GenImageGradientSquare() (5 input parameters)
   Name: GenImageGradientSquare
   Return type: Image
   Description: Generate image: square gradient
   Param[1]: width (type: int)
   Param[2]: height (type: int)
-  Param[3]: gradientWidth (type: int)
-  Param[4]: gradientHeight (type: int)
-  Param[5]: density (type: float)
-  Param[6]: inner (type: Color)
-  Param[7]: outer (type: Color)
+  Param[3]: density (type: float)
+  Param[4]: inner (type: Color)
+  Param[5]: outer (type: Color)
 Function 249: GenImageChecked() (6 input parameters)
   Name: GenImageChecked
   Return type: Image

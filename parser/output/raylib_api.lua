@@ -5026,8 +5026,6 @@ return {
       params = {
         {type = "int", name = "width"},
         {type = "int", name = "height"},
-        {type = "int", name = "gradientWidth"},
-        {type = "int", name = "gradientHeight"},
         {type = "float", name = "density"},
         {type = "Color", name = "inner"},
         {type = "Color", name = "outer"}

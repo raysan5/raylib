@@ -13,7 +13,7 @@
 
 #include "raylib.h"
 
-#define NUM_TEXTURES  10      // Currently we have 8 generation algorithms but some are have multiple purposes (Linear and Square Gradients)
+#define NUM_TEXTURES  9      // Currently we have 8 generation algorithms but some are have multiple purposes (Linear and Square Gradients)
 
 //------------------------------------------------------------------------------------
 // Program main entry point
@@ -31,8 +31,7 @@ int main(void)
     Image horizontalGradient = GenImageGradientLinear(screenWidth, screenHeight, 90, RED, BLUE);
     Image diagonalGradient = GenImageGradientLinear(screenWidth, screenHeight, 45, RED, BLUE);
     Image radialGradient = GenImageGradientRadial(screenWidth, screenHeight, 0.0f, WHITE, BLACK);
-    Image squareGradient = GenImageGradientSquare(screenWidth, screenHeight, screenHeight*0.9, screenHeight*0.9, 0.0f, WHITE, BLACK);
-    Image rectangularGradient = GenImageGradientSquare(screenWidth, screenHeight, screenWidth, screenHeight, 0.0f, WHITE, BLACK);
+    Image squareGradient = GenImageGradientSquare(screenWidth, screenHeight, 0.0f, WHITE, BLACK);
     Image checked = GenImageChecked(screenWidth, screenHeight, 32, 32, RED, BLUE);
     Image whiteNoise = GenImageWhiteNoise(screenWidth, screenHeight, 0.5f);
     Image perlinNoise = GenImagePerlinNoise(screenWidth, screenHeight, 50, 50, 4.0f);
@@ -45,11 +44,10 @@ int main(void)
     textures[2] = LoadTextureFromImage(diagonalGradient);
     textures[3] = LoadTextureFromImage(radialGradient);
     textures[4] = LoadTextureFromImage(squareGradient);
-    textures[5] = LoadTextureFromImage(rectangularGradient);
-    textures[6] = LoadTextureFromImage(checked);
-    textures[7] = LoadTextureFromImage(whiteNoise);
-    textures[8] = LoadTextureFromImage(perlinNoise);
-    textures[9] = LoadTextureFromImage(cellular);
+    textures[5] = LoadTextureFromImage(checked);
+    textures[6] = LoadTextureFromImage(whiteNoise);
+    textures[7] = LoadTextureFromImage(perlinNoise);
+    textures[8] = LoadTextureFromImage(cellular);
 
     // Unload image data (CPU RAM)
     UnloadImage(verticalGradient);
@@ -97,11 +95,10 @@ int main(void)
                 case 2: DrawText("DIAGONAL GRADIENT", 540, 10, 20, RAYWHITE); break;
                 case 3: DrawText("RADIAL GRADIENT", 580, 10, 20, LIGHTGRAY); break;
                 case 4: DrawText("SQUARE GRADIENT", 580, 10, 20, LIGHTGRAY); break;
-                case 5: DrawText("RECTANGULAR GRADIENT", 530, 10, 20, LIGHTGRAY); break;
-                case 6: DrawText("CHECKED", 680, 10, 20, RAYWHITE); break;
-                case 7: DrawText("WHITE NOISE", 640, 10, 20, RED); break;
-                case 8: DrawText("PERLIN NOISE", 640, 10, 20, RED); break;
-                case 9: DrawText("CELLULAR", 670, 10, 20, RAYWHITE); break;
+                case 5: DrawText("CHECKED", 680, 10, 20, RAYWHITE); break;
+                case 6: DrawText("WHITE NOISE", 640, 10, 20, RED); break;
+                case 7: DrawText("PERLIN NOISE", 640, 10, 20, RED); break;
+                case 8: DrawText("CELLULAR", 670, 10, 20, RAYWHITE); break;
                 default: break;
             }
 
