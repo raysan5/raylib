@@ -1563,6 +1563,15 @@
             <Param type="Color" name="inner" desc="" />
             <Param type="Color" name="outer" desc="" />
         </Function>
+        <Function name="GenImageGradientSquare" retType="Image" paramCount="7" desc="Generate image: square gradient">
+            <Param type="int" name="width" desc="" />
+            <Param type="int" name="height" desc="" />
+            <Param type="int" name="int gradiantWidth" desc="" />
+            <Param type="int" name="int gradientHeight" desc="" />
+            <Param type="float" name="density" desc="" />
+            <Param type="Color" name="inner" desc="" />
+            <Param type="Color" name="outer" desc="" />
+        </Function>
         <Function name="GenImageChecked" retType="Image" paramCount="6" desc="Generate image: checked">
             <Param type="int" name="width" desc="" />
             <Param type="int" name="height" desc="" />
