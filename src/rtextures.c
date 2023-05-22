@@ -764,6 +764,55 @@ Image GenImageGradientRadial(int width, int height, float density, Color inner, 
     return image;
 }
 
+// Generate image: square gradient
+Image GenImageGradientSquare(int width, int height, float density, Color inner, Color outer)
+{
+    Color *pixels = (Color *)RL_MALLOC(width*height*sizeof(Color));
+
+    float centerX = (float)width/2.0f;
+    float centerY = (float)height/2.0f;
+
+    for (int y = 0; y < height; y++)
+    {
+        for (int x = 0; x < width; x++)
+        {
+            // Calculate the Manhattan distance from the center
+            float distX = fabsf(x - centerX);
+            float distY = fabsf(y - centerY);
+
+            // Normalize the distances by the dimensions of the gradient rectangle
+            float normalizedDistX = distX / centerX;
+            float normalizedDistY = distY / centerY;
+
+            // Calculate the total normalized Manhattan distance
+            float manhattanDist = fmax(normalizedDistX, normalizedDistY);
+
+            // Subtract the density from the manhattanDist, then divide by (1 - density)
+            // This makes the gradient start from the center when density is 0, and from the edge when density is 1
+            float factor = (manhattanDist - density) / (1.0f - density);
+
+            // Clamp the factor between 0 and 1
+            factor = fminf(fmaxf(factor, 0.f), 1.f);
+
+            // Blend the colors based on the calculated factor
+            pixels[y*width + x].r = (int)((float)outer.r*factor + (float)inner.r*(1.0f - factor));
+            pixels[y*width + x].g = (int)((float)outer.g*factor + (float)inner.g*(1.0f - factor));
+            pixels[y*width + x].b = (int)((float)outer.b*factor + (float)inner.b*(1.0f - factor));
+            pixels[y*width + x].a = (int)((float)outer.a*factor + (float)inner.a*(1.0f - factor));
+        }
+    }
+
+    Image image = {
+        .data = pixels,
+        .width = width,
+        .height = height,
+        .format = PIXELFORMAT_UNCOMPRESSED_R8G8B8A8,
+        .mipmaps = 1
+    };
+
+    return image;
+}
+
 // Generate image: checked
 Image GenImageChecked(int width, int height, int checksX, int checksY, Color col1, Color col2)
 {

@@ -656,7 +656,7 @@
             <Param type="unsigned int" name="frames" desc="" />
         </Callback>
     </Callbacks>
-    <Functions count="516">
+    <Functions count="517">
         <Function name="InitWindow" retType="void" paramCount="3" desc="Initialize window and OpenGL context">
             <Param type="int" name="width" desc="" />
             <Param type="int" name="height" desc="" />
@@ -1549,7 +1549,7 @@
             <Param type="int" name="height" desc="" />
             <Param type="Color" name="color" desc="" />
         </Function>
-        <Function name="GenImageGradientLinear" retType="Image" paramCount="5" desc="Generate image: linear gradient">
+        <Function name="GenImageGradientLinear" retType="Image" paramCount="5" desc="Generate image: linear gradient, direction in degrees [0..360], 0=Vertical gradient">
             <Param type="int" name="width" desc="" />
             <Param type="int" name="height" desc="" />
             <Param type="int" name="direction" desc="" />
@@ -1557,6 +1557,13 @@
             <Param type="Color" name="end" desc="" />
         </Function>
         <Function name="GenImageGradientRadial" retType="Image" paramCount="5" desc="Generate image: radial gradient">
+            <Param type="int" name="width" desc="" />
+            <Param type="int" name="height" desc="" />
+            <Param type="float" name="density" desc="" />
+            <Param type="Color" name="inner" desc="" />
+            <Param type="Color" name="outer" desc="" />
+        </Function>
+        <Function name="GenImageGradientSquare" retType="Image" paramCount="5" desc="Generate image: square gradient">
             <Param type="int" name="width" desc="" />
             <Param type="int" name="height" desc="" />
             <Param type="float" name="density" desc="" />

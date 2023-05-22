@@ -1396,6 +1396,15 @@
                 <Param name="Color outer" />
             </Overload>
         </KeyWord>
+        <KeyWord name="GenImageGradientSquare" func="yes">
+            <Overload retVal="Image" descr="Generate image: square gradient">
+                <Param name="int width" />
+                <Param name="int height" />
+                <Param name="float density" />
+                <Param name="Color inner" />
+                <Param name="Color outer" />
+            </Overload>
+        </KeyWord>
         <KeyWord name="GenImageChecked" func="yes">
             <Overload retVal="Image" descr="Generate image: checked">
                 <Param name="int width" />
