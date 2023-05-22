@@ -692,27 +692,26 @@ Image GenImageGradientLinear(int width, int height, int direction, Color start, 
 {
     Color *pixels = (Color *)RL_MALLOC(width*height*sizeof(Color));
 
-    float radianDirection = (float)(90 - direction) / 180.f * 3.14159f;
+    float radianDirection = (float)(90 - direction)/180.f*3.14159f;
     float cosDir = cos(radianDirection);
     float sinDir = sin(radianDirection);
 
-    int i, j;
-    for (i = 0; i < width; i++)
+    for (int i = 0; i < width; i++)
     {
-        for (j = 0; j < height; j++)
+        for (int j = 0; j < height; j++)
         {
             // Calculate the relative position of the pixel along the gradient direction
-            float pos = (i * cosDir + j * sinDir) / (width * cosDir + height * sinDir);
+            float pos = (i*cosDir + j*sinDir)/(width*cosDir + height*sinDir);
 
             float factor = pos;
-            factor = (factor > 1.f) ? 1.f : factor;  // Clamp to [0,1]
-            factor = (factor < 0.f) ? 0.f : factor;  // Clamp to [0,1]
+            factor = (factor > 1.0f)? 1.0f : factor;  // Clamp to [0,1]
+            factor = (factor < 0.0f)? 0.0f : factor;  // Clamp to [0,1]
 
             // Generate the color for this pixel
-            pixels[j * width + i].r = (int)((float)end.r*factor + (float)start.r*(1.f - factor));
-            pixels[j * width + i].g = (int)((float)end.g*factor + (float)start.g*(1.f - factor));
-            pixels[j * width + i].b = (int)((float)end.b*factor + (float)start.b*(1.f - factor));
-            pixels[j * width + i].a = (int)((float)end.a*factor + (float)start.a*(1.f - factor));
+            pixels[j*width + i].r = (int)((float)end.r*factor + (float)start.r*(1.0f - factor));
+            pixels[j*width + i].g = (int)((float)end.g*factor + (float)start.g*(1.0f - factor));
+            pixels[j*width + i].b = (int)((float)end.b*factor + (float)start.b*(1.0f - factor));
+            pixels[j*width + i].a = (int)((float)end.a*factor + (float)start.a*(1.0f - factor));
         }
     }
 
@@ -789,10 +788,10 @@ Image GenImageGradientSquare(int width, int height, float density, Color inner, 
 
             // Subtract the density from the manhattanDist, then divide by (1 - density)
             // This makes the gradient start from the center when density is 0, and from the edge when density is 1
-            float factor = (manhattanDist - density) / (1.0f - density);
+            float factor = (manhattanDist - density)/(1.0f - density);
 
             // Clamp the factor between 0 and 1
-            factor = fminf(fmaxf(factor, 0.f), 1.f);
+            factor = fminf(fmaxf(factor, 0.0f), 1.0f);
 
             // Blend the colors based on the calculated factor
             pixels[y*width + x].r = (int)((float)outer.r*factor + (float)inner.r*(1.0f - factor));
