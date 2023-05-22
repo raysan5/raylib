@@ -207,12 +207,16 @@ unsigned char *LoadFileData(const char *fileName, unsigned int *bytesRead)
             {
                 data = (unsigned char *)RL_MALLOC(size*sizeof(unsigned char));
 
-                // NOTE: fread() returns number of read elements instead of bytes, so we read [1 byte, size elements]
-                unsigned int count = (unsigned int)fread(data, sizeof(unsigned char), size, file);
-                *bytesRead = count;
+                if (data != NULL)
+                {
+                    // NOTE: fread() returns number of read elements instead of bytes, so we read [1 byte, size elements]
+                    unsigned int count = (unsigned int)fread(data, sizeof(unsigned char), size, file);
+                    *bytesRead = count;
 
-                if (count != size) TRACELOG(LOG_WARNING, "FILEIO: [%s] File partially loaded", fileName);
-                else TRACELOG(LOG_INFO, "FILEIO: [%s] File loaded successfully", fileName);
+                    if (count != size) TRACELOG(LOG_WARNING, "FILEIO: [%s] File partially loaded", fileName);
+                    else TRACELOG(LOG_INFO, "FILEIO: [%s] File loaded successfully", fileName);
+                }
+                else TRACELOG(LOG_WARNING, "FILEIO: [%s] Failed to allocated memory for file reading", fileName);
             }
             else TRACELOG(LOG_WARNING, "FILEIO: [%s] Failed to read file", fileName);
 
@@ -344,16 +348,21 @@ char *LoadFileText(const char *fileName)
             if (size > 0)
             {
                 text = (char *)RL_MALLOC((size + 1)*sizeof(char));
-                unsigned int count = (unsigned int)fread(text, sizeof(char), size, file);
+                
+                if (text != NULL)
+                {
+                    unsigned int count = (unsigned int)fread(text, sizeof(char), size, file);
 
-                // WARNING: \r\n is converted to \n on reading, so,
-                // read bytes count gets reduced by the number of lines
-                if (count < size) text = RL_REALLOC(text, count + 1);
+                    // WARNING: \r\n is converted to \n on reading, so,
+                    // read bytes count gets reduced by the number of lines
+                    if (count < size) text = RL_REALLOC(text, count + 1);
 
-                // Zero-terminate the string
-                text[count] = '\0';
+                    // Zero-terminate the string
+                    text[count] = '\0';
 
-                TRACELOG(LOG_INFO, "FILEIO: [%s] Text file loaded successfully", fileName);
+                    TRACELOG(LOG_INFO, "FILEIO: [%s] Text file loaded successfully", fileName);
+                }
+                else TRACELOG(LOG_WARNING, "FILEIO: [%s] Failed to allocated memory for file reading", fileName);
             }
             else TRACELOG(LOG_WARNING, "FILEIO: [%s] Failed to read text file", fileName);
 
