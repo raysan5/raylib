@@ -4997,7 +4997,7 @@ return {
     },
     {
       name = "GenImageGradientLinear",
-      description = "Generate image: linear gradient",
+      description = "Generate image: linear gradient, direction in degrees [0..360], 0=Vertical gradient",
       returnType = "Image",
       params = {
         {type = "int", name = "width"},
@@ -5014,6 +5014,20 @@ return {
       params = {
         {type = "int", name = "width"},
         {type = "int", name = "height"},
+        {type = "float", name = "density"},
+        {type = "Color", name = "inner"},
+        {type = "Color", name = "outer"}
+      }
+    },
+    {
+      name = "GenImageGradientSquare",
+      description = "Generate image: square gradient",
+      returnType = "Image",
+      params = {
+        {type = "int", name = "width"},
+        {type = "int", name = "height"},
+        {type = "int", name = "gradientWidth"},
+        {type = "int", name = "gradientHeight"},
         {type = "float", name = "density"},
         {type = "Color", name = "inner"},
         {type = "Color", name = "outer"}

@@ -765,7 +765,7 @@ Image GenImageGradientRadial(int width, int height, float density, Color inner, 
 }
 
 // Generate image: square gradient
-Image GenImageGradientSquare(int width, int weight, int gradientWidth, int gradientHeight, float density, Color inner, Color outer)
+Image GenImageGradientSquare(int width, int height, int gradientWidth, int gradientHeight, float density, Color inner, Color outer)
 {
     Color *pixels = (Color *)RL_MALLOC(width*height*sizeof(Color));
 
@@ -788,10 +788,14 @@ Image GenImageGradientSquare(int width, int weight, int gradientWidth, int gradi
             float normalizedDistY = distY / gradientCenterY;
 
             // Calculate the total normalized Manhattan distance
-            float manhattanDist = fmax(normalizedDistX, normalizedDistY) * density;
+            float manhattanDist = fmax(normalizedDistX, normalizedDistY);
+
+            // Subtract the density from the manhattanDist, then divide by (1 - density)
+            // This makes the gradient start from the center when density is 0, and from the edge when density is 1
+            float factor = (manhattanDist - density) / (1.0f - density);
 
             // Clamp the factor between 0 and 1
-            float factor = fminf(fmaxf(manhattanDist, 0.f), 1.f);
+            factor = fminf(fmaxf(factor, 0.f), 1.f);
 
             // Blend the colors based on the calculated factor
             pixels[y*width + x].r = (int)((float)outer.r*factor + (float)inner.r*(1.0f - factor));
@@ -811,7 +815,6 @@ Image GenImageGradientSquare(int width, int weight, int gradientWidth, int gradi
 
     return image;
 }
-
 
 // Generate image: checked
 Image GenImageChecked(int width, int height, int checksX, int checksY, Color col1, Color col2)
