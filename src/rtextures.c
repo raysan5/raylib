@@ -2128,22 +2128,22 @@ void ImageRotate(Image *image, int degrees)
     if (image->format >= PIXELFORMAT_COMPRESSED_DXT1_RGB) TRACELOG(LOG_WARNING, "Image manipulation not supported for compressed formats");
     else
     {
-        double rad = degrees * PI / 180.0;
-        double sin_rad = sin(rad);
-        double cos_rad = cos(rad);
+        float rad = degrees * PI / 180.0f;
+        float sinRadius = sin(rad);
+        float cosRadius = cos(rad);
 
-        int new_width = abs(image->width * cos_rad) + abs(image->height * sin_rad);
-        int new_height = abs(image->height * cos_rad) + abs(image->width * sin_rad);
+        int width = abs(image->width * cosRadius) + abs(image->height * sinRadius);
+        int height = abs(image->height * cosRadius) + abs(image->width * sinRadius);
 
         int bytesPerPixel = GetPixelDataSize(1, 1, image->format);
-        unsigned char *rotatedData = (unsigned char *)RL_CALLOC(new_width * new_height, bytesPerPixel);
+        unsigned char *rotatedData = (unsigned char *)RL_CALLOC(width * height, bytesPerPixel);
 
-        for (int y = 0; y < new_height; y++)
+        for (int y = 0; y < height; y++)
         {
-            for (int x = 0; x < new_width; x++)
+            for (int x = 0; x < width; x++)
             {
-                double oldX = ((x - new_width / 2.0) * cos_rad + (y - new_height / 2.0) * sin_rad) + image->width / 2.0;
-                double oldY = ((y - new_height / 2.0) * cos_rad - (x - new_width / 2.0) * sin_rad) + image->height / 2.0;
+                float oldX = ((x - width / 2.0f) * cosRadius + (y - height / 2.0f) * sinRadius) + image->width / 2.0f;
+                float oldY = ((y - height / 2.0f) * cosRadius - (x - width / 2.0f) * sinRadius) + image->height / 2.0f;
 
                 if (oldX >= 0 && oldX < image->width && oldY >= 0 && oldY < image->height)
                 {
@@ -2152,19 +2152,19 @@ void ImageRotate(Image *image, int degrees)
                     int x2 = MIN(x1 + 1, image->width - 1);
                     int y2 = MIN(y1 + 1, image->height - 1);
 
-                    double px = oldX - x1;
-                    double py = oldY - y1;
+                    float px = oldX - x1;
+                    float py = oldY - y1;
 
                     for (int i = 0; i < bytesPerPixel; i++)
                     {
-                        double f1 = ((unsigned char *)image->data)[(y1 * image->width + x1) * bytesPerPixel + i];
-                        double f2 = ((unsigned char *)image->data)[(y1 * image->width + x2) * bytesPerPixel + i];
-                        double f3 = ((unsigned char *)image->data)[(y2 * image->width + x1) * bytesPerPixel + i];
-                        double f4 = ((unsigned char *)image->data)[(y2 * image->width + x2) * bytesPerPixel + i];
+                        float f1 = ((unsigned char *)image->data)[(y1 * image->width + x1) * bytesPerPixel + i];
+                        float f2 = ((unsigned char *)image->data)[(y1 * image->width + x2) * bytesPerPixel + i];
+                        float f3 = ((unsigned char *)image->data)[(y2 * image->width + x1) * bytesPerPixel + i];
+                        float f4 = ((unsigned char *)image->data)[(y2 * image->width + x2) * bytesPerPixel + i];
 
-                        double val = f1 * (1 - px) * (1 - py) + f2 * px * (1 - py) + f3 * (1 - px) * py + f4 * px * py;
+                        float val = f1 * (1 - px) * (1 - py) + f2 * px * (1 - py) + f3 * (1 - px) * py + f4 * px * py;
 
-                        rotatedData[(y * new_width + x) * bytesPerPixel + i] = (unsigned char)val;
+                        rotatedData[(y * width + x) * bytesPerPixel + i] = (unsigned char)val;
                     }
                 }
             }
@@ -2172,8 +2172,8 @@ void ImageRotate(Image *image, int degrees)
 
         RL_FREE(image->data);
         image->data = rotatedData;
-        image->width = new_width;
-        image->height = new_height;
+        image->width = width;
+        image->height = height;
     }
 }
 
