@@ -25,7 +25,7 @@ int main(void)
     const int screenWidth = 800;
     const int screenHeight = 450;
 
-    InitWindow(screenWidth, screenHeight, "raylib [textures] example - texture loading and drawing");
+    InitWindow(screenWidth, screenHeight, "raylib [textures] example - texture rotation");
 
     // NOTE: Textures MUST be loaded after Window initialization (OpenGL context is required)
     Image image45 = LoadImage("resources/raylib_logo.png");
