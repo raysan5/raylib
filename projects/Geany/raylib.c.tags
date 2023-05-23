@@ -202,6 +202,7 @@ ImageDrawText|void|(Image *dst, Vector2 position, const char *text, int fontSize
 ImageDrawTextEx|void|(Image *dst, Vector2 position, Font font, const char *text, float fontSize, float spacing, Color color);|
 ImageFlipVertical|void|(Image *image);|
 ImageFlipHorizontal|void|(Image *image);|
+ImageRotate|void|(Image *image, int degrees);|
 ImageRotateCW|void|(Image *image);|
 ImageRotateCCW|void|(Image *image);|
 ImageColorTint|void|(Image *image, Color color);|

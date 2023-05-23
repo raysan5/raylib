@@ -1685,6 +1685,10 @@
         <Function name="ImageFlipHorizontal" retType="void" paramCount="1" desc="Flip image horizontally">
             <Param type="Image *" name="image" desc="" />
         </Function>
+        <Function name="ImageRotate" retType="void" paramCount="2" desc="Rotate image by input angle in degrees (-359 to 359)">
+            <Param type="Image *" name="image" desc="" />
+            <Param type="int" name="degrees" desc="" />
+        </Function>
         <Function name="ImageRotateCW" retType="void" paramCount="1" desc="Rotate image clockwise 90deg">
             <Param type="Image *" name="image" desc="" />
         </Function>

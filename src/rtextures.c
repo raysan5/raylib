@@ -2118,6 +2118,65 @@ void ImageFlipHorizontal(Image *image)
     }
 }
 
+// Rotate image in degrees
+void ImageRotate(Image *image, int degrees)
+{
+    // Security check to avoid program crash
+    if ((image->data == NULL) || (image->width == 0) || (image->height == 0)) return;
+
+    if (image->mipmaps > 1) TRACELOG(LOG_WARNING, "Image manipulation only applied to base mipmap level");
+    if (image->format >= PIXELFORMAT_COMPRESSED_DXT1_RGB) TRACELOG(LOG_WARNING, "Image manipulation not supported for compressed formats");
+    else
+    {
+        double rad = degrees * PI / 180.0;
+        double sin_rad = sin(rad);
+        double cos_rad = cos(rad);
+
+        int new_width = abs(image->width * cos_rad) + abs(image->height * sin_rad);
+        int new_height = abs(image->height * cos_rad) + abs(image->width * sin_rad);
+
+        int bytesPerPixel = GetPixelDataSize(1, 1, image->format);
+        unsigned char *rotatedData = (unsigned char *)RL_CALLOC(new_width * new_height, bytesPerPixel);
+
+        for (int y = 0; y < new_height; y++)
+        {
+            for (int x = 0; x < new_width; x++)
+            {
+                double oldX = ((x - new_width / 2.0) * cos_rad + (y - new_height / 2.0) * sin_rad) + image->width / 2.0;
+                double oldY = ((y - new_height / 2.0) * cos_rad - (x - new_width / 2.0) * sin_rad) + image->height / 2.0;
+
+                if (oldX >= 0 && oldX < image->width && oldY >= 0 && oldY < image->height)
+                {
+                    int x1 = (int)floor(oldX);
+                    int y1 = (int)floor(oldY);
+                    int x2 = MIN(x1 + 1, image->width - 1);
+                    int y2 = MIN(y1 + 1, image->height - 1);
+
+                    double px = oldX - x1;
+                    double py = oldY - y1;
+
+                    for (int i = 0; i < bytesPerPixel; i++)
+                    {
+                        double f1 = ((unsigned char *)image->data)[(y1 * image->width + x1) * bytesPerPixel + i];
+                        double f2 = ((unsigned char *)image->data)[(y1 * image->width + x2) * bytesPerPixel + i];
+                        double f3 = ((unsigned char *)image->data)[(y2 * image->width + x1) * bytesPerPixel + i];
+                        double f4 = ((unsigned char *)image->data)[(y2 * image->width + x2) * bytesPerPixel + i];
+
+                        double val = f1 * (1 - px) * (1 - py) + f2 * px * (1 - py) + f3 * (1 - px) * py + f4 * px * py;
+
+                        rotatedData[(y * new_width + x) * bytesPerPixel + i] = (unsigned char)val;
+                    }
+                }
+            }
+        }
+
+        RL_FREE(image->data);
+        image->data = rotatedData;
+        image->width = new_width;
+        image->height = new_height;
+    }
+}
+
 // Rotate image clockwise 90deg
 void ImageRotateCW(Image *image)
 {

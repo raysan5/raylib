@@ -1570,6 +1570,12 @@
                 <Param name="Image *image" />
             </Overload>
         </KeyWord>
+        <KeyWord name="ImageRotate" func="yes">
+            <Overload retVal="void" descr="Rotate image by input angle in degrees (-359 to 359)">
+                <Param name="Image *image" />
+                <Param name="int degrees" />
+            </Overload>
+        </KeyWord>
         <KeyWord name="ImageRotateCW" func="yes">
             <Overload retVal="void" descr="Rotate image clockwise 90deg">
                 <Param name="Image *image" />
