@@ -119,8 +119,8 @@ raylib can load data from multiple standard file formats:
 
  - Image/Textures: PNG, BMP, TGA, JPG, GIF, QOI, PSD, DDS, HDR, KTX, ASTC, PKM, PVR
  - Fonts: FNT (sprite font), TTF, OTF
- - Models/Meshes: OBJ, IQM, GLTF, VOX
- - Audio: WAV, OGG, MP3, FLAC, XM, MOD
+ - Models/Meshes: OBJ, IQM, GLTF, VOX, M3D
+ - Audio: WAV, OGG, MP3, FLAC, XM, MOD, QOA
  
 ### Does raylib support the Vulkan API?
 
