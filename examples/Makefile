@@ -453,6 +453,7 @@ TEXTURES = \
     textures/textures_image_generation \
     textures/textures_image_loading \
     textures/textures_image_processing \
+    textures/textures_image_rotate \
     textures/textures_image_text \
     textures/textures_to_image \
     textures/textures_raw_data \
