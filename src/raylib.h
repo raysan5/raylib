@@ -405,6 +405,15 @@ typedef struct ModelAnimation {
     char name[32];          // Animation name
 } ModelAnimation;
 
+// Chunk 
+typedef struct Chunk3D {
+    Vector3 position;
+    Model model;
+    Image noise;
+    Texture2D texture;
+    bool loaded;
+} Chunk3D;
+
 // Ray, ray for raycasting
 typedef struct Ray {
     Vector3 position;       // Ray position (origin)
