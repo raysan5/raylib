@@ -5267,6 +5267,15 @@ return {
       }
     },
     {
+      name = "ImageRotate",
+      description = "Rotate image by input angle in degrees (-359 to 359) ",
+      returnType = "void",
+      params = {
+        {type = "Image *", name = "image"},
+        {type = "int", name = "degrees"}
+      }
+    },
+    {
       name = "ImageRotateCW",
       description = "Rotate image clockwise 90deg",
       returnType = "void",
