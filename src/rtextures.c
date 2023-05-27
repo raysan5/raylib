@@ -3321,6 +3321,14 @@ Texture2D LoadTextureFromImage(Image image)
     return texture;
 }
 
+// Load texture from memory buffer, fileType refers to extension: i.e. '.png'
+Texture2D LoadTextureFromMemory(const char *fileType, const unsigned char *fileData, int dataSize) {
+    Image img = LoadImageFromMemory(fileType, fileData, dataSize);
+    Texture txt = LoadTextureFromImage(img);
+    UnloadImage(img);
+    return txt;
+}
+
 // Load cubemap from image, multiple image cubemap layouts supported
 TextureCubemap LoadTextureCubemap(Image image, int layout)
 {
