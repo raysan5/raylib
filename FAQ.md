@@ -14,7 +14,7 @@
 - [What does raylib provide that other engines or libraries don't?](#what-does-raylib-provide-that-other-engines-or-libraries-dont)
 - [How does raylib compare to Unity/Unreal/Godot?](#how-does-raylib-compare-to-unityunrealgodot)
 - [What development tools are required for raylib?](#what-development-tools-are-required-for-raylib)
-- [Which are raylib external dependencies?](#which-are-raylib-external-dependencies)
+- [What are raylib's external dependencies?](#what-are-raylibs-external-dependencies)
 - [Can I use raylib with other technologies or libraries?](#can-i-use-raylib-with-other-technologies-or-libraries)
 - [What file formats are supported by raylib?](#what-file-formats-are-supported-by-raylib)
 - [Does raylib support the Vulkan API?](#does-raylib-support-the-vulkan-api)
