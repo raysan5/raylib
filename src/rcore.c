@@ -1230,8 +1230,17 @@ void ToggleFullscreen(void)
         {
             CORE.Window.fullscreen = true;
             CORE.Window.flags |= FLAG_FULLSCREEN_MODE;
+            const GLFWvidmode* mode = glfwGetVideoMode(monitor);
+            if (!mode)
+            {
+                TRACELOG(LOG_WARNING, "GLFW: Failed to get monitor video mode");
+                glfwSetWindowMonitor(CORE.Window.handle, monitor, 0, 0, CORE.Window.screen.width, CORE.Window.screen.height, GLFW_DONT_CARE);
+            }
+            else
+            {
+                glfwSetWindowMonitor(CORE.Window.handle, monitor, 0, 0, mode->width, mode->height, GLFW_DONT_CARE);
+            }
 
-            glfwSetWindowMonitor(CORE.Window.handle, monitor, 0, 0, CORE.Window.screen.width, CORE.Window.screen.height, GLFW_DONT_CARE);
         }
     }
     else
