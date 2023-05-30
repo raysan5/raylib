@@ -45,6 +45,7 @@ pub fn addRaylib(b: *std.Build, target: std.zig.CrossTarget, optimize: std.built
             raylib.linkSystemLibrary("dl");
             raylib.linkSystemLibrary("m");
             raylib.linkSystemLibrary("X11");
+            raylib.addIncludePath("/usr/include");
 
             raylib.defineCMacro("PLATFORM_DESKTOP", null);
         },
