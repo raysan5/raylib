@@ -95,12 +95,11 @@ USE_EXTERNAL_GLFW     ?= FALSE
 USE_WAYLAND_DISPLAY   ?= FALSE
 
 # Use cross-compiler for PLATFORM_RPI
-ifeq ($(PLATFORM),PLATFORM_RPI)
-    USE_RPI_CROSS_COMPILER ?= FALSE
-    ifeq ($(USE_RPI_CROSS_COMPILER),TRUE)
-        RPI_TOOLCHAIN ?= C:/SysGCC/Raspberry
-        RPI_TOOLCHAIN_SYSROOT ?= $(RPI_TOOLCHAIN)/arm-linux-gnueabihf/sysroot
-    endif
+USE_RPI_CROSS_COMPILER ?= FALSE
+ifeq ($(USE_RPI_CROSS_COMPILER),TRUE)
+    RPI_TOOLCHAIN ?= C:/SysGCC/Raspberry
+    RPI_TOOLCHAIN_NAME ?= arm-linux-gnueabihf
+    RPI_TOOLCHAIN_SYSROOT ?= $(RPI_TOOLCHAIN)/$(RPI_TOOLCHAIN_NAME)/sysroot
 endif
 
 # Determine if the file has root access (only required to install raylib)
@@ -273,8 +272,16 @@ ifeq ($(PLATFORM),PLATFORM_RPI)
     ifeq ($(USE_RPI_CROSS_COMPILER),TRUE)
         # Define RPI cross-compiler
         #CC = armv6j-hardfloat-linux-gnueabi-gcc
-        CC = $(RPI_TOOLCHAIN)/bin/arm-linux-gnueabihf-gcc
-        AR = $(RPI_TOOLCHAIN)/bin/arm-linux-gnueabihf-ar
+        CC = $(RPI_TOOLCHAIN)/bin/$(RPI_TOOLCHAIN_NAME)-gcc
+        AR = $(RPI_TOOLCHAIN)/bin/$(RPI_TOOLCHAIN_NAME)-ar
+    endif
+endif
+ifeq ($(PLATFORM),PLATFORM_DRM)
+    ifeq ($(USE_RPI_CROSS_COMPILER),TRUE)
+        # Define RPI cross-compiler
+        #CC = armv6j-hardfloat-linux-gnueabi-gcc
+        CC = $(RPI_TOOLCHAIN)/bin/$(RPI_TOOLCHAIN_NAME)-gcc
+        AR = $(RPI_TOOLCHAIN)/bin/$(RPI_TOOLCHAIN_NAME)-ar
     endif
 endif
 ifeq ($(PLATFORM),PLATFORM_WEB)
@@ -451,6 +458,10 @@ ifeq ($(PLATFORM),PLATFORM_RPI)
 endif
 ifeq ($(PLATFORM),PLATFORM_DRM)
     INCLUDE_PATHS += -I/usr/include/libdrm
+    ifeq ($(USE_RPI_CROSSCOMPILER), TRUE)
+	    INCLUDE_PATHS += -I$(RPI_TOOLCHAIN_SYSROOT)/usr/include
+	    INCLUDE_PATHS += -I$(RPI_TOOLCHAIN_SYSROOT)/opt/vc/include
+    endif
 endif
 ifeq ($(PLATFORM),PLATFORM_ANDROID)
     NATIVE_APP_GLUE = $(ANDROID_NDK)/sources/android/native_app_glue
@@ -499,6 +510,9 @@ ifeq ($(PLATFORM),PLATFORM_RPI)
 endif
 ifeq ($(PLATFORM),PLATFORM_DRM)
     LDFLAGS += -Wl,-soname,lib$(RAYLIB_LIB_NAME).so.$(RAYLIB_API_VERSION)
+    ifeq ($(USE_RPI_CROSSCOMPILER), TRUE)
+	    INCLUDE_PATHS += -L$(RPI_TOOLCHAIN_SYSROOT)/opt/vc/lib -L$(RPI_TOOLCHAIN_SYSROOT)/usr/lib
+    endif
 endif
 ifeq ($(PLATFORM),PLATFORM_ANDROID)
     LDFLAGS += -Wl,-soname,libraylib.$(API_VERSION).so -Wl,--exclude-libs,libatomic.a
