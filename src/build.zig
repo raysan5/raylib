@@ -1,6 +1,7 @@
 const std = @import("std");
 
-pub fn addRaylib(b: *std.build.Builder, target: std.zig.CrossTarget) *std.build.LibExeObjStep {
+// This has been tested to work with zig master branch as of commit 87de821 or May 14 2023
+pub fn addRaylib(b: *std.Build, target: std.zig.CrossTarget, optimize: std.builtin.OptimizeMode) *std.Build.CompileStep {
     const raylib_flags = &[_][]const u8{
         "-std=gnu99",
         "-D_GNU_SOURCE",
@@ -8,7 +9,11 @@ pub fn addRaylib(b: *std.build.Builder, target: std.zig.CrossTarget) *std.build.
         "-fno-sanitize=undefined", // https://github.com/raysan5/raylib/issues/1891
     };
 
-    const raylib = b.addStaticLibrary("raylib", null);
+    const raylib = b.addStaticLibrary(.{
+        .name = "raylib",
+        .target = target,
+        .optimize = optimize,
+    });
     raylib.linkLibC();
 
     raylib.addIncludePath(srcdir ++ "/external/glfw/include");
@@ -99,7 +104,7 @@ pub fn addRaylib(b: *std.build.Builder, target: std.zig.CrossTarget) *std.build.
     return raylib;
 }
 
-pub fn build(b: *std.build.Builder) void {
+pub fn build(b: *std.Build) void {
     // Standard target options allows the person running `zig build` to choose
     // what target to build for. Here we do not override the defaults, which
     // means any target is allowed, and the default is native. Other options
@@ -108,10 +113,10 @@ pub fn build(b: *std.build.Builder) void {
     // Standard optimization options allow the person running `zig build` to select
     // between Debug, ReleaseSafe, ReleaseFast, and ReleaseSmall. Here we do not
     // set a preferred release mode, allowing the user to decide how to optimize.
-    // const optimize = b.standardReleaseOptions();
+    const optimize = b.standardOptimizeOption(.{});
 
-    const lib = addRaylib(b, target);
-    b.installFile("src/raylib.h", "raylib.h");
+    const lib = addRaylib(b, target, optimize);
+    lib.installHeader("src/raylib.h", "raylib.h");
     b.installArtifact(lib);
 }
 

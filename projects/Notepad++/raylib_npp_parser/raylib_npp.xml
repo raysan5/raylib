@@ -1378,24 +1378,26 @@
                 <Param name="Color color" />
             </Overload>
         </KeyWord>
-        <KeyWord name="GenImageGradientV" func="yes">
-            <Overload retVal="Image" descr="Generate image: vertical gradient">
+        <KeyWord name="GenImageGradientLinear" func="yes">
+            <Overload retVal="Image" descr="Generate image: linear gradient">
                 <Param name="int width" />
                 <Param name="int height" />
-                <Param name="Color top" />
-                <Param name="Color bottom" />
-            </Overload>
-        </KeyWord>
-        <KeyWord name="GenImageGradientH" func="yes">
-            <Overload retVal="Image" descr="Generate image: horizontal gradient">
-                <Param name="int width" />
-                <Param name="int height" />
-                <Param name="Color left" />
-                <Param name="Color right" />
+                <Param name="int direction" />
+                <Param name="Color start" />
+                <Param name="Color end" />
             </Overload>
         </KeyWord>
         <KeyWord name="GenImageGradientRadial" func="yes">
             <Overload retVal="Image" descr="Generate image: radial gradient">
+                <Param name="int width" />
+                <Param name="int height" />
+                <Param name="float density" />
+                <Param name="Color inner" />
+                <Param name="Color outer" />
+            </Overload>
+        </KeyWord>
+        <KeyWord name="GenImageGradientSquare" func="yes">
+            <Overload retVal="Image" descr="Generate image: square gradient">
                 <Param name="int width" />
                 <Param name="int height" />
                 <Param name="float density" />
@@ -1566,6 +1568,12 @@
         <KeyWord name="ImageFlipHorizontal" func="yes">
             <Overload retVal="void" descr="Flip image horizontally">
                 <Param name="Image *image" />
+            </Overload>
+        </KeyWord>
+        <KeyWord name="ImageRotate" func="yes">
+            <Overload retVal="void" descr="Rotate image by input angle in degrees (-359 to 359)">
+                <Param name="Image *image" />
+                <Param name="int degrees" />
             </Overload>
         </KeyWord>
         <KeyWord name="ImageRotateCW" func="yes">

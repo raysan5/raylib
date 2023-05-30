@@ -447,14 +447,30 @@ void UpdateCamera(Camera *camera, int mode)
         if (IsKeyDown(KEY_Q)) CameraRoll(camera, -CAMERA_ROTATION_SPEED);
         if (IsKeyDown(KEY_E)) CameraRoll(camera, CAMERA_ROTATION_SPEED);
 
-        CameraYaw(camera, -mousePositionDelta.x*CAMERA_MOUSE_MOVE_SENSITIVITY, rotateAroundTarget);
-        CameraPitch(camera, -mousePositionDelta.y*CAMERA_MOUSE_MOVE_SENSITIVITY, lockView, rotateAroundTarget, rotateUp);
-
         // Camera movement
-        if (IsKeyDown(KEY_W)) CameraMoveForward(camera, CAMERA_MOVE_SPEED, moveInWorldPlane);
-        if (IsKeyDown(KEY_A)) CameraMoveRight(camera, -CAMERA_MOVE_SPEED, moveInWorldPlane);
-        if (IsKeyDown(KEY_S)) CameraMoveForward(camera, -CAMERA_MOVE_SPEED, moveInWorldPlane);
-        if (IsKeyDown(KEY_D)) CameraMoveRight(camera, CAMERA_MOVE_SPEED, moveInWorldPlane);
+        if (!IsGamepadAvailable(0))
+        {
+            // Mouse/Keyboard support
+            CameraYaw(camera, -mousePositionDelta.x*CAMERA_MOUSE_MOVE_SENSITIVITY, rotateAroundTarget);
+            CameraPitch(camera, -mousePositionDelta.y*CAMERA_MOUSE_MOVE_SENSITIVITY, lockView, rotateAroundTarget, rotateUp);
+
+            if (IsKeyDown(KEY_W)) CameraMoveForward(camera, CAMERA_MOVE_SPEED, moveInWorldPlane);
+            if (IsKeyDown(KEY_A)) CameraMoveRight(camera, -CAMERA_MOVE_SPEED, moveInWorldPlane);
+            if (IsKeyDown(KEY_S)) CameraMoveForward(camera, -CAMERA_MOVE_SPEED, moveInWorldPlane);
+            if (IsKeyDown(KEY_D)) CameraMoveRight(camera, CAMERA_MOVE_SPEED, moveInWorldPlane);
+        }
+        else
+        {
+            // Gamepad controller support
+            CameraYaw(camera, -(GetGamepadAxisMovement(0, GAMEPAD_AXIS_RIGHT_X) * 2)*CAMERA_MOUSE_MOVE_SENSITIVITY, rotateAroundTarget);
+            CameraPitch(camera, -(GetGamepadAxisMovement(0, GAMEPAD_AXIS_RIGHT_Y) * 2)*CAMERA_MOUSE_MOVE_SENSITIVITY, lockView, rotateAroundTarget, rotateUp);
+
+            if (GetGamepadAxisMovement(0, GAMEPAD_AXIS_LEFT_Y) <= -0.75f) CameraMoveForward(camera, CAMERA_MOVE_SPEED, moveInWorldPlane);
+            if (GetGamepadAxisMovement(0, GAMEPAD_AXIS_LEFT_X) <= -0.75f) CameraMoveRight(camera, -CAMERA_MOVE_SPEED, moveInWorldPlane);
+            if (GetGamepadAxisMovement(0, GAMEPAD_AXIS_LEFT_Y) >= 0.75f) CameraMoveForward(camera, -CAMERA_MOVE_SPEED, moveInWorldPlane);
+            if (GetGamepadAxisMovement(0, GAMEPAD_AXIS_LEFT_X) >= 0.75f) CameraMoveRight(camera, CAMERA_MOVE_SPEED, moveInWorldPlane);
+        }
+
         //if (IsKeyDown(KEY_SPACE)) CameraMoveUp(camera, CAMERA_MOVE_SPEED);
         //if (IsKeyDown(KEY_LEFT_CONTROL)) CameraMoveUp(camera, -CAMERA_MOVE_SPEED);
     }

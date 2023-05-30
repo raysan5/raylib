@@ -317,9 +317,9 @@ RLAPI bool ExportImageAsCode(Image image, const char *fileName);                
 
 // Image generation functions
 RLAPI Image GenImageColor(int width, int height, Color color);                                           // Generate image: plain color
-RLAPI Image GenImageGradientV(int width, int height, Color top, Color bottom);                           // Generate image: vertical gradient
-RLAPI Image GenImageGradientH(int width, int height, Color left, Color right);                           // Generate image: horizontal gradient
+RLAPI Image GenImageGradientLinear(int width, int height, int direction, Color start, Color end);        // Generate image: linear gradient
 RLAPI Image GenImageGradientRadial(int width, int height, float density, Color inner, Color outer);      // Generate image: radial gradient
+RLAPI Image GenImageGradientSquare(int width, int height, float density, Color inner, Color outer);      // Generate image: square gradient
 RLAPI Image GenImageChecked(int width, int height, int checksX, int checksY, Color col1, Color col2);    // Generate image: checked
 RLAPI Image GenImageWhiteNoise(int width, int height, float factor);                                     // Generate image: white noise
 RLAPI Image GenImagePerlinNoise(int width, int height, int offsetX, int offsetY, float scale);           // Generate image: perlin noise
@@ -346,6 +346,7 @@ RLAPI void ImageMipmaps(Image *image);                                          
 RLAPI void ImageDither(Image *image, int rBpp, int gBpp, int bBpp, int aBpp);                            // Dither image data to 16bpp or lower (Floyd-Steinberg dithering)
 RLAPI void ImageFlipVertical(Image *image);                                                              // Flip image vertically
 RLAPI void ImageFlipHorizontal(Image *image);                                                            // Flip image horizontally
+RLAPI void ImageRotate(Image *image, int degrees);                                                       // Rotate image by input angle in degrees (-359 to 359)
 RLAPI void ImageRotateCW(Image *image);                                                                  // Rotate image clockwise 90deg
 RLAPI void ImageRotateCCW(Image *image);                                                                 // Rotate image counter-clockwise 90deg
 RLAPI void ImageColorTint(Image *image, Color color);                                                    // Modify image color: tint

@@ -3,9 +3,9 @@
     <Defines count="56">
         <Define name="RAYLIB_H" type="GUARD" value="" desc="" />
         <Define name="RAYLIB_VERSION_MAJOR" type="INT" value="4" desc="" />
-        <Define name="RAYLIB_VERSION_MINOR" type="INT" value="5" desc="" />
+        <Define name="RAYLIB_VERSION_MINOR" type="INT" value="6" desc="" />
         <Define name="RAYLIB_VERSION_PATCH" type="INT" value="0" desc="" />
-        <Define name="RAYLIB_VERSION" type="STRING" value="4.5" desc="" />
+        <Define name="RAYLIB_VERSION" type="STRING" value="4.6-dev" desc="" />
         <Define name="__declspec(x)" type="MACRO" value="__attribute__((x))" desc="" />
         <Define name="RLAPI" type="UNKNOWN" value="__declspec(dllexport)" desc="We are building the library as a Win32 shared library (.dll)" />
         <Define name="PI" type="FLOAT" value="3.14159265358979323846" desc="" />
@@ -210,11 +210,12 @@
             <Field type="BoneInfo *" name="bones" desc="Bones information (skeleton)" />
             <Field type="Transform *" name="bindPose" desc="Bones base transformation (pose)" />
         </Struct>
-        <Struct name="ModelAnimation" fieldCount="4" desc="ModelAnimation">
+        <Struct name="ModelAnimation" fieldCount="5" desc="ModelAnimation">
             <Field type="int" name="boneCount" desc="Number of bones" />
             <Field type="int" name="frameCount" desc="Number of animation frames" />
             <Field type="BoneInfo *" name="bones" desc="Bones information (skeleton)" />
             <Field type="Transform **" name="framePoses" desc="Poses array by frame" />
+            <Field type="char[32]" name="name" desc="Animation name" />
         </Struct>
         <Struct name="Ray" fieldCount="2" desc="Ray, ray for raycasting">
             <Field type="Vector3" name="position" desc="Ray position (origin)" />
@@ -655,7 +656,7 @@
             <Param type="unsigned int" name="frames" desc="" />
         </Callback>
     </Callbacks>
-    <Functions count="517">
+    <Functions count="518">
         <Function name="InitWindow" retType="void" paramCount="3" desc="Initialize window and OpenGL context">
             <Param type="int" name="width" desc="" />
             <Param type="int" name="height" desc="" />
@@ -1548,19 +1549,21 @@
             <Param type="int" name="height" desc="" />
             <Param type="Color" name="color" desc="" />
         </Function>
-        <Function name="GenImageGradientV" retType="Image" paramCount="4" desc="Generate image: vertical gradient">
+        <Function name="GenImageGradientLinear" retType="Image" paramCount="5" desc="Generate image: linear gradient, direction in degrees [0..360], 0=Vertical gradient">
             <Param type="int" name="width" desc="" />
             <Param type="int" name="height" desc="" />
-            <Param type="Color" name="top" desc="" />
-            <Param type="Color" name="bottom" desc="" />
-        </Function>
-        <Function name="GenImageGradientH" retType="Image" paramCount="4" desc="Generate image: horizontal gradient">
-            <Param type="int" name="width" desc="" />
-            <Param type="int" name="height" desc="" />
-            <Param type="Color" name="left" desc="" />
-            <Param type="Color" name="right" desc="" />
+            <Param type="int" name="direction" desc="" />
+            <Param type="Color" name="start" desc="" />
+            <Param type="Color" name="end" desc="" />
         </Function>
         <Function name="GenImageGradientRadial" retType="Image" paramCount="5" desc="Generate image: radial gradient">
+            <Param type="int" name="width" desc="" />
+            <Param type="int" name="height" desc="" />
+            <Param type="float" name="density" desc="" />
+            <Param type="Color" name="inner" desc="" />
+            <Param type="Color" name="outer" desc="" />
+        </Function>
+        <Function name="GenImageGradientSquare" retType="Image" paramCount="5" desc="Generate image: square gradient">
             <Param type="int" name="width" desc="" />
             <Param type="int" name="height" desc="" />
             <Param type="float" name="density" desc="" />
@@ -1681,6 +1684,10 @@
         </Function>
         <Function name="ImageFlipHorizontal" retType="void" paramCount="1" desc="Flip image horizontally">
             <Param type="Image *" name="image" desc="" />
+        </Function>
+        <Function name="ImageRotate" retType="void" paramCount="2" desc="Rotate image by input angle in degrees (-359 to 359) ">
+            <Param type="Image *" name="image" desc="" />
+            <Param type="int" name="degrees" desc="" />
         </Function>
         <Function name="ImageRotateCW" retType="void" paramCount="1" desc="Rotate image clockwise 90deg">
             <Param type="Image *" name="image" desc="" />

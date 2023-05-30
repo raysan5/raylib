@@ -684,48 +684,34 @@ Image GenImageColor(int width, int height, Color color)
 }
 
 #if defined(SUPPORT_IMAGE_GENERATION)
-// Generate image: vertical gradient
-Image GenImageGradientV(int width, int height, Color top, Color bottom)
+// Generate image: linear gradient
+// The direction value specifies the direction of the gradient (in degrees) 
+// with 0 being vertical (from top to bottom), 90 being horizontal (from left to right).
+// The gradient effectively rotates counter-clockwise by the specified amount.
+Image GenImageGradientLinear(int width, int height, int direction, Color start, Color end)
 {
     Color *pixels = (Color *)RL_MALLOC(width*height*sizeof(Color));
 
-    for (int j = 0; j < height; j++)
-    {
-        float factor = (float)j/(float)height;
-        for (int i = 0; i < width; i++)
-        {
-            pixels[j*width + i].r = (int)((float)bottom.r*factor + (float)top.r*(1.f - factor));
-            pixels[j*width + i].g = (int)((float)bottom.g*factor + (float)top.g*(1.f - factor));
-            pixels[j*width + i].b = (int)((float)bottom.b*factor + (float)top.b*(1.f - factor));
-            pixels[j*width + i].a = (int)((float)bottom.a*factor + (float)top.a*(1.f - factor));
-        }
-    }
-
-    Image image = {
-        .data = pixels,
-        .width = width,
-        .height = height,
-        .format = PIXELFORMAT_UNCOMPRESSED_R8G8B8A8,
-        .mipmaps = 1
-    };
-
-    return image;
-}
-
-// Generate image: horizontal gradient
-Image GenImageGradientH(int width, int height, Color left, Color right)
-{
-    Color *pixels = (Color *)RL_MALLOC(width*height*sizeof(Color));
+    float radianDirection = (float)(90 - direction)/180.f*3.14159f;
+    float cosDir = cos(radianDirection);
+    float sinDir = sin(radianDirection);
 
     for (int i = 0; i < width; i++)
     {
-        float factor = (float)i/(float)width;
         for (int j = 0; j < height; j++)
         {
-            pixels[j*width + i].r = (int)((float)right.r*factor + (float)left.r*(1.f - factor));
-            pixels[j*width + i].g = (int)((float)right.g*factor + (float)left.g*(1.f - factor));
-            pixels[j*width + i].b = (int)((float)right.b*factor + (float)left.b*(1.f - factor));
-            pixels[j*width + i].a = (int)((float)right.a*factor + (float)left.a*(1.f - factor));
+            // Calculate the relative position of the pixel along the gradient direction
+            float pos = (i*cosDir + j*sinDir)/(width*cosDir + height*sinDir);
+
+            float factor = pos;
+            factor = (factor > 1.0f)? 1.0f : factor;  // Clamp to [0,1]
+            factor = (factor < 0.0f)? 0.0f : factor;  // Clamp to [0,1]
+
+            // Generate the color for this pixel
+            pixels[j*width + i].r = (int)((float)end.r*factor + (float)start.r*(1.0f - factor));
+            pixels[j*width + i].g = (int)((float)end.g*factor + (float)start.g*(1.0f - factor));
+            pixels[j*width + i].b = (int)((float)end.b*factor + (float)start.b*(1.0f - factor));
+            pixels[j*width + i].a = (int)((float)end.a*factor + (float)start.a*(1.0f - factor));
         }
     }
 
@@ -759,6 +745,55 @@ Image GenImageGradientRadial(int width, int height, float density, Color inner, 
             factor = (float)fmax(factor, 0.0f);
             factor = (float)fmin(factor, 1.f); // dist can be bigger than radius, so we have to check
 
+            pixels[y*width + x].r = (int)((float)outer.r*factor + (float)inner.r*(1.0f - factor));
+            pixels[y*width + x].g = (int)((float)outer.g*factor + (float)inner.g*(1.0f - factor));
+            pixels[y*width + x].b = (int)((float)outer.b*factor + (float)inner.b*(1.0f - factor));
+            pixels[y*width + x].a = (int)((float)outer.a*factor + (float)inner.a*(1.0f - factor));
+        }
+    }
+
+    Image image = {
+        .data = pixels,
+        .width = width,
+        .height = height,
+        .format = PIXELFORMAT_UNCOMPRESSED_R8G8B8A8,
+        .mipmaps = 1
+    };
+
+    return image;
+}
+
+// Generate image: square gradient
+Image GenImageGradientSquare(int width, int height, float density, Color inner, Color outer)
+{
+    Color *pixels = (Color *)RL_MALLOC(width*height*sizeof(Color));
+
+    float centerX = (float)width/2.0f;
+    float centerY = (float)height/2.0f;
+
+    for (int y = 0; y < height; y++)
+    {
+        for (int x = 0; x < width; x++)
+        {
+            // Calculate the Manhattan distance from the center
+            float distX = fabsf(x - centerX);
+            float distY = fabsf(y - centerY);
+
+            // Normalize the distances by the dimensions of the gradient rectangle
+            float normalizedDistX = distX / centerX;
+            float normalizedDistY = distY / centerY;
+
+            // Calculate the total normalized Manhattan distance
+            float manhattanDist = fmax(normalizedDistX, normalizedDistY);
+
+            // Subtract the density from the manhattanDist, then divide by (1 - density)
+            // This makes the gradient start from the center when density is 0, and from the edge when density is 1
+            float factor = (manhattanDist - density)/(1.0f - density);
+
+            // Clamp the factor between 0 and 1
+            factor = fminf(fmaxf(factor, 0.0f), 1.0f);
+
+            // Blend the colors based on the calculated factor
             pixels[y*width + x].r = (int)((float)outer.r*factor + (float)inner.r*(1.0f - factor));
             pixels[y*width + x].g = (int)((float)outer.g*factor + (float)inner.g*(1.0f - factor));
             pixels[y*width + x].b = (int)((float)outer.b*factor + (float)inner.b*(1.0f - factor));
@@ -833,18 +868,27 @@ Image GenImagePerlinNoise(int width, int height, int offsetX, int offsetY, float
     {
         for (int x = 0; x < width; x++)
         {
-            float nx = (float)(x + offsetX)*scale/(float)width;
-            float ny = (float)(y + offsetY)*scale/(float)height;
-
+            float nx = (float)(x + offsetX)*(scale/(float)width);
+            float ny = (float)(y + offsetY)*(scale/(float)height);
+            
+            // Basic perlin noise implementation (not used)
+            //float p = (stb_perlin_noise3(nx, ny, 0.0f, 0, 0, 0);
+            
+            // Calculate a better perlin noise using fbm (fractal brownian motion)
             // Typical values to start playing with:
             //   lacunarity = ~2.0   -- spacing between successive octaves (use exactly 2.0 for wrapping output)
             //   gain       =  0.5   -- relative weighting applied to each successive octave
             //   octaves    =  6     -- number of "octaves" of noise3() to sum
+            float p = stb_perlin_fbm_noise3(nx, ny, 1.0f, 2.0f, 0.5f, 6);
+            
+            // Clamp between -1.0f and 1.0f
+            if (p < -1.0f) p = -1.0f;
+            if (p > 1.0f) p = 1.0f;
+            
+            // We need to normalize the data from [-1..1] to [0..1]
+            float np = (p + 1.0f)/2.0f;
 
-            // NOTE: We need to translate the data from [-1..1] to [0..1]
-            float p = (stb_perlin_fbm_noise3(nx, ny, 1.0f, 2.0f, 0.5f, 6) + 1.0f)/2.0f;
-
-            int intensity = (int)(p*255.0f);
+            int intensity = (int)(np*255.0f);
             pixels[y*width + x] = (Color){ intensity, intensity, intensity, 255 };
         }
     }
@@ -2046,7 +2090,7 @@ void ImageFlipHorizontal(Image *image)
         {
             for (int x = 0; x < image->width; x++)
             {
-                // OPTION 1: Move pixels with memcopy()
+                // OPTION 1: Move pixels with memcpy()
                 //memcpy(flippedData + (y*image->width + x)*bytesPerPixel, ((unsigned char *)image->data) + (y*image->width + (image->width - 1 - x))*bytesPerPixel, bytesPerPixel);
 
                 // OPTION 2: Just copy data pixel by pixel
@@ -2071,6 +2115,65 @@ void ImageFlipHorizontal(Image *image)
             }
         }
         */
+    }
+}
+
+// Rotate image in degrees
+void ImageRotate(Image *image, int degrees)
+{
+    // Security check to avoid program crash
+    if ((image->data == NULL) || (image->width == 0) || (image->height == 0)) return;
+
+    if (image->mipmaps > 1) TRACELOG(LOG_WARNING, "Image manipulation only applied to base mipmap level");
+    if (image->format >= PIXELFORMAT_COMPRESSED_DXT1_RGB) TRACELOG(LOG_WARNING, "Image manipulation not supported for compressed formats");
+    else
+    {
+        float rad = degrees*PI/180.0f;
+        float sinRadius = sin(rad);
+        float cosRadius = cos(rad);
+
+        int width = fabsf(image->width*cosRadius) + fabsf(image->height*sinRadius);
+        int height = fabsf(image->height*cosRadius) + fabsf(image->width*sinRadius);
+
+        int bytesPerPixel = GetPixelDataSize(1, 1, image->format);
+        unsigned char *rotatedData = (unsigned char *)RL_CALLOC(width*height, bytesPerPixel);
+
+        for (int y = 0; y < height; y++)
+        {
+            for (int x = 0; x < width; x++)
+            {
+                float oldX = ((x - width/2.0f)*cosRadius + (y - height/2.0f)*sinRadius) + image->width/2.0f;
+                float oldY = ((y - height/2.0f)*cosRadius - (x - width/2.0f)*sinRadius) + image->height/2.0f;
+
+                if ((oldX >= 0) && (oldX < image->width) && (oldY >= 0) && (oldY < image->height))
+                {
+                    int x1 = (int)floorf(oldX);
+                    int y1 = (int)floorf(oldY);
+                    int x2 = MIN(x1 + 1, image->width - 1);
+                    int y2 = MIN(y1 + 1, image->height - 1);
+
+                    float px = oldX - x1;
+                    float py = oldY - y1;
+
+                    for (int i = 0; i < bytesPerPixel; i++)
+                    {
+                        float f1 = ((unsigned char *)image->data)[(y1*image->width + x1)*bytesPerPixel + i];
+                        float f2 = ((unsigned char *)image->data)[(y1*image->width + x2)*bytesPerPixel + i];
+                        float f3 = ((unsigned char *)image->data)[(y2*image->width + x1)*bytesPerPixel + i];
+                        float f4 = ((unsigned char *)image->data)[(y2*image->width + x2)*bytesPerPixel + i];
+
+                        float val = f1*(1 - px)*(1 - py) + f2*px*(1 - py) + f3*(1 - px)*py + f4*px*py;
+
+                        rotatedData[(y*width + x)*bytesPerPixel + i] = (unsigned char)val;
+                    }
+                }
+            }
+        }
+
+        RL_FREE(image->data);
+        image->data = rotatedData;
+        image->width = width;
+        image->height = height;
     }
 }
 
