@@ -605,6 +605,34 @@ bool ExportImage(Image image, const char *fileName)
     return success;
 }
 
+// Export image to memory buffer
+unsigned char *ExportImageToMemory(Image image, const char *fileType, int *dataSize)
+{
+    unsigned char *fileData = NULL;
+    *dataSize = 0;
+    
+    if ((image.width == 0) || (image.height == 0) || (image.data == NULL)) return NULL;
+
+#if defined(SUPPORT_IMAGE_EXPORT)
+    int channels = 4;
+
+    if (image.format == PIXELFORMAT_UNCOMPRESSED_GRAYSCALE) channels = 1;
+    else if (image.format == PIXELFORMAT_UNCOMPRESSED_GRAY_ALPHA) channels = 2;
+    else if (image.format == PIXELFORMAT_UNCOMPRESSED_R8G8B8) channels = 3;
+    else if (image.format == PIXELFORMAT_UNCOMPRESSED_R8G8B8A8) channels = 4;
+
+#if defined(SUPPORT_FILEFORMAT_PNG)
+    if ((strcmp(fileType, ".png") == 0) || (strcmp(fileType, ".PNG") == 0))
+    {
+        fileData = stbi_write_png_to_mem((const unsigned char *)image.data, image.width*channels, image.width, image.height, channels, dataSize);
+    }
+#endif
+
+#endif
+    
+    return fileData;
+}
+
 // Export image as code file (.h) defining an array of bytes
 bool ExportImageAsCode(Image image, const char *fileName)
 {
@@ -1013,7 +1041,7 @@ Image ImageCopy(Image image)
         if (height < 1) height = 1;
     }
 
-    newImage.data = RL_MALLOC(size);
+    newImage.data = RL_CALLOC(size, 1);
 
     if (newImage.data != NULL)
     {
