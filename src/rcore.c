@@ -1692,6 +1692,15 @@ void SetWindowSize(int width, int height)
 #endif
 }
 
+// Set window aspect ratio (for FLAG_WINDOW_RESIZABLE)
+void SetWindowAspectRatio(int numerator, int denominator);
+{
+#if defined(PLATFORM_DESKTOP)
+    glfwSetWindowAspectRatio(CORE.Window.handle, numerator, denominator);
+#endif
+}
+
+
 // Set window opacity, value opacity is between 0.0 and 1.0
 void SetWindowOpacity(float opacity)
 {
