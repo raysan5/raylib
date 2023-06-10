@@ -1693,7 +1693,7 @@ void SetWindowSize(int width, int height)
 }
 
 // Set window aspect ratio (for FLAG_WINDOW_RESIZABLE)
-void SetWindowAspectRatio(int numerator, int denominator);
+void SetWindowAspectRatio(int numerator, int denominator)
 {
 #if defined(PLATFORM_DESKTOP)
     glfwSetWindowAspectRatio(CORE.Window.handle, numerator, denominator);
