@@ -345,7 +345,8 @@ endif
 
 ifeq ($(RAYLIB_BUILD_MODE),RELEASE)
     ifeq ($(PLATFORM),PLATFORM_WEB)
-        CFLAGS += -Os
+        #CFLAGS += -Os
+        CFLAGS += -O3
     endif
     ifeq ($(PLATFORM),PLATFORM_DESKTOP)
         CFLAGS += -O1
