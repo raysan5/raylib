@@ -4022,11 +4022,6 @@ int GetTouchPointId(int index)
     return id;
 }
 
-bool GetTouchPointState(int index)
-{
-    return ( (index < MAX_TOUCH_POINTS) && (CORE.Input.Touch.currentTouchState[index] != 0) );
-}
-
 // Get number of touch points
 int GetTouchPointCount(void)
 {
