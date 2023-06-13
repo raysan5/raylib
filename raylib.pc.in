@@ -10,4 +10,4 @@ Version: @PROJECT_VERSION@
 Libs: -L"${libdir}" -lraylib @PKG_CONFIG_LIBS_EXTRA@
 Libs.private: @PKG_CONFIG_LIBS_PRIVATE@
 Requires.private: @GLFW_PKG_DEPS@
-Cflags: -I"${includedir}"
+Cflags: -I"${includedir}" -std=c++11
