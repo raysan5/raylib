@@ -49,6 +49,8 @@ int main(void)
     SetTargetFPS(60);               // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
 
+    int gamepad = 0; // which gamepad to display
+
     // Main game loop
     while (!WindowShouldClose())    // Detect window close button or ESC key
     {
@@ -62,7 +64,9 @@ int main(void)
         BeginDrawing();
 
             ClearBackground(RAYWHITE);
-            int gamepad = 1;
+
+            if (IsKeyPressed(KEY_LEFT) && gamepad > 0) gamepad--;
+            if (IsKeyPressed(KEY_RIGHT)) gamepad++;
 
             if (IsGamepadAvailable(gamepad))
             {
@@ -189,7 +193,7 @@ int main(void)
             }
             else
             {
-                DrawText("GP1: NOT DETECTED", 10, 10, 10, GRAY);
+                DrawText(TextFormat("GP%d: NOT DETECTED", gamepad), 10, 10, 10, GRAY);
 
                 DrawTexture(texXboxPad, 0, 0, LIGHTGRAY);
             }
