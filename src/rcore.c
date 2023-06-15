@@ -1491,13 +1491,6 @@ void ClearWindowState(unsigned int flags)
         CORE.Window.flags &= ~FLAG_WINDOW_RESIZABLE;
     }
 
-    // State change: FLAG_WINDOW_UNDECORATED
-    if (((CORE.Window.flags & FLAG_WINDOW_UNDECORATED) > 0) && ((flags & FLAG_WINDOW_UNDECORATED) > 0))
-    {
-        glfwSetWindowAttrib(CORE.Window.handle, GLFW_DECORATED, GLFW_TRUE);
-        CORE.Window.flags &= ~FLAG_WINDOW_UNDECORATED;
-    }
-
     // State change: FLAG_WINDOW_HIDDEN
     if (((CORE.Window.flags & FLAG_WINDOW_HIDDEN) > 0) && ((flags & FLAG_WINDOW_HIDDEN) > 0))
     {
@@ -1515,6 +1508,13 @@ void ClearWindowState(unsigned int flags)
     if (((CORE.Window.flags & FLAG_WINDOW_MAXIMIZED) > 0) && ((flags & FLAG_WINDOW_MAXIMIZED) > 0))
     {
         RestoreWindow();       // NOTE: Window state flag updated inside function
+    }
+
+    // State change: FLAG_WINDOW_UNDECORATED
+    if (((CORE.Window.flags & FLAG_WINDOW_UNDECORATED) > 0) && ((flags & FLAG_WINDOW_UNDECORATED) > 0))
+    {
+        glfwSetWindowAttrib(CORE.Window.handle, GLFW_DECORATED, GLFW_TRUE);
+        CORE.Window.flags &= ~FLAG_WINDOW_UNDECORATED;
     }
 
     // State change: FLAG_WINDOW_UNFOCUSED
