@@ -451,7 +451,11 @@ Image LoadImageFromMemory(const char *fileType, const unsigned char *fileData, i
     else TRACELOG(LOG_WARNING, "IMAGE: Data format not supported");
 
     if (image.data != NULL) TRACELOG(LOG_INFO, "IMAGE: Data loaded successfully (%ix%i | %s | %i mipmaps)", image.width, image.height, rlGetPixelFormatName(image.format), image.mipmaps);
-    else TRACELOG(LOG_WARNING, "IMAGE: Failed to load image data");
+    else
+    {
+        TRACELOG(LOG_WARNING, "IMAGE: Failed to load image data");
+        TRACELOG(LOG_WARNING, "IMAGE: Magic bytes are: %x %x %x %x", fileData[0], fileData[1], fileData[2], fileData[3]);
+    }
 
     return image;
 }
