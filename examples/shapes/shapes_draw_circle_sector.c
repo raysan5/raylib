@@ -35,8 +35,8 @@ int main(void)
     float outerRadius = 180.0f;
     float startAngle = 0.0f;
     float endAngle = 180.0f;
-    int segments = 0;
-    int minSegments = 4;
+    float segments = 10.0f;
+    float minSegments = 4;
 
     SetTargetFPS(60);               // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
@@ -58,16 +58,16 @@ int main(void)
             DrawLine(500, 0, 500, GetScreenHeight(), Fade(LIGHTGRAY, 0.6f));
             DrawRectangle(500, 0, GetScreenWidth() - 500, GetScreenHeight(), Fade(LIGHTGRAY, 0.3f));
 
-            DrawCircleSector(center, outerRadius, startAngle, endAngle, segments, Fade(MAROON, 0.3f));
-            DrawCircleSectorLines(center, outerRadius, startAngle, endAngle, segments, Fade(MAROON, 0.6f));
+            DrawCircleSector(center, outerRadius, startAngle, endAngle, (int)segments, Fade(MAROON, 0.3f));
+            DrawCircleSectorLines(center, outerRadius, startAngle, endAngle, (int)segments, Fade(MAROON, 0.6f));
 
             // Draw GUI controls
             //------------------------------------------------------------------------------
-            startAngle = GuiSliderBar((Rectangle){ 600, 40, 120, 20}, "StartAngle", NULL, startAngle, 0, 720);
-            endAngle = GuiSliderBar((Rectangle){ 600, 70, 120, 20}, "EndAngle", NULL, endAngle, 0, 720);
+            GuiSliderBar((Rectangle){ 600, 40, 120, 20}, "StartAngle", NULL, &startAngle, 0, 720);
+            GuiSliderBar((Rectangle){ 600, 70, 120, 20}, "EndAngle", NULL, &endAngle, 0, 720);
 
-            outerRadius = GuiSliderBar((Rectangle){ 600, 140, 120, 20}, "Radius", NULL, outerRadius, 0, 200);
-            segments = (int)GuiSliderBar((Rectangle){ 600, 170, 120, 20}, "Segments", NULL, (float)segments, 0, 100);
+            GuiSliderBar((Rectangle){ 600, 140, 120, 20}, "Radius", NULL, &outerRadius, 0, 200);
+            GuiSliderBar((Rectangle){ 600, 170, 120, 20}, "Segments", NULL, &segments, 0, 100);
             //------------------------------------------------------------------------------
 
             minSegments = (int)ceilf((endAngle - startAngle) / 90);

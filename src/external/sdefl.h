@@ -38,10 +38,10 @@ this file implementation in *one* C or C++ file to prevent collisions.
 | zlib 1.2.11 -1          |    72 MB/s |   307 MB/s |    42298774 | 42.30 |
 | zlib 1.2.11 -6          |    24 MB/s |   313 MB/s |    36548921 | 36.55 |
 | zlib 1.2.11 -9          |    20 MB/s |   314 MB/s |    36475792 | 36.48 |
-| sdefl 1.0 -0            |   127 MB/s |   371 MB/s |    40004116 | 39.88 |
-| sdefl 1.0 -1            |   111 MB/s |   398 MB/s |    38940674 | 38.82 |
-| sdefl 1.0 -5            |    45 MB/s |   420 MB/s |    36577183 | 36.46 |
-| sdefl 1.0 -7            |    38 MB/s |   423 MB/s |    36523781 | 36.41 |
+| sdefl 1.0 -0            |   127 MB/s |   355 MB/s |    40004116 | 39.88 |
+| sdefl 1.0 -1            |   111 MB/s |   413 MB/s |    38940674 | 38.82 |
+| sdefl 1.0 -5            |    45 MB/s |   436 MB/s |    36577183 | 36.46 |
+| sdefl 1.0 -7            |    38 MB/s |   432 MB/s |    36523781 | 36.41 |
 | libdeflate 1.3 -1       |   147 MB/s |   667 MB/s |    39597378 | 39.60 |
 | libdeflate 1.3 -6       |    69 MB/s |   689 MB/s |    36648318 | 36.65 |
 | libdeflate 1.3 -9       |    13 MB/s |   672 MB/s |    35197141 | 35.20 |
@@ -50,20 +50,20 @@ this file implementation in *one* C or C++ file to prevent collisions.
 ### Compression
 Results on the [Silesia compression corpus](http://sun.aei.polsl.pl/~sdeor/index.php?page=silesia):
 
-| File    |   Original | `sdefl 0`  	| `sdefl 5` 	| `sdefl 7` |
-| :------ | ---------: | -----------------: | ---------: | ----------: |
-| dickens | 10.192.446 |  4,260,187|  3,845,261|   3,833,657 |
-| mozilla | 51.220.480 | 20,774,706 | 19,607,009 |  19,565,867 |
-| mr      |  9.970.564 | 3,860,531 |  3,673,460 |   3,665,627 |
-| nci     | 33.553.445 | 4,030,283 |  3,094,526 |   3,006,075 |
-| ooffice |  6.152.192 | 3,320,063 |  3,186,373 |   3,183,815 |
-| osdb    | 10.085.684 | 3,919,646 |  3,649,510 |   3,649,477 |
-| reymont |  6.627.202 | 2,263,378 |  1,857,588 |   1,827,237 |
-| samba   | 21.606.400 | 6,121,797 |  5,462,670 |   5,450,762 |
-| sao     |  7.251.944 | 5,612,421 |  5,485,380 |   5,481,765 |
-| webster | 41.458.703 | 13,972,648 | 12,059,432 |  11,991,421 |
-| xml     |  5.345.280 | 886,620|    674,009 |     662,141 |
-| x-ray   |  8.474.240 | 6,304,655 |  6,244,779 |   6,244,779 |
+| File    |   Original | `sdefl 0`    | `sdefl 5`  | `sdefl 7`   |
+| --------| -----------| -------------| ---------- | ------------|
+| dickens | 10.192.446 | 4,260,187    |  3,845,261 |   3,833,657 |
+| mozilla | 51.220.480 | 20,774,706   | 19,607,009 |  19,565,867 |
+| mr      |  9.970.564 | 3,860,531    |  3,673,460 |   3,665,627 |
+| nci     | 33.553.445 | 4,030,283    |  3,094,526 |   3,006,075 |
+| ooffice |  6.152.192 | 3,320,063    |  3,186,373 |   3,183,815 |
+| osdb    | 10.085.684 | 3,919,646    |  3,649,510 |   3,649,477 |
+| reymont |  6.627.202 | 2,263,378    |  1,857,588 |   1,827,237 |
+| samba   | 21.606.400 | 6,121,797    |  5,462,670 |   5,450,762 |
+| sao     |  7.251.944 | 5,612,421    |  5,485,380 |   5,481,765 |
+| webster | 41.458.703 | 13,972,648   | 12,059,432 |  11,991,421 |
+| xml     |  5.345.280 | 886,620      |    674,009 |     662,141 |
+| x-ray   |  8.474.240 | 6,304,655    |  6,244,779 |   6,244,779 |
 
 ## License
 ```
@@ -462,8 +462,12 @@ sdefl_match_codes(struct sdefl_match_codes *cod, int dist, int len) {
     27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27,
     27, 27, 28
   };
+  assert(len <= 258);
+  assert(dist <= 32768);
   cod->ls = lslot[len];
   cod->lc = 257 + cod->ls;
+  assert(cod->lc <= 285);
+
   cod->dx = sdefl_ilog2(sdefl_npow2(dist) >> 2);
   cod->dc = cod->dx ? ((cod->dx + 1) << 1) + (dist > dxmax[cod->dx]) : dist-1;
 }
@@ -501,7 +505,9 @@ sdefl_flush(unsigned char **dst, struct sdefl *s, int is_last,
   sdefl_precode(&symcnt, freqs, items, s->cod.len.lit, s->cod.len.off);
   sdefl_huff(lens, codes, freqs, SDEFL_PRE_MAX, SDEFL_PRE_CODES);
   for (item_cnt = SDEFL_PRE_MAX; item_cnt > 4; item_cnt--) {
-    if (lens[perm[item_cnt - 1]]) break;
+    if (lens[perm[item_cnt - 1]]){
+      break;
+    }
   }
   /* block header */
   sdefl_put(dst, s, is_last ? 0x01 : 0x00, 1); /* block */
@@ -509,8 +515,9 @@ sdefl_flush(unsigned char **dst, struct sdefl *s, int is_last,
   sdefl_put(dst, s, symcnt.lit - 257, 5);
   sdefl_put(dst, s, symcnt.off - 1, 5);
   sdefl_put(dst, s, item_cnt - 4, 4);
-  for (i = 0; i < item_cnt; ++i)
+  for (i = 0; i < item_cnt; ++i) {
     sdefl_put(dst, s, lens[perm[i]], 3);
+  }
   for (i = 0; i < symcnt.items; ++i) {
     unsigned sym = items[i] & 0x1F;
     sdefl_put(dst, s, (int)codes[sym], lens[sym]);
@@ -521,12 +528,14 @@ sdefl_flush(unsigned char **dst, struct sdefl *s, int is_last,
   }
   /* block sequences */
   for (i = 0; i < s->seq_cnt; ++i) {
-    if (s->seq[i].off >= 0)
+    if (s->seq[i].off >= 0) {
       for (j = 0; j < s->seq[i].len; ++j) {
         int c = in[s->seq[i].off + j];
         sdefl_put(dst, s, (int)s->cod.word.lit[c], s->cod.len.lit[c]);
       }
-    else sdefl_match(dst, s, -s->seq[i].off, s->seq[i].len);
+    } else {
+      sdefl_match(dst, s, -s->seq[i].off, s->seq[i].len);
+    }
   }
   sdefl_put(dst, s, (int)(s)->cod.word.lit[SDEFL_EOB], (s)->cod.len.lit[SDEFL_EOB]);
   memset(&s->freq, 0, sizeof(s->freq));
@@ -579,12 +588,13 @@ sdefl_compr(struct sdefl *s, unsigned char *out, const unsigned char *in,
   for (n = 0; n < SDEFL_HASH_SIZ; ++n) {
     s->tbl[n] = SDEFL_NIL;
   }
-  do {int blk_end = i + SDEFL_BLK_MAX < in_len ? i + SDEFL_BLK_MAX : in_len;
+  do {int blk_end = ((i + SDEFL_BLK_MAX) < in_len) ? (i + SDEFL_BLK_MAX) : in_len;
     while (i < blk_end) {
       struct sdefl_match m = {0};
-      int max_match = ((in_len-i)>SDEFL_MAX_MATCH) ? SDEFL_MAX_MATCH:(in_len-i);
+      int left = blk_end - i;
+      int max_match = (left >= SDEFL_MAX_MATCH) ? SDEFL_MAX_MATCH : left;
       int nice_match = pref[lvl] < max_match ? pref[lvl] : max_match;
-      int run = 1, inc = 1, run_inc;
+      int run = 1, inc = 1, run_inc = 0;
       if (max_match > SDEFL_MIN_MATCH) {
         sdefl_fnd(&m, s, max_chain, max_match, in, i);
       }
@@ -615,9 +625,11 @@ sdefl_compr(struct sdefl *s, unsigned char *out, const unsigned char *in,
           unsigned h = sdefl_hash32(&in[i]);
           s->prv[i&SDEFL_WIN_MSK] = s->tbl[h];
           s->tbl[h] = i, i += inc;
+          assert(i <= blk_end);
         }
       } else {
         i += run_inc;
+        assert(i <= blk_end);
       }
     }
     if (litlen) {
@@ -627,8 +639,9 @@ sdefl_compr(struct sdefl *s, unsigned char *out, const unsigned char *in,
     sdefl_flush(&q, s, blk_end == in_len, in);
   } while (i < in_len);
 
-  if (s->bitcnt)
+  if (s->bitcnt > 0)
     sdefl_put(&q, s, 0x00, 8 - s->bitcnt);
+
   return (int)(q - out);
 }
 extern int

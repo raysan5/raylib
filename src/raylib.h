@@ -133,10 +133,18 @@
 
 // NOTE: MSVC C++ compiler does not support compound literals (C99 feature)
 // Plain structures in C++ (without constructors) can be initialized with { }
+// This is called aggregate initialization (C++11 feature)
 #if defined(__cplusplus)
     #define CLITERAL(type)      type
 #else
     #define CLITERAL(type)      (type)
+#endif
+
+// Some compilers (mostly macos clang) default to C++98,
+// where aggregate initialization can't be used
+// So, give a more clear error stating how to fix this
+#if !defined(_MSC_VER) && (defined(__cplusplus) && __cplusplus < 201103L)
+    #error "C++11 or later is required. Add -std=c++11"
 #endif
 
 // NOTE: We set some defines with some data types declared by raylib
@@ -1235,6 +1243,7 @@ RLAPI Image LoadImageFromScreen(void);                                          
 RLAPI bool IsImageReady(Image image);                                                                    // Check if an image is ready
 RLAPI void UnloadImage(Image image);                                                                     // Unload image from CPU memory (RAM)
 RLAPI bool ExportImage(Image image, const char *fileName);                                               // Export image data to file, returns true on success
+RLAPI unsigned char *ExportImageToMemory(Image image, const char *fileType, int *fileSize);              // Export image to memory buffer
 RLAPI bool ExportImageAsCode(Image image, const char *fileName);                                         // Export image as code file defining an array of bytes, returns true on success
 
 // Image generation functions
