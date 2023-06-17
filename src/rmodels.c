@@ -5379,7 +5379,7 @@ static ModelAnimation *LoadModelAnimationsGLTF(const char *fileName, unsigned in
 
                 strncpy(animations[i].name, animData.name, sizeof(animations[i].name));
                 animations[i].name[sizeof(animations[i].name) - 1] = '\0';
-                
+
                 animations[i].frameCount = (int)(animDuration*1000.0f/GLTF_ANIMDELAY);
                 animations[i].framePoses = RL_MALLOC(animations[i].frameCount*sizeof(Transform *));
 

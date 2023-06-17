@@ -348,7 +348,7 @@ char *LoadFileText(const char *fileName)
             if (size > 0)
             {
                 text = (char *)RL_MALLOC((size + 1)*sizeof(char));
-                
+
                 if (text != NULL)
                 {
                     unsigned int count = (unsigned int)fread(text, sizeof(char), size, file);

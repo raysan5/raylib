@@ -610,7 +610,7 @@ unsigned char *ExportImageToMemory(Image image, const char *fileType, int *dataS
 {
     unsigned char *fileData = NULL;
     *dataSize = 0;
-    
+
     if ((image.width == 0) || (image.height == 0) || (image.data == NULL)) return NULL;
 
 #if defined(SUPPORT_IMAGE_EXPORT)
@@ -629,7 +629,7 @@ unsigned char *ExportImageToMemory(Image image, const char *fileType, int *dataS
 #endif
 
 #endif
-    
+
     return fileData;
 }
 
@@ -713,7 +713,7 @@ Image GenImageColor(int width, int height, Color color)
 
 #if defined(SUPPORT_IMAGE_GENERATION)
 // Generate image: linear gradient
-// The direction value specifies the direction of the gradient (in degrees) 
+// The direction value specifies the direction of the gradient (in degrees)
 // with 0 being vertical (from top to bottom), 90 being horizontal (from left to right).
 // The gradient effectively rotates counter-clockwise by the specified amount.
 Image GenImageGradientLinear(int width, int height, int direction, Color start, Color end)
@@ -898,21 +898,21 @@ Image GenImagePerlinNoise(int width, int height, int offsetX, int offsetY, float
         {
             float nx = (float)(x + offsetX)*(scale/(float)width);
             float ny = (float)(y + offsetY)*(scale/(float)height);
-            
+
             // Basic perlin noise implementation (not used)
             //float p = (stb_perlin_noise3(nx, ny, 0.0f, 0, 0, 0);
-            
+
             // Calculate a better perlin noise using fbm (fractal brownian motion)
             // Typical values to start playing with:
             //   lacunarity = ~2.0   -- spacing between successive octaves (use exactly 2.0 for wrapping output)
             //   gain       =  0.5   -- relative weighting applied to each successive octave
             //   octaves    =  6     -- number of "octaves" of noise3() to sum
             float p = stb_perlin_fbm_noise3(nx, ny, 1.0f, 2.0f, 0.5f, 6);
-            
+
             // Clamp between -1.0f and 1.0f
             if (p < -1.0f) p = -1.0f;
             if (p > 1.0f) p = 1.0f;
-            
+
             // We need to normalize the data from [-1..1] to [0..1]
             float np = (p + 1.0f)/2.0f;
 
