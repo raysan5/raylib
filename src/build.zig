@@ -1,11 +1,5 @@
 const std = @import("std");
 
-const Options = struct {
-    raygui: bool = false,
-    raymath: bool = false,
-    physac: bool = false,
-};
-
 // This has been tested to work with zig master branch as of commit 87de821 or May 14 2023
 pub fn addRaylib(b: *std.Build, target: std.zig.CrossTarget, optimize: std.builtin.OptimizeMode, options: Options) *std.Build.CompileStep {
     const raylib_flags = &[_][]const u8{
@@ -130,6 +124,12 @@ pub fn addRaylib(b: *std.Build, target: std.zig.CrossTarget, optimize: std.built
 
     return raylib;
 }
+
+const Options = struct {
+    raygui: bool = false,
+    raymath: bool = false,
+    physac: bool = false,
+};
 
 pub fn build(b: *std.Build) void {
     // Standard target options allows the person running `zig build` to choose
