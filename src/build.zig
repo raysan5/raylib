@@ -34,6 +34,7 @@ pub fn addRaylib(b: *std.Build, target: std.zig.CrossTarget, optimize: std.built
     if (options.raygui) {
         _ = gen_step.add(srcdir ++ "/raygui.c", "#define RAYGUI_IMPLEMENTATION\n#include \"raygui.h\"\n");
         raylib.addCSourceFile(srcdir ++ "/raygui.c", raylib_flags);
+        raylib.addIncludePath(srcdir);
         raylib.addIncludePath(srcdir ++ "/../../raygui/src");
     }
 
