@@ -1,7 +1,13 @@
 const std = @import("std");
 
+const Options = struct {
+    raygui: bool = false,
+    raymath: bool = false,
+    physac: bool = false,
+};
+
 // This has been tested to work with zig master branch as of commit 87de821 or May 14 2023
-pub fn addRaylib(b: *std.Build, target: std.zig.CrossTarget, optimize: std.builtin.OptimizeMode) *std.Build.CompileStep {
+pub fn addRaylib(b: *std.Build, target: std.zig.CrossTarget, optimize: std.builtin.OptimizeMode, options: Options) *std.Build.CompileStep {
     const raylib_flags = &[_][]const u8{
         "-std=gnu99",
         "-D_GNU_SOURCE",
@@ -27,6 +33,26 @@ pub fn addRaylib(b: *std.Build, target: std.zig.CrossTarget, optimize: std.built
         srcdir ++ "/rtextures.c",
         srcdir ++ "/utils.c",
     }, raylib_flags);
+
+    var gen_step = std.build.Step.WriteFile.create(b);
+    raylib.step.dependOn(&gen_step.step);
+
+    if (options.raygui) {
+        _ = gen_step.add(srcdir ++ "/raygui.c", "#define RAYGUI_IMPLEMENTATION\n#include \"raygui.h\"\n");
+        raylib.addCSourceFile(srcdir ++ "/raygui.c", raylib_flags);
+        raylib.addIncludePath(srcdir ++ "/../../raygui/src");
+    }
+
+    if (options.raymath) {
+        _ = gen_step.add(srcdir ++ "/raymath.c", "#define RAYMATH_IMPLEMENTATION\n#include \"raymath.h\"\n");
+        raylib.addCSourceFile(srcdir ++ "/raymath.c", raylib_flags);
+    }
+
+    if (options.physac) {
+        _ = gen_step.add(srcdir ++ "/physac.c", "#define PHYSAC_IMPLEMENTATION\n#include \"physac.h\"\n");
+        raylib.addCSourceFile(srcdir ++ "/physac.c", raylib_flags);
+        raylib.addIncludePath(srcdir ++ "/../../physac/src");
+    }
 
     switch (target.getOsTag()) {
         .windows => {
@@ -116,8 +142,30 @@ pub fn build(b: *std.Build) void {
     // set a preferred release mode, allowing the user to decide how to optimize.
     const optimize = b.standardOptimizeOption(.{});
 
-    const lib = addRaylib(b, target, optimize);
+    const raymath = b.option(bool, "raymath", "Compile with raymath support");
+    const raygui = b.option(bool, "raygui", "Compile with raygui support");
+    const physac = b.option(bool, "physac", "Compile with physac support");
+
+    const lib = addRaylib(b, target, optimize, .{
+        .raymath = raymath orelse false,
+        .raygui = raygui orelse false,
+        .physac = physac orelse false,
+    });
+
     lib.installHeader("src/raylib.h", "raylib.h");
+
+    if (raymath orelse false) {
+        lib.installHeader("src/raymath.h", "raymath.h");
+    }
+
+    if (raygui orelse false) {
+        lib.installHeader("../raygui/src/raygui.h", "raygui.h");
+    }
+
+    if (physac orelse false) {
+        lib.installHeader("../physac/src/physac.h", "physac.h");
+    }
+
     b.installArtifact(lib);
 }
 
