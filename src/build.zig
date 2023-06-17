@@ -37,17 +37,6 @@ pub fn addRaylib(b: *std.Build, target: std.zig.CrossTarget, optimize: std.built
         raylib.addIncludePath(srcdir ++ "/../../raygui/src");
     }
 
-    if (options.raymath) {
-        _ = gen_step.add(srcdir ++ "/raymath.c", "#define RAYMATH_IMPLEMENTATION\n#include \"raymath.h\"\n");
-        raylib.addCSourceFile(srcdir ++ "/raymath.c", raylib_flags);
-    }
-
-    if (options.physac) {
-        _ = gen_step.add(srcdir ++ "/physac.c", "#define PHYSAC_IMPLEMENTATION\n#include \"physac.h\"\n");
-        raylib.addCSourceFile(srcdir ++ "/physac.c", raylib_flags);
-        raylib.addIncludePath(srcdir ++ "/../../physac/src");
-    }
-
     switch (target.getOsTag()) {
         .windows => {
             raylib.addCSourceFiles(&.{srcdir ++ "/rglfw.c"}, raylib_flags);
@@ -127,8 +116,6 @@ pub fn addRaylib(b: *std.Build, target: std.zig.CrossTarget, optimize: std.built
 
 const Options = struct {
     raygui: bool = false,
-    raymath: bool = false,
-    physac: bool = false,
 };
 
 pub fn build(b: *std.Build) void {
@@ -153,17 +140,11 @@ pub fn build(b: *std.Build) void {
     });
 
     lib.installHeader("src/raylib.h", "raylib.h");
-
-    if (raymath orelse false) {
-        lib.installHeader("src/raymath.h", "raymath.h");
-    }
+    lib.installHeader("src/raymath.h", "raymath.h");
+    lib.installHeader("src/rlgl.h", "rlgl.h");
 
     if (raygui orelse false) {
         lib.installHeader("../raygui/src/raygui.h", "raygui.h");
-    }
-
-    if (physac orelse false) {
-        lib.installHeader("../physac/src/physac.h", "physac.h");
     }
 
     b.installArtifact(lib);
