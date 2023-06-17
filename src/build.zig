@@ -129,14 +129,10 @@ pub fn build(b: *std.Build) void {
     // set a preferred release mode, allowing the user to decide how to optimize.
     const optimize = b.standardOptimizeOption(.{});
 
-    const raymath = b.option(bool, "raymath", "Compile with raymath support");
     const raygui = b.option(bool, "raygui", "Compile with raygui support");
-    const physac = b.option(bool, "physac", "Compile with physac support");
 
     const lib = addRaylib(b, target, optimize, .{
-        .raymath = raymath orelse false,
         .raygui = raygui orelse false,
-        .physac = physac orelse false,
     });
 
     lib.installHeader("src/raylib.h", "raylib.h");
