@@ -1,7 +1,7 @@
 const std = @import("std");
 
 // This has been tested to work with zig master branch as of commit 87de821 or May 14 2023
-pub fn addRaylib(b: *std.Build, target: std.zig.CrossTarget, optimize: std.builtin.OptimizeMode) *std.Build.CompileStep {
+pub fn addRaylib(b: *std.Build, target: std.zig.CrossTarget, optimize: std.builtin.OptimizeMode, options: Options) *std.Build.CompileStep {
     const raylib_flags = &[_][]const u8{
         "-std=gnu99",
         "-D_GNU_SOURCE",
@@ -27,6 +27,16 @@ pub fn addRaylib(b: *std.Build, target: std.zig.CrossTarget, optimize: std.built
         srcdir ++ "/rtextures.c",
         srcdir ++ "/utils.c",
     }, raylib_flags);
+
+    var gen_step = std.build.Step.WriteFile.create(b);
+    raylib.step.dependOn(&gen_step.step);
+
+    if (options.raygui) {
+        _ = gen_step.add(srcdir ++ "/raygui.c", "#define RAYGUI_IMPLEMENTATION\n#include \"raygui.h\"\n");
+        raylib.addCSourceFile(srcdir ++ "/raygui.c", raylib_flags);
+        raylib.addIncludePath(srcdir);
+        raylib.addIncludePath(srcdir ++ "/../../raygui/src");
+    }
 
     switch (target.getOsTag()) {
         .windows => {
@@ -105,6 +115,10 @@ pub fn addRaylib(b: *std.Build, target: std.zig.CrossTarget, optimize: std.built
     return raylib;
 }
 
+const Options = struct {
+    raygui: bool = false,
+};
+
 pub fn build(b: *std.Build) void {
     // Standard target options allows the person running `zig build` to choose
     // what target to build for. Here we do not override the defaults, which
@@ -116,8 +130,20 @@ pub fn build(b: *std.Build) void {
     // set a preferred release mode, allowing the user to decide how to optimize.
     const optimize = b.standardOptimizeOption(.{});
 
-    const lib = addRaylib(b, target, optimize);
+    const raygui = b.option(bool, "raygui", "Compile with raygui support");
+
+    const lib = addRaylib(b, target, optimize, .{
+        .raygui = raygui orelse false,
+    });
+
     lib.installHeader("src/raylib.h", "raylib.h");
+    lib.installHeader("src/raymath.h", "raymath.h");
+    lib.installHeader("src/rlgl.h", "rlgl.h");
+
+    if (raygui orelse false) {
+        lib.installHeader("../raygui/src/raygui.h", "raygui.h");
+    }
+
     b.installArtifact(lib);
 }
 
