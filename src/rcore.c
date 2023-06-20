@@ -717,17 +717,17 @@ void android_main(struct android_app *app)
     char arg0[] = "raylib";     // NOTE: argv[] are mutable
     CORE.Android.app = app;
 
-    // NOTE: Return codes != 0 are skipped
-    (void)main(1, (char *[]) { arg0, NULL });
+    // NOTE: We get the main return for exit()
+    int ret = main(1, (char *[]) { arg0, NULL });
 
-    // Finish native activity
-    ANativeActivity_finish(CORE.Android.app->activity);
+    // Request to end the native activity
+    ANativeActivity_finish(app->activity);
 
     // Android ALooper_pollAll() variables
     int pollResult = 0;
     int pollEvents = 0;
 
-    // Wait for app events to close
+    // Waiting for application events before complete finishing
     while (!CORE.Android.app->destroyRequested)
     {
         while ((pollResult = ALooper_pollAll(0, NULL, &pollEvents, (void **)&CORE.Android.source)) >= 0)
@@ -736,8 +736,11 @@ void android_main(struct android_app *app)
         }
     }
 
-    // WARNING: Check for deallocation and ensure no other processes are running from the application
-    exit(0);    // Closes the application completely without going through Java
+    // WARNING: Make sure you free resources properly and no other process is running from Java code or other.
+    // NOTE: You can use JNI to call a NativeLoader method (which will call finish() from the UI thread)
+    // to handle the full close from Java, without using exit(0) like here.
+
+    exit(ret);    // Close the application directly, without going through Java
 }
 
 // NOTE: Add this to header (if apps really need it)
