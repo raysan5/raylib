@@ -13,7 +13,7 @@ Some people ported raylib to other languages in form of bindings or wrappers to 
 | cl-raylib          | 4.0     | [Common Lisp](https://common-lisp.net/)   | MIT | https://github.com/longlene/cl-raylib     |
 | claylib/wrap       | **4.5**     | [Common Lisp](https://common-lisp.net/)   | Zlib | https://github.com/defun-games/claylib |
 | chez-raylib        | **auto** | [Chez Scheme](https://cisco.github.io/ChezScheme/) | GPLv3 | https://github.com/Yunoinsky/chez-raylib |
-| raylib-cr          | **4.5-dev (7e7939e)** | [Crystal](https://crystal-lang.org/)    | Apache-2.0 | https://github.com/sol-vin/raylib-cr |
+| raylib-cr          | **4.6-dev (5e1a81)** | [Crystal](https://crystal-lang.org/)    | Apache-2.0 | https://github.com/sol-vin/raylib-cr |
 | ray-cyber          | 4.5     | [Cyber](https://cyberscript.dev)  | MIT | https://github.com/fubark/ray-cyber |
 | raylib-c3          | **4.5** | [C3](https://c3-lang.org/)    | MIT | https://github.com/Its-Kenta/Raylib-C3 |
 | dart-raylib        | 4.0     | [Dart](https://dart.dev/)               | MIT | https://gitlab.com/wolfenrain/dart-raylib   |
