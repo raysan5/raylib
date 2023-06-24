@@ -721,8 +721,8 @@ Image GenImageGradientLinear(int width, int height, int direction, Color start, 
     Color *pixels = (Color *)RL_MALLOC(width*height*sizeof(Color));
 
     float radianDirection = (float)(90 - direction)/180.f*3.14159f;
-    float cosDir = cos(radianDirection);
-    float sinDir = sin(radianDirection);
+    float cosDir = cosf(radianDirection);
+    float sinDir = sinf(radianDirection);
 
     for (int i = 0; i < width; i++)
     {
@@ -812,7 +812,7 @@ Image GenImageGradientSquare(int width, int height, float density, Color inner, 
             float normalizedDistY = distY / centerY;
 
             // Calculate the total normalized Manhattan distance
-            float manhattanDist = fmax(normalizedDistX, normalizedDistY);
+            float manhattanDist = fmaxf(normalizedDistX, normalizedDistY);
 
             // Subtract the density from the manhattanDist, then divide by (1 - density)
             // This makes the gradient start from the center when density is 0, and from the edge when density is 1
@@ -2157,11 +2157,11 @@ void ImageRotate(Image *image, int degrees)
     else
     {
         float rad = degrees*PI/180.0f;
-        float sinRadius = sin(rad);
-        float cosRadius = cos(rad);
+        float sinRadius = sinf(rad);
+        float cosRadius = cosf(rad);
 
-        int width = fabsf(image->width*cosRadius) + fabsf(image->height*sinRadius);
-        int height = fabsf(image->height*cosRadius) + fabsf(image->width*sinRadius);
+        int width = (int)(fabsf(image->width*cosRadius) + fabsf(image->height*sinRadius));
+        int height = (int)(fabsf(image->height*cosRadius) + fabsf(image->width*sinRadius));
 
         int bytesPerPixel = GetPixelDataSize(1, 1, image->format);
         unsigned char *rotatedData = (unsigned char *)RL_CALLOC(width*height, bytesPerPixel);
