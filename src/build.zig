@@ -1,7 +1,7 @@
 const std = @import("std");
 
 // This has been tested to work with zig master branch as of commit 87de821 or May 14 2023
-pub fn addRaylib(b: *std.Build, compile: *std.Build.Step.Compile , options: Options) void {
+pub fn addRaylib(owner: *std.Build, compile: *std.Build.Step.Compile , options: Options) void {
     const raylib_flags = &[_][]const u8{
         "-std=gnu99",
         "-D_GNU_SOURCE",
@@ -10,7 +10,7 @@ pub fn addRaylib(b: *std.Build, compile: *std.Build.Step.Compile , options: Opti
     };
 
     compile.linkLibC();
-
+    compile.addIncludePath(srcdir);
     compile.addIncludePath(srcdir ++ "/external/glfw/include");
 
     const c_source = &[_][]const u8{
@@ -27,7 +27,7 @@ pub fn addRaylib(b: *std.Build, compile: *std.Build.Step.Compile , options: Opti
         srcdir ++ "/rglfw.c",
     };
 
-    var gen_step = std.build.Step.WriteFile.create(b);
+    var gen_step = std.build.Step.WriteFile.create(owner);
     compile.step.dependOn(&gen_step.step);
 
     if (options.raygui) {
@@ -101,12 +101,12 @@ pub fn addRaylib(b: *std.Build, compile: *std.Build.Step.Compile , options: Opti
                 raylib_flags ++ &[_][]const u8{ "PLATFORM_WEB", "GRAPHICS_API_OPENGL_ES2" }
             );
 
-            if (b.sysroot == null) {
+            if (owner.sysroot == null) {
                 @panic("Pass '--sysroot \"$EMSDK/upstream/emscripten\"'");
             }
 
-            const cache_include = std.fs.path.join(b.allocator, &.{ b.sysroot.?, "cache", "sysroot", "include" }) catch @panic("Out of memory");
-            defer b.allocator.free(cache_include);
+            const cache_include = std.fs.path.join(owner.allocator, &.{ owner.sysroot.?, "cache", "sysroot", "include" }) catch @panic("Out of memory");
+            defer owner.allocator.free(cache_include);
 
             var dir = std.fs.openDirAbsolute(cache_include, std.fs.Dir.OpenDirOptions{ .access_sub_paths = true, .no_follow = true }) catch @panic("No emscripten cache. Generate it!");
             dir.close();
