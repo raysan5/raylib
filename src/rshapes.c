@@ -80,7 +80,7 @@
 //----------------------------------------------------------------------------------
 // Global Variables Definition
 //----------------------------------------------------------------------------------
-Texture2D texShapes = { 1, 1, 1, 1, 7 };                // Texture used on shapes drawing (usually a white pixel)
+Texture2D texShapes = { 1, 1, 1, 1, 7 };                // Texture used on shapes drawing (white pixel loaded by rlgl)
 Rectangle texShapesRec = { 0.0f, 0.0f, 1.0f, 1.0f };    // Texture source rectangle used on shapes drawing
 
 //----------------------------------------------------------------------------------
@@ -97,8 +97,19 @@ static float EaseCubicInOut(float t, float b, float c, float d);    // Cubic eas
 // defining a font char white rectangle would allow drawing everything in a single draw call
 void SetShapesTexture(Texture2D texture, Rectangle source)
 {
-    texShapes = texture;
-    texShapesRec = source;
+    // Reset texture to default pixel if required
+    // WARNING: Shapes texture should be probably better validated,
+    // it can break the rendering of all shapes if missused
+    if ((texture.id == 0) || (source.width == 0) || (source.height == 0))
+    {
+        texShapes = (Texture2D){ 1, 1, 1, 1, 7 };
+        texShapesRec = (Rectangle){ 0.0f, 0.0f, 1.0f, 1.0f };
+    }
+    else
+    {
+        texShapes = texture;
+        texShapesRec = source;
+    }
 }
 
 // Draw a pixel
