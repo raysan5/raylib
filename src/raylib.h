@@ -204,6 +204,13 @@
 typedef struct Vector2 {
     float x;                // Vector x component
     float y;                // Vector y component
+
+    Vector2() {}
+    Vector2(float x, float y)
+    {
+        this->x = x;
+        this->y = y;
+    }
 } Vector2;
 
 // Vector3, 3 components
@@ -211,6 +218,14 @@ typedef struct Vector3 {
     float x;                // Vector x component
     float y;                // Vector y component
     float z;                // Vector z component
+
+    Vector3() {}
+    Vector3(float x, float y, float z)
+    {
+        this->x = x;
+        this->y = y;
+        this->z = z;
+    }
 } Vector3;
 
 // Vector4, 4 components
@@ -219,6 +234,15 @@ typedef struct Vector4 {
     float y;                // Vector y component
     float z;                // Vector z component
     float w;                // Vector w component
+
+    Vector4() {}
+    Vector4(float x, float y, float z, float w)
+    {
+        this->x = x;
+        this->y = y;
+        this->z = z;
+        this->w = w;
+    }
 } Vector4;
 
 // Quaternion, 4 components (Vector4 alias)
