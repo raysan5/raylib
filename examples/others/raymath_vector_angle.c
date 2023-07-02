@@ -49,14 +49,14 @@ int main(void)
             // Calculate angle between two vectors, considering a common origin (v0)
             v1 = Vector2Add(v0, (Vector2){ 100.0f, 80.0f });
             v2 = GetMousePosition();
-            angle = Vector2Angle(Vector2Normalize(Vector2Subtract(v1, v0)), Vector2Normalize(Vector2Subtract(v2, v0)))*RAD2DEG;
+            angle = 90 - Vector2LineAngle(v0, v2) * RAD2DEG;
         }
         else if (angleMode == 1)
         {
             // Calculate angle defined by a two vectors line, in reference to horizontal line
             v1 = (Vector2){ screenWidth/2, screenHeight/2 };
             v2 = GetMousePosition();
-            angle = Vector2LineAngle(v1, v2)*RAD2DEG;
+            angle = Vector2LineAngle(v1, v2) * RAD2DEG;
         }
         //----------------------------------------------------------------------------------
 
@@ -77,8 +77,7 @@ int main(void)
                 DrawLineEx(v0, v1, 2.0f, BLACK);
                 DrawLineEx(v0, v2, 2.0f, RED);
                 
-                // TODO: Properly draw circle sector
-                DrawCircleSector(v0, 40.0f, Vector2LineAngle(v0, v1)*RAD2DEG, angle, 32, Fade(GREEN, 0.6f));
+                DrawCircleSector(v0, 40.0f, 90 - Vector2LineAngle(v0, v1) * RAD2DEG, angle, 32, Fade(GREEN, 0.6f));
             }
             else if (angleMode == 1)
             {
