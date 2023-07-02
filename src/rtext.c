@@ -1588,7 +1588,8 @@ int TextFindIndex(const char *text, const char *find)
 }
 
 // Get upper case version of provided string
-// REQUIRES: toupper()
+// WARNING: Limited functionality, only basic characters set
+// TODO: Support UTF-8 diacritics to upper-case, check codepoints
 const char *TextToUpper(const char *text)
 {
     static char buffer[MAX_TEXT_BUFFER_LENGTH] = { 0 };
@@ -1596,17 +1597,10 @@ const char *TextToUpper(const char *text)
 
     if (text != NULL)
     {
-        for (int i = 0; i < MAX_TEXT_BUFFER_LENGTH; i++)
+        for (int i = 0; (i < MAX_TEXT_BUFFER_LENGTH - 1) && (text[i] != '\0'); i++)
         {
-            if (text[i] != '\0')
-            {
-                buffer[i] = (char)toupper(text[i]);
-                //if ((text[i] >= 'a') && (text[i] <= 'z')) buffer[i] = text[i] - 32;
-
-                // TODO: Support UTF-8 diacritics to upper-case
-                //if ((text[i] >= 'à') && (text[i] <= 'ý')) buffer[i] = text[i] - 32;
-            }
-            else { buffer[i] = '\0'; break; }
+            if ((text[i] >= 'a') && (text[i] <= 'z')) buffer[i] = text[i] - 32;
+            else buffer[i] = text[i];
         }
     }
 
@@ -1614,7 +1608,7 @@ const char *TextToUpper(const char *text)
 }
 
 // Get lower case version of provided string
-// REQUIRES: tolower()
+// WARNING: Limited functionality, only basic characters set
 const char *TextToLower(const char *text)
 {
     static char buffer[MAX_TEXT_BUFFER_LENGTH] = { 0 };
@@ -1622,14 +1616,10 @@ const char *TextToLower(const char *text)
 
     if (text != NULL)
     {
-        for (int i = 0; i < MAX_TEXT_BUFFER_LENGTH; i++)
+        for (int i = 0; (i < MAX_TEXT_BUFFER_LENGTH - 1) && (text[i] != '\0'); i++)
         {
-            if (text[i] != '\0')
-            {
-                buffer[i] = (char)tolower(text[i]);
-                //if ((text[i] >= 'A') && (text[i] <= 'Z')) buffer[i] = text[i] + 32;
-            }
-            else { buffer[i] = '\0'; break; }
+            if ((text[i] >= 'A') && (text[i] <= 'Z')) buffer[i] = text[i] + 32;
+            else buffer[i] = text[i];
         }
     }
 
@@ -1637,7 +1627,7 @@ const char *TextToLower(const char *text)
 }
 
 // Get Pascal case notation version of provided string
-// REQUIRES: toupper()
+// WARNING: Limited functionality, only basic characters set
 const char *TextToPascal(const char *text)
 {
     static char buffer[MAX_TEXT_BUFFER_LENGTH] = { 0 };
@@ -1645,20 +1635,18 @@ const char *TextToPascal(const char *text)
 
     if (text != NULL)
     {
-        buffer[0] = (char)toupper(text[0]);
+        // Upper case first character
+        if ((text[0] >= 'a') && (text[0] <= 'z')) buffer[0] = text[0] - 32;
 
-        for (int i = 1, j = 1; i < MAX_TEXT_BUFFER_LENGTH; i++, j++)
+        // Check for next separator to upper case another character
+        for (int i = 1, j = 1; (i < MAX_TEXT_BUFFER_LENGTH - 1) && (text[j] != '\0'); i++, j++)
         {
-            if (text[j] != '\0')
+            if (text[j] != '_') buffer[i] = text[j];
+            else
             {
-                if (text[j] != '_') buffer[i] = text[j];
-                else
-                {
-                    j++;
-                    buffer[i] = (char)toupper(text[j]);
-                }
+                j++;
+                if ((text[j] >= 'a') && (text[j] <= 'z')) buffer[i] = text[j] - 32;
             }
-            else { buffer[i] = '\0'; break; }
         }
     }
 
