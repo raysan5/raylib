@@ -316,16 +316,15 @@ RMAPI float Vector2Angle(Vector2 v1, Vector2 v2)
 {
     float result = 0.0f;
     
-    float dot = v1.x*v2.x + v1.y*v2.y;      // Dot product
+    float dot = v1.x*v2.x + v1.y*v2.y;              // Dot product
     float dotClamp = (dot < -1.0f)? -1.0f : dot;    // Clamp
     if (dotClamp > 1.0f) dotClamp = 1.0f;
-
     result = acosf(dotClamp);
 
     // Alternative implementation, more costly
     //float v1Length = sqrtf((v1.x*v1.x) + (v1.y*v1.y));
     //float v2Length = sqrtf((v2.x*v2.x) + (v2.y*v2.y));
-    //float result = -acosf((v1.x*v2.x + v1.y*v2.y)/(v1Length*v2Length));
+    //result = -acosf((v1.x*v2.x + v1.y*v2.y)/(v1Length*v2Length));
     
     return result;
 }
