@@ -111,7 +111,8 @@ static Font defaultFont = { 0 };
 // Module specific Functions Declaration
 //----------------------------------------------------------------------------------
 #if defined(SUPPORT_FILEFORMAT_FNT)
-static Font LoadBMFont(const char *fileName);     // Load a BMFont file (AngelCode font file)
+static Font LoadBMFont(const char *fileName);   // Load a BMFont file (AngelCode font file)
+static int textLineSpacing = 15;                // Text vertical line spacing in pixels
 #endif
 
 #if defined(SUPPORT_DEFAULT_FONT)
@@ -123,7 +124,6 @@ extern void UnloadFontDefault(void);
 // Module Functions Definition
 //----------------------------------------------------------------------------------
 #if defined(SUPPORT_DEFAULT_FONT)
-
 // Load raylib default font
 extern void LoadFontDefault(void)
 {
@@ -702,6 +702,8 @@ Image GenImageFontAtlas(const GlyphInfo *chars, Rectangle **charRecs, int glyphC
         totalWidth += chars[i].image.width + 2*padding;
     }
 
+//#define SUPPORT_FONT_ATLAS_SIZE_CONSERVATIVE
+#if defined(SUPPORT_FONT_ATLAS_SIZE_CONSERVATIVE)
     int rowCount = 0;
     int imageSize = 64;  // Define minimum starting value to avoid unnecessary calculation steps for very small images
 
@@ -711,6 +713,12 @@ Image GenImageFontAtlas(const GlyphInfo *chars, Rectangle **charRecs, int glyphC
         imageSize *= 2;                                 // Double the size of image (to keep POT)
         rowCount = imageSize/(fontSize + 2*padding);    // Calculate new row count for the new image size
     }
+#else
+    // No need for a so-conservative atlas generation
+    float totalArea = totalWidth*fontSize*1.3f;
+    float imageMinSize = sqrtf(totalArea);
+    int imageSize = (int)powf(2, ceilf(logf(imageMinSize)/logf(2)));
+#endif
 
     atlas.width = imageSize;   // Atlas bitmap width
     atlas.height = imageSize;  // Atlas bitmap height
@@ -1071,9 +1079,8 @@ void DrawTextEx(Font font, const char *text, Vector2 position, float fontSize, f
 
         if (codepoint == '\n')
         {
-            // NOTE: Fixed line spacing of 1.5 line-height
-            // TODO: Support custom line spacing defined by user
-            textOffsetY += (int)((font.baseSize + font.baseSize/2.0f)*scaleFactor);
+            // NOTE: Line spacing is a global variable, use SetTextLineSpacing() to setup
+            textOffsetY += textLineSpacing;
             textOffsetX = 0.0f;
         }
         else
@@ -1143,9 +1150,8 @@ void DrawTextCodepoints(Font font, const int *codepoints, int count, Vector2 pos
 
         if (codepoints[i] == '\n')
         {
-            // NOTE: Fixed line spacing of 1.5 line-height
-            // TODO: Support custom line spacing defined by user
-            textOffsetY += (int)((font.baseSize + font.baseSize/2.0f)*scaleFactor);
+            // NOTE: Line spacing is a global variable, use SetTextLineSpacing() to setup
+            textOffsetY += textLineSpacing;
             textOffsetX = 0.0f;
         }
         else
@@ -1159,6 +1165,12 @@ void DrawTextCodepoints(Font font, const int *codepoints, int count, Vector2 pos
             else textOffsetX += ((float)font.glyphs[index].advanceX*scaleFactor + spacing);
         }
     }
+}
+
+// Set vertical line spacing when drawing with line-breaks
+void SetTextLineSpacing(int spacing)
+{
+    textLineSpacing = spacing;
 }
 
 // Measure string width for default font
@@ -1219,7 +1231,9 @@ Vector2 MeasureTextEx(Font font, const char *text, float fontSize, float spacing
             if (tempTextWidth < textWidth) tempTextWidth = textWidth;
             byteCounter = 0;
             textWidth = 0;
-            textHeight += ((float)font.baseSize*1.5f); // NOTE: Fixed line spacing of 1.5 lines
+            
+            // NOTE: Line spacing is a global variable, use SetTextLineSpacing() to setup
+            textHeight += (float)textLineSpacing;
         }
 
         if (tempByteCounter < byteCounter) tempByteCounter = byteCounter;
