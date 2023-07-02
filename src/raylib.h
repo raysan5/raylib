@@ -958,6 +958,7 @@ RLAPI void SetWindowMonitor(int monitor);                         // Set monitor
 RLAPI void SetWindowMinSize(int width, int height);               // Set window minimum dimensions (for FLAG_WINDOW_RESIZABLE)
 RLAPI void SetWindowSize(int width, int height);                  // Set window dimensions
 RLAPI void SetWindowOpacity(float opacity);                       // Set window opacity [0.0f..1.0f] (only PLATFORM_DESKTOP)
+RLAPI void SetWindowFocused(void);                                // Set window focused (only PLATFORM_DESKTOP)
 RLAPI void *GetWindowHandle(void);                                // Get native window handle
 RLAPI int GetScreenWidth(void);                                   // Get current screen width
 RLAPI int GetScreenHeight(void);                                  // Get current screen height
