@@ -3219,7 +3219,7 @@ const char *GetApplicationDirectory(void)
 
 #if defined(_WIN32)
     int len = 0;
-#if defined (UNICODE)
+#if defined(UNICODE)
     unsigned short widePath[MAX_PATH];
     len = GetModuleFileNameW(NULL, widePath, MAX_PATH);
     len = WideCharToMultiByte(0, 0, widePath, len, appDir, MAX_PATH, NULL, NULL);
