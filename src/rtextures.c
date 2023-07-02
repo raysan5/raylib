@@ -3290,8 +3290,7 @@ void ImageDrawText(Image *dst, const char *text, int posX, int posY, int fontSiz
     if (GetFontDefault().texture.id == 0) LoadFontDefault();
 
     Vector2 position = { (float)posX, (float)posY };
-    // NOTE: For default font, spacing is set to desired font size / default font size (10)
-    ImageDrawTextEx(dst, GetFontDefault(), text, position, (float)fontSize, (float)fontSize/10, color);   // WARNING: Module required: rtext
+    ImageDrawTextEx(dst, GetFontDefault(), text, position, (float)fontSize, 1.0f, color);   // WARNING: Module required: rtext
 #else
     TRACELOG(LOG_WARNING, "IMAGE: ImageDrawText() requires module: rtext");
 #endif
