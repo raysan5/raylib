@@ -6131,6 +6131,10 @@ static EM_BOOL EmscriptenTouchCallback(int eventType, const EmscriptenTouchEvent
     {
         gestureEvent.pointId[i] = CORE.Input.Touch.pointId[i];
         gestureEvent.position[i] = CORE.Input.Touch.position[i];
+
+        // Normalize gestureEvent.position[i]
+        gestureEvent.position[i].x /= (float)GetScreenWidth();
+        gestureEvent.position[i].y /= (float)GetScreenHeight();
     }
 
     // Gesture data is sent to gestures system for processing
