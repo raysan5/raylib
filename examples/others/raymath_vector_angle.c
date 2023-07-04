@@ -78,9 +78,7 @@ int main(void)
                 DrawLineEx(v0, v2, 2.0f, RED);
                 
                 float startangle = 90 - Vector2LineAngle(v0, v1)*RAD2DEG;
-                DrawCircleSector(v0, 40.0f, startangle, angle + startangle, 32, Fade(GREEN, 0.6f));
-                
-                //DrawCircleSector(v0, 40.0f, 90 - Vector2LineAngle(v0, v1)*RAD2DEG, angle, 32, Fade(GREEN, 0.6f));
+                DrawCircleSector(v0, 40.0f, startangle, startangle + angle - 360.0f*(angle > 180.0f), 32, Fade(GREEN, 0.6f));
             }
             else if (angleMode == 1)
             {
