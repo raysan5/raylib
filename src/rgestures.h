@@ -203,6 +203,8 @@ typedef struct {
         Vector2 downDragPosition;       // Touch drag position
         Vector2 moveDownPositionA;      // First touch down position on move
         Vector2 moveDownPositionB;      // Second touch down position on move
+        Vector2 previousPositionA;      // Previous position A to compare for pinch gestures
+        Vector2 previousPositionB;      // Previous position B to compare for pinch gestures
         int tapCounter;                 // TAP counter (one tap implies TOUCH_ACTION_DOWN and TOUCH_ACTION_UP actions)
     } Touch;
     struct {
@@ -364,6 +366,9 @@ void ProcessGestureEvent(GestureEvent event)
             GESTURES.Touch.downPositionA = event.position[0];
             GESTURES.Touch.downPositionB = event.position[1];
 
+            GESTURES.Touch.previousPositionA = GESTURES.Touch.downPositionA;
+            GESTURES.Touch.previousPositionB = GESTURES.Touch.downPositionB;
+
             //GESTURES.Pinch.distance = rgVector2Distance(GESTURES.Touch.downPositionA, GESTURES.Touch.downPositionB);
 
             GESTURES.Pinch.vector.x = GESTURES.Touch.downPositionB.x - GESTURES.Touch.downPositionA.x;
@@ -376,18 +381,15 @@ void ProcessGestureEvent(GestureEvent event)
         {
             GESTURES.Pinch.distance = rgVector2Distance(GESTURES.Touch.moveDownPositionA, GESTURES.Touch.moveDownPositionB);
 
-            GESTURES.Touch.downPositionA = GESTURES.Touch.moveDownPositionA;
-            GESTURES.Touch.downPositionB = GESTURES.Touch.moveDownPositionB;
-
             GESTURES.Touch.moveDownPositionA = event.position[0];
             GESTURES.Touch.moveDownPositionB = event.position[1];
 
             GESTURES.Pinch.vector.x = GESTURES.Touch.moveDownPositionB.x - GESTURES.Touch.moveDownPositionA.x;
             GESTURES.Pinch.vector.y = GESTURES.Touch.moveDownPositionB.y - GESTURES.Touch.moveDownPositionA.y;
 
-            if ((rgVector2Distance(GESTURES.Touch.downPositionA, GESTURES.Touch.moveDownPositionA) >= MINIMUM_PINCH) || (rgVector2Distance(GESTURES.Touch.downPositionB, GESTURES.Touch.moveDownPositionB) >= MINIMUM_PINCH))
+            if ((rgVector2Distance(GESTURES.Touch.previousPositionA, GESTURES.Touch.moveDownPositionA) >= MINIMUM_PINCH) || (rgVector2Distance(GESTURES.Touch.previousPositionB, GESTURES.Touch.moveDownPositionB) >= MINIMUM_PINCH))
             {
-                if ((rgVector2Distance(GESTURES.Touch.moveDownPositionA, GESTURES.Touch.moveDownPositionB) - GESTURES.Pinch.distance) < 0) GESTURES.current = GESTURE_PINCH_IN;
+                if ( rgVector2Distance(GESTURES.Touch.previousPositionA, GESTURES.Touch.previousPositionB) > rgVector2Distance(GESTURES.Touch.moveDownPositionA, GESTURES.Touch.moveDownPositionB) ) GESTURES.current = GESTURE_PINCH_IN;
                 else GESTURES.current = GESTURE_PINCH_OUT;
             }
             else
