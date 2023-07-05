@@ -112,8 +112,8 @@ static Font defaultFont = { 0 };
 //----------------------------------------------------------------------------------
 #if defined(SUPPORT_FILEFORMAT_FNT)
 static Font LoadBMFont(const char *fileName);   // Load a BMFont file (AngelCode font file)
-static int textLineSpacing = 15;                // Text vertical line spacing in pixels
 #endif
+static int textLineSpacing = 15;                // Text vertical line spacing in pixels
 
 #if defined(SUPPORT_DEFAULT_FONT)
 extern void LoadFontDefault(void);
