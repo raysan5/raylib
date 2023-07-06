@@ -1254,7 +1254,7 @@ Vector2 MeasureTextEx(Font font, const char *text, float fontSize, float spacing
 
     if (tempTextWidth < textWidth) tempTextWidth = textWidth;
 
-    textSize.x = (tempTextWidth + (float)((tempByteCounter - 1)*spacing))*scaleFactor;
+    textSize.x = tempTextWidth*scaleFactor + (float)((tempByteCounter - 1)*spacing);
     textSize.y = textHeight*scaleFactor;
 
     return textSize;
