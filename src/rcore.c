@@ -6139,6 +6139,9 @@ static EM_BOOL EmscriptenTouchCallback(int eventType, const EmscriptenTouchEvent
 
     // Gesture data is sent to gestures system for processing
     ProcessGestureEvent(gestureEvent);
+
+    // Reset the pointCount for web, if it was the last Touch End event
+    if (eventType == EMSCRIPTEN_EVENT_TOUCHEND && CORE.Input.Touch.pointCount == 1) CORE.Input.Touch.pointCount = 0;
 #endif
 
     return 1;   // The event was consumed by the callback handler
