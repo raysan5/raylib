@@ -3,12 +3,12 @@
 *   rgestures - Gestures system, gestures processing based on input events (touch/mouse)
 *
 *   CONFIGURATION:
-*       #define GESTURES_IMPLEMENTATION
+*       #define RGESTURES_IMPLEMENTATION
 *           Generates the implementation of the library into the included file.
 *           If not defined, the library is in header only mode and can be included in other headers
 *           or source files without problems. But only ONE file should hold the implementation.
 *
-*       #define GESTURES_STANDALONE
+*       #define RGESTURES_STANDALONE
 *           If defined, the library can be used as standalone to process gesture events with
 *           no external dependencies.
 *
@@ -56,7 +56,7 @@
 
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
-// NOTE: Below types are required for GESTURES_STANDALONE usage
+// NOTE: Below types are required for standalone usage
 //----------------------------------------------------------------------------------
 // Boolean type
 #if (defined(__STDC__) && __STDC_VERSION__ >= 199901L) || (defined(_MSC_VER) && _MSC_VER >= 1800)
@@ -73,7 +73,7 @@ typedef struct Vector2 {
 } Vector2;
 #endif
 
-#if defined(GESTURES_STANDALONE)
+#if defined(RGESTURES_STANDALONE)
 // Gestures type
 // NOTE: It could be used as flags to enable only some gestures
 typedef enum {
@@ -122,7 +122,7 @@ extern "C" {            // Prevents name mangling of functions
 void ProcessGestureEvent(GestureEvent event);           // Process gesture event and translate it into gestures
 void UpdateGestures(void);                              // Update gestures detected (must be called every frame)
 
-#if defined(GESTURES_STANDALONE)
+#if defined(RGESTURES_STANDALONE)
 void SetGesturesEnabled(unsigned int flags);            // Enable a set of gestures using flags
 bool IsGestureDetected(int gesture);                    // Check if a gesture have been detected
 int GetGestureDetected(void);                           // Get latest detected gesture
@@ -138,17 +138,17 @@ float GetGesturePinchAngle(void);                       // Get gesture pinch ang
 }
 #endif
 
-#endif // GESTURES_H
+#endif // RGESTURES_H
 
 /***********************************************************************************
 *
-*   GESTURES IMPLEMENTATION
+*   RGESTURES IMPLEMENTATION
 *
 ************************************************************************************/
 
-#if defined(GESTURES_IMPLEMENTATION)
+#if defined(RGESTURES_IMPLEMENTATION)
 
-#if defined(GESTURES_STANDALONE)
+#if defined(RGESTURES_STANDALONE)
 #if defined(_WIN32)
     #if defined(__cplusplus)
     extern "C" {        // Prevents name mangling of functions
@@ -527,7 +527,7 @@ static double rgGetCurrentTime(void)
 {
     double time = 0;
 
-#if !defined(GESTURES_STANDALONE)
+#if !defined(RGESTURES_STANDALONE)
     time = GetTime();
 #else
 #if defined(_WIN32)
@@ -568,4 +568,4 @@ static double rgGetCurrentTime(void)
     return time;
 }
 
-#endif // GESTURES_IMPLEMENTATION
+#endif // RGESTURES_IMPLEMENTATION

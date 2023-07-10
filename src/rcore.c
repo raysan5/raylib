@@ -124,12 +124,12 @@
 #include "raymath.h"                // Vector3, Quaternion and Matrix functionality
 
 #if defined(SUPPORT_GESTURES_SYSTEM)
-    #define GESTURES_IMPLEMENTATION
+    #define RGESTURES_IMPLEMENTATION
     #include "rgestures.h"           // Gestures detection functionality
 #endif
 
 #if defined(SUPPORT_CAMERA_SYSTEM)
-    #define CAMERA_IMPLEMENTATION
+    #define RCAMERA_IMPLEMENTATION
     #include "rcamera.h"             // Camera system functionality
 #endif
 

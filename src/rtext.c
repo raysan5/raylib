@@ -1244,7 +1244,7 @@ Vector2 MeasureTextEx(Font font, const char *text, float fontSize, float spacing
             if (tempTextWidth < textWidth) tempTextWidth = textWidth;
             byteCounter = 0;
             textWidth = 0;
-            
+
             // NOTE: Line spacing is a global variable, use SetTextLineSpacing() to setup
             textHeight += (float)textLineSpacing;
         }
