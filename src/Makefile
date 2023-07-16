@@ -308,6 +308,17 @@ ifeq ($(PLATFORM),PLATFORM_ANDROID)
     AR = $(ANDROID_TOOLCHAIN)/bin/llvm-ar
 endif
 
+# This section is here to help handle cross compilation. eg build on Linux for Windows. If you are doing this, you better know what you are doing!
+ifdef TARGET_OS
+    ifdef CROSS_CC
+        CC = ${CROSS_CC}
+    endif
+    ifdef CROSS_AR
+        AR = ${CROSS_AR}
+    endif
+    PLATFORM_OS = ${TARGET_OS}
+endif
+
 # Define compiler flags: CFLAGS
 #------------------------------------------------------------------------------------------------
 #  -O1                      defines optimization level
