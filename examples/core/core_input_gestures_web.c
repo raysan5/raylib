@@ -14,7 +14,8 @@
 ********************************************************************************************/
 
 #include "raylib.h"
-#include "math.h" // Required for the protractor angle graphic drawing
+
+#include "math.h"       // Required for the protractor angle graphic drawing
 
 #if defined(PLATFORM_WEB)
     #include <emscripten/emscripten.h> // Required for the Web/HTML5
@@ -26,14 +27,14 @@
 
 // Common variables definitions
 //--------------------------------------------------------------------------------------
-int screenWidth = 800;
+int screenWidth = 800;                  // Update depending on web canvas
 const int screenHeight = 450;
-Vector2 messagePosition = {160, 7};
+Vector2 messagePosition = { 160, 7 };
 
 // Last gesture variables definitions
 //--------------------------------------------------------------------------------------
 int lastGesture = 0;
-Vector2 lastGesturePosition = {165, 130};
+Vector2 lastGesturePosition = { 165, 130 };
 
 // Gesture log variables definitions and functions declarations
 //--------------------------------------------------------------------------------------
@@ -41,6 +42,7 @@ Vector2 lastGesturePosition = {165, 130};
 char gestureLog[GESTURE_LOG_SIZE][12] = { "" }; // The gesture log uses an array (as an inverted circular queue) to store the performed gestures
 int gestureLogIndex = GESTURE_LOG_SIZE;         // The index for the inverted circular queue (moving from last to first direction, then looping around)
 int previousGesture = 0;
+
 char const *GetGestureName(int i)
 {
    switch (i)  {
@@ -58,6 +60,7 @@ char const *GetGestureName(int i)
       default:  return "Unknown";     break;
    }
 }
+
 Color GetGestureColor(int i)
 {
    switch (i)  {
@@ -75,19 +78,21 @@ Color GetGestureColor(int i)
       default:  return BLACK;   break;
    }
 }
-Color gestureColor = BLACK;
+
 int logMode = 1; // Log mode values: 0 shows repeated events; 1 hides repeated events; 2 shows repeated events but hide hold events; 3 hides repeated events and hide hold events
-Rectangle logButton1 = {53, 7, 48, 26};
-Rectangle logButton2 = {108, 7, 36, 26};
-Vector2 gestureLogPosition = {10, 10};
+
+Color gestureColor = { 0, 0, 0, 255 };
+Rectangle logButton1 = { 53, 7, 48, 26 };
+Rectangle logButton2 = { 108, 7, 36, 26 };
+Vector2 gestureLogPosition = { 10, 10 };
 
 // Protractor variables definitions
 //--------------------------------------------------------------------------------------
 float angleLength = 90.0f;
 float currentAngleDegrees = 0.0f;
-Vector2 finalVector = {0.0f, 0.0f};
+Vector2 finalVector = { 0.0f, 0.0f };
 char currentAngleStr[7] = "";
-Vector2 protractorPosition = {266.0f, 315.0f};
+Vector2 protractorPosition = { 266.0f, 315.0f };
 
 // Update
 //--------------------------------------------------------------------------------------
@@ -103,39 +108,40 @@ void Update(void)
 
     // Handle last gesture
     //--------------------------------------------------------------------------------------
-    if ( currentGesture != 0 && currentGesture != 4 && currentGesture != previousGesture ) lastGesture = currentGesture; // Filter the meaningful gestures (1, 2, 8 to 512) for the display
+    if ((currentGesture != 0) && (currentGesture != 4) && (currentGesture != previousGesture)) lastGesture = currentGesture; // Filter the meaningful gestures (1, 2, 8 to 512) for the display
 
     // Handle gesture log
     //--------------------------------------------------------------------------------------
-    if ( IsMouseButtonReleased(MOUSE_BUTTON_LEFT) )
+    if (IsMouseButtonReleased(MOUSE_BUTTON_LEFT))
     {
-        if ( CheckCollisionPointRec(GetMousePosition(), logButton1 ) )
+        if (CheckCollisionPointRec(GetMousePosition(), logButton1))
         {
             switch (logMode)
             {
-              case 3:  logMode=2; break;
-              case 2:  logMode=3; break;
-              case 1:  logMode=0; break;
-              default: logMode=1; break;
+                case 3:  logMode=2; break;
+                case 2:  logMode=3; break;
+                case 1:  logMode=0; break;
+                default: logMode=1; break;
             }
         }
-        else if ( CheckCollisionPointRec(GetMousePosition(), logButton2) )
+        else if (CheckCollisionPointRec(GetMousePosition(), logButton2))
         {
             switch (logMode)
             {
-              case 3:  logMode=1; break;
-              case 2:  logMode=0; break;
-              case 1:  logMode=3; break;
-              default: logMode=2; break;
+                case 3:  logMode=1; break;
+                case 2:  logMode=0; break;
+                case 1:  logMode=3; break;
+                default: logMode=2; break;
             }
         }
     }
+    
     int fillLog = 0; // Gate variable to be used to allow or not the gesture log to be filled
     if (currentGesture !=0)
     {
         if (logMode == 3) // 3 hides repeated events and hide hold events
         {
-            if ( ( currentGesture != 4 && currentGesture != previousGesture ) || currentGesture < 3 ) fillLog = 1;
+            if (((currentGesture != 4) && (currentGesture != previousGesture)) || (currentGesture < 3)) fillLog = 1;
         }
         else if (logMode == 2) // 2 shows repeated events but hide hold events
         {
@@ -150,13 +156,16 @@ void Update(void)
             fillLog = 1;
         }
     }
+    
     if (fillLog) // If one of the conditions from logMode was met, fill the gesture log
     {
         previousGesture = currentGesture;
         gestureColor = GetGestureColor(currentGesture);
         if (gestureLogIndex <= 0) gestureLogIndex = GESTURE_LOG_SIZE;
         gestureLogIndex--;
-        TextCopy( gestureLog[gestureLogIndex], GetGestureName(currentGesture) ); // Copy the gesture respective name to the gesture log array
+        
+        // Copy the gesture respective name to the gesture log array
+        TextCopy(gestureLog[gestureLogIndex], GetGestureName(currentGesture)); 
     }
 
     // Handle protractor
@@ -173,12 +182,15 @@ void Update(void)
     {
         currentAngleDegrees = 0.0f;
     }
-    float currentAngleRadians = ( (currentAngleDegrees +90.0f)*PI/180 ); // Convert the current angle to Radians
-    finalVector = (Vector2){ ( angleLength*sinf(currentAngleRadians) ) + protractorPosition.x, ( angleLength*cosf(currentAngleRadians) ) + protractorPosition.y }; // Calculate the final vector for display
+    
+    float currentAngleRadians = ((currentAngleDegrees +90.0f)*PI/180); // Convert the current angle to Radians
+    finalVector = (Vector2){ (angleLength*sinf(currentAngleRadians)) + protractorPosition.x, (angleLength*cosf(currentAngleRadians)) + protractorPosition.y }; // Calculate the final vector for display
 
     // Handle touch and mouse pointer points
     //--------------------------------------------------------------------------------------
-    Vector2 touchPosition[touchCount];
+    #define MAX_TOUCH_COUNT     32
+    
+    Vector2 touchPosition[MAX_TOUCH_COUNT] = { 0 };
     Vector2 mousePosition = {0, 0};
     if (currentGesture != GESTURE_NONE)
     {
@@ -186,16 +198,14 @@ void Update(void)
         {
             for (i = 0; i < touchCount; i++) touchPosition[i] = GetTouchPosition(i); // Fill the touch positions
         }
-        else
-        {
-            mousePosition = GetMousePosition();
-        }
+        else mousePosition = GetMousePosition();
     }
 
     // Draw
     //--------------------------------------------------------------------------------------
     BeginDrawing();
-    ClearBackground(RAYWHITE);
+        
+        ClearBackground(RAYWHITE);
 
         // Draw common
         //--------------------------------------------------------------------------------------
@@ -216,29 +226,30 @@ void Update(void)
         DrawRing( (Vector2){lastGesturePosition.x + 103, lastGesturePosition.y + 16}, 6.0f, 11.0f, 0.0f, 360.0f, 0, lastGesture == GESTURE_DRAG ? LIME : LIGHTGRAY);
         DrawCircle(lastGesturePosition.x + 80, lastGesturePosition.y + 43, 10, lastGesture == GESTURE_DOUBLETAP ? SKYBLUE : LIGHTGRAY);
         DrawCircle(lastGesturePosition.x + 103, lastGesturePosition.y + 43, 10, lastGesture == GESTURE_DOUBLETAP ? SKYBLUE : LIGHTGRAY);
-        DrawTriangle( (Vector2){lastGesturePosition.x + 122, lastGesturePosition.y + 16}, (Vector2){lastGesturePosition.x + 137, lastGesturePosition.y + 26}, (Vector2){lastGesturePosition.x + 137, lastGesturePosition.y + 6}, lastGesture == GESTURE_PINCH_OUT ? ORANGE : LIGHTGRAY);
-        DrawTriangle( (Vector2){lastGesturePosition.x + 147, lastGesturePosition.y + 6}, (Vector2){lastGesturePosition.x + 147, lastGesturePosition.y + 26}, (Vector2){lastGesturePosition.x + 162, lastGesturePosition.y + 16}, lastGesture == GESTURE_PINCH_OUT ? ORANGE : LIGHTGRAY);
-        DrawTriangle( (Vector2){lastGesturePosition.x + 125, lastGesturePosition.y + 33}, (Vector2){lastGesturePosition.x + 125, lastGesturePosition.y + 53}, (Vector2){lastGesturePosition.x + 140, lastGesturePosition.y + 43}, lastGesture == GESTURE_PINCH_IN ? VIOLET : LIGHTGRAY);
-        DrawTriangle( (Vector2){lastGesturePosition.x + 144, lastGesturePosition.y + 43}, (Vector2){lastGesturePosition.x + 159, lastGesturePosition.y + 53}, (Vector2){lastGesturePosition.x + 159, lastGesturePosition.y + 33}, lastGesture == GESTURE_PINCH_IN ? VIOLET : LIGHTGRAY);
-        for ( i = 0; i < 4; i++ ) DrawCircle(lastGesturePosition.x + 180, lastGesturePosition.y + 7 + i*15, 5, touchCount <= i ? LIGHTGRAY : gestureColor);
+        DrawTriangle((Vector2){ lastGesturePosition.x + 122, lastGesturePosition.y + 16 }, (Vector2){ lastGesturePosition.x + 137, lastGesturePosition.y + 26 }, (Vector2){ lastGesturePosition.x + 137, lastGesturePosition.y + 6 }, lastGesture == GESTURE_PINCH_OUT? ORANGE : LIGHTGRAY);
+        DrawTriangle((Vector2){ lastGesturePosition.x + 147, lastGesturePosition.y + 6 }, (Vector2){ lastGesturePosition.x + 147, lastGesturePosition.y + 26 }, (Vector2){ lastGesturePosition.x + 162, lastGesturePosition.y + 16 }, lastGesture == GESTURE_PINCH_OUT? ORANGE : LIGHTGRAY);
+        DrawTriangle((Vector2){ lastGesturePosition.x + 125, lastGesturePosition.y + 33 }, (Vector2){ lastGesturePosition.x + 125, lastGesturePosition.y + 53 }, (Vector2){ lastGesturePosition.x + 140, lastGesturePosition.y + 43 }, lastGesture == GESTURE_PINCH_IN? VIOLET : LIGHTGRAY);
+        DrawTriangle((Vector2){ lastGesturePosition.x + 144, lastGesturePosition.y + 43 }, (Vector2){ lastGesturePosition.x + 159, lastGesturePosition.y + 53 }, (Vector2){ lastGesturePosition.x + 159, lastGesturePosition.y + 33 }, lastGesture == GESTURE_PINCH_IN? VIOLET : LIGHTGRAY);
+        for (i = 0; i < 4; i++) DrawCircle(lastGesturePosition.x + 180, lastGesturePosition.y + 7 + i*15, 5, touchCount <= i? LIGHTGRAY : gestureColor);
 
         // Draw gesture log
         //--------------------------------------------------------------------------------------
         DrawText("Log", gestureLogPosition.x, gestureLogPosition.y, 20, BLACK);
+        
         // Loop in both directions to print the gesture log array in the inverted order (and looping around if the index started somewhere in the middle)
         for (i = 0, ii = gestureLogIndex; i < GESTURE_LOG_SIZE; i++, ii = (ii + 1) % GESTURE_LOG_SIZE) DrawText(gestureLog[ii], gestureLogPosition.x, gestureLogPosition.y + 410 - i*20, 20, (i == 0 ? gestureColor : LIGHTGRAY));
         Color logButton1Color, logButton2Color;
         switch (logMode)
         {
-          case 3:  logButton1Color=MAROON; logButton2Color=MAROON; break;
-          case 2:  logButton1Color=GRAY;   logButton2Color=MAROON; break;
-          case 1:  logButton1Color=MAROON; logButton2Color=GRAY;   break;
-          default: logButton1Color=GRAY;   logButton2Color=GRAY;   break;
+            case 3:  logButton1Color=MAROON; logButton2Color=MAROON; break;
+            case 2:  logButton1Color=GRAY;   logButton2Color=MAROON; break;
+            case 1:  logButton1Color=MAROON; logButton2Color=GRAY;   break;
+            default: logButton1Color=GRAY;   logButton2Color=GRAY;   break;
         }
-        DrawRectangleRec( logButton1, logButton1Color);
+        DrawRectangleRec(logButton1, logButton1Color);
         DrawText("Hide", logButton1.x + 7, logButton1.y + 3, 10, WHITE);
         DrawText("Repeat", logButton1.x + 7, logButton1.y + 13, 10, WHITE);
-        DrawRectangleRec( logButton2, logButton2Color);
+        DrawRectangleRec(logButton2, logButton2Color);
         DrawText("Hide", logButton1.x + 62, logButton1.y + 3, 10, WHITE);
         DrawText("Hold", logButton1.x + 62, logButton1.y + 13, 10, WHITE);
 
@@ -250,10 +261,10 @@ void Update(void)
         const char *angleStringTrim = TextSubtext(angleString, 0, angleStringDot + 3);
         DrawText( angleStringTrim, protractorPosition.x + 55, protractorPosition.y + 92, 20, gestureColor);
         DrawCircle(protractorPosition.x, protractorPosition.y, 80.0f, WHITE);
-        DrawLineEx( (Vector2){protractorPosition.x - 90, protractorPosition.y}, (Vector2){protractorPosition.x + 90, protractorPosition.y}, 3.0f, LIGHTGRAY);
-        DrawLineEx( (Vector2){protractorPosition.x, protractorPosition.y - 90}, (Vector2){protractorPosition.x, protractorPosition.y + 90}, 3.0f, LIGHTGRAY);
-        DrawLineEx( (Vector2){protractorPosition.x - 80, protractorPosition.y - 45}, (Vector2){protractorPosition.x + 80, protractorPosition.y + 45}, 3.0f, GREEN);
-        DrawLineEx( (Vector2){protractorPosition.x - 80, protractorPosition.y + 45}, (Vector2){protractorPosition.x + 80, protractorPosition.y - 45}, 3.0f, GREEN);
+        DrawLineEx((Vector2){ protractorPosition.x - 90, protractorPosition.y }, (Vector2){ protractorPosition.x + 90, protractorPosition.y }, 3.0f, LIGHTGRAY);
+        DrawLineEx((Vector2){ protractorPosition.x, protractorPosition.y - 90 }, (Vector2){ protractorPosition.x, protractorPosition.y + 90 }, 3.0f, LIGHTGRAY);
+        DrawLineEx((Vector2){ protractorPosition.x - 80, protractorPosition.y - 45 }, (Vector2){ protractorPosition.x + 80, protractorPosition.y + 45 }, 3.0f, GREEN);
+        DrawLineEx((Vector2){ protractorPosition.x - 80, protractorPosition.y + 45 }, (Vector2){ protractorPosition.x + 80, protractorPosition.y - 45 }, 3.0f, GREEN);
         DrawText("0", protractorPosition.x + 96, protractorPosition.y - 9, 20, BLACK);
         DrawText("30", protractorPosition.x + 74, protractorPosition.y - 68, 20, BLACK);
         DrawText("90", protractorPosition.x - 11, protractorPosition.y - 110, 20, BLACK);
@@ -262,7 +273,7 @@ void Update(void)
         DrawText("210", protractorPosition.x - 100, protractorPosition.y + 50, 20, BLACK);
         DrawText("270", protractorPosition.x - 18, protractorPosition.y + 92, 20, BLACK);
         DrawText("330", protractorPosition.x + 72, protractorPosition.y + 50, 20, BLACK);
-        if ( currentAngleDegrees != 0.0f ) DrawLineEx( protractorPosition, finalVector, 3.0f, gestureColor);
+        if (currentAngleDegrees != 0.0f) DrawLineEx(protractorPosition, finalVector, 3.0f, gestureColor);
 
         // Draw touch and mouse pointer points
         //--------------------------------------------------------------------------------------
@@ -275,7 +286,8 @@ void Update(void)
                     DrawCircleV(touchPosition[i], 50.0f, Fade(gestureColor, 0.5f));
                     DrawCircleV(touchPosition[i], 5.0f, gestureColor);
                 }
-                if (touchCount == 2) DrawLineEx( touchPosition[0], touchPosition[1], (currentGesture == 512 ? 8 : 12), gestureColor);
+                
+                if (touchCount == 2) DrawLineEx(touchPosition[0], touchPosition[1], ((currentGesture == 512)? 8 : 12), gestureColor);
             }
             else
             {
@@ -297,15 +309,11 @@ int main(void)
     // Initialization
     //--------------------------------------------------------------------------------------
     #if defined( PLATFORM_WEB )
-        const int canvasWidth = EM_ASM_INT( return document.getElementById('canvas').getBoundingClientRect().width; ); // Using Emscripten EM_ASM_INT macro, get the page canvas width
-        if (canvasWidth > 400)
-        {
-            screenWidth = canvasWidth;
-        }
-        else
-        {
-            screenWidth = 400; // Set a minimum width for the screen
-        }
+        // Using Emscripten EM_ASM_INT macro, get the page canvas width
+        const int canvasWidth = EM_ASM_INT( return document.getElementById('canvas').getBoundingClientRect().width; );
+        
+        if (canvasWidth > 400) screenWidth = canvasWidth;
+        else screenWidth = 400; // Set a minimum width for the screen
     #endif
 
     InitWindow(screenWidth, screenHeight, "raylib [core] example - input gestures web");
