@@ -5593,7 +5593,13 @@ static void MouseButtonCallback(GLFWwindow *window, int button, int action, int 
     gestureEvent.position[0].y /= (float)GetScreenHeight();
 
     // Gesture data is sent to gestures-system for processing
+#if defined(PLATFORM_WEB)
+    // Prevent calling ProcessGestureEvent() when Emscripten is present and there's a touch gesture, so EmscriptenTouchCallback() can handle it itself
+    if (GetMouseX() != 0 || GetMouseY() != 0) ProcessGestureEvent(gestureEvent);
+#else
     ProcessGestureEvent(gestureEvent);
+#endif
+
 #endif
 }
 

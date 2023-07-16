@@ -127,7 +127,7 @@ void SetGesturesEnabled(unsigned int flags);            // Enable a set of gestu
 bool IsGestureDetected(int gesture);                    // Check if a gesture have been detected
 int GetGestureDetected(void);                           // Get latest detected gesture
 
-float GetGestureHoldDuration(void);                     // Get gesture hold time in milliseconds
+float GetGestureHoldDuration(void);                     // Get gesture hold time in seconds
 Vector2 GetGestureDragVector(void);                     // Get gesture drag vector
 float GetGestureDragAngle(void);                        // Get gesture drag angle
 Vector2 GetGesturePinchVector(void);                    // Get gesture pinch delta
@@ -181,8 +181,8 @@ float GetGesturePinchAngle(void);                       // Get gesture pinch ang
 #define FORCE_TO_SWIPE      0.0005f     // Swipe force, measured in normalized screen units/time
 #define MINIMUM_DRAG        0.015f      // Drag minimum force, measured in normalized screen units (0.0f to 1.0f)
 #define MINIMUM_PINCH       0.005f      // Pinch minimum force, measured in normalized screen units (0.0f to 1.0f)
-#define TAP_TIMEOUT         300         // Tap minimum time, measured in milliseconds
-#define PINCH_TIMEOUT       300         // Pinch minimum time, measured in milliseconds
+#define TAP_TIMEOUT         0.3f        // Tap minimum time, measured in seconds
+#define PINCH_TIMEOUT       0.3f        // Pinch minimum time, measured in seconds
 #define DOUBLETAP_RANGE     0.03f       // DoubleTap range, measured in normalized screen units (0.0f to 1.0f)
 
 //----------------------------------------------------------------------------------
@@ -209,7 +209,7 @@ typedef struct {
     } Touch;
     struct {
         bool resetRequired;             // HOLD reset to get first touch point again
-        double timeDuration;            // HOLD duration in milliseconds
+        double timeDuration;            // HOLD duration in seconds
     } Hold;
     struct {
         Vector2 vector;                 // DRAG vector (between initial and current position)
@@ -522,7 +522,7 @@ static float rgVector2Distance(Vector2 v1, Vector2 v2)
     return result;
 }
 
-// Time measure returned are milliseconds
+// Time measure returned are seconds
 static double rgGetCurrentTime(void)
 {
     double time = 0;
@@ -536,7 +536,7 @@ static double rgGetCurrentTime(void)
     QueryPerformanceFrequency(&clockFrequency);     // BE CAREFUL: Costly operation!
     QueryPerformanceCounter(&currentTime);
 
-    time = (double)currentTime/clockFrequency*1000.0f;  // Time in miliseconds
+    time = (double)currentTime/clockFrequency;  // Time in seconds
 #endif
 
 #if defined(__linux__)
@@ -545,7 +545,7 @@ static double rgGetCurrentTime(void)
     clock_gettime(CLOCK_MONOTONIC, &now);
     unsigned long long int nowTime = (unsigned long long int)now.tv_sec*1000000000LLU + (unsigned long long int)now.tv_nsec;     // Time in nanoseconds
 
-    time = ((double)nowTime/1000000.0);     // Time in miliseconds
+    time = ((double)nowTime*1e-9);     // Time in seconds
 #endif
 
 #if defined(__APPLE__)
@@ -561,7 +561,7 @@ static double rgGetCurrentTime(void)
     mach_port_deallocate(mach_task_self(), cclock);
     unsigned long long int nowTime = (unsigned long long int)now.tv_sec*1000000000LLU + (unsigned long long int)now.tv_nsec;     // Time in nanoseconds
 
-    time = ((double)nowTime/1000000.0);     // Time in miliseconds
+    time = ((double)nowTime*1e-9);     // Time in seconds
 #endif
 #endif
 
