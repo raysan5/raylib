@@ -70,6 +70,8 @@
 // By default EndDrawing() does this job: draws everything + SwapScreenBuffer() + manage frame timing + PollInputEvents()
 // Enabling this flag allows manual control of the frame processes, use at your own risk
 //#define SUPPORT_CUSTOM_FRAME_CONTROL    1
+// Support receiving input of control characters, mainly for backspace and newline characters
+//#define SUPPORT_INPUT_CONTROL_CHARS         1
 
 // rcore: Configuration values
 //------------------------------------------------------------------------------------

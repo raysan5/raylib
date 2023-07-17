@@ -5553,6 +5553,10 @@ static void CharCallback(GLFWwindow *window, unsigned int key)
     // Ref: https://github.com/glfw/glfw/issues/668#issuecomment-166794907
     // Ref: https://www.glfw.org/docs/latest/input_guide.html#input_char
 
+#if !defined(SUPPORT_INPUT_CONTROL_CHARS)
+    // Control characters
+    if (key < 32) return;
+#endif
     // Check if there is space available in the queue
     if (CORE.Input.Keyboard.charPressedQueueCount < MAX_CHAR_PRESSED_QUEUE)
     {

@@ -314,7 +314,7 @@ void _glfwInputChar(_GLFWwindow* window, uint32_t codepoint, int mods, GLFWbool 
     assert(mods == (mods & GLFW_MOD_MASK));
     assert(plain == GLFW_TRUE || plain == GLFW_FALSE);
 
-    if (codepoint < 32 || (codepoint > 126 && codepoint < 160))
+    if (codepoint > 126 && codepoint < 160) // original: if (codepoint < 32 || (codepoint > 126 && codepoint < 160)) // @nthung-2k5
         return;
 
     if (!window->lockKeyMods)
