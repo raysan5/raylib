@@ -6,14 +6,19 @@
 *       #define SUPPORT_MODULE_RTEXT
 *           rtext module is included in the build
 *
+*       #define SUPPORT_DEFAULT_FONT
+*           Load default raylib font on initialization to be used by DrawText() and MeasureText().
+*           If no default font loaded, DrawTextEx() and MeasureTextEx() are required.
+*
 *       #define SUPPORT_FILEFORMAT_FNT
 *       #define SUPPORT_FILEFORMAT_TTF
 *           Selected desired fileformats to be supported for loading. Some of those formats are
 *           supported by default, to remove support, just comment unrequired #define in this module
 *
-*       #define SUPPORT_DEFAULT_FONT
-*           Load default raylib font on initialization to be used by DrawText() and MeasureText().
-*           If no default font loaded, DrawTextEx() and MeasureTextEx() are required.
+*       #define SUPPORT_FONT_ATLAS_WHITE_REC
+*           On font atlas image generation [GenImageFontAtlas()], add a 3x3 pixels white rectangle
+*           at the bottom-right corner of the atlas. It can be useful to for shapes drawing, to allow
+*           drawing text and shapes with a single draw call [SetShapesTexture()].
 *
 *       #define TEXTSPLIT_MAX_TEXT_BUFFER_LENGTH
 *           TextSplit() function static buffer max size
@@ -734,7 +739,6 @@ Image GenImageFontAtlas(const GlyphInfo *chars, Rectangle **charRecs, int glyphC
     }
 #endif
 
-
     atlas.data = (unsigned char *)RL_CALLOC(1, atlas.width*atlas.height);   // Create a bitmap to store characters (8 bpp)
     atlas.format = PIXELFORMAT_UNCOMPRESSED_GRAYSCALE;
     atlas.mipmaps = 1;
@@ -839,7 +843,20 @@ Image GenImageFontAtlas(const GlyphInfo *chars, Rectangle **charRecs, int glyphC
         RL_FREE(nodes);
         RL_FREE(context);
     }
-
+    
+#if defined(SUPPORT_FONT_ATLAS_WHITE_REC)
+    // Add a 3x3 white rectangle at the bottom-right corner of the generated atlas,
+    // useful to use as the white texture to draw shapes with raylib, using this rectangle
+    // shapes and text can be backed into a single draw call: SetShapesTexture()
+    for (int i = 0, k = atlas.width*atlas.height - 1; i < 3; i++)
+    {
+        ((unsigned char *)atlas.data)[k - 0] = 255;
+        ((unsigned char *)atlas.data)[k - 1] = 255;
+        ((unsigned char *)atlas.data)[k - 2] = 255;
+        k -= atlas.width;
+    }
+#endif
+    
     // Convert image data from GRAYSCALE to GRAY_ALPHA
     unsigned char *dataGrayAlpha = (unsigned char *)RL_MALLOC(atlas.width*atlas.height*sizeof(unsigned char)*2); // Two channels
 
