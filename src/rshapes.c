@@ -1503,8 +1503,8 @@ void DrawTriangleStrip(Vector2 *points, int pointCount, Color color)
 void DrawPoly(Vector2 center, int sides, float radius, float rotation, Color color)
 {
     if (sides < 3) sides = 3;
-    float centralAngle = rotation * DEG2RAD;
-    float angleStep = 360.0f/(float)sides * DEG2RAD;
+    float centralAngle = rotation*DEG2RAD;
+    float angleStep = 360.0f/(float)sides*DEG2RAD;
 
 #if defined(SUPPORT_QUADS_DRAW_MODE)
     rlSetTexture(texShapes.id);
@@ -1513,7 +1513,7 @@ void DrawPoly(Vector2 center, int sides, float radius, float rotation, Color col
         for (int i = 0; i < sides; i++)
         {
             rlColor4ub(color.r, color.g, color.b, color.a);
-            float nextAngle = centralAngle+angleStep;
+            float nextAngle = centralAngle + angleStep;
 
             rlTexCoord2f(texShapesRec.x/texShapes.width, texShapesRec.y/texShapes.height);
             rlVertex2f(center.x, center.y);
@@ -1551,8 +1551,8 @@ void DrawPoly(Vector2 center, int sides, float radius, float rotation, Color col
 void DrawPolyLines(Vector2 center, int sides, float radius, float rotation, Color color)
 {
     if (sides < 3) sides = 3;
-    float centralAngle = rotation * DEG2RAD;
-    float angleStep = 360.0f/(float)sides * DEG2RAD;
+    float centralAngle = rotation*DEG2RAD;
+    float angleStep = 360.0f/(float)sides*DEG2RAD;
 
     rlBegin(RL_LINES);
         for (int i = 0; i < sides; i++)
@@ -1560,7 +1560,7 @@ void DrawPolyLines(Vector2 center, int sides, float radius, float rotation, Colo
             rlColor4ub(color.r, color.g, color.b, color.a);
 
             rlVertex2f(center.x + cosf(centralAngle)*radius, center.y + sinf(centralAngle)*radius);
-            rlVertex2f(center.x + cosf(centralAngle+angleStep)*radius, center.y + sinf(centralAngle+angleStep)*radius);
+            rlVertex2f(center.x + cosf(centralAngle + angleStep)*radius, center.y + sinf(centralAngle + angleStep)*radius);
 
             centralAngle += angleStep;
         }
