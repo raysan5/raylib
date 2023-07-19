@@ -3,12 +3,12 @@
 *   rcamera - Basic camera system with support for multiple camera modes
 *
 *   CONFIGURATION:
-*       #define CAMERA_IMPLEMENTATION
+*       #define RCAMERA_IMPLEMENTATION
 *           Generates the implementation of the library into the included file.
 *           If not defined, the library is in header only mode and can be included in other headers
 *           or source files without problems. But only ONE file should hold the implementation.
 *
-*       #define CAMERA_STANDALONE
+*       #define RCAMERA_STANDALONE
 *           If defined, the library can be used as standalone as a camera system but some
 *           functions must be redefined to manage inputs accordingly.
 *
@@ -50,7 +50,7 @@
     #define RLAPI       // Functions defined as 'extern' by default (implicit specifiers)
 #endif
 
-#if defined(CAMERA_STANDALONE)
+#if defined(RCAMERA_STANDALONE)
     #define CAMERA_CULL_DISTANCE_NEAR      0.01
     #define CAMERA_CULL_DISTANCE_FAR    1000.0
 #else
@@ -60,9 +60,9 @@
 
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
-// NOTE: Below types are required for CAMERA_STANDALONE usage
+// NOTE: Below types are required for standalone usage
 //----------------------------------------------------------------------------------
-#if defined(CAMERA_STANDALONE)
+#if defined(RCAMERA_STANDALONE)
     // Vector2, 2 components
     typedef struct Vector2 {
         float x;                // Vector x component
@@ -75,6 +75,14 @@
         float y;                // Vector y component
         float z;                // Vector z component
     } Vector3;
+
+    // Matrix, 4x4 components, column major, OpenGL style, right-handed
+    typedef struct Matrix {
+        float m0, m4, m8, m12;  // Matrix first row (4 components)
+        float m1, m5, m9, m13;  // Matrix second row (4 components)
+        float m2, m6, m10, m14; // Matrix third row (4 components)
+        float m3, m7, m11, m15; // Matrix fourth row (4 components)
+    } Matrix;
 
     // Camera type, defines a camera position/orientation in 3d space
     typedef struct Camera3D {
@@ -138,7 +146,7 @@ RLAPI Matrix GetCameraProjectionMatrix(Camera* camera, float aspect);
 }
 #endif
 
-#endif // CAMERA_H
+#endif // RCAMERA_H
 
 
 /***********************************************************************************
@@ -147,7 +155,7 @@ RLAPI Matrix GetCameraProjectionMatrix(Camera* camera, float aspect);
 *
 ************************************************************************************/
 
-#if defined(CAMERA_IMPLEMENTATION)
+#if defined(RCAMERA_IMPLEMENTATION)
 
 #include "raymath.h"        // Required for vector maths:
                             // Vector3Add()
@@ -417,7 +425,7 @@ Matrix GetCameraProjectionMatrix(Camera *camera, float aspect)
     return MatrixIdentity();
 }
 
-#ifndef CAMERA_STANDALONE
+#if !defined(RCAMERA_STANDALONE)
 // Update camera position for selected mode
 // Camera mode: CAMERA_FREE, CAMERA_FIRST_PERSON, CAMERA_THIRD_PERSON, CAMERA_ORBITAL or CUSTOM
 void UpdateCamera(Camera *camera, int mode)
@@ -483,7 +491,7 @@ void UpdateCamera(Camera *camera, int mode)
         if (IsKeyPressed(KEY_KP_ADD)) CameraMoveToTarget(camera, -2.0f);
     }
 }
-#endif // !CAMERA_STANDALONE
+#endif // !RCAMERA_STANDALONE
 
 // Update camera movement, movement/rotation values should be provided by user
 void UpdateCameraPro(Camera *camera, Vector3 movement, Vector3 rotation, float zoom)
@@ -516,4 +524,4 @@ void UpdateCameraPro(Camera *camera, Vector3 movement, Vector3 rotation, float z
     CameraMoveToTarget(camera, zoom);
 }
 
-#endif // CAMERA_IMPLEMENTATION
+#endif // RCAMERA_IMPLEMENTATION

@@ -6,14 +6,19 @@
 *       #define SUPPORT_MODULE_RTEXT
 *           rtext module is included in the build
 *
+*       #define SUPPORT_DEFAULT_FONT
+*           Load default raylib font on initialization to be used by DrawText() and MeasureText().
+*           If no default font loaded, DrawTextEx() and MeasureTextEx() are required.
+*
 *       #define SUPPORT_FILEFORMAT_FNT
 *       #define SUPPORT_FILEFORMAT_TTF
 *           Selected desired fileformats to be supported for loading. Some of those formats are
 *           supported by default, to remove support, just comment unrequired #define in this module
 *
-*       #define SUPPORT_DEFAULT_FONT
-*           Load default raylib font on initialization to be used by DrawText() and MeasureText().
-*           If no default font loaded, DrawTextEx() and MeasureTextEx() are required.
+*       #define SUPPORT_FONT_ATLAS_WHITE_REC
+*           On font atlas image generation [GenImageFontAtlas()], add a 3x3 pixels white rectangle
+*           at the bottom-right corner of the atlas. It can be useful to for shapes drawing, to allow
+*           drawing text and shapes with a single draw call [SetShapesTexture()].
 *
 *       #define TEXTSPLIT_MAX_TEXT_BUFFER_LENGTH
 *           TextSplit() function static buffer max size
@@ -111,8 +116,9 @@ static Font defaultFont = { 0 };
 // Module specific Functions Declaration
 //----------------------------------------------------------------------------------
 #if defined(SUPPORT_FILEFORMAT_FNT)
-static Font LoadBMFont(const char *fileName);     // Load a BMFont file (AngelCode font file)
+static Font LoadBMFont(const char *fileName);   // Load a BMFont file (AngelCode font file)
 #endif
+static int textLineSpacing = 15;                // Text vertical line spacing in pixels
 
 #if defined(SUPPORT_DEFAULT_FONT)
 extern void LoadFontDefault(void);
@@ -123,7 +129,6 @@ extern void UnloadFontDefault(void);
 // Module Functions Definition
 //----------------------------------------------------------------------------------
 #if defined(SUPPORT_DEFAULT_FONT)
-
 // Load raylib default font
 extern void LoadFontDefault(void)
 {
@@ -699,9 +704,11 @@ Image GenImageFontAtlas(const GlyphInfo *chars, Rectangle **charRecs, int glyphC
     for (int i = 0; i < glyphCount; i++)
     {
         if (chars[i].image.width > maxGlyphWidth) maxGlyphWidth = chars[i].image.width;
-        totalWidth += chars[i].image.width + 2*padding;
+        totalWidth += chars[i].image.width + 4*padding;
     }
 
+//#define SUPPORT_FONT_ATLAS_SIZE_CONSERVATIVE
+#if defined(SUPPORT_FONT_ATLAS_SIZE_CONSERVATIVE)
     int rowCount = 0;
     int imageSize = 64;  // Define minimum starting value to avoid unnecessary calculation steps for very small images
 
@@ -714,6 +721,24 @@ Image GenImageFontAtlas(const GlyphInfo *chars, Rectangle **charRecs, int glyphC
 
     atlas.width = imageSize;   // Atlas bitmap width
     atlas.height = imageSize;  // Atlas bitmap height
+#else
+    // No need for a so-conservative atlas generation
+    float totalArea = totalWidth*fontSize*1.2f;
+    float imageMinSize = sqrtf(totalArea);
+    int imageSize = (int)powf(2, ceilf(logf(imageMinSize)/logf(2)));
+
+    if (totalArea < ((imageSize*imageSize)/2))
+    {
+        atlas.width = imageSize;    // Atlas bitmap width
+        atlas.height = imageSize/2; // Atlas bitmap height
+    }
+    else
+    {
+        atlas.width = imageSize;   // Atlas bitmap width
+        atlas.height = imageSize;  // Atlas bitmap height
+    }
+#endif
+
     atlas.data = (unsigned char *)RL_CALLOC(1, atlas.width*atlas.height);   // Create a bitmap to store characters (8 bpp)
     atlas.format = PIXELFORMAT_UNCOMPRESSED_GRAYSCALE;
     atlas.mipmaps = 1;
@@ -818,7 +843,20 @@ Image GenImageFontAtlas(const GlyphInfo *chars, Rectangle **charRecs, int glyphC
         RL_FREE(nodes);
         RL_FREE(context);
     }
-
+    
+#if defined(SUPPORT_FONT_ATLAS_WHITE_REC)
+    // Add a 3x3 white rectangle at the bottom-right corner of the generated atlas,
+    // useful to use as the white texture to draw shapes with raylib, using this rectangle
+    // shapes and text can be backed into a single draw call: SetShapesTexture()
+    for (int i = 0, k = atlas.width*atlas.height - 1; i < 3; i++)
+    {
+        ((unsigned char *)atlas.data)[k - 0] = 255;
+        ((unsigned char *)atlas.data)[k - 1] = 255;
+        ((unsigned char *)atlas.data)[k - 2] = 255;
+        k -= atlas.width;
+    }
+#endif
+    
     // Convert image data from GRAYSCALE to GRAY_ALPHA
     unsigned char *dataGrayAlpha = (unsigned char *)RL_MALLOC(atlas.width*atlas.height*sizeof(unsigned char)*2); // Two channels
 
@@ -1071,9 +1109,8 @@ void DrawTextEx(Font font, const char *text, Vector2 position, float fontSize, f
 
         if (codepoint == '\n')
         {
-            // NOTE: Fixed line spacing of 1.5 line-height
-            // TODO: Support custom line spacing defined by user
-            textOffsetY += (int)((font.baseSize + font.baseSize/2.0f)*scaleFactor);
+            // NOTE: Line spacing is a global variable, use SetTextLineSpacing() to setup
+            textOffsetY += textLineSpacing;
             textOffsetX = 0.0f;
         }
         else
@@ -1143,9 +1180,8 @@ void DrawTextCodepoints(Font font, const int *codepoints, int count, Vector2 pos
 
         if (codepoints[i] == '\n')
         {
-            // NOTE: Fixed line spacing of 1.5 line-height
-            // TODO: Support custom line spacing defined by user
-            textOffsetY += (int)((font.baseSize + font.baseSize/2.0f)*scaleFactor);
+            // NOTE: Line spacing is a global variable, use SetTextLineSpacing() to setup
+            textOffsetY += textLineSpacing;
             textOffsetX = 0.0f;
         }
         else
@@ -1159,6 +1195,12 @@ void DrawTextCodepoints(Font font, const int *codepoints, int count, Vector2 pos
             else textOffsetX += ((float)font.glyphs[index].advanceX*scaleFactor + spacing);
         }
     }
+}
+
+// Set vertical line spacing when drawing with line-breaks
+void SetTextLineSpacing(int spacing)
+{
+    textLineSpacing = spacing;
 }
 
 // Measure string width for default font
@@ -1219,7 +1261,9 @@ Vector2 MeasureTextEx(Font font, const char *text, float fontSize, float spacing
             if (tempTextWidth < textWidth) tempTextWidth = textWidth;
             byteCounter = 0;
             textWidth = 0;
-            textHeight += ((float)font.baseSize*1.5f); // NOTE: Fixed line spacing of 1.5 lines
+
+            // NOTE: Line spacing is a global variable, use SetTextLineSpacing() to setup
+            textHeight += (float)textLineSpacing;
         }
 
         if (tempByteCounter < byteCounter) tempByteCounter = byteCounter;
@@ -1227,7 +1271,7 @@ Vector2 MeasureTextEx(Font font, const char *text, float fontSize, float spacing
 
     if (tempTextWidth < textWidth) tempTextWidth = textWidth;
 
-    textSize.x = tempTextWidth*scaleFactor + (float)((tempByteCounter - 1)*spacing); // Adds chars spacing to measure
+    textSize.x = tempTextWidth*scaleFactor + (float)((tempByteCounter - 1)*spacing);
     textSize.y = textHeight*scaleFactor;
 
     return textSize;
@@ -1574,7 +1618,8 @@ int TextFindIndex(const char *text, const char *find)
 }
 
 // Get upper case version of provided string
-// REQUIRES: toupper()
+// WARNING: Limited functionality, only basic characters set
+// TODO: Support UTF-8 diacritics to upper-case, check codepoints
 const char *TextToUpper(const char *text)
 {
     static char buffer[MAX_TEXT_BUFFER_LENGTH] = { 0 };
@@ -1582,17 +1627,10 @@ const char *TextToUpper(const char *text)
 
     if (text != NULL)
     {
-        for (int i = 0; i < MAX_TEXT_BUFFER_LENGTH; i++)
+        for (int i = 0; (i < MAX_TEXT_BUFFER_LENGTH - 1) && (text[i] != '\0'); i++)
         {
-            if (text[i] != '\0')
-            {
-                buffer[i] = (char)toupper(text[i]);
-                //if ((text[i] >= 'a') && (text[i] <= 'z')) buffer[i] = text[i] - 32;
-
-                // TODO: Support UTF-8 diacritics to upper-case
-                //if ((text[i] >= 'à') && (text[i] <= 'ý')) buffer[i] = text[i] - 32;
-            }
-            else { buffer[i] = '\0'; break; }
+            if ((text[i] >= 'a') && (text[i] <= 'z')) buffer[i] = text[i] - 32;
+            else buffer[i] = text[i];
         }
     }
 
@@ -1600,7 +1638,7 @@ const char *TextToUpper(const char *text)
 }
 
 // Get lower case version of provided string
-// REQUIRES: tolower()
+// WARNING: Limited functionality, only basic characters set
 const char *TextToLower(const char *text)
 {
     static char buffer[MAX_TEXT_BUFFER_LENGTH] = { 0 };
@@ -1608,14 +1646,10 @@ const char *TextToLower(const char *text)
 
     if (text != NULL)
     {
-        for (int i = 0; i < MAX_TEXT_BUFFER_LENGTH; i++)
+        for (int i = 0; (i < MAX_TEXT_BUFFER_LENGTH - 1) && (text[i] != '\0'); i++)
         {
-            if (text[i] != '\0')
-            {
-                buffer[i] = (char)tolower(text[i]);
-                //if ((text[i] >= 'A') && (text[i] <= 'Z')) buffer[i] = text[i] + 32;
-            }
-            else { buffer[i] = '\0'; break; }
+            if ((text[i] >= 'A') && (text[i] <= 'Z')) buffer[i] = text[i] + 32;
+            else buffer[i] = text[i];
         }
     }
 
@@ -1623,7 +1657,7 @@ const char *TextToLower(const char *text)
 }
 
 // Get Pascal case notation version of provided string
-// REQUIRES: toupper()
+// WARNING: Limited functionality, only basic characters set
 const char *TextToPascal(const char *text)
 {
     static char buffer[MAX_TEXT_BUFFER_LENGTH] = { 0 };
@@ -1631,20 +1665,18 @@ const char *TextToPascal(const char *text)
 
     if (text != NULL)
     {
-        buffer[0] = (char)toupper(text[0]);
+        // Upper case first character
+        if ((text[0] >= 'a') && (text[0] <= 'z')) buffer[0] = text[0] - 32;
 
-        for (int i = 1, j = 1; i < MAX_TEXT_BUFFER_LENGTH; i++, j++)
+        // Check for next separator to upper case another character
+        for (int i = 1, j = 1; (i < MAX_TEXT_BUFFER_LENGTH - 1) && (text[j] != '\0'); i++, j++)
         {
-            if (text[j] != '\0')
+            if (text[j] != '_') buffer[i] = text[j];
+            else
             {
-                if (text[j] != '_') buffer[i] = text[j];
-                else
-                {
-                    j++;
-                    buffer[i] = (char)toupper(text[j]);
-                }
+                j++;
+                if ((text[j] >= 'a') && (text[j] <= 'z')) buffer[i] = text[j] - 32;
             }
-            else { buffer[i] = '\0'; break; }
         }
     }
 

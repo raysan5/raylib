@@ -15,9 +15,9 @@ Some people ported raylib to other languages in form of bindings or wrappers to 
 | chez-raylib        | **auto** | [Chez Scheme](https://cisco.github.io/ChezScheme/) | GPLv3 | https://github.com/Yunoinsky/chez-raylib |
 | raylib-cr          | **4.6-dev (5e1a81)** | [Crystal](https://crystal-lang.org/)    | Apache-2.0 | https://github.com/sol-vin/raylib-cr |
 | ray-cyber          | 4.5     | [Cyber](https://cyberscript.dev)  | MIT | https://github.com/fubark/ray-cyber |
-| raylib-c3          | **4.5** | [C3](https://c3-lang.org/)    | MIT | https://github.com/Its-Kenta/Raylib-C3 |
+| raylib-c3          | **4.5** | [C3](https://c3-lang.org/)           | Zlib | https://github.com/Its-Kenta/Raylib-C3 |
 | dart-raylib        | 4.0     | [Dart](https://dart.dev/)               | MIT | https://gitlab.com/wolfenrain/dart-raylib   |
-| bindbc-raylib3     | 4.0     | [D](https://dlang.org/)              | BSL-1.0 | https://github.com/o3o/bindbc-raylib3     |
+| bindbc-raylib3     | **4.5**     | [D](https://dlang.org/)              | BSL-1.0 | https://github.com/o3o/bindbc-raylib3     |
 | dray               | 4.2     | [D](https://dlang.org/)              | Apache-2.0 | https://github.com/redthing1/dray          |
 | raylib-d           | **4.5** | [D](https://dlang.org/)              | Zlib | https://github.com/schveiguy/raylib-d        |
 | dlang_raylib       | 4.0     | [D](https://dlang.org)                  | MPL-2.0 |https://github.com/rc-05/dlang_raylib          |
@@ -28,7 +28,7 @@ Some people ported raylib to other languages in form of bindings or wrappers to 
 | raylib-go          | 4.5     | [Go](https://golang.org/)            | Zlib | https://github.com/gen2brain/raylib-go       |
 | raylib-guile       | **auto** | [Guile](https://www.gnu.org/software/guile/) | Zlib | https://github.com/petelliott/raylib-guile |
 | gforth-raylib      | 3.5     | [Gforth](https://gforth.org/)            | MIT  | https://github.com/ArnautDaniel/gforth-raylib   |
-| h-raylib           | **4.5** | [Haskell](https://haskell.org/)          | Apache-2.0 | https://github.com/Anut-py/h-raylib       |
+| h-raylib           | **4.6-dev** | [Haskell](https://haskell.org/)          | Apache-2.0 | https://github.com/Anut-py/h-raylib       |
 | raylib-hx          | 4.2     | [Haxe](https://haxe.org/)                | Zlib | https://github.com/foreignsasquatch/raylib-hx    |
 | hb-raylib          | 3.5     | [Harbour](https://harbour.github.io)                 | MIT | https://github.com/MarcosLeonardoMendezGerencir/hb-raylib |
 | jaylib             | 4.5     | [Janet](https://janet-lang.org/)     | MIT  | https://github.com/janet-lang/jaylib      |
@@ -40,7 +40,7 @@ Some people ported raylib to other languages in form of bindings or wrappers to 
 | raylib-lua         | **4.5**     | [Lua](http://www.lua.org/)           | ISC | https://github.com/TSnake41/raylib-lua        |
 | raylua             | 4.0     | [Lua](http://www.lua.org/)           | MIT | https://github.com/Rabios/raylua              |
 | nelua-raylib       | 4.0     | [nelua](https://nelua.io/)           | MIT | https://github.com/AKDev21/nelua-raylib       |
-| Raylib-Nelua       | **4.5-dev** | [nelua](https://nelua.io/)       | MIT | https://github.com/Its-Kenta/Raylib-Nelua     |
+| Raylib.nelua       | **4.5** | [nelua](https://nelua.io/)           | Zlib | https://github.com/Its-Kenta/Raylib-Nelua     |
 | NimraylibNow!      | 4.2     | [Nim](https://nim-lang.org/)         | MIT | https://github.com/greenfork/nimraylib_now    |
 | raylib-Forever     | auto    | [Nim](https://nim-lang.org/)         | ? | https://github.com/Guevara-chan/Raylib-Forever  |
 | naylib             | auto    | [Nim](https://nim-lang.org/)         | MIT | https://github.com/planetis-m/naylib          |
@@ -59,6 +59,7 @@ Some people ported raylib to other languages in form of bindings or wrappers to 
 | raylib-php         | 3.5     | [PHP](https://en.wikipedia.org/wiki/PHP) | Zlib | https://github.com/joseph-montanez/raylib-php   |
 | raylib-phpcpp      | 3.5     | [PHP](https://en.wikipedia.org/wiki/PHP) | Zlib | https://github.com/oraoto/raylib-phpcpp         |
 | raylibr            | 4.0     | [R](https://www.r-project.org)       | MIT | https://github.com/jeroenjanssens/raylibr         |
+| raylib-ffi          | 4.5     | [Rust](https://www.rust-lang.org/)   | GPLv3 | https://github.com/ewpratten/raylib-ffi        |
 | raylib-rs          | 3.5     | [Rust](https://www.rust-lang.org/)   | Zlib | https://github.com/deltaphc/raylib-rs        |
 | Relib              | 3.5     | [ReCT](https://github.com/RedCubeDev-ByteSpace/ReCT) | ?   | https://github.com/RedCubeDev-ByteSpace/Relib |
 | racket-raylib      | 4.0     | [Racket](https://racket-lang.org/) | MIT/Apache-2.0 | https://github.com/eutro/racket-raylib |

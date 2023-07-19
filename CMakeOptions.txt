@@ -73,6 +73,7 @@ cmake_dependent_option(SUPPORT_FILEFORMAT_PVR "Support loading PVR as textures" 
 cmake_dependent_option(SUPPORT_FILEFORMAT_FNT "Support loading fonts in FNT format" ON CUSTOMIZE_BUILD ON)
 cmake_dependent_option(SUPPORT_FILEFORMAT_TTF "Support loading font in TTF/OTF format" ON CUSTOMIZE_BUILD ON)
 cmake_dependent_option(SUPPORT_TEXT_MANIPULATION "Support text manipulation functions" ON CUSTOMIZE_BUILD ON)
+cmake_dependent_option(SUPPORT_FONT_ATLAS_WHITE_REC "Support white rec on font atlas bottom-right corner" ON CUSTOMIZE_BUILD ON)
 
 # rmodels.c
 cmake_dependent_option(SUPPORT_MESH_GENERATION "Support procedural mesh generation functions, uses external par_shapes.h library. NOTE: Some generated meshes DO NOT include generated texture coordinates" ON CUSTOMIZE_BUILD ON)

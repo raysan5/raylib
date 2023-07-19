@@ -314,8 +314,12 @@ RMAPI float Vector2DistanceSqr(Vector2 v1, Vector2 v2)
 // NOTE: Angle is calculated from origin point (0, 0)
 RMAPI float Vector2Angle(Vector2 v1, Vector2 v2)
 {
-    float result = atan2f(v2.y - v1.y, v2.x - v1.x);
-
+    float result = 0.0f;
+    
+    float dot = v1.x*v2.x + v1.y*v2.y;
+    float det = v1.x*v2.y - v1.y*v2.x;
+    result = -atan2f(det, dot);
+    
     return result;
 }
 
@@ -325,18 +329,8 @@ RMAPI float Vector2Angle(Vector2 v1, Vector2 v2)
 RMAPI float Vector2LineAngle(Vector2 start, Vector2 end)
 {
     float result = 0.0f;
-
-    float dot = start.x*end.x + start.y*end.y;      // Dot product
-
-    float dotClamp = (dot < -1.0f)? -1.0f : dot;    // Clamp
-    if (dotClamp > 1.0f) dotClamp = 1.0f;
-
-    result = acosf(dotClamp);
-
-    // Alternative implementation, more costly
-    //float v1Length = sqrtf((start.x*start.x) + (start.y*start.y));
-    //float v2Length = sqrtf((end.x*end.x) + (end.y*end.y));
-    //float result = -acosf((start.x*end.x + start.y*end.y)/(v1Length*v2Length));
+    
+    result = atan2f(end.y - start.y, end.x - start.x);
 
     return result;
 }
@@ -1515,11 +1509,11 @@ RMAPI Matrix MatrixFrustum(double left, double right, double bottom, double top,
 
 // Get perspective projection matrix
 // NOTE: Fovy angle must be provided in radians
-RMAPI Matrix MatrixPerspective(double fovy, double aspect, double near, double far)
+RMAPI Matrix MatrixPerspective(double fovY, double aspect, double nearPlane, double farPlane)
 {
     Matrix result = { 0 };
 
-    double top = near*tan(fovy*0.5);
+    double top = nearPlane*tan(fovY*0.5);
     double bottom = -top;
     double right = top*aspect;
     double left = -right;
@@ -1527,27 +1521,27 @@ RMAPI Matrix MatrixPerspective(double fovy, double aspect, double near, double f
     // MatrixFrustum(-right, right, -top, top, near, far);
     float rl = (float)(right - left);
     float tb = (float)(top - bottom);
-    float fn = (float)(far - near);
+    float fn = (float)(farPlane - nearPlane);
 
-    result.m0 = ((float)near*2.0f)/rl;
-    result.m5 = ((float)near*2.0f)/tb;
+    result.m0 = ((float)nearPlane*2.0f)/rl;
+    result.m5 = ((float)nearPlane*2.0f)/tb;
     result.m8 = ((float)right + (float)left)/rl;
     result.m9 = ((float)top + (float)bottom)/tb;
-    result.m10 = -((float)far + (float)near)/fn;
+    result.m10 = -((float)farPlane + (float)nearPlane)/fn;
     result.m11 = -1.0f;
-    result.m14 = -((float)far*(float)near*2.0f)/fn;
+    result.m14 = -((float)farPlane*(float)nearPlane*2.0f)/fn;
 
     return result;
 }
 
 // Get orthographic projection matrix
-RMAPI Matrix MatrixOrtho(double left, double right, double bottom, double top, double near, double far)
+RMAPI Matrix MatrixOrtho(double left, double right, double bottom, double top, double nearPlane, double farPlane)
 {
     Matrix result = { 0 };
 
     float rl = (float)(right - left);
     float tb = (float)(top - bottom);
-    float fn = (float)(far - near);
+    float fn = (float)(farPlane - nearPlane);
 
     result.m0 = 2.0f/rl;
     result.m1 = 0.0f;
@@ -1563,7 +1557,7 @@ RMAPI Matrix MatrixOrtho(double left, double right, double bottom, double top, d
     result.m11 = 0.0f;
     result.m12 = -((float)left + (float)right)/rl;
     result.m13 = -((float)top + (float)bottom)/tb;
-    result.m14 = -((float)far + (float)near)/fn;
+    result.m14 = -((float)farPlane + (float)nearPlane)/fn;
     result.m15 = 1.0f;
 
     return result;
