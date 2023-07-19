@@ -201,7 +201,7 @@ ifeq ($(PLATFORM),PLATFORM_ANDROID)
     # Android required path variables
     # NOTE: Starting with Android NDK r21, no more toolchain generation is required, NDK is the toolchain on itself
     ifeq ($(OS),Windows_NT)
-        ANDROID_NDK ?= C:/android-ndk
+        ANDROID_NDK ?= C:/android_sdk/ndk/25.2.9519653
         ANDROID_TOOLCHAIN = $(ANDROID_NDK)/toolchains/llvm/prebuilt/windows-x86_64
     else
         ANDROID_NDK ?= /usr/lib/android/ndk
