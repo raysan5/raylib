@@ -3135,26 +3135,28 @@ void ImageDrawRectangleRec(Image *dst, Rectangle rec, Color color)
     if (rec.height < 0) rec.height = 0;
 
     int sy = (int)rec.y;
-    int ey = sy + (int)rec.height;
-
     int sx = (int)rec.x;
 
     int bytesPerPixel = GetPixelDataSize(1, 1, dst->format);
 
-    for (int y = sy; y < ey; y++)
+    // Fill in the first pixel of the first row based on image format
+    ImageDrawPixel(dst, sx, sy, color);
+
+    int bytesOffset = ((sy*dst->width) + sx)*bytesPerPixel;
+    unsigned char *pSrcPixel = (unsigned char *)dst->data + bytesOffset;
+
+    // Repeat the first pixel data throughout the row
+    for (int x = 1; x < (int)rec.width; x++)
     {
-        // Fill in the first pixel of the row based on image format
-        ImageDrawPixel(dst, sx, y, color);
-
-        int bytesOffset = ((y*dst->width) + sx)*bytesPerPixel;
-        unsigned char *pSrcPixel = (unsigned char *)dst->data + bytesOffset;
-
-        // Repeat the first pixel data throughout the row
-        for (int x = 1; x < (int)rec.width; x++)
-        {
-            memcpy(pSrcPixel + x*bytesPerPixel, pSrcPixel, bytesPerPixel);
-        }
+        memcpy(pSrcPixel + x*bytesPerPixel, pSrcPixel, bytesPerPixel);
     }
+	
+	// Repeat the first row data for all other rows
+	int bytesPerRow = bytesPerPixel * (int)rec.width;
+	for (int y = 1; y < (int)rec.height; y++)
+	{
+		memcpy(pSrcPixel + (y*dst->width)*bytesPerPixel, pSrcPixel, bytesPerRow);
+	}
 }
 
 // Draw rectangle lines within an image
