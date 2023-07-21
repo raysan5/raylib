@@ -16,7 +16,10 @@ pub fn addRaylib(b: *std.Build, target: std.zig.CrossTarget, optimize: std.built
     });
     raylib.linkLibC();
 
-    raylib.addIncludePath(srcdir ++ "/external/glfw/include");
+    // No GLFW required on PLATFORM_DRM
+    if (!options.platform_drm) {
+        raylib.addIncludePath(srcdir ++ "/external/glfw/include");
+    }
 
     raylib.addCSourceFiles(&.{
         srcdir ++ "/raudio.c",
@@ -49,15 +52,32 @@ pub fn addRaylib(b: *std.Build, target: std.zig.CrossTarget, optimize: std.built
             raylib.defineCMacro("PLATFORM_DESKTOP", null);
         },
         .linux => {
-            raylib.addCSourceFiles(&.{srcdir ++ "/rglfw.c"}, raylib_flags);
-            raylib.linkSystemLibrary("GL");
-            raylib.linkSystemLibrary("rt");
-            raylib.linkSystemLibrary("dl");
-            raylib.linkSystemLibrary("m");
-            raylib.linkSystemLibrary("X11");
-            raylib.addIncludePath("/usr/include");
+            if (!options.platform_drm) {
+                raylib.addCSourceFiles(&.{srcdir ++ "/rglfw.c"}, raylib_flags);
+                raylib.linkSystemLibrary("GL");
+                raylib.linkSystemLibrary("rt");
+                raylib.linkSystemLibrary("dl");
+                raylib.linkSystemLibrary("m");
+                raylib.linkSystemLibrary("X11");
+                raylib.addIncludePath("/usr/include");
 
-            raylib.defineCMacro("PLATFORM_DESKTOP", null);
+                raylib.defineCMacro("PLATFORM_DESKTOP", null);
+            } else {
+                raylib.linkSystemLibrary("GLESv2");
+                raylib.linkSystemLibrary("EGL");
+                raylib.linkSystemLibrary("drm");
+                raylib.linkSystemLibrary("gbm");
+                raylib.linkSystemLibrary("pthread");
+                raylib.linkSystemLibrary("rt");
+                raylib.linkSystemLibrary("m");
+                raylib.linkSystemLibrary("dl");
+                raylib.addIncludePath("/usr/include/libdrm");
+
+                raylib.defineCMacro("PLATFORM_DRM", null);
+                raylib.defineCMacro("GRAPHICS_API_OPENGL_ES2", null);
+                raylib.defineCMacro("EGL_NO_X11", null);
+                raylib.defineCMacro("DEFAULT_BATCH_BUFFER_ELEMENT", "2048");
+            }
         },
         .freebsd, .openbsd, .netbsd, .dragonfly => {
             raylib.addCSourceFiles(&.{srcdir ++ "/rglfw.c"}, raylib_flags);
@@ -115,8 +135,9 @@ pub fn addRaylib(b: *std.Build, target: std.zig.CrossTarget, optimize: std.built
     return raylib;
 }
 
-const Options = struct {
+pub const Options = struct {
     raygui: bool = false,
+    platform_drm: bool = false,
 };
 
 pub fn build(b: *std.Build) void {
@@ -131,9 +152,11 @@ pub fn build(b: *std.Build) void {
     const optimize = b.standardOptimizeOption(.{});
 
     const raygui = b.option(bool, "raygui", "Compile with raygui support");
+    const platform_drm = b.option(bool, "platform_drm", "Compile raylib in native mode (no X11)");
 
     const lib = addRaylib(b, target, optimize, .{
         .raygui = raygui orelse false,
+        .platform_drm = platform_drm orelse false,
     });
 
     lib.installHeader("src/raylib.h", "raylib.h");
