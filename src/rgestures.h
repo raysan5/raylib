@@ -219,8 +219,7 @@ typedef struct {
         float intensity;                // DRAG intensity, how far why did the DRAG (pixels per frame)
     } Drag;
     struct {
-        bool start;                     // SWIPE used to define when start measuring GESTURES.Swipe.timeDuration
-        double timeDuration;            // SWIPE time to calculate drag intensity
+        double startTime;               // SWIPE start time to calculate drag intensity
     } Swipe;
     struct {
         Vector2 vector;                 // PINCH vector (between first and second touch points)
@@ -292,7 +291,7 @@ void ProcessGestureEvent(GestureEvent event)
             GESTURES.Touch.upPosition = GESTURES.Touch.downPositionA;
             GESTURES.Touch.eventTime = rgGetCurrentTime();
 
-            GESTURES.Touch.firstId = event.pointId[0];
+            GESTURES.Swipe.startTime = rgGetCurrentTime();
 
             GESTURES.Drag.vector = (Vector2){ 0.0f, 0.0f };
         }
@@ -303,12 +302,10 @@ void ProcessGestureEvent(GestureEvent event)
 
             // NOTE: GESTURES.Drag.intensity dependent on the resolution of the screen
             GESTURES.Drag.distance = rgVector2Distance(GESTURES.Touch.downPositionA, GESTURES.Touch.upPosition);
-            GESTURES.Drag.intensity = GESTURES.Drag.distance/(float)((rgGetCurrentTime() - GESTURES.Swipe.timeDuration));
-
-            GESTURES.Swipe.start = false;
+            GESTURES.Drag.intensity = GESTURES.Drag.distance/(float)((rgGetCurrentTime() - GESTURES.Swipe.startTime));
 
             // Detect GESTURE_SWIPE
-            if ((GESTURES.Drag.intensity > FORCE_TO_SWIPE) && (GESTURES.Touch.firstId == event.pointId[0]))
+            if ((GESTURES.Drag.intensity > FORCE_TO_SWIPE))
             {
                 // NOTE: Angle should be inverted in Y
                 GESTURES.Drag.angle = 360.0f - rgVector2Angle(GESTURES.Touch.downPositionA, GESTURES.Touch.upPosition);
@@ -333,14 +330,6 @@ void ProcessGestureEvent(GestureEvent event)
         }
         else if (event.touchAction == TOUCH_ACTION_MOVE)
         {
-            if (GESTURES.current == GESTURE_DRAG) GESTURES.Touch.eventTime = rgGetCurrentTime();
-
-            if (!GESTURES.Swipe.start)
-            {
-                GESTURES.Swipe.timeDuration = rgGetCurrentTime();
-                GESTURES.Swipe.start = true;
-            }
-
             GESTURES.Touch.moveDownPositionA = event.position[0];
 
             if (GESTURES.current == GESTURE_HOLD)
@@ -434,13 +423,6 @@ void UpdateGestures(void)
     {
         GESTURES.current = GESTURE_HOLD;
         GESTURES.Hold.timeDuration = rgGetCurrentTime();
-    }
-
-    if (((rgGetCurrentTime() - GESTURES.Touch.eventTime) > TAP_TIMEOUT) && (GESTURES.current == GESTURE_DRAG) && (GESTURES.Touch.pointCount < 2))
-    {
-        GESTURES.current = GESTURE_HOLD;
-        GESTURES.Hold.timeDuration = rgGetCurrentTime();
-        GESTURES.Hold.resetRequired = true;
     }
 
     // Detect GESTURE_NONE
