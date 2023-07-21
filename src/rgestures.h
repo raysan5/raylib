@@ -180,7 +180,7 @@ float GetGesturePinchAngle(void);                       // Get gesture pinch ang
 //----------------------------------------------------------------------------------
 #define FORCE_TO_SWIPE      0.2f        // Swipe force, measured in normalized screen units/time
 #define MINIMUM_DRAG        0.015f      // Drag minimum force, measured in normalized screen units (0.0f to 1.0f)
-#define DRAG_TIMEOUT        0.2f        // Drag minimum time for web, measured in seconds
+#define DRAG_TIMEOUT        0.3f        // Drag minimum time for web, measured in seconds
 #define MINIMUM_PINCH       0.005f      // Pinch minimum force, measured in normalized screen units (0.0f to 1.0f)
 #define TAP_TIMEOUT         0.3f        // Tap minimum time, measured in seconds
 #define PINCH_TIMEOUT       0.3f        // Pinch minimum time, measured in seconds
@@ -305,7 +305,7 @@ void ProcessGestureEvent(GestureEvent event)
             GESTURES.Drag.intensity = GESTURES.Drag.distance/(float)((rgGetCurrentTime() - GESTURES.Swipe.startTime));
 
             // Detect GESTURE_SWIPE
-            if ((GESTURES.Drag.intensity > FORCE_TO_SWIPE))
+            if ((GESTURES.Drag.intensity > FORCE_TO_SWIPE) && (GESTURES.current != GESTURE_DRAG))
             {
                 // NOTE: Angle should be inverted in Y
                 GESTURES.Drag.angle = 360.0f - rgVector2Angle(GESTURES.Touch.downPositionA, GESTURES.Touch.upPosition);
@@ -339,12 +339,7 @@ void ProcessGestureEvent(GestureEvent event)
                 GESTURES.Hold.resetRequired = false;
 
                 // Detect GESTURE_DRAG
-#if defined(PLATFORM_WEB)
-                // An alternative check to detect gesture drag is necessary since moveDownPositionA on touch for web is always zero, causing the distance calculation to be inaccurate
                 if ((rgGetCurrentTime() - GESTURES.Touch.eventTime) > DRAG_TIMEOUT)
-#else
-                if (rgVector2Distance(GESTURES.Touch.downPositionA, GESTURES.Touch.moveDownPositionA) >= MINIMUM_DRAG)
-#endif
                 {
                     GESTURES.Touch.eventTime = rgGetCurrentTime();
                     GESTURES.current = GESTURE_DRAG;
