@@ -468,6 +468,7 @@ typedef struct CoreData {
             Vector2 currentWheelMove;       // Registers current mouse wheel variation
             Vector2 previousWheelMove;      // Registers previous mouse wheel variation
 #if defined(PLATFORM_RPI) || defined(PLATFORM_DRM)
+            Vector2 eventWheelMove;         // Registers the event mouse wheel variation
             // NOTE: currentButtonState[] can't be written directly due to multithreading, app could miss the update
             char currentButtonStateEvdev[MAX_MOUSE_BUTTONS]; // Holds the new mouse state for the next polling event to grab
 #endif
@@ -5062,7 +5063,8 @@ void PollInputEvents(void)
 
     // Register previous mouse states
     CORE.Input.Mouse.previousWheelMove = CORE.Input.Mouse.currentWheelMove;
-    CORE.Input.Mouse.currentWheelMove = (Vector2){ 0.0f, 0.0f };
+    CORE.Input.Mouse.currentWheelMove = CORE.Input.Mouse.eventWheelMove;
+    CORE.Input.Mouse.eventWheelMove = (Vector2){ 0.0f, 0.0f };
     for (int i = 0; i < MAX_MOUSE_BUTTONS; i++)
     {
         CORE.Input.Mouse.previousButtonState[i] = CORE.Input.Mouse.currentButtonState[i];
@@ -6677,7 +6679,7 @@ static void *EventThread(void *arg)
                     gestureUpdate = true;
                 }
 
-                if (event.code == REL_WHEEL) CORE.Input.Mouse.currentWheelMove.y += event.value;
+                if (event.code == REL_WHEEL) CORE.Input.Mouse.eventWheelMove.y += event.value;
             }
 
             // Absolute movement parsing
