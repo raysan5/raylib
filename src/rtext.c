@@ -1389,6 +1389,40 @@ int TextToInteger(const char *text)
     return value*sign;
 }
 
+// Get float value from text
+float TextToFloat(const char* text)
+{
+    float value = 0.0f;
+    float floatingPoint = 0.0f;
+    int sign = 1;
+
+    if ((text[0] == '+') || (text[0] == '-'))
+    {
+        if (text[0] == '-') sign = -1;
+        text++;
+    }
+
+    for (int i = 0; (((text[i] >= '0') && (text[i] <= '9')) || text[i] == '.'); i++)
+    {
+        if (text[i] == '.')
+        {
+            if (floatingPoint > 0.0f) break;
+
+            floatingPoint = 10.0f;
+            continue;
+        }
+        if (floatingPoint > 0.0f)
+        {
+            value += (float)(text[i] - '0') / floatingPoint;
+            floatingPoint *= 10.0f;
+        }
+        else
+            value = value * 10.0f + (float)(text[i] - '0');
+    }
+
+    return value * sign;
+}
+
 #if defined(SUPPORT_TEXT_MANIPULATION)
 // Copy one string to another, returns bytes copied
 int TextCopy(char *dst, const char *src)
