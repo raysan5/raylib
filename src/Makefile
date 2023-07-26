@@ -801,19 +801,19 @@ ifeq ($(ROOT),root)
     # and $(RAYLIB_H_INSTALL_PATH). Please confirm each item.
     ifeq ($(PLATFORM_OS),LINUX)
         ifeq ($(RAYLIB_LIBTYPE),SHARED)
-		rm --force --interactive --verbose $(RAYLIB_INSTALL_PATH)/libraylib.so
-		rm --force --interactive --verbose $(RAYLIB_INSTALL_PATH)/libraylib.so.$(RAYLIB_API_VERSION)
-		rm --force --interactive --verbose $(RAYLIB_INSTALL_PATH)/libraylib.so.$(RAYLIB_VERSION)
-        # Uncomment to clean up the runtime linker cache. See install target.
-		ldconfig
+			rm --force --interactive --verbose $(RAYLIB_INSTALL_PATH)/libraylib.so
+			rm --force --interactive --verbose $(RAYLIB_INSTALL_PATH)/libraylib.so.$(RAYLIB_API_VERSION)
+			rm --force --interactive --verbose $(RAYLIB_INSTALL_PATH)/libraylib.so.$(RAYLIB_VERSION)
+            # Uncomment to clean up the runtime linker cache. See install target.
+			ldconfig
         else
-		rm --force --interactive --verbose $(RAYLIB_INSTALL_PATH)/libraylib.a
+			rm --force --interactive --verbose $(RAYLIB_INSTALL_PATH)/libraylib.a
         endif
 		rm --force --interactive --verbose $(RAYLIB_H_INSTALL_PATH)/raylib.h
 		rm --force --interactive --verbose $(RAYLIB_H_INSTALL_PATH)/raymath.h
 		rm --force --interactive --verbose $(RAYLIB_H_INSTALL_PATH)/rlgl.h
 		@echo "raylib development files removed!"
-        else
+    else
 		@echo "This function currently works on GNU/Linux systems. Add yours today (^;"
     endif
 else
