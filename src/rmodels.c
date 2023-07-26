@@ -3492,7 +3492,7 @@ void DrawBillboardRec(Camera camera, Texture2D texture, Rectangle source, Vector
 void DrawBillboardPro(Camera camera, Texture2D texture, Rectangle source, Vector3 position, Vector3 up, Vector2 size, Vector2 origin, float rotation, Color tint)
 {
     // NOTE: Billboard size will maintain source rectangle aspect ratio, size will represent billboard width
-    Vector2 sizeRatio = { size.x*(float)source.width/source.height, size.y };
+    Vector2 sizeRatio = { size.x*fabsf((float)source.width/source.height), size.y };
 
     Matrix matView = MatrixLookAt(camera.position, camera.target, camera.up);
 
@@ -3558,21 +3558,40 @@ void DrawBillboardPro(Camera camera, Texture2D texture, Rectangle source, Vector
     rlBegin(RL_QUADS);
         rlColor4ub(tint.r, tint.g, tint.b, tint.a);
 
-        // Bottom-left corner for texture and quad
-        rlTexCoord2f((float)source.x/texture.width, (float)source.y/texture.height);
-        rlVertex3f(topLeft.x, topLeft.y, topLeft.z);
+        if (sizeRatio.x * sizeRatio.y >= 0.0f)
+        {
+            // Bottom-left corner for texture and quad
+            rlTexCoord2f((float)source.x/texture.width, (float)source.y/texture.height);
+            rlVertex3f(topLeft.x, topLeft.y, topLeft.z);
 
-        // Top-left corner for texture and quad
-        rlTexCoord2f((float)source.x/texture.width, (float)(source.y + source.height)/texture.height);
-        rlVertex3f(bottomLeft.x, bottomLeft.y, bottomLeft.z);
+            // Top-left corner for texture and quad
+            rlTexCoord2f((float)source.x/texture.width, (float)(source.y + source.height)/texture.height);
+            rlVertex3f(bottomLeft.x, bottomLeft.y, bottomLeft.z);
 
-        // Top-right corner for texture and quad
-        rlTexCoord2f((float)(source.x + source.width)/texture.width, (float)(source.y + source.height)/texture.height);
-        rlVertex3f(bottomRight.x, bottomRight.y, bottomRight.z);
+            // Top-right corner for texture and quad
+            rlTexCoord2f((float)(source.x + source.width)/texture.width, (float)(source.y + source.height)/texture.height);
+            rlVertex3f(bottomRight.x, bottomRight.y, bottomRight.z);
 
-        // Bottom-right corner for texture and quad
-        rlTexCoord2f((float)(source.x + source.width)/texture.width, (float)source.y/texture.height);
-        rlVertex3f(topRight.x, topRight.y, topRight.z);
+            // Bottom-right corner for texture and quad
+            rlTexCoord2f((float)(source.x + source.width)/texture.width, (float)source.y/texture.height);
+            rlVertex3f(topRight.x, topRight.y, topRight.z);
+        }
+        else
+        {
+            // Reverse vertex order if the size has only one negative dimension
+            rlTexCoord2f((float)(source.x + source.width)/texture.width, (float)source.y/texture.height);
+            rlVertex3f(topRight.x, topRight.y, topRight.z);
+
+            rlTexCoord2f((float)(source.x + source.width)/texture.width, (float)(source.y + source.height)/texture.height);
+            rlVertex3f(bottomRight.x, bottomRight.y, bottomRight.z);
+
+            rlTexCoord2f((float)source.x/texture.width, (float)(source.y + source.height)/texture.height);
+            rlVertex3f(bottomLeft.x, bottomLeft.y, bottomLeft.z);
+
+            rlTexCoord2f((float)source.x/texture.width, (float)source.y/texture.height);
+            rlVertex3f(topLeft.x, topLeft.y, topLeft.z);
+        }
+
     rlEnd();
 
     rlSetTexture(0);
