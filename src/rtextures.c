@@ -3369,9 +3369,15 @@ TextureCubemap LoadTextureCubemap(Image image, int layout)
             if ((image.height/6) == image.width) { layout = CUBEMAP_LAYOUT_LINE_VERTICAL; cubemap.width = image.height/6; }
             else if ((image.width/3) == (image.height/4)) { layout = CUBEMAP_LAYOUT_CROSS_THREE_BY_FOUR; cubemap.width = image.width/3; }
         }
-
-        cubemap.height = cubemap.width;
+    } else {
+        if (layout == CUBEMAP_LAYOUT_LINE_VERTICAL) cubemap.width = image.height/6;
+        if (layout == CUBEMAP_LAYOUT_LINE_HORIZONTAL) cubemap.width = image.width/6;
+        if (layout == CUBEMAP_LAYOUT_CROSS_THREE_BY_FOUR) cubemap.width = image.width/3;
+        if (layout == CUBEMAP_LAYOUT_CROSS_FOUR_BY_THREE) cubemap.width = image.width/4;
+        if (layout == CUBEMAP_LAYOUT_PANORAMA) cubemap.width = image.width/4;
     }
+
+    cubemap.height = cubemap.width;
 
     // Layout provided or already auto-detected
     if (layout != CUBEMAP_LAYOUT_AUTO_DETECT)
