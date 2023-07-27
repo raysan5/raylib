@@ -1972,6 +1972,17 @@ Vector2 GetWindowPosition(void)
     return (Vector2){ (float)x, (float)y };
 }
 
+// Get window size on monitor
+Vector2 GetWindowSize(void)
+{
+    int x = 0;
+    int y = 0;
+#if defined(PLATFORM_DESKTOP)
+    glfwGetWindowSize(CORE.Window.handle, &x, &y);
+#endif
+    return (Vector2){ (float)x, (float)y };
+}
+
 // Get window scale DPI factor for current monitor
 Vector2 GetWindowScaleDPI(void)
 {
