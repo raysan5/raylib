@@ -1670,7 +1670,14 @@ void SetWindowMonitor(int monitor)
 
     if ((monitor >= 0) && (monitor < monitorCount))
     {
-        if (!CORE.Window.fullscreen)
+        if (CORE.Window.fullscreen)
+        {
+            TRACELOG(LOG_INFO, "GLFW: Selected fullscreen monitor: [%i] %s", monitor, glfwGetMonitorName(monitors[monitor]));
+
+            const GLFWvidmode *mode = glfwGetVideoMode(monitors[monitor]);
+            glfwSetWindowMonitor(CORE.Window.handle, monitors[monitor], 0, 0, mode->width, mode->height, mode->refreshRate);
+        }
+        else
         {
             TRACELOG(LOG_INFO, "GLFW: Selected monitor: [%i] %s", monitor, glfwGetMonitorName(monitors[monitor]));
 
@@ -1691,7 +1698,6 @@ void SetWindowMonitor(int monitor)
                 glfwSetWindowPos(CORE.Window.handle, x, y);
             }
         }
-        else TRACELOG(LOG_WARNING, "GLFW: Failed to find selected monitor because it's on fullscreen");
     }
     else TRACELOG(LOG_WARNING, "GLFW: Failed to find selected monitor");
 #endif
