@@ -1661,7 +1661,7 @@ void SetWindowPosition(int x, int y)
 #endif
 }
 
-// Set monitor for the current window (fullscreen mode)
+// Set monitor for the current window
 void SetWindowMonitor(int monitor)
 {
 #if defined(PLATFORM_DESKTOP)
@@ -1670,10 +1670,28 @@ void SetWindowMonitor(int monitor)
 
     if ((monitor >= 0) && (monitor < monitorCount))
     {
-        TRACELOG(LOG_INFO, "GLFW: Selected fullscreen monitor: [%i] %s", monitor, glfwGetMonitorName(monitors[monitor]));
+        if (!CORE.Window.fullscreen)
+        {
+            TRACELOG(LOG_INFO, "GLFW: Selected monitor: [%i] %s", monitor, glfwGetMonitorName(monitors[monitor]));
 
-        const GLFWvidmode *mode = glfwGetVideoMode(monitors[monitor]);
-        glfwSetWindowMonitor(CORE.Window.handle, monitors[monitor], 0, 0, mode->width, mode->height, mode->refreshRate);
+            const int screenWidth = CORE.Window.screen.width;
+            const int screenHeight = CORE.Window.screen.height;
+            int monitorWorkareaX = 0;
+            int monitorWorkareaY = 0;
+            int monitorWorkareaWidth = 0;
+            int monitorWorkareaHeight = 0;
+            glfwGetMonitorWorkarea(monitors[monitor], &monitorWorkareaX, &monitorWorkareaY, &monitorWorkareaWidth, &monitorWorkareaHeight);
+
+            // If the screen size is larger than the monitor workarea, anchor it on the top left corner, otherwise, center it
+            if ((screenWidth >= monitorWorkareaWidth) || (screenHeight >= monitorWorkareaHeight)) glfwSetWindowPos(CORE.Window.handle, monitorWorkareaX, monitorWorkareaY);
+            else
+            {
+                const int x = monitorWorkareaX + (monitorWorkareaWidth*0.5f) - (screenWidth*0.5f);
+                const int y = monitorWorkareaY + (monitorWorkareaHeight*0.5f) - (screenHeight*0.5f);
+                glfwSetWindowPos(CORE.Window.handle, x, y);
+            }
+        }
+        else TRACELOG(LOG_WARNING, "GLFW: Failed to find selected monitor because it's on fullscreen");
     }
     else TRACELOG(LOG_WARNING, "GLFW: Failed to find selected monitor");
 #endif
