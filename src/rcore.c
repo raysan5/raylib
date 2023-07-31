@@ -1835,20 +1835,24 @@ int GetCurrentMonitor(void)
                 int mx = 0;
                 int my = 0;
 
-                int width = 0;
-                int height = 0;
-
                 monitor = monitors[i];
-                glfwGetMonitorWorkarea(monitor, &mx, &my, &width, &height);
-
-                if ((x >= mx) &&
-                    (x < (mx + width)) &&
-                    (y >= my) &&
-                    (y < (my + height)))
+                glfwGetMonitorPos(monitor, &mx, &my);
+                const GLFWvidmode *mode = glfwGetVideoMode(monitor);
+                if (mode)
                 {
-                    index = i;
-                    break;
+                    const int width = mode->width;
+                    const int height = mode->height;
+
+                    if ((x >= mx) &&
+                        (x < (mx + width)) &&
+                        (y >= my) &&
+                        (y < (my + height)))
+                    {
+                        index = i;
+                        break;
+                    }
                 }
+                else TRACELOG(LOG_WARNING, "GLFW: Failed to find video mode for selected monitor");
             }
         }
     }
