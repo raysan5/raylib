@@ -18,7 +18,7 @@ pub fn addRaylib(b: *std.Build, target: std.zig.CrossTarget, optimize: std.built
 
     // No GLFW required on PLATFORM_DRM
     if (!options.platform_drm) {
-        raylib.addIncludePath(srcdir ++ "/external/glfw/include");
+        raylib.addIncludePath(.{ .path = srcdir ++ "/external/glfw/include" });
     }
 
     raylib.addCSourceFiles(&.{
@@ -36,9 +36,9 @@ pub fn addRaylib(b: *std.Build, target: std.zig.CrossTarget, optimize: std.built
 
     if (options.raygui) {
         _ = gen_step.add(srcdir ++ "/raygui.c", "#define RAYGUI_IMPLEMENTATION\n#include \"raygui.h\"\n");
-        raylib.addCSourceFile(srcdir ++ "/raygui.c", raylib_flags);
-        raylib.addIncludePath(srcdir);
-        raylib.addIncludePath(srcdir ++ "/../../raygui/src");
+        raylib.addCSourceFile(.{ .file = .{ .path = srcdir ++ "/raygui.c" }, .flags = raylib_flags });
+        raylib.addIncludePath(.{ .path = srcdir });
+        raylib.addIncludePath(.{ .path = srcdir ++ "/../../raygui/src" });
     }
 
     switch (target.getOsTag()) {
@@ -47,7 +47,7 @@ pub fn addRaylib(b: *std.Build, target: std.zig.CrossTarget, optimize: std.built
             raylib.linkSystemLibrary("winmm");
             raylib.linkSystemLibrary("gdi32");
             raylib.linkSystemLibrary("opengl32");
-            raylib.addIncludePath("external/glfw/deps/mingw");
+            raylib.addIncludePath(.{ .path = "external/glfw/deps/mingw" });
 
             raylib.defineCMacro("PLATFORM_DESKTOP", null);
         },
@@ -59,7 +59,7 @@ pub fn addRaylib(b: *std.Build, target: std.zig.CrossTarget, optimize: std.built
                 raylib.linkSystemLibrary("dl");
                 raylib.linkSystemLibrary("m");
                 raylib.linkSystemLibrary("X11");
-                raylib.addIncludePath("/usr/include");
+                raylib.addIncludePath(.{ .path = "/usr/include" });
 
                 raylib.defineCMacro("PLATFORM_DESKTOP", null);
             } else {
@@ -71,7 +71,7 @@ pub fn addRaylib(b: *std.Build, target: std.zig.CrossTarget, optimize: std.built
                 raylib.linkSystemLibrary("rt");
                 raylib.linkSystemLibrary("m");
                 raylib.linkSystemLibrary("dl");
-                raylib.addIncludePath("/usr/include/libdrm");
+                raylib.addIncludePath(.{ .path = "/usr/include/libdrm" });
 
                 raylib.defineCMacro("PLATFORM_DRM", null);
                 raylib.defineCMacro("GRAPHICS_API_OPENGL_ES2", null);
@@ -125,7 +125,7 @@ pub fn addRaylib(b: *std.Build, target: std.zig.CrossTarget, optimize: std.built
             var dir = std.fs.openDirAbsolute(cache_include, std.fs.Dir.OpenDirOptions{ .access_sub_paths = true, .no_follow = true }) catch @panic("No emscripten cache. Generate it!");
             dir.close();
 
-            raylib.addIncludePath(cache_include);
+            raylib.addIncludePath(.{ .path = cache_include });
         },
         else => {
             @panic("Unsupported OS");
