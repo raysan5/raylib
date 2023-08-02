@@ -461,7 +461,6 @@ typedef struct AudioStream {
 typedef struct Sound {
     AudioStream stream;         // Audio stream
     unsigned int frameCount;    // Total number of frames (considering channels)
-    bool noFree;                // The sound data buffer is owned by something else, don't free it
 } Sound;
 
 // Music, audio stream, anything longer than ~10 seconds should be streamed
@@ -1532,11 +1531,12 @@ RLAPI Wave LoadWaveFromMemory(const char *fileType, const unsigned char *fileDat
 RLAPI bool IsWaveReady(Wave wave);                                    // Checks if wave data is ready
 RLAPI Sound LoadSound(const char *fileName);                          // Load sound from file
 RLAPI Sound LoadSoundFromWave(Wave wave);                             // Load sound from wave data
-RLAPI Sound CloneSound(Sound sourceSound);                            // Create a new sound that shares the same sample data as the source sound, does not own the sound data
+RLAPI Sound LoadSoundAlias(Sound source);                            // Create a new sound that shares the same sample data as the source sound, does not own the sound data
 RLAPI bool IsSoundReady(Sound sound);                                 // Checks if a sound is ready
 RLAPI void UpdateSound(Sound sound, const void *data, int sampleCount); // Update sound buffer with new data
 RLAPI void UnloadWave(Wave wave);                                     // Unload wave data
 RLAPI void UnloadSound(Sound sound);                                  // Unload sound
+RLAPI void UnloadSoundAlias(Sound alias);                             // Unload a sound alias (does not deallocate sample data)
 RLAPI bool ExportWave(Wave wave, const char *fileName);               // Export wave data to file, returns true on success
 RLAPI bool ExportWaveAsCode(Wave wave, const char *fileName);         // Export wave sample data to code (.h), returns true on success
 

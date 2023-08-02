@@ -912,7 +912,6 @@ Sound LoadSoundFromWave(Wave wave)
         sound.stream.sampleSize = 32;
         sound.stream.channels = AUDIO_DEVICE_CHANNELS;
         sound.stream.buffer = audioBuffer;
-        sound.noFree = false;
     }
 
     return sound;
@@ -921,25 +920,24 @@ Sound LoadSoundFromWave(Wave wave)
 // Clone sound from existing sound data, clone does not own wave data
 // Wave data must 
 // NOTE: Wave data must be unallocated manually and will be shared across all clones
-Sound CloneSound(Sound sourceSound)
+Sound LoadSoundAlias(Sound source)
 {
     Sound sound = { 0 };
 
-    if (sourceSound.stream.buffer->data != NULL)
+    if (source.stream.buffer->data != NULL)
     {
-        AudioBuffer* audioBuffer = LoadAudioBuffer(AUDIO_DEVICE_FORMAT, AUDIO_DEVICE_CHANNELS, AUDIO.System.device.sampleRate, sourceSound.frameCount, AUDIO_BUFFER_USAGE_STATIC);
+        AudioBuffer* audioBuffer = LoadAudioBuffer(AUDIO_DEVICE_FORMAT, AUDIO_DEVICE_CHANNELS, AUDIO.System.device.sampleRate, source.frameCount, AUDIO_BUFFER_USAGE_STATIC);
         if (audioBuffer == NULL)
         {
             TRACELOG(LOG_WARNING, "SOUND: Failed to create buffer");
             return sound; // early return to avoid dereferencing the audioBuffer null pointer
         }
-        audioBuffer->data = sourceSound.stream.buffer->data;
-        sound.frameCount = sourceSound.frameCount;
+        audioBuffer->data = source.stream.buffer->data;
+        sound.frameCount = source.frameCount;
         sound.stream.sampleRate = AUDIO.System.device.sampleRate;
         sound.stream.sampleSize = 32;
         sound.stream.channels = AUDIO_DEVICE_CHANNELS;
         sound.stream.buffer = audioBuffer;
-        sound.noFree = true;
     }
 
     return sound;
@@ -965,7 +963,13 @@ void UnloadWave(Wave wave)
 // Unload sound
 void UnloadSound(Sound sound)
 {
-    UnloadAudioBuffer(sound.stream.buffer, !sound.noFree);
+    UnloadAudioBuffer(sound.stream.buffer, true);
+    //TRACELOG(LOG_INFO, "SOUND: Unloaded sound data from RAM");
+}
+
+void UnloadSoundAlias(Sound alias)
+{
+    UnloadAudioBuffer(alias.stream.buffer, false);
     //TRACELOG(LOG_INFO, "SOUND: Unloaded sound data from RAM");
 }
 
