@@ -420,7 +420,7 @@ static bool SaveFileText(const char *fileName, char *text);         // Save text
 // NOTE: Those functions are not exposed by raylib... for the moment
 //----------------------------------------------------------------------------------
 AudioBuffer *LoadAudioBuffer(ma_format format, ma_uint32 channels, ma_uint32 sampleRate, ma_uint32 sizeInFrames, int usage);
-void UnloadAudioBuffer(AudioBuffer *buffer);
+void UnloadAudioBuffer(AudioBuffer *buffer, bool freeSampleData);
 
 bool IsAudioBufferPlaying(AudioBuffer *buffer);
 void PlayAudioBuffer(AudioBuffer *buffer);
@@ -591,13 +591,14 @@ AudioBuffer *LoadAudioBuffer(ma_format format, ma_uint32 channels, ma_uint32 sam
 }
 
 // Delete an audio buffer
-void UnloadAudioBuffer(AudioBuffer *buffer)
+void UnloadAudioBuffer(AudioBuffer *buffer, bool freeSampleData)
 {
     if (buffer != NULL)
     {
         ma_data_converter_uninit(&buffer->converter, NULL);
         UntrackAudioBuffer(buffer);
-        RL_FREE(buffer->data);
+        if (freeSampleData)
+            RL_FREE(buffer->data);
         RL_FREE(buffer);
     }
 }
@@ -911,6 +912,34 @@ Sound LoadSoundFromWave(Wave wave)
         sound.stream.sampleSize = 32;
         sound.stream.channels = AUDIO_DEVICE_CHANNELS;
         sound.stream.buffer = audioBuffer;
+        sound.noFree = false;
+    }
+
+    return sound;
+}
+
+// Clone sound from existing sound data, clone does not own wave data
+// Wave data must 
+// NOTE: Wave data must be unallocated manually and will be shared across all clones
+Sound CloneSound(Sound sourceSound)
+{
+    Sound sound = { 0 };
+
+    if (sourceSound.stream.buffer->data != NULL)
+    {
+        AudioBuffer* audioBuffer = LoadAudioBuffer(AUDIO_DEVICE_FORMAT, AUDIO_DEVICE_CHANNELS, AUDIO.System.device.sampleRate, sourceSound.frameCount, AUDIO_BUFFER_USAGE_STATIC);
+        if (audioBuffer == NULL)
+        {
+            TRACELOG(LOG_WARNING, "SOUND: Failed to create buffer");
+            return sound; // early return to avoid dereferencing the audioBuffer null pointer
+        }
+        audioBuffer->data = sourceSound.stream.buffer->data;
+        sound.frameCount = sourceSound.frameCount;
+        sound.stream.sampleRate = AUDIO.System.device.sampleRate;
+        sound.stream.sampleSize = 32;
+        sound.stream.channels = AUDIO_DEVICE_CHANNELS;
+        sound.stream.buffer = audioBuffer;
+        sound.noFree = true;
     }
 
     return sound;
@@ -936,7 +965,7 @@ void UnloadWave(Wave wave)
 // Unload sound
 void UnloadSound(Sound sound)
 {
-    UnloadAudioBuffer(sound.stream.buffer);
+    UnloadAudioBuffer(sound.stream.buffer, !sound.noFree);
     //TRACELOG(LOG_INFO, "SOUND: Unloaded sound data from RAM");
 }
 
@@ -2027,7 +2056,7 @@ bool IsAudioStreamReady(AudioStream stream)
 // Unload audio stream and free memory
 void UnloadAudioStream(AudioStream stream)
 {
-    UnloadAudioBuffer(stream.buffer);
+    UnloadAudioBuffer(stream.buffer, true);
 
     TRACELOG(LOG_INFO, "STREAM: Unloaded audio stream data from RAM");
 }
