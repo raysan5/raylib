@@ -1693,8 +1693,8 @@ void SetWindowMonitor(int monitor)
             if ((screenWidth >= monitorWorkareaWidth) || (screenHeight >= monitorWorkareaHeight)) glfwSetWindowPos(CORE.Window.handle, monitorWorkareaX, monitorWorkareaY);
             else
             {
-                const int x = monitorWorkareaX + (monitorWorkareaWidth*0.5f) - (screenWidth*0.5f);
-                const int y = monitorWorkareaY + (monitorWorkareaHeight*0.5f) - (screenHeight*0.5f);
+                const int x = monitorWorkareaX + (monitorWorkareaWidth/2) - (screenWidth/2);
+                const int y = monitorWorkareaY + (monitorWorkareaHeight/2) - (screenHeight/2);
                 glfwSetWindowPos(CORE.Window.handle, x, y);
             }
         }
