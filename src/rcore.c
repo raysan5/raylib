@@ -1736,12 +1736,15 @@ void SetWindowIcons(Image *images, int count)
 #endif
 }
 
-// Set title for window (only PLATFORM_DESKTOP)
+// Set title for window (only PLATFORM_DESKTOP and PLATFORM_WEB)
 void SetWindowTitle(const char *title)
 {
     CORE.Window.title = title;
 #if defined(PLATFORM_DESKTOP)
     glfwSetWindowTitle(CORE.Window.handle, title);
+#endif
+#if defined(PLATFORM_WEB)
+    emscripten_set_window_title(title);
 #endif
 }
 
