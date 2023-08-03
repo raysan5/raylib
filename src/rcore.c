@@ -4436,6 +4436,11 @@ static bool InitGraphicsDevice(int width, int height)
         return false;
     }
 
+// glfwCreateWindow title doesn't work with emscripten.
+#if defined(PLATFORM_WEB)
+    emscripten_set_window_title((CORE.Window.title != 0)? CORE.Window.title : " ");
+#endif
+    
     // Set window callback events
     glfwSetWindowSizeCallback(CORE.Window.handle, WindowSizeCallback);      // NOTE: Resizing not allowed by default!
 #if !defined(PLATFORM_WEB)
