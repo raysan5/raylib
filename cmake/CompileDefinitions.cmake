@@ -28,6 +28,7 @@ if (${CUSTOMIZE_BUILD})
     define_if("raylib" SUPPORT_EVENTS_WAITING)
     define_if("raylib" SUPPORT_WINMM_HIGHRES_TIMER)
     define_if("raylib" SUPPORT_COMPRESSION_API)
+    define_if("raylib" SUPPORT_CUSTOM_FRAME_CONTROL)
     define_if("raylib" SUPPORT_QUADS_DRAW_MODE)
     define_if("raylib" SUPPORT_IMAGE_EXPORT)
     define_if("raylib" SUPPORT_IMAGE_GENERATION)
@@ -69,17 +70,17 @@ if (${CUSTOMIZE_BUILD})
     else ()
         target_compile_definitions("raylib" PUBLIC "MAX_FILEPATH_LENGTH=512")
     endif ()
-    
+
     target_compile_definitions("raylib" PUBLIC "MAX_GAMEPADS=4")
     target_compile_definitions("raylib" PUBLIC "MAX_GAMEPAD_AXIS=8")
     target_compile_definitions("raylib" PUBLIC "MAX_GAMEPAD_BUTTONS=32")
     target_compile_definitions("raylib" PUBLIC "MAX_TOUCH_POINTS=10")
     target_compile_definitions("raylib" PUBLIC "MAX_KEY_PRESSED_QUEUE=16")
-    
+
     target_compile_definitions("raylib" PUBLIC "STORAGE_DATA_FILE=\"storage.data\"")
     target_compile_definitions("raylib" PUBLIC "MAX_CHAR_PRESSED_QUEUE=16")
     target_compile_definitions("raylib" PUBLIC "MAX_DECOMPRESSION_SIZE=64")
-    
+
     if (${GRAPHICS} MATCHES "GRAPHICS_API_OPENGL_33" OR ${GRAPHICS} MATCHES "GRAPHICS_API_OPENGL_11")
         target_compile_definitions("raylib" PUBLIC "DEFAULT_BATCH_BUFFER_ELEMENTS=8192")
     elseif (${GRAPHICS} MATCHES "GRAPHICS_API_OPENGL_ES2")

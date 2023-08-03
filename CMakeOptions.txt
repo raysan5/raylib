@@ -46,6 +46,7 @@ cmake_dependent_option(SUPPORT_BUSY_WAIT_LOOP "Use busy wait loop for timing syn
 cmake_dependent_option(SUPPORT_EVENTS_WAITING "Wait for events passively (sleeping while no events) instead of polling them actively every frame" OFF CUSTOMIZE_BUILD OFF)
 cmake_dependent_option(SUPPORT_WINMM_HIGHRES_TIMER "Setting a higher resolution can improve the accuracy of time-out intervals in wait functions" OFF CUSTOMIZE_BUILD OFF)
 cmake_dependent_option(SUPPORT_COMPRESSION_API "Support for compression API" ON CUSTOMIZE_BUILD ON)
+cmake_dependent_option(SUPPORT_CUSTOM_FRAME_CONTROL "Enabling this flag allows manual control of the frame processes, use at your own risk" OFF CUSTOMIZE_BUILD OFF)
 
 # rshapes.c
 cmake_dependent_option(SUPPORT_QUADS_DRAW_MODE "Use QUADS instead of TRIANGLES for drawing when possible. Some lines-based shapes could still use lines" ON CUSTOMIZE_BUILD ON)
