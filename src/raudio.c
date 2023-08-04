@@ -916,6 +916,32 @@ Sound LoadSoundFromWave(Wave wave)
     return sound;
 }
 
+// Clone sound from existing sound data, clone does not own wave data
+// Wave data must 
+// NOTE: Wave data must be unallocated manually and will be shared across all clones
+Sound LoadSoundAlias(Sound source)
+{
+    Sound sound = { 0 };
+
+    if (source.stream.buffer->data != NULL)
+    {
+        AudioBuffer* audioBuffer = LoadAudioBuffer(AUDIO_DEVICE_FORMAT, AUDIO_DEVICE_CHANNELS, AUDIO.System.device.sampleRate, source.frameCount, AUDIO_BUFFER_USAGE_STATIC);
+        if (audioBuffer == NULL)
+        {
+            TRACELOG(LOG_WARNING, "SOUND: Failed to create buffer");
+            return sound; // early return to avoid dereferencing the audioBuffer null pointer
+        }
+        audioBuffer->data = source.stream.buffer->data;
+        sound.frameCount = source.frameCount;
+        sound.stream.sampleRate = AUDIO.System.device.sampleRate;
+        sound.stream.sampleSize = 32;
+        sound.stream.channels = AUDIO_DEVICE_CHANNELS;
+        sound.stream.buffer = audioBuffer;
+    }
+
+    return sound;
+}
+
 // Checks if a sound is ready
 bool IsSoundReady(Sound sound)
 {
@@ -938,6 +964,17 @@ void UnloadSound(Sound sound)
 {
     UnloadAudioBuffer(sound.stream.buffer);
     //TRACELOG(LOG_INFO, "SOUND: Unloaded sound data from RAM");
+}
+
+void UnloadSoundAlias(Sound alias)
+{
+    // untrack and unload just the sound buffer, not the sample data, it is shared with the source for the alias
+    if (alias.stream.buffer != NULL)
+    {
+        ma_data_converter_uninit(&alias.stream.buffer->converter, NULL);
+        UntrackAudioBuffer(alias.stream.buffer);
+        RL_FREE(alias.stream.buffer);
+    }
 }
 
 // Update sound buffer with new data
