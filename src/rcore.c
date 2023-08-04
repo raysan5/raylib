@@ -412,6 +412,8 @@ typedef struct CoreData {
         Size render;                        // Framebuffer width and height (render area, including black bars if required)
         Point renderOffset;                 // Offset from render area (must be divided by 2)
         Matrix screenScale;                 // Matrix to scale screen (framebuffer rendering)
+        Point previousPosition;             // Previous screen position (required on borderless windowed toggle)
+        Size previousScreen;                // Previous screen size (required on borderless windowed toggle)
 
         char **dropFilepaths;         // Store dropped files paths pointers (provided by GLFW)
         unsigned int dropFileCount;         // Count dropped files strings
@@ -1324,6 +1326,82 @@ void ToggleFullscreen(void)
 #endif
 }
 
+// Toggle borderless windowed mode (only PLATFORM_DESKTOP)
+void ToggleBorderlessWindowed(void)
+{
+#if defined(PLATFORM_DESKTOP)
+    // Leave fullscreen before attempting to set borderless windowed mode and get screen position from it
+    bool wasOnFullscreen = false;
+    if (CORE.Window.fullscreen)
+    {
+        CORE.Window.previousPosition = CORE.Window.position;
+        ToggleFullscreen();
+        wasOnFullscreen = true;
+    }
+
+    const int monitor = GetCurrentMonitor();
+    int monitorCount;
+    GLFWmonitor **monitors = glfwGetMonitors(&monitorCount);
+    if ((monitor >= 0) && (monitor < monitorCount))
+    {
+        const GLFWvidmode *mode = glfwGetVideoMode(monitors[monitor]);
+        if (mode)
+        {
+            if (!IsWindowState(FLAG_BORDERLESS_WINDOWED_MODE))
+            {
+                // Store screen position and size
+                // NOTE: If it was on fullscreen, screen position was already stored, so skip setting it here
+                if (!wasOnFullscreen) glfwGetWindowPos(CORE.Window.handle, &CORE.Window.previousPosition.x, &CORE.Window.previousPosition.y);
+                CORE.Window.previousScreen = CORE.Window.screen;
+
+                // Set undecorated and topmost modes and flags
+                glfwSetWindowAttrib(CORE.Window.handle, GLFW_DECORATED, GLFW_FALSE);
+                CORE.Window.flags |= FLAG_WINDOW_UNDECORATED;
+                glfwSetWindowAttrib(CORE.Window.handle, GLFW_FLOATING, GLFW_TRUE);
+                CORE.Window.flags |= FLAG_WINDOW_TOPMOST;
+
+                // Get monitor position and size
+                int monitorPosX = 0;
+                int monitorPosY = 0;
+                glfwGetMonitorPos(monitors[monitor], &monitorPosX, &monitorPosY);
+                const int monitorWidth = mode->width;
+                const int monitorHeight = mode->height;
+                glfwSetWindowSize(CORE.Window.handle, monitorWidth, monitorHeight);
+
+                // Set screen position and size
+                glfwSetWindowPos(CORE.Window.handle, monitorPosX, monitorPosY);
+                glfwSetWindowSize(CORE.Window.handle, monitorWidth, monitorHeight);
+
+                // Refocus window
+                glfwFocusWindow(CORE.Window.handle);
+
+                CORE.Window.flags |= FLAG_BORDERLESS_WINDOWED_MODE;
+            }
+            else
+            {
+                // Remove topmost and undecorated modes and flags
+                glfwSetWindowAttrib(CORE.Window.handle, GLFW_FLOATING, GLFW_FALSE);
+                CORE.Window.flags &= ~FLAG_WINDOW_TOPMOST;
+                glfwSetWindowAttrib(CORE.Window.handle, GLFW_DECORATED, GLFW_TRUE);
+                CORE.Window.flags &= ~FLAG_WINDOW_UNDECORATED;
+
+                // Return previous screen size and position
+                // NOTE: The order matters here, it must set size first, then set position, otherwise the screen will be positioned incorrectly
+                glfwSetWindowSize(CORE.Window.handle,  CORE.Window.previousScreen.width, CORE.Window.previousScreen.height);
+                glfwSetWindowPos(CORE.Window.handle, CORE.Window.previousPosition.x, CORE.Window.previousPosition.y);
+
+                // Refocus window
+                glfwFocusWindow(CORE.Window.handle);
+
+                CORE.Window.flags &= ~FLAG_BORDERLESS_WINDOWED_MODE;
+            }
+        }
+        else TRACELOG(LOG_WARNING, "GLFW: Failed to find video mode for selected monitor");
+    }
+    else TRACELOG(LOG_WARNING, "GLFW: Failed to find selected monitor");
+#endif
+}
+
 // Set window state: maximized, if resizable (only PLATFORM_DESKTOP)
 void MaximizeWindow(void)
 {
@@ -1371,6 +1449,13 @@ void SetWindowState(unsigned int flags)
     {
         glfwSwapInterval(1);
         CORE.Window.flags |= FLAG_VSYNC_HINT;
+    }
+
+    // State change: FLAG_BORDERLESS_WINDOWED_MODE
+    // NOTE: This must be handled before FLAG_FULLSCREEN_MODE because ToggleBorderlessWindowed() needs to get some fullscreen values if fullscreen is running
+    if (((CORE.Window.flags & FLAG_BORDERLESS_WINDOWED_MODE) != (flags & FLAG_BORDERLESS_WINDOWED_MODE)) && ((flags & FLAG_BORDERLESS_WINDOWED_MODE) > 0))
+    {
+        ToggleBorderlessWindowed();     // NOTE: Window state flag updated inside function
     }
 
     // State change: FLAG_FULLSCREEN_MODE
@@ -1481,6 +1566,13 @@ void ClearWindowState(unsigned int flags)
     {
         glfwSwapInterval(0);
         CORE.Window.flags &= ~FLAG_VSYNC_HINT;
+    }
+
+    // State change: FLAG_BORDERLESS_WINDOWED_MODE
+    // NOTE: This must be handled before FLAG_FULLSCREEN_MODE because ToggleBorderlessWindowed() needs to get some fullscreen values if fullscreen is running
+    if (((CORE.Window.flags & FLAG_BORDERLESS_WINDOWED_MODE) > 0) && ((flags & FLAG_BORDERLESS_WINDOWED_MODE) > 0))
+    {
+        ToggleBorderlessWindowed();     // NOTE: Window state flag updated inside function
     }
 
     // State change: FLAG_FULLSCREEN_MODE
@@ -1644,12 +1736,15 @@ void SetWindowIcons(Image *images, int count)
 #endif
 }
 
-// Set title for window (only PLATFORM_DESKTOP)
+// Set title for window (only PLATFORM_DESKTOP and PLATFORM_WEB)
 void SetWindowTitle(const char *title)
 {
     CORE.Window.title = title;
 #if defined(PLATFORM_DESKTOP)
     glfwSetWindowTitle(CORE.Window.handle, title);
+#endif
+#if defined(PLATFORM_WEB)
+    emscripten_set_window_title(title);
 #endif
 }
 
@@ -1693,8 +1788,8 @@ void SetWindowMonitor(int monitor)
             if ((screenWidth >= monitorWorkareaWidth) || (screenHeight >= monitorWorkareaHeight)) glfwSetWindowPos(CORE.Window.handle, monitorWorkareaX, monitorWorkareaY);
             else
             {
-                const int x = monitorWorkareaX + (monitorWorkareaWidth*0.5f) - (screenWidth*0.5f);
-                const int y = monitorWorkareaY + (monitorWorkareaHeight*0.5f) - (screenHeight*0.5f);
+                const int x = monitorWorkareaX + (monitorWorkareaWidth/2) - (screenWidth/2);
+                const int y = monitorWorkareaY + (monitorWorkareaHeight/2) - (screenHeight/2);
                 glfwSetWindowPos(CORE.Window.handle, x, y);
             }
         }
@@ -4341,6 +4436,11 @@ static bool InitGraphicsDevice(int width, int height)
         return false;
     }
 
+// glfwCreateWindow title doesn't work with emscripten.
+#if defined(PLATFORM_WEB)
+    emscripten_set_window_title((CORE.Window.title != 0)? CORE.Window.title : " ");
+#endif
+    
     // Set window callback events
     glfwSetWindowSizeCallback(CORE.Window.handle, WindowSizeCallback);      // NOTE: Resizing not allowed by default!
 #if !defined(PLATFORM_WEB)
