@@ -420,7 +420,7 @@ static bool SaveFileText(const char *fileName, char *text);         // Save text
 // NOTE: Those functions are not exposed by raylib... for the moment
 //----------------------------------------------------------------------------------
 AudioBuffer *LoadAudioBuffer(ma_format format, ma_uint32 channels, ma_uint32 sampleRate, ma_uint32 sizeInFrames, int usage);
-void UnloadAudioBuffer(AudioBuffer *buffer, bool freeSampleData);
+void UnloadAudioBuffer(AudioBuffer *buffer);
 
 bool IsAudioBufferPlaying(AudioBuffer *buffer);
 void PlayAudioBuffer(AudioBuffer *buffer);
@@ -591,14 +591,13 @@ AudioBuffer *LoadAudioBuffer(ma_format format, ma_uint32 channels, ma_uint32 sam
 }
 
 // Delete an audio buffer
-void UnloadAudioBuffer(AudioBuffer *buffer, bool freeSampleData)
+void UnloadAudioBuffer(AudioBuffer *buffer)
 {
     if (buffer != NULL)
     {
         ma_data_converter_uninit(&buffer->converter, NULL);
         UntrackAudioBuffer(buffer);
-        if (freeSampleData)
-            RL_FREE(buffer->data);
+        RL_FREE(buffer->data);
         RL_FREE(buffer);
     }
 }
@@ -963,14 +962,19 @@ void UnloadWave(Wave wave)
 // Unload sound
 void UnloadSound(Sound sound)
 {
-    UnloadAudioBuffer(sound.stream.buffer, true);
+    UnloadAudioBuffer(sound.stream.buffer);
     //TRACELOG(LOG_INFO, "SOUND: Unloaded sound data from RAM");
 }
 
 void UnloadSoundAlias(Sound alias)
 {
-    UnloadAudioBuffer(alias.stream.buffer, false);
-    //TRACELOG(LOG_INFO, "SOUND: Unloaded sound data from RAM");
+    // untrack and unload just the sound buffer, not the sample data, it is shared with the source for the alias
+    if (alias.stream.buffer != NULL)
+    {
+        ma_data_converter_uninit(&alias.stream.buffer->converter, NULL);
+        UntrackAudioBuffer(alias.stream.buffer);
+        RL_FREE(alias.stream.buffer);
+    }
 }
 
 // Update sound buffer with new data
@@ -2060,7 +2064,7 @@ bool IsAudioStreamReady(AudioStream stream)
 // Unload audio stream and free memory
 void UnloadAudioStream(AudioStream stream)
 {
-    UnloadAudioBuffer(stream.buffer, true);
+    UnloadAudioBuffer(stream.buffer);
 
     TRACELOG(LOG_INFO, "STREAM: Unloaded audio stream data from RAM");
 }
