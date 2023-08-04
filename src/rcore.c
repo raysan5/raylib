@@ -1736,12 +1736,15 @@ void SetWindowIcons(Image *images, int count)
 #endif
 }
 
-// Set title for window (only PLATFORM_DESKTOP)
+// Set title for window (only PLATFORM_DESKTOP and PLATFORM_WEB)
 void SetWindowTitle(const char *title)
 {
     CORE.Window.title = title;
 #if defined(PLATFORM_DESKTOP)
     glfwSetWindowTitle(CORE.Window.handle, title);
+#endif
+#if defined(PLATFORM_WEB)
+    emscripten_set_window_title(title);
 #endif
 }
 
@@ -4433,6 +4436,11 @@ static bool InitGraphicsDevice(int width, int height)
         return false;
     }
 
+// glfwCreateWindow title doesn't work with emscripten.
+#if defined(PLATFORM_WEB)
+    emscripten_set_window_title((CORE.Window.title != 0)? CORE.Window.title : " ");
+#endif
+    
     // Set window callback events
     glfwSetWindowSizeCallback(CORE.Window.handle, WindowSizeCallback);      // NOTE: Resizing not allowed by default!
 #if !defined(PLATFORM_WEB)
