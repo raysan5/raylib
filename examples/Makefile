@@ -534,6 +534,7 @@ AUDIO = \
     audio/audio_music_stream \
     audio/audio_raw_stream \
     audio/audio_sound_loading \
+    audio/audio_sound_multi \
     audio/audio_stream_effects \
     audio/audio_mixed_processor
 
