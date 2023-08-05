@@ -74,9 +74,6 @@ void InitAssetManager(AAssetManager *manager, const char *dataPath);   // Initia
 FILE *android_fopen(const char *fileName, const char *mode);           // Replacement for fopen() -> Read-only!
 #endif
 
-float HalfToFloat(unsigned short x);
-unsigned short FloatToHalf(float x);
-
 #if defined(__cplusplus)
 }
 #endif

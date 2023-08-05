@@ -488,26 +488,3 @@ static int android_close(void *cookie)
     return 0;
 }
 #endif  // PLATFORM_ANDROID
-
-// From https://stackoverflow.com/questions/1659440/32-bit-to-16-bit-floating-point-conversion/60047308#60047308
-
-unsigned int AsUnsignedInt(const float x) {
-    return *(unsigned int*)&x;
-}
-float AsFloat(const unsigned int x) {
-    return *(float*)&x;
-}
-
-float HalfToFloat(unsigned short x) {
-    const unsigned int e = (x&0x7C00)>>10; // exponent
-    const unsigned int m = (x&0x03FF)<<13; // mantissa
-    const unsigned int v = AsUnsignedInt((float)m)>>23; // evil log2 bit hack to count leading zeros in denormalized format
-    return AsFloat((x&0x8000)<<16 | (e!=0)*((e+112)<<23|m) | ((e==0)&(m!=0))*((v-37)<<23|((m<<(150-v))&0x007FE000))); // sign : normalized : denormalized
-}
-
-unsigned short FloatToHalf(float x) {
-    const unsigned int b = AsUnsignedInt(x)+0x00001000; // round-to-nearest-even: add last bit after truncated mantissa
-    const unsigned int e = (b&0x7F800000)>>23; // exponent
-    const unsigned int m = b&0x007FFFFF; // mantissa; in line below: 0x007FF000 = 0x00800000-0x00001000 = decimal indicator flag - initial rounding
-    return (b&0x80000000)>>16 | (e>112)*((((e-112)<<10)&0x7C00)|m>>13) | ((e<113)&(e>101))*((((0x007FF000+m)>>(125-e))+1)>>1) | (e>143)*0x7FFF; // sign : normalized : denormalized : saturate
-}
