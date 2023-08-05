@@ -223,6 +223,8 @@ extern void LoadFontDefault(void);          // [Module: text] Loads default font
 //----------------------------------------------------------------------------------
 // Module specific Functions Declaration
 //----------------------------------------------------------------------------------
+static float HalfToFloat(unsigned short x);
+static unsigned short FloatToHalf(float x);
 static Vector4 *LoadImageDataNormalized(Image image);       // Load pixel data from image as Vector4 array (float normalized)
 
 //----------------------------------------------------------------------------------
@@ -1286,6 +1288,40 @@ void ImageFormat(Image *image, int newFormat)
                         ((float *)image->data)[i + 3] = pixels[k].w;
                     }
                 } break;
+                case PIXELFORMAT_UNCOMPRESSED_R16:
+                {
+                    // WARNING: Image is converted to GRAYSCALE equivalent 16bit
+
+                    image->data = (unsigned short *)RL_MALLOC(image->width*image->height*sizeof(unsigned short));
+
+                    for (int i = 0; i < image->width*image->height; i++)
+                    {
+                        ((unsigned short *)image->data)[i] = FloatToHalf((float)(pixels[i].x*0.299f + pixels[i].y*0.587f + pixels[i].z*0.114f));
+                    }
+                } break;
+                case PIXELFORMAT_UNCOMPRESSED_R16G16B16:
+                {
+                    image->data = (unsigned short *)RL_MALLOC(image->width*image->height*3*sizeof(unsigned short));
+
+                    for (int i = 0, k = 0; i < image->width*image->height*3; i += 3, k++)
+                    {
+                        ((unsigned short *)image->data)[i] = FloatToHalf(pixels[k].x);
+                        ((unsigned short *)image->data)[i + 1] = FloatToHalf(pixels[k].y);
+                        ((unsigned short *)image->data)[i + 2] = FloatToHalf(pixels[k].z);
+                    }
+                } break;
+                case PIXELFORMAT_UNCOMPRESSED_R16G16B16A16:
+                {
+                    image->data = (unsigned short *)RL_MALLOC(image->width*image->height*4*sizeof(unsigned short));
+
+                    for (int i = 0, k = 0; i < image->width*image->height*4; i += 4, k++)
+                    {
+                        ((unsigned short *)image->data)[i] = FloatToHalf(pixels[k].x);
+                        ((unsigned short *)image->data)[i + 1] = FloatToHalf(pixels[k].y);
+                        ((unsigned short *)image->data)[i + 2] = FloatToHalf(pixels[k].z);
+                        ((unsigned short *)image->data)[i + 3] = FloatToHalf(pixels[k].w);
+                    }
+                } break;
                 default: break;
             }
 
@@ -1649,6 +1685,19 @@ void ImageAlphaClear(Image *image, Color color, float threshold)
                         ((float *)image->data)[i - 2] = (float)color.g/255.0f;
                         ((float *)image->data)[i - 1] = (float)color.b/255.0f;
                         ((float *)image->data)[i] = (float)color.a/255.0f;
+                    }
+                }
+            } break;
+            case PIXELFORMAT_UNCOMPRESSED_R16G16B16A16:
+            {
+                for (int i = 3; i < image->width*image->height*4; i += 4)
+                {
+                    if (HalfToFloat(((unsigned short *)image->data)[i]) <= threshold)
+                    {
+                        ((unsigned short *)image->data)[i - 3] = FloatToHalf((float)color.r/255.0f);
+                        ((unsigned short *)image->data)[i - 2] = FloatToHalf((float)color.g/255.0f);
+                        ((unsigned short *)image->data)[i - 1] = FloatToHalf((float)color.b/255.0f);
+                        ((unsigned short *)image->data)[i] = FloatToHalf((float)color.a/255.0f);
                     }
                 }
             } break;
@@ -2493,6 +2542,10 @@ Color *LoadImageColors(Image image)
             (image.format == PIXELFORMAT_UNCOMPRESSED_R32G32B32) ||
             (image.format == PIXELFORMAT_UNCOMPRESSED_R32G32B32A32)) TRACELOG(LOG_WARNING, "IMAGE: Pixel format converted from 32bit to 8bit per channel");
 
+        if ((image.format == PIXELFORMAT_UNCOMPRESSED_R16) ||
+            (image.format == PIXELFORMAT_UNCOMPRESSED_R16G16B16) ||
+            (image.format == PIXELFORMAT_UNCOMPRESSED_R16G16B16A16)) TRACELOG(LOG_WARNING, "IMAGE: Pixel format converted from 16bit to 8bit per channel");
+
         for (int i = 0, k = 0; i < image.width*image.height; i++)
         {
             switch (image.format)
@@ -2585,6 +2638,32 @@ Color *LoadImageColors(Image image)
                     pixels[i].g = (unsigned char)(((float *)image.data)[k]*255.0f);
                     pixels[i].b = (unsigned char)(((float *)image.data)[k]*255.0f);
                     pixels[i].a = (unsigned char)(((float *)image.data)[k]*255.0f);
+
+                    k += 4;
+                } break;
+                case PIXELFORMAT_UNCOMPRESSED_R16:
+                {
+                    pixels[i].r = (unsigned char)(HalfToFloat(((unsigned short *)image.data)[k])*255.0f);
+                    pixels[i].g = 0;
+                    pixels[i].b = 0;
+                    pixels[i].a = 255;
+
+                } break;
+                case PIXELFORMAT_UNCOMPRESSED_R16G16B16:
+                {
+                    pixels[i].r = (unsigned char)(HalfToFloat(((unsigned short *)image.data)[k])*255.0f);
+                    pixels[i].g = (unsigned char)(HalfToFloat(((unsigned short *)image.data)[k + 1])*255.0f);
+                    pixels[i].b = (unsigned char)(HalfToFloat(((unsigned short *)image.data)[k + 2])*255.0f);
+                    pixels[i].a = 255;
+
+                    k += 3;
+                } break;
+                case PIXELFORMAT_UNCOMPRESSED_R16G16B16A16:
+                {
+                    pixels[i].r = (unsigned char)(HalfToFloat(((unsigned short *)image.data)[k])*255.0f);
+                    pixels[i].g = (unsigned char)(HalfToFloat(((unsigned short *)image.data)[k])*255.0f);
+                    pixels[i].b = (unsigned char)(HalfToFloat(((unsigned short *)image.data)[k])*255.0f);
+                    pixels[i].a = (unsigned char)(HalfToFloat(((unsigned short *)image.data)[k])*255.0f);
 
                     k += 4;
                 } break;
@@ -2800,6 +2879,30 @@ Color GetImageColor(Image image, int x, int y)
                 color.a = (unsigned char)(((float *)image.data)[(y*image.width + x)*4]*255.0f);
 
             } break;
+            case PIXELFORMAT_UNCOMPRESSED_R16:
+            {
+                color.r = (unsigned char)(HalfToFloat(((unsigned short *)image.data)[y*image.width + x])*255.0f);
+                color.g = 0;
+                color.b = 0;
+                color.a = 255;
+
+            } break;
+            case PIXELFORMAT_UNCOMPRESSED_R16G16B16:
+            {
+                color.r = (unsigned char)(HalfToFloat(((unsigned short *)image.data)[(y*image.width + x)*3])*255.0f);
+                color.g = (unsigned char)(HalfToFloat(((unsigned short *)image.data)[(y*image.width + x)*3 + 1])*255.0f);
+                color.b = (unsigned char)(HalfToFloat(((unsigned short *)image.data)[(y*image.width + x)*3 + 2])*255.0f);
+                color.a = 255;
+
+            } break;
+            case PIXELFORMAT_UNCOMPRESSED_R16G16B16A16:
+            {
+                color.r = (unsigned char)(HalfToFloat(((unsigned short *)image.data)[(y*image.width + x)*4])*255.0f);
+                color.g = (unsigned char)(HalfToFloat(((unsigned short *)image.data)[(y*image.width + x)*4])*255.0f);
+                color.b = (unsigned char)(HalfToFloat(((unsigned short *)image.data)[(y*image.width + x)*4])*255.0f);
+                color.a = (unsigned char)(HalfToFloat(((unsigned short *)image.data)[(y*image.width + x)*4])*255.0f);
+
+            } break;
             default: TRACELOG(LOG_WARNING, "Compressed image format does not support color reading"); break;
         }
     }
@@ -2937,6 +3040,34 @@ void ImageDrawPixel(Image *dst, int x, int y, Color color)
             ((float *)dst->data)[(y*dst->width + x)*4 + 1] = coln.y;
             ((float *)dst->data)[(y*dst->width + x)*4 + 2] = coln.z;
             ((float *)dst->data)[(y*dst->width + x)*4 + 3] = coln.w;
+
+        } break;
+        case PIXELFORMAT_UNCOMPRESSED_R16:
+        {
+            // NOTE: Calculate grayscale equivalent color (normalized to 32bit)
+            Vector3 coln = { (float)color.r/255.0f, (float)color.g/255.0f, (float)color.b/255.0f };
+
+            ((unsigned short*)dst->data)[y*dst->width + x] = FloatToHalf(coln.x*0.299f + coln.y*0.587f + coln.z*0.114f);
+
+        } break;
+        case PIXELFORMAT_UNCOMPRESSED_R16G16B16:
+        {
+            // NOTE: Calculate R32G32B32 equivalent color (normalized to 32bit)
+            Vector3 coln = { (float)color.r/255.0f, (float)color.g/255.0f, (float)color.b/255.0f };
+
+            ((unsigned short *)dst->data)[(y*dst->width + x)*3] = FloatToHalf(coln.x);
+            ((unsigned short *)dst->data)[(y*dst->width + x)*3 + 1] = FloatToHalf(coln.y);
+            ((unsigned short *)dst->data)[(y*dst->width + x)*3 + 2] = FloatToHalf(coln.z);
+        } break;
+        case PIXELFORMAT_UNCOMPRESSED_R16G16B16A16:
+        {
+            // NOTE: Calculate R32G32B32A32 equivalent color (normalized to 32bit)
+            Vector4 coln = { (float)color.r/255.0f, (float)color.g/255.0f, (float)color.b/255.0f, (float)color.a/255.0f };
+
+            ((unsigned short *)dst->data)[(y*dst->width + x)*4] = FloatToHalf(coln.x);
+            ((unsigned short *)dst->data)[(y*dst->width + x)*4 + 1] = FloatToHalf(coln.y);
+            ((unsigned short *)dst->data)[(y*dst->width + x)*4 + 2] = FloatToHalf(coln.z);
+            ((unsigned short *)dst->data)[(y*dst->width + x)*4 + 3] = FloatToHalf(coln.w);
 
         } break;
         default: break;
@@ -3234,7 +3365,7 @@ void ImageDraw(Image *dst, Image src, Rectangle srcRec, Rectangle dstRec, Color 
         //    [-] GetPixelColor(): Get Vector4 instead of Color, easier for ColorAlphaBlend()
         //    [ ] Support f32bit channels drawing
 
-        // TODO: Support PIXELFORMAT_UNCOMPRESSED_R32, PIXELFORMAT_UNCOMPRESSED_R32G32B32, PIXELFORMAT_UNCOMPRESSED_R32G32B32A32
+        // TODO: Support PIXELFORMAT_UNCOMPRESSED_R32, PIXELFORMAT_UNCOMPRESSED_R32G32B32, PIXELFORMAT_UNCOMPRESSED_R32G32B32A32 and 16-bit equivalents
 
         Color colSrc, colDst, blend;
         bool blendRequired = true;
@@ -4367,6 +4498,33 @@ Color GetPixelColor(void *srcPtr, int format)
             color.a = (unsigned char)(((float *)srcPtr)[3]*255.0f);
 
         } break;
+        case PIXELFORMAT_UNCOMPRESSED_R16:
+        {
+            // NOTE: Pixel normalized float value is converted to [0..255]
+            color.r = (unsigned char)(HalfToFloat(((unsigned short *)srcPtr)[0])*255.0f);
+            color.g = (unsigned char)(HalfToFloat(((unsigned short *)srcPtr)[0])*255.0f);
+            color.b = (unsigned char)(HalfToFloat(((unsigned short *)srcPtr)[0])*255.0f);
+            color.a = 255;
+
+        } break;
+        case PIXELFORMAT_UNCOMPRESSED_R16G16B16:
+        {
+            // NOTE: Pixel normalized float value is converted to [0..255]
+            color.r = (unsigned char)(HalfToFloat(((unsigned short *)srcPtr)[0])*255.0f);
+            color.g = (unsigned char)(HalfToFloat(((unsigned short *)srcPtr)[1])*255.0f);
+            color.b = (unsigned char)(HalfToFloat(((unsigned short *)srcPtr)[2])*255.0f);
+            color.a = 255;
+
+        } break;
+        case PIXELFORMAT_UNCOMPRESSED_R16G16B16A16:
+        {
+            // NOTE: Pixel normalized float value is converted to [0..255]
+            color.r = (unsigned char)(HalfToFloat(((unsigned short *)srcPtr)[0])*255.0f);
+            color.g = (unsigned char)(HalfToFloat(((unsigned short *)srcPtr)[1])*255.0f);
+            color.b = (unsigned char)(HalfToFloat(((unsigned short *)srcPtr)[2])*255.0f);
+            color.a = (unsigned char)(HalfToFloat(((unsigned short *)srcPtr)[3])*255.0f);
+
+        } break;
         default: break;
     }
 
@@ -4473,6 +4631,9 @@ int GetPixelDataSize(int width, int height, int format)
         case PIXELFORMAT_UNCOMPRESSED_R32: bpp = 32; break;
         case PIXELFORMAT_UNCOMPRESSED_R32G32B32: bpp = 32*3; break;
         case PIXELFORMAT_UNCOMPRESSED_R32G32B32A32: bpp = 32*4; break;
+        case PIXELFORMAT_UNCOMPRESSED_R16: bpp = 16; break;
+        case PIXELFORMAT_UNCOMPRESSED_R16G16B16: bpp = 16*3; break;
+        case PIXELFORMAT_UNCOMPRESSED_R16G16B16A16: bpp = 16*4; break;
         case PIXELFORMAT_COMPRESSED_DXT1_RGB:
         case PIXELFORMAT_COMPRESSED_DXT1_RGBA:
         case PIXELFORMAT_COMPRESSED_ETC1_RGB:
@@ -4503,6 +4664,24 @@ int GetPixelDataSize(int width, int height, int format)
 //----------------------------------------------------------------------------------
 // Module specific Functions Definition
 //----------------------------------------------------------------------------------
+// From https://stackoverflow.com/questions/1659440/32-bit-to-16-bit-floating-point-conversion/60047308#60047308
+
+static float HalfToFloat(unsigned short x) {
+    const unsigned int e = (x&0x7C00)>>10; // exponent
+    const unsigned int m = (x&0x03FF)<<13; // mantissa
+    const float fm = (float)m;
+    const unsigned int v = (*(unsigned int*)&fm)>>23; // evil log2 bit hack to count leading zeros in denormalized format
+    const unsigned int r = (x&0x8000)<<16 | (e!=0)*((e+112)<<23|m) | ((e==0)&(m!=0))*((v-37)<<23|((m<<(150-v))&0x007FE000)); // sign : normalized : denormalized
+    return *(float*)&r;
+}
+
+static unsigned short FloatToHalf(float x) {
+    const unsigned int b = (*(unsigned int*)&x)+0x00001000; // round-to-nearest-even: add last bit after truncated mantissa
+    const unsigned int e = (b&0x7F800000)>>23; // exponent
+    const unsigned int m = b&0x007FFFFF; // mantissa; in line below: 0x007FF000 = 0x00800000-0x00001000 = decimal indicator flag - initial rounding
+    return (b&0x80000000)>>16 | (e>112)*((((e-112)<<10)&0x7C00)|m>>13) | ((e<113)&(e>101))*((((0x007FF000+m)>>(125-e))+1)>>1) | (e>143)*0x7FFF; // sign : normalized : denormalized : saturate
+}
+
 // Get pixel data from image as Vector4 array (float normalized)
 static Vector4 *LoadImageDataNormalized(Image image)
 {
@@ -4605,7 +4784,32 @@ static Vector4 *LoadImageDataNormalized(Image image)
                     pixels[i].w = ((float *)image.data)[k + 3];
 
                     k += 4;
-                }
+                } break;
+                case PIXELFORMAT_UNCOMPRESSED_R16:
+                {
+                    pixels[i].x = HalfToFloat(((unsigned short *)image.data)[k]);
+                    pixels[i].y = 0.0f;
+                    pixels[i].z = 0.0f;
+                    pixels[i].w = 1.0f;
+                } break;
+                case PIXELFORMAT_UNCOMPRESSED_R16G16B16:
+                {
+                    pixels[i].x = HalfToFloat(((unsigned short *)image.data)[k]);
+                    pixels[i].y = HalfToFloat(((unsigned short *)image.data)[k + 1]);
+                    pixels[i].z = HalfToFloat(((unsigned short *)image.data)[k + 2]);
+                    pixels[i].w = 1.0f;
+
+                    k += 3;
+                } break;
+                case PIXELFORMAT_UNCOMPRESSED_R16G16B16A16:
+                {
+                    pixels[i].x = HalfToFloat(((unsigned short *)image.data)[k]);
+                    pixels[i].y = HalfToFloat(((unsigned short *)image.data)[k + 1]);
+                    pixels[i].z = HalfToFloat(((unsigned short *)image.data)[k + 2]);
+                    pixels[i].w = HalfToFloat(((unsigned short *)image.data)[k + 3]);
+
+                    k += 4;
+                } break;
                 default: break;
             }
         }
