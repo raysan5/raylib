@@ -5904,7 +5904,6 @@ static void AndroidCommandCallback(struct android_app *app, int32_t cmd)
                     CORE.Window.surface = EGL_NO_SURFACE;
                 }
 
-                CORE.Window.device = EGL_NO_DISPLAY;
                 CORE.Android.contextRebindRequired = true;
             }
             // If 'CORE.Window.device' is already set to 'EGL_NO_DISPLAY'
