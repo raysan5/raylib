@@ -720,8 +720,8 @@ void android_main(struct android_app *app)
     char arg0[] = "raylib";     // NOTE: argv[] are mutable
     CORE.Android.app = app;
 
-    // NOTE: We get the main return for exit()
-    int ret = main(1, (char *[]) { arg0, NULL });
+    // NOTE: Return from main is ignored
+    (void)main(1, (char *[]) { arg0, NULL });
 
     // Request to end the native activity
     ANativeActivity_finish(app->activity);
@@ -731,19 +731,13 @@ void android_main(struct android_app *app)
     int pollEvents = 0;
 
     // Waiting for application events before complete finishing
-    while (!CORE.Android.app->destroyRequested)
+    while (!app->destroyRequested)
     {
         while ((pollResult = ALooper_pollAll(0, NULL, &pollEvents, (void **)&CORE.Android.source)) >= 0)
         {
-            if (CORE.Android.source != NULL) CORE.Android.source->process(CORE.Android.app, CORE.Android.source);
+            if (CORE.Android.source != NULL) CORE.Android.source->process(app, CORE.Android.source);
         }
     }
-
-    // WARNING: Make sure you free resources properly and no other process is running from Java code or other.
-    // NOTE: You can use JNI to call a NativeLoader method (which will call finish() from the UI thread)
-    // to handle the full close from Java, without using exit(0) like here.
-
-    exit(ret);    // Close the application directly, without going through Java
 }
 
 // NOTE: Add this to header (if apps really need it)
@@ -5897,21 +5891,29 @@ static void AndroidCommandCallback(struct android_app *app, int32_t cmd)
         case APP_CMD_TERM_WINDOW:
         {
             // Dettach OpenGL context and destroy display surface
-            // NOTE 1: Detaching context before destroying display surface avoids losing our resources (textures, shaders, VBOs...)
-            // NOTE 2: In some cases (too many context loaded), OS could unload context automatically... :(
-            eglMakeCurrent(CORE.Window.device, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
-            eglDestroySurface(CORE.Window.device, CORE.Window.surface);
+            // NOTE 1: This case is used when the user exits the app without closing it. We detach the context to ensure everything is recoverable upon resuming.
+            // NOTE 2: Detaching context before destroying display surface avoids losing our resources (textures, shaders, VBOs...)
+            // NOTE 3: In some cases (too many context loaded), OS could unload context automatically... :(
+            if (CORE.Window.device != EGL_NO_DISPLAY)
+            {
+                eglMakeCurrent(CORE.Window.device, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
 
-            CORE.Android.contextRebindRequired = true;
+                if (CORE.Window.surface != EGL_NO_SURFACE)
+                {
+                    eglDestroySurface(CORE.Window.device, CORE.Window.surface);
+                    CORE.Window.surface = EGL_NO_SURFACE;
+                }
+
+                CORE.Window.device = EGL_NO_DISPLAY;
+                CORE.Android.contextRebindRequired = true;
+            }
+            // If 'CORE.Window.device' is already set to 'EGL_NO_DISPLAY'
+            // this means that the user has already called 'CloseWindow()'
+
         } break;
         case APP_CMD_SAVE_STATE: break;
         case APP_CMD_STOP: break;
-        case APP_CMD_DESTROY:
-        {
-            // NOTE 1: Call ANativeActivity_finish again to free resources unconditionally.
-            // NOTE 2: You can deallocate other things that are NativeActivity related here.
-            ANativeActivity_finish(CORE.Android.app->activity);
-        } break;
+        case APP_CMD_DESTROY: break;
         case APP_CMD_CONFIG_CHANGED:
         {
             //AConfiguration_fromAssetManager(CORE.Android.app->config, CORE.Android.app->activity->assetManager);
