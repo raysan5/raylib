@@ -2890,6 +2890,14 @@ void rlDrawRenderBatch(rlRenderBatch *batch)
     // Change to next buffer in the list (in case of multi-buffering)
     batch->currentBuffer++;
     if (batch->currentBuffer >= batch->bufferCount) batch->currentBuffer = 0;
+
+#if defined(GRAPHICS_API_OPENGL_ES2)
+    // Fix compositing mixing with the framebuffer (that causes transparency issues) by clearing the alpha channel on the end of the frame
+    glClearColor(0, 0, 0, 1);
+    glColorMask(false, false, false, true);
+    glClear(GL_COLOR_BUFFER_BIT);
+    glColorMask(true, true, true, true);
+#endif
 #endif
 }
 
