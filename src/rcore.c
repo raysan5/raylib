@@ -5609,7 +5609,7 @@ static void KeyCallback(GLFWwindow *window, int key, int scancode, int action, i
     if ((key == GLFW_KEY_F12) && (action == GLFW_PRESS))
     {
 #if defined(SUPPORT_GIF_RECORDING)
-        if (mods == GLFW_MOD_CONTROL)
+        if (mods & GLFW_MOD_CONTROL)
         {
             if (gifRecording)
             {
