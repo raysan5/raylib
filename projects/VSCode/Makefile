@@ -32,7 +32,7 @@ RAYLIB_PATH        ?= ..\..
 COMPILER_PATH      ?= C:/raylib/w64devkit/bin
 
 # Define default options
-# One of PLATFORM_DESKTOP, PLATFORM_RPI, PLATFORM_ANDROID, PLATFORM_WEB
+# One of PLATFORM_DESKTOP, PLATFORM_ANDROID, PLATFORM_WEB
 PLATFORM           ?= PLATFORM_DESKTOP
 
 # Locations of your newly installed library and associated headers. See ../src/Makefile

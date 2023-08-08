@@ -42,7 +42,7 @@
         #endif
         #define GLSL_VERSION            330
     #endif
-#else   // PLATFORM_RPI, PLATFORM_ANDROID, PLATFORM_WEB
+#else   // PLATFORM_ANDROID, PLATFORM_WEB
     #define GLSL_VERSION            100
 #endif
 
