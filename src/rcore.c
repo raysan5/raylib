@@ -3694,7 +3694,7 @@ unsigned char *DecodeDataBase64(const unsigned char *data, int *outputSize)
 // Ref: https://github.com/raysan5/raylib/issues/686
 void OpenURL(const char *url)
 {
-    // Security check to (aprtially) avoid malicious code on PLATFORM_WEB
+    // Security check to (partially) avoid malicious code on PLATFORM_WEB
     if (strchr(url, '\'') != NULL) TRACELOG(LOG_WARNING, "SYSTEM: Provided URL could be potentially malicious, avoid [\'] character");
     else
     {
@@ -4277,9 +4277,9 @@ static bool InitGraphicsDevice(int width, int height)
         glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE); // Profiles Hint: Only 3.3 and above!
                                                                        // Values: GLFW_OPENGL_CORE_PROFILE, GLFW_OPENGL_ANY_PROFILE, GLFW_OPENGL_COMPAT_PROFILE
 #if defined(__APPLE__)
-        glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GLFW_TRUE);  // OSX Requires fordward compatibility
+        glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GLFW_TRUE);  // OSX Requires forward compatibility
 #else
-        glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GLFW_FALSE); // Fordward Compatibility Hint: Only 3.3 and above!
+        glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GLFW_FALSE); // Forward Compatibility Hint: Only 3.3 and above!
 #endif
         //glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GLFW_TRUE); // Request OpenGL DEBUG context
     }
@@ -5890,7 +5890,7 @@ static void AndroidCommandCallback(struct android_app *app, int32_t cmd)
         } break;
         case APP_CMD_TERM_WINDOW:
         {
-            // Dettach OpenGL context and destroy display surface
+            // Detach OpenGL context and destroy display surface
             // NOTE 1: This case is used when the user exits the app without closing it. We detach the context to ensure everything is recoverable upon resuming.
             // NOTE 2: Detaching context before destroying display surface avoids losing our resources (textures, shaders, VBOs...)
             // NOTE 3: In some cases (too many context loaded), OS could unload context automatically... :(
@@ -6575,7 +6575,7 @@ static void ConfigureEvdevDevice(char *device)
     {
         ioctl(fd, EVIOCGBIT(EV_ABS, sizeof(absBits)), absBits);
 
-        // Check for absolute movement support (usualy touchscreens, but also joysticks)
+        // Check for absolute movement support (usually touchscreens, but also joysticks)
         if (TEST_BIT(absBits, ABS_X) && TEST_BIT(absBits, ABS_Y))
         {
             hasAbs = true;
@@ -6589,7 +6589,7 @@ static void ConfigureEvdevDevice(char *device)
             worker->absRange.height = absinfo.maximum - absinfo.minimum;
         }
 
-        // Check for multiple absolute movement support (usualy multitouch touchscreens)
+        // Check for multiple absolute movement support (usually multitouch touchscreens)
         if (TEST_BIT(absBits, ABS_MT_POSITION_X) && TEST_BIT(absBits, ABS_MT_POSITION_Y))
         {
             hasAbsMulti = true;
@@ -6604,7 +6604,7 @@ static void ConfigureEvdevDevice(char *device)
         }
     }
 
-    // Check for relative movement support (usualy mouse)
+    // Check for relative movement support (usually mouse)
     if (TEST_BIT(evBits, EV_REL))
     {
         ioctl(fd, EVIOCGBIT(EV_REL, sizeof(relBits)), relBits);
@@ -6612,7 +6612,7 @@ static void ConfigureEvdevDevice(char *device)
         if (TEST_BIT(relBits, REL_X) && TEST_BIT(relBits, REL_Y)) hasRel = true;
     }
 
-    // Check for button support to determine the device type(usualy on all input devices)
+    // Check for button support to determine the device type(usually on all input devices)
     if (TEST_BIT(evBits, EV_KEY))
     {
         ioctl(fd, EVIOCGBIT(EV_KEY, sizeof(keyBits)), keyBits);
@@ -6740,7 +6740,7 @@ static void PollKeyboardEvents(void)
             // Keyboard button parsing
             if ((event.code >= 1) && (event.code <= 255))     //Keyboard keys appear for codes 1 to 255
             {
-                keycode = keymapUS[event.code & 0xFF];     // The code we get is a scancode so we look up the apropriate keycode
+                keycode = keymapUS[event.code & 0xFF];     // The code we get is a scancode so we look up the appropriate keycode
 
                 // Make sure we got a valid keycode
                 if ((keycode > 0) && (keycode < sizeof(CORE.Input.Keyboard.currentKeyState)))
@@ -6817,8 +6817,8 @@ static void *EventThread(void *arg)
                 // Basic movement
                 if (event.code == ABS_X)
                 {
-                    CORE.Input.Mouse.currentPosition.x = (event.value - worker->absRange.x)*CORE.Window.screen.width/worker->absRange.width;    // Scale acording to absRange
-                    CORE.Input.Touch.position[0].x = (event.value - worker->absRange.x)*CORE.Window.screen.width/worker->absRange.width;        // Scale acording to absRange
+                    CORE.Input.Mouse.currentPosition.x = (event.value - worker->absRange.x)*CORE.Window.screen.width/worker->absRange.width;    // Scale according to absRange
+                    CORE.Input.Touch.position[0].x = (event.value - worker->absRange.x)*CORE.Window.screen.width/worker->absRange.width;        // Scale according to absRange
 
                     touchAction = 2;    // TOUCH_ACTION_MOVE
                     gestureUpdate = true;
@@ -6826,8 +6826,8 @@ static void *EventThread(void *arg)
 
                 if (event.code == ABS_Y)
                 {
-                    CORE.Input.Mouse.currentPosition.y = (event.value - worker->absRange.y)*CORE.Window.screen.height/worker->absRange.height;  // Scale acording to absRange
-                    CORE.Input.Touch.position[0].y = (event.value - worker->absRange.y)*CORE.Window.screen.height/worker->absRange.height;      // Scale acording to absRange
+                    CORE.Input.Mouse.currentPosition.y = (event.value - worker->absRange.y)*CORE.Window.screen.height/worker->absRange.height;  // Scale according to absRange
+                    CORE.Input.Touch.position[0].y = (event.value - worker->absRange.y)*CORE.Window.screen.height/worker->absRange.height;      // Scale according to absRange
 
                     touchAction = 2;    // TOUCH_ACTION_MOVE
                     gestureUpdate = true;
@@ -6838,12 +6838,12 @@ static void *EventThread(void *arg)
 
                 if (event.code == ABS_MT_POSITION_X)
                 {
-                    if (worker->touchSlot < MAX_TOUCH_POINTS) CORE.Input.Touch.position[worker->touchSlot].x = (event.value - worker->absRange.x)*CORE.Window.screen.width/worker->absRange.width;    // Scale acording to absRange
+                    if (worker->touchSlot < MAX_TOUCH_POINTS) CORE.Input.Touch.position[worker->touchSlot].x = (event.value - worker->absRange.x)*CORE.Window.screen.width/worker->absRange.width;    // Scale according to absRange
                 }
 
                 if (event.code == ABS_MT_POSITION_Y)
                 {
-                    if (worker->touchSlot < MAX_TOUCH_POINTS) CORE.Input.Touch.position[worker->touchSlot].y = (event.value - worker->absRange.y)*CORE.Window.screen.height/worker->absRange.height;  // Scale acording to absRange
+                    if (worker->touchSlot < MAX_TOUCH_POINTS) CORE.Input.Touch.position[worker->touchSlot].y = (event.value - worker->absRange.y)*CORE.Window.screen.height/worker->absRange.height;  // Scale according to absRange
                 }
 
                 if (event.code == ABS_MT_TRACKING_ID)
