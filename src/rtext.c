@@ -1688,7 +1688,7 @@ const char *TextToPascal(const char *text)
 // WARNING: Allocated memory must be manually freed
 char *LoadUTF8(const int *codepoints, int length)
 {
-    // We allocate enough memory fo fit all possible codepoints
+    // We allocate enough memory to fit all possible codepoints
     // NOTE: 5 bytes for every codepoint should be enough
     char *text = (char *)RL_CALLOC(length*5, 1);
     const char *utf8 = NULL;
