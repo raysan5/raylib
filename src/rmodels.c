@@ -101,19 +101,18 @@
     #define PAR_REALLOC(T, BUF, N) ((T*)RL_REALLOC(BUF, sizeof(T)*(N)))
     #define PAR_FREE RL_FREE
 
-#if defined(_MSC_VER ) // par shapes has 2 warnings on windows, so disable them just fof this file
-#pragma warning( push )
-#pragma warning( disable : 4244)
-#pragma warning( disable : 4305)
-#endif
+    #if defined(_MSC_VER)           // Disable some MSVC warning
+        #pragma warning(push)
+        #pragma warning(disable : 4244)
+        #pragma warning(disable : 4305)
+    #endif
 
     #define PAR_SHAPES_IMPLEMENTATION
     #include "external/par_shapes.h"    // Shapes 3d parametric generation
 
-#if defined(_MSC_VER )  // disable MSVC warning suppression for par shapes
-#pragma warning( pop )
-#endif
-
+    #if defined(_MSC_VER)           
+        #pragma warning(pop)        // Disable MSVC warning suppression
+    #endif
 #endif
 
 #if defined(_WIN32)

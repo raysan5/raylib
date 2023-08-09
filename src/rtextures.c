@@ -162,16 +162,17 @@
     #define QOI_MALLOC RL_MALLOC
     #define QOI_FREE RL_FREE
 
-#if defined(_MSC_VER ) // qoi has warnings on windows, so disable them just for this file
-#pragma warning( push )
-#pragma warning( disable : 4267)
-#endif
+    #if defined(_MSC_VER)               // Disable some MSVC warning
+        #pragma warning(push)
+        #pragma warning(disable : 4267)
+    #endif
+    
     #define QOI_IMPLEMENTATION
     #include "external/qoi.h"
 
-#if defined(_MSC_VER )
-#pragma warning( pop )
-#endif
+    #if defined(_MSC_VER)
+        #pragma warning(pop)            // Disable MSVC warning suppression
+    #endif
 
 #endif
 

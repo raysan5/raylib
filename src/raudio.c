@@ -227,17 +227,20 @@ typedef struct tagBITMAPINFOHEADER {
     #define QOA_MALLOC RL_MALLOC
     #define QOA_FREE RL_FREE
 
-#if defined(_MSC_VER ) // par shapes has 2 warnings on windows, so disable them just fof this file
-#pragma warning( push )
-#pragma warning( disable : 4018)
-#pragma warning( disable : 4267)
-#pragma warning( disable : 4244)
-#endif
-
+    #if defined(_MSC_VER)           // Disable some MSVC warning
+        #pragma warning(push)
+        #pragma warning(disable : 4018)
+        #pragma warning(disable : 4267)
+        #pragma warning(disable : 4244)
+    #endif
 
     #define QOA_IMPLEMENTATION
     #include "external/qoa.h"           // QOA loading and saving functions
     #include "external/qoaplay.c"       // QOA stream playing helper functions
+    
+    #if defined(_MSC_VER)
+        #pragma warning(pop)        // Disable MSVC warning suppression
+    #endif
 #endif
 
 #if defined(SUPPORT_FILEFORMAT_FLAC)
@@ -254,16 +257,16 @@ typedef struct tagBITMAPINFOHEADER {
     #define JARXM_MALLOC RL_MALLOC
     #define JARXM_FREE RL_FREE
 
-    #if defined(_MSC_VER )              // jar_xm has warnings on windows, so disable them just for this file
-        #pragma warning( push )
-        #pragma warning( disable : 4244)
+    #if defined(_MSC_VER)           // Disable some MSVC warning
+        #pragma warning(push)
+        #pragma warning(disable : 4244)
     #endif
 
     #define JAR_XM_IMPLEMENTATION
     #include "external/jar_xm.h"        // XM loading functions
 
-    #if defined(_MSC_VER )
-        #pragma warning( pop )
+    #if defined(_MSC_VER)
+        #pragma warning(pop)        // Disable MSVC warning suppression
     #endif
 #endif
 
