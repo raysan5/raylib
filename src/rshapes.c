@@ -99,7 +99,7 @@ void SetShapesTexture(Texture2D texture, Rectangle source)
 {
     // Reset texture to default pixel if required
     // WARNING: Shapes texture should be probably better validated,
-    // it can break the rendering of all shapes if missused
+    // it can break the rendering of all shapes if misused
     if ((texture.id == 0) || (source.width == 0) || (source.height == 0))
     {
         texShapes = (Texture2D){ 1, 1, 1, 1, 7 };

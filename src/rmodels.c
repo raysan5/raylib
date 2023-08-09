@@ -2457,7 +2457,7 @@ Mesh GenMeshCube(float width, float height, float length)
 // Platonic solids:
 par_shapes_mesh* par_shapes_create_tetrahedron();       // 4 sides polyhedron (pyramid)
 par_shapes_mesh* par_shapes_create_cube();              // 6 sides polyhedron (cube)
-par_shapes_mesh* par_shapes_create_octahedron();        // 8 sides polyhedron (dyamond)
+par_shapes_mesh* par_shapes_create_octahedron();        // 8 sides polyhedron (diamond)
 par_shapes_mesh* par_shapes_create_dodecahedron();      // 12 sides polyhedron
 par_shapes_mesh* par_shapes_create_icosahedron();       // 20 sides polyhedron
 */
@@ -4244,7 +4244,7 @@ static Model LoadIQM(const char *fileName)
         model.meshes[i].triangleCount = imesh[i].num_triangles;
         model.meshes[i].indices = RL_CALLOC(model.meshes[i].triangleCount*3, sizeof(unsigned short));
 
-        // Animated verted data, what we actually process for rendering
+        // Animated vertex data, what we actually process for rendering
         // NOTE: Animated vertex should be re-uploaded to GPU (if not using GPU skinning)
         model.meshes[i].animVertices = RL_CALLOC(model.meshes[i].vertexCount*3, sizeof(float));
         model.meshes[i].animNormals = RL_CALLOC(model.meshes[i].vertexCount*3, sizeof(float));
@@ -4787,7 +4787,7 @@ static Model LoadGLTF(const char *fileName)
 
         RESTRICTIONS:
           - Only triangle meshes supported
-          - Vertex attibute types and formats supported:
+          - Vertex attribute types and formats supported:
               > Vertices (position): vec3: float
               > Normals: vec3: float
               > Texcoords: vec2: float
@@ -5286,7 +5286,7 @@ static bool GetPoseAtTimeGLTF(cgltf_accessor *input, cgltf_accessor *output, flo
         Vector4 v2 = {tmp[0], tmp[1], tmp[2], tmp[3]};
         Vector4 *r = data;
 
-        // Only v4 is for rotations, so we know it's a quat
+        // Only v4 is for rotations, so we know it's a quaternion
         *r = QuaternionSlerp(v1, v2, t);
     }
 
