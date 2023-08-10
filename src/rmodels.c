@@ -110,7 +110,7 @@
     #define PAR_SHAPES_IMPLEMENTATION
     #include "external/par_shapes.h"    // Shapes 3d parametric generation
 
-    #if defined(_MSC_VER)           
+    #if defined(_MSC_VER)
         #pragma warning(pop)        // Disable MSVC warning suppression
     #endif
 #endif
@@ -5576,7 +5576,7 @@ static Model LoadM3D(const char *fileName)
     m3dp_t *prop = NULL;
     unsigned int bytesRead = 0;
     unsigned char *fileData = LoadFileData(fileName, &bytesRead);
-    int i, j, k, l, n, mi = -2;
+    int i, j, k, l, n, mi = -2, vcolor = 0;
 
     if (fileData != NULL)
     {
@@ -5606,9 +5606,12 @@ static Model LoadM3D(const char *fileName)
         }
         else
         {
-            model.meshCount = model.materialCount = 1;
+            model.meshCount = 1; model.materialCount = 0;
             TRACELOG(LOG_INFO, "MODEL: No materials, putting all meshes in a default material");
         }
+
+        // We always need a default material, so we add +1
+        model.materialCount++;
 
         model.meshes = (Mesh *)RL_CALLOC(model.meshCount, sizeof(Mesh));
         model.meshMaterial = (int *)RL_CALLOC(model.meshCount, sizeof(int));
@@ -5634,7 +5637,14 @@ static Model LoadM3D(const char *fileName)
                 k++;
                 mi = m3d->face[i].materialid;
 
-                for (j = i, l = 0; (j < (int)m3d->numface) && (mi == m3d->face[j].materialid); j++, l++);
+                // Only allocate colors VertexBuffer if there's a color vertex in the model for this material batch
+                // if all colors are fully transparent black for all verteces of this materal, then we assume no vertex colors
+                for (j = i, l = vcolor = 0; (j < (int)m3d->numface) && (mi == m3d->face[j].materialid); j++, l++)
+                {
+                    if (!m3d->vertex[m3d->face[j].vertex[0]].color ||
+                        !m3d->vertex[m3d->face[j].vertex[1]].color ||
+                        !m3d->vertex[m3d->face[j].vertex[2]].color) vcolor = 1;
+                }
 
                 model.meshes[k].vertexCount = l*3;
                 model.meshes[k].triangleCount = l;
@@ -5642,9 +5652,9 @@ static Model LoadM3D(const char *fileName)
                 model.meshes[k].texcoords = (float *)RL_CALLOC(model.meshes[k].vertexCount*2, sizeof(float));
                 model.meshes[k].normals = (float *)RL_CALLOC(model.meshes[k].vertexCount*3, sizeof(float));
 
-                // If no map is provided, we allocate storage for vertex colors
-                // M3D specs only consider vertex colors if no material is provided
-                if (mi != M3D_UNDEF) model.meshes[k].colors = RL_CALLOC(model.meshes[k].vertexCount*4, sizeof(unsigned char));
+                // If no map is provided, or we have colors defined, we allocate storage for vertex colors
+                // M3D specs only consider vertex colors if no material is provided, however raylib uses both and mixes the colors
+                if ((mi == M3D_UNDEF) || vcolor) model.meshes[k].colors = RL_CALLOC(model.meshes[k].vertexCount*4, sizeof(unsigned char));
 
                 if (m3d->numbone && m3d->numskin)
                 {
