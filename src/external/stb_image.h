@@ -7758,6 +7758,14 @@ STBIDEF int stbi_is_16_bit_from_callbacks(stbi_io_callbacks const *c, void *user
    return stbi__is_16_main(&s);
 }
 
+// Workaround to hide the following unused functions warnings while compiling raylib
+void unused_stb_image(void)
+{
+    (void)&stbi__addints_valid;
+    (void)&stbi__mul2shorts_valid;
+    return;
+}
+
 #endif // STB_IMAGE_IMPLEMENTATION
 
 /*

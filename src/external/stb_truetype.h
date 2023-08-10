@@ -4964,6 +4964,41 @@ STBTT_DEF int stbtt_CompareUTF8toUTF16_bigendian(const char *s1, int len1, const
    return stbtt_CompareUTF8toUTF16_bigendian_internal((char *) s1, len1, (char *) s2, len2);
 }
 
+// Workaround to hide the following unused functions warnings while compiling raylib
+void unused_stb_truetype(void)
+{
+    (void)&stbtt_CompareUTF8toUTF16_bigendian;
+    (void)&stbtt_FindMatchingFont;
+    (void)&stbtt_GetNumberOfFonts;
+    (void)&stbtt_BakeFontBitmap;
+    (void)&stbtt_GetFontNameString;
+    (void)&stbtt_FreeSDF;
+    (void)&stbtt_GetPackedQuad;
+    (void)&stbtt_GetScaledFontVMetrics;
+    (void)&stbtt_PackFontRange;
+    (void)&stbtt_PackSetSkipMissingCodepoints;
+    (void)&stbtt_PackSetOversampling;
+    (void)&stbtt_PackEnd;
+    (void)&stbtt_PackBegin;
+    (void)&stbtt_GetBakedQuad;
+    (void)&stbtt_MakeCodepointBitmap;
+    (void)&stbtt_MakeCodepointBitmapSubpixelPrefilter;
+    (void)&stbtt_GetGlyphBitmap;
+    (void)&stbtt_FreeBitmap;
+    (void)&stbtt_GetCodepointBitmapBox;
+    (void)&stbtt_GetCodepointSVG;
+    (void)&stbtt_FreeShape;
+    (void)&stbtt_GetFontBoundingBox;
+    (void)&stbtt_GetFontVMetricsOS2;
+    (void)&stbtt_GetCodepointKernAdvance;
+    (void)&stbtt_GetKerningTable;
+    (void)&stbtt_GetKerningTableLength;
+    (void)&stbtt_IsGlyphEmpty;
+    (void)&stbtt_GetCodepointBox;
+    (void)&stbtt_GetCodepointShape;
+    return;
+}
+
 #if defined(__GNUC__) || defined(__clang__)
 #pragma GCC diagnostic pop
 #endif

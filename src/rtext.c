@@ -71,21 +71,12 @@
 #include <ctype.h>          // Required for: toupper(), tolower() [Used in TextToUpper(), TextToLower()]
 
 #if defined(SUPPORT_FILEFORMAT_TTF)
-    #if defined(__GNUC__) // GCC and Clang
-        #pragma GCC diagnostic push
-        #pragma GCC diagnostic ignored "-Wunused-function"
-    #endif
-
     #define STB_RECT_PACK_IMPLEMENTATION
     #include "external/stb_rect_pack.h"     // Required for: ttf font rectangles packaging
 
     #define STBTT_STATIC
     #define STB_TRUETYPE_IMPLEMENTATION
     #include "external/stb_truetype.h"      // Required for: ttf font data reading
-
-    #if defined(__GNUC__) // GCC and Clang
-        #pragma GCC diagnostic pop
-    #endif
 #endif
 
 //----------------------------------------------------------------------------------
@@ -852,7 +843,7 @@ Image GenImageFontAtlas(const GlyphInfo *chars, Rectangle **charRecs, int glyphC
         RL_FREE(nodes);
         RL_FREE(context);
     }
-    
+
 #if defined(SUPPORT_FONT_ATLAS_WHITE_REC)
     // Add a 3x3 white rectangle at the bottom-right corner of the generated atlas,
     // useful to use as the white texture to draw shapes with raylib, using this rectangle
@@ -865,7 +856,7 @@ Image GenImageFontAtlas(const GlyphInfo *chars, Rectangle **charRecs, int glyphC
         k -= atlas.width;
     }
 #endif
-    
+
     // Convert image data from GRAYSCALE to GRAY_ALPHA
     unsigned char *dataGrayAlpha = (unsigned char *)RL_MALLOC(atlas.width*atlas.height*sizeof(unsigned char)*2); // Two channels
 

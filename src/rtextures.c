@@ -138,11 +138,6 @@
      defined(SUPPORT_FILEFORMAT_PIC) || \
      defined(SUPPORT_FILEFORMAT_PNM))
 
-    #if defined(__GNUC__) // GCC and Clang
-        #pragma GCC diagnostic push
-        #pragma GCC diagnostic ignored "-Wunused-function"
-    #endif
-
     #define STBI_MALLOC RL_MALLOC
     #define STBI_FREE RL_FREE
     #define STBI_REALLOC RL_REALLOC
@@ -150,10 +145,6 @@
     #define STB_IMAGE_IMPLEMENTATION
     #include "external/stb_image.h"         // Required for: stbi_load_from_file()
                                             // NOTE: Used to read image data (multiple formats support)
-
-    #if defined(__GNUC__) // GCC and Clang
-        #pragma GCC diagnostic pop
-    #endif
 #endif
 
 #if (defined(SUPPORT_FILEFORMAT_DDS) || \
@@ -162,18 +153,9 @@
      defined(SUPPORT_FILEFORMAT_PVR) || \
      defined(SUPPORT_FILEFORMAT_ASTC))
 
-    #if defined(__GNUC__) // GCC and Clang
-        #pragma GCC diagnostic push
-        #pragma GCC diagnostic ignored "-Wunused-function"
-    #endif
-
     #define RL_GPUTEX_IMPLEMENTATION
     #include "external/rl_gputex.h"         // Required for: rl_load_xxx_from_memory()
                                             // NOTE: Used to read compressed textures data (multiple formats support)
-
-    #if defined(__GNUC__) // GCC and Clang
-        #pragma GCC diagnostic pop
-    #endif
 #endif
 
 #if defined(SUPPORT_FILEFORMAT_QOI)
@@ -184,7 +166,7 @@
         #pragma warning(push)
         #pragma warning(disable : 4267)
     #endif
-    
+
     #define QOI_IMPLEMENTATION
     #include "external/qoi.h"
 
@@ -3300,13 +3282,13 @@ void ImageDrawRectangleRec(Image *dst, Rectangle rec, Color color)
     {
         memcpy(pSrcPixel + x*bytesPerPixel, pSrcPixel, bytesPerPixel);
     }
-	
-	// Repeat the first row data for all other rows
-	int bytesPerRow = bytesPerPixel * (int)rec.width;
-	for (int y = 1; y < (int)rec.height; y++)
-	{
-		memcpy(pSrcPixel + (y*dst->width)*bytesPerPixel, pSrcPixel, bytesPerRow);
-	}
+
+    // Repeat the first row data for all other rows
+    int bytesPerRow = bytesPerPixel * (int)rec.width;
+    for (int y = 1; y < (int)rec.height; y++)
+    {
+        memcpy(pSrcPixel + (y*dst->width)*bytesPerPixel, pSrcPixel, bytesPerRow);
+    }
 }
 
 // Draw rectangle lines within an image
