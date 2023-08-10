@@ -184,7 +184,7 @@
         #pragma warning(push)
         #pragma warning(disable : 4267)
     #endif
-    
+
     #define QOI_IMPLEMENTATION
     #include "external/qoi.h"
 
@@ -3300,13 +3300,13 @@ void ImageDrawRectangleRec(Image *dst, Rectangle rec, Color color)
     {
         memcpy(pSrcPixel + x*bytesPerPixel, pSrcPixel, bytesPerPixel);
     }
-	
-	// Repeat the first row data for all other rows
-	int bytesPerRow = bytesPerPixel * (int)rec.width;
-	for (int y = 1; y < (int)rec.height; y++)
-	{
-		memcpy(pSrcPixel + (y*dst->width)*bytesPerPixel, pSrcPixel, bytesPerRow);
-	}
+
+    // Repeat the first row data for all other rows
+    int bytesPerRow = bytesPerPixel * (int)rec.width;
+    for (int y = 1; y < (int)rec.height; y++)
+    {
+        memcpy(pSrcPixel + (y*dst->width)*bytesPerPixel, pSrcPixel, bytesPerRow);
+    }
 }
 
 // Draw rectangle lines within an image

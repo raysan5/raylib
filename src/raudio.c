@@ -237,7 +237,7 @@ typedef struct tagBITMAPINFOHEADER {
     #define QOA_IMPLEMENTATION
     #include "external/qoa.h"           // QOA loading and saving functions
     #include "external/qoaplay.c"       // QOA stream playing helper functions
-    
+
     #if defined(_MSC_VER)
         #pragma warning(pop)        // Disable MSVC warning suppression
     #endif
@@ -920,7 +920,7 @@ Sound LoadSoundFromWave(Wave wave)
 }
 
 // Clone sound from existing sound data, clone does not own wave data
-// Wave data must 
+// Wave data must
 // NOTE: Wave data must be unallocated manually and will be shared across all clones
 Sound LoadSoundAlias(Sound source)
 {
