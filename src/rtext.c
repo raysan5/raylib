@@ -1766,7 +1766,7 @@ int GetCodepointCount(const char *text)
     while (*ptr != '\0')
     {
         int next = 0;
-        int letter = GetCodepointNext(ptr, &next);
+        (void)GetCodepointNext(ptr, &next);
 
         ptr += next;
 
