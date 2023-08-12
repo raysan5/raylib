@@ -437,11 +437,9 @@ void DrawLineCatmullRom(Vector2 *points, int pointCount, float thick, Color colo
             vertices[1].y = currentPoint.y + dx*size;
         }
 
-        // TODO: Something is wrong with this implementation,
-        // it should use 'j' instead of 'i' but it does not work...
-        for (int i = 1; i <= SPLINE_LINE_DIVISIONS; i++)
+        for (int j = 1; j <= SPLINE_LINE_DIVISIONS; j++)
         {
-            t = ((float)i)/((float)SPLINE_LINE_DIVISIONS);
+            t = ((float)j)/((float)SPLINE_LINE_DIVISIONS);
 
             float q0 = (-1.0f*t*t*t) + (2.0f*t*t) + (-1.0f*t);
             float q1 = (3.0f*t*t*t) + (-5.0f*t*t) + 2.0f;
@@ -451,11 +449,11 @@ void DrawLineCatmullRom(Vector2 *points, int pointCount, float thick, Color colo
             nextPoint.x = 0.5f*((p1.x*q0) + (p2.x*q1) + (p3.x*q2) + (p4.x*q3));
             nextPoint.y = 0.5f*((p1.y*q0) + (p2.y*q1) + (p3.y*q2) + (p4.y*q3));
 
-            float dy = nextPoint.y - currentPoint.y;
-            float dx = nextPoint.x - currentPoint.x;
-            float size = (0.5f*thick)/sqrtf(dx*dx + dy*dy);
+            dy = nextPoint.y - currentPoint.y;
+            dx = nextPoint.x - currentPoint.x;
+            size = (0.5f*thick)/sqrtf(dx*dx + dy*dy);
 
-            if (i == 1)
+            if ((i == 0) && (j == 1))
             {
                 vertices[0].x = currentPoint.x + dy*size;
                 vertices[0].y = currentPoint.y - dx*size;
@@ -463,19 +461,18 @@ void DrawLineCatmullRom(Vector2 *points, int pointCount, float thick, Color colo
                 vertices[1].y = currentPoint.y + dx*size;
             }
 
-            vertices[2*i + 1].x = nextPoint.x - dy*size;
-            vertices[2*i + 1].y = nextPoint.y + dx*size;
-            vertices[2*i].x = nextPoint.x + dy*size;
-            vertices[2*i].y = nextPoint.y - dx*size;
+            vertices[2*j + 1].x = nextPoint.x - dy*size;
+            vertices[2*j + 1].y = nextPoint.y + dx*size;
+            vertices[2*j].x = nextPoint.x + dy*size;
+            vertices[2*j].y = nextPoint.y - dx*size;
 
             currentPoint = nextPoint;
         }
 
         DrawTriangleStrip(vertices, 2*SPLINE_LINE_DIVISIONS + 2, color);
-
-        // TODO: REVIEW: HACK: Drawing a circle at points intersection to hide broken strip
-        DrawCircleV(currentPoint, thick/2.0f, color);
     }
+
+    DrawCircleV(currentPoint, thick/2.0f, color);   // Draw end line circle-cap
 }
 
 // Draw lines sequence
