@@ -429,8 +429,6 @@ void DrawLineCatmullRom(Vector2 *points, int pointCount, float thick, Color colo
         float t = 0.0f;
         Vector2 p1 = points[i], p2 = points[i + 1], p3 = points[i + 2], p4 = points[i + 3];
 
-        currentPoint = points[i];
-
         if (i > 0)
         {
             vertices[0].x = currentPoint.x + dy*size;
@@ -439,7 +437,9 @@ void DrawLineCatmullRom(Vector2 *points, int pointCount, float thick, Color colo
             vertices[1].y = currentPoint.y + dx*size;
         }
 
-        for (int i = 0; i <= SPLINE_LINE_DIVISIONS; i++)
+        // TODO: Something is wrong with this implementation,
+        // it should use 'j' instead of 'i' but it does not work...
+        for (int i = 1; i <= SPLINE_LINE_DIVISIONS; i++)
         {
             t = ((float)i)/((float)SPLINE_LINE_DIVISIONS);
 
