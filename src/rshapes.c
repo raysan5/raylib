@@ -67,8 +67,8 @@
 #ifndef SMOOTH_CIRCLE_ERROR_RATE
     #define SMOOTH_CIRCLE_ERROR_RATE    0.5f    // Circle error rate
 #endif
-#ifndef BEZIER_LINE_DIVISIONS
-    #define BEZIER_LINE_DIVISIONS       24      // Bezier line divisions
+#ifndef SPLINE_LINE_DIVISIONS
+    #define SPLINE_LINE_DIVISIONS       24      // Spline lines segment divisions
 #endif
 
 
@@ -208,14 +208,14 @@ void DrawLineBezier(Vector2 startPos, Vector2 endPos, float thick, Color color)
     Vector2 previous = startPos;
     Vector2 current = { 0 };
 
-    Vector2 points[2*BEZIER_LINE_DIVISIONS + 2] = { 0 };
+    Vector2 points[2*SPLINE_LINE_DIVISIONS + 2] = { 0 };
 
-    for (int i = 1; i <= BEZIER_LINE_DIVISIONS; i++)
+    for (int i = 1; i <= SPLINE_LINE_DIVISIONS; i++)
     {
         // Cubic easing in-out
         // NOTE: Easing is calculated only for y position value
-        current.y = EaseCubicInOut((float)i, startPos.y, endPos.y - startPos.y, (float)BEZIER_LINE_DIVISIONS);
-        current.x = previous.x + (endPos.x - startPos.x)/ (float)BEZIER_LINE_DIVISIONS;
+        current.y = EaseCubicInOut((float)i, startPos.y, endPos.y - startPos.y, (float)SPLINE_LINE_DIVISIONS);
+        current.x = previous.x + (endPos.x - startPos.x)/(float)SPLINE_LINE_DIVISIONS;
 
         float dy = current.y-previous.y;
         float dx = current.x-previous.x;
@@ -237,21 +237,21 @@ void DrawLineBezier(Vector2 startPos, Vector2 endPos, float thick, Color color)
         previous = current;
     }
 
-    DrawTriangleStrip(points, 2*BEZIER_LINE_DIVISIONS+2, color);
+    DrawTriangleStrip(points, 2*SPLINE_LINE_DIVISIONS+2, color);
 }
 
 // Draw line using quadratic bezier curves with a control point
 void DrawLineBezierQuad(Vector2 startPos, Vector2 endPos, Vector2 controlPos, float thick, Color color)
 {
-    const float step = 1.0f/BEZIER_LINE_DIVISIONS;
+    const float step = 1.0f/SPLINE_LINE_DIVISIONS;
 
     Vector2 previous = startPos;
     Vector2 current = { 0 };
     float t = 0.0f;
 
-    Vector2 points[2*BEZIER_LINE_DIVISIONS + 2] = { 0 };
+    Vector2 points[2*SPLINE_LINE_DIVISIONS + 2] = { 0 };
 
-    for (int i = 1; i <= BEZIER_LINE_DIVISIONS; i++)
+    for (int i = 1; i <= SPLINE_LINE_DIVISIONS; i++)
     {
         t = step*i;
         float a = powf(1 - t, 2);
@@ -282,52 +282,198 @@ void DrawLineBezierQuad(Vector2 startPos, Vector2 endPos, Vector2 controlPos, fl
         previous = current;
     }
 
-    DrawTriangleStrip(points, 2*BEZIER_LINE_DIVISIONS+2, color);
+    DrawTriangleStrip(points, 2*SPLINE_LINE_DIVISIONS+2, color);
 }
 
 // Draw line using cubic bezier curves with 2 control points
 void DrawLineBezierCubic(Vector2 startPos, Vector2 endPos, Vector2 startControlPos, Vector2 endControlPos, float thick, Color color)
 {
-    const float step = 1.0f/BEZIER_LINE_DIVISIONS;
+    const float step = 1.0f/SPLINE_LINE_DIVISIONS;
 
     Vector2 previous = startPos;
     Vector2 current = { 0 };
     float t = 0.0f;
 
-    Vector2 points[2*BEZIER_LINE_DIVISIONS + 2] = { 0 };
+    Vector2 points[2*SPLINE_LINE_DIVISIONS + 2] = { 0 };
 
-    for (int i = 1; i <= BEZIER_LINE_DIVISIONS; i++)
+    for (int i = 1; i <= SPLINE_LINE_DIVISIONS; i++)
     {
         t = step*i;
         float a = powf(1 - t, 3);
         float b = 3*powf(1 - t, 2)*t;
-        float c = 3*(1-t)*powf(t, 2);
+        float c = 3*(1 - t)*powf(t, 2);
         float d = powf(t, 3);
 
         current.y = a*startPos.y + b*startControlPos.y + c*endControlPos.y + d*endPos.y;
         current.x = a*startPos.x + b*startControlPos.x + c*endControlPos.x + d*endPos.x;
 
-        float dy = current.y-previous.y;
-        float dx = current.x-previous.x;
+        float dy = current.y - previous.y;
+        float dx = current.x - previous.x;
         float size = 0.5f*thick/sqrtf(dx*dx+dy*dy);
 
-        if (i==1)
+        if (i == 1)
         {
-            points[0].x = previous.x+dy*size;
-            points[0].y = previous.y-dx*size;
-            points[1].x = previous.x-dy*size;
-            points[1].y = previous.y+dx*size;
+            points[0].x = previous.x + dy*size;
+            points[0].y = previous.y - dx*size;
+            points[1].x = previous.x - dy*size;
+            points[1].y = previous.y + dx*size;
         }
 
-        points[2*i+1].x = current.x-dy*size;
-        points[2*i+1].y = current.y+dx*size;
-        points[2*i].x = current.x+dy*size;
-        points[2*i].y = current.y-dx*size;
+        points[2*i + 1].x = current.x - dy*size;
+        points[2*i + 1].y = current.y + dx*size;
+        points[2*i].x = current.x + dy*size;
+        points[2*i].y = current.y - dx*size;
 
         previous = current;
     }
 
-    DrawTriangleStrip(points, 2*BEZIER_LINE_DIVISIONS+2, color);
+    DrawTriangleStrip(points, 2*SPLINE_LINE_DIVISIONS + 2, color);
+}
+
+// Draw a B-Spline line, minimum 4 points
+void DrawLineBSpline(Vector2 *points, int pointCount, float thick, Color color)
+{
+    if (pointCount < 4) return;
+
+    float a[4] = { 0 };
+    float b[4] = { 0 };
+    float dy = 0.0f;
+    float dx = 0.0f;
+    float size = 0.0f;
+
+    Vector2 currentPoint = { 0 };
+    Vector2 nextPoint = { 0 };
+    Vector2 vertices[2*SPLINE_LINE_DIVISIONS + 2] = { 0 };
+
+    for (int i = 0; i < (pointCount - 3); i++)
+    {
+        Vector2 p1 = points[i], p2 = points[i + 1], p3 = points[i + 2], p4 = points[i + 3];
+
+        a[0] = (-p1.x + 3*p2.x - 3*p3.x + p4.x)/6.0f;
+        a[1] = (3*p1.x - 6*p2.x + 3*p3.x)/6.0f;
+        a[2] = (-3*p1.x + 3*p3.x)/6.0f;
+        a[3] = (p1.x + 4*p2.x + p3.x)/6.0f;
+
+        b[0] = (-p1.y + 3*p2.y - 3*p3.y + p4.y)/6.0f;
+        b[1] = (3*p1.y - 6*p2.y + 3*p3.y)/6.0f;
+        b[2] = (-3*p1.y + 3*p3.y)/6.0f;
+        b[3] = (p1.y + 4*p2.y + p3.y)/6.0f;
+
+        currentPoint.x = a[3];
+        currentPoint.y = b[3];
+
+        if (i == 0) DrawCircleV(currentPoint, thick/2.0f, color);
+
+        float t = 0.0f;
+
+        if (i > 0)
+        {
+            vertices[0].x = currentPoint.x + dy*size;
+            vertices[0].y = currentPoint.y - dx*size;
+            vertices[1].x = currentPoint.x - dy*size;
+            vertices[1].y = currentPoint.y + dx*size;
+        }
+
+        for (int j = 1; j <= SPLINE_LINE_DIVISIONS; j++)
+        {
+            t = ((float)j)/((float)SPLINE_LINE_DIVISIONS);
+
+            nextPoint.x = a[3] + t*(a[2] + t*(a[1] + t*a[0]));
+            nextPoint.y = b[3] + t*(b[2] + t*(b[1] + t*b[0]));
+
+            dy = nextPoint.y - currentPoint.y;
+            dx = nextPoint.x - currentPoint.x;
+            size = 0.5f*thick/sqrtf(dx*dx+dy*dy);
+
+            if ((j == 1) && (i == 0))
+            {
+                vertices[0].x = currentPoint.x + dy*size;
+                vertices[0].y = currentPoint.y - dx*size;
+                vertices[1].x = currentPoint.x - dy*size;
+                vertices[1].y = currentPoint.y + dx*size;
+            }
+
+            vertices[2*j + 1].x = nextPoint.x - dy*size;
+            vertices[2*j + 1].y = nextPoint.y + dx*size;
+            vertices[2*j].x = nextPoint.x + dy*size;
+            vertices[2*j].y = nextPoint.y - dx*size;
+
+            currentPoint = nextPoint;
+        }
+
+        DrawTriangleStrip(vertices, 2*SPLINE_LINE_DIVISIONS+2, color);
+    }
+
+    DrawCircleV(currentPoint, thick/2.0f, color);
+}
+
+// Draw a Catmull Rom spline line, minimum 4 points
+void DrawLineCatmullRom(Vector2 *points, int pointCount, float thick, Color color)
+{
+    if (pointCount < 4) return;
+
+    float dy = 0.0f;
+    float dx = 0.0f;
+    float size = 0.0f;
+
+    Vector2 currentPoint = points[1];
+    Vector2 nextPoint = { 0 };
+    Vector2 vertices[2*SPLINE_LINE_DIVISIONS + 2] = { 0 };
+
+    DrawCircleV(currentPoint, thick/2.0f, color);
+
+    for (int i = 0; i < (pointCount - 3); i++)
+    {
+        Vector2 p1 = points[i], p2 = points[i + 1], p3 = points[i + 2], p4 = points[i + 3];
+
+        float t = 0.0f;
+        currentPoint = points[i];
+
+        if (i > 0)
+        {
+            vertices[0].x = currentPoint.x + dy*size;
+            vertices[0].y = currentPoint.y - dx*size;
+            vertices[1].x = currentPoint.x - dy*size;
+            vertices[1].y = currentPoint.y + dx*size;
+        }
+
+        for (int i = 0; i <= SPLINE_LINE_DIVISIONS; i++)
+        {
+            t = ((float)i)/((float)SPLINE_LINE_DIVISIONS);
+
+            float q0 = (-1*t*t*t) + (2*t*t) + (-1*t);
+            float q1 = (3*t*t*t) + (-5*t*t) + 2;
+            float q2 = (-3*t*t*t) + (4*t*t) + t;
+            float q3 = t*t*t - t*t;
+
+            nextPoint.x = 0.5f*((p1.x*q0) + (p2.x*q1) + (p3.x*q2) + (p4.x*q3));
+            nextPoint.y = 0.5f*((p1.y*q0) + (p2.y*q1) + (p3.y*q2) + (p4.y*q3));
+
+            float dy = nextPoint.y - currentPoint.y;
+            float dx = nextPoint.x - currentPoint.x;
+            float size = (0.5f*thick)/sqrtf(dx*dx + dy*dy);
+
+            if (i == 1)
+            {
+                vertices[0].x = currentPoint.x + dy*size;
+                vertices[0].y = currentPoint.y - dx*size;
+                vertices[1].x = currentPoint.x - dy*size;
+                vertices[1].y = currentPoint.y + dx*size;
+            }
+
+            vertices[2*i + 1].x = nextPoint.x - dy*size;
+            vertices[2*i + 1].y = nextPoint.y + dx*size;
+            vertices[2*i].x = nextPoint.x + dy*size;
+            vertices[2*i].y = nextPoint.y - dx*size;
+
+            currentPoint = nextPoint;
+        }
+
+        DrawTriangleStrip(vertices, 2*SPLINE_LINE_DIVISIONS+2, color);
+
+        // TODO: REVIEW: HACK: Drawing a circle at points intersection to hide broken strip
+        DrawCircleV(currentPoint, thick/2.0f, color);
+    }
 }
 
 // Draw lines sequence

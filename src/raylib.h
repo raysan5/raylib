@@ -1192,6 +1192,8 @@ RLAPI void DrawLineEx(Vector2 startPos, Vector2 endPos, float thick, Color color
 RLAPI void DrawLineBezier(Vector2 startPos, Vector2 endPos, float thick, Color color);                   // Draw a line using cubic-bezier curves in-out
 RLAPI void DrawLineBezierQuad(Vector2 startPos, Vector2 endPos, Vector2 controlPos, float thick, Color color); // Draw line using quadratic bezier curves with a control point
 RLAPI void DrawLineBezierCubic(Vector2 startPos, Vector2 endPos, Vector2 startControlPos, Vector2 endControlPos, float thick, Color color); // Draw line using cubic bezier curves with 2 control points
+RLAPI void DrawLineBSpline(Vector2 *points, int pointCount, float thick, Color color);                   // Draw a B-Spline line, minimum 4 points
+RLAPI void DrawLineCatmullRom(Vector2 *points, int pointCount, float thick, Color color);                // Draw a Catmull Rom spline line, minimum 4 points
 RLAPI void DrawLineStrip(Vector2 *points, int pointCount, Color color);                                  // Draw lines sequence
 RLAPI void DrawCircle(int centerX, int centerY, float radius, Color color);                              // Draw a color-filled circle
 RLAPI void DrawCircleSector(Vector2 center, float radius, float startAngle, float endAngle, int segments, Color color);      // Draw a piece of a circle
