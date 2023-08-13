@@ -506,7 +506,7 @@ RMAPI Vector2 Vector2ClampValue(Vector2 v, float min, float max)
 RMAPI int Vector2Equals(Vector2 p, Vector2 q)
 {
     int result = ((fabsf(p.x - q.x)) <= (EPSILON*fmaxf(1.0f, fmaxf(fabsf(p.x), fabsf(q.x))))) &&
-                  ((fabsf(p.y - q.y)) <= (EPSILON*fmaxf(1.0f, fmaxf(fabsf(p.y), fabsf(q.y)))));
+                 ((fabsf(p.y - q.y)) <= (EPSILON*fmaxf(1.0f, fmaxf(fabsf(p.y), fabsf(q.y)))));
 
     return result;
 }
@@ -914,18 +914,18 @@ RMAPI Vector3 Vector3Unproject(Vector3 source, Matrix projection, Matrix view)
 
     // Calculate unprojected matrix (multiply view matrix by projection matrix) and invert it
     Matrix matViewProj = {      // MatrixMultiply(view, projection);
-        view.m0*projection.m0  + view.m1*projection.m4  + view.m2 *projection.m8  + view.m3*projection.m12,
-        view.m0*projection.m1  + view.m1*projection.m5  + view.m2 *projection.m9  + view.m3*projection.m13,
-        view.m0*projection.m2  + view.m1*projection.m6  + view.m2 *projection.m10 + view.m3*projection.m14,
-        view.m0*projection.m3  + view.m1*projection.m7  + view.m2 *projection.m11 + view.m3*projection.m15,
-        view.m4*projection.m0  + view.m5*projection.m4  + view.m6 *projection.m8  + view.m7*projection.m12,
-        view.m4*projection.m1  + view.m5*projection.m5  + view.m6 *projection.m9  + view.m7*projection.m13,
-        view.m4*projection.m2  + view.m5*projection.m6  + view.m6 *projection.m10 + view.m7*projection.m14,
-        view.m4*projection.m3  + view.m5*projection.m7  + view.m6 *projection.m11 + view.m7*projection.m15,
-        view.m8*projection.m0  + view.m9*projection.m4  + view.m10*projection.m8  + view.m11*projection.m12,
-        view.m8*projection.m1  + view.m9*projection.m5  + view.m10*projection.m9  + view.m11*projection.m13,
-        view.m8*projection.m2  + view.m9*projection.m6  + view.m10*projection.m10 + view.m11*projection.m14,
-        view.m8*projection.m3  + view.m9*projection.m7  + view.m10*projection.m11 + view.m11*projection.m15,
+        view.m0 *projection.m0 + view.m1 *projection.m4 + view.m2 *projection.m8  + view.m3*projection.m12,
+        view.m0 *projection.m1 + view.m1 *projection.m5 + view.m2 *projection.m9  + view.m3*projection.m13,
+        view.m0 *projection.m2 + view.m1 *projection.m6 + view.m2 *projection.m10 + view.m3*projection.m14,
+        view.m0 *projection.m3 + view.m1 *projection.m7 + view.m2 *projection.m11 + view.m3*projection.m15,
+        view.m4 *projection.m0 + view.m5 *projection.m4 + view.m6 *projection.m8  + view.m7*projection.m12,
+        view.m4 *projection.m1 + view.m5 *projection.m5 + view.m6 *projection.m9  + view.m7*projection.m13,
+        view.m4 *projection.m2 + view.m5 *projection.m6 + view.m6 *projection.m10 + view.m7*projection.m14,
+        view.m4 *projection.m3 + view.m5 *projection.m7 + view.m6 *projection.m11 + view.m7*projection.m15,
+        view.m8 *projection.m0 + view.m9 *projection.m4 + view.m10*projection.m8  + view.m11*projection.m12,
+        view.m8 *projection.m1 + view.m9 *projection.m5 + view.m10*projection.m9  + view.m11*projection.m13,
+        view.m8 *projection.m2 + view.m9 *projection.m6 + view.m10*projection.m10 + view.m11*projection.m14,
+        view.m8 *projection.m3 + view.m9 *projection.m7 + view.m10*projection.m11 + view.m11*projection.m15,
         view.m12*projection.m0 + view.m13*projection.m4 + view.m14*projection.m8  + view.m15*projection.m12,
         view.m12*projection.m1 + view.m13*projection.m5 + view.m14*projection.m9  + view.m15*projection.m13,
         view.m12*projection.m2 + view.m13*projection.m6 + view.m14*projection.m10 + view.m15*projection.m14,
@@ -1097,9 +1097,9 @@ RMAPI float MatrixDeterminant(Matrix mat)
     float result = 0.0f;
 
     // Cache the matrix values (speed optimization)
-    float a00 = mat.m0, a01 = mat.m1, a02 = mat.m2, a03 = mat.m3;
-    float a10 = mat.m4, a11 = mat.m5, a12 = mat.m6, a13 = mat.m7;
-    float a20 = mat.m8, a21 = mat.m9, a22 = mat.m10, a23 = mat.m11;
+    float a00 = mat.m0 , a01 = mat.m1 , a02 = mat.m2 , a03 = mat.m3;
+    float a10 = mat.m4 , a11 = mat.m5 , a12 = mat.m6 , a13 = mat.m7;
+    float a20 = mat.m8 , a21 = mat.m9 , a22 = mat.m10, a23 = mat.m11;
     float a30 = mat.m12, a31 = mat.m13, a32 = mat.m14, a33 = mat.m15;
 
     result = a30*a21*a12*a03 - a20*a31*a12*a03 - a30*a11*a22*a03 + a10*a31*a22*a03 +
@@ -1259,18 +1259,18 @@ RMAPI Matrix MatrixMultiply(Matrix left, Matrix right)
 {
     Matrix result = { 0 };
 
-    result.m0  = left.m0*right.m0  + left.m1*right.m4  + left.m2 *right.m8  + left.m3 *right.m12;
-    result.m1  = left.m0*right.m1  + left.m1*right.m5  + left.m2 *right.m9  + left.m3 *right.m13;
-    result.m2  = left.m0*right.m2  + left.m1*right.m6  + left.m2 *right.m10 + left.m3 *right.m14;
-    result.m3  = left.m0*right.m3  + left.m1*right.m7  + left.m2 *right.m11 + left.m3 *right.m15;
-    result.m4  = left.m4*right.m0  + left.m5*right.m4  + left.m6 *right.m8  + left.m7 *right.m12;
-    result.m5  = left.m4*right.m1  + left.m5*right.m5  + left.m6 *right.m9  + left.m7 *right.m13;
-    result.m6  = left.m4*right.m2  + left.m5*right.m6  + left.m6 *right.m10 + left.m7 *right.m14;
-    result.m7  = left.m4*right.m3  + left.m5*right.m7  + left.m6 *right.m11 + left.m7 *right.m15;
-    result.m8  = left.m8*right.m0  + left.m9*right.m4  + left.m10*right.m8  + left.m11*right.m12;
-    result.m9  = left.m8*right.m1  + left.m9*right.m5  + left.m10*right.m9  + left.m11*right.m13;
-    result.m10 = left.m8*right.m2  + left.m9*right.m6  + left.m10*right.m10 + left.m11*right.m14;
-    result.m11 = left.m8*right.m3  + left.m9*right.m7  + left.m10*right.m11 + left.m11*right.m15;
+    result.m0  = left.m0 *right.m0 + left.m1 *right.m4 + left.m2 *right.m8  + left.m3 *right.m12;
+    result.m1  = left.m0 *right.m1 + left.m1 *right.m5 + left.m2 *right.m9  + left.m3 *right.m13;
+    result.m2  = left.m0 *right.m2 + left.m1 *right.m6 + left.m2 *right.m10 + left.m3 *right.m14;
+    result.m3  = left.m0 *right.m3 + left.m1 *right.m7 + left.m2 *right.m11 + left.m3 *right.m15;
+    result.m4  = left.m4 *right.m0 + left.m5 *right.m4 + left.m6 *right.m8  + left.m7 *right.m12;
+    result.m5  = left.m4 *right.m1 + left.m5 *right.m5 + left.m6 *right.m9  + left.m7 *right.m13;
+    result.m6  = left.m4 *right.m2 + left.m5 *right.m6 + left.m6 *right.m10 + left.m7 *right.m14;
+    result.m7  = left.m4 *right.m3 + left.m5 *right.m7 + left.m6 *right.m11 + left.m7 *right.m15;
+    result.m8  = left.m8 *right.m0 + left.m9 *right.m4 + left.m10*right.m8  + left.m11*right.m12;
+    result.m9  = left.m8 *right.m1 + left.m9 *right.m5 + left.m10*right.m9  + left.m11*right.m13;
+    result.m10 = left.m8 *right.m2 + left.m9 *right.m6 + left.m10*right.m10 + left.m11*right.m14;
+    result.m11 = left.m8 *right.m3 + left.m9 *right.m7 + left.m10*right.m11 + left.m11*right.m15;
     result.m12 = left.m12*right.m0 + left.m13*right.m4 + left.m14*right.m8  + left.m15*right.m12;
     result.m13 = left.m12*right.m1 + left.m13*right.m5 + left.m14*right.m9  + left.m15*right.m13;
     result.m14 = left.m12*right.m2 + left.m13*right.m6 + left.m14*right.m10 + left.m15*right.m14;
@@ -1312,18 +1312,18 @@ RMAPI Matrix MatrixRotate(Vector3 axis, float angle)
     float cosres = cosf(angle);
     float t = 1.0f - cosres;
 
-    result.m0 = x*x*t + cosres;
-    result.m1 = y*x*t + z*sinres;
-    result.m2 = z*x*t - y*sinres;
-    result.m3 = 0.0f;
+    result.m0  = x*x*t + cosres;
+    result.m1  = y*x*t + z*sinres;
+    result.m2  = z*x*t - y*sinres;
+    result.m3  = 0.0f;
 
-    result.m4 = x*y*t - z*sinres;
-    result.m5 = y*y*t + cosres;
-    result.m6 = z*y*t + x*sinres;
-    result.m7 = 0.0f;
+    result.m4  = x*y*t - z*sinres;
+    result.m5  = y*y*t + cosres;
+    result.m6  = z*y*t + x*sinres;
+    result.m7  = 0.0f;
 
-    result.m8 = x*z*t + y*sinres;
-    result.m9 = y*z*t - x*sinres;
+    result.m8  = x*z*t + y*sinres;
+    result.m9  = y*z*t - x*sinres;
     result.m10 = z*z*t + cosres;
     result.m11 = 0.0f;
 
@@ -1347,10 +1347,10 @@ RMAPI Matrix MatrixRotateX(float angle)
     float cosres = cosf(angle);
     float sinres = sinf(angle);
 
-    result.m5 = cosres;
-    result.m6 = sinres;
-    result.m9 = -sinres;
-    result.m10 = cosres;
+    result.m5  =  cosres;
+    result.m6  =  sinres;
+    result.m9  = -sinres;
+    result.m10 =  cosres;
 
     return result;
 }
@@ -1367,10 +1367,10 @@ RMAPI Matrix MatrixRotateY(float angle)
     float cosres = cosf(angle);
     float sinres = sinf(angle);
 
-    result.m0 = cosres;
-    result.m2 = -sinres;
-    result.m8 = sinres;
-    result.m10 = cosres;
+    result.m0  =  cosres;
+    result.m2  = -sinres;
+    result.m8  =  sinres;
+    result.m10 =  cosres;
 
     return result;
 }
@@ -1387,10 +1387,10 @@ RMAPI Matrix MatrixRotateZ(float angle)
     float cosres = cosf(angle);
     float sinres = sinf(angle);
 
-    result.m0 = cosres;
-    result.m1 = sinres;
+    result.m0 =  cosres;
+    result.m1 =  sinres;
     result.m4 = -sinres;
-    result.m5 = cosres;
+    result.m5 =  cosres;
 
     return result;
 }
@@ -1440,23 +1440,23 @@ RMAPI Matrix MatrixRotateZYX(Vector3 angle)
     float cx = cosf(angle.x);
     float sx = sinf(angle.x);
 
-    result.m0 = cz*cy;
-    result.m4 = cz*sy*sx - cx*sz;
-    result.m8 = sz*sx + cz*cx*sy;
+    result.m0  = cz*cy;
+    result.m4  = cz*sy*sx - cx*sz;
+    result.m8  = sz*sx + cz*cx*sy;
     result.m12 = 0;
 
-    result.m1 = cy*sz;
-    result.m5 = cz*cx + sz*sy*sx;
-    result.m9 = cx*sz*sy - cz*sx;
+    result.m1  = cy*sz;
+    result.m5  = cz*cx + sz*sy*sx;
+    result.m9  = cx*sz*sy - cz*sx;
     result.m13 = 0;
 
-    result.m2 = -sy;
-    result.m6 = cy*sx;
+    result.m2  = -sy;
+    result.m6  = cy*sx;
     result.m10 = cy*cx;
     result.m14 = 0;
 
-    result.m3 = 0;
-    result.m7 = 0;
+    result.m3  = 0;
+    result.m7  = 0;
     result.m11 = 0;
     result.m15 = 1;
 
@@ -1466,9 +1466,9 @@ RMAPI Matrix MatrixRotateZYX(Vector3 angle)
 // Get scaling matrix
 RMAPI Matrix MatrixScale(float x, float y, float z)
 {
-    Matrix result = { x, 0.0f, 0.0f, 0.0f,
-                      0.0f, y, 0.0f, 0.0f,
-                      0.0f, 0.0f, z, 0.0f,
+    Matrix result = { x   , 0.0f, 0.0f, 0.0f,
+                      0.0f, y   , 0.0f, 0.0f,
+                      0.0f, 0.0f,    z, 0.0f,
                       0.0f, 0.0f, 0.0f, 1.0f };
 
     return result;
@@ -1493,9 +1493,9 @@ RMAPI Matrix MatrixFrustum(double left, double right, double bottom, double top,
     result.m6 = 0.0f;
     result.m7 = 0.0f;
 
-    result.m8 = ((float)right + (float)left)/rl;
-    result.m9 = ((float)top + (float)bottom)/tb;
-    result.m10 = -((float)far + (float)near)/fn;
+    result.m8  =  ((float)right + (float)left  )/rl;
+    result.m9  =  ((float)top   + (float)bottom)/tb;
+    result.m10 = -((float)far   + (float)near  )/fn;
     result.m11 = -1.0f;
 
     result.m12 = 0.0f;
@@ -1518,14 +1518,14 @@ RMAPI Matrix MatrixPerspective(double fovY, double aspect, double nearPlane, dou
     double left = -right;
 
     // MatrixFrustum(-right, right, -top, top, near, far);
-    float rl = (float)(right - left);
-    float tb = (float)(top - bottom);
+    float rl = (float)(right    - left     );
+    float tb = (float)(top      - bottom   );
     float fn = (float)(farPlane - nearPlane);
 
-    result.m0 = ((float)nearPlane*2.0f)/rl;
-    result.m5 = ((float)nearPlane*2.0f)/tb;
-    result.m8 = ((float)right + (float)left)/rl;
-    result.m9 = ((float)top + (float)bottom)/tb;
+    result.m0  =  ((float)nearPlane*2.0f)/rl;
+    result.m5  =  ((float)nearPlane*2.0f)/tb;
+    result.m8  =  ((float)right    + (float)left     )/rl;
+    result.m9  =  ((float)top      + (float)bottom   )/tb;
     result.m10 = -((float)farPlane + (float)nearPlane)/fn;
     result.m11 = -1.0f;
     result.m14 = -((float)farPlane*(float)nearPlane*2.0f)/fn;
@@ -1538,8 +1538,8 @@ RMAPI Matrix MatrixOrtho(double left, double right, double bottom, double top, d
 {
     Matrix result = { 0 };
 
-    float rl = (float)(right - left);
-    float tb = (float)(top - bottom);
+    float rl = (float)(right    - left     );
+    float tb = (float)(top      - bottom   );
     float fn = (float)(farPlane - nearPlane);
 
     result.m0 = 2.0f/rl;
@@ -1554,8 +1554,8 @@ RMAPI Matrix MatrixOrtho(double left, double right, double bottom, double top, d
     result.m9 = 0.0f;
     result.m10 = -2.0f/fn;
     result.m11 = 0.0f;
-    result.m12 = -((float)left + (float)right)/rl;
-    result.m13 = -((float)top + (float)bottom)/tb;
+    result.m12 = -((float)left     + (float)right    )/rl;
+    result.m13 = -((float)top      + (float)bottom   )/tb;
     result.m14 = -((float)farPlane + (float)nearPlane)/fn;
     result.m15 = 1.0f;
 
@@ -1881,9 +1881,9 @@ RMAPI Quaternion QuaternionFromMatrix(Matrix mat)
 {
     Quaternion result = { 0 };
 
-    float fourWSquaredMinus1 = mat.m0 + mat.m5 + mat.m10;
-    float fourXSquaredMinus1 = mat.m0 - mat.m5 - mat.m10;
-    float fourYSquaredMinus1 = mat.m5 - mat.m0 - mat.m10;
+    float fourWSquaredMinus1 = mat.m0  + mat.m5 + mat.m10;
+    float fourXSquaredMinus1 = mat.m0  - mat.m5 - mat.m10;
+    float fourYSquaredMinus1 = mat.m5  - mat.m0 - mat.m10;
     float fourZSquaredMinus1 = mat.m10 - mat.m0 - mat.m5;
 
     int biggestIndex = 0;
@@ -1958,16 +1958,16 @@ RMAPI Matrix QuaternionToMatrix(Quaternion q)
     float bd = q.w*q.y;
     float cd = q.w*q.z;
 
-    result.m0 = 1 - 2*(b2 + c2);
-    result.m1 = 2*(ab + cd);
-    result.m2 = 2*(ac - bd);
+    result.m0  = 1 - 2*(b2 + c2);
+    result.m1  =     2*(ab + cd);
+    result.m2  =     2*(ac - bd);
 
-    result.m4 = 2*(ab - cd);
-    result.m5 = 1 - 2*(a2 + c2);
-    result.m6 = 2*(bc + ad);
+    result.m4  =     2*(ab - cd);
+    result.m5  = 1 - 2*(a2 + c2);
+    result.m6  =     2*(bc + ad);
 
-    result.m8 = 2*(ac + bd);
-    result.m9 = 2*(bc - ad);
+    result.m8  =     2*(ac + bd);
+    result.m9  =     2*(bc - ad);
     result.m10 = 1 - 2*(a2 + b2);
 
     return result;
@@ -2107,8 +2107,8 @@ RMAPI Quaternion QuaternionTransform(Quaternion q, Matrix mat)
 {
     Quaternion result = { 0 };
 
-    result.x = mat.m0*q.x + mat.m4*q.y + mat.m8*q.z + mat.m12*q.w;
-    result.y = mat.m1*q.x + mat.m5*q.y + mat.m9*q.z + mat.m13*q.w;
+    result.x = mat.m0*q.x + mat.m4*q.y + mat.m8 *q.z + mat.m12*q.w;
+    result.y = mat.m1*q.x + mat.m5*q.y + mat.m9 *q.z + mat.m13*q.w;
     result.z = mat.m2*q.x + mat.m6*q.y + mat.m10*q.z + mat.m14*q.w;
     result.w = mat.m3*q.x + mat.m7*q.y + mat.m11*q.z + mat.m15*q.w;
 
