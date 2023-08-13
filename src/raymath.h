@@ -281,7 +281,7 @@ RMAPI float Vector2Length(Vector2 v)
 // Calculate vector square length
 RMAPI float Vector2LengthSqr(Vector2 v)
 {
-    float result = (v.x*v.x) + (v.y*v.y);
+    float result = v.x*v.x + v.y*v.y;
 
     return result;
 }
@@ -289,7 +289,7 @@ RMAPI float Vector2LengthSqr(Vector2 v)
 // Calculate two vectors dot product
 RMAPI float Vector2DotProduct(Vector2 v1, Vector2 v2)
 {
-    float result = (v1.x*v2.x + v1.y*v2.y);
+    float result = v1.x*v2.x + v1.y*v2.y;
 
     return result;
 }
@@ -305,7 +305,7 @@ RMAPI float Vector2Distance(Vector2 v1, Vector2 v2)
 // Calculate square distance between two vectors
 RMAPI float Vector2DistanceSqr(Vector2 v1, Vector2 v2)
 {
-    float result = ((v1.x - v2.x)*(v1.x - v2.x) + (v1.y - v2.y)*(v1.y - v2.y));
+    float result = (v1.x - v2.x)*(v1.x - v2.x) + (v1.y - v2.y)*(v1.y - v2.y);
 
     return result;
 }
