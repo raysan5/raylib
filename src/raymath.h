@@ -1826,7 +1826,7 @@ RMAPI Quaternion QuaternionSlerp(Quaternion q1, Quaternion q2, float amount)
         float halfTheta = acosf(cosHalfTheta);
         float sinHalfTheta = sqrtf(1.0f - cosHalfTheta*cosHalfTheta);
 
-        if (fabsf(sinHalfTheta) < 0.001f)
+        if (fabsf(sinHalfTheta) < EPSILON)
         {
             result.x = (q1.x*0.5f + q2.x*0.5f);
             result.y = (q1.y*0.5f + q2.y*0.5f);
@@ -2039,7 +2039,7 @@ RMAPI void QuaternionToAxisAngle(Quaternion q, Vector3 *outAxis, float *outAngle
     float resAngle = 2.0f*acosf(q.w);
     float den = sqrtf(1.0f - q.w*q.w);
 
-    if (den > 0.0001f)
+    if (den > EPSILON)
     {
         resAxis.x = q.x/den;
         resAxis.y = q.y/den;
