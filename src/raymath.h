@@ -1062,12 +1062,11 @@ RMAPI int Vector3Equals(Vector3 p, Vector3 q)
     return result;
 }
 
-// Compute the direction of a refracted ray where v specifies the
-// normalized direction of the incoming ray, n specifies the
-// normalized normal vector of the interface of two optical media,
-// and r specifies the ratio of the refractive index of the medium
-// from where the ray comes to the refractive index of the medium
-// on the other side of the surface
+// Compute the direction of a refracted ray
+// v: normalized direction of the incoming ray
+// n: normalized normal vector of the interface of two optical media
+// r: ratio of the refractive index of the medium from where the ray comes
+//    to the refractive index of the medium on the other side of the surface
 RMAPI Vector3 Vector3Refract(Vector3 v, Vector3 n, float r)
 {
     Vector3 result = { 0 };
