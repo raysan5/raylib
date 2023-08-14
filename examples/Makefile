@@ -261,6 +261,11 @@ ifeq ($(PLATFORM),PLATFORM_DRM)
     INCLUDE_PATHS += -I/usr/include/libdrm
 endif
 
+# Include GLFW required for examples/others/rlgl_standalone.c
+ifeq ($(USE_EXTERNAL_GLFW),FALSE)
+all others: INCLUDE_PATHS += -I$(RAYLIB_PATH)/src/external/glfw/include
+endif
+
 # Define library paths containing required libs: LDFLAGS
 #------------------------------------------------------------------------------------------------
 LDFLAGS = -L. -L$(RAYLIB_RELEASE_PATH) -L$(RAYLIB_PATH)/src
