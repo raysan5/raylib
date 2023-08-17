@@ -5172,7 +5172,7 @@ void SwapScreenBuffer(void)
 static void RegisterCurrentKeyState(int key, bool state)
 {
     if (state && (CORE.Input.Keyboard.currentKeyState[key] < MAX_KEY_REPEAT)) CORE.Input.Keyboard.currentKeyState[key]++;
-    else CORE.Input.Keyboard.currentKeyState[key] = 0;
+    else if (!state) CORE.Input.Keyboard.currentKeyState[key] = 0;
 }
 
 // Register previous keys states and remove unused key repeats
