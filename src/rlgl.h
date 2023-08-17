@@ -2945,6 +2945,7 @@ bool rlCheckRenderBatchLimit(int vCount)
 unsigned int rlLoadTexture(const void *data, int width, int height, int format, int mipmapCount)
 {
     unsigned int id = 0;
+    if (data == NULL) return id;
 
     glBindTexture(GL_TEXTURE_2D, 0);    // Free any old binding
 
