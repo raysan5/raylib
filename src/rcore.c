@@ -3750,7 +3750,7 @@ bool IsKeyPressed(int key)
 {
     bool pressed = false;
 
-    if ((CORE.Input.Keyboard.previousKeyState[key] == 0) && (CORE.Input.Keyboard.currentKeyState[key] == 1)) pressed = true;
+    if ((CORE.Input.Keyboard.previousKeyState[key] == 0) && IsKeyDown(key)) pressed = true;
 
     return pressed;
 }
@@ -3758,7 +3758,7 @@ bool IsKeyPressed(int key)
 // Check if a key is being pressed (key held down)
 bool IsKeyDown(int key)
 {
-    if (CORE.Input.Keyboard.currentKeyState[key] == 1) return true;
+    if (CORE.Input.Keyboard.currentKeyState[key] >= 1) return true;
     else return false;
 }
 
@@ -3767,7 +3767,7 @@ bool IsKeyReleased(int key)
 {
     bool released = false;
 
-    if ((CORE.Input.Keyboard.previousKeyState[key] == 1) && (CORE.Input.Keyboard.currentKeyState[key] == 0)) released = true;
+    if ((CORE.Input.Keyboard.previousKeyState[key] >= 1) && IsKeyUp(key)) released = true;
 
     return released;
 }
@@ -3777,6 +3777,17 @@ bool IsKeyUp(int key)
 {
     if (CORE.Input.Keyboard.currentKeyState[key] == 0) return true;
     else return false;
+}
+
+// Get key's last repeat
+bool GetKeyRepeat(int key)
+{
+    if (CORE.Input.Keyboard.currentKeyState[key] > 1)
+    {
+        CORE.Input.Keyboard.currentKeyState[key]--;
+        return true;
+    }
+    return false;
 }
 
 // Get the last key pressed
@@ -5158,6 +5169,25 @@ void SwapScreenBuffer(void)
 #endif  // PLATFORM_ANDROID || PLATFORM_RPI || PLATFORM_DRM
 }
 
+static void RegisterCurrentKeyState(int key, bool state)
+{
+    if (state && (CORE.Input.Keyboard.currentKeyState[key] < MAX_KEY_REPEAT)) CORE.Input.Keyboard.currentKeyState[key]++;
+    else CORE.Input.Keyboard.currentKeyState[key] = 0;
+}
+
+// Register previous keys states and remove unused key repeats
+static void RegisterPreviousKeys(int count)
+{
+    for (int i = 0; i < count; i++)
+    {
+        if (CORE.Input.Keyboard.currentKeyState[i] > 1)
+        {
+            CORE.Input.Keyboard.currentKeyState[i] = 1;
+        }
+        CORE.Input.Keyboard.previousKeyState[i] = CORE.Input.Keyboard.currentKeyState[i];
+    }
+}
+
 // Register all input events
 void PollInputEvents(void)
 {
@@ -5178,9 +5208,7 @@ void PollInputEvents(void)
 #endif
 
 #if defined(PLATFORM_RPI) || defined(PLATFORM_DRM)
-    // Register previous keys states
-    for (int i = 0; i < MAX_KEYBOARD_KEYS; i++) CORE.Input.Keyboard.previousKeyState[i] = CORE.Input.Keyboard.currentKeyState[i];
-
+    RegisterPreviousKeys(MAX_KEYBOARD_KEYS);
     PollKeyboardEvents();
 
     // Register previous mouse states
@@ -5207,8 +5235,7 @@ void PollInputEvents(void)
 #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
     // Keyboard/Mouse input polling (automatically managed by GLFW3 through callback)
 
-    // Register previous keys states
-    for (int i = 0; i < MAX_KEYBOARD_KEYS; i++) CORE.Input.Keyboard.previousKeyState[i] = CORE.Input.Keyboard.currentKeyState[i];
+    RegisterPreviousKeys(MAX_KEYBOARD_KEYS);
 
     // Register previous mouse states
     for (int i = 0; i < MAX_MOUSE_BUTTONS; i++) CORE.Input.Mouse.previousButtonState[i] = CORE.Input.Mouse.currentButtonState[i];
@@ -5390,7 +5417,7 @@ void PollInputEvents(void)
 #if defined(PLATFORM_ANDROID)
     // Register previous keys states
     // NOTE: Android supports up to 260 keys
-    for (int i = 0; i < 260; i++) CORE.Input.Keyboard.previousKeyState[i] = CORE.Input.Keyboard.currentKeyState[i];
+    RegisterPreviousKeys(260);
 
     // Android ALooper_pollAll() variables
     int pollResult = 0;
@@ -5583,16 +5610,18 @@ static void KeyCallback(GLFWwindow *window, int key, int scancode, int action, i
 {
     if (key < 0) return;    // Security check, macOS fn key generates -1
 
-    // WARNING: GLFW could return GLFW_REPEAT, we need to consider it as 1
+    // WARNING: GLFW could return GLFW_REPEAT, we need to consider it as true
     // to work properly with our implementation (IsKeyDown/IsKeyUp checks)
-    if (action == GLFW_RELEASE) CORE.Input.Keyboard.currentKeyState[key] = 0;
-    else CORE.Input.Keyboard.currentKeyState[key] = 1;
-
+    if (action == GLFW_RELEASE)
+    {
 #if !defined(PLATFORM_WEB)
-    // WARNING: Check if CAPS/NUM key modifiers are enabled and force down state for those keys
-    if (((key == KEY_CAPS_LOCK) && ((mods & GLFW_MOD_CAPS_LOCK) > 0)) ||
-        ((key == KEY_NUM_LOCK) && ((mods & GLFW_MOD_NUM_LOCK) > 0))) CORE.Input.Keyboard.currentKeyState[key] = 1;
+        // WARNING: Check if CAPS/NUM key modifiers are enabled and force down state for those keys
+        if (!((key == KEY_CAPS_LOCK) && ((mods & GLFW_MOD_CAPS_LOCK) > 0)) ||
+            !((key == KEY_NUM_LOCK) && ((mods & GLFW_MOD_NUM_LOCK) > 0)))
 #endif
+            RegisterCurrentKeyState(key, false);
+    }
+    else RegisterCurrentKeyState(key, true);
 
     // Check if there is space available in the key queue
     if ((CORE.Input.Keyboard.keyPressedQueueCount < MAX_KEY_PRESSED_QUEUE) && (action == GLFW_PRESS))
@@ -6047,14 +6076,16 @@ static int32_t AndroidInputCallback(struct android_app *app, AInputEvent *event)
 
         // Save current button and its state
         // NOTE: Android key action is 0 for down and 1 for up
-        if (AKeyEvent_getAction(event) == AKEY_EVENT_ACTION_DOWN)
+        if (AKeyEvent_getAction(event) == AKEY_EVENT_ACTION_UP) RegisterCurrentKeyState(keycode, false);// Key up
+        else
         {
-            CORE.Input.Keyboard.currentKeyState[keycode] = 1;   // Key down
-
-            CORE.Input.Keyboard.keyPressedQueue[CORE.Input.Keyboard.keyPressedQueueCount] = keycode;
-            CORE.Input.Keyboard.keyPressedQueueCount++;
+            if (AKeyEvent_getAction(event) == AKEY_EVENT_ACTION_PRESSED)
+            {
+                CORE.Input.Keyboard.keyPressedQueue[CORE.Input.Keyboard.keyPressedQueueCount] = keycode;
+                CORE.Input.Keyboard.keyPressedQueueCount++;
+            }
+            RegisterCurrentKeyState(keycode, true);     // Key down
         }
-        else CORE.Input.Keyboard.currentKeyState[keycode] = 0;  // Key up
 
         if (keycode == AKEYCODE_POWER)
         {
@@ -6367,7 +6398,7 @@ static void ProcessKeyboard(void)
         if (keysBuffer[i] == 0x1b)
         {
             // Check if ESCAPE key has been pressed to stop program
-            if (bufferByteCount == 1) CORE.Input.Keyboard.currentKeyState[CORE.Input.Keyboard.exitKey] = 1;
+            if (bufferByteCount == 1) RegisterCurrentKeyState(CORE.Input.Keyboard.exitKey, true);
             else
             {
                 if (keysBuffer[i + 1] == 0x5b)    // Special function key
@@ -6377,18 +6408,18 @@ static void ProcessKeyboard(void)
                         // Process special function keys (F1 - F12)
                         switch (keysBuffer[i + 3])
                         {
-                            case 0x41: CORE.Input.Keyboard.currentKeyState[290] = 1; break;    // raylib KEY_F1
-                            case 0x42: CORE.Input.Keyboard.currentKeyState[291] = 1; break;    // raylib KEY_F2
-                            case 0x43: CORE.Input.Keyboard.currentKeyState[292] = 1; break;    // raylib KEY_F3
-                            case 0x44: CORE.Input.Keyboard.currentKeyState[293] = 1; break;    // raylib KEY_F4
-                            case 0x45: CORE.Input.Keyboard.currentKeyState[294] = 1; break;    // raylib KEY_F5
-                            case 0x37: CORE.Input.Keyboard.currentKeyState[295] = 1; break;    // raylib KEY_F6
-                            case 0x38: CORE.Input.Keyboard.currentKeyState[296] = 1; break;    // raylib KEY_F7
-                            case 0x39: CORE.Input.Keyboard.currentKeyState[297] = 1; break;    // raylib KEY_F8
-                            case 0x30: CORE.Input.Keyboard.currentKeyState[298] = 1; break;    // raylib KEY_F9
-                            case 0x31: CORE.Input.Keyboard.currentKeyState[299] = 1; break;    // raylib KEY_F10
-                            case 0x33: CORE.Input.Keyboard.currentKeyState[300] = 1; break;    // raylib KEY_F11
-                            case 0x34: CORE.Input.Keyboard.currentKeyState[301] = 1; break;    // raylib KEY_F12
+                            case 0x41: RegisterCurrentKeyState(290, true); break;    // raylib KEY_F1
+                            case 0x42: RegisterCurrentKeyState(291, true); break;    // raylib KEY_F2
+                            case 0x43: RegisterCurrentKeyState(292, true); break;    // raylib KEY_F3
+                            case 0x44: RegisterCurrentKeyState(293, true); break;    // raylib KEY_F4
+                            case 0x45: RegisterCurrentKeyState(294, true); break;    // raylib KEY_F5
+                            case 0x37: RegisterCurrentKeyState(295, true); break;    // raylib KEY_F6
+                            case 0x38: RegisterCurrentKeyState(296, true); break;    // raylib KEY_F7
+                            case 0x39: RegisterCurrentKeyState(297, true); break;    // raylib KEY_F8
+                            case 0x30: RegisterCurrentKeyState(298, true); break;    // raylib KEY_F9
+                            case 0x31: RegisterCurrentKeyState(299, true); break;    // raylib KEY_F10
+                            case 0x33: RegisterCurrentKeyState(300, true); break;    // raylib KEY_F11
+                            case 0x34: RegisterCurrentKeyState(301, true); break;    // raylib KEY_F12
                             default: break;
                         }
 
@@ -6399,10 +6430,10 @@ static void ProcessKeyboard(void)
                     {
                         switch (keysBuffer[i + 2])
                         {
-                            case 0x41: CORE.Input.Keyboard.currentKeyState[265] = 1; break;    // raylib KEY_UP
-                            case 0x42: CORE.Input.Keyboard.currentKeyState[264] = 1; break;    // raylib KEY_DOWN
-                            case 0x43: CORE.Input.Keyboard.currentKeyState[262] = 1; break;    // raylib KEY_RIGHT
-                            case 0x44: CORE.Input.Keyboard.currentKeyState[263] = 1; break;    // raylib KEY_LEFT
+                            case 0x41: RegisterCurrentKeyState(265, true); break;    // raylib KEY_UP
+                            case 0x42: RegisterCurrentKeyState(264, true); break;    // raylib KEY_DOWN
+                            case 0x43: RegisterCurrentKeyState(262, true); break;    // raylib KEY_RIGHT
+                            case 0x44: RegisterCurrentKeyState(263, true); break;    // raylib KEY_LEFT
                             default: break;
                         }
 
@@ -6415,14 +6446,14 @@ static void ProcessKeyboard(void)
         }
         else if (keysBuffer[i] == 0x0a)     // raylib KEY_ENTER (don't mix with <linux/input.h> KEY_*)
         {
-            CORE.Input.Keyboard.currentKeyState[257] = 1;
+            RegisterCurrentKeyState(257, true);
 
             CORE.Input.Keyboard.keyPressedQueue[CORE.Input.Keyboard.keyPressedQueueCount] = 257;     // Add keys pressed into queue
             CORE.Input.Keyboard.keyPressedQueueCount++;
         }
         else if (keysBuffer[i] == 0x7f)     // raylib KEY_BACKSPACE
         {
-            CORE.Input.Keyboard.currentKeyState[259] = 1;
+            RegisterCurrentKeyState(259, true);
 
             CORE.Input.Keyboard.keyPressedQueue[CORE.Input.Keyboard.keyPressedQueueCount] = 257;     // Add keys pressed into queue
             CORE.Input.Keyboard.keyPressedQueueCount++;
@@ -6432,9 +6463,9 @@ static void ProcessKeyboard(void)
             // Translate lowercase a-z letters to A-Z
             if ((keysBuffer[i] >= 97) && (keysBuffer[i] <= 122))
             {
-                CORE.Input.Keyboard.currentKeyState[(int)keysBuffer[i] - 32] = 1;
+                RegisterCurrentKeyState((int)keysBuffer[i] - 32, true);
             }
-            else CORE.Input.Keyboard.currentKeyState[(int)keysBuffer[i]] = 1;
+            else RegisterCurrentKeyState((int)keysBuffer[i], true);
 
             CORE.Input.Keyboard.keyPressedQueue[CORE.Input.Keyboard.keyPressedQueueCount] = keysBuffer[i];     // Add keys pressed into queue
             CORE.Input.Keyboard.keyPressedQueueCount++;
@@ -6442,11 +6473,11 @@ static void ProcessKeyboard(void)
     }
 
     // Check exit key (same functionality as GLFW3 KeyCallback())
-    if (CORE.Input.Keyboard.currentKeyState[CORE.Input.Keyboard.exitKey] == 1) CORE.Window.shouldClose = true;
+    if (IsKeyDown(CORE.Input.Keyboard.exitKey)) CORE.Window.shouldClose = true;
 
 #if defined(SUPPORT_SCREEN_CAPTURE)
     // Check screen capture key (raylib key: KEY_F12)
-    if (CORE.Input.Keyboard.currentKeyState[301] == 1)
+    if (IsKeyDown(301))
     {
         TakeScreenshot(TextFormat("screenshot%03i.png", screenshotCounter));
         screenshotCounter++;
@@ -6748,7 +6779,7 @@ static void PollKeyboardEvents(void)
                     // WARNING: https://www.kernel.org/doc/Documentation/input/input.txt
                     // Event interface: 'value' is the value the event carries. Either a relative change for EV_REL,
                     // absolute new value for EV_ABS (joysticks ...), or 0 for EV_KEY for release, 1 for keypress and 2 for autorepeat
-                    CORE.Input.Keyboard.currentKeyState[keycode] = (event.value >= 1)? 1 : 0;
+                    RegisterCurrentKeyState(keycode, event.value >= 1);
                     if (event.value >= 1)
                     {
                         CORE.Input.Keyboard.keyPressedQueue[CORE.Input.Keyboard.keyPressedQueueCount] = keycode;     // Register last key pressed
@@ -6757,14 +6788,14 @@ static void PollKeyboardEvents(void)
 
                 #if defined(SUPPORT_SCREEN_CAPTURE)
                     // Check screen capture key (raylib key: KEY_F12)
-                    if (CORE.Input.Keyboard.currentKeyState[301] == 1)
+                    if (IsKeyDown(301))
                     {
                         TakeScreenshot(TextFormat("screenshot%03i.png", screenshotCounter));
                         screenshotCounter++;
                     }
                 #endif
 
-                    if (CORE.Input.Keyboard.currentKeyState[CORE.Input.Keyboard.exitKey] == 1) CORE.Window.shouldClose = true;
+                    if (IsKeyDown(CORE.Input.Keyboard.exitKey) CORE.Window.shouldClose = true;
 
                     TRACELOGD("RPI: KEY_%s ScanCode: %4i KeyCode: %4i", event.value == 0 ? "UP":"DOWN", event.code, keycode);
                 }
@@ -7446,10 +7477,10 @@ static void PlayAutomationEvent(unsigned int frame)
             switch (events[i].type)
             {
                 // Input events
-                case INPUT_KEY_UP: CORE.Input.Keyboard.currentKeyState[events[i].params[0]] = false; break;             // param[0]: key
-                case INPUT_KEY_DOWN: CORE.Input.Keyboard.currentKeyState[events[i].params[0]] = true; break;            // param[0]: key
-                case INPUT_MOUSE_BUTTON_UP: CORE.Input.Mouse.currentButtonState[events[i].params[0]] = false; break;    // param[0]: key
-                case INPUT_MOUSE_BUTTON_DOWN: CORE.Input.Mouse.currentButtonState[events[i].params[0]] = true; break;   // param[0]: key
+                case INPUT_KEY_UP: RegisterCurrentKeyState(events[i].params[0]], false); break;             // param[0]: key
+                case INPUT_KEY_DOWN: RegisterCurrentKeyState(events[i].params[0]], true); break;            // param[0]: key
+                case INPUT_MOUSE_BUTTON_UP: RegisterCurrentKeyState(events[i].params[0]], false); break;    // param[0]: key
+                case INPUT_MOUSE_BUTTON_DOWN: RegisterCurrentKeyState(events[i].params[0]], true); break;   // param[0]: key
                 case INPUT_MOUSE_POSITION:      // param[0]: x, param[1]: y
                 {
                     CORE.Input.Mouse.currentPosition.x = (float)events[i].params[0];
