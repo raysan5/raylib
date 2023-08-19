@@ -3748,7 +3748,7 @@ void OpenURL(const char *url)
 #define KEY_STATE_PRESSED   (   2 | KEY_STATE_DOWN) // Flag for key pressed down on frame
 #define KEY_STATE_RELEASED      4                   // Flag for key released on frame
 #define KEY_STATE_REPEATED  (   8 | KEY_STATE_DOWN) // Flag for key text repeat
-#define KEY_STATE(key)    CORE.Input.Keyboard.keyState[key & (MAX_KEYBOARD_KEYS - 1)]   // Safely accesses key state
+#define KEY_STATE(key)    CORE.Input.Keyboard.keyState[key & KEYBOARD_KEYS_MASK]	// Safely accesses key state
 
 // Check if a key has been pressed once
 bool IsKeyPressed(int key)
