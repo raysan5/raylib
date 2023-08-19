@@ -192,7 +192,14 @@ int main(void)
         {
             selected = hovered;
             selectedPos = hoveredPos;
-            SetClipboardText(messages[emoji[selected].message].text);
+            #if defined(PLATFORM_WEB)
+                // Line Feed (LF) (New Line) must be escaped for SetClipboardText() for web
+                char *escapedString = TextReplace(messages[emoji[selected].message].text, "\x0A", "\\n");
+                SetClipboardText(escapedString);
+                MemFree(escapedString);
+            #else
+                SetClipboardText(messages[emoji[selected].message].text);
+            #endif
         }
 
         Vector2 mouse = GetMousePosition();
@@ -267,7 +274,7 @@ int main(void)
                     a = b;
                     b = tmp;
                 }
-                
+
                 if (msgRect.x + msgRect.width > screenWidth) msgRect.x -= (msgRect.x + msgRect.width) - screenWidth + 10;
 
                 // Draw chat bubble
@@ -287,11 +294,11 @@ int main(void)
                 DrawText(info, (int)pos.x, (int)pos.y, 10, RAYWHITE);
             }
             //------------------------------------------------------------------------------
-            
+
             // Draw the info text
             DrawText("These emojis have something to tell you, click each to find out!", (screenWidth - 650)/2, screenHeight - 40, 20, GRAY);
             DrawText("Each emoji is a unicode character from a font, not a texture... Press [SPACEBAR] to refresh", (screenWidth - 484)/2, screenHeight - 16, 10, GRAY);
-            
+
         EndDrawing();
         //----------------------------------------------------------------------------------
     }
@@ -342,7 +349,7 @@ static void DrawTextBoxedSelectable(Font font, const char *text, Rectangle rec, 
 {
     int length = TextLength(text);  // Total length in bytes of the text, scanned by codepoints in loop
 
-    float textOffsetY = 0;          // Offset between lines (on line break '\n')
+    float textOffsetY = 0.0f;       // Offset between lines (on line break '\n')
     float textOffsetX = 0.0f;       // Offset X to next character to draw
 
     float scaleFactor = fontSize/(float)font.baseSize;     // Character rectangle scaling factor
