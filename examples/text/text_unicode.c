@@ -187,19 +187,11 @@ int main(void)
         // Add a new set of emojis when SPACE is pressed
         if (IsKeyPressed(KEY_SPACE)) RandomizeEmoji();
 
-        // Set the selected emoji and copy its text to clipboard
+        // Set the selected emoji
         if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && (hovered != -1) && (hovered != selected))
         {
             selected = hovered;
             selectedPos = hoveredPos;
-            #if defined(PLATFORM_WEB)
-                // Line Feed (LF) (New Line) must be escaped for SetClipboardText() for web
-                char *escapedString = TextReplace(messages[emoji[selected].message].text, "\x0A", "\\n");
-                SetClipboardText(escapedString);
-                MemFree(escapedString);
-            #else
-                SetClipboardText(messages[emoji[selected].message].text);
-            #endif
         }
 
         Vector2 mouse = GetMousePosition();
