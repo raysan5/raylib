@@ -3751,31 +3751,47 @@ void OpenURL(const char *url)
 // Check if a key has been pressed once
 bool IsKeyPressed(int key)
 {
-    return KEY_SAFE(key) && (CORE.Input.Keyboard.previousKeyState[key] == 0) && (CORE.Input.Keyboard.currentKeyState[key] == 1);
+    if (!KEY_SAFE(key)) return false;
+    bool pressed = false;
+
+    if ((CORE.Input.Keyboard.previousKeyState[key] == 0) && (CORE.Input.Keyboard.currentKeyState[key] == 1)) pressed = true;
+
+    return pressed;
 }
 
 // Check if a key is being pressed (key held down)
 bool IsKeyDown(int key)
 {
-    return KEY_SAFE(key) && (CORE.Input.Keyboard.currentKeyState[key] == 1);
+    if (!KEY_SAFE(key)) return false;
+    if (CORE.Input.Keyboard.currentKeyState[key] == 1) return true;
+    else return false;
 }
 
 // Check if a key has been released once
 bool IsKeyReleased(int key)
 {
-    return KEY_SAFE(key) && (CORE.Input.Keyboard.previousKeyState[key] == 1) && (CORE.Input.Keyboard.currentKeyState[key] == 0);
+    if (!KEY_SAFE(key)) return false;
+    bool released = false;
+
+    if ((CORE.Input.Keyboard.previousKeyState[key] == 1) && (CORE.Input.Keyboard.currentKeyState[key] == 0)) released = true;
+
+    return released;
 }
 
 // Check if a key is NOT being pressed (key not held down)
 bool IsKeyUp(int key)
 {
-    return KEY_SAFE(key) && (CORE.Input.Keyboard.currentKeyState[key] == 0);
+    if (!KEY_SAFE(key)) return false;
+    if (CORE.Input.Keyboard.currentKeyState[key] == 0) return true;
+    else return false;
 }
 
 // Check if a key has been repeated
 bool IsKeyRepeated(int key)
 {
-    return KEY_SAFE(key) && (CORE.Input.Keyboard.repeatKeyState[key] == 1);
+    if (!KEY_SAFE(key)) return false;
+    if (CORE.Input.Keyboard.repeatKeyState[key] == 1) return true;
+	else return false;
 }
 
 // Get the last key pressed
