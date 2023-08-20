@@ -3751,7 +3751,7 @@ void OpenURL(const char *url)
 // Check if a key has been pressed once
 bool IsKeyPressed(int key)
 {
-    return IsKeyDown(key) && (CORE.Input.Keyboard.previousKeyState[key] == 0);
+    return KEY_SAFE(key) && (CORE.Input.Keyboard.previousKeyState[key] == 0) && (CORE.Input.Keyboard.currentKeyState[key] == 1);
 }
 
 // Check if a key is being pressed (key held down)
@@ -3763,7 +3763,7 @@ bool IsKeyDown(int key)
 // Check if a key has been released once
 bool IsKeyReleased(int key)
 {
-    return IsKeyUp(key) && (CORE.Input.Keyboard.previousKeyState[key] == 1);
+    return KEY_SAFE(key) && (CORE.Input.Keyboard.previousKeyState[key] == 1) && (CORE.Input.Keyboard.currentKeyState[key] == 0);
 }
 
 // Check if a key is NOT being pressed (key not held down)
