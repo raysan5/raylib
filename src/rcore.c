@@ -6514,10 +6514,10 @@ static void InitEvdevInput(void)
 
     // Reset keyboard key state
     for (int i = 0; i < MAX_KEYBOARD_KEYS; i++)
-	{
-		CORE.Input.Keyboard.currentKeyState[i] = 0;
-		CORE.Input.Keyboard.keyRepeatInFrame[i] = 0;
-	}
+    {
+        CORE.Input.Keyboard.currentKeyState[i] = 0;
+        CORE.Input.Keyboard.keyRepeatInFrame[i] = 0;
+    }
 
     // Open the linux directory of "/dev/input"
     directory = opendir(DEFAULT_EVDEV_PATH);
