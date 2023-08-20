@@ -438,7 +438,6 @@ typedef struct CoreData {
             int exitKey;                    // Default exit key
             char currentKeyState[MAX_KEYBOARD_KEYS];        // Registers current frame key state
             char previousKeyState[MAX_KEYBOARD_KEYS];       // Registers previous frame key state
-          
             // NOTE: Since key press logic involves comparing prev vs cur key state, we need to handle key repeats specially
             char keyRepeatInFrame[MAX_KEYBOARD_KEYS];       // Registers key repeats for current frame.
 
