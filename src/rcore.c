@@ -6067,8 +6067,9 @@ static int32_t AndroidInputCallback(struct android_app *app, AInputEvent *event)
             CORE.Input.Keyboard.keyPressedQueue[CORE.Input.Keyboard.keyPressedQueueCount] = keycode;
             CORE.Input.Keyboard.keyPressedQueueCount++;
         }
-        else if (AKeyEvent_getAction(event) == AKEY_EVENT_ACTION_MULTIPLE) CORE.Input.Keyboard.repeatKeyState[keycode] = 1;
         else CORE.Input.Keyboard.currentKeyState[keycode] = 0;  // Key up
+
+        if (AKeyEvent_getAction(event) == AKEY_EVENT_ACTION_MULTIPLE) CORE.Input.Keyboard.repeatKeyState[keycode] = 1;
 
         if (keycode == AKEYCODE_POWER)
         {
