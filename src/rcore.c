@@ -346,10 +346,10 @@
 #endif
 
 // Flags operation macros
-#define FLAGS_SET(n, f)     (   (n) |=  (f)         )
-#define FLAGS_CLEAR(n, f)   (   (n) &= ~(f)         )
-#define FLAGS_TOGGLE(n, f)  (   (n) ^=  (f)         )
-#define FLAGS_CHECK(n, f)   ((  (n) &   (f)) == (f) )
+#define FLAG_SET(n, f) ((n) |= (f))
+#define FLAG_CLEAR(n, f) ((n) &= ~(f))
+#define FLAG_TOGGLE(n, f) ((n) ^= (f))
+#define FLAG_CHECK(n, f) ((n) & (f))
 
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
@@ -436,7 +436,9 @@ typedef struct CoreData {
 #endif
         struct {
             int exitKey;                    // Default exit key
-            char keyState[MAX_KEYBOARD_KEYS];               // Registers frame key state
+            char currentKeyState[MAX_KEYBOARD_KEYS];        // Registers current frame key state
+            char previousKeyState[MAX_KEYBOARD_KEYS];       // Registers previous frame key state
+            char repeatKeyState[MAX_KEYBOARD_KEYS];         // Registers repeat frame key state
 
             int keyPressedQueue[MAX_KEY_PRESSED_QUEUE];     // Input keys queue
             int keyPressedQueueCount;       // Input keys queue count
@@ -3744,40 +3746,36 @@ void OpenURL(const char *url)
 //----------------------------------------------------------------------------------
 // Module Functions Definition - Input (Keyboard, Mouse, Gamepad) Functions
 //----------------------------------------------------------------------------------
-#define KEY_STATE_DOWN          1                   // Flag for key held down
-#define KEY_STATE_PRESSED   (   2 | KEY_STATE_DOWN) // Flag for key pressed down on frame
-#define KEY_STATE_RELEASED      4                   // Flag for key released on frame
-#define KEY_STATE_REPEATED  (   8 | KEY_STATE_DOWN) // Flag for key text repeat
-#define KEY_STATE(key)    CORE.Input.Keyboard.keyState[key & KEYBOARD_KEYS_MASK]	// Safely accesses key state
+#define KEY_SAFE(key) (((key) >= 0) && ((key) < sizeof(CORE.Input.Keyboard.currentKeyState)))
 
 // Check if a key has been pressed once
 bool IsKeyPressed(int key)
 {
-    return FLAGS_CHECK(KEY_STATE(key), KEY_STATE_PRESSED);
+    return IsKeyDown(key) && (CORE.Input.Keyboard.previousKeyState[key] == 0);
 }
 
 // Check if a key is being pressed (key held down)
 bool IsKeyDown(int key)
 {
-    return FLAGS_CHECK(KEY_STATE(key), KEY_STATE_DOWN);
+    return KEY_SAFE(key) && (CORE.Input.Keyboard.currentKeyState[key] == 1);
 }
 
 // Check if a key has been released once
 bool IsKeyReleased(int key)
 {
-    return FLAGS_CHECK(KEY_STATE(key), KEY_STATE_RELEASED);
+    return IsKeyUp(key) && (CORE.Input.Keyboard.previousKeyState[key] == 1);
 }
 
 // Check if a key is NOT being pressed (key not held down)
 bool IsKeyUp(int key)
 {
-    return !IsKeyDown(key);
+    return KEY_SAFE(key) && (CORE.Input.Keyboard.currentKeyState[key] == 0);
 }
 
 // Check if a key is being repeated (when held down)
 bool IsKeyRepeated(int key)
 {
-    return FLAGS_CHECK(KEY_STATE(key), KEY_STATE_REPEATED);
+    return KEY_SAFE(key) && (CORE.Input.Keyboard.repeatKeyState[key] == 1);
 }
 
 // Get the last key pressed
@@ -5159,15 +5157,6 @@ void SwapScreenBuffer(void)
 #endif  // PLATFORM_ANDROID || PLATFORM_RPI || PLATFORM_DRM
 }
 
-// Clear frame only key states
-static void ClearKeyStates(int count)
-{
-    for (int key = 0; key < count; key++)
-    {
-        FLAGS_CLEAR(KEY_STATE(key), ~KEY_STATE_DOWN);
-    }
-}
-
 // Register all input events
 void PollInputEvents(void)
 {
@@ -5188,7 +5177,13 @@ void PollInputEvents(void)
 #endif
 
 #if defined(PLATFORM_RPI) || defined(PLATFORM_DRM)
-    ClearKeyStates(MAX_KEYBOARD_KEYS);
+    // Register previous keys states
+    for (int i = 0; i < MAX_KEYBOARD_KEYS; i++)
+    {
+        CORE.Input.Keyboard.previousKeyState[i] = CORE.Input.Keyboard.currentKeyState[i];
+        CORE.Input.Keyboard.repeatKeyState[i] = 0;
+    }
+
     PollKeyboardEvents();
 
     // Register previous mouse states
@@ -5215,7 +5210,12 @@ void PollInputEvents(void)
 #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
     // Keyboard/Mouse input polling (automatically managed by GLFW3 through callback)
 
-    ClearKeyStates(MAX_KEYBOARD_KEYS);
+    // Register previous keys states
+    for (int i = 0; i < MAX_KEYBOARD_KEYS; i++)
+    {
+        CORE.Input.Keyboard.previousKeyState[i] = CORE.Input.Keyboard.currentKeyState[i];
+        CORE.Input.Keyboard.repeatKeyState[i] = 0;
+    }
 
     // Register previous mouse states
     for (int i = 0; i < MAX_MOUSE_BUTTONS; i++) CORE.Input.Mouse.previousButtonState[i] = CORE.Input.Mouse.currentButtonState[i];
@@ -5397,7 +5397,11 @@ void PollInputEvents(void)
 #if defined(PLATFORM_ANDROID)
     // Register previous keys states
     // NOTE: Android supports up to 260 keys
-    ClearKeyStates(260);
+    for (int i = 0; i < 260; i++)
+    {
+        CORE.Input.Keyboard.previousKeyState[i] = CORE.Input.Keyboard.currentKeyState[i];
+        CORE.Input.Keyboard.repeatKeyState[i] = 0;
+    }
 
     // Android ALooper_pollAll() variables
     int pollResult = 0;
@@ -5590,14 +5594,18 @@ static void KeyCallback(GLFWwindow *window, int key, int scancode, int action, i
 {
     if (key < 0) return;    // Security check, macOS fn key generates -1
 
-    if ((action == GLFW_RELEASE)
-#if !defined(PLATFORM_WEB) // WARNING: Check if CAPS/NUM key modifiers are not enabled
-        && !((key == KEY_CAPS_LOCK) && FLAGS_CHECK(mods, GLFW_MOD_CAPS_LOCK))
-        && !((key == KEY_NUM_LOCK) && FLAGS_CHECK(mods, GLFW_MOD_NUM_LOCK))
+    // WARNING: GLFW could return GLFW_REPEAT, we need to consider it as 1
+    // to work properly with our implementation (IsKeyDown/IsKeyUp checks)
+    if (action == GLFW_RELEASE) CORE.Input.Keyboard.currentKeyState[key] = 0;
+    else CORE.Input.Keyboard.currentKeyState[key] = 1;
+
+    if (action == GLFW_REPEAT) CORE.Input.Keyboard.repeatKeyState[key] = 1;
+
+#if !defined(PLATFORM_WEB)
+    // WARNING: Check if CAPS/NUM key modifiers are enabled and force down state for those keys
+    if (((key == KEY_CAPS_LOCK) && ((mods & GLFW_MOD_CAPS_LOCK) > 0)) ||
+        ((key == KEY_NUM_LOCK) && ((mods & GLFW_MOD_NUM_LOCK) > 0))) CORE.Input.Keyboard.currentKeyState[key] = 1;
 #endif
-        ) KEY_STATE(key) = KEY_STATE_RELEASED;
-    else if (action == GLFW_PRESS)  KEY_STATE(key) = KEY_STATE_PRESSED;
-    else if (action == GLFW_REPEAT) KEY_STATE(key) = KEY_STATE_REPEATED;
 
     // Check if there is space available in the key queue
     if ((CORE.Input.Keyboard.keyPressedQueueCount < MAX_KEY_PRESSED_QUEUE) && (action == GLFW_PRESS))
@@ -6054,13 +6062,13 @@ static int32_t AndroidInputCallback(struct android_app *app, AInputEvent *event)
         // NOTE: Android key action is 0 for down and 1 for up
         if (AKeyEvent_getAction(event) == AKEY_EVENT_ACTION_DOWN)
         {
-            KEY_STATE(keycode) = KEY_STATE_PRESSED;
+            CORE.Input.Keyboard.currentKeyState[keycode] = 1;   // Key down
 
             CORE.Input.Keyboard.keyPressedQueue[CORE.Input.Keyboard.keyPressedQueueCount] = keycode;
             CORE.Input.Keyboard.keyPressedQueueCount++;
         }
-        else if (AKeyEvent_getAction(event) == AKEY_EVENT_ACTION_UP) KEY_STATE(keycode) = KEY_STATE_RELEASED;
-        else if (AKeyEvent_getAction(event) == AKEY_EVENT_ACTION_MULTIPLE) KEY_STATE(keycode) = KEY_STATE_REPEATED;
+        else if (AKeyEvent_getAction(event) == AKEY_EVENT_ACTION_MULTIPLE) CORE.Input.Keyboard.repeatKeyState[keycode] = 1;
+        else CORE.Input.Keyboard.currentKeyState[keycode] = 0;  // Key up
 
         if (keycode == AKEYCODE_POWER)
         {
@@ -6363,7 +6371,7 @@ static void ProcessKeyboard(void)
     bufferByteCount = read(STDIN_FILENO, keysBuffer, MAX_KEYBUFFER_SIZE);     // POSIX system call
 
     // Reset pressed keys array (it will be filled below)
-    for (int i = 0; i < MAX_KEYBOARD_KEYS; i++) KEY_STATE(i) = 0;
+    for (int i = 0; i < MAX_KEYBOARD_KEYS; i++) CORE.Input.Keyboard.currentKeyState[i] = 0;
 
     // Fill all read bytes (looking for keys)
     for (int i = 0; i < bufferByteCount; i++)
@@ -6373,7 +6381,7 @@ static void ProcessKeyboard(void)
         if (keysBuffer[i] == 0x1b)
         {
             // Check if ESCAPE key has been pressed to stop program
-            if (bufferByteCount == 1) KEY_STATE(CORE.Input.Keyboard.exitKey) = KEY_STATE_PRESSED;
+            if (bufferByteCount == 1) CORE.Input.Keyboard.currentKeyState[CORE.Input.Keyboard.exitKey] = 1;
             else
             {
                 if (keysBuffer[i + 1] == 0x5b)    // Special function key
@@ -6383,18 +6391,18 @@ static void ProcessKeyboard(void)
                         // Process special function keys (F1 - F12)
                         switch (keysBuffer[i + 3])
                         {
-                            case 0x41: KEY_STATE(290) = KEY_STATE_PRESSED; break;    // raylib KEY_F1
-                            case 0x42: KEY_STATE(291) = KEY_STATE_PRESSED; break;    // raylib KEY_F2
-                            case 0x43: KEY_STATE(292) = KEY_STATE_PRESSED; break;    // raylib KEY_F3
-                            case 0x44: KEY_STATE(293) = KEY_STATE_PRESSED; break;    // raylib KEY_F4
-                            case 0x45: KEY_STATE(294) = KEY_STATE_PRESSED; break;    // raylib KEY_F5
-                            case 0x37: KEY_STATE(295) = KEY_STATE_PRESSED; break;    // raylib KEY_F6
-                            case 0x38: KEY_STATE(296) = KEY_STATE_PRESSED; break;    // raylib KEY_F7
-                            case 0x39: KEY_STATE(297) = KEY_STATE_PRESSED; break;    // raylib KEY_F8
-                            case 0x30: KEY_STATE(298) = KEY_STATE_PRESSED; break;    // raylib KEY_F9
-                            case 0x31: KEY_STATE(299) = KEY_STATE_PRESSED; break;    // raylib KEY_F10
-                            case 0x33: KEY_STATE(300) = KEY_STATE_PRESSED; break;    // raylib KEY_F11
-                            case 0x34: KEY_STATE(301) = KEY_STATE_PRESSED; break;    // raylib KEY_F12
+                            case 0x41: CORE.Input.Keyboard.currentKeyState[290] = 1; break;    // raylib KEY_F1
+                            case 0x42: CORE.Input.Keyboard.currentKeyState[291] = 1; break;    // raylib KEY_F2
+                            case 0x43: CORE.Input.Keyboard.currentKeyState[292] = 1; break;    // raylib KEY_F3
+                            case 0x44: CORE.Input.Keyboard.currentKeyState[293] = 1; break;    // raylib KEY_F4
+                            case 0x45: CORE.Input.Keyboard.currentKeyState[294] = 1; break;    // raylib KEY_F5
+                            case 0x37: CORE.Input.Keyboard.currentKeyState[295] = 1; break;    // raylib KEY_F6
+                            case 0x38: CORE.Input.Keyboard.currentKeyState[296] = 1; break;    // raylib KEY_F7
+                            case 0x39: CORE.Input.Keyboard.currentKeyState[297] = 1; break;    // raylib KEY_F8
+                            case 0x30: CORE.Input.Keyboard.currentKeyState[298] = 1; break;    // raylib KEY_F9
+                            case 0x31: CORE.Input.Keyboard.currentKeyState[299] = 1; break;    // raylib KEY_F10
+                            case 0x33: CORE.Input.Keyboard.currentKeyState[300] = 1; break;    // raylib KEY_F11
+                            case 0x34: CORE.Input.Keyboard.currentKeyState[301] = 1; break;    // raylib KEY_F12
                             default: break;
                         }
 
@@ -6405,10 +6413,10 @@ static void ProcessKeyboard(void)
                     {
                         switch (keysBuffer[i + 2])
                         {
-                            case 0x41: KEY_STATE(265) = KEY_STATE_PRESSED; break;    // raylib KEY_UP
-                            case 0x42: KEY_STATE(264) = KEY_STATE_PRESSED; break;    // raylib KEY_DOWN
-                            case 0x43: KEY_STATE(262) = KEY_STATE_PRESSED; break;    // raylib KEY_RIGHT
-                            case 0x44: KEY_STATE(263) = KEY_STATE_PRESSED; break;    // raylib KEY_LEFT
+                            case 0x41: CORE.Input.Keyboard.currentKeyState[265] = 1; break;    // raylib KEY_UP
+                            case 0x42: CORE.Input.Keyboard.currentKeyState[264] = 1; break;    // raylib KEY_DOWN
+                            case 0x43: CORE.Input.Keyboard.currentKeyState[262] = 1; break;    // raylib KEY_RIGHT
+                            case 0x44: CORE.Input.Keyboard.currentKeyState[263] = 1; break;    // raylib KEY_LEFT
                             default: break;
                         }
 
@@ -6421,14 +6429,14 @@ static void ProcessKeyboard(void)
         }
         else if (keysBuffer[i] == 0x0a)     // raylib KEY_ENTER (don't mix with <linux/input.h> KEY_*)
         {
-            KEY_STATE(257) = KEY_STATE_PRESSED;
+            CORE.Input.Keyboard.currentKeyState[257] = 1;
 
             CORE.Input.Keyboard.keyPressedQueue[CORE.Input.Keyboard.keyPressedQueueCount] = 257;     // Add keys pressed into queue
             CORE.Input.Keyboard.keyPressedQueueCount++;
         }
         else if (keysBuffer[i] == 0x7f)     // raylib KEY_BACKSPACE
         {
-            KEY_STATE(259) = KEY_STATE_PRESSED;
+            CORE.Input.Keyboard.currentKeyState[259] = 1;
 
             CORE.Input.Keyboard.keyPressedQueue[CORE.Input.Keyboard.keyPressedQueueCount] = 257;     // Add keys pressed into queue
             CORE.Input.Keyboard.keyPressedQueueCount++;
@@ -6438,9 +6446,9 @@ static void ProcessKeyboard(void)
             // Translate lowercase a-z letters to A-Z
             if ((keysBuffer[i] >= 97) && (keysBuffer[i] <= 122))
             {
-                KEY_STATE((int)keysBuffer[i] - 32) = KEY_STATE_PRESSED;
+                CORE.Input.Keyboard.currentKeyState[(int)keysBuffer[i] - 32] = 1;
             }
-            else KEY_STATE((int)keysBuffer[i]) = KEY_STATE_PRESSED;
+            else CORE.Input.Keyboard.currentKeyState[(int)keysBuffer[i]] = 1;
 
             CORE.Input.Keyboard.keyPressedQueue[CORE.Input.Keyboard.keyPressedQueueCount] = keysBuffer[i];     // Add keys pressed into queue
             CORE.Input.Keyboard.keyPressedQueueCount++;
@@ -6448,11 +6456,11 @@ static void ProcessKeyboard(void)
     }
 
     // Check exit key (same functionality as GLFW3 KeyCallback())
-    if (IsKeyDown(CORE.Input.Keyboard.exitKey)) CORE.Window.shouldClose = true;
+    if (CORE.Input.Keyboard.currentKeyState[CORE.Input.Keyboard.exitKey] == 1) CORE.Window.shouldClose = true;
 
 #if defined(SUPPORT_SCREEN_CAPTURE)
     // Check screen capture key (raylib key: KEY_F12)
-    if (IsKeyDown(301))
+    if (CORE.Input.Keyboard.currentKeyState[301] == 1)
     {
         TakeScreenshot(TextFormat("screenshot%03i.png", screenshotCounter));
         screenshotCounter++;
@@ -6479,7 +6487,7 @@ static void InitEvdevInput(void)
     }
 
     // Reset keyboard key state
-    for (int i = 0; i < MAX_KEYBOARD_KEYS; i++) KEY_STATE(i) = 0;
+    for (int i = 0; i < MAX_KEYBOARD_KEYS; i++) CORE.Input.Keyboard.currentKeyState[i] = 0;
 
     // Open the linux directory of "/dev/input"
     directory = opendir(DEFAULT_EVDEV_PATH);
@@ -6502,14 +6510,14 @@ static void InitEvdevInput(void)
 }
 
 // Identifies a input device and configures it for use if appropriate
-static void ConfigureEvdevDevice(char *device)
+static void ConfigureEvdevDevice(char* device)
 {
-    #define BITS_PER_LONG   (8*sizeof(long))
-    #define NBITS(x)        ((((x) - 1)/BITS_PER_LONG) + 1)
-    #define OFF(x)          ((x)%BITS_PER_LONG)
-    #define BIT(x)          (1UL<<OFF(x))
-    #define LONG(x)         ((x)/BITS_PER_LONG)
-    #define TEST_BIT(array, bit) ((array[LONG(bit)] >> OFF(bit)) & 1)
+#define BITS_PER_LONG   (8*sizeof(long))
+#define NBITS(x)        ((((x) - 1)/BITS_PER_LONG) + 1)
+#define OFF(x)          ((x)%BITS_PER_LONG)
+#define BIT(x)          (1UL<<OFF(x))
+#define LONG(x)         ((x)/BITS_PER_LONG)
+#define TEST_BIT(array, bit) ((array[LONG(bit)] >> OFF(bit)) & 1)
 
     struct input_absinfo absinfo = { 0 };
     unsigned long evBits[NBITS(EV_MAX)] = { 0 };
@@ -6522,12 +6530,12 @@ static void ConfigureEvdevDevice(char *device)
     int freeWorkerId = -1;
     int fd = -1;
 
-    InputEventWorker *worker = NULL;
+    InputEventWorker* worker = NULL;
 
     // Open the device and allocate worker
     //-------------------------------------------------------------------------------------------------------
     // Find a free spot in the workers array
-    for (int i = 0; i < sizeof(CORE.Input.eventWorker)/sizeof(InputEventWorker); ++i)
+    for (int i = 0; i < sizeof(CORE.Input.eventWorker) / sizeof(InputEventWorker); ++i)
     {
         if (CORE.Input.eventWorker[i].threadId == 0)
         {
@@ -6559,7 +6567,7 @@ static void ConfigureEvdevDevice(char *device)
 
     // Grab number on the end of the devices name "event<N>"
     int devNum = 0;
-    char *ptrDevName = strrchr(device, 't');
+    char* ptrDevName = strrchr(device, 't');
     worker->eventNum = -1;
 
     if (ptrDevName != NULL)
@@ -6662,13 +6670,13 @@ static void ConfigureEvdevDevice(char *device)
     {
         // Looks like an interesting device
         TRACELOG(LOG_INFO, "RPI: Opening input device: %s (%s%s%s%s)", device,
-            worker->isMouse? "mouse " : "",
-            worker->isMultitouch? "multitouch " : "",
-            worker->isTouch? "touchscreen " : "",
-            worker->isGamepad? "gamepad " : "");
+            worker->isMouse ? "mouse " : "",
+            worker->isMultitouch ? "multitouch " : "",
+            worker->isTouch ? "touchscreen " : "",
+            worker->isGamepad ? "gamepad " : "");
 
         // Create a thread for this device
-        int error = pthread_create(&worker->threadId, NULL, &EventThread, (void *)worker);
+        int error = pthread_create(&worker->threadId, NULL, &EventThread, (void*)worker);
         if (error != 0)
         {
             TRACELOG(LOG_WARNING, "RPI: Failed to create input device thread: %s (error: %d)", device, error);
@@ -6680,13 +6688,13 @@ static void ConfigureEvdevDevice(char *device)
         // Find touchscreen with the highest index
         int maxTouchNumber = -1;
 
-        for (int i = 0; i < sizeof(CORE.Input.eventWorker)/sizeof(InputEventWorker); ++i)
+        for (int i = 0; i < sizeof(CORE.Input.eventWorker) / sizeof(InputEventWorker); ++i)
         {
             if (CORE.Input.eventWorker[i].isTouch && (CORE.Input.eventWorker[i].eventNum > maxTouchNumber)) maxTouchNumber = CORE.Input.eventWorker[i].eventNum;
         }
 
         // Find touchscreens with lower indexes
-        for (int i = 0; i < sizeof(CORE.Input.eventWorker)/sizeof(InputEventWorker); ++i)
+        for (int i = 0; i < sizeof(CORE.Input.eventWorker) / sizeof(InputEventWorker); ++i)
         {
             if (CORE.Input.eventWorker[i].isTouch && (CORE.Input.eventWorker[i].eventNum < maxTouchNumber))
             {
@@ -6749,30 +6757,30 @@ static void PollKeyboardEvents(void)
                 keycode = keymapUS[event.code & 0xFF];     // The code we get is a scancode so we look up the appropriate keycode
 
                 // Make sure we got a valid keycode
-                if ((keycode > 0) && (keycode < MAX_KEYBOARD_KEYS))
+                if ((keycode > 0) && (keycode < sizeof(CORE.Input.Keyboard.currentKeyState)))
                 {
                     // WARNING: https://www.kernel.org/doc/Documentation/input/input.txt
                     // Event interface: 'value' is the value the event carries. Either a relative change for EV_REL,
                     // absolute new value for EV_ABS (joysticks ...), or 0 for EV_KEY for release, 1 for keypress and 2 for autorepeat
-                    KEY_STATE(keycode) = (event.value >= 1) ? KEY_STATE_PRESSED : KEY_STATE_RELEASED;
+                    CORE.Input.Keyboard.currentKeyState[keycode] = (event.value >= 1) ? 1 : 0;
                     if (event.value >= 1)
                     {
                         CORE.Input.Keyboard.keyPressedQueue[CORE.Input.Keyboard.keyPressedQueueCount] = keycode;     // Register last key pressed
                         CORE.Input.Keyboard.keyPressedQueueCount++;
                     }
 
-                #if defined(SUPPORT_SCREEN_CAPTURE)
+#if defined(SUPPORT_SCREEN_CAPTURE)
                     // Check screen capture key (raylib key: KEY_F12)
-                    if (IsKeyDown(301))
+                    if (CORE.Input.Keyboard.currentKeyState[301] == 1)
                     {
                         TakeScreenshot(TextFormat("screenshot%03i.png", screenshotCounter));
                         screenshotCounter++;
                     }
-                #endif
+#endif
 
-                    if (IsKeyDown(CORE.Input.Keyboard.exitKey) CORE.Window.shouldClose = true;
+                    if (CORE.Input.Keyboard.currentKeyState[CORE.Input.Keyboard.exitKey] == 1) CORE.Window.shouldClose = true;
 
-                    TRACELOGD("RPI: KEY_%s ScanCode: %4i KeyCode: %4i", event.value == 0 ? "UP":"DOWN", event.code, keycode);
+                    TRACELOGD("RPI: KEY_%s ScanCode: %4i KeyCode: %4i", event.value == 0 ? "UP" : "DOWN", event.code, keycode);
                 }
             }
         }
@@ -6780,10 +6788,10 @@ static void PollKeyboardEvents(void)
 }
 
 // Input device events reading thread
-static void *EventThread(void *arg)
+static void* EventThread(void* arg)
 {
     struct input_event event = { 0 };
-    InputEventWorker *worker = (InputEventWorker *)arg;
+    InputEventWorker* worker = (InputEventWorker*)arg;
 
     int touchAction = -1;           // 0-TOUCH_ACTION_UP, 1-TOUCH_ACTION_DOWN, 2-TOUCH_ACTION_MOVE
     bool gestureUpdate = false;     // Flag to note gestures require to update
@@ -6823,8 +6831,8 @@ static void *EventThread(void *arg)
                 // Basic movement
                 if (event.code == ABS_X)
                 {
-                    CORE.Input.Mouse.currentPosition.x = (event.value - worker->absRange.x)*CORE.Window.screen.width/worker->absRange.width;    // Scale according to absRange
-                    CORE.Input.Touch.position[0].x = (event.value - worker->absRange.x)*CORE.Window.screen.width/worker->absRange.width;        // Scale according to absRange
+                    CORE.Input.Mouse.currentPosition.x = (event.value - worker->absRange.x) * CORE.Window.screen.width / worker->absRange.width;    // Scale according to absRange
+                    CORE.Input.Touch.position[0].x = (event.value - worker->absRange.x) * CORE.Window.screen.width / worker->absRange.width;        // Scale according to absRange
 
                     touchAction = 2;    // TOUCH_ACTION_MOVE
                     gestureUpdate = true;
@@ -6832,8 +6840,8 @@ static void *EventThread(void *arg)
 
                 if (event.code == ABS_Y)
                 {
-                    CORE.Input.Mouse.currentPosition.y = (event.value - worker->absRange.y)*CORE.Window.screen.height/worker->absRange.height;  // Scale according to absRange
-                    CORE.Input.Touch.position[0].y = (event.value - worker->absRange.y)*CORE.Window.screen.height/worker->absRange.height;      // Scale according to absRange
+                    CORE.Input.Mouse.currentPosition.y = (event.value - worker->absRange.y) * CORE.Window.screen.height / worker->absRange.height;  // Scale according to absRange
+                    CORE.Input.Touch.position[0].y = (event.value - worker->absRange.y) * CORE.Window.screen.height / worker->absRange.height;      // Scale according to absRange
 
                     touchAction = 2;    // TOUCH_ACTION_MOVE
                     gestureUpdate = true;
@@ -6844,12 +6852,12 @@ static void *EventThread(void *arg)
 
                 if (event.code == ABS_MT_POSITION_X)
                 {
-                    if (worker->touchSlot < MAX_TOUCH_POINTS) CORE.Input.Touch.position[worker->touchSlot].x = (event.value - worker->absRange.x)*CORE.Window.screen.width/worker->absRange.width;    // Scale according to absRange
+                    if (worker->touchSlot < MAX_TOUCH_POINTS) CORE.Input.Touch.position[worker->touchSlot].x = (event.value - worker->absRange.x) * CORE.Window.screen.width / worker->absRange.width;    // Scale according to absRange
                 }
 
                 if (event.code == ABS_MT_POSITION_Y)
                 {
-                    if (worker->touchSlot < MAX_TOUCH_POINTS) CORE.Input.Touch.position[worker->touchSlot].y = (event.value - worker->absRange.y)*CORE.Window.screen.height/worker->absRange.height;  // Scale according to absRange
+                    if (worker->touchSlot < MAX_TOUCH_POINTS) CORE.Input.Touch.position[worker->touchSlot].y = (event.value - worker->absRange.y) * CORE.Window.screen.height / worker->absRange.height;  // Scale according to absRange
                 }
 
                 if (event.code == ABS_MT_TRACKING_ID)
@@ -6911,10 +6919,10 @@ static void *EventThread(void *arg)
             if (!CORE.Input.Mouse.cursorHidden)
             {
                 if (CORE.Input.Mouse.currentPosition.x < 0) CORE.Input.Mouse.currentPosition.x = 0;
-                if (CORE.Input.Mouse.currentPosition.x > CORE.Window.screen.width/CORE.Input.Mouse.scale.x) CORE.Input.Mouse.currentPosition.x = CORE.Window.screen.width/CORE.Input.Mouse.scale.x;
+                if (CORE.Input.Mouse.currentPosition.x > CORE.Window.screen.width / CORE.Input.Mouse.scale.x) CORE.Input.Mouse.currentPosition.x = CORE.Window.screen.width / CORE.Input.Mouse.scale.x;
 
                 if (CORE.Input.Mouse.currentPosition.y < 0) CORE.Input.Mouse.currentPosition.y = 0;
-                if (CORE.Input.Mouse.currentPosition.y > CORE.Window.screen.height/CORE.Input.Mouse.scale.y) CORE.Input.Mouse.currentPosition.y = CORE.Window.screen.height/CORE.Input.Mouse.scale.y;
+                if (CORE.Input.Mouse.currentPosition.y > CORE.Window.screen.height / CORE.Input.Mouse.scale.y) CORE.Input.Mouse.currentPosition.y = CORE.Window.screen.height / CORE.Input.Mouse.scale.y;
             }
 
             // Update touch point count
@@ -6986,11 +6994,11 @@ static void InitGamepad(void)
 }
 
 // Process Gamepad (/dev/input/js0)
-static void *GamepadThread(void *arg)
+static void* GamepadThread(void* arg)
 {
-    #define JS_EVENT_BUTTON         0x01    // Button pressed/released
-    #define JS_EVENT_AXIS           0x02    // Joystick axis moved
-    #define JS_EVENT_INIT           0x80    // Initial state of device
+#define JS_EVENT_BUTTON         0x01    // Button pressed/released
+#define JS_EVENT_AXIS           0x02    // Joystick axis moved
+#define JS_EVENT_INIT           0x80    // Initial state of device
 
     struct js_event {
         unsigned int time;      // event timestamp in milliseconds
@@ -7031,7 +7039,7 @@ static void *GamepadThread(void *arg)
                     if (gamepadEvent.number < MAX_GAMEPAD_AXIS)
                     {
                         // NOTE: Scaling of gamepadEvent.value to get values between -1..1
-                        CORE.Input.Gamepad.axisState[i][gamepadEvent.number] = (float)gamepadEvent.value/32768;
+                        CORE.Input.Gamepad.axisState[i][gamepadEvent.number] = (float)gamepadEvent.value / 32768;
                     }
                 }
             }
@@ -7045,13 +7053,13 @@ static void *GamepadThread(void *arg)
 
 #if defined(PLATFORM_DRM)
 // Search matching DRM mode in connector's mode list
-static int FindMatchingConnectorMode(const drmModeConnector *connector, const drmModeModeInfo *mode)
+static int FindMatchingConnectorMode(const drmModeConnector* connector, const drmModeModeInfo* mode)
 {
     if (NULL == connector) return -1;
     if (NULL == mode) return -1;
 
     // safe bitwise comparison of two modes
-    #define BINCMP(a, b) memcmp((a), (b), (sizeof(a) < sizeof(b)) ? sizeof(a) : sizeof(b))
+#define BINCMP(a, b) memcmp((a), (b), (sizeof(a) < sizeof(b)) ? sizeof(a) : sizeof(b))
 
     for (size_t i = 0; i < connector->count_modes; i++)
     {
@@ -7063,11 +7071,11 @@ static int FindMatchingConnectorMode(const drmModeConnector *connector, const dr
 
     return -1;
 
-    #undef BINCMP
+#undef BINCMP
 }
 
 // Search exactly matching DRM connector mode in connector's list
-static int FindExactConnectorMode(const drmModeConnector *connector, uint width, uint height, uint fps, bool allowInterlaced)
+static int FindExactConnectorMode(const drmModeConnector* connector, uint width, uint height, uint fps, bool allowInterlaced)
 {
     TRACELOG(LOG_TRACE, "DISPLAY: Searching exact connector mode for %ux%u@%u, selecting an interlaced mode is allowed: %s", width, height, fps, allowInterlaced ? "yes" : "no");
 
@@ -7075,7 +7083,7 @@ static int FindExactConnectorMode(const drmModeConnector *connector, uint width,
 
     for (int i = 0; i < CORE.Window.connector->count_modes; i++)
     {
-        const drmModeModeInfo *const mode = &CORE.Window.connector->modes[i];
+        const drmModeModeInfo* const mode = &CORE.Window.connector->modes[i];
 
         TRACELOG(LOG_TRACE, "DISPLAY: DRM Mode %d %ux%u@%u %s", i, mode->hdisplay, mode->vdisplay, mode->vrefresh, (mode->flags & DRM_MODE_FLAG_INTERLACE) ? "interlaced" : "progressive");
 
@@ -7089,7 +7097,7 @@ static int FindExactConnectorMode(const drmModeConnector *connector, uint width,
 }
 
 // Search the nearest matching DRM connector mode in connector's list
-static int FindNearestConnectorMode(const drmModeConnector *connector, uint width, uint height, uint fps, bool allowInterlaced)
+static int FindNearestConnectorMode(const drmModeConnector* connector, uint width, uint height, uint fps, bool allowInterlaced)
 {
     TRACELOG(LOG_TRACE, "DISPLAY: Searching nearest connector mode for %ux%u@%u, selecting an interlaced mode is allowed: %s", width, height, fps, allowInterlaced ? "yes" : "no");
 
@@ -7098,7 +7106,7 @@ static int FindNearestConnectorMode(const drmModeConnector *connector, uint widt
     int nearestIndex = -1;
     for (int i = 0; i < CORE.Window.connector->count_modes; i++)
     {
-        const drmModeModeInfo *const mode = &CORE.Window.connector->modes[i];
+        const drmModeModeInfo* const mode = &CORE.Window.connector->modes[i];
 
         TRACELOG(LOG_TRACE, "DISPLAY: DRM mode: %d %ux%u@%u %s", i, mode->hdisplay, mode->vdisplay, mode->vrefresh,
             (mode->flags & DRM_MODE_FLAG_INTERLACE) ? "interlaced" : "progressive");
@@ -7141,7 +7149,7 @@ static int FindNearestConnectorMode(const drmModeConnector *connector, uint widt
 #if defined(SUPPORT_EVENTS_AUTOMATION)
 // NOTE: Loading happens over AutomationEvent *events
 // TODO: This system should probably be redesigned
-static void LoadAutomationEvents(const char *fileName)
+static void LoadAutomationEvents(const char* fileName)
 {
     // Load events file (binary)
     /*
@@ -7161,7 +7169,7 @@ static void LoadAutomationEvents(const char *fileName)
     */
 
     // Load events file (text)
-    FILE *repFile = fopen(fileName, "rt");
+    FILE* repFile = fopen(fileName, "rt");
 
     if (repFile != NULL)
     {
@@ -7176,7 +7184,7 @@ static void LoadAutomationEvents(const char *fileName)
             else if (buffer[0] == 'e')
             {
                 sscanf(buffer, "e %d %d %d %d %d", &events[count].frame, &events[count].type,
-                       &events[count].params[0], &events[count].params[1], &events[count].params[2]);
+                    &events[count].params[0], &events[count].params[1], &events[count].params[2]);
 
                 count++;
             }
@@ -7193,7 +7201,7 @@ static void LoadAutomationEvents(const char *fileName)
 }
 
 // Export recorded events into a file
-static void ExportAutomationEvents(const char *fileName)
+static void ExportAutomationEvents(const char* fileName)
 {
     unsigned char fileId[4] = "rEP ";
 
@@ -7207,7 +7215,7 @@ static void ExportAutomationEvents(const char *fileName)
     */
 
     // Export events as text
-    FILE *repFile = fopen(fileName, "wt");
+    FILE* repFile = fopen(fileName, "wt");
 
     if (repFile != NULL)
     {
@@ -7219,7 +7227,7 @@ static void ExportAutomationEvents(const char *fileName)
         for (int i = 0; i < eventCount; i++)
         {
             fprintf(repFile, "e %i %i %i %i %i // %s\n", events[i].frame, events[i].type,
-                    events[i].params[0], events[i].params[1], events[i].params[2], autoEventTypeName[events[i].type]);
+                events[i].params[0], events[i].params[1], events[i].params[2], autoEventTypeName[events[i].type]);
         }
 
         fclose(repFile);
@@ -7233,7 +7241,7 @@ static void RecordAutomationEvent(unsigned int frame)
     for (int key = 0; key < MAX_KEYBOARD_KEYS; key++)
     {
         // INPUT_KEY_UP (only saved once)
-        if (IsKeyReleased(key))
+        if (CORE.Input.Keyboard.previousKeyState[key] && !CORE.Input.Keyboard.currentKeyState[key])
         {
             events[eventCount].frame = frame;
             events[eventCount].type = INPUT_KEY_UP;
@@ -7246,7 +7254,7 @@ static void RecordAutomationEvent(unsigned int frame)
         }
 
         // INPUT_KEY_DOWN
-        if (IsKeyDown(key))
+        if (CORE.Input.Keyboard.currentKeyState[key])
         {
             events[eventCount].frame = frame;
             events[eventCount].type = INPUT_KEY_DOWN;
@@ -7420,7 +7428,7 @@ static void RecordAutomationEvent(unsigned int frame)
                 events[eventCount].type = INPUT_GAMEPAD_AXIS_MOTION;
                 events[eventCount].params[0] = gamepad;
                 events[eventCount].params[1] = axis;
-                events[eventCount].params[2] = (int)(CORE.Input.Gamepad.axisState[gamepad][axis]*32768.0f);
+                events[eventCount].params[2] = (int)(CORE.Input.Gamepad.axisState[gamepad][axis] * 32768.0f);
 
                 TRACELOG(LOG_INFO, "[%i] INPUT_GAMEPAD_AXIS_MOTION: %i, %i, %i", events[eventCount].frame, events[eventCount].params[0], events[eventCount].params[1], events[eventCount].params[2]);
                 eventCount++;
@@ -7452,51 +7460,51 @@ static void PlayAutomationEvent(unsigned int frame)
             switch (events[i].type)
             {
                 // Input events
-                case INPUT_KEY_UP: KEY_STATE(events[i].params[0]) = KEY_STATE_RELEASED; break;              // param[0]: key
-                case INPUT_KEY_DOWN: KEY_STATE(events[i].params[0]) = KEY_STATE_PRESSED; break;             // param[0]: key
-                case INPUT_MOUSE_BUTTON_UP: KEY_STATE(events[i].params[0]) = KEY_STATE_RELEASED; break;     // param[0]: key
-                case INPUT_MOUSE_BUTTON_DOWN: KEY_STATE(events[i].params[0]) = KEY_STATE_PRESSED; break;    // param[0]: key
-                case INPUT_MOUSE_POSITION:      // param[0]: x, param[1]: y
-                {
-                    CORE.Input.Mouse.currentPosition.x = (float)events[i].params[0];
-                    CORE.Input.Mouse.currentPosition.y = (float)events[i].params[1];
-                } break;
-                case INPUT_MOUSE_WHEEL_MOTION:  // param[0]: x delta, param[1]: y delta
-                {
-                    CORE.Input.Mouse.currentWheelMove.x = (float)events[i].params[0]; break;
-                    CORE.Input.Mouse.currentWheelMove.y = (float)events[i].params[1]; break;
-                } break;
-                case INPUT_TOUCH_UP: CORE.Input.Touch.currentTouchState[events[i].params[0]] = false; break;            // param[0]: id
-                case INPUT_TOUCH_DOWN: CORE.Input.Touch.currentTouchState[events[i].params[0]] = true; break;           // param[0]: id
-                case INPUT_TOUCH_POSITION:      // param[0]: id, param[1]: x, param[2]: y
-                {
-                    CORE.Input.Touch.position[events[i].params[0]].x = (float)events[i].params[1];
-                    CORE.Input.Touch.position[events[i].params[0]].y = (float)events[i].params[2];
-                } break;
-                case INPUT_GAMEPAD_CONNECT: CORE.Input.Gamepad.ready[events[i].params[0]] = true; break;                // param[0]: gamepad
-                case INPUT_GAMEPAD_DISCONNECT: CORE.Input.Gamepad.ready[events[i].params[0]] = false; break;            // param[0]: gamepad
-                case INPUT_GAMEPAD_BUTTON_UP: CORE.Input.Gamepad.currentButtonState[events[i].params[0]][events[i].params[1]] = false; break;    // param[0]: gamepad, param[1]: button
-                case INPUT_GAMEPAD_BUTTON_DOWN: CORE.Input.Gamepad.currentButtonState[events[i].params[0]][events[i].params[1]] = true; break;   // param[0]: gamepad, param[1]: button
-                case INPUT_GAMEPAD_AXIS_MOTION: // param[0]: gamepad, param[1]: axis, param[2]: delta
-                {
-                    CORE.Input.Gamepad.axisState[events[i].params[0]][events[i].params[1]] = ((float)events[i].params[2]/32768.0f);
-                } break;
-                case INPUT_GESTURE: GESTURES.current = events[i].params[0]; break;     // param[0]: gesture (enum Gesture) -> rgestures.h: GESTURES.current
+            case INPUT_KEY_UP: CORE.Input.Keyboard.currentKeyState[events[i].params[0]] = false; break;             // param[0]: key
+            case INPUT_KEY_DOWN: CORE.Input.Keyboard.currentKeyState[events[i].params[0]] = true; break;            // param[0]: key
+            case INPUT_MOUSE_BUTTON_UP: CORE.Input.Mouse.currentButtonState[events[i].params[0]] = false; break;    // param[0]: key
+            case INPUT_MOUSE_BUTTON_DOWN: CORE.Input.Mouse.currentButtonState[events[i].params[0]] = true; break;   // param[0]: key
+            case INPUT_MOUSE_POSITION:      // param[0]: x, param[1]: y
+            {
+                CORE.Input.Mouse.currentPosition.x = (float)events[i].params[0];
+                CORE.Input.Mouse.currentPosition.y = (float)events[i].params[1];
+            } break;
+            case INPUT_MOUSE_WHEEL_MOTION:  // param[0]: x delta, param[1]: y delta
+            {
+                CORE.Input.Mouse.currentWheelMove.x = (float)events[i].params[0]; break;
+                CORE.Input.Mouse.currentWheelMove.y = (float)events[i].params[1]; break;
+            } break;
+            case INPUT_TOUCH_UP: CORE.Input.Touch.currentTouchState[events[i].params[0]] = false; break;            // param[0]: id
+            case INPUT_TOUCH_DOWN: CORE.Input.Touch.currentTouchState[events[i].params[0]] = true; break;           // param[0]: id
+            case INPUT_TOUCH_POSITION:      // param[0]: id, param[1]: x, param[2]: y
+            {
+                CORE.Input.Touch.position[events[i].params[0]].x = (float)events[i].params[1];
+                CORE.Input.Touch.position[events[i].params[0]].y = (float)events[i].params[2];
+            } break;
+            case INPUT_GAMEPAD_CONNECT: CORE.Input.Gamepad.ready[events[i].params[0]] = true; break;                // param[0]: gamepad
+            case INPUT_GAMEPAD_DISCONNECT: CORE.Input.Gamepad.ready[events[i].params[0]] = false; break;            // param[0]: gamepad
+            case INPUT_GAMEPAD_BUTTON_UP: CORE.Input.Gamepad.currentButtonState[events[i].params[0]][events[i].params[1]] = false; break;    // param[0]: gamepad, param[1]: button
+            case INPUT_GAMEPAD_BUTTON_DOWN: CORE.Input.Gamepad.currentButtonState[events[i].params[0]][events[i].params[1]] = true; break;   // param[0]: gamepad, param[1]: button
+            case INPUT_GAMEPAD_AXIS_MOTION: // param[0]: gamepad, param[1]: axis, param[2]: delta
+            {
+                CORE.Input.Gamepad.axisState[events[i].params[0]][events[i].params[1]] = ((float)events[i].params[2] / 32768.0f);
+            } break;
+            case INPUT_GESTURE: GESTURES.current = events[i].params[0]; break;     // param[0]: gesture (enum Gesture) -> rgestures.h: GESTURES.current
 
                 // Window events
-                case WINDOW_CLOSE: CORE.Window.shouldClose = true; break;
-                case WINDOW_MAXIMIZE: MaximizeWindow(); break;
-                case WINDOW_MINIMIZE: MinimizeWindow(); break;
-                case WINDOW_RESIZE: SetWindowSize(events[i].params[0], events[i].params[1]); break;
+            case WINDOW_CLOSE: CORE.Window.shouldClose = true; break;
+            case WINDOW_MAXIMIZE: MaximizeWindow(); break;
+            case WINDOW_MINIMIZE: MinimizeWindow(); break;
+            case WINDOW_RESIZE: SetWindowSize(events[i].params[0], events[i].params[1]); break;
 
                 // Custom events
-                case ACTION_TAKE_SCREENSHOT:
-                {
-                    TakeScreenshot(TextFormat("screenshot%03i.png", screenshotCounter));
-                    screenshotCounter++;
-                } break;
-                case ACTION_SETTARGETFPS: SetTargetFPS(events[i].params[0]); break;
-                default: break;
+            case ACTION_TAKE_SCREENSHOT:
+            {
+                TakeScreenshot(TextFormat("screenshot%03i.png", screenshotCounter));
+                screenshotCounter++;
+            } break;
+            case ACTION_SETTARGETFPS: SetTargetFPS(events[i].params[0]); break;
+            default: break;
             }
         }
     }
@@ -7506,20 +7514,20 @@ static void PlayAutomationEvent(unsigned int frame)
 #if !defined(SUPPORT_MODULE_RTEXT)
 // Formatting of text with variables to 'embed'
 // WARNING: String returned will expire after this function is called MAX_TEXTFORMAT_BUFFERS times
-const char *TextFormat(const char *text, ...)
+const char* TextFormat(const char* text, ...)
 {
 #ifndef MAX_TEXTFORMAT_BUFFERS
-    #define MAX_TEXTFORMAT_BUFFERS      4        // Maximum number of static buffers for text formatting
+#define MAX_TEXTFORMAT_BUFFERS      4        // Maximum number of static buffers for text formatting
 #endif
 #ifndef MAX_TEXT_BUFFER_LENGTH
-    #define MAX_TEXT_BUFFER_LENGTH   1024        // Maximum size of static text buffer
+#define MAX_TEXT_BUFFER_LENGTH   1024        // Maximum size of static text buffer
 #endif
 
     // We create an array of buffers so strings don't expire until MAX_TEXTFORMAT_BUFFERS invocations
     static char buffers[MAX_TEXTFORMAT_BUFFERS][MAX_TEXT_BUFFER_LENGTH] = { 0 };
     static int index = 0;
 
-    char *currentBuffer = buffers[index];
+    char* currentBuffer = buffers[index];
     memset(currentBuffer, 0, MAX_TEXT_BUFFER_LENGTH);   // Clear buffer before using
 
     va_list args;
