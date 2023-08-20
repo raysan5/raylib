@@ -498,6 +498,13 @@ void DrawCircle(int centerX, int centerY, float radius, Color color)
     DrawCircleV((Vector2){ (float)centerX, (float)centerY }, radius, color);
 }
 
+// Draw a color-filled circle (Vector version)
+// NOTE: On OpenGL 3.3 and ES2 we use QUADS to avoid drawing order issues
+void DrawCircleV(Vector2 center, float radius, Color color)
+{
+    DrawCircleSector(center, radius, 0, 360, 36, color);
+}
+
 // Draw a piece of a circle
 void DrawCircleSector(Vector2 center, float radius, float startAngle, float endAngle, int segments, Color color)
 {
@@ -530,6 +537,7 @@ void DrawCircleSector(Vector2 center, float radius, float startAngle, float endA
     rlSetTexture(texShapes.id);
 
     rlBegin(RL_QUADS);
+
         // NOTE: Every QUAD actually represents two segments
         for (int i = 0; i < segments/2; i++)
         {
@@ -539,7 +547,7 @@ void DrawCircleSector(Vector2 center, float radius, float startAngle, float endA
             rlVertex2f(center.x, center.y);
 
             rlTexCoord2f((texShapesRec.x + texShapesRec.width)/texShapes.width, texShapesRec.y/texShapes.height);
-            rlVertex2f(center.x + cosf(DEG2RAD*(angle + stepLength*2))*radius, center.y + sinf(DEG2RAD*(angle + stepLength*2))*radius);
+            rlVertex2f(center.x + cosf(DEG2RAD*(angle + stepLength*2.0f))*radius, center.y + sinf(DEG2RAD*(angle + stepLength*2.0f))*radius);
 
             rlTexCoord2f((texShapesRec.x + texShapesRec.width)/texShapes.width, (texShapesRec.y + texShapesRec.height)/texShapes.height);
             rlVertex2f(center.x + cosf(DEG2RAD*(angle + stepLength))*radius, center.y + sinf(DEG2RAD*(angle + stepLength))*radius);
@@ -547,11 +555,11 @@ void DrawCircleSector(Vector2 center, float radius, float startAngle, float endA
             rlTexCoord2f(texShapesRec.x/texShapes.width, (texShapesRec.y + texShapesRec.height)/texShapes.height);
             rlVertex2f(center.x + cosf(DEG2RAD*angle)*radius, center.y + sinf(DEG2RAD*angle)*radius);
 
-            angle += (stepLength*2);
+            angle += (stepLength*2.0f);
         }
 
         // NOTE: In case number of segments is odd, we add one last piece to the cake
-        if (segments%2)
+        if ((segments%2) == 1)
         {
             rlColor4ub(color.r, color.g, color.b, color.a);
 
@@ -567,6 +575,7 @@ void DrawCircleSector(Vector2 center, float radius, float startAngle, float endA
             rlTexCoord2f((texShapesRec.x + texShapesRec.width)/texShapes.width, texShapesRec.y/texShapes.height);
             rlVertex2f(center.x, center.y);
         }
+
     rlEnd();
 
     rlSetTexture(0);
@@ -657,13 +666,6 @@ void DrawCircleGradient(int centerX, int centerY, float radius, Color color1, Co
             rlVertex2f((float)centerX + cosf(DEG2RAD*i)*radius, (float)centerY + sinf(DEG2RAD*i)*radius);
         }
     rlEnd();
-}
-
-// Draw a color-filled circle (Vector version)
-// NOTE: On OpenGL 3.3 and ES2 we use QUADS to avoid drawing order issues
-void DrawCircleV(Vector2 center, float radius, Color color)
-{
-    DrawCircleSector(center, radius, 0, 360, 36, color);
 }
 
 // Draw circle outline
