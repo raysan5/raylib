@@ -3772,7 +3772,7 @@ bool IsKeyUp(int key)
     return KEY_SAFE(key) && (CORE.Input.Keyboard.currentKeyState[key] == 0);
 }
 
-// Check if a key is being repeated (when held down)
+// Check if a key has been repeated
 bool IsKeyRepeated(int key)
 {
     return KEY_SAFE(key) && (CORE.Input.Keyboard.repeatKeyState[key] == 1);
