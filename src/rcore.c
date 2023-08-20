@@ -3761,7 +3761,7 @@ bool IsKeyPressed(int key)
 bool IsKeyPressedRepeat(int key)
 {
     if (CORE.Input.Keyboard.keyRepeatInFrame[key] == 1) return true;
-    else return true;
+    else return false;
 }
 
 // Check if a key is being pressed (key held down)
