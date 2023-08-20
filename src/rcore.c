@@ -5234,7 +5234,7 @@ void PollInputEvents(void)
     for (int i = 0; i < MAX_KEYBOARD_KEYS; i++)
     {
         CORE.Input.Keyboard.previousKeyState[i] = CORE.Input.Keyboard.currentKeyState[i];
-        CORE.Input.Keyboard.repeatKeyState[i] = 0;
+        CORE.Input.Keyboard.keyRepeatInFrame[i] = 0;
     }
 
     // Register previous mouse states
@@ -5420,7 +5420,7 @@ void PollInputEvents(void)
     for (int i = 0; i < 260; i++)
     {
         CORE.Input.Keyboard.previousKeyState[i] = CORE.Input.Keyboard.currentKeyState[i];
-        CORE.Input.Keyboard.repeatKeyState[i] = 0;
+        CORE.Input.Keyboard.keyRepeatInFrame[i] = 0;
     }
 
     // Android ALooper_pollAll() variables
@@ -5620,7 +5620,7 @@ static void KeyCallback(GLFWwindow *window, int key, int scancode, int action, i
     else if(action == GLFW_PRESS) CORE.Input.Keyboard.currentKeyState[key] = 1;
     else if(action == GLFW_REPEAT) CORE.Input.Keyboard.keyRepeatInFrame[key] = 1;
 
-    if (action == GLFW_REPEAT) CORE.Input.Keyboard.repeatKeyState[key] = 1;
+    if (action == GLFW_REPEAT) CORE.Input.Keyboard.keyRepeatInFrame[key] = 1;
 
 #if !defined(PLATFORM_WEB)
     // WARNING: Check if CAPS/NUM key modifiers are enabled and force down state for those keys
@@ -6090,7 +6090,7 @@ static int32_t AndroidInputCallback(struct android_app *app, AInputEvent *event)
         }
         else CORE.Input.Keyboard.currentKeyState[keycode] = 0;  // Key up
 
-        if (AKeyEvent_getAction(event) == AKEY_EVENT_ACTION_MULTIPLE) CORE.Input.Keyboard.repeatKeyState[keycode] = 1;
+        if (AKeyEvent_getAction(event) == AKEY_EVENT_ACTION_MULTIPLE) CORE.Input.Keyboard.keyRepeatInFrame[keycode] = 1;
 
         if (keycode == AKEYCODE_POWER)
         {
