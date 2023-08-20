@@ -3746,12 +3746,10 @@ void OpenURL(const char *url)
 //----------------------------------------------------------------------------------
 // Module Functions Definition - Input (Keyboard, Mouse, Gamepad) Functions
 //----------------------------------------------------------------------------------
-#define KEY_SAFE(key) (((key) >= 0) && ((key) < sizeof(CORE.Input.Keyboard.currentKeyState)))
-
 // Check if a key has been pressed once
 bool IsKeyPressed(int key)
 {
-    if (!KEY_SAFE(key)) return false;
+    if ((key < 0) || (key >= sizeof(CORE.Input.Keyboard.currentKeyState))) return false;
     bool pressed = false;
 
     if ((CORE.Input.Keyboard.previousKeyState[key] == 0) && (CORE.Input.Keyboard.currentKeyState[key] == 1)) pressed = true;
@@ -3762,7 +3760,7 @@ bool IsKeyPressed(int key)
 // Check if a key is being pressed (key held down)
 bool IsKeyDown(int key)
 {
-    if (!KEY_SAFE(key)) return false;
+    if ((key < 0) || (key >= sizeof(CORE.Input.Keyboard.currentKeyState))) return false;
     if (CORE.Input.Keyboard.currentKeyState[key] == 1) return true;
     else return false;
 }
@@ -3770,7 +3768,7 @@ bool IsKeyDown(int key)
 // Check if a key has been released once
 bool IsKeyReleased(int key)
 {
-    if (!KEY_SAFE(key)) return false;
+    if ((key < 0) || (key >= sizeof(CORE.Input.Keyboard.currentKeyState))) return false;
     bool released = false;
 
     if ((CORE.Input.Keyboard.previousKeyState[key] == 1) && (CORE.Input.Keyboard.currentKeyState[key] == 0)) released = true;
@@ -3781,7 +3779,7 @@ bool IsKeyReleased(int key)
 // Check if a key is NOT being pressed (key not held down)
 bool IsKeyUp(int key)
 {
-    if (!KEY_SAFE(key)) return false;
+    if ((key < 0) || (key >= sizeof(CORE.Input.Keyboard.currentKeyState))) return false;
     if (CORE.Input.Keyboard.currentKeyState[key] == 0) return true;
     else return false;
 }
@@ -3789,7 +3787,7 @@ bool IsKeyUp(int key)
 // Check if a key has been repeated
 bool IsKeyRepeated(int key)
 {
-    if (!KEY_SAFE(key)) return false;
+    if ((key < 0) || (key >= sizeof(CORE.Input.Keyboard.currentKeyState))) return false;
     if (CORE.Input.Keyboard.repeatKeyState[key] == 1) return true;
     else return false;
 }
