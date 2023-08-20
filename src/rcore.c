@@ -3761,7 +3761,7 @@ bool IsKeyPressed(int key)
 // Check if a key has been pressed again (only PLATFORM_DESKTOP)
 bool IsKeyPressedRepeat(int key)
 {
-	if ((key < 0) || (key >= MAX_KEYBOARD_KEYS)) return false;
+    if ((key < 0) || (key >= MAX_KEYBOARD_KEYS)) return false;
     if (CORE.Input.Keyboard.keyRepeatInFrame[key] == 1) return true;
     else return false;
 }
@@ -5201,7 +5201,6 @@ void PollInputEvents(void)
     for (int i = 0; i < MAX_KEYBOARD_KEYS; i++)
     {
         CORE.Input.Keyboard.previousKeyState[i] = CORE.Input.Keyboard.currentKeyState[i];
-
         CORE.Input.Keyboard.keyRepeatInFrame[i] = 0;
     }
 
