@@ -438,6 +438,8 @@ typedef struct CoreData {
             int exitKey;                    // Default exit key
             char currentKeyState[MAX_KEYBOARD_KEYS];        // Registers current frame key state
             char previousKeyState[MAX_KEYBOARD_KEYS];       // Registers previous frame key state
+            // NOTE: Since key press logic involves comparing prev vs cur key state, we need to handle key repeats specially
+            char keyRepeatInFrame[MAX_KEYBOARD_KEYS];       // Registers key repeats for current frame.
 
             int keyPressedQueue[MAX_KEY_PRESSED_QUEUE];     // Input keys queue
             int keyPressedQueueCount;       // Input keys queue count
@@ -3755,6 +3757,13 @@ bool IsKeyPressed(int key)
     return pressed;
 }
 
+// Check if a key has been pressed again (only PLATFORM_DESKTOP)
+bool IsKeyPressedRepeat(int key)
+{
+    if (CORE.Input.Keyboard.keyRepeatInFrame[key] == 1) return true;
+    else return true;
+}
+
 // Check if a key is being pressed (key held down)
 bool IsKeyDown(int key)
 {
@@ -5170,6 +5179,8 @@ void PollInputEvents(void)
     // Reset keys/chars pressed registered
     CORE.Input.Keyboard.keyPressedQueueCount = 0;
     CORE.Input.Keyboard.charPressedQueueCount = 0;
+    // Reset key repeats
+    for (int i = 0; i < MAX_KEYBOARD_KEYS; i++) CORE.Input.Keyboard.keyRepeatInFrame[i] = 0;
 
 #if !(defined(PLATFORM_RPI) || defined(PLATFORM_DRM))
     // Reset last gamepad button/axis registered state
@@ -5179,7 +5190,11 @@ void PollInputEvents(void)
 
 #if defined(PLATFORM_RPI) || defined(PLATFORM_DRM)
     // Register previous keys states
-    for (int i = 0; i < MAX_KEYBOARD_KEYS; i++) CORE.Input.Keyboard.previousKeyState[i] = CORE.Input.Keyboard.currentKeyState[i];
+    for (int i = 0; i < MAX_KEYBOARD_KEYS; i++)
+    {
+        CORE.Input.Keyboard.previousKeyState[i] = CORE.Input.Keyboard.currentKeyState[i];
+        CORE.Input.Keyboard.keyRepeatInFrame[i] = 0;
+    }
 
     PollKeyboardEvents();
 
@@ -5586,7 +5601,8 @@ static void KeyCallback(GLFWwindow *window, int key, int scancode, int action, i
     // WARNING: GLFW could return GLFW_REPEAT, we need to consider it as 1
     // to work properly with our implementation (IsKeyDown/IsKeyUp checks)
     if (action == GLFW_RELEASE) CORE.Input.Keyboard.currentKeyState[key] = 0;
-    else CORE.Input.Keyboard.currentKeyState[key] = 1;
+    else if(action == GLFW_PRESS) CORE.Input.Keyboard.currentKeyState[key] = 1;
+    else if(action == GLFW_REPEAT) CORE.Input.Keyboard.keyRepeatInFrame[key] = 1;
 
 #if !defined(PLATFORM_WEB)
     // WARNING: Check if CAPS/NUM key modifiers are enabled and force down state for those keys
@@ -6357,7 +6373,11 @@ static void ProcessKeyboard(void)
     bufferByteCount = read(STDIN_FILENO, keysBuffer, MAX_KEYBUFFER_SIZE);     // POSIX system call
 
     // Reset pressed keys array (it will be filled below)
-    for (int i = 0; i < MAX_KEYBOARD_KEYS; i++) CORE.Input.Keyboard.currentKeyState[i] = 0;
+    for (int i = 0; i < MAX_KEYBOARD_KEYS; i++)
+    {
+        CORE.Input.Keyboard.currentKeyState[i] = 0;
+        CORE.Input.Keyboard.keyRepeatInFrame[i] = 0;
+    }
 
     // Fill all read bytes (looking for keys)
     for (int i = 0; i < bufferByteCount; i++)
