@@ -3791,7 +3791,7 @@ bool IsKeyRepeated(int key)
 {
     if (!KEY_SAFE(key)) return false;
     if (CORE.Input.Keyboard.repeatKeyState[key] == 1) return true;
-	else return false;
+    else return false;
 }
 
 // Get the last key pressed
