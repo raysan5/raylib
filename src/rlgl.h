@@ -4550,6 +4550,7 @@ static void rlLoadShaderDefault(void)
 #endif
 #if defined(GRAPHICS_API_OPENGL_ES2)
     "#version 100                       \n"
+    "precision mediump float;           \n"     // Precision required for OpenGL ES2 (WebGL) (on some browsers)
     "attribute vec3 vertexPosition;     \n"
     "attribute vec2 vertexTexCoord;     \n"
     "attribute vec4 vertexColor;        \n"
