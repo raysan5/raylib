@@ -716,12 +716,12 @@ RMAPI Vector3 Vector3Normalize(Vector3 v)
 //Calculate the projection of the vector v1 on to v2
 RMAPI Vector3 Vector3Project(Vector3 v1, Vector3 v2)
 {
-    float v1dv2 = (v1.x * v2.x + v1.y * v2.y + v1.z * v2.z);
-    float v2dv2 = (v2.x * v2.x + v2.y * v2.y + v2.z * v2.z);
+    float v1dv2 = (v1.x*v2.x + v1.y*v2.y + v1.z*v2.z);
+    float v2dv2 = (v2.x*v2.x + v2.y*v2.y + v2.z*v2.z);
 
-    float mag = v1dv2 / v2dv2;
+    float mag = v1dv2/v2dv2;
 
-    Vector3 result = { v2.x * mag ,v2.y * mag,v2.z * mag };
+    Vector3 result = { v2.x*mag , v2.y*mag, v2.z*mag };
 
     return result;
 }
@@ -729,12 +729,12 @@ RMAPI Vector3 Vector3Project(Vector3 v1, Vector3 v2)
 //Calculate the rejection of the vector v1 on to v2
 RMAPI Vector3 Vector3Reject(Vector3 v1, Vector3 v2)
 {
-    float v1dv2 = (v1.x * v2.x + v1.y * v2.y + v1.z * v2.z);
-    float v2dv2 = (v2.x * v2.x + v2.y * v2.y + v2.z * v2.z);
+    float v1dv2 = (v1.x*v2.x + v1.y*v2.y + v1.z*v2.z);
+    float v2dv2 = (v2.x*v2.x + v2.y*v2.y + v2.z*v2.z);
 
-    float mag = v1dv2 / v2dv2;
+    float mag = v1dv2/v2dv2;
 
-    Vector3 result = { v1.x - (v2.x * mag) ,v1.y-(v2.y * mag),v1.z - (v2.z * mag) };
+    Vector3 result = { v1.x - (v2.x*mag) , v1.y - (v2.y*mag), v1.z - (v2.z*mag) };
 
     return result;
 }
