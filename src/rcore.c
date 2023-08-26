@@ -3750,6 +3750,7 @@ void OpenURL(const char *url)
 // Check if a key has been pressed once
 bool IsKeyPressed(int key)
 {
+    if ((key < 0) || (key >= MAX_KEYBOARD_KEYS)) return false;
     bool pressed = false;
 
     if ((CORE.Input.Keyboard.previousKeyState[key] == 0) && (CORE.Input.Keyboard.currentKeyState[key] == 1)) pressed = true;
@@ -3760,6 +3761,7 @@ bool IsKeyPressed(int key)
 // Check if a key has been pressed again (only PLATFORM_DESKTOP)
 bool IsKeyPressedRepeat(int key)
 {
+    if ((key < 0) || (key >= MAX_KEYBOARD_KEYS)) return false;
     if (CORE.Input.Keyboard.keyRepeatInFrame[key] == 1) return true;
     else return false;
 }
@@ -3767,6 +3769,7 @@ bool IsKeyPressedRepeat(int key)
 // Check if a key is being pressed (key held down)
 bool IsKeyDown(int key)
 {
+    if ((key < 0) || (key >= MAX_KEYBOARD_KEYS)) return false;
     if (CORE.Input.Keyboard.currentKeyState[key] == 1) return true;
     else return false;
 }
@@ -3774,6 +3777,7 @@ bool IsKeyDown(int key)
 // Check if a key has been released once
 bool IsKeyReleased(int key)
 {
+    if ((key < 0) || (key >= MAX_KEYBOARD_KEYS)) return false;
     bool released = false;
 
     if ((CORE.Input.Keyboard.previousKeyState[key] == 1) && (CORE.Input.Keyboard.currentKeyState[key] == 0)) released = true;
@@ -3784,6 +3788,7 @@ bool IsKeyReleased(int key)
 // Check if a key is NOT being pressed (key not held down)
 bool IsKeyUp(int key)
 {
+    if ((key < 0) || (key >= MAX_KEYBOARD_KEYS)) return false;
     if (CORE.Input.Keyboard.currentKeyState[key] == 0) return true;
     else return false;
 }
@@ -5226,7 +5231,11 @@ void PollInputEvents(void)
     // Keyboard/Mouse input polling (automatically managed by GLFW3 through callback)
 
     // Register previous keys states
-    for (int i = 0; i < MAX_KEYBOARD_KEYS; i++) CORE.Input.Keyboard.previousKeyState[i] = CORE.Input.Keyboard.currentKeyState[i];
+    for (int i = 0; i < MAX_KEYBOARD_KEYS; i++)
+    {
+        CORE.Input.Keyboard.previousKeyState[i] = CORE.Input.Keyboard.currentKeyState[i];
+        CORE.Input.Keyboard.keyRepeatInFrame[i] = 0;
+    }
 
     // Register previous mouse states
     for (int i = 0; i < MAX_MOUSE_BUTTONS; i++) CORE.Input.Mouse.previousButtonState[i] = CORE.Input.Mouse.currentButtonState[i];
@@ -5408,7 +5417,11 @@ void PollInputEvents(void)
 #if defined(PLATFORM_ANDROID)
     // Register previous keys states
     // NOTE: Android supports up to 260 keys
-    for (int i = 0; i < 260; i++) CORE.Input.Keyboard.previousKeyState[i] = CORE.Input.Keyboard.currentKeyState[i];
+    for (int i = 0; i < 260; i++)
+    {
+        CORE.Input.Keyboard.previousKeyState[i] = CORE.Input.Keyboard.currentKeyState[i];
+        CORE.Input.Keyboard.keyRepeatInFrame[i] = 0;
+    }
 
     // Android ALooper_pollAll() variables
     int pollResult = 0;
@@ -6073,6 +6086,7 @@ static int32_t AndroidInputCallback(struct android_app *app, AInputEvent *event)
             CORE.Input.Keyboard.keyPressedQueue[CORE.Input.Keyboard.keyPressedQueueCount] = keycode;
             CORE.Input.Keyboard.keyPressedQueueCount++;
         }
+        else if (AKeyEvent_getAction(event) == AKEY_EVENT_ACTION_MULTIPLE) CORE.Input.Keyboard.keyRepeatInFrame[keycode] = 1;
         else CORE.Input.Keyboard.currentKeyState[keycode] = 0;  // Key up
 
         if (keycode == AKEYCODE_POWER)
@@ -6496,7 +6510,11 @@ static void InitEvdevInput(void)
     }
 
     // Reset keyboard key state
-    for (int i = 0; i < MAX_KEYBOARD_KEYS; i++) CORE.Input.Keyboard.currentKeyState[i] = 0;
+    for (int i = 0; i < MAX_KEYBOARD_KEYS; i++)
+    {
+        CORE.Input.Keyboard.currentKeyState[i] = 0;
+        CORE.Input.Keyboard.keyRepeatInFrame[i] = 0;
+    }
 
     // Open the linux directory of "/dev/input"
     directory = opendir(DEFAULT_EVDEV_PATH);
