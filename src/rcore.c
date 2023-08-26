@@ -2150,7 +2150,7 @@ void SetClipboardText(const char *text)
 #if defined(PLATFORM_WEB)
     // Security check to (partially) avoid malicious code
     if (strchr(text, '\'') != NULL) TRACELOG(LOG_WARNING, "SYSTEM: Provided Clipboard could be potentially malicious, avoid [\'] character");
-    else emscripten_run_script(TextFormat("navigator.clipboard.writeText('%s')", text));
+    else EM_ASM( { navigator.clipboard.writeText(UTF8ToString($0)); }, text);
 #endif
 }
 
