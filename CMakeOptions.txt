@@ -46,6 +46,7 @@ cmake_dependent_option(SUPPORT_BUSY_WAIT_LOOP "Use busy wait loop for timing syn
 cmake_dependent_option(SUPPORT_EVENTS_WAITING "Wait for events passively (sleeping while no events) instead of polling them actively every frame" OFF CUSTOMIZE_BUILD OFF)
 cmake_dependent_option(SUPPORT_WINMM_HIGHRES_TIMER "Setting a higher resolution can improve the accuracy of time-out intervals in wait functions" ON CUSTOMIZE_BUILD ON)
 cmake_dependent_option(SUPPORT_COMPRESSION_API "Support for compression API" ON CUSTOMIZE_BUILD ON)
+cmake_dependent_option(SUPPORT_EVENTS_AUTOMATION "Support automatic generated events, loading and recording of those events when required" OFF CUSTOMIZE_BUILD OFF)
 cmake_dependent_option(SUPPORT_CUSTOM_FRAME_CONTROL "Enabling this flag allows manual control of the frame processes, use at your own risk" OFF CUSTOMIZE_BUILD OFF)
 
 # rshapes.c
@@ -58,6 +59,7 @@ cmake_dependent_option(SUPPORT_IMAGE_MANIPULATION "Support multiple image editin
 cmake_dependent_option(SUPPORT_FILEFORMAT_PNG "Support loading PNG as textures" ON CUSTOMIZE_BUILD ON)
 cmake_dependent_option(SUPPORT_FILEFORMAT_DDS "Support loading DDS as textures" ON CUSTOMIZE_BUILD ON)
 cmake_dependent_option(SUPPORT_FILEFORMAT_HDR "Support loading HDR as textures" ON CUSTOMIZE_BUILD ON)
+cmake_dependent_option(SUPPORT_FILEFORMAT_PIC "Support loading PIC as textures" ${OFF} CUSTOMIZE_BUILD OFF)
 cmake_dependent_option(SUPPORT_FILEFORMAT_PNM "Support loading PNM as textures" ${OFF} CUSTOMIZE_BUILD OFF)
 cmake_dependent_option(SUPPORT_FILEFORMAT_KTX "Support loading KTX as textures" ${OFF} CUSTOMIZE_BUILD OFF)
 cmake_dependent_option(SUPPORT_FILEFORMAT_ASTC "Support loading ASTC as textures" ${OFF} CUSTOMIZE_BUILD OFF)
@@ -83,6 +85,7 @@ cmake_dependent_option(SUPPORT_FILEFORMAT_MTL "Support loading MTL file format" 
 cmake_dependent_option(SUPPORT_FILEFORMAT_IQM "Support loading IQM file format" ON CUSTOMIZE_BUILD ON)
 cmake_dependent_option(SUPPORT_FILEFORMAT_GLTF "Support loading GLTF file format" ON CUSTOMIZE_BUILD ON)
 cmake_dependent_option(SUPPORT_FILEFORMAT_VOX "Support loading VOX file format" ON CUSTOMIZE_BUILD ON)
+cmake_dependent_option(SUPPORT_FILEFORMAT_M3D "Support loading M3D file format" ON CUSTOMIZE_BUILD ON)
 
 # raudio.c
 cmake_dependent_option(SUPPORT_FILEFORMAT_WAV  "Support loading WAV for sound" ON CUSTOMIZE_BUILD ON)
@@ -90,6 +93,7 @@ cmake_dependent_option(SUPPORT_FILEFORMAT_OGG  "Support loading OGG for sound" O
 cmake_dependent_option(SUPPORT_FILEFORMAT_XM   "Support loading XM for sound" ON CUSTOMIZE_BUILD ON)
 cmake_dependent_option(SUPPORT_FILEFORMAT_MOD  "Support loading MOD for sound" ON CUSTOMIZE_BUILD ON)
 cmake_dependent_option(SUPPORT_FILEFORMAT_MP3  "Support loading MP3 for sound" ON CUSTOMIZE_BUILD ON)
+cmake_dependent_option(SUPPORT_FILEFORMAT_QOA  "Support loading QOA for sound" ON CUSTOMIZE_BUILD ON)
 cmake_dependent_option(SUPPORT_FILEFORMAT_FLAC "Support loading FLAC for sound" ${OFF} CUSTOMIZE_BUILD OFF)
 
 # utils.c
