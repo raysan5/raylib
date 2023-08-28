@@ -46,7 +46,7 @@ int main(void)
     // Load shader and setup location points and values
     Shader shader = LoadShader(0, TextFormat("resources/shaders/glsl%i/wave.fs", GLSL_VERSION));
 
-    int secondsLoc = GetShaderLocation(shader, "secondes");
+    int secondsLoc = GetShaderLocation(shader, "seconds");
     int freqXLoc = GetShaderLocation(shader, "freqX");
     int freqYLoc = GetShaderLocation(shader, "freqY");
     int ampXLoc = GetShaderLocation(shader, "ampX");
