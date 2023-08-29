@@ -3192,13 +3192,24 @@ bool DirectoryExists(const char *dirPath)
 int GetFileLength(const char *fileName)
 {
     int size = 0;
+    
+    // NOTE: On Unix-like systems, it can by used the POSIX system call: stat(),
+    // but depending on the platform that call could not be available
+    //struct stat result = { 0 };
+    //stat(fileName, &result);
+    //return result.st_size;
 
     FILE *file = fopen(fileName, "rb");
 
     if (file != NULL)
     {
         fseek(file, 0L, SEEK_END);
-        size = (int)ftell(file);
+        long int fileSize = ftell(file);
+        
+        // Check for size overflow (INT_MAX)
+        if (fileSize > 2147483647) TRACELOG(LOG_WARNING, "[%s] File size overflows expected limit, do not use GetFileLength()", fileName);
+        else size = (int)fileSize;
+        
         fclose(file);
     }
 
