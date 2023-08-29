@@ -1,7 +1,7 @@
 # Setup the project and settings
 project(raylib C)
-set(PROJECT_VERSION 4.2.0)
-set(API_VERSION 420)
+set(PROJECT_VERSION 4.5.0)
+set(API_VERSION 450)
 
 include(GNUInstallDirs)
 include(JoinPaths)
@@ -38,7 +38,9 @@ set(raylib_sources
     )
 
 # <root>/cmake/GlfwImport.cmake handles the details around the inclusion of glfw
-include(GlfwImport)
+if (NOT ${PLATFORM} MATCHES "Web")
+    include(GlfwImport)
+endif ()
 
 # Sets additional platform options and link libraries for each platform
 # also selects the proper graphics API and version for that platform
@@ -60,12 +62,16 @@ if (NOT BUILD_SHARED_LIBS)
     add_library(raylib_static ALIAS raylib)
 else()
     MESSAGE(STATUS "Building raylib shared library")
-    if (MSVC)
+    if (WIN32)
         target_compile_definitions(raylib
                                    PRIVATE $<BUILD_INTERFACE:BUILD_LIBTYPE_SHARED>
                                    INTERFACE $<INSTALL_INTERFACE:USE_LIBTYPE_SHARED>
                                    )
     endif ()
+endif()
+
+if (${PLATFORM} MATCHES "Web")
+    target_link_options(raylib PRIVATE "-sUSE_GLFW=3")
 endif()
 
 set_target_properties(raylib PROPERTIES

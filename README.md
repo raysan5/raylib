@@ -1,4 +1,4 @@
-<img align="left" src="https://github.com/raysan5/raylib/blob/master/logo/raylib_logo_animation.gif" width="288px">
+<img align="left" style="width:260px" src="https://github.com/raysan5/raylib/blob/master/logo/raylib_logo_animation.gif" width="288px">
 
 **raylib is a simple and easy-to-use library to enjoy videogames programming.**
 
@@ -14,7 +14,8 @@ Ready to learn? Jump to [code examples!](https://www.raylib.com/examples.html)
 
 [![GitHub Releases Downloads](https://img.shields.io/github/downloads/raysan5/raylib/total)](https://github.com/raysan5/raylib/releases)
 [![GitHub Stars](https://img.shields.io/github/stars/raysan5/raylib?style=flat&label=stars)](https://github.com/raysan5/raylib/stargazers)
-[![GitHub commits since tagged version](https://img.shields.io/github/commits-since/raysan5/raylib/4.2.0)](https://github.com/raysan5/raylib/commits/master)
+[![GitHub commits since tagged version](https://img.shields.io/github/commits-since/raysan5/raylib/4.5.0)](https://github.com/raysan5/raylib/commits/master)
+[![GitHub Sponsors](https://img.shields.io/github/sponsors/raysan5?label=sponsors)](https://github.com/sponsors/raysan5)
 [![Packaging Status](https://repology.org/badge/tiny-repos/raylib.svg)](https://repology.org/project/raylib/versions)
 [![License](https://img.shields.io/badge/license-zlib%2Flibpng-blue.svg)](LICENSE)
 
@@ -22,8 +23,6 @@ Ready to learn? Jump to [code examples!](https://www.raylib.com/examples.html)
 [![Subreddit Subscribers](https://img.shields.io/reddit/subreddit-subscribers/raylib?label=reddit%20r%2Fraylib&logo=reddit)](https://www.reddit.com/r/raylib/)
 [![Youtube Subscribers](https://img.shields.io/youtube/channel/subscribers/UC8WIBkhYb5sBNqXO1mZ7WSQ?style=flat&label=Youtube&logo=youtube)](https://www.youtube.com/c/raylib)
 [![Twitch Status](https://img.shields.io/twitch/status/raysan5?style=flat&label=Twitch&logo=twitch)](https://www.twitch.tv/raysan5)
-[![Twitter Followers](https://img.shields.io/twitter/follow/raysan5?style=flat&label=@raysan5&color=1da1f2&logo=twitter)](https://twitter.com/raysan5)
-
 
 [![Windows](https://github.com/raysan5/raylib/workflows/Windows/badge.svg)](https://github.com/raysan5/raylib/actions?query=workflow%3AWindows)
 [![Linux](https://github.com/raysan5/raylib/workflows/Linux/badge.svg)](https://github.com/raysan5/raylib/actions?query=workflow%3ALinux)
@@ -39,10 +38,10 @@ features
 --------
   - **NO external dependencies**, all required libraries are [bundled into raylib](https://github.com/raysan5/raylib/tree/master/src/external)
   - Multiple platforms supported: **Windows, Linux, MacOS, RPI, Android, HTML5... and more!**
-  - Written in plain C code (C99) in PascalCase/camelCase notation
+  - Written in plain C code (C99) using PascalCase/camelCase notation
   - Hardware accelerated with OpenGL (**1.1, 2.1, 3.3, 4.3 or ES 2.0**)
   - **Unique OpenGL abstraction layer** (usable as standalone module): [rlgl](https://github.com/raysan5/raylib/blob/master/src/rlgl.h)
-  - Multiple **Fonts** formats supported (TTF, XNA fonts, AngelCode fonts)
+  - Multiple **Fonts** formats supported (TTF, Image fonts, AngelCode fonts)
   - Multiple texture formats supported, including **compressed formats** (DXT, ETC, ASTC)
   - **Full 3D support**, including 3D Shapes, Models, Billboards, Heightmaps and more! 
   - Flexible Materials system, supporting classic maps and **PBR maps**
@@ -52,7 +51,7 @@ features
   - Audio loading and playing with streaming support (WAV, OGG, MP3, FLAC, XM, MOD)
   - **VR stereo rendering** support with configurable HMD device parameters
   - Huge examples collection with [+120 code examples](https://github.com/raysan5/raylib/tree/master/examples)!
-  - Bindings to [+50 programming languages](https://github.com/raysan5/raylib/blob/master/BINDINGS.md)!
+  - Bindings to [+60 programming languages](https://github.com/raysan5/raylib/blob/master/BINDINGS.md)!
   - **Free and open source**.
 
 basic example

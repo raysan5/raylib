@@ -21,6 +21,7 @@ Please, before submitting a new issue verify and check:
 
  - [ ] I tested it on latest raylib version from master branch
  - [ ] I checked there is no similar issue already reported
+ - [ ] I checked the documentation on the [wiki](https://github.com/raysan5/raylib/wiki)
  - [ ] My code has no errors or misuse of raylib
 
 ### Issue description

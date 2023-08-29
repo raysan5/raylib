@@ -9,11 +9,16 @@
 *   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
 *   BSD-like license that allows static linking with closed source software
 *
-*   Copyright (c) 2015-2022 Ramon Santamaria (@raysan5)
+*   Copyright (c) 2015-2023 Ramon Santamaria (@raysan5)
 *
 ********************************************************************************************/
 
 #include "raylib.h"
+
+#include <stdlib.h>         // Required for: calloc(), free()
+
+#define MAX_FILEPATH_RECORDED   4096
+#define MAX_FILEPATH_SIZE       2048
 
 //------------------------------------------------------------------------------------
 // Program main entry point
@@ -27,7 +32,14 @@ int main(void)
 
     InitWindow(screenWidth, screenHeight, "raylib [core] example - drop files");
 
-    FilePathList droppedFiles = { 0 };
+    int filePathCounter = 0;
+    char *filePaths[MAX_FILEPATH_RECORDED] = { 0 }; // We will register a maximum of filepaths
+
+    // Allocate space for the required file paths
+    for (int i = 0; i < MAX_FILEPATH_RECORDED; i++)
+    {
+        filePaths[i] = (char *)RL_CALLOC(MAX_FILEPATH_SIZE, 1);
+    }
 
     SetTargetFPS(60);               // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
@@ -39,11 +51,18 @@ int main(void)
         //----------------------------------------------------------------------------------
         if (IsFileDropped())
         {
-            // Is some files have been previously loaded, unload them
-            if (droppedFiles.count > 0) UnloadDroppedFiles(droppedFiles);
-            
-            // Load new dropped files
-            droppedFiles = LoadDroppedFiles();
+            FilePathList droppedFiles = LoadDroppedFiles();
+
+            for (int i = 0, offset = filePathCounter; i < droppedFiles.count; i++)
+            {
+                if (filePathCounter < (MAX_FILEPATH_RECORDED - 1))
+                {
+                    TextCopy(filePaths[offset + i], droppedFiles.paths[i]);
+                    filePathCounter++;
+                }
+            }
+
+            UnloadDroppedFiles(droppedFiles);    // Unload filepaths from memory
         }
         //----------------------------------------------------------------------------------
 
@@ -53,20 +72,20 @@ int main(void)
 
             ClearBackground(RAYWHITE);
 
-            if (droppedFiles.count == 0) DrawText("Drop your files to this window!", 100, 40, 20, DARKGRAY);
+            if (filePathCounter == 0) DrawText("Drop your files to this window!", 100, 40, 20, DARKGRAY);
             else
             {
                 DrawText("Dropped files:", 100, 40, 20, DARKGRAY);
 
-                for (int i = 0; i < droppedFiles.count; i++)
+                for (unsigned int i = 0; i < filePathCounter; i++)
                 {
                     if (i%2 == 0) DrawRectangle(0, 85 + 40*i, screenWidth, 40, Fade(LIGHTGRAY, 0.5f));
                     else DrawRectangle(0, 85 + 40*i, screenWidth, 40, Fade(LIGHTGRAY, 0.3f));
 
-                    DrawText(droppedFiles.paths[i], 120, 100 + 40*i, 10, GRAY);
+                    DrawText(filePaths[i], 120, 100 + 40*i, 10, GRAY);
                 }
 
-                DrawText("Drop new files...", 100, 110 + 40*droppedFiles.count, 20, DARKGRAY);
+                DrawText("Drop new files...", 100, 110 + 40*filePathCounter, 20, DARKGRAY);
             }
 
         EndDrawing();
@@ -75,7 +94,10 @@ int main(void)
 
     // De-Initialization
     //--------------------------------------------------------------------------------------
-    UnloadDroppedFiles(droppedFiles); // Unload files memory
+    for (int i = 0; i < MAX_FILEPATH_RECORDED; i++)
+    {
+        RL_FREE(filePaths[i]); // Free allocated memory for all filepaths
+    }
 
     CloseWindow();          // Close window and OpenGL context
     //--------------------------------------------------------------------------------------

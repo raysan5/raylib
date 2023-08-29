@@ -65,8 +65,14 @@
             <Overload retVal="void" descr="Set window state: not minimized/maximized (only PLATFORM_DESKTOP)"></Overload>
         </KeyWord>
         <KeyWord name="SetWindowIcon" func="yes">
-            <Overload retVal="void" descr="Set icon for window (only PLATFORM_DESKTOP)">
+            <Overload retVal="void" descr="Set icon for window (single image, RGBA 32bit, only PLATFORM_DESKTOP)">
                 <Param name="Image image" />
+            </Overload>
+        </KeyWord>
+        <KeyWord name="SetWindowIcons" func="yes">
+            <Overload retVal="void" descr="Set icon for window (multiple images, RGBA 32bit, only PLATFORM_DESKTOP)">
+                <Param name="Image *images" />
+                <Param name="int count" />
             </Overload>
         </KeyWord>
         <KeyWord name="SetWindowTitle" func="yes">
@@ -181,7 +187,7 @@
 
         <!-- Custom frame control functions -->
         <!-- NOTE: Those functions are intended for advance users that want full control over the frame processing -->
-        <!-- By default EndDrawing() does this job: draws everything + SwapScreenBuffer() + manage frame timming + PollInputEvents() -->
+        <!-- By default EndDrawing() does this job: draws everything + SwapScreenBuffer() + manage frame timing + PollInputEvents() -->
         <!-- To avoid that behaviour and control frame processes manually, enable in config.h: SUPPORT_CUSTOM_FRAME_CONTROL -->
         <KeyWord name="SwapScreenBuffer" func="yes">
             <Overload retVal="void" descr="Swap back buffer with front buffer (screen drawing)"></Overload>
@@ -311,6 +317,11 @@
             <Overload retVal="Shader" descr="Load shader from code strings and bind default locations">
                 <Param name="const char *vsCode" />
                 <Param name="const char *fsCode" />
+            </Overload>
+        </KeyWord>
+        <KeyWord name="IsShaderReady" func="yes">
+            <Overload retVal="bool" descr="Check if a shader is ready">
+                <Param name="Shader shader" />
             </Overload>
         </KeyWord>
         <KeyWord name="GetShaderLocation" func="yes">
@@ -459,7 +470,7 @@
         </KeyWord>
         <KeyWord name="MemAlloc" func="yes">
             <Overload retVal="void" descr="Internal memory allocator">
-                <Param name="int size" />
+                <Param name="unsigned int size" />
             </Overload>
         </KeyWord>
         <KeyWord name="MemRealloc" func="yes">
@@ -521,7 +532,7 @@
         </KeyWord>
         <KeyWord name="ExportDataAsCode" func="yes">
             <Overload retVal="bool" descr="Export data to code (.h), returns true on success">
-                <Param name="const char *data" />
+                <Param name="const unsigned char" />
                 <Param name="unsigned int size" />
                 <Param name="const char *fileName" />
             </Overload>
@@ -878,41 +889,18 @@
         <!-------------------------------------------------------------------------------------- -->
         <!-- Camera System Functions (Module: rcamera) -->
         <!-------------------------------------------------------------------------------------- -->
-        <KeyWord name="SetCameraMode" func="yes">
-            <Overload retVal="void" descr="Set camera mode (multiple camera modes available)">
-                <Param name="Camera camera" />
-                <Param name="int mode" />
-            </Overload>
-        </KeyWord>
         <KeyWord name="UpdateCamera" func="yes">
             <Overload retVal="void" descr="Update camera position for selected mode">
                 <Param name="Camera *camera" />
+                <Param name="int mode" />
             </Overload>
         </KeyWord>
-
-        <KeyWord name="SetCameraPanControl" func="yes">
-            <Overload retVal="void" descr="Set camera pan key to combine with mouse movement (free camera)">
-                <Param name="int keyPan" />
-            </Overload>
-        </KeyWord>
-        <KeyWord name="SetCameraAltControl" func="yes">
-            <Overload retVal="void" descr="Set camera alt key to combine with mouse movement (free camera)">
-                <Param name="int keyAlt" />
-            </Overload>
-        </KeyWord>
-        <KeyWord name="SetCameraSmoothZoomControl" func="yes">
-            <Overload retVal="void" descr="Set camera smooth zoom key to combine with mouse (free camera)">
-                <Param name="int keySmoothZoom" />
-            </Overload>
-        </KeyWord>
-        <KeyWord name="SetCameraMoveControls" func="yes">
-            <Overload retVal="void" descr="Set camera move controls (1st person and 3rd person cameras)">
-                <Param name="int keyFront" />
-                <Param name="int keyBack" />
-                <Param name="int keyRight" />
-                <Param name="int keyLeft" />
-                <Param name="int keyUp" />
-                <Param name="int keyDown" />
+        <KeyWord name="UpdateCameraPro" func="yes">
+            <Overload retVal="void" descr="Update camera movement/rotation">
+                <Param name="Camera *camera" />
+                <Param name="Vector3 movement" />
+                <Param name="Vector3 rotation" />
+                <Param name="float zoom" />
             </Overload>
         </KeyWord>
 
@@ -1287,6 +1275,13 @@
                 <Param name="Vector2 p3" />
             </Overload>
         </KeyWord>
+        <KeyWord name="CheckCollisionPointPoly" func="yes">
+            <Overload retVal="bool" descr="Check if point is within a polygon described by array of vertices">
+                <Param name="Vector2 point" />
+                <Param name="Vector2 *points" />
+                <Param name="int pointCount" />
+            </Overload>
+        </KeyWord>
         <KeyWord name="CheckCollisionLines" func="yes">
             <Overload retVal="bool" descr="Check the collision between two lines defined by two points each, returns collision point by reference">
                 <Param name="Vector2 startPos1" />
@@ -1316,7 +1311,7 @@
         <!-------------------------------------------------------------------------------------- -->
 
         <!-- Image loading functions -->
-        <!-- NOTE: This functions do not require GPU access -->
+        <!-- NOTE: These functions do not require GPU access -->
         <KeyWord name="LoadImage" func="yes">
             <Overload retVal="Image" descr="Load image from file into CPU memory (RAM)">
                 <Param name="const char *fileName" />
@@ -1352,6 +1347,11 @@
         <KeyWord name="LoadImageFromScreen" func="yes">
             <Overload retVal="Image" descr="Load image from screen buffer and (screenshot)"></Overload>
         </KeyWord>
+        <KeyWord name="IsImageReady" func="yes">
+            <Overload retVal="bool" descr="Check if an image is ready">
+                <Param name="Image image" />
+            </Overload>
+        </KeyWord>
         <KeyWord name="UnloadImage" func="yes">
             <Overload retVal="void" descr="Unload image from CPU memory (RAM)">
                 <Param name="Image image" />
@@ -1378,24 +1378,26 @@
                 <Param name="Color color" />
             </Overload>
         </KeyWord>
-        <KeyWord name="GenImageGradientV" func="yes">
-            <Overload retVal="Image" descr="Generate image: vertical gradient">
+        <KeyWord name="GenImageGradientLinear" func="yes">
+            <Overload retVal="Image" descr="Generate image: linear gradient">
                 <Param name="int width" />
                 <Param name="int height" />
-                <Param name="Color top" />
-                <Param name="Color bottom" />
-            </Overload>
-        </KeyWord>
-        <KeyWord name="GenImageGradientH" func="yes">
-            <Overload retVal="Image" descr="Generate image: horizontal gradient">
-                <Param name="int width" />
-                <Param name="int height" />
-                <Param name="Color left" />
-                <Param name="Color right" />
+                <Param name="int direction" />
+                <Param name="Color start" />
+                <Param name="Color end" />
             </Overload>
         </KeyWord>
         <KeyWord name="GenImageGradientRadial" func="yes">
             <Overload retVal="Image" descr="Generate image: radial gradient">
+                <Param name="int width" />
+                <Param name="int height" />
+                <Param name="float density" />
+                <Param name="Color inner" />
+                <Param name="Color outer" />
+            </Overload>
+        </KeyWord>
+        <KeyWord name="GenImageGradientSquare" func="yes">
+            <Overload retVal="Image" descr="Generate image: square gradient">
                 <Param name="int width" />
                 <Param name="int height" />
                 <Param name="float density" />
@@ -1420,11 +1422,27 @@
                 <Param name="float factor" />
             </Overload>
         </KeyWord>
+        <KeyWord name="GenImagePerlinNoise" func="yes">
+            <Overload retVal="Image" descr="Generate image: perlin noise">
+                <Param name="int width" />
+                <Param name="int height" />
+                <Param name="int offsetX" />
+                <Param name="int offsetY" />
+                <Param name="float scale" />
+            </Overload>
+        </KeyWord>
         <KeyWord name="GenImageCellular" func="yes">
             <Overload retVal="Image" descr="Generate image: cellular algorithm, bigger tileSize means bigger cells">
                 <Param name="int width" />
                 <Param name="int height" />
                 <Param name="int tileSize" />
+            </Overload>
+        </KeyWord>
+        <KeyWord name="GenImageText" func="yes">
+            <Overload retVal="Image" descr="Generate image: grayscale image from text data">
+                <Param name="int width" />
+                <Param name="int height" />
+                <Param name="const char *text" />
             </Overload>
         </KeyWord>
 
@@ -1498,6 +1516,12 @@
                 <Param name="Image *image" />
             </Overload>
         </KeyWord>
+        <KeyWord name="ImageBlurGaussian" func="yes">
+            <Overload retVal="void" descr="Apply Gaussian blur using a box blur approximation">
+                <Param name="Image *image" />
+                <Param name="int blurSize" />
+            </Overload>
+        </KeyWord>
         <KeyWord name="ImageResize" func="yes">
             <Overload retVal="void" descr="Resize image (Bicubic scaling algorithm)">
                 <Param name="Image *image" />
@@ -1544,6 +1568,12 @@
         <KeyWord name="ImageFlipHorizontal" func="yes">
             <Overload retVal="void" descr="Flip image horizontally">
                 <Param name="Image *image" />
+            </Overload>
+        </KeyWord>
+        <KeyWord name="ImageRotate" func="yes">
+            <Overload retVal="void" descr="Rotate image by input angle in degrees (-359 to 359)">
+                <Param name="Image *image" />
+                <Param name="int degrees" />
             </Overload>
         </KeyWord>
         <KeyWord name="ImageRotateCW" func="yes">
@@ -1669,7 +1699,7 @@
             </Overload>
         </KeyWord>
         <KeyWord name="ImageDrawCircle" func="yes">
-            <Overload retVal="void" descr="Draw circle within an image">
+            <Overload retVal="void" descr="Draw a filled circle within an image">
                 <Param name="Image *dst" />
                 <Param name="int centerX" />
                 <Param name="int centerY" />
@@ -1678,7 +1708,24 @@
             </Overload>
         </KeyWord>
         <KeyWord name="ImageDrawCircleV" func="yes">
-            <Overload retVal="void" descr="Draw circle within an image (Vector version)">
+            <Overload retVal="void" descr="Draw a filled circle within an image (Vector version)">
+                <Param name="Image *dst" />
+                <Param name="Vector2 center" />
+                <Param name="int radius" />
+                <Param name="Color color" />
+            </Overload>
+        </KeyWord>
+        <KeyWord name="ImageDrawCircleLines" func="yes">
+            <Overload retVal="void" descr="Draw circle outline within an image">
+                <Param name="Image *dst" />
+                <Param name="int centerX" />
+                <Param name="int centerY" />
+                <Param name="int radius" />
+                <Param name="Color color" />
+            </Overload>
+        </KeyWord>
+        <KeyWord name="ImageDrawCircleLinesV" func="yes">
+            <Overload retVal="void" descr="Draw circle outline within an image (Vector version)">
                 <Param name="Image *dst" />
                 <Param name="Vector2 center" />
                 <Param name="int radius" />
@@ -1773,9 +1820,19 @@
                 <Param name="int height" />
             </Overload>
         </KeyWord>
+        <KeyWord name="IsTextureReady" func="yes">
+            <Overload retVal="bool" descr="Check if a texture is ready">
+                <Param name="Texture2D texture" />
+            </Overload>
+        </KeyWord>
         <KeyWord name="UnloadTexture" func="yes">
             <Overload retVal="void" descr="Unload texture from GPU memory (VRAM)">
                 <Param name="Texture2D texture" />
+            </Overload>
+        </KeyWord>
+        <KeyWord name="IsRenderTextureReady" func="yes">
+            <Overload retVal="bool" descr="Check if a render texture is ready">
+                <Param name="RenderTexture2D target" />
             </Overload>
         </KeyWord>
         <KeyWord name="UnloadRenderTexture" func="yes">
@@ -1849,26 +1906,6 @@
                 <Param name="Color tint" />
             </Overload>
         </KeyWord>
-        <KeyWord name="DrawTextureQuad" func="yes">
-            <Overload retVal="void" descr="Draw texture quad with tiling and offset parameters">
-                <Param name="Texture2D texture" />
-                <Param name="Vector2 tiling" />
-                <Param name="Vector2 offset" />
-                <Param name="Rectangle quad" />
-                <Param name="Color tint" />
-            </Overload>
-        </KeyWord>
-        <KeyWord name="DrawTextureTiled" func="yes">
-            <Overload retVal="void" descr="Draw part of a texture (defined by a rectangle) with rotation and scale tiled into dest.">
-                <Param name="Texture2D texture" />
-                <Param name="Rectangle source" />
-                <Param name="Rectangle dest" />
-                <Param name="Vector2 origin" />
-                <Param name="float rotation" />
-                <Param name="float scale" />
-                <Param name="Color tint" />
-            </Overload>
-        </KeyWord>
         <KeyWord name="DrawTexturePro" func="yes">
             <Overload retVal="void" descr="Draw a part of a texture defined by a rectangle with 'pro' parameters">
                 <Param name="Texture2D texture" />
@@ -1886,16 +1923,6 @@
                 <Param name="Rectangle dest" />
                 <Param name="Vector2 origin" />
                 <Param name="float rotation" />
-                <Param name="Color tint" />
-            </Overload>
-        </KeyWord>
-        <KeyWord name="DrawTexturePoly" func="yes">
-            <Overload retVal="void" descr="Draw a textured polygon">
-                <Param name="Texture2D texture" />
-                <Param name="Vector2 center" />
-                <Param name="Vector2 *points" />
-                <Param name="Vector2 *texcoords" />
-                <Param name="int pointCount" />
                 <Param name="Color tint" />
             </Overload>
         </KeyWord>
@@ -1932,6 +1959,24 @@
                 <Param name="float hue" />
                 <Param name="float saturation" />
                 <Param name="float value" />
+            </Overload>
+        </KeyWord>
+        <KeyWord name="ColorTint" func="yes">
+            <Overload retVal="Color" descr="Get color multiplied with another color">
+                <Param name="Color color" />
+                <Param name="Color tint" />
+            </Overload>
+        </KeyWord>
+        <KeyWord name="ColorBrightness" func="yes">
+            <Overload retVal="Color" descr="Get color with brightness correction, brightness factor goes from -1.0f to 1.0f">
+                <Param name="Color color" />
+                <Param name="float factor" />
+            </Overload>
+        </KeyWord>
+        <KeyWord name="ColorContrast" func="yes">
+            <Overload retVal="Color" descr="Get color with contrast correction, contrast values between -1.0f and 1.0f">
+                <Param name="Color color" />
+                <Param name="float contrast" />
             </Overload>
         </KeyWord>
         <KeyWord name="ColorAlpha" func="yes">
@@ -2002,6 +2047,11 @@
                 <Param name="int fontSize" />
                 <Param name="int *fontChars" />
                 <Param name="int glyphCount" />
+            </Overload>
+        </KeyWord>
+        <KeyWord name="IsFontReady" func="yes">
+            <Overload retVal="bool" descr="Check if a font is ready">
+                <Param name="Font font" />
             </Overload>
         </KeyWord>
         <KeyWord name="LoadFontData" func="yes">
@@ -2136,6 +2186,17 @@
         </KeyWord>
 
         <!-- Text codepoints management functions (unicode characters) -->
+        <KeyWord name="LoadUTF8" func="yes">
+            <Overload retVal="char" descr="Load UTF-8 text encoded from codepoints array">
+                <Param name="const int *codepoints" />
+                <Param name="int length" />
+            </Overload>
+        </KeyWord>
+        <KeyWord name="UnloadUTF8" func="yes">
+            <Overload retVal="void" descr="Unload UTF-8 text encoded from codepoints array">
+                <Param name="char *text" />
+            </Overload>
+        </KeyWord>
         <KeyWord name="LoadCodepoints" func="yes">
             <Overload retVal="int" descr="Load all codepoints from a UTF-8 text string, codepoints count returned by parameter">
                 <Param name="const char *text" />
@@ -2155,19 +2216,25 @@
         <KeyWord name="GetCodepoint" func="yes">
             <Overload retVal="int" descr="Get next codepoint in a UTF-8 encoded string, 0x3f('?') is returned on failure">
                 <Param name="const char *text" />
-                <Param name="int *bytesProcessed" />
+                <Param name="int *codepointSize" />
+            </Overload>
+        </KeyWord>
+        <KeyWord name="GetCodepointNext" func="yes">
+            <Overload retVal="int" descr="Get next codepoint in a UTF-8 encoded string, 0x3f('?') is returned on failure">
+                <Param name="const char *text" />
+                <Param name="int *codepointSize" />
+            </Overload>
+        </KeyWord>
+        <KeyWord name="GetCodepointPrevious" func="yes">
+            <Overload retVal="int" descr="Get previous codepoint in a UTF-8 encoded string, 0x3f('?') is returned on failure">
+                <Param name="const char *text" />
+                <Param name="int *codepointSize" />
             </Overload>
         </KeyWord>
         <KeyWord name="CodepointToUTF8" func="yes">
             <Overload retVal="const char" descr="Encode one codepoint into UTF-8 byte array (array length returned as parameter)">
                 <Param name="int codepoint" />
-                <Param name="int *byteSize" />
-            </Overload>
-        </KeyWord>
-        <KeyWord name="TextCodepointsToUTF8" func="yes">
-            <Overload retVal="char" descr="Encode text as codepoints array into UTF-8 text string (WARNING: memory must be freed!)">
-                <Param name="const int *codepoints" />
-                <Param name="int length" />
+                <Param name="int *utf8Size" />
             </Overload>
         </KeyWord>
 
@@ -2339,27 +2406,6 @@
                 <Param name="Color color" />
             </Overload>
         </KeyWord>
-        <KeyWord name="DrawCubeTexture" func="yes">
-            <Overload retVal="void" descr="Draw cube textured">
-                <Param name="Texture2D texture" />
-                <Param name="Vector3 position" />
-                <Param name="float width" />
-                <Param name="float height" />
-                <Param name="float length" />
-                <Param name="Color color" />
-            </Overload>
-        </KeyWord>
-        <KeyWord name="DrawCubeTextureRec" func="yes">
-            <Overload retVal="void" descr="Draw cube with a region of a texture">
-                <Param name="Texture2D texture" />
-                <Param name="Rectangle source" />
-                <Param name="Vector3 position" />
-                <Param name="float width" />
-                <Param name="float height" />
-                <Param name="float length" />
-                <Param name="Color color" />
-            </Overload>
-        </KeyWord>
         <KeyWord name="DrawSphere" func="yes">
             <Overload retVal="void" descr="Draw sphere">
                 <Param name="Vector3 centerPos" />
@@ -2425,6 +2471,26 @@
                 <Param name="Color color" />
             </Overload>
         </KeyWord>
+        <KeyWord name="DrawCapsule" func="yes">
+            <Overload retVal="void" descr="Draw a capsule with the center of its sphere caps at startPos and endPos">
+                <Param name="Vector3 startPos" />
+                <Param name="Vector3 endPos" />
+                <Param name="float radius" />
+                <Param name="int slices" />
+                <Param name="int rings" />
+                <Param name="Color color" />
+            </Overload>
+        </KeyWord>
+        <KeyWord name="DrawCapsuleWires" func="yes">
+            <Overload retVal="void" descr="Draw capsule wireframe with the center of its sphere caps at startPos and endPos">
+                <Param name="Vector3 startPos" />
+                <Param name="Vector3 endPos" />
+                <Param name="float radius" />
+                <Param name="int slices" />
+                <Param name="int rings" />
+                <Param name="Color color" />
+            </Overload>
+        </KeyWord>
         <KeyWord name="DrawPlane" func="yes">
             <Overload retVal="void" descr="Draw a plane XZ">
                 <Param name="Vector3 centerPos" />
@@ -2460,13 +2526,13 @@
                 <Param name="Mesh mesh" />
             </Overload>
         </KeyWord>
-        <KeyWord name="UnloadModel" func="yes">
-            <Overload retVal="void" descr="Unload model (including meshes) from memory (RAM and/or VRAM)">
+        <KeyWord name="IsModelReady" func="yes">
+            <Overload retVal="bool" descr="Check if a model is ready">
                 <Param name="Model model" />
             </Overload>
         </KeyWord>
-        <KeyWord name="UnloadModelKeepMeshes" func="yes">
-            <Overload retVal="void" descr="Unload model (but not meshes) from memory (RAM and/or VRAM)">
+        <KeyWord name="UnloadModel" func="yes">
+            <Overload retVal="void" descr="Unload model (including meshes) from memory (RAM and/or VRAM)">
                 <Param name="Model model" />
             </Overload>
         </KeyWord>
@@ -2694,6 +2760,11 @@
         <KeyWord name="LoadMaterialDefault" func="yes">
             <Overload retVal="Material" descr="Load default material (Supports: DIFFUSE, SPECULAR, NORMAL maps)"></Overload>
         </KeyWord>
+        <KeyWord name="IsMaterialReady" func="yes">
+            <Overload retVal="bool" descr="Check if a material is ready">
+                <Param name="Material material" />
+            </Overload>
+        </KeyWord>
         <KeyWord name="UnloadMaterial" func="yes">
             <Overload retVal="void" descr="Unload material from GPU memory (VRAM)">
                 <Param name="Material material" />
@@ -2839,6 +2910,11 @@
                 <Param name="int dataSize" />
             </Overload>
         </KeyWord>
+        <KeyWord name="IsWaveReady" func="yes">
+            <Overload retVal="bool" descr="Checks if wave data is ready">
+                <Param name="Wave wave" />
+            </Overload>
+        </KeyWord>
         <KeyWord name="LoadSound" func="yes">
             <Overload retVal="Sound" descr="Load sound from file">
                 <Param name="const char *fileName" />
@@ -2847,6 +2923,11 @@
         <KeyWord name="LoadSoundFromWave" func="yes">
             <Overload retVal="Sound" descr="Load sound from wave data">
                 <Param name="Wave wave" />
+            </Overload>
+        </KeyWord>
+        <KeyWord name="IsSoundReady" func="yes">
+            <Overload retVal="bool" descr="Checks if a sound is ready">
+                <Param name="Sound sound" />
             </Overload>
         </KeyWord>
         <KeyWord name="UpdateSound" func="yes">
@@ -2899,17 +2980,6 @@
             <Overload retVal="void" descr="Resume a paused sound">
                 <Param name="Sound sound" />
             </Overload>
-        </KeyWord>
-        <KeyWord name="PlaySoundMulti" func="yes">
-            <Overload retVal="void" descr="Play a sound (using multichannel buffer pool)">
-                <Param name="Sound sound" />
-            </Overload>
-        </KeyWord>
-        <KeyWord name="StopSoundMulti" func="yes">
-            <Overload retVal="void" descr="Stop any sound playing (using multichannel buffer pool)"></Overload>
-        </KeyWord>
-        <KeyWord name="GetSoundsPlaying" func="yes">
-            <Overload retVal="int" descr="Get number of sounds playing in the multichannel"></Overload>
         </KeyWord>
         <KeyWord name="IsSoundPlaying" func="yes">
             <Overload retVal="bool" descr="Check if a sound is currently playing">
@@ -2976,6 +3046,11 @@
                 <Param name="const char *fileType" />
                 <Param name="const unsigned char" />
                 <Param name="int dataSize" />
+            </Overload>
+        </KeyWord>
+        <KeyWord name="IsMusicReady" func="yes">
+            <Overload retVal="bool" descr="Checks if a music stream is ready">
+                <Param name="Music music" />
             </Overload>
         </KeyWord>
         <KeyWord name="UnloadMusicStream" func="yes">
@@ -3054,6 +3129,11 @@
                 <Param name="unsigned int sampleRate" />
                 <Param name="unsigned int sampleSize" />
                 <Param name="unsigned int channels" />
+            </Overload>
+        </KeyWord>
+        <KeyWord name="IsAudioStreamReady" func="yes">
+            <Overload retVal="bool" descr="Checks if an audio stream is ready">
+                <Param name="AudioStream stream" />
             </Overload>
         </KeyWord>
         <KeyWord name="UnloadAudioStream" func="yes">
@@ -3137,6 +3217,17 @@
         <KeyWord name="DetachAudioStreamProcessor" func="yes">
             <Overload retVal="void" descr="Detach audio stream processor from stream">
                 <Param name="AudioStream stream" />
+                <Param name="AudioCallback processor" />
+            </Overload>
+        </KeyWord>
+
+        <KeyWord name="AttachAudioMixedProcessor" func="yes">
+            <Overload retVal="void" descr="Attach audio stream processor to the entire audio pipeline">
+                <Param name="AudioCallback processor" />
+            </Overload>
+        </KeyWord>
+        <KeyWord name="DetachAudioMixedProcessor" func="yes">
+            <Overload retVal="void" descr="Detach audio stream processor from the entire audio pipeline">
                 <Param name="AudioCallback processor" />
             </Overload>
         </KeyWord>

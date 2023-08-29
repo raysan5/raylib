@@ -15,7 +15,7 @@
 *   This example has been created using raylib 1.0 (www.raylib.com)
 *   raylib is licensed under an unmodified zlib/libpng license (View raylib.h for details)
 *
-*   Copyright (c) 2013-2022 Ramon Santamaria (@raysan5)
+*   Copyright (c) 2013-2023 Ramon Santamaria (@raysan5)
 *
 ********************************************************************************************/
 
@@ -39,7 +39,7 @@ static void UpdateDrawFrame(void);          // Update and draw one frame
 //----------------------------------------------------------------------------------
 // Main entry point
 //----------------------------------------------------------------------------------
-int main() 
+int main()
 {
     // Initialization
     //--------------------------------------------------------------------------------------
@@ -53,8 +53,6 @@ int main()
     camera.up = (Vector3){ 0.0f, 1.0f, 0.0f };
     camera.fovy = 60.0f;
     camera.projection = CAMERA_PERSPECTIVE;
-    
-    SetCameraMode(camera, CAMERA_ORBITAL);
 
     //--------------------------------------------------------------------------------------
 
@@ -84,7 +82,7 @@ static void UpdateDrawFrame(void)
 {
     // Update
     //----------------------------------------------------------------------------------
-    UpdateCamera(&camera);
+    UpdateCamera(&camera, CAMERA_ORBITAL);
     //----------------------------------------------------------------------------------
 
     // Draw

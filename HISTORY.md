@@ -5,7 +5,7 @@ introduction
 
 I started developing videogames in 2006 and some years later I started teaching videogames development to young people with artistic profile, most of students had never written a single line of code.
 
-I decided to start with C language basis and, after searching for the most simple and easy-to-use library to teach videogames programming, I found [WinBGI](http://www.codecutter.net/tools/winbgim/); it was great and it worked very well with students, in just a couple of weeks, those students that had never written a single line of code were able to program (and understand) a simple PONG game, some of them even a BREAKOUT!
+I decided to start with C language basis and, after searching for the most simple and easy-to-use library to teach videogames programming, I found [WinBGI](https://winbgim.codecutter.org/); it was great and it worked very well with students, in just a couple of weeks, those students that had never written a single line of code were able to program (and understand) a simple PONG game, some of them even a BREAKOUT!
 
 But WinBGI was not the clearer and most organized library for my taste. There were lots of things I found confusing and some function names were not clear enough for most of the students; not to mention the lack of transparencies support and no hardware acceleration.
 
@@ -395,3 +395,40 @@ Highlights for `raylib 4.2`:
 As always, there are more improvements than the key features listed, make sure to check raylib [CHANGELOG](CHANGELOG) for the detailed list of changes; for this release a `WARNING` flag has been added to all the changes that could affect bindings or productivity code. **raylib keeps improving one more version** and a special focus on maintainability has been put on the library for the future. Specific/advance functionality will be provided through **raylib-extras** repos and raylib main repo devlelopment will be focused on what made raylib popular: being a simple and easy-to-use library to **enjoy videogames programming**.
 
 **Enjoy gamedev/tools/graphics programming!** :)
+
+notes on raylib 4.5
+-------------------
+
+It's been **7 months** since latest raylib release. As usual, **many parts of the library have been reviewed and improved** along those months. Many issues have been closed, staying under 10 open issues at the moment of this writting and also many PRs from contributors have been received, reviewed and merged into raylib library. Some new functions have been added and some others have been removed to improve library coherence and avoid moving too high level, giving the users the tools to implement advance functionality themselfs over raylib. Again, this is a big release with a considerable amount of changes and improvements. Here it is a small summary highlighting this new **rayib 4.5**.
+
+Some numbers for this release:
+
+ - **+100** closed issues (for a TOTAL of **+1340**!)
+ - **+350** commits since previous RELEASE (for a TOTAL of **+6350**!)
+ - **+25** functions ADDED to raylib API (for a TOTAL of **516**!)
+ - **+40** functions REVIEWED/REDESIGNED
+ - **+40** new contributors (for a TOTAL of **405**!)
+
+Highlights for `raylib 4.5`:
+
+ - **`NEW` Improved ANGLE support on Desktop platforms**: Support for OpenGL ES 2.0 on Desktop platforms (Windows, Linux, macOS) has been reviewed by @wtnbgo GitHub user. Now raylib can be compiled on desktop for OpenGL ES 2.0 and linked against [`ANGLE`](https://github.com/google/angle). This _small_ addition open the door to building raylib for all **ANGLE supported backends: Direct3D 11, Vulkan and Metal**. Please note that this new feature is still experimental and requires further testing!
+
+ - **`NEW` Camera module**: A brand new implementation from scratch for `rcamera` module, contributed by @Crydsch GitHub user! **New camera system is simpler, more flexible, more granular and more extendable**. Specific camera math transformations (movement/rotation) have been moved to individual functions, exposing them to users if required. Global state has been removed from the module and standalone usage has been greatly improved; now `rcamera.h` single-file header-only library can be used externally, independently of raylib. A new `UpdateCameraPro()` function has been added to address input-dependency of `UpdateCamera()`, now advance users have **full control over camera inputs and movement/rotation speeds**!
+ 
+ - **`NEW` Support for M3D models and M3D/GLTF animations**: 3d models animations support has been a limited aspect of raylib for long time, some versions ago IQM animations were supported but raylib 4.5 also adds support for the brand new [M3D file format](https://bztsrc.gitlab.io/model3d/), including animations and the long expected support for **GLTF animations**! The new M3D file format is **simple, portable, feature complete, extensible and open source**. It also provides a complete set of tools to export/visualize M3D models from/to Blender! Now raylib supports up to **3 model file-formats with animations**: `IQM`, `GLTF` and `M3D`.
+ 
+ - **`NEW` Support QOA audio format (import/export)**: Just a couple of months ago the new [QOA file format](https://qoaformat.org/) was published, a very simple, portable and open source quite-ok-audio file format. raylib already supports it, added to `raudio` module and including audio loading from file, loading from memory, streaming from file, streaming from memory and **exporting to QOA** audio format. **Because simplicity really matters to raylib!**
+ 
+ - **`NEW` Module for compressed textures loading**: [`rl_gputex`](https://github.com/raysan5/raylib/blob/master/src/external/rl_gputex.h), a portable single-file header-only small library to load compressed texture file-formats (DDS, PKM, KTX, PVR, ASTC). Provided functionality is not new to raylib but it was part of the raylib `rtextures` module, now it has been moved into a separate self-contained library, **improving portability**. Note that this module is only intended to **load compressed data from files, ready to be uploaded to GPU**, no compression/decompression functionality is provided. This change is a first step towards a better modularization of raylib library.
+ 
+ - **Reviewed `rlgl` module for automatic limits checking**: Again, [`rlgl`](https://github.com/raysan5/raylib/blob/master/src/rlgl.h) has been reviewed to simplify usage. Now users do not need to worry about reaching the internal render-batch limits when they send their triangles to draw 2d/3d, `rlgl` manages it automatically! This change allows a **great simplification for other modules** like `rshapes`, `rtextures` and `rmodels` that do not need to worry about bufffer overflows and can just define as many vertex as desired!
+ 
+ - **Reviewed `rshapes` module to minimize the rlgl dependency**: Now `rshapes` 2d shapes drawing functions **only depend on 6 low-level functions**: `rlBegin()`, `rlEnd()`, `rlVertex3f()`, `rlTexCoord2f()`, `rlNormal3f()`, `rlSetTexture()`. With only those pseudo-OpenGl 1.1 minimal functionality, everything can be drawn! This improvement converts `rshapes` module in a **self-contained, portable shapes-drawing library that can be used independently of raylib**, as far as entry points for those 6 functions are provided by the user. It even allows to be used for software rendering, with the proper backend! 
+
+ - **Added data structures validation functions**: Multiple functions have been added by @RobLoach GitHub user to ease the validation of raylib data structures: `IsImageReady()`, `IsTextureReady()`, `IsSoundReady()`... Now users have a simple mechanism to **make sure data has been correctly loaded**, instead of checking internal structure values by themselfs.
+ 
+As usual, those are only some highlights but there is much more! New image generators, new color transformation functionality, improved blending support for color/alpha, etc... Make sure to check raylib [CHANGELOG]([CHANGELOG](https://github.com/raysan5/raylib/blob/master/CHANGELOG)) for a detailed list of changes! Please, note that all breaking changes have been flagged with a `WARNING` in the CHANGELOG, specially useful for binding creators!
+
+**raylib keeps improving one more version** with a special focus on maintainability and sustainability. Always working towards making the library more **simple and easy-to-use**. 
+
+Let's keep **enjoying games/tools/graphics programming!** :)

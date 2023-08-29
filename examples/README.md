@@ -186,7 +186,6 @@ Examples using raylib audio functionality, including sound/music loading and pla
 | 118 | [audio_music_stream](audio/audio_music_stream.c) | <img src="audio/audio_music_stream.png" alt="audio_music_stream" width="80"> | ⭐️☆☆☆ | 1.3 | **4.2** | [Ray](https://github.com/raysan5) |
 | 119 | [audio_raw_stream](audio/audio_raw_stream.c) | <img src="audio/audio_raw_stream.png" alt="audio_raw_stream" width="80"> | ⭐️⭐️⭐️☆ | 1.6 | **4.2** | [Ray](https://github.com/raysan5) |
 | 120 | [audio_sound_loading](audio/audio_sound_loading.c) | <img src="audio/audio_sound_loading.png" alt="audio_sound_loading" width="80"> | ⭐️☆☆☆ | 1.1 | 3.5 | [Ray](https://github.com/raysan5) |
-| 121 | [audio_multichannel_sound](audio/audio_multichannel_sound.c) | <img src="audio/audio_multichannel_sound.png" alt="audio_multichannel_sound" width="80"> | ⭐️☆☆☆ | 3.0 | 3.5 | [Chris Camacho](https://github.com/codifies) |
 
 ### category: others
 

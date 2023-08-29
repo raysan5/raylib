@@ -38,10 +38,10 @@ this file implementation in *one* C or C++ file to prevent collisions.
 | zlib 1.2.11 -1          |    72 MB/s |   307 MB/s |    42298774 | 42.30 |
 | zlib 1.2.11 -6          |    24 MB/s |   313 MB/s |    36548921 | 36.55 |
 | zlib 1.2.11 -9          |    20 MB/s |   314 MB/s |    36475792 | 36.48 |
-| sdefl 1.0 -0            |   127 MB/s |   371 MB/s |    40004116 | 39.88 |
-| sdefl 1.0 -1            |   111 MB/s |   398 MB/s |    38940674 | 38.82 |
-| sdefl 1.0 -5            |    45 MB/s |   420 MB/s |    36577183 | 36.46 |
-| sdefl 1.0 -7            |    38 MB/s |   423 MB/s |    36523781 | 36.41 |
+| sdefl 1.0 -0            |   127 MB/s |   355 MB/s |    40004116 | 39.88 |
+| sdefl 1.0 -1            |   111 MB/s |   413 MB/s |    38940674 | 38.82 |
+| sdefl 1.0 -5            |    45 MB/s |   436 MB/s |    36577183 | 36.46 |
+| sdefl 1.0 -7            |    38 MB/s |   432 MB/s |    36523781 | 36.41 |
 | libdeflate 1.3 -1       |   147 MB/s |   667 MB/s |    39597378 | 39.60 |
 | libdeflate 1.3 -6       |    69 MB/s |   689 MB/s |    36648318 | 36.65 |
 | libdeflate 1.3 -9       |    13 MB/s |   672 MB/s |    35197141 | 35.20 |
@@ -50,20 +50,20 @@ this file implementation in *one* C or C++ file to prevent collisions.
 ### Compression
 Results on the [Silesia compression corpus](http://sun.aei.polsl.pl/~sdeor/index.php?page=silesia):
 
-| File    |   Original | `sdefl 0`  	| `sdefl 5` 	| `sdefl 7` |
-| :------ | ---------: | -----------------: | ---------: | ----------: |
-| dickens | 10.192.446 |  4,260,187|  3,845,261|   3,833,657 |
-| mozilla | 51.220.480 | 20,774,706 | 19,607,009 |  19,565,867 |
-| mr      |  9.970.564 | 3,860,531 |  3,673,460 |   3,665,627 |
-| nci     | 33.553.445 | 4,030,283 |  3,094,526 |   3,006,075 |
-| ooffice |  6.152.192 | 3,320,063 |  3,186,373 |   3,183,815 |
-| osdb    | 10.085.684 | 3,919,646 |  3,649,510 |   3,649,477 |
-| reymont |  6.627.202 | 2,263,378 |  1,857,588 |   1,827,237 |
-| samba   | 21.606.400 | 6,121,797 |  5,462,670 |   5,450,762 |
-| sao     |  7.251.944 | 5,612,421 |  5,485,380 |   5,481,765 |
-| webster | 41.458.703 | 13,972,648 | 12,059,432 |  11,991,421 |
-| xml     |  5.345.280 | 886,620|    674,009 |     662,141 |
-| x-ray   |  8.474.240 | 6,304,655 |  6,244,779 |   6,244,779 |
+| File    |   Original | `sdefl 0`    | `sdefl 5`  | `sdefl 7`   |
+| --------| -----------| -------------| ---------- | ------------|
+| dickens | 10.192.446 | 4,260,187    |  3,845,261 |   3,833,657 |
+| mozilla | 51.220.480 | 20,774,706   | 19,607,009 |  19,565,867 |
+| mr      |  9.970.564 | 3,860,531    |  3,673,460 |   3,665,627 |
+| nci     | 33.553.445 | 4,030,283    |  3,094,526 |   3,006,075 |
+| ooffice |  6.152.192 | 3,320,063    |  3,186,373 |   3,183,815 |
+| osdb    | 10.085.684 | 3,919,646    |  3,649,510 |   3,649,477 |
+| reymont |  6.627.202 | 2,263,378    |  1,857,588 |   1,827,237 |
+| samba   | 21.606.400 | 6,121,797    |  5,462,670 |   5,450,762 |
+| sao     |  7.251.944 | 5,612,421    |  5,485,380 |   5,481,765 |
+| webster | 41.458.703 | 13,972,648   | 12,059,432 |  11,991,421 |
+| xml     |  5.345.280 | 886,620      |    674,009 |     662,141 |
+| x-ray   |  8.474.240 | 6,304,655    |  6,244,779 |   6,244,779 |
 
 ## License
 ```
@@ -71,7 +71,7 @@ Results on the [Silesia compression corpus](http://sun.aei.polsl.pl/~sdeor/index
 This software is available under 2 licenses -- choose whichever you prefer.
 ------------------------------------------------------------------------------
 ALTERNATIVE A - MIT License
-Copyright (c) 2020 Micha Mettke
+Copyright (c) 2020-2023 Micha Mettke
 Permission is hereby granted, free of charge, to any person obtaining a copy of
 this software and associated documentation files (the "Software"), to deal in
 the Software without restriction, including without limitation the rights to
@@ -125,7 +125,7 @@ extern "C" {
 
 #define SDEFL_MIN_MATCH 4
 #define SDEFL_BLK_MAX   (256*1024)
-#define SDEFL_SEQ_SIZ   ((SDEFL_BLK_MAX + SDEFL_MIN_MATCH)/SDEFL_MIN_MATCH)
+#define SDEFL_SEQ_SIZ   ((SDEFL_BLK_MAX+2)/3)
 
 #define SDEFL_SYM_MAX   (288)
 #define SDEFL_OFF_MAX   (32)
@@ -185,6 +185,7 @@ extern int zsdeflate(struct sdefl *s, void *o, const void *i, int n, int lvl);
 #define SDEFL_MAX_CODE_LEN      (15)
 #define SDEFL_SYM_BITS          (10u)
 #define SDEFL_SYM_MSK           ((1u << SDEFL_SYM_BITS)-1u)
+#define SDEFL_RAW_BLK_SIZE      (65535)
 #define SDEFL_LIT_LEN_CODES     (14)
 #define SDEFL_OFF_CODES         (15)
 #define SDEFL_PRE_CODES         (7)
@@ -192,6 +193,7 @@ extern int zsdeflate(struct sdefl *s, void *o, const void *i, int n, int lvl);
 #define SDEFL_EOB               (256)
 
 #define sdefl_npow2(n) (1 << (sdefl_ilog2((n)-1) + 1))
+#define sdefl_div_round_up(n,d) (((n)+((d)-1))/(d))
 
 static int
 sdefl_ilog2(int n) {
@@ -438,12 +440,12 @@ sdefl_precode(struct sdefl_symcnt *cnt, unsigned *freqs, unsigned *items,
   } while (run_start != total);
   cnt->items = (int)(at - items);
 }
-struct sdefl_match_codes {
+struct sdefl_match_codest {
   int ls, lc;
   int dc, dx;
 };
 static void
-sdefl_match_codes(struct sdefl_match_codes *cod, int dist, int len) {
+sdefl_match_codes(struct sdefl_match_codest *cod, int dist, int len) {
   static const short dxmax[] = {0,6,12,24,48,96,192,384,768,1536,3072,6144,12288,24576};
   static const unsigned char lslot[258+1] = {
     0, 0, 0, 0, 1, 2, 3, 4, 5, 6, 7, 8, 8, 9, 9, 10, 10, 11, 11, 12, 12, 12,
@@ -462,10 +464,52 @@ sdefl_match_codes(struct sdefl_match_codes *cod, int dist, int len) {
     27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27,
     27, 27, 28
   };
+  assert(len <= 258);
+  assert(dist <= 32768);
   cod->ls = lslot[len];
   cod->lc = 257 + cod->ls;
+  assert(cod->lc <= 285);
+
   cod->dx = sdefl_ilog2(sdefl_npow2(dist) >> 2);
   cod->dc = cod->dx ? ((cod->dx + 1) << 1) + (dist > dxmax[cod->dx]) : dist-1;
+}
+enum sdefl_blk_type {
+  SDEFL_BLK_UCOMPR,
+  SDEFL_BLK_DYN
+};
+static enum sdefl_blk_type
+sdefl_blk_type(const struct sdefl *s, int blk_len, int pre_item_len,
+               const unsigned *pre_freq, const unsigned char *pre_len) {
+  static const unsigned char x_pre_bits[] = { 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2,3,7};
+  static const unsigned char x_len_bits[] = {0,0,0,0,0,0,0,0, 1,1,1,1,2,2,2,2,
+    3,3,3,3,4,4,4,4, 5,5,5,5,0};
+  static const unsigned char x_off_bits[] = {0,0,0,0,1,1,2,2, 3,3,4,4,5,5,6,6,
+    7,7,8,8,9,9,10,10, 11,11,12,12,13,13};
+
+  int dyn_cost = 0;
+  int fix_cost = 0;
+  int sym = 0;
+
+  dyn_cost += 5 + 5 + 4 + (3 * pre_item_len);
+  for (sym = 0; sym < SDEFL_PRE_MAX; sym++)
+    dyn_cost += pre_freq[sym] * (x_pre_bits[sym] + pre_len[sym]);
+  for (sym = 0; sym < 256; sym++)
+    dyn_cost += s->freq.lit[sym] * s->cod.len.lit[sym];
+  dyn_cost += s->cod.len.lit[SDEFL_EOB];
+  for (sym = 257; sym < 286; sym++)
+    dyn_cost += s->freq.lit[sym] * (x_len_bits[sym - 257] + s->cod.len.lit[sym]);
+  for (sym = 0; sym < 30; sym++)
+    dyn_cost += s->freq.off[sym] * (x_off_bits[sym] + s->cod.len.off[sym]);
+
+  fix_cost += 8*(5 * sdefl_div_round_up(blk_len, SDEFL_RAW_BLK_SIZE) + blk_len + 1 + 2);
+  return (dyn_cost < fix_cost) ? SDEFL_BLK_DYN : SDEFL_BLK_UCOMPR;
+}
+static void
+sdefl_put16(unsigned char **dst, unsigned short x) {
+  unsigned char *val = *dst;
+  val[0] = (unsigned char)(x & 0xff);
+  val[1] = (unsigned char)(x >> 8);
+  *dst = val + 2;
 }
 static void
 sdefl_match(unsigned char **dst, struct sdefl *s, int dist, int len) {
@@ -475,7 +519,7 @@ sdefl_match(unsigned char **dst, struct sdefl *s, int dist, int len) {
   static const short dmin[] = {1,2,3,4,5,7,9,13,17,25,33,49,65,97,129,193,257,
       385,513,769,1025,1537,2049,3073,4097,6145,8193,12289,16385,24577};
 
-  struct sdefl_match_codes cod;
+  struct sdefl_match_codest cod;
   sdefl_match_codes(&cod, dist, len);
   sdefl_put(dst, s, (int)s->cod.word.lit[cod.lc], s->cod.len.lit[cod.lc]);
   sdefl_put(dst, s, len - lmin[cod.ls], lxn[cod.ls]);
@@ -484,7 +528,8 @@ sdefl_match(unsigned char **dst, struct sdefl *s, int dist, int len) {
 }
 static void
 sdefl_flush(unsigned char **dst, struct sdefl *s, int is_last,
-            const unsigned char *in) {
+            const unsigned char *in, int blk_begin, int blk_end) {
+  int blk_len = blk_end - blk_begin;
   int j, i = 0, item_cnt = 0;
   struct sdefl_symcnt symcnt = {0};
   unsigned codes[SDEFL_PRE_MAX];
@@ -494,41 +539,69 @@ sdefl_flush(unsigned char **dst, struct sdefl *s, int is_last,
   static const unsigned char perm[SDEFL_PRE_MAX] = {16,17,18,0,8,7,9,6,10,5,11,
       4,12,3,13,2,14,1,15};
 
-  /* huffman codes */
+  /* calculate huffman codes */
   s->freq.lit[SDEFL_EOB]++;
   sdefl_huff(s->cod.len.lit, s->cod.word.lit, s->freq.lit, SDEFL_SYM_MAX, SDEFL_LIT_LEN_CODES);
   sdefl_huff(s->cod.len.off, s->cod.word.off, s->freq.off, SDEFL_OFF_MAX, SDEFL_OFF_CODES);
   sdefl_precode(&symcnt, freqs, items, s->cod.len.lit, s->cod.len.off);
   sdefl_huff(lens, codes, freqs, SDEFL_PRE_MAX, SDEFL_PRE_CODES);
   for (item_cnt = SDEFL_PRE_MAX; item_cnt > 4; item_cnt--) {
-    if (lens[perm[item_cnt - 1]]) break;
+    if (lens[perm[item_cnt - 1]]){
+      break;
+    }
   }
-  /* block header */
-  sdefl_put(dst, s, is_last ? 0x01 : 0x00, 1); /* block */
-  sdefl_put(dst, s, 0x02, 2); /* dynamic huffman */
-  sdefl_put(dst, s, symcnt.lit - 257, 5);
-  sdefl_put(dst, s, symcnt.off - 1, 5);
-  sdefl_put(dst, s, item_cnt - 4, 4);
-  for (i = 0; i < item_cnt; ++i)
-    sdefl_put(dst, s, lens[perm[i]], 3);
-  for (i = 0; i < symcnt.items; ++i) {
-    unsigned sym = items[i] & 0x1F;
-    sdefl_put(dst, s, (int)codes[sym], lens[sym]);
-    if (sym < 16) continue;
-    if (sym == 16) sdefl_put(dst, s, items[i] >> 5, 2);
-    else if(sym == 17) sdefl_put(dst, s, items[i] >> 5, 3);
-    else sdefl_put(dst, s, items[i] >> 5, 7);
-  }
-  /* block sequences */
-  for (i = 0; i < s->seq_cnt; ++i) {
-    if (s->seq[i].off >= 0)
-      for (j = 0; j < s->seq[i].len; ++j) {
-        int c = in[s->seq[i].off + j];
-        sdefl_put(dst, s, (int)s->cod.word.lit[c], s->cod.len.lit[c]);
+  /* write block */
+  switch (sdefl_blk_type(s, blk_len, item_cnt, freqs, lens)) {
+  case SDEFL_BLK_UCOMPR: {
+    /* uncompressed blocks */
+    int n = sdefl_div_round_up(blk_len, SDEFL_RAW_BLK_SIZE);
+    for (i = 0; i < n; ++i) {
+      int fin = is_last && (i + 1 == n);
+      int amount = blk_len < SDEFL_RAW_BLK_SIZE ? blk_len : SDEFL_RAW_BLK_SIZE;
+      sdefl_put(dst, s, !!fin, 1); /* block */
+      sdefl_put(dst, s, 0x00, 2); /* stored block */
+      if (s->bitcnt) {
+        sdefl_put(dst, s, 0x00, 8 - s->bitcnt);
       }
-    else sdefl_match(dst, s, -s->seq[i].off, s->seq[i].len);
-  }
-  sdefl_put(dst, s, (int)(s)->cod.word.lit[SDEFL_EOB], (s)->cod.len.lit[SDEFL_EOB]);
+      assert(s->bitcnt == 0);
+      sdefl_put16(dst, (unsigned short)amount);
+      sdefl_put16(dst, ~(unsigned short)amount);
+      memcpy(*dst, in + blk_begin + i * SDEFL_RAW_BLK_SIZE, amount);
+      *dst = *dst + amount;
+      blk_len -= amount;
+    }
+  } break;
+  case SDEFL_BLK_DYN: {
+    /* dynamic huffman block */
+    sdefl_put(dst, s, !!is_last, 1); /* block */
+    sdefl_put(dst, s, 0x02, 2); /* dynamic huffman */
+    sdefl_put(dst, s, symcnt.lit - 257, 5);
+    sdefl_put(dst, s, symcnt.off - 1, 5);
+    sdefl_put(dst, s, item_cnt - 4, 4);
+    for (i = 0; i < item_cnt; ++i) {
+      sdefl_put(dst, s, lens[perm[i]], 3);
+    }
+    for (i = 0; i < symcnt.items; ++i) {
+      unsigned sym = items[i] & 0x1F;
+      sdefl_put(dst, s, (int)codes[sym], lens[sym]);
+      if (sym < 16) continue;
+      if (sym == 16) sdefl_put(dst, s, items[i] >> 5, 2);
+      else if(sym == 17) sdefl_put(dst, s, items[i] >> 5, 3);
+      else sdefl_put(dst, s, items[i] >> 5, 7);
+    }
+    /* block sequences */
+    for (i = 0; i < s->seq_cnt; ++i) {
+      if (s->seq[i].off >= 0) {
+        for (j = 0; j < s->seq[i].len; ++j) {
+          int c = in[s->seq[i].off + j];
+          sdefl_put(dst, s, (int)s->cod.word.lit[c], s->cod.len.lit[c]);
+        }
+      } else {
+        sdefl_match(dst, s, -s->seq[i].off, s->seq[i].len);
+      }
+    }
+    sdefl_put(dst, s, (int)(s)->cod.word.lit[SDEFL_EOB], (s)->cod.len.lit[SDEFL_EOB]);
+  } break;}
   memset(&s->freq, 0, sizeof(s->freq));
   s->seq_cnt = 0;
 }
@@ -541,8 +614,12 @@ sdefl_seq(struct sdefl *s, int off, int len) {
 }
 static void
 sdefl_reg_match(struct sdefl *s, int off, int len) {
-  struct sdefl_match_codes cod;
+  struct sdefl_match_codest cod;
   sdefl_match_codes(&cod, off, len);
+
+  assert(cod.lc < SDEFL_SYM_MAX);
+  assert(cod.dc < SDEFL_OFF_MAX);
+
   s->freq.lit[cod.lc]++;
   s->freq.off[cod.dc]++;
 }
@@ -551,22 +628,35 @@ struct sdefl_match {
   int len;
 };
 static void
-sdefl_fnd(struct sdefl_match *m, const struct sdefl *s,
-          int chain_len, int max_match, const unsigned char *in, int p) {
-  int i = s->tbl[sdefl_hash32(&in[p])];
-  int limit = ((p-SDEFL_WIN_SIZ)<SDEFL_NIL)?SDEFL_NIL:(p-SDEFL_WIN_SIZ);
+sdefl_fnd(struct sdefl_match *m, const struct sdefl *s, int chain_len,
+          int max_match, const unsigned char *in, int p, int e) {
+  int i = s->tbl[sdefl_hash32(in + p)];
+  int limit = ((p - SDEFL_WIN_SIZ) < SDEFL_NIL) ? SDEFL_NIL : (p-SDEFL_WIN_SIZ);
+
+  assert(p < e);
+  assert(p + max_match <= e);
   while (i > limit) {
-    if (in[i+m->len] == in[p+m->len] &&
-        (sdefl_uload32(&in[i]) == sdefl_uload32(&in[p]))){
+    assert(i + m->len < e);
+    assert(p + m->len < e);
+    assert(i + SDEFL_MIN_MATCH < e);
+    assert(p + SDEFL_MIN_MATCH < e);
+
+    if (in[i + m->len] == in[p + m->len] &&
+      (sdefl_uload32(&in[i]) == sdefl_uload32(&in[p]))) {
       int n = SDEFL_MIN_MATCH;
-      while (n < max_match && in[i+n] == in[p+n]) n++;
+      while (n < max_match && in[i + n] == in[p + n]) {
+        assert(i + n < e);
+        assert(p + n < e);
+        n++;
+      }
       if (n > m->len) {
         m->len = n, m->off = p - i;
-        if (n == max_match) break;
+        if (n == max_match)
+          break;
       }
     }
     if (!(--chain_len)) break;
-    i = s->prv[i&SDEFL_WIN_MSK];
+    i = s->prv[i & SDEFL_WIN_MSK];
   }
 }
 static int
@@ -579,18 +669,20 @@ sdefl_compr(struct sdefl *s, unsigned char *out, const unsigned char *in,
   for (n = 0; n < SDEFL_HASH_SIZ; ++n) {
     s->tbl[n] = SDEFL_NIL;
   }
-  do {int blk_end = i + SDEFL_BLK_MAX < in_len ? i + SDEFL_BLK_MAX : in_len;
+  do {int blk_begin = i;
+    int blk_end = ((i + SDEFL_BLK_MAX) < in_len) ? (i + SDEFL_BLK_MAX) : in_len;
     while (i < blk_end) {
       struct sdefl_match m = {0};
-      int max_match = ((in_len-i)>SDEFL_MAX_MATCH) ? SDEFL_MAX_MATCH:(in_len-i);
+      int left = blk_end - i;
+      int max_match = (left > SDEFL_MAX_MATCH) ? SDEFL_MAX_MATCH : left;
       int nice_match = pref[lvl] < max_match ? pref[lvl] : max_match;
-      int run = 1, inc = 1, run_inc;
+      int run = 1, inc = 1, run_inc = 0;
       if (max_match > SDEFL_MIN_MATCH) {
-        sdefl_fnd(&m, s, max_chain, max_match, in, i);
+        sdefl_fnd(&m, s, max_chain, max_match, in, i, in_len);
       }
-      if (lvl >= 5 && m.len >= SDEFL_MIN_MATCH && m.len < nice_match){
+      if (lvl >= 5 && m.len >= SDEFL_MIN_MATCH && m.len + 1 < nice_match){
         struct sdefl_match m2 = {0};
-        sdefl_fnd(&m2, s, max_chain, m.len+1, in, i+1);
+        sdefl_fnd(&m2, s, max_chain, m.len + 1, in, i + 1, in_len);
         m.len = (m2.len > m.len) ? 0 : m.len;
       }
       if (m.len >= SDEFL_MIN_MATCH) {
@@ -615,20 +707,23 @@ sdefl_compr(struct sdefl *s, unsigned char *out, const unsigned char *in,
           unsigned h = sdefl_hash32(&in[i]);
           s->prv[i&SDEFL_WIN_MSK] = s->tbl[h];
           s->tbl[h] = i, i += inc;
+          assert(i <= blk_end);
         }
       } else {
         i += run_inc;
+        assert(i <= blk_end);
       }
     }
     if (litlen) {
       sdefl_seq(s, i - litlen, litlen);
       litlen = 0;
     }
-    sdefl_flush(&q, s, blk_end == in_len, in);
+    sdefl_flush(&q, s, blk_end == in_len, in, blk_begin, blk_end);
   } while (i < in_len);
-
-  if (s->bitcnt)
+  if (s->bitcnt) {
     sdefl_put(&q, s, 0x00, 8 - s->bitcnt);
+  }
+  assert(s->bitcnt == 0);
   return (int)(q - out);
 }
 extern int
@@ -688,9 +783,8 @@ zsdeflate(struct sdefl *s, void *out, const void *in, int n, int lvl) {
 }
 extern int
 sdefl_bound(int len) {
-  int a = 128 + (len * 110) / 100;
-  int b = 128 + len + ((len / (31 * 1024)) + 1) * 5;
-  return (a > b) ? a : b;
+  int max_blocks = 1 + sdefl_div_round_up(len, SDEFL_RAW_BLK_SIZE);
+  int bound = 5 * max_blocks + len + 1 + 4 + 8;
+  return bound;
 }
 #endif /* SDEFL_IMPLEMENTATION */
-

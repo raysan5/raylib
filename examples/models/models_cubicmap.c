@@ -7,7 +7,7 @@
 *   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
 *   BSD-like license that allows static linking with closed source software
 *
-*   Copyright (c) 2015-2022 Ramon Santamaria (@raysan5)
+*   Copyright (c) 2015-2023 Ramon Santamaria (@raysan5)
 *
 ********************************************************************************************/
 
@@ -26,7 +26,12 @@ int main(void)
     InitWindow(screenWidth, screenHeight, "raylib [models] example - cubesmap loading and drawing");
 
     // Define the camera to look into our 3d world
-    Camera camera = { { 16.0f, 14.0f, 16.0f }, { 0.0f, 0.0f, 0.0f }, { 0.0f, 1.0f, 0.0f }, 45.0f, 0 };
+    Camera camera = { 0 };
+    camera.position = (Vector3){ 16.0f, 14.0f, 16.0f };     // Camera position
+    camera.target = (Vector3){ 0.0f, 0.0f, 0.0f };          // Camera looking at point
+    camera.up = (Vector3){ 0.0f, 1.0f, 0.0f };              // Camera up vector (rotation towards target)
+    camera.fovy = 45.0f;                                    // Camera field-of-view Y
+    camera.projection = CAMERA_PERSPECTIVE;                 // Camera projection type
 
     Image image = LoadImage("resources/cubicmap.png");      // Load cubicmap image (RAM)
     Texture2D cubicmap = LoadTextureFromImage(image);       // Convert image to texture to display (VRAM)
@@ -36,23 +41,21 @@ int main(void)
 
     // NOTE: By default each cube is mapped to one part of texture atlas
     Texture2D texture = LoadTexture("resources/cubicmap_atlas.png");    // Load map texture
-    model.materials[0].maps[MATERIAL_MAP_DIFFUSE].texture = texture;             // Set map diffuse texture
+    model.materials[0].maps[MATERIAL_MAP_DIFFUSE].texture = texture;    // Set map diffuse texture
 
     Vector3 mapPosition = { -16.0f, 0.0f, -8.0f };          // Set model position
 
     UnloadImage(image);     // Unload cubesmap image from RAM, already uploaded to VRAM
 
-    SetCameraMode(camera, CAMERA_ORBITAL);  // Set an orbital camera mode
-
-    SetTargetFPS(60);                       // Set our game to run at 60 frames-per-second
+    SetTargetFPS(60);                   // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
 
     // Main game loop
-    while (!WindowShouldClose())            // Detect window close button or ESC key
+    while (!WindowShouldClose())        // Detect window close button or ESC key
     {
         // Update
         //----------------------------------------------------------------------------------
-        UpdateCamera(&camera);
+        UpdateCamera(&camera, CAMERA_ORBITAL);
         //----------------------------------------------------------------------------------
 
         // Draw

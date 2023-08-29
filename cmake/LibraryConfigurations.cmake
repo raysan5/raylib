@@ -1,3 +1,12 @@
+# Set OpenGL_GL_PREFERENCE to new "GLVND" even when legacy library exists and
+# cmake is <= 3.10
+#
+# See https://cmake.org/cmake/help/latest/policy/CMP0072.html for more
+# information.
+if(POLICY CMP0072)
+  cmake_policy(SET CMP0072 NEW)
+endif()
+
 if (${PLATFORM} MATCHES "Desktop")
     set(PLATFORM_CPP "PLATFORM_DESKTOP")
 
@@ -16,7 +25,7 @@ if (${PLATFORM} MATCHES "Desktop")
         add_definitions(-D_CRT_SECURE_NO_WARNINGS)
         find_package(OpenGL QUIET)
         set(LIBS_PRIVATE ${OPENGL_LIBRARIES} winmm)
-    else ()
+    elseif (UNIX)
         find_library(pthread NAMES pthread)
         find_package(OpenGL QUIET)
         if ("${OPENGL_LIBRARIES}" STREQUAL "")
@@ -27,9 +36,22 @@ if (${PLATFORM} MATCHES "Desktop")
             find_library(OSS_LIBRARY ossaudio)
         endif ()
 
+        set(LIBS_PRIVATE m pthread ${OPENGL_LIBRARIES} ${OSS_LIBRARY})
+    else ()
+        find_library(pthread NAMES pthread)
+        find_package(OpenGL QUIET)
+        if ("${OPENGL_LIBRARIES}" STREQUAL "")
+            set(OPENGL_LIBRARIES "GL")
+        endif ()
+        
         set(LIBS_PRIVATE m atomic pthread ${OPENGL_LIBRARIES} ${OSS_LIBRARY})
 
-        if (USE_AUDIO)
+        if ("${CMAKE_SYSTEM_NAME}" MATCHES "(Net|Open)BSD")
+            find_library(OSS_LIBRARY ossaudio)
+            set(LIBS_PRIVATE m pthread ${OPENGL_LIBRARIES} ${OSS_LIBRARY})
+        endif ()
+
+        if (NOT "${CMAKE_SYSTEM_NAME}" MATCHES "(Net|Open)BSD" AND USE_AUDIO)
             set(LIBS_PRIVATE ${LIBS_PRIVATE} dl)
         endif ()
     endif ()
@@ -45,7 +67,6 @@ elseif (${PLATFORM} MATCHES "Android")
     set(GRAPHICS "GRAPHICS_API_OPENGL_ES2")
     set(CMAKE_POSITION_INDEPENDENT_CODE ON)
     list(APPEND raylib_sources ${ANDROID_NDK}/sources/android/native_app_glue/android_native_app_glue.c)
-    add_definitions(-DANDROID -D__ANDROID_API__=21)
     include_directories(${ANDROID_NDK}/sources/android/native_app_glue)
     set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,--exclude-libs,libatomic.a -Wl,--build-id -Wl,-z,noexecstack -Wl,-z,relro -Wl,-z,now -Wl,--warn-shared-textrel -Wl,--fatal-warnings -u ANativeActivity_onCreate -Wl,-undefined,dynamic_lookup")
 
@@ -85,7 +106,7 @@ elseif ("${PLATFORM}" MATCHES "DRM")
 
 endif ()
 
-if (${OPENGL_VERSION})
+if (NOT ${OPENGL_VERSION} MATCHES "OFF")
     set(${SUGGESTED_GRAPHICS} "${GRAPHICS}")
     if (${OPENGL_VERSION} MATCHES "4.3")
 		set(GRAPHICS "GRAPHICS_API_OPENGL_43")

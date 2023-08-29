@@ -9,14 +9,19 @@
 *   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
 *   BSD-like license that allows static linking with closed source software
 *
-*   Copyright (c) 2021-2022 Chris Camacho (@codifies) and Ramon Santamaria (@raysan5)
+*   Copyright (c) 2021-2023 Chris Camacho (@codifies) and Ramon Santamaria (@raysan5)
 *
 ********************************************************************************************/
 
 #include "raylib.h"
+
+#include "rlgl.h"           // Required for: Vertex definition
 #include "raymath.h"
 
 #define MAX_POINTS  11      // 10 points and back to the start
+
+// Draw textured polygon, defined by vertex and texture coordinates
+void DrawTexturePoly(Texture2D texture, Vector2 center, Vector2 *points, Vector2 *texcoords, int pointCount, Color tint);
 
 //------------------------------------------------------------------------------------
 // Program main entry point
@@ -86,7 +91,7 @@ int main(void)
 
             DrawText("textured polygon", 20, 20, 20, DARKGRAY);
 
-            DrawTexturePoly(texture, (Vector2){ GetScreenWidth()/2, GetScreenHeight()/2 },
+            DrawTexturePoly(texture, (Vector2){ GetScreenWidth()/2.0f, GetScreenHeight()/2.0f },
                             positions, texcoords, MAX_POINTS, WHITE);
 
         EndDrawing();
@@ -101,4 +106,35 @@ int main(void)
     //--------------------------------------------------------------------------------------
 
     return 0;
+}
+
+// Draw textured polygon, defined by vertex and texture coordinates
+// NOTE: Polygon center must have straight line path to all points
+// without crossing perimeter, points must be in anticlockwise order
+void DrawTexturePoly(Texture2D texture, Vector2 center, Vector2 *points, Vector2 *texcoords, int pointCount, Color tint)
+{
+    rlSetTexture(texture.id);
+
+    // Texturing is only supported on RL_QUADS
+    rlBegin(RL_QUADS);
+
+        rlColor4ub(tint.r, tint.g, tint.b, tint.a);
+
+        for (int i = 0; i < pointCount - 1; i++)
+        {
+            rlTexCoord2f(0.5f, 0.5f);
+            rlVertex2f(center.x, center.y);
+
+            rlTexCoord2f(texcoords[i].x, texcoords[i].y);
+            rlVertex2f(points[i].x + center.x, points[i].y + center.y);
+
+            rlTexCoord2f(texcoords[i + 1].x, texcoords[i + 1].y);
+            rlVertex2f(points[i + 1].x + center.x, points[i + 1].y + center.y);
+
+            rlTexCoord2f(texcoords[i + 1].x, texcoords[i + 1].y);
+            rlVertex2f(points[i + 1].x + center.x, points[i + 1].y + center.y);
+        }
+    rlEnd();
+
+    rlSetTexture(0);
 }

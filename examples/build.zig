@@ -1,10 +1,11 @@
 const std = @import("std");
 const builtin = @import("builtin");
 
-fn add_module(comptime module: []const u8, b: *std.build.Builder, target: std.zig.CrossTarget) !*std.build.Step {
-    // Standard release options allow the person running `zig build` to select
-    // between Debug, ReleaseSafe, ReleaseFast, and ReleaseSmall.
-    const mode = b.standardReleaseOptions();
+// This has been tested to work with zig master branch as of commit 87de821 or May 14 2023
+fn add_module(comptime module: []const u8, b: *std.Build, target: std.zig.CrossTarget, optimize: std.builtin.OptimizeMode) !*std.Build.Step {
+    if (target.getOsTag() == .emscripten) {
+        @panic("Emscripten building via Zig unsupported");
+    }
 
     const all = b.step(module, "All " ++ module ++ " examples");
     const dir = try std.fs.cwd().openIterableDir(module, .{});
@@ -18,33 +19,33 @@ fn add_module(comptime module: []const u8, b: *std.build.Builder, target: std.zi
         // zig's mingw headers do not include pthread.h
         if (std.mem.eql(u8, "core_loading_thread", name) and target.getOsTag() == .windows) continue;
 
-        const exe = b.addExecutable(name, null);
-        exe.addCSourceFile(path, switch (target.getOsTag()) {
-            .windows => &[_][]const u8{},
-            .linux => &[_][]const u8{},
-            .macos => &[_][]const u8{"-DPLATFORM_DESKTOP"},
-            else => @panic("Unsupported OS"),
+        const exe = b.addExecutable(.{
+            .name = name,
+            .target = target,
+            .optimize = optimize,
         });
-        exe.setTarget(target);
-        exe.setBuildMode(mode);
+        exe.addCSourceFile(path, &[_][]const u8{});
         exe.linkLibC();
         exe.addObjectFile(switch (target.getOsTag()) {
-            .windows => "../src/raylib.lib",
-            .linux => "../src/libraylib.a",
-            .macos => "../src/libraylib.a",
+            .windows => "../src/zig-out/lib/raylib.lib",
+            .linux => "../src/zig-out/lib/libraylib.a",
+            .macos => "../src/zig-out/lib/libraylib.a",
+            .emscripten => "../src/zig-out/lib/libraylib.a",
             else => @panic("Unsupported OS"),
         });
 
-        exe.addIncludeDir("../src");
-        exe.addIncludeDir("../src/external");
-        exe.addIncludeDir("../src/external/glfw/include");
+        exe.addIncludePath("../src");
+        exe.addIncludePath("../src/external");
+        exe.addIncludePath("../src/external/glfw/include");
 
-        switch (exe.target.toTarget().os.tag) {
+        switch (target.getOsTag()) {
             .windows => {
                 exe.linkSystemLibrary("winmm");
                 exe.linkSystemLibrary("gdi32");
                 exe.linkSystemLibrary("opengl32");
-                exe.addIncludeDir("external/glfw/deps/mingw");
+                exe.addIncludePath("external/glfw/deps/mingw");
+
+                exe.defineCMacro("PLATFORM_DESKTOP", null);
             },
             .linux => {
                 exe.linkSystemLibrary("GL");
@@ -52,6 +53,8 @@ fn add_module(comptime module: []const u8, b: *std.build.Builder, target: std.zi
                 exe.linkSystemLibrary("dl");
                 exe.linkSystemLibrary("m");
                 exe.linkSystemLibrary("X11");
+
+                exe.defineCMacro("PLATFORM_DESKTOP", null);
             },
             .macos => {
                 exe.linkFramework("Foundation");
@@ -60,16 +63,16 @@ fn add_module(comptime module: []const u8, b: *std.build.Builder, target: std.zi
                 exe.linkFramework("CoreAudio");
                 exe.linkFramework("CoreVideo");
                 exe.linkFramework("IOKit");
+
+                exe.defineCMacro("PLATFORM_DESKTOP", null);
             },
             else => {
                 @panic("Unsupported OS");
             },
         }
 
-        exe.setOutputDir(module);
-
-        var run = exe.run();
-        run.step.dependOn(&b.addInstallArtifact(exe).step);
+        b.installArtifact(exe);
+        var run = b.addRunArtifact(exe);
         run.cwd = module;
         b.step(name, name).dependOn(&run.step);
         all.dependOn(&exe.step);
@@ -77,21 +80,25 @@ fn add_module(comptime module: []const u8, b: *std.build.Builder, target: std.zi
     return all;
 }
 
-pub fn build(b: *std.build.Builder) !void {
+pub fn build(b: *std.Build) !void {
     // Standard target options allows the person running `zig build` to choose
     // what target to build for. Here we do not override the defaults, which
     // means any target is allowed, and the default is native. Other options
     // for restricting supported target set are available.
     const target = b.standardTargetOptions(.{});
+    // Standard optimization options allow the person running `zig build` to select
+    // between Debug, ReleaseSafe, ReleaseFast, and ReleaseSmall. Here we do not
+    // set a preferred release mode, allowing the user to decide how to optimize.
+    const optimize = b.standardOptimizeOption(.{});
 
     const all = b.getInstallStep();
 
-    all.dependOn(try add_module("audio", b, target));
-    all.dependOn(try add_module("core", b, target));
-    all.dependOn(try add_module("models", b, target));
-    all.dependOn(try add_module("others", b, target));
-    all.dependOn(try add_module("shaders", b, target));
-    all.dependOn(try add_module("shapes", b, target));
-    all.dependOn(try add_module("text", b, target));
-    all.dependOn(try add_module("textures", b, target));
+    all.dependOn(try add_module("audio", b, target, optimize));
+    all.dependOn(try add_module("core", b, target, optimize));
+    all.dependOn(try add_module("models", b, target, optimize));
+    all.dependOn(try add_module("others", b, target, optimize));
+    all.dependOn(try add_module("shaders", b, target, optimize));
+    all.dependOn(try add_module("shapes", b, target, optimize));
+    all.dependOn(try add_module("text", b, target, optimize));
+    all.dependOn(try add_module("textures", b, target, optimize));
 }

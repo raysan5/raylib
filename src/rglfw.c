@@ -7,7 +7,7 @@
 *
 *   LICENSE: zlib/libpng
 *
-*   Copyright (c) 2017-2022 Ramon Santamaria (@raysan5)
+*   Copyright (c) 2017-2023 Ramon Santamaria (@raysan5)
 *
 *   This software is provided "as-is", without any express or implied warranty. In no event
 *   will the authors be held liable for any damages arising from the use of this software.
@@ -75,7 +75,7 @@
     #include "external/glfw/src/win32_time.c"
     #include "external/glfw/src/win32_thread.c"
     #include "external/glfw/src/wgl_context.c"
-    
+
     #include "external/glfw/src/egl_context.c"
     #include "external/glfw/src/osmesa_context.c"
 #endif
@@ -87,10 +87,10 @@
     #include "external/glfw/src/posix_poll.c"
     #include "external/glfw/src/linux_joystick.c"
     #include "external/glfw/src/xkb_unicode.c"
-    
+
     #include "external/glfw/src/egl_context.c"
     #include "external/glfw/src/osmesa_context.c"
-    
+
     #if defined(_GLFW_WAYLAND)
         #include "external/glfw/src/wl_init.c"
         #include "external/glfw/src/wl_monitor.c"
@@ -108,9 +108,10 @@
     #include "external/glfw/src/posix_module.c"
     #include "external/glfw/src/posix_thread.c"
     #include "external/glfw/src/posix_time.c"
+    #include "external/glfw/src/posix_poll.c"
     #include "external/glfw/src/null_joystick.c"
     #include "external/glfw/src/xkb_unicode.c"
-    
+
     #include "external/glfw/src/x11_init.c"
     #include "external/glfw/src/x11_monitor.c"
     #include "external/glfw/src/x11_window.c"
@@ -129,7 +130,7 @@
     #include "external/glfw/src/cocoa_window.m"
     #include "external/glfw/src/cocoa_time.c"
     #include "external/glfw/src/nsgl_context.m"
-    
+
     #include "external/glfw/src/egl_context.c"
     #include "external/glfw/src/osmesa_context.c"
 #endif

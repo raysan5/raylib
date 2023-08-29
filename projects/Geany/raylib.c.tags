@@ -202,6 +202,7 @@ ImageDrawText|void|(Image *dst, Vector2 position, const char *text, int fontSize
 ImageDrawTextEx|void|(Image *dst, Vector2 position, Font font, const char *text, float fontSize, float spacing, Color color);|
 ImageFlipVertical|void|(Image *image);|
 ImageFlipHorizontal|void|(Image *image);|
+ImageRotate|void|(Image *image, int degrees);|
 ImageRotateCW|void|(Image *image);|
 ImageRotateCCW|void|(Image *image);|
 ImageColorTint|void|(Image *image, Color color);|
@@ -211,9 +212,9 @@ ImageColorContrast|void|(Image *image, float contrast);|
 ImageColorBrightness|void|(Image *image, int brightness);|
 ImageColorReplace|void|(Image *image, Color color, Color replace);|
 GenImageColor|Image|(int width, int height, Color color);|
-GenImageGradientV|Image|(int width, int height, Color top, Color bottom);|
-GenImageGradientH|Image|(int width, int height, Color left, Color right);|
+GenImageGradientLinear|Image|(int width, int height, int direction, Color start, Color end);|
 GenImageGradientRadial|Image|(int width, int height, float density, Color inner, Color outer);|
+GenImageGradientSquare|Image|(int width, int height, float density, Color inner, Color outer);|
 GenImageChecked|Image|(int width, int height, int checksX, int checksY, Color col1, Color col2);|
 GenImageWhiteNoise|Image|(int width, int height, float factor);|
 GenImagePerlinNoise|Image|(int width, int height, int offsetX, int offsetY, float scale);|

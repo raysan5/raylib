@@ -2,7 +2,7 @@
 #
 #   raylib makefile for Desktop platforms, Raspberry Pi, Android and HTML5
 #
-#   Copyright (c) 2013-2022 Ramon Santamaria (@raysan5)
+#   Copyright (c) 2013-2023 Ramon Santamaria (@raysan5)
 #
 #   This software is provided "as-is", without any express or implied warranty. In no event
 #   will the authors be held liable for any damages arising from the use of this software.
@@ -30,7 +30,7 @@ PLATFORM              ?= PLATFORM_WEB
 
 # Define required raylib variables
 PROJECT_NAME          ?= raylib_examples
-RAYLIB_VERSION        ?= 4.2.0
+RAYLIB_VERSION        ?= 4.5.0
 RAYLIB_PATH           ?= ..
 
 # Locations of raylib.h and libraylib.a/libraylib.so
@@ -60,8 +60,8 @@ ifeq ($(PLATFORM),PLATFORM_RPI)
     endif
 endif
 
-# Determine PLATFORM_OS in case PLATFORM_DESKTOP selected
-ifeq ($(PLATFORM),PLATFORM_DESKTOP)
+# Determine PLATFORM_OS in case PLATFORM_DESKTOP or PLATFORM_WEB selected
+ifeq ($(PLATFORM),$(filter $(PLATFORM),PLATFORM_DESKTOP PLATFORM_WEB))
     # No uname.exe on MinGW!, but OS=Windows_NT on Windows!
     # ifeq ($(UNAME),Msys) -> Windows
     ifeq ($(OS),Windows_NT)
@@ -119,16 +119,18 @@ ifeq ($(PLATFORM),PLATFORM_DRM)
 endif
 
 # Define raylib release directory for compiled library
-RAYLIB_RELEASE_PATH 	?= $(RAYLIB_PATH)/src
+RAYLIB_RELEASE_PATH    ?= $(RAYLIB_PATH)/src
 
 ifeq ($(PLATFORM),PLATFORM_WEB)
-    # Emscripten required variables
-    EMSDK_PATH         ?= C:/emsdk
-    EMSCRIPTEN_PATH    ?= $(EMSDK_PATH)/upstream/emscripten
-    CLANG_PATH          = $(EMSDK_PATH)/upstream/bin
-    PYTHON_PATH         = $(EMSDK_PATH)/python/3.9.2-1_64bit
-    NODE_PATH           = $(EMSDK_PATH)/node/14.15.5_64bit/bin
-    export PATH         = $(EMSDK_PATH);$(EMSCRIPTEN_PATH);$(CLANG_PATH);$(NODE_PATH);$(PYTHON_PATH):$$(PATH)
+    ifeq ($(PLATFORM_OS),WINDOWS)
+        # Emscripten required variables
+		EMSDK_PATH         ?= C:/emsdk
+		EMSCRIPTEN_PATH    ?= $(EMSDK_PATH)/upstream/emscripten
+		CLANG_PATH          = $(EMSDK_PATH)/upstream/bin
+		PYTHON_PATH         = $(EMSDK_PATH)/python/3.9.2-1_64bit
+		NODE_PATH           = $(EMSDK_PATH)/node/14.15.5_64bit/bin
+		export PATH         = $(EMSDK_PATH);$(EMSCRIPTEN_PATH);$(CLANG_PATH);$(NODE_PATH);$(PYTHON_PATH):$$(PATH)
+    endif
 endif
 
 # Define default C compiler: CC
@@ -195,9 +197,13 @@ ifeq ($(BUILD_MODE),DEBUG)
     endif
 else
     ifeq ($(PLATFORM),PLATFORM_WEB)
-        CFLAGS += -Os
+        ifeq ($(BUILD_WEB_ASYNCIFY),TRUE)
+            CFLAGS += -O3
+        else
+            CFLAGS += -Os
+        endif
     else
-        CFLAGS += -s -O1
+        CFLAGS += -s -O2
     endif
 endif
 
@@ -279,11 +285,12 @@ ifeq ($(PLATFORM),PLATFORM_WEB)
     # -s ASYNCIFY                # lets synchronous C/C++ code interact with asynchronous JS
     # -s FORCE_FILESYSTEM=1      # force filesystem to load/save files data
     # -s ASSERTIONS=1            # enable runtime checks for common memory allocation errors (-O1 and above turn it off)
+    # -s EXPORTED_RUNTIME_METHODS=ccall  # require exporting some LEGACY_RUNTIME functions, ccall() is required by miniaudio
     # --profiling                # include information for code profiling
     # --memory-init-file 0       # to avoid an external memory initialization code file (.mem)
     # --preload-file resources   # specify a resources folder for data compilation
     # --source-map-base          # allow debugging in browser with source map
-    LDFLAGS += -s USE_GLFW=3 -s ASYNCIFY
+    LDFLAGS += -s USE_GLFW=3 -s ASYNCIFY -s EXPORTED_RUNTIME_METHODS=ccall
 
     # NOTE: Simple raylib examples are compiled to be interpreter with asyncify, that way,
     # we can compile same code for ALL platforms with no change required, but, working on bigger
@@ -328,6 +335,9 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
         ifeq ($(RAYLIB_LIBTYPE),SHARED)
             LDLIBS += -lc
         endif
+
+        # NOTE: On ARM 32bit arch, miniaudio requires atomics library
+        LDLIBS += -latomic
     endif
     ifeq ($(PLATFORM_OS),OSX)
         # Libraries for OSX 10.9 desktop compiling
@@ -376,6 +386,7 @@ CORE = \
     core/core_input_gamepad \
     core/core_input_multitouch \
     core/core_input_gestures \
+    core/core_input_gestures_web \
     core/core_2d_camera \
     core/core_2d_camera_platformer \
     core/core_2d_camera_mouse_zoom \
@@ -390,13 +401,13 @@ CORE = \
     core/core_scissor_test \
     core/core_storage_values \
     core/core_vr_simulator \
-    core/core_loading_thread \
     core/core_window_flags \
     core/core_window_letterbox \
     core/core_window_should_close \
     core/core_split_screen \
     core/core_smooth_pixelperfect \
-    core/core_custom_frame_control
+    core/core_custom_frame_control \
+    core/core_loading_thread
 
 SHAPES = \
     shapes/shapes_basic_shapes \
@@ -433,6 +444,7 @@ TEXTURES = \
     textures/textures_sprite_anim \
     textures/textures_sprite_button \
     textures/textures_sprite_explosion \
+    textures/textures_textured_curve \
     textures/textures_bunnymark \
     textures/textures_blend_modes \
     textures/textures_draw_tiled \
@@ -460,6 +472,7 @@ MODELS = \
     models/models_billboard \
     models/models_box_collisions \
     models/models_cubicmap \
+    models/models_draw_cube_texture \
     models/models_first_person_maze \
     models/models_geometric_shapes \
     models/models_mesh_generation \
@@ -467,6 +480,7 @@ MODELS = \
     models/models_loading \
     models/models_loading_vox \
     models/models_loading_gltf \
+    models/models_loading_m3d \
     models/models_orthographic_projection \
     models/models_rlgl_solar_system \
     models/models_skybox \
@@ -492,15 +506,17 @@ SHADERS = \
     shaders/shaders_spotlight \
     shaders/shaders_hot_reloading \
     shaders/shaders_mesh_instancing \
-    shaders/shaders_multi_sample2d
+    shaders/shaders_multi_sample2d \
+    shaders/shaders_write_depth \
+    shaders/shaders_hybrid_render
 
 AUDIO = \
     audio/audio_module_playing \
     audio/audio_music_stream \
     audio/audio_raw_stream \
     audio/audio_sound_loading \
-    audio/audio_multichannel_sound \
-    audio/audio_stream_effects
+    audio/audio_stream_effects \
+    audio/audio_mixed_processor
 
 CURRENT_MAKEFILE = $(lastword $(MAKEFILE_LIST))
 
@@ -544,12 +560,15 @@ core/core_input_multitouch: core/core_input_multitouch.c
 core/core_input_gestures: core/core_input_gestures.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
+core/core_input_gestures_web: core/core_input_gestures_web.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
+
 core/core_2d_camera: core/core_2d_camera.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
 core/core_2d_camera_platformer: core/core_2d_camera_platformer.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
-    
+
 core/core_2d_camera_mouse_zoom: core/core_2d_camera_mouse_zoom.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
@@ -590,13 +609,6 @@ core/core_vr_simulator: core/core_vr_simulator.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
     --preload-file core/resources/distortion100.fs@resources/distortion100.fs
 
-# NOTE: To use multi-threading raylib must be compiled with multi-theading support (-s USE_PTHREADS=1)
-# WARNING: For security reasons multi-threading is not supported on browsers, it requires cross-origin isolation (Oct.2021)
-# WARNING: It requires raylib to be compiled using -pthread, so atomic operations and thread-local data (if any) 
-# in its source were transformed to non-atomic operations and non-thread-local data
-core/core_loading_thread: core/core_loading_thread.c
-	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) -s USE_PTHREADS=1
-
 core/core_window_flags: core/core_window_flags.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
@@ -611,6 +623,14 @@ core/core_custom_frame_control: core/core_custom_frame_control.c
 
 core/core_window_should_close: core/core_window_should_close.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
+
+# NOTE: To use multi-threading raylib must be compiled with multi-theading support (-s USE_PTHREADS=1)
+# WARNING: For security reasons multi-threading is not supported on browsers, it requires cross-origin isolation (Oct.2021)
+# WARNING: It requires raylib to be compiled using -pthread, so atomic operations and thread-local data (if any)
+# in its source were transformed to non-atomic operations and non-thread-local data
+core/core_loading_thread: core/core_loading_thread.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) -s USE_PTHREADS=1
+
 
 # Compile SHAPES examples
 shapes/shapes_basic_shapes: shapes/shapes_basic_shapes.c
@@ -731,6 +751,10 @@ textures/textures_sprite_explosion: textures/textures_sprite_explosion.c
     --preload-file textures/resources/explosion.png@resources/explosion.png \
     --preload-file textures/resources/boom.wav@resources/boom.wav
 
+textures/textures_textured_curve: textures/textures_textured_curve.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
+    --preload-file textures/resources/road.png@resources/road.png
+
 textures/textures_bunnymark: textures/textures_bunnymark.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
     --preload-file textures/resources/wabbit_alpha.png@resources/wabbit_alpha.png
@@ -836,6 +860,10 @@ models/models_cubicmap: models/models_cubicmap.c
     --preload-file models/resources/cubicmap.png@resources/cubicmap.png \
     --preload-file models/resources/cubicmap_atlas.png@resources/cubicmap_atlas.png
 
+models/models_draw_cube_texture: models/models_draw_cube_texture.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
+    --preload-file models/resources/cubicmap_atlas.png@resources/cubicmap_atlas.png
+
 models/models_first_person_maze: models/models_first_person_maze.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
     --preload-file models/resources/cubicmap.png@resources/cubicmap.png \
@@ -866,6 +894,10 @@ models/models_loading_vox: models/models_loading_vox.c
 models/models_loading_gltf: models/models_loading_gltf.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) -s TOTAL_MEMORY=67108864 \
     --preload-file models/resources/models/gltf/robot.glb@resources/models/gltf/robot.glb
+
+models/models_loading_m3d: models/models_loading_m3d.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) -s TOTAL_MEMORY=67108864 \
+    --preload-file models/resources/models/m3d/cesium_man.m3d@resources/models/m3d/cesium_man.m3d
 
 models/models_orthographic_projection: models/models_orthographic_projection.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
@@ -947,13 +979,13 @@ shaders/shaders_basic_lighting: shaders/shaders_basic_lighting.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
     --preload-file shaders/resources/texel_checker.png@resources/texel_checker.png \
     --preload-file shaders/resources/shaders/glsl100/lighting.fs@resources/shaders/glsl100/lighting.fs \
-    --preload-file shaders/resources/shaders/glsl100/base_lighting.vs@resources/shaders/glsl100/base_lighting.vs
+    --preload-file shaders/resources/shaders/glsl100/lighting.vs@resources/shaders/glsl100/lighting.vs
 
 shaders/shaders_fog: shaders/shaders_fog.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
     --preload-file shaders/resources/texel_checker.png@resources/texel_checker.png \
     --preload-file shaders/resources/shaders/glsl100/fog.fs@resources/shaders/glsl100/fog.fs \
-    --preload-file shaders/resources/shaders/glsl100/base_lighting.vs@resources/shaders/glsl100/base_lighting.vs
+    --preload-file shaders/resources/shaders/glsl100/lighting.vs@resources/shaders/glsl100/lighting.vs
 
 shaders/shaders_simple_mask: shaders/shaders_simple_mask.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
@@ -972,9 +1004,8 @@ shaders/shaders_hot_reloading: shaders/shaders_hot_reloading.c
 
 shaders/shaders_mesh_instancing: shaders/shaders_mesh_instancing.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
-    --preload-file shaders/resources/shaders/glsl100/base_lighting_instanced.vs@resources/shaders/glsl100/base_lighting_instanced.vs \
+    --preload-file shaders/resources/shaders/glsl100/lighting_instancing.vs@resources/shaders/glsl100/lighting_instancing.vs \
     --preload-file shaders/resources/shaders/glsl100/lighting.fs@resources/shaders/glsl100/lighting.fs
-
 
 shaders/shaders_multi_sample2d: shaders/shaders_multi_sample2d.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
@@ -984,6 +1015,15 @@ shaders/shaders_texture_outline: shaders/shaders_texture_outline.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
     --preload-file shaders/resources/shaders/glsl100/outline.fs@resources/shaders/glsl100/outline.fs \
     --preload-file shaders/resources/fudesumi.png@resources/fudesumi.png
+
+shaders/shaders_write_depth: shaders/shaders_write_depth.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
+    --preload-file shaders/resources/shaders/glsl100/write_depth.fs@resources/shaders/glsl100/write_depth.fs
+
+shaders/shaders_hybrid_render: shaders/shaders_hybrid_render.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
+    --preload-file shaders/resources/shaders/glsl100/hybrid_raymarch.fs@resources/shaders/glsl100/hybrid_raymarch.fs \
+    --preload-file shaders/resources/shaders/glsl100/hybrid_raster.fs@resources/shaders/glsl100/hybrid_raster.fs
 
 # Compile AUDIO examples
 audio/audio_module_playing: audio/audio_module_playing.c
@@ -1002,14 +1042,14 @@ audio/audio_sound_loading: audio/audio_sound_loading.c
     --preload-file audio/resources/sound.wav@resources/sound.wav \
     --preload-file audio/resources/target.ogg@resources/target.ogg
 
-audio/audio_multichannel_sound: audio/audio_multichannel_sound.c
-	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
-    --preload-file audio/resources/sound.wav@resources/sound.wav \
-    --preload-file audio/resources/target.ogg@resources/target.ogg
-
 audio/audio_stream_effects: audio/audio_stream_effects.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) -s TOTAL_MEMORY=67108864 \
     --preload-file audio/resources/country.mp3@resources/country.mp3
+
+audio/audio_mixed_processor: audio/audio_mixed_processor.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) -s TOTAL_MEMORY=67108864 \
+    --preload-file audio/resources/country.mp3@resources/country.mp3 \
+    --preload-file audio/resources/coin.wav@resources/coin.wav
 
 # Clean everything
 clean:

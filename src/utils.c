@@ -3,15 +3,14 @@
 *   raylib.utils - Some common utility functions
 *
 *   CONFIGURATION:
-*
-*   #define SUPPORT_TRACELOG
-*       Show TraceLog() output messages
-*       NOTE: By default LOG_DEBUG traces not shown
+*       #define SUPPORT_TRACELOG
+*           Show TraceLog() output messages
+*           NOTE: By default LOG_DEBUG traces not shown
 *
 *
 *   LICENSE: zlib/libpng
 *
-*   Copyright (c) 2014-2022 Ramon Santamaria (@raysan5)
+*   Copyright (c) 2014-2023 Ramon Santamaria (@raysan5)
 *
 *   This software is provided "as-is", without any express or implied warranty. In no event
 *   will the authors be held liable for any damages arising from the use of this software.
@@ -54,7 +53,7 @@
 // Defines and Macros
 //----------------------------------------------------------------------------------
 #ifndef MAX_TRACELOG_MSG_LENGTH
-    #define MAX_TRACELOG_MSG_LENGTH     128     // Max length of one trace-log message
+    #define MAX_TRACELOG_MSG_LENGTH     256         // Max length of one trace-log message
 #endif
 
 //----------------------------------------------------------------------------------
@@ -63,10 +62,10 @@
 static int logTypeLevel = LOG_INFO;                 // Minimum log type level
 
 static TraceLogCallback traceLog = NULL;            // TraceLog callback function pointer
-static LoadFileDataCallback loadFileData = NULL;    // LoadFileData callback funtion pointer
-static SaveFileDataCallback saveFileData = NULL;    // SaveFileText callback funtion pointer
-static LoadFileTextCallback loadFileText = NULL;    // LoadFileText callback funtion pointer
-static SaveFileTextCallback saveFileText = NULL;    // SaveFileText callback funtion pointer
+static LoadFileDataCallback loadFileData = NULL;    // LoadFileData callback function pointer
+static SaveFileDataCallback saveFileData = NULL;    // SaveFileText callback function pointer
+static LoadFileTextCallback loadFileText = NULL;    // LoadFileText callback function pointer
+static SaveFileTextCallback saveFileText = NULL;    // SaveFileText callback function pointer
 
 //----------------------------------------------------------------------------------
 // Functions to set internal callbacks
@@ -145,7 +144,8 @@ void TraceLog(int logType, const char *text, ...)
         default: break;
     }
 
-    strcat(buffer, text);
+    unsigned int textSize = (unsigned int)strlen(text);
+    memcpy(buffer + strlen(buffer), text, (textSize < (MAX_TRACELOG_MSG_LENGTH - 12))? textSize : (MAX_TRACELOG_MSG_LENGTH - 12));
     strcat(buffer, "\n");
     vprintf(buffer, args);
     fflush(stdout);
@@ -207,12 +207,16 @@ unsigned char *LoadFileData(const char *fileName, unsigned int *bytesRead)
             {
                 data = (unsigned char *)RL_MALLOC(size*sizeof(unsigned char));
 
-                // NOTE: fread() returns number of read elements instead of bytes, so we read [1 byte, size elements]
-                unsigned int count = (unsigned int)fread(data, sizeof(unsigned char), size, file);
-                *bytesRead = count;
+                if (data != NULL)
+                {
+                    // NOTE: fread() returns number of read elements instead of bytes, so we read [1 byte, size elements]
+                    unsigned int count = (unsigned int)fread(data, sizeof(unsigned char), size, file);
+                    *bytesRead = count;
 
-                if (count != size) TRACELOG(LOG_WARNING, "FILEIO: [%s] File partially loaded", fileName);
-                else TRACELOG(LOG_INFO, "FILEIO: [%s] File loaded successfully", fileName);
+                    if (count != size) TRACELOG(LOG_WARNING, "FILEIO: [%s] File partially loaded", fileName);
+                    else TRACELOG(LOG_INFO, "FILEIO: [%s] File loaded successfully", fileName);
+                }
+                else TRACELOG(LOG_WARNING, "FILEIO: [%s] Failed to allocated memory for file reading", fileName);
             }
             else TRACELOG(LOG_WARNING, "FILEIO: [%s] Failed to read file", fileName);
 
@@ -270,7 +274,7 @@ bool SaveFileData(const char *fileName, void *data, unsigned int bytesToWrite)
 }
 
 // Export data to code (.h), returns true on success
-bool ExportDataAsCode(const char *data, unsigned int size, const char *fileName)
+bool ExportDataAsCode(const unsigned char *data, unsigned int size, const char *fileName)
 {
     bool success = false;
 
@@ -290,7 +294,7 @@ bool ExportDataAsCode(const char *data, unsigned int size, const char *fileName)
     byteCount += sprintf(txtData + byteCount, "// more info and bugs-report:  github.com/raysan5/raylib                              //\n");
     byteCount += sprintf(txtData + byteCount, "// feedback and support:       ray[at]raylib.com                                      //\n");
     byteCount += sprintf(txtData + byteCount, "//                                                                                    //\n");
-    byteCount += sprintf(txtData + byteCount, "// Copyright (c) 2022 Ramon Santamaria (@raysan5)                                     //\n");
+    byteCount += sprintf(txtData + byteCount, "// Copyright (c) 2022-2023 Ramon Santamaria (@raysan5)                                //\n");
     byteCount += sprintf(txtData + byteCount, "//                                                                                    //\n");
     byteCount += sprintf(txtData + byteCount, "////////////////////////////////////////////////////////////////////////////////////////\n\n");
 
@@ -299,7 +303,9 @@ bool ExportDataAsCode(const char *data, unsigned int size, const char *fileName)
     strcpy(varFileName, GetFileNameWithoutExt(fileName));
     for (int i = 0; varFileName[i] != '\0'; i++) if ((varFileName[i] >= 'a') && (varFileName[i] <= 'z')) { varFileName[i] = varFileName[i] - 32; }
 
-    byteCount += sprintf(txtData + byteCount, "static unsigned char %s_DATA[%i] = { ", varFileName, size);
+    byteCount += sprintf(txtData + byteCount, "#define %s_DATA_SIZE     %i\n\n", varFileName, size);
+
+    byteCount += sprintf(txtData + byteCount, "static unsigned char %s_DATA[%s_DATA_SIZE] = { ", varFileName, varFileName);
     for (unsigned int i = 0; i < size - 1; i++) byteCount += sprintf(txtData + byteCount, ((i%TEXT_BYTES_PER_LINE == 0)? "0x%x,\n" : "0x%x, "), data[i]);
     byteCount += sprintf(txtData + byteCount, "0x%x };\n", data[size - 1]);
 
@@ -342,16 +348,21 @@ char *LoadFileText(const char *fileName)
             if (size > 0)
             {
                 text = (char *)RL_MALLOC((size + 1)*sizeof(char));
-                unsigned int count = (unsigned int)fread(text, sizeof(char), size, file);
 
-                // WARNING: \r\n is converted to \n on reading, so,
-                // read bytes count gets reduced by the number of lines
-                if (count < size) text = RL_REALLOC(text, count + 1);
+                if (text != NULL)
+                {
+                    unsigned int count = (unsigned int)fread(text, sizeof(char), size, file);
 
-                // Zero-terminate the string
-                text[count] = '\0';
+                    // WARNING: \r\n is converted to \n on reading, so,
+                    // read bytes count gets reduced by the number of lines
+                    if (count < size) text = RL_REALLOC(text, count + 1);
 
-                TRACELOG(LOG_INFO, "FILEIO: [%s] Text file loaded successfully", fileName);
+                    // Zero-terminate the string
+                    text[count] = '\0';
+
+                    TRACELOG(LOG_INFO, "FILEIO: [%s] Text file loaded successfully", fileName);
+                }
+                else TRACELOG(LOG_WARNING, "FILEIO: [%s] Failed to allocated memory for file reading", fileName);
             }
             else TRACELOG(LOG_WARNING, "FILEIO: [%s] Failed to read text file", fileName);
 

@@ -1,19 +1,21 @@
 /*******************************************************************************************
 *
-*   raylib [audio] example - Multichannel sound playing
+*   raylib [audio] example - Playing sound multiple times
 *
-*   Example originally created with raylib 3.0, last time updated with raylib 3.5
-*
-*   Example contributed by Chris Camacho (@chriscamacho) and reviewed by Ramon Santamaria (@raysan5)
+*   Example originally created with raylib 4.6
 *
 *   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
 *   BSD-like license that allows static linking with closed source software
 *
-*   Copyright (c) 2019-2022 Chris Camacho (@chriscamacho) and Ramon Santamaria (@raysan5)
+*   Copyright (c) 2023 Jeffery Myers (@JeffM2501)
 *
 ********************************************************************************************/
 
 #include "raylib.h"
+
+#define MAX_SOUNDS 10
+Sound soundArray[MAX_SOUNDS] = { 0 };
+int currentSound;
 
 //------------------------------------------------------------------------------------
 // Program main entry point
@@ -25,16 +27,20 @@ int main(void)
     const int screenWidth = 800;
     const int screenHeight = 450;
 
-    InitWindow(screenWidth, screenHeight, "raylib [audio] example - Multichannel sound playing");
+    InitWindow(screenWidth, screenHeight, "raylib [audio] example - playing sound multiple times");
 
     InitAudioDevice();      // Initialize audio device
 
-    Sound fxWav = LoadSound("resources/sound.wav");         // Load WAV audio file
-    Sound fxOgg = LoadSound("resources/target.ogg");        // Load OGG audio file
+    // load the sound list
+    soundArray[0] = LoadSound("resources/sound.wav");         // Load WAV audio file into the first slot as the 'source' sound
+                                                              // this sound owns the sample data
+    for (int i = 1; i < MAX_SOUNDS; i++)
+    {
+        soundArray[i] = LoadSoundAlias(soundArray[0]);        // Load an alias of the sound into slots 1-9. These do not own the sound data, but can be played
+    }
+    currentSound = 0;                                         // set the sound list to the start
 
-    SetSoundVolume(fxWav, 0.2f);
-
-    SetTargetFPS(60);       // Set our game to run at 60 frames-per-second
+    SetTargetFPS(60);               // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
 
     // Main game loop
@@ -42,8 +48,16 @@ int main(void)
     {
         // Update
         //----------------------------------------------------------------------------------
-        if (IsKeyPressed(KEY_ENTER)) PlaySoundMulti(fxWav);     // Play a new wav sound instance
-        if (IsKeyPressed(KEY_SPACE)) PlaySoundMulti(fxOgg);     // Play a new ogg sound instance
+        if (IsKeyPressed(KEY_SPACE))
+        {
+            PlaySound(soundArray[currentSound]);            // play the next open sound slot
+            currentSound++;                                 // increment the sound slot
+            if (currentSound >= MAX_SOUNDS)                 // if the sound slot is out of bounds, go back to 0
+                currentSound = 0;
+
+            // Note: a better way would be to look at the list for the first sound that is not playing and use that slot
+        }
+
         //----------------------------------------------------------------------------------
 
         // Draw
@@ -52,11 +66,7 @@ int main(void)
 
             ClearBackground(RAYWHITE);
 
-            DrawText("MULTICHANNEL SOUND PLAYING", 20, 20, 20, GRAY);
-            DrawText("Press SPACE to play new ogg instance!", 200, 120, 20, LIGHTGRAY);
-            DrawText("Press ENTER to play new wav instance!", 200, 180, 20, LIGHTGRAY);
-
-            DrawText(TextFormat("CONCURRENT SOUNDS PLAYING: %02i", GetSoundsPlaying()), 220, 280, 20, RED);
+            DrawText("Press SPACE to PLAY a WAV sound!", 200, 180, 20, LIGHTGRAY);
 
         EndDrawing();
         //----------------------------------------------------------------------------------
@@ -64,10 +74,9 @@ int main(void)
 
     // De-Initialization
     //--------------------------------------------------------------------------------------
-    StopSoundMulti();       // We must stop the buffer pool before unloading
-
-    UnloadSound(fxWav);     // Unload sound data
-    UnloadSound(fxOgg);     // Unload sound data
+    for (int i = 1; i < MAX_SOUNDS; i++)
+        UnloadSoundAlias(soundArray[i]);     // Unload sound aliases
+    UnloadSound(soundArray[0]);              // Unload source sound data
 
     CloseAudioDevice();     // Close audio device
 

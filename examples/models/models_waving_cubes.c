@@ -9,7 +9,7 @@
 *   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
 *   BSD-like license that allows static linking with closed source software
 *
-*   Copyright (c) 2019-2022 Codecat (@codecat) and Ramon Santamaria (@raysan5)
+*   Copyright (c) 2019-2023 Codecat (@codecat) and Ramon Santamaria (@raysan5)
 *
 ********************************************************************************************/
 
@@ -31,11 +31,11 @@ int main()
 
     // Initialize the camera
     Camera3D camera = { 0 };
-    camera.position = (Vector3){ 30.0f, 20.0f, 30.0f };
-    camera.target = (Vector3){ 0.0f, 0.0f, 0.0f };
-    camera.up = (Vector3){ 0.0f, 1.0f, 0.0f };
-    camera.fovy = 70.0f;
-    camera.projection = CAMERA_PERSPECTIVE;
+    camera.position = (Vector3){ 30.0f, 20.0f, 30.0f }; // Camera position
+    camera.target = (Vector3){ 0.0f, 0.0f, 0.0f };      // Camera looking at point
+    camera.up = (Vector3){ 0.0f, 1.0f, 0.0f };          // Camera up vector (rotation towards target)
+    camera.fovy = 70.0f;                                // Camera field-of-view Y
+    camera.projection = CAMERA_PERSPECTIVE;             // Camera projection type
 
     // Specify the amount of blocks in each direction
     const int numBlocks = 15;

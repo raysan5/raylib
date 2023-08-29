@@ -2,30 +2,35 @@
 *
 *   raymath v1.5 - Math functions to work with Vector2, Vector3, Matrix and Quaternions
 *
-*   CONFIGURATION:
-*
-*   #define RAYMATH_IMPLEMENTATION
-*       Generates the implementation of the library into the included file.
-*       If not defined, the library is in header only mode and can be included in other headers
-*       or source files without problems. But only ONE file should hold the implementation.
-*
-*   #define RAYMATH_STATIC_INLINE
-*       Define static inline functions code, so #include header suffices for use.
-*       This may use up lots of memory.
-*
 *   CONVENTIONS:
-*
+*     - Matrix structure is defined as row-major (memory layout) but parameters naming AND all
+*       math operations performed by the library consider the structure as it was column-major
+*       It is like transposed versions of the matrices are used for all the maths
+*       It benefits some functions making them cache-friendly and also avoids matrix
+*       transpositions sometimes required by OpenGL
+*       Example: In memory order, row0 is [m0 m4 m8 m12] but in semantic math row0 is [m0 m1 m2 m3]
 *     - Functions are always self-contained, no function use another raymath function inside,
 *       required code is directly re-implemented inside
 *     - Functions input parameters are always received by value (2 unavoidable exceptions)
 *     - Functions use always a "result" variable for return
 *     - Functions are always defined inline
 *     - Angles are always in radians (DEG2RAD/RAD2DEG macros provided for convenience)
+*     - No compound literals used to make sure libray is compatible with C++
+*
+*   CONFIGURATION:
+*       #define RAYMATH_IMPLEMENTATION
+*           Generates the implementation of the library into the included file.
+*           If not defined, the library is in header only mode and can be included in other headers
+*           or source files without problems. But only ONE file should hold the implementation.
+*
+*       #define RAYMATH_STATIC_INLINE
+*           Define static inline functions code, so #include header suffices for use.
+*           This may use up lots of memory.
 *
 *
 *   LICENSE: zlib/libpng
 *
-*   Copyright (c) 2015-2022 Ramon Santamaria (@raysan5)
+*   Copyright (c) 2015-2023 Ramon Santamaria (@raysan5)
 *
 *   This software is provided "as-is", without any express or implied warranty. In no event
 *   will the authors be held liable for any damages arising from the use of this software.
@@ -306,10 +311,27 @@ RMAPI float Vector2DistanceSqr(Vector2 v1, Vector2 v2)
     return result;
 }
 
-// Calculate angle from two vectors
+// Calculate angle between two vectors
+// NOTE: Angle is calculated from origin point (0, 0)
 RMAPI float Vector2Angle(Vector2 v1, Vector2 v2)
 {
-    float result = atan2f(v2.y, v2.x) - atan2f(v1.y, v1.x);
+    float result = 0.0f;
+
+    float dot = v1.x*v2.x + v1.y*v2.y;
+    float det = v1.x*v2.y - v1.y*v2.x;
+    result = -atan2f(det, dot);
+
+    return result;
+}
+
+// Calculate angle defined by a two vectors line
+// NOTE: Parameters need to be normalized
+// Current implementation should be aligned with glm::angle
+RMAPI float Vector2LineAngle(Vector2 start, Vector2 end)
+{
+    float result = 0.0f;
+
+    result = atan2f(end.y - start.y, end.x - start.x);
 
     return result;
 }
@@ -680,12 +702,48 @@ RMAPI Vector3 Vector3Normalize(Vector3 v)
     Vector3 result = v;
 
     float length = sqrtf(v.x*v.x + v.y*v.y + v.z*v.z);
-    if (length == 0.0f) length = 1.0f;
-    float ilength = 1.0f/length;
+    if (length != 0.0f)
+    {
+        float ilength = 1.0f/length;
 
-    result.x *= ilength;
-    result.y *= ilength;
-    result.z *= ilength;
+        result.x *= ilength;
+        result.y *= ilength;
+        result.z *= ilength;
+    }
+
+    return result;
+}
+
+//Calculate the projection of the vector v1 on to v2
+RMAPI Vector3 Vector3Project(Vector3 v1, Vector3 v2)
+{
+    Vector3 result = { 0 };
+    
+    float v1dv2 = (v1.x*v2.x + v1.y*v2.y + v1.z*v2.z);
+    float v2dv2 = (v2.x*v2.x + v2.y*v2.y + v2.z*v2.z);
+
+    float mag = v1dv2/v2dv2;
+
+    result.x = v2.x*mag;
+    result.y = v2.y*mag;
+    result.z = v2.z*mag;
+
+    return result;
+}
+
+//Calculate the rejection of the vector v1 on to v2
+RMAPI Vector3 Vector3Reject(Vector3 v1, Vector3 v2)
+{
+    Vector3 result = { 0 };
+    
+    float v1dv2 = (v1.x*v2.x + v1.y*v2.y + v1.z*v2.z);
+    float v2dv2 = (v2.x*v2.x + v2.y*v2.y + v2.z*v2.z);
+
+    float mag = v1dv2/v2dv2;
+
+    result.x = v1.x - (v2.x*mag);
+    result.y = v1.y - (v2.y*mag);
+    result.z = v1.z - (v2.z*mag);
 
     return result;
 }
@@ -889,7 +947,7 @@ RMAPI Vector3 Vector3Unproject(Vector3 source, Matrix projection, Matrix view)
 {
     Vector3 result = { 0 };
 
-    // Calculate unproject matrix (multiply view patrix by projection matrix) and invert it
+    // Calculate unprojected matrix (multiply view matrix by projection matrix) and invert it
     Matrix matViewProj = {      // MatrixMultiply(view, projection);
         view.m0*projection.m0 + view.m1*projection.m4 + view.m2*projection.m8 + view.m3*projection.m12,
         view.m0*projection.m1 + view.m1*projection.m5 + view.m2*projection.m9 + view.m3*projection.m13,
@@ -952,7 +1010,7 @@ RMAPI Vector3 Vector3Unproject(Vector3 source, Matrix projection, Matrix view)
     // Create quaternion from source point
     Quaternion quat = { source.x, source.y, source.z, 1.0f };
 
-    // Multiply quat point by unproject matrix
+    // Multiply quat point by unprojecte matrix
     Quaternion qtransformed = {     // QuaternionTransform(quat, matViewProjInv)
         matViewProjInv.m0*quat.x + matViewProjInv.m4*quat.y + matViewProjInv.m8*quat.z + matViewProjInv.m12*quat.w,
         matViewProjInv.m1*quat.x + matViewProjInv.m5*quat.y + matViewProjInv.m9*quat.z + matViewProjInv.m13*quat.w,
@@ -1486,11 +1544,11 @@ RMAPI Matrix MatrixFrustum(double left, double right, double bottom, double top,
 
 // Get perspective projection matrix
 // NOTE: Fovy angle must be provided in radians
-RMAPI Matrix MatrixPerspective(double fovy, double aspect, double near, double far)
+RMAPI Matrix MatrixPerspective(double fovY, double aspect, double nearPlane, double farPlane)
 {
     Matrix result = { 0 };
 
-    double top = near*tan(fovy*0.5);
+    double top = nearPlane*tan(fovY*0.5);
     double bottom = -top;
     double right = top*aspect;
     double left = -right;
@@ -1498,27 +1556,27 @@ RMAPI Matrix MatrixPerspective(double fovy, double aspect, double near, double f
     // MatrixFrustum(-right, right, -top, top, near, far);
     float rl = (float)(right - left);
     float tb = (float)(top - bottom);
-    float fn = (float)(far - near);
+    float fn = (float)(farPlane - nearPlane);
 
-    result.m0 = ((float)near*2.0f)/rl;
-    result.m5 = ((float)near*2.0f)/tb;
+    result.m0 = ((float)nearPlane*2.0f)/rl;
+    result.m5 = ((float)nearPlane*2.0f)/tb;
     result.m8 = ((float)right + (float)left)/rl;
     result.m9 = ((float)top + (float)bottom)/tb;
-    result.m10 = -((float)far + (float)near)/fn;
+    result.m10 = -((float)farPlane + (float)nearPlane)/fn;
     result.m11 = -1.0f;
-    result.m14 = -((float)far*(float)near*2.0f)/fn;
+    result.m14 = -((float)farPlane*(float)nearPlane*2.0f)/fn;
 
     return result;
 }
 
 // Get orthographic projection matrix
-RMAPI Matrix MatrixOrtho(double left, double right, double bottom, double top, double near, double far)
+RMAPI Matrix MatrixOrtho(double left, double right, double bottom, double top, double nearPlane, double farPlane)
 {
     Matrix result = { 0 };
 
     float rl = (float)(right - left);
     float tb = (float)(top - bottom);
-    float fn = (float)(far - near);
+    float fn = (float)(farPlane - nearPlane);
 
     result.m0 = 2.0f/rl;
     result.m1 = 0.0f;
@@ -1534,7 +1592,7 @@ RMAPI Matrix MatrixOrtho(double left, double right, double bottom, double top, d
     result.m11 = 0.0f;
     result.m12 = -((float)left + (float)right)/rl;
     result.m13 = -((float)top + (float)bottom)/tb;
-    result.m14 = -((float)far + (float)near)/fn;
+    result.m14 = -((float)farPlane + (float)nearPlane)/fn;
     result.m15 = 1.0f;
 
     return result;
