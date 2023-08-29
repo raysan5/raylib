@@ -506,7 +506,7 @@ typedef struct CoreData {
         double frame;                       // Time measure for one frame
         double target;                      // Desired time for one frame, if 0 not applied
 #if defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI) || defined(PLATFORM_DRM)
-        unsigned long long base;            // Base time measure for hi-res timer
+        unsigned long long int base;        // Base time measure for hi-res timer
 #endif
         unsigned int frameCounter;          // Frame counter
     } Time;
@@ -3495,10 +3495,10 @@ bool ChangeDirectory(const char *dir)
 // Check if a given path point to a file
 bool IsPathFile(const char *path)
 {
-    struct stat pathStat = { 0 };
-    stat(path, &pathStat);
+    struct stat result = { 0 };
+    stat(path, &result);
 
-    return S_ISREG(pathStat.st_mode);
+    return S_ISREG(result.st_mode);
 }
 
 // Check if a file has been dropped into window
