@@ -358,7 +358,7 @@ Font LoadFont(const char *fileName)
 // Load Font from TTF font file with generation parameters
 // NOTE: You can pass an array with desired characters, those characters should be available in the font
 // if array is NULL, default char set is selected 32..126
-Font LoadFontEx(const char *fileName, int fontSize, int *fontChars, int glyphCount)
+Font LoadFontEx(const char *fileName, int fontSize, int *codepoints, int codepointCount)
 {
     Font font = { 0 };
 
@@ -369,7 +369,7 @@ Font LoadFontEx(const char *fileName, int fontSize, int *fontChars, int glyphCou
     if (fileData != NULL)
     {
         // Loading font from memory data
-        font = LoadFontFromMemory(GetFileExtension(fileName), fileData, fileSize, fontSize, fontChars, glyphCount);
+        font = LoadFontFromMemory(GetFileExtension(fileName), fileData, fileSize, fontSize, codepoints, codepointCount);
 
         UnloadFileData(fileData);
     }
@@ -504,7 +504,7 @@ Font LoadFontFromImage(Image image, Color key, int firstChar)
 }
 
 // Load font from memory buffer, fileType refers to extension: i.e. ".ttf"
-Font LoadFontFromMemory(const char *fileType, const unsigned char *fileData, int dataSize, int fontSize, int *fontChars, int glyphCount)
+Font LoadFontFromMemory(const char *fileType, const unsigned char *fileData, int dataSize, int fontSize, int *codepoints, int codepointCount)
 {
     Font font = { 0 };
 
@@ -516,9 +516,9 @@ Font LoadFontFromMemory(const char *fileType, const unsigned char *fileData, int
         TextIsEqual(fileExtLower, ".otf"))
     {
         font.baseSize = fontSize;
-        font.glyphCount = (glyphCount > 0)? glyphCount : 95;
+        font.glyphCount = (codepointCount > 0)? codepointCount : 95;
         font.glyphPadding = 0;
-        font.glyphs = LoadFontData(fileData, dataSize, font.baseSize, fontChars, font.glyphCount, FONT_DEFAULT);
+        font.glyphs = LoadFontData(fileData, dataSize, font.baseSize, codepoints, font.glyphCount, FONT_DEFAULT);
 
         if (font.glyphs != NULL)
         {
@@ -562,7 +562,7 @@ bool IsFontReady(Font font)
 
 // Load font data for further use
 // NOTE: Requires TTF font memory data and can generate SDF data
-GlyphInfo *LoadFontData(const unsigned char *fileData, int dataSize, int fontSize, int *fontChars, int glyphCount, int type)
+GlyphInfo *LoadFontData(const unsigned char *fileData, int dataSize, int fontSize, int *codepoints, int codepointCount, int type)
 {
     // NOTE: Using some SDF generation default values,
     // trades off precision with ability to handle *smaller* sizes
@@ -600,25 +600,25 @@ GlyphInfo *LoadFontData(const unsigned char *fileData, int dataSize, int fontSiz
             stbtt_GetFontVMetrics(&fontInfo, &ascent, &descent, &lineGap);
 
             // In case no chars count provided, default to 95
-            glyphCount = (glyphCount > 0)? glyphCount : 95;
+            codepointCount = (codepointCount > 0)? codepointCount : 95;
 
             // Fill fontChars in case not provided externally
             // NOTE: By default we fill glyphCount consecutively, starting at 32 (Space)
 
-            if (fontChars == NULL)
+            if (codepoints == NULL)
             {
-                fontChars = (int *)RL_MALLOC(glyphCount*sizeof(int));
-                for (int i = 0; i < glyphCount; i++) fontChars[i] = i + 32;
+                codepoints = (int *)RL_MALLOC(codepointCount*sizeof(int));
+                for (int i = 0; i < codepointCount; i++) codepoints[i] = i + 32;
                 genFontChars = true;
             }
 
-            chars = (GlyphInfo *)RL_MALLOC(glyphCount*sizeof(GlyphInfo));
+            chars = (GlyphInfo *)RL_MALLOC(codepointCount*sizeof(GlyphInfo));
 
             // NOTE: Using simple packaging, one char after another
-            for (int i = 0; i < glyphCount; i++)
+            for (int i = 0; i < codepointCount; i++)
             {
                 int chw = 0, chh = 0;   // Character width and height (on generation)
-                int ch = fontChars[i];  // Character value to get info for
+                int ch = codepoints[i];  // Character value to get info for
                 chars[i].value = ch;
 
                 //  Render a unicode codepoint to a bitmap
@@ -678,7 +678,7 @@ GlyphInfo *LoadFontData(const unsigned char *fileData, int dataSize, int fontSiz
         }
         else TRACELOG(LOG_WARNING, "FONT: Failed to process TTF font data");
 
-        if (genFontChars) RL_FREE(fontChars);
+        if (genFontChars) RL_FREE(codepoints);
     }
 #endif
 
@@ -688,17 +688,17 @@ GlyphInfo *LoadFontData(const unsigned char *fileData, int dataSize, int fontSiz
 // Generate image font atlas using chars info
 // NOTE: Packing method: 0-Default, 1-Skyline
 #if defined(SUPPORT_FILEFORMAT_TTF)
-Image GenImageFontAtlas(const GlyphInfo *chars, Rectangle **charRecs, int glyphCount, int fontSize, int padding, int packMethod)
+Image GenImageFontAtlas(const GlyphInfo *glyphs, Rectangle **glyphRecs, int glyphCount, int fontSize, int padding, int packMethod)
 {
     Image atlas = { 0 };
 
-    if (chars == NULL)
+    if (glyphs == NULL)
     {
         TRACELOG(LOG_WARNING, "FONT: Provided chars info not valid, returning empty image atlas");
         return atlas;
     }
 
-    *charRecs = NULL;
+    *glyphRecs = NULL;
 
     // In case no chars count provided we suppose default of 95
     glyphCount = (glyphCount > 0)? glyphCount : 95;
@@ -712,8 +712,8 @@ Image GenImageFontAtlas(const GlyphInfo *chars, Rectangle **charRecs, int glyphC
 
     for (int i = 0; i < glyphCount; i++)
     {
-        if (chars[i].image.width > maxGlyphWidth) maxGlyphWidth = chars[i].image.width;
-        totalWidth += chars[i].image.width + 4*padding;
+        if (glyphs[i].image.width > maxGlyphWidth) maxGlyphWidth = glyphs[i].image.width;
+        totalWidth += glyphs[i].image.width + 4*padding;
     }
 
 //#define SUPPORT_FONT_ATLAS_SIZE_CONSERVATIVE
@@ -764,7 +764,7 @@ Image GenImageFontAtlas(const GlyphInfo *chars, Rectangle **charRecs, int glyphC
         for (int i = 0; i < glyphCount; i++)
         {
             // Check remaining space for glyph
-            if (offsetX >= (atlas.width - chars[i].image.width - 2*padding))
+            if (offsetX >= (atlas.width - glyphs[i].image.width - 2*padding))
             {
                 offsetX = padding;
 
@@ -789,22 +789,22 @@ Image GenImageFontAtlas(const GlyphInfo *chars, Rectangle **charRecs, int glyphC
             }
 
             // Copy pixel data from fc.data to atlas
-            for (int y = 0; y < chars[i].image.height; y++)
+            for (int y = 0; y < glyphs[i].image.height; y++)
             {
-                for (int x = 0; x < chars[i].image.width; x++)
+                for (int x = 0; x < glyphs[i].image.width; x++)
                 {
-                    ((unsigned char *)atlas.data)[(offsetY + y)*atlas.width + (offsetX + x)] = ((unsigned char *)chars[i].image.data)[y*chars[i].image.width + x];
+                    ((unsigned char *)atlas.data)[(offsetY + y)*atlas.width + (offsetX + x)] = ((unsigned char *)glyphs[i].image.data)[y*glyphs[i].image.width + x];
                 }
             }
 
             // Fill chars rectangles in atlas info
             recs[i].x = (float)offsetX;
             recs[i].y = (float)offsetY;
-            recs[i].width = (float)chars[i].image.width;
-            recs[i].height = (float)chars[i].image.height;
+            recs[i].width = (float)glyphs[i].image.width;
+            recs[i].height = (float)glyphs[i].image.height;
 
             // Move atlas position X for next character drawing
-            offsetX += (chars[i].image.width + 2*padding);
+            offsetX += (glyphs[i].image.width + 2*padding);
         }
     }
     else if (packMethod == 1)  // Use Skyline rect packing algorithm (stb_pack_rect)
@@ -819,8 +819,8 @@ Image GenImageFontAtlas(const GlyphInfo *chars, Rectangle **charRecs, int glyphC
         for (int i = 0; i < glyphCount; i++)
         {
             rects[i].id = i;
-            rects[i].w = chars[i].image.width + 2*padding;
-            rects[i].h = chars[i].image.height + 2*padding;
+            rects[i].w = glyphs[i].image.width + 2*padding;
+            rects[i].h = glyphs[i].image.height + 2*padding;
         }
 
         // Package rectangles into atlas
@@ -831,17 +831,17 @@ Image GenImageFontAtlas(const GlyphInfo *chars, Rectangle **charRecs, int glyphC
             // It returns char rectangles in atlas
             recs[i].x = rects[i].x + (float)padding;
             recs[i].y = rects[i].y + (float)padding;
-            recs[i].width = (float)chars[i].image.width;
-            recs[i].height = (float)chars[i].image.height;
+            recs[i].width = (float)glyphs[i].image.width;
+            recs[i].height = (float)glyphs[i].image.height;
 
             if (rects[i].was_packed)
             {
                 // Copy pixel data from fc.data to atlas
-                for (int y = 0; y < chars[i].image.height; y++)
+                for (int y = 0; y < glyphs[i].image.height; y++)
                 {
-                    for (int x = 0; x < chars[i].image.width; x++)
+                    for (int x = 0; x < glyphs[i].image.width; x++)
                     {
-                        ((unsigned char *)atlas.data)[(rects[i].y + padding + y)*atlas.width + (rects[i].x + padding + x)] = ((unsigned char *)chars[i].image.data)[y*chars[i].image.width + x];
+                        ((unsigned char *)atlas.data)[(rects[i].y + padding + y)*atlas.width + (rects[i].x + padding + x)] = ((unsigned char *)glyphs[i].image.data)[y*glyphs[i].image.width + x];
                     }
                 }
             }
@@ -879,7 +879,7 @@ Image GenImageFontAtlas(const GlyphInfo *chars, Rectangle **charRecs, int glyphC
     atlas.data = dataGrayAlpha;
     atlas.format = PIXELFORMAT_UNCOMPRESSED_GRAY_ALPHA;
 
-    *charRecs = recs;
+    *glyphRecs = recs;
 
     return atlas;
 }
@@ -1176,14 +1176,14 @@ void DrawTextCodepoint(Font font, int codepoint, Vector2 position, float fontSiz
 }
 
 // Draw multiple character (codepoints)
-void DrawTextCodepoints(Font font, const int *codepoints, int count, Vector2 position, float fontSize, float spacing, Color tint)
+void DrawTextCodepoints(Font font, const int *codepoints, int codepointCount, Vector2 position, float fontSize, float spacing, Color tint)
 {
     int textOffsetY = 0;            // Offset between lines (on linebreak '\n')
     float textOffsetX = 0.0f;       // Offset X to next character to draw
 
     float scaleFactor = fontSize/font.baseSize;         // Character quad scaling factor
 
-    for (int i = 0; i < count; i++)
+    for (int i = 0; i < codepointCount; i++)
     {
         int index = GetGlyphIndex(font, codepoints[i]);
 
