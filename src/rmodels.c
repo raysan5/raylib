@@ -1904,7 +1904,7 @@ Material *LoadMaterials(const char *fileName, int *materialCount)
         int result = tinyobj_parse_mtl_file(&mats, &count, fileName);
         if (result != TINYOBJ_SUCCESS) TRACELOG(LOG_WARNING, "MATERIAL: [%s] Failed to parse materials file", fileName);
 
-        materials = MemAlloc(count*sizeof(Material));
+        materials = RL_MALLOC(count*sizeof(Material));
         ProcessMaterialsOBJ(materials, mats, count);
 
         tinyobj_materials_free(mats, count);
@@ -4704,7 +4704,7 @@ static Image LoadImageFromCgltfImage(cgltf_image *cgltfImage, const char *texPat
                 if (result == cgltf_result_success)
                 {
                     image = LoadImageFromMemory(".png", (unsigned char *)data, outSize);
-                    MemFree(data);
+                    RL_FREE(data);
                 }
             }
         }
