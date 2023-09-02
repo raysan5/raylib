@@ -47,6 +47,8 @@ int main(void)
     // NOTE: We define a font base size of 32 pixels tall and up-to 250 characters
     Font fontTtf = LoadFontEx("resources/pixantiqua.ttf", 32, 0, 250);
 
+    SetTextLineSpacing(48);         // Set line spacing for multiline text (when line breaks are included '\n')
+
     bool useTtf = false;
 
     SetTargetFPS(60);               // Set our game to run at 60 frames-per-second

@@ -52,6 +52,8 @@ int main(void)
     // Set bilinear scale filter for better font scaling
     SetTextureFilter(font.texture, TEXTURE_FILTER_BILINEAR);
 
+    SetTextLineSpacing(54);         // Set line spacing for multiline text (when line breaks are included '\n')
+
     // Free codepoints, atlas has already been generated
     free(codepointsNoDups);
 
