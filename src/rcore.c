@@ -601,7 +601,7 @@ static const char *autoEventTypeName[] = {
     "ACTION_SETTARGETFPS"
 };
 
-// Automation Event (24 bytes)
+// Automation event (24 bytes)
 typedef struct AutomationEvent {
     unsigned int frame;                 // Event frame
     unsigned int type;                  // Event type (AutomationEventType)
