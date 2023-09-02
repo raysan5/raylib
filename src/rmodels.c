@@ -2099,9 +2099,9 @@ void UpdateModelAnimation(Model model, ModelAnimation anim, int frame)
 }
 
 // Unload animation array data
-void UnloadModelAnimations(ModelAnimation *animations, unsigned int count)
+void UnloadModelAnimations(ModelAnimation *animations, int animCount)
 {
-    for (unsigned int i = 0; i < count; i++) UnloadModelAnimation(animations[i]);
+    for (int i = 0; i < animCount; i++) UnloadModelAnimation(animations[i]);
     RL_FREE(animations);
 }
 
