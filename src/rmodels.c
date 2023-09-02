@@ -151,18 +151,18 @@ static Model LoadOBJ(const char *fileName);     // Load OBJ mesh data
 #endif
 #if defined(SUPPORT_FILEFORMAT_IQM)
 static Model LoadIQM(const char *fileName);     // Load IQM mesh data
-static ModelAnimation *LoadModelAnimationsIQM(const char *fileName, unsigned int *animCount);   // Load IQM animation data
+static ModelAnimation *LoadModelAnimationsIQM(const char *fileName, int *animCount);   // Load IQM animation data
 #endif
 #if defined(SUPPORT_FILEFORMAT_GLTF)
 static Model LoadGLTF(const char *fileName);    // Load GLTF mesh data
-static ModelAnimation *LoadModelAnimationsGLTF(const char *fileName, unsigned int *animCount);  // Load GLTF animation data
+static ModelAnimation *LoadModelAnimationsGLTF(const char *fileName, int *animCount);  // Load GLTF animation data
 #endif
 #if defined(SUPPORT_FILEFORMAT_VOX)
 static Model LoadVOX(const char *filename);     // Load VOX mesh data
 #endif
 #if defined(SUPPORT_FILEFORMAT_M3D)
 static Model LoadM3D(const char *filename);     // Load M3D mesh data
-static ModelAnimation *LoadModelAnimationsM3D(const char *fileName, unsigned int *animCount);   // Load M3D animation data
+static ModelAnimation *LoadModelAnimationsM3D(const char *fileName, int *animCount);   // Load M3D animation data
 #endif
 #if defined(SUPPORT_FILEFORMAT_OBJ) || defined(SUPPORT_FILEFORMAT_MTL)
 static void ProcessMaterialsOBJ(Material *rayMaterials, tinyobj_material_t *materials, int materialCount);  // Process obj materials
@@ -1979,7 +1979,7 @@ void SetModelMeshMaterial(Model *model, int meshId, int materialId)
 }
 
 // Load model animations from file
-ModelAnimation *LoadModelAnimations(const char *fileName, unsigned int *animCount)
+ModelAnimation *LoadModelAnimations(const char *fileName, int *animCount)
 {
     ModelAnimation *animations = NULL;
 
@@ -4081,8 +4081,8 @@ static Model LoadIQM(const char *fileName)
     #define MESH_NAME_LENGTH    32          // Mesh name string length
     #define MATERIAL_NAME_LENGTH 32         // Material name string length
 
-    unsigned int fileSize = 0;
-    unsigned char *fileData = LoadFileData(fileName, &fileSize);
+    int dataSize = 0;
+    unsigned char *fileData = LoadFileData(fileName, &dataSize);
     unsigned char *fileDataPtr = fileData;
 
     // IQM file structs
@@ -4090,7 +4090,7 @@ static Model LoadIQM(const char *fileName)
     typedef struct IQMHeader {
         char magic[16];
         unsigned int version;
-        unsigned int filesize;
+        unsigned int dataSize;
         unsigned int flags;
         unsigned int num_text, ofs_text;
         unsigned int num_meshes, ofs_meshes;
@@ -4443,19 +4443,19 @@ static Model LoadIQM(const char *fileName)
 }
 
 // Load IQM animation data
-static ModelAnimation *LoadModelAnimationsIQM(const char *fileName, unsigned int *animCount)
+static ModelAnimation *LoadModelAnimationsIQM(const char *fileName, int *animCount)
 {
     #define IQM_MAGIC       "INTERQUAKEMODEL"   // IQM file magic number
     #define IQM_VERSION     2                   // only IQM version 2 supported
 
-    unsigned int fileSize = 0;
-    unsigned char *fileData = LoadFileData(fileName, &fileSize);
+    int dataSize = 0;
+    unsigned char *fileData = LoadFileData(fileName, &dataSize);
     unsigned char *fileDataPtr = fileData;
 
     typedef struct IQMHeader {
         char magic[16];
         unsigned int version;
-        unsigned int filesize;
+        unsigned int dataSize;
         unsigned int flags;
         unsigned int num_text, ofs_text;
         unsigned int num_meshes, ofs_meshes;
@@ -4815,7 +4815,7 @@ static Model LoadGLTF(const char *fileName)
     Model model = { 0 };
 
     // glTF file loading
-    unsigned int dataSize = 0;
+    int dataSize = 0;
     unsigned char *fileData = LoadFileData(fileName, &dataSize);
 
     if (fileData == NULL) return model;
@@ -5295,10 +5295,10 @@ static bool GetPoseAtTimeGLTF(cgltf_accessor *input, cgltf_accessor *output, flo
 
 #define GLTF_ANIMDELAY 17    // Animation frames delay, (~1000 ms/60 FPS = 16.666666* ms)
 
-static ModelAnimation *LoadModelAnimationsGLTF(const char *fileName, unsigned int *animCount)
+static ModelAnimation *LoadModelAnimationsGLTF(const char *fileName, int *animCount)
 {
     // glTF file loading
-    unsigned int dataSize = 0;
+    int dataSize = 0;
     unsigned char *fileData = LoadFileData(fileName, &dataSize);
 
     ModelAnimation *animations = NULL;
@@ -5466,11 +5466,11 @@ static Model LoadVOX(const char *fileName)
 
     int nbvertices = 0;
     int meshescount = 0;
-    unsigned int fileSize = 0;
-    unsigned char *fileData = NULL;
-
+   
     // Read vox file into buffer
-    fileData = LoadFileData(fileName, &fileSize);
+    int dataSize = 0;
+    unsigned char *fileData = LoadFileData(fileName, &dataSize);
+    
     if (fileData == 0)
     {
         TRACELOG(LOG_WARNING, "MODEL: [%s] Failed to load VOX file", fileName);
@@ -5479,7 +5479,7 @@ static Model LoadVOX(const char *fileName)
 
     // Read and build voxarray description
     VoxArray3D voxarray = { 0 };
-    int ret = Vox_LoadFromMemory(fileData, fileSize, &voxarray);
+    int ret = Vox_LoadFromMemory(fileData, dataSize, &voxarray);
 
     if (ret != VOX_SUCCESS)
     {
@@ -5574,9 +5574,10 @@ static Model LoadM3D(const char *fileName)
 
     m3d_t *m3d = NULL;
     m3dp_t *prop = NULL;
-    unsigned int bytesRead = 0;
-    unsigned char *fileData = LoadFileData(fileName, &bytesRead);
     int i, j, k, l, n, mi = -2, vcolor = 0;
+    
+    int dataSize = 0;
+    unsigned char *fileData = LoadFileData(fileName, &dataSize);
 
     if (fileData != NULL)
     {
@@ -5878,15 +5879,16 @@ static Model LoadM3D(const char *fileName)
 #define M3D_ANIMDELAY 17    // Animation frames delay, (~1000 ms/60 FPS = 16.666666* ms)
 
 // Load M3D animation data
-static ModelAnimation *LoadModelAnimationsM3D(const char *fileName, unsigned int *animCount)
+static ModelAnimation *LoadModelAnimationsM3D(const char *fileName, int *animCount)
 {
-    m3d_t *m3d = NULL;
-    unsigned int bytesRead = 0;
-    unsigned char *fileData = LoadFileData(fileName, &bytesRead);
     ModelAnimation *animations = NULL;
+    
+    m3d_t *m3d = NULL;
     int i = 0, j = 0;
-
     *animCount = 0;
+
+    int dataSize = 0;
+    unsigned char *fileData = LoadFileData(fileName, &dataSize);
 
     if (fileData != NULL)
     {
