@@ -215,6 +215,14 @@
 #define STB_IMAGE_RESIZE_IMPLEMENTATION
 #include "external/stb_image_resize.h"  // Required for: stbir_resize_uint8() [ImageResize()]
 
+#if defined(SUPPORT_FILEFORMAT_SVG)
+	#define NANOSVG_IMPLEMENTATION	// Expands implementation
+	#include "external/nanosvg.h"
+
+	#define NANOSVGRAST_IMPLEMENTATION
+	#include "external/nanosvgrast.h"
+#endif
+
 //----------------------------------------------------------------------------------
 // Defines and Macros
 //----------------------------------------------------------------------------------
@@ -305,6 +313,72 @@ Image LoadImageRaw(const char *fileName, int width, int height, int format, int 
         image.format = format;
 
         RL_FREE(fileData);
+    }
+
+    return image;
+}
+
+// Load an image from SVG file data with a custom size
+Image LoadImageSvg(const char *fileName, int width, int height)
+{
+    Image image = { 0 };
+
+    unsigned int dataSize = 0;
+    unsigned char *string = LoadFileData(fileName, &dataSize);
+
+    if (string != NULL)
+    {
+        image = LoadImageSvgFromString(string, width, height);
+        RL_FREE(string);
+    }
+
+    return image;
+}
+
+// Load an image from a SVG string with custom size
+Image LoadImageSvgFromString(const char *string, int width, int height)
+{
+    Image image = { 0 };
+
+    if (string != NULL)
+    {
+        struct NSVGimage *svgImage = nsvgParse(string, "px", 96.0f);
+
+        // Allocate memory for image
+        unsigned char *img = malloc(width*height*4);
+
+        // Calculate scales for both the width and the height
+        const float scaleWidth = width/svgImage->width;
+        const float scaleHeight = height/svgImage->height;
+
+        // Set the largest of the 2 scales to be the scale to use
+        const float scale = (scaleHeight > scaleWidth) ? scaleWidth : scaleHeight;
+
+        int offsetX = 0;
+        int offsetY = 0;
+
+        if (scaleHeight > scaleWidth)
+        {
+            offsetY = (height - svgImage->height*scale) / 2;
+        }
+        else
+        {
+            offsetX = (width - svgImage->width*scale) / 2;
+        }
+
+        // Rasterize
+        struct NSVGrasterizer* rast = nsvgCreateRasterizer();
+        nsvgRasterize(rast, svgImage, (int)offsetX, (int)offsetY, scale, img, width, height, width*4);
+
+        // Populate image struct with all data
+        image.data = img;
+        image.width = width;
+        image.height = height;
+        image.mipmaps = 1;
+        image.format = PIXELFORMAT_UNCOMPRESSED_R8G8B8A8;
+
+        // Delete
+        nsvgDelete(svgImage);
     }
 
     return image;
@@ -469,6 +543,27 @@ Image LoadImageFromMemory(const char *fileType, const unsigned char *fileData, i
     else if ((strcmp(fileType, ".astc") == 0) || (strcmp(fileType, ".ASTC") == 0))
     {
         image.data = rl_load_astc_from_memory(fileData, dataSize, &image.width, &image.height, &image.format, &image.mipmaps);
+    }
+#endif
+#if defined(SUPPORT_FILEFORMAT_SVG)
+    else if (strcmp(fileType, ".svg") == 0)
+    {
+	    if (fileData != NULL)
+	    {
+            // Creating a duplicate svg to read sizes from due to nsvgParse modifiying the string buffer.
+            unsigned char *duplicate = (unsigned char*)RL_MALLOC(dataSize);
+            memcpy(duplicate, fileData, dataSize);
+	        struct NSVGimage *svgImage = nsvgParse(duplicate, "px", 96.0f);
+            RL_FREE(duplicate);
+
+	    	const int width = (int)svgImage->width;
+	        const int height = (int)svgImage->height;
+	        // Delete
+	        nsvgDelete(svgImage);
+            
+
+	        image = LoadImageSvgFromString(fileData, width, height);
+	    }
     }
 #endif
     else TRACELOG(LOG_WARNING, "IMAGE: Data format not supported");
