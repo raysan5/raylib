@@ -147,6 +147,8 @@
     #define STBI_FREE RL_FREE
     #define STBI_REALLOC RL_REALLOC
 
+    #define STBI_NO_THREAD_LOCALS
+
     #define STB_IMAGE_IMPLEMENTATION
     #include "external/stb_image.h"         // Required for: stbi_load_from_file()
                                             // NOTE: Used to read image data (multiple formats support)
