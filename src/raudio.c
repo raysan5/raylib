@@ -413,8 +413,8 @@ static void MixAudioFrames(float *framesOut, const float *framesIn, ma_uint32 fr
 static bool IsFileExtension(const char *fileName, const char *ext); // Check file extension
 static const char *GetFileExtension(const char *fileName);          // Get pointer to extension for a filename string (includes the dot: .png)
 
-static unsigned char *LoadFileData(const char *fileName, unsigned int *bytesRead);     // Load file data as byte array (read)
-static bool SaveFileData(const char *fileName, void *data, unsigned int bytesToWrite); // Save data to file from byte array (write)
+static unsigned char *LoadFileData(const char *fileName, int *dataSize);    // Load file data as byte array (read)
+static bool SaveFileData(const char *fileName, void *data, int dataSize);   // Save data to file from byte array (write)
 static bool SaveFileText(const char *fileName, char *text);         // Save text data to file (write), string must be '\0' terminated
 #endif
 
@@ -732,11 +732,11 @@ Wave LoadWave(const char *fileName)
     Wave wave = { 0 };
 
     // Loading file to memory
-    unsigned int fileSize = 0;
-    unsigned char *fileData = LoadFileData(fileName, &fileSize);
+    int dataSize = 0;
+    unsigned char *fileData = LoadFileData(fileName, &dataSize);
 
     // Loading wave from memory data
-    if (fileData != NULL) wave = LoadWaveFromMemory(GetFileExtension(fileName), fileData, fileSize);
+    if (fileData != NULL) wave = LoadWaveFromMemory(GetFileExtension(fileName), fileData, dataSize);
 
     RL_FREE(fileData);
 
@@ -2619,10 +2619,10 @@ static const char *GetFileExtension(const char *fileName)
 }
 
 // Load data from file into a buffer
-static unsigned char *LoadFileData(const char *fileName, unsigned int *bytesRead)
+static unsigned char *LoadFileData(const char *fileName, int *dataSize)
 {
     unsigned char *data = NULL;
-    *bytesRead = 0;
+    *dataSize = 0;
 
     if (fileName != NULL)
     {
@@ -2642,7 +2642,7 @@ static unsigned char *LoadFileData(const char *fileName, unsigned int *bytesRead
 
                 // NOTE: fread() returns number of read elements instead of bytes, so we read [1 byte, size elements]
                 unsigned int count = (unsigned int)fread(data, sizeof(unsigned char), size, file);
-                *bytesRead = count;
+                *dataSize = count;
 
                 if (count != size) TRACELOG(LOG_WARNING, "FILEIO: [%s] File partially loaded", fileName);
                 else TRACELOG(LOG_INFO, "FILEIO: [%s] File loaded successfully", fileName);
@@ -2659,7 +2659,7 @@ static unsigned char *LoadFileData(const char *fileName, unsigned int *bytesRead
 }
 
 // Save data to file from buffer
-static bool SaveFileData(const char *fileName, void *data, unsigned int bytesToWrite)
+static bool SaveFileData(const char *fileName, void *data, int dataSize)
 {
     if (fileName != NULL)
     {
@@ -2667,10 +2667,10 @@ static bool SaveFileData(const char *fileName, void *data, unsigned int bytesToW
 
         if (file != NULL)
         {
-            unsigned int count = (unsigned int)fwrite(data, sizeof(unsigned char), bytesToWrite, file);
+            unsigned int count = (unsigned int)fwrite(data, sizeof(unsigned char), dataSize, file);
 
             if (count == 0) TRACELOG(LOG_WARNING, "FILEIO: [%s] Failed to write file", fileName);
-            else if (count != bytesToWrite) TRACELOG(LOG_WARNING, "FILEIO: [%s] File partially written", fileName);
+            else if (count != dataSize) TRACELOG(LOG_WARNING, "FILEIO: [%s] File partially written", fileName);
             else TRACELOG(LOG_INFO, "FILEIO: [%s] File saved successfully", fileName);
 
             fclose(file);

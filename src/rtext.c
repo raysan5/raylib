@@ -363,13 +363,13 @@ Font LoadFontEx(const char *fileName, int fontSize, int *codepoints, int codepoi
     Font font = { 0 };
 
     // Loading file to memory
-    unsigned int fileSize = 0;
-    unsigned char *fileData = LoadFileData(fileName, &fileSize);
+    int dataSize = 0;
+    unsigned char *fileData = LoadFileData(fileName, &dataSize);
 
     if (fileData != NULL)
     {
         // Loading font from memory data
-        font = LoadFontFromMemory(GetFileExtension(fileName), fileData, fileSize, fontSize, codepoints, codepointCount);
+        font = LoadFontFromMemory(GetFileExtension(fileName), fileData, dataSize, fontSize, codepoints, codepointCount);
 
         UnloadFileData(fileData);
     }
