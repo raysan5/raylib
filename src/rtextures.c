@@ -324,24 +324,35 @@ Image LoadImageSvg(const char *fileNameOrString, int width, int height)
     Image image = { 0 };
     bool isSvgStringValid = false;
     
-    // TODO: Validate fileName or string
+    // Validate fileName or string
     if (fileNameOrString != NULL)
     {
+        int dataSize = 0;
+        unsigned char *fileData = NULL;
+
         if (FileExists(fileNameOrString))
         {
-            int dataSize = 0;
-            unsigned char *fileData = LoadFileData(fileNameOrString, &dataSize);
+            fileData = LoadFileData(fileNameOrString, &dataSize);
             isSvgStringValid = true;
         }
         else
         {
-            // TODO: Validate it's a valid SVG string
-            isSvgStringValid = true;
+            // Validate fileData as valid SVG string data
+            //<svg xmlns="http://www.w3.org/2000/svg" width="2500" height="2484" viewBox="0 0 192.756 191.488">
+            if ((fileNameOrString != NULL) &&
+                (fileNameOrString[0] == '<') &&
+                (fileNameOrString[1] == 's') &&
+                (fileNameOrString[2] == 'v') &&
+                (fileNameOrString[3] == 'g'))
+            {
+                fileData = fileNameOrString;
+                isSvgStringValid = true;
+            }
         }
 
-        if (isSvgStringValid != NULL)
+        if (isSvgStringValid)
         {
-            struct NSVGimage *svgImage = nsvgParse(fileNameOrString, "px", 96.0f);
+            struct NSVGimage *svgImage = nsvgParse(fileData, "px", 96.0f);
             
             unsigned char *img = RL_MALLOC(width*height*4);
 
@@ -372,6 +383,8 @@ Image LoadImageSvg(const char *fileNameOrString, int width, int height)
             // Free used memory
             nsvgDelete(svgImage);
         }
+
+        if (isSvgStringValid && (fileData != fileNameOrString)) UnloadFileData(fileData);
     }
 
     return image;
@@ -500,34 +513,44 @@ Image LoadImageFromMemory(const char *fileType, const unsigned char *fileData, i
 #if defined(SUPPORT_FILEFORMAT_QOI)
     else if ((strcmp(fileType, ".qoi") == 0) || (strcmp(fileType, ".QOI") == 0))
     {
-        qoi_desc desc = { 0 };
-        image.data = qoi_decode(fileData, dataSize, &desc, 4);
-        image.width = desc.width;
-        image.height = desc.height;
-        image.format = PIXELFORMAT_UNCOMPRESSED_R8G8B8A8;
-        image.mipmaps = 1;
+        if (fileData != NULL)
+        {
+            qoi_desc desc = { 0 };
+            image.data = qoi_decode(fileData, dataSize, &desc, 4);
+            image.width = desc.width;
+            image.height = desc.height;
+            image.format = PIXELFORMAT_UNCOMPRESSED_R8G8B8A8;
+            image.mipmaps = 1;
+        }
     }
 #endif
 #if defined(SUPPORT_FILEFORMAT_SVG)
     else if ((strcmp(fileType, ".svg") == 0) || (strcmp(fileType, ".SVG") == 0))
     {
-        // TODO: Validate fileData as valid SVG string data
-        
-        struct NSVGimage *svgImage = nsvgParse(fileData, "px", 96.0f);
-        unsigned char *img = RL_MALLOC(svgImage->width*svgImage->height*4);
-        
-        // Rasterize
-        struct NSVGrasterizer *rast = nsvgCreateRasterizer();
-        nsvgRasterize(rast, svgImage, 0, 0, 1.0f, img, svgImage->width, svgImage->height, svgImage->width*4);
+        // Validate fileData as valid SVG string data
+        //<svg xmlns="http://www.w3.org/2000/svg" width="2500" height="2484" viewBox="0 0 192.756 191.488">
+        if ((fileData != NULL) &&
+            (fileData[0] == '<') &&
+            (fileData[1] == 's') &&
+            (fileData[2] == 'v') &&
+            (fileData[3] == 'g'))
+        {
+            struct NSVGimage *svgImage = nsvgParse(fileData, "px", 96.0f);
+            unsigned char *img = RL_MALLOC(svgImage->width*svgImage->height*4);
 
-        // Populate image struct with all data
-        image.data = img;
-        image.width = svgImage->width;
-        image.height = svgImage->height;
-        image.mipmaps = 1;
-        image.format = PIXELFORMAT_UNCOMPRESSED_R8G8B8A8;
+            // Rasterize
+            struct NSVGrasterizer *rast = nsvgCreateRasterizer();
+            nsvgRasterize(rast, svgImage, 0, 0, 1.0f, img, svgImage->width, svgImage->height, svgImage->width*4);
 
-        nsvgDelete(svgImage);
+            // Populate image struct with all data
+            image.data = img;
+            image.width = svgImage->width;
+            image.height = svgImage->height;
+            image.mipmaps = 1;
+            image.format = PIXELFORMAT_UNCOMPRESSED_R8G8B8A8;
+
+            nsvgDelete(svgImage);
+        }
     }
 #endif
 #if defined(SUPPORT_FILEFORMAT_DDS)
