@@ -290,8 +290,12 @@
 #endif
 
 #if defined(PLATFORM_WEB)
-    #define GLFW_INCLUDE_ES2            // GLFW3: Enable OpenGL ES 2.0 (translated to WebGL)
-    //#define GLFW_INCLUDE_ES3            // GLFW3: Enable OpenGL ES 3.0 (transalted to WebGL2?)
+    #if defined(GRAPHICS_API_OPENGL_ES3)
+        #define GLFW_INCLUDE_ES3 // GLFW3: Enable OpenGL ES 3.0 (transalted to WebGL2?)
+    #else
+        #define GLFW_INCLUDE_ES2  // GLFW3: Enable OpenGL ES 2.0 (translated to WebGL)
+    #endif
+
     #include "GLFW/glfw3.h"             // GLFW3: Windows, OpenGL context and Input management
     #include <sys/time.h>               // Required for: timespec, nanosleep(), select() - POSIX
 

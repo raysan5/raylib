@@ -799,8 +799,11 @@ RLAPI void rlLoadDrawQuad(void);     // Load and draw a quad
     #define GLAD_GL_IMPLEMENTATION
     #include "external/glad.h"      // GLAD extensions loading library, includes OpenGL headers
 #endif
-
-#if defined(GRAPHICS_API_OPENGL_ES2)
+#if defined(GRAPHICS_API_OPENGL_ES3) && defined(PLATFORM_WEB)
+    #include <GLES3/gl3.h>
+    //#include "external/glad_gles3.h"
+#endif
+#if defined(GRAPHICS_API_OPENGL_ES2) //&& !defined(GRAPHICS_API_OPENGL_ES3)
     // NOTE: OpenGL ES 2.0 can be enabled on PLATFORM_DESKTOP,
     // in that case, functions are loaded from a custom glad for OpenGL ES 2.0
     #if defined(PLATFORM_DESKTOP)
@@ -897,8 +900,10 @@ RLAPI void rlLoadDrawQuad(void);     // Load and draw a quad
 
 #if defined(GRAPHICS_API_OPENGL_ES2)
     #define glClearDepth                 glClearDepthf
-    #define GL_READ_FRAMEBUFFER         GL_FRAMEBUFFER
-    #define GL_DRAW_FRAMEBUFFER         GL_FRAMEBUFFER
+    #if !defined(GRAPHICS_API_OPENGL_ES3) //These macros are defined in gl3.h
+        #define GL_READ_FRAMEBUFFER         GL_FRAMEBUFFER
+        #define GL_DRAW_FRAMEBUFFER         GL_FRAMEBUFFER
+    #endif
 #endif
 
 // Default shader vertex attribute names to set location points
@@ -1037,7 +1042,7 @@ typedef void *(*rlglLoadProc)(const char *name);   // OpenGL extension functions
 static rlglData RLGL = { 0 };
 #endif  // GRAPHICS_API_OPENGL_33 || GRAPHICS_API_OPENGL_ES2
 
-#if defined(GRAPHICS_API_OPENGL_ES2)
+#if defined(GRAPHICS_API_OPENGL_ES2) && !(defined(GRAPHICS_API_OPENGL_ES3) && defined(PLATFORM_WEB)) //ES3 should provide its own implementation
 // NOTE: VAO functionality is exposed through extensions (OES)
 static PFNGLGENVERTEXARRAYSOESPROC glGenVertexArrays = NULL;
 static PFNGLBINDVERTEXARRAYOESPROC glBindVertexArray = NULL;
@@ -1047,6 +1052,9 @@ static PFNGLDELETEVERTEXARRAYSOESPROC glDeleteVertexArrays = NULL;
 static PFNGLDRAWARRAYSINSTANCEDEXTPROC glDrawArraysInstanced = NULL;
 static PFNGLDRAWELEMENTSINSTANCEDEXTPROC glDrawElementsInstanced = NULL;
 static PFNGLVERTEXATTRIBDIVISOREXTPROC glVertexAttribDivisor = NULL;
+#endif
+#ifndef GL_HALF_FLOAT
+#define GL_HALF_FLOAT 0x140B
 #endif
 
 //----------------------------------------------------------------------------------
