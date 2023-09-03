@@ -64,6 +64,8 @@ int main(void)
 
             DrawTexture(textures[currentTexture], screenWidth/2 - textures[currentTexture].width/2, screenHeight/2 - textures[currentTexture].height/2, WHITE);
 
+            DrawText("Press LEFT MOUSE BUTTON to rotate the image clockwise", 250, 420, 10, DARKGRAY);
+
         EndDrawing();
         //----------------------------------------------------------------------------------
     }
