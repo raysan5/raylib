@@ -324,6 +324,7 @@ Image LoadImageSvg(const char *fileNameOrString, int width, int height)
     Image image = { 0 };
     bool isSvgStringValid = false;
     
+#if defined(SUPPORT_FILEFORMAT_SVG)
     // Validate fileName or string
     if (fileNameOrString != NULL)
     {
@@ -386,6 +387,9 @@ Image LoadImageSvg(const char *fileNameOrString, int width, int height)
 
         if (isSvgStringValid && (fileData != fileNameOrString)) UnloadFileData(fileData);
     }
+#else
+    TRACELOG(LOG_WARNING, "SVG image support not enabled, image can not be loaded");
+#endif
 
     return image;
 }
