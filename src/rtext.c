@@ -1071,7 +1071,7 @@ void DrawFPS(int posX, int posY)
 {
     const int fps = GetFPS();
 
-    Color color =
+    const Color color =
         fps < 15 ? RED :    // Low FPS
         fps < 30 ? ORANGE : // Warning FPS
         LIME;               // Good FPS
