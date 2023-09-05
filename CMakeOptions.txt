@@ -71,7 +71,7 @@ cmake_dependent_option(SUPPORT_FILEFORMAT_QOI "Support loading QOI as textures" 
 cmake_dependent_option(SUPPORT_FILEFORMAT_PSD "Support loading PSD as textures" ${OFF} CUSTOMIZE_BUILD OFF)
 cmake_dependent_option(SUPPORT_FILEFORMAT_PKM "Support loading PKM as textures" ${OFF} CUSTOMIZE_BUILD OFF)
 cmake_dependent_option(SUPPORT_FILEFORMAT_PVR "Support loading PVR as textures" ${OFF} CUSTOMIZE_BUILD OFF)
-cmake_dependent_option(SUPPORT_FILEFORMAT_SVG "Support loading SVG as textures" ON CUSTOMIZE_BUILD ON)
+cmake_dependent_option(SUPPORT_FILEFORMAT_SVG "Support loading SVG as textures" ${OFF} CUSTOMIZE_BUILD OFF)
 
 # rtext.c
 cmake_dependent_option(SUPPORT_FILEFORMAT_FNT "Support loading fonts in FNT format" ON CUSTOMIZE_BUILD ON)
