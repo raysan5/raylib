@@ -1075,7 +1075,7 @@ void DrawFPS(int posX, int posY)
     if ((fps < 30) && (fps >= 15)) color = ORANGE;  // Warning FPS
     else if (fps < 15) color = RED;             // Low FPS
 
-    DrawText(TextFormat("%2i FPS", GetFPS()), posX, posY, 20, color);
+    DrawText(TextFormat("%2i FPS", fps), posX, posY, 20, color);
 }
 
 // Draw text (using default font)
