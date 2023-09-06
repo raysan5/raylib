@@ -49,9 +49,6 @@
 *       #define SUPPORT_MOUSE_GESTURES
 *           Mouse gestures are directly mapped like touches and processed by gestures system.
 *
-*       #define SUPPORT_TOUCH_AS_MOUSE
-*           Touch input and mouse input are shared. Mouse functions also return touch information.
-*
 *       #define SUPPORT_SSH_KEYBOARD_RPI (Raspberry Pi only)
 *           Reconfigure standard input to receive key inputs, works with SSH connection.
 *           WARNING: Reconfiguring standard input could lead to undesired effects, like breaking other
