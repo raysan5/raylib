@@ -4051,7 +4051,7 @@ Vector2 GetMousePosition(void)
 {
     Vector2 position = { 0 };
 
-#if defined(PLATFORM_ANDROID) || defined(PLATFORM_WEB)
+#if defined(PLATFORM_ANDROID) //|| defined(PLATFORM_WEB)
     position = GetTouchPosition(0);
 #else
     position.x = (CORE.Input.Mouse.currentPosition.x + CORE.Input.Mouse.offset.x)*CORE.Input.Mouse.scale.x;
