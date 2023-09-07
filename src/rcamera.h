@@ -184,9 +184,10 @@ RLAPI Matrix GetCameraProjectionMatrix(Camera* camera, float aspect);
 //----------------------------------------------------------------------------------
 #define CAMERA_MOVE_SPEED                               0.09f
 #define CAMERA_ROTATION_SPEED                           0.03f
+#define CAMERA_PAN_SPEED                                0.2f
 
 // Camera mouse movement sensitivity
-#define CAMERA_MOUSE_MOVE_SENSITIVITY                   0.003f    // TODO: it should be independant of framerate
+#define CAMERA_MOUSE_MOVE_SENSITIVITY                   0.003f     // TODO: it should be independant of framerate
 #define CAMERA_MOUSE_SCROLL_SENSITIVITY                 1.5f
 
 #define CAMERA_ORBITAL_SPEED                            0.5f       // Radians per second
@@ -435,7 +436,7 @@ void UpdateCamera(Camera *camera, int mode)
     bool moveInWorldPlane = ((mode == CAMERA_FIRST_PERSON) || (mode == CAMERA_THIRD_PERSON));
     bool rotateAroundTarget = ((mode == CAMERA_THIRD_PERSON) || (mode == CAMERA_ORBITAL));
     bool lockView = ((mode == CAMERA_FIRST_PERSON) || (mode == CAMERA_THIRD_PERSON) || (mode == CAMERA_ORBITAL));
-    bool rotateUp = (mode == CAMERA_FREE);
+    bool rotateUp = false;
 
     if (mode == CAMERA_ORBITAL)
     {
@@ -458,10 +459,23 @@ void UpdateCamera(Camera *camera, int mode)
         // Camera movement
         if (!IsGamepadAvailable(0))
         {
-            // Mouse/Keyboard support
-            CameraYaw(camera, -mousePositionDelta.x*CAMERA_MOUSE_MOVE_SENSITIVITY, rotateAroundTarget);
-            CameraPitch(camera, -mousePositionDelta.y*CAMERA_MOUSE_MOVE_SENSITIVITY, lockView, rotateAroundTarget, rotateUp);
+            // Camera pan (for CAMERA_FREE)
+            if ((mode == CAMERA_FREE) && (IsMouseButtonDown(MOUSE_BUTTON_MIDDLE)))
+            {
+                const Vector2 mouseDelta = GetMouseDelta();
+                if (mouseDelta.x > 0.0f) CameraMoveRight(camera, CAMERA_PAN_SPEED, moveInWorldPlane);
+                if (mouseDelta.x < 0.0f) CameraMoveRight(camera, -CAMERA_PAN_SPEED, moveInWorldPlane);
+                if (mouseDelta.y > 0.0f) CameraMoveUp(camera, -CAMERA_PAN_SPEED);
+                if (mouseDelta.y < 0.0f) CameraMoveUp(camera, CAMERA_PAN_SPEED);
+            }
+            else
+            {
+                // Mouse support
+                CameraYaw(camera, -mousePositionDelta.x*CAMERA_MOUSE_MOVE_SENSITIVITY, rotateAroundTarget);
+                CameraPitch(camera, -mousePositionDelta.y*CAMERA_MOUSE_MOVE_SENSITIVITY, lockView, rotateAroundTarget, rotateUp);
+            }
 
+            // Keyboard support
             if (IsKeyDown(KEY_W)) CameraMoveForward(camera, CAMERA_MOVE_SPEED, moveInWorldPlane);
             if (IsKeyDown(KEY_A)) CameraMoveRight(camera, -CAMERA_MOVE_SPEED, moveInWorldPlane);
             if (IsKeyDown(KEY_S)) CameraMoveForward(camera, -CAMERA_MOVE_SPEED, moveInWorldPlane);
@@ -479,11 +493,14 @@ void UpdateCamera(Camera *camera, int mode)
             if (GetGamepadAxisMovement(0, GAMEPAD_AXIS_LEFT_X) >= 0.25f) CameraMoveRight(camera, CAMERA_MOVE_SPEED, moveInWorldPlane);
         }
 
-        //if (IsKeyDown(KEY_SPACE)) CameraMoveUp(camera, CAMERA_MOVE_SPEED);
-        //if (IsKeyDown(KEY_LEFT_CONTROL)) CameraMoveUp(camera, -CAMERA_MOVE_SPEED);
+        if (mode == CAMERA_FREE)
+        {
+            if (IsKeyDown(KEY_SPACE)) CameraMoveUp(camera, CAMERA_MOVE_SPEED);
+            if (IsKeyDown(KEY_LEFT_CONTROL)) CameraMoveUp(camera, -CAMERA_MOVE_SPEED);
+        }
     }
 
-    if ((mode == CAMERA_THIRD_PERSON) || (mode == CAMERA_ORBITAL))
+    if ((mode == CAMERA_THIRD_PERSON) || (mode == CAMERA_ORBITAL) || (mode == CAMERA_FREE))
     {
         // Zoom target distance
         CameraMoveToTarget(camera, -GetMouseWheelMove());

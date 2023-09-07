@@ -101,19 +101,18 @@
     #define PAR_REALLOC(T, BUF, N) ((T*)RL_REALLOC(BUF, sizeof(T)*(N)))
     #define PAR_FREE RL_FREE
 
-#if defined(_MSC_VER ) // par shapes has 2 warnings on windows, so disable them just fof this file
-#pragma warning( push )
-#pragma warning( disable : 4244)
-#pragma warning( disable : 4305)
-#endif
+    #if defined(_MSC_VER)           // Disable some MSVC warning
+        #pragma warning(push)
+        #pragma warning(disable : 4244)
+        #pragma warning(disable : 4305)
+    #endif
 
     #define PAR_SHAPES_IMPLEMENTATION
     #include "external/par_shapes.h"    // Shapes 3d parametric generation
 
-#if defined(_MSC_VER )  // disable MSVC warning suppression for par shapes
-#pragma warning( pop )
-#endif
-
+    #if defined(_MSC_VER)
+        #pragma warning(pop)        // Disable MSVC warning suppression
+    #endif
 #endif
 
 #if defined(_WIN32)
@@ -152,18 +151,18 @@ static Model LoadOBJ(const char *fileName);     // Load OBJ mesh data
 #endif
 #if defined(SUPPORT_FILEFORMAT_IQM)
 static Model LoadIQM(const char *fileName);     // Load IQM mesh data
-static ModelAnimation *LoadModelAnimationsIQM(const char *fileName, unsigned int *animCount);   // Load IQM animation data
+static ModelAnimation *LoadModelAnimationsIQM(const char *fileName, int *animCount);   // Load IQM animation data
 #endif
 #if defined(SUPPORT_FILEFORMAT_GLTF)
 static Model LoadGLTF(const char *fileName);    // Load GLTF mesh data
-static ModelAnimation *LoadModelAnimationsGLTF(const char *fileName, unsigned int *animCount);  // Load GLTF animation data
+static ModelAnimation *LoadModelAnimationsGLTF(const char *fileName, int *animCount);  // Load GLTF animation data
 #endif
 #if defined(SUPPORT_FILEFORMAT_VOX)
 static Model LoadVOX(const char *filename);     // Load VOX mesh data
 #endif
 #if defined(SUPPORT_FILEFORMAT_M3D)
 static Model LoadM3D(const char *filename);     // Load M3D mesh data
-static ModelAnimation *LoadModelAnimationsM3D(const char *fileName, unsigned int *animCount);   // Load M3D animation data
+static ModelAnimation *LoadModelAnimationsM3D(const char *fileName, int *animCount);   // Load M3D animation data
 #endif
 #if defined(SUPPORT_FILEFORMAT_OBJ) || defined(SUPPORT_FILEFORMAT_MTL)
 static void ProcessMaterialsOBJ(Material *rayMaterials, tinyobj_material_t *materials, int materialCount);  // Process obj materials
@@ -1905,7 +1904,7 @@ Material *LoadMaterials(const char *fileName, int *materialCount)
         int result = tinyobj_parse_mtl_file(&mats, &count, fileName);
         if (result != TINYOBJ_SUCCESS) TRACELOG(LOG_WARNING, "MATERIAL: [%s] Failed to parse materials file", fileName);
 
-        materials = MemAlloc(count*sizeof(Material));
+        materials = RL_MALLOC(count*sizeof(Material));
         ProcessMaterialsOBJ(materials, mats, count);
 
         tinyobj_materials_free(mats, count);
@@ -1980,7 +1979,7 @@ void SetModelMeshMaterial(Model *model, int meshId, int materialId)
 }
 
 // Load model animations from file
-ModelAnimation *LoadModelAnimations(const char *fileName, unsigned int *animCount)
+ModelAnimation *LoadModelAnimations(const char *fileName, int *animCount)
 {
     ModelAnimation *animations = NULL;
 
@@ -2100,9 +2099,9 @@ void UpdateModelAnimation(Model model, ModelAnimation anim, int frame)
 }
 
 // Unload animation array data
-void UnloadModelAnimations(ModelAnimation *animations, unsigned int count)
+void UnloadModelAnimations(ModelAnimation *animations, int animCount)
 {
-    for (unsigned int i = 0; i < count; i++) UnloadModelAnimation(animations[i]);
+    for (int i = 0; i < animCount; i++) UnloadModelAnimation(animations[i]);
     RL_FREE(animations);
 }
 
@@ -2458,7 +2457,7 @@ Mesh GenMeshCube(float width, float height, float length)
 // Platonic solids:
 par_shapes_mesh* par_shapes_create_tetrahedron();       // 4 sides polyhedron (pyramid)
 par_shapes_mesh* par_shapes_create_cube();              // 6 sides polyhedron (cube)
-par_shapes_mesh* par_shapes_create_octahedron();        // 8 sides polyhedron (dyamond)
+par_shapes_mesh* par_shapes_create_octahedron();        // 8 sides polyhedron (diamond)
 par_shapes_mesh* par_shapes_create_dodecahedron();      // 12 sides polyhedron
 par_shapes_mesh* par_shapes_create_icosahedron();       // 20 sides polyhedron
 */
@@ -4082,8 +4081,8 @@ static Model LoadIQM(const char *fileName)
     #define MESH_NAME_LENGTH    32          // Mesh name string length
     #define MATERIAL_NAME_LENGTH 32         // Material name string length
 
-    unsigned int fileSize = 0;
-    unsigned char *fileData = LoadFileData(fileName, &fileSize);
+    int dataSize = 0;
+    unsigned char *fileData = LoadFileData(fileName, &dataSize);
     unsigned char *fileDataPtr = fileData;
 
     // IQM file structs
@@ -4091,7 +4090,7 @@ static Model LoadIQM(const char *fileName)
     typedef struct IQMHeader {
         char magic[16];
         unsigned int version;
-        unsigned int filesize;
+        unsigned int dataSize;
         unsigned int flags;
         unsigned int num_text, ofs_text;
         unsigned int num_meshes, ofs_meshes;
@@ -4245,7 +4244,7 @@ static Model LoadIQM(const char *fileName)
         model.meshes[i].triangleCount = imesh[i].num_triangles;
         model.meshes[i].indices = RL_CALLOC(model.meshes[i].triangleCount*3, sizeof(unsigned short));
 
-        // Animated verted data, what we actually process for rendering
+        // Animated vertex data, what we actually process for rendering
         // NOTE: Animated vertex should be re-uploaded to GPU (if not using GPU skinning)
         model.meshes[i].animVertices = RL_CALLOC(model.meshes[i].vertexCount*3, sizeof(float));
         model.meshes[i].animNormals = RL_CALLOC(model.meshes[i].vertexCount*3, sizeof(float));
@@ -4444,19 +4443,19 @@ static Model LoadIQM(const char *fileName)
 }
 
 // Load IQM animation data
-static ModelAnimation *LoadModelAnimationsIQM(const char *fileName, unsigned int *animCount)
+static ModelAnimation *LoadModelAnimationsIQM(const char *fileName, int *animCount)
 {
     #define IQM_MAGIC       "INTERQUAKEMODEL"   // IQM file magic number
     #define IQM_VERSION     2                   // only IQM version 2 supported
 
-    unsigned int fileSize = 0;
-    unsigned char *fileData = LoadFileData(fileName, &fileSize);
+    int dataSize = 0;
+    unsigned char *fileData = LoadFileData(fileName, &dataSize);
     unsigned char *fileDataPtr = fileData;
 
     typedef struct IQMHeader {
         char magic[16];
         unsigned int version;
-        unsigned int filesize;
+        unsigned int dataSize;
         unsigned int flags;
         unsigned int num_text, ofs_text;
         unsigned int num_meshes, ofs_meshes;
@@ -4705,7 +4704,7 @@ static Image LoadImageFromCgltfImage(cgltf_image *cgltfImage, const char *texPat
                 if (result == cgltf_result_success)
                 {
                     image = LoadImageFromMemory(".png", (unsigned char *)data, outSize);
-                    MemFree(data);
+                    RL_FREE(data);
                 }
             }
         }
@@ -4788,7 +4787,7 @@ static Model LoadGLTF(const char *fileName)
 
         RESTRICTIONS:
           - Only triangle meshes supported
-          - Vertex attibute types and formats supported:
+          - Vertex attribute types and formats supported:
               > Vertices (position): vec3: float
               > Normals: vec3: float
               > Texcoords: vec2: float
@@ -4816,7 +4815,7 @@ static Model LoadGLTF(const char *fileName)
     Model model = { 0 };
 
     // glTF file loading
-    unsigned int dataSize = 0;
+    int dataSize = 0;
     unsigned char *fileData = LoadFileData(fileName, &dataSize);
 
     if (fileData == NULL) return model;
@@ -5287,7 +5286,7 @@ static bool GetPoseAtTimeGLTF(cgltf_accessor *input, cgltf_accessor *output, flo
         Vector4 v2 = {tmp[0], tmp[1], tmp[2], tmp[3]};
         Vector4 *r = data;
 
-        // Only v4 is for rotations, so we know it's a quat
+        // Only v4 is for rotations, so we know it's a quaternion
         *r = QuaternionSlerp(v1, v2, t);
     }
 
@@ -5296,10 +5295,10 @@ static bool GetPoseAtTimeGLTF(cgltf_accessor *input, cgltf_accessor *output, flo
 
 #define GLTF_ANIMDELAY 17    // Animation frames delay, (~1000 ms/60 FPS = 16.666666* ms)
 
-static ModelAnimation *LoadModelAnimationsGLTF(const char *fileName, unsigned int *animCount)
+static ModelAnimation *LoadModelAnimationsGLTF(const char *fileName, int *animCount)
 {
     // glTF file loading
-    unsigned int dataSize = 0;
+    int dataSize = 0;
     unsigned char *fileData = LoadFileData(fileName, &dataSize);
 
     ModelAnimation *animations = NULL;
@@ -5467,11 +5466,11 @@ static Model LoadVOX(const char *fileName)
 
     int nbvertices = 0;
     int meshescount = 0;
-    unsigned int fileSize = 0;
-    unsigned char *fileData = NULL;
-
+   
     // Read vox file into buffer
-    fileData = LoadFileData(fileName, &fileSize);
+    int dataSize = 0;
+    unsigned char *fileData = LoadFileData(fileName, &dataSize);
+    
     if (fileData == 0)
     {
         TRACELOG(LOG_WARNING, "MODEL: [%s] Failed to load VOX file", fileName);
@@ -5480,7 +5479,7 @@ static Model LoadVOX(const char *fileName)
 
     // Read and build voxarray description
     VoxArray3D voxarray = { 0 };
-    int ret = Vox_LoadFromMemory(fileData, fileSize, &voxarray);
+    int ret = Vox_LoadFromMemory(fileData, dataSize, &voxarray);
 
     if (ret != VOX_SUCCESS)
     {
@@ -5575,9 +5574,10 @@ static Model LoadM3D(const char *fileName)
 
     m3d_t *m3d = NULL;
     m3dp_t *prop = NULL;
-    unsigned int bytesRead = 0;
-    unsigned char *fileData = LoadFileData(fileName, &bytesRead);
-    int i, j, k, l, n, mi = -2;
+    int i, j, k, l, n, mi = -2, vcolor = 0;
+    
+    int dataSize = 0;
+    unsigned char *fileData = LoadFileData(fileName, &dataSize);
 
     if (fileData != NULL)
     {
@@ -5607,9 +5607,12 @@ static Model LoadM3D(const char *fileName)
         }
         else
         {
-            model.meshCount = model.materialCount = 1;
+            model.meshCount = 1; model.materialCount = 0;
             TRACELOG(LOG_INFO, "MODEL: No materials, putting all meshes in a default material");
         }
+
+        // We always need a default material, so we add +1
+        model.materialCount++;
 
         model.meshes = (Mesh *)RL_CALLOC(model.meshCount, sizeof(Mesh));
         model.meshMaterial = (int *)RL_CALLOC(model.meshCount, sizeof(int));
@@ -5635,7 +5638,14 @@ static Model LoadM3D(const char *fileName)
                 k++;
                 mi = m3d->face[i].materialid;
 
-                for (j = i, l = 0; (j < (int)m3d->numface) && (mi == m3d->face[j].materialid); j++, l++);
+                // Only allocate colors VertexBuffer if there's a color vertex in the model for this material batch
+                // if all colors are fully transparent black for all verteces of this materal, then we assume no vertex colors
+                for (j = i, l = vcolor = 0; (j < (int)m3d->numface) && (mi == m3d->face[j].materialid); j++, l++)
+                {
+                    if (!m3d->vertex[m3d->face[j].vertex[0]].color ||
+                        !m3d->vertex[m3d->face[j].vertex[1]].color ||
+                        !m3d->vertex[m3d->face[j].vertex[2]].color) vcolor = 1;
+                }
 
                 model.meshes[k].vertexCount = l*3;
                 model.meshes[k].triangleCount = l;
@@ -5643,9 +5653,9 @@ static Model LoadM3D(const char *fileName)
                 model.meshes[k].texcoords = (float *)RL_CALLOC(model.meshes[k].vertexCount*2, sizeof(float));
                 model.meshes[k].normals = (float *)RL_CALLOC(model.meshes[k].vertexCount*3, sizeof(float));
 
-                // If no map is provided, we allocate storage for vertex colors
-                // M3D specs only consider vertex colors if no material is provided
-                if (mi != M3D_UNDEF) model.meshes[k].colors = RL_CALLOC(model.meshes[k].vertexCount*4, sizeof(unsigned char));
+                // If no map is provided, or we have colors defined, we allocate storage for vertex colors
+                // M3D specs only consider vertex colors if no material is provided, however raylib uses both and mixes the colors
+                if ((mi == M3D_UNDEF) || vcolor) model.meshes[k].colors = RL_CALLOC(model.meshes[k].vertexCount*4, sizeof(unsigned char));
 
                 if (m3d->numbone && m3d->numskin)
                 {
@@ -5869,15 +5879,16 @@ static Model LoadM3D(const char *fileName)
 #define M3D_ANIMDELAY 17    // Animation frames delay, (~1000 ms/60 FPS = 16.666666* ms)
 
 // Load M3D animation data
-static ModelAnimation *LoadModelAnimationsM3D(const char *fileName, unsigned int *animCount)
+static ModelAnimation *LoadModelAnimationsM3D(const char *fileName, int *animCount)
 {
-    m3d_t *m3d = NULL;
-    unsigned int bytesRead = 0;
-    unsigned char *fileData = LoadFileData(fileName, &bytesRead);
     ModelAnimation *animations = NULL;
+    
+    m3d_t *m3d = NULL;
     int i = 0, j = 0;
-
     *animCount = 0;
+
+    int dataSize = 0;
+    unsigned char *fileData = LoadFileData(fileName, &dataSize);
 
     if (fileData != NULL)
     {

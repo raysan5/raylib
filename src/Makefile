@@ -776,7 +776,7 @@ clean:	clean_shell_$(PLATFORM_SHELL)
 	@echo "removed all generated files!"
 
 clean_shell_sh:
-	rm -fv *.o $(RAYLIB_RELEASE_PATH)/lib$(RAYLIB_LIB_NAME).a $(RAYLIB_RELEASE_PATH)/lib$(RAYLIB_LIB_NAME).bc $(RAYLIB_RELEASE_PATH)/lib$(RAYLIB_LIB_NAME).so*
+	rm -fv *.o $(RAYLIB_RELEASE_PATH)/lib$(RAYLIB_LIB_NAME).a $(RAYLIB_RELEASE_PATH)/lib$(RAYLIB_LIB_NAME).bc $(RAYLIB_RELEASE_PATH)/lib$(RAYLIB_LIB_NAME).so* raygui.c physac.c
 ifeq ($(PLATFORM),PLATFORM_ANDROID)
 	rm -fv $(NATIVE_APP_GLUE)/android_native_app_glue.o
 endif
@@ -788,4 +788,6 @@ clean_shell_cmd:
 	cd $(RAYLIB_RELEASE_PATH) & \
 	del lib$(RAYLIB_LIB_NAME).a /s & \
 	del lib$(RAYLIB_LIB_NAME)dll.a /s & \
-	del $(RAYLIB_LIB_NAME).dll /s
+	del $(RAYLIB_LIB_NAME).dll /s & \
+	del raygui.c /s & \
+	del physac.c /s

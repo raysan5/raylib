@@ -138,13 +138,24 @@
      defined(SUPPORT_FILEFORMAT_PIC) || \
      defined(SUPPORT_FILEFORMAT_PNM))
 
+    #if defined(__GNUC__) // GCC and Clang
+        #pragma GCC diagnostic push
+        #pragma GCC diagnostic ignored "-Wunused-function"
+    #endif
+
     #define STBI_MALLOC RL_MALLOC
     #define STBI_FREE RL_FREE
     #define STBI_REALLOC RL_REALLOC
 
+    #define STBI_NO_THREAD_LOCALS
+
     #define STB_IMAGE_IMPLEMENTATION
     #include "external/stb_image.h"         // Required for: stbi_load_from_file()
                                             // NOTE: Used to read image data (multiple formats support)
+
+    #if defined(__GNUC__) // GCC and Clang
+        #pragma GCC diagnostic pop
+    #endif
 #endif
 
 #if (defined(SUPPORT_FILEFORMAT_DDS) || \
@@ -153,25 +164,35 @@
      defined(SUPPORT_FILEFORMAT_PVR) || \
      defined(SUPPORT_FILEFORMAT_ASTC))
 
+    #if defined(__GNUC__) // GCC and Clang
+        #pragma GCC diagnostic push
+        #pragma GCC diagnostic ignored "-Wunused-function"
+    #endif
+
     #define RL_GPUTEX_IMPLEMENTATION
     #include "external/rl_gputex.h"         // Required for: rl_load_xxx_from_memory()
                                             // NOTE: Used to read compressed textures data (multiple formats support)
+
+    #if defined(__GNUC__) // GCC and Clang
+        #pragma GCC diagnostic pop
+    #endif
 #endif
 
 #if defined(SUPPORT_FILEFORMAT_QOI)
     #define QOI_MALLOC RL_MALLOC
     #define QOI_FREE RL_FREE
 
-#if defined(_MSC_VER ) // qoi has warnings on windows, so disable them just for this file
-#pragma warning( push )
-#pragma warning( disable : 4267)
-#endif
+    #if defined(_MSC_VER)               // Disable some MSVC warning
+        #pragma warning(push)
+        #pragma warning(disable : 4267)
+    #endif
+
     #define QOI_IMPLEMENTATION
     #include "external/qoi.h"
 
-#if defined(_MSC_VER )
-#pragma warning( pop )
-#endif
+    #if defined(_MSC_VER)
+        #pragma warning(pop)            // Disable MSVC warning suppression
+    #endif
 
 #endif
 
@@ -193,6 +214,14 @@
 #define STBIR_FREE(ptr,c) ((void)(c), RL_FREE(ptr))
 #define STB_IMAGE_RESIZE_IMPLEMENTATION
 #include "external/stb_image_resize.h"  // Required for: stbir_resize_uint8() [ImageResize()]
+
+#if defined(SUPPORT_FILEFORMAT_SVG)
+	#define NANOSVG_IMPLEMENTATION	// Expands implementation
+	#include "external/nanosvg.h"
+
+	#define NANOSVGRAST_IMPLEMENTATION
+	#include "external/nanosvgrast.h"
+#endif
 
 //----------------------------------------------------------------------------------
 // Defines and Macros
@@ -250,11 +279,11 @@ Image LoadImage(const char *fileName)
 #endif
 
     // Loading file to memory
-    unsigned int fileSize = 0;
-    unsigned char *fileData = LoadFileData(fileName, &fileSize);
+    int dataSize = 0;
+    unsigned char *fileData = LoadFileData(fileName, &dataSize);
 
     // Loading image from memory data
-    if (fileData != NULL) image = LoadImageFromMemory(GetFileExtension(fileName), fileData, fileSize);
+    if (fileData != NULL) image = LoadImageFromMemory(GetFileExtension(fileName), fileData, dataSize);
 
     RL_FREE(fileData);
 
@@ -266,7 +295,7 @@ Image LoadImageRaw(const char *fileName, int width, int height, int format, int 
 {
     Image image = { 0 };
 
-    unsigned int dataSize = 0;
+    int dataSize = 0;
     unsigned char *fileData = LoadFileData(fileName, &dataSize);
 
     if (fileData != NULL)
@@ -289,6 +318,82 @@ Image LoadImageRaw(const char *fileName, int width, int height, int format, int 
     return image;
 }
 
+// Load an image from a SVG file or string with custom size
+Image LoadImageSvg(const char *fileNameOrString, int width, int height)
+{
+    Image image = { 0 };
+    bool isSvgStringValid = false;
+    
+#if defined(SUPPORT_FILEFORMAT_SVG)
+    // Validate fileName or string
+    if (fileNameOrString != NULL)
+    {
+        int dataSize = 0;
+        unsigned char *fileData = NULL;
+
+        if (FileExists(fileNameOrString))
+        {
+            fileData = LoadFileData(fileNameOrString, &dataSize);
+            isSvgStringValid = true;
+        }
+        else
+        {
+            // Validate fileData as valid SVG string data
+            //<svg xmlns="http://www.w3.org/2000/svg" width="2500" height="2484" viewBox="0 0 192.756 191.488">
+            if ((fileNameOrString != NULL) &&
+                (fileNameOrString[0] == '<') &&
+                (fileNameOrString[1] == 's') &&
+                (fileNameOrString[2] == 'v') &&
+                (fileNameOrString[3] == 'g'))
+            {
+                fileData = fileNameOrString;
+                isSvgStringValid = true;
+            }
+        }
+
+        if (isSvgStringValid)
+        {
+            struct NSVGimage *svgImage = nsvgParse(fileData, "px", 96.0f);
+            
+            unsigned char *img = RL_MALLOC(width*height*4);
+
+            // Calculate scales for both the width and the height
+            const float scaleWidth = width/svgImage->width;
+            const float scaleHeight = height/svgImage->height;
+
+            // Set the largest of the 2 scales to be the scale to use
+            const float scale = (scaleHeight > scaleWidth)? scaleWidth : scaleHeight;
+
+            int offsetX = 0;
+            int offsetY = 0;
+
+            if (scaleHeight > scaleWidth) offsetY = (height - svgImage->height*scale) / 2;
+            else offsetX = (width - svgImage->width*scale) / 2;
+
+            // Rasterize
+            struct NSVGrasterizer *rast = nsvgCreateRasterizer();
+            nsvgRasterize(rast, svgImage, (int)offsetX, (int)offsetY, scale, img, width, height, width*4);
+
+            // Populate image struct with all data
+            image.data = img;
+            image.width = width;
+            image.height = height;
+            image.mipmaps = 1;
+            image.format = PIXELFORMAT_UNCOMPRESSED_R8G8B8A8;
+
+            // Free used memory
+            nsvgDelete(svgImage);
+        }
+
+        if (isSvgStringValid && (fileData != fileNameOrString)) UnloadFileData(fileData);
+    }
+#else
+    TRACELOG(LOG_WARNING, "SVG image support not enabled, image can not be loaded");
+#endif
+
+    return image;
+}
+
 // Load animated image data
 //  - Image.data buffer includes all frames: [image#0][image#1][image#2][...]
 //  - Number of frames is returned through 'frames' parameter
@@ -302,7 +407,7 @@ Image LoadImageAnim(const char *fileName, int *frames)
 #if defined(SUPPORT_FILEFORMAT_GIF)
     if (IsFileExtension(fileName, ".gif"))
     {
-        unsigned int dataSize = 0;
+        int dataSize = 0;
         unsigned char *fileData = LoadFileData(fileName, &dataSize);
 
         if (fileData != NULL)
@@ -412,12 +517,44 @@ Image LoadImageFromMemory(const char *fileType, const unsigned char *fileData, i
 #if defined(SUPPORT_FILEFORMAT_QOI)
     else if ((strcmp(fileType, ".qoi") == 0) || (strcmp(fileType, ".QOI") == 0))
     {
-        qoi_desc desc = { 0 };
-        image.data = qoi_decode(fileData, dataSize, &desc, 4);
-        image.width = desc.width;
-        image.height = desc.height;
-        image.format = PIXELFORMAT_UNCOMPRESSED_R8G8B8A8;
-        image.mipmaps = 1;
+        if (fileData != NULL)
+        {
+            qoi_desc desc = { 0 };
+            image.data = qoi_decode(fileData, dataSize, &desc, 4);
+            image.width = desc.width;
+            image.height = desc.height;
+            image.format = PIXELFORMAT_UNCOMPRESSED_R8G8B8A8;
+            image.mipmaps = 1;
+        }
+    }
+#endif
+#if defined(SUPPORT_FILEFORMAT_SVG)
+    else if ((strcmp(fileType, ".svg") == 0) || (strcmp(fileType, ".SVG") == 0))
+    {
+        // Validate fileData as valid SVG string data
+        //<svg xmlns="http://www.w3.org/2000/svg" width="2500" height="2484" viewBox="0 0 192.756 191.488">
+        if ((fileData != NULL) &&
+            (fileData[0] == '<') &&
+            (fileData[1] == 's') &&
+            (fileData[2] == 'v') &&
+            (fileData[3] == 'g'))
+        {
+            struct NSVGimage *svgImage = nsvgParse(fileData, "px", 96.0f);
+            unsigned char *img = RL_MALLOC(svgImage->width*svgImage->height*4);
+
+            // Rasterize
+            struct NSVGrasterizer *rast = nsvgCreateRasterizer();
+            nsvgRasterize(rast, svgImage, 0, 0, 1.0f, img, svgImage->width, svgImage->height, svgImage->width*4);
+
+            // Populate image struct with all data
+            image.data = img;
+            image.width = svgImage->width;
+            image.height = svgImage->height;
+            image.mipmaps = 1;
+            image.format = PIXELFORMAT_UNCOMPRESSED_R8G8B8A8;
+
+            nsvgDelete(svgImage);
+        }
     }
 #endif
 #if defined(SUPPORT_FILEFORMAT_DDS)
@@ -3265,6 +3402,14 @@ void ImageDrawRectangleRec(Image *dst, Rectangle rec, Color color)
     if (rec.width < 0) rec.width = 0;
     if (rec.height < 0) rec.height = 0;
 
+    // Clamp the size the the image bounds
+    if ((rec.x + rec.width) >= dst->width) rec.width = dst->width - rec.x;
+    if ((rec.y + rec.height) >= dst->height) rec.height = dst->height - rec.y;
+
+    // Check if the rect is even inside the image
+    if ((rec.x > dst->width) || (rec.y > dst->height)) return;
+    if (((rec.x + rec.width) < 0) || (rec.y + rec.height < 0)) return;
+
     int sy = (int)rec.y;
     int sx = (int)rec.x;
 
@@ -3281,13 +3426,13 @@ void ImageDrawRectangleRec(Image *dst, Rectangle rec, Color color)
     {
         memcpy(pSrcPixel + x*bytesPerPixel, pSrcPixel, bytesPerPixel);
     }
-	
-	// Repeat the first row data for all other rows
-	int bytesPerRow = bytesPerPixel * (int)rec.width;
-	for (int y = 1; y < (int)rec.height; y++)
-	{
-		memcpy(pSrcPixel + (y*dst->width)*bytesPerPixel, pSrcPixel, bytesPerRow);
-	}
+
+    // Repeat the first row data for all other rows
+    int bytesPerRow = bytesPerPixel * (int)rec.width;
+    for (int y = 1; y < (int)rec.height; y++)
+    {
+        memcpy(pSrcPixel + (y*dst->width)*bytesPerPixel, pSrcPixel, bytesPerRow);
+    }
 }
 
 // Draw rectangle lines within an image

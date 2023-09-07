@@ -108,7 +108,7 @@ int main(void)
 
     InitWindow(screenWidth, screenHeight, "raylib [easings] example - easings testbed");
 
-    Vector2 ballPosition = { 100.0f, 200.0f };
+    Vector2 ballPosition = { 100.0f, 100.0f };
 
     float t = 0.0f;             // Current time (in any unit measure, but same unit as duration)
     float d = 300.0f;           // Total time it should take to complete (duration)
@@ -180,8 +180,8 @@ int main(void)
         // Movement computation
         if (!paused && ((boundedT && t < d) || !boundedT))
         {
-            ballPosition.x = Easings[easingX].func(t, 100.0f, 700.0f - 100.0f, d);
-            ballPosition.y = Easings[easingY].func(t, 100.0f, 400.0f - 100.0f, d);
+            ballPosition.x = Easings[easingX].func(t, 100.0f, 700.0f - 170.0f, d);
+            ballPosition.y = Easings[easingY].func(t, 100.0f, 400.0f - 170.0f, d);
             t += 1.0f;
         }
         //----------------------------------------------------------------------------------
@@ -193,15 +193,15 @@ int main(void)
             ClearBackground(RAYWHITE);
 
             // Draw information text
-            DrawText(TextFormat("Easing x: %s", Easings[easingX].name), 0, FONT_SIZE*2, FONT_SIZE, LIGHTGRAY);
-            DrawText(TextFormat("Easing y: %s", Easings[easingY].name), 0, FONT_SIZE*3, FONT_SIZE, LIGHTGRAY);
-            DrawText(TextFormat("t (%c) = %.2f d = %.2f", (boundedT == true)? 'b' : 'u', t, d), 0, FONT_SIZE*4, FONT_SIZE, LIGHTGRAY);
+            DrawText(TextFormat("Easing x: %s", Easings[easingX].name), 20, FONT_SIZE, FONT_SIZE, LIGHTGRAY);
+            DrawText(TextFormat("Easing y: %s", Easings[easingY].name), 20, FONT_SIZE*2, FONT_SIZE, LIGHTGRAY);
+            DrawText(TextFormat("t (%c) = %.2f d = %.2f", (boundedT == true)? 'b' : 'u', t, d), 20, FONT_SIZE*3, FONT_SIZE, LIGHTGRAY);
 
             // Draw instructions text
-            DrawText("Use ENTER to play or pause movement, use SPACE to restart", 0, GetScreenHeight() - FONT_SIZE*2, FONT_SIZE, LIGHTGRAY);
-            DrawText("Use D and W or A and S keys to change duration", 0, GetScreenHeight() - FONT_SIZE*3, FONT_SIZE, LIGHTGRAY);
-            DrawText("Use LEFT or RIGHT keys to choose easing for the x axis", 0, GetScreenHeight() - FONT_SIZE*4, FONT_SIZE, LIGHTGRAY);
-            DrawText("Use UP or DOWN keys to choose easing for the y axis", 0, GetScreenHeight() - FONT_SIZE*5, FONT_SIZE, LIGHTGRAY);
+            DrawText("Use ENTER to play or pause movement, use SPACE to restart", 20, GetScreenHeight() - FONT_SIZE*2, FONT_SIZE, LIGHTGRAY);
+            DrawText("Use Q and W or A and S keys to change duration", 20, GetScreenHeight() - FONT_SIZE*3, FONT_SIZE, LIGHTGRAY);
+            DrawText("Use LEFT or RIGHT keys to choose easing for the x axis", 20, GetScreenHeight() - FONT_SIZE*4, FONT_SIZE, LIGHTGRAY);
+            DrawText("Use UP or DOWN keys to choose easing for the y axis", 20, GetScreenHeight() - FONT_SIZE*5, FONT_SIZE, LIGHTGRAY);
 
             // Draw ball
             DrawCircleV(ballPosition, 16.0f, MAROON);

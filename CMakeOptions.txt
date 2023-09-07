@@ -38,14 +38,15 @@ cmake_dependent_option(SUPPORT_MODULE_RAUDIO "Include module: raudio" ON CUSTOMI
 cmake_dependent_option(SUPPORT_CAMERA_SYSTEM "Provide camera module (rcamera.h) with multiple predefined cameras: free, 1st/3rd person, orbital" ON CUSTOMIZE_BUILD ON)
 cmake_dependent_option(SUPPORT_GESTURES_SYSTEM "Gestures module is included (rgestures.h) to support gestures detection: tap, hold, swipe, drag" ON CUSTOMIZE_BUILD ON)
 cmake_dependent_option(SUPPORT_MOUSE_GESTURES "Mouse gestures are directly mapped like touches and processed by gestures system" ON CUSTOMIZE_BUILD ON)
-cmake_dependent_option(SUPPORT_SSH_KEYBOARD_RPI "Reconfigure standard input to receive key inputs, works with SSH connection" OFF CUSTOMIZE_BUILD OFF)
+cmake_dependent_option(SUPPORT_SSH_KEYBOARD_RPI "Reconfigure standard input to receive key inputs, works with SSH connection" ON CUSTOMIZE_BUILD ON)
 cmake_dependent_option(SUPPORT_DEFAULT_FONT "Default font is loaded on window initialization to be available for the user to render simple text. If enabled, uses external module functions to load default raylib font (module: text)" ON CUSTOMIZE_BUILD ON)
 cmake_dependent_option(SUPPORT_SCREEN_CAPTURE "Allow automatic screen capture of current screen pressing F12, defined in KeyCallback()" ON CUSTOMIZE_BUILD ON)
 cmake_dependent_option(SUPPORT_GIF_RECORDING "Allow automatic gif recording of current screen pressing CTRL+F12, defined in KeyCallback()" ON CUSTOMIZE_BUILD ON)
 cmake_dependent_option(SUPPORT_BUSY_WAIT_LOOP "Use busy wait loop for timing sync instead of a high-resolution timer" OFF CUSTOMIZE_BUILD OFF)
 cmake_dependent_option(SUPPORT_EVENTS_WAITING "Wait for events passively (sleeping while no events) instead of polling them actively every frame" OFF CUSTOMIZE_BUILD OFF)
-cmake_dependent_option(SUPPORT_WINMM_HIGHRES_TIMER "Setting a higher resolution can improve the accuracy of time-out intervals in wait functions" OFF CUSTOMIZE_BUILD OFF)
+cmake_dependent_option(SUPPORT_WINMM_HIGHRES_TIMER "Setting a higher resolution can improve the accuracy of time-out intervals in wait functions" ON CUSTOMIZE_BUILD ON)
 cmake_dependent_option(SUPPORT_COMPRESSION_API "Support for compression API" ON CUSTOMIZE_BUILD ON)
+cmake_dependent_option(SUPPORT_EVENTS_AUTOMATION "Support automatic generated events, loading and recording of those events when required" OFF CUSTOMIZE_BUILD OFF)
 cmake_dependent_option(SUPPORT_CUSTOM_FRAME_CONTROL "Enabling this flag allows manual control of the frame processes, use at your own risk" OFF CUSTOMIZE_BUILD OFF)
 
 # rshapes.c
@@ -58,17 +59,19 @@ cmake_dependent_option(SUPPORT_IMAGE_MANIPULATION "Support multiple image editin
 cmake_dependent_option(SUPPORT_FILEFORMAT_PNG "Support loading PNG as textures" ON CUSTOMIZE_BUILD ON)
 cmake_dependent_option(SUPPORT_FILEFORMAT_DDS "Support loading DDS as textures" ON CUSTOMIZE_BUILD ON)
 cmake_dependent_option(SUPPORT_FILEFORMAT_HDR "Support loading HDR as textures" ON CUSTOMIZE_BUILD ON)
-cmake_dependent_option(SUPPORT_FILEFORMAT_PNM "Support loading PNM as textures" ON CUSTOMIZE_BUILD ON)
-cmake_dependent_option(SUPPORT_FILEFORMAT_KTX "Support loading KTX as textures" ON CUSTOMIZE_BUILD ON)
-cmake_dependent_option(SUPPORT_FILEFORMAT_ASTC "Support loading ASTC as textures" ON CUSTOMIZE_BUILD ON)
+cmake_dependent_option(SUPPORT_FILEFORMAT_PIC "Support loading PIC as textures" ${OFF} CUSTOMIZE_BUILD OFF)
+cmake_dependent_option(SUPPORT_FILEFORMAT_PNM "Support loading PNM as textures" ${OFF} CUSTOMIZE_BUILD OFF)
+cmake_dependent_option(SUPPORT_FILEFORMAT_KTX "Support loading KTX as textures" ${OFF} CUSTOMIZE_BUILD OFF)
+cmake_dependent_option(SUPPORT_FILEFORMAT_ASTC "Support loading ASTC as textures" ${OFF} CUSTOMIZE_BUILD OFF)
 cmake_dependent_option(SUPPORT_FILEFORMAT_BMP "Support loading BMP as textures" ${OFF} CUSTOMIZE_BUILD OFF)
 cmake_dependent_option(SUPPORT_FILEFORMAT_TGA "Support loading TGA as textures" ${OFF} CUSTOMIZE_BUILD OFF)
 cmake_dependent_option(SUPPORT_FILEFORMAT_JPG "Support loading JPG as textures" ${OFF} CUSTOMIZE_BUILD OFF)
-cmake_dependent_option(SUPPORT_FILEFORMAT_GIF "Support loading GIF as textures" ${OFF} CUSTOMIZE_BUILD OFF)
-cmake_dependent_option(SUPPORT_FILEFORMAT_QOI "Support loading QOI as textures" ${OFF} CUSTOMIZE_BUILD OFF)
+cmake_dependent_option(SUPPORT_FILEFORMAT_GIF "Support loading GIF as textures" ON CUSTOMIZE_BUILD ON)
+cmake_dependent_option(SUPPORT_FILEFORMAT_QOI "Support loading QOI as textures" ON CUSTOMIZE_BUILD ON)
 cmake_dependent_option(SUPPORT_FILEFORMAT_PSD "Support loading PSD as textures" ${OFF} CUSTOMIZE_BUILD OFF)
 cmake_dependent_option(SUPPORT_FILEFORMAT_PKM "Support loading PKM as textures" ${OFF} CUSTOMIZE_BUILD OFF)
 cmake_dependent_option(SUPPORT_FILEFORMAT_PVR "Support loading PVR as textures" ${OFF} CUSTOMIZE_BUILD OFF)
+cmake_dependent_option(SUPPORT_FILEFORMAT_SVG "Support loading SVG as textures" ${OFF} CUSTOMIZE_BUILD OFF)
 
 # rtext.c
 cmake_dependent_option(SUPPORT_FILEFORMAT_FNT "Support loading fonts in FNT format" ON CUSTOMIZE_BUILD ON)
@@ -83,6 +86,7 @@ cmake_dependent_option(SUPPORT_FILEFORMAT_MTL "Support loading MTL file format" 
 cmake_dependent_option(SUPPORT_FILEFORMAT_IQM "Support loading IQM file format" ON CUSTOMIZE_BUILD ON)
 cmake_dependent_option(SUPPORT_FILEFORMAT_GLTF "Support loading GLTF file format" ON CUSTOMIZE_BUILD ON)
 cmake_dependent_option(SUPPORT_FILEFORMAT_VOX "Support loading VOX file format" ON CUSTOMIZE_BUILD ON)
+cmake_dependent_option(SUPPORT_FILEFORMAT_M3D "Support loading M3D file format" ON CUSTOMIZE_BUILD ON)
 
 # raudio.c
 cmake_dependent_option(SUPPORT_FILEFORMAT_WAV  "Support loading WAV for sound" ON CUSTOMIZE_BUILD ON)
@@ -90,6 +94,7 @@ cmake_dependent_option(SUPPORT_FILEFORMAT_OGG  "Support loading OGG for sound" O
 cmake_dependent_option(SUPPORT_FILEFORMAT_XM   "Support loading XM for sound" ON CUSTOMIZE_BUILD ON)
 cmake_dependent_option(SUPPORT_FILEFORMAT_MOD  "Support loading MOD for sound" ON CUSTOMIZE_BUILD ON)
 cmake_dependent_option(SUPPORT_FILEFORMAT_MP3  "Support loading MP3 for sound" ON CUSTOMIZE_BUILD ON)
+cmake_dependent_option(SUPPORT_FILEFORMAT_QOA  "Support loading QOA for sound" ON CUSTOMIZE_BUILD ON)
 cmake_dependent_option(SUPPORT_FILEFORMAT_FLAC "Support loading FLAC for sound" ${OFF} CUSTOMIZE_BUILD OFF)
 
 # utils.c

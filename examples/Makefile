@@ -228,6 +228,11 @@ ifeq ($(PLATFORM),PLATFORM_DRM)
     INCLUDE_PATHS += -I/usr/include/libdrm
 endif
 
+# Include GLFW required for examples/others/rlgl_standalone.c
+ifeq ($(USE_EXTERNAL_GLFW),FALSE)
+all others: INCLUDE_PATHS += -I$(RAYLIB_PATH)/src/external/glfw/include
+endif
+
 # Define library paths containing required libs: LDFLAGS
 #------------------------------------------------------------------------------------------------
 LDFLAGS = -L. -L$(RAYLIB_RELEASE_PATH) -L$(RAYLIB_PATH)/src
@@ -426,7 +431,8 @@ TEXTURES = \
     textures/textures_draw_tiled \
     textures/textures_polygon \
     textures/textures_gif_player \
-    textures/textures_fog_of_war
+    textures/textures_fog_of_war \
+    textures/textures_svg_loading
 
 TEXT = \
     text/text_raylib_fonts \
@@ -480,6 +486,7 @@ SHADERS = \
     shaders/shaders_simple_mask \
     shaders/shaders_spotlight \
     shaders/shaders_hot_reloading \
+    shaders/shaders_lightmap \
     shaders/shaders_mesh_instancing \
     shaders/shaders_multi_sample2d \
     shaders/shaders_write_depth \
