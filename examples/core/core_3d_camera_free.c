@@ -72,7 +72,7 @@ int main(void)
             DrawText("- Mouse Wheel to Zoom in-out", 40, 40, 10, DARKGRAY);
             DrawText("- Mouse Wheel Pressed to Pan", 40, 60, 10, DARKGRAY);
             DrawText("- Alt + Mouse Wheel Pressed to Rotate", 40, 80, 10, DARKGRAY);
-            DrawText("- Alt + Ctrl + Mouse Wheel Pressed for Smooth Zoom", 40, 100, 10, DARKGRAY);
+            //DrawText("- Alt + Ctrl + Mouse Wheel Pressed for Smooth Zoom", 40, 100, 10, DARKGRAY);
             DrawText("- Z to zoom to (0, 0, 0)", 40, 120, 10, DARKGRAY);
 
         EndDrawing();

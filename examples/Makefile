@@ -370,9 +370,11 @@ CORE = \
     core/core_2d_camera \
     core/core_2d_camera_platformer \
     core/core_2d_camera_mouse_zoom \
+    core/core_2d_camera_split_screen \
     core/core_3d_camera_mode \
     core/core_3d_camera_free \
     core/core_3d_camera_first_person \
+    core/core_3d_camera_split_screen \
     core/core_3d_picking \
     core/core_world_screen \
     core/core_custom_logging \
@@ -385,8 +387,6 @@ CORE = \
     core/core_window_flags \
     core/core_window_letterbox \
     core/core_window_should_close \
-    core/core_split_screen \
-    core/core_camera_2d_split_screen \
     core/core_smooth_pixelperfect \
     core/core_custom_frame_control
 
