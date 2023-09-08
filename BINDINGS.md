@@ -77,6 +77,7 @@ Some people ported raylib to other languages in form of bindings or wrappers to 
 | raylib-sunder      | **auto** | [Sunder](https://github.com/ashn-dot-dev/sunder) | 0BSD | https://github.com/ashn-dot-dev/raylib-sunder |
 | rayed-bqn          | **auto** | [BQN](https://mlochbaum.github.io/BQN/) | MIT | https://github.com/Brian-ED/rayed-bqn | 
 | rayjs              | 4.6-dev | [QuickJS](https://bellard.org/quickjs/)    | MIT | https://github.com/mode777/rayjs    |
+| raylib-raku        | **auto** | [Raku](https://www.raku.org/) | Artistic License 2.0 | https://github.com/vushu/raylib-raku |
 
 ### Utility Wrapers
 These are utility wrappers for specific languages, they are not required to use raylib in the language but may adapt the raylib API to be more inline with the language's pardigm.
