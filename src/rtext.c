@@ -788,7 +788,7 @@ Image GenImageFontAtlas(const GlyphInfo *glyphs, Rectangle **glyphRecs, int glyp
                 }
             }
 
-            // Copy pixel data from fc.data to atlas
+            // Copy pixel data from glyph image to atlas
             for (int y = 0; y < glyphs[i].image.height; y++)
             {
                 for (int x = 0; x < glyphs[i].image.width; x++)
