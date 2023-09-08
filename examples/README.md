@@ -54,6 +54,7 @@ Examples using raylib core platform functionality like window creation, inputs, 
 | 28 | [core_smooth_pixelperfect](core/core_smooth_pixelperfect.c) | <img src="core/core_smooth_pixelperfect.png" alt="core_smooth_pixelperfect" width="80"> | ⭐️⭐️⭐️☆ | 3.7 | **4.0** | [Giancamillo Alessandroni](https://github.com/NotManyIdeasDev) |
 | 29 | [core_split_screen](core/core_split_screen.c) | <img src="core/core_split_screen.png" alt="core_split_screen" width="80"> | ⭐️⭐️⭐️⭐️ | 3.7 | **4.0** | [Jeffery Myers](https://github.com/JeffM2501) |
 | 30 | [core_window_should_close](core/core_window_should_close.c) | <img src="core/core_window_should_close.png" alt="core_window_should_close" width="80"> | ⭐️⭐️☆☆ | **4.2** | **4.2** | [Ray](https://github.com/raysan5) |
+| 31 | [core_camera_2d_split_screen](core/core_camera_2d_split_screen.c) | <img src="core/core_camera_2d_split_screen.png" alt="core_camera_2d_split_screen" width="80"> | ⭐️⭐️⭐️⭐️ | **4.5** | **4.5** | [Jeffery Myers](https://github.com/JeffM2501) |
 
 ### category: shapes
 
