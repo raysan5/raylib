@@ -389,15 +389,15 @@ typedef struct CoreData {
         bool resizedLastFrame;              // Check if window has been resized last frame
         bool eventWaiting;                  // Wait for events before ending frame
 
-        Point position;                     // Window position on screen (required on fullscreen toggle)
+        Point position;                     // Window position (required on fullscreen toggle)
+        Point previousPosition;             // Window previous position (required on borderless windowed toggle)
         Size display;                       // Display width and height (monitor, device-screen, LCD, ...)
         Size screen;                        // Screen width and height (used render area)
+        Size previousScreen;                // Screen previous width and height (required on borderless windowed toggle)
         Size currentFbo;                    // Current render width and height (depends on active fbo)
         Size render;                        // Framebuffer width and height (render area, including black bars if required)
         Point renderOffset;                 // Offset from render area (must be divided by 2)
         Matrix screenScale;                 // Matrix to scale screen (framebuffer rendering)
-        Point previousPosition;             // Previous screen position (required on borderless windowed toggle)
-        Size previousScreen;                // Previous screen size (required on borderless windowed toggle)
 
         char **dropFilepaths;         // Store dropped files paths pointers (provided by GLFW)
         unsigned int dropFileCount;         // Count dropped files strings
@@ -3753,10 +3753,12 @@ void OpenURL(const char *url)
 // Check if a key has been pressed once
 bool IsKeyPressed(int key)
 {
-    if ((key < 0) || (key >= MAX_KEYBOARD_KEYS)) return false;
     bool pressed = false;
 
-    if ((CORE.Input.Keyboard.previousKeyState[key] == 0) && (CORE.Input.Keyboard.currentKeyState[key] == 1)) pressed = true;
+    if ((key > 0) && (key < MAX_KEYBOARD_KEYS))
+    {
+        if ((CORE.Input.Keyboard.previousKeyState[key] == 0) && (CORE.Input.Keyboard.currentKeyState[key] == 1)) pressed = true;
+    }
 
     return pressed;
 }
@@ -3764,26 +3766,38 @@ bool IsKeyPressed(int key)
 // Check if a key has been pressed again (only PLATFORM_DESKTOP)
 bool IsKeyPressedRepeat(int key)
 {
-    if ((key < 0) || (key >= MAX_KEYBOARD_KEYS)) return false;
-    if (CORE.Input.Keyboard.keyRepeatInFrame[key] == 1) return true;
-    else return false;
+    bool repeat = false;
+    
+    if ((key > 0) && (key < MAX_KEYBOARD_KEYS))
+    {
+        if (CORE.Input.Keyboard.keyRepeatInFrame[key] == 1) repeat = true;
+    }
+    
+    return repeat;
 }
 
 // Check if a key is being pressed (key held down)
 bool IsKeyDown(int key)
 {
-    if ((key < 0) || (key >= MAX_KEYBOARD_KEYS)) return false;
-    if (CORE.Input.Keyboard.currentKeyState[key] == 1) return true;
-    else return false;
+    bool down = false;
+    
+    if ((key > 0) && (key < MAX_KEYBOARD_KEYS))
+    {
+        if (CORE.Input.Keyboard.currentKeyState[key] == 1) down = true;
+    }
+    
+    return down;
 }
 
 // Check if a key has been released once
 bool IsKeyReleased(int key)
 {
-    if ((key < 0) || (key >= MAX_KEYBOARD_KEYS)) return false;
     bool released = false;
-
-    if ((CORE.Input.Keyboard.previousKeyState[key] == 1) && (CORE.Input.Keyboard.currentKeyState[key] == 0)) released = true;
+        
+    if ((key > 0) && (key < MAX_KEYBOARD_KEYS))
+    {
+        if ((CORE.Input.Keyboard.previousKeyState[key] == 1) && (CORE.Input.Keyboard.currentKeyState[key] == 0)) released = true;
+    }
 
     return released;
 }
@@ -3791,9 +3805,14 @@ bool IsKeyReleased(int key)
 // Check if a key is NOT being pressed (key not held down)
 bool IsKeyUp(int key)
 {
-    if ((key < 0) || (key >= MAX_KEYBOARD_KEYS)) return false;
-    if (CORE.Input.Keyboard.currentKeyState[key] == 0) return true;
-    else return false;
+    bool up = false;
+    
+    if ((key > 0) && (key < MAX_KEYBOARD_KEYS))
+    {
+        if (CORE.Input.Keyboard.currentKeyState[key] == 0) up = true;
+    }
+    
+    return up;
 }
 
 // Get the last key pressed
@@ -3806,7 +3825,7 @@ int GetKeyPressed(void)
         // Get character from the queue head
         value = CORE.Input.Keyboard.keyPressedQueue[0];
 
-        // Shift elements 1 step toward the head.
+        // Shift elements 1 step toward the head
         for (int i = 0; i < (CORE.Input.Keyboard.keyPressedQueueCount - 1); i++)
             CORE.Input.Keyboard.keyPressedQueue[i] = CORE.Input.Keyboard.keyPressedQueue[i + 1];
 
@@ -3828,7 +3847,7 @@ int GetCharPressed(void)
         // Get character from the queue head
         value = CORE.Input.Keyboard.charPressedQueue[0];
 
-        // Shift elements 1 step toward the head.
+        // Shift elements 1 step toward the head
         for (int i = 0; i < (CORE.Input.Keyboard.charPressedQueueCount - 1); i++)
             CORE.Input.Keyboard.charPressedQueue[i] = CORE.Input.Keyboard.charPressedQueue[i + 1];
 
@@ -3864,18 +3883,23 @@ bool IsGamepadAvailable(int gamepad)
 // Get gamepad internal name id
 const char *GetGamepadName(int gamepad)
 {
+    const char *name = NULL;
+
 #if defined(PLATFORM_DESKTOP)
-    if (CORE.Input.Gamepad.ready[gamepad]) return glfwGetJoystickName(gamepad);
-    else return NULL;
+    if (CORE.Input.Gamepad.ready[gamepad]) name = glfwGetJoystickName(gamepad);
 #endif
 #if defined(PLATFORM_DRM)
-    if (CORE.Input.Gamepad.ready[gamepad]) ioctl(CORE.Input.Gamepad.streamId[gamepad], JSIOCGNAME(64), &CORE.Input.Gamepad.name[gamepad]);
-    return CORE.Input.Gamepad.name[gamepad];
+    if (CORE.Input.Gamepad.ready[gamepad]) 
+    {
+        ioctl(CORE.Input.Gamepad.streamId[gamepad], JSIOCGNAME(64), &CORE.Input.Gamepad.name[gamepad]);
+        name = CORE.Input.Gamepad.name[gamepad];
+    }
 #endif
 #if defined(PLATFORM_WEB)
-    return CORE.Input.Gamepad.name[gamepad];
+    name = CORE.Input.Gamepad.name[gamepad];
 #endif
-    return NULL;
+
+    return name;
 }
 
 // Get gamepad axis count
@@ -3915,12 +3939,12 @@ bool IsGamepadButtonPressed(int gamepad, int button)
 // Check if a gamepad button is being pressed
 bool IsGamepadButtonDown(int gamepad, int button)
 {
-    bool result = false;
+    bool down = false;
 
     if ((gamepad < MAX_GAMEPADS) && CORE.Input.Gamepad.ready[gamepad] && (button < MAX_GAMEPAD_BUTTONS) &&
-        (CORE.Input.Gamepad.currentButtonState[gamepad][button] == 1)) result = true;
+        (CORE.Input.Gamepad.currentButtonState[gamepad][button] == 1)) down = true;
 
-    return result;
+    return down;
 }
 
 // Check if a gamepad button has NOT been pressed once
@@ -3937,12 +3961,12 @@ bool IsGamepadButtonReleased(int gamepad, int button)
 // Check if a gamepad button is NOT being pressed
 bool IsGamepadButtonUp(int gamepad, int button)
 {
-    bool result = false;
+    bool up = false;
 
     if ((gamepad < MAX_GAMEPADS) && CORE.Input.Gamepad.ready[gamepad] && (button < MAX_GAMEPAD_BUTTONS) &&
-        (CORE.Input.Gamepad.currentButtonState[gamepad][button] == 0)) result = true;
+        (CORE.Input.Gamepad.currentButtonState[gamepad][button] == 0)) up = true;
 
-    return result;
+    return up;
 }
 
 // Get the last gamepad button pressed
@@ -3983,7 +4007,7 @@ bool IsMouseButtonDown(int button)
 
     if (CORE.Input.Mouse.currentButtonState[button] == 1) down = true;
 
-    // Map touches to mouse buttons checking
+    // NOTE: Touches are considered like mouse buttons
     if (CORE.Input.Touch.currentTouchState[button] == 1) down = true;
 
     return down;
@@ -4005,7 +4029,14 @@ bool IsMouseButtonReleased(int button)
 // Check if a mouse button is NOT being pressed
 bool IsMouseButtonUp(int button)
 {
-    return !IsMouseButtonDown(button);
+    bool up = false;
+
+    if (CORE.Input.Mouse.currentButtonState[button] == 0) up = true;
+
+    // NOTE: Touches are considered like mouse buttons
+    if (CORE.Input.Touch.currentTouchState[button] == 0) up = true;
+
+    return up;
 }
 
 // Get mouse position X
@@ -4032,10 +4063,13 @@ int GetMouseY(void)
 Vector2 GetMousePosition(void)
 {
     Vector2 position = { 0 };
+    
+    // TODO: Review touch position on PLATFORM_WEB
 
 #if defined(PLATFORM_ANDROID) //|| defined(PLATFORM_WEB)
     position = GetTouchPosition(0);
 #else
+    // NOTE: On PLATFORM_WEB, even on canvas scaling, mouse position is proportionally returned
     position.x = (CORE.Input.Mouse.currentPosition.x + CORE.Input.Mouse.offset.x)*CORE.Input.Mouse.scale.x;
     position.y = (CORE.Input.Mouse.currentPosition.y + CORE.Input.Mouse.offset.y)*CORE.Input.Mouse.scale.y;
 #endif
