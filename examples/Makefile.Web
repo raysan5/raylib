@@ -361,6 +361,7 @@ CORE = \
     core/core_window_letterbox \
     core/core_window_should_close \
     core/core_split_screen \
+    core/core_camera_2d_split_screen \
     core/core_smooth_pixelperfect \
     core/core_custom_frame_control \
     core/core_loading_thread
