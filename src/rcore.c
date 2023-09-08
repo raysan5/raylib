@@ -2117,6 +2117,21 @@ Vector2 GetWindowScaleDPI(void)
     return scale;
 }
 
+// Get the actual frame buffer size regardless of DPI mode
+RLAPI Vector2 GetFrameBufferSize(void)
+{
+    Vector2 size = { (float)CORE.Window.currentFbo.width, (float)CORE.Window.currentFbo.height };
+#if defined(PLATFORM_DESKTOP)
+    int w = 0;
+    int h = 0;
+
+    glfwGetFramebufferSize(glfwGetCurrentContext(), &w, &h);
+    size = (Vector2){ (float)w, (float)h };
+#endif
+
+    return size;
+}
+
 // Get the human-readable, UTF-8 encoded name of the selected monitor
 const char *GetMonitorName(int monitor)
 {
