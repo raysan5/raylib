@@ -815,7 +815,7 @@ RLAPI void rlLoadDrawQuad(void);     // Load and draw a quad
 
     // It seems OpenGL ES 2.0 instancing entry points are not defined on Raspberry Pi
     // provided headers (despite being defined in official Khronos GLES2 headers)
-    #if defined(PLATFORM_RPI) || defined(PLATFORM_DRM)
+    #if defined(PLATFORM_DRM)
     typedef void (GL_APIENTRYP PFNGLDRAWARRAYSINSTANCEDEXTPROC) (GLenum mode, GLint start, GLsizei count, GLsizei primcount);
     typedef void (GL_APIENTRYP PFNGLDRAWELEMENTSINSTANCEDEXTPROC) (GLenum mode, GLsizei count, GLenum type, const void *indices, GLsizei primcount);
     typedef void (GL_APIENTRYP PFNGLVERTEXATTRIBDIVISOREXTPROC) (GLuint index, GLuint divisor);
@@ -3267,9 +3267,15 @@ void rlGetGlTextureFormats(int format, unsigned int *glInternalFormat, unsigned 
         case RL_PIXELFORMAT_UNCOMPRESSED_R32: if (RLGL.ExtSupported.texFloat32) *glInternalFormat = GL_LUMINANCE; *glFormat = GL_LUMINANCE; *glType = GL_FLOAT; break;            // NOTE: Requires extension OES_texture_float
         case RL_PIXELFORMAT_UNCOMPRESSED_R32G32B32: if (RLGL.ExtSupported.texFloat32) *glInternalFormat = GL_RGB; *glFormat = GL_RGB; *glType = GL_FLOAT; break;                  // NOTE: Requires extension OES_texture_float
         case RL_PIXELFORMAT_UNCOMPRESSED_R32G32B32A32: if (RLGL.ExtSupported.texFloat32) *glInternalFormat = GL_RGBA; *glFormat = GL_RGBA; *glType = GL_FLOAT; break;             // NOTE: Requires extension OES_texture_float
+        #if defined(GRAPHICS_API_OPENGL_21)
+        case RL_PIXELFORMAT_UNCOMPRESSED_R16: if (RLGL.ExtSupported.texFloat16) *glInternalFormat = GL_LUMINANCE; *glFormat = GL_LUMINANCE; *glType = GL_HALF_FLOAT_ARB; break;
+        case RL_PIXELFORMAT_UNCOMPRESSED_R16G16B16: if (RLGL.ExtSupported.texFloat16) *glInternalFormat = GL_RGB; *glFormat = GL_RGB; *glType = GL_HALF_FLOAT_ARB; break;
+        case RL_PIXELFORMAT_UNCOMPRESSED_R16G16B16A16: if (RLGL.ExtSupported.texFloat16) *glInternalFormat = GL_RGBA; *glFormat = GL_RGBA; *glType = GL_HALF_FLOAT_ARB; break;
+        #else // defined(GRAPHICS_API_OPENGL_ES2)
         case RL_PIXELFORMAT_UNCOMPRESSED_R16: if (RLGL.ExtSupported.texFloat16) *glInternalFormat = GL_LUMINANCE; *glFormat = GL_LUMINANCE; *glType = GL_HALF_FLOAT_OES; break;   // NOTE: Requires extension OES_texture_half_float
         case RL_PIXELFORMAT_UNCOMPRESSED_R16G16B16: if (RLGL.ExtSupported.texFloat16) *glInternalFormat = GL_RGB; *glFormat = GL_RGB; *glType = GL_HALF_FLOAT_OES; break;         // NOTE: Requires extension OES_texture_half_float
         case RL_PIXELFORMAT_UNCOMPRESSED_R16G16B16A16: if (RLGL.ExtSupported.texFloat16) *glInternalFormat = GL_RGBA; *glFormat = GL_RGBA; *glType = GL_HALF_FLOAT_OES; break;    // NOTE: Requires extension OES_texture_half_float
+        #endif
         #endif
         #endif
     #elif defined(GRAPHICS_API_OPENGL_33)
@@ -3681,7 +3687,11 @@ void rlDrawVertexArray(int offset, int count)
 // Draw vertex array elements
 void rlDrawVertexArrayElements(int offset, int count, const void *buffer)
 {
-    glDrawElements(GL_TRIANGLES, count, GL_UNSIGNED_SHORT, (const unsigned short *)buffer + offset);
+    // NOTE: Added pointer math separately from function to avoid UBSAN complaining
+    unsigned short *bufferPtr = (unsigned short *)buffer;
+    if (offset > 0) bufferPtr += offset;
+    
+    glDrawElements(GL_TRIANGLES, count, GL_UNSIGNED_SHORT, (const unsigned short *)bufferPtr);
 }
 
 // Draw vertex array instanced
@@ -3696,7 +3706,11 @@ void rlDrawVertexArrayInstanced(int offset, int count, int instances)
 void rlDrawVertexArrayElementsInstanced(int offset, int count, const void *buffer, int instances)
 {
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
-    glDrawElementsInstanced(GL_TRIANGLES, count, GL_UNSIGNED_SHORT, (const unsigned short *)buffer + offset, instances);
+    // NOTE: Added pointer math separately from function to avoid UBSAN complaining
+    unsigned short *bufferPtr = (unsigned short *)buffer;
+    if (offset > 0) bufferPtr += offset;
+    
+    glDrawElementsInstanced(GL_TRIANGLES, count, GL_UNSIGNED_SHORT, (const unsigned short *)bufferPtr, instances);
 #endif
 }
 
@@ -4544,6 +4558,7 @@ static void rlLoadShaderDefault(void)
 #endif
 #if defined(GRAPHICS_API_OPENGL_ES2)
     "#version 100                       \n"
+    "precision mediump float;           \n"     // Precision required for OpenGL ES2 (WebGL) (on some browsers)
     "attribute vec3 vertexPosition;     \n"
     "attribute vec2 vertexTexCoord;     \n"
     "attribute vec4 vertexColor;        \n"

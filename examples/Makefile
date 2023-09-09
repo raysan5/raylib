@@ -25,7 +25,7 @@
 
 # Define required environment variables
 #------------------------------------------------------------------------------------------------
-# Define target platform: PLATFORM_DESKTOP, PLATFORM_RPI, PLATFORM_DRM, PLATFORM_ANDROID, PLATFORM_WEB
+# Define target platform: PLATFORM_DESKTOP, PLATFORM_DRM, PLATFORM_ANDROID, PLATFORM_WEB
 PLATFORM              ?= PLATFORM_DESKTOP
 
 # Define required raylib variables
@@ -58,15 +58,6 @@ BUILD_WEB_HEAP_SIZE   ?= 134217728
 BUILD_WEB_RESOURCES   ?= TRUE
 BUILD_WEB_RESOURCES_PATH  ?= $(dir $<)resources@resources
 
-# Use cross-compiler for PLATFORM_RPI
-ifeq ($(PLATFORM),PLATFORM_RPI)
-    USE_RPI_CROSS_COMPILER ?= FALSE
-    ifeq ($(USE_RPI_CROSS_COMPILER),TRUE)
-        RPI_TOOLCHAIN ?= C:/SysGCC/Raspberry
-        RPI_TOOLCHAIN_SYSROOT ?= $(RPI_TOOLCHAIN)/arm-linux-gnueabihf/sysroot
-    endif
-endif
-
 # Determine PLATFORM_OS in case PLATFORM_DESKTOP or PLATFORM_WEB selected
 ifeq ($(PLATFORM),$(filter $(PLATFORM),PLATFORM_DESKTOP PLATFORM_WEB))
     # No uname.exe on MinGW!, but OS=Windows_NT on Windows!
@@ -95,12 +86,6 @@ ifeq ($(PLATFORM),$(filter $(PLATFORM),PLATFORM_DESKTOP PLATFORM_WEB))
         endif
     endif
 endif
-ifeq ($(PLATFORM),PLATFORM_RPI)
-    UNAMEOS = $(shell uname)
-    ifeq ($(UNAMEOS),Linux)
-        PLATFORM_OS = LINUX
-    endif
-endif
 ifeq ($(PLATFORM),PLATFORM_DRM)
     UNAMEOS = $(shell uname)
     ifeq ($(UNAMEOS),Linux)
@@ -118,9 +103,6 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
 endif
 
 # Default path for raylib on Raspberry Pi
-ifeq ($(PLATFORM),PLATFORM_RPI)
-    RAYLIB_PATH        ?= /home/pi/raylib
-endif
 ifeq ($(PLATFORM),PLATFORM_DRM)
     RAYLIB_PATH        ?= /home/pi/raylib
 endif
@@ -152,13 +134,6 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
     ifeq ($(PLATFORM_OS),BSD)
         # FreeBSD, OpenBSD, NetBSD, DragonFly default compiler
         CC = clang
-    endif
-endif
-ifeq ($(PLATFORM),PLATFORM_RPI)
-    ifeq ($(USE_RPI_CROSS_COMPILER),TRUE)
-        # Define RPI cross-compiler
-        #CC = armv6j-hardfloat-linux-gnueabi-gcc
-        CC = $(RPI_TOOLCHAIN)/bin/arm-linux-gnueabihf-gcc
     endif
 endif
 ifeq ($(PLATFORM),PLATFORM_WEB)
@@ -231,9 +206,6 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
         endif
     endif
 endif
-ifeq ($(PLATFORM),PLATFORM_RPI)
-    CFLAGS += -std=gnu99
-endif
 ifeq ($(PLATFORM),PLATFORM_DRM)
     CFLAGS += -std=gnu99 -DEGL_NO_X11
 endif
@@ -252,13 +224,13 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
         INCLUDE_PATHS += -I$(RAYLIB_INCLUDE_PATH)
     endif
 endif
-ifeq ($(PLATFORM),PLATFORM_RPI)
-    INCLUDE_PATHS += -I$(RPI_TOOLCHAIN_SYSROOT)/opt/vc/include
-    INCLUDE_PATHS += -I$(RPI_TOOLCHAIN_SYSROOT)/opt/vc/include/interface/vmcs_host/linux
-    INCLUDE_PATHS += -I$(RPI_TOOLCHAIN_SYSROOT)/opt/vc/include/interface/vcos/pthreads
-endif
 ifeq ($(PLATFORM),PLATFORM_DRM)
     INCLUDE_PATHS += -I/usr/include/libdrm
+endif
+
+# Include GLFW required for examples/others/rlgl_standalone.c
+ifeq ($(USE_EXTERNAL_GLFW),FALSE)
+all others: INCLUDE_PATHS += -I$(RAYLIB_PATH)/src/external/glfw/include
 endif
 
 # Define library paths containing required libs: LDFLAGS
@@ -323,9 +295,6 @@ ifeq ($(PLATFORM),PLATFORM_WEB)
     # logic to a self contained function: UpdateDrawFrame(), check core_basic_window_web.c for reference.
 
 endif
-ifeq ($(PLATFORM),PLATFORM_RPI)
-    LDFLAGS += -L$(RPI_TOOLCHAIN_SYSROOT)/opt/vc/lib
-endif
 
 # Define libraries required on linking: LDLIBS
 # NOTE: To link libraries (lib<name>.so or lib<name>.a), use -l<name>
@@ -376,14 +345,6 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
         LDLIBS += -lglfw
     endif
 endif
-ifeq ($(PLATFORM),PLATFORM_RPI)
-    # Libraries for Raspberry Pi compiling
-    # NOTE: Required packages: libasound2-dev (ALSA)
-    LDLIBS = -lraylib -lbrcmGLESv2 -lbrcmEGL -lpthread -lrt -lm -lbcm_host -ldl -latomic
-    ifeq ($(USE_RPI_CROSS_COMPILER),TRUE)
-        LDLIBS += -lvchiq_arm -lvcos
-    endif
-endif
 ifeq ($(PLATFORM),PLATFORM_DRM)
     # Libraries for DRM compiling
     # NOTE: Required packages: libasound2-dev (ALSA)
@@ -409,9 +370,11 @@ CORE = \
     core/core_2d_camera \
     core/core_2d_camera_platformer \
     core/core_2d_camera_mouse_zoom \
+    core/core_2d_camera_split_screen \
     core/core_3d_camera_mode \
     core/core_3d_camera_free \
     core/core_3d_camera_first_person \
+    core/core_3d_camera_split_screen \
     core/core_3d_picking \
     core/core_world_screen \
     core/core_custom_logging \
@@ -424,7 +387,6 @@ CORE = \
     core/core_window_flags \
     core/core_window_letterbox \
     core/core_window_should_close \
-    core/core_split_screen \
     core/core_smooth_pixelperfect \
     core/core_custom_frame_control
 
@@ -470,7 +432,8 @@ TEXTURES = \
     textures/textures_draw_tiled \
     textures/textures_polygon \
     textures/textures_gif_player \
-    textures/textures_fog_of_war
+    textures/textures_fog_of_war \
+    textures/textures_svg_loading
 
 TEXT = \
     text/text_raylib_fonts \
@@ -524,6 +487,7 @@ SHADERS = \
     shaders/shaders_simple_mask \
     shaders/shaders_spotlight \
     shaders/shaders_hot_reloading \
+    shaders/shaders_lightmap \
     shaders/shaders_mesh_instancing \
     shaders/shaders_multi_sample2d \
     shaders/shaders_write_depth \
@@ -585,10 +549,6 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
 		find . -type f -perm +ugo+x -delete
 		rm -f *.o
     endif
-endif
-ifeq ($(PLATFORM),PLATFORM_RPI)
-	find . -type f -executable -delete
-	rm -fv *.o
 endif
 ifeq ($(PLATFORM),PLATFORM_DRM)
 	find . -type f -executable -delete

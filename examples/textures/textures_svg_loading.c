@@ -1,19 +1,19 @@
 /*******************************************************************************************
 *
-*   raylib [textures] example - Image Rotation
+*   raylib [textures] example - SVG loading and texture creation
 *
-*   Example originally created with raylib 1.0, last time updated with raylib 1.0
+*   NOTE: Images are loaded in CPU memory (RAM); textures are loaded in GPU memory (VRAM)
+*
+*   Example originally created with raylib 4.2, last time updated with raylib 4.2
 *
 *   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
 *   BSD-like license that allows static linking with closed source software
 *
-*   Copyright (c) 2014-2023 Ramon Santamaria (@raysan5)
+*   Copyright (c) 2022 Dennis Meinen (@bixxy#4258 on Discord)
 *
 ********************************************************************************************/
 
 #include "raylib.h"
-
-#define NUM_TEXTURES  3
 
 //------------------------------------------------------------------------------------
 // Program main entry point
@@ -25,24 +25,15 @@ int main(void)
     const int screenWidth = 800;
     const int screenHeight = 450;
 
-    InitWindow(screenWidth, screenHeight, "raylib [textures] example - texture rotation");
+    InitWindow(screenWidth, screenHeight, "raylib [textures] example - svg loading");
 
     // NOTE: Textures MUST be loaded after Window initialization (OpenGL context is required)
-    Image image45 = LoadImage("resources/raylib_logo.png");
-    Image image90 = LoadImage("resources/raylib_logo.png");
-    Image imageNeg90 = LoadImage("resources/raylib_logo.png");
 
-    ImageRotate(&image45, 45);
-    ImageRotate(&image90, 90);
-    ImageRotate(&imageNeg90, -90);
+    Image image = LoadImageSvg("resources/test.svg", 400, 350);     // Loaded in CPU memory (RAM)
+    Texture2D texture = LoadTextureFromImage(image);          // Image converted to texture, GPU memory (VRAM)
+    UnloadImage(image);   // Once image has been converted to texture and uploaded to VRAM, it can be unloaded from RAM
 
-    Texture2D textures[NUM_TEXTURES] = { 0 };
-
-    textures[0] = LoadTextureFromImage(image45);
-    textures[1] = LoadTextureFromImage(image90);
-    textures[2] = LoadTextureFromImage(imageNeg90);
-
-    int currentTexture = 0;
+    SetTargetFPS(60);     // Set our game to run at 60 frames-per-second
     //---------------------------------------------------------------------------------------
 
     // Main game loop
@@ -50,10 +41,7 @@ int main(void)
     {
         // Update
         //----------------------------------------------------------------------------------
-        if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) || IsKeyPressed(KEY_RIGHT))
-        {
-            currentTexture = (currentTexture + 1)%NUM_TEXTURES; // Cycle between the textures
-        }
+        // TODO: Update your variables here
         //----------------------------------------------------------------------------------
 
         // Draw
@@ -62,9 +50,12 @@ int main(void)
 
             ClearBackground(RAYWHITE);
 
-            DrawTexture(textures[currentTexture], screenWidth/2 - textures[currentTexture].width/2, screenHeight/2 - textures[currentTexture].height/2, WHITE);
+            DrawTexture(texture, screenWidth/2 - texture.width/2, screenHeight/2 - texture.height/2, WHITE);
 
-            DrawText("Press LEFT MOUSE BUTTON to rotate the image clockwise", 250, 420, 10, DARKGRAY);
+            //Red border to illustrate how the SVG is centered within the specified dimensions
+            DrawRectangleLines((screenWidth / 2 - texture.width / 2) - 1, (screenHeight / 2 - texture.height / 2) - 1, texture.width + 2, texture.height + 2, RED);
+
+            DrawText("this IS a texture loaded from an SVG file!", 300, 410, 10, GRAY);
 
         EndDrawing();
         //----------------------------------------------------------------------------------
@@ -72,7 +63,7 @@ int main(void)
 
     // De-Initialization
     //--------------------------------------------------------------------------------------
-    for (int i = 0; i < NUM_TEXTURES; i++) UnloadTexture(textures[i]);
+    UnloadTexture(texture);       // Texture unloading
 
     CloseWindow();                // Close window and OpenGL context
     //--------------------------------------------------------------------------------------

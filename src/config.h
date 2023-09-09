@@ -141,22 +141,22 @@
 //------------------------------------------------------------------------------------
 // Module: rtextures - Configuration Flags
 //------------------------------------------------------------------------------------
-// Select the desired fileformats to be supported for image data loading
-#define SUPPORT_FILEFORMAT_PNG          1
-//#define SUPPORT_FILEFORMAT_BMP          1
-//#define SUPPORT_FILEFORMAT_TGA          1
-//#define SUPPORT_FILEFORMAT_JPG          1
-#define SUPPORT_FILEFORMAT_GIF          1
-#define SUPPORT_FILEFORMAT_QOI          1
-//#define SUPPORT_FILEFORMAT_PSD          1
-#define SUPPORT_FILEFORMAT_DDS          1
-#define SUPPORT_FILEFORMAT_HDR          1
+// Selecte desired fileformats to be supported for image data loading
+#define SUPPORT_FILEFORMAT_PNG      1
+//#define SUPPORT_FILEFORMAT_BMP      1
+//#define SUPPORT_FILEFORMAT_TGA      1
+//#define SUPPORT_FILEFORMAT_JPG      1
+#define SUPPORT_FILEFORMAT_GIF      1
+#define SUPPORT_FILEFORMAT_QOI      1
+//#define SUPPORT_FILEFORMAT_PSD      1
+#define SUPPORT_FILEFORMAT_DDS      1
+//#define SUPPORT_FILEFORMAT_HDR      1
 //#define SUPPORT_FILEFORMAT_PIC          1
-//#define SUPPORT_FILEFORMAT_PNM          1
-//#define SUPPORT_FILEFORMAT_KTX          1
-//#define SUPPORT_FILEFORMAT_ASTC         1
-//#define SUPPORT_FILEFORMAT_PKM          1
-//#define SUPPORT_FILEFORMAT_PVR          1
+//#define SUPPORT_FILEFORMAT_KTX      1
+//#define SUPPORT_FILEFORMAT_ASTC     1
+//#define SUPPORT_FILEFORMAT_PKM      1
+//#define SUPPORT_FILEFORMAT_PVR      1
+//#define SUPPORT_FILEFORMAT_SVG      1
 
 // Support image export functionality (.png, .bmp, .tga, .jpg, .qoi)
 #define SUPPORT_IMAGE_EXPORT            1

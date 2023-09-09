@@ -35,11 +35,11 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{946A1700-C7AA-46F0-AEF2-67C98B5722AC}</ProjectGuid>
+    <ProjectGuid>{CC62F7DB-D089-4677-8575-CAB7A7815C43}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
-    <RootNamespace>core_split_screen</RootNamespace>
+    <RootNamespace>core_2d_camera_split_screen</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
-    <ProjectName>core_split_screen</ProjectName>
+    <ProjectName>core_2d_camera_split_screen</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -374,7 +374,7 @@
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\..\examples\core\core_split_screen.c" />
+    <ClCompile Include="..\..\..\examples\core\core_2d_camera_split_screen.c" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\raylib\raylib.vcxproj">

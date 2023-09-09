@@ -1075,10 +1075,10 @@ RLAPI void SetLoadFileTextCallback(LoadFileTextCallback callback); // Set custom
 RLAPI void SetSaveFileTextCallback(SaveFileTextCallback callback); // Set custom file text data saver
 
 // Files management functions
-RLAPI unsigned char *LoadFileData(const char *fileName, unsigned int *bytesRead);       // Load file data as byte array (read)
+RLAPI unsigned char *LoadFileData(const char *fileName, int *dataSize); // Load file data as byte array (read)
 RLAPI void UnloadFileData(unsigned char *data);                   // Unload file data allocated by LoadFileData()
-RLAPI bool SaveFileData(const char *fileName, void *data, unsigned int bytesToWrite);   // Save data to file from byte array (write), returns true on success
-RLAPI bool ExportDataAsCode(const unsigned char *data, unsigned int size, const char *fileName); // Export data to code (.h), returns true on success
+RLAPI bool SaveFileData(const char *fileName, void *data, int dataSize); // Save data to file from byte array (write), returns true on success
+RLAPI bool ExportDataAsCode(const unsigned char *data, int dataSize, const char *fileName); // Export data to code (.h), returns true on success
 RLAPI char *LoadFileText(const char *fileName);                   // Load text data from file (read), returns a '\0' terminated string
 RLAPI void UnloadFileText(char *text);                            // Unload file text data allocated by LoadFileText()
 RLAPI bool SaveFileText(const char *fileName, char *text);        // Save text data to file (write), string must be '\0' terminated, returns true on success
@@ -1115,6 +1115,7 @@ RLAPI unsigned char *DecodeDataBase64(const unsigned char *data, int *outputSize
 
 // Input-related functions: keyboard
 RLAPI bool IsKeyPressed(int key);                             // Check if a key has been pressed once
+RLAPI bool IsKeyPressedRepeat(int key);                       // Check if a key has been pressed again (Only PLATFORM_DESKTOP)
 RLAPI bool IsKeyDown(int key);                                // Check if a key is being pressed
 RLAPI bool IsKeyReleased(int key);                            // Check if a key has been released once
 RLAPI bool IsKeyUp(int key);                                  // Check if a key is NOT being pressed
@@ -1192,6 +1193,8 @@ RLAPI void DrawLineEx(Vector2 startPos, Vector2 endPos, float thick, Color color
 RLAPI void DrawLineBezier(Vector2 startPos, Vector2 endPos, float thick, Color color);                   // Draw a line using cubic-bezier curves in-out
 RLAPI void DrawLineBezierQuad(Vector2 startPos, Vector2 endPos, Vector2 controlPos, float thick, Color color); // Draw line using quadratic bezier curves with a control point
 RLAPI void DrawLineBezierCubic(Vector2 startPos, Vector2 endPos, Vector2 startControlPos, Vector2 endControlPos, float thick, Color color); // Draw line using cubic bezier curves with 2 control points
+RLAPI void DrawLineBSpline(Vector2 *points, int pointCount, float thick, Color color);                   // Draw a B-Spline line, minimum 4 points
+RLAPI void DrawLineCatmullRom(Vector2 *points, int pointCount, float thick, Color color);                // Draw a Catmull Rom spline line, minimum 4 points
 RLAPI void DrawLineStrip(Vector2 *points, int pointCount, Color color);                                  // Draw lines sequence
 RLAPI void DrawCircle(int centerX, int centerY, float radius, Color color);                              // Draw a color-filled circle
 RLAPI void DrawCircleSector(Vector2 center, float radius, float startAngle, float endAngle, int segments, Color color);      // Draw a piece of a circle
@@ -1242,6 +1245,7 @@ RLAPI Rectangle GetCollisionRec(Rectangle rec1, Rectangle rec2);                
 // NOTE: These functions do not require GPU access
 RLAPI Image LoadImage(const char *fileName);                                                             // Load image from file into CPU memory (RAM)
 RLAPI Image LoadImageRaw(const char *fileName, int width, int height, int format, int headerSize);       // Load image from RAW file data
+RLAPI Image LoadImageSvg(const char *fileNameOrString, int width, int height);                           // Load image from SVG file data or string with specified size
 RLAPI Image LoadImageAnim(const char *fileName, int *frames);                                            // Load image sequence from file (frames appended to image.data)
 RLAPI Image LoadImageFromMemory(const char *fileType, const unsigned char *fileData, int dataSize);      // Load image from memory buffer, fileType refers to extension: i.e. '.png'
 RLAPI Image LoadImageFromTexture(Texture2D texture);                                                     // Load image from GPU texture data
@@ -1368,13 +1372,13 @@ RLAPI int GetPixelDataSize(int width, int height, int format);              // G
 // Font loading/unloading functions
 RLAPI Font GetFontDefault(void);                                                            // Get the default Font
 RLAPI Font LoadFont(const char *fileName);                                                  // Load font from file into GPU memory (VRAM)
-RLAPI Font LoadFontEx(const char *fileName, int fontSize, int *fontChars, int glyphCount);  // Load font from file with extended parameters, use NULL for fontChars and 0 for glyphCount to load the default character set
+RLAPI Font LoadFontEx(const char *fileName, int fontSize, int *codepoints, int codepointCount);  // Load font from file with extended parameters, use NULL for codepoints and 0 for codepointCount to load the default character set
 RLAPI Font LoadFontFromImage(Image image, Color key, int firstChar);                        // Load font from Image (XNA style)
-RLAPI Font LoadFontFromMemory(const char *fileType, const unsigned char *fileData, int dataSize, int fontSize, int *fontChars, int glyphCount); // Load font from memory buffer, fileType refers to extension: i.e. '.ttf'
+RLAPI Font LoadFontFromMemory(const char *fileType, const unsigned char *fileData, int dataSize, int fontSize, int *codepoints, int codepointCount); // Load font from memory buffer, fileType refers to extension: i.e. '.ttf'
 RLAPI bool IsFontReady(Font font);                                                          // Check if a font is ready
-RLAPI GlyphInfo *LoadFontData(const unsigned char *fileData, int dataSize, int fontSize, int *fontChars, int glyphCount, int type); // Load font data for further use
-RLAPI Image GenImageFontAtlas(const GlyphInfo *chars, Rectangle **recs, int glyphCount, int fontSize, int padding, int packMethod); // Generate image font atlas using chars info
-RLAPI void UnloadFontData(GlyphInfo *chars, int glyphCount);                                // Unload font chars info data (RAM)
+RLAPI GlyphInfo *LoadFontData(const unsigned char *fileData, int dataSize, int fontSize, int *codepoints, int codepointCount, int type); // Load font data for further use
+RLAPI Image GenImageFontAtlas(const GlyphInfo *glyphs, Rectangle **glyphRecs, int glyphCount, int fontSize, int padding, int packMethod); // Generate image font atlas using chars info
+RLAPI void UnloadFontData(GlyphInfo *glyphs, int glyphCount);                                // Unload font chars info data (RAM)
 RLAPI void UnloadFont(Font font);                                                           // Unload font from GPU memory (VRAM)
 RLAPI bool ExportFontAsCode(Font font, const char *fileName);                               // Export font as code file, returns true on success
 
@@ -1384,7 +1388,7 @@ RLAPI void DrawText(const char *text, int posX, int posY, int fontSize, Color co
 RLAPI void DrawTextEx(Font font, const char *text, Vector2 position, float fontSize, float spacing, Color tint); // Draw text using font and additional parameters
 RLAPI void DrawTextPro(Font font, const char *text, Vector2 position, Vector2 origin, float rotation, float fontSize, float spacing, Color tint); // Draw text using Font and pro parameters (rotation)
 RLAPI void DrawTextCodepoint(Font font, int codepoint, Vector2 position, float fontSize, Color tint); // Draw one character (codepoint)
-RLAPI void DrawTextCodepoints(Font font, const int *codepoints, int count, Vector2 position, float fontSize, float spacing, Color tint); // Draw multiple character (codepoint)
+RLAPI void DrawTextCodepoints(Font font, const int *codepoints, int codepointCount, Vector2 position, float fontSize, float spacing, Color tint); // Draw multiple character (codepoint)
 
 // Text font info functions
 RLAPI void SetTextLineSpacing(int spacing);                                                 // Set vertical line spacing when drawing with line-breaks
@@ -1503,10 +1507,10 @@ RLAPI void SetMaterialTexture(Material *material, int mapType, Texture2D texture
 RLAPI void SetModelMeshMaterial(Model *model, int meshId, int materialId);                  // Set material for a mesh
 
 // Model animations loading/unloading functions
-RLAPI ModelAnimation *LoadModelAnimations(const char *fileName, unsigned int *animCount);   // Load model animations from file
+RLAPI ModelAnimation *LoadModelAnimations(const char *fileName, int *animCount);            // Load model animations from file
 RLAPI void UpdateModelAnimation(Model model, ModelAnimation anim, int frame);               // Update model animation pose
 RLAPI void UnloadModelAnimation(ModelAnimation anim);                                       // Unload animation data
-RLAPI void UnloadModelAnimations(ModelAnimation *animations, unsigned int count);           // Unload animation array data
+RLAPI void UnloadModelAnimations(ModelAnimation *animations, int animCount);                // Unload animation array data
 RLAPI bool IsModelAnimationValid(Model model, ModelAnimation anim);                         // Check model animation skeleton match
 
 // Collision detection functions

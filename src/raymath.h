@@ -15,6 +15,7 @@
 *     - Functions use always a "result" variable for return
 *     - Functions are always defined inline
 *     - Angles are always in radians (DEG2RAD/RAD2DEG macros provided for convenience)
+*     - No compound literals used to make sure libray is compatible with C++
 *
 *   CONFIGURATION:
 *       #define RAYMATH_IMPLEMENTATION
@@ -315,11 +316,11 @@ RMAPI float Vector2DistanceSqr(Vector2 v1, Vector2 v2)
 RMAPI float Vector2Angle(Vector2 v1, Vector2 v2)
 {
     float result = 0.0f;
-    
+
     float dot = v1.x*v2.x + v1.y*v2.y;
     float det = v1.x*v2.y - v1.y*v2.x;
     result = -atan2f(det, dot);
-    
+
     return result;
 }
 
@@ -329,7 +330,7 @@ RMAPI float Vector2Angle(Vector2 v1, Vector2 v2)
 RMAPI float Vector2LineAngle(Vector2 start, Vector2 end)
 {
     float result = 0.0f;
-    
+
     result = atan2f(end.y - start.y, end.x - start.x);
 
     return result;
@@ -709,6 +710,40 @@ RMAPI Vector3 Vector3Normalize(Vector3 v)
         result.y *= ilength;
         result.z *= ilength;
     }
+
+    return result;
+}
+
+//Calculate the projection of the vector v1 on to v2
+RMAPI Vector3 Vector3Project(Vector3 v1, Vector3 v2)
+{
+    Vector3 result = { 0 };
+    
+    float v1dv2 = (v1.x*v2.x + v1.y*v2.y + v1.z*v2.z);
+    float v2dv2 = (v2.x*v2.x + v2.y*v2.y + v2.z*v2.z);
+
+    float mag = v1dv2/v2dv2;
+
+    result.x = v2.x*mag;
+    result.y = v2.y*mag;
+    result.z = v2.z*mag;
+
+    return result;
+}
+
+//Calculate the rejection of the vector v1 on to v2
+RMAPI Vector3 Vector3Reject(Vector3 v1, Vector3 v2)
+{
+    Vector3 result = { 0 };
+    
+    float v1dv2 = (v1.x*v2.x + v1.y*v2.y + v1.z*v2.z);
+    float v2dv2 = (v2.x*v2.x + v2.y*v2.y + v2.z*v2.z);
+
+    float mag = v1dv2/v2dv2;
+
+    result.x = v1.x - (v2.x*mag);
+    result.y = v1.y - (v2.y*mag);
+    result.z = v1.z - (v2.z*mag);
 
     return result;
 }

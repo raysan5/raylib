@@ -11,7 +11,7 @@ uniform vec4 colDiffuse;
 // Output fragment color
 out vec4 finalColor;
 
-uniform float secondes;
+uniform float seconds;
 
 uniform vec2 size;
 
@@ -30,8 +30,8 @@ void main() {
     float boxTop = 0.0;
 
     vec2 p = fragTexCoord;
-    p.x += cos((fragTexCoord.y - boxTop) * freqX / ( pixelWidth * 750.0) + (secondes * speedX)) * ampX * pixelWidth;
-    p.y += sin((fragTexCoord.x - boxLeft) * freqY * aspect / ( pixelHeight * 750.0) + (secondes * speedY)) * ampY * pixelHeight;
+    p.x += cos((fragTexCoord.y - boxTop) * freqX / ( pixelWidth * 750.0) + (seconds * speedX)) * ampX * pixelWidth;
+    p.y += sin((fragTexCoord.x - boxLeft) * freqY * aspect / ( pixelHeight * 750.0) + (seconds * speedY)) * ampY * pixelHeight;
 
     finalColor = texture(texture0, p)*colDiffuse*fragColor;
 }

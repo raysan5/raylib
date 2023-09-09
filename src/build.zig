@@ -22,14 +22,37 @@ pub fn addRaylib(b: *std.Build, target: std.zig.CrossTarget, optimize: std.built
     }
 
     raylib.addCSourceFiles(&.{
-        srcdir ++ "/raudio.c",
         srcdir ++ "/rcore.c",
-        srcdir ++ "/rmodels.c",
-        srcdir ++ "/rshapes.c",
-        srcdir ++ "/rtext.c",
-        srcdir ++ "/rtextures.c",
         srcdir ++ "/utils.c",
     }, raylib_flags);
+
+    if (options.raudio) {
+        raylib.addCSourceFiles(&.{
+            srcdir ++ "/raudio.c",
+        }, raylib_flags);
+    }
+    if (options.rmodels) {
+        raylib.addCSourceFiles(&.{
+            srcdir ++ "/rmodels.c",
+        }, &[_][]const u8{
+            "-fno-sanitize=undefined", // https://github.com/raysan5/raylib/issues/1891
+        } ++ raylib_flags);
+    }
+    if (options.rshapes) {
+        raylib.addCSourceFiles(&.{
+            srcdir ++ "/rshapes.c",
+        }, raylib_flags);
+    }
+    if (options.rtext) {
+        raylib.addCSourceFiles(&.{
+            srcdir ++ "/rtext.c",
+        }, raylib_flags);
+    }
+    if (options.rtextures) {
+        raylib.addCSourceFiles(&.{
+            srcdir ++ "/rtextures.c",
+        }, raylib_flags);
+    }
 
     var gen_step = std.build.Step.WriteFile.create(b);
     raylib.step.dependOn(&gen_step.step);
@@ -137,6 +160,11 @@ pub fn addRaylib(b: *std.Build, target: std.zig.CrossTarget, optimize: std.built
 }
 
 pub const Options = struct {
+    raudio: bool = true,
+    rmodels: bool = true,
+    rshapes: bool = true,
+    rtext: bool = true,
+    rtextures: bool = true,
     raygui: bool = false,
     platform_drm: bool = false,
 };
@@ -152,19 +180,24 @@ pub fn build(b: *std.Build) void {
     // set a preferred release mode, allowing the user to decide how to optimize.
     const optimize = b.standardOptimizeOption(.{});
 
-    const raygui = b.option(bool, "raygui", "Compile with raygui support");
-    const platform_drm = b.option(bool, "platform_drm", "Compile raylib in native mode (no X11)");
+    const defaults = Options{};
+    const options = Options{
+        .platform_drm = b.option(bool, "platform_drm", "Compile raylib in native mode (no X11)") orelse defaults.platform_drm,
+        .raudio = b.option(bool, "raudio", "Compile with audio support") orelse defaults.raudio,
+        .rmodels = b.option(bool, "rmodels", "Compile with models support") orelse defaults.rmodels,
+        .rtext = b.option(bool, "rtext", "Compile with text support") orelse defaults.rtext,
+        .rtextures = b.option(bool, "rtextures", "Compile with textures support") orelse defaults.rtextures,
+        .rshapes = b.option(bool, "rshapes", "Compile with shapes support") orelse defaults.rshapes,
+        .raygui = b.option(bool, "raygui", "Compile with raygui support") orelse defaults.raygui,
+    };
 
-    const lib = addRaylib(b, target, optimize, .{
-        .raygui = raygui orelse false,
-        .platform_drm = platform_drm orelse false,
-    });
+    const lib = addRaylib(b, target, optimize, options);
 
     lib.installHeader("src/raylib.h", "raylib.h");
     lib.installHeader("src/raymath.h", "raymath.h");
     lib.installHeader("src/rlgl.h", "rlgl.h");
 
-    if (raygui orelse false) {
+    if (options.raygui) {
         lib.installHeader("../raygui/src/raygui.h", "raygui.h");
     }
 

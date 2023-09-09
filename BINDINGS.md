@@ -24,6 +24,7 @@ Some people ported raylib to other languages in form of bindings or wrappers to 
 | rayex              | 3.7     | [elixir](https://elixir-lang.org/)      | Apache-2.0 | https://github.com/shiryel/rayex     |
 | raylib-factor      | 4.0     | [Factor](https://factorcode.org/)        | BSD  | https://github.com/factor/factor/blob/master/extra/raylib/raylib.factor   |
 | raylib-freebasic   | **4.5** | [FreeBASIC](https://www.freebasic.net/) | MIT | https://github.com/WIITD/raylib-freebasic     |
+| fortran-raylib     | **4.5** | [Fortran](https://fortran-lang.org/) | ISC | https://github.com/interkosmos/fortran-raylib     |
 | raylib for Pascal  | **4.5** | [Object Pascal](https://en.wikipedia.org/wiki/Object_Pascal) | Modified Zlib | https://github.com/tinyBigGAMES/raylib |
 | raylib-go          | 4.5     | [Go](https://golang.org/)            | Zlib | https://github.com/gen2brain/raylib-go       |
 | raylib-guile       | **auto** | [Guile](https://www.gnu.org/software/guile/) | Zlib | https://github.com/petelliott/raylib-guile |
@@ -76,6 +77,7 @@ Some people ported raylib to other languages in form of bindings or wrappers to 
 | raylib-sunder      | **auto** | [Sunder](https://github.com/ashn-dot-dev/sunder) | 0BSD | https://github.com/ashn-dot-dev/raylib-sunder |
 | rayed-bqn          | **auto** | [BQN](https://mlochbaum.github.io/BQN/) | MIT | https://github.com/Brian-ED/rayed-bqn | 
 | rayjs              | 4.6-dev | [QuickJS](https://bellard.org/quickjs/)    | MIT | https://github.com/mode777/rayjs    |
+| raylib-raku        | **auto** | [Raku](https://www.raku.org/) | Artistic License 2.0 | https://github.com/vushu/raylib-raku |
 
 ### Utility Wrapers
 These are utility wrappers for specific languages, they are not required to use raylib in the language but may adapt the raylib API to be more inline with the language's pardigm.

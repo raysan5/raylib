@@ -20,7 +20,7 @@
 
 #if defined(PLATFORM_DESKTOP)
     #define GLSL_VERSION            330
-#else   // PLATFORM_RPI, PLATFORM_ANDROID, PLATFORM_WEB
+#else   // PLATFORM_ANDROID, PLATFORM_WEB
     #define GLSL_VERSION            100
 #endif
 
@@ -37,18 +37,18 @@ int main(void)
     InitWindow(screenWidth, screenHeight, "raylib [shaders] example - Apply an outline to a texture");
 
     Texture2D texture = LoadTexture("resources/fudesumi.png");
-    
+
     Shader shdrOutline = LoadShader(0, TextFormat("resources/shaders/glsl%i/outline.fs", GLSL_VERSION));
 
     float outlineSize = 2.0f;
-    float outlineColor[4] = { 1.0f, 0.0f, 0.0f, 1.0f };     // Normalized RED color 
+    float outlineColor[4] = { 1.0f, 0.0f, 0.0f, 1.0f };     // Normalized RED color
     float textureSize[2] = { (float)texture.width, (float)texture.height };
-    
+
     // Get shader locations
     int outlineSizeLoc = GetShaderLocation(shdrOutline, "outlineSize");
     int outlineColorLoc = GetShaderLocation(shdrOutline, "outlineColor");
     int textureSizeLoc = GetShaderLocation(shdrOutline, "textureSize");
-    
+
     // Set shader values (they can be changed later)
     SetShaderValue(shdrOutline, outlineSizeLoc, &outlineSize, SHADER_UNIFORM_FLOAT);
     SetShaderValue(shdrOutline, outlineColorLoc, outlineColor, SHADER_UNIFORM_VEC4);
@@ -64,7 +64,7 @@ int main(void)
         //----------------------------------------------------------------------------------
         outlineSize += GetMouseWheelMove();
         if (outlineSize < 1.0f) outlineSize = 1.0f;
-        
+
         SetShaderValue(shdrOutline, outlineSizeLoc, &outlineSize, SHADER_UNIFORM_FLOAT);
         //----------------------------------------------------------------------------------
 
@@ -75,13 +75,13 @@ int main(void)
             ClearBackground(RAYWHITE);
 
             BeginShaderMode(shdrOutline);
-            
+
                 DrawTexture(texture, GetScreenWidth()/2 - texture.width/2, -30, WHITE);
-                
+
             EndShaderMode();
 
             DrawText("Shader-based\ntexture\noutline", 10, 10, 20, GRAY);
-            
+            DrawText("Scroll mouse wheel to\nchange outline size", 10, 72, 20, GRAY);
             DrawText(TextFormat("Outline size: %i px", (int)outlineSize), 10, 120, 20, MAROON);
 
             DrawFPS(710, 10);
