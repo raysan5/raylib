@@ -356,6 +356,7 @@ typedef struct {
 
 typedef struct { int x; int y; } Point;
 typedef struct { unsigned int width; unsigned int height; } Size;
+typedef struct { int width; int height; } SizeInt;
 
 // Core global state context data
 typedef struct CoreData {
@@ -395,6 +396,8 @@ typedef struct CoreData {
         Size currentFbo;                    // Current render width and height (depends on active fbo)
         Size render;                        // Framebuffer width and height (render area, including black bars if required)
         Point renderOffset;                 // Offset from render area (must be divided by 2)
+        SizeInt windowMin;                  // Window minimum width and height (for resizable window)
+        SizeInt windowMax;                  // Window maximum width and height (for resizable window)
         Matrix screenScale;                 // Matrix to scale screen (framebuffer rendering)
 
         char **dropFilepaths;         // Store dropped files paths pointers (provided by GLFW)
@@ -1787,9 +1790,30 @@ void SetWindowMonitor(int monitor)
 // Set window minimum dimensions (FLAG_WINDOW_RESIZABLE)
 void SetWindowMinSize(int width, int height)
 {
+    CORE.Window.windowMin.width = width;
+    CORE.Window.windowMin.height = height;
 #if defined(PLATFORM_DESKTOP)
     const GLFWvidmode *mode = glfwGetVideoMode(glfwGetPrimaryMonitor());
-    glfwSetWindowSizeLimits(CORE.Window.handle, width, height, mode->width, mode->height);
+    glfwSetWindowSizeLimits(CORE.Window.handle, CORE.Window.windowMin.width, CORE.Window.windowMin.height, CORE.Window.windowMax.width, CORE.Window.windowMax.height);
+#endif
+#if defined(PLATFORM_WEB)
+    // Trigger the resize event once to update the window minimum width and height
+    if ((CORE.Window.flags & FLAG_WINDOW_RESIZABLE) != 0) EmscriptenResizeCallback(EMSCRIPTEN_EVENT_RESIZE, NULL, NULL);
+#endif
+}
+
+// Set window maximum dimensions (FLAG_WINDOW_RESIZABLE)
+void SetWindowMaxSize(int width, int height)
+{
+    CORE.Window.windowMax.width = width;
+    CORE.Window.windowMax.height = height;
+#if defined(PLATFORM_DESKTOP)
+    const GLFWvidmode *mode = glfwGetVideoMode(glfwGetPrimaryMonitor());
+    glfwSetWindowSizeLimits(CORE.Window.handle, CORE.Window.windowMin.width, CORE.Window.windowMin.height, CORE.Window.windowMax.width, CORE.Window.windowMax.height);
+#endif
+#if defined(PLATFORM_WEB)
+    // Trigger the resize event once to update the window maximum width and height
+    if ((CORE.Window.flags & FLAG_WINDOW_RESIZABLE) != 0) EmscriptenResizeCallback(EMSCRIPTEN_EVENT_RESIZE, NULL, NULL);
 #endif
 }
 
@@ -3182,7 +3206,7 @@ bool DirectoryExists(const char *dirPath)
 int GetFileLength(const char *fileName)
 {
     int size = 0;
-    
+
     // NOTE: On Unix-like systems, it can by used the POSIX system call: stat(),
     // but depending on the platform that call could not be available
     //struct stat result = { 0 };
@@ -3195,11 +3219,11 @@ int GetFileLength(const char *fileName)
     {
         fseek(file, 0L, SEEK_END);
         long int fileSize = ftell(file);
-        
+
         // Check for size overflow (INT_MAX)
         if (fileSize > 2147483647) TRACELOG(LOG_WARNING, "[%s] File size overflows expected limit, do not use GetFileLength()", fileName);
         else size = (int)fileSize;
-        
+
         fclose(file);
     }
 
@@ -3765,12 +3789,12 @@ bool IsKeyPressed(int key)
 bool IsKeyPressedRepeat(int key)
 {
     bool repeat = false;
-    
+
     if ((key > 0) && (key < MAX_KEYBOARD_KEYS))
     {
         if (CORE.Input.Keyboard.keyRepeatInFrame[key] == 1) repeat = true;
     }
-    
+
     return repeat;
 }
 
@@ -3778,12 +3802,12 @@ bool IsKeyPressedRepeat(int key)
 bool IsKeyDown(int key)
 {
     bool down = false;
-    
+
     if ((key > 0) && (key < MAX_KEYBOARD_KEYS))
     {
         if (CORE.Input.Keyboard.currentKeyState[key] == 1) down = true;
     }
-    
+
     return down;
 }
 
@@ -3791,7 +3815,7 @@ bool IsKeyDown(int key)
 bool IsKeyReleased(int key)
 {
     bool released = false;
-        
+
     if ((key > 0) && (key < MAX_KEYBOARD_KEYS))
     {
         if ((CORE.Input.Keyboard.previousKeyState[key] == 1) && (CORE.Input.Keyboard.currentKeyState[key] == 0)) released = true;
@@ -3804,12 +3828,12 @@ bool IsKeyReleased(int key)
 bool IsKeyUp(int key)
 {
     bool up = false;
-    
+
     if ((key > 0) && (key < MAX_KEYBOARD_KEYS))
     {
         if (CORE.Input.Keyboard.currentKeyState[key] == 0) up = true;
     }
-    
+
     return up;
 }
 
@@ -3887,7 +3911,7 @@ const char *GetGamepadName(int gamepad)
     if (CORE.Input.Gamepad.ready[gamepad]) name = glfwGetJoystickName(gamepad);
 #endif
 #if defined(PLATFORM_DRM)
-    if (CORE.Input.Gamepad.ready[gamepad]) 
+    if (CORE.Input.Gamepad.ready[gamepad])
     {
         ioctl(CORE.Input.Gamepad.streamId[gamepad], JSIOCGNAME(64), &CORE.Input.Gamepad.name[gamepad]);
         name = CORE.Input.Gamepad.name[gamepad];
@@ -4061,7 +4085,7 @@ int GetMouseY(void)
 Vector2 GetMousePosition(void)
 {
     Vector2 position = { 0 };
-    
+
     // TODO: Review touch position on PLATFORM_WEB
 
 #if defined(PLATFORM_ANDROID) //|| defined(PLATFORM_WEB)
@@ -4219,6 +4243,12 @@ static bool InitGraphicsDevice(int width, int height)
     CORE.Window.screen.width = width;            // User desired width
     CORE.Window.screen.height = height;          // User desired height
     CORE.Window.screenScale = MatrixIdentity();  // No draw scaling required by default
+
+    // Set the window minimum and maximum default values to GLFW_DONT_CARE (-1)
+    CORE.Window.windowMin.width  = GLFW_DONT_CARE;
+    CORE.Window.windowMin.height = GLFW_DONT_CARE;
+    CORE.Window.windowMax.width  = GLFW_DONT_CARE;
+    CORE.Window.windowMax.height = GLFW_DONT_CARE;
 
     // NOTE: Framebuffer (render area - CORE.Window.render.width, CORE.Window.render.height) could include black bars...
     // ...in top-down or left-right to match display aspect ratio (no weird scaling)
@@ -6178,6 +6208,13 @@ static EM_BOOL EmscriptenResizeCallback(int eventType, const EmscriptenUiEvent *
     // so the size of the canvas object is explicitly retrieved below
     int width = GetWindowInnerWidth();
     int height = GetWindowInnerHeight();
+
+    if (width < CORE.Window.windowMin.width) width = CORE.Window.windowMin.width;
+    else if (width > CORE.Window.windowMax.width && CORE.Window.windowMax.width > 0) width = CORE.Window.windowMax.width;
+
+    if (height < CORE.Window.windowMin.height) height = CORE.Window.windowMin.height;
+    else if (height > CORE.Window.windowMax.height && CORE.Window.windowMax.height > 0) height = CORE.Window.windowMax.height;
+
     emscripten_set_canvas_element_size("#canvas",width,height);
 
     SetupViewport(width, height);    // Reset viewport and projection matrix for new size
