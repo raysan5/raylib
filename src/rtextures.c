@@ -322,9 +322,10 @@ Image LoadImageRaw(const char *fileName, int width, int height, int format, int 
 Image LoadImageSvg(const char *fileNameOrString, int width, int height)
 {
     Image image = { 0 };
+
+#if defined(SUPPORT_FILEFORMAT_SVG)
     bool isSvgStringValid = false;
     
-#if defined(SUPPORT_FILEFORMAT_SVG)
     // Validate fileName or string
     if (fileNameOrString != NULL)
     {
