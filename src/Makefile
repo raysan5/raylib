@@ -632,8 +632,19 @@ endif
 # Compile all modules with their prerequisites
 
 # Compile core module
-rcore.o : rcore.c raylib.h rlgl.h utils.h raymath.h rcamera.h rgestures.h
-	$(CC) -c $< $(CFLAGS) $(INCLUDE_PATHS)
+RCORE_SUBMODULE=rcore_desktop.c
+ifeq ($(PLATFORM),PLATFORM_ANDROID)
+    RCORE_SUBMODULE=rcore_android.c
+endif
+ifeq ($(PLATFORM),PLATFORM_DRM)
+    RCORE_SUBMODULE=rcore_drm.c
+endif
+ifeq ($(PLATFORM),PLATFORM_WEB)
+    RCORE_SUBMODULE=rcore_web.c
+endif
+
+rcore.o : rcore.c raylib.h rlgl.h utils.h raymath.h rcamera.h rgestures.h rcore.h 
+	$(CC) -c $< $(RCORE_SUBMODULE) $(CFLAGS) $(INCLUDE_PATHS)
 
 # Compile rglfw module
 rglfw.o : rglfw.c

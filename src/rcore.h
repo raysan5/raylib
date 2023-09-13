@@ -1,6 +1,22 @@
 #ifndef RCORE_H
 #define RCORE_H
 
+#include <stdlib.h>                 // Required for: srand(), rand(), atexit()
+#include <stdio.h>                  // Required for: sprintf() [Used in OpenURL()]
+#include <string.h>                 // Required for: strrchr(), strcmp(), strlen(), memset()
+#include <time.h>                   // Required for: time() [Used in InitTimer()]
+#include <math.h>                   // Required for: tan() [Used in BeginMode3D()], atan2f() [Used in LoadVrStereoConfig()]
+
+#include "utils.h"                  // Required for: TRACELOG() macros
+
+#if defined(PLATFORM_DESKTOP)
+    #define GLFW_INCLUDE_NONE       // Disable the standard OpenGL header inclusion on GLFW3
+                                    // NOTE: Already provided by rlgl implementation (on glad.h)
+    #include "GLFW/glfw3.h"         // GLFW3 library: Windows, OpenGL context and Input management
+                                    // NOTE: GLFW3 already includes gl.h (OpenGL) headers
+#endif
+
+
 // PROVIDE A HEADER TO BE USED BY ALL THE rcore_* IMPLEMENTATIONS.
 /*
 
@@ -116,6 +132,16 @@ typedef struct CoreData {
 
         char **dropFilepaths;         // Store dropped files paths pointers (provided by GLFW)
         unsigned int dropFileCount;         // Count dropped files strings
+
+        struct {
+            float width;
+            float height;
+        } windowMin;
+
+        struct {
+            float width;
+            float height;
+        } windowMax;
 
     } Window;
 #if defined(PLATFORM_ANDROID)

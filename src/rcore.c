@@ -106,8 +106,6 @@
     #include "config.h"             // Defines module configuration flags
 #endif
 
-#include "utils.h"                  // Required for: TRACELOG() macros
-
 #define RLGL_IMPLEMENTATION
 #include "rlgl.h"                   // OpenGL abstraction layer to OpenGL 1.1, 3.3+ or ES2
 
@@ -166,12 +164,6 @@
         #include <mach-o/dyld.h>
     #endif // OSs
 #endif // PLATFORM_DESKTOP
-
-#include <stdlib.h>                 // Required for: srand(), rand(), atexit()
-#include <stdio.h>                  // Required for: sprintf() [Used in OpenURL()]
-#include <string.h>                 // Required for: strrchr(), strcmp(), strlen(), memset()
-#include <time.h>                   // Required for: time() [Used in InitTimer()]
-#include <math.h>                   // Required for: tan() [Used in BeginMode3D()], atan2f() [Used in LoadVrStereoConfig()]
 
 #define _CRT_INTERNAL_NONSTDC_NAMES  1
 #include <sys/stat.h>               // Required for: stat(), S_ISREG [Used in GetFileModTime(), IsFilePath()]
