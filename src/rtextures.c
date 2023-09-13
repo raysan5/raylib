@@ -322,9 +322,10 @@ Image LoadImageRaw(const char *fileName, int width, int height, int format, int 
 Image LoadImageSvg(const char *fileNameOrString, int width, int height)
 {
     Image image = { 0 };
+
+#if defined(SUPPORT_FILEFORMAT_SVG)
     bool isSvgStringValid = false;
     
-#if defined(SUPPORT_FILEFORMAT_SVG)
     // Validate fileName or string
     if (fileNameOrString != NULL)
     {
@@ -3481,7 +3482,7 @@ void ImageDraw(Image *dst, Image src, Rectangle srcRec, Rectangle dstRec, Color 
         // Destination rectangle out-of-bounds security checks
         if (dstRec.x < 0)
         {
-            srcRec.x = -dstRec.x;
+            srcRec.x -= dstRec.x;
             srcRec.width += dstRec.x;
             dstRec.x = 0;
         }
@@ -3489,7 +3490,7 @@ void ImageDraw(Image *dst, Image src, Rectangle srcRec, Rectangle dstRec, Color 
 
         if (dstRec.y < 0)
         {
-            srcRec.y = -dstRec.y;
+            srcRec.y -= dstRec.y;
             srcRec.height += dstRec.y;
             dstRec.y = 0;
         }
