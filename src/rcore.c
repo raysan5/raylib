@@ -356,7 +356,6 @@ typedef struct {
 
 typedef struct { int x; int y; } Point;
 typedef struct { unsigned int width; unsigned int height; } Size;
-typedef struct { int width; int height; } SizeInt;
 
 // Core global state context data
 typedef struct CoreData {
@@ -396,11 +395,11 @@ typedef struct CoreData {
         Size currentFbo;                    // Current render width and height (depends on active fbo)
         Size render;                        // Framebuffer width and height (render area, including black bars if required)
         Point renderOffset;                 // Offset from render area (must be divided by 2)
-        SizeInt windowMin;                  // Window minimum width and height (for resizable window)
-        SizeInt windowMax;                  // Window maximum width and height (for resizable window)
+        Size windowMin;                     // Window minimum width and height (for resizable window)
+        Size windowMax;                     // Window maximum width and height (for resizable window)
         Matrix screenScale;                 // Matrix to scale screen (framebuffer rendering)
 
-        char **dropFilepaths;         // Store dropped files paths pointers (provided by GLFW)
+        char **dropFilepaths;               // Store dropped files paths pointers (provided by GLFW)
         unsigned int dropFileCount;         // Count dropped files strings
 
     } Window;
@@ -1793,8 +1792,11 @@ void SetWindowMinSize(int width, int height)
     CORE.Window.windowMin.width = width;
     CORE.Window.windowMin.height = height;
 #if defined(PLATFORM_DESKTOP)
-    const GLFWvidmode *mode = glfwGetVideoMode(glfwGetPrimaryMonitor());
-    glfwSetWindowSizeLimits(CORE.Window.handle, CORE.Window.windowMin.width, CORE.Window.windowMin.height, CORE.Window.windowMax.width, CORE.Window.windowMax.height);
+    int minWidth  = (CORE.Window.windowMin.width  == 0) ? GLFW_DONT_CARE : CORE.Window.windowMin.width;
+    int minHeight = (CORE.Window.windowMin.height == 0) ? GLFW_DONT_CARE : CORE.Window.windowMin.height;
+    int maxWidth  = (CORE.Window.windowMax.width  == 0) ? GLFW_DONT_CARE : CORE.Window.windowMax.width;
+    int maxHeight = (CORE.Window.windowMax.height == 0) ? GLFW_DONT_CARE : CORE.Window.windowMax.height;
+    glfwSetWindowSizeLimits(CORE.Window.handle, minWidth, minHeight, maxWidth, maxHeight);
 #endif
 #if defined(PLATFORM_WEB)
     // Trigger the resize event once to update the window minimum width and height
@@ -1808,8 +1810,11 @@ void SetWindowMaxSize(int width, int height)
     CORE.Window.windowMax.width = width;
     CORE.Window.windowMax.height = height;
 #if defined(PLATFORM_DESKTOP)
-    const GLFWvidmode *mode = glfwGetVideoMode(glfwGetPrimaryMonitor());
-    glfwSetWindowSizeLimits(CORE.Window.handle, CORE.Window.windowMin.width, CORE.Window.windowMin.height, CORE.Window.windowMax.width, CORE.Window.windowMax.height);
+    int minWidth  = (CORE.Window.windowMin.width  == 0) ? GLFW_DONT_CARE : CORE.Window.windowMin.width;
+    int minHeight = (CORE.Window.windowMin.height == 0) ? GLFW_DONT_CARE : CORE.Window.windowMin.height;
+    int maxWidth  = (CORE.Window.windowMax.width  == 0) ? GLFW_DONT_CARE : CORE.Window.windowMax.width;
+    int maxHeight = (CORE.Window.windowMax.height == 0) ? GLFW_DONT_CARE : CORE.Window.windowMax.height;
+    glfwSetWindowSizeLimits(CORE.Window.handle, minWidth, minHeight, maxWidth, maxHeight);
 #endif
 #if defined(PLATFORM_WEB)
     // Trigger the resize event once to update the window maximum width and height
@@ -4244,11 +4249,11 @@ static bool InitGraphicsDevice(int width, int height)
     CORE.Window.screen.height = height;          // User desired height
     CORE.Window.screenScale = MatrixIdentity();  // No draw scaling required by default
 
-    // Set the window minimum and maximum default values to GLFW_DONT_CARE (-1)
-    CORE.Window.windowMin.width  = GLFW_DONT_CARE;
-    CORE.Window.windowMin.height = GLFW_DONT_CARE;
-    CORE.Window.windowMax.width  = GLFW_DONT_CARE;
-    CORE.Window.windowMax.height = GLFW_DONT_CARE;
+    // Set the window minimum and maximum default values to 0
+    CORE.Window.windowMin.width  = 0;
+    CORE.Window.windowMin.height = 0;
+    CORE.Window.windowMax.width  = 0;
+    CORE.Window.windowMax.height = 0;
 
     // NOTE: Framebuffer (render area - CORE.Window.render.width, CORE.Window.render.height) could include black bars...
     // ...in top-down or left-right to match display aspect ratio (no weird scaling)
