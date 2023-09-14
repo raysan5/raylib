@@ -143,7 +143,7 @@
 // Some compilers (mostly macos clang) default to C++98,
 // where aggregate initialization can't be used
 // So, give a more clear error stating how to fix this
-#if !defined(_MSC_VER) && (defined(__cplusplus) && __cplusplus < 201103L)
+#if !defined(_MSC_VER) && (defined(__cplusplus) && __cplusplus < 201103L) && !defined(RL_NO_COLOR_CONSTANTS)
     #error "C++11 or later is required. Add -std=c++11"
 #endif
 
