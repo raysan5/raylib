@@ -395,8 +395,8 @@ typedef struct CoreData {
         Size currentFbo;                    // Current render width and height (depends on active fbo)
         Size render;                        // Framebuffer width and height (render area, including black bars if required)
         Point renderOffset;                 // Offset from render area (must be divided by 2)
-        Size windowMin;                     // Window minimum width and height (for resizable window)
-        Size windowMax;                     // Window maximum width and height (for resizable window)
+        Size screenMin;                     // Screen minimum width and height (for resizable window)
+        Size screenMax;                     // Screen maximum width and height (for resizable window)
         Matrix screenScale;                 // Matrix to scale screen (framebuffer rendering)
 
         char **dropFilepaths;               // Store dropped files paths pointers (provided by GLFW)
@@ -1789,13 +1789,13 @@ void SetWindowMonitor(int monitor)
 // Set window minimum dimensions (FLAG_WINDOW_RESIZABLE)
 void SetWindowMinSize(int width, int height)
 {
-    CORE.Window.windowMin.width = width;
-    CORE.Window.windowMin.height = height;
+    CORE.Window.screenMin.width = width;
+    CORE.Window.screenMin.height = height;
 #if defined(PLATFORM_DESKTOP)
-    int minWidth  = (CORE.Window.windowMin.width  == 0) ? GLFW_DONT_CARE : CORE.Window.windowMin.width;
-    int minHeight = (CORE.Window.windowMin.height == 0) ? GLFW_DONT_CARE : CORE.Window.windowMin.height;
-    int maxWidth  = (CORE.Window.windowMax.width  == 0) ? GLFW_DONT_CARE : CORE.Window.windowMax.width;
-    int maxHeight = (CORE.Window.windowMax.height == 0) ? GLFW_DONT_CARE : CORE.Window.windowMax.height;
+    int minWidth  = (CORE.Window.screenMin.width  == 0) ? GLFW_DONT_CARE : CORE.Window.screenMin.width;
+    int minHeight = (CORE.Window.screenMin.height == 0) ? GLFW_DONT_CARE : CORE.Window.screenMin.height;
+    int maxWidth  = (CORE.Window.screenMax.width  == 0) ? GLFW_DONT_CARE : CORE.Window.screenMax.width;
+    int maxHeight = (CORE.Window.screenMax.height == 0) ? GLFW_DONT_CARE : CORE.Window.screenMax.height;
     glfwSetWindowSizeLimits(CORE.Window.handle, minWidth, minHeight, maxWidth, maxHeight);
 #endif
 #if defined(PLATFORM_WEB)
@@ -1807,13 +1807,13 @@ void SetWindowMinSize(int width, int height)
 // Set window maximum dimensions (FLAG_WINDOW_RESIZABLE)
 void SetWindowMaxSize(int width, int height)
 {
-    CORE.Window.windowMax.width = width;
-    CORE.Window.windowMax.height = height;
+    CORE.Window.screenMax.width = width;
+    CORE.Window.screenMax.height = height;
 #if defined(PLATFORM_DESKTOP)
-    int minWidth  = (CORE.Window.windowMin.width  == 0) ? GLFW_DONT_CARE : CORE.Window.windowMin.width;
-    int minHeight = (CORE.Window.windowMin.height == 0) ? GLFW_DONT_CARE : CORE.Window.windowMin.height;
-    int maxWidth  = (CORE.Window.windowMax.width  == 0) ? GLFW_DONT_CARE : CORE.Window.windowMax.width;
-    int maxHeight = (CORE.Window.windowMax.height == 0) ? GLFW_DONT_CARE : CORE.Window.windowMax.height;
+    int minWidth  = (CORE.Window.screenMin.width  == 0) ? GLFW_DONT_CARE : CORE.Window.screenMin.width;
+    int minHeight = (CORE.Window.screenMin.height == 0) ? GLFW_DONT_CARE : CORE.Window.screenMin.height;
+    int maxWidth  = (CORE.Window.screenMax.width  == 0) ? GLFW_DONT_CARE : CORE.Window.screenMax.width;
+    int maxHeight = (CORE.Window.screenMax.height == 0) ? GLFW_DONT_CARE : CORE.Window.screenMax.height;
     glfwSetWindowSizeLimits(CORE.Window.handle, minWidth, minHeight, maxWidth, maxHeight);
 #endif
 #if defined(PLATFORM_WEB)
@@ -4249,11 +4249,11 @@ static bool InitGraphicsDevice(int width, int height)
     CORE.Window.screen.height = height;          // User desired height
     CORE.Window.screenScale = MatrixIdentity();  // No draw scaling required by default
 
-    // Set the window minimum and maximum default values to 0
-    CORE.Window.windowMin.width  = 0;
-    CORE.Window.windowMin.height = 0;
-    CORE.Window.windowMax.width  = 0;
-    CORE.Window.windowMax.height = 0;
+    // Set the screen minimum and maximum default values to 0
+    CORE.Window.screenMin.width  = 0;
+    CORE.Window.screenMin.height = 0;
+    CORE.Window.screenMax.width  = 0;
+    CORE.Window.screenMax.height = 0;
 
     // NOTE: Framebuffer (render area - CORE.Window.render.width, CORE.Window.render.height) could include black bars...
     // ...in top-down or left-right to match display aspect ratio (no weird scaling)
@@ -6214,11 +6214,11 @@ static EM_BOOL EmscriptenResizeCallback(int eventType, const EmscriptenUiEvent *
     int width = GetWindowInnerWidth();
     int height = GetWindowInnerHeight();
 
-    if (width < CORE.Window.windowMin.width) width = CORE.Window.windowMin.width;
-    else if (width > CORE.Window.windowMax.width && CORE.Window.windowMax.width > 0) width = CORE.Window.windowMax.width;
+    if (width < CORE.Window.screenMin.width) width = CORE.Window.screenMin.width;
+    else if (width > CORE.Window.screenMax.width && CORE.Window.screenMax.width > 0) width = CORE.Window.screenMax.width;
 
-    if (height < CORE.Window.windowMin.height) height = CORE.Window.windowMin.height;
-    else if (height > CORE.Window.windowMax.height && CORE.Window.windowMax.height > 0) height = CORE.Window.windowMax.height;
+    if (height < CORE.Window.screenMin.height) height = CORE.Window.screenMin.height;
+    else if (height > CORE.Window.screenMax.height && CORE.Window.screenMax.height > 0) height = CORE.Window.screenMax.height;
 
     emscripten_set_canvas_element_size("#canvas",width,height);
 
