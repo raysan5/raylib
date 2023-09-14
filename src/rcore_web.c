@@ -1088,3 +1088,9 @@ bool WindowShouldClose(void)
     emscripten_sleep(16);
     return false;
 }
+
+// Check if window is currently hidden
+bool IsWindowHidden(void)
+{
+    return false;
+}

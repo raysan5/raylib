@@ -431,15 +431,6 @@ bool IsWindowFullscreen(void)
     return CORE.Window.fullscreen;
 }
 
-// Check if window is currently hidden
-bool IsWindowHidden(void)
-{
-#if defined(PLATFORM_DESKTOP)
-    return ((CORE.Window.flags & FLAG_WINDOW_HIDDEN) > 0);
-#endif
-    return false;
-}
-
 // Check if window has been minimized
 bool IsWindowMinimized(void)
 {

@@ -521,3 +521,9 @@ bool WindowShouldClose(void)
     }
     else return true;
 }
+
+// Check if window is currently hidden
+bool IsWindowHidden(void)
+{
+    return ((CORE.Window.flags & FLAG_WINDOW_HIDDEN) > 0);
+}
