@@ -1002,3 +1002,12 @@ void CloseWindow(void)
     CORE.Window.ready = false;
     TRACELOG(LOG_INFO, "Window closed successfully");
 }
+
+
+
+// Check if KEY_ESCAPE pressed or Close icon pressed
+bool WindowShouldClose(void)
+{
+    if (CORE.Window.ready) return CORE.Window.shouldClose;
+    else return true;
+}

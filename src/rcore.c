@@ -419,41 +419,6 @@ const char *TextFormat(const char *text, ...);       // Formatting of text with 
 // Module Functions Definition - Window and OpenGL Context Functions
 //----------------------------------------------------------------------------------
 
-// Check if KEY_ESCAPE pressed or Close icon pressed
-bool WindowShouldClose(void)
-{
-#if defined(PLATFORM_WEB)
-    // Emterpreter-Async required to run sync code
-    // https://github.com/emscripten-core/emscripten/wiki/Emterpreter#emterpreter-async-run-synchronous-code
-    // By default, this function is never called on a web-ready raylib example because we encapsulate
-    // frame code in a UpdateDrawFrame() function, to allow browser manage execution asynchronously
-    // but now emscripten allows sync code to be executed in an interpreted way, using emterpreter!
-    emscripten_sleep(16);
-    return false;
-#endif
-
-#if defined(PLATFORM_DESKTOP)
-    if (CORE.Window.ready)
-    {
-        // While window minimized, stop loop execution
-        while (IsWindowState(FLAG_WINDOW_MINIMIZED) && !IsWindowState(FLAG_WINDOW_ALWAYS_RUN)) glfwWaitEvents();
-
-        CORE.Window.shouldClose = glfwWindowShouldClose(CORE.Window.handle);
-
-        // Reset close status for next frame
-        glfwSetWindowShouldClose(CORE.Window.handle, GLFW_FALSE);
-
-        return CORE.Window.shouldClose;
-    }
-    else return true;
-#endif
-
-#if defined(PLATFORM_ANDROID) || defined(PLATFORM_DRM)
-    if (CORE.Window.ready) return CORE.Window.shouldClose;
-    else return true;
-#endif
-}
-
 // Check if window has been initialized successfully
 bool IsWindowReady(void)
 {

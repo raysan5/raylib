@@ -1074,3 +1074,17 @@ void CloseWindow(void)
     CORE.Window.ready = false;
     TRACELOG(LOG_INFO, "Window closed successfully");
 }
+
+
+
+// Check if KEY_ESCAPE pressed or Close icon pressed
+bool WindowShouldClose(void)
+{
+    // Emterpreter-Async required to run sync code
+    // https://github.com/emscripten-core/emscripten/wiki/Emterpreter#emterpreter-async-run-synchronous-code
+    // By default, this function is never called on a web-ready raylib example because we encapsulate
+    // frame code in a UpdateDrawFrame() function, to allow browser manage execution asynchronously
+    // but now emscripten allows sync code to be executed in an interpreted way, using emterpreter!
+    emscripten_sleep(16);
+    return false;
+}

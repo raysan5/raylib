@@ -501,3 +501,23 @@ void CloseWindow(void)
     CORE.Window.ready = false;
     TRACELOG(LOG_INFO, "Window closed successfully");
 }
+
+
+
+// Check if KEY_ESCAPE pressed or Close icon pressed
+bool WindowShouldClose(void)
+{
+    if (CORE.Window.ready)
+    {
+        // While window minimized, stop loop execution
+        while (IsWindowState(FLAG_WINDOW_MINIMIZED) && !IsWindowState(FLAG_WINDOW_ALWAYS_RUN)) glfwWaitEvents();
+
+        CORE.Window.shouldClose = glfwWindowShouldClose(CORE.Window.handle);
+
+        // Reset close status for next frame
+        glfwSetWindowShouldClose(CORE.Window.handle, GLFW_FALSE);
+
+        return CORE.Window.shouldClose;
+    }
+    else return true;
+}
