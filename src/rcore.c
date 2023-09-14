@@ -513,41 +513,6 @@ void ToggleBorderlessWindowed(void)
 #endif
 }
 
-// Set window state: maximized, if resizable (only PLATFORM_DESKTOP)
-void MaximizeWindow(void)
-{
-#if defined(PLATFORM_DESKTOP)
-    if (glfwGetWindowAttrib(CORE.Window.handle, GLFW_RESIZABLE) == GLFW_TRUE)
-    {
-        glfwMaximizeWindow(CORE.Window.handle);
-        CORE.Window.flags |= FLAG_WINDOW_MAXIMIZED;
-    }
-#endif
-}
-
-// Set window state: minimized (only PLATFORM_DESKTOP)
-void MinimizeWindow(void)
-{
-#if defined(PLATFORM_DESKTOP)
-    // NOTE: Following function launches callback that sets appropriate flag!
-    glfwIconifyWindow(CORE.Window.handle);
-#endif
-}
-
-// Set window state: not minimized/maximized (only PLATFORM_DESKTOP)
-void RestoreWindow(void)
-{
-#if defined(PLATFORM_DESKTOP)
-    if (glfwGetWindowAttrib(CORE.Window.handle, GLFW_RESIZABLE) == GLFW_TRUE)
-    {
-        // Restores the specified window if it was previously iconified (minimized) or maximized
-        glfwRestoreWindow(CORE.Window.handle);
-        CORE.Window.flags &= ~FLAG_WINDOW_MINIMIZED;
-        CORE.Window.flags &= ~FLAG_WINDOW_MAXIMIZED;
-    }
-#endif
-}
-
 // Set window configuration state using flags
 void SetWindowState(unsigned int flags)
 {

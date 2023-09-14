@@ -1049,3 +1049,23 @@ void ToggleFullscreen(void)
 {
     TRACELOG(LOG_WARNING, "SYSTEM: Failed to toggle to windowed mode");
 }
+
+
+// Set window state: maximized, if resizable (only PLATFORM_DESKTOP)
+void MaximizeWindow(void)
+{
+    TRACELOG(LOG_WARNING, "MaximizeWindow not implemented in rcore_drm.c");
+}
+
+// Set window state: minimized (only PLATFORM_DESKTOP)
+void MinimizeWindow(void)
+{
+    TRACELOG(LOG_WARNING, "MinimizeWindow not implemented in rcore_drm.c");
+}
+
+// Set window state: not minimized/maximized (only PLATFORM_DESKTOP)
+void RestoreWindow(void)
+{
+    TRACELOG(LOG_WARNING, "RestoreWindow not implemented in rcore_drm.c");
+}
+

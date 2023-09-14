@@ -584,6 +584,7 @@ void ToggleFullscreen(void)
 
             glfwSetWindowMonitor(CORE.Window.handle, monitor, 0, 0, CORE.Window.screen.width, CORE.Window.screen.height, GLFW_DONT_CARE);
         }
+
     }
     else
     {
@@ -597,3 +598,34 @@ void ToggleFullscreen(void)
     // NOTE: V-Sync can be enabled by graphic driver configuration
     if (CORE.Window.flags & FLAG_VSYNC_HINT) glfwSwapInterval(1);
 }
+
+
+// Set window state: maximized, if resizable (only PLATFORM_DESKTOP)
+void MaximizeWindow(void)
+{
+    if (glfwGetWindowAttrib(CORE.Window.handle, GLFW_RESIZABLE) == GLFW_TRUE)
+    {
+        glfwMaximizeWindow(CORE.Window.handle);
+        CORE.Window.flags |= FLAG_WINDOW_MAXIMIZED;
+    }
+}
+
+// Set window state: minimized (only PLATFORM_DESKTOP)
+void MinimizeWindow(void)
+{
+    // NOTE: Following function launches callback that sets appropriate flag!
+    glfwIconifyWindow(CORE.Window.handle);
+}
+
+// Set window state: not minimized/maximized (only PLATFORM_DESKTOP)
+void RestoreWindow(void)
+{
+    if (glfwGetWindowAttrib(CORE.Window.handle, GLFW_RESIZABLE) == GLFW_TRUE)
+    {
+        // Restores the specified window if it was previously iconified (minimized) or maximized
+        glfwRestoreWindow(CORE.Window.handle);
+        CORE.Window.flags &= ~FLAG_WINDOW_MINIMIZED;
+        CORE.Window.flags &= ~FLAG_WINDOW_MAXIMIZED;
+    }
+}
+
