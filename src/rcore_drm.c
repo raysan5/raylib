@@ -1042,3 +1042,10 @@ bool IsWindowResized(void)
 {
     return false;
 }
+
+
+// Toggle fullscreen mode (only PLATFORM_DESKTOP)
+void ToggleFullscreen(void)
+{
+    TRACELOG(LOG_WARNING, "SYSTEM: Failed to toggle to windowed mode");
+}

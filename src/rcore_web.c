@@ -1118,3 +1118,75 @@ bool IsWindowResized(void)
 {
     return CORE.Window.resizedLastFrame;
 }
+
+
+// Toggle fullscreen mode (only PLATFORM_DESKTOP)
+void ToggleFullscreen(void)
+{
+/*
+    EM_ASM
+    (
+        // This strategy works well while using raylib minimal web shell for emscripten,
+        // it re-scales the canvas to fullscreen using monitor resolution, for tools this
+        // is a good strategy but maybe games prefer to keep current canvas resolution and
+        // display it in fullscreen, adjusting monitor resolution if possible
+        if (document.fullscreenElement) document.exitFullscreen();
+        else Module.requestFullscreen(true, true); //false, true);
+    );
+*/
+    //EM_ASM(Module.requestFullscreen(false, false););
+/*
+    if (!CORE.Window.fullscreen)
+    {
+        // Option 1: Request fullscreen for the canvas element
+        // This option does not seem to work at all:
+        // emscripten_request_pointerlock() and emscripten_request_fullscreen() are affected by web security,
+        // the user must click once on the canvas to hide the pointer or transition to full screen
+        //emscripten_request_fullscreen("#canvas", false);
+
+        // Option 2: Request fullscreen for the canvas element with strategy
+        // This option does not seem to work at all
+        // Ref: https://github.com/emscripten-core/emscripten/issues/5124
+        // EmscriptenFullscreenStrategy strategy = {
+            // .scaleMode = EMSCRIPTEN_FULLSCREEN_SCALE_STRETCH, //EMSCRIPTEN_FULLSCREEN_SCALE_ASPECT,
+            // .canvasResolutionScaleMode = EMSCRIPTEN_FULLSCREEN_CANVAS_SCALE_STDDEF,
+            // .filteringMode = EMSCRIPTEN_FULLSCREEN_FILTERING_DEFAULT,
+            // .canvasResizedCallback = EmscriptenWindowResizedCallback,
+            // .canvasResizedCallbackUserData = NULL
+        // };
+        //emscripten_request_fullscreen_strategy("#canvas", EM_FALSE, &strategy);
+
+        // Option 3: Request fullscreen for the canvas element with strategy
+        // It works as expected but only inside the browser (client area)
+        EmscriptenFullscreenStrategy strategy = {
+            .scaleMode = EMSCRIPTEN_FULLSCREEN_SCALE_ASPECT,
+            .canvasResolutionScaleMode = EMSCRIPTEN_FULLSCREEN_CANVAS_SCALE_STDDEF,
+            .filteringMode = EMSCRIPTEN_FULLSCREEN_FILTERING_DEFAULT,
+            .canvasResizedCallback = EmscriptenWindowResizedCallback,
+            .canvasResizedCallbackUserData = NULL
+        };
+        emscripten_enter_soft_fullscreen("#canvas", &strategy);
+
+        int width, height;
+        emscripten_get_canvas_element_size("#canvas", &width, &height);
+        TRACELOG(LOG_WARNING, "Emscripten: Enter fullscreen: Canvas size: %i x %i", width, height);
+
+        CORE.Window.fullscreen = true;          // Toggle fullscreen flag
+        CORE.Window.flags |= FLAG_FULLSCREEN_MODE;
+    }
+    else
+    {
+        //emscripten_exit_fullscreen();
+        //emscripten_exit_soft_fullscreen();
+
+        int width, height;
+        emscripten_get_canvas_element_size("#canvas", &width, &height);
+        TRACELOG(LOG_WARNING, "Emscripten: Exit fullscreen: Canvas size: %i x %i", width, height);
+
+        CORE.Window.fullscreen = false;          // Toggle fullscreen flag
+        CORE.Window.flags &= ~FLAG_FULLSCREEN_MODE;
+    }
+*/
+
+    CORE.Window.fullscreen = !CORE.Window.fullscreen;          // Toggle fullscreen flag
+}

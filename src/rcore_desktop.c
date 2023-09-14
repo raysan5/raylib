@@ -552,3 +552,48 @@ bool IsWindowResized(void)
 {
     return CORE.Window.resizedLastFrame;
 }
+
+// Toggle fullscreen mode (only PLATFORM_DESKTOP)
+void ToggleFullscreen(void)
+{
+    if (!CORE.Window.fullscreen)
+    {
+        // Store previous window position (in case we exit fullscreen)
+        glfwGetWindowPos(CORE.Window.handle, &CORE.Window.position.x, &CORE.Window.position.y);
+
+        int monitorCount = 0;
+        int monitorIndex = GetCurrentMonitor();
+        GLFWmonitor **monitors = glfwGetMonitors(&monitorCount);
+
+        // Use current monitor, so we correctly get the display the window is on
+        GLFWmonitor *monitor = (monitorIndex < monitorCount)? monitors[monitorIndex] : NULL;
+
+        if (monitor == NULL)
+        {
+            TRACELOG(LOG_WARNING, "GLFW: Failed to get monitor");
+
+            CORE.Window.fullscreen = false;
+            CORE.Window.flags &= ~FLAG_FULLSCREEN_MODE;
+
+            glfwSetWindowMonitor(CORE.Window.handle, NULL, 0, 0, CORE.Window.screen.width, CORE.Window.screen.height, GLFW_DONT_CARE);
+        }
+        else
+        {
+            CORE.Window.fullscreen = true;
+            CORE.Window.flags |= FLAG_FULLSCREEN_MODE;
+
+            glfwSetWindowMonitor(CORE.Window.handle, monitor, 0, 0, CORE.Window.screen.width, CORE.Window.screen.height, GLFW_DONT_CARE);
+        }
+    }
+    else
+    {
+        CORE.Window.fullscreen = false;
+        CORE.Window.flags &= ~FLAG_FULLSCREEN_MODE;
+
+        glfwSetWindowMonitor(CORE.Window.handle, NULL, CORE.Window.position.x, CORE.Window.position.y, CORE.Window.screen.width, CORE.Window.screen.height, GLFW_DONT_CARE);
+    }
+
+    // Try to enable GPU V-Sync, so frames are limited to screen refresh rate (60Hz -> 60 FPS)
+    // NOTE: V-Sync can be enabled by graphic driver configuration
+    if (CORE.Window.flags & FLAG_VSYNC_HINT) glfwSwapInterval(1);
+}
