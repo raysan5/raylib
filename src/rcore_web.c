@@ -1041,3 +1041,36 @@ static bool InitGraphicsDevice(int width, int height)
 
     return true;
 }
+
+// Close window and unload OpenGL context
+void CloseWindow(void)
+{
+#if defined(SUPPORT_GIF_RECORDING)
+    if (gifRecording)
+    {
+        MsfGifResult result = msf_gif_end(&gifState);
+        msf_gif_free(result);
+        gifRecording = false;
+    }
+#endif
+
+#if defined(SUPPORT_MODULE_RTEXT) && defined(SUPPORT_DEFAULT_FONT)
+    UnloadFontDefault();        // WARNING: Module required: rtext
+#endif
+
+    rlglClose();                // De-init rlgl
+
+    glfwDestroyWindow(CORE.Window.handle);
+    glfwTerminate();
+
+#if defined(_WIN32) && defined(SUPPORT_WINMM_HIGHRES_TIMER) && !defined(SUPPORT_BUSY_WAIT_LOOP)
+    timeEndPeriod(1);           // Restore time period
+#endif
+
+#if defined(SUPPORT_EVENTS_AUTOMATION)
+    RL_FREE(events);
+#endif
+
+    CORE.Window.ready = false;
+    TRACELOG(LOG_INFO, "Window closed successfully");
+}

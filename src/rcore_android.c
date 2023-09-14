@@ -1199,3 +1199,89 @@ static int32_t AndroidInputCallback(struct android_app *app, AInputEvent *event)
 
     return 0;
 }
+
+// To allow easier porting to android, we allow the user to define a
+// main function which we call from android_main, defined by ourselves
+extern int main(int argc, char *argv[]);
+
+void android_main(struct android_app *app)
+{
+    char arg0[] = "raylib";     // NOTE: argv[] are mutable
+    CORE.Android.app = app;
+
+    // NOTE: Return from main is ignored
+    (void)main(1, (char *[]) { arg0, NULL });
+
+    // Request to end the native activity
+    ANativeActivity_finish(app->activity);
+
+    // Android ALooper_pollAll() variables
+    int pollResult = 0;
+    int pollEvents = 0;
+
+    // Waiting for application events before complete finishing
+    while (!app->destroyRequested)
+    {
+        while ((pollResult = ALooper_pollAll(0, NULL, &pollEvents, (void **)&CORE.Android.source)) >= 0)
+        {
+            if (CORE.Android.source != NULL) CORE.Android.source->process(app, CORE.Android.source);
+        }
+    }
+}
+
+// NOTE: Add this to header (if apps really need it)
+struct android_app *GetAndroidApp(void)
+{
+    return CORE.Android.app;
+}
+
+// Close window and unload OpenGL context
+void CloseWindow(void)
+{
+#if defined(SUPPORT_GIF_RECORDING)
+    if (gifRecording)
+    {
+        MsfGifResult result = msf_gif_end(&gifState);
+        msf_gif_free(result);
+        gifRecording = false;
+    }
+#endif
+
+#if defined(SUPPORT_MODULE_RTEXT) && defined(SUPPORT_DEFAULT_FONT)
+    UnloadFontDefault();        // WARNING: Module required: rtext
+#endif
+
+    rlglClose();                // De-init rlgl
+
+#if defined(_WIN32) && defined(SUPPORT_WINMM_HIGHRES_TIMER) && !defined(SUPPORT_BUSY_WAIT_LOOP)
+    timeEndPeriod(1);           // Restore time period
+#endif
+
+    // Close surface, context and display
+    if (CORE.Window.device != EGL_NO_DISPLAY)
+    {
+        eglMakeCurrent(CORE.Window.device, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
+
+        if (CORE.Window.surface != EGL_NO_SURFACE)
+        {
+            eglDestroySurface(CORE.Window.device, CORE.Window.surface);
+            CORE.Window.surface = EGL_NO_SURFACE;
+        }
+
+        if (CORE.Window.context != EGL_NO_CONTEXT)
+        {
+            eglDestroyContext(CORE.Window.device, CORE.Window.context);
+            CORE.Window.context = EGL_NO_CONTEXT;
+        }
+
+        eglTerminate(CORE.Window.device);
+        CORE.Window.device = EGL_NO_DISPLAY;
+    }
+
+#if defined(SUPPORT_EVENTS_AUTOMATION)
+    RL_FREE(events);
+#endif
+
+    CORE.Window.ready = false;
+    TRACELOG(LOG_INFO, "Window closed successfully");
+}

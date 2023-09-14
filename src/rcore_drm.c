@@ -884,3 +884,121 @@ static bool InitGraphicsDevice(int width, int height)
 
     return true;
 }
+
+
+// Close window and unload OpenGL context
+void CloseWindow(void)
+{
+#if defined(SUPPORT_GIF_RECORDING)
+    if (gifRecording)
+    {
+        MsfGifResult result = msf_gif_end(&gifState);
+        msf_gif_free(result);
+        gifRecording = false;
+    }
+#endif
+
+#if defined(SUPPORT_MODULE_RTEXT) && defined(SUPPORT_DEFAULT_FONT)
+    UnloadFontDefault();        // WARNING: Module required: rtext
+#endif
+
+    rlglClose();                // De-init rlgl
+
+#if defined(_WIN32) && defined(SUPPORT_WINMM_HIGHRES_TIMER) && !defined(SUPPORT_BUSY_WAIT_LOOP)
+    timeEndPeriod(1);           // Restore time period
+#endif
+
+
+    if (CORE.Window.prevFB)
+    {
+        drmModeRmFB(CORE.Window.fd, CORE.Window.prevFB);
+        CORE.Window.prevFB = 0;
+    }
+
+    if (CORE.Window.prevBO)
+    {
+        gbm_surface_release_buffer(CORE.Window.gbmSurface, CORE.Window.prevBO);
+        CORE.Window.prevBO = NULL;
+    }
+
+    if (CORE.Window.gbmSurface)
+    {
+        gbm_surface_destroy(CORE.Window.gbmSurface);
+        CORE.Window.gbmSurface = NULL;
+    }
+
+    if (CORE.Window.gbmDevice)
+    {
+        gbm_device_destroy(CORE.Window.gbmDevice);
+        CORE.Window.gbmDevice = NULL;
+    }
+
+    if (CORE.Window.crtc)
+    {
+        if (CORE.Window.connector)
+        {
+            drmModeSetCrtc(CORE.Window.fd, CORE.Window.crtc->crtc_id, CORE.Window.crtc->buffer_id,
+                CORE.Window.crtc->x, CORE.Window.crtc->y, &CORE.Window.connector->connector_id, 1, &CORE.Window.crtc->mode);
+            drmModeFreeConnector(CORE.Window.connector);
+            CORE.Window.connector = NULL;
+        }
+
+        drmModeFreeCrtc(CORE.Window.crtc);
+        CORE.Window.crtc = NULL;
+    }
+
+    if (CORE.Window.fd != -1)
+    {
+        close(CORE.Window.fd);
+        CORE.Window.fd = -1;
+    }
+
+    // Close surface, context and display
+    if (CORE.Window.device != EGL_NO_DISPLAY)
+    {
+        if (CORE.Window.surface != EGL_NO_SURFACE)
+        {
+            eglDestroySurface(CORE.Window.device, CORE.Window.surface);
+            CORE.Window.surface = EGL_NO_SURFACE;
+        }
+
+        if (CORE.Window.context != EGL_NO_CONTEXT)
+        {
+            eglDestroyContext(CORE.Window.device, CORE.Window.context);
+            CORE.Window.context = EGL_NO_CONTEXT;
+        }
+
+        eglTerminate(CORE.Window.device);
+        CORE.Window.device = EGL_NO_DISPLAY;
+    }
+
+    // Wait for mouse and gamepad threads to finish before closing
+    // NOTE: Those threads should already have finished at this point
+    // because they are controlled by CORE.Window.shouldClose variable
+
+    CORE.Window.shouldClose = true;   // Added to force threads to exit when the close window is called
+
+    // Close the evdev keyboard
+    if (CORE.Input.Keyboard.fd != -1)
+    {
+        close(CORE.Input.Keyboard.fd);
+        CORE.Input.Keyboard.fd = -1;
+    }
+
+    for (int i = 0; i < sizeof(CORE.Input.eventWorker)/sizeof(InputEventWorker); ++i)
+    {
+        if (CORE.Input.eventWorker[i].threadId)
+        {
+            pthread_join(CORE.Input.eventWorker[i].threadId, NULL);
+        }
+    }
+
+    if (CORE.Input.Gamepad.threadId) pthread_join(CORE.Input.Gamepad.threadId, NULL);
+
+#if defined(SUPPORT_EVENTS_AUTOMATION)
+    RL_FREE(events);
+#endif
+
+    CORE.Window.ready = false;
+    TRACELOG(LOG_INFO, "Window closed successfully");
+}
