@@ -1017,3 +1017,9 @@ bool IsWindowHidden(void)
 {
     return false;
 }
+
+// Check if window has been minimized
+bool IsWindowMinimized(void)
+{
+    return false;
+}

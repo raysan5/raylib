@@ -431,15 +431,6 @@ bool IsWindowFullscreen(void)
     return CORE.Window.fullscreen;
 }
 
-// Check if window has been minimized
-bool IsWindowMinimized(void)
-{
-#if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
-    return ((CORE.Window.flags & FLAG_WINDOW_MINIMIZED) > 0);
-#endif
-    return false;
-}
-
 // Check if window has been maximized (only PLATFORM_DESKTOP)
 bool IsWindowMaximized(void)
 {

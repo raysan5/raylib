@@ -527,3 +527,9 @@ bool IsWindowHidden(void)
 {
     return ((CORE.Window.flags & FLAG_WINDOW_HIDDEN) > 0);
 }
+
+// Check if window has been minimized
+bool IsWindowMinimized(void)
+{
+    return ((CORE.Window.flags & FLAG_WINDOW_MINIMIZED) > 0);
+}
