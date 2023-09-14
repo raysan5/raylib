@@ -1237,17 +1237,107 @@ void ToggleFullscreen(void)
 // Set window state: maximized, if resizable (only PLATFORM_DESKTOP)
 void MaximizeWindow(void)
 {
-    TRACELOG(LOG_WARNING, "MaximizeWindow not implemented in rcore_web.c");
+    TRACELOG(LOG_INFO, "MaximizeWindow not implemented in rcore_web.c");
 }
 
 // Set window state: minimized (only PLATFORM_DESKTOP)
 void MinimizeWindow(void)
 {
-    TRACELOG(LOG_WARNING, "MinimizeWindow not implemented in rcore_web.c");
+    TRACELOG(LOG_INFO, "MinimizeWindow not implemented in rcore_web.c");
 }
 
 // Set window state: not minimized/maximized (only PLATFORM_DESKTOP)
 void RestoreWindow(void)
 {
-    TRACELOG(LOG_WARNING, "RestoreWindow not implemented in rcore_web.c");
+    TRACELOG(LOG_INFO, "RestoreWindow not implemented in rcore_web.c");
+}
+
+// Toggle borderless windowed mode (only PLATFORM_DESKTOP)
+void ToggleBorderlessWindowed(void)
+{
+    TRACELOG(LOG_INFO, "ToggleBorderlessWindows not implemented in rcore_web.c");
+}
+
+// Set window configuration state using flags
+void SetWindowState(unsigned int flags)
+{
+    TRACELOG(LOG_INFO, "SetWindowState not implemented in rcore_web.c");
+}
+
+// Clear window configuration state flags
+void ClearWindowState(unsigned int flags)
+{
+    TRACELOG(LOG_INFO, "ClearWindowState not implemented in rcore_web.c");
+}
+
+// Set icon for window (only PLATFORM_DESKTOP)
+// NOTE 1: Image must be in RGBA format, 8bit per channel
+// NOTE 2: Image is scaled by the OS for all required sizes
+void SetWindowIcon(Image image)
+{
+    TRACELOG(LOG_INFO, "SetWindowIcon not implemented in rcore_web.c");
+}
+
+// Set icon for window (multiple images, only PLATFORM_DESKTOP)
+// NOTE 1: Images must be in RGBA format, 8bit per channel
+// NOTE 2: The multiple images are used depending on provided sizes
+// Standard Windows icon sizes: 256, 128, 96, 64, 48, 32, 24, 16
+void SetWindowIcons(Image *images, int count)
+{
+    TRACELOG(LOG_INFO, "SetWindowIcons not implemented in rcore_web.c");
+}
+
+// Set title for window (only PLATFORM_DESKTOP and PLATFORM_WEB)
+void SetWindowTitle(const char *title)
+{
+    CORE.Window.title = title;
+    emscripten_set_window_title(title);
+}
+
+// Set window position on screen (windowed mode)
+void SetWindowPosition(int x, int y)
+{
+    TRACELOG(LOG_INFO, "SetWindowPosition not implemented in rcore_web.c");
+}
+
+// Set monitor for the current window
+void SetWindowMonitor(int monitor)
+{
+    TRACELOG(LOG_INFO, "SetWindowMonitor not implemented in rcore_web.c");
+}
+
+// Set window minimum dimensions (FLAG_WINDOW_RESIZABLE)
+void SetWindowMinSize(int width, int height)
+{
+    CORE.Window.windowMin.width = width;
+    CORE.Window.windowMin.height = height;
+    // Trigger the resize event once to update the window minimum width and height
+    if ((CORE.Window.flags & FLAG_WINDOW_RESIZABLE) != 0) EmscriptenResizeCallback(EMSCRIPTEN_EVENT_RESIZE, NULL, NULL);
+}
+
+// Set window maximum dimensions (FLAG_WINDOW_RESIZABLE)
+void SetWindowMaxSize(int width, int height)
+{
+    CORE.Window.windowMax.width = width;
+    CORE.Window.windowMax.height = height;
+    // Trigger the resize event once to update the window maximum width and height
+    if ((CORE.Window.flags & FLAG_WINDOW_RESIZABLE) != 0) EmscriptenResizeCallback(EMSCRIPTEN_EVENT_RESIZE, NULL, NULL);
+}
+
+// Set window dimensions
+void SetWindowSize(int width, int height)
+{
+    glfwSetWindowSize(CORE.Window.handle, width, height);
+}
+
+// Set window opacity, value opacity is between 0.0 and 1.0
+void SetWindowOpacity(float opacity)
+{
+    TRACELOG(LOG_INFO, "SetWindowOpacity not implemented in rcore_web.c");
+}
+
+// Set window focused
+void SetWindowFocused(void)
+{
+    TRACELOG(LOG_INFO, "SetWindowFocused not implemented in rcore_web.c");
 }
