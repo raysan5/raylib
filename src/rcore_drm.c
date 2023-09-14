@@ -1023,3 +1023,22 @@ bool IsWindowMinimized(void)
 {
     return false;
 }
+
+
+// Check if window has been maximized (only PLATFORM_DESKTOP)
+bool IsWindowMaximized(void)
+{
+    return false;
+}
+
+// Check if window has the focus
+bool IsWindowFocused(void)
+{
+    return true;
+}
+
+// Check if window has been resizedLastFrame
+bool IsWindowResized(void)
+{
+    return false;
+}

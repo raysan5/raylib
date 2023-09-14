@@ -431,37 +431,6 @@ bool IsWindowFullscreen(void)
     return CORE.Window.fullscreen;
 }
 
-// Check if window has been maximized (only PLATFORM_DESKTOP)
-bool IsWindowMaximized(void)
-{
-#if defined(PLATFORM_DESKTOP)
-    return ((CORE.Window.flags & FLAG_WINDOW_MAXIMIZED) > 0);
-#endif
-    return false;
-}
-
-// Check if window has the focus
-bool IsWindowFocused(void)
-{
-#if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
-    return ((CORE.Window.flags & FLAG_WINDOW_UNFOCUSED) == 0);
-#endif
-#if defined(PLATFORM_ANDROID)
-    return CORE.Android.appEnabled;
-#endif
-    return true;
-}
-
-// Check if window has been resizedLastFrame
-bool IsWindowResized(void)
-{
-#if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
-    return CORE.Window.resizedLastFrame;
-#else
-    return false;
-#endif
-}
-
 // Check if one specific window flag is enabled
 bool IsWindowState(unsigned int flag)
 {
