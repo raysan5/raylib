@@ -63,13 +63,14 @@ int main(void)
         Vector3 axis = Vector3Normalize((Vector3){ (float)GetRandomValue(0, 360), (float)GetRandomValue(0, 360), (float)GetRandomValue(0, 360) });
         float angle = (float)GetRandomValue(0, 10)*DEG2RAD;
         Matrix rotation = MatrixRotate(axis, angle);
-        
+
         transforms[i] = MatrixMultiply(rotation, translation);
     }
 
     // Load lighting shader
-    Shader shader = LoadShader(TextFormat("resources/shaders/glsl%i/lighting_instancing.vs", GLSL_VERSION),
-                               TextFormat("resources/shaders/glsl%i/lighting.fs", GLSL_VERSION));
+    const char *applicationDir = GetApplicationDirectory();
+    Shader shader = LoadShader(TextFormat("%sresources/shaders/glsl%i/lighting_instancing.vs", applicationDir, GLSL_VERSION),
+                               TextFormat("%sresources/shaders/glsl%i/lighting.fs", applicationDir, GLSL_VERSION));
     // Get shader locations
     shader.locs[SHADER_LOC_MATRIX_MVP] = GetShaderLocation(shader, "mvp");
     shader.locs[SHADER_LOC_VECTOR_VIEW] = GetShaderLocation(shader, "viewPos");
