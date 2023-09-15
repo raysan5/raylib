@@ -5564,7 +5564,7 @@ static Model LoadVOX(const char *fileName)
 
 #if defined(SUPPORT_FILEFORMAT_M3D)
 // Hook LoadFileData()/UnloadFileData() calls to M3D loaders
-unsigned char *m3d_loaderhook(char *fn, unsigned int *len) { return LoadFileData((const char *)fn, len); }
+unsigned char *m3d_loaderhook(char *fn, unsigned int *len) { return LoadFileData((const char *)fn, (int *)len); }
 void m3d_freehook(void *data) { UnloadFileData((unsigned char *)data); }
 
 // Load M3D mesh data
