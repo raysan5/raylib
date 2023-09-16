@@ -603,7 +603,7 @@
             <Overload retVal="const char" descr="Get current working directory (uses static string)"></Overload>
         </KeyWord>
         <KeyWord name="GetApplicationDirectory" func="yes">
-            <Overload retVal="const char" descr="Get the directory if the running application (uses static string)"></Overload>
+            <Overload retVal="const char" descr="Get the directory of the running application (uses static string)"></Overload>
         </KeyWord>
         <KeyWord name="ChangeDirectory" func="yes">
             <Overload retVal="bool" descr="Change working directory, return true on success">

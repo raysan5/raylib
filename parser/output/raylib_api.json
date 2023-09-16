@@ -4333,7 +4333,7 @@
     },
     {
       "name": "GetApplicationDirectory",
-      "description": "Get the directory if the running application (uses static string)",
+      "description": "Get the directory of the running application (uses static string)",
       "returnType": "const char *"
     },
     {
