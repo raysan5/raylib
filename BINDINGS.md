@@ -114,6 +114,7 @@ These are older raylib bindings that are more than 2 versions old or have not be
 | raylib-pas         | 3.0 | [Pascal](https://en.wikipedia.org/wiki/Pascal_(programming_language))         | https://github.com/tazdij/raylib-pas      |
 | raylib-pascal      | 2.0 | [Pascal](https://en.wikipedia.org/wiki/Pascal_(programming_language))         | https://github.com/drezgames/raylib-pascal    |
 | Graphics-Raylib    | 1.4 | [Perl](https://www.perl.org/)         | https://github.com/athreef/Graphics-Raylib      |
+| raylib-bindings    | 4.5 | [Ruby](https://www.ruby-lang.org/en/) | https://github.com/vaiorabbit/raylib-bindings        |
 | raylib-ruby        | 2.6 | [Ruby](https://www.ruby-lang.org/en/) | https://github.com/a0/raylib-ruby        |
 | raylib-ruby-ffi    | 2.0 | [Ruby](https://www.ruby-lang.org/en/) | https://github.com/D3nX/raylib-ruby-ffi      |
 | raylib-mruby       | 2.5-dev | [mruby](https://github.com/mruby/mruby)  | https://github.com/lihaochen910/raylib-mruby    |
