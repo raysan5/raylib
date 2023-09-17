@@ -507,7 +507,7 @@ RMAPI Vector2 Vector2ClampValue(Vector2 v, float min, float max)
 RMAPI int Vector2Equals(Vector2 p, Vector2 q)
 {
     int result = ((fabsf(p.x - q.x)) <= (EPSILON*fmaxf(1.0f, fmaxf(fabsf(p.x), fabsf(q.x))))) &&
-                 ((fabsf(p.y - q.y)) <= (EPSILON*fmaxf(1.0f, fmaxf(fabsf(p.y), fabsf(q.y)))));
+                  ((fabsf(p.y - q.y)) <= (EPSILON*fmaxf(1.0f, fmaxf(fabsf(p.y), fabsf(q.y)))));
 
     return result;
 }
