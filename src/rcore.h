@@ -1,6 +1,8 @@
 #ifndef RCORE_H
 #define RCORE_H
 
+#define PLATFORM_DESKTOP
+
 #include <stdlib.h>                 // Required for: srand(), rand(), atexit()
 #include <stdio.h>                  // Required for: sprintf() [Used in OpenURL()]
 #include <string.h>                 // Required for: strrchr(), strcmp(), strlen(), memset()
@@ -26,6 +28,8 @@
 */
 
 #include "raylib.h"
+#include "rlgl.h"
+#include "raymath.h"
 
 
 
@@ -81,6 +85,11 @@
 #define FLAG_TOGGLE(n, f) ((n) ^= (f))
 #define FLAG_CHECK(n, f) ((n) & (f))
 
+// TODO: HACK: Added flag if not provided by GLFW when using external library
+// Latest GLFW release (GLFW 3.3.8) does not implement this flag, it was added for 3.4.0-dev
+#if !defined(GLFW_MOUSE_PASSTHROUGH)
+    #define GLFW_MOUSE_PASSTHROUGH      0x0002000D
+#endif
 
 //----------------------------------------------------------------------------------
 // Types and Structures Definition

@@ -199,6 +199,18 @@ RLAPI const char *raylib_version = RAYLIB_VERSION;  // raylib version exported s
 
 CoreData CORE = { 0 };               // Global CORE state context
 
+#if defined(PLATFORM_DESKTOP)
+    #include "rcore_desktop.c"
+#elif defined(PLATFORM_WEB)
+    #include "rcore_web.c"
+#elif defined(PLATFOM_DRM)
+    #include "rcore_drm.c"
+#elif defined(PLATFOM_ANDROID)
+    #include "rcore_android.c"
+#else
+    // Software rendering backend, user needs to provide buffer ;)
+#endif
+
 #if defined(SUPPORT_SCREEN_CAPTURE)
 static int screenshotCounter = 0;           // Screenshots counter
 #endif
@@ -314,25 +326,6 @@ static void SetupViewport(int width, int height);       // Set viewport for a pr
 
 static void ScanDirectoryFiles(const char *basePath, FilePathList *list, const char *filter);   // Scan all files and directories in a base path
 static void ScanDirectoryFilesRecursively(const char *basePath, FilePathList *list, const char *filter);  // Scan all files and directories recursively from a base path
-
-#if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
-static void ErrorCallback(int error, const char *description);                             // GLFW3 Error Callback, runs on GLFW3 error
-// Window callbacks events
-static void WindowSizeCallback(GLFWwindow *window, int width, int height);                 // GLFW3 WindowSize Callback, runs when window is resized
-#if !defined(PLATFORM_WEB)
-static void WindowMaximizeCallback(GLFWwindow* window, int maximized);                     // GLFW3 Window Maximize Callback, runs when window is maximized
-#endif
-static void WindowIconifyCallback(GLFWwindow *window, int iconified);                      // GLFW3 WindowIconify Callback, runs when window is minimized/restored
-static void WindowFocusCallback(GLFWwindow *window, int focused);                          // GLFW3 WindowFocus Callback, runs when window get/lose focus
-static void WindowDropCallback(GLFWwindow *window, int count, const char **paths);         // GLFW3 Window Drop Callback, runs when drop files into window
-// Input callbacks events
-static void KeyCallback(GLFWwindow *window, int key, int scancode, int action, int mods);  // GLFW3 Keyboard Callback, runs on key pressed
-static void CharCallback(GLFWwindow *window, unsigned int key);                            // GLFW3 Char Key Callback, runs on key pressed (get char value)
-static void MouseButtonCallback(GLFWwindow *window, int button, int action, int mods);     // GLFW3 Mouse Button Callback, runs on mouse button pressed
-static void MouseCursorPosCallback(GLFWwindow *window, double x, double y);                // GLFW3 Cursor Position Callback, runs on mouse move
-static void MouseScrollCallback(GLFWwindow *window, double xoffset, double yoffset);       // GLFW3 Srolling Callback, runs on mouse wheel
-static void CursorEnterCallback(GLFWwindow *window, int enter);                            // GLFW3 Cursor Enter Callback, cursor enters client area
-#endif
 
 #if defined(PLATFORM_DRM)
 static void InitKeyboard(void);                         // Initialize raw keyboard system
@@ -3367,11 +3360,6 @@ static void ScanDirectoryFilesRecursively(const char *basePath, FilePathList *fi
 }
 
 #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
-// GLFW3 Error Callback, runs on GLFW3 error
-static void ErrorCallback(int error, const char *description)
-{
-    TRACELOG(LOG_WARNING, "GLFW: Error: %i Description: %s", error, description);
-}
 
 // GLFW3 WindowSize Callback, runs when window is resizedLastFrame
 // NOTE: Window resizing not allowed by default
@@ -3414,15 +3402,6 @@ static void WindowIconifyCallback(GLFWwindow *window, int iconified)
     if (iconified) CORE.Window.flags |= FLAG_WINDOW_MINIMIZED;  // The window was iconified
     else CORE.Window.flags &= ~FLAG_WINDOW_MINIMIZED;           // The window was restored
 }
-
-#if !defined(PLATFORM_WEB)
-// GLFW3 WindowMaximize Callback, runs when window is maximized/restored
-static void WindowMaximizeCallback(GLFWwindow *window, int maximized)
-{
-    if (maximized) CORE.Window.flags |= FLAG_WINDOW_MAXIMIZED;  // The window was maximized
-    else CORE.Window.flags &= ~FLAG_WINDOW_MAXIMIZED;           // The window was restored
-}
-#endif
 
 // GLFW3 WindowFocus Callback, runs when window get/lose focus
 static void WindowFocusCallback(GLFWwindow *window, int focused)
