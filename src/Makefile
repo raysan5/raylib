@@ -632,7 +632,7 @@ endif
 # Compile all modules with their prerequisites
 
 # Compile core module
-rcore.o : rcore.c raylib.h rlgl.h utils.h raymath.h rcamera.h rgestures.h rcore.h 
+rcore.o : rcore.c raylib.h rlgl.h utils.h raymath.h rcamera.h rgestures.h
 	$(CC) -c $< $(CFLAGS) $(INCLUDE_PATHS)
 
 # Compile rglfw module
