@@ -1,8 +1,6 @@
 #ifndef RCORE_H
 #define RCORE_H
 
-#define PLATFORM_DESKTOP
-
 #include <stdlib.h>                 // Required for: srand(), rand(), atexit()
 #include <stdio.h>                  // Required for: sprintf() [Used in OpenURL()]
 #include <string.h>                 // Required for: strrchr(), strcmp(), strlen(), memset()
