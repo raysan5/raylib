@@ -1641,7 +1641,7 @@ Function 126: GetWorkingDirectory() (0 input parameters)
 Function 127: GetApplicationDirectory() (0 input parameters)
   Name: GetApplicationDirectory
   Return type: const char *
-  Description: Get the directory of the running application (uses static string)
+  Description: Get the directory if the running application (uses static string)
   No input parameters
 Function 128: ChangeDirectory() (1 input parameters)
   Name: ChangeDirectory
