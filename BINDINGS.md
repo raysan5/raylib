@@ -44,6 +44,7 @@ Some people ported raylib to other languages in form of bindings or wrappers to 
 | nelua-raylib       | 4.0     | [nelua](https://nelua.io/)           | MIT | https://github.com/AKDev21/nelua-raylib       |
 | Raylib.nelua       | **4.5** | [nelua](https://nelua.io/)           | Zlib | https://github.com/Its-Kenta/Raylib-Nelua     |
 | NimraylibNow!      | 4.2     | [Nim](https://nim-lang.org/)         | MIT | https://github.com/greenfork/nimraylib_now    |
+| raylib-bindings    | **4.5** | [Ruby](https://www.ruby-lang.org/en/) | https://github.com/vaiorabbit/raylib-bindings        |
 | raylib-Forever     | auto    | [Nim](https://nim-lang.org/)         | ? | https://github.com/Guevara-chan/Raylib-Forever  |
 | naylib             | auto    | [Nim](https://nim-lang.org/)         | MIT | https://github.com/planetis-m/naylib          |
 | node-raylib        | **4.5** | [Node.js](https://nodejs.org/en/)    | Zlib     | https://github.com/RobLoach/node-raylib         |
@@ -114,7 +115,6 @@ These are older raylib bindings that are more than 2 versions old or have not be
 | raylib-pas         | 3.0 | [Pascal](https://en.wikipedia.org/wiki/Pascal_(programming_language))         | https://github.com/tazdij/raylib-pas      |
 | raylib-pascal      | 2.0 | [Pascal](https://en.wikipedia.org/wiki/Pascal_(programming_language))         | https://github.com/drezgames/raylib-pascal    |
 | Graphics-Raylib    | 1.4 | [Perl](https://www.perl.org/)         | https://github.com/athreef/Graphics-Raylib      |
-| raylib-bindings    | 4.5 | [Ruby](https://www.ruby-lang.org/en/) | https://github.com/vaiorabbit/raylib-bindings        |
 | raylib-ruby        | 2.6 | [Ruby](https://www.ruby-lang.org/en/) | https://github.com/a0/raylib-ruby        |
 | raylib-ruby-ffi    | 2.0 | [Ruby](https://www.ruby-lang.org/en/) | https://github.com/D3nX/raylib-ruby-ffi      |
 | raylib-mruby       | 2.5-dev | [mruby](https://github.com/mruby/mruby)  | https://github.com/lihaochen910/raylib-mruby    |
