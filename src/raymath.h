@@ -820,7 +820,7 @@ RMAPI Vector3 Vector3RotateByAxisAngle(Vector3 v, Vector3 axis, float angle)
     Vector3 result = v;
 
     // Vector3Normalize(axis);
-    float length = sqrtf(axis.x * axis.x + axis.y * axis.y + axis.z * axis.z);
+    float length = sqrtf(axis.x*axis.x + axis.y*axis.y + axis.z*axis.z);
     if (length == 0.0f) length = 1.0f;
     float ilength = 1.0f / length;
     axis.x *= ilength;
@@ -829,19 +829,19 @@ RMAPI Vector3 Vector3RotateByAxisAngle(Vector3 v, Vector3 axis, float angle)
 
     angle /= 2.0f;
     float a = sinf(angle);
-    float b = axis.x * a;
-    float c = axis.y * a;
-    float d = axis.z * a;
+    float b = axis.x*a;
+    float c = axis.y*a;
+    float d = axis.z*a;
     a = cosf(angle);
     Vector3 w = { b, c, d };
 
     // Vector3CrossProduct(w, v)
-    Vector3 wv = { w.y * v.z - w.z * v.y, w.z * v.x - w.x * v.z, w.x * v.y - w.y * v.x };
+    Vector3 wv = { w.y*v.z - w.z*v.y, w.z*v.x - w.x*v.z, w.x*v.y - w.y*v.x };
 
     // Vector3CrossProduct(w, wv)
-    Vector3 wwv = { w.y * wv.z - w.z * wv.y, w.z * wv.x - w.x * wv.z, w.x * wv.y - w.y * wv.x };
+    Vector3 wwv = { w.y*wv.z - w.z*wv.y, w.z*wv.x - w.x*wv.z, w.x*wv.y - w.y*wv.x };
 
-    // Vector3Scale(wv, 2 * a)
+    // Vector3Scale(wv, 2*a)
     a *= 2;
     wv.x *= a;
     wv.y *= a;
@@ -1091,18 +1091,17 @@ RMAPI Vector3 Vector3ClampValue(Vector3 v, float min, float max)
 RMAPI int Vector3Equals(Vector3 p, Vector3 q)
 {
     int result = ((fabsf(p.x - q.x)) <= (EPSILON*fmaxf(1.0f, fmaxf(fabsf(p.x), fabsf(q.x))))) &&
-                  ((fabsf(p.y - q.y)) <= (EPSILON*fmaxf(1.0f, fmaxf(fabsf(p.y), fabsf(q.y))))) &&
-                  ((fabsf(p.z - q.z)) <= (EPSILON*fmaxf(1.0f, fmaxf(fabsf(p.z), fabsf(q.z)))));
+                 ((fabsf(p.y - q.y)) <= (EPSILON*fmaxf(1.0f, fmaxf(fabsf(p.y), fabsf(q.y))))) &&
+                 ((fabsf(p.z - q.z)) <= (EPSILON*fmaxf(1.0f, fmaxf(fabsf(p.z), fabsf(q.z)))));
 
     return result;
 }
 
-// Compute the direction of a refracted ray where v specifies the
-// normalized direction of the incoming ray, n specifies the
-// normalized normal vector of the interface of two optical media,
-// and r specifies the ratio of the refractive index of the medium
-// from where the ray comes to the refractive index of the medium
-// on the other side of the surface
+// Compute the direction of a refracted ray
+// v: normalized direction of the incoming ray
+// n: normalized normal vector of the interface of two optical media
+// r: ratio of the refractive index of the medium from where the ray comes
+//    to the refractive index of the medium on the other side of the surface
 RMAPI Vector3 Vector3Refract(Vector3 v, Vector3 n, float r)
 {
     Vector3 result = { 0 };
@@ -1862,7 +1861,7 @@ RMAPI Quaternion QuaternionSlerp(Quaternion q1, Quaternion q2, float amount)
         float halfTheta = acosf(cosHalfTheta);
         float sinHalfTheta = sqrtf(1.0f - cosHalfTheta*cosHalfTheta);
 
-        if (fabsf(sinHalfTheta) < 0.001f)
+        if (fabsf(sinHalfTheta) < EPSILON)
         {
             result.x = (q1.x*0.5f + q2.x*0.5f);
             result.y = (q1.y*0.5f + q2.y*0.5f);
@@ -1917,9 +1916,9 @@ RMAPI Quaternion QuaternionFromMatrix(Matrix mat)
 {
     Quaternion result = { 0 };
 
-    float fourWSquaredMinus1 = mat.m0 + mat.m5 + mat.m10;
-    float fourXSquaredMinus1 = mat.m0 - mat.m5 - mat.m10;
-    float fourYSquaredMinus1 = mat.m5 - mat.m0 - mat.m10;
+    float fourWSquaredMinus1 = mat.m0  + mat.m5 + mat.m10;
+    float fourXSquaredMinus1 = mat.m0  - mat.m5 - mat.m10;
+    float fourYSquaredMinus1 = mat.m5  - mat.m0 - mat.m10;
     float fourZSquaredMinus1 = mat.m10 - mat.m0 - mat.m5;
 
     int biggestIndex = 0;
@@ -1942,34 +1941,34 @@ RMAPI Quaternion QuaternionFromMatrix(Matrix mat)
         biggestIndex = 3;
     }
 
-    float biggestVal = sqrtf(fourBiggestSquaredMinus1 + 1.0f) * 0.5f;
+    float biggestVal = sqrtf(fourBiggestSquaredMinus1 + 1.0f)*0.5f;
     float mult = 0.25f / biggestVal;
 
     switch (biggestIndex)
     {
         case 0:
             result.w = biggestVal;
-            result.x = (mat.m6 - mat.m9) * mult;
-            result.y = (mat.m8 - mat.m2) * mult;
-            result.z = (mat.m1 - mat.m4) * mult;
+            result.x = (mat.m6 - mat.m9)*mult;
+            result.y = (mat.m8 - mat.m2)*mult;
+            result.z = (mat.m1 - mat.m4)*mult;
             break;
         case 1:
             result.x = biggestVal;
-            result.w = (mat.m6 - mat.m9) * mult;
-            result.y = (mat.m1 + mat.m4) * mult;
-            result.z = (mat.m8 + mat.m2) * mult;
+            result.w = (mat.m6 - mat.m9)*mult;
+            result.y = (mat.m1 + mat.m4)*mult;
+            result.z = (mat.m8 + mat.m2)*mult;
             break;
         case 2:
             result.y = biggestVal;
-            result.w = (mat.m8 - mat.m2) * mult;
-            result.x = (mat.m1 + mat.m4) * mult;
-            result.z = (mat.m6 + mat.m9) * mult;
+            result.w = (mat.m8 - mat.m2)*mult;
+            result.x = (mat.m1 + mat.m4)*mult;
+            result.z = (mat.m6 + mat.m9)*mult;
             break;
         case 3:
             result.z = biggestVal;
-            result.w = (mat.m1 - mat.m4) * mult;
-            result.x = (mat.m8 + mat.m2) * mult;
-            result.y = (mat.m6 + mat.m9) * mult;
+            result.w = (mat.m1 - mat.m4)*mult;
+            result.x = (mat.m8 + mat.m2)*mult;
+            result.y = (mat.m6 + mat.m9)*mult;
             break;
     }
 
@@ -2075,7 +2074,7 @@ RMAPI void QuaternionToAxisAngle(Quaternion q, Vector3 *outAxis, float *outAngle
     float resAngle = 2.0f*acosf(q.w);
     float den = sqrtf(1.0f - q.w*q.w);
 
-    if (den > 0.0001f)
+    if (den > EPSILON)
     {
         resAxis.x = q.x/den;
         resAxis.y = q.y/den;
@@ -2158,7 +2157,7 @@ RMAPI int QuaternionEquals(Quaternion p, Quaternion q)
                   ((fabsf(p.y - q.y)) <= (EPSILON*fmaxf(1.0f, fmaxf(fabsf(p.y), fabsf(q.y))))) &&
                   ((fabsf(p.z - q.z)) <= (EPSILON*fmaxf(1.0f, fmaxf(fabsf(p.z), fabsf(q.z))))) &&
                   ((fabsf(p.w - q.w)) <= (EPSILON*fmaxf(1.0f, fmaxf(fabsf(p.w), fabsf(q.w)))))) ||
-                  (((fabsf(p.x + q.x)) <= (EPSILON*fmaxf(1.0f, fmaxf(fabsf(p.x), fabsf(q.x))))) &&
+                 (((fabsf(p.x + q.x)) <= (EPSILON*fmaxf(1.0f, fmaxf(fabsf(p.x), fabsf(q.x))))) &&
                   ((fabsf(p.y + q.y)) <= (EPSILON*fmaxf(1.0f, fmaxf(fabsf(p.y), fabsf(q.y))))) &&
                   ((fabsf(p.z + q.z)) <= (EPSILON*fmaxf(1.0f, fmaxf(fabsf(p.z), fabsf(q.z))))) &&
                   ((fabsf(p.w + q.w)) <= (EPSILON*fmaxf(1.0f, fmaxf(fabsf(p.w), fabsf(q.w))))));
