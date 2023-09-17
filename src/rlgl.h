@@ -3009,11 +3009,15 @@ unsigned int rlLoadTexture(const void *data, int width, int height, int format, 
 
         TRACELOGD("TEXTURE: Load mipmap level %i (%i x %i), size: %i, offset: %i", i, mipWidth, mipHeight, mipSize, mipOffset);
 
+        // NOTE: Added pointer math separately from function to avoid UBSAN complaining
+        unsigned char *dataPtr = (unsigned char*)data;
+        if (mipOffset > 0) dataPtr = (unsigned char*)data + mipOffset;
+
         if (glInternalFormat != -1)
         {
-            if (format < RL_PIXELFORMAT_COMPRESSED_DXT1_RGB) glTexImage2D(GL_TEXTURE_2D, i, glInternalFormat, mipWidth, mipHeight, 0, glFormat, glType, (unsigned char *)data + mipOffset);
+            if (format < RL_PIXELFORMAT_COMPRESSED_DXT1_RGB) glTexImage2D(GL_TEXTURE_2D, i, glInternalFormat, mipWidth, mipHeight, 0, glFormat, glType, dataPtr);
 #if !defined(GRAPHICS_API_OPENGL_11)
-            else glCompressedTexImage2D(GL_TEXTURE_2D, i, glInternalFormat, mipWidth, mipHeight, 0, mipSize, (unsigned char *)data + mipOffset);
+            else glCompressedTexImage2D(GL_TEXTURE_2D, i, glInternalFormat, mipWidth, mipHeight, 0, mipSize, dataPtr);
 #endif
 
 #if defined(GRAPHICS_API_OPENGL_33)
