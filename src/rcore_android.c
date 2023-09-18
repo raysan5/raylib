@@ -1651,3 +1651,21 @@ int SetGamepadMappings(const char *mappings)
 {
     return 0;
 }
+
+// Get mouse position X
+int GetMouseX(void)
+{
+    return (int)CORE.Input.Touch.position[0].x;
+}
+
+// Get mouse position Y
+int GetMouseY(void)
+{
+    return (int)CORE.Input.Touch.position[0].y;
+}
+
+// Get mouse position XY
+Vector2 GetMousePosition(void)
+{
+    return GetTouchPosition(0);
+}

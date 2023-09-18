@@ -2074,44 +2074,6 @@ bool IsMouseButtonUp(int button)
     return up;
 }
 
-// Get mouse position X
-int GetMouseX(void)
-{
-#if defined(PLATFORM_ANDROID)
-    return (int)CORE.Input.Touch.position[0].x;
-#else
-    return (int)((CORE.Input.Mouse.currentPosition.x + CORE.Input.Mouse.offset.x)*CORE.Input.Mouse.scale.x);
-#endif
-}
-
-// Get mouse position Y
-int GetMouseY(void)
-{
-#if defined(PLATFORM_ANDROID)
-    return (int)CORE.Input.Touch.position[0].y;
-#else
-    return (int)((CORE.Input.Mouse.currentPosition.y + CORE.Input.Mouse.offset.y)*CORE.Input.Mouse.scale.y);
-#endif
-}
-
-// Get mouse position XY
-Vector2 GetMousePosition(void)
-{
-    Vector2 position = { 0 };
-
-    // TODO: Review touch position on PLATFORM_WEB
-
-#if defined(PLATFORM_ANDROID) //|| defined(PLATFORM_WEB)
-    position = GetTouchPosition(0);
-#else
-    // NOTE: On PLATFORM_WEB, even on canvas scaling, mouse position is proportionally returned
-    position.x = (CORE.Input.Mouse.currentPosition.x + CORE.Input.Mouse.offset.x)*CORE.Input.Mouse.scale.x;
-    position.y = (CORE.Input.Mouse.currentPosition.y + CORE.Input.Mouse.offset.y)*CORE.Input.Mouse.scale.y;
-#endif
-
-    return position;
-}
-
 // Get mouse delta between frames
 Vector2 GetMouseDelta(void)
 {

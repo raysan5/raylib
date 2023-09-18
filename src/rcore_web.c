@@ -1573,3 +1573,29 @@ int SetGamepadMappings(const char *mappings)
 {
     return 0;
 }
+
+// Get mouse position X
+int GetMouseX(void)
+{
+    return (int)((CORE.Input.Mouse.currentPosition.x + CORE.Input.Mouse.offset.x)*CORE.Input.Mouse.scale.x);
+}
+
+// Get mouse position Y
+int GetMouseY(void)
+{
+    return (int)((CORE.Input.Mouse.currentPosition.y + CORE.Input.Mouse.offset.y)*CORE.Input.Mouse.scale.y);
+}
+
+// Get mouse position XY
+Vector2 GetMousePosition(void)
+{
+    Vector2 position = { 0 };
+
+    // TODO: Review touch position on PLATFORM_WEB
+
+    // NOTE: On PLATFORM_WEB, even on canvas scaling, mouse position is proportionally returned
+    position.x = (CORE.Input.Mouse.currentPosition.x + CORE.Input.Mouse.offset.x)*CORE.Input.Mouse.scale.x;
+    position.y = (CORE.Input.Mouse.currentPosition.y + CORE.Input.Mouse.offset.y)*CORE.Input.Mouse.scale.y;
+
+    return position;
+}
