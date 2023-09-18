@@ -6979,15 +6979,11 @@ static void *EventThread(void *arg)
                 gestureEvent.touchAction = touchAction;
                 gestureEvent.pointCount = CORE.Input.Touch.pointCount;
 
-                gestureEvent.pointId[0] = 0;
-                gestureEvent.pointId[1] = 1;
-                gestureEvent.pointId[2] = 2;
-                gestureEvent.pointId[3] = 3;
-
-                gestureEvent.position[0] = CORE.Input.Touch.position[0];
-                gestureEvent.position[1] = CORE.Input.Touch.position[1];
-                gestureEvent.position[2] = CORE.Input.Touch.position[2];
-                gestureEvent.position[3] = CORE.Input.Touch.position[3];
+                for (int i = 0; i < MAX_TOUCH_POINTS; i++)
+                {
+                    gestureEvent.pointId[i] = i;
+                    gestureEvent.position[i] = CORE.Input.Touch.position[i];
+                }
 
                 ProcessGestureEvent(gestureEvent);
             }
