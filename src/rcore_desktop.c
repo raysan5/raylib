@@ -1524,3 +1524,10 @@ int GetMonitorPhysicalWidth(int monitor)
     else TRACELOG(LOG_WARNING, "GLFW: Failed to find selected monitor");
     return 0;
 }
+
+
+// Get gamepad axis count
+int GetGamepadAxisCount(int gamepad)
+{
+    return CORE.Input.Gamepad.axisCount;
+}

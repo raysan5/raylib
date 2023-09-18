@@ -1640,3 +1640,10 @@ int GetMonitorPhysicalWidth(int monitor)
 {
     return 0;
 }
+
+
+// Get gamepad axis count
+int GetGamepadAxisCount(int gamepad)
+{
+    return CORE.Input.Gamepad.axisCount;
+}

@@ -1961,18 +1961,6 @@ bool IsGamepadAvailable(int gamepad)
     return result;
 }
 
-// Get gamepad axis count
-int GetGamepadAxisCount(int gamepad)
-{
-#if defined(PLATFORM_DRM)
-    int axisCount = 0;
-    if (CORE.Input.Gamepad.ready[gamepad]) ioctl(CORE.Input.Gamepad.streamId[gamepad], JSIOCGAXES, &axisCount);
-    CORE.Input.Gamepad.axisCount = axisCount;
-#endif
-
-    return CORE.Input.Gamepad.axisCount;
-}
-
 // Get axis movement vector for a gamepad
 float GetGamepadAxisMovement(int gamepad, int axis)
 {
