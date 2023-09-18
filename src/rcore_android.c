@@ -1633,3 +1633,10 @@ const char *GetGamepadName(int gamepad)
 {
     return NULL;
 }
+
+
+// Get selected monitor physical width in millimetres
+int GetMonitorPhysicalWidth(int monitor)
+{
+    return 0;
+}

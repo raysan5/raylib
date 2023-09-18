@@ -410,24 +410,6 @@ int GetRenderHeight(void)
     return CORE.Window.render.height;
 }
 
-// Get selected monitor physical width in millimetres
-int GetMonitorPhysicalWidth(int monitor)
-{
-#if defined(PLATFORM_DESKTOP)
-    int monitorCount;
-    GLFWmonitor **monitors = glfwGetMonitors(&monitorCount);
-
-    if ((monitor >= 0) && (monitor < monitorCount))
-    {
-        int physicalWidth;
-        glfwGetMonitorPhysicalSize(monitors[monitor], &physicalWidth, NULL);
-        return physicalWidth;
-    }
-    else TRACELOG(LOG_WARNING, "GLFW: Failed to find selected monitor");
-#endif
-    return 0;
-}
-
 // Enable waiting for events on EndDrawing(), no automatic event polling
 void EnableEventWaiting(void)
 {

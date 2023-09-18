@@ -1507,3 +1507,20 @@ const char *GetGamepadName(int gamepad)
 
     return name;
 }
+
+
+// Get selected monitor physical width in millimetres
+int GetMonitorPhysicalWidth(int monitor)
+{
+    int monitorCount;
+    GLFWmonitor **monitors = glfwGetMonitors(&monitorCount);
+
+    if ((monitor >= 0) && (monitor < monitorCount))
+    {
+        int physicalWidth;
+        glfwGetMonitorPhysicalSize(monitors[monitor], &physicalWidth, NULL);
+        return physicalWidth;
+    }
+    else TRACELOG(LOG_WARNING, "GLFW: Failed to find selected monitor");
+    return 0;
+}
