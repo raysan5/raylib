@@ -1005,4 +1005,17 @@ void SetMousePosition(int x, int y)
 {
     CORE.Input.Mouse.currentPosition = (Vector2){ (float)x, (float)y };
     CORE.Input.Mouse.previousPosition = CORE.Input.Mouse.currentPosition;
+
+}
+
+
+// Get mouse wheel movement Y
+float GetMouseWheelMove(void)
+{
+    float result = 0.0f;
+
+    if (fabsf(CORE.Input.Mouse.currentWheelMove.x) > fabsf(CORE.Input.Mouse.currentWheelMove.y)) result = (float)CORE.Input.Mouse.currentWheelMove.x;
+    else result = (float)CORE.Input.Mouse.currentWheelMove.y;
+
+    return result;
 }

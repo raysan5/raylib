@@ -1609,3 +1609,15 @@ void SetMousePosition(int x, int y)
     // NOTE: emscripten not implemented
     glfwSetCursorPos(CORE.Window.handle, CORE.Input.Mouse.currentPosition.x, CORE.Input.Mouse.currentPosition.y);
 }
+
+
+// Get mouse wheel movement Y
+float GetMouseWheelMove(void)
+{
+    float result = 0.0f;
+
+    if (fabsf(CORE.Input.Mouse.currentWheelMove.x) > fabsf(CORE.Input.Mouse.currentWheelMove.y)) result = (float)CORE.Input.Mouse.currentWheelMove.x;
+    else result = (float)CORE.Input.Mouse.currentWheelMove.y;
+
+    return result;
+}

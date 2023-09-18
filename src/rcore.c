@@ -2099,19 +2099,6 @@ void SetMouseScale(float scaleX, float scaleY)
     CORE.Input.Mouse.scale = (Vector2){ scaleX, scaleY };
 }
 
-// Get mouse wheel movement Y
-float GetMouseWheelMove(void)
-{
-    float result = 0.0f;
-
-#if !defined(PLATFORM_ANDROID)
-    if (fabsf(CORE.Input.Mouse.currentWheelMove.x) > fabsf(CORE.Input.Mouse.currentWheelMove.y)) result = (float)CORE.Input.Mouse.currentWheelMove.x;
-    else result = (float)CORE.Input.Mouse.currentWheelMove.y;
-#endif
-
-    return result;
-}
-
 // Get mouse wheel movement X/Y as a vector
 Vector2 GetMouseWheelMoveV(void)
 {
