@@ -1,8 +1,5 @@
 #include <stdlib.h>
 
-// for debugging
-#define PLATFORM_DESKTOP
-
 #include "rcore.h"
 
 #define GLFW_INCLUDE_NONE       // Disable the standard OpenGL header inclusion on GLFW3

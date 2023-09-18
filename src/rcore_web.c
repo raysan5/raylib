@@ -1,8 +1,5 @@
 #include <stdlib.h>
 
-// for debugging
-#define PLATFORM_WEB
-
 #include "rcore.h"
 
 #define GLFW_INCLUDE_ES2 // GLFW3: Enable OpenGL ES 2.0 (translated to WebGL)

@@ -1,8 +1,5 @@
 #include <stdlib.h>
 
-// for debugging
-#define PLATFORM_ANDROID
-
 #include "rcore.h"
 
 //#include <android/sensor.h>           // Required for: Android sensors functions (accelerometer, gyroscope, light...)

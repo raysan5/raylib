@@ -1,8 +1,5 @@
 #include <stdlib.h>
 
-// for debugging
-#define PLATFORM_DRM
-
 #include "rcore.h"
 
 #include <fcntl.h>   // POSIX file control definitions - open(), creat(), fcntl()
