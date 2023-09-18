@@ -2022,18 +2022,6 @@ int GetGamepadButtonPressed(void)
     return CORE.Input.Gamepad.lastButtonPressed;
 }
 
-// Set internal gamepad mappings
-int SetGamepadMappings(const char *mappings)
-{
-    int result = 0;
-
-#if defined(PLATFORM_DESKTOP)
-    result = glfwUpdateGamepadMappings(mappings);
-#endif
-
-    return result;
-}
-
 // Check if a mouse button has been pressed once
 bool IsMouseButtonPressed(int button)
 {
