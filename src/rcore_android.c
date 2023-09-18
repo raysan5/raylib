@@ -1570,3 +1570,69 @@ double GetTime(void)
     time = (double)(nanoSeconds - CORE.Time.base)*1e-9;  // Elapsed time since InitTimer()
     return time;
 }
+
+// NOTE TRACELOG() function is located in [utils.h]
+
+// Takes a screenshot of current screen (saved a .png)
+void TakeScreenshot(const char *fileName)
+{
+#if defined(SUPPORT_MODULE_RTEXTURES)
+    // Security check to (partially) avoid malicious code on PLATFORM_WEB
+    if (strchr(fileName, '\'') != NULL) { TRACELOG(LOG_WARNING, "SYSTEM: Provided fileName could be potentially malicious, avoid [\'] character");  return; }
+
+    Vector2 scale = GetWindowScaleDPI();
+    unsigned char *imgData = rlReadScreenPixels((int)((float)CORE.Window.render.width*scale.x), (int)((float)CORE.Window.render.height*scale.y));
+    Image image = { imgData, (int)((float)CORE.Window.render.width*scale.x), (int)((float)CORE.Window.render.height*scale.y), 1, PIXELFORMAT_UNCOMPRESSED_R8G8B8A8 };
+
+    char path[2048] = { 0 };
+    strcpy(path, TextFormat("%s/%s", CORE.Storage.basePath, fileName));
+
+    ExportImage(image, path);           // WARNING: Module required: rtextures
+    RL_FREE(imgData);
+
+    TRACELOG(LOG_INFO, "SYSTEM: [%s] Screenshot taken successfully", path);
+#else
+    TRACELOG(LOG_WARNING,"IMAGE: ExportImage() requires module: rtextures");
+#endif
+}
+
+// Open URL with default system browser (if available)
+// NOTE: This function is only safe to use if you control the URL given.
+// A user could craft a malicious string performing another action.
+// Only call this function yourself not with user input or make sure to check the string yourself.
+// Ref: https://github.com/raysan5/raylib/issues/686
+void OpenURL(const char *url)
+{
+    // Security check to (partially) avoid malicious code on PLATFORM_WEB
+    if (strchr(url, '\'') != NULL) TRACELOG(LOG_WARNING, "SYSTEM: Provided URL could be potentially malicious, avoid [\'] character");
+    else
+    {
+        JNIEnv *env = NULL;
+        JavaVM *vm = CORE.Android.app->activity->vm;
+        (*vm)->AttachCurrentThread(vm, &env, NULL);
+
+        jstring urlString = (*env)->NewStringUTF(env, url);
+        jclass uriClass = (*env)->FindClass(env, "android/net/Uri");
+        jmethodID uriParse = (*env)->GetStaticMethodID(env, uriClass, "parse", "(Ljava/lang/String;)Landroid/net/Uri;");
+        jobject uri = (*env)->CallStaticObjectMethod(env, uriClass, uriParse, urlString);
+
+        jclass intentClass = (*env)->FindClass(env, "android/content/Intent");
+        jfieldID actionViewId = (*env)->GetStaticFieldID(env, intentClass, "ACTION_VIEW", "Ljava/lang/String;");
+        jobject actionView = (*env)->GetStaticObjectField(env, intentClass, actionViewId);
+        jmethodID newIntent = (*env)->GetMethodID(env, intentClass, "<init>", "(Ljava/lang/String;Landroid/net/Uri;)V");
+        jobject intent = (*env)->AllocObject(env, intentClass);
+
+        (*env)->CallVoidMethod(env, intent, newIntent, actionView, uri);
+        jclass activityClass = (*env)->FindClass(env, "android/app/Activity");
+        jmethodID startActivity = (*env)->GetMethodID(env, activityClass, "startActivity", "(Landroid/content/Intent;)V");
+        (*env)->CallVoidMethod(env, CORE.Android.app->activity->clazz, startActivity, intent);
+
+        (*vm)->DetachCurrentThread(vm);
+    }
+}
+
+// Get gamepad internal name id
+const char *GetGamepadName(int gamepad)
+{
+    return NULL;
+}

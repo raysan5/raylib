@@ -1448,3 +1448,65 @@ double GetTime(void)
     double time = glfwGetTime();   // Elapsed time since glfwInit()
     return time;
 }
+
+// NOTE TRACELOG() function is located in [utils.h]
+
+// Takes a screenshot of current screen (saved a .png)
+void TakeScreenshot(const char *fileName)
+{
+#if defined(SUPPORT_MODULE_RTEXTURES)
+    // Security check to (partially) avoid malicious code on PLATFORM_WEB
+    if (strchr(fileName, '\'') != NULL) { TRACELOG(LOG_WARNING, "SYSTEM: Provided fileName could be potentially malicious, avoid [\'] character");  return; }
+
+    Vector2 scale = GetWindowScaleDPI();
+    unsigned char *imgData = rlReadScreenPixels((int)((float)CORE.Window.render.width*scale.x), (int)((float)CORE.Window.render.height*scale.y));
+    Image image = { imgData, (int)((float)CORE.Window.render.width*scale.x), (int)((float)CORE.Window.render.height*scale.y), 1, PIXELFORMAT_UNCOMPRESSED_R8G8B8A8 };
+
+    char path[2048] = { 0 };
+    strcpy(path, TextFormat("%s/%s", CORE.Storage.basePath, fileName));
+
+    ExportImage(image, path);           // WARNING: Module required: rtextures
+    RL_FREE(imgData);
+
+    TRACELOG(LOG_INFO, "SYSTEM: [%s] Screenshot taken successfully", path);
+#else
+    TRACELOG(LOG_WARNING,"IMAGE: ExportImage() requires module: rtextures");
+#endif
+}
+
+// Open URL with default system browser (if available)
+// NOTE: This function is only safe to use if you control the URL given.
+// A user could craft a malicious string performing another action.
+// Only call this function yourself not with user input or make sure to check the string yourself.
+// Ref: https://github.com/raysan5/raylib/issues/686
+void OpenURL(const char *url)
+{
+    // Security check to (partially) avoid malicious code on PLATFORM_WEB
+    if (strchr(url, '\'') != NULL) TRACELOG(LOG_WARNING, "SYSTEM: Provided URL could be potentially malicious, avoid [\'] character");
+    else
+    {
+        char *cmd = (char *)RL_CALLOC(strlen(url) + 32, sizeof(char));
+    #if defined(_WIN32)
+        sprintf(cmd, "explorer \"%s\"", url);
+    #endif
+    #if defined(__linux__) || defined(__FreeBSD__) || defined(__OpenBSD__)
+        sprintf(cmd, "xdg-open '%s'", url); // Alternatives: firefox, x-www-browser
+    #endif
+    #if defined(__APPLE__)
+        sprintf(cmd, "open '%s'", url);
+    #endif
+        int result = system(cmd);
+        if (result == -1) TRACELOG(LOG_WARNING, "OpenURL() child process could not be created");
+        RL_FREE(cmd);
+    }
+}
+
+// Get gamepad internal name id
+const char *GetGamepadName(int gamepad)
+{
+    const char *name = NULL;
+
+    if (CORE.Input.Gamepad.ready[gamepad]) name = glfwGetJoystickName(gamepad);
+
+    return name;
+}

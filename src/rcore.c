@@ -1237,37 +1237,6 @@ void SetConfigFlags(unsigned int flags)
     CORE.Window.flags |= flags;
 }
 
-// NOTE TRACELOG() function is located in [utils.h]
-
-// Takes a screenshot of current screen (saved a .png)
-void TakeScreenshot(const char *fileName)
-{
-#if defined(SUPPORT_MODULE_RTEXTURES)
-    // Security check to (partially) avoid malicious code on PLATFORM_WEB
-    if (strchr(fileName, '\'') != NULL) { TRACELOG(LOG_WARNING, "SYSTEM: Provided fileName could be potentially malicious, avoid [\'] character");  return; }
-
-    Vector2 scale = GetWindowScaleDPI();
-    unsigned char *imgData = rlReadScreenPixels((int)((float)CORE.Window.render.width*scale.x), (int)((float)CORE.Window.render.height*scale.y));
-    Image image = { imgData, (int)((float)CORE.Window.render.width*scale.x), (int)((float)CORE.Window.render.height*scale.y), 1, PIXELFORMAT_UNCOMPRESSED_R8G8B8A8 };
-
-    char path[2048] = { 0 };
-    strcpy(path, TextFormat("%s/%s", CORE.Storage.basePath, fileName));
-
-    ExportImage(image, path);           // WARNING: Module required: rtextures
-    RL_FREE(imgData);
-
-#if defined(PLATFORM_WEB)
-    // Download file from MEMFS (emscripten memory filesystem)
-    // saveFileFromMEMFSToDisk() function is defined in raylib/src/shell.html
-    emscripten_run_script(TextFormat("saveFileFromMEMFSToDisk('%s','%s')", GetFileName(path), GetFileName(path)));
-#endif
-
-    TRACELOG(LOG_INFO, "SYSTEM: [%s] Screenshot taken successfully", path);
-#else
-    TRACELOG(LOG_WARNING,"IMAGE: ExportImage() requires module: rtextures");
-#endif
-}
-
 // Get a random value between min and max (both included)
 // WARNING: Ranges higher than RAND_MAX will return invalid results
 // More specifically, if (max - min) > INT_MAX there will be an overflow,
@@ -1876,61 +1845,6 @@ unsigned char *DecodeDataBase64(const unsigned char *data, int *outputSize)
     return decodedData;
 }
 
-// Open URL with default system browser (if available)
-// NOTE: This function is only safe to use if you control the URL given.
-// A user could craft a malicious string performing another action.
-// Only call this function yourself not with user input or make sure to check the string yourself.
-// Ref: https://github.com/raysan5/raylib/issues/686
-void OpenURL(const char *url)
-{
-    // Security check to (partially) avoid malicious code on PLATFORM_WEB
-    if (strchr(url, '\'') != NULL) TRACELOG(LOG_WARNING, "SYSTEM: Provided URL could be potentially malicious, avoid [\'] character");
-    else
-    {
-#if defined(PLATFORM_DESKTOP)
-        char *cmd = (char *)RL_CALLOC(strlen(url) + 32, sizeof(char));
-    #if defined(_WIN32)
-        sprintf(cmd, "explorer \"%s\"", url);
-    #endif
-    #if defined(__linux__) || defined(__FreeBSD__) || defined(__OpenBSD__)
-        sprintf(cmd, "xdg-open '%s'", url); // Alternatives: firefox, x-www-browser
-    #endif
-    #if defined(__APPLE__)
-        sprintf(cmd, "open '%s'", url);
-    #endif
-        int result = system(cmd);
-        if (result == -1) TRACELOG(LOG_WARNING, "OpenURL() child process could not be created");
-        RL_FREE(cmd);
-#endif
-#if defined(PLATFORM_WEB)
-        emscripten_run_script(TextFormat("window.open('%s', '_blank')", url));
-#endif
-#if defined(PLATFORM_ANDROID)
-        JNIEnv *env = NULL;
-        JavaVM *vm = CORE.Android.app->activity->vm;
-        (*vm)->AttachCurrentThread(vm, &env, NULL);
-
-        jstring urlString = (*env)->NewStringUTF(env, url);
-        jclass uriClass = (*env)->FindClass(env, "android/net/Uri");
-        jmethodID uriParse = (*env)->GetStaticMethodID(env, uriClass, "parse", "(Ljava/lang/String;)Landroid/net/Uri;");
-        jobject uri = (*env)->CallStaticObjectMethod(env, uriClass, uriParse, urlString);
-
-        jclass intentClass = (*env)->FindClass(env, "android/content/Intent");
-        jfieldID actionViewId = (*env)->GetStaticFieldID(env, intentClass, "ACTION_VIEW", "Ljava/lang/String;");
-        jobject actionView = (*env)->GetStaticObjectField(env, intentClass, actionViewId);
-        jmethodID newIntent = (*env)->GetMethodID(env, intentClass, "<init>", "(Ljava/lang/String;Landroid/net/Uri;)V");
-        jobject intent = (*env)->AllocObject(env, intentClass);
-
-        (*env)->CallVoidMethod(env, intent, newIntent, actionView, uri);
-        jclass activityClass = (*env)->FindClass(env, "android/app/Activity");
-        jmethodID startActivity = (*env)->GetMethodID(env, activityClass, "startActivity", "(Landroid/content/Intent;)V");
-        (*env)->CallVoidMethod(env, CORE.Android.app->activity->clazz, startActivity, intent);
-
-        (*vm)->DetachCurrentThread(vm);
-#endif
-    }
-}
-
 //----------------------------------------------------------------------------------
 // Module Functions Definition - Input (Keyboard, Mouse, Gamepad) Functions
 //----------------------------------------------------------------------------------
@@ -2063,28 +1977,6 @@ bool IsGamepadAvailable(int gamepad)
     if ((gamepad < MAX_GAMEPADS) && CORE.Input.Gamepad.ready[gamepad]) result = true;
 
     return result;
-}
-
-// Get gamepad internal name id
-const char *GetGamepadName(int gamepad)
-{
-    const char *name = NULL;
-
-#if defined(PLATFORM_DESKTOP)
-    if (CORE.Input.Gamepad.ready[gamepad]) name = glfwGetJoystickName(gamepad);
-#endif
-#if defined(PLATFORM_DRM)
-    if (CORE.Input.Gamepad.ready[gamepad])
-    {
-        ioctl(CORE.Input.Gamepad.streamId[gamepad], JSIOCGNAME(64), &CORE.Input.Gamepad.name[gamepad]);
-        name = CORE.Input.Gamepad.name[gamepad];
-    }
-#endif
-#if defined(PLATFORM_WEB)
-    name = CORE.Input.Gamepad.name[gamepad];
-#endif
-
-    return name;
 }
 
 // Get gamepad axis count
