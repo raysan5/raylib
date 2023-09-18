@@ -6966,10 +6966,10 @@ static void *EventThread(void *arg)
 
             // Update touch point count
             CORE.Input.Touch.pointCount = 0;
-            if (CORE.Input.Touch.position[0].x >= 0) CORE.Input.Touch.pointCount++;
-            if (CORE.Input.Touch.position[1].x >= 0) CORE.Input.Touch.pointCount++;
-            if (CORE.Input.Touch.position[2].x >= 0) CORE.Input.Touch.pointCount++;
-            if (CORE.Input.Touch.position[3].x >= 0) CORE.Input.Touch.pointCount++;
+            for (int i = 0; i < MAX_TOUCH_POINTS; i++)
+            {
+                if (CORE.Input.Touch.position[i].x >= 0) CORE.Input.Touch.pointCount++;
+            }
 
 #if defined(SUPPORT_GESTURES_SYSTEM)        // PLATFORM_DRM
             if (gestureUpdate)
