@@ -2997,7 +2997,10 @@ unsigned int rlLoadTexture(const void *data, int width, int height, int format, 
 
     int mipWidth = width;
     int mipHeight = height;
-    int mipOffset = 0;          // Mipmap data offset
+    int mipOffset = 0;          // Mipmap data offset, only used for tracelog
+    
+    // NOTE: Added pointer math separately from function to avoid UBSAN complaining
+    unsigned char *dataPtr = (unsigned char *)data;
 
     // Load the different mipmap levels
     for (int i = 0; i < mipmapCount; i++)
@@ -3008,10 +3011,6 @@ unsigned int rlLoadTexture(const void *data, int width, int height, int format, 
         rlGetGlTextureFormats(format, &glInternalFormat, &glFormat, &glType);
 
         TRACELOGD("TEXTURE: Load mipmap level %i (%i x %i), size: %i, offset: %i", i, mipWidth, mipHeight, mipSize, mipOffset);
-
-        // NOTE: Added pointer math separately from function to avoid UBSAN complaining
-        unsigned char *dataPtr = (unsigned char*)data;
-        if (mipOffset > 0) dataPtr = (unsigned char*)data + mipOffset;
 
         if (glInternalFormat != -1)
         {
@@ -3040,7 +3039,8 @@ unsigned int rlLoadTexture(const void *data, int width, int height, int format, 
 
         mipWidth /= 2;
         mipHeight /= 2;
-        mipOffset += mipSize;
+        mipOffset += mipSize;       // Increment offset position to next mipmap
+        dataPtr += mipSize;         // Increment data pointer to next mipmap
 
         // Security check for NPOT textures
         if (mipWidth < 1) mipWidth = 1;
