@@ -1,5 +1,8 @@
 #include <stdlib.h>
 
+// for debugging
+#define PLATFORM_DRM
+
 #include "rcore.h"
 
 #include <fcntl.h>   // POSIX file control definitions - open(), creat(), fcntl()
@@ -774,4 +777,133 @@ void SetWindowOpacity(float opacity)
 void SetWindowFocused(void)
 {
     TRACELOG(LOG_INFO, "SetWindowFocused not implemented in rcore_drm.c");
+}
+
+// Get native window handle
+void *GetWindowHandle(void)
+{
+    return NULL;
+}
+
+// Get number of monitors
+int GetMonitorCount(void)
+{
+    return 1;
+}
+
+// Get number of monitors
+int GetCurrentMonitor(void)
+{
+    return 0;
+}
+
+// Get selected monitor position
+Vector2 GetMonitorPosition(int monitor)
+{
+    return (Vector2){ 0, 0 };
+}
+
+// Get selected monitor width (currently used by monitor)
+int GetMonitorWidth(int monitor)
+{
+    return 0;
+}
+
+// Get selected monitor height (currently used by monitor)
+int GetMonitorHeight(int monitor)
+{
+    return 0;
+}
+
+// Get selected monitor physical height in millimetres
+int GetMonitorPhysicalHeight(int monitor)
+{
+    return 0;
+}
+
+// Get selected monitor refresh rate
+int GetMonitorRefreshRate(int monitor)
+{
+    if ((CORE.Window.connector) && (CORE.Window.modeIndex >= 0))
+    {
+        return CORE.Window.connector->modes[CORE.Window.modeIndex].vrefresh;
+    }
+    return 0;
+}
+
+// Get window position XY on monitor
+Vector2 GetWindowPosition(void)
+{
+    return (Vector2){ 0, 0 };
+}
+
+// Get window scale DPI factor for current monitor
+Vector2 GetWindowScaleDPI(void)
+{
+    return (Vector2){ 1.0f, 1.0f };
+}
+
+// Get the human-readable, UTF-8 encoded name of the selected monitor
+const char *GetMonitorName(int monitor)
+{
+    return "";
+}
+
+
+// Set clipboard text content
+void SetClipboardText(const char *text)
+{
+}
+
+
+// Get clipboard text content
+// NOTE: returned string is allocated and freed by GLFW
+const char *GetClipboardText(void)
+{
+    return NULL;
+}
+
+// Show mouse cursor
+void ShowCursor(void)
+{
+    CORE.Input.Mouse.cursorHidden = false;
+}
+
+// Hides mouse cursor
+void HideCursor(void)
+{
+    CORE.Input.Mouse.cursorHidden = true;
+}
+
+
+// Enables cursor (unlock cursor)
+void EnableCursor(void)
+{
+    // Set cursor position in the middle
+    SetMousePosition(CORE.Window.screen.width/2, CORE.Window.screen.height/2);
+
+    CORE.Input.Mouse.cursorHidden = false;
+}
+
+// Disables cursor (lock cursor)
+void DisableCursor(void)
+{
+    // Set cursor position in the middle
+    SetMousePosition(CORE.Window.screen.width/2, CORE.Window.screen.height/2);
+
+    CORE.Input.Mouse.cursorHidden = true;
+}
+
+// Get elapsed time measure in seconds since InitTimer()
+// NOTE: On PLATFORM_DESKTOP InitTimer() is called on InitWindow()
+// NOTE: On PLATFORM_DESKTOP, timer is initialized on glfwInit()
+double GetTime(void)
+{
+    double time = 0.0;
+    struct timespec ts = { 0 };
+    clock_gettime(CLOCK_MONOTONIC, &ts);
+    unsigned long long int nanoSeconds = (unsigned long long int)ts.tv_sec*1000000000LLU + (unsigned long long int)ts.tv_nsec;
+
+    time = (double)(nanoSeconds - CORE.Time.base)*1e-9;  // Elapsed time since InitTimer()
+    return time;
 }

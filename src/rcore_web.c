@@ -1,5 +1,8 @@
 #include <stdlib.h>
 
+// for debugging
+#define PLATFORM_WEB
+
 #include "rcore.h"
 
 #define GLFW_INCLUDE_ES2 // GLFW3: Enable OpenGL ES 2.0 (translated to WebGL)
@@ -1358,4 +1361,146 @@ void SetWindowFocused(void)
 static void ErrorCallback(int error, const char *description)
 {
     TRACELOG(LOG_WARNING, "GLFW: Error: %i Description: %s", error, description);
+}
+
+// Get native window handle
+void *GetWindowHandle(void)
+{
+    return NULL;
+}
+
+// Get number of monitors
+int GetMonitorCount(void)
+{
+    return 1;
+}
+
+// Get number of monitors
+int GetCurrentMonitor(void)
+{
+    return 0;
+}
+
+// Get selected monitor position
+Vector2 GetMonitorPosition(int monitor)
+{
+    return (Vector2){ 0, 0 };
+}
+
+// Get selected monitor width (currently used by monitor)
+int GetMonitorWidth(int monitor)
+{
+    return 0;
+}
+
+// Get selected monitor height (currently used by monitor)
+int GetMonitorHeight(int monitor)
+{
+    return 0;
+}
+
+// Get selected monitor physical height in millimetres
+int GetMonitorPhysicalHeight(int monitor)
+{
+    return 0;
+}
+
+// Get selected monitor refresh rate
+int GetMonitorRefreshRate(int monitor)
+{
+    return 0;
+}
+
+// Get window position XY on monitor
+Vector2 GetWindowPosition(void)
+{
+    return (Vector2){ 0, 0 };
+}
+
+// Get window scale DPI factor for current monitor
+Vector2 GetWindowScaleDPI(void)
+{
+    return (Vector2){ 1.0f, 1.0f };
+}
+
+// Get the human-readable, UTF-8 encoded name of the selected monitor
+const char *GetMonitorName(int monitor)
+{
+    return "";
+}
+
+// Set clipboard text content
+void SetClipboardText(const char *text)
+{
+    // Security check to (partially) avoid malicious code
+    if (strchr(text, '\'') != NULL) TRACELOG(LOG_WARNING, "SYSTEM: Provided Clipboard could be potentially malicious, avoid [\'] character");
+    else EM_ASM( { navigator.clipboard.writeText(UTF8ToString($0)); }, text);
+}
+
+
+// Get clipboard text content
+// NOTE: returned string is allocated and freed by GLFW
+const char *GetClipboardText(void)
+{
+/*
+    // Accessing clipboard data from browser is tricky due to security reasons
+    // The method to use is navigator.clipboard.readText() but this is an asynchronous method
+    // that will return at some moment after the function is called with the required data
+    emscripten_run_script_string("navigator.clipboard.readText() \
+        .then(text => { document.getElementById('clipboard').innerText = text; console.log('Pasted content: ', text); }) \
+        .catch(err => { console.error('Failed to read clipboard contents: ', err); });"
+    );
+
+    // The main issue is getting that data, one approach could be using ASYNCIFY and wait
+    // for the data but it requires adding Asyncify emscripten library on compilation
+
+    // Another approach could be just copy the data in a HTML text field and try to retrieve it
+    // later on if available... and clean it for future accesses
+*/
+    return NULL;
+}
+
+// Show mouse cursor
+void ShowCursor(void)
+{
+    CORE.Input.Mouse.cursorHidden = false;
+}
+
+// Hides mouse cursor
+void HideCursor(void)
+{
+    CORE.Input.Mouse.cursorHidden = true;
+}
+
+
+// Enables cursor (unlock cursor)
+void EnableCursor(void)
+{
+    emscripten_exit_pointerlock();
+
+    // Set cursor position in the middle
+    SetMousePosition(CORE.Window.screen.width/2, CORE.Window.screen.height/2);
+
+    CORE.Input.Mouse.cursorHidden = false;
+}
+
+// Disables cursor (lock cursor)
+void DisableCursor(void)
+{
+    // TODO: figure out how not to hard code the canvas ID here. 
+    emscripten_request_pointerlock("#canvas", 1);
+
+    // Set cursor position in the middle
+    SetMousePosition(CORE.Window.screen.width/2, CORE.Window.screen.height/2);
+
+    CORE.Input.Mouse.cursorHidden = true;
+}
+
+// Get elapsed time measure in seconds since InitTimer()
+// NOTE: On PLATFORM_DESKTOP InitTimer() is called on InitWindow()
+// NOTE: On PLATFORM_DESKTOP, timer is initialized on glfwInit()
+double GetTime(void)
+{
+    double time = glfwGetTime();   // Elapsed time since glfwInit()
+    return time;
 }

@@ -1,5 +1,8 @@
 #include <stdlib.h>
 
+// for debugging
+#define PLATFORM_DESKTOP
+
 #include "rcore.h"
 
 #define GLFW_INCLUDE_NONE       // Disable the standard OpenGL header inclusion on GLFW3
@@ -1153,4 +1156,295 @@ static void WindowMaximizeCallback(GLFWwindow *window, int maximized)
 static void ErrorCallback(int error, const char *description)
 {
     TRACELOG(LOG_WARNING, "GLFW: Error: %i Description: %s", error, description);
+}
+
+// Get native window handle
+void *GetWindowHandle(void)
+{
+#if defined(PLATFORM_DESKTOP) && defined(_WIN32)
+    // NOTE: Returned handle is: void *HWND (windows.h)
+    return glfwGetWin32Window(CORE.Window.handle);
+#endif
+#if defined(PLATFORM_DESKTOP) && defined(__linux__)
+    // NOTE: Returned handle is: unsigned long Window (X.h)
+    // typedef unsigned long XID;
+    // typedef XID Window;
+    //unsigned long id = (unsigned long)glfwGetX11Window(CORE.Window.handle);
+    //return NULL;    // TODO: Find a way to return value... cast to void *?
+    return (void *)CORE.Window.handle;
+#endif
+#if defined(__APPLE__)
+    // NOTE: Returned handle is: (objc_object *)
+    return (void *)glfwGetCocoaWindow(CORE.Window.handle);
+#endif
+
+    return NULL;
+}
+
+// Get number of monitors
+int GetMonitorCount(void)
+{
+    int monitorCount;
+    glfwGetMonitors(&monitorCount);
+    return monitorCount;
+}
+// Get number of monitors
+int GetCurrentMonitor(void)
+{
+    int index = 0;
+    int monitorCount;
+    GLFWmonitor **monitors = glfwGetMonitors(&monitorCount);
+    GLFWmonitor *monitor = NULL;
+
+    if (monitorCount > 1)
+    {
+        if (IsWindowFullscreen())
+        {
+            // Get the handle of the monitor that the specified window is in full screen on
+            monitor = glfwGetWindowMonitor(CORE.Window.handle);
+
+            for (int i = 0; i < monitorCount; i++)
+            {
+                if (monitors[i] == monitor)
+                {
+                    index = i;
+                    break;
+                }
+            }
+        }
+        else
+        {
+            int x = 0;
+            int y = 0;
+
+            glfwGetWindowPos(CORE.Window.handle, &x, &y);
+
+            for (int i = 0; i < monitorCount; i++)
+            {
+                int mx = 0;
+                int my = 0;
+
+                monitor = monitors[i];
+                glfwGetMonitorPos(monitor, &mx, &my);
+                const GLFWvidmode *mode = glfwGetVideoMode(monitor);
+                if (mode)
+                {
+                    const int width = mode->width;
+                    const int height = mode->height;
+
+                    if ((x >= mx) &&
+                        (x < (mx + width)) &&
+                        (y >= my) &&
+                        (y < (my + height)))
+                    {
+                        index = i;
+                        break;
+                    }
+                }
+                else TRACELOG(LOG_WARNING, "GLFW: Failed to find video mode for selected monitor");
+            }
+        }
+    }
+}
+
+// Get selected monitor position
+Vector2 GetMonitorPosition(int monitor)
+{
+    int monitorCount;
+    GLFWmonitor **monitors = glfwGetMonitors(&monitorCount);
+
+    if ((monitor >= 0) && (monitor < monitorCount))
+    {
+        int x, y;
+        glfwGetMonitorPos(monitors[monitor], &x, &y);
+
+        return (Vector2){ (float)x, (float)y };
+    }
+    else TRACELOG(LOG_WARNING, "GLFW: Failed to find selected monitor");
+    return (Vector2){ 0, 0 };
+}
+
+// Get selected monitor width (currently used by monitor)
+int GetMonitorWidth(int monitor)
+{
+    int monitorCount;
+    GLFWmonitor **monitors = glfwGetMonitors(&monitorCount);
+
+    if ((monitor >= 0) && (monitor < monitorCount))
+    {
+        const GLFWvidmode *mode = glfwGetVideoMode(monitors[monitor]);
+
+        if (mode) return mode->width;
+        else TRACELOG(LOG_WARNING, "GLFW: Failed to find video mode for selected monitor");
+    }
+    else TRACELOG(LOG_WARNING, "GLFW: Failed to find selected monitor");
+    return 0;
+}
+
+
+// Get selected monitor height (currently used by monitor)
+int GetMonitorHeight(int monitor)
+{
+    int monitorCount;
+    GLFWmonitor **monitors = glfwGetMonitors(&monitorCount);
+
+    if ((monitor >= 0) && (monitor < monitorCount))
+    {
+        const GLFWvidmode *mode = glfwGetVideoMode(monitors[monitor]);
+
+        if (mode) return mode->height;
+        else TRACELOG(LOG_WARNING, "GLFW: Failed to find video mode for selected monitor");
+    }
+    else TRACELOG(LOG_WARNING, "GLFW: Failed to find selected monitor");
+    return 0;
+}
+
+// Get selected monitor physical height in millimetres
+int GetMonitorPhysicalHeight(int monitor)
+{
+    int monitorCount;
+    GLFWmonitor **monitors = glfwGetMonitors(&monitorCount);
+
+    if ((monitor >= 0) && (monitor < monitorCount))
+    {
+        int physicalHeight;
+        glfwGetMonitorPhysicalSize(monitors[monitor], NULL, &physicalHeight);
+        return physicalHeight;
+    }
+    else TRACELOG(LOG_WARNING, "GLFW: Failed to find selected monitor");
+    return 0;
+}
+
+// Get selected monitor refresh rate
+int GetMonitorRefreshRate(int monitor)
+{
+    int monitorCount;
+    GLFWmonitor **monitors = glfwGetMonitors(&monitorCount);
+
+    if ((monitor >= 0) && (monitor < monitorCount))
+    {
+        const GLFWvidmode *vidmode = glfwGetVideoMode(monitors[monitor]);
+        return vidmode->refreshRate;
+    }
+    else TRACELOG(LOG_WARNING, "GLFW: Failed to find selected monitor");
+    return 0;
+}
+
+// Get window position XY on monitor
+Vector2 GetWindowPosition(void)
+{
+    int x = 0;
+    int y = 0;
+    glfwGetWindowPos(CORE.Window.handle, &x, &y);
+    return (Vector2){ (float)x, (float)y };
+}
+
+
+// Get window scale DPI factor for current monitor
+Vector2 GetWindowScaleDPI(void)
+{
+    Vector2 scale = { 1.0f, 1.0f };
+
+    float xdpi = 1.0;
+    float ydpi = 1.0;
+    Vector2 windowPos = GetWindowPosition();
+
+    int monitorCount = 0;
+    GLFWmonitor **monitors = glfwGetMonitors(&monitorCount);
+
+    // Check window monitor
+    for (int i = 0; i < monitorCount; i++)
+    {
+        glfwGetMonitorContentScale(monitors[i], &xdpi, &ydpi);
+
+        int xpos, ypos, width, height;
+        glfwGetMonitorWorkarea(monitors[i], &xpos, &ypos, &width, &height);
+
+        if ((windowPos.x >= xpos) && (windowPos.x < xpos + width) &&
+            (windowPos.y >= ypos) && (windowPos.y < ypos + height))
+        {
+            scale.x = xdpi;
+            scale.y = ydpi;
+            break;
+        }
+    }
+
+    return scale;
+}
+
+
+// Get the human-readable, UTF-8 encoded name of the selected monitor
+const char *GetMonitorName(int monitor)
+{
+    int monitorCount;
+    GLFWmonitor **monitors = glfwGetMonitors(&monitorCount);
+
+    if ((monitor >= 0) && (monitor < monitorCount))
+    {
+        return glfwGetMonitorName(monitors[monitor]);
+    }
+    else TRACELOG(LOG_WARNING, "GLFW: Failed to find selected monitor");
+    return "";
+}
+
+
+// Set clipboard text content
+void SetClipboardText(const char *text)
+{
+    glfwSetClipboardString(CORE.Window.handle, text);
+}
+
+
+// Get clipboard text content
+// NOTE: returned string is allocated and freed by GLFW
+const char *GetClipboardText(void)
+{
+    return glfwGetClipboardString(CORE.Window.handle);
+}
+
+// Show mouse cursor
+void ShowCursor(void)
+{
+    glfwSetInputMode(CORE.Window.handle, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+    CORE.Input.Mouse.cursorHidden = false;
+}
+
+// Hides mouse cursor
+void HideCursor(void)
+{
+    glfwSetInputMode(CORE.Window.handle, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
+    CORE.Input.Mouse.cursorHidden = true;
+}
+
+
+// Enables cursor (unlock cursor)
+void EnableCursor(void)
+{
+    glfwSetInputMode(CORE.Window.handle, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+
+    // Set cursor position in the middle
+    SetMousePosition(CORE.Window.screen.width/2, CORE.Window.screen.height/2);
+
+    CORE.Input.Mouse.cursorHidden = false;
+}
+
+// Disables cursor (lock cursor)
+void DisableCursor(void)
+{
+    glfwSetInputMode(CORE.Window.handle, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+
+    // Set cursor position in the middle
+    SetMousePosition(CORE.Window.screen.width/2, CORE.Window.screen.height/2);
+
+    CORE.Input.Mouse.cursorHidden = true;
+}
+
+
+// Get elapsed time measure in seconds since InitTimer()
+// NOTE: On PLATFORM_DESKTOP InitTimer() is called on InitWindow()
+// NOTE: On PLATFORM_DESKTOP, timer is initialized on glfwInit()
+double GetTime(void)
+{
+    double time = glfwGetTime();   // Elapsed time since glfwInit()
+    return time;
 }
