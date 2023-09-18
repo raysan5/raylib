@@ -999,3 +999,10 @@ Vector2 GetMousePosition(void)
 
     return position;
 }
+
+// Set mouse position XY
+void SetMousePosition(int x, int y)
+{
+    CORE.Input.Mouse.currentPosition = (Vector2){ (float)x, (float)y };
+    CORE.Input.Mouse.previousPosition = CORE.Input.Mouse.currentPosition;
+}

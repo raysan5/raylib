@@ -1558,3 +1558,13 @@ Vector2 GetMousePosition(void)
 
     return position;
 }
+
+// Set mouse position XY
+void SetMousePosition(int x, int y)
+{
+    CORE.Input.Mouse.currentPosition = (Vector2){ (float)x, (float)y };
+    CORE.Input.Mouse.previousPosition = CORE.Input.Mouse.currentPosition;
+
+    // NOTE: emscripten not implemented
+    glfwSetCursorPos(CORE.Window.handle, CORE.Input.Mouse.currentPosition.x, CORE.Input.Mouse.currentPosition.y);
+}

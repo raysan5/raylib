@@ -2085,18 +2085,6 @@ Vector2 GetMouseDelta(void)
     return delta;
 }
 
-// Set mouse position XY
-void SetMousePosition(int x, int y)
-{
-    CORE.Input.Mouse.currentPosition = (Vector2){ (float)x, (float)y };
-    CORE.Input.Mouse.previousPosition = CORE.Input.Mouse.currentPosition;
-
-#if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
-    // NOTE: emscripten not implemented
-    glfwSetCursorPos(CORE.Window.handle, CORE.Input.Mouse.currentPosition.x, CORE.Input.Mouse.currentPosition.y);
-#endif
-}
-
 // Set mouse offset
 // NOTE: Useful when rendering to different size targets
 void SetMouseOffset(int offsetX, int offsetY)
