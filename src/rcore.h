@@ -256,25 +256,4 @@ typedef struct CoreData {
 
 extern CoreData CORE;
 
-#if defined(SUPPORT_GIF_RECORDING)
-extern int gifFrameCounter = 0;             // GIF frames counter
-extern bool gifRecording = false;           // GIF recording state
-extern MsfGifState gifState = { 0 };        // MSGIF context state
-#endif
-
-
-
-//----------------------------------------------------------------------------------
-// Function Definition
-//----------------------------------------------------------------------------------
-
-#if defined(SUPPORT_MODULE_RTEXT) && defined(SUPPORT_DEFAULT_FONT)
-extern void LoadFontDefault(void);          // [Module: text] Loads default font on InitWindow()
-extern void UnloadFontDefault(void);        // [Module: text] Unloads default font from GPU memory
-#endif
-
-void InitTimer(void);                            // Initialize timer (hi-resolution if available)
-void SetupFramebuffer(int width, int height);    // Setup main framebuffer
-void SetupViewport(int width, int height);       // Set viewport for a provided width and height
-
 #endif

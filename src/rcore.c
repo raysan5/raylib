@@ -195,18 +195,6 @@ RLAPI const char *raylib_version = RAYLIB_VERSION;  // raylib version exported s
 
 CoreData CORE = { 0 };               // Global CORE state context
 
-#if defined(PLATFORM_DESKTOP)
-    #include "rcore_desktop.c"
-#elif defined(PLATFORM_WEB)
-    #include "rcore_web.c"
-#elif defined(PLATFOM_DRM)
-    #include "rcore_drm.c"
-#elif defined(PLATFOM_ANDROID)
-    #include "rcore_android.c"
-#else
-    // Software rendering backend, user needs to provide buffer ;)
-#endif
-
 #if defined(SUPPORT_SCREEN_CAPTURE)
 static int screenshotCounter = 0;           // Screenshots counter
 #endif
@@ -309,6 +297,16 @@ static bool eventsRecording = false;    // Record events
 // Module specific Functions Declaration
 //----------------------------------------------------------------------------------
 
+
+#if defined(SUPPORT_MODULE_RTEXT) && defined(SUPPORT_DEFAULT_FONT)
+static void LoadFontDefault(void);          // [Module: text] Loads default font on InitWindow()
+static void UnloadFontDefault(void);        // [Module: text] Unloads default font from GPU memory
+#endif
+
+static void InitTimer(void);                            // Initialize timer (hi-resolution if available)
+static void SetupFramebuffer(int width, int height);    // Setup main framebuffer
+static void SetupViewport(int width, int height);       // Set viewport for a provided width and height
+
 static void ScanDirectoryFiles(const char *basePath, FilePathList *list, const char *filter);   // Scan all files and directories in a base path
 static void ScanDirectoryFilesRecursively(const char *basePath, FilePathList *list, const char *filter);  // Scan all files and directories recursively from a base path
 
@@ -348,6 +346,19 @@ void __stdcall Sleep(unsigned long msTimeout);              // Required for: Wai
 #if !defined(SUPPORT_MODULE_RTEXT)
 const char *TextFormat(const char *text, ...);       // Formatting of text with variables to 'embed'
 #endif // !SUPPORT_MODULE_RTEXT
+
+// Include submodules
+#if defined(PLATFORM_DESKTOP)
+    #include "rcore_desktop.c"
+#elif defined(PLATFORM_WEB)
+    #include "rcore_web.c"
+#elif defined(PLATFOM_DRM)
+    #include "rcore_drm.c"
+#elif defined(PLATFOM_ANDROID)
+    #include "rcore_android.c"
+#else
+    // Software rendering backend, user needs to provide buffer ;)
+#endif
 
 //----------------------------------------------------------------------------------
 // Module Functions Definition - Window and OpenGL Context Functions
