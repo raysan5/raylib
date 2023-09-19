@@ -212,9 +212,9 @@ static int screenshotCounter = 0;           // Screenshots counter
 #endif
 
 #if defined(SUPPORT_GIF_RECORDING)
-static int gifFrameCounter = 0;             // GIF frames counter
-static bool gifRecording = false;           // GIF recording state
-static MsfGifState gifState = { 0 };        // MSGIF context state
+int gifFrameCounter = 0;             // GIF frames counter
+bool gifRecording = false;           // GIF recording state
+MsfGifState gifState = { 0 };        // MSGIF context state
 #endif
 
 #if defined(SUPPORT_EVENTS_AUTOMATION)
@@ -306,19 +306,8 @@ static bool eventsRecording = false;    // Record events
 //-----------------------------------------------------------------------------------
 
 //----------------------------------------------------------------------------------
-// Other Modules Functions Declaration (required by core)
-//----------------------------------------------------------------------------------
-#if defined(SUPPORT_MODULE_RTEXT) && defined(SUPPORT_DEFAULT_FONT)
-extern void LoadFontDefault(void);          // [Module: text] Loads default font on InitWindow()
-extern void UnloadFontDefault(void);        // [Module: text] Unloads default font from GPU memory
-#endif
-
-//----------------------------------------------------------------------------------
 // Module specific Functions Declaration
 //----------------------------------------------------------------------------------
-static void InitTimer(void);                            // Initialize timer (hi-resolution if available)
-static void SetupFramebuffer(int width, int height);    // Setup main framebuffer
-static void SetupViewport(int width, int height);       // Set viewport for a provided width and height
 
 static void ScanDirectoryFiles(const char *basePath, FilePathList *list, const char *filter);   // Scan all files and directories in a base path
 static void ScanDirectoryFilesRecursively(const char *basePath, FilePathList *list, const char *filter);  // Scan all files and directories recursively from a base path
@@ -2181,7 +2170,7 @@ int GetTouchPointCount(void)
 //----------------------------------------------------------------------------------
 
 // Set viewport for a provided width and height
-static void SetupViewport(int width, int height)
+void SetupViewport(int width, int height)
 {
     CORE.Window.render.width = width;
     CORE.Window.render.height = height;
@@ -2210,7 +2199,7 @@ static void SetupViewport(int width, int height)
 
 // Compute framebuffer size relative to screen size and display size
 // NOTE: Global variables CORE.Window.render.width/CORE.Window.render.height and CORE.Window.renderOffset.x/CORE.Window.renderOffset.y can be modified
-static void SetupFramebuffer(int width, int height)
+void SetupFramebuffer(int width, int height)
 {
     // Calculate CORE.Window.render.width and CORE.Window.render.height, we have the display size (input params) and the desired screen size (global var)
     if ((CORE.Window.screen.width > CORE.Window.display.width) || (CORE.Window.screen.height > CORE.Window.display.height))
@@ -2287,7 +2276,7 @@ static void SetupFramebuffer(int width, int height)
 }
 
 // Initialize hi-resolution timer
-static void InitTimer(void)
+void InitTimer(void)
 {
 // Setting a higher resolution can improve the accuracy of time-out intervals in wait functions.
 // However, it can also reduce overall system performance, because the thread scheduler switches tasks more often.
