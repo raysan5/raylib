@@ -304,6 +304,7 @@
   <ItemGroup>
     <ClCompile Include="..\..\..\src\raudio.c" />
     <ClCompile Include="..\..\..\src\rcore.c" />
+    <ClCompile Include="..\..\..\src\rcore_desktop.c" />
     <ClCompile Include="..\..\..\src\rmodels.c" />
     <ClCompile Include="..\..\..\src\rglfw.c" />
     <ClCompile Include="..\..\..\src\rshapes.c" />
