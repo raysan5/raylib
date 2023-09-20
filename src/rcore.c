@@ -297,10 +297,9 @@ static bool eventsRecording = false;    // Record events
 // Module specific Functions Declaration
 //----------------------------------------------------------------------------------
 
-
 #if defined(SUPPORT_MODULE_RTEXT) && defined(SUPPORT_DEFAULT_FONT)
-static void LoadFontDefault(void);          // [Module: text] Loads default font on InitWindow()
-static void UnloadFontDefault(void);        // [Module: text] Unloads default font from GPU memory
+extern void LoadFontDefault(void);          // [Module: text] Loads default font on InitWindow()
+extern void UnloadFontDefault(void);        // [Module: text] Unloads default font from GPU memory
 #endif
 
 static void InitTimer(void);                            // Initialize timer (hi-resolution if available)
