@@ -7,6 +7,7 @@
 #include <time.h>                   // Required for: time() [Used in InitTimer()]
 #include <math.h>                   // Required for: tan() [Used in BeginMode3D()], atan2f() [Used in LoadVrStereoConfig()]
 
+#define SUPPORT_TRACELOG
 #include "utils.h"                  // Required for: TRACELOG() macros
 
 #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
