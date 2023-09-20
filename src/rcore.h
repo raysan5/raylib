@@ -27,6 +27,8 @@
 
 #include "raylib.h"
 #include "rlgl.h"
+
+#define RAYMATH_IMPLEMENTATION
 #include "raymath.h"
 
 
