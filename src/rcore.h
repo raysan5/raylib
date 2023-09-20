@@ -16,6 +16,9 @@
                                     // NOTE: GLFW3 already includes gl.h (OpenGL) headers
 #endif
 
+#if defined(PLATFORM_DRM)
+    #include "drm.h"
+#endif
 
 // PROVIDE A HEADER TO BE USED BY ALL THE rcore_* IMPLEMENTATIONS.
 /*
