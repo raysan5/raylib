@@ -1173,22 +1173,19 @@ void *GetWindowHandle(void)
 // Get number of monitors
 int GetMonitorCount(void)
 {
-    int monitorCount = 0;
-
+    int monitorCount;
     glfwGetMonitors(&monitorCount);
-
     return monitorCount;
 }
-
 // Get number of monitors
 int GetCurrentMonitor(void)
 {
     int index = 0;
-    int monitorCount = 0;
+    int monitorCount;
     GLFWmonitor **monitors = glfwGetMonitors(&monitorCount);
     GLFWmonitor *monitor = NULL;
 
-    if (monitorCount >= 1)
+    if (monitorCount > 1)
     {
         if (IsWindowFullscreen())
         {
@@ -1219,7 +1216,6 @@ int GetCurrentMonitor(void)
                 monitor = monitors[i];
                 glfwGetMonitorPos(monitor, &mx, &my);
                 const GLFWvidmode *mode = glfwGetVideoMode(monitor);
-
                 if (mode)
                 {
                     const int width = mode->width;
@@ -1238,8 +1234,6 @@ int GetCurrentMonitor(void)
             }
         }
     }
-
-    return index;
 }
 
 // Get selected monitor position
@@ -1262,7 +1256,7 @@ Vector2 GetMonitorPosition(int monitor)
 // Get selected monitor width (currently used by monitor)
 int GetMonitorWidth(int monitor)
 {
-    int monitorCount = 0;
+    int monitorCount;
     GLFWmonitor **monitors = glfwGetMonitors(&monitorCount);
 
     if ((monitor >= 0) && (monitor < monitorCount))
@@ -1273,7 +1267,6 @@ int GetMonitorWidth(int monitor)
         else TRACELOG(LOG_WARNING, "GLFW: Failed to find video mode for selected monitor");
     }
     else TRACELOG(LOG_WARNING, "GLFW: Failed to find selected monitor");
-
     return 0;
 }
 

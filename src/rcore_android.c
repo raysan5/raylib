@@ -1,5 +1,7 @@
 #include <stdlib.h>
 
+#include "rcore.h"
+
 //#include <android/sensor.h>           // Required for: Android sensors functions (accelerometer, gyroscope, light...)
 #include <android/window.h>             // Required for: AWINDOW_FLAG_FULLSCREEN definition and others
 #include <android_native_app_glue.h>    // Required for: android_app struct and activity management

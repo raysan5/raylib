@@ -1,5 +1,7 @@
 #include <stdlib.h>
 
+#include "rcore.h"
+
 #define GLFW_INCLUDE_ES2 // GLFW3: Enable OpenGL ES 2.0 (translated to WebGL)
 // #define GLFW_INCLUDE_ES3            // GLFW3: Enable OpenGL ES 3.0 (transalted to WebGL2?)
 #include "GLFW/glfw3.h" // GLFW3: Windows, OpenGL context and Input management
