@@ -17,7 +17,38 @@
 #endif
 
 #if defined(PLATFORM_DRM)
-    #include "drm.h"
+    #include <gbm.h>         // Generic Buffer Management (native platform for EGL on DRM)
+    #include <xf86drm.h>     // Direct Rendering Manager user-level library interface
+    #include <xf86drmMode.h> // Direct Rendering Manager mode setting (KMS) interface
+
+    #include "EGL/egl.h"    // Native platform windowing system interface
+    #include "EGL/eglext.h" // EGL extensions
+
+    #include <termios.h> // POSIX terminal control definitions - tcgetattr(), tcsetattr()
+
+    #include <fcntl.h>   // POSIX file control definitions - open(), creat(), fcntl()
+    #include <unistd.h>  // POSIX standard function definitions - read(), close(), STDIN_FILENO
+    #include <pthread.h> // POSIX threads management (inputs reading)
+    #include <dirent.h>  // POSIX directory browsing
+
+    #include <sys/ioctl.h>      // Required for: ioctl() - UNIX System call for device-specific input/output operations
+    #include <linux/kd.h>       // Linux: KDSKBMODE, K_MEDIUMRAM constants definition
+    #include <linux/input.h>    // Linux: Keycodes constants definition (KEY_A, ...)
+    #include <linux/joystick.h> // Linux: Joystick support library
+
+    typedef struct
+    {
+        pthread_t threadId; // Event reading thread id
+        int fd;             // File descriptor to the device it is assigned to
+        int eventNum;       // Number of 'event<N>' device
+        Rectangle absRange; // Range of values for absolute pointing devices (touchscreens)
+        int touchSlot;      // Hold the touch slot number of the currently being sent multitouch block
+        bool isMouse;       // True if device supports relative X Y movements
+        bool isTouch;       // True if device supports absolute X Y movements and has BTN_TOUCH
+        bool isMultitouch;  // True if device supports multiple absolute movevents and has BTN_TOUCH
+        bool isKeyboard;    // True if device has letter keycodes
+        bool isGamepad;     // True if device has gamepad buttons
+    } InputEventWorker;
 #endif
 
 // PROVIDE A HEADER TO BE USED BY ALL THE rcore_* IMPLEMENTATIONS.
@@ -186,9 +217,7 @@ typedef struct CoreData {
 
 #if defined(PLATFORM_DRM)
             int defaultMode;                // Default keyboard mode
-#if defined(SUPPORT_SSH_KEYBOARD_RPI)
             bool evtMode;                   // Keyboard in event mode
-#endif
             int defaultFileFlags;           // Default IO file flags
             struct termios defaultSettings; // Default keyboard settings
             int fd;                         // File descriptor for the evdev keyboard
