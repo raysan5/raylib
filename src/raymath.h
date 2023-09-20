@@ -214,7 +214,7 @@ RMAPI float Wrap(float value, float min, float max)
 // Check whether two given floats are almost equal
 RMAPI int FloatEquals(float x, float y)
 {
-#ifndef EPSILON
+#if !defined(EPSILON)
     #define EPSILON 0.000001f
 #endif
 
@@ -510,7 +510,7 @@ RMAPI Vector2 Vector2ClampValue(Vector2 v, float min, float max)
 // Check whether two given vectors are almost equal
 RMAPI int Vector2Equals(Vector2 p, Vector2 q)
 {
-#ifndef EPSILON
+#if !defined(EPSILON)
     #define EPSILON 0.000001f
 #endif
 
@@ -1098,7 +1098,7 @@ RMAPI Vector3 Vector3ClampValue(Vector3 v, float min, float max)
 // Check whether two given vectors are almost equal
 RMAPI int Vector3Equals(Vector3 p, Vector3 q)
 {
-#ifndef EPSILON
+#if !defined(EPSILON)
     #define EPSILON 0.000001f
 #endif
 
@@ -1858,7 +1858,7 @@ RMAPI Quaternion QuaternionSlerp(Quaternion q1, Quaternion q2, float amount)
 {
     Quaternion result = { 0 };
 
-#ifndef EPSILON
+#if !defined(EPSILON)
     #define EPSILON 0.000001f
 #endif
 
@@ -2169,7 +2169,7 @@ RMAPI Quaternion QuaternionTransform(Quaternion q, Matrix mat)
 // Check whether two given quaternions are almost equal
 RMAPI int QuaternionEquals(Quaternion p, Quaternion q)
 {
-#ifndef EPSILON
+#if !defined(EPSILON)
     #define EPSILON 0.000001f
 #endif
 
