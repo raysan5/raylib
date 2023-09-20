@@ -9,7 +9,7 @@
 
 #include "utils.h"                  // Required for: TRACELOG() macros
 
-#if defined(PLATFORM_DESKTOP)
+#if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
     #define GLFW_INCLUDE_NONE       // Disable the standard OpenGL header inclusion on GLFW3
                                     // NOTE: Already provided by rlgl implementation (on glad.h)
     #include "GLFW/glfw3.h"         // GLFW3 library: Windows, OpenGL context and Input management
@@ -21,7 +21,7 @@
 /*
 
     Status:
-    InitWindow: DRM, 
+    InitWindow: DRM,
 
 */
 
