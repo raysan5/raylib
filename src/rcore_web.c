@@ -350,7 +350,6 @@ static bool InitGraphicsDevice(int width, int height)
     // NOTE: Framebuffer (render area - CORE.Window.render.width, CORE.Window.render.height) could include black bars...
     // ...in top-down or left-right to match display aspect ratio (no weird scaling)
 
-// HERE 1 //#if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
     glfwSetErrorCallback(ErrorCallback);
 /*
     // TODO: Setup GLFW custom allocators to match raylib ones
@@ -363,9 +362,6 @@ static bool InitGraphicsDevice(int width, int height)
 
     glfwInitAllocator(&allocator);
 */
-// HERE 2 //#if defined(__APPLE__)
-// HERE 2 //    glfwInitHint(GLFW_COCOA_CHDIR_RESOURCES, GLFW_FALSE);
-// HERE 2 //#endif
 
     if (!glfwInit())
     {
@@ -408,26 +404,7 @@ static bool InitGraphicsDevice(int width, int height)
     else glfwWindowHint(GLFW_FLOATING, GLFW_FALSE);
 
         // NOTE: Some GLFW flags are not supported on HTML5
-// HERE 3 //#if defined(PLATFORM_DESKTOP)
-// HERE 3 //    if ((CORE.Window.flags & FLAG_WINDOW_TRANSPARENT) > 0) glfwWindowHint(GLFW_TRANSPARENT_FRAMEBUFFER, GLFW_TRUE); // Transparent framebuffer
-// HERE 3 //    else glfwWindowHint(GLFW_TRANSPARENT_FRAMEBUFFER, GLFW_FALSE); // Opaque framebuffer
-// HERE 3 //
-// HERE 3 //    if ((CORE.Window.flags & FLAG_WINDOW_HIGHDPI) > 0)
-// HERE 3 //    {
-// HERE 3 //        // Resize window content area based on the monitor content scale.
-// HERE 3 //        // NOTE: This hint only has an effect on platforms where screen coordinates and pixels always map 1:1 such as Windows and X11.
-// HERE 3 //        // On platforms like macOS the resolution of the framebuffer is changed independently of the window size.
-// HERE 3 //        glfwWindowHint(GLFW_SCALE_TO_MONITOR, GLFW_TRUE); // Scale content area based on the monitor content scale where window is placed on
-// HERE 3 //#if defined(__APPLE__)
-// HERE 3 //        glfwWindowHint(GLFW_COCOA_RETINA_FRAMEBUFFER, GLFW_TRUE);
-// HERE 3 //#endif
-// HERE 3 //    }
-// HERE 3 //    else glfwWindowHint(GLFW_SCALE_TO_MONITOR, GLFW_FALSE);
-// HERE 3 //
-// HERE 3 //    // Mouse passthrough
-// HERE 3 //    if ((CORE.Window.flags & FLAG_WINDOW_MOUSE_PASSTHROUGH) > 0) glfwWindowHint(GLFW_MOUSE_PASSTHROUGH, GLFW_TRUE);
-// HERE 3 //    else glfwWindowHint(GLFW_MOUSE_PASSTHROUGH, GLFW_FALSE);
-// HERE 3 //#endif
+        // e.g.: GLFW_TRANSPARENT_FRAMEBUFFER, GLFW_SCALE_TO_MONITOR, GLFW_COCOA_RETINA_FRAMEBUFFER, GLFW_MOUSE_PASSTHROUGH
 
     if (CORE.Window.flags & FLAG_MSAA_4X_HINT)
     {
@@ -452,11 +429,7 @@ static bool InitGraphicsDevice(int width, int height)
         glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);                 // Choose OpenGL minor version (just hint)
         glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE); // Profiles Hint: Only 3.3 and above!
                                                                        // Values: GLFW_OPENGL_CORE_PROFILE, GLFW_OPENGL_ANY_PROFILE, GLFW_OPENGL_COMPAT_PROFILE
-// HERE 4 //#if defined(__APPLE__)
-// HERE 4 //        glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GLFW_TRUE); // OSX Requires forward compatibility
-// HERE 4 //#else
         glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GLFW_FALSE); // Forward Compatibility Hint: Only 3.3 and above!
-// HERE 4 //#endif
         // glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GLFW_TRUE); // Request OpenGL DEBUG context
     }
     else if (rlGetVersion() == RL_OPENGL_43)
@@ -474,56 +447,19 @@ static bool InitGraphicsDevice(int width, int height)
         glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 2);
         glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
         glfwWindowHint(GLFW_CLIENT_API, GLFW_OPENGL_ES_API);
-// HERE 5 //#if defined(PLATFORM_DESKTOP)
-// HERE 5 //        glfwWindowHint(GLFW_CONTEXT_CREATION_API, GLFW_EGL_CONTEXT_API);
-// HERE 5 //#else
         glfwWindowHint(GLFW_CONTEXT_CREATION_API, GLFW_NATIVE_CONTEXT_API);
-// HERE 5 //#endif
     }
     else if (rlGetVersion() == RL_OPENGL_ES_30) // Request OpenGL ES 3.0 context
     {
         glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
         glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
         glfwWindowHint(GLFW_CLIENT_API, GLFW_OPENGL_ES_API);
-// HERE 6 //#if defined(PLATFORM_DESKTOP)
-// HERE 6 //        glfwWindowHint(GLFW_CONTEXT_CREATION_API, GLFW_EGL_CONTEXT_API);
-// HERE 6 //#else
         glfwWindowHint(GLFW_CONTEXT_CREATION_API, GLFW_NATIVE_CONTEXT_API);
-// HERE 6 //#endif
     }
 
-// HERE 7 //#if defined(PLATFORM_DESKTOP)
-// HERE 7 //    // NOTE: GLFW 3.4+ defers initialization of the Joystick subsystem on the first call to any Joystick related functions.
-// HERE 7 //    // Forcing this initialization here avoids doing it on PollInputEvents() called by EndDrawing() after first frame has been just drawn.
-// HERE 7 //    // The initialization will still happen and possible delays still occur, but before the window is shown, which is a nicer experience.
-// HERE 7 //    // REF: https://github.com/raysan5/raylib/issues/1554
-// HERE 7 //    if (MAX_GAMEPADS > 0) glfwSetJoystickCallback(NULL);
-// HERE 7 //#endif
-
-// HERE 8 //#if defined(PLATFORM_DESKTOP)
-// HERE 8 //    // Find monitor resolution
-// HERE 8 //    GLFWmonitor *monitor = glfwGetPrimaryMonitor();
-// HERE 8 //    if (!monitor)
-// HERE 8 //    {
-// HERE 8 //        TRACELOG(LOG_WARNING, "GLFW: Failed to get primary monitor");
-// HERE 8 //        return false;
-// HERE 8 //    }
-// HERE 8 //
-// HERE 8 //    const GLFWvidmode *mode = glfwGetVideoMode(monitor);
-// HERE 8 //
-// HERE 8 //    CORE.Window.display.width = mode->width;
-// HERE 8 //    CORE.Window.display.height = mode->height;
-// HERE 8 //
-// HERE 8 //    // Set screen width/height to the display width/height if they are 0
-// HERE 8 //    if (CORE.Window.screen.width == 0) CORE.Window.screen.width = CORE.Window.display.width;
-// HERE 8 //    if (CORE.Window.screen.height == 0) CORE.Window.screen.height = CORE.Window.display.height;
-// HERE 8 //#endif // PLATFORM_DESKTOP
-
-// HERE 9 //#if defined(PLATFORM_WEB)
     // NOTE: Getting video modes is not implemented in emscripten GLFW3 version
     CORE.Window.display.width = CORE.Window.screen.width;
     CORE.Window.display.height = CORE.Window.screen.height;
-// HERE 9 //#endif // PLATFORM_WEB
 
     if (CORE.Window.fullscreen)
     {
@@ -582,13 +518,6 @@ static bool InitGraphicsDevice(int width, int height)
     }
     else
     {
-// HERE 10 //#if defined(PLATFORM_DESKTOP)
-// HERE 10 //        // If we are windowed fullscreen, ensures that window does not minimize when focus is lost
-// HERE 10 //        if ((CORE.Window.screen.height == CORE.Window.display.height) && (CORE.Window.screen.width == CORE.Window.display.width))
-// HERE 10 //        {
-// HERE 10 //            glfwWindowHint(GLFW_AUTO_ICONIFY, 0);
-// HERE 10 //        }
-// HERE 10 //#endif
         // No-fullscreen window creation
         CORE.Window.handle = glfwCreateWindow(CORE.Window.screen.width, CORE.Window.screen.height, (CORE.Window.title != 0) ? CORE.Window.title : " ", NULL, NULL);
 
@@ -607,15 +536,10 @@ static bool InitGraphicsDevice(int width, int height)
     }
 
 // glfwCreateWindow title doesn't work with emscripten.
-// HERE 11 //#if defined(PLATFORM_WEB)
     emscripten_set_window_title((CORE.Window.title != 0) ? CORE.Window.title : " ");
-// HERE 11 //#endif
 
     // Set window callback events
     glfwSetWindowSizeCallback(CORE.Window.handle, WindowSizeCallback); // NOTE: Resizing not allowed by default!
-// HERE 12 //#if !defined(PLATFORM_WEB)
-// HERE 12 //    glfwSetWindowMaximizeCallback(CORE.Window.handle, WindowMaximizeCallback);
-// HERE 12 //#endif
     glfwSetWindowIconifyCallback(CORE.Window.handle, WindowIconifyCallback);
     glfwSetWindowFocusCallback(CORE.Window.handle, WindowFocusCallback);
     glfwSetDropCallback(CORE.Window.handle, WindowDropCallback);
@@ -630,43 +554,12 @@ static bool InitGraphicsDevice(int width, int height)
 
     glfwMakeContextCurrent(CORE.Window.handle);
 
-// HERE 13 //#if !defined(PLATFORM_WEB)
-// HERE 13 //    glfwSetInputMode(CORE.Window.handle, GLFW_LOCK_KEY_MODS, GLFW_TRUE); // Enable lock keys modifiers (CAPS, NUM)
-// HERE 13 //
-// HERE 13 //    glfwSwapInterval(0); // No V-Sync by default
-// HERE 13 //#endif
-
     // Try to enable GPU V-Sync, so frames are limited to screen refresh rate (60Hz -> 60 FPS)
     // NOTE: V-Sync can be enabled by graphic driver configuration, it doesn't need
     // to be activated on web platforms since VSync is enforced there.
-// HERE 14 //#if !defined(PLATFORM_WEB)
-// HERE 14 //    if (CORE.Window.flags & FLAG_VSYNC_HINT)
-// HERE 14 //    {
-// HERE 14 //        // WARNING: It seems to hit a critical render path in Intel HD Graphics
-// HERE 14 //        glfwSwapInterval(1);
-// HERE 14 //        TRACELOG(LOG_INFO, "DISPLAY: Trying to enable VSYNC");
-// HERE 14 //    }
-// HERE 14 //#endif
 
     int fbWidth = CORE.Window.screen.width;
     int fbHeight = CORE.Window.screen.height;
-
-// HERE 15 //#if defined(PLATFORM_DESKTOP)
-// HERE 15 //    if ((CORE.Window.flags & FLAG_WINDOW_HIGHDPI) > 0)
-// HERE 15 //    {
-// HERE 15 //        // NOTE: On APPLE platforms system should manage window/input scaling and also framebuffer scaling.
-// HERE 15 //        // Framebuffer scaling should be activated with: glfwWindowHint(GLFW_COCOA_RETINA_FRAMEBUFFER, GLFW_TRUE);
-// HERE 15 //#if !defined(__APPLE__)
-// HERE 15 //        glfwGetFramebufferSize(CORE.Window.handle, &fbWidth, &fbHeight);
-// HERE 15 //
-// HERE 15 //        // Screen scaling matrix is required in case desired screen area is different from display area
-// HERE 15 //        CORE.Window.screenScale = MatrixScale((float)fbWidth / CORE.Window.screen.width, (float)fbHeight / CORE.Window.screen.height, 1.0f);
-// HERE 15 //
-// HERE 15 //        // Mouse input scaling for the new screen size
-// HERE 15 //        SetMouseScale((float)CORE.Window.screen.width / fbWidth, (float)CORE.Window.screen.height / fbHeight);
-// HERE 15 //#endif
-// HERE 15 //    }
-// HERE 15 //#endif
 
     CORE.Window.render.width = fbWidth;
     CORE.Window.render.height = fbHeight;
@@ -679,377 +572,9 @@ static bool InitGraphicsDevice(int width, int height)
     TRACELOG(LOG_INFO, "    > Render size:  %i x %i", CORE.Window.render.width, CORE.Window.render.height);
     TRACELOG(LOG_INFO, "    > Viewport offsets: %i, %i", CORE.Window.renderOffset.x, CORE.Window.renderOffset.y);
 
-// HERE 1 //#endif // PLATFORM_DESKTOP || PLATFORM_WEB
-
-// HERE 16 //#if defined(PLATFORM_ANDROID) || defined(PLATFORM_DRM)
-// HERE 16 //    CORE.Window.fullscreen = true;
-// HERE 16 //    CORE.Window.flags |= FLAG_FULLSCREEN_MODE;
-// HERE 16 //
-// HERE 16 //#if defined(PLATFORM_DRM)
-// HERE 16 //    CORE.Window.fd = -1;
-// HERE 16 //    CORE.Window.connector = NULL;
-// HERE 16 //    CORE.Window.modeIndex = -1;
-// HERE 16 //    CORE.Window.crtc = NULL;
-// HERE 16 //    CORE.Window.gbmDevice = NULL;
-// HERE 16 //    CORE.Window.gbmSurface = NULL;
-// HERE 16 //    CORE.Window.prevBO = NULL;
-// HERE 16 //    CORE.Window.prevFB = 0;
-// HERE 16 //
-// HERE 16 //#if defined(DEFAULT_GRAPHIC_DEVICE_DRM)
-// HERE 16 //    CORE.Window.fd = open(DEFAULT_GRAPHIC_DEVICE_DRM, O_RDWR);
-// HERE 16 //#else
-// HERE 16 //    TRACELOG(LOG_INFO, "DISPLAY: No graphic card set, trying platform-gpu-card");
-// HERE 16 //    CORE.Window.fd = open("/dev/dri/by-path/platform-gpu-card", O_RDWR); // VideoCore VI (Raspberry Pi 4)
-// HERE 16 //
-// HERE 16 //    if ((-1 == CORE.Window.fd) || (drmModeGetResources(CORE.Window.fd) == NULL))
-// HERE 16 //    {
-// HERE 16 //        TRACELOG(LOG_INFO, "DISPLAY: Failed to open platform-gpu-card, trying card1");
-// HERE 16 //        CORE.Window.fd = open("/dev/dri/card1", O_RDWR); // Other Embedded
-// HERE 16 //    }
-// HERE 16 //
-// HERE 16 //    if ((-1 == CORE.Window.fd) || (drmModeGetResources(CORE.Window.fd) == NULL))
-// HERE 16 //    {
-// HERE 16 //        TRACELOG(LOG_INFO, "DISPLAY: Failed to open graphic card1, trying card0");
-// HERE 16 //        CORE.Window.fd = open("/dev/dri/card0", O_RDWR); // VideoCore IV (Raspberry Pi 1-3)
-// HERE 16 //    }
-// HERE 16 //#endif
-// HERE 16 //    if (-1 == CORE.Window.fd)
-// HERE 16 //    {
-// HERE 16 //        TRACELOG(LOG_WARNING, "DISPLAY: Failed to open graphic card");
-// HERE 16 //        return false;
-// HERE 16 //    }
-// HERE 16 //
-// HERE 16 //    drmModeRes *res = drmModeGetResources(CORE.Window.fd);
-// HERE 16 //    if (!res)
-// HERE 16 //    {
-// HERE 16 //        TRACELOG(LOG_WARNING, "DISPLAY: Failed get DRM resources");
-// HERE 16 //        return false;
-// HERE 16 //    }
-// HERE 16 //
-// HERE 16 //    TRACELOG(LOG_TRACE, "DISPLAY: Connectors found: %i", res->count_connectors);
-// HERE 16 //    for (size_t i = 0; i < res->count_connectors; i++)
-// HERE 16 //    {
-// HERE 16 //        TRACELOG(LOG_TRACE, "DISPLAY: Connector index %i", i);
-// HERE 16 //        drmModeConnector *con = drmModeGetConnector(CORE.Window.fd, res->connectors[i]);
-// HERE 16 //        TRACELOG(LOG_TRACE, "DISPLAY: Connector modes detected: %i", con->count_modes);
-// HERE 16 //        if ((con->connection == DRM_MODE_CONNECTED) && (con->encoder_id))
-// HERE 16 //        {
-// HERE 16 //            TRACELOG(LOG_TRACE, "DISPLAY: DRM mode connected");
-// HERE 16 //            CORE.Window.connector = con;
-// HERE 16 //            break;
-// HERE 16 //        }
-// HERE 16 //        else
-// HERE 16 //        {
-// HERE 16 //            TRACELOG(LOG_TRACE, "DISPLAY: DRM mode NOT connected (deleting)");
-// HERE 16 //            drmModeFreeConnector(con);
-// HERE 16 //        }
-// HERE 16 //    }
-// HERE 16 //
-// HERE 16 //    if (!CORE.Window.connector)
-// HERE 16 //    {
-// HERE 16 //        TRACELOG(LOG_WARNING, "DISPLAY: No suitable DRM connector found");
-// HERE 16 //        drmModeFreeResources(res);
-// HERE 16 //        return false;
-// HERE 16 //    }
-// HERE 16 //
-// HERE 16 //    drmModeEncoder *enc = drmModeGetEncoder(CORE.Window.fd, CORE.Window.connector->encoder_id);
-// HERE 16 //    if (!enc)
-// HERE 16 //    {
-// HERE 16 //        TRACELOG(LOG_WARNING, "DISPLAY: Failed to get DRM mode encoder");
-// HERE 16 //        drmModeFreeResources(res);
-// HERE 16 //        return false;
-// HERE 16 //    }
-// HERE 16 //
-// HERE 16 //    CORE.Window.crtc = drmModeGetCrtc(CORE.Window.fd, enc->crtc_id);
-// HERE 16 //    if (!CORE.Window.crtc)
-// HERE 16 //    {
-// HERE 16 //        TRACELOG(LOG_WARNING, "DISPLAY: Failed to get DRM mode crtc");
-// HERE 16 //        drmModeFreeEncoder(enc);
-// HERE 16 //        drmModeFreeResources(res);
-// HERE 16 //        return false;
-// HERE 16 //    }
-// HERE 16 //
-// HERE 16 //    // If InitWindow should use the current mode find it in the connector's mode list
-// HERE 16 //    if ((CORE.Window.screen.width <= 0) || (CORE.Window.screen.height <= 0))
-// HERE 16 //    {
-// HERE 16 //        TRACELOG(LOG_TRACE, "DISPLAY: Selecting DRM connector mode for current used mode...");
-// HERE 16 //
-// HERE 16 //        CORE.Window.modeIndex = FindMatchingConnectorMode(CORE.Window.connector, &CORE.Window.crtc->mode);
-// HERE 16 //
-// HERE 16 //        if (CORE.Window.modeIndex < 0)
-// HERE 16 //        {
-// HERE 16 //            TRACELOG(LOG_WARNING, "DISPLAY: No matching DRM connector mode found");
-// HERE 16 //            drmModeFreeEncoder(enc);
-// HERE 16 //            drmModeFreeResources(res);
-// HERE 16 //            return false;
-// HERE 16 //        }
-// HERE 16 //
-// HERE 16 //        CORE.Window.screen.width = CORE.Window.display.width;
-// HERE 16 //        CORE.Window.screen.height = CORE.Window.display.height;
-// HERE 16 //    }
-// HERE 16 //
-// HERE 16 //    const bool allowInterlaced = CORE.Window.flags & FLAG_INTERLACED_HINT;
-// HERE 16 //    const int fps = (CORE.Time.target > 0) ? (1.0 / CORE.Time.target) : 60;
-// HERE 16 //
-// HERE 16 //    // Try to find an exact matching mode
-// HERE 16 //    CORE.Window.modeIndex = FindExactConnectorMode(CORE.Window.connector, CORE.Window.screen.width, CORE.Window.screen.height, fps, allowInterlaced);
-// HERE 16 //
-// HERE 16 //    // If nothing found, try to find a nearly matching mode
-// HERE 16 //    if (CORE.Window.modeIndex < 0) CORE.Window.modeIndex = FindNearestConnectorMode(CORE.Window.connector, CORE.Window.screen.width, CORE.Window.screen.height, fps, allowInterlaced);
-// HERE 16 //
-// HERE 16 //    // If nothing found, try to find an exactly matching mode including interlaced
-// HERE 16 //    if (CORE.Window.modeIndex < 0) CORE.Window.modeIndex = FindExactConnectorMode(CORE.Window.connector, CORE.Window.screen.width, CORE.Window.screen.height, fps, true);
-// HERE 16 //
-// HERE 16 //    // If nothing found, try to find a nearly matching mode including interlaced
-// HERE 16 //    if (CORE.Window.modeIndex < 0) CORE.Window.modeIndex = FindNearestConnectorMode(CORE.Window.connector, CORE.Window.screen.width, CORE.Window.screen.height, fps, true);
-// HERE 16 //
-// HERE 16 //    // If nothing found, there is no suitable mode
-// HERE 16 //    if (CORE.Window.modeIndex < 0)
-// HERE 16 //    {
-// HERE 16 //        TRACELOG(LOG_WARNING, "DISPLAY: Failed to find a suitable DRM connector mode");
-// HERE 16 //        drmModeFreeEncoder(enc);
-// HERE 16 //        drmModeFreeResources(res);
-// HERE 16 //        return false;
-// HERE 16 //    }
-// HERE 16 //
-// HERE 16 //    CORE.Window.display.width = CORE.Window.connector->modes[CORE.Window.modeIndex].hdisplay;
-// HERE 16 //    CORE.Window.display.height = CORE.Window.connector->modes[CORE.Window.modeIndex].vdisplay;
-// HERE 16 //
-// HERE 16 //    TRACELOG(LOG_INFO, "DISPLAY: Selected DRM connector mode %s (%ux%u%c@%u)", CORE.Window.connector->modes[CORE.Window.modeIndex].name,
-// HERE 16 //             CORE.Window.connector->modes[CORE.Window.modeIndex].hdisplay, CORE.Window.connector->modes[CORE.Window.modeIndex].vdisplay,
-// HERE 16 //             (CORE.Window.connector->modes[CORE.Window.modeIndex].flags & DRM_MODE_FLAG_INTERLACE) ? 'i' : 'p',
-// HERE 16 //             CORE.Window.connector->modes[CORE.Window.modeIndex].vrefresh);
-// HERE 16 //
-// HERE 16 //    // Use the width and height of the surface for render
-// HERE 16 //    CORE.Window.render.width = CORE.Window.screen.width;
-// HERE 16 //    CORE.Window.render.height = CORE.Window.screen.height;
-// HERE 16 //
-// HERE 16 //    drmModeFreeEncoder(enc);
-// HERE 16 //    enc = NULL;
-// HERE 16 //
-// HERE 16 //    drmModeFreeResources(res);
-// HERE 16 //    res = NULL;
-// HERE 16 //
-// HERE 16 //    CORE.Window.gbmDevice = gbm_create_device(CORE.Window.fd);
-// HERE 16 //    if (!CORE.Window.gbmDevice)
-// HERE 16 //    {
-// HERE 16 //        TRACELOG(LOG_WARNING, "DISPLAY: Failed to create GBM device");
-// HERE 16 //        return false;
-// HERE 16 //    }
-// HERE 16 //
-// HERE 16 //    CORE.Window.gbmSurface = gbm_surface_create(CORE.Window.gbmDevice, CORE.Window.connector->modes[CORE.Window.modeIndex].hdisplay,
-// HERE 16 //                                                CORE.Window.connector->modes[CORE.Window.modeIndex].vdisplay, GBM_FORMAT_ARGB8888, GBM_BO_USE_SCANOUT | GBM_BO_USE_RENDERING);
-// HERE 16 //    if (!CORE.Window.gbmSurface)
-// HERE 16 //    {
-// HERE 16 //        TRACELOG(LOG_WARNING, "DISPLAY: Failed to create GBM surface");
-// HERE 16 //        return false;
-// HERE 16 //    }
-// HERE 16 //#endif
-// HERE 16 //
-// HERE 16 //    EGLint samples = 0;
-// HERE 16 //    EGLint sampleBuffer = 0;
-// HERE 16 //    if (CORE.Window.flags & FLAG_MSAA_4X_HINT)
-// HERE 16 //    {
-// HERE 16 //        samples = 4;
-// HERE 16 //        sampleBuffer = 1;
-// HERE 16 //        TRACELOG(LOG_INFO, "DISPLAY: Trying to enable MSAA x4");
-// HERE 16 //    }
-// HERE 16 //
-// HERE 16 //    const EGLint framebufferAttribs[] =
-// HERE 16 //    {
-// HERE 16 //        EGL_RENDERABLE_TYPE,
-// HERE 16 //        (rlGetVersion() == RL_OPENGL_ES_30) ? EGL_OPENGL_ES3_BIT : EGL_OPENGL_ES2_BIT, // Type of context support
-// HERE 16 //#if defined(PLATFORM_DRM)
-// HERE 16 //        EGL_SURFACE_TYPE,
-// HERE 16 //        EGL_WINDOW_BIT, // Don't use it on Android!
-// HERE 16 //#endif
-// HERE 16 //        EGL_RED_SIZE,
-// HERE 16 //        8, // RED color bit depth (alternative: 5)
-// HERE 16 //        EGL_GREEN_SIZE,
-// HERE 16 //        8, // GREEN color bit depth (alternative: 6)
-// HERE 16 //        EGL_BLUE_SIZE,
-// HERE 16 //        8, // BLUE color bit depth (alternative: 5)
-// HERE 16 //#if defined(PLATFORM_DRM)
-// HERE 16 //        EGL_ALPHA_SIZE,
-// HERE 16 //        8, // ALPHA bit depth (required for transparent framebuffer)
-// HERE 16 //#endif
-// HERE 16 //        // EGL_TRANSPARENT_TYPE, EGL_NONE, // Request transparent framebuffer (EGL_TRANSPARENT_RGB does not work on RPI)
-// HERE 16 //        EGL_DEPTH_SIZE,
-// HERE 16 //        16, // Depth buffer size (Required to use Depth testing!)
-// HERE 16 //        // EGL_STENCIL_SIZE, 8,      // Stencil buffer size
-// HERE 16 //        EGL_SAMPLE_BUFFERS,
-// HERE 16 //        sampleBuffer, // Activate MSAA
-// HERE 16 //        EGL_SAMPLES,
-// HERE 16 //        samples, // 4x Antialiasing if activated (Free on MALI GPUs)
-// HERE 16 //        EGL_NONE
-// HERE 16 //    };
-// HERE 16 //
-// HERE 16 //    const EGLint contextAttribs[] =
-// HERE 16 //        {
-// HERE 16 //            EGL_CONTEXT_CLIENT_VERSION, 2,
-// HERE 16 //            EGL_NONE};
-// HERE 16 //
-// HERE 16 //#if defined(PLATFORM_ANDROID) || defined(PLATFORM_DRM)
-// HERE 16 //    EGLint numConfigs = 0;
-// HERE 16 //
-// HERE 16 //    // Get an EGL device connection
-// HERE 16 //#if defined(PLATFORM_DRM)
-// HERE 16 //    CORE.Window.device = eglGetDisplay((EGLNativeDisplayType)CORE.Window.gbmDevice);
-// HERE 16 //#else
-// HERE 16 //    CORE.Window.device = eglGetDisplay(EGL_DEFAULT_DISPLAY);
-// HERE 16 //#endif
-// HERE 16 //    if (CORE.Window.device == EGL_NO_DISPLAY)
-// HERE 16 //    {
-// HERE 16 //        TRACELOG(LOG_WARNING, "DISPLAY: Failed to initialize EGL device");
-// HERE 16 //        return false;
-// HERE 16 //    }
-// HERE 16 //
-// HERE 16 //    // Initialize the EGL device connection
-// HERE 16 //    if (eglInitialize(CORE.Window.device, NULL, NULL) == EGL_FALSE)
-// HERE 16 //    {
-// HERE 16 //        // If all of the calls to eglInitialize returned EGL_FALSE then an error has occurred.
-// HERE 16 //        TRACELOG(LOG_WARNING, "DISPLAY: Failed to initialize EGL device");
-// HERE 16 //        return false;
-// HERE 16 //    }
-// HERE 16 //
-// HERE 16 //#if defined(PLATFORM_DRM)
-// HERE 16 //    if (!eglChooseConfig(CORE.Window.device, NULL, NULL, 0, &numConfigs))
-// HERE 16 //    {
-// HERE 16 //        TRACELOG(LOG_WARNING, "DISPLAY: Failed to get EGL config count: 0x%x", eglGetError());
-// HERE 16 //        return false;
-// HERE 16 //    }
-// HERE 16 //
-// HERE 16 //    TRACELOG(LOG_TRACE, "DISPLAY: EGL configs available: %d", numConfigs);
-// HERE 16 //
-// HERE 16 //    EGLConfig *configs = RL_CALLOC(numConfigs, sizeof(*configs));
-// HERE 16 //    if (!configs)
-// HERE 16 //    {
-// HERE 16 //        TRACELOG(LOG_WARNING, "DISPLAY: Failed to get memory for EGL configs");
-// HERE 16 //        return false;
-// HERE 16 //    }
-// HERE 16 //
-// HERE 16 //    EGLint matchingNumConfigs = 0;
-// HERE 16 //    if (!eglChooseConfig(CORE.Window.device, framebufferAttribs, configs, numConfigs, &matchingNumConfigs))
-// HERE 16 //    {
-// HERE 16 //        TRACELOG(LOG_WARNING, "DISPLAY: Failed to choose EGL config: 0x%x", eglGetError());
-// HERE 16 //        free(configs);
-// HERE 16 //        return false;
-// HERE 16 //    }
-// HERE 16 //
-// HERE 16 //    TRACELOG(LOG_TRACE, "DISPLAY: EGL matching configs available: %d", matchingNumConfigs);
-// HERE 16 //
-// HERE 16 //    // find the EGL config that matches the previously setup GBM format
-// HERE 16 //    int found = 0;
-// HERE 16 //    for (EGLint i = 0; i < matchingNumConfigs; ++i)
-// HERE 16 //    {
-// HERE 16 //        EGLint id = 0;
-// HERE 16 //        if (!eglGetConfigAttrib(CORE.Window.device, configs[i], EGL_NATIVE_VISUAL_ID, &id))
-// HERE 16 //        {
-// HERE 16 //            TRACELOG(LOG_WARNING, "DISPLAY: Failed to get EGL config attribute: 0x%x", eglGetError());
-// HERE 16 //            continue;
-// HERE 16 //        }
-// HERE 16 //
-// HERE 16 //        if (GBM_FORMAT_ARGB8888 == id)
-// HERE 16 //        {
-// HERE 16 //            TRACELOG(LOG_TRACE, "DISPLAY: Using EGL config: %d", i);
-// HERE 16 //            CORE.Window.config = configs[i];
-// HERE 16 //            found = 1;
-// HERE 16 //            break;
-// HERE 16 //        }
-// HERE 16 //    }
-// HERE 16 //
-// HERE 16 //    RL_FREE(configs);
-// HERE 16 //
-// HERE 16 //    if (!found)
-// HERE 16 //    {
-// HERE 16 //        TRACELOG(LOG_WARNING, "DISPLAY: Failed to find a suitable EGL config");
-// HERE 16 //        return false;
-// HERE 16 //    }
-// HERE 16 //#else
-// HERE 16 //    // Get an appropriate EGL framebuffer configuration
-// HERE 16 //    eglChooseConfig(CORE.Window.device, framebufferAttribs, &CORE.Window.config, 1, &numConfigs);
-// HERE 16 //#endif
-// HERE 16 //
-// HERE 16 //    // Set rendering API
-// HERE 16 //    eglBindAPI(EGL_OPENGL_ES_API);
-// HERE 16 //
-// HERE 16 //    // Create an EGL rendering context
-// HERE 16 //    CORE.Window.context = eglCreateContext(CORE.Window.device, CORE.Window.config, EGL_NO_CONTEXT, contextAttribs);
-// HERE 16 //    if (CORE.Window.context == EGL_NO_CONTEXT)
-// HERE 16 //    {
-// HERE 16 //        TRACELOG(LOG_WARNING, "DISPLAY: Failed to create EGL context");
-// HERE 16 //        return false;
-// HERE 16 //    }
-// HERE 16 //#endif
-// HERE 16 //
-// HERE 16 //    // Create an EGL window surface
-// HERE 16 //    //---------------------------------------------------------------------------------
-// HERE 16 //#if defined(PLATFORM_ANDROID)
-// HERE 16 //    EGLint displayFormat = 0;
-// HERE 16 //
-// HERE 16 //    // EGL_NATIVE_VISUAL_ID is an attribute of the EGLConfig that is guaranteed to be accepted by ANativeWindow_setBuffersGeometry()
-// HERE 16 //    // As soon as we picked a EGLConfig, we can safely reconfigure the ANativeWindow buffers to match, using EGL_NATIVE_VISUAL_ID
-// HERE 16 //    eglGetConfigAttrib(CORE.Window.device, CORE.Window.config, EGL_NATIVE_VISUAL_ID, &displayFormat);
-// HERE 16 //
-// HERE 16 //    // At this point we need to manage render size vs screen size
-// HERE 16 //    // NOTE: This function use and modify global module variables:
-// HERE 16 //    //  -> CORE.Window.screen.width/CORE.Window.screen.height
-// HERE 16 //    //  -> CORE.Window.render.width/CORE.Window.render.height
-// HERE 16 //    //  -> CORE.Window.screenScale
-// HERE 16 //    SetupFramebuffer(CORE.Window.display.width, CORE.Window.display.height);
-// HERE 16 //
-// HERE 16 //    ANativeWindow_setBuffersGeometry(CORE.Android.app->window, CORE.Window.render.width, CORE.Window.render.height, displayFormat);
-// HERE 16 //    // ANativeWindow_setBuffersGeometry(CORE.Android.app->window, 0, 0, displayFormat);       // Force use of native display size
-// HERE 16 //
-// HERE 16 //    CORE.Window.surface = eglCreateWindowSurface(CORE.Window.device, CORE.Window.config, CORE.Android.app->window, NULL);
-// HERE 16 //#endif // PLATFORM_ANDROID
-// HERE 16 //
-// HERE 16 //#if defined(PLATFORM_DRM)
-// HERE 16 //    CORE.Window.surface = eglCreateWindowSurface(CORE.Window.device, CORE.Window.config, (EGLNativeWindowType)CORE.Window.gbmSurface, NULL);
-// HERE 16 //    if (EGL_NO_SURFACE == CORE.Window.surface)
-// HERE 16 //    {
-// HERE 16 //        TRACELOG(LOG_WARNING, "DISPLAY: Failed to create EGL window surface: 0x%04x", eglGetError());
-// HERE 16 //        return false;
-// HERE 16 //    }
-// HERE 16 //
-// HERE 16 //    // At this point we need to manage render size vs screen size
-// HERE 16 //    // NOTE: This function use and modify global module variables:
-// HERE 16 //    //  -> CORE.Window.screen.width/CORE.Window.screen.height
-// HERE 16 //    //  -> CORE.Window.render.width/CORE.Window.render.height
-// HERE 16 //    //  -> CORE.Window.screenScale
-// HERE 16 //    SetupFramebuffer(CORE.Window.display.width, CORE.Window.display.height);
-// HERE 16 //#endif // PLATFORM_DRM
-// HERE 16 //
-// HERE 16 //    // There must be at least one frame displayed before the buffers are swapped
-// HERE 16 //    // eglSwapInterval(CORE.Window.device, 1);
-// HERE 16 //
-// HERE 16 //    if (eglMakeCurrent(CORE.Window.device, CORE.Window.surface, CORE.Window.surface, CORE.Window.context) == EGL_FALSE)
-// HERE 16 //    {
-// HERE 16 //        TRACELOG(LOG_WARNING, "DISPLAY: Failed to attach EGL rendering context to EGL surface");
-// HERE 16 //        return false;
-// HERE 16 //    }
-// HERE 16 //    else
-// HERE 16 //    {
-// HERE 16 //        CORE.Window.render.width = CORE.Window.screen.width;
-// HERE 16 //        CORE.Window.render.height = CORE.Window.screen.height;
-// HERE 16 //        CORE.Window.currentFbo.width = CORE.Window.render.width;
-// HERE 16 //        CORE.Window.currentFbo.height = CORE.Window.render.height;
-// HERE 16 //
-// HERE 16 //        TRACELOG(LOG_INFO, "DISPLAY: Device initialized successfully");
-// HERE 16 //        TRACELOG(LOG_INFO, "    > Display size: %i x %i", CORE.Window.display.width, CORE.Window.display.height);
-// HERE 16 //        TRACELOG(LOG_INFO, "    > Screen size:  %i x %i", CORE.Window.screen.width, CORE.Window.screen.height);
-// HERE 16 //        TRACELOG(LOG_INFO, "    > Render size:  %i x %i", CORE.Window.render.width, CORE.Window.render.height);
-// HERE 16 //        TRACELOG(LOG_INFO, "    > Viewport offsets: %i, %i", CORE.Window.renderOffset.x, CORE.Window.renderOffset.y);
-// HERE 16 //    }
-// HERE 16 //#endif // PLATFORM_ANDROID || PLATFORM_DRM
-
     // Load OpenGL extensions
     // NOTE: GL procedures address loader is required to load extensions
-// HERE 17 //#if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
     rlLoadExtensions(glfwGetProcAddress);
-// HERE 17 //#else
-// HERE 17 //    rlLoadExtensions(eglGetProcAddress);
-// HERE 17 //#endif
 
     // Initialize OpenGL context (states and resources)
     // NOTE: CORE.Window.currentFbo.width and CORE.Window.currentFbo.height not used, just stored as globals in rlgl
@@ -1058,10 +583,6 @@ static bool InitGraphicsDevice(int width, int height)
     // Setup default viewport
     // NOTE: It updated CORE.Window.render.width and CORE.Window.render.height
     SetupViewport(CORE.Window.currentFbo.width, CORE.Window.currentFbo.height);
-
-// HERE 18 //#if defined(PLATFORM_ANDROID)
-// HERE 18 //    CORE.Window.ready = true;
-// HERE 18 //#endif
 
     if ((CORE.Window.flags & FLAG_WINDOW_MINIMIZED) > 0) MinimizeWindow();
 
