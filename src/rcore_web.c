@@ -83,8 +83,7 @@ void InitWindow(int width, int height, const char *title)
     TRACELOG(LOG_INFO, "    > raudio:.... not loaded (optional)");
 #endif
 
-    if ((title != NULL) && (title[0] != 0))
-        CORE.Window.title = title;
+    if ((title != NULL) && (title[0] != 0)) CORE.Window.title = title;
 
     // Initialize global input state
     memset(&CORE.Input, 0, sizeof(CORE.Input));
@@ -105,8 +104,7 @@ void InitWindow(int width, int height, const char *title)
         TRACELOG(LOG_FATAL, "Failed to initialize Graphic Device");
         return;
     }
-    else
-        SetWindowPosition(GetMonitorWidth(GetCurrentMonitor()) / 2 - CORE.Window.screen.width / 2, GetMonitorHeight(GetCurrentMonitor()) / 2 - CORE.Window.screen.height / 2);
+    else SetWindowPosition(GetMonitorWidth(GetCurrentMonitor()) / 2 - CORE.Window.screen.width / 2, GetMonitorHeight(GetCurrentMonitor()) / 2 - CORE.Window.screen.height / 2);
 
     // Initialize hi-res timer
     InitTimer();
@@ -211,8 +209,7 @@ EM_JS(int, GetCanvasHeight, (), { return canvas.clientHeight; });
 static EM_BOOL EmscriptenResizeCallback(int eventType, const EmscriptenUiEvent *event, void *userData)
 {
     // Don't resize non-resizeable windows
-    if ((CORE.Window.flags & FLAG_WINDOW_RESIZABLE) == 0)
-        return 1;
+    if ((CORE.Window.flags & FLAG_WINDOW_RESIZABLE) == 0) return 1;
 
     // This event is called whenever the window changes sizes,
     // so the size of the canvas object is explicitly retrieved below
@@ -226,8 +223,7 @@ static EM_BOOL EmscriptenResizeCallback(int eventType, const EmscriptenUiEvent *
     CORE.Window.currentFbo.height = height;
     CORE.Window.resizedLastFrame = true;
 
-    if (IsWindowFullscreen())
-        return 1;
+    if (IsWindowFullscreen()) return 1;
 
     // Set current screen size
     CORE.Window.screen.width = width;
@@ -263,8 +259,7 @@ static EM_BOOL EmscriptenGamepadCallback(int eventType, const EmscriptenGamepadE
         CORE.Input.Gamepad.ready[gamepadEvent->index] = true;
         sprintf(CORE.Input.Gamepad.name[gamepadEvent->index], "%s", gamepadEvent->id);
     }
-    else
-        CORE.Input.Gamepad.ready[gamepadEvent->index] = false;
+    else CORE.Input.Gamepad.ready[gamepadEvent->index] = false;
 
     return 1; // The event was consumed by the callback handler
 }
@@ -294,10 +289,8 @@ static EM_BOOL EmscriptenTouchCallback(int eventType, const EmscriptenTouchEvent
         CORE.Input.Touch.position[i].x *= ((float)GetScreenWidth() / (float)canvasWidth);
         CORE.Input.Touch.position[i].y *= ((float)GetScreenHeight() / (float)canvasHeight);
 
-        if (eventType == EMSCRIPTEN_EVENT_TOUCHSTART)
-            CORE.Input.Touch.currentTouchState[i] = 1;
-        else if (eventType == EMSCRIPTEN_EVENT_TOUCHEND)
-            CORE.Input.Touch.currentTouchState[i] = 0;
+        if (eventType == EMSCRIPTEN_EVENT_TOUCHSTART) CORE.Input.Touch.currentTouchState[i] = 1;
+        else if (eventType == EMSCRIPTEN_EVENT_TOUCHEND) CORE.Input.Touch.currentTouchState[i] = 0;
     }
 
 #if defined(SUPPORT_GESTURES_SYSTEM) // PLATFORM_WEB
@@ -306,14 +299,10 @@ static EM_BOOL EmscriptenTouchCallback(int eventType, const EmscriptenTouchEvent
     gestureEvent.pointCount = CORE.Input.Touch.pointCount;
 
     // Register touch actions
-    if (eventType == EMSCRIPTEN_EVENT_TOUCHSTART)
-        gestureEvent.touchAction = TOUCH_ACTION_DOWN;
-    else if (eventType == EMSCRIPTEN_EVENT_TOUCHEND)
-        gestureEvent.touchAction = TOUCH_ACTION_UP;
-    else if (eventType == EMSCRIPTEN_EVENT_TOUCHMOVE)
-        gestureEvent.touchAction = TOUCH_ACTION_MOVE;
-    else if (eventType == EMSCRIPTEN_EVENT_TOUCHCANCEL)
-        gestureEvent.touchAction = TOUCH_ACTION_CANCEL;
+    if (eventType == EMSCRIPTEN_EVENT_TOUCHSTART) gestureEvent.touchAction = TOUCH_ACTION_DOWN;
+    else if (eventType == EMSCRIPTEN_EVENT_TOUCHEND) gestureEvent.touchAction = TOUCH_ACTION_UP;
+    else if (eventType == EMSCRIPTEN_EVENT_TOUCHMOVE) gestureEvent.touchAction = TOUCH_ACTION_MOVE;
+    else if (eventType == EMSCRIPTEN_EVENT_TOUCHCANCEL) gestureEvent.touchAction = TOUCH_ACTION_CANCEL;
 
     for (int i = 0; (i < gestureEvent.pointCount) && (i < MAX_TOUCH_POINTS); i++)
     {
@@ -329,8 +318,7 @@ static EM_BOOL EmscriptenTouchCallback(int eventType, const EmscriptenTouchEvent
     ProcessGestureEvent(gestureEvent);
 
     // Reset the pointCount for web, if it was the last Touch End event
-    if (eventType == EMSCRIPTEN_EVENT_TOUCHEND && CORE.Input.Touch.pointCount == 1)
-        CORE.Input.Touch.pointCount = 0;
+    if (eventType == EMSCRIPTEN_EVENT_TOUCHEND && CORE.Input.Touch.pointCount == 1) CORE.Input.Touch.pointCount = 0;
 #endif
 
     return 1; // The event was consumed by the callback handler
@@ -389,48 +377,33 @@ static bool InitGraphicsDevice(int width, int height)
     // glfwWindowHint(GLFW_AUX_BUFFERS, 0);          // Number of auxiliar buffers
 
     // Check window creation flags
-    if ((CORE.Window.flags & FLAG_FULLSCREEN_MODE) > 0)
-        CORE.Window.fullscreen = true;
+    if ((CORE.Window.flags & FLAG_FULLSCREEN_MODE) > 0) CORE.Window.fullscreen = true;
 
-    if ((CORE.Window.flags & FLAG_WINDOW_HIDDEN) > 0)
-        glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE); // Visible window
-    else
-        glfwWindowHint(GLFW_VISIBLE, GLFW_TRUE); // Window initially hidden
+    if ((CORE.Window.flags & FLAG_WINDOW_HIDDEN) > 0) glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE); // Visible window
+    else glfwWindowHint(GLFW_VISIBLE, GLFW_TRUE); // Window initially hidden
 
-    if ((CORE.Window.flags & FLAG_WINDOW_UNDECORATED) > 0)
-        glfwWindowHint(GLFW_DECORATED, GLFW_FALSE); // Border and buttons on Window
-    else
-        glfwWindowHint(GLFW_DECORATED, GLFW_TRUE); // Decorated window
+    if ((CORE.Window.flags & FLAG_WINDOW_UNDECORATED) > 0) glfwWindowHint(GLFW_DECORATED, GLFW_FALSE); // Border and buttons on Window
+    else glfwWindowHint(GLFW_DECORATED, GLFW_TRUE); // Decorated window
 
-    if ((CORE.Window.flags & FLAG_WINDOW_RESIZABLE) > 0)
-        glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE); // Resizable window
-    else
-        glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE); // Avoid window being resizable
+    if ((CORE.Window.flags & FLAG_WINDOW_RESIZABLE) > 0) glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE); // Resizable window
+    else glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE); // Avoid window being resizable
 
     // Disable FLAG_WINDOW_MINIMIZED, not supported on initialization
-    if ((CORE.Window.flags & FLAG_WINDOW_MINIMIZED) > 0)
-        CORE.Window.flags &= ~FLAG_WINDOW_MINIMIZED;
+    if ((CORE.Window.flags & FLAG_WINDOW_MINIMIZED) > 0) CORE.Window.flags &= ~FLAG_WINDOW_MINIMIZED;
 
     // Disable FLAG_WINDOW_MAXIMIZED, not supported on initialization
-    if ((CORE.Window.flags & FLAG_WINDOW_MAXIMIZED) > 0)
-        CORE.Window.flags &= ~FLAG_WINDOW_MAXIMIZED;
+    if ((CORE.Window.flags & FLAG_WINDOW_MAXIMIZED) > 0) CORE.Window.flags &= ~FLAG_WINDOW_MAXIMIZED;
 
-    if ((CORE.Window.flags & FLAG_WINDOW_UNFOCUSED) > 0)
-        glfwWindowHint(GLFW_FOCUSED, GLFW_FALSE);
-    else
-        glfwWindowHint(GLFW_FOCUSED, GLFW_TRUE);
+    if ((CORE.Window.flags & FLAG_WINDOW_UNFOCUSED) > 0) glfwWindowHint(GLFW_FOCUSED, GLFW_FALSE);
+    else glfwWindowHint(GLFW_FOCUSED, GLFW_TRUE);
 
-    if ((CORE.Window.flags & FLAG_WINDOW_TOPMOST) > 0)
-        glfwWindowHint(GLFW_FLOATING, GLFW_TRUE);
-    else
-        glfwWindowHint(GLFW_FLOATING, GLFW_FALSE);
+    if ((CORE.Window.flags & FLAG_WINDOW_TOPMOST) > 0) glfwWindowHint(GLFW_FLOATING, GLFW_TRUE);
+    else glfwWindowHint(GLFW_FLOATING, GLFW_FALSE);
 
         // NOTE: Some GLFW flags are not supported on HTML5
 #if defined(PLATFORM_DESKTOP)
-    if ((CORE.Window.flags & FLAG_WINDOW_TRANSPARENT) > 0)
-        glfwWindowHint(GLFW_TRANSPARENT_FRAMEBUFFER, GLFW_TRUE); // Transparent framebuffer
-    else
-        glfwWindowHint(GLFW_TRANSPARENT_FRAMEBUFFER, GLFW_FALSE); // Opaque framebuffer
+    if ((CORE.Window.flags & FLAG_WINDOW_TRANSPARENT) > 0) glfwWindowHint(GLFW_TRANSPARENT_FRAMEBUFFER, GLFW_TRUE); // Transparent framebuffer
+    else glfwWindowHint(GLFW_TRANSPARENT_FRAMEBUFFER, GLFW_FALSE); // Opaque framebuffer
 
     if ((CORE.Window.flags & FLAG_WINDOW_HIGHDPI) > 0)
     {
@@ -442,14 +415,11 @@ static bool InitGraphicsDevice(int width, int height)
         glfwWindowHint(GLFW_COCOA_RETINA_FRAMEBUFFER, GLFW_TRUE);
 #endif
     }
-    else
-        glfwWindowHint(GLFW_SCALE_TO_MONITOR, GLFW_FALSE);
+    else glfwWindowHint(GLFW_SCALE_TO_MONITOR, GLFW_FALSE);
 
     // Mouse passthrough
-    if ((CORE.Window.flags & FLAG_WINDOW_MOUSE_PASSTHROUGH) > 0)
-        glfwWindowHint(GLFW_MOUSE_PASSTHROUGH, GLFW_TRUE);
-    else
-        glfwWindowHint(GLFW_MOUSE_PASSTHROUGH, GLFW_FALSE);
+    if ((CORE.Window.flags & FLAG_WINDOW_MOUSE_PASSTHROUGH) > 0) glfwWindowHint(GLFW_MOUSE_PASSTHROUGH, GLFW_TRUE);
+    else glfwWindowHint(GLFW_MOUSE_PASSTHROUGH, GLFW_FALSE);
 #endif
 
     if (CORE.Window.flags & FLAG_MSAA_4X_HINT)
@@ -520,8 +490,7 @@ static bool InitGraphicsDevice(int width, int height)
     // Forcing this initialization here avoids doing it on PollInputEvents() called by EndDrawing() after first frame has been just drawn.
     // The initialization will still happen and possible delays still occur, but before the window is shown, which is a nicer experience.
     // REF: https://github.com/raysan5/raylib/issues/1554
-    if (MAX_GAMEPADS > 0)
-        glfwSetJoystickCallback(NULL);
+    if (MAX_GAMEPADS > 0) glfwSetJoystickCallback(NULL);
 #endif
 
 #if defined(PLATFORM_DESKTOP)
@@ -539,10 +508,8 @@ static bool InitGraphicsDevice(int width, int height)
     CORE.Window.display.height = mode->height;
 
     // Set screen width/height to the display width/height if they are 0
-    if (CORE.Window.screen.width == 0)
-        CORE.Window.screen.width = CORE.Window.display.width;
-    if (CORE.Window.screen.height == 0)
-        CORE.Window.screen.height = CORE.Window.display.height;
+    if (CORE.Window.screen.width == 0) CORE.Window.screen.width = CORE.Window.display.width;
+    if (CORE.Window.screen.height == 0) CORE.Window.screen.height = CORE.Window.display.height;
 #endif // PLATFORM_DESKTOP
 
 #if defined(PLATFORM_WEB)
@@ -567,10 +534,8 @@ static bool InitGraphicsDevice(int width, int height)
             CORE.Window.position.y = CORE.Window.display.height / 2 - CORE.Window.screen.height / 2;
         }
 
-        if (CORE.Window.position.x < 0)
-            CORE.Window.position.x = 0;
-        if (CORE.Window.position.y < 0)
-            CORE.Window.position.y = 0;
+        if (CORE.Window.position.x < 0) CORE.Window.position.x = 0;
+        if (CORE.Window.position.y < 0) CORE.Window.position.y = 0;
 
         // Obtain recommended CORE.Window.display.width/CORE.Window.display.height from a valid videomode for the monitor
         int count = 0;
@@ -823,16 +788,13 @@ static bool InitGraphicsDevice(int width, int height)
     CORE.Window.modeIndex = FindExactConnectorMode(CORE.Window.connector, CORE.Window.screen.width, CORE.Window.screen.height, fps, allowInterlaced);
 
     // If nothing found, try to find a nearly matching mode
-    if (CORE.Window.modeIndex < 0)
-        CORE.Window.modeIndex = FindNearestConnectorMode(CORE.Window.connector, CORE.Window.screen.width, CORE.Window.screen.height, fps, allowInterlaced);
+    if (CORE.Window.modeIndex < 0) CORE.Window.modeIndex = FindNearestConnectorMode(CORE.Window.connector, CORE.Window.screen.width, CORE.Window.screen.height, fps, allowInterlaced);
 
     // If nothing found, try to find an exactly matching mode including interlaced
-    if (CORE.Window.modeIndex < 0)
-        CORE.Window.modeIndex = FindExactConnectorMode(CORE.Window.connector, CORE.Window.screen.width, CORE.Window.screen.height, fps, true);
+    if (CORE.Window.modeIndex < 0) CORE.Window.modeIndex = FindExactConnectorMode(CORE.Window.connector, CORE.Window.screen.width, CORE.Window.screen.height, fps, true);
 
     // If nothing found, try to find a nearly matching mode including interlaced
-    if (CORE.Window.modeIndex < 0)
-        CORE.Window.modeIndex = FindNearestConnectorMode(CORE.Window.connector, CORE.Window.screen.width, CORE.Window.screen.height, fps, true);
+    if (CORE.Window.modeIndex < 0) CORE.Window.modeIndex = FindNearestConnectorMode(CORE.Window.connector, CORE.Window.screen.width, CORE.Window.screen.height, fps, true);
 
     // If nothing found, there is no suitable mode
     if (CORE.Window.modeIndex < 0)
@@ -1094,8 +1056,7 @@ static bool InitGraphicsDevice(int width, int height)
     CORE.Window.ready = true;
 #endif
 
-    if ((CORE.Window.flags & FLAG_WINDOW_MINIMIZED) > 0)
-        MinimizeWindow();
+    if ((CORE.Window.flags & FLAG_WINDOW_MINIMIZED) > 0) MinimizeWindow();
 
     return true;
 }
@@ -1484,7 +1445,7 @@ void EnableCursor(void)
 // Disables cursor (lock cursor)
 void DisableCursor(void)
 {
-    // TODO: figure out how not to hard code the canvas ID here. 
+    // TODO: figure out how not to hard code the canvas ID here.
     emscripten_request_pointerlock("#canvas", 1);
 
     // Set cursor position in the middle
@@ -1509,7 +1470,7 @@ void TakeScreenshot(const char *fileName)
 {
 #if defined(SUPPORT_MODULE_RTEXTURES)
     // Security check to (partially) avoid malicious code on PLATFORM_WEB
-    if (strchr(fileName, '\'') != NULL) { TRACELOG(LOG_WARNING, "SYSTEM: Provided fileName could be potentially malicious, avoid [\'] character");  return; }
+    if (strchr(fileName, '\'') != NULL) { TRACELOG(LOG_WARNING, "SYSTEM: Provided fileName could be potentially malicious, avoid [\'] character"); return; }
 
     Vector2 scale = GetWindowScaleDPI();
     unsigned char *imgData = rlReadScreenPixels((int)((float)CORE.Window.render.width*scale.x), (int)((float)CORE.Window.render.height*scale.y));
