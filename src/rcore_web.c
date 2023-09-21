@@ -215,6 +215,13 @@ static EM_BOOL EmscriptenResizeCallback(int eventType, const EmscriptenUiEvent *
     // so the size of the canvas object is explicitly retrieved below
     int width = GetWindowInnerWidth();
     int height = GetWindowInnerHeight();
+
+    if (width < CORE.Window.screenMin.width) width = CORE.Window.screenMin.width;
+    else if (width > CORE.Window.screenMax.width && CORE.Window.screenMax.width > 0) width = CORE.Window.screenMax.width;
+
+    if (height < CORE.Window.screenMin.height) height = CORE.Window.screenMin.height;
+    else if (height > CORE.Window.screenMax.height && CORE.Window.screenMax.height > 0) height = CORE.Window.screenMax.height;
+
     emscripten_set_canvas_element_size("#canvas", width, height);
 
     SetupViewport(width, height); // Reset viewport and projection matrix for new size
@@ -334,11 +341,11 @@ static bool InitGraphicsDevice(int width, int height)
     CORE.Window.screen.height = height;         // User desired height
     CORE.Window.screenScale = MatrixIdentity(); // No draw scaling required by default
 
-    // Set the window minimum and maximum default values to 0
-    CORE.Window.windowMin.width = 0;
-    CORE.Window.windowMin.height = 0;
-    CORE.Window.windowMax.width = 0;
-    CORE.Window.windowMax.height = 0;
+    // Set the screen minimum and maximum default values to 0
+    CORE.Window.screenMin.width  = 0;
+    CORE.Window.screenMin.height = 0;
+    CORE.Window.screenMax.width  = 0;
+    CORE.Window.screenMax.height = 0;
 
     // NOTE: Framebuffer (render area - CORE.Window.render.width, CORE.Window.render.height) could include black bars...
     // ...in top-down or left-right to match display aspect ratio (no weird scaling)
@@ -1282,8 +1289,8 @@ void SetWindowMonitor(int monitor)
 // Set window minimum dimensions (FLAG_WINDOW_RESIZABLE)
 void SetWindowMinSize(int width, int height)
 {
-    CORE.Window.windowMin.width = width;
-    CORE.Window.windowMin.height = height;
+    CORE.Window.screenMin.width = width;
+    CORE.Window.screenMin.height = height;
     // Trigger the resize event once to update the window minimum width and height
     if ((CORE.Window.flags & FLAG_WINDOW_RESIZABLE) != 0) EmscriptenResizeCallback(EMSCRIPTEN_EVENT_RESIZE, NULL, NULL);
 }
@@ -1291,8 +1298,8 @@ void SetWindowMinSize(int width, int height)
 // Set window maximum dimensions (FLAG_WINDOW_RESIZABLE)
 void SetWindowMaxSize(int width, int height)
 {
-    CORE.Window.windowMax.width = width;
-    CORE.Window.windowMax.height = height;
+    CORE.Window.screenMax.width = width;
+    CORE.Window.screenMax.height = height;
     // Trigger the resize event once to update the window maximum width and height
     if ((CORE.Window.flags & FLAG_WINDOW_RESIZABLE) != 0) EmscriptenResizeCallback(EMSCRIPTEN_EVENT_RESIZE, NULL, NULL);
 }

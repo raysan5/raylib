@@ -189,11 +189,11 @@ static bool InitGraphicsDevice(int width, int height)
     CORE.Window.screen.height = height;          // User desired height
     CORE.Window.screenScale = MatrixIdentity();  // No draw scaling required by default
 
-    // Set the window minimum and maximum default values to 0
-    CORE.Window.windowMin.width  = 0;
-    CORE.Window.windowMin.height = 0;
-    CORE.Window.windowMax.width  = 0;
-    CORE.Window.windowMax.height = 0;
+    // Set the screen minimum and maximum default values to 0
+    CORE.Window.screenMin.width  = 0;
+    CORE.Window.screenMin.height = 0;
+    CORE.Window.screenMax.width  = 0;
+    CORE.Window.screenMax.height = 0;
 
     // NOTE: Framebuffer (render area - CORE.Window.render.width, CORE.Window.render.height) could include black bars...
     // ...in top-down or left-right to match display aspect ratio (no weird scaling)
@@ -1093,24 +1093,24 @@ void SetWindowMonitor(int monitor)
 // Set window minimum dimensions (FLAG_WINDOW_RESIZABLE)
 void SetWindowMinSize(int width, int height)
 {
-    CORE.Window.windowMin.width = width;
-    CORE.Window.windowMin.height = height;
-    int minWidth  = (CORE.Window.windowMin.width  == 0) ? GLFW_DONT_CARE : CORE.Window.windowMin.width;
-    int minHeight = (CORE.Window.windowMin.height == 0) ? GLFW_DONT_CARE : CORE.Window.windowMin.height;
-    int maxWidth  = (CORE.Window.windowMax.width  == 0) ? GLFW_DONT_CARE : CORE.Window.windowMax.width;
-    int maxHeight = (CORE.Window.windowMax.height == 0) ? GLFW_DONT_CARE : CORE.Window.windowMax.height;
+    CORE.Window.screenMin.width = width;
+    CORE.Window.screenMin.height = height;
+    int minWidth  = (CORE.Window.screenMin.width  == 0) ? GLFW_DONT_CARE : CORE.Window.screenMin.width;
+    int minHeight = (CORE.Window.screenMin.height == 0) ? GLFW_DONT_CARE : CORE.Window.screenMin.height;
+    int maxWidth  = (CORE.Window.screenMax.width  == 0) ? GLFW_DONT_CARE : CORE.Window.screenMax.width;
+    int maxHeight = (CORE.Window.screenMax.height == 0) ? GLFW_DONT_CARE : CORE.Window.screenMax.height;
     glfwSetWindowSizeLimits(CORE.Window.handle, minWidth, minHeight, maxWidth, maxHeight);
 }
 
 // Set window maximum dimensions (FLAG_WINDOW_RESIZABLE)
 void SetWindowMaxSize(int width, int height)
 {
-    CORE.Window.windowMax.width = width;
-    CORE.Window.windowMax.height = height;
-    int minWidth  = (CORE.Window.windowMin.width  == 0) ? GLFW_DONT_CARE : CORE.Window.windowMin.width;
-    int minHeight = (CORE.Window.windowMin.height == 0) ? GLFW_DONT_CARE : CORE.Window.windowMin.height;
-    int maxWidth  = (CORE.Window.windowMax.width  == 0) ? GLFW_DONT_CARE : CORE.Window.windowMax.width;
-    int maxHeight = (CORE.Window.windowMax.height == 0) ? GLFW_DONT_CARE : CORE.Window.windowMax.height;
+    CORE.Window.screenMax.width = width;
+    CORE.Window.screenMax.height = height;
+    int minWidth  = (CORE.Window.screenMin.width  == 0) ? GLFW_DONT_CARE : CORE.Window.screenMin.width;
+    int minHeight = (CORE.Window.screenMin.height == 0) ? GLFW_DONT_CARE : CORE.Window.screenMin.height;
+    int maxWidth  = (CORE.Window.screenMax.width  == 0) ? GLFW_DONT_CARE : CORE.Window.screenMax.width;
+    int maxHeight = (CORE.Window.screenMax.height == 0) ? GLFW_DONT_CARE : CORE.Window.screenMax.height;
     glfwSetWindowSizeLimits(CORE.Window.handle, minWidth, minHeight, maxWidth, maxHeight);
 }
 
