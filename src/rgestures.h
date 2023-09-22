@@ -255,7 +255,7 @@ void SetGesturesEnabled(unsigned int flags)
 }
 
 // Check if a gesture have been detected
-bool IsGestureDetected(int gesture)
+bool IsGestureDetected(unsigned int gesture)
 {
     if ((GESTURES.enabledFlags & GESTURES.current) == gesture) return true;
     else return false;

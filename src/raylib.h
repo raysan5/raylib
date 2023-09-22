@@ -1163,7 +1163,7 @@ RLAPI int GetTouchPointCount(void);                           // Get number of t
 // Gestures and Touch Handling Functions (Module: rgestures)
 //------------------------------------------------------------------------------------
 RLAPI void SetGesturesEnabled(unsigned int flags);      // Enable a set of gestures using flags
-RLAPI bool IsGestureDetected(int gesture);              // Check if a gesture have been detected
+RLAPI bool IsGestureDetected(unsigned int gesture);     // Check if a gesture have been detected
 RLAPI int GetGestureDetected(void);                     // Get latest detected gesture
 RLAPI float GetGestureHoldDuration(void);               // Get gesture hold time in milliseconds
 RLAPI Vector2 GetGestureDragVector(void);               // Get gesture drag vector
