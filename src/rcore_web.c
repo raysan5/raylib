@@ -1099,7 +1099,6 @@ void SetMousePosition(int x, int y)
     glfwSetCursorPos(CORE.Window.handle, CORE.Input.Mouse.currentPosition.x, CORE.Input.Mouse.currentPosition.y);
 }
 
-
 // Get mouse wheel movement Y
 float GetMouseWheelMove(void)
 {
@@ -1109,6 +1108,13 @@ float GetMouseWheelMove(void)
     else result = (float)CORE.Input.Mouse.currentWheelMove.y;
 
     return result;
+}
+
+// Set mouse cursor
+// NOTE: This is a no-op on platforms other than PLATFORM_DESKTOP
+void SetMouseCursor(int cursor)
+{
+    TRACELOG(LOG_INFO, "SetMouseCursor not implemented in rcore_web.c");
 }
 
 // Get touch position X for touch point 0 (relative to screen size)

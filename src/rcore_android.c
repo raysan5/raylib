@@ -1683,6 +1683,13 @@ float GetMouseWheelMove(void)
     return 0.0f;
 }
 
+// Set mouse cursor
+// NOTE: This is a no-op on platforms other than PLATFORM_DESKTOP
+void SetMouseCursor(int cursor)
+{
+    TRACELOG(LOG_INFO, "SetMouseCursor not implemented in rcore_android.c");
+}
+
 // Get touch position X for touch point 0 (relative to screen size)
 int GetTouchX(void)
 {

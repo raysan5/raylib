@@ -1579,6 +1579,19 @@ float GetMouseWheelMove(void)
     return result;
 }
 
+// Set mouse cursor
+// NOTE: This is a no-op on platforms other than PLATFORM_DESKTOP
+void SetMouseCursor(int cursor)
+{
+    CORE.Input.Mouse.cursor = cursor;
+    if (cursor == MOUSE_CURSOR_DEFAULT) glfwSetCursor(CORE.Window.handle, NULL);
+    else
+    {
+        // NOTE: We are relating internal GLFW enum values to our MouseCursor enum values
+        glfwSetCursor(CORE.Window.handle, glfwCreateStandardCursor(0x00036000 + cursor));
+    }
+}
+
 // Get touch position X for touch point 0 (relative to screen size)
 int GetTouchX(void)
 {
