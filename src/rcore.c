@@ -2106,60 +2106,60 @@ Vector2 GetMouseWheelMoveV(void)
     return result;
 }
 
-// Set mouse cursor
-// NOTE: This is a no-op on platforms other than PLATFORM_DESKTOP
-void SetMouseCursor(int cursor)
-{
-#if defined(PLATFORM_DESKTOP)
-    CORE.Input.Mouse.cursor = cursor;
-    if (cursor == MOUSE_CURSOR_DEFAULT) glfwSetCursor(CORE.Window.handle, NULL);
-    else
-    {
-        // NOTE: We are relating internal GLFW enum values to our MouseCursor enum values
-        glfwSetCursor(CORE.Window.handle, glfwCreateStandardCursor(0x00036000 + cursor));
-    }
-#endif
-}
+//// Set mouse cursor
+//// NOTE: This is a no-op on platforms other than PLATFORM_DESKTOP
+//void SetMouseCursor(int cursor)
+//{
+//#if defined(PLATFORM_DESKTOP)
+//    CORE.Input.Mouse.cursor = cursor;
+//    if (cursor == MOUSE_CURSOR_DEFAULT) glfwSetCursor(CORE.Window.handle, NULL);
+//    else
+//    {
+//        // NOTE: We are relating internal GLFW enum values to our MouseCursor enum values
+//        glfwSetCursor(CORE.Window.handle, glfwCreateStandardCursor(0x00036000 + cursor));
+//    }
+//#endif
+//}
 
-// Get touch position X for touch point 0 (relative to screen size)
-int GetTouchX(void)
-{
-#if defined(PLATFORM_ANDROID) || defined(PLATFORM_WEB)
-    return (int)CORE.Input.Touch.position[0].x;
-#else   // PLATFORM_DESKTOP, PLATFORM_DRM
-    return GetMouseX();
-#endif
-}
+//// Get touch position X for touch point 0 (relative to screen size)
+//int GetTouchX(void)
+//{
+//#if defined(PLATFORM_ANDROID) || defined(PLATFORM_WEB)
+//    return (int)CORE.Input.Touch.position[0].x;
+//#else   // PLATFORM_DESKTOP, PLATFORM_DRM
+//    return GetMouseX();
+//#endif
+//}
 
-// Get touch position Y for touch point 0 (relative to screen size)
-int GetTouchY(void)
-{
-#if defined(PLATFORM_ANDROID) || defined(PLATFORM_WEB)
-    return (int)CORE.Input.Touch.position[0].y;
-#else   // PLATFORM_DESKTOP, PLATFORM_DRM
-    return GetMouseY();
-#endif
-}
+//// Get touch position Y for touch point 0 (relative to screen size)
+//int GetTouchY(void)
+//{
+//#if defined(PLATFORM_ANDROID) || defined(PLATFORM_WEB)
+//    return (int)CORE.Input.Touch.position[0].y;
+//#else   // PLATFORM_DESKTOP, PLATFORM_DRM
+//    return GetMouseY();
+//#endif
+//}
 
-// Get touch position XY for a touch point index (relative to screen size)
-// TODO: Touch position should be scaled depending on display size and render size
-Vector2 GetTouchPosition(int index)
-{
-    Vector2 position = { -1.0f, -1.0f };
-
-#if defined(PLATFORM_DESKTOP)
-    // TODO: GLFW does not support multi-touch input just yet
-    // https://www.codeproject.com/Articles/668404/Programming-for-Multi-Touch
-    // https://docs.microsoft.com/en-us/windows/win32/wintouch/getting-started-with-multi-touch-messages
-    if (index == 0) position = GetMousePosition();
-#endif
-#if defined(PLATFORM_ANDROID) || defined(PLATFORM_WEB) || defined(PLATFORM_DRM)
-    if (index < MAX_TOUCH_POINTS) position = CORE.Input.Touch.position[index];
-    else TRACELOG(LOG_WARNING, "INPUT: Required touch point out of range (Max touch points: %i)", MAX_TOUCH_POINTS);
-#endif
-
-    return position;
-}
+//// Get touch position XY for a touch point index (relative to screen size)
+//// TODO: Touch position should be scaled depending on display size and render size
+//Vector2 GetTouchPosition(int index)
+//{
+//    Vector2 position = { -1.0f, -1.0f };
+//
+//#if defined(PLATFORM_DESKTOP)
+//    // TODO: GLFW does not support multi-touch input just yet
+//    // https://www.codeproject.com/Articles/668404/Programming-for-Multi-Touch
+//    // https://docs.microsoft.com/en-us/windows/win32/wintouch/getting-started-with-multi-touch-messages
+//    if (index == 0) position = GetMousePosition();
+//#endif
+//#if defined(PLATFORM_ANDROID) || defined(PLATFORM_WEB) || defined(PLATFORM_DRM)
+//    if (index < MAX_TOUCH_POINTS) position = CORE.Input.Touch.position[index];
+//    else TRACELOG(LOG_WARNING, "INPUT: Required touch point out of range (Max touch points: %i)", MAX_TOUCH_POINTS);
+//#endif
+//
+//    return position;
+//}
 
 // Get touch point identifier for given index
 int GetTouchPointId(int index)
