@@ -1568,7 +1568,6 @@ void SetMousePosition(int x, int y)
     glfwSetCursorPos(CORE.Window.handle, CORE.Input.Mouse.currentPosition.x, CORE.Input.Mouse.currentPosition.y);
 }
 
-
 // Get mouse wheel movement Y
 float GetMouseWheelMove(void)
 {
@@ -1580,13 +1579,37 @@ float GetMouseWheelMove(void)
     return result;
 }
 
+// Get touch position X for touch point 0 (relative to screen size)
+int GetTouchX(void)
+{
+    return GetMouseX();
+}
+
+// Get touch position Y for touch point 0 (relative to screen size)
+int GetTouchY(void)
+{
+    return GetMouseY();
+}
+
+// Get touch position XY for a touch point index (relative to screen size)
+// TODO: Touch position should be scaled depending on display size and render size
+Vector2 GetTouchPosition(int index)
+{
+    Vector2 position = { -1.0f, -1.0f };
+
+    // TODO: GLFW does not support multi-touch input just yet
+    // https://www.codeproject.com/Articles/668404/Programming-for-Multi-Touch
+    // https://docs.microsoft.com/en-us/windows/win32/wintouch/getting-started-with-multi-touch-messages
+    if (index == 0) position = GetMousePosition();
+
+    return position;
+}
 
 // Swap back buffer with front buffer (screen drawing)
 void SwapScreenBuffer(void)
 {
     glfwSwapBuffers(CORE.Window.handle);
 }
-
 
 // Register all input events
 void PollInputEvents(void)

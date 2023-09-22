@@ -1111,13 +1111,35 @@ float GetMouseWheelMove(void)
     return result;
 }
 
+// Get touch position X for touch point 0 (relative to screen size)
+int GetTouchX(void)
+{
+    return (int)CORE.Input.Touch.position[0].x;
+}
+
+// Get touch position Y for touch point 0 (relative to screen size)
+int GetTouchY(void)
+{
+    return (int)CORE.Input.Touch.position[0].y;
+}
+
+// Get touch position XY for a touch point index (relative to screen size)
+// TODO: Touch position should be scaled depending on display size and render size
+Vector2 GetTouchPosition(int index)
+{
+    Vector2 position = { -1.0f, -1.0f };
+
+    if (index < MAX_TOUCH_POINTS) position = CORE.Input.Touch.position[index];
+    else TRACELOG(LOG_WARNING, "INPUT: Required touch point out of range (Max touch points: %i)", MAX_TOUCH_POINTS);
+
+    return position;
+}
 
 // Swap back buffer with front buffer (screen drawing)
 void SwapScreenBuffer(void)
 {
     glfwSwapBuffers(CORE.Window.handle);
 }
-
 
 // Register all input events
 void PollInputEvents(void)
