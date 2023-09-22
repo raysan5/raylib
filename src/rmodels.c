@@ -5246,7 +5246,7 @@ static bool GetPoseAtTimeGLTF(cgltf_accessor *input, cgltf_accessor *output, flo
     float tend = 0.0f;
     int keyframe = 0;       // Defaults to first pose
 
-    for (int i = 0; i < input->count - 1; i++)
+    for (int i = 0; i < (int)input->count - 1; i++)
     {
         cgltf_bool r1 = cgltf_accessor_read_float(input, i, &tstart, 1);
         if (!r1) return false;
@@ -5722,7 +5722,7 @@ static Model LoadM3D(const char *fileName)
                     int skinid = m3d->vertex[m3d->face[i].vertex[n]].skinid;
 
                     // Check if there is a skin for this mesh, should be, just failsafe
-                    if (skinid != M3D_UNDEF && skinid < (int)m3d->numskin)
+                    if ((skinid != M3D_UNDEF) && (skinid < (int)m3d->numskin))
                     {
                         for (j = 0; j < 4; j++)
                         {
