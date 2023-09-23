@@ -711,7 +711,6 @@ void ToggleBorderlessWindowed(void)
                 glfwGetMonitorPos(monitors[monitor], &monitorPosX, &monitorPosY);
                 const int monitorWidth = mode->width;
                 const int monitorHeight = mode->height;
-                glfwSetWindowSize(CORE.Window.handle, monitorWidth, monitorHeight);
 
                 // Set screen position and size
                 glfwSetWindowPos(CORE.Window.handle, monitorPosX, monitorPosY);
