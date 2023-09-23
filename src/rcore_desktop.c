@@ -711,7 +711,6 @@ void ToggleBorderlessWindowed(void)
                 glfwGetMonitorPos(monitors[monitor], &monitorPosX, &monitorPosY);
                 const int monitorWidth = mode->width;
                 const int monitorHeight = mode->height;
-                glfwSetWindowSize(CORE.Window.handle, monitorWidth, monitorHeight);
 
                 // Set screen position and size
                 glfwSetWindowPos(CORE.Window.handle, monitorPosX, monitorPosY);
@@ -1150,11 +1149,11 @@ static void ErrorCallback(int error, const char *description)
 // Get native window handle
 void *GetWindowHandle(void)
 {
-#if defined(PLATFORM_DESKTOP) && defined(_WIN32)
+#if defined(_WIN32)
     // NOTE: Returned handle is: void *HWND (windows.h)
     return glfwGetWin32Window(CORE.Window.handle);
 #endif
-#if defined(PLATFORM_DESKTOP) && defined(__linux__)
+#if defined(__linux__)
     // NOTE: Returned handle is: unsigned long Window (X.h)
     // typedef unsigned long XID;
     // typedef XID Window;
@@ -1497,16 +1496,6 @@ void OpenURL(const char *url)
     }
 }
 
-// Get gamepad internal name id
-const char *GetGamepadName(int gamepad)
-{
-    const char *name = NULL;
-
-    if (CORE.Input.Gamepad.ready[gamepad]) name = glfwGetJoystickName(gamepad);
-
-    return name;
-}
-
 // Get selected monitor physical width in millimetres
 int GetMonitorPhysicalWidth(int monitor)
 {
@@ -1521,6 +1510,16 @@ int GetMonitorPhysicalWidth(int monitor)
     }
     else TRACELOG(LOG_WARNING, "GLFW: Failed to find selected monitor");
     return 0;
+}
+
+// Get gamepad internal name id
+const char *GetGamepadName(int gamepad)
+{
+    const char *name = NULL;
+
+    if (CORE.Input.Gamepad.ready[gamepad]) name = glfwGetJoystickName(gamepad);
+
+    return name;
 }
 
 // Get gamepad axis count
