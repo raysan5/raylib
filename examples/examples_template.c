@@ -35,6 +35,23 @@
     9. In case of additional information is required, just come to raylib Discord channel: example-contributions
 
     10. Have fun!
+
+    The following files should be updated when adding a new example, it's planned to create some
+    script to automatize this process but not available yet.
+
+     - raylib/examples/<category>/<category>_example_name.c
+     - raylib/examples/<category>/<category>_example_name.png
+     - raylib/examples/<category>/resources/*.*
+     - raylib/examples/Makefile
+     - raylib/examples/Makefile.Web
+     - raylib/examples/README.md
+     - raylib/projects/VS2022/examples/<category>_example_name.vcxproj
+     - raylib/projects/VS2022/raylib.sln
+     - raylib.com/common/examples.js
+     - raylib.com/examples/<category>/<category>_example_name.html
+     - raylib.com/examples/<category>/<category>_example_name.data
+     - raylib.com/examples/<category>/<category>_example_name.wasm
+     - raylib.com/examples/<category>/<category>_example_name.js
 */
 
 /*******************************************************************************************
