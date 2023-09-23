@@ -1035,6 +1035,12 @@ void OpenURL(const char *url)
     }
 }
 
+// Get selected monitor physical width in millimetres
+int GetMonitorPhysicalWidth(int monitor)
+{
+    return 0;
+}
+
 // Get gamepad internal name id
 const char *GetGamepadName(int gamepad)
 {
@@ -1043,12 +1049,6 @@ const char *GetGamepadName(int gamepad)
     name = CORE.Input.Gamepad.name[gamepad];
 
     return name;
-}
-
-// Get selected monitor physical width in millimetres
-int GetMonitorPhysicalWidth(int monitor)
-{
-    return 0;
 }
 
 // Get gamepad axis count
@@ -1060,6 +1060,8 @@ int GetGamepadAxisCount(int gamepad)
 // Set internal gamepad mappings
 int SetGamepadMappings(const char *mappings)
 {
+    TRACELOG(LOG_INFO, "SetGamepadMappings not implemented in rcore_web.c");
+
     return 0;
 }
 

@@ -1496,16 +1496,6 @@ void OpenURL(const char *url)
     }
 }
 
-// Get gamepad internal name id
-const char *GetGamepadName(int gamepad)
-{
-    const char *name = NULL;
-
-    if (CORE.Input.Gamepad.ready[gamepad]) name = glfwGetJoystickName(gamepad);
-
-    return name;
-}
-
 // Get selected monitor physical width in millimetres
 int GetMonitorPhysicalWidth(int monitor)
 {
@@ -1520,6 +1510,16 @@ int GetMonitorPhysicalWidth(int monitor)
     }
     else TRACELOG(LOG_WARNING, "GLFW: Failed to find selected monitor");
     return 0;
+}
+
+// Get gamepad internal name id
+const char *GetGamepadName(int gamepad)
+{
+    const char *name = NULL;
+
+    if (CORE.Input.Gamepad.ready[gamepad]) name = glfwGetJoystickName(gamepad);
+
+    return name;
 }
 
 // Get gamepad axis count

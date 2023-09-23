@@ -1043,16 +1043,18 @@ void OpenURL(const char *url)
     }
 }
 
-// Get gamepad internal name id
-const char *GetGamepadName(int gamepad)
-{
-    return NULL;
-}
-
 // Get selected monitor physical width in millimetres
 int GetMonitorPhysicalWidth(int monitor)
 {
     return 0;
+}
+
+// Get gamepad internal name id
+const char *GetGamepadName(int gamepad)
+{
+    TRACELOG(LOG_INFO, "GetGamepadName not implemented in rcore_android.c");
+
+    return NULL;
 }
 
 // Get gamepad axis count
@@ -1064,6 +1066,8 @@ int GetGamepadAxisCount(int gamepad)
 // Set internal gamepad mappings
 int SetGamepadMappings(const char *mappings)
 {
+    TRACELOG(LOG_INFO, "SetGamepadMappings not implemented in rcore_android.c");
+
     return 0;
 }
 
