@@ -1041,6 +1041,8 @@ int GetMonitorPhysicalWidth(int monitor)
     return 0;
 }
 
+// NOTE: Gamepad support not implemented in emscripten GLFW3 (PLATFORM_WEB)
+
 // Get gamepad internal name id
 const char *GetGamepadName(int gamepad)
 {
