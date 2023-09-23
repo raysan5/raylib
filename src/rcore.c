@@ -1937,14 +1937,14 @@ int GetCharPressed(void)
     return value;
 }
 
-// Set a custom key to exit program
-// NOTE: default exitKey is ESCAPE
-void SetExitKey(int key)
-{
-#if !defined(PLATFORM_ANDROID)
-    CORE.Input.Keyboard.exitKey = key;
-#endif
-}
+//// Set a custom key to exit program
+//// NOTE: default exitKey is ESCAPE
+//void SetExitKey(int key)
+//{
+//#if !defined(PLATFORM_ANDROID)
+//    CORE.Input.Keyboard.exitKey = key;
+//#endif
+//}
 
 // NOTE: Gamepad support not implemented in emscripten GLFW3 (PLATFORM_WEB)
 

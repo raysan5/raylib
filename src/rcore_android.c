@@ -1049,6 +1049,13 @@ int GetMonitorPhysicalWidth(int monitor)
     return 0;
 }
 
+// Set a custom key to exit program
+// NOTE: default exitKey is ESCAPE
+void SetExitKey(int key)
+{
+    TRACELOG(LOG_INFO, "SetExitKey not implemented in rcore_android.c");
+}
+
 // Get gamepad internal name id
 const char *GetGamepadName(int gamepad)
 {

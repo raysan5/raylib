@@ -1041,6 +1041,13 @@ int GetMonitorPhysicalWidth(int monitor)
     return 0;
 }
 
+// Set a custom key to exit program
+// NOTE: default exitKey is ESCAPE
+void SetExitKey(int key)
+{
+    CORE.Input.Keyboard.exitKey = key;
+}
+
 // NOTE: Gamepad support not implemented in emscripten GLFW3 (PLATFORM_WEB)
 
 // Get gamepad internal name id
