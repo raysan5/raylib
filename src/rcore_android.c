@@ -270,6 +270,350 @@ static bool InitGraphicsDevice(int width, int height)
     return true;
 }
 
+// ANDROID: Process activity lifecycle commands
+static void AndroidCommandCallback(struct android_app *app, int32_t cmd)
+{
+    switch (cmd)
+    {
+        case APP_CMD_START:
+        {
+            //rendering = true;
+        } break;
+        case APP_CMD_RESUME: break;
+        case APP_CMD_INIT_WINDOW:
+        {
+            if (app->window != NULL)
+            {
+                if (CORE.Android.contextRebindRequired)
+                {
+                    // Reset screen scaling to full display size
+                    EGLint displayFormat = 0;
+                    eglGetConfigAttrib(CORE.Window.device, CORE.Window.config, EGL_NATIVE_VISUAL_ID, &displayFormat);
+
+                    // Adding renderOffset here feels rather hackish, but the viewport scaling is wrong after the
+                    // context rebinding if the screen is scaled unless offsets are added. There's probably a more
+                    // appropriate way to fix this
+                    ANativeWindow_setBuffersGeometry(app->window,
+                        CORE.Window.render.width + CORE.Window.renderOffset.x,
+                        CORE.Window.render.height + CORE.Window.renderOffset.y,
+                        displayFormat);
+
+                    // Recreate display surface and re-attach OpenGL context
+                    CORE.Window.surface = eglCreateWindowSurface(CORE.Window.device, CORE.Window.config, app->window, NULL);
+                    eglMakeCurrent(CORE.Window.device, CORE.Window.surface, CORE.Window.surface, CORE.Window.context);
+
+                    CORE.Android.contextRebindRequired = false;
+                }
+                else
+                {
+                    CORE.Window.display.width = ANativeWindow_getWidth(CORE.Android.app->window);
+                    CORE.Window.display.height = ANativeWindow_getHeight(CORE.Android.app->window);
+
+                    // Initialize graphics device (display device and OpenGL context)
+                    InitGraphicsDevice(CORE.Window.screen.width, CORE.Window.screen.height);
+
+                    // Initialize hi-res timer
+                    InitTimer();
+
+                    // Initialize random seed
+                    srand((unsigned int)time(NULL));
+
+                #if defined(SUPPORT_MODULE_RTEXT) && defined(SUPPORT_DEFAULT_FONT)
+                    // Load default font
+                    // WARNING: External function: Module required: rtext
+                    LoadFontDefault();
+                    Rectangle rec = GetFontDefault().recs[95];
+                    // NOTE: We setup a 1px padding on char rectangle to avoid pixel bleeding on MSAA filtering
+                    #if defined(SUPPORT_MODULE_RSHAPES)
+                    SetShapesTexture(GetFontDefault().texture, (Rectangle){ rec.x + 1, rec.y + 1, rec.width - 2, rec.height - 2 });  // WARNING: Module required: rshapes
+                    #endif
+                #endif
+
+                    // TODO: GPU assets reload in case of lost focus (lost context)
+                    // NOTE: This problem has been solved just unbinding and rebinding context from display
+                    /*
+                    if (assetsReloadRequired)
+                    {
+                        for (int i = 0; i < assetCount; i++)
+                        {
+                            // TODO: Unload old asset if required
+
+                            // Load texture again to pointed texture
+                            (*textureAsset + i) = LoadTexture(assetPath[i]);
+                        }
+                    }
+                    */
+                }
+            }
+        } break;
+        case APP_CMD_GAINED_FOCUS:
+        {
+            CORE.Android.appEnabled = true;
+            //ResumeMusicStream();
+        } break;
+        case APP_CMD_PAUSE: break;
+        case APP_CMD_LOST_FOCUS:
+        {
+            CORE.Android.appEnabled = false;
+            //PauseMusicStream();
+        } break;
+        case APP_CMD_TERM_WINDOW:
+        {
+            // Detach OpenGL context and destroy display surface
+            // NOTE 1: This case is used when the user exits the app without closing it. We detach the context to ensure everything is recoverable upon resuming.
+            // NOTE 2: Detaching context before destroying display surface avoids losing our resources (textures, shaders, VBOs...)
+            // NOTE 3: In some cases (too many context loaded), OS could unload context automatically... :(
+            if (CORE.Window.device != EGL_NO_DISPLAY)
+            {
+                eglMakeCurrent(CORE.Window.device, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
+
+                if (CORE.Window.surface != EGL_NO_SURFACE)
+                {
+                    eglDestroySurface(CORE.Window.device, CORE.Window.surface);
+                    CORE.Window.surface = EGL_NO_SURFACE;
+                }
+
+                CORE.Android.contextRebindRequired = true;
+            }
+            // If 'CORE.Window.device' is already set to 'EGL_NO_DISPLAY'
+            // this means that the user has already called 'CloseWindow()'
+
+        } break;
+        case APP_CMD_SAVE_STATE: break;
+        case APP_CMD_STOP: break;
+        case APP_CMD_DESTROY: break;
+        case APP_CMD_CONFIG_CHANGED:
+        {
+            //AConfiguration_fromAssetManager(CORE.Android.app->config, CORE.Android.app->activity->assetManager);
+            //print_cur_config(CORE.Android.app);
+
+            // Check screen orientation here!
+        } break;
+        default: break;
+    }
+}
+
+static GamepadButton AndroidTranslateGamepadButton(int button)
+{
+    switch (button)
+    {
+        case AKEYCODE_BUTTON_A: return GAMEPAD_BUTTON_RIGHT_FACE_DOWN;
+        case AKEYCODE_BUTTON_B: return GAMEPAD_BUTTON_RIGHT_FACE_RIGHT;
+        case AKEYCODE_BUTTON_X: return GAMEPAD_BUTTON_RIGHT_FACE_LEFT;
+        case AKEYCODE_BUTTON_Y: return GAMEPAD_BUTTON_RIGHT_FACE_UP;
+        case AKEYCODE_BUTTON_L1: return GAMEPAD_BUTTON_LEFT_TRIGGER_1;
+        case AKEYCODE_BUTTON_R1: return GAMEPAD_BUTTON_RIGHT_TRIGGER_1;
+        case AKEYCODE_BUTTON_L2: return GAMEPAD_BUTTON_LEFT_TRIGGER_2;
+        case AKEYCODE_BUTTON_R2: return GAMEPAD_BUTTON_RIGHT_TRIGGER_2;
+        case AKEYCODE_BUTTON_THUMBL: return GAMEPAD_BUTTON_LEFT_THUMB;
+        case AKEYCODE_BUTTON_THUMBR: return GAMEPAD_BUTTON_RIGHT_THUMB;
+        case AKEYCODE_BUTTON_START: return GAMEPAD_BUTTON_MIDDLE_RIGHT;
+        case AKEYCODE_BUTTON_SELECT: return GAMEPAD_BUTTON_MIDDLE_LEFT;
+        case AKEYCODE_BUTTON_MODE: return GAMEPAD_BUTTON_MIDDLE;
+        // On some (most?) gamepads dpad events are reported as axis motion instead
+        case AKEYCODE_DPAD_DOWN: return GAMEPAD_BUTTON_LEFT_FACE_DOWN;
+        case AKEYCODE_DPAD_RIGHT: return GAMEPAD_BUTTON_LEFT_FACE_RIGHT;
+        case AKEYCODE_DPAD_LEFT: return GAMEPAD_BUTTON_LEFT_FACE_LEFT;
+        case AKEYCODE_DPAD_UP: return GAMEPAD_BUTTON_LEFT_FACE_UP;
+        default: return GAMEPAD_BUTTON_UNKNOWN;
+    }
+}
+
+// ANDROID: Get input events
+static int32_t AndroidInputCallback(struct android_app *app, AInputEvent *event)
+{
+    // If additional inputs are required check:
+    // https://developer.android.com/ndk/reference/group/input
+    // https://developer.android.com/training/game-controllers/controller-input
+
+    int type = AInputEvent_getType(event);
+    int source = AInputEvent_getSource(event);
+
+    if (type == AINPUT_EVENT_TYPE_MOTION)
+    {
+        if (((source & AINPUT_SOURCE_JOYSTICK) == AINPUT_SOURCE_JOYSTICK) ||
+            ((source & AINPUT_SOURCE_GAMEPAD) == AINPUT_SOURCE_GAMEPAD))
+        {
+            // For now we'll assume a single gamepad which we "detect" on its input event
+            CORE.Input.Gamepad.ready[0] = true;
+
+            CORE.Input.Gamepad.axisState[0][GAMEPAD_AXIS_LEFT_X] = AMotionEvent_getAxisValue(
+                    event, AMOTION_EVENT_AXIS_X, 0);
+            CORE.Input.Gamepad.axisState[0][GAMEPAD_AXIS_LEFT_Y] = AMotionEvent_getAxisValue(
+                    event, AMOTION_EVENT_AXIS_Y, 0);
+            CORE.Input.Gamepad.axisState[0][GAMEPAD_AXIS_RIGHT_X] = AMotionEvent_getAxisValue(
+                    event, AMOTION_EVENT_AXIS_Z, 0);
+            CORE.Input.Gamepad.axisState[0][GAMEPAD_AXIS_RIGHT_Y] = AMotionEvent_getAxisValue(
+                    event, AMOTION_EVENT_AXIS_RZ, 0);
+            CORE.Input.Gamepad.axisState[0][GAMEPAD_AXIS_LEFT_TRIGGER] = AMotionEvent_getAxisValue(
+                    event, AMOTION_EVENT_AXIS_BRAKE, 0) * 2.0f - 1.0f;
+            CORE.Input.Gamepad.axisState[0][GAMEPAD_AXIS_RIGHT_TRIGGER] = AMotionEvent_getAxisValue(
+                    event, AMOTION_EVENT_AXIS_GAS, 0) * 2.0f - 1.0f;
+
+            // dpad is reported as an axis on android
+            float dpadX = AMotionEvent_getAxisValue(event, AMOTION_EVENT_AXIS_HAT_X, 0);
+            float dpadY = AMotionEvent_getAxisValue(event, AMOTION_EVENT_AXIS_HAT_Y, 0);
+
+            if (dpadX == 1.0f)
+            {
+                CORE.Input.Gamepad.currentButtonState[0][GAMEPAD_BUTTON_LEFT_FACE_RIGHT] = 1;
+                CORE.Input.Gamepad.currentButtonState[0][GAMEPAD_BUTTON_LEFT_FACE_LEFT] = 0;
+            }
+            else if (dpadX == -1.0f)
+            {
+                CORE.Input.Gamepad.currentButtonState[0][GAMEPAD_BUTTON_LEFT_FACE_RIGHT] = 0;
+                CORE.Input.Gamepad.currentButtonState[0][GAMEPAD_BUTTON_LEFT_FACE_LEFT] = 1;
+            }
+            else
+            {
+                CORE.Input.Gamepad.currentButtonState[0][GAMEPAD_BUTTON_LEFT_FACE_RIGHT] = 0;
+                CORE.Input.Gamepad.currentButtonState[0][GAMEPAD_BUTTON_LEFT_FACE_LEFT] = 0;
+            }
+
+            if (dpadY == 1.0f)
+            {
+                CORE.Input.Gamepad.currentButtonState[0][GAMEPAD_BUTTON_LEFT_FACE_DOWN] = 1;
+                CORE.Input.Gamepad.currentButtonState[0][GAMEPAD_BUTTON_LEFT_FACE_UP] = 0;
+            }
+            else if (dpadY == -1.0f)
+            {
+                CORE.Input.Gamepad.currentButtonState[0][GAMEPAD_BUTTON_LEFT_FACE_DOWN] = 0;
+                CORE.Input.Gamepad.currentButtonState[0][GAMEPAD_BUTTON_LEFT_FACE_UP] = 1;
+            }
+            else
+            {
+                CORE.Input.Gamepad.currentButtonState[0][GAMEPAD_BUTTON_LEFT_FACE_DOWN] = 0;
+                CORE.Input.Gamepad.currentButtonState[0][GAMEPAD_BUTTON_LEFT_FACE_UP] = 0;
+            }
+
+            return 1; // Handled gamepad axis motion
+        }
+    }
+    else if (type == AINPUT_EVENT_TYPE_KEY)
+    {
+        int32_t keycode = AKeyEvent_getKeyCode(event);
+        //int32_t AKeyEvent_getMetaState(event);
+
+        // Handle gamepad button presses and releases
+        if (((source & AINPUT_SOURCE_JOYSTICK) == AINPUT_SOURCE_JOYSTICK) ||
+            ((source & AINPUT_SOURCE_GAMEPAD) == AINPUT_SOURCE_GAMEPAD))
+        {
+            // For now we'll assume a single gamepad which we "detect" on its input event
+            CORE.Input.Gamepad.ready[0] = true;
+
+            GamepadButton button = AndroidTranslateGamepadButton(keycode);
+
+            if (button == GAMEPAD_BUTTON_UNKNOWN) return 1;
+
+            if (AKeyEvent_getAction(event) == AKEY_EVENT_ACTION_DOWN)
+            {
+                CORE.Input.Gamepad.currentButtonState[0][button] = 1;
+            }
+            else CORE.Input.Gamepad.currentButtonState[0][button] = 0;  // Key up
+
+            return 1; // Handled gamepad button
+        }
+
+        // Save current button and its state
+        // NOTE: Android key action is 0 for down and 1 for up
+        if (AKeyEvent_getAction(event) == AKEY_EVENT_ACTION_DOWN)
+        {
+            CORE.Input.Keyboard.currentKeyState[keycode] = 1;   // Key down
+
+            CORE.Input.Keyboard.keyPressedQueue[CORE.Input.Keyboard.keyPressedQueueCount] = keycode;
+            CORE.Input.Keyboard.keyPressedQueueCount++;
+        }
+        else if (AKeyEvent_getAction(event) == AKEY_EVENT_ACTION_MULTIPLE) CORE.Input.Keyboard.keyRepeatInFrame[keycode] = 1;
+        else CORE.Input.Keyboard.currentKeyState[keycode] = 0;  // Key up
+
+        if (keycode == AKEYCODE_POWER)
+        {
+            // Let the OS handle input to avoid app stuck. Behaviour: CMD_PAUSE -> CMD_SAVE_STATE -> CMD_STOP -> CMD_CONFIG_CHANGED -> CMD_LOST_FOCUS
+            // Resuming Behaviour: CMD_START -> CMD_RESUME -> CMD_CONFIG_CHANGED -> CMD_CONFIG_CHANGED -> CMD_GAINED_FOCUS
+            // It seems like locking mobile, screen size (CMD_CONFIG_CHANGED) is affected.
+            // NOTE: AndroidManifest.xml must have <activity android:configChanges="orientation|keyboardHidden|screenSize" >
+            // Before that change, activity was calling CMD_TERM_WINDOW and CMD_DESTROY when locking mobile, so that was not a normal behaviour
+            return 0;
+        }
+        else if ((keycode == AKEYCODE_BACK) || (keycode == AKEYCODE_MENU))
+        {
+            // Eat BACK_BUTTON and AKEYCODE_MENU, just do nothing... and don't let to be handled by OS!
+            return 1;
+        }
+        else if ((keycode == AKEYCODE_VOLUME_UP) || (keycode == AKEYCODE_VOLUME_DOWN))
+        {
+            // Set default OS behaviour
+            return 0;
+        }
+
+        return 0;
+    }
+
+    // Register touch points count
+    CORE.Input.Touch.pointCount = AMotionEvent_getPointerCount(event);
+
+    for (int i = 0; (i < CORE.Input.Touch.pointCount) && (i < MAX_TOUCH_POINTS); i++)
+    {
+        // Register touch points id
+        CORE.Input.Touch.pointId[i] = AMotionEvent_getPointerId(event, i);
+
+        // Register touch points position
+        CORE.Input.Touch.position[i] = (Vector2){ AMotionEvent_getX(event, i), AMotionEvent_getY(event, i) };
+
+        // Normalize CORE.Input.Touch.position[i] for CORE.Window.screen.width and CORE.Window.screen.height
+        float widthRatio = (float)(CORE.Window.screen.width + CORE.Window.renderOffset.x) / (float)CORE.Window.display.width;
+        float heightRatio = (float)(CORE.Window.screen.height + CORE.Window.renderOffset.y) / (float)CORE.Window.display.height;
+        CORE.Input.Touch.position[i].x = CORE.Input.Touch.position[i].x * widthRatio - (float)CORE.Window.renderOffset.x / 2;
+        CORE.Input.Touch.position[i].y = CORE.Input.Touch.position[i].y * heightRatio - (float)CORE.Window.renderOffset.y / 2;
+    }
+
+    int32_t action = AMotionEvent_getAction(event);
+    unsigned int flags = action & AMOTION_EVENT_ACTION_MASK;
+
+#if defined(SUPPORT_GESTURES_SYSTEM)        // PLATFORM_ANDROID
+    GestureEvent gestureEvent = { 0 };
+
+    gestureEvent.pointCount = CORE.Input.Touch.pointCount;
+
+    // Register touch actions
+    if (flags == AMOTION_EVENT_ACTION_DOWN) gestureEvent.touchAction = TOUCH_ACTION_DOWN;
+    else if (flags == AMOTION_EVENT_ACTION_UP) gestureEvent.touchAction = TOUCH_ACTION_UP;
+    else if (flags == AMOTION_EVENT_ACTION_MOVE) gestureEvent.touchAction = TOUCH_ACTION_MOVE;
+    else if (flags == AMOTION_EVENT_ACTION_CANCEL) gestureEvent.touchAction = TOUCH_ACTION_CANCEL;
+
+    for (int i = 0; (i < gestureEvent.pointCount) && (i < MAX_TOUCH_POINTS); i++)
+    {
+        gestureEvent.pointId[i] = CORE.Input.Touch.pointId[i];
+        gestureEvent.position[i] = CORE.Input.Touch.position[i];
+    }
+
+    // Gesture data is sent to gestures system for processing
+    ProcessGestureEvent(gestureEvent);
+#endif
+
+    int32_t pointerIndex = (action & AMOTION_EVENT_ACTION_POINTER_INDEX_MASK) >> AMOTION_EVENT_ACTION_POINTER_INDEX_SHIFT;
+
+    if (flags == AMOTION_EVENT_ACTION_POINTER_UP || flags == AMOTION_EVENT_ACTION_UP)
+    {
+        // One of the touchpoints is released, remove it from touch point arrays
+        for (int i = pointerIndex; (i < CORE.Input.Touch.pointCount - 1) && (i < MAX_TOUCH_POINTS); i++)
+        {
+            CORE.Input.Touch.pointId[i] = CORE.Input.Touch.pointId[i+1];
+            CORE.Input.Touch.position[i] = CORE.Input.Touch.position[i+1];
+        }
+
+        CORE.Input.Touch.pointCount--;
+    }
+
+    // When all touchpoints are tapped and released really quickly, this event is generated
+    if (flags == AMOTION_EVENT_ACTION_CANCEL) CORE.Input.Touch.pointCount = 0;
+
+    if (CORE.Input.Touch.pointCount > 0) CORE.Input.Touch.currentTouchState[MOUSE_BUTTON_LEFT] = 1;
+    else CORE.Input.Touch.currentTouchState[MOUSE_BUTTON_LEFT] = 0;
+
+    return 0;
+}
+
 // To allow easier porting to android, we allow the user to define a
 // main function which we call from android_main, defined by ourselves
 extern int main(int argc, char *argv[]);
@@ -855,348 +1199,4 @@ void PollInputEvents(void)
             //ANativeActivity_finish(CORE.Android.app->activity);
         }
     }
-}
-
-// ANDROID: Process activity lifecycle commands
-static void AndroidCommandCallback(struct android_app *app, int32_t cmd)
-{
-    switch (cmd)
-    {
-        case APP_CMD_START:
-        {
-            //rendering = true;
-        } break;
-        case APP_CMD_RESUME: break;
-        case APP_CMD_INIT_WINDOW:
-        {
-            if (app->window != NULL)
-            {
-                if (CORE.Android.contextRebindRequired)
-                {
-                    // Reset screen scaling to full display size
-                    EGLint displayFormat = 0;
-                    eglGetConfigAttrib(CORE.Window.device, CORE.Window.config, EGL_NATIVE_VISUAL_ID, &displayFormat);
-
-                    // Adding renderOffset here feels rather hackish, but the viewport scaling is wrong after the
-                    // context rebinding if the screen is scaled unless offsets are added. There's probably a more
-                    // appropriate way to fix this
-                    ANativeWindow_setBuffersGeometry(app->window,
-                        CORE.Window.render.width + CORE.Window.renderOffset.x,
-                        CORE.Window.render.height + CORE.Window.renderOffset.y,
-                        displayFormat);
-
-                    // Recreate display surface and re-attach OpenGL context
-                    CORE.Window.surface = eglCreateWindowSurface(CORE.Window.device, CORE.Window.config, app->window, NULL);
-                    eglMakeCurrent(CORE.Window.device, CORE.Window.surface, CORE.Window.surface, CORE.Window.context);
-
-                    CORE.Android.contextRebindRequired = false;
-                }
-                else
-                {
-                    CORE.Window.display.width = ANativeWindow_getWidth(CORE.Android.app->window);
-                    CORE.Window.display.height = ANativeWindow_getHeight(CORE.Android.app->window);
-
-                    // Initialize graphics device (display device and OpenGL context)
-                    InitGraphicsDevice(CORE.Window.screen.width, CORE.Window.screen.height);
-
-                    // Initialize hi-res timer
-                    InitTimer();
-
-                    // Initialize random seed
-                    srand((unsigned int)time(NULL));
-
-                #if defined(SUPPORT_MODULE_RTEXT) && defined(SUPPORT_DEFAULT_FONT)
-                    // Load default font
-                    // WARNING: External function: Module required: rtext
-                    LoadFontDefault();
-                    Rectangle rec = GetFontDefault().recs[95];
-                    // NOTE: We setup a 1px padding on char rectangle to avoid pixel bleeding on MSAA filtering
-                    #if defined(SUPPORT_MODULE_RSHAPES)
-                    SetShapesTexture(GetFontDefault().texture, (Rectangle){ rec.x + 1, rec.y + 1, rec.width - 2, rec.height - 2 });  // WARNING: Module required: rshapes
-                    #endif
-                #endif
-
-                    // TODO: GPU assets reload in case of lost focus (lost context)
-                    // NOTE: This problem has been solved just unbinding and rebinding context from display
-                    /*
-                    if (assetsReloadRequired)
-                    {
-                        for (int i = 0; i < assetCount; i++)
-                        {
-                            // TODO: Unload old asset if required
-
-                            // Load texture again to pointed texture
-                            (*textureAsset + i) = LoadTexture(assetPath[i]);
-                        }
-                    }
-                    */
-                }
-            }
-        } break;
-        case APP_CMD_GAINED_FOCUS:
-        {
-            CORE.Android.appEnabled = true;
-            //ResumeMusicStream();
-        } break;
-        case APP_CMD_PAUSE: break;
-        case APP_CMD_LOST_FOCUS:
-        {
-            CORE.Android.appEnabled = false;
-            //PauseMusicStream();
-        } break;
-        case APP_CMD_TERM_WINDOW:
-        {
-            // Detach OpenGL context and destroy display surface
-            // NOTE 1: This case is used when the user exits the app without closing it. We detach the context to ensure everything is recoverable upon resuming.
-            // NOTE 2: Detaching context before destroying display surface avoids losing our resources (textures, shaders, VBOs...)
-            // NOTE 3: In some cases (too many context loaded), OS could unload context automatically... :(
-            if (CORE.Window.device != EGL_NO_DISPLAY)
-            {
-                eglMakeCurrent(CORE.Window.device, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
-
-                if (CORE.Window.surface != EGL_NO_SURFACE)
-                {
-                    eglDestroySurface(CORE.Window.device, CORE.Window.surface);
-                    CORE.Window.surface = EGL_NO_SURFACE;
-                }
-
-                CORE.Android.contextRebindRequired = true;
-            }
-            // If 'CORE.Window.device' is already set to 'EGL_NO_DISPLAY'
-            // this means that the user has already called 'CloseWindow()'
-
-        } break;
-        case APP_CMD_SAVE_STATE: break;
-        case APP_CMD_STOP: break;
-        case APP_CMD_DESTROY: break;
-        case APP_CMD_CONFIG_CHANGED:
-        {
-            //AConfiguration_fromAssetManager(CORE.Android.app->config, CORE.Android.app->activity->assetManager);
-            //print_cur_config(CORE.Android.app);
-
-            // Check screen orientation here!
-        } break;
-        default: break;
-    }
-}
-
-static GamepadButton AndroidTranslateGamepadButton(int button)
-{
-    switch (button)
-    {
-        case AKEYCODE_BUTTON_A: return GAMEPAD_BUTTON_RIGHT_FACE_DOWN;
-        case AKEYCODE_BUTTON_B: return GAMEPAD_BUTTON_RIGHT_FACE_RIGHT;
-        case AKEYCODE_BUTTON_X: return GAMEPAD_BUTTON_RIGHT_FACE_LEFT;
-        case AKEYCODE_BUTTON_Y: return GAMEPAD_BUTTON_RIGHT_FACE_UP;
-        case AKEYCODE_BUTTON_L1: return GAMEPAD_BUTTON_LEFT_TRIGGER_1;
-        case AKEYCODE_BUTTON_R1: return GAMEPAD_BUTTON_RIGHT_TRIGGER_1;
-        case AKEYCODE_BUTTON_L2: return GAMEPAD_BUTTON_LEFT_TRIGGER_2;
-        case AKEYCODE_BUTTON_R2: return GAMEPAD_BUTTON_RIGHT_TRIGGER_2;
-        case AKEYCODE_BUTTON_THUMBL: return GAMEPAD_BUTTON_LEFT_THUMB;
-        case AKEYCODE_BUTTON_THUMBR: return GAMEPAD_BUTTON_RIGHT_THUMB;
-        case AKEYCODE_BUTTON_START: return GAMEPAD_BUTTON_MIDDLE_RIGHT;
-        case AKEYCODE_BUTTON_SELECT: return GAMEPAD_BUTTON_MIDDLE_LEFT;
-        case AKEYCODE_BUTTON_MODE: return GAMEPAD_BUTTON_MIDDLE;
-        // On some (most?) gamepads dpad events are reported as axis motion instead
-        case AKEYCODE_DPAD_DOWN: return GAMEPAD_BUTTON_LEFT_FACE_DOWN;
-        case AKEYCODE_DPAD_RIGHT: return GAMEPAD_BUTTON_LEFT_FACE_RIGHT;
-        case AKEYCODE_DPAD_LEFT: return GAMEPAD_BUTTON_LEFT_FACE_LEFT;
-        case AKEYCODE_DPAD_UP: return GAMEPAD_BUTTON_LEFT_FACE_UP;
-        default: return GAMEPAD_BUTTON_UNKNOWN;
-    }
-}
-
-// ANDROID: Get input events
-static int32_t AndroidInputCallback(struct android_app *app, AInputEvent *event)
-{
-    // If additional inputs are required check:
-    // https://developer.android.com/ndk/reference/group/input
-    // https://developer.android.com/training/game-controllers/controller-input
-
-    int type = AInputEvent_getType(event);
-    int source = AInputEvent_getSource(event);
-
-    if (type == AINPUT_EVENT_TYPE_MOTION)
-    {
-        if (((source & AINPUT_SOURCE_JOYSTICK) == AINPUT_SOURCE_JOYSTICK) ||
-            ((source & AINPUT_SOURCE_GAMEPAD) == AINPUT_SOURCE_GAMEPAD))
-        {
-            // For now we'll assume a single gamepad which we "detect" on its input event
-            CORE.Input.Gamepad.ready[0] = true;
-
-            CORE.Input.Gamepad.axisState[0][GAMEPAD_AXIS_LEFT_X] = AMotionEvent_getAxisValue(
-                    event, AMOTION_EVENT_AXIS_X, 0);
-            CORE.Input.Gamepad.axisState[0][GAMEPAD_AXIS_LEFT_Y] = AMotionEvent_getAxisValue(
-                    event, AMOTION_EVENT_AXIS_Y, 0);
-            CORE.Input.Gamepad.axisState[0][GAMEPAD_AXIS_RIGHT_X] = AMotionEvent_getAxisValue(
-                    event, AMOTION_EVENT_AXIS_Z, 0);
-            CORE.Input.Gamepad.axisState[0][GAMEPAD_AXIS_RIGHT_Y] = AMotionEvent_getAxisValue(
-                    event, AMOTION_EVENT_AXIS_RZ, 0);
-            CORE.Input.Gamepad.axisState[0][GAMEPAD_AXIS_LEFT_TRIGGER] = AMotionEvent_getAxisValue(
-                    event, AMOTION_EVENT_AXIS_BRAKE, 0) * 2.0f - 1.0f;
-            CORE.Input.Gamepad.axisState[0][GAMEPAD_AXIS_RIGHT_TRIGGER] = AMotionEvent_getAxisValue(
-                    event, AMOTION_EVENT_AXIS_GAS, 0) * 2.0f - 1.0f;
-
-            // dpad is reported as an axis on android
-            float dpadX = AMotionEvent_getAxisValue(event, AMOTION_EVENT_AXIS_HAT_X, 0);
-            float dpadY = AMotionEvent_getAxisValue(event, AMOTION_EVENT_AXIS_HAT_Y, 0);
-
-            if (dpadX == 1.0f)
-            {
-                CORE.Input.Gamepad.currentButtonState[0][GAMEPAD_BUTTON_LEFT_FACE_RIGHT] = 1;
-                CORE.Input.Gamepad.currentButtonState[0][GAMEPAD_BUTTON_LEFT_FACE_LEFT] = 0;
-            }
-            else if (dpadX == -1.0f)
-            {
-                CORE.Input.Gamepad.currentButtonState[0][GAMEPAD_BUTTON_LEFT_FACE_RIGHT] = 0;
-                CORE.Input.Gamepad.currentButtonState[0][GAMEPAD_BUTTON_LEFT_FACE_LEFT] = 1;
-            }
-            else
-            {
-                CORE.Input.Gamepad.currentButtonState[0][GAMEPAD_BUTTON_LEFT_FACE_RIGHT] = 0;
-                CORE.Input.Gamepad.currentButtonState[0][GAMEPAD_BUTTON_LEFT_FACE_LEFT] = 0;
-            }
-
-            if (dpadY == 1.0f)
-            {
-                CORE.Input.Gamepad.currentButtonState[0][GAMEPAD_BUTTON_LEFT_FACE_DOWN] = 1;
-                CORE.Input.Gamepad.currentButtonState[0][GAMEPAD_BUTTON_LEFT_FACE_UP] = 0;
-            }
-            else if (dpadY == -1.0f)
-            {
-                CORE.Input.Gamepad.currentButtonState[0][GAMEPAD_BUTTON_LEFT_FACE_DOWN] = 0;
-                CORE.Input.Gamepad.currentButtonState[0][GAMEPAD_BUTTON_LEFT_FACE_UP] = 1;
-            }
-            else
-            {
-                CORE.Input.Gamepad.currentButtonState[0][GAMEPAD_BUTTON_LEFT_FACE_DOWN] = 0;
-                CORE.Input.Gamepad.currentButtonState[0][GAMEPAD_BUTTON_LEFT_FACE_UP] = 0;
-            }
-
-            return 1; // Handled gamepad axis motion
-        }
-    }
-    else if (type == AINPUT_EVENT_TYPE_KEY)
-    {
-        int32_t keycode = AKeyEvent_getKeyCode(event);
-        //int32_t AKeyEvent_getMetaState(event);
-
-        // Handle gamepad button presses and releases
-        if (((source & AINPUT_SOURCE_JOYSTICK) == AINPUT_SOURCE_JOYSTICK) ||
-            ((source & AINPUT_SOURCE_GAMEPAD) == AINPUT_SOURCE_GAMEPAD))
-        {
-            // For now we'll assume a single gamepad which we "detect" on its input event
-            CORE.Input.Gamepad.ready[0] = true;
-
-            GamepadButton button = AndroidTranslateGamepadButton(keycode);
-
-            if (button == GAMEPAD_BUTTON_UNKNOWN) return 1;
-
-            if (AKeyEvent_getAction(event) == AKEY_EVENT_ACTION_DOWN)
-            {
-                CORE.Input.Gamepad.currentButtonState[0][button] = 1;
-            }
-            else CORE.Input.Gamepad.currentButtonState[0][button] = 0;  // Key up
-
-            return 1; // Handled gamepad button
-        }
-
-        // Save current button and its state
-        // NOTE: Android key action is 0 for down and 1 for up
-        if (AKeyEvent_getAction(event) == AKEY_EVENT_ACTION_DOWN)
-        {
-            CORE.Input.Keyboard.currentKeyState[keycode] = 1;   // Key down
-
-            CORE.Input.Keyboard.keyPressedQueue[CORE.Input.Keyboard.keyPressedQueueCount] = keycode;
-            CORE.Input.Keyboard.keyPressedQueueCount++;
-        }
-        else if (AKeyEvent_getAction(event) == AKEY_EVENT_ACTION_MULTIPLE) CORE.Input.Keyboard.keyRepeatInFrame[keycode] = 1;
-        else CORE.Input.Keyboard.currentKeyState[keycode] = 0;  // Key up
-
-        if (keycode == AKEYCODE_POWER)
-        {
-            // Let the OS handle input to avoid app stuck. Behaviour: CMD_PAUSE -> CMD_SAVE_STATE -> CMD_STOP -> CMD_CONFIG_CHANGED -> CMD_LOST_FOCUS
-            // Resuming Behaviour: CMD_START -> CMD_RESUME -> CMD_CONFIG_CHANGED -> CMD_CONFIG_CHANGED -> CMD_GAINED_FOCUS
-            // It seems like locking mobile, screen size (CMD_CONFIG_CHANGED) is affected.
-            // NOTE: AndroidManifest.xml must have <activity android:configChanges="orientation|keyboardHidden|screenSize" >
-            // Before that change, activity was calling CMD_TERM_WINDOW and CMD_DESTROY when locking mobile, so that was not a normal behaviour
-            return 0;
-        }
-        else if ((keycode == AKEYCODE_BACK) || (keycode == AKEYCODE_MENU))
-        {
-            // Eat BACK_BUTTON and AKEYCODE_MENU, just do nothing... and don't let to be handled by OS!
-            return 1;
-        }
-        else if ((keycode == AKEYCODE_VOLUME_UP) || (keycode == AKEYCODE_VOLUME_DOWN))
-        {
-            // Set default OS behaviour
-            return 0;
-        }
-
-        return 0;
-    }
-
-    // Register touch points count
-    CORE.Input.Touch.pointCount = AMotionEvent_getPointerCount(event);
-
-    for (int i = 0; (i < CORE.Input.Touch.pointCount) && (i < MAX_TOUCH_POINTS); i++)
-    {
-        // Register touch points id
-        CORE.Input.Touch.pointId[i] = AMotionEvent_getPointerId(event, i);
-
-        // Register touch points position
-        CORE.Input.Touch.position[i] = (Vector2){ AMotionEvent_getX(event, i), AMotionEvent_getY(event, i) };
-
-        // Normalize CORE.Input.Touch.position[i] for CORE.Window.screen.width and CORE.Window.screen.height
-        float widthRatio = (float)(CORE.Window.screen.width + CORE.Window.renderOffset.x) / (float)CORE.Window.display.width;
-        float heightRatio = (float)(CORE.Window.screen.height + CORE.Window.renderOffset.y) / (float)CORE.Window.display.height;
-        CORE.Input.Touch.position[i].x = CORE.Input.Touch.position[i].x * widthRatio - (float)CORE.Window.renderOffset.x / 2;
-        CORE.Input.Touch.position[i].y = CORE.Input.Touch.position[i].y * heightRatio - (float)CORE.Window.renderOffset.y / 2;
-    }
-
-    int32_t action = AMotionEvent_getAction(event);
-    unsigned int flags = action & AMOTION_EVENT_ACTION_MASK;
-
-#if defined(SUPPORT_GESTURES_SYSTEM)        // PLATFORM_ANDROID
-    GestureEvent gestureEvent = { 0 };
-
-    gestureEvent.pointCount = CORE.Input.Touch.pointCount;
-
-    // Register touch actions
-    if (flags == AMOTION_EVENT_ACTION_DOWN) gestureEvent.touchAction = TOUCH_ACTION_DOWN;
-    else if (flags == AMOTION_EVENT_ACTION_UP) gestureEvent.touchAction = TOUCH_ACTION_UP;
-    else if (flags == AMOTION_EVENT_ACTION_MOVE) gestureEvent.touchAction = TOUCH_ACTION_MOVE;
-    else if (flags == AMOTION_EVENT_ACTION_CANCEL) gestureEvent.touchAction = TOUCH_ACTION_CANCEL;
-
-    for (int i = 0; (i < gestureEvent.pointCount) && (i < MAX_TOUCH_POINTS); i++)
-    {
-        gestureEvent.pointId[i] = CORE.Input.Touch.pointId[i];
-        gestureEvent.position[i] = CORE.Input.Touch.position[i];
-    }
-
-    // Gesture data is sent to gestures system for processing
-    ProcessGestureEvent(gestureEvent);
-#endif
-
-    int32_t pointerIndex = (action & AMOTION_EVENT_ACTION_POINTER_INDEX_MASK) >> AMOTION_EVENT_ACTION_POINTER_INDEX_SHIFT;
-
-    if (flags == AMOTION_EVENT_ACTION_POINTER_UP || flags == AMOTION_EVENT_ACTION_UP)
-    {
-        // One of the touchpoints is released, remove it from touch point arrays
-        for (int i = pointerIndex; (i < CORE.Input.Touch.pointCount - 1) && (i < MAX_TOUCH_POINTS); i++)
-        {
-            CORE.Input.Touch.pointId[i] = CORE.Input.Touch.pointId[i+1];
-            CORE.Input.Touch.position[i] = CORE.Input.Touch.position[i+1];
-        }
-
-        CORE.Input.Touch.pointCount--;
-    }
-
-    // When all touchpoints are tapped and released really quickly, this event is generated
-    if (flags == AMOTION_EVENT_ACTION_CANCEL) CORE.Input.Touch.pointCount = 0;
-
-    if (CORE.Input.Touch.pointCount > 0) CORE.Input.Touch.currentTouchState[MOUSE_BUTTON_LEFT] = 1;
-    else CORE.Input.Touch.currentTouchState[MOUSE_BUTTON_LEFT] = 0;
-
-    return 0;
 }
