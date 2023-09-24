@@ -136,11 +136,11 @@ static bool InitGraphicsDevice(int width, int height)
     CORE.Window.screen.height = height;          // User desired height
     CORE.Window.screenScale = MatrixIdentity();  // No draw scaling required by default
 
-    // Set the window minimum and maximum default values to 0
-    CORE.Window.windowMin.width  = 0;
-    CORE.Window.windowMin.height = 0;
-    CORE.Window.windowMax.width  = 0;
-    CORE.Window.windowMax.height = 0;
+    // Set the screen minimum and maximum default values to 0
+    CORE.Window.screenMin.width  = 0;
+    CORE.Window.screenMin.height = 0;
+    CORE.Window.screenMax.width  = 0;
+    CORE.Window.screenMax.height = 0;
 
     // NOTE: Framebuffer (render area - CORE.Window.render.width, CORE.Window.render.height) could include black bars...
     // ...in top-down or left-right to match display aspect ratio (no weird scaling)
