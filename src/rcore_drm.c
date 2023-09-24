@@ -949,6 +949,13 @@ int GetMonitorPhysicalWidth(int monitor)
     return 0;
 }
 
+// Set a custom key to exit program
+// NOTE: default exitKey is ESCAPE
+void SetExitKey(int key)
+{
+    CORE.Input.Keyboard.exitKey = key;
+}
+
 // Get gamepad axis count
 int GetGamepadAxisCount(int gamepad)
 {
@@ -1007,6 +1014,34 @@ float GetMouseWheelMove(void)
     return result;
 }
 
+
+// Set mouse cursor
+// NOTE: This is a no-op on platforms other than PLATFORM_DESKTOP
+void SetMouseCursor(int cursor)
+{
+}
+
+// Get touch position X for touch point 0 (relative to screen size)
+int GetTouchX(void)
+{
+    return GetMouseX();
+}
+
+// Get touch position Y for touch point 0 (relative to screen size)
+int GetTouchY(void)
+{
+    return GetMouseY();
+}
+
+// Get touch position XY for a touch point index (relative to screen size)
+// TODO: Touch position should be scaled depending on display size and render size
+Vector2 GetTouchPosition(int index)
+{
+    Vector2 position = { -1.0f, -1.0f };
+    if (index < MAX_TOUCH_POINTS) position = CORE.Input.Touch.position[index];
+    else TRACELOG(LOG_WARNING, "INPUT: Required touch point out of range (Max touch points: %i)", MAX_TOUCH_POINTS);
+    return position;
+}
 
 // Swap back buffer with front buffer (screen drawing)
 void SwapScreenBuffer(void)
