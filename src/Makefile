@@ -384,6 +384,7 @@ ifeq ($(PLATFORM),PLATFORM_DRM)
     # without EGL_NO_X11 eglplatform.h tears Xlib.h in which tears X.h in
     # which contains a conflicting type Font
     CFLAGS += -DEGL_NO_X11
+    CFLAGS += -Werror=implicit-function-declaration
 endif
 # Use Wayland display on Linux desktop
 ifeq ($(PLATFORM),PLATFORM_DESKTOP)
