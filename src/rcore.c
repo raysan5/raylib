@@ -828,7 +828,7 @@ VrStereoConfig LoadVrStereoConfig(VrDeviceInfo device)
 // Unload VR stereo config properties
 void UnloadVrStereoConfig(VrStereoConfig config)
 {
-    //...
+    TRACELOG(LOG_INFO, "UnloadVrStereoConfig not implemented in rcore.c");
 }
 
 // Load shader from files and bind default locations
