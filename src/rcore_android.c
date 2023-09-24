@@ -928,6 +928,7 @@ const char *GetMonitorName(int monitor)
 // Set clipboard text content
 void SetClipboardText(const char *text)
 {
+    TRACELOG(LOG_INFO, "SetClipboardText not implemented in rcore_android.c");
 }
 
 
