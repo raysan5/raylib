@@ -186,151 +186,6 @@ void InitWindow(int width, int height, const char *title)
 #endif
 }
 
-// Register fullscreen change events
-static EM_BOOL EmscriptenFullscreenChangeCallback(int eventType, const EmscriptenFullscreenChangeEvent *event, void *userData)
-{
-    // TODO: Implement EmscriptenFullscreenChangeCallback()?
-
-    return 1; // The event was consumed by the callback handler
-}
-
-// Register window resize event
-static EM_BOOL EmscriptenWindowResizedCallback(int eventType, const EmscriptenUiEvent *event, void *userData)
-{
-    // TODO: Implement EmscriptenWindowResizedCallback()?
-
-    return 1; // The event was consumed by the callback handler
-}
-
-EM_JS(int, GetWindowInnerWidth, (), { return window.innerWidth; });
-EM_JS(int, GetWindowInnerHeight, (), { return window.innerHeight; });
-
-// Register DOM element resize event
-static EM_BOOL EmscriptenResizeCallback(int eventType, const EmscriptenUiEvent *event, void *userData)
-{
-    // Don't resize non-resizeable windows
-    if ((CORE.Window.flags & FLAG_WINDOW_RESIZABLE) == 0) return 1;
-
-    // This event is called whenever the window changes sizes,
-    // so the size of the canvas object is explicitly retrieved below
-    int width = GetWindowInnerWidth();
-    int height = GetWindowInnerHeight();
-
-    if (width < CORE.Window.screenMin.width) width = CORE.Window.screenMin.width;
-    else if (width > CORE.Window.screenMax.width && CORE.Window.screenMax.width > 0) width = CORE.Window.screenMax.width;
-
-    if (height < CORE.Window.screenMin.height) height = CORE.Window.screenMin.height;
-    else if (height > CORE.Window.screenMax.height && CORE.Window.screenMax.height > 0) height = CORE.Window.screenMax.height;
-
-    emscripten_set_canvas_element_size("#canvas", width, height);
-
-    SetupViewport(width, height); // Reset viewport and projection matrix for new size
-
-    CORE.Window.currentFbo.width = width;
-    CORE.Window.currentFbo.height = height;
-    CORE.Window.resizedLastFrame = true;
-
-    if (IsWindowFullscreen()) return 1;
-
-    // Set current screen size
-    CORE.Window.screen.width = width;
-    CORE.Window.screen.height = height;
-
-    // NOTE: Postprocessing texture is not scaled to new size
-
-    return 0;
-}
-
-// Register mouse input events
-static EM_BOOL EmscriptenMouseCallback(int eventType, const EmscriptenMouseEvent *mouseEvent, void *userData)
-{
-    // This is only for registering mouse click events with emscripten and doesn't need to do anything
-
-    return 1; // The event was consumed by the callback handler
-}
-
-// Register connected/disconnected gamepads events
-static EM_BOOL EmscriptenGamepadCallback(int eventType, const EmscriptenGamepadEvent *gamepadEvent, void *userData)
-{
-    /*
-    TRACELOGD("%s: timeStamp: %g, connected: %d, index: %ld, numAxes: %d, numButtons: %d, id: \"%s\", mapping: \"%s\"",
-           eventType != 0? emscripten_event_type_to_string(eventType) : "Gamepad state",
-           gamepadEvent->timestamp, gamepadEvent->connected, gamepadEvent->index, gamepadEvent->numAxes, gamepadEvent->numButtons, gamepadEvent->id, gamepadEvent->mapping);
-
-    for (int i = 0; i < gamepadEvent->numAxes; ++i) TRACELOGD("Axis %d: %g", i, gamepadEvent->axis[i]);
-    for (int i = 0; i < gamepadEvent->numButtons; ++i) TRACELOGD("Button %d: Digital: %d, Analog: %g", i, gamepadEvent->digitalButton[i], gamepadEvent->analogButton[i]);
-    */
-
-    if ((gamepadEvent->connected) && (gamepadEvent->index < MAX_GAMEPADS))
-    {
-        CORE.Input.Gamepad.ready[gamepadEvent->index] = true;
-        sprintf(CORE.Input.Gamepad.name[gamepadEvent->index], "%s", gamepadEvent->id);
-    }
-    else CORE.Input.Gamepad.ready[gamepadEvent->index] = false;
-
-    return 1; // The event was consumed by the callback handler
-}
-
-// Register touch input events
-static EM_BOOL EmscriptenTouchCallback(int eventType, const EmscriptenTouchEvent *touchEvent, void *userData)
-{
-    // Register touch points count
-    CORE.Input.Touch.pointCount = touchEvent->numTouches;
-
-    double canvasWidth = 0.0;
-    double canvasHeight = 0.0;
-    // NOTE: emscripten_get_canvas_element_size() returns canvas.width and canvas.height but
-    // we are looking for actual CSS size: canvas.style.width and canvas.style.height
-    // EMSCRIPTEN_RESULT res = emscripten_get_canvas_element_size("#canvas", &canvasWidth, &canvasHeight);
-    emscripten_get_element_css_size("#canvas", &canvasWidth, &canvasHeight);
-
-    for (int i = 0; (i < CORE.Input.Touch.pointCount) && (i < MAX_TOUCH_POINTS); i++)
-    {
-        // Register touch points id
-        CORE.Input.Touch.pointId[i] = touchEvent->touches[i].identifier;
-
-        // Register touch points position
-        CORE.Input.Touch.position[i] = (Vector2){touchEvent->touches[i].targetX, touchEvent->touches[i].targetY};
-
-        // Normalize gestureEvent.position[x] for CORE.Window.screen.width and CORE.Window.screen.height
-        CORE.Input.Touch.position[i].x *= ((float)GetScreenWidth() / (float)canvasWidth);
-        CORE.Input.Touch.position[i].y *= ((float)GetScreenHeight() / (float)canvasHeight);
-
-        if (eventType == EMSCRIPTEN_EVENT_TOUCHSTART) CORE.Input.Touch.currentTouchState[i] = 1;
-        else if (eventType == EMSCRIPTEN_EVENT_TOUCHEND) CORE.Input.Touch.currentTouchState[i] = 0;
-    }
-
-#if defined(SUPPORT_GESTURES_SYSTEM) // PLATFORM_WEB
-    GestureEvent gestureEvent = {0};
-
-    gestureEvent.pointCount = CORE.Input.Touch.pointCount;
-
-    // Register touch actions
-    if (eventType == EMSCRIPTEN_EVENT_TOUCHSTART) gestureEvent.touchAction = TOUCH_ACTION_DOWN;
-    else if (eventType == EMSCRIPTEN_EVENT_TOUCHEND) gestureEvent.touchAction = TOUCH_ACTION_UP;
-    else if (eventType == EMSCRIPTEN_EVENT_TOUCHMOVE) gestureEvent.touchAction = TOUCH_ACTION_MOVE;
-    else if (eventType == EMSCRIPTEN_EVENT_TOUCHCANCEL) gestureEvent.touchAction = TOUCH_ACTION_CANCEL;
-
-    for (int i = 0; (i < gestureEvent.pointCount) && (i < MAX_TOUCH_POINTS); i++)
-    {
-        gestureEvent.pointId[i] = CORE.Input.Touch.pointId[i];
-        gestureEvent.position[i] = CORE.Input.Touch.position[i];
-
-        // Normalize gestureEvent.position[i]
-        gestureEvent.position[i].x /= (float)GetScreenWidth();
-        gestureEvent.position[i].y /= (float)GetScreenHeight();
-    }
-
-    // Gesture data is sent to gestures system for processing
-    ProcessGestureEvent(gestureEvent);
-
-    // Reset the pointCount for web, if it was the last Touch End event
-    if (eventType == EMSCRIPTEN_EVENT_TOUCHEND && CORE.Input.Touch.pointCount == 1) CORE.Input.Touch.pointCount = 0;
-#endif
-
-    return 1; // The event was consumed by the callback handler
-}
-
 // Initialize display device and framebuffer
 // NOTE: width and height represent the screen (framebuffer) desired size, not actual display size
 // If width or height are 0, default display size will be used for framebuffer size
@@ -1041,6 +896,13 @@ int GetMonitorPhysicalWidth(int monitor)
     return 0;
 }
 
+// Set a custom key to exit program
+// NOTE: default exitKey is ESCAPE
+void SetExitKey(int key)
+{
+    CORE.Input.Keyboard.exitKey = key;
+}
+
 // NOTE: Gamepad support not implemented in emscripten GLFW3 (PLATFORM_WEB)
 
 // Get gamepad internal name id
@@ -1264,4 +1126,403 @@ void PollInputEvents(void)
             CORE.Input.Gamepad.axisCount = gamepadState.numAxes;
         }
     }
+}
+
+// GLFW3 WindowSize Callback, runs when window is resizedLastFrame
+// NOTE: Window resizing not allowed by default
+static void WindowSizeCallback(GLFWwindow *window, int width, int height)
+{
+    // Reset viewport and projection matrix for new size
+    SetupViewport(width, height);
+
+    CORE.Window.currentFbo.width = width;
+    CORE.Window.currentFbo.height = height;
+    CORE.Window.resizedLastFrame = true;
+
+    if (IsWindowFullscreen()) return;
+
+    // Set current screen size
+    if ((CORE.Window.flags & FLAG_WINDOW_HIGHDPI) > 0)
+    {
+        Vector2 windowScaleDPI = GetWindowScaleDPI();
+
+        CORE.Window.screen.width = (unsigned int)(width/windowScaleDPI.x);
+        CORE.Window.screen.height = (unsigned int)(height/windowScaleDPI.y);
+    }
+    else
+    {
+        CORE.Window.screen.width = width;
+        CORE.Window.screen.height = height;
+    }
+
+    // NOTE: Postprocessing texture is not scaled to new size
+}
+
+// GLFW3 WindowIconify Callback, runs when window is minimized/restored
+static void WindowIconifyCallback(GLFWwindow *window, int iconified)
+{
+    if (iconified) CORE.Window.flags |= FLAG_WINDOW_MINIMIZED;  // The window was iconified
+    else CORE.Window.flags &= ~FLAG_WINDOW_MINIMIZED;           // The window was restored
+}
+
+// GLFW3 WindowFocus Callback, runs when window get/lose focus
+static void WindowFocusCallback(GLFWwindow *window, int focused)
+{
+    if (focused) CORE.Window.flags &= ~FLAG_WINDOW_UNFOCUSED;   // The window was focused
+    else CORE.Window.flags |= FLAG_WINDOW_UNFOCUSED;            // The window lost focus
+}
+
+// GLFW3 Keyboard Callback, runs on key pressed
+static void KeyCallback(GLFWwindow *window, int key, int scancode, int action, int mods)
+{
+    if (key < 0) return;    // Security check, macOS fn key generates -1
+
+    // WARNING: GLFW could return GLFW_REPEAT, we need to consider it as 1
+    // to work properly with our implementation (IsKeyDown/IsKeyUp checks)
+    if (action == GLFW_RELEASE) CORE.Input.Keyboard.currentKeyState[key] = 0;
+    else if(action == GLFW_PRESS) CORE.Input.Keyboard.currentKeyState[key] = 1;
+    else if(action == GLFW_REPEAT) CORE.Input.Keyboard.keyRepeatInFrame[key] = 1;
+
+    // Check if there is space available in the key queue
+    if ((CORE.Input.Keyboard.keyPressedQueueCount < MAX_KEY_PRESSED_QUEUE) && (action == GLFW_PRESS))
+    {
+        // Add character to the queue
+        CORE.Input.Keyboard.keyPressedQueue[CORE.Input.Keyboard.keyPressedQueueCount] = key;
+        CORE.Input.Keyboard.keyPressedQueueCount++;
+    }
+
+    // Check the exit key to set close window
+    if ((key == CORE.Input.Keyboard.exitKey) && (action == GLFW_PRESS)) glfwSetWindowShouldClose(CORE.Window.handle, GLFW_TRUE);
+
+#if defined(SUPPORT_SCREEN_CAPTURE)
+    if ((key == GLFW_KEY_F12) && (action == GLFW_PRESS))
+    {
+#if defined(SUPPORT_GIF_RECORDING)
+        if (mods & GLFW_MOD_CONTROL)
+        {
+            if (gifRecording)
+            {
+                gifRecording = false;
+
+                MsfGifResult result = msf_gif_end(&gifState);
+
+                SaveFileData(TextFormat("%s/screenrec%03i.gif", CORE.Storage.basePath, screenshotCounter), result.data, (unsigned int)result.dataSize);
+                msf_gif_free(result);
+
+                // Download file from MEMFS (emscripten memory filesystem)
+                // saveFileFromMEMFSToDisk() function is defined in raylib/templates/web_shel/shell.html
+                emscripten_run_script(TextFormat("saveFileFromMEMFSToDisk('%s','%s')", TextFormat("screenrec%03i.gif", screenshotCounter - 1), TextFormat("screenrec%03i.gif", screenshotCounter - 1)));
+
+                TRACELOG(LOG_INFO, "SYSTEM: Finish animated GIF recording");
+            }
+            else
+            {
+                gifRecording = true;
+                gifFrameCounter = 0;
+
+                Vector2 scale = GetWindowScaleDPI();
+                msf_gif_begin(&gifState, (int)((float)CORE.Window.render.width*scale.x), (int)((float)CORE.Window.render.height*scale.y));
+                screenshotCounter++;
+
+                TRACELOG(LOG_INFO, "SYSTEM: Start animated GIF recording: %s", TextFormat("screenrec%03i.gif", screenshotCounter));
+            }
+        }
+        else
+#endif  // SUPPORT_GIF_RECORDING
+        {
+            TakeScreenshot(TextFormat("screenshot%03i.png", screenshotCounter));
+            screenshotCounter++;
+        }
+    }
+#endif  // SUPPORT_SCREEN_CAPTURE
+
+#if defined(SUPPORT_EVENTS_AUTOMATION)
+    if ((key == GLFW_KEY_F11) && (action == GLFW_PRESS))
+    {
+        eventsRecording = !eventsRecording;
+
+        // On finish recording, we export events into a file
+        if (!eventsRecording) ExportAutomationEvents("eventsrec.rep");
+    }
+    else if ((key == GLFW_KEY_F9) && (action == GLFW_PRESS))
+    {
+        LoadAutomationEvents("eventsrec.rep");
+        eventsPlaying = true;
+
+        TRACELOG(LOG_WARNING, "eventsPlaying enabled!");
+    }
+#endif
+}
+
+// GLFW3 Char Key Callback, runs on key down (gets equivalent unicode char value)
+static void CharCallback(GLFWwindow *window, unsigned int key)
+{
+    //TRACELOG(LOG_DEBUG, "Char Callback: KEY:%i(%c)", key, key);
+
+    // NOTE: Registers any key down considering OS keyboard layout but
+    // does not detect action events, those should be managed by user...
+    // Ref: https://github.com/glfw/glfw/issues/668#issuecomment-166794907
+    // Ref: https://www.glfw.org/docs/latest/input_guide.html#input_char
+
+    // Check if there is space available in the queue
+    if (CORE.Input.Keyboard.charPressedQueueCount < MAX_CHAR_PRESSED_QUEUE)
+    {
+        // Add character to the queue
+        CORE.Input.Keyboard.charPressedQueue[CORE.Input.Keyboard.charPressedQueueCount] = key;
+        CORE.Input.Keyboard.charPressedQueueCount++;
+    }
+}
+
+// GLFW3 Mouse Button Callback, runs on mouse button pressed
+static void MouseButtonCallback(GLFWwindow *window, int button, int action, int mods)
+{
+    // WARNING: GLFW could only return GLFW_PRESS (1) or GLFW_RELEASE (0) for now,
+    // but future releases may add more actions (i.e. GLFW_REPEAT)
+    CORE.Input.Mouse.currentButtonState[button] = action;
+
+#if defined(SUPPORT_GESTURES_SYSTEM) && defined(SUPPORT_MOUSE_GESTURES)         // PLATFORM_DESKTOP
+    // Process mouse events as touches to be able to use mouse-gestures
+    GestureEvent gestureEvent = { 0 };
+
+    // Register touch actions
+    if ((CORE.Input.Mouse.currentButtonState[button] == 1) && (CORE.Input.Mouse.previousButtonState[button] == 0)) gestureEvent.touchAction = TOUCH_ACTION_DOWN;
+    else if ((CORE.Input.Mouse.currentButtonState[button] == 0) && (CORE.Input.Mouse.previousButtonState[button] == 1)) gestureEvent.touchAction = TOUCH_ACTION_UP;
+
+    // NOTE: TOUCH_ACTION_MOVE event is registered in MouseCursorPosCallback()
+
+    // Assign a pointer ID
+    gestureEvent.pointId[0] = 0;
+
+    // Register touch points count
+    gestureEvent.pointCount = 1;
+
+    // Register touch points position, only one point registered
+    gestureEvent.position[0] = GetMousePosition();
+
+    // Normalize gestureEvent.position[0] for CORE.Window.screen.width and CORE.Window.screen.height
+    gestureEvent.position[0].x /= (float)GetScreenWidth();
+    gestureEvent.position[0].y /= (float)GetScreenHeight();
+
+    // Gesture data is sent to gestures-system for processing
+    // Prevent calling ProcessGestureEvent() when Emscripten is present and there's a touch gesture, so EmscriptenTouchCallback() can handle it itself
+    if (GetMouseX() != 0 || GetMouseY() != 0) ProcessGestureEvent(gestureEvent);
+
+#endif
+}
+
+// GLFW3 Cursor Position Callback, runs on mouse move
+static void MouseCursorPosCallback(GLFWwindow *window, double x, double y)
+{
+    CORE.Input.Mouse.currentPosition.x = (float)x;
+    CORE.Input.Mouse.currentPosition.y = (float)y;
+    CORE.Input.Touch.position[0] = CORE.Input.Mouse.currentPosition;
+
+#if defined(SUPPORT_GESTURES_SYSTEM) && defined(SUPPORT_MOUSE_GESTURES)         // PLATFORM_DESKTOP
+    // Process mouse events as touches to be able to use mouse-gestures
+    GestureEvent gestureEvent = { 0 };
+
+    gestureEvent.touchAction = TOUCH_ACTION_MOVE;
+
+    // Assign a pointer ID
+    gestureEvent.pointId[0] = 0;
+
+    // Register touch points count
+    gestureEvent.pointCount = 1;
+
+    // Register touch points position, only one point registered
+    gestureEvent.position[0] = CORE.Input.Touch.position[0];
+
+    // Normalize gestureEvent.position[0] for CORE.Window.screen.width and CORE.Window.screen.height
+    gestureEvent.position[0].x /= (float)GetScreenWidth();
+    gestureEvent.position[0].y /= (float)GetScreenHeight();
+
+    // Gesture data is sent to gestures-system for processing
+    ProcessGestureEvent(gestureEvent);
+#endif
+}
+
+// GLFW3 Scrolling Callback, runs on mouse wheel
+static void MouseScrollCallback(GLFWwindow *window, double xoffset, double yoffset)
+{
+    CORE.Input.Mouse.currentWheelMove = (Vector2){ (float)xoffset, (float)yoffset };
+}
+
+// GLFW3 CursorEnter Callback, when cursor enters the window
+static void CursorEnterCallback(GLFWwindow *window, int enter)
+{
+    if (enter == true) CORE.Input.Mouse.cursorOnScreen = true;
+    else CORE.Input.Mouse.cursorOnScreen = false;
+}
+
+// GLFW3 Window Drop Callback, runs when drop files into window
+static void WindowDropCallback(GLFWwindow *window, int count, const char **paths)
+{
+    if (count > 0)
+    {
+        // In case previous dropped filepaths have not been freed, we free them
+        if (CORE.Window.dropFileCount > 0)
+        {
+            for (unsigned int i = 0; i < CORE.Window.dropFileCount; i++) RL_FREE(CORE.Window.dropFilepaths[i]);
+
+            RL_FREE(CORE.Window.dropFilepaths);
+
+            CORE.Window.dropFileCount = 0;
+            CORE.Window.dropFilepaths = NULL;
+        }
+
+        // WARNING: Paths are freed by GLFW when the callback returns, we must keep an internal copy
+        CORE.Window.dropFileCount = count;
+        CORE.Window.dropFilepaths = (char **)RL_CALLOC(CORE.Window.dropFileCount, sizeof(char *));
+
+        for (unsigned int i = 0; i < CORE.Window.dropFileCount; i++)
+        {
+            CORE.Window.dropFilepaths[i] = (char *)RL_CALLOC(MAX_FILEPATH_LENGTH, sizeof(char));
+            strcpy(CORE.Window.dropFilepaths[i], paths[i]);
+        }
+    }
+}
+
+// Register fullscreen change events
+static EM_BOOL EmscriptenFullscreenChangeCallback(int eventType, const EmscriptenFullscreenChangeEvent *event, void *userData)
+{
+    // TODO: Implement EmscriptenFullscreenChangeCallback()?
+
+    return 1; // The event was consumed by the callback handler
+}
+
+// Register window resize event
+static EM_BOOL EmscriptenWindowResizedCallback(int eventType, const EmscriptenUiEvent *event, void *userData)
+{
+    // TODO: Implement EmscriptenWindowResizedCallback()?
+
+    return 1; // The event was consumed by the callback handler
+}
+
+EM_JS(int, GetWindowInnerWidth, (), { return window.innerWidth; });
+EM_JS(int, GetWindowInnerHeight, (), { return window.innerHeight; });
+
+// Register DOM element resize event
+static EM_BOOL EmscriptenResizeCallback(int eventType, const EmscriptenUiEvent *event, void *userData)
+{
+    // Don't resize non-resizeable windows
+    if ((CORE.Window.flags & FLAG_WINDOW_RESIZABLE) == 0) return 1;
+
+    // This event is called whenever the window changes sizes,
+    // so the size of the canvas object is explicitly retrieved below
+    int width = GetWindowInnerWidth();
+    int height = GetWindowInnerHeight();
+
+    if (width < CORE.Window.screenMin.width) width = CORE.Window.screenMin.width;
+    else if (width > CORE.Window.screenMax.width && CORE.Window.screenMax.width > 0) width = CORE.Window.screenMax.width;
+
+    if (height < CORE.Window.screenMin.height) height = CORE.Window.screenMin.height;
+    else if (height > CORE.Window.screenMax.height && CORE.Window.screenMax.height > 0) height = CORE.Window.screenMax.height;
+
+    emscripten_set_canvas_element_size("#canvas", width, height);
+
+    SetupViewport(width, height); // Reset viewport and projection matrix for new size
+
+    CORE.Window.currentFbo.width = width;
+    CORE.Window.currentFbo.height = height;
+    CORE.Window.resizedLastFrame = true;
+
+    if (IsWindowFullscreen()) return 1;
+
+    // Set current screen size
+    CORE.Window.screen.width = width;
+    CORE.Window.screen.height = height;
+
+    // NOTE: Postprocessing texture is not scaled to new size
+
+    return 0;
+}
+
+// Register mouse input events
+static EM_BOOL EmscriptenMouseCallback(int eventType, const EmscriptenMouseEvent *mouseEvent, void *userData)
+{
+    // This is only for registering mouse click events with emscripten and doesn't need to do anything
+
+    return 1; // The event was consumed by the callback handler
+}
+
+// Register connected/disconnected gamepads events
+static EM_BOOL EmscriptenGamepadCallback(int eventType, const EmscriptenGamepadEvent *gamepadEvent, void *userData)
+{
+    /*
+    TRACELOGD("%s: timeStamp: %g, connected: %d, index: %ld, numAxes: %d, numButtons: %d, id: \"%s\", mapping: \"%s\"",
+           eventType != 0? emscripten_event_type_to_string(eventType) : "Gamepad state",
+           gamepadEvent->timestamp, gamepadEvent->connected, gamepadEvent->index, gamepadEvent->numAxes, gamepadEvent->numButtons, gamepadEvent->id, gamepadEvent->mapping);
+
+    for (int i = 0; i < gamepadEvent->numAxes; ++i) TRACELOGD("Axis %d: %g", i, gamepadEvent->axis[i]);
+    for (int i = 0; i < gamepadEvent->numButtons; ++i) TRACELOGD("Button %d: Digital: %d, Analog: %g", i, gamepadEvent->digitalButton[i], gamepadEvent->analogButton[i]);
+    */
+
+    if ((gamepadEvent->connected) && (gamepadEvent->index < MAX_GAMEPADS))
+    {
+        CORE.Input.Gamepad.ready[gamepadEvent->index] = true;
+        sprintf(CORE.Input.Gamepad.name[gamepadEvent->index], "%s", gamepadEvent->id);
+    }
+    else CORE.Input.Gamepad.ready[gamepadEvent->index] = false;
+
+    return 1; // The event was consumed by the callback handler
+}
+
+// Register touch input events
+static EM_BOOL EmscriptenTouchCallback(int eventType, const EmscriptenTouchEvent *touchEvent, void *userData)
+{
+    // Register touch points count
+    CORE.Input.Touch.pointCount = touchEvent->numTouches;
+
+    double canvasWidth = 0.0;
+    double canvasHeight = 0.0;
+    // NOTE: emscripten_get_canvas_element_size() returns canvas.width and canvas.height but
+    // we are looking for actual CSS size: canvas.style.width and canvas.style.height
+    // EMSCRIPTEN_RESULT res = emscripten_get_canvas_element_size("#canvas", &canvasWidth, &canvasHeight);
+    emscripten_get_element_css_size("#canvas", &canvasWidth, &canvasHeight);
+
+    for (int i = 0; (i < CORE.Input.Touch.pointCount) && (i < MAX_TOUCH_POINTS); i++)
+    {
+        // Register touch points id
+        CORE.Input.Touch.pointId[i] = touchEvent->touches[i].identifier;
+
+        // Register touch points position
+        CORE.Input.Touch.position[i] = (Vector2){touchEvent->touches[i].targetX, touchEvent->touches[i].targetY};
+
+        // Normalize gestureEvent.position[x] for CORE.Window.screen.width and CORE.Window.screen.height
+        CORE.Input.Touch.position[i].x *= ((float)GetScreenWidth() / (float)canvasWidth);
+        CORE.Input.Touch.position[i].y *= ((float)GetScreenHeight() / (float)canvasHeight);
+
+        if (eventType == EMSCRIPTEN_EVENT_TOUCHSTART) CORE.Input.Touch.currentTouchState[i] = 1;
+        else if (eventType == EMSCRIPTEN_EVENT_TOUCHEND) CORE.Input.Touch.currentTouchState[i] = 0;
+    }
+
+#if defined(SUPPORT_GESTURES_SYSTEM) // PLATFORM_WEB
+    GestureEvent gestureEvent = {0};
+
+    gestureEvent.pointCount = CORE.Input.Touch.pointCount;
+
+    // Register touch actions
+    if (eventType == EMSCRIPTEN_EVENT_TOUCHSTART) gestureEvent.touchAction = TOUCH_ACTION_DOWN;
+    else if (eventType == EMSCRIPTEN_EVENT_TOUCHEND) gestureEvent.touchAction = TOUCH_ACTION_UP;
+    else if (eventType == EMSCRIPTEN_EVENT_TOUCHMOVE) gestureEvent.touchAction = TOUCH_ACTION_MOVE;
+    else if (eventType == EMSCRIPTEN_EVENT_TOUCHCANCEL) gestureEvent.touchAction = TOUCH_ACTION_CANCEL;
+
+    for (int i = 0; (i < gestureEvent.pointCount) && (i < MAX_TOUCH_POINTS); i++)
+    {
+        gestureEvent.pointId[i] = CORE.Input.Touch.pointId[i];
+        gestureEvent.position[i] = CORE.Input.Touch.position[i];
+
+        // Normalize gestureEvent.position[i]
+        gestureEvent.position[i].x /= (float)GetScreenWidth();
+        gestureEvent.position[i].y /= (float)GetScreenHeight();
+    }
+
+    // Gesture data is sent to gestures system for processing
+    ProcessGestureEvent(gestureEvent);
+
+    // Reset the pointCount for web, if it was the last Touch End event
+    if (eventType == EMSCRIPTEN_EVENT_TOUCHEND && CORE.Input.Touch.pointCount == 1) CORE.Input.Touch.pointCount = 0;
+#endif
+
+    return 1; // The event was consumed by the callback handler
 }
