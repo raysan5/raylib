@@ -330,7 +330,7 @@ const char *TextFormat(const char *text, ...);       // Formatting of text with 
     #include "rcore_desktop.c"
 #elif defined(PLATFORM_WEB)
     #include "rcore_web.c"
-#elif defined(PLATFOM_DRM)
+#elif defined(PLATFORM_DRM)
     #include "rcore_drm.c"
 #elif defined(PLATFOM_ANDROID)
     #include "rcore_android.c"
