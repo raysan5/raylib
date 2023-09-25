@@ -2922,7 +2922,7 @@ Matrix GetCameraMatrix2D(Camera2D camera)
     //   2. Rotate and Scale
     //   3. Move by -target
     Matrix matOrigin = MatrixTranslate(-camera.target.x, -camera.target.y, 0.0f);
-    Matrix matRotation = MatrixRotate((Vector3){ 0.0f, 0.0f, 1.0f }, camera.rotation*DEG2RAD);
+    Matrix matRotation = MatrixRotateZ(-camera.rotation*DEG2RAD);
     Matrix matScale = MatrixScale(camera.zoom, camera.zoom, 1.0f);
     Matrix matTranslation = MatrixTranslate(camera.offset.x, camera.offset.y, 0.0f);
 
@@ -2952,7 +2952,7 @@ Vector2 GetWorldToScreenEx(Vector3 position, Camera camera, int width, int heigh
     }
     else if (camera.projection == CAMERA_ORTHOGRAPHIC)
     {
-        float aspect = (float)CORE.Window.screen.width/(float)CORE.Window.screen.height;
+        float aspect = ((double)width/(double)height);
         double top = camera.fovy/2.0;
         double right = top*aspect;
 
@@ -2963,19 +2963,14 @@ Vector2 GetWorldToScreenEx(Vector3 position, Camera camera, int width, int heigh
     // Calculate view matrix from camera look at (and transpose it)
     Matrix matView = MatrixLookAt(camera.position, camera.target, camera.up);
 
-    // TODO: Why not use Vector3Transform(Vector3 v, Matrix mat)?
-
-    // Convert world position vector to quaternion
-    Quaternion worldPos = { position.x, position.y, position.z, 1.0f };
-
     // Transform world position to view
-    worldPos = QuaternionTransform(worldPos, matView);
+    Vector3 worldPos = Vector3Transform(position, matView);
 
     // Transform result to projection (clip space position)
-    worldPos = QuaternionTransform(worldPos, matProj);
+    worldPos = Vector3Transform(worldPos, matProj);
 
     // Calculate normalized device coordinates (inverted y)
-    Vector3 ndcPos = { worldPos.x/worldPos.w, -worldPos.y/worldPos.w, worldPos.z/worldPos.w };
+    Vector3 ndcPos = { worldPos.x, -worldPos.y, worldPos.z };
 
     // Calculate 2d screen position vector
     Vector2 screenPosition = { (ndcPos.x + 1.0f)/2.0f*(float)width, (ndcPos.y + 1.0f)/2.0f*(float)height };
