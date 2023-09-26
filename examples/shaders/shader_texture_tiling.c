@@ -21,7 +21,6 @@
 
 int main(void)
 {
-    SetTraceLogLevel(LOG_WARNING);
     const int screenWidth = 800;
     const int screenHeight = 600;
 
