@@ -325,7 +325,7 @@ Image LoadImageSvg(const char *fileNameOrString, int width, int height)
 
 #if defined(SUPPORT_FILEFORMAT_SVG)
     bool isSvgStringValid = false;
-    
+
     // Validate fileName or string
     if (fileNameOrString != NULL)
     {
@@ -355,7 +355,7 @@ Image LoadImageSvg(const char *fileNameOrString, int width, int height)
         if (isSvgStringValid)
         {
             struct NSVGimage *svgImage = nsvgParse(fileData, "px", 96.0f);
-            
+
             unsigned char *img = RL_MALLOC(width*height*4);
 
             // Calculate scales for both the width and the height
