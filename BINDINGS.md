@@ -44,7 +44,7 @@ Some people ported raylib to other languages in form of bindings or wrappers to 
 | nelua-raylib       | 4.0     | [nelua](https://nelua.io/)           | MIT | https://github.com/AKDev21/nelua-raylib       |
 | Raylib.nelua       | **4.5** | [nelua](https://nelua.io/)           | Zlib | https://github.com/Its-Kenta/Raylib-Nelua     |
 | NimraylibNow!      | 4.2     | [Nim](https://nim-lang.org/)         | MIT | https://github.com/greenfork/nimraylib_now    |
-| raylib-bindings    | **4.5** | [Ruby](https://www.ruby-lang.org/en/) | https://github.com/vaiorabbit/raylib-bindings        |
+| raylib-bindings    | **4.5** | [Ruby](https://www.ruby-lang.org/en/) | Zlib | https://github.com/vaiorabbit/raylib-bindings |
 | raylib-Forever     | auto    | [Nim](https://nim-lang.org/)         | ? | https://github.com/Guevara-chan/Raylib-Forever  |
 | naylib             | auto    | [Nim](https://nim-lang.org/)         | MIT | https://github.com/planetis-m/naylib          |
 | node-raylib        | **4.5** | [Node.js](https://nodejs.org/en/)    | Zlib     | https://github.com/RobLoach/node-raylib         |
