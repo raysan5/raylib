@@ -2963,14 +2963,17 @@ Vector2 GetWorldToScreenEx(Vector3 position, Camera camera, int width, int heigh
     // Calculate view matrix from camera look at (and transpose it)
     Matrix matView = MatrixLookAt(camera.position, camera.target, camera.up);
 
+    // Convert world position vector to quaternion
+    Quaternion worldPos = { position.x, position.y, position.z, 1.0f };
+
     // Transform world position to view
-    Vector3 worldPos = Vector3Transform(position, matView);
+    worldPos = QuaternionTransform(worldPos, matView);
 
     // Transform result to projection (clip space position)
-    worldPos = Vector3Transform(worldPos, matProj);
+    worldPos = QuaternionTransform(worldPos, matProj);
 
     // Calculate normalized device coordinates (inverted y)
-    Vector3 ndcPos = { worldPos.x, -worldPos.y, worldPos.z };
+    Vector3 ndcPos = { worldPos.x/worldPos.w, -worldPos.y/worldPos.w, worldPos.z/worldPos.w };
 
     // Calculate 2d screen position vector
     Vector2 screenPosition = { (ndcPos.x + 1.0f)/2.0f*(float)width, (ndcPos.y + 1.0f)/2.0f*(float)height };
