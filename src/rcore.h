@@ -16,6 +16,11 @@
                                     // NOTE: GLFW3 already includes gl.h (OpenGL) headers
 #endif
 
+#if defined(PLATFORM_ANDROID)
+    #include <EGL/egl.h>            // Native platform windowing system interface
+    //#include <GLES2/gl2.h>        // OpenGL ES 2.0 library (not required in this module, only in rlgl)
+#endif
+
 #if defined(PLATFORM_DRM)
 
     #include <fcntl.h>   // POSIX file control definitions - open(), creat(), fcntl()
@@ -49,7 +54,7 @@
         bool isKeyboard;    // True if device has letter keycodes
         bool isGamepad;     // True if device has gamepad buttons
     } InputEventWorker;
-    
+
 #endif
 
 // PROVIDE A HEADER TO BE USED BY ALL THE rcore_* IMPLEMENTATIONS.
