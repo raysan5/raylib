@@ -1344,8 +1344,13 @@ Rectangle GetGlyphAtlasRec(Font font, int codepoint)
 // Get text length in bytes, check for \0 character
 unsigned int TextLength(const char *text)
 {
+    if (!text)
+        return 0;
+
     // use strlen since it uses vector operations
-    return textstrlen(text) ? 1 : 0;
+    unsigned int length = strlen(text);
+    
+    return length;
 }
 
 // Formatting of text with variables to 'embed'
@@ -1424,24 +1429,35 @@ int TextCopy(char *dst, const char *src)
 // REQUIRES: strcmp()
 bool TextIsEqual(const char *text1, const char *text2)
 {
-    return !strcmp(text1, text2);
+    bool result = false;
+
+    if (text1 && text2 && !strcmp(text1, text2))
+        result = true;
+
+    return result;
 }
 
 // Get a piece of a text string
 const char *TextSubtext(const char *text, int position, int length)
 {
-    if (!length)
+    if (!length || !text)
         return "";
+
     int textLength = TextLength(text);
+
     if (position >= textLength)
     {
         position = textLength - 1;
         length = 0;
     }
-    if (length > textLength) length = textLength;
+
+    if (length > textLength)
+        length = textLength;
+
     char *buffer = malloc(length + 1);
     memcpy(buffer, text + position, length);
     buffer[length] = '\0';
+
     return buffer;
 }
 
