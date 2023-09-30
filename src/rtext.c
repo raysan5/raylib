@@ -1415,7 +1415,7 @@ int TextCopy(char *dst, const char *src)
         return 0;
 
     // use strcpy since it uses vector operations
-    unsigned int length = strcpy(dst, src);
+    unsigned int length = *strcpy(dst, src);
     
     return length;
 }
