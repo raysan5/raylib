@@ -1424,7 +1424,7 @@ int TextCopy(char *dst, const char *src)
 // REQUIRES: strcmp()
 bool TextIsEqual(const char *text1, const char *text2)
 {
-    return !strcmp(text1, text2);
+    return text1 && text2 ? !strcmp(text1, text2) : 0;
 }
 
 // Get a piece of a text string
