@@ -1361,8 +1361,8 @@ const char *TextFormat(const char *text, ...)
     if (!text)
         return "";
 
-    static char buffer[MAX_TEXT_BUFFER_LENGTH] = { 0 };
-    memset(buffer, 0, MAX_TEXT_BUFFER_LENGTH);
+    static char formatBuffer[MAX_TEXT_BUFFER_LENGTH] = { 0 };
+    memset(formatBuffer, 0, MAX_TEXT_BUFFER_LENGTH);
 
     va_list args;
     va_start(args, text);
@@ -1375,20 +1375,13 @@ const char *TextFormat(const char *text, ...)
         return NULL;
     }
 
-    if (buffer == NULL)
-    {
-        // Handle memory allocation failure
-        va_end(args);
-        return NULL;
-    }
-
     va_end(args); // Reset the va_list
 
     va_start(args, text);                      // Start again for the actual formatting
-    vsnprintf(buffer, length + 1, text, args); // Format the string and copy it to the result buffer
+    vsnprintf(formatBuffer, length + 1, text, args); // Format the string and copy it to the result buffer
     va_end(args);
 
-    return buffer;
+    return formatBuffer;
 }
 
 // Get integer value from text
