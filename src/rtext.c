@@ -1430,7 +1430,7 @@ bool TextIsEqual(const char *text1, const char *text2)
 // Get a piece of a text string
 const char *TextSubtext(const char *text, int position, int length)
 {
-    if (!length)
+    if (!length || !text)
         return "";
     int textLength = TextLength(text);
     if (position >= textLength)
