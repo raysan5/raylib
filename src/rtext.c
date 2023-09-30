@@ -1345,12 +1345,7 @@ Rectangle GetGlyphAtlasRec(Font font, int codepoint)
 unsigned int TextLength(const char *text)
 {
     // use strlen since it uses vector operations
-    bool result = false;
-
-    if (text && strlen(text))
-        result = true;
-
-    return result;
+    return text ? strlen(text) : 0;
 }
 
 // Formatting of text with variables to 'embed'
