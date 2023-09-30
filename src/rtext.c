@@ -1430,27 +1430,18 @@ bool TextIsEqual(const char *text1, const char *text2)
 // Get a piece of a text string
 const char *TextSubtext(const char *text, int position, int length)
 {
-    static char buffer[MAX_TEXT_BUFFER_LENGTH] = { 0 };
-    memset(buffer, 0, MAX_TEXT_BUFFER_LENGTH);
-
+    if (!length)
+        return "";
     int textLength = TextLength(text);
-
     if (position >= textLength)
     {
         position = textLength - 1;
         length = 0;
     }
-
-    if (length >= textLength) length = textLength;
-
-    for (int c = 0 ; c < length ; c++)
-    {
-        *(buffer + c) = *(text + position);
-        text++;
-    }
-
-    *(buffer + length) = '\0';
-
+    if (length > textLength) length = textLength;
+    char *buffer = malloc(length + 1);
+    memcpy(buffer, text + position, length);
+    buffer[length] = '\0';
     return buffer;
 }
 
