@@ -1367,7 +1367,7 @@ const char *TextFormat(const char *format, ...)
         return NULL;
     }
 
-    char *result = (char *)malloc(length + 1); // Allocate memory for the formatted string (+1 for null terminator)
+    char *result = (char *)RL_MALLOC(length + 1); // Allocate memory for the formatted string (+1 for null terminator)
     if (result == NULL)
     {
         // Handle memory allocation failure
@@ -1380,7 +1380,6 @@ const char *TextFormat(const char *format, ...)
     va_start(args, format);                      // Start again for the actual formatting
     vsnprintf(result, length + 1, format, args); // Format the string and copy it to the result buffer
     va_end(args);
-
     return result;
 }
 
@@ -1454,11 +1453,12 @@ const char *TextSubtext(const char *text, int position, int length)
     if (length > textLength)
         length = textLength;
 
-    char *buffer = malloc(length + 1);
+    char *buffer = RL_MALLOC(length + 1);
     memcpy(buffer, text + position, length);
     buffer[length] = '\0';
-
-    return buffer;
+    // strcpy(text, buffer);
+    // free(buffer);
+    return text;
 }
 
 // Replace text string
