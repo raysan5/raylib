@@ -1344,40 +1344,39 @@ Rectangle GetGlyphAtlasRec(Font font, int codepoint)
 // Get text length in bytes, check for \0 character
 unsigned int TextLength(const char *text)
 {
-    unsigned int length = 0; //strlen(text)
-
-    if (text != NULL)
-    {
-        while (*text++) length++;
-    }
-
-    return length;
+    // use strlen since it uses vector operations
+    return strlen(text);
 }
 
 // Formatting of text with variables to 'embed'
-// WARNING: String returned will expire after this function is called MAX_TEXTFORMAT_BUFFERS times
-const char *TextFormat(const char *text, ...)
+const char *TextFormat(const char *format, ...)
 {
-#ifndef MAX_TEXTFORMAT_BUFFERS
-    #define MAX_TEXTFORMAT_BUFFERS 4        // Maximum number of static buffers for text formatting
-#endif
-
-    // We create an array of buffers so strings don't expire until MAX_TEXTFORMAT_BUFFERS invocations
-    static char buffers[MAX_TEXTFORMAT_BUFFERS][MAX_TEXT_BUFFER_LENGTH] = { 0 };
-    static int index = 0;
-
-    char *currentBuffer = buffers[index];
-    memset(currentBuffer, 0, MAX_TEXT_BUFFER_LENGTH);   // Clear buffer before using
-
     va_list args;
-    va_start(args, text);
-    vsnprintf(currentBuffer, MAX_TEXT_BUFFER_LENGTH, text, args);
+    va_start(args, format);
+
+    int length = vsnprintf(NULL, 0, format, args); // Determine the length of the formatted string
+    if (length < 0)
+    {
+        // Handle error
+        va_end(args);
+        return NULL;
+    }
+
+    char *result = (char *)malloc(length + 1); // Allocate memory for the formatted string (+1 for null terminator)
+    if (result == NULL)
+    {
+        // Handle memory allocation failure
+        va_end(args);
+        return NULL;
+    }
+
+    va_end(args); // Reset the va_list
+
+    va_start(args, format);                      // Start again for the actual formatting
+    vsnprintf(result, length + 1, format, args); // Format the string and copy it to the result buffer
     va_end(args);
 
-    index += 1;     // Move to next buffer for next function call
-    if (index >= MAX_TEXTFORMAT_BUFFERS) index = 0;
-
-    return currentBuffer;
+    return result;
 }
 
 // Get integer value from text
@@ -1425,14 +1424,7 @@ int TextCopy(char *dst, const char *src)
 // REQUIRES: strcmp()
 bool TextIsEqual(const char *text1, const char *text2)
 {
-    bool result = false;
-
-    if ((text1 != NULL) && (text2 != NULL))
-    {
-        if (strcmp(text1, text2) == 0) result = true;
-    }
-
-    return result;
+    return !strcmp(text1, text2);
 }
 
 // Get a piece of a text string
