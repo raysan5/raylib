@@ -1356,6 +1356,12 @@ unsigned int TextLength(const char *text)
 // Formatting of text with variables to 'embed'
 const char *TextFormat(const char *format, ...)
 {
+    if (!format)
+        return "";
+
+    static char buffer[MAX_TEXT_BUFFER_LENGTH] = { 0 };
+    memset(buffer, 0, MAX_TEXT_BUFFER_LENGTH);
+
     va_list args;
     va_start(args, format);
 
@@ -1367,8 +1373,7 @@ const char *TextFormat(const char *format, ...)
         return NULL;
     }
 
-    char *result = (char *)RL_MALLOC(length + 1); // Allocate memory for the formatted string (+1 for null terminator)
-    if (result == NULL)
+    if (buffer == NULL)
     {
         // Handle memory allocation failure
         va_end(args);
@@ -1378,9 +1383,10 @@ const char *TextFormat(const char *format, ...)
     va_end(args); // Reset the va_list
 
     va_start(args, format);                      // Start again for the actual formatting
-    vsnprintf(result, length + 1, format, args); // Format the string and copy it to the result buffer
+    vsnprintf(buffer, length + 1, format, args); // Format the string and copy it to the result buffer
     va_end(args);
-    return result;
+
+    return buffer;
 }
 
 // Get integer value from text
@@ -1405,23 +1411,13 @@ int TextToInteger(const char *text)
 // Copy one string to another, returns bytes copied
 int TextCopy(char *dst, const char *src)
 {
-    int bytes = 0;
+    if (!dst || !src)
+        return 0;
 
-    if ((src != NULL) && (dst != NULL))
-    {
-        while (*src != '\0')
-        {
-            *dst = *src;
-            dst++;
-            src++;
-
-            bytes++;
-        }
-
-        *dst = '\0';
-    }
-
-    return bytes;
+    // use strcpy since it uses vector operations
+    unsigned int length = strcpy(dst, src);
+    
+    return length;
 }
 
 // Check if two text string are equal
@@ -1453,12 +1449,14 @@ const char *TextSubtext(const char *text, int position, int length)
     if (length > textLength)
         length = textLength;
 
-    char *buffer = RL_MALLOC(length + 1);
-    memcpy(buffer, text + position, length);
-    buffer[length] = '\0';
-    // strcpy(text, buffer);
-    // free(buffer);
-    return text;
+    static char buffer[512] = {0};
+    memset(buffer, 0, length + 1);
+    memcpy(buffer, text+position, length);
+
+    *(buffer + length) = '\0';
+    *(buffer + length + 1) = 0;
+
+    return buffer;
 }
 
 // Replace text string
