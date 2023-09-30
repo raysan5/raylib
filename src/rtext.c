@@ -1354,18 +1354,18 @@ unsigned int TextLength(const char *text)
 }
 
 // Formatting of text with variables to 'embed'
-const char *TextFormat(const char *format, ...)
+const char *TextFormat(const char *text, ...)
 {
-    if (!format)
+    if (!text)
         return "";
 
     static char buffer[MAX_TEXT_BUFFER_LENGTH] = { 0 };
     memset(buffer, 0, MAX_TEXT_BUFFER_LENGTH);
 
     va_list args;
-    va_start(args, format);
+    va_start(args, text);
 
-    int length = vsnprintf(NULL, 0, format, args); // Determine the length of the formatted string
+    int length = vsnprintf(NULL, 0, text, args); // Determine the length of the formatted string
     if (length < 0)
     {
         // Handle error
@@ -1382,8 +1382,8 @@ const char *TextFormat(const char *format, ...)
 
     va_end(args); // Reset the va_list
 
-    va_start(args, format);                      // Start again for the actual formatting
-    vsnprintf(buffer, length + 1, format, args); // Format the string and copy it to the result buffer
+    va_start(args, text);                      // Start again for the actual formatting
+    vsnprintf(buffer, length + 1, text, args); // Format the string and copy it to the result buffer
     va_end(args);
 
     return buffer;
@@ -1449,7 +1449,7 @@ const char *TextSubtext(const char *text, int position, int length)
     if (length > textLength)
         length = textLength;
 
-    static char buffer[512] = {0};
+    static char buffer[MAX_TEXT_BUFFER_LENGTH] = {0};
     memset(buffer, 0, length + 1);
     memcpy(buffer, text+position, length);
 
