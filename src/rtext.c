@@ -1367,17 +1367,16 @@ const char *TextFormat(const char *text, ...)
     va_list args;
     va_start(args, text);
 
-    int length = vsnprintf(NULL, 0, text, args); // Determine the length of the formatted string
-    if (length < 0)
+    int length = vsnprintf(NULL, 0, text, args);
+
+    if (length < 0 || length >= MAX_TEXT_BUFFER_LENGTH)
     {
-        // Handle error
         va_end(args);
         return NULL;
     }
 
-    va_end(args); // Reset the va_list
-
-    va_start(args, text);                      // Start again for the actual formatting
+    va_end(args);
+    va_start(args, text);
     vsnprintf(formatBuffer, length + 1, text, args); // Format the string and copy it to the result buffer
     va_end(args);
 
