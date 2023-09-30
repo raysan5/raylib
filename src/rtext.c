@@ -1342,16 +1342,18 @@ Rectangle GetGlyphAtlasRec(Font font, int codepoint)
 // Text strings management functions
 //----------------------------------------------------------------------------------
 // Get text length in bytes, check for \0 character
-unsigned int TextLength(const char *text)
+unsigned int TextLength(const char *text) 
 {
-    if (!text)
-        return 0;
+    unsigned int length = 0;
 
-    // use strlen since it uses vector operations
-    unsigned int length = strlen(text);
-    
+    if (!text)
+        return length;
+
+    length = strlen(text);
+
     return length;
 }
+
 
 // Formatting of text with variables to 'embed'
 const char *TextFormat(const char *text, ...)
@@ -1409,16 +1411,19 @@ int TextToInteger(const char *text)
 
 #if defined(SUPPORT_TEXT_MANIPULATION)
 // Copy one string to another, returns bytes copied
-int TextCopy(char *dst, const char *src)
+int TextCopy(char *dst, const char *src) 
 {
-    if (!dst || !src)
-        return 0;
+    int bytes = 0;
 
-    // use strcpy since it uses vector operations
-    unsigned int length = *strcpy(dst, src);
-    
-    return length;
+    if (!dst || !src)
+        return bytes;
+
+    strcpy(dst, src);
+    bytes = strlen(dst);
+
+    return bytes;
 }
+
 
 // Check if two text string are equal
 // REQUIRES: strcmp()
@@ -1454,7 +1459,6 @@ const char *TextSubtext(const char *text, int position, int length)
     memcpy(buffer, text+position, length);
 
     *(buffer + length) = '\0';
-    *(buffer + length + 1) = 0;
 
     return buffer;
 }
