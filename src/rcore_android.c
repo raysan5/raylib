@@ -7,9 +7,6 @@
 #include <android_native_app_glue.h>    // Required for: android_app struct and activity management
 #include <jni.h>                        // Required for: JNIEnv and JavaVM [Used in OpenURL()]
 
-#include <EGL/egl.h>                    // Native platform windowing system interface
-//#include <GLES2/gl2.h>                // OpenGL ES 2.0 library (not required in this module, only in rlgl)
-
 static bool InitGraphicsDevice(int width, int height);                                     // Initialize graphics device
 static void AndroidCommandCallback(struct android_app *app, int32_t cmd);                  // Process Android activity lifecycle commands
 static int32_t AndroidInputCallback(struct android_app *app, AInputEvent *event);          // Process Android inputs
