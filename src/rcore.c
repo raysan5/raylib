@@ -332,7 +332,7 @@ const char *TextFormat(const char *text, ...);       // Formatting of text with 
     #include "rcore_web.c"
 #elif defined(PLATFORM_DRM)
     #include "rcore_drm.c"
-#elif defined(PLATFOM_ANDROID)
+#elif defined(PLATFORM_ANDROID)
     #include "rcore_android.c"
 #else
     // Software rendering backend, user needs to provide buffer ;)
