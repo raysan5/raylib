@@ -1,8 +1,9 @@
 /*******************************************************************************************
  *
- *   raylib [models] example - Draw some basic geometric shapes (cube, sphere, cylinder...)
+ *   raylib [models] example -Draw a cube and transform it by translating, scaling,
+ *   and rotating.
  *
- *   Example originally created with raylib 1.0, last time updated with raylib 3.5
+ *   Example originally created with raylib 4.5, last time updated with raylib 4.5
  *
  *   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
  *   BSD-like license that allows static linking with closed source software
