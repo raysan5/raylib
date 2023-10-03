@@ -5623,7 +5623,7 @@ static Model LoadM3D(const char *fileName)
         // We always need a default material, so we add +1
         model.materialCount++;
 
-        // Sort faces by material.
+        // failsafe, model should already have faces grouped by material
         qsort(m3d->face, m3d->numface, sizeof(m3df_t), m3d_compare_faces);
 
         model.meshes = (Mesh *)RL_CALLOC(model.meshCount, sizeof(Mesh));
