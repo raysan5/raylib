@@ -528,7 +528,8 @@ typedef enum {
     FLAG_WINDOW_MOUSE_PASSTHROUGH = 0x00004000, // Set to support mouse passthrough, only supported when FLAG_WINDOW_UNDECORATED
     FLAG_BORDERLESS_WINDOWED_MODE = 0x00008000, // Set to run program in borderless windowed mode
     FLAG_MSAA_4X_HINT       = 0x00000020,   // Set to try enabling MSAA 4X
-    FLAG_INTERLACED_HINT    = 0x00010000    // Set to try enabling interlaced video format (for V3D)
+    FLAG_INTERLACED_HINT    = 0x00010000,   // Set to try enabling interlaced video format (for V3D)
+    FLAG_FULLSCREEN_DESKTOP = 0x00020000    // Set to prevent a video mode change when toggling fullscreen mode
 } ConfigFlags;
 
 // Trace log level
