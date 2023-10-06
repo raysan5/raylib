@@ -4432,6 +4432,29 @@ Color ColorTint(Color color, Color tint)
     return result;
 }
 
+// Get color inverted
+Color ColorInvert(Color color)
+{
+    Color result = color;
+
+    color.r = 255 - color.r;
+    color.g = 255 - color.g;
+    color.b = 255 - color.b;
+
+    return result;
+}
+
+// Get color grayscaled
+Color ColorGrayscale(Color color)
+{
+    Color result = color;
+
+    Vector4 normalizedColor = ColorNormalize(color);
+    *((unsigned char *)&result) = (unsigned char)((normalizedColor.x*0.299f + normalizedColor.y*0.587f + normalizedColor.z*0.114f)*255.0f);
+
+    return result;
+}
+
 // Get color with brightness correction, brightness factor goes from -1.0f to 1.0f
 Color ColorBrightness(Color color, float factor)
 {
