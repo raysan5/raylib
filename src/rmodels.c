@@ -5567,6 +5567,15 @@ static Model LoadVOX(const char *fileName)
 unsigned char *m3d_loaderhook(char *fn, unsigned int *len) { return LoadFileData((const char *)fn, (int *)len); }
 void m3d_freehook(void *data) { UnloadFileData((unsigned char *)data); }
 
+// Comparison function for qsort
+static int m3d_compare_faces(const void *a, const void *b)
+{
+  m3df_t *fa = (m3df_t *)a;
+  m3df_t *fb = (m3df_t *)b;
+
+  return (fa->materialid - fb->materialid);
+}
+
 // Load M3D mesh data
 static Model LoadM3D(const char *fileName)
 {
@@ -5613,6 +5622,9 @@ static Model LoadM3D(const char *fileName)
 
         // We always need a default material, so we add +1
         model.materialCount++;
+
+        // failsafe, model should already have faces grouped by material
+        qsort(m3d->face, m3d->numface, sizeof(m3df_t), m3d_compare_faces);
 
         model.meshes = (Mesh *)RL_CALLOC(model.meshCount, sizeof(Mesh));
         model.meshMaterial = (int *)RL_CALLOC(model.meshCount, sizeof(int));
