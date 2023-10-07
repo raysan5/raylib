@@ -5614,19 +5614,26 @@ static Model LoadM3D(const char *fileName)
         // We always need a default material, so we add +1
         model.materialCount++;
 
-        // WARNING: Sorting is not needed, valid M3D model files should already be sorted
-        // faces should already by grouped by material
-        // Just keeping the sorting function for reference (Check PR #3363)
-        /*
-        static int m3d_compare_faces(const void *a, const void *b)
+        // Faces must be in non-decreasing materialid order
+        // Verify that quickly, sorting them otherwise. 
+        for (i = 1; i < m3d->numface; i++)
         {
-            m3df_t *fa = (m3df_t *)a;
-            m3df_t *fb = (m3df_t *)b;
-            return (fa->materialid - fb->materialid);
+            if ( m3d->face[i-1].materialid <= m3d->face[i].materialid )
+               continue;
+
+            // face[i-1] > face[i].  slide face[i] lower.
+            m3df_t slider = m3d->face[i];
+            j = i-1;
+
+            do
+            {   // face[j] > slider, face[j+1] is svailable vacant gap.
+                m3d->face[j+1] = m3d->face[j];
+                j = j-1;
+            }
+            while (j >= 0 && m3d->face[j].materialid > slider.materialid);
+
+            m3d->face[j+1] = slider;
         }
-        
-        qsort(m3d->face, m3d->numface, sizeof(m3df_t), m3d_compare_faces);
-        */
 
         model.meshes = (Mesh *)RL_CALLOC(model.meshCount, sizeof(Mesh));
         model.meshMaterial = (int *)RL_CALLOC(model.meshCount, sizeof(int));
