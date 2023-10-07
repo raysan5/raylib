@@ -5567,15 +5567,6 @@ static Model LoadVOX(const char *fileName)
 unsigned char *m3d_loaderhook(char *fn, unsigned int *len) { return LoadFileData((const char *)fn, (int *)len); }
 void m3d_freehook(void *data) { UnloadFileData((unsigned char *)data); }
 
-// Comparison function for qsort
-static int m3d_compare_faces(const void *a, const void *b)
-{
-  m3df_t *fa = (m3df_t *)a;
-  m3df_t *fb = (m3df_t *)b;
-
-  return (fa->materialid - fb->materialid);
-}
-
 // Load M3D mesh data
 static Model LoadM3D(const char *fileName)
 {
@@ -5623,8 +5614,19 @@ static Model LoadM3D(const char *fileName)
         // We always need a default material, so we add +1
         model.materialCount++;
 
-        // failsafe, model should already have faces grouped by material
+        // WARNING: Sorting is not needed, valid M3D model files should already be sorted
+        // faces should already by grouped by material
+        // Just keeping the sorting function for reference (Check PR #3363)
+        /*
+        static int m3d_compare_faces(const void *a, const void *b)
+        {
+            m3df_t *fa = (m3df_t *)a;
+            m3df_t *fb = (m3df_t *)b;
+            return (fa->materialid - fb->materialid);
+        }
+        
         qsort(m3d->face, m3d->numface, sizeof(m3df_t), m3d_compare_faces);
+        */
 
         model.meshes = (Mesh *)RL_CALLOC(model.meshCount, sizeof(Mesh));
         model.meshMaterial = (int *)RL_CALLOC(model.meshCount, sizeof(int));
@@ -5692,7 +5694,7 @@ static Model LoadM3D(const char *fileName)
             model.meshes[k].vertices[l*9 + 7] = m3d->vertex[m3d->face[i].vertex[2]].y*m3d->scale;
             model.meshes[k].vertices[l*9 + 8] = m3d->vertex[m3d->face[i].vertex[2]].z*m3d->scale;
 
-            // without vertex color (full transparency), we use the default color
+            // Without vertex color (full transparency), we use the default color
             if (model.meshes[k].colors != NULL)
             {
                 if (m3d->vertex[m3d->face[i].vertex[0]].color & 0xFF000000)
