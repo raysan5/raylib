@@ -447,11 +447,11 @@ int main(int argc, char* argv[])
             {
                 if (isFloat)
                 {
-                    defines[defineIndex].type = linePtr[j-1] == 'f' ? FLOAT : DOUBLE;
+                    defines[defineIndex].type = (linePtr[j-1] == 'f')? FLOAT : DOUBLE;
                 }
                 else
                 {
-                    defines[defineIndex].type = linePtr[j-1] == 'L' ? LONG : INT;
+                    defines[defineIndex].type = (linePtr[j-1] == 'L')? LONG : INT;
                     defines[defineIndex].isHex = isHex;
                 }
             }

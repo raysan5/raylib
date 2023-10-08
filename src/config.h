@@ -55,9 +55,7 @@
 // Use busy wait loop for timing sync, if not defined, a high-resolution timer is set up and used
 //#define SUPPORT_BUSY_WAIT_LOOP          1
 // Use a partial-busy wait loop, in this case frame sleeps for most of the time, but then runs a busy loop at the end for accuracy
-#define SUPPORT_PARTIALBUSY_WAIT_LOOP
-// Wait for events passively (sleeping while no events) instead of polling them actively every frame
-//#define SUPPORT_EVENTS_WAITING          1
+#define SUPPORT_PARTIALBUSY_WAIT_LOOP    1
 // Allow automatic screen capture of current screen pressing F12, defined in KeyCallback()
 #define SUPPORT_SCREEN_CAPTURE          1
 // Allow automatic gif recording of current screen pressing CTRL+F12, defined in KeyCallback()

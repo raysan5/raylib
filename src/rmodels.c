@@ -1202,7 +1202,7 @@ void UploadMesh(Mesh *mesh, bool dynamic)
     // NOTE: Vertex attributes must be uploaded considering default locations points and available vertex data
 
     // Enable vertex attributes: position (shader-location = 0)
-    void *vertices = mesh->animVertices != NULL ? mesh->animVertices : mesh->vertices;
+    void *vertices = (mesh->animVertices != NULL)? mesh->animVertices : mesh->vertices;
     mesh->vboId[0] = rlLoadVertexBuffer(vertices, mesh->vertexCount*3*sizeof(float), dynamic);
     rlSetVertexAttribute(0, 3, RL_FLOAT, 0, 0, 0);
     rlEnableVertexAttribute(0);
@@ -1218,7 +1218,7 @@ void UploadMesh(Mesh *mesh, bool dynamic)
     if (mesh->normals != NULL)
     {
         // Enable vertex attributes: normals (shader-location = 2)
-        void *normals = mesh->animNormals != NULL ? mesh->animNormals : mesh->normals;
+        void *normals = (mesh->animNormals != NULL)? mesh->animNormals : mesh->normals;
         mesh->vboId[2] = rlLoadVertexBuffer(normals, mesh->vertexCount*3*sizeof(float), dynamic);
         rlSetVertexAttribute(2, 3, RL_FLOAT, 0, 0, 0);
         rlEnableVertexAttribute(2);
@@ -5585,7 +5585,7 @@ static Model LoadM3D(const char *fileName)
 
         if (!m3d || M3D_ERR_ISFATAL(m3d->errcode))
         {
-            TRACELOG(LOG_WARNING, "MODEL: [%s] Failed to load M3D data, error code %d", fileName, m3d ? m3d->errcode : -2);
+            TRACELOG(LOG_WARNING, "MODEL: [%s] Failed to load M3D data, error code %d", fileName, m3d? m3d->errcode : -2);
             if (m3d) m3d_free(m3d);
             UnloadFileData(fileData);
             return model;
@@ -5910,7 +5910,7 @@ static ModelAnimation *LoadModelAnimationsM3D(const char *fileName, int *animCou
 
         if (!m3d || M3D_ERR_ISFATAL(m3d->errcode))
         {
-            TRACELOG(LOG_WARNING, "MODEL: [%s] Failed to load M3D data, error code %d", fileName, m3d ? m3d->errcode : -2);
+            TRACELOG(LOG_WARNING, "MODEL: [%s] Failed to load M3D data, error code %d", fileName, m3d? m3d->errcode : -2);
             UnloadFileData(fileData);
             return NULL;
         }
