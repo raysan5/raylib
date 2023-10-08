@@ -534,8 +534,8 @@ int main(int argc, char* argv[])
                     {
                         // Found a valid number -> update largestType
                         int numberType;
-                        if (isFloat) numberType = valuePtr[c - 1] == 'f' ? FLOAT_MATH : DOUBLE_MATH;
-                        else numberType = valuePtr[c - 1] == 'L' ? LONG_MATH : INT_MATH;
+                        if (isFloat) numberType = (valuePtr[c - 1] == 'f')? FLOAT_MATH : DOUBLE_MATH;
+                        else numberType = (valuePtr[c - 1] == 'L')? LONG_MATH : INT_MATH;
 
                         if (numberType > largestType) largestType = numberType;
                     }
