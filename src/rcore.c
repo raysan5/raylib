@@ -53,9 +53,6 @@
 *       #define SUPPORT_PARTIALBUSY_WAIT_LOOP
 *           Use a partial-busy wait loop, in this case frame sleeps for most of the time and runs a busy-wait-loop at the end
 *
-*       #define SUPPORT_EVENTS_WAITING
-*           Wait for events passively (sleeping while no events) instead of polling them actively every frame
-*
 *       #define SUPPORT_SCREEN_CAPTURE
 *           Allow automatic screen capture of current screen pressing F12, defined in KeyCallback()
 *
@@ -196,7 +193,7 @@ RLAPI const char *raylib_version = RAYLIB_VERSION;  // raylib version exported s
 CoreData CORE = { 0 };               // Global CORE state context
 
 #if defined(SUPPORT_SCREEN_CAPTURE)
-static int screenshotCounter = 0;           // Screenshots counter
+static int screenshotCounter = 0;    // Screenshots counter
 #endif
 
 #if defined(SUPPORT_GIF_RECORDING)
@@ -294,17 +291,18 @@ static bool eventsRecording = false;    // Record events
 //-----------------------------------------------------------------------------------
 
 //----------------------------------------------------------------------------------
-// Module specific Functions Declaration
+// Module Functions Declaration
+// NOTE: Those functions are common for all platforms!
 //----------------------------------------------------------------------------------
 
 #if defined(SUPPORT_MODULE_RTEXT) && defined(SUPPORT_DEFAULT_FONT)
-extern void LoadFontDefault(void);          // [Module: text] Loads default font on InitWindow()
-extern void UnloadFontDefault(void);        // [Module: text] Unloads default font from GPU memory
+extern void LoadFontDefault(void);      // [Module: text] Loads default font on InitWindow()
+extern void UnloadFontDefault(void);    // [Module: text] Unloads default font from GPU memory
 #endif
 
-static void InitTimer(void);                            // Initialize timer (hi-resolution if available)
-static void SetupFramebuffer(int width, int height);    // Setup main framebuffer
-static void SetupViewport(int width, int height);       // Set viewport for a provided width and height
+static void InitTimer(void);                                // Initialize timer (hi-resolution if available)
+static void SetupFramebuffer(int width, int height);        // Setup main framebuffer
+static void SetupViewport(int width, int height);           // Set viewport for a provided width and height
 
 static void ScanDirectoryFiles(const char *basePath, FilePathList *list, const char *filter);   // Scan all files and directories in a base path
 static void ScanDirectoryFilesRecursively(const char *basePath, FilePathList *list, const char *filter);  // Scan all files and directories recursively from a base path
@@ -325,7 +323,7 @@ void __stdcall Sleep(unsigned long msTimeout);              // Required for: Wai
 const char *TextFormat(const char *text, ...);       // Formatting of text with variables to 'embed'
 #endif // !SUPPORT_MODULE_RTEXT
 
-// Include submodules
+// Include platform-specific submodules
 #if defined(PLATFORM_DESKTOP)
     #include "rcore_desktop.c"
 #elif defined(PLATFORM_WEB)
@@ -341,6 +339,57 @@ const char *TextFormat(const char *text, ...);       // Formatting of text with 
 //----------------------------------------------------------------------------------
 // Module Functions Definition - Window and OpenGL Context Functions
 //----------------------------------------------------------------------------------
+
+// NOTE: Multiple window/display/monitor management functions have been moved to platform-specific modules
+
+// Platform-specific functions:
+//void InitWindow(int width, int height, const char *title);
+//void CloseWindow(void);
+//bool WindowShouldClose(void)
+//bool IsWindowHidden(void)
+//bool IsWindowMinimized(void)
+//bool IsWindowMaximized(void)
+//bool IsWindowFocused(void)
+//bool IsWindowResized(void)
+//void ToggleFullscreen(void)
+//void MaximizeWindow(void)
+//void MinimizeWindow(void)
+//void RestoreWindow(void)
+//void ToggleBorderlessWindowed(void)
+//void SetWindowState(unsigned int flags)
+//void ClearWindowState(unsigned int flags)
+//void SetWindowIcon(Image image)
+//void SetWindowIcons(Image *images, int count)
+//void SetWindowTitle(const char *title)
+//void SetWindowPosition(int x, int y)
+//void SetWindowMonitor(int monitor)
+//void SetWindowMinSize(int width, int height)
+//void SetWindowMaxSize(int width, int height)
+//void SetWindowSize(int width, int height)
+//void SetWindowOpacity(float opacity)
+//void SetWindowFocused(void)
+//void *GetWindowHandle(void)
+//int GetMonitorCount(void)
+//int GetCurrentMonitor(void)
+//Vector2 GetMonitorPosition(int monitor)
+//int GetMonitorWidth(int monitor)
+//int GetMonitorHeight(int monitor)
+//int GetMonitorPhysicalWidth(int monitor)
+//int GetMonitorPhysicalHeight(int monitor)
+//int GetMonitorRefreshRate(int monitor)
+//const char *GetMonitorName(int monitor)
+//Vector2 GetWindowPosition(void)
+//Vector2 GetWindowScaleDPI(void)
+//void SetClipboardText(const char *text)
+//const char *GetClipboardText(void)
+//void ShowCursor(void)
+//void HideCursor(void)
+//void EnableCursor(void)
+//void DisableCursor(void)
+//double GetTime(void)
+//void TakeScreenshot(const char *fileName)
+//void OpenURL(const char *url)
+
 
 // Check if window has been initialized successfully
 bool IsWindowReady(void)
@@ -1193,32 +1242,9 @@ void SetConfigFlags(unsigned int flags)
     CORE.Window.flags |= flags;
 }
 
-// Get a random value between min and max (both included)
-// WARNING: Ranges higher than RAND_MAX will return invalid results
-// More specifically, if (max - min) > INT_MAX there will be an overflow,
-// and otherwise if (max - min) > RAND_MAX the random value will incorrectly never exceed a certain threshold
-int GetRandomValue(int min, int max)
-{
-    if (min > max)
-    {
-        int tmp = max;
-        max = min;
-        min = tmp;
-    }
-
-    if ((unsigned int)(max - min) > (unsigned int)RAND_MAX)
-    {
-        TRACELOG(LOG_WARNING, "Invalid GetRandomValue() arguments, range should not be higher than %i", RAND_MAX);
-    }
-
-    return (rand()%(abs(max - min) + 1) + min);
-}
-
-// Set the seed for the random number generator
-void SetRandomSeed(unsigned int seed)
-{
-    srand(seed);
-}
+//----------------------------------------------------------------------------------
+// Module Functions Definition: FileSystem
+//----------------------------------------------------------------------------------
 
 // Check if the file exists
 bool FileExists(const char *fileName)
@@ -1374,7 +1400,7 @@ const char *GetFileNameWithoutExt(const char *filePath)
 // Get directory for a given filePath
 const char *GetDirectoryPath(const char *filePath)
 {
-/*
+    /*
     // NOTE: Directory separator is different in Windows and other platforms,
     // fortunately, Windows also support the '/' separator, that's the one should be used
     #if defined(_WIN32)
@@ -1382,7 +1408,7 @@ const char *GetDirectoryPath(const char *filePath)
     #else
         char separator = '/';
     #endif
-*/
+    */
     const char *lastSlash = NULL;
     static char dirPath[MAX_FILEPATH_LENGTH] = { 0 };
     memset(dirPath, 0, MAX_FILEPATH_LENGTH);
@@ -1409,8 +1435,8 @@ const char *GetDirectoryPath(const char *filePath)
         else
         {
             // NOTE: Be careful, strncpy() is not safe, it does not care about '\0'
-            memcpy(dirPath + (filePath[1] != ':' && filePath[0] != '\\' && filePath[0] != '/' ? 2 : 0), filePath, strlen(filePath) - (strlen(lastSlash) - 1));
-            dirPath[strlen(filePath) - strlen(lastSlash) + (filePath[1] != ':' && filePath[0] != '\\' && filePath[0] != '/' ? 2 : 0)] = '\0';  // Add '\0' manually
+            memcpy(dirPath + ((filePath[1] != ':') && (filePath[0] != '\\') && (filePath[0] != '/'))? 2 : 0, filePath, strlen(filePath) - (strlen(lastSlash) - 1));
+            dirPath[strlen(filePath) - strlen(lastSlash) + ((filePath[1] != ':') && (filePath[0] != '\\') && (filePath[0] != '/'))? 2 : 0] = '\0';  // Add '\0' manually
         }
     }
 
@@ -1662,6 +1688,37 @@ long GetFileModTime(const char *fileName)
     return 0;
 }
 
+//----------------------------------------------------------------------------------
+// Module Functions Definition: Misc
+//----------------------------------------------------------------------------------
+
+// Get a random value between min and max (both included)
+// WARNING: Ranges higher than RAND_MAX will return invalid results
+// More specifically, if (max - min) > INT_MAX there will be an overflow,
+// and otherwise if (max - min) > RAND_MAX the random value will incorrectly never exceed a certain threshold
+int GetRandomValue(int min, int max)
+{
+    if (min > max)
+    {
+        int tmp = max;
+        max = min;
+        min = tmp;
+    }
+
+    if ((unsigned int)(max - min) > (unsigned int)RAND_MAX)
+    {
+        TRACELOG(LOG_WARNING, "Invalid GetRandomValue() arguments, range should not be higher than %i", RAND_MAX);
+    }
+
+    return (rand()%(abs(max - min) + 1) + min);
+}
+
+// Set the seed for the random number generator
+void SetRandomSeed(unsigned int seed)
+{
+    srand(seed);
+}
+
 // Compress data (DEFLATE algorithm)
 unsigned char *CompressData(const unsigned char *data, int dataSize, int *compDataSize)
 {
@@ -1672,7 +1729,7 @@ unsigned char *CompressData(const unsigned char *data, int dataSize, int *compDa
 #if defined(SUPPORT_COMPRESSION_API)
     // Compress data and generate a valid DEFLATE stream
     struct sdefl *sdefl = RL_CALLOC(1, sizeof(struct sdefl));   // WARNING: Possible stack overflow, struct sdefl is almost 1MB
-    int bounds = dataSize*2;//sdefl_bound(dataSize);
+    int bounds = sdefl_bound(dataSize);
     compData = (unsigned char *)RL_CALLOC(bounds, 1);
 
     *compDataSize = sdeflate(sdefl, compData, data, dataSize, COMPRESSION_QUALITY_DEFLATE);   // Compression level 8, same as stbiw
@@ -1804,8 +1861,26 @@ unsigned char *DecodeDataBase64(const unsigned char *data, int *outputSize)
 }
 
 //----------------------------------------------------------------------------------
-// Module Functions Definition - Input (Keyboard, Mouse, Gamepad) Functions
+// Module Functions Definition: Inputs
 //----------------------------------------------------------------------------------
+
+// Platform-specific functions
+//void SetExitKey(int key)
+//const char *GetGamepadName(int gamepad)
+//int GetGamepadAxisCount(int gamepad)
+//int SetGamepadMappings(const char *mappings)
+//int GetMouseX(void)
+//int GetMouseY(void)
+//Vector2 GetMousePosition(void)
+//void SetMousePosition(int x, int y)
+//float GetMouseWheelMove(void)
+//void SetMouseCursor(int cursor)
+//int GetTouchX(void)
+//int GetTouchY(void)
+//Vector2 GetTouchPosition(int index)
+//void SwapScreenBuffer(void)
+//void PollInputEvents(void)
+
 // Check if a key has been pressed once
 bool IsKeyPressed(int key)
 {
@@ -1915,17 +1990,6 @@ int GetCharPressed(void)
 
     return value;
 }
-
-//// Set a custom key to exit program
-//// NOTE: default exitKey is ESCAPE
-//void SetExitKey(int key)
-//{
-//#if !defined(PLATFORM_ANDROID)
-//    CORE.Input.Keyboard.exitKey = key;
-//#endif
-//}
-
-// NOTE: Gamepad support not implemented in emscripten GLFW3 (PLATFORM_WEB)
 
 // Check if a gamepad is available
 bool IsGamepadAvailable(int gamepad)
@@ -2085,61 +2149,6 @@ Vector2 GetMouseWheelMoveV(void)
     return result;
 }
 
-//// Set mouse cursor
-//// NOTE: This is a no-op on platforms other than PLATFORM_DESKTOP
-//void SetMouseCursor(int cursor)
-//{
-//#if defined(PLATFORM_DESKTOP)
-//    CORE.Input.Mouse.cursor = cursor;
-//    if (cursor == MOUSE_CURSOR_DEFAULT) glfwSetCursor(CORE.Window.handle, NULL);
-//    else
-//    {
-//        // NOTE: We are relating internal GLFW enum values to our MouseCursor enum values
-//        glfwSetCursor(CORE.Window.handle, glfwCreateStandardCursor(0x00036000 + cursor));
-//    }
-//#endif
-//}
-
-//// Get touch position X for touch point 0 (relative to screen size)
-//int GetTouchX(void)
-//{
-//#if defined(PLATFORM_ANDROID) || defined(PLATFORM_WEB)
-//    return (int)CORE.Input.Touch.position[0].x;
-//#else   // PLATFORM_DESKTOP, PLATFORM_DRM
-//    return GetMouseX();
-//#endif
-//}
-
-//// Get touch position Y for touch point 0 (relative to screen size)
-//int GetTouchY(void)
-//{
-//#if defined(PLATFORM_ANDROID) || defined(PLATFORM_WEB)
-//    return (int)CORE.Input.Touch.position[0].y;
-//#else   // PLATFORM_DESKTOP, PLATFORM_DRM
-//    return GetMouseY();
-//#endif
-//}
-
-//// Get touch position XY for a touch point index (relative to screen size)
-//// TODO: Touch position should be scaled depending on display size and render size
-//Vector2 GetTouchPosition(int index)
-//{
-//    Vector2 position = { -1.0f, -1.0f };
-//
-//#if defined(PLATFORM_DESKTOP)
-//    // TODO: GLFW does not support multi-touch input just yet
-//    // https://www.codeproject.com/Articles/668404/Programming-for-Multi-Touch
-//    // https://docs.microsoft.com/en-us/windows/win32/wintouch/getting-started-with-multi-touch-messages
-//    if (index == 0) position = GetMousePosition();
-//#endif
-//#if defined(PLATFORM_ANDROID) || defined(PLATFORM_WEB) || defined(PLATFORM_DRM)
-//    if (index < MAX_TOUCH_POINTS) position = CORE.Input.Touch.position[index];
-//    else TRACELOG(LOG_WARNING, "INPUT: Required touch point out of range (Max touch points: %i)", MAX_TOUCH_POINTS);
-//#endif
-//
-//    return position;
-//}
-
 // Get touch point identifier for given index
 int GetTouchPointId(int index)
 {
@@ -2157,8 +2166,11 @@ int GetTouchPointCount(void)
 }
 
 //----------------------------------------------------------------------------------
-// Module specific Functions Definition
+// Module Internal Functions Definition
 //----------------------------------------------------------------------------------
+
+// Platform-specific functions
+//static bool InitGraphicsDevice(int width, int height)
 
 // Set viewport for a provided width and height
 void SetupViewport(int width, int height)
@@ -2334,7 +2346,6 @@ void WaitTime(double seconds)
 #endif
 }
 
-
 // Scan all files and directories in a base path
 // WARNING: files.paths[] must be previously allocated and
 // contain enough space to store all required paths
@@ -2424,280 +2435,6 @@ static void ScanDirectoryFilesRecursively(const char *basePath, FilePathList *fi
     }
     else TRACELOG(LOG_WARNING, "FILEIO: Directory cannot be opened (%s)", basePath);
 }
-
-//#if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
-//
-//// GLFW3 WindowSize Callback, runs when window is resizedLastFrame
-//// NOTE: Window resizing not allowed by default
-//static void WindowSizeCallback(GLFWwindow *window, int width, int height)
-//{
-//    // Reset viewport and projection matrix for new size
-//    SetupViewport(width, height);
-//
-//    CORE.Window.currentFbo.width = width;
-//    CORE.Window.currentFbo.height = height;
-//    CORE.Window.resizedLastFrame = true;
-//
-//    if (IsWindowFullscreen()) return;
-//
-//    // Set current screen size
-//#if defined(__APPLE__)
-//    CORE.Window.screen.width = width;
-//    CORE.Window.screen.height = height;
-//#else
-//    if ((CORE.Window.flags & FLAG_WINDOW_HIGHDPI) > 0)
-//    {
-//        Vector2 windowScaleDPI = GetWindowScaleDPI();
-//
-//        CORE.Window.screen.width = (unsigned int)(width/windowScaleDPI.x);
-//        CORE.Window.screen.height = (unsigned int)(height/windowScaleDPI.y);
-//    }
-//    else
-//    {
-//        CORE.Window.screen.width = width;
-//        CORE.Window.screen.height = height;
-//    }
-//#endif
-//
-//    // NOTE: Postprocessing texture is not scaled to new size
-//}
-//
-//// GLFW3 WindowIconify Callback, runs when window is minimized/restored
-//static void WindowIconifyCallback(GLFWwindow *window, int iconified)
-//{
-//    if (iconified) CORE.Window.flags |= FLAG_WINDOW_MINIMIZED;  // The window was iconified
-//    else CORE.Window.flags &= ~FLAG_WINDOW_MINIMIZED;           // The window was restored
-//}
-//
-//// GLFW3 WindowFocus Callback, runs when window get/lose focus
-//static void WindowFocusCallback(GLFWwindow *window, int focused)
-//{
-//    if (focused) CORE.Window.flags &= ~FLAG_WINDOW_UNFOCUSED;   // The window was focused
-//    else CORE.Window.flags |= FLAG_WINDOW_UNFOCUSED;            // The window lost focus
-//}
-//
-//// GLFW3 Keyboard Callback, runs on key pressed
-//static void KeyCallback(GLFWwindow *window, int key, int scancode, int action, int mods)
-//{
-//    if (key < 0) return;    // Security check, macOS fn key generates -1
-//
-//    // WARNING: GLFW could return GLFW_REPEAT, we need to consider it as 1
-//    // to work properly with our implementation (IsKeyDown/IsKeyUp checks)
-//    if (action == GLFW_RELEASE) CORE.Input.Keyboard.currentKeyState[key] = 0;
-//    else if(action == GLFW_PRESS) CORE.Input.Keyboard.currentKeyState[key] = 1;
-//    else if(action == GLFW_REPEAT) CORE.Input.Keyboard.keyRepeatInFrame[key] = 1;
-//
-//#if !defined(PLATFORM_WEB)
-//    // WARNING: Check if CAPS/NUM key modifiers are enabled and force down state for those keys
-//    if (((key == KEY_CAPS_LOCK) && ((mods & GLFW_MOD_CAPS_LOCK) > 0)) ||
-//        ((key == KEY_NUM_LOCK) && ((mods & GLFW_MOD_NUM_LOCK) > 0))) CORE.Input.Keyboard.currentKeyState[key] = 1;
-//#endif
-//
-//    // Check if there is space available in the key queue
-//    if ((CORE.Input.Keyboard.keyPressedQueueCount < MAX_KEY_PRESSED_QUEUE) && (action == GLFW_PRESS))
-//    {
-//        // Add character to the queue
-//        CORE.Input.Keyboard.keyPressedQueue[CORE.Input.Keyboard.keyPressedQueueCount] = key;
-//        CORE.Input.Keyboard.keyPressedQueueCount++;
-//    }
-//
-//    // Check the exit key to set close window
-//    if ((key == CORE.Input.Keyboard.exitKey) && (action == GLFW_PRESS)) glfwSetWindowShouldClose(CORE.Window.handle, GLFW_TRUE);
-//
-//#if defined(SUPPORT_SCREEN_CAPTURE)
-//    if ((key == GLFW_KEY_F12) && (action == GLFW_PRESS))
-//    {
-//#if defined(SUPPORT_GIF_RECORDING)
-//        if (mods & GLFW_MOD_CONTROL)
-//        {
-//            if (gifRecording)
-//            {
-//                gifRecording = false;
-//
-//                MsfGifResult result = msf_gif_end(&gifState);
-//
-//                SaveFileData(TextFormat("%s/screenrec%03i.gif", CORE.Storage.basePath, screenshotCounter), result.data, (unsigned int)result.dataSize);
-//                msf_gif_free(result);
-//
-//            #if defined(PLATFORM_WEB)
-//                // Download file from MEMFS (emscripten memory filesystem)
-//                // saveFileFromMEMFSToDisk() function is defined in raylib/templates/web_shel/shell.html
-//                emscripten_run_script(TextFormat("saveFileFromMEMFSToDisk('%s','%s')", TextFormat("screenrec%03i.gif", screenshotCounter - 1), TextFormat("screenrec%03i.gif", screenshotCounter - 1)));
-//            #endif
-//
-//                TRACELOG(LOG_INFO, "SYSTEM: Finish animated GIF recording");
-//            }
-//            else
-//            {
-//                gifRecording = true;
-//                gifFrameCounter = 0;
-//
-//                Vector2 scale = GetWindowScaleDPI();
-//                msf_gif_begin(&gifState, (int)((float)CORE.Window.render.width*scale.x), (int)((float)CORE.Window.render.height*scale.y));
-//                screenshotCounter++;
-//
-//                TRACELOG(LOG_INFO, "SYSTEM: Start animated GIF recording: %s", TextFormat("screenrec%03i.gif", screenshotCounter));
-//            }
-//        }
-//        else
-//#endif  // SUPPORT_GIF_RECORDING
-//        {
-//            TakeScreenshot(TextFormat("screenshot%03i.png", screenshotCounter));
-//            screenshotCounter++;
-//        }
-//    }
-//#endif  // SUPPORT_SCREEN_CAPTURE
-//
-//#if defined(SUPPORT_EVENTS_AUTOMATION)
-//    if ((key == GLFW_KEY_F11) && (action == GLFW_PRESS))
-//    {
-//        eventsRecording = !eventsRecording;
-//
-//        // On finish recording, we export events into a file
-//        if (!eventsRecording) ExportAutomationEvents("eventsrec.rep");
-//    }
-//    else if ((key == GLFW_KEY_F9) && (action == GLFW_PRESS))
-//    {
-//        LoadAutomationEvents("eventsrec.rep");
-//        eventsPlaying = true;
-//
-//        TRACELOG(LOG_WARNING, "eventsPlaying enabled!");
-//    }
-//#endif
-//}
-//
-//// GLFW3 Char Key Callback, runs on key down (gets equivalent unicode char value)
-//static void CharCallback(GLFWwindow *window, unsigned int key)
-//{
-//    //TRACELOG(LOG_DEBUG, "Char Callback: KEY:%i(%c)", key, key);
-//
-//    // NOTE: Registers any key down considering OS keyboard layout but
-//    // does not detect action events, those should be managed by user...
-//    // Ref: https://github.com/glfw/glfw/issues/668#issuecomment-166794907
-//    // Ref: https://www.glfw.org/docs/latest/input_guide.html#input_char
-//
-//    // Check if there is space available in the queue
-//    if (CORE.Input.Keyboard.charPressedQueueCount < MAX_CHAR_PRESSED_QUEUE)
-//    {
-//        // Add character to the queue
-//        CORE.Input.Keyboard.charPressedQueue[CORE.Input.Keyboard.charPressedQueueCount] = key;
-//        CORE.Input.Keyboard.charPressedQueueCount++;
-//    }
-//}
-//
-//// GLFW3 Mouse Button Callback, runs on mouse button pressed
-//static void MouseButtonCallback(GLFWwindow *window, int button, int action, int mods)
-//{
-//    // WARNING: GLFW could only return GLFW_PRESS (1) or GLFW_RELEASE (0) for now,
-//    // but future releases may add more actions (i.e. GLFW_REPEAT)
-//    CORE.Input.Mouse.currentButtonState[button] = action;
-//
-//#if defined(SUPPORT_GESTURES_SYSTEM) && defined(SUPPORT_MOUSE_GESTURES)         // PLATFORM_DESKTOP
-//    // Process mouse events as touches to be able to use mouse-gestures
-//    GestureEvent gestureEvent = { 0 };
-//
-//    // Register touch actions
-//    if ((CORE.Input.Mouse.currentButtonState[button] == 1) && (CORE.Input.Mouse.previousButtonState[button] == 0)) gestureEvent.touchAction = TOUCH_ACTION_DOWN;
-//    else if ((CORE.Input.Mouse.currentButtonState[button] == 0) && (CORE.Input.Mouse.previousButtonState[button] == 1)) gestureEvent.touchAction = TOUCH_ACTION_UP;
-//
-//    // NOTE: TOUCH_ACTION_MOVE event is registered in MouseCursorPosCallback()
-//
-//    // Assign a pointer ID
-//    gestureEvent.pointId[0] = 0;
-//
-//    // Register touch points count
-//    gestureEvent.pointCount = 1;
-//
-//    // Register touch points position, only one point registered
-//    gestureEvent.position[0] = GetMousePosition();
-//
-//    // Normalize gestureEvent.position[0] for CORE.Window.screen.width and CORE.Window.screen.height
-//    gestureEvent.position[0].x /= (float)GetScreenWidth();
-//    gestureEvent.position[0].y /= (float)GetScreenHeight();
-//
-//    // Gesture data is sent to gestures-system for processing
-//#if defined(PLATFORM_WEB)
-//    // Prevent calling ProcessGestureEvent() when Emscripten is present and there's a touch gesture, so EmscriptenTouchCallback() can handle it itself
-//    if (GetMouseX() != 0 || GetMouseY() != 0) ProcessGestureEvent(gestureEvent);
-//#else
-//    ProcessGestureEvent(gestureEvent);
-//#endif
-//
-//#endif
-//}
-//
-//// GLFW3 Cursor Position Callback, runs on mouse move
-//static void MouseCursorPosCallback(GLFWwindow *window, double x, double y)
-//{
-//    CORE.Input.Mouse.currentPosition.x = (float)x;
-//    CORE.Input.Mouse.currentPosition.y = (float)y;
-//    CORE.Input.Touch.position[0] = CORE.Input.Mouse.currentPosition;
-//
-//#if defined(SUPPORT_GESTURES_SYSTEM) && defined(SUPPORT_MOUSE_GESTURES)         // PLATFORM_DESKTOP
-//    // Process mouse events as touches to be able to use mouse-gestures
-//    GestureEvent gestureEvent = { 0 };
-//
-//    gestureEvent.touchAction = TOUCH_ACTION_MOVE;
-//
-//    // Assign a pointer ID
-//    gestureEvent.pointId[0] = 0;
-//
-//    // Register touch points count
-//    gestureEvent.pointCount = 1;
-//
-//    // Register touch points position, only one point registered
-//    gestureEvent.position[0] = CORE.Input.Touch.position[0];
-//
-//    // Normalize gestureEvent.position[0] for CORE.Window.screen.width and CORE.Window.screen.height
-//    gestureEvent.position[0].x /= (float)GetScreenWidth();
-//    gestureEvent.position[0].y /= (float)GetScreenHeight();
-//
-//    // Gesture data is sent to gestures-system for processing
-//    ProcessGestureEvent(gestureEvent);
-//#endif
-//}
-//
-//// GLFW3 Scrolling Callback, runs on mouse wheel
-//static void MouseScrollCallback(GLFWwindow *window, double xoffset, double yoffset)
-//{
-//    CORE.Input.Mouse.currentWheelMove = (Vector2){ (float)xoffset, (float)yoffset };
-//}
-//
-//// GLFW3 CursorEnter Callback, when cursor enters the window
-//static void CursorEnterCallback(GLFWwindow *window, int enter)
-//{
-//    if (enter == true) CORE.Input.Mouse.cursorOnScreen = true;
-//    else CORE.Input.Mouse.cursorOnScreen = false;
-//}
-//
-//// GLFW3 Window Drop Callback, runs when drop files into window
-//static void WindowDropCallback(GLFWwindow *window, int count, const char **paths)
-//{
-//    if (count > 0)
-//    {
-//        // In case previous dropped filepaths have not been freed, we free them
-//        if (CORE.Window.dropFileCount > 0)
-//        {
-//            for (unsigned int i = 0; i < CORE.Window.dropFileCount; i++) RL_FREE(CORE.Window.dropFilepaths[i]);
-//
-//            RL_FREE(CORE.Window.dropFilepaths);
-//
-//            CORE.Window.dropFileCount = 0;
-//            CORE.Window.dropFilepaths = NULL;
-//        }
-//
-//        // WARNING: Paths are freed by GLFW when the callback returns, we must keep an internal copy
-//        CORE.Window.dropFileCount = count;
-//        CORE.Window.dropFilepaths = (char **)RL_CALLOC(CORE.Window.dropFileCount, sizeof(char *));
-//
-//        for (unsigned int i = 0; i < CORE.Window.dropFileCount; i++)
-//        {
-//            CORE.Window.dropFilepaths[i] = (char *)RL_CALLOC(MAX_FILEPATH_LENGTH, sizeof(char));
-//            strcpy(CORE.Window.dropFilepaths[i], paths[i]);
-//        }
-//    }
-//}
-//#endif
 
 #if defined(SUPPORT_EVENTS_AUTOMATION)
 // NOTE: Loading happens over AutomationEvent *events

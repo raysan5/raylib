@@ -1,10 +1,67 @@
-#include <stdlib.h>
-
-#include "time.h"
+/**********************************************************************************************
+*
+*   rcore_drm - Functions to manage window, graphics device and inputs 
+*
+*   PLATFORM: DRM
+*       - Raspberry Pi 0-5
+*       - Linux native mode (KMS driver)
+*
+*   LIMITATIONS:
+*       - Most of the window/monitor functions are not implemented (not required)
+*
+*   POSSIBLE IMPROVEMENTS:
+*       - Improvement 01
+*       - Improvement 02
+*
+*   ADDITIONAL NOTES:
+*       - TRACELOG() function is located in raylib [utils] module
+*
+*   CONFIGURATION:
+*       #define RCORE_DRM_CUSTOM_FLAG
+*           Custom flag for rcore on PLATFORM_DRM -not used-
+*
+*   DEPENDENCIES:
+*       gestures - Gestures system for touch-ready devices (or simulated from mouse inputs)
+*
+*
+*   LICENSE: zlib/libpng
+*
+*   Copyright (c) 2013-2023 Ramon Santamaria (@raysan5) and contributors
+*
+*   This software is provided "as-is", without any express or implied warranty. In no event
+*   will the authors be held liable for any damages arising from the use of this software.
+*
+*   Permission is granted to anyone to use this software for any purpose, including commercial
+*   applications, and to alter it and redistribute it freely, subject to the following restrictions:
+*
+*     1. The origin of this software must not be misrepresented; you must not claim that you
+*     wrote the original software. If you use this software in a product, an acknowledgment
+*     in the product documentation would be appreciated but is not required.
+*
+*     2. Altered source versions must be plainly marked as such, and must not be misrepresented
+*     as being the original software.
+*
+*     3. This notice may not be removed or altered from any source distribution.
+*
+**********************************************************************************************/
 
 #include "rcore.h"
 
+//----------------------------------------------------------------------------------
+// Types and Structures Definition
+//----------------------------------------------------------------------------------
+//...
+
+//----------------------------------------------------------------------------------
+// Global Variables Definition
+//----------------------------------------------------------------------------------
+extern CoreData CORE;           // Global CORE state context
+
+//----------------------------------------------------------------------------------
+// Module Internal Functions Declaration
+//----------------------------------------------------------------------------------
 static bool InitGraphicsDevice(int width, int height);  // Initialize graphics device
+
 static void InitKeyboard(void);                         // Initialize raw keyboard system
 static void RestoreKeyboard(void);                      // Restore keyboard system
 #if defined(SUPPORT_SSH_KEYBOARD_RPI)
@@ -13,7 +70,7 @@ static void ProcessKeyboard(void);                      // Process keyboard even
 
 static void InitEvdevInput(void);                       // Initialize evdev inputs
 static void ConfigureEvdevDevice(char *device);         // Identifies a input device and configures it for use if appropriate
-static void PollKeyboardEvents(void);                   // Process evdev keyboard events.
+static void PollKeyboardEvents(void);                   // Process evdev keyboard events
 static void *EventThread(void *arg);                    // Input device events reading thread
 
 static void InitGamepad(void);                          // Initialize raw gamepad input
@@ -22,6 +79,15 @@ static void *GamepadThread(void *arg);                  // Mouse reading thread
 static int FindMatchingConnectorMode(const drmModeConnector *connector, const drmModeModeInfo *mode);                               // Search matching DRM mode in connector's mode list
 static int FindExactConnectorMode(const drmModeConnector *connector, uint width, uint height, uint fps, bool allowInterlaced);      // Search exactly matching DRM connector mode in connector's list
 static int FindNearestConnectorMode(const drmModeConnector *connector, uint width, uint height, uint fps, bool allowInterlaced);    // Search the nearest matching DRM connector mode in connector's list
+
+//----------------------------------------------------------------------------------
+// Module Functions Declaration
+//----------------------------------------------------------------------------------
+// NOTE: Functions declaration is provided by raylib.h
+
+//----------------------------------------------------------------------------------
+// Module Functions Definition
+//----------------------------------------------------------------------------------
 
 // Initialize window and OpenGL context
 // NOTE: data parameter could be used to pass any kind of required data to the initialization
@@ -58,8 +124,8 @@ void InitWindow(int width, int height, const char *title)
     TRACELOG(LOG_INFO, "    > raudio:.... not loaded (optional)");
 #endif
 
-    if ((title != NULL) && (title[0] != 0))
-        CORE.Window.title = title;
+    // NOTE: Keep internal pointer to input title string (no copy)
+    if ((title != NULL) && (title[0] != 0)) CORE.Window.title = title;
 
     // Initialize global input state
     memset(&CORE.Input, 0, sizeof(CORE.Input));
@@ -67,9 +133,7 @@ void InitWindow(int width, int height, const char *title)
     CORE.Input.Mouse.scale = (Vector2){1.0f, 1.0f};
     CORE.Input.Mouse.cursor = MOUSE_CURSOR_ARROW;
     CORE.Input.Gamepad.lastButtonPressed = 0; // GAMEPAD_BUTTON_UNKNOWN
-#if defined(SUPPORT_EVENTS_WAITING)
-    CORE.Window.eventWaiting = true;
-#endif
+    CORE.Window.eventWaiting = false;
 
     // Initialize graphics device (display device and OpenGL context)
     // NOTE: returns true if window and graphic device has been initialized successfully
@@ -141,359 +205,6 @@ void InitWindow(int width, int height, const char *title)
 #endif
 }
 
-
-// Initialize display device and framebuffer
-// NOTE: width and height represent the screen (framebuffer) desired size, not actual display size
-// If width or height are 0, default display size will be used for framebuffer size
-// NOTE: returns false in case graphic device could not be created
-static bool InitGraphicsDevice(int width, int height)
-{
-    CORE.Window.screen.width = width;            // User desired width
-    CORE.Window.screen.height = height;          // User desired height
-    CORE.Window.screenScale = MatrixIdentity();  // No draw scaling required by default
-
-    // Set the window minimum and maximum default values to 0
-    CORE.Window.windowMin.width  = 0;
-    CORE.Window.windowMin.height = 0;
-    CORE.Window.windowMax.width  = 0;
-    CORE.Window.windowMax.height = 0;
-
-    // NOTE: Framebuffer (render area - CORE.Window.render.width, CORE.Window.render.height) could include black bars...
-    // ...in top-down or left-right to match display aspect ratio (no weird scaling)
-
-    CORE.Window.fullscreen = true;
-    CORE.Window.flags |= FLAG_FULLSCREEN_MODE;
-
-
-    CORE.Window.fd = -1;
-    CORE.Window.connector = NULL;
-    CORE.Window.modeIndex = -1;
-    CORE.Window.crtc = NULL;
-    CORE.Window.gbmDevice = NULL;
-    CORE.Window.gbmSurface = NULL;
-    CORE.Window.prevBO = NULL;
-    CORE.Window.prevFB = 0;
-
-#if defined(DEFAULT_GRAPHIC_DEVICE_DRM)
-    CORE.Window.fd = open(DEFAULT_GRAPHIC_DEVICE_DRM, O_RDWR);
-#else
-    TRACELOG(LOG_INFO, "DISPLAY: No graphic card set, trying platform-gpu-card");
-    CORE.Window.fd = open("/dev/dri/by-path/platform-gpu-card",  O_RDWR); // VideoCore VI (Raspberry Pi 4)
-
-    if ((-1 == CORE.Window.fd) || (drmModeGetResources(CORE.Window.fd) == NULL))
-    {
-        TRACELOG(LOG_INFO, "DISPLAY: Failed to open platform-gpu-card, trying card1");
-        CORE.Window.fd = open("/dev/dri/card1", O_RDWR); // Other Embedded
-    }
-
-    if ((-1 == CORE.Window.fd) || (drmModeGetResources(CORE.Window.fd) == NULL))
-    {
-        TRACELOG(LOG_INFO, "DISPLAY: Failed to open graphic card1, trying card0");
-        CORE.Window.fd = open("/dev/dri/card0", O_RDWR); // VideoCore IV (Raspberry Pi 1-3)
-    }
-#endif
-    if (-1 == CORE.Window.fd)
-    {
-        TRACELOG(LOG_WARNING, "DISPLAY: Failed to open graphic card");
-        return false;
-    }
-
-    drmModeRes *res = drmModeGetResources(CORE.Window.fd);
-    if (!res)
-    {
-        TRACELOG(LOG_WARNING, "DISPLAY: Failed get DRM resources");
-        return false;
-    }
-
-    TRACELOG(LOG_TRACE, "DISPLAY: Connectors found: %i", res->count_connectors);
-    for (size_t i = 0; i < res->count_connectors; i++)
-    {
-        TRACELOG(LOG_TRACE, "DISPLAY: Connector index %i", i);
-        drmModeConnector *con = drmModeGetConnector(CORE.Window.fd, res->connectors[i]);
-        TRACELOG(LOG_TRACE, "DISPLAY: Connector modes detected: %i", con->count_modes);
-        if ((con->connection == DRM_MODE_CONNECTED) && (con->encoder_id))
-        {
-            TRACELOG(LOG_TRACE, "DISPLAY: DRM mode connected");
-            CORE.Window.connector = con;
-            break;
-        }
-        else
-        {
-            TRACELOG(LOG_TRACE, "DISPLAY: DRM mode NOT connected (deleting)");
-            drmModeFreeConnector(con);
-        }
-    }
-
-    if (!CORE.Window.connector)
-    {
-        TRACELOG(LOG_WARNING, "DISPLAY: No suitable DRM connector found");
-        drmModeFreeResources(res);
-        return false;
-    }
-
-    drmModeEncoder *enc = drmModeGetEncoder(CORE.Window.fd, CORE.Window.connector->encoder_id);
-    if (!enc)
-    {
-        TRACELOG(LOG_WARNING, "DISPLAY: Failed to get DRM mode encoder");
-        drmModeFreeResources(res);
-        return false;
-    }
-
-    CORE.Window.crtc = drmModeGetCrtc(CORE.Window.fd, enc->crtc_id);
-    if (!CORE.Window.crtc)
-    {
-        TRACELOG(LOG_WARNING, "DISPLAY: Failed to get DRM mode crtc");
-        drmModeFreeEncoder(enc);
-        drmModeFreeResources(res);
-        return false;
-    }
-
-    // If InitWindow should use the current mode find it in the connector's mode list
-    if ((CORE.Window.screen.width <= 0) || (CORE.Window.screen.height <= 0))
-    {
-        TRACELOG(LOG_TRACE, "DISPLAY: Selecting DRM connector mode for current used mode...");
-
-        CORE.Window.modeIndex = FindMatchingConnectorMode(CORE.Window.connector, &CORE.Window.crtc->mode);
-
-        if (CORE.Window.modeIndex < 0)
-        {
-            TRACELOG(LOG_WARNING, "DISPLAY: No matching DRM connector mode found");
-            drmModeFreeEncoder(enc);
-            drmModeFreeResources(res);
-            return false;
-        }
-
-        CORE.Window.screen.width = CORE.Window.display.width;
-        CORE.Window.screen.height = CORE.Window.display.height;
-    }
-
-    const bool allowInterlaced = CORE.Window.flags & FLAG_INTERLACED_HINT;
-    const int fps = (CORE.Time.target > 0) ? (1.0/CORE.Time.target) : 60;
-
-    // Try to find an exact matching mode
-    CORE.Window.modeIndex = FindExactConnectorMode(CORE.Window.connector, CORE.Window.screen.width, CORE.Window.screen.height, fps, allowInterlaced);
-
-    // If nothing found, try to find a nearly matching mode
-    if (CORE.Window.modeIndex < 0) CORE.Window.modeIndex = FindNearestConnectorMode(CORE.Window.connector, CORE.Window.screen.width, CORE.Window.screen.height, fps, allowInterlaced);
-
-    // If nothing found, try to find an exactly matching mode including interlaced
-    if (CORE.Window.modeIndex < 0) CORE.Window.modeIndex = FindExactConnectorMode(CORE.Window.connector, CORE.Window.screen.width, CORE.Window.screen.height, fps, true);
-
-    // If nothing found, try to find a nearly matching mode including interlaced
-    if (CORE.Window.modeIndex < 0) CORE.Window.modeIndex = FindNearestConnectorMode(CORE.Window.connector, CORE.Window.screen.width, CORE.Window.screen.height, fps, true);
-
-    // If nothing found, there is no suitable mode
-    if (CORE.Window.modeIndex < 0)
-    {
-        TRACELOG(LOG_WARNING, "DISPLAY: Failed to find a suitable DRM connector mode");
-        drmModeFreeEncoder(enc);
-        drmModeFreeResources(res);
-        return false;
-    }
-
-    CORE.Window.display.width = CORE.Window.connector->modes[CORE.Window.modeIndex].hdisplay;
-    CORE.Window.display.height = CORE.Window.connector->modes[CORE.Window.modeIndex].vdisplay;
-
-    TRACELOG(LOG_INFO, "DISPLAY: Selected DRM connector mode %s (%ux%u%c@%u)", CORE.Window.connector->modes[CORE.Window.modeIndex].name,
-        CORE.Window.connector->modes[CORE.Window.modeIndex].hdisplay, CORE.Window.connector->modes[CORE.Window.modeIndex].vdisplay,
-        (CORE.Window.connector->modes[CORE.Window.modeIndex].flags & DRM_MODE_FLAG_INTERLACE) ? 'i' : 'p',
-        CORE.Window.connector->modes[CORE.Window.modeIndex].vrefresh);
-
-    // Use the width and height of the surface for render
-    CORE.Window.render.width = CORE.Window.screen.width;
-    CORE.Window.render.height = CORE.Window.screen.height;
-
-    drmModeFreeEncoder(enc);
-    enc = NULL;
-
-    drmModeFreeResources(res);
-    res = NULL;
-
-    CORE.Window.gbmDevice = gbm_create_device(CORE.Window.fd);
-    if (!CORE.Window.gbmDevice)
-    {
-        TRACELOG(LOG_WARNING, "DISPLAY: Failed to create GBM device");
-        return false;
-    }
-
-    CORE.Window.gbmSurface = gbm_surface_create(CORE.Window.gbmDevice, CORE.Window.connector->modes[CORE.Window.modeIndex].hdisplay,
-        CORE.Window.connector->modes[CORE.Window.modeIndex].vdisplay, GBM_FORMAT_ARGB8888, GBM_BO_USE_SCANOUT | GBM_BO_USE_RENDERING);
-    if (!CORE.Window.gbmSurface)
-    {
-        TRACELOG(LOG_WARNING, "DISPLAY: Failed to create GBM surface");
-        return false;
-    }
-
-    EGLint samples = 0;
-    EGLint sampleBuffer = 0;
-    if (CORE.Window.flags & FLAG_MSAA_4X_HINT)
-    {
-        samples = 4;
-        sampleBuffer = 1;
-        TRACELOG(LOG_INFO, "DISPLAY: Trying to enable MSAA x4");
-    }
-
-    const EGLint framebufferAttribs[] =
-    {
-        EGL_RENDERABLE_TYPE, (rlGetVersion() == RL_OPENGL_ES_30)? EGL_OPENGL_ES3_BIT : EGL_OPENGL_ES2_BIT,      // Type of context support
-        EGL_SURFACE_TYPE, EGL_WINDOW_BIT,          // Don't use it on Android!
-        EGL_RED_SIZE, 8,            // RED color bit depth (alternative: 5)
-        EGL_GREEN_SIZE, 8,          // GREEN color bit depth (alternative: 6)
-        EGL_BLUE_SIZE, 8,           // BLUE color bit depth (alternative: 5)
-        EGL_ALPHA_SIZE, 8,        // ALPHA bit depth (required for transparent framebuffer)
-        //EGL_TRANSPARENT_TYPE, EGL_NONE, // Request transparent framebuffer (EGL_TRANSPARENT_RGB does not work on RPI)
-        EGL_DEPTH_SIZE, 16,         // Depth buffer size (Required to use Depth testing!)
-        //EGL_STENCIL_SIZE, 8,      // Stencil buffer size
-        EGL_SAMPLE_BUFFERS, sampleBuffer,    // Activate MSAA
-        EGL_SAMPLES, samples,       // 4x Antialiasing if activated (Free on MALI GPUs)
-        EGL_NONE
-    };
-
-    const EGLint contextAttribs[] =
-    {
-        EGL_CONTEXT_CLIENT_VERSION, 2,
-        EGL_NONE
-    };
-
-    EGLint numConfigs = 0;
-
-    // Get an EGL device connection
-    CORE.Window.device = eglGetDisplay((EGLNativeDisplayType)CORE.Window.gbmDevice);
-    if (CORE.Window.device == EGL_NO_DISPLAY)
-    {
-        TRACELOG(LOG_WARNING, "DISPLAY: Failed to initialize EGL device");
-        return false;
-    }
-
-    // Initialize the EGL device connection
-    if (eglInitialize(CORE.Window.device, NULL, NULL) == EGL_FALSE)
-    {
-        // If all of the calls to eglInitialize returned EGL_FALSE then an error has occurred.
-        TRACELOG(LOG_WARNING, "DISPLAY: Failed to initialize EGL device");
-        return false;
-    }
-
-    if (!eglChooseConfig(CORE.Window.device, NULL, NULL, 0, &numConfigs))
-    {
-        TRACELOG(LOG_WARNING, "DISPLAY: Failed to get EGL config count: 0x%x", eglGetError());
-        return false;
-    }
-
-    TRACELOG(LOG_TRACE, "DISPLAY: EGL configs available: %d", numConfigs);
-
-    EGLConfig *configs = RL_CALLOC(numConfigs, sizeof(*configs));
-    if (!configs)
-    {
-        TRACELOG(LOG_WARNING, "DISPLAY: Failed to get memory for EGL configs");
-        return false;
-    }
-
-    EGLint matchingNumConfigs = 0;
-    if (!eglChooseConfig(CORE.Window.device, framebufferAttribs, configs, numConfigs, &matchingNumConfigs))
-    {
-        TRACELOG(LOG_WARNING, "DISPLAY: Failed to choose EGL config: 0x%x", eglGetError());
-        free(configs);
-        return false;
-    }
-
-    TRACELOG(LOG_TRACE, "DISPLAY: EGL matching configs available: %d", matchingNumConfigs);
-
-    // find the EGL config that matches the previously setup GBM format
-    int found = 0;
-    for (EGLint i = 0; i < matchingNumConfigs; ++i)
-    {
-        EGLint id = 0;
-        if (!eglGetConfigAttrib(CORE.Window.device, configs[i], EGL_NATIVE_VISUAL_ID, &id))
-        {
-            TRACELOG(LOG_WARNING, "DISPLAY: Failed to get EGL config attribute: 0x%x", eglGetError());
-            continue;
-        }
-
-        if (GBM_FORMAT_ARGB8888 == id)
-        {
-            TRACELOG(LOG_TRACE, "DISPLAY: Using EGL config: %d", i);
-            CORE.Window.config = configs[i];
-            found = 1;
-            break;
-        }
-    }
-
-    RL_FREE(configs);
-
-    if (!found)
-    {
-        TRACELOG(LOG_WARNING, "DISPLAY: Failed to find a suitable EGL config");
-        return false;
-    }
-
-    // Set rendering API
-    eglBindAPI(EGL_OPENGL_ES_API);
-
-    // Create an EGL rendering context
-    CORE.Window.context = eglCreateContext(CORE.Window.device, CORE.Window.config, EGL_NO_CONTEXT, contextAttribs);
-    if (CORE.Window.context == EGL_NO_CONTEXT)
-    {
-        TRACELOG(LOG_WARNING, "DISPLAY: Failed to create EGL context");
-        return false;
-    }
-
-
-    // Create an EGL window surface
-    //---------------------------------------------------------------------------------
-    CORE.Window.surface = eglCreateWindowSurface(CORE.Window.device, CORE.Window.config, (EGLNativeWindowType)CORE.Window.gbmSurface, NULL);
-    if (EGL_NO_SURFACE == CORE.Window.surface)
-    {
-        TRACELOG(LOG_WARNING, "DISPLAY: Failed to create EGL window surface: 0x%04x", eglGetError());
-        return false;
-    }
-
-    // At this point we need to manage render size vs screen size
-    // NOTE: This function use and modify global module variables:
-    //  -> CORE.Window.screen.width/CORE.Window.screen.height
-    //  -> CORE.Window.render.width/CORE.Window.render.height
-    //  -> CORE.Window.screenScale
-    SetupFramebuffer(CORE.Window.display.width, CORE.Window.display.height);
-
-    // There must be at least one frame displayed before the buffers are swapped
-    //eglSwapInterval(CORE.Window.device, 1);
-
-    if (eglMakeCurrent(CORE.Window.device, CORE.Window.surface, CORE.Window.surface, CORE.Window.context) == EGL_FALSE)
-    {
-        TRACELOG(LOG_WARNING, "DISPLAY: Failed to attach EGL rendering context to EGL surface");
-        return false;
-    }
-    else
-    {
-        CORE.Window.render.width = CORE.Window.screen.width;
-        CORE.Window.render.height = CORE.Window.screen.height;
-        CORE.Window.currentFbo.width = CORE.Window.render.width;
-        CORE.Window.currentFbo.height = CORE.Window.render.height;
-
-        TRACELOG(LOG_INFO, "DISPLAY: Device initialized successfully");
-        TRACELOG(LOG_INFO, "    > Display size: %i x %i", CORE.Window.display.width, CORE.Window.display.height);
-        TRACELOG(LOG_INFO, "    > Screen size:  %i x %i", CORE.Window.screen.width, CORE.Window.screen.height);
-        TRACELOG(LOG_INFO, "    > Render size:  %i x %i", CORE.Window.render.width, CORE.Window.render.height);
-        TRACELOG(LOG_INFO, "    > Viewport offsets: %i, %i", CORE.Window.renderOffset.x, CORE.Window.renderOffset.y);
-    }
-
-    // Load OpenGL extensions
-    // NOTE: GL procedures address loader is required to load extensions
-    rlLoadExtensions(eglGetProcAddress);
-
-    // Initialize OpenGL context (states and resources)
-    // NOTE: CORE.Window.currentFbo.width and CORE.Window.currentFbo.height not used, just stored as globals in rlgl
-    rlglInit(CORE.Window.currentFbo.width, CORE.Window.currentFbo.height);
-
-    // Setup default viewport
-    // NOTE: It updated CORE.Window.render.width and CORE.Window.render.height
-    SetupViewport(CORE.Window.currentFbo.width, CORE.Window.currentFbo.height);
-
-    if ((CORE.Window.flags & FLAG_WINDOW_MINIMIZED) > 0) MinimizeWindow();
-
-    return true;
-}
-
-
 // Close window and unload OpenGL context
 void CloseWindow(void)
 {
@@ -515,7 +226,6 @@ void CloseWindow(void)
 #if defined(_WIN32) && defined(SUPPORT_WINMM_HIGHRES_TIMER) && !defined(SUPPORT_BUSY_WAIT_LOOP)
     timeEndPeriod(1);           // Restore time period
 #endif
-
 
     if (CORE.Window.prevFB)
     {
@@ -611,9 +321,8 @@ void CloseWindow(void)
     TRACELOG(LOG_INFO, "Window closed successfully");
 }
 
-
-
-// Check if KEY_ESCAPE pressed or Close icon pressed
+// Check if application should close
+// NOTE: By default, if KEY_ESCAPE pressed
 bool WindowShouldClose(void)
 {
     if (CORE.Window.ready) return CORE.Window.shouldClose;
@@ -632,8 +341,7 @@ bool IsWindowMinimized(void)
     return false;
 }
 
-
-// Check if window has been maximized (only PLATFORM_DESKTOP)
+// Check if window has been maximized
 bool IsWindowMaximized(void)
 {
     return false;
@@ -651,69 +359,61 @@ bool IsWindowResized(void)
     return false;
 }
 
-
-// Toggle fullscreen mode (only PLATFORM_DESKTOP)
+// Toggle fullscreen mode
 void ToggleFullscreen(void)
 {
-    TRACELOG(LOG_WARNING, "SYSTEM: Failed to toggle to windowed mode");
+    TRACELOG(LOG_WARNING, "ToggleFullscreen() not available on PLATFORM_DRM");
 }
 
-
-// Set window state: maximized, if resizable (only PLATFORM_DESKTOP)
+// Set window state: maximized, if resizable
 void MaximizeWindow(void)
 {
-    TRACELOG(LOG_INFO, "MaximizeWindow not implemented in rcore_drm.c");
+    TRACELOG(LOG_WARNING, "MaximizeWindow() not available on PLATFORM_DRM");
 }
 
-// Set window state: minimized (only PLATFORM_DESKTOP)
+// Set window state: minimized
 void MinimizeWindow(void)
 {
-    TRACELOG(LOG_INFO, "MinimizeWindow not implemented in rcore_drm.c");
+    TRACELOG(LOG_WARNING, "MinimizeWindow() not available on PLATFORM_DRM");
 }
 
-// Set window state: not minimized/maximized (only PLATFORM_DESKTOP)
+// Set window state: not minimized/maximized
 void RestoreWindow(void)
 {
-    TRACELOG(LOG_INFO, "RestoreWindow not implemented in rcore_drm.c");
+    TRACELOG(LOG_WARNING, "RestoreWindow() not available on PLATFORM_DRM");
 }
 
-
-// Toggle borderless windowed mode (only PLATFORM_DESKTOP)
+// Toggle borderless windowed mode
 void ToggleBorderlessWindowed(void)
 {
-    TRACELOG(LOG_INFO, "ToggleBorderlessWindowed not implemented in rcore_drm.c");
+    TRACELOG(LOG_WARNING, "ToggleBorderlessWindowed() not available on PLATFORM_DRM");
 }
 
 // Set window configuration state using flags
 void SetWindowState(unsigned int flags)
 {
-    TRACELOG(LOG_INFO, "SetWindowState not implemented in rcore_drm.c");
+    TRACELOG(LOG_WARNING, "SetWindowState() not available on PLATFORM_DRM");
 }
 
 // Clear window configuration state flags
 void ClearWindowState(unsigned int flags)
 {
-    TRACELOG(LOG_INFO, "ClearWindowState not implemented in rcore_drm.c");
+    TRACELOG(LOG_WARNING, "ClearWindowState() not available on PLATFORM_DRM");
 }
 
-// Set icon for window (only PLATFORM_DESKTOP)
-// NOTE 1: Image must be in RGBA format, 8bit per channel
-// NOTE 2: Image is scaled by the OS for all required sizes
+// Set icon for window
 void SetWindowIcon(Image image)
 {
-    TRACELOG(LOG_INFO, "SetWindowIcon not implemented in rcore_drm.c");
+    TRACELOG(LOG_WARNING, "SetWindowIcon() not available on PLATFORM_DRM");
 }
 
-// Set icon for window (multiple images, only PLATFORM_DESKTOP)
-// NOTE 1: Images must be in RGBA format, 8bit per channel
-// NOTE 2: The multiple images are used depending on provided sizes
-// Standard Windows icon sizes: 256, 128, 96, 64, 48, 32, 24, 16
+// Set icon for window
 void SetWindowIcons(Image *images, int count)
 {
-    TRACELOG(LOG_INFO, "SetWindowIcons not implemented in rcore_drm.c");
+    TRACELOG(LOG_WARNING, "SetWindowIcons() not available on PLATFORM_DRM");
 }
 
-// Set title for window (only PLATFORM_DESKTOP and PLATFORM_WEB)
+// Set title for window
 void SetWindowTitle(const char *title)
 {
     CORE.Window.title = title;
@@ -722,13 +422,13 @@ void SetWindowTitle(const char *title)
 // Set window position on screen (windowed mode)
 void SetWindowPosition(int x, int y)
 {
-    TRACELOG(LOG_INFO, "SetWindowPosition not implemented in rcore_drm.c");
+    TRACELOG(LOG_WARNING, "SetWindowPosition() not available on PLATFORM_DRM");
 }
 
 // Set monitor for the current window
 void SetWindowMonitor(int monitor)
 {
-    TRACELOG(LOG_INFO, "SetWindowMonitor not implemented in rcore_drm.c");
+    TRACELOG(LOG_WARNING, "SetWindowMonitor() not available on PLATFORM_DRM");
 }
 
 // Set window minimum dimensions (FLAG_WINDOW_RESIZABLE)
@@ -748,71 +448,95 @@ void SetWindowMaxSize(int width, int height)
 // Set window dimensions
 void SetWindowSize(int width, int height)
 {
-    TRACELOG(LOG_INFO, "SetWindowSize not implemented in rcore_drm.c");
+    TRACELOG(LOG_WARNING, "SetWindowSize() not available on PLATFORM_DRM");
 }
 
 // Set window opacity, value opacity is between 0.0 and 1.0
 void SetWindowOpacity(float opacity)
 {
-    TRACELOG(LOG_INFO, "SetWindowOpacity not implemented in rcore_drm.c");
+    TRACELOG(LOG_WARNING, "SetWindowOpacity() not available on PLATFORM_DRM");
 }
 
 // Set window focused
 void SetWindowFocused(void)
 {
-    TRACELOG(LOG_INFO, "SetWindowFocused not implemented in rcore_drm.c");
+    TRACELOG(LOG_WARNING, "SetWindowFocused() not available on PLATFORM_DRM");
 }
 
 // Get native window handle
 void *GetWindowHandle(void)
 {
+    TRACELOG(LOG_WARNING, "GetWindowHandle() not implemented on PLATFORM_DRM");
     return NULL;
 }
 
 // Get number of monitors
 int GetMonitorCount(void)
 {
+    TRACELOG(LOG_WARNING, "GetMonitorCount() not implemented on PLATFORM_DRM");
     return 1;
 }
 
 // Get number of monitors
 int GetCurrentMonitor(void)
 {
+    TRACELOG(LOG_WARNING, "GetCurrentMonitor() not implemented on PLATFORM_DRM");
     return 0;
 }
 
 // Get selected monitor position
 Vector2 GetMonitorPosition(int monitor)
 {
+    TRACELOG(LOG_WARNING, "GetMonitorPosition() not implemented on PLATFORM_DRM");
     return (Vector2){ 0, 0 };
 }
 
 // Get selected monitor width (currently used by monitor)
 int GetMonitorWidth(int monitor)
 {
+    TRACELOG(LOG_WARNING, "GetMonitorWidth() not implemented on PLATFORM_DRM");
     return 0;
 }
 
 // Get selected monitor height (currently used by monitor)
 int GetMonitorHeight(int monitor)
 {
+    TRACELOG(LOG_WARNING, "GetMonitorHeight() not implemented on PLATFORM_DRM");
+    return 0;
+}
+
+// Get selected monitor physical width in millimetres
+int GetMonitorPhysicalWidth(int monitor)
+{
+    TRACELOG(LOG_WARNING, "GetMonitorPhysicalWidth() not implemented on PLATFORM_DRM");
     return 0;
 }
 
 // Get selected monitor physical height in millimetres
 int GetMonitorPhysicalHeight(int monitor)
 {
+    TRACELOG(LOG_WARNING, "GetMonitorPhysicalHeight() not implemented on PLATFORM_DRM");
     return 0;
 }
 
 // Get selected monitor refresh rate
 int GetMonitorRefreshRate(int monitor)
 {
+    int refresh = 0;
+    
     if ((CORE.Window.connector) && (CORE.Window.modeIndex >= 0))
     {
-        return CORE.Window.connector->modes[CORE.Window.modeIndex].vrefresh;
+        refresh = CORE.Window.connector->modes[CORE.Window.modeIndex].vrefresh;
     }
-    return 0;
+    
+    return refresh;
+}
+
+// Get the human-readable, UTF-8 encoded name of the selected monitor
+const char *GetMonitorName(int monitor)
+{
+    TRACELOG(LOG_WARNING, "GetMonitorName() not implemented on PLATFORM_DRM");
+    return "";
 }
 
 // Get window position XY on monitor
@@ -827,23 +551,17 @@ Vector2 GetWindowScaleDPI(void)
     return (Vector2){ 1.0f, 1.0f };
 }
 
-// Get the human-readable, UTF-8 encoded name of the selected monitor
-const char *GetMonitorName(int monitor)
-{
-    return "";
-}
-
-
 // Set clipboard text content
 void SetClipboardText(const char *text)
 {
+    TRACELOG(LOG_WARNING, "SetClipboardText() not implemented on PLATFORM_DRM");
 }
-
 
 // Get clipboard text content
 // NOTE: returned string is allocated and freed by GLFW
 const char *GetClipboardText(void)
 {
+    TRACELOG(LOG_WARNING, "GetClipboardText() not implemented on PLATFORM_DRM");
     return NULL;
 }
 
@@ -858,7 +576,6 @@ void HideCursor(void)
 {
     CORE.Input.Mouse.cursorHidden = true;
 }
-
 
 // Enables cursor (unlock cursor)
 void EnableCursor(void)
@@ -879,8 +596,6 @@ void DisableCursor(void)
 }
 
 // Get elapsed time measure in seconds since InitTimer()
-// NOTE: On PLATFORM_DESKTOP InitTimer() is called on InitWindow()
-// NOTE: On PLATFORM_DESKTOP, timer is initialized on glfwInit()
 double GetTime(void)
 {
     double time = 0.0;
@@ -889,10 +604,9 @@ double GetTime(void)
     unsigned long long int nanoSeconds = (unsigned long long int)ts.tv_sec*1000000000LLU + (unsigned long long int)ts.tv_nsec;
 
     time = (double)(nanoSeconds - CORE.Time.base)*1e-9;  // Elapsed time since InitTimer()
+    
     return time;
 }
-
-// NOTE TRACELOG() function is located in [utils.h]
 
 // Takes a screenshot of current screen (saved a .png)
 void TakeScreenshot(const char *fileName)
@@ -924,9 +638,18 @@ void TakeScreenshot(const char *fileName)
 // Ref: https://github.com/raysan5/raylib/issues/686
 void OpenURL(const char *url)
 {
-    // Security check to (partially) avoid malicious code on PLATFORM_WEB
-    if (strchr(url, '\'') != NULL) TRACELOG(LOG_WARNING, "SYSTEM: Provided URL could be potentially malicious, avoid [\'] character");
-    TRACELOG(LOG_INFO, "OpenURL not implemented in rcore_drm.c");
+    TRACELOG(LOG_WARNING, "OpenURL() not implemented on PLATFORM_DRM");
+}
+
+//----------------------------------------------------------------------------------
+// Module Functions Definition: Inputs
+//----------------------------------------------------------------------------------
+
+// Set a custom key to exit program
+// NOTE: default exitKey is ESCAPE
+void SetExitKey(int key)
+{
+    CORE.Input.Keyboard.exitKey = key;
 }
 
 // Get gamepad internal name id
@@ -943,31 +666,20 @@ const char *GetGamepadName(int gamepad)
     return name;
 }
 
-// Get selected monitor physical width in millimetres
-int GetMonitorPhysicalWidth(int monitor)
-{
-    return 0;
-}
-
-// Set a custom key to exit program
-// NOTE: default exitKey is ESCAPE
-void SetExitKey(int key)
-{
-    CORE.Input.Keyboard.exitKey = key;
-}
-
 // Get gamepad axis count
 int GetGamepadAxisCount(int gamepad)
 {
     int axisCount = 0;
     if (CORE.Input.Gamepad.ready[gamepad]) ioctl(CORE.Input.Gamepad.streamId[gamepad], JSIOCGAXES, &axisCount);
     CORE.Input.Gamepad.axisCount = axisCount;
+    
     return CORE.Input.Gamepad.axisCount;
 }
 
 // Set internal gamepad mappings
 int SetGamepadMappings(const char *mappings)
 {
+    TRACELOG(LOG_WARNING, "SetGamepadMappings() not implemented on PLATFORM_DRM");
     return 0;
 }
 
@@ -999,9 +711,7 @@ void SetMousePosition(int x, int y)
 {
     CORE.Input.Mouse.currentPosition = (Vector2){ (float)x, (float)y };
     CORE.Input.Mouse.previousPosition = CORE.Input.Mouse.currentPosition;
-
 }
-
 
 // Get mouse wheel movement Y
 float GetMouseWheelMove(void)
@@ -1014,11 +724,10 @@ float GetMouseWheelMove(void)
     return result;
 }
 
-
 // Set mouse cursor
-// NOTE: This is a no-op on platforms other than PLATFORM_DESKTOP
 void SetMouseCursor(int cursor)
 {
+    TRACELOG(LOG_WARNING, "SetMouseCursor() not implemented on PLATFORM_DRM");
 }
 
 // Get touch position X for touch point 0 (relative to screen size)
@@ -1034,12 +743,13 @@ int GetTouchY(void)
 }
 
 // Get touch position XY for a touch point index (relative to screen size)
-// TODO: Touch position should be scaled depending on display size and render size
 Vector2 GetTouchPosition(int index)
 {
     Vector2 position = { -1.0f, -1.0f };
+    
     if (index < MAX_TOUCH_POINTS) position = CORE.Input.Touch.position[index];
     else TRACELOG(LOG_WARNING, "INPUT: Required touch point out of range (Max touch points: %i)", MAX_TOUCH_POINTS);
+    
     return position;
 }
 
@@ -1073,7 +783,6 @@ void SwapScreenBuffer(void)
     CORE.Window.prevBO = bo;
 }
 
-
 // Register all input events
 void PollInputEvents(void)
 {
@@ -1086,6 +795,7 @@ void PollInputEvents(void)
     // Reset keys/chars pressed registered
     CORE.Input.Keyboard.keyPressedQueueCount = 0;
     CORE.Input.Keyboard.charPressedQueueCount = 0;
+    
     // Reset key repeats
     for (int i = 0; i < MAX_KEYBOARD_KEYS; i++) CORE.Input.Keyboard.keyRepeatInFrame[i] = 0;
 
@@ -1141,6 +851,361 @@ void PollInputEvents(void)
 #endif
 }
 
+//----------------------------------------------------------------------------------
+// Module Internal Functions Definition
+//----------------------------------------------------------------------------------
+
+// Initialize display device and framebuffer
+// NOTE: width and height represent the screen (framebuffer) desired size, not actual display size
+// If width or height are 0, default display size will be used for framebuffer size
+// NOTE: returns false in case graphic device could not be created
+static bool InitGraphicsDevice(int width, int height)
+{
+    CORE.Window.screen.width = width;            // User desired width
+    CORE.Window.screen.height = height;          // User desired height
+    CORE.Window.screenScale = MatrixIdentity();  // No draw scaling required by default
+
+    // Set the window minimum and maximum default values to 0
+    CORE.Window.windowMin.width  = 0;
+    CORE.Window.windowMin.height = 0;
+    CORE.Window.windowMax.width  = 0;
+    CORE.Window.windowMax.height = 0;
+
+    // NOTE: Framebuffer (render area - CORE.Window.render.width, CORE.Window.render.height) could include black bars...
+    // ...in top-down or left-right to match display aspect ratio (no weird scaling)
+
+    CORE.Window.fullscreen = true;
+    CORE.Window.flags |= FLAG_FULLSCREEN_MODE;
+
+    CORE.Window.fd = -1;
+    CORE.Window.connector = NULL;
+    CORE.Window.modeIndex = -1;
+    CORE.Window.crtc = NULL;
+    CORE.Window.gbmDevice = NULL;
+    CORE.Window.gbmSurface = NULL;
+    CORE.Window.prevBO = NULL;
+    CORE.Window.prevFB = 0;
+
+#if defined(DEFAULT_GRAPHIC_DEVICE_DRM)
+    CORE.Window.fd = open(DEFAULT_GRAPHIC_DEVICE_DRM, O_RDWR);
+#else
+    TRACELOG(LOG_INFO, "DISPLAY: No graphic card set, trying platform-gpu-card");
+    CORE.Window.fd = open("/dev/dri/by-path/platform-gpu-card",  O_RDWR); // VideoCore VI (Raspberry Pi 4)
+
+    if ((CORE.Window.fd == -1) || (drmModeGetResources(CORE.Window.fd) == NULL))
+    {
+        TRACELOG(LOG_INFO, "DISPLAY: Failed to open platform-gpu-card, trying card1");
+        CORE.Window.fd = open("/dev/dri/card1", O_RDWR); // Other Embedded
+    }
+
+    if ((CORE.Window.fd == -1) || (drmModeGetResources(CORE.Window.fd) == NULL))
+    {
+        TRACELOG(LOG_INFO, "DISPLAY: Failed to open graphic card1, trying card0");
+        CORE.Window.fd = open("/dev/dri/card0", O_RDWR); // VideoCore IV (Raspberry Pi 1-3)
+    }
+#endif
+
+    if (CORE.Window.fd == -1)
+    {
+        TRACELOG(LOG_WARNING, "DISPLAY: Failed to open graphic card");
+        return false;
+    }
+
+    drmModeRes *res = drmModeGetResources(CORE.Window.fd);
+    if (!res)
+    {
+        TRACELOG(LOG_WARNING, "DISPLAY: Failed get DRM resources");
+        return false;
+    }
+
+    TRACELOG(LOG_TRACE, "DISPLAY: Connectors found: %i", res->count_connectors);
+    
+    for (size_t i = 0; i < res->count_connectors; i++)
+    {
+        TRACELOG(LOG_TRACE, "DISPLAY: Connector index %i", i);
+        
+        drmModeConnector *con = drmModeGetConnector(CORE.Window.fd, res->connectors[i]);
+        TRACELOG(LOG_TRACE, "DISPLAY: Connector modes detected: %i", con->count_modes);
+        
+        if ((con->connection == DRM_MODE_CONNECTED) && (con->encoder_id))
+        {
+            TRACELOG(LOG_TRACE, "DISPLAY: DRM mode connected");
+            CORE.Window.connector = con;
+            break;
+        }
+        else
+        {
+            TRACELOG(LOG_TRACE, "DISPLAY: DRM mode NOT connected (deleting)");
+            drmModeFreeConnector(con);
+        }
+    }
+
+    if (!CORE.Window.connector)
+    {
+        TRACELOG(LOG_WARNING, "DISPLAY: No suitable DRM connector found");
+        drmModeFreeResources(res);
+        return false;
+    }
+
+    drmModeEncoder *enc = drmModeGetEncoder(CORE.Window.fd, CORE.Window.connector->encoder_id);
+    if (!enc)
+    {
+        TRACELOG(LOG_WARNING, "DISPLAY: Failed to get DRM mode encoder");
+        drmModeFreeResources(res);
+        return false;
+    }
+
+    CORE.Window.crtc = drmModeGetCrtc(CORE.Window.fd, enc->crtc_id);
+    if (!CORE.Window.crtc)
+    {
+        TRACELOG(LOG_WARNING, "DISPLAY: Failed to get DRM mode crtc");
+        drmModeFreeEncoder(enc);
+        drmModeFreeResources(res);
+        return false;
+    }
+
+    // If InitWindow should use the current mode find it in the connector's mode list
+    if ((CORE.Window.screen.width <= 0) || (CORE.Window.screen.height <= 0))
+    {
+        TRACELOG(LOG_TRACE, "DISPLAY: Selecting DRM connector mode for current used mode...");
+
+        CORE.Window.modeIndex = FindMatchingConnectorMode(CORE.Window.connector, &CORE.Window.crtc->mode);
+
+        if (CORE.Window.modeIndex < 0)
+        {
+            TRACELOG(LOG_WARNING, "DISPLAY: No matching DRM connector mode found");
+            drmModeFreeEncoder(enc);
+            drmModeFreeResources(res);
+            return false;
+        }
+
+        CORE.Window.screen.width = CORE.Window.display.width;
+        CORE.Window.screen.height = CORE.Window.display.height;
+    }
+
+    const bool allowInterlaced = CORE.Window.flags & FLAG_INTERLACED_HINT;
+    const int fps = (CORE.Time.target > 0)? (1.0/CORE.Time.target) : 60;
+
+    // Try to find an exact matching mode
+    CORE.Window.modeIndex = FindExactConnectorMode(CORE.Window.connector, CORE.Window.screen.width, CORE.Window.screen.height, fps, allowInterlaced);
+
+    // If nothing found, try to find a nearly matching mode
+    if (CORE.Window.modeIndex < 0) CORE.Window.modeIndex = FindNearestConnectorMode(CORE.Window.connector, CORE.Window.screen.width, CORE.Window.screen.height, fps, allowInterlaced);
+
+    // If nothing found, try to find an exactly matching mode including interlaced
+    if (CORE.Window.modeIndex < 0) CORE.Window.modeIndex = FindExactConnectorMode(CORE.Window.connector, CORE.Window.screen.width, CORE.Window.screen.height, fps, true);
+
+    // If nothing found, try to find a nearly matching mode including interlaced
+    if (CORE.Window.modeIndex < 0) CORE.Window.modeIndex = FindNearestConnectorMode(CORE.Window.connector, CORE.Window.screen.width, CORE.Window.screen.height, fps, true);
+
+    // If nothing found, there is no suitable mode
+    if (CORE.Window.modeIndex < 0)
+    {
+        TRACELOG(LOG_WARNING, "DISPLAY: Failed to find a suitable DRM connector mode");
+        drmModeFreeEncoder(enc);
+        drmModeFreeResources(res);
+        return false;
+    }
+
+    CORE.Window.display.width = CORE.Window.connector->modes[CORE.Window.modeIndex].hdisplay;
+    CORE.Window.display.height = CORE.Window.connector->modes[CORE.Window.modeIndex].vdisplay;
+
+    TRACELOG(LOG_INFO, "DISPLAY: Selected DRM connector mode %s (%ux%u%c@%u)", CORE.Window.connector->modes[CORE.Window.modeIndex].name,
+        CORE.Window.connector->modes[CORE.Window.modeIndex].hdisplay, CORE.Window.connector->modes[CORE.Window.modeIndex].vdisplay,
+        (CORE.Window.connector->modes[CORE.Window.modeIndex].flags & DRM_MODE_FLAG_INTERLACE)? 'i' : 'p',
+        CORE.Window.connector->modes[CORE.Window.modeIndex].vrefresh);
+
+    // Use the width and height of the surface for render
+    CORE.Window.render.width = CORE.Window.screen.width;
+    CORE.Window.render.height = CORE.Window.screen.height;
+
+    drmModeFreeEncoder(enc);
+    enc = NULL;
+
+    drmModeFreeResources(res);
+    res = NULL;
+
+    CORE.Window.gbmDevice = gbm_create_device(CORE.Window.fd);
+    if (!CORE.Window.gbmDevice)
+    {
+        TRACELOG(LOG_WARNING, "DISPLAY: Failed to create GBM device");
+        return false;
+    }
+
+    CORE.Window.gbmSurface = gbm_surface_create(CORE.Window.gbmDevice, CORE.Window.connector->modes[CORE.Window.modeIndex].hdisplay,
+        CORE.Window.connector->modes[CORE.Window.modeIndex].vdisplay, GBM_FORMAT_ARGB8888, GBM_BO_USE_SCANOUT | GBM_BO_USE_RENDERING);
+    if (!CORE.Window.gbmSurface)
+    {
+        TRACELOG(LOG_WARNING, "DISPLAY: Failed to create GBM surface");
+        return false;
+    }
+
+    EGLint samples = 0;
+    EGLint sampleBuffer = 0;
+    if (CORE.Window.flags & FLAG_MSAA_4X_HINT)
+    {
+        samples = 4;
+        sampleBuffer = 1;
+        TRACELOG(LOG_INFO, "DISPLAY: Trying to enable MSAA x4");
+    }
+
+    const EGLint framebufferAttribs[] =
+    {
+        EGL_RENDERABLE_TYPE, (rlGetVersion() == RL_OPENGL_ES_30)? EGL_OPENGL_ES3_BIT : EGL_OPENGL_ES2_BIT,      // Type of context support
+        EGL_SURFACE_TYPE, EGL_WINDOW_BIT,          // Don't use it on Android!
+        EGL_RED_SIZE, 8,            // RED color bit depth (alternative: 5)
+        EGL_GREEN_SIZE, 8,          // GREEN color bit depth (alternative: 6)
+        EGL_BLUE_SIZE, 8,           // BLUE color bit depth (alternative: 5)
+        EGL_ALPHA_SIZE, 8,        // ALPHA bit depth (required for transparent framebuffer)
+        //EGL_TRANSPARENT_TYPE, EGL_NONE, // Request transparent framebuffer (EGL_TRANSPARENT_RGB does not work on RPI)
+        EGL_DEPTH_SIZE, 16,         // Depth buffer size (Required to use Depth testing!)
+        //EGL_STENCIL_SIZE, 8,      // Stencil buffer size
+        EGL_SAMPLE_BUFFERS, sampleBuffer,    // Activate MSAA
+        EGL_SAMPLES, samples,       // 4x Antialiasing if activated (Free on MALI GPUs)
+        EGL_NONE
+    };
+
+    const EGLint contextAttribs[] = {
+        EGL_CONTEXT_CLIENT_VERSION, 2,
+        EGL_NONE
+    };
+
+    EGLint numConfigs = 0;
+
+    // Get an EGL device connection
+    CORE.Window.device = eglGetDisplay((EGLNativeDisplayType)CORE.Window.gbmDevice);
+    if (CORE.Window.device == EGL_NO_DISPLAY)
+    {
+        TRACELOG(LOG_WARNING, "DISPLAY: Failed to initialize EGL device");
+        return false;
+    }
+
+    // Initialize the EGL device connection
+    if (eglInitialize(CORE.Window.device, NULL, NULL) == EGL_FALSE)
+    {
+        // If all of the calls to eglInitialize returned EGL_FALSE then an error has occurred.
+        TRACELOG(LOG_WARNING, "DISPLAY: Failed to initialize EGL device");
+        return false;
+    }
+
+    if (!eglChooseConfig(CORE.Window.device, NULL, NULL, 0, &numConfigs))
+    {
+        TRACELOG(LOG_WARNING, "DISPLAY: Failed to get EGL config count: 0x%x", eglGetError());
+        return false;
+    }
+
+    TRACELOG(LOG_TRACE, "DISPLAY: EGL configs available: %d", numConfigs);
+
+    EGLConfig *configs = RL_CALLOC(numConfigs, sizeof(*configs));
+    if (!configs)
+    {
+        TRACELOG(LOG_WARNING, "DISPLAY: Failed to get memory for EGL configs");
+        return false;
+    }
+
+    EGLint matchingNumConfigs = 0;
+    if (!eglChooseConfig(CORE.Window.device, framebufferAttribs, configs, numConfigs, &matchingNumConfigs))
+    {
+        TRACELOG(LOG_WARNING, "DISPLAY: Failed to choose EGL config: 0x%x", eglGetError());
+        free(configs);
+        return false;
+    }
+
+    TRACELOG(LOG_TRACE, "DISPLAY: EGL matching configs available: %d", matchingNumConfigs);
+
+    // find the EGL config that matches the previously setup GBM format
+    int found = 0;
+    for (EGLint i = 0; i < matchingNumConfigs; ++i)
+    {
+        EGLint id = 0;
+        if (!eglGetConfigAttrib(CORE.Window.device, configs[i], EGL_NATIVE_VISUAL_ID, &id))
+        {
+            TRACELOG(LOG_WARNING, "DISPLAY: Failed to get EGL config attribute: 0x%x", eglGetError());
+            continue;
+        }
+
+        if (GBM_FORMAT_ARGB8888 == id)
+        {
+            TRACELOG(LOG_TRACE, "DISPLAY: Using EGL config: %d", i);
+            CORE.Window.config = configs[i];
+            found = 1;
+            break;
+        }
+    }
+
+    RL_FREE(configs);
+
+    if (!found)
+    {
+        TRACELOG(LOG_WARNING, "DISPLAY: Failed to find a suitable EGL config");
+        return false;
+    }
+
+    // Set rendering API
+    eglBindAPI(EGL_OPENGL_ES_API);
+
+    // Create an EGL rendering context
+    CORE.Window.context = eglCreateContext(CORE.Window.device, CORE.Window.config, EGL_NO_CONTEXT, contextAttribs);
+    if (CORE.Window.context == EGL_NO_CONTEXT)
+    {
+        TRACELOG(LOG_WARNING, "DISPLAY: Failed to create EGL context");
+        return false;
+    }
+
+    // Create an EGL window surface
+    //---------------------------------------------------------------------------------
+    CORE.Window.surface = eglCreateWindowSurface(CORE.Window.device, CORE.Window.config, (EGLNativeWindowType)CORE.Window.gbmSurface, NULL);
+    if (EGL_NO_SURFACE == CORE.Window.surface)
+    {
+        TRACELOG(LOG_WARNING, "DISPLAY: Failed to create EGL window surface: 0x%04x", eglGetError());
+        return false;
+    }
+
+    // At this point we need to manage render size vs screen size
+    // NOTE: This function use and modify global module variables:
+    //  -> CORE.Window.screen.width/CORE.Window.screen.height
+    //  -> CORE.Window.render.width/CORE.Window.render.height
+    //  -> CORE.Window.screenScale
+    SetupFramebuffer(CORE.Window.display.width, CORE.Window.display.height);
+
+    // There must be at least one frame displayed before the buffers are swapped
+    //eglSwapInterval(CORE.Window.device, 1);
+
+    if (eglMakeCurrent(CORE.Window.device, CORE.Window.surface, CORE.Window.surface, CORE.Window.context) == EGL_FALSE)
+    {
+        TRACELOG(LOG_WARNING, "DISPLAY: Failed to attach EGL rendering context to EGL surface");
+        return false;
+    }
+    else
+    {
+        CORE.Window.render.width = CORE.Window.screen.width;
+        CORE.Window.render.height = CORE.Window.screen.height;
+        CORE.Window.currentFbo.width = CORE.Window.render.width;
+        CORE.Window.currentFbo.height = CORE.Window.render.height;
+
+        TRACELOG(LOG_INFO, "DISPLAY: Device initialized successfully");
+        TRACELOG(LOG_INFO, "    > Display size: %i x %i", CORE.Window.display.width, CORE.Window.display.height);
+        TRACELOG(LOG_INFO, "    > Screen size:  %i x %i", CORE.Window.screen.width, CORE.Window.screen.height);
+        TRACELOG(LOG_INFO, "    > Render size:  %i x %i", CORE.Window.render.width, CORE.Window.render.height);
+        TRACELOG(LOG_INFO, "    > Viewport offsets: %i, %i", CORE.Window.renderOffset.x, CORE.Window.renderOffset.y);
+    }
+
+    // Load OpenGL extensions
+    // NOTE: GL procedures address loader is required to load extensions
+    rlLoadExtensions(eglGetProcAddress);
+
+    // Initialize OpenGL context (states and resources)
+    // NOTE: CORE.Window.currentFbo.width and CORE.Window.currentFbo.height not used, just stored as globals in rlgl
+    rlglInit(CORE.Window.currentFbo.width, CORE.Window.currentFbo.height);
+
+    // Setup default viewport
+    // NOTE: It updated CORE.Window.render.width and CORE.Window.render.height
+    SetupViewport(CORE.Window.currentFbo.width, CORE.Window.currentFbo.height);
+
+    if ((CORE.Window.flags & FLAG_WINDOW_MINIMIZED) > 0) MinimizeWindow();
+
+    return true;
+}
 
 // Initialize Keyboard system (using standard input)
 static void InitKeyboard(void)
@@ -1315,7 +1380,8 @@ static void ProcessKeyboard(void)
 }
 #endif  // SUPPORT_SSH_KEYBOARD_RPI
 
-// Initialise user input from evdev(/dev/input/event<N>) this means mouse, keyboard or gamepad devices
+// Initialise user input from evdev(/dev/input/event<N>) 
+// this means mouse, keyboard or gamepad devices
 static void InitEvdevInput(void)
 {
     char path[MAX_FILEPATH_LENGTH] = { 0 };
@@ -1562,6 +1628,7 @@ static void ConfigureEvdevDevice(char *device)
     //-------------------------------------------------------------------------------------------------------
 }
 
+// Poll and process evdev keyboard events
 static void PollKeyboardEvents(void)
 {
     // Scancode to keycode mapping for US keyboards
@@ -1630,7 +1697,7 @@ static void PollKeyboardEvents(void)
 
                     if (CORE.Input.Keyboard.currentKeyState[CORE.Input.Keyboard.exitKey] == 1) CORE.Window.shouldClose = true;
 
-                    TRACELOGD("RPI: KEY_%s ScanCode: %4i KeyCode: %4i", event.value == 0 ? "UP":"DOWN", event.code, keycode);
+                    TRACELOGD("RPI: KEY_%s ScanCode: %4i KeyCode: %4i", (event.value == 0)? "UP" : "DOWN", event.code, keycode);
                 }
             }
         }
@@ -1903,12 +1970,12 @@ static int FindMatchingConnectorMode(const drmModeConnector *connector, const dr
     if (NULL == mode) return -1;
 
     // safe bitwise comparison of two modes
-    #define BINCMP(a, b) memcmp((a), (b), (sizeof(a) < sizeof(b)) ? sizeof(a) : sizeof(b))
+    #define BINCMP(a, b) memcmp((a), (b), (sizeof(a) < sizeof(b))? sizeof(a) : sizeof(b))
 
     for (size_t i = 0; i < connector->count_modes; i++)
     {
         TRACELOG(LOG_TRACE, "DISPLAY: DRM mode: %d %ux%u@%u %s", i, connector->modes[i].hdisplay, connector->modes[i].vdisplay,
-            connector->modes[i].vrefresh, (connector->modes[i].flags & DRM_MODE_FLAG_INTERLACE) ? "interlaced" : "progressive");
+            connector->modes[i].vrefresh, (connector->modes[i].flags & DRM_MODE_FLAG_INTERLACE)? "interlaced" : "progressive");
 
         if (0 == BINCMP(&CORE.Window.crtc->mode, &CORE.Window.connector->modes[i])) return i;
     }
@@ -1921,7 +1988,7 @@ static int FindMatchingConnectorMode(const drmModeConnector *connector, const dr
 // Search exactly matching DRM connector mode in connector's list
 static int FindExactConnectorMode(const drmModeConnector *connector, uint width, uint height, uint fps, bool allowInterlaced)
 {
-    TRACELOG(LOG_TRACE, "DISPLAY: Searching exact connector mode for %ux%u@%u, selecting an interlaced mode is allowed: %s", width, height, fps, allowInterlaced ? "yes" : "no");
+    TRACELOG(LOG_TRACE, "DISPLAY: Searching exact connector mode for %ux%u@%u, selecting an interlaced mode is allowed: %s", width, height, fps, allowInterlaced? "yes" : "no");
 
     if (NULL == connector) return -1;
 
@@ -1929,7 +1996,7 @@ static int FindExactConnectorMode(const drmModeConnector *connector, uint width,
     {
         const drmModeModeInfo *const mode = &CORE.Window.connector->modes[i];
 
-        TRACELOG(LOG_TRACE, "DISPLAY: DRM Mode %d %ux%u@%u %s", i, mode->hdisplay, mode->vdisplay, mode->vrefresh, (mode->flags & DRM_MODE_FLAG_INTERLACE) ? "interlaced" : "progressive");
+        TRACELOG(LOG_TRACE, "DISPLAY: DRM Mode %d %ux%u@%u %s", i, mode->hdisplay, mode->vdisplay, mode->vrefresh, (mode->flags & DRM_MODE_FLAG_INTERLACE)? "interlaced" : "progressive");
 
         if ((mode->flags & DRM_MODE_FLAG_INTERLACE) && (!allowInterlaced)) continue;
 
@@ -1943,7 +2010,7 @@ static int FindExactConnectorMode(const drmModeConnector *connector, uint width,
 // Search the nearest matching DRM connector mode in connector's list
 static int FindNearestConnectorMode(const drmModeConnector *connector, uint width, uint height, uint fps, bool allowInterlaced)
 {
-    TRACELOG(LOG_TRACE, "DISPLAY: Searching nearest connector mode for %ux%u@%u, selecting an interlaced mode is allowed: %s", width, height, fps, allowInterlaced ? "yes" : "no");
+    TRACELOG(LOG_TRACE, "DISPLAY: Searching nearest connector mode for %ux%u@%u, selecting an interlaced mode is allowed: %s", width, height, fps, allowInterlaced? "yes" : "no");
 
     if (NULL == connector) return -1;
 
@@ -1953,7 +2020,7 @@ static int FindNearestConnectorMode(const drmModeConnector *connector, uint widt
         const drmModeModeInfo *const mode = &CORE.Window.connector->modes[i];
 
         TRACELOG(LOG_TRACE, "DISPLAY: DRM mode: %d %ux%u@%u %s", i, mode->hdisplay, mode->vdisplay, mode->vrefresh,
-            (mode->flags & DRM_MODE_FLAG_INTERLACE) ? "interlaced" : "progressive");
+            (mode->flags & DRM_MODE_FLAG_INTERLACE)? "interlaced" : "progressive");
 
         if ((mode->hdisplay < width) || (mode->vdisplay < height))
         {
@@ -1988,3 +2055,5 @@ static int FindNearestConnectorMode(const drmModeConnector *connector, uint widt
 
     return nearestIndex;
 }
+
+// EOF

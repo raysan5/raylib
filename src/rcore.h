@@ -1,3 +1,37 @@
+/**********************************************************************************************
+*
+*   rcore - Common types and globals (all platforms)
+*
+*   LIMITATIONS:
+*       - Limitation 01
+*       - Limitation 02
+*
+*   POSSIBLE IMPROVEMENTS:
+*       - Improvement 01
+*       - Improvement 02
+*
+*
+*   LICENSE: zlib/libpng
+*
+*   Copyright (c) 2013-2023 Ramon Santamaria (@raysan5) and contributors
+*
+*   This software is provided "as-is", without any express or implied warranty. In no event
+*   will the authors be held liable for any damages arising from the use of this software.
+*
+*   Permission is granted to anyone to use this software for any purpose, including commercial
+*   applications, and to alter it and redistribute it freely, subject to the following restrictions:
+*
+*     1. The origin of this software must not be misrepresented; you must not claim that you
+*     wrote the original software. If you use this software in a product, an acknowledgment
+*     in the product documentation would be appreciated but is not required.
+*
+*     2. Altered source versions must be plainly marked as such, and must not be misrepresented
+*     as being the original software.
+*
+*     3. This notice may not be removed or altered from any source distribution.
+*
+**********************************************************************************************/
+
 #ifndef RCORE_H
 #define RCORE_H
 
@@ -57,21 +91,14 @@
 
 #endif
 
-// PROVIDE A HEADER TO BE USED BY ALL THE rcore_* IMPLEMENTATIONS.
-/*
-
-    Status:
-    InitWindow: DRM,
-
-*/
+// TODO: PROVIDE A HEADER TO BE USED BY ALL THE rcore_* IMPLEMENTATIONS
 
 #include "raylib.h"
+
 #include "rlgl.h"
 
 #define RAYMATH_IMPLEMENTATION
 #include "raymath.h"
-
-
 
 //----------------------------------------------------------------------------------
 // Defines and Macros
@@ -139,10 +166,8 @@
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
 //----------------------------------------------------------------------------------
-
 typedef struct { int x; int y; } Point;
 typedef struct { unsigned int width; unsigned int height; } Size;
-
 
 // Core global state context data
 typedef struct CoreData {
@@ -184,20 +209,12 @@ typedef struct CoreData {
         Point renderOffset;                 // Offset from render area (must be divided by 2)
         Size screenMin;                     // Screen minimum width and height (for resizable window)
         Size screenMax;                     // Screen maximum width and height (for resizable window)
+        Size windowMin;                     // Window minimum width and height
+        Size windowMax;                     // Window maximum width and height
         Matrix screenScale;                 // Matrix to scale screen (framebuffer rendering)
 
         char **dropFilepaths;               // Store dropped files paths pointers (provided by GLFW)
         unsigned int dropFileCount;         // Count dropped files strings
-
-        struct {
-            float width;
-            float height;
-        } windowMin;
-
-        struct {
-            float width;
-            float height;
-        } windowMax;
 
     } Window;
 #if defined(PLATFORM_ANDROID)
@@ -293,11 +310,9 @@ typedef struct CoreData {
     } Time;
 } CoreData;
 
-
 //----------------------------------------------------------------------------------
 // Global Variables Definition
 //----------------------------------------------------------------------------------
-
 extern CoreData CORE;
 
 #endif

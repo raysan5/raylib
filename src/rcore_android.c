@@ -1,4 +1,50 @@
-#include <stdlib.h>
+/**********************************************************************************************
+*
+*   rcore_android - Functions to manage window, graphics device and inputs 
+*
+*   PLATFORM: ANDROID
+*       - Android (ARM, ARM64)
+*
+*   LIMITATIONS:
+*       - Limitation 01
+*       - Limitation 02
+*
+*   POSSIBLE IMPROVEMENTS:
+*       - Improvement 01
+*       - Improvement 02
+*
+*   ADDITIONAL NOTES:
+*       - TRACELOG() function is located in raylib [utils] module
+*
+*   CONFIGURATION:
+*       #define RCORE_ANDROID_CUSTOM_FLAG
+*           Custom flag for rcore on PLATFORM_ANDROID -not used-
+*
+*   DEPENDENCIES:
+*       Android NDK - Provides C API to access Android functionality
+*       gestures - Gestures system for touch-ready devices (or simulated from mouse inputs)
+*
+*
+*   LICENSE: zlib/libpng
+*
+*   Copyright (c) 2013-2023 Ramon Santamaria (@raysan5) and contributors
+*
+*   This software is provided "as-is", without any express or implied warranty. In no event
+*   will the authors be held liable for any damages arising from the use of this software.
+*
+*   Permission is granted to anyone to use this software for any purpose, including commercial
+*   applications, and to alter it and redistribute it freely, subject to the following restrictions:
+*
+*     1. The origin of this software must not be misrepresented; you must not claim that you
+*     wrote the original software. If you use this software in a product, an acknowledgment
+*     in the product documentation would be appreciated but is not required.
+*
+*     2. Altered source versions must be plainly marked as such, and must not be misrepresented
+*     as being the original software.
+*
+*     3. This notice may not be removed or altered from any source distribution.
+*
+**********************************************************************************************/
 
 #include "rcore.h"
 
@@ -7,9 +53,69 @@
 #include <android_native_app_glue.h>    // Required for: android_app struct and activity management
 #include <jni.h>                        // Required for: JNIEnv and JavaVM [Used in OpenURL()]
 
-static bool InitGraphicsDevice(int width, int height);                                     // Initialize graphics device
-static void AndroidCommandCallback(struct android_app *app, int32_t cmd);                  // Process Android activity lifecycle commands
-static int32_t AndroidInputCallback(struct android_app *app, AInputEvent *event);          // Process Android inputs
+//----------------------------------------------------------------------------------
+// Types and Structures Definition
+//----------------------------------------------------------------------------------
+//...
+
+//----------------------------------------------------------------------------------
+// Global Variables Definition
+//----------------------------------------------------------------------------------
+extern CoreData CORE;           // Global CORE state context
+
+//----------------------------------------------------------------------------------
+// Module Internal Functions Declaration
+//----------------------------------------------------------------------------------
+static bool InitGraphicsDevice(int width, int height); // Initialize graphics device
+
+static void AndroidCommandCallback(struct android_app *app, int32_t cmd);           // Process Android activity lifecycle commands
+static int32_t AndroidInputCallback(struct android_app *app, AInputEvent *event);   // Process Android inputs
+static GamepadButton AndroidTranslateGamepadButton(int button);                     // Map Android gamepad button to raylib gamepad button
+
+//----------------------------------------------------------------------------------
+// Module Functions Declaration
+//----------------------------------------------------------------------------------
+// NOTE: Functions declaration is provided by raylib.h
+
+//----------------------------------------------------------------------------------
+// Module Functions Definition
+//----------------------------------------------------------------------------------
+
+// To allow easier porting to android, we allow the user to define a
+// main function which we call from android_main, defined by ourselves
+extern int main(int argc, char *argv[]);
+
+// Android main function
+void android_main(struct android_app *app)
+{
+    char arg0[] = "raylib";     // NOTE: argv[] are mutable
+    CORE.Android.app = app;
+
+    // NOTE: Return from main is ignored
+    (void)main(1, (char *[]) { arg0, NULL });
+
+    // Request to end the native activity
+    ANativeActivity_finish(app->activity);
+
+    // Android ALooper_pollAll() variables
+    int pollResult = 0;
+    int pollEvents = 0;
+
+    // Waiting for application events before complete finishing
+    while (!app->destroyRequested)
+    {
+        while ((pollResult = ALooper_pollAll(0, NULL, &pollEvents, (void **)&CORE.Android.source)) >= 0)
+        {
+            if (CORE.Android.source != NULL) CORE.Android.source->process(app, CORE.Android.source);
+        }
+    }
+}
+
+// NOTE: Add this to header (if apps really need it)
+struct android_app *GetAndroidApp(void)
+{
+    return CORE.Android.app;
+}
 
 // Initialize window and OpenGL context
 // NOTE: data parameter could be used to pass any kind of required data to the initialization
@@ -46,6 +152,7 @@ void InitWindow(int width, int height, const char *title)
     TRACELOG(LOG_INFO, "    > raudio:.... not loaded (optional)");
 #endif
 
+    // NOTE: Keep internal pointer to input title string (no copy)
     if ((title != NULL) && (title[0] != 0)) CORE.Window.title = title;
 
     // Initialize global input state
@@ -54,9 +161,7 @@ void InitWindow(int width, int height, const char *title)
     CORE.Input.Mouse.scale = (Vector2){ 1.0f, 1.0f };
     CORE.Input.Mouse.cursor = MOUSE_CURSOR_ARROW;
     CORE.Input.Gamepad.lastButtonPressed = 0;       // GAMEPAD_BUTTON_UNKNOWN
-#if defined(SUPPORT_EVENTS_WAITING)
-    CORE.Window.eventWaiting = true;
-#endif
+    CORE.Window.eventWaiting = false;
 
     CORE.Window.screen.width = width;
     CORE.Window.screen.height = height;
@@ -122,6 +227,553 @@ void InitWindow(int width, int height, const char *title)
     }
 }
 
+// Close window and unload OpenGL context
+void CloseWindow(void)
+{
+#if defined(SUPPORT_GIF_RECORDING)
+    if (gifRecording)
+    {
+        MsfGifResult result = msf_gif_end(&gifState);
+        msf_gif_free(result);
+        gifRecording = false;
+    }
+#endif
+
+#if defined(SUPPORT_MODULE_RTEXT) && defined(SUPPORT_DEFAULT_FONT)
+    UnloadFontDefault();        // WARNING: Module required: rtext
+#endif
+
+    rlglClose();                // De-init rlgl
+
+#if defined(_WIN32) && defined(SUPPORT_WINMM_HIGHRES_TIMER) && !defined(SUPPORT_BUSY_WAIT_LOOP)
+    timeEndPeriod(1);           // Restore time period
+#endif
+
+    // Close surface, context and display
+    if (CORE.Window.device != EGL_NO_DISPLAY)
+    {
+        eglMakeCurrent(CORE.Window.device, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
+
+        if (CORE.Window.surface != EGL_NO_SURFACE)
+        {
+            eglDestroySurface(CORE.Window.device, CORE.Window.surface);
+            CORE.Window.surface = EGL_NO_SURFACE;
+        }
+
+        if (CORE.Window.context != EGL_NO_CONTEXT)
+        {
+            eglDestroyContext(CORE.Window.device, CORE.Window.context);
+            CORE.Window.context = EGL_NO_CONTEXT;
+        }
+
+        eglTerminate(CORE.Window.device);
+        CORE.Window.device = EGL_NO_DISPLAY;
+    }
+
+#if defined(SUPPORT_EVENTS_AUTOMATION)
+    RL_FREE(events);
+#endif
+
+    CORE.Window.ready = false;
+    TRACELOG(LOG_INFO, "Window closed successfully");
+}
+
+// Check if application should close
+bool WindowShouldClose(void)
+{
+    if (CORE.Window.ready) return CORE.Window.shouldClose;
+    else return true;
+}
+
+// Check if window is currently hidden
+bool IsWindowHidden(void)
+{
+    return false;
+}
+
+// Check if window has been minimized
+bool IsWindowMinimized(void)
+{
+    return false;
+}
+
+// Check if window has been maximized
+bool IsWindowMaximized(void)
+{
+    return false;
+}
+
+// Check if window has the focus
+bool IsWindowFocused(void)
+{
+    return CORE.Android.appEnabled;
+}
+
+// Check if window has been resizedLastFrame
+bool IsWindowResized(void)
+{
+    return false;
+}
+
+// Toggle fullscreen mode
+void ToggleFullscreen(void)
+{
+    TRACELOG(LOG_WARNING, "ToggleFullscreen() not available on PLATFORM_ANDROID");
+}
+
+// Set window state: maximized, if resizable
+void MaximizeWindow(void)
+{
+    TRACELOG(LOG_WARNING, "MaximizeWindow() not available on PLATFORM_ANDROID");
+}
+
+// Set window state: minimized
+void MinimizeWindow(void)
+{
+    TRACELOG(LOG_WARNING, "MinimizeWindow() not available on PLATFORM_ANDROID");
+}
+
+// Set window state: not minimized/maximized
+void RestoreWindow(void)
+{
+    TRACELOG(LOG_WARNING, "RestoreWindow() not available on PLATFORM_ANDROID");
+}
+
+// Toggle borderless windowed mode
+void ToggleBorderlessWindowed(void)
+{
+    TRACELOG(LOG_WARNING, "ToggleBorderlessWindowed() not available on PLATFORM_ANDROID");
+}
+
+// Set window configuration state using flags
+void SetWindowState(unsigned int flags)
+{
+    TRACELOG(LOG_WARNING, "SetWindowState() not available on PLATFORM_ANDROID");
+}
+
+// Clear window configuration state flags
+void ClearWindowState(unsigned int flags)
+{
+    TRACELOG(LOG_WARNING, "ClearWindowState() not available on PLATFORM_ANDROID");
+}
+
+// Set icon for window
+void SetWindowIcon(Image image)
+{
+    TRACELOG(LOG_WARNING, "SetWindowIcon() not available on PLATFORM_ANDROID");
+}
+
+// Set icon for window
+void SetWindowIcons(Image *images, int count)
+{
+    TRACELOG(LOG_WARNING, "SetWindowIcons() not available on PLATFORM_ANDROID");
+}
+
+// Set title for window
+void SetWindowTitle(const char *title)
+{
+    CORE.Window.title = title;
+}
+
+// Set window position on screen (windowed mode)
+void SetWindowPosition(int x, int y)
+{
+    TRACELOG(LOG_WARNING, "SetWindowPosition() not available on PLATFORM_ANDROID");
+}
+
+// Set monitor for the current window
+void SetWindowMonitor(int monitor)
+{
+    TRACELOG(LOG_WARNING, "SetWindowMonitor() not available on PLATFORM_ANDROID");
+}
+
+// Set window minimum dimensions (FLAG_WINDOW_RESIZABLE)
+void SetWindowMinSize(int width, int height)
+{
+    CORE.Window.windowMin.width = width;
+    CORE.Window.windowMin.height = height;
+}
+
+// Set window maximum dimensions (FLAG_WINDOW_RESIZABLE)
+void SetWindowMaxSize(int width, int height)
+{
+    CORE.Window.windowMax.width = width;
+    CORE.Window.windowMax.height = height;
+}
+
+// Set window dimensions
+void SetWindowSize(int width, int height)
+{
+    TRACELOG(LOG_WARNING, "SetWindowSize() not available on PLATFORM_ANDROID");
+}
+
+// Set window opacity, value opacity is between 0.0 and 1.0
+void SetWindowOpacity(float opacity)
+{
+    TRACELOG(LOG_WARNING, "SetWindowOpacity() not available on PLATFORM_ANDROID");
+}
+
+// Set window focused
+void SetWindowFocused(void)
+{
+    TRACELOG(LOG_WARNING, "SetWindowFocused() not available on PLATFORM_ANDROID");
+}
+
+// Get native window handle
+void *GetWindowHandle(void)
+{
+    TRACELOG(LOG_WARNING, "GetWindowHandle() not implemented on PLATFORM_ANDROID");
+    return NULL;
+}
+
+// Get number of monitors
+int GetMonitorCount(void)
+{
+    TRACELOG(LOG_WARNING, "GetMonitorCount() not implemented on PLATFORM_ANDROID");
+    return 1;
+}
+
+// Get number of monitors
+int GetCurrentMonitor(void)
+{
+    TRACELOG(LOG_WARNING, "GetCurrentMonitor() not implemented on PLATFORM_ANDROID");
+    return 0;
+}
+
+// Get selected monitor position
+Vector2 GetMonitorPosition(int monitor)
+{
+    TRACELOG(LOG_WARNING, "GetMonitorPosition() not implemented on PLATFORM_ANDROID");
+    return (Vector2){ 0, 0 };
+}
+
+// Get selected monitor width (currently used by monitor)
+int GetMonitorWidth(int monitor)
+{
+    TRACELOG(LOG_WARNING, "GetMonitorWidth() not implemented on PLATFORM_ANDROID");
+    return 0;
+}
+
+// Get selected monitor height (currently used by monitor)
+int GetMonitorHeight(int monitor)
+{
+    TRACELOG(LOG_WARNING, "GetMonitorHeight() not implemented on PLATFORM_ANDROID");
+    return 0;
+}
+
+// Get selected monitor physical width in millimetres
+int GetMonitorPhysicalWidth(int monitor)
+{
+    TRACELOG(LOG_WARNING, "GetMonitorPhysicalWidth() not implemented on PLATFORM_ANDROID");
+    return 0;
+}
+
+// Get selected monitor physical height in millimetres
+int GetMonitorPhysicalHeight(int monitor)
+{
+    TRACELOG(LOG_WARNING, "GetMonitorPhysicalHeight() not implemented on PLATFORM_ANDROID");
+    return 0;
+}
+
+// Get selected monitor refresh rate
+int GetMonitorRefreshRate(int monitor)
+{
+    TRACELOG(LOG_WARNING, "GetMonitorRefreshRate() not implemented on PLATFORM_ANDROID");
+    return 0;
+}
+
+// Get the human-readable, UTF-8 encoded name of the selected monitor
+const char *GetMonitorName(int monitor)
+{
+    TRACELOG(LOG_WARNING, "GetMonitorName() not implemented on PLATFORM_ANDROID");
+    return "";
+}
+
+// Get window position XY on monitor
+Vector2 GetWindowPosition(void)
+{
+    TRACELOG(LOG_WARNING, "GetWindowPosition() not implemented on PLATFORM_ANDROID");
+    return (Vector2){ 0, 0 };
+}
+
+// Get window scale DPI factor for current monitor
+Vector2 GetWindowScaleDPI(void)
+{
+    TRACELOG(LOG_WARNING, "GetWindowScaleDPI() not implemented on PLATFORM_ANDROID");
+    return (Vector2){ 1.0f, 1.0f };
+}
+
+// Set clipboard text content
+void SetClipboardText(const char *text)
+{
+    TRACELOG(LOG_WARNING, "SetClipboardText() not implemented on PLATFORM_ANDROID");
+}
+
+// Get clipboard text content
+// NOTE: returned string is allocated and freed by GLFW
+const char *GetClipboardText(void)
+{
+    TRACELOG(LOG_WARNING, "GetClipboardText() not implemented on PLATFORM_ANDROID");
+    return NULL;
+}
+
+// Show mouse cursor
+void ShowCursor(void)
+{
+    CORE.Input.Mouse.cursorHidden = false;
+}
+
+// Hides mouse cursor
+void HideCursor(void)
+{
+    CORE.Input.Mouse.cursorHidden = true;
+}
+
+// Enables cursor (unlock cursor)
+void EnableCursor(void)
+{
+    // Set cursor position in the middle
+    SetMousePosition(CORE.Window.screen.width/2, CORE.Window.screen.height/2);
+
+    CORE.Input.Mouse.cursorHidden = false;
+}
+
+// Disables cursor (lock cursor)
+void DisableCursor(void)
+{
+    // Set cursor position in the middle
+    SetMousePosition(CORE.Window.screen.width/2, CORE.Window.screen.height/2);
+
+    CORE.Input.Mouse.cursorHidden = true;
+}
+
+// Get elapsed time measure in seconds since InitTimer()
+double GetTime(void)
+{
+    double time = 0.0;
+    struct timespec ts = { 0 };
+    clock_gettime(CLOCK_MONOTONIC, &ts);
+    unsigned long long int nanoSeconds = (unsigned long long int)ts.tv_sec*1000000000LLU + (unsigned long long int)ts.tv_nsec;
+
+    time = (double)(nanoSeconds - CORE.Time.base)*1e-9;  // Elapsed time since InitTimer()
+    
+    return time;
+}
+
+// Takes a screenshot of current screen (saved a .png)
+void TakeScreenshot(const char *fileName)
+{
+#if defined(SUPPORT_MODULE_RTEXTURES)
+    // Security check to (partially) avoid malicious code on PLATFORM_ANDROID
+    if (strchr(fileName, '\'') != NULL) { TRACELOG(LOG_WARNING, "SYSTEM: Provided fileName could be potentially malicious, avoid [\'] character");  return; }
+
+    Vector2 scale = GetWindowScaleDPI();
+    unsigned char *imgData = rlReadScreenPixels((int)((float)CORE.Window.render.width*scale.x), (int)((float)CORE.Window.render.height*scale.y));
+    Image image = { imgData, (int)((float)CORE.Window.render.width*scale.x), (int)((float)CORE.Window.render.height*scale.y), 1, PIXELFORMAT_UNCOMPRESSED_R8G8B8A8 };
+
+    char path[2048] = { 0 };
+    strcpy(path, TextFormat("%s/%s", CORE.Storage.basePath, fileName));
+
+    ExportImage(image, path);           // WARNING: Module required: rtextures
+    RL_FREE(imgData);
+
+    TRACELOG(LOG_INFO, "SYSTEM: [%s] Screenshot taken successfully", path);
+#else
+    TRACELOG(LOG_WARNING,"IMAGE: ExportImage() requires module: rtextures");
+#endif
+}
+
+// Open URL with default system browser (if available)
+// NOTE: This function is only safe to use if you control the URL given.
+// A user could craft a malicious string performing another action.
+// Only call this function yourself not with user input or make sure to check the string yourself.
+// Ref: https://github.com/raysan5/raylib/issues/686
+void OpenURL(const char *url)
+{
+    // Security check to (partially) avoid malicious code on PLATFORM_ANDROID
+    if (strchr(url, '\'') != NULL) TRACELOG(LOG_WARNING, "SYSTEM: Provided URL could be potentially malicious, avoid [\'] character");
+    else
+    {
+        JNIEnv *env = NULL;
+        JavaVM *vm = CORE.Android.app->activity->vm;
+        (*vm)->AttachCurrentThread(vm, &env, NULL);
+
+        jstring urlString = (*env)->NewStringUTF(env, url);
+        jclass uriClass = (*env)->FindClass(env, "android/net/Uri");
+        jmethodID uriParse = (*env)->GetStaticMethodID(env, uriClass, "parse", "(Ljava/lang/String;)Landroid/net/Uri;");
+        jobject uri = (*env)->CallStaticObjectMethod(env, uriClass, uriParse, urlString);
+
+        jclass intentClass = (*env)->FindClass(env, "android/content/Intent");
+        jfieldID actionViewId = (*env)->GetStaticFieldID(env, intentClass, "ACTION_VIEW", "Ljava/lang/String;");
+        jobject actionView = (*env)->GetStaticObjectField(env, intentClass, actionViewId);
+        jmethodID newIntent = (*env)->GetMethodID(env, intentClass, "<init>", "(Ljava/lang/String;Landroid/net/Uri;)V");
+        jobject intent = (*env)->AllocObject(env, intentClass);
+
+        (*env)->CallVoidMethod(env, intent, newIntent, actionView, uri);
+        jclass activityClass = (*env)->FindClass(env, "android/app/Activity");
+        jmethodID startActivity = (*env)->GetMethodID(env, activityClass, "startActivity", "(Landroid/content/Intent;)V");
+        (*env)->CallVoidMethod(env, CORE.Android.app->activity->clazz, startActivity, intent);
+
+        (*vm)->DetachCurrentThread(vm);
+    }
+}
+
+//----------------------------------------------------------------------------------
+// Module Functions Definition: Inputs
+//----------------------------------------------------------------------------------
+
+// Set a custom key to exit program
+void SetExitKey(int key)
+{
+    TRACELOG(LOG_WARNING, "SetExitKey() not implemented on PLATFORM_ANDROID");
+}
+
+// Get gamepad internal name id
+const char *GetGamepadName(int gamepad)
+{
+    TRACELOG(LOG_WARNING, "GetGamepadName() not implemented on PLATFORM_ANDROID");
+    return NULL;
+}
+
+// Get gamepad axis count
+int GetGamepadAxisCount(int gamepad)
+{
+    return CORE.Input.Gamepad.axisCount;
+}
+
+// Set internal gamepad mappings
+int SetGamepadMappings(const char *mappings)
+{
+    TRACELOG(LOG_WARNING, "SetGamepadMappings() not implemented on PLATFORM_ANDROID");
+    return 0;
+}
+
+// Get mouse position X
+int GetMouseX(void)
+{
+    return (int)CORE.Input.Touch.position[0].x;
+}
+
+// Get mouse position Y
+int GetMouseY(void)
+{
+    return (int)CORE.Input.Touch.position[0].y;
+}
+
+// Get mouse position XY
+Vector2 GetMousePosition(void)
+{
+    return GetTouchPosition(0);
+}
+
+// Set mouse position XY
+void SetMousePosition(int x, int y)
+{
+    CORE.Input.Mouse.currentPosition = (Vector2){ (float)x, (float)y };
+    CORE.Input.Mouse.previousPosition = CORE.Input.Mouse.currentPosition;
+}
+
+// Get mouse wheel movement Y
+float GetMouseWheelMove(void)
+{
+    TRACELOG(LOG_WARNING, "GetMouseWheelMove() not implemented on PLATFORM_ANDROID");
+    return 0.0f;
+}
+
+// Set mouse cursor
+void SetMouseCursor(int cursor)
+{
+    TRACELOG(LOG_WARNING, "SetMouseCursor() not implemented on PLATFORM_ANDROID");
+}
+
+// Get touch position X for touch point 0 (relative to screen size)
+int GetTouchX(void)
+{
+    return (int)CORE.Input.Touch.position[0].x;
+}
+
+// Get touch position Y for touch point 0 (relative to screen size)
+int GetTouchY(void)
+{
+    return (int)CORE.Input.Touch.position[0].y;
+}
+
+// Get touch position XY for a touch point index (relative to screen size)
+// TODO: Touch position should be scaled depending on display size and render size
+Vector2 GetTouchPosition(int index)
+{
+    Vector2 position = { -1.0f, -1.0f };
+
+    if (index < MAX_TOUCH_POINTS) position = CORE.Input.Touch.position[index];
+    else TRACELOG(LOG_WARNING, "INPUT: Required touch point out of range (Max touch points: %i)", MAX_TOUCH_POINTS);
+
+    return position;
+}
+
+// Swap back buffer with front buffer (screen drawing)
+void SwapScreenBuffer(void)
+{
+    eglSwapBuffers(CORE.Window.device, CORE.Window.surface);
+}
+
+// Register all input events
+void PollInputEvents(void)
+{
+#if defined(SUPPORT_GESTURES_SYSTEM)
+    // NOTE: Gestures update must be called every frame to reset gestures correctly
+    // because ProcessGestureEvent() is just called on an event, not every frame
+    UpdateGestures();
+#endif
+
+    // Reset keys/chars pressed registered
+    CORE.Input.Keyboard.keyPressedQueueCount = 0;
+    CORE.Input.Keyboard.charPressedQueueCount = 0;
+    // Reset key repeats
+    for (int i = 0; i < MAX_KEYBOARD_KEYS; i++) CORE.Input.Keyboard.keyRepeatInFrame[i] = 0;
+
+    // Reset last gamepad button/axis registered state
+    CORE.Input.Gamepad.lastButtonPressed = 0;       // GAMEPAD_BUTTON_UNKNOWN
+    CORE.Input.Gamepad.axisCount = 0;
+
+    // Register previous touch states
+    for (int i = 0; i < MAX_TOUCH_POINTS; i++) CORE.Input.Touch.previousTouchState[i] = CORE.Input.Touch.currentTouchState[i];
+
+    // Reset touch positions
+    // TODO: It resets on PLATFORM_ANDROID the mouse position and not filled again until a move-event,
+    // so, if mouse is not moved it returns a (0, 0) position... this behaviour should be reviewed!
+    //for (int i = 0; i < MAX_TOUCH_POINTS; i++) CORE.Input.Touch.position[i] = (Vector2){ 0, 0 };
+
+    // Register previous keys states
+    // NOTE: Android supports up to 260 keys
+    for (int i = 0; i < 260; i++)
+    {
+        CORE.Input.Keyboard.previousKeyState[i] = CORE.Input.Keyboard.currentKeyState[i];
+        CORE.Input.Keyboard.keyRepeatInFrame[i] = 0;
+    }
+
+    // Android ALooper_pollAll() variables
+    int pollResult = 0;
+    int pollEvents = 0;
+
+    // Poll Events (registered events)
+    // NOTE: Activity is paused if not enabled (CORE.Android.appEnabled)
+    while ((pollResult = ALooper_pollAll(CORE.Android.appEnabled? 0 : -1, NULL, &pollEvents, (void**)&CORE.Android.source)) >= 0)
+    {
+        // Process this event
+        if (CORE.Android.source != NULL) CORE.Android.source->process(CORE.Android.app, CORE.Android.source);
+
+        // NOTE: Never close window, native activity is controlled by the system!
+        if (CORE.Android.app->destroyRequested != 0)
+        {
+            //CORE.Window.shouldClose = true;
+            //ANativeActivity_finish(CORE.Android.app->activity);
+        }
+    }
+}
+
+//----------------------------------------------------------------------------------
+// Module Internal Functions Definition
+//----------------------------------------------------------------------------------
 
 // Initialize display device and framebuffer
 // NOTE: width and height represent the screen (framebuffer) desired size, not actual display size
@@ -390,6 +1042,7 @@ static void AndroidCommandCallback(struct android_app *app, int32_t cmd)
     }
 }
 
+// ANDROID: Map Android gamepad button to raylib gamepad button
 static GamepadButton AndroidTranslateGamepadButton(int button)
 {
     switch (button)
@@ -611,590 +1264,4 @@ static int32_t AndroidInputCallback(struct android_app *app, AInputEvent *event)
     return 0;
 }
 
-// To allow easier porting to android, we allow the user to define a
-// main function which we call from android_main, defined by ourselves
-extern int main(int argc, char *argv[]);
-
-void android_main(struct android_app *app)
-{
-    char arg0[] = "raylib";     // NOTE: argv[] are mutable
-    CORE.Android.app = app;
-
-    // NOTE: Return from main is ignored
-    (void)main(1, (char *[]) { arg0, NULL });
-
-    // Request to end the native activity
-    ANativeActivity_finish(app->activity);
-
-    // Android ALooper_pollAll() variables
-    int pollResult = 0;
-    int pollEvents = 0;
-
-    // Waiting for application events before complete finishing
-    while (!app->destroyRequested)
-    {
-        while ((pollResult = ALooper_pollAll(0, NULL, &pollEvents, (void **)&CORE.Android.source)) >= 0)
-        {
-            if (CORE.Android.source != NULL) CORE.Android.source->process(app, CORE.Android.source);
-        }
-    }
-}
-
-// NOTE: Add this to header (if apps really need it)
-struct android_app *GetAndroidApp(void)
-{
-    return CORE.Android.app;
-}
-
-// Close window and unload OpenGL context
-void CloseWindow(void)
-{
-#if defined(SUPPORT_GIF_RECORDING)
-    if (gifRecording)
-    {
-        MsfGifResult result = msf_gif_end(&gifState);
-        msf_gif_free(result);
-        gifRecording = false;
-    }
-#endif
-
-#if defined(SUPPORT_MODULE_RTEXT) && defined(SUPPORT_DEFAULT_FONT)
-    UnloadFontDefault();        // WARNING: Module required: rtext
-#endif
-
-    rlglClose();                // De-init rlgl
-
-#if defined(_WIN32) && defined(SUPPORT_WINMM_HIGHRES_TIMER) && !defined(SUPPORT_BUSY_WAIT_LOOP)
-    timeEndPeriod(1);           // Restore time period
-#endif
-
-    // Close surface, context and display
-    if (CORE.Window.device != EGL_NO_DISPLAY)
-    {
-        eglMakeCurrent(CORE.Window.device, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
-
-        if (CORE.Window.surface != EGL_NO_SURFACE)
-        {
-            eglDestroySurface(CORE.Window.device, CORE.Window.surface);
-            CORE.Window.surface = EGL_NO_SURFACE;
-        }
-
-        if (CORE.Window.context != EGL_NO_CONTEXT)
-        {
-            eglDestroyContext(CORE.Window.device, CORE.Window.context);
-            CORE.Window.context = EGL_NO_CONTEXT;
-        }
-
-        eglTerminate(CORE.Window.device);
-        CORE.Window.device = EGL_NO_DISPLAY;
-    }
-
-#if defined(SUPPORT_EVENTS_AUTOMATION)
-    RL_FREE(events);
-#endif
-
-    CORE.Window.ready = false;
-    TRACELOG(LOG_INFO, "Window closed successfully");
-}
-
-
-// Check if KEY_ESCAPE pressed or Close icon pressed
-bool WindowShouldClose(void)
-{
-    if (CORE.Window.ready) return CORE.Window.shouldClose;
-    else return true;
-}
-
-// Check if window is currently hidden
-bool IsWindowHidden(void)
-{
-    return false;
-}
-
-// Check if window has been minimized
-bool IsWindowMinimized(void)
-{
-    return false;
-}
-
-
-// Check if window has been maximized (only PLATFORM_DESKTOP)
-bool IsWindowMaximized(void)
-{
-    return false;
-}
-
-// Check if window has the focus
-bool IsWindowFocused(void)
-{
-    return CORE.Android.appEnabled;
-}
-
-// Check if window has been resizedLastFrame
-bool IsWindowResized(void)
-{
-    return false;
-}
-
-// Toggle fullscreen mode (only PLATFORM_DESKTOP)
-void ToggleFullscreen(void)
-{
-    TRACELOG(LOG_WARNING, "SYSTEM: Failed to toggle to windowed mode");
-}
-
-// Set window state: maximized, if resizable (only PLATFORM_DESKTOP)
-void MaximizeWindow(void)
-{
-    TRACELOG(LOG_INFO, "MaximizeWindow not implemented in rcore_android.c");
-}
-
-// Set window state: minimized (only PLATFORM_DESKTOP)
-void MinimizeWindow(void)
-{
-    TRACELOG(LOG_INFO, "MinimizeWindow not implemented in rcore_android.c");
-}
-
-// Set window state: not minimized/maximized (only PLATFORM_DESKTOP)
-void RestoreWindow(void)
-{
-    TRACELOG(LOG_INFO, "RestoreWindow not implemented in rcore_android.c");
-}
-
-
-// Toggle borderless windowed mode (only PLATFORM_DESKTOP)
-void ToggleBorderlessWindowed(void)
-{
-    TRACELOG(LOG_INFO, "ToggleBorderlessWindowed not implemented in rcore_android.c");
-}
-
-// Set window configuration state using flags
-void SetWindowState(unsigned int flags)
-{
-    TRACELOG(LOG_INFO, "SetWindowState not implemented in rcore_android.c");
-}
-
-// Clear window configuration state flags
-void ClearWindowState(unsigned int flags)
-{
-    TRACELOG(LOG_INFO, "ClearWindowState not implemented in rcore_android.c");
-}
-
-// Set icon for window (only PLATFORM_DESKTOP)
-// NOTE 1: Image must be in RGBA format, 8bit per channel
-// NOTE 2: Image is scaled by the OS for all required sizes
-void SetWindowIcon(Image image)
-{
-    TRACELOG(LOG_INFO, "SetWindowIcon not implemented in rcore_android.c");
-}
-
-// Set icon for window (multiple images, only PLATFORM_DESKTOP)
-// NOTE 1: Images must be in RGBA format, 8bit per channel
-// NOTE 2: The multiple images are used depending on provided sizes
-// Standard Windows icon sizes: 256, 128, 96, 64, 48, 32, 24, 16
-void SetWindowIcons(Image *images, int count)
-{
-    TRACELOG(LOG_INFO, "SetWindowIcons not implemented in rcore_android.c");
-}
-
-// Set title for window (only PLATFORM_DESKTOP and PLATFORM_WEB)
-void SetWindowTitle(const char *title)
-{
-    CORE.Window.title = title;
-}
-
-// Set window position on screen (windowed mode)
-void SetWindowPosition(int x, int y)
-{
-    TRACELOG(LOG_INFO, "SetWindowPosition not implemented in rcore_android.c");
-}
-
-// Set monitor for the current window
-void SetWindowMonitor(int monitor)
-{
-    TRACELOG(LOG_INFO, "SetWindowMonitor not implemented in rcore_android.c");
-}
-
-// Set window minimum dimensions (FLAG_WINDOW_RESIZABLE)
-void SetWindowMinSize(int width, int height)
-{
-    CORE.Window.windowMin.width = width;
-    CORE.Window.windowMin.height = height;
-}
-
-// Set window maximum dimensions (FLAG_WINDOW_RESIZABLE)
-void SetWindowMaxSize(int width, int height)
-{
-    CORE.Window.windowMax.width = width;
-    CORE.Window.windowMax.height = height;
-}
-
-// Set window dimensions
-void SetWindowSize(int width, int height)
-{
-    TRACELOG(LOG_INFO, "SetWindowSize not implemented in rcore_android.c");
-}
-
-// Set window opacity, value opacity is between 0.0 and 1.0
-void SetWindowOpacity(float opacity)
-{
-    TRACELOG(LOG_INFO, "SetWindowOpacity not implemented in rcore_android.c");
-}
-
-// Set window focused
-void SetWindowFocused(void)
-{
-    TRACELOG(LOG_INFO, "SetWindowFocused not implemented in rcore_android.c");
-
-}
-
-// Get native window handle
-void *GetWindowHandle(void)
-{
-    return NULL;
-}
-
-// Get number of monitors
-int GetMonitorCount(void)
-{
-    return 1;
-}
-
-// Get number of monitors
-int GetCurrentMonitor(void)
-{
-    return 0;
-}
-
-// Get selected monitor position
-Vector2 GetMonitorPosition(int monitor)
-{
-    return (Vector2){ 0, 0 };
-}
-
-// Get selected monitor width (currently used by monitor)
-int GetMonitorWidth(int monitor)
-{
-    if (CORE.Android.app->window != NULL)
-    {
-        return ANativeWindow_getWidth(CORE.Android.app->window);
-    }
-    return 0;
-}
-
-// Get selected monitor height (currently used by monitor)
-int GetMonitorHeight(int monitor)
-{
-    if (CORE.Android.app->window != NULL)
-    {
-        return ANativeWindow_getHeight(CORE.Android.app->window);
-    }
-    return 0;
-}
-
-// Get selected monitor physical height in millimetres
-int GetMonitorPhysicalHeight(int monitor)
-{
-    return 0;
-}
-
-// Get selected monitor refresh rate
-int GetMonitorRefreshRate(int monitor)
-{
-    return 0;
-}
-
-// Get window position XY on monitor
-Vector2 GetWindowPosition(void)
-{
-    return (Vector2){ 0, 0 };
-}
-
-// Get window scale DPI factor for current monitor
-Vector2 GetWindowScaleDPI(void)
-{
-    return (Vector2){ 1.0f, 1.0f };
-}
-
-// Get the human-readable, UTF-8 encoded name of the selected monitor
-const char *GetMonitorName(int monitor)
-{
-    return "";
-}
-
-
-// Set clipboard text content
-void SetClipboardText(const char *text)
-{
-    TRACELOG(LOG_INFO, "SetClipboardText not implemented in rcore_android.c");
-}
-
-
-// Get clipboard text content
-// NOTE: returned string is allocated and freed by GLFW
-const char *GetClipboardText(void)
-{
-    return NULL;
-}
-
-// Show mouse cursor
-void ShowCursor(void)
-{
-    CORE.Input.Mouse.cursorHidden = false;
-}
-
-// Hides mouse cursor
-void HideCursor(void)
-{
-    CORE.Input.Mouse.cursorHidden = true;
-}
-
-
-// Enables cursor (unlock cursor)
-void EnableCursor(void)
-{
-    // Set cursor position in the middle
-    SetMousePosition(CORE.Window.screen.width/2, CORE.Window.screen.height/2);
-
-    CORE.Input.Mouse.cursorHidden = false;
-}
-
-// Disables cursor (lock cursor)
-void DisableCursor(void)
-{
-    // Set cursor position in the middle
-    SetMousePosition(CORE.Window.screen.width/2, CORE.Window.screen.height/2);
-
-    CORE.Input.Mouse.cursorHidden = true;
-}
-
-// Get elapsed time measure in seconds since InitTimer()
-// NOTE: On PLATFORM_DESKTOP InitTimer() is called on InitWindow()
-// NOTE: On PLATFORM_DESKTOP, timer is initialized on glfwInit()
-double GetTime(void)
-{
-    double time = 0.0;
-    struct timespec ts = { 0 };
-    clock_gettime(CLOCK_MONOTONIC, &ts);
-    unsigned long long int nanoSeconds = (unsigned long long int)ts.tv_sec*1000000000LLU + (unsigned long long int)ts.tv_nsec;
-
-    time = (double)(nanoSeconds - CORE.Time.base)*1e-9;  // Elapsed time since InitTimer()
-    return time;
-}
-
-// NOTE TRACELOG() function is located in [utils.h]
-
-// Takes a screenshot of current screen (saved a .png)
-void TakeScreenshot(const char *fileName)
-{
-#if defined(SUPPORT_MODULE_RTEXTURES)
-    // Security check to (partially) avoid malicious code on PLATFORM_WEB
-    if (strchr(fileName, '\'') != NULL) { TRACELOG(LOG_WARNING, "SYSTEM: Provided fileName could be potentially malicious, avoid [\'] character");  return; }
-
-    Vector2 scale = GetWindowScaleDPI();
-    unsigned char *imgData = rlReadScreenPixels((int)((float)CORE.Window.render.width*scale.x), (int)((float)CORE.Window.render.height*scale.y));
-    Image image = { imgData, (int)((float)CORE.Window.render.width*scale.x), (int)((float)CORE.Window.render.height*scale.y), 1, PIXELFORMAT_UNCOMPRESSED_R8G8B8A8 };
-
-    char path[2048] = { 0 };
-    strcpy(path, TextFormat("%s/%s", CORE.Storage.basePath, fileName));
-
-    ExportImage(image, path);           // WARNING: Module required: rtextures
-    RL_FREE(imgData);
-
-    TRACELOG(LOG_INFO, "SYSTEM: [%s] Screenshot taken successfully", path);
-#else
-    TRACELOG(LOG_WARNING,"IMAGE: ExportImage() requires module: rtextures");
-#endif
-}
-
-// Open URL with default system browser (if available)
-// NOTE: This function is only safe to use if you control the URL given.
-// A user could craft a malicious string performing another action.
-// Only call this function yourself not with user input or make sure to check the string yourself.
-// Ref: https://github.com/raysan5/raylib/issues/686
-void OpenURL(const char *url)
-{
-    // Security check to (partially) avoid malicious code on PLATFORM_WEB
-    if (strchr(url, '\'') != NULL) TRACELOG(LOG_WARNING, "SYSTEM: Provided URL could be potentially malicious, avoid [\'] character");
-    else
-    {
-        JNIEnv *env = NULL;
-        JavaVM *vm = CORE.Android.app->activity->vm;
-        (*vm)->AttachCurrentThread(vm, &env, NULL);
-
-        jstring urlString = (*env)->NewStringUTF(env, url);
-        jclass uriClass = (*env)->FindClass(env, "android/net/Uri");
-        jmethodID uriParse = (*env)->GetStaticMethodID(env, uriClass, "parse", "(Ljava/lang/String;)Landroid/net/Uri;");
-        jobject uri = (*env)->CallStaticObjectMethod(env, uriClass, uriParse, urlString);
-
-        jclass intentClass = (*env)->FindClass(env, "android/content/Intent");
-        jfieldID actionViewId = (*env)->GetStaticFieldID(env, intentClass, "ACTION_VIEW", "Ljava/lang/String;");
-        jobject actionView = (*env)->GetStaticObjectField(env, intentClass, actionViewId);
-        jmethodID newIntent = (*env)->GetMethodID(env, intentClass, "<init>", "(Ljava/lang/String;Landroid/net/Uri;)V");
-        jobject intent = (*env)->AllocObject(env, intentClass);
-
-        (*env)->CallVoidMethod(env, intent, newIntent, actionView, uri);
-        jclass activityClass = (*env)->FindClass(env, "android/app/Activity");
-        jmethodID startActivity = (*env)->GetMethodID(env, activityClass, "startActivity", "(Landroid/content/Intent;)V");
-        (*env)->CallVoidMethod(env, CORE.Android.app->activity->clazz, startActivity, intent);
-
-        (*vm)->DetachCurrentThread(vm);
-    }
-}
-
-// Get selected monitor physical width in millimetres
-int GetMonitorPhysicalWidth(int monitor)
-{
-    return 0;
-}
-
-// Set a custom key to exit program
-// NOTE: default exitKey is ESCAPE
-void SetExitKey(int key)
-{
-    TRACELOG(LOG_INFO, "SetExitKey not implemented in rcore_android.c");
-}
-
-// Get gamepad internal name id
-const char *GetGamepadName(int gamepad)
-{
-    TRACELOG(LOG_INFO, "GetGamepadName not implemented in rcore_android.c");
-
-    return NULL;
-}
-
-// Get gamepad axis count
-int GetGamepadAxisCount(int gamepad)
-{
-    return CORE.Input.Gamepad.axisCount;
-}
-
-// Set internal gamepad mappings
-int SetGamepadMappings(const char *mappings)
-{
-    TRACELOG(LOG_INFO, "SetGamepadMappings not implemented in rcore_android.c");
-
-    return 0;
-}
-
-// Get mouse position X
-int GetMouseX(void)
-{
-    return (int)CORE.Input.Touch.position[0].x;
-}
-
-// Get mouse position Y
-int GetMouseY(void)
-{
-    return (int)CORE.Input.Touch.position[0].y;
-}
-
-// Get mouse position XY
-Vector2 GetMousePosition(void)
-{
-    return GetTouchPosition(0);
-}
-
-// Set mouse position XY
-void SetMousePosition(int x, int y)
-{
-    CORE.Input.Mouse.currentPosition = (Vector2){ (float)x, (float)y };
-    CORE.Input.Mouse.previousPosition = CORE.Input.Mouse.currentPosition;
-}
-
-// Get mouse wheel movement Y
-float GetMouseWheelMove(void)
-{
-    return 0.0f;
-}
-
-// Set mouse cursor
-// NOTE: This is a no-op on platforms other than PLATFORM_DESKTOP
-void SetMouseCursor(int cursor)
-{
-    TRACELOG(LOG_INFO, "SetMouseCursor not implemented in rcore_android.c");
-}
-
-// Get touch position X for touch point 0 (relative to screen size)
-int GetTouchX(void)
-{
-    return (int)CORE.Input.Touch.position[0].x;
-}
-
-// Get touch position Y for touch point 0 (relative to screen size)
-int GetTouchY(void)
-{
-    return (int)CORE.Input.Touch.position[0].y;
-}
-
-// Get touch position XY for a touch point index (relative to screen size)
-// TODO: Touch position should be scaled depending on display size and render size
-Vector2 GetTouchPosition(int index)
-{
-    Vector2 position = { -1.0f, -1.0f };
-
-    if (index < MAX_TOUCH_POINTS) position = CORE.Input.Touch.position[index];
-    else TRACELOG(LOG_WARNING, "INPUT: Required touch point out of range (Max touch points: %i)", MAX_TOUCH_POINTS);
-
-    return position;
-}
-
-// Swap back buffer with front buffer (screen drawing)
-void SwapScreenBuffer(void)
-{
-    eglSwapBuffers(CORE.Window.device, CORE.Window.surface);
-}
-
-// Register all input events
-void PollInputEvents(void)
-{
-#if defined(SUPPORT_GESTURES_SYSTEM)
-    // NOTE: Gestures update must be called every frame to reset gestures correctly
-    // because ProcessGestureEvent() is just called on an event, not every frame
-    UpdateGestures();
-#endif
-
-    // Reset keys/chars pressed registered
-    CORE.Input.Keyboard.keyPressedQueueCount = 0;
-    CORE.Input.Keyboard.charPressedQueueCount = 0;
-    // Reset key repeats
-    for (int i = 0; i < MAX_KEYBOARD_KEYS; i++) CORE.Input.Keyboard.keyRepeatInFrame[i] = 0;
-
-    // Reset last gamepad button/axis registered state
-    CORE.Input.Gamepad.lastButtonPressed = 0;       // GAMEPAD_BUTTON_UNKNOWN
-    CORE.Input.Gamepad.axisCount = 0;
-
-    // Register previous touch states
-    for (int i = 0; i < MAX_TOUCH_POINTS; i++) CORE.Input.Touch.previousTouchState[i] = CORE.Input.Touch.currentTouchState[i];
-
-    // Reset touch positions
-    // TODO: It resets on PLATFORM_WEB the mouse position and not filled again until a move-event,
-    // so, if mouse is not moved it returns a (0, 0) position... this behaviour should be reviewed!
-    //for (int i = 0; i < MAX_TOUCH_POINTS; i++) CORE.Input.Touch.position[i] = (Vector2){ 0, 0 };
-
-    // Register previous keys states
-    // NOTE: Android supports up to 260 keys
-    for (int i = 0; i < 260; i++)
-    {
-        CORE.Input.Keyboard.previousKeyState[i] = CORE.Input.Keyboard.currentKeyState[i];
-        CORE.Input.Keyboard.keyRepeatInFrame[i] = 0;
-    }
-
-    // Android ALooper_pollAll() variables
-    int pollResult = 0;
-    int pollEvents = 0;
-
-    // Poll Events (registered events)
-    // NOTE: Activity is paused if not enabled (CORE.Android.appEnabled)
-    while ((pollResult = ALooper_pollAll(CORE.Android.appEnabled? 0 : -1, NULL, &pollEvents, (void**)&CORE.Android.source)) >= 0)
-    {
-        // Process this event
-        if (CORE.Android.source != NULL) CORE.Android.source->process(CORE.Android.app, CORE.Android.source);
-
-        // NOTE: Never close window, native activity is controlled by the system!
-        if (CORE.Android.app->destroyRequested != 0)
-        {
-            //CORE.Window.shouldClose = true;
-            //ANativeActivity_finish(CORE.Android.app->activity);
-        }
-    }
-}
+// EOF
