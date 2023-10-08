@@ -292,7 +292,7 @@
         <Alias type="Camera" name="Camera3D" desc="Camera type fallback, defaults to Camera3D" />
     </Aliases>
     <Enums count="21">
-        <Enum name="ConfigFlags" valueCount="15" desc="System/Window config flags">
+        <Enum name="ConfigFlags" valueCount="16" desc="System/Window config flags">
             <Value name="FLAG_VSYNC_HINT" integer="64" desc="Set to try enabling V-Sync on GPU" />
             <Value name="FLAG_FULLSCREEN_MODE" integer="2" desc="Set to run program in fullscreen" />
             <Value name="FLAG_WINDOW_RESIZABLE" integer="4" desc="Set to allow resizable window" />
@@ -306,6 +306,7 @@
             <Value name="FLAG_WINDOW_TRANSPARENT" integer="16" desc="Set to allow transparent framebuffer" />
             <Value name="FLAG_WINDOW_HIGHDPI" integer="8192" desc="Set to support HighDPI" />
             <Value name="FLAG_WINDOW_MOUSE_PASSTHROUGH" integer="16384" desc="Set to support mouse passthrough, only supported when FLAG_WINDOW_UNDECORATED" />
+            <Value name="FLAG_BORDERLESS_WINDOWED_MODE" integer="32768" desc="Set to run program in borderless windowed mode" />
             <Value name="FLAG_MSAA_4X_HINT" integer="32" desc="Set to try enabling MSAA 4X" />
             <Value name="FLAG_INTERLACED_HINT" integer="65536" desc="Set to try enabling interlaced video format (for V3D)" />
         </Enum>
@@ -539,7 +540,7 @@
             <Value name="SHADER_ATTRIB_VEC3" integer="2" desc="Shader attribute type: vec3 (3 float)" />
             <Value name="SHADER_ATTRIB_VEC4" integer="3" desc="Shader attribute type: vec4 (4 float)" />
         </Enum>
-        <Enum name="PixelFormat" valueCount="21" desc="Pixel formats">
+        <Enum name="PixelFormat" valueCount="24" desc="Pixel formats">
             <Value name="PIXELFORMAT_UNCOMPRESSED_GRAYSCALE" integer="1" desc="8 bit per pixel (no alpha)" />
             <Value name="PIXELFORMAT_UNCOMPRESSED_GRAY_ALPHA" integer="2" desc="8*2 bpp (2 channels)" />
             <Value name="PIXELFORMAT_UNCOMPRESSED_R5G6B5" integer="3" desc="16 bpp" />
@@ -550,17 +551,20 @@
             <Value name="PIXELFORMAT_UNCOMPRESSED_R32" integer="8" desc="32 bpp (1 channel - float)" />
             <Value name="PIXELFORMAT_UNCOMPRESSED_R32G32B32" integer="9" desc="32*3 bpp (3 channels - float)" />
             <Value name="PIXELFORMAT_UNCOMPRESSED_R32G32B32A32" integer="10" desc="32*4 bpp (4 channels - float)" />
-            <Value name="PIXELFORMAT_COMPRESSED_DXT1_RGB" integer="11" desc="4 bpp (no alpha)" />
-            <Value name="PIXELFORMAT_COMPRESSED_DXT1_RGBA" integer="12" desc="4 bpp (1 bit alpha)" />
-            <Value name="PIXELFORMAT_COMPRESSED_DXT3_RGBA" integer="13" desc="8 bpp" />
-            <Value name="PIXELFORMAT_COMPRESSED_DXT5_RGBA" integer="14" desc="8 bpp" />
-            <Value name="PIXELFORMAT_COMPRESSED_ETC1_RGB" integer="15" desc="4 bpp" />
-            <Value name="PIXELFORMAT_COMPRESSED_ETC2_RGB" integer="16" desc="4 bpp" />
-            <Value name="PIXELFORMAT_COMPRESSED_ETC2_EAC_RGBA" integer="17" desc="8 bpp" />
-            <Value name="PIXELFORMAT_COMPRESSED_PVRT_RGB" integer="18" desc="4 bpp" />
-            <Value name="PIXELFORMAT_COMPRESSED_PVRT_RGBA" integer="19" desc="4 bpp" />
-            <Value name="PIXELFORMAT_COMPRESSED_ASTC_4x4_RGBA" integer="20" desc="8 bpp" />
-            <Value name="PIXELFORMAT_COMPRESSED_ASTC_8x8_RGBA" integer="21" desc="2 bpp" />
+            <Value name="PIXELFORMAT_UNCOMPRESSED_R16" integer="11" desc="16 bpp (1 channel - half float)" />
+            <Value name="PIXELFORMAT_UNCOMPRESSED_R16G16B16" integer="12" desc="16*3 bpp (3 channels - half float)" />
+            <Value name="PIXELFORMAT_UNCOMPRESSED_R16G16B16A16" integer="13" desc="16*4 bpp (4 channels - half float)" />
+            <Value name="PIXELFORMAT_COMPRESSED_DXT1_RGB" integer="14" desc="4 bpp (no alpha)" />
+            <Value name="PIXELFORMAT_COMPRESSED_DXT1_RGBA" integer="15" desc="4 bpp (1 bit alpha)" />
+            <Value name="PIXELFORMAT_COMPRESSED_DXT3_RGBA" integer="16" desc="8 bpp" />
+            <Value name="PIXELFORMAT_COMPRESSED_DXT5_RGBA" integer="17" desc="8 bpp" />
+            <Value name="PIXELFORMAT_COMPRESSED_ETC1_RGB" integer="18" desc="4 bpp" />
+            <Value name="PIXELFORMAT_COMPRESSED_ETC2_RGB" integer="19" desc="4 bpp" />
+            <Value name="PIXELFORMAT_COMPRESSED_ETC2_EAC_RGBA" integer="20" desc="8 bpp" />
+            <Value name="PIXELFORMAT_COMPRESSED_PVRT_RGB" integer="21" desc="4 bpp" />
+            <Value name="PIXELFORMAT_COMPRESSED_PVRT_RGBA" integer="22" desc="4 bpp" />
+            <Value name="PIXELFORMAT_COMPRESSED_ASTC_4x4_RGBA" integer="23" desc="8 bpp" />
+            <Value name="PIXELFORMAT_COMPRESSED_ASTC_8x8_RGBA" integer="24" desc="2 bpp" />
         </Enum>
         <Enum name="TextureFilter" valueCount="6" desc="Texture parameters: filter mode">
             <Value name="TEXTURE_FILTER_POINT" integer="0" desc="No filter, just pixel approximation" />
@@ -637,12 +641,12 @@
         </Callback>
         <Callback name="LoadFileDataCallback" retType="unsigned char *" paramCount="2" desc="FileIO: Load binary data">
             <Param type="const char *" name="fileName" desc="" />
-            <Param type="unsigned int *" name="bytesRead" desc="" />
+            <Param type="int *" name="dataSize" desc="" />
         </Callback>
         <Callback name="SaveFileDataCallback" retType="bool" paramCount="3" desc="FileIO: Save binary data">
             <Param type="const char *" name="fileName" desc="" />
             <Param type="void *" name="data" desc="" />
-            <Param type="unsigned int" name="bytesToWrite" desc="" />
+            <Param type="int" name="dataSize" desc="" />
         </Callback>
         <Callback name="LoadFileTextCallback" retType="char *" paramCount="1" desc="FileIO: Load text data">
             <Param type="const char *" name="fileName" desc="" />
@@ -656,7 +660,7 @@
             <Param type="unsigned int" name="frames" desc="" />
         </Callback>
     </Callbacks>
-    <Functions count="518">
+    <Functions count="529">
         <Function name="InitWindow" retType="void" paramCount="3" desc="Initialize window and OpenGL context">
             <Param type="int" name="width" desc="" />
             <Param type="int" name="height" desc="" />
@@ -691,6 +695,8 @@
         </Function>
         <Function name="ToggleFullscreen" retType="void" paramCount="0" desc="Toggle window state: fullscreen/windowed (only PLATFORM_DESKTOP)">
         </Function>
+        <Function name="ToggleBorderlessWindowed" retType="void" paramCount="0" desc="Toggle window state: borderless windowed (only PLATFORM_DESKTOP)">
+        </Function>
         <Function name="MaximizeWindow" retType="void" paramCount="0" desc="Set window state: maximized, if resizable (only PLATFORM_DESKTOP)">
         </Function>
         <Function name="MinimizeWindow" retType="void" paramCount="0" desc="Set window state: minimized, if resizable (only PLATFORM_DESKTOP)">
@@ -704,17 +710,21 @@
             <Param type="Image *" name="images" desc="" />
             <Param type="int" name="count" desc="" />
         </Function>
-        <Function name="SetWindowTitle" retType="void" paramCount="1" desc="Set title for window (only PLATFORM_DESKTOP)">
+        <Function name="SetWindowTitle" retType="void" paramCount="1" desc="Set title for window (only PLATFORM_DESKTOP and PLATFORM_WEB)">
             <Param type="const char *" name="title" desc="" />
         </Function>
         <Function name="SetWindowPosition" retType="void" paramCount="2" desc="Set window position on screen (only PLATFORM_DESKTOP)">
             <Param type="int" name="x" desc="" />
             <Param type="int" name="y" desc="" />
         </Function>
-        <Function name="SetWindowMonitor" retType="void" paramCount="1" desc="Set monitor for the current window (fullscreen mode)">
+        <Function name="SetWindowMonitor" retType="void" paramCount="1" desc="Set monitor for the current window">
             <Param type="int" name="monitor" desc="" />
         </Function>
         <Function name="SetWindowMinSize" retType="void" paramCount="2" desc="Set window minimum dimensions (for FLAG_WINDOW_RESIZABLE)">
+            <Param type="int" name="width" desc="" />
+            <Param type="int" name="height" desc="" />
+        </Function>
+        <Function name="SetWindowMaxSize" retType="void" paramCount="2" desc="Set window maximum dimensions (for FLAG_WINDOW_RESIZABLE)">
             <Param type="int" name="width" desc="" />
             <Param type="int" name="height" desc="" />
         </Function>
@@ -724,6 +734,8 @@
         </Function>
         <Function name="SetWindowOpacity" retType="void" paramCount="1" desc="Set window opacity [0.0f..1.0f] (only PLATFORM_DESKTOP)">
             <Param type="float" name="opacity" desc="" />
+        </Function>
+        <Function name="SetWindowFocused" retType="void" paramCount="0" desc="Set window focused (only PLATFORM_DESKTOP)">
         </Function>
         <Function name="GetWindowHandle" retType="void *" paramCount="0" desc="Get native window handle">
         </Function>
@@ -761,7 +773,7 @@
         </Function>
         <Function name="GetWindowScaleDPI" retType="Vector2" paramCount="0" desc="Get window scale DPI factor">
         </Function>
-        <Function name="GetMonitorName" retType="const char *" paramCount="1" desc="Get the human-readable, UTF-8 encoded name of the primary monitor">
+        <Function name="GetMonitorName" retType="const char *" paramCount="1" desc="Get the human-readable, UTF-8 encoded name of the specified monitor">
             <Param type="int" name="monitor" desc="" />
         </Function>
         <Function name="SetClipboardText" retType="void" paramCount="1" desc="Set clipboard text content">
@@ -976,7 +988,7 @@
         </Function>
         <Function name="LoadFileData" retType="unsigned char *" paramCount="2" desc="Load file data as byte array (read)">
             <Param type="const char *" name="fileName" desc="" />
-            <Param type="unsigned int *" name="bytesRead" desc="" />
+            <Param type="int *" name="dataSize" desc="" />
         </Function>
         <Function name="UnloadFileData" retType="void" paramCount="1" desc="Unload file data allocated by LoadFileData()">
             <Param type="unsigned char *" name="data" desc="" />
@@ -984,11 +996,11 @@
         <Function name="SaveFileData" retType="bool" paramCount="3" desc="Save data to file from byte array (write), returns true on success">
             <Param type="const char *" name="fileName" desc="" />
             <Param type="void *" name="data" desc="" />
-            <Param type="unsigned int" name="bytesToWrite" desc="" />
+            <Param type="int" name="dataSize" desc="" />
         </Function>
         <Function name="ExportDataAsCode" retType="bool" paramCount="3" desc="Export data to code (.h), returns true on success">
             <Param type="const unsigned char *" name="data" desc="" />
-            <Param type="unsigned int" name="size" desc="" />
+            <Param type="int" name="dataSize" desc="" />
             <Param type="const char *" name="fileName" desc="" />
         </Function>
         <Function name="LoadFileText" retType="char *" paramCount="1" desc="Load text data from file (read), returns a '\0' terminated string">
@@ -1031,7 +1043,7 @@
         </Function>
         <Function name="GetWorkingDirectory" retType="const char *" paramCount="0" desc="Get current working directory (uses static string)">
         </Function>
-        <Function name="GetApplicationDirectory" retType="const char *" paramCount="0" desc="Get the directory if the running application (uses static string)">
+        <Function name="GetApplicationDirectory" retType="const char *" paramCount="0" desc="Get the directory of the running application (uses static string)">
         </Function>
         <Function name="ChangeDirectory" retType="bool" paramCount="1" desc="Change working directory, return true on success">
             <Param type="const char *" name="dir" desc="" />
@@ -1080,6 +1092,9 @@
             <Param type="int *" name="outputSize" desc="" />
         </Function>
         <Function name="IsKeyPressed" retType="bool" paramCount="1" desc="Check if a key has been pressed once">
+            <Param type="int" name="key" desc="" />
+        </Function>
+        <Function name="IsKeyPressedRepeat" retType="bool" paramCount="1" desc="Check if a key has been pressed again (Only PLATFORM_DESKTOP)">
             <Param type="int" name="key" desc="" />
         </Function>
         <Function name="IsKeyDown" retType="bool" paramCount="1" desc="Check if a key is being pressed">
@@ -1187,7 +1202,7 @@
             <Param type="unsigned int" name="flags" desc="" />
         </Function>
         <Function name="IsGestureDetected" retType="bool" paramCount="1" desc="Check if a gesture have been detected">
-            <Param type="int" name="gesture" desc="" />
+            <Param type="unsigned int" name="gesture" desc="" />
         </Function>
         <Function name="GetGestureDetected" retType="int" paramCount="0" desc="Get latest detected gesture">
         </Function>
@@ -1260,6 +1275,18 @@
             <Param type="Vector2" name="endPos" desc="" />
             <Param type="Vector2" name="startControlPos" desc="" />
             <Param type="Vector2" name="endControlPos" desc="" />
+            <Param type="float" name="thick" desc="" />
+            <Param type="Color" name="color" desc="" />
+        </Function>
+        <Function name="DrawLineBSpline" retType="void" paramCount="4" desc="Draw a B-Spline line, minimum 4 points">
+            <Param type="Vector2 *" name="points" desc="" />
+            <Param type="int" name="pointCount" desc="" />
+            <Param type="float" name="thick" desc="" />
+            <Param type="Color" name="color" desc="" />
+        </Function>
+        <Function name="DrawLineCatmullRom" retType="void" paramCount="4" desc="Draw a Catmull Rom spline line, minimum 4 points">
+            <Param type="Vector2 *" name="points" desc="" />
+            <Param type="int" name="pointCount" desc="" />
             <Param type="float" name="thick" desc="" />
             <Param type="Color" name="color" desc="" />
         </Function>
@@ -1516,6 +1543,11 @@
             <Param type="int" name="format" desc="" />
             <Param type="int" name="headerSize" desc="" />
         </Function>
+        <Function name="LoadImageSvg" retType="Image" paramCount="3" desc="Load image from SVG file data or string with specified size">
+            <Param type="const char *" name="fileNameOrString" desc="" />
+            <Param type="int" name="width" desc="" />
+            <Param type="int" name="height" desc="" />
+        </Function>
         <Function name="LoadImageAnim" retType="Image" paramCount="2" desc="Load image sequence from file (frames appended to image.data)">
             <Param type="const char *" name="fileName" desc="" />
             <Param type="int *" name="frames" desc="" />
@@ -1539,6 +1571,11 @@
         <Function name="ExportImage" retType="bool" paramCount="2" desc="Export image data to file, returns true on success">
             <Param type="Image" name="image" desc="" />
             <Param type="const char *" name="fileName" desc="" />
+        </Function>
+        <Function name="ExportImageToMemory" retType="unsigned char *" paramCount="3" desc="Export image to memory buffer">
+            <Param type="Image" name="image" desc="" />
+            <Param type="const char *" name="fileType" desc="" />
+            <Param type="int *" name="fileSize" desc="" />
         </Function>
         <Function name="ExportImageAsCode" retType="bool" paramCount="2" desc="Export image as code file defining an array of bytes, returns true on success">
             <Param type="Image" name="image" desc="" />
@@ -1685,7 +1722,7 @@
         <Function name="ImageFlipHorizontal" retType="void" paramCount="1" desc="Flip image horizontally">
             <Param type="Image *" name="image" desc="" />
         </Function>
-        <Function name="ImageRotate" retType="void" paramCount="2" desc="Rotate image by input angle in degrees (-359 to 359) ">
+        <Function name="ImageRotate" retType="void" paramCount="2" desc="Rotate image by input angle in degrees (-359 to 359)">
             <Param type="Image *" name="image" desc="" />
             <Param type="int" name="degrees" desc="" />
         </Function>
@@ -1995,11 +2032,11 @@
         <Function name="LoadFont" retType="Font" paramCount="1" desc="Load font from file into GPU memory (VRAM)">
             <Param type="const char *" name="fileName" desc="" />
         </Function>
-        <Function name="LoadFontEx" retType="Font" paramCount="4" desc="Load font from file with extended parameters, use NULL for fontChars and 0 for glyphCount to load the default character set">
+        <Function name="LoadFontEx" retType="Font" paramCount="4" desc="Load font from file with extended parameters, use NULL for codepoints and 0 for codepointCount to load the default character setFont">
             <Param type="const char *" name="fileName" desc="" />
             <Param type="int" name="fontSize" desc="" />
-            <Param type="int *" name="fontChars" desc="" />
-            <Param type="int" name="glyphCount" desc="" />
+            <Param type="int *" name="codepoints" desc="" />
+            <Param type="int" name="codepointCount" desc="" />
         </Function>
         <Function name="LoadFontFromImage" retType="Font" paramCount="3" desc="Load font from Image (XNA style)">
             <Param type="Image" name="image" desc="" />
@@ -2011,8 +2048,8 @@
             <Param type="const unsigned char *" name="fileData" desc="" />
             <Param type="int" name="dataSize" desc="" />
             <Param type="int" name="fontSize" desc="" />
-            <Param type="int *" name="fontChars" desc="" />
-            <Param type="int" name="glyphCount" desc="" />
+            <Param type="int *" name="codepoints" desc="" />
+            <Param type="int" name="codepointCount" desc="" />
         </Function>
         <Function name="IsFontReady" retType="bool" paramCount="1" desc="Check if a font is ready">
             <Param type="Font" name="font" desc="" />
@@ -2021,20 +2058,20 @@
             <Param type="const unsigned char *" name="fileData" desc="" />
             <Param type="int" name="dataSize" desc="" />
             <Param type="int" name="fontSize" desc="" />
-            <Param type="int *" name="fontChars" desc="" />
-            <Param type="int" name="glyphCount" desc="" />
+            <Param type="int *" name="codepoints" desc="" />
+            <Param type="int" name="codepointCount" desc="" />
             <Param type="int" name="type" desc="" />
         </Function>
         <Function name="GenImageFontAtlas" retType="Image" paramCount="6" desc="Generate image font atlas using chars info">
-            <Param type="const GlyphInfo *" name="chars" desc="" />
-            <Param type="Rectangle **" name="recs" desc="" />
+            <Param type="const GlyphInfo *" name="glyphs" desc="" />
+            <Param type="Rectangle **" name="glyphRecs" desc="" />
             <Param type="int" name="glyphCount" desc="" />
             <Param type="int" name="fontSize" desc="" />
             <Param type="int" name="padding" desc="" />
             <Param type="int" name="packMethod" desc="" />
         </Function>
         <Function name="UnloadFontData" retType="void" paramCount="2" desc="Unload font chars info data (RAM)">
-            <Param type="GlyphInfo *" name="chars" desc="" />
+            <Param type="GlyphInfo *" name="glyphs" desc="" />
             <Param type="int" name="glyphCount" desc="" />
         </Function>
         <Function name="UnloadFont" retType="void" paramCount="1" desc="Unload font from GPU memory (VRAM)">
@@ -2083,11 +2120,14 @@
         <Function name="DrawTextCodepoints" retType="void" paramCount="7" desc="Draw multiple character (codepoint)">
             <Param type="Font" name="font" desc="" />
             <Param type="const int *" name="codepoints" desc="" />
-            <Param type="int" name="count" desc="" />
+            <Param type="int" name="codepointCount" desc="" />
             <Param type="Vector2" name="position" desc="" />
             <Param type="float" name="fontSize" desc="" />
             <Param type="float" name="spacing" desc="" />
             <Param type="Color" name="tint" desc="" />
+        </Function>
+        <Function name="SetTextLineSpacing" retType="void" paramCount="1" desc="Set vertical line spacing when drawing with line-breaks">
+            <Param type="int" name="spacing" desc="" />
         </Function>
         <Function name="MeasureText" retType="int" paramCount="2" desc="Measure string width for default font">
             <Param type="const char *" name="text" desc="" />
@@ -2523,7 +2563,7 @@
         </Function>
         <Function name="LoadModelAnimations" retType="ModelAnimation *" paramCount="2" desc="Load model animations from file">
             <Param type="const char *" name="fileName" desc="" />
-            <Param type="unsigned int *" name="animCount" desc="" />
+            <Param type="int *" name="animCount" desc="" />
         </Function>
         <Function name="UpdateModelAnimation" retType="void" paramCount="3" desc="Update model animation pose">
             <Param type="Model" name="model" desc="" />
@@ -2535,7 +2575,7 @@
         </Function>
         <Function name="UnloadModelAnimations" retType="void" paramCount="2" desc="Unload animation array data">
             <Param type="ModelAnimation *" name="animations" desc="" />
-            <Param type="unsigned int" name="count" desc="" />
+            <Param type="int" name="animCount" desc="" />
         </Function>
         <Function name="IsModelAnimationValid" retType="bool" paramCount="2" desc="Check model animation skeleton match">
             <Param type="Model" name="model" desc="" />
@@ -2609,6 +2649,9 @@
         <Function name="LoadSoundFromWave" retType="Sound" paramCount="1" desc="Load sound from wave data">
             <Param type="Wave" name="wave" desc="" />
         </Function>
+        <Function name="LoadSoundAlias" retType="Sound" paramCount="1" desc="Create a new sound that shares the same sample data as the source sound, does not own the sound data">
+            <Param type="Sound" name="source" desc="" />
+        </Function>
         <Function name="IsSoundReady" retType="bool" paramCount="1" desc="Checks if a sound is ready">
             <Param type="Sound" name="sound" desc="" />
         </Function>
@@ -2622,6 +2665,9 @@
         </Function>
         <Function name="UnloadSound" retType="void" paramCount="1" desc="Unload sound">
             <Param type="Sound" name="sound" desc="" />
+        </Function>
+        <Function name="UnloadSoundAlias" retType="void" paramCount="1" desc="Unload a sound alias (does not deallocate sample data)">
+            <Param type="Sound" name="alias" desc="" />
         </Function>
         <Function name="ExportWave" retType="bool" paramCount="2" desc="Export wave data to file, returns true on success">
             <Param type="Wave" name="wave" desc="" />
@@ -2785,7 +2831,7 @@
             <Param type="AudioStream" name="stream" desc="" />
             <Param type="AudioCallback" name="callback" desc="" />
         </Function>
-        <Function name="AttachAudioStreamProcessor" retType="void" paramCount="2" desc="Attach audio stream processor to stream">
+        <Function name="AttachAudioStreamProcessor" retType="void" paramCount="2" desc="Attach audio stream processor to stream, receives the samples as <float>s">
             <Param type="AudioStream" name="stream" desc="" />
             <Param type="AudioCallback" name="processor" desc="" />
         </Function>
@@ -2793,7 +2839,7 @@
             <Param type="AudioStream" name="stream" desc="" />
             <Param type="AudioCallback" name="processor" desc="" />
         </Function>
-        <Function name="AttachAudioMixedProcessor" retType="void" paramCount="1" desc="Attach audio stream processor to the entire audio pipeline">
+        <Function name="AttachAudioMixedProcessor" retType="void" paramCount="1" desc="Attach audio stream processor to the entire audio pipeline, receives the samples as <float>s">
             <Param type="AudioCallback" name="processor" desc="" />
         </Function>
         <Function name="DetachAudioMixedProcessor" retType="void" paramCount="1" desc="Detach audio stream processor from the entire audio pipeline">

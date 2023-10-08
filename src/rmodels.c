@@ -1202,7 +1202,7 @@ void UploadMesh(Mesh *mesh, bool dynamic)
     // NOTE: Vertex attributes must be uploaded considering default locations points and available vertex data
 
     // Enable vertex attributes: position (shader-location = 0)
-    void *vertices = mesh->animVertices != NULL ? mesh->animVertices : mesh->vertices;
+    void *vertices = (mesh->animVertices != NULL)? mesh->animVertices : mesh->vertices;
     mesh->vboId[0] = rlLoadVertexBuffer(vertices, mesh->vertexCount*3*sizeof(float), dynamic);
     rlSetVertexAttribute(0, 3, RL_FLOAT, 0, 0, 0);
     rlEnableVertexAttribute(0);
@@ -1218,7 +1218,7 @@ void UploadMesh(Mesh *mesh, bool dynamic)
     if (mesh->normals != NULL)
     {
         // Enable vertex attributes: normals (shader-location = 2)
-        void *normals = mesh->animNormals != NULL ? mesh->animNormals : mesh->normals;
+        void *normals = (mesh->animNormals != NULL)? mesh->animNormals : mesh->normals;
         mesh->vboId[2] = rlLoadVertexBuffer(normals, mesh->vertexCount*3*sizeof(float), dynamic);
         rlSetVertexAttribute(2, 3, RL_FLOAT, 0, 0, 0);
         rlEnableVertexAttribute(2);
@@ -5246,7 +5246,7 @@ static bool GetPoseAtTimeGLTF(cgltf_accessor *input, cgltf_accessor *output, flo
     float tend = 0.0f;
     int keyframe = 0;       // Defaults to first pose
 
-    for (int i = 0; i < input->count - 1; i++)
+    for (int i = 0; i < (int)input->count - 1; i++)
     {
         cgltf_bool r1 = cgltf_accessor_read_float(input, i, &tstart, 1);
         if (!r1) return false;
@@ -5585,7 +5585,7 @@ static Model LoadM3D(const char *fileName)
 
         if (!m3d || M3D_ERR_ISFATAL(m3d->errcode))
         {
-            TRACELOG(LOG_WARNING, "MODEL: [%s] Failed to load M3D data, error code %d", fileName, m3d ? m3d->errcode : -2);
+            TRACELOG(LOG_WARNING, "MODEL: [%s] Failed to load M3D data, error code %d", fileName, m3d? m3d->errcode : -2);
             if (m3d) m3d_free(m3d);
             UnloadFileData(fileData);
             return model;
@@ -5613,6 +5613,20 @@ static Model LoadM3D(const char *fileName)
 
         // We always need a default material, so we add +1
         model.materialCount++;
+
+        // WARNING: Sorting is not needed, valid M3D model files should already be sorted
+        // faces should already by grouped by material
+        // Just keeping the sorting function for reference (Check PR #3363)
+        /*
+        static int m3d_compare_faces(const void *a, const void *b)
+        {
+            m3df_t *fa = (m3df_t *)a;
+            m3df_t *fb = (m3df_t *)b;
+            return (fa->materialid - fb->materialid);
+        }
+        
+        qsort(m3d->face, m3d->numface, sizeof(m3df_t), m3d_compare_faces);
+        */
 
         model.meshes = (Mesh *)RL_CALLOC(model.meshCount, sizeof(Mesh));
         model.meshMaterial = (int *)RL_CALLOC(model.meshCount, sizeof(int));
@@ -5680,7 +5694,7 @@ static Model LoadM3D(const char *fileName)
             model.meshes[k].vertices[l*9 + 7] = m3d->vertex[m3d->face[i].vertex[2]].y*m3d->scale;
             model.meshes[k].vertices[l*9 + 8] = m3d->vertex[m3d->face[i].vertex[2]].z*m3d->scale;
 
-            // without vertex color (full transparency), we use the default color
+            // Without vertex color (full transparency), we use the default color
             if (model.meshes[k].colors != NULL)
             {
                 if (m3d->vertex[m3d->face[i].vertex[0]].color & 0xFF000000)
@@ -5722,7 +5736,7 @@ static Model LoadM3D(const char *fileName)
                     int skinid = m3d->vertex[m3d->face[i].vertex[n]].skinid;
 
                     // Check if there is a skin for this mesh, should be, just failsafe
-                    if (skinid != M3D_UNDEF && skinid < (int)m3d->numskin)
+                    if ((skinid != M3D_UNDEF) && (skinid < (int)m3d->numskin))
                     {
                         for (j = 0; j < 4; j++)
                         {
@@ -5896,7 +5910,7 @@ static ModelAnimation *LoadModelAnimationsM3D(const char *fileName, int *animCou
 
         if (!m3d || M3D_ERR_ISFATAL(m3d->errcode))
         {
-            TRACELOG(LOG_WARNING, "MODEL: [%s] Failed to load M3D data, error code %d", fileName, m3d ? m3d->errcode : -2);
+            TRACELOG(LOG_WARNING, "MODEL: [%s] Failed to load M3D data, error code %d", fileName, m3d? m3d->errcode : -2);
             UnloadFileData(fileData);
             return NULL;
         }
