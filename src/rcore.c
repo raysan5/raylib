@@ -1050,7 +1050,7 @@ Ray GetMouseRay(Vector2 mouse, Camera camera)
     }
     else if (camera.projection == CAMERA_ORTHOGRAPHIC)
     {
-        float aspect = (float)CORE.Window.screen.width/(float)CORE.Window.screen.height;
+        double aspect = (double)CORE.Window.screen.width/(double)CORE.Window.screen.height;
         double top = camera.fovy/2.0;
         double right = top*aspect;
 
@@ -1134,7 +1134,7 @@ Vector2 GetWorldToScreenEx(Vector3 position, Camera camera, int width, int heigh
     }
     else if (camera.projection == CAMERA_ORTHOGRAPHIC)
     {
-        float aspect = (float)CORE.Window.screen.width/(float)CORE.Window.screen.height;
+        double aspect = (double)width/(double)height;
         double top = camera.fovy/2.0;
         double right = top*aspect;
 
