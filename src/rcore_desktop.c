@@ -362,6 +362,7 @@ void ToggleFullscreen(void)
             int monitorHeight = GetMonitorHeight(monitorIndex);
             int refreshRate = GLFW_DONT_CARE;
 
+            //Prevent GLFW from changing the video mode if the screen is the same size as the monitor
             if (CORE.Window.screen.width == monitorWidth && CORE.Window.screen.height == monitorHeight)
             {
                 refreshRate = GetMonitorRefreshRate(refreshRate);
