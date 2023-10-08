@@ -32,7 +32,7 @@
     #include <android/asset_manager.h>      // Required for: AAssetManager
 #endif
 
-#if defined(SUPPORT_TRACELOG)
+#if defined(SUPPORT_TRACELOG) && !defined(TRACELOG)
     #define TRACELOG(level, ...) TraceLog(level, __VA_ARGS__)
 
     #if defined(SUPPORT_TRACELOG_DEBUG)

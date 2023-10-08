@@ -53,15 +53,31 @@
 #include <android_native_app_glue.h>    // Required for: android_app struct and activity management
 #include <jni.h>                        // Required for: JNIEnv and JavaVM [Used in OpenURL()]
 
+#include <EGL/egl.h>                    // Native platform windowing system interface
+    
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
 //----------------------------------------------------------------------------------
-//...
+typedef struct {
+    // Application data
+    struct android_app *app;            // Android activity
+    struct android_poll_source *source; // Android events polling source
+    bool appEnabled;                    // Flag to detect if app is active ** = true
+    bool contextRebindRequired;         // Used to know context rebind required
+    
+    // Display data
+    EGLDisplay device;                  // Native display device (physical screen connection)
+    EGLSurface surface;                 // Surface to draw on, framebuffers (connected to context)
+    EGLContext context;                 // Graphic context, mode in which drawing can be done
+    EGLConfig config;                   // Graphic config
+} PlatformData;
 
 //----------------------------------------------------------------------------------
 // Global Variables Definition
 //----------------------------------------------------------------------------------
-extern CoreData CORE;           // Global CORE state context
+extern CoreData CORE;                   // Global CORE state context
+
+static PlatformData platform = { 0 };   // Platform specific data
 
 //----------------------------------------------------------------------------------
 // Module Internal Functions Declaration
@@ -89,7 +105,7 @@ extern int main(int argc, char *argv[]);
 void android_main(struct android_app *app)
 {
     char arg0[] = "raylib";     // NOTE: argv[] are mutable
-    CORE.Android.app = app;
+    platform.app = app;
 
     // NOTE: Return from main is ignored
     (void)main(1, (char *[]) { arg0, NULL });
@@ -104,9 +120,9 @@ void android_main(struct android_app *app)
     // Waiting for application events before complete finishing
     while (!app->destroyRequested)
     {
-        while ((pollResult = ALooper_pollAll(0, NULL, &pollEvents, (void **)&CORE.Android.source)) >= 0)
+        while ((pollResult = ALooper_pollAll(0, NULL, &pollEvents, (void **)&platform.source)) >= 0)
         {
-            if (CORE.Android.source != NULL) CORE.Android.source->process(app, CORE.Android.source);
+            if (platform.source != NULL) platform.source->process(app, platform.source);
         }
     }
 }
@@ -114,7 +130,7 @@ void android_main(struct android_app *app)
 // NOTE: Add this to header (if apps really need it)
 struct android_app *GetAndroidApp(void)
 {
-    return CORE.Android.app;
+    return platform.app;
 }
 
 // Initialize window and OpenGL context
@@ -169,9 +185,9 @@ void InitWindow(int width, int height, const char *title)
     CORE.Window.currentFbo.height = height;
 
     // Set desired windows flags before initializing anything
-    ANativeActivity_setWindowFlags(CORE.Android.app->activity, AWINDOW_FLAG_FULLSCREEN, 0);  //AWINDOW_FLAG_SCALED, AWINDOW_FLAG_DITHER
+    ANativeActivity_setWindowFlags(platform.app->activity, AWINDOW_FLAG_FULLSCREEN, 0);  //AWINDOW_FLAG_SCALED, AWINDOW_FLAG_DITHER
 
-    int orientation = AConfiguration_getOrientation(CORE.Android.app->config);
+    int orientation = AConfiguration_getOrientation(platform.app->config);
 
     if (orientation == ACONFIGURATION_ORIENTATION_PORT) TRACELOG(LOG_INFO, "ANDROID: Window orientation set as portrait");
     else if (orientation == ACONFIGURATION_ORIENTATION_LAND) TRACELOG(LOG_INFO, "ANDROID: Window orientation set as landscape");
@@ -179,32 +195,32 @@ void InitWindow(int width, int height, const char *title)
     // TODO: Automatic orientation doesn't seem to work
     if (width <= height)
     {
-        AConfiguration_setOrientation(CORE.Android.app->config, ACONFIGURATION_ORIENTATION_PORT);
+        AConfiguration_setOrientation(platform.app->config, ACONFIGURATION_ORIENTATION_PORT);
         TRACELOG(LOG_WARNING, "ANDROID: Window orientation changed to portrait");
     }
     else
     {
-        AConfiguration_setOrientation(CORE.Android.app->config, ACONFIGURATION_ORIENTATION_LAND);
+        AConfiguration_setOrientation(platform.app->config, ACONFIGURATION_ORIENTATION_LAND);
         TRACELOG(LOG_WARNING, "ANDROID: Window orientation changed to landscape");
     }
 
-    //AConfiguration_getDensity(CORE.Android.app->config);
-    //AConfiguration_getKeyboard(CORE.Android.app->config);
-    //AConfiguration_getScreenSize(CORE.Android.app->config);
-    //AConfiguration_getScreenLong(CORE.Android.app->config);
+    //AConfiguration_getDensity(platform.app->config);
+    //AConfiguration_getKeyboard(platform.app->config);
+    //AConfiguration_getScreenSize(platform.app->config);
+    //AConfiguration_getScreenLong(platform.app->config);
 
     // Initialize App command system
     // NOTE: On APP_CMD_INIT_WINDOW -> InitGraphicsDevice(), InitTimer(), LoadFontDefault()...
-    CORE.Android.app->onAppCmd = AndroidCommandCallback;
+    platform.app->onAppCmd = AndroidCommandCallback;
 
     // Initialize input events system
-    CORE.Android.app->onInputEvent = AndroidInputCallback;
+    platform.app->onInputEvent = AndroidInputCallback;
 
     // Initialize assets manager
-    InitAssetManager(CORE.Android.app->activity->assetManager, CORE.Android.app->activity->internalDataPath);
+    InitAssetManager(platform.app->activity->assetManager, platform.app->activity->internalDataPath);
 
     // Initialize base path for storage
-    CORE.Storage.basePath = CORE.Android.app->activity->internalDataPath;
+    CORE.Storage.basePath = platform.app->activity->internalDataPath;
 
     TRACELOG(LOG_INFO, "ANDROID: App initialized successfully");
 
@@ -216,13 +232,13 @@ void InitWindow(int width, int height, const char *title)
     while (!CORE.Window.ready)
     {
         // Process events loop
-        while ((pollResult = ALooper_pollAll(0, NULL, &pollEvents, (void**)&CORE.Android.source)) >= 0)
+        while ((pollResult = ALooper_pollAll(0, NULL, &pollEvents, (void**)&platform.source)) >= 0)
         {
             // Process this event
-            if (CORE.Android.source != NULL) CORE.Android.source->process(CORE.Android.app, CORE.Android.source);
+            if (platform.source != NULL) platform.source->process(platform.app, platform.source);
 
             // NOTE: Never close window, native activity is controlled by the system!
-            //if (CORE.Android.app->destroyRequested != 0) CORE.Window.shouldClose = true;
+            //if (platform.app->destroyRequested != 0) CORE.Window.shouldClose = true;
         }
     }
 }
@@ -250,24 +266,24 @@ void CloseWindow(void)
 #endif
 
     // Close surface, context and display
-    if (CORE.Window.device != EGL_NO_DISPLAY)
+    if (platform.device != EGL_NO_DISPLAY)
     {
-        eglMakeCurrent(CORE.Window.device, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
+        eglMakeCurrent(platform.device, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
 
-        if (CORE.Window.surface != EGL_NO_SURFACE)
+        if (platform.surface != EGL_NO_SURFACE)
         {
-            eglDestroySurface(CORE.Window.device, CORE.Window.surface);
-            CORE.Window.surface = EGL_NO_SURFACE;
+            eglDestroySurface(platform.device, platform.surface);
+            platform.surface = EGL_NO_SURFACE;
         }
 
-        if (CORE.Window.context != EGL_NO_CONTEXT)
+        if (platform.context != EGL_NO_CONTEXT)
         {
-            eglDestroyContext(CORE.Window.device, CORE.Window.context);
-            CORE.Window.context = EGL_NO_CONTEXT;
+            eglDestroyContext(platform.device, platform.context);
+            platform.context = EGL_NO_CONTEXT;
         }
 
-        eglTerminate(CORE.Window.device);
-        CORE.Window.device = EGL_NO_DISPLAY;
+        eglTerminate(platform.device);
+        platform.device = EGL_NO_DISPLAY;
     }
 
 #if defined(SUPPORT_EVENTS_AUTOMATION)
@@ -306,7 +322,7 @@ bool IsWindowMaximized(void)
 // Check if window has the focus
 bool IsWindowFocused(void)
 {
-    return CORE.Android.appEnabled;
+    return platform.appEnabled;
 }
 
 // Check if window has been resizedLastFrame
@@ -595,7 +611,7 @@ void OpenURL(const char *url)
     else
     {
         JNIEnv *env = NULL;
-        JavaVM *vm = CORE.Android.app->activity->vm;
+        JavaVM *vm = platform.app->activity->vm;
         (*vm)->AttachCurrentThread(vm, &env, NULL);
 
         jstring urlString = (*env)->NewStringUTF(env, url);
@@ -612,7 +628,7 @@ void OpenURL(const char *url)
         (*env)->CallVoidMethod(env, intent, newIntent, actionView, uri);
         jclass activityClass = (*env)->FindClass(env, "android/app/Activity");
         jmethodID startActivity = (*env)->GetMethodID(env, activityClass, "startActivity", "(Landroid/content/Intent;)V");
-        (*env)->CallVoidMethod(env, CORE.Android.app->activity->clazz, startActivity, intent);
+        (*env)->CallVoidMethod(env, platform.app->activity->clazz, startActivity, intent);
 
         (*vm)->DetachCurrentThread(vm);
     }
@@ -713,7 +729,7 @@ Vector2 GetTouchPosition(int index)
 // Swap back buffer with front buffer (screen drawing)
 void SwapScreenBuffer(void)
 {
-    eglSwapBuffers(CORE.Window.device, CORE.Window.surface);
+    eglSwapBuffers(platform.device, platform.surface);
 }
 
 // Register all input events
@@ -756,17 +772,17 @@ void PollInputEvents(void)
     int pollEvents = 0;
 
     // Poll Events (registered events)
-    // NOTE: Activity is paused if not enabled (CORE.Android.appEnabled)
-    while ((pollResult = ALooper_pollAll(CORE.Android.appEnabled? 0 : -1, NULL, &pollEvents, (void**)&CORE.Android.source)) >= 0)
+    // NOTE: Activity is paused if not enabled (platform.appEnabled)
+    while ((pollResult = ALooper_pollAll(platform.appEnabled? 0 : -1, NULL, &pollEvents, (void**)&platform.source)) >= 0)
     {
         // Process this event
-        if (CORE.Android.source != NULL) CORE.Android.source->process(CORE.Android.app, CORE.Android.source);
+        if (platform.source != NULL) platform.source->process(platform.app, platform.source);
 
         // NOTE: Never close window, native activity is controlled by the system!
-        if (CORE.Android.app->destroyRequested != 0)
+        if (platform.app->destroyRequested != 0)
         {
             //CORE.Window.shouldClose = true;
-            //ANativeActivity_finish(CORE.Android.app->activity);
+            //ANativeActivity_finish(platform.app->activity);
         }
     }
 }
@@ -829,15 +845,15 @@ static bool InitGraphicsDevice(int width, int height)
     EGLint numConfigs = 0;
 
     // Get an EGL device connection
-    CORE.Window.device = eglGetDisplay(EGL_DEFAULT_DISPLAY);
-    if (CORE.Window.device == EGL_NO_DISPLAY)
+    platform.device = eglGetDisplay(EGL_DEFAULT_DISPLAY);
+    if (platform.device == EGL_NO_DISPLAY)
     {
         TRACELOG(LOG_WARNING, "DISPLAY: Failed to initialize EGL device");
         return false;
     }
 
     // Initialize the EGL device connection
-    if (eglInitialize(CORE.Window.device, NULL, NULL) == EGL_FALSE)
+    if (eglInitialize(platform.device, NULL, NULL) == EGL_FALSE)
     {
         // If all of the calls to eglInitialize returned EGL_FALSE then an error has occurred.
         TRACELOG(LOG_WARNING, "DISPLAY: Failed to initialize EGL device");
@@ -845,14 +861,14 @@ static bool InitGraphicsDevice(int width, int height)
     }
 
     // Get an appropriate EGL framebuffer configuration
-    eglChooseConfig(CORE.Window.device, framebufferAttribs, &CORE.Window.config, 1, &numConfigs);
+    eglChooseConfig(platform.device, framebufferAttribs, &platform.config, 1, &numConfigs);
 
     // Set rendering API
     eglBindAPI(EGL_OPENGL_ES_API);
 
     // Create an EGL rendering context
-    CORE.Window.context = eglCreateContext(CORE.Window.device, CORE.Window.config, EGL_NO_CONTEXT, contextAttribs);
-    if (CORE.Window.context == EGL_NO_CONTEXT)
+    platform.context = eglCreateContext(platform.device, platform.config, EGL_NO_CONTEXT, contextAttribs);
+    if (platform.context == EGL_NO_CONTEXT)
     {
         TRACELOG(LOG_WARNING, "DISPLAY: Failed to create EGL context");
         return false;
@@ -864,7 +880,7 @@ static bool InitGraphicsDevice(int width, int height)
 
     // EGL_NATIVE_VISUAL_ID is an attribute of the EGLConfig that is guaranteed to be accepted by ANativeWindow_setBuffersGeometry()
     // As soon as we picked a EGLConfig, we can safely reconfigure the ANativeWindow buffers to match, using EGL_NATIVE_VISUAL_ID
-    eglGetConfigAttrib(CORE.Window.device, CORE.Window.config, EGL_NATIVE_VISUAL_ID, &displayFormat);
+    eglGetConfigAttrib(platform.device, platform.config, EGL_NATIVE_VISUAL_ID, &displayFormat);
 
     // At this point we need to manage render size vs screen size
     // NOTE: This function use and modify global module variables:
@@ -873,15 +889,15 @@ static bool InitGraphicsDevice(int width, int height)
     //  -> CORE.Window.screenScale
     SetupFramebuffer(CORE.Window.display.width, CORE.Window.display.height);
 
-    ANativeWindow_setBuffersGeometry(CORE.Android.app->window, CORE.Window.render.width, CORE.Window.render.height, displayFormat);
-    //ANativeWindow_setBuffersGeometry(CORE.Android.app->window, 0, 0, displayFormat);       // Force use of native display size
+    ANativeWindow_setBuffersGeometry(platform.app->window, CORE.Window.render.width, CORE.Window.render.height, displayFormat);
+    //ANativeWindow_setBuffersGeometry(platform.app->window, 0, 0, displayFormat);       // Force use of native display size
 
-    CORE.Window.surface = eglCreateWindowSurface(CORE.Window.device, CORE.Window.config, CORE.Android.app->window, NULL);
+    platform.surface = eglCreateWindowSurface(platform.device, platform.config, platform.app->window, NULL);
 
     // There must be at least one frame displayed before the buffers are swapped
-    //eglSwapInterval(CORE.Window.device, 1);
+    //eglSwapInterval(platform.device, 1);
 
-    if (eglMakeCurrent(CORE.Window.device, CORE.Window.surface, CORE.Window.surface, CORE.Window.context) == EGL_FALSE)
+    if (eglMakeCurrent(platform.device, platform.surface, platform.surface, platform.context) == EGL_FALSE)
     {
         TRACELOG(LOG_WARNING, "DISPLAY: Failed to attach EGL rendering context to EGL surface");
         return false;
@@ -933,11 +949,11 @@ static void AndroidCommandCallback(struct android_app *app, int32_t cmd)
         {
             if (app->window != NULL)
             {
-                if (CORE.Android.contextRebindRequired)
+                if (platform.contextRebindRequired)
                 {
                     // Reset screen scaling to full display size
                     EGLint displayFormat = 0;
-                    eglGetConfigAttrib(CORE.Window.device, CORE.Window.config, EGL_NATIVE_VISUAL_ID, &displayFormat);
+                    eglGetConfigAttrib(platform.device, platform.config, EGL_NATIVE_VISUAL_ID, &displayFormat);
 
                     // Adding renderOffset here feels rather hackish, but the viewport scaling is wrong after the
                     // context rebinding if the screen is scaled unless offsets are added. There's probably a more
@@ -948,15 +964,15 @@ static void AndroidCommandCallback(struct android_app *app, int32_t cmd)
                         displayFormat);
 
                     // Recreate display surface and re-attach OpenGL context
-                    CORE.Window.surface = eglCreateWindowSurface(CORE.Window.device, CORE.Window.config, app->window, NULL);
-                    eglMakeCurrent(CORE.Window.device, CORE.Window.surface, CORE.Window.surface, CORE.Window.context);
+                    platform.surface = eglCreateWindowSurface(platform.device, platform.config, app->window, NULL);
+                    eglMakeCurrent(platform.device, platform.surface, platform.surface, platform.context);
 
-                    CORE.Android.contextRebindRequired = false;
+                    platform.contextRebindRequired = false;
                 }
                 else
                 {
-                    CORE.Window.display.width = ANativeWindow_getWidth(CORE.Android.app->window);
-                    CORE.Window.display.height = ANativeWindow_getHeight(CORE.Android.app->window);
+                    CORE.Window.display.width = ANativeWindow_getWidth(platform.app->window);
+                    CORE.Window.display.height = ANativeWindow_getHeight(platform.app->window);
 
                     // Initialize graphics device (display device and OpenGL context)
                     InitGraphicsDevice(CORE.Window.screen.width, CORE.Window.screen.height);
@@ -997,13 +1013,13 @@ static void AndroidCommandCallback(struct android_app *app, int32_t cmd)
         } break;
         case APP_CMD_GAINED_FOCUS:
         {
-            CORE.Android.appEnabled = true;
+            platform.appEnabled = true;
             //ResumeMusicStream();
         } break;
         case APP_CMD_PAUSE: break;
         case APP_CMD_LOST_FOCUS:
         {
-            CORE.Android.appEnabled = false;
+            platform.appEnabled = false;
             //PauseMusicStream();
         } break;
         case APP_CMD_TERM_WINDOW:
@@ -1012,19 +1028,19 @@ static void AndroidCommandCallback(struct android_app *app, int32_t cmd)
             // NOTE 1: This case is used when the user exits the app without closing it. We detach the context to ensure everything is recoverable upon resuming.
             // NOTE 2: Detaching context before destroying display surface avoids losing our resources (textures, shaders, VBOs...)
             // NOTE 3: In some cases (too many context loaded), OS could unload context automatically... :(
-            if (CORE.Window.device != EGL_NO_DISPLAY)
+            if (platform.device != EGL_NO_DISPLAY)
             {
-                eglMakeCurrent(CORE.Window.device, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
+                eglMakeCurrent(platform.device, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
 
-                if (CORE.Window.surface != EGL_NO_SURFACE)
+                if (platform.surface != EGL_NO_SURFACE)
                 {
-                    eglDestroySurface(CORE.Window.device, CORE.Window.surface);
-                    CORE.Window.surface = EGL_NO_SURFACE;
+                    eglDestroySurface(platform.device, platform.surface);
+                    platform.surface = EGL_NO_SURFACE;
                 }
 
-                CORE.Android.contextRebindRequired = true;
+                platform.contextRebindRequired = true;
             }
-            // If 'CORE.Window.device' is already set to 'EGL_NO_DISPLAY'
+            // If 'platform.device' is already set to 'EGL_NO_DISPLAY'
             // this means that the user has already called 'CloseWindow()'
 
         } break;
@@ -1033,8 +1049,8 @@ static void AndroidCommandCallback(struct android_app *app, int32_t cmd)
         case APP_CMD_DESTROY: break;
         case APP_CMD_CONFIG_CHANGED:
         {
-            //AConfiguration_fromAssetManager(CORE.Android.app->config, CORE.Android.app->activity->assetManager);
-            //print_cur_config(CORE.Android.app);
+            //AConfiguration_fromAssetManager(platform.app->config, platform.app->activity->assetManager);
+            //print_cur_config(platform.app);
 
             // Check screen orientation here!
         } break;

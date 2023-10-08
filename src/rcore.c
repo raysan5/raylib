@@ -1,33 +1,18 @@
 /**********************************************************************************************
 *
-*   rcore - Basic functions to manage windows, OpenGL context and input on multiple platforms
+*   rcore - Window/display management, Graphic device/context management and input management
 *
 *   PLATFORMS SUPPORTED:
 *       - PLATFORM_DESKTOP: Windows (Win32, Win64)
 *       - PLATFORM_DESKTOP: Linux (X11 desktop mode)
 *       - PLATFORM_DESKTOP: FreeBSD, OpenBSD, NetBSD, DragonFly (X11 desktop)
 *       - PLATFORM_DESKTOP: OSX/macOS
+*       - PLATFORM_WEB:     HTML5 (WebAssembly)
+*       - PLATFORM_DRM:     Raspberry Pi 0-5
+*       - PLATFORM_DRM:     Linux native mode (KMS driver)
 *       - PLATFORM_ANDROID: Android (ARM, ARM64)
-*       - PLATFORM_DRM:     Linux native mode, including Raspberry Pi 4 with V3D fkms driver
-*       - PLATFORM_WEB:     HTML5 with WebAssembly
 *
 *   CONFIGURATION:
-*       #define PLATFORM_DESKTOP
-*           Windowing and input system configured for desktop platforms:
-*               Windows, Linux, OSX, FreeBSD, OpenBSD, NetBSD, DragonFly
-*
-*       #define PLATFORM_ANDROID
-*           Windowing and input system configured for Android device, app activity managed internally in this module.
-*           NOTE: OpenGL ES 2.0 is required and graphic device is managed by EGL
-*
-*       #define PLATFORM_DRM
-*           Windowing and input system configured for DRM native mode (RPI4 and other devices)
-*           graphic device is managed by EGL and inputs are processed is raw mode, reading from /dev/input/
-*
-*       #define PLATFORM_WEB
-*           Windowing and input system configured for HTML5 (run on browser), code converted from C to asm.js
-*           using emscripten compiler. OpenGL ES 2.0 required for direct translation to WebGL equivalent code.
-*
 *       #define SUPPORT_DEFAULT_FONT (default)
 *           Default font is loaded on window initialization to be available for the user to render simple text.
 *           NOTE: If enabled, uses external module functions to load default raylib font (module: text)
@@ -41,11 +26,6 @@
 *
 *       #define SUPPORT_MOUSE_GESTURES
 *           Mouse gestures are directly mapped like touches and processed by gestures system.
-*
-*       #define SUPPORT_SSH_KEYBOARD_RPI (Raspberry Pi only)
-*           Reconfigure standard input to receive key inputs, works with SSH connection.
-*           WARNING: Reconfiguring standard input could lead to undesired effects, like breaking other
-*           running processes orblocking the device if not restored properly. Use with care.
 *
 *       #define SUPPORT_BUSY_WAIT_LOOP
 *           Use busy wait loop for timing sync, if not defined, a high-resolution timer is setup and used
@@ -68,7 +48,6 @@
 *           Support automatic generated events, loading and recording of those events when required
 *
 *   DEPENDENCIES:
-*       rglfw    - Manage graphic device, OpenGL context and inputs on PLATFORM_DESKTOP (Windows, Linux, OSX, FreeBSD...)
 *       raymath  - 3D math functionality (Vector2, Vector3, Matrix, Quaternion)
 *       camera   - Multiple 3D camera modes (free, orbital, 1st person, 3rd person)
 *       gestures - Gestures system for touch-ready devices (or simulated from mouse inputs)
@@ -76,7 +55,7 @@
 *
 *   LICENSE: zlib/libpng
 *
-*   Copyright (c) 2013-2023 Ramon Santamaria (@raysan5)
+*   Copyright (c) 2013-2023 Ramon Santamaria (@raysan5) and contributors
 *
 *   This software is provided "as-is", without any express or implied warranty. In no event
 *   will the authors be held liable for any damages arising from the use of this software.
@@ -102,7 +81,7 @@
     #include "config.h"             // Defines module configuration flags
 #endif
 
-#include "rcore.h"
+#include "rcore.h"                  // Defines types and globals
 
 #define RLGL_IMPLEMENTATION
 #include "rlgl.h"                   // OpenGL abstraction layer to OpenGL 1.1, 3.3+ or ES2
@@ -142,21 +121,19 @@
 #endif
 
 // Platform specific defines to handle GetApplicationDirectory()
-#if defined (PLATFORM_DESKTOP)
-    #if defined(_WIN32)
-        #ifndef MAX_PATH
-            #define MAX_PATH 1025
-        #endif
-    __declspec(dllimport) unsigned long __stdcall GetModuleFileNameA(void *hModule, void *lpFilename, unsigned long nSize);
-    __declspec(dllimport) unsigned long __stdcall GetModuleFileNameW(void *hModule, void *lpFilename, unsigned long nSize);
-    __declspec(dllimport) int __stdcall WideCharToMultiByte(unsigned int cp, unsigned long flags, void *widestr, int cchwide, void *str, int cbmb, void *defchar, int *used_default);
-    #elif defined(__linux__)
-        #include <unistd.h>
-    #elif defined(__APPLE__)
-        #include <sys/syslimits.h>
-        #include <mach-o/dyld.h>
-    #endif // OSs
-#endif // PLATFORM_DESKTOP
+#if defined(_WIN32)
+    #ifndef MAX_PATH
+        #define MAX_PATH 1025
+    #endif
+__declspec(dllimport) unsigned long __stdcall GetModuleFileNameA(void *hModule, void *lpFilename, unsigned long nSize);
+__declspec(dllimport) unsigned long __stdcall GetModuleFileNameW(void *hModule, void *lpFilename, unsigned long nSize);
+__declspec(dllimport) int __stdcall WideCharToMultiByte(unsigned int cp, unsigned long flags, void *widestr, int cchwide, void *str, int cbmb, void *defchar, int *used_default);
+#elif defined(__linux__)
+    #include <unistd.h>
+#elif defined(__APPLE__)
+    #include <sys/syslimits.h>
+    #include <mach-o/dyld.h>
+#endif // OSs
 
 #define _CRT_INTERNAL_NONSTDC_NAMES  1
 #include <sys/stat.h>               // Required for: stat(), S_ISREG [Used in GetFileModTime(), IsFilePath()]
@@ -165,7 +142,7 @@
     #define S_ISREG(m) (((m) & S_IFMT) == S_IFREG)
 #endif
 
-#if defined(PLATFORM_DESKTOP) && defined(_WIN32) && (defined(_MSC_VER) || defined(__TINYC__))
+#if defined(_WIN32) && (defined(_MSC_VER) || defined(__TINYC__))
     #define DIRENT_MALLOC RL_MALLOC
     #define DIRENT_FREE RL_FREE
 
@@ -333,7 +310,8 @@ const char *TextFormat(const char *text, ...);       // Formatting of text with 
 #elif defined(PLATFORM_ANDROID)
     #include "rcore_android.c"
 #else
-    // Software rendering backend, user needs to provide buffer ;)
+    // TODO: Include your custom platform backend!
+    // i.e software rendering backend or console backend!
 #endif
 
 //----------------------------------------------------------------------------------
@@ -1897,7 +1875,7 @@ bool IsKeyPressed(int key)
     return pressed;
 }
 
-// Check if a key has been pressed again (only PLATFORM_DESKTOP)
+// Check if a key has been pressed again
 bool IsKeyPressedRepeat(int key)
 {
     bool repeat = false;
@@ -2291,7 +2269,7 @@ void InitTimer(void)
     timeBeginPeriod(1);                 // Setup high-resolution timer to 1ms (granularity of 1-2 ms)
 #endif
 
-#if defined(PLATFORM_ANDROID) || defined(PLATFORM_DRM)
+#if defined(__linux__) || defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__EMSCRIPTEN__)
     struct timespec now = { 0 };
 
     if (clock_gettime(CLOCK_MONOTONIC, &now) == 0)  // Success

@@ -47,23 +47,42 @@
 
 #include "rcore.h"
 
-#define GLFW_INCLUDE_ES2 // GLFW3: Enable OpenGL ES 2.0 (translated to WebGL)
-// #define GLFW_INCLUDE_ES3            // GLFW3: Enable OpenGL ES 3.0 (transalted to WebGL2?)
-#include "GLFW/glfw3.h" // GLFW3: Windows, OpenGL context and Input management
+#define GLFW_INCLUDE_ES2                // GLFW3: Enable OpenGL ES 2.0 (translated to WebGL)
+// #define GLFW_INCLUDE_ES3               // GLFW3: Enable OpenGL ES 3.0 (transalted to WebGL2?)
+#include "GLFW/glfw3.h"                 // GLFW3: Windows, OpenGL context and Input management
+
+#include <emscripten/emscripten.h>      // Emscripten functionality for C
+#include <emscripten/html5.h>           // Emscripten HTML5 library
+
 #include <sys/time.h>   // Required for: timespec, nanosleep(), select() - POSIX
 
-#include <emscripten/emscripten.h> // Emscripten functionality for C
-#include <emscripten/html5.h>      // Emscripten HTML5 library
+//----------------------------------------------------------------------------------
+// Defines and Macros
+//----------------------------------------------------------------------------------
+// TODO: HACK: Added flag if not provided by GLFW when using external library
+// Latest GLFW release (GLFW 3.3.8) does not implement this flag, it was added for 3.4.0-dev
+#if !defined(GLFW_MOUSE_PASSTHROUGH)
+    #define GLFW_MOUSE_PASSTHROUGH      0x0002000D
+#endif
+
+#if (_POSIX_C_SOURCE < 199309L)
+    #undef _POSIX_C_SOURCE
+    #define _POSIX_C_SOURCE 199309L     // Required for: CLOCK_MONOTONIC if compiled with c99 without gnu ext.
+#endif
 
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
 //----------------------------------------------------------------------------------
-//...
+typedef struct {
+    GLFWwindow *handle;                 // GLFW window handle (graphic device)
+} PlatformData;
 
 //----------------------------------------------------------------------------------
 // Global Variables Definition
 //----------------------------------------------------------------------------------
-extern CoreData CORE;           // Global CORE state context
+extern CoreData CORE;                   // Global CORE state context
+
+static PlatformData platform = { 0 };   // Platform specific data
 
 //----------------------------------------------------------------------------------
 // Module Internal Functions Declaration
@@ -263,7 +282,7 @@ void CloseWindow(void)
 
     rlglClose(); // De-init rlgl
 
-    glfwDestroyWindow(CORE.Window.handle);
+    glfwDestroyWindow(platform.handle);
     glfwTerminate();
 
 #if defined(_WIN32) && defined(SUPPORT_WINMM_HIGHRES_TIMER) && !defined(SUPPORT_BUSY_WAIT_LOOP)
@@ -481,7 +500,7 @@ void SetWindowMaxSize(int width, int height)
 // Set window dimensions
 void SetWindowSize(int width, int height)
 {
-    glfwSetWindowSize(CORE.Window.handle, width, height);
+    glfwSetWindowSize(platform.handle, width, height);
 }
 
 // Set window opacity, value opacity is between 0.0 and 1.0
@@ -759,7 +778,7 @@ void SetMousePosition(int x, int y)
     CORE.Input.Mouse.previousPosition = CORE.Input.Mouse.currentPosition;
 
     // NOTE: emscripten not implemented
-    glfwSetCursorPos(CORE.Window.handle, CORE.Input.Mouse.currentPosition.x, CORE.Input.Mouse.currentPosition.y);
+    glfwSetCursorPos(platform.handle, CORE.Input.Mouse.currentPosition.x, CORE.Input.Mouse.currentPosition.y);
 }
 
 // Get mouse wheel movement Y
@@ -806,7 +825,7 @@ Vector2 GetTouchPosition(int index)
 // Swap back buffer with front buffer (screen drawing)
 void SwapScreenBuffer(void)
 {
-    glfwSwapBuffers(CORE.Window.handle);
+    glfwSwapBuffers(platform.handle);
 }
 
 // Register all input events
@@ -1110,24 +1129,24 @@ static bool InitGraphicsDevice(int width, int height)
         // HighDPI monitors are properly considered in a following similar function: SetupViewport()
         SetupFramebuffer(CORE.Window.display.width, CORE.Window.display.height);
 
-        CORE.Window.handle = glfwCreateWindow(CORE.Window.display.width, CORE.Window.display.height, (CORE.Window.title != 0)? CORE.Window.title : " ", glfwGetPrimaryMonitor(), NULL);
+        platform.handle = glfwCreateWindow(CORE.Window.display.width, CORE.Window.display.height, (CORE.Window.title != 0)? CORE.Window.title : " ", glfwGetPrimaryMonitor(), NULL);
 
         // NOTE: Full-screen change, not working properly...
-        // glfwSetWindowMonitor(CORE.Window.handle, glfwGetPrimaryMonitor(), 0, 0, CORE.Window.screen.width, CORE.Window.screen.height, GLFW_DONT_CARE);
+        // glfwSetWindowMonitor(platform.handle, glfwGetPrimaryMonitor(), 0, 0, CORE.Window.screen.width, CORE.Window.screen.height, GLFW_DONT_CARE);
     }
     else
     {
         // No-fullscreen window creation
-        CORE.Window.handle = glfwCreateWindow(CORE.Window.screen.width, CORE.Window.screen.height, (CORE.Window.title != 0)? CORE.Window.title : " ", NULL, NULL);
+        platform.handle = glfwCreateWindow(CORE.Window.screen.width, CORE.Window.screen.height, (CORE.Window.title != 0)? CORE.Window.title : " ", NULL, NULL);
 
-        if (CORE.Window.handle)
+        if (platform.handle)
         {
             CORE.Window.render.width = CORE.Window.screen.width;
             CORE.Window.render.height = CORE.Window.screen.height;
         }
     }
 
-    if (!CORE.Window.handle)
+    if (!platform.handle)
     {
         glfwTerminate();
         TRACELOG(LOG_WARNING, "GLFW: Failed to initialize Window");
@@ -1138,20 +1157,20 @@ static bool InitGraphicsDevice(int width, int height)
     emscripten_set_window_title((CORE.Window.title != 0)? CORE.Window.title : " ");
 
     // Set window callback events
-    glfwSetWindowSizeCallback(CORE.Window.handle, WindowSizeCallback); // NOTE: Resizing not allowed by default!
-    glfwSetWindowIconifyCallback(CORE.Window.handle, WindowIconifyCallback);
-    glfwSetWindowFocusCallback(CORE.Window.handle, WindowFocusCallback);
-    glfwSetDropCallback(CORE.Window.handle, WindowDropCallback);
+    glfwSetWindowSizeCallback(platform.handle, WindowSizeCallback); // NOTE: Resizing not allowed by default!
+    glfwSetWindowIconifyCallback(platform.handle, WindowIconifyCallback);
+    glfwSetWindowFocusCallback(platform.handle, WindowFocusCallback);
+    glfwSetDropCallback(platform.handle, WindowDropCallback);
 
     // Set input callback events
-    glfwSetKeyCallback(CORE.Window.handle, KeyCallback);
-    glfwSetCharCallback(CORE.Window.handle, CharCallback);
-    glfwSetMouseButtonCallback(CORE.Window.handle, MouseButtonCallback);
-    glfwSetCursorPosCallback(CORE.Window.handle, MouseCursorPosCallback); // Track mouse position changes
-    glfwSetScrollCallback(CORE.Window.handle, MouseScrollCallback);
-    glfwSetCursorEnterCallback(CORE.Window.handle, CursorEnterCallback);
+    glfwSetKeyCallback(platform.handle, KeyCallback);
+    glfwSetCharCallback(platform.handle, CharCallback);
+    glfwSetMouseButtonCallback(platform.handle, MouseButtonCallback);
+    glfwSetCursorPosCallback(platform.handle, MouseCursorPosCallback); // Track mouse position changes
+    glfwSetScrollCallback(platform.handle, MouseScrollCallback);
+    glfwSetCursorEnterCallback(platform.handle, CursorEnterCallback);
 
-    glfwMakeContextCurrent(CORE.Window.handle);
+    glfwMakeContextCurrent(platform.handle);
 
     // Try to enable GPU V-Sync, so frames are limited to screen refresh rate (60Hz -> 60 FPS)
     // NOTE: V-Sync can be enabled by graphic driver configuration, it doesn't need
@@ -1293,7 +1312,7 @@ static void KeyCallback(GLFWwindow *window, int key, int scancode, int action, i
     }
 
     // Check the exit key to set close window
-    if ((key == CORE.Input.Keyboard.exitKey) && (action == GLFW_PRESS)) glfwSetWindowShouldClose(CORE.Window.handle, GLFW_TRUE);
+    if ((key == CORE.Input.Keyboard.exitKey) && (action == GLFW_PRESS)) glfwSetWindowShouldClose(platform.handle, GLFW_TRUE);
 
 #if defined(SUPPORT_SCREEN_CAPTURE)
     if ((key == GLFW_KEY_F12) && (action == GLFW_PRESS))
