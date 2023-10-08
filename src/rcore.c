@@ -2162,9 +2162,10 @@ void SetupViewport(int width, int height)
     // NOTE: We consider render size (scaled) and offset in case black bars are required and
     // render area does not match full display area (this situation is only applicable on fullscreen mode)
 #if defined(__APPLE__)
-    float xScale = 1.0f, yScale = 1.0f;
-    glfwGetWindowContentScale(CORE.Window.handle, &xScale, &yScale);
-    rlViewport(CORE.Window.renderOffset.x/2*xScale, CORE.Window.renderOffset.y/2*yScale, (CORE.Window.render.width)*xScale, (CORE.Window.render.height)*yScale);
+    //float xScale = 1.0f, yScale = 1.0f;
+    //glfwGetWindowContentScale(CORE.Window.handle, &xScale, &yScale);
+    Vector2 scale = GetWindowScaleDPI();
+    rlViewport(CORE.Window.renderOffset.x/2*scale.x, CORE.Window.renderOffset.y/2*scale.y, (CORE.Window.render.width)*scale.x, (CORE.Window.render.height)*scale.y);
 #else
     rlViewport(CORE.Window.renderOffset.x/2, CORE.Window.renderOffset.y/2, CORE.Window.render.width, CORE.Window.render.height);
 #endif
