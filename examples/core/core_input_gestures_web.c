@@ -135,7 +135,7 @@ void Update(void)
             }
         }
     }
-    
+
     int fillLog = 0; // Gate variable to be used to allow or not the gesture log to be filled
     if (currentGesture !=0)
     {
@@ -156,16 +156,16 @@ void Update(void)
             fillLog = 1;
         }
     }
-    
+
     if (fillLog) // If one of the conditions from logMode was met, fill the gesture log
     {
         previousGesture = currentGesture;
         gestureColor = GetGestureColor(currentGesture);
         if (gestureLogIndex <= 0) gestureLogIndex = GESTURE_LOG_SIZE;
         gestureLogIndex--;
-        
+
         // Copy the gesture respective name to the gesture log array
-        TextCopy(gestureLog[gestureLogIndex], GetGestureName(currentGesture)); 
+        TextCopy(gestureLog[gestureLogIndex], GetGestureName(currentGesture));
     }
 
     // Handle protractor
@@ -182,14 +182,14 @@ void Update(void)
     {
         currentAngleDegrees = 0.0f;
     }
-    
+
     float currentAngleRadians = ((currentAngleDegrees +90.0f)*PI/180); // Convert the current angle to Radians
     finalVector = (Vector2){ (angleLength*sinf(currentAngleRadians)) + protractorPosition.x, (angleLength*cosf(currentAngleRadians)) + protractorPosition.y }; // Calculate the final vector for display
 
     // Handle touch and mouse pointer points
     //--------------------------------------------------------------------------------------
     #define MAX_TOUCH_COUNT     32
-    
+
     Vector2 touchPosition[MAX_TOUCH_COUNT] = { 0 };
     Vector2 mousePosition = {0, 0};
     if (currentGesture != GESTURE_NONE)
@@ -204,7 +204,7 @@ void Update(void)
     // Draw
     //--------------------------------------------------------------------------------------
     BeginDrawing();
-        
+
         ClearBackground(RAYWHITE);
 
         // Draw common
@@ -235,7 +235,7 @@ void Update(void)
         // Draw gesture log
         //--------------------------------------------------------------------------------------
         DrawText("Log", gestureLogPosition.x, gestureLogPosition.y, 20, BLACK);
-        
+
         // Loop in both directions to print the gesture log array in the inverted order (and looping around if the index started somewhere in the middle)
         for (i = 0, ii = gestureLogIndex; i < GESTURE_LOG_SIZE; i++, ii = (ii + 1) % GESTURE_LOG_SIZE) DrawText(gestureLog[ii], gestureLogPosition.x, gestureLogPosition.y + 410 - i*20, 20, (i == 0 ? gestureColor : LIGHTGRAY));
         Color logButton1Color, logButton2Color;
@@ -286,7 +286,7 @@ void Update(void)
                     DrawCircleV(touchPosition[i], 50.0f, Fade(gestureColor, 0.5f));
                     DrawCircleV(touchPosition[i], 5.0f, gestureColor);
                 }
-                
+
                 if (touchCount == 2) DrawLineEx(touchPosition[0], touchPosition[1], ((currentGesture == 512)? 8 : 12), gestureColor);
             }
             else
@@ -308,14 +308,6 @@ int main(void)
 {
     // Initialization
     //--------------------------------------------------------------------------------------
-    #if defined( PLATFORM_WEB )
-        // Using Emscripten EM_ASM_INT macro, get the page canvas width
-        const int canvasWidth = EM_ASM_INT( return document.getElementById('canvas').getBoundingClientRect().width; );
-        
-        if (canvasWidth > 400) screenWidth = canvasWidth;
-        else screenWidth = 400; // Set a minimum width for the screen
-    #endif
-
     InitWindow(screenWidth, screenHeight, "raylib [core] example - input gestures web");
     //--------------------------------------------------------------------------------------
 
