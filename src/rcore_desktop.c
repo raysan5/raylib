@@ -358,10 +358,27 @@ void ToggleFullscreen(void)
         }
         else
         {
+            int width = CORE.Window.screen.width;
+            int height = CORE.Window.screen.height;
+            int refreshRate = GLFW_DONT_CARE;
+
+            CORE.Window.previousScreen.width = width;
+            CORE.Window.previousScreen.height = height;
+
+            if (IsWindowState(FLAG_FULLSCREEN_DESKTOP))
+            {
+                width = GetMonitorWidth(monitorIndex);
+                height = GetMonitorHeight(monitorIndex);
+                refreshRate = GetMonitorRefreshRate(monitorIndex);
+
+                CORE.Window.screen.width = width;
+                CORE.Window.screen.height = height;
+            }
+
             CORE.Window.fullscreen = true;
             CORE.Window.flags |= FLAG_FULLSCREEN_MODE;
 
-            glfwSetWindowMonitor(platform.handle, monitor, 0, 0, CORE.Window.screen.width, CORE.Window.screen.height, GLFW_DONT_CARE);
+            glfwSetWindowMonitor(platform.handle, monitor, 0, 0, width, height, refreshRate);
         }
 
     }
@@ -370,7 +387,7 @@ void ToggleFullscreen(void)
         CORE.Window.fullscreen = false;
         CORE.Window.flags &= ~FLAG_FULLSCREEN_MODE;
 
-        glfwSetWindowMonitor(platform.handle, NULL, CORE.Window.position.x, CORE.Window.position.y, CORE.Window.screen.width, CORE.Window.screen.height, GLFW_DONT_CARE);
+        glfwSetWindowMonitor(platform.handle, NULL, CORE.Window.position.x, CORE.Window.position.y, CORE.Window.previousScreen.width, CORE.Window.previousScreen.height, GLFW_DONT_CARE);
     }
 
     // Try to enable GPU V-Sync, so frames are limited to screen refresh rate (60Hz -> 60 FPS)
@@ -495,6 +512,11 @@ void SetWindowState(unsigned int flags)
         CORE.Window.flags |= FLAG_VSYNC_HINT;
     }
 
+    if (((CORE.Window.flags & FLAG_FULLSCREEN_DESKTOP) != (flags & FLAG_FULLSCREEN_DESKTOP)) && ((flags & FLAG_FULLSCREEN_DESKTOP) > 0))
+    {
+        CORE.Window.flags |= FLAG_FULLSCREEN_DESKTOP;
+    }
+
     // State change: FLAG_BORDERLESS_WINDOWED_MODE
     // NOTE: This must be handled before FLAG_FULLSCREEN_MODE because ToggleBorderlessWindowed() needs to get some fullscreen values if fullscreen is running
     if (((CORE.Window.flags & FLAG_BORDERLESS_WINDOWED_MODE) != (flags & FLAG_BORDERLESS_WINDOWED_MODE)) && ((flags & FLAG_BORDERLESS_WINDOWED_MODE) > 0))
@@ -608,6 +630,11 @@ void ClearWindowState(unsigned int flags)
     {
         glfwSwapInterval(0);
         CORE.Window.flags &= ~FLAG_VSYNC_HINT;
+    }
+
+    if (((CORE.Window.flags & FLAG_FULLSCREEN_DESKTOP) > 0) && ((flags & FLAG_FULLSCREEN_DESKTOP) > 0))
+    {
+        CORE.Window.flags &= ~FLAG_FULLSCREEN_DESKTOP;
     }
 
     // State change: FLAG_BORDERLESS_WINDOWED_MODE
