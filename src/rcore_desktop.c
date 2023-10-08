@@ -358,10 +358,19 @@ void ToggleFullscreen(void)
         }
         else
         {
+            int monitorWidth = GetMonitorWidth(monitorIndex);
+            int monitorHeight = GetMonitorHeight(monitorIndex);
+            int refreshRate = GLFW_DONT_CARE;
+
+            if (CORE.Window.screen.width == monitorWidth && CORE.Window.screen.height == monitorHeight)
+            {
+                refreshRate = GetMonitorRefreshRate(refreshRate);
+            }
+
             CORE.Window.fullscreen = true;
             CORE.Window.flags |= FLAG_FULLSCREEN_MODE;
 
-            glfwSetWindowMonitor(platform.handle, monitor, 0, 0, CORE.Window.screen.width, CORE.Window.screen.height, GLFW_DONT_CARE);
+            glfwSetWindowMonitor(platform.handle, monitor, 0, 0, CORE.Window.screen.width, CORE.Window.screen.height, refreshRate);
         }
 
     }
