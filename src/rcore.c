@@ -1435,7 +1435,9 @@ const char *GetDirectoryPath(const char *filePath)
         else
         {
             // NOTE: Be careful, strncpy() is not safe, it does not care about '\0'
-            memcpy(dirPath + ((filePath[1] != ':') && (filePath[0] != '\\') && (filePath[0] != '/'))? 2 : 0, filePath, strlen(filePath) - (strlen(lastSlash) - 1));
+            unsigned char *dirPathPtr = dirPath;
+            if ((filePath[1] != ':') && (filePath[0] != '\\') && (filePath[0] != '/')) dirPathPtr += 2;     // Skip drive letter, "C:"
+            memcpy(dirPathPtr, filePath, strlen(filePath) - (strlen(lastSlash) - 1));
             dirPath[strlen(filePath) - strlen(lastSlash) + ((filePath[1] != ':') && (filePath[0] != '\\') && (filePath[0] != '/'))? 2 : 0] = '\0';  // Add '\0' manually
         }
     }
