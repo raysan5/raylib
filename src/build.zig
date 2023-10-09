@@ -1,6 +1,6 @@
 const std = @import("std");
 
-// This has been tested to work with zig master branch as of commit 87de821 or May 14 2023
+// This has been tested to work with zig 0.11.0 (67709b6, Aug 4 2023)
 pub fn addRaylib(b: *std.Build, target: std.zig.CrossTarget, optimize: std.builtin.OptimizeMode, options: Options) *std.Build.CompileStep {
     const raylib_flags = &[_][]const u8{
         "-std=gnu99",
@@ -192,12 +192,12 @@ pub fn build(b: *std.Build) void {
 
     const lib = addRaylib(b, target, optimize, options);
 
-    lib.installHeader("src/raylib.h", "raylib.h");
-    lib.installHeader("src/raymath.h", "raymath.h");
-    lib.installHeader("src/rlgl.h", "rlgl.h");
+    lib.installHeader("raylib.h", "raylib.h");
+    lib.installHeader("raymath.h", "raymath.h");
+    lib.installHeader("rlgl.h", "rlgl.h");
 
     if (options.raygui) {
-        lib.installHeader("../raygui/src/raygui.h", "raygui.h");
+        lib.installHeader("../../raygui/src/raygui.h", "raygui.h");
     }
 
     b.installArtifact(lib);
