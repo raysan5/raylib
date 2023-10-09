@@ -27,10 +27,10 @@ fn add_module(comptime module: []const u8, b: *std.Build, target: std.zig.CrossT
         exe.addCSourceFile(.{ .file = .{ .path = path }, .flags = &.{} });
         exe.linkLibC();
         exe.addObjectFile(switch (target.getOsTag()) {
-            .windows => .{ .path = "../zig-out/lib/raylib.lib" },
-            .linux => .{ .path = "../zig-out/lib/libraylib.a" },
-            .macos => .{ .path = "../zig-out/lib/libraylib.a" },
-            .emscripten => .{ .path = "../zig-out/lib/libraylib.a" },
+            .windows => .{ .path = "../src/zig-out/lib/raylib.lib" },
+            .linux => .{ .path = "../src/zig-out/lib/libraylib.a" },
+            .macos => .{ .path = "../src/zig-out/lib/libraylib.a" },
+            .emscripten => .{ .path = "../src/zig-out/lib/libraylib.a" },
             else => @panic("Unsupported OS"),
         });
 
