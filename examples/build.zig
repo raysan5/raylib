@@ -11,7 +11,7 @@ fn add_module(comptime module: []const u8, b: *std.Build, target: std.zig.CrossT
     const dir = try std.fs.cwd().openIterableDir(module, .{});
     var iter = dir.iterate();
     while (try iter.next()) |entry| {
-        if (entry.kind != .File) continue;
+        if (entry.kind != .file) continue;
         const extension_idx = std.mem.lastIndexOf(u8, entry.name, ".c") orelse continue;
         const name = entry.name[0..extension_idx];
         const path = try std.fs.path.join(b.allocator, &.{ module, entry.name });
@@ -24,26 +24,26 @@ fn add_module(comptime module: []const u8, b: *std.Build, target: std.zig.CrossT
             .target = target,
             .optimize = optimize,
         });
-        exe.addCSourceFile(path, &[_][]const u8{});
+        exe.addCSourceFile(.{ .file = .{ .path = path }, .flags = &.{} });
         exe.linkLibC();
         exe.addObjectFile(switch (target.getOsTag()) {
-            .windows => "../src/zig-out/lib/raylib.lib",
-            .linux => "../src/zig-out/lib/libraylib.a",
-            .macos => "../src/zig-out/lib/libraylib.a",
-            .emscripten => "../src/zig-out/lib/libraylib.a",
+            .windows => .{ .path = "../zig-out/lib/raylib.lib" },
+            .linux => .{ .path = "../zig-out/lib/libraylib.a" },
+            .macos => .{ .path = "../zig-out/lib/libraylib.a" },
+            .emscripten => .{ .path = "../zig-out/lib/libraylib.a" },
             else => @panic("Unsupported OS"),
         });
 
-        exe.addIncludePath("../src");
-        exe.addIncludePath("../src/external");
-        exe.addIncludePath("../src/external/glfw/include");
+        exe.addIncludePath(.{ .path = "../src" });
+        exe.addIncludePath(.{ .path = "../src/external" });
+        exe.addIncludePath(.{ .path = "../src/external/glfw/include" });
 
         switch (target.getOsTag()) {
             .windows => {
                 exe.linkSystemLibrary("winmm");
                 exe.linkSystemLibrary("gdi32");
                 exe.linkSystemLibrary("opengl32");
-                exe.addIncludePath("external/glfw/deps/mingw");
+                exe.addIncludePath(.{ .path = "external/glfw/deps/mingw" });
 
                 exe.defineCMacro("PLATFORM_DESKTOP", null);
             },
