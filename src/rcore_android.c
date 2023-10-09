@@ -133,6 +133,10 @@ struct android_app *GetAndroidApp(void)
     return platform.app;
 }
 
+//----------------------------------------------------------------------------------
+// Module Functions Definition: Window and Graphics Device
+//----------------------------------------------------------------------------------
+
 // Initialize window and OpenGL context
 // NOTE: data parameter could be used to pass any kind of required data to the initialization
 void InitWindow(int width, int height, const char *title)
@@ -563,6 +567,16 @@ void DisableCursor(void)
     CORE.Input.Mouse.cursorHidden = true;
 }
 
+// Swap back buffer with front buffer (screen drawing)
+void SwapScreenBuffer(void)
+{
+    eglSwapBuffers(platform.device, platform.surface);
+}
+
+//----------------------------------------------------------------------------------
+// Module Functions Definition: Misc
+//----------------------------------------------------------------------------------
+
 // Get elapsed time measure in seconds since InitTimer()
 double GetTime(void)
 {
@@ -574,29 +588,6 @@ double GetTime(void)
     time = (double)(nanoSeconds - CORE.Time.base)*1e-9;  // Elapsed time since InitTimer()
     
     return time;
-}
-
-// Takes a screenshot of current screen (saved a .png)
-void TakeScreenshot(const char *fileName)
-{
-#if defined(SUPPORT_MODULE_RTEXTURES)
-    // Security check to (partially) avoid malicious code on PLATFORM_ANDROID
-    if (strchr(fileName, '\'') != NULL) { TRACELOG(LOG_WARNING, "SYSTEM: Provided fileName could be potentially malicious, avoid [\'] character");  return; }
-
-    Vector2 scale = GetWindowScaleDPI();
-    unsigned char *imgData = rlReadScreenPixels((int)((float)CORE.Window.render.width*scale.x), (int)((float)CORE.Window.render.height*scale.y));
-    Image image = { imgData, (int)((float)CORE.Window.render.width*scale.x), (int)((float)CORE.Window.render.height*scale.y), 1, PIXELFORMAT_UNCOMPRESSED_R8G8B8A8 };
-
-    char path[2048] = { 0 };
-    strcpy(path, TextFormat("%s/%s", CORE.Storage.basePath, fileName));
-
-    ExportImage(image, path);           // WARNING: Module required: rtextures
-    RL_FREE(imgData);
-
-    TRACELOG(LOG_INFO, "SYSTEM: [%s] Screenshot taken successfully", path);
-#else
-    TRACELOG(LOG_WARNING,"IMAGE: ExportImage() requires module: rtextures");
-#endif
 }
 
 // Open URL with default system browser (if available)
@@ -726,12 +717,6 @@ Vector2 GetTouchPosition(int index)
     return position;
 }
 
-// Swap back buffer with front buffer (screen drawing)
-void SwapScreenBuffer(void)
-{
-    eglSwapBuffers(platform.device, platform.surface);
-}
-
 // Register all input events
 void PollInputEvents(void)
 {
@@ -786,6 +771,7 @@ void PollInputEvents(void)
         }
     }
 }
+
 
 //----------------------------------------------------------------------------------
 // Module Internal Functions Definition

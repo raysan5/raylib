@@ -122,7 +122,7 @@ static EM_BOOL EmscriptenGamepadCallback(int eventType, const EmscriptenGamepadE
 // NOTE: Functions declaration is provided by raylib.h
 
 //----------------------------------------------------------------------------------
-// Module Functions Definition
+// Module Functions Definition: Window and Graphics Device
 //----------------------------------------------------------------------------------
 
 // Initialize window and OpenGL context
@@ -664,38 +664,21 @@ void DisableCursor(void)
     CORE.Input.Mouse.cursorHidden = true;
 }
 
+// Swap back buffer with front buffer (screen drawing)
+void SwapScreenBuffer(void)
+{
+    glfwSwapBuffers(platform.handle);
+}
+
+//----------------------------------------------------------------------------------
+// Module Functions Definition: Misc
+//----------------------------------------------------------------------------------
+
 // Get elapsed time measure in seconds since InitTimer()
 double GetTime(void)
 {
     double time = glfwGetTime();   // Elapsed time since glfwInit()
     return time;
-}
-
-// Takes a screenshot of current screen (saved a .png)
-void TakeScreenshot(const char *fileName)
-{
-#if defined(SUPPORT_MODULE_RTEXTURES)
-    // Security check to (partially) avoid malicious code on PLATFORM_WEB
-    if (strchr(fileName, '\'') != NULL) { TRACELOG(LOG_WARNING, "SYSTEM: Provided fileName could be potentially malicious, avoid [\'] character"); return; }
-
-    Vector2 scale = GetWindowScaleDPI();
-    unsigned char *imgData = rlReadScreenPixels((int)((float)CORE.Window.render.width*scale.x), (int)((float)CORE.Window.render.height*scale.y));
-    Image image = { imgData, (int)((float)CORE.Window.render.width*scale.x), (int)((float)CORE.Window.render.height*scale.y), 1, PIXELFORMAT_UNCOMPRESSED_R8G8B8A8 };
-
-    char path[2048] = { 0 };
-    strcpy(path, TextFormat("%s/%s", CORE.Storage.basePath, fileName));
-
-    ExportImage(image, path);           // WARNING: Module required: rtextures
-    RL_FREE(imgData);
-
-    // Download file from MEMFS (emscripten memory filesystem)
-    // saveFileFromMEMFSToDisk() function is defined in raylib/src/shell.html
-    emscripten_run_script(TextFormat("saveFileFromMEMFSToDisk('%s','%s')", GetFileName(path), GetFileName(path)));
-
-    TRACELOG(LOG_INFO, "SYSTEM: [%s] Screenshot taken successfully", path);
-#else
-    TRACELOG(LOG_WARNING,"IMAGE: ExportImage() requires module: rtextures");
-#endif
 }
 
 // Open URL with default system browser (if available)
@@ -822,12 +805,6 @@ Vector2 GetTouchPosition(int index)
     return position;
 }
 
-// Swap back buffer with front buffer (screen drawing)
-void SwapScreenBuffer(void)
-{
-    glfwSwapBuffers(platform.handle);
-}
-
 // Register all input events
 void PollInputEvents(void)
 {
@@ -943,6 +920,7 @@ void PollInputEvents(void)
         }
     }
 }
+
 
 //----------------------------------------------------------------------------------
 // Module Internal Functions Definition

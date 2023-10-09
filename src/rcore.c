@@ -2329,6 +2329,29 @@ void WaitTime(double seconds)
 #endif
 }
 
+// Takes a screenshot of current screen (saved a .png)
+void TakeScreenshot(const char *fileName)
+{
+#if defined(SUPPORT_MODULE_RTEXTURES)
+    // Security check to (partially) avoid malicious code
+    if (strchr(fileName, '\'') != NULL) { TRACELOG(LOG_WARNING, "SYSTEM: Provided fileName could be potentially malicious, avoid [\'] character"); return; }
+
+    Vector2 scale = GetWindowScaleDPI();
+    unsigned char *imgData = rlReadScreenPixels((int)((float)CORE.Window.render.width*scale.x), (int)((float)CORE.Window.render.height*scale.y));
+    Image image = { imgData, (int)((float)CORE.Window.render.width*scale.x), (int)((float)CORE.Window.render.height*scale.y), 1, PIXELFORMAT_UNCOMPRESSED_R8G8B8A8 };
+
+    char path[512] = { 0 };
+    strcpy(path, TextFormat("%s/%s", CORE.Storage.basePath, fileName));
+
+    ExportImage(image, path);           // WARNING: Module required: rtextures
+    RL_FREE(imgData);
+
+    TRACELOG(LOG_INFO, "SYSTEM: [%s] Screenshot taken successfully", path);
+#else
+    TRACELOG(LOG_WARNING,"IMAGE: ExportImage() requires module: rtextures");
+#endif
+}
+
 // Scan all files and directories in a base path
 // WARNING: files.paths[] must be previously allocated and
 // contain enough space to store all required paths

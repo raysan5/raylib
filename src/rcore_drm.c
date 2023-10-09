@@ -166,7 +166,7 @@ static int FindNearestConnectorMode(const drmModeConnector *connector, uint widt
 // NOTE: Functions declaration is provided by raylib.h
 
 //----------------------------------------------------------------------------------
-// Module Functions Definition
+// Module Functions Definition: Window and Graphics Device
 //----------------------------------------------------------------------------------
 
 // Initialize window and OpenGL context
@@ -675,6 +675,40 @@ void DisableCursor(void)
     CORE.Input.Mouse.cursorHidden = true;
 }
 
+// Swap back buffer with front buffer (screen drawing)
+void SwapScreenBuffer(void)
+{
+    eglSwapBuffers(platform.device, platform.surface);
+
+    if (!platform.gbmSurface || (-1 == platform.fd) || !platform.connector || !platform.crtc) TRACELOG(LOG_ERROR, "DISPLAY: DRM initialization failed to swap");
+
+    struct gbm_bo *bo = gbm_surface_lock_front_buffer(platform.gbmSurface);
+    if (!bo) TRACELOG(LOG_ERROR, "DISPLAY: Failed GBM to lock front buffer");
+
+    uint32_t fb = 0;
+    int result = drmModeAddFB(platform.fd, platform.connector->modes[platform.modeIndex].hdisplay, platform.connector->modes[platform.modeIndex].vdisplay, 24, 32, gbm_bo_get_stride(bo), gbm_bo_get_handle(bo).u32, &fb);
+    if (result != 0) TRACELOG(LOG_ERROR, "DISPLAY: drmModeAddFB() failed with result: %d", result);
+
+    result = drmModeSetCrtc(platform.fd, platform.crtc->crtc_id, fb, 0, 0, &platform.connector->connector_id, 1, &platform.connector->modes[platform.modeIndex]);
+    if (result != 0) TRACELOG(LOG_ERROR, "DISPLAY: drmModeSetCrtc() failed with result: %d", result);
+
+    if (platform.prevFB)
+    {
+        result = drmModeRmFB(platform.fd, platform.prevFB);
+        if (result != 0) TRACELOG(LOG_ERROR, "DISPLAY: drmModeRmFB() failed with result: %d", result);
+    }
+
+    platform.prevFB = fb;
+
+    if (platform.prevBO) gbm_surface_release_buffer(platform.gbmSurface, platform.prevBO);
+
+    platform.prevBO = bo;
+}
+
+//----------------------------------------------------------------------------------
+// Module Functions Definition: Misc
+//----------------------------------------------------------------------------------
+
 // Get elapsed time measure in seconds since InitTimer()
 double GetTime(void)
 {
@@ -686,29 +720,6 @@ double GetTime(void)
     time = (double)(nanoSeconds - CORE.Time.base)*1e-9;  // Elapsed time since InitTimer()
     
     return time;
-}
-
-// Takes a screenshot of current screen (saved a .png)
-void TakeScreenshot(const char *fileName)
-{
-#if defined(SUPPORT_MODULE_RTEXTURES)
-    // Security check to (partially) avoid malicious code on PLATFORM_WEB
-    if (strchr(fileName, '\'') != NULL) { TRACELOG(LOG_WARNING, "SYSTEM: Provided fileName could be potentially malicious, avoid [\'] character");  return; }
-
-    Vector2 scale = GetWindowScaleDPI();
-    unsigned char *imgData = rlReadScreenPixels((int)((float)CORE.Window.render.width*scale.x), (int)((float)CORE.Window.render.height*scale.y));
-    Image image = { imgData, (int)((float)CORE.Window.render.width*scale.x), (int)((float)CORE.Window.render.height*scale.y), 1, PIXELFORMAT_UNCOMPRESSED_R8G8B8A8 };
-
-    char path[2048] = { 0 };
-    strcpy(path, TextFormat("%s/%s", CORE.Storage.basePath, fileName));
-
-    ExportImage(image, path);           // WARNING: Module required: rtextures
-    RL_FREE(imgData);
-
-    TRACELOG(LOG_INFO, "SYSTEM: [%s] Screenshot taken successfully", path);
-#else
-    TRACELOG(LOG_WARNING,"IMAGE: ExportImage() requires module: rtextures");
-#endif
 }
 
 // Open URL with default system browser (if available)
@@ -833,36 +844,6 @@ Vector2 GetTouchPosition(int index)
     return position;
 }
 
-// Swap back buffer with front buffer (screen drawing)
-void SwapScreenBuffer(void)
-{
-    eglSwapBuffers(platform.device, platform.surface);
-
-    if (!platform.gbmSurface || (-1 == platform.fd) || !platform.connector || !platform.crtc) TRACELOG(LOG_ERROR, "DISPLAY: DRM initialization failed to swap");
-
-    struct gbm_bo *bo = gbm_surface_lock_front_buffer(platform.gbmSurface);
-    if (!bo) TRACELOG(LOG_ERROR, "DISPLAY: Failed GBM to lock front buffer");
-
-    uint32_t fb = 0;
-    int result = drmModeAddFB(platform.fd, platform.connector->modes[platform.modeIndex].hdisplay, platform.connector->modes[platform.modeIndex].vdisplay, 24, 32, gbm_bo_get_stride(bo), gbm_bo_get_handle(bo).u32, &fb);
-    if (result != 0) TRACELOG(LOG_ERROR, "DISPLAY: drmModeAddFB() failed with result: %d", result);
-
-    result = drmModeSetCrtc(platform.fd, platform.crtc->crtc_id, fb, 0, 0, &platform.connector->connector_id, 1, &platform.connector->modes[platform.modeIndex]);
-    if (result != 0) TRACELOG(LOG_ERROR, "DISPLAY: drmModeSetCrtc() failed with result: %d", result);
-
-    if (platform.prevFB)
-    {
-        result = drmModeRmFB(platform.fd, platform.prevFB);
-        if (result != 0) TRACELOG(LOG_ERROR, "DISPLAY: drmModeRmFB() failed with result: %d", result);
-    }
-
-    platform.prevFB = fb;
-
-    if (platform.prevBO) gbm_surface_release_buffer(platform.gbmSurface, platform.prevBO);
-
-    platform.prevBO = bo;
-}
-
 // Register all input events
 void PollInputEvents(void)
 {
@@ -930,6 +911,7 @@ void PollInputEvents(void)
     // NOTE: Gamepad (Joystick) input events polling is done asynchonously in another pthread - GamepadThread()
 #endif
 }
+
 
 //----------------------------------------------------------------------------------
 // Module Internal Functions Definition

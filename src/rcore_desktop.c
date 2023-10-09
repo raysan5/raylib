@@ -137,7 +137,7 @@ static void CursorEnterCallback(GLFWwindow *window, int enter);                 
 // NOTE: Functions declaration is provided by raylib.h
 
 //----------------------------------------------------------------------------------
-// Module Functions Definition
+// Module Functions Definition: Window and Graphics Device
 //----------------------------------------------------------------------------------
 
 // Initialize window and OpenGL context
@@ -1168,35 +1168,21 @@ void DisableCursor(void)
     CORE.Input.Mouse.cursorHidden = true;
 }
 
+// Swap back buffer with front buffer (screen drawing)
+void SwapScreenBuffer(void)
+{
+    glfwSwapBuffers(platform.handle);
+}
+
+//----------------------------------------------------------------------------------
+// Module Functions Definition: Misc
+//----------------------------------------------------------------------------------
+
 // Get elapsed time measure in seconds since InitTimer()
 double GetTime(void)
 {
     double time = glfwGetTime();   // Elapsed time since glfwInit()
     return time;
-}
-
-// Takes a screenshot of current screen (saved a .png)
-// WARNING: This function requires [rtextures] module functionality
-void TakeScreenshot(const char *fileName)
-{
-#if defined(SUPPORT_MODULE_RTEXTURES)
-    // Security check to (partially) avoid malicious code
-    if (strchr(fileName, '\'') != NULL) { TRACELOG(LOG_WARNING, "SYSTEM: Provided fileName could be potentially malicious, avoid [\'] character");  return; }
-
-    Vector2 scale = GetWindowScaleDPI();
-    unsigned char *imgData = rlReadScreenPixels((int)((float)CORE.Window.render.width*scale.x), (int)((float)CORE.Window.render.height*scale.y));
-    Image image = { imgData, (int)((float)CORE.Window.render.width*scale.x), (int)((float)CORE.Window.render.height*scale.y), 1, PIXELFORMAT_UNCOMPRESSED_R8G8B8A8 };
-
-    char path[2048] = { 0 };
-    strcpy(path, TextFormat("%s/%s", CORE.Storage.basePath, fileName));
-
-    ExportImage(image, path);           // WARNING: Module required: rtextures
-    RL_FREE(imgData);
-
-    TRACELOG(LOG_INFO, "SYSTEM: [%s] Screenshot taken successfully", path);
-#else
-    TRACELOG(LOG_WARNING,"IMAGE: ExportImage() requires module: rtextures");
-#endif
 }
 
 // Open URL with default system browser (if available)
@@ -1339,12 +1325,6 @@ Vector2 GetTouchPosition(int index)
     if (index == 0) position = GetMousePosition();
 
     return position;
-}
-
-// Swap back buffer with front buffer (screen drawing)
-void SwapScreenBuffer(void)
-{
-    glfwSwapBuffers(platform.handle);
 }
 
 // Register all input events
