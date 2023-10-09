@@ -384,6 +384,7 @@ Image LoadImageSvg(const char *fileNameOrString, int width, int height)
 
             // Free used memory
             nsvgDelete(svgImage);
+            nsvgDeleteRasterizer(rast);
         }
 
         if (isSvgStringValid && (fileData != fileNameOrString)) UnloadFileData(fileData);
@@ -555,6 +556,7 @@ Image LoadImageFromMemory(const char *fileType, const unsigned char *fileData, i
             image.format = PIXELFORMAT_UNCOMPRESSED_R8G8B8A8;
 
             nsvgDelete(svgImage);
+            nsvgDeleteRasterizer(rast);
         }
     }
 #endif
