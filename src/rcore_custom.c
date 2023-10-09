@@ -17,8 +17,8 @@
 *       - TRACELOG() function is located in raylib [utils] module
 *
 *   CONFIGURATION:
-*       #define RCORE_CUSTOM_FLAG
-*           Custom flag for rcore on PLATFORM_<platform> -not used-
+*       #define RCORE_PLATFORM_CUSTOM_FLAG
+*           Custom flag for rcore on target platform -not used-
 *
 *   DEPENDENCIES:
 *       - Dependency 01
@@ -219,55 +219,55 @@ bool IsWindowResized(void)
 // Toggle fullscreen mode
 void ToggleFullscreen(void)
 {
-    TRACELOG(LOG_WARNING, "ToggleFullscreen() not available on PLATFORM_CUSTOM");
+    TRACELOG(LOG_WARNING, "ToggleFullscreen() not available on target platform");
 }
 
 // Set window state: maximized, if resizable
 void MaximizeWindow(void)
 {
-    TRACELOG(LOG_WARNING, "MaximizeWindow() not available on PLATFORM_CUSTOM");
+    TRACELOG(LOG_WARNING, "MaximizeWindow() not available on target platform");
 }
 
 // Set window state: minimized
 void MinimizeWindow(void)
 {
-    TRACELOG(LOG_WARNING, "MinimizeWindow() not available on PLATFORM_CUSTOM");
+    TRACELOG(LOG_WARNING, "MinimizeWindow() not available on target platform");
 }
 
 // Set window state: not minimized/maximized
 void RestoreWindow(void)
 {
-    TRACELOG(LOG_WARNING, "RestoreWindow() not available on PLATFORM_CUSTOM");
+    TRACELOG(LOG_WARNING, "RestoreWindow() not available on target platform");
 }
 
 // Toggle borderless windowed mode
 void ToggleBorderlessWindowed(void)
 {
-    TRACELOG(LOG_WARNING, "ToggleBorderlessWindowed() not available on PLATFORM_CUSTOM");
+    TRACELOG(LOG_WARNING, "ToggleBorderlessWindowed() not available on target platform");
 }
 
 // Set window configuration state using flags
 void SetWindowState(unsigned int flags)
 {
-    TRACELOG(LOG_WARNING, "SetWindowState() not available on PLATFORM_CUSTOM");
+    TRACELOG(LOG_WARNING, "SetWindowState() not available on target platform");
 }
 
 // Clear window configuration state flags
 void ClearWindowState(unsigned int flags)
 {
-    TRACELOG(LOG_WARNING, "ClearWindowState() not available on PLATFORM_CUSTOM");
+    TRACELOG(LOG_WARNING, "ClearWindowState() not available on target platform");
 }
 
 // Set icon for window
 void SetWindowIcon(Image image)
 {
-    TRACELOG(LOG_WARNING, "SetWindowIcon() not available on PLATFORM_CUSTOM");
+    TRACELOG(LOG_WARNING, "SetWindowIcon() not available on target platform");
 }
 
 // Set icon for window
 void SetWindowIcons(Image *images, int count)
 {
-    TRACELOG(LOG_WARNING, "SetWindowIcons() not available on PLATFORM_CUSTOM");
+    TRACELOG(LOG_WARNING, "SetWindowIcons() not available on target platform");
 }
 
 // Set title for window
@@ -279,13 +279,13 @@ void SetWindowTitle(const char *title)
 // Set window position on screen (windowed mode)
 void SetWindowPosition(int x, int y)
 {
-    TRACELOG(LOG_WARNING, "SetWindowPosition() not available on PLATFORM_CUSTOM");
+    TRACELOG(LOG_WARNING, "SetWindowPosition() not available on target platform");
 }
 
 // Set monitor for the current window
 void SetWindowMonitor(int monitor)
 {
-    TRACELOG(LOG_WARNING, "SetWindowMonitor() not available on PLATFORM_CUSTOM");
+    TRACELOG(LOG_WARNING, "SetWindowMonitor() not available on target platform");
 }
 
 // Set window minimum dimensions (FLAG_WINDOW_RESIZABLE)
@@ -305,116 +305,116 @@ void SetWindowMaxSize(int width, int height)
 // Set window dimensions
 void SetWindowSize(int width, int height)
 {
-    TRACELOG(LOG_WARNING, "SetWindowSize() not available on PLATFORM_CUSTOM");
+    TRACELOG(LOG_WARNING, "SetWindowSize() not available on target platform");
 }
 
 // Set window opacity, value opacity is between 0.0 and 1.0
 void SetWindowOpacity(float opacity)
 {
-    TRACELOG(LOG_WARNING, "SetWindowOpacity() not available on PLATFORM_CUSTOM");
+    TRACELOG(LOG_WARNING, "SetWindowOpacity() not available on target platform");
 }
 
 // Set window focused
 void SetWindowFocused(void)
 {
-    TRACELOG(LOG_WARNING, "SetWindowFocused() not available on PLATFORM_CUSTOM");
+    TRACELOG(LOG_WARNING, "SetWindowFocused() not available on target platform");
 }
 
 // Get native window handle
 void *GetWindowHandle(void)
 {
-    TRACELOG(LOG_WARNING, "GetWindowHandle() not implemented on PLATFORM_CUSTOM");
+    TRACELOG(LOG_WARNING, "GetWindowHandle() not implemented on target platform");
     return NULL;
 }
 
 // Get number of monitors
 int GetMonitorCount(void)
 {
-    TRACELOG(LOG_WARNING, "GetMonitorCount() not implemented on PLATFORM_CUSTOM");
+    TRACELOG(LOG_WARNING, "GetMonitorCount() not implemented on target platform");
     return 1;
 }
 
 // Get number of monitors
 int GetCurrentMonitor(void)
 {
-    TRACELOG(LOG_WARNING, "GetCurrentMonitor() not implemented on PLATFORM_CUSTOM");
+    TRACELOG(LOG_WARNING, "GetCurrentMonitor() not implemented on target platform");
     return 0;
 }
 
 // Get selected monitor position
 Vector2 GetMonitorPosition(int monitor)
 {
-    TRACELOG(LOG_WARNING, "GetMonitorPosition() not implemented on PLATFORM_CUSTOM");
+    TRACELOG(LOG_WARNING, "GetMonitorPosition() not implemented on target platform");
     return (Vector2){ 0, 0 };
 }
 
 // Get selected monitor width (currently used by monitor)
 int GetMonitorWidth(int monitor)
 {
-    TRACELOG(LOG_WARNING, "GetMonitorWidth() not implemented on PLATFORM_CUSTOM");
+    TRACELOG(LOG_WARNING, "GetMonitorWidth() not implemented on target platform");
     return 0;
 }
 
 // Get selected monitor height (currently used by monitor)
 int GetMonitorHeight(int monitor)
 {
-    TRACELOG(LOG_WARNING, "GetMonitorHeight() not implemented on PLATFORM_CUSTOM");
+    TRACELOG(LOG_WARNING, "GetMonitorHeight() not implemented on target platform");
     return 0;
 }
 
 // Get selected monitor physical width in millimetres
 int GetMonitorPhysicalWidth(int monitor)
 {
-    TRACELOG(LOG_WARNING, "GetMonitorPhysicalWidth() not implemented on PLATFORM_CUSTOM");
+    TRACELOG(LOG_WARNING, "GetMonitorPhysicalWidth() not implemented on target platform");
     return 0;
 }
 
 // Get selected monitor physical height in millimetres
 int GetMonitorPhysicalHeight(int monitor)
 {
-    TRACELOG(LOG_WARNING, "GetMonitorPhysicalHeight() not implemented on PLATFORM_CUSTOM");
+    TRACELOG(LOG_WARNING, "GetMonitorPhysicalHeight() not implemented on target platform");
     return 0;
 }
 
 // Get selected monitor refresh rate
 int GetMonitorRefreshRate(int monitor)
 {
-    TRACELOG(LOG_WARNING, "GetMonitorRefreshRate() not implemented on PLATFORM_CUSTOM");
+    TRACELOG(LOG_WARNING, "GetMonitorRefreshRate() not implemented on target platform");
     return 0;
 }
 
 // Get the human-readable, UTF-8 encoded name of the selected monitor
 const char *GetMonitorName(int monitor)
 {
-    TRACELOG(LOG_WARNING, "GetMonitorName() not implemented on PLATFORM_CUSTOM");
+    TRACELOG(LOG_WARNING, "GetMonitorName() not implemented on target platform");
     return "";
 }
 
 // Get window position XY on monitor
 Vector2 GetWindowPosition(void)
 {
-    TRACELOG(LOG_WARNING, "GetWindowPosition() not implemented on PLATFORM_CUSTOM");
+    TRACELOG(LOG_WARNING, "GetWindowPosition() not implemented on target platform");
     return (Vector2){ 0, 0 };
 }
 
 // Get window scale DPI factor for current monitor
 Vector2 GetWindowScaleDPI(void)
 {
-    TRACELOG(LOG_WARNING, "GetWindowScaleDPI() not implemented on PLATFORM_CUSTOM");
+    TRACELOG(LOG_WARNING, "GetWindowScaleDPI() not implemented on target platform");
     return (Vector2){ 1.0f, 1.0f };
 }
 
 // Set clipboard text content
 void SetClipboardText(const char *text)
 {
-    TRACELOG(LOG_WARNING, "SetClipboardText() not implemented on PLATFORM_CUSTOM");
+    TRACELOG(LOG_WARNING, "SetClipboardText() not implemented on target platform");
 }
 
 // Get clipboard text content
 // NOTE: returned string is allocated and freed by GLFW
 const char *GetClipboardText(void)
 {
-    TRACELOG(LOG_WARNING, "GetClipboardText() not implemented on PLATFORM_CUSTOM");
+    TRACELOG(LOG_WARNING, "GetClipboardText() not implemented on target platform");
     return NULL;
 }
 
@@ -478,7 +478,7 @@ double GetTime(void)
 // Ref: https://github.com/raysan5/raylib/issues/686
 void OpenURL(const char *url)
 {
-    // Security check to (partially) avoid malicious code on PLATFORM_CUSTOM
+    // Security check to (partially) avoid malicious code on target platform
     if (strchr(url, '\'') != NULL) TRACELOG(LOG_WARNING, "SYSTEM: Provided URL could be potentially malicious, avoid [\'] character");
     else
     {
@@ -513,13 +513,13 @@ void OpenURL(const char *url)
 // Set a custom key to exit program
 void SetExitKey(int key)
 {
-    TRACELOG(LOG_WARNING, "SetExitKey() not implemented on PLATFORM_CUSTOM");
+    TRACELOG(LOG_WARNING, "SetExitKey() not implemented on target platform");
 }
 
 // Get gamepad internal name id
 const char *GetGamepadName(int gamepad)
 {
-    TRACELOG(LOG_WARNING, "GetGamepadName() not implemented on PLATFORM_CUSTOM");
+    TRACELOG(LOG_WARNING, "GetGamepadName() not implemented on target platform");
     return NULL;
 }
 
@@ -532,7 +532,7 @@ int GetGamepadAxisCount(int gamepad)
 // Set internal gamepad mappings
 int SetGamepadMappings(const char *mappings)
 {
-    TRACELOG(LOG_WARNING, "SetGamepadMappings() not implemented on PLATFORM_CUSTOM");
+    TRACELOG(LOG_WARNING, "SetGamepadMappings() not implemented on target platform");
     return 0;
 }
 
@@ -564,14 +564,14 @@ void SetMousePosition(int x, int y)
 // Get mouse wheel movement Y
 float GetMouseWheelMove(void)
 {
-    TRACELOG(LOG_WARNING, "GetMouseWheelMove() not implemented on PLATFORM_CUSTOM");
+    TRACELOG(LOG_WARNING, "GetMouseWheelMove() not implemented on target platform");
     return 0.0f;
 }
 
 // Set mouse cursor
 void SetMouseCursor(int cursor)
 {
-    TRACELOG(LOG_WARNING, "SetMouseCursor() not implemented on PLATFORM_CUSTOM");
+    TRACELOG(LOG_WARNING, "SetMouseCursor() not implemented on target platform");
 }
 
 // Get touch position X for touch point 0 (relative to screen size)
@@ -622,7 +622,7 @@ void PollInputEvents(void)
     for (int i = 0; i < MAX_TOUCH_POINTS; i++) CORE.Input.Touch.previousTouchState[i] = CORE.Input.Touch.currentTouchState[i];
 
     // Reset touch positions
-    // TODO: It resets on PLATFORM_CUSTOM the mouse position and not filled again until a move-event,
+    // TODO: It resets on target platform the mouse position and not filled again until a move-event,
     // so, if mouse is not moved it returns a (0, 0) position... this behaviour should be reviewed!
     //for (int i = 0; i < MAX_TOUCH_POINTS; i++) CORE.Input.Touch.position[i] = (Vector2){ 0, 0 };
 

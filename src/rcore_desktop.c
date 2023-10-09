@@ -20,8 +20,8 @@
 *       - TRACELOG() function is located in raylib [utils] module
 *
 *   CONFIGURATION:
-*       #define RCORE_DESKTOP_CUSTOM_FLAG
-*           Custom flag for rcore on PLATFORM_DESKTOP -not used-
+*       #define RCORE_PLATFORM_CUSTOM_FLAG
+*           Custom flag for rcore on target platform -not used-
 *
 *   DEPENDENCIES:
 *       rglfw    - Manage graphic device, OpenGL context and inputs (Windows, Linux, OSX, FreeBSD...)
@@ -1368,8 +1368,6 @@ void PollInputEvents(void)
     for (int i = 0; i < MAX_TOUCH_POINTS; i++) CORE.Input.Touch.previousTouchState[i] = CORE.Input.Touch.currentTouchState[i];
 
     // Reset touch positions
-    // TODO: It resets on PLATFORM_WEB the mouse position and not filled again until a move-event,
-    // so, if mouse is not moved it returns a (0, 0) position... this behaviour should be reviewed!
     //for (int i = 0; i < MAX_TOUCH_POINTS; i++) CORE.Input.Touch.position[i] = (Vector2){ 0, 0 };
 
     // Check if gamepads are ready
