@@ -1,6 +1,6 @@
 /**********************************************************************************************
 *
-*   rcore_android - Functions to manage window, graphics device and inputs 
+*   rcore_android - Functions to manage window, graphics device and inputs
 *
 *   PLATFORM: ANDROID
 *       - Android (ARM, ARM64)
@@ -48,13 +48,13 @@
 
 #include "rcore.h"
 
-//#include <android/sensor.h>           // Required for: Android sensors functions (accelerometer, gyroscope, light...)
-#include <android/window.h>             // Required for: AWINDOW_FLAG_FULLSCREEN definition and others
 #include <android_native_app_glue.h>    // Required for: android_app struct and activity management
+#include <android/window.h>             // Required for: AWINDOW_FLAG_FULLSCREEN definition and others
+//#include <android/sensor.h>           // Required for: Android sensors functions (accelerometer, gyroscope, light...)
 #include <jni.h>                        // Required for: JNIEnv and JavaVM [Used in OpenURL()]
 
 #include <EGL/egl.h>                    // Native platform windowing system interface
-    
+
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
 //----------------------------------------------------------------------------------
@@ -64,7 +64,7 @@ typedef struct {
     struct android_poll_source *source; // Android events polling source
     bool appEnabled;                    // Flag to detect if app is active ** = true
     bool contextRebindRequired;         // Used to know context rebind required
-    
+
     // Display data
     EGLDisplay device;                  // Native display device (physical screen connection)
     EGLSurface surface;                 // Surface to draw on, framebuffers (connected to context)
@@ -94,7 +94,7 @@ static GamepadButton AndroidTranslateGamepadButton(int button);                 
 // NOTE: Functions declaration is provided by raylib.h
 
 //----------------------------------------------------------------------------------
-// Module Functions Definition
+// Module Functions Definition: Application
 //----------------------------------------------------------------------------------
 
 // To allow easier porting to android, we allow the user to define a
@@ -188,6 +188,8 @@ void InitWindow(int width, int height, const char *title)
     CORE.Window.currentFbo.width = width;
     CORE.Window.currentFbo.height = height;
 
+    // Platform specific init window
+    //--------------------------------------------------------------
     // Set desired windows flags before initializing anything
     ANativeActivity_setWindowFlags(platform.app->activity, AWINDOW_FLAG_FULLSCREEN, 0);  //AWINDOW_FLAG_SCALED, AWINDOW_FLAG_DITHER
 
@@ -269,6 +271,8 @@ void CloseWindow(void)
     timeEndPeriod(1);           // Restore time period
 #endif
 
+    // Platform specific close window
+    //--------------------------------------------------------------
     // Close surface, context and display
     if (platform.device != EGL_NO_DISPLAY)
     {
@@ -289,6 +293,7 @@ void CloseWindow(void)
         eglTerminate(platform.device);
         platform.device = EGL_NO_DISPLAY;
     }
+    //--------------------------------------------------------------
 
 #if defined(SUPPORT_EVENTS_AUTOMATION)
     RL_FREE(events);
@@ -586,7 +591,7 @@ double GetTime(void)
     unsigned long long int nanoSeconds = (unsigned long long int)ts.tv_sec*1000000000LLU + (unsigned long long int)ts.tv_nsec;
 
     time = (double)(nanoSeconds - CORE.Time.base)*1e-9;  // Elapsed time since InitTimer()
-    
+
     return time;
 }
 

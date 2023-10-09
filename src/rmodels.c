@@ -5466,11 +5466,11 @@ static Model LoadVOX(const char *fileName)
 
     int nbvertices = 0;
     int meshescount = 0;
-   
+
     // Read vox file into buffer
     int dataSize = 0;
     unsigned char *fileData = LoadFileData(fileName, &dataSize);
-    
+
     if (fileData == 0)
     {
         TRACELOG(LOG_WARNING, "MODEL: [%s] Failed to load VOX file", fileName);
@@ -5575,7 +5575,7 @@ static Model LoadM3D(const char *fileName)
     m3d_t *m3d = NULL;
     m3dp_t *prop = NULL;
     int i, j, k, l, n, mi = -2, vcolor = 0;
-    
+
     int dataSize = 0;
     unsigned char *fileData = LoadFileData(fileName, &dataSize);
 
@@ -5905,7 +5905,7 @@ static Model LoadM3D(const char *fileName)
 static ModelAnimation *LoadModelAnimationsM3D(const char *fileName, int *animCount)
 {
     ModelAnimation *animations = NULL;
-    
+
     m3d_t *m3d = NULL;
     int i = 0, j = 0;
     *animCount = 0;

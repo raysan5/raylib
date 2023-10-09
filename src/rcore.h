@@ -133,18 +133,18 @@ typedef struct CoreData {
 
         char **dropFilepaths;               // Store dropped files paths pointers (provided by GLFW)
         unsigned int dropFileCount;         // Count dropped files strings
-        
+
     } Window;
     struct {
         const char *basePath;               // Base path for data storage
-        
+
     } Storage;
     struct {
         struct {
             int exitKey;                    // Default exit key
             char currentKeyState[MAX_KEYBOARD_KEYS]; // Registers current frame key state
             char previousKeyState[MAX_KEYBOARD_KEYS]; // Registers previous frame key state
-            
+
             // NOTE: Since key press logic involves comparing prev vs cur key state, we need to handle key repeats specially
             char keyRepeatInFrame[MAX_KEYBOARD_KEYS]; // Registers key repeats for current frame.
 
@@ -177,7 +177,7 @@ typedef struct CoreData {
             Vector2 position[MAX_TOUCH_POINTS];         // Touch position on screen
             char currentTouchState[MAX_TOUCH_POINTS];   // Registers current touch state
             char previousTouchState[MAX_TOUCH_POINTS];  // Registers previous touch state
-            
+
         } Touch;
         struct {
             int lastButtonPressed;          // Register last gamepad button pressed
@@ -199,7 +199,7 @@ typedef struct CoreData {
         double target;                      // Desired time for one frame, if 0 not applied
         unsigned long long int base;        // Base time measure for hi-res timer (PLATFORM_ANDROID, PLATFORM_DRM)
         unsigned int frameCounter;          // Frame counter
-        
+
     } Time;
 } CoreData;
 

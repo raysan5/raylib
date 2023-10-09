@@ -1,6 +1,6 @@
 /**********************************************************************************************
 *
-*   rcore_desktop - Functions to manage window, graphics device and inputs 
+*   rcore_desktop - Functions to manage window, graphics device and inputs
 *
 *   PLATFORM: DESKTOP
 *       - Windows (Win32, Win64)
@@ -268,12 +268,15 @@ void CloseWindow(void)
 
     rlglClose();                // De-init rlgl
 
+    // Platform specific close window
+    //--------------------------------------------------------------
     glfwDestroyWindow(platform.handle);
     glfwTerminate();
 
 #if defined(_WIN32) && defined(SUPPORT_WINMM_HIGHRES_TIMER) && !defined(SUPPORT_BUSY_WAIT_LOOP)
     timeEndPeriod(1);           // Restore time period
 #endif
+    //--------------------------------------------------------------
 
 #if defined(SUPPORT_EVENTS_AUTOMATION)
     RL_FREE(events);
@@ -422,11 +425,11 @@ void ToggleBorderlessWindowed(void)
     const int monitor = GetCurrentMonitor();
     int monitorCount;
     GLFWmonitor **monitors = glfwGetMonitors(&monitorCount);
-    
+
     if ((monitor >= 0) && (monitor < monitorCount))
     {
         const GLFWvidmode *mode = glfwGetVideoMode(monitors[monitor]);
-        
+
         if (mode)
         {
             if (!IsWindowState(FLAG_BORDERLESS_WINDOWED_MODE))
@@ -1016,7 +1019,7 @@ int GetMonitorHeight(int monitor)
         else TRACELOG(LOG_WARNING, "GLFW: Failed to find video mode for selected monitor");
     }
     else TRACELOG(LOG_WARNING, "GLFW: Failed to find selected monitor");
-    
+
     return height;
 }
 
@@ -1029,7 +1032,7 @@ int GetMonitorPhysicalWidth(int monitor)
 
     if ((monitor >= 0) && (monitor < monitorCount)) glfwGetMonitorPhysicalSize(monitors[monitor], &width, NULL);
     else TRACELOG(LOG_WARNING, "GLFW: Failed to find selected monitor");
-    
+
     return width;
 }
 
@@ -1042,7 +1045,7 @@ int GetMonitorPhysicalHeight(int monitor)
 
     if ((monitor >= 0) && (monitor < monitorCount)) glfwGetMonitorPhysicalSize(monitors[monitor], NULL, &height);
     else TRACELOG(LOG_WARNING, "GLFW: Failed to find selected monitor");
-    
+
     return height;
 }
 
@@ -1059,7 +1062,7 @@ int GetMonitorRefreshRate(int monitor)
         refresh = vidmode->refreshRate;
     }
     else TRACELOG(LOG_WARNING, "GLFW: Failed to find selected monitor");
-    
+
     return refresh;
 }
 
@@ -1082,9 +1085,9 @@ Vector2 GetWindowPosition(void)
 {
     int x = 0;
     int y = 0;
-    
+
     glfwGetWindowPos(platform.handle, &x, &y);
-    
+
     return (Vector2){ (float)x, (float)y };
 }
 

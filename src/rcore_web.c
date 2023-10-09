@@ -1,6 +1,6 @@
 /**********************************************************************************************
 *
-*   rcore_web - Functions to manage window, graphics device and inputs 
+*   rcore_web - Functions to manage window, graphics device and inputs
 *
 *   PLATFORM: WEB
 *       - HTML5 (WebAssembly)
@@ -237,7 +237,7 @@ void InitWindow(int width, int height, const char *title)
     // emscripten_set_fullscreenchange_callback(EMSCRIPTEN_EVENT_TARGET_WINDOW, NULL, 1, EmscriptenResizeCallback);
     // Check Resize event (note this is done on the window since most browsers don't support this on #canvas)
     emscripten_set_resize_callback(EMSCRIPTEN_EVENT_TARGET_WINDOW, NULL, 1, EmscriptenResizeCallback);
-    
+
     // Trigger this once to get initial window sizing
     EmscriptenResizeCallback(EMSCRIPTEN_EVENT_RESIZE, NULL, NULL);
 
@@ -282,12 +282,11 @@ void CloseWindow(void)
 
     rlglClose(); // De-init rlgl
 
+    // Platform specific close window
+    //--------------------------------------------------------------
     glfwDestroyWindow(platform.handle);
     glfwTerminate();
-
-#if defined(_WIN32) && defined(SUPPORT_WINMM_HIGHRES_TIMER) && !defined(SUPPORT_BUSY_WAIT_LOOP)
-    timeEndPeriod(1); // Restore time period
-#endif
+    //--------------------------------------------------------------
 
 #if defined(SUPPORT_EVENTS_AUTOMATION)
     RL_FREE(events);
@@ -482,7 +481,7 @@ void SetWindowMinSize(int width, int height)
 {
     CORE.Window.screenMin.width = width;
     CORE.Window.screenMin.height = height;
-    
+
     // Trigger the resize event once to update the window minimum width and height
     if ((CORE.Window.flags & FLAG_WINDOW_RESIZABLE) != 0) EmscriptenResizeCallback(EMSCRIPTEN_EVENT_RESIZE, NULL, NULL);
 }
@@ -1090,7 +1089,7 @@ static bool InitGraphicsDevice(int width, int height)
                 }
             }
         }
-        
+
         TRACELOG(LOG_WARNING, "SYSTEM: Closest fullscreen videomode: %i x %i", CORE.Window.display.width, CORE.Window.display.height);
 
         // NOTE: ISSUE: Closest videomode could not match monitor aspect-ratio, for example,
@@ -1229,7 +1228,7 @@ static void WindowIconifyCallback(GLFWwindow *window, int iconified)
 // GLFW3 Window Maximize Callback, runs when window is maximized
 static void WindowMaximizeCallback(GLFWwindow *window, int maximized)
 {
-    
+
 }
 
 // GLFW3 WindowFocus Callback, runs when window get/lose focus

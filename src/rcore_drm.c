@@ -1,6 +1,6 @@
 /**********************************************************************************************
 *
-*   rcore_drm - Functions to manage window, graphics device and inputs 
+*   rcore_drm - Functions to manage window, graphics device and inputs
 *
 *   PLATFORM: DRM
 *       - Raspberry Pi 0-5
@@ -81,7 +81,7 @@
 
 typedef struct {
     pthread_t threadId;                 // Event reading thread id
-    
+
     int fd;                             // File descriptor to the device it is assigned to
     int eventNum;                       // Number of 'event<N>' device
     Rectangle absRange;                 // Range of values for absolute pointing devices (touchscreens)
@@ -111,7 +111,7 @@ typedef struct {
 
     // Input data
     InputEventWorker eventWorker[10];   // List of worker threads for every monitored "/dev/input/event<N>"
-    
+
     // Keyboard data
     int defaultKeyboardMode;            // Default keyboard mode
     bool eventKeyboardMode;             // Keyboard in event mode
@@ -307,6 +307,8 @@ void CloseWindow(void)
     timeEndPeriod(1);           // Restore time period
 #endif
 
+    // Platform specific close window
+    //--------------------------------------------------------------
     if (platform.prevFB)
     {
         drmModeRmFB(platform.fd, platform.prevFB);
@@ -392,6 +394,7 @@ void CloseWindow(void)
     }
 
     if (platform.gamepadThreadId) pthread_join(platform.gamepadThreadId, NULL);
+    //--------------------------------------------------------------
 
 #if defined(SUPPORT_EVENTS_AUTOMATION)
     RL_FREE(events);
@@ -603,12 +606,12 @@ int GetMonitorPhysicalHeight(int monitor)
 int GetMonitorRefreshRate(int monitor)
 {
     int refresh = 0;
-    
+
     if ((platform.connector) && (platform.modeIndex >= 0))
     {
         refresh = platform.connector->modes[platform.modeIndex].vrefresh;
     }
-    
+
     return refresh;
 }
 
@@ -718,7 +721,7 @@ double GetTime(void)
     unsigned long long int nanoSeconds = (unsigned long long int)ts.tv_sec*1000000000LLU + (unsigned long long int)ts.tv_nsec;
 
     time = (double)(nanoSeconds - CORE.Time.base)*1e-9;  // Elapsed time since InitTimer()
-    
+
     return time;
 }
 
@@ -763,7 +766,7 @@ int GetGamepadAxisCount(int gamepad)
     int axisCount = 0;
     if (CORE.Input.Gamepad.ready[gamepad]) ioctl(platform.gamepadStreamFd[gamepad], JSIOCGAXES, &axisCount);
     CORE.Input.Gamepad.axisCount = axisCount;
-    
+
     return CORE.Input.Gamepad.axisCount;
 }
 
@@ -837,10 +840,10 @@ int GetTouchY(void)
 Vector2 GetTouchPosition(int index)
 {
     Vector2 position = { -1.0f, -1.0f };
-    
+
     if (index < MAX_TOUCH_POINTS) position = CORE.Input.Touch.position[index];
     else TRACELOG(LOG_WARNING, "INPUT: Required touch point out of range (Max touch points: %i)", MAX_TOUCH_POINTS);
-    
+
     return position;
 }
 
@@ -856,7 +859,7 @@ void PollInputEvents(void)
     // Reset keys/chars pressed registered
     CORE.Input.Keyboard.keyPressedQueueCount = 0;
     CORE.Input.Keyboard.charPressedQueueCount = 0;
-    
+
     // Reset key repeats
     for (int i = 0; i < MAX_KEYBOARD_KEYS; i++) CORE.Input.Keyboard.keyRepeatInFrame[i] = 0;
 
@@ -979,14 +982,14 @@ static bool InitGraphicsDevice(int width, int height)
     }
 
     TRACELOG(LOG_TRACE, "DISPLAY: Connectors found: %i", res->count_connectors);
-    
+
     for (size_t i = 0; i < res->count_connectors; i++)
     {
         TRACELOG(LOG_TRACE, "DISPLAY: Connector index %i", i);
-        
+
         drmModeConnector *con = drmModeGetConnector(platform.fd, res->connectors[i]);
         TRACELOG(LOG_TRACE, "DISPLAY: Connector modes detected: %i", con->count_modes);
-        
+
         if ((con->connection == DRM_MODE_CONNECTED) && (con->encoder_id))
         {
             TRACELOG(LOG_TRACE, "DISPLAY: DRM mode connected");
@@ -1440,7 +1443,7 @@ static void ProcessKeyboard(void)
 }
 #endif  // SUPPORT_SSH_KEYBOARD_RPI
 
-// Initialise user input from evdev(/dev/input/event<N>) 
+// Initialise user input from evdev(/dev/input/event<N>)
 // this means mouse, keyboard or gamepad devices
 static void InitEvdevInput(void)
 {

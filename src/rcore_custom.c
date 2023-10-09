@@ -1,6 +1,6 @@
 /**********************************************************************************************
 *
-*   rcore_<platform> - Functions to manage window, graphics device and inputs 
+*   rcore_<platform> - Functions to manage window, graphics device and inputs
 *
 *   PLATFORM: <PLATFORM>
 *       - TODO: Define the target platform for the core
@@ -48,14 +48,14 @@
 
 #include "rcore.h"
 
-// TODO: Include the platform specific libraries 
-    
+// TODO: Include the platform specific libraries
+
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
 //----------------------------------------------------------------------------------
 typedef struct {
     // TODO: Define the platform specific variables required
-    
+
     // Display data
     EGLDisplay device;                  // Native display device (physical screen connection)
     EGLSurface surface;                 // Surface to draw on, framebuffers (connected to context)
@@ -128,15 +128,15 @@ void InitWindow(int width, int height, const char *title)
     CORE.Input.Mouse.scale = (Vector2){ 1.0f, 1.0f };
     CORE.Input.Mouse.cursor = MOUSE_CURSOR_ARROW;
     CORE.Input.Gamepad.lastButtonPressed = 0;       // GAMEPAD_BUTTON_UNKNOWN
-    CORE.Window.eventWaiting = false;
 
+    CORE.Window.eventWaiting = false;
     CORE.Window.screen.width = width;
     CORE.Window.screen.height = height;
     CORE.Window.currentFbo.width = width;
     CORE.Window.currentFbo.height = height;
 
     // TODO: Initialize window/display system
-    
+
     // TODO: Initialize input events system
 
     // TODO: Initialize assets manager
@@ -165,11 +165,10 @@ void CloseWindow(void)
 
     rlglClose();                // De-init rlgl
 
-#if defined(_WIN32) && defined(SUPPORT_WINMM_HIGHRES_TIMER) && !defined(SUPPORT_BUSY_WAIT_LOOP)
-    timeEndPeriod(1);           // Restore time period
-#endif
-
-    // TODO: Close surface, context and display
+    // Platform specific close window
+    //--------------------------------------------------------------
+    // TODO.
+    //--------------------------------------------------------------
 
 #if defined(SUPPORT_EVENTS_AUTOMATION)
     RL_FREE(events);
@@ -467,7 +466,7 @@ double GetTime(void)
     unsigned long long int nanoSeconds = (unsigned long long int)ts.tv_sec*1000000000LLU + (unsigned long long int)ts.tv_nsec;
 
     time = (double)(nanoSeconds - CORE.Time.base)*1e-9;  // Elapsed time since InitTimer()
-    
+
     return time;
 }
 
@@ -610,7 +609,7 @@ void PollInputEvents(void)
     // Reset keys/chars pressed registered
     CORE.Input.Keyboard.keyPressedQueueCount = 0;
     CORE.Input.Keyboard.charPressedQueueCount = 0;
-    
+
     // Reset key repeats
     for (int i = 0; i < MAX_KEYBOARD_KEYS; i++) CORE.Input.Keyboard.keyRepeatInFrame[i] = 0;
 
