@@ -5614,12 +5614,13 @@ static Model LoadM3D(const char *fileName)
         // We always need a default material, so we add +1
         model.materialCount++;
 
-        // Faces must be in non-decreasing materialid order
-        // Verify that quickly, sorting them otherwise. 
+        // Faces must be in non-decreasing materialid order. Verify that quickly, sorting them otherwise.
+        // WARNING: Sorting is not needed, valid M3D model files should already be sorted
+        // Just keeping the sorting function for reference (Check PR #3363 #3385)
+        /*
         for (i = 1; i < m3d->numface; i++)
         {
-            if ( m3d->face[i-1].materialid <= m3d->face[i].materialid )
-               continue;
+            if (m3d->face[i-1].materialid <= m3d->face[i].materialid) continue;
 
             // face[i-1] > face[i].  slide face[i] lower.
             m3df_t slider = m3d->face[i];
@@ -5634,6 +5635,7 @@ static Model LoadM3D(const char *fileName)
 
             m3d->face[j+1] = slider;
         }
+        */
 
         model.meshes = (Mesh *)RL_CALLOC(model.meshCount, sizeof(Mesh));
         model.meshMaterial = (int *)RL_CALLOC(model.meshCount, sizeof(int));
