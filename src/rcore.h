@@ -37,12 +37,12 @@
 
 #include "raylib.h"
 
-#include "rlgl.h"
+#include "utils.h"                  // Required for: TRACELOG() macros
+
+#include "rlgl.h"                   // Required for: graphics layer functionality
 
 #define RAYMATH_IMPLEMENTATION
-#include "raymath.h"
-
-#include "utils.h"                  // Required for: TRACELOG() macros
+#include "raymath.h"                // Required for: Vector2/Vector3/Matrix functionality
 
 #include <stdlib.h>                 // Required for: srand(), rand(), atexit()
 #include <stdio.h>                  // Required for: sprintf() [Used in OpenURL()]
