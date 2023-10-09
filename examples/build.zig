@@ -71,11 +71,15 @@ fn add_module(comptime module: []const u8, b: *std.Build, target: std.zig.CrossT
             },
         }
 
-        b.installArtifact(exe);
-        var run = b.addRunArtifact(exe);
-        run.cwd = module;
-        b.step(name, name).dependOn(&run.step);
-        all.dependOn(&exe.step);
+        const install_cmd = b.addInstallArtifact(exe, .{});
+
+        const run_cmd = b.addRunArtifact(exe);
+        run_cmd.step.dependOn(&install_cmd.step);
+
+        const run_step = b.step(name, name);
+        run_step.dependOn(&run_cmd.step);
+
+        all.dependOn(&install_cmd.step);
     }
     return all;
 }
