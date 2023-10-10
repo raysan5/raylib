@@ -664,9 +664,9 @@ void UnloadImage(Image image)
 // NOTE: File format depends on fileName extension
 bool ExportImage(Image image, const char *fileName)
 {
-    int success = 0;
+    int result = 0;
 
-    if ((image.width == 0) || (image.height == 0) || (image.data == NULL)) return success;
+    if ((image.width == 0) || (image.height == 0) || (image.data == NULL)) return result;
 
 #if defined(SUPPORT_IMAGE_EXPORT)
     int channels = 4;
@@ -689,21 +689,21 @@ bool ExportImage(Image image, const char *fileName)
     {
         int dataSize = 0;
         unsigned char *fileData = stbi_write_png_to_mem((const unsigned char *)imgData, image.width*channels, image.width, image.height, channels, &dataSize);
-        success = SaveFileData(fileName, fileData, dataSize);
+        result = SaveFileData(fileName, fileData, dataSize);
         RL_FREE(fileData);
     }
 #else
     if (false) { }
 #endif
 #if defined(SUPPORT_FILEFORMAT_BMP)
-    else if (IsFileExtension(fileName, ".bmp")) success = stbi_write_bmp(fileName, image.width, image.height, channels, imgData);
+    else if (IsFileExtension(fileName, ".bmp")) result = stbi_write_bmp(fileName, image.width, image.height, channels, imgData);
 #endif
 #if defined(SUPPORT_FILEFORMAT_TGA)
-    else if (IsFileExtension(fileName, ".tga")) success = stbi_write_tga(fileName, image.width, image.height, channels, imgData);
+    else if (IsFileExtension(fileName, ".tga")) result = stbi_write_tga(fileName, image.width, image.height, channels, imgData);
 #endif
 #if defined(SUPPORT_FILEFORMAT_JPG)
     else if (IsFileExtension(fileName, ".jpg") ||
-             IsFileExtension(fileName, ".jpeg")) success = stbi_write_jpg(fileName, image.width, image.height, channels, imgData, 90);  // JPG quality: between 1 and 100
+             IsFileExtension(fileName, ".jpeg")) result = stbi_write_jpg(fileName, image.width, image.height, channels, imgData, 90);  // JPG quality: between 1 and 100
 #endif
 #if defined(SUPPORT_FILEFORMAT_QOI)
     else if (IsFileExtension(fileName, ".qoi"))
@@ -721,30 +721,30 @@ bool ExportImage(Image image, const char *fileName)
             desc.channels = channels;
             desc.colorspace = QOI_SRGB;
 
-            success = qoi_write(fileName, imgData, &desc);
+            result = qoi_write(fileName, imgData, &desc);
         }
     }
 #endif
 #if defined(SUPPORT_FILEFORMAT_KTX)
     else if (IsFileExtension(fileName, ".ktx"))
     {
-        success = rl_save_ktx(fileName, image.data, image.width, image.height, image.format, image.mipmaps);
+        result = rl_save_ktx(fileName, image.data, image.width, image.height, image.format, image.mipmaps);
     }
 #endif
     else if (IsFileExtension(fileName, ".raw"))
     {
         // Export raw pixel data (without header)
         // NOTE: It's up to the user to track image parameters
-        success = SaveFileData(fileName, image.data, GetPixelDataSize(image.width, image.height, image.format));
+        result = SaveFileData(fileName, image.data, GetPixelDataSize(image.width, image.height, image.format));
     }
 
     if (allocatedData) RL_FREE(imgData);
 #endif      // SUPPORT_IMAGE_EXPORT
 
-    if (success != 0) TRACELOG(LOG_INFO, "FILEIO: [%s] Image exported successfully", fileName);
+    if (result != 0) TRACELOG(LOG_INFO, "FILEIO: [%s] Image exported successfully", fileName);
     else TRACELOG(LOG_WARNING, "FILEIO: [%s] Failed to export image", fileName);
 
-    return success;
+    return result;
 }
 
 // Export image to memory buffer
