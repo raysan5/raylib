@@ -186,23 +186,19 @@ void InitWindow(int width, int height, const char *title)
     CORE.Input.Gamepad.lastButtonPressed = 0;       // GAMEPAD_BUTTON_UNKNOWN
     CORE.Window.eventWaiting = false;
 
-    // Initialize graphics device (display device and OpenGL context)
+    // Initialize graphics device
     // NOTE: returns true if window and graphic device has been initialized successfully
     CORE.Window.ready = InitGraphicsDevice(width, height);
 
     // If graphic device is no properly initialized, we end program
-    if (!CORE.Window.ready)
-    {
-        TRACELOG(LOG_FATAL, "Failed to initialize Graphic Device");
-        return;
-    }
+    if (!CORE.Window.ready) { TRACELOG(LOG_FATAL, "PLATFORM: Failed to initialize graphic device"); return; }
     else SetWindowPosition(GetMonitorWidth(GetCurrentMonitor())/2 - CORE.Window.screen.width/2, GetMonitorHeight(GetCurrentMonitor())/2 - CORE.Window.screen.height/2);
 
     // Initialize hi-res timer
     InitTimer();
 
     // Initialize random seed
-    srand((unsigned int)time(NULL));
+    SetRandomSeed((unsigned int)time(NULL));
 
     // Initialize base path for storage
     CORE.Storage.basePath = GetWorkingDirectory();
@@ -248,6 +244,8 @@ void InitWindow(int width, int height, const char *title)
     events = (AutomationEvent *)RL_CALLOC(MAX_CODE_AUTOMATION_EVENTS, sizeof(AutomationEvent));
     CORE.Time.frameCounter = 0;
 #endif
+
+    TRACELOG(LOG_INFO, "PLATFORM: DESKTOP: Application initialized successfully");
 }
 
 // Close window and unload OpenGL context
@@ -834,10 +832,12 @@ void SetWindowMinSize(int width, int height)
 {
     CORE.Window.screenMin.width = width;
     CORE.Window.screenMin.height = height;
-    int minWidth  = (CORE.Window.screenMin.width  == 0)? GLFW_DONT_CARE : CORE.Window.screenMin.width;
-    int minHeight = (CORE.Window.screenMin.height == 0)? GLFW_DONT_CARE : CORE.Window.screenMin.height;
-    int maxWidth  = (CORE.Window.screenMax.width  == 0)? GLFW_DONT_CARE : CORE.Window.screenMax.width;
-    int maxHeight = (CORE.Window.screenMax.height == 0)? GLFW_DONT_CARE : CORE.Window.screenMax.height;
+    
+    int minWidth  = (CORE.Window.screenMin.width  == 0)? GLFW_DONT_CARE : (int)CORE.Window.screenMin.width;
+    int minHeight = (CORE.Window.screenMin.height == 0)? GLFW_DONT_CARE : (int)CORE.Window.screenMin.height;
+    int maxWidth  = (CORE.Window.screenMax.width  == 0)? GLFW_DONT_CARE : (int)CORE.Window.screenMax.width;
+    int maxHeight = (CORE.Window.screenMax.height == 0)? GLFW_DONT_CARE : (int)CORE.Window.screenMax.height;
+    
     glfwSetWindowSizeLimits(platform.handle, minWidth, minHeight, maxWidth, maxHeight);
 }
 
@@ -846,10 +846,12 @@ void SetWindowMaxSize(int width, int height)
 {
     CORE.Window.screenMax.width = width;
     CORE.Window.screenMax.height = height;
-    int minWidth  = (CORE.Window.screenMin.width  == 0)? GLFW_DONT_CARE : CORE.Window.screenMin.width;
-    int minHeight = (CORE.Window.screenMin.height == 0)? GLFW_DONT_CARE : CORE.Window.screenMin.height;
-    int maxWidth  = (CORE.Window.screenMax.width  == 0)? GLFW_DONT_CARE : CORE.Window.screenMax.width;
-    int maxHeight = (CORE.Window.screenMax.height == 0)? GLFW_DONT_CARE : CORE.Window.screenMax.height;
+    
+    int minWidth  = (CORE.Window.screenMin.width  == 0)? GLFW_DONT_CARE : (int)CORE.Window.screenMin.width;
+    int minHeight = (CORE.Window.screenMin.height == 0)? GLFW_DONT_CARE : (int)CORE.Window.screenMin.height;
+    int maxWidth  = (CORE.Window.screenMax.width  == 0)? GLFW_DONT_CARE : (int)CORE.Window.screenMax.width;
+    int maxHeight = (CORE.Window.screenMax.height == 0)? GLFW_DONT_CARE : (int)CORE.Window.screenMax.height;
+    
     glfwSetWindowSizeLimits(platform.handle, minWidth, minHeight, maxWidth, maxHeight);
 }
 

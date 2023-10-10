@@ -228,7 +228,7 @@ void InitWindow(int width, int height, const char *title)
     // Initialize base path for storage
     CORE.Storage.basePath = platform.app->activity->internalDataPath;
 
-    TRACELOG(LOG_INFO, "ANDROID: App initialized successfully");
+    TRACELOG(LOG_INFO, "PLATFORM: ANDROID: Application initialized successfully");
 
     // Android ALooper_pollAll() variables
     int pollResult = 0;
@@ -247,6 +247,7 @@ void InitWindow(int width, int height, const char *title)
             //if (platform.app->destroyRequested != 0) CORE.Window.shouldClose = true;
         }
     }
+    //--------------------------------------------------------------
 }
 
 // Close window and unload OpenGL context

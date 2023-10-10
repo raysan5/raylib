@@ -220,19 +220,14 @@ void InitWindow(int width, int height, const char *title)
     CORE.Window.ready = InitGraphicsDevice(width, height);
 
     // If graphic device is no properly initialized, we end program
-    if (!CORE.Window.ready)
-    {
-        TRACELOG(LOG_FATAL, "Failed to initialize Graphic Device");
-        return;
-    }
-    else
-        SetWindowPosition(GetMonitorWidth(GetCurrentMonitor()) / 2 - CORE.Window.screen.width / 2, GetMonitorHeight(GetCurrentMonitor()) / 2 - CORE.Window.screen.height / 2);
+    if (!CORE.Window.ready) { TRACELOG(LOG_FATAL, "PLATFORM: Failed to initialize graphic device"); return; }
+    else SetWindowPosition(GetMonitorWidth(GetCurrentMonitor()) / 2 - CORE.Window.screen.width / 2, GetMonitorHeight(GetCurrentMonitor()) / 2 - CORE.Window.screen.height / 2);
 
     // Initialize hi-res timer
     InitTimer();
 
     // Initialize random seed
-    srand((unsigned int)time(NULL));
+    SetRandomSeed((unsigned int)time(NULL));
 
     // Initialize base path for storage
     CORE.Storage.basePath = GetWorkingDirectory();
@@ -274,15 +269,20 @@ void InitWindow(int width, int height, const char *title)
     }
 #endif
 
-    // Initialize raw input system
-    InitEvdevInput(); // Evdev inputs initialization
-    InitGamepad();    // Gamepad init
-    InitKeyboard();   // Keyboard init (stdin)
-
 #if defined(SUPPORT_EVENTS_AUTOMATION)
     events = (AutomationEvent *)RL_CALLOC(MAX_CODE_AUTOMATION_EVENTS, sizeof(AutomationEvent));
     CORE.Time.frameCounter = 0;
 #endif
+
+    // Platform specific init window
+    //--------------------------------------------------------------
+    // Initialize raw input system
+    InitEvdevInput(); // Evdev inputs initialization
+    InitGamepad();    // Gamepad init
+    InitKeyboard();   // Keyboard init (stdin)
+    //--------------------------------------------------------------
+    
+    TRACELOG(LOG_INFO, "PLATFORM: DRM: Application initialized successfully");
 }
 
 // Close window and unload OpenGL context

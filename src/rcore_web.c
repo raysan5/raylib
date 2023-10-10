@@ -176,18 +176,14 @@ void InitWindow(int width, int height, const char *title)
     CORE.Window.ready = InitGraphicsDevice(width, height);
 
     // If graphic device is no properly initialized, we end program
-    if (!CORE.Window.ready)
-    {
-        TRACELOG(LOG_FATAL, "Failed to initialize Graphic Device");
-        return;
-    }
+    if (!CORE.Window.ready) { TRACELOG(LOG_FATAL, "PLATFORM: Failed to initialize graphic device"); return; }
     else SetWindowPosition(GetMonitorWidth(GetCurrentMonitor())/2 - CORE.Window.screen.width/2, GetMonitorHeight(GetCurrentMonitor())/2 - CORE.Window.screen.height/2);
 
     // Initialize hi-res timer
     InitTimer();
 
     // Initialize random seed
-    srand((unsigned int)time(NULL));
+    SetRandomSeed((unsigned int)time(NULL));
 
     // Initialize base path for storage
     CORE.Storage.basePath = GetWorkingDirectory();
@@ -229,6 +225,13 @@ void InitWindow(int width, int height, const char *title)
     }
 #endif
 
+#if defined(SUPPORT_EVENTS_AUTOMATION)
+    events = (AutomationEvent *)RL_CALLOC(MAX_CODE_AUTOMATION_EVENTS, sizeof(AutomationEvent));
+    CORE.Time.frameCounter = 0;
+#endif
+
+    // Platform specific init window
+    //--------------------------------------------------------------
     // Setup callback functions for the DOM events
     emscripten_set_fullscreenchange_callback("#canvas", NULL, 1, EmscriptenFullscreenChangeCallback);
 
@@ -257,11 +260,9 @@ void InitWindow(int width, int height, const char *title)
     // Support gamepad events (not provided by GLFW3 on emscripten)
     emscripten_set_gamepadconnected_callback(NULL, 1, EmscriptenGamepadCallback);
     emscripten_set_gamepaddisconnected_callback(NULL, 1, EmscriptenGamepadCallback);
+    //--------------------------------------------------------------
 
-#if defined(SUPPORT_EVENTS_AUTOMATION)
-    events = (AutomationEvent *)RL_CALLOC(MAX_CODE_AUTOMATION_EVENTS, sizeof(AutomationEvent));
-    CORE.Time.frameCounter = 0;
-#endif
+    TRACELOG(LOG_INFO, "PLATFORM: WEB: Application initialized successfully");
 }
 
 // Close window and unload OpenGL context
