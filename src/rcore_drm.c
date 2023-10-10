@@ -739,13 +739,6 @@ void OpenURL(const char *url)
 // Module Functions Definition: Inputs
 //----------------------------------------------------------------------------------
 
-// Set a custom key to exit program
-// NOTE: default exitKey is ESCAPE
-void SetExitKey(int key)
-{
-    CORE.Input.Keyboard.exitKey = key;
-}
-
 // Get gamepad internal name id
 const char *GetGamepadName(int gamepad)
 {
@@ -764,6 +757,7 @@ const char *GetGamepadName(int gamepad)
 int GetGamepadAxisCount(int gamepad)
 {
     int axisCount = 0;
+
     if (CORE.Input.Gamepad.ready[gamepad]) ioctl(platform.gamepadStreamFd[gamepad], JSIOCGAXES, &axisCount);
     CORE.Input.Gamepad.axisCount = axisCount;
 

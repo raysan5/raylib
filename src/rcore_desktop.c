@@ -130,6 +130,7 @@ static void MouseButtonCallback(GLFWwindow *window, int button, int action, int 
 static void MouseCursorPosCallback(GLFWwindow *window, double x, double y);                // GLFW3 Cursor Position Callback, runs on mouse move
 static void MouseScrollCallback(GLFWwindow *window, double xoffset, double yoffset);       // GLFW3 Srolling Callback, runs on mouse wheel
 static void CursorEnterCallback(GLFWwindow *window, int enter);                            // GLFW3 Cursor Enter Callback, cursor enters client area
+static void JoystickCallback(int jid, int event);                                           // GLFW3 Joystick Connected/Disconnected Callback
 
 //----------------------------------------------------------------------------------
 // Module Functions Declaration
@@ -1221,21 +1222,10 @@ void OpenURL(const char *url)
 // Module Functions Definition: Inputs
 //----------------------------------------------------------------------------------
 
-// Set a custom key to exit program
-// NOTE: default exitKey is ESCAPE
-void SetExitKey(int key)
-{
-    CORE.Input.Keyboard.exitKey = key;
-}
-
 // Get gamepad internal name id
 const char *GetGamepadName(int gamepad)
 {
-    const char *name = NULL;
-
-    if (CORE.Input.Gamepad.ready[gamepad]) name = glfwGetJoystickName(gamepad);
-
-    return name;
+    return CORE.Input.Gamepad.name[gamepad];
 }
 
 // Get gamepad axis count
@@ -1731,6 +1721,7 @@ static bool InitGraphicsDevice(int width, int height)
     glfwSetCursorPosCallback(platform.handle, MouseCursorPosCallback);   // Track mouse position changes
     glfwSetScrollCallback(platform.handle, MouseScrollCallback);
     glfwSetCursorEnterCallback(platform.handle, CursorEnterCallback);
+    glfwSetJoystickCallback(JoystickCallback);
 
     glfwMakeContextCurrent(platform.handle);
 
@@ -2066,5 +2057,17 @@ static void CursorEnterCallback(GLFWwindow *window, int enter)
     else CORE.Input.Mouse.cursorOnScreen = false;
 }
 
-// EOF
+// GLFW3 Joystick Connected/Disconnected Callback
+static void JoystickCallback(int jid, int event)
+{
+    if (event == GLFW_CONNECTED)
+    {
+        strcpy(CORE.Input.Gamepad.name[jid], glfwGetJoystickName(jid));
+    }
+    else if (event == GLFW_DISCONNECTED)
+    {
+        memset(CORE.Input.Gamepad.name[jid], 0, 64);
+    }
+}
 
+// EOF

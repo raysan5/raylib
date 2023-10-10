@@ -635,17 +635,10 @@ void OpenURL(const char *url)
 // Module Functions Definition: Inputs
 //----------------------------------------------------------------------------------
 
-// Set a custom key to exit program
-void SetExitKey(int key)
-{
-    TRACELOG(LOG_WARNING, "SetExitKey() not implemented on target platform");
-}
-
 // Get gamepad internal name id
 const char *GetGamepadName(int gamepad)
 {
-    TRACELOG(LOG_WARNING, "GetGamepadName() not implemented on target platform");
-    return NULL;
+    return CORE.Input.Gamepad.name[gamepad];
 }
 
 // Get gamepad axis count
