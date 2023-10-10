@@ -1947,7 +1947,7 @@ static void InitGamepad(void)
                 else  TRACELOG(LOG_INFO, "RPI: Gamepad device initialized successfully");
             }
 
-            ioctl(platform.gamepadStreamFd[gamepad], JSIOCGNAME(64), &CORE.Input.Gamepad.name[i]);
+            ioctl(platform.gamepadStreamFd[i], JSIOCGNAME(64), &CORE.Input.Gamepad.name[i]);
         }
     }
 }
