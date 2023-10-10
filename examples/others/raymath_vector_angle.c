@@ -83,7 +83,6 @@ int main(void)
                 DrawLineEx(v0, v2, 2.0f, RED);
 
                 DrawCircleSector(v0, 40.0f, startangle, startangle + angle, 32, Fade(GREEN, 0.6f));
-
             }
             else if (angleMode == 1)
             {
