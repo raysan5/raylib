@@ -44,7 +44,11 @@ int main(void)
         //----------------------------------------------------------------------------------
         float startangle;
 
+<<<<<<< HEAD
         if (angleMode == 0) startangle = Vector2LineAngle(v0, v1)*RAD2DEG;
+=======
+        if (angleMode == 0) startangle = -Vector2LineAngle(v0, v1)*RAD2DEG;
+>>>>>>> b5edafafe17c950722d4c5fd6c705f6aff74a65f
         if (angleMode == 1) startangle = 0.0f; 
 
         v2 = GetMousePosition();
@@ -82,7 +86,11 @@ int main(void)
                 DrawLineEx(v0, v1, 2.0f, BLACK);
                 DrawLineEx(v0, v2, 2.0f, RED);
                 
+<<<<<<< HEAD
                 DrawCircleSector(v0, 40.0f, startangle, startangle + angle, 32, Fade(GREEN, 0.6f));
+=======
+                DrawCircleSector(v0, 40.0f, startangle, startangle - angle, 32, Fade(GREEN, 0.6f));
+>>>>>>> b5edafafe17c950722d4c5fd6c705f6aff74a65f
             }
             else if (angleMode == 1)
             {
@@ -91,7 +99,11 @@ int main(void)
                 DrawLine(0, screenHeight/2, screenWidth, screenHeight/2, LIGHTGRAY);
                 DrawLineEx(v0, v2, 2.0f, RED);
                 
+<<<<<<< HEAD
                 DrawCircleSector(v0, 40.0f, startangle, startangle + angle, 32, Fade(GREEN, 0.6f));
+=======
+                DrawCircleSector(v0, 40.0f, startangle, startangle - angle, 32, Fade(GREEN, 0.6f));
+>>>>>>> b5edafafe17c950722d4c5fd6c705f6aff74a65f
             }
             
             DrawText("v0", v0.x, v0.y, 10, DARKGRAY);
