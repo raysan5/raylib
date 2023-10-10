@@ -1948,11 +1948,7 @@ static void InitGamepad(void)
             }
 
             ioctl(platform.gamepadStreamFd[i], JSIOCGNAME(64), &CORE.Input.Gamepad.name[i]);
-
-            
-            int axisCount = 0;
-            if (CORE.Input.Gamepad.ready[i]) ioctl(platform.gamepadStreamFd[i], JSIOCGAXES, &axisCount);
-                CORE.Input.Gamepad.axisCount = axisCount;
+            ioctl(platform.gamepadStreamFd[i], JSIOCGAXES, &CORE.Input.Gamepad.axisCount);
         }
     }
 }
