@@ -324,8 +324,7 @@ RMAPI float Vector2Angle(Vector2 v1, Vector2 v2)
     float dot = v1.x*v2.x + v1.y*v2.y;
     float det = v1.x*v2.y - v1.y*v2.x;
 
-    // TODO(10/9/2023): Currently angles move clockwise, determine if this is wanted behavior
-    result = -atan2f(det, dot);
+    result = atan2f(det, dot);
 
     return result;
 }
