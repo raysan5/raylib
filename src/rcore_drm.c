@@ -1948,6 +1948,11 @@ static void InitGamepad(void)
             }
 
             ioctl(platform.gamepadStreamFd[i], JSIOCGNAME(64), &CORE.Input.Gamepad.name[i]);
+
+            
+            int axisCount = 0;
+            if (CORE.Input.Gamepad.ready[i]) ioctl(platform.gamepadStreamFd[i], JSIOCGAXES, &axisCount);
+                CORE.Input.Gamepad.axisCount = axisCount;
         }
     }
 }
@@ -1969,17 +1974,10 @@ static void *GamepadThread(void *arg)
     // Read gamepad event
     struct js_event gamepadEvent = { 0 };
 
-    int axisCount = 0;
-
     while (!CORE.Window.shouldClose)
     {
         for (int i = 0; i < MAX_GAMEPADS; i++)
         {
-            // Update the axis count for each gamepad.
-            axisCount = 0;
-            if (CORE.Input.Gamepad.ready[i]) ioctl(platform.gamepadStreamFd[i], JSIOCGAXES, &axisCount);
-                CORE.Input.Gamepad.axisCount = axisCount;
-
             if (read(platform.gamepadStreamFd[i], &gamepadEvent, sizeof(struct js_event)) == (int)sizeof(struct js_event))
             {
                 gamepadEvent.type &= ~JS_EVENT_INIT;     // Ignore synthetic events
