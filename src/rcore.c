@@ -2946,9 +2946,9 @@ const char *TextFormat(const char *text, ...)
     // If requiredByteCount is larger than the MAX_TEXT_BUFFER_LENGTH, then overflow occured
     if (requiredByteCount >= MAX_TEXT_BUFFER_LENGTH)
     {
-        // We are going to insert [TRUN] at the end of the string so the user knows what happened
-        char *truncBuffer = buffers[index] + MAX_TEXT_BUFFER_LENGTH - 7; // Adding 7 bytes = six char + '\0'
-        sprintf(truncBuffer, "[TRUN]");
+        // Inserting "..." at the end of the string to mark as truncated
+        char *truncBuffer = buffers[index] + MAX_TEXT_BUFFER_LENGTH - 4; // Adding 4 bytes = "...\0"
+        sprintf(truncBuffer, "...");
     }
 
     index += 1;     // Move to next buffer for next function call
