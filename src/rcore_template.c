@@ -141,7 +141,7 @@ void InitWindow(int width, int height, const char *title)
 
     // If graphic device is no properly initialized, we end program
     if (!CORE.Window.ready) { TRACELOG(LOG_FATAL, "PLATFORM: Failed to initialize graphic device"); return; }
-    
+
     // Initialize hi-res timer
     InitTimer();
 
@@ -150,7 +150,7 @@ void InitWindow(int width, int height, const char *title)
 
     // Initialize base path for storage
     CORE.Storage.basePath = GetWorkingDirectory();
-    
+
 #if defined(SUPPORT_MODULE_RTEXT) && defined(SUPPORT_DEFAULT_FONT)
     // Load default font
     // WARNING: External function: Module required: rtext
@@ -344,15 +344,15 @@ void SetWindowMonitor(int monitor)
 // Set window minimum dimensions (FLAG_WINDOW_RESIZABLE)
 void SetWindowMinSize(int width, int height)
 {
-    CORE.Window.windowMin.width = width;
-    CORE.Window.windowMin.height = height;
+    CORE.Window.screenMin.width = width;
+    CORE.Window.screenMin.height = height;
 }
 
 // Set window maximum dimensions (FLAG_WINDOW_RESIZABLE)
 void SetWindowMaxSize(int width, int height)
 {
-    CORE.Window.windowMax.width = width;
-    CORE.Window.windowMax.height = height;
+    CORE.Window.screenMax.width = width;
+    CORE.Window.screenMax.height = height;
 }
 
 // Set window dimensions
