@@ -742,25 +742,12 @@ void OpenURL(const char *url)
 // Get gamepad internal name id
 const char *GetGamepadName(int gamepad)
 {
-    const char *name = NULL;
-
-    if (CORE.Input.Gamepad.ready[gamepad])
-    {
-        ioctl(platform.gamepadStreamFd[gamepad], JSIOCGNAME(64), &CORE.Input.Gamepad.name[gamepad]);
-        name = CORE.Input.Gamepad.name[gamepad];
-    }
-
-    return name;
+    return CORE.Input.Gamepad.name[gamepad];
 }
 
 // Get gamepad axis count
 int GetGamepadAxisCount(int gamepad)
 {
-    int axisCount = 0;
-
-    if (CORE.Input.Gamepad.ready[gamepad]) ioctl(platform.gamepadStreamFd[gamepad], JSIOCGAXES, &axisCount);
-    CORE.Input.Gamepad.axisCount = axisCount;
-
     return CORE.Input.Gamepad.axisCount;
 }
 
@@ -1959,6 +1946,9 @@ static void InitGamepad(void)
                 if (error != 0) TRACELOG(LOG_WARNING, "RPI: Failed to create gamepad input event thread");
                 else  TRACELOG(LOG_INFO, "RPI: Gamepad device initialized successfully");
             }
+
+            ioctl(platform.gamepadStreamFd[i], JSIOCGNAME(64), &CORE.Input.Gamepad.name[i]);
+            ioctl(platform.gamepadStreamFd[i], JSIOCGAXES, &CORE.Input.Gamepad.axisCount);
         }
     }
 }
