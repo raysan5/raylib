@@ -1,0 +1,123 @@
+# For most projects, this workflow file will not need changing; you simply need
+# to commit it to your repository.
+#
+# You may wish to alter this file to override the set of languages analyzed,
+# or to provide custom queries or build logic.
+#
+# ******** NOTE ********
+# We have attempted to detect the languages in your repository. Please check
+# the `language` matrix defined below to confirm you have the correct set of
+# supported CodeQL languages.
+#
+name: "CodeQL"
+
+on:
+  push:
+    branches: [ "main", "master" ]
+  pull_request:
+    # The branches below must be a subset of the branches above
+    branches: [ "main", "master" ]
+  schedule:
+    - cron: '28 21 * * 0'
+
+jobs:
+  analyze:
+    name: Analyze
+    # Runner size impacts CodeQL analysis time. To learn more, please see:
+    #   - https://gh.io/recommended-hardware-resources-for-running-codeql
+    #   - https://gh.io/supported-runners-and-hardware-resources
+    #   - https://gh.io/using-larger-runners
+    # Consider using larger runners for possible analysis time improvements.
+    runs-on: ${{ (matrix.language == 'swift' && 'macos-latest') || 'ubuntu-20.04' }}
+    timeout-minutes: ${{ (matrix.language == 'swift' && 120) || 360 }}
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
+
+    strategy:
+      fail-fast: false
+      matrix:
+        language: [ 'cpp' ]
+        # CodeQL supports [ 'cpp', 'csharp', 'go', 'java', 'javascript', 'python', 'ruby', 'swift' ]
+        # Use only 'java' to analyze code written in Java, Kotlin or both
+        # Use only 'javascript' to analyze code written in JavaScript, TypeScript or both
+        # Learn more about CodeQL language support at https://aka.ms/codeql-docs/language-support
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+      with:
+        submodules: recursive
+
+    # Initializes the CodeQL tools for scanning.
+    - name: Initialize CodeQL
+      uses: github/codeql-action/init@v2
+      with:
+        languages: ${{ matrix.language }}
+        # If you wish to specify custom queries, you can do so here or in a config file.
+        # By default, queries listed here will override any specified in a config file.
+        # Prefix the list here with "+" to use these queries and those in the config file.
+
+        # For more details on CodeQL's query packs, refer to: https://docs.github.com/en/code-security/code-scanning/automatically-scanning-your-code-for-vulnerabilities-and-errors/configuring-code-scanning#using-queries-in-ql-packs
+        # queries: security-extended,security-and-quality
+        queries: security-and-quality
+
+
+    # Autobuild attempts to build any compiled languages (C/C++, C#, Go, Java, or Swift).
+    # If this step fails, then you should remove it and run the build manually (see below)
+    #- name: Autobuild
+    #  uses: github/codeql-action/autobuild@v2
+
+    # ℹ️ Command-line programs to run using the OS shell.
+    # 📚 See https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#jobsjob_idstepsrun
+
+    #   If the Autobuild fails above, remove it and uncomment the following three lines.
+    #   modify them (or add more) to build your code if your project, please refer to the EXAMPLE below for guidance.
+
+    - run: |
+        ./.github/workflows/codeql-buildscript.sh
+
+    - name: Perform CodeQL Analysis
+      uses: github/codeql-action/analyze@v2
+      with:
+        category: "/language:${{matrix.language}}"
+        upload: false
+      id: step1
+
+    # Filter out rules with low severity or high false positve rate
+    # Also filter out warnings in third-party code
+    - name: Filter out unwanted errors and warnings
+      uses: advanced-security/filter-sarif@v1
+      with:
+        patterns: |
+          -**:cpp/path-injection
+          -**:cpp/world-writable-file-creation
+          -**:cpp/poorly-documented-function
+          -**:cpp/potentially-dangerous-function
+          -**:cpp/use-of-goto
+          -**:cpp/integer-multiplication-cast-to-long
+          -**:cpp/comparison-with-wider-type
+          -**:cpp/leap-year/*
+          -**:cpp/ambiguously-signed-bit-field
+          -**:cpp/suspicious-pointer-scaling
+          -**:cpp/suspicious-pointer-scaling-void
+          -**:cpp/unsigned-comparison-zero
+          -**/third*party/**
+          -**/3rd*party/**
+          -**/external/**
+        input: ${{ steps.step1.outputs.sarif-output }}/cpp.sarif
+        output: ${{ steps.step1.outputs.sarif-output }}/cpp.sarif
+
+    - name: Upload SARIF
+      uses: github/codeql-action/upload-sarif@v2
+      with:
+        sarif_file: ${{ steps.step1.outputs.sarif-output }}
+        category: "/language:${{matrix.language}}"
+
+    - name: Archive CodeQL results
+      uses: actions/upload-artifact@v3
+      with:
+        name: codeql-results
+        path: ${{ steps.step1.outputs.sarif-output }}
+        retention-days: 5
