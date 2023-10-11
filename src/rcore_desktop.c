@@ -380,35 +380,6 @@ void ToggleFullscreen(void)
     if (CORE.Window.flags & FLAG_VSYNC_HINT) glfwSwapInterval(1);
 }
 
-// Set window state: maximized, if resizable
-void MaximizeWindow(void)
-{
-    if (glfwGetWindowAttrib(platform.handle, GLFW_RESIZABLE) == GLFW_TRUE)
-    {
-        glfwMaximizeWindow(platform.handle);
-        CORE.Window.flags |= FLAG_WINDOW_MAXIMIZED;
-    }
-}
-
-// Set window state: minimized
-void MinimizeWindow(void)
-{
-    // NOTE: Following function launches callback that sets appropriate flag!
-    glfwIconifyWindow(platform.handle);
-}
-
-// Set window state: not minimized/maximized
-void RestoreWindow(void)
-{
-    if (glfwGetWindowAttrib(platform.handle, GLFW_RESIZABLE) == GLFW_TRUE)
-    {
-        // Restores the specified window if it was previously iconified (minimized) or maximized
-        glfwRestoreWindow(platform.handle);
-        CORE.Window.flags &= ~FLAG_WINDOW_MINIMIZED;
-        CORE.Window.flags &= ~FLAG_WINDOW_MAXIMIZED;
-    }
-}
-
 // Toggle borderless windowed mode
 void ToggleBorderlessWindowed(void)
 {
@@ -482,6 +453,35 @@ void ToggleBorderlessWindowed(void)
         else TRACELOG(LOG_WARNING, "GLFW: Failed to find video mode for selected monitor");
     }
     else TRACELOG(LOG_WARNING, "GLFW: Failed to find selected monitor");
+}
+
+// Set window state: maximized, if resizable
+void MaximizeWindow(void)
+{
+    if (glfwGetWindowAttrib(platform.handle, GLFW_RESIZABLE) == GLFW_TRUE)
+    {
+        glfwMaximizeWindow(platform.handle);
+        CORE.Window.flags |= FLAG_WINDOW_MAXIMIZED;
+    }
+}
+
+// Set window state: minimized
+void MinimizeWindow(void)
+{
+    // NOTE: Following function launches callback that sets appropriate flag!
+    glfwIconifyWindow(platform.handle);
+}
+
+// Set window state: not minimized/maximized
+void RestoreWindow(void)
+{
+    if (glfwGetWindowAttrib(platform.handle, GLFW_RESIZABLE) == GLFW_TRUE)
+    {
+        // Restores the specified window if it was previously iconified (minimized) or maximized
+        glfwRestoreWindow(platform.handle);
+        CORE.Window.flags &= ~FLAG_WINDOW_MINIMIZED;
+        CORE.Window.flags &= ~FLAG_WINDOW_MAXIMIZED;
+    }
 }
 
 // Set window configuration state using flags

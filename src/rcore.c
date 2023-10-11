@@ -2285,7 +2285,7 @@ int GetTouchPointCount(void)
 // Module Internal Functions Definition
 //----------------------------------------------------------------------------------
 
-// Platform-specific functions
+// NOTE: Functions with a platform-specific implementation on rcore_<platform>.c
 //static bool InitGraphicsDevice(int width, int height)
 
 // Set viewport for a provided width and height

@@ -448,6 +448,12 @@ void ToggleFullscreen(void)
     TRACELOG(LOG_WARNING, "ToggleFullscreen() not available on target platform");
 }
 
+// Toggle borderless windowed mode
+void ToggleBorderlessWindowed(void)
+{
+    TRACELOG(LOG_WARNING, "ToggleBorderlessWindowed() not available on target platform");
+}
+
 // Set window state: maximized, if resizable
 void MaximizeWindow(void)
 {
@@ -464,12 +470,6 @@ void MinimizeWindow(void)
 void RestoreWindow(void)
 {
     TRACELOG(LOG_WARNING, "RestoreWindow() not available on target platform");
-}
-
-// Toggle borderless windowed mode
-void ToggleBorderlessWindowed(void)
-{
-    TRACELOG(LOG_WARNING, "ToggleBorderlessWindowed() not available on target platform");
 }
 
 // Set window configuration state using flags
