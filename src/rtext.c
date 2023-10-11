@@ -1371,14 +1371,23 @@ const char *TextFormat(const char *text, ...)
 
     va_list args;
     va_start(args, text);
-    vsnprintf(currentBuffer, MAX_TEXT_BUFFER_LENGTH, text, args);
+    int charCountRequired = vsnprintf(currentBuffer, MAX_TEXT_BUFFER_LENGTH, text, args);
     va_end(args);
+
+    // If charCountRequired is larger than the MAX_TEXT_BUFFER_LENGTH, then overflow occured
+    if(charCountRequired > MAX_TEXT_BUFFER_LENGTH)
+    {
+        // We are going to insert [TRUN] at the end of the string so the user knows what happened
+        char *truncBuffer = buffers[index] + MAX_TEXT_BUFFER_LENGTH - 7; // 7 = six letters + '\0'
+        sprintf(truncBuffer, "[TRUN]");
+    }
 
     index += 1;     // Move to next buffer for next function call
     if (index >= MAX_TEXTFORMAT_BUFFERS) index = 0;
 
     return currentBuffer;
 }
+
 
 // Get integer value from text
 // NOTE: This function replaces atoi() [stdlib.h]
