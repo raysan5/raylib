@@ -1228,29 +1228,6 @@ int SetGamepadMappings(const char *mappings)
     return glfwUpdateGamepadMappings(mappings);
 }
 
-// Get mouse position X
-int GetMouseX(void)
-{
-    return (int)((CORE.Input.Mouse.currentPosition.x + CORE.Input.Mouse.offset.x)*CORE.Input.Mouse.scale.x);
-}
-
-// Get mouse position Y
-int GetMouseY(void)
-{
-    return (int)((CORE.Input.Mouse.currentPosition.y + CORE.Input.Mouse.offset.y)*CORE.Input.Mouse.scale.y);
-}
-
-// Get mouse position XY
-Vector2 GetMousePosition(void)
-{
-    Vector2 position = { 0 };
-
-    position.x = (CORE.Input.Mouse.currentPosition.x + CORE.Input.Mouse.offset.x)*CORE.Input.Mouse.scale.x;
-    position.y = (CORE.Input.Mouse.currentPosition.y + CORE.Input.Mouse.offset.y)*CORE.Input.Mouse.scale.y;
-
-    return position;
-}
-
 // Set mouse position XY
 void SetMousePosition(int x, int y)
 {
@@ -1259,17 +1236,6 @@ void SetMousePosition(int x, int y)
 
     // NOTE: emscripten not implemented
     glfwSetCursorPos(platform.handle, CORE.Input.Mouse.currentPosition.x, CORE.Input.Mouse.currentPosition.y);
-}
-
-// Get mouse wheel movement Y
-float GetMouseWheelMove(void)
-{
-    float result = 0.0f;
-
-    if (fabsf(CORE.Input.Mouse.currentWheelMove.x) > fabsf(CORE.Input.Mouse.currentWheelMove.y)) result = (float)CORE.Input.Mouse.currentWheelMove.x;
-    else result = (float)CORE.Input.Mouse.currentWheelMove.y;
-
-    return result;
 }
 
 // Set mouse cursor
@@ -1282,32 +1248,6 @@ void SetMouseCursor(int cursor)
         // NOTE: We are relating internal GLFW enum values to our MouseCursor enum values
         glfwSetCursor(platform.handle, glfwCreateStandardCursor(0x00036000 + cursor));
     }
-}
-
-// Get touch position X for touch point 0 (relative to screen size)
-int GetTouchX(void)
-{
-    return GetMouseX();
-}
-
-// Get touch position Y for touch point 0 (relative to screen size)
-int GetTouchY(void)
-{
-    return GetMouseY();
-}
-
-// Get touch position XY for a touch point index (relative to screen size)
-// TODO: Touch position should be scaled depending on display size and render size
-Vector2 GetTouchPosition(int index)
-{
-    Vector2 position = { -1.0f, -1.0f };
-
-    // TODO: GLFW does not support multi-touch input just yet
-    // https://www.codeproject.com/Articles/668404/Programming-for-Multi-Touch
-    // https://docs.microsoft.com/en-us/windows/win32/wintouch/getting-started-with-multi-touch-messages
-    if (index == 0) position = GetMousePosition();
-
-    return position;
 }
 
 // Register all input events
@@ -1352,6 +1292,13 @@ void PollInputEvents(void)
 
     // Reset touch positions
     //for (int i = 0; i < MAX_TOUCH_POINTS; i++) CORE.Input.Touch.position[i] = (Vector2){ 0, 0 };
+    
+    // Map touch position to mouse position for convenience
+    // WARNING: If the target desktop device supports touch screen, this behavious should be reviewed!
+    // TODO: GLFW does not support multi-touch input just yet
+    // https://www.codeproject.com/Articles/668404/Programming-for-Multi-Touch
+    // https://docs.microsoft.com/en-us/windows/win32/wintouch/getting-started-with-multi-touch-messages
+    CORE.Input.Touch.position[0] = CORE.Input.Mouse.currentPosition;
 
     // Check if gamepads are ready
     // NOTE: We do it here in case of disconnection

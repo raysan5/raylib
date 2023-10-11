@@ -705,30 +705,6 @@ int SetGamepadMappings(const char *mappings)
     return 0;
 }
 
-// Get mouse position X
-int GetMouseX(void)
-{
-    return (int)((CORE.Input.Mouse.currentPosition.x + CORE.Input.Mouse.offset.x)*CORE.Input.Mouse.scale.x);
-}
-
-// Get mouse position Y
-int GetMouseY(void)
-{
-    return (int)((CORE.Input.Mouse.currentPosition.y + CORE.Input.Mouse.offset.y)*CORE.Input.Mouse.scale.y);
-}
-
-// Get mouse position XY
-Vector2 GetMousePosition(void)
-{
-    Vector2 position = { 0 };
-
-    // NOTE: On canvas scaling, mouse position is proportionally returned
-    position.x = (CORE.Input.Mouse.currentPosition.x + CORE.Input.Mouse.offset.x)*CORE.Input.Mouse.scale.x;
-    position.y = (CORE.Input.Mouse.currentPosition.y + CORE.Input.Mouse.offset.y)*CORE.Input.Mouse.scale.y;
-
-    return position;
-}
-
 // Set mouse position XY
 void SetMousePosition(int x, int y)
 {
@@ -739,45 +715,10 @@ void SetMousePosition(int x, int y)
     glfwSetCursorPos(platform.handle, CORE.Input.Mouse.currentPosition.x, CORE.Input.Mouse.currentPosition.y);
 }
 
-// Get mouse wheel movement Y
-float GetMouseWheelMove(void)
-{
-    float result = 0.0f;
-
-    if (fabsf(CORE.Input.Mouse.currentWheelMove.x) > fabsf(CORE.Input.Mouse.currentWheelMove.y)) result = (float)CORE.Input.Mouse.currentWheelMove.x;
-    else result = (float)CORE.Input.Mouse.currentWheelMove.y;
-
-    return result;
-}
-
 // Set mouse cursor
 void SetMouseCursor(int cursor)
 {
     TRACELOG(LOG_INFO, "SetMouseCursor not implemented in rcore_web.c");
-}
-
-// Get touch position X for touch point 0 (relative to screen size)
-int GetTouchX(void)
-{
-    return (int)CORE.Input.Touch.position[0].x;
-}
-
-// Get touch position Y for touch point 0 (relative to screen size)
-int GetTouchY(void)
-{
-    return (int)CORE.Input.Touch.position[0].y;
-}
-
-// Get touch position XY for a touch point index (relative to screen size)
-// TODO: Touch position should be scaled depending on display size and render size
-Vector2 GetTouchPosition(int index)
-{
-    Vector2 position = { -1.0f, -1.0f };
-
-    if (index < MAX_TOUCH_POINTS) position = CORE.Input.Touch.position[index];
-    else TRACELOG(LOG_WARNING, "INPUT: Required touch point out of range (Max touch points: %i)", MAX_TOUCH_POINTS);
-
-    return position;
 }
 
 // Register all input events
