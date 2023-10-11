@@ -1380,7 +1380,6 @@ const char *TextFormat(const char *text, ...)
         // We are going to insert [TRUN] at the end of the string so the user knows what happened
         char *truncBuffer = buffers[index] + MAX_TEXT_BUFFER_LENGTH - 7; // 7 = six letters + '\0'
         sprintf(truncBuffer, "[TRUN]");
-        TRACELOG(LOG_WARNING, "RTEXT: TextFormat string was [TRUN]cated. If you need longer strings, please increase MAX_TEXT_BUFFER_LENGTH.");
     }
 
     index += 1;     // Move to next buffer for next function call
