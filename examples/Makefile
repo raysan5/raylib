@@ -365,6 +365,7 @@ CORE = \
     core/core_input_mouse \
     core/core_input_mouse_wheel \
     core/core_input_gamepad \
+    core/core_input_gamepad_info \
     core/core_input_multitouch \
     core/core_input_gestures \
     core/core_input_gestures_web \
