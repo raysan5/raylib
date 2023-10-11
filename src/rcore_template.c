@@ -1,6 +1,6 @@
 /**********************************************************************************************
 *
-*   rcore_<platform> - Functions to manage window, graphics device and inputs
+*   rcore_<platform> template - Functions to manage window, graphics device and inputs
 *
 *   PLATFORM: <PLATFORM>
 *       - TODO: Define the target platform for the core
@@ -562,18 +562,6 @@ void OpenURL(const char *url)
 //----------------------------------------------------------------------------------
 // Module Functions Definition: Inputs
 //----------------------------------------------------------------------------------
-
-// Get gamepad internal name id
-const char *GetGamepadName(int gamepad)
-{
-    return CORE.Input.Gamepad.name[gamepad];
-}
-
-// Get gamepad axis count
-int GetGamepadAxisCount(int gamepad)
-{
-    return CORE.Input.Gamepad.axisCount;
-}
 
 // Set internal gamepad mappings
 int SetGamepadMappings(const char *mappings)

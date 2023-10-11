@@ -2023,8 +2023,6 @@ void SetExitKey(int key)
 //----------------------------------------------------------------------------------
 
 // NOTE: Functions with a platform-specific implementation on rcore_<platform>.c
-//int GetGamepadAxisCount(int gamepad)          **
-//const char *GetGamepadName(int gamepad)       **
 //int SetGamepadMappings(const char *mappings)
 
 // Check if a gamepad is available
@@ -2038,10 +2036,10 @@ bool IsGamepadAvailable(int gamepad)
 }
 
 // Get gamepad internal name id
-//const char *GetGamepadName(int gamepad)
-//{
-//    return CORE.Input.Gamepad.ready[gamepad];
-//}
+const char *GetGamepadName(int gamepad)
+{
+    return CORE.Input.Gamepad.name[gamepad];
+}
 
 // Check if a gamepad button has been pressed once
 bool IsGamepadButtonPressed(int gamepad, int button)
@@ -2094,10 +2092,10 @@ int GetGamepadButtonPressed(void)
 }
 
 // Get gamepad axis count
-//int GetGamepadAxisCount(int gamepad)
-//{
-//    return CORE.Input.Gamepad.axisCount;
-//}
+int GetGamepadAxisCount(int gamepad)
+{
+    return CORE.Input.Gamepad.axisCount;
+}
 
 // Get axis movement vector for a gamepad
 float GetGamepadAxisMovement(int gamepad, int axis)
