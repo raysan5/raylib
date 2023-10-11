@@ -1371,7 +1371,7 @@ const char *TextFormat(const char *text, ...)
 
     va_list args;
     va_start(args, text);
-    charCountRequired = vsnprintf(currentBuffer, MAX_TEXT_BUFFER_LENGTH, text, args);
+    int charCountRequired = vsnprintf(currentBuffer, MAX_TEXT_BUFFER_LENGTH, text, args);
     va_end(args);
 
     // If charCountRequired is larger than the MAX_TEXT_BUFFER_LENGTH, then overflow occured
