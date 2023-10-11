@@ -2922,7 +2922,6 @@ static void PlayAutomationEvent(unsigned int frame)
 #if !defined(SUPPORT_MODULE_RTEXT)
 // Formatting of text with variables to 'embed'
 // WARNING: String returned will expire after this function is called MAX_TEXTFORMAT_BUFFERS times
-
 const char *TextFormat(const char *text, ...)
 {
 #ifndef MAX_TEXTFORMAT_BUFFERS
@@ -2941,14 +2940,14 @@ const char *TextFormat(const char *text, ...)
 
     va_list args;
     va_start(args, text);
-    int charCountRequired = vsnprintf(currentBuffer, MAX_TEXT_BUFFER_LENGTH, text, args);
+    int requiredByteCount = vsnprintf(currentBuffer, MAX_TEXT_BUFFER_LENGTH, text, args);
     va_end(args);
 
-    // If charCountRequired is larger than the MAX_TEXT_BUFFER_LENGTH, then overflow occured
-    if(charCountRequired > MAX_TEXT_BUFFER_LENGTH)
+    // If requiredByteCount is larger than the MAX_TEXT_BUFFER_LENGTH, then overflow occured
+    if (requiredByteCount >= MAX_TEXT_BUFFER_LENGTH)
     {
         // We are going to insert [TRUN] at the end of the string so the user knows what happened
-        char *truncBuffer = buffers[index] + MAX_TEXT_BUFFER_LENGTH - 7; // 7 = six letters + '\0'
+        char *truncBuffer = buffers[index] + MAX_TEXT_BUFFER_LENGTH - 7; // Adding 7 bytes = six char + '\0'
         sprintf(truncBuffer, "[TRUN]");
     }
 
