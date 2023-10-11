@@ -431,15 +431,6 @@ bool IsCursorOnScreen(void)
 }
 
 //----------------------------------------------------------------------------------
-// Module Functions Definition: Custom frame control
-//----------------------------------------------------------------------------------
-
-// NOTE: Functions with a platform-specific implementation on rcore_<platform>.c
-//void SwapScreenBuffer(void);  
-//void PollInputEvents(void);   
-//void WaitTime(double seconds);
-
-//----------------------------------------------------------------------------------
 // Module Functions Definition: Screen Drawing
 //----------------------------------------------------------------------------------
 
@@ -1234,6 +1225,60 @@ int GetFPS(void)
 float GetFrameTime(void)
 {
     return (float)CORE.Time.frame;
+}
+
+//----------------------------------------------------------------------------------
+// Module Functions Definition: Custom frame control
+//----------------------------------------------------------------------------------
+
+// NOTE: Functions with a platform-specific implementation on rcore_<platform>.c
+//void SwapScreenBuffer(void);  
+//void PollInputEvents(void);
+
+// Wait for some time (stop program execution)
+// NOTE: Sleep() granularity could be around 10 ms, it means, Sleep() could
+// take longer than expected... for that reason we use the busy wait loop
+// Ref: http://stackoverflow.com/questions/43057578/c-programming-win32-games-sleep-taking-longer-than-expected
+// Ref: http://www.geisswerks.com/ryan/FAQS/timing.html --> All about timing on Win32!
+void WaitTime(double seconds)
+{
+    if (seconds < 0) return;
+    
+#if defined(SUPPORT_BUSY_WAIT_LOOP) || defined(SUPPORT_PARTIALBUSY_WAIT_LOOP)
+    double destinationTime = GetTime() + seconds;
+#endif
+
+#if defined(SUPPORT_BUSY_WAIT_LOOP)
+    while (GetTime() < destinationTime) { }
+#else
+    #if defined(SUPPORT_PARTIALBUSY_WAIT_LOOP)
+        double sleepSeconds = seconds - seconds*0.05;  // NOTE: We reserve a percentage of the time for busy waiting
+    #else
+        double sleepSeconds = seconds;
+    #endif
+
+    // System halt functions
+    #if defined(_WIN32)
+        Sleep((unsigned long)(sleepSeconds*1000.0));
+    #endif
+    #if defined(__linux__) || defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__EMSCRIPTEN__)
+        struct timespec req = { 0 };
+        time_t sec = sleepSeconds;
+        long nsec = (sleepSeconds - sec)*1000000000L;
+        req.tv_sec = sec;
+        req.tv_nsec = nsec;
+
+        // NOTE: Use nanosleep() on Unix platforms... usleep() it's deprecated.
+        while (nanosleep(&req, &req) == -1) continue;
+    #endif
+    #if defined(__APPLE__)
+        usleep(sleepSeconds*1000000.0);
+    #endif
+
+    #if defined(SUPPORT_PARTIALBUSY_WAIT_LOOP)
+        while (GetTime() < destinationTime) { }
+    #endif
+#endif
 }
 
 //----------------------------------------------------------------------------------
@@ -2288,6 +2333,30 @@ int GetTouchPointCount(void)
 // NOTE: Functions with a platform-specific implementation on rcore_<platform>.c
 //static bool InitGraphicsDevice(int width, int height)
 
+// Initialize hi-resolution timer
+void InitTimer(void)
+{
+// Setting a higher resolution can improve the accuracy of time-out intervals in wait functions.
+// However, it can also reduce overall system performance, because the thread scheduler switches tasks more often.
+// High resolutions can also prevent the CPU power management system from entering power-saving modes.
+// Setting a higher resolution does not improve the accuracy of the high-resolution performance counter.
+#if defined(_WIN32) && defined(SUPPORT_WINMM_HIGHRES_TIMER) && !defined(SUPPORT_BUSY_WAIT_LOOP)
+    timeBeginPeriod(1);                 // Setup high-resolution timer to 1ms (granularity of 1-2 ms)
+#endif
+
+#if defined(__linux__) || defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__EMSCRIPTEN__)
+    struct timespec now = { 0 };
+
+    if (clock_gettime(CLOCK_MONOTONIC, &now) == 0)  // Success
+    {
+        CORE.Time.base = (unsigned long long int)now.tv_sec*1000000000LLU + (unsigned long long int)now.tv_nsec;
+    }
+    else TRACELOG(LOG_WARNING, "TIMER: Hi-resolution timer not available");
+#endif
+
+    CORE.Time.previous = GetTime();     // Get time as double
+}
+
 // Set viewport for a provided width and height
 void SetupViewport(int width, int height)
 {
@@ -2393,76 +2462,6 @@ void SetupFramebuffer(int width, int height)
         CORE.Window.renderOffset.x = 0;
         CORE.Window.renderOffset.y = 0;
     }
-}
-
-// Initialize hi-resolution timer
-void InitTimer(void)
-{
-// Setting a higher resolution can improve the accuracy of time-out intervals in wait functions.
-// However, it can also reduce overall system performance, because the thread scheduler switches tasks more often.
-// High resolutions can also prevent the CPU power management system from entering power-saving modes.
-// Setting a higher resolution does not improve the accuracy of the high-resolution performance counter.
-#if defined(_WIN32) && defined(SUPPORT_WINMM_HIGHRES_TIMER) && !defined(SUPPORT_BUSY_WAIT_LOOP)
-    timeBeginPeriod(1);                 // Setup high-resolution timer to 1ms (granularity of 1-2 ms)
-#endif
-
-#if defined(__linux__) || defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__EMSCRIPTEN__)
-    struct timespec now = { 0 };
-
-    if (clock_gettime(CLOCK_MONOTONIC, &now) == 0)  // Success
-    {
-        CORE.Time.base = (unsigned long long int)now.tv_sec*1000000000LLU + (unsigned long long int)now.tv_nsec;
-    }
-    else TRACELOG(LOG_WARNING, "TIMER: Hi-resolution timer not available");
-#endif
-
-    CORE.Time.previous = GetTime();     // Get time as double
-}
-
-// Wait for some time (stop program execution)
-// NOTE: Sleep() granularity could be around 10 ms, it means, Sleep() could
-// take longer than expected... for that reason we use the busy wait loop
-// Ref: http://stackoverflow.com/questions/43057578/c-programming-win32-games-sleep-taking-longer-than-expected
-// Ref: http://www.geisswerks.com/ryan/FAQS/timing.html --> All about timing on Win32!
-void WaitTime(double seconds)
-{
-    if (seconds < 0) return;
-    
-#if defined(SUPPORT_BUSY_WAIT_LOOP) || defined(SUPPORT_PARTIALBUSY_WAIT_LOOP)
-    double destinationTime = GetTime() + seconds;
-#endif
-
-#if defined(SUPPORT_BUSY_WAIT_LOOP)
-    while (GetTime() < destinationTime) { }
-#else
-    #if defined(SUPPORT_PARTIALBUSY_WAIT_LOOP)
-        double sleepSeconds = seconds - seconds*0.05;  // NOTE: We reserve a percentage of the time for busy waiting
-    #else
-        double sleepSeconds = seconds;
-    #endif
-
-    // System halt functions
-    #if defined(_WIN32)
-        Sleep((unsigned long)(sleepSeconds*1000.0));
-    #endif
-    #if defined(__linux__) || defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__EMSCRIPTEN__)
-        struct timespec req = { 0 };
-        time_t sec = sleepSeconds;
-        long nsec = (sleepSeconds - sec)*1000000000L;
-        req.tv_sec = sec;
-        req.tv_nsec = nsec;
-
-        // NOTE: Use nanosleep() on Unix platforms... usleep() it's deprecated.
-        while (nanosleep(&req, &req) == -1) continue;
-    #endif
-    #if defined(__APPLE__)
-        usleep(sleepSeconds*1000000.0);
-    #endif
-
-    #if defined(SUPPORT_PARTIALBUSY_WAIT_LOOP)
-        while (GetTime() < destinationTime) { }
-    #endif
-#endif
 }
 
 // Scan all files and directories in a base path
