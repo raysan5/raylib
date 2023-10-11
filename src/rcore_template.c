@@ -1,6 +1,6 @@
 /**********************************************************************************************
 *
-*   rcore_<platform> - Functions to manage window, graphics device and inputs
+*   rcore_<platform> template - Functions to manage window, graphics device and inputs
 *
 *   PLATFORM: <PLATFORM>
 *       - TODO: Define the target platform for the core
