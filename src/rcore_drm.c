@@ -156,6 +156,7 @@ static void ProcessKeyboard(void);                      // Process keyboard even
 
 static void InitDrmInput(void);                         // Initialize inputs for DRM platform
 static void InitDrmJoystick(int index, const char *path);                 // Initialize a joystick for DRM platform
+static void PollDrmJoystickEvents();
 
 static void InitEvdevInput(void);                       // Initialize evdev inputs
 static void ConfigureEvdevDevice(char *device);         // Identifies a input device and configures it for use if appropriate
@@ -869,6 +870,7 @@ void PollInputEvents(void)
         CORE.Input.Keyboard.keyRepeatInFrame[i] = 0;
     }
 
+    PollDrmJoystickEvents();
     PollKeyboardEvents();
 
     // Register previous mouse states
@@ -1532,6 +1534,27 @@ static void InitDrmJoystick(int index, const char *path)
     TraceLog(LOG_INFO, TextFormat("Gamepad [%d] %s has %d axes", index, CORE.Input.Gamepad.name[index], CORE.Input.Gamepad.axisCount[index]));
 
     CORE.Input.Gamepad.ready[index] = true;
+}
+
+static void PollDrmJoystickEvents()
+{
+    struct input_event ev;
+
+    for (int i = 0; i < MAX_GAMEPADS; i++)
+    {
+        if (!CORE.Input.Gamepad.ready[i])
+            continue;
+        
+        while (read(platform.gamepadStreamFd, &ev, sizeof(ev)) > 0)
+        {
+            switch(ev.type)
+            {
+            case EV_KEY:
+                printf("Key %d = %d", ev.code, ev.value);
+                break;
+            }
+        }
+    }
 }
 
 // Initialise user input from evdev(/dev/input/event<N>)
