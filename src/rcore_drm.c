@@ -72,8 +72,14 @@
 //----------------------------------------------------------------------------------
 #define USE_LAST_TOUCH_DEVICE       // When multiple touchscreens are connected, only use the one with the highest event<N> number
 
-#define DEFAULT_GAMEPAD_DEV    "/dev/input/js"      // Gamepad input (base dev for all gamepads: js0, js1, ...)
-#define DEFAULT_EVDEV_PATH       "/dev/input/"      // Path to the linux input events
+#define DEFAULT_EVDEV_PATH       "/dev/input/by-id"      // Path to the linux input events
+
+#define MI_BITS_PER_LONG (8 * sizeof(long))
+#define MI_NBITS(x) ((((x)-1) / MI_BITS_PER_LONG) + 1)
+#define MI_OFF(x) ((x) % MI_BITS_PER_LONG)
+#define MI_BIT(x) (1UL << MI_OFF(x))
+#define MI_LONG(x) ((x) / MI_BITS_PER_LONG)
+#define MI_IS_BIT_SET(array, bit) ((array[MI_LONG(bit)] >> MI_OFF(bit)) & 1)
 
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
@@ -148,12 +154,15 @@ static void RestoreKeyboard(void);                      // Restore keyboard syst
 static void ProcessKeyboard(void);                      // Process keyboard events
 #endif
 
+static void InitDrmInput(void);                         // Initialize inputs for DRM platform
+static void InitDrmJoystick(int index, char *path)                 // Initialize a joystick for DRM platform
+
 static void InitEvdevInput(void);                       // Initialize evdev inputs
 static void ConfigureEvdevDevice(char *device);         // Identifies a input device and configures it for use if appropriate
 static void PollKeyboardEvents(void);                   // Process evdev keyboard events
 static void *EventThread(void *arg);                    // Input device events reading thread
 
-static void InitGamepad(void);                          // Initialize raw gamepad input
+//static void InitGamepad(void);                          // Initialize raw gamepad input
 static void *GamepadThread(void *arg);                  // Mouse reading thread
 
 static int FindMatchingConnectorMode(const drmModeConnector *connector, const drmModeModeInfo *mode);                               // Search matching DRM mode in connector's mode list
@@ -214,6 +223,11 @@ void InitWindow(int width, int height, const char *title)
     CORE.Input.Mouse.cursor = MOUSE_CURSOR_ARROW;
     CORE.Input.Gamepad.lastButtonPressed = 0; // GAMEPAD_BUTTON_UNKNOWN
     CORE.Window.eventWaiting = false;
+
+    for (int i = 0; i < MAX_GAMEPADS; i++)
+    {
+        CORE.Input.Gamepad.ready[i] = false;
+    }
 
     // Initialize graphics device (display device and OpenGL context)
     // NOTE: returns true if window and graphic device has been initialized successfully
@@ -277,8 +291,9 @@ void InitWindow(int width, int height, const char *title)
     // Platform specific init window
     //--------------------------------------------------------------
     // Initialize raw input system
+    InitDrmInput();   // DRM platform input initialization
     InitEvdevInput(); // Evdev inputs initialization
-    InitGamepad();    // Gamepad init
+    //InitGamepad();    // Gamepad init
     InitKeyboard();   // Keyboard init (stdin)
     //--------------------------------------------------------------
     
@@ -1424,6 +1439,98 @@ static void ProcessKeyboard(void)
 }
 #endif  // SUPPORT_SSH_KEYBOARD_RPI
 
+// Initialize user input from /dev/input/by-id
+// This includes keyobard, mouse, gamepads, and touch screens.
+static void InitDrmInput(void)
+{
+    char path[MAX_FILEPATH_LENGTH] = { 0 };
+    DIR *directory = NULL;
+    struct dirent *entity = NULL;
+
+    // Initialise keyboard file descriptor
+    platform.keyboardFd = -1;
+    
+    // Reset variables
+    for (int i = 0; i < MAX_TOUCH_POINTS; ++i)
+    {
+        CORE.Input.Touch.position[i].x = -1;
+        CORE.Input.Touch.position[i].y = -1;
+    }
+
+    // Reset keyboard key state
+    for (int i = 0; i < MAX_KEYBOARD_KEYS; i++)
+    {
+        CORE.Input.Keyboard.currentKeyState[i] = 0;
+        CORE.Input.Keyboard.keyRepeatInFrame[i] = 0;
+    }
+
+    // Open the linux directory of "/dev/input/by-id"
+    directory = opendir(DEFAULT_EVDEV_PATH);
+
+    if (directory)
+    {
+        while ((entity = readdir(directory)) != NULL)
+        {
+            sprintf(path, "%s%s", DEFAULT_EVDEV_PATH, entity->d_name);
+
+            // Devices are in the format:
+            // /dev/input/by-id/usb-Name_of_Device-[event-joystick|event-kbd|event-mouse]
+            int len = strlen("event-joystick");
+            if (strncmp("event-joystick", entity->d_name + (strlen(entity->d_name)-len), len) == 0)
+            {
+                TraceLog(LOG_INFO, TextFormat("Device %s is an event joystick", entity->d_name));
+                for (int i = 0; i < MAX_GAMEPADS; i++)
+                {
+                    if (CORE.Input.Gamepad.ready) 
+                        continue;
+                    
+                    InitDrmJoystick(i, path);
+                    break;                        
+                }   
+
+            }
+
+            len = strlen("event-kbd");
+            if (strncmp("event-kbd", entity->d_name + (strlen(entity->d_name)-len), len) == 0)
+            {
+                TraceLog(LOG_INFO, TextFormat("Device %s is an event keyboard", entity->d_name));
+            }
+
+            len = strlen("event-mouse");
+            if (strncmp("event-mouse", entity->d_name + (strlen(entity->d_name)-len), len) == 0)
+            {
+                TraceLog(LOG_INFO, TextFormat("Device %s is an event mouse", entity->d_name));
+            }
+        }
+
+        closedir(directory);
+    }
+}
+
+void InitDrmJoystick(int index, const char *path)
+{
+    if ((platform.gamepadStreamFd[index] = open(path, O_RDONLY | O_NONBLOCK)) < 0)
+    {
+        // This isn't an active device that can be read so return without doing anything else.
+        return;
+    }
+
+    // Get the bits describing the absolute axes of the device.
+    unsigned long abs_bits[ABS_MAX / 8 + 1] = {0};
+    ioctl(platform.gamepadStreamFd[index], EVIOCGBIT(EV_ABS, sizeof(abs_bits)), &abs_bits);
+
+    // Count the axes present on the device.
+    CORE.Input.Gamepad.axisCount = 0;
+    for (int axis = 0; axis < ABS_MAX; axis++)
+    {
+        if (MI_IS_BIT_SET(abs_bits, axis)) {
+            CORE.Input.Gamepad.axisCount++;
+        }
+    }
+
+    CORE.Input.Gamepad.ready[index] = true;
+}
+
 // Initialise user input from evdev(/dev/input/event<N>)
 // this means mouse, keyboard or gamepad devices
 static void InitEvdevInput(void)
@@ -1921,37 +2028,37 @@ static void *EventThread(void *arg)
 }
 
 // Initialize gamepad system
-static void InitGamepad(void)
-{
-    char gamepadDev[128] = { 0 };
-
-    for (int i = 0; i < MAX_GAMEPADS; i++)
-    {
-        sprintf(gamepadDev, "%s%i", DEFAULT_GAMEPAD_DEV, i);
-
-        if ((platform.gamepadStreamFd[i] = open(gamepadDev, O_RDONLY | O_NONBLOCK)) < 0)
-        {
-            // NOTE: Only show message for first gamepad
-            if (i == 0) TRACELOG(LOG_WARNING, "RPI: Failed to open Gamepad device, no gamepad available");
-        }
-        else
-        {
-            CORE.Input.Gamepad.ready[i] = true;
-
-            // NOTE: Only create one thread
-            if (i == 0)
-            {
-                int error = pthread_create(&platform.gamepadThreadId, NULL, &GamepadThread, NULL);
-
-                if (error != 0) TRACELOG(LOG_WARNING, "RPI: Failed to create gamepad input event thread");
-                else  TRACELOG(LOG_INFO, "RPI: Gamepad device initialized successfully");
-            }
-
-            ioctl(platform.gamepadStreamFd[i], JSIOCGNAME(64), &CORE.Input.Gamepad.name[i]);
-            ioctl(platform.gamepadStreamFd[i], JSIOCGAXES, &CORE.Input.Gamepad.axisCount);
-        }
-    }
-}
+// static void InitGamepad(void)
+// {
+//     char gamepadDev[128] = { 0 };
+// 
+//     for (int i = 0; i < MAX_GAMEPADS; i++)
+//     {
+//         sprintf(gamepadDev, "%s%i", DEFAULT_GAMEPAD_DEV, i);
+// 
+//         if ((platform.gamepadStreamFd[i] = open(gamepadDev, O_RDONLY | O_NONBLOCK)) < 0)
+//         {
+//             // NOTE: Only show message for first gamepad
+//             if (i == 0) TRACELOG(LOG_WARNING, "RPI: Failed to open Gamepad device, no gamepad available");
+//         }
+//         else
+//         {
+//             CORE.Input.Gamepad.ready[i] = true;
+// 
+//             // NOTE: Only create one thread
+//             if (i == 0)
+//             {
+//                 int error = pthread_create(&platform.gamepadThreadId, NULL, &GamepadThread, NULL);
+// 
+//                 if (error != 0) TRACELOG(LOG_WARNING, "RPI: Failed to create gamepad input event thread");
+//                 else  TRACELOG(LOG_INFO, "RPI: Gamepad device initialized successfully");
+//             }
+// 
+//             ioctl(platform.gamepadStreamFd[i], JSIOCGNAME(64), &CORE.Input.Gamepad.name[i]);
+//             ioctl(platform.gamepadStreamFd[i], JSIOCGAXES, &CORE.Input.Gamepad.axisCount);
+//         }
+//     }
+// }
 
 // Process Gamepad (/dev/input/js0)
 static void *GamepadThread(void *arg)
