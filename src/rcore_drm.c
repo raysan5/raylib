@@ -1443,6 +1443,8 @@ static void ProcessKeyboard(void)
 // This includes keyobard, mouse, gamepads, and touch screens.
 static void InitDrmInput(void)
 {
+    TraceLog(LOG_INFO, "RUNNING InitDrmInput");
+    
     char path[MAX_FILEPATH_LENGTH] = { 0 };
     DIR *directory = NULL;
     struct dirent *entity = NULL;
@@ -1487,7 +1489,6 @@ static void InitDrmInput(void)
                     InitDrmJoystick(i, path);
                     break;                        
                 }   
-
             }
 
             len = strlen("event-kbd");
