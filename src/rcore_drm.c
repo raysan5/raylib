@@ -1514,7 +1514,7 @@ static void InitDrmInput(void)
 
 static void InitDrmJoystick(int index, const char *path)
 {
-    TraceLog(LOG_INFO, "InitDrmJoystick");
+    TraceLog(LOG_INFO, TextFormat("InitDrmJoystick - %s", path);
 
     int result = (platform.gamepadStreamFd[index] = open(path, O_RDONLY | O_NONBLOCK));
     printf("Result of file open: %d\n", result);
