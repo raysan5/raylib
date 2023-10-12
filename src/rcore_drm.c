@@ -1508,7 +1508,7 @@ static void InitDrmInput(void)
     }
 }
 
-void InitDrmJoystick(int index, const char *path)
+static void InitDrmJoystick(int index, const char *path)
 {
     if ((platform.gamepadStreamFd[index] = open(path, O_RDONLY | O_NONBLOCK)) < 0)
     {
