@@ -862,11 +862,6 @@ void PollInputEvents(void)
     // Reset last gamepad button/axis registered state
     CORE.Input.Gamepad.lastButtonPressed = 0;       // GAMEPAD_BUTTON_UNKNOWN
     
-    for (int i = 0; i < MAX_GAMEPADS; i++)
-    {
-        CORE.Input.Gamepad.axisCount[i] = 0;
-    }
-
     // Register previous keys states
     for (int i = 0; i < MAX_KEYBOARD_KEYS; i++)
     {
@@ -1529,6 +1524,7 @@ static void InitDrmJoystick(int index, const char *path)
     for (int axis = 0; axis < ABS_MAX; axis++)
     {
         if (MI_IS_BIT_SET(abs_bits, axis)) {
+            TraceLog(LOG_INFO, TextFormat("Gamepad %d has axis %d", index, axis);
             CORE.Input.Gamepad.axisCount[index]++;
         }
     }
