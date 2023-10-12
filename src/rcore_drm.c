@@ -1487,7 +1487,7 @@ static void InitDrmInput(void)
                 TraceLog(LOG_INFO, TextFormat("Device %s is an event joystick", entity->d_name));
                 for (int i = 0; i < MAX_GAMEPADS; i++)
                 {
-                    if (CORE.Input.Gamepad.ready) 
+                    if (CORE.Input.Gamepad.ready[i]) 
                         continue;
                     
                     InitDrmJoystick(i, path);
@@ -1515,7 +1515,7 @@ static void InitDrmInput(void)
 static void InitDrmJoystick(int index, const char *path)
 {
     TraceLog(LOG_INFO, "InitDrmJoystick");
-    
+
     int result = (platform.gamepadStreamFd[index] = open(path, O_RDONLY | O_NONBLOCK));
     printf("Result of file open: %d\n", result);
 
