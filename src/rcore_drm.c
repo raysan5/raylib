@@ -155,7 +155,7 @@ static void ProcessKeyboard(void);                      // Process keyboard even
 #endif
 
 static void InitDrmInput(void);                         // Initialize inputs for DRM platform
-static void InitDrmJoystick(int index, char *path);                 // Initialize a joystick for DRM platform
+static void InitDrmJoystick(int index, const char *path);                 // Initialize a joystick for DRM platform
 
 static void InitEvdevInput(void);                       // Initialize evdev inputs
 static void ConfigureEvdevDevice(char *device);         // Identifies a input device and configures it for use if appropriate
