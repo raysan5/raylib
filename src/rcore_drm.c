@@ -155,7 +155,7 @@ static void ProcessKeyboard(void);                      // Process keyboard even
 #endif
 
 static void InitDrmInput(void);                         // Initialize inputs for DRM platform
-static void InitDrmJoystick(int index, char *path)                 // Initialize a joystick for DRM platform
+static void InitDrmJoystick(int index, char *path);                 // Initialize a joystick for DRM platform
 
 static void InitEvdevInput(void);                       // Initialize evdev inputs
 static void ConfigureEvdevDevice(char *device);         // Identifies a input device and configures it for use if appropriate
@@ -1444,7 +1444,7 @@ static void ProcessKeyboard(void)
 static void InitDrmInput(void)
 {
     TraceLog(LOG_INFO, "RUNNING InitDrmInput");
-    
+
     char path[MAX_FILEPATH_LENGTH] = { 0 };
     DIR *directory = NULL;
     struct dirent *entity = NULL;
