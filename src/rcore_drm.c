@@ -1524,7 +1524,7 @@ static void InitDrmJoystick(int index, const char *path)
     for (int axis = 0; axis < ABS_MAX; axis++)
     {
         if (MI_IS_BIT_SET(abs_bits, axis)) {
-            TraceLog(LOG_INFO, TextFormat("Gamepad %d has axis %d", index, axis);
+            TraceLog(LOG_INFO, TextFormat("Gamepad %d has axis %d", index, axis));
             CORE.Input.Gamepad.axisCount[index]++;
         }
     }
