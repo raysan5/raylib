@@ -1477,7 +1477,7 @@ static void InitDrmInput(void)
     {
         while ((entity = readdir(directory)) != NULL)
         {
-            sprintf(path, "%s%s", DEFAULT_EVDEV_PATH, entity->d_name);
+            sprintf(path, "%s/%s", DEFAULT_EVDEV_PATH, entity->d_name);
 
             // Devices are in the format:
             // /dev/input/by-id/usb-Name_of_Device-[event-joystick|event-kbd|event-mouse]
