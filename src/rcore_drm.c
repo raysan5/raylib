@@ -763,7 +763,7 @@ const char *GetGamepadName(int gamepad)
 // Get gamepad axis count
 int GetGamepadAxisCount(int gamepad)
 {
-    return CORE.Input.Gamepad.axisCount;
+    return CORE.Input.Gamepad.axisCount[gamepad];
 }
 
 // Set internal gamepad mappings
@@ -861,7 +861,11 @@ void PollInputEvents(void)
 
     // Reset last gamepad button/axis registered state
     CORE.Input.Gamepad.lastButtonPressed = 0;       // GAMEPAD_BUTTON_UNKNOWN
-    CORE.Input.Gamepad.axisCount = 0;
+    
+    for (int i = 0; i < MAX_GAMEPADS; i++)
+    {
+        CORE.Input.Gamepad.axisCount[i] = 0;
+    }
 
     // Register previous keys states
     for (int i = 0; i < MAX_KEYBOARD_KEYS; i++)
@@ -1519,15 +1523,18 @@ static void InitDrmJoystick(int index, const char *path)
     // Get the bits describing the absolute axes of the device.
     unsigned long abs_bits[ABS_MAX / 8 + 1] = {0};
     ioctl(platform.gamepadStreamFd[index], EVIOCGBIT(EV_ABS, sizeof(abs_bits)), &abs_bits);
+    ioctl(platform.gamepadStreamFd[index], EVIOCGNAME(64), &CORE.Input.Gamepad.name[index]);
 
     // Count the axes present on the device.
-    CORE.Input.Gamepad.axisCount = 0;
+    CORE.Input.Gamepad.axisCount[index] = 0;
     for (int axis = 0; axis < ABS_MAX; axis++)
     {
         if (MI_IS_BIT_SET(abs_bits, axis)) {
-            CORE.Input.Gamepad.axisCount++;
+            CORE.Input.Gamepad.axisCount[index]++;
         }
     }
+
+    TraceLog(LOG_INFO, TextFormat("Gamepad [%d] %s has %d axes", index, CORE.Input.Gamepad.name[index], CORE.Input.Gamepad.axisCount[index]));
 
     CORE.Input.Gamepad.ready[index] = true;
 }
