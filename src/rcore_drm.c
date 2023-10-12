@@ -1514,11 +1514,10 @@ static void InitDrmInput(void)
 
 static void InitDrmJoystick(int index, const char *path)
 {
-    if ((platform.gamepadStreamFd[index] = open(path, O_RDONLY | O_NONBLOCK)) < 0)
-    {
-        // This isn't an active device that can be read so return without doing anything else.
-        return;
-    }
+    TraceLog(LOG_INFO, "InitDrmJoystick");
+    
+    int result = (platform.gamepadStreamFd[index] = open(path, O_RDONLY | O_NONBLOCK));
+    printf("Result of file open: %d\n", result);
 
     // Get the bits describing the absolute axes of the device.
     unsigned long abs_bits[ABS_MAX / 8 + 1] = {0};
