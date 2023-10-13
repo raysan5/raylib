@@ -1178,6 +1178,16 @@ static int32_t AndroidInputCallback(struct android_app *app, AInputEvent *event)
     if (CORE.Input.Touch.pointCount > 0) CORE.Input.Touch.currentTouchState[MOUSE_BUTTON_LEFT] = 1;
     else CORE.Input.Touch.currentTouchState[MOUSE_BUTTON_LEFT] = 0;
 
+    // Stores the previous position of touch[0] only while it's active to calculate the delta.
+    if (flags == AMOTION_EVENT_ACTION_MOVE)
+    {
+        CORE.Input.Mouse.previousPosition = CORE.Input.Mouse.currentPosition;
+    }
+    else
+    {
+        CORE.Input.Mouse.previousPosition = CORE.Input.Touch.position[0];
+    }
+
     // Map touch[0] as mouse input for convenience
     CORE.Input.Mouse.currentPosition = CORE.Input.Touch.position[0];
     CORE.Input.Mouse.currentWheelMove = (Vector2){ 0.0f, 0.0f };
