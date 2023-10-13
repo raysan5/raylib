@@ -1572,7 +1572,7 @@ static void PollDrmJoystickEvents()
         if (!CORE.Input.Gamepad.ready[i])
             continue;
         
-        while (read(platform.gamepadStreamFd, &ev, sizeof(ev)) > 0)
+        while (read(platform.gamepadStreamFd[i], &ev, sizeof(ev)) > 0)
         {
             switch(ev.type)
             {
