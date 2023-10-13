@@ -1579,6 +1579,7 @@ static void PollDrmJoystickEvents()
             case EV_KEY:
                 if (ev.code < MAX_GAMEPAD_BUTTONS)
                 {
+                    printf("b %d = %d\n:", ev.code, ev.value);
                     CORE.Input.Gamepad.currentButtonState[i][ev.code] = ev.value;
                     for (int lookupButton = 0; lookupButton < MAX_GAMEPAD_BUTTONS; lookupButton++)
                     {
