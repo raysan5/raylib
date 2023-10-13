@@ -1338,10 +1338,16 @@ int GetRandomValue(int min, int max)
     return (rand()%(abs(max - min) + 1) + min);
 }
 
-// Set the seed for the random number generator
+// Set the seed for the random number generator using custom value.
 void SetRandomSeed(unsigned int seed)
 {
     srand(seed);
+}
+
+// Set the seed for the random number generator using time since epoch.
+void SetRandomSeedWithTime(void)
+{
+    srand((unsigned int)time(NULL));
 }
 
 // Takes a screenshot of current screen (saved a .png)
