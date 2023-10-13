@@ -1577,7 +1577,7 @@ static void PollDrmJoystickEvents()
             switch(ev.type)
             {
             case EV_KEY:
-                if (ev.code < MAX_GAMEPAD_BUTTONS)
+                if (ev.code < KEY_MAX)
                 {
                     printf("b %d = %d\n:", ev.code, ev.value);
                     CORE.Input.Gamepad.currentButtonState[i][ev.code] = ev.value;
