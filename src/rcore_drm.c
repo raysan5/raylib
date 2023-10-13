@@ -1550,7 +1550,7 @@ static void InitDrmJoystick(int index, const char *path)
     for (int axis = 0; axis < ABS_MAX; axis++)
     {
         // axis may be any number between 0x00 and 0x3f, and it is common for the first axis to be 0x10 (ABS_HAT0X). This maps the active axes to a range of IDs between 0 and MAX_GAMEPAD_AXIS
-        if (MI_IS_BIT_SET(abs_bits, axis) && CORE.Input.Gamepad.axisCount < MAX_GAMEPAD_AXIS) 
+        if (MI_IS_BIT_SET(abs_bits, axis) && CORE.Input.Gamepad.axisCount[index] < MAX_GAMEPAD_AXIS) 
         {
             platform.gamepadActiveAxes[index][CORE.Input.Gamepad.axisCount[index]++] = axis;               
             TraceLog(LOG_INFO, TextFormat("Gamepad %d has axis %d", index, axis));
