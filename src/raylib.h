@@ -371,6 +371,7 @@ typedef struct MaterialMap {
 // Material, includes shader and maps
 typedef struct Material {
     Shader shader;          // Material shader
+    Shader shaderInstanced; // Material shader
     MaterialMap *maps;      // Material maps array (MAX_MATERIAL_MAPS)
     float params[4];        // Material generic parameters (if required)
 } Material;
@@ -753,6 +754,7 @@ typedef enum {
     SHADER_LOC_VERTEX_NORMAL,       // Shader location: vertex attribute: normal
     SHADER_LOC_VERTEX_TANGENT,      // Shader location: vertex attribute: tangent
     SHADER_LOC_VERTEX_COLOR,        // Shader location: vertex attribute: color
+    SHADER_LOC_VERTEX_INSTANCE,     // Shader location: vertex attribute: instance (transform)
     SHADER_LOC_MATRIX_MVP,          // Shader location: matrix uniform: model-view-projection
     SHADER_LOC_MATRIX_VIEW,         // Shader location: matrix uniform: view (camera transform)
     SHADER_LOC_MATRIX_PROJECTION,   // Shader location: matrix uniform: projection

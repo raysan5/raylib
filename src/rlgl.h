@@ -467,6 +467,7 @@ typedef enum {
     RL_SHADER_LOC_VERTEX_NORMAL,        // Shader location: vertex attribute: normal
     RL_SHADER_LOC_VERTEX_TANGENT,       // Shader location: vertex attribute: tangent
     RL_SHADER_LOC_VERTEX_COLOR,         // Shader location: vertex attribute: color
+    RL_SHADER_LOC_VERTEX_INSTANCE,      // Shader location: vertex attribute: instance (transform)
     RL_SHADER_LOC_MATRIX_MVP,           // Shader location: matrix uniform: model-view-projection
     RL_SHADER_LOC_MATRIX_VIEW,          // Shader location: matrix uniform: view (camera transform)
     RL_SHADER_LOC_MATRIX_PROJECTION,    // Shader location: matrix uniform: projection
@@ -664,6 +665,8 @@ RLAPI int rlGetFramebufferHeight(void);                 // Get default framebuff
 RLAPI unsigned int rlGetTextureIdDefault(void);         // Get default texture id
 RLAPI unsigned int rlGetShaderIdDefault(void);          // Get default shader id
 RLAPI int *rlGetShaderLocsDefault(void);                // Get default shader locations
+RLAPI unsigned int rlGetShaderInstancedIdDefault(void);          // Get default shader instanced id
+RLAPI int *rlGetShaderInstancedLocsDefault(void);                // Get default shader instanced locations
 
 // Render batch management
 // NOTE: rlgl provides a default render batch to behave like OpenGL 1.1 immediate mode
@@ -978,6 +981,10 @@ typedef struct rlglData {
         unsigned int defaultFShaderId;      // Default fragment shader id (used by default shader program)
         unsigned int defaultShaderId;       // Default shader program id, supports vertex color and diffuse texture
         int *defaultShaderLocs;             // Default shader locations pointer to be used on rendering
+        unsigned int defaultVShaderInstancedId;      // Default vertex shader instanced id (used by default shader instanced program)
+        unsigned int defaultFShaderInstancedId;      // Default fragment shader instanced id (used by default shader instanced program)
+        unsigned int defaultShaderInstancedId;       // Default shader instanced program id, supports vertex color and diffuse texture
+        int *defaultShaderInstancedLocs;             // Default shader instanced locations pointer to be used on rendering
         unsigned int currentShaderId;       // Current shader id to be used on rendering (by default, defaultShaderId)
         int *currentShaderLocs;             // Current shader locations pointer to be used on rendering (by default, defaultShaderLocs)
 
@@ -1055,6 +1062,8 @@ static PFNGLVERTEXATTRIBDIVISOREXTPROC glVertexAttribDivisor = NULL;
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
 static void rlLoadShaderDefault(void);      // Load default shader
 static void rlUnloadShaderDefault(void);    // Unload default shader
+static void rlLoadShaderInstancedDefault(void);      // Load default shaderInstanced
+static void rlUnloadShaderInstancedDefault(void);    // Unload default shaderInstanced
 #if defined(RLGL_SHOW_GL_DETAILS_INFO)
 static char *rlGetCompressedFormatName(int format); // Get compressed format official GL identifier name
 #endif  // RLGL_SHOW_GL_DETAILS_INFO
@@ -2093,6 +2102,7 @@ void rlglInit(int width, int height)
     // Init default Shader (customized for GL 3.3 and ES2)
     // Loaded: RLGL.State.defaultShaderId + RLGL.State.defaultShaderLocs
     rlLoadShaderDefault();
+    rlLoadShaderInstancedDefault();
     RLGL.State.currentShaderId = RLGL.State.defaultShaderId;
     RLGL.State.currentShaderLocs = RLGL.State.defaultShaderLocs;
 
@@ -2159,6 +2169,7 @@ void rlglClose(void)
     rlUnloadRenderBatch(RLGL.defaultBatch);
 
     rlUnloadShaderDefault();          // Unload default shader
+    rlUnloadShaderInstancedDefault();          // Unload default shader
 
     glDeleteTextures(1, &RLGL.State.defaultTextureId); // Unload default texture
     TRACELOG(RL_LOG_INFO, "TEXTURE: [ID %i] Default texture unloaded successfully", RLGL.State.defaultTextureId);
@@ -2520,6 +2531,26 @@ int *rlGetShaderLocsDefault(void)
     int *locs = NULL;
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     locs = RLGL.State.defaultShaderLocs;
+#endif
+    return locs;
+}
+
+// Get default shader instanced id
+unsigned int rlGetShaderInstancedIdDefault(void)
+{
+    unsigned int id = 0;
+#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
+    id = RLGL.State.defaultShaderInstancedId;
+#endif
+    return id;
+}
+
+// Get default shader instanced locs
+int *rlGetShaderInstancedLocsDefault(void)
+{
+    int *locs = NULL;
+#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
+    locs = RLGL.State.defaultShaderInstancedLocs;
 #endif
     return locs;
 }
@@ -4660,6 +4691,136 @@ static void rlUnloadShaderDefault(void)
     RL_FREE(RLGL.State.defaultShaderLocs);
 
     TRACELOG(RL_LOG_INFO, "SHADER: [ID %i] Default shader unloaded successfully", RLGL.State.defaultShaderId);
+}
+
+// Load default instanced shader (just vertex positioning and texture coloring)
+static void rlLoadShaderInstancedDefault(void)
+{
+    RLGL.State.defaultShaderInstancedLocs = (int *)RL_CALLOC(RL_MAX_SHADER_LOCATIONS, sizeof(int));
+
+    // NOTE: All locations must be reseted to -1 (no location)
+    for (int i = 0; i < RL_MAX_SHADER_LOCATIONS; i++) RLGL.State.defaultShaderInstancedLocs[i] = -1;
+
+    // Vertex shader directly defined, no external file required
+    const char *defaultVShaderInstancedCode =
+#if defined(GRAPHICS_API_OPENGL_21)
+    "#version 120                       \n"
+    "attribute vec3 vertexPosition;     \n"
+    "attribute vec2 vertexTexCoord;     \n"
+    "attribute vec4 vertexColor;        \n"
+    "attribute mat4 instanceTransform;  \n"
+    "varying vec2 fragTexCoord;         \n"
+    "varying vec4 fragColor;            \n"
+#elif defined(GRAPHICS_API_OPENGL_33)
+    "#version 330                       \n"
+    "in vec3 vertexPosition;            \n"
+    "in vec2 vertexTexCoord;            \n"
+    "in vec4 vertexColor;               \n"
+    "in mat4 instanceTransform;         \n"
+    "out vec2 fragTexCoord;             \n"
+    "out vec4 fragColor;                \n"
+#endif
+#if defined(GRAPHICS_API_OPENGL_ES2)
+    "#version 100                       \n"
+    "precision mediump float;           \n"     // Precision required for OpenGL ES2 (WebGL) (on some browsers)
+    "attribute vec3 vertexPosition;     \n"
+    "attribute vec2 vertexTexCoord;     \n"
+    "attribute vec4 vertexColor;        \n"
+    "attribute mat4 instanceTransform;  \n"
+    "varying vec2 fragTexCoord;         \n"
+    "varying vec4 fragColor;            \n"
+#endif
+    "uniform mat4 mvp;                  \n"
+    "void main()                        \n"
+    "{                                  \n"
+    "    fragTexCoord = vertexTexCoord; \n"
+    "    fragColor = vertexColor;       \n"
+    "    gl_Position = mvp*instanceTransform*vec4(vertexPosition, 1.0); \n"
+    "}                                  \n";
+
+    // Fragment shader directly defined, no external file required
+    const char *defaultFShaderInstancedCode =
+#if defined(GRAPHICS_API_OPENGL_21)
+    "#version 120                       \n"
+    "varying vec2 fragTexCoord;         \n"
+    "varying vec4 fragColor;            \n"
+    "uniform sampler2D texture0;        \n"
+    "uniform vec4 colDiffuse;           \n"
+    "void main()                        \n"
+    "{                                  \n"
+    "    vec4 texelColor = texture2D(texture0, fragTexCoord); \n"
+    "    gl_FragColor = texelColor*colDiffuse*fragColor;      \n"
+    "}                                  \n";
+#elif defined(GRAPHICS_API_OPENGL_33)
+    "#version 330       \n"
+    "in vec2 fragTexCoord;              \n"
+    "in vec4 fragColor;                 \n"
+    "out vec4 finalColor;               \n"
+    "uniform sampler2D texture0;        \n"
+    "uniform vec4 colDiffuse;           \n"
+    "void main()                        \n"
+    "{                                  \n"
+    "    vec4 texelColor = texture(texture0, fragTexCoord);   \n"
+    "    finalColor = texelColor*colDiffuse*fragColor;        \n"
+    "}                                  \n";
+#endif
+#if defined(GRAPHICS_API_OPENGL_ES2)
+    "#version 100                       \n"
+    "precision mediump float;           \n"     // Precision required for OpenGL ES2 (WebGL)
+    "varying vec2 fragTexCoord;         \n"
+    "varying vec4 fragColor;            \n"
+    "uniform sampler2D texture0;        \n"
+    "uniform vec4 colDiffuse;           \n"
+    "void main()                        \n"
+    "{                                  \n"
+    "    vec4 texelColor = texture2D(texture0, fragTexCoord); \n"
+    "    gl_FragColor = texelColor*colDiffuse*fragColor;      \n"
+    "}                                  \n";
+#endif
+
+    // NOTE: Compiled vertex/fragment shaders are not deleted,
+    // they are kept for re-use as default shaders in case some shader loading fails
+    RLGL.State.defaultVShaderInstancedId = rlCompileShader(defaultVShaderInstancedCode, GL_VERTEX_SHADER);     // Compile default vertex shader
+    RLGL.State.defaultFShaderInstancedId = rlCompileShader(defaultFShaderInstancedCode, GL_FRAGMENT_SHADER);   // Compile default fragment shader
+
+    RLGL.State.defaultShaderInstancedId = rlLoadShaderProgram(RLGL.State.defaultVShaderInstancedId, RLGL.State.defaultFShaderInstancedId);
+
+    if (RLGL.State.defaultShaderInstancedId > 0)
+    {
+        TRACELOG(RL_LOG_INFO, "SHADER: [ID %i] Default instanced shader loaded successfully", RLGL.State.defaultShaderInstancedId);
+
+        // Set default shader locations: attributes locations
+        RLGL.State.defaultShaderInstancedLocs[RL_SHADER_LOC_VERTEX_POSITION] = glGetAttribLocation(RLGL.State.defaultShaderInstancedId, "vertexPosition");
+        RLGL.State.defaultShaderInstancedLocs[RL_SHADER_LOC_VERTEX_TEXCOORD01] = glGetAttribLocation(RLGL.State.defaultShaderInstancedId, "vertexTexCoord");
+        RLGL.State.defaultShaderInstancedLocs[RL_SHADER_LOC_VERTEX_COLOR] = glGetAttribLocation(RLGL.State.defaultShaderInstancedId, "vertexColor");
+
+        // For instanced rendering
+        RLGL.State.defaultShaderInstancedLocs[RL_SHADER_LOC_VERTEX_INSTANCE] = glGetAttribLocation(RLGL.State.defaultShaderInstancedId, "instanceTransform");
+
+        // Set default shader locations: uniform locations
+        RLGL.State.defaultShaderInstancedLocs[RL_SHADER_LOC_MATRIX_MVP]  = glGetUniformLocation(RLGL.State.defaultShaderInstancedId, "mvp");
+        RLGL.State.defaultShaderInstancedLocs[RL_SHADER_LOC_COLOR_DIFFUSE] = glGetUniformLocation(RLGL.State.defaultShaderInstancedId, "colDiffuse");
+        RLGL.State.defaultShaderInstancedLocs[RL_SHADER_LOC_MAP_DIFFUSE] = glGetUniformLocation(RLGL.State.defaultShaderInstancedId, "texture0");
+    }
+    else TRACELOG(RL_LOG_WARNING, "SHADER: [ID %i] Failed to load default instanced shader", RLGL.State.defaultShaderInstancedId);
+}
+
+// Unload default instanced shader
+// NOTE: Unloads: RLGL.State.defaultShaderInstancedId, RLGL.State.defaultShaderInstancedLocs
+static void rlUnloadShaderInstancedDefault(void)
+{
+    glUseProgram(0);
+
+    glDetachShader(RLGL.State.defaultShaderInstancedId, RLGL.State.defaultVShaderInstancedId);
+    glDetachShader(RLGL.State.defaultShaderInstancedId, RLGL.State.defaultFShaderInstancedId);
+    glDeleteShader(RLGL.State.defaultVShaderInstancedId);
+    glDeleteShader(RLGL.State.defaultFShaderInstancedId);
+
+    glDeleteProgram(RLGL.State.defaultShaderInstancedId);
+
+    RL_FREE(RLGL.State.defaultShaderInstancedLocs);
+
+    TRACELOG(RL_LOG_INFO, "SHADER: [ID %i] Default instanced shader unloaded successfully", RLGL.State.defaultShaderInstancedId);
 }
 
 #if defined(RLGL_SHOW_GL_DETAILS_INFO)

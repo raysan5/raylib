@@ -896,6 +896,7 @@ Shader LoadShaderFromMemory(const char *vsCode, const char *fsCode)
         shader.locs[SHADER_LOC_VERTEX_NORMAL] = rlGetLocationAttrib(shader.id, RL_DEFAULT_SHADER_ATTRIB_NAME_NORMAL);
         shader.locs[SHADER_LOC_VERTEX_TANGENT] = rlGetLocationAttrib(shader.id, RL_DEFAULT_SHADER_ATTRIB_NAME_TANGENT);
         shader.locs[SHADER_LOC_VERTEX_COLOR] = rlGetLocationAttrib(shader.id, RL_DEFAULT_SHADER_ATTRIB_NAME_COLOR);
+        shader.locs[SHADER_LOC_VERTEX_INSTANCE] = rlGetLocationAttrib(shader.id, RL_DEFAULT_SHADER_ATTRIB_NAME_INSTANCE);
 
         // Get handles to GLSL uniform locations (vertex shader)
         shader.locs[SHADER_LOC_MATRIX_MVP] = rlGetLocationUniform(shader.id, RL_DEFAULT_SHADER_UNIFORM_NAME_MVP);
@@ -931,6 +932,7 @@ bool IsShaderReady(Shader shader)
     // shader.locs[SHADER_LOC_VERTEX_NORMAL]
     // shader.locs[SHADER_LOC_VERTEX_TANGENT]
     // shader.locs[SHADER_LOC_VERTEX_COLOR]         // Set by default internal shader
+    // shader.locs[SHADER_LOC_VERTEX_INSTANCE]      // Set by default internal shader instanced
 
     // Vertex shader uniform locations (default)
     // shader.locs[SHADER_LOC_MATRIX_MVP]           // Set by default internal shader
