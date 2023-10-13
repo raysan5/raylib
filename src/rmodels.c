@@ -1539,7 +1539,7 @@ void DrawMeshInstanced(Mesh mesh, Material material, const Matrix *transforms, i
     unsigned int instancesVboId = 0;
 
     Shader shader = material.shaderInstanced;
-    if (material.shader.id != rlGetShaderIdDefault()) {
+    if (shader.id == rlGetShaderInstancedIdDefault() && shader.id != rlGetShaderIdDefault()) {
         shader = material.shader;
     }
 
