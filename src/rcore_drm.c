@@ -86,6 +86,11 @@
 //----------------------------------------------------------------------------------
 
 typedef struct {
+    int min;
+    int max;
+} GamepadAxisRange;
+
+typedef struct {
     pthread_t threadId;                 // Event reading thread id
 
     int fd;                             // File descriptor to the device it is assigned to
@@ -131,9 +136,13 @@ typedef struct {
     char currentButtonStateEvdev[MAX_MOUSE_BUTTONS]; // Holds the new mouse state for the next polling event to grab
 
     // Gamepad data
-    pthread_t gamepadThreadId;          // Gamepad reading thread id
-    int gamepadStreamFd[MAX_GAMEPADS];  // Gamepad device file descriptor
-
+    pthread_t gamepadThreadId;                                          // Gamepad reading thread id
+    int gamepadStreamFd[MAX_GAMEPADS];                                  // Gamepad device file descriptor
+    struct input_absinfo gamepadAxisFeatures[MAX_GAMEPADS][ABS_MAX];    // Store the features of each axis for each gamepad.
+    int gamepadActiveAxes[MAX_GAMEPADS][MAX_GAMEPAD_AXIS];              // Map axis ID to actual axis, e.g. the first axis found will be axis 0 as far as raylib is concerned but might actually be ABS_HAT0X (16) for some gamepads.
+    int gamepadButtonCount[MAX_GAMEPADS];                               // Store the number of active buttons found, up to MAX_GAMEPAD_BUTTONS
+    int gamepadActiveButtons[MAX_GAMEPADS][MAX_GAMEPAD_BUTTONS];        // Map button ID to actual key. e.g. the first key on a joystick might be KEY_A or KEY_X.
+    
 } PlatformData;
 
 //----------------------------------------------------------------------------------
@@ -1479,7 +1488,7 @@ static void InitDrmInput(void)
             // Devices are in the format:
             // /dev/input/by-id/usb-Name_of_Device-[event-joystick|event-kbd|event-mouse]
             int len = strlen("event-joystick");
-            if (strncmp("event-joystick", entity->d_name + (strlen(entity->d_name)-len), len) == 0)
+            if (strncmp("event-joystick", entity->d_name + (strlen(entity->d_name)-len), len) == 0) // If the device id ends with "event-joystick"
             {
                 TraceLog(LOG_INFO, TextFormat("Device %s is an event joystick", entity->d_name));
                 for (int i = 0; i < MAX_GAMEPADS; i++)
@@ -1493,13 +1502,13 @@ static void InitDrmInput(void)
             }
 
             len = strlen("event-kbd");
-            if (strncmp("event-kbd", entity->d_name + (strlen(entity->d_name)-len), len) == 0)
+            if (strncmp("event-kbd", entity->d_name + (strlen(entity->d_name)-len), len) == 0) // If the device id ends with "event-kbd"
             {
                 TraceLog(LOG_INFO, TextFormat("Device %s is an event keyboard", entity->d_name));
             }
 
             len = strlen("event-mouse");
-            if (strncmp("event-mouse", entity->d_name + (strlen(entity->d_name)-len), len) == 0)
+            if (strncmp("event-mouse", entity->d_name + (strlen(entity->d_name)-len), len) == 0) // If the device id ends with "event-mouse"
             {
                 TraceLog(LOG_INFO, TextFormat("Device %s is an event mouse", entity->d_name));
             }
@@ -1516,18 +1525,36 @@ static void InitDrmJoystick(int index, const char *path)
     int result = (platform.gamepadStreamFd[index] = open(path, O_RDONLY | O_NONBLOCK));
     printf("Result of file open: %d\n", result);
 
+    // Get the name of the device.
+    ioctl(platform.gamepadStreamFd[index], EVIOCGNAME(64), &CORE.Input.Gamepad.name[index]);
+
+    // Get the bits describing the buttons of the device.
+    unsigned long key_bits[KEY_MAX / 8 + 1] = {0};
+    ioctl(platform.gamepadStreamFd[index], EVIOCGBIT(EV_KEY, sizeof(key_bits)), &key_bits);
+
+    // Count the buttons present and map a game button id (0-32) to the key code of the physical button.
+    for (int key = 0; key < KEY_MAX; key++)
+    {
+        if (MI_IS_BIT_SET(key_bits, key) && platform.gamepadButtonCount[index] < MAX_GAMEPAD_BUTTONS)
+        {
+            platform.gamepadActiveButtons[index][platform.gamepadButtonCount[index]++] = key;
+        }
+    }
+
     // Get the bits describing the absolute axes of the device.
     unsigned long abs_bits[ABS_MAX / 8 + 1] = {0};
     ioctl(platform.gamepadStreamFd[index], EVIOCGBIT(EV_ABS, sizeof(abs_bits)), &abs_bits);
-    ioctl(platform.gamepadStreamFd[index], EVIOCGNAME(64), &CORE.Input.Gamepad.name[index]);
-
-    // Count the axes present on the device.
+    
+    // Count the axes present on the device and read their features.
     CORE.Input.Gamepad.axisCount[index] = 0;
     for (int axis = 0; axis < ABS_MAX; axis++)
     {
-        if (MI_IS_BIT_SET(abs_bits, axis)) {
+        // axis may be any number between 0x00 and 0x3f, and it is common for the first axis to be 0x10 (ABS_HAT0X). This maps the active axes to a range of IDs between 0 and MAX_GAMEPAD_AXIS
+        if (MI_IS_BIT_SET(abs_bits, axis) && CORE.Input.Gamepad.axisCount < MAX_GAMEPAD_AXIS) 
+        {
+            platform.gamepadActiveAxes[index][CORE.Input.Gamepad.axisCount[index]++] = axis;               
             TraceLog(LOG_INFO, TextFormat("Gamepad %d has axis %d", index, axis));
-            CORE.Input.Gamepad.axisCount[index]++;
+            ioctl(platform.gamepadStreamFd[index], EVIOCGABS(axis), &platform.gamepadAxisFeatures[index][axis]);
         }
     }
 
@@ -1550,7 +1577,32 @@ static void PollDrmJoystickEvents()
             switch(ev.type)
             {
             case EV_KEY:
-                printf("Key %d = %d", ev.code, ev.value);
+                if (ev.code < MAX_GAMEPAD_BUTTONS)
+                {
+                    CORE.Input.Gamepad.currentButtonState[i][ev.code] = ev.value;
+                    for (int lookupButton = 0; lookupButton < MAX_GAMEPAD_BUTTONS; lookupButton++)
+                    {
+                        if (platform.gamepadActiveButtons[i][lookupButton] == ev.code)
+                        {
+                            CORE.Input.Gamepad.currentButtonState[i][lookupButton] = ev.value;
+                            break;
+                        }
+                    }
+                }
+                break;
+            case EV_ABS:
+                if (ev.code < MAX_GAMEPAD_AXIS)
+                {
+                    struct input_absinfo f = platform.gamepadAxisFeatures[i][ev.code];
+                    for (int lookupAxis = 0; lookupAxis < MAX_GAMEPAD_AXIS; lookupAxis++)
+                    {
+                        if (platform.gamepadActiveAxes[i][lookupAxis] == ev.code) 
+                        {
+                            CORE.Input.Gamepad.axisState[i][lookupAxis] = ((float)ev.value - ((f.maximum - f.minimum) / 2.0f)) / (float)(f.maximum - f.minimum);
+                            break;
+                        }
+                    }
+                }
                 break;
             }
         }
@@ -2086,6 +2138,7 @@ static void *EventThread(void *arg)
 //     }
 // }
 
+/*
 // Process Gamepad (/dev/input/js0)
 static void *GamepadThread(void *arg)
 {
@@ -2142,6 +2195,7 @@ static void *GamepadThread(void *arg)
 
     return NULL;
 }
+*/
 
 // Search matching DRM mode in connector's mode list
 static int FindMatchingConnectorMode(const drmModeConnector *connector, const drmModeModeInfo *mode)
