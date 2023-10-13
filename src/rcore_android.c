@@ -190,7 +190,7 @@ void InitWindow(int width, int height, const char *title)
     CORE.Window.screen.height = height;
     CORE.Window.currentFbo.width = width;
     CORE.Window.currentFbo.height = height;
-    
+
     // Set desired windows flags before initializing anything
     ANativeActivity_setWindowFlags(platform.app->activity, AWINDOW_FLAG_FULLSCREEN, 0);  //AWINDOW_FLAG_SCALED, AWINDOW_FLAG_DITHER
 
@@ -228,12 +228,12 @@ void InitWindow(int width, int height, const char *title)
 
     // Initialize base path for storage
     CORE.Storage.basePath = platform.app->activity->internalDataPath;
-    
+
     // Set some default window flags
     CORE.Window.flags &= ~FLAG_WINDOW_HIDDEN;       // false
-    CORE.Window.flags &= ~FLAG_WINDOW_MINIMIZED);   // false
-    CORE.Window.flags |= FLAG_WINDOW_MAXIMIZED);    // true
-    CORE.Window.flags &= ~FLAG_WINDOW_UNFOCUSED);   // false
+    CORE.Window.flags &= ~FLAG_WINDOW_MINIMIZED;    // false
+    CORE.Window.flags |= FLAG_WINDOW_MAXIMIZED;     // true
+    CORE.Window.flags &= ~FLAG_WINDOW_UNFOCUSED;    // false
 
     TRACELOG(LOG_INFO, "PLATFORM: ANDROID: Application initialized successfully");
 
