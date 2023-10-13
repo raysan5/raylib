@@ -56,7 +56,7 @@ int main(void)
                 }
                 for (int button = 0; button < 32; button++)
                 {
-                    DrawText(TextFormat("\tButton %d = %d", button, IsGamepadButtonPressed(i, button)), 10, y, 20, BLACK);
+                    DrawText(TextFormat("\tButton %d = %d", button, IsGamepadButtonDown(i, button)), 10, y, 20, BLACK);
                     y += 30;
                 }
             }
