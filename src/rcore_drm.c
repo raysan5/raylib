@@ -1574,6 +1574,7 @@ static void PollDrmJoystickEvents()
         
         while (read(platform.gamepadStreamFd[i], &ev, sizeof(ev)) > 0)
         {
+            printf("event type: %d\n", ev.type);
             switch(ev.type)
             {
             case EV_KEY:
