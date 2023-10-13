@@ -228,16 +228,16 @@ void InitWindow(int width, int height, const char *title)
 
     // Set some default window flags
     CORE.Window.flags &= ~FLAG_WINDOW_HIDDEN;       // false
-    CORE.Window.flags &= ~FLAG_WINDOW_MINIMIZED);   // false
-    CORE.Window.flags |= FLAG_WINDOW_MAXIMIZED);    // true
-    CORE.Window.flags &= ~FLAG_WINDOW_UNFOCUSED);   // false
-    
+    CORE.Window.flags &= ~FLAG_WINDOW_MINIMIZED;    // false
+    CORE.Window.flags |= FLAG_WINDOW_MAXIMIZED;     // true
+    CORE.Window.flags &= ~FLAG_WINDOW_UNFOCUSED;    // false
+
     // Initialize hi-res timer
     InitTimer();
-    
+
     // Initialize base path for storage
     CORE.Storage.basePath = GetWorkingDirectory();
-    
+
     // Initialize raw input system
     InitEvdevInput(); // Evdev inputs initialization
     InitGamepad();    // Gamepad init
