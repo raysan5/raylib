@@ -1523,7 +1523,6 @@ static void InitDrmJoystick(int index, const char *path)
     TraceLog(LOG_INFO, TextFormat("InitDrmJoystick - %s", path));
 
     int result = (platform.gamepadStreamFd[index] = open(path, O_RDONLY | O_NONBLOCK));
-    printf("Result of file open: %d\n", result);
 
     // Get the name of the device.
     ioctl(platform.gamepadStreamFd[index], EVIOCGNAME(64), &CORE.Input.Gamepad.name[index]);
@@ -1574,13 +1573,11 @@ static void PollDrmJoystickEvents()
         
         while (read(platform.gamepadStreamFd[i], &ev, sizeof(ev)) > 0)
         {
-            printf("event type: %d\n", ev.type);
             switch(ev.type)
             {
             case EV_KEY:
                 if (ev.code < KEY_MAX)
                 {
-                    printf("b %d = %d\n:", ev.code, ev.value);
                     CORE.Input.Gamepad.currentButtonState[i][ev.code] = ev.value;
                     for (int lookupButton = 0; lookupButton < MAX_GAMEPAD_BUTTONS; lookupButton++)
                     {
