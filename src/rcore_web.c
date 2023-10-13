@@ -171,6 +171,9 @@ void InitWindow(int width, int height, const char *title)
     CORE.Input.Gamepad.lastButtonPressed = 0; // GAMEPAD_BUTTON_UNKNOWN
     CORE.Window.eventWaiting = false;
 
+
+    // Platform specific init window
+    //--------------------------------------------------------------
     // Initialize graphics device (display device and OpenGL context)
     // NOTE: returns true if window and graphic device has been initialized successfully
     CORE.Window.ready = InitGraphicsDevice(width, height);
@@ -181,12 +184,43 @@ void InitWindow(int width, int height, const char *title)
 
     // Initialize hi-res timer
     InitTimer();
+    
+    // Initialize base path for storage
+    CORE.Storage.basePath = GetWorkingDirectory();
+    
+    // Setup callback functions for the DOM events
+    emscripten_set_fullscreenchange_callback("#canvas", NULL, 1, EmscriptenFullscreenChangeCallback);
+
+    // WARNING: Below resize code was breaking fullscreen mode for sample games and examples, it needs review
+    // Check fullscreen change events(note this is done on the window since most browsers don't support this on #canvas)
+    // emscripten_set_fullscreenchange_callback(EMSCRIPTEN_EVENT_TARGET_WINDOW, NULL, 1, EmscriptenResizeCallback);
+    // Check Resize event (note this is done on the window since most browsers don't support this on #canvas)
+    emscripten_set_resize_callback(EMSCRIPTEN_EVENT_TARGET_WINDOW, NULL, 1, EmscriptenResizeCallback);
+
+    // Trigger this once to get initial window sizing
+    EmscriptenResizeCallback(EMSCRIPTEN_EVENT_RESIZE, NULL, NULL);
+
+    // Support keyboard events -> Not used, GLFW.JS takes care of that
+    // emscripten_set_keypress_callback("#canvas", NULL, 1, EmscriptenKeyboardCallback);
+    // emscripten_set_keydown_callback("#canvas", NULL, 1, EmscriptenKeyboardCallback);
+
+    // Support mouse events
+    emscripten_set_click_callback("#canvas", NULL, 1, EmscriptenMouseCallback);
+
+    // Support touch events
+    emscripten_set_touchstart_callback("#canvas", NULL, 1, EmscriptenTouchCallback);
+    emscripten_set_touchend_callback("#canvas", NULL, 1, EmscriptenTouchCallback);
+    emscripten_set_touchmove_callback("#canvas", NULL, 1, EmscriptenTouchCallback);
+    emscripten_set_touchcancel_callback("#canvas", NULL, 1, EmscriptenTouchCallback);
+
+    // Support gamepad events (not provided by GLFW3 on emscripten)
+    emscripten_set_gamepadconnected_callback(NULL, 1, EmscriptenGamepadCallback);
+    emscripten_set_gamepaddisconnected_callback(NULL, 1, EmscriptenGamepadCallback);
+    //--------------------------------------------------------------
+
 
     // Initialize random seed
     SetRandomSeed((unsigned int)time(NULL));
-
-    // Initialize base path for storage
-    CORE.Storage.basePath = GetWorkingDirectory();
 
 #if defined(SUPPORT_MODULE_RTEXT) && defined(SUPPORT_DEFAULT_FONT)
     // Load default font
@@ -229,38 +263,6 @@ void InitWindow(int width, int height, const char *title)
     events = (AutomationEvent *)RL_CALLOC(MAX_CODE_AUTOMATION_EVENTS, sizeof(AutomationEvent));
     CORE.Time.frameCounter = 0;
 #endif
-
-    // Platform specific init window
-    //--------------------------------------------------------------
-    // Setup callback functions for the DOM events
-    emscripten_set_fullscreenchange_callback("#canvas", NULL, 1, EmscriptenFullscreenChangeCallback);
-
-    // WARNING: Below resize code was breaking fullscreen mode for sample games and examples, it needs review
-    // Check fullscreen change events(note this is done on the window since most browsers don't support this on #canvas)
-    // emscripten_set_fullscreenchange_callback(EMSCRIPTEN_EVENT_TARGET_WINDOW, NULL, 1, EmscriptenResizeCallback);
-    // Check Resize event (note this is done on the window since most browsers don't support this on #canvas)
-    emscripten_set_resize_callback(EMSCRIPTEN_EVENT_TARGET_WINDOW, NULL, 1, EmscriptenResizeCallback);
-
-    // Trigger this once to get initial window sizing
-    EmscriptenResizeCallback(EMSCRIPTEN_EVENT_RESIZE, NULL, NULL);
-
-    // Support keyboard events -> Not used, GLFW.JS takes care of that
-    // emscripten_set_keypress_callback("#canvas", NULL, 1, EmscriptenKeyboardCallback);
-    // emscripten_set_keydown_callback("#canvas", NULL, 1, EmscriptenKeyboardCallback);
-
-    // Support mouse events
-    emscripten_set_click_callback("#canvas", NULL, 1, EmscriptenMouseCallback);
-
-    // Support touch events
-    emscripten_set_touchstart_callback("#canvas", NULL, 1, EmscriptenTouchCallback);
-    emscripten_set_touchend_callback("#canvas", NULL, 1, EmscriptenTouchCallback);
-    emscripten_set_touchmove_callback("#canvas", NULL, 1, EmscriptenTouchCallback);
-    emscripten_set_touchcancel_callback("#canvas", NULL, 1, EmscriptenTouchCallback);
-
-    // Support gamepad events (not provided by GLFW3 on emscripten)
-    emscripten_set_gamepadconnected_callback(NULL, 1, EmscriptenGamepadCallback);
-    emscripten_set_gamepaddisconnected_callback(NULL, 1, EmscriptenGamepadCallback);
-    //--------------------------------------------------------------
 
     TRACELOG(LOG_INFO, "PLATFORM: WEB: Application initialized successfully");
 }
@@ -307,36 +309,6 @@ bool WindowShouldClose(void)
     // but now emscripten allows sync code to be executed in an interpreted way, using emterpreter!
     emscripten_sleep(16);
     return false;
-}
-
-// Check if window is currently hidden
-bool IsWindowHidden(void)
-{
-    return false;
-}
-
-// Check if window has been minimized
-bool IsWindowMinimized(void)
-{
-    return false;
-}
-
-// Check if window has been maximized
-bool IsWindowMaximized(void)
-{
-    return false;
-}
-
-// Check if window has the focus
-bool IsWindowFocused(void)
-{
-    return ((CORE.Window.flags & FLAG_WINDOW_UNFOCUSED) == 0);
-}
-
-// Check if window has been resizedLastFrame
-bool IsWindowResized(void)
-{
-    return CORE.Window.resizedLastFrame;
 }
 
 // Toggle fullscreen mode

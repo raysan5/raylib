@@ -2,7 +2,7 @@
 *
 *   rcore_desktop - Functions to manage window, graphics device and inputs
 *
-*   PLATFORM: DESKTOP
+*   PLATFORM: DESKTOP: GLFW
 *       - Windows (Win32, Win64)
 *       - Linux (X11/Wayland desktop mode)
 *       - FreeBSD, OpenBSD, NetBSD, DragonFly (X11 desktop)
@@ -187,8 +187,26 @@ void InitWindow(int width, int height, const char *title)
     CORE.Input.Gamepad.lastButtonPressed = 0;       // GAMEPAD_BUTTON_UNKNOWN
     CORE.Window.eventWaiting = false;
 
+
+    // Platform specific init window
+    //--------------------------------------------------------------
+    glfwSetErrorCallback(ErrorCallback);
+/*
+    // TODO: Setup GLFW custom allocators to match raylib ones
+    const GLFWallocator allocator = {
+        .allocate = MemAlloc,
+        .deallocate = MemFree,
+        .reallocate = MemRealloc,
+        .user = NULL
+    };
+
+    glfwInitAllocator(&allocator);
+*/
+
     // Initialize graphics device
     // NOTE: returns true if window and graphic device has been initialized successfully
+    // WARNING: Actually, all window initialization and input callbacks initialization is
+    // done inside InitGraphicsDevice(), this functionality should be changed!
     CORE.Window.ready = InitGraphicsDevice(width, height);
 
     // If graphic device is no properly initialized, we end program
@@ -197,12 +215,14 @@ void InitWindow(int width, int height, const char *title)
 
     // Initialize hi-res timer
     InitTimer();
+    
+    // Initialize base path for storage
+    CORE.Storage.basePath = GetWorkingDirectory();
+    //--------------------------------------------------------------
+
 
     // Initialize random seed
     SetRandomSeed((unsigned int)time(NULL));
-
-    // Initialize base path for storage
-    CORE.Storage.basePath = GetWorkingDirectory();
 
 #if defined(SUPPORT_MODULE_RTEXT) && defined(SUPPORT_DEFAULT_FONT)
     // Load default font
@@ -302,36 +322,6 @@ bool WindowShouldClose(void)
         return CORE.Window.shouldClose;
     }
     else return true;
-}
-
-// Check if window is currently hidden
-bool IsWindowHidden(void)
-{
-    return ((CORE.Window.flags & FLAG_WINDOW_HIDDEN) > 0);
-}
-
-// Check if window has been minimized
-bool IsWindowMinimized(void)
-{
-    return ((CORE.Window.flags & FLAG_WINDOW_MINIMIZED) > 0);
-}
-
-// Check if window has been maximized
-bool IsWindowMaximized(void)
-{
-    return ((CORE.Window.flags & FLAG_WINDOW_MAXIMIZED) > 0);
-}
-
-// Check if window has the focus
-bool IsWindowFocused(void)
-{
-    return ((CORE.Window.flags & FLAG_WINDOW_UNFOCUSED) == 0);
-}
-
-// Check if window has been resizedLastFrame
-bool IsWindowResized(void)
-{
-    return CORE.Window.resizedLastFrame;
 }
 
 // Toggle fullscreen mode
@@ -1408,18 +1398,6 @@ static bool InitGraphicsDevice(int width, int height)
     // NOTE: Framebuffer (render area - CORE.Window.render.width, CORE.Window.render.height) could include black bars...
     // ...in top-down or left-right to match display aspect ratio (no weird scaling)
 
-    glfwSetErrorCallback(ErrorCallback);
-/*
-    // TODO: Setup GLFW custom allocators to match raylib ones
-    const GLFWallocator allocator = {
-        .allocate = MemAlloc,
-        .deallocate = MemFree,
-        .reallocate = MemRealloc,
-        .user = NULL
-    };
-
-    glfwInitAllocator(&allocator);
-*/
 #if defined(__APPLE__)
     glfwInitHint(GLFW_COCOA_CHDIR_RESOURCES, GLFW_FALSE);
 #endif

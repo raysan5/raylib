@@ -128,8 +128,11 @@ void InitWindow(int width, int height, const char *title)
     CORE.Input.Mouse.scale = (Vector2){ 1.0f, 1.0f };
     CORE.Input.Mouse.cursor = MOUSE_CURSOR_ARROW;
     CORE.Input.Gamepad.lastButtonPressed = 0;       // GAMEPAD_BUTTON_UNKNOWN
-
     CORE.Window.eventWaiting = false;
+    
+    
+    // TODO: Platform specific init window
+    //--------------------------------------------------------------
     CORE.Window.screen.width = width;
     CORE.Window.screen.height = height;
     CORE.Window.currentFbo.width = width;
@@ -144,12 +147,14 @@ void InitWindow(int width, int height, const char *title)
 
     // Initialize hi-res timer
     InitTimer();
+    
+    // Initialize base path for storage
+    CORE.Storage.basePath = GetWorkingDirectory();
+    //--------------------------------------------------------------
+
 
     // Initialize random seed
     SetRandomSeed((unsigned int)time(NULL));
-
-    // Initialize base path for storage
-    CORE.Storage.basePath = GetWorkingDirectory();
 
 #if defined(SUPPORT_MODULE_RTEXT) && defined(SUPPORT_DEFAULT_FONT)
     // Load default font
@@ -193,11 +198,6 @@ void InitWindow(int width, int height, const char *title)
     CORE.Time.frameCounter = 0;
 #endif
 
-    // TODO: Platform specific init window
-    //--------------------------------------------------------------
-    // ...
-    //--------------------------------------------------------------
-
     TRACELOG(LOG_INFO, "PLATFORM: CUSTOM: Application initialized successfully");
 }
 
@@ -237,36 +237,6 @@ bool WindowShouldClose(void)
 {
     if (CORE.Window.ready) return CORE.Window.shouldClose;
     else return true;
-}
-
-// Check if window is currently hidden
-bool IsWindowHidden(void)
-{
-    return false;
-}
-
-// Check if window has been minimized
-bool IsWindowMinimized(void)
-{
-    return false;
-}
-
-// Check if window has been maximized
-bool IsWindowMaximized(void)
-{
-    return false;
-}
-
-// Check if window has the focus
-bool IsWindowFocused(void)
-{
-    return platform.appEnabled;
-}
-
-// Check if window has been resizedLastFrame
-bool IsWindowResized(void)
-{
-    return false;
 }
 
 // Toggle fullscreen mode

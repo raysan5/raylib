@@ -322,18 +322,15 @@ const char *TextFormat(const char *text, ...);       // Formatting of text with 
 //void InitWindow(int width, int height, const char *title)
 //void CloseWindow(void)
 //bool WindowShouldClose(void)
-//bool IsWindowHidden(void)
-//bool IsWindowMinimized(void)
-//bool IsWindowMaximized(void)
-//bool IsWindowFocused(void)
-//bool IsWindowResized(void)
 //void ToggleFullscreen(void)
+//void ToggleBorderlessWindowed(void)
 //void MaximizeWindow(void)
 //void MinimizeWindow(void)
 //void RestoreWindow(void)
-//void ToggleBorderlessWindowed(void)
+
 //void SetWindowState(unsigned int flags)
 //void ClearWindowState(unsigned int flags)
+
 //void SetWindowIcon(Image image)
 //void SetWindowIcons(Image *images, int count)
 //void SetWindowTitle(const char *title)
@@ -345,24 +342,26 @@ const char *TextFormat(const char *text, ...);       // Formatting of text with 
 //void SetWindowOpacity(float opacity)
 //void SetWindowFocused(void)
 //void *GetWindowHandle(void)
+//Vector2 GetWindowPosition(void)
+//Vector2 GetWindowScaleDPI(void)
+
 //int GetMonitorCount(void)
 //int GetCurrentMonitor(void)
-//Vector2 GetMonitorPosition(int monitor)
 //int GetMonitorWidth(int monitor)
 //int GetMonitorHeight(int monitor)
 //int GetMonitorPhysicalWidth(int monitor)
 //int GetMonitorPhysicalHeight(int monitor)
 //int GetMonitorRefreshRate(int monitor)
+//Vector2 GetMonitorPosition(int monitor)
 //const char *GetMonitorName(int monitor)
-//Vector2 GetWindowPosition(void)
-//Vector2 GetWindowScaleDPI(void)
+
 //void SetClipboardText(const char *text)
 //const char *GetClipboardText(void)
+
 //void ShowCursor(void)
 //void HideCursor(void)
 //void EnableCursor(void)
 //void DisableCursor(void)
-
 
 // Check if window has been initialized successfully
 bool IsWindowReady(void)
@@ -374,6 +373,36 @@ bool IsWindowReady(void)
 bool IsWindowFullscreen(void)
 {
     return CORE.Window.fullscreen;
+}
+
+// Check if window is currently hidden
+bool IsWindowHidden(void)
+{
+    return ((CORE.Window.flags & FLAG_WINDOW_HIDDEN) > 0);
+}
+
+// Check if window has been minimized
+bool IsWindowMinimized(void)
+{
+    return ((CORE.Window.flags & FLAG_WINDOW_MINIMIZED) > 0);
+}
+
+// Check if window has been maximized
+bool IsWindowMaximized(void)
+{
+    return ((CORE.Window.flags & FLAG_WINDOW_MAXIMIZED) > 0);
+}
+
+// Check if window has the focus
+bool IsWindowFocused(void)
+{
+    return ((CORE.Window.flags & FLAG_WINDOW_UNFOCUSED) == 0);
+}
+
+// Check if window has been resizedLastFrame
+bool IsWindowResized(void)
+{
+    return CORE.Window.resizedLastFrame;
 }
 
 // Check if one specific window flag is enabled
@@ -394,13 +423,13 @@ int GetScreenHeight(void)
     return CORE.Window.screen.height;
 }
 
-// Get current render width which is equal to screen width * dpi scale
+// Get current render width which is equal to screen width*dpi scale
 int GetRenderWidth(void)
 {
     return CORE.Window.render.width;
 }
 
-// Get current screen height which is equal to screen height * dpi scale
+// Get current screen height which is equal to screen height*dpi scale
 int GetRenderHeight(void)
 {
     return CORE.Window.render.height;

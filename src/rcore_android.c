@@ -183,13 +183,14 @@ void InitWindow(int width, int height, const char *title)
     CORE.Input.Gamepad.lastButtonPressed = 0;       // GAMEPAD_BUTTON_UNKNOWN
     CORE.Window.eventWaiting = false;
 
+
+    // Platform specific init window
+    //--------------------------------------------------------------
     CORE.Window.screen.width = width;
     CORE.Window.screen.height = height;
     CORE.Window.currentFbo.width = width;
     CORE.Window.currentFbo.height = height;
-
-    // Platform specific init window
-    //--------------------------------------------------------------
+    
     // Set desired windows flags before initializing anything
     ANativeActivity_setWindowFlags(platform.app->activity, AWINDOW_FLAG_FULLSCREEN, 0);  //AWINDOW_FLAG_SCALED, AWINDOW_FLAG_DITHER
 
@@ -227,6 +228,12 @@ void InitWindow(int width, int height, const char *title)
 
     // Initialize base path for storage
     CORE.Storage.basePath = platform.app->activity->internalDataPath;
+    
+    // Set some default window flags
+    CORE.Window.flags &= ~FLAG_WINDOW_HIDDEN;       // false
+    CORE.Window.flags &= ~FLAG_WINDOW_MINIMIZED);   // false
+    CORE.Window.flags |= FLAG_WINDOW_MAXIMIZED);    // true
+    CORE.Window.flags &= ~FLAG_WINDOW_UNFOCUSED);   // false
 
     TRACELOG(LOG_INFO, "PLATFORM: ANDROID: Application initialized successfully");
 
@@ -309,36 +316,6 @@ bool WindowShouldClose(void)
 {
     if (CORE.Window.ready) return CORE.Window.shouldClose;
     else return true;
-}
-
-// Check if window is currently hidden
-bool IsWindowHidden(void)
-{
-    return false;
-}
-
-// Check if window has been minimized
-bool IsWindowMinimized(void)
-{
-    return false;
-}
-
-// Check if window has been maximized
-bool IsWindowMaximized(void)
-{
-    return false;
-}
-
-// Check if window has the focus
-bool IsWindowFocused(void)
-{
-    return platform.appEnabled;
-}
-
-// Check if window has been resizedLastFrame
-bool IsWindowResized(void)
-{
-    return false;
 }
 
 // Toggle fullscreen mode
@@ -936,12 +913,14 @@ static void AndroidCommandCallback(struct android_app *app, int32_t cmd)
         case APP_CMD_GAINED_FOCUS:
         {
             platform.appEnabled = true;
+            CORE.Window.flags &= ~FLAG_WINDOW_UNFOCUSED;
             //ResumeMusicStream();
         } break;
         case APP_CMD_PAUSE: break;
         case APP_CMD_LOST_FOCUS:
         {
             platform.appEnabled = false;
+            CORE.Window.flags |= FLAG_WINDOW_UNFOCUSED;
             //PauseMusicStream();
         } break;
         case APP_CMD_TERM_WINDOW:
