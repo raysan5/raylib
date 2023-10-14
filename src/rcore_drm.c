@@ -174,7 +174,7 @@ static void PollKeyboardEvents(void);                   // Process evdev keyboar
 static void *EventThread(void *arg);                    // Input device events reading thread
 
 //static void InitGamepad(void);                          // Initialize raw gamepad input
-static void *GamepadThread(void *arg);                  // Mouse reading thread
+//static void *GamepadThread(void *arg);                  // Mouse reading thread
 
 static int FindMatchingConnectorMode(const drmModeConnector *connector, const drmModeModeInfo *mode);                               // Search matching DRM mode in connector's mode list
 static int FindExactConnectorMode(const drmModeConnector *connector, uint width, uint height, uint fps, bool allowInterlaced);      // Search exactly matching DRM connector mode in connector's list
@@ -1074,7 +1074,8 @@ static int InitPlatform(void)
 
     // Initialize raw input system
     InitEvdevInput(); // Evdev inputs initialization
-    InitGamepad();    // Gamepad init
+    InitDrmInput();
+    //InitGamepad();    // Gamepad init
     InitKeyboard();   // Keyboard init (stdin)
     
     return 0;
@@ -1417,7 +1418,7 @@ static void InitDrmJoystick(int index, const char *path)
 {
     TraceLog(LOG_INFO, TextFormat("InitDrmJoystick - %s", path));
 
-    int result = (platform.gamepadStreamFd[index] = open(path, O_RDONLY | O_NONBLOCK));
+    platform.gamepadStreamFd[index] = open(path, O_RDONLY | O_NONBLOCK);
 
     // Get the name of the device.
     ioctl(platform.gamepadStreamFd[index], EVIOCGNAME(64), &CORE.Input.Gamepad.name[index]);

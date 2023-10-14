@@ -2168,7 +2168,7 @@ int GetGamepadButtonPressed(void)
 // Get gamepad axis count
 int GetGamepadAxisCount(int gamepad)
 {
-    return CORE.Input.Gamepad.axisCount;
+    return CORE.Input.Gamepad.axisCount[gamepad];
 }
 
 // Get axis movement vector for a gamepad
