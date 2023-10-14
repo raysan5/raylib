@@ -62,6 +62,8 @@ int main(void)
             }
         }
 
+        DrawFPS(GetScreenWidth() - 100, 100);
+
         EndDrawing();
     }
 
