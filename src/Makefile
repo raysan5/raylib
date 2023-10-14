@@ -634,6 +634,7 @@ endif
 
 # Compile core module
 rcore.o : rcore.c raylib.h rlgl.h utils.h raymath.h rcamera.h rgestures.h
+rcore.o : rcore_android.c rcore_desktop.c rcore_drm.c rcore_template.c rcore_web.c
 	$(CC) -c $< $(CFLAGS) $(INCLUDE_PATHS)
 
 # Compile rglfw module
