@@ -1230,7 +1230,7 @@ int GetFPS(void)
 
     static int index = 0;
     static float history[FPS_CAPTURE_FRAMES_COUNT] = { 0 };
-    static float average = 0, wait = 0;
+    static float average = 0, wait = FPS_STEP;
     float fpsFrame = GetFrameTime();
 
     if (fpsFrame == 0) return 0;
