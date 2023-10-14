@@ -53,12 +53,12 @@ pub fn addRaylib(b: *std.Build, target: std.zig.CrossTarget, optimize: std.built
         }, raylib_flags);
     }
 
-    var gen_step = std.build.Step.WriteFile.create(b);
+    var gen_step = b.addWriteFiles();
     raylib.step.dependOn(&gen_step.step);
 
     if (options.raygui) {
-        _ = gen_step.add(srcdir ++ "/raygui.c", "#define RAYGUI_IMPLEMENTATION\n#include \"raygui.h\"\n");
-        raylib.addCSourceFile(.{ .file = .{ .path = srcdir ++ "/raygui.c" }, .flags = raylib_flags });
+        const raygui_c_path = gen_step.add("raygui.c", "#define RAYGUI_IMPLEMENTATION\n#include \"raygui.h\"\n");
+        raylib.addCSourceFile(.{ .file = raygui_c_path, .flags = raylib_flags });
         raylib.addIncludePath(.{ .path = srcdir });
         raylib.addIncludePath(.{ .path = srcdir ++ "/../../raygui/src" });
     }
