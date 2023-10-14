@@ -82,7 +82,8 @@ static PlatformData platform = { 0 };   // Platform specific data
 //----------------------------------------------------------------------------------
 // Module Internal Functions Declaration
 //----------------------------------------------------------------------------------
-static bool InitGraphicsDevice(int width, int height); // Initialize graphics device
+static int InitPlatform(void);          // Initialize platform (graphics, inputs and more)
+static void ClosePlatform(void);        // Close platform
 
 static void AndroidCommandCallback(struct android_app *app, int32_t cmd);           // Process Android activity lifecycle commands
 static int32_t AndroidInputCallback(struct android_app *app, AInputEvent *event);   // Process Android inputs
@@ -172,88 +173,23 @@ void InitWindow(int width, int height, const char *title)
     TRACELOG(LOG_INFO, "    > raudio:.... not loaded (optional)");
 #endif
 
-    // NOTE: Keep internal pointer to input title string (no copy)
+    // Initialize window data
+    CORE.Window.screen.width = width;
+    CORE.Window.screen.height = height;
+    CORE.Window.eventWaiting = false;
+    CORE.Window.screenScale = MatrixIdentity();     // No draw scaling required by default
     if ((title != NULL) && (title[0] != 0)) CORE.Window.title = title;
 
     // Initialize global input state
-    memset(&CORE.Input, 0, sizeof(CORE.Input));
+    memset(&CORE.Input, 0, sizeof(CORE.Input));     // Reset CORE.Input structure to 0
     CORE.Input.Keyboard.exitKey = KEY_ESCAPE;
     CORE.Input.Mouse.scale = (Vector2){ 1.0f, 1.0f };
     CORE.Input.Mouse.cursor = MOUSE_CURSOR_ARROW;
-    CORE.Input.Gamepad.lastButtonPressed = 0;       // GAMEPAD_BUTTON_UNKNOWN
-    CORE.Window.eventWaiting = false;
+    CORE.Input.Gamepad.lastButtonPressed = GAMEPAD_BUTTON_UNKNOWN;
 
-
-    // Platform specific init window
-    //--------------------------------------------------------------
-    CORE.Window.screen.width = width;
-    CORE.Window.screen.height = height;
-    CORE.Window.currentFbo.width = width;
-    CORE.Window.currentFbo.height = height;
-
-    // Set desired windows flags before initializing anything
-    ANativeActivity_setWindowFlags(platform.app->activity, AWINDOW_FLAG_FULLSCREEN, 0);  //AWINDOW_FLAG_SCALED, AWINDOW_FLAG_DITHER
-
-    int orientation = AConfiguration_getOrientation(platform.app->config);
-
-    if (orientation == ACONFIGURATION_ORIENTATION_PORT) TRACELOG(LOG_INFO, "ANDROID: Window orientation set as portrait");
-    else if (orientation == ACONFIGURATION_ORIENTATION_LAND) TRACELOG(LOG_INFO, "ANDROID: Window orientation set as landscape");
-
-    // TODO: Automatic orientation doesn't seem to work
-    if (width <= height)
-    {
-        AConfiguration_setOrientation(platform.app->config, ACONFIGURATION_ORIENTATION_PORT);
-        TRACELOG(LOG_WARNING, "ANDROID: Window orientation changed to portrait");
-    }
-    else
-    {
-        AConfiguration_setOrientation(platform.app->config, ACONFIGURATION_ORIENTATION_LAND);
-        TRACELOG(LOG_WARNING, "ANDROID: Window orientation changed to landscape");
-    }
-
-    //AConfiguration_getDensity(platform.app->config);
-    //AConfiguration_getKeyboard(platform.app->config);
-    //AConfiguration_getScreenSize(platform.app->config);
-    //AConfiguration_getScreenLong(platform.app->config);
-
-    // Initialize App command system
-    // NOTE: On APP_CMD_INIT_WINDOW -> InitGraphicsDevice(), InitTimer(), LoadFontDefault()...
-    platform.app->onAppCmd = AndroidCommandCallback;
-
-    // Initialize input events system
-    platform.app->onInputEvent = AndroidInputCallback;
-
-    // Initialize assets manager
-    InitAssetManager(platform.app->activity->assetManager, platform.app->activity->internalDataPath);
-
-    // Initialize base path for storage
-    CORE.Storage.basePath = platform.app->activity->internalDataPath;
-
-    // Set some default window flags
-    CORE.Window.flags &= ~FLAG_WINDOW_HIDDEN;       // false
-    CORE.Window.flags &= ~FLAG_WINDOW_MINIMIZED;    // false
-    CORE.Window.flags |= FLAG_WINDOW_MAXIMIZED;     // true
-    CORE.Window.flags &= ~FLAG_WINDOW_UNFOCUSED;    // false
-
-    TRACELOG(LOG_INFO, "PLATFORM: ANDROID: Application initialized successfully");
-
-    // Android ALooper_pollAll() variables
-    int pollResult = 0;
-    int pollEvents = 0;
-
-    // Wait for window to be initialized (display and context)
-    while (!CORE.Window.ready)
-    {
-        // Process events loop
-        while ((pollResult = ALooper_pollAll(0, NULL, &pollEvents, (void**)&platform.source)) >= 0)
-        {
-            // Process this event
-            if (platform.source != NULL) platform.source->process(platform.app, platform.source);
-
-            // NOTE: Never close window, native activity is controlled by the system!
-            //if (platform.app->destroyRequested != 0) CORE.Window.shouldClose = true;
-        }
-    }
+    // Initialize platform
+    //--------------------------------------------------------------   
+    InitPlatform();
     //--------------------------------------------------------------
 }
 
@@ -279,28 +215,9 @@ void CloseWindow(void)
     timeEndPeriod(1);           // Restore time period
 #endif
 
-    // Platform specific close window
-    //--------------------------------------------------------------
-    // Close surface, context and display
-    if (platform.device != EGL_NO_DISPLAY)
-    {
-        eglMakeCurrent(platform.device, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
-
-        if (platform.surface != EGL_NO_SURFACE)
-        {
-            eglDestroySurface(platform.device, platform.surface);
-            platform.surface = EGL_NO_SURFACE;
-        }
-
-        if (platform.context != EGL_NO_CONTEXT)
-        {
-            eglDestroyContext(platform.device, platform.context);
-            platform.context = EGL_NO_CONTEXT;
-        }
-
-        eglTerminate(platform.device);
-        platform.device = EGL_NO_DISPLAY;
-    }
+    // De-initialize platform
+    //--------------------------------------------------------------   
+    ClosePlatform();
     //--------------------------------------------------------------
 
 #if defined(SUPPORT_EVENTS_AUTOMATION)
@@ -690,25 +607,108 @@ void PollInputEvents(void)
 // Module Internal Functions Definition
 //----------------------------------------------------------------------------------
 
+// Initialize platform: graphics, inputs and more
+static int InitPlatform(void)
+{
+    CORE.Window.currentFbo.width = CORE.Window.screen.width;
+    CORE.Window.currentFbo.height = CORE.Window.screen.width;
+
+    // Set desired windows flags before initializing anything
+    ANativeActivity_setWindowFlags(platform.app->activity, AWINDOW_FLAG_FULLSCREEN, 0);  //AWINDOW_FLAG_SCALED, AWINDOW_FLAG_DITHER
+
+    int orientation = AConfiguration_getOrientation(platform.app->config);
+
+    if (orientation == ACONFIGURATION_ORIENTATION_PORT) TRACELOG(LOG_INFO, "ANDROID: Window orientation set as portrait");
+    else if (orientation == ACONFIGURATION_ORIENTATION_LAND) TRACELOG(LOG_INFO, "ANDROID: Window orientation set as landscape");
+
+    // TODO: Automatic orientation doesn't seem to work
+    if (width <= height)
+    {
+        AConfiguration_setOrientation(platform.app->config, ACONFIGURATION_ORIENTATION_PORT);
+        TRACELOG(LOG_WARNING, "ANDROID: Window orientation changed to portrait");
+    }
+    else
+    {
+        AConfiguration_setOrientation(platform.app->config, ACONFIGURATION_ORIENTATION_LAND);
+        TRACELOG(LOG_WARNING, "ANDROID: Window orientation changed to landscape");
+    }
+
+    //AConfiguration_getDensity(platform.app->config);
+    //AConfiguration_getKeyboard(platform.app->config);
+    //AConfiguration_getScreenSize(platform.app->config);
+    //AConfiguration_getScreenLong(platform.app->config);
+
+    // Initialize App command system
+    // NOTE: On APP_CMD_INIT_WINDOW -> InitGraphicsDevice(), InitTimer(), LoadFontDefault()...
+    platform.app->onAppCmd = AndroidCommandCallback;
+
+    // Initialize input events system
+    platform.app->onInputEvent = AndroidInputCallback;
+
+    // Initialize assets manager
+    InitAssetManager(platform.app->activity->assetManager, platform.app->activity->internalDataPath);
+
+    // Initialize base path for storage
+    CORE.Storage.basePath = platform.app->activity->internalDataPath;
+
+    // Set some default window flags
+    CORE.Window.flags &= ~FLAG_WINDOW_HIDDEN;       // false
+    CORE.Window.flags &= ~FLAG_WINDOW_MINIMIZED;    // false
+    CORE.Window.flags |= FLAG_WINDOW_MAXIMIZED;     // true
+    CORE.Window.flags &= ~FLAG_WINDOW_UNFOCUSED;    // false
+
+    TRACELOG(LOG_INFO, "PLATFORM: ANDROID: Application initialized successfully");
+
+    // Android ALooper_pollAll() variables
+    int pollResult = 0;
+    int pollEvents = 0;
+
+    // Wait for window to be initialized (display and context)
+    while (!CORE.Window.ready)
+    {
+        // Process events loop
+        while ((pollResult = ALooper_pollAll(0, NULL, &pollEvents, (void**)&platform.source)) >= 0)
+        {
+            // Process this event
+            if (platform.source != NULL) platform.source->process(platform.app, platform.source);
+
+            // NOTE: Never close window, native activity is controlled by the system!
+            //if (platform.app->destroyRequested != 0) CORE.Window.shouldClose = true;
+        }
+    }
+}
+
+// Close platform
+static void ClosePlatform(void)
+{
+    // Close surface, context and display
+    if (platform.device != EGL_NO_DISPLAY)
+    {
+        eglMakeCurrent(platform.device, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
+
+        if (platform.surface != EGL_NO_SURFACE)
+        {
+            eglDestroySurface(platform.device, platform.surface);
+            platform.surface = EGL_NO_SURFACE;
+        }
+
+        if (platform.context != EGL_NO_CONTEXT)
+        {
+            eglDestroyContext(platform.device, platform.context);
+            platform.context = EGL_NO_CONTEXT;
+        }
+
+        eglTerminate(platform.device);
+        platform.device = EGL_NO_DISPLAY;
+    }
+}
+
 // Initialize display device and framebuffer
 // NOTE: width and height represent the screen (framebuffer) desired size, not actual display size
 // If width or height are 0, default display size will be used for framebuffer size
 // NOTE: returns false in case graphic device could not be created
-static bool InitGraphicsDevice(int width, int height)
+static bool InitGraphicsDevice(void)
 {
-    CORE.Window.screen.width = width;            // User desired width
-    CORE.Window.screen.height = height;          // User desired height
-    CORE.Window.screenScale = MatrixIdentity();  // No draw scaling required by default
-
-    // Set the screen minimum and maximum default values to 0
-    CORE.Window.screenMin.width  = 0;
-    CORE.Window.screenMin.height = 0;
-    CORE.Window.screenMax.width  = 0;
-    CORE.Window.screenMax.height = 0;
-
-    // NOTE: Framebuffer (render area - CORE.Window.render.width, CORE.Window.render.height) could include black bars...
-    // ...in top-down or left-right to match display aspect ratio (no weird scaling)
-
     CORE.Window.fullscreen = true;
     CORE.Window.flags |= FLAG_FULLSCREEN_MODE;
 
@@ -748,7 +748,7 @@ static bool InitGraphicsDevice(int width, int height)
     if (platform.device == EGL_NO_DISPLAY)
     {
         TRACELOG(LOG_WARNING, "DISPLAY: Failed to initialize EGL device");
-        return false;
+        return -1;
     }
 
     // Initialize the EGL device connection
@@ -756,7 +756,7 @@ static bool InitGraphicsDevice(int width, int height)
     {
         // If all of the calls to eglInitialize returned EGL_FALSE then an error has occurred.
         TRACELOG(LOG_WARNING, "DISPLAY: Failed to initialize EGL device");
-        return false;
+        return -1;
     }
 
     // Get an appropriate EGL framebuffer configuration
@@ -770,7 +770,7 @@ static bool InitGraphicsDevice(int width, int height)
     if (platform.context == EGL_NO_CONTEXT)
     {
         TRACELOG(LOG_WARNING, "DISPLAY: Failed to create EGL context");
-        return false;
+        return -1;
     }
 
     // Create an EGL window surface
@@ -799,7 +799,7 @@ static bool InitGraphicsDevice(int width, int height)
     if (eglMakeCurrent(platform.device, platform.surface, platform.surface, platform.context) == EGL_FALSE)
     {
         TRACELOG(LOG_WARNING, "DISPLAY: Failed to attach EGL rendering context to EGL surface");
-        return false;
+        return -1;
     }
     else
     {
@@ -819,19 +819,11 @@ static bool InitGraphicsDevice(int width, int height)
     // NOTE: GL procedures address loader is required to load extensions
     rlLoadExtensions(eglGetProcAddress);
 
-    // Initialize OpenGL context (states and resources)
-    // NOTE: CORE.Window.currentFbo.width and CORE.Window.currentFbo.height not used, just stored as globals in rlgl
-    rlglInit(CORE.Window.currentFbo.width, CORE.Window.currentFbo.height);
-
-    // Setup default viewport
-    // NOTE: It updated CORE.Window.render.width and CORE.Window.render.height
-    SetupViewport(CORE.Window.currentFbo.width, CORE.Window.currentFbo.height);
-
     CORE.Window.ready = true;
 
     if ((CORE.Window.flags & FLAG_WINDOW_MINIMIZED) > 0) MinimizeWindow();
 
-    return true;
+    return 0;
 }
 
 // ANDROID: Process activity lifecycle commands
@@ -874,24 +866,49 @@ static void AndroidCommandCallback(struct android_app *app, int32_t cmd)
                     CORE.Window.display.height = ANativeWindow_getHeight(platform.app->window);
 
                     // Initialize graphics device (display device and OpenGL context)
-                    InitGraphicsDevice(CORE.Window.screen.width, CORE.Window.screen.height);
+                    InitGraphicsDevice();
+                    
+                    // Initialize OpenGL context (states and resources)
+                    // NOTE: CORE.Window.currentFbo.width and CORE.Window.currentFbo.height not used, just stored as globals in rlgl
+                    rlglInit(CORE.Window.currentFbo.width, CORE.Window.currentFbo.height);
+
+                    // Setup default viewport
+                    // NOTE: It updated CORE.Window.render.width and CORE.Window.render.height
+                    SetupViewport(CORE.Window.currentFbo.width, CORE.Window.currentFbo.height);
 
                     // Initialize hi-res timer
                     InitTimer();
-
-                    // Initialize random seed
-                    srand((unsigned int)time(NULL));
 
                 #if defined(SUPPORT_MODULE_RTEXT) && defined(SUPPORT_DEFAULT_FONT)
                     // Load default font
                     // WARNING: External function: Module required: rtext
                     LoadFontDefault();
-                    Rectangle rec = GetFontDefault().recs[95];
-                    // NOTE: We setup a 1px padding on char rectangle to avoid pixel bleeding on MSAA filtering
                     #if defined(SUPPORT_MODULE_RSHAPES)
-                    SetShapesTexture(GetFontDefault().texture, (Rectangle){ rec.x + 1, rec.y + 1, rec.width - 2, rec.height - 2 });  // WARNING: Module required: rshapes
+                    // Set font white rectangle for shapes drawing, so shapes and text can be batched together
+                    // WARNING: rshapes module is required, if not available, default internal white rectangle is used
+                    Rectangle rec = GetFontDefault().recs[95];
+                    if (CORE.Window.flags & FLAG_MSAA_4X_HINT)
+                    {
+                        // NOTE: We try to maxime rec padding to avoid pixel bleeding on MSAA filtering
+                        SetShapesTexture(GetFontDefault().texture, (Rectangle){ rec.x + 2, rec.y + 2, 1, 1 });
+                    }
+                    else
+                    {
+                        // NOTE: We set up a 1px padding on char rectangle to avoid pixel bleeding
+                        SetShapesTexture(GetFontDefault().texture, (Rectangle){ rec.x + 1, rec.y + 1, rec.width - 2, rec.height - 2 });
+                    }
+                    #endif
+                #else
+                    #if defined(SUPPORT_MODULE_RSHAPES)
+                    // Set default texture and rectangle to be used for shapes drawing
+                    // NOTE: rlgl default texture is a 1x1 pixel UNCOMPRESSED_R8G8B8A8
+                    Texture2D texture = { rlGetTextureIdDefault(), 1, 1, 1, PIXELFORMAT_UNCOMPRESSED_R8G8B8A8 };
+                    SetShapesTexture(texture, (Rectangle){ 0.0f, 0.0f, 1.0f, 1.0f });    // WARNING: Module required: rshapes
                     #endif
                 #endif
+                
+                    // Initialize random seed
+                    SetRandomSeed((unsigned int)time(NULL));
 
                     // TODO: GPU assets reload in case of lost focus (lost context)
                     // NOTE: This problem has been solved just unbinding and rebinding context from display

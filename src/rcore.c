@@ -2365,10 +2365,10 @@ int GetTouchPointCount(void)
 // Initialize hi-resolution timer
 void InitTimer(void)
 {
-// Setting a higher resolution can improve the accuracy of time-out intervals in wait functions.
-// However, it can also reduce overall system performance, because the thread scheduler switches tasks more often.
-// High resolutions can also prevent the CPU power management system from entering power-saving modes.
-// Setting a higher resolution does not improve the accuracy of the high-resolution performance counter.
+    // Setting a higher resolution can improve the accuracy of time-out intervals in wait functions.
+    // However, it can also reduce overall system performance, because the thread scheduler switches tasks more often.
+    // High resolutions can also prevent the CPU power management system from entering power-saving modes.
+    // Setting a higher resolution does not improve the accuracy of the high-resolution performance counter.
 #if defined(_WIN32) && defined(SUPPORT_WINMM_HIGHRES_TIMER) && !defined(SUPPORT_BUSY_WAIT_LOOP)
     timeBeginPeriod(1);                 // Setup high-resolution timer to 1ms (granularity of 1-2 ms)
 #endif

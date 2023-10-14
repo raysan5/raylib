@@ -111,7 +111,8 @@ static PlatformData platform = { 0 };   // Platform specific data
 //----------------------------------------------------------------------------------
 // Module Internal Functions Declaration
 //----------------------------------------------------------------------------------
-static bool InitGraphicsDevice(int width, int height); // Initialize graphics device
+static int InitPlatform(void);          // Initialize platform (graphics, inputs and more)
+static void ClosePlatform(void);        // Close platform
 
 // Error callback event
 static void ErrorCallback(int error, const char *description);                             // GLFW3 Error Callback, runs on GLFW3 error
@@ -176,53 +177,31 @@ void InitWindow(int width, int height, const char *title)
     TRACELOG(LOG_INFO, "    > raudio:.... not loaded (optional)");
 #endif
 
-    // NOTE: Keep internal pointer to input title string (no copy)
+    // Initialize window data
+    CORE.Window.screen.width = width;
+    CORE.Window.screen.height = height;
+    CORE.Window.eventWaiting = false;
+    CORE.Window.screenScale = MatrixIdentity();     // No draw scaling required by default
     if ((title != NULL) && (title[0] != 0)) CORE.Window.title = title;
 
     // Initialize global input state
-    memset(&CORE.Input, 0, sizeof(CORE.Input));     // Reset CORE structure to 0
+    memset(&CORE.Input, 0, sizeof(CORE.Input));     // Reset CORE.Input structure to 0
     CORE.Input.Keyboard.exitKey = KEY_ESCAPE;
     CORE.Input.Mouse.scale = (Vector2){ 1.0f, 1.0f };
     CORE.Input.Mouse.cursor = MOUSE_CURSOR_ARROW;
-    CORE.Input.Gamepad.lastButtonPressed = 0;       // GAMEPAD_BUTTON_UNKNOWN
-    CORE.Window.eventWaiting = false;
-
-
-    // Platform specific init window
-    //--------------------------------------------------------------
-    glfwSetErrorCallback(ErrorCallback);
-/*
-    // TODO: Setup GLFW custom allocators to match raylib ones
-    const GLFWallocator allocator = {
-        .allocate = MemAlloc,
-        .deallocate = MemFree,
-        .reallocate = MemRealloc,
-        .user = NULL
-    };
-
-    glfwInitAllocator(&allocator);
-*/
-
-    // Initialize graphics device
-    // NOTE: returns true if window and graphic device has been initialized successfully
-    // WARNING: Actually, all window initialization and input callbacks initialization is
-    // done inside InitGraphicsDevice(), this functionality should be changed!
-    CORE.Window.ready = InitGraphicsDevice(width, height);
-
-    // If graphic device is no properly initialized, we end program
-    if (!CORE.Window.ready) { TRACELOG(LOG_FATAL, "PLATFORM: Failed to initialize graphic device"); return; }
-    else SetWindowPosition(GetMonitorWidth(GetCurrentMonitor())/2 - CORE.Window.screen.width/2, GetMonitorHeight(GetCurrentMonitor())/2 - CORE.Window.screen.height/2);
-
-    // Initialize hi-res timer
-    InitTimer();
+    CORE.Input.Gamepad.lastButtonPressed = GAMEPAD_BUTTON_UNKNOWN;
     
-    // Initialize base path for storage
-    CORE.Storage.basePath = GetWorkingDirectory();
+    // Initialize platform
+    //--------------------------------------------------------------   
+    InitPlatform();
     //--------------------------------------------------------------
+    
+    // Initialize rlgl default data (buffers and shaders)
+    // NOTE: CORE.Window.currentFbo.width and CORE.Window.currentFbo.height not used, just stored as globals in rlgl
+    rlglInit(CORE.Window.currentFbo.width, CORE.Window.currentFbo.height);
 
-
-    // Initialize random seed
-    SetRandomSeed((unsigned int)time(NULL));
+    // Setup default viewport
+    SetupViewport(CORE.Window.currentFbo.width, CORE.Window.currentFbo.height);
 
 #if defined(SUPPORT_MODULE_RTEXT) && defined(SUPPORT_DEFAULT_FONT)
     // Load default font
@@ -266,6 +245,9 @@ void InitWindow(int width, int height, const char *title)
     CORE.Time.frameCounter = 0;
 #endif
 
+    // Initialize random seed
+    SetRandomSeed((unsigned int)time(NULL));
+
     TRACELOG(LOG_INFO, "PLATFORM: DESKTOP: Application initialized successfully");
 }
 
@@ -287,14 +269,9 @@ void CloseWindow(void)
 
     rlglClose();                // De-init rlgl
 
-    // Platform specific close window
-    //--------------------------------------------------------------
-    glfwDestroyWindow(platform.handle);
-    glfwTerminate();
-
-#if defined(_WIN32) && defined(SUPPORT_WINMM_HIGHRES_TIMER) && !defined(SUPPORT_BUSY_WAIT_LOOP)
-    timeEndPeriod(1);           // Restore time period
-#endif
+    // De-initialize platform
+    //--------------------------------------------------------------   
+    ClosePlatform();
     //--------------------------------------------------------------
 
 #if defined(SUPPORT_EVENTS_AUTOMATION)
@@ -1379,34 +1356,28 @@ void PollInputEvents(void)
 // Module Internal Functions Definition
 //----------------------------------------------------------------------------------
 
-// Initialize display device and framebuffer
-// NOTE: width and height represent the screen (framebuffer) desired size, not actual display size
-// If width or height are 0, default display size will be used for framebuffer size
-// NOTE: returns false in case graphic device could not be created
-static bool InitGraphicsDevice(int width, int height)
+// Initialize platform: graphics, inputs and more
+static int InitPlatform(void)
 {
-    CORE.Window.screen.width = width;            // User desired width
-    CORE.Window.screen.height = height;          // User desired height
-    CORE.Window.screenScale = MatrixIdentity();  // No draw scaling required by default
+    glfwSetErrorCallback(ErrorCallback);
+/*
+    // TODO: Setup GLFW custom allocators to match raylib ones
+    const GLFWallocator allocator = {
+        .allocate = MemAlloc,
+        .deallocate = MemFree,
+        .reallocate = MemRealloc,
+        .user = NULL
+    };
 
-    // Set the screen minimum and maximum default values to 0
-    CORE.Window.screenMin.width  = 0;
-    CORE.Window.screenMin.height = 0;
-    CORE.Window.screenMax.width  = 0;
-    CORE.Window.screenMax.height = 0;
-
-    // NOTE: Framebuffer (render area - CORE.Window.render.width, CORE.Window.render.height) could include black bars...
-    // ...in top-down or left-right to match display aspect ratio (no weird scaling)
+    glfwInitAllocator(&allocator);
+*/
 
 #if defined(__APPLE__)
     glfwInitHint(GLFW_COCOA_CHDIR_RESOURCES, GLFW_FALSE);
 #endif
-
-    if (!glfwInit())
-    {
-        TRACELOG(LOG_WARNING, "GLFW: Failed to initialize GLFW");
-        return false;
-    }
+    // Initialize GLFW internal global state
+    int result = glfwInit();
+    if (result == GLFW_FALSE) { TRACELOG(LOG_WARNING, "GLFW: Failed to initialize GLFW"); return -1; }
 
     glfwDefaultWindowHints();                       // Set default windows hints
     //glfwWindowHint(GLFW_RED_BITS, 8);             // Framebuffer red color component bits
@@ -1528,7 +1499,7 @@ static bool InitGraphicsDevice(int width, int height)
     if (!monitor)
     {
         TRACELOG(LOG_WARNING, "GLFW: Failed to get primary monitor");
-        return false;
+        return -1;
     }
 
     const GLFWvidmode *mode = glfwGetVideoMode(monitor);
@@ -1617,7 +1588,7 @@ static bool InitGraphicsDevice(int width, int height)
     {
         glfwTerminate();
         TRACELOG(LOG_WARNING, "GLFW: Failed to initialize Window");
-        return false;
+        return -1;
     }
 
     // Set window callback events
@@ -1683,21 +1654,34 @@ static bool InitGraphicsDevice(int width, int height)
 
     // Load OpenGL extensions
     // NOTE: GL procedures address loader is required to load extensions
-
     rlLoadExtensions(glfwGetProcAddress);
 
-    // Initialize OpenGL context (states and resources)
-    // NOTE: CORE.Window.currentFbo.width and CORE.Window.currentFbo.height not used, just stored as globals in rlgl
-    rlglInit(CORE.Window.currentFbo.width, CORE.Window.currentFbo.height);
-
-    // Setup default viewport
-    // NOTE: It updated CORE.Window.render.width and CORE.Window.render.height
-    SetupViewport(CORE.Window.currentFbo.width, CORE.Window.currentFbo.height);
-
     if ((CORE.Window.flags & FLAG_WINDOW_MINIMIZED) > 0) MinimizeWindow();
+    
+    // If graphic device is no properly initialized, we end program
+    if (!CORE.Window.ready) { TRACELOG(LOG_FATAL, "PLATFORM: Failed to initialize graphic device"); return -1; }
+    else SetWindowPosition(GetMonitorWidth(GetCurrentMonitor())/2 - CORE.Window.screen.width/2, GetMonitorHeight(GetCurrentMonitor())/2 - CORE.Window.screen.height/2);
 
-    return true;
+    // Initialize hi-res timer
+    InitTimer();
+    
+    // Initialize base path for storage
+    CORE.Storage.basePath = GetWorkingDirectory();
+    
+    return 0;
 }
+
+// Close platform
+static void ClosePlatform(void)
+{
+    glfwDestroyWindow(platform.handle);
+    glfwTerminate();
+
+#if defined(_WIN32) && defined(SUPPORT_WINMM_HIGHRES_TIMER) && !defined(SUPPORT_BUSY_WAIT_LOOP)
+    timeEndPeriod(1);           // Restore time period
+#endif
+}
+
 
 // GLFW3 Error Callback, runs on GLFW3 error
 static void ErrorCallback(int error, const char *description)
