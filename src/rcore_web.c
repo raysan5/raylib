@@ -659,37 +659,35 @@ void SetMousePosition(int x, int y)
 // Set mouse cursor
 void SetMouseCursor(int cursor)
 {
-    CORE.Input.Mouse.cursor = cursor;
-    const char *cursorName;
-    switch (cursor)
+    if (CORE.Input.Mouse.cursor != cursor)
     {
-        case MOUSE_CURSOR_IBEAM: cursorName = "text"; break;
-        case MOUSE_CURSOR_CROSSHAIR: cursorName = "crosshair"; break;
-        case MOUSE_CURSOR_POINTING_HAND: cursorName = "pointer"; break;
-        case MOUSE_CURSOR_RESIZE_EW: cursorName = "ew-resize"; break;
-        case MOUSE_CURSOR_RESIZE_NS: cursorName = "ns-resize"; break;
-        case MOUSE_CURSOR_RESIZE_NWSE: cursorName = "nwse-resize"; break;
-        case MOUSE_CURSOR_RESIZE_NESW: cursorName = "nesw-resize"; break;
-        case MOUSE_CURSOR_RESIZE_ALL: cursorName = "move"; break;
-        case MOUSE_CURSOR_NOT_ALLOWED: cursorName = "not-allowed"; break;
+        const char *cursorName = NULL;
+        CORE.Input.Mouse.cursor = cursor;
 
-        case MOUSE_CURSOR_ARROW: // can't find a name specifically for arrow cursor
-        case MOUSE_CURSOR_DEFAULT:
+        switch (cursor)
         {
-            cursorName = "default";
-        } break;
+            case MOUSE_CURSOR_IBEAM: cursorName = "text"; break;
+            case MOUSE_CURSOR_CROSSHAIR: cursorName = "crosshair"; break;
+            case MOUSE_CURSOR_POINTING_HAND: cursorName = "pointer"; break;
+            case MOUSE_CURSOR_RESIZE_EW: cursorName = "ew-resize"; break;
+            case MOUSE_CURSOR_RESIZE_NS: cursorName = "ns-resize"; break;
+            case MOUSE_CURSOR_RESIZE_NWSE: cursorName = "nwse-resize"; break;
+            case MOUSE_CURSOR_RESIZE_NESW: cursorName = "nesw-resize"; break;
+            case MOUSE_CURSOR_RESIZE_ALL: cursorName = "move"; break;
+            case MOUSE_CURSOR_NOT_ALLOWED: cursorName = "not-allowed"; break;
+            case MOUSE_CURSOR_ARROW: // WARNING: It does not seem t be a specific cursor for arrow
+            case MOUSE_CURSOR_DEFAULT: cursorName = "default"; break;
+            default:
+            {
+                cursorName = "default";
+                CORE.Input.Mouse.cursor = MOUSE_CURSOR_DEFAULT;
+            } break;
+        }
 
-        default:
-        {
-            TRACELOG(LOG_WARNING, "Cursor value out of bound (%d). Setting to default", cursor);
-            cursorName = "default";
-            CORE.Input.Mouse.cursor = MOUSE_CURSOR_DEFAULT;
-        } break;
+        // Set the cursor element on the canvas CSS
+        // The canvas is coded to the Id "canvas" on init
+        EM_ASM({document.getElementById("canvas").style.cursor = UTF8ToString($0);}, cursorName);
     }
-
-    // Set the cursor element on the canvas CSS
-    // The canvas is coded to the Id "canvas" on init
-    EM_ASM({document.getElementById("canvas").style.cursor = UTF8ToString($0);}, cursorName);
 }
 
 // Register all input events
