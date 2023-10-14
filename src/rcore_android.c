@@ -676,6 +676,8 @@ static int InitPlatform(void)
             //if (platform.app->destroyRequested != 0) CORE.Window.shouldClose = true;
         }
     }
+
+    return 0;
 }
 
 // Close platform
@@ -707,7 +709,7 @@ static void ClosePlatform(void)
 // NOTE: width and height represent the screen (framebuffer) desired size, not actual display size
 // If width or height are 0, default display size will be used for framebuffer size
 // NOTE: returns false in case graphic device could not be created
-static bool InitGraphicsDevice(void)
+static int InitGraphicsDevice(void)
 {
     CORE.Window.fullscreen = true;
     CORE.Window.flags |= FLAG_FULLSCREEN_MODE;
