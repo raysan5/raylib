@@ -73,7 +73,8 @@ static PlatformData platform = { 0 };   // Platform specific data
 //----------------------------------------------------------------------------------
 // Module Internal Functions Declaration
 //----------------------------------------------------------------------------------
-static bool InitGraphicsDevice(int width, int height); // Initialize graphics device
+static int InitPlatform(void);          // Initialize platform (graphics, inputs and more)
+static bool InitGraphicsDevice(void);   // Initialize graphics device
 
 //----------------------------------------------------------------------------------
 // Module Functions Declaration
@@ -128,8 +129,11 @@ void InitWindow(int width, int height, const char *title)
     CORE.Input.Mouse.scale = (Vector2){ 1.0f, 1.0f };
     CORE.Input.Mouse.cursor = MOUSE_CURSOR_ARROW;
     CORE.Input.Gamepad.lastButtonPressed = 0;       // GAMEPAD_BUTTON_UNKNOWN
-
     CORE.Window.eventWaiting = false;
+    
+    
+    // TODO: Platform specific init window
+    //--------------------------------------------------------------
     CORE.Window.screen.width = width;
     CORE.Window.screen.height = height;
     CORE.Window.currentFbo.width = width;
@@ -139,17 +143,15 @@ void InitWindow(int width, int height, const char *title)
     // NOTE: returns true if window and graphic device has been initialized successfully
     CORE.Window.ready = InitGraphicsDevice(width, height);
 
-    // If graphic device is no properly initialized, we end program
-    if (!CORE.Window.ready) { TRACELOG(LOG_FATAL, "PLATFORM: Failed to initialize graphic device"); return; }
 
-    // Initialize hi-res timer
-    InitTimer();
+    
+    // Initialize OpenGL context (states and resources)
+    // NOTE: CORE.Window.currentFbo.width and CORE.Window.currentFbo.height not used, just stored as globals in rlgl
+    rlglInit(CORE.Window.currentFbo.width, CORE.Window.currentFbo.height);
 
-    // Initialize random seed
-    SetRandomSeed((unsigned int)time(NULL));
-
-    // Initialize base path for storage
-    CORE.Storage.basePath = GetWorkingDirectory();
+    // Setup default viewport
+    // NOTE: It updated CORE.Window.render.width and CORE.Window.render.height
+    SetupViewport(CORE.Window.currentFbo.width, CORE.Window.currentFbo.height);
 
 #if defined(SUPPORT_MODULE_RTEXT) && defined(SUPPORT_DEFAULT_FONT)
     // Load default font
@@ -193,10 +195,8 @@ void InitWindow(int width, int height, const char *title)
     CORE.Time.frameCounter = 0;
 #endif
 
-    // TODO: Platform specific init window
-    //--------------------------------------------------------------
-    // ...
-    //--------------------------------------------------------------
+    // Initialize random seed
+    SetRandomSeed((unsigned int)time(NULL));
 
     TRACELOG(LOG_INFO, "PLATFORM: CUSTOM: Application initialized successfully");
 }
@@ -237,36 +237,6 @@ bool WindowShouldClose(void)
 {
     if (CORE.Window.ready) return CORE.Window.shouldClose;
     else return true;
-}
-
-// Check if window is currently hidden
-bool IsWindowHidden(void)
-{
-    return false;
-}
-
-// Check if window has been minimized
-bool IsWindowMinimized(void)
-{
-    return false;
-}
-
-// Check if window has been maximized
-bool IsWindowMaximized(void)
-{
-    return false;
-}
-
-// Check if window has the focus
-bool IsWindowFocused(void)
-{
-    return platform.appEnabled;
-}
-
-// Check if window has been resizedLastFrame
-bool IsWindowResized(void)
-{
-    return false;
 }
 
 // Toggle fullscreen mode
@@ -627,25 +597,9 @@ void PollInputEvents(void)
 // Module Internal Functions Definition
 //----------------------------------------------------------------------------------
 
-// Initialize display device and framebuffer
-// NOTE: width and height represent the screen (framebuffer) desired size, not actual display size
-// If width or height are 0, default display size will be used for framebuffer size
-// NOTE: returns false in case graphic device could not be created
-static bool InitGraphicsDevice(int width, int height)
+// Initialize platform: graphics, inputs and more
+static int InitPlatform(void)
 {
-    CORE.Window.screen.width = width;            // User desired width
-    CORE.Window.screen.height = height;          // User desired height
-    CORE.Window.screenScale = MatrixIdentity();  // No draw scaling required by default
-
-    // Set the screen minimum and maximum default values to 0
-    CORE.Window.screenMin.width  = 0;
-    CORE.Window.screenMin.height = 0;
-    CORE.Window.screenMax.width  = 0;
-    CORE.Window.screenMax.height = 0;
-
-    // NOTE: Framebuffer (render area - CORE.Window.render.width, CORE.Window.render.height) could include black bars...
-    // ...in top-down or left-right to match display aspect ratio (no weird scaling)
-
     CORE.Window.fullscreen = true;
     CORE.Window.flags |= FLAG_FULLSCREEN_MODE;
 
@@ -707,7 +661,7 @@ static bool InitGraphicsDevice(int width, int height)
     if (platform.context == EGL_NO_CONTEXT)
     {
         TRACELOG(LOG_WARNING, "DISPLAY: Failed to create EGL context");
-        return false;
+        return -1;
     }
 
     // Create an EGL window surface
@@ -736,7 +690,7 @@ static bool InitGraphicsDevice(int width, int height)
     if (eglMakeCurrent(platform.device, platform.surface, platform.surface, platform.context) == EGL_FALSE)
     {
         TRACELOG(LOG_WARNING, "DISPLAY: Failed to attach EGL rendering context to EGL surface");
-        return false;
+        return -1;
     }
     else
     {
@@ -756,19 +710,24 @@ static bool InitGraphicsDevice(int width, int height)
     // NOTE: GL procedures address loader is required to load extensions
     rlLoadExtensions(eglGetProcAddress);
 
-    // Initialize OpenGL context (states and resources)
-    // NOTE: CORE.Window.currentFbo.width and CORE.Window.currentFbo.height not used, just stored as globals in rlgl
-    rlglInit(CORE.Window.currentFbo.width, CORE.Window.currentFbo.height);
-
-    // Setup default viewport
-    // NOTE: It updated CORE.Window.render.width and CORE.Window.render.height
-    SetupViewport(CORE.Window.currentFbo.width, CORE.Window.currentFbo.height);
-
     CORE.Window.ready = true;
+    
+    // If graphic device is no properly initialized, we end program
+    if (!CORE.Window.ready) { TRACELOG(LOG_FATAL, "PLATFORM: Failed to initialize graphic device"); return -1; }
 
-    if ((CORE.Window.flags & FLAG_WINDOW_MINIMIZED) > 0) MinimizeWindow();
+    // Initialize hi-res timer
+    InitTimer();
+    
+    // Initialize base path for storage
+    CORE.Storage.basePath = GetWorkingDirectory();
 
-    return true;
+    return 0;
+}
+
+// Close platform
+static void ClosePlatform(void)
+{
+    // TODO: De-initialize graphics, inputs and more
 }
 
 // EOF

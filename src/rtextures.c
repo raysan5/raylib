@@ -213,7 +213,7 @@
 #define STBIR_MALLOC(size,c) ((void)(c), RL_MALLOC(size))
 #define STBIR_FREE(ptr,c) ((void)(c), RL_FREE(ptr))
 #define STB_IMAGE_RESIZE_IMPLEMENTATION
-#include "external/stb_image_resize.h"  // Required for: stbir_resize_uint8() [ImageResize()]
+#include "external/stb_image_resize2.h"  // Required for: stbir_resize_uint8_linear() [ImageResize()]
 
 #if defined(SUPPORT_FILEFORMAT_SVG)
 	#define NANOSVG_IMPLEMENTATION	// Expands implementation
@@ -1624,10 +1624,10 @@ void ImageResize(Image *image, int newWidth, int newHeight)
 
         switch (image->format)
         {
-            case PIXELFORMAT_UNCOMPRESSED_GRAYSCALE: stbir_resize_uint8((unsigned char *)image->data, image->width, image->height, 0, output, newWidth, newHeight, 0, 1); break;
-            case PIXELFORMAT_UNCOMPRESSED_GRAY_ALPHA: stbir_resize_uint8((unsigned char *)image->data, image->width, image->height, 0, output, newWidth, newHeight, 0, 2); break;
-            case PIXELFORMAT_UNCOMPRESSED_R8G8B8: stbir_resize_uint8((unsigned char *)image->data, image->width, image->height, 0, output, newWidth, newHeight, 0, 3); break;
-            case PIXELFORMAT_UNCOMPRESSED_R8G8B8A8: stbir_resize_uint8((unsigned char *)image->data, image->width, image->height, 0, output, newWidth, newHeight, 0, 4); break;
+            case PIXELFORMAT_UNCOMPRESSED_GRAYSCALE: stbir_resize_uint8_linear((unsigned char *)image->data, image->width, image->height, 0, output, newWidth, newHeight, 0, (stbir_pixel_layout)1); break;
+            case PIXELFORMAT_UNCOMPRESSED_GRAY_ALPHA: stbir_resize_uint8_linear((unsigned char *)image->data, image->width, image->height, 0, output, newWidth, newHeight, 0, (stbir_pixel_layout)2); break;
+            case PIXELFORMAT_UNCOMPRESSED_R8G8B8: stbir_resize_uint8_linear((unsigned char *)image->data, image->width, image->height, 0, output, newWidth, newHeight, 0, (stbir_pixel_layout)3); break;
+            case PIXELFORMAT_UNCOMPRESSED_R8G8B8A8: stbir_resize_uint8_linear((unsigned char *)image->data, image->width, image->height, 0, output, newWidth, newHeight, 0, (stbir_pixel_layout)4); break;
             default: break;
         }
 
@@ -1643,7 +1643,7 @@ void ImageResize(Image *image, int newWidth, int newHeight)
         Color *output = (Color *)RL_MALLOC(newWidth*newHeight*sizeof(Color));
 
         // NOTE: Color data is cast to (unsigned char *), there shouldn't been any problem...
-        stbir_resize_uint8((unsigned char *)pixels, image->width, image->height, 0, (unsigned char *)output, newWidth, newHeight, 0, 4);
+        stbir_resize_uint8_linear((unsigned char *)pixels, image->width, image->height, 0, (unsigned char *)output, newWidth, newHeight, 0, (stbir_pixel_layout)4);
 
         int format = image->format;
 
