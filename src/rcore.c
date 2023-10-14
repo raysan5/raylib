@@ -2812,7 +2812,7 @@ static void RecordAutomationEvent(unsigned int frame)
         // INPUT_GAMEPAD_CONNECT
         /*
         if ((CORE.Input.Gamepad.currentState[gamepad] != CORE.Input.Gamepad.previousState[gamepad]) &&
-            (CORE.Input.Gamepad.currentState[gamepad] == true)) // Check if changed to ready
+            (CORE.Input.Gamepad.currentState[gamepad])) // Check if changed to ready
         {
             // TODO: Save gamepad connect event
         }
@@ -2821,7 +2821,7 @@ static void RecordAutomationEvent(unsigned int frame)
         // INPUT_GAMEPAD_DISCONNECT
         /*
         if ((CORE.Input.Gamepad.currentState[gamepad] != CORE.Input.Gamepad.previousState[gamepad]) &&
-            (CORE.Input.Gamepad.currentState[gamepad] == false)) // Check if changed to not-ready
+            (!CORE.Input.Gamepad.currentState[gamepad])) // Check if changed to not-ready
         {
             // TODO: Save gamepad disconnect event
         }

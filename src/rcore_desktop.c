@@ -1966,7 +1966,7 @@ static void MouseScrollCallback(GLFWwindow *window, double xoffset, double yoffs
 // GLFW3 CursorEnter Callback, when cursor enters the window
 static void CursorEnterCallback(GLFWwindow *window, int enter)
 {
-    if (enter == true) CORE.Input.Mouse.cursorOnScreen = true;
+    if (enter) CORE.Input.Mouse.cursorOnScreen = true;
     else CORE.Input.Mouse.cursorOnScreen = false;
 }
 
