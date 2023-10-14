@@ -1230,19 +1230,16 @@ int GetFPS(void)
 
     static int index = 0;
     static float history[FPS_CAPTURE_FRAMES_COUNT] = { 0 };
-    static float average = 0, last = 0;
+    static float average = 0, wait = 0;
     float fpsFrame = GetFrameTime();
 
     if (fpsFrame == 0) return 0;
 
-    float newTime = (float)GetTime();
+    wait += fpsFrame;
 
-    if (last > newTime)
-        last = newTime; // Last value is from a previous window so reset it
-
-    if ((newTime - last) > FPS_STEP)
+    if (wait > FPS_STEP)
     {
-        last = newTime;
+        wait = 0;
         index = (index + 1)%FPS_CAPTURE_FRAMES_COUNT;
         average -= history[index];
         history[index] = fpsFrame/FPS_CAPTURE_FRAMES_COUNT;
