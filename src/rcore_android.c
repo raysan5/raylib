@@ -611,7 +611,7 @@ void PollInputEvents(void)
 static int InitPlatform(void)
 {
     CORE.Window.currentFbo.width = CORE.Window.screen.width;
-    CORE.Window.currentFbo.height = CORE.Window.screen.width;
+    CORE.Window.currentFbo.height = CORE.Window.screen.height;
 
     // Set desired windows flags before initializing anything
     ANativeActivity_setWindowFlags(platform.app->activity, AWINDOW_FLAG_FULLSCREEN, 0);  //AWINDOW_FLAG_SCALED, AWINDOW_FLAG_DITHER
@@ -622,7 +622,7 @@ static int InitPlatform(void)
     else if (orientation == ACONFIGURATION_ORIENTATION_LAND) TRACELOG(LOG_INFO, "ANDROID: Window orientation set as landscape");
 
     // TODO: Automatic orientation doesn't seem to work
-    if (width <= height)
+    if (CORE.Window.screen.width <= CORE.Window.screen.height)
     {
         AConfiguration_setOrientation(platform.app->config, ACONFIGURATION_ORIENTATION_PORT);
         TRACELOG(LOG_WARNING, "ANDROID: Window orientation changed to portrait");
