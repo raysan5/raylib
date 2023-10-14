@@ -1119,7 +1119,7 @@ static void WindowIconifyCallback(GLFWwindow *window, int iconified)
 // GLFW3 Window Maximize Callback, runs when window is maximized
 static void WindowMaximizeCallback(GLFWwindow *window, int maximized)
 {
-
+    // TODO.
 }
 
 // GLFW3 WindowFocus Callback, runs when window get/lose focus
@@ -1156,7 +1156,6 @@ static void WindowDropCallback(GLFWwindow *window, int count, const char **paths
         }
     }
 }
-
 
 // GLFW3 Keyboard Callback, runs on key pressed
 static void KeyCallback(GLFWwindow *window, int key, int scancode, int action, int mods)
@@ -1339,7 +1338,6 @@ static void CursorEnterCallback(GLFWwindow *window, int enter)
     if (enter) CORE.Input.Mouse.cursorOnScreen = true;
     else CORE.Input.Mouse.cursorOnScreen = false;
 }
-
 
 // Register fullscreen change events
 static EM_BOOL EmscriptenFullscreenChangeCallback(int eventType, const EmscriptenFullscreenChangeEvent *event, void *userData)
