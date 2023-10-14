@@ -685,8 +685,9 @@ void SetMouseCursor(int cursor)
         } break;
     }
 
-    // Set the cursor element on the CSS
-    EM_ASM({document.body.style.cursor = UTF8ToString($0);}, cursorName);
+    // Set the cursor element on the canvas CSS
+    // The canvas is coded to the Id "canvas" on init
+    EM_ASM({document.getElementById("canvas").style.cursor = UTF8ToString($0);}, cursorName);
 }
 
 // Register all input events
