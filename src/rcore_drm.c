@@ -47,8 +47,6 @@
 *
 **********************************************************************************************/
 
-#include "rcore.h"
-
 #include <fcntl.h>   // POSIX file control definitions - open(), creat(), fcntl()
 #include <unistd.h>  // POSIX standard function definitions - read(), close(), STDIN_FILENO
 #include <termios.h> // POSIX terminal control definitions - tcgetattr(), tcsetattr()
@@ -218,12 +216,12 @@ void InitWindow(int width, int height, const char *title)
     CORE.Input.Mouse.scale = (Vector2){ 1.0f, 1.0f };
     CORE.Input.Mouse.cursor = MOUSE_CURSOR_ARROW;
     CORE.Input.Gamepad.lastButtonPressed = GAMEPAD_BUTTON_UNKNOWN;
-    
+
     // Initialize platform
-    //--------------------------------------------------------------   
+    //--------------------------------------------------------------
     InitPlatform();
     //--------------------------------------------------------------
-    
+
     // Initialize rlgl default data (buffers and shaders)
     // NOTE: CORE.Window.currentFbo.width and CORE.Window.currentFbo.height not used, just stored as globals in rlgl
     rlglInit(CORE.Window.currentFbo.width, CORE.Window.currentFbo.height);
@@ -272,10 +270,10 @@ void InitWindow(int width, int height, const char *title)
     events = (AutomationEvent *)RL_CALLOC(MAX_CODE_AUTOMATION_EVENTS, sizeof(AutomationEvent));
     CORE.Time.frameCounter = 0;
 #endif
-    
+
     // Initialize random seed
     SetRandomSeed((unsigned int)time(NULL));
-    
+
     TRACELOG(LOG_INFO, "PLATFORM: DRM: Application initialized successfully");
 }
 
@@ -302,7 +300,7 @@ void CloseWindow(void)
 #endif
 
     // De-initialize platform
-    //--------------------------------------------------------------   
+    //--------------------------------------------------------------
     ClosePlatform();
     //--------------------------------------------------------------
 
@@ -721,7 +719,7 @@ static int InitPlatform(void)
     platform.gbmSurface = NULL;
     platform.prevBO = NULL;
     platform.prevFB = 0;
-    
+
     CORE.Window.fullscreen = true;
     CORE.Window.flags |= FLAG_FULLSCREEN_MODE;
 
@@ -1034,9 +1032,9 @@ static int InitPlatform(void)
     rlLoadExtensions(eglGetProcAddress);
 
     if ((CORE.Window.flags & FLAG_WINDOW_MINIMIZED) > 0) MinimizeWindow();
-    
+
     CORE.Window.ready = true;   // TODO: Proper validation on windows/context creation
-    
+
         // If graphic device is no properly initialized, we end program
     if (!CORE.Window.ready) { TRACELOG(LOG_FATAL, "PLATFORM: Failed to initialize graphic device"); return -1; }
     else SetWindowPosition(GetMonitorWidth(GetCurrentMonitor()) / 2 - CORE.Window.screen.width / 2, GetMonitorHeight(GetCurrentMonitor()) / 2 - CORE.Window.screen.height / 2);
@@ -1057,7 +1055,7 @@ static int InitPlatform(void)
     InitEvdevInput(); // Evdev inputs initialization
     InitGamepad();    // Gamepad init
     InitKeyboard();   // Keyboard init (stdin)
-    
+
     return 0;
 }
 

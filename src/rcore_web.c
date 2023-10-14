@@ -45,8 +45,6 @@
 *
 **********************************************************************************************/
 
-#include "rcore.h"
-
 #define GLFW_INCLUDE_ES2                // GLFW3: Enable OpenGL ES 2.0 (translated to WebGL)
 // #define GLFW_INCLUDE_ES3               // GLFW3: Enable OpenGL ES 3.0 (transalted to WebGL2?)
 #include "GLFW/glfw3.h"                 // GLFW3: Windows, OpenGL context and Input management
@@ -177,7 +175,7 @@ void InitWindow(int width, int height, const char *title)
     CORE.Input.Gamepad.lastButtonPressed = GAMEPAD_BUTTON_UNKNOWN;
 
     // Initialize platform
-    //--------------------------------------------------------------   
+    //--------------------------------------------------------------
     InitPlatform();
     //--------------------------------------------------------------
 
@@ -256,7 +254,7 @@ void CloseWindow(void)
     rlglClose(); // De-init rlgl
 
     // De-initialize platform
-    //--------------------------------------------------------------   
+    //--------------------------------------------------------------
     ClosePlatform();
     //--------------------------------------------------------------
 
@@ -1004,7 +1002,7 @@ static int InitPlatform(void)
     glfwSetCursorEnterCallback(platform.handle, CursorEnterCallback);
 
     glfwMakeContextCurrent(platform.handle);
-    
+
     // Load OpenGL extensions
     // NOTE: GL procedures address loader is required to load extensions
     rlLoadExtensions(glfwGetProcAddress);
@@ -1028,19 +1026,19 @@ static int InitPlatform(void)
     TRACELOG(LOG_INFO, "    > Screen size:  %i x %i", CORE.Window.screen.width, CORE.Window.screen.height);
     TRACELOG(LOG_INFO, "    > Render size:  %i x %i", CORE.Window.render.width, CORE.Window.render.height);
     TRACELOG(LOG_INFO, "    > Viewport offsets: %i, %i", CORE.Window.renderOffset.x, CORE.Window.renderOffset.y);
-    
+
     CORE.Window.ready = true;   // TODO: Proper validation on windows/context creation
-    
+
     // If graphic device is no properly initialized, we end program
     if (!CORE.Window.ready) { TRACELOG(LOG_FATAL, "PLATFORM: Failed to initialize graphic device"); return -1; }
     else SetWindowPosition(GetMonitorWidth(GetCurrentMonitor())/2 - CORE.Window.screen.width/2, GetMonitorHeight(GetCurrentMonitor())/2 - CORE.Window.screen.height/2);
 
     // Initialize hi-res timer
     InitTimer();
-    
+
     // Initialize base path for storage
     CORE.Storage.basePath = GetWorkingDirectory();
-    
+
     // Setup callback functions for the DOM events
     emscripten_set_fullscreenchange_callback("#canvas", NULL, 1, EmscriptenFullscreenChangeCallback);
 
@@ -1069,7 +1067,7 @@ static int InitPlatform(void)
     // Support gamepad events (not provided by GLFW3 on emscripten)
     emscripten_set_gamepadconnected_callback(NULL, 1, EmscriptenGamepadCallback);
     emscripten_set_gamepaddisconnected_callback(NULL, 1, EmscriptenGamepadCallback);
-    
+
     return 0;
 }
 
