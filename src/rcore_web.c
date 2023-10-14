@@ -659,6 +659,7 @@ void SetMousePosition(int x, int y)
 // Set mouse cursor
 void SetMouseCursor(int cursor)
 {
+    CORE.Input.Mouse.cursor = cursor;
     const char *cursorName;
     switch (cursor)
     {
@@ -682,11 +683,13 @@ void SetMouseCursor(int cursor)
         {
             TRACELOG(LOG_WARNING, "Cursor value out of bound (%d). Setting to default", cursor);
             cursorName = "default";
+            CORE.Input.Mouse.cursor = MOUSE_CURSOR_DEFAULT;
         } break;
     }
 
-    // Set the cursor element on the CSS
-    EM_ASM({document.body.style.cursor = UTF8ToString($0);}, cursorName);
+    // Set the cursor element on the canvas CSS
+    // The canvas is coded to the Id "canvas" on init
+    EM_ASM({document.getElementById("canvas").style.cursor = UTF8ToString($0);}, cursorName);
 }
 
 // Register all input events
