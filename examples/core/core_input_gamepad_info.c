@@ -30,7 +30,7 @@ int main(void)
 
     InitWindow(screenWidth, screenHeight, "raylib [core] example - gamepad information");
 
-    // SetTargetFPS(60); // Set our game to run at 60 frames-per-second
+    SetTargetFPS(60); // Set our game to run at 60 frames-per-second
 
     // Main game loop
     while (!WindowShouldClose()) // Detect window close button or ESC key
@@ -61,8 +61,6 @@ int main(void)
                 }
             }
         }
-
-        DrawFPS(400, 100);
 
         EndDrawing();
     }
