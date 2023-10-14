@@ -72,12 +72,23 @@
 //----------------------------------------------------------------------------------
 #define USE_LAST_TOUCH_DEVICE       // When multiple touchscreens are connected, only use the one with the highest event<N> number
 
-#define DEFAULT_GAMEPAD_DEV    "/dev/input/js"      // Gamepad input (base dev for all gamepads: js0, js1, ...)
-#define DEFAULT_EVDEV_PATH       "/dev/input/"      // Path to the linux input events
+#define DEFAULT_EVDEV_PATH       "/dev/input/by-id"      // Path to the linux input events
+
+#define MI_BITS_PER_LONG (8 * sizeof(long))
+#define MI_NBITS(x) ((((x)-1) / MI_BITS_PER_LONG) + 1)
+#define MI_OFF(x) ((x) % MI_BITS_PER_LONG)
+#define MI_BIT(x) (1UL << MI_OFF(x))
+#define MI_LONG(x) ((x) / MI_BITS_PER_LONG)
+#define MI_IS_BIT_SET(array, bit) ((array[MI_LONG(bit)] >> MI_OFF(bit)) & 1)
 
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
 //----------------------------------------------------------------------------------
+
+typedef struct {
+    int min;
+    int max;
+} GamepadAxisRange;
 
 typedef struct {
     pthread_t threadId;                 // Event reading thread id
@@ -125,9 +136,13 @@ typedef struct {
     char currentButtonStateEvdev[MAX_MOUSE_BUTTONS]; // Holds the new mouse state for the next polling event to grab
 
     // Gamepad data
-    pthread_t gamepadThreadId;          // Gamepad reading thread id
-    int gamepadStreamFd[MAX_GAMEPADS];  // Gamepad device file descriptor
-
+    pthread_t gamepadThreadId;                                          // Gamepad reading thread id
+    int gamepadStreamFd[MAX_GAMEPADS];                                  // Gamepad device file descriptor
+    struct input_absinfo gamepadAxisFeatures[MAX_GAMEPADS][ABS_MAX];    // Store the features of each axis for each gamepad.
+    int gamepadActiveAxes[MAX_GAMEPADS][MAX_GAMEPAD_AXIS];              // Map axis ID to actual axis, e.g. the first axis found will be axis 0 as far as raylib is concerned but might actually be ABS_HAT0X (16) for some gamepads.
+    int gamepadButtonCount[MAX_GAMEPADS];                               // Store the number of active buttons found, up to MAX_GAMEPAD_BUTTONS
+    int gamepadActiveButtons[MAX_GAMEPADS][MAX_GAMEPAD_BUTTONS];        // Map button ID to actual key. e.g. the first key on a joystick might be KEY_A or KEY_X.
+    
 } PlatformData;
 
 //----------------------------------------------------------------------------------
@@ -149,13 +164,17 @@ static void RestoreKeyboard(void);              // Restore keyboard system
 static void ProcessKeyboard(void);              // Process keyboard events
 #endif
 
-static void InitEvdevInput(void);               // Initialize evdev inputs
-static void ConfigureEvdevDevice(char *device); // Identifies a input device and configures it for use if appropriate
-static void PollKeyboardEvents(void);           // Process evdev keyboard events
-static void *EventThread(void *arg);            // Input device events reading thread
+static void InitDrmInput(void);                         // Initialize inputs for DRM platform
+static void InitDrmJoystick(int index, const char *path);                 // Initialize a joystick for DRM platform
+static void PollDrmJoystickEvents();
 
-static void InitGamepad(void);                  // Initialize raw gamepad input
-static void *GamepadThread(void *arg);          // Mouse reading thread
+static void InitEvdevInput(void);                       // Initialize evdev inputs
+static void ConfigureEvdevDevice(char *device);         // Identifies a input device and configures it for use if appropriate
+static void PollKeyboardEvents(void);                   // Process evdev keyboard events
+static void *EventThread(void *arg);                    // Input device events reading thread
+
+//static void InitGamepad(void);                          // Initialize raw gamepad input
+static void *GamepadThread(void *arg);                  // Mouse reading thread
 
 static int FindMatchingConnectorMode(const drmModeConnector *connector, const drmModeModeInfo *mode);                               // Search matching DRM mode in connector's mode list
 static int FindExactConnectorMode(const drmModeConnector *connector, uint width, uint height, uint fps, bool allowInterlaced);      // Search exactly matching DRM connector mode in connector's list
@@ -657,8 +676,7 @@ void PollInputEvents(void)
 
     // Reset last gamepad button/axis registered state
     CORE.Input.Gamepad.lastButtonPressed = 0;       // GAMEPAD_BUTTON_UNKNOWN
-    CORE.Input.Gamepad.axisCount = 0;
-
+    
     // Register previous keys states
     for (int i = 0; i < MAX_KEYBOARD_KEYS; i++)
     {
@@ -666,6 +684,7 @@ void PollInputEvents(void)
         CORE.Input.Keyboard.keyRepeatInFrame[i] = 0;
     }
 
+    PollDrmJoystickEvents();
     PollKeyboardEvents();
 
     // Register previous mouse states
@@ -1325,6 +1344,165 @@ static void ProcessKeyboard(void)
 }
 #endif  // SUPPORT_SSH_KEYBOARD_RPI
 
+// Initialize user input from /dev/input/by-id
+// This includes keyobard, mouse, gamepads, and touch screens.
+static void InitDrmInput(void)
+{
+    TraceLog(LOG_INFO, "RUNNING InitDrmInput");
+
+    char path[MAX_FILEPATH_LENGTH] = { 0 };
+    DIR *directory = NULL;
+    struct dirent *entity = NULL;
+
+    // Initialise keyboard file descriptor
+    platform.keyboardFd = -1;
+    
+    // Reset variables
+    for (int i = 0; i < MAX_TOUCH_POINTS; ++i)
+    {
+        CORE.Input.Touch.position[i].x = -1;
+        CORE.Input.Touch.position[i].y = -1;
+    }
+
+    // Reset keyboard key state
+    for (int i = 0; i < MAX_KEYBOARD_KEYS; i++)
+    {
+        CORE.Input.Keyboard.currentKeyState[i] = 0;
+        CORE.Input.Keyboard.keyRepeatInFrame[i] = 0;
+    }
+
+    // Open the linux directory of "/dev/input/by-id"
+    directory = opendir(DEFAULT_EVDEV_PATH);
+
+    if (directory)
+    {
+        while ((entity = readdir(directory)) != NULL)
+        {
+            sprintf(path, "%s/%s", DEFAULT_EVDEV_PATH, entity->d_name);
+
+            // Devices are in the format:
+            // /dev/input/by-id/usb-Name_of_Device-[event-joystick|event-kbd|event-mouse]
+            int len = strlen("event-joystick");
+            if (strncmp("event-joystick", entity->d_name + (strlen(entity->d_name)-len), len) == 0) // If the device id ends with "event-joystick"
+            {
+                TraceLog(LOG_INFO, TextFormat("Device %s is an event joystick", entity->d_name));
+                for (int i = 0; i < MAX_GAMEPADS; i++)
+                {
+                    if (CORE.Input.Gamepad.ready[i]) 
+                        continue;
+                    
+                    InitDrmJoystick(i, path);
+                    break;                        
+                }   
+            }
+
+            len = strlen("event-kbd");
+            if (strncmp("event-kbd", entity->d_name + (strlen(entity->d_name)-len), len) == 0) // If the device id ends with "event-kbd"
+            {
+                TraceLog(LOG_INFO, TextFormat("Device %s is an event keyboard", entity->d_name));
+            }
+
+            len = strlen("event-mouse");
+            if (strncmp("event-mouse", entity->d_name + (strlen(entity->d_name)-len), len) == 0) // If the device id ends with "event-mouse"
+            {
+                TraceLog(LOG_INFO, TextFormat("Device %s is an event mouse", entity->d_name));
+            }
+        }
+
+        closedir(directory);
+    }
+}
+
+static void InitDrmJoystick(int index, const char *path)
+{
+    TraceLog(LOG_INFO, TextFormat("InitDrmJoystick - %s", path));
+
+    int result = (platform.gamepadStreamFd[index] = open(path, O_RDONLY | O_NONBLOCK));
+
+    // Get the name of the device.
+    ioctl(platform.gamepadStreamFd[index], EVIOCGNAME(64), &CORE.Input.Gamepad.name[index]);
+
+    // Get the bits describing the buttons of the device.
+    unsigned long key_bits[KEY_MAX / 8 + 1] = {0};
+    ioctl(platform.gamepadStreamFd[index], EVIOCGBIT(EV_KEY, sizeof(key_bits)), &key_bits);
+
+    // Count the buttons present and map a game button id (0-32) to the key code of the physical button.
+    for (int key = 0; key < KEY_MAX; key++)
+    {
+        if (MI_IS_BIT_SET(key_bits, key) && platform.gamepadButtonCount[index] < MAX_GAMEPAD_BUTTONS)
+        {
+            platform.gamepadActiveButtons[index][platform.gamepadButtonCount[index]++] = key;
+        }
+    }
+
+    // Get the bits describing the absolute axes of the device.
+    unsigned long abs_bits[ABS_MAX / 8 + 1] = {0};
+    ioctl(platform.gamepadStreamFd[index], EVIOCGBIT(EV_ABS, sizeof(abs_bits)), &abs_bits);
+    
+    // Count the axes present on the device and read their features.
+    CORE.Input.Gamepad.axisCount[index] = 0;
+    for (int axis = 0; axis < ABS_MAX; axis++)
+    {
+        // axis may be any number between 0x00 and 0x3f, and it is common for the first axis to be 0x10 (ABS_HAT0X). This maps the active axes to a range of IDs between 0 and MAX_GAMEPAD_AXIS
+        if (MI_IS_BIT_SET(abs_bits, axis) && CORE.Input.Gamepad.axisCount[index] < MAX_GAMEPAD_AXIS) 
+        {
+            platform.gamepadActiveAxes[index][CORE.Input.Gamepad.axisCount[index]++] = axis;               
+            TraceLog(LOG_INFO, TextFormat("Gamepad %d has axis %d", index, axis));
+            ioctl(platform.gamepadStreamFd[index], EVIOCGABS(axis), &platform.gamepadAxisFeatures[index][axis]);
+        }
+    }
+
+    TraceLog(LOG_INFO, TextFormat("Gamepad [%d] %s has %d axes", index, CORE.Input.Gamepad.name[index], CORE.Input.Gamepad.axisCount[index]));
+
+    CORE.Input.Gamepad.ready[index] = true;
+}
+
+static void PollDrmJoystickEvents()
+{
+    struct input_event ev;
+
+    for (int i = 0; i < MAX_GAMEPADS; i++)
+    {
+        if (!CORE.Input.Gamepad.ready[i])
+            continue;
+        
+        while (read(platform.gamepadStreamFd[i], &ev, sizeof(ev)) > 0)
+        {
+            switch(ev.type)
+            {
+            case EV_KEY:
+                if (ev.code < KEY_MAX)
+                {
+                    CORE.Input.Gamepad.currentButtonState[i][ev.code] = ev.value;
+                    for (int lookupButton = 0; lookupButton < MAX_GAMEPAD_BUTTONS; lookupButton++)
+                    {
+                        if (platform.gamepadActiveButtons[i][lookupButton] == ev.code)
+                        {
+                            CORE.Input.Gamepad.currentButtonState[i][lookupButton] = ev.value;
+                            break;
+                        }
+                    }
+                }
+                break;
+            case EV_ABS:
+                if (ev.code < MAX_GAMEPAD_AXIS)
+                {
+                    struct input_absinfo f = platform.gamepadAxisFeatures[i][ev.code];
+                    for (int lookupAxis = 0; lookupAxis < MAX_GAMEPAD_AXIS; lookupAxis++)
+                    {
+                        if (platform.gamepadActiveAxes[i][lookupAxis] == ev.code) 
+                        {
+                            CORE.Input.Gamepad.axisState[i][lookupAxis] = ((float)ev.value - ((f.maximum - f.minimum) / 2.0f)) / (float)(f.maximum - f.minimum);
+                            break;
+                        }
+                    }
+                }
+                break;
+            }
+        }
+    }
+}
+
 // Initialise user input from evdev(/dev/input/event<N>)
 // this means mouse, keyboard or gamepad devices
 static void InitEvdevInput(void)
@@ -1822,38 +2000,39 @@ static void *EventThread(void *arg)
 }
 
 // Initialize gamepad system
-static void InitGamepad(void)
-{
-    char gamepadDev[128] = { 0 };
+// static void InitGamepad(void)
+// {
+//     char gamepadDev[128] = { 0 };
+// 
+//     for (int i = 0; i < MAX_GAMEPADS; i++)
+//     {
+//         sprintf(gamepadDev, "%s%i", DEFAULT_GAMEPAD_DEV, i);
+// 
+//         if ((platform.gamepadStreamFd[i] = open(gamepadDev, O_RDONLY | O_NONBLOCK)) < 0)
+//         {
+//             // NOTE: Only show message for first gamepad
+//             if (i == 0) TRACELOG(LOG_WARNING, "RPI: Failed to open Gamepad device, no gamepad available");
+//         }
+//         else
+//         {
+//             CORE.Input.Gamepad.ready[i] = true;
+// 
+//             // NOTE: Only create one thread
+//             if (i == 0)
+//             {
+//                 int error = pthread_create(&platform.gamepadThreadId, NULL, &GamepadThread, NULL);
+// 
+//                 if (error != 0) TRACELOG(LOG_WARNING, "RPI: Failed to create gamepad input event thread");
+//                 else  TRACELOG(LOG_INFO, "RPI: Gamepad device initialized successfully");
+//             }
+// 
+//             ioctl(platform.gamepadStreamFd[i], JSIOCGNAME(64), &CORE.Input.Gamepad.name[i]);
+//             ioctl(platform.gamepadStreamFd[i], JSIOCGAXES, &CORE.Input.Gamepad.axisCount);
+//         }
+//     }
+// }
 
-    for (int i = 0; i < MAX_GAMEPADS; i++)
-    {
-        sprintf(gamepadDev, "%s%i", DEFAULT_GAMEPAD_DEV, i);
-
-        if ((platform.gamepadStreamFd[i] = open(gamepadDev, O_RDONLY | O_NONBLOCK)) < 0)
-        {
-            // NOTE: Only show message for first gamepad
-            if (i == 0) TRACELOG(LOG_WARNING, "RPI: Failed to open Gamepad device, no gamepad available");
-        }
-        else
-        {
-            CORE.Input.Gamepad.ready[i] = true;
-
-            // NOTE: Only create one thread
-            if (i == 0)
-            {
-                int error = pthread_create(&platform.gamepadThreadId, NULL, &GamepadThread, NULL);
-
-                if (error != 0) TRACELOG(LOG_WARNING, "RPI: Failed to create gamepad input event thread");
-                else  TRACELOG(LOG_INFO, "RPI: Gamepad device initialized successfully");
-            }
-
-            ioctl(platform.gamepadStreamFd[i], JSIOCGNAME(64), &CORE.Input.Gamepad.name[i]);
-            ioctl(platform.gamepadStreamFd[i], JSIOCGAXES, &CORE.Input.Gamepad.axisCount);
-        }
-    }
-}
-
+/*
 // Process Gamepad (/dev/input/js0)
 static void *GamepadThread(void *arg)
 {
@@ -1910,6 +2089,7 @@ static void *GamepadThread(void *arg)
 
     return NULL;
 }
+*/
 
 // Search matching DRM mode in connector's mode list
 static int FindMatchingConnectorMode(const drmModeConnector *connector, const drmModeModeInfo *mode)

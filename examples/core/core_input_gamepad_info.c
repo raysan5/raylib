@@ -41,14 +41,28 @@ int main(void)
 
         ClearBackground(RAYWHITE);
 
-        for (int i = 0; i < 4; i++)     // by default rcore.h has a MAX_GAMEPADS of 4 so mimmic that here.
+        for (int i = 0; i < 4; i++) // by default rcore.h has a MAX_GAMEPADS of 4 so mimmic that here.
         {
             if (IsGamepadAvailable(i))
             {
-                DrawText(TextFormat("Gamepad:\n\tName: %s\n\tAxes: %d", GetGamepadName(i), GetGamepadAxisCount(i)), 10, y, 20, BLACK);
-                y += 40;
+                DrawText(TextFormat("Gamepad name: %s", GetGamepadName(i)), 10, y, 20, BLACK);
+                y += 30;
+                DrawText(TextFormat("\tAxis count:   %d", GetGamepadAxisCount(i)), 10, y, 20, BLACK);
+                y += 30;
+                for (int axis = 0; axis < GetGamepadAxisCount(i); axis++)
+                {
+                    DrawText(TextFormat("\tAxis %d = %f", axis, GetGamepadAxisMovement(i, axis)), 10, y, 20, BLACK);
+                    y += 30;
+                }
+                for (int button = 0; button < 32; button++)
+                {
+                    DrawText(TextFormat("\tButton %d = %d", button, IsGamepadButtonDown(i, button)), 10, y, 20, BLACK);
+                    y += 30;
+                }
             }
         }
+
+        DrawFPS(GetScreenWidth() - 100, 100);
 
         EndDrawing();
     }
