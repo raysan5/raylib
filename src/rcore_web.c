@@ -690,7 +690,34 @@ void SetMousePosition(int x, int y)
 // Set mouse cursor
 void SetMouseCursor(int cursor)
 {
-    TRACELOG(LOG_INFO, "SetMouseCursor not implemented in rcore_web.c");
+    const char *cursorName;
+    switch (cursor)
+    {
+        case MOUSE_CURSOR_IBEAM: cursorName = "text"; break;
+        case MOUSE_CURSOR_CROSSHAIR: cursorName = "crosshair"; break;
+        case MOUSE_CURSOR_POINTING_HAND: cursorName = "pointer"; break;
+        case MOUSE_CURSOR_RESIZE_EW: cursorName = "ew-resize"; break;
+        case MOUSE_CURSOR_RESIZE_NS: cursorName = "ns-resize"; break;
+        case MOUSE_CURSOR_RESIZE_NWSE: cursorName = "nwse-resize"; break;
+        case MOUSE_CURSOR_RESIZE_NESW: cursorName = "nesw-resize"; break;
+        case MOUSE_CURSOR_RESIZE_ALL: cursorName = "move"; break;
+        case MOUSE_CURSOR_NOT_ALLOWED: cursorName = "not-allowed"; break;
+
+        case MOUSE_CURSOR_ARROW: // can't find a name specifically for arrow cursor
+        case MOUSE_CURSOR_DEFAULT:
+        {
+            cursorName = "default";
+        } break;
+
+        default:
+        {
+            TRACELOG(LOG_WARNING, "Cursor value out of bound (%d). Setting to default", cursor);
+            cursorName = "default";
+        } break;
+    }
+
+    // Set the cursor element on the CSS
+    EM_ASM({document.body.style.cursor = UTF8ToString($0);}, cursorName);
 }
 
 // Register all input events
