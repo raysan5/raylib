@@ -46,8 +46,6 @@
 *
 **********************************************************************************************/
 
-#include "rcore.h"
-
 // TODO: Include the platform specific libraries
 
 //----------------------------------------------------------------------------------
@@ -130,8 +128,8 @@ void InitWindow(int width, int height, const char *title)
     CORE.Input.Mouse.cursor = MOUSE_CURSOR_ARROW;
     CORE.Input.Gamepad.lastButtonPressed = 0;       // GAMEPAD_BUTTON_UNKNOWN
     CORE.Window.eventWaiting = false;
-    
-    
+
+
     // TODO: Platform specific init window
     //--------------------------------------------------------------
     CORE.Window.screen.width = width;
@@ -144,7 +142,7 @@ void InitWindow(int width, int height, const char *title)
     CORE.Window.ready = InitGraphicsDevice(width, height);
 
 
-    
+
     // Initialize OpenGL context (states and resources)
     // NOTE: CORE.Window.currentFbo.width and CORE.Window.currentFbo.height not used, just stored as globals in rlgl
     rlglInit(CORE.Window.currentFbo.width, CORE.Window.currentFbo.height);
@@ -711,13 +709,13 @@ static int InitPlatform(void)
     rlLoadExtensions(eglGetProcAddress);
 
     CORE.Window.ready = true;
-    
+
     // If graphic device is no properly initialized, we end program
     if (!CORE.Window.ready) { TRACELOG(LOG_FATAL, "PLATFORM: Failed to initialize graphic device"); return -1; }
 
     // Initialize hi-res timer
     InitTimer();
-    
+
     // Initialize base path for storage
     CORE.Storage.basePath = GetWorkingDirectory();
 
