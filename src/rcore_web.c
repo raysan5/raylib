@@ -706,7 +706,7 @@ void PollInputEvents(void)
 
     // Reset last gamepad button/axis registered state
     CORE.Input.Gamepad.lastButtonPressed = 0;       // GAMEPAD_BUTTON_UNKNOWN
-    CORE.Input.Gamepad.axisCount = 0;
+    //CORE.Input.Gamepad.axisCount = 0;
     // Keyboard/Mouse input polling (automatically managed by GLFW3 through callback)
 
     // Register previous keys states
@@ -800,7 +800,7 @@ void PollInputEvents(void)
                 CORE.Input.Gamepad.axisState[i][j] = gamepadState.axis[j];
             }
 
-            CORE.Input.Gamepad.axisCount = gamepadState.numAxes;
+            CORE.Input.Gamepad.axisCount[i] = gamepadState.numAxes;
         }
     }
 }
