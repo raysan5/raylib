@@ -62,8 +62,8 @@ int main(void)
             }
         }
 
-        DrawFPS(100, 100);
-        
+        DrawFPS(400, 100);
+
         EndDrawing();
     }
 
