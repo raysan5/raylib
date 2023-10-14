@@ -659,6 +659,7 @@ void SetMousePosition(int x, int y)
 // Set mouse cursor
 void SetMouseCursor(int cursor)
 {
+    CORE.Input.Mouse.cursor = cursor;
     const char *cursorName;
     switch (cursor)
     {
@@ -682,6 +683,7 @@ void SetMouseCursor(int cursor)
         {
             TRACELOG(LOG_WARNING, "Cursor value out of bound (%d). Setting to default", cursor);
             cursorName = "default";
+            CORE.Input.Mouse.cursor = MOUSE_CURSOR_DEFAULT;
         } break;
     }
 
