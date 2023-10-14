@@ -1657,6 +1657,8 @@ static int InitPlatform(void)
     rlLoadExtensions(glfwGetProcAddress);
 
     if ((CORE.Window.flags & FLAG_WINDOW_MINIMIZED) > 0) MinimizeWindow();
+
+    CORE.Window.ready = true;   // TODO: Proper validation on windows/context creation
     
     // If graphic device is no properly initialized, we end program
     if (!CORE.Window.ready) { TRACELOG(LOG_FATAL, "PLATFORM: Failed to initialize graphic device"); return -1; }
