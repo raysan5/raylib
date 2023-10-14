@@ -155,12 +155,13 @@ static PlatformData platform = { 0 };   // Platform specific data
 //----------------------------------------------------------------------------------
 // Module Internal Functions Declaration
 //----------------------------------------------------------------------------------
-static bool InitGraphicsDevice(int width, int height);  // Initialize graphics device
+static int InitPlatform(void);          // Initialize platform (graphics, inputs and more)
+static void ClosePlatform(void);        // Close platform
 
-static void InitKeyboard(void);                         // Initialize raw keyboard system
-static void RestoreKeyboard(void);                      // Restore keyboard system
+static void InitKeyboard(void);                 // Initialize raw keyboard system
+static void RestoreKeyboard(void);              // Restore keyboard system
 #if defined(SUPPORT_SSH_KEYBOARD_RPI)
-static void ProcessKeyboard(void);                      // Process keyboard events
+static void ProcessKeyboard(void);              // Process keyboard events
 #endif
 
 static void InitDrmInput(void);                         // Initialize inputs for DRM platform
@@ -223,38 +224,31 @@ void InitWindow(int width, int height, const char *title)
     TRACELOG(LOG_INFO, "    > raudio:.... not loaded (optional)");
 #endif
 
-    // NOTE: Keep internal pointer to input title string (no copy)
+    // Initialize window data
+    CORE.Window.screen.width = width;
+    CORE.Window.screen.height = height;
+    CORE.Window.eventWaiting = false;
+    CORE.Window.screenScale = MatrixIdentity();     // No draw scaling required by default
     if ((title != NULL) && (title[0] != 0)) CORE.Window.title = title;
 
     // Initialize global input state
-    memset(&CORE.Input, 0, sizeof(CORE.Input));
+    memset(&CORE.Input, 0, sizeof(CORE.Input));     // Reset CORE.Input structure to 0
     CORE.Input.Keyboard.exitKey = KEY_ESCAPE;
-    CORE.Input.Mouse.scale = (Vector2){1.0f, 1.0f};
+    CORE.Input.Mouse.scale = (Vector2){ 1.0f, 1.0f };
     CORE.Input.Mouse.cursor = MOUSE_CURSOR_ARROW;
-    CORE.Input.Gamepad.lastButtonPressed = 0; // GAMEPAD_BUTTON_UNKNOWN
-    CORE.Window.eventWaiting = false;
+    CORE.Input.Gamepad.lastButtonPressed = GAMEPAD_BUTTON_UNKNOWN;
+    
+    // Initialize platform
+    //--------------------------------------------------------------   
+    InitPlatform();
+    //--------------------------------------------------------------
+    
+    // Initialize rlgl default data (buffers and shaders)
+    // NOTE: CORE.Window.currentFbo.width and CORE.Window.currentFbo.height not used, just stored as globals in rlgl
+    rlglInit(CORE.Window.currentFbo.width, CORE.Window.currentFbo.height);
 
-    for (int i = 0; i < MAX_GAMEPADS; i++)
-    {
-        CORE.Input.Gamepad.ready[i] = false;
-    }
-
-    // Initialize graphics device (display device and OpenGL context)
-    // NOTE: returns true if window and graphic device has been initialized successfully
-    CORE.Window.ready = InitGraphicsDevice(width, height);
-
-    // If graphic device is no properly initialized, we end program
-    if (!CORE.Window.ready) { TRACELOG(LOG_FATAL, "PLATFORM: Failed to initialize graphic device"); return; }
-    else SetWindowPosition(GetMonitorWidth(GetCurrentMonitor()) / 2 - CORE.Window.screen.width / 2, GetMonitorHeight(GetCurrentMonitor()) / 2 - CORE.Window.screen.height / 2);
-
-    // Initialize hi-res timer
-    InitTimer();
-
-    // Initialize random seed
-    SetRandomSeed((unsigned int)time(NULL));
-
-    // Initialize base path for storage
-    CORE.Storage.basePath = GetWorkingDirectory();
+    // Setup default viewport
+    SetupViewport(CORE.Window.currentFbo.width, CORE.Window.currentFbo.height);
 
 #if defined(SUPPORT_MODULE_RTEXT) && defined(SUPPORT_DEFAULT_FONT)
     // Load default font
@@ -297,15 +291,9 @@ void InitWindow(int width, int height, const char *title)
     events = (AutomationEvent *)RL_CALLOC(MAX_CODE_AUTOMATION_EVENTS, sizeof(AutomationEvent));
     CORE.Time.frameCounter = 0;
 #endif
-
-    // Platform specific init window
-    //--------------------------------------------------------------
-    // Initialize raw input system
-    InitDrmInput();   // DRM platform input initialization
-    InitEvdevInput(); // Evdev inputs initialization
-    //InitGamepad();    // Gamepad init
-    InitKeyboard();   // Keyboard init (stdin)
-    //--------------------------------------------------------------
+    
+    // Initialize random seed
+    SetRandomSeed((unsigned int)time(NULL));
     
     TRACELOG(LOG_INFO, "PLATFORM: DRM: Application initialized successfully");
 }
@@ -332,93 +320,9 @@ void CloseWindow(void)
     timeEndPeriod(1);           // Restore time period
 #endif
 
-    // Platform specific close window
-    //--------------------------------------------------------------
-    if (platform.prevFB)
-    {
-        drmModeRmFB(platform.fd, platform.prevFB);
-        platform.prevFB = 0;
-    }
-
-    if (platform.prevBO)
-    {
-        gbm_surface_release_buffer(platform.gbmSurface, platform.prevBO);
-        platform.prevBO = NULL;
-    }
-
-    if (platform.gbmSurface)
-    {
-        gbm_surface_destroy(platform.gbmSurface);
-        platform.gbmSurface = NULL;
-    }
-
-    if (platform.gbmDevice)
-    {
-        gbm_device_destroy(platform.gbmDevice);
-        platform.gbmDevice = NULL;
-    }
-
-    if (platform.crtc)
-    {
-        if (platform.connector)
-        {
-            drmModeSetCrtc(platform.fd, platform.crtc->crtc_id, platform.crtc->buffer_id,
-                platform.crtc->x, platform.crtc->y, &platform.connector->connector_id, 1, &platform.crtc->mode);
-            drmModeFreeConnector(platform.connector);
-            platform.connector = NULL;
-        }
-
-        drmModeFreeCrtc(platform.crtc);
-        platform.crtc = NULL;
-    }
-
-    if (platform.fd != -1)
-    {
-        close(platform.fd);
-        platform.fd = -1;
-    }
-
-    // Close surface, context and display
-    if (platform.device != EGL_NO_DISPLAY)
-    {
-        if (platform.surface != EGL_NO_SURFACE)
-        {
-            eglDestroySurface(platform.device, platform.surface);
-            platform.surface = EGL_NO_SURFACE;
-        }
-
-        if (platform.context != EGL_NO_CONTEXT)
-        {
-            eglDestroyContext(platform.device, platform.context);
-            platform.context = EGL_NO_CONTEXT;
-        }
-
-        eglTerminate(platform.device);
-        platform.device = EGL_NO_DISPLAY;
-    }
-
-    // Wait for mouse and gamepad threads to finish before closing
-    // NOTE: Those threads should already have finished at this point
-    // because they are controlled by CORE.Window.shouldClose variable
-
-    CORE.Window.shouldClose = true;   // Added to force threads to exit when the close window is called
-
-    // Close the evdev keyboard
-    if (platform.keyboardFd != -1)
-    {
-        close(platform.keyboardFd);
-        platform.keyboardFd = -1;
-    }
-
-    for (int i = 0; i < sizeof(platform.eventWorker)/sizeof(InputEventWorker); ++i)
-    {
-        if (platform.eventWorker[i].threadId)
-        {
-            pthread_join(platform.eventWorker[i].threadId, NULL);
-        }
-    }
-
-    if (platform.gamepadThreadId) pthread_join(platform.gamepadThreadId, NULL);
+    // De-initialize platform
+    //--------------------------------------------------------------   
+    ClosePlatform();
     //--------------------------------------------------------------
 
 #if defined(SUPPORT_EVENTS_AUTOMATION)
@@ -437,40 +341,16 @@ bool WindowShouldClose(void)
     else return true;
 }
 
-// Check if window is currently hidden
-bool IsWindowHidden(void)
-{
-    return false;
-}
-
-// Check if window has been minimized
-bool IsWindowMinimized(void)
-{
-    return false;
-}
-
-// Check if window has been maximized
-bool IsWindowMaximized(void)
-{
-    return false;
-}
-
-// Check if window has the focus
-bool IsWindowFocused(void)
-{
-    return true;
-}
-
-// Check if window has been resizedLastFrame
-bool IsWindowResized(void)
-{
-    return false;
-}
-
 // Toggle fullscreen mode
 void ToggleFullscreen(void)
 {
     TRACELOG(LOG_WARNING, "ToggleFullscreen() not available on target platform");
+}
+
+// Toggle borderless windowed mode
+void ToggleBorderlessWindowed(void)
+{
+    TRACELOG(LOG_WARNING, "ToggleBorderlessWindowed() not available on target platform");
 }
 
 // Set window state: maximized, if resizable
@@ -489,12 +369,6 @@ void MinimizeWindow(void)
 void RestoreWindow(void)
 {
     TRACELOG(LOG_WARNING, "RestoreWindow() not available on target platform");
-}
-
-// Toggle borderless windowed mode
-void ToggleBorderlessWindowed(void)
-{
-    TRACELOG(LOG_WARNING, "ToggleBorderlessWindowed() not available on target platform");
 }
 
 // Set window configuration state using flags
@@ -542,15 +416,15 @@ void SetWindowMonitor(int monitor)
 // Set window minimum dimensions (FLAG_WINDOW_RESIZABLE)
 void SetWindowMinSize(int width, int height)
 {
-    CORE.Window.windowMin.width = width;
-    CORE.Window.windowMin.height = height;
+    CORE.Window.screenMin.width = width;
+    CORE.Window.screenMin.height = height;
 }
 
 // Set window maximum dimensions (FLAG_WINDOW_RESIZABLE)
 void SetWindowMaxSize(int width, int height)
 {
-    CORE.Window.windowMax.width = width;
-    CORE.Window.windowMax.height = height;
+    CORE.Window.screenMax.width = width;
+    CORE.Window.screenMax.height = height;
 }
 
 // Set window dimensions
@@ -764,46 +638,11 @@ void OpenURL(const char *url)
 // Module Functions Definition: Inputs
 //----------------------------------------------------------------------------------
 
-// Get gamepad internal name id
-const char *GetGamepadName(int gamepad)
-{
-    return CORE.Input.Gamepad.name[gamepad];
-}
-
-// Get gamepad axis count
-int GetGamepadAxisCount(int gamepad)
-{
-    return CORE.Input.Gamepad.axisCount[gamepad];
-}
-
 // Set internal gamepad mappings
 int SetGamepadMappings(const char *mappings)
 {
     TRACELOG(LOG_WARNING, "SetGamepadMappings() not implemented on target platform");
     return 0;
-}
-
-// Get mouse position X
-int GetMouseX(void)
-{
-    return (int)((CORE.Input.Mouse.currentPosition.x + CORE.Input.Mouse.offset.x)*CORE.Input.Mouse.scale.x);
-}
-
-// Get mouse position Y
-int GetMouseY(void)
-{
-    return (int)((CORE.Input.Mouse.currentPosition.y + CORE.Input.Mouse.offset.y)*CORE.Input.Mouse.scale.y);
-}
-
-// Get mouse position XY
-Vector2 GetMousePosition(void)
-{
-    Vector2 position = { 0 };
-
-    position.x = (CORE.Input.Mouse.currentPosition.x + CORE.Input.Mouse.offset.x)*CORE.Input.Mouse.scale.x;
-    position.y = (CORE.Input.Mouse.currentPosition.y + CORE.Input.Mouse.offset.y)*CORE.Input.Mouse.scale.y;
-
-    return position;
 }
 
 // Set mouse position XY
@@ -813,44 +652,10 @@ void SetMousePosition(int x, int y)
     CORE.Input.Mouse.previousPosition = CORE.Input.Mouse.currentPosition;
 }
 
-// Get mouse wheel movement Y
-float GetMouseWheelMove(void)
-{
-    float result = 0.0f;
-
-    if (fabsf(CORE.Input.Mouse.currentWheelMove.x) > fabsf(CORE.Input.Mouse.currentWheelMove.y)) result = (float)CORE.Input.Mouse.currentWheelMove.x;
-    else result = (float)CORE.Input.Mouse.currentWheelMove.y;
-
-    return result;
-}
-
 // Set mouse cursor
 void SetMouseCursor(int cursor)
 {
     TRACELOG(LOG_WARNING, "SetMouseCursor() not implemented on target platform");
-}
-
-// Get touch position X for touch point 0 (relative to screen size)
-int GetTouchX(void)
-{
-    return GetMouseX();
-}
-
-// Get touch position Y for touch point 0 (relative to screen size)
-int GetTouchY(void)
-{
-    return GetMouseY();
-}
-
-// Get touch position XY for a touch point index (relative to screen size)
-Vector2 GetTouchPosition(int index)
-{
-    Vector2 position = { -1.0f, -1.0f };
-
-    if (index < MAX_TOUCH_POINTS) position = CORE.Input.Touch.position[index];
-    else TRACELOG(LOG_WARNING, "INPUT: Required touch point out of range (Max touch points: %i)", MAX_TOUCH_POINTS);
-
-    return position;
 }
 
 // Register all input events
@@ -924,28 +729,9 @@ void PollInputEvents(void)
 // Module Internal Functions Definition
 //----------------------------------------------------------------------------------
 
-// Initialize display device and framebuffer
-// NOTE: width and height represent the screen (framebuffer) desired size, not actual display size
-// If width or height are 0, default display size will be used for framebuffer size
-// NOTE: returns false in case graphic device could not be created
-static bool InitGraphicsDevice(int width, int height)
+// Initialize platform: graphics, inputs and more
+static int InitPlatform(void)
 {
-    CORE.Window.screen.width = width;            // User desired width
-    CORE.Window.screen.height = height;          // User desired height
-    CORE.Window.screenScale = MatrixIdentity();  // No draw scaling required by default
-
-    // Set the window minimum and maximum default values to 0
-    CORE.Window.windowMin.width  = 0;
-    CORE.Window.windowMin.height = 0;
-    CORE.Window.windowMax.width  = 0;
-    CORE.Window.windowMax.height = 0;
-
-    // NOTE: Framebuffer (render area - CORE.Window.render.width, CORE.Window.render.height) could include black bars...
-    // ...in top-down or left-right to match display aspect ratio (no weird scaling)
-
-    CORE.Window.fullscreen = true;
-    CORE.Window.flags |= FLAG_FULLSCREEN_MODE;
-
     platform.fd = -1;
     platform.connector = NULL;
     platform.modeIndex = -1;
@@ -954,6 +740,9 @@ static bool InitGraphicsDevice(int width, int height)
     platform.gbmSurface = NULL;
     platform.prevBO = NULL;
     platform.prevFB = 0;
+    
+    CORE.Window.fullscreen = true;
+    CORE.Window.flags |= FLAG_FULLSCREEN_MODE;
 
 #if defined(DEFAULT_GRAPHIC_DEVICE_DRM)
     platform.fd = open(DEFAULT_GRAPHIC_DEVICE_DRM, O_RDWR);
@@ -977,14 +766,14 @@ static bool InitGraphicsDevice(int width, int height)
     if (platform.fd == -1)
     {
         TRACELOG(LOG_WARNING, "DISPLAY: Failed to open graphic card");
-        return false;
+        return -1;
     }
 
     drmModeRes *res = drmModeGetResources(platform.fd);
     if (!res)
     {
         TRACELOG(LOG_WARNING, "DISPLAY: Failed get DRM resources");
-        return false;
+        return -1;
     }
 
     TRACELOG(LOG_TRACE, "DISPLAY: Connectors found: %i", res->count_connectors);
@@ -1013,7 +802,7 @@ static bool InitGraphicsDevice(int width, int height)
     {
         TRACELOG(LOG_WARNING, "DISPLAY: No suitable DRM connector found");
         drmModeFreeResources(res);
-        return false;
+        return -1;
     }
 
     drmModeEncoder *enc = drmModeGetEncoder(platform.fd, platform.connector->encoder_id);
@@ -1021,7 +810,7 @@ static bool InitGraphicsDevice(int width, int height)
     {
         TRACELOG(LOG_WARNING, "DISPLAY: Failed to get DRM mode encoder");
         drmModeFreeResources(res);
-        return false;
+        return -1;
     }
 
     platform.crtc = drmModeGetCrtc(platform.fd, enc->crtc_id);
@@ -1030,7 +819,7 @@ static bool InitGraphicsDevice(int width, int height)
         TRACELOG(LOG_WARNING, "DISPLAY: Failed to get DRM mode crtc");
         drmModeFreeEncoder(enc);
         drmModeFreeResources(res);
-        return false;
+        return -1;
     }
 
     // If InitWindow should use the current mode find it in the connector's mode list
@@ -1045,7 +834,7 @@ static bool InitGraphicsDevice(int width, int height)
             TRACELOG(LOG_WARNING, "DISPLAY: No matching DRM connector mode found");
             drmModeFreeEncoder(enc);
             drmModeFreeResources(res);
-            return false;
+            return -1;
         }
 
         CORE.Window.screen.width = CORE.Window.display.width;
@@ -1073,7 +862,7 @@ static bool InitGraphicsDevice(int width, int height)
         TRACELOG(LOG_WARNING, "DISPLAY: Failed to find a suitable DRM connector mode");
         drmModeFreeEncoder(enc);
         drmModeFreeResources(res);
-        return false;
+        return -1;
     }
 
     CORE.Window.display.width = platform.connector->modes[platform.modeIndex].hdisplay;
@@ -1098,7 +887,7 @@ static bool InitGraphicsDevice(int width, int height)
     if (!platform.gbmDevice)
     {
         TRACELOG(LOG_WARNING, "DISPLAY: Failed to create GBM device");
-        return false;
+        return -1;
     }
 
     platform.gbmSurface = gbm_surface_create(platform.gbmDevice, platform.connector->modes[platform.modeIndex].hdisplay,
@@ -1106,7 +895,7 @@ static bool InitGraphicsDevice(int width, int height)
     if (!platform.gbmSurface)
     {
         TRACELOG(LOG_WARNING, "DISPLAY: Failed to create GBM surface");
-        return false;
+        return -1;
     }
 
     EGLint samples = 0;
@@ -1146,7 +935,7 @@ static bool InitGraphicsDevice(int width, int height)
     if (platform.device == EGL_NO_DISPLAY)
     {
         TRACELOG(LOG_WARNING, "DISPLAY: Failed to initialize EGL device");
-        return false;
+        return -1;
     }
 
     // Initialize the EGL device connection
@@ -1154,13 +943,13 @@ static bool InitGraphicsDevice(int width, int height)
     {
         // If all of the calls to eglInitialize returned EGL_FALSE then an error has occurred.
         TRACELOG(LOG_WARNING, "DISPLAY: Failed to initialize EGL device");
-        return false;
+        return -1;
     }
 
     if (!eglChooseConfig(platform.device, NULL, NULL, 0, &numConfigs))
     {
         TRACELOG(LOG_WARNING, "DISPLAY: Failed to get EGL config count: 0x%x", eglGetError());
-        return false;
+        return -1;
     }
 
     TRACELOG(LOG_TRACE, "DISPLAY: EGL configs available: %d", numConfigs);
@@ -1169,7 +958,7 @@ static bool InitGraphicsDevice(int width, int height)
     if (!configs)
     {
         TRACELOG(LOG_WARNING, "DISPLAY: Failed to get memory for EGL configs");
-        return false;
+        return -1;
     }
 
     EGLint matchingNumConfigs = 0;
@@ -1177,7 +966,7 @@ static bool InitGraphicsDevice(int width, int height)
     {
         TRACELOG(LOG_WARNING, "DISPLAY: Failed to choose EGL config: 0x%x", eglGetError());
         free(configs);
-        return false;
+        return -1;
     }
 
     TRACELOG(LOG_TRACE, "DISPLAY: EGL matching configs available: %d", matchingNumConfigs);
@@ -1207,7 +996,7 @@ static bool InitGraphicsDevice(int width, int height)
     if (!found)
     {
         TRACELOG(LOG_WARNING, "DISPLAY: Failed to find a suitable EGL config");
-        return false;
+        return -1;
     }
 
     // Set rendering API
@@ -1218,7 +1007,7 @@ static bool InitGraphicsDevice(int width, int height)
     if (platform.context == EGL_NO_CONTEXT)
     {
         TRACELOG(LOG_WARNING, "DISPLAY: Failed to create EGL context");
-        return false;
+        return -1;
     }
 
     // Create an EGL window surface
@@ -1227,7 +1016,7 @@ static bool InitGraphicsDevice(int width, int height)
     if (EGL_NO_SURFACE == platform.surface)
     {
         TRACELOG(LOG_WARNING, "DISPLAY: Failed to create EGL window surface: 0x%04x", eglGetError());
-        return false;
+        return -1;
     }
 
     // At this point we need to manage render size vs screen size
@@ -1243,7 +1032,7 @@ static bool InitGraphicsDevice(int width, int height)
     if (eglMakeCurrent(platform.device, platform.surface, platform.surface, platform.context) == EGL_FALSE)
     {
         TRACELOG(LOG_WARNING, "DISPLAY: Failed to attach EGL rendering context to EGL surface");
-        return false;
+        return -1;
     }
     else
     {
@@ -1263,18 +1052,124 @@ static bool InitGraphicsDevice(int width, int height)
     // NOTE: GL procedures address loader is required to load extensions
     rlLoadExtensions(eglGetProcAddress);
 
-    // Initialize OpenGL context (states and resources)
-    // NOTE: CORE.Window.currentFbo.width and CORE.Window.currentFbo.height not used, just stored as globals in rlgl
-    rlglInit(CORE.Window.currentFbo.width, CORE.Window.currentFbo.height);
-
-    // Setup default viewport
-    // NOTE: It updated CORE.Window.render.width and CORE.Window.render.height
-    SetupViewport(CORE.Window.currentFbo.width, CORE.Window.currentFbo.height);
-
     if ((CORE.Window.flags & FLAG_WINDOW_MINIMIZED) > 0) MinimizeWindow();
+    
+    CORE.Window.ready = true;   // TODO: Proper validation on windows/context creation
+    
+        // If graphic device is no properly initialized, we end program
+    if (!CORE.Window.ready) { TRACELOG(LOG_FATAL, "PLATFORM: Failed to initialize graphic device"); return -1; }
+    else SetWindowPosition(GetMonitorWidth(GetCurrentMonitor()) / 2 - CORE.Window.screen.width / 2, GetMonitorHeight(GetCurrentMonitor()) / 2 - CORE.Window.screen.height / 2);
 
-    return true;
+    // Set some default window flags
+    CORE.Window.flags &= ~FLAG_WINDOW_HIDDEN;       // false
+    CORE.Window.flags &= ~FLAG_WINDOW_MINIMIZED;    // false
+    CORE.Window.flags |= FLAG_WINDOW_MAXIMIZED;     // true
+    CORE.Window.flags &= ~FLAG_WINDOW_UNFOCUSED;    // false
+
+    // Initialize hi-res timer
+    InitTimer();
+
+    // Initialize base path for storage
+    CORE.Storage.basePath = GetWorkingDirectory();
+
+    // Initialize raw input system
+    InitEvdevInput(); // Evdev inputs initialization
+    InitGamepad();    // Gamepad init
+    InitKeyboard();   // Keyboard init (stdin)
+    
+    return 0;
 }
+
+// Close platform
+static void ClosePlatform(void)
+{
+    if (platform.prevFB)
+    {
+        drmModeRmFB(platform.fd, platform.prevFB);
+        platform.prevFB = 0;
+    }
+
+    if (platform.prevBO)
+    {
+        gbm_surface_release_buffer(platform.gbmSurface, platform.prevBO);
+        platform.prevBO = NULL;
+    }
+
+    if (platform.gbmSurface)
+    {
+        gbm_surface_destroy(platform.gbmSurface);
+        platform.gbmSurface = NULL;
+    }
+
+    if (platform.gbmDevice)
+    {
+        gbm_device_destroy(platform.gbmDevice);
+        platform.gbmDevice = NULL;
+    }
+
+    if (platform.crtc)
+    {
+        if (platform.connector)
+        {
+            drmModeSetCrtc(platform.fd, platform.crtc->crtc_id, platform.crtc->buffer_id,
+                platform.crtc->x, platform.crtc->y, &platform.connector->connector_id, 1, &platform.crtc->mode);
+            drmModeFreeConnector(platform.connector);
+            platform.connector = NULL;
+        }
+
+        drmModeFreeCrtc(platform.crtc);
+        platform.crtc = NULL;
+    }
+
+    if (platform.fd != -1)
+    {
+        close(platform.fd);
+        platform.fd = -1;
+    }
+
+    // Close surface, context and display
+    if (platform.device != EGL_NO_DISPLAY)
+    {
+        if (platform.surface != EGL_NO_SURFACE)
+        {
+            eglDestroySurface(platform.device, platform.surface);
+            platform.surface = EGL_NO_SURFACE;
+        }
+
+        if (platform.context != EGL_NO_CONTEXT)
+        {
+            eglDestroyContext(platform.device, platform.context);
+            platform.context = EGL_NO_CONTEXT;
+        }
+
+        eglTerminate(platform.device);
+        platform.device = EGL_NO_DISPLAY;
+    }
+
+    // Wait for mouse and gamepad threads to finish before closing
+    // NOTE: Those threads should already have finished at this point
+    // because they are controlled by CORE.Window.shouldClose variable
+
+    CORE.Window.shouldClose = true;   // Added to force threads to exit when the close window is called
+
+    // Close the evdev keyboard
+    if (platform.keyboardFd != -1)
+    {
+        close(platform.keyboardFd);
+        platform.keyboardFd = -1;
+    }
+
+    for (int i = 0; i < sizeof(platform.eventWorker)/sizeof(InputEventWorker); ++i)
+    {
+        if (platform.eventWorker[i].threadId)
+        {
+            pthread_join(platform.eventWorker[i].threadId, NULL);
+        }
+    }
+
+    if (platform.gamepadThreadId) pthread_join(platform.gamepadThreadId, NULL);
+}
+
 
 // Initialize Keyboard system (using standard input)
 static void InitKeyboard(void)

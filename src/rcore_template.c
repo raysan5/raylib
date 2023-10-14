@@ -1,6 +1,6 @@
 /**********************************************************************************************
 *
-*   rcore_<platform> - Functions to manage window, graphics device and inputs
+*   rcore_<platform> template - Functions to manage window, graphics device and inputs
 *
 *   PLATFORM: <PLATFORM>
 *       - TODO: Define the target platform for the core
@@ -73,7 +73,8 @@ static PlatformData platform = { 0 };   // Platform specific data
 //----------------------------------------------------------------------------------
 // Module Internal Functions Declaration
 //----------------------------------------------------------------------------------
-static bool InitGraphicsDevice(int width, int height); // Initialize graphics device
+static int InitPlatform(void);          // Initialize platform (graphics, inputs and more)
+static bool InitGraphicsDevice(void);   // Initialize graphics device
 
 //----------------------------------------------------------------------------------
 // Module Functions Declaration
@@ -128,8 +129,11 @@ void InitWindow(int width, int height, const char *title)
     CORE.Input.Mouse.scale = (Vector2){ 1.0f, 1.0f };
     CORE.Input.Mouse.cursor = MOUSE_CURSOR_ARROW;
     CORE.Input.Gamepad.lastButtonPressed = 0;       // GAMEPAD_BUTTON_UNKNOWN
-
     CORE.Window.eventWaiting = false;
+    
+    
+    // TODO: Platform specific init window
+    //--------------------------------------------------------------
     CORE.Window.screen.width = width;
     CORE.Window.screen.height = height;
     CORE.Window.currentFbo.width = width;
@@ -139,18 +143,16 @@ void InitWindow(int width, int height, const char *title)
     // NOTE: returns true if window and graphic device has been initialized successfully
     CORE.Window.ready = InitGraphicsDevice(width, height);
 
-    // If graphic device is no properly initialized, we end program
-    if (!CORE.Window.ready) { TRACELOG(LOG_FATAL, "PLATFORM: Failed to initialize graphic device"); return; }
-    
-    // Initialize hi-res timer
-    InitTimer();
 
-    // Initialize random seed
-    SetRandomSeed((unsigned int)time(NULL));
-
-    // Initialize base path for storage
-    CORE.Storage.basePath = GetWorkingDirectory();
     
+    // Initialize OpenGL context (states and resources)
+    // NOTE: CORE.Window.currentFbo.width and CORE.Window.currentFbo.height not used, just stored as globals in rlgl
+    rlglInit(CORE.Window.currentFbo.width, CORE.Window.currentFbo.height);
+
+    // Setup default viewport
+    // NOTE: It updated CORE.Window.render.width and CORE.Window.render.height
+    SetupViewport(CORE.Window.currentFbo.width, CORE.Window.currentFbo.height);
+
 #if defined(SUPPORT_MODULE_RTEXT) && defined(SUPPORT_DEFAULT_FONT)
     // Load default font
     // WARNING: External function: Module required: rtext
@@ -193,10 +195,8 @@ void InitWindow(int width, int height, const char *title)
     CORE.Time.frameCounter = 0;
 #endif
 
-    // TODO: Platform specific init window
-    //--------------------------------------------------------------
-    // ...
-    //--------------------------------------------------------------
+    // Initialize random seed
+    SetRandomSeed((unsigned int)time(NULL));
 
     TRACELOG(LOG_INFO, "PLATFORM: CUSTOM: Application initialized successfully");
 }
@@ -239,40 +239,16 @@ bool WindowShouldClose(void)
     else return true;
 }
 
-// Check if window is currently hidden
-bool IsWindowHidden(void)
-{
-    return false;
-}
-
-// Check if window has been minimized
-bool IsWindowMinimized(void)
-{
-    return false;
-}
-
-// Check if window has been maximized
-bool IsWindowMaximized(void)
-{
-    return false;
-}
-
-// Check if window has the focus
-bool IsWindowFocused(void)
-{
-    return platform.appEnabled;
-}
-
-// Check if window has been resizedLastFrame
-bool IsWindowResized(void)
-{
-    return false;
-}
-
 // Toggle fullscreen mode
 void ToggleFullscreen(void)
 {
     TRACELOG(LOG_WARNING, "ToggleFullscreen() not available on target platform");
+}
+
+// Toggle borderless windowed mode
+void ToggleBorderlessWindowed(void)
+{
+    TRACELOG(LOG_WARNING, "ToggleBorderlessWindowed() not available on target platform");
 }
 
 // Set window state: maximized, if resizable
@@ -291,12 +267,6 @@ void MinimizeWindow(void)
 void RestoreWindow(void)
 {
     TRACELOG(LOG_WARNING, "RestoreWindow() not available on target platform");
-}
-
-// Toggle borderless windowed mode
-void ToggleBorderlessWindowed(void)
-{
-    TRACELOG(LOG_WARNING, "ToggleBorderlessWindowed() not available on target platform");
 }
 
 // Set window configuration state using flags
@@ -344,15 +314,15 @@ void SetWindowMonitor(int monitor)
 // Set window minimum dimensions (FLAG_WINDOW_RESIZABLE)
 void SetWindowMinSize(int width, int height)
 {
-    CORE.Window.windowMin.width = width;
-    CORE.Window.windowMin.height = height;
+    CORE.Window.screenMin.width = width;
+    CORE.Window.screenMin.height = height;
 }
 
 // Set window maximum dimensions (FLAG_WINDOW_RESIZABLE)
 void SetWindowMaxSize(int width, int height)
 {
-    CORE.Window.windowMax.width = width;
-    CORE.Window.windowMax.height = height;
+    CORE.Window.screenMax.width = width;
+    CORE.Window.screenMax.height = height;
 }
 
 // Set window dimensions
@@ -563,47 +533,11 @@ void OpenURL(const char *url)
 // Module Functions Definition: Inputs
 //----------------------------------------------------------------------------------
 
-// Get gamepad internal name id
-const char *GetGamepadName(int gamepad)
-{
-    return CORE.Input.Gamepad.name[gamepad];
-}
-
-// Get gamepad axis count
-int GetGamepadAxisCount(int gamepad)
-{
-    return CORE.Input.Gamepad.axisCount;
-}
-
 // Set internal gamepad mappings
 int SetGamepadMappings(const char *mappings)
 {
     TRACELOG(LOG_WARNING, "SetGamepadMappings() not implemented on target platform");
     return 0;
-}
-
-// Get mouse position X
-int GetMouseX(void)
-{
-    return (int)((CORE.Input.Mouse.currentPosition.x + CORE.Input.Mouse.offset.x)*CORE.Input.Mouse.scale.x);
-}
-
-// Get mouse position Y
-int GetMouseY(void)
-{
-    return (int)((CORE.Input.Mouse.currentPosition.y + CORE.Input.Mouse.offset.y)*CORE.Input.Mouse.scale.y);
-}
-
-// Get mouse position XY
-Vector2 GetMousePosition(void)
-{
-    Vector2 position = { 0 };
-
-    // NOTE: On canvas scaling, mouse position is proportionally returned
-    position.x = (CORE.Input.Mouse.currentPosition.x + CORE.Input.Mouse.offset.x)*CORE.Input.Mouse.scale.x;
-    position.y = (CORE.Input.Mouse.currentPosition.y + CORE.Input.Mouse.offset.y)*CORE.Input.Mouse.scale.y;
-
-    return position;
 }
 
 // Set mouse position XY
@@ -613,41 +547,10 @@ void SetMousePosition(int x, int y)
     CORE.Input.Mouse.previousPosition = CORE.Input.Mouse.currentPosition;
 }
 
-// Get mouse wheel movement Y
-float GetMouseWheelMove(void)
-{
-    TRACELOG(LOG_WARNING, "GetMouseWheelMove() not implemented on target platform");
-    return 0.0f;
-}
-
 // Set mouse cursor
 void SetMouseCursor(int cursor)
 {
     TRACELOG(LOG_WARNING, "SetMouseCursor() not implemented on target platform");
-}
-
-// Get touch position X for touch point 0 (relative to screen size)
-int GetTouchX(void)
-{
-    return (int)CORE.Input.Touch.position[0].x;
-}
-
-// Get touch position Y for touch point 0 (relative to screen size)
-int GetTouchY(void)
-{
-    return (int)CORE.Input.Touch.position[0].y;
-}
-
-// Get touch position XY for a touch point index (relative to screen size)
-// TODO: Touch position should be scaled depending on display size and render size
-Vector2 GetTouchPosition(int index)
-{
-    Vector2 position = { -1.0f, -1.0f };
-
-    if (index < MAX_TOUCH_POINTS) position = CORE.Input.Touch.position[index];
-    else TRACELOG(LOG_WARNING, "INPUT: Required touch point out of range (Max touch points: %i)", MAX_TOUCH_POINTS);
-
-    return position;
 }
 
 // Register all input events
@@ -694,25 +597,9 @@ void PollInputEvents(void)
 // Module Internal Functions Definition
 //----------------------------------------------------------------------------------
 
-// Initialize display device and framebuffer
-// NOTE: width and height represent the screen (framebuffer) desired size, not actual display size
-// If width or height are 0, default display size will be used for framebuffer size
-// NOTE: returns false in case graphic device could not be created
-static bool InitGraphicsDevice(int width, int height)
+// Initialize platform: graphics, inputs and more
+static int InitPlatform(void)
 {
-    CORE.Window.screen.width = width;            // User desired width
-    CORE.Window.screen.height = height;          // User desired height
-    CORE.Window.screenScale = MatrixIdentity();  // No draw scaling required by default
-
-    // Set the screen minimum and maximum default values to 0
-    CORE.Window.screenMin.width  = 0;
-    CORE.Window.screenMin.height = 0;
-    CORE.Window.screenMax.width  = 0;
-    CORE.Window.screenMax.height = 0;
-
-    // NOTE: Framebuffer (render area - CORE.Window.render.width, CORE.Window.render.height) could include black bars...
-    // ...in top-down or left-right to match display aspect ratio (no weird scaling)
-
     CORE.Window.fullscreen = true;
     CORE.Window.flags |= FLAG_FULLSCREEN_MODE;
 
@@ -774,7 +661,7 @@ static bool InitGraphicsDevice(int width, int height)
     if (platform.context == EGL_NO_CONTEXT)
     {
         TRACELOG(LOG_WARNING, "DISPLAY: Failed to create EGL context");
-        return false;
+        return -1;
     }
 
     // Create an EGL window surface
@@ -803,7 +690,7 @@ static bool InitGraphicsDevice(int width, int height)
     if (eglMakeCurrent(platform.device, platform.surface, platform.surface, platform.context) == EGL_FALSE)
     {
         TRACELOG(LOG_WARNING, "DISPLAY: Failed to attach EGL rendering context to EGL surface");
-        return false;
+        return -1;
     }
     else
     {
@@ -823,19 +710,24 @@ static bool InitGraphicsDevice(int width, int height)
     // NOTE: GL procedures address loader is required to load extensions
     rlLoadExtensions(eglGetProcAddress);
 
-    // Initialize OpenGL context (states and resources)
-    // NOTE: CORE.Window.currentFbo.width and CORE.Window.currentFbo.height not used, just stored as globals in rlgl
-    rlglInit(CORE.Window.currentFbo.width, CORE.Window.currentFbo.height);
-
-    // Setup default viewport
-    // NOTE: It updated CORE.Window.render.width and CORE.Window.render.height
-    SetupViewport(CORE.Window.currentFbo.width, CORE.Window.currentFbo.height);
-
     CORE.Window.ready = true;
+    
+    // If graphic device is no properly initialized, we end program
+    if (!CORE.Window.ready) { TRACELOG(LOG_FATAL, "PLATFORM: Failed to initialize graphic device"); return -1; }
 
-    if ((CORE.Window.flags & FLAG_WINDOW_MINIMIZED) > 0) MinimizeWindow();
+    // Initialize hi-res timer
+    InitTimer();
+    
+    // Initialize base path for storage
+    CORE.Storage.basePath = GetWorkingDirectory();
 
-    return true;
+    return 0;
+}
+
+// Close platform
+static void ClosePlatform(void)
+{
+    // TODO: De-initialize graphics, inputs and more
 }
 
 // EOF

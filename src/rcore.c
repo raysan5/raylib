@@ -322,18 +322,15 @@ const char *TextFormat(const char *text, ...);       // Formatting of text with 
 //void InitWindow(int width, int height, const char *title)
 //void CloseWindow(void)
 //bool WindowShouldClose(void)
-//bool IsWindowHidden(void)
-//bool IsWindowMinimized(void)
-//bool IsWindowMaximized(void)
-//bool IsWindowFocused(void)
-//bool IsWindowResized(void)
 //void ToggleFullscreen(void)
+//void ToggleBorderlessWindowed(void)
 //void MaximizeWindow(void)
 //void MinimizeWindow(void)
 //void RestoreWindow(void)
-//void ToggleBorderlessWindowed(void)
+
 //void SetWindowState(unsigned int flags)
 //void ClearWindowState(unsigned int flags)
+
 //void SetWindowIcon(Image image)
 //void SetWindowIcons(Image *images, int count)
 //void SetWindowTitle(const char *title)
@@ -345,24 +342,26 @@ const char *TextFormat(const char *text, ...);       // Formatting of text with 
 //void SetWindowOpacity(float opacity)
 //void SetWindowFocused(void)
 //void *GetWindowHandle(void)
+//Vector2 GetWindowPosition(void)
+//Vector2 GetWindowScaleDPI(void)
+
 //int GetMonitorCount(void)
 //int GetCurrentMonitor(void)
-//Vector2 GetMonitorPosition(int monitor)
 //int GetMonitorWidth(int monitor)
 //int GetMonitorHeight(int monitor)
 //int GetMonitorPhysicalWidth(int monitor)
 //int GetMonitorPhysicalHeight(int monitor)
 //int GetMonitorRefreshRate(int monitor)
+//Vector2 GetMonitorPosition(int monitor)
 //const char *GetMonitorName(int monitor)
-//Vector2 GetWindowPosition(void)
-//Vector2 GetWindowScaleDPI(void)
+
 //void SetClipboardText(const char *text)
 //const char *GetClipboardText(void)
+
 //void ShowCursor(void)
 //void HideCursor(void)
 //void EnableCursor(void)
 //void DisableCursor(void)
-
 
 // Check if window has been initialized successfully
 bool IsWindowReady(void)
@@ -374,6 +373,36 @@ bool IsWindowReady(void)
 bool IsWindowFullscreen(void)
 {
     return CORE.Window.fullscreen;
+}
+
+// Check if window is currently hidden
+bool IsWindowHidden(void)
+{
+    return ((CORE.Window.flags & FLAG_WINDOW_HIDDEN) > 0);
+}
+
+// Check if window has been minimized
+bool IsWindowMinimized(void)
+{
+    return ((CORE.Window.flags & FLAG_WINDOW_MINIMIZED) > 0);
+}
+
+// Check if window has been maximized
+bool IsWindowMaximized(void)
+{
+    return ((CORE.Window.flags & FLAG_WINDOW_MAXIMIZED) > 0);
+}
+
+// Check if window has the focus
+bool IsWindowFocused(void)
+{
+    return ((CORE.Window.flags & FLAG_WINDOW_UNFOCUSED) == 0);
+}
+
+// Check if window has been resizedLastFrame
+bool IsWindowResized(void)
+{
+    return CORE.Window.resizedLastFrame;
 }
 
 // Check if one specific window flag is enabled
@@ -394,13 +423,13 @@ int GetScreenHeight(void)
     return CORE.Window.screen.height;
 }
 
-// Get current render width which is equal to screen width * dpi scale
+// Get current render width which is equal to screen width*dpi scale
 int GetRenderWidth(void)
 {
     return CORE.Window.render.width;
 }
 
-// Get current screen height which is equal to screen height * dpi scale
+// Get current screen height which is equal to screen height*dpi scale
 int GetRenderHeight(void)
 {
     return CORE.Window.render.height;
@@ -429,15 +458,6 @@ bool IsCursorOnScreen(void)
 {
     return CORE.Input.Mouse.cursorOnScreen;
 }
-
-//----------------------------------------------------------------------------------
-// Module Functions Definition: Custom frame control
-//----------------------------------------------------------------------------------
-
-// NOTE: Functions with a platform-specific implementation on rcore_<platform>.c
-//void SwapScreenBuffer(void);  
-//void PollInputEvents(void);   
-//void WaitTime(double seconds);
 
 //----------------------------------------------------------------------------------
 // Module Functions Definition: Screen Drawing
@@ -1237,6 +1257,60 @@ float GetFrameTime(void)
 }
 
 //----------------------------------------------------------------------------------
+// Module Functions Definition: Custom frame control
+//----------------------------------------------------------------------------------
+
+// NOTE: Functions with a platform-specific implementation on rcore_<platform>.c
+//void SwapScreenBuffer(void);  
+//void PollInputEvents(void);
+
+// Wait for some time (stop program execution)
+// NOTE: Sleep() granularity could be around 10 ms, it means, Sleep() could
+// take longer than expected... for that reason we use the busy wait loop
+// Ref: http://stackoverflow.com/questions/43057578/c-programming-win32-games-sleep-taking-longer-than-expected
+// Ref: http://www.geisswerks.com/ryan/FAQS/timing.html --> All about timing on Win32!
+void WaitTime(double seconds)
+{
+    if (seconds < 0) return;
+    
+#if defined(SUPPORT_BUSY_WAIT_LOOP) || defined(SUPPORT_PARTIALBUSY_WAIT_LOOP)
+    double destinationTime = GetTime() + seconds;
+#endif
+
+#if defined(SUPPORT_BUSY_WAIT_LOOP)
+    while (GetTime() < destinationTime) { }
+#else
+    #if defined(SUPPORT_PARTIALBUSY_WAIT_LOOP)
+        double sleepSeconds = seconds - seconds*0.05;  // NOTE: We reserve a percentage of the time for busy waiting
+    #else
+        double sleepSeconds = seconds;
+    #endif
+
+    // System halt functions
+    #if defined(_WIN32)
+        Sleep((unsigned long)(sleepSeconds*1000.0));
+    #endif
+    #if defined(__linux__) || defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__EMSCRIPTEN__)
+        struct timespec req = { 0 };
+        time_t sec = sleepSeconds;
+        long nsec = (sleepSeconds - sec)*1000000000L;
+        req.tv_sec = sec;
+        req.tv_nsec = nsec;
+
+        // NOTE: Use nanosleep() on Unix platforms... usleep() it's deprecated.
+        while (nanosleep(&req, &req) == -1) continue;
+    #endif
+    #if defined(__APPLE__)
+        usleep(sleepSeconds*1000000.0);
+    #endif
+
+    #if defined(SUPPORT_PARTIALBUSY_WAIT_LOOP)
+        while (GetTime() < destinationTime) { }
+    #endif
+#endif
+}
+
+//----------------------------------------------------------------------------------
 // Module Functions Definition: Misc
 //----------------------------------------------------------------------------------
 
@@ -2023,8 +2097,6 @@ void SetExitKey(int key)
 //----------------------------------------------------------------------------------
 
 // NOTE: Functions with a platform-specific implementation on rcore_<platform>.c
-//int GetGamepadAxisCount(int gamepad)          **
-//const char *GetGamepadName(int gamepad)       **
 //int SetGamepadMappings(const char *mappings)
 
 // Check if a gamepad is available
@@ -2038,10 +2110,10 @@ bool IsGamepadAvailable(int gamepad)
 }
 
 // Get gamepad internal name id
-//const char *GetGamepadName(int gamepad)
-//{
-//    return CORE.Input.Gamepad.ready[gamepad];
-//}
+const char *GetGamepadName(int gamepad)
+{
+    return CORE.Input.Gamepad.name[gamepad];
+}
 
 // Check if a gamepad button has been pressed once
 bool IsGamepadButtonPressed(int gamepad, int button)
@@ -2094,10 +2166,10 @@ int GetGamepadButtonPressed(void)
 }
 
 // Get gamepad axis count
-//int GetGamepadAxisCount(int gamepad)
-//{
-//    return CORE.Input.Gamepad.axisCount;
-//}
+int GetGamepadAxisCount(int gamepad)
+{
+    return CORE.Input.Gamepad.axisCount;
+}
 
 // Get axis movement vector for a gamepad
 float GetGamepadAxisMovement(int gamepad, int axis)
@@ -2115,11 +2187,7 @@ float GetGamepadAxisMovement(int gamepad, int axis)
 //----------------------------------------------------------------------------------
 
 // NOTE: Functions with a platform-specific implementation on rcore_<platform>.c
-//int GetMouseX(void)                   **
-//int GetMouseY(void)                   **
-//Vector2 GetMousePosition(void)        **
 //void SetMousePosition(int x, int y)
-//float GetMouseWheelMove(void)         **
 //void SetMouseCursor(int cursor)
 
 // Check if a mouse button has been pressed once
@@ -2174,6 +2242,29 @@ bool IsMouseButtonUp(int button)
     return up;
 }
 
+// Get mouse position X
+int GetMouseX(void)
+{
+    return (int)((CORE.Input.Mouse.currentPosition.x + CORE.Input.Mouse.offset.x)*CORE.Input.Mouse.scale.x);
+}
+
+// Get mouse position Y
+int GetMouseY(void)
+{
+    return (int)((CORE.Input.Mouse.currentPosition.y + CORE.Input.Mouse.offset.y)*CORE.Input.Mouse.scale.y);
+}
+
+// Get mouse position XY
+Vector2 GetMousePosition(void)
+{
+    Vector2 position = { 0 };
+
+    position.x = (CORE.Input.Mouse.currentPosition.x + CORE.Input.Mouse.offset.x)*CORE.Input.Mouse.scale.x;
+    position.y = (CORE.Input.Mouse.currentPosition.y + CORE.Input.Mouse.offset.y)*CORE.Input.Mouse.scale.y;
+
+    return position;
+}
+
 // Get mouse delta between frames
 Vector2 GetMouseDelta(void)
 {
@@ -2199,6 +2290,17 @@ void SetMouseScale(float scaleX, float scaleY)
     CORE.Input.Mouse.scale = (Vector2){ scaleX, scaleY };
 }
 
+// Get mouse wheel movement Y
+float GetMouseWheelMove(void)
+{
+    float result = 0.0f;
+
+    if (fabsf(CORE.Input.Mouse.currentWheelMove.x) > fabsf(CORE.Input.Mouse.currentWheelMove.y)) result = (float)CORE.Input.Mouse.currentWheelMove.x;
+    else result = (float)CORE.Input.Mouse.currentWheelMove.y;
+
+    return result;
+}
+
 // Get mouse wheel movement X/Y as a vector
 Vector2 GetMouseWheelMoveV(void)
 {
@@ -2213,10 +2315,29 @@ Vector2 GetMouseWheelMoveV(void)
 // Module Functions Definition: Input Handling: Touch
 //----------------------------------------------------------------------------------
 
-// NOTE: Functions with a platform-specific implementation on rcore_<platform>.c
-//int GetTouchX(void)
-//int GetTouchY(void)
-//Vector2 GetTouchPosition(int index)
+// Get touch position X for touch point 0 (relative to screen size)
+int GetTouchX(void)
+{
+    return (int)CORE.Input.Touch.position[0].x;
+}
+
+// Get touch position Y for touch point 0 (relative to screen size)
+int GetTouchY(void)
+{
+    return (int)CORE.Input.Touch.position[0].y;
+}
+
+// Get touch position XY for a touch point index (relative to screen size)
+// TODO: Touch position should be scaled depending on display size and render size
+Vector2 GetTouchPosition(int index)
+{
+    Vector2 position = { -1.0f, -1.0f };
+
+    if (index < MAX_TOUCH_POINTS) position = CORE.Input.Touch.position[index];
+    else TRACELOG(LOG_WARNING, "INPUT: Required touch point out of range (Max touch points: %i)", MAX_TOUCH_POINTS);
+
+    return position;
+}
 
 // Get touch point identifier for given index
 int GetTouchPointId(int index)
@@ -2238,8 +2359,32 @@ int GetTouchPointCount(void)
 // Module Internal Functions Definition
 //----------------------------------------------------------------------------------
 
-// Platform-specific functions
-//static bool InitGraphicsDevice(int width, int height)
+// NOTE: Functions with a platform-specific implementation on rcore_<platform>.c
+//static bool InitPlatform(void)
+
+// Initialize hi-resolution timer
+void InitTimer(void)
+{
+    // Setting a higher resolution can improve the accuracy of time-out intervals in wait functions.
+    // However, it can also reduce overall system performance, because the thread scheduler switches tasks more often.
+    // High resolutions can also prevent the CPU power management system from entering power-saving modes.
+    // Setting a higher resolution does not improve the accuracy of the high-resolution performance counter.
+#if defined(_WIN32) && defined(SUPPORT_WINMM_HIGHRES_TIMER) && !defined(SUPPORT_BUSY_WAIT_LOOP)
+    timeBeginPeriod(1);                 // Setup high-resolution timer to 1ms (granularity of 1-2 ms)
+#endif
+
+#if defined(__linux__) || defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__EMSCRIPTEN__)
+    struct timespec now = { 0 };
+
+    if (clock_gettime(CLOCK_MONOTONIC, &now) == 0)  // Success
+    {
+        CORE.Time.base = (unsigned long long int)now.tv_sec*1000000000LLU + (unsigned long long int)now.tv_nsec;
+    }
+    else TRACELOG(LOG_WARNING, "TIMER: Hi-resolution timer not available");
+#endif
+
+    CORE.Time.previous = GetTime();     // Get time as double
+}
 
 // Set viewport for a provided width and height
 void SetupViewport(int width, int height)
@@ -2346,76 +2491,6 @@ void SetupFramebuffer(int width, int height)
         CORE.Window.renderOffset.x = 0;
         CORE.Window.renderOffset.y = 0;
     }
-}
-
-// Initialize hi-resolution timer
-void InitTimer(void)
-{
-// Setting a higher resolution can improve the accuracy of time-out intervals in wait functions.
-// However, it can also reduce overall system performance, because the thread scheduler switches tasks more often.
-// High resolutions can also prevent the CPU power management system from entering power-saving modes.
-// Setting a higher resolution does not improve the accuracy of the high-resolution performance counter.
-#if defined(_WIN32) && defined(SUPPORT_WINMM_HIGHRES_TIMER) && !defined(SUPPORT_BUSY_WAIT_LOOP)
-    timeBeginPeriod(1);                 // Setup high-resolution timer to 1ms (granularity of 1-2 ms)
-#endif
-
-#if defined(__linux__) || defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__EMSCRIPTEN__)
-    struct timespec now = { 0 };
-
-    if (clock_gettime(CLOCK_MONOTONIC, &now) == 0)  // Success
-    {
-        CORE.Time.base = (unsigned long long int)now.tv_sec*1000000000LLU + (unsigned long long int)now.tv_nsec;
-    }
-    else TRACELOG(LOG_WARNING, "TIMER: Hi-resolution timer not available");
-#endif
-
-    CORE.Time.previous = GetTime();     // Get time as double
-}
-
-// Wait for some time (stop program execution)
-// NOTE: Sleep() granularity could be around 10 ms, it means, Sleep() could
-// take longer than expected... for that reason we use the busy wait loop
-// Ref: http://stackoverflow.com/questions/43057578/c-programming-win32-games-sleep-taking-longer-than-expected
-// Ref: http://www.geisswerks.com/ryan/FAQS/timing.html --> All about timing on Win32!
-void WaitTime(double seconds)
-{
-    if (seconds < 0) return;
-    
-#if defined(SUPPORT_BUSY_WAIT_LOOP) || defined(SUPPORT_PARTIALBUSY_WAIT_LOOP)
-    double destinationTime = GetTime() + seconds;
-#endif
-
-#if defined(SUPPORT_BUSY_WAIT_LOOP)
-    while (GetTime() < destinationTime) { }
-#else
-    #if defined(SUPPORT_PARTIALBUSY_WAIT_LOOP)
-        double sleepSeconds = seconds - seconds*0.05;  // NOTE: We reserve a percentage of the time for busy waiting
-    #else
-        double sleepSeconds = seconds;
-    #endif
-
-    // System halt functions
-    #if defined(_WIN32)
-        Sleep((unsigned long)(sleepSeconds*1000.0));
-    #endif
-    #if defined(__linux__) || defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__EMSCRIPTEN__)
-        struct timespec req = { 0 };
-        time_t sec = sleepSeconds;
-        long nsec = (sleepSeconds - sec)*1000000000L;
-        req.tv_sec = sec;
-        req.tv_nsec = nsec;
-
-        // NOTE: Use nanosleep() on Unix platforms... usleep() it's deprecated.
-        while (nanosleep(&req, &req) == -1) continue;
-    #endif
-    #if defined(__APPLE__)
-        usleep(sleepSeconds*1000000.0);
-    #endif
-
-    #if defined(SUPPORT_PARTIALBUSY_WAIT_LOOP)
-        while (GetTime() < destinationTime) { }
-    #endif
-#endif
 }
 
 // Scan all files and directories in a base path
@@ -2737,7 +2812,7 @@ static void RecordAutomationEvent(unsigned int frame)
         // INPUT_GAMEPAD_CONNECT
         /*
         if ((CORE.Input.Gamepad.currentState[gamepad] != CORE.Input.Gamepad.previousState[gamepad]) &&
-            (CORE.Input.Gamepad.currentState[gamepad] == true)) // Check if changed to ready
+            (CORE.Input.Gamepad.currentState[gamepad])) // Check if changed to ready
         {
             // TODO: Save gamepad connect event
         }
@@ -2746,7 +2821,7 @@ static void RecordAutomationEvent(unsigned int frame)
         // INPUT_GAMEPAD_DISCONNECT
         /*
         if ((CORE.Input.Gamepad.currentState[gamepad] != CORE.Input.Gamepad.previousState[gamepad]) &&
-            (CORE.Input.Gamepad.currentState[gamepad] == false)) // Check if changed to not-ready
+            (!CORE.Input.Gamepad.currentState[gamepad])) // Check if changed to not-ready
         {
             // TODO: Save gamepad disconnect event
         }
@@ -2894,12 +2969,21 @@ const char *TextFormat(const char *text, ...)
 
     va_list args;
     va_start(args, text);
-    vsnprintf(currentBuffer, MAX_TEXT_BUFFER_LENGTH, text, args);
+    int requiredByteCount = vsnprintf(currentBuffer, MAX_TEXT_BUFFER_LENGTH, text, args);
     va_end(args);
+
+    // If requiredByteCount is larger than the MAX_TEXT_BUFFER_LENGTH, then overflow occured
+    if (requiredByteCount >= MAX_TEXT_BUFFER_LENGTH)
+    {
+        // Inserting "..." at the end of the string to mark as truncated
+        char *truncBuffer = buffers[index] + MAX_TEXT_BUFFER_LENGTH - 4; // Adding 4 bytes = "...\0"
+        sprintf(truncBuffer, "...");
+    }
 
     index += 1;     // Move to next buffer for next function call
     if (index >= MAX_TEXTFORMAT_BUFFERS) index = 0;
 
     return currentBuffer;
 }
+
 #endif // !SUPPORT_MODULE_RTEXT

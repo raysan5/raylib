@@ -87,17 +87,18 @@ static PlatformData platform = { 0 };   // Platform specific data
 //----------------------------------------------------------------------------------
 // Module Internal Functions Declaration
 //----------------------------------------------------------------------------------
-static bool InitGraphicsDevice(int width, int height); // Initialize graphics device
+static int InitPlatform(void);          // Initialize platform (graphics, inputs and more)
+static void ClosePlatform(void);        // Close platform
 
 // Error callback event
-static void ErrorCallback(int error, const char *description);                             // GLFW3 Error Callback, runs on GLFW3 error
+static void ErrorCallback(int error, const char *description);                      // GLFW3 Error Callback, runs on GLFW3 error
 
 // Window callbacks events
-static void WindowSizeCallback(GLFWwindow *window, int width, int height);         // GLFW3 WindowSize Callback, runs when window is resized
-static void WindowIconifyCallback(GLFWwindow *window, int iconified);              // GLFW3 WindowIconify Callback, runs when window is minimized/restored
-static void WindowMaximizeCallback(GLFWwindow *window, int maximized);             // GLFW3 Window Maximize Callback, runs when window is maximized
-static void WindowFocusCallback(GLFWwindow *window, int focused);                  // GLFW3 WindowFocus Callback, runs when window get/lose focus
-static void WindowDropCallback(GLFWwindow *window, int count, const char **paths); // GLFW3 Window Drop Callback, runs when drop files into window
+static void WindowSizeCallback(GLFWwindow *window, int width, int height);          // GLFW3 WindowSize Callback, runs when window is resized
+static void WindowIconifyCallback(GLFWwindow *window, int iconified);               // GLFW3 WindowIconify Callback, runs when window is minimized/restored
+static void WindowMaximizeCallback(GLFWwindow *window, int maximized);              // GLFW3 Window Maximize Callback, runs when window is maximized
+static void WindowFocusCallback(GLFWwindow *window, int focused);                   // GLFW3 WindowFocus Callback, runs when window get/lose focus
+static void WindowDropCallback(GLFWwindow *window, int count, const char **paths);  // GLFW3 Window Drop Callback, runs when drop files into window
 
 // Input callbacks events
 static void KeyCallback(GLFWwindow *window, int key, int scancode, int action, int mods); // GLFW3 Keyboard Callback, runs on key pressed
@@ -107,11 +108,12 @@ static void MouseCursorPosCallback(GLFWwindow *window, double x, double y);     
 static void MouseScrollCallback(GLFWwindow *window, double xoffset, double yoffset);      // GLFW3 Srolling Callback, runs on mouse wheel
 static void CursorEnterCallback(GLFWwindow *window, int enter);                           // GLFW3 Cursor Enter Callback, cursor enters client area
 
-// Emscripten callback events
+// Emscripten window callback events
 static EM_BOOL EmscriptenFullscreenChangeCallback(int eventType, const EmscriptenFullscreenChangeEvent *event, void *userData);
 static EM_BOOL EmscriptenWindowResizedCallback(int eventType, const EmscriptenUiEvent *event, void *userData);
 static EM_BOOL EmscriptenResizeCallback(int eventType, const EmscriptenUiEvent *event, void *userData);
 
+// Emscripten input callback events
 static EM_BOOL EmscriptenMouseCallback(int eventType, const EmscriptenMouseEvent *mouseEvent, void *userData);
 static EM_BOOL EmscriptenTouchCallback(int eventType, const EmscriptenTouchEvent *touchEvent, void *userData);
 static EM_BOOL EmscriptenGamepadCallback(int eventType, const EmscriptenGamepadEvent *gamepadEvent, void *userData);
@@ -160,33 +162,32 @@ void InitWindow(int width, int height, const char *title)
     TRACELOG(LOG_INFO, "    > raudio:.... not loaded (optional)");
 #endif
 
-    // NOTE: Keep internal pointer to input title string (no copy)
+    // Initialize window data
+    CORE.Window.screen.width = width;
+    CORE.Window.screen.height = height;
+    CORE.Window.eventWaiting = false;
+    CORE.Window.screenScale = MatrixIdentity();     // No draw scaling required by default
     if ((title != NULL) && (title[0] != 0)) CORE.Window.title = title;
 
     // Initialize global input state
-    memset(&CORE.Input, 0, sizeof(CORE.Input));
+    memset(&CORE.Input, 0, sizeof(CORE.Input));     // Reset CORE.Input structure to 0
     CORE.Input.Keyboard.exitKey = KEY_ESCAPE;
-    CORE.Input.Mouse.scale = (Vector2){1.0f, 1.0f};
+    CORE.Input.Mouse.scale = (Vector2){ 1.0f, 1.0f };
     CORE.Input.Mouse.cursor = MOUSE_CURSOR_ARROW;
-    CORE.Input.Gamepad.lastButtonPressed = 0; // GAMEPAD_BUTTON_UNKNOWN
-    CORE.Window.eventWaiting = false;
+    CORE.Input.Gamepad.lastButtonPressed = GAMEPAD_BUTTON_UNKNOWN;
 
-    // Initialize graphics device (display device and OpenGL context)
-    // NOTE: returns true if window and graphic device has been initialized successfully
-    CORE.Window.ready = InitGraphicsDevice(width, height);
+    // Initialize platform
+    //--------------------------------------------------------------   
+    InitPlatform();
+    //--------------------------------------------------------------
 
-    // If graphic device is no properly initialized, we end program
-    if (!CORE.Window.ready) { TRACELOG(LOG_FATAL, "PLATFORM: Failed to initialize graphic device"); return; }
-    else SetWindowPosition(GetMonitorWidth(GetCurrentMonitor())/2 - CORE.Window.screen.width/2, GetMonitorHeight(GetCurrentMonitor())/2 - CORE.Window.screen.height/2);
+    // Initialize OpenGL context (states and resources)
+    // NOTE: CORE.Window.currentFbo.width and CORE.Window.currentFbo.height not used, just stored as globals in rlgl
+    rlglInit(CORE.Window.currentFbo.width, CORE.Window.currentFbo.height);
 
-    // Initialize hi-res timer
-    InitTimer();
-
-    // Initialize random seed
-    SetRandomSeed((unsigned int)time(NULL));
-
-    // Initialize base path for storage
-    CORE.Storage.basePath = GetWorkingDirectory();
+    // Setup default viewport
+    // NOTE: It updated CORE.Window.render.width and CORE.Window.render.height
+    SetupViewport(CORE.Window.currentFbo.width, CORE.Window.currentFbo.height);
 
 #if defined(SUPPORT_MODULE_RTEXT) && defined(SUPPORT_DEFAULT_FONT)
     // Load default font
@@ -230,37 +231,8 @@ void InitWindow(int width, int height, const char *title)
     CORE.Time.frameCounter = 0;
 #endif
 
-    // Platform specific init window
-    //--------------------------------------------------------------
-    // Setup callback functions for the DOM events
-    emscripten_set_fullscreenchange_callback("#canvas", NULL, 1, EmscriptenFullscreenChangeCallback);
-
-    // WARNING: Below resize code was breaking fullscreen mode for sample games and examples, it needs review
-    // Check fullscreen change events(note this is done on the window since most browsers don't support this on #canvas)
-    // emscripten_set_fullscreenchange_callback(EMSCRIPTEN_EVENT_TARGET_WINDOW, NULL, 1, EmscriptenResizeCallback);
-    // Check Resize event (note this is done on the window since most browsers don't support this on #canvas)
-    emscripten_set_resize_callback(EMSCRIPTEN_EVENT_TARGET_WINDOW, NULL, 1, EmscriptenResizeCallback);
-
-    // Trigger this once to get initial window sizing
-    EmscriptenResizeCallback(EMSCRIPTEN_EVENT_RESIZE, NULL, NULL);
-
-    // Support keyboard events -> Not used, GLFW.JS takes care of that
-    // emscripten_set_keypress_callback("#canvas", NULL, 1, EmscriptenKeyboardCallback);
-    // emscripten_set_keydown_callback("#canvas", NULL, 1, EmscriptenKeyboardCallback);
-
-    // Support mouse events
-    emscripten_set_click_callback("#canvas", NULL, 1, EmscriptenMouseCallback);
-
-    // Support touch events
-    emscripten_set_touchstart_callback("#canvas", NULL, 1, EmscriptenTouchCallback);
-    emscripten_set_touchend_callback("#canvas", NULL, 1, EmscriptenTouchCallback);
-    emscripten_set_touchmove_callback("#canvas", NULL, 1, EmscriptenTouchCallback);
-    emscripten_set_touchcancel_callback("#canvas", NULL, 1, EmscriptenTouchCallback);
-
-    // Support gamepad events (not provided by GLFW3 on emscripten)
-    emscripten_set_gamepadconnected_callback(NULL, 1, EmscriptenGamepadCallback);
-    emscripten_set_gamepaddisconnected_callback(NULL, 1, EmscriptenGamepadCallback);
-    //--------------------------------------------------------------
+    // Initialize random seed
+    SetRandomSeed((unsigned int)time(NULL));
 
     TRACELOG(LOG_INFO, "PLATFORM: WEB: Application initialized successfully");
 }
@@ -283,10 +255,9 @@ void CloseWindow(void)
 
     rlglClose(); // De-init rlgl
 
-    // Platform specific close window
-    //--------------------------------------------------------------
-    glfwDestroyWindow(platform.handle);
-    glfwTerminate();
+    // De-initialize platform
+    //--------------------------------------------------------------   
+    ClosePlatform();
     //--------------------------------------------------------------
 
 #if defined(SUPPORT_EVENTS_AUTOMATION)
@@ -307,36 +278,6 @@ bool WindowShouldClose(void)
     // but now emscripten allows sync code to be executed in an interpreted way, using emterpreter!
     emscripten_sleep(16);
     return false;
-}
-
-// Check if window is currently hidden
-bool IsWindowHidden(void)
-{
-    return false;
-}
-
-// Check if window has been minimized
-bool IsWindowMinimized(void)
-{
-    return false;
-}
-
-// Check if window has been maximized
-bool IsWindowMaximized(void)
-{
-    return false;
-}
-
-// Check if window has the focus
-bool IsWindowFocused(void)
-{
-    return ((CORE.Window.flags & FLAG_WINDOW_UNFOCUSED) == 0);
-}
-
-// Check if window has been resizedLastFrame
-bool IsWindowResized(void)
-{
-    return CORE.Window.resizedLastFrame;
 }
 
 // Toggle fullscreen mode
@@ -410,6 +351,12 @@ void ToggleFullscreen(void)
     CORE.Window.fullscreen = !CORE.Window.fullscreen; // Toggle fullscreen flag
 }
 
+// Toggle borderless windowed mode
+void ToggleBorderlessWindowed(void)
+{
+    TRACELOG(LOG_WARNING, "ToggleBorderlessWindowed() not available on target platform");
+}
+
 // Set window state: maximized, if resizable
 void MaximizeWindow(void)
 {
@@ -426,12 +373,6 @@ void MinimizeWindow(void)
 void RestoreWindow(void)
 {
     TRACELOG(LOG_WARNING, "RestoreWindow() not available on target platform");
-}
-
-// Toggle borderless windowed mode
-void ToggleBorderlessWindowed(void)
-{
-    TRACELOG(LOG_WARNING, "ToggleBorderlessWindowed() not available on target platform");
 }
 
 // Set window configuration state using flags
@@ -697,48 +638,12 @@ void OpenURL(const char *url)
 // Module Functions Definition: Inputs
 //----------------------------------------------------------------------------------
 
-// Get gamepad internal name id
-const char *GetGamepadName(int gamepad)
-{
-    return CORE.Input.Gamepad.name[gamepad];
-}
-
-// Get gamepad axis count
-int GetGamepadAxisCount(int gamepad)
-{
-    return CORE.Input.Gamepad.axisCount;
-}
-
 // Set internal gamepad mappings
 int SetGamepadMappings(const char *mappings)
 {
     TRACELOG(LOG_INFO, "SetGamepadMappings not implemented in rcore_web.c");
 
     return 0;
-}
-
-// Get mouse position X
-int GetMouseX(void)
-{
-    return (int)((CORE.Input.Mouse.currentPosition.x + CORE.Input.Mouse.offset.x)*CORE.Input.Mouse.scale.x);
-}
-
-// Get mouse position Y
-int GetMouseY(void)
-{
-    return (int)((CORE.Input.Mouse.currentPosition.y + CORE.Input.Mouse.offset.y)*CORE.Input.Mouse.scale.y);
-}
-
-// Get mouse position XY
-Vector2 GetMousePosition(void)
-{
-    Vector2 position = { 0 };
-
-    // NOTE: On canvas scaling, mouse position is proportionally returned
-    position.x = (CORE.Input.Mouse.currentPosition.x + CORE.Input.Mouse.offset.x)*CORE.Input.Mouse.scale.x;
-    position.y = (CORE.Input.Mouse.currentPosition.y + CORE.Input.Mouse.offset.y)*CORE.Input.Mouse.scale.y;
-
-    return position;
 }
 
 // Set mouse position XY
@@ -751,45 +656,37 @@ void SetMousePosition(int x, int y)
     glfwSetCursorPos(platform.handle, CORE.Input.Mouse.currentPosition.x, CORE.Input.Mouse.currentPosition.y);
 }
 
-// Get mouse wheel movement Y
-float GetMouseWheelMove(void)
-{
-    float result = 0.0f;
-
-    if (fabsf(CORE.Input.Mouse.currentWheelMove.x) > fabsf(CORE.Input.Mouse.currentWheelMove.y)) result = (float)CORE.Input.Mouse.currentWheelMove.x;
-    else result = (float)CORE.Input.Mouse.currentWheelMove.y;
-
-    return result;
-}
-
 // Set mouse cursor
 void SetMouseCursor(int cursor)
 {
-    TRACELOG(LOG_INFO, "SetMouseCursor not implemented in rcore_web.c");
-}
+    const char *cursorName;
+    switch (cursor)
+    {
+        case MOUSE_CURSOR_IBEAM: cursorName = "text"; break;
+        case MOUSE_CURSOR_CROSSHAIR: cursorName = "crosshair"; break;
+        case MOUSE_CURSOR_POINTING_HAND: cursorName = "pointer"; break;
+        case MOUSE_CURSOR_RESIZE_EW: cursorName = "ew-resize"; break;
+        case MOUSE_CURSOR_RESIZE_NS: cursorName = "ns-resize"; break;
+        case MOUSE_CURSOR_RESIZE_NWSE: cursorName = "nwse-resize"; break;
+        case MOUSE_CURSOR_RESIZE_NESW: cursorName = "nesw-resize"; break;
+        case MOUSE_CURSOR_RESIZE_ALL: cursorName = "move"; break;
+        case MOUSE_CURSOR_NOT_ALLOWED: cursorName = "not-allowed"; break;
 
-// Get touch position X for touch point 0 (relative to screen size)
-int GetTouchX(void)
-{
-    return (int)CORE.Input.Touch.position[0].x;
-}
+        case MOUSE_CURSOR_ARROW: // can't find a name specifically for arrow cursor
+        case MOUSE_CURSOR_DEFAULT:
+        {
+            cursorName = "default";
+        } break;
 
-// Get touch position Y for touch point 0 (relative to screen size)
-int GetTouchY(void)
-{
-    return (int)CORE.Input.Touch.position[0].y;
-}
+        default:
+        {
+            TRACELOG(LOG_WARNING, "Cursor value out of bound (%d). Setting to default", cursor);
+            cursorName = "default";
+        } break;
+    }
 
-// Get touch position XY for a touch point index (relative to screen size)
-// TODO: Touch position should be scaled depending on display size and render size
-Vector2 GetTouchPosition(int index)
-{
-    Vector2 position = { -1.0f, -1.0f };
-
-    if (index < MAX_TOUCH_POINTS) position = CORE.Input.Touch.position[index];
-    else TRACELOG(LOG_WARNING, "INPUT: Required touch point out of range (Max touch points: %i)", MAX_TOUCH_POINTS);
-
-    return position;
+    // Set the cursor element on the CSS
+    EM_ASM({document.body.style.cursor = UTF8ToString($0);}, cursorName);
 }
 
 // Register all input events
@@ -913,43 +810,14 @@ void PollInputEvents(void)
 // Module Internal Functions Definition
 //----------------------------------------------------------------------------------
 
-// Initialize display device and framebuffer
-// NOTE: width and height represent the screen (framebuffer) desired size, not actual display size
-// If width or height are 0, default display size will be used for framebuffer size
-// NOTE: returns false in case graphic device could not be created
-static bool InitGraphicsDevice(int width, int height)
+// Initialize platform: graphics, inputs and more
+static int InitPlatform(void)
 {
-    CORE.Window.screen.width = width;           // User desired width
-    CORE.Window.screen.height = height;         // User desired height
-    CORE.Window.screenScale = MatrixIdentity(); // No draw scaling required by default
-
-    // Set the screen minimum and maximum default values to 0
-    CORE.Window.screenMin.width  = 0;
-    CORE.Window.screenMin.height = 0;
-    CORE.Window.screenMax.width  = 0;
-    CORE.Window.screenMax.height = 0;
-
-    // NOTE: Framebuffer (render area - CORE.Window.render.width, CORE.Window.render.height) could include black bars...
-    // ...in top-down or left-right to match display aspect ratio (no weird scaling)
-
     glfwSetErrorCallback(ErrorCallback);
-/*
-    // TODO: Setup GLFW custom allocators to match raylib ones
-    const GLFWallocator allocator = {
-        .allocate = MemAlloc,
-        .deallocate = MemFree,
-        .reallocate = MemRealloc,
-        .user = NULL
-    };
 
-    glfwInitAllocator(&allocator);
-*/
-
-    if (!glfwInit())
-    {
-        TRACELOG(LOG_WARNING, "GLFW: Failed to initialize GLFW");
-        return false;
-    }
+    // Initialize GLFW internal global state
+    int result = glfwInit();
+    if (result == GLFW_FALSE) { TRACELOG(LOG_WARNING, "GLFW: Failed to initialize GLFW"); return -1; }
 
     glfwDefaultWindowHints(); // Set default windows hints
     // glfwWindowHint(GLFW_RED_BITS, 8);             // Framebuffer red color component bits
@@ -1115,7 +983,7 @@ static bool InitGraphicsDevice(int width, int height)
     {
         glfwTerminate();
         TRACELOG(LOG_WARNING, "GLFW: Failed to initialize Window");
-        return false;
+        return -1;
     }
 
     // WARNING: glfwCreateWindow() title doesn't work with emscripten
@@ -1136,6 +1004,12 @@ static bool InitGraphicsDevice(int width, int height)
     glfwSetCursorEnterCallback(platform.handle, CursorEnterCallback);
 
     glfwMakeContextCurrent(platform.handle);
+    
+    // Load OpenGL extensions
+    // NOTE: GL procedures address loader is required to load extensions
+    rlLoadExtensions(glfwGetProcAddress);
+
+    if ((CORE.Window.flags & FLAG_WINDOW_MINIMIZED) > 0) MinimizeWindow();
 
     // Try to enable GPU V-Sync, so frames are limited to screen refresh rate (60Hz -> 60 FPS)
     // NOTE: V-Sync can be enabled by graphic driver configuration, it doesn't need
@@ -1154,22 +1028,56 @@ static bool InitGraphicsDevice(int width, int height)
     TRACELOG(LOG_INFO, "    > Screen size:  %i x %i", CORE.Window.screen.width, CORE.Window.screen.height);
     TRACELOG(LOG_INFO, "    > Render size:  %i x %i", CORE.Window.render.width, CORE.Window.render.height);
     TRACELOG(LOG_INFO, "    > Viewport offsets: %i, %i", CORE.Window.renderOffset.x, CORE.Window.renderOffset.y);
+    
+    CORE.Window.ready = true;   // TODO: Proper validation on windows/context creation
+    
+    // If graphic device is no properly initialized, we end program
+    if (!CORE.Window.ready) { TRACELOG(LOG_FATAL, "PLATFORM: Failed to initialize graphic device"); return -1; }
+    else SetWindowPosition(GetMonitorWidth(GetCurrentMonitor())/2 - CORE.Window.screen.width/2, GetMonitorHeight(GetCurrentMonitor())/2 - CORE.Window.screen.height/2);
 
-    // Load OpenGL extensions
-    // NOTE: GL procedures address loader is required to load extensions
-    rlLoadExtensions(glfwGetProcAddress);
+    // Initialize hi-res timer
+    InitTimer();
+    
+    // Initialize base path for storage
+    CORE.Storage.basePath = GetWorkingDirectory();
+    
+    // Setup callback functions for the DOM events
+    emscripten_set_fullscreenchange_callback("#canvas", NULL, 1, EmscriptenFullscreenChangeCallback);
 
-    // Initialize OpenGL context (states and resources)
-    // NOTE: CORE.Window.currentFbo.width and CORE.Window.currentFbo.height not used, just stored as globals in rlgl
-    rlglInit(CORE.Window.currentFbo.width, CORE.Window.currentFbo.height);
+    // WARNING: Below resize code was breaking fullscreen mode for sample games and examples, it needs review
+    // Check fullscreen change events(note this is done on the window since most browsers don't support this on #canvas)
+    // emscripten_set_fullscreenchange_callback(EMSCRIPTEN_EVENT_TARGET_WINDOW, NULL, 1, EmscriptenResizeCallback);
+    // Check Resize event (note this is done on the window since most browsers don't support this on #canvas)
+    emscripten_set_resize_callback(EMSCRIPTEN_EVENT_TARGET_WINDOW, NULL, 1, EmscriptenResizeCallback);
 
-    // Setup default viewport
-    // NOTE: It updated CORE.Window.render.width and CORE.Window.render.height
-    SetupViewport(CORE.Window.currentFbo.width, CORE.Window.currentFbo.height);
+    // Trigger this once to get initial window sizing
+    EmscriptenResizeCallback(EMSCRIPTEN_EVENT_RESIZE, NULL, NULL);
 
-    if ((CORE.Window.flags & FLAG_WINDOW_MINIMIZED) > 0) MinimizeWindow();
+    // Support keyboard events -> Not used, GLFW.JS takes care of that
+    // emscripten_set_keypress_callback("#canvas", NULL, 1, EmscriptenKeyboardCallback);
+    // emscripten_set_keydown_callback("#canvas", NULL, 1, EmscriptenKeyboardCallback);
 
-    return true;
+    // Support mouse events
+    emscripten_set_click_callback("#canvas", NULL, 1, EmscriptenMouseCallback);
+
+    // Support touch events
+    emscripten_set_touchstart_callback("#canvas", NULL, 1, EmscriptenTouchCallback);
+    emscripten_set_touchend_callback("#canvas", NULL, 1, EmscriptenTouchCallback);
+    emscripten_set_touchmove_callback("#canvas", NULL, 1, EmscriptenTouchCallback);
+    emscripten_set_touchcancel_callback("#canvas", NULL, 1, EmscriptenTouchCallback);
+
+    // Support gamepad events (not provided by GLFW3 on emscripten)
+    emscripten_set_gamepadconnected_callback(NULL, 1, EmscriptenGamepadCallback);
+    emscripten_set_gamepaddisconnected_callback(NULL, 1, EmscriptenGamepadCallback);
+    
+    return 0;
+}
+
+// Close platform
+static void ClosePlatform(void)
+{
+    glfwDestroyWindow(platform.handle);
+    glfwTerminate();
 }
 
 // GLFW3 Error Callback, runs on GLFW3 error
@@ -1218,7 +1126,7 @@ static void WindowIconifyCallback(GLFWwindow *window, int iconified)
 // GLFW3 Window Maximize Callback, runs when window is maximized
 static void WindowMaximizeCallback(GLFWwindow *window, int maximized)
 {
-
+    // TODO.
 }
 
 // GLFW3 WindowFocus Callback, runs when window get/lose focus
@@ -1255,7 +1163,6 @@ static void WindowDropCallback(GLFWwindow *window, int count, const char **paths
         }
     }
 }
-
 
 // GLFW3 Keyboard Callback, runs on key pressed
 static void KeyCallback(GLFWwindow *window, int key, int scancode, int action, int mods)
@@ -1435,10 +1342,9 @@ static void MouseScrollCallback(GLFWwindow *window, double xoffset, double yoffs
 // GLFW3 CursorEnter Callback, when cursor enters the window
 static void CursorEnterCallback(GLFWwindow *window, int enter)
 {
-    if (enter == true) CORE.Input.Mouse.cursorOnScreen = true;
+    if (enter) CORE.Input.Mouse.cursorOnScreen = true;
     else CORE.Input.Mouse.cursorOnScreen = false;
 }
-
 
 // Register fullscreen change events
 static EM_BOOL EmscriptenFullscreenChangeCallback(int eventType, const EmscriptenFullscreenChangeEvent *event, void *userData)
