@@ -2249,7 +2249,7 @@ Mesh GenMeshPlane(float width, float length, int resX, int resZ)
     for (int face = 0; face < numFaces; face++)
     {
         // Retrieve lower left corner from face ind
-        int i = face % (resX - 1) + (face/(resZ - 1)*resX);
+        int i = face + face / (resX - 1);
 
         triangles[t++] = i + resX;
         triangles[t++] = i + 1;
