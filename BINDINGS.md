@@ -41,6 +41,7 @@ Some people ported raylib to other languages in form of bindings or wrappers to 
 | KaylibKit             | **4.5**| [Kotlin/native](https://kotlinlang.org) | Zlib | https://codeberg.org/Kenta/KaylibKit   |
 | raylib-lua         | **4.5**     | [Lua](http://www.lua.org/)           | ISC | https://github.com/TSnake41/raylib-lua        |
 | raylua             | 4.0     | [Lua](http://www.lua.org/)           | MIT | https://github.com/Rabios/raylua              |
+| raylib-matte       | 4.6-dev | [Matte](https://github.com/jcorks/matte/) | MIT | https://github.com/jcorks/raylib-matte | 
 | nelua-raylib       | 4.0     | [nelua](https://nelua.io/)           | MIT | https://github.com/AKDev21/nelua-raylib       |
 | Raylib.nelua       | **4.5** | [nelua](https://nelua.io/)           | Zlib | https://github.com/Its-Kenta/Raylib-Nelua     |
 | NimraylibNow!      | 4.2     | [Nim](https://nim-lang.org/)         | MIT | https://github.com/greenfork/nimraylib_now    |
