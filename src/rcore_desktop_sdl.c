@@ -356,7 +356,6 @@ int GetMonitorCount(void)
 // Get number of monitors
 int GetCurrentMonitor(void)
 {
-    TRACELOG(LOG_WARNING, "Running on sdl");
     return SDL_GetWindowDisplayIndex(platform.window);
 }
 
