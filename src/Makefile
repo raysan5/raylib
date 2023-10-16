@@ -632,6 +632,9 @@ endif
 
 # Compile all modules with their prerequisites
 
+# Prerequisites of core module
+rcore.o : rcore_android.c rcore_desktop.c rcore_drm.c rcore_template.c rcore_web.c
+
 # Compile core module
 rcore.o : rcore.c raylib.h rlgl.h utils.h raymath.h rcamera.h rgestures.h
 	$(CC) -c $< $(CFLAGS) $(INCLUDE_PATHS)
