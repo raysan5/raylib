@@ -535,6 +535,9 @@ void PollInputEvents(void)
     CORE.Input.Mouse.currentWheelMove.x = 0;
     CORE.Input.Mouse.currentWheelMove.y = 0;
 
+    // Register previous mouse position
+    CORE.Input.Mouse.previousPosition = CORE.Input.Mouse.currentPosition;
+
     // Reset last gamepad button/axis registered state
     CORE.Input.Gamepad.lastButtonPressed = GAMEPAD_BUTTON_UNKNOWN;
     for (int i = 0; i < MAX_GAMEPADS; i++) CORE.Input.Gamepad.axisCount[i] = 0;
