@@ -558,6 +558,9 @@ void PollInputEvents(void)
         CORE.Input.Keyboard.keyRepeatInFrame[i] = 0;
     }
 
+    // Register previous mouse states
+    for (int i = 0; i < MAX_MOUSE_BUTTONS; i++) CORE.Input.Mouse.previousButtonState[i] = CORE.Input.Mouse.currentButtonState[i];
+
     // Poll input events for current plaform
     //-----------------------------------------------------------------------------
     /*
@@ -613,7 +616,10 @@ void PollInputEvents(void)
             {
                 CORE.Input.Mouse.currentButtonState[event.button.button - 1] = 1;
             } break;
-            case SDL_MOUSEBUTTONUP: break;
+            case SDL_MOUSEBUTTONUP:
+            {
+                CORE.Input.Mouse.currentButtonState[event.button.button - 1] = 0;
+            } break;
             case SDL_MOUSEWHEEL:
             {
                 CORE.Input.Mouse.currentWheelMove.x = (float)event.wheel.x;
