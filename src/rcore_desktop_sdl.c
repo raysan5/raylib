@@ -60,7 +60,7 @@
 typedef struct {
     SDL_Window *window;
     SDL_GLContext glContext;
-    
+
     SDL_Joystick *gamepad;
 } PlatformData;
 
@@ -134,12 +134,12 @@ void InitWindow(int width, int height, const char *title)
     CORE.Input.Mouse.scale = (Vector2){ 1.0f, 1.0f };
     CORE.Input.Mouse.cursor = MOUSE_CURSOR_ARROW;
     CORE.Input.Gamepad.lastButtonPressed = GAMEPAD_BUTTON_UNKNOWN;
-    
+
     // Initialize platform
-    //--------------------------------------------------------------   
+    //--------------------------------------------------------------
     InitPlatform();
     //--------------------------------------------------------------
-    
+
     // Initialize rlgl default data (buffers and shaders)
     // NOTE: CORE.Window.currentFbo.width and CORE.Window.currentFbo.height not used, just stored as globals in rlgl
     rlglInit(CORE.Window.currentFbo.width, CORE.Window.currentFbo.height);
@@ -214,7 +214,7 @@ void CloseWindow(void)
     rlglClose();                // De-init rlgl
 
     // De-initialize platform
-    //--------------------------------------------------------------   
+    //--------------------------------------------------------------
     ClosePlatform();
     //--------------------------------------------------------------
 
@@ -481,7 +481,7 @@ void SwapScreenBuffer(void)
 double GetTime(void)
 {
     unsigned int ms = SDL_GetTicks();    // Elapsed time in milliseconds since SDL_Init()
-    double time = (double)ms/1000; 
+    double time = (double)ms/1000;
     return time;
 }
 
@@ -530,6 +530,10 @@ void PollInputEvents(void)
 
     // Reset key repeats
     for (int i = 0; i < MAX_KEYBOARD_KEYS; i++) CORE.Input.Keyboard.keyRepeatInFrame[i] = 0;
+
+    // Reset mouse wheel
+    CORE.Input.Mouse.currentWheelMove.x = 0;
+    CORE.Input.Mouse.currentWheelMove.y = 0;
 
     // Reset last gamepad button/axis registered state
     CORE.Input.Gamepad.lastButtonPressed = GAMEPAD_BUTTON_UNKNOWN;
@@ -602,12 +606,12 @@ void PollInputEvents(void)
             case SDL_KEYUP: break;
 
             // Check mouse events
-            case SDL_MOUSEBUTTONDOWN: 
+            case SDL_MOUSEBUTTONDOWN:
             {
                 CORE.Input.Mouse.currentButtonState[event.button.button - 1] = 1;
             } break;
             case SDL_MOUSEBUTTONUP: break;
-            case SDL_MOUSEWHEEL: 
+            case SDL_MOUSEWHEEL:
             {
                 CORE.Input.Mouse.currentWheelMove.x = (float)event.wheel.x;
                 CORE.Input.Mouse.currentWheelMove.y = (float)event.wheel.y;
@@ -653,7 +657,7 @@ static int InitPlatform(void)
     // Initialize SDL internal global state
     int result = SDL_Init(SDL_INIT_EVERYTHING);
     if (result < 0) { TRACELOG(LOG_WARNING, "SDL: Failed to initialize SDL"); return -1; }
-    
+
     unsigned int flags = 0;
     flags |= SDL_WINDOW_SHOWN;
     flags |= SDL_WINDOW_OPENGL;
@@ -662,12 +666,12 @@ static int InitPlatform(void)
     flags |= SDL_WINDOW_MOUSE_CAPTURE;  // Window has mouse captured
 
     // Check window creation flags
-    if ((CORE.Window.flags & FLAG_FULLSCREEN_MODE) > 0) 
+    if ((CORE.Window.flags & FLAG_FULLSCREEN_MODE) > 0)
     {
         CORE.Window.fullscreen = true;
         flags |= SDL_WINDOW_FULLSCREEN;
     }
-    
+
     //if ((CORE.Window.flags & FLAG_WINDOW_HIDDEN) == 0) flags |= SDL_WINDOW_HIDDEN;
     if ((CORE.Window.flags & FLAG_WINDOW_UNDECORATED) > 0) flags |= SDL_WINDOW_BORDERLESS;
     if ((CORE.Window.flags & FLAG_WINDOW_RESIZABLE) > 0) flags |= SDL_WINDOW_RESIZABLE;
@@ -684,11 +688,11 @@ static int InitPlatform(void)
     if ((CORE.Window.flags & FLAG_WINDOW_MOUSE_PASSTHROUGH) > 0) flags &= ~SDL_WINDOW_MOUSE_CAPTURE;
 
     if ((CORE.Window.flags & FLAG_WINDOW_HIGHDPI) > 0) flags |= SDL_WINDOW_ALLOW_HIGHDPI;
-    
+
     //if ((CORE.Window.flags & FLAG_WINDOW_TRANSPARENT) > 0) flags |= SDL_WINDOW_TRANSPARENT;     // Alternative: SDL_GL_ALPHA_SIZE = 8
-    
+
     //if ((CORE.Window.flags & FLAG_FULLSCREEN_DESKTOP) > 0) flags |= SDL_WINDOW_FULLSCREEN_DESKTOP;
-    
+
     // NOTE: Some OpenGL context attributes must be set before window creation
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
@@ -702,12 +706,12 @@ static int InitPlatform(void)
 
     // Init window
     platform.window = SDL_CreateWindow(CORE.Window.title, SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, CORE.Window.screen.width, CORE.Window.screen.height, flags);
-    
+
     // Init OpenGL context
     platform.glContext = SDL_GL_CreateContext(platform.window);
-    
+
     // Check window and glContext have been initialized succesfully
-    if ((platform.window != NULL) && (platform.glContext != NULL)) 
+    if ((platform.window != NULL) && (platform.glContext != NULL))
     {
         CORE.Window.ready = true;
 
@@ -728,21 +732,21 @@ static int InitPlatform(void)
     // NOTE: GL procedures address loader is required to load extensions
     rlLoadExtensions(SDL_GL_GetProcAddress);
 
-    
+
     // Init input gamepad
     if (SDL_NumJoysticks() >= 1)
     {
         SDL_Joystick *gamepad = SDL_JoystickOpen(0);
         //if (SDL_Joystick *gamepad == NULL) SDL_Log("WARNING: Unable to open game controller! SDL Error: %s\n", SDL_GetError());
     }
-    
+
     // Initialize hi-res timer
     //InitTimer();
     CORE.Time.previous = GetTime();     // Get time as double
-    
+
     // Initialize base path for storage
     CORE.Storage.basePath = GetWorkingDirectory();
-    
+
     return 0;
 }
 
