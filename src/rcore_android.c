@@ -46,8 +46,6 @@
 *
 **********************************************************************************************/
 
-#include "rcore.h"
-
 #include <android_native_app_glue.h>    // Required for: android_app struct and activity management
 #include <android/window.h>             // Required for: AWINDOW_FLAG_FULLSCREEN definition and others
 //#include <android/sensor.h>           // Required for: Android sensors functions (accelerometer, gyroscope, light...)
@@ -188,7 +186,7 @@ void InitWindow(int width, int height, const char *title)
     CORE.Input.Gamepad.lastButtonPressed = GAMEPAD_BUTTON_UNKNOWN;
 
     // Initialize platform
-    //--------------------------------------------------------------   
+    //--------------------------------------------------------------
     InitPlatform();
     //--------------------------------------------------------------
 }
@@ -216,7 +214,7 @@ void CloseWindow(void)
 #endif
 
     // De-initialize platform
-    //--------------------------------------------------------------   
+    //--------------------------------------------------------------
     ClosePlatform();
     //--------------------------------------------------------------
 
@@ -869,7 +867,7 @@ static void AndroidCommandCallback(struct android_app *app, int32_t cmd)
 
                     // Initialize graphics device (display device and OpenGL context)
                     InitGraphicsDevice();
-                    
+
                     // Initialize OpenGL context (states and resources)
                     // NOTE: CORE.Window.currentFbo.width and CORE.Window.currentFbo.height not used, just stored as globals in rlgl
                     rlglInit(CORE.Window.currentFbo.width, CORE.Window.currentFbo.height);
@@ -908,7 +906,7 @@ static void AndroidCommandCallback(struct android_app *app, int32_t cmd)
                     SetShapesTexture(texture, (Rectangle){ 0.0f, 0.0f, 1.0f, 1.0f });    // WARNING: Module required: rshapes
                     #endif
                 #endif
-                
+
                     // Initialize random seed
                     SetRandomSeed((unsigned int)time(NULL));
 
