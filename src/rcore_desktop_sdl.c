@@ -466,12 +466,16 @@ const char *GetClipboardText(void)
 // Show mouse cursor
 void ShowCursor(void)
 {
+    SDL_ShowCursor(SDL_ENABLE);
+
     CORE.Input.Mouse.cursorHidden = false;
 }
 
 // Hides mouse cursor
 void HideCursor(void)
 {
+    SDL_ShowCursor(SDL_DISABLE);
+
     CORE.Input.Mouse.cursorHidden = true;
 }
 
