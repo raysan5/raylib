@@ -292,13 +292,18 @@ void SetWindowIcons(Image *images, int count)
 // Set title for window
 void SetWindowTitle(const char *title)
 {
+    SDL_SetWindowTitle(platform.window, title);
+
     CORE.Window.title = title;
 }
 
 // Set window position on screen (windowed mode)
 void SetWindowPosition(int x, int y)
 {
-    TRACELOG(LOG_WARNING, "SetWindowPosition() not available on target platform");
+    SDL_SetWindowPosition(platform.window, x, y);
+
+    CORE.Window.position.x = x;
+    CORE.Window.position.y = y;
 }
 
 // Set monitor for the current window
@@ -324,13 +329,19 @@ void SetWindowMaxSize(int width, int height)
 // Set window dimensions
 void SetWindowSize(int width, int height)
 {
-    TRACELOG(LOG_WARNING, "SetWindowSize() not available on target platform");
+    SDL_SetWindowSize(platform.window, width, height);
+
+    CORE.Window.screen.width = width;
+    CORE.Window.screen.height = height;
 }
 
 // Set window opacity, value opacity is between 0.0 and 1.0
 void SetWindowOpacity(float opacity)
 {
-    TRACELOG(LOG_WARNING, "SetWindowOpacity() not available on target platform");
+    if (opacity >= 1.0f) opacity = 1.0f;
+    else if (opacity <= 0.0f) opacity = 0.0f;
+
+    SDL_SetWindowOpacity(platform.window, opacity);
 }
 
 // Set window focused
@@ -349,8 +360,11 @@ void *GetWindowHandle(void)
 // Get number of monitors
 int GetMonitorCount(void)
 {
-    TRACELOG(LOG_WARNING, "GetMonitorCount() not implemented on target platform");
-    return 1;
+    int monitorCount = 0;
+
+    monitorCount = SDL_GetNumVideoDisplays();
+
+    return monitorCount;
 }
 
 // Get number of monitors
@@ -369,15 +383,39 @@ Vector2 GetMonitorPosition(int monitor)
 // Get selected monitor width (currently used by monitor)
 int GetMonitorWidth(int monitor)
 {
-    TRACELOG(LOG_WARNING, "GetMonitorWidth() not implemented on target platform");
-    return 0;
+    int width = 0;
+
+    int monitorCount = 0;
+    monitorCount = SDL_GetNumVideoDisplays();
+
+    if ((monitor >= 0) && (monitor < monitorCount))
+    {
+        SDL_DisplayMode mode;
+        SDL_GetCurrentDisplayMode(monitor, &mode);
+        width = mode.w;
+    }
+    else TRACELOG(LOG_WARNING, "SDL: Failed to find selected monitor");
+
+    return width;
 }
 
 // Get selected monitor height (currently used by monitor)
 int GetMonitorHeight(int monitor)
 {
-    TRACELOG(LOG_WARNING, "GetMonitorHeight() not implemented on target platform");
-    return 0;
+    int height = 0;
+
+    int monitorCount = 0;
+    monitorCount = SDL_GetNumVideoDisplays();
+
+    if ((monitor >= 0) && (monitor < monitorCount))
+    {
+        SDL_DisplayMode mode;
+        SDL_GetCurrentDisplayMode(monitor, &mode);
+        height = mode.h;
+    }
+    else TRACELOG(LOG_WARNING, "SDL: Failed to find selected monitor");
+
+    return height;
 }
 
 // Get selected monitor physical width in millimetres
@@ -397,22 +435,43 @@ int GetMonitorPhysicalHeight(int monitor)
 // Get selected monitor refresh rate
 int GetMonitorRefreshRate(int monitor)
 {
-    TRACELOG(LOG_WARNING, "GetMonitorRefreshRate() not implemented on target platform");
-    return 0;
+    int refresh = 0;
+
+    int monitorCount = 0;
+    monitorCount = SDL_GetNumVideoDisplays();
+
+    if ((monitor >= 0) && (monitor < monitorCount))
+    {
+        SDL_DisplayMode mode;
+        SDL_GetCurrentDisplayMode(monitor, &mode);
+        refresh = mode.refresh_rate;
+    }
+    else TRACELOG(LOG_WARNING, "SDL: Failed to find selected monitor");
+
+    return refresh;
 }
 
 // Get the human-readable, UTF-8 encoded name of the selected monitor
 const char *GetMonitorName(int monitor)
 {
-    TRACELOG(LOG_WARNING, "GetMonitorName() not implemented on target platform");
+    int monitorCount = 0;
+    monitorCount = SDL_GetNumVideoDisplays();
+
+    if ((monitor >= 0) && (monitor < monitorCount)) return SDL_GetDisplayName(monitor);
+    else TRACELOG(LOG_WARNING, "SDL: Failed to find selected monitor");
+
     return "";
 }
 
 // Get window position XY on monitor
 Vector2 GetWindowPosition(void)
 {
-    TRACELOG(LOG_WARNING, "GetWindowPosition() not implemented on target platform");
-    return (Vector2){ 0, 0 };
+    int x = 0;
+    int y = 0;
+
+    SDL_GetWindowPosition(platform.window, &x, &y);
+
+    return (Vector2){ (float)x, (float)y };
 }
 
 // Get window scale DPI factor for current monitor
