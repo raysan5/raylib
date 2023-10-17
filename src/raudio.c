@@ -536,6 +536,14 @@ void SetMasterVolume(float volume)
     ma_device_set_master_volume(&AUDIO.System.device, volume);
 }
 
+// Get master volume (listener)
+float GetMasterVolume(void)
+{
+    float volume = 0.0f;
+    ma_device_get_master_volume(&AUDIO.System.device, &volume);
+    return volume;
+}
+
 //----------------------------------------------------------------------------------
 // Module Functions Definition - Audio Buffer management
 //----------------------------------------------------------------------------------
