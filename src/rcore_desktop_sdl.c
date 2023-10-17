@@ -75,7 +75,7 @@ static PlatformData platform = { 0 };   // Platform specific data
 // Local Variables Definition
 //----------------------------------------------------------------------------------
 #define SCANCODE_MAPPED_NUM 100
-static const short ScancodeToKey[SCANCODE_MAPPED_NUM] = {
+static const KeyboardKey ScancodeToKey[SCANCODE_MAPPED_NUM] = {
     KEY_NULL,           // SDL_SCANCODE_UNKNOWN
     0,
     0,
