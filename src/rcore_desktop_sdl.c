@@ -414,15 +414,24 @@ int GetMonitorRefreshRate(int monitor)
 // Get the human-readable, UTF-8 encoded name of the selected monitor
 const char *GetMonitorName(int monitor)
 {
-    TRACELOG(LOG_WARNING, "GetMonitorName() not implemented on target platform");
+    int monitorCount = 0;
+    monitorCount = SDL_GetNumVideoDisplays();
+
+    if ((monitor >= 0) && (monitor < monitorCount)) return SDL_GetDisplayName(monitor);
+    else TRACELOG(LOG_WARNING, "SDL: Failed to find selected monitor");
+
     return "";
 }
 
 // Get window position XY on monitor
 Vector2 GetWindowPosition(void)
 {
-    TRACELOG(LOG_WARNING, "GetWindowPosition() not implemented on target platform");
-    return (Vector2){ 0, 0 };
+    int x = 0;
+    int y = 0;
+
+    SDL_GetWindowPosition(platform.window, &x, &y);
+
+    return (Vector2){ (float)x, (float)y };
 }
 
 // Get window scale DPI factor for current monitor
