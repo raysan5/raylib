@@ -356,8 +356,7 @@ int GetMonitorCount(void)
 // Get number of monitors
 int GetCurrentMonitor(void)
 {
-    TRACELOG(LOG_WARNING, "GetCurrentMonitor() not implemented on target platform");
-    return 0;
+    return SDL_GetWindowDisplayIndex(platform.window);
 }
 
 // Get selected monitor position
