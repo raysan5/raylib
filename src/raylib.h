@@ -81,10 +81,10 @@
 
 #include <stdarg.h>     // Required for: va_list - Only used by TraceLogCallback
 
-#define RAYLIB_VERSION_MAJOR 4
-#define RAYLIB_VERSION_MINOR 6
+#define RAYLIB_VERSION_MAJOR 5
+#define RAYLIB_VERSION_MINOR 0
 #define RAYLIB_VERSION_PATCH 0
-#define RAYLIB_VERSION  "4.6-dev"
+#define RAYLIB_VERSION  "5.0-dev"
 
 // Function specifiers in case library is build/used as a shared library (Windows)
 // NOTE: Microsoft specifiers to tell compiler that symbols are imported/exported from a .dll
