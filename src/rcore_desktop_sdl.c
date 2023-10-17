@@ -301,6 +301,9 @@ void SetWindowTitle(const char *title)
 void SetWindowPosition(int x, int y)
 {
     SDL_SetWindowPosition(platform.window, x, y);
+
+    CORE.Window.position.x = x;
+    CORE.Window.position.y = y;
 }
 
 // Set monitor for the current window
@@ -433,8 +436,20 @@ int GetMonitorPhysicalHeight(int monitor)
 // Get selected monitor refresh rate
 int GetMonitorRefreshRate(int monitor)
 {
-    TRACELOG(LOG_WARNING, "GetMonitorRefreshRate() not implemented on target platform");
-    return 0;
+    int refresh = 0;
+
+    int monitorCount = 0;
+    monitorCount = SDL_GetNumVideoDisplays();
+
+    if ((monitor >= 0) && (monitor < monitorCount))
+    {
+        SDL_DisplayMode mode;
+        SDL_GetCurrentDisplayMode(monitor, &mode);
+        refresh = mode.refresh_rate;
+    }
+    else TRACELOG(LOG_WARNING, "SDL: Failed to find selected monitor");
+
+    return refresh;
 }
 
 // Get the human-readable, UTF-8 encoded name of the selected monitor
