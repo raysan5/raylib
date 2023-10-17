@@ -292,13 +292,15 @@ void SetWindowIcons(Image *images, int count)
 // Set title for window
 void SetWindowTitle(const char *title)
 {
+    SDL_SetWindowTitle(platform.window, title);
+
     CORE.Window.title = title;
 }
 
 // Set window position on screen (windowed mode)
 void SetWindowPosition(int x, int y)
 {
-    TRACELOG(LOG_WARNING, "SetWindowPosition() not available on target platform");
+    SDL_SetWindowPosition(platform.window, x, y);
 }
 
 // Set monitor for the current window
