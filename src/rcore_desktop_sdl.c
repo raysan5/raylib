@@ -324,13 +324,19 @@ void SetWindowMaxSize(int width, int height)
 // Set window dimensions
 void SetWindowSize(int width, int height)
 {
-    TRACELOG(LOG_WARNING, "SetWindowSize() not available on target platform");
+    SDL_SetWindowSize(platform.window, width, height);
+
+    CORE.Window.screen.width = width;
+    CORE.Window.screen.height = height;
 }
 
 // Set window opacity, value opacity is between 0.0 and 1.0
 void SetWindowOpacity(float opacity)
 {
-    TRACELOG(LOG_WARNING, "SetWindowOpacity() not available on target platform");
+    if (opacity >= 1.0f) opacity = 1.0f;
+    else if (opacity <= 0.0f) opacity = 0.0f;
+
+    SDL_SetWindowOpacity(platform.window, opacity);
 }
 
 // Set window focused
@@ -349,8 +355,11 @@ void *GetWindowHandle(void)
 // Get number of monitors
 int GetMonitorCount(void)
 {
-    TRACELOG(LOG_WARNING, "GetMonitorCount() not implemented on target platform");
-    return 1;
+    int monitorCount = 0;
+
+    monitorCount = SDL_GetNumVideoDisplays();
+
+    return monitorCount;
 }
 
 // Get number of monitors
