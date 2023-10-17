@@ -381,15 +381,39 @@ Vector2 GetMonitorPosition(int monitor)
 // Get selected monitor width (currently used by monitor)
 int GetMonitorWidth(int monitor)
 {
-    TRACELOG(LOG_WARNING, "GetMonitorWidth() not implemented on target platform");
-    return 0;
+    int width = 0;
+
+    int monitorCount = 0;
+    monitorCount = SDL_GetNumVideoDisplays();
+
+    if ((monitor >= 0) && (monitor < monitorCount))
+    {
+        SDL_DisplayMode mode;
+        SDL_GetCurrentDisplayMode(monitor, &mode);
+        width = mode.w;
+    }
+    else TRACELOG(LOG_WARNING, "SDL: Failed to find selected monitor");
+
+    return width;
 }
 
 // Get selected monitor height (currently used by monitor)
 int GetMonitorHeight(int monitor)
 {
-    TRACELOG(LOG_WARNING, "GetMonitorHeight() not implemented on target platform");
-    return 0;
+    int height = 0;
+
+    int monitorCount = 0;
+    monitorCount = SDL_GetNumVideoDisplays();
+
+    if ((monitor >= 0) && (monitor < monitorCount))
+    {
+        SDL_DisplayMode mode;
+        SDL_GetCurrentDisplayMode(monitor, &mode);
+        height = mode.h;
+    }
+    else TRACELOG(LOG_WARNING, "SDL: Failed to find selected monitor");
+
+    return height;
 }
 
 // Get selected monitor physical width in millimetres
