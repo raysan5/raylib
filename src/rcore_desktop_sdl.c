@@ -1041,6 +1041,12 @@ static int InitPlatform(void)
     {
         CORE.Window.ready = true;
 
+        SDL_DisplayMode displayMode;
+        SDL_GetCurrentDisplayMode(0, &displayMode);
+
+        CORE.Window.display.width = displayMode.w;
+        CORE.Window.display.height = displayMode.h;
+
         CORE.Window.render.width = CORE.Window.screen.width;
         CORE.Window.render.height = CORE.Window.screen.height;
         CORE.Window.currentFbo.width = CORE.Window.render.width;
