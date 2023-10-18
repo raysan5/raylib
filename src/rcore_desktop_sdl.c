@@ -227,7 +227,57 @@ void ToggleFullscreen(void)
 // Toggle borderless windowed mode
 void ToggleBorderlessWindowed(void)
 {
-    //SDL_SetWindowFullscreen
+    // Leave fullscreen before attempting to set borderless windowed mode and get screen position from it
+    bool wasOnFullscreen = false;
+    if (CORE.Window.fullscreen)
+    {
+        CORE.Window.previousPosition = CORE.Window.position;
+        ToggleFullscreen();
+        wasOnFullscreen = true;
+    }
+
+    if (!IsWindowState(FLAG_BORDERLESS_WINDOWED_MODE))
+    {
+        // Store the window's current position and size
+        SDL_GetWindowPosition(platform.window, &CORE.Window.previousPosition.x, &CORE.Window.previousPosition.y);
+        CORE.Window.previousScreen = CORE.Window.screen;
+
+        // Set screen position and size inside valid bounds
+        SDL_Rect displayBounds;
+        if (SDL_GetDisplayBounds(GetCurrentMonitor(), &displayBounds) == 0)
+        {
+            SDL_SetWindowPosition(platform.window, displayBounds.x, displayBounds.y);
+            SDL_SetWindowSize(platform.window, displayBounds.w, displayBounds.h);
+        }
+
+        // Set borderless mode and flag
+        SDL_SetWindowBordered(platform.window, SDL_FALSE);
+        CORE.Window.flags |= FLAG_WINDOW_UNDECORATED;
+
+        // Set topmost modes and flag
+        SDL_SetWindowAlwaysOnTop(platform.window, SDL_TRUE);
+        CORE.Window.flags |= FLAG_WINDOW_TOPMOST;
+
+        // Set borderless windowed flag
+        CORE.Window.flags |= FLAG_BORDERLESS_WINDOWED_MODE;
+    }
+    else
+    {
+        // Remove borderless mode and flag
+        SDL_SetWindowBordered(platform.window, SDL_TRUE);
+        CORE.Window.flags &= ~FLAG_WINDOW_UNDECORATED;
+
+        // Remove topmost modes and flag
+        SDL_SetWindowAlwaysOnTop(platform.window, SDL_FALSE);
+        CORE.Window.flags &= ~FLAG_WINDOW_TOPMOST;
+
+        // Restore the window's previous size and position
+        SDL_SetWindowSize(platform.window, CORE.Window.previousScreen.width, CORE.Window.previousScreen.height);
+        SDL_SetWindowPosition(platform.window, CORE.Window.previousPosition.x, CORE.Window.previousPosition.y);
+
+        // Remove borderless windowed flag
+        CORE.Window.flags &= ~FLAG_BORDERLESS_WINDOWED_MODE;
+    }
 }
 
 // Set window state: maximized, if resizable
@@ -1042,7 +1092,7 @@ static int InitPlatform(void)
         CORE.Window.ready = true;
 
         SDL_DisplayMode displayMode;
-        SDL_GetCurrentDisplayMode(SDL_GetWindowDisplayIndex(platform.window), &displayMode);
+        SDL_GetCurrentDisplayMode(GetCurrentMonitor(), &displayMode);
 
         CORE.Window.display.width = displayMode.w;
         CORE.Window.display.height = displayMode.h;
