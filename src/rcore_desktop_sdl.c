@@ -221,7 +221,16 @@ bool WindowShouldClose(void)
 // Toggle fullscreen mode
 void ToggleFullscreen(void)
 {
-    //SDL_SetWindowFullscreen
+    if (!IsWindowState(FLAG_FULLSCREEN_MODE))
+    {
+        SDL_SetWindowFullscreen(platform.window, SDL_WINDOW_FULLSCREEN);
+        CORE.Window.flags |= FLAG_FULLSCREEN_MODE;
+    }
+    else
+    {
+        SDL_SetWindowFullscreen(platform.window, 0);
+        CORE.Window.flags &= ~FLAG_FULLSCREEN_MODE; 
+    }
 }
 
 // Toggle borderless windowed mode
