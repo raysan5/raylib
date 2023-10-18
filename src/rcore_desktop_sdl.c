@@ -62,6 +62,7 @@ typedef struct {
     SDL_GLContext glContext;
 
     SDL_Joystick *gamepad;
+    SDL_Cursor *cursor;
 } PlatformData;
 
 //----------------------------------------------------------------------------------
@@ -176,6 +177,22 @@ static const KeyboardKey ScancodeToKey[SCANCODE_MAPPED_NUM] = {
     KEY_KP_9,           // SDL_SCANCODE_KP_9
     KEY_KP_0,           // SDL_SCANCODE_KP_0
     KEY_KP_DECIMAL      // SDL_SCANCODE_KP_PERIOD
+};
+
+static const int CursorsLUT[] = {
+    SDL_SYSTEM_CURSOR_ARROW,       // 0  MOUSE_CURSOR_DEFAULT
+    SDL_SYSTEM_CURSOR_ARROW,       // 1  MOUSE_CURSOR_ARROW
+    SDL_SYSTEM_CURSOR_IBEAM,       // 2  MOUSE_CURSOR_IBEAM
+    SDL_SYSTEM_CURSOR_CROSSHAIR,   // 3  MOUSE_CURSOR_CROSSHAIR
+    SDL_SYSTEM_CURSOR_HAND,        // 4  MOUSE_CURSOR_POINTING_HAND
+    SDL_SYSTEM_CURSOR_SIZEWE,      // 5  MOUSE_CURSOR_RESIZE_EW
+    SDL_SYSTEM_CURSOR_SIZENS,      // 6  MOUSE_CURSOR_RESIZE_NS
+    SDL_SYSTEM_CURSOR_SIZENWSE,    // 7  MOUSE_CURSOR_RESIZE_NWSE
+    SDL_SYSTEM_CURSOR_SIZENESW,    // 8  MOUSE_CURSOR_RESIZE_NESW
+    SDL_SYSTEM_CURSOR_SIZEALL,     // 9  MOUSE_CURSOR_RESIZE_ALL
+    SDL_SYSTEM_CURSOR_NO           // 10 MOUSE_CURSOR_NOT_ALLOWED
+    //SDL_SYSTEM_CURSOR_WAIT,      // No equivalent implemented on MouseCursor enum on raylib.h
+    //SDL_SYSTEM_CURSOR_WAITARROW, // No equivalent implemented on MouseCursor enum on raylib.h
 };
 
 //----------------------------------------------------------------------------------
@@ -540,7 +557,10 @@ void SetMousePosition(int x, int y)
 // Set mouse cursor
 void SetMouseCursor(int cursor)
 {
-    TRACELOG(LOG_WARNING, "SetMouseCursor() not implemented on target platform");
+    platform.cursor = SDL_CreateSystemCursor(CursorsLUT[cursor]);
+    SDL_SetCursor(platform.cursor);
+
+    CORE.Input.Mouse.cursor = cursor;
 }
 
 // Register all input events
@@ -796,6 +816,7 @@ static int InitPlatform(void)
 
 static void ClosePlatform(void)
 {
+    SDL_FreeCursor(platform.cursor); // Free cursor
     SDL_GL_DeleteContext(platform.glContext); // Deinitialize OpenGL context
     SDL_DestroyWindow(platform.window);
     SDL_Quit(); // Deinitialize SDL internal global state
