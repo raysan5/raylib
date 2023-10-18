@@ -581,7 +581,20 @@ void SetWindowPosition(int x, int y)
 // Set monitor for the current window
 void SetWindowMonitor(int monitor)
 {
-    TRACELOG(LOG_WARNING, "SetWindowMonitor() not available on target platform");
+    if (monitor < 0 || monitor >= SDL_GetNumVideoDisplays())
+    {
+        TRACELOG(LOG_ERROR, "Invalid monitor index");
+        return;
+    }
+
+    SDL_Rect displayBounds;
+    if (SDL_GetDisplayBounds(monitor, &displayBounds) != 0)
+    {
+        TRACELOG(LOG_ERROR, "Failed to get display bounds");
+        return;
+    }
+
+    SDL_SetWindowPosition(platform.window, displayBounds.x, displayBounds.y);
 }
 
 // Set window minimum dimensions (FLAG_WINDOW_RESIZABLE)
