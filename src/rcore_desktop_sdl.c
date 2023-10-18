@@ -1018,6 +1018,12 @@ static int InitPlatform(void)
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
     //SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, SDL_GL_CONTEXT_DEBUG_FLAG | SDL_GL_CONTEXT_FORWARD_COMPATIBLE_FLAG);
+
+    if (CORE.Window.flags & FLAG_VSYNC_HINT)
+    {
+        SDL_GL_SetSwapInterval(1);
+    }
+
     if (CORE.Window.flags & FLAG_MSAA_4X_HINT)
     {
         SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, 1);
