@@ -1042,7 +1042,7 @@ static int InitPlatform(void)
         CORE.Window.ready = true;
 
         SDL_DisplayMode displayMode;
-        SDL_GetCurrentDisplayMode(0, &displayMode);
+        SDL_GetCurrentDisplayMode(SDL_GetWindowDisplayIndex(platform.window), &displayMode);
 
         CORE.Window.display.width = displayMode.w;
         CORE.Window.display.height = displayMode.h;
