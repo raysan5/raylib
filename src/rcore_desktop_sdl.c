@@ -887,7 +887,7 @@ void OpenURL(const char *url)
 // Set internal gamepad mappings
 int SetGamepadMappings(const char *mappings)
 {
-    SDL_GameControllerAddMapping(mappings);
+    return SDL_GameControllerAddMapping(mappings);
 }
 
 // Set mouse position XY
