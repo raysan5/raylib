@@ -647,8 +647,20 @@ int GetCurrentMonitor(void)
 // Get selected monitor position
 Vector2 GetMonitorPosition(int monitor)
 {
-    TRACELOG(LOG_WARNING, "GetMonitorPosition() not implemented on target platform");
-    return (Vector2){ 0, 0 };
+    if (monitor < 0 || monitor >= SDL_GetNumVideoDisplays())
+    {
+        TRACELOG(LOG_ERROR, "Invalid monitor index");
+        return (Vector2) { 0, 0 };
+    }
+
+    SDL_Rect displayBounds;
+    if (SDL_GetDisplayBounds(monitor, &displayBounds) != 0)
+    {
+        TRACELOG(LOG_ERROR, "Failed to get display bounds");
+        return (Vector2) { 0, 0 };
+    }
+
+    return (Vector2) { displayBounds.x, displayBounds.y };
 }
 
 // Get selected monitor width (currently used by monitor)
