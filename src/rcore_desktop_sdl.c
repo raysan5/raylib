@@ -255,17 +255,25 @@ void SetWindowState(unsigned int flags)
 {
     CORE.Window.flags |= flags;
 
+    if (flags & FLAG_VSYNC_HINT)
+    {
+        SDL_GL_SetSwapInterval(1);
+    }
     if (flags & FLAG_FULLSCREEN_MODE)
     {
         SDL_SetWindowFullscreen(platform.window, SDL_WINDOW_FULLSCREEN);
+    }
+    if (flags & FLAG_WINDOW_RESIZABLE)
+    {
+        SDL_SetWindowResizable(platform.window, SDL_TRUE);
     }
     if (flags & FLAG_WINDOW_UNDECORATED)
     {
         SDL_SetWindowBordered(platform.window, SDL_FALSE);
     }
-    if (flags & FLAG_WINDOW_RESIZABLE)
+    if (flags & FLAG_WINDOW_HIDDEN)
     {
-        SDL_SetWindowResizable(platform.window, SDL_TRUE);
+        SDL_HideWindow(platform.window);
     }
     if (flags & FLAG_WINDOW_MINIMIZED)
     {
@@ -279,19 +287,43 @@ void SetWindowState(unsigned int flags)
     {
         // NOTE: To be able to implement this part it seems that we should
         // do it ourselves, via `Windows.h`, `X11/Xlib.h` or even `Cocoa.h`
+        TraceLog(LOG_WARNING, "SetWindowState() - FLAG_WINDOW_UNFOCUSED is not supported on PLATFORM_DESKTOP_SDL");
     }
     if (flags & FLAG_WINDOW_TOPMOST)
     {
-        // NOTE: To be able to implement this part it seems that we should
-        // do it ourselves, via `Windows.h`, `X11/Xlib.h` or even `Cocoa.h`
+        SDL_SetWindowAlwaysOnTop(platform.window, SDL_FALSE);
     }
-    if (flags & FLAG_WINDOW_MOUSE_PASSTHROUGH)
+    if (flags & FLAG_WINDOW_ALWAYS_RUN)
     {
-        SDL_SetWindowGrab(platform.window, SDL_FALSE);
+        TraceLog(LOG_WARNING, "SetWindowState() - FLAG_WINDOW_ALWAYS_RUN is not supported on PLATFORM_DESKTOP_SDL");
+    }
+    if (flags & FLAG_WINDOW_TRANSPARENT)
+    {
+        TraceLog(LOG_WARNING, "SetWindowState() - FLAG_WINDOW_TRANSPARENT is not supported on PLATFORM_DESKTOP_SDL");
     }
     if (flags & FLAG_WINDOW_HIGHDPI)
     {
         // NOTE: Such a function does not seem to exist
+        TraceLog(LOG_WARNING, "SetWindowState() - FLAG_WINDOW_HIGHDPI is not supported on PLATFORM_DESKTOP_SDL");
+    }
+    if (flags & FLAG_WINDOW_MOUSE_PASSTHROUGH)
+    {
+        //SDL_SetWindowGrab(platform.window, SDL_FALSE);
+        TraceLog(LOG_WARNING, "SetWindowState() - FLAG_WINDOW_MOUSE_PASSTHROUGH is not supported on PLATFORM_DESKTOP_SDL");
+    }
+    if (flags & FLAG_BORDERLESS_WINDOWED_MODE)
+    {
+        // NOTE: Same as FLAG_WINDOW_UNDECORATED with SDL ?
+        SDL_SetWindowBordered(platform.window, SDL_FALSE);
+    }
+    if (flags & FLAG_MSAA_4X_HINT)
+    {
+        SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, 1); // Enable multisampling buffers
+        SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, 4); // Enable multisampling
+    }
+    if (flags & FLAG_INTERLACED_HINT)
+    {
+        TraceLog(LOG_WARNING, "SetWindowState() - FLAG_INTERLACED_HINT is not supported on PLATFORM_DESKTOP_SDL");
     }
 }
 
@@ -300,17 +332,25 @@ void ClearWindowState(unsigned int flags)
 {
     CORE.Window.flags &= ~flags;
 
+    if (flags & FLAG_VSYNC_HINT)
+    {
+        SDL_GL_SetSwapInterval(0);
+    }
     if (flags & FLAG_FULLSCREEN_MODE)
     {
         SDL_SetWindowFullscreen(platform.window, 0);
+    }
+    if (flags & FLAG_WINDOW_RESIZABLE)
+    {
+        SDL_SetWindowResizable(platform.window, SDL_FALSE);
     }
     if (flags & FLAG_WINDOW_UNDECORATED)
     {
         SDL_SetWindowBordered(platform.window, SDL_TRUE);
     }
-    if (flags & FLAG_WINDOW_RESIZABLE)
+    if (flags & FLAG_WINDOW_HIDDEN)
     {
-        SDL_SetWindowResizable(platform.window, SDL_FALSE);
+        SDL_ShowWindow(platform.window);
     }
     if (flags & FLAG_WINDOW_MINIMIZED)
     {
@@ -323,18 +363,43 @@ void ClearWindowState(unsigned int flags)
     if (flags & FLAG_WINDOW_UNFOCUSED)
     {
         //SDL_RaiseWindow(platform.window);
+        TraceLog(LOG_WARNING, "ClearWindowState() - FLAG_WINDOW_UNFOCUSED is not supported on PLATFORM_DESKTOP_SDL");
     }
     if (flags & FLAG_WINDOW_TOPMOST)
     {
-        // NOTE: You will have to manage the window priority manually, as mentioned earlier
+        SDL_SetWindowAlwaysOnTop(platform.window, SDL_FALSE);
     }
-    if (flags & FLAG_WINDOW_MOUSE_PASSTHROUGH)
+    if (flags & FLAG_WINDOW_ALWAYS_RUN)
     {
-        SDL_SetWindowGrab(platform.window, SDL_TRUE);
+        TraceLog(LOG_WARNING, "ClearWindowState() - FLAG_WINDOW_ALWAYS_RUN is not supported on PLATFORM_DESKTOP_SDL");
+    }
+    if (flags & FLAG_WINDOW_TRANSPARENT)
+    {
+        TraceLog(LOG_WARNING, "ClearWindowState() - FLAG_WINDOW_TRANSPARENT is not supported on PLATFORM_DESKTOP_SDL");
     }
     if (flags & FLAG_WINDOW_HIGHDPI)
     {
         // NOTE: There also doesn't seem to be a feature to disable high DPI once enabled
+        TraceLog(LOG_WARNING, "ClearWindowState() - FLAG_WINDOW_HIGHDPI is not supported on PLATFORM_DESKTOP_SDL");
+    }
+    if (flags & FLAG_WINDOW_MOUSE_PASSTHROUGH)
+    {
+        //SDL_SetWindowGrab(platform.window, SDL_TRUE);
+        TraceLog(LOG_WARNING, "ClearWindowState() - FLAG_WINDOW_MOUSE_PASSTHROUGH is not supported on PLATFORM_DESKTOP_SDL");
+    }
+    if (flags & FLAG_BORDERLESS_WINDOWED_MODE)
+    {
+        // NOTE: Same as FLAG_WINDOW_UNDECORATED with SDL ?
+        SDL_SetWindowBordered(platform.window, SDL_TRUE);
+    }
+    if (flags & FLAG_MSAA_4X_HINT)
+    {
+        SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, 0); // Disable multisampling buffers
+        SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, 0); // Disable multisampling
+    }
+    if (flags & FLAG_INTERLACED_HINT)
+    {
+        TraceLog(LOG_WARNING, "ClearWindowState() - FLAG_INTERLACED_HINT is not supported on PLATFORM_DESKTOP_SDL");
     }
 }
 
