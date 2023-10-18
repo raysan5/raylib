@@ -332,7 +332,7 @@ void SetWindowOpacity(float opacity)
 // Set window focused
 void SetWindowFocused(void)
 {
-    TRACELOG(LOG_WARNING, "SetWindowFocused() not available on target platform");
+    SDL_RaiseWindow(platform.window);
 }
 
 // Get native window handle
@@ -406,15 +406,45 @@ int GetMonitorHeight(int monitor)
 // Get selected monitor physical width in millimetres
 int GetMonitorPhysicalWidth(int monitor)
 {
-    TRACELOG(LOG_WARNING, "GetMonitorPhysicalWidth() not implemented on target platform");
-    return 0;
+    int width = 0;
+
+    int monitorCount = 0;
+    monitorCount = SDL_GetNumVideoDisplays();
+
+    if ((monitor >= 0) && (monitor < monitorCount))
+    {
+        float vdpi = 0.0f;
+        SDL_GetDisplayDPI(monitor, NULL, NULL, &vdpi);
+        SDL_DisplayMode mode;
+        SDL_GetCurrentDisplayMode(monitor, &mode);
+        // Calculate size on inches, then convert to millimeter
+        if (vdpi > 0.0f) width = (mode.w/vdpi)*25.4f;
+    }
+    else TRACELOG(LOG_WARNING, "SDL: Failed to find selected monitor");
+
+    return width;
 }
 
 // Get selected monitor physical height in millimetres
 int GetMonitorPhysicalHeight(int monitor)
 {
-    TRACELOG(LOG_WARNING, "GetMonitorPhysicalHeight() not implemented on target platform");
-    return 0;
+    int height = 0;
+
+    int monitorCount = 0;
+    monitorCount = SDL_GetNumVideoDisplays();
+
+    if ((monitor >= 0) && (monitor < monitorCount))
+    {
+        float vdpi = 0.0f;
+        SDL_GetDisplayDPI(monitor, NULL, NULL, &vdpi);
+        SDL_DisplayMode mode;
+        SDL_GetCurrentDisplayMode(monitor, &mode);
+        // Calculate size on inches, then convert to millimeter
+        if (vdpi > 0.0f) height = (mode.h/vdpi)*25.4f;
+    }
+    else TRACELOG(LOG_WARNING, "SDL: Failed to find selected monitor");
+
+    return height;
 }
 
 // Get selected monitor refresh rate
