@@ -253,19 +253,182 @@ void RestoreWindow(void)
 // Set window configuration state using flags
 void SetWindowState(unsigned int flags)
 {
-    //SDL_HideWindow(platform.window);
+    CORE.Window.flags |= flags;
+
+    if (flags & FLAG_FULLSCREEN_MODE)
+    {
+        SDL_SetWindowFullscreen(platform.window, SDL_WINDOW_FULLSCREEN);
+    }
+    if (flags & FLAG_WINDOW_UNDECORATED)
+    {
+        SDL_SetWindowBordered(platform.window, SDL_FALSE);
+    }
+    if (flags & FLAG_WINDOW_RESIZABLE)
+    {
+        SDL_SetWindowResizable(platform.window, SDL_TRUE);
+    }
+    if (flags & FLAG_WINDOW_MINIMIZED)
+    {
+        SDL_MinimizeWindow(platform.window);
+    }
+    if (flags & FLAG_WINDOW_MAXIMIZED)
+    {
+        SDL_MaximizeWindow(platform.window);
+    }
+    if (flags & FLAG_WINDOW_UNFOCUSED)
+    {
+        // NOTE: To be able to implement this part it seems that we should
+        // do it ourselves, via `Windows.h`, `X11/Xlib.h` or even `Cocoa.h`
+    }
+    if (flags & FLAG_WINDOW_TOPMOST)
+    {
+        // NOTE: To be able to implement this part it seems that we should
+        // do it ourselves, via `Windows.h`, `X11/Xlib.h` or even `Cocoa.h`
+    }
+    if (flags & FLAG_WINDOW_MOUSE_PASSTHROUGH)
+    {
+        SDL_SetWindowGrab(platform.window, SDL_FALSE);
+    }
+    if (flags & FLAG_WINDOW_HIGHDPI)
+    {
+        // NOTE: Such a function does not seem to exist
+    }
 }
 
 // Clear window configuration state flags
 void ClearWindowState(unsigned int flags)
 {
-    TRACELOG(LOG_WARNING, "ClearWindowState() not available on target platform");
+    CORE.Window.flags &= ~flags;
+
+    if (flags & FLAG_FULLSCREEN_MODE)
+    {
+        SDL_SetWindowFullscreen(platform.window, 0);
+    }
+    if (flags & FLAG_WINDOW_UNDECORATED)
+    {
+        SDL_SetWindowBordered(platform.window, SDL_TRUE);
+    }
+    if (flags & FLAG_WINDOW_RESIZABLE)
+    {
+        SDL_SetWindowResizable(platform.window, SDL_FALSE);
+    }
+    if (flags & FLAG_WINDOW_MINIMIZED)
+    {
+        SDL_RestoreWindow(platform.window);
+    }
+    if (flags & FLAG_WINDOW_MAXIMIZED)
+    {
+        SDL_RestoreWindow(platform.window);
+    }
+    if (flags & FLAG_WINDOW_UNFOCUSED)
+    {
+        //SDL_RaiseWindow(platform.window);
+    }
+    if (flags & FLAG_WINDOW_TOPMOST)
+    {
+        // NOTE: You will have to manage the window priority manually, as mentioned earlier
+    }
+    if (flags & FLAG_WINDOW_MOUSE_PASSTHROUGH)
+    {
+        SDL_SetWindowGrab(platform.window, SDL_TRUE);
+    }
+    if (flags & FLAG_WINDOW_HIGHDPI)
+    {
+        // NOTE: There also doesn't seem to be a feature to disable high DPI once enabled
+    }
 }
 
 // Set icon for window
 void SetWindowIcon(Image image)
 {
-    TRACELOG(LOG_WARNING, "SetWindowIcon() not available on target platform");
+    SDL_Surface* iconSurface = NULL;
+
+    Uint32 rmask, gmask, bmask, amask;
+    int depth = 0;  // Depth in bits
+    int pitch = 0;  // Pixel spacing (pitch) in bytes
+
+    switch (image.format)
+    {
+        case PIXELFORMAT_UNCOMPRESSED_GRAYSCALE:
+            rmask = 0xFF, gmask = 0;
+            bmask = 0, amask = 0;
+            depth = 8, pitch = image.width;
+            break;
+        case PIXELFORMAT_UNCOMPRESSED_GRAY_ALPHA:
+            rmask = 0xFF, gmask = 0xFF00;
+            bmask = 0, amask = 0;
+            depth = 16, pitch = image.width * 2;
+            break;
+        case PIXELFORMAT_UNCOMPRESSED_R5G6B5:
+            rmask = 0xF800, gmask = 0x07E0;
+            bmask = 0x001F, amask = 0;
+            depth = 16, pitch = image.width * 2;
+            break;
+        case PIXELFORMAT_UNCOMPRESSED_R8G8B8:
+            rmask = 0xFF0000, gmask = 0x00FF00;
+            bmask = 0x0000FF, amask = 0;
+            depth = 24, pitch = image.width * 3;
+            break;
+        case PIXELFORMAT_UNCOMPRESSED_R5G5B5A1:
+            rmask = 0xF800, gmask = 0x07C0;
+            bmask = 0x003E, amask = 0x0001;
+            depth = 16, pitch = image.width * 2;
+            break;
+        case PIXELFORMAT_UNCOMPRESSED_R4G4B4A4:
+            rmask = 0xF000, gmask = 0x0F00;
+            bmask = 0x00F0, amask = 0x000F;
+            depth = 16, pitch = image.width * 2;
+            break;
+        case PIXELFORMAT_UNCOMPRESSED_R8G8B8A8:
+            rmask = 0xFF000000, gmask = 0x00FF0000;
+            bmask = 0x0000FF00, amask = 0x000000FF;
+            depth = 32, pitch = image.width * 4;
+            break;
+        case PIXELFORMAT_UNCOMPRESSED_R32:
+            rmask = 0xFFFFFFFF, gmask = 0;
+            bmask = 0, amask = 0;
+            depth = 32, pitch = image.width * 4;
+            break;
+        case PIXELFORMAT_UNCOMPRESSED_R32G32B32:
+            rmask = 0xFFFFFFFF, gmask = 0xFFFFFFFF;
+            bmask = 0xFFFFFFFF, amask = 0;
+            depth = 96, pitch = image.width * 12;
+            break;
+        case PIXELFORMAT_UNCOMPRESSED_R32G32B32A32:
+            rmask = 0xFFFFFFFF, gmask = 0xFFFFFFFF;
+            bmask = 0xFFFFFFFF, amask = 0xFFFFFFFF;
+            depth = 128, pitch = image.width * 16;
+            break;
+        case PIXELFORMAT_UNCOMPRESSED_R16:
+            rmask = 0xFFFF, gmask = 0;
+            bmask = 0, amask = 0;
+            depth = 16, pitch = image.width * 2;
+            break;
+        case PIXELFORMAT_UNCOMPRESSED_R16G16B16:
+            rmask = 0xFFFF, gmask = 0xFFFF;
+            bmask = 0xFFFF, amask = 0;
+            depth = 48, pitch = image.width * 6;
+            break;
+        case PIXELFORMAT_UNCOMPRESSED_R16G16B16A16:
+            rmask = 0xFFFF, gmask = 0xFFFF;
+            bmask = 0xFFFF, amask = 0xFFFF;
+            depth = 64, pitch = image.width * 8;
+            break;
+        default:
+            // Compressed formats are not supported
+            return;
+    }
+
+    iconSurface = SDL_CreateRGBSurfaceFrom(
+        image.data, image.width, image.height, depth, pitch,
+        rmask, gmask, bmask, amask
+    );
+
+    if (iconSurface)
+    {
+        SDL_SetWindowIcon(platform.window, iconSurface);
+        SDL_FreeSurface(iconSurface);
+    }
 }
 
 // Set icon for window
