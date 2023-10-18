@@ -338,8 +338,7 @@ void SetWindowFocused(void)
 // Get native window handle
 void *GetWindowHandle(void)
 {
-    TRACELOG(LOG_WARNING, "GetWindowHandle() not implemented on target platform");
-    return NULL;
+    return (void *)platform.window;
 }
 
 // Get number of monitors
@@ -573,8 +572,7 @@ void OpenURL(const char *url)
 // Set internal gamepad mappings
 int SetGamepadMappings(const char *mappings)
 {
-    TRACELOG(LOG_WARNING, "SetGamepadMappings() not implemented on target platform");
-    return 0;
+    SDL_GameControllerAddMapping(mappings);
 }
 
 // Set mouse position XY
