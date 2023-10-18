@@ -230,7 +230,7 @@ void ToggleFullscreen(void)
     else
     {
         SDL_SetWindowFullscreen(platform.window, 0);
-        CORE.Window.flags &= ~FLAG_FULLSCREEN_MODE; 
+        CORE.Window.flags &= ~FLAG_FULLSCREEN_MODE;
     }
 }
 
@@ -725,12 +725,12 @@ int GetMonitorPhysicalWidth(int monitor)
 
     if ((monitor >= 0) && (monitor < monitorCount))
     {
-        float vdpi = 0.0f;
-        SDL_GetDisplayDPI(monitor, NULL, NULL, &vdpi);
+        float ddpi = 0.0f;
+        SDL_GetDisplayDPI(monitor, &ddpi, NULL, NULL);
         SDL_DisplayMode mode;
         SDL_GetCurrentDisplayMode(monitor, &mode);
         // Calculate size on inches, then convert to millimeter
-        if (vdpi > 0.0f) width = (mode.w/vdpi)*25.4f;
+        if (ddpi > 0.0f) width = (mode.w/ddpi)*25.4f;
     }
     else TRACELOG(LOG_WARNING, "SDL: Failed to find selected monitor");
 
@@ -747,12 +747,12 @@ int GetMonitorPhysicalHeight(int monitor)
 
     if ((monitor >= 0) && (monitor < monitorCount))
     {
-        float vdpi = 0.0f;
-        SDL_GetDisplayDPI(monitor, NULL, NULL, &vdpi);
+        float ddpi = 0.0f;
+        SDL_GetDisplayDPI(monitor, &ddpi, NULL, NULL);
         SDL_DisplayMode mode;
         SDL_GetCurrentDisplayMode(monitor, &mode);
         // Calculate size on inches, then convert to millimeter
-        if (vdpi > 0.0f) height = (mode.h/vdpi)*25.4f;
+        if (ddpi > 0.0f) height = (mode.h/ddpi)*25.4f;
     }
     else TRACELOG(LOG_WARNING, "SDL: Failed to find selected monitor");
 
