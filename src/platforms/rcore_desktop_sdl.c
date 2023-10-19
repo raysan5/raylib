@@ -1070,7 +1070,7 @@ void PollInputEvents(void)
 //----------------------------------------------------------------------------------
 
 // Initialize platform: graphics, inputs and more
-static int InitPlatform(void)
+int InitPlatform(void)
 {
     // Initialize SDL internal global state
     int result = SDL_Init(SDL_INIT_EVERYTHING);
@@ -1180,13 +1180,14 @@ static int InitPlatform(void)
     return 0;
 }
 
-static void ClosePlatform(void)
+void ClosePlatform(void)
 {
     SDL_FreeCursor(platform.cursor); // Free cursor
     SDL_GL_DeleteContext(platform.glContext); // Deinitialize OpenGL context
     SDL_DestroyWindow(platform.window);
     SDL_Quit(); // Deinitialize SDL internal global state
 }
+
 
 static KeyboardKey ConvertScancodeToKey(SDL_Scancode sdlScancode)
 {

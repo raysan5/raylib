@@ -516,7 +516,7 @@ void PollInputEvents(void)
 //----------------------------------------------------------------------------------
 
 // Initialize platform: graphics, inputs and more
-static int InitPlatform(void)
+int InitPlatform(void)
 {
     CORE.Window.currentFbo.width = CORE.Window.screen.width;
     CORE.Window.currentFbo.height = CORE.Window.screen.height;
@@ -589,7 +589,7 @@ static int InitPlatform(void)
 }
 
 // Close platform
-static void ClosePlatform(void)
+void ClosePlatform(void)
 {
     // Close surface, context and display
     if (platform.device != EGL_NO_DISPLAY)
@@ -612,6 +612,7 @@ static void ClosePlatform(void)
         platform.device = EGL_NO_DISPLAY;
     }
 }
+
 
 // Initialize display device and framebuffer
 // NOTE: width and height represent the screen (framebuffer) desired size, not actual display size

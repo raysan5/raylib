@@ -429,7 +429,7 @@ void PollInputEvents(void)
 //----------------------------------------------------------------------------------
 
 // Initialize platform: graphics, inputs and more
-static int InitPlatform(void)
+int InitPlatform(void)
 {
     CORE.Window.fullscreen = true;
     CORE.Window.flags |= FLAG_FULLSCREEN_MODE;
@@ -556,7 +556,7 @@ static int InitPlatform(void)
 }
 
 // Close platform
-static void ClosePlatform(void)
+void ClosePlatform(void)
 {
     // TODO: De-initialize graphics, inputs and more
 }

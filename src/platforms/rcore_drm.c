@@ -565,7 +565,7 @@ void PollInputEvents(void)
 //----------------------------------------------------------------------------------
 
 // Initialize platform: graphics, inputs and more
-static int InitPlatform(void)
+int InitPlatform(void)
 {
     platform.fd = -1;
     platform.connector = NULL;
@@ -916,7 +916,7 @@ static int InitPlatform(void)
 }
 
 // Close platform
-static void ClosePlatform(void)
+void ClosePlatform(void)
 {
     if (platform.prevFB)
     {

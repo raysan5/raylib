@@ -2523,7 +2523,8 @@ int GetTouchPointCount(void)
 //----------------------------------------------------------------------------------
 
 // NOTE: Functions with a platform-specific implementation on rcore_<platform>.c
-//static bool InitPlatform(void)
+//int InitPlatform(void)
+//void ClosePlatform(void)
 
 // Initialize hi-resolution timer
 void InitTimer(void)
