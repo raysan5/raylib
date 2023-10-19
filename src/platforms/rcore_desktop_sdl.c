@@ -583,7 +583,7 @@ void SetWindowPosition(int x, int y)
 // Set monitor for the current window
 void SetWindowMonitor(int monitor)
 {
-    int monitorCount = SDL_GetNumVideoDisplays();
+    const int monitorCount = SDL_GetNumVideoDisplays();
     if ((monitor >= 0) && (monitor < monitorCount))
     {
         if (CORE.Window.fullscreen) ToggleFullscreen();
@@ -607,6 +607,8 @@ void SetWindowMonitor(int monitor)
                     // 3. It was't done here because we can't assume changing the window size automatically
                     //    is acceptable behavior by the user.
                     SDL_SetWindowPosition(platform.window, usableBounds.x, usableBounds.y);
+                    CORE.Window.position.x = x;
+                    CORE.Window.position.y = y;
                 }
                 else
                 {
