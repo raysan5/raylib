@@ -583,20 +583,44 @@ void SetWindowPosition(int x, int y)
 // Set monitor for the current window
 void SetWindowMonitor(int monitor)
 {
-    if (monitor < 0 || monitor >= SDL_GetNumVideoDisplays())
+    int monitorCount = SDL_GetNumVideoDisplays();
+    if ((monitor >= 0) && (monitor < monitorCount))
     {
-        TRACELOG(LOG_ERROR, "Invalid monitor index");
-        return;
+        if (CORE.Window.fullscreen) ToggleFullscreen();
+        else
+        {
+            const int screenWidth = CORE.Window.screen.width;
+            const int screenHeight = CORE.Window.screen.height;
+            SDL_Rect usableBounds;
+            if (SDL_GetDisplayUsableBounds(monitor, &usableBounds) == 0)
+            {
+                printf("usableBounds (%i) %i %i %i %i \n", monitor, usableBounds.w, usableBounds.h, usableBounds.x, usableBounds.y);
+                // If the screen size is larger than the monitor usable area, anchor it on the top left corner, otherwise, center it
+                if ((screenWidth >= usableBounds.w) || (screenHeight >= usableBounds.h))
+                {
+                    // NOTE:
+                    // 1. There's a known issue where if the window larger than the target display bounds,
+                    //    when moving the windows to that display, the window could be clipped back
+                    //    ending up positioned partly outside the target display.
+                    // 2. The workaround for that is, previously to moving the window,
+                    //    setting the window size to the target display size, so they match.
+                    // 3. It was't done here because we can't assume changing the window size automatically
+                    //    is acceptable behavior by the user.
+                    SDL_SetWindowPosition(platform.window, usableBounds.x, usableBounds.y);
+                }
+                else
+                {
+                    const int x = usableBounds.x + (usableBounds.w/2) - (screenWidth/2);
+                    const int y = usableBounds.y + (usableBounds.h/2) - (screenHeight/2);
+                    SDL_SetWindowPosition(platform.window, x, y);
+                    CORE.Window.position.x = x;
+                    CORE.Window.position.y = y;
+                }
+            }
+            else TRACELOG(LOG_WARNING, "SDL: Failed to get selected display usable bounds");
+        }
     }
-
-    SDL_Rect displayBounds;
-    if (SDL_GetDisplayBounds(monitor, &displayBounds) != 0)
-    {
-        TRACELOG(LOG_ERROR, "Failed to get display bounds");
-        return;
-    }
-
-    SDL_SetWindowPosition(platform.window, displayBounds.x, displayBounds.y);
+    else TRACELOG(LOG_WARNING, "SDL: Failed to find selected monitor");
 }
 
 // Set window minimum dimensions (FLAG_WINDOW_RESIZABLE)
