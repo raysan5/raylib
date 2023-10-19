@@ -199,8 +199,9 @@ static const int CursorsLUT[] = {
 //----------------------------------------------------------------------------------
 // Module Internal Functions Declaration
 //----------------------------------------------------------------------------------
-static int InitPlatform(void);                                      // Initialize platform (graphics, inputs and more)
-static void ClosePlatform(void);                                    // Close platform
+int InitPlatform(void);                                      // Initialize platform (graphics, inputs and more)
+void ClosePlatform(void);                                    // Close platform
+
 static KeyboardKey ConvertScancodeToKey(SDL_Scancode sdlScancode);  // Help convert SDL scancodes to raylib key
 
 //----------------------------------------------------------------------------------

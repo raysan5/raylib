@@ -71,8 +71,8 @@ static PlatformData platform = { 0 };   // Platform specific data
 //----------------------------------------------------------------------------------
 // Module Internal Functions Declaration
 //----------------------------------------------------------------------------------
-static int InitPlatform(void);          // Initialize platform (graphics, inputs and more)
-static bool InitGraphicsDevice(void);   // Initialize graphics device
+int InitPlatform(void);          // Initialize platform (graphics, inputs and more)
+bool InitGraphicsDevice(void);   // Initialize graphics device
 
 //----------------------------------------------------------------------------------
 // Module Functions Declaration
