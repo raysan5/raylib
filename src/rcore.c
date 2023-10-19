@@ -281,8 +281,8 @@ extern void LoadFontDefault(void);      // [Module: text] Loads default font on 
 extern void UnloadFontDefault(void);    // [Module: text] Unloads default font from GPU memory
 #endif
 
-static int InitPlatform(void);          // Initialize platform (graphics, inputs and more)
-static void ClosePlatform(void);        // Close platform
+extern int InitPlatform(void);          // Initialize platform (graphics, inputs and more)
+extern void ClosePlatform(void);        // Close platform
 
 static void InitTimer(void);                                // Initialize timer (hi-resolution if available)
 static void SetupFramebuffer(int width, int height);        // Setup main framebuffer
@@ -309,15 +309,15 @@ const char *TextFormat(const char *text, ...);       // Formatting of text with 
 
 // Include platform-specific submodules
 #if defined(PLATFORM_DESKTOP)
-    #include "rcore_desktop.c"
+    #include "platforms/rcore_desktop.c"
 #elif defined(PLATFORM_DESKTOP_SDL)
-    #include "rcore_desktop_sdl.c" 
+    #include "platforms/rcore_desktop_sdl.c" 
 #elif defined(PLATFORM_WEB)
-    #include "rcore_web.c"
+    #include "platforms/rcore_web.c"
 #elif defined(PLATFORM_DRM)
-    #include "rcore_drm.c"
+    #include "platforms/rcore_drm.c"
 #elif defined(PLATFORM_ANDROID)
-    #include "rcore_android.c"
+    #include "platforms/rcore_android.c"
 #else
     // TODO: Include your custom platform backend!
     // i.e software rendering backend or console backend!
@@ -328,8 +328,6 @@ const char *TextFormat(const char *text, ...);       // Formatting of text with 
 //----------------------------------------------------------------------------------
 
 // NOTE: Functions with a platform-specific implementation on rcore_<platform>.c
-//void InitWindow(int width, int height, const char *title)
-//void CloseWindow(void)
 //bool WindowShouldClose(void)
 //void ToggleFullscreen(void)
 //void ToggleBorderlessWindowed(void)
@@ -377,6 +375,22 @@ const char *TextFormat(const char *text, ...);       // Formatting of text with 
 void InitWindow(int width, int height, const char *title)
 {
     TRACELOG(LOG_INFO, "Initializing raylib %s", RAYLIB_VERSION);
+
+#if defined(PLATFORM_DESKTOP)
+    TRACELOG(LOG_INFO, "Platform backend: DESKTOP (GLFW)");
+#elif defined(PLATFORM_DESKTOP_SDL)
+    TRACELOG(LOG_INFO, "Platform backend: DESKTOP (SDL)");
+#elif defined(PLATFORM_WEB)
+    TRACELOG(LOG_INFO, "Platform backend: WEB (HTML5)");
+#elif defined(PLATFORM_DRM)
+    TRACELOG(LOG_INFO, "Platform backend: NATIVE DRM");
+#elif defined(PLATFORM_ANDROID)
+    TRACELOG(LOG_INFO, "Platform backend: ANDROID");
+#else
+    // TODO: Include your custom platform backend!
+    // i.e software rendering backend or console backend!
+    TRACELOG(LOG_INFO, "Platform backend: CUSTOM");
+#endif
 
     TRACELOG(LOG_INFO, "Supported raylib modules:");
     TRACELOG(LOG_INFO, "    > rcore:..... loaded (mandatory)");
