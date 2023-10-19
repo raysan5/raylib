@@ -62,6 +62,8 @@ typedef struct {
     SDL_GLContext glContext;
 
     SDL_Joystick *gamepad;
+    SDL_Cursor *cursor;
+    bool cursorRelative;
 } PlatformData;
 
 //----------------------------------------------------------------------------------
@@ -178,6 +180,22 @@ static const KeyboardKey ScancodeToKey[SCANCODE_MAPPED_NUM] = {
     KEY_KP_DECIMAL      // SDL_SCANCODE_KP_PERIOD
 };
 
+static const int CursorsLUT[] = {
+    SDL_SYSTEM_CURSOR_ARROW,       // 0  MOUSE_CURSOR_DEFAULT
+    SDL_SYSTEM_CURSOR_ARROW,       // 1  MOUSE_CURSOR_ARROW
+    SDL_SYSTEM_CURSOR_IBEAM,       // 2  MOUSE_CURSOR_IBEAM
+    SDL_SYSTEM_CURSOR_CROSSHAIR,   // 3  MOUSE_CURSOR_CROSSHAIR
+    SDL_SYSTEM_CURSOR_HAND,        // 4  MOUSE_CURSOR_POINTING_HAND
+    SDL_SYSTEM_CURSOR_SIZEWE,      // 5  MOUSE_CURSOR_RESIZE_EW
+    SDL_SYSTEM_CURSOR_SIZENS,      // 6  MOUSE_CURSOR_RESIZE_NS
+    SDL_SYSTEM_CURSOR_SIZENWSE,    // 7  MOUSE_CURSOR_RESIZE_NWSE
+    SDL_SYSTEM_CURSOR_SIZENESW,    // 8  MOUSE_CURSOR_RESIZE_NESW
+    SDL_SYSTEM_CURSOR_SIZEALL,     // 9  MOUSE_CURSOR_RESIZE_ALL
+    SDL_SYSTEM_CURSOR_NO           // 10 MOUSE_CURSOR_NOT_ALLOWED
+    //SDL_SYSTEM_CURSOR_WAIT,      // No equivalent implemented on MouseCursor enum on raylib.h
+    //SDL_SYSTEM_CURSOR_WAITARROW, // No equivalent implemented on MouseCursor enum on raylib.h
+};
+
 //----------------------------------------------------------------------------------
 // Module Internal Functions Declaration
 //----------------------------------------------------------------------------------
@@ -204,13 +222,72 @@ bool WindowShouldClose(void)
 // Toggle fullscreen mode
 void ToggleFullscreen(void)
 {
-    //SDL_SetWindowFullscreen
+    if (!IsWindowState(FLAG_FULLSCREEN_MODE))
+    {
+        SDL_SetWindowFullscreen(platform.window, SDL_WINDOW_FULLSCREEN);
+        CORE.Window.flags |= FLAG_FULLSCREEN_MODE;
+    }
+    else
+    {
+        SDL_SetWindowFullscreen(platform.window, 0);
+        CORE.Window.flags &= ~FLAG_FULLSCREEN_MODE; 
+    }
 }
 
 // Toggle borderless windowed mode
 void ToggleBorderlessWindowed(void)
 {
-    //SDL_SetWindowFullscreen
+    // Leave fullscreen before attempting to set borderless windowed mode and get screen position from it
+    bool wasOnFullscreen = false;
+    if (CORE.Window.fullscreen)
+    {
+        CORE.Window.previousPosition = CORE.Window.position;
+        ToggleFullscreen();
+        wasOnFullscreen = true;
+    }
+
+    if (!IsWindowState(FLAG_BORDERLESS_WINDOWED_MODE))
+    {
+        // Store the window's current position and size
+        SDL_GetWindowPosition(platform.window, &CORE.Window.previousPosition.x, &CORE.Window.previousPosition.y);
+        CORE.Window.previousScreen = CORE.Window.screen;
+
+        // Set screen position and size inside valid bounds
+        SDL_Rect displayBounds;
+        if (SDL_GetDisplayBounds(GetCurrentMonitor(), &displayBounds) == 0)
+        {
+            SDL_SetWindowPosition(platform.window, displayBounds.x, displayBounds.y);
+            SDL_SetWindowSize(platform.window, displayBounds.w, displayBounds.h);
+        }
+
+        // Set borderless mode and flag
+        SDL_SetWindowBordered(platform.window, SDL_FALSE);
+        CORE.Window.flags |= FLAG_WINDOW_UNDECORATED;
+
+        // Set topmost modes and flag
+        SDL_SetWindowAlwaysOnTop(platform.window, SDL_TRUE);
+        CORE.Window.flags |= FLAG_WINDOW_TOPMOST;
+
+        // Set borderless windowed flag
+        CORE.Window.flags |= FLAG_BORDERLESS_WINDOWED_MODE;
+    }
+    else
+    {
+        // Remove borderless mode and flag
+        SDL_SetWindowBordered(platform.window, SDL_TRUE);
+        CORE.Window.flags &= ~FLAG_WINDOW_UNDECORATED;
+
+        // Remove topmost modes and flag
+        SDL_SetWindowAlwaysOnTop(platform.window, SDL_FALSE);
+        CORE.Window.flags &= ~FLAG_WINDOW_TOPMOST;
+
+        // Restore the window's previous size and position
+        SDL_SetWindowSize(platform.window, CORE.Window.previousScreen.width, CORE.Window.previousScreen.height);
+        SDL_SetWindowPosition(platform.window, CORE.Window.previousPosition.x, CORE.Window.previousPosition.y);
+
+        // Remove borderless windowed flag
+        CORE.Window.flags &= ~FLAG_BORDERLESS_WINDOWED_MODE;
+    }
 }
 
 // Set window state: maximized, if resizable
@@ -236,19 +313,247 @@ void RestoreWindow(void)
 // Set window configuration state using flags
 void SetWindowState(unsigned int flags)
 {
-    //SDL_HideWindow(platform.window);
+    CORE.Window.flags |= flags;
+
+    if (flags & FLAG_VSYNC_HINT)
+    {
+        SDL_GL_SetSwapInterval(1);
+    }
+    if (flags & FLAG_FULLSCREEN_MODE)
+    {
+        SDL_SetWindowFullscreen(platform.window, SDL_WINDOW_FULLSCREEN);
+    }
+    if (flags & FLAG_WINDOW_RESIZABLE)
+    {
+        SDL_SetWindowResizable(platform.window, SDL_TRUE);
+    }
+    if (flags & FLAG_WINDOW_UNDECORATED)
+    {
+        SDL_SetWindowBordered(platform.window, SDL_FALSE);
+    }
+    if (flags & FLAG_WINDOW_HIDDEN)
+    {
+        SDL_HideWindow(platform.window);
+    }
+    if (flags & FLAG_WINDOW_MINIMIZED)
+    {
+        SDL_MinimizeWindow(platform.window);
+    }
+    if (flags & FLAG_WINDOW_MAXIMIZED)
+    {
+        SDL_MaximizeWindow(platform.window);
+    }
+    if (flags & FLAG_WINDOW_UNFOCUSED)
+    {
+        // NOTE: To be able to implement this part it seems that we should
+        // do it ourselves, via `Windows.h`, `X11/Xlib.h` or even `Cocoa.h`
+        TRACELOG(LOG_WARNING, "SetWindowState() - FLAG_WINDOW_UNFOCUSED is not supported on PLATFORM_DESKTOP_SDL");
+    }
+    if (flags & FLAG_WINDOW_TOPMOST)
+    {
+        SDL_SetWindowAlwaysOnTop(platform.window, SDL_FALSE);
+    }
+    if (flags & FLAG_WINDOW_ALWAYS_RUN)
+    {
+        TRACELOG(LOG_WARNING, "SetWindowState() - FLAG_WINDOW_ALWAYS_RUN is not supported on PLATFORM_DESKTOP_SDL");
+    }
+    if (flags & FLAG_WINDOW_TRANSPARENT)
+    {
+        TRACELOG(LOG_WARNING, "SetWindowState() - FLAG_WINDOW_TRANSPARENT is not supported on PLATFORM_DESKTOP_SDL");
+    }
+    if (flags & FLAG_WINDOW_HIGHDPI)
+    {
+        // NOTE: Such a function does not seem to exist
+        TRACELOG(LOG_WARNING, "SetWindowState() - FLAG_WINDOW_HIGHDPI is not supported on PLATFORM_DESKTOP_SDL");
+    }
+    if (flags & FLAG_WINDOW_MOUSE_PASSTHROUGH)
+    {
+        //SDL_SetWindowGrab(platform.window, SDL_FALSE);
+        TRACELOG(LOG_WARNING, "SetWindowState() - FLAG_WINDOW_MOUSE_PASSTHROUGH is not supported on PLATFORM_DESKTOP_SDL");
+    }
+    if (flags & FLAG_BORDERLESS_WINDOWED_MODE)
+    {
+        // NOTE: Same as FLAG_WINDOW_UNDECORATED with SDL ?
+        SDL_SetWindowBordered(platform.window, SDL_FALSE);
+    }
+    if (flags & FLAG_MSAA_4X_HINT)
+    {
+        SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, 1); // Enable multisampling buffers
+        SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, 4); // Enable multisampling
+    }
+    if (flags & FLAG_INTERLACED_HINT)
+    {
+        TRACELOG(LOG_WARNING, "SetWindowState() - FLAG_INTERLACED_HINT is not supported on PLATFORM_DESKTOP_SDL");
+    }
 }
 
 // Clear window configuration state flags
 void ClearWindowState(unsigned int flags)
 {
-    TRACELOG(LOG_WARNING, "ClearWindowState() not available on target platform");
+    CORE.Window.flags &= ~flags;
+
+    if (flags & FLAG_VSYNC_HINT)
+    {
+        SDL_GL_SetSwapInterval(0);
+    }
+    if (flags & FLAG_FULLSCREEN_MODE)
+    {
+        SDL_SetWindowFullscreen(platform.window, 0);
+    }
+    if (flags & FLAG_WINDOW_RESIZABLE)
+    {
+        SDL_SetWindowResizable(platform.window, SDL_FALSE);
+    }
+    if (flags & FLAG_WINDOW_UNDECORATED)
+    {
+        SDL_SetWindowBordered(platform.window, SDL_TRUE);
+    }
+    if (flags & FLAG_WINDOW_HIDDEN)
+    {
+        SDL_ShowWindow(platform.window);
+    }
+    if (flags & FLAG_WINDOW_MINIMIZED)
+    {
+        SDL_RestoreWindow(platform.window);
+    }
+    if (flags & FLAG_WINDOW_MAXIMIZED)
+    {
+        SDL_RestoreWindow(platform.window);
+    }
+    if (flags & FLAG_WINDOW_UNFOCUSED)
+    {
+        //SDL_RaiseWindow(platform.window);
+        TRACELOG(LOG_WARNING, "ClearWindowState() - FLAG_WINDOW_UNFOCUSED is not supported on PLATFORM_DESKTOP_SDL");
+    }
+    if (flags & FLAG_WINDOW_TOPMOST)
+    {
+        SDL_SetWindowAlwaysOnTop(platform.window, SDL_FALSE);
+    }
+    if (flags & FLAG_WINDOW_ALWAYS_RUN)
+    {
+        TRACELOG(LOG_WARNING, "ClearWindowState() - FLAG_WINDOW_ALWAYS_RUN is not supported on PLATFORM_DESKTOP_SDL");
+    }
+    if (flags & FLAG_WINDOW_TRANSPARENT)
+    {
+        TRACELOG(LOG_WARNING, "ClearWindowState() - FLAG_WINDOW_TRANSPARENT is not supported on PLATFORM_DESKTOP_SDL");
+    }
+    if (flags & FLAG_WINDOW_HIGHDPI)
+    {
+        // NOTE: There also doesn't seem to be a feature to disable high DPI once enabled
+        TRACELOG(LOG_WARNING, "ClearWindowState() - FLAG_WINDOW_HIGHDPI is not supported on PLATFORM_DESKTOP_SDL");
+    }
+    if (flags & FLAG_WINDOW_MOUSE_PASSTHROUGH)
+    {
+        //SDL_SetWindowGrab(platform.window, SDL_TRUE);
+        TRACELOG(LOG_WARNING, "ClearWindowState() - FLAG_WINDOW_MOUSE_PASSTHROUGH is not supported on PLATFORM_DESKTOP_SDL");
+    }
+    if (flags & FLAG_BORDERLESS_WINDOWED_MODE)
+    {
+        // NOTE: Same as FLAG_WINDOW_UNDECORATED with SDL ?
+        SDL_SetWindowBordered(platform.window, SDL_TRUE);
+    }
+    if (flags & FLAG_MSAA_4X_HINT)
+    {
+        SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, 0); // Disable multisampling buffers
+        SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, 0); // Disable multisampling
+    }
+    if (flags & FLAG_INTERLACED_HINT)
+    {
+        TRACELOG(LOG_WARNING, "ClearWindowState() - FLAG_INTERLACED_HINT is not supported on PLATFORM_DESKTOP_SDL");
+    }
 }
 
 // Set icon for window
 void SetWindowIcon(Image image)
 {
-    TRACELOG(LOG_WARNING, "SetWindowIcon() not available on target platform");
+    SDL_Surface* iconSurface = NULL;
+
+    Uint32 rmask, gmask, bmask, amask;
+    int depth = 0;  // Depth in bits
+    int pitch = 0;  // Pixel spacing (pitch) in bytes
+
+    switch (image.format)
+    {
+        case PIXELFORMAT_UNCOMPRESSED_GRAYSCALE:
+            rmask = 0xFF, gmask = 0;
+            bmask = 0, amask = 0;
+            depth = 8, pitch = image.width;
+            break;
+        case PIXELFORMAT_UNCOMPRESSED_GRAY_ALPHA:
+            rmask = 0xFF, gmask = 0xFF00;
+            bmask = 0, amask = 0;
+            depth = 16, pitch = image.width * 2;
+            break;
+        case PIXELFORMAT_UNCOMPRESSED_R5G6B5:
+            rmask = 0xF800, gmask = 0x07E0;
+            bmask = 0x001F, amask = 0;
+            depth = 16, pitch = image.width * 2;
+            break;
+        case PIXELFORMAT_UNCOMPRESSED_R8G8B8:
+            rmask = 0xFF0000, gmask = 0x00FF00;
+            bmask = 0x0000FF, amask = 0;
+            depth = 24, pitch = image.width * 3;
+            break;
+        case PIXELFORMAT_UNCOMPRESSED_R5G5B5A1:
+            rmask = 0xF800, gmask = 0x07C0;
+            bmask = 0x003E, amask = 0x0001;
+            depth = 16, pitch = image.width * 2;
+            break;
+        case PIXELFORMAT_UNCOMPRESSED_R4G4B4A4:
+            rmask = 0xF000, gmask = 0x0F00;
+            bmask = 0x00F0, amask = 0x000F;
+            depth = 16, pitch = image.width * 2;
+            break;
+        case PIXELFORMAT_UNCOMPRESSED_R8G8B8A8:
+            rmask = 0xFF000000, gmask = 0x00FF0000;
+            bmask = 0x0000FF00, amask = 0x000000FF;
+            depth = 32, pitch = image.width * 4;
+            break;
+        case PIXELFORMAT_UNCOMPRESSED_R32:
+            rmask = 0xFFFFFFFF, gmask = 0;
+            bmask = 0, amask = 0;
+            depth = 32, pitch = image.width * 4;
+            break;
+        case PIXELFORMAT_UNCOMPRESSED_R32G32B32:
+            rmask = 0xFFFFFFFF, gmask = 0xFFFFFFFF;
+            bmask = 0xFFFFFFFF, amask = 0;
+            depth = 96, pitch = image.width * 12;
+            break;
+        case PIXELFORMAT_UNCOMPRESSED_R32G32B32A32:
+            rmask = 0xFFFFFFFF, gmask = 0xFFFFFFFF;
+            bmask = 0xFFFFFFFF, amask = 0xFFFFFFFF;
+            depth = 128, pitch = image.width * 16;
+            break;
+        case PIXELFORMAT_UNCOMPRESSED_R16:
+            rmask = 0xFFFF, gmask = 0;
+            bmask = 0, amask = 0;
+            depth = 16, pitch = image.width * 2;
+            break;
+        case PIXELFORMAT_UNCOMPRESSED_R16G16B16:
+            rmask = 0xFFFF, gmask = 0xFFFF;
+            bmask = 0xFFFF, amask = 0;
+            depth = 48, pitch = image.width * 6;
+            break;
+        case PIXELFORMAT_UNCOMPRESSED_R16G16B16A16:
+            rmask = 0xFFFF, gmask = 0xFFFF;
+            bmask = 0xFFFF, amask = 0xFFFF;
+            depth = 64, pitch = image.width * 8;
+            break;
+        default:
+            // Compressed formats are not supported
+            return;
+    }
+
+    iconSurface = SDL_CreateRGBSurfaceFrom(
+        image.data, image.width, image.height, depth, pitch,
+        rmask, gmask, bmask, amask
+    );
+
+    if (iconSurface)
+    {
+        SDL_SetWindowIcon(platform.window, iconSurface);
+        SDL_FreeSurface(iconSurface);
+    }
 }
 
 // Set icon for window
@@ -277,7 +582,20 @@ void SetWindowPosition(int x, int y)
 // Set monitor for the current window
 void SetWindowMonitor(int monitor)
 {
-    TRACELOG(LOG_WARNING, "SetWindowMonitor() not available on target platform");
+    if (monitor < 0 || monitor >= SDL_GetNumVideoDisplays())
+    {
+        TRACELOG(LOG_ERROR, "Invalid monitor index");
+        return;
+    }
+
+    SDL_Rect displayBounds;
+    if (SDL_GetDisplayBounds(monitor, &displayBounds) != 0)
+    {
+        TRACELOG(LOG_ERROR, "Failed to get display bounds");
+        return;
+    }
+
+    SDL_SetWindowPosition(platform.window, displayBounds.x, displayBounds.y);
 }
 
 // Set window minimum dimensions (FLAG_WINDOW_RESIZABLE)
@@ -315,14 +633,13 @@ void SetWindowOpacity(float opacity)
 // Set window focused
 void SetWindowFocused(void)
 {
-    TRACELOG(LOG_WARNING, "SetWindowFocused() not available on target platform");
+    SDL_RaiseWindow(platform.window);
 }
 
 // Get native window handle
 void *GetWindowHandle(void)
 {
-    TRACELOG(LOG_WARNING, "GetWindowHandle() not implemented on target platform");
-    return NULL;
+    return (void *)platform.window;
 }
 
 // Get number of monitors
@@ -344,8 +661,20 @@ int GetCurrentMonitor(void)
 // Get selected monitor position
 Vector2 GetMonitorPosition(int monitor)
 {
-    TRACELOG(LOG_WARNING, "GetMonitorPosition() not implemented on target platform");
-    return (Vector2){ 0, 0 };
+    if (monitor < 0 || monitor >= SDL_GetNumVideoDisplays())
+    {
+        TRACELOG(LOG_ERROR, "Invalid monitor index");
+        return (Vector2) { 0, 0 };
+    }
+
+    SDL_Rect displayBounds;
+    if (SDL_GetDisplayBounds(monitor, &displayBounds) != 0)
+    {
+        TRACELOG(LOG_ERROR, "Failed to get display bounds");
+        return (Vector2) { 0, 0 };
+    }
+
+    return (Vector2) { displayBounds.x, displayBounds.y };
 }
 
 // Get selected monitor width (currently used by monitor)
@@ -389,15 +718,45 @@ int GetMonitorHeight(int monitor)
 // Get selected monitor physical width in millimetres
 int GetMonitorPhysicalWidth(int monitor)
 {
-    TRACELOG(LOG_WARNING, "GetMonitorPhysicalWidth() not implemented on target platform");
-    return 0;
+    int width = 0;
+
+    int monitorCount = 0;
+    monitorCount = SDL_GetNumVideoDisplays();
+
+    if ((monitor >= 0) && (monitor < monitorCount))
+    {
+        float vdpi = 0.0f;
+        SDL_GetDisplayDPI(monitor, NULL, NULL, &vdpi);
+        SDL_DisplayMode mode;
+        SDL_GetCurrentDisplayMode(monitor, &mode);
+        // Calculate size on inches, then convert to millimeter
+        if (vdpi > 0.0f) width = (mode.w/vdpi)*25.4f;
+    }
+    else TRACELOG(LOG_WARNING, "SDL: Failed to find selected monitor");
+
+    return width;
 }
 
 // Get selected monitor physical height in millimetres
 int GetMonitorPhysicalHeight(int monitor)
 {
-    TRACELOG(LOG_WARNING, "GetMonitorPhysicalHeight() not implemented on target platform");
-    return 0;
+    int height = 0;
+
+    int monitorCount = 0;
+    monitorCount = SDL_GetNumVideoDisplays();
+
+    if ((monitor >= 0) && (monitor < monitorCount))
+    {
+        float vdpi = 0.0f;
+        SDL_GetDisplayDPI(monitor, NULL, NULL, &vdpi);
+        SDL_DisplayMode mode;
+        SDL_GetCurrentDisplayMode(monitor, &mode);
+        // Calculate size on inches, then convert to millimeter
+        if (vdpi > 0.0f) height = (mode.h/vdpi)*25.4f;
+    }
+    else TRACELOG(LOG_WARNING, "SDL: Failed to find selected monitor");
+
+    return height;
 }
 
 // Get selected monitor refresh rate
@@ -452,44 +811,48 @@ Vector2 GetWindowScaleDPI(void)
 // Set clipboard text content
 void SetClipboardText(const char *text)
 {
-    TRACELOG(LOG_WARNING, "SetClipboardText() not implemented on target platform");
+    SDL_SetClipboardText(text);
 }
 
 // Get clipboard text content
-// NOTE: returned string is allocated and freed by GLFW
+// NOTE: returned string must be freed with SDL_free()
 const char *GetClipboardText(void)
 {
-    TRACELOG(LOG_WARNING, "GetClipboardText() not implemented on target platform");
-    return NULL;
+    return SDL_GetClipboardText();
 }
 
 // Show mouse cursor
 void ShowCursor(void)
 {
+    SDL_ShowCursor(SDL_ENABLE);
+
     CORE.Input.Mouse.cursorHidden = false;
 }
 
 // Hides mouse cursor
 void HideCursor(void)
 {
+    SDL_ShowCursor(SDL_DISABLE);
+
     CORE.Input.Mouse.cursorHidden = true;
 }
 
 // Enables cursor (unlock cursor)
 void EnableCursor(void)
 {
-    // Set cursor position in the middle
-    SetMousePosition(CORE.Window.screen.width/2, CORE.Window.screen.height/2);
+    SDL_SetRelativeMouseMode(SDL_FALSE);
+    SDL_ShowCursor(SDL_ENABLE);
 
+    platform.cursorRelative = false;
     CORE.Input.Mouse.cursorHidden = false;
 }
 
 // Disables cursor (lock cursor)
 void DisableCursor(void)
 {
-    // Set cursor position in the middle
-    SetMousePosition(CORE.Window.screen.width/2, CORE.Window.screen.height/2);
+    SDL_SetRelativeMouseMode(SDL_TRUE);
 
+    platform.cursorRelative = true;
     CORE.Input.Mouse.cursorHidden = true;
 }
 
@@ -524,8 +887,7 @@ void OpenURL(const char *url)
 // Set internal gamepad mappings
 int SetGamepadMappings(const char *mappings)
 {
-    TRACELOG(LOG_WARNING, "SetGamepadMappings() not implemented on target platform");
-    return 0;
+    return SDL_GameControllerAddMapping(mappings);
 }
 
 // Set mouse position XY
@@ -538,7 +900,10 @@ void SetMousePosition(int x, int y)
 // Set mouse cursor
 void SetMouseCursor(int cursor)
 {
-    TRACELOG(LOG_WARNING, "SetMouseCursor() not implemented on target platform");
+    platform.cursor = SDL_CreateSystemCursor(CursorsLUT[cursor]);
+    SDL_SetCursor(platform.cursor);
+
+    CORE.Input.Mouse.cursor = cursor;
 }
 
 // Register all input events
@@ -562,7 +927,8 @@ void PollInputEvents(void)
     CORE.Input.Mouse.currentWheelMove.y = 0;
 
     // Register previous mouse position
-    CORE.Input.Mouse.previousPosition = CORE.Input.Mouse.currentPosition;
+    if (platform.cursorRelative) CORE.Input.Mouse.currentPosition = (Vector2){ 0.0f, 0.0f };
+    else CORE.Input.Mouse.previousPosition = CORE.Input.Mouse.currentPosition;
 
     // Reset last gamepad button/axis registered state
     CORE.Input.Gamepad.lastButtonPressed = GAMEPAD_BUTTON_UNKNOWN;
@@ -578,7 +944,7 @@ void PollInputEvents(void)
 
     // Register previous keys states
     // NOTE: Android supports up to 260 keys
-    for (int i = 0; i < 260; i++)
+    for (int i = 0; i < MAX_KEYBOARD_KEYS; i++)
     {
         CORE.Input.Keyboard.previousKeyState[i] = CORE.Input.Keyboard.currentKeyState[i];
         CORE.Input.Keyboard.keyRepeatInFrame[i] = 0;
@@ -612,16 +978,16 @@ void PollInputEvents(void)
             {
                 switch (event.window.event)
                 {
-                case SDL_WINDOWEVENT_LEAVE:
-                case SDL_WINDOWEVENT_HIDDEN:
-                case SDL_WINDOWEVENT_MINIMIZED:
-                case SDL_WINDOWEVENT_FOCUS_LOST:
-                case SDL_WINDOWEVENT_ENTER:
-                case SDL_WINDOWEVENT_SHOWN:
-                case SDL_WINDOWEVENT_FOCUS_GAINED:
-                case SDL_WINDOWEVENT_MAXIMIZED:
-                case SDL_WINDOWEVENT_RESTORED:
-                default: break;
+                    case SDL_WINDOWEVENT_LEAVE:
+                    case SDL_WINDOWEVENT_HIDDEN:
+                    case SDL_WINDOWEVENT_MINIMIZED:
+                    case SDL_WINDOWEVENT_FOCUS_LOST:
+                    case SDL_WINDOWEVENT_ENTER:
+                    case SDL_WINDOWEVENT_SHOWN:
+                    case SDL_WINDOWEVENT_FOCUS_GAINED:
+                    case SDL_WINDOWEVENT_MAXIMIZED:
+                    case SDL_WINDOWEVENT_RESTORED:
+                    default: break;
                 }
             } break;
 
@@ -660,8 +1026,17 @@ void PollInputEvents(void)
             } break;
             case SDL_MOUSEMOTION:
             {
-                CORE.Input.Mouse.currentPosition.x = (float)event.motion.x;
-                CORE.Input.Mouse.currentPosition.y = (float)event.motion.y;
+                if (platform.cursorRelative)
+                {
+                    CORE.Input.Mouse.currentPosition.x = (float)event.motion.xrel;
+                    CORE.Input.Mouse.currentPosition.y = (float)event.motion.yrel;
+                    CORE.Input.Mouse.previousPosition = (Vector2){ 0.0f, 0.0f };
+                }
+                else
+                {
+                    CORE.Input.Mouse.currentPosition.x = (float)event.motion.x;
+                    CORE.Input.Mouse.currentPosition.y = (float)event.motion.y;
+                }
             } break;
 
             // Check gamepad events
@@ -740,6 +1115,12 @@ static int InitPlatform(void)
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
     //SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, SDL_GL_CONTEXT_DEBUG_FLAG | SDL_GL_CONTEXT_FORWARD_COMPATIBLE_FLAG);
+
+    if (CORE.Window.flags & FLAG_VSYNC_HINT)
+    {
+        SDL_GL_SetSwapInterval(1);
+    }
+
     if (CORE.Window.flags & FLAG_MSAA_4X_HINT)
     {
         SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, 1);
@@ -756,6 +1137,12 @@ static int InitPlatform(void)
     if ((platform.window != NULL) && (platform.glContext != NULL))
     {
         CORE.Window.ready = true;
+
+        SDL_DisplayMode displayMode;
+        SDL_GetCurrentDisplayMode(GetCurrentMonitor(), &displayMode);
+
+        CORE.Window.display.width = displayMode.w;
+        CORE.Window.display.height = displayMode.h;
 
         CORE.Window.render.width = CORE.Window.screen.width;
         CORE.Window.render.height = CORE.Window.screen.height;
@@ -794,6 +1181,7 @@ static int InitPlatform(void)
 
 static void ClosePlatform(void)
 {
+    SDL_FreeCursor(platform.cursor); // Free cursor
     SDL_GL_DeleteContext(platform.glContext); // Deinitialize OpenGL context
     SDL_DestroyWindow(platform.window);
     SDL_Quit(); // Deinitialize SDL internal global state
