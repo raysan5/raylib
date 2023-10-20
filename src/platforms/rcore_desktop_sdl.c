@@ -583,20 +583,51 @@ void SetWindowPosition(int x, int y)
 // Set monitor for the current window
 void SetWindowMonitor(int monitor)
 {
-    if (monitor < 0 || monitor >= SDL_GetNumVideoDisplays())
+    const int monitorCount = SDL_GetNumVideoDisplays();
+    if ((monitor >= 0) && (monitor < monitorCount))
     {
-        TRACELOG(LOG_ERROR, "Invalid monitor index");
-        return;
-    }
+        // NOTE:
+        // 1. SDL started supporting moving exclusive fullscreen windows between displays on SDL3,
+        //    see commit https://github.com/libsdl-org/SDL/commit/3f5ef7dd422057edbcf3e736107e34be4b75d9ba
+        // 2. A workround for SDL2 is leaving fullscreen, moving the window, then entering full screen again.
+        const bool wasFullscreen = ((CORE.Window.flags & FLAG_FULLSCREEN_MODE) > 0) ? true : false;
 
-    SDL_Rect displayBounds;
-    if (SDL_GetDisplayBounds(monitor, &displayBounds) != 0)
-    {
-        TRACELOG(LOG_ERROR, "Failed to get display bounds");
-        return;
-    }
+        const int screenWidth = CORE.Window.screen.width;
+        const int screenHeight = CORE.Window.screen.height;
+        SDL_Rect usableBounds;
+        if (SDL_GetDisplayUsableBounds(monitor, &usableBounds) == 0)
+        {
+            if (wasFullscreen == 1) ToggleFullscreen(); // Leave fullscreen.
 
-    SDL_SetWindowPosition(platform.window, displayBounds.x, displayBounds.y);
+            // If the screen size is larger than the monitor usable area, anchor it on the top left corner, otherwise, center it
+            if ((screenWidth >= usableBounds.w) || (screenHeight >= usableBounds.h))
+            {
+                // NOTE:
+                // 1. There's a known issue where if the window larger than the target display bounds,
+                //    when moving the windows to that display, the window could be clipped back
+                //    ending up positioned partly outside the target display.
+                // 2. The workaround for that is, previously to moving the window,
+                //    setting the window size to the target display size, so they match.
+                // 3. It was't done here because we can't assume changing the window size automatically
+                //    is acceptable behavior by the user.
+                SDL_SetWindowPosition(platform.window, usableBounds.x, usableBounds.y);
+                CORE.Window.position.x = usableBounds.x;
+                CORE.Window.position.y = usableBounds.y;
+            }
+            else
+            {
+                const int x = usableBounds.x + (usableBounds.w/2) - (screenWidth/2);
+                const int y = usableBounds.y + (usableBounds.h/2) - (screenHeight/2);
+                SDL_SetWindowPosition(platform.window, x, y);
+                CORE.Window.position.x = x;
+                CORE.Window.position.y = y;
+            }
+
+            if (wasFullscreen == 1) ToggleFullscreen(); // Re-enter fullscreen
+        }
+        else TRACELOG(LOG_WARNING, "SDL: Failed to get selected display usable bounds");
+    }
+    else TRACELOG(LOG_WARNING, "SDL: Failed to find selected monitor");
 }
 
 // Set window minimum dimensions (FLAG_WINDOW_RESIZABLE)
@@ -656,26 +687,28 @@ int GetMonitorCount(void)
 // Get number of monitors
 int GetCurrentMonitor(void)
 {
-    return SDL_GetWindowDisplayIndex(platform.window);
+    int currentMonitor = 0;
+
+    currentMonitor = SDL_GetWindowDisplayIndex(platform.window);
+
+    return currentMonitor;
 }
 
 // Get selected monitor position
 Vector2 GetMonitorPosition(int monitor)
 {
-    if (monitor < 0 || monitor >= SDL_GetNumVideoDisplays())
+    const int monitorCount = SDL_GetNumVideoDisplays();
+    if ((monitor >= 0) && (monitor < monitorCount))
     {
-        TRACELOG(LOG_ERROR, "Invalid monitor index");
-        return (Vector2) { 0, 0 };
+        SDL_Rect displayBounds;
+        if (SDL_GetDisplayUsableBounds(monitor, &displayBounds) == 0)
+        {
+            return (Vector2){ (float)displayBounds.x, (float)displayBounds.y };
+        }
+        else TRACELOG(LOG_WARNING, "SDL: Failed to get selected display usable bounds");
     }
-
-    SDL_Rect displayBounds;
-    if (SDL_GetDisplayBounds(monitor, &displayBounds) != 0)
-    {
-        TRACELOG(LOG_ERROR, "Failed to get display bounds");
-        return (Vector2) { 0, 0 };
-    }
-
-    return (Vector2) { displayBounds.x, displayBounds.y };
+    else TRACELOG(LOG_WARNING, "SDL: Failed to find selected monitor");
+    return (Vector2){ 0.0f, 0.0f };
 }
 
 // Get selected monitor width (currently used by monitor)
@@ -683,9 +716,7 @@ int GetMonitorWidth(int monitor)
 {
     int width = 0;
 
-    int monitorCount = 0;
-    monitorCount = SDL_GetNumVideoDisplays();
-
+    const int monitorCount = SDL_GetNumVideoDisplays();
     if ((monitor >= 0) && (monitor < monitorCount))
     {
         SDL_DisplayMode mode;
@@ -702,9 +733,7 @@ int GetMonitorHeight(int monitor)
 {
     int height = 0;
 
-    int monitorCount = 0;
-    monitorCount = SDL_GetNumVideoDisplays();
-
+    const int monitorCount = SDL_GetNumVideoDisplays();
     if ((monitor >= 0) && (monitor < monitorCount))
     {
         SDL_DisplayMode mode;
@@ -721,9 +750,7 @@ int GetMonitorPhysicalWidth(int monitor)
 {
     int width = 0;
 
-    int monitorCount = 0;
-    monitorCount = SDL_GetNumVideoDisplays();
-
+    const int monitorCount = SDL_GetNumVideoDisplays();
     if ((monitor >= 0) && (monitor < monitorCount))
     {
         float ddpi = 0.0f;
@@ -743,9 +770,7 @@ int GetMonitorPhysicalHeight(int monitor)
 {
     int height = 0;
 
-    int monitorCount = 0;
-    monitorCount = SDL_GetNumVideoDisplays();
-
+    const int monitorCount = SDL_GetNumVideoDisplays();
     if ((monitor >= 0) && (monitor < monitorCount))
     {
         float ddpi = 0.0f;
@@ -765,9 +790,7 @@ int GetMonitorRefreshRate(int monitor)
 {
     int refresh = 0;
 
-    int monitorCount = 0;
-    monitorCount = SDL_GetNumVideoDisplays();
-
+    const int monitorCount = SDL_GetNumVideoDisplays();
     if ((monitor >= 0) && (monitor < monitorCount))
     {
         SDL_DisplayMode mode;
@@ -782,8 +805,7 @@ int GetMonitorRefreshRate(int monitor)
 // Get the human-readable, UTF-8 encoded name of the selected monitor
 const char *GetMonitorName(int monitor)
 {
-    int monitorCount = 0;
-    monitorCount = SDL_GetNumVideoDisplays();
+    const int monitorCount = SDL_GetNumVideoDisplays();
 
     if ((monitor >= 0) && (monitor < monitorCount)) return SDL_GetDisplayName(monitor);
     else TRACELOG(LOG_WARNING, "SDL: Failed to find selected monitor");
