@@ -827,8 +827,14 @@ Vector2 GetWindowPosition(void)
 // Get window scale DPI factor for current monitor
 Vector2 GetWindowScaleDPI(void)
 {
+    Vector2 scale = { 1.0f, 1.0f };
+
+    // NOTE: SDL_GetWindowDisplayScale was only added on SDL3
+    //       see https://wiki.libsdl.org/SDL3/SDL_GetWindowDisplayScale
+    // TODO: Implement the window scale factor calculation manually.
     TRACELOG(LOG_WARNING, "GetWindowScaleDPI() not implemented on target platform");
-    return (Vector2){ 1.0f, 1.0f };
+
+    return scale;
 }
 
 // Set clipboard text content
