@@ -712,9 +712,7 @@ int GetMonitorWidth(int monitor)
 {
     int width = 0;
 
-    int monitorCount = 0;
-    monitorCount = SDL_GetNumVideoDisplays();
-
+    const int monitorCount = SDL_GetNumVideoDisplays();
     if ((monitor >= 0) && (monitor < monitorCount))
     {
         SDL_DisplayMode mode;
@@ -731,9 +729,7 @@ int GetMonitorHeight(int monitor)
 {
     int height = 0;
 
-    int monitorCount = 0;
-    monitorCount = SDL_GetNumVideoDisplays();
-
+    const int monitorCount = SDL_GetNumVideoDisplays();
     if ((monitor >= 0) && (monitor < monitorCount))
     {
         SDL_DisplayMode mode;
@@ -750,9 +746,7 @@ int GetMonitorPhysicalWidth(int monitor)
 {
     int width = 0;
 
-    int monitorCount = 0;
-    monitorCount = SDL_GetNumVideoDisplays();
-
+    const int monitorCount = SDL_GetNumVideoDisplays();
     if ((monitor >= 0) && (monitor < monitorCount))
     {
         float ddpi = 0.0f;
@@ -772,9 +766,7 @@ int GetMonitorPhysicalHeight(int monitor)
 {
     int height = 0;
 
-    int monitorCount = 0;
-    monitorCount = SDL_GetNumVideoDisplays();
-
+    const int monitorCount = SDL_GetNumVideoDisplays();
     if ((monitor >= 0) && (monitor < monitorCount))
     {
         float ddpi = 0.0f;
@@ -794,9 +786,7 @@ int GetMonitorRefreshRate(int monitor)
 {
     int refresh = 0;
 
-    int monitorCount = 0;
-    monitorCount = SDL_GetNumVideoDisplays();
-
+    const int monitorCount = SDL_GetNumVideoDisplays();
     if ((monitor >= 0) && (monitor < monitorCount))
     {
         SDL_DisplayMode mode;
@@ -811,8 +801,7 @@ int GetMonitorRefreshRate(int monitor)
 // Get the human-readable, UTF-8 encoded name of the selected monitor
 const char *GetMonitorName(int monitor)
 {
-    int monitorCount = 0;
-    monitorCount = SDL_GetNumVideoDisplays();
+    const int monitorCount = SDL_GetNumVideoDisplays();
 
     if ((monitor >= 0) && (monitor < monitorCount)) return SDL_GetDisplayName(monitor);
     else TRACELOG(LOG_WARNING, "SDL: Failed to find selected monitor");
