@@ -586,41 +586,46 @@ void SetWindowMonitor(int monitor)
     const int monitorCount = SDL_GetNumVideoDisplays();
     if ((monitor >= 0) && (monitor < monitorCount))
     {
-        if (CORE.Window.fullscreen) ToggleFullscreen();
-        else
+        // NOTE:
+        // 1. SDL started supporting moving exclusive fullscreen windows between displays on SDL3,
+        //    see commit https://github.com/libsdl-org/SDL/commit/3f5ef7dd422057edbcf3e736107e34be4b75d9ba
+        // 2. A workround for SDL2 is leaving fullscreen, moving the window, then entering full screen again.
+        const bool wasFullscreen = ((CORE.Window.flags & FLAG_FULLSCREEN_MODE) > 0) ? true : false;
+
+        const int screenWidth = CORE.Window.screen.width;
+        const int screenHeight = CORE.Window.screen.height;
+        SDL_Rect usableBounds;
+        if (SDL_GetDisplayUsableBounds(monitor, &usableBounds) == 0)
         {
-            const int screenWidth = CORE.Window.screen.width;
-            const int screenHeight = CORE.Window.screen.height;
-            SDL_Rect usableBounds;
-            if (SDL_GetDisplayUsableBounds(monitor, &usableBounds) == 0)
+            if (wasFullscreen == 1) ToggleFullscreen(); // Leave fullscreen.
+
+            // If the screen size is larger than the monitor usable area, anchor it on the top left corner, otherwise, center it
+            if ((screenWidth >= usableBounds.w) || (screenHeight >= usableBounds.h))
             {
-                printf("usableBounds (%i) %i %i %i %i \n", monitor, usableBounds.w, usableBounds.h, usableBounds.x, usableBounds.y);
-                // If the screen size is larger than the monitor usable area, anchor it on the top left corner, otherwise, center it
-                if ((screenWidth >= usableBounds.w) || (screenHeight >= usableBounds.h))
-                {
-                    // NOTE:
-                    // 1. There's a known issue where if the window larger than the target display bounds,
-                    //    when moving the windows to that display, the window could be clipped back
-                    //    ending up positioned partly outside the target display.
-                    // 2. The workaround for that is, previously to moving the window,
-                    //    setting the window size to the target display size, so they match.
-                    // 3. It was't done here because we can't assume changing the window size automatically
-                    //    is acceptable behavior by the user.
-                    SDL_SetWindowPosition(platform.window, usableBounds.x, usableBounds.y);
-                    CORE.Window.position.x = x;
-                    CORE.Window.position.y = y;
-                }
-                else
-                {
-                    const int x = usableBounds.x + (usableBounds.w/2) - (screenWidth/2);
-                    const int y = usableBounds.y + (usableBounds.h/2) - (screenHeight/2);
-                    SDL_SetWindowPosition(platform.window, x, y);
-                    CORE.Window.position.x = x;
-                    CORE.Window.position.y = y;
-                }
+                // NOTE:
+                // 1. There's a known issue where if the window larger than the target display bounds,
+                //    when moving the windows to that display, the window could be clipped back
+                //    ending up positioned partly outside the target display.
+                // 2. The workaround for that is, previously to moving the window,
+                //    setting the window size to the target display size, so they match.
+                // 3. It was't done here because we can't assume changing the window size automatically
+                //    is acceptable behavior by the user.
+                SDL_SetWindowPosition(platform.window, usableBounds.x, usableBounds.y);
+                CORE.Window.position.x = usableBounds.x;
+                CORE.Window.position.y = usableBounds.y;
             }
-            else TRACELOG(LOG_WARNING, "SDL: Failed to get selected display usable bounds");
+            else
+            {
+                const int x = usableBounds.x + (usableBounds.w/2) - (screenWidth/2);
+                const int y = usableBounds.y + (usableBounds.h/2) - (screenHeight/2);
+                SDL_SetWindowPosition(platform.window, x, y);
+                CORE.Window.position.x = x;
+                CORE.Window.position.y = y;
+            }
+
+            if (wasFullscreen == 1) ToggleFullscreen(); // Re-enter fullscreen
         }
+        else TRACELOG(LOG_WARNING, "SDL: Failed to get selected display usable bounds");
     }
     else TRACELOG(LOG_WARNING, "SDL: Failed to find selected monitor");
 }
