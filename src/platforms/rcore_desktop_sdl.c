@@ -295,7 +295,14 @@ void SetWindowState(unsigned int flags)
     }
     if (flags & FLAG_FULLSCREEN_MODE)
     {
-        SDL_SetWindowFullscreen(platform.window, SDL_WINDOW_FULLSCREEN);
+        const int monitor = SDL_GetWindowDisplayIndex(platform.window);
+        const int monitorCount = SDL_GetNumVideoDisplays();
+        if ((monitor >= 0) && (monitor < monitorCount))
+        {
+            SDL_SetWindowFullscreen(platform.window, SDL_WINDOW_FULLSCREEN);
+            CORE.Window.fullscreen = true;
+        }
+        else TRACELOG(LOG_WARNING, "SDL: Failed to find selected monitor");
     }
     if (flags & FLAG_WINDOW_RESIZABLE)
     {
@@ -347,8 +354,13 @@ void SetWindowState(unsigned int flags)
     }
     if (flags & FLAG_BORDERLESS_WINDOWED_MODE)
     {
-        // NOTE: Same as FLAG_WINDOW_UNDECORATED with SDL ?
-        SDL_SetWindowBordered(platform.window, SDL_FALSE);
+        const int monitor = SDL_GetWindowDisplayIndex(platform.window);
+        const int monitorCount = SDL_GetNumVideoDisplays();
+        if ((monitor >= 0) && (monitor < monitorCount))
+        {
+            SDL_SetWindowFullscreen(platform.window, SDL_WINDOW_FULLSCREEN_DESKTOP);
+        }
+        else TRACELOG(LOG_WARNING, "SDL: Failed to find selected monitor");
     }
     if (flags & FLAG_MSAA_4X_HINT)
     {
@@ -373,6 +385,7 @@ void ClearWindowState(unsigned int flags)
     if (flags & FLAG_FULLSCREEN_MODE)
     {
         SDL_SetWindowFullscreen(platform.window, 0);
+        CORE.Window.fullscreen = false;
     }
     if (flags & FLAG_WINDOW_RESIZABLE)
     {
@@ -423,8 +436,7 @@ void ClearWindowState(unsigned int flags)
     }
     if (flags & FLAG_BORDERLESS_WINDOWED_MODE)
     {
-        // NOTE: Same as FLAG_WINDOW_UNDECORATED with SDL ?
-        SDL_SetWindowBordered(platform.window, SDL_TRUE);
+        SDL_SetWindowFullscreen(platform.window, 0);
     }
     if (flags & FLAG_MSAA_4X_HINT)
     {
