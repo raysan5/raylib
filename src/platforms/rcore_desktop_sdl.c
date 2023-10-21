@@ -618,6 +618,8 @@ void SetWindowMonitor(int monitor)
 // Set window minimum dimensions (FLAG_WINDOW_RESIZABLE)
 void SetWindowMinSize(int width, int height)
 {
+    SDL_SetWindowMinimumSize(platform.window, width, height);
+
     CORE.Window.screenMin.width = width;
     CORE.Window.screenMin.height = height;
 }
@@ -625,6 +627,8 @@ void SetWindowMinSize(int width, int height)
 // Set window maximum dimensions (FLAG_WINDOW_RESIZABLE)
 void SetWindowMaxSize(int width, int height)
 {
+    SDL_SetWindowMaximumSize(platform.window, width, height);
+
     CORE.Window.screenMax.width = width;
     CORE.Window.screenMax.height = height;
 }
