@@ -223,72 +223,45 @@ bool WindowShouldClose(void)
 // Toggle fullscreen mode
 void ToggleFullscreen(void)
 {
-    if (!IsWindowState(FLAG_FULLSCREEN_MODE))
+    const int monitor = SDL_GetWindowDisplayIndex(platform.window);
+    const int monitorCount = SDL_GetNumVideoDisplays();
+    if ((monitor >= 0) && (monitor < monitorCount))
     {
-        SDL_SetWindowFullscreen(platform.window, SDL_WINDOW_FULLSCREEN);
-        CORE.Window.flags |= FLAG_FULLSCREEN_MODE;
+        if ((CORE.Window.flags & FLAG_FULLSCREEN_MODE) > 0)
+        {
+            SDL_SetWindowFullscreen(platform.window, 0);
+            CORE.Window.flags &= ~FLAG_FULLSCREEN_MODE;
+            CORE.Window.fullscreen = false;
+        }
+        else
+        {
+            SDL_SetWindowFullscreen(platform.window, SDL_WINDOW_FULLSCREEN);
+            CORE.Window.flags |= FLAG_FULLSCREEN_MODE;
+            CORE.Window.fullscreen = true;
+        }
     }
-    else
-    {
-        SDL_SetWindowFullscreen(platform.window, 0);
-        CORE.Window.flags &= ~FLAG_FULLSCREEN_MODE;
-    }
+    else TRACELOG(LOG_WARNING, "SDL: Failed to find selected monitor");
 }
 
 // Toggle borderless windowed mode
 void ToggleBorderlessWindowed(void)
 {
-    // Leave fullscreen before attempting to set borderless windowed mode and get screen position from it
-    bool wasOnFullscreen = false;
-    if (CORE.Window.fullscreen)
+    const int monitor = SDL_GetWindowDisplayIndex(platform.window);
+    const int monitorCount = SDL_GetNumVideoDisplays();
+    if ((monitor >= 0) && (monitor < monitorCount))
     {
-        CORE.Window.previousPosition = CORE.Window.position;
-        ToggleFullscreen();
-        wasOnFullscreen = true;
-    }
-
-    if (!IsWindowState(FLAG_BORDERLESS_WINDOWED_MODE))
-    {
-        // Store the window's current position and size
-        SDL_GetWindowPosition(platform.window, &CORE.Window.previousPosition.x, &CORE.Window.previousPosition.y);
-        CORE.Window.previousScreen = CORE.Window.screen;
-
-        // Set screen position and size inside valid bounds
-        SDL_Rect displayBounds;
-        if (SDL_GetDisplayBounds(GetCurrentMonitor(), &displayBounds) == 0)
+        if ((CORE.Window.flags & FLAG_BORDERLESS_WINDOWED_MODE) > 0)
         {
-            SDL_SetWindowPosition(platform.window, displayBounds.x, displayBounds.y);
-            SDL_SetWindowSize(platform.window, displayBounds.w, displayBounds.h);
+            SDL_SetWindowFullscreen(platform.window, 0);
+            CORE.Window.flags &= ~FLAG_BORDERLESS_WINDOWED_MODE;
         }
-
-        // Set borderless mode and flag
-        SDL_SetWindowBordered(platform.window, SDL_FALSE);
-        CORE.Window.flags |= FLAG_WINDOW_UNDECORATED;
-
-        // Set topmost modes and flag
-        SDL_SetWindowAlwaysOnTop(platform.window, SDL_TRUE);
-        CORE.Window.flags |= FLAG_WINDOW_TOPMOST;
-
-        // Set borderless windowed flag
-        CORE.Window.flags |= FLAG_BORDERLESS_WINDOWED_MODE;
+        else
+        {
+            SDL_SetWindowFullscreen(platform.window, SDL_WINDOW_FULLSCREEN_DESKTOP);
+            CORE.Window.flags |= FLAG_BORDERLESS_WINDOWED_MODE;
+        }
     }
-    else
-    {
-        // Remove borderless mode and flag
-        SDL_SetWindowBordered(platform.window, SDL_TRUE);
-        CORE.Window.flags &= ~FLAG_WINDOW_UNDECORATED;
-
-        // Remove topmost modes and flag
-        SDL_SetWindowAlwaysOnTop(platform.window, SDL_FALSE);
-        CORE.Window.flags &= ~FLAG_WINDOW_TOPMOST;
-
-        // Restore the window's previous size and position
-        SDL_SetWindowSize(platform.window, CORE.Window.previousScreen.width, CORE.Window.previousScreen.height);
-        SDL_SetWindowPosition(platform.window, CORE.Window.previousPosition.x, CORE.Window.previousPosition.y);
-
-        // Remove borderless windowed flag
-        CORE.Window.flags &= ~FLAG_BORDERLESS_WINDOWED_MODE;
-    }
+    else TRACELOG(LOG_WARNING, "SDL: Failed to find selected monitor");
 }
 
 // Set window state: maximized, if resizable
@@ -322,7 +295,14 @@ void SetWindowState(unsigned int flags)
     }
     if (flags & FLAG_FULLSCREEN_MODE)
     {
-        SDL_SetWindowFullscreen(platform.window, SDL_WINDOW_FULLSCREEN);
+        const int monitor = SDL_GetWindowDisplayIndex(platform.window);
+        const int monitorCount = SDL_GetNumVideoDisplays();
+        if ((monitor >= 0) && (monitor < monitorCount))
+        {
+            SDL_SetWindowFullscreen(platform.window, SDL_WINDOW_FULLSCREEN);
+            CORE.Window.fullscreen = true;
+        }
+        else TRACELOG(LOG_WARNING, "SDL: Failed to find selected monitor");
     }
     if (flags & FLAG_WINDOW_RESIZABLE)
     {
@@ -374,8 +354,13 @@ void SetWindowState(unsigned int flags)
     }
     if (flags & FLAG_BORDERLESS_WINDOWED_MODE)
     {
-        // NOTE: Same as FLAG_WINDOW_UNDECORATED with SDL ?
-        SDL_SetWindowBordered(platform.window, SDL_FALSE);
+        const int monitor = SDL_GetWindowDisplayIndex(platform.window);
+        const int monitorCount = SDL_GetNumVideoDisplays();
+        if ((monitor >= 0) && (monitor < monitorCount))
+        {
+            SDL_SetWindowFullscreen(platform.window, SDL_WINDOW_FULLSCREEN_DESKTOP);
+        }
+        else TRACELOG(LOG_WARNING, "SDL: Failed to find selected monitor");
     }
     if (flags & FLAG_MSAA_4X_HINT)
     {
@@ -400,6 +385,7 @@ void ClearWindowState(unsigned int flags)
     if (flags & FLAG_FULLSCREEN_MODE)
     {
         SDL_SetWindowFullscreen(platform.window, 0);
+        CORE.Window.fullscreen = false;
     }
     if (flags & FLAG_WINDOW_RESIZABLE)
     {
@@ -450,8 +436,7 @@ void ClearWindowState(unsigned int flags)
     }
     if (flags & FLAG_BORDERLESS_WINDOWED_MODE)
     {
-        // NOTE: Same as FLAG_WINDOW_UNDECORATED with SDL ?
-        SDL_SetWindowBordered(platform.window, SDL_TRUE);
+        SDL_SetWindowFullscreen(platform.window, 0);
     }
     if (flags & FLAG_MSAA_4X_HINT)
     {
@@ -827,8 +812,14 @@ Vector2 GetWindowPosition(void)
 // Get window scale DPI factor for current monitor
 Vector2 GetWindowScaleDPI(void)
 {
+    Vector2 scale = { 1.0f, 1.0f };
+
+    // NOTE: SDL_GetWindowDisplayScale was only added on SDL3
+    //       see https://wiki.libsdl.org/SDL3/SDL_GetWindowDisplayScale
+    // TODO: Implement the window scale factor calculation manually.
     TRACELOG(LOG_WARNING, "GetWindowScaleDPI() not implemented on target platform");
-    return (Vector2){ 1.0f, 1.0f };
+
+    return scale;
 }
 
 // Set clipboard text content
