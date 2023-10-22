@@ -156,7 +156,7 @@ ifeq ($(PLATFORM),PLATFORM_ANDROID)
     MAKE = mingw32-make
 endif
 ifeq ($(PLATFORM),PLATFORM_WEB)
-    MAKE = mingw32-make
+    MAKE = emmake make
 endif
 
 # Define compiler flags: CFLAGS
@@ -533,6 +533,8 @@ others: $(OTHERS)
 %: %.c
 ifeq ($(PLATFORM),PLATFORM_ANDROID)
 	$(MAKE) -f Makefile.Android PROJECT_NAME=$@ PROJECT_SOURCE_FILES=$<
+else ifeq ($(PLATFORM),PLATFORM_WEB)
+	$(MAKE) -f Makefile.Web $@
 else
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 endif
