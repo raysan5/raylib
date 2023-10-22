@@ -149,7 +149,7 @@ ifeq ($(PLATFORM),PLATFORM_ANDROID)
     MAKE = mingw32-make
 endif
 ifeq ($(PLATFORM),PLATFORM_WEB)
-    MAKE = mingw32-make
+    MAKE = emmake make
 endif
 
 # Define compiler flags: CFLAGS
@@ -268,7 +268,7 @@ ifeq ($(PLATFORM),PLATFORM_WEB)
     # are specified per-example for optimization
 
     # Define a custom shell .html and output extension
-    LDFLAGS += --shell-file $(RAYLIB_PATH)/src/shell.html
+    LDFLAGS += --shell-file $(RAYLIB_PATH)/src/minshell.html
     EXT = .html
 endif
 
@@ -340,6 +340,7 @@ CORE = \
     core/core_input_mouse \
     core/core_input_mouse_wheel \
     core/core_input_gamepad \
+    core/core_input_gamepad_info \
     core/core_input_multitouch \
     core/core_input_gestures \
     core/core_input_gestures_web \
@@ -392,6 +393,7 @@ TEXTURES = \
     textures/textures_image_generation \
     textures/textures_image_loading \
     textures/textures_image_processing \
+    textures/textures_image_rotate \
     textures/textures_image_text \
     textures/textures_to_image \
     textures/textures_raw_data \
@@ -473,8 +475,17 @@ AUDIO = \
     audio/audio_music_stream \
     audio/audio_raw_stream \
     audio/audio_sound_loading \
+    audio/audio_sound_multi \
     audio/audio_stream_effects \
     audio/audio_mixed_processor
+
+OTHERS = \
+    others/easings_testbed \
+    others/embedded_files_loading \
+    others/raylib_opengl_interop \
+    others/raymath_vector_angle \
+    others/rlgl_compute_shader \
+    others/rlgl_standalone
 
 CURRENT_MAKEFILE = $(lastword $(MAKEFILE_LIST))
 
@@ -512,6 +523,9 @@ core/core_input_gamepad: core/core_input_gamepad.c
     --preload-file core/resources/ps3.png@resources/ps3.png \
     --preload-file core/resources/xbox.png@resources/xbox.png
 
+core/core_input_gamepad_info: core/core_input_gamepad.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
+
 core/core_input_multitouch: core/core_input_multitouch.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
@@ -529,7 +543,7 @@ core/core_2d_camera_platformer: core/core_2d_camera_platformer.c
 
 core/core_2d_camera_mouse_zoom: core/core_2d_camera_mouse_zoom.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
-    
+
 core/core_2d_camera_split_screen: core/core_2d_camera_split_screen.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
@@ -541,7 +555,7 @@ core/core_3d_camera_free: core/core_3d_camera_free.c
 
 core/core_3d_camera_first_person: core/core_3d_camera_first_person.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
-    
+
 core/core_3d_camera_split_screen: core/core_3d_camera_split_screen.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
@@ -675,6 +689,10 @@ textures/textures_image_processing: textures/textures_image_processing.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
     --preload-file textures/resources/parrots.png@resources/parrots.png
 
+textures/textures_image_rotate: textures/textures_image_rotate.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
+    --preload-file textures/resources/raylib_logo.png
+
 textures/textures_image_text: textures/textures_image_text.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) -s TOTAL_MEMORY=67108864 \
     --preload-file textures/resources/parrots.png@resources/parrots.png \
@@ -739,6 +757,10 @@ textures/textures_gif_player: textures/textures_gif_player.c
 
 textures/textures_fog_of_war: textures/textures_fog_of_war.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
+
+textures/textures_svg_loading: textures/textures_svg_loading.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
+    --preload-file textures/resources/test.svg
 
 # Compile TEXT examples
 text/text_raylib_fonts: text/text_raylib_fonts.c
@@ -963,6 +985,13 @@ shaders/shaders_hot_reloading: shaders/shaders_hot_reloading.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) -s FORCE_FILESYSTEM=1 \
     --preload-file shaders/resources/shaders/glsl100/reload.fs@resources/shaders/glsl100/reload.fs
 
+shaders/shaders_lightmap: shaders/shaders_lightmap.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) -s FORCE_FILESYSTEM=1 \
+    --preload-file shaders/resources/shaders/glsl330/lightmap.vs \
+    --preload-file shaders/resources/shaders/glsl330/lightmap.fs \
+    --preload-file shaders/resources/cubicmap_atlas.png \
+    --preload-file shaders/resources/spark_flame.png
+
 shaders/shaders_mesh_instancing: shaders/shaders_mesh_instancing.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
     --preload-file shaders/resources/shaders/glsl100/lighting_instancing.vs@resources/shaders/glsl100/lighting_instancing.vs \
@@ -1003,6 +1032,10 @@ audio/audio_sound_loading: audio/audio_sound_loading.c
     --preload-file audio/resources/sound.wav@resources/sound.wav \
     --preload-file audio/resources/target.ogg@resources/target.ogg
 
+audio/audio_sound_multi: audio/audio_sound_multi.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
+    --preload-file audio/resources/sound.wav@resources/sound.wav
+
 audio/audio_stream_effects: audio/audio_stream_effects.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) -s TOTAL_MEMORY=67108864 \
     --preload-file audio/resources/country.mp3@resources/country.mp3
@@ -1011,6 +1044,25 @@ audio/audio_mixed_processor: audio/audio_mixed_processor.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) -s TOTAL_MEMORY=67108864 \
     --preload-file audio/resources/country.mp3@resources/country.mp3 \
     --preload-file audio/resources/coin.wav@resources/coin.wav
+
+# Compile OTHERS examples
+others/easings_testbed: others/easings_testbed.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
+
+others/embedded_files_loading: others/embedded_files_loading.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
+
+others/raylib_opengl_interop:
+	$(info Skipping_others_raylib_opengl_interop)
+
+others/raymath_vector_angle: others/raymath_vector_angle.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
+
+others/rlgl_compute_shader:
+	$(info Skipping_others_rlgl_compute_shader)
+
+others/rlgl_standalone:
+	$(info Skipping_others_rlgl_standalone)
 
 # Clean everything
 clean:
