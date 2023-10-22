@@ -618,6 +618,8 @@ void SetWindowMonitor(int monitor)
 // Set window minimum dimensions (FLAG_WINDOW_RESIZABLE)
 void SetWindowMinSize(int width, int height)
 {
+    SDL_SetWindowMinimumSize(platform.window, width, height);
+
     CORE.Window.screenMin.width = width;
     CORE.Window.screenMin.height = height;
 }
@@ -625,6 +627,8 @@ void SetWindowMinSize(int width, int height)
 // Set window maximum dimensions (FLAG_WINDOW_RESIZABLE)
 void SetWindowMaxSize(int width, int height)
 {
+    SDL_SetWindowMaximumSize(platform.window, width, height);
+
     CORE.Window.screenMax.width = width;
     CORE.Window.screenMax.height = height;
 }
@@ -979,6 +983,8 @@ void PollInputEvents(void)
     }
     */
 
+    CORE.Window.resizedLastFrame = false;
+
     SDL_Event event = { 0 };
     while (SDL_PollEvent(&event) != 0)
     {
@@ -992,6 +998,18 @@ void PollInputEvents(void)
             {
                 switch (event.window.event)
                 {
+                    case SDL_WINDOWEVENT_RESIZED:
+                    case SDL_WINDOWEVENT_SIZE_CHANGED:
+                    {
+                        const int width = event.window.data1;
+                        const int height = event.window.data2;
+                        SetupViewport(width, height);
+                        CORE.Window.screen.width = width;
+                        CORE.Window.screen.height = height;
+                        CORE.Window.currentFbo.width = width;
+                        CORE.Window.currentFbo.height = height;
+                        CORE.Window.resizedLastFrame = true;
+                    } break;
                     case SDL_WINDOWEVENT_LEAVE:
                     case SDL_WINDOWEVENT_HIDDEN:
                     case SDL_WINDOWEVENT_MINIMIZED:
