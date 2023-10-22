@@ -983,6 +983,8 @@ void PollInputEvents(void)
     }
     */
 
+    CORE.Window.resizedLastFrame = false;
+
     SDL_Event event = { 0 };
     while (SDL_PollEvent(&event) != 0)
     {
@@ -996,6 +998,18 @@ void PollInputEvents(void)
             {
                 switch (event.window.event)
                 {
+                    case SDL_WINDOWEVENT_RESIZED:
+                    case SDL_WINDOWEVENT_SIZE_CHANGED:
+                    {
+                        int width = event.window.data1;
+                        int height = event.window.data2;
+                        SetupViewport(width, height);
+                        CORE.Window.screen.width = width;
+                        CORE.Window.screen.height = height;
+                        CORE.Window.currentFbo.width = width;
+                        CORE.Window.currentFbo.height = height;
+                        CORE.Window.resizedLastFrame = true;
+                    } break;
                     case SDL_WINDOWEVENT_LEAVE:
                     case SDL_WINDOWEVENT_HIDDEN:
                     case SDL_WINDOWEVENT_MINIMIZED:
