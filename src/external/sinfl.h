@@ -223,7 +223,7 @@ sinfl_refill(struct sinfl *s) {
   //---------------------------------------------------
   //s->bitbuf |= sinfl_read64(s->bitptr) << s->bitcnt;
   unsigned long long n = 0;
-  memcpy(&n, p, s->bitptr + 8 < s->bitend ? 8 : s->bitend - s->bitptr);
+  memcpy(&n, s->bitptr, s->bitptr + 8 < s->bitend ? 8 : s->bitend - s->bitptr);
   s->bitbuf |= n << s->bitcnt;
   //---------------------------------------------------
 
