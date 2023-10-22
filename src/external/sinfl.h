@@ -5,8 +5,6 @@ which implements the Deflate (RFC 1951) compressed data format specification sta
 It is mainly tuned to get as much speed and compression ratio from as little code
 as needed to keep the implementation as concise as possible.
 
-@raysan5: this file has been reviewed as per https://github.com/raysan5/raylib/issues/3349
-
 ## Features
 - Portable single header and source file duo written in ANSI C (ISO C90)
 - Dual license with either MIT or public domain
@@ -124,7 +122,6 @@ extern "C" {
 
 struct sinfl {
   const unsigned char *bitptr;
-  const unsigned char *bitend;  // @raysan5, added
   unsigned long long bitbuf;
   int bitcnt;
 
@@ -180,23 +177,17 @@ sinfl_bsr(unsigned n) {
   return 31 - __builtin_clz(n);
 #endif
 }
-// @raysan5, commented
-//static unsigned long long
-//sinfl_read64(const void *p) {
-//  unsigned long long n;
-//  memcpy(&n, p, 8);
-//  return n;
-//}
+static unsigned long long
+sinfl_read64(const void *p) {
+  unsigned long long n;
+  memcpy(&n, p, 8);
+  return n;
+}
 static void
 sinfl_copy64(unsigned char **dst, unsigned char **src) {
-  // @raysan5, reviewed
-  //----------------------------
-  //unsigned long long n;
-  //memcpy(&n, *src, 8);
-  //memcpy(*dst, &n, 8);
-  memcpy(*dst, *src, 8);
-  //----------------------------
-  
+  unsigned long long n;
+  memcpy(&n, *src, 8);
+  memcpy(*dst, &n, 8);
   *dst += 8, *src += 8;
 }
 static unsigned char*
@@ -219,14 +210,7 @@ sinfl_copy128(unsigned char **dst, unsigned char **src) {
 #endif
 static void
 sinfl_refill(struct sinfl *s) {
-  // @raysan5, reviewed
-  //---------------------------------------------------
-  //s->bitbuf |= sinfl_read64(s->bitptr) << s->bitcnt;
-  unsigned long long n = 0;
-  memcpy(&n, p, s->bitptr + 8 < s->bitend ? 8 : s->bitend - s->bitptr);
-  s->bitbuf |= n << s->bitcnt;
-  //---------------------------------------------------
-
+  s->bitbuf |= sinfl_read64(s->bitptr) << s->bitcnt;
   s->bitptr += (63 - s->bitcnt) >> 3;
   s->bitcnt |= 56; /* bitcount in range [56,63] */
 }
@@ -400,8 +384,6 @@ sinfl_decompress(unsigned char *out, int cap, const unsigned char *in, int size)
   int last = 0;
 
   s.bitptr = in;
-  s.bitend = e;     // @raysan5, added
-  
   while (1) {
     switch (state) {
     case hdr: {
