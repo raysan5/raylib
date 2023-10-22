@@ -1349,7 +1349,7 @@ int InitPlatform(void)
     // Forcing this initialization here avoids doing it on PollInputEvents() called by EndDrawing() after first frame has been just drawn.
     // The initialization will still happen and possible delays still occur, but before the window is shown, which is a nicer experience.
     // REF: https://github.com/raysan5/raylib/issues/1554
-    if (MAX_GAMEPADS > 0) glfwSetJoystickCallback(NULL);
+    glfwSetJoystickCallback(NULL);
 
     // Find monitor resolution
     GLFWmonitor *monitor = glfwGetPrimaryMonitor();
@@ -1404,6 +1404,7 @@ int InitPlatform(void)
                 }
             }
         }
+        
         TRACELOG(LOG_WARNING, "SYSTEM: Closest fullscreen videomode: %i x %i", CORE.Window.display.width, CORE.Window.display.height);
 
         // NOTE: ISSUE: Closest videomode could not match monitor aspect-ratio, for example,
@@ -1447,27 +1448,8 @@ int InitPlatform(void)
         TRACELOG(LOG_WARNING, "GLFW: Failed to initialize Window");
         return -1;
     }
-
-    // Set window callback events
-    glfwSetWindowSizeCallback(platform.handle, WindowSizeCallback);      // NOTE: Resizing not allowed by default!
-    glfwSetWindowMaximizeCallback(platform.handle, WindowMaximizeCallback);
-    glfwSetWindowIconifyCallback(platform.handle, WindowIconifyCallback);
-    glfwSetWindowFocusCallback(platform.handle, WindowFocusCallback);
-    glfwSetDropCallback(platform.handle, WindowDropCallback);
-
-    // Set input callback events
-    glfwSetKeyCallback(platform.handle, KeyCallback);
-    glfwSetCharCallback(platform.handle, CharCallback);
-    glfwSetMouseButtonCallback(platform.handle, MouseButtonCallback);
-    glfwSetCursorPosCallback(platform.handle, MouseCursorPosCallback);   // Track mouse position changes
-    glfwSetScrollCallback(platform.handle, MouseScrollCallback);
-    glfwSetCursorEnterCallback(platform.handle, CursorEnterCallback);
-    glfwSetJoystickCallback(JoystickCallback);
-
+    
     glfwMakeContextCurrent(platform.handle);
-
-    glfwSetInputMode(platform.handle, GLFW_LOCK_KEY_MODS, GLFW_TRUE);    // Enable lock keys modifiers (CAPS, NUM)
-
     glfwSwapInterval(0);        // No V-Sync by default
 
     // Try to enable GPU V-Sync, so frames are limited to screen refresh rate (60Hz -> 60 FPS)
@@ -1520,6 +1502,25 @@ int InitPlatform(void)
     // If graphic device is no properly initialized, we end program
     if (!CORE.Window.ready) { TRACELOG(LOG_FATAL, "PLATFORM: Failed to initialize graphic device"); return -1; }
     else SetWindowPosition(GetMonitorWidth(GetCurrentMonitor())/2 - CORE.Window.screen.width/2, GetMonitorHeight(GetCurrentMonitor())/2 - CORE.Window.screen.height/2);
+    
+    
+    // Set window callback events
+    glfwSetWindowSizeCallback(platform.handle, WindowSizeCallback);      // NOTE: Resizing not allowed by default!
+    glfwSetWindowMaximizeCallback(platform.handle, WindowMaximizeCallback);
+    glfwSetWindowIconifyCallback(platform.handle, WindowIconifyCallback);
+    glfwSetWindowFocusCallback(platform.handle, WindowFocusCallback);
+    glfwSetDropCallback(platform.handle, WindowDropCallback);
+
+    // Set input callback events
+    glfwSetKeyCallback(platform.handle, KeyCallback);
+    glfwSetCharCallback(platform.handle, CharCallback);
+    glfwSetMouseButtonCallback(platform.handle, MouseButtonCallback);
+    glfwSetCursorPosCallback(platform.handle, MouseCursorPosCallback);   // Track mouse position changes
+    glfwSetScrollCallback(platform.handle, MouseScrollCallback);
+    glfwSetCursorEnterCallback(platform.handle, CursorEnterCallback);
+    glfwSetJoystickCallback(JoystickCallback);
+
+    glfwSetInputMode(platform.handle, GLFW_LOCK_KEY_MODS, GLFW_TRUE);    // Enable lock keys modifiers (CAPS, NUM)
 
     // Initialize hi-res timer
     InitTimer();
