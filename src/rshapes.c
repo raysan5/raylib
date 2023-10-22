@@ -671,14 +671,20 @@ void DrawCircleGradient(int centerX, int centerY, float radius, Color color1, Co
 // Draw circle outline
 void DrawCircleLines(int centerX, int centerY, float radius, Color color)
 {
+    DrawCircleLinesV((Vector2){ (float)centerX, (float)centerY }, radius, color);
+}
+
+// Draw circle outline (Vector version)
+void DrawCircleLinesV(Vector2 center, float radius, Color color)
+{
     rlBegin(RL_LINES);
         rlColor4ub(color.r, color.g, color.b, color.a);
 
         // NOTE: Circle outline is drawn pixel by pixel every degree (0 to 360)
         for (int i = 0; i < 360; i += 10)
         {
-            rlVertex2f(centerX + cosf(DEG2RAD*i)*radius, centerY + sinf(DEG2RAD*i)*radius);
-            rlVertex2f(centerX + cosf(DEG2RAD*(i + 10))*radius, centerY + sinf(DEG2RAD*(i + 10))*radius);
+            rlVertex2f(center.x + cosf(DEG2RAD*i)*radius, center.y + sinf(DEG2RAD*i)*radius);
+            rlVertex2f(center.x + cosf(DEG2RAD*(i + 10))*radius, center.y + sinf(DEG2RAD*(i + 10))*radius);
         }
     rlEnd();
 }
