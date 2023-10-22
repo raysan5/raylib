@@ -1001,8 +1001,8 @@ void PollInputEvents(void)
                     case SDL_WINDOWEVENT_RESIZED:
                     case SDL_WINDOWEVENT_SIZE_CHANGED:
                     {
-                        int width = event.window.data1;
-                        int height = event.window.data2;
+                        const int width = event.window.data1;
+                        const int height = event.window.data2;
                         SetupViewport(width, height);
                         CORE.Window.screen.width = width;
                         CORE.Window.screen.height = height;
