@@ -677,6 +677,8 @@ int InitPlatform(void)
     int result = glfwInit();
     if (result == GLFW_FALSE) { TRACELOG(LOG_WARNING, "GLFW: Failed to initialize GLFW"); return -1; }
 
+    // Initialize graphic device: display/window and graphic context
+    //----------------------------------------------------------------------------
     glfwDefaultWindowHints(); // Set default windows hints
     // glfwWindowHint(GLFW_RED_BITS, 8);             // Framebuffer red color component bits
     // glfwWindowHint(GLFW_GREEN_BITS, 8);           // Framebuffer green color component bits
@@ -862,43 +864,46 @@ int InitPlatform(void)
     glfwSetCursorEnterCallback(platform.handle, CursorEnterCallback);
 
     glfwMakeContextCurrent(platform.handle);
+    result = glfwGetError(NULL);
+    
+    // Check context activation
+    if ((result != GLFW_NO_WINDOW_CONTEXT) && (result != GLFW_PLATFORM_ERROR))
+    {
+        CORE.Window.ready = true;   // TODO: Proper validation on windows/context creation
 
-    // Load OpenGL extensions
-    // NOTE: GL procedures address loader is required to load extensions
-    rlLoadExtensions(glfwGetProcAddress);
+        int fbWidth = CORE.Window.screen.width;
+        int fbHeight = CORE.Window.screen.height;
+
+        CORE.Window.render.width = fbWidth;
+        CORE.Window.render.height = fbHeight;
+        CORE.Window.currentFbo.width = fbWidth;
+        CORE.Window.currentFbo.height = fbHeight;
+
+        TRACELOG(LOG_INFO, "DISPLAY: Device initialized successfully");
+        TRACELOG(LOG_INFO, "    > Display size: %i x %i", CORE.Window.display.width, CORE.Window.display.height);
+        TRACELOG(LOG_INFO, "    > Screen size:  %i x %i", CORE.Window.screen.width, CORE.Window.screen.height);
+        TRACELOG(LOG_INFO, "    > Render size:  %i x %i", CORE.Window.render.width, CORE.Window.render.height);
+        TRACELOG(LOG_INFO, "    > Viewport offsets: %i, %i", CORE.Window.renderOffset.x, CORE.Window.renderOffset.y);
+    }
+    else 
+    { 
+        TRACELOG(LOG_FATAL, "PLATFORM: Failed to initialize graphics device"); 
+        return -1;
+    }
 
     if ((CORE.Window.flags & FLAG_WINDOW_MINIMIZED) > 0) MinimizeWindow();
-
-    // Try to enable GPU V-Sync, so frames are limited to screen refresh rate (60Hz -> 60 FPS)
-    // NOTE: V-Sync can be enabled by graphic driver configuration, it doesn't need
-    // to be activated on web platforms since VSync is enforced there.
-
-    int fbWidth = CORE.Window.screen.width;
-    int fbHeight = CORE.Window.screen.height;
-
-    CORE.Window.render.width = fbWidth;
-    CORE.Window.render.height = fbHeight;
-    CORE.Window.currentFbo.width = fbWidth;
-    CORE.Window.currentFbo.height = fbHeight;
-
-    TRACELOG(LOG_INFO, "DISPLAY: Device initialized successfully");
-    TRACELOG(LOG_INFO, "    > Display size: %i x %i", CORE.Window.display.width, CORE.Window.display.height);
-    TRACELOG(LOG_INFO, "    > Screen size:  %i x %i", CORE.Window.screen.width, CORE.Window.screen.height);
-    TRACELOG(LOG_INFO, "    > Render size:  %i x %i", CORE.Window.render.width, CORE.Window.render.height);
-    TRACELOG(LOG_INFO, "    > Viewport offsets: %i, %i", CORE.Window.renderOffset.x, CORE.Window.renderOffset.y);
-
-    CORE.Window.ready = true;   // TODO: Proper validation on windows/context creation
 
     // If graphic device is no properly initialized, we end program
     if (!CORE.Window.ready) { TRACELOG(LOG_FATAL, "PLATFORM: Failed to initialize graphic device"); return -1; }
     else SetWindowPosition(GetMonitorWidth(GetCurrentMonitor())/2 - CORE.Window.screen.width/2, GetMonitorHeight(GetCurrentMonitor())/2 - CORE.Window.screen.height/2);
-
-    // Initialize hi-res timer
-    InitTimer();
-
-    // Initialize base path for storage
-    CORE.Storage.basePath = GetWorkingDirectory();
-
+    
+    // Load OpenGL extensions
+    // NOTE: GL procedures address loader is required to load extensions
+    rlLoadExtensions(glfwGetProcAddress);
+    //----------------------------------------------------------------------------
+    
+    // Initialize input events callbacks
+    //----------------------------------------------------------------------------
     // Setup callback functions for the DOM events
     emscripten_set_fullscreenchange_callback("#canvas", NULL, 1, EmscriptenFullscreenChangeCallback);
 
@@ -927,6 +932,19 @@ int InitPlatform(void)
     // Support gamepad events (not provided by GLFW3 on emscripten)
     emscripten_set_gamepadconnected_callback(NULL, 1, EmscriptenGamepadCallback);
     emscripten_set_gamepaddisconnected_callback(NULL, 1, EmscriptenGamepadCallback);
+    //----------------------------------------------------------------------------
+
+    // Initialize timming system
+    //----------------------------------------------------------------------------
+    InitTimer();
+    //----------------------------------------------------------------------------
+
+    // Initialize storage system
+    //----------------------------------------------------------------------------
+    CORE.Storage.basePath = GetWorkingDirectory();
+    //----------------------------------------------------------------------------
+
+    TRACELOG(LOG_INFO, "PLATFORM: WEB: Initialized successfully");
 
     return 0;
 }
@@ -937,7 +955,6 @@ void ClosePlatform(void)
     glfwDestroyWindow(platform.handle);
     glfwTerminate();
 }
-
 
 // GLFW3 Error Callback, runs on GLFW3 error
 static void ErrorCallback(int error, const char *description)

@@ -1236,6 +1236,8 @@ int InitPlatform(void)
     int result = glfwInit();
     if (result == GLFW_FALSE) { TRACELOG(LOG_WARNING, "GLFW: Failed to initialize GLFW"); return -1; }
 
+    // Initialize graphic device: display/window and graphic context
+    //----------------------------------------------------------------------------
     glfwDefaultWindowHints();                       // Set default windows hints
     //glfwWindowHint(GLFW_RED_BITS, 8);             // Framebuffer red color component bits
     //glfwWindowHint(GLFW_GREEN_BITS, 8);           // Framebuffer green color component bits
@@ -1450,60 +1452,73 @@ int InitPlatform(void)
     }
     
     glfwMakeContextCurrent(platform.handle);
-    glfwSwapInterval(0);        // No V-Sync by default
-
-    // Try to enable GPU V-Sync, so frames are limited to screen refresh rate (60Hz -> 60 FPS)
-    // NOTE: V-Sync can be enabled by graphic driver configuration, it doesn't need
-    // to be activated on web platforms since VSync is enforced there.
-    if (CORE.Window.flags & FLAG_VSYNC_HINT)
+    result = glfwGetError(NULL);
+    
+    // Check context activation
+    if ((result != GLFW_NO_WINDOW_CONTEXT) && (result != GLFW_PLATFORM_ERROR))
     {
-        // WARNING: It seems to hit a critical render path in Intel HD Graphics
-        glfwSwapInterval(1);
-        TRACELOG(LOG_INFO, "DISPLAY: Trying to enable VSYNC");
+        CORE.Window.ready = true;
+
+        glfwSwapInterval(0);        // No V-Sync by default
+
+        // Try to enable GPU V-Sync, so frames are limited to screen refresh rate (60Hz -> 60 FPS)
+        // NOTE: V-Sync can be enabled by graphic driver configuration, it doesn't need
+        // to be activated on web platforms since VSync is enforced there.
+        if (CORE.Window.flags & FLAG_VSYNC_HINT)
+        {
+            // WARNING: It seems to hit a critical render path in Intel HD Graphics
+            glfwSwapInterval(1);
+            TRACELOG(LOG_INFO, "DISPLAY: Trying to enable VSYNC");
+        }
+
+        int fbWidth = CORE.Window.screen.width;
+        int fbHeight = CORE.Window.screen.height;
+
+        if ((CORE.Window.flags & FLAG_WINDOW_HIGHDPI) > 0)
+        {
+            // NOTE: On APPLE platforms system should manage window/input scaling and also framebuffer scaling.
+            // Framebuffer scaling should be activated with: glfwWindowHint(GLFW_COCOA_RETINA_FRAMEBUFFER, GLFW_TRUE);
+    #if !defined(__APPLE__)
+            glfwGetFramebufferSize(platform.handle, &fbWidth, &fbHeight);
+
+            // Screen scaling matrix is required in case desired screen area is different from display area
+            CORE.Window.screenScale = MatrixScale((float)fbWidth/CORE.Window.screen.width, (float)fbHeight/CORE.Window.screen.height, 1.0f);
+
+            // Mouse input scaling for the new screen size
+            SetMouseScale((float)CORE.Window.screen.width/fbWidth, (float)CORE.Window.screen.height/fbHeight);
+    #endif
+        }
+
+        CORE.Window.render.width = fbWidth;
+        CORE.Window.render.height = fbHeight;
+        CORE.Window.currentFbo.width = fbWidth;
+        CORE.Window.currentFbo.height = fbHeight;
+
+        TRACELOG(LOG_INFO, "DISPLAY: Device initialized successfully");
+        TRACELOG(LOG_INFO, "    > Display size: %i x %i", CORE.Window.display.width, CORE.Window.display.height);
+        TRACELOG(LOG_INFO, "    > Screen size:  %i x %i", CORE.Window.screen.width, CORE.Window.screen.height);
+        TRACELOG(LOG_INFO, "    > Render size:  %i x %i", CORE.Window.render.width, CORE.Window.render.height);
+        TRACELOG(LOG_INFO, "    > Viewport offsets: %i, %i", CORE.Window.renderOffset.x, CORE.Window.renderOffset.y);
     }
-
-    int fbWidth = CORE.Window.screen.width;
-    int fbHeight = CORE.Window.screen.height;
-
-    if ((CORE.Window.flags & FLAG_WINDOW_HIGHDPI) > 0)
-    {
-        // NOTE: On APPLE platforms system should manage window/input scaling and also framebuffer scaling.
-        // Framebuffer scaling should be activated with: glfwWindowHint(GLFW_COCOA_RETINA_FRAMEBUFFER, GLFW_TRUE);
-#if !defined(__APPLE__)
-        glfwGetFramebufferSize(platform.handle, &fbWidth, &fbHeight);
-
-        // Screen scaling matrix is required in case desired screen area is different from display area
-        CORE.Window.screenScale = MatrixScale((float)fbWidth/CORE.Window.screen.width, (float)fbHeight/CORE.Window.screen.height, 1.0f);
-
-        // Mouse input scaling for the new screen size
-        SetMouseScale((float)CORE.Window.screen.width/fbWidth, (float)CORE.Window.screen.height/fbHeight);
-#endif
+    else 
+    { 
+        TRACELOG(LOG_FATAL, "PLATFORM: Failed to initialize graphics device"); 
+        return -1;
     }
-
-    CORE.Window.render.width = fbWidth;
-    CORE.Window.render.height = fbHeight;
-    CORE.Window.currentFbo.width = fbWidth;
-    CORE.Window.currentFbo.height = fbHeight;
-
-    TRACELOG(LOG_INFO, "DISPLAY: Device initialized successfully");
-    TRACELOG(LOG_INFO, "    > Display size: %i x %i", CORE.Window.display.width, CORE.Window.display.height);
-    TRACELOG(LOG_INFO, "    > Screen size:  %i x %i", CORE.Window.screen.width, CORE.Window.screen.height);
-    TRACELOG(LOG_INFO, "    > Render size:  %i x %i", CORE.Window.render.width, CORE.Window.render.height);
-    TRACELOG(LOG_INFO, "    > Viewport offsets: %i, %i", CORE.Window.renderOffset.x, CORE.Window.renderOffset.y);
-
-    // Load OpenGL extensions
-    // NOTE: GL procedures address loader is required to load extensions
-    rlLoadExtensions(glfwGetProcAddress);
 
     if ((CORE.Window.flags & FLAG_WINDOW_MINIMIZED) > 0) MinimizeWindow();
 
-    CORE.Window.ready = true;   // TODO: Proper validation on windows/context creation
-    
     // If graphic device is no properly initialized, we end program
     if (!CORE.Window.ready) { TRACELOG(LOG_FATAL, "PLATFORM: Failed to initialize graphic device"); return -1; }
     else SetWindowPosition(GetMonitorWidth(GetCurrentMonitor())/2 - CORE.Window.screen.width/2, GetMonitorHeight(GetCurrentMonitor())/2 - CORE.Window.screen.height/2);
     
+    // Load OpenGL extensions
+    // NOTE: GL procedures address loader is required to load extensions
+    rlLoadExtensions(glfwGetProcAddress);
+    //----------------------------------------------------------------------------
     
+    // Initialize input events callbacks
+    //----------------------------------------------------------------------------
     // Set window callback events
     glfwSetWindowSizeCallback(platform.handle, WindowSizeCallback);      // NOTE: Resizing not allowed by default!
     glfwSetWindowMaximizeCallback(platform.handle, WindowMaximizeCallback);
@@ -1521,12 +1536,19 @@ int InitPlatform(void)
     glfwSetJoystickCallback(JoystickCallback);
 
     glfwSetInputMode(platform.handle, GLFW_LOCK_KEY_MODS, GLFW_TRUE);    // Enable lock keys modifiers (CAPS, NUM)
+    //----------------------------------------------------------------------------
 
-    // Initialize hi-res timer
+    // Initialize timming system
+    //----------------------------------------------------------------------------
     InitTimer();
-    
-    // Initialize base path for storage
+    //----------------------------------------------------------------------------
+
+    // Initialize storage system
+    //----------------------------------------------------------------------------
     CORE.Storage.basePath = GetWorkingDirectory();
+    //----------------------------------------------------------------------------
+    
+    TRACELOG(LOG_INFO, "PLATFORM: DESKTOP (GLFW): Initialized successfully");
     
     return 0;
 }
@@ -1541,7 +1563,6 @@ void ClosePlatform(void)
     timeEndPeriod(1);           // Restore time period
 #endif
 }
-
 
 // GLFW3 Error Callback, runs on GLFW3 error
 static void ErrorCallback(int error, const char *description)

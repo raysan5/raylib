@@ -1107,6 +1107,8 @@ int InitPlatform(void)
     int result = SDL_Init(SDL_INIT_EVERYTHING);
     if (result < 0) { TRACELOG(LOG_WARNING, "SDL: Failed to initialize SDL"); return -1; }
 
+    // Initialize graphic device: display/window and graphic context
+    //----------------------------------------------------------------------------
     unsigned int flags = 0;
     flags |= SDL_WINDOW_SHOWN;
     flags |= SDL_WINDOW_OPENGL;
@@ -1143,6 +1145,7 @@ int InitPlatform(void)
     //if ((CORE.Window.flags & FLAG_FULLSCREEN_DESKTOP) > 0) flags |= SDL_WINDOW_FULLSCREEN_DESKTOP;
 
     // NOTE: Some OpenGL context attributes must be set before window creation
+
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
@@ -1170,7 +1173,7 @@ int InitPlatform(void)
     {
         CORE.Window.ready = true;
 
-        SDL_DisplayMode displayMode;
+        SDL_DisplayMode displayMode = { 0 };
         SDL_GetCurrentDisplayMode(GetCurrentMonitor(), &displayMode);
 
         CORE.Window.display.width = displayMode.w;
@@ -1187,30 +1190,43 @@ int InitPlatform(void)
         TRACELOG(LOG_INFO, "    > Render size:  %i x %i", CORE.Window.render.width, CORE.Window.render.height);
         TRACELOG(LOG_INFO, "    > Viewport offsets: %i, %i", CORE.Window.renderOffset.x, CORE.Window.renderOffset.y);
     }
-    else { TRACELOG(LOG_FATAL, "PLATFORM: Failed to initialize graphic device"); return -1; }
+    else
+    { 
+        TRACELOG(LOG_FATAL, "PLATFORM: Failed to initialize graphics device"); 
+        return -1; 
+    }
 
     // Load OpenGL extensions
     // NOTE: GL procedures address loader is required to load extensions
     rlLoadExtensions(SDL_GL_GetProcAddress);
+    //----------------------------------------------------------------------------
 
-
-    // Init input gamepad
+    // Initialize input events system
+    //----------------------------------------------------------------------------
     if (SDL_NumJoysticks() >= 1)
     {
         SDL_Joystick *gamepad = SDL_JoystickOpen(0);
         //if (SDL_Joystick *gamepad == NULL) SDL_Log("WARNING: Unable to open game controller! SDL Error: %s\n", SDL_GetError());
     }
+    //----------------------------------------------------------------------------
 
-    // Initialize hi-res timer
-    //InitTimer();
+    // Initialize timming system
+    //----------------------------------------------------------------------------
+    // NOTE: No need to call InitTimer(), let SDL manage it internally
     CORE.Time.previous = GetTime();     // Get time as double
+    //----------------------------------------------------------------------------
 
-    // Initialize base path for storage
-    CORE.Storage.basePath = GetWorkingDirectory();
+    // Initialize storage system
+    //----------------------------------------------------------------------------
+    CORE.Storage.basePath = GetWorkingDirectory();  // Define base path for storage
+    //----------------------------------------------------------------------------
+    
+    TRACELOG(LOG_INFO, "PLATFORM: DESKTOP (SDL): Initialized successfully");
 
     return 0;
 }
 
+// Close platform
 void ClosePlatform(void)
 {
     SDL_FreeCursor(platform.cursor); // Free cursor
@@ -1219,7 +1235,7 @@ void ClosePlatform(void)
     SDL_Quit(); // Deinitialize SDL internal global state
 }
 
-
+// Scancode to keycode mapping
 static KeyboardKey ConvertScancodeToKey(SDL_Scancode sdlScancode)
 {
     if (sdlScancode >= 0 && sdlScancode < SCANCODE_MAPPED_NUM)

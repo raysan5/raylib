@@ -491,8 +491,6 @@ void InitWindow(int width, int height, const char *title)
 
     // Initialize random seed
     SetRandomSeed((unsigned int)time(NULL));
-
-    TRACELOG(LOG_INFO, "PLATFORM: DESKTOP: Application initialized successfully");
 }
 
 // Close window and unload OpenGL context

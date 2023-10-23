@@ -576,6 +576,8 @@ int InitPlatform(void)
     platform.prevBO = NULL;
     platform.prevFB = 0;
 
+    // Initialize graphic device: display/window and graphic context
+    //----------------------------------------------------------------------------
     CORE.Window.fullscreen = true;
     CORE.Window.flags |= FLAG_FULLSCREEN_MODE;
 
@@ -846,7 +848,6 @@ int InitPlatform(void)
     }
 
     // Create an EGL window surface
-    //---------------------------------------------------------------------------------
     platform.surface = eglCreateWindowSurface(platform.device, platform.config, (EGLNativeWindowType)platform.gbmSurface, NULL);
     if (EGL_NO_SURFACE == platform.surface)
     {
@@ -863,14 +864,14 @@ int InitPlatform(void)
 
     // There must be at least one frame displayed before the buffers are swapped
     //eglSwapInterval(platform.device, 1);
+    
+    EGLBoolean result = eglMakeCurrent(platform.device, platform.surface, platform.surface, platform.context);
 
-    if (eglMakeCurrent(platform.device, platform.surface, platform.surface, platform.context) == EGL_FALSE)
+    // Check surface and context activation
+    if (result != EGL_FALSE)
     {
-        TRACELOG(LOG_WARNING, "DISPLAY: Failed to attach EGL rendering context to EGL surface");
-        return -1;
-    }
-    else
-    {
+        CORE.Window.ready = true;
+        
         CORE.Window.render.width = CORE.Window.screen.width;
         CORE.Window.render.height = CORE.Window.screen.height;
         CORE.Window.currentFbo.width = CORE.Window.render.width;
@@ -882,16 +883,15 @@ int InitPlatform(void)
         TRACELOG(LOG_INFO, "    > Render size:  %i x %i", CORE.Window.render.width, CORE.Window.render.height);
         TRACELOG(LOG_INFO, "    > Viewport offsets: %i, %i", CORE.Window.renderOffset.x, CORE.Window.renderOffset.y);
     }
-
-    // Load OpenGL extensions
-    // NOTE: GL procedures address loader is required to load extensions
-    rlLoadExtensions(eglGetProcAddress);
+    else 
+    { 
+        TRACELOG(LOG_FATAL, "PLATFORM: Failed to initialize graphics device"); 
+        return -1;
+    }
 
     if ((CORE.Window.flags & FLAG_WINDOW_MINIMIZED) > 0) MinimizeWindow();
 
-    CORE.Window.ready = true;   // TODO: Proper validation on windows/context creation
-
-        // If graphic device is no properly initialized, we end program
+    // If graphic device is no properly initialized, we end program
     if (!CORE.Window.ready) { TRACELOG(LOG_FATAL, "PLATFORM: Failed to initialize graphic device"); return -1; }
     else SetWindowPosition(GetMonitorWidth(GetCurrentMonitor()) / 2 - CORE.Window.screen.width / 2, GetMonitorHeight(GetCurrentMonitor()) / 2 - CORE.Window.screen.height / 2);
 
@@ -901,16 +901,29 @@ int InitPlatform(void)
     CORE.Window.flags |= FLAG_WINDOW_MAXIMIZED;     // true
     CORE.Window.flags &= ~FLAG_WINDOW_UNFOCUSED;    // false
 
-    // Initialize hi-res timer
+    // Load OpenGL extensions
+    // NOTE: GL procedures address loader is required to load extensions
+    rlLoadExtensions(eglGetProcAddress);
+    //----------------------------------------------------------------------------
+    
+    // Initialize input events system
+    //----------------------------------------------------------------------------
+    InitEvdevInput();   // Evdev inputs initialization
+    InitGamepad();      // Gamepad init
+    InitKeyboard();     // Keyboard init (stdin)
+    //----------------------------------------------------------------------------
+
+    // Initialize timming system
+    //----------------------------------------------------------------------------
     InitTimer();
+    //----------------------------------------------------------------------------
 
-    // Initialize base path for storage
+    // Initialize storage system
+    //----------------------------------------------------------------------------
     CORE.Storage.basePath = GetWorkingDirectory();
-
-    // Initialize raw input system
-    InitEvdevInput(); // Evdev inputs initialization
-    InitGamepad();    // Gamepad init
-    InitKeyboard();   // Keyboard init (stdin)
+    //----------------------------------------------------------------------------
+    
+    TRACELOG(LOG_INFO, "PLATFORM: DRM: Initialized successfully");
 
     return 0;
 }
@@ -1004,7 +1017,6 @@ void ClosePlatform(void)
 
     if (platform.gamepadThreadId) pthread_join(platform.gamepadThreadId, NULL);
 }
-
 
 // Initialize Keyboard system (using standard input)
 static void InitKeyboard(void)

@@ -518,6 +518,8 @@ void PollInputEvents(void)
 // Initialize platform: graphics, inputs and more
 int InitPlatform(void)
 {
+    // Initialize display basic configuration
+    //----------------------------------------------------------------------------
     CORE.Window.currentFbo.width = CORE.Window.screen.width;
     CORE.Window.currentFbo.height = CORE.Window.screen.height;
 
@@ -545,27 +547,33 @@ int InitPlatform(void)
     //AConfiguration_getKeyboard(platform.app->config);
     //AConfiguration_getScreenSize(platform.app->config);
     //AConfiguration_getScreenLong(platform.app->config);
-
-    // Initialize App command system
-    // NOTE: On APP_CMD_INIT_WINDOW -> InitGraphicsDevice(), InitTimer(), LoadFontDefault()...
-    platform.app->onAppCmd = AndroidCommandCallback;
-
-    // Initialize input events system
-    platform.app->onInputEvent = AndroidInputCallback;
-
-    // Initialize assets manager
-    InitAssetManager(platform.app->activity->assetManager, platform.app->activity->internalDataPath);
-
-    // Initialize base path for storage
-    CORE.Storage.basePath = platform.app->activity->internalDataPath;
-
+    
     // Set some default window flags
     CORE.Window.flags &= ~FLAG_WINDOW_HIDDEN;       // false
     CORE.Window.flags &= ~FLAG_WINDOW_MINIMIZED;    // false
     CORE.Window.flags |= FLAG_WINDOW_MAXIMIZED;     // true
     CORE.Window.flags &= ~FLAG_WINDOW_UNFOCUSED;    // false
+    //----------------------------------------------------------------------------
 
-    TRACELOG(LOG_INFO, "PLATFORM: ANDROID: Application initialized successfully");
+    // Initialize App command system
+    // NOTE: On APP_CMD_INIT_WINDOW -> InitGraphicsDevice(), InitTimer(), LoadFontDefault()...
+    //----------------------------------------------------------------------------
+    platform.app->onAppCmd = AndroidCommandCallback;
+    //----------------------------------------------------------------------------
+
+    // Initialize input events system
+    //----------------------------------------------------------------------------
+    platform.app->onInputEvent = AndroidInputCallback;
+    //----------------------------------------------------------------------------
+
+    // Initialize storage system
+    //----------------------------------------------------------------------------
+    InitAssetManager(platform.app->activity->assetManager, platform.app->activity->internalDataPath);   // Initialize assets manager
+    
+    CORE.Storage.basePath = platform.app->activity->internalDataPath;   // Define base path for storage
+    //----------------------------------------------------------------------------
+
+    TRACELOG(LOG_INFO, "PLATFORM: ANDROID: Initialized successfully");
 
     // Android ALooper_pollAll() variables
     int pollResult = 0;
@@ -612,7 +620,6 @@ void ClosePlatform(void)
         platform.device = EGL_NO_DISPLAY;
     }
 }
-
 
 // Initialize display device and framebuffer
 // NOTE: width and height represent the screen (framebuffer) desired size, not actual display size

@@ -518,13 +518,27 @@ int InitPlatform(void)
 
     EGLBoolean result = eglMakeCurrent(platform.device, platform.surface, platform.surface, platform.context);
 
-    // Enabling current display surface and context failed
-    if (result == EGL_FALSE)
+    // Check surface and context activation
+    if (result != EGL_FALSE)
     {
-        TRACELOG(LOG_WARNING, "DISPLAY: Failed to attach EGL rendering context to EGL surface");
+        CORE.Window.ready = true;
+        
+        CORE.Window.render.width = CORE.Window.screen.width;
+        CORE.Window.render.height = CORE.Window.screen.height;
+        CORE.Window.currentFbo.width = CORE.Window.render.width;
+        CORE.Window.currentFbo.height = CORE.Window.render.height;
+
+        TRACELOG(LOG_INFO, "DISPLAY: Device initialized successfully");
+        TRACELOG(LOG_INFO, "    > Display size: %i x %i", CORE.Window.display.width, CORE.Window.display.height);
+        TRACELOG(LOG_INFO, "    > Screen size:  %i x %i", CORE.Window.screen.width, CORE.Window.screen.height);
+        TRACELOG(LOG_INFO, "    > Render size:  %i x %i", CORE.Window.render.width, CORE.Window.render.height);
+        TRACELOG(LOG_INFO, "    > Viewport offsets: %i, %i", CORE.Window.renderOffset.x, CORE.Window.renderOffset.y);
+    }
+    else 
+    { 
+        TRACELOG(LOG_FATAL, "PLATFORM: Failed to initialize graphics device"); 
         return -1;
     }
-    else CORE.Window.ready = true;
     //----------------------------------------------------------------------------
     
     // If everything work as expected, we can continue
@@ -545,7 +559,7 @@ int InitPlatform(void)
     rlLoadExtensions(eglGetProcAddress);
     //----------------------------------------------------------------------------
     
-    // TODO: Initialize input system
+    // TODO: Initialize input events system
     // It could imply keyboard, mouse, gamepad, touch...
     // Depending on the platform libraries/SDK it could use a callbacks mechanims
     // For system events and inputs evens polling on a per-frame basis, use PollInputEvents()
@@ -553,15 +567,17 @@ int InitPlatform(void)
     // ...
     //----------------------------------------------------------------------------
 
-    // TODO: Initialize hi-res timer
+    // TODO: Initialize timming system
     //----------------------------------------------------------------------------
     InitTimer();
     //----------------------------------------------------------------------------
 
-    // TODO: Initialize base path for storage
+    // TODO: Initialize storage system
     //----------------------------------------------------------------------------
     CORE.Storage.basePath = GetWorkingDirectory();
     //----------------------------------------------------------------------------
+    
+    TRACELOG(LOG_INFO, "PLATFORM: CUSTOM: Initialized successfully");
 
     return 0;
 }
