@@ -484,9 +484,9 @@ void InitWindow(int width, int height, const char *title)
     }
 #endif
 
+    CORE.Time.frameCounter = 0;
 #if defined(SUPPORT_EVENTS_AUTOMATION)
     events = (AutomationEvent *)RL_CALLOC(MAX_CODE_AUTOMATION_EVENTS, sizeof(AutomationEvent));
-    CORE.Time.frameCounter = 0;
 #endif
 
     // Initialize random seed
@@ -1395,6 +1395,16 @@ int GetFPS(void)
     static float history[FPS_CAPTURE_FRAMES_COUNT] = { 0 };
     static float average = 0, last = 0;
     float fpsFrame = GetFrameTime();
+
+    // if we reset the window, reset the FPS info
+    if (CORE.Time.frameCounter == 0)
+    {
+        average = 0;
+        last = 0;
+        index = 0;
+        for (int i = 0; i < FPS_CAPTURE_FRAMES_COUNT; i++)
+            history[i] = 0;
+    }
 
     if (fpsFrame == 0) return 0;
 
