@@ -739,6 +739,44 @@ void EndDrawing(void)
     PollInputEvents();      // Poll user events (before next frame update)
 #endif
 
+#if defined(SUPPORT_SCREEN_CAPTURE)
+    if (IsKeyPressed(KEY_F12))
+    {
+#if defined(SUPPORT_GIF_RECORDING)
+        if (IsKeyDown(KEY_LEFT_CONTROL))
+        {
+            if (gifRecording)
+            {
+                gifRecording = false;
+
+                MsfGifResult result = msf_gif_end(&gifState);
+
+                SaveFileData(TextFormat("%s/screenrec%03i.gif", CORE.Storage.basePath, screenshotCounter), result.data, (unsigned int)result.dataSize);
+                msf_gif_free(result);
+
+                TRACELOG(LOG_INFO, "SYSTEM: Finish animated GIF recording");
+            }
+            else
+            {
+                gifRecording = true;
+                gifFrameCounter = 0;
+
+                Vector2 scale = GetWindowScaleDPI();
+                msf_gif_begin(&gifState, (int)((float)CORE.Window.render.width*scale.x), (int)((float)CORE.Window.render.height*scale.y));
+                screenshotCounter++;
+
+                TRACELOG(LOG_INFO, "SYSTEM: Start animated GIF recording: %s", TextFormat("screenrec%03i.gif", screenshotCounter));
+            }
+        }
+        else
+#endif  // SUPPORT_GIF_RECORDING
+        {
+            TakeScreenshot(TextFormat("screenshot%03i.png", screenshotCounter));
+            screenshotCounter++;
+        }
+    }
+#endif  // SUPPORT_SCREEN_CAPTURE
+
 #if defined(SUPPORT_EVENTS_AUTOMATION)
     // Events recording and playing logic
     if (eventsRecording) RecordAutomationEvent(CORE.Time.frameCounter);
@@ -748,7 +786,7 @@ void EndDrawing(void)
         if (CORE.Time.frameCounter >= eventCount) eventsPlaying = false;
         PlayAutomationEvent(CORE.Time.frameCounter);
     }
-#endif
+#endif  // SUPPORT_EVENTS_AUTOMATION
 
     CORE.Time.frameCounter++;
 }

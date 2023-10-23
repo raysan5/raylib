@@ -1658,61 +1658,6 @@ static void KeyCallback(GLFWwindow *window, int key, int scancode, int action, i
 
     // Check the exit key to set close window
     if ((key == CORE.Input.Keyboard.exitKey) && (action == GLFW_PRESS)) glfwSetWindowShouldClose(platform.handle, GLFW_TRUE);
-
-#if defined(SUPPORT_SCREEN_CAPTURE)
-    if ((key == GLFW_KEY_F12) && (action == GLFW_PRESS))
-    {
-#if defined(SUPPORT_GIF_RECORDING)
-        if (mods & GLFW_MOD_CONTROL)
-        {
-            if (gifRecording)
-            {
-                gifRecording = false;
-
-                MsfGifResult result = msf_gif_end(&gifState);
-
-                SaveFileData(TextFormat("%s/screenrec%03i.gif", CORE.Storage.basePath, screenshotCounter), result.data, (unsigned int)result.dataSize);
-                msf_gif_free(result);
-
-                TRACELOG(LOG_INFO, "SYSTEM: Finish animated GIF recording");
-            }
-            else
-            {
-                gifRecording = true;
-                gifFrameCounter = 0;
-
-                Vector2 scale = GetWindowScaleDPI();
-                msf_gif_begin(&gifState, (int)((float)CORE.Window.render.width*scale.x), (int)((float)CORE.Window.render.height*scale.y));
-                screenshotCounter++;
-
-                TRACELOG(LOG_INFO, "SYSTEM: Start animated GIF recording: %s", TextFormat("screenrec%03i.gif", screenshotCounter));
-            }
-        }
-        else
-#endif  // SUPPORT_GIF_RECORDING
-        {
-            TakeScreenshot(TextFormat("screenshot%03i.png", screenshotCounter));
-            screenshotCounter++;
-        }
-    }
-#endif  // SUPPORT_SCREEN_CAPTURE
-
-#if defined(SUPPORT_EVENTS_AUTOMATION)
-    if ((key == GLFW_KEY_F11) && (action == GLFW_PRESS))
-    {
-        eventsRecording = !eventsRecording;
-
-        // On finish recording, we export events into a file
-        if (!eventsRecording) ExportAutomationEvents("eventsrec.rep");
-    }
-    else if ((key == GLFW_KEY_F9) && (action == GLFW_PRESS))
-    {
-        LoadAutomationEvents("eventsrec.rep");
-        eventsPlaying = true;
-
-        TRACELOG(LOG_WARNING, "eventsPlaying enabled!");
-    }
-#endif
 }
 
 // GLFW3 Char Key Callback, runs on key down (gets equivalent unicode char value)
