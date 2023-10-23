@@ -54,7 +54,7 @@ RAYLIB_SRC_PATH      ?= ../src
 # NOTE: If externally provided, make sure directory exists
 RAYLIB_RELEASE_PATH  ?= $(RAYLIB_SRC_PATH)
 
-# Library type used for raylib: STATIC (.a) or SHARED (.so/.dll)
+# Library type used for raylib: STATIC (.a/.lib) or SHARED (.so/.dll)
 RAYLIB_LIBTYPE       ?= STATIC
 
 # Build mode for library: DEBUG or RELEASE
