@@ -928,7 +928,6 @@ Sound LoadSoundFromWave(Wave wave)
 }
 
 // Clone sound from existing sound data, clone does not own wave data
-// Wave data must
 // NOTE: Wave data must be unallocated manually and will be shared across all clones
 Sound LoadSoundAlias(Sound source)
 {
@@ -936,13 +935,16 @@ Sound LoadSoundAlias(Sound source)
 
     if (source.stream.buffer->data != NULL)
     {
-        AudioBuffer* audioBuffer = LoadAudioBuffer(AUDIO_DEVICE_FORMAT, AUDIO_DEVICE_CHANNELS, AUDIO.System.device.sampleRate, source.frameCount, AUDIO_BUFFER_USAGE_STATIC);
+        AudioBuffer* audioBuffer = LoadAudioBuffer(AUDIO_DEVICE_FORMAT, AUDIO_DEVICE_CHANNELS, AUDIO.System.device.sampleRate, 0, AUDIO_BUFFER_USAGE_STATIC);
         if (audioBuffer == NULL)
         {
             TRACELOG(LOG_WARNING, "SOUND: Failed to create buffer");
             return sound; // early return to avoid dereferencing the audioBuffer null pointer
         }
+        audioBuffer->sizeInFrames = source.stream.buffer->sizeInFrames;
+        audioBuffer->volume = source.stream.buffer->volume;
         audioBuffer->data = source.stream.buffer->data;
+
         sound.frameCount = source.frameCount;
         sound.stream.sampleRate = AUDIO.System.device.sampleRate;
         sound.stream.sampleSize = 32;
@@ -952,6 +954,7 @@ Sound LoadSoundAlias(Sound source)
 
     return sound;
 }
+
 
 // Checks if a sound is ready
 bool IsSoundReady(Sound sound)
