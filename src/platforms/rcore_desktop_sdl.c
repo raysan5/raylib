@@ -893,9 +893,15 @@ double GetTime(void)
 }
 
 // Open URL with default system browser (if available)
+// NOTE: This function is only safe to use if you control the URL given.
+// A user could craft a malicious string performing another action.
+// Only call this function yourself not with user input or make sure to check the string yourself.
+// Ref: https://github.com/raysan5/raylib/issues/686
 void OpenURL(const char *url)
 {
-    SDL_OpenURL(url);
+    // Security check to (partially) avoid malicious code
+    if (strchr(url, '\'') != NULL) TRACELOG(LOG_WARNING, "SYSTEM: Provided URL could be potentially malicious, avoid [\'] character");
+    else SDL_OpenURL(url);
 }
 
 //----------------------------------------------------------------------------------
@@ -1145,7 +1151,7 @@ int InitPlatform(void)
     //if ((CORE.Window.flags & FLAG_FULLSCREEN_DESKTOP) > 0) flags |= SDL_WINDOW_FULLSCREEN_DESKTOP;
 
     // NOTE: Some OpenGL context attributes must be set before window creation
-    
+
     // Check selection OpenGL version
     if (rlGetVersion() == RL_OPENGL_21)
     {
@@ -1224,9 +1230,9 @@ int InitPlatform(void)
         TRACELOG(LOG_INFO, "    > Viewport offsets: %i, %i", CORE.Window.renderOffset.x, CORE.Window.renderOffset.y);
     }
     else
-    { 
-        TRACELOG(LOG_FATAL, "PLATFORM: Failed to initialize graphics device"); 
-        return -1; 
+    {
+        TRACELOG(LOG_FATAL, "PLATFORM: Failed to initialize graphics device");
+        return -1;
     }
 
     // Load OpenGL extensions
@@ -1253,7 +1259,7 @@ int InitPlatform(void)
     //----------------------------------------------------------------------------
     CORE.Storage.basePath = GetWorkingDirectory();  // Define base path for storage
     //----------------------------------------------------------------------------
-    
+
     TRACELOG(LOG_INFO, "PLATFORM: DESKTOP (SDL): Initialized successfully");
 
     return 0;
