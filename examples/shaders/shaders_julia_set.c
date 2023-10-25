@@ -44,8 +44,8 @@ int main(void)
 {
     // Initialization
     //--------------------------------------------------------------------------------------
-    const int screenWidth = 800;
-    const int screenHeight = 450;
+    const int screenWidth = 1920 * 1.5;
+    const int screenHeight = 1080 * 1.5;
     const float zoomSpeed = 1.005f;
 
     InitWindow(screenWidth, screenHeight, "raylib [shaders] example - julia sets");
@@ -61,7 +61,7 @@ int main(void)
     float c[2] = { pointsOfInterest[0][0], pointsOfInterest[0][1] };
 
     // Offset and zoom to draw the julia set at. (centered on screen and default size)
-    float offset[2] = { -(float)GetScreenWidth()/2, -(float)GetScreenHeight()/2 };
+    float offset[2] = { -0.5, -0.5 };
     float zoom = 1.0f;
 
     // Get variable (uniform) locations on the shader to connect with the program
@@ -69,10 +69,6 @@ int main(void)
     int cLoc = GetShaderLocation(shader, "c");
     int zoomLoc = GetShaderLocation(shader, "zoom");
     int offsetLoc = GetShaderLocation(shader, "offset");
-
-    // Tell the shader what the screen dimensions, zoom, offset and c are
-    float screenDims[2] = { (float)GetScreenWidth(), (float)GetScreenHeight() };
-    SetShaderValue(shader, GetShaderLocation(shader, "screenDims"), screenDims, SHADER_UNIFORM_VEC2);
 
     SetShaderValue(shader, cLoc, c, SHADER_UNIFORM_VEC2);
     SetShaderValue(shader, zoomLoc, &zoom, SHADER_UNIFORM_FLOAT);
@@ -120,16 +116,16 @@ int main(void)
 
                 const Vector2 mousePos = GetMousePosition();
                 Vector2 offsetVelocity;
-                offsetVelocity.x = zoom * (mousePos.x - (float)screenWidth / 2.0);
-                offsetVelocity.y = zoom * (mousePos.y - (float)screenHeight / 2.0);
+                offsetVelocity.x = zoom * (mousePos.x/(float)screenWidth - 0.5);
+                offsetVelocity.y = zoom * (mousePos.y/(float)screenHeight - 0.5);
 
                 // Apply move velocity to camera
                 offset[0] += GetFrameTime() * offsetVelocity.x;
                 offset[1] += GetFrameTime() * offsetVelocity.y;
-            }
 
-            SetShaderValue(shader, zoomLoc, &zoom, SHADER_UNIFORM_FLOAT);
-            SetShaderValue(shader, offsetLoc, offset, SHADER_UNIFORM_VEC2);
+                SetShaderValue(shader, zoomLoc, &zoom, SHADER_UNIFORM_FLOAT);
+                SetShaderValue(shader, offsetLoc, offset, SHADER_UNIFORM_VEC2);
+            }
 
             // Increment c value with time
             float amount = GetFrameTime() * incrementSpeed * 0.0005f;

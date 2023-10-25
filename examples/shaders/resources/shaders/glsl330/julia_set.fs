@@ -7,12 +7,11 @@ in vec4 fragColor;
 // Output fragment color
 out vec4 finalColor;
 
-uniform vec2 screenDims;        // Dimensions of the screen
 uniform vec2 c;                 // c.x = real, c.y = imaginary component. Equation done is z^2 + c
 uniform vec2 offset;            // Offset of the scale.
 uniform float zoom;             // Zoom of the scale.
 
-const int MAX_ITERATIONS = 255;  // Max iterations to do.
+const int MAX_ITERATIONS = 255 * 4;  // Max iterations to do.
 const float COLOR_CYCLES = 2;    // Number of times the palette repeats. Can show higher detail for higher iteration numbers.
 
 // Square a complex number
@@ -55,7 +54,7 @@ void main()
 
     // The pixel coordinates are scaled so they are on the mandelbrot scale
     // NOTE: fragTexCoord already comes as normalized screen coordinates but offset must be normalized before scaling and zoom
-    vec2 z = vec2((fragTexCoord.x + offset.x/screenDims.x)*2.5/zoom, (fragTexCoord.y + offset.y/screenDims.y)*1.5/zoom);
+    vec2 z = vec2((fragTexCoord.x + offset.x)*2.5/zoom, (fragTexCoord.y + offset.y)*1.5/zoom);
 
     int iterations = 0;
     for (iterations = 0; iterations < MAX_ITERATIONS; iterations++)
