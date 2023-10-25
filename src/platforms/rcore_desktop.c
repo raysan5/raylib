@@ -755,6 +755,8 @@ int GetCurrentMonitor(void)
             int y = 0;
 
             glfwGetWindowPos(platform.handle, &x, &y);
+            x += (int)CORE.Window.screen.width / 2;
+            y += (int)CORE.Window.screen.height / 2;
 
             for (int i = 0; i < monitorCount; i++)
             {
