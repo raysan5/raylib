@@ -11,7 +11,7 @@ uniform vec2 c;                 // c.x = real, c.y = imaginary component. Equati
 uniform vec2 offset;            // Offset of the scale.
 uniform float zoom;             // Zoom of the scale.
 
-const int MAX_ITERATIONS = 255 * 4;  // Max iterations to do.
+const int MAX_ITERATIONS = 255;  // Max iterations to do.
 const float COLOR_CYCLES = 2;    // Number of times the palette repeats. Can show higher detail for higher iteration numbers.
 
 // Square a complex number
