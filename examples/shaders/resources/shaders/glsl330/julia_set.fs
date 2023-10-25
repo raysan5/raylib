@@ -12,7 +12,8 @@ uniform vec2 c;                 // c.x = real, c.y = imaginary component. Equati
 uniform vec2 offset;            // Offset of the scale.
 uniform float zoom;             // Zoom of the scale.
 
-const int MAX_ITERATIONS = 255; // Max iterations to do.
+const int MAX_ITERATIONS = 255;  // Max iterations to do.
+const float COLOR_CYCLES = 2;    // Number of times the palette repeats. Can show higher detail for higher iteration numbers.
 
 // Square a complex number
 vec2 ComplexSquare(vec2 z)
@@ -77,5 +78,5 @@ void main()
 
     // If in set, color black. 0.999 allows for some float accuracy error.
     if (norm > 0.999) finalColor = vec4(0.0, 0.0, 0.0, 1.0);
-    else finalColor = vec4(Hsv2rgb(vec3(norm, 1.0, 1.0)), 1.0);
+    else finalColor = vec4(Hsv2rgb(vec3(norm * COLOR_CYCLES, 1.0, 1.0)), 1.0);
 }

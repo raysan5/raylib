@@ -13,7 +13,9 @@ uniform float zoom;             // Zoom of the scale.
 
 // NOTE: Maximum number of shader for-loop iterations depend on GPU,
 // for example, on RasperryPi for this examply only supports up to 60
-const int MAX_ITERATIONS = 48;  // Max iterations to do
+const int MAX_ITERATIONS = 48;  // Max iterations to do.
+
+const float COLOR_CYCLES = 1;   // Number of times the palette repeats.
 
 // Square a complex number
 vec2 ComplexSquare(vec2 z)
@@ -79,5 +81,5 @@ void main()
 
     // If in set, color black. 0.999 allows for some float accuracy error.
     if (norm > 0.999) gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0);
-    else gl_FragColor = vec4(Hsv2rgb(vec3(norm, 1.0, 1.0)), 1.0);
+    else gl_FragColor = vec4(Hsv2rgb(vec3(norm * COLOR_CYCLES, 1.0, 1.0)), 1.0);
 }
