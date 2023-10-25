@@ -1120,7 +1120,11 @@ void PollInputEvents(void)
     // NOTE: We do it here in case of disconnection
     for (int i = 0; i < MAX_GAMEPADS; i++)
     {
-        if (glfwJoystickPresent(i)) CORE.Input.Gamepad.ready[i] = true;
+        if (glfwJoystickPresent(i)) 
+        {
+            CORE.Input.Gamepad.ready[i] = true;
+            strcpy(CORE.Input.Gamepad.name[i], glfwGetJoystickName(i));
+        }
         else CORE.Input.Gamepad.ready[i] = false;
     }
 
