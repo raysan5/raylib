@@ -37,8 +37,8 @@ const float pointsOfInterest[6][2] =
     { -0.70176f, -0.3842f },
 };
 
-const int screenWidth = 1920;
-const int screenHeight = 1080;
+const int screenWidth = 800;
+const int screenHeight = 450;
 const float zoomSpeed = 1.01f;
 const float offsetSpeedMul = 2.0f;
 
@@ -73,6 +73,7 @@ int main(void)
     int zoomLoc = GetShaderLocation(shader, "zoom");
     int offsetLoc = GetShaderLocation(shader, "offset");
 
+    // Upload the shader uniform values!
     SetShaderValue(shader, cLoc, c, SHADER_UNIFORM_VEC2);
     SetShaderValue(shader, zoomLoc, &zoom, SHADER_UNIFORM_FLOAT);
     SetShaderValue(shader, offsetLoc, offset, SHADER_UNIFORM_VEC2);
@@ -111,7 +112,7 @@ int main(void)
             SetShaderValue(shader, offsetLoc, offset, SHADER_UNIFORM_VEC2);
         }
 
-        if (IsKeyPressed(KEY_SPACE)) incrementSpeed = 0;             // Pause animation (c change)
+        if (IsKeyPressed(KEY_SPACE)) incrementSpeed = 0;         // Pause animation (c change)
         if (IsKeyPressed(KEY_F1)) showControls = !showControls;  // Toggle whether or not to show controls
 
         if (IsKeyPressed(KEY_RIGHT)) incrementSpeed++;
@@ -126,6 +127,9 @@ int main(void)
 
             const Vector2 mousePos = GetMousePosition();
             Vector2 offsetVelocity;
+            // Find the velocity at which to change the camera. Take the distance of the mouse
+            // from the center of the screen as the direction, and adjust magnitude based on
+            // the current zoom.
             offsetVelocity.x = (mousePos.x/(float)screenWidth - 0.5) * offsetSpeedMul / zoom;
             offsetVelocity.y = (mousePos.y/(float)screenHeight - 0.5) * offsetSpeedMul / zoom;
 
@@ -133,6 +137,7 @@ int main(void)
             offset[0] += GetFrameTime() * offsetVelocity.x;
             offset[1] += GetFrameTime() * offsetVelocity.y;
 
+            // Update the shader uniform values!
             SetShaderValue(shader, zoomLoc, &zoom, SHADER_UNIFORM_FLOAT);
             SetShaderValue(shader, offsetLoc, offset, SHADER_UNIFORM_VEC2);
         }
