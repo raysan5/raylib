@@ -37,6 +37,13 @@ const float pointsOfInterest[6][2] =
     { -0.70176f, -0.3842f },
 };
 
+const int screenWidth = 1920;
+const int screenHeight = 1080;
+const float zoomSpeed = 1.01f;
+const float offsetSpeedMul = 2.0f;
+
+const float startingZoom = 0.75f;
+
 //------------------------------------------------------------------------------------
 // Program main entry point
 //------------------------------------------------------------------------------------
@@ -44,10 +51,6 @@ int main(void)
 {
     // Initialization
     //--------------------------------------------------------------------------------------
-    const int screenWidth = 1920 * 1.5;
-    const int screenHeight = 1080 * 1.5;
-    const float zoomSpeed = 1.005f;
-
     InitWindow(screenWidth, screenHeight, "raylib [shaders] example - julia sets");
 
     // Load julia set shader
@@ -61,8 +64,8 @@ int main(void)
     float c[2] = { pointsOfInterest[0][0], pointsOfInterest[0][1] };
 
     // Offset and zoom to draw the julia set at. (centered on screen and default size)
-    float offset[2] = { -0.5, -0.5 };
-    float zoom = 1.0f;
+    float offset[2] = { 0.0, 0.0 };
+    float zoom = startingZoom;
 
     // Get variable (uniform) locations on the shader to connect with the program
     // NOTE: If uniform variable could not be found in the shader, function returns -1
@@ -76,7 +79,6 @@ int main(void)
 
     int incrementSpeed = 0;             // Multiplier of speed to change c value
     bool showControls = true;           // Show controls
-    bool pause = false;                 // Pause animation
 
     SetTargetFPS(60);                   // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
@@ -99,41 +101,47 @@ int main(void)
             }
         }
 
-        if (IsKeyPressed(KEY_SPACE)) pause = !pause;             // Pause animation (c change)
+        // If "R" is pressed, reset zoom and offset.
+        if (IsKeyPressed(KEY_R))
+        {
+            zoom = startingZoom;
+            offset[0] = 0.0;
+            offset[1] = 0.0;
+            SetShaderValue(shader, zoomLoc, &zoom, SHADER_UNIFORM_FLOAT);
+            SetShaderValue(shader, offsetLoc, offset, SHADER_UNIFORM_VEC2);
+        }
+
+        if (IsKeyPressed(KEY_SPACE)) incrementSpeed = 0;             // Pause animation (c change)
         if (IsKeyPressed(KEY_F1)) showControls = !showControls;  // Toggle whether or not to show controls
 
-        if (!pause)
+        if (IsKeyPressed(KEY_RIGHT)) incrementSpeed++;
+        else if (IsKeyPressed(KEY_LEFT)) incrementSpeed--;
+
+        // If either left or right button is pressed, zoom in/out.
+        const bool leftMouseButtonDown = IsMouseButtonDown(MOUSE_BUTTON_LEFT);
+        if (leftMouseButtonDown ^ IsMouseButtonDown(MOUSE_BUTTON_RIGHT))
         {
-            if (IsKeyPressed(KEY_RIGHT)) incrementSpeed++;
-            else if (IsKeyPressed(KEY_LEFT)) incrementSpeed--;
+            // Change zoom. If Mouse left -> zoom in. Mouse right -> zoom out.
+            zoom *= leftMouseButtonDown ? zoomSpeed : 1.0f / zoomSpeed;
 
-            // If either left or right button is pressed, zoom in/out.
-            const bool leftMouseButtonDown = IsMouseButtonDown(MOUSE_BUTTON_LEFT);
-            if (leftMouseButtonDown ^ IsMouseButtonDown(MOUSE_BUTTON_RIGHT))
-            {
-                // Change zoom. If Mouse left -> zoom in. Mouse right -> zoom out.
-                zoom *= leftMouseButtonDown ? zoomSpeed : 1.0f / zoomSpeed;
+            const Vector2 mousePos = GetMousePosition();
+            Vector2 offsetVelocity;
+            offsetVelocity.x = (mousePos.x/(float)screenWidth - 0.5) * offsetSpeedMul / zoom;
+            offsetVelocity.y = (mousePos.y/(float)screenHeight - 0.5) * offsetSpeedMul / zoom;
 
-                const Vector2 mousePos = GetMousePosition();
-                Vector2 offsetVelocity;
-                offsetVelocity.x = zoom * (mousePos.x/(float)screenWidth - 0.5);
-                offsetVelocity.y = zoom * (mousePos.y/(float)screenHeight - 0.5);
+            // Apply move velocity to camera
+            offset[0] += GetFrameTime() * offsetVelocity.x;
+            offset[1] += GetFrameTime() * offsetVelocity.y;
 
-                // Apply move velocity to camera
-                offset[0] += GetFrameTime() * offsetVelocity.x;
-                offset[1] += GetFrameTime() * offsetVelocity.y;
-
-                SetShaderValue(shader, zoomLoc, &zoom, SHADER_UNIFORM_FLOAT);
-                SetShaderValue(shader, offsetLoc, offset, SHADER_UNIFORM_VEC2);
-            }
-
-            // Increment c value with time
-            float amount = GetFrameTime() * incrementSpeed * 0.0005f;
-            c[0] += amount;
-            c[1] += amount;
-
-            SetShaderValue(shader, cLoc, c, SHADER_UNIFORM_VEC2);
+            SetShaderValue(shader, zoomLoc, &zoom, SHADER_UNIFORM_FLOAT);
+            SetShaderValue(shader, offsetLoc, offset, SHADER_UNIFORM_VEC2);
         }
+
+        // Increment c value with time
+        const float dc = GetFrameTime() * (float)incrementSpeed * 0.0005f;
+        c[0] += dc;
+        c[1] += dc;
+        SetShaderValue(shader, cLoc, c, SHADER_UNIFORM_VEC2);
         //----------------------------------------------------------------------------------
 
         // Draw
@@ -166,7 +174,8 @@ int main(void)
                 DrawText("Press KEY_F1 to toggle these controls", 10, 30, 10, RAYWHITE);
                 DrawText("Press KEYS [1 - 6] to change point of interest", 10, 45, 10, RAYWHITE);
                 DrawText("Press KEY_LEFT | KEY_RIGHT to change speed", 10, 60, 10, RAYWHITE);
-                DrawText("Press KEY_SPACE to pause movement animation", 10, 75, 10, RAYWHITE);
+                DrawText("Press KEY_SPACE to stop movement animation", 10, 75, 10, RAYWHITE);
+                DrawText("Press KEY_R to recenter the camera", 10, 90, 10, RAYWHITE);
             }
         EndDrawing();
         //----------------------------------------------------------------------------------

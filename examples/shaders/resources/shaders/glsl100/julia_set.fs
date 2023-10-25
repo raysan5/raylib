@@ -6,7 +6,6 @@ precision mediump float;
 varying vec2 fragTexCoord;
 varying vec4 fragColor;
 
-uniform vec2 screenDims;        // Dimensions of the screen
 uniform vec2 c;                 // c.x = real, c.y = imaginary component. Equation done is z^2 + c
 uniform vec2 offset;            // Offset of the scale.
 uniform float zoom;             // Zoom of the scale.
@@ -57,7 +56,9 @@ void main()
 
     // The pixel coordinates are scaled so they are on the mandelbrot scale
     // NOTE: fragTexCoord already comes as normalized screen coordinates but offset must be normalized before scaling and zoom
-    vec2 z = vec2((fragTexCoord.x + offset.x/screenDims.x)*2.5/zoom, (fragTexCoord.y + offset.y/screenDims.y)*1.5/zoom);
+    vec2 z = vec2((fragTexCoord.x - 0.5) * 2.5, (fragTexCoord.y - 0.5) * 1.5) / zoom;
+    z.x += offset.x;
+    z.y += offset.y;
 
     int iter = 0;
     for (int iterations = 0; iterations < 60; iterations++)

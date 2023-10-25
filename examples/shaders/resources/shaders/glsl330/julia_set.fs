@@ -54,7 +54,9 @@ void main()
 
     // The pixel coordinates are scaled so they are on the mandelbrot scale
     // NOTE: fragTexCoord already comes as normalized screen coordinates but offset must be normalized before scaling and zoom
-    vec2 z = vec2((fragTexCoord.x + offset.x)*2.5/zoom, (fragTexCoord.y + offset.y)*1.5/zoom);
+    vec2 z = vec2((fragTexCoord.x - 0.5) * 2.5, (fragTexCoord.y - 0.5) * 1.5) / zoom;
+    z.x += offset.x;
+    z.y += offset.y;
 
     int iterations = 0;
     for (iterations = 0; iterations < MAX_ITERATIONS; iterations++)
