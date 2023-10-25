@@ -93,24 +93,18 @@ int main(void)
         // Update
         //----------------------------------------------------------------------------------
         // Press [1 - 6] to reset c to a point of interest
-        if (IsKeyPressed(KEY_ONE) ||
-            IsKeyPressed(KEY_TWO) ||
-            IsKeyPressed(KEY_THREE) ||
-            IsKeyPressed(KEY_FOUR) ||
-            IsKeyPressed(KEY_FIVE) ||
-            IsKeyPressed(KEY_SIX))
+        for (KeyboardKey k = KEY_ONE; k <= KEY_SIX; ++k)
         {
-            if (IsKeyPressed(KEY_ONE)) c[0] = pointsOfInterest[0][0], c[1] = pointsOfInterest[0][1];
-            else if (IsKeyPressed(KEY_TWO)) c[0] = pointsOfInterest[1][0], c[1] = pointsOfInterest[1][1];
-            else if (IsKeyPressed(KEY_THREE)) c[0] = pointsOfInterest[2][0], c[1] = pointsOfInterest[2][1];
-            else if (IsKeyPressed(KEY_FOUR)) c[0] = pointsOfInterest[3][0], c[1] = pointsOfInterest[3][1];
-            else if (IsKeyPressed(KEY_FIVE)) c[0] = pointsOfInterest[4][0], c[1] = pointsOfInterest[4][1];
-            else if (IsKeyPressed(KEY_SIX)) c[0] = pointsOfInterest[5][0], c[1] = pointsOfInterest[5][1];
-
-            SetShaderValue(shader, cLoc, c, SHADER_UNIFORM_VEC2);
+            if (IsKeyPressed(k))
+            {
+                c[0] = pointsOfInterest[k - KEY_ONE][0];
+                c[1] = pointsOfInterest[k - KEY_ONE][1];
+                SetShaderValue(shader, cLoc, c, SHADER_UNIFORM_VEC2);
+                break;
+            }
         }
 
-        if (IsKeyPressed(KEY_SPACE)) pause = !pause;                 // Pause animation (c change)
+        if (IsKeyPressed(KEY_SPACE)) pause = !pause;             // Pause animation (c change)
         if (IsKeyPressed(KEY_F1)) showControls = !showControls;  // Toggle whether or not to show controls
 
         if (!pause)
@@ -118,21 +112,22 @@ int main(void)
             if (IsKeyPressed(KEY_RIGHT)) incrementSpeed++;
             else if (IsKeyPressed(KEY_LEFT)) incrementSpeed--;
 
-            // TODO: The idea is to zoom and move around with mouse
-            // Probably offset movement should be proportional to zoom level
+            
+
+            // TODO: The idea is to zoom and move around with the mouse
             if (IsMouseButtonDown(MOUSE_BUTTON_LEFT) || IsMouseButtonDown(MOUSE_BUTTON_RIGHT))
             {
-                if (IsMouseButtonDown(MOUSE_BUTTON_LEFT)) zoom += zoom*0.003f;
-                if (IsMouseButtonDown(MOUSE_BUTTON_RIGHT)) zoom -= zoom*0.003f;
+                if (IsMouseButtonDown(MOUSE_BUTTON_LEFT)) zoom += zoom * 0.003f;
+                if (IsMouseButtonDown(MOUSE_BUTTON_RIGHT)) zoom -= zoom * 0.003f;
 
-                Vector2 mousePos = GetMousePosition();
-
-                offsetSpeed.x = mousePos.x -(float)screenWidth/2;
-                offsetSpeed.y = mousePos.y -(float)screenHeight/2;
+                const Vector2 mousePos = GetMousePosition();
+                
+                offsetSpeed.x = zoom * (mousePos.x - (float)screenWidth / 2.0);
+                offsetSpeed.y = zoom * (mousePos.y - (float)screenHeight / 2.0);
 
                 // Slowly move camera to targetOffset
-                offset[0] += GetFrameTime()*offsetSpeed.x*0.8f;
-                offset[1] += GetFrameTime()*offsetSpeed.y*0.8f;
+                offset[0] += GetFrameTime() * offsetSpeed.x;
+                offset[1] += GetFrameTime() * offsetSpeed.y;
             }
             else offsetSpeed = (Vector2){ 0.0f, 0.0f };
 
