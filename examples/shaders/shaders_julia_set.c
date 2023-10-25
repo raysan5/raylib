@@ -9,12 +9,12 @@
 *
 *   Example originally created with raylib 2.5, last time updated with raylib 4.0
 *
-*   Example contributed by eggmund (@eggmund) and reviewed by Ramon Santamaria (@raysan5)
+*   Example contributed by Josh Colclough (@joshcol9232) and reviewed by Ramon Santamaria (@raysan5)
 *
 *   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
 *   BSD-like license that allows static linking with closed source software
 *
-*   Copyright (c) 2019-2023 eggmund (@eggmund) and Ramon Santamaria (@raysan5)
+*   Copyright (c) 2019-2023 Josh Colclough (@joshcol9232) and Ramon Santamaria (@raysan5)
 *
 ********************************************************************************************/
 
@@ -46,8 +46,8 @@ int main(void)
     //--------------------------------------------------------------------------------------
     const int screenWidth = 800;
     const int screenHeight = 450;
+    const float zoomSpeed = 1.005f;
 
-    //SetConfigFlags(FLAG_WINDOW_HIGHDPI);
     InitWindow(screenWidth, screenHeight, "raylib [shaders] example - julia sets");
 
     // Load julia set shader
@@ -63,8 +63,6 @@ int main(void)
     // Offset and zoom to draw the julia set at. (centered on screen and default size)
     float offset[2] = { -(float)GetScreenWidth()/2, -(float)GetScreenHeight()/2 };
     float zoom = 1.0f;
-
-    Vector2 offsetSpeed = { 0.0f, 0.0f };
 
     // Get variable (uniform) locations on the shader to connect with the program
     // NOTE: If uniform variable could not be found in the shader, function returns -1
@@ -97,6 +95,7 @@ int main(void)
         {
             if (IsKeyPressed(k))
             {
+                // If this key is pressed, set the point of interest of the corresponding key.
                 c[0] = pointsOfInterest[k - KEY_ONE][0];
                 c[1] = pointsOfInterest[k - KEY_ONE][1];
                 SetShaderValue(shader, cLoc, c, SHADER_UNIFORM_VEC2);
@@ -112,30 +111,28 @@ int main(void)
             if (IsKeyPressed(KEY_RIGHT)) incrementSpeed++;
             else if (IsKeyPressed(KEY_LEFT)) incrementSpeed--;
 
-            
-
-            // TODO: The idea is to zoom and move around with the mouse
-            if (IsMouseButtonDown(MOUSE_BUTTON_LEFT) || IsMouseButtonDown(MOUSE_BUTTON_RIGHT))
+            // If either left or right button is pressed, zoom in/out.
+            const bool leftMouseButtonDown = IsMouseButtonDown(MOUSE_BUTTON_LEFT);
+            if (leftMouseButtonDown ^ IsMouseButtonDown(MOUSE_BUTTON_RIGHT))
             {
-                if (IsMouseButtonDown(MOUSE_BUTTON_LEFT)) zoom += zoom * 0.003f;
-                if (IsMouseButtonDown(MOUSE_BUTTON_RIGHT)) zoom -= zoom * 0.003f;
+                // Change zoom. If Mouse left -> zoom in. Mouse right -> zoom out.
+                zoom *= leftMouseButtonDown ? zoomSpeed : 1.0f / zoomSpeed;
 
                 const Vector2 mousePos = GetMousePosition();
-                
-                offsetSpeed.x = zoom * (mousePos.x - (float)screenWidth / 2.0);
-                offsetSpeed.y = zoom * (mousePos.y - (float)screenHeight / 2.0);
+                Vector2 offsetVelocity;
+                offsetVelocity.x = zoom * (mousePos.x - (float)screenWidth / 2.0);
+                offsetVelocity.y = zoom * (mousePos.y - (float)screenHeight / 2.0);
 
-                // Slowly move camera to targetOffset
-                offset[0] += GetFrameTime() * offsetSpeed.x;
-                offset[1] += GetFrameTime() * offsetSpeed.y;
+                // Apply move velocity to camera
+                offset[0] += GetFrameTime() * offsetVelocity.x;
+                offset[1] += GetFrameTime() * offsetVelocity.y;
             }
-            else offsetSpeed = (Vector2){ 0.0f, 0.0f };
 
             SetShaderValue(shader, zoomLoc, &zoom, SHADER_UNIFORM_FLOAT);
             SetShaderValue(shader, offsetLoc, offset, SHADER_UNIFORM_VEC2);
 
             // Increment c value with time
-            float amount = GetFrameTime()*incrementSpeed*0.0005f;
+            float amount = GetFrameTime() * incrementSpeed * 0.0005f;
             c[0] += amount;
             c[1] += amount;
 
