@@ -1349,7 +1349,7 @@ unsigned int TextLength(const char *text)
     if (text != NULL)
     {
         // NOTE: Alternative: use strlen(text)
-        
+
         while (*text++) length++;
     }
 
@@ -1418,7 +1418,7 @@ int TextCopy(char *dst, const char *src)
     if ((src != NULL) && (dst != NULL))
     {
         // NOTE: Alternative: use strcpy(dst, src)
-        
+
         while (*src != '\0')
         {
             *dst = *src;
@@ -1463,7 +1463,7 @@ const char *TextSubtext(const char *text, int position, int length)
     }
 
     if (length >= textLength) length = textLength;
-    
+
     // NOTE: Alternative: memcpy(buffer, text + position, length)
 
     for (int c = 0 ; c < length ; c++)
