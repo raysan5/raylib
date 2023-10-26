@@ -865,7 +865,7 @@ int InitPlatform(void)
 
     glfwMakeContextCurrent(platform.handle);
     result = true; // TODO: WARNING: glfwGetError(NULL); symbol can not be found in Web
-    
+
     // Check context activation
     if (result == true) //(result != GLFW_NO_WINDOW_CONTEXT) && (result != GLFW_PLATFORM_ERROR))
     {
@@ -885,9 +885,9 @@ int InitPlatform(void)
         TRACELOG(LOG_INFO, "    > Render size:  %i x %i", CORE.Window.render.width, CORE.Window.render.height);
         TRACELOG(LOG_INFO, "    > Viewport offsets: %i, %i", CORE.Window.renderOffset.x, CORE.Window.renderOffset.y);
     }
-    else 
-    { 
-        TRACELOG(LOG_FATAL, "PLATFORM: Failed to initialize graphics device"); 
+    else
+    {
+        TRACELOG(LOG_FATAL, "PLATFORM: Failed to initialize graphics device");
         return -1;
     }
 
@@ -896,12 +896,12 @@ int InitPlatform(void)
     // If graphic device is no properly initialized, we end program
     if (!CORE.Window.ready) { TRACELOG(LOG_FATAL, "PLATFORM: Failed to initialize graphic device"); return -1; }
     else SetWindowPosition(GetMonitorWidth(GetCurrentMonitor())/2 - CORE.Window.screen.width/2, GetMonitorHeight(GetCurrentMonitor())/2 - CORE.Window.screen.height/2);
-    
+
     // Load OpenGL extensions
     // NOTE: GL procedures address loader is required to load extensions
     rlLoadExtensions(glfwGetProcAddress);
     //----------------------------------------------------------------------------
-    
+
     // Initialize input events callbacks
     //----------------------------------------------------------------------------
     // Setup callback functions for the DOM events
