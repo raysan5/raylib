@@ -864,12 +864,12 @@ int InitPlatform(void)
     glfwSetCursorEnterCallback(platform.handle, CursorEnterCallback);
 
     glfwMakeContextCurrent(platform.handle);
-    result = glfwGetError(NULL);
+    result = true; // TODO: WARNING: glfwGetError(NULL); symbol can not be found in Web
     
     // Check context activation
-    if ((result != GLFW_NO_WINDOW_CONTEXT) && (result != GLFW_PLATFORM_ERROR))
+    if (result == true) //(result != GLFW_NO_WINDOW_CONTEXT) && (result != GLFW_PLATFORM_ERROR))
     {
-        CORE.Window.ready = true;   // TODO: Proper validation on windows/context creation
+        CORE.Window.ready = true;
 
         int fbWidth = CORE.Window.screen.width;
         int fbHeight = CORE.Window.screen.height;
