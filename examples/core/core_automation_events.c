@@ -77,7 +77,7 @@ int main(void)
     
     int frameCounter = 0;
     int playFrameCounter = 0;
-    int currentFrame = 0;
+    int currentPlayFrame = 0;
 
     SetTargetFPS(60);
     //--------------------------------------------------------------------------------------
@@ -87,7 +87,7 @@ int main(void)
     {
         // Update
         //----------------------------------------------------------------------------------
-        float deltaTime = GetFrameTime();
+        float deltaTime = 0.015f;//GetFrameTime();
         
         // Dropped files logic
         //----------------------------------------------------------------------------------
@@ -106,6 +106,7 @@ int main(void)
                 // Reset scene state to play
                 eventPlaying = true;
                 playFrameCounter = 0;
+                currentPlayFrame = 0;
                 
                 player.position = (Vector2){ 400, 280 };
                 player.speed = 0;
@@ -163,8 +164,15 @@ int main(void)
 
         if (IsKeyPressed(KEY_R))
         {
-            camera.zoom = 1.0f;
+            // Reset game state
             player.position = (Vector2){ 400, 280 };
+            player.speed = 0;
+            player.canJump = false;
+
+            camera.target = player.position;
+            camera.offset = (Vector2){ screenWidth/2.0f, screenHeight/2.0f };
+            camera.rotation = 0.0f;
+            camera.zoom = 1.0f;
         }
         //----------------------------------------------------------------------------------
 
@@ -193,7 +201,7 @@ int main(void)
         //----------------------------------------------------------------------------------
         
         // Toggle events recording
-        if (IsKeyPressed(KEY_ONE))
+        if (IsKeyPressed(KEY_F2))
         {
             if (!eventPlaying)
             {
@@ -211,22 +219,41 @@ int main(void)
                 }
             }
         }
+        else if (IsKeyPressed(KEY_F3))
+        {
+            if (!eventRecording && (aelist.count > 0))
+            {
+                // Reset scene state to play
+                eventPlaying = true;
+                playFrameCounter = 0;
+                currentPlayFrame = 0;
+
+                player.position = (Vector2){ 400, 280 };
+                player.speed = 0;
+                player.canJump = false;
+
+                camera.target = player.position;
+                camera.offset = (Vector2){ screenWidth/2.0f, screenHeight/2.0f };
+                camera.rotation = 0.0f;
+                camera.zoom = 1.0f;
+            }
+        }
         
         if (eventPlaying)
         {
-            if (playFrameCounter == aelist.events[currentFrame].frame)
+            if (playFrameCounter >= aelist.events[currentPlayFrame].frame)
             {
-                PlayAutomationEvent(aelist.events[currentFrame]);
-                currentFrame++;
+                PlayAutomationEvent(aelist.events[currentPlayFrame]);
+                currentPlayFrame++;
 
-                if (currentFrame == aelist.count)
+                if (currentPlayFrame == aelist.count)
                 {
                     eventPlaying = false;
-                    currentFrame = 0;
+                    currentPlayFrame = 0;
                     playFrameCounter = 0;
                 }
             }
-
+            
             playFrameCounter++;
         }
         
@@ -253,28 +280,36 @@ int main(void)
 
             EndMode2D();
             
+            // Draw game controls
+            DrawRectangle(10, 10, 290, 145, Fade(SKYBLUE, 0.5f));
+            DrawRectangleLines(10, 10, 290, 145, Fade(BLUE, 0.8f));
+
+            DrawText("Controls:", 20, 20, 10, BLACK);
+            DrawText("- RIGHT | LEFT: Player movement", 30, 40, 10, DARKGRAY);
+            DrawText("- SPACE: Player jump", 30, 60, 10, DARKGRAY);
+            DrawText("- R: Reset game state", 30, 80, 10, DARKGRAY);
+
+            DrawText("- F2: START/STOP RECORDING INPUT EVENTS", 30, 110, 10, BLACK);
+            DrawText("- F3: REPLAY LAST RECORDED INPUT EVENTS", 30, 130, 10, BLACK);
+
             // Draw automation events recording indicator
             if (eventRecording)
             {
-                if (((frameCounter/15)%2) == 1)
-                {
-                    DrawCircle(GetScreenWidth() - 200, 20, 10, MAROON);
-                    DrawText(TextFormat("RECORDING EVENTS... [%i]", aelist.count), GetScreenWidth() - 180, 15, 10, RED);
-                }
+                DrawRectangle(10, 160, 290, 30, Fade(RED, 0.3f));
+                DrawRectangleLines(10, 160, 290, 30, Fade(MAROON, 0.8f));
+                DrawCircle(30, 175, 10, MAROON);
+
+                if (((frameCounter/15)%2) == 1) DrawText(TextFormat("RECORDING EVENTS... [%i]", aelist.count), 50, 170, 10, MAROON);
             }
             else if (eventPlaying)
             {
-                if (((frameCounter/15)%2) == 1)
-                {
-                    DrawTriangle((Vector2){ GetScreenWidth() - 200, 10 }, (Vector2){ GetScreenWidth() - 200, 30 }, (Vector2){ GetScreenWidth() - 200 + 20, 20 }, DARKGREEN);
-                    DrawText(TextFormat("PLAYING EVENTS... [%i]", currentFrame), GetScreenWidth() - 170, 15, 10, LIME);
-                }
-            }
+                DrawRectangle(10, 160, 290, 30, Fade(LIME, 0.3f));
+                DrawRectangleLines(10, 160, 290, 30, Fade(DARKGREEN, 0.8f));
+                DrawTriangle((Vector2){ 20, 155 + 10 }, (Vector2){ 20, 155 + 30 }, (Vector2){ 40, 155 + 20 }, DARKGREEN);
 
-            DrawText("Controls:", 20, 20, 10, BLACK);
-            DrawText("- Right/Left to move", 30, 40, 10, DARKGRAY);
-            DrawText("- Space to jump", 30, 60, 10, DARKGRAY);
-            DrawText("- Mouse Wheel to Zoom in-out, R to reset zoom", 30, 80, 10, DARKGRAY);
+                if (((frameCounter/15)%2) == 1) DrawText(TextFormat("PLAYING RECORDED EVENTS... [%i]", currentPlayFrame), 50, 170, 10, DARKGREEN);
+            }
+            
 
         EndDrawing();
         //----------------------------------------------------------------------------------
