@@ -506,6 +506,20 @@ typedef struct FilePathList {
     char **paths;                   // Filepaths entries
 } FilePathList;
 
+// Automation event (opaque struct)
+typedef struct AutomationEvent {
+    unsigned int frame;                 // Event frame
+    unsigned int type;                  // Event type (AutomationEventType)
+    int params[4];                      // Event parameters (if required)
+} AutomationEvent;
+
+// Automation event list
+typedef struct AutomationEventList {
+    unsigned int capacity;          // Events max entries (MAX_AUTOMATION_EVENTS)
+    unsigned int count;             // Events entries count
+    AutomationEvent *events;        // Events entries
+} AutomationEventList;
+
 //----------------------------------------------------------------------------------
 // Enumerators Definition
 //----------------------------------------------------------------------------------
@@ -1113,6 +1127,15 @@ RLAPI unsigned char *CompressData(const unsigned char *data, int dataSize, int *
 RLAPI unsigned char *DecompressData(const unsigned char *compData, int compDataSize, int *dataSize);  // Decompress data (DEFLATE algorithm), memory must be MemFree()
 RLAPI char *EncodeDataBase64(const unsigned char *data, int dataSize, int *outputSize);               // Encode data to Base64 string, memory must be MemFree()
 RLAPI unsigned char *DecodeDataBase64(const unsigned char *data, int *outputSize);                    // Decode Base64 string data, memory must be MemFree()
+
+// Automation events functionality
+RLAPI AutomationEventList LoadAutomationEventList(const char *fileName);                // Load automation events list from file, NULL for empty list, capacity = MAX_AUTOMATION_EVENTS
+RLAPI void UnloadAutomationEventList(AutomationEventList *list);                        // Unload automation events list from file
+RLAPI bool ExportAutomationEventList(AutomationEventList list, const char *fileName);   // Export automation events list as text file
+RLAPI void SetAutomationEventList(AutomationEventList *list);                           // Set automation event list to record to
+RLAPI void StartAutomationEventRecording(void);                                         // Start recording automation events (AutomationEventList must be set)
+RLAPI void StopAutomationEventRecording(void);                                          // Stop recording automation events
+RLAPI void PlayAutomationEvent(AutomationEvent event);                                  // Play a recorded automation event
 
 //------------------------------------------------------------------------------------
 // Input Handling Functions (Module: core)

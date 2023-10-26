@@ -89,6 +89,10 @@
     #define MAX_DECOMPRESSION_SIZE        64        // Maximum size allocated for decompression in MB
 #endif
 
+#ifndef MAX_AUTOMATION_EVENTS
+    #define MAX_AUTOMATION_EVENTS      16384        // Maximum number of automation events to record
+#endif
+
 // Flags operation macros
 #define FLAG_SET(n, f) ((n) |= (f))
 #define FLAG_CLEAR(n, f) ((n) &= ~(f))
