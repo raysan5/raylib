@@ -214,6 +214,7 @@ int main(void)
                 }
                 else 
                 {
+                    SetAutomationEventBaseFrame(180);
                     StartAutomationEventRecording();
                     eventRecording = true;
                 }

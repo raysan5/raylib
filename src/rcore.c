@@ -2289,6 +2289,12 @@ void SetAutomationEventList(AutomationEventList *list)
 #endif
 }
 
+// Set automation event internal base frame to start recording
+void SetAutomationEventBaseFrame(int frame)
+{
+    CORE.Time.frameCounter = frame;
+}
+
 // Start recording automation events (AutomationEventList must be set)
 void StartAutomationEventRecording(void)
 {

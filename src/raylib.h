@@ -508,9 +508,9 @@ typedef struct FilePathList {
 
 // Automation event (opaque struct)
 typedef struct AutomationEvent {
-    unsigned int frame;                 // Event frame
-    unsigned int type;                  // Event type (AutomationEventType)
-    int params[4];                      // Event parameters (if required)
+    unsigned int frame;             // Event frame
+    unsigned int type;              // Event type (AutomationEventType)
+    int params[4];                  // Event parameters (if required)
 } AutomationEvent;
 
 // Automation event list
@@ -1133,6 +1133,7 @@ RLAPI AutomationEventList LoadAutomationEventList(const char *fileName);        
 RLAPI void UnloadAutomationEventList(AutomationEventList *list);                        // Unload automation events list from file
 RLAPI bool ExportAutomationEventList(AutomationEventList list, const char *fileName);   // Export automation events list as text file
 RLAPI void SetAutomationEventList(AutomationEventList *list);                           // Set automation event list to record to
+RLAPI void SetAutomationEventBaseFrame(int frame);                                      // Set automation event internal base frame to start recording
 RLAPI void StartAutomationEventRecording(void);                                         // Start recording automation events (AutomationEventList must be set)
 RLAPI void StopAutomationEventRecording(void);                                          // Stop recording automation events
 RLAPI void PlayAutomationEvent(AutomationEvent event);                                  // Play a recorded automation event
