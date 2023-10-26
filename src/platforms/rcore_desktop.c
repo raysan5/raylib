@@ -751,15 +751,19 @@ int GetCurrentMonitor(void)
         }
         else
         {
-            int x = 0;
-            int y = 0;
+            int closestDist = 0x7FFFFFFF;
 
-            glfwGetWindowPos(platform.handle, &x, &y);
-            x += (int)CORE.Window.screen.width / 2;
-            y += (int)CORE.Window.screen.height / 2;
+            // Window center position
+            int wcx = 0;
+            int wcy = 0;
+
+            glfwGetWindowPos(platform.handle, &wcx, &wcy);
+            wcx += (int)CORE.Window.screen.width / 2;
+            wcy += (int)CORE.Window.screen.height / 2;
 
             for (int i = 0; i < monitorCount; i++)
             {
+                // Monitor top-left position
                 int mx = 0;
                 int my = 0;
 
@@ -769,16 +773,45 @@ int GetCurrentMonitor(void)
 
                 if (mode)
                 {
-                    const int width = mode->width;
-                    const int height = mode->height;
+                    const int right = mx + mode->width - 1;
+                    const int bottom = my + mode->height - 1;
 
-                    if ((x >= mx) &&
-                        (x < (mx + width)) &&
-                        (y >= my) &&
-                        (y < (my + height)))
+                    if ((wcx >= mx) &&
+                        (wcx <= right) &&
+                        (wcy >= my) &&
+                        (wcy <= bottom))
                     {
                         index = i;
                         break;
+                    }
+
+                    int xclosest = wcx;
+                    if (wcx < mx)
+                    {
+                        xclosest = mx;
+                    }
+                    else if (wcx > right)
+                    {
+                        xclosest = right;
+                    }
+
+                    int yclosest = wcy;
+                    if (wcy < my)
+                    {
+                        yclosest = my;
+                    }
+                    else if (wcy > bottom)
+                    {
+                        yclosest = bottom;
+                    }
+
+                    int dx = wcx - xclosest;
+                    int dy = wcy - yclosest;
+                    int dist = (dx * dx) + (dy * dy);
+                    if (dist < closestDist)
+                    {
+                        index = i;
+                        closestDist = dist;
                     }
                 }
                 else TRACELOG(LOG_WARNING, "GLFW: Failed to find video mode for selected monitor");
