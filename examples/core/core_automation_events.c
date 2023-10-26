@@ -241,7 +241,8 @@ int main(void)
         
         if (eventPlaying)
         {
-            if (playFrameCounter >= aelist.events[currentPlayFrame].frame)
+            // NOTE: Multiple events could be executed in a single frame
+            while (playFrameCounter == aelist.events[currentPlayFrame].frame)
             {
                 PlayAutomationEvent(aelist.events[currentPlayFrame]);
                 currentPlayFrame++;
