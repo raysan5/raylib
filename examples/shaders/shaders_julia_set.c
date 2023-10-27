@@ -124,11 +124,10 @@ int main(void)
         else if (IsKeyPressed(KEY_LEFT)) incrementSpeed--;
 
         // If either left or right button is pressed, zoom in/out.
-        const bool leftMouseButtonDown = IsMouseButtonDown(MOUSE_BUTTON_LEFT);
-        if (leftMouseButtonDown ^ IsMouseButtonDown(MOUSE_BUTTON_RIGHT))
+        if (IsMouseButtonDown(MOUSE_BUTTON_LEFT) || IsMouseButtonDown(MOUSE_BUTTON_RIGHT))
         {
             // Change zoom. If Mouse left -> zoom in. Mouse right -> zoom out.
-            zoom *= leftMouseButtonDown ? zoomSpeed : 1.0f / zoomSpeed;
+            zoom *= IsMouseButtonDown(MOUSE_BUTTON_LEFT)? zoomSpeed : 1.0f/zoomSpeed;
 
             const Vector2 mousePos = GetMousePosition();
             Vector2 offsetVelocity;
