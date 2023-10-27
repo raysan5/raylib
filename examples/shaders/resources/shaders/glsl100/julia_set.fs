@@ -13,24 +13,23 @@ uniform float zoom;             // Zoom of the scale.
 // NOTE: Maximum number of shader for-loop iterations depend on GPU,
 // for example, on RasperryPi for this examply only supports up to 60
 const int MAX_ITERATIONS = 48;  // Max iterations to do.
-
-const float COLOR_CYCLES = 1;   // Number of times the palette repeats.
+const float COLOR_CYCLES = 1;   // Number of times the color palette repeats.
 
 // Square a complex number
 vec2 ComplexSquare(vec2 z)
 {
     return vec2(
-        z.x * z.x - z.y * z.y,
-        z.x * z.y * 2.0
+        z.x*z.x - z.y*z.y,
+        z.x*z.y*2.0
     );
 }
 
 // Convert Hue Saturation Value (HSV) color into RGB
 vec3 Hsv2rgb(vec3 c)
 {
-    vec4 K = vec4(1.0, 2.0 / 3.0, 1.0 / 3.0, 3.0);
-    vec3 p = abs(fract(c.xxx + K.xyz) * 6.0 - K.www);
-    return c.z * mix(K.xxx, clamp(p - K.xxx, 0.0, 1.0), c.y);
+    vec4 K = vec4(1.0, 2.0/3.0, 1.0/3.0, 3.0);
+    vec3 p = abs(fract(c.xxx + K.xyz)*6.0 - K.www);
+    return c.z*mix(K.xxx, clamp(p - K.xxx, 0.0, 1.0), c.y);
 }
 
 void main()
@@ -56,7 +55,7 @@ void main()
 
     // The pixel coordinates are scaled so they are on the mandelbrot scale
     // NOTE: fragTexCoord already comes as normalized screen coordinates but offset must be normalized before scaling and zoom
-    vec2 z = vec2((fragTexCoord.x - 0.5) * 2.5, (fragTexCoord.y - 0.5) * 1.5) / zoom;
+    vec2 z = vec2((fragTexCoord.x - 0.5)*2.5, (fragTexCoord.y - 0.5)*1.5)/zoom;
     z.x += offset.x;
     z.y += offset.y;
 
@@ -82,5 +81,5 @@ void main()
 
     // If in set, color black. 0.999 allows for some float accuracy error.
     if (norm > 0.999) gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0);
-    else gl_FragColor = vec4(Hsv2rgb(vec3(norm * COLOR_CYCLES, 1.0, 1.0)), 1.0);
+    else gl_FragColor = vec4(Hsv2rgb(vec3(norm*COLOR_CYCLES, 1.0, 1.0)), 1.0);
 }
