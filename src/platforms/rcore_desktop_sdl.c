@@ -998,6 +998,33 @@ void PollInputEvents(void)
         switch (event.type)
         {
             case SDL_QUIT: CORE.Window.shouldClose = true; break;
+            
+            case SDL_DROPFILE:      // Dropped file
+            {
+                if (CORE.Window.dropFileCount == 0)
+                {
+                    // When a new file is dropped, we reserve a fixed number of slots for all possible dropped files
+                    // at the moment we limit the number of drops at once to 1024 files but this behaviour should probably be reviewed
+                    // TODO: Pointers should probably be reallocated for any new file added...
+                    CORE.Window.dropFilepaths = (char **)RL_CALLOC(1024, sizeof(char *));
+
+                    CORE.Window.dropFilepaths[CORE.Window.dropFileCount] = (char *)RL_CALLOC(MAX_FILEPATH_LENGTH, sizeof(char));
+                    strcpy(CORE.Window.dropFilepaths[CORE.Window.dropFileCount], event.drop.file);
+                    SDL_free(event.drop.file);
+
+                    CORE.Window.dropFileCount++;
+                }
+                else if (CORE.Window.dropFileCount < 1024)
+                {
+                    CORE.Window.dropFilepaths[CORE.Window.dropFileCount] = (char *)RL_CALLOC(MAX_FILEPATH_LENGTH, sizeof(char));
+                    strcpy(CORE.Window.dropFilepaths[CORE.Window.dropFileCount], event.drop.file);
+                    SDL_free(event.drop.file);
+                    
+                    CORE.Window.dropFileCount++;
+                }
+                else TRACELOG(LOG_WARNING, "FILE: Maximum drag and drop files at once is limited to 1024 files!");
+
+            } break;
 
             // Window events are also polled (Minimized, maximized, close...)
             case SDL_WINDOWEVENT:
@@ -1247,6 +1274,8 @@ int InitPlatform(void)
         SDL_Joystick *gamepad = SDL_JoystickOpen(0);
         //if (SDL_Joystick *gamepad == NULL) SDL_Log("WARNING: Unable to open game controller! SDL Error: %s\n", SDL_GetError());
     }
+    
+    SDL_EventState(SDL_DROPFILE, SDL_ENABLE);
     //----------------------------------------------------------------------------
 
     // Initialize timming system

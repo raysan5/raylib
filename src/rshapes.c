@@ -190,7 +190,7 @@ void DrawLineEx(Vector2 startPos, Vector2 endPos, float thick, Color color)
     if ((length > 0) && (thick > 0))
     {
         float scale = thick/(2*length);
-        
+
         Vector2 radius = { -scale*delta.y, scale*delta.x };
         Vector2 strip[4] = {
             { startPos.x - radius.x, startPos.y - radius.y },
@@ -255,7 +255,7 @@ void DrawLineBezierQuad(Vector2 startPos, Vector2 endPos, Vector2 controlPos, fl
     for (int i = 1; i <= SPLINE_LINE_DIVISIONS; i++)
     {
         t = step*i;
-        
+
         float a = powf(1.0f - t, 2);
         float b = 2.0f*(1.0f - t)*t;
         float c = powf(t, 2);
@@ -301,7 +301,7 @@ void DrawLineBezierCubic(Vector2 startPos, Vector2 endPos, Vector2 startControlP
     for (int i = 1; i <= SPLINE_LINE_DIVISIONS; i++)
     {
         t = step*i;
-        
+
         float a = powf(1.0f - t, 3);
         float b = 3.0f*powf(1.0f - t, 2)*t;
         float c = 3.0f*(1.0f - t)*powf(t, 2);

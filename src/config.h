@@ -63,7 +63,7 @@
 // Support CompressData() and DecompressData() functions
 #define SUPPORT_COMPRESSION_API         1
 // Support automatic generated events, loading and recording of those events when required
-//#define SUPPORT_EVENTS_AUTOMATION       1
+#define SUPPORT_AUTOMATION_EVENTS       1
 // Support custom frame control, only for advance users
 // By default EndDrawing() does this job: draws everything + SwapScreenBuffer() + manage frame timing + PollInputEvents()
 // Enabling this flag allows manual control of the frame processes, use at your own risk
@@ -85,6 +85,7 @@
 
 #define MAX_DECOMPRESSION_SIZE         64       // Max size allocated for decompression in MB
 
+#define MAX_AUTOMATION_EVENTS       16384       // Maximum number of automation events to record
 
 //------------------------------------------------------------------------------------
 // Module: rlgl - Configuration values

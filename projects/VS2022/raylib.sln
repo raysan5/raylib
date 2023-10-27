@@ -273,6 +273,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "audio_sound_multi", "exampl
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "core_2d_camera_split_screen", "examples\core_2d_camera_split_screen.vcxproj", "{CC62F7DB-D089-4677-8575-CAB7A7815C43}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "core_automation_events", "examples\core_automation_events.vcxproj", "{7AF97D44-707E-48DC-81CB-C9D8D7C9ED26}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug.DLL|x64 = Debug.DLL|x64
@@ -2297,6 +2299,22 @@ Global
 		{CC62F7DB-D089-4677-8575-CAB7A7815C43}.Release|x64.Build.0 = Release|x64
 		{CC62F7DB-D089-4677-8575-CAB7A7815C43}.Release|x86.ActiveCfg = Release|Win32
 		{CC62F7DB-D089-4677-8575-CAB7A7815C43}.Release|x86.Build.0 = Release|Win32
+		{7AF97D44-707E-48DC-81CB-C9D8D7C9ED26}.Debug.DLL|x64.ActiveCfg = Debug.DLL|x64
+		{7AF97D44-707E-48DC-81CB-C9D8D7C9ED26}.Debug.DLL|x64.Build.0 = Debug.DLL|x64
+		{7AF97D44-707E-48DC-81CB-C9D8D7C9ED26}.Debug.DLL|x86.ActiveCfg = Debug.DLL|Win32
+		{7AF97D44-707E-48DC-81CB-C9D8D7C9ED26}.Debug.DLL|x86.Build.0 = Debug.DLL|Win32
+		{7AF97D44-707E-48DC-81CB-C9D8D7C9ED26}.Debug|x64.ActiveCfg = Debug|x64
+		{7AF97D44-707E-48DC-81CB-C9D8D7C9ED26}.Debug|x64.Build.0 = Debug|x64
+		{7AF97D44-707E-48DC-81CB-C9D8D7C9ED26}.Debug|x86.ActiveCfg = Debug|Win32
+		{7AF97D44-707E-48DC-81CB-C9D8D7C9ED26}.Debug|x86.Build.0 = Debug|Win32
+		{7AF97D44-707E-48DC-81CB-C9D8D7C9ED26}.Release.DLL|x64.ActiveCfg = Release.DLL|x64
+		{7AF97D44-707E-48DC-81CB-C9D8D7C9ED26}.Release.DLL|x64.Build.0 = Release.DLL|x64
+		{7AF97D44-707E-48DC-81CB-C9D8D7C9ED26}.Release.DLL|x86.ActiveCfg = Release.DLL|Win32
+		{7AF97D44-707E-48DC-81CB-C9D8D7C9ED26}.Release.DLL|x86.Build.0 = Release.DLL|Win32
+		{7AF97D44-707E-48DC-81CB-C9D8D7C9ED26}.Release|x64.ActiveCfg = Release|x64
+		{7AF97D44-707E-48DC-81CB-C9D8D7C9ED26}.Release|x64.Build.0 = Release|x64
+		{7AF97D44-707E-48DC-81CB-C9D8D7C9ED26}.Release|x86.ActiveCfg = Release|Win32
+		{7AF97D44-707E-48DC-81CB-C9D8D7C9ED26}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -2435,6 +2453,7 @@ Global
 		{3755E9F4-CB48-4EC3-B561-3B85964EBDEF} = {5317807F-61D4-4E0F-B6DC-2D9F12621ED9}
 		{F81C5819-85B4-4D2E-B6DC-104A7634461B} = {CC132A4D-D081-4C26-BFB9-AB11984054F8}
 		{CC62F7DB-D089-4677-8575-CAB7A7815C43} = {6C82BAAE-BDDF-457D-8FA8-7E2490B07035}
+		{7AF97D44-707E-48DC-81CB-C9D8D7C9ED26} = {6C82BAAE-BDDF-457D-8FA8-7E2490B07035}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {E926C768-6307-4423-A1EC-57E95B1FAB29}

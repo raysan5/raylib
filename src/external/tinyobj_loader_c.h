@@ -1269,6 +1269,11 @@ int tinyobj_parse_obj(tinyobj_attrib_t *attrib, tinyobj_shape_t **shapes,
       if (is_line_ending(buf, i, end_idx)) {
         line_infos[line_no].pos = prev_pos;
         line_infos[line_no].len = i - prev_pos;
+         
+// ---- QUICK BUG FIX : https://github.com/raysan5/raylib/issues/3473
+        if ( i > 0 && buf[i-1] == '\r' ) line_infos[line_no].len--;
+// --------
+
         prev_pos = i + 1;
         line_no++;
       }

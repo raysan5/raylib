@@ -547,7 +547,7 @@ int InitPlatform(void)
     //AConfiguration_getKeyboard(platform.app->config);
     //AConfiguration_getScreenSize(platform.app->config);
     //AConfiguration_getScreenLong(platform.app->config);
-    
+
     // Set some default window flags
     CORE.Window.flags &= ~FLAG_WINDOW_HIDDEN;       // false
     CORE.Window.flags &= ~FLAG_WINDOW_MINIMIZED;    // false
@@ -569,7 +569,7 @@ int InitPlatform(void)
     // Initialize storage system
     //----------------------------------------------------------------------------
     InitAssetManager(platform.app->activity->assetManager, platform.app->activity->internalDataPath);   // Initialize assets manager
-    
+
     CORE.Storage.basePath = platform.app->activity->internalDataPath;   // Define base path for storage
     //----------------------------------------------------------------------------
 

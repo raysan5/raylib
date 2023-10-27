@@ -1,6 +1,6 @@
 /*
 Audio playback and capture library. Choice of public domain or MIT-0. See license statements at the end of this file.
-miniaudio - v0.11.18 - 2023-08-07
+miniaudio - v0.11.19 - TBD
 
 David Reid - mackron@gmail.com
 
@@ -87,7 +87,7 @@ device on the stack, but you could allocate it on the heap if that suits your si
 
         // Do something here. Probably your program's main loop.
 
-        ma_device_uninit(&device);    // This will stop the device so no need to do that manually.
+        ma_device_uninit(&device);
         return 0;
     }
     ```
@@ -1675,7 +1675,7 @@ an example for initializing a data source:
 
     // ...
 
-    ma_resource_manager_data_source_uninit(pResourceManager, &dataSource);
+    ma_resource_manager_data_source_uninit(&dataSource);
     ```
 
 The `flags` parameter specifies how you want to perform loading of the sound file. It can be a
@@ -1912,10 +1912,10 @@ once after the other:
 
     ```c
     ma_resource_manager_data_source_init(pResourceManager, "my_file", ..., &myDataBuffer0); // Refcount = 1. Initial load.
-    ma_resource_manager_data_source_uninit(pResourceManager, &myDataBuffer0);               // Refcount = 0. Unloaded.
+    ma_resource_manager_data_source_uninit(&myDataBuffer0);                                 // Refcount = 0. Unloaded.
 
     ma_resource_manager_data_source_init(pResourceManager, "my_file", ..., &myDataBuffer1); // Refcount = 1. Reloaded because previous uninit() unloaded it.
-    ma_resource_manager_data_source_uninit(pResourceManager, &myDataBuffer1);               // Refcount = 0. Unloaded.
+    ma_resource_manager_data_source_uninit(&myDataBuffer1);                                 // Refcount = 0. Unloaded.
     ```
 
 A binary search tree (BST) is used for storing data buffers as it has good balance between
@@ -2675,8 +2675,15 @@ outputting any audio data. To output audio data, use `ma_encoder_write_pcm_frame
 example below:
 
     ```c
-    framesWritten = ma_encoder_write_pcm_frames(&encoder, pPCMFramesToWrite, framesToWrite);
+    ma_uint64 framesWritten;
+    result = ma_encoder_write_pcm_frames(&encoder, pPCMFramesToWrite, framesToWrite, &framesWritten);
+    if (result != MA_SUCCESS) {
+        ... handle error ...
+    }
     ```
+
+The `framesWritten` variable will contain the number of PCM frames that were actually written. This
+is optionally and you can pass in `NULL` if you need this.
 
 Encoders must be uninitialized with `ma_encoder_uninit()`.
 
@@ -3409,7 +3416,7 @@ miniaudio supports reading from a buffer of raw audio data via the `ma_audio_buf
 read from memory that's managed by the application, but can also handle the memory management for
 you internally. Memory management is flexible and should support most use cases.
 
-Audio buffers are initialised using the standard configuration system used everywhere in miniaudio:
+Audio buffers are initialized using the standard configuration system used everywhere in miniaudio:
 
     ```c
     ma_audio_buffer_config config = ma_audio_buffer_config_init(
@@ -3716,7 +3723,7 @@ extern "C" {
 
 #define MA_VERSION_MAJOR    0
 #define MA_VERSION_MINOR    11
-#define MA_VERSION_REVISION 18
+#define MA_VERSION_REVISION 19
 #define MA_VERSION_STRING   MA_XSTRINGIFY(MA_VERSION_MAJOR) "." MA_XSTRINGIFY(MA_VERSION_MINOR) "." MA_XSTRINGIFY(MA_VERSION_REVISION)
 
 #if defined(_MSC_VER) && !defined(__clang__)
@@ -4267,7 +4274,7 @@ typedef enum
     ma_standard_sample_rate_192000 = 192000,
 
     ma_standard_sample_rate_16000  = 16000,     /* Extreme lows */
-    ma_standard_sample_rate_11025  = 11250,
+    ma_standard_sample_rate_11025  = 11025,
     ma_standard_sample_rate_8000   = 8000,
 
     ma_standard_sample_rate_352800 = 352800,    /* Extreme highs */
@@ -5390,7 +5397,7 @@ MA_API void ma_resampler_uninit(ma_resampler* pResampler, const ma_allocation_ca
 /*
 Converts the given input data.
 
-Both the input and output frames must be in the format specified in the config when the resampler was initilized.
+Both the input and output frames must be in the format specified in the config when the resampler was initialized.
 
 On input, [pFrameCountOut] contains the number of output frames to process. On output it contains the number of output frames that
 were actually processed, which may be less than the requested amount which will happen if there's not enough input data. You can use
@@ -9133,8 +9140,6 @@ speakers or received from the microphone which can in turn result in de-syncs.
 
 Do not call this in any callback.
 
-This will be called implicitly by `ma_device_uninit()`.
-
 
 See Also
 --------
@@ -10171,7 +10176,7 @@ MA_API ma_noise_config ma_noise_config_init(ma_format format, ma_uint32 channels
 
 typedef struct
 {
-    ma_data_source_vtable ds;
+    ma_data_source_base ds;
     ma_noise_config config;
     ma_lcg lcg;
     union
@@ -10569,7 +10574,7 @@ typedef struct
     /*
     Extended processing callback. This callback is used for effects that process input and output
     at different rates (i.e. they perform resampling). This is similar to the simple version, only
-    they take two seperate frame counts: one for input, and one for output.
+    they take two separate frame counts: one for input, and one for output.
 
     On input, `pFrameCountOut` is equal to the capacity of the output buffer for each bus, whereas
     `pFrameCountIn` will be equal to the number of PCM frames in each of the buffers in `ppFramesIn`.
@@ -12238,7 +12243,7 @@ static MA_INLINE void ma_zero_memory_default(void* p, size_t sz)
 #define ma_abs(x)                       (((x) > 0) ? (x) : -(x))
 #define ma_clamp(x, lo, hi)             (ma_max(lo, ma_min(x, hi)))
 #define ma_offset_ptr(p, offset)        (((ma_uint8*)(p)) + (offset))
-#define ma_align(x, a)                  ((x + (a-1)) & ~(a-1))
+#define ma_align(x, a)                  (((x) + ((a)-1)) & ~((a)-1))
 #define ma_align_64(x)                  ma_align(x, 8)
 
 #define ma_buffer_frame_capacity(buffer, channels, format) (sizeof(buffer) / ma_get_bytes_per_sample(format) / (channels))
@@ -13639,7 +13644,7 @@ MA_API ma_result ma_log_postv(ma_log* pLog, ma_uint32 level, const char* pFormat
         /* First try formatting into our fixed sized stack allocated buffer. If this is too small we'll fallback to a heap allocation. */
         length = vsnprintf(pFormattedMessageStack, sizeof(pFormattedMessageStack), pFormat, args);
         if (length < 0) {
-            return MA_INVALID_OPERATION;    /* An error occured when trying to convert the buffer. */
+            return MA_INVALID_OPERATION;    /* An error occurred when trying to convert the buffer. */
         }
 
         if ((size_t)length < sizeof(pFormattedMessageStack)) {
@@ -16180,7 +16185,15 @@ static void ma_thread_wait__posix(ma_thread* pThread)
 
 static ma_result ma_mutex_init__posix(ma_mutex* pMutex)
 {
-    int result = pthread_mutex_init((pthread_mutex_t*)pMutex, NULL);
+    int result;
+    
+    if (pMutex == NULL) {
+        return MA_INVALID_ARGS;
+    }
+
+    MA_ZERO_OBJECT(pMutex);
+
+    result = pthread_mutex_init((pthread_mutex_t*)pMutex, NULL);
     if (result != 0) {
         return ma_result_from_errno(result);
     }
@@ -18452,7 +18465,7 @@ Timing
 *******************************************************************************/
 #if defined(MA_WIN32) && !defined(MA_POSIX)
     static LARGE_INTEGER g_ma_TimerFrequency;   /* <-- Initialized to zero since it's static. */
-    void ma_timer_init(ma_timer* pTimer)
+    static void ma_timer_init(ma_timer* pTimer)
     {
         LARGE_INTEGER counter;
 
@@ -18464,7 +18477,7 @@ Timing
         pTimer->counter = counter.QuadPart;
     }
 
-    double ma_timer_get_time_in_seconds(ma_timer* pTimer)
+    static double ma_timer_get_time_in_seconds(ma_timer* pTimer)
     {
         LARGE_INTEGER counter;
         if (!QueryPerformanceCounter(&counter)) {
@@ -18637,30 +18650,36 @@ static void ma_device__on_notification(ma_device_notification notification)
     }
 }
 
-void ma_device__on_notification_started(ma_device* pDevice)
+static void ma_device__on_notification_started(ma_device* pDevice)
 {
     ma_device__on_notification(ma_device_notification_init(pDevice, ma_device_notification_type_started));
 }
 
-void ma_device__on_notification_stopped(ma_device* pDevice)
+static void ma_device__on_notification_stopped(ma_device* pDevice)
 {
     ma_device__on_notification(ma_device_notification_init(pDevice, ma_device_notification_type_stopped));
 }
 
-void ma_device__on_notification_rerouted(ma_device* pDevice)
+/* Not all platforms support reroute notifications. */
+#if !defined(MA_EMSCRIPTEN)
+static void ma_device__on_notification_rerouted(ma_device* pDevice)
 {
     ma_device__on_notification(ma_device_notification_init(pDevice, ma_device_notification_type_rerouted));
 }
+#endif
 
-void ma_device__on_notification_interruption_began(ma_device* pDevice)
+/* Interruptions are only used on some platforms. */
+#if defined(MA_APPLE_MOBILE)
+static void ma_device__on_notification_interruption_began(ma_device* pDevice)
 {
     ma_device__on_notification(ma_device_notification_init(pDevice, ma_device_notification_type_interruption_began));
 }
 
-void ma_device__on_notification_interruption_ended(ma_device* pDevice)
+static void ma_device__on_notification_interruption_ended(ma_device* pDevice)
 {
     ma_device__on_notification(ma_device_notification_init(pDevice, ma_device_notification_type_interruption_ended));
 }
+#endif
 
 
 static void ma_device__on_data_inner(ma_device* pDevice, void* pFramesOut, const void* pFramesIn, ma_uint32 frameCount)
@@ -19115,10 +19134,10 @@ static MA_INLINE void ma_device__set_state(ma_device* pDevice, ma_device_state n
 
 
 #if defined(MA_WIN32)
-    GUID MA_GUID_KSDATAFORMAT_SUBTYPE_PCM        = {0x00000001, 0x0000, 0x0010, {0x80, 0x00, 0x00, 0xaa, 0x00, 0x38, 0x9b, 0x71}};
-    GUID MA_GUID_KSDATAFORMAT_SUBTYPE_IEEE_FLOAT = {0x00000003, 0x0000, 0x0010, {0x80, 0x00, 0x00, 0xaa, 0x00, 0x38, 0x9b, 0x71}};
-    /*GUID MA_GUID_KSDATAFORMAT_SUBTYPE_ALAW       = {0x00000006, 0x0000, 0x0010, {0x80, 0x00, 0x00, 0xaa, 0x00, 0x38, 0x9b, 0x71}};*/
-    /*GUID MA_GUID_KSDATAFORMAT_SUBTYPE_MULAW      = {0x00000007, 0x0000, 0x0010, {0x80, 0x00, 0x00, 0xaa, 0x00, 0x38, 0x9b, 0x71}};*/
+    static GUID MA_GUID_KSDATAFORMAT_SUBTYPE_PCM        = {0x00000001, 0x0000, 0x0010, {0x80, 0x00, 0x00, 0xaa, 0x00, 0x38, 0x9b, 0x71}};
+    static GUID MA_GUID_KSDATAFORMAT_SUBTYPE_IEEE_FLOAT = {0x00000003, 0x0000, 0x0010, {0x80, 0x00, 0x00, 0xaa, 0x00, 0x38, 0x9b, 0x71}};
+    /*static GUID MA_GUID_KSDATAFORMAT_SUBTYPE_ALAW       = {0x00000006, 0x0000, 0x0010, {0x80, 0x00, 0x00, 0xaa, 0x00, 0x38, 0x9b, 0x71}};*/
+    /*static GUID MA_GUID_KSDATAFORMAT_SUBTYPE_MULAW      = {0x00000007, 0x0000, 0x0010, {0x80, 0x00, 0x00, 0xaa, 0x00, 0x38, 0x9b, 0x71}};*/
 #endif
 
 
@@ -23270,7 +23289,7 @@ static ma_result ma_device_read__wasapi(ma_device* pDevice, void* pFrames, ma_ui
 
                     /* At this point we should be able to loop back to the start of the loop and try retrieving a data buffer again. */
                 } else {
-                    /* An error occured and we need to abort. */
+                    /* An error occurred and we need to abort. */
                     ma_log_postf(ma_device_get_log(pDevice), MA_LOG_LEVEL_ERROR, "[WASAPI] Failed to retrieve internal buffer from capture device in preparation for reading from the device. HRESULT = %d. Stopping device.\n", (int)hr);
                     result = ma_result_from_HRESULT(hr);
                     break;
@@ -34834,7 +34853,7 @@ static ma_result ma_context_init__coreaudio(ma_context* pContext, const ma_conte
 #endif
 
 #if !defined(MA_NO_RUNTIME_LINKING) && !defined(MA_APPLE_MOBILE)
-    pContext->coreaudio.hCoreFoundation = ma_dlopen(ma_context_get_log(pContext), "CoreFoundation.framework/CoreFoundation");
+    pContext->coreaudio.hCoreFoundation = ma_dlopen(ma_context_get_log(pContext), "/System/Library/Frameworks/CoreFoundation.framework/CoreFoundation");
     if (pContext->coreaudio.hCoreFoundation == NULL) {
         return MA_API_NOT_FOUND;
     }
@@ -34843,7 +34862,7 @@ static ma_result ma_context_init__coreaudio(ma_context* pContext, const ma_conte
     pContext->coreaudio.CFRelease          = ma_dlsym(ma_context_get_log(pContext), pContext->coreaudio.hCoreFoundation, "CFRelease");
 
 
-    pContext->coreaudio.hCoreAudio = ma_dlopen(ma_context_get_log(pContext), "CoreAudio.framework/CoreAudio");
+    pContext->coreaudio.hCoreAudio = ma_dlopen(ma_context_get_log(pContext), "/System/Library/Frameworks/CoreAudio.framework/CoreAudio");
     if (pContext->coreaudio.hCoreAudio == NULL) {
         ma_dlclose(ma_context_get_log(pContext), pContext->coreaudio.hCoreFoundation);
         return MA_API_NOT_FOUND;
@@ -34861,7 +34880,7 @@ static ma_result ma_context_init__coreaudio(ma_context* pContext, const ma_conte
     The way it'll work is that it'll first try AudioUnit, and if the required symbols are not present there we'll fall back to
     AudioToolbox.
     */
-    pContext->coreaudio.hAudioUnit = ma_dlopen(ma_context_get_log(pContext), "AudioUnit.framework/AudioUnit");
+    pContext->coreaudio.hAudioUnit = ma_dlopen(ma_context_get_log(pContext), "/System/Library/Frameworks/AudioUnit.framework/AudioUnit");
     if (pContext->coreaudio.hAudioUnit == NULL) {
         ma_dlclose(ma_context_get_log(pContext), pContext->coreaudio.hCoreAudio);
         ma_dlclose(ma_context_get_log(pContext), pContext->coreaudio.hCoreFoundation);
@@ -34871,7 +34890,7 @@ static ma_result ma_context_init__coreaudio(ma_context* pContext, const ma_conte
     if (ma_dlsym(ma_context_get_log(pContext), pContext->coreaudio.hAudioUnit, "AudioComponentFindNext") == NULL) {
         /* Couldn't find the required symbols in AudioUnit, so fall back to AudioToolbox. */
         ma_dlclose(ma_context_get_log(pContext), pContext->coreaudio.hAudioUnit);
-        pContext->coreaudio.hAudioUnit = ma_dlopen(ma_context_get_log(pContext), "AudioToolbox.framework/AudioToolbox");
+        pContext->coreaudio.hAudioUnit = ma_dlopen(ma_context_get_log(pContext), "/System/Library/Frameworks/AudioToolbox.framework/AudioToolbox");
         if (pContext->coreaudio.hAudioUnit == NULL) {
             ma_dlclose(ma_context_get_log(pContext), pContext->coreaudio.hCoreAudio);
             ma_dlclose(ma_context_get_log(pContext), pContext->coreaudio.hCoreFoundation);
@@ -39956,7 +39975,7 @@ static void ma_audio_worklet_processor_created__webaudio(EMSCRIPTEN_WEBAUDIO_T a
 
     /* With the audio worklet initialized we can now attach it to the graph. */
     if (pParameters->pConfig->deviceType == ma_device_type_capture || pParameters->pConfig->deviceType == ma_device_type_duplex) {
-        ma_result attachmentResult = EM_ASM_INT({
+        ma_result attachmentResult = (ma_result)EM_ASM_INT({
             var getUserMediaResult = 0;
             var audioWorklet = emscriptenGetAudioObject($0);
             var audioContext = emscriptenGetAudioObject($1);
@@ -39987,7 +40006,7 @@ static void ma_audio_worklet_processor_created__webaudio(EMSCRIPTEN_WEBAUDIO_T a
 
     /* If it's playback only we can now attach the worklet node to the graph. This has already been done for the duplex case. */
     if (pParameters->pConfig->deviceType == ma_device_type_playback) {
-        ma_result attachmentResult = EM_ASM_INT({
+        ma_result attachmentResult = (ma_result)EM_ASM_INT({
             var audioWorklet = emscriptenGetAudioObject($0);
             var audioContext = emscriptenGetAudioObject($1);
             audioWorklet.connect(audioContext.destination);
@@ -40202,7 +40221,7 @@ static ma_result ma_device_init__webaudio(ma_device* pDevice, const ma_device_co
 
             /* First thing we need is an AudioContext. */
             var audioContextOptions = {};
-            if (deviceType == window.miniaudio.device_type.playback) {
+            if (deviceType == window.miniaudio.device_type.playback && sampleRate != 0) {
                 audioContextOptions.sampleRate = sampleRate;
             }
 
@@ -40888,6 +40907,11 @@ static ma_thread_result MA_THREADCALL ma_worker_thread(void* pData)
         */
         if (stopResult == MA_SUCCESS) {
             ma_device__on_notification_stopped(pDevice);
+        }
+
+        /* If we stopped because the device has been uninitialized, abort now. */
+        if (ma_device_get_state(pDevice) == ma_device_state_uninitialized) {
+            break;
         }
 
         /* A function somewhere is waiting for the device to have stopped for real so we need to signal an event to allow it to continue. */
@@ -42100,10 +42124,23 @@ MA_API void ma_device_uninit(ma_device* pDevice)
         return;
     }
 
-    /* Make sure the device is stopped first. The backends will probably handle this naturally, but I like to do it explicitly for my own sanity. */
-    if (ma_device_is_started(pDevice)) {
-        ma_device_stop(pDevice);
+    /*
+    It's possible for the miniaudio side of the device and the backend to not be in sync due to
+    system-level situations such as the computer being put into sleep mode and the backend not
+    notifying miniaudio of the fact the device has stopped. It's possible for this to result in a
+    deadlock due to miniaudio thinking the device is in a running state, when in fact it's not
+    running at all. For this reason I am no longer explicitly stopping the device. I don't think
+    this should affect anyone in practice since uninitializing the backend will naturally stop the
+    device anyway.
+    */
+    #if 0
+    {
+        /* Make sure the device is stopped first. The backends will probably handle this naturally, but I like to do it explicitly for my own sanity. */
+        if (ma_device_is_started(pDevice)) {
+            ma_device_stop(pDevice);
+        }
     }
+    #endif
 
     /* Putting the device into an uninitialized state will make the worker thread return. */
     ma_device__set_state(pDevice, ma_device_state_uninitialized);
@@ -52835,7 +52872,7 @@ static ma_result ma_channel_map_apply_mono_in_f32(float* MA_RESTRICT pFramesOut,
                                 for (iFrame = 0; iFrame < unrolledFrameCount; iFrame += 1) {
                                     __m128 in0 = _mm_set1_ps(pFramesIn[iFrame*2 + 0]);
                                     __m128 in1 = _mm_set1_ps(pFramesIn[iFrame*2 + 1]);
-                                    _mm_storeu_ps(&pFramesOut[iFrame*4 + 0], _mm_shuffle_ps(in1, in0, _MM_SHUFFLE(0, 0, 0, 0)));
+                                    _mm_storeu_ps(&pFramesOut[iFrame*4 + 0], _mm_shuffle_ps(in0, in1, _MM_SHUFFLE(0, 0, 0, 0)));
                                 }
 
                                 /* Tail. */
@@ -52861,7 +52898,7 @@ static ma_result ma_channel_map_apply_mono_in_f32(float* MA_RESTRICT pFramesOut,
                                     __m128 in1 = _mm_set1_ps(pFramesIn[iFrame*2 + 1]);
 
                                     _mm_storeu_ps(&pFramesOut[iFrame*12 + 0], in0);
-                                    _mm_storeu_ps(&pFramesOut[iFrame*12 + 4], _mm_shuffle_ps(in1, in0, _MM_SHUFFLE(0, 0, 0, 0)));
+                                    _mm_storeu_ps(&pFramesOut[iFrame*12 + 4], _mm_shuffle_ps(in0, in1, _MM_SHUFFLE(0, 0, 0, 0)));
                                     _mm_storeu_ps(&pFramesOut[iFrame*12 + 8], in1);
                                 }
 
@@ -59701,7 +59738,7 @@ extern "C" {
 #define MA_DR_WAV_XSTRINGIFY(x)     MA_DR_WAV_STRINGIFY(x)
 #define MA_DR_WAV_VERSION_MAJOR     0
 #define MA_DR_WAV_VERSION_MINOR     13
-#define MA_DR_WAV_VERSION_REVISION  12
+#define MA_DR_WAV_VERSION_REVISION  13
 #define MA_DR_WAV_VERSION_STRING    MA_DR_WAV_XSTRINGIFY(MA_DR_WAV_VERSION_MAJOR) "." MA_DR_WAV_XSTRINGIFY(MA_DR_WAV_VERSION_MINOR) "." MA_DR_WAV_XSTRINGIFY(MA_DR_WAV_VERSION_REVISION)
 #include <stddef.h>
 #define MA_DR_WAVE_FORMAT_PCM          0x1
@@ -64826,7 +64863,7 @@ MA_API ma_result ma_decoder_init_file(const char* pFilePath, const ma_decoder_co
         /* Probably no implementation for loading from a file path. Use miniaudio's file IO instead. */
         result = ma_decoder_init_vfs(NULL, pFilePath, pConfig, pDecoder);
         if (result != MA_SUCCESS) {
-            return MA_SUCCESS;
+            return result;
         }
     }
 
@@ -64976,7 +65013,7 @@ MA_API ma_result ma_decoder_init_file_w(const wchar_t* pFilePath, const ma_decod
         /* Probably no implementation for loading from a file path. Use miniaudio's file IO instead. */
         result = ma_decoder_init_vfs_w(NULL, pFilePath, pConfig, pDecoder);
         if (result != MA_SUCCESS) {
-            return MA_SUCCESS;
+            return result;
         }
     }
 
@@ -68744,7 +68781,7 @@ static ma_result ma_resource_manager_data_buffer_init_ex_internal(ma_resource_ma
     async = (flags & MA_RESOURCE_MANAGER_DATA_SOURCE_FLAG_ASYNC) != 0;
 
     /*
-    Fences need to be acquired before doing anything. These must be aquired and released outside of
+    Fences need to be acquired before doing anything. These must be acquired and released outside of
     the node to ensure there's no holes where ma_fence_wait() could prematurely return before the
     data buffer has completed initialization.
 
@@ -72016,7 +72053,7 @@ MA_API ma_result ma_node_init_preallocated(ma_node_graph* pNodeGraph, const ma_n
     }
 
     if (heapLayout.outputBusOffset != MA_SIZE_MAX) {
-        pNodeBase->pOutputBuses = (ma_node_output_bus*)ma_offset_ptr(pHeap, heapLayout.inputBusOffset);
+        pNodeBase->pOutputBuses = (ma_node_output_bus*)ma_offset_ptr(pHeap, heapLayout.outputBusOffset);
     } else {
         pNodeBase->pOutputBuses = pNodeBase->_outputBuses;
     }
@@ -72507,11 +72544,11 @@ static ma_result ma_node_read_pcm_frames(ma_node* pNode, ma_uint32 outputBusInde
 
     /*
     At this point we know that we are inside our start/stop times. However, we may need to adjust
-    our frame count and output pointer to accomodate since we could be straddling the time period
+    our frame count and output pointer to accommodate since we could be straddling the time period
     that this function is getting called for.
 
     It's possible (and likely) that the start time does not line up with the output buffer. We
-    therefore need to offset it by a number of frames to accomodate. The same thing applies for
+    therefore need to offset it by a number of frames to accommodate. The same thing applies for
     the stop time.
     */
     timeOffsetBeg = (globalTimeBeg < startTime) ? (ma_uint32)(globalTimeEnd - startTime) : 0;
@@ -74097,7 +74134,7 @@ static void ma_engine_node_process_pcm_frames__general(ma_engine_node* pEngineNo
             if (fadeStartOffsetInFrames == (ma_int64)(~(ma_uint64)0)) {
                 fadeStartOffsetInFrames = 0;
             } else {
-                fadeStartOffsetInFrames -= ma_engine_get_time(pEngineNode->pEngine);
+                fadeStartOffsetInFrames -= ma_engine_get_time_in_pcm_frames(pEngineNode->pEngine);
             }
 
             ma_fader_set_fade_ex(&pEngineNode->fader, fadeVolumeBeg, fadeVolumeEnd, fadeLengthInFrames, fadeStartOffsetInFrames);
@@ -75534,6 +75571,10 @@ MA_API void ma_engine_listener_get_cone(const ma_engine* pEngine, ma_uint32 list
         *pOuterGain = 0;
     }
 
+    if (pEngine == NULL || listenerIndex >= pEngine->listenerCount) {
+        return;
+    }
+
     ma_spatializer_listener_get_cone(&pEngine->listeners[listenerIndex], pInnerAngleInRadians, pOuterAngleInRadians, pOuterGain);
 }
 
@@ -76103,7 +76144,7 @@ MA_API ma_result ma_sound_stop_with_fade_in_pcm_frames(ma_sound* pSound, ma_uint
     }
 
     /* Stopping with a fade out requires us to schedule the stop into the future by the fade length. */
-    ma_sound_set_stop_time_with_fade_in_pcm_frames(pSound, ma_engine_get_time(ma_sound_get_engine(pSound)) + fadeLengthInFrames, fadeLengthInFrames);
+    ma_sound_set_stop_time_with_fade_in_pcm_frames(pSound, ma_engine_get_time_in_pcm_frames(ma_sound_get_engine(pSound)) + fadeLengthInFrames, fadeLengthInFrames);
 
     return MA_SUCCESS;
 }
@@ -76476,6 +76517,10 @@ MA_API void ma_sound_get_cone(const ma_sound* pSound, float* pInnerAngleInRadian
         *pOuterGain = 0;
     }
 
+    if (pSound == NULL) {
+        return;
+    }
+
     ma_spatializer_get_cone(&pSound->engineNode.spatializer, pInnerAngleInRadians, pOuterAngleInRadians, pOuterGain);
 }
 
@@ -76757,6 +76802,8 @@ MA_API ma_result ma_sound_get_data_format(ma_sound* pSound, ma_format* pFormat, 
 
 MA_API ma_result ma_sound_get_cursor_in_pcm_frames(ma_sound* pSound, ma_uint64* pCursor)
 {
+    ma_uint64 seekTarget;
+
     if (pSound == NULL) {
         return MA_INVALID_ARGS;
     }
@@ -76766,7 +76813,13 @@ MA_API ma_result ma_sound_get_cursor_in_pcm_frames(ma_sound* pSound, ma_uint64* 
         return MA_INVALID_OPERATION;
     }
 
-    return ma_data_source_get_cursor_in_pcm_frames(pSound->pDataSource, pCursor);
+    seekTarget = ma_atomic_load_64(&pSound->seekTarget);
+    if (seekTarget != MA_SEEK_TARGET_NONE) {
+        *pCursor = seekTarget;
+        return MA_SUCCESS;
+    } else {
+        return ma_data_source_get_cursor_in_pcm_frames(pSound->pDataSource, pCursor);
+    }
 }
 
 MA_API ma_result ma_sound_get_length_in_pcm_frames(ma_sound* pSound, ma_uint64* pLength)
@@ -76785,16 +76838,28 @@ MA_API ma_result ma_sound_get_length_in_pcm_frames(ma_sound* pSound, ma_uint64* 
 
 MA_API ma_result ma_sound_get_cursor_in_seconds(ma_sound* pSound, float* pCursor)
 {
-    if (pSound == NULL) {
-        return MA_INVALID_ARGS;
+    ma_result result;
+    ma_uint64 cursorInPCMFrames;
+    ma_uint32 sampleRate;
+
+    if (pCursor != NULL) {
+        *pCursor = 0;
     }
 
-    /* The notion of a cursor is only valid for sounds that are backed by a data source. */
-    if (pSound->pDataSource == NULL) {
-        return MA_INVALID_OPERATION;
+    result = ma_sound_get_cursor_in_pcm_frames(pSound, &cursorInPCMFrames);
+    if (result != MA_SUCCESS) {
+        return result;
     }
 
-    return ma_data_source_get_cursor_in_seconds(pSound->pDataSource, pCursor);
+    result = ma_sound_get_data_format(pSound, NULL, NULL, &sampleRate, NULL, 0);
+    if (result != MA_SUCCESS) {
+        return result;
+    }
+
+    /* VC6 does not support division of unsigned 64-bit integers with floating point numbers. Need to use a signed number. This shouldn't effect anything in practice. */
+    *pCursor = (ma_int64)cursorInPCMFrames / (float)sampleRate;
+
+    return MA_SUCCESS;
 }
 
 MA_API ma_result ma_sound_get_length_in_seconds(ma_sound* pSound, float* pLength)
@@ -77193,8 +77258,8 @@ code below please report the bug to the respective repository for the relevant p
 #define ma_dr_wav_clamp(x, lo, hi)             (ma_dr_wav_max((lo), ma_dr_wav_min((hi), (x))))
 #define ma_dr_wav_offset_ptr(p, offset)        (((ma_uint8*)(p)) + (offset))
 #define MA_DR_WAV_MAX_SIMD_VECTOR_SIZE         32
-#define MA_DR_WAV_INT64_MIN   ((ma_int64)0x80000000  << 32)
-#define MA_DR_WAV_INT64_MAX ((((ma_int64)0x7FFFFFFF) << 32) | 0xFFFFFFFF)
+#define MA_DR_WAV_INT64_MIN ((ma_int64) ((ma_uint64)0x80000000 << 32))
+#define MA_DR_WAV_INT64_MAX ((ma_int64)(((ma_uint64)0x7FFFFFFF << 32) | 0xFFFFFFFF))
 #if defined(_MSC_VER) && _MSC_VER >= 1400
     #define MA_DR_WAV_HAS_BYTESWAP16_INTRINSIC
     #define MA_DR_WAV_HAS_BYTESWAP32_INTRINSIC

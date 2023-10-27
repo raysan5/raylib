@@ -864,14 +864,14 @@ int InitPlatform(void)
 
     // There must be at least one frame displayed before the buffers are swapped
     //eglSwapInterval(platform.device, 1);
-    
+
     EGLBoolean result = eglMakeCurrent(platform.device, platform.surface, platform.surface, platform.context);
 
     // Check surface and context activation
     if (result != EGL_FALSE)
     {
         CORE.Window.ready = true;
-        
+
         CORE.Window.render.width = CORE.Window.screen.width;
         CORE.Window.render.height = CORE.Window.screen.height;
         CORE.Window.currentFbo.width = CORE.Window.render.width;
@@ -883,9 +883,9 @@ int InitPlatform(void)
         TRACELOG(LOG_INFO, "    > Render size:  %i x %i", CORE.Window.render.width, CORE.Window.render.height);
         TRACELOG(LOG_INFO, "    > Viewport offsets: %i, %i", CORE.Window.renderOffset.x, CORE.Window.renderOffset.y);
     }
-    else 
-    { 
-        TRACELOG(LOG_FATAL, "PLATFORM: Failed to initialize graphics device"); 
+    else
+    {
+        TRACELOG(LOG_FATAL, "PLATFORM: Failed to initialize graphics device");
         return -1;
     }
 
@@ -905,7 +905,7 @@ int InitPlatform(void)
     // NOTE: GL procedures address loader is required to load extensions
     rlLoadExtensions(eglGetProcAddress);
     //----------------------------------------------------------------------------
-    
+
     // Initialize input events system
     //----------------------------------------------------------------------------
     InitEvdevInput();   // Evdev inputs initialization
@@ -922,7 +922,7 @@ int InitPlatform(void)
     //----------------------------------------------------------------------------
     CORE.Storage.basePath = GetWorkingDirectory();
     //----------------------------------------------------------------------------
-    
+
     TRACELOG(LOG_INFO, "PLATFORM: DRM: Initialized successfully");
 
     return 0;

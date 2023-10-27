@@ -522,7 +522,7 @@ int InitPlatform(void)
     if (result != EGL_FALSE)
     {
         CORE.Window.ready = true;
-        
+
         CORE.Window.render.width = CORE.Window.screen.width;
         CORE.Window.render.height = CORE.Window.screen.height;
         CORE.Window.currentFbo.width = CORE.Window.render.width;
@@ -534,13 +534,13 @@ int InitPlatform(void)
         TRACELOG(LOG_INFO, "    > Render size:  %i x %i", CORE.Window.render.width, CORE.Window.render.height);
         TRACELOG(LOG_INFO, "    > Viewport offsets: %i, %i", CORE.Window.renderOffset.x, CORE.Window.renderOffset.y);
     }
-    else 
-    { 
-        TRACELOG(LOG_FATAL, "PLATFORM: Failed to initialize graphics device"); 
+    else
+    {
+        TRACELOG(LOG_FATAL, "PLATFORM: Failed to initialize graphics device");
         return -1;
     }
     //----------------------------------------------------------------------------
-    
+
     // If everything work as expected, we can continue
     CORE.Window.render.width = CORE.Window.screen.width;
     CORE.Window.render.height = CORE.Window.screen.height;
@@ -558,7 +558,7 @@ int InitPlatform(void)
     //----------------------------------------------------------------------------
     rlLoadExtensions(eglGetProcAddress);
     //----------------------------------------------------------------------------
-    
+
     // TODO: Initialize input events system
     // It could imply keyboard, mouse, gamepad, touch...
     // Depending on the platform libraries/SDK it could use a callbacks mechanims
@@ -576,7 +576,7 @@ int InitPlatform(void)
     //----------------------------------------------------------------------------
     CORE.Storage.basePath = GetWorkingDirectory();
     //----------------------------------------------------------------------------
-    
+
     TRACELOG(LOG_INFO, "PLATFORM: CUSTOM: Initialized successfully");
 
     return 0;
