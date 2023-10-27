@@ -90,16 +90,21 @@ int main(void)
         // Update
         //----------------------------------------------------------------------------------
         // Press [1 - 6] to reset c to a point of interest
-        for (KeyboardKey k = KEY_ONE; k <= KEY_SIX; ++k)
+        if (IsKeyPressed(KEY_ONE) ||
+            IsKeyPressed(KEY_TWO) ||
+            IsKeyPressed(KEY_THREE) ||
+            IsKeyPressed(KEY_FOUR) ||
+            IsKeyPressed(KEY_FIVE) ||
+            IsKeyPressed(KEY_SIX))
         {
-            if (IsKeyPressed(k))
-            {
-                // If this key is pressed, set the point of interest of the corresponding key.
-                c[0] = pointsOfInterest[k - KEY_ONE][0];
-                c[1] = pointsOfInterest[k - KEY_ONE][1];
-                SetShaderValue(shader, cLoc, c, SHADER_UNIFORM_VEC2);
-                break;
-            }
+            if (IsKeyPressed(KEY_ONE)) c[0] = pointsOfInterest[0][0], c[1] = pointsOfInterest[0][1];
+            else if (IsKeyPressed(KEY_TWO)) c[0] = pointsOfInterest[1][0], c[1] = pointsOfInterest[1][1];
+            else if (IsKeyPressed(KEY_THREE)) c[0] = pointsOfInterest[2][0], c[1] = pointsOfInterest[2][1];
+            else if (IsKeyPressed(KEY_FOUR)) c[0] = pointsOfInterest[3][0], c[1] = pointsOfInterest[3][1];
+            else if (IsKeyPressed(KEY_FIVE)) c[0] = pointsOfInterest[4][0], c[1] = pointsOfInterest[4][1];
+            else if (IsKeyPressed(KEY_SIX)) c[0] = pointsOfInterest[5][0], c[1] = pointsOfInterest[5][1];
+
+            SetShaderValue(shader, cLoc, c, SHADER_UNIFORM_VEC2);
         }
 
         // If "R" is pressed, reset zoom and offset.
