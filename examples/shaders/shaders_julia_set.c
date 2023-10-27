@@ -64,7 +64,7 @@ int main(void)
     float c[2] = { pointsOfInterest[0][0], pointsOfInterest[0][1] };
 
     // Offset and zoom to draw the julia set at. (centered on screen and default size)
-    float offset[2] = { 0.0, 0.0 };
+    float offset[2] = { 0.0f, 0.0f };
     float zoom = startingZoom;
 
     // Get variable (uniform) locations on the shader to connect with the program
@@ -111,8 +111,8 @@ int main(void)
         if (IsKeyPressed(KEY_R))
         {
             zoom = startingZoom;
-            offset[0] = 0.0;
-            offset[1] = 0.0;
+            offset[0] = 0.0f;
+            offset[1] = 0.0f;
             SetShaderValue(shader, zoomLoc, &zoom, SHADER_UNIFORM_FLOAT);
             SetShaderValue(shader, offsetLoc, offset, SHADER_UNIFORM_VEC2);
         }
@@ -134,8 +134,8 @@ int main(void)
             // Find the velocity at which to change the camera. Take the distance of the mouse
             // from the center of the screen as the direction, and adjust magnitude based on
             // the current zoom.
-            offsetVelocity.x = (mousePos.x/(float)screenWidth - 0.5)*offsetSpeedMul/zoom;
-            offsetVelocity.y = (mousePos.y/(float)screenHeight - 0.5)*offsetSpeedMul/zoom;
+            offsetVelocity.x = (mousePos.x/(float)screenWidth - 0.5f)*offsetSpeedMul/zoom;
+            offsetVelocity.y = (mousePos.y/(float)screenHeight - 0.5f)*offsetSpeedMul/zoom;
 
             // Apply move velocity to camera
             offset[0] += GetFrameTime()*offsetVelocity.x;
