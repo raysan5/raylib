@@ -2675,8 +2675,15 @@ outputting any audio data. To output audio data, use `ma_encoder_write_pcm_frame
 example below:
 
     ```c
-    framesWritten = ma_encoder_write_pcm_frames(&encoder, pPCMFramesToWrite, framesToWrite);
+    ma_uint64 framesWritten;
+    result = ma_encoder_write_pcm_frames(&encoder, pPCMFramesToWrite, framesToWrite, &framesWritten);
+    if (result != MA_SUCCESS) {
+        ... handle error ...
+    }
     ```
+
+The `framesWritten` variable will contain the number of PCM frames that were actually written. This
+is optionally and you can pass in `NULL` if you need this.
 
 Encoders must be uninitialized with `ma_encoder_uninit()`.
 
@@ -40902,6 +40909,11 @@ static ma_thread_result MA_THREADCALL ma_worker_thread(void* pData)
             ma_device__on_notification_stopped(pDevice);
         }
 
+        /* If we stopped because the device has been uninitialized, abort now. */
+        if (ma_device_get_state(pDevice) == ma_device_state_uninitialized) {
+            break;
+        }
+
         /* A function somewhere is waiting for the device to have stopped for real so we need to signal an event to allow it to continue. */
         ma_device__set_state(pDevice, ma_device_state_stopped);
         ma_event_signal(&pDevice->stopEvent);
@@ -76804,6 +76816,7 @@ MA_API ma_result ma_sound_get_cursor_in_pcm_frames(ma_sound* pSound, ma_uint64* 
     seekTarget = ma_atomic_load_64(&pSound->seekTarget);
     if (seekTarget != MA_SEEK_TARGET_NONE) {
         *pCursor = seekTarget;
+        return MA_SUCCESS;
     } else {
         return ma_data_source_get_cursor_in_pcm_frames(pSound->pDataSource, pCursor);
     }
