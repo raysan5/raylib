@@ -78,13 +78,10 @@ RAYLIB_CONFIG_FLAGS  ?= NONE
 RAYLIB_MODULE_AUDIO  ?= TRUE
 RAYLIB_MODULE_MODELS ?= TRUE
 RAYLIB_MODULE_RAYGUI ?= FALSE
-RAYLIB_MODULE_PHYSAC ?= FALSE
 
 # NOTE: Additional libraries have been moved to their own repos:
 # raygui: https://github.com/raysan5/raygui
-# physac: https://github.com/raysan5/physac
 RAYLIB_MODULE_RAYGUI_PATH ?= $(RAYLIB_SRC_PATH)/../../raygui/src
-RAYLIB_MODULE_PHYSAC_PATH ?= $(RAYLIB_SRC_PATH)/../../physac/src
 
 # Use external GLFW library instead of rglfw module
 USE_EXTERNAL_GLFW     ?= FALSE
@@ -553,9 +550,6 @@ endif
 ifeq ($(RAYLIB_MODULE_RAYGUI),TRUE)
     OBJS += raygui.o
 endif
-ifeq ($(RAYLIB_MODULE_PHYSAC),TRUE)
-    OBJS += physac.o
-endif
 
 ifeq ($(PLATFORM),PLATFORM_ANDROID)
     OBJS += android_native_app_glue.o
@@ -680,22 +674,9 @@ else
 	@echo "#include \"$(RAYLIB_MODULE_RAYGUI_PATH)/raygui.h\"" >> raygui.c
 endif
 
-# Compile physac module
-# NOTE: physac header should be distributed with raylib.h
-physac.o : physac.c
-	$(CC) -c $< $(CFLAGS) $(INCLUDE_PATHS)
-physac.c:
-ifeq ($(PLATFORM_SHELL), cmd)
-	@echo #define PHYSAC_IMPLEMENTATION > physac.c
-	@echo #include "$(RAYLIB_MODULE_PHYSAC_PATH)/physac.h" >> physac.c
-else
-	@echo "#define PHYSAC_IMPLEMENTATION" > physac.c
-	@echo "#include \"$(RAYLIB_MODULE_PHYSAC_PATH)/physac.h\"" >> physac.c
-endif
 # Compile android_native_app_glue module
 android_native_app_glue.o : $(NATIVE_APP_GLUE)/android_native_app_glue.c
 	$(CC) -c $< $(CFLAGS) $(INCLUDE_PATHS)
-
 
 # Install generated and needed files to desired directories.
 # On GNU/Linux and BSDs, there are some standard directories that contain extra
@@ -780,7 +761,7 @@ clean:	clean_shell_$(PLATFORM_SHELL)
 	@echo "removed all generated files!"
 
 clean_shell_sh:
-	rm -fv *.o $(RAYLIB_RELEASE_PATH)/lib$(RAYLIB_LIB_NAME).a $(RAYLIB_RELEASE_PATH)/lib$(RAYLIB_LIB_NAME).bc $(RAYLIB_RELEASE_PATH)/lib$(RAYLIB_LIB_NAME).so* raygui.c physac.c
+	rm -fv *.o $(RAYLIB_RELEASE_PATH)/lib$(RAYLIB_LIB_NAME).a $(RAYLIB_RELEASE_PATH)/lib$(RAYLIB_LIB_NAME).bc $(RAYLIB_RELEASE_PATH)/lib$(RAYLIB_LIB_NAME).so* raygui.c
 ifeq ($(PLATFORM),PLATFORM_ANDROID)
 	rm -fv $(NATIVE_APP_GLUE)/android_native_app_glue.o
 endif
@@ -794,4 +775,3 @@ clean_shell_cmd:
 	del lib$(RAYLIB_LIB_NAME)dll.a /s & \
 	del $(RAYLIB_LIB_NAME).dll /s & \
 	del raygui.c /s & \
-	del physac.c /s
