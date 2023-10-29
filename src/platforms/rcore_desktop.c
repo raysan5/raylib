@@ -751,6 +751,11 @@ int GetCurrentMonitor(void)
         }
         else
         {
+            // In case the window is between two monitors, we use below logic
+            // to try to detect the "current monitor" for that window, note that
+            // this is probably an overengineered solution for a very side case
+            // trying to match SDL behaviour
+            
             int closestDist = 0x7FFFFFFF;
 
             // Window center position
@@ -758,8 +763,8 @@ int GetCurrentMonitor(void)
             int wcy = 0;
 
             glfwGetWindowPos(platform.handle, &wcx, &wcy);
-            wcx += (int)CORE.Window.screen.width / 2;
-            wcy += (int)CORE.Window.screen.height / 2;
+            wcx += (int)CORE.Window.screen.width/2;
+            wcy += (int)CORE.Window.screen.height/2;
 
             for (int i = 0; i < monitorCount; i++)
             {
@@ -786,28 +791,16 @@ int GetCurrentMonitor(void)
                     }
 
                     int xclosest = wcx;
-                    if (wcx < mx)
-                    {
-                        xclosest = mx;
-                    }
-                    else if (wcx > right)
-                    {
-                        xclosest = right;
-                    }
+                    if (wcx < mx) xclosest = mx;
+                    else if (wcx > right) xclosest = right;
 
                     int yclosest = wcy;
-                    if (wcy < my)
-                    {
-                        yclosest = my;
-                    }
-                    else if (wcy > bottom)
-                    {
-                        yclosest = bottom;
-                    }
+                    if (wcy < my) yclosest = my;
+                    else if (wcy > bottom) yclosest = bottom;
 
                     int dx = wcx - xclosest;
                     int dy = wcy - yclosest;
-                    int dist = (dx * dx) + (dy * dy);
+                    int dist = (dx*dx) + (dy*dy);
                     if (dist < closestDist)
                     {
                         index = i;
