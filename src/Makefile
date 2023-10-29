@@ -1,18 +1,28 @@
 #******************************************************************************
 #
-#  raylib makefile
+#   raylib makefile
 #
-#  Platforms supported:
-#    PLATFORM_DESKTOP:  Windows (Win32, Win64)
-#    PLATFORM_DESKTOP:  Linux (arm64, i386, x64)
-#    PLATFORM_DESKTOP:  OSX/macOS (arm64, x86_64)
-#    PLATFORM_DESKTOP:  FreeBSD, OpenBSD, NetBSD, DragonFly
-#    PLATFORM_ANDROID:  Android (arm, i686, arm64, x86_64)
-#    PLATFORM_DRM:      Linux native mode, including Raspberry Pi (RPI OS Bullseye)
-#    PLATFORM_WEB:      HTML5 (Chrome, Firefox)
+#   This file supports building raylib library for the following platforms:
 #
-#  Many thanks to Milan Nikolic (@gen2brain) for implementing Android platform pipeline.
-#  Many thanks to Emanuele Petriglia for his contribution on GNU/Linux pipeline.
+#     - PLATFORM_DESKTOP (GLFW backend):
+#         > Windows (Win32, Win64)
+#         > Linux (X11/Wayland desktop mode)
+#         > macOS/OSX (x64, arm64)
+#         > FreeBSD, OpenBSD, NetBSD, DragonFly (X11 desktop)
+#     - PLATFORM_DESKTOP_SDL (SDL backend):
+#         > Windows (Win32, Win64)
+#         > Linux (X11/Wayland desktop mode)
+#         > Others (not tested)
+#     - PLATFORM_WEB:
+#         > HTML5 (WebAssembly)
+#     - PLATFORM_DRM:
+#         > Raspberry Pi 0-5 (no X11/Wayland)
+#         > Linux native mode (KMS driver)
+#     - PLATFORM_ANDROID:
+#         > Android (ARM, ARM64)
+#
+#   Many thanks to Milan Nikolic (@gen2brain) for implementing Android platform pipeline.
+#   Many thanks to Emanuele Petriglia for his contribution on GNU/Linux pipeline.
 #
 #   Copyright (c) 2013-2023 Ramon Santamaria (@raysan5)
 #
@@ -86,6 +96,11 @@ RAYLIB_MODULE_RAYGUI_PATH ?= $(RAYLIB_SRC_PATH)/../../raygui/src
 # Use external GLFW library instead of rglfw module
 USE_EXTERNAL_GLFW     ?= FALSE
 
+# PLATFORM_DESKTOP_SDL: It requires SDL library to be provided externally
+# WARNING: Library is not included in raylib, it MUST be configured by users
+SDL_INCLUDE_PATH      ?= $(RAYLIB_SRC_PATH)/external/SDL2-2.28.4/include
+SDL_LIBRARY_PATH      ?= $(RAYLIB_SRC_PATH)/external/SDL2-2.28.4/lib/x64
+
 # Use Wayland display server protocol on Linux desktop (by default it uses X11 windowing system)
 # NOTE: This variable is only used for PLATFORM_OS: LINUX
 USE_WAYLAND_DISPLAY   ?= FALSE
@@ -98,8 +113,8 @@ ROOT = $(shell whoami)
 HOST_PLATFORM_OS ?= WINDOWS
 PLATFORM_OS ?= WINDOWS
 
-# Determine PLATFORM_OS in case PLATFORM_DESKTOP selected
-ifeq ($(PLATFORM),PLATFORM_DESKTOP)
+# Determine PLATFORM_OS when required
+ifeq ($(PLATFORM),$(filter $(PLATFORM),PLATFORM_DESKTOP PLATFORM_DESKTOP_SDL PLATFORM_WEB))
     # No uname.exe on MinGW!, but OS=Windows_NT on Windows!
     # ifeq ($(UNAME),Msys) -> Windows
     ifeq ($(OS),Windows_NT)
@@ -142,16 +157,7 @@ ifeq ($(PLATFORM),PLATFORM_DRM)
     endif
 endif
 ifeq ($(PLATFORM),PLATFORM_WEB)
-    ifeq ($(OS),Windows_NT)
-        PLATFORM_OS = WINDOWS
-        ifndef PLATFORM_SHELL
-            PLATFORM_SHELL = cmd
-        endif
-    else
-        UNAMEOS = $(shell uname)
-        ifeq ($(UNAMEOS),Linux)
-            PLATFORM_OS = LINUX
-        endif
+    ifeq ($(PLATFORM_OS),LINUX)
         ifndef PLATFORM_SHELL
             PLATFORM_SHELL = sh
         endif
@@ -214,7 +220,10 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
     #GRAPHICS = GRAPHICS_API_OPENGL_43      # Uncomment to use OpenGL 4.3
     #GRAPHICS = GRAPHICS_API_OPENGL_ES2     # Uncomment to use OpenGL ES 2.0 (ANGLE)
 endif
-
+ifeq ($(PLATFORM),PLATFORM_DESKTOP_SDL)
+    # By default use OpenGL 3.3 on desktop platform with SDL backend
+    GRAPHICS ?= GRAPHICS_API_OPENGL_33
+endif
 ifeq ($(PLATFORM),PLATFORM_DRM)
     # On DRM OpenGL ES 2.0 must be used
     GRAPHICS = GRAPHICS_API_OPENGL_ES2
@@ -413,13 +422,20 @@ endif
 # Define include paths for required headers: INCLUDE_PATHS
 # NOTE: Several external required libraries (stb and others)
 #------------------------------------------------------------------------------------------------
-INCLUDE_PATHS = -I. -Iexternal/glfw/include -Iexternal/glfw/deps/mingw
+INCLUDE_PATHS = -I. 
 
 # Define additional directories containing required header files
 ifeq ($(PLATFORM),PLATFORM_DESKTOP)
+    INCLUDE_PATHS += -Iexternal/glfw/include -Iexternal/glfw/deps/mingw
     ifeq ($(PLATFORM_OS),BSD)
         INCLUDE_PATHS += -I/usr/local/include
     endif
+endif
+ifeq ($(PLATFORM),PLATFORM_DESKTOP_SDL)
+    INCLUDE_PATHS += -I$(SDL_INCLUDE_PATH)
+endif
+ifeq ($(PLATFORM),PLATFORM_WEB)
+    INCLUDE_PATHS += -Iexternal/glfw/include -Iexternal/glfw/deps/mingw
 endif
 ifeq ($(PLATFORM),PLATFORM_DRM)
     INCLUDE_PATHS += -I/usr/include/libdrm
@@ -470,10 +486,14 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
         LDFLAGS += -Wl,-soname,lib$(RAYLIB_LIB_NAME).$(RAYLIB_API_VERSION).so -Lsrc -L/usr/local/lib
     endif
 endif
+ifeq ($(PLATFORM),PLATFORM_DESKTOP_SDL)
+    LDFLAGS += -Wl,-soname,lib$(RAYLIB_LIB_NAME).so.$(RAYLIB_API_VERSION)
+    LDFLAGS += -L$(SDL_LIBRARY_PATH)
+endif
 ifeq ($(PLATFORM),PLATFORM_DRM)
     LDFLAGS += -Wl,-soname,lib$(RAYLIB_LIB_NAME).so.$(RAYLIB_API_VERSION)
     ifeq ($(USE_RPI_CROSSCOMPILER), TRUE)
-        INCLUDE_PATHS += -L$(RPI_TOOLCHAIN_SYSROOT)/opt/vc/lib -L$(RPI_TOOLCHAIN_SYSROOT)/usr/lib
+        LDFLAGS += -L$(RPI_TOOLCHAIN_SYSROOT)/opt/vc/lib -L$(RPI_TOOLCHAIN_SYSROOT)/usr/lib
     endif
 endif
 ifeq ($(PLATFORM),PLATFORM_ANDROID)
@@ -517,6 +537,18 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
         # a static library known as libglfw3.a. In that case, the name should be -lglfw3
         LDLIBS = -lglfw
     endif
+endif
+ifeq ($(PLATFORM),PLATFORM_DESKTOP_SDL)
+    ifeq ($(PLATFORM_OS),WINDOWS)
+        LDLIBS = -static-libgcc -lopengl32 -lgdi32
+    endif
+    ifeq ($(PLATFORM_OS),LINUX)
+        LDLIBS = -lGL -lc -lm -lpthread -ldl -lrt
+        ifeq ($(USE_WAYLAND_DISPLAY),FALSE)
+            LDLIBS += -lX11
+        endif
+    endif
+    LDLIBS += -lSDL2 -lSDL2main
 endif
 ifeq ($(PLATFORM),PLATFORM_DRM)
     LDLIBS = -lGLESv2 -lEGL -ldrm -lgbm -lpthread -lrt -lm -ldl
