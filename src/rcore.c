@@ -3,11 +3,15 @@
 *   rcore - Window/display management, Graphic device/context management and input management
 *
 *   PLATFORMS SUPPORTED:
-*       - PLATFORM_DESKTOP:
+*       - PLATFORM_DESKTOP (GLFW backend):
 *           > Windows (Win32, Win64)
 *           > Linux (X11/Wayland desktop mode)
 *           > macOS/OSX (x64, arm64)
 *           > FreeBSD, OpenBSD, NetBSD, DragonFly (X11 desktop)
+*       - PLATFORM_DESKTOP_SDL (SDL backend):
+*           > Windows (Win32, Win64)
+*           > Linux (X11/Wayland desktop mode)
+*           > Others (not tested)
 *       - PLATFORM_WEB:
 *           > HTML5 (WebAssembly)
 *       - PLATFORM_DRM:
@@ -446,8 +450,8 @@ extern void UnloadFontDefault(void);    // [Module: text] Unloads default font f
 extern int InitPlatform(void);          // Initialize platform (graphics, inputs and more)
 extern void ClosePlatform(void);        // Close platform
 
-static void InitTimer(void);                                // Initialize timer (hi-resolution if available)
-static void SetupFramebuffer(int width, int height);        // Setup main framebuffer
+static void InitTimer(void);                                // Initialize timer, hi-resolution if available (required by InitPlatform())
+static void SetupFramebuffer(int width, int height);        // Setup main framebuffer (required by InitPlatform())
 static void SetupViewport(int width, int height);           // Set viewport for a provided width and height
 
 static void ScanDirectoryFiles(const char *basePath, FilePathList *list, const char *filter);   // Scan all files and directories in a base path
@@ -2933,7 +2937,7 @@ void InitTimer(void)
     // However, it can also reduce overall system performance, because the thread scheduler switches tasks more often.
     // High resolutions can also prevent the CPU power management system from entering power-saving modes.
     // Setting a higher resolution does not improve the accuracy of the high-resolution performance counter.
-#if defined(_WIN32) && defined(SUPPORT_WINMM_HIGHRES_TIMER) && !defined(SUPPORT_BUSY_WAIT_LOOP)
+#if defined(_WIN32) && defined(SUPPORT_WINMM_HIGHRES_TIMER) && !defined(SUPPORT_BUSY_WAIT_LOOP) && !defined(PLATFORM_DESKTOP_SDL)
     timeBeginPeriod(1);                 // Setup high-resolution timer to 1ms (granularity of 1-2 ms)
 #endif
 
