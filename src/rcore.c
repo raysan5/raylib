@@ -131,6 +131,11 @@
     #include "external/sdefl.h"     // Deflate (RFC 1951) compressor
 #endif
 
+#if defined(SUPPORT_RPRAND_GENERATOR)
+    #define RPRAND_IMPLEMENTATION
+    #include "external/rprand.h"
+#endif
+
 #if defined(__linux__) && !defined(_GNU_SOURCE)
     #define _GNU_SOURCE
 #endif
@@ -1647,31 +1652,43 @@ void WaitTime(double seconds)
 // NOTE: Functions with a platform-specific implementation on rcore_<platform>.c
 //void OpenURL(const char *url)
 
+
+// Set the seed for the random number generator
+void SetRandomSeed(unsigned int seed)
+{
+#if defined(SUPPORT_RPRAND_GENERATOR)
+    rprand_set_seed(seed);
+#else
+    srand(seed);
+#endif
+}
+
 // Get a random value between min and max (both included)
-// WARNING: Ranges higher than RAND_MAX will return invalid results
-// More specifically, if (max - min) > INT_MAX there will be an overflow,
-// and otherwise if (max - min) > RAND_MAX the random value will incorrectly never exceed a certain threshold
 int GetRandomValue(int min, int max)
 {
+    int value = 0;
+    
     if (min > max)
     {
         int tmp = max;
         max = min;
         min = tmp;
     }
-
+    
+#if defined(SUPPORT_RPRAND_GENERATOR)
+    value = rprand_get_value(min, max);
+#else 
+    // WARNING: Ranges higher than RAND_MAX will return invalid results
+    // More specifically, if (max - min) > INT_MAX there will be an overflow,
+    // and otherwise if (max - min) > RAND_MAX the random value will incorrectly never exceed a certain threshold
     if ((unsigned int)(max - min) > (unsigned int)RAND_MAX)
     {
         TRACELOG(LOG_WARNING, "Invalid GetRandomValue() arguments, range should not be higher than %i", RAND_MAX);
     }
-
-    return (rand()%(abs(max - min) + 1) + min);
-}
-
-// Set the seed for the random number generator
-void SetRandomSeed(unsigned int seed)
-{
-    srand(seed);
+    
+    value = (rand()%(abs(max - min) + 1) + min);
+#endif
+    return value;
 }
 
 // Takes a screenshot of current screen (saved a .png)
