@@ -906,16 +906,17 @@ int InitPlatform(void)
     rlLoadExtensions(eglGetProcAddress);
     //----------------------------------------------------------------------------
 
+    // Initialize timming system
+    //----------------------------------------------------------------------------
+    // NOTE: timming system must be initialized before the input events system
+    InitTimer();
+    //----------------------------------------------------------------------------
+
     // Initialize input events system
     //----------------------------------------------------------------------------
     InitEvdevInput();   // Evdev inputs initialization
     InitGamepad();      // Gamepad init
     InitKeyboard();     // Keyboard init (stdin)
-    //----------------------------------------------------------------------------
-
-    // Initialize timming system
-    //----------------------------------------------------------------------------
-    InitTimer();
     //----------------------------------------------------------------------------
 
     // Initialize storage system
