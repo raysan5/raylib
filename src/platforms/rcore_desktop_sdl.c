@@ -1269,8 +1269,8 @@ int InitPlatform(void)
     //----------------------------------------------------------------------------
     if (SDL_NumJoysticks() >= 1)
     {
-        SDL_Joystick *gamepad = SDL_JoystickOpen(0);
-        //if (SDL_Joystick *gamepad == NULL) SDL_Log("WARNING: Unable to open game controller! SDL Error: %s\n", SDL_GetError());
+        platform.gamepad = SDL_JoystickOpen(0);
+        //if (platform.gamepadgamepad == NULL) TRACELOG(LOG_WARNING, "PLATFORM: Unable to open game controller [ERROR: %s]", SDL_GetError());
     }
 
     SDL_EventState(SDL_DROPFILE, SDL_ENABLE);
