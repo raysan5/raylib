@@ -85,12 +85,19 @@
     #include "config.h"             // Defines module configuration flags
 #endif
 
-#include "rcore.h"                  // Defines types and globals
+#include "utils.h"                  // Required for: TRACELOG() macros
+
+#include <stdlib.h>                 // Required for: srand(), rand(), atexit()
+#include <stdio.h>                  // Required for: sprintf() [Used in OpenURL()]
+#include <string.h>                 // Required for: strrchr(), strcmp(), strlen(), memset()
+#include <time.h>                   // Required for: time() [Used in InitTimer()]
+#include <math.h>                   // Required for: tan() [Used in BeginMode3D()], atan2f() [Used in LoadVrStereoConfig()]
 
 #define RLGL_IMPLEMENTATION
 #include "rlgl.h"                   // OpenGL abstraction layer to OpenGL 1.1, 3.3+ or ES2
 
-#include "raymath.h"                // Vector3, Quaternion and Matrix functionality
+#define RAYMATH_IMPLEMENTATION
+#include "raymath.h"                // Vector2, Vector3, Quaternion and Matrix functionality
 
 #if defined(SUPPORT_GESTURES_SYSTEM)
     #define RGESTURES_IMPLEMENTATION
@@ -165,6 +172,161 @@ __declspec(dllimport) int __stdcall WideCharToMultiByte(unsigned int cp, unsigne
     #define GETCWD getcwd
     #define CHDIR chdir
 #endif
+
+//----------------------------------------------------------------------------------
+// Defines and Macros
+//----------------------------------------------------------------------------------
+#ifndef MAX_FILEPATH_CAPACITY
+    #define MAX_FILEPATH_CAPACITY       8192        // Maximum capacity for filepath
+#endif
+#ifndef MAX_FILEPATH_LENGTH
+    #define MAX_FILEPATH_LENGTH         4096        // Maximum length for filepaths (Linux PATH_MAX default value)
+#endif
+
+#ifndef MAX_KEYBOARD_KEYS
+    #define MAX_KEYBOARD_KEYS            512        // Maximum number of keyboard keys supported
+#endif
+#ifndef MAX_MOUSE_BUTTONS
+    #define MAX_MOUSE_BUTTONS              8        // Maximum number of mouse buttons supported
+#endif
+#ifndef MAX_GAMEPADS
+    #define MAX_GAMEPADS                   4        // Maximum number of gamepads supported
+#endif
+#ifndef MAX_GAMEPAD_AXIS
+    #define MAX_GAMEPAD_AXIS               8        // Maximum number of axis supported (per gamepad)
+#endif
+#ifndef MAX_GAMEPAD_BUTTONS
+    #define MAX_GAMEPAD_BUTTONS           32        // Maximum number of buttons supported (per gamepad)
+#endif
+#ifndef MAX_TOUCH_POINTS
+    #define MAX_TOUCH_POINTS               8        // Maximum number of touch points supported
+#endif
+#ifndef MAX_KEY_PRESSED_QUEUE
+    #define MAX_KEY_PRESSED_QUEUE         16        // Maximum number of keys in the key input queue
+#endif
+#ifndef MAX_CHAR_PRESSED_QUEUE
+    #define MAX_CHAR_PRESSED_QUEUE        16        // Maximum number of characters in the char input queue
+#endif
+
+#ifndef MAX_DECOMPRESSION_SIZE
+    #define MAX_DECOMPRESSION_SIZE        64        // Maximum size allocated for decompression in MB
+#endif
+
+#ifndef MAX_AUTOMATION_EVENTS
+    #define MAX_AUTOMATION_EVENTS      16384        // Maximum number of automation events to record
+#endif
+
+// Flags operation macros
+#define FLAG_SET(n, f) ((n) |= (f))
+#define FLAG_CLEAR(n, f) ((n) &= ~(f))
+#define FLAG_TOGGLE(n, f) ((n) ^= (f))
+#define FLAG_CHECK(n, f) ((n) & (f))
+
+#if (defined(__linux__) || defined(PLATFORM_WEB)) && (_POSIX_C_SOURCE < 199309L)
+    #undef _POSIX_C_SOURCE
+    #define _POSIX_C_SOURCE 199309L // Required for: CLOCK_MONOTONIC if compiled with c99 without gnu ext.
+#endif
+
+//----------------------------------------------------------------------------------
+// Types and Structures Definition
+//----------------------------------------------------------------------------------
+typedef struct { int x; int y; } Point;
+typedef struct { unsigned int width; unsigned int height; } Size;
+
+// Core global state context data
+typedef struct CoreData {
+    struct {
+        const char *title;                  // Window text title const pointer
+        unsigned int flags;                 // Configuration flags (bit based), keeps window state
+        bool ready;                         // Check if window has been initialized successfully
+        bool fullscreen;                    // Check if fullscreen mode is enabled
+        bool shouldClose;                   // Check if window set for closing
+        bool resizedLastFrame;              // Check if window has been resized last frame
+        bool eventWaiting;                  // Wait for events before ending frame
+
+        Point position;                     // Window position (required on fullscreen toggle)
+        Point previousPosition;             // Window previous position (required on borderless windowed toggle)
+        Size display;                       // Display width and height (monitor, device-screen, LCD, ...)
+        Size screen;                        // Screen width and height (used render area)
+        Size previousScreen;                // Screen previous width and height (required on borderless windowed toggle)
+        Size currentFbo;                    // Current render width and height (depends on active fbo)
+        Size render;                        // Framebuffer width and height (render area, including black bars if required)
+        Point renderOffset;                 // Offset from render area (must be divided by 2)
+        Size screenMin;                     // Screen minimum width and height (for resizable window)
+        Size screenMax;                     // Screen maximum width and height (for resizable window)
+        Matrix screenScale;                 // Matrix to scale screen (framebuffer rendering)
+
+        char **dropFilepaths;               // Store dropped files paths pointers (provided by GLFW)
+        unsigned int dropFileCount;         // Count dropped files strings
+
+    } Window;
+    struct {
+        const char *basePath;               // Base path for data storage
+
+    } Storage;
+    struct {
+        struct {
+            int exitKey;                    // Default exit key
+            char currentKeyState[MAX_KEYBOARD_KEYS]; // Registers current frame key state
+            char previousKeyState[MAX_KEYBOARD_KEYS]; // Registers previous frame key state
+
+            // NOTE: Since key press logic involves comparing prev vs cur key state, we need to handle key repeats specially
+            char keyRepeatInFrame[MAX_KEYBOARD_KEYS]; // Registers key repeats for current frame.
+
+            int keyPressedQueue[MAX_KEY_PRESSED_QUEUE]; // Input keys queue
+            int keyPressedQueueCount;       // Input keys queue count
+
+            int charPressedQueue[MAX_CHAR_PRESSED_QUEUE]; // Input characters queue (unicode)
+            int charPressedQueueCount;      // Input characters queue count
+
+        } Keyboard;
+        struct {
+            Vector2 offset;                 // Mouse offset
+            Vector2 scale;                  // Mouse scaling
+            Vector2 currentPosition;        // Mouse position on screen
+            Vector2 previousPosition;       // Previous mouse position
+
+            int cursor;                     // Tracks current mouse cursor
+            bool cursorHidden;              // Track if cursor is hidden
+            bool cursorOnScreen;            // Tracks if cursor is inside client area
+
+            char currentButtonState[MAX_MOUSE_BUTTONS];     // Registers current mouse button state
+            char previousButtonState[MAX_MOUSE_BUTTONS];    // Registers previous mouse button state
+            Vector2 currentWheelMove;       // Registers current mouse wheel variation
+            Vector2 previousWheelMove;      // Registers previous mouse wheel variation
+
+        } Mouse;
+        struct {
+            int pointCount;                             // Number of touch points active
+            int pointId[MAX_TOUCH_POINTS];              // Point identifiers
+            Vector2 position[MAX_TOUCH_POINTS];         // Touch position on screen
+            char currentTouchState[MAX_TOUCH_POINTS];   // Registers current touch state
+            char previousTouchState[MAX_TOUCH_POINTS];  // Registers previous touch state
+
+        } Touch;
+        struct {
+            int lastButtonPressed;          // Register last gamepad button pressed
+            int axisCount[MAX_GAMEPADS];                  // Register number of available gamepad axis
+            bool ready[MAX_GAMEPADS];       // Flag to know if gamepad is ready
+            char name[MAX_GAMEPADS][64];    // Gamepad name holder
+            char currentButtonState[MAX_GAMEPADS][MAX_GAMEPAD_BUTTONS];     // Current gamepad buttons state
+            char previousButtonState[MAX_GAMEPADS][MAX_GAMEPAD_BUTTONS];    // Previous gamepad buttons state
+            float axisState[MAX_GAMEPADS][MAX_GAMEPAD_AXIS];                // Gamepad axis state
+
+        } Gamepad;
+    } Input;
+    struct {
+        double current;                     // Current time measure
+        double previous;                    // Previous time measure
+        double update;                      // Time measure for frame update
+        double draw;                        // Time measure for frame draw
+        double frame;                       // Time measure for one frame
+        double target;                      // Desired time for one frame, if 0 not applied
+        unsigned long long int base;        // Base time measure for hi-res timer (PLATFORM_ANDROID, PLATFORM_DRM)
+        unsigned int frameCounter;          // Frame counter
+
+    } Time;
+} CoreData;
 
 //----------------------------------------------------------------------------------
 // Global Variables Definition
@@ -2156,7 +2318,7 @@ AutomationEventList LoadAutomationEventList(const char *fileName)
         /*
         //int dataSize = 0;
         //unsigned char *data = LoadFileData(fileName, &dataSize);
-        
+
         FILE *raeFile = fopen(fileName, "rb");
         unsigned char fileId[4] = { 0 };
 
@@ -2202,7 +2364,7 @@ AutomationEventList LoadAutomationEventList(const char *fileName)
                 fgets(buffer, 256, raeFile);
             }
 
-            if (counter != list.count) 
+            if (counter != list.count)
             {
                 TRACELOG(LOG_WARNING, "AUTOMATION: Events read from file [%i] do not mach event count specified [%i]", counter, list.count);
                 list.count = counter;
@@ -2234,7 +2396,7 @@ void UnloadAutomationEventList(AutomationEventList *list)
 bool ExportAutomationEventList(AutomationEventList list, const char *fileName)
 {
     bool success = false;
-    
+
 #if defined(SUPPORT_AUTOMATION_EVENTS)
     // Export events as binary file
     // TODO: Save to memory buffer and SaveFileData()
@@ -2992,7 +3154,7 @@ static void RecordAutomationEvent(void)
 {
     // Checking events in current frame and save them into currentEventList
     // TODO: How important is the current frame? Could it be modified?
-    
+
     if (currentEventList->count == currentEventList->capacity) return;    // Security check
 
     // Keyboard input events recording
@@ -3011,7 +3173,7 @@ static void RecordAutomationEvent(void)
             TRACELOG(LOG_INFO, "AUTOMATION: Frame: %i | Event type: INPUT_KEY_UP | Event parameters: %i, %i, %i", currentEventList->events[currentEventList->count].frame, currentEventList->events[currentEventList->count].params[0], currentEventList->events[currentEventList->count].params[1], currentEventList->events[currentEventList->count].params[2]);
             currentEventList->count++;
         }
-        
+
         if (currentEventList->count == currentEventList->capacity) return;    // Security check
 
         // Event type: INPUT_KEY_DOWN
@@ -3026,7 +3188,7 @@ static void RecordAutomationEvent(void)
             TRACELOG(LOG_INFO, "AUTOMATION: Frame: %i | Event type: INPUT_KEY_DOWN | Event parameters: %i, %i, %i", currentEventList->events[currentEventList->count].frame, currentEventList->events[currentEventList->count].params[0], currentEventList->events[currentEventList->count].params[1], currentEventList->events[currentEventList->count].params[2]);
             currentEventList->count++;
         }
-        
+
         if (currentEventList->count == currentEventList->capacity) return;    // Security check
     }
     //-------------------------------------------------------------------------------------
@@ -3047,7 +3209,7 @@ static void RecordAutomationEvent(void)
             TRACELOG(LOG_INFO, "AUTOMATION: Frame: %i | Event type: INPUT_MOUSE_BUTTON_UP | Event parameters: %i, %i, %i", currentEventList->events[currentEventList->count].frame, currentEventList->events[currentEventList->count].params[0], currentEventList->events[currentEventList->count].params[1], currentEventList->events[currentEventList->count].params[2]);
             currentEventList->count++;
         }
-        
+
         if (currentEventList->count == currentEventList->capacity) return;    // Security check
 
         // Event type: INPUT_MOUSE_BUTTON_DOWN
@@ -3062,7 +3224,7 @@ static void RecordAutomationEvent(void)
             TRACELOG(LOG_INFO, "AUTOMATION: Frame: %i | Event type: INPUT_MOUSE_BUTTON_DOWN | Event parameters: %i, %i, %i", currentEventList->events[currentEventList->count].frame, currentEventList->events[currentEventList->count].params[0], currentEventList->events[currentEventList->count].params[1], currentEventList->events[currentEventList->count].params[2]);
             currentEventList->count++;
         }
-        
+
         if (currentEventList->count == currentEventList->capacity) return;    // Security check
     }
 
@@ -3078,7 +3240,7 @@ static void RecordAutomationEvent(void)
 
         TRACELOG(LOG_INFO, "AUTOMATION: Frame: %i | Event type: INPUT_MOUSE_POSITION | Event parameters: %i, %i, %i", currentEventList->events[currentEventList->count].frame, currentEventList->events[currentEventList->count].params[0], currentEventList->events[currentEventList->count].params[1], currentEventList->events[currentEventList->count].params[2]);
         currentEventList->count++;
-        
+
         if (currentEventList->count == currentEventList->capacity) return;    // Security check
     }
 
@@ -3094,7 +3256,7 @@ static void RecordAutomationEvent(void)
 
         TRACELOG(LOG_INFO, "AUTOMATION: Frame: %i | Event type: INPUT_MOUSE_WHEEL_MOTION | Event parameters: %i, %i, %i", currentEventList->events[currentEventList->count].frame, currentEventList->events[currentEventList->count].params[0], currentEventList->events[currentEventList->count].params[1], currentEventList->events[currentEventList->count].params[2]);
         currentEventList->count++;
-        
+
         if (currentEventList->count == currentEventList->capacity) return;    // Security check
     }
     //-------------------------------------------------------------------------------------
@@ -3115,7 +3277,7 @@ static void RecordAutomationEvent(void)
             TRACELOG(LOG_INFO, "AUTOMATION: Frame: %i | Event type: INPUT_TOUCH_UP | Event parameters: %i, %i, %i", currentEventList->events[currentEventList->count].frame, currentEventList->events[currentEventList->count].params[0], currentEventList->events[currentEventList->count].params[1], currentEventList->events[currentEventList->count].params[2]);
             currentEventList->count++;
         }
-        
+
         if (currentEventList->count == currentEventList->capacity) return;    // Security check
 
         // Event type: INPUT_TOUCH_DOWN
@@ -3130,7 +3292,7 @@ static void RecordAutomationEvent(void)
             TRACELOG(LOG_INFO, "AUTOMATION: Frame: %i | Event type: INPUT_TOUCH_DOWN | Event parameters: %i, %i, %i", currentEventList->events[currentEventList->count].frame, currentEventList->events[currentEventList->count].params[0], currentEventList->events[currentEventList->count].params[1], currentEventList->events[currentEventList->count].params[2]);
             currentEventList->count++;
         }
-        
+
         if (currentEventList->count == currentEventList->capacity) return;    // Security check
 
         // Event type: INPUT_TOUCH_POSITION
@@ -3149,7 +3311,7 @@ static void RecordAutomationEvent(void)
             currentEventList->count++;
         }
         */
-        
+
         if (currentEventList->count == currentEventList->capacity) return;    // Security check
     }
     //-------------------------------------------------------------------------------------
@@ -3190,7 +3352,7 @@ static void RecordAutomationEvent(void)
                 TRACELOG(LOG_INFO, "AUTOMATION: Frame: %i | Event type: INPUT_GAMEPAD_BUTTON_UP | Event parameters: %i, %i, %i", currentEventList->events[currentEventList->count].frame, currentEventList->events[currentEventList->count].params[0], currentEventList->events[currentEventList->count].params[1], currentEventList->events[currentEventList->count].params[2]);
                 currentEventList->count++;
             }
-            
+
             if (currentEventList->count == currentEventList->capacity) return;    // Security check
 
             // Event type: INPUT_GAMEPAD_BUTTON_DOWN
@@ -3205,7 +3367,7 @@ static void RecordAutomationEvent(void)
                 TRACELOG(LOG_INFO, "AUTOMATION: Frame: %i | Event type: INPUT_GAMEPAD_BUTTON_DOWN | Event parameters: %i, %i, %i", currentEventList->events[currentEventList->count].frame, currentEventList->events[currentEventList->count].params[0], currentEventList->events[currentEventList->count].params[1], currentEventList->events[currentEventList->count].params[2]);
                 currentEventList->count++;
             }
-            
+
             if (currentEventList->count == currentEventList->capacity) return;    // Security check
         }
 
@@ -3223,7 +3385,7 @@ static void RecordAutomationEvent(void)
                 TRACELOG(LOG_INFO, "AUTOMATION: Frame: %i | Event type: INPUT_GAMEPAD_AXIS_MOTION | Event parameters: %i, %i, %i", currentEventList->events[currentEventList->count].frame, currentEventList->events[currentEventList->count].params[0], currentEventList->events[currentEventList->count].params[1], currentEventList->events[currentEventList->count].params[2]);
                 currentEventList->count++;
             }
-            
+
             if (currentEventList->count == currentEventList->capacity) return;    // Security check
         }
     }
@@ -3242,7 +3404,7 @@ static void RecordAutomationEvent(void)
 
         TRACELOG(LOG_INFO, "AUTOMATION: Frame: %i | Event type: INPUT_GESTURE | Event parameters: %i, %i, %i", currentEventList->events[currentEventList->count].frame, currentEventList->events[currentEventList->count].params[0], currentEventList->events[currentEventList->count].params[1], currentEventList->events[currentEventList->count].params[2]);
         currentEventList->count++;
-        
+
         if (currentEventList->count == currentEventList->capacity) return;    // Security check
     }
     //-------------------------------------------------------------------------------------
