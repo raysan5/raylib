@@ -138,7 +138,7 @@ endif
 
 # Define default make program: MAKE
 #------------------------------------------------------------------------------------------------
-MAKE ?= make
+MAKE ?= emmake make
 
 ifeq ($(PLATFORM),PLATFORM_DESKTOP)
     ifeq ($(PLATFORM_OS),WINDOWS)
