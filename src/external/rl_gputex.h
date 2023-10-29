@@ -261,11 +261,9 @@ void *rl_load_dds_from_memory(const unsigned char *file_data, unsigned int file_
             }
             else if (((header->ddspf.flags == 0x04) || (header->ddspf.flags == 0x05)) && (header->ddspf.fourcc > 0)) // Compressed
             {
-                int data_size = 0;
-
-                // Calculate data size, including all mipmaps
-                if (header->mipmap_count > 1) data_size = header->pitch_or_linear_size*2;
-                else data_size = header->pitch_or_linear_size;
+                // NOTE: This forces only 1 mipmap to be loaded which is not really correct but it works
+                int data_size = (header->pitch_or_linear_size < file_size - 0x80) ? header->pitch_or_linear_size : file_size - 0x80;
+                *mips = 1;
 
                 image_data = RL_MALLOC(data_size*sizeof(unsigned char));
 
