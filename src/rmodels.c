@@ -1170,6 +1170,12 @@ BoundingBox GetModelBoundingBox(Model model)
             bounds.max = temp;
         }
     }
+    
+    // Apply model.transform to bounding box
+    // WARNING: Current BoundingBox structure design does not support rotation transformations,
+    // in those cases is up to the user to calculate the proper box bounds (8 vertices transformed)
+    bounds.min = Vector3Transform(bounds.min, model.transform);
+    bounds.max = Vector3Transform(bounds.max, model.transform);
 
     return bounds;
 }
