@@ -764,7 +764,7 @@ int GetRenderHeight(void)
     int height = 0;
 #if defined(__APPLE__)
     Vector2 scale = GetWindowScaleDPI();
-    height = (int)((float)CORE.Window.render.width*scale.y);
+    height = (int)((float)CORE.Window.render.height*scale.y);
 #else
     height = CORE.Window.render.height;
 #endif
