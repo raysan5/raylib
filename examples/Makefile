@@ -52,6 +52,9 @@ PROJECT_NAME          ?= raylib_examples
 RAYLIB_VERSION        ?= 5.0.0
 RAYLIB_PATH           ?= ..
 
+# Define raylib source code path
+RAYLIB_SRC_PATH       ?= ../src
+
 # Locations of raylib.h and libraylib.a/libraylib.so
 # NOTE: Those variables are only used for PLATFORM_OS: LINUX, BSD
 RAYLIB_INCLUDE_PATH   ?= /usr/local/include
