@@ -748,13 +748,27 @@ int GetScreenHeight(void)
 // Get current render width which is equal to screen width*dpi scale
 int GetRenderWidth(void)
 {
-    return CORE.Window.render.width;
+    int width = 0;
+#if defined(__APPLE__)
+    Vector2 scale = GetWindowScaleDPI();
+    width = (int)((float)CORE.Window.render.width*scale.x);
+#else
+    width = CORE.Window.render.width;
+#endif
+    return width;
 }
 
 // Get current screen height which is equal to screen height*dpi scale
 int GetRenderHeight(void)
 {
-    return CORE.Window.render.height;
+    int height = 0;
+#if defined(__APPLE__)
+    Vector2 scale = GetWindowScaleDPI();
+    height = (int)((float)CORE.Window.render.width*scale.y);
+#else
+    height = CORE.Window.render.height;
+#endif
+    return height;
 }
 
 // Enable waiting for events on EndDrawing(), no automatic event polling
