@@ -506,7 +506,7 @@ typedef struct FilePathList {
     char **paths;                   // Filepaths entries
 } FilePathList;
 
-// Automation event (opaque struct)
+// Automation event
 typedef struct AutomationEvent {
     unsigned int frame;             // Event frame
     unsigned int type;              // Event type (AutomationEventType)
