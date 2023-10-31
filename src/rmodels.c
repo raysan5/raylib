@@ -3984,7 +3984,7 @@ static Model LoadOBJ(const char *fileName)
             model.meshMaterial[i] = 0;  // By default, assign material 0 to each mesh
 
             // Process all mesh faces
-            for (unsigned int face = 0, f = meshes[i].face_offset, v = 0, vt = 0, vn = 0; face < tris; face++, f++, v += 3, vt += 2, vn += 3)
+            for (unsigned int face = 0, f = meshes[i].face_offset, v = 0, vt = 0, vn = 0; face < tris; face++, f++, v += 3, vt += 3, vn += 3)
             {
                 // Get indices for the face
                 tinyobj_vertex_index_t idx0 = attrib.faces[f*3 + 0];
