@@ -176,6 +176,7 @@ Examples using raylib shaders functionality, including shaders loading, paramete
 | 114 | [shaders_mesh_instancing](shaders/shaders_mesh_instancing.c) | <img src="shaders/shaders_mesh_instancing.png" alt="shaders_mesh_instancing" width="80"> | ⭐️⭐️⭐️⭐️ | 3.7 | **4.2** | [seanpringle](https://github.com/seanpringle) |
 | 115 | [shaders_multi_sample2d](shaders/shaders_multi_sample2d.c) | <img src="shaders/shaders_multi_sample2d.png" alt="shaders_multi_sample2d" width="80"> | ⭐️⭐️☆☆ | 3.5 | 3.5 | [Ray](https://github.com/raysan5) |
 | 116 | [shaders_spotlight](shaders/shaders_spotlight.c) | <img src="shaders/shaders_spotlight.png" alt="shaders_spotlight" width="80"> | ⭐️⭐️☆☆ | 2.5 | 3.7 | [Chris Camacho](https://github.com/codifies) |
+| 117 | [shaders_deferred_render](shaders/shaders_deferred_render.c) | <img src="shaders/shaders_deferred_render.png" alt="shaders_deferred_render" width="80"> | ⭐️⭐️⭐️⭐️ | 4.5 | 4.5 | [Justin Andreas Lacoste](https://github.com/27justin) |
 
 ### category: audio
 
@@ -183,10 +184,10 @@ Examples using raylib audio functionality, including sound/music loading and pla
 
 | ## | example  | image  | difficulty<br>level | version<br>created | last version<br>updated | original<br>developer |
 |----|----------|--------|:-------------------:|:------------------:|:------------------:|:----------|
-| 117 | [audio_module_playing](audio/audio_module_playing.c) | <img src="audio/audio_module_playing.png" alt="audio_module_playing" width="80"> | ⭐️☆☆☆ | 1.5 | 3.5 | [Ray](https://github.com/raysan5) |
-| 118 | [audio_music_stream](audio/audio_music_stream.c) | <img src="audio/audio_music_stream.png" alt="audio_music_stream" width="80"> | ⭐️☆☆☆ | 1.3 | **4.2** | [Ray](https://github.com/raysan5) |
-| 119 | [audio_raw_stream](audio/audio_raw_stream.c) | <img src="audio/audio_raw_stream.png" alt="audio_raw_stream" width="80"> | ⭐️⭐️⭐️☆ | 1.6 | **4.2** | [Ray](https://github.com/raysan5) |
-| 120 | [audio_sound_loading](audio/audio_sound_loading.c) | <img src="audio/audio_sound_loading.png" alt="audio_sound_loading" width="80"> | ⭐️☆☆☆ | 1.1 | 3.5 | [Ray](https://github.com/raysan5) |
+| 118 | [audio_module_playing](audio/audio_module_playing.c) | <img src="audio/audio_module_playing.png" alt="audio_module_playing" width="80"> | ⭐️☆☆☆ | 1.5 | 3.5 | [Ray](https://github.com/raysan5) |
+| 119 | [audio_music_stream](audio/audio_music_stream.c) | <img src="audio/audio_music_stream.png" alt="audio_music_stream" width="80"> | ⭐️☆☆☆ | 1.3 | **4.2** | [Ray](https://github.com/raysan5) |
+| 120 | [audio_raw_stream](audio/audio_raw_stream.c) | <img src="audio/audio_raw_stream.png" alt="audio_raw_stream" width="80"> | ⭐️⭐️⭐️☆ | 1.6 | **4.2** | [Ray](https://github.com/raysan5) |
+| 121 | [audio_sound_loading](audio/audio_sound_loading.c) | <img src="audio/audio_sound_loading.png" alt="audio_sound_loading" width="80"> | ⭐️☆☆☆ | 1.1 | 3.5 | [Ray](https://github.com/raysan5) |
 
 ### category: others
 
