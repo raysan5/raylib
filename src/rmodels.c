@@ -1052,26 +1052,16 @@ Model LoadModel(const char *fileName)
     // Make sure model transform is set to identity matrix!
     model.transform = MatrixIdentity();
 
-    if (model.meshCount == 0)
+    if ((model.meshCount != 0) && (model.meshes != NULL))
     {
-        model.meshCount = 1;
-        model.meshes = (Mesh *)RL_CALLOC(model.meshCount, sizeof(Mesh));
-#if defined(SUPPORT_MESH_GENERATION)
-        TRACELOG(LOG_WARNING, "MESH: [%s] Failed to load mesh data, default to cube mesh", fileName);
-        model.meshes[0] = GenMeshCube(1.0f, 1.0f, 1.0f);
-#else
-        TRACELOG(LOG_WARNING, "MESH: [%s] Failed to load mesh data", fileName);
-#endif
-    }
-    else
-    {
-        // Upload vertex data to GPU (static mesh)
+        // Upload vertex data to GPU (static meshes)
         for (int i = 0; i < model.meshCount; i++) UploadMesh(&model.meshes[i], false);
     }
+    else TRACELOG(LOG_WARNING, "MESH: [%s] Failed to load model mesh(es) data", fileName);
 
     if (model.materialCount == 0)
     {
-        TRACELOG(LOG_WARNING, "MATERIAL: [%s] Failed to load material data, default to white material", fileName);
+        TRACELOG(LOG_WARNING, "MATERIAL: [%s] Failed to load model material data, default to white material", fileName);
 
         model.materialCount = 1;
         model.materials = (Material *)RL_CALLOC(model.materialCount, sizeof(Material));
