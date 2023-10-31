@@ -3931,9 +3931,10 @@ static Model LoadOBJ(const char *fileName)
     if (fileText != NULL)
     {
         unsigned int dataSize = (unsigned int)strlen(fileText);
+
         char currentDir[1024] = { 0 };
-        strcpy(currentDir, GetWorkingDirectory());
-        const char *workingDir = GetDirectoryPath(fileName);
+        strcpy(currentDir, GetWorkingDirectory()); // Save current working directory
+        const char *workingDir = GetDirectoryPath(fileName); // Switch to OBJ directory for material path correctness
         if (CHDIR(workingDir) != 0)
         {
             TRACELOG(LOG_WARNING, "MODEL: [%s] Failed to change working directory", workingDir);
@@ -3945,117 +3946,91 @@ static Model LoadOBJ(const char *fileName)
         if (ret != TINYOBJ_SUCCESS) TRACELOG(LOG_WARNING, "MODEL: [%s] Failed to load OBJ data", fileName);
         else TRACELOG(LOG_INFO, "MODEL: [%s] OBJ data loaded successfully: %i meshes/%i materials", fileName, meshCount, materialCount);
 
-        model.meshCount = materialCount;
+        // WARNING: We are not splitting meshes by materials (previous implementation)
+        // Depending on the provided OBJ that was not the best option and it just crashed
+        // so, implementation was simplified to prioritize parsed meshes
+        model.meshCount = meshCount;
 
-        // Init model materials array
-        if (materialCount > 0)
+        // Set number of materials available
+        // NOTE: There could be more materials available than meshes but it will be resolved at 
+        // model.meshMaterial, just assigning the right material to corresponding mesh
+        model.materialCount = materialCount;
+        if (model.materialCount == 0)
         {
-            model.materialCount = materialCount;
-            model.materials = (Material *)RL_CALLOC(model.materialCount, sizeof(Material));
-            TRACELOG(LOG_INFO, "MODEL: model has %i material meshes", materialCount);
-        }
-        else
-        {
-            model.meshCount = 1;
-            TRACELOG(LOG_INFO, "MODEL: No materials, putting all meshes in a default material");
+            model.materialCount = 1;
+            TRACELOG(LOG_INFO, "MODEL: No materials provided, setting one default material for all meshes");
         }
 
+        // Init model meshes and materials
         model.meshes = (Mesh *)RL_CALLOC(model.meshCount, sizeof(Mesh));
-        model.meshMaterial = (int *)RL_CALLOC(model.meshCount, sizeof(int));
+        model.meshMaterial = (int *)RL_CALLOC(model.meshCount, sizeof(int)); // Material index assigned to each mesh
+        model.materials = (Material *)RL_CALLOC(model.materialCount, sizeof(Material));
 
-        // Count the faces for each material
-        int *matFaces = RL_CALLOC(model.meshCount, sizeof(int));
-
-        // if no materials are present use all faces on one mesh
-        if (materialCount > 0)
+        // Process each provided mesh
+        for (int i = 0; i < model.meshCount; i++)
         {
-            for (unsigned int fi = 0; fi < attrib.num_faces; fi++)
+            // WARNING: We need to calculate the mesh triangles manually using meshes[i].face_offset
+            // because in case of triangulated quads, meshes[i].length actually report quads, 
+            // despite the triangulation that is efectively considered on attrib.num_faces
+            unsigned int tris = 0;
+            if (i == model.meshCount - 1) tris = attrib.num_faces - meshes[i].face_offset;
+            else tris = meshes[i + 1].face_offset;
+
+            model.meshes[i].vertexCount = tris*3;
+            model.meshes[i].triangleCount = tris;   // Face count (triangulated)
+            model.meshes[i].vertices = (float *)RL_CALLOC(model.meshes[i].vertexCount*3, sizeof(float));
+            model.meshes[i].texcoords = (float *)RL_CALLOC(model.meshes[i].vertexCount*2, sizeof(float));
+            model.meshes[i].normals = (float *)RL_CALLOC(model.meshes[i].vertexCount*3, sizeof(float));
+            model.meshMaterial[i] = 0;  // By default, assign material 0 to each mesh
+
+            // Process all mesh faces
+            for (unsigned int face = 0, f = meshes[i].face_offset, v = 0, vt = 0, vn = 0; face < tris; face++, f++, v += 3, vt += 2, vn += 3)
             {
-                //tinyobj_vertex_index_t face = attrib.faces[fi];
-                int idx = attrib.material_ids[fi];
-                matFaces[idx]++;
-            }
+                // Get indices for the face
+                tinyobj_vertex_index_t idx0 = attrib.faces[f*3 + 0];
+                tinyobj_vertex_index_t idx1 = attrib.faces[f*3 + 1];
+                tinyobj_vertex_index_t idx2 = attrib.faces[f*3 + 2];
 
-        }
-        else
-        {
-            matFaces[0] = attrib.num_faces;
-        }
+                // Fill vertices buffer (float) using vertex index of the face
+                for (int n = 0; n < 3; n++) { model.meshes[i].vertices[v*3 + n] = attrib.vertices[idx0.v_idx*3 + n]; }
+                for (int n = 0; n < 3; n++) { model.meshes[i].vertices[(v + 1)*3 + n] = attrib.vertices[idx1.v_idx*3 + n]; }
+                for (int n = 0; n < 3; n++) { model.meshes[i].vertices[(v + 2)*3 + n] = attrib.vertices[idx2.v_idx*3 + n]; }
 
-        //--------------------------------------
-        // Create the material meshes
+                if (attrib.num_texcoords > 0)
+                {
+                    // Fill texcoords buffer (float) using vertex index of the face
+                    // NOTE: Y-coordinate must be flipped upside-down
+                    model.meshes[i].texcoords[vt*2 + 0] = attrib.texcoords[idx0.vt_idx*2 + 0];
+                    model.meshes[i].texcoords[vt*2 + 1] = 1.0f - attrib.texcoords[idx0.vt_idx*2 + 1];
 
-        // Running counts/indexes for each material mesh as we are
-        // building them at the same time
-        int *vCount = RL_CALLOC(model.meshCount, sizeof(int));
-        int *vtCount = RL_CALLOC(model.meshCount, sizeof(int));
-        int *vnCount = RL_CALLOC(model.meshCount, sizeof(int));
-        int *faceCount = RL_CALLOC(model.meshCount, sizeof(int));
+                    model.meshes[i].texcoords[(vt + 1)*2 + 0] = attrib.texcoords[idx1.vt_idx*2 + 0];
+                    model.meshes[i].texcoords[(vt + 1)*2 + 1] = 1.0f - attrib.texcoords[idx1.vt_idx*2 + 1];
 
-        // Allocate space for each of the material meshes
-        for (int mi = 0; mi < model.meshCount; mi++)
-        {
-            model.meshes[mi].vertexCount = matFaces[mi]*3;
-            model.meshes[mi].triangleCount = matFaces[mi];
-            model.meshes[mi].vertices = (float *)RL_CALLOC(model.meshes[mi].vertexCount*3, sizeof(float));
-            model.meshes[mi].texcoords = (float *)RL_CALLOC(model.meshes[mi].vertexCount*2, sizeof(float));
-            model.meshes[mi].normals = (float *)RL_CALLOC(model.meshes[mi].vertexCount*3, sizeof(float));
-            model.meshMaterial[mi] = mi;
-        }
+                    model.meshes[i].texcoords[(vt + 2)*2 + 0] = attrib.texcoords[idx2.vt_idx*2 + 0];
+                    model.meshes[i].texcoords[(vt + 2)*2 + 1] = 1.0f - attrib.texcoords[idx2.vt_idx*2 + 1];
+                }
 
-        // Scan through the combined sub meshes and pick out each material mesh
-        for (unsigned int af = 0; af < attrib.num_faces; af++)
-        {
-            int mm = attrib.material_ids[af];   // mesh material for this face
-            if (mm == -1) { mm = 0; }           // no material object..
-
-            // Get indices for the face
-            tinyobj_vertex_index_t idx0 = attrib.faces[3*af + 0];
-            tinyobj_vertex_index_t idx1 = attrib.faces[3*af + 1];
-            tinyobj_vertex_index_t idx2 = attrib.faces[3*af + 2];
-
-            // Fill vertices buffer (float) using vertex index of the face
-            for (int v = 0; v < 3; v++) { model.meshes[mm].vertices[vCount[mm] + v] = attrib.vertices[idx0.v_idx*3 + v]; } vCount[mm] +=3;
-            for (int v = 0; v < 3; v++) { model.meshes[mm].vertices[vCount[mm] + v] = attrib.vertices[idx1.v_idx*3 + v]; } vCount[mm] +=3;
-            for (int v = 0; v < 3; v++) { model.meshes[mm].vertices[vCount[mm] + v] = attrib.vertices[idx2.v_idx*3 + v]; } vCount[mm] +=3;
-
-            if (attrib.num_texcoords > 0)
-            {
-                // Fill texcoords buffer (float) using vertex index of the face
-                // NOTE: Y-coordinate must be flipped upside-down to account for
-                // raylib's upside down textures...
-                model.meshes[mm].texcoords[vtCount[mm] + 0] = attrib.texcoords[idx0.vt_idx*2 + 0];
-                model.meshes[mm].texcoords[vtCount[mm] + 1] = 1.0f - attrib.texcoords[idx0.vt_idx*2 + 1]; vtCount[mm] += 2;
-                model.meshes[mm].texcoords[vtCount[mm] + 0] = attrib.texcoords[idx1.vt_idx*2 + 0];
-                model.meshes[mm].texcoords[vtCount[mm] + 1] = 1.0f - attrib.texcoords[idx1.vt_idx*2 + 1]; vtCount[mm] += 2;
-                model.meshes[mm].texcoords[vtCount[mm] + 0] = attrib.texcoords[idx2.vt_idx*2 + 0];
-                model.meshes[mm].texcoords[vtCount[mm] + 1] = 1.0f - attrib.texcoords[idx2.vt_idx*2 + 1]; vtCount[mm] += 2;
-            }
-
-            if (attrib.num_normals > 0)
-            {
-                // Fill normals buffer (float) using vertex index of the face
-                for (int v = 0; v < 3; v++) { model.meshes[mm].normals[vnCount[mm] + v] = attrib.normals[idx0.vn_idx*3 + v]; } vnCount[mm] +=3;
-                for (int v = 0; v < 3; v++) { model.meshes[mm].normals[vnCount[mm] + v] = attrib.normals[idx1.vn_idx*3 + v]; } vnCount[mm] +=3;
-                for (int v = 0; v < 3; v++) { model.meshes[mm].normals[vnCount[mm] + v] = attrib.normals[idx2.vn_idx*3 + v]; } vnCount[mm] +=3;
+                if (attrib.num_normals > 0)
+                {
+                    // Fill normals buffer (float) using vertex index of the face
+                    for (int n = 0; n < 3; n++) { model.meshes[i].normals[vn*3 + n] = attrib.normals[idx0.vn_idx*3 + n]; }
+                    for (int n = 0; n < 3; n++) { model.meshes[i].normals[(vn + 1)*3 + n] = attrib.normals[idx1.vn_idx*3 + n]; }
+                    for (int n = 0; n < 3; n++) { model.meshes[i].normals[(vn + 2)*3 + n] = attrib.normals[idx2.vn_idx*3 + n]; }
+                }
             }
         }
 
         // Init model materials
-        ProcessMaterialsOBJ(model.materials, materials, materialCount);
+        if (materialCount > 0) ProcessMaterialsOBJ(model.materials, materials, materialCount);
+        else model.materials[0] = LoadMaterialDefault(); // Set default material for the mesh
 
         tinyobj_attrib_free(&attrib);
-        tinyobj_shapes_free(meshes, meshCount);
+        tinyobj_shapes_free(meshes, model.meshCount);
         tinyobj_materials_free(materials, materialCount);
 
         UnloadFileText(fileText);
 
-        RL_FREE(matFaces);
-        RL_FREE(vCount);
-        RL_FREE(vtCount);
-        RL_FREE(vnCount);
-        RL_FREE(faceCount);
-
+        // Restore current working directory
         if (CHDIR(currentDir) != 0)
         {
             TRACELOG(LOG_WARNING, "MODEL: [%s] Failed to change working directory", currentDir);
