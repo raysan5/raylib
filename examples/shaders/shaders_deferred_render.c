@@ -31,6 +31,8 @@
 
 #include <stdlib.h>         // Required for: NULL
 
+#define MAX_CUBES   30
+
 typedef struct GBuffer {
     unsigned int framebuffer;
 
@@ -144,18 +146,18 @@ int main(void)
     lights[2] = CreateLight(LIGHT_POINT, (Vector3){ -2, 1, 2 }, Vector3Zero(), GREEN, deferredShader);
     lights[3] = CreateLight(LIGHT_POINT, (Vector3){ 2, 1, -2 }, Vector3Zero(), BLUE, deferredShader);
 
-    const int MAX_CUBES = 30;
     const float CUBE_SCALE = 0.25;
-    Vector3 cubePositions[MAX_CUBES];
-    float cubeRotations[MAX_CUBES];
+    Vector3 cubePositions[MAX_CUBES] = { 0 };
+    float cubeRotations[MAX_CUBES] = { 0 };
     
-    for(int i = 0; i < MAX_CUBES; i++)
+    for (int i = 0; i < MAX_CUBES; i++)
     {
         cubePositions[i] = (Vector3){
             .x = (float)(rand()%10) - 5,
             .y = (float)(rand()%5),
             .z = (float)(rand()%10) - 5,
         };
+        
         cubeRotations[i] = (float)(rand()%360);
     }
 
