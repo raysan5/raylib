@@ -121,6 +121,7 @@ typedef struct {
     Vector2 eventWheelMove;             // Registers the event mouse wheel variation
     // NOTE: currentButtonState[] can't be written directly due to multithreading, app could miss the update
     char currentButtonStateEvdev[MAX_MOUSE_BUTTONS]; // Holds the new mouse state for the next polling event to grab
+    bool cursorRelative;                // Relative cursor mode
 
     // Gamepad data
     pthread_t gamepadThreadId;          // Gamepad reading thread id
@@ -400,6 +401,7 @@ void EnableCursor(void)
     // Set cursor position in the middle
     SetMousePosition(CORE.Window.screen.width/2, CORE.Window.screen.height/2);
 
+    platform.cursorRelative = false;
     CORE.Input.Mouse.cursorHidden = false;
 }
 
@@ -409,6 +411,7 @@ void DisableCursor(void)
     // Set cursor position in the middle
     SetMousePosition(CORE.Window.screen.width/2, CORE.Window.screen.height/2);
 
+    platform.cursorRelative = true;
     CORE.Input.Mouse.cursorHidden = true;
 }
 
@@ -521,6 +524,13 @@ void PollInputEvents(void)
     }
 
     PollKeyboardEvents();
+
+    // Register previous mouse position
+    if (platform.cursorRelative)
+    {
+        CORE.Input.Mouse.previousPosition = CORE.Input.Mouse.currentPosition;
+        CORE.Input.Mouse.currentPosition = (Vector2){ 0.0f, 0.0f };
+    }
 
     // Register previous mouse states
     CORE.Input.Mouse.previousWheelMove = CORE.Input.Mouse.currentWheelMove;
@@ -1535,8 +1545,16 @@ static void *EventThread(void *arg)
             {
                 if (event.code == REL_X)
                 {
-                    CORE.Input.Mouse.currentPosition.x += event.value;
-                    CORE.Input.Touch.position[0].x = CORE.Input.Mouse.currentPosition.x;
+                    if (platform.cursorRelative)
+                    {
+                        CORE.Input.Mouse.currentPosition.x -= event.value;
+                        CORE.Input.Touch.position[0].x = CORE.Input.Mouse.currentPosition.x;
+                    }
+                    else
+                    {
+                        CORE.Input.Mouse.currentPosition.x += event.value;
+                        CORE.Input.Touch.position[0].x = CORE.Input.Mouse.currentPosition.x;
+                    }
 
                     touchAction = 2;    // TOUCH_ACTION_MOVE
                     gestureUpdate = true;
@@ -1544,8 +1562,16 @@ static void *EventThread(void *arg)
 
                 if (event.code == REL_Y)
                 {
-                    CORE.Input.Mouse.currentPosition.y += event.value;
-                    CORE.Input.Touch.position[0].y = CORE.Input.Mouse.currentPosition.y;
+                    if (platform.cursorRelative)
+                    {
+                        CORE.Input.Mouse.currentPosition.y -= event.value;
+                        CORE.Input.Touch.position[0].y = CORE.Input.Mouse.currentPosition.y;
+                    }
+                    else
+                    {
+                        CORE.Input.Mouse.currentPosition.y += event.value;
+                        CORE.Input.Touch.position[0].y = CORE.Input.Mouse.currentPosition.y;
+                    }
 
                     touchAction = 2;    // TOUCH_ACTION_MOVE
                     gestureUpdate = true;
