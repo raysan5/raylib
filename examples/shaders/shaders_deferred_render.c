@@ -48,8 +48,7 @@ int main(void) {
     const int screenWidth = 800;
     const int screenHeight = 450;
 
-    InitWindow(screenWidth, screenHeight, "raylib [shaders] example - deferred shading");
-
+    InitWindow(screenWidth, screenHeight, "raylib [shaders] example - deferred render");
 
     Camera camera = { 0 };
     camera.position = (Vector3){ 5.0f, 4.0f, 5.0f };    // Camera position
@@ -70,12 +69,12 @@ int main(void) {
                                "resources/shaders/glsl330/deferred_shading.fs");
     deferredShader.locs[SHADER_LOC_VECTOR_VIEW] = GetShaderLocation(deferredShader, "viewPosition");
 
-
     // Initialize the G-buffer
     GBuffer gBuffer = { 0 };
     gBuffer.framebuffer = rlLoadFramebuffer(screenWidth, screenHeight);
 
-    if(!gBuffer.framebuffer) {
+    if(!gBuffer.framebuffer)
+    {
         TraceLog(LOG_WARNING, "Failed to create framebuffer");
         exit(1);
     }
@@ -93,12 +92,10 @@ int main(void) {
     // Activate the draw buffers for our framebuffer
     rlActiveDrawBuffers(3);
 
-
     // Now we attach our textures to the framebuffer.
     rlFramebufferAttach(gBuffer.framebuffer, gBuffer.positionTexture, RL_ATTACHMENT_COLOR_CHANNEL0, RL_ATTACHMENT_TEXTURE2D, 0);
     rlFramebufferAttach(gBuffer.framebuffer, gBuffer.normalTexture, RL_ATTACHMENT_COLOR_CHANNEL1, RL_ATTACHMENT_TEXTURE2D, 0);
     rlFramebufferAttach(gBuffer.framebuffer, gBuffer.albedoSpecTexture, RL_ATTACHMENT_COLOR_CHANNEL2, RL_ATTACHMENT_TEXTURE2D, 0);
-
 
     // Finally we attach the depth buffer.
     gBuffer.depthRenderbuffer = rlLoadTextureDepth(screenWidth, screenHeight, true);
@@ -107,7 +104,8 @@ int main(void) {
     // Make sure our framebuffer is complete.
     // NOTE: rlFramebufferComplete() automatically unbinds the framebuffer, so we don't have
     // to rlDisableFramebuffer() here.
-    if(rlFramebufferComplete(gBuffer.framebuffer) != true) {
+    if(rlFramebufferComplete(gBuffer.framebuffer) != true)
+    {
         TraceLog(LOG_WARNING, "Framebuffer is not complete");
         exit(1);
     }
@@ -139,7 +137,8 @@ int main(void) {
     const float CUBE_SCALE = 0.25;
     Vector3 cubePositions[MAX_CUBES];
     float cubeRotations[MAX_CUBES];
-    for(int i = 0; i < MAX_CUBES; i++) {
+    for(int i = 0; i < MAX_CUBES; i++)
+    {
         cubePositions[i] = (Vector3) {
             .x = (float)(rand() % 10) - 5,
             .y = (float)(rand() % 5),
@@ -161,7 +160,8 @@ int main(void) {
     //---------------------------------------------------------------------------------------
 
     // Main game loop
-    while (!WindowShouldClose()) {
+    while (!WindowShouldClose())
+    {
         // Update
         //----------------------------------------------------------------------------------
         UpdateCamera(&camera, CAMERA_ORBITAL);
@@ -205,7 +205,8 @@ int main(void) {
                     DrawModel(model, Vector3Zero(), 1.0f, WHITE);
                     DrawModel(cube, (Vector3) { 0.0, 1.0f, 0.0 }, 1.0f, WHITE);
 
-                    for(int i = 0; i < MAX_CUBES; i++) {
+                    for(int i = 0; i < MAX_CUBES; i++)
+                    {
                         Vector3 position = cubePositions[i];
 
                         DrawModelEx(cube, position, (Vector3) { 1, 1, 1 }, cubeRotations[i], (Vector3) { CUBE_SCALE, CUBE_SCALE, CUBE_SCALE }, WHITE);
@@ -219,7 +220,8 @@ int main(void) {
             rlDisableFramebuffer();
             rlClearScreenBuffers(); // Clear color & depth buffer
 
-            switch(activeTexture) {
+            switch(activeTexture)
+            {
                 case DEFERRED_SHADING:
                     BeginMode3D(camera);
                         rlDisableColorBlend();
@@ -252,7 +254,8 @@ int main(void) {
                     // forward rendering
                     BeginMode3D(camera);
                         rlEnableShader(rlGetShaderIdDefault());
-                            for(int i = 0; i < MAX_LIGHTS; i++) {
+                            for(int i = 0; i < MAX_LIGHTS; i++)
+                            {
                                 if(lights[i].enabled) DrawSphereEx(lights[i].position, 0.2f, 8, 8, lights[i].color);
                                 else DrawSphereWires(lights[i].position, 0.2f, 8, 8, ColorAlpha(lights[i].color, 0.3f));
                             }

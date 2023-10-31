@@ -563,7 +563,7 @@ SHADERS = \
     shaders/shaders_multi_sample2d \
     shaders/shaders_write_depth \
     shaders/shaders_hybrid_render \
-    shaders/shaders_deferred_shading
+    shaders/shaders_deferred_render
 
 AUDIO = \
     audio/audio_module_playing \
