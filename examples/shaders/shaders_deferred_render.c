@@ -2,7 +2,7 @@
 *
 *   raylib [shaders] example - deferred rendering
 *
-*   NOTE: This example requires raylib OpenGL 3.3 or ES 3 versions.
+*   NOTE: This example requires raylib OpenGL 3.3 or OpenGL ES 3.0
 *
 *   Example originally created with raylib 4.5, last time updated with raylib 4.5
 *
@@ -15,12 +15,9 @@
 *
 ********************************************************************************************/
 
-#include <stdlib.h>
-#include <GLES3/gl3.h>
-
 #include "raylib.h"
-#include "rlgl.h"
 
+#include "rlgl.h"
 #include "raymath.h"
 
 #define RLIGHTS_IMPLEMENTATION
@@ -32,7 +29,9 @@
     #define GLSL_VERSION            100
 #endif
 
-typedef struct {
+#include <stdlib.h>         // Required for: NULL
+
+typedef struct GBuffer {
     unsigned int framebuffer;
 
     unsigned int positionTexture;
@@ -42,7 +41,18 @@ typedef struct {
     unsigned int depthRenderbuffer;
 } GBuffer;
 
-int main(void) {
+typedef enum {
+   DEFERRED_POSITION,
+   DEFERRED_NORMAL,
+   DEFERRED_ALBEDO,
+   DEFERRED_SHADING
+} DeferredMode;
+
+//------------------------------------------------------------------------------------
+// Program main entry point
+//------------------------------------------------------------------------------------
+int main(void)
+{
     // Initialization
     // -------------------------------------------------------------------------------------
     const int screenWidth = 800;
@@ -73,11 +83,12 @@ int main(void) {
     GBuffer gBuffer = { 0 };
     gBuffer.framebuffer = rlLoadFramebuffer(screenWidth, screenHeight);
 
-    if(!gBuffer.framebuffer)
+    if (!gBuffer.framebuffer)
     {
         TraceLog(LOG_WARNING, "Failed to create framebuffer");
         exit(1);
     }
+    
     rlEnableFramebuffer(gBuffer.framebuffer);
 
     // Since we are storing position and normal data in these textures, 
@@ -104,7 +115,7 @@ int main(void) {
     // Make sure our framebuffer is complete.
     // NOTE: rlFramebufferComplete() automatically unbinds the framebuffer, so we don't have
     // to rlDisableFramebuffer() here.
-    if(rlFramebufferComplete(gBuffer.framebuffer) != true)
+    if (!rlFramebufferComplete(gBuffer.framebuffer))
     {
         TraceLog(LOG_WARNING, "Framebuffer is not complete");
         exit(1);
@@ -137,22 +148,18 @@ int main(void) {
     const float CUBE_SCALE = 0.25;
     Vector3 cubePositions[MAX_CUBES];
     float cubeRotations[MAX_CUBES];
+    
     for(int i = 0; i < MAX_CUBES; i++)
     {
-        cubePositions[i] = (Vector3) {
-            .x = (float)(rand() % 10) - 5,
-            .y = (float)(rand() % 5),
-            .z = (float)(rand() % 10) - 5,
+        cubePositions[i] = (Vector3){
+            .x = (float)(rand()%10) - 5,
+            .y = (float)(rand()%5),
+            .z = (float)(rand()%10) - 5,
         };
-        cubeRotations[i] = (float)(rand() % 360);
+        cubeRotations[i] = (float)(rand()%360);
     }
 
-    enum {
-        POSITION,
-        NORMAL,
-        ALBEDO,
-        DEFERRED_SHADING
-    } activeTexture = DEFERRED_SHADING;
+    DeferredMode mode = DEFERRED_SHADING;
 
     rlEnableDepthTest();
 
@@ -177,12 +184,11 @@ int main(void) {
         if (IsKeyPressed(KEY_B)) { lights[3].enabled = !lights[3].enabled; }
 
         // Check key inputs to switch between G-buffer textures
-        if(IsKeyPressed(KEY_ONE)) activeTexture = POSITION;
-        if(IsKeyPressed(KEY_TWO)) activeTexture = NORMAL;
-        if(IsKeyPressed(KEY_THREE)) activeTexture = ALBEDO;
-        if(IsKeyPressed(KEY_FOUR)) activeTexture = DEFERRED_SHADING;
+        if (IsKeyPressed(KEY_ONE)) mode = DEFERRED_POSITION;
+        if (IsKeyPressed(KEY_TWO)) mode = DEFERRED_NORMAL;
+        if (IsKeyPressed(KEY_THREE)) mode = DEFERRED_ALBEDO;
+        if (IsKeyPressed(KEY_FOUR)) mode = DEFERRED_SHADING;
 
-        
         // Update light values (actually, only enable/disable them)
         for (int i = 0; i < MAX_LIGHTS; i++) UpdateLightValues(deferredShader, lights[i]);
         //----------------------------------------------------------------------------------
@@ -190,14 +196,16 @@ int main(void) {
         // Draw
         // ---------------------------------------------------------------------------------
         BeginDrawing();
-            // Draw to the geometry buffer by first activating it.
+        
+            ClearBackground(RAYWHITE);
+        
+            // Draw to the geometry buffer by first activating it
             rlEnableFramebuffer(gBuffer.framebuffer);
-            rlClearScreenBuffers();  // Clear color & depth buffer
-
+            rlClearScreenBuffers();  // Clear color and depth buffer
+            
             rlDisableColorBlend();
             BeginMode3D(camera);
-                // NOTE:
-                // We have to use rlEnableShader here. `BeginShaderMode` or thus `rlSetShader`
+                // NOTE: We have to use rlEnableShader here. `BeginShaderMode` or thus `rlSetShader`
                 // will not work, as they won't immediately load the shader program.
                 rlEnableShader(gbufferShader.id);
                     // When drawing a model here, make sure that the material's shaders
@@ -205,10 +213,9 @@ int main(void) {
                     DrawModel(model, Vector3Zero(), 1.0f, WHITE);
                     DrawModel(cube, (Vector3) { 0.0, 1.0f, 0.0 }, 1.0f, WHITE);
 
-                    for(int i = 0; i < MAX_CUBES; i++)
+                    for (int i = 0; i < MAX_CUBES; i++)
                     {
                         Vector3 position = cubePositions[i];
-
                         DrawModelEx(cube, position, (Vector3) { 1, 1, 1 }, cubeRotations[i], (Vector3) { CUBE_SCALE, CUBE_SCALE, CUBE_SCALE }, WHITE);
                     }
 
@@ -220,9 +227,10 @@ int main(void) {
             rlDisableFramebuffer();
             rlClearScreenBuffers(); // Clear color & depth buffer
 
-            switch(activeTexture)
+            switch (mode)
             {
                 case DEFERRED_SHADING:
+                {
                     BeginMode3D(camera);
                         rlDisableColorBlend();
                         rlEnableShader(deferredShader.id);
@@ -243,11 +251,10 @@ int main(void) {
                         rlEnableColorBlend();
                     EndMode3D();
 
-                    // As a last step, we now copy over the depth buffer from our g-buffer to the
-                    // default framebuffer.
-                    glBindFramebuffer(GL_READ_FRAMEBUFFER, gBuffer.framebuffer);
-                    glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
-                    glBlitFramebuffer(0, 0, screenWidth, screenHeight, 0, 0, screenWidth, screenHeight, GL_DEPTH_BUFFER_BIT, GL_NEAREST);
+                    // As a last step, we now copy over the depth buffer from our g-buffer to the default framebuffer.
+                    rlEnableFramebuffer(gBuffer.framebuffer); //glBindFramebuffer(GL_READ_FRAMEBUFFER, gBuffer.framebuffer);
+                    rlEnableFramebuffer(0); //glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
+                    rlBlitFramebuffer(0, 0, screenWidth, screenHeight, 0, 0, screenWidth, screenHeight, 0x00000100);    // GL_DEPTH_BUFFER_BIT
                     rlDisableFramebuffer();
 
                     // Since our shader is now done and disabled, we can draw our lights in default
@@ -256,44 +263,50 @@ int main(void) {
                         rlEnableShader(rlGetShaderIdDefault());
                             for(int i = 0; i < MAX_LIGHTS; i++)
                             {
-                                if(lights[i].enabled) DrawSphereEx(lights[i].position, 0.2f, 8, 8, lights[i].color);
+                                if (lights[i].enabled) DrawSphereEx(lights[i].position, 0.2f, 8, 8, lights[i].color);
                                 else DrawSphereWires(lights[i].position, 0.2f, 8, 8, ColorAlpha(lights[i].color, 0.3f));
                             }
                         rlDisableShader();
                     EndMode3D();
                     DrawText("FINAL RESULT", 10, screenHeight - 30, 20, DARKGREEN);
-                    break;
-                case POSITION:
-                    DrawTextureRec((Texture2D) {
+                } break;
+                
+                case DEFERRED_POSITION:
+                {
+                    DrawTextureRec((Texture2D){
                         .id = gBuffer.positionTexture,
                         .width = screenWidth,
                         .height = screenHeight,
                     }, (Rectangle) { 0, 0, screenWidth, -screenHeight }, Vector2Zero(), RAYWHITE);
                     DrawText("POSITION TEXTURE", 10, screenHeight - 30, 20, DARKGREEN);
-                    break;
-                case NORMAL:
-                    DrawTextureRec((Texture2D) {
+                } break;
+                
+                case DEFERRED_NORMAL:
+                {
+                    DrawTextureRec((Texture2D){
                         .id = gBuffer.normalTexture,
                         .width = screenWidth,
                         .height = screenHeight,
                     }, (Rectangle) { 0, 0, screenWidth, -screenHeight }, Vector2Zero(), RAYWHITE);
                     DrawText("NORMAL TEXTURE", 10, screenHeight - 30, 20, DARKGREEN);
-                    break;
+                } break;
 
-                case ALBEDO:
-                    DrawTextureRec((Texture2D) {
+                case DEFERRED_ALBEDO:
+                {
+                    DrawTextureRec((Texture2D){
                         .id = gBuffer.albedoSpecTexture,
                         .width = screenWidth,
                         .height = screenHeight,
                     }, (Rectangle) { 0, 0, screenWidth, -screenHeight }, Vector2Zero(), RAYWHITE);
                     DrawText("ALBEDO TEXTURE", 10, screenHeight - 30, 20, DARKGREEN);
-                    break;
+                } break;
             }
 
-            DrawFPS(10, 10);
+            DrawText("Toggle lights keys: [Y][R][G][B]", 10, 40, 20, DARKGRAY);
+            DrawText("Switch G-buffer textures: [1][2][3][4]", 10, 70, 20, DARKGRAY);
 
-            DrawText("Use keys [Y][R][G][B] to toggle lights", 10, 40, 20, DARKGRAY);
-            DrawText("Use keys [1]-[4] to switch between G-buffer textures", 10, 70, 20, DARKGRAY);
+            DrawFPS(10, 10);
+            
         EndDrawing();
         // -----------------------------------------------------------------------------
     }
