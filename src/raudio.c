@@ -1797,7 +1797,9 @@ void SeekMusicStream(Music music, float position)
         case MUSIC_AUDIO_MP3: drmp3_seek_to_pcm_frame((drmp3 *)music.ctxData, positionInFrames); break;
 #endif
 #if defined(SUPPORT_FILEFORMAT_QOA)
-        case MUSIC_AUDIO_QOA: qoaplay_seek_frame((qoaplay_desc *)music.ctxData, positionInFrames); break;
+        //qoaplay_seek_frame seeks to QOA frame, not PCM frame, therefore we need to compute QOA frame number and change positionInFrames
+        case MUSIC_AUDIO_QOA: { int qoaFrame = positionInFrames/QOA_FRAME_LEN; qoaplay_seek_frame((qoaplay_desc*)music.ctxData, qoaFrame);
+            positionInFrames = ((qoaplay_desc*)music.ctxData)->sample_position; break; }
 #endif
 #if defined(SUPPORT_FILEFORMAT_FLAC)
         case MUSIC_AUDIO_FLAC: drflac_seek_to_pcm_frame((drflac *)music.ctxData, positionInFrames); break;
