@@ -21,7 +21,7 @@
 *           Custom flag for rcore on target platform -not used-
 *
 *   DEPENDENCIES:
-*       - <platform-specific SDK dependency> 
+*       - <platform-specific SDK dependency>
 *       - gestures: Gestures system for touch-ready devices (or simulated from mouse inputs)
 *
 *

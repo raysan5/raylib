@@ -755,7 +755,7 @@ int GetCurrentMonitor(void)
             // to try to detect the "current monitor" for that window, note that
             // this is probably an overengineered solution for a very side case
             // trying to match SDL behaviour
-            
+
             int closestDist = 0x7FFFFFFF;
 
             // Window center position

@@ -1681,17 +1681,17 @@ void SetRandomSeed(unsigned int seed)
 int GetRandomValue(int min, int max)
 {
     int value = 0;
-    
+
     if (min > max)
     {
         int tmp = max;
         max = min;
         min = tmp;
     }
-    
+
 #if defined(SUPPORT_RPRAND_GENERATOR)
     value = rprand_get_value(min, max);
-#else 
+#else
     // WARNING: Ranges higher than RAND_MAX will return invalid results
     // More specifically, if (max - min) > INT_MAX there will be an overflow,
     // and otherwise if (max - min) > RAND_MAX the random value will incorrectly never exceed a certain threshold
@@ -1699,7 +1699,7 @@ int GetRandomValue(int min, int max)
     {
         TRACELOG(LOG_WARNING, "Invalid GetRandomValue() arguments, range should not be higher than %i", RAND_MAX);
     }
-    
+
     value = (rand()%(abs(max - min) + 1) + min);
 #endif
     return value;
