@@ -632,7 +632,8 @@ RLAPI void rlEnableScissorTest(void);                   // Enable scissor test
 RLAPI void rlDisableScissorTest(void);                  // Disable scissor test
 RLAPI void rlScissor(int x, int y, int width, int height); // Scissor test
 RLAPI void rlEnableWireMode(void);                      // Enable wire mode
-RLAPI void rlDisableWireMode(void);                     // Disable wire mode
+RLAPI void rlEnablePointMode(void);                     //  Enable point mode
+RLAPI void rlDisableWireMode(void);                     // Disable wire mode ( and point ) maybe rename 
 RLAPI void rlSetLineWidth(float width);                 // Set the line drawing width
 RLAPI float rlGetLineWidth(void);                       // Get the line drawing width
 RLAPI void rlEnableSmoothLines(void);                   // Enable line aliasing
@@ -1817,6 +1818,14 @@ void rlEnableWireMode(void)
 #endif
 }
 
+void rlEnablePointMode(void)
+{
+#if defined(GRAPHICS_API_OPENGL_11) || defined(GRAPHICS_API_OPENGL_33)
+    // NOTE: glPolygonMode() not available on OpenGL ES
+    glPolygonMode(GL_FRONT_AND_BACK, GL_POINT);
+    glEnable(GL_PROGRAM_POINT_SIZE);  
+#endif
+}
 // Disable wire mode
 void rlDisableWireMode(void)
 {
