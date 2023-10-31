@@ -3,7 +3,7 @@
 *   rcore_drm - Functions to manage window, graphics device and inputs
 *
 *   PLATFORM: DRM
-*       - Raspberry Pi 0-5
+*       - Raspberry Pi 0-5 (native mode)
 *       - Linux native mode (KMS driver)
 *
 *   LIMITATIONS:
@@ -23,7 +23,8 @@
 *           running processes orblocking the device if not restored properly. Use with care.
 *
 *   DEPENDENCIES:
-*       gestures - Gestures system for touch-ready devices (or simulated from mouse inputs)
+*       - DRM and GLM: System libraries for display initialization and configuration
+*       - gestures: Gestures system for touch-ready devices (or simulated from mouse inputs)
 *
 *
 *   LICENSE: zlib/libpng

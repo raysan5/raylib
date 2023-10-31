@@ -24,8 +24,8 @@
 *           Custom flag for rcore on target platform -not used-
 *
 *   DEPENDENCIES:
-*       - SDL 2 (main library)
-*       - Dependency 02
+*       - SDL 2 (main library): Windowing and inputs management
+*       - gestures: Gestures system for touch-ready devices (or simulated from mouse inputs)
 *
 *
 *   LICENSE: zlib/libpng

@@ -21,8 +21,8 @@
 *           Custom flag for rcore on target platform -not used-
 *
 *   DEPENDENCIES:
-*       Android NDK - Provides C API to access Android functionality
-*       gestures - Gestures system for touch-ready devices (or simulated from mouse inputs)
+*       - Android NDK: Provides C API to access Android functionality
+*       - gestures: Gestures system for touch-ready devices (or simulated from mouse inputs)
 *
 *
 *   LICENSE: zlib/libpng

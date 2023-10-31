@@ -20,8 +20,8 @@
 *           Custom flag for rcore on target platform -not used-
 *
 *   DEPENDENCIES:
-*       emscripten - Allow interaction between browser API and C
-*       gestures - Gestures system for touch-ready devices (or simulated from mouse inputs)
+*       - emscripten: Allow interaction between browser API and C
+*       - gestures: Gestures system for touch-ready devices (or simulated from mouse inputs)
 *
 *
 *   LICENSE: zlib/libpng
