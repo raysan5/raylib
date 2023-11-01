@@ -16,12 +16,6 @@ uniform vec4 colDiffuse;
 #define     LIGHT_DIRECTIONAL       0
 #define     LIGHT_POINT             1
 
-struct MaterialProperty {
-    vec3 color;
-    int useSampler;
-    sampler2D sampler;
-};
-
 struct Light {
     int enabled;
     int type;
