@@ -42,7 +42,7 @@ int main(void)
     {
         // Update
         //----------------------------------------------------------------------------------
-        float startangle;
+        float startangle = 0.0f;
 
         if (angleMode == 0) startangle = -Vector2LineAngle(v0, v1)*RAD2DEG;
         if (angleMode == 1) startangle = 0.0f; 

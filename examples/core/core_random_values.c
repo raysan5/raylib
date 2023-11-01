@@ -29,7 +29,7 @@ int main(void)
 
     int randValue = GetRandomValue(-8, 5);   // Get a random integer number between -8 and 5 (both included)
     
-    int framesCounter = 0;          // Variable used to count frames
+    unsigned int framesCounter = 0; // Variable used to count frames
     
     SetTargetFPS(60);               // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------

@@ -82,7 +82,8 @@ int main(void)
         // Check if screen is resized
         if (IsWindowResized())
         {
-            float resolution[2] = { (float)GetScreenWidth(), (float)GetScreenHeight() };
+            resolution[0] = (float)GetScreenWidth();
+            resolution[1] = (float)GetScreenHeight();
             SetShaderValue(shader, resolutionLoc, resolution, SHADER_UNIFORM_VEC2);
         }
         //----------------------------------------------------------------------------------

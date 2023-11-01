@@ -1288,8 +1288,6 @@ void ImageFormat(Image *image, int newFormat)
             image->data = NULL;
             image->format = newFormat;
 
-            int k = 0;
-
             switch (image->format)
             {
                 case PIXELFORMAT_UNCOMPRESSED_GRAYSCALE:
@@ -1306,7 +1304,7 @@ void ImageFormat(Image *image, int newFormat)
                 {
                     image->data = (unsigned char *)RL_MALLOC(image->width*image->height*2*sizeof(unsigned char));
 
-                    for (int i = 0; i < image->width*image->height*2; i += 2, k++)
+                    for (int i = 0, k = 0; i < image->width*image->height*2; i += 2, k++)
                     {
                         ((unsigned char *)image->data)[i] = (unsigned char)((pixels[k].x*0.299f + (float)pixels[k].y*0.587f + (float)pixels[k].z*0.114f)*255.0f);
                         ((unsigned char *)image->data)[i + 1] = (unsigned char)(pixels[k].w*255.0f);

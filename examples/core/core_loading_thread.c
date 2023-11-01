@@ -41,7 +41,7 @@ int main(void)
 
     InitWindow(screenWidth, screenHeight, "raylib [core] example - loading thread");
 
-    pthread_t threadId;             // Loading data thread id
+    pthread_t threadId = { 0 };     // Loading data thread id
 
     enum { STATE_WAITING, STATE_LOADING, STATE_FINISHED } state = STATE_WAITING;
     int framesCounter = 0;

@@ -75,9 +75,9 @@ int main(void)
     bool eventRecording = false;
     bool eventPlaying = false;
     
-    int frameCounter = 0;
-    int playFrameCounter = 0;
-    int currentPlayFrame = 0;
+    unsigned int frameCounter = 0;
+    unsigned int playFrameCounter = 0;
+    unsigned int currentPlayFrame = 0;
 
     SetTargetFPS(60);
     //--------------------------------------------------------------------------------------

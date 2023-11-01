@@ -68,14 +68,12 @@ int main(void)
 
     char skyboxFileName[256] = { 0 };
     
-    Texture2D panorama;
-
     if (useHDR)
     {
         TextCopy(skyboxFileName, "resources/dresden_square_2k.hdr");
 
         // Load HDR panorama (sphere) texture
-        panorama = LoadTexture(skyboxFileName);
+        Texture2D panorama = LoadTexture(skyboxFileName);
 
         // Generate cubemap (texture with 6 quads-cube-mapping) from panorama HDR texture
         // NOTE 1: New texture is generated rendering to texture, shader calculates the sphere->cube coordinates mapping
@@ -83,7 +81,7 @@ int main(void)
         // despite texture can be successfully created.. so using PIXELFORMAT_UNCOMPRESSED_R8G8B8A8 instead of PIXELFORMAT_UNCOMPRESSED_R32G32B32A32
         skybox.materials[0].maps[MATERIAL_MAP_CUBEMAP].texture = GenTextureCubemap(shdrCubemap, panorama, 1024, PIXELFORMAT_UNCOMPRESSED_R8G8B8A8);
 
-        //UnloadTexture(panorama);    // Texture not required anymore, cubemap already generated
+        UnloadTexture(panorama);        // Texture not required anymore, cubemap already generated
     }
     else
     {
@@ -113,15 +111,18 @@ int main(void)
             {
                 if (IsFileExtension(droppedFiles.paths[0], ".png;.jpg;.hdr;.bmp;.tga"))
                 {
-                    // Unload current cubemap texture and load new one
+                    // Unload current cubemap texture to load new one
                     UnloadTexture(skybox.materials[0].maps[MATERIAL_MAP_CUBEMAP].texture);
+                    
                     if (useHDR)
                     {
+                        // Load HDR panorama (sphere) texture
                         Texture2D panorama = LoadTexture(droppedFiles.paths[0]);
 
                         // Generate cubemap from panorama texture
                         skybox.materials[0].maps[MATERIAL_MAP_CUBEMAP].texture = GenTextureCubemap(shdrCubemap, panorama, 1024, PIXELFORMAT_UNCOMPRESSED_R8G8B8A8);
-                        UnloadTexture(panorama);
+                        
+                        UnloadTexture(panorama);    // Texture not required anymore, cubemap already generated
                     }
                     else
                     {

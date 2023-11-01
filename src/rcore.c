@@ -436,8 +436,8 @@ struct AutomationEvent {
 };
 */
 
-static AutomationEventList *currentEventList = NULL;    // Current automation events list, set by user, keep internal pointer
-static bool automationEventRecording = false;           // Recording automation events flag
+static AutomationEventList *currentEventList = NULL;        // Current automation events list, set by user, keep internal pointer
+static bool automationEventRecording = false;               // Recording automation events flag
 //static short automationEventEnabled = 0b0000001111111111; // TODO: Automation events enabled for recording/playing
 #endif
 //-----------------------------------------------------------------------------------
@@ -2465,7 +2465,7 @@ bool ExportAutomationEventList(AutomationEventList list, const char *fileName)
     byteCount += sprintf(txtData + byteCount, "c %i\n", list.count);
     for (int i = 0; i < list.count; i++)
     {
-        byteCount += sprintf(txtData + byteCount, "e %i %i %i %i %i %i // Event: %s\n", list.events[i].frame, list.events[i].type,
+        byteCount += snprintf(txtData + byteCount, 256, "e %i %i %i %i %i %i // Event: %s\n", list.events[i].frame, list.events[i].type,
             list.events[i].params[0], list.events[i].params[1], list.events[i].params[2], list.events[i].params[3], autoEventTypeName[list.events[i].type]);
     }
 

@@ -2142,11 +2142,11 @@ Mesh GenMeshPoly(int sides, float radius)
     Vector3 *vertices = (Vector3 *)RL_MALLOC(vertexCount*sizeof(Vector3));
 
     float d = 0.0f, dStep = 360.0f/sides;
-    for (int v = 0; v < vertexCount; v += 3)
+    for (int v = 0; v < vertexCount - 2; v += 3)
     {
         vertices[v] = (Vector3){ 0.0f, 0.0f, 0.0f };
         vertices[v + 1] = (Vector3){ sinf(DEG2RAD*d)*radius, 0.0f, cosf(DEG2RAD*d)*radius };
-        vertices[v + 2] = (Vector3){sinf(DEG2RAD*(d+dStep))*radius, 0.0f, cosf(DEG2RAD*(d+dStep))*radius };
+        vertices[v + 2] = (Vector3){ sinf(DEG2RAD*(d+dStep))*radius, 0.0f, cosf(DEG2RAD*(d+dStep))*radius };
         d += dStep;
     }
 

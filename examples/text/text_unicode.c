@@ -195,7 +195,7 @@ int main(void)
         }
 
         Vector2 mouse = GetMousePosition();
-        Vector2 pos = { 28.8f, 10.0f };
+        Vector2 position = { 28.8f, 10.0f };
         hovered = -1;
         //----------------------------------------------------------------------------------
 
@@ -210,21 +210,21 @@ int main(void)
             for (int i = 0; i < SIZEOF(emoji); ++i)
             {
                 const char *txt = &emojiCodepoints[emoji[i].index];
-                Rectangle emojiRect = { pos.x, pos.y, (float)fontEmoji.baseSize, (float)fontEmoji.baseSize };
+                Rectangle emojiRect = { position.x, position.y, (float)fontEmoji.baseSize, (float)fontEmoji.baseSize };
 
                 if (!CheckCollisionPointRec(mouse, emojiRect))
                 {
-                    DrawTextEx(fontEmoji, txt, pos, (float)fontEmoji.baseSize, 1.0f, selected == i ? emoji[i].color : Fade(LIGHTGRAY, 0.4f));
+                    DrawTextEx(fontEmoji, txt, position, (float)fontEmoji.baseSize, 1.0f, selected == i ? emoji[i].color : Fade(LIGHTGRAY, 0.4f));
                 }
                 else
                 {
-                    DrawTextEx(fontEmoji, txt, pos, (float)fontEmoji.baseSize, 1.0f, emoji[i].color );
+                    DrawTextEx(fontEmoji, txt, position, (float)fontEmoji.baseSize, 1.0f, emoji[i].color );
                     hovered = i;
-                    hoveredPos = pos;
+                    hoveredPos = position;
                 }
 
-                if ((i != 0) && (i%EMOJI_PER_WIDTH == 0)) { pos.y += fontEmoji.baseSize + 24.25f; pos.x = 28.8f; }
-                else pos.x += fontEmoji.baseSize + 28.8f;
+                if ((i != 0) && (i%EMOJI_PER_WIDTH == 0)) { position.y += fontEmoji.baseSize + 24.25f; position.x = 28.8f; }
+                else position.x += fontEmoji.baseSize + 28.8f;
             }
             //------------------------------------------------------------------------------
 
@@ -282,8 +282,8 @@ int main(void)
                 int length = GetCodepointCount(messages[message].text);
                 const char *info = TextFormat("%s %u characters %i bytes", messages[message].language, length, size);
                 sz = MeasureTextEx(GetFontDefault(), info, 10, 1.0f);
-                Vector2 pos = { textRect.x + textRect.width - sz.x,  msgRect.y + msgRect.height - sz.y - 2 };
-                DrawText(info, (int)pos.x, (int)pos.y, 10, RAYWHITE);
+                
+                DrawText(info, (int)(textRect.x + textRect.width - sz.x), (int)(msgRect.y + msgRect.height - sz.y - 2), 10, RAYWHITE);
             }
             //------------------------------------------------------------------------------
 

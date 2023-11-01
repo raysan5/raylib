@@ -2002,7 +2002,6 @@ int GetCodepointPrevious(const char *text, int *codepointSize)
 // Module specific Functions Definition
 //----------------------------------------------------------------------------------
 #if defined(SUPPORT_FILEFORMAT_FNT)
-
 // Read a line from memory
 // REQUIRES: memcpy()
 // NOTE: Returns the number of bytes read
@@ -2032,7 +2031,9 @@ static Font LoadBMFont(const char *fileName)
     int imHeight = 0;
     char imFileName[129] = { 0 };
 
-    int base = 0;   // Useless data
+    int base = 0;       // Useless data
+    int readBytes = 0;  // Data bytes read
+    int readVars = 0;   // Variables filled by sscanf()
 
     char *fileText = LoadFileText(fileName);
 
@@ -2041,32 +2042,30 @@ static Font LoadBMFont(const char *fileName)
     char *fileTextPtr = fileText;
 
     // NOTE: We skip first line, it contains no useful information
-    int lineBytes = GetLine(fileTextPtr, buffer, MAX_BUFFER_SIZE);
-    fileTextPtr += (lineBytes + 1);
+    readBytes = GetLine(fileTextPtr, buffer, MAX_BUFFER_SIZE);
+    fileTextPtr += (readBytes + 1);
 
     // Read line data
-    lineBytes = GetLine(fileTextPtr, buffer, MAX_BUFFER_SIZE);
+    readBytes = GetLine(fileTextPtr, buffer, MAX_BUFFER_SIZE);
     searchPoint = strstr(buffer, "lineHeight");
-    sscanf(searchPoint, "lineHeight=%i base=%i scaleW=%i scaleH=%i", &fontSize, &base, &imWidth, &imHeight);
-    fileTextPtr += (lineBytes + 1);
+    readVars = sscanf(searchPoint, "lineHeight=%i base=%i scaleW=%i scaleH=%i", &fontSize, &base, &imWidth, &imHeight);
+    fileTextPtr += (readBytes + 1);
+    
+    if (readVars < 4) { UnloadFileText(fileText); return font; } // Some data not available, file malformed
 
-    TRACELOGD("FONT: [%s] Loaded font info:", fileName);
-    TRACELOGD("    > Base size: %i", fontSize);
-    TRACELOGD("    > Texture scale: %ix%i", imWidth, imHeight);
-
-    lineBytes = GetLine(fileTextPtr, buffer, MAX_BUFFER_SIZE);
+    readBytes = GetLine(fileTextPtr, buffer, MAX_BUFFER_SIZE);
     searchPoint = strstr(buffer, "file");
-    sscanf(searchPoint, "file=\"%128[^\"]\"", imFileName);
-    fileTextPtr += (lineBytes + 1);
+    readVars = sscanf(searchPoint, "file=\"%128[^\"]\"", imFileName);
+    fileTextPtr += (readBytes + 1);
 
-    TRACELOGD("    > Texture filename: %s", imFileName);
+    if (readVars < 1) { UnloadFileText(fileText); return font; } // No fileName read
 
-    lineBytes = GetLine(fileTextPtr, buffer, MAX_BUFFER_SIZE);
+    readBytes = GetLine(fileTextPtr, buffer, MAX_BUFFER_SIZE);
     searchPoint = strstr(buffer, "count");
-    sscanf(searchPoint, "count=%i", &glyphCount);
-    fileTextPtr += (lineBytes + 1);
+    readVars = sscanf(searchPoint, "count=%i", &glyphCount);
+    fileTextPtr += (readBytes + 1);
 
-    TRACELOGD("    > Chars count: %i", glyphCount);
+    if (readVars < 1) { UnloadFileText(fileText); return font; } // No glyphCount read
 
     // Compose correct path using route of .fnt file (fileName) and imFileName
     char *imPath = NULL;
@@ -2124,22 +2123,26 @@ static Font LoadBMFont(const char *fileName)
 
     for (int i = 0; i < glyphCount; i++)
     {
-        lineBytes = GetLine(fileTextPtr, buffer, MAX_BUFFER_SIZE);
-        sscanf(buffer, "char id=%i x=%i y=%i width=%i height=%i xoffset=%i yoffset=%i xadvance=%i",
+        readBytes = GetLine(fileTextPtr, buffer, MAX_BUFFER_SIZE);
+        readVars = sscanf(buffer, "char id=%i x=%i y=%i width=%i height=%i xoffset=%i yoffset=%i xadvance=%i",
                        &charId, &charX, &charY, &charWidth, &charHeight, &charOffsetX, &charOffsetY, &charAdvanceX);
-        fileTextPtr += (lineBytes + 1);
+        fileTextPtr += (readBytes + 1);
+        
+        if (readVars == 8)  // Make sure all char data has been properly read
+        {
+            // Get character rectangle in the font atlas texture
+            font.recs[i] = (Rectangle){ (float)charX, (float)charY, (float)charWidth, (float)charHeight };
 
-        // Get character rectangle in the font atlas texture
-        font.recs[i] = (Rectangle){ (float)charX, (float)charY, (float)charWidth, (float)charHeight };
+            // Save data properly in sprite font
+            font.glyphs[i].value = charId;
+            font.glyphs[i].offsetX = charOffsetX;
+            font.glyphs[i].offsetY = charOffsetY;
+            font.glyphs[i].advanceX = charAdvanceX;
 
-        // Save data properly in sprite font
-        font.glyphs[i].value = charId;
-        font.glyphs[i].offsetX = charOffsetX;
-        font.glyphs[i].offsetY = charOffsetY;
-        font.glyphs[i].advanceX = charAdvanceX;
-
-        // Fill character image data from imFont data
-        font.glyphs[i].image = ImageFromImage(imFont, font.recs[i]);
+            // Fill character image data from imFont data
+            font.glyphs[i].image = ImageFromImage(imFont, font.recs[i]);
+        }
+        else TRACELOG(LOG_WARNING, "FONT: [%s] Some characters data not correctly provided", fileName);
     }
 
     UnloadImage(imFont);
