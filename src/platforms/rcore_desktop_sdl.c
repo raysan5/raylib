@@ -964,6 +964,12 @@ void PollInputEvents(void)
     // so, if mouse is not moved it returns a (0, 0) position... this behaviour should be reviewed!
     //for (int i = 0; i < MAX_TOUCH_POINTS; i++) CORE.Input.Touch.position[i] = (Vector2){ 0, 0 };
 
+    // Map touch position to mouse position for convenience
+    // WARNING: If the target desktop device supports touch screen, this behavious should be reviewed!
+    // https://www.codeproject.com/Articles/668404/Programming-for-Multi-Touch
+    // https://docs.microsoft.com/en-us/windows/win32/wintouch/getting-started-with-multi-touch-messages
+    CORE.Input.Touch.position[0] = CORE.Input.Mouse.currentPosition;
+
     // Register previous keys states
     // NOTE: Android supports up to 260 keys
     for (int i = 0; i < MAX_KEYBOARD_KEYS; i++)
@@ -1077,10 +1083,60 @@ void PollInputEvents(void)
             case SDL_MOUSEBUTTONDOWN:
             {
                 CORE.Input.Mouse.currentButtonState[event.button.button - 1] = 1;
+
+                #if defined(SUPPORT_GESTURES_SYSTEM) && defined(SUPPORT_MOUSE_GESTURES)
+                    // Process mouse events as touches to be able to use mouse-gestures
+                    GestureEvent gestureEvent = { 0 };
+
+                    // Register touch actions
+                    if ((CORE.Input.Mouse.currentButtonState[event.button.button - 1] == 1) && (CORE.Input.Mouse.previousButtonState[event.button.button - 1] == 0)) gestureEvent.touchAction = TOUCH_ACTION_DOWN;
+                    else if ((CORE.Input.Mouse.currentButtonState[event.button.button - 1] == 0) && (CORE.Input.Mouse.previousButtonState[event.button.button - 1] == 1)) gestureEvent.touchAction = TOUCH_ACTION_UP;
+
+                    // Assign a pointer ID
+                    gestureEvent.pointId[0] = 0;
+
+                    // Register touch points count
+                    gestureEvent.pointCount = 1;
+
+                    // Register touch points position, only one point registered
+                    gestureEvent.position[0] = GetMousePosition();
+
+                    // Normalize gestureEvent.position[0] for CORE.Window.screen.width and CORE.Window.screen.height
+                    gestureEvent.position[0].x /= (float)GetScreenWidth();
+                    gestureEvent.position[0].y /= (float)GetScreenHeight();
+
+                    // Gesture data is sent to gestures-system for processing
+                    ProcessGestureEvent(gestureEvent);
+                #endif
             } break;
             case SDL_MOUSEBUTTONUP:
             {
                 CORE.Input.Mouse.currentButtonState[event.button.button - 1] = 0;
+
+                #if defined(SUPPORT_GESTURES_SYSTEM) && defined(SUPPORT_MOUSE_GESTURES)
+                    // Process mouse events as touches to be able to use mouse-gestures
+                    GestureEvent gestureEvent = { 0 };
+
+                    // Register touch actions
+                    if ((CORE.Input.Mouse.currentButtonState[event.button.button - 1] == 1) && (CORE.Input.Mouse.previousButtonState[event.button.button - 1] == 0)) gestureEvent.touchAction = TOUCH_ACTION_DOWN;
+                    else if ((CORE.Input.Mouse.currentButtonState[event.button.button - 1] == 0) && (CORE.Input.Mouse.previousButtonState[event.button.button - 1] == 1)) gestureEvent.touchAction = TOUCH_ACTION_UP;
+
+                    // Assign a pointer ID
+                    gestureEvent.pointId[0] = 0;
+
+                    // Register touch points count
+                    gestureEvent.pointCount = 1;
+
+                    // Register touch points position, only one point registered
+                    gestureEvent.position[0] = GetMousePosition();
+
+                    // Normalize gestureEvent.position[0] for CORE.Window.screen.width and CORE.Window.screen.height
+                    gestureEvent.position[0].x /= (float)GetScreenWidth();
+                    gestureEvent.position[0].y /= (float)GetScreenHeight();
+
+                    // Gesture data is sent to gestures-system for processing
+                    ProcessGestureEvent(gestureEvent);
+                #endif
             } break;
             case SDL_MOUSEWHEEL:
             {
@@ -1100,6 +1156,31 @@ void PollInputEvents(void)
                     CORE.Input.Mouse.currentPosition.x = (float)event.motion.x;
                     CORE.Input.Mouse.currentPosition.y = (float)event.motion.y;
                 }
+
+                #if defined(SUPPORT_GESTURES_SYSTEM) && defined(SUPPORT_MOUSE_GESTURES)
+                    CORE.Input.Touch.position[0] = CORE.Input.Mouse.currentPosition;
+
+                    // Process mouse events as touches to be able to use mouse-gestures
+                    GestureEvent gestureEvent = { 0 };
+
+                    gestureEvent.touchAction = TOUCH_ACTION_MOVE;
+
+                    // Assign a pointer ID
+                    gestureEvent.pointId[0] = 0;
+
+                    // Register touch points count
+                    gestureEvent.pointCount = 1;
+
+                    // Register touch points position, only one point registered
+                    gestureEvent.position[0] = CORE.Input.Touch.position[0];
+
+                    // Normalize gestureEvent.position[0] for CORE.Window.screen.width and CORE.Window.screen.height
+                    gestureEvent.position[0].x /= (float)GetScreenWidth();
+                    gestureEvent.position[0].y /= (float)GetScreenHeight();
+
+                    // Gesture data is sent to gestures-system for processing
+                    ProcessGestureEvent(gestureEvent);
+                #endif
             } break;
 
             // Check gamepad events
