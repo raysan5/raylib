@@ -1158,7 +1158,8 @@ void PollInputEvents(void)
             gestureEvent.pointCount = 1;
 
             // Register touch points position, only one point registered
-            gestureEvent.position[0] = GetMousePosition();
+            if (touchAction == 2) gestureEvent.position[0] = CORE.Input.Touch.position[0];
+            else gestureEvent.position[0] = GetMousePosition();
 
             // Normalize gestureEvent.position[0] for CORE.Window.screen.width and CORE.Window.screen.height
             gestureEvent.position[0].x /= (float)GetScreenWidth();
@@ -1171,7 +1172,6 @@ void PollInputEvents(void)
     }
     //-----------------------------------------------------------------------------
 }
-
 
 //----------------------------------------------------------------------------------
 // Module Internal Functions Definition
