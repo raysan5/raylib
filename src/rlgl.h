@@ -799,10 +799,14 @@ RLAPI void rlLoadDrawQuad(void);     // Load and draw a quad
     #define GLAD_FREE RL_FREE
 
     #define GLAD_GL_IMPLEMENTATION
-    #include "external/glad.h"      // GLAD extensions loading library, includes OpenGL headers
+    #include "external/glad.h"          // GLAD extensions loading library, includes OpenGL headers
 #endif
 
-#if defined(GRAPHICS_API_OPENGL_ES2)
+#if defined(GRAPHICS_API_OPENGL_ES3)
+    #include <GLES3/gl3.h>              // OpenGL ES 3.0 library
+    #define GL_GLEXT_PROTOTYPES
+    #include <GLES2/gl2ext.h>           // OpenGL ES 2.0 extensions library
+#elif defined(GRAPHICS_API_OPENGL_ES2)
     // NOTE: OpenGL ES 2.0 can be enabled on PLATFORM_DESKTOP,
     // in that case, functions are loaded from a custom glad for OpenGL ES 2.0
     #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_DESKTOP_SDL)
@@ -822,9 +826,6 @@ RLAPI void rlLoadDrawQuad(void);     // Load and draw a quad
     typedef void (GL_APIENTRYP PFNGLDRAWELEMENTSINSTANCEDEXTPROC) (GLenum mode, GLsizei count, GLenum type, const void *indices, GLsizei primcount);
     typedef void (GL_APIENTRYP PFNGLVERTEXATTRIBDIVISOREXTPROC) (GLuint index, GLuint divisor);
     #endif
-#endif
-#if defined(GRAPHICS_API_OPENGL_ES3)
-    #include <GLES3/gl3.h>
 #endif
 
 #include <stdlib.h>                     // Required for: malloc(), free()
@@ -902,8 +903,10 @@ RLAPI void rlLoadDrawQuad(void);     // Load and draw a quad
 
 #if defined(GRAPHICS_API_OPENGL_ES2)
     #define glClearDepth                 glClearDepthf
-    #define GL_READ_FRAMEBUFFER         GL_FRAMEBUFFER
-    #define GL_DRAW_FRAMEBUFFER         GL_FRAMEBUFFER
+    #if !defined(GRAPHICS_API_OPENGL_ES3)
+        #define GL_READ_FRAMEBUFFER         GL_FRAMEBUFFER
+        #define GL_DRAW_FRAMEBUFFER         GL_FRAMEBUFFER
+    #endif
 #endif
 
 // Default shader vertex attribute names to set location points

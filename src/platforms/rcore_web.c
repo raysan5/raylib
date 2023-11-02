@@ -45,7 +45,9 @@
 *
 **********************************************************************************************/
 
-#include "GLFW/glfw3.h"                 // GLFW3: Windows, OpenGL context and Input management
+#define GLFW_INCLUDE_NONE       // Disable the standard OpenGL header inclusion on GLFW3
+                                // NOTE: Already provided by rlgl implementation (on glad.h)
+#include "GLFW/glfw3.h"         // GLFW3: Windows, OpenGL context and Input management
 
 #include <emscripten/emscripten.h>      // Emscripten functionality for C
 #include <emscripten/html5.h>           // Emscripten HTML5 library
@@ -759,6 +761,7 @@ int InitPlatform(void)
     }
     else if (rlGetVersion() == RL_OPENGL_ES_30) // Request OpenGL ES 3.0 context
     {
+        // TODO: It seems WebGL 2.0 context is not set despite being requested
         glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
         glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
         glfwWindowHint(GLFW_CLIENT_API, GLFW_OPENGL_ES_API);
