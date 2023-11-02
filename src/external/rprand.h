@@ -196,15 +196,14 @@ unsigned int *rprand_load_sequence(unsigned int count, int min, int max)
     sequence = (unsigned int *)RPRAND_CALLOC(count, sizeof(unsigned int));
 
     uint32_t value = 0;
-    int value_count = 0;
     bool value_is_dup = false;
 
-    for (int i = 0; value_count < count; i++)
+    for (int i = 0; i < count;)
     {
         value = rprand_xoshiro()%(max - min) + min;
         value_is_dup = false;
 
-        for (int j = 0; j < value_count; j++)
+        for (int j = 0; j < i; j++)
         {
             if (sequence[j] == value)
             {
@@ -215,8 +214,8 @@ unsigned int *rprand_load_sequence(unsigned int count, int min, int max)
 
         if (!value_is_dup)
         {
-            sequence[value_count] = value;
-            value_count++;
+            sequence[i] = value;
+            i++;
         }
     }
 
