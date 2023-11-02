@@ -170,6 +170,11 @@ static const int EvkeyToUnicodeLUT[] = {
     // LUT currently incomplete, just mapped the most essential keys
 };
 
+#if defined(SUPPORT_GESTURES_SYSTEM)
+GestureEvent gestureEvent = { 0 };      // Gesture event to hold data between EventThread() and PollInputEvents()
+bool newGesture = false;                // Var to trigger ProcessGestureEvent(gestureEvent) on PollInputEvents()
+#endif
+
 //----------------------------------------------------------------------------------
 // Module Internal Functions Declaration
 //----------------------------------------------------------------------------------
@@ -592,6 +597,18 @@ void PollInputEvents(void)
     // Reset touch positions
     //for (int i = 0; i < MAX_TOUCH_POINTS; i++) CORE.Input.Touch.position[i] = (Vector2){ 0, 0 };
 
+    // Map touch position to mouse position for convenience
+    CORE.Input.Touch.position[0] = CORE.Input.Mouse.currentPosition;
+
+#if defined(SUPPORT_GESTURES_SYSTEM)
+    // Call the ProcessGestureEvent here instead of on EventThread() to workaround the threads not matching
+    if (newGesture)
+    {
+        ProcessGestureEvent(gestureEvent);
+        newGesture = false;
+    }
+#endif
+
 #if defined(SUPPORT_SSH_KEYBOARD_RPI)
     // NOTE: Keyboard reading could be done using input_event(s) or just read from stdin, both methods are used here.
     // stdin reading is still used for legacy purposes, it allows keyboard input trough SSH console
@@ -602,7 +619,6 @@ void PollInputEvents(void)
     // NOTE: Gamepad (Joystick) input events polling is done asynchonously in another pthread - GamepadThread()
 #endif
 }
-
 
 //----------------------------------------------------------------------------------
 // Module Internal Functions Definition
@@ -1715,7 +1731,7 @@ static void *EventThread(void *arg)
 #if defined(SUPPORT_GESTURES_SYSTEM)
             if (gestureUpdate)
             {
-                GestureEvent gestureEvent = { 0 };
+                //GestureEvent gestureEvent = { 0 };
 
                 gestureEvent.touchAction = touchAction;
                 gestureEvent.pointCount = CORE.Input.Touch.pointCount;
@@ -1726,7 +1742,8 @@ static void *EventThread(void *arg)
                     gestureEvent.position[i] = CORE.Input.Touch.position[i];
                 }
 
-                ProcessGestureEvent(gestureEvent);
+                //ProcessGestureEvent(gestureEvent);
+                newGesture = true;
             }
 #endif
         }
