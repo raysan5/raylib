@@ -6,7 +6,7 @@
 *       - Windows (Win32, Win64)
 *       - Linux (X11/Wayland desktop mode)
 *       - FreeBSD, OpenBSD, NetBSD, DragonFly (X11 desktop)
-*       - OSX/macOS
+*       - OSX/macOS (x64, arm64)
 *
 *   LIMITATIONS:
 *       - Limitation 01

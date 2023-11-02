@@ -3,22 +3,22 @@
 *   rcore - Window/display management, Graphic device/context management and input management
 *
 *   PLATFORMS SUPPORTED:
-*       - PLATFORM_DESKTOP (GLFW backend):
-*           > Windows (Win32, Win64)
-*           > Linux (X11/Wayland desktop mode)
-*           > macOS/OSX (x64, arm64)
-*           > FreeBSD, OpenBSD, NetBSD, DragonFly (X11 desktop)
-*       - PLATFORM_DESKTOP_SDL (SDL backend):
-*           > Windows (Win32, Win64)
-*           > Linux (X11/Wayland desktop mode)
-*           > Others (not tested)
-*       - PLATFORM_WEB:
-*           > HTML5 (WebAssembly)
-*       - PLATFORM_DRM:
-*           > Raspberry Pi 0-5
-*           > Linux native mode (KMS driver)
-*       - PLATFORM_ANDROID:
-*           > Android (ARM, ARM64)
+*       > PLATFORM_DESKTOP (GLFW backend):
+*           - Windows (Win32, Win64)
+*           - Linux (X11/Wayland desktop mode)
+*           - macOS/OSX (x64, arm64)
+*           - FreeBSD, OpenBSD, NetBSD, DragonFly (X11 desktop)
+*       > PLATFORM_DESKTOP_SDL (SDL backend):
+*           - Windows (Win32, Win64)
+*           - Linux (X11/Wayland desktop mode)
+*           - Others (not tested)
+*       > PLATFORM_WEB:
+*           - HTML5 (WebAssembly)
+*       > PLATFORM_DRM:
+*           - Raspberry Pi 0-5 (DRM/KMS)
+*           - Linux DRM subsystem (KMS mode)
+*       > PLATFORM_ANDROID:
+*           - Android (ARM, ARM64)
 *
 *   CONFIGURATION:
 *       #define SUPPORT_DEFAULT_FONT (default)

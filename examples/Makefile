@@ -4,22 +4,22 @@
 #
 #   This file supports building raylib examples for the following platforms:
 #
-#     - PLATFORM_DESKTOP (GLFW backend):
-#         > Windows (Win32, Win64)
-#         > Linux (X11/Wayland desktop mode)
-#         > macOS/OSX (x64, arm64)
-#         > FreeBSD, OpenBSD, NetBSD, DragonFly (X11 desktop)
-#     - PLATFORM_DESKTOP_SDL (SDL backend):
-#         > Windows (Win32, Win64)
-#         > Linux (X11/Wayland desktop mode)
-#         > Others (not tested)
-#     - PLATFORM_WEB:
-#         > HTML5 (WebAssembly)
-#     - PLATFORM_DRM:
-#         > Raspberry Pi 0-5 (no X11/Wayland)
-#         > Linux native mode (KMS driver)
-#     - PLATFORM_ANDROID:
-#         > Android (ARM, ARM64)
+#     > PLATFORM_DESKTOP (GLFW backend):
+#         - Windows (Win32, Win64)
+#         - Linux (X11/Wayland desktop mode)
+#         - macOS/OSX (x64, arm64)
+#         - FreeBSD, OpenBSD, NetBSD, DragonFly (X11 desktop)
+#     > PLATFORM_DESKTOP_SDL (SDL backend):
+#         - Windows (Win32, Win64)
+#         - Linux (X11/Wayland desktop mode)
+#         - Others (not tested)
+#     > PLATFORM_WEB:
+#         - HTML5 (WebAssembly)
+#     > PLATFORM_DRM:
+#         - Raspberry Pi 0-5 (DRM/KMS)
+#         - Linux DRM subsystem (KMS mode)
+#     > PLATFORM_ANDROID:
+#         - Android (ARM, ARM64)
 #
 #   Copyright (c) 2013-2023 Ramon Santamaria (@raysan5)
 #

@@ -3,8 +3,8 @@
 *   rcore_drm - Functions to manage window, graphics device and inputs
 *
 *   PLATFORM: DRM
-*       - Raspberry Pi 0-5 (native mode)
-*       - Linux native mode (KMS driver)
+*       - Raspberry Pi 0-5 (DRM/KMS)
+*       - Linux DRM subsystem (KMS mode)
 *
 *   LIMITATIONS:
 *       - Most of the window/monitor functions are not implemented (not required)
