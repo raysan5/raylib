@@ -2520,7 +2520,16 @@ void PlayAutomationEvent(AutomationEvent event)
         {
             // Input event
             case INPUT_KEY_UP: CORE.Input.Keyboard.currentKeyState[event.params[0]] = false; break;             // param[0]: key
-            case INPUT_KEY_DOWN: CORE.Input.Keyboard.currentKeyState[event.params[0]] = true; break;            // param[0]: key
+            case INPUT_KEY_DOWN: {                                                                              // param[0]: key
+                CORE.Input.Keyboard.currentKeyState[event.params[0]] = true;
+                if (CORE.Input.Keyboard.previousKeyState[event.params[0]] == false) {
+                    if (CORE.Input.Keyboard.keyPressedQueueCount < MAX_KEY_PRESSED_QUEUE) {
+                        // Add character to the queue
+                        CORE.Input.Keyboard.keyPressedQueue[CORE.Input.Keyboard.keyPressedQueueCount] = event.params[0];
+                        CORE.Input.Keyboard.keyPressedQueueCount++;
+                    }
+                }
+            } break;
             case INPUT_MOUSE_BUTTON_UP: CORE.Input.Mouse.currentButtonState[event.params[0]] = false; break;    // param[0]: key
             case INPUT_MOUSE_BUTTON_DOWN: CORE.Input.Mouse.currentButtonState[event.params[0]] = true; break;   // param[0]: key
             case INPUT_MOUSE_POSITION:      // param[0]: x, param[1]: y
