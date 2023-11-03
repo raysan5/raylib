@@ -1712,7 +1712,7 @@ int *LoadRandomSequence(unsigned int count, int min, int max)
     int *values = NULL;
     
 #if defined(SUPPORT_RPRAND_GENERATOR)
-    rprand_load_sequence(count, min, max);
+    values = rprand_load_sequence(count, min, max);
 #else
     if (count > (abs(max - min) + 1)) return values;
 
