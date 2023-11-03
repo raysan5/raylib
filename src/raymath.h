@@ -2,25 +2,30 @@
 *
 *   raymath v1.5 - Math functions to work with Vector2, Vector3, Matrix and Quaternions
 *
-*   CONFIGURATION:
-*
-*   #define RAYMATH_IMPLEMENTATION
-*       Generates the implementation of the library into the included file.
-*       If not defined, the library is in header only mode and can be included in other headers
-*       or source files without problems. But only ONE file should hold the implementation.
-*
-*   #define RAYMATH_STATIC_INLINE
-*       Define static inline functions code, so #include header suffices for use.
-*       This may use up lots of memory.
-*
 *   CONVENTIONS:
-*
+*     - Matrix structure is defined as row-major (memory layout) but parameters naming AND all
+*       math operations performed by the library consider the structure as it was column-major
+*       It is like transposed versions of the matrices are used for all the maths
+*       It benefits some functions making them cache-friendly and also avoids matrix
+*       transpositions sometimes required by OpenGL
+*       Example: In memory order, row0 is [m0 m4 m8 m12] but in semantic math row0 is [m0 m1 m2 m3]
 *     - Functions are always self-contained, no function use another raymath function inside,
 *       required code is directly re-implemented inside
 *     - Functions input parameters are always received by value (2 unavoidable exceptions)
 *     - Functions use always a "result" variable for return
 *     - Functions are always defined inline
 *     - Angles are always in radians (DEG2RAD/RAD2DEG macros provided for convenience)
+*     - No compound literals used to make sure libray is compatible with C++
+*
+*   CONFIGURATION:
+*       #define RAYMATH_IMPLEMENTATION
+*           Generates the implementation of the library into the included file.
+*           If not defined, the library is in header only mode and can be included in other headers
+*           or source files without problems. But only ONE file should hold the implementation.
+*
+*       #define RAYMATH_STATIC_INLINE
+*           Define static inline functions code, so #include header suffices for use.
+*           This may use up lots of memory.
 *
 *
 *   LICENSE: zlib/libpng
@@ -209,6 +214,10 @@ RMAPI float Wrap(float value, float min, float max)
 // Check whether two given floats are almost equal
 RMAPI int FloatEquals(float x, float y)
 {
+#if !defined(EPSILON)
+    #define EPSILON 0.000001f
+#endif
+
     int result = (fabsf(x - y)) <= (EPSILON*fmaxf(1.0f, fmaxf(fabsf(x), fabsf(y))));
 
     return result;
@@ -310,7 +319,12 @@ RMAPI float Vector2DistanceSqr(Vector2 v1, Vector2 v2)
 // NOTE: Angle is calculated from origin point (0, 0)
 RMAPI float Vector2Angle(Vector2 v1, Vector2 v2)
 {
-    float result = atan2f(v2.y - v1.y, v2.x - v1.x);
+    float result = 0.0f;
+
+    float dot = v1.x*v2.x + v1.y*v2.y;
+    float det = v1.x*v2.y - v1.y*v2.x;
+
+    result = atan2f(det, dot);
 
     return result;
 }
@@ -322,17 +336,8 @@ RMAPI float Vector2LineAngle(Vector2 start, Vector2 end)
 {
     float result = 0.0f;
 
-    float dot = start.x*end.x + start.y*end.y;      // Dot product
-
-    float dotClamp = (dot < -1.0f)? -1.0f : dot;    // Clamp
-    if (dotClamp > 1.0f) dotClamp = 1.0f;
-
-    result = acosf(dotClamp);
-
-    // Alternative implementation, more costly
-    //float v1Length = sqrtf((start.x*start.x) + (start.y*start.y));
-    //float v2Length = sqrtf((end.x*end.x) + (end.y*end.y));
-    //float result = -acosf((start.x*end.x + start.y*end.y)/(v1Length*v2Length));
+    // TODO(10/9/2023): Currently angles move clockwise, determine if this is wanted behavior
+    result = -atan2f(end.y - start.y, end.x - start.x);
 
     return result;
 }
@@ -507,6 +512,10 @@ RMAPI Vector2 Vector2ClampValue(Vector2 v, float min, float max)
 // Check whether two given vectors are almost equal
 RMAPI int Vector2Equals(Vector2 p, Vector2 q)
 {
+#if !defined(EPSILON)
+    #define EPSILON 0.000001f
+#endif
+
     int result = ((fabsf(p.x - q.x)) <= (EPSILON*fmaxf(1.0f, fmaxf(fabsf(p.x), fabsf(q.x))))) &&
                   ((fabsf(p.y - q.y)) <= (EPSILON*fmaxf(1.0f, fmaxf(fabsf(p.y), fabsf(q.y)))));
 
@@ -703,7 +712,7 @@ RMAPI Vector3 Vector3Normalize(Vector3 v)
     Vector3 result = v;
 
     float length = sqrtf(v.x*v.x + v.y*v.y + v.z*v.z);
-    if (length != 0.0f) 
+    if (length != 0.0f)
     {
         float ilength = 1.0f/length;
 
@@ -711,6 +720,40 @@ RMAPI Vector3 Vector3Normalize(Vector3 v)
         result.y *= ilength;
         result.z *= ilength;
     }
+
+    return result;
+}
+
+//Calculate the projection of the vector v1 on to v2
+RMAPI Vector3 Vector3Project(Vector3 v1, Vector3 v2)
+{
+    Vector3 result = { 0 };
+    
+    float v1dv2 = (v1.x*v2.x + v1.y*v2.y + v1.z*v2.z);
+    float v2dv2 = (v2.x*v2.x + v2.y*v2.y + v2.z*v2.z);
+
+    float mag = v1dv2/v2dv2;
+
+    result.x = v2.x*mag;
+    result.y = v2.y*mag;
+    result.z = v2.z*mag;
+
+    return result;
+}
+
+//Calculate the rejection of the vector v1 on to v2
+RMAPI Vector3 Vector3Reject(Vector3 v1, Vector3 v2)
+{
+    Vector3 result = { 0 };
+    
+    float v1dv2 = (v1.x*v2.x + v1.y*v2.y + v1.z*v2.z);
+    float v2dv2 = (v2.x*v2.x + v2.y*v2.y + v2.z*v2.z);
+
+    float mag = v1dv2/v2dv2;
+
+    result.x = v1.x - (v2.x*mag);
+    result.y = v1.y - (v2.y*mag);
+    result.z = v1.z - (v2.z*mag);
 
     return result;
 }
@@ -787,7 +830,7 @@ RMAPI Vector3 Vector3RotateByAxisAngle(Vector3 v, Vector3 axis, float angle)
     Vector3 result = v;
 
     // Vector3Normalize(axis);
-    float length = sqrtf(axis.x * axis.x + axis.y * axis.y + axis.z * axis.z);
+    float length = sqrtf(axis.x*axis.x + axis.y*axis.y + axis.z*axis.z);
     if (length == 0.0f) length = 1.0f;
     float ilength = 1.0f / length;
     axis.x *= ilength;
@@ -796,19 +839,19 @@ RMAPI Vector3 Vector3RotateByAxisAngle(Vector3 v, Vector3 axis, float angle)
 
     angle /= 2.0f;
     float a = sinf(angle);
-    float b = axis.x * a;
-    float c = axis.y * a;
-    float d = axis.z * a;
+    float b = axis.x*a;
+    float c = axis.y*a;
+    float d = axis.z*a;
     a = cosf(angle);
     Vector3 w = { b, c, d };
 
     // Vector3CrossProduct(w, v)
-    Vector3 wv = { w.y * v.z - w.z * v.y, w.z * v.x - w.x * v.z, w.x * v.y - w.y * v.x };
+    Vector3 wv = { w.y*v.z - w.z*v.y, w.z*v.x - w.x*v.z, w.x*v.y - w.y*v.x };
 
     // Vector3CrossProduct(w, wv)
-    Vector3 wwv = { w.y * wv.z - w.z * wv.y, w.z * wv.x - w.x * wv.z, w.x * wv.y - w.y * wv.x };
+    Vector3 wwv = { w.y*wv.z - w.z*wv.y, w.z*wv.x - w.x*wv.z, w.x*wv.y - w.y*wv.x };
 
-    // Vector3Scale(wv, 2 * a)
+    // Vector3Scale(wv, 2*a)
     a *= 2;
     wv.x *= a;
     wv.y *= a;
@@ -1057,19 +1100,22 @@ RMAPI Vector3 Vector3ClampValue(Vector3 v, float min, float max)
 // Check whether two given vectors are almost equal
 RMAPI int Vector3Equals(Vector3 p, Vector3 q)
 {
+#if !defined(EPSILON)
+    #define EPSILON 0.000001f
+#endif
+
     int result = ((fabsf(p.x - q.x)) <= (EPSILON*fmaxf(1.0f, fmaxf(fabsf(p.x), fabsf(q.x))))) &&
-                  ((fabsf(p.y - q.y)) <= (EPSILON*fmaxf(1.0f, fmaxf(fabsf(p.y), fabsf(q.y))))) &&
-                  ((fabsf(p.z - q.z)) <= (EPSILON*fmaxf(1.0f, fmaxf(fabsf(p.z), fabsf(q.z)))));
+                 ((fabsf(p.y - q.y)) <= (EPSILON*fmaxf(1.0f, fmaxf(fabsf(p.y), fabsf(q.y))))) &&
+                 ((fabsf(p.z - q.z)) <= (EPSILON*fmaxf(1.0f, fmaxf(fabsf(p.z), fabsf(q.z)))));
 
     return result;
 }
 
-// Compute the direction of a refracted ray where v specifies the
-// normalized direction of the incoming ray, n specifies the
-// normalized normal vector of the interface of two optical media,
-// and r specifies the ratio of the refractive index of the medium
-// from where the ray comes to the refractive index of the medium
-// on the other side of the surface
+// Compute the direction of a refracted ray
+// v: normalized direction of the incoming ray
+// n: normalized normal vector of the interface of two optical media
+// r: ratio of the refractive index of the medium from where the ray comes
+//    to the refractive index of the medium on the other side of the surface
 RMAPI Vector3 Vector3Refract(Vector3 v, Vector3 n, float r)
 {
     Vector3 result = { 0 };
@@ -1511,11 +1557,11 @@ RMAPI Matrix MatrixFrustum(double left, double right, double bottom, double top,
 
 // Get perspective projection matrix
 // NOTE: Fovy angle must be provided in radians
-RMAPI Matrix MatrixPerspective(double fovy, double aspect, double near, double far)
+RMAPI Matrix MatrixPerspective(double fovY, double aspect, double nearPlane, double farPlane)
 {
     Matrix result = { 0 };
 
-    double top = near*tan(fovy*0.5);
+    double top = nearPlane*tan(fovY*0.5);
     double bottom = -top;
     double right = top*aspect;
     double left = -right;
@@ -1523,27 +1569,27 @@ RMAPI Matrix MatrixPerspective(double fovy, double aspect, double near, double f
     // MatrixFrustum(-right, right, -top, top, near, far);
     float rl = (float)(right - left);
     float tb = (float)(top - bottom);
-    float fn = (float)(far - near);
+    float fn = (float)(farPlane - nearPlane);
 
-    result.m0 = ((float)near*2.0f)/rl;
-    result.m5 = ((float)near*2.0f)/tb;
+    result.m0 = ((float)nearPlane*2.0f)/rl;
+    result.m5 = ((float)nearPlane*2.0f)/tb;
     result.m8 = ((float)right + (float)left)/rl;
     result.m9 = ((float)top + (float)bottom)/tb;
-    result.m10 = -((float)far + (float)near)/fn;
+    result.m10 = -((float)farPlane + (float)nearPlane)/fn;
     result.m11 = -1.0f;
-    result.m14 = -((float)far*(float)near*2.0f)/fn;
+    result.m14 = -((float)farPlane*(float)nearPlane*2.0f)/fn;
 
     return result;
 }
 
 // Get orthographic projection matrix
-RMAPI Matrix MatrixOrtho(double left, double right, double bottom, double top, double near, double far)
+RMAPI Matrix MatrixOrtho(double left, double right, double bottom, double top, double nearPlane, double farPlane)
 {
     Matrix result = { 0 };
 
     float rl = (float)(right - left);
     float tb = (float)(top - bottom);
-    float fn = (float)(far - near);
+    float fn = (float)(farPlane - nearPlane);
 
     result.m0 = 2.0f/rl;
     result.m1 = 0.0f;
@@ -1559,7 +1605,7 @@ RMAPI Matrix MatrixOrtho(double left, double right, double bottom, double top, d
     result.m11 = 0.0f;
     result.m12 = -((float)left + (float)right)/rl;
     result.m13 = -((float)top + (float)bottom)/tb;
-    result.m14 = -((float)far + (float)near)/fn;
+    result.m14 = -((float)farPlane + (float)nearPlane)/fn;
     result.m15 = 1.0f;
 
     return result;
@@ -1814,6 +1860,10 @@ RMAPI Quaternion QuaternionSlerp(Quaternion q1, Quaternion q2, float amount)
 {
     Quaternion result = { 0 };
 
+#if !defined(EPSILON)
+    #define EPSILON 0.000001f
+#endif
+
     float cosHalfTheta = q1.x*q2.x + q1.y*q2.y + q1.z*q2.z + q1.w*q2.w;
 
     if (cosHalfTheta < 0)
@@ -1829,7 +1879,7 @@ RMAPI Quaternion QuaternionSlerp(Quaternion q1, Quaternion q2, float amount)
         float halfTheta = acosf(cosHalfTheta);
         float sinHalfTheta = sqrtf(1.0f - cosHalfTheta*cosHalfTheta);
 
-        if (fabsf(sinHalfTheta) < 0.001f)
+        if (fabsf(sinHalfTheta) < EPSILON)
         {
             result.x = (q1.x*0.5f + q2.x*0.5f);
             result.y = (q1.y*0.5f + q2.y*0.5f);
@@ -1884,9 +1934,9 @@ RMAPI Quaternion QuaternionFromMatrix(Matrix mat)
 {
     Quaternion result = { 0 };
 
-    float fourWSquaredMinus1 = mat.m0 + mat.m5 + mat.m10;
-    float fourXSquaredMinus1 = mat.m0 - mat.m5 - mat.m10;
-    float fourYSquaredMinus1 = mat.m5 - mat.m0 - mat.m10;
+    float fourWSquaredMinus1 = mat.m0  + mat.m5 + mat.m10;
+    float fourXSquaredMinus1 = mat.m0  - mat.m5 - mat.m10;
+    float fourYSquaredMinus1 = mat.m5  - mat.m0 - mat.m10;
     float fourZSquaredMinus1 = mat.m10 - mat.m0 - mat.m5;
 
     int biggestIndex = 0;
@@ -1909,34 +1959,34 @@ RMAPI Quaternion QuaternionFromMatrix(Matrix mat)
         biggestIndex = 3;
     }
 
-    float biggestVal = sqrtf(fourBiggestSquaredMinus1 + 1.0f) * 0.5f;
+    float biggestVal = sqrtf(fourBiggestSquaredMinus1 + 1.0f)*0.5f;
     float mult = 0.25f / biggestVal;
 
     switch (biggestIndex)
     {
         case 0:
             result.w = biggestVal;
-            result.x = (mat.m6 - mat.m9) * mult;
-            result.y = (mat.m8 - mat.m2) * mult;
-            result.z = (mat.m1 - mat.m4) * mult;
+            result.x = (mat.m6 - mat.m9)*mult;
+            result.y = (mat.m8 - mat.m2)*mult;
+            result.z = (mat.m1 - mat.m4)*mult;
             break;
         case 1:
             result.x = biggestVal;
-            result.w = (mat.m6 - mat.m9) * mult;
-            result.y = (mat.m1 + mat.m4) * mult;
-            result.z = (mat.m8 + mat.m2) * mult;
+            result.w = (mat.m6 - mat.m9)*mult;
+            result.y = (mat.m1 + mat.m4)*mult;
+            result.z = (mat.m8 + mat.m2)*mult;
             break;
         case 2:
             result.y = biggestVal;
-            result.w = (mat.m8 - mat.m2) * mult;
-            result.x = (mat.m1 + mat.m4) * mult;
-            result.z = (mat.m6 + mat.m9) * mult;
+            result.w = (mat.m8 - mat.m2)*mult;
+            result.x = (mat.m1 + mat.m4)*mult;
+            result.z = (mat.m6 + mat.m9)*mult;
             break;
         case 3:
             result.z = biggestVal;
-            result.w = (mat.m1 - mat.m4) * mult;
-            result.x = (mat.m8 + mat.m2) * mult;
-            result.y = (mat.m6 + mat.m9) * mult;
+            result.w = (mat.m1 - mat.m4)*mult;
+            result.x = (mat.m8 + mat.m2)*mult;
+            result.y = (mat.m6 + mat.m9)*mult;
             break;
     }
 
@@ -2042,7 +2092,7 @@ RMAPI void QuaternionToAxisAngle(Quaternion q, Vector3 *outAxis, float *outAngle
     float resAngle = 2.0f*acosf(q.w);
     float den = sqrtf(1.0f - q.w*q.w);
 
-    if (den > 0.0001f)
+    if (den > EPSILON)
     {
         resAxis.x = q.x/den;
         resAxis.y = q.y/den;
@@ -2121,11 +2171,15 @@ RMAPI Quaternion QuaternionTransform(Quaternion q, Matrix mat)
 // Check whether two given quaternions are almost equal
 RMAPI int QuaternionEquals(Quaternion p, Quaternion q)
 {
+#if !defined(EPSILON)
+    #define EPSILON 0.000001f
+#endif
+
     int result = (((fabsf(p.x - q.x)) <= (EPSILON*fmaxf(1.0f, fmaxf(fabsf(p.x), fabsf(q.x))))) &&
                   ((fabsf(p.y - q.y)) <= (EPSILON*fmaxf(1.0f, fmaxf(fabsf(p.y), fabsf(q.y))))) &&
                   ((fabsf(p.z - q.z)) <= (EPSILON*fmaxf(1.0f, fmaxf(fabsf(p.z), fabsf(q.z))))) &&
                   ((fabsf(p.w - q.w)) <= (EPSILON*fmaxf(1.0f, fmaxf(fabsf(p.w), fabsf(q.w)))))) ||
-                  (((fabsf(p.x + q.x)) <= (EPSILON*fmaxf(1.0f, fmaxf(fabsf(p.x), fabsf(q.x))))) &&
+                 (((fabsf(p.x + q.x)) <= (EPSILON*fmaxf(1.0f, fmaxf(fabsf(p.x), fabsf(q.x))))) &&
                   ((fabsf(p.y + q.y)) <= (EPSILON*fmaxf(1.0f, fmaxf(fabsf(p.y), fabsf(q.y))))) &&
                   ((fabsf(p.z + q.z)) <= (EPSILON*fmaxf(1.0f, fmaxf(fabsf(p.z), fabsf(q.z))))) &&
                   ((fabsf(p.w + q.w)) <= (EPSILON*fmaxf(1.0f, fmaxf(fabsf(p.w), fabsf(q.w))))));

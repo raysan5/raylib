@@ -25,12 +25,12 @@
 
 # Define required environment variables
 #------------------------------------------------------------------------------------------------
-# Define target platform: PLATFORM_DESKTOP, PLATFORM_RPI, PLATFORM_DRM, PLATFORM_ANDROID, PLATFORM_WEB
+# Define target platform: PLATFORM_DESKTOP, PLATFORM_DRM, PLATFORM_ANDROID, PLATFORM_WEB
 PLATFORM              ?= PLATFORM_WEB
 
 # Define required raylib variables
 PROJECT_NAME          ?= raylib_examples
-RAYLIB_VERSION        ?= 4.5.0
+RAYLIB_VERSION        ?= 5.0.0
 RAYLIB_PATH           ?= ..
 
 # Locations of raylib.h and libraylib.a/libraylib.so
@@ -50,15 +50,6 @@ USE_EXTERNAL_GLFW     ?= FALSE
 # Use Wayland display server protocol on Linux desktop (by default it uses X11 windowing system)
 # NOTE: This variable is only used for PLATFORM_OS: LINUX
 USE_WAYLAND_DISPLAY   ?= FALSE
-
-# Use cross-compiler for PLATFORM_RPI
-ifeq ($(PLATFORM),PLATFORM_RPI)
-    USE_RPI_CROSS_COMPILER ?= FALSE
-    ifeq ($(USE_RPI_CROSS_COMPILER),TRUE)
-        RPI_TOOLCHAIN ?= C:/SysGCC/Raspberry
-        RPI_TOOLCHAIN_SYSROOT ?= $(RPI_TOOLCHAIN)/arm-linux-gnueabihf/sysroot
-    endif
-endif
 
 # Determine PLATFORM_OS in case PLATFORM_DESKTOP or PLATFORM_WEB selected
 ifeq ($(PLATFORM),$(filter $(PLATFORM),PLATFORM_DESKTOP PLATFORM_WEB))
@@ -88,12 +79,6 @@ ifeq ($(PLATFORM),$(filter $(PLATFORM),PLATFORM_DESKTOP PLATFORM_WEB))
         endif
     endif
 endif
-ifeq ($(PLATFORM),PLATFORM_RPI)
-    UNAMEOS = $(shell uname)
-    ifeq ($(UNAMEOS),Linux)
-        PLATFORM_OS = LINUX
-    endif
-endif
 ifeq ($(PLATFORM),PLATFORM_DRM)
     UNAMEOS = $(shell uname)
     ifeq ($(UNAMEOS),Linux)
@@ -111,9 +96,6 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
 endif
 
 # Default path for raylib on Raspberry Pi
-ifeq ($(PLATFORM),PLATFORM_RPI)
-    RAYLIB_PATH        ?= /home/pi/raylib
-endif
 ifeq ($(PLATFORM),PLATFORM_DRM)
     RAYLIB_PATH        ?= /home/pi/raylib
 endif
@@ -147,13 +129,6 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
         CC = clang
     endif
 endif
-ifeq ($(PLATFORM),PLATFORM_RPI)
-    ifeq ($(USE_RPI_CROSS_COMPILER),TRUE)
-        # Define RPI cross-compiler
-        #CC = armv6j-hardfloat-linux-gnueabi-gcc
-        CC = $(RPI_TOOLCHAIN)/bin/arm-linux-gnueabihf-gcc
-    endif
-endif
 ifeq ($(PLATFORM),PLATFORM_WEB)
     # HTML5 emscripten compiler
     # WARNING: To compile to HTML5, code must be redesigned
@@ -163,7 +138,7 @@ endif
 
 # Define default make program: MAKE
 #------------------------------------------------------------------------------------------------
-MAKE ?= make
+MAKE ?= emmake make
 
 ifeq ($(PLATFORM),PLATFORM_DESKTOP)
     ifeq ($(PLATFORM_OS),WINDOWS)
@@ -174,7 +149,7 @@ ifeq ($(PLATFORM),PLATFORM_ANDROID)
     MAKE = mingw32-make
 endif
 ifeq ($(PLATFORM),PLATFORM_WEB)
-    MAKE = mingw32-make
+    MAKE = emmake make
 endif
 
 # Define compiler flags: CFLAGS
@@ -224,9 +199,6 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
         endif
     endif
 endif
-ifeq ($(PLATFORM),PLATFORM_RPI)
-    CFLAGS += -std=gnu99
-endif
 ifeq ($(PLATFORM),PLATFORM_DRM)
     CFLAGS += -std=gnu99 -DEGL_NO_X11
 endif
@@ -244,11 +216,6 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
     ifeq ($(PLATFORM_OS),LINUX)
         INCLUDE_PATHS += -I$(RAYLIB_INCLUDE_PATH)
     endif
-endif
-ifeq ($(PLATFORM),PLATFORM_RPI)
-    INCLUDE_PATHS += -I$(RPI_TOOLCHAIN_SYSROOT)/opt/vc/include
-    INCLUDE_PATHS += -I$(RPI_TOOLCHAIN_SYSROOT)/opt/vc/include/interface/vmcs_host/linux
-    INCLUDE_PATHS += -I$(RPI_TOOLCHAIN_SYSROOT)/opt/vc/include/interface/vcos/pthreads
 endif
 ifeq ($(PLATFORM),PLATFORM_DRM)
     INCLUDE_PATHS += -I/usr/include/libdrm
@@ -301,11 +268,8 @@ ifeq ($(PLATFORM),PLATFORM_WEB)
     # are specified per-example for optimization
 
     # Define a custom shell .html and output extension
-    LDFLAGS += --shell-file $(RAYLIB_PATH)/src/shell.html
+    LDFLAGS += --shell-file $(RAYLIB_PATH)/src/minshell.html
     EXT = .html
-endif
-ifeq ($(PLATFORM),PLATFORM_RPI)
-    LDFLAGS += -L$(RPI_TOOLCHAIN_SYSROOT)/opt/vc/lib
 endif
 
 # Define libraries required on linking: LDLIBS
@@ -357,14 +321,6 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
         LDLIBS += -lglfw
     endif
 endif
-ifeq ($(PLATFORM),PLATFORM_RPI)
-    # Libraries for Raspberry Pi compiling
-    # NOTE: Required packages: libasound2-dev (ALSA)
-    LDLIBS = -lraylib -lbrcmGLESv2 -lbrcmEGL -lpthread -lrt -lm -lbcm_host -ldl -latomic
-    ifeq ($(USE_RPI_CROSS_COMPILER),TRUE)
-        LDLIBS += -lvchiq_arm -lvcos
-    endif
-endif
 ifeq ($(PLATFORM),PLATFORM_DRM)
     # Libraries for DRM compiling
     # NOTE: Required packages: libasound2-dev (ALSA)
@@ -384,14 +340,18 @@ CORE = \
     core/core_input_mouse \
     core/core_input_mouse_wheel \
     core/core_input_gamepad \
+    core/core_input_gamepad_info \
     core/core_input_multitouch \
     core/core_input_gestures \
+    core/core_input_gestures_web \
     core/core_2d_camera \
     core/core_2d_camera_platformer \
     core/core_2d_camera_mouse_zoom \
+    core/core_2d_camera_split_screen \
     core/core_3d_camera_mode \
     core/core_3d_camera_free \
     core/core_3d_camera_first_person \
+    core/core_3d_camera_split_screen \
     core/core_3d_picking \
     core/core_world_screen \
     core/core_custom_logging \
@@ -403,7 +363,6 @@ CORE = \
     core/core_window_flags \
     core/core_window_letterbox \
     core/core_window_should_close \
-    core/core_split_screen \
     core/core_smooth_pixelperfect \
     core/core_custom_frame_control \
     core/core_loading_thread
@@ -434,6 +393,7 @@ TEXTURES = \
     textures/textures_image_generation \
     textures/textures_image_loading \
     textures/textures_image_processing \
+    textures/textures_image_rotate \
     textures/textures_image_text \
     textures/textures_to_image \
     textures/textures_raw_data \
@@ -449,7 +409,8 @@ TEXTURES = \
     textures/textures_draw_tiled \
     textures/textures_polygon \
     textures/textures_gif_player \
-    textures/textures_fog_of_war
+    textures/textures_fog_of_war \
+    textures/textures_svg_loading
 
 TEXT = \
     text/text_raylib_fonts \
@@ -503,18 +464,29 @@ SHADERS = \
     shaders/shaders_simple_mask \
     shaders/shaders_spotlight \
     shaders/shaders_hot_reloading \
+    shaders/shaders_lightmap \
     shaders/shaders_mesh_instancing \
     shaders/shaders_multi_sample2d \
     shaders/shaders_write_depth \
-    shaders/shaders_hybrid_render
+    shaders/shaders_hybrid_render \
+    shaders/shaders_deferred_render
 
 AUDIO = \
     audio/audio_module_playing \
     audio/audio_music_stream \
     audio/audio_raw_stream \
     audio/audio_sound_loading \
+    audio/audio_sound_multi \
     audio/audio_stream_effects \
     audio/audio_mixed_processor
+
+OTHERS = \
+    others/easings_testbed \
+    others/embedded_files_loading \
+    others/raylib_opengl_interop \
+    others/raymath_vector_angle \
+    others/rlgl_compute_shader \
+    others/rlgl_standalone
 
 CURRENT_MAKEFILE = $(lastword $(MAKEFILE_LIST))
 
@@ -552,10 +524,16 @@ core/core_input_gamepad: core/core_input_gamepad.c
     --preload-file core/resources/ps3.png@resources/ps3.png \
     --preload-file core/resources/xbox.png@resources/xbox.png
 
+core/core_input_gamepad_info: core/core_input_gamepad.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
+
 core/core_input_multitouch: core/core_input_multitouch.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
 core/core_input_gestures: core/core_input_gestures.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
+
+core/core_input_gestures_web: core/core_input_gestures_web.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
 core/core_2d_camera: core/core_2d_camera.c
@@ -563,8 +541,11 @@ core/core_2d_camera: core/core_2d_camera.c
 
 core/core_2d_camera_platformer: core/core_2d_camera_platformer.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
-    
+
 core/core_2d_camera_mouse_zoom: core/core_2d_camera_mouse_zoom.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
+
+core/core_2d_camera_split_screen: core/core_2d_camera_split_screen.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
 core/core_3d_camera_mode: core/core_3d_camera_mode.c
@@ -574,6 +555,9 @@ core/core_3d_camera_free: core/core_3d_camera_free.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
 core/core_3d_camera_first_person: core/core_3d_camera_first_person.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
+
+core/core_3d_camera_split_screen: core/core_3d_camera_split_screen.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
 core/core_3d_picking: core/core_3d_picking.c
@@ -607,9 +591,6 @@ core/core_vr_simulator: core/core_vr_simulator.c
 core/core_window_flags: core/core_window_flags.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
-core/core_split_screen: core/core_split_screen.c
-	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
-
 core/core_smooth_pixelperfect: core/core_smooth_pixelperfect.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
@@ -618,10 +599,10 @@ core/core_custom_frame_control: core/core_custom_frame_control.c
 
 core/core_window_should_close: core/core_window_should_close.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
-    
+
 # NOTE: To use multi-threading raylib must be compiled with multi-theading support (-s USE_PTHREADS=1)
 # WARNING: For security reasons multi-threading is not supported on browsers, it requires cross-origin isolation (Oct.2021)
-# WARNING: It requires raylib to be compiled using -pthread, so atomic operations and thread-local data (if any) 
+# WARNING: It requires raylib to be compiled using -pthread, so atomic operations and thread-local data (if any)
 # in its source were transformed to non-atomic operations and non-thread-local data
 core/core_loading_thread: core/core_loading_thread.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) -s USE_PTHREADS=1
@@ -709,6 +690,10 @@ textures/textures_image_processing: textures/textures_image_processing.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
     --preload-file textures/resources/parrots.png@resources/parrots.png
 
+textures/textures_image_rotate: textures/textures_image_rotate.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
+    --preload-file textures/resources/raylib_logo.png
+
 textures/textures_image_text: textures/textures_image_text.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) -s TOTAL_MEMORY=67108864 \
     --preload-file textures/resources/parrots.png@resources/parrots.png \
@@ -745,7 +730,7 @@ textures/textures_sprite_explosion: textures/textures_sprite_explosion.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
     --preload-file textures/resources/explosion.png@resources/explosion.png \
     --preload-file textures/resources/boom.wav@resources/boom.wav
-    
+
 textures/textures_textured_curve: textures/textures_textured_curve.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
     --preload-file textures/resources/road.png@resources/road.png
@@ -773,6 +758,10 @@ textures/textures_gif_player: textures/textures_gif_player.c
 
 textures/textures_fog_of_war: textures/textures_fog_of_war.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
+
+textures/textures_svg_loading: textures/textures_svg_loading.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
+    --preload-file textures/resources/test.svg
 
 # Compile TEXT examples
 text/text_raylib_fonts: text/text_raylib_fonts.c
@@ -857,8 +846,8 @@ models/models_cubicmap: models/models_cubicmap.c
 
 models/models_draw_cube_texture: models/models_draw_cube_texture.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
-    --preload-file models/resources/cubicmap_atlas.png@resources/cubicmap_atlas.png    
-    
+    --preload-file models/resources/cubicmap_atlas.png@resources/cubicmap_atlas.png
+
 models/models_first_person_maze: models/models_first_person_maze.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
     --preload-file models/resources/cubicmap.png@resources/cubicmap.png \
@@ -889,7 +878,7 @@ models/models_loading_vox: models/models_loading_vox.c
 models/models_loading_gltf: models/models_loading_gltf.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) -s TOTAL_MEMORY=67108864 \
     --preload-file models/resources/models/gltf/robot.glb@resources/models/gltf/robot.glb
-    
+
 models/models_loading_m3d: models/models_loading_m3d.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) -s TOTAL_MEMORY=67108864 \
     --preload-file models/resources/models/m3d/cesium_man.m3d@resources/models/m3d/cesium_man.m3d
@@ -997,6 +986,13 @@ shaders/shaders_hot_reloading: shaders/shaders_hot_reloading.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) -s FORCE_FILESYSTEM=1 \
     --preload-file shaders/resources/shaders/glsl100/reload.fs@resources/shaders/glsl100/reload.fs
 
+shaders/shaders_lightmap: shaders/shaders_lightmap.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) -s FORCE_FILESYSTEM=1 \
+    --preload-file shaders/resources/shaders/glsl330/lightmap.vs \
+    --preload-file shaders/resources/shaders/glsl330/lightmap.fs \
+    --preload-file shaders/resources/cubicmap_atlas.png \
+    --preload-file shaders/resources/spark_flame.png
+
 shaders/shaders_mesh_instancing: shaders/shaders_mesh_instancing.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
     --preload-file shaders/resources/shaders/glsl100/lighting_instancing.vs@resources/shaders/glsl100/lighting_instancing.vs \
@@ -1010,16 +1006,16 @@ shaders/shaders_texture_outline: shaders/shaders_texture_outline.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
     --preload-file shaders/resources/shaders/glsl100/outline.fs@resources/shaders/glsl100/outline.fs \
     --preload-file shaders/resources/fudesumi.png@resources/fudesumi.png
-    
+
 shaders/shaders_write_depth: shaders/shaders_write_depth.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
     --preload-file shaders/resources/shaders/glsl100/write_depth.fs@resources/shaders/glsl100/write_depth.fs
-    
+
 shaders/shaders_hybrid_render: shaders/shaders_hybrid_render.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
     --preload-file shaders/resources/shaders/glsl100/hybrid_raymarch.fs@resources/shaders/glsl100/hybrid_raymarch.fs \
     --preload-file shaders/resources/shaders/glsl100/hybrid_raster.fs@resources/shaders/glsl100/hybrid_raster.fs
-    
+
 # Compile AUDIO examples
 audio/audio_module_playing: audio/audio_module_playing.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
@@ -1037,14 +1033,37 @@ audio/audio_sound_loading: audio/audio_sound_loading.c
     --preload-file audio/resources/sound.wav@resources/sound.wav \
     --preload-file audio/resources/target.ogg@resources/target.ogg
 
+audio/audio_sound_multi: audio/audio_sound_multi.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
+    --preload-file audio/resources/sound.wav@resources/sound.wav
+
 audio/audio_stream_effects: audio/audio_stream_effects.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) -s TOTAL_MEMORY=67108864 \
     --preload-file audio/resources/country.mp3@resources/country.mp3
-    
+
 audio/audio_mixed_processor: audio/audio_mixed_processor.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) -s TOTAL_MEMORY=67108864 \
     --preload-file audio/resources/country.mp3@resources/country.mp3 \
     --preload-file audio/resources/coin.wav@resources/coin.wav
+
+# Compile OTHERS examples
+others/easings_testbed: others/easings_testbed.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
+
+others/embedded_files_loading: others/embedded_files_loading.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
+
+others/raylib_opengl_interop:
+	$(info Skipping_others_raylib_opengl_interop)
+
+others/raymath_vector_angle: others/raymath_vector_angle.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
+
+others/rlgl_compute_shader:
+	$(info Skipping_others_rlgl_compute_shader)
+
+others/rlgl_standalone:
+	$(info Skipping_others_rlgl_standalone)
 
 # Clean everything
 clean:
@@ -1060,10 +1079,6 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
 		find . -type f -perm +ugo+x -delete
 		rm -f *.o
     endif
-endif
-ifeq ($(PLATFORM),PLATFORM_RPI)
-	find . -type f -executable -delete
-	rm -fv *.o
 endif
 ifeq ($(PLATFORM),PLATFORM_DRM)
 	find . -type f -executable -delete

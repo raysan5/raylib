@@ -169,9 +169,11 @@ static FunctionInfo *funcs = NULL;
 // Command line variables
 static char apiDefine[32] = { 0 };         // Functions define (i.e. RLAPI for raylib.h, RMDEF for raymath.h, etc.)
 static char truncAfter[32] = { 0 };        // Truncate marker (i.e. "RLGL IMPLEMENTATION" for rlgl.h)
-static char inFileName[512] = { 0 };       // Input file name (required in case of provided through CLI)
-static char outFileName[512] = { 0 };      // Output file name (required for file save/export)
 static int outputFormat = DEFAULT;
+
+// NOTE: Max length depends on OS, in Windows MAX_PATH = 256
+static char inFileName[512] = { 0 };        // Input file name (required in case of drag & drop over executable)
+static char outFileName[512] = { 0 };       // Output file name (required for file save/export)
 
 //----------------------------------------------------------------------------------
 // Module Functions Declaration
@@ -445,11 +447,11 @@ int main(int argc, char* argv[])
             {
                 if (isFloat)
                 {
-                    defines[defineIndex].type = linePtr[j-1] == 'f' ? FLOAT : DOUBLE;
+                    defines[defineIndex].type = (linePtr[j-1] == 'f')? FLOAT : DOUBLE;
                 }
                 else
                 {
-                    defines[defineIndex].type = linePtr[j-1] == 'L' ? LONG : INT;
+                    defines[defineIndex].type = (linePtr[j-1] == 'L')? LONG : INT;
                     defines[defineIndex].isHex = isHex;
                 }
             }
@@ -499,7 +501,7 @@ int main(int argc, char* argv[])
                     (ch == '/') ||
                     (ch == ' ') ||
                     (ch == '\t')) continue;
-                
+
                 // Read number operand
                 else if (isdigit(ch))
                 {
@@ -532,9 +534,9 @@ int main(int argc, char* argv[])
                     {
                         // Found a valid number -> update largestType
                         int numberType;
-                        if (isFloat) numberType = valuePtr[c - 1] == 'f' ? FLOAT_MATH : DOUBLE_MATH;
-                        else numberType = valuePtr[c - 1] == 'L' ? LONG_MATH : INT_MATH;
-                        
+                        if (isFloat) numberType = (valuePtr[c - 1] == 'f')? FLOAT_MATH : DOUBLE_MATH;
+                        else numberType = (valuePtr[c - 1] == 'L')? LONG_MATH : INT_MATH;
+
                         if (numberType > largestType) largestType = numberType;
                     }
                     else
@@ -654,7 +656,7 @@ int main(int argc, char* argv[])
                     {
                         if (structs[i].fieldName[originalIndex][c] == ',') additionalFields++;
                     }
-                    
+
                     if (additionalFields > 0)
                     {
                         int originalLength = -1;
@@ -702,7 +704,7 @@ int main(int argc, char* argv[])
                     {
                         if (structs[i].fieldType[originalIndex][c] == ',') additionalFields++;
                     }
-                    
+
                     if (additionalFields > 0)
                     {
                         // Copy original name to last additional field

@@ -746,7 +746,7 @@ static int tinyobj_parse_and_index_mtl_file(tinyobj_material_t **materials_out,
   (*materials_out) = NULL;
   (*num_materials_out) = 0;
 
-  fp = fopen(filename, "r");
+  fp = fopen(filename, "rt");
   if (!fp) {
     fprintf(stderr, "TINYOBJ: Error reading file '%s': %s (%d)\n", filename, strerror(errno), errno);
     return TINYOBJ_ERROR_FILE_OPERATION;
@@ -1269,6 +1269,11 @@ int tinyobj_parse_obj(tinyobj_attrib_t *attrib, tinyobj_shape_t **shapes,
       if (is_line_ending(buf, i, end_idx)) {
         line_infos[line_no].pos = prev_pos;
         line_infos[line_no].len = i - prev_pos;
+         
+// ---- QUICK BUG FIX : https://github.com/raysan5/raylib/issues/3473
+        if ( i > 0 && buf[i-1] == '\r' ) line_infos[line_no].len--;
+// --------
+
         prev_pos = i + 1;
         line_no++;
       }

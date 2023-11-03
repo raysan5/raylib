@@ -15,7 +15,7 @@ return {
     {
       name = "RAYLIB_VERSION_MINOR",
       type = "INT",
-      value = 5,
+      value = 6,
       description = ""
     },
     {
@@ -27,7 +27,7 @@ return {
     {
       name = "RAYLIB_VERSION",
       type = "STRING",
-      value = "4.5",
+      value = "4.6-dev",
       description = ""
     },
     {
@@ -1032,6 +1032,11 @@ return {
           type = "Transform **",
           name = "framePoses",
           description = "Poses array by frame"
+        },
+        {
+          type = "char[32]",
+          name = "name",
+          description = "Animation name"
         }
       }
     },
@@ -1422,6 +1427,11 @@ return {
           name = "FLAG_WINDOW_MOUSE_PASSTHROUGH",
           value = 16384,
           description = "Set to support mouse passthrough, only supported when FLAG_WINDOW_UNDECORATED"
+        },
+        {
+          name = "FLAG_BORDERLESS_WINDOWED_MODE",
+          value = 32768,
+          description = "Set to run program in borderless windowed mode"
         },
         {
           name = "FLAG_MSAA_4X_HINT",
@@ -2600,58 +2610,73 @@ return {
           description = "32*4 bpp (4 channels - float)"
         },
         {
-          name = "PIXELFORMAT_COMPRESSED_DXT1_RGB",
+          name = "PIXELFORMAT_UNCOMPRESSED_R16",
           value = 11,
+          description = "16 bpp (1 channel - half float)"
+        },
+        {
+          name = "PIXELFORMAT_UNCOMPRESSED_R16G16B16",
+          value = 12,
+          description = "16*3 bpp (3 channels - half float)"
+        },
+        {
+          name = "PIXELFORMAT_UNCOMPRESSED_R16G16B16A16",
+          value = 13,
+          description = "16*4 bpp (4 channels - half float)"
+        },
+        {
+          name = "PIXELFORMAT_COMPRESSED_DXT1_RGB",
+          value = 14,
           description = "4 bpp (no alpha)"
         },
         {
           name = "PIXELFORMAT_COMPRESSED_DXT1_RGBA",
-          value = 12,
+          value = 15,
           description = "4 bpp (1 bit alpha)"
         },
         {
           name = "PIXELFORMAT_COMPRESSED_DXT3_RGBA",
-          value = 13,
+          value = 16,
           description = "8 bpp"
         },
         {
           name = "PIXELFORMAT_COMPRESSED_DXT5_RGBA",
-          value = 14,
-          description = "8 bpp"
-        },
-        {
-          name = "PIXELFORMAT_COMPRESSED_ETC1_RGB",
-          value = 15,
-          description = "4 bpp"
-        },
-        {
-          name = "PIXELFORMAT_COMPRESSED_ETC2_RGB",
-          value = 16,
-          description = "4 bpp"
-        },
-        {
-          name = "PIXELFORMAT_COMPRESSED_ETC2_EAC_RGBA",
           value = 17,
           description = "8 bpp"
         },
         {
-          name = "PIXELFORMAT_COMPRESSED_PVRT_RGB",
+          name = "PIXELFORMAT_COMPRESSED_ETC1_RGB",
           value = 18,
           description = "4 bpp"
         },
         {
-          name = "PIXELFORMAT_COMPRESSED_PVRT_RGBA",
+          name = "PIXELFORMAT_COMPRESSED_ETC2_RGB",
           value = 19,
           description = "4 bpp"
         },
         {
-          name = "PIXELFORMAT_COMPRESSED_ASTC_4x4_RGBA",
+          name = "PIXELFORMAT_COMPRESSED_ETC2_EAC_RGBA",
           value = 20,
           description = "8 bpp"
         },
         {
-          name = "PIXELFORMAT_COMPRESSED_ASTC_8x8_RGBA",
+          name = "PIXELFORMAT_COMPRESSED_PVRT_RGB",
           value = 21,
+          description = "4 bpp"
+        },
+        {
+          name = "PIXELFORMAT_COMPRESSED_PVRT_RGBA",
+          value = 22,
+          description = "4 bpp"
+        },
+        {
+          name = "PIXELFORMAT_COMPRESSED_ASTC_4x4_RGBA",
+          value = 23,
+          description = "8 bpp"
+        },
+        {
+          name = "PIXELFORMAT_COMPRESSED_ASTC_8x8_RGBA",
+          value = 24,
           description = "2 bpp"
         }
       }
@@ -2968,7 +2993,7 @@ return {
       returnType = "unsigned char *",
       params = {
         {type = "const char *", name = "fileName"},
-        {type = "unsigned int *", name = "bytesRead"}
+        {type = "int *", name = "dataSize"}
       }
     },
     {
@@ -2978,7 +3003,7 @@ return {
       params = {
         {type = "const char *", name = "fileName"},
         {type = "void *", name = "data"},
-        {type = "unsigned int", name = "bytesToWrite"}
+        {type = "int", name = "dataSize"}
       }
     },
     {
@@ -3094,6 +3119,11 @@ return {
       returnType = "void"
     },
     {
+      name = "ToggleBorderlessWindowed",
+      description = "Toggle window state: borderless windowed (only PLATFORM_DESKTOP)",
+      returnType = "void"
+    },
+    {
       name = "MaximizeWindow",
       description = "Set window state: maximized, if resizable (only PLATFORM_DESKTOP)",
       returnType = "void"
@@ -3127,7 +3157,7 @@ return {
     },
     {
       name = "SetWindowTitle",
-      description = "Set title for window (only PLATFORM_DESKTOP)",
+      description = "Set title for window (only PLATFORM_DESKTOP and PLATFORM_WEB)",
       returnType = "void",
       params = {
         {type = "const char *", name = "title"}
@@ -3144,7 +3174,7 @@ return {
     },
     {
       name = "SetWindowMonitor",
-      description = "Set monitor for the current window (fullscreen mode)",
+      description = "Set monitor for the current window",
       returnType = "void",
       params = {
         {type = "int", name = "monitor"}
@@ -3153,6 +3183,15 @@ return {
     {
       name = "SetWindowMinSize",
       description = "Set window minimum dimensions (for FLAG_WINDOW_RESIZABLE)",
+      returnType = "void",
+      params = {
+        {type = "int", name = "width"},
+        {type = "int", name = "height"}
+      }
+    },
+    {
+      name = "SetWindowMaxSize",
+      description = "Set window maximum dimensions (for FLAG_WINDOW_RESIZABLE)",
       returnType = "void",
       params = {
         {type = "int", name = "width"},
@@ -3175,6 +3214,11 @@ return {
       params = {
         {type = "float", name = "opacity"}
       }
+    },
+    {
+      name = "SetWindowFocused",
+      description = "Set window focused (only PLATFORM_DESKTOP)",
+      returnType = "void"
     },
     {
       name = "GetWindowHandle",
@@ -3271,7 +3315,7 @@ return {
     },
     {
       name = "GetMonitorName",
-      description = "Get the human-readable, UTF-8 encoded name of the primary monitor",
+      description = "Get the human-readable, UTF-8 encoded name of the specified monitor",
       returnType = "const char *",
       params = {
         {type = "int", name = "monitor"}
@@ -3787,7 +3831,7 @@ return {
       returnType = "unsigned char *",
       params = {
         {type = "const char *", name = "fileName"},
-        {type = "unsigned int *", name = "bytesRead"}
+        {type = "int *", name = "dataSize"}
       }
     },
     {
@@ -3805,7 +3849,7 @@ return {
       params = {
         {type = "const char *", name = "fileName"},
         {type = "void *", name = "data"},
-        {type = "unsigned int", name = "bytesToWrite"}
+        {type = "int", name = "dataSize"}
       }
     },
     {
@@ -3814,7 +3858,7 @@ return {
       returnType = "bool",
       params = {
         {type = "const unsigned char *", name = "data"},
-        {type = "unsigned int", name = "size"},
+        {type = "int", name = "dataSize"},
         {type = "const char *", name = "fileName"}
       }
     },
@@ -3923,7 +3967,7 @@ return {
     },
     {
       name = "GetApplicationDirectory",
-      description = "Get the directory if the running application (uses static string)",
+      description = "Get the directory of the running application (uses static string)",
       returnType = "const char *"
     },
     {
@@ -4036,6 +4080,14 @@ return {
     {
       name = "IsKeyPressed",
       description = "Check if a key has been pressed once",
+      returnType = "bool",
+      params = {
+        {type = "int", name = "key"}
+      }
+    },
+    {
+      name = "IsKeyPressedRepeat",
+      description = "Check if a key has been pressed again (Only PLATFORM_DESKTOP)",
       returnType = "bool",
       params = {
         {type = "int", name = "key"}
@@ -4306,7 +4358,7 @@ return {
       description = "Check if a gesture have been detected",
       returnType = "bool",
       params = {
-        {type = "int", name = "gesture"}
+        {type = "unsigned int", name = "gesture"}
       }
     },
     {
@@ -4452,6 +4504,28 @@ return {
         {type = "Vector2", name = "endPos"},
         {type = "Vector2", name = "startControlPos"},
         {type = "Vector2", name = "endControlPos"},
+        {type = "float", name = "thick"},
+        {type = "Color", name = "color"}
+      }
+    },
+    {
+      name = "DrawLineBSpline",
+      description = "Draw a B-Spline line, minimum 4 points",
+      returnType = "void",
+      params = {
+        {type = "Vector2 *", name = "points"},
+        {type = "int", name = "pointCount"},
+        {type = "float", name = "thick"},
+        {type = "Color", name = "color"}
+      }
+    },
+    {
+      name = "DrawLineCatmullRom",
+      description = "Draw a Catmull Rom spline line, minimum 4 points",
+      returnType = "void",
+      params = {
+        {type = "Vector2 *", name = "points"},
+        {type = "int", name = "pointCount"},
         {type = "float", name = "thick"},
         {type = "Color", name = "color"}
       }
@@ -4915,6 +4989,16 @@ return {
       }
     },
     {
+      name = "LoadImageSvg",
+      description = "Load image from SVG file data or string with specified size",
+      returnType = "Image",
+      params = {
+        {type = "const char *", name = "fileNameOrString"},
+        {type = "int", name = "width"},
+        {type = "int", name = "height"}
+      }
+    },
+    {
       name = "LoadImageAnim",
       description = "Load image sequence from file (frames appended to image.data)",
       returnType = "Image",
@@ -4972,6 +5056,16 @@ return {
       }
     },
     {
+      name = "ExportImageToMemory",
+      description = "Export image to memory buffer",
+      returnType = "unsigned char *",
+      params = {
+        {type = "Image", name = "image"},
+        {type = "const char *", name = "fileType"},
+        {type = "int *", name = "fileSize"}
+      }
+    },
+    {
       name = "ExportImageAsCode",
       description = "Export image as code file defining an array of bytes, returns true on success",
       returnType = "bool",
@@ -4991,30 +5085,32 @@ return {
       }
     },
     {
-      name = "GenImageGradientV",
-      description = "Generate image: vertical gradient",
+      name = "GenImageGradientLinear",
+      description = "Generate image: linear gradient, direction in degrees [0..360], 0=Vertical gradient",
       returnType = "Image",
       params = {
         {type = "int", name = "width"},
         {type = "int", name = "height"},
-        {type = "Color", name = "top"},
-        {type = "Color", name = "bottom"}
-      }
-    },
-    {
-      name = "GenImageGradientH",
-      description = "Generate image: horizontal gradient",
-      returnType = "Image",
-      params = {
-        {type = "int", name = "width"},
-        {type = "int", name = "height"},
-        {type = "Color", name = "left"},
-        {type = "Color", name = "right"}
+        {type = "int", name = "direction"},
+        {type = "Color", name = "start"},
+        {type = "Color", name = "end"}
       }
     },
     {
       name = "GenImageGradientRadial",
       description = "Generate image: radial gradient",
+      returnType = "Image",
+      params = {
+        {type = "int", name = "width"},
+        {type = "int", name = "height"},
+        {type = "float", name = "density"},
+        {type = "Color", name = "inner"},
+        {type = "Color", name = "outer"}
+      }
+    },
+    {
+      name = "GenImageGradientSquare",
+      description = "Generate image: square gradient",
       returnType = "Image",
       params = {
         {type = "int", name = "width"},
@@ -5257,6 +5353,15 @@ return {
       returnType = "void",
       params = {
         {type = "Image *", name = "image"}
+      }
+    },
+    {
+      name = "ImageRotate",
+      description = "Rotate image by input angle in degrees (-359 to 359)",
+      returnType = "void",
+      params = {
+        {type = "Image *", name = "image"},
+        {type = "int", name = "degrees"}
       }
     },
     {
@@ -5895,13 +6000,13 @@ return {
     },
     {
       name = "LoadFontEx",
-      description = "Load font from file with extended parameters, use NULL for fontChars and 0 for glyphCount to load the default character set",
+      description = "Load font from file with extended parameters, use NULL for codepoints and 0 for codepointCount to load the default character setFont",
       returnType = "Font",
       params = {
         {type = "const char *", name = "fileName"},
         {type = "int", name = "fontSize"},
-        {type = "int *", name = "fontChars"},
-        {type = "int", name = "glyphCount"}
+        {type = "int *", name = "codepoints"},
+        {type = "int", name = "codepointCount"}
       }
     },
     {
@@ -5923,8 +6028,8 @@ return {
         {type = "const unsigned char *", name = "fileData"},
         {type = "int", name = "dataSize"},
         {type = "int", name = "fontSize"},
-        {type = "int *", name = "fontChars"},
-        {type = "int", name = "glyphCount"}
+        {type = "int *", name = "codepoints"},
+        {type = "int", name = "codepointCount"}
       }
     },
     {
@@ -5943,8 +6048,8 @@ return {
         {type = "const unsigned char *", name = "fileData"},
         {type = "int", name = "dataSize"},
         {type = "int", name = "fontSize"},
-        {type = "int *", name = "fontChars"},
-        {type = "int", name = "glyphCount"},
+        {type = "int *", name = "codepoints"},
+        {type = "int", name = "codepointCount"},
         {type = "int", name = "type"}
       }
     },
@@ -5953,8 +6058,8 @@ return {
       description = "Generate image font atlas using chars info",
       returnType = "Image",
       params = {
-        {type = "const GlyphInfo *", name = "chars"},
-        {type = "Rectangle **", name = "recs"},
+        {type = "const GlyphInfo *", name = "glyphs"},
+        {type = "Rectangle **", name = "glyphRecs"},
         {type = "int", name = "glyphCount"},
         {type = "int", name = "fontSize"},
         {type = "int", name = "padding"},
@@ -5966,7 +6071,7 @@ return {
       description = "Unload font chars info data (RAM)",
       returnType = "void",
       params = {
-        {type = "GlyphInfo *", name = "chars"},
+        {type = "GlyphInfo *", name = "glyphs"},
         {type = "int", name = "glyphCount"}
       }
     },
@@ -6055,11 +6160,19 @@ return {
       params = {
         {type = "Font", name = "font"},
         {type = "const int *", name = "codepoints"},
-        {type = "int", name = "count"},
+        {type = "int", name = "codepointCount"},
         {type = "Vector2", name = "position"},
         {type = "float", name = "fontSize"},
         {type = "float", name = "spacing"},
         {type = "Color", name = "tint"}
+      }
+    },
+    {
+      name = "SetTextLineSpacing",
+      description = "Set vertical line spacing when drawing with line-breaks",
+      returnType = "void",
+      params = {
+        {type = "int", name = "spacing"}
       }
     },
     {
@@ -6938,7 +7051,7 @@ return {
       returnType = "ModelAnimation *",
       params = {
         {type = "const char *", name = "fileName"},
-        {type = "unsigned int *", name = "animCount"}
+        {type = "int *", name = "animCount"}
       }
     },
     {
@@ -6965,7 +7078,7 @@ return {
       returnType = "void",
       params = {
         {type = "ModelAnimation *", name = "animations"},
-        {type = "unsigned int", name = "count"}
+        {type = "int", name = "animCount"}
       }
     },
     {
@@ -7125,6 +7238,14 @@ return {
       }
     },
     {
+      name = "LoadSoundAlias",
+      description = "Create a new sound that shares the same sample data as the source sound, does not own the sound data",
+      returnType = "Sound",
+      params = {
+        {type = "Sound", name = "source"}
+      }
+    },
+    {
       name = "IsSoundReady",
       description = "Checks if a sound is ready",
       returnType = "bool",
@@ -7156,6 +7277,14 @@ return {
       returnType = "void",
       params = {
         {type = "Sound", name = "sound"}
+      }
+    },
+    {
+      name = "UnloadSoundAlias",
+      description = "Unload a sound alias (does not deallocate sample data)",
+      returnType = "void",
+      params = {
+        {type = "Sound", name = "alias"}
       }
     },
     {
@@ -7552,7 +7681,7 @@ return {
     },
     {
       name = "AttachAudioStreamProcessor",
-      description = "Attach audio stream processor to stream",
+      description = "Attach audio stream processor to stream, receives the samples as <float>s",
       returnType = "void",
       params = {
         {type = "AudioStream", name = "stream"},
@@ -7570,7 +7699,7 @@ return {
     },
     {
       name = "AttachAudioMixedProcessor",
-      description = "Attach audio stream processor to the entire audio pipeline",
+      description = "Attach audio stream processor to the entire audio pipeline, receives the samples as <float>s",
       returnType = "void",
       params = {
         {type = "AudioCallback", name = "processor"}

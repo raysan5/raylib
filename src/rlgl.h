@@ -2,82 +2,82 @@
 *
 *   rlgl v4.5 - A multi-OpenGL abstraction layer with an immediate-mode style API
 *
-*   An abstraction layer for multiple OpenGL versions (1.1, 2.1, 3.3 Core, 4.3 Core, ES 2.0)
-*   that provides a pseudo-OpenGL 1.1 immediate-mode style API (rlVertex, rlTranslate, rlRotate...)
+*   DESCRIPTION:
+*       An abstraction layer for multiple OpenGL versions (1.1, 2.1, 3.3 Core, 4.3 Core, ES 2.0)
+*       that provides a pseudo-OpenGL 1.1 immediate-mode style API (rlVertex, rlTranslate, rlRotate...)
 *
-*   When choosing an OpenGL backend different than OpenGL 1.1, some internal buffer are
-*   initialized on rlglInit() to accumulate vertex data.
+*   ADDITIONAL NOTES:
+*       When choosing an OpenGL backend different than OpenGL 1.1, some internal buffer are
+*       initialized on rlglInit() to accumulate vertex data.
 *
-*   When an internal state change is required all the stored vertex data is renderer in batch,
-*   additionally, rlDrawRenderBatchActive() could be called to force flushing of the batch.
+*       When an internal state change is required all the stored vertex data is renderer in batch,
+*       additionally, rlDrawRenderBatchActive() could be called to force flushing of the batch.
 *
-*   Some additional resources are also loaded for convenience, here the complete list:
-*      - Default batch (RLGL.defaultBatch): RenderBatch system to accumulate vertex data
-*      - Default texture (RLGL.defaultTextureId): 1x1 white pixel R8G8B8A8
-*      - Default shader (RLGL.State.defaultShaderId, RLGL.State.defaultShaderLocs)
+*       Some resources are also loaded for convenience, here the complete list:
+*          - Default batch (RLGL.defaultBatch): RenderBatch system to accumulate vertex data
+*          - Default texture (RLGL.defaultTextureId): 1x1 white pixel R8G8B8A8
+*          - Default shader (RLGL.State.defaultShaderId, RLGL.State.defaultShaderLocs)
 *
-*   Internal buffer (and additional resources) must be manually unloaded calling rlglClose().
-*
+*       Internal buffer (and resources) must be manually unloaded calling rlglClose().
 *
 *   CONFIGURATION:
+*       #define GRAPHICS_API_OPENGL_11
+*       #define GRAPHICS_API_OPENGL_21
+*       #define GRAPHICS_API_OPENGL_33
+*       #define GRAPHICS_API_OPENGL_43
+*       #define GRAPHICS_API_OPENGL_ES2
+*       #define GRAPHICS_API_OPENGL_ES3
+*           Use selected OpenGL graphics backend, should be supported by platform
+*           Those preprocessor defines are only used on rlgl module, if OpenGL version is
+*           required by any other module, use rlGetVersion() to check it
 *
-*   #define GRAPHICS_API_OPENGL_11
-*   #define GRAPHICS_API_OPENGL_21
-*   #define GRAPHICS_API_OPENGL_33
-*   #define GRAPHICS_API_OPENGL_43
-*   #define GRAPHICS_API_OPENGL_ES2
-*       Use selected OpenGL graphics backend, should be supported by platform
-*       Those preprocessor defines are only used on rlgl module, if OpenGL version is
-*       required by any other module, use rlGetVersion() to check it
+*       #define RLGL_IMPLEMENTATION
+*           Generates the implementation of the library into the included file.
+*           If not defined, the library is in header only mode and can be included in other headers
+*           or source files without problems. But only ONE file should hold the implementation.
 *
-*   #define RLGL_IMPLEMENTATION
-*       Generates the implementation of the library into the included file.
-*       If not defined, the library is in header only mode and can be included in other headers
-*       or source files without problems. But only ONE file should hold the implementation.
+*       #define RLGL_RENDER_TEXTURES_HINT
+*           Enable framebuffer objects (fbo) support (enabled by default)
+*           Some GPUs could not support them despite the OpenGL version
 *
-*   #define RLGL_RENDER_TEXTURES_HINT
-*       Enable framebuffer objects (fbo) support (enabled by default)
-*       Some GPUs could not support them despite the OpenGL version
+*       #define RLGL_SHOW_GL_DETAILS_INFO
+*           Show OpenGL extensions and capabilities detailed logs on init
 *
-*   #define RLGL_SHOW_GL_DETAILS_INFO
-*       Show OpenGL extensions and capabilities detailed logs on init
+*       #define RLGL_ENABLE_OPENGL_DEBUG_CONTEXT
+*           Enable debug context (only available on OpenGL 4.3)
 *
-*   #define RLGL_ENABLE_OPENGL_DEBUG_CONTEXT
-*       Enable debug context (only available on OpenGL 4.3)
+*       rlgl capabilities could be customized just defining some internal
+*       values before library inclusion (default values listed):
 *
-*   rlgl capabilities could be customized just defining some internal
-*   values before library inclusion (default values listed):
+*       #define RL_DEFAULT_BATCH_BUFFER_ELEMENTS   8192    // Default internal render batch elements limits
+*       #define RL_DEFAULT_BATCH_BUFFERS              1    // Default number of batch buffers (multi-buffering)
+*       #define RL_DEFAULT_BATCH_DRAWCALLS          256    // Default number of batch draw calls (by state changes: mode, texture)
+*       #define RL_DEFAULT_BATCH_MAX_TEXTURE_UNITS    4    // Maximum number of textures units that can be activated on batch drawing (SetShaderValueTexture())
 *
-*   #define RL_DEFAULT_BATCH_BUFFER_ELEMENTS   8192    // Default internal render batch elements limits
-*   #define RL_DEFAULT_BATCH_BUFFERS              1    // Default number of batch buffers (multi-buffering)
-*   #define RL_DEFAULT_BATCH_DRAWCALLS          256    // Default number of batch draw calls (by state changes: mode, texture)
-*   #define RL_DEFAULT_BATCH_MAX_TEXTURE_UNITS    4    // Maximum number of textures units that can be activated on batch drawing (SetShaderValueTexture())
+*       #define RL_MAX_MATRIX_STACK_SIZE             32    // Maximum size of internal Matrix stack
+*       #define RL_MAX_SHADER_LOCATIONS              32    // Maximum number of shader locations supported
+*       #define RL_CULL_DISTANCE_NEAR              0.01    // Default projection matrix near cull distance
+*       #define RL_CULL_DISTANCE_FAR             1000.0    // Default projection matrix far cull distance
 *
-*   #define RL_MAX_MATRIX_STACK_SIZE             32    // Maximum size of internal Matrix stack
-*   #define RL_MAX_SHADER_LOCATIONS              32    // Maximum number of shader locations supported
-*   #define RL_CULL_DISTANCE_NEAR              0.01    // Default projection matrix near cull distance
-*   #define RL_CULL_DISTANCE_FAR             1000.0    // Default projection matrix far cull distance
+*       When loading a shader, the following vertex attribute and uniform
+*       location names are tried to be set automatically:
 *
-*   When loading a shader, the following vertex attribute and uniform
-*   location names are tried to be set automatically:
-*
-*   #define RL_DEFAULT_SHADER_ATTRIB_NAME_POSITION     "vertexPosition"    // Bound by default to shader location: 0
-*   #define RL_DEFAULT_SHADER_ATTRIB_NAME_TEXCOORD     "vertexTexCoord"    // Bound by default to shader location: 1
-*   #define RL_DEFAULT_SHADER_ATTRIB_NAME_NORMAL       "vertexNormal"      // Bound by default to shader location: 2
-*   #define RL_DEFAULT_SHADER_ATTRIB_NAME_COLOR        "vertexColor"       // Bound by default to shader location: 3
-*   #define RL_DEFAULT_SHADER_ATTRIB_NAME_TANGENT      "vertexTangent"     // Bound by default to shader location: 4
-*   #define RL_DEFAULT_SHADER_UNIFORM_NAME_MVP         "mvp"               // model-view-projection matrix
-*   #define RL_DEFAULT_SHADER_UNIFORM_NAME_VIEW        "matView"           // view matrix
-*   #define RL_DEFAULT_SHADER_UNIFORM_NAME_PROJECTION  "matProjection"     // projection matrix
-*   #define RL_DEFAULT_SHADER_UNIFORM_NAME_MODEL       "matModel"          // model matrix
-*   #define RL_DEFAULT_SHADER_UNIFORM_NAME_NORMAL      "matNormal"         // normal matrix (transpose(inverse(matModelView))
-*   #define RL_DEFAULT_SHADER_UNIFORM_NAME_COLOR       "colDiffuse"        // color diffuse (base tint color, multiplied by texture color)
-*   #define RL_DEFAULT_SHADER_SAMPLER2D_NAME_TEXTURE0  "texture0"          // texture0 (texture slot active 0)
-*   #define RL_DEFAULT_SHADER_SAMPLER2D_NAME_TEXTURE1  "texture1"          // texture1 (texture slot active 1)
-*   #define RL_DEFAULT_SHADER_SAMPLER2D_NAME_TEXTURE2  "texture2"          // texture2 (texture slot active 2)
+*       #define RL_DEFAULT_SHADER_ATTRIB_NAME_POSITION     "vertexPosition"    // Bound by default to shader location: 0
+*       #define RL_DEFAULT_SHADER_ATTRIB_NAME_TEXCOORD     "vertexTexCoord"    // Bound by default to shader location: 1
+*       #define RL_DEFAULT_SHADER_ATTRIB_NAME_NORMAL       "vertexNormal"      // Bound by default to shader location: 2
+*       #define RL_DEFAULT_SHADER_ATTRIB_NAME_COLOR        "vertexColor"       // Bound by default to shader location: 3
+*       #define RL_DEFAULT_SHADER_ATTRIB_NAME_TANGENT      "vertexTangent"     // Bound by default to shader location: 4
+*       #define RL_DEFAULT_SHADER_UNIFORM_NAME_MVP         "mvp"               // model-view-projection matrix
+*       #define RL_DEFAULT_SHADER_UNIFORM_NAME_VIEW        "matView"           // view matrix
+*       #define RL_DEFAULT_SHADER_UNIFORM_NAME_PROJECTION  "matProjection"     // projection matrix
+*       #define RL_DEFAULT_SHADER_UNIFORM_NAME_MODEL       "matModel"          // model matrix
+*       #define RL_DEFAULT_SHADER_UNIFORM_NAME_NORMAL      "matNormal"         // normal matrix (transpose(inverse(matModelView))
+*       #define RL_DEFAULT_SHADER_UNIFORM_NAME_COLOR       "colDiffuse"        // color diffuse (base tint color, multiplied by texture color)
+*       #define RL_DEFAULT_SHADER_SAMPLER2D_NAME_TEXTURE0  "texture0"          // texture0 (texture slot active 0)
+*       #define RL_DEFAULT_SHADER_SAMPLER2D_NAME_TEXTURE1  "texture1"          // texture1 (texture slot active 1)
+*       #define RL_DEFAULT_SHADER_SAMPLER2D_NAME_TEXTURE2  "texture2"          // texture2 (texture slot active 2)
 *
 *   DEPENDENCIES:
-*
 *      - OpenGL libraries (depending on platform and OpenGL version selected)
 *      - GLAD OpenGL extensions loading library (only for OpenGL 3.3 Core, 4.3 Core)
 *
@@ -148,7 +148,8 @@
     !defined(GRAPHICS_API_OPENGL_21) && \
     !defined(GRAPHICS_API_OPENGL_33) && \
     !defined(GRAPHICS_API_OPENGL_43) && \
-    !defined(GRAPHICS_API_OPENGL_ES2)
+    !defined(GRAPHICS_API_OPENGL_ES2) && \
+    !defined(GRAPHICS_API_OPENGL_ES3)
         #define GRAPHICS_API_OPENGL_33
 #endif
 
@@ -177,6 +178,11 @@
 // OpenGL 4.3 uses OpenGL 3.3 Core functionality
 #if defined(GRAPHICS_API_OPENGL_43)
     #define GRAPHICS_API_OPENGL_33
+#endif
+
+// OpenGL ES 3.0 uses OpenGL ES 2.0 functionality (and more)
+#if defined(GRAPHICS_API_OPENGL_ES3)
+    #define GRAPHICS_API_OPENGL_ES2
 #endif
 
 // Support framebuffer objects by default
@@ -383,7 +389,8 @@ typedef enum {
     RL_OPENGL_21,               // OpenGL 2.1 (GLSL 120)
     RL_OPENGL_33,               // OpenGL 3.3 (GLSL 330)
     RL_OPENGL_43,               // OpenGL 4.3 (using GLSL 330)
-    RL_OPENGL_ES_20             // OpenGL ES 2.0 (GLSL 100)
+    RL_OPENGL_ES_20,            // OpenGL ES 2.0 (GLSL 100)
+    RL_OPENGL_ES_30             // OpenGL ES 3.0 (GLSL 300 es)
 } rlGlVersion;
 
 // Trace log level
@@ -412,6 +419,9 @@ typedef enum {
     RL_PIXELFORMAT_UNCOMPRESSED_R32,               // 32 bpp (1 channel - float)
     RL_PIXELFORMAT_UNCOMPRESSED_R32G32B32,         // 32*3 bpp (3 channels - float)
     RL_PIXELFORMAT_UNCOMPRESSED_R32G32B32A32,      // 32*4 bpp (4 channels - float)
+    RL_PIXELFORMAT_UNCOMPRESSED_R16,               // 16 bpp (1 channel - half float)
+    RL_PIXELFORMAT_UNCOMPRESSED_R16G16B16,         // 16*3 bpp (3 channels - half float)
+    RL_PIXELFORMAT_UNCOMPRESSED_R16G16B16A16,      // 16*4 bpp (4 channels - half float)
     RL_PIXELFORMAT_COMPRESSED_DXT1_RGB,            // 4 bpp (no alpha)
     RL_PIXELFORMAT_COMPRESSED_DXT1_RGBA,           // 4 bpp (1 bit alpha)
     RL_PIXELFORMAT_COMPRESSED_DXT3_RGBA,           // 8 bpp
@@ -506,28 +516,28 @@ typedef enum {
 // Framebuffer attachment type
 // NOTE: By default up to 8 color channels defined, but it can be more
 typedef enum {
-    RL_ATTACHMENT_COLOR_CHANNEL0 = 0,   // Framebuffer attachment type: color 0
-    RL_ATTACHMENT_COLOR_CHANNEL1,       // Framebuffer attachment type: color 1
-    RL_ATTACHMENT_COLOR_CHANNEL2,       // Framebuffer attachment type: color 2
-    RL_ATTACHMENT_COLOR_CHANNEL3,       // Framebuffer attachment type: color 3
-    RL_ATTACHMENT_COLOR_CHANNEL4,       // Framebuffer attachment type: color 4
-    RL_ATTACHMENT_COLOR_CHANNEL5,       // Framebuffer attachment type: color 5
-    RL_ATTACHMENT_COLOR_CHANNEL6,       // Framebuffer attachment type: color 6
-    RL_ATTACHMENT_COLOR_CHANNEL7,       // Framebuffer attachment type: color 7
-    RL_ATTACHMENT_DEPTH = 100,          // Framebuffer attachment type: depth
-    RL_ATTACHMENT_STENCIL = 200,        // Framebuffer attachment type: stencil
+    RL_ATTACHMENT_COLOR_CHANNEL0 = 0,       // Framebuffer attachment type: color 0
+    RL_ATTACHMENT_COLOR_CHANNEL1 = 1,       // Framebuffer attachment type: color 1
+    RL_ATTACHMENT_COLOR_CHANNEL2 = 2,       // Framebuffer attachment type: color 2
+    RL_ATTACHMENT_COLOR_CHANNEL3 = 3,       // Framebuffer attachment type: color 3
+    RL_ATTACHMENT_COLOR_CHANNEL4 = 4,       // Framebuffer attachment type: color 4
+    RL_ATTACHMENT_COLOR_CHANNEL5 = 5,       // Framebuffer attachment type: color 5
+    RL_ATTACHMENT_COLOR_CHANNEL6 = 6,       // Framebuffer attachment type: color 6
+    RL_ATTACHMENT_COLOR_CHANNEL7 = 7,       // Framebuffer attachment type: color 7
+    RL_ATTACHMENT_DEPTH = 100,              // Framebuffer attachment type: depth
+    RL_ATTACHMENT_STENCIL = 200,            // Framebuffer attachment type: stencil
 } rlFramebufferAttachType;
 
 // Framebuffer texture attachment type
 typedef enum {
-    RL_ATTACHMENT_CUBEMAP_POSITIVE_X = 0, // Framebuffer texture attachment type: cubemap, +X side
-    RL_ATTACHMENT_CUBEMAP_NEGATIVE_X,   // Framebuffer texture attachment type: cubemap, -X side
-    RL_ATTACHMENT_CUBEMAP_POSITIVE_Y,   // Framebuffer texture attachment type: cubemap, +Y side
-    RL_ATTACHMENT_CUBEMAP_NEGATIVE_Y,   // Framebuffer texture attachment type: cubemap, -Y side
-    RL_ATTACHMENT_CUBEMAP_POSITIVE_Z,   // Framebuffer texture attachment type: cubemap, +Z side
-    RL_ATTACHMENT_CUBEMAP_NEGATIVE_Z,   // Framebuffer texture attachment type: cubemap, -Z side
-    RL_ATTACHMENT_TEXTURE2D = 100,      // Framebuffer texture attachment type: texture2d
-    RL_ATTACHMENT_RENDERBUFFER = 200,   // Framebuffer texture attachment type: renderbuffer
+    RL_ATTACHMENT_CUBEMAP_POSITIVE_X = 0,   // Framebuffer texture attachment type: cubemap, +X side
+    RL_ATTACHMENT_CUBEMAP_NEGATIVE_X = 1,   // Framebuffer texture attachment type: cubemap, -X side
+    RL_ATTACHMENT_CUBEMAP_POSITIVE_Y = 2,   // Framebuffer texture attachment type: cubemap, +Y side
+    RL_ATTACHMENT_CUBEMAP_NEGATIVE_Y = 3,   // Framebuffer texture attachment type: cubemap, -Y side
+    RL_ATTACHMENT_CUBEMAP_POSITIVE_Z = 4,   // Framebuffer texture attachment type: cubemap, +Z side
+    RL_ATTACHMENT_CUBEMAP_NEGATIVE_Z = 5,   // Framebuffer texture attachment type: cubemap, -Z side
+    RL_ATTACHMENT_TEXTURE2D = 100,          // Framebuffer texture attachment type: texture2d
+    RL_ATTACHMENT_RENDERBUFFER = 200,       // Framebuffer texture attachment type: renderbuffer
 } rlFramebufferAttachTextureType;
 
 // Face culling mode
@@ -607,6 +617,7 @@ RLAPI void rlDisableShader(void);                       // Disable shader progra
 RLAPI void rlEnableFramebuffer(unsigned int id);        // Enable render texture (fbo)
 RLAPI void rlDisableFramebuffer(void);                  // Disable render texture (fbo), return to default framebuffer
 RLAPI void rlActiveDrawBuffers(int count);              // Activate multiple draw color buffers
+RLAPI void rlBlitFramebuffer(int srcX, int srcY, int srcWidth, int srcHeight, int dstX, int dstY, int dstWidth, int dstHeight, int bufferMask); // Blit active framebuffer to main framebuffer
 
 // General render state
 RLAPI void rlEnableColorBlend(void);                     // Enable color blending
@@ -622,7 +633,8 @@ RLAPI void rlEnableScissorTest(void);                   // Enable scissor test
 RLAPI void rlDisableScissorTest(void);                  // Disable scissor test
 RLAPI void rlScissor(int x, int y, int width, int height); // Scissor test
 RLAPI void rlEnableWireMode(void);                      // Enable wire mode
-RLAPI void rlDisableWireMode(void);                     // Disable wire mode
+RLAPI void rlEnablePointMode(void);                     //  Enable point mode
+RLAPI void rlDisableWireMode(void);                     // Disable wire mode ( and point ) maybe rename
 RLAPI void rlSetLineWidth(float width);                 // Set the line drawing width
 RLAPI float rlGetLineWidth(void);                       // Get the line drawing width
 RLAPI void rlEnableSmoothLines(void);                   // Enable line aliasing
@@ -787,13 +799,17 @@ RLAPI void rlLoadDrawQuad(void);     // Load and draw a quad
     #define GLAD_FREE RL_FREE
 
     #define GLAD_GL_IMPLEMENTATION
-    #include "external/glad.h"      // GLAD extensions loading library, includes OpenGL headers
+    #include "external/glad.h"          // GLAD extensions loading library, includes OpenGL headers
 #endif
 
-#if defined(GRAPHICS_API_OPENGL_ES2)
+#if defined(GRAPHICS_API_OPENGL_ES3)
+    #include <GLES3/gl3.h>              // OpenGL ES 3.0 library
+    #define GL_GLEXT_PROTOTYPES
+    #include <GLES2/gl2ext.h>           // OpenGL ES 2.0 extensions library
+#elif defined(GRAPHICS_API_OPENGL_ES2)
     // NOTE: OpenGL ES 2.0 can be enabled on PLATFORM_DESKTOP,
     // in that case, functions are loaded from a custom glad for OpenGL ES 2.0
-    #if defined(PLATFORM_DESKTOP)
+    #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_DESKTOP_SDL)
         #define GLAD_GLES2_IMPLEMENTATION
         #include "external/glad_gles2.h"
     #else
@@ -805,7 +821,7 @@ RLAPI void rlLoadDrawQuad(void);     // Load and draw a quad
 
     // It seems OpenGL ES 2.0 instancing entry points are not defined on Raspberry Pi
     // provided headers (despite being defined in official Khronos GLES2 headers)
-    #if defined(PLATFORM_RPI) || defined(PLATFORM_DRM)
+    #if defined(PLATFORM_DRM)
     typedef void (GL_APIENTRYP PFNGLDRAWARRAYSINSTANCEDEXTPROC) (GLenum mode, GLint start, GLsizei count, GLsizei primcount);
     typedef void (GL_APIENTRYP PFNGLDRAWELEMENTSINSTANCEDEXTPROC) (GLenum mode, GLsizei count, GLenum type, const void *indices, GLsizei primcount);
     typedef void (GL_APIENTRYP PFNGLVERTEXATTRIBDIVISOREXTPROC) (GLuint index, GLuint divisor);
@@ -887,8 +903,10 @@ RLAPI void rlLoadDrawQuad(void);     // Load and draw a quad
 
 #if defined(GRAPHICS_API_OPENGL_ES2)
     #define glClearDepth                 glClearDepthf
-    #define GL_READ_FRAMEBUFFER         GL_FRAMEBUFFER
-    #define GL_DRAW_FRAMEBUFFER         GL_FRAMEBUFFER
+    #if !defined(GRAPHICS_API_OPENGL_ES3)
+        #define GL_READ_FRAMEBUFFER         GL_FRAMEBUFFER
+        #define GL_DRAW_FRAMEBUFFER         GL_FRAMEBUFFER
+    #endif
 #endif
 
 // Default shader vertex attribute names to set location points
@@ -999,6 +1017,7 @@ typedef struct rlglData {
         bool texDepth;                      // Depth textures supported (GL_ARB_depth_texture, GL_OES_depth_texture)
         bool texDepthWebGL;                 // Depth textures supported WebGL specific (GL_WEBGL_depth_texture)
         bool texFloat32;                    // float textures support (32 bit per channel) (GL_OES_texture_float)
+        bool texFloat16;                    // half float textures support (16 bit per channel) (GL_OES_texture_half_float)
         bool texCompDXT;                    // DDS texture compression support (GL_EXT_texture_compression_s3tc, GL_WEBGL_compressed_texture_s3tc, GL_WEBKIT_WEBGL_compressed_texture_s3tc)
         bool texCompETC1;                   // ETC1 texture compression support (GL_OES_compressed_ETC1_RGB8_texture, GL_WEBGL_compressed_texture_etc1)
         bool texCompETC2;                   // ETC2/EAC texture compression support (GL_ARB_ES3_compatibility)
@@ -1026,7 +1045,7 @@ typedef void *(*rlglLoadProc)(const char *name);   // OpenGL extension functions
 static rlglData RLGL = { 0 };
 #endif  // GRAPHICS_API_OPENGL_33 || GRAPHICS_API_OPENGL_ES2
 
-#if defined(GRAPHICS_API_OPENGL_ES2)
+#if defined(GRAPHICS_API_OPENGL_ES2) && !defined(GRAPHICS_API_OPENGL_ES3)
 // NOTE: VAO functionality is exposed through extensions (OES)
 static PFNGLGENVERTEXARRAYSOESPROC glGenVertexArrays = NULL;
 static PFNGLBINDVERTEXARRAYOESPROC glBindVertexArray = NULL;
@@ -1416,8 +1435,7 @@ void rlVertex3f(float x, float y, float z)
     RLGL.currentBatch->vertexBuffer[RLGL.currentBatch->currentBuffer].texcoords[2*RLGL.State.vertexCounter] = RLGL.State.texcoordx;
     RLGL.currentBatch->vertexBuffer[RLGL.currentBatch->currentBuffer].texcoords[2*RLGL.State.vertexCounter + 1] = RLGL.State.texcoordy;
 
-    // TODO: Add current normal
-    // By default rlVertexBuffer type does not store normals
+    // WARNING: By default rlVertexBuffer struct does not store normals
 
     // Add current color
     RLGL.currentBatch->vertexBuffer[RLGL.currentBatch->currentBuffer].colors[4*RLGL.State.vertexCounter] = RLGL.State.colorr;
@@ -1702,11 +1720,19 @@ void rlDisableFramebuffer(void)
 #endif
 }
 
+// Blit active framebuffer to main framebuffer
+void rlBlitFramebuffer(int srcX, int srcY, int srcWidth, int srcHeight, int dstX, int dstY, int dstWidth, int dstHeight, int bufferMask)
+{
+#if (defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES3)) && defined(RLGL_RENDER_TEXTURES_HINT)
+    glBlitFramebuffer(srcX, srcY, srcWidth, srcHeight, dstX, dstY, dstWidth, dstHeight, bufferMask, GL_NEAREST);
+#endif
+}
+
 // Activate multiple draw color buffers
 // NOTE: One color buffer is always active by default
 void rlActiveDrawBuffers(int count)
 {
-#if (defined(GRAPHICS_API_OPENGL_33) && defined(RLGL_RENDER_TEXTURES_HINT))
+#if ((defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES3)) && defined(RLGL_RENDER_TEXTURES_HINT))
     // NOTE: Maximum number of draw buffers supported is implementation dependant,
     // it can be queried with glGet*() but it must be at least 8
     //GLint maxDrawBuffers = 0;
@@ -1718,6 +1744,16 @@ void rlActiveDrawBuffers(int count)
         else
         {
             unsigned int buffers[8] = {
+#if defined(GRAPHICS_API_OPENGL_ES3)
+                GL_COLOR_ATTACHMENT0_EXT,
+                GL_COLOR_ATTACHMENT1_EXT,
+                GL_COLOR_ATTACHMENT2_EXT,
+                GL_COLOR_ATTACHMENT3_EXT,
+                GL_COLOR_ATTACHMENT4_EXT,
+                GL_COLOR_ATTACHMENT5_EXT,
+                GL_COLOR_ATTACHMENT6_EXT,
+                GL_COLOR_ATTACHMENT7_EXT,
+#else
                 GL_COLOR_ATTACHMENT0,
                 GL_COLOR_ATTACHMENT1,
                 GL_COLOR_ATTACHMENT2,
@@ -1726,9 +1762,14 @@ void rlActiveDrawBuffers(int count)
                 GL_COLOR_ATTACHMENT5,
                 GL_COLOR_ATTACHMENT6,
                 GL_COLOR_ATTACHMENT7,
+#endif
             };
 
+#if defined(GRAPHICS_API_OPENGL_ES3)
+            glDrawBuffersEXT(count, buffers);
+#else
             glDrawBuffers(count, buffers);
+#endif
         }
     }
     else TRACELOG(LOG_WARNING, "GL: One color buffer active by default");
@@ -1792,6 +1833,14 @@ void rlEnableWireMode(void)
 #endif
 }
 
+void rlEnablePointMode(void)
+{
+#if defined(GRAPHICS_API_OPENGL_11) || defined(GRAPHICS_API_OPENGL_33)
+    // NOTE: glPolygonMode() not available on OpenGL ES
+    glPolygonMode(GL_FRONT_AND_BACK, GL_POINT);
+    glEnable(GL_PROGRAM_POINT_SIZE);
+#endif
+}
 // Disable wire mode
 void rlDisableWireMode(void)
 {
@@ -2047,7 +2096,7 @@ void rlglInit(int width, int height)
     if ((glDebugMessageCallback != NULL) && (glDebugMessageControl != NULL))
     {
         glDebugMessageCallback(rlDebugMessageCallback, 0);
-        // glDebugMessageControl(GL_DEBUG_SOURCE_API, GL_DEBUG_TYPE_ERROR, GL_DEBUG_SEVERITY_HIGH, 0, 0, GL_TRUE); // TODO: Filter message
+        // glDebugMessageControl(GL_DEBUG_SOURCE_API, GL_DEBUG_TYPE_ERROR, GL_DEBUG_SEVERITY_HIGH, 0, 0, GL_TRUE);
 
         // Debug context options:
         //  - GL_DEBUG_OUTPUT - Faster version but not useful for breakpoints
@@ -2168,6 +2217,7 @@ void rlLoadExtensions(void *loader)
     RLGL.ExtSupported.instancing = (GLAD_GL_EXT_draw_instanced && GLAD_GL_ARB_instanced_arrays);
     RLGL.ExtSupported.texNPOT = GLAD_GL_ARB_texture_non_power_of_two;
     RLGL.ExtSupported.texFloat32 = GLAD_GL_ARB_texture_float;
+    RLGL.ExtSupported.texFloat16 = GLAD_GL_ARB_texture_float;
     RLGL.ExtSupported.texDepth = GLAD_GL_ARB_depth_texture;
     RLGL.ExtSupported.maxDepthBits = 32;
     RLGL.ExtSupported.texAnisoFilter = GLAD_GL_EXT_texture_filter_anisotropic;
@@ -2179,6 +2229,7 @@ void rlLoadExtensions(void *loader)
     RLGL.ExtSupported.instancing = true;
     RLGL.ExtSupported.texNPOT = true;
     RLGL.ExtSupported.texFloat32 = true;
+    RLGL.ExtSupported.texFloat16 = true;
     RLGL.ExtSupported.texDepth = true;
     RLGL.ExtSupported.maxDepthBits = 32;
     RLGL.ExtSupported.texAnisoFilter = true;
@@ -2196,11 +2247,35 @@ void rlLoadExtensions(void *loader)
 
 #endif  // GRAPHICS_API_OPENGL_33
 
-#if defined(GRAPHICS_API_OPENGL_ES2)
+#if defined(GRAPHICS_API_OPENGL_ES3)
+    // Register supported extensions flags
+    // OpenGL ES 3.0 extensions supported by default (or it should be)
+    RLGL.ExtSupported.vao = true;
+    RLGL.ExtSupported.instancing = true;
+    RLGL.ExtSupported.texNPOT = true;
+    RLGL.ExtSupported.texFloat32 = true;
+    RLGL.ExtSupported.texFloat16 = true;
+    RLGL.ExtSupported.texDepth = true;
+    RLGL.ExtSupported.texDepthWebGL = true;
+    RLGL.ExtSupported.maxDepthBits = 24;
+    RLGL.ExtSupported.texAnisoFilter = true;
+    RLGL.ExtSupported.texMirrorClamp = true;
+    // TODO: Check for additional OpenGL ES 3.0 supported extensions:
+    //RLGL.ExtSupported.texCompDXT = true;
+    //RLGL.ExtSupported.texCompETC1 = true;
+    //RLGL.ExtSupported.texCompETC2 = true;
+    //RLGL.ExtSupported.texCompPVRT = true;
+    //RLGL.ExtSupported.texCompASTC = true;
+    //RLGL.ExtSupported.maxAnisotropyLevel = true;
+    //RLGL.ExtSupported.computeShader = true;
+    //RLGL.ExtSupported.ssbo = true;
 
-    #if defined(PLATFORM_DESKTOP)
+#elif defined(GRAPHICS_API_OPENGL_ES2)
+
+    #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_DESKTOP_SDL)
+    // TODO: Support GLAD loader for OpenGL ES 3.0
     if (gladLoadGLES2((GLADloadfunc)loader) == 0) TRACELOG(RL_LOG_WARNING, "GLAD: Cannot load OpenGL ES2.0 functions");
-    else TRACELOG(RL_LOG_INFO, "GLAD: OpenGL ES2.0 loaded successfully");
+    else TRACELOG(RL_LOG_INFO, "GLAD: OpenGL ES 2.0 loaded successfully");
     #endif
 
     // Get supported extensions list
@@ -2276,6 +2351,7 @@ void rlLoadExtensions(void *loader)
 
         // Check texture float support
         if (strcmp(extList[i], (const char *)"GL_OES_texture_float") == 0) RLGL.ExtSupported.texFloat32 = true;
+        if (strcmp(extList[i], (const char *)"GL_OES_texture_half_float") == 0) RLGL.ExtSupported.texFloat16 = true;
 
         // Check depth texture support
         if (strcmp(extList[i], (const char *)"GL_OES_depth_texture") == 0) RLGL.ExtSupported.texDepth = true;
@@ -2391,15 +2467,17 @@ int rlGetVersion(void)
 #endif
 #if defined(GRAPHICS_API_OPENGL_21)
     glVersion = RL_OPENGL_21;
+#elif defined(GRAPHICS_API_OPENGL_43)
+    glVersion = RL_OPENGL_43;
 #elif defined(GRAPHICS_API_OPENGL_33)
     glVersion = RL_OPENGL_33;
 #endif
-#if defined(GRAPHICS_API_OPENGL_43)
-    glVersion = RL_OPENGL_43;
-#endif
-#if defined(GRAPHICS_API_OPENGL_ES2)
+#if defined(GRAPHICS_API_OPENGL_ES3)
+    glVersion = RL_OPENGL_ES_30;
+#elif defined(GRAPHICS_API_OPENGL_ES2)
     glVersion = RL_OPENGL_ES_20;
 #endif
+
     return glVersion;
 }
 
@@ -2648,7 +2726,7 @@ void rlDrawRenderBatch(rlRenderBatch *batch)
     // Update batch vertex buffers
     //------------------------------------------------------------------------------------------------------------
     // NOTE: If there is not vertex data, buffers doesn't need to be updated (vertexCount > 0)
-    // TODO: If no data changed on the CPU arrays --> No need to re-update GPU arrays (change flag required)
+    // TODO: If no data changed on the CPU arrays --> No need to re-update GPU arrays (use a change detector flag?)
     if (RLGL.State.vertexCounter > 0)
     {
         // Activate elements VAO
@@ -2943,7 +3021,11 @@ unsigned int rlLoadTexture(const void *data, int width, int height, int format, 
 
     int mipWidth = width;
     int mipHeight = height;
-    int mipOffset = 0;          // Mipmap data offset
+    int mipOffset = 0;          // Mipmap data offset, only used for tracelog
+
+    // NOTE: Added pointer math separately from function to avoid UBSAN complaining
+    unsigned char *dataPtr = NULL;
+    if (data != NULL) dataPtr = (unsigned char *)data;
 
     // Load the different mipmap levels
     for (int i = 0; i < mipmapCount; i++)
@@ -2955,11 +3037,11 @@ unsigned int rlLoadTexture(const void *data, int width, int height, int format, 
 
         TRACELOGD("TEXTURE: Load mipmap level %i (%i x %i), size: %i, offset: %i", i, mipWidth, mipHeight, mipSize, mipOffset);
 
-        if (glInternalFormat != -1)
+        if (glInternalFormat != 0)
         {
-            if (format < RL_PIXELFORMAT_COMPRESSED_DXT1_RGB) glTexImage2D(GL_TEXTURE_2D, i, glInternalFormat, mipWidth, mipHeight, 0, glFormat, glType, (unsigned char *)data + mipOffset);
+            if (format < RL_PIXELFORMAT_COMPRESSED_DXT1_RGB) glTexImage2D(GL_TEXTURE_2D, i, glInternalFormat, mipWidth, mipHeight, 0, glFormat, glType, dataPtr);
 #if !defined(GRAPHICS_API_OPENGL_11)
-            else glCompressedTexImage2D(GL_TEXTURE_2D, i, glInternalFormat, mipWidth, mipHeight, 0, mipSize, (unsigned char *)data + mipOffset);
+            else glCompressedTexImage2D(GL_TEXTURE_2D, i, glInternalFormat, mipWidth, mipHeight, 0, mipSize, dataPtr);
 #endif
 
 #if defined(GRAPHICS_API_OPENGL_33)
@@ -2982,7 +3064,8 @@ unsigned int rlLoadTexture(const void *data, int width, int height, int format, 
 
         mipWidth /= 2;
         mipHeight /= 2;
-        mipOffset += mipSize;
+        mipOffset += mipSize;       // Increment offset position to next mipmap
+        if (data != NULL) dataPtr += mipSize;         // Increment data pointer to next mipmap
 
         // Security check for NPOT textures
         if (mipWidth < 1) mipWidth = 1;
@@ -3049,7 +3132,7 @@ unsigned int rlLoadTextureDepth(int width, int height, bool useRenderBuffer)
     // Possible formats: GL_DEPTH_COMPONENT16, GL_DEPTH_COMPONENT24, GL_DEPTH_COMPONENT32 and GL_DEPTH_COMPONENT32F
     unsigned int glInternalFormat = GL_DEPTH_COMPONENT;
 
-#if defined(GRAPHICS_API_OPENGL_ES2)
+#if (defined(GRAPHICS_API_OPENGL_ES2) || defined(GRAPHICS_API_OPENGL_ES3))
     // WARNING: WebGL platform requires unsized internal format definition (GL_DEPTH_COMPONENT)
     // while other platforms using OpenGL ES 2.0 require/support sized internal formats depending on the GPU capabilities
     if (!RLGL.ExtSupported.texDepthWebGL || useRenderBuffer)
@@ -3108,7 +3191,7 @@ unsigned int rlLoadTextureCubemap(const void *data, int size, int format)
     unsigned int glInternalFormat, glFormat, glType;
     rlGetGlTextureFormats(format, &glInternalFormat, &glFormat, &glType);
 
-    if (glInternalFormat != -1)
+    if (glInternalFormat != 0)
     {
         // Load cubemap faces
         for (unsigned int i = 0; i < 6; i++)
@@ -3117,13 +3200,9 @@ unsigned int rlLoadTextureCubemap(const void *data, int size, int format)
             {
                 if (format < RL_PIXELFORMAT_COMPRESSED_DXT1_RGB)
                 {
-                    if (format == RL_PIXELFORMAT_UNCOMPRESSED_R32G32B32)
-                    {
-                        // Instead of using a sized internal texture format (GL_RGB16F, GL_RGB32F), we let the driver to choose the better format for us (GL_RGB)
-                        if (RLGL.ExtSupported.texFloat32) glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGB, size, size, 0, GL_RGB, GL_FLOAT, NULL);
-                        else TRACELOG(RL_LOG_WARNING, "TEXTURES: Cubemap requested format not supported");
-                    }
-                    else if ((format == RL_PIXELFORMAT_UNCOMPRESSED_R32) || (format == RL_PIXELFORMAT_UNCOMPRESSED_R32G32B32A32)) TRACELOG(RL_LOG_WARNING, "TEXTURES: Cubemap requested format not supported");
+                    if ((format == RL_PIXELFORMAT_UNCOMPRESSED_R32) || (format == RL_PIXELFORMAT_UNCOMPRESSED_R32G32B32A32)
+                            || (format == RL_PIXELFORMAT_UNCOMPRESSED_R16) || (format == RL_PIXELFORMAT_UNCOMPRESSED_R16G16B16A16))
+                        TRACELOG(RL_LOG_WARNING, "TEXTURES: Cubemap requested format not supported");
                     else glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, glInternalFormat, size, size, 0, glFormat, glType, NULL);
                 }
                 else TRACELOG(RL_LOG_WARNING, "TEXTURES: Empty cubemap creation does not support compressed format");
@@ -3180,7 +3259,7 @@ void rlUpdateTexture(unsigned int id, int offsetX, int offsetY, int width, int h
     unsigned int glInternalFormat, glFormat, glType;
     rlGetGlTextureFormats(format, &glInternalFormat, &glFormat, &glType);
 
-    if ((glInternalFormat != -1) && (format < RL_PIXELFORMAT_COMPRESSED_DXT1_RGB))
+    if ((glInternalFormat != 0) && (format < RL_PIXELFORMAT_COMPRESSED_DXT1_RGB))
     {
         glTexSubImage2D(GL_TEXTURE_2D, 0, offsetX, offsetY, width, height, glFormat, glType, data);
     }
@@ -3206,9 +3285,27 @@ void rlGetGlTextureFormats(int format, unsigned int *glInternalFormat, unsigned 
         case RL_PIXELFORMAT_UNCOMPRESSED_R4G4B4A4: *glInternalFormat = GL_RGBA; *glFormat = GL_RGBA; *glType = GL_UNSIGNED_SHORT_4_4_4_4; break;
         case RL_PIXELFORMAT_UNCOMPRESSED_R8G8B8A8: *glInternalFormat = GL_RGBA; *glFormat = GL_RGBA; *glType = GL_UNSIGNED_BYTE; break;
         #if !defined(GRAPHICS_API_OPENGL_11)
-        case RL_PIXELFORMAT_UNCOMPRESSED_R32: if (RLGL.ExtSupported.texFloat32) *glInternalFormat = GL_LUMINANCE; *glFormat = GL_LUMINANCE; *glType = GL_FLOAT; break;   // NOTE: Requires extension OES_texture_float
-        case RL_PIXELFORMAT_UNCOMPRESSED_R32G32B32: if (RLGL.ExtSupported.texFloat32) *glInternalFormat = GL_RGB; *glFormat = GL_RGB; *glType = GL_FLOAT; break;         // NOTE: Requires extension OES_texture_float
-        case RL_PIXELFORMAT_UNCOMPRESSED_R32G32B32A32: if (RLGL.ExtSupported.texFloat32) *glInternalFormat = GL_RGBA; *glFormat = GL_RGBA; *glType = GL_FLOAT; break;    // NOTE: Requires extension OES_texture_float
+        #if defined(GRAPHICS_API_OPENGL_ES3)
+        case RL_PIXELFORMAT_UNCOMPRESSED_R32: if (RLGL.ExtSupported.texFloat32) *glInternalFormat = GL_R32F_EXT; *glFormat = GL_RED_EXT; *glType = GL_FLOAT; break;
+        case RL_PIXELFORMAT_UNCOMPRESSED_R32G32B32: if (RLGL.ExtSupported.texFloat32) *glInternalFormat = GL_RGB32F_EXT; *glFormat = GL_RGB; *glType = GL_FLOAT; break;
+        case RL_PIXELFORMAT_UNCOMPRESSED_R32G32B32A32: if (RLGL.ExtSupported.texFloat32) *glInternalFormat = GL_RGBA32F_EXT; *glFormat = GL_RGBA; *glType = GL_FLOAT; break;
+        case RL_PIXELFORMAT_UNCOMPRESSED_R16: if (RLGL.ExtSupported.texFloat16) *glInternalFormat = GL_R16F_EXT; *glFormat = GL_RED_EXT; *glType = GL_HALF_FLOAT; break;
+        case RL_PIXELFORMAT_UNCOMPRESSED_R16G16B16: if (RLGL.ExtSupported.texFloat16) *glInternalFormat = GL_RGB16F_EXT; *glFormat = GL_RGB; *glType = GL_HALF_FLOAT; break;
+        case RL_PIXELFORMAT_UNCOMPRESSED_R16G16B16A16: if (RLGL.ExtSupported.texFloat16) *glInternalFormat = GL_RGBA16F_EXT; *glFormat = GL_RGBA; *glType = GL_HALF_FLOAT; break;
+        #else
+        case RL_PIXELFORMAT_UNCOMPRESSED_R32: if (RLGL.ExtSupported.texFloat32) *glInternalFormat = GL_LUMINANCE; *glFormat = GL_LUMINANCE; *glType = GL_FLOAT; break;            // NOTE: Requires extension OES_texture_float
+        case RL_PIXELFORMAT_UNCOMPRESSED_R32G32B32: if (RLGL.ExtSupported.texFloat32) *glInternalFormat = GL_RGB; *glFormat = GL_RGB; *glType = GL_FLOAT; break;                  // NOTE: Requires extension OES_texture_float
+        case RL_PIXELFORMAT_UNCOMPRESSED_R32G32B32A32: if (RLGL.ExtSupported.texFloat32) *glInternalFormat = GL_RGBA; *glFormat = GL_RGBA; *glType = GL_FLOAT; break;             // NOTE: Requires extension OES_texture_float
+        #if defined(GRAPHICS_API_OPENGL_21)
+        case RL_PIXELFORMAT_UNCOMPRESSED_R16: if (RLGL.ExtSupported.texFloat16) *glInternalFormat = GL_LUMINANCE; *glFormat = GL_LUMINANCE; *glType = GL_HALF_FLOAT_ARB; break;
+        case RL_PIXELFORMAT_UNCOMPRESSED_R16G16B16: if (RLGL.ExtSupported.texFloat16) *glInternalFormat = GL_RGB; *glFormat = GL_RGB; *glType = GL_HALF_FLOAT_ARB; break;
+        case RL_PIXELFORMAT_UNCOMPRESSED_R16G16B16A16: if (RLGL.ExtSupported.texFloat16) *glInternalFormat = GL_RGBA; *glFormat = GL_RGBA; *glType = GL_HALF_FLOAT_ARB; break;
+        #else // defined(GRAPHICS_API_OPENGL_ES2)
+        case RL_PIXELFORMAT_UNCOMPRESSED_R16: if (RLGL.ExtSupported.texFloat16) *glInternalFormat = GL_LUMINANCE; *glFormat = GL_LUMINANCE; *glType = GL_HALF_FLOAT_OES; break;   // NOTE: Requires extension OES_texture_half_float
+        case RL_PIXELFORMAT_UNCOMPRESSED_R16G16B16: if (RLGL.ExtSupported.texFloat16) *glInternalFormat = GL_RGB; *glFormat = GL_RGB; *glType = GL_HALF_FLOAT_OES; break;         // NOTE: Requires extension OES_texture_half_float
+        case RL_PIXELFORMAT_UNCOMPRESSED_R16G16B16A16: if (RLGL.ExtSupported.texFloat16) *glInternalFormat = GL_RGBA; *glFormat = GL_RGBA; *glType = GL_HALF_FLOAT_OES; break;    // NOTE: Requires extension OES_texture_half_float
+        #endif
+        #endif
         #endif
     #elif defined(GRAPHICS_API_OPENGL_33)
         case RL_PIXELFORMAT_UNCOMPRESSED_GRAYSCALE: *glInternalFormat = GL_R8; *glFormat = GL_RED; *glType = GL_UNSIGNED_BYTE; break;
@@ -3221,6 +3318,9 @@ void rlGetGlTextureFormats(int format, unsigned int *glInternalFormat, unsigned 
         case RL_PIXELFORMAT_UNCOMPRESSED_R32: if (RLGL.ExtSupported.texFloat32) *glInternalFormat = GL_R32F; *glFormat = GL_RED; *glType = GL_FLOAT; break;
         case RL_PIXELFORMAT_UNCOMPRESSED_R32G32B32: if (RLGL.ExtSupported.texFloat32) *glInternalFormat = GL_RGB32F; *glFormat = GL_RGB; *glType = GL_FLOAT; break;
         case RL_PIXELFORMAT_UNCOMPRESSED_R32G32B32A32: if (RLGL.ExtSupported.texFloat32) *glInternalFormat = GL_RGBA32F; *glFormat = GL_RGBA; *glType = GL_FLOAT; break;
+        case RL_PIXELFORMAT_UNCOMPRESSED_R16: if (RLGL.ExtSupported.texFloat16) *glInternalFormat = GL_R16F; *glFormat = GL_RED; *glType = GL_HALF_FLOAT; break;
+        case RL_PIXELFORMAT_UNCOMPRESSED_R16G16B16: if (RLGL.ExtSupported.texFloat16) *glInternalFormat = GL_RGB16F; *glFormat = GL_RGB; *glType = GL_HALF_FLOAT; break;
+        case RL_PIXELFORMAT_UNCOMPRESSED_R16G16B16A16: if (RLGL.ExtSupported.texFloat16) *glInternalFormat = GL_RGBA16F; *glFormat = GL_RGBA; *glType = GL_HALF_FLOAT; break;
     #endif
     #if !defined(GRAPHICS_API_OPENGL_11)
         case RL_PIXELFORMAT_COMPRESSED_DXT1_RGB: if (RLGL.ExtSupported.texCompDXT) *glInternalFormat = GL_COMPRESSED_RGB_S3TC_DXT1_EXT; break;
@@ -3303,7 +3403,7 @@ void *rlReadTexturePixels(unsigned int id, int width, int height, int format)
     rlGetGlTextureFormats(format, &glInternalFormat, &glFormat, &glType);
     unsigned int size = rlGetPixelDataSize(width, height, format);
 
-    if ((glInternalFormat != -1) && (format < RL_PIXELFORMAT_COMPRESSED_DXT1_RGB))
+    if ((glInternalFormat != 0) && (format < RL_PIXELFORMAT_COMPRESSED_DXT1_RGB))
     {
         pixels = RL_MALLOC(size);
         glGetTexImage(GL_TEXTURE_2D, 0, glFormat, glType, pixels);
@@ -3466,11 +3566,14 @@ bool rlFramebufferComplete(unsigned int id)
 void rlUnloadFramebuffer(unsigned int id)
 {
 #if (defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)) && defined(RLGL_RENDER_TEXTURES_HINT)
-
     // Query depth attachment to automatically delete texture/renderbuffer
     int depthType = 0, depthId = 0;
     glBindFramebuffer(GL_FRAMEBUFFER, id);   // Bind framebuffer to query depth texture type
     glGetFramebufferAttachmentParameteriv(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_FRAMEBUFFER_ATTACHMENT_OBJECT_TYPE, &depthType);
+
+    // TODO: Review warning retrieving object name in WebGL
+    // WARNING: WebGL: INVALID_ENUM: getFramebufferAttachmentParameter: invalid parameter name
+    // https://registry.khronos.org/webgl/specs/latest/1.0/
     glGetFramebufferAttachmentParameteriv(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_FRAMEBUFFER_ATTACHMENT_OBJECT_NAME, &depthId);
 
     unsigned int depthIdU = (unsigned int)depthId;
@@ -3616,7 +3719,11 @@ void rlDrawVertexArray(int offset, int count)
 // Draw vertex array elements
 void rlDrawVertexArrayElements(int offset, int count, const void *buffer)
 {
-    glDrawElements(GL_TRIANGLES, count, GL_UNSIGNED_SHORT, (const unsigned short *)buffer + offset);
+    // NOTE: Added pointer math separately from function to avoid UBSAN complaining
+    unsigned short *bufferPtr = (unsigned short *)buffer;
+    if (offset > 0) bufferPtr += offset;
+
+    glDrawElements(GL_TRIANGLES, count, GL_UNSIGNED_SHORT, (const unsigned short *)bufferPtr);
 }
 
 // Draw vertex array instanced
@@ -3631,7 +3738,11 @@ void rlDrawVertexArrayInstanced(int offset, int count, int instances)
 void rlDrawVertexArrayElementsInstanced(int offset, int count, const void *buffer, int instances)
 {
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
-    glDrawElementsInstanced(GL_TRIANGLES, count, GL_UNSIGNED_SHORT, (const unsigned short *)buffer + offset, instances);
+    // NOTE: Added pointer math separately from function to avoid UBSAN complaining
+    unsigned short *bufferPtr = (unsigned short *)buffer;
+    if (offset > 0) bufferPtr += offset;
+
+    glDrawElementsInstanced(GL_TRIANGLES, count, GL_UNSIGNED_SHORT, (const unsigned short *)bufferPtr, instances);
 #endif
 }
 
@@ -4091,7 +4202,7 @@ unsigned int rlLoadShaderBuffer(unsigned int size, const void *data, int usageHi
     glGenBuffers(1, &ssbo);
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo);
     glBufferData(GL_SHADER_STORAGE_BUFFER, size, data, usageHint? usageHint : RL_STREAM_COPY);
-    glClearBufferData(GL_SHADER_STORAGE_BUFFER, GL_R8UI, GL_RED_INTEGER, GL_UNSIGNED_BYTE, 0);
+    if (data == NULL) glClearBufferData(GL_SHADER_STORAGE_BUFFER, GL_R8UI, GL_RED_INTEGER, GL_UNSIGNED_BYTE, NULL);    // Clear buffer data to 0
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 #endif
 
@@ -4162,7 +4273,7 @@ void rlBindImageTexture(unsigned int id, unsigned int index, int format, bool re
     unsigned int glInternalFormat = 0, glFormat = 0, glType = 0;
 
     rlGetGlTextureFormats(format, &glInternalFormat, &glFormat, &glType);
-    glBindImageTexture(index, id, 0, 0, 0, readonly ? GL_READ_ONLY : GL_READ_WRITE, glInternalFormat);
+    glBindImageTexture(index, id, 0, 0, 0, readonly? GL_READ_ONLY : GL_READ_WRITE, glInternalFormat);
 #endif
 }
 
@@ -4428,6 +4539,9 @@ const char *rlGetPixelFormatName(unsigned int format)
         case RL_PIXELFORMAT_UNCOMPRESSED_R32: return "R32"; break;                     // 32 bpp (1 channel - float)
         case RL_PIXELFORMAT_UNCOMPRESSED_R32G32B32: return "R32G32B32"; break;         // 32*3 bpp (3 channels - float)
         case RL_PIXELFORMAT_UNCOMPRESSED_R32G32B32A32: return "R32G32B32A32"; break;   // 32*4 bpp (4 channels - float)
+        case RL_PIXELFORMAT_UNCOMPRESSED_R16: return "R16"; break;                     // 16 bpp (1 channel - half float)
+        case RL_PIXELFORMAT_UNCOMPRESSED_R16G16B16: return "R16G16B16"; break;         // 16*3 bpp (3 channels - half float)
+        case RL_PIXELFORMAT_UNCOMPRESSED_R16G16B16A16: return "R16G16B16A16"; break;   // 16*4 bpp (4 channels - half float)
         case RL_PIXELFORMAT_COMPRESSED_DXT1_RGB: return "DXT1_RGB"; break;             // 4 bpp (no alpha)
         case RL_PIXELFORMAT_COMPRESSED_DXT1_RGBA: return "DXT1_RGBA"; break;           // 4 bpp (1 bit alpha)
         case RL_PIXELFORMAT_COMPRESSED_DXT3_RGBA: return "DXT3_RGBA"; break;           // 8 bpp
@@ -4476,6 +4590,7 @@ static void rlLoadShaderDefault(void)
 #endif
 #if defined(GRAPHICS_API_OPENGL_ES2)
     "#version 100                       \n"
+    "precision mediump float;           \n"     // Precision required for OpenGL ES2 (WebGL) (on some browsers)
     "attribute vec3 vertexPosition;     \n"
     "attribute vec2 vertexTexCoord;     \n"
     "attribute vec4 vertexColor;        \n"
@@ -4669,6 +4784,9 @@ static int rlGetPixelDataSize(int width, int height, int format)
         case RL_PIXELFORMAT_UNCOMPRESSED_R32: bpp = 32; break;
         case RL_PIXELFORMAT_UNCOMPRESSED_R32G32B32: bpp = 32*3; break;
         case RL_PIXELFORMAT_UNCOMPRESSED_R32G32B32A32: bpp = 32*4; break;
+        case RL_PIXELFORMAT_UNCOMPRESSED_R16: bpp = 16; break;
+        case RL_PIXELFORMAT_UNCOMPRESSED_R16G16B16: bpp = 16*3; break;
+        case RL_PIXELFORMAT_UNCOMPRESSED_R16G16B16A16: bpp = 16*4; break;
         case RL_PIXELFORMAT_COMPRESSED_DXT1_RGB:
         case RL_PIXELFORMAT_COMPRESSED_DXT1_RGBA:
         case RL_PIXELFORMAT_COMPRESSED_ETC1_RGB:

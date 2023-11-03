@@ -1,6 +1,25 @@
 #**************************************************************************************************
 #
-#   raylib makefile for Desktop platforms, Raspberry Pi, Android and HTML5
+#   raylib makefile for multiple platforms
+#
+#   This file supports building raylib examples for the following platforms:
+#
+#     > PLATFORM_DESKTOP (GLFW backend):
+#         - Windows (Win32, Win64)
+#         - Linux (X11/Wayland desktop mode)
+#         - macOS/OSX (x64, arm64)
+#         - FreeBSD, OpenBSD, NetBSD, DragonFly (X11 desktop)
+#     > PLATFORM_DESKTOP_SDL (SDL backend):
+#         - Windows (Win32, Win64)
+#         - Linux (X11/Wayland desktop mode)
+#         - Others (not tested)
+#     > PLATFORM_WEB:
+#         - HTML5 (WebAssembly)
+#     > PLATFORM_DRM:
+#         - Raspberry Pi 0-5 (DRM/KMS)
+#         - Linux DRM subsystem (KMS mode)
+#     > PLATFORM_ANDROID:
+#         - Android (ARM, ARM64)
 #
 #   Copyright (c) 2013-2023 Ramon Santamaria (@raysan5)
 #
@@ -25,13 +44,16 @@
 
 # Define required environment variables
 #------------------------------------------------------------------------------------------------
-# Define target platform: PLATFORM_DESKTOP, PLATFORM_RPI, PLATFORM_DRM, PLATFORM_ANDROID, PLATFORM_WEB
+# Define target platform: PLATFORM_DESKTOP, PLATFORM_DESKTOP_SDL, PLATFORM_DRM, PLATFORM_ANDROID, PLATFORM_WEB
 PLATFORM              ?= PLATFORM_DESKTOP
 
 # Define required raylib variables
 PROJECT_NAME          ?= raylib_examples
-RAYLIB_VERSION        ?= 4.5.0
+RAYLIB_VERSION        ?= 5.0.0
 RAYLIB_PATH           ?= ..
+
+# Define raylib source code path
+RAYLIB_SRC_PATH       ?= ../src
 
 # Locations of raylib.h and libraylib.a/libraylib.so
 # NOTE: Those variables are only used for PLATFORM_OS: LINUX, BSD
@@ -47,6 +69,11 @@ BUILD_MODE            ?= RELEASE
 # Use external GLFW library instead of rglfw module
 USE_EXTERNAL_GLFW     ?= FALSE
 
+# PLATFORM_DESKTOP_SDL: It requires SDL library to be provided externally
+# WARNING: Library is not included in raylib, it MUST be configured by users
+SDL_INCLUDE_PATH      ?= $(RAYLIB_SRC_PATH)/external/SDL2-2.28.4/include
+SDL_LIBRARY_PATH      ?= $(RAYLIB_SRC_PATH)/external/SDL2-2.28.4/lib/x64
+
 # Use Wayland display server protocol on Linux desktop (by default it uses X11 windowing system)
 # NOTE: This variable is only used for PLATFORM_OS: LINUX
 USE_WAYLAND_DISPLAY   ?= FALSE
@@ -58,17 +85,8 @@ BUILD_WEB_HEAP_SIZE   ?= 134217728
 BUILD_WEB_RESOURCES   ?= TRUE
 BUILD_WEB_RESOURCES_PATH  ?= $(dir $<)resources@resources
 
-# Use cross-compiler for PLATFORM_RPI
-ifeq ($(PLATFORM),PLATFORM_RPI)
-    USE_RPI_CROSS_COMPILER ?= FALSE
-    ifeq ($(USE_RPI_CROSS_COMPILER),TRUE)
-        RPI_TOOLCHAIN ?= C:/SysGCC/Raspberry
-        RPI_TOOLCHAIN_SYSROOT ?= $(RPI_TOOLCHAIN)/arm-linux-gnueabihf/sysroot
-    endif
-endif
-
-# Determine PLATFORM_OS in case PLATFORM_DESKTOP or PLATFORM_WEB selected
-ifeq ($(PLATFORM),$(filter $(PLATFORM),PLATFORM_DESKTOP PLATFORM_WEB))
+# Determine PLATFORM_OS when required
+ifeq ($(PLATFORM),$(filter $(PLATFORM),PLATFORM_DESKTOP PLATFORM_DESKTOP_SDL PLATFORM_WEB))
     # No uname.exe on MinGW!, but OS=Windows_NT on Windows!
     # ifeq ($(UNAME),Msys) -> Windows
     ifeq ($(OS),Windows_NT)
@@ -95,12 +113,6 @@ ifeq ($(PLATFORM),$(filter $(PLATFORM),PLATFORM_DESKTOP PLATFORM_WEB))
         endif
     endif
 endif
-ifeq ($(PLATFORM),PLATFORM_RPI)
-    UNAMEOS = $(shell uname)
-    ifeq ($(UNAMEOS),Linux)
-        PLATFORM_OS = LINUX
-    endif
-endif
 ifeq ($(PLATFORM),PLATFORM_DRM)
     UNAMEOS = $(shell uname)
     ifeq ($(UNAMEOS),Linux)
@@ -118,9 +130,6 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
 endif
 
 # Default path for raylib on Raspberry Pi
-ifeq ($(PLATFORM),PLATFORM_RPI)
-    RAYLIB_PATH        ?= /home/pi/raylib
-endif
 ifeq ($(PLATFORM),PLATFORM_DRM)
     RAYLIB_PATH        ?= /home/pi/raylib
 endif
@@ -154,13 +163,6 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
         CC = clang
     endif
 endif
-ifeq ($(PLATFORM),PLATFORM_RPI)
-    ifeq ($(USE_RPI_CROSS_COMPILER),TRUE)
-        # Define RPI cross-compiler
-        #CC = armv6j-hardfloat-linux-gnueabi-gcc
-        CC = $(RPI_TOOLCHAIN)/bin/arm-linux-gnueabihf-gcc
-    endif
-endif
 ifeq ($(PLATFORM),PLATFORM_WEB)
     # HTML5 emscripten compiler
     # WARNING: To compile to HTML5, code must be redesigned
@@ -181,7 +183,7 @@ ifeq ($(PLATFORM),PLATFORM_ANDROID)
     MAKE = mingw32-make
 endif
 ifeq ($(PLATFORM),PLATFORM_WEB)
-    MAKE = mingw32-make
+    MAKE = emmake make
 endif
 
 # Define compiler flags: CFLAGS
@@ -231,9 +233,6 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
         endif
     endif
 endif
-ifeq ($(PLATFORM),PLATFORM_RPI)
-    CFLAGS += -std=gnu99
-endif
 ifeq ($(PLATFORM),PLATFORM_DRM)
     CFLAGS += -std=gnu99 -DEGL_NO_X11
 endif
@@ -252,13 +251,17 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
         INCLUDE_PATHS += -I$(RAYLIB_INCLUDE_PATH)
     endif
 endif
-ifeq ($(PLATFORM),PLATFORM_RPI)
-    INCLUDE_PATHS += -I$(RPI_TOOLCHAIN_SYSROOT)/opt/vc/include
-    INCLUDE_PATHS += -I$(RPI_TOOLCHAIN_SYSROOT)/opt/vc/include/interface/vmcs_host/linux
-    INCLUDE_PATHS += -I$(RPI_TOOLCHAIN_SYSROOT)/opt/vc/include/interface/vcos/pthreads
+ifeq ($(PLATFORM),PLATFORM_DESKTOP_SDL)
+    INCLUDE_PATHS += -I$(SDL_INCLUDE_PATH)
 endif
 ifeq ($(PLATFORM),PLATFORM_DRM)
+    INCLUDE_PATHS += -I$(RAYLIB_INCLUDE_PATH)
     INCLUDE_PATHS += -I/usr/include/libdrm
+endif
+
+# Include GLFW required for examples/others/rlgl_standalone.c
+ifeq ($(USE_EXTERNAL_GLFW),FALSE)
+all others: INCLUDE_PATHS += -I$(RAYLIB_PATH)/src/external/glfw/include
 endif
 
 # Define library paths containing required libs: LDFLAGS
@@ -280,6 +283,17 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
     ifeq ($(PLATFORM_OS),BSD)
         LDFLAGS += -Lsrc -L$(RAYLIB_LIB_PATH)
     endif
+endif
+ifeq ($(PLATFORM),PLATFORM_DESKTOP_SDL)
+    ifeq ($(PLATFORM_OS),WINDOWS)
+        # NOTE: The resource .rc file contains windows executable icon and properties
+        LDFLAGS += $(RAYLIB_PATH)/src/raylib.rc.data
+        # -Wl,--subsystem,windows hides the console window
+        ifeq ($(BUILD_MODE), RELEASE)
+            LDFLAGS += -Wl,--subsystem,windows
+        endif
+    endif
+    LDFLAGS += -L$(SDL_LIBRARY_PATH)
 endif
 ifeq ($(PLATFORM),PLATFORM_WEB)
     # -Os                        # size optimization
@@ -322,9 +336,6 @@ ifeq ($(PLATFORM),PLATFORM_WEB)
     # projects, code needs to be refactored to avoid a blocking while() loop, moving Update and Draw
     # logic to a self contained function: UpdateDrawFrame(), check core_basic_window_web.c for reference.
 
-endif
-ifeq ($(PLATFORM),PLATFORM_RPI)
-    LDFLAGS += -L$(RPI_TOOLCHAIN_SYSROOT)/opt/vc/lib
 endif
 
 # Define libraries required on linking: LDLIBS
@@ -376,12 +387,32 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
         LDLIBS += -lglfw
     endif
 endif
-ifeq ($(PLATFORM),PLATFORM_RPI)
-    # Libraries for Raspberry Pi compiling
-    # NOTE: Required packages: libasound2-dev (ALSA)
-    LDLIBS = -lraylib -lbrcmGLESv2 -lbrcmEGL -lpthread -lrt -lm -lbcm_host -ldl -latomic
-    ifeq ($(USE_RPI_CROSS_COMPILER),TRUE)
-        LDLIBS += -lvchiq_arm -lvcos
+ifeq ($(PLATFORM),PLATFORM_DESKTOP_SDL)
+    ifeq ($(PLATFORM_OS),WINDOWS)
+        # Libraries for Windows desktop compilation
+        LDLIBS = -lraylib -lSDL2 -lSDL2main -lopengl32 -lgdi32
+    endif
+    ifeq ($(PLATFORM_OS),LINUX)
+        # Libraries for Debian GNU/Linux desktop compiling
+        # NOTE: Required packages: libegl1-mesa-dev
+        LDLIBS = -lraylib -lSDL2 -lSDL2main -lGL -lm -lpthread -ldl -lrt
+
+        # On X11 requires also below libraries
+        LDLIBS += -lX11
+        # NOTE: It seems additional libraries are not required any more, latest GLFW just dlopen them
+        #LDLIBS += -lXrandr -lXinerama -lXi -lXxf86vm -lXcursor
+
+        # On Wayland windowing system, additional libraries requires
+        ifeq ($(USE_WAYLAND_DISPLAY),TRUE)
+            LDLIBS += -lwayland-client -lwayland-cursor -lwayland-egl -lxkbcommon
+        endif
+        # Explicit link to libc
+        ifeq ($(RAYLIB_LIBTYPE),SHARED)
+            LDLIBS += -lc
+        endif
+
+        # NOTE: On ARM 32bit arch, miniaudio requires atomics library
+        LDLIBS += -latomic
     endif
 endif
 ifeq ($(PLATFORM),PLATFORM_DRM)
@@ -403,14 +434,18 @@ CORE = \
     core/core_input_mouse \
     core/core_input_mouse_wheel \
     core/core_input_gamepad \
+    core/core_input_gamepad_info \
     core/core_input_multitouch \
     core/core_input_gestures \
+    core/core_input_gestures_web \
     core/core_2d_camera \
     core/core_2d_camera_platformer \
     core/core_2d_camera_mouse_zoom \
+    core/core_2d_camera_split_screen \
     core/core_3d_camera_mode \
     core/core_3d_camera_free \
     core/core_3d_camera_first_person \
+    core/core_3d_camera_split_screen \
     core/core_3d_picking \
     core/core_world_screen \
     core/core_custom_logging \
@@ -423,7 +458,6 @@ CORE = \
     core/core_window_flags \
     core/core_window_letterbox \
     core/core_window_should_close \
-    core/core_split_screen \
     core/core_smooth_pixelperfect \
     core/core_custom_frame_control
 
@@ -453,6 +487,7 @@ TEXTURES = \
     textures/textures_image_generation \
     textures/textures_image_loading \
     textures/textures_image_processing \
+    textures/textures_image_rotate \
     textures/textures_image_text \
     textures/textures_to_image \
     textures/textures_raw_data \
@@ -468,7 +503,8 @@ TEXTURES = \
     textures/textures_draw_tiled \
     textures/textures_polygon \
     textures/textures_gif_player \
-    textures/textures_fog_of_war
+    textures/textures_fog_of_war \
+    textures/textures_svg_loading
 
 TEXT = \
     text/text_raylib_fonts \
@@ -522,25 +558,36 @@ SHADERS = \
     shaders/shaders_simple_mask \
     shaders/shaders_spotlight \
     shaders/shaders_hot_reloading \
+    shaders/shaders_lightmap \
     shaders/shaders_mesh_instancing \
     shaders/shaders_multi_sample2d \
     shaders/shaders_write_depth \
-    shaders/shaders_hybrid_render
+    shaders/shaders_hybrid_render \
+    shaders/shaders_deferred_render
 
 AUDIO = \
     audio/audio_module_playing \
     audio/audio_music_stream \
     audio/audio_raw_stream \
     audio/audio_sound_loading \
+    audio/audio_sound_multi \
     audio/audio_stream_effects \
     audio/audio_mixed_processor
+
+OTHERS = \
+    others/easings_testbed \
+    others/embedded_files_loading \
+    others/raylib_opengl_interop \
+    others/raymath_vector_angle \
+    others/rlgl_compute_shader \
+    others/rlgl_standalone
 
 CURRENT_MAKEFILE = $(lastword $(MAKEFILE_LIST))
 
 # Define processes to execute
 #------------------------------------------------------------------------------------------------
 # Default target entry
-all: $(CORE) $(SHAPES) $(TEXT) $(TEXTURES) $(MODELS) $(SHADERS) $(AUDIO)
+all: $(CORE) $(SHAPES) $(TEXT) $(TEXTURES) $(MODELS) $(SHADERS) $(AUDIO) $(OTHERS)
 
 core: $(CORE)
 shapes: $(SHAPES)
@@ -549,12 +596,15 @@ text: $(TEXT)
 models: $(MODELS)
 shaders: $(SHADERS)
 audio: $(AUDIO)
+others: $(OTHERS)
 
 # Generic compilation pattern
 # NOTE: Examples must be ready for Android compilation!
 %: %.c
 ifeq ($(PLATFORM),PLATFORM_ANDROID)
 	$(MAKE) -f Makefile.Android PROJECT_NAME=$@ PROJECT_SOURCE_FILES=$<
+else ifeq ($(PLATFORM),PLATFORM_WEB)
+	$(MAKE) -f Makefile.Web $@
 else
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 endif
@@ -573,10 +623,6 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
 		find . -type f -perm +ugo+x -delete
 		rm -f *.o
     endif
-endif
-ifeq ($(PLATFORM),PLATFORM_RPI)
-	find . -type f -executable -delete
-	rm -fv *.o
 endif
 ifeq ($(PLATFORM),PLATFORM_DRM)
 	find . -type f -executable -delete

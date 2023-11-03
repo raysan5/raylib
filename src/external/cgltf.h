@@ -65,7 +65,8 @@
  *
  * `cgltf_num_components` is a tiny utility that tells you the dimensionality of
  * a certain accessor type. This can be used before `cgltf_accessor_unpack_floats` to help allocate
- * the necessary amount of memory.
+ * the necessary amount of memory. `cgltf_component_size` and `cgltf_calc_size` exist for 
+ * similar purposes.
  *
  * `cgltf_accessor_read_float` reads a certain element from a non-sparse accessor and converts it to
  * floating point, assuming that `cgltf_load_buffers` has already been called. The passed-in element
@@ -837,6 +838,8 @@ cgltf_bool cgltf_accessor_read_uint(const cgltf_accessor* accessor, cgltf_size i
 cgltf_size cgltf_accessor_read_index(const cgltf_accessor* accessor, cgltf_size index);
 
 cgltf_size cgltf_num_components(cgltf_type type);
+cgltf_size cgltf_component_size(cgltf_component_type component_type);
+cgltf_size cgltf_calc_size(cgltf_type type, cgltf_component_type component_type);
 
 cgltf_size cgltf_accessor_unpack_floats(const cgltf_accessor* accessor, cgltf_float* out, cgltf_size float_count);
 
@@ -1487,8 +1490,6 @@ cgltf_result cgltf_load_buffers(const cgltf_options* options, cgltf_data* data, 
 
 	return cgltf_result_success;
 }
-
-static cgltf_size cgltf_calc_size(cgltf_type type, cgltf_component_type component_type);
 
 static cgltf_size cgltf_calc_index_bound(cgltf_buffer_view* buffer_view, cgltf_size offset, cgltf_component_type component_type, cgltf_size count)
 {
@@ -2217,7 +2218,7 @@ static cgltf_size cgltf_component_read_index(const void* in, cgltf_component_typ
 		case cgltf_component_type_r_32u:
 			return *((const uint32_t*) in);
 		case cgltf_component_type_r_32f:
-			return (cgltf_size)*((const float*) in);
+			return (cgltf_size)((cgltf_ssize)*((const float*) in));
 		case cgltf_component_type_r_8u:
 			return *((const uint8_t*) in);
 		default:
@@ -2252,8 +2253,6 @@ static cgltf_float cgltf_component_read_float(const void* in, cgltf_component_ty
 
 	return (cgltf_float)cgltf_component_read_integer(in, component_type);
 }
-
-static cgltf_size cgltf_component_size(cgltf_component_type component_type);
 
 static cgltf_bool cgltf_element_read_float(const uint8_t* element, cgltf_type type, cgltf_component_type component_type, cgltf_bool normalized, cgltf_float* out, cgltf_size element_size)
 {
@@ -5965,7 +5964,7 @@ cgltf_size cgltf_num_components(cgltf_type type) {
 	}
 }
 
-static cgltf_size cgltf_component_size(cgltf_component_type component_type) {
+cgltf_size cgltf_component_size(cgltf_component_type component_type) {
 	switch (component_type)
 	{
 	case cgltf_component_type_r_8:
@@ -5983,7 +5982,7 @@ static cgltf_size cgltf_component_size(cgltf_component_type component_type) {
 	}
 }
 
-static cgltf_size cgltf_calc_size(cgltf_type type, cgltf_component_type component_type)
+cgltf_size cgltf_calc_size(cgltf_type type, cgltf_component_type component_type)
 {
 	cgltf_size component_size = cgltf_component_size(component_type);
 	if (type == cgltf_type_mat2 && component_size == 1)

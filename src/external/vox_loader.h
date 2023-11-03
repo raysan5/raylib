@@ -555,7 +555,7 @@ int Vox_LoadFromMemory(unsigned char* pvoxData, unsigned int voxDataSize, VoxArr
 	version = ((unsigned int*)fileDataPtr)[0];
 	fileDataPtr += 4;
 
-	if (version != 150)
+	if (version != 150 && version != 200)
 	{
 		return VOX_ERROR_FILE_VERSION_NOT_MATCH; //"MagicaVoxel version doesn't match"
 	}

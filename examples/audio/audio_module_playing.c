@@ -79,6 +79,7 @@ int main(void)
         {
             StopMusicStream(music);
             PlayMusicStream(music);
+            pause = false;
         }
 
         // Pause/Resume music playing
@@ -133,6 +134,14 @@ int main(void)
             DrawRectangle(20, screenHeight - 20 - 12, screenWidth - 40, 12, LIGHTGRAY);
             DrawRectangle(20, screenHeight - 20 - 12, (int)timePlayed, 12, MAROON);
             DrawRectangleLines(20, screenHeight - 20 - 12, screenWidth - 40, 12, GRAY);
+
+            // Draw help instructions
+            DrawRectangle(20, 20, 425, 145, WHITE);
+            DrawRectangleLines(20, 20, 425, 145, GRAY);
+            DrawText("PRESS SPACE TO RESTART MUSIC", 40, 40, 20, BLACK);
+            DrawText("PRESS P TO PAUSE/RESUME", 40, 70, 20, BLACK);
+            DrawText("PRESS UP/DOWN TO CHANGE SPEED", 40, 100, 20, BLACK);
+            DrawText(TextFormat("SPEED: %f", pitch), 40, 130, 20, MAROON);
 
         EndDrawing();
         //----------------------------------------------------------------------------------

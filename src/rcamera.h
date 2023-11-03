@@ -3,15 +3,14 @@
 *   rcamera - Basic camera system with support for multiple camera modes
 *
 *   CONFIGURATION:
+*       #define RCAMERA_IMPLEMENTATION
+*           Generates the implementation of the library into the included file.
+*           If not defined, the library is in header only mode and can be included in other headers
+*           or source files without problems. But only ONE file should hold the implementation.
 *
-*   #define CAMERA_IMPLEMENTATION
-*       Generates the implementation of the library into the included file.
-*       If not defined, the library is in header only mode and can be included in other headers
-*       or source files without problems. But only ONE file should hold the implementation.
-*
-*   #define CAMERA_STANDALONE
-*       If defined, the library can be used as standalone as a camera system but some
-*       functions must be redefined to manage inputs accordingly.
+*       #define RCAMERA_STANDALONE
+*           If defined, the library can be used as standalone as a camera system but some
+*           functions must be redefined to manage inputs accordingly.
 *
 *   CONTRIBUTORS:
 *       Ramon Santamaria:   Supervision, review, update and maintenance
@@ -47,11 +46,25 @@
 // Defines and Macros
 //----------------------------------------------------------------------------------
 // Function specifiers definition
+
+// Function specifiers in case library is build/used as a shared library (Windows)
+// NOTE: Microsoft specifiers to tell compiler that symbols are imported/exported from a .dll
+#if defined(_WIN32)
+#if defined(BUILD_LIBTYPE_SHARED)
+#if defined(__TINYC__)
+#define __declspec(x) __attribute__((x))
+#endif
+#define RLAPI __declspec(dllexport)     // We are building the library as a Win32 shared library (.dll)
+#elif defined(USE_LIBTYPE_SHARED)
+#define RLAPI __declspec(dllimport)     // We are using the library as a Win32 shared library (.dll)
+#endif
+#endif
+
 #ifndef RLAPI
     #define RLAPI       // Functions defined as 'extern' by default (implicit specifiers)
 #endif
 
-#if defined(CAMERA_STANDALONE)
+#if defined(RCAMERA_STANDALONE)
     #define CAMERA_CULL_DISTANCE_NEAR      0.01
     #define CAMERA_CULL_DISTANCE_FAR    1000.0
 #else
@@ -61,9 +74,9 @@
 
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
-// NOTE: Below types are required for CAMERA_STANDALONE usage
+// NOTE: Below types are required for standalone usage
 //----------------------------------------------------------------------------------
-#if defined(CAMERA_STANDALONE)
+#if defined(RCAMERA_STANDALONE)
     // Vector2, 2 components
     typedef struct Vector2 {
         float x;                // Vector x component
@@ -76,6 +89,14 @@
         float y;                // Vector y component
         float z;                // Vector z component
     } Vector3;
+
+    // Matrix, 4x4 components, column major, OpenGL style, right-handed
+    typedef struct Matrix {
+        float m0, m4, m8, m12;  // Matrix first row (4 components)
+        float m1, m5, m9, m13;  // Matrix second row (4 components)
+        float m2, m6, m10, m14; // Matrix third row (4 components)
+        float m3, m7, m11, m15; // Matrix fourth row (4 components)
+    } Matrix;
 
     // Camera type, defines a camera position/orientation in 3d space
     typedef struct Camera3D {
@@ -139,7 +160,7 @@ RLAPI Matrix GetCameraProjectionMatrix(Camera* camera, float aspect);
 }
 #endif
 
-#endif // CAMERA_H
+#endif // RCAMERA_H
 
 
 /***********************************************************************************
@@ -148,7 +169,7 @@ RLAPI Matrix GetCameraProjectionMatrix(Camera* camera, float aspect);
 *
 ************************************************************************************/
 
-#if defined(CAMERA_IMPLEMENTATION)
+#if defined(RCAMERA_IMPLEMENTATION)
 
 #include "raymath.h"        // Required for vector maths:
                             // Vector3Add()
@@ -177,9 +198,10 @@ RLAPI Matrix GetCameraProjectionMatrix(Camera* camera, float aspect);
 //----------------------------------------------------------------------------------
 #define CAMERA_MOVE_SPEED                               0.09f
 #define CAMERA_ROTATION_SPEED                           0.03f
+#define CAMERA_PAN_SPEED                                0.2f
 
 // Camera mouse movement sensitivity
-#define CAMERA_MOUSE_MOVE_SENSITIVITY                   0.003f    // TODO: it should be independant of framerate
+#define CAMERA_MOUSE_MOVE_SENSITIVITY                   0.003f     // TODO: it should be independant of framerate
 #define CAMERA_MOUSE_SCROLL_SENSITIVITY                 1.5f
 
 #define CAMERA_ORBITAL_SPEED                            0.5f       // Radians per second
@@ -294,7 +316,7 @@ void CameraMoveToTarget(Camera *camera, float delta)
     distance += delta;
 
     // Distance must be greater than 0
-    if (distance < 0) distance = 0.001f;
+    if (distance <= 0) distance = 0.001f;
 
     // Set new distance by moving the position along the forward vector
     Vector3 forward = GetCameraForward(camera);
@@ -418,7 +440,7 @@ Matrix GetCameraProjectionMatrix(Camera *camera, float aspect)
     return MatrixIdentity();
 }
 
-#ifndef CAMERA_STANDALONE
+#if !defined(RCAMERA_STANDALONE)
 // Update camera position for selected mode
 // Camera mode: CAMERA_FREE, CAMERA_FIRST_PERSON, CAMERA_THIRD_PERSON, CAMERA_ORBITAL or CUSTOM
 void UpdateCamera(Camera *camera, int mode)
@@ -428,7 +450,7 @@ void UpdateCamera(Camera *camera, int mode)
     bool moveInWorldPlane = ((mode == CAMERA_FIRST_PERSON) || (mode == CAMERA_THIRD_PERSON));
     bool rotateAroundTarget = ((mode == CAMERA_THIRD_PERSON) || (mode == CAMERA_ORBITAL));
     bool lockView = ((mode == CAMERA_FIRST_PERSON) || (mode == CAMERA_THIRD_PERSON) || (mode == CAMERA_ORBITAL));
-    bool rotateUp = (mode == CAMERA_FREE);
+    bool rotateUp = false;
 
     if (mode == CAMERA_ORBITAL)
     {
@@ -448,19 +470,51 @@ void UpdateCamera(Camera *camera, int mode)
         if (IsKeyDown(KEY_Q)) CameraRoll(camera, -CAMERA_ROTATION_SPEED);
         if (IsKeyDown(KEY_E)) CameraRoll(camera, CAMERA_ROTATION_SPEED);
 
-        CameraYaw(camera, -mousePositionDelta.x*CAMERA_MOUSE_MOVE_SENSITIVITY, rotateAroundTarget);
-        CameraPitch(camera, -mousePositionDelta.y*CAMERA_MOUSE_MOVE_SENSITIVITY, lockView, rotateAroundTarget, rotateUp);
-
         // Camera movement
-        if (IsKeyDown(KEY_W)) CameraMoveForward(camera, CAMERA_MOVE_SPEED, moveInWorldPlane);
-        if (IsKeyDown(KEY_A)) CameraMoveRight(camera, -CAMERA_MOVE_SPEED, moveInWorldPlane);
-        if (IsKeyDown(KEY_S)) CameraMoveForward(camera, -CAMERA_MOVE_SPEED, moveInWorldPlane);
-        if (IsKeyDown(KEY_D)) CameraMoveRight(camera, CAMERA_MOVE_SPEED, moveInWorldPlane);
-        //if (IsKeyDown(KEY_SPACE)) CameraMoveUp(camera, CAMERA_MOVE_SPEED);
-        //if (IsKeyDown(KEY_LEFT_CONTROL)) CameraMoveUp(camera, -CAMERA_MOVE_SPEED);
+        if (!IsGamepadAvailable(0))
+        {
+            // Camera pan (for CAMERA_FREE)
+            if ((mode == CAMERA_FREE) && (IsMouseButtonDown(MOUSE_BUTTON_MIDDLE)))
+            {
+                const Vector2 mouseDelta = GetMouseDelta();
+                if (mouseDelta.x > 0.0f) CameraMoveRight(camera, CAMERA_PAN_SPEED, moveInWorldPlane);
+                if (mouseDelta.x < 0.0f) CameraMoveRight(camera, -CAMERA_PAN_SPEED, moveInWorldPlane);
+                if (mouseDelta.y > 0.0f) CameraMoveUp(camera, -CAMERA_PAN_SPEED);
+                if (mouseDelta.y < 0.0f) CameraMoveUp(camera, CAMERA_PAN_SPEED);
+            }
+            else
+            {
+                // Mouse support
+                CameraYaw(camera, -mousePositionDelta.x*CAMERA_MOUSE_MOVE_SENSITIVITY, rotateAroundTarget);
+                CameraPitch(camera, -mousePositionDelta.y*CAMERA_MOUSE_MOVE_SENSITIVITY, lockView, rotateAroundTarget, rotateUp);
+            }
+
+            // Keyboard support
+            if (IsKeyDown(KEY_W)) CameraMoveForward(camera, CAMERA_MOVE_SPEED, moveInWorldPlane);
+            if (IsKeyDown(KEY_A)) CameraMoveRight(camera, -CAMERA_MOVE_SPEED, moveInWorldPlane);
+            if (IsKeyDown(KEY_S)) CameraMoveForward(camera, -CAMERA_MOVE_SPEED, moveInWorldPlane);
+            if (IsKeyDown(KEY_D)) CameraMoveRight(camera, CAMERA_MOVE_SPEED, moveInWorldPlane);
+        }
+        else
+        {
+            // Gamepad controller support
+            CameraYaw(camera, -(GetGamepadAxisMovement(0, GAMEPAD_AXIS_RIGHT_X) * 2)*CAMERA_MOUSE_MOVE_SENSITIVITY, rotateAroundTarget);
+            CameraPitch(camera, -(GetGamepadAxisMovement(0, GAMEPAD_AXIS_RIGHT_Y) * 2)*CAMERA_MOUSE_MOVE_SENSITIVITY, lockView, rotateAroundTarget, rotateUp);
+
+            if (GetGamepadAxisMovement(0, GAMEPAD_AXIS_LEFT_Y) <= -0.25f) CameraMoveForward(camera, CAMERA_MOVE_SPEED, moveInWorldPlane);
+            if (GetGamepadAxisMovement(0, GAMEPAD_AXIS_LEFT_X) <= -0.25f) CameraMoveRight(camera, -CAMERA_MOVE_SPEED, moveInWorldPlane);
+            if (GetGamepadAxisMovement(0, GAMEPAD_AXIS_LEFT_Y) >= 0.25f) CameraMoveForward(camera, -CAMERA_MOVE_SPEED, moveInWorldPlane);
+            if (GetGamepadAxisMovement(0, GAMEPAD_AXIS_LEFT_X) >= 0.25f) CameraMoveRight(camera, CAMERA_MOVE_SPEED, moveInWorldPlane);
+        }
+
+        if (mode == CAMERA_FREE)
+        {
+            if (IsKeyDown(KEY_SPACE)) CameraMoveUp(camera, CAMERA_MOVE_SPEED);
+            if (IsKeyDown(KEY_LEFT_CONTROL)) CameraMoveUp(camera, -CAMERA_MOVE_SPEED);
+        }
     }
 
-    if ((mode == CAMERA_THIRD_PERSON) || (mode == CAMERA_ORBITAL))
+    if ((mode == CAMERA_THIRD_PERSON) || (mode == CAMERA_ORBITAL) || (mode == CAMERA_FREE))
     {
         // Zoom target distance
         CameraMoveToTarget(camera, -GetMouseWheelMove());
@@ -468,7 +522,7 @@ void UpdateCamera(Camera *camera, int mode)
         if (IsKeyPressed(KEY_KP_ADD)) CameraMoveToTarget(camera, -2.0f);
     }
 }
-#endif // !CAMERA_STANDALONE
+#endif // !RCAMERA_STANDALONE
 
 // Update camera movement, movement/rotation values should be provided by user
 void UpdateCameraPro(Camera *camera, Vector3 movement, Vector3 rotation, float zoom)
@@ -501,4 +555,4 @@ void UpdateCameraPro(Camera *camera, Vector3 movement, Vector3 rotation, float z
     CameraMoveToTarget(camera, zoom);
 }
 
-#endif // CAMERA_IMPLEMENTATION
+#endif // RCAMERA_IMPLEMENTATION

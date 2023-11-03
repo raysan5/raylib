@@ -4,9 +4,9 @@
 *
 *   LIMITATIONS:
 *     - Only supports 1 armature per file, and skips loading it if there are multiple armatures
-*     - Only supports linear interpolation (default method in Blender when checked 
+*     - Only supports linear interpolation (default method in Blender when checked
 *       "Always Sample Animations" when exporting a GLTF file)
-*     - Only supports translation/rotation/scale animation channel.path, 
+*     - Only supports translation/rotation/scale animation channel.path,
 *       weights not considered (i.e. morph targets)
 *
 *   Example originally created with raylib 3.7, last time updated with raylib 4.2
@@ -42,7 +42,7 @@ int main(void)
 
     // Load gltf model
     Model model = LoadModel("resources/models/gltf/robot.glb");
-    
+
     // Load gltf model animations
     unsigned int animsCount = 0;
     unsigned int animIndex = 0;
@@ -63,9 +63,9 @@ int main(void)
         //----------------------------------------------------------------------------------
         UpdateCamera(&camera, CAMERA_THIRD_PERSON);
         // Select current animation
-        if (IsKeyPressed(KEY_UP)) animIndex = (animIndex + 1)%animsCount;
-        else if (IsKeyPressed(KEY_DOWN)) animIndex = (animIndex + animsCount - 1)%animsCount;
-        
+        if (IsMouseButtonPressed(MOUSE_BUTTON_RIGHT)) animIndex = (animIndex + 1)%animsCount;
+        else if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) animIndex = (animIndex + animsCount - 1)%animsCount;
+
         // Update model animation
         ModelAnimation anim = modelAnimations[animIndex];
         animCurrentFrame = (animCurrentFrame + 1)%anim.frameCount;
@@ -85,7 +85,8 @@ int main(void)
 
             EndMode3D();
 
-            DrawText("Use the UP/DOWN arrow keys to switch animation", 10, 10, 20, GRAY);
+            DrawText("Use the LEFT/RIGHT mouse buttons to switch animation", 10, 10, 20, GRAY);
+            DrawText(TextFormat("Animation: %s", anim.name), 10, GetScreenHeight() - 20, 10, DARKGRAY);
 
         EndDrawing();
         //----------------------------------------------------------------------------------

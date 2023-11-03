@@ -18,7 +18,7 @@
 
 #if defined(PLATFORM_DESKTOP)
     #define GLSL_VERSION            330
-#else   // PLATFORM_RPI, PLATFORM_ANDROID, PLATFORM_WEB -> Not supported at this moment
+#else   // PLATFORM_ANDROID, PLATFORM_WEB -> Not supported at this moment
     #define GLSL_VERSION            100
 #endif
 
@@ -82,7 +82,8 @@ int main(void)
         // Check if screen is resized
         if (IsWindowResized())
         {
-            float resolution[2] = { (float)GetScreenWidth(), (float)GetScreenHeight() };
+            resolution[0] = (float)GetScreenWidth();
+            resolution[1] = (float)GetScreenHeight();
             SetShaderValue(shader, resolutionLoc, resolution, SHADER_UNIFORM_VEC2);
         }
         //----------------------------------------------------------------------------------
