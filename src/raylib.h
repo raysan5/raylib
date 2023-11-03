@@ -1067,10 +1067,13 @@ RLAPI void SwapScreenBuffer(void);                                // Swap back b
 RLAPI void PollInputEvents(void);                                 // Register all input events
 RLAPI void WaitTime(double seconds);                              // Wait for some time (halt program execution)
 
-// Misc. functions
+// Random values generation functions
 RLAPI void SetRandomSeed(unsigned int seed);                      // Set the seed for the random number generator
 RLAPI int GetRandomValue(int min, int max);                       // Get a random value between min and max (both included)
+RLAPI int *LoadRandomSequence(unsigned int count, int min, int max); // Load random values sequence, no values repeated
+RLAPI void UnloadRandomSequence(int *sequence);                   // Unload random values sequence
 
+// Misc. functions
 RLAPI void TakeScreenshot(const char *fileName);                  // Takes a screenshot of current screen (filename extension defines format)
 RLAPI void SetConfigFlags(unsigned int flags);                    // Setup init configuration flags (view FLAGS)
 RLAPI void OpenURL(const char *url);                              // Open URL with default system browser (if available)

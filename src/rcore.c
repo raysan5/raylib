@@ -1677,7 +1677,7 @@ void SetRandomSeed(unsigned int seed)
 #endif
 }
 
-// Get a random value between min and max (both included)
+// Get a random value between min and max included
 int GetRandomValue(int min, int max)
 {
     int value = 0;
@@ -1695,6 +1695,7 @@ int GetRandomValue(int min, int max)
     // WARNING: Ranges higher than RAND_MAX will return invalid results
     // More specifically, if (max - min) > INT_MAX there will be an overflow,
     // and otherwise if (max - min) > RAND_MAX the random value will incorrectly never exceed a certain threshold
+    // NOTE: Depending on the library it can be as low as 32767
     if ((unsigned int)(max - min) > (unsigned int)RAND_MAX)
     {
         TRACELOG(LOG_WARNING, "Invalid GetRandomValue() arguments, range should not be higher than %i", RAND_MAX);
@@ -1703,6 +1704,55 @@ int GetRandomValue(int min, int max)
     value = (rand()%(abs(max - min) + 1) + min);
 #endif
     return value;
+}
+
+// Load random values sequence, no values repeated, min and max included
+int *LoadRandomSequence(unsigned int count, int min, int max)
+{
+    int *values = NULL;
+    
+#if defined(SUPPORT_RPRAND_GENERATOR)
+    rprand_load_sequence(count, min, max);
+#else
+    if (count > (abs(max - min) + 1)) return values;
+
+    values = (int *)RL_CALLOC(count, sizeof(int));
+
+    int value = 0;
+    bool dupValue = false;
+
+    for (int i = 0; i < count;)
+    {
+        value = (rand()%(abs(max - min) + 1) + min);
+        dupValue = false;
+
+        for (int j = 0; j < i; j++)
+        {
+            if (values[j] == value)
+            {
+                dupValue = true;
+                break;
+            }
+        }
+
+        if (!dupValue)
+        {
+            values[i] = value;
+            i++;
+        }
+    }
+#endif
+    return values;
+}
+
+// Unload random values sequence
+void UnloadRandomSequence(int *sequence)
+{
+#if defined(SUPPORT_RPRAND_GENERATOR)
+    rprand_unload_sequence(sequence);
+#else
+    RL_FREE(sequence);
+#endif
 }
 
 // Takes a screenshot of current screen (saved a .png)

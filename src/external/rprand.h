@@ -117,10 +117,10 @@ extern "C" {                // Prevents name mangling of functions
 // Module Functions Declaration
 //----------------------------------------------------------------------------------
 RPRANDAPI void rprand_set_seed(unsigned long long seed);        // Set rprand_state for Xoshiro128**, seed is 64bit
-RPRANDAPI unsigned int rprand_get_value(int min, int max);      // Get random value within a range, min and max included
+RPRANDAPI int rprand_get_value(int min, int max);               // Get random value within a range, min and max included
 
-RPRANDAPI unsigned int *rprand_load_sequence(unsigned int count, int min, int max); // Load pseudo-random numbers sequence with no duplicates
-RPRANDAPI void rprand_unload_sequence(unsigned int *sequence);  // Unload pseudo-random numbers sequence
+RPRANDAPI int *rprand_load_sequence(unsigned int count, int min, int max); // Load pseudo-random numbers sequence with no duplicates
+RPRANDAPI void rprand_unload_sequence(int *sequence);           // Unload pseudo-random numbers sequence
 
 #ifdef __cplusplus
 }
@@ -136,7 +136,7 @@ RPRANDAPI void rprand_unload_sequence(unsigned int *sequence);  // Unload pseudo
 
 #if defined(RPRAND_IMPLEMENTATION)
 
-#include <stdlib.h>     // Required for: calloc(), free()
+#include <stdlib.h>     // Required for: calloc(), free(), abs()
 #include <stdint.h>     // Required for data types: uint32_t, uint64_t
 
 //----------------------------------------------------------------------------------
@@ -174,33 +174,33 @@ void rprand_set_seed(unsigned long long seed)
 }
 
 // Get random value within a range, min and max included
-unsigned int rprand_get_value(int min, int max)
+int rprand_get_value(int min, int max)
 {
-    unsigned int value = rprand_xoshiro()%(max - min) + min;
+    int value = rprand_xoshiro()%(abs(max - min) + 1) + min;
 
     return value;
 }
 
-// Load pseudo-random numbers sequence with no duplicates
-unsigned int *rprand_load_sequence(unsigned int count, int min, int max)
+// Load pseudo-random numbers sequence with no duplicates, min and max included
+int *rprand_load_sequence(unsigned int count, int min, int max)
 {
-    unsigned int *sequence = NULL;
+    int *sequence = NULL;
     
-    if (count > (max - min)) 
+    if (count > (abs(max - min) + 1)) 
     {
         RPRAND_LOG("WARNING: Sequence count required is greater than range provided\n");
         //count = (max - min);
         return sequence;
     }
 
-    sequence = (unsigned int *)RPRAND_CALLOC(count, sizeof(unsigned int));
+    sequence = (int *)RPRAND_CALLOC(count, sizeof(int));
 
-    uint32_t value = 0;
+    int value = 0;
     bool value_is_dup = false;
 
     for (int i = 0; i < count;)
     {
-        value = rprand_xoshiro()%(max - min) + min;
+        value = (rprand_xoshiro()%(abs(max - min) + 1)) + min;
         value_is_dup = false;
 
         for (int j = 0; j < i; j++)
@@ -223,7 +223,7 @@ unsigned int *rprand_load_sequence(unsigned int count, int min, int max)
 }
 
 // Unload pseudo-random numbers sequence
-void rprand_unload_sequence(unsigned int *sequence)
+void rprand_unload_sequence(int *sequence)
 {
     RPRAND_FREE(sequence);
     sequence = NULL;
