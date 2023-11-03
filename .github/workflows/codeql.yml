@@ -15,7 +15,7 @@ on:
   # push:
   #   branches: [ "main", "master" ]
   schedule:
-    - cron: '0 0 * * *'
+  - cron: '0 0 * * 1'
   pull_request:
     branches: '*'
 
@@ -75,7 +75,16 @@ jobs:
     #   modify them (or add more) to build your code if your project, please refer to the EXAMPLE below for guidance.
 
     - run: |
-        ./.github/workflows/codeql-buildscript.sh
+        cmake -E make_directory build
+
+        sudo apt-get update -qq
+        sudo apt-get install -y gcc-multilib
+        sudo apt-get install -y --no-install-recommends libglfw3 libglfw3-dev libx11-dev libxcursor-dev libxrandr-dev libxinerama-dev libxi-dev libxext-dev libxfixes-dev
+
+        BUILD_TYPE=Release
+        cd build
+        cmake .. -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DPLATFORM=Desktop
+        cmake --build . --config $BUILD_TYPE
 
     - name: Perform CodeQL Analysis
       uses: github/codeql-action/analyze@v2
@@ -103,6 +112,7 @@ jobs:
           -**:cpp/suspicious-pointer-scaling-void
           -**:cpp/unsigned-comparison-zero
           -**/cmake*/Modules/**
+          -**/src/external/glfw/**
         input: ${{ steps.step1.outputs.sarif-output }}/cpp.sarif
         output: ${{ steps.step1.outputs.sarif-output }}/cpp.sarif
 
