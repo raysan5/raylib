@@ -1,7 +1,7 @@
 const std = @import("std");
 const builtin = @import("builtin");
 
-// This has been tested to work with zig 0.11.0 (67709b6, Aug 4 2023)
+// This has been tested to work with zig 0.11.0 and zig 0.12.0-dev.1390+94cee4fb2
 pub fn addRaylib(b: *std.Build, target: std.zig.CrossTarget, optimize: std.builtin.OptimizeMode, options: Options) *std.Build.CompileStep {
     const raylib_flags = &[_][]const u8{
         "-std=gnu99",
