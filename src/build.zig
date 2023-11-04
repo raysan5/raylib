@@ -1,4 +1,5 @@
 const std = @import("std");
+const builtin = @import("builtin");
 
 // This has been tested to work with zig 0.11.0 (67709b6, Aug 4 2023)
 pub fn addRaylib(b: *std.Build, target: std.zig.CrossTarget, optimize: std.builtin.OptimizeMode, options: Options) *std.Build.CompileStep {
@@ -20,55 +21,37 @@ pub fn addRaylib(b: *std.Build, target: std.zig.CrossTarget, optimize: std.built
         raylib.addIncludePath(.{ .path = srcdir ++ "/external/glfw/include" });
     }
 
-    raylib.addCSourceFiles(
-        &.{
-            srcdir ++ "/rcore.c",
-            srcdir ++ "/utils.c",
-        },
-        raylib_flags,
-    );
+    addCSourceFilesVersioned(raylib, &.{
+        srcdir ++ "/rcore.c",
+        srcdir ++ "/utils.c",
+    }, raylib_flags);
 
     if (options.raudio) {
-        raylib.addCSourceFiles(
-            &.{
-                srcdir ++ "/raudio.c",
-            },
-            raylib_flags,
-        );
+        addCSourceFilesVersioned(raylib, &.{
+            srcdir ++ "/raudio.c",
+        }, raylib_flags);
     }
     if (options.rmodels) {
-        raylib.addCSourceFiles(
-            &.{
-                srcdir ++ "/rmodels.c",
-            },
-            &[_][]const u8{
-                "-fno-sanitize=undefined", // https://github.com/raysan5/raylib/issues/1891
-            } ++ raylib_flags,
-        );
+        addCSourceFilesVersioned(raylib, &.{
+            srcdir ++ "/rmodels.c",
+        }, &[_][]const u8{
+            "-fno-sanitize=undefined", // https://github.com/raysan5/raylib/issues/1891
+        } ++ raylib_flags);
     }
     if (options.rshapes) {
-        raylib.addCSourceFiles(
-            &.{
-                srcdir ++ "/rshapes.c",
-            },
-            raylib_flags,
-        );
+        addCSourceFilesVersioned(raylib, &.{
+            srcdir ++ "/rshapes.c",
+        }, raylib_flags);
     }
     if (options.rtext) {
-        raylib.addCSourceFiles(
-            &.{
-                srcdir ++ "/rtext.c",
-            },
-            raylib_flags,
-        );
+        addCSourceFilesVersioned(raylib, &.{
+            srcdir ++ "/rtext.c",
+        }, raylib_flags);
     }
     if (options.rtextures) {
-        raylib.addCSourceFiles(
-            &.{
-                srcdir ++ "/rtextures.c",
-            },
-            raylib_flags,
-        );
+        addCSourceFilesVersioned(raylib, &.{
+            srcdir ++ "/rtextures.c",
+        }, raylib_flags);
     }
 
     var gen_step = b.addWriteFiles();
@@ -83,10 +66,9 @@ pub fn addRaylib(b: *std.Build, target: std.zig.CrossTarget, optimize: std.built
 
     switch (target.getOsTag()) {
         .windows => {
-            raylib.addCSourceFiles(
-                &.{srcdir ++ "/rglfw.c"},
-                raylib_flags,
-            );
+            addCSourceFilesVersioned(raylib, &.{
+                srcdir ++ "/rglfw.c",
+            }, raylib_flags);
             raylib.linkSystemLibrary("winmm");
             raylib.linkSystemLibrary("gdi32");
             raylib.linkSystemLibrary("opengl32");
@@ -96,10 +78,9 @@ pub fn addRaylib(b: *std.Build, target: std.zig.CrossTarget, optimize: std.built
         },
         .linux => {
             if (!options.platform_drm) {
-                raylib.addCSourceFiles(
-                    &.{srcdir ++ "/rglfw.c"},
-                    raylib_flags,
-                );
+                addCSourceFilesVersioned(raylib, &.{
+                    srcdir ++ "/rglfw.c",
+                }, raylib_flags);
                 raylib.linkSystemLibrary("GL");
                 raylib.linkSystemLibrary("rt");
                 raylib.linkSystemLibrary("dl");
@@ -127,10 +108,9 @@ pub fn addRaylib(b: *std.Build, target: std.zig.CrossTarget, optimize: std.built
             }
         },
         .freebsd, .openbsd, .netbsd, .dragonfly => {
-            raylib.addCSourceFiles(
-                &.{srcdir ++ "/rglfw.c"},
-                raylib_flags,
-            );
+            addCSourceFilesVersioned(raylib, &.{
+                srcdir ++ "/rglfw.c",
+            }, raylib_flags);
             raylib.linkSystemLibrary("GL");
             raylib.linkSystemLibrary("rt");
             raylib.linkSystemLibrary("dl");
@@ -149,10 +129,9 @@ pub fn addRaylib(b: *std.Build, target: std.zig.CrossTarget, optimize: std.built
             const raylib_flags_extra_macos = &[_][]const u8{
                 "-ObjC",
             };
-            raylib.addCSourceFiles(
-                &.{srcdir ++ "/rglfw.c"},
-                raylib_flags ++ raylib_flags_extra_macos,
-            );
+            addCSourceFilesVersioned(raylib, &.{
+                srcdir ++ "/rglfw.c",
+            }, raylib_flags ++ raylib_flags_extra_macos);
             raylib.linkFramework("Foundation");
             raylib.linkFramework("CoreServices");
             raylib.linkFramework("CoreGraphics");
@@ -235,3 +214,14 @@ const srcdir = struct {
         return std.fs.path.dirname(@src().file).?;
     }
 }.getSrcDir();
+
+fn addCSourceFilesVersioned(exe: *std.Build.Step.Compile, files: []const []const u8, flags: []const []const u8) void {
+    if (comptime builtin.zig_version.minor >= 12) {
+        exe.addCSourceFiles(.{
+            .files = files,
+            .flags = flags,
+        });
+    } else {
+        exe.addCSourceFiles(files, flags);
+    }
+}
