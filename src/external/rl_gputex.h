@@ -1,6 +1,6 @@
 /**********************************************************************************************
 *
-*   rl_gputex - GPU compressed textures loading and saving
+*   rl_gputex v1.0 - GPU compressed textures loading and saving
 *
 *   DESCRIPTION:
 *
