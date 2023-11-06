@@ -136,7 +136,7 @@
 *
 *       #define RAYGUI_DEBUG_RECS_BOUNDS
 *           Draw control bounds rectangles for debug
-* 
+*
 *       #define RAYGUI_DEBUG_TEXT_BOUNDS
 *           Draw text bounds rectangles for debug
 *
@@ -246,7 +246,7 @@
 *       0.8 (27-Aug-2015) Initial release. Implemented by Kevin Gato, Daniel Nicolás and Ramon Santamaria.
 *
 *   DEPENDENCIES:
-*       raylib 4.6-dev      Inputs reading (keyboard/mouse), shapes drawing, font loading and text drawing
+*       raylib 5.0  - Inputs reading (keyboard/mouse), shapes drawing, font loading and text drawing
 *
 *   STANDALONE MODE:
 *       By default raygui depends on raylib mostly for the inputs and the drawing functionality but that dependency can be disabled
@@ -498,7 +498,7 @@ typedef enum {
 typedef enum {
     // Default -> populates to all controls when set
     DEFAULT = 0,
-    
+
     // Basic controls
     LABEL,          // Used also for: LABELBUTTON
     BUTTON,
@@ -1775,7 +1775,7 @@ int GuiScrollPanel(Rectangle bounds, const char *text, Rectangle content, Vector
 {
     #define RAYGUI_MIN_SCROLLBAR_WIDTH     40
     #define RAYGUI_MIN_SCROLLBAR_HEIGHT    40
-    
+
     int result = 0;
     GuiState state = guiState;
     float mouseWheelSpeed = 20.0f;      // Default movement speed with mouse wheel
@@ -1806,27 +1806,27 @@ int GuiScrollPanel(Rectangle bounds, const char *text, Rectangle content, Vector
 
     int horizontalScrollBarWidth = hasHorizontalScrollBar? GuiGetStyle(LISTVIEW, SCROLLBAR_WIDTH) : 0;
     int verticalScrollBarWidth =  hasVerticalScrollBar? GuiGetStyle(LISTVIEW, SCROLLBAR_WIDTH) : 0;
-    Rectangle horizontalScrollBar = { 
-        (float)((GuiGetStyle(LISTVIEW, SCROLLBAR_SIDE) == SCROLLBAR_LEFT_SIDE)? (float)bounds.x + verticalScrollBarWidth : (float)bounds.x) + GuiGetStyle(DEFAULT, BORDER_WIDTH), 
-        (float)bounds.y + bounds.height - horizontalScrollBarWidth - GuiGetStyle(DEFAULT, BORDER_WIDTH), 
-        (float)bounds.width - verticalScrollBarWidth - 2*GuiGetStyle(DEFAULT, BORDER_WIDTH), 
-        (float)horizontalScrollBarWidth 
+    Rectangle horizontalScrollBar = {
+        (float)((GuiGetStyle(LISTVIEW, SCROLLBAR_SIDE) == SCROLLBAR_LEFT_SIDE)? (float)bounds.x + verticalScrollBarWidth : (float)bounds.x) + GuiGetStyle(DEFAULT, BORDER_WIDTH),
+        (float)bounds.y + bounds.height - horizontalScrollBarWidth - GuiGetStyle(DEFAULT, BORDER_WIDTH),
+        (float)bounds.width - verticalScrollBarWidth - 2*GuiGetStyle(DEFAULT, BORDER_WIDTH),
+        (float)horizontalScrollBarWidth
     };
-    Rectangle verticalScrollBar = { 
-        (float)((GuiGetStyle(LISTVIEW, SCROLLBAR_SIDE) == SCROLLBAR_LEFT_SIDE)? (float)bounds.x + GuiGetStyle(DEFAULT, BORDER_WIDTH) : (float)bounds.x + bounds.width - verticalScrollBarWidth - GuiGetStyle(DEFAULT, BORDER_WIDTH)), 
-        (float)bounds.y + GuiGetStyle(DEFAULT, BORDER_WIDTH), 
-        (float)verticalScrollBarWidth, 
-        (float)bounds.height - horizontalScrollBarWidth - 2*GuiGetStyle(DEFAULT, BORDER_WIDTH) 
+    Rectangle verticalScrollBar = {
+        (float)((GuiGetStyle(LISTVIEW, SCROLLBAR_SIDE) == SCROLLBAR_LEFT_SIDE)? (float)bounds.x + GuiGetStyle(DEFAULT, BORDER_WIDTH) : (float)bounds.x + bounds.width - verticalScrollBarWidth - GuiGetStyle(DEFAULT, BORDER_WIDTH)),
+        (float)bounds.y + GuiGetStyle(DEFAULT, BORDER_WIDTH),
+        (float)verticalScrollBarWidth,
+        (float)bounds.height - horizontalScrollBarWidth - 2*GuiGetStyle(DEFAULT, BORDER_WIDTH)
     };
 
     // Make sure scroll bars have a minimum width/height
     // NOTE: If content >>> bounds, size could be very small or even 0
-    if (horizontalScrollBar.width < RAYGUI_MIN_SCROLLBAR_WIDTH) 
+    if (horizontalScrollBar.width < RAYGUI_MIN_SCROLLBAR_WIDTH)
     {
         horizontalScrollBar.width = RAYGUI_MIN_SCROLLBAR_WIDTH;
         mouseWheelSpeed = 30.0f;    // TODO: Calculate speed increment based on content.height vs bounds.height
     }
-    if (verticalScrollBar.height < RAYGUI_MIN_SCROLLBAR_HEIGHT) 
+    if (verticalScrollBar.height < RAYGUI_MIN_SCROLLBAR_HEIGHT)
     {
         verticalScrollBar.height = RAYGUI_MIN_SCROLLBAR_HEIGHT;
         mouseWheelSpeed = 30.0f;    // TODO: Calculate speed increment based on content.width vs bounds.width
@@ -2155,7 +2155,7 @@ int GuiToggleSlider(Rectangle bounds, const char *text, int *active)
             }
             else state = STATE_FOCUSED;
         }
-        
+
         if ((*active) && (state != STATE_FOCUSED)) state = STATE_PRESSED;
     }
 
@@ -2625,8 +2625,6 @@ int GuiTextBox(Rectangle bounds, char *text, int bufferSize, bool editMode)
             if (CheckCollisionPointRec(mousePosition, textBounds))     // Mouse hover text
             {
                 float scaleFactor = (float)GuiGetStyle(DEFAULT, TEXT_SIZE)/(float)guiFont.baseSize;
-                int codepoint = 0;
-                int codepointSize = 0;
                 int codepointIndex = 0;
                 float glyphWidth = 0.0f;
                 float widthToMouseX = 0;
@@ -2646,7 +2644,7 @@ int GuiTextBox(Rectangle bounds, char *text, int bufferSize, bool editMode)
                         mouseCursorIndex = i;
                         break;
                     }
-                    
+
                     widthToMouseX += (glyphWidth + (float)GuiGetStyle(DEFAULT, TEXT_SPACING));
                 }
 
@@ -2743,7 +2741,7 @@ bool GuiTextBoxMulti(Rectangle bounds, char *text, int bufferSize, bool editMode
     GuiSetStyle(DEFAULT, TEXT_ALIGNMENT_VERTICAL, TEXT_ALIGN_MIDDLE);
     GuiSetStyle(DEFAULT, TEXT_WRAP_MODE, TEXT_WRAP_NONE);
     GuiSetStyle(TEXTBOX, TEXT_READONLY, 0);
-    
+
     return pressed;
 }
 */
@@ -2937,6 +2935,7 @@ int GuiValueBox(Rectangle bounds, const char *text, int *value, int minValue, in
 int GuiSliderPro(Rectangle bounds, const char *textLeft, const char *textRight, float *value, float minValue, float maxValue, int sliderWidth)
 {
     int result = 0;
+    float oldValue = *value;
     GuiState state = guiState;
 
     float temp = (maxValue - minValue)/2.0f;
@@ -3005,6 +3004,10 @@ int GuiSliderPro(Rectangle bounds, const char *textLeft, const char *textRight, 
         if (*value > maxValue) *value = maxValue;
         else if (*value < minValue) *value = minValue;
     }
+
+    // Control value change check
+    if(oldValue == *value) result = 0;
+    else result = 1;
 
     // Bar limits check
     if (sliderWidth > 0)        // Slider
@@ -3085,7 +3088,7 @@ int GuiProgressBar(Rectangle bounds, const char *textLeft, const char *textRight
     if (*value > maxValue) *value = maxValue;
 
     // WARNING: Working with floats could lead to rounding issues
-    if ((state != STATE_DISABLED)) progress.width = (float)(*value/(maxValue - minValue))*bounds.width - ((*value >= maxValue) ? (float)(2*GuiGetStyle(PROGRESSBAR, BORDER_WIDTH)) : 0.0f);
+    if ((state != STATE_DISABLED)) progress.width = (float)(*value/(maxValue - minValue))*bounds.width - ((*value >= maxValue)? (float)(2*GuiGetStyle(PROGRESSBAR, BORDER_WIDTH)) : 0.0f);
     //--------------------------------------------------------------------
 
     // Draw control
@@ -3366,8 +3369,7 @@ int GuiColorPanel(Rectangle bounds, const char *text, Color *color)
     pickerSelector.x = bounds.x + (float)hsv.y*bounds.width;            // HSV: Saturation
     pickerSelector.y = bounds.y + (1.0f - (float)hsv.z)*bounds.height;  // HSV: Value
 
-    float hue = -1.0f;
-    Vector3 maxHue = { hue >= 0.0f ? hue : hsv.x, 1.0f, 1.0f };
+    Vector3 maxHue = { hsv.x, 1.0f, 1.0f };
     Vector3 rgbHue = ConvertHSVtoRGB(maxHue);
     Color maxHueCol = { (unsigned char)(255.0f*rgbHue.x),
                       (unsigned char)(255.0f*rgbHue.y),
@@ -3680,8 +3682,7 @@ int GuiColorPanelHSV(Rectangle bounds, const char *text, Vector3 *colorHsv)
     pickerSelector.x = bounds.x + (float)colorHsv->y*bounds.width;            // HSV: Saturation
     pickerSelector.y = bounds.y + (1.0f - (float)colorHsv->z)*bounds.height;  // HSV: Value
 
-    float hue = -1.0f;
-    Vector3 maxHue = { hue >= 0.0f ? hue : colorHsv->x, 1.0f, 1.0f };
+    Vector3 maxHue = { colorHsv->x, 1.0f, 1.0f };
     Vector3 rgbHue = ConvertHSVtoRGB(maxHue);
     Color maxHueCol = { (unsigned char)(255.0f*rgbHue.x),
                       (unsigned char)(255.0f*rgbHue.y),
@@ -3894,11 +3895,13 @@ int GuiGrid(Rectangle bounds, const char *text, float spacing, int subdivs, Vect
     GuiState state = guiState;
 
     Vector2 mousePoint = GetMousePosition();
-    Vector2 currentMouseCell = { 0 };
+    Vector2 currentMouseCell = { -1, -1 };
 
     float spaceWidth = spacing/(float)subdivs;
     int linesV = (int)(bounds.width/spaceWidth) + 1;
     int linesH = (int)(bounds.height/spaceWidth) + 1;
+
+    int color = GuiGetStyle(DEFAULT, LINE_COLOR);
 
     // Update control
     //--------------------------------------------------------------------
@@ -3915,28 +3918,23 @@ int GuiGrid(Rectangle bounds, const char *text, float spacing, int subdivs, Vect
 
     // Draw control
     //--------------------------------------------------------------------
-    switch (state)
-    {
-        case STATE_NORMAL:
-        {
-            if (subdivs > 0)
-            {
-                // Draw vertical grid lines
-                for (int i = 0; i < linesV; i++)
-                {
-                    Rectangle lineV = { bounds.x + spacing*i/subdivs, bounds.y, 1, bounds.height };
-                    GuiDrawRectangle(lineV, 0, BLANK, ((i%subdivs) == 0)? GuiFade(GetColor(GuiGetStyle(DEFAULT, LINE_COLOR)), RAYGUI_GRID_ALPHA*4) : GuiFade(GetColor(GuiGetStyle(DEFAULT, LINE_COLOR)), RAYGUI_GRID_ALPHA));
-                }
+    if (state == STATE_DISABLED) color = GuiGetStyle(DEFAULT, BORDER_COLOR_DISABLED);
 
-                // Draw horizontal grid lines
-                for (int i = 0; i < linesH; i++)
-                {
-                    Rectangle lineH = { bounds.x, bounds.y + spacing*i/subdivs, bounds.width, 1 };
-                    GuiDrawRectangle(lineH, 0, BLANK, ((i%subdivs) == 0)? GuiFade(GetColor(GuiGetStyle(DEFAULT, LINE_COLOR)), RAYGUI_GRID_ALPHA*4) : GuiFade(GetColor(GuiGetStyle(DEFAULT, LINE_COLOR)), RAYGUI_GRID_ALPHA));
-                }
-            }
-        } break;
-        default: break;
+    if (subdivs > 0)
+    {
+        // Draw vertical grid lines
+        for (int i = 0; i < linesV; i++)
+        {
+            Rectangle lineV = { bounds.x + spacing*i/subdivs, bounds.y, 1, bounds.height };
+            GuiDrawRectangle(lineV, 0, BLANK, ((i%subdivs) == 0)? GuiFade(GetColor(color), RAYGUI_GRID_ALPHA*4) : GuiFade(GetColor(color), RAYGUI_GRID_ALPHA));
+        }
+
+        // Draw horizontal grid lines
+        for (int i = 0; i < linesH; i++)
+        {
+            Rectangle lineH = { bounds.x, bounds.y + spacing*i/subdivs, bounds.width, 1 };
+            GuiDrawRectangle(lineH, 0, BLANK, ((i%subdivs) == 0)? GuiFade(GetColor(color), RAYGUI_GRID_ALPHA*4) : GuiFade(GetColor(color), RAYGUI_GRID_ALPHA));
+        }
     }
 
     if (mouseCell != NULL) *mouseCell = currentMouseCell;
@@ -4101,7 +4099,7 @@ void GuiLoadStyleDefault(void)
     GuiSetStyle(DEFAULT, BORDER_WIDTH, 1);
     GuiSetStyle(DEFAULT, TEXT_PADDING, 0);
     GuiSetStyle(DEFAULT, TEXT_ALIGNMENT, TEXT_ALIGN_CENTER);
-    
+
     // Initialize default extended property values
     // NOTE: By default, extended property values are initialized to 0
     GuiSetStyle(DEFAULT, TEXT_SIZE, 10);                // DEFAULT, shared by all controls
@@ -4189,7 +4187,7 @@ const char *GuiIconText(int iconId, const char *text)
     return NULL;
 #else
     static char buffer[1024] = { 0 };
-    static char iconBuffer[6] = { 0 };
+    static char iconBuffer[16] = { 0 };
 
     if (text != NULL)
     {
@@ -4206,7 +4204,7 @@ const char *GuiIconText(int iconId, const char *text)
     }
     else
     {
-        sprintf(iconBuffer, "#%03i#", iconId & 0x1ff);
+        sprintf(iconBuffer, "#%03i#", iconId);
 
         return iconBuffer;
     }
@@ -4876,7 +4874,7 @@ static void GuiDrawText(const char *text, Rectangle textBounds, int alignment, C
             if (codepoint == '\n') break;   // WARNING: Lines are already processed manually, no need to keep drawing after this codepoint
             else
             {
-                // TODO: There are multiple types of spaces in Unicode, 
+                // TODO: There are multiple types of spaces in Unicode,
                 // maybe it's a good idea to add support for more: http://jkorpela.fi/chars/spaces.html
                 if ((codepoint != ' ') && (codepoint != '\t'))      // Do not draw codepoints with no glyph
                 {
@@ -4888,7 +4886,7 @@ static void GuiDrawText(const char *text, Rectangle textBounds, int alignment, C
                             DrawTextCodepoint(guiFont, codepoint, RAYGUI_CLITERAL(Vector2){ textBoundsPosition.x + textOffsetX, textBoundsPosition.y + textOffsetY }, (float)GuiGetStyle(DEFAULT, TEXT_SIZE), GuiFade(tint, guiAlpha));
                         }
                     }
-                    else if ((wrapMode == TEXT_WRAP_CHAR) || (wrapMode == TEXT_WRAP_WORD)) 
+                    else if ((wrapMode == TEXT_WRAP_CHAR) || (wrapMode == TEXT_WRAP_WORD))
                     {
                         // Draw only glyphs inside the bounds
                         if ((textBoundsPosition.y + textOffsetY) <= (textBounds.y + textBounds.height - GuiGetStyle(DEFAULT, TEXT_SIZE)))
