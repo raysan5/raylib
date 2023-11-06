@@ -3173,7 +3173,11 @@ static void ScanDirectoryFiles(const char *basePath, FilePathList *files, const 
             if ((strcmp(dp->d_name, ".") != 0) &&
                 (strcmp(dp->d_name, "..") != 0))
             {
+            #if defined(_WIN32)
+                sprintf(path, "%s\\%s", basePath, dp->d_name);
+            #else
                 sprintf(path, "%s/%s", basePath, dp->d_name);
+            #endif
 
                 if (filter != NULL)
                 {
@@ -3212,7 +3216,11 @@ static void ScanDirectoryFilesRecursively(const char *basePath, FilePathList *fi
             if ((strcmp(dp->d_name, ".") != 0) && (strcmp(dp->d_name, "..") != 0))
             {
                 // Construct new path from our base path
+            #if defined(_WIN32)
+                sprintf(path, "%s\\%s", basePath, dp->d_name);
+            #else
                 sprintf(path, "%s/%s", basePath, dp->d_name);
+            #endif
 
                 if (IsPathFile(path))
                 {
