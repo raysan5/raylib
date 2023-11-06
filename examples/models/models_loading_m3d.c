@@ -85,7 +85,7 @@ int main(void)
                 animFrameCounter = 0;
                 animId++;
 
-                if (animId >= animsCount) animId = 0;
+                if (animId >= (int)animsCount) animId = 0;
                 UpdateModelAnimation(model, anims[animId], 0);
                 animPlaying = true;
             }

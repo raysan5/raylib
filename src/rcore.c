@@ -2519,7 +2519,7 @@ bool ExportAutomationEventList(AutomationEventList list, const char *fileName)
 
     // Add events data
     byteCount += sprintf(txtData + byteCount, "c %i\n", list.count);
-    for (int i = 0; i < list.count; i++)
+    for (unsigned int i = 0; i < list.count; i++)
     {
         byteCount += snprintf(txtData + byteCount, 256, "e %i %i %i %i %i %i // Event: %s\n", list.events[i].frame, list.events[i].type,
             list.events[i].params[0], list.events[i].params[1], list.events[i].params[2], list.events[i].params[3], autoEventTypeName[list.events[i].type]);

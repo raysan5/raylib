@@ -30,7 +30,7 @@ int main(void)
     Vector2 end = { (float)screenWidth, (float)screenHeight };
     
     Vector2 startControl = { 100, 0 };
-    Vector2 endControl = { GetScreenWidth() - 100, GetScreenHeight() };
+    Vector2 endControl = { (float)GetScreenWidth() - 100, (float)GetScreenHeight() };
 
     SetTargetFPS(60);               // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------

@@ -92,7 +92,7 @@ int main(void)
         BeginDrawing();
             ClearBackground(RAYWHITE);
         
-            DrawTextureRec(target.texture, (Rectangle) { 0, 0, screenWidth, -screenHeight }, (Vector2) { 0, 0 }, WHITE);
+            DrawTextureRec(target.texture, (Rectangle) { 0, 0, (float)screenWidth, (float)-screenHeight }, (Vector2) { 0, 0 }, WHITE);
             DrawFPS(10, 10);
         EndDrawing();
         //----------------------------------------------------------------------------------
