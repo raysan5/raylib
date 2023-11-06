@@ -68,7 +68,7 @@ int main(void)
     marchLocs.screenCenter = GetShaderLocation(shdrRaymarch, "screenCenter");
 
     // Transfer screenCenter position to shader. Which is used to calculate ray direction. 
-    Vector2 screenCenter = {.x = screenWidth/2.0, .y = screenHeight/2.0};
+    Vector2 screenCenter = {.x = screenWidth/2.0f, .y = screenHeight/2.0f};
     SetShaderValue(shdrRaymarch, marchLocs.screenCenter , &screenCenter , SHADER_UNIFORM_VEC2);
 
     // Use Customized function to create writable depth texture buffer
@@ -84,7 +84,7 @@ int main(void)
     };
     
     // Camera FOV is pre-calculated in the camera Distance.
-    double camDist = 1.0/(tan(camera.fovy*0.5*DEG2RAD));
+    float camDist = 1.0f/(tanf(camera.fovy*0.5f*DEG2RAD));
     
     SetTargetFPS(60);               // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
@@ -113,7 +113,7 @@ int main(void)
             // Raymarch Scene
             rlEnableDepthTest(); //Manually enable Depth Test to handle multiple rendering methods.
             BeginShaderMode(shdrRaymarch);
-                DrawRectangleRec((Rectangle){0,0,screenWidth,screenHeight},WHITE);
+                DrawRectangleRec((Rectangle){0,0, (float)screenWidth, (float)screenHeight},WHITE);
             EndShaderMode();
             
             // Raserize Scene
@@ -132,7 +132,7 @@ int main(void)
         BeginDrawing();
             ClearBackground(RAYWHITE);
         
-            DrawTextureRec(target.texture, (Rectangle) { 0, 0, screenWidth, -screenHeight }, (Vector2) { 0, 0 }, WHITE);
+            DrawTextureRec(target.texture, (Rectangle) { 0, 0, (float)screenWidth, (float)-screenHeight }, (Vector2) { 0, 0 }, WHITE);
             DrawFPS(10, 10);
         EndDrawing();
         //----------------------------------------------------------------------------------

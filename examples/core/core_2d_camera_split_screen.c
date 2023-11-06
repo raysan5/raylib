@@ -85,12 +85,12 @@ int main(void)
                 // Draw full scene with first camera
                 for (int i = 0; i < screenWidth/PLAYER_SIZE + 1; i++)
                 {
-                    DrawLineV((Vector2){PLAYER_SIZE*i, 0}, (Vector2){PLAYER_SIZE*i, screenHeight}, LIGHTGRAY);
+                    DrawLineV((Vector2){(float)PLAYER_SIZE*i, 0}, (Vector2){ (float)PLAYER_SIZE*i, (float)screenHeight}, LIGHTGRAY);
                 }
 
                 for (int i = 0; i < screenHeight/PLAYER_SIZE + 1; i++)
                 {
-                    DrawLineV((Vector2){0, PLAYER_SIZE*i}, (Vector2){screenWidth, PLAYER_SIZE*i}, LIGHTGRAY);
+                    DrawLineV((Vector2){0, (float)PLAYER_SIZE*i}, (Vector2){ (float)screenWidth, (float)PLAYER_SIZE*i}, LIGHTGRAY);
                 }
 
                 for (int i = 0; i < screenWidth/PLAYER_SIZE; i++)
@@ -118,12 +118,12 @@ int main(void)
                 // Draw full scene with second camera
                 for (int i = 0; i < screenWidth/PLAYER_SIZE + 1; i++)
                 {
-                    DrawLineV((Vector2){PLAYER_SIZE*i, 0}, (Vector2){PLAYER_SIZE*i, screenHeight}, LIGHTGRAY);
+                    DrawLineV((Vector2){ (float)PLAYER_SIZE*i, 0}, (Vector2){ (float)PLAYER_SIZE*i, (float)screenHeight}, LIGHTGRAY);
                 }
 
                 for (int i = 0; i < screenHeight/PLAYER_SIZE + 1; i++)
                 {
-                    DrawLineV((Vector2){0, PLAYER_SIZE*i}, (Vector2){screenWidth, PLAYER_SIZE*i}, LIGHTGRAY);
+                    DrawLineV((Vector2){0, (float)PLAYER_SIZE*i}, (Vector2){ (float)screenWidth, (float)PLAYER_SIZE*i}, LIGHTGRAY);
                 }
 
                 for (int i = 0; i < screenWidth/PLAYER_SIZE; i++)

@@ -2655,7 +2655,7 @@ int GuiTextBox(Rectangle bounds, char *text, int bufferSize, bool editMode)
                 if (GetMousePosition().x >= (textBounds.x + textEndWidth - glyphWidth/2))
                 {
                     mouseCursor.x = textBounds.x + textEndWidth;
-                    mouseCursorIndex = strlen(text);
+                    mouseCursorIndex = (int)strlen(text);
                 }
 
                 // Place cursor at required index on mouse click
