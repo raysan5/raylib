@@ -6,12 +6,14 @@
 name: "CodeQL"
 
 on:
+  workflow_dispatch:
   # push:
   #   branches: [ "main", "master" ]
-  schedule:
-  - cron: '0 0 * * 1'
   pull_request:
     branches: '*'
+  schedule:
+  - cron: '0 0 * * 1'
+
 env:
   # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)
   BUILD_TYPE: Release
