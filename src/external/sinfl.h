@@ -122,6 +122,7 @@ extern "C" {
 
 struct sinfl {
   const unsigned char *bitptr;
+  const unsigned char *bitend;      // @raysan5: added
   unsigned long long bitbuf;
   int bitcnt;
 
@@ -185,9 +186,10 @@ sinfl_read64(const void *p) {
 }
 static void
 sinfl_copy64(unsigned char **dst, unsigned char **src) {
-  unsigned long long n;
-  memcpy(&n, *src, 8);
-  memcpy(*dst, &n, 8);
+  //unsigned long long n;
+  //memcpy(&n, *src, 8);
+  //memcpy(*dst, &n, 8);
+  memcpy(*dst, *src, 8);    // @raysan5
   *dst += 8, *src += 8;
 }
 static unsigned char*
@@ -210,9 +212,22 @@ sinfl_copy128(unsigned char **dst, unsigned char **src) {
 #endif
 static void
 sinfl_refill(struct sinfl *s) {
-  s->bitbuf |= sinfl_read64(s->bitptr) << s->bitcnt;
-  s->bitptr += (63 - s->bitcnt) >> 3;
-  s->bitcnt |= 56; /* bitcount in range [56,63] */
+  if (s->bitend - s->bitptr >= 8) {
+      // @raysan5: original code, only those 3 lines
+      s->bitbuf |= sinfl_read64(s->bitptr) << s->bitcnt;
+      s->bitptr += (63 - s->bitcnt) >> 3;
+      s->bitcnt |= 56; /* bitcount in range [56,63] */
+  } else {
+      // @raysan5: added this case when bits remaining < 8
+      int bitswant = 63 - s->bitcnt;
+      int byteswant = bitswant >> 3;
+      int bytesuse = s->bitend - s->bitptr <= byteswant ? (int)(s->bitend - s->bitptr) : byteswant;
+      unsigned long long n = 0;
+      memcpy(&n, s->bitptr, bytesuse);
+      s->bitbuf |= n << s->bitcnt;
+      s->bitptr += bytesuse;
+      s->bitcnt += bytesuse << 3;
+  }
 }
 static int
 sinfl_peek(struct sinfl *s, int cnt) {
@@ -384,6 +399,7 @@ sinfl_decompress(unsigned char *out, int cap, const unsigned char *in, int size)
   int last = 0;
 
   s.bitptr = in;
+  s.bitend = e;     // @raysan5: added
   while (1) {
     switch (state) {
     case hdr: {
