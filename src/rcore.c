@@ -252,6 +252,7 @@ typedef struct CoreData {
         bool shouldClose;                   // Check if window set for closing
         bool resizedLastFrame;              // Check if window has been resized last frame
         bool eventWaiting;                  // Wait for events before ending frame
+        bool usingFbo;                      // Using FBO (RenderTexture) for rendering instead of default framebuffer
 
         Point position;                     // Window position (required on fullscreen toggle)
         Point previousPosition;             // Window previous position (required on borderless windowed toggle)
@@ -1035,6 +1036,7 @@ void BeginTextureMode(RenderTexture2D target)
     // calculation when using BeginMode3D()
     CORE.Window.currentFbo.width = target.texture.width;
     CORE.Window.currentFbo.height = target.texture.height;
+    CORE.Window.usingFbo = true;
 }
 
 // Ends drawing to render texture
@@ -1050,6 +1052,7 @@ void EndTextureMode(void)
     // Reset current fbo to screen size
     CORE.Window.currentFbo.width = CORE.Window.render.width;
     CORE.Window.currentFbo.height = CORE.Window.render.height;
+    CORE.Window.usingFbo = false;
 }
 
 // Begin custom shader mode
