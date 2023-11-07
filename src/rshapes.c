@@ -161,7 +161,7 @@ void DrawPixelV(Vector2 position, Color color)
 #endif
 }
 
-// Draw a line
+// Draw a line (using gl lines)
 void DrawLine(int startPosX, int startPosY, int endPosX, int endPosY, Color color)
 {
     rlBegin(RL_LINES);
@@ -171,7 +171,7 @@ void DrawLine(int startPosX, int startPosY, int endPosX, int endPosY, Color colo
     rlEnd();
 }
 
-// Draw a line  (Vector version)
+// Draw a line (using gl lines)
 void DrawLineV(Vector2 startPos, Vector2 endPos, Color color)
 {
     rlBegin(RL_LINES);
@@ -181,29 +181,24 @@ void DrawLineV(Vector2 startPos, Vector2 endPos, Color color)
     rlEnd();
 }
 
-// Draw a line defining thickness
-void DrawLineEx(Vector2 startPos, Vector2 endPos, float thick, Color color)
+// Draw lines sequuence (using gl lines)
+void DrawLineStrip(Vector2 *points, int pointCount, Color color)
 {
-    Vector2 delta = { endPos.x - startPos.x, endPos.y - startPos.y };
-    float length = sqrtf(delta.x*delta.x + delta.y*delta.y);
-
-    if ((length > 0) && (thick > 0))
+    if (pointCount >= 2)
     {
-        float scale = thick/(2*length);
+        rlBegin(RL_LINES);
+            rlColor4ub(color.r, color.g, color.b, color.a);
 
-        Vector2 radius = { -scale*delta.y, scale*delta.x };
-        Vector2 strip[4] = {
-            { startPos.x - radius.x, startPos.y - radius.y },
-            { startPos.x + radius.x, startPos.y + radius.y },
-            { endPos.x - radius.x, endPos.y - radius.y },
-            { endPos.x + radius.x, endPos.y + radius.y }
-        };
-
-        DrawTriangleStrip(strip, 4, color);
+            for (int i = 0; i < pointCount - 1; i++)
+            {
+                rlVertex2f(points[i].x, points[i].y);
+                rlVertex2f(points[i + 1].x, points[i + 1].y);
+            }
+        rlEnd();
     }
 }
 
-// Draw line using cubic-bezier curves in-out
+// Draw line using cubic-bezier spline, in-out interpolation, no control points
 void DrawLineBezier(Vector2 startPos, Vector2 endPos, float thick, Color color)
 {
     Vector2 previous = startPos;
@@ -241,254 +236,25 @@ void DrawLineBezier(Vector2 startPos, Vector2 endPos, float thick, Color color)
     DrawTriangleStrip(points, 2*SPLINE_LINE_DIVISIONS + 2, color);
 }
 
-// Draw line using quadratic bezier curves with a control point
-void DrawLineBezierQuad(Vector2 startPos, Vector2 endPos, Vector2 controlPos, float thick, Color color)
+// Draw a line defining thickness
+void DrawLineEx(Vector2 startPos, Vector2 endPos, float thick, Color color)
 {
-    const float step = 1.0f/SPLINE_LINE_DIVISIONS;
+    Vector2 delta = { endPos.x - startPos.x, endPos.y - startPos.y };
+    float length = sqrtf(delta.x*delta.x + delta.y*delta.y);
 
-    Vector2 previous = startPos;
-    Vector2 current = { 0 };
-    float t = 0.0f;
-
-    Vector2 points[2*SPLINE_LINE_DIVISIONS + 2] = { 0 };
-
-    for (int i = 1; i <= SPLINE_LINE_DIVISIONS; i++)
+    if ((length > 0) && (thick > 0))
     {
-        t = step*i;
+        float scale = thick/(2*length);
 
-        float a = powf(1.0f - t, 2);
-        float b = 2.0f*(1.0f - t)*t;
-        float c = powf(t, 2);
+        Vector2 radius = { -scale*delta.y, scale*delta.x };
+        Vector2 strip[4] = {
+            { startPos.x - radius.x, startPos.y - radius.y },
+            { startPos.x + radius.x, startPos.y + radius.y },
+            { endPos.x - radius.x, endPos.y - radius.y },
+            { endPos.x + radius.x, endPos.y + radius.y }
+        };
 
-        // NOTE: The easing functions aren't suitable here because they don't take a control point
-        current.y = a*startPos.y + b*controlPos.y + c*endPos.y;
-        current.x = a*startPos.x + b*controlPos.x + c*endPos.x;
-
-        float dy = current.y - previous.y;
-        float dx = current.x - previous.x;
-        float size = 0.5f*thick/sqrtf(dx*dx+dy*dy);
-
-        if (i == 1)
-        {
-            points[0].x = previous.x + dy*size;
-            points[0].y = previous.y - dx*size;
-            points[1].x = previous.x - dy*size;
-            points[1].y = previous.y + dx*size;
-        }
-
-        points[2*i + 1].x = current.x - dy*size;
-        points[2*i + 1].y = current.y + dx*size;
-        points[2*i].x = current.x + dy*size;
-        points[2*i].y = current.y - dx*size;
-
-        previous = current;
-    }
-
-    DrawTriangleStrip(points, 2*SPLINE_LINE_DIVISIONS + 2, color);
-}
-
-// Draw line using cubic bezier curves with 2 control points
-void DrawLineBezierCubic(Vector2 startPos, Vector2 endPos, Vector2 startControlPos, Vector2 endControlPos, float thick, Color color)
-{
-    const float step = 1.0f/SPLINE_LINE_DIVISIONS;
-
-    Vector2 previous = startPos;
-    Vector2 current = { 0 };
-    float t = 0.0f;
-
-    Vector2 points[2*SPLINE_LINE_DIVISIONS + 2] = { 0 };
-
-    for (int i = 1; i <= SPLINE_LINE_DIVISIONS; i++)
-    {
-        t = step*i;
-
-        float a = powf(1.0f - t, 3);
-        float b = 3.0f*powf(1.0f - t, 2)*t;
-        float c = 3.0f*(1.0f - t)*powf(t, 2);
-        float d = powf(t, 3);
-
-        current.y = a*startPos.y + b*startControlPos.y + c*endControlPos.y + d*endPos.y;
-        current.x = a*startPos.x + b*startControlPos.x + c*endControlPos.x + d*endPos.x;
-
-        float dy = current.y - previous.y;
-        float dx = current.x - previous.x;
-        float size = 0.5f*thick/sqrtf(dx*dx+dy*dy);
-
-        if (i == 1)
-        {
-            points[0].x = previous.x + dy*size;
-            points[0].y = previous.y - dx*size;
-            points[1].x = previous.x - dy*size;
-            points[1].y = previous.y + dx*size;
-        }
-
-        points[2*i + 1].x = current.x - dy*size;
-        points[2*i + 1].y = current.y + dx*size;
-        points[2*i].x = current.x + dy*size;
-        points[2*i].y = current.y - dx*size;
-
-        previous = current;
-    }
-
-    DrawTriangleStrip(points, 2*SPLINE_LINE_DIVISIONS + 2, color);
-}
-
-// Draw a B-Spline line, minimum 4 points
-void DrawLineBSpline(Vector2 *points, int pointCount, float thick, Color color)
-{
-    if (pointCount < 4) return;
-
-    float a[4] = { 0 };
-    float b[4] = { 0 };
-    float dy = 0.0f;
-    float dx = 0.0f;
-    float size = 0.0f;
-
-    Vector2 currentPoint = { 0 };
-    Vector2 nextPoint = { 0 };
-    Vector2 vertices[2*SPLINE_LINE_DIVISIONS + 2] = { 0 };
-
-    for (int i = 0; i < (pointCount - 3); i++)
-    {
-        float t = 0.0f;
-        Vector2 p1 = points[i], p2 = points[i + 1], p3 = points[i + 2], p4 = points[i + 3];
-
-        a[0] = (-p1.x + 3.0f*p2.x - 3.0f*p3.x + p4.x)/6.0f;
-        a[1] = (3.0f*p1.x - 6.0f*p2.x + 3.0f*p3.x)/6.0f;
-        a[2] = (-3.0f*p1.x + 3.0f*p3.x)/6.0f;
-        a[3] = (p1.x + 4.0f*p2.x + p3.x)/6.0f;
-
-        b[0] = (-p1.y + 3.0f*p2.y - 3.0f*p3.y + p4.y)/6.0f;
-        b[1] = (3.0f*p1.y - 6.0f*p2.y + 3.0f*p3.y)/6.0f;
-        b[2] = (-3.0f*p1.y + 3.0f*p3.y)/6.0f;
-        b[3] = (p1.y + 4.0f*p2.y + p3.y)/6.0f;
-
-        currentPoint.x = a[3];
-        currentPoint.y = b[3];
-
-        if (i == 0) DrawCircleV(currentPoint, thick/2.0f, color);   // Draw init line circle-cap
-
-        if (i > 0)
-        {
-            vertices[0].x = currentPoint.x + dy*size;
-            vertices[0].y = currentPoint.y - dx*size;
-            vertices[1].x = currentPoint.x - dy*size;
-            vertices[1].y = currentPoint.y + dx*size;
-        }
-
-        for (int j = 1; j <= SPLINE_LINE_DIVISIONS; j++)
-        {
-            t = ((float)j)/((float)SPLINE_LINE_DIVISIONS);
-
-            nextPoint.x = a[3] + t*(a[2] + t*(a[1] + t*a[0]));
-            nextPoint.y = b[3] + t*(b[2] + t*(b[1] + t*b[0]));
-
-            dy = nextPoint.y - currentPoint.y;
-            dx = nextPoint.x - currentPoint.x;
-            size = 0.5f*thick/sqrtf(dx*dx+dy*dy);
-
-            if ((i == 0) && (j == 1))
-            {
-                vertices[0].x = currentPoint.x + dy*size;
-                vertices[0].y = currentPoint.y - dx*size;
-                vertices[1].x = currentPoint.x - dy*size;
-                vertices[1].y = currentPoint.y + dx*size;
-            }
-
-            vertices[2*j + 1].x = nextPoint.x - dy*size;
-            vertices[2*j + 1].y = nextPoint.y + dx*size;
-            vertices[2*j].x = nextPoint.x + dy*size;
-            vertices[2*j].y = nextPoint.y - dx*size;
-
-            currentPoint = nextPoint;
-        }
-
-        DrawTriangleStrip(vertices, 2*SPLINE_LINE_DIVISIONS + 2, color);
-    }
-
-    DrawCircleV(currentPoint, thick/2.0f, color);   // Draw end line circle-cap
-}
-
-// Draw a Catmull Rom spline line, minimum 4 points
-void DrawLineCatmullRom(Vector2 *points, int pointCount, float thick, Color color)
-{
-    if (pointCount < 4) return;
-
-    float dy = 0.0f;
-    float dx = 0.0f;
-    float size = 0.0f;
-
-    Vector2 currentPoint = points[1];
-    Vector2 nextPoint = { 0 };
-    Vector2 vertices[2*SPLINE_LINE_DIVISIONS + 2] = { 0 };
-
-    DrawCircleV(currentPoint, thick/2.0f, color);   // Draw init line circle-cap
-
-    for (int i = 0; i < (pointCount - 3); i++)
-    {
-        float t = 0.0f;
-        Vector2 p1 = points[i], p2 = points[i + 1], p3 = points[i + 2], p4 = points[i + 3];
-
-        if (i > 0)
-        {
-            vertices[0].x = currentPoint.x + dy*size;
-            vertices[0].y = currentPoint.y - dx*size;
-            vertices[1].x = currentPoint.x - dy*size;
-            vertices[1].y = currentPoint.y + dx*size;
-        }
-
-        for (int j = 1; j <= SPLINE_LINE_DIVISIONS; j++)
-        {
-            t = ((float)j)/((float)SPLINE_LINE_DIVISIONS);
-
-            float q0 = (-1.0f*t*t*t) + (2.0f*t*t) + (-1.0f*t);
-            float q1 = (3.0f*t*t*t) + (-5.0f*t*t) + 2.0f;
-            float q2 = (-3.0f*t*t*t) + (4.0f*t*t) + t;
-            float q3 = t*t*t - t*t;
-
-            nextPoint.x = 0.5f*((p1.x*q0) + (p2.x*q1) + (p3.x*q2) + (p4.x*q3));
-            nextPoint.y = 0.5f*((p1.y*q0) + (p2.y*q1) + (p3.y*q2) + (p4.y*q3));
-
-            dy = nextPoint.y - currentPoint.y;
-            dx = nextPoint.x - currentPoint.x;
-            size = (0.5f*thick)/sqrtf(dx*dx + dy*dy);
-
-            if ((i == 0) && (j == 1))
-            {
-                vertices[0].x = currentPoint.x + dy*size;
-                vertices[0].y = currentPoint.y - dx*size;
-                vertices[1].x = currentPoint.x - dy*size;
-                vertices[1].y = currentPoint.y + dx*size;
-            }
-
-            vertices[2*j + 1].x = nextPoint.x - dy*size;
-            vertices[2*j + 1].y = nextPoint.y + dx*size;
-            vertices[2*j].x = nextPoint.x + dy*size;
-            vertices[2*j].y = nextPoint.y - dx*size;
-
-            currentPoint = nextPoint;
-        }
-
-        DrawTriangleStrip(vertices, 2*SPLINE_LINE_DIVISIONS + 2, color);
-    }
-
-    DrawCircleV(currentPoint, thick/2.0f, color);   // Draw end line circle-cap
-}
-
-// Draw lines sequence
-void DrawLineStrip(Vector2 *points, int pointCount, Color color)
-{
-    if (pointCount >= 2)
-    {
-        rlBegin(RL_LINES);
-            rlColor4ub(color.r, color.g, color.b, color.a);
-
-            for (int i = 0; i < pointCount - 1; i++)
-            {
-                rlVertex2f(points[i].x, points[i].y);
-                rlVertex2f(points[i + 1].x, points[i + 1].y);
-            }
-        rlEnd();
+        DrawTriangleStrip(strip, 4, color);
     }
 }
 
@@ -1771,6 +1537,353 @@ void DrawPolyLinesEx(Vector2 center, int sides, float radius, float rotation, fl
         }
     rlEnd();
 #endif
+}
+
+//----------------------------------------------------------------------------------
+// Module Functions Definition - Splines functions
+//----------------------------------------------------------------------------------
+
+// Draw spline: linear, minimum 2 points
+void DrawSplineLinear(Vector2 *points, int pointCount, float thick, Color color)
+{
+    Vector2 delta = { 0 };
+    float length = 0.0f;
+    float scale = 0.0f;
+    
+    for (int i = 0; i < pointCount - 1; i++)
+    {
+        delta = (Vector2){ points[i + 1].x - points[i].x, points[i + 1].y - points[i].y };
+        length = sqrtf(delta.x*delta.x + delta.y*delta.y);
+
+        if (length > 0) scale = thick/(2*length);
+
+        Vector2 radius = { -scale*delta.y, scale*delta.x };
+        Vector2 strip[4] = {
+            { points[i].x - radius.x, points[i].y - radius.y },
+            { points[i].x + radius.x, points[i].y + radius.y },
+            { points[i + 1].x - radius.x, points[i + 1].y - radius.y },
+            { points[i + 1].x + radius.x, points[i + 1].y + radius.y }
+        };
+
+        DrawTriangleStrip(strip, 4, color);
+    }
+}
+
+// Draw spline: B-Spline, minimum 4 points
+void DrawSplineBasis(Vector2 *points, int pointCount, float thick, Color color)
+{
+    if (pointCount < 4) return;
+
+    float a[4] = { 0 };
+    float b[4] = { 0 };
+    float dy = 0.0f;
+    float dx = 0.0f;
+    float size = 0.0f;
+
+    Vector2 currentPoint = { 0 };
+    Vector2 nextPoint = { 0 };
+    Vector2 vertices[2*SPLINE_LINE_DIVISIONS + 2] = { 0 };
+
+    for (int i = 0; i < (pointCount - 3); i++)
+    {
+        float t = 0.0f;
+        Vector2 p1 = points[i], p2 = points[i + 1], p3 = points[i + 2], p4 = points[i + 3];
+
+        a[0] = (-p1.x + 3.0f*p2.x - 3.0f*p3.x + p4.x)/6.0f;
+        a[1] = (3.0f*p1.x - 6.0f*p2.x + 3.0f*p3.x)/6.0f;
+        a[2] = (-3.0f*p1.x + 3.0f*p3.x)/6.0f;
+        a[3] = (p1.x + 4.0f*p2.x + p3.x)/6.0f;
+
+        b[0] = (-p1.y + 3.0f*p2.y - 3.0f*p3.y + p4.y)/6.0f;
+        b[1] = (3.0f*p1.y - 6.0f*p2.y + 3.0f*p3.y)/6.0f;
+        b[2] = (-3.0f*p1.y + 3.0f*p3.y)/6.0f;
+        b[3] = (p1.y + 4.0f*p2.y + p3.y)/6.0f;
+
+        currentPoint.x = a[3];
+        currentPoint.y = b[3];
+
+        if (i == 0) DrawCircleV(currentPoint, thick/2.0f, color);   // Draw init line circle-cap
+
+        if (i > 0)
+        {
+            vertices[0].x = currentPoint.x + dy*size;
+            vertices[0].y = currentPoint.y - dx*size;
+            vertices[1].x = currentPoint.x - dy*size;
+            vertices[1].y = currentPoint.y + dx*size;
+        }
+
+        for (int j = 1; j <= SPLINE_LINE_DIVISIONS; j++)
+        {
+            t = ((float)j)/((float)SPLINE_LINE_DIVISIONS);
+
+            nextPoint.x = a[3] + t*(a[2] + t*(a[1] + t*a[0]));
+            nextPoint.y = b[3] + t*(b[2] + t*(b[1] + t*b[0]));
+
+            dy = nextPoint.y - currentPoint.y;
+            dx = nextPoint.x - currentPoint.x;
+            size = 0.5f*thick/sqrtf(dx*dx+dy*dy);
+
+            if ((i == 0) && (j == 1))
+            {
+                vertices[0].x = currentPoint.x + dy*size;
+                vertices[0].y = currentPoint.y - dx*size;
+                vertices[1].x = currentPoint.x - dy*size;
+                vertices[1].y = currentPoint.y + dx*size;
+            }
+
+            vertices[2*j + 1].x = nextPoint.x - dy*size;
+            vertices[2*j + 1].y = nextPoint.y + dx*size;
+            vertices[2*j].x = nextPoint.x + dy*size;
+            vertices[2*j].y = nextPoint.y - dx*size;
+
+            currentPoint = nextPoint;
+        }
+
+        DrawTriangleStrip(vertices, 2*SPLINE_LINE_DIVISIONS + 2, color);
+    }
+
+    DrawCircleV(currentPoint, thick/2.0f, color);   // Draw end line circle-cap
+}
+
+// Draw spline: Catmull Rom, minimum 4 points
+void DrawSplineCatmullRom(Vector2 *points, int pointCount, float thick, Color color)
+{
+    if (pointCount < 4) return;
+
+    float dy = 0.0f;
+    float dx = 0.0f;
+    float size = 0.0f;
+
+    Vector2 currentPoint = points[1];
+    Vector2 nextPoint = { 0 };
+    Vector2 vertices[2*SPLINE_LINE_DIVISIONS + 2] = { 0 };
+
+    DrawCircleV(currentPoint, thick/2.0f, color);   // Draw init line circle-cap
+
+    for (int i = 0; i < (pointCount - 3); i++)
+    {
+        float t = 0.0f;
+        Vector2 p1 = points[i], p2 = points[i + 1], p3 = points[i + 2], p4 = points[i + 3];
+
+        if (i > 0)
+        {
+            vertices[0].x = currentPoint.x + dy*size;
+            vertices[0].y = currentPoint.y - dx*size;
+            vertices[1].x = currentPoint.x - dy*size;
+            vertices[1].y = currentPoint.y + dx*size;
+        }
+
+        for (int j = 1; j <= SPLINE_LINE_DIVISIONS; j++)
+        {
+            t = ((float)j)/((float)SPLINE_LINE_DIVISIONS);
+
+            float q0 = (-1.0f*t*t*t) + (2.0f*t*t) + (-1.0f*t);
+            float q1 = (3.0f*t*t*t) + (-5.0f*t*t) + 2.0f;
+            float q2 = (-3.0f*t*t*t) + (4.0f*t*t) + t;
+            float q3 = t*t*t - t*t;
+
+            nextPoint.x = 0.5f*((p1.x*q0) + (p2.x*q1) + (p3.x*q2) + (p4.x*q3));
+            nextPoint.y = 0.5f*((p1.y*q0) + (p2.y*q1) + (p3.y*q2) + (p4.y*q3));
+
+            dy = nextPoint.y - currentPoint.y;
+            dx = nextPoint.x - currentPoint.x;
+            size = (0.5f*thick)/sqrtf(dx*dx + dy*dy);
+
+            if ((i == 0) && (j == 1))
+            {
+                vertices[0].x = currentPoint.x + dy*size;
+                vertices[0].y = currentPoint.y - dx*size;
+                vertices[1].x = currentPoint.x - dy*size;
+                vertices[1].y = currentPoint.y + dx*size;
+            }
+
+            vertices[2*j + 1].x = nextPoint.x - dy*size;
+            vertices[2*j + 1].y = nextPoint.y + dx*size;
+            vertices[2*j].x = nextPoint.x + dy*size;
+            vertices[2*j].y = nextPoint.y - dx*size;
+
+            currentPoint = nextPoint;
+        }
+
+        DrawTriangleStrip(vertices, 2*SPLINE_LINE_DIVISIONS + 2, color);
+    }
+
+    DrawCircleV(currentPoint, thick/2.0f, color);   // Draw end line circle-cap
+}
+
+
+// Draw spline segment: quadratic-bezier, one control point
+void DrawSplineBezierQuad(Vector2 startPos, Vector2 endPos, Vector2 controlPos, float thick, Color color)
+{
+    const float step = 1.0f/SPLINE_LINE_DIVISIONS;
+
+    Vector2 previous = startPos;
+    Vector2 current = { 0 };
+    float t = 0.0f;
+
+    Vector2 points[2*SPLINE_LINE_DIVISIONS + 2] = { 0 };
+
+    for (int i = 1; i <= SPLINE_LINE_DIVISIONS; i++)
+    {
+        t = step*i;
+
+        float a = powf(1.0f - t, 2);
+        float b = 2.0f*(1.0f - t)*t;
+        float c = powf(t, 2);
+
+        // NOTE: The easing functions aren't suitable here because they don't take a control point
+        current.y = a*startPos.y + b*controlPos.y + c*endPos.y;
+        current.x = a*startPos.x + b*controlPos.x + c*endPos.x;
+
+        float dy = current.y - previous.y;
+        float dx = current.x - previous.x;
+        float size = 0.5f*thick/sqrtf(dx*dx+dy*dy);
+
+        if (i == 1)
+        {
+            points[0].x = previous.x + dy*size;
+            points[0].y = previous.y - dx*size;
+            points[1].x = previous.x - dy*size;
+            points[1].y = previous.y + dx*size;
+        }
+
+        points[2*i + 1].x = current.x - dy*size;
+        points[2*i + 1].y = current.y + dx*size;
+        points[2*i].x = current.x + dy*size;
+        points[2*i].y = current.y - dx*size;
+
+        previous = current;
+    }
+
+    DrawTriangleStrip(points, 2*SPLINE_LINE_DIVISIONS + 2, color);
+}
+
+// Draw spline segment: cubic-bezier, two control point
+void DrawSplineBezierCubic(Vector2 startPos, Vector2 startControlPos, Vector2 endControlPos, Vector2 endPos, float thick, Color color)
+{
+    const float step = 1.0f/SPLINE_LINE_DIVISIONS;
+
+    Vector2 previous = startPos;
+    Vector2 current = { 0 };
+    float t = 0.0f;
+
+    Vector2 points[2*SPLINE_LINE_DIVISIONS + 2] = { 0 };
+
+    for (int i = 1; i <= SPLINE_LINE_DIVISIONS; i++)
+    {
+        t = step*i;
+
+        float a = powf(1.0f - t, 3);
+        float b = 3.0f*powf(1.0f - t, 2)*t;
+        float c = 3.0f*(1.0f - t)*powf(t, 2);
+        float d = powf(t, 3);
+
+        current.y = a*startPos.y + b*startControlPos.y + c*endControlPos.y + d*endPos.y;
+        current.x = a*startPos.x + b*startControlPos.x + c*endControlPos.x + d*endPos.x;
+
+        float dy = current.y - previous.y;
+        float dx = current.x - previous.x;
+        float size = 0.5f*thick/sqrtf(dx*dx+dy*dy);
+
+        if (i == 1)
+        {
+            points[0].x = previous.x + dy*size;
+            points[0].y = previous.y - dx*size;
+            points[1].x = previous.x - dy*size;
+            points[1].y = previous.y + dx*size;
+        }
+
+        points[2*i + 1].x = current.x - dy*size;
+        points[2*i + 1].y = current.y + dx*size;
+        points[2*i].x = current.x + dy*size;
+        points[2*i].y = current.y - dx*size;
+
+        previous = current;
+    }
+
+    DrawTriangleStrip(points, 2*SPLINE_LINE_DIVISIONS + 2, color);
+}
+
+// Get spline point for a given t [0.0f .. 1.0f], Linear
+Vector2 GetSplinePointLinear(Vector2 startPos, Vector2 endPos, float t)
+{
+    Vector2 point = { 0 };
+
+    point.x = startPos.x*(1.0f - t) + endPos.x*t;
+    point.y = startPos.y*(1.0f - t) + endPos.y*t;
+
+    return point;
+}
+
+// Get spline point for a given t [0.0f .. 1.0f], B-Spline
+Vector2 GetSplinePointBasis(Vector2 p1, Vector2 p2, Vector2 p3, Vector2 p4, float t)
+{
+    Vector2 point = { 0 };
+
+    float a[4] = { 0 };
+    float b[4] = { 0 };
+
+    a[0] = (-p1.x + 3*p2.x - 3*p3.x + p4.x)/6.0f;
+    a[1] = (3*p1.x - 6*p2.x + 3*p3.x)/6.0f;
+    a[2] = (-3*p1.x + 3*p3.x)/6.0f;
+    a[3] = (p1.x + 4*p2.x + p3.x)/6.0f;
+
+    b[0] = (-p1.y + 3*p2.y - 3*p3.y + p4.y)/6.0f;
+    b[1] = (3*p1.y - 6*p2.y + 3*p3.y)/6.0f;
+    b[2] = (-3*p1.y + 3*p3.y)/6.0f;
+    b[3] = (p1.y + 4*p2.y + p3.y)/6.0f;
+
+    point.x = a[3] + t*(a[2] + t*(a[1] + t*a[0]));
+    point.y = b[3] + t*(b[2] + t*(b[1] + t*b[0]));
+
+    return point;
+}
+
+// Get spline point for a given t [0.0f .. 1.0f], Catmull-Rom
+Vector2 GetSplinePointCatmullRom(Vector2 p1, Vector2 p2, Vector2 p3, Vector2 p4, float t)
+{
+    Vector2 point = { 0 };
+
+    float q0 = (-1*t*t*t) + (2*t*t) + (-1*t);
+    float q1 = (3*t*t*t) + (-5*t*t) + 2;
+    float q2 = (-3*t*t*t) + (4*t*t) + t;
+    float q3 = t*t*t - t*t;
+
+    point.x = 0.5f*((p1.x*q0) + (p2.x*q1) + (p3.x*q2) + (p4.x*q3));
+    point.y = 0.5f*((p1.y*q0) + (p2.y*q1) + (p3.y*q2) + (p4.y*q3));
+
+    return point;
+}
+
+// Get spline point for a given t [0.0f .. 1.0f], Quadratic Bezier
+Vector2 GetSplinePointBezierQuad(Vector2 startPos, Vector2 controlPos, Vector2 endPos, float t)
+{
+    Vector2 point = { 0 };
+
+    float a = powf(1.0f - t, 2);
+    float b = 2.0f*(1.0f - t)*t;
+    float c = powf(t, 2);
+
+    point.y = a*startPos.y + b*controlPos.y + c*endPos.y;
+    point.x = a*startPos.x + b*controlPos.x + c*endPos.x;
+
+    return point;
+}
+
+// Get spline point for a given t [0.0f .. 1.0f], Cubic Bezier
+Vector2 GetSplinePointBezierCubic(Vector2 startPos, Vector2 startControlPos, Vector2 endControlPos, Vector2 endPos, float t)
+{
+    Vector2 point = { 0 };
+
+    float a = powf(1.0f - t, 3);
+    float b = 3.0f*powf(1.0f - t, 2)*t;
+    float c = 3.0f*(1.0f - t)*powf(t, 2);
+    float d = powf(t, 3);
+
+    point.y = a*startPos.y + b*startControlPos.y + c*endControlPos.y + d*endPos.y;
+    point.x = a*startPos.x + b*startControlPos.x + c*endControlPos.x + d*endPos.x;
+
+    return point;
 }
 
 //----------------------------------------------------------------------------------

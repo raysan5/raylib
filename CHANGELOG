@@ -52,7 +52,7 @@ Detailed changes:
 [rlgl] REVIEWED: rLoadTexture() UBSAN complaints #1891 (#3321) by @Codom
 [rlgl] REVIEWED: glInternalFormat as unsigned int
 [rshapes] ADDED: Spline drawing functions by @raysan5
-[rshapes] REVIEWED: DrawLineCatmullRom() by @raysan5
+[rshapes] REVIEWED: DrawSplineCatmullRom() by @raysan5
 [rshapes] REVIEWED: Minor fix in DrawLineBezier* (#3006) by @eternalStudent
 [rshapes] REVIEWED: GetCollisionRec(), more performant (#3052) by @manuel5975p
 [rshapes] REVIEWED: Fix off-by-one error in CheckCollisionPointRec() (#3022) by @dbechrd
@@ -651,7 +651,7 @@ Detailed changes:
 [raymath] REVIEWED: QuaternionFromAxisAngle() (#1892)
 [raymath] REVIEWED: QuaternionToMatrix() returning transposed result. (#1793) by @object71
 [shapes] ADDED: RenderPolyLinesEx() (#1758) by @lambertwang
-[shapes] ADDED: DrawLineBezierCubic() (#2021) by @SAOMDVN
+[shapes] ADDED: DrawSplineBezierCubic() (#2021) by @SAOMDVN
 [textures] ADDED: GetImageColor() #2024
 [textures] REMOVED: GenImagePerlinNoise()
 [textures] RENAMED: GetTextureData() to LoadImageFromTexture()
@@ -789,7 +789,7 @@ Detailed changes:
 [rlgl] REDESIGNED: rlLoadExtensions(), more details exposed
 [raymath] REVIEWED: QuaternionFromEuler() (#1651)
 [raymath] REVIEWED: MatrixRotateZYX() (#1642)
-[shapes] ADDED: DrawLineBezierQuad() (#1468) by @epsilon-phase
+[shapes] ADDED: DrawSplineBezierQuad() (#1468) by @epsilon-phase
 [shapes] ADDED: CheckCollisionLines()
 [shapes] ADDED: CheckCollisionPointLine() by @mkupiec1
 [shapes] REVIEWED: CheckCollisionPointTriangle() by @mkupiec1

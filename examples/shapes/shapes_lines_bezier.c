@@ -30,7 +30,7 @@ int main(void)
     Vector2 end = { (float)screenWidth, (float)screenHeight };
     
     Vector2 startControl = { 100, 0 };
-    Vector2 endControl = { (float)GetScreenWidth() - 100, (float)GetScreenHeight() };
+    Vector2 endControl = { GetScreenWidth() - 100, GetScreenHeight() };
 
     SetTargetFPS(60);               // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
@@ -60,9 +60,11 @@ int main(void)
 
             DrawText("USE MOUSE LEFT-RIGHT CLICK to DEFINE LINE START and END POINTS", 15, 20, 20, GRAY);
 
-            //DrawLineBezier(start, end, 2.0f, RED);
+            // Draw line cubic-bezier, in-out interpolation (easing), no control points
+            DrawLineBezier(start, end, 3.0f, BLUE);
             
-            DrawLineBezierCubic(start, end, startControl, endControl, 2.0f, RED);
+            // Draw spline cubic-bezier with control points
+            DrawSplineBezierCubic(start, startControl, endControl, end, 2.0f, RED);
             
             DrawLineEx(start, startControl, 1.0, LIGHTGRAY);
             DrawLineEx(end, endControl, 1.0, LIGHTGRAY);
