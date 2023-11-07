@@ -176,6 +176,11 @@ int main(void)
                     else if (focusedControlPoint == &control[i].end) DrawCircleV(control[i].end, 6, GREEN);
                     DrawLineEx(points[i], control[i].start, 1.0, LIGHTGRAY);
                     DrawLineEx(points[i + 1], control[i].end, 1.0, LIGHTGRAY);
+                
+                    // Draw spline control lines
+                    DrawLineV(points[i], control[i].start, LIGHTGRAY);
+                    DrawLineV(control[i].start, control[i].end, LIGHTGRAY);
+                    DrawLineV(control[i].end, points[i + 1], LIGHTGRAY);
                 }
             }
 
@@ -183,7 +188,9 @@ int main(void)
             for (int i = 0; i < pointCount; i++)
             {
                 DrawCircleV(points[i], (focusedPoint == i)? 8.0f : 5.0f, (focusedPoint == i)? BLUE: RED);
-                if ((splineType != 0) && (i < pointCount - 1)) DrawLineV(points[i], points[i + 1], LIGHTGRAY);
+                if ((splineType != SPLINE_LINEAR) && 
+                    (splineType != SPLINE_BEZIER) && 
+                    (i < pointCount - 1)) DrawLineV(points[i], points[i + 1], LIGHTGRAY);
             }
             
             // TODO: Draw help
