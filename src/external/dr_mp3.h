@@ -1,6 +1,6 @@
 /*
 MP3 audio decoder. Choice of public domain or MIT-0. See license statements at the end of this file.
-dr_mp3 - v0.6.34 - 2022-09-17
+dr_mp3 - v0.6.38 - 2023-11-02
 
 David Reid - mackron@gmail.com
 
@@ -95,12 +95,12 @@ extern "C" {
 
 #define DRMP3_VERSION_MAJOR     0
 #define DRMP3_VERSION_MINOR     6
-#define DRMP3_VERSION_REVISION  34
+#define DRMP3_VERSION_REVISION  38
 #define DRMP3_VERSION_STRING    DRMP3_XSTRINGIFY(DRMP3_VERSION_MAJOR) "." DRMP3_XSTRINGIFY(DRMP3_VERSION_MINOR) "." DRMP3_XSTRINGIFY(DRMP3_VERSION_REVISION)
 
 #include <stddef.h> /* For size_t. */
 
-/* Sized types. */
+/* Sized Types */
 typedef   signed char           drmp3_int8;
 typedef unsigned char           drmp3_uint8;
 typedef   signed short          drmp3_int16;
@@ -133,7 +133,9 @@ typedef drmp3_uint8             drmp3_bool8;
 typedef drmp3_uint32            drmp3_bool32;
 #define DRMP3_TRUE              1
 #define DRMP3_FALSE             0
+/* End Sized Types */
 
+/* Decorations */
 #if !defined(DRMP3_API)
     #if defined(DRMP3_DLL)
         #if defined(_WIN32)
@@ -163,7 +165,9 @@ typedef drmp3_uint32            drmp3_bool32;
         #define DRMP3_PRIVATE static
     #endif
 #endif
+/* End Decorations */
 
+/* Result Codes */
 typedef drmp3_int32 drmp3_result;
 #define DRMP3_SUCCESS                        0
 #define DRMP3_ERROR                         -1   /* A generic error. */
@@ -219,11 +223,12 @@ typedef drmp3_int32 drmp3_result;
 #define DRMP3_CANCELLED                     -51
 #define DRMP3_MEMORY_ALREADY_MAPPED         -52
 #define DRMP3_AT_END                        -53
-
+/* End Result Codes */
 
 #define DRMP3_MAX_PCM_FRAMES_PER_MP3_FRAME  1152
 #define DRMP3_MAX_SAMPLES_PER_FRAME         (DRMP3_MAX_PCM_FRAMES_PER_MP3_FRAME*2)
 
+/* Inline */
 #ifdef _MSC_VER
     #define DRMP3_INLINE __forceinline
 #elif defined(__GNUC__)
@@ -250,10 +255,22 @@ typedef drmp3_int32 drmp3_result;
 #else
     #define DRMP3_INLINE
 #endif
+/* End Inline */
 
 
 DRMP3_API void drmp3_version(drmp3_uint32* pMajor, drmp3_uint32* pMinor, drmp3_uint32* pRevision);
 DRMP3_API const char* drmp3_version_string(void);
+
+
+/* Allocation Callbacks */
+typedef struct
+{
+    void* pUserData;
+    void* (* onMalloc)(size_t sz, void* pUserData);
+    void* (* onRealloc)(void* p, size_t sz, void* pUserData);
+    void  (* onFree)(void* p, void* pUserData);
+} drmp3_allocation_callbacks;
+/* End Allocation Callbacks */
 
 
 /*
@@ -328,14 +345,6 @@ Whether or not it is relative to the beginning or current position is determined
 will be either drmp3_seek_origin_start or drmp3_seek_origin_current.
 */
 typedef drmp3_bool32 (* drmp3_seek_proc)(void* pUserData, int offset, drmp3_seek_origin origin);
-
-typedef struct
-{
-    void* pUserData;
-    void* (* onMalloc)(size_t sz, void* pUserData);
-    void* (* onRealloc)(void* p, size_t sz, void* pUserData);
-    void  (* onFree)(void* p, void* pUserData);
-} drmp3_allocation_callbacks;
 
 typedef struct
 {
@@ -704,7 +713,7 @@ static int drmp3_have_simd(void)
 
 #endif
 
-#if defined(__ARM_ARCH) && (__ARM_ARCH >= 6) && !defined(__aarch64__) && !defined(_M_ARM64)
+#if defined(__ARM_ARCH) && (__ARM_ARCH >= 6) && !defined(__aarch64__) && !defined(_M_ARM64) && !defined(__ARM_ARCH_6M__)
 #define DRMP3_HAVE_ARMV6 1
 static __inline__ __attribute__((always_inline)) drmp3_int32 drmp3_clip_int16_arm(drmp3_int32 a)
 {
@@ -2415,6 +2424,7 @@ DRMP3_API void drmp3dec_f32_to_s16(const float *in, drmp3_int16 *out, size_t num
  Main Public API
 
  ************************************************************************************************************************************************************/
+/* SIZE_MAX */
 #if defined(SIZE_MAX)
     #define DRMP3_SIZE_MAX  SIZE_MAX
 #else
@@ -2424,6 +2434,7 @@ DRMP3_API void drmp3dec_f32_to_s16(const float *in, drmp3_int16 *out, size_t num
         #define DRMP3_SIZE_MAX  0xFFFFFFFF
     #endif
 #endif
+/* End SIZE_MAX */
 
 /* Options. */
 #ifndef DRMP3_SEEK_LEADING_MP3_FRAMES
@@ -2690,6 +2701,11 @@ static drmp3_uint32 drmp3_decode_next_frame_ex__callbacks(drmp3* pMP3, drmp3d_sa
         DRMP3_ASSERT(pMP3->pData != NULL);
         DRMP3_ASSERT(pMP3->dataCapacity > 0);
 
+        /* Do a runtime check here to try silencing a false-positive from clang-analyzer. */
+        if (pMP3->pData == NULL) {
+            return 0;
+        }
+
         pcmFramesRead = drmp3dec_decode_frame(&pMP3->decoder, pMP3->pData + pMP3->dataConsumed, (int)pMP3->dataSize, pPCMFrames, &info);    /* <-- Safe size_t -> int conversion thanks to the check above. */
 
         /* Consume the data. */
@@ -2931,6 +2947,7 @@ DRMP3_API drmp3_bool32 drmp3_init_memory(drmp3* pMP3, const void* pData, size_t 
 #include <stdio.h>
 #include <wchar.h>      /* For wcslen(), wcsrtombs() */
 
+/* Errno */
 /* drmp3_result_from_errno() is only used inside DR_MP3_NO_STDIO for now. Move this out if it's ever used elsewhere. */
 #include <errno.h>
 static drmp3_result drmp3_result_from_errno(int e)
@@ -3334,7 +3351,9 @@ static drmp3_result drmp3_result_from_errno(int e)
         default: return DRMP3_ERROR;
     }
 }
+/* End Errno */
 
+/* fopen */
 static drmp3_result drmp3_fopen(FILE** ppFile, const char* pFilePath, const char* pOpenMode)
 {
 #if defined(_MSC_VER) && _MSC_VER >= 1400
@@ -3490,7 +3509,7 @@ static drmp3_result drmp3_wfopen(FILE** ppFile, const wchar_t* pFilePath, const 
 
     return DRMP3_SUCCESS;
 }
-
+/* End fopen */
 
 
 static size_t drmp3__on_read_stdio(void* pUserData, void* pBufferOut, size_t bytesToRead)
@@ -4476,6 +4495,18 @@ counts rather than sample counts.
 /*
 REVISION HISTORY
 ================
+v0.6.38 - 2023-11-02
+  - Fix build for ARMv6-M.
+
+v0.6.37 - 2023-07-07
+  - Silence a static analysis warning.
+
+v0.6.36 - 2023-06-17
+  - Fix an incorrect date in revision history. No functional change.
+
+v0.6.35 - 2023-05-22
+  - Minor code restructure. No functional change.
+
 v0.6.34 - 2022-09-17
   - Fix compilation with DJGPP.
   - Fix compilation when compiling with x86 with no SSE2.
@@ -4777,7 +4808,7 @@ For more information, please refer to <http://unlicense.org/>
 ===============================================================================
 ALTERNATIVE 2 - MIT No Attribution
 ===============================================================================
-Copyright 2020 David Reid
+Copyright 2023 David Reid
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of
 this software and associated documentation files (the "Software"), to deal in

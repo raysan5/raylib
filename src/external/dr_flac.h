@@ -1,6 +1,6 @@
 /*
 FLAC audio decoder. Choice of public domain or MIT-0. See license statements at the end of this file.
-dr_flac - v0.12.39 - 2022-09-17
+dr_flac - v0.12.42 - 2023-11-02
 
 David Reid - mackron@gmail.com
 
@@ -235,12 +235,12 @@ extern "C" {
 
 #define DRFLAC_VERSION_MAJOR     0
 #define DRFLAC_VERSION_MINOR     12
-#define DRFLAC_VERSION_REVISION  39
+#define DRFLAC_VERSION_REVISION  42
 #define DRFLAC_VERSION_STRING    DRFLAC_XSTRINGIFY(DRFLAC_VERSION_MAJOR) "." DRFLAC_XSTRINGIFY(DRFLAC_VERSION_MINOR) "." DRFLAC_XSTRINGIFY(DRFLAC_VERSION_REVISION)
 
 #include <stddef.h> /* For size_t. */
 
-/* Sized types. */
+/* Sized Types */
 typedef   signed char           drflac_int8;
 typedef unsigned char           drflac_uint8;
 typedef   signed short          drflac_int16;
@@ -273,7 +273,9 @@ typedef drflac_uint8            drflac_bool8;
 typedef drflac_uint32           drflac_bool32;
 #define DRFLAC_TRUE             1
 #define DRFLAC_FALSE            0
+/* End Sized Types */
 
+/* Decorations */
 #if !defined(DRFLAC_API)
     #if defined(DRFLAC_DLL)
         #if defined(_WIN32)
@@ -303,6 +305,7 @@ typedef drflac_uint32           drflac_bool32;
         #define DRFLAC_PRIVATE static
     #endif
 #endif
+/* End Decorations */
 
 #if defined(_MSC_VER) && _MSC_VER >= 1700   /* Visual Studio 2012 */
     #define DRFLAC_DEPRECATED       __declspec(deprecated)
@@ -321,6 +324,16 @@ typedef drflac_uint32           drflac_bool32;
 DRFLAC_API void drflac_version(drflac_uint32* pMajor, drflac_uint32* pMinor, drflac_uint32* pRevision);
 DRFLAC_API const char* drflac_version_string(void);
 
+/* Allocation Callbacks */
+typedef struct
+{
+    void* pUserData;
+    void* (* onMalloc)(size_t sz, void* pUserData);
+    void* (* onRealloc)(void* p, size_t sz, void* pUserData);
+    void  (* onFree)(void* p, void* pUserData);
+} drflac_allocation_callbacks;
+/* End Allocation Callbacks */
+
 /*
 As data is read from the client it is placed into an internal buffer for fast access. This controls the size of that buffer. Larger values means more speed,
 but also more memory. In my testing there is diminishing returns after about 4KB, but you can fiddle with this to suit your own needs. Must be a multiple of 8.
@@ -329,10 +342,21 @@ but also more memory. In my testing there is diminishing returns after about 4KB
 #define DR_FLAC_BUFFER_SIZE   4096
 #endif
 
-/* Check if we can enable 64-bit optimizations. */
+
+/* Architecture Detection */
 #if defined(_WIN64) || defined(_LP64) || defined(__LP64__)
 #define DRFLAC_64BIT
 #endif
+
+#if defined(__x86_64__) || defined(_M_X64)
+    #define DRFLAC_X64
+#elif defined(__i386) || defined(_M_IX86)
+    #define DRFLAC_X86
+#elif defined(__arm__) || defined(_M_ARM) || defined(__arm64) || defined(__arm64__) || defined(__aarch64__) || defined(_M_ARM64)
+    #define DRFLAC_ARM
+#endif
+/* End Architecture Detection */
+
 
 #ifdef DRFLAC_64BIT
 typedef drflac_uint64 drflac_cache_t;
@@ -561,14 +585,6 @@ will be set to one of the DRFLAC_METADATA_BLOCK_TYPE_* tokens.
 */
 typedef void (* drflac_meta_proc)(void* pUserData, drflac_metadata* pMetadata);
 
-
-typedef struct
-{
-    void* pUserData;
-    void* (* onMalloc)(size_t sz, void* pUserData);
-    void* (* onRealloc)(void* p, size_t sz, void* pUserData);
-    void  (* onFree)(void* p, void* pUserData);
-} drflac_allocation_callbacks;
 
 /* Structure for internal use. Only used for decoders opened with drflac_open_memory. */
 typedef struct
@@ -1351,6 +1367,7 @@ DRFLAC_API drflac_bool32 drflac_next_cuesheet_track(drflac_cuesheet_track_iterat
 #include <stdlib.h>
 #include <string.h>
 
+/* Inline */
 #ifdef _MSC_VER
     #define DRFLAC_INLINE __forceinline
 #elif defined(__GNUC__)
@@ -1377,15 +1394,7 @@ DRFLAC_API drflac_bool32 drflac_next_cuesheet_track(drflac_cuesheet_track_iterat
 #else
     #define DRFLAC_INLINE
 #endif
-
-/* CPU architecture. */
-#if defined(__x86_64__) || defined(_M_X64)
-    #define DRFLAC_X64
-#elif defined(__i386) || defined(_M_IX86)
-    #define DRFLAC_X86
-#elif defined(__arm__) || defined(_M_ARM) || defined(__arm64) || defined(__arm64__) || defined(__aarch64__) || defined(_M_ARM64)
-    #define DRFLAC_ARM
-#endif
+/* End Inline */
 
 /*
 Intrinsics Support
@@ -1623,6 +1632,7 @@ static DRFLAC_INLINE drflac_bool32 drflac_has_sse41(void)
 
 #define DRFLAC_MAX_SIMD_VECTOR_SIZE                     64  /* 64 for AVX-512 in the future. */
 
+/* Result Codes */
 typedef drflac_int32 drflac_result;
 #define DRFLAC_SUCCESS                                   0
 #define DRFLAC_ERROR                                    -1   /* A generic error. */
@@ -1678,7 +1688,10 @@ typedef drflac_int32 drflac_result;
 #define DRFLAC_CANCELLED                                -51
 #define DRFLAC_MEMORY_ALREADY_MAPPED                    -52
 #define DRFLAC_AT_END                                   -53
-#define DRFLAC_CRC_MISMATCH                             -128
+
+#define DRFLAC_CRC_MISMATCH                             -100
+/* End Result Codes */
+
 
 #define DRFLAC_SUBFRAME_CONSTANT                        0
 #define DRFLAC_SUBFRAME_VERBATIM                        1
@@ -1838,7 +1851,7 @@ static DRFLAC_INLINE drflac_uint32 drflac__swap_endian_uint32(drflac_uint32 n)
     #if defined(_MSC_VER) && !defined(__clang__)
         return _byteswap_ulong(n);
     #elif defined(__GNUC__) || defined(__clang__)
-        #if defined(DRFLAC_ARM) && (defined(__ARM_ARCH) && __ARM_ARCH >= 6) && !defined(DRFLAC_64BIT)   /* <-- 64-bit inline assembly has not been tested, so disabling for now. */
+        #if defined(DRFLAC_ARM) && (defined(__ARM_ARCH) && __ARM_ARCH >= 6) && !defined(__ARM_ARCH_6M__) && !defined(DRFLAC_64BIT)   /* <-- 64-bit inline assembly has not been tested, so disabling for now. */
             /* Inline assembly optimized implementation for ARM. In my testing, GCC does not generate optimized code with __builtin_bswap32(). */
             drflac_uint32 r;
             __asm__ __volatile__ (
@@ -2802,7 +2815,7 @@ static DRFLAC_INLINE drflac_uint32 drflac__clz_lzcnt(drflac_cache_t x)
 
                 return r;
             }
-        #elif defined(DRFLAC_ARM) && (defined(__ARM_ARCH) && __ARM_ARCH >= 5) && !defined(DRFLAC_64BIT)   /* <-- I haven't tested 64-bit inline assembly, so only enabling this for the 32-bit build for now. */
+        #elif defined(DRFLAC_ARM) && (defined(__ARM_ARCH) && __ARM_ARCH >= 5) && !defined(__ARM_ARCH_6M__) && !defined(DRFLAC_64BIT)   /* <-- I haven't tested 64-bit inline assembly, so only enabling this for the 32-bit build for now. */
             {
                 unsigned int r;
                 __asm__ __volatile__ (
@@ -6479,7 +6492,7 @@ static drflac_bool32 drflac__read_and_decode_metadata(drflac_read_proc onRead, d
     for (;;) {
         drflac_metadata metadata;
         drflac_uint8 isLastBlock = 0;
-        drflac_uint8 blockType;
+        drflac_uint8 blockType = 0;
         drflac_uint32 blockSize;
         if (drflac__read_and_decode_block_header(onRead, pUserData, &isLastBlock, &blockType, &blockSize) == DRFLAC_FALSE) {
             return DRFLAC_FALSE;
@@ -8141,6 +8154,7 @@ static drflac* drflac_open_with_metadata_private(drflac_read_proc onRead, drflac
 #include <wchar.h>      /* For wcslen(), wcsrtombs() */
 #endif
 
+/* Errno */
 /* drflac_result_from_errno() is only used for fopen() and wfopen() so putting it inside DR_WAV_NO_STDIO for now. If something else needs this later we can move it out. */
 #include <errno.h>
 static drflac_result drflac_result_from_errno(int e)
@@ -8544,7 +8558,9 @@ static drflac_result drflac_result_from_errno(int e)
         default: return DRFLAC_ERROR;
     }
 }
+/* End Errno */
 
+/* fopen */
 static drflac_result drflac_fopen(FILE** ppFile, const char* pFilePath, const char* pOpenMode)
 {
 #if defined(_MSC_VER) && _MSC_VER >= 1400
@@ -8702,6 +8718,7 @@ static drflac_result drflac_wfopen(FILE** ppFile, const wchar_t* pFilePath, cons
     return DRFLAC_SUCCESS;
 }
 #endif
+/* End fopen */
 
 static size_t drflac__on_read_stdio(void* pUserData, void* bufferOut, size_t bytesToRead)
 {
@@ -11666,6 +11683,7 @@ DRFLAC_API drflac_bool32 drflac_seek_to_pcm_frame(drflac* pFlac, drflac_uint64 p
 
 /* High Level APIs */
 
+/* SIZE_MAX */
 #if defined(SIZE_MAX)
     #define DRFLAC_SIZE_MAX  SIZE_MAX
 #else
@@ -11675,6 +11693,7 @@ DRFLAC_API drflac_bool32 drflac_seek_to_pcm_frame(drflac* pFlac, drflac_uint64 p
         #define DRFLAC_SIZE_MAX  0xFFFFFFFF
     #endif
 #endif
+/* End SIZE_MAX */
 
 
 /* Using a macro as the definition of the drflac__full_decode_and_close_*() API family. Sue me. */
@@ -12058,6 +12077,16 @@ DRFLAC_API drflac_bool32 drflac_next_cuesheet_track(drflac_cuesheet_track_iterat
 /*
 REVISION HISTORY
 ================
+v0.12.42 - 2023-11-02
+  - Fix build for ARMv6-M.
+  - Fix a compilation warning with GCC.
+
+v0.12.41 - 2023-06-17
+  - Fix an incorrect date in revision history. No functional change.
+
+v0.12.40 - 2023-05-22
+  - Minor code restructure. No functional change.
+
 v0.12.39 - 2022-09-17
   - Fix compilation with DJGPP.
   - Fix compilation error with Visual Studio 2019 and the ARM build.
@@ -12488,7 +12517,7 @@ For more information, please refer to <http://unlicense.org/>
 ===============================================================================
 ALTERNATIVE 2 - MIT No Attribution
 ===============================================================================
-Copyright 2020 David Reid
+Copyright 2023 David Reid
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of
 this software and associated documentation files (the "Software"), to deal in
