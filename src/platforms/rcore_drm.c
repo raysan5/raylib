@@ -1549,9 +1549,14 @@ static void ConfigureEvdevDevice(char *device)
             ioctl(fd, EVIOCGABS(ABS_X), &absinfo);
             worker->absRange.x = absinfo.minimum;
             worker->absRange.width = absinfo.maximum - absinfo.minimum;
+            platform.absRange.x = absinfo.minimum;
+            platform.absRange.width = absinfo.maximum - absinfo.minimum;
+
             ioctl(fd, EVIOCGABS(ABS_Y), &absinfo);
             worker->absRange.y = absinfo.minimum;
             worker->absRange.height = absinfo.maximum - absinfo.minimum;
+            platform.absRange.y = absinfo.minimum;
+            platform.absRange.height = absinfo.maximum - absinfo.minimum;
         }
 
         // Check for multiple absolute movement support (usually multitouch touchscreens)
@@ -1563,9 +1568,14 @@ static void ConfigureEvdevDevice(char *device)
             ioctl(fd, EVIOCGABS(ABS_X), &absinfo);
             worker->absRange.x = absinfo.minimum;
             worker->absRange.width = absinfo.maximum - absinfo.minimum;
+            platform.absRange.x = absinfo.minimum;
+            platform.absRange.width = absinfo.maximum - absinfo.minimum;
+
             ioctl(fd, EVIOCGABS(ABS_Y), &absinfo);
             worker->absRange.y = absinfo.minimum;
             worker->absRange.height = absinfo.maximum - absinfo.minimum;
+            platform.absRange.y = absinfo.minimum;
+            platform.absRange.height = absinfo.maximum - absinfo.minimum;
         }
     }
 
