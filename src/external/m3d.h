@@ -89,7 +89,7 @@ typedef uint8_t M3D_VOXEL;
 #define M3D_NUMBONE 4
 #endif
 #ifndef M3D_BONEMAXLEVEL
-#define M3D_BONEMAXLEVEL 8
+#define M3D_BONEMAXLEVEL 64
 #endif
 #ifndef _MSC_VER
 #ifndef _inline
@@ -2172,6 +2172,8 @@ M3D_INDEX _m3d_gettx(m3d_t *model, m3dread_t readfilecb, m3dfree_t freecb, char 
     stbi__context s;
     stbi__result_info ri;
 
+    /* failsafe */
+    if(!fn || !*fn) return M3D_UNDEF;
     /* do we have loaded this texture already? */
     for(i = 0; i < model->numtexture; i++)
         if(!strcmp(fn, model->texture[i].name)) return i;
@@ -2246,9 +2248,9 @@ void _m3d_getpr(m3d_t *model, _unused m3dread_t readfilecb, _unused  m3dfree_t f
 {
 #ifdef M3D_PR_INTERP
     unsigned int i, len = 0;
-    unsigned char *buff = readfilecb ? (*readfilecb)(fn, &len) : NULL;
+    unsigned char *buff = readfilecb && fn && *fn ? (*readfilecb)(fn, &len) : NULL;
 
-    if(!buff && model->inlined) {
+    if(!buff && fn && *fn && model->inlined) {
         for(i = 0; i < model->numinlined; i++)
             if(!strcmp(fn, model->inlined[i].name)) {
                 buff = model->inlined[i].data;
@@ -3439,6 +3441,7 @@ memerr:         M3D_LOG("Out of memory");
                 model->bone[i].numweight = 0;
                 model->bone[i].weight = NULL;
             }
+            if(i != model->numbone) { M3D_LOG("Truncated bone chunk"); model->numbone = i; model->numskin = 0; model->errcode = M3D_ERR_BONE; }
             /* read skin definitions */
             if(model->numskin) {
                 model->skin = (m3ds_t*)M3D_MALLOC(model->numskin * sizeof(m3ds_t));
@@ -3471,6 +3474,7 @@ memerr:         M3D_LOG("Out of memory");
                             model->skin[i].weight[j] /= w;
                     }
                 }
+                if(i != model->numskin) { M3D_LOG("Truncated skin in bone chunk"); model->numskin = i; model->errcode = M3D_ERR_BONE; }
             }
         } else
         /* material */
@@ -4726,14 +4730,14 @@ unsigned char *m3d_save(m3d_t *model, int quality, int flags, unsigned int *size
     unsigned char *out = NULL, *z = NULL, weights[M3D_NUMBONE < 8 ? 8 : M3D_NUMBONE], *norm = NULL;
     unsigned int i, j, k, l, n, o, len, chunklen, *length;
     int maxvox = 0, minvox = 0;
-    M3D_FLOAT scale = (M3D_FLOAT)0.0, min_x, max_x, min_y, max_y, min_z, max_z;
+    M3D_FLOAT scale = (M3D_FLOAT)0.0, min_x, max_x, min_y, max_y, min_z, max_z, mw;
     M3D_INDEX last, *vrtxidx = NULL, *mtrlidx = NULL, *tmapidx = NULL, *skinidx = NULL;
 #ifdef M3D_VERTEXMAX
     M3D_INDEX lastp;
 #endif
     uint32_t idx, numcmap = 0, *cmap = NULL, numvrtx = 0, maxvrtx = 0, numtmap = 0, maxtmap = 0, numproc = 0;
     uint32_t numskin = 0, maxskin = 0, numstr = 0, maxt = 0, maxbone = 0, numgrp = 0, maxgrp = 0, *grpidx = NULL;
-    uint8_t *opa;
+    uint8_t *opa = NULL;
     m3dcd_t *cd;
     m3dc_t *cmd;
     m3dstr_t *str = NULL;
@@ -5072,10 +5076,9 @@ unsigned char *m3d_save(m3d_t *model, int quality, int flags, unsigned int *size
         for(i = 0; i < model->numskin; i++) {
             if(skinidx[i] == M3D_UNDEF) continue;
             memset(&sk, 0, sizeof(m3dssave_t));
-            for(j = 0, min_x = (M3D_FLOAT)0.0; j < M3D_NUMBONE && model->skin[i].boneid[j] != M3D_UNDEF &&
-                model->skin[i].weight[j] > (M3D_FLOAT)0.0; j++) {
+            for(j = 0, min_x = (M3D_FLOAT)0.0; j < M3D_NUMBONE && model->skin[i].boneid[j] != M3D_UNDEF; j++) {
                     sk.data.boneid[j] = model->skin[i].boneid[j];
-                    sk.data.weight[j] = model->skin[i].weight[j];
+                    sk.data.weight[j] = model->skin[i].weight[j] > (M3D_FLOAT)0.0 ? model->skin[i].weight[j] : (M3D_FLOAT)0.01;
                     min_x += sk.data.weight[j];
             }
             if(j > maxbone) maxbone = j;
@@ -5191,6 +5194,7 @@ memerr: if(vrtxidx) M3D_FREE(vrtxidx);
         if(sa) M3D_FREE(sa);
         if(sd) M3D_FREE(sd);
         if(out) M3D_FREE(out);
+        if(opa) free(opa);
         if(h) M3D_FREE(h);
         M3D_LOG("Out of memory");
         model->errcode = M3D_ERR_ALLOC;
@@ -5218,8 +5222,16 @@ memerr: if(vrtxidx) M3D_FREE(vrtxidx);
         if(model->preview.data && model->preview.length) {
             sl = _m3d_safestr(sn, 0);
             if(sl) {
+/* gcc thinks that "ptr is used after free", well, gcc is simply wrong. */
+#ifdef __GNUC__
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wuse-after-free"
+#endif
                 ptr -= (uintptr_t)out; len = (unsigned int)((uintptr_t)ptr + (uintptr_t)20 + strlen(sl));
                 out = (unsigned char*)M3D_REALLOC(out, len); ptr += (uintptr_t)out;
+#ifdef __GNUC__
+#pragma GCC diagnostic pop
+#endif
                 if(!out) { setlocale(LC_NUMERIC, ol); goto memerr; }
                 ptr += sprintf(ptr, "Preview\r\n%s.png\r\n\r\n", sl);
                 M3D_FREE(sl); sl = NULL;
@@ -5228,6 +5240,7 @@ memerr: if(vrtxidx) M3D_FREE(vrtxidx);
         M3D_FREE(sn);  sn = NULL;
         /* texture map */
         if(numtmap && tmap && !(flags & M3D_EXP_NOTXTCRD) && !(flags & M3D_EXP_NOFACE)) {
+/* interestingly gcc does not complain about "ptr is used after free" here, although the code is 100% the same */
             ptr -= (uintptr_t)out; len = (unsigned int)((uintptr_t)ptr + (uintptr_t)(maxtmap * 32) + (uintptr_t)12);
             out = (unsigned char*)M3D_REALLOC(out, len); ptr += (uintptr_t)out;
             if(!out) { setlocale(LC_NUMERIC, ol); goto memerr; }
@@ -5846,9 +5859,13 @@ memerr: if(vrtxidx) M3D_FREE(vrtxidx);
                     if(skin[i].newidx == last) continue;
                     last = skin[i].newidx;
                     memset(&weights, 0, nb_s);
-                    for(j = 0; j < (uint32_t)nb_s && skin[i].data.boneid[j] != M3D_UNDEF &&
-                        skin[i].data.weight[j] > (M3D_FLOAT)0.0; j++)
+                    for(j = k = l = 0, mw = 0.0; j < (uint32_t)nb_s && skin[i].data.boneid[j] != M3D_UNDEF &&
+                        skin[i].data.weight[j] > (M3D_FLOAT)0.0; j++) {
+                            if(mw < skin[i].data.weight[j]) { mw = skin[i].data.weight[j]; k = j; }
                             weights[j] = (uint8_t)(skin[i].data.weight[j] * 255);
+                            if(!weights[j]) { weights[j]++; l--; }
+                        }
+                    weights[k] += l;
                     switch(nb_s) {
                         case 1: weights[0] = 255; break;
                         case 2: memcpy(out, weights, 2); out += 2; break;
@@ -5941,7 +5958,7 @@ memerr: if(vrtxidx) M3D_FREE(vrtxidx);
         }
         /* mesh face */
         if(model->numface && face && !(flags & M3D_EXP_NOFACE)) {
-            chunklen = 8 + si_s + model->numface * (6 * vi_s + 3 * ti_s + si_s + 1);
+            chunklen = 8 + si_s + model->numface * (9 * vi_s + 3 * ti_s + si_s + 1);
             h = (m3dhdr_t*)M3D_REALLOC(h, len + chunklen);
             if(!h) goto memerr;
             memcpy((uint8_t*)h + len, "MESH", 4);
@@ -6268,6 +6285,7 @@ memerr: if(vrtxidx) M3D_FREE(vrtxidx);
     if(skin) M3D_FREE(skin);
     if(str) M3D_FREE(str);
     if(vrtx) M3D_FREE(vrtx);
+    if(opa) free(opa);
     if(h) M3D_FREE(h);
     return out;
 }
