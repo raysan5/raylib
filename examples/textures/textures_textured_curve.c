@@ -118,10 +118,11 @@ int main()
 //----------------------------------------------------------------------------------
 static void DrawCurve(void)
 {
-    if (showCurve) DrawLineBezierCubic(curveStartPosition, curveEndPosition, curveStartPositionTangent, curveEndPositionTangent, 2, BLUE);
+    if (showCurve) DrawSplineBezierCubic(curveStartPosition, curveEndPosition, curveStartPositionTangent, curveEndPositionTangent, 2, BLUE);
 
     // Draw the various control points and highlight where the mouse is
     DrawLineV(curveStartPosition, curveStartPositionTangent, SKYBLUE);
+    DrawLineV(curveStartPositionTangent, curveEndPositionTangent, Fade(LIGHTGRAY, 0.4f));
     DrawLineV(curveEndPosition, curveEndPositionTangent, PURPLE);
     Vector2 mouse = GetMousePosition();
 
