@@ -123,6 +123,9 @@ typedef struct {
     // NOTE: currentButtonState[] can't be written directly due to multithreading, app could miss the update
     char currentButtonStateEvdev[MAX_MOUSE_BUTTONS]; // Holds the new mouse state for the next polling event to grab
     bool cursorRelative;                // Relative cursor mode
+    int mouseFd;                        // File descriptor for the evdev mouse/touch/gestures
+    Rectangle absRange;                 // Range of values for absolute pointing devices (touchscreens)
+    int touchSlot;                      // Hold the touch slot number of the currently being sent multitouch block
 
     // Gamepad data
     pthread_t gamepadThreadId;          // Gamepad reading thread id
@@ -169,11 +172,6 @@ static const int EvkeyToUnicodeLUT[] = {
     39, 96, 0, 92, 122, 120, 99, 118, 98, 110, 109, 44, 46, 47, 0, 0, 0, 32
     // LUT currently incomplete, just mapped the most essential keys
 };
-
-#if defined(SUPPORT_GESTURES_SYSTEM)
-GestureEvent gestureEvent = { 0 };      // Gesture event to hold data between EventThread() and PollInputEvents()
-bool newGesture = false;                // Var to trigger ProcessGestureEvent(gestureEvent) on PollInputEvents()
-#endif
 
 //----------------------------------------------------------------------------------
 // Module Internal Functions Declaration
@@ -448,7 +446,7 @@ void EnableCursor(void)
 void DisableCursor(void)
 {
     // Set cursor position in the middle
-    SetMousePosition(CORE.Window.screen.width/2, CORE.Window.screen.height/2);
+    SetMousePosition(0, 0);
 
     platform.cursorRelative = true;
     CORE.Input.Mouse.cursorHidden = true;
@@ -565,11 +563,8 @@ void PollInputEvents(void)
     PollKeyboardEvents();
 
     // Register previous mouse position
-    if (platform.cursorRelative)
-    {
-        CORE.Input.Mouse.previousPosition = CORE.Input.Mouse.currentPosition;
-        CORE.Input.Mouse.currentPosition = (Vector2){ 0.0f, 0.0f };
-    }
+    if (platform.cursorRelative) CORE.Input.Mouse.currentPosition = (Vector2){ 0.0f, 0.0f };
+    else CORE.Input.Mouse.previousPosition = CORE.Input.Mouse.currentPosition;
 
     // Register previous mouse states
     CORE.Input.Mouse.previousWheelMove = CORE.Input.Mouse.currentWheelMove;
@@ -600,15 +595,6 @@ void PollInputEvents(void)
     // Map touch position to mouse position for convenience
     CORE.Input.Touch.position[0] = CORE.Input.Mouse.currentPosition;
 
-#if defined(SUPPORT_GESTURES_SYSTEM)
-    // Call the ProcessGestureEvent here instead of on EventThread() to workaround the threads not matching
-    if (newGesture)
-    {
-        ProcessGestureEvent(gestureEvent);
-        newGesture = false;
-    }
-#endif
-
 #if defined(SUPPORT_SSH_KEYBOARD_RPI)
     // NOTE: Keyboard reading could be done using input_event(s) or just read from stdin, both methods are used here.
     // stdin reading is still used for legacy purposes, it allows keyboard input trough SSH console
@@ -618,6 +604,183 @@ void PollInputEvents(void)
     // NOTE: Mouse input events polling is done asynchronously in another pthread - EventThread()
     // NOTE: Gamepad (Joystick) input events polling is done asynchonously in another pthread - GamepadThread()
 #endif
+
+    // Handle the mouse/touch/gestures events:
+    // NOTE: Replaces the EventThread handling that is now commented.
+    {
+        int fd = platform.mouseFd;
+        if (fd == -1) return;
+
+        struct input_event event = { 0 };
+
+        int touchAction = -1;           // 0-TOUCH_ACTION_UP, 1-TOUCH_ACTION_DOWN, 2-TOUCH_ACTION_MOVE
+        bool gestureUpdate = false;     // Flag to note gestures require to update
+
+        // Try to read data from the mouse/touch/gesture and only continue if successful
+        while (read(fd, &event, sizeof(event)) == (int)sizeof(event))
+        {
+            // Relative movement parsing
+            if (event.type == EV_REL)
+            {
+                if (event.code == REL_X)
+                {
+                    if (platform.cursorRelative)
+                    {
+                        CORE.Input.Mouse.currentPosition.x = event.value;
+                        CORE.Input.Mouse.previousPosition.x = 0.0f;
+                    }
+                    else CORE.Input.Mouse.currentPosition.x += event.value;
+                    CORE.Input.Touch.position[0].x = CORE.Input.Mouse.currentPosition.x;
+
+                    touchAction = 2;    // TOUCH_ACTION_MOVE
+                    gestureUpdate = true;
+                }
+
+                if (event.code == REL_Y)
+                {
+                    if (platform.cursorRelative)
+                    {
+                        CORE.Input.Mouse.currentPosition.y = event.value;
+                        CORE.Input.Mouse.previousPosition.y = 0.0f;
+                    }
+                    else CORE.Input.Mouse.currentPosition.y += event.value;
+                    CORE.Input.Touch.position[0].y = CORE.Input.Mouse.currentPosition.y;
+
+                    touchAction = 2;    // TOUCH_ACTION_MOVE
+                    gestureUpdate = true;
+                }
+
+                if (event.code == REL_WHEEL) platform.eventWheelMove.y += event.value;
+            }
+
+            // Absolute movement parsing
+            if (event.type == EV_ABS)
+            {
+                // Basic movement
+                if (event.code == ABS_X)
+                {
+                    CORE.Input.Mouse.currentPosition.x = (event.value - platform.absRange.x)*CORE.Window.screen.width/platform.absRange.width;    // Scale according to absRange
+                    CORE.Input.Touch.position[0].x = (event.value - platform.absRange.x)*CORE.Window.screen.width/platform.absRange.width;        // Scale according to absRange
+
+                    touchAction = 2;    // TOUCH_ACTION_MOVE
+                    gestureUpdate = true;
+                }
+
+                if (event.code == ABS_Y)
+                {
+                    CORE.Input.Mouse.currentPosition.y = (event.value - platform.absRange.y)*CORE.Window.screen.height/platform.absRange.height;  // Scale according to absRange
+                    CORE.Input.Touch.position[0].y = (event.value - platform.absRange.y)*CORE.Window.screen.height/platform.absRange.height;      // Scale according to absRange
+
+                    touchAction = 2;    // TOUCH_ACTION_MOVE
+                    gestureUpdate = true;
+                }
+
+                // Multitouch movement
+                if (event.code == ABS_MT_SLOT) platform.touchSlot = event.value;   // Remember the slot number for the folowing events
+
+                if (event.code == ABS_MT_POSITION_X)
+                {
+                    if (platform.touchSlot < MAX_TOUCH_POINTS) CORE.Input.Touch.position[platform.touchSlot].x = (event.value - platform.absRange.x)*CORE.Window.screen.width/platform.absRange.width;    // Scale according to absRange
+                }
+
+                if (event.code == ABS_MT_POSITION_Y)
+                {
+                    if (platform.touchSlot < MAX_TOUCH_POINTS) CORE.Input.Touch.position[platform.touchSlot].y = (event.value - platform.absRange.y)*CORE.Window.screen.height/platform.absRange.height;  // Scale according to absRange
+                }
+
+                if (event.code == ABS_MT_TRACKING_ID)
+                {
+                    if ((event.value < 0) && (platform.touchSlot < MAX_TOUCH_POINTS))
+                    {
+                        // Touch has ended for this point
+                        CORE.Input.Touch.position[platform.touchSlot].x = -1;
+                        CORE.Input.Touch.position[platform.touchSlot].y = -1;
+                    }
+                }
+
+                // Touchscreen tap
+                if (event.code == ABS_PRESSURE)
+                {
+                    int previousMouseLeftButtonState = platform.currentButtonStateEvdev[MOUSE_BUTTON_LEFT];
+
+                    if (!event.value && previousMouseLeftButtonState)
+                    {
+                        platform.currentButtonStateEvdev[MOUSE_BUTTON_LEFT] = 0;
+
+                        touchAction = 0;    // TOUCH_ACTION_UP
+                        gestureUpdate = true;
+                    }
+
+                    if (event.value && !previousMouseLeftButtonState)
+                    {
+                        platform.currentButtonStateEvdev[MOUSE_BUTTON_LEFT] = 1;
+
+                        touchAction = 1;    // TOUCH_ACTION_DOWN
+                        gestureUpdate = true;
+                    }
+                }
+
+            }
+
+            // Button parsing
+            if (event.type == EV_KEY)
+            {
+                // Mouse button parsing
+                if ((event.code == BTN_TOUCH) || (event.code == BTN_LEFT))
+                {
+                    platform.currentButtonStateEvdev[MOUSE_BUTTON_LEFT] = event.value;
+
+                    if (event.value > 0) touchAction = 1;   // TOUCH_ACTION_DOWN
+                    else touchAction = 0;       // TOUCH_ACTION_UP
+                    gestureUpdate = true;
+                }
+
+                if (event.code == BTN_RIGHT) platform.currentButtonStateEvdev[MOUSE_BUTTON_RIGHT] = event.value;
+                if (event.code == BTN_MIDDLE) platform.currentButtonStateEvdev[MOUSE_BUTTON_MIDDLE] = event.value;
+                if (event.code == BTN_SIDE) platform.currentButtonStateEvdev[MOUSE_BUTTON_SIDE] = event.value;
+                if (event.code == BTN_EXTRA) platform.currentButtonStateEvdev[MOUSE_BUTTON_EXTRA] = event.value;
+                if (event.code == BTN_FORWARD) platform.currentButtonStateEvdev[MOUSE_BUTTON_FORWARD] = event.value;
+                if (event.code == BTN_BACK) platform.currentButtonStateEvdev[MOUSE_BUTTON_BACK] = event.value;
+            }
+
+            // Screen confinement
+            if (!CORE.Input.Mouse.cursorHidden)
+            {
+                if (CORE.Input.Mouse.currentPosition.x < 0) CORE.Input.Mouse.currentPosition.x = 0;
+                if (CORE.Input.Mouse.currentPosition.x > CORE.Window.screen.width/CORE.Input.Mouse.scale.x) CORE.Input.Mouse.currentPosition.x = CORE.Window.screen.width/CORE.Input.Mouse.scale.x;
+
+                if (CORE.Input.Mouse.currentPosition.y < 0) CORE.Input.Mouse.currentPosition.y = 0;
+                if (CORE.Input.Mouse.currentPosition.y > CORE.Window.screen.height/CORE.Input.Mouse.scale.y) CORE.Input.Mouse.currentPosition.y = CORE.Window.screen.height/CORE.Input.Mouse.scale.y;
+            }
+
+            // Update touch point count
+            CORE.Input.Touch.pointCount = 0;
+            for (int i = 0; i < MAX_TOUCH_POINTS; i++)
+            {
+                if (CORE.Input.Touch.position[i].x >= 0) CORE.Input.Touch.pointCount++;
+            }
+
+#if defined(SUPPORT_GESTURES_SYSTEM)
+            if (gestureUpdate)
+            {
+                GestureEvent gestureEvent = { 0 };
+
+                gestureEvent.touchAction = touchAction;
+                gestureEvent.pointCount = CORE.Input.Touch.pointCount;
+
+                for (int i = 0; i < MAX_TOUCH_POINTS; i++)
+                {
+                    gestureEvent.pointId[i] = i;
+                    gestureEvent.position[i] = CORE.Input.Touch.position[i];
+                }
+
+                ProcessGestureEvent(gestureEvent);
+
+                gestureUpdate = false;
+            }
+#endif
+        }
+    }
 }
 
 //----------------------------------------------------------------------------------
@@ -1462,15 +1625,20 @@ static void ConfigureEvdevDevice(char *device)
             worker->isMultitouch? "multitouch " : "",
             worker->isTouch? "touchscreen " : "",
             worker->isGamepad? "gamepad " : "");
+        platform.mouseFd = worker->fd;
+
+        // NOTE: moved the mouse/touch/gesture input to PollInputEvents()/
+        //       so added the "platform.mouseFd = worker->fd;" line above
+        //       and commented the thread code below:
 
         // Create a thread for this device
-        int error = pthread_create(&worker->threadId, NULL, &EventThread, (void *)worker);
-        if (error != 0)
-        {
-            TRACELOG(LOG_WARNING, "RPI: Failed to create input device thread: %s (error: %d)", device, error);
-            worker->threadId = 0;
-            close(fd);
-        }
+        //int error = pthread_create(&worker->threadId, NULL, &EventThread, (void *)worker);
+        //if (error != 0)
+        //{
+        //    TRACELOG(LOG_WARNING, "RPI: Failed to create input device thread: %s (error: %d)", device, error);
+        //    worker->threadId = 0;
+        //    close(fd);
+        //}
 
 #if defined(USE_LAST_TOUCH_DEVICE)
         // Find touchscreen with the highest index
@@ -1570,6 +1738,7 @@ static void PollKeyboardEvents(void)
 // Input device events reading thread
 static void *EventThread(void *arg)
 {
+/*
     struct input_event event = { 0 };
     InputEventWorker *worker = (InputEventWorker *)arg;
 
@@ -1731,7 +1900,7 @@ static void *EventThread(void *arg)
 #if defined(SUPPORT_GESTURES_SYSTEM)
             if (gestureUpdate)
             {
-                //GestureEvent gestureEvent = { 0 };
+                GestureEvent gestureEvent = { 0 };
 
                 gestureEvent.touchAction = touchAction;
                 gestureEvent.pointCount = CORE.Input.Touch.pointCount;
@@ -1742,8 +1911,7 @@ static void *EventThread(void *arg)
                     gestureEvent.position[i] = CORE.Input.Touch.position[i];
                 }
 
-                //ProcessGestureEvent(gestureEvent);
-                newGesture = true;
+                ProcessGestureEvent(gestureEvent);
             }
 #endif
         }
@@ -1752,7 +1920,7 @@ static void *EventThread(void *arg)
     }
 
     close(worker->fd);
-
+*/
     return NULL;
 }
 
