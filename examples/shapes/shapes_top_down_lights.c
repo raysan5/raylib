@@ -335,6 +335,7 @@ int main(void)
             DrawFPS(screenWidth - 80, 10);
             DrawText("Drag to move light #1", 10, 10, 10, DARKGREEN);
             DrawText("Right click to add new light", 10, 30, 10, DARKGREEN);
+
         EndDrawing();
         //----------------------------------------------------------------------------------
     }

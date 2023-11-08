@@ -35,11 +35,11 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{15CDD310-6980-42A6-8082-3A6B7730D13F}</ProjectGuid>
+    <ProjectGuid>{27AA7BDA-0C34-4733-9009-73D3E64234FB}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
-    <RootNamespace>core_input_mouse_wheel</RootNamespace>
+    <RootNamespace>core_input_gamepad_info</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
-    <ProjectName>core_input_mouse_wheel</ProjectName>
+    <ProjectName>core_input_gamepad_info</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -374,7 +374,7 @@
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\..\examples\core\core_input_mouse_wheel.c" />
+    <ClCompile Include="..\..\..\examples\core\core_input_gamepad_info.c" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="..\..\..\src\raylib.rc" />

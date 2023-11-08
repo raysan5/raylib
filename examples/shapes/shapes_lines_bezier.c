@@ -60,11 +60,11 @@ int main(void)
 
             DrawText("USE MOUSE LEFT-RIGHT CLICK to DEFINE LINE START and END POINTS", 15, 20, 20, GRAY);
 
-            // Draw line cubic-bezier, in-out interpolation (easing), no control points
+            // Draw line Cubic Bezier, in-out interpolation (easing), no control points
             DrawLineBezier(start, end, 3.0f, BLUE);
             
-            // Draw spline cubic-bezier with control points
-            DrawSplineBezierCubic(start, startControl, endControl, end, 2.0f, RED);
+            // Draw spline Cubic Bezier with control points
+            DrawSplineSegmentBezierCubic(start, startControl, endControl, end, 2.0f, RED);
             
             DrawLineEx(start, startControl, 1.0, LIGHTGRAY);
             DrawLineEx(end, endControl, 1.0, LIGHTGRAY);

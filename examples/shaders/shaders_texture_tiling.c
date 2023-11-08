@@ -1,17 +1,25 @@
 /*******************************************************************************************
 *
-*   raylib [core] example - Initialize 3d camera free
+*   raylib [shaders] example - texture tiling
 *
-*   Example originally created with raylib 1.3, last time updated with raylib 1.3
+*   Example demonstrates how to tile a texture on a 3D model using raylib.
+*
+*   Example contributed by Luis Almeida (@luis605) and reviewed by Ramon Santamaria (@raysan5)
 *
 *   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
 *   BSD-like license that allows static linking with closed source software
 *
-*   Copyright (c) 2015-2023 Ramon Santamaria (@raysan5)
+*   Copyright (c) 2023 Luis Almeida (@luis605)
 *
 ********************************************************************************************/
 
 #include "raylib.h"
+
+#if defined(PLATFORM_DESKTOP)
+    #define GLSL_VERSION            330
+#else   // PLATFORM_ANDROID, PLATFORM_WEB
+    #define GLSL_VERSION            100
+#endif
 
 //------------------------------------------------------------------------------------
 // Program main entry point
@@ -23,17 +31,29 @@ int main(void)
     const int screenWidth = 800;
     const int screenHeight = 450;
 
-    InitWindow(screenWidth, screenHeight, "raylib [core] example - 3d camera free");
+    InitWindow(screenWidth, screenHeight, "raylib [shaders] example - texture tiling");
 
     // Define the camera to look into our 3d world
     Camera3D camera = { 0 };
-    camera.position = (Vector3){ 10.0f, 10.0f, 10.0f }; // Camera position
-    camera.target = (Vector3){ 0.0f, 0.0f, 0.0f };      // Camera looking at point
+    camera.position = (Vector3){ 4.0f, 4.0f, 4.0f }; // Camera position
+    camera.target = (Vector3){ 0.0f, 0.5f, 0.0f };      // Camera looking at point
     camera.up = (Vector3){ 0.0f, 1.0f, 0.0f };          // Camera up vector (rotation towards target)
     camera.fovy = 45.0f;                                // Camera field-of-view Y
     camera.projection = CAMERA_PERSPECTIVE;             // Camera projection type
 
-    Vector3 cubePosition = { 0.0f, 0.0f, 0.0f };
+    // Load a cube model
+    Mesh cube = GenMeshCube(1.0f, 1.0f, 1.0f);
+    Model model = LoadModelFromMesh(cube);
+    
+    // Load a texture and assign to cube model
+    Texture2D texture = LoadTexture("resources/cubicmap_atlas.png");
+    model.materials[0].maps[MATERIAL_MAP_DIFFUSE].texture = texture;
+
+    // Set the texture tiling using a shader
+    float tiling[2] = { 3.0f, 3.0f };
+    Shader shader = LoadShader(0, TextFormat("resources/shaders/glsl%i/tiling.fs", GLSL_VERSION));
+    SetShaderValue(shader, GetShaderLocation(shader, "tiling"), tiling, SHADER_UNIFORM_VEC2);
+    model.materials[0].shader = shader;
 
     DisableCursor();                    // Limit cursor to relative movement inside the window
 
@@ -47,31 +67,26 @@ int main(void)
         //----------------------------------------------------------------------------------
         UpdateCamera(&camera, CAMERA_FREE);
 
-        if (IsKeyPressed('Z')) camera.target = (Vector3){ 0.0f, 0.0f, 0.0f };
+        if (IsKeyPressed('Z')) camera.target = (Vector3){ 0.0f, 0.5f, 0.0f };
         //----------------------------------------------------------------------------------
 
         // Draw
         //----------------------------------------------------------------------------------
         BeginDrawing();
-
+        
             ClearBackground(RAYWHITE);
 
             BeginMode3D(camera);
-
-                DrawCube(cubePosition, 2.0f, 2.0f, 2.0f, RED);
-                DrawCubeWires(cubePosition, 2.0f, 2.0f, 2.0f, MAROON);
+            
+                BeginShaderMode(shader);
+                    DrawModel(model, (Vector3){ 0.0f, 0.0f, 0.0f }, 2.0f, WHITE);
+                EndShaderMode();
 
                 DrawGrid(10, 1.0f);
-
+                
             EndMode3D();
 
-            DrawRectangle( 10, 10, 320, 93, Fade(SKYBLUE, 0.5f));
-            DrawRectangleLines( 10, 10, 320, 93, BLUE);
-
-            DrawText("Free camera default controls:", 20, 20, 10, BLACK);
-            DrawText("- Mouse Wheel to Zoom in-out", 40, 40, 10, DARKGRAY);
-            DrawText("- Mouse Wheel Pressed to Pan", 40, 60, 10, DARKGRAY);
-            DrawText("- Z to zoom to (0, 0, 0)", 40, 80, 10, DARKGRAY);
+            DrawText("Use mouse to rotate the camera", 10, 10, 20, DARKGRAY);
 
         EndDrawing();
         //----------------------------------------------------------------------------------
@@ -79,8 +94,12 @@ int main(void)
 
     // De-Initialization
     //--------------------------------------------------------------------------------------
-    CloseWindow();        // Close window and OpenGL context
-    //--------------------------------------------------------------------------------------
+    UnloadModel(model);         // Unload model
+    UnloadShader(shader);       // Unload shader
+    UnloadTexture(texture);     // Unload texture
 
+    CloseWindow();              // Close window and OpenGL context
+    //--------------------------------------------------------------------------------------
+    
     return 0;
 }

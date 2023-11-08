@@ -31,40 +31,49 @@ int main(void)
     InitWindow(screenWidth, screenHeight, "raylib [core] example - gamepad information");
 
     SetTargetFPS(60);                   // Set our game to run at 60 frames-per-second
+    //--------------------------------------------------------------------------------------
 
     // Main game loop
-    while (!WindowShouldClose())        // Detect window close button or ESC key
+    while (!WindowShouldClose())    // Detect window close button or ESC key
     {
-        int y = 10;
+        // Update
+        //----------------------------------------------------------------------------------
+        // TODO: Update your variables here
+        //----------------------------------------------------------------------------------
 
+        // Draw
+        //----------------------------------------------------------------------------------
         BeginDrawing();
 
-        ClearBackground(RAYWHITE);
+            ClearBackground(RAYWHITE);
 
-        for (int i = 0; i < 4; i++) // by default rcore.h has a MAX_GAMEPADS of 4 so mimmic that here.
-        {
-            if (IsGamepadAvailable(i))
+            for (int i = 0, y = 10; i < 4; i++)     // MAX_GAMEPADS = 4
             {
-                DrawText(TextFormat("Gamepad name: %s", GetGamepadName(i)), 10, y, 20, BLACK);
-                y += 30;
-                DrawText(TextFormat("\tAxis count:   %d", GetGamepadAxisCount(i)), 10, y, 20, BLACK);
-                y += 30;
-                for (int axis = 0; axis < GetGamepadAxisCount(i); axis++)
+                if (IsGamepadAvailable(i))
                 {
-                    DrawText(TextFormat("\tAxis %d = %f", axis, GetGamepadAxisMovement(i, axis)), 10, y, 20, BLACK);
+                    DrawText(TextFormat("Gamepad name: %s", GetGamepadName(i)), 10, y, 20, BLACK);
                     y += 30;
-                }
-                for (int button = 0; button < 32; button++)
-                {
-                    DrawText(TextFormat("\tButton %d = %d", button, IsGamepadButtonDown(i, button)), 10, y, 20, BLACK);
+                    DrawText(TextFormat("\tAxis count:   %d", GetGamepadAxisCount(i)), 10, y, 20, BLACK);
                     y += 30;
+
+                    for (int axis = 0; axis < GetGamepadAxisCount(i); axis++)
+                    {
+                        DrawText(TextFormat("\tAxis %d = %f", axis, GetGamepadAxisMovement(i, axis)), 10, y, 20, BLACK);
+                        y += 30;
+                    }
+
+                    for (int button = 0; button < 32; button++)
+                    {
+                        DrawText(TextFormat("\tButton %d = %d", button, IsGamepadButtonDown(i, button)), 10, y, 20, BLACK);
+                        y += 30;
+                    }
                 }
             }
-        }
 
-        DrawFPS(GetScreenWidth() - 100, 100);
+            DrawFPS(GetScreenWidth() - 100, 100);
 
         EndDrawing();
+        //----------------------------------------------------------------------------------
     }
 
     // De-Initialization

@@ -167,7 +167,7 @@ int main(void)
                 // Draw spline: cubic-bezier (with control points)
                 for (int i = 0; i < pointCount - 1; i++)
                 {
-                    DrawSplineBezierCubic(points[i], control[i].start, control[i].end, points[i + 1], 2.0f, RED);
+                    DrawSplineSegmentBezierCubic(points[i], control[i].start, control[i].end, points[i + 1], 10.0f, RED);
 
                     // Every cubic bezier point should have two control points
                     DrawCircleV(control[i].start, 4, GOLD);

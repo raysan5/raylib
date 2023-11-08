@@ -428,97 +428,99 @@ endif
 # Define source code object files required
 #------------------------------------------------------------------------------------------------
 CORE = \
-    core/core_basic_window \
+    core/core_2d_camera \
+    core/core_2d_camera_mouse_zoom \
+    core/core_2d_camera_platformer \
+    core/core_2d_camera_split_screen \
+    core/core_3d_camera_first_person \
+    core/core_3d_camera_free \
+    core/core_3d_camera_mode \
+    core/core_3d_camera_split_screen \
+    core/core_3d_picking \
+    core/core_automation_events \
     core/core_basic_screen_manager \
+    core/core_basic_window \
+    core/core_custom_frame_control \
+    core/core_custom_logging \
+    core/core_drop_files \
+    core/core_input_gamepad \
+    core/core_input_gamepad_info \
+    core/core_input_gestures \
+    core/core_input_gestures_web \
     core/core_input_keys \
     core/core_input_mouse \
     core/core_input_mouse_wheel \
-    core/core_input_gamepad \
-    core/core_input_gamepad_info \
     core/core_input_multitouch \
-    core/core_input_gestures \
-    core/core_input_gestures_web \
-    core/core_2d_camera \
-    core/core_2d_camera_platformer \
-    core/core_2d_camera_mouse_zoom \
-    core/core_2d_camera_split_screen \
-    core/core_3d_camera_mode \
-    core/core_3d_camera_free \
-    core/core_3d_camera_first_person \
-    core/core_3d_camera_split_screen \
-    core/core_3d_picking \
-    core/core_world_screen \
-    core/core_custom_logging \
-    core/core_drop_files \
+    core/core_loading_thread \
     core/core_random_values \
     core/core_scissor_test \
+    core/core_smooth_pixelperfect \
     core/core_storage_values \
     core/core_vr_simulator \
-    core/core_loading_thread \
     core/core_window_flags \
     core/core_window_letterbox \
     core/core_window_should_close \
-    core/core_smooth_pixelperfect \
-    core/core_custom_frame_control
+    core/core_world_screen
 
 SHAPES = \
     shapes/shapes_basic_shapes \
     shapes/shapes_bouncing_ball \
-    shapes/shapes_colors_palette \
-    shapes/shapes_logo_raylib \
-    shapes/shapes_logo_raylib_anim \
-    shapes/shapes_rectangle_scaling \
-    shapes/shapes_lines_bezier \
     shapes/shapes_collision_area \
-    shapes/shapes_following_eyes \
+    shapes/shapes_colors_palette \
+    shapes/shapes_draw_circle_sector \
+    shapes/shapes_draw_rectangle_rounded \
+    shapes/shapes_draw_ring \
     shapes/shapes_easings_ball_anim \
     shapes/shapes_easings_box_anim \
     shapes/shapes_easings_rectangle_array \
-    shapes/shapes_draw_ring \
-    shapes/shapes_draw_circle_sector \
-    shapes/shapes_draw_rectangle_rounded \
+    shapes/shapes_following_eyes \
+    shapes/shapes_lines_bezier \
+    shapes/shapes_logo_raylib \
+    shapes/shapes_logo_raylib_anim \
+    shapes/shapes_rectangle_scaling \
+    shapes/shapes_splines_drawing \
     shapes/shapes_top_down_lights
 
 TEXTURES = \
-    textures/textures_logo_raylib \
-    textures/textures_mouse_painting \
-    textures/textures_srcrec_dstrec \
+    textures/textures_background_scrolling \
+    textures/textures_blend_modes \
+    textures/textures_bunnymark \
+    textures/textures_draw_tiled \
+    textures/textures_fog_of_war \
+    textures/textures_gif_player \
     textures/textures_image_drawing \
     textures/textures_image_generation \
     textures/textures_image_loading \
     textures/textures_image_processing \
     textures/textures_image_rotate \
     textures/textures_image_text \
-    textures/textures_to_image \
-    textures/textures_raw_data \
-    textures/textures_particles_blending \
+    textures/textures_logo_raylib \
+    textures/textures_mouse_painting \
     textures/textures_npatch_drawing \
-    textures/textures_background_scrolling \
+    textures/textures_particles_blending \
+    textures/textures_polygon \
+    textures/textures_raw_data \
     textures/textures_sprite_anim \
     textures/textures_sprite_button \
     textures/textures_sprite_explosion \
+    textures/textures_srcrec_dstrec \
+    textures/textures_svg_loading \
     textures/textures_textured_curve \
-    textures/textures_bunnymark \
-    textures/textures_blend_modes \
-    textures/textures_draw_tiled \
-    textures/textures_polygon \
-    textures/textures_gif_player \
-    textures/textures_fog_of_war \
-    textures/textures_svg_loading
+    textures/textures_to_image
 
 TEXT = \
-    text/text_raylib_fonts \
-    text/text_font_spritefont \
-    text/text_font_loading \
+    text/text_codepoints_loading \
+    text/text_draw_3d \
     text/text_font_filters \
+    text/text_font_loading \
     text/text_font_sdf \
+    text/text_font_spritefont \
     text/text_format_text \
     text/text_input_box \
-    text/text_writing_anim \
+    text/text_raylib_fonts \
     text/text_rectangle_bounds \
     text/text_unicode \
-    text/text_draw_3d \
-    text/text_codepoints_loading
+    text/text_writing_anim
 
 MODELS = \
     models/models_animation \
@@ -528,51 +530,52 @@ MODELS = \
     models/models_draw_cube_texture \
     models/models_first_person_maze \
     models/models_geometric_shapes \
-    models/models_mesh_generation \
-    models/models_mesh_picking \
+    models/models_heightmap \
     models/models_loading \
-    models/models_loading_vox \
     models/models_loading_gltf \
     models/models_loading_m3d \
+    models/models_loading_vox \
+    models/models_mesh_generation \
+    models/models_mesh_picking \
     models/models_orthographic_projection \
     models/models_rlgl_solar_system \
     models/models_skybox \
-    models/models_yaw_pitch_roll \
-    models/models_heightmap \
-    models/models_waving_cubes
+    models/models_waving_cubes \
+    models/models_yaw_pitch_roll
 
 SHADERS = \
-    shaders/shaders_model_shader \
-    shaders/shaders_shapes_textures \
-    shaders/shaders_custom_uniform \
-    shaders/shaders_postprocessing \
-    shaders/shaders_palette_switch \
-    shaders/shaders_raymarching \
-    shaders/shaders_texture_drawing \
-    shaders/shaders_texture_waves \
-    shaders/shaders_texture_outline \
-    shaders/shaders_julia_set \
-    shaders/shaders_eratosthenes \
     shaders/shaders_basic_lighting \
+    shaders/shaders_custom_uniform \
+    shaders/shaders_deferred_render \
+    shaders/shaders_eratosthenes \
     shaders/shaders_fog \
-    shaders/shaders_simple_mask \
-    shaders/shaders_spotlight \
     shaders/shaders_hot_reloading \
+    shaders/shaders_hybrid_render \
+    shaders/shaders_julia_set \
     shaders/shaders_lightmap \
     shaders/shaders_mesh_instancing \
+    shaders/shaders_model_shader \
     shaders/shaders_multi_sample2d \
-    shaders/shaders_write_depth \
-    shaders/shaders_hybrid_render \
-    shaders/shaders_deferred_render
+    shaders/shaders_palette_switch \
+    shaders/shaders_postprocessing \
+    shaders/shaders_raymarching \
+    shaders/shaders_shapes_textures \
+    shaders/shaders_simple_mask \
+    shaders/shaders_spotlight \
+    shaders/shaders_texture_drawing \
+    shaders/shaders_texture_outline \
+    shaders/shaders_texture_tiling \
+    shaders/shaders_texture_waves \
+    shaders/shaders_write_depth
 
 AUDIO = \
+    audio/audio_mixed_processor \
     audio/audio_module_playing \
     audio/audio_music_stream \
     audio/audio_raw_stream \
     audio/audio_sound_loading \
     audio/audio_sound_multi \
-    audio/audio_stream_effects \
-    audio/audio_mixed_processor
+    audio/audio_stream_effects
 
 OTHERS = \
     others/easings_testbed \
