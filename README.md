@@ -49,7 +49,7 @@ features
   - **Powerful math module** for Vector, Matrix and Quaternion operations: [raymath](https://github.com/raysan5/raylib/blob/master/src/raymath.h)
   - Audio loading and playing with streaming support (WAV, QOA, OGG, MP3, FLAC, XM, MOD)
   - **VR stereo rendering** support with configurable HMD device parameters
-  - Huge examples collection with [+130 code examples](https://github.com/raysan5/raylib/tree/master/examples)!
+  - Huge examples collection with [+140 code examples](https://github.com/raysan5/raylib/tree/master/examples)!
   - Bindings to [+70 programming languages](https://github.com/raysan5/raylib/blob/master/BINDINGS.md)!
   - **Free and open source**
 
