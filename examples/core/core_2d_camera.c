@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [core] example - 2d camera
+*   raylib [core] example - 2D Camera system
 *
 *   Example originally created with raylib 1.5, last time updated with raylib 3.0
 *

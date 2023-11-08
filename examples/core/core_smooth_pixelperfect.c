@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [core] example - smooth pixel-perfect camera
+*   raylib [core] example - Smooth Pixel-perfect camera
 *
 *   Example originally created with raylib 3.7, last time updated with raylib 4.0
 *   
