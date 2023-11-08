@@ -138,6 +138,10 @@
 // Some lines-based shapes could still use lines
 #define SUPPORT_QUADS_DRAW_MODE         1
 
+// rshapes: Configuration values
+//------------------------------------------------------------------------------------
+#define SPLINE_SEGMENT_DIVISIONS       24       // Spline segments subdivisions
+
 
 //------------------------------------------------------------------------------------
 // Module: rtextures - Configuration Flags

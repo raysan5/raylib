@@ -1256,18 +1256,23 @@ RLAPI void DrawPolyLines(Vector2 center, int sides, float radius, float rotation
 RLAPI void DrawPolyLinesEx(Vector2 center, int sides, float radius, float rotation, float lineThick, Color color); // Draw a polygon outline of n sides with extended parameters
 
 // Splines drawing functions
-RLAPI void DrawSplineLinear(Vector2 *points, int pointCount, float thick, Color color);                  // Draw spline: linear, minimum 2 points
+RLAPI void DrawSplineLinear(Vector2 *points, int pointCount, float thick, Color color);                  // Draw spline: Linear, minimum 2 points
 RLAPI void DrawSplineBasis(Vector2 *points, int pointCount, float thick, Color color);                   // Draw spline: B-Spline, minimum 4 points
-RLAPI void DrawSplineCatmullRom(Vector2 *points, int pointCount, float thick, Color color);              // Draw spline: Catmull Rom, minimum 4 points
-RLAPI void DrawSplineBezierQuad(Vector2 startPos, Vector2 controlPos, Vector2 endPos, float thick, Color color); // Draw spline segment: quadratic-bezier, one control point
-RLAPI void DrawSplineBezierCubic(Vector2 startPos, Vector2 startControlPos, Vector2 endControlPos, Vector2 endPos, float thick, Color color); // Draw spline segment: cubic-bezier, two control points
+RLAPI void DrawSplineCatmullRom(Vector2 *points, int pointCount, float thick, Color color);              // Draw spline: Catmull-Rom, minimum 4 points
+RLAPI void DrawSplineBezierQuadratic(Vector2 *points, int pointCount, float thick, Color color);         // Draw spline: Quadratic Bezier, minimum 3 points (1 control point): [p1, c2, p3, c4...]
+RLAPI void DrawSplineBezierCubic(Vector2 *points, int pointCount, float thick, Color color);             // Draw spline: Cubic Bezier, minimum 4 points (2 control points): [p1, c2, c3, p4, c5, c6...]
+RLAPI void DrawSplineSegmentLinear(Vector2 p1, Vector2 p2, float thick, Color color);                    // Draw spline segment: Linear, 2 points
+RLAPI void DrawSplineSegmentBasis(Vector2 p1, Vector2 p2, Vector2 p3, Vector2 p4, float thick, Color color); // Draw spline segment: B-Spline, 4 points
+RLAPI void DrawSplineSegmentCatmullRom(Vector2 p1, Vector2 p2, Vector2 p3, Vector2 p4, float thick, Color color); // Draw spline segment: Catmull-Rom, 4 points
+RLAPI void DrawSplineSegmentBezierQuadratic(Vector2 p1, Vector2 c2, Vector2 p3, float thick, Color color); // Draw spline segment: Quadratic Bezier, 2 points, 1 control point
+RLAPI void DrawSplineSegmentBezierCubic(Vector2 p1, Vector2 c2, Vector2 c3, Vector2 p4, float thick, Color color); // Draw spline segment: Cubic Bezier, 2 points, 2 control points
 
-// Get (evaluate) spline point for a given t [0.0f .. 1.0f]
-RLAPI Vector2 GetSplinePointLinear(Vector2 startPos, Vector2 endPos, float t);                           // Get (evaluate) spline point: linear
+// Spline segment point evaluation functions, for a given t [0.0f .. 1.0f]
+RLAPI Vector2 GetSplinePointLinear(Vector2 startPos, Vector2 endPos, float t);                           // Get (evaluate) spline point: Linear
 RLAPI Vector2 GetSplinePointBasis(Vector2 p1, Vector2 p2, Vector2 p3, Vector2 p4, float t);              // Get (evaluate) spline point: B-Spline
 RLAPI Vector2 GetSplinePointCatmullRom(Vector2 p1, Vector2 p2, Vector2 p3, Vector2 p4, float t);         // Get (evaluate) spline point: Catmull-Rom
-RLAPI Vector2 GetSplinePointBezierQuad(Vector2 startPos, Vector2 controlPos, Vector2 endPos, float t);   // Get (evaluate) spline point: quadratic-bezier
-RLAPI Vector2 GetSplinePointBezierCubic(Vector2 startPos, Vector2 startControlPos, Vector2 endControlPos, Vector2 endPos, float t); // Get (evaluate) spline point: cubic-bezier
+RLAPI Vector2 GetSplinePointBezierQuad(Vector2 p1, Vector2 c2, Vector2 p3, float t);                     // Get (evaluate) spline point: Quadratic Bezier
+RLAPI Vector2 GetSplinePointBezierCubic(Vector2 p1, Vector2 c2, Vector2 c3, Vector2 p4, float t);        // Get (evaluate) spline point: Cubic Bezier
 
 // Basic shapes collision detection functions
 RLAPI bool CheckCollisionRecs(Rectangle rec1, Rectangle rec2);                                           // Check collision between two rectangles
