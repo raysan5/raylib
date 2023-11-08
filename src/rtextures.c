@@ -347,7 +347,7 @@ Image LoadImageSvg(const char *fileNameOrString, int width, int height)
                 (fileNameOrString[2] == 'v') &&
                 (fileNameOrString[3] == 'g'))
             {
-                fileData = fileNameOrString;
+                fileData = (unsigned char *)fileNameOrString;
                 isSvgStringValid = true;
             }
         }
