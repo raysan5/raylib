@@ -42,5 +42,5 @@ void main()
     tc += center;
     vec4 color = texture2D(texture0, tc/texSize)*colDiffuse*fragColor;;
 
-    gl_FragColor = vec4(color.rgb, 1.0);;
+    gl_FragColor = vec4(color.rgb, 1.0);
 }

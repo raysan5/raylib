@@ -507,10 +507,63 @@ shaders: $(SHADERS)
 audio: $(AUDIO)
 
 # Compile CORE examples
+core/core_2d_camera: core/core_2d_camera.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
+
+core/core_2d_camera_mouse_zoom: core/core_2d_camera_mouse_zoom.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
+
+core/core_2d_camera_platformer: core/core_2d_camera_platformer.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
+
+core/core_2d_camera_split_screen: core/core_2d_camera_split_screen.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
+
+core/core_3d_camera_first_person: core/core_3d_camera_first_person.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
+
+core/core_3d_camera_free: core/core_3d_camera_free.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
+
+core/core_3d_camera_mode: core/core_3d_camera_mode.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
+
+core/core_3d_camera_split_screen: core/core_3d_camera_split_screen.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
+
+core/core_3d_picking: core/core_3d_picking.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
+    
+core/core_automation_events : core/core_automation_events.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
+    
 core/core_basic_window: core/core_basic_window.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
 core/core_basic_screen_manager: core/core_basic_screen_manager.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
+
+core/core_custom_frame_control: core/core_custom_frame_control.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
+
+core/core_custom_logging: core/core_custom_logging.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
+
+core/core_drop_files: core/core_drop_files.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) -s TOTAL_MEMORY=67108864 -s FORCE_FILESYSTEM=1
+
+core/core_input_gamepad: core/core_input_gamepad.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
+    --preload-file core/resources/ps3.png@resources/ps3.png \
+    --preload-file core/resources/xbox.png@resources/xbox.png
+
+core/core_input_gamepad_info: core/core_input_gamepad_info.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
+
+core/core_input_gestures: core/core_input_gestures.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
+
+core/core_input_gestures_web: core/core_input_gestures_web.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
 core/core_input_keys: core/core_input_keys.c
@@ -522,66 +575,23 @@ core/core_input_mouse: core/core_input_mouse.c
 core/core_input_mouse_wheel: core/core_input_mouse_wheel.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
-core/core_input_gamepad: core/core_input_gamepad.c
-	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
-    --preload-file core/resources/ps3.png@resources/ps3.png \
-    --preload-file core/resources/xbox.png@resources/xbox.png
-
-core/core_input_gamepad_info: core/core_input_gamepad.c
-	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
-
 core/core_input_multitouch: core/core_input_multitouch.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
-core/core_input_gestures: core/core_input_gestures.c
-	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
-
-core/core_input_gestures_web: core/core_input_gestures_web.c
-	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
-
-core/core_2d_camera: core/core_2d_camera.c
-	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
-
-core/core_2d_camera_platformer: core/core_2d_camera_platformer.c
-	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
-
-core/core_2d_camera_mouse_zoom: core/core_2d_camera_mouse_zoom.c
-	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
-
-core/core_2d_camera_split_screen: core/core_2d_camera_split_screen.c
-	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
-
-core/core_3d_camera_mode: core/core_3d_camera_mode.c
-	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
-
-core/core_3d_camera_free: core/core_3d_camera_free.c
-	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
-
-core/core_3d_camera_first_person: core/core_3d_camera_first_person.c
-	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
-
-core/core_3d_camera_split_screen: core/core_3d_camera_split_screen.c
-	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
-
-core/core_3d_picking: core/core_3d_picking.c
-	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
-
-core/core_world_screen: core/core_world_screen.c
-	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
-
-core/core_custom_logging: core/core_custom_logging.c
-	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
-
-core/core_window_letterbox: core/core_window_letterbox.c
-	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
-
-core/core_drop_files: core/core_drop_files.c
-	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) -s TOTAL_MEMORY=67108864 -s FORCE_FILESYSTEM=1
+# NOTE: To use multi-threading raylib must be compiled with multi-theading support (-s USE_PTHREADS=1)
+# WARNING: For security reasons multi-threading is not supported on browsers, it requires cross-origin isolation (Oct.2021)
+# WARNING: It requires raylib to be compiled using -pthread, so atomic operations and thread-local data (if any)
+# in its source were transformed to non-atomic operations and non-thread-local data
+core/core_loading_thread: core/core_loading_thread.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) -s USE_PTHREADS=1
 
 core/core_random_values: core/core_random_values.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
 core/core_scissor_test: core/core_scissor_test.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
+
+core/core_smooth_pixelperfect: core/core_smooth_pixelperfect.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
 core/core_storage_values: core/core_storage_values.c
@@ -594,21 +604,14 @@ core/core_vr_simulator: core/core_vr_simulator.c
 core/core_window_flags: core/core_window_flags.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
-core/core_smooth_pixelperfect: core/core_smooth_pixelperfect.c
-	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
-
-core/core_custom_frame_control: core/core_custom_frame_control.c
+core/core_window_letterbox: core/core_window_letterbox.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
 core/core_window_should_close: core/core_window_should_close.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
-# NOTE: To use multi-threading raylib must be compiled with multi-theading support (-s USE_PTHREADS=1)
-# WARNING: For security reasons multi-threading is not supported on browsers, it requires cross-origin isolation (Oct.2021)
-# WARNING: It requires raylib to be compiled using -pthread, so atomic operations and thread-local data (if any)
-# in its source were transformed to non-atomic operations and non-thread-local data
-core/core_loading_thread: core/core_loading_thread.c
-	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) -s USE_PTHREADS=1
+core/core_world_screen: core/core_world_screen.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
 
 # Compile SHAPES examples
@@ -618,25 +621,19 @@ shapes/shapes_basic_shapes: shapes/shapes_basic_shapes.c
 shapes/shapes_bouncing_ball: shapes/shapes_bouncing_ball.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
-shapes/shapes_colors_palette: shapes/shapes_colors_palette.c
-	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
-
-shapes/shapes_logo_raylib: shapes/shapes_logo_raylib.c
-	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
-
-shapes/shapes_logo_raylib_anim: shapes/shapes_logo_raylib_anim.c
-	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
-
-shapes/shapes_rectangle_scaling: shapes/shapes_rectangle_scaling.c
-	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
-
-shapes/shapes_lines_bezier: shapes/shapes_lines_bezier.c
-	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
-
 shapes/shapes_collision_area: shapes/shapes_collision_area.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
-shapes/shapes_following_eyes: shapes/shapes_following_eyes.c
+shapes/shapes_colors_palette: shapes/shapes_colors_palette.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
+
+shapes/shapes_draw_circle_sector: shapes/shapes_draw_circle_sector.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
+
+shapes/shapes_draw_rectangle_rounded: shapes/shapes_draw_rectangle_rounded.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
+    
+shapes/shapes_draw_ring: shapes/shapes_draw_ring.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
 shapes/shapes_easings_ball_anim: shapes/shapes_easings_ball_anim.c
@@ -648,37 +645,54 @@ shapes/shapes_easings_box_anim: shapes/shapes_easings_box_anim.c
 shapes/shapes_easings_rectangle_array: shapes/shapes_easings_rectangle_array.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
-shapes/shapes_draw_ring: shapes/shapes_draw_ring.c
+shapes/shapes_following_eyes: shapes/shapes_following_eyes.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
-shapes/shapes_draw_circle_sector: shapes/shapes_draw_circle_sector.c
+shapes/shapes_lines_bezier: shapes/shapes_lines_bezier.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
-shapes/shapes_draw_rectangle_rounded: shapes/shapes_draw_rectangle_rounded.c
+shapes/shapes_logo_raylib: shapes/shapes_logo_raylib.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
+
+shapes/shapes_logo_raylib_anim: shapes/shapes_logo_raylib_anim.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
+
+shapes/shapes_rectangle_scaling: shapes/shapes_rectangle_scaling.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
+
+shapes/shapes_splines_drawing: shapes/shapes_splines_drawing.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
 shapes/shapes_top_down_lights: shapes/shapes_top_down_lights.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
-# Compile TEXTURES examples
-textures/textures_logo_raylib: textures/textures_logo_raylib.c
-	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
-    --preload-file textures/resources/raylib_logo.png@resources/raylib_logo.png
 
-textures/textures_mouse_painting: textures/textures_mouse_painting.c
+# Compile TEXTURES examples
+textures/textures_background_scrolling: textures/textures_background_scrolling.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
+    --preload-file textures/resources/cyberpunk_street_background.png@resources/cyberpunk_street_background.png \
+    --preload-file textures/resources/cyberpunk_street_midground.png@resources/cyberpunk_street_midground.png \
+    --preload-file textures/resources/cyberpunk_street_foreground.png@resources/cyberpunk_street_foreground.png
+
+textures/textures_blend_modes: textures/textures_blend_modes.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
+    --preload-file textures/resources/cyberpunk_street_background.png@resources/cyberpunk_street_background.png \
+    --preload-file textures/resources/cyberpunk_street_foreground.png@resources/cyberpunk_street_foreground.png
+
+textures/textures_bunnymark: textures/textures_bunnymark.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
+    --preload-file textures/resources/wabbit_alpha.png@resources/wabbit_alpha.png
+
+textures/textures_draw_tiled: textures/textures_draw_tiled.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
+    --preload-file textures/resources/patterns.png@resources/patterns.png
+
+textures/textures_fog_of_war: textures/textures_fog_of_war.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
-textures/textures_sprite_anim: textures/textures_sprite_anim.c
+textures/textures_gif_player: textures/textures_gif_player.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
-    --preload-file textures/resources/scarfy.png@resources/scarfy.png
-
-textures/textures_srcrec_dstrec: textures/textures_srcrec_dstrec.c
-	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
-    --preload-file textures/resources/scarfy.png@resources/scarfy.png
-
-textures/textures_image_loading: textures/textures_image_loading.c
-	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
-    --preload-file textures/resources/raylib_logo.png@resources/raylib_logo.png
+    --preload-file textures/resources/scarfy_run.gif@resources/scarfy_run.gif
 
 textures/textures_image_drawing: textures/textures_image_drawing.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
@@ -688,6 +702,10 @@ textures/textures_image_drawing: textures/textures_image_drawing.c
 
 textures/textures_image_generation: textures/textures_image_generation.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) -s TOTAL_MEMORY=67108864
+
+textures/textures_image_loading: textures/textures_image_loading.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
+    --preload-file textures/resources/raylib_logo.png@resources/raylib_logo.png
 
 textures/textures_image_processing: textures/textures_image_processing.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
@@ -702,27 +720,32 @@ textures/textures_image_text: textures/textures_image_text.c
     --preload-file textures/resources/parrots.png@resources/parrots.png \
     --preload-file textures/resources/KAISG.ttf@resources/KAISG.ttf
 
-textures/textures_to_image: textures/textures_to_image.c
+textures/textures_logo_raylib: textures/textures_logo_raylib.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
     --preload-file textures/resources/raylib_logo.png@resources/raylib_logo.png
 
-textures/textures_raw_data: textures/textures_raw_data.c
-	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
-    --preload-file textures/resources/fudesumi.raw@resources/fudesumi.raw
-
-textures/textures_particles_blending: textures/textures_particles_blending.c
-	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
-    --preload-file textures/resources/spark_flame.png@resources/spark_flame.png
+textures/textures_mouse_painting: textures/textures_mouse_painting.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
 textures/textures_npatch_drawing: textures/textures_npatch_drawing.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
     --preload-file textures/resources/ninepatch_button.png@resources/ninepatch_button.png
 
-textures/textures_background_scrolling: textures/textures_background_scrolling.c
+textures/textures_particles_blending: textures/textures_particles_blending.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
-    --preload-file textures/resources/cyberpunk_street_background.png@resources/cyberpunk_street_background.png \
-    --preload-file textures/resources/cyberpunk_street_midground.png@resources/cyberpunk_street_midground.png \
-    --preload-file textures/resources/cyberpunk_street_foreground.png@resources/cyberpunk_street_foreground.png
+    --preload-file textures/resources/spark_flame.png@resources/spark_flame.png
+
+textures/textures_polygon: textures/textures_polygon.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
+    --preload-file textures/resources/cat.png@resources/cat.png
+
+textures/textures_raw_data: textures/textures_raw_data.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
+    --preload-file textures/resources/fudesumi.raw@resources/fudesumi.raw
+
+textures/textures_sprite_anim: textures/textures_sprite_anim.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
+    --preload-file textures/resources/scarfy.png@resources/scarfy.png
 
 textures/textures_sprite_button: textures/textures_sprite_button.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
@@ -734,39 +757,59 @@ textures/textures_sprite_explosion: textures/textures_sprite_explosion.c
     --preload-file textures/resources/explosion.png@resources/explosion.png \
     --preload-file textures/resources/boom.wav@resources/boom.wav
 
-textures/textures_textured_curve: textures/textures_textured_curve.c
+textures/textures_srcrec_dstrec: textures/textures_srcrec_dstrec.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
-    --preload-file textures/resources/road.png@resources/road.png
-
-textures/textures_bunnymark: textures/textures_bunnymark.c
-	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
-    --preload-file textures/resources/wabbit_alpha.png@resources/wabbit_alpha.png
-
-textures/textures_blend_modes: textures/textures_blend_modes.c
-	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
-    --preload-file textures/resources/cyberpunk_street_background.png@resources/cyberpunk_street_background.png \
-    --preload-file textures/resources/cyberpunk_street_foreground.png@resources/cyberpunk_street_foreground.png
-
-textures/textures_draw_tiled: textures/textures_draw_tiled.c
-	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
-    --preload-file textures/resources/patterns.png@resources/patterns.png
-
-textures/textures_polygon: textures/textures_polygon.c
-	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
-    --preload-file textures/resources/cat.png@resources/cat.png
-
-textures/textures_gif_player: textures/textures_gif_player.c
-	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
-    --preload-file textures/resources/scarfy_run.gif@resources/scarfy_run.gif
-
-textures/textures_fog_of_war: textures/textures_fog_of_war.c
-	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
+    --preload-file textures/resources/scarfy.png@resources/scarfy.png
 
 textures/textures_svg_loading: textures/textures_svg_loading.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
     --preload-file textures/resources/test.svg
 
+textures/textures_textured_curve: textures/textures_textured_curve.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
+    --preload-file textures/resources/road.png@resources/road.png
+
+textures/textures_to_image: textures/textures_to_image.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
+    --preload-file textures/resources/raylib_logo.png@resources/raylib_logo.png
+
+
 # Compile TEXT examples
+text/text_codepoints_loading: text/text_codepoints_loading.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
+    --preload-file text/resources/DotGothic16-Regular.ttf@resources/DotGothic16-Regular.ttf
+    
+text/text_draw_3d: text/text_draw_3d.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
+    --preload-file text/resources/shaders/glsl100/alpha_discard.fs@resources/shaders/glsl100/alpha_discard.fs
+
+text/text_font_filters: text/text_font_filters.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) -s TOTAL_MEMORY=67108864 \
+    --preload-file text/resources/KAISG.ttf@resources/KAISG.ttf
+
+text/text_font_loading: text/text_font_loading.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) -s TOTAL_MEMORY=67108864 \
+    --preload-file text/resources/pixantiqua.fnt@resources/pixantiqua.fnt \
+    --preload-file text/resources/pixantiqua.png@resources/pixantiqua.png \
+    --preload-file text/resources/pixantiqua.ttf@resources/pixantiqua.ttf
+
+text/text_font_sdf: text/text_font_sdf.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) -s TOTAL_MEMORY=67108864 \
+    --preload-file text/resources/anonymous_pro_bold.ttf@resources/anonymous_pro_bold.ttf \
+    --preload-file text/resources/shaders/glsl100/sdf.fs@resources/shaders/glsl100/sdf.fs
+
+text/text_font_spritefont: text/text_font_spritefont.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
+    --preload-file text/resources/custom_mecha.png@resources/custom_mecha.png \
+    --preload-file text/resources/custom_alagard.png@resources/custom_alagard.png \
+    --preload-file text/resources/custom_jupiter_crash.png@resources/custom_jupiter_crash.png
+
+text/text_format_text: text/text_format_text.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
+
+text/text_input_box: text/text_input_box.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
+
 text/text_raylib_fonts: text/text_raylib_fonts.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
     --preload-file text/resources/fonts/alagard.png@resources/fonts/alagard.png \
@@ -777,36 +820,6 @@ text/text_raylib_fonts: text/text_raylib_fonts.c
     --preload-file text/resources/fonts/pixantiqua.png@resources/fonts/pixantiqua.png \
     --preload-file text/resources/fonts/alpha_beta.png@resources/fonts/alpha_beta.png \
     --preload-file text/resources/fonts/jupiter_crash.png@resources/fonts/jupiter_crash.png
-
-text/text_font_spritefont: text/text_font_spritefont.c
-	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
-    --preload-file text/resources/custom_mecha.png@resources/custom_mecha.png \
-    --preload-file text/resources/custom_alagard.png@resources/custom_alagard.png \
-    --preload-file text/resources/custom_jupiter_crash.png@resources/custom_jupiter_crash.png
-
-text/text_font_loading: text/text_font_loading.c
-	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) -s TOTAL_MEMORY=67108864 \
-    --preload-file text/resources/pixantiqua.fnt@resources/pixantiqua.fnt \
-    --preload-file text/resources/pixantiqua.png@resources/pixantiqua.png \
-    --preload-file text/resources/pixantiqua.ttf@resources/pixantiqua.ttf
-
-text/text_font_filters: text/text_font_filters.c
-	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) -s TOTAL_MEMORY=67108864 \
-    --preload-file text/resources/KAISG.ttf@resources/KAISG.ttf
-
-text/text_font_sdf: text/text_font_sdf.c
-	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) -s TOTAL_MEMORY=67108864 \
-    --preload-file text/resources/anonymous_pro_bold.ttf@resources/anonymous_pro_bold.ttf \
-    --preload-file text/resources/shaders/glsl100/sdf.fs@resources/shaders/glsl100/sdf.fs
-
-text/text_format_text: text/text_format_text.c
-	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
-
-text/text_input_box: text/text_input_box.c
-	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
-
-text/text_writing_anim: text/text_writing_anim.c
-	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
 text/text_rectangle_bounds: text/text_rectangle_bounds.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
@@ -820,13 +833,9 @@ text/text_unicode: text/text_unicode.c
     --preload-file text/resources/symbola.fnt@resources/symbola.fnt \
     --preload-file text/resources/symbola.png@resources/symbola.png
 
-text/text_draw_3d: text/text_draw_3d.c
-	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
-    --preload-file text/resources/shaders/glsl100/alpha_discard.fs@resources/shaders/glsl100/alpha_discard.fs
+text/text_writing_anim: text/text_writing_anim.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
-text/text_codepoints_loading: text/text_codepoints_loading.c
-	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
-    --preload-file text/resources/DotGothic16-Regular.ttf@resources/DotGothic16-Regular.ttf
 
 # Compile MODELS examples
 models/models_animation: models/models_animation.c
@@ -858,6 +867,29 @@ models/models_first_person_maze: models/models_first_person_maze.c
 
 models/models_geometric_shapes: models/models_geometric_shapes.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
+    
+models/models_heightmap: models/models_heightmap.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
+    --preload-file models/resources/heightmap.png@resources/heightmap.png
+
+models/models_loading: models/models_loading.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) -s TOTAL_MEMORY=67108864 \
+    --preload-file models/resources/models/obj/castle.obj@resources/models/obj/castle.obj \
+    --preload-file models/resources/models/obj/castle_diffuse.png@resources/models/obj/castle_diffuse.png
+    
+models/models_loading_gltf: models/models_loading_gltf.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) -s TOTAL_MEMORY=67108864 \
+    --preload-file models/resources/models/gltf/robot.glb@resources/models/gltf/robot.glb
+
+models/models_loading_m3d: models/models_loading_m3d.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) -s TOTAL_MEMORY=67108864 \
+    --preload-file models/resources/models/m3d/cesium_man.m3d@resources/models/m3d/cesium_man.m3d
+    
+models/models_loading_vox: models/models_loading_vox.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) -s TOTAL_MEMORY=67108864 \
+    --preload-file models/resources/models/vox/chr_knight.vox@resources/models/vox/chr_knight.vox \
+    --preload-file models/resources/models/vox/chr_sword.vox@resources/models/vox/chr_sword.vox \
+    --preload-file models/resources/models/vox/monu9.vox@resources/models/vox/monu9.vox   
 
 models/models_mesh_generation: models/models_mesh_generation.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
@@ -866,25 +898,6 @@ models/models_mesh_picking: models/models_mesh_picking.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
     --preload-file models/resources/models/obj/turret.obj@resources/models/obj/turret.obj \
     --preload-file models/resources/models/obj/turret_diffuse.png@resources/models/obj/turret_diffuse.png
-
-models/models_loading: models/models_loading.c
-	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) -s TOTAL_MEMORY=67108864 \
-    --preload-file models/resources/models/obj/castle.obj@resources/models/obj/castle.obj \
-    --preload-file models/resources/models/obj/castle_diffuse.png@resources/models/obj/castle_diffuse.png
-
-models/models_loading_vox: models/models_loading_vox.c
-	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) -s TOTAL_MEMORY=67108864 \
-    --preload-file models/resources/models/vox/chr_knight.vox@resources/models/vox/chr_knight.vox \
-    --preload-file models/resources/models/vox/chr_sword.vox@resources/models/vox/chr_sword.vox \
-    --preload-file models/resources/models/vox/monu9.vox@resources/models/vox/monu9.vox
-
-models/models_loading_gltf: models/models_loading_gltf.c
-	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) -s TOTAL_MEMORY=67108864 \
-    --preload-file models/resources/models/gltf/robot.glb@resources/models/gltf/robot.glb
-
-models/models_loading_m3d: models/models_loading_m3d.c
-	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) -s TOTAL_MEMORY=67108864 \
-    --preload-file models/resources/models/m3d/cesium_man.m3d@resources/models/m3d/cesium_man.m3d
 
 models/models_orthographic_projection: models/models_orthographic_projection.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
@@ -900,30 +913,21 @@ models/models_skybox: models/models_skybox.c
     --preload-file models/resources/shaders/glsl100/cubemap.vs@resources/shaders/glsl100/cubemap.vs \
     --preload-file models/resources/shaders/glsl100/cubemap.fs@resources/shaders/glsl100/cubemap.fs
 
+models/models_waving_cubes: models/models_waving_cubes.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
+    
 models/models_yaw_pitch_roll: models/models_yaw_pitch_roll.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) -s TOTAL_MEMORY=67108864 \
     --preload-file models/resources/models/obj/plane.obj@resources/models/obj/plane.obj \
     --preload-file models/resources/models/obj/plane_diffuse.png@resources/models/obj/plane_diffuse.png
 
-models/models_heightmap: models/models_heightmap.c
-	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
-    --preload-file models/resources/heightmap.png@resources/heightmap.png
-
-models/models_waving_cubes: models/models_waving_cubes.c
-	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
 # Compile SHADER examples
-shaders/shaders_model_shader: shaders/shaders_model_shader.c
-	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) -s TOTAL_MEMORY=67108864 \
-    --preload-file shaders/resources/models/watermill.obj@resources/models/watermill.obj \
-    --preload-file shaders/resources/models/watermill_diffuse.png@resources/models/watermill_diffuse.png \
-    --preload-file shaders/resources/shaders/glsl100/grayscale.fs@resources/shaders/glsl100/grayscale.fs
-
-shaders/shaders_shapes_textures: shaders/shaders_shapes_textures.c
+shaders/shaders_basic_lighting: shaders/shaders_basic_lighting.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
-    --preload-file shaders/resources/fudesumi.png@resources/fudesumi.png \
-    --preload-file shaders/resources/shaders/glsl100/base.vs@resources/shaders/glsl100/base.vs \
-    --preload-file shaders/resources/shaders/glsl100/grayscale.fs@resources/shaders/glsl100/grayscale.fs
+    --preload-file shaders/resources/texel_checker.png@resources/texel_checker.png \
+    --preload-file shaders/resources/shaders/glsl100/lighting.fs@resources/shaders/glsl100/lighting.fs \
+    --preload-file shaders/resources/shaders/glsl100/lighting.vs@resources/shaders/glsl100/lighting.vs
 
 shaders/shaders_custom_uniform: shaders/shaders_custom_uniform.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) -s TOTAL_MEMORY=67108864 \
@@ -931,42 +935,17 @@ shaders/shaders_custom_uniform: shaders/shaders_custom_uniform.c
     --preload-file shaders/resources/models/barracks_diffuse.png@resources/models/barracks_diffuse.png \
     --preload-file shaders/resources/shaders/glsl100/swirl.fs@resources/shaders/glsl100/swirl.fs
 
-shaders/shaders_postprocessing: shaders/shaders_postprocessing.c
-	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) -s TOTAL_MEMORY=67108864 \
-    --preload-file shaders/resources/models/church.obj@resources/models/church.obj \
-    --preload-file shaders/resources/models/church_diffuse.png@resources/models/church_diffuse.png \
-    --preload-file shaders/resources/shaders/glsl100@resources/shaders/glsl100
-
-shaders/shaders_palette_switch: shaders/shaders_palette_switch.c
+shaders/shaders_deferred_render: shaders/shaders_deferred_render.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
-    --preload-file shaders/resources/shaders/glsl100/palette_switch.fs@resources/shaders/glsl100/palette_switch.fs
-
-shaders/shaders_raymarching: shaders/shaders_raymarching.c
-	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
-    --preload-file shaders/resources/shaders/glsl100/raymarching.fs@resources/shaders/glsl100/raymarching.fs
-
-shaders/shaders_texture_drawing: shaders/shaders_texture_drawing.c
-	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
-    --preload-file shaders/resources/shaders/glsl100/cubes_panning.fs@resources/shaders/glsl100/cubes_panning.fs
-
-shaders/shaders_texture_waves: shaders/shaders_texture_waves.c
-	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
-    --preload-file shaders/resources/space.png@resources/space.png \
-    --preload-file shaders/resources/shaders/glsl100/wave.fs@resources/shaders/glsl100/wave.fs
-
-shaders/shaders_julia_set: shaders/shaders_julia_set.c
-	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
-    --preload-file shaders/resources/shaders/glsl100/julia_set.fs@resources/shaders/glsl100/julia_set.fs
+    --preload-file shaders/resources/fudesumi.png@resources/fudesumi.png \
+    --preload-file shaders/resources/shaders/glsl330/gbuffer.vs@resources/shaders/glsl330/gbuffer.vs \
+    --preload-file shaders/resources/shaders/glsl330/gbuffer.fs@resources/shaders/glsl330/gbuffer.fs \
+    --preload-file shaders/resources/shaders/glsl330/deferred_shading.fs@resources/shaders/glsl330/deferred_shading.fs \
+    --preload-file shaders/resources/shaders/glsl330/deferred_shading.fs@resources/shaders/glsl330/deferred_shading.fs \
 
 shaders/shaders_eratosthenes: shaders/shaders_eratosthenes.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
     --preload-file shaders/resources/shaders/glsl100/eratosthenes.fs@resources/shaders/glsl100/eratosthenes.fs
-
-shaders/shaders_basic_lighting: shaders/shaders_basic_lighting.c
-	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
-    --preload-file shaders/resources/texel_checker.png@resources/texel_checker.png \
-    --preload-file shaders/resources/shaders/glsl100/lighting.fs@resources/shaders/glsl100/lighting.fs \
-    --preload-file shaders/resources/shaders/glsl100/lighting.vs@resources/shaders/glsl100/lighting.vs
 
 shaders/shaders_fog: shaders/shaders_fog.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
@@ -974,20 +953,18 @@ shaders/shaders_fog: shaders/shaders_fog.c
     --preload-file shaders/resources/shaders/glsl100/fog.fs@resources/shaders/glsl100/fog.fs \
     --preload-file shaders/resources/shaders/glsl100/lighting.vs@resources/shaders/glsl100/lighting.vs
 
-shaders/shaders_simple_mask: shaders/shaders_simple_mask.c
-	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
-    --preload-file shaders/resources/plasma.png@resources/plasma.png \
-    --preload-file shaders/resources/mask.png@resources/mask.png \
-    --preload-file shaders/resources/shaders/glsl100/mask.fs@resources/shaders/glsl100/mask.fs
-
-shaders/shaders_spotlight: shaders/shaders_spotlight.c
-	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
-    --preload-file shaders/resources/raysan.png@resources/raysan.png \
-    --preload-file shaders/resources/shaders/glsl100/spotlight.fs@resources/shaders/glsl100/spotlight.fs
-
 shaders/shaders_hot_reloading: shaders/shaders_hot_reloading.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) -s FORCE_FILESYSTEM=1 \
     --preload-file shaders/resources/shaders/glsl100/reload.fs@resources/shaders/glsl100/reload.fs
+
+shaders/shaders_hybrid_render: shaders/shaders_hybrid_render.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
+    --preload-file shaders/resources/shaders/glsl100/hybrid_raymarch.fs@resources/shaders/glsl100/hybrid_raymarch.fs \
+    --preload-file shaders/resources/shaders/glsl100/hybrid_raster.fs@resources/shaders/glsl100/hybrid_raster.fs
+
+shaders/shaders_julia_set: shaders/shaders_julia_set.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
+    --preload-file shaders/resources/shaders/glsl100/julia_set.fs@resources/shaders/glsl100/julia_set.fs
 
 shaders/shaders_lightmap: shaders/shaders_lightmap.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) -s FORCE_FILESYSTEM=1 \
@@ -1001,25 +978,77 @@ shaders/shaders_mesh_instancing: shaders/shaders_mesh_instancing.c
     --preload-file shaders/resources/shaders/glsl100/lighting_instancing.vs@resources/shaders/glsl100/lighting_instancing.vs \
     --preload-file shaders/resources/shaders/glsl100/lighting.fs@resources/shaders/glsl100/lighting.fs
 
+shaders/shaders_model_shader: shaders/shaders_model_shader.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) -s TOTAL_MEMORY=67108864 \
+    --preload-file shaders/resources/models/watermill.obj@resources/models/watermill.obj \
+    --preload-file shaders/resources/models/watermill_diffuse.png@resources/models/watermill_diffuse.png \
+    --preload-file shaders/resources/shaders/glsl100/grayscale.fs@resources/shaders/glsl100/grayscale.fs
+
 shaders/shaders_multi_sample2d: shaders/shaders_multi_sample2d.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
     --preload-file shaders/resources/shaders/glsl100/color_mix.fs@resources/shaders/glsl100/color_mix.fs
+
+shaders/shaders_palette_switch: shaders/shaders_palette_switch.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
+    --preload-file shaders/resources/shaders/glsl100/palette_switch.fs@resources/shaders/glsl100/palette_switch.fs
+
+shaders/shaders_postprocessing: shaders/shaders_postprocessing.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) -s TOTAL_MEMORY=67108864 \
+    --preload-file shaders/resources/models/church.obj@resources/models/church.obj \
+    --preload-file shaders/resources/models/church_diffuse.png@resources/models/church_diffuse.png \
+    --preload-file shaders/resources/shaders/glsl100@resources/shaders/glsl100
+
+shaders/shaders_raymarching: shaders/shaders_raymarching.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
+    --preload-file shaders/resources/shaders/glsl100/raymarching.fs@resources/shaders/glsl100/raymarching.fs
+
+shaders/shaders_shapes_textures: shaders/shaders_shapes_textures.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
+    --preload-file shaders/resources/fudesumi.png@resources/fudesumi.png \
+    --preload-file shaders/resources/shaders/glsl100/base.vs@resources/shaders/glsl100/base.vs \
+    --preload-file shaders/resources/shaders/glsl100/grayscale.fs@resources/shaders/glsl100/grayscale.fs
+
+shaders/shaders_simple_mask: shaders/shaders_simple_mask.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
+    --preload-file shaders/resources/plasma.png@resources/plasma.png \
+    --preload-file shaders/resources/mask.png@resources/mask.png \
+    --preload-file shaders/resources/shaders/glsl100/mask.fs@resources/shaders/glsl100/mask.fs
+
+shaders/shaders_spotlight: shaders/shaders_spotlight.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
+    --preload-file shaders/resources/raysan.png@resources/raysan.png \
+    --preload-file shaders/resources/shaders/glsl100/spotlight.fs@resources/shaders/glsl100/spotlight.fs
+
+shaders/shaders_texture_drawing: shaders/shaders_texture_drawing.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
+    --preload-file shaders/resources/shaders/glsl100/cubes_panning.fs@resources/shaders/glsl100/cubes_panning.fs
 
 shaders/shaders_texture_outline: shaders/shaders_texture_outline.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
     --preload-file shaders/resources/shaders/glsl100/outline.fs@resources/shaders/glsl100/outline.fs \
     --preload-file shaders/resources/fudesumi.png@resources/fudesumi.png
 
+shaders/shaders_texture_tiling: shaders/shaders_texture_tiling.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
+    --preload-file shaders/resources/shaders/glsl100/tiling.fs@resources/shaders/glsl100/tiling.fs \
+    --preload-file shaders/resources/cubicmap_atlas.png@resources/cubicmap_atlas.png
+
+shaders/shaders_texture_waves: shaders/shaders_texture_waves.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
+    --preload-file shaders/resources/space.png@resources/space.png \
+    --preload-file shaders/resources/shaders/glsl100/wave.fs@resources/shaders/glsl100/wave.fs
+
 shaders/shaders_write_depth: shaders/shaders_write_depth.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
     --preload-file shaders/resources/shaders/glsl100/write_depth.fs@resources/shaders/glsl100/write_depth.fs
 
-shaders/shaders_hybrid_render: shaders/shaders_hybrid_render.c
-	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
-    --preload-file shaders/resources/shaders/glsl100/hybrid_raymarch.fs@resources/shaders/glsl100/hybrid_raymarch.fs \
-    --preload-file shaders/resources/shaders/glsl100/hybrid_raster.fs@resources/shaders/glsl100/hybrid_raster.fs
 
 # Compile AUDIO examples
+audio/audio_mixed_processor: audio/audio_mixed_processor.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) -s TOTAL_MEMORY=67108864 \
+    --preload-file audio/resources/country.mp3@resources/country.mp3 \
+    --preload-file audio/resources/coin.wav@resources/coin.wav
+    
 audio/audio_module_playing: audio/audio_module_playing.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
     --preload-file audio/resources/mini1111.xm@resources/mini1111.xm
@@ -1044,10 +1073,6 @@ audio/audio_stream_effects: audio/audio_stream_effects.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) -s TOTAL_MEMORY=67108864 \
     --preload-file audio/resources/country.mp3@resources/country.mp3
 
-audio/audio_mixed_processor: audio/audio_mixed_processor.c
-	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) -s TOTAL_MEMORY=67108864 \
-    --preload-file audio/resources/country.mp3@resources/country.mp3 \
-    --preload-file audio/resources/coin.wav@resources/coin.wav
 
 # Compile OTHERS examples
 others/easings_testbed: others/easings_testbed.c
