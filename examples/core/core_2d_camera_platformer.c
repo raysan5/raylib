@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [core] example - 2d camera platformer
+*   raylib [core] example - 2D Camera platformer
 *
 *   Example originally created with raylib 2.5, last time updated with raylib 3.0
 *
