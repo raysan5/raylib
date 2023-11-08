@@ -44,7 +44,7 @@ int main(void)
     Model model = LoadModel("resources/models/gltf/robot.glb");
 
     // Load gltf model animations
-    unsigned int animsCount = 0;
+    int animsCount = 0;
     unsigned int animIndex = 0;
     unsigned int animCurrentFrame = 0;
     ModelAnimation *modelAnimations = LoadModelAnimations("resources/models/gltf/robot.glb", &animsCount);

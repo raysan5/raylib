@@ -2,7 +2,7 @@
 *
 *   raylib [shapes] example - splines drawing
 *
-*   Example originally created with raylib 4.6-dev, last time updated with raylib 4.6-dev
+*   Example originally created with raylib 5.0, last time updated with raylib 5.0
 *
 *   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
 *   BSD-like license that allows static linking with closed source software
@@ -17,7 +17,7 @@
 
 #define MAX_SPLINE_POINTS      32
 
-// Bezier spline control points
+// Cubic Bezier spline control points
 // NOTE: Every segment has two control points 
 typedef struct {
     Vector2 start;
@@ -26,10 +26,10 @@ typedef struct {
 
 // Spline types
 typedef enum {
-    SPLINE_LINEAR = 0,
-    SPLINE_BASIS,       // B-Spline
-    SPLINE_CATMULLROM,
-    SPLINE_BEZIER
+    SPLINE_LINEAR = 0,      // Linear
+    SPLINE_BASIS,           // B-Spline
+    SPLINE_CATMULLROM,      // Catmull-Rom
+    SPLINE_BEZIER           // Cubic Bezier
 } SplineType;
 
 //------------------------------------------------------------------------------------

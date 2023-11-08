@@ -104,7 +104,7 @@ int main(void)
 bool SaveStorageValue(unsigned int position, int value)
 {
     bool success = false;
-    unsigned int dataSize = 0;
+    int dataSize = 0;
     unsigned int newDataSize = 0;
     unsigned char *fileData = LoadFileData(STORAGE_DATA_FILE, &dataSize);
     unsigned char *newFileData = NULL;
@@ -172,7 +172,7 @@ bool SaveStorageValue(unsigned int position, int value)
 int LoadStorageValue(unsigned int position)
 {
     int value = 0;
-    unsigned int dataSize = 0;
+    int dataSize = 0;
     unsigned char *fileData = LoadFileData(STORAGE_DATA_FILE, &dataSize);
 
     if (fileData != NULL)

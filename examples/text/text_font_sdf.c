@@ -38,7 +38,7 @@ int main(void)
     const char msg[50] = "Signed Distance Fields";
 
     // Loading file to memory
-    unsigned int fileSize = 0;
+    int fileSize = 0;
     unsigned char *fileData = LoadFileData("resources/anonymous_pro_bold.ttf", &fileSize);
 
     // Default font generation from TTF font

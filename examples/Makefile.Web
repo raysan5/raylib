@@ -941,7 +941,7 @@ shaders/shaders_deferred_render: shaders/shaders_deferred_render.c
     --preload-file shaders/resources/shaders/glsl330/gbuffer.vs@resources/shaders/glsl330/gbuffer.vs \
     --preload-file shaders/resources/shaders/glsl330/gbuffer.fs@resources/shaders/glsl330/gbuffer.fs \
     --preload-file shaders/resources/shaders/glsl330/deferred_shading.fs@resources/shaders/glsl330/deferred_shading.fs \
-    --preload-file shaders/resources/shaders/glsl330/deferred_shading.fs@resources/shaders/glsl330/deferred_shading.fs \
+    --preload-file shaders/resources/shaders/glsl330/deferred_shading.fs@resources/shaders/glsl330/deferred_shading.fs
 
 shaders/shaders_eratosthenes: shaders/shaders_eratosthenes.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \

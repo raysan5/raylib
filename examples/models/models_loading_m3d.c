@@ -50,7 +50,7 @@ int main(void)
     Model model = LoadModel(modelFileName); // Load the bind-pose model mesh and basic data
 
     // Load animations
-    unsigned int animsCount = 0;
+    int animsCount = 0;
     int animFrameCounter = 0, animId = 0;
     ModelAnimation *anims = LoadModelAnimations(modelFileName, &animsCount); // Load skeletal animation data
 

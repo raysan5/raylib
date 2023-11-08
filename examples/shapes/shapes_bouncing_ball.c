@@ -67,9 +67,6 @@ int main(void)
             // On pause, we draw a blinking message
             if (pause && ((framesCounter/30)%2)) DrawText("PAUSED", 350, 200, 30, GRAY);
 
-            DrawCircle(400.5f, 300.5f, 50.0f, BLACK);
-            DrawCircle(528.0f, 172.0f, 26.0f, BLACK);
-
             DrawFPS(10, 10);
 
         EndDrawing();
