@@ -268,7 +268,7 @@ ifeq ($(PLATFORM),PLATFORM_WEB)
     # are specified per-example for optimization
 
     # Define a custom shell .html and output extension
-    LDFLAGS += --shell-file $(RAYLIB_PATH)/src/minshell.html
+    LDFLAGS += --shell-file $(RAYLIB_PATH)/src/shell.html
     EXT = .html
 endif
 
