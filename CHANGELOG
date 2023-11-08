@@ -11,6 +11,8 @@ KEY CHANGES:
  - REMOVED: Deprecated platform: PLATFORM_RPI, use PLATFORM_DRM instead
  - ADDED: New platform backend supported: SDL
  - ADDED: New platform backend supported: Nintendo Switch (closed source)
+ - ADDED: New Splines drawing and evaluation API
+ - ADDED: New pseudo-random numbers generator: rprand
  - REDESIGNED: Automation Events System (exposed API)
 
 Detailed changes:
@@ -20,6 +22,7 @@ Detailed changes:
 [rcore] ADDED: FLAG_WINDOW_RESIZABLE for web (#3305) by @Peter0x44
 [rcore] ADDED: SetWindowMaxSize() for desktop and web (#3309) by @ubkp
 [rcore] ADDED: SetMouseCursor() for PLATFORM_WEB (#3414) by @BeardedBread
+[rcore] ADDED: LoadRandomSequence()/UnloadRandomSequence() by @raysan5
 [rcore] REMOVED: PLATFORM_RPI (#3232) by @michaelfiber
 [rcore] REVIEWED: GetFileLength(), added comment (#3262) by @raysan5
 [rcore] REVIEWED: Default shaders precission issue on PLATFORM_WEB (#3261) by @branc116
@@ -32,6 +35,7 @@ Detailed changes:
 [rcore] REVIEWED: SetWindowMonitor() to no longer force fullscreen (#3209) by @ubkp
 [rcore] REVIEWED: Fix mouse wheel not working in PLATFORM_RPI or PLATFORM_DRM (#3193) by @ubkp
 [rcore] REVIEWED: GetMonitorName() description (#3184) (#3189) by @danilwhale
+[rcore] REVIEWED: BeginScissorMode(), identify rendering to texture (#3510) by @gulrak
 [rcore] REVIEWED: Window flags order (#3114) by @lesleyrs
 [rcore] REVIEWED: Full movement for right analog stick (#3095) by @PixelPhobicGames
 [rcore] REVIEWED: Fix Android app freeze after calling CloseWindow() (#3067) by @Bigfoot71
@@ -43,15 +47,25 @@ Detailed changes:
 [rcore] REVIEWED: CompressData(), possible stack overflow
 [rcore] REVIEWED: GetWorldToScreenEx() (#3351) by @Brian-ED
 [rcore] REVIEWED: Fix GetMouseDelta() issue for Android (#3404) by @Bigfoot71
+[rcore] REVIEWED: GetFPS(), reset FPS averages when window is inited (#3445) by @JeffM2501
+[rcore] REVIEWED: GetCurrentMonitor(), check window center position by @M374LX
+[rcore] REVIEWED: GetRender*() issue on macOS highDPI (#3367) by @raysan5
+[rcore] REVIEWED: ScanDirectoryFiles*(), paths building slashes sides (#3507)
 [rlgl] ADDED: Experimental support for OpenGL ES 3.0 by @raysan5
 [rlgl] ADDED: Support 16-Bit HDR textures (#3220) by @Not-Nik
+[rlgl] ADDED: rlEnablePointMode() (#3490) by @JettMonstersGoBoom
+[rlgl] ADDED: rlBlitFramebuffer(), required for deferred render
+[rlgl] REVIEWED: LoadModel(), removed cube fallback mechanism (#3459)
 [rlgl] REVIEWED: Improved support for ES3/WebGL2 (#3107) by @chemaguerra
 [rlgl] REVIEWED: OpenGL 2.1 half floats support as part of an extension by @Not-Nik
 [rlgl] REVIEWED: Avoid shader attribute not found log by @raysan5
 [rlgl] REVIEWED: Avoid tracelog about not found uniforms (#3003) by @raysan5
 [rlgl] REVIEWED: rLoadTexture() UBSAN complaints #1891 (#3321) by @Codom
 [rlgl] REVIEWED: glInternalFormat as unsigned int
+[rlgl] REVIEWED: OpenGL ES 3.0 support
 [rshapes] ADDED: Spline drawing functions by @raysan5
+[rshapes] ADDED: GetSplinePoint*() functions for spline evaluation by @raysan5
+[rshapes] ADDED: DrawCircleLinesV() for consistency (#3452) by @Peter0x44
 [rshapes] REVIEWED: DrawSplineCatmullRom() by @raysan5
 [rshapes] REVIEWED: Minor fix in DrawLineBezier* (#3006) by @eternalStudent
 [rshapes] REVIEWED: GetCollisionRec(), more performant (#3052) by @manuel5975p
@@ -75,6 +89,7 @@ Detailed changes:
 [rtextures] REVIEWED: ImageDrawRectangleRec() (#3027) by @raysan5
 [rtextures] REVIEWED: ImageDraw() source clipping when drawing beyond top left (#3306) by @RobLoach
 [rtextures] REVIEWED: UnloadRenderTexture(), additional checks
+[rtextures] REVIEWED: Fixed compressed DDS texture loading issues (#3483) by @JaanDev
 [rtext] ADDED: Font altas white rectangle and flag SUPPORT_FONT_ATLAS_WHITE_REC by @raysan5
 [rtext] ADDED: SetTextLineSpacing() to define line breaks text drawing spacing by @raysan5
 [rtext] RENAMED: LoadFont*() parameter names for consistency and coherence by @raysan5
@@ -82,9 +97,10 @@ Detailed changes:
 [rtext] REVIEWED: TextFormat() warn user if buffer overflow occured (#3399) by @Murlocohol
 [rtext] REVIEWED: TextFormat(), added "..." for truncation (#3366) by @raysan5
 [rtext] REVIEWED: GetGlyphIndex() (#3000) by @raysan5
-[rtext] REVIEWED: GetCodepointNext() to return default value on invalid inp…  by @chocolate42
+[rtext] REVIEWED: GetCodepointNext() to return default value by @chocolate42
 [rtext] REVIEWED: TextToPascal() issue when first char is uppercase
-[rmodels] ADDED: ModelAnimation.name field, initially with GLTF animation names loaded (… by @alfredbaudisch
+[rmodels] ADDED: ModelAnimation.name field, initially with GLTF animation names by @alfredbaudisch
+[rmodels] REDESIGNED: LoadOBJ(), avoid mesh splitting by materials, fix (#3398) by @raysan5
 [rmodels] REVIEWED: Support .vox model files version 200 (#3097) by @Bigfoot71
 [rmodels] REVIEWED: Materials loading (#3126) @raysan5
 [rmodels] REVIEWED: DrawBillboardPro() to allow source of negative size (#3197) by @bohonghuang
@@ -93,6 +109,7 @@ Detailed changes:
 [rmodels] REVIEWED: GenMeshCubicmap(), correction of values (#3032) by @Bigfoot71
 [rmodels] REVIEWED: DrawMesh() to avoid UBSAN complaining (#1891)
 [rmodels] REVIEWED: GenMeshPlane() when resX != resZ (#3425) by @neyrox, @s-yablonskiy
+[rmodels] REVIEWED: GetModelBoundingBox() (#3485)
 [raudio] ADDED: LoadSoundAlias() by @JeffM2501
 [raudio] ADDED: Missing structure on standalone mode (#3160) by @raysan5
 [raudio] ADDED: GetMasterVolume() (#3434) by @rexim
@@ -102,6 +119,7 @@ Detailed changes:
 [raudio] REVIEWED: Fix warning on discarded const qualifier (#2967) by @RobLoach
 [raudio] REVIEWED: Move mutex initialization before ma_device_start() (#3325) by @Bigfoot71
 [raudio] REVIEWED: Fix UpdateSound() parameter name (#3405) by @KislyjKisel
+[raudio] REVIEWED: Fix QOA seeking (#3494) by @veins1
 [rcamera] REVIEWED: File-macros for consistency (#3161) by @raysan5
 [rcamera] REVIEWED: Support analog stick camera controls (#3066) by @PixelPhobicGames
 [rcamera] REVIEWED: CameraMoveToTarget(), ensure distance is greater than 0 (#3031) by @kolunmi
@@ -123,6 +141,7 @@ Detailed changes:
 [examples] ADDED: core_2d_camera_split_screen (#3298) by @gabrielssanches
 [examples] ADDED: LoadSoundAlias() usage example (#3223) by @JeffM2501
 [examples] ADDED: textures_tiling (#3353) by @luis605
+[examples] ADDED: shader_deferred_render (#3496) by @27justin
 [examples] RENAMED: 2d_camera examples for consistency
 [examples] REVIEWED: Text examples SetTextLineSpacing() to multiline examples by @raysan5
 [examples] REVIEWED: examples/shapes/shapes_collision_area.c help instructions (#3279) by @asdqwe
@@ -136,8 +155,11 @@ Detailed changes:
 [examples] REVIEWED: core_input_gestures for Web (#3172) by @ubkp
 [examples] REVIEWED: core_input_gamepad (#3110) by @iacore
 [examples] REVIEWED: examples using raygui to raygui 4.0 by @raysan5
+[examples] REVIEWED: Julia set shader example (#3467) by @joshcol9232
 [build] ADDED: CMake option for SUPPORT_CUSTOM_FRAME_CONTROL (#3221) by @ubkp
 [build] ADDED: New BORDERLESS_WINDOWED_MODE for PLATFORM_DESKTOP (#3216) by @ubkp
+[build] ADDED: New examples to VS2022 solution by @raysan5
+[build] REVIEWED: Updated Makefile and Makefile.Web, include new examples
 [build] REVIEWED: Fix CMake extraneous -lglfw (#3266) by @iacore
 [build] REVIEWED: Add missing cmake options (#3267) by @asdqwe
 [build] REVIEWED: Match CMakeOptions.txt options default values (#3258) by @asdqwe
@@ -166,6 +188,10 @@ Detailed changes:
 [build] REVIEWED: Update zig build system to zig version 0.11.0 (#3393) by @purple4pur
 [build] REVIEWED: Fix for latest zig master (#3037) by @star-tek-mb
 [build] REVIEWED: Examples Makefile to use Makefile.Web when building for web (#3449) by @keithstellyes
+[build] REVIEWED: build.zig updates for 0.11.0 release. (#3501) by @cabarger
+[build] REVIEWED: Support OpenGL ES 3.0 building on Web platform
+[build] REVIEWED: Fix warnings in Visual Studio (#3512) by @JeffM2501
+[build] REVIEWED: OpenGL ES 3.0 flags on CMakeOptions (#3514) by @awfulcooking
 [bindings] ADDED: fortran-raylib
 [bindings] ADDED: raylib-raku to bindings (#3299) by @vushu
 [bindings] ADDED: claw-raylib to BINDINGS.md (#3310) by @bohonghuang
@@ -198,16 +224,24 @@ Detailed changes:
 [bindings] UPDATED: h-raylib version (#2970) by @Anut-py
 [bindings] UPDATED: Factor's raylib binding to v4.5 (#3350) by @WraithGlade
 [bindings] UPDATED: raylib-ocaml bindings to 4.5 version (#3322) by @tjammer
+[bindings] UPDATED: Jaylib binding (#3508) by @glowiak
 [external] UPDATED: sdefl and sinfl DEFLATE compression libraries by @raysan5
-[external] UPDATED: miniaudio v0.11.12 --> v0.11.18 by @raysan5
+[external] UPDATED: miniaudio v0.11.12 --> v0.11.19 by @raysan5
 [external] UPDATED: rl_gputex.h compressed images loading library by @raysan5
 [external] UPDATED: Replaced stb_image_resize.c by stb_image_resize2.h (#3403) by @BabakSamimi
+[external] UPDATED: qoi and qoa libraries
+[external] UPDATED: stb libraries (required ones)
+[external] UPDATED: cgltf and m3d libraries
 [external] REVIEWED: msf_gif.h, some warnings
+[external] REVIEWED: sinfl external library to avoid ASAN complaints (#3349) by @raysan5
 [misc] ADDED: New task point to issue template about checking the wiki (#3169) by @ubkp
+[misc] ADDED: CodeQL for static code analysis (#3476) by @b4yuan
 [misc] REVIEWED: Update FAQ.md by @raysan5
+[misc] REVIEWED: Potential code issues reported by CodeQL (#3476)
 [misc] REVIEWED: Fix a link in the FAQ (#3082)by @jasonliang-dev
 [misc] REVIEWED: New file formats to FAQ (#3079) by @Luramoth
 [misc] REVIEWED: Make assets loading extension case insensitive #3008 by @raysan5
+[misc] REVIEWED: Updated web shells open-graph info by @raysan5
 
 -------------------------------------------------------------------------
 Release:     raylib 4.5 (18 March 2023)
