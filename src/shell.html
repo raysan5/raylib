@@ -160,6 +160,7 @@ jwE50AGjLCVuS8Yt4H7OgZLKK5EKOsLviEWJSL/+0uMi7gLUSBseYwqEbXvSHCec1CJvZPyHCmYQffaB
         cursor: pointer;
         width: 140px;
         height: 50px;
+        margin-left: 10px;
       }
 
       input[type=button]:hover {
@@ -176,8 +177,9 @@ jwE50AGjLCVuS8Yt4H7OgZLKK5EKOsLviEWJSL/+0uMi7gLUSBseYwqEbXvSHCec1CJvZPyHCmYQffaB
         <div class="emscripten" id="status">Downloading...</div>
 
         <span id='controls'>
+          <span><input type="button" value="📜 SOURCE CODE" onclick="location.href='https://github.com/raysan5/raylib';"/></span>
           <span><input type="button" value="🖵 FULLSCREEN" onclick="Module.requestFullscreen(false, false)"></span>
-          <span><input type="button" id="btn-audio" value="🔇 SUSPEND" onclick="toggleAudio()"></span>
+          <span><input type="button" id="btn-audio" value="🔇 MUTE" onclick="toggleAudio()"></span>
         </span>
 
         <div class="emscripten">
@@ -322,7 +324,7 @@ jwE50AGjLCVuS8Yt4H7OgZLKK5EKOsLviEWJSL/+0uMi7gLUSBseYwqEbXvSHCec1CJvZPyHCmYQffaB
                 else if (ctx.state == "running") ctx.suspend();
             });
 
-            if (resumed) audioBtn.value = "🔇 SUSPEND";
+            if (resumed) audioBtn.value = "🔇 MUTE";
             else audioBtn.value = "🔈 RESUME";
         }
     </script>
