@@ -26,11 +26,10 @@ int main(void)
     SetConfigFlags(FLAG_MSAA_4X_HINT);
     InitWindow(screenWidth, screenHeight, "raylib [shapes] example - cubic-bezier lines");
 
-    Vector2 start = { 0, 0 };
-    Vector2 end = { (float)screenWidth, (float)screenHeight };
-    
-    Vector2 startControl = { 100, 0 };
-    Vector2 endControl = { GetScreenWidth() - 100, GetScreenHeight() };
+    Vector2 startPoint = { 30, 30 };
+    Vector2 endPoint = { (float)screenWidth - 30, (float)screenHeight - 30 };
+    bool moveStartPoint = false;
+    bool moveEndPoint = false;
 
     SetTargetFPS(60);               // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
@@ -40,15 +39,21 @@ int main(void)
     {
         // Update
         //----------------------------------------------------------------------------------
-        if (IsKeyDown(KEY_LEFT_CONTROL))
+        Vector2 mouse = GetMousePosition();
+
+        if (CheckCollisionPointCircle(mouse, startPoint, 10.0f) && IsMouseButtonDown(MOUSE_BUTTON_LEFT)) moveStartPoint = true;
+        else if (CheckCollisionPointCircle(mouse, endPoint, 10.0f) && IsMouseButtonDown(MOUSE_BUTTON_LEFT)) moveEndPoint = true;
+
+        if (moveStartPoint)
         {
-            if (IsMouseButtonDown(MOUSE_BUTTON_LEFT)) startControl = GetMousePosition();
-            else if (IsMouseButtonDown(MOUSE_BUTTON_RIGHT)) endControl = GetMousePosition();
+            startPoint = mouse;
+            if (IsMouseButtonReleased(MOUSE_BUTTON_LEFT)) moveStartPoint = false;
         }
-        else
+
+        if (moveEndPoint)
         {
-            if (IsMouseButtonDown(MOUSE_BUTTON_LEFT)) start = GetMousePosition();
-            else if (IsMouseButtonDown(MOUSE_BUTTON_RIGHT)) end = GetMousePosition();
+            endPoint = mouse;
+            if (IsMouseButtonReleased(MOUSE_BUTTON_LEFT)) moveEndPoint = false;
         }
         //----------------------------------------------------------------------------------
 
@@ -58,18 +63,14 @@ int main(void)
 
             ClearBackground(RAYWHITE);
 
-            DrawText("USE MOUSE LEFT-RIGHT CLICK to DEFINE LINE START and END POINTS", 15, 20, 20, GRAY);
+            DrawText("MOVE START-END POINTS WITH MOUSE", 15, 20, 20, GRAY);
 
             // Draw line Cubic Bezier, in-out interpolation (easing), no control points
-            DrawLineBezier(start, end, 3.0f, BLUE);
+            DrawLineBezier(startPoint, endPoint, 4.0f, BLUE);
             
-            // Draw spline Cubic Bezier with control points
-            DrawSplineSegmentBezierCubic(start, startControl, endControl, end, 2.0f, RED);
-            
-            DrawLineEx(start, startControl, 1.0, LIGHTGRAY);
-            DrawLineEx(end, endControl, 1.0, LIGHTGRAY);
-            DrawCircleV(startControl, 10, RED);
-            DrawCircleV(endControl, 10, RED);
+            // Draw start-end spline circles with some details
+            DrawCircleV(startPoint, CheckCollisionPointCircle(mouse, startPoint, 10.0f)? 14 : 8, moveStartPoint? RED : BLUE);
+            DrawCircleV(endPoint, CheckCollisionPointCircle(mouse, endPoint, 10.0f)? 14 : 8, moveEndPoint? RED : BLUE);
 
         EndDrawing();
         //----------------------------------------------------------------------------------

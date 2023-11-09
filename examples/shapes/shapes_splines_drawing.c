@@ -192,12 +192,12 @@ int main(void)
                     DrawSplineSegmentBezierCubic(points[i], control[i].start, control[i].end, points[i + 1], splineThickness, RED);
 
                     // Every cubic bezier point should have two control points
-                    DrawCircleV(control[i].start, 4, GOLD);
-                    DrawCircleV(control[i].end, 4, GOLD);
-                    if (focusedControlPoint == &control[i].start) DrawCircleV(control[i].start, 6, GREEN);
-                    else if (focusedControlPoint == &control[i].end) DrawCircleV(control[i].end, 6, GREEN);
-                    DrawLineEx(points[i], control[i].start, 1.0, LIGHTGRAY);
-                    DrawLineEx(points[i + 1], control[i].end, 1.0, LIGHTGRAY);
+                    DrawCircleV(control[i].start, 6, GOLD);
+                    DrawCircleV(control[i].end, 6, GOLD);
+                    if (focusedControlPoint == &control[i].start) DrawCircleV(control[i].start, 8, GREEN);
+                    else if (focusedControlPoint == &control[i].end) DrawCircleV(control[i].end, 8, GREEN);
+                    DrawLineEx(points[i], control[i].start, 1.0f, LIGHTGRAY);
+                    DrawLineEx(points[i + 1], control[i].end, 1.0f, LIGHTGRAY);
                 
                     // Draw spline control lines
                     DrawLineV(points[i], control[i].start, GRAY);
