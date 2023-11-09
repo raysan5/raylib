@@ -658,6 +658,7 @@ void InitWindow(int width, int height, const char *title)
 #endif
 
     CORE.Time.frameCounter = 0;
+    CORE.Window.shouldClose = false;
 
     // Initialize random seed
     SetRandomSeed((unsigned int)time(NULL));
