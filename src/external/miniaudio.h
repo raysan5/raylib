@@ -1,6 +1,6 @@
 /*
 Audio playback and capture library. Choice of public domain or MIT-0. See license statements at the end of this file.
-miniaudio - v0.11.19 - 2023-11-04
+miniaudio - v0.11.20 - 2023-11-10
 
 David Reid - mackron@gmail.com
 
@@ -3723,7 +3723,7 @@ extern "C" {
 
 #define MA_VERSION_MAJOR    0
 #define MA_VERSION_MINOR    11
-#define MA_VERSION_REVISION 19
+#define MA_VERSION_REVISION 20
 #define MA_VERSION_STRING   MA_XSTRINGIFY(MA_VERSION_MAJOR) "." MA_XSTRINGIFY(MA_VERSION_MINOR) "." MA_XSTRINGIFY(MA_VERSION_REVISION)
 
 #if defined(_MSC_VER) && !defined(__clang__)
@@ -17820,7 +17820,7 @@ MA_API ma_handle ma_dlopen(ma_log* pLog, const char* filename)
 
     #ifdef MA_WIN32
         /* From MSDN: Desktop applications cannot use LoadPackagedLibrary; if a desktop application calls this function it fails with APPMODEL_ERROR_NO_PACKAGE.*/
-        #if !defined(MA_WIN32_UWP)
+        #if !defined(MA_WIN32_UWP) || !(defined(WINAPI_FAMILY) && ((defined(WINAPI_FAMILY_PHONE_APP) && WINAPI_FAMILY == WINAPI_FAMILY_PHONE_APP)))
             handle = (ma_handle)LoadLibraryA(filename);
         #else
             /* *sigh* It appears there is no ANSI version of LoadPackagedLibrary()... */
@@ -18665,19 +18665,6 @@ static void ma_device__on_notification_stopped(ma_device* pDevice)
 static void ma_device__on_notification_rerouted(ma_device* pDevice)
 {
     ma_device__on_notification(ma_device_notification_init(pDevice, ma_device_notification_type_rerouted));
-}
-#endif
-
-/* Interruptions are only used on some platforms. */
-#if defined(MA_APPLE_MOBILE)
-static void ma_device__on_notification_interruption_began(ma_device* pDevice)
-{
-    ma_device__on_notification(ma_device_notification_init(pDevice, ma_device_notification_type_interruption_began));
-}
-
-static void ma_device__on_notification_interruption_ended(ma_device* pDevice)
-{
-    ma_device__on_notification(ma_device_notification_init(pDevice, ma_device_notification_type_interruption_ended));
 }
 #endif
 
@@ -23511,6 +23498,39 @@ static ma_result ma_context_init__wasapi(ma_context* pContext, const ma_context_
 
     MA_ZERO_OBJECT(&pContext->wasapi);
 
+
+    #if defined(MA_WIN32_UWP)
+    {
+        /* Link to mmdevapi so we can get access to ActivateAudioInterfaceAsync(). */
+        pContext->wasapi.hMMDevapi = ma_dlopen(ma_context_get_log(pContext), "mmdevapi.dll");
+        if (pContext->wasapi.hMMDevapi) {
+            pContext->wasapi.ActivateAudioInterfaceAsync = ma_dlsym(ma_context_get_log(pContext), pContext->wasapi.hMMDevapi, "ActivateAudioInterfaceAsync");
+            if (pContext->wasapi.ActivateAudioInterfaceAsync == NULL) {
+                ma_dlclose(ma_context_get_log(pContext), pContext->wasapi.hMMDevapi);
+                return MA_NO_BACKEND;   /* ActivateAudioInterfaceAsync() could not be loaded. */
+            }
+        } else {
+            return MA_NO_BACKEND;   /* Failed to load mmdevapi.dll which is required for ActivateAudioInterfaceAsync() */
+        }
+    }
+    #endif
+
+    /* Optionally use the Avrt API to specify the audio thread's latency sensitivity requirements */
+    pContext->wasapi.hAvrt = ma_dlopen(ma_context_get_log(pContext), "avrt.dll");
+    if (pContext->wasapi.hAvrt) {
+        pContext->wasapi.AvSetMmThreadCharacteristicsA   = ma_dlsym(ma_context_get_log(pContext), pContext->wasapi.hAvrt, "AvSetMmThreadCharacteristicsA");
+        pContext->wasapi.AvRevertMmThreadcharacteristics = ma_dlsym(ma_context_get_log(pContext), pContext->wasapi.hAvrt, "AvRevertMmThreadCharacteristics");
+
+        /* If either function could not be found, disable use of avrt entirely. */
+        if (!pContext->wasapi.AvSetMmThreadCharacteristicsA || !pContext->wasapi.AvRevertMmThreadcharacteristics) {
+            pContext->wasapi.AvSetMmThreadCharacteristicsA   = NULL;
+            pContext->wasapi.AvRevertMmThreadcharacteristics = NULL;
+            ma_dlclose(ma_context_get_log(pContext), pContext->wasapi.hAvrt);
+            pContext->wasapi.hAvrt = NULL;
+        }
+    }
+
+
     /*
     Annoyingly, WASAPI does not allow you to release an IAudioClient object from a different thread
     than the one that retrieved it with GetService(). This can result in a deadlock in two
@@ -23553,41 +23573,6 @@ static ma_result ma_context_init__wasapi(ma_context* pContext, const ma_context_
             ma_semaphore_uninit(&pContext->wasapi.commandSem);
             ma_mutex_uninit(&pContext->wasapi.commandLock);
             return result;
-        }
-
-        #if defined(MA_WIN32_UWP)
-        {
-            /* Link to mmdevapi so we can get access to ActivateAudioInterfaceAsync(). */
-            pContext->wasapi.hMMDevapi = ma_dlopen(ma_context_get_log(pContext), "mmdevapi.dll");
-            if (pContext->wasapi.hMMDevapi) {
-                pContext->wasapi.ActivateAudioInterfaceAsync = ma_dlsym(ma_context_get_log(pContext), pContext->wasapi.hMMDevapi, "ActivateAudioInterfaceAsync");
-                if (pContext->wasapi.ActivateAudioInterfaceAsync == NULL) {
-                    ma_semaphore_uninit(&pContext->wasapi.commandSem);
-                    ma_mutex_uninit(&pContext->wasapi.commandLock);
-                    ma_dlclose(ma_context_get_log(pContext), pContext->wasapi.hMMDevapi);
-                    return MA_NO_BACKEND;   /* ActivateAudioInterfaceAsync() could not be loaded. */
-                }
-            } else {
-                ma_semaphore_uninit(&pContext->wasapi.commandSem);
-                ma_mutex_uninit(&pContext->wasapi.commandLock);
-                return MA_NO_BACKEND;   /* Failed to load mmdevapi.dll which is required for ActivateAudioInterfaceAsync() */
-            }
-        }
-        #endif
-
-        /* Optionally use the Avrt API to specify the audio thread's latency sensitivity requirements */
-        pContext->wasapi.hAvrt = ma_dlopen(ma_context_get_log(pContext), "avrt.dll");
-        if (pContext->wasapi.hAvrt) {
-            pContext->wasapi.AvSetMmThreadCharacteristicsA   = ma_dlsym(ma_context_get_log(pContext), pContext->wasapi.hAvrt, "AvSetMmThreadCharacteristicsA");
-            pContext->wasapi.AvRevertMmThreadcharacteristics = ma_dlsym(ma_context_get_log(pContext), pContext->wasapi.hAvrt, "AvRevertMmThreadCharacteristics");
-
-            /* If either function could not be found, disable use of avrt entirely. */
-            if (!pContext->wasapi.AvSetMmThreadCharacteristicsA || !pContext->wasapi.AvRevertMmThreadcharacteristics) {
-                pContext->wasapi.AvSetMmThreadCharacteristicsA   = NULL;
-                pContext->wasapi.AvRevertMmThreadcharacteristics = NULL;
-                ma_dlclose(ma_context_get_log(pContext), pContext->wasapi.hAvrt);
-                pContext->wasapi.hAvrt = NULL;
-            }
         }
     }
 
@@ -31883,6 +31868,18 @@ address with the kAudioHardwarePropertyDevices selector and the kAudioObjectProp
 size, allocate a block of memory of that size and then call AudioObjectGetPropertyData(). The data is just a list of
 AudioDeviceID's so just do "dataSize/sizeof(AudioDeviceID)" to know the device count.
 */
+
+#if defined(MA_APPLE_MOBILE)
+static void ma_device__on_notification_interruption_began(ma_device* pDevice)
+{
+    ma_device__on_notification(ma_device_notification_init(pDevice, ma_device_notification_type_interruption_began));
+}
+
+static void ma_device__on_notification_interruption_ended(ma_device* pDevice)
+{
+    ma_device__on_notification(ma_device_notification_init(pDevice, ma_device_notification_type_interruption_ended));
+}
+#endif
 
 static ma_result ma_result_from_OSStatus(OSStatus status)
 {
