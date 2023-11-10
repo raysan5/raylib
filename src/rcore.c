@@ -1589,8 +1589,8 @@ int GetFPS(void)
         average = 0;
         last = 0;
         index = 0;
-        for (int i = 0; i < FPS_CAPTURE_FRAMES_COUNT; i++)
-            history[i] = 0;
+        
+        for (int i = 0; i < FPS_CAPTURE_FRAMES_COUNT; i++) history[i] = 0;
     }
 
     if (fpsFrame == 0) return 0;
@@ -2583,8 +2583,11 @@ void PlayAutomationEvent(AutomationEvent event)
             case INPUT_KEY_UP: CORE.Input.Keyboard.currentKeyState[event.params[0]] = false; break;             // param[0]: key
             case INPUT_KEY_DOWN: {                                                                              // param[0]: key
                 CORE.Input.Keyboard.currentKeyState[event.params[0]] = true;
-                if (CORE.Input.Keyboard.previousKeyState[event.params[0]] == false) {
-                    if (CORE.Input.Keyboard.keyPressedQueueCount < MAX_KEY_PRESSED_QUEUE) {
+                
+                if (CORE.Input.Keyboard.previousKeyState[event.params[0]] == false)
+                {
+                    if (CORE.Input.Keyboard.keyPressedQueueCount < MAX_KEY_PRESSED_QUEUE)
+                    {
                         // Add character to the queue
                         CORE.Input.Keyboard.keyPressedQueue[CORE.Input.Keyboard.keyPressedQueueCount] = event.params[0];
                         CORE.Input.Keyboard.keyPressedQueueCount++;
