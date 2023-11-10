@@ -11,15 +11,24 @@ Here it is a wishlist with features and ideas to improve the library. Note that 
 
 _Current version of raylib is complete and functional but there is always room for improvements._
 
+**raylib 5.x**
+ - [ ] `rcore`: Support additional platforms: iOS, Xbox Series S|X
+ - [ ] `rcore_web`: Avoid GLFW dependency, functionality can be directly implemented using emscripten SDK
+ - [ ] `rlgl`: Review GLSL shaders naming conventions for consistency
+ - [ ] `textures`: Improve compressed textures support, loading and saving
+ - [ ] `rmodels`: Improve 3d objects loading, specially animations (obj, gltf)
+ - [ ] `raudio`: Implement miniaudio high-level provided features
+ - [ ] `examples`: Review all examples, add more and better code explanations
+ - [ ] Software renderer backend? Maybe using `Image` provided API
+
 **raylib 4.x**
- - [ ] Split core module into separate platforms?
- - [ ] Basic 2d software renderer, using `Image` provided API
- - [ ] Redesign gestures system, improve touch inputs management
- - [ ] Redesign audio module, implement miniaudio high-level provided features
+ - [x] Split core module into separate platforms?
+ - [x] Redesign gestures system, improve touch inputs management
  - [x] Redesign camera module (more flexible) ([#1143](https://github.com/raysan5/raylib/issues/1143), https://github.com/raysan5/raylib/discussions/2507)
  - [x] Better documentation and improved examples, reviewed webpage with examples complexity level
  - [x] Focus on HTML5 ([raylib 5k gamejam](https://itch.io/jam/raylib-5k-gamejam)) and embedded platforms (RPI and similar SOCs)
  - [x] Additional support libraries: [raygui](https://github.com/raysan5/raygui), [rres](https://github.com/raysan5/rres)
+
 
 **raylib 4.0**
  - [x] Improved consistency and coherency in raylib API
