@@ -559,7 +559,6 @@ void PollInputEvents(void)
     // Reset keys/chars pressed registered
     CORE.Input.Keyboard.keyPressedQueueCount = 0;
     CORE.Input.Keyboard.charPressedQueueCount = 0;
-    for (int i = 0; i < MAX_KEYBOARD_KEYS; i++) CORE.Input.Keyboard.keyRepeatInFrame[i] = 0;
 
     // Reset last gamepad button/axis registered state
     CORE.Input.Gamepad.lastButtonPressed = 0;       // GAMEPAD_BUTTON_UNKNOWN
@@ -663,11 +662,10 @@ void PollInputEvents(void)
 
     CORE.Window.resizedLastFrame = false;
 
-    // This code does not seem to do anything??
+    // TODO: This code does not seem to do anything??
     //if (CORE.Window.eventWaiting) glfwWaitEvents();     // Wait for in input events before continue (drawing is paused)
-    //else glfwPollEvents();      // Poll input events: keyboard/mouse/window events (callbacks)
+    //else glfwPollEvents(); // Poll input events: keyboard/mouse/window events (callbacks) --> WARNING: Where is key input reseted?
 }
-
 
 //----------------------------------------------------------------------------------
 // Module Internal Functions Definition
