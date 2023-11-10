@@ -201,7 +201,7 @@ int main(void)
         //----------------------------------------------------------------------------------
         
         // Toggle events recording
-        if (IsKeyPressed(KEY_F2))
+        if (IsKeyPressed(KEY_S))
         {
             if (!eventPlaying)
             {
@@ -220,7 +220,7 @@ int main(void)
                 }
             }
         }
-        else if (IsKeyPressed(KEY_F3))
+        else if (IsKeyPressed(KEY_A))
         {
             if (!eventRecording && (aelist.count > 0))
             {
@@ -291,8 +291,8 @@ int main(void)
             DrawText("- SPACE: Player jump", 30, 60, 10, DARKGRAY);
             DrawText("- R: Reset game state", 30, 80, 10, DARKGRAY);
 
-            DrawText("- F2: START/STOP RECORDING INPUT EVENTS", 30, 110, 10, BLACK);
-            DrawText("- F3: REPLAY LAST RECORDED INPUT EVENTS", 30, 130, 10, BLACK);
+            DrawText("- S: START/STOP RECORDING INPUT EVENTS", 30, 110, 10, BLACK);
+            DrawText("- A: REPLAY LAST RECORDED INPUT EVENTS", 30, 130, 10, BLACK);
 
             // Draw automation events recording indicator
             if (eventRecording)
