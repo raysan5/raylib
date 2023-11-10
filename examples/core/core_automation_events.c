@@ -211,6 +211,8 @@ int main(void)
                     eventRecording = false;
                     
                     ExportAutomationEventList(aelist, "automation.rae");
+                    
+                    TraceLog(LOG_INFO, "RECORDED FRAMES: %i", aelist.count);
                 }
                 else 
                 {
@@ -245,6 +247,9 @@ int main(void)
             // NOTE: Multiple events could be executed in a single frame
             while (playFrameCounter == aelist.events[currentPlayFrame].frame)
             {
+                TraceLog(LOG_INFO, "PLAYING: PlayFrameCount: %i | currentPlayFrame: %i | Event Frame: %i, param: %i | current Time: %f", 
+                    playFrameCounter, currentPlayFrame, aelist.events[currentPlayFrame].frame, aelist.events[currentPlayFrame].params[0]);
+                
                 PlayAutomationEvent(aelist.events[currentPlayFrame]);
                 currentPlayFrame++;
 
@@ -253,6 +258,9 @@ int main(void)
                     eventPlaying = false;
                     currentPlayFrame = 0;
                     playFrameCounter = 0;
+
+                    TraceLog(LOG_INFO, "FINISH PLAYING!");
+                    break;
                 }
             }
             

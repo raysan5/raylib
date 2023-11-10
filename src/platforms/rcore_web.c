@@ -559,12 +559,12 @@ void PollInputEvents(void)
     // Reset keys/chars pressed registered
     CORE.Input.Keyboard.keyPressedQueueCount = 0;
     CORE.Input.Keyboard.charPressedQueueCount = 0;
-    // Reset key repeats
     for (int i = 0; i < MAX_KEYBOARD_KEYS; i++) CORE.Input.Keyboard.keyRepeatInFrame[i] = 0;
 
     // Reset last gamepad button/axis registered state
     CORE.Input.Gamepad.lastButtonPressed = 0;       // GAMEPAD_BUTTON_UNKNOWN
     //CORE.Input.Gamepad.axisCount = 0;
+
     // Keyboard/Mouse input polling (automatically managed by GLFW3 through callback)
 
     // Register previous keys states
@@ -592,7 +592,6 @@ void PollInputEvents(void)
     // so, if mouse is not moved it returns a (0, 0) position... this behaviour should be reviewed!
     //for (int i = 0; i < MAX_TOUCH_POINTS; i++) CORE.Input.Touch.position[i] = (Vector2){ 0, 0 };
 
-    CORE.Window.resizedLastFrame = false;
 
     // Gamepad support using emscripten API
     // NOTE: GLFW3 joystick functionality not available in web
@@ -661,6 +660,12 @@ void PollInputEvents(void)
             CORE.Input.Gamepad.axisCount[i] = gamepadState.numAxes;
         }
     }
+
+    CORE.Window.resizedLastFrame = false;
+
+    // This code does not seem to do anything??
+    //if (CORE.Window.eventWaiting) glfwWaitEvents();     // Wait for in input events before continue (drawing is paused)
+    //else glfwPollEvents();      // Poll input events: keyboard/mouse/window events (callbacks)
 }
 
 
