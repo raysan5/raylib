@@ -872,8 +872,15 @@ int InitPlatform(void)
     {
         CORE.Window.ready = true;
 
-        int fbWidth = CORE.Window.screen.width;
-        int fbHeight = CORE.Window.screen.height;
+        int fbWidth;
+        int fbHeight;
+
+        glfwGetFramebufferSize(platform.handle, &fbWidth, &fbHeight);
+
+        // Screen scaling matrix is required in case desired screen area is different from display area
+        CORE.Window.screenScale = MatrixScale((float)fbWidth/CORE.Window.screen.width, (float)fbHeight/CORE.Window.screen.height, 1.0f);
+
+        // no need to scale mouse as glfw is doing it already
 
         CORE.Window.render.width = fbWidth;
         CORE.Window.render.height = fbHeight;
@@ -966,28 +973,26 @@ static void ErrorCallback(int error, const char *description)
 // NOTE: Window resizing not allowed by default
 static void WindowSizeCallback(GLFWwindow *window, int width, int height)
 {
-    // Reset viewport and projection matrix for new size
-    SetupViewport(width, height);
+    CORE.Window.screen.width = width;
+    CORE.Window.screen.height = height;
 
-    CORE.Window.currentFbo.width = width;
-    CORE.Window.currentFbo.height = height;
+    // Same logic from InitPlatform
+
+    int fbWidth;
+    int fbHeight;
+
+    glfwGetFramebufferSize(platform.handle, &fbWidth, &fbHeight);
+
+    // Screen scaling matrix is required in case desired screen area is different from display area
+    CORE.Window.screenScale = MatrixScale((float)fbWidth/(float)CORE.Window.screen.width, (float)fbHeight/(float)CORE.Window.screen.height, 1.0f);
+
+    CORE.Window.render.width = fbWidth;
+    CORE.Window.render.height = fbHeight;
+    CORE.Window.currentFbo.width = fbWidth;
+    CORE.Window.currentFbo.height = fbHeight;
     CORE.Window.resizedLastFrame = true;
 
-    if (IsWindowFullscreen()) return;
-
-    // Set current screen size
-    if ((CORE.Window.flags & FLAG_WINDOW_HIGHDPI) > 0)
-    {
-        Vector2 windowScaleDPI = GetWindowScaleDPI();
-
-        CORE.Window.screen.width = (unsigned int)(width/windowScaleDPI.x);
-        CORE.Window.screen.height = (unsigned int)(height/windowScaleDPI.y);
-    }
-    else
-    {
-        CORE.Window.screen.width = width;
-        CORE.Window.screen.height = height;
-    }
+    SetupViewport(fbWidth, fbHeight);
 
     // NOTE: Postprocessing texture is not scaled to new size
 }
@@ -1199,23 +1204,9 @@ static EM_BOOL EmscriptenResizeCallback(int eventType, const EmscriptenUiEvent *
     if (height < CORE.Window.screenMin.height) height = CORE.Window.screenMin.height;
     else if (height > CORE.Window.screenMax.height && CORE.Window.screenMax.height > 0) height = CORE.Window.screenMax.height;
 
-    emscripten_set_canvas_element_size("#canvas", width, height);
+    SetWindowSize(width, height); // will trigger callback
 
-    SetupViewport(width, height); // Reset viewport and projection matrix for new size
-
-    CORE.Window.currentFbo.width = width;
-    CORE.Window.currentFbo.height = height;
-    CORE.Window.resizedLastFrame = true;
-
-    if (IsWindowFullscreen()) return 1;
-
-    // Set current screen size
-    CORE.Window.screen.width = width;
-    CORE.Window.screen.height = height;
-
-    // NOTE: Postprocessing texture is not scaled to new size
-
-    return 0;
+    return 1; // The event was consumed by the callback handler
 }
 
 // Register mouse input events
