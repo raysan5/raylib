@@ -247,7 +247,7 @@ int main(void)
             // NOTE: Multiple events could be executed in a single frame
             while (playFrameCounter == aelist.events[currentPlayFrame].frame)
             {
-                TraceLog(LOG_INFO, "PLAYING: PlayFrameCount: %i | currentPlayFrame: %i | Event Frame: %i, param: %i | current Time: %f", 
+                TraceLog(LOG_INFO, "PLAYING: PlayFrameCount: %i | currentPlayFrame: %i | Event Frame: %i, param: %i", 
                     playFrameCounter, currentPlayFrame, aelist.events[currentPlayFrame].frame, aelist.events[currentPlayFrame].params[0]);
                 
                 PlayAutomationEvent(aelist.events[currentPlayFrame]);
