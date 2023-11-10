@@ -1,6 +1,6 @@
 /**********************************************************************************************
 *
-*   raylib v4.6-dev - A simple and easy-to-use library to enjoy videogames programming (www.raylib.com)
+*   raylib v5.0 - A simple and easy-to-use library to enjoy videogames programming (www.raylib.com)
 *
 *   FEATURES:
 *       - NO external dependencies, all required libraries included with raylib

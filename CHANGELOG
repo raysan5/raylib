@@ -4,16 +4,16 @@ changelog
 Current Release:    raylib 4.5.0 (18 March 2023)
 
 -------------------------------------------------------------------------
-Release:     raylib 5.0 (xx November 2023) -WIP-
+Release:     raylib 5.0 - 10th Anniversary Edition (18 November 2023)
 -------------------------------------------------------------------------
 KEY CHANGES:
- - REDESIGNED: rcore module split per-platform, by @ubkp, @michaelfiber, @Bigfoot71, @raysan5
- - REMOVED: Deprecated platform: PLATFORM_RPI, use PLATFORM_DRM instead
+ - REDESIGNED: rcore module platform-split, by @ubkp, @michaelfiber, @Bigfoot71, @raysan5
  - ADDED: New platform backend supported: SDL
  - ADDED: New platform backend supported: Nintendo Switch (closed source)
  - ADDED: New Splines drawing and evaluation API
  - ADDED: New pseudo-random numbers generator: rprand
- - REDESIGNED: Automation Events System (exposed API)
+ - ADDED: Automation Events System API
+ - REMOVED: Deprecated platform: PLATFORM_RPI, use PLATFORM_DRM instead
 
 Detailed changes:
 [rcore] ADDED: RAYLIB_VERSION_* values to raylib.h (#2856) by @RobLoach
