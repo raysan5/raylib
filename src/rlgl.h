@@ -1065,7 +1065,7 @@ static PFNGLVERTEXATTRIBDIVISOREXTPROC glVertexAttribDivisor = NULL;
 static void rlLoadShaderDefault(void);      // Load default shader
 static void rlUnloadShaderDefault(void);    // Unload default shader
 #if defined(RLGL_SHOW_GL_DETAILS_INFO)
-static char *rlGetCompressedFormatName(int format); // Get compressed format official GL identifier name
+static const char *rlGetCompressedFormatName(int format); // Get compressed format official GL identifier name
 #endif  // RLGL_SHOW_GL_DETAILS_INFO
 #endif  // GRAPHICS_API_OPENGL_33 || GRAPHICS_API_OPENGL_ES2
 
@@ -4690,7 +4690,7 @@ static void rlUnloadShaderDefault(void)
 
 #if defined(RLGL_SHOW_GL_DETAILS_INFO)
 // Get compressed format official GL identifier name
-static char *rlGetCompressedFormatName(int format)
+static const char *rlGetCompressedFormatName(int format)
 {
     switch (format)
     {
