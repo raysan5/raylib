@@ -2082,6 +2082,132 @@ void ImageBlurGaussian(Image *image, int blurSize) {
     ImageFormat(image, format);
 }
 
+// The kernel matrix is assumed to be square. Only supply the width of the kernel.
+void ImageKernelConvolution(Image *image, float* karnel, int karenlWidth){
+
+    if ((image->data == NULL) || (image->width == 0) || (image->height == 0) || karnel == NULL) return;
+
+    ImageAlphaPremultiply(image);
+
+    Color *pixels = LoadImageColors(*image);
+
+    Vector4 *imageCopy1 = RL_MALLOC((image->height)*(image->width)*sizeof(Vector4));
+    Vector4 *imageCopy2 = RL_MALLOC((image->height)*(image->width)*sizeof(Vector4));
+    Vector4 *temp = RL_MALLOC(karenlWidth*karenlWidth*sizeof(Vector4));
+
+
+    float normKernel = 0.0f;
+    for(int i = 0; i < karenlWidth * karenlWidth; i++){
+        temp[i].x = 0.0f;
+        temp[i].y = 0.0f;
+        temp[i].z = 0.0f;
+        temp[i].w = 0.0f;
+        normKernel += karnel[i];
+    }
+
+    if(normKernel != 0.0f){
+        for(int i = 0; i < karenlWidth * karenlWidth; i++){
+            karnel[i] /= normKernel;
+        }
+    }
+
+
+    float rRes = 0.0f;
+    float gRes = 0.0f;
+    float bRes = 0.0f;
+    float aRes = 0.0f;
+
+    for (int i = 0; i < (image->height)*(image->width); i++) {
+        imageCopy1[i].x = ((float)pixels[i].r)/255.0f;
+        imageCopy1[i].y = ((float)pixels[i].g)/255.0f;
+        imageCopy1[i].z = ((float)pixels[i].b)/255.0f;
+        imageCopy1[i].w = ((float)pixels[i].a)/255.0f;
+    }
+
+
+
+    int startRange, endRange;
+    if(karenlWidth % 2 == 0){
+        startRange = -karenlWidth/2;
+        endRange = karenlWidth/2;
+    } else {
+        startRange = -karenlWidth/2;
+        endRange = karenlWidth/2+1;
+    }
+    for(int x = 0; x < image->height; x++) {
+        for(int y = 0; y < image->width; y++) {
+
+            for(int xk = startRange; xk < endRange; xk++){
+                for(int yk = startRange; yk < endRange; yk++){
+                    int xkabs = xk + karenlWidth/2;
+                    int ykabs = yk + karenlWidth/2;
+                    size_t imgindex = image->width * (x+xk) + (y+yk);
+                    if(imgindex < 0 || imgindex >= image->width * image->height){
+                        temp[karenlWidth * xkabs + ykabs].x = 0.0f;
+                        temp[karenlWidth * xkabs + ykabs].y = 0.0f;
+                        temp[karenlWidth * xkabs + ykabs].z = 0.0f;
+                        temp[karenlWidth * xkabs + ykabs].w = 0.0f;
+                    } else {
+                        temp[karenlWidth * xkabs + ykabs].x = imageCopy1[imgindex].x * karnel[karenlWidth * xkabs + ykabs];
+                        temp[karenlWidth * xkabs + ykabs].y = imageCopy1[imgindex].y * karnel[karenlWidth * xkabs + ykabs];
+                        temp[karenlWidth * xkabs + ykabs].z = imageCopy1[imgindex].z * karnel[karenlWidth * xkabs + ykabs];
+                        temp[karenlWidth * xkabs + ykabs].w = imageCopy1[imgindex].w * karnel[karenlWidth * xkabs + ykabs];
+                    }
+                }
+            }
+
+            for(int i = 0; i < karenlWidth * karenlWidth; i++){
+                rRes += temp[i].x;
+                gRes += temp[i].y;
+                bRes += temp[i].z;
+                aRes += temp[i].w;
+            }
+
+            STBIR_CLAMP(rRes, 0.0f, 1.0f);
+            STBIR_CLAMP(gRes, 0.0f, 1.0f);
+            STBIR_CLAMP(bRes, 0.0f, 1.0f);
+            STBIR_CLAMP(aRes, 0.0f, 1.0f);
+
+            imageCopy2[image->width * (x) + (y)].x = rRes;
+            imageCopy2[image->width * (x) + (y)].y = gRes;
+            imageCopy2[image->width * (x) + (y)].z = bRes;
+            imageCopy2[image->width * (x) + (y)].w = aRes;
+
+            rRes = 0.0f;
+            gRes = 0.0f;
+            bRes = 0.0f;
+            aRes = 0.0f;
+
+            for(int i = 0; i < karenlWidth * karenlWidth; i++){
+                temp[i].x = 0.0f;
+                temp[i].y = 0.0f;
+                temp[i].z = 0.0f;
+                temp[i].w = 0.0f;
+            }
+        }
+    }
+
+    for (int i = 0; i < (image->width)*(image->height); i++) {
+        float alpha = (float)imageCopy2[i].w;
+        pixels[i].r = (unsigned char)((imageCopy2[i].x)*255.0f);
+        pixels[i].g = (unsigned char)((imageCopy2[i].y)*255.0f);
+        pixels[i].b = (unsigned char)((imageCopy2[i].z)*255.0f);
+        pixels[i].a = (unsigned char)((alpha)*255.0f);
+        // printf("pixels[%d] = %d", i, pixels[i].r); 
+    }
+
+
+    int format = image->format;
+    RL_FREE(image->data);
+    RL_FREE(imageCopy1);
+    RL_FREE(imageCopy2);
+    RL_FREE(temp);
+
+    image->data = pixels;
+    image->format = PIXELFORMAT_UNCOMPRESSED_R8G8B8A8;
+    ImageFormat(image, format);
+}
+
 // Generate all mipmap levels for a provided image
 // NOTE 1: Supports POT and NPOT images
 // NOTE 2: image.data is scaled to include mipmap levels
