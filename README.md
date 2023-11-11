@@ -135,6 +135,13 @@ raylib is present in several networks and raylib community is growing everyday. 
  - Patreon: [https://www.patreon.com/raylib](https://www.patreon.com/raylib)
  - YouTube: [https://www.youtube.com/channel/raylib](https://www.youtube.com/c/raylib)
 
+contributors
+------------
+
+<a href="https://github.com/raysan5/raylib/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=raysan5/raylib&max=500&columns=20&anon=1" />
+</a>
+
 license
 -------
 
