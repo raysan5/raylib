@@ -94,7 +94,7 @@ static void ErrorCallback(int error, const char *description);                  
 // Window callbacks events
 static void WindowSizeCallback(GLFWwindow *window, int width, int height);          // GLFW3 WindowSize Callback, runs when window is resized
 static void WindowIconifyCallback(GLFWwindow *window, int iconified);               // GLFW3 WindowIconify Callback, runs when window is minimized/restored
-static void WindowMaximizeCallback(GLFWwindow *window, int maximized);              // GLFW3 Window Maximize Callback, runs when window is maximized
+//static void WindowMaximizeCallback(GLFWwindow *window, int maximized);              // GLFW3 Window Maximize Callback, runs when window is maximized
 static void WindowFocusCallback(GLFWwindow *window, int focused);                   // GLFW3 WindowFocus Callback, runs when window get/lose focus
 static void WindowDropCallback(GLFWwindow *window, int count, const char **paths);  // GLFW3 Window Drop Callback, runs when drop files into window
 
@@ -1002,11 +1002,13 @@ static void WindowIconifyCallback(GLFWwindow *window, int iconified)
     else CORE.Window.flags &= ~FLAG_WINDOW_MINIMIZED;           // The window was restored
 }
 
+/*
 // GLFW3 Window Maximize Callback, runs when window is maximized
 static void WindowMaximizeCallback(GLFWwindow *window, int maximized)
 {
     // TODO.
 }
+*/
 
 // GLFW3 WindowFocus Callback, runs when window get/lose focus
 static void WindowFocusCallback(GLFWwindow *window, int focused)
