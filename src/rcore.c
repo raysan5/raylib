@@ -1726,26 +1726,29 @@ int *LoadRandomSequence(unsigned int count, int min, int max)
     values = rprand_load_sequence(count, min, max);
 #else
     if (count > (abs(max - min) + 1)) return values;
-
+    
+    // Allocate array for putting random values into it.
     values = (int *)RL_CALLOC(count, sizeof(int));
 
     int value = 0;
     bool dupValue = false;
 
     for (int i = 0; i < count;)
-    {
+    {   
+        // Generate random value with max and min
         value = (rand()%(abs(max - min) + 1) + min);
         dupValue = false;
 
         for (int j = 0; j < i; j++)
         {
-            if (values[j] == value)
+            if (values[j] == value) // Check for value duplication
             {
                 dupValue = true;
                 break;
             }
         }
 
+        // Don't add same the value
         if (!dupValue)
         {
             values[i] = value;
