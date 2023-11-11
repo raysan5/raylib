@@ -865,6 +865,10 @@ void EndDrawing(void)
     }
 #endif
 
+#if defined(SUPPORT_AUTOMATION_EVENTS)
+    if (automationEventRecording) RecordAutomationEvent();    // Event recording
+#endif
+
 #if !defined(SUPPORT_CUSTOM_FRAME_CONTROL)
     SwapScreenBuffer();                  // Copy back buffer to front buffer (screen)
 
@@ -927,10 +931,6 @@ void EndDrawing(void)
         }
     }
 #endif  // SUPPORT_SCREEN_CAPTURE
-
-#if defined(SUPPORT_AUTOMATION_EVENTS)
-    if (automationEventRecording) RecordAutomationEvent();    // Event recording
-#endif
 
     CORE.Time.frameCounter++;
 }
@@ -1106,7 +1106,7 @@ void BeginScissorMode(int x, int y, int width, int height)
         rlScissor((int)(x*scale.x), (int)(CORE.Window.currentFbo.height - (y + height)*scale.y), (int)(width*scale.x), (int)(height*scale.y));
     }
 #endif
-    else 
+    else
     {
         rlScissor(x, CORE.Window.currentFbo.height - (y + height), width, height);
     }
@@ -1589,7 +1589,7 @@ int GetFPS(void)
         average = 0;
         last = 0;
         index = 0;
-        
+
         for (int i = 0; i < FPS_CAPTURE_FRAMES_COUNT; i++) history[i] = 0;
     }
 
@@ -1721,7 +1721,7 @@ int GetRandomValue(int min, int max)
 int *LoadRandomSequence(unsigned int count, int min, int max)
 {
     int *values = NULL;
-    
+
 #if defined(SUPPORT_RPRAND_GENERATOR)
     values = rprand_load_sequence(count, min, max);
 #else
@@ -2583,7 +2583,7 @@ void PlayAutomationEvent(AutomationEvent event)
             case INPUT_KEY_UP: CORE.Input.Keyboard.currentKeyState[event.params[0]] = false; break;             // param[0]: key
             case INPUT_KEY_DOWN: {                                                                              // param[0]: key
                 CORE.Input.Keyboard.currentKeyState[event.params[0]] = true;
-                
+
                 if (CORE.Input.Keyboard.previousKeyState[event.params[0]] == false)
                 {
                     if (CORE.Input.Keyboard.keyPressedQueueCount < MAX_KEY_PRESSED_QUEUE)
