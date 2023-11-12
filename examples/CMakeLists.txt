@@ -99,6 +99,7 @@ elseif (${PLATFORM} MATCHES "Web")
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Os -s USE_GLFW=3 -s ASSERTIONS=1 -s WASM=1 -s ASYNCIFY")
     # Since WASM is used, ALLOW_MEMORY_GROWTH has no extra overheads
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -s ALLOW_MEMORY_GROWTH=1 --no-heap-copy")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -s EXPORTED_FUNCTIONS=_main,_SetHighDPIAware,_FullscreenCallback -s EXPORTED_RUNTIME_METHODS=cwrap")
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} --shell-file ${CMAKE_SOURCE_DIR}/src/shell.html")
     set(CMAKE_EXECUTABLE_SUFFIX ".html")
 
