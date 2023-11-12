@@ -977,45 +977,46 @@ static void ErrorCallback(int error, const char *description)
 // AdjustWindowSize
 static void AdjustWindowSize(int width, int height, int fbWidth, int fbHeight)
 {
-  TRACELOG(LOG_INFO, "AdjustWindowSize: %dx%d | %dx%d", width, height, fbWidth, fbHeight);
-  CORE.Window.screen.width = width;
-  CORE.Window.screen.height = height;
+    TRACELOG(LOG_INFO, "AdjustWindowSize: %dx%d | %dx%d", width, height, fbWidth, fbHeight);
+    CORE.Window.screen.width = width;
+    CORE.Window.screen.height = height;
 
-  AdjustFrameBufferSize(width, height);
+    AdjustFrameBufferSize(width, height);
 
-  emscripten_set_element_css_size("#canvas", width, height);
+    emscripten_set_element_css_size("#canvas", width, height);
 
-  EM_ASM({
-           GLFW.active.width = $0;
-           GLFW.active.height = $1;
-         },
-         width, height
-  );
+    EM_ASM({
+               GLFW.active.width = $0;
+               GLFW.active.height = $1;
+           },
+           width, height
+    );
 }
 
 // AdjustFrameBufferSize
 static void AdjustFrameBufferSize(int fbWidth, int fbHeight)
 {
-  TRACELOG(LOG_INFO, "AdjustFrameBufferSize: %dx%d", fbWidth, fbHeight);
+    TRACELOG(LOG_INFO, "AdjustFrameBufferSize: %dx%d", fbWidth, fbHeight);
 
-  float scale = GetDevicePixelRatio();
-  fbWidth = (int) ((float) fbWidth * scale);
-  fbHeight = (int) ((float) fbHeight * scale);
+    float scale = GetDevicePixelRatio();
+    fbWidth = (int) ((float) fbWidth * scale);
+    fbHeight = (int) ((float) fbHeight * scale);
 
-  // Screen scaling matrix is required in case desired screen area is different from display area
-  CORE.Window.screenScale = MatrixScale((float)fbWidth/(float)CORE.Window.screen.width, (float)fbHeight/(float)CORE.Window.screen.height, 1.0f);
+    // Screen scaling matrix is required in case desired screen area is different from display area
+    CORE.Window.screenScale = MatrixScale((float) fbWidth / (float) CORE.Window.screen.width,
+                                          (float) fbHeight / (float) CORE.Window.screen.height, 1.0f);
 
-  SetMouseScale(1.0f / scale, 1.0f / scale);
+    SetMouseScale(1.0f / scale, 1.0f / scale);
 
-  CORE.Window.render.width = fbWidth;
-  CORE.Window.render.height = fbHeight;
-  CORE.Window.currentFbo.width = fbWidth;
-  CORE.Window.currentFbo.height = fbHeight;
-  CORE.Window.resizedLastFrame = true;
+    CORE.Window.render.width = fbWidth;
+    CORE.Window.render.height = fbHeight;
+    CORE.Window.currentFbo.width = fbWidth;
+    CORE.Window.currentFbo.height = fbHeight;
+    CORE.Window.resizedLastFrame = true;
 
-  emscripten_set_canvas_element_size("#canvas", fbWidth, fbHeight);
+    emscripten_set_canvas_element_size("#canvas", fbWidth, fbHeight);
 
-  SetupViewport(fbWidth, fbHeight);
+    SetupViewport(fbWidth, fbHeight);
 }
 
 // GLFW3 WindowSize Callback, runs when window is resizedLastFrame
@@ -1351,65 +1352,68 @@ void InstallModuleJSAPI()
 // FullscreenCallback
 void FullscreenCallback(bool isFullscreen)
 {
-  TRACELOG(LOG_INFO, "FullscreenCallback(%s)", isFullscreen ? "true" : "false");
-  if (isFullscreen)
-  {
-    if ((CORE.Window.flags & FLAG_WINDOW_RESIZABLE) == 0)
+    TRACELOG(LOG_INFO, "FullscreenCallback(%s)", isFullscreen ? "true" : "false");
+    if(isFullscreen)
     {
-      if(IsHighDPIAware())
-      {
-        int screenWidth, screenHeight;
-        emscripten_get_screen_size(&screenWidth, &screenHeight);
-        AdjustFrameBufferSize(screenWidth, screenWidth);
-      }
+        if((CORE.Window.flags & FLAG_WINDOW_RESIZABLE) == 0)
+        {
+            if(IsHighDPIAware())
+            {
+                int screenWidth, screenHeight;
+                emscripten_get_screen_size(&screenWidth, &screenHeight);
+                AdjustFrameBufferSize(screenWidth, screenWidth);
+            }
+        }
+        else
+        {
+            int screenWidth, screenHeight;
+            emscripten_get_screen_size(&screenWidth, &screenHeight);
+            TRACELOG(LOG_INFO, "fullscreen resizable %dx%d", screenWidth, screenHeight);
+            SetWindowSize(screenWidth, screenHeight);
+        }
     }
     else
     {
-      int screenWidth, screenHeight;
-      emscripten_get_screen_size(&screenWidth, &screenHeight);
-      TRACELOG(LOG_INFO, "fullscreen resizable %dx%d", screenWidth, screenHeight);
-      SetWindowSize(screenWidth, screenHeight);
+        SetWindowSize(EM_ASM_INT(return Module.raylib.screenWidth;), EM_ASM_INT(return Module.raylib.screenHeight;));
     }
-  }
-  else
-  {
-    SetWindowSize(EM_ASM_INT(return Module.raylib.screenWidth;), EM_ASM_INT(return Module.raylib.screenHeight;));
-  }
 
-  CORE.Window.fullscreen = isFullscreen;
+    CORE.Window.fullscreen = isFullscreen;
 }
 
 // SetHighDPIAware
 void SetHighDPIAware(bool flag)
 {
-  TRACELOG(LOG_INFO, "SetHighDPIAware(%s)", flag ? "true" : "false");
-  if (platform.isHighDPIAware != flag)
-  {
-    platform.isHighDPIAware = flag;
-    if(CORE.Window.fullscreen)
+    TRACELOG(LOG_INFO, "SetHighDPIAware(%s)", flag ? "true" : "false");
+    if(platform.isHighDPIAware != flag)
     {
-      int screenWidth, screenHeight;
-      emscripten_get_screen_size(&screenWidth, &screenHeight);
-      AdjustFrameBufferSize(screenWidth, screenWidth);
+        platform.isHighDPIAware = flag;
+        if(CORE.Window.fullscreen)
+        {
+            int screenWidth, screenHeight;
+            emscripten_get_screen_size(&screenWidth, &screenHeight);
+            AdjustFrameBufferSize(screenWidth, screenWidth);
+        }
+        else
+            SetWindowSize(GetScreenWidth(), GetScreenHeight());
     }
-    else
-      SetWindowSize(GetScreenWidth(), GetScreenHeight());
-  }
 }
 
 // IsHighDPIAware
 static bool IsHighDPIAware()
 {
-  return platform.isHighDPIAware;
+    return platform.isHighDPIAware;
 }
 
 // GetDevicePixelRatio
 static float GetDevicePixelRatio()
 {
-  if (IsHighDPIAware())
-    return (float) EM_ASM_DOUBLE({ console.log("dpr: " + devicePixelRatio); return (typeof devicePixelRatio == 'number' && devicePixelRatio) || 1.0; });
-  else
-    return 1.0f;
+    if(IsHighDPIAware())
+        return (float) EM_ASM_DOUBLE({
+                                         console.log("dpr: " + devicePixelRatio);
+                                         return (typeof devicePixelRatio == 'number' && devicePixelRatio) || 1.0;
+                                     });
+    else
+        return 1.0f;
 }
 
 // EOF
