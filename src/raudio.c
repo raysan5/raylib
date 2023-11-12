@@ -18,6 +18,9 @@
 *           Define to use the module as standalone library (independently of raylib).
 *           Required types and functions are defined in the same module.
 *
+*       #define PLATFORM_DESKTOP_SDL
+*           SDL is used as a custom backend
+*
 *       #define SUPPORT_FILEFORMAT_WAV
 *       #define SUPPORT_FILEFORMAT_OGG
 *       #define SUPPORT_FILEFORMAT_MP3
@@ -163,6 +166,11 @@ typedef struct tagBITMAPINFOHEADER {
 #define MA_MALLOC RL_MALLOC
 #define MA_FREE RL_FREE
 
+#if defined (PLATFORM_DESKTOP_SDL)
+    #define MA_ENABLE_ONLY_SPECIFIC_BACKENDS
+    #define MA_ENABLE_CUSTOM
+#endif
+
 #define MA_NO_JACK
 #define MA_NO_WAV
 #define MA_NO_FLAC
@@ -174,6 +182,11 @@ typedef struct tagBITMAPINFOHEADER {
 #define MINIAUDIO_IMPLEMENTATION
 //#define MA_DEBUG_OUTPUT
 #include "external/miniaudio.h"         // Audio device initialization and management
+#if defined(PLATFORM_DESKTOP_SDL)
+    #define MA_NO_RUNTIME_LINKING
+    #include <SDL2/SDL.h>
+    #include "external/backend_sdl.h"
+#endif
 #undef PlaySound                        // Win32 API: windows.h > mmsystem.h defines PlaySound macro
 
 #include <stdlib.h>                     // Required for: malloc(), free()
@@ -375,6 +388,18 @@ struct rAudioProcessor {
 typedef struct AudioData {
     struct {
         ma_context context;         // miniaudio context data
+        #if defined(PLATFORM_DESKTOP_SDL)
+            struct
+            {
+                ma_proc SDL_InitSubSystem;
+                ma_proc SDL_QuitSubSystem;
+                ma_proc SDL_GetNumAudioDevices;
+                ma_proc SDL_GetAudioDeviceName;
+                ma_proc SDL_CloseAudioDevice;
+                ma_proc SDL_OpenAudioDevice;
+                ma_proc SDL_PauseAudioDevice;
+            } sdl;
+        #endif
         ma_device device;           // miniaudio device
         ma_mutex lock;              // miniaudio mutex lock
         bool isReady;               // Check if audio device is ready
@@ -446,7 +471,16 @@ void InitAudioDevice(void)
     ma_context_config ctxConfig = ma_context_config_init();
     ma_log_callback_init(OnLog, NULL);
 
-    ma_result result = ma_context_init(NULL, 0, &ctxConfig, &AUDIO.System.context);
+    #if defined(PLATFORM_DESKTOP_SDL)
+        ma_backend backends[] = {
+            ma_backend_custom
+        };
+        ctxConfig.custom.onContextInit = ma_context_init__custom_loader;
+        ma_result result = ma_context_init(backends, sizeof(backends)/sizeof(backends[0]), &ctxConfig, &AUDIO.System.context);
+    #else
+        ma_result result = ma_context_init(NULL, 0, &ctxConfig, &AUDIO.System.context);
+    #endif
+    
     if (result != MA_SUCCESS)
     {
         TRACELOG(LOG_WARNING, "AUDIO: Failed to initialize context");
@@ -474,6 +508,11 @@ void InitAudioDevice(void)
         return;
     }
 
+    // When using the custom SDL backend, the device has to be started before a mutex is created. Threading issue?
+    #if defined(PLATFORM_DESKTOP_SDL)
+    result = ma_device_start(&AUDIO.System.device);
+    #endif
+    
     // Mixing happens on a separate thread which means we need to synchronize. I'm using a mutex here to make things simple, but may
     // want to look at something a bit smarter later on to keep everything real-time, if that's necessary.
     if (ma_mutex_init(&AUDIO.System.lock) != MA_SUCCESS)
@@ -486,7 +525,9 @@ void InitAudioDevice(void)
 
     // Keep the device running the whole time. May want to consider doing something a bit smarter and only have the device running
     // while there's at least one sound being played.
+    #if !defined(PLATFORM_DESKTOP_SDL)
     result = ma_device_start(&AUDIO.System.device);
+    #endif
     if (result != MA_SUCCESS)
     {
         TRACELOG(LOG_WARNING, "AUDIO: Failed to start playback device");
