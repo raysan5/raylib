@@ -1084,14 +1084,26 @@ void PollInputEvents(void)
             // Check mouse events
             case SDL_MOUSEBUTTONDOWN:
             {
-                CORE.Input.Mouse.currentButtonState[event.button.button - 1] = 1;
+                // NOTE: SDL2 mouse button order is LEFT, MIDDLE, RIGHT, but raylib uses LEFT, RIGHT, MIDDLE like GLFW
+                //       The following conditions align SDL with raylib.h MouseButton enum order
+                int btn = event.button.button - 1;
+                if (btn == 2) btn = 1;
+                else if (btn == 1) btn = 2;
+
+                CORE.Input.Mouse.currentButtonState[btn] = 1;
 
                 touchAction = 1;
                 gestureUpdate = true;
             } break;
             case SDL_MOUSEBUTTONUP:
             {
-                CORE.Input.Mouse.currentButtonState[event.button.button - 1] = 0;
+                // NOTE: SDL2 mouse button order is LEFT, MIDDLE, RIGHT, but raylib uses LEFT, RIGHT, MIDDLE like GLFW
+                //       The following conditions align SDL with raylib.h MouseButton enum order
+                int btn = event.button.button - 1;
+                if (btn == 2) btn = 1;
+                else if (btn == 1) btn = 2;
+
+                CORE.Input.Mouse.currentButtonState[btn] = 0;
 
                 touchAction = 0;
                 gestureUpdate = true;
