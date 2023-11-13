@@ -14,6 +14,8 @@
 *           - Others (not tested)
 *       > PLATFORM_WEB:
 *           - HTML5 (WebAssembly)
+*       > PLATFORM_WEB_SDL (SDL backend):
+*           - HTML5 (WebAssembly)
 *       > PLATFORM_DRM:
 *           - Raspberry Pi 0-5 (DRM/KMS)
 *           - Linux DRM subsystem (KMS mode)
@@ -235,7 +237,7 @@ __declspec(dllimport) int __stdcall WideCharToMultiByte(unsigned int cp, unsigne
 #define FLAG_TOGGLE(n, f) ((n) ^= (f))
 #define FLAG_CHECK(n, f) ((n) & (f))
 
-#if (defined(__linux__) || defined(PLATFORM_WEB)) && (_POSIX_C_SOURCE < 199309L)
+#if (defined(__linux__) || defined(PLATFORM_WEB) || defined(PLATFORM_WEB_SDL)) && (_POSIX_C_SOURCE < 199309L)
     #undef _POSIX_C_SOURCE
     #define _POSIX_C_SOURCE 199309L // Required for: CLOCK_MONOTONIC if compiled with c99 without gnu ext.
 #endif
@@ -487,6 +489,8 @@ const char *TextFormat(const char *text, ...);              // Formatting of tex
     #include "platforms/rcore_desktop_sdl.c"
 #elif defined(PLATFORM_WEB)
     #include "platforms/rcore_web.c"
+#elif defined(PLATFORM_WEB_SDL)
+    #include "platforms/rcore_web_sdl.c"
 #elif defined(PLATFORM_DRM)
     #include "platforms/rcore_drm.c"
 #elif defined(PLATFORM_ANDROID)
@@ -555,6 +559,8 @@ void InitWindow(int width, int height, const char *title)
     TRACELOG(LOG_INFO, "Platform backend: DESKTOP (SDL)");
 #elif defined(PLATFORM_WEB)
     TRACELOG(LOG_INFO, "Platform backend: WEB (HTML5)");
+#elif defined(PLATFORM_WEB_SDL)
+    TRACELOG(LOG_INFO, "Platform backend: WEB (SDL) (HTML5)");
 #elif defined(PLATFORM_DRM)
     TRACELOG(LOG_INFO, "Platform backend: NATIVE DRM");
 #elif defined(PLATFORM_ANDROID)
@@ -1780,7 +1786,7 @@ void TakeScreenshot(const char *fileName)
 
     char path[512] = { 0 };
     strcpy(path, TextFormat("%s/%s", CORE.Storage.basePath, GetFileName(fileName)));
-    
+
     ExportImage(image, path);           // WARNING: Module required: rtextures
     RL_FREE(imgData);
 
@@ -3043,7 +3049,7 @@ void InitTimer(void)
     // However, it can also reduce overall system performance, because the thread scheduler switches tasks more often.
     // High resolutions can also prevent the CPU power management system from entering power-saving modes.
     // Setting a higher resolution does not improve the accuracy of the high-resolution performance counter.
-#if defined(_WIN32) && defined(SUPPORT_WINMM_HIGHRES_TIMER) && !defined(SUPPORT_BUSY_WAIT_LOOP) && !defined(PLATFORM_DESKTOP_SDL)
+#if defined(_WIN32) && defined(SUPPORT_WINMM_HIGHRES_TIMER) && !defined(SUPPORT_BUSY_WAIT_LOOP) && !defined(PLATFORM_DESKTOP_SDL) && !defined(PLATFORM_WEB_SDL)
     timeBeginPeriod(1);                 // Setup high-resolution timer to 1ms (granularity of 1-2 ms)
 #endif
 
