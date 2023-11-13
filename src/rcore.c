@@ -1725,14 +1725,14 @@ int *LoadRandomSequence(unsigned int count, int min, int max)
 #if defined(SUPPORT_RPRAND_GENERATOR)
     values = rprand_load_sequence(count, min, max);
 #else
-    if (count > (abs(max - min) + 1)) return values;
+    if (count > ((unsigned int)abs(max - min) + 1)) return values;
 
     values = (int *)RL_CALLOC(count, sizeof(int));
 
     int value = 0;
     bool dupValue = false;
 
-    for (int i = 0; i < count;)
+    for (int i = 0; i < (int)count;)
     {
         value = (rand()%(abs(max - min) + 1) + min);
         dupValue = false;
