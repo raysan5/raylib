@@ -15,6 +15,8 @@
 #         - Others (not tested)
 #     > PLATFORM_WEB:
 #         - HTML5 (WebAssembly)
+#     > PLATFORM_WEB_SDL (SDL backend):
+#         - HTML5 (WebAssembly)
 #     > PLATFORM_DRM:
 #         - Raspberry Pi 0-5 (DRM/KMS)
 #         - Linux DRM subsystem (KMS mode)
@@ -114,7 +116,7 @@ HOST_PLATFORM_OS ?= WINDOWS
 PLATFORM_OS ?= WINDOWS
 
 # Determine PLATFORM_OS when required
-ifeq ($(PLATFORM),$(filter $(PLATFORM),PLATFORM_DESKTOP PLATFORM_DESKTOP_SDL PLATFORM_WEB))
+ifeq ($(PLATFORM),$(filter $(PLATFORM),PLATFORM_DESKTOP PLATFORM_DESKTOP_SDL PLATFORM_WEB PLATFORM_WEB_SDL))
     # No uname.exe on MinGW!, but OS=Windows_NT on Windows!
     # ifeq ($(UNAME),Msys) -> Windows
     ifeq ($(OS),Windows_NT)
@@ -156,7 +158,7 @@ ifeq ($(PLATFORM),PLATFORM_DRM)
         PLATFORM_SHELL = sh
     endif
 endif
-ifeq ($(PLATFORM),PLATFORM_WEB)
+ifeq ($(PLATFORM),$(filter $(PLATFORM),PLATFORM_WEB PLATFORM_WEB_SDL))
     ifeq ($(PLATFORM_OS),LINUX)
         ifndef PLATFORM_SHELL
             PLATFORM_SHELL = sh
@@ -164,7 +166,7 @@ ifeq ($(PLATFORM),PLATFORM_WEB)
     endif
 endif
 
-ifeq ($(PLATFORM),PLATFORM_WEB)
+ifeq ($(PLATFORM),$(filter $(PLATFORM),PLATFORM_WEB PLATFORM_WEB_SDL))
     ifeq ($(PLATFORM_OS), WINDOWS)
         # Emscripten required variables
         EMSDK_PATH         ?= C:/emsdk
@@ -233,6 +235,10 @@ ifeq ($(PLATFORM),PLATFORM_WEB)
     GRAPHICS = GRAPHICS_API_OPENGL_ES2
     #GRAPHICS = GRAPHICS_API_OPENGL_ES3      # Uncomment to use ES3/WebGL2 (preliminary support).
 endif
+ifeq ($(PLATFORM),PLATFORM_WEB_SDL)
+    # On HTML5 OpenGL ES 2.0 is used, emscripten translates it to WebGL 1.0
+    GRAPHICS = GRAPHICS_API_OPENGL_ES2
+endif
 ifeq ($(PLATFORM),PLATFORM_ANDROID)
     # By default use OpenGL ES 2.0 on Android
     GRAPHICS = GRAPHICS_API_OPENGL_ES2
@@ -262,7 +268,7 @@ ifeq ($(PLATFORM),PLATFORM_DRM)
         AR = $(RPI_TOOLCHAIN)/bin/$(RPI_TOOLCHAIN_NAME)-ar
     endif
 endif
-ifeq ($(PLATFORM),PLATFORM_WEB)
+ifeq ($(PLATFORM),$(filter $(PLATFORM),PLATFORM_WEB PLATFORM_WEB_SDL))
     # HTML5 emscripten compiler
     CC = emcc
     AR = emar
@@ -305,7 +311,7 @@ ifneq ($(RAYLIB_CONFIG_FLAGS), NONE)
     CFLAGS += -DEXTERNAL_CONFIG_FLAGS $(RAYLIB_CONFIG_FLAGS)
 endif
 
-ifeq ($(PLATFORM), PLATFORM_WEB)
+ifeq ($(PLATFORM),$(filter $(PLATFORM),PLATFORM_WEB PLATFORM_WEB_SDL))
     # NOTE: When using multi-threading in the user code, it requires -pthread enabled
     CFLAGS += -std=gnu99
 else
@@ -321,7 +327,7 @@ ifeq ($(RAYLIB_BUILD_MODE),DEBUG)
 endif
 
 ifeq ($(RAYLIB_BUILD_MODE),RELEASE)
-    ifeq ($(PLATFORM),PLATFORM_WEB)
+    ifeq ($(PLATFORM),$(filter $(PLATFORM),PLATFORM_WEB PLATFORM_WEB_SDL))
         CFLAGS += -Os
     endif
     ifeq ($(PLATFORM),PLATFORM_DESKTOP)
@@ -340,7 +346,7 @@ endif
 ifeq ($(PLATFORM),PLATFORM_DESKTOP)
     CFLAGS += -Werror=implicit-function-declaration
 endif
-ifeq ($(PLATFORM),PLATFORM_WEB)
+ifeq ($(PLATFORM),$(filter $(PLATFORM),PLATFORM_WEB PLATFORM_WEB_SDL))
     # -Os                        # size optimization
     # -O2                        # optimization level 2, if used, also set --memory-init-file 0
     # -s USE_GLFW=3              # Use glfw3 library (context/input management) -> Only for linker!
@@ -422,7 +428,7 @@ endif
 # Define include paths for required headers: INCLUDE_PATHS
 # NOTE: Several external required libraries (stb and others)
 #------------------------------------------------------------------------------------------------
-INCLUDE_PATHS = -I. 
+INCLUDE_PATHS = -I.
 
 # Define additional directories containing required header files
 ifeq ($(PLATFORM),PLATFORM_DESKTOP)
@@ -436,6 +442,9 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP_SDL)
 endif
 ifeq ($(PLATFORM),PLATFORM_WEB)
     INCLUDE_PATHS += -Iexternal/glfw/include -Iexternal/glfw/deps/mingw
+endif
+ifeq ($(PLATFORM),PLATFORM_WEB_SDL)
+    INCLUDE_PATHS += -I$(SDL_INCLUDE_PATH)
 endif
 ifeq ($(PLATFORM),PLATFORM_DRM)
     INCLUDE_PATHS += -I/usr/include/libdrm
@@ -595,7 +604,7 @@ all: raylib
 # Compile raylib library
 # NOTE: Release directory is created if not exist
 raylib: $(OBJS)
-ifeq ($(PLATFORM),PLATFORM_WEB)
+ifeq ($(PLATFORM),$(filter $(PLATFORM),PLATFORM_WEB PLATFORM_WEB_SDL))
     # Compile raylib libray for web
     #$(CC) $(OBJS) -r -o $(RAYLIB_RELEASE_PATH)/lib$(RAYLIB_LIB_NAME).bc
 	$(AR) rcs $(RAYLIB_RELEASE_PATH)/lib$(RAYLIB_LIB_NAME).a $(OBJS)
