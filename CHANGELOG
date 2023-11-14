@@ -1,7 +1,7 @@
 changelog
 ---------
 
-Current Release:    raylib 4.5.0 (18 March 2023)
+Current Release:    raylib 5.0 (18 November 2023)
 
 -------------------------------------------------------------------------
 Release:     raylib 5.0 - 10th Anniversary Edition (18 November 2023)
@@ -13,7 +13,7 @@ KEY CHANGES:
  - ADDED: New Splines drawing and evaluation API
  - ADDED: New pseudo-random numbers generator: rprand
  - ADDED: Automation Events System API
- - REMOVED: Deprecated platform: PLATFORM_RPI, use PLATFORM_DRM instead
+ - UPDATED: raygui 4.0: New version of this immediate-mode gui system for tools development with raylib
 
 Detailed changes:
 [rcore] ADDED: RAYLIB_VERSION_* values to raylib.h (#2856) by @RobLoach
