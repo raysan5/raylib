@@ -73,7 +73,7 @@ static PlatformData platform = { 0 };   // Platform specific data
 //----------------------------------------------------------------------------------
 // Local Variables Definition
 //----------------------------------------------------------------------------------
-#define SCANCODE_MAPPED_NUM 100
+#define SCANCODE_MAPPED_NUM 232
 static const KeyboardKey ScancodeToKey[SCANCODE_MAPPED_NUM] = {
     KEY_NULL,           // SDL_SCANCODE_UNKNOWN
     0,
@@ -174,7 +174,28 @@ static const KeyboardKey ScancodeToKey[SCANCODE_MAPPED_NUM] = {
     KEY_KP_8,           // SDL_SCANCODE_KP_8
     KEY_KP_9,           // SDL_SCANCODE_KP_9
     KEY_KP_0,           // SDL_SCANCODE_KP_0
-    KEY_KP_DECIMAL      // SDL_SCANCODE_KP_PERIOD
+    KEY_KP_DECIMAL,     // SDL_SCANCODE_KP_PERIOD
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0,
+    KEY_LEFT_CONTROL,   //SDL_SCANCODE_LCTRL
+    KEY_LEFT_SHIFT,     //SDL_SCANCODE_LSHIFT
+    KEY_LEFT_ALT,       //SDL_SCANCODE_LALT
+    KEY_LEFT_SUPER,     //SDL_SCANCODE_LGUI
+    KEY_RIGHT_CONTROL,  //SDL_SCANCODE_RCTRL
+    KEY_RIGHT_SHIFT,    //SDL_SCANCODE_RSHIFT
+    KEY_RIGHT_ALT,      //SDL_SCANCODE_RALT
+    KEY_RIGHT_SUPER     //SDL_SCANCODE_RGUI
 };
 
 static const int CursorsLUT[] = {
