@@ -18,6 +18,19 @@
 //------------------------------------------------------------------------------------
 // Program main entry point
 //------------------------------------------------------------------------------------
+void normalizeKernel(float *kernel, int size){
+    float sum = 0.0f;
+    for(int i = 0; i < size; i++){
+        sum += kernel[i]; 
+    }
+
+    if(sum != 0.0f){
+        for(int i = 0; i < size; i++){
+            kernel[i] /= sum; 
+        }
+    }
+}
+
 int main(void)
 {
     // Initialization
@@ -38,19 +51,23 @@ int main(void)
                     2.0, 0.0, -2.0,
                     1.0, 0.0, -1.0};
 
-    float sharpenkernel[] = {0.0, 1.0, 0.0,
+    float sharpenkernel[] = {0.0, -1.0, 0.0,
                         -1.0, 5.0, -1.0,
                         0.0, -1.0, 0.0};
 
+    normalizeKernel(gaussiankernel, 9);
+    normalizeKernel(sharpenkernel, 9);
+    normalizeKernel(sobelkernel, 9);
+
     Image catSharpend = ImageCopy(image);
-    ImageKernelConvolution(&catSharpend, sharpenkernel, 16);
+    ImageKernelConvolution(&catSharpend, sharpenkernel, 9);
  
     Image catSobel = ImageCopy(image);
-    ImageKernelConvolution(&catSobel, sobelkernel, 16);
+    ImageKernelConvolution(&catSobel, sobelkernel, 9);
 
     Image catGaussian = ImageCopy(image);
     for(int i = 0; i < 6; i++){
-        ImageKernelConvolution(&catGaussian, gaussiankernel, 16);
+        ImageKernelConvolution(&catGaussian, gaussiankernel, 9);
     }
 
     ImageCrop(&image, (Rectangle){ 0, 0, (float)200, (float)450 });
