@@ -1,6 +1,6 @@
 /*
 Audio playback and capture library. Choice of public domain or MIT-0. See license statements at the end of this file.
-miniaudio - v0.11.20 - 2023-11-10
+miniaudio - v0.11.21 - 2023-11-15
 
 David Reid - mackron@gmail.com
 
@@ -3723,7 +3723,7 @@ extern "C" {
 
 #define MA_VERSION_MAJOR    0
 #define MA_VERSION_MINOR    11
-#define MA_VERSION_REVISION 20
+#define MA_VERSION_REVISION 21
 #define MA_VERSION_STRING   MA_XSTRINGIFY(MA_VERSION_MAJOR) "." MA_XSTRINGIFY(MA_VERSION_MINOR) "." MA_XSTRINGIFY(MA_VERSION_REVISION)
 
 #if defined(_MSC_VER) && !defined(__clang__)
@@ -6716,7 +6716,8 @@ typedef enum
     ma_device_notification_type_stopped,
     ma_device_notification_type_rerouted,
     ma_device_notification_type_interruption_began,
-    ma_device_notification_type_interruption_ended
+    ma_device_notification_type_interruption_ended,
+    ma_device_notification_type_unlocked
 } ma_device_notification_type;
 
 typedef struct
@@ -18665,6 +18666,14 @@ static void ma_device__on_notification_stopped(ma_device* pDevice)
 static void ma_device__on_notification_rerouted(ma_device* pDevice)
 {
     ma_device__on_notification(ma_device_notification_init(pDevice, ma_device_notification_type_rerouted));
+}
+#endif
+
+#if defined(MA_EMSCRIPTEN)
+EMSCRIPTEN_KEEPALIVE
+void ma_device__on_notification_unlocked(ma_device* pDevice)
+{
+    ma_device__on_notification(ma_device_notification_init(pDevice, ma_device_notification_type_unlocked));
 }
 #endif
 
@@ -32797,9 +32806,9 @@ static ma_result ma_find_best_format__coreaudio(ma_context* pContext, AudioObjec
 
     hasSupportedFormat = MA_FALSE;
     for (iFormat = 0; iFormat < deviceFormatDescriptionCount; ++iFormat) {
-        ma_format format;
-        ma_result formatResult = ma_format_from_AudioStreamBasicDescription(&pDeviceFormatDescriptions[iFormat].mFormat, &format);
-        if (formatResult == MA_SUCCESS && format != ma_format_unknown) {
+        ma_format formatFromDescription;
+        ma_result formatResult = ma_format_from_AudioStreamBasicDescription(&pDeviceFormatDescriptions[iFormat].mFormat, &formatFromDescription);
+        if (formatResult == MA_SUCCESS && formatFromDescription != ma_format_unknown) {
             hasSupportedFormat = MA_TRUE;
             bestDeviceFormatSoFar = pDeviceFormatDescriptions[iFormat].mFormat;
             break;
@@ -39800,6 +39809,7 @@ static ma_result ma_device_uninit__webaudio(ma_device* pDevice)
             */
             device.webaudio.close();
             device.webaudio = undefined;
+            device.pDevice = undefined;
         }, pDevice->webaudio.deviceIndex);
     }
     #endif
@@ -39822,6 +39832,10 @@ static ma_uint32 ma_calculate_period_size_in_frames_from_descriptor__webaudio(co
     the default buffer size, we'll make sure the period size is bigger than our standard defaults.
     */
     ma_uint32 periodSizeInFrames;
+
+    if (nativeSampleRate == 0) {
+        nativeSampleRate = MA_DEFAULT_SAMPLE_RATE;
+    }
 
     if (pDescriptor->periodSizeInFrames == 0) {
         if (pDescriptor->periodSizeInMilliseconds == 0) {
@@ -40295,6 +40309,8 @@ static ma_result ma_device_init__webaudio(ma_device* pDevice, const ma_device_co
                 device.scriptNode.connect(device.webaudio.destination);
             }
 
+            device.pDevice = pDevice;
+
             return miniaudio.track_device(device);
         }, pConfig->deviceType, channels, sampleRate, periodSizeInFrames, pDevice->webaudio.pIntermediaryBuffer, pDevice);
 
@@ -40467,8 +40483,15 @@ static ma_result ma_context_init__webaudio(ma_context* pContext, const ma_contex
             miniaudio.unlock = function() {
                 for(var i = 0; i < miniaudio.devices.length; ++i) {
                     var device = miniaudio.devices[i];
-                    if (device != null && device.webaudio != null && device.state === 2 /* ma_device_state_started */) {
-                        device.webaudio.resume();
+                    if (device != null &&
+                        device.webaudio != null &&
+                        device.state === window.miniaudio.device_state.started) {
+
+                        device.webaudio.resume().then(() => {
+                                Module._ma_device__on_notification_unlocked(device.pDevice);
+                            },
+                            (error) => {console.error("Failed to resume audiocontext", error);
+                            });
                     }
                 }
                 miniaudio.unlock_event_types.map(function(event_type) {
