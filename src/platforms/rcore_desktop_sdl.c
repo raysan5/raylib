@@ -49,7 +49,14 @@
 **********************************************************************************************/
 
 #include "SDL.h"            // SDL base library (window/rendered, input, timming... functionality)
+#ifdef GRAPHICS_API_OPENGL_ES2
+// I suspect that the gles2 version of the SDL header should be used
+// but the compilation fails if we do. Not including anything appears
+// to work fine.
+//#include "SDL_opengles2.h"
+#else
 #include "SDL_opengl.h"     // SDL OpenGL functionality (if required, instead of internal renderer)
+#endif
 
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
