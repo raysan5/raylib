@@ -2100,19 +2100,11 @@ void ImageKernelConvolution(Image *image, float* kernel, int kernelSize){
     Vector4 *temp = RL_MALLOC(kernelSize*sizeof(Vector4));
 
 
-    float normKernel = 0.0f;
     for(int i = 0; i < kernelSize; i++){
         temp[i].x = 0.0f;
         temp[i].y = 0.0f;
         temp[i].z = 0.0f;
         temp[i].w = 0.0f;
-        normKernel += kernel[i];
-    }
-
-    if(normKernel != 0.0f){
-        for(int i = 0; i < kernelSize; i++){
-            kernel[i] /= normKernel;
-        }
     }
 
     float rRes = 0.0f;
@@ -2122,18 +2114,24 @@ void ImageKernelConvolution(Image *image, float* kernel, int kernelSize){
 
 
     int startRange, endRange;
-    if(kernelWidth % 2 == 0){
+    if(kernelWidth % 2 == 0)
+    {
         startRange = -kernelWidth/2;
         endRange = kernelWidth/2;
-    } else {
+    } else 
+    {
         startRange = -kernelWidth/2;
         endRange = kernelWidth/2+1;
     }
-    for(int x = 0; x < image->height; x++) {
-        for(int y = 0; y < image->width; y++) {
+    for(int x = 0; x < image->height; x++) 
+    {
+        for(int y = 0; y < image->width; y++) 
+        {
 
-            for(int xk = startRange; xk < endRange; xk++){
-                for(int yk = startRange; yk < endRange; yk++){
+            for(int xk = startRange; xk < endRange; xk++)
+            {
+                for(int yk = startRange; yk < endRange; yk++)
+                {
                     int xkabs = xk + kernelWidth/2;
                     int ykabs = yk + kernelWidth/2;
                     size_t imgindex = image->width * (x+xk) + (y+yk);
@@ -2151,30 +2149,37 @@ void ImageKernelConvolution(Image *image, float* kernel, int kernelSize){
                 }
             }
 
-            for(int i = 0; i < kernelSize; i++){
+            for(int i = 0; i < kernelSize; i++)
+            {
                 rRes += temp[i].x;
                 gRes += temp[i].y;
                 bRes += temp[i].z;
                 aRes += temp[i].w;
             }
 
-            if(rRes < 0.0f){
+            if(rRes < 0.0f)
+            {
                 rRes = 0.0f;
             }
-            if(gRes < 0.0f){
+            if(gRes < 0.0f)
+            {
                 gRes = 0.0f;
             }
-            if(bRes < 0.0f){
+            if(bRes < 0.0f)
+            {
                 bRes = 0.0f;
             }
 
-            if(rRes > 1.0f){
+            if(rRes > 1.0f)
+            {
                 rRes = 1.0f;
             }
-            if(gRes > 1.0f){
+            if(gRes > 1.0f)
+            {
                 gRes = 1.0f;
             }
-             if(bRes > 1.0f){
+             if(bRes > 1.0f)
+            {
                 bRes = 1.0f;
             }
 
@@ -2188,7 +2193,8 @@ void ImageKernelConvolution(Image *image, float* kernel, int kernelSize){
             bRes = 0.0f;
             aRes = 0.0f;
 
-            for(int i = 0; i < kernelSize; i++){
+            for(int i = 0; i < kernelSize; i++)
+            {
                 temp[i].x = 0.0f;
                 temp[i].y = 0.0f;
                 temp[i].z = 0.0f;
@@ -2197,7 +2203,8 @@ void ImageKernelConvolution(Image *image, float* kernel, int kernelSize){
         }
     }
 
-    for (int i = 0; i < (image->width)*(image->height); i++) {
+    for (int i = 0; i < (image->width) * (image->height); i++) 
+    {
         float alpha = (float)imageCopy2[i].w;
         pixels[i].r = (unsigned char)((imageCopy2[i].x)*255.0f);
         pixels[i].g = (unsigned char)((imageCopy2[i].y)*255.0f);

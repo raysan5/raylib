@@ -20,12 +20,15 @@
 //------------------------------------------------------------------------------------
 void normalizeKernel(float *kernel, int size){
     float sum = 0.0f;
-    for(int i = 0; i < size; i++){
+    for(int i = 0; i < size; i++)
+    {
         sum += kernel[i]; 
     }
 
-    if(sum != 0.0f){
-        for(int i = 0; i < size; i++){
+    if(sum != 0.0f)
+    {
+        for(int i = 0; i < size; i++)
+        {
             kernel[i] /= sum; 
         }
     }
@@ -66,7 +69,8 @@ int main(void)
     ImageKernelConvolution(&catSobel, sobelkernel, 9);
 
     Image catGaussian = ImageCopy(image);
-    for(int i = 0; i < 6; i++){
+    for(int i = 0; i < 6; i++)
+    {
         ImageKernelConvolution(&catGaussian, gaussiankernel, 9);
     }
 
