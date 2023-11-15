@@ -9,7 +9,7 @@
 *   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
 *   BSD-like license that allows static linking with closed source software
 *
-*   Copyright (c) 2015-2023 Ramon Santamaria (@raysan5)
+*   Copyright (c) 2015-2023 Karim Salem (@kimo-s)
 *
 ********************************************************************************************/
 
@@ -25,8 +25,8 @@ int main(void)
 
     Image image = LoadImage("resources/cat.png");     // Loaded in CPU memory (RAM)
 
-    const int screenWidth = image.width*4;
-    const int screenHeight = image.height;
+    const int screenWidth = 800;
+    const int screenHeight = 450;
 
     InitWindow(screenWidth, screenHeight, "raylib [textures] example - image convolution");
 
@@ -43,18 +43,20 @@ int main(void)
                         0.0, -1.0, 0.0};
 
     Image catSharpend = ImageCopy(image);
-    ImageKernelConvolution(&catSharpend, sharpenkernel, 3);
+    ImageKernelConvolution(&catSharpend, sharpenkernel, 16);
  
-
     Image catSobel = ImageCopy(image);
-    ImageKernelConvolution(&catSobel, sobelkernel, 3);
+    ImageKernelConvolution(&catSobel, sobelkernel, 16);
 
     Image catGaussian = ImageCopy(image);
     for(int i = 0; i < 6; i++){
-        ImageKernelConvolution(&catGaussian, gaussiankernel, 3);
+        ImageKernelConvolution(&catGaussian, gaussiankernel, 16);
     }
 
-
+    ImageCrop(&image, (Rectangle){ 0, 0, (float)200, (float)450 });
+    ImageCrop(&catGaussian, (Rectangle){ 0, 0, (float)200, (float)450 });
+    ImageCrop(&catSobel, (Rectangle){ 0, 0, (float)200, (float)450 });
+    ImageCrop(&catSharpend, (Rectangle){ 0, 0, (float)200, (float)450 });
     Texture2D texture = LoadTextureFromImage(image);          // Image converted to texture, GPU memory (VRAM)
     Texture2D catSharpendTexture = LoadTextureFromImage(catSharpend);
     Texture2D catSobelTexture = LoadTextureFromImage(catSobel);
@@ -82,9 +84,9 @@ int main(void)
             ClearBackground(RAYWHITE);
 
             DrawTexture(catSharpendTexture, 0, 0, WHITE);
-            DrawTexture(catSobelTexture, texture.width, 0, WHITE);
-            DrawTexture(catGaussianTexture, texture.width*2, 0, WHITE);
-            DrawTexture(texture, texture.width*3, 0, WHITE);
+            DrawTexture(catSobelTexture, 200, 0, WHITE);
+            DrawTexture(catGaussianTexture, 400, 0, WHITE);
+            DrawTexture(texture, 600, 0, WHITE);
 
         EndDrawing();
         //----------------------------------------------------------------------------------

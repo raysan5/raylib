@@ -2083,90 +2083,100 @@ void ImageBlurGaussian(Image *image, int blurSize) {
 }
 
 // The kernel matrix is assumed to be square. Only supply the width of the kernel.
-void ImageKernelConvolution(Image *image, float* karnel, int karenlWidth){
+void ImageKernelConvolution(Image *image, float* kernel, int kernelSize){
 
-    if ((image->data == NULL) || (image->width == 0) || (image->height == 0) || karnel == NULL) return;
+    if ((image->data == NULL) || (image->width == 0) || (image->height == 0) || kernel == NULL) return;
 
-    ImageAlphaPremultiply(image);
+    int kernelWidth = (int)sqrtf((float)kernelSize);
+    if (kernelWidth*kernelWidth != kernelSize)
+    {
+        TRACELOG(LOG_WARNING, "IMAGE: Convolution kernel must be square to be applied");
+        return;
+    }
 
     Color *pixels = LoadImageColors(*image);
 
-    Vector4 *imageCopy1 = RL_MALLOC((image->height)*(image->width)*sizeof(Vector4));
     Vector4 *imageCopy2 = RL_MALLOC((image->height)*(image->width)*sizeof(Vector4));
-    Vector4 *temp = RL_MALLOC(karenlWidth*karenlWidth*sizeof(Vector4));
+    Vector4 *temp = RL_MALLOC(kernelSize*sizeof(Vector4));
 
 
     float normKernel = 0.0f;
-    for(int i = 0; i < karenlWidth * karenlWidth; i++){
+    for(int i = 0; i < kernelSize; i++){
         temp[i].x = 0.0f;
         temp[i].y = 0.0f;
         temp[i].z = 0.0f;
         temp[i].w = 0.0f;
-        normKernel += karnel[i];
+        normKernel += kernel[i];
     }
 
     if(normKernel != 0.0f){
-        for(int i = 0; i < karenlWidth * karenlWidth; i++){
-            karnel[i] /= normKernel;
+        for(int i = 0; i < kernelSize; i++){
+            kernel[i] /= normKernel;
         }
     }
-
 
     float rRes = 0.0f;
     float gRes = 0.0f;
     float bRes = 0.0f;
     float aRes = 0.0f;
 
-    for (int i = 0; i < (image->height)*(image->width); i++) {
-        imageCopy1[i].x = ((float)pixels[i].r)/255.0f;
-        imageCopy1[i].y = ((float)pixels[i].g)/255.0f;
-        imageCopy1[i].z = ((float)pixels[i].b)/255.0f;
-        imageCopy1[i].w = ((float)pixels[i].a)/255.0f;
-    }
-
-
 
     int startRange, endRange;
-    if(karenlWidth % 2 == 0){
-        startRange = -karenlWidth/2;
-        endRange = karenlWidth/2;
+    if(kernelWidth % 2 == 0){
+        startRange = -kernelWidth/2;
+        endRange = kernelWidth/2;
     } else {
-        startRange = -karenlWidth/2;
-        endRange = karenlWidth/2+1;
+        startRange = -kernelWidth/2;
+        endRange = kernelWidth/2+1;
     }
     for(int x = 0; x < image->height; x++) {
         for(int y = 0; y < image->width; y++) {
 
             for(int xk = startRange; xk < endRange; xk++){
                 for(int yk = startRange; yk < endRange; yk++){
-                    int xkabs = xk + karenlWidth/2;
-                    int ykabs = yk + karenlWidth/2;
+                    int xkabs = xk + kernelWidth/2;
+                    int ykabs = yk + kernelWidth/2;
                     size_t imgindex = image->width * (x+xk) + (y+yk);
                     if(imgindex < 0 || imgindex >= image->width * image->height){
-                        temp[karenlWidth * xkabs + ykabs].x = 0.0f;
-                        temp[karenlWidth * xkabs + ykabs].y = 0.0f;
-                        temp[karenlWidth * xkabs + ykabs].z = 0.0f;
-                        temp[karenlWidth * xkabs + ykabs].w = 0.0f;
+                        temp[kernelWidth * xkabs + ykabs].x = 0.0f;
+                        temp[kernelWidth * xkabs + ykabs].y = 0.0f;
+                        temp[kernelWidth * xkabs + ykabs].z = 0.0f;
+                        temp[kernelWidth * xkabs + ykabs].w = 0.0f;
                     } else {
-                        temp[karenlWidth * xkabs + ykabs].x = imageCopy1[imgindex].x * karnel[karenlWidth * xkabs + ykabs];
-                        temp[karenlWidth * xkabs + ykabs].y = imageCopy1[imgindex].y * karnel[karenlWidth * xkabs + ykabs];
-                        temp[karenlWidth * xkabs + ykabs].z = imageCopy1[imgindex].z * karnel[karenlWidth * xkabs + ykabs];
-                        temp[karenlWidth * xkabs + ykabs].w = imageCopy1[imgindex].w * karnel[karenlWidth * xkabs + ykabs];
+                        temp[kernelWidth * xkabs + ykabs].x = ((float)pixels[imgindex].r)/255.0f * kernel[kernelWidth * xkabs + ykabs];
+                        temp[kernelWidth * xkabs + ykabs].y = ((float)pixels[imgindex].g)/255.0f * kernel[kernelWidth * xkabs + ykabs];
+                        temp[kernelWidth * xkabs + ykabs].z = ((float)pixels[imgindex].b)/255.0f * kernel[kernelWidth * xkabs + ykabs];
+                        temp[kernelWidth * xkabs + ykabs].w = ((float)pixels[imgindex].a)/255.0f * kernel[kernelWidth * xkabs + ykabs];
                     }
                 }
             }
 
-            for(int i = 0; i < karenlWidth * karenlWidth; i++){
+            for(int i = 0; i < kernelSize; i++){
                 rRes += temp[i].x;
                 gRes += temp[i].y;
                 bRes += temp[i].z;
                 aRes += temp[i].w;
             }
 
-            STBIR_CLAMP(rRes, 0.0f, 1.0f);
-            STBIR_CLAMP(gRes, 0.0f, 1.0f);
-            STBIR_CLAMP(bRes, 0.0f, 1.0f);
-            STBIR_CLAMP(aRes, 0.0f, 1.0f);
+            if(rRes < 0.0f){
+                rRes = 0.0f;
+            }
+            if(gRes < 0.0f){
+                gRes = 0.0f;
+            }
+            if(bRes < 0.0f){
+                bRes = 0.0f;
+            }
+
+            if(rRes > 1.0f){
+                rRes = 1.0f;
+            }
+            if(gRes > 1.0f){
+                gRes = 1.0f;
+            }
+             if(bRes > 1.0f){
+                bRes = 1.0f;
+            }
 
             imageCopy2[image->width * (x) + (y)].x = rRes;
             imageCopy2[image->width * (x) + (y)].y = gRes;
@@ -2178,7 +2188,7 @@ void ImageKernelConvolution(Image *image, float* karnel, int karenlWidth){
             bRes = 0.0f;
             aRes = 0.0f;
 
-            for(int i = 0; i < karenlWidth * karenlWidth; i++){
+            for(int i = 0; i < kernelSize; i++){
                 temp[i].x = 0.0f;
                 temp[i].y = 0.0f;
                 temp[i].z = 0.0f;
@@ -2199,7 +2209,6 @@ void ImageKernelConvolution(Image *image, float* karnel, int karenlWidth){
 
     int format = image->format;
     RL_FREE(image->data);
-    RL_FREE(imageCopy1);
     RL_FREE(imageCopy2);
     RL_FREE(temp);
 
