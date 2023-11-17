@@ -126,7 +126,6 @@ static Font defaultFont = { 0 };
 //----------------------------------------------------------------------------------
 #if defined(SUPPORT_FILEFORMAT_FNT)
 static Font LoadBMFont(const char *fileName);   // Load a BMFont file (AngelCode font file)
-static Font LoadBMFontEx(const char *fileName);   // Load a BMFont file (AngelCode font file)
 #endif
 static int textLineSpacing = 15;                // Text vertical line spacing in pixels
 
@@ -333,7 +332,7 @@ Font LoadFont(const char *fileName)
     else
 #endif
 #if defined(SUPPORT_FILEFORMAT_FNT)
-    if (IsFileExtension(fileName, ".fnt")) font = LoadBMFontEx(fileName);
+    if (IsFileExtension(fileName, ".fnt")) font = LoadBMFont(fileName);
     else
 #endif
     {
@@ -2030,154 +2029,7 @@ static Font LoadBMFont(const char *fileName)
 
     int imWidth = 0;
     int imHeight = 0;
-    char imFileName[129] = { 0 };
-
-    int base = 0;       // Useless data
-    int readBytes = 0;  // Data bytes read
-    int readVars = 0;   // Variables filled by sscanf()
-
-    char *fileText = LoadFileText(fileName);
-
-    if (fileText == NULL) return font;
-
-    char *fileTextPtr = fileText;
-
-    // NOTE: We skip first line, it contains no useful information
-    readBytes = GetLine(fileTextPtr, buffer, MAX_BUFFER_SIZE);
-    fileTextPtr += (readBytes + 1);
-
-    // Read line data
-    readBytes = GetLine(fileTextPtr, buffer, MAX_BUFFER_SIZE);
-    searchPoint = strstr(buffer, "lineHeight");
-    readVars = sscanf(searchPoint, "lineHeight=%i base=%i scaleW=%i scaleH=%i", &fontSize, &base, &imWidth, &imHeight);
-    fileTextPtr += (readBytes + 1);
-    
-    if (readVars < 4) { UnloadFileText(fileText); return font; } // Some data not available, file malformed
-
-    readBytes = GetLine(fileTextPtr, buffer, MAX_BUFFER_SIZE);
-    searchPoint = strstr(buffer, "file");
-    readVars = sscanf(searchPoint, "file=\"%128[^\"]\"", imFileName);
-    fileTextPtr += (readBytes + 1);
-
-    if (readVars < 1) { UnloadFileText(fileText); return font; } // No fileName read
-
-    readBytes = GetLine(fileTextPtr, buffer, MAX_BUFFER_SIZE);
-    searchPoint = strstr(buffer, "count");
-    readVars = sscanf(searchPoint, "count=%i", &glyphCount);
-    fileTextPtr += (readBytes + 1);
-
-    if (readVars < 1) { UnloadFileText(fileText); return font; } // No glyphCount read
-
-    // Compose correct path using route of .fnt file (fileName) and imFileName
-    char *imPath = NULL;
-    char *lastSlash = NULL;
-
-    lastSlash = strrchr(fileName, '/');
-    if (lastSlash == NULL) lastSlash = strrchr(fileName, '\\');
-
-    if (lastSlash != NULL)
-    {
-        // NOTE: We need some extra space to avoid memory corruption on next allocations!
-        imPath = (char *)RL_CALLOC(TextLength(fileName) - TextLength(lastSlash) + TextLength(imFileName) + 4, 1);
-        memcpy(imPath, fileName, TextLength(fileName) - TextLength(lastSlash) + 1);
-        memcpy(imPath + TextLength(fileName) - TextLength(lastSlash) + 1, imFileName, TextLength(imFileName));
-    }
-    else imPath = imFileName;
-
-    TRACELOGD("    > Image loading path: %s", imPath);
-
-    Image imFont = LoadImage(imPath);
-
-    if (imFont.format == PIXELFORMAT_UNCOMPRESSED_GRAYSCALE)
-    {
-        // Convert image to GRAYSCALE + ALPHA, using the mask as the alpha channel
-        Image imFontAlpha = {
-            .data = RL_CALLOC(imFont.width*imFont.height, 2),
-            .width = imFont.width,
-            .height = imFont.height,
-            .mipmaps = 1,
-            .format = PIXELFORMAT_UNCOMPRESSED_GRAY_ALPHA
-        };
-
-        for (int p = 0, i = 0; p < (imFont.width*imFont.height*2); p += 2, i++)
-        {
-            ((unsigned char *)(imFontAlpha.data))[p] = 0xff;
-            ((unsigned char *)(imFontAlpha.data))[p + 1] = ((unsigned char *)imFont.data)[i];
-        }
-
-        UnloadImage(imFont);
-        imFont = imFontAlpha;
-    }
-
-    font.texture = LoadTextureFromImage(imFont);
-
-    if (lastSlash != NULL) RL_FREE(imPath);
-
-    // Fill font characters info data
-    font.baseSize = fontSize;
-    font.glyphCount = glyphCount;
-    font.glyphPadding = 0;
-    font.glyphs = (GlyphInfo *)RL_MALLOC(glyphCount*sizeof(GlyphInfo));
-    font.recs = (Rectangle *)RL_MALLOC(glyphCount*sizeof(Rectangle));
-
-    int charId, charX, charY, charWidth, charHeight, charOffsetX, charOffsetY, charAdvanceX;
-
-    for (int i = 0; i < glyphCount; i++)
-    {
-        readBytes = GetLine(fileTextPtr, buffer, MAX_BUFFER_SIZE);
-        readVars = sscanf(buffer, "char id=%i x=%i y=%i width=%i height=%i xoffset=%i yoffset=%i xadvance=%i",
-                       &charId, &charX, &charY, &charWidth, &charHeight, &charOffsetX, &charOffsetY, &charAdvanceX);
-        fileTextPtr += (readBytes + 1);
-        
-        if (readVars == 8)  // Make sure all char data has been properly read
-        {
-            // Get character rectangle in the font atlas texture
-            font.recs[i] = (Rectangle){ (float)charX, (float)charY, (float)charWidth, (float)charHeight };
-
-            // Save data properly in sprite font
-            font.glyphs[i].value = charId;
-            font.glyphs[i].offsetX = charOffsetX;
-            font.glyphs[i].offsetY = charOffsetY;
-            font.glyphs[i].advanceX = charAdvanceX;
-
-            // Fill character image data from imFont data
-            font.glyphs[i].image = ImageFromImage(imFont, font.recs[i]);
-        }
-        else TRACELOG(LOG_WARNING, "FONT: [%s] Some characters data not correctly provided", fileName);
-    }
-
-    UnloadImage(imFont);
-    UnloadFileText(fileText);
-
-    if (font.texture.id == 0)
-    {
-        UnloadFont(font);
-        font = GetFontDefault();
-        TRACELOG(LOG_WARNING, "FONT: [%s] Failed to load texture, reverted to default font", fileName);
-    }
-    else TRACELOG(LOG_INFO, "FONT: [%s] Font loaded successfully (%i glyphs)", fileName, font.glyphCount);
-
-    return font;
-}
-
-// Extender of LoadBMFont. Load a BMFont file (AngelCode font file)
-// REQUIRES: strstr(), sscanf(), strrchr(), memcpy()
-static Font LoadBMFontEX(const char *fileName)
-{
-    #define MAX_BUFFER_SIZE     256
-
-    Font font = { 0 };
-
-    char buffer[MAX_BUFFER_SIZE] = { 0 };
-    char *searchPoint = NULL;
-
-    int fontSize = 0;
-    int glyphCount = 0;
-
-    int imWidth = 0;
-    int imHeight = 0;
     int totalPage = 1;   // page variable
-    int curPage = 0;
     char imFileName[10][129] = { 0 };  // up to ten png file.
 
     int base = 0;       // Useless data
@@ -2241,7 +2093,10 @@ static Font LoadBMFontEX(const char *fileName)
     TRACELOGD("    > Image loading path: %s", imPath[i]);
     }
 
-    Image imFont[totalPage];
+    // Resize and ReDraw Font Image 
+    Image fullFont = LoadImage(imPath[0]);;
+
+    Image imFont[totalPage];   // font atlas
 
     for (int i = 0; i < totalPage; i++)
     {
@@ -2269,15 +2124,14 @@ static Font LoadBMFontEX(const char *fileName)
         }
 
         if (lastSlash != NULL) RL_FREE(imPath[i]);
-    }
+    } 
 
-    // Resize and ReDraw Font Image 
-    Image fullFont; 
-    fullFont = imFont[0];
+    fullFont =  imFont[0];
 
     // If multiple atlas, then merge atlas
     if (totalPage > 1)
     {
+        // Resize and ReDraw Font Image 
         ImageResizeCanvas(&fullFont, imWidth, imHeight * totalPage, 0, 0, BLACK); 
 
         for (int index = 1; index <= totalPage; index++)
