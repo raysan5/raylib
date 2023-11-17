@@ -109,15 +109,17 @@
 
 #define RLGL_VERSION  "4.5"
 
-// Function specifiers in case library is build/used as a shared library (Windows)
+// Function specifiers in case library is build/used as a shared library
 // NOTE: Microsoft specifiers to tell compiler that symbols are imported/exported from a .dll
-#if defined(_WIN32)
-    #if defined(BUILD_LIBTYPE_SHARED)
-        #define RLAPI __declspec(dllexport)     // We are building the library as a Win32 shared library (.dll)
-    #elif defined(USE_LIBTYPE_SHARED)
-        #define RLAPI __declspec(dllimport)     // We are using the library as a Win32 shared library (.dll)
-    #endif
+// NOTE: visibility(default) attribute makes symbols "visible" when compiled with -fvisibility=hidden
+#if defined(_WIN32) && defined(BUILD_LIBTYPE_SHARED)
+    #define RLAPI __declspec(dllexport)     // We are building the library as a Win32 shared library (.dll)
+#elif defined(BUILD_LIBTYPE_SHARED)
+    #define RLAPI __attribute__((visibility("default"))) // We are building he library as a Unix shared library (.so/.dylib)
+#elif defined(_WIN32) && defined(USE_LIBTYPE_SHARED)
+    #define RLAPI __declspec(dllimport)     // We are using the library as a Win32 shared library (.dll)
 #endif
+
 
 // Function specifiers definition
 #ifndef RLAPI
