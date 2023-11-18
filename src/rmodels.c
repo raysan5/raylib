@@ -5156,7 +5156,7 @@ static Model LoadGLTF(const char *fileName)
                         if ((attribute->component_type == cgltf_component_type_r_8u) && (attribute->type == cgltf_type_vec4))
                         {
                             // Handle 8-bit unsigned byte, vec4 format
-                            model.meshes[meshIndex].boneIds = RL_CALLOC(model.meshes[meshIndex].vertexCount * 4, sizeof(unsigned char));
+                            model.meshes[meshIndex].boneIds = RL_CALLOC(model.meshes[meshIndex].vertexCount*4, sizeof(unsigned char));
                             LOAD_ATTRIBUTE(attribute, 4, unsigned char, model.meshes[meshIndex].boneIds)
                         }
                         else if ((attribute->component_type == cgltf_component_type_r_8s) && (attribute->type == cgltf_type_scalar))
@@ -5168,19 +5168,19 @@ static Model LoadGLTF(const char *fileName)
                         else if ((attribute->component_type == cgltf_component_type_r_16u) && (attribute->type == cgltf_type_vec2))
                         {
                             // Handle 16-bit unsigned short, vec2 format
-                            model.meshes[meshIndex].boneIds = RL_CALLOC(model.meshes[meshIndex].vertexCount * 2, sizeof(unsigned short));
+                            model.meshes[meshIndex].boneIds = RL_CALLOC(model.meshes[meshIndex].vertexCount*2, sizeof(unsigned short));
                             LOAD_ATTRIBUTE(attribute, 2, unsigned short, model.meshes[meshIndex].boneIds)
                         }
                         else if ((attribute->component_type == cgltf_component_type_r_16s) && (attribute->type == cgltf_type_vec3))
                         {
                             // Handle 16-bit signed short, vec3 format
-                            model.meshes[meshIndex].boneIds = RL_CALLOC(model.meshes[meshIndex].vertexCount * 3, sizeof(short));
+                            model.meshes[meshIndex].boneIds = RL_CALLOC(model.meshes[meshIndex].vertexCount*3, sizeof(short));
                             LOAD_ATTRIBUTE(attribute, 3, short, model.meshes[meshIndex].boneIds)
                         }
                         else if ((attribute->component_type == cgltf_component_type_r_32u) && (attribute->type == cgltf_type_vec4))
                         {
                             // Handle 32-bit unsigned int, vec4 format
-                            model.meshes[meshIndex].boneIds = RL_CALLOC(model.meshes[meshIndex].vertexCount * 4, sizeof(unsigned int));
+                            model.meshes[meshIndex].boneIds = RL_CALLOC(model.meshes[meshIndex].vertexCount*4, sizeof(unsigned int));
                             LOAD_ATTRIBUTE(attribute, 4, unsigned int, model.meshes[meshIndex].boneIds)
                         }
                         else if ((attribute->component_type == cgltf_component_type_r_32s) && (attribute->type == cgltf_type_scalar))
@@ -5192,13 +5192,13 @@ static Model LoadGLTF(const char *fileName)
                         else if ((attribute->component_type == cgltf_component_type_r_32f) && (attribute->type == cgltf_type_vec2))
                         {
                             // Handle 32-bit float, vec2 format
-                            model.meshes[meshIndex].boneIds = RL_CALLOC(model.meshes[meshIndex].vertexCount * 2, sizeof(float));
+                            model.meshes[meshIndex].boneIds = RL_CALLOC(model.meshes[meshIndex].vertexCount*2, sizeof(float));
                             LOAD_ATTRIBUTE(attribute, 2, float, model.meshes[meshIndex].boneIds)
                         }
                         else if ((attribute->component_type == cgltf_component_type_r_64f) && (attribute->type == cgltf_type_vec3))
                         {
                             // Handle 64-bit double, vec3 format
-                            model.meshes[meshIndex].boneIds = RL_CALLOC(model.meshes[meshIndex].vertexCount * 3, sizeof(double));
+                            model.meshes[meshIndex].boneIds = RL_CALLOC(model.meshes[meshIndex].vertexCount*3, sizeof(double));
                             LOAD_ATTRIBUTE(attribute, 3, double, model.meshes[meshIndex].boneIds)
                         }
                         else TRACELOG(LOG_WARNING, "MODEL: [%s] Joint attribute data format not supported", fileName);
