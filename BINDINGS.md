@@ -53,7 +53,7 @@ Some people ported raylib to other languages in form of bindings or wrappers to 
 | raylib_odin_bindings | 4.0-dev | [Odin](https://odin-lang.org/)     | MIT | https://github.com/Deathbat2190/raylib_odin_bindings |
 | raylib-ocaml       | **4.5** | [OCaml](https://ocaml.org/)          | MIT | https://github.com/tjammer/raylib-ocaml        |
 | TurboRaylib        | **4.5** | [Object Pascal](https://en.wikipedia.org/wiki/Object_Pascal) | MIT | https://github.com/turborium/TurboRaylib |
-| Ray4Laz            | **4.5** | [Free Pascal](https://en.wikipedia.org/wiki/Free_Pascal)| Zlib |  https://github.com/GuvaCode/Ray4Laz |
+| Ray4Laz            | **5.0** | [Free Pascal](https://en.wikipedia.org/wiki/Free_Pascal)| Zlib |  https://github.com/GuvaCode/Ray4Laz |
 | Raylib.4.0.Pascal  | 4.0     | [Free Pascal](https://en.wikipedia.org/wiki/Free_Pascal)| Zlib |  https://github.com/sysrpl/Raylib.4.0.Pascal |
 | pyraylib           | 3.7     | [Python](https://www.python.org/)    | Zlib    | https://github.com/Ho011/pyraylib         |
 | raylib-python-cffi | 4.2 | [Python](https://www.python.org/)    | EPL-2.0 | https://github.com/electronstudio/raylib-python-cffi |
