@@ -33,7 +33,7 @@ Some people ported raylib to other languages in form of bindings or wrappers to 
 | h-raylib           | **4.6-dev** | [Haskell](https://haskell.org/)          | Apache-2.0 | https://github.com/Anut-py/h-raylib       |
 | raylib-hx          | 4.2     | [Haxe](https://haxe.org/)                | Zlib | https://github.com/foreignsasquatch/raylib-hx    |
 | hb-raylib          | 3.5     | [Harbour](https://harbour.github.io)                 | MIT | https://github.com/MarcosLeonardoMendezGerencir/hb-raylib |
-| jaylib             | 4.5     | [Janet](https://janet-lang.org/)     | MIT  | https://github.com/janet-lang/jaylib      |
+| jaylib             | 5.0     | [Janet](https://janet-lang.org/)     | MIT  | https://github.com/janet-lang/jaylib      |
 | jaylib             | **4.5**     | [Java](https://en.wikipedia.org/wiki/Java_(programming_language)) | GPLv3+CE | https://github.com/electronstudio/jaylib/  |
 | raylib-j           | 4.0     | [Java](https://en.wikipedia.org/wiki/Java_(programming_language)) | Zlib | https://github.com/CreedVI/Raylib-J |
 | raylib.jl          | 4.2     | [Julia](https://julialang.org/)      | Zlib | https://github.com/irishgreencitrus/raylib.jl |
