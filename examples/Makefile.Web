@@ -396,6 +396,7 @@ TEXTURES = \
     textures/textures_gif_player \
     textures/textures_image_drawing \
     textures/textures_image_generation \
+    textures/textures_image_kernel \
     textures/textures_image_loading \
     textures/textures_image_processing \
     textures/textures_image_rotate \
@@ -702,6 +703,9 @@ textures/textures_image_drawing: textures/textures_image_drawing.c
 
 textures/textures_image_generation: textures/textures_image_generation.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) -s TOTAL_MEMORY=67108864
+	
+textures/textures_image_kernel: textures/textures_image_kernel.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
 textures/textures_image_loading: textures/textures_image_loading.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
