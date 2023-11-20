@@ -490,6 +490,7 @@ TEXTURES = \
     textures/textures_gif_player \
     textures/textures_image_drawing \
     textures/textures_image_generation \
+    textures/textures_image_kernel \
     textures/textures_image_loading \
     textures/textures_image_processing \
     textures/textures_image_rotate \

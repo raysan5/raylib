@@ -396,6 +396,7 @@ TEXTURES = \
     textures/textures_gif_player \
     textures/textures_image_drawing \
     textures/textures_image_generation \
+    textures/textures_image_kernel \
     textures/textures_image_loading \
     textures/textures_image_processing \
     textures/textures_image_rotate \
@@ -702,6 +703,10 @@ textures/textures_image_drawing: textures/textures_image_drawing.c
 
 textures/textures_image_generation: textures/textures_image_generation.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) -s TOTAL_MEMORY=67108864
+	
+textures/textures_image_kernel: textures/textures_image_kernel.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
+	--preload-file textures/resources/cat.png@resources/cat.png
 
 textures/textures_image_loading: textures/textures_image_loading.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
@@ -968,10 +973,10 @@ shaders/shaders_julia_set: shaders/shaders_julia_set.c
 
 shaders/shaders_lightmap: shaders/shaders_lightmap.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) -s FORCE_FILESYSTEM=1 \
-    --preload-file shaders/resources/shaders/glsl330/lightmap.vs \
-    --preload-file shaders/resources/shaders/glsl330/lightmap.fs \
-    --preload-file shaders/resources/cubicmap_atlas.png \
-    --preload-file shaders/resources/spark_flame.png
+    --preload-file shaders/resources/shaders/glsl100/lightmap.vs@resources/shaders/glsl100/lightmap.vs \
+    --preload-file shaders/resources/shaders/glsl100/lightmap.fs@resources/shaders/glsl100/lightmap.fs \
+    --preload-file shaders/resources/cubicmap_atlas.png@resources/cubicmap_atlas.png \
+    --preload-file shaders/resources/spark_flame.png@resources/spark_flame.png
 
 shaders/shaders_mesh_instancing: shaders/shaders_mesh_instancing.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
