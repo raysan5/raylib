@@ -2623,8 +2623,9 @@ void PlayAutomationEvent(AutomationEvent event)
             {
                 CORE.Input.Gamepad.axisState[event.params[0]][event.params[1]] = ((float)event.params[2]/32768.0f);
             } break;
+    #if defined(SUPPORT_GESTURES_SYSTEM)
             case INPUT_GESTURE: GESTURES.current = event.params[0]; break;     // param[0]: gesture (enum Gesture) -> rgestures.h: GESTURES.current
-
+    #endif
             // Window event
             case WINDOW_CLOSE: CORE.Window.shouldClose = true; break;
             case WINDOW_MAXIMIZE: MaximizeWindow(); break;
@@ -2632,11 +2633,13 @@ void PlayAutomationEvent(AutomationEvent event)
             case WINDOW_RESIZE: SetWindowSize(event.params[0], event.params[1]); break;
 
             // Custom event
+    #if defined(SUPPORT_SCREEN_CAPTURE)
             case ACTION_TAKE_SCREENSHOT:
             {
                 TakeScreenshot(TextFormat("screenshot%03i.png", screenshotCounter));
                 screenshotCounter++;
             } break;
+    #endif
             case ACTION_SETTARGETFPS: SetTargetFPS(event.params[0]); break;
             default: break;
         }
@@ -3507,6 +3510,7 @@ static void RecordAutomationEvent(void)
     }
     //-------------------------------------------------------------------------------------
 
+#if defined(SUPPORT_GESTURES_SYSTEM)
     // Gestures input currentEventList->events recording
     //-------------------------------------------------------------------------------------
     if (GESTURES.current != GESTURE_NONE)
@@ -3524,6 +3528,7 @@ static void RecordAutomationEvent(void)
         if (currentEventList->count == currentEventList->capacity) return;    // Security check
     }
     //-------------------------------------------------------------------------------------
+#endif
 
     // Window events recording
     //-------------------------------------------------------------------------------------
