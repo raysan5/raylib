@@ -9,13 +9,13 @@ return {
     {
       name = "RAYLIB_VERSION_MAJOR",
       type = "INT",
-      value = 4,
+      value = 5,
       description = ""
     },
     {
       name = "RAYLIB_VERSION_MINOR",
       type = "INT",
-      value = 6,
+      value = 1,
       description = ""
     },
     {
@@ -27,7 +27,7 @@ return {
     {
       name = "RAYLIB_VERSION",
       type = "STRING",
-      value = "4.6-dev",
+      value = "5.1-dev",
       description = ""
     },
     {
@@ -1327,6 +1327,48 @@ return {
           type = "char **",
           name = "paths",
           description = "Filepaths entries"
+        }
+      }
+    },
+    {
+      name = "AutomationEvent",
+      description = "Automation event",
+      fields = {
+        {
+          type = "unsigned int",
+          name = "frame",
+          description = "Event frame"
+        },
+        {
+          type = "unsigned int",
+          name = "type",
+          description = "Event type (AutomationEventType)"
+        },
+        {
+          type = "int[4]",
+          name = "params",
+          description = "Event parameters (if required)"
+        }
+      }
+    },
+    {
+      name = "AutomationEventList",
+      description = "Automation event list",
+      fields = {
+        {
+          type = "unsigned int",
+          name = "capacity",
+          description = "Events max entries (MAX_AUTOMATION_EVENTS)"
+        },
+        {
+          type = "unsigned int",
+          name = "count",
+          description = "Events entries count"
+        },
+        {
+          type = "AutomationEvent *",
+          name = "events",
+          description = "Events entries"
         }
       }
     }
@@ -3045,14 +3087,14 @@ return {
       }
     },
     {
-      name = "WindowShouldClose",
-      description = "Check if KEY_ESCAPE pressed or Close icon pressed",
-      returnType = "bool"
-    },
-    {
       name = "CloseWindow",
       description = "Close window and unload OpenGL context",
       returnType = "void"
+    },
+    {
+      name = "WindowShouldClose",
+      description = "Check if application should close (KEY_ESCAPE pressed or windows close icon clicked)",
+      returnType = "bool"
     },
     {
       name = "IsWindowReady",
@@ -3343,24 +3385,6 @@ return {
       name = "DisableEventWaiting",
       description = "Disable waiting for events on EndDrawing(), automatic events polling",
       returnType = "void"
-    },
-    {
-      name = "SwapScreenBuffer",
-      description = "Swap back buffer with front buffer (screen drawing)",
-      returnType = "void"
-    },
-    {
-      name = "PollInputEvents",
-      description = "Register all input events",
-      returnType = "void"
-    },
-    {
-      name = "WaitTime",
-      description = "Wait for some time (halt program execution)",
-      returnType = "void",
-      params = {
-        {type = "double", name = "seconds"}
-      }
     },
     {
       name = "ShowCursor",
@@ -3687,11 +3711,6 @@ return {
       }
     },
     {
-      name = "GetFPS",
-      description = "Get current FPS",
-      returnType = "int"
-    },
-    {
       name = "GetFrameTime",
       description = "Get time in seconds for last frame drawn (delta time)",
       returnType = "float"
@@ -3700,6 +3719,37 @@ return {
       name = "GetTime",
       description = "Get elapsed time in seconds since InitWindow()",
       returnType = "double"
+    },
+    {
+      name = "GetFPS",
+      description = "Get current FPS",
+      returnType = "int"
+    },
+    {
+      name = "SwapScreenBuffer",
+      description = "Swap back buffer with front buffer (screen drawing)",
+      returnType = "void"
+    },
+    {
+      name = "PollInputEvents",
+      description = "Register all input events",
+      returnType = "void"
+    },
+    {
+      name = "WaitTime",
+      description = "Wait for some time (halt program execution)",
+      returnType = "void",
+      params = {
+        {type = "double", name = "seconds"}
+      }
+    },
+    {
+      name = "SetRandomSeed",
+      description = "Set the seed for the random number generator",
+      returnType = "void",
+      params = {
+        {type = "unsigned int", name = "seed"}
+      }
     },
     {
       name = "GetRandomValue",
@@ -3711,11 +3761,21 @@ return {
       }
     },
     {
-      name = "SetRandomSeed",
-      description = "Set the seed for the random number generator",
+      name = "LoadRandomSequence",
+      description = "Load random values sequence, no values repeated",
+      returnType = "int *",
+      params = {
+        {type = "unsigned int", name = "count"},
+        {type = "int", name = "min"},
+        {type = "int", name = "max"}
+      }
+    },
+    {
+      name = "UnloadRandomSequence",
+      description = "Unload random values sequence",
       returnType = "void",
       params = {
-        {type = "unsigned int", name = "seed"}
+        {type = "int *", name = "sequence"}
       }
     },
     {
@@ -3732,6 +3792,14 @@ return {
       returnType = "void",
       params = {
         {type = "unsigned int", name = "flags"}
+      }
+    },
+    {
+      name = "OpenURL",
+      description = "Open URL with default system browser (if available)",
+      returnType = "void",
+      params = {
+        {type = "const char *", name = "url"}
       }
     },
     {
@@ -3775,14 +3843,6 @@ return {
       returnType = "void",
       params = {
         {type = "void *", name = "ptr"}
-      }
-    },
-    {
-      name = "OpenURL",
-      description = "Open URL with default system browser (if available)",
-      returnType = "void",
-      params = {
-        {type = "const char *", name = "url"}
       }
     },
     {
@@ -4078,6 +4138,65 @@ return {
       }
     },
     {
+      name = "LoadAutomationEventList",
+      description = "Load automation events list from file, NULL for empty list, capacity = MAX_AUTOMATION_EVENTS",
+      returnType = "AutomationEventList",
+      params = {
+        {type = "const char *", name = "fileName"}
+      }
+    },
+    {
+      name = "UnloadAutomationEventList",
+      description = "Unload automation events list from file",
+      returnType = "void",
+      params = {
+        {type = "AutomationEventList *", name = "list"}
+      }
+    },
+    {
+      name = "ExportAutomationEventList",
+      description = "Export automation events list as text file",
+      returnType = "bool",
+      params = {
+        {type = "AutomationEventList", name = "list"},
+        {type = "const char *", name = "fileName"}
+      }
+    },
+    {
+      name = "SetAutomationEventList",
+      description = "Set automation event list to record to",
+      returnType = "void",
+      params = {
+        {type = "AutomationEventList *", name = "list"}
+      }
+    },
+    {
+      name = "SetAutomationEventBaseFrame",
+      description = "Set automation event internal base frame to start recording",
+      returnType = "void",
+      params = {
+        {type = "int", name = "frame"}
+      }
+    },
+    {
+      name = "StartAutomationEventRecording",
+      description = "Start recording automation events (AutomationEventList must be set)",
+      returnType = "void"
+    },
+    {
+      name = "StopAutomationEventRecording",
+      description = "Stop recording automation events",
+      returnType = "void"
+    },
+    {
+      name = "PlayAutomationEvent",
+      description = "Play a recorded automation event",
+      returnType = "void",
+      params = {
+        {type = "AutomationEvent", name = "event"}
+      }
+    },
+    {
       name = "IsKeyPressed",
       description = "Check if a key has been pressed once",
       returnType = "bool",
@@ -4118,14 +4237,6 @@ return {
       }
     },
     {
-      name = "SetExitKey",
-      description = "Set a custom key to exit program (default is ESC)",
-      returnType = "void",
-      params = {
-        {type = "int", name = "key"}
-      }
-    },
-    {
       name = "GetKeyPressed",
       description = "Get key pressed (keycode), call it multiple times for keys queued, returns 0 when the queue is empty",
       returnType = "int"
@@ -4134,6 +4245,14 @@ return {
       name = "GetCharPressed",
       description = "Get char pressed (unicode), call it multiple times for chars queued, returns 0 when the queue is empty",
       returnType = "int"
+    },
+    {
+      name = "SetExitKey",
+      description = "Set a custom key to exit program (default is ESC)",
+      returnType = "void",
+      params = {
+        {type = "int", name = "key"}
+      }
     },
     {
       name = "IsGamepadAvailable",
@@ -4453,7 +4572,7 @@ return {
     },
     {
       name = "DrawLineV",
-      description = "Draw a line (Vector version)",
+      description = "Draw a line (using gl lines)",
       returnType = "void",
       params = {
         {type = "Vector2", name = "startPos"},
@@ -4463,80 +4582,33 @@ return {
     },
     {
       name = "DrawLineEx",
-      description = "Draw a line defining thickness",
+      description = "Draw a line (using triangles/quads)",
       returnType = "void",
       params = {
         {type = "Vector2", name = "startPos"},
         {type = "Vector2", name = "endPos"},
-        {type = "float", name = "thick"},
-        {type = "Color", name = "color"}
-      }
-    },
-    {
-      name = "DrawLineBezier",
-      description = "Draw a line using cubic-bezier curves in-out",
-      returnType = "void",
-      params = {
-        {type = "Vector2", name = "startPos"},
-        {type = "Vector2", name = "endPos"},
-        {type = "float", name = "thick"},
-        {type = "Color", name = "color"}
-      }
-    },
-    {
-      name = "DrawLineBezierQuad",
-      description = "Draw line using quadratic bezier curves with a control point",
-      returnType = "void",
-      params = {
-        {type = "Vector2", name = "startPos"},
-        {type = "Vector2", name = "endPos"},
-        {type = "Vector2", name = "controlPos"},
-        {type = "float", name = "thick"},
-        {type = "Color", name = "color"}
-      }
-    },
-    {
-      name = "DrawLineBezierCubic",
-      description = "Draw line using cubic bezier curves with 2 control points",
-      returnType = "void",
-      params = {
-        {type = "Vector2", name = "startPos"},
-        {type = "Vector2", name = "endPos"},
-        {type = "Vector2", name = "startControlPos"},
-        {type = "Vector2", name = "endControlPos"},
-        {type = "float", name = "thick"},
-        {type = "Color", name = "color"}
-      }
-    },
-    {
-      name = "DrawLineBSpline",
-      description = "Draw a B-Spline line, minimum 4 points",
-      returnType = "void",
-      params = {
-        {type = "Vector2 *", name = "points"},
-        {type = "int", name = "pointCount"},
-        {type = "float", name = "thick"},
-        {type = "Color", name = "color"}
-      }
-    },
-    {
-      name = "DrawLineCatmullRom",
-      description = "Draw a Catmull Rom spline line, minimum 4 points",
-      returnType = "void",
-      params = {
-        {type = "Vector2 *", name = "points"},
-        {type = "int", name = "pointCount"},
         {type = "float", name = "thick"},
         {type = "Color", name = "color"}
       }
     },
     {
       name = "DrawLineStrip",
-      description = "Draw lines sequence",
+      description = "Draw lines sequence (using gl lines)",
       returnType = "void",
       params = {
         {type = "Vector2 *", name = "points"},
         {type = "int", name = "pointCount"},
+        {type = "Color", name = "color"}
+      }
+    },
+    {
+      name = "DrawLineBezier",
+      description = "Draw line segment cubic-bezier in-out interpolation",
+      returnType = "void",
+      params = {
+        {type = "Vector2", name = "startPos"},
+        {type = "Vector2", name = "endPos"},
+        {type = "float", name = "thick"},
         {type = "Color", name = "color"}
       }
     },
@@ -4606,6 +4678,16 @@ return {
       params = {
         {type = "int", name = "centerX"},
         {type = "int", name = "centerY"},
+        {type = "float", name = "radius"},
+        {type = "Color", name = "color"}
+      }
+    },
+    {
+      name = "DrawCircleLinesV",
+      description = "Draw circle outline (Vector version)",
+      returnType = "void",
+      params = {
+        {type = "Vector2", name = "center"},
         {type = "float", name = "radius"},
         {type = "Color", name = "color"}
       }
@@ -4864,6 +4946,180 @@ return {
         {type = "float", name = "rotation"},
         {type = "float", name = "lineThick"},
         {type = "Color", name = "color"}
+      }
+    },
+    {
+      name = "DrawSplineLinear",
+      description = "Draw spline: Linear, minimum 2 points",
+      returnType = "void",
+      params = {
+        {type = "Vector2 *", name = "points"},
+        {type = "int", name = "pointCount"},
+        {type = "float", name = "thick"},
+        {type = "Color", name = "color"}
+      }
+    },
+    {
+      name = "DrawSplineBasis",
+      description = "Draw spline: B-Spline, minimum 4 points",
+      returnType = "void",
+      params = {
+        {type = "Vector2 *", name = "points"},
+        {type = "int", name = "pointCount"},
+        {type = "float", name = "thick"},
+        {type = "Color", name = "color"}
+      }
+    },
+    {
+      name = "DrawSplineCatmullRom",
+      description = "Draw spline: Catmull-Rom, minimum 4 points",
+      returnType = "void",
+      params = {
+        {type = "Vector2 *", name = "points"},
+        {type = "int", name = "pointCount"},
+        {type = "float", name = "thick"},
+        {type = "Color", name = "color"}
+      }
+    },
+    {
+      name = "DrawSplineBezierQuadratic",
+      description = "Draw spline: Quadratic Bezier, minimum 3 points (1 control point): [p1, c2, p3, c4...]",
+      returnType = "void",
+      params = {
+        {type = "Vector2 *", name = "points"},
+        {type = "int", name = "pointCount"},
+        {type = "float", name = "thick"},
+        {type = "Color", name = "color"}
+      }
+    },
+    {
+      name = "DrawSplineBezierCubic",
+      description = "Draw spline: Cubic Bezier, minimum 4 points (2 control points): [p1, c2, c3, p4, c5, c6...]",
+      returnType = "void",
+      params = {
+        {type = "Vector2 *", name = "points"},
+        {type = "int", name = "pointCount"},
+        {type = "float", name = "thick"},
+        {type = "Color", name = "color"}
+      }
+    },
+    {
+      name = "DrawSplineSegmentLinear",
+      description = "Draw spline segment: Linear, 2 points",
+      returnType = "void",
+      params = {
+        {type = "Vector2", name = "p1"},
+        {type = "Vector2", name = "p2"},
+        {type = "float", name = "thick"},
+        {type = "Color", name = "color"}
+      }
+    },
+    {
+      name = "DrawSplineSegmentBasis",
+      description = "Draw spline segment: B-Spline, 4 points",
+      returnType = "void",
+      params = {
+        {type = "Vector2", name = "p1"},
+        {type = "Vector2", name = "p2"},
+        {type = "Vector2", name = "p3"},
+        {type = "Vector2", name = "p4"},
+        {type = "float", name = "thick"},
+        {type = "Color", name = "color"}
+      }
+    },
+    {
+      name = "DrawSplineSegmentCatmullRom",
+      description = "Draw spline segment: Catmull-Rom, 4 points",
+      returnType = "void",
+      params = {
+        {type = "Vector2", name = "p1"},
+        {type = "Vector2", name = "p2"},
+        {type = "Vector2", name = "p3"},
+        {type = "Vector2", name = "p4"},
+        {type = "float", name = "thick"},
+        {type = "Color", name = "color"}
+      }
+    },
+    {
+      name = "DrawSplineSegmentBezierQuadratic",
+      description = "Draw spline segment: Quadratic Bezier, 2 points, 1 control point",
+      returnType = "void",
+      params = {
+        {type = "Vector2", name = "p1"},
+        {type = "Vector2", name = "c2"},
+        {type = "Vector2", name = "p3"},
+        {type = "float", name = "thick"},
+        {type = "Color", name = "color"}
+      }
+    },
+    {
+      name = "DrawSplineSegmentBezierCubic",
+      description = "Draw spline segment: Cubic Bezier, 2 points, 2 control points",
+      returnType = "void",
+      params = {
+        {type = "Vector2", name = "p1"},
+        {type = "Vector2", name = "c2"},
+        {type = "Vector2", name = "c3"},
+        {type = "Vector2", name = "p4"},
+        {type = "float", name = "thick"},
+        {type = "Color", name = "color"}
+      }
+    },
+    {
+      name = "GetSplinePointLinear",
+      description = "Get (evaluate) spline point: Linear",
+      returnType = "Vector2",
+      params = {
+        {type = "Vector2", name = "startPos"},
+        {type = "Vector2", name = "endPos"},
+        {type = "float", name = "t"}
+      }
+    },
+    {
+      name = "GetSplinePointBasis",
+      description = "Get (evaluate) spline point: B-Spline",
+      returnType = "Vector2",
+      params = {
+        {type = "Vector2", name = "p1"},
+        {type = "Vector2", name = "p2"},
+        {type = "Vector2", name = "p3"},
+        {type = "Vector2", name = "p4"},
+        {type = "float", name = "t"}
+      }
+    },
+    {
+      name = "GetSplinePointCatmullRom",
+      description = "Get (evaluate) spline point: Catmull-Rom",
+      returnType = "Vector2",
+      params = {
+        {type = "Vector2", name = "p1"},
+        {type = "Vector2", name = "p2"},
+        {type = "Vector2", name = "p3"},
+        {type = "Vector2", name = "p4"},
+        {type = "float", name = "t"}
+      }
+    },
+    {
+      name = "GetSplinePointBezierQuad",
+      description = "Get (evaluate) spline point: Quadratic Bezier",
+      returnType = "Vector2",
+      params = {
+        {type = "Vector2", name = "p1"},
+        {type = "Vector2", name = "c2"},
+        {type = "Vector2", name = "p3"},
+        {type = "float", name = "t"}
+      }
+    },
+    {
+      name = "GetSplinePointBezierCubic",
+      description = "Get (evaluate) spline point: Cubic Bezier",
+      returnType = "Vector2",
+      params = {
+        {type = "Vector2", name = "p1"},
+        {type = "Vector2", name = "c2"},
+        {type = "Vector2", name = "c3"},
+        {type = "Vector2", name = "p4"},
+        {type = "float", name = "t"}
       }
     },
     {
@@ -5284,6 +5540,16 @@ return {
       params = {
         {type = "Image *", name = "image"},
         {type = "int", name = "blurSize"}
+      }
+    },
+    {
+      name = "ImageKernelConvolution",
+      description = "Apply Custom Square image convolution kernel",
+      returnType = "void",
+      params = {
+        {type = "Image *", name = "image"},
+        {type = "float*", name = "kernel"},
+        {type = "int", name = "kernelSize"}
       }
     },
     {
@@ -7194,6 +7460,11 @@ return {
       params = {
         {type = "float", name = "volume"}
       }
+    },
+    {
+      name = "GetMasterVolume",
+      description = "Get master volume (listener)",
+      returnType = "float"
     },
     {
       name = "LoadWave",
