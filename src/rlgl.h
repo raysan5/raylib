@@ -1,6 +1,6 @@
 /**********************************************************************************************
 *
-*   rlgl v4.5 - A multi-OpenGL abstraction layer with an immediate-mode style API
+*   rlgl v5.0 - A multi-OpenGL abstraction layer with an immediate-mode style API
 *
 *   DESCRIPTION:
 *       An abstraction layer for multiple OpenGL versions (1.1, 2.1, 3.3 Core, 4.3 Core, ES 2.0)
