@@ -20,7 +20,7 @@ Some people ported raylib to other languages in form of bindings or wrappers to 
 | dart-raylib        | 4.0     | [Dart](https://dart.dev/)               | MIT | https://gitlab.com/wolfenrain/dart-raylib   |
 | bindbc-raylib3     | **4.5**     | [D](https://dlang.org/)              | BSL-1.0 | https://github.com/o3o/bindbc-raylib3     |
 | dray               | 4.2     | [D](https://dlang.org/)              | Apache-2.0 | https://github.com/redthing1/dray          |
-| raylib-d           | **4.5** | [D](https://dlang.org/)              | Zlib | https://github.com/schveiguy/raylib-d        |
+| raylib-d           | **5.0** | [D](https://dlang.org/)              | Zlib | https://github.com/schveiguy/raylib-d        |
 | dlang_raylib       | 4.0     | [D](https://dlang.org)                  | MPL-2.0 |https://github.com/rc-05/dlang_raylib          |
 | rayex              | 3.7     | [elixir](https://elixir-lang.org/)      | Apache-2.0 | https://github.com/shiryel/rayex     |
 | raylib-factor      | **4.5** | [Factor](https://factorcode.org/)        | BSD  | https://github.com/factor/factor/blob/master/extra/raylib/raylib.factor   |
