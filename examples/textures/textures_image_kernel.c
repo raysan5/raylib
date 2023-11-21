@@ -18,19 +18,14 @@
 //------------------------------------------------------------------------------------
 // Program main entry point
 //------------------------------------------------------------------------------------
-void normalizeKernel(float *kernel, int size){
+void NormalizeKernel(float *kernel, int size)
+{
     float sum = 0.0f;
-    for(int i = 0; i < size; i++)
-    {
-        sum += kernel[i]; 
-    }
+    for (int i = 0; i < size; i++) sum += kernel[i]; 
 
-    if(sum != 0.0f)
+    if (sum != 0.0f)
     {
-        for(int i = 0; i < size; i++)
-        {
-            kernel[i] /= sum; 
-        }
+        for (int i = 0; i < size; i++) kernel[i] /= sum; 
     }
 }
 
@@ -38,29 +33,31 @@ int main(void)
 {
     // Initialization
     //--------------------------------------------------------------------------------------
-
-    Image image = LoadImage("resources/cat.png");     // Loaded in CPU memory (RAM)
-
     const int screenWidth = 800;
     const int screenHeight = 450;
 
     InitWindow(screenWidth, screenHeight, "raylib [textures] example - image convolution");
+        
+    Image image = LoadImage("resources/cat.png");     // Loaded in CPU memory (RAM)
 
-    float gaussiankernel[] = {1.0, 2.0, 1.0,
-                    2.0, 4.0, 2.0,
-                    1.0, 2.0, 1.0};
+    float gaussiankernel[] = { 
+        1.0f, 2.0f, 1.0f,
+        2.0f, 4.0f, 2.0f,
+        1.0f, 2.0f, 1.0f };
 
-    float sobelkernel[] = {1.0, 0.0, -1.0,
-                    2.0, 0.0, -2.0,
-                    1.0, 0.0, -1.0};
+    float sobelkernel[] = {
+        1.0f, 0.0f, -1.0f,
+        2.0f, 0.0f, -2.0f,
+        1.0f, 0.0f, -1.0f };
 
-    float sharpenkernel[] = {0.0, -1.0, 0.0,
-                        -1.0, 5.0, -1.0,
-                        0.0, -1.0, 0.0};
+    float sharpenkernel[] = {
+        0.0f, -1.0f, 0.0f,
+       -1.0f, 5.0f, -1.0f,
+        0.0f, -1.0f, 0.0f };
 
-    normalizeKernel(gaussiankernel, 9);
-    normalizeKernel(sharpenkernel, 9);
-    normalizeKernel(sobelkernel, 9);
+    NormalizeKernel(gaussiankernel, 9);
+    NormalizeKernel(sharpenkernel, 9);
+    NormalizeKernel(sobelkernel, 9);
 
     Image catSharpend = ImageCopy(image);
     ImageKernelConvolution(&catSharpend, sharpenkernel, 9);
@@ -69,7 +66,8 @@ int main(void)
     ImageKernelConvolution(&catSobel, sobelkernel, 9);
 
     Image catGaussian = ImageCopy(image);
-    for(int i = 0; i < 6; i++)
+    
+    for (int i = 0; i < 6; i++)
     {
         ImageKernelConvolution(&catGaussian, gaussiankernel, 9);
     }
@@ -78,11 +76,16 @@ int main(void)
     ImageCrop(&catGaussian, (Rectangle){ 0, 0, (float)200, (float)450 });
     ImageCrop(&catSobel, (Rectangle){ 0, 0, (float)200, (float)450 });
     ImageCrop(&catSharpend, (Rectangle){ 0, 0, (float)200, (float)450 });
-    Texture2D texture = LoadTextureFromImage(image);          // Image converted to texture, GPU memory (VRAM)
+    
+    // Images converted to texture, GPU memory (VRAM)
+    Texture2D texture = LoadTextureFromImage(image);
     Texture2D catSharpendTexture = LoadTextureFromImage(catSharpend);
     Texture2D catSobelTexture = LoadTextureFromImage(catSobel);
     Texture2D catGaussianTexture = LoadTextureFromImage(catGaussian);
-    UnloadImage(image);   // Once image has been converted to texture and uploaded to VRAM, it can be unloaded from RAM
+    
+    // Once images have been converted to texture and uploaded to VRAM, 
+    // they can be unloaded from RAM
+    UnloadImage(image);
     UnloadImage(catGaussian);
     UnloadImage(catSobel);
     UnloadImage(catSharpend);
@@ -115,7 +118,7 @@ int main(void)
 
     // De-Initialization
     //--------------------------------------------------------------------------------------
-    UnloadTexture(texture);       // Texture unloading
+    UnloadTexture(texture);
     UnloadTexture(catGaussianTexture);
     UnloadTexture(catSobelTexture);
     UnloadTexture(catSharpendTexture);
