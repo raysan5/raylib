@@ -4437,6 +4437,12 @@ int ColorToInt(Color color)
     return (((int)color.r << 24) | ((int)color.g << 16) | ((int)color.b << 8) | (int)color.a);
 }
 
+// Get Color structure from hexadecimal value
+Color ColorFromInt(unsigned int hexValue)
+{
+    return GetColor(hexValue);
+}
+
 // Get color normalized as float [0..1]
 Vector4 ColorNormalize(Color color)
 {
