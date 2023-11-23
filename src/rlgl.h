@@ -773,6 +773,11 @@ RLAPI void rlLoadDrawQuad(void);     // Load and draw a quad
 
 #if defined(RLGL_IMPLEMENTATION)
 
+// Expose OpenGL functions from glad in raylib
+#if defined(BUILD_SHARED_LIBS)
+    #define GLAD_API_CALL_EXPORT_BUILD
+#endif
+
 #if defined(GRAPHICS_API_OPENGL_11)
     #if defined(__APPLE__)
         #include <OpenGL/gl.h>          // OpenGL 1.1 library for OSX
