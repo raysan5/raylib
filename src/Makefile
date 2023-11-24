@@ -114,7 +114,7 @@ HOST_PLATFORM_OS ?= WINDOWS
 PLATFORM_OS ?= WINDOWS
 
 # Determine PLATFORM_OS when required
-ifeq ($(PLATFORM),$(filter $(PLATFORM),PLATFORM_DESKTOP PLATFORM_DESKTOP_SDL PLATFORM_WEB))
+ifeq ($(PLATFORM),$(filter $(PLATFORM),PLATFORM_DESKTOP PLATFORM_DESKTOP_SDL PLATFORM_WEB PLATFORM_ANDROID))
     # No uname.exe on MinGW!, but OS=Windows_NT on Windows!
     # ifeq ($(UNAME),Msys) -> Windows
     ifeq ($(OS),Windows_NT)
@@ -189,8 +189,12 @@ ifeq ($(PLATFORM),PLATFORM_ANDROID)
         ANDROID_NDK ?= C:/android-ndk
         ANDROID_TOOLCHAIN = $(ANDROID_NDK)/toolchains/llvm/prebuilt/windows-x86_64
     else
-        ANDROID_NDK ?= /usr/lib/android/ndk
-        ANDROID_TOOLCHAIN = $(ANDROID_NDK)/toolchains/llvm/prebuilt/linux-x86_64
+		ANDROID_NDK ?= /usr/lib/android/ndk
+		ifeq ($(PLATFORM_OS), OSX)
+			ANDROID_TOOLCHAIN = $(ANDROID_NDK)/toolchains/llvm/prebuilt/darwin-x86_64
+		else
+			ANDROID_TOOLCHAIN = $(ANDROID_NDK)/toolchains/llvm/prebuilt/linux-x86_64
+		endif
     endif
 
     # NOTE: Sysroot can also be reference from $(ANDROID_NDK)/sysroot
