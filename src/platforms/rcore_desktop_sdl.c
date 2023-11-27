@@ -499,9 +499,9 @@ void SetWindowIcon(Image image)
             bmask = 0x001F, amask = 0;
             depth = 16, pitch = image.width * 2;
             break;
-        case PIXELFORMAT_UNCOMPRESSED_R8G8B8:
-            rmask = 0xFF0000, gmask = 0x00FF00;
-            bmask = 0x0000FF, amask = 0;
+        case PIXELFORMAT_UNCOMPRESSED_R8G8B8: // Uses BGR for 24-bit
+            rmask = 0x0000FF, gmask = 0x00FF00;
+            bmask = 0xFF0000, amask = 0;
             depth = 24, pitch = image.width * 3;
             break;
         case PIXELFORMAT_UNCOMPRESSED_R5G5B5A1:
