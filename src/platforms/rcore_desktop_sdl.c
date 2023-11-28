@@ -48,7 +48,7 @@
 *
 **********************************************************************************************/
 
-#include "SDL.h"                // SDL base library (window/rendered, input, timming... functionality)
+#include "SDL.h"                // SDL base library (window/rendered, input, timing... functionality)
 
 #if defined(GRAPHICS_API_OPENGL_ES2)
     // It seems it does not need to be included to work
@@ -598,7 +598,7 @@ void SetWindowMonitor(int monitor)
         // NOTE:
         // 1. SDL started supporting moving exclusive fullscreen windows between displays on SDL3,
         //    see commit https://github.com/libsdl-org/SDL/commit/3f5ef7dd422057edbcf3e736107e34be4b75d9ba
-        // 2. A workround for SDL2 is leaving fullscreen, moving the window, then entering full screen again.
+        // 2. A workaround for SDL2 is leaving fullscreen, moving the window, then entering full screen again.
         const bool wasFullscreen = ((CORE.Window.flags & FLAG_FULLSCREEN_MODE) > 0) ? true : false;
 
         const int screenWidth = CORE.Window.screen.width;
@@ -617,7 +617,7 @@ void SetWindowMonitor(int monitor)
                 //    ending up positioned partly outside the target display.
                 // 2. The workaround for that is, previously to moving the window,
                 //    setting the window size to the target display size, so they match.
-                // 3. It was't done here because we can't assume changing the window size automatically
+                // 3. It wasn't done here because we can't assume changing the window size automatically
                 //    is acceptable behavior by the user.
                 SDL_SetWindowPosition(platform.window, usableBounds.x, usableBounds.y);
                 CORE.Window.position.x = usableBounds.x;
@@ -1010,7 +1010,7 @@ void PollInputEvents(void)
     // Register previous mouse states
     for (int i = 0; i < MAX_MOUSE_BUTTONS; i++) CORE.Input.Mouse.previousButtonState[i] = CORE.Input.Mouse.currentButtonState[i];
 
-    // Poll input events for current plaform
+    // Poll input events for current platform
     //-----------------------------------------------------------------------------
     /*
     // WARNING: Indexes into this array are obtained by using SDL_Scancode values, not SDL_Keycode values
@@ -1316,7 +1316,7 @@ int InitPlatform(void)
     // Init OpenGL context
     platform.glContext = SDL_GL_CreateContext(platform.window);
 
-    // Check window and glContext have been initialized succesfully
+    // Check window and glContext have been initialized successfully
     if ((platform.window != NULL) && (platform.glContext != NULL))
     {
         CORE.Window.ready = true;
@@ -1360,7 +1360,7 @@ int InitPlatform(void)
     SDL_EventState(SDL_DROPFILE, SDL_ENABLE);
     //----------------------------------------------------------------------------
 
-    // Initialize timming system
+    // Initialize timing system
     //----------------------------------------------------------------------------
     // NOTE: No need to call InitTimer(), let SDL manage it internally
     CORE.Time.previous = GetTime();     // Get time as double

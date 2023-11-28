@@ -602,7 +602,7 @@ void PollInputEvents(void)
     if (!platform.eventKeyboardMode) ProcessKeyboard();
 
     // NOTE: Mouse input events polling is done asynchronously in another pthread - EventThread()
-    // NOTE: Gamepad (Joystick) input events polling is done asynchonously in another pthread - GamepadThread()
+    // NOTE: Gamepad (Joystick) input events polling is done asynchronously in another pthread - GamepadThread()
 #endif
 
     // Handle the mouse/touch/gestures events:
