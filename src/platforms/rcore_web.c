@@ -664,7 +664,7 @@ void PollInputEvents(void)
 
     // TODO: This code does not seem to do anything??
     //if (CORE.Window.eventWaiting) glfwWaitEvents();     // Wait for in input events before continue (drawing is paused)
-    //else glfwPollEvents(); // Poll input events: keyboard/mouse/window events (callbacks) --> WARNING: Where is key input reseted?
+    //else glfwPollEvents(); // Poll input events: keyboard/mouse/window events (callbacks) --> WARNING: Where is key input reset?
 }
 
 //----------------------------------------------------------------------------------
@@ -937,7 +937,7 @@ int InitPlatform(void)
     emscripten_set_gamepaddisconnected_callback(NULL, 1, EmscriptenGamepadCallback);
     //----------------------------------------------------------------------------
 
-    // Initialize timming system
+    // Initialize timing system
     //----------------------------------------------------------------------------
     InitTimer();
     //----------------------------------------------------------------------------
