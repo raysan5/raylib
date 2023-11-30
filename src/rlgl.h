@@ -777,6 +777,7 @@ RLAPI void rlLoadDrawQuad(void);     // Load and draw a quad
 
 // Expose OpenGL functions from glad in raylib
 #if defined(BUILD_LIBTYPE_SHARED)
+    #define GLAD_API_CALL_EXPORT
     #define GLAD_API_CALL_EXPORT_BUILD
 #endif
 
