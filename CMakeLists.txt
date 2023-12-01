@@ -1,4 +1,13 @@
 cmake_minimum_required(VERSION 3.0)
+
+# Directory for easier includes
+# Anywhere you see include(...) you can check <root>/cmake for that file
+set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
+
+include(CustomPlatform)
+
+custom_platform_include_if_exists("raylibPlatformCustomProjectConfig")
+
 project(raylib)
 
 # Avoid excessive expansion of variables in conditionals. In particular, if
@@ -18,9 +27,6 @@ cmake_policy(SET CMP0054 NEW)
 # See https://cmake.org/cmake/help/latest/policy/CMP0063.html
 cmake_policy(SET CMP0063 NEW)
 
-# Directory for easier includes
-# Anywhere you see include(...) you can check <root>/cmake for that file
-set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 
 # RAYLIB_IS_MAIN determines whether the project is being used from root
 # or if it is added as a dependency (through add_subdirectory for example).
