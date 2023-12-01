@@ -324,6 +324,10 @@
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
 //----------------------------------------------------------------------------------
+#if defined(PLATFORM_CUSTOM)
+#include "raylib_platform_custom.h"
+#endif
+
 #if (defined(__STDC__) && __STDC_VERSION__ >= 199901L) || (defined(_MSC_VER) && _MSC_VER >= 1800)
     #include <stdbool.h>
 #elif !defined(__cplusplus) && !defined(bool) && !defined(RL_BOOL_TYPE)
@@ -818,7 +822,7 @@ RLAPI void rlLoadDrawQuad(void);     // Load and draw a quad
 #elif defined(GRAPHICS_API_OPENGL_ES2)
     // NOTE: OpenGL ES 2.0 can be enabled on PLATFORM_DESKTOP,
     // in that case, functions are loaded from a custom glad for OpenGL ES 2.0
-    #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_DESKTOP_SDL)
+    #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_DESKTOP_SDL) || defined(PLATFORM_CUSTOM_ENABLE_OPENGL_ES2)
         #define GLAD_GLES2_IMPLEMENTATION
         #include "external/glad_gles2.h"
     #else
@@ -2281,7 +2285,7 @@ void rlLoadExtensions(void *loader)
 
 #elif defined(GRAPHICS_API_OPENGL_ES2)
 
-    #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_DESKTOP_SDL)
+    #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_DESKTOP_SDL) || defined(PLATFORM_CUSTOM_ENABLE_OPENGL_ES2)
     // TODO: Support GLAD loader for OpenGL ES 3.0
     if (gladLoadGLES2((GLADloadfunc)loader) == 0) TRACELOG(RL_LOG_WARNING, "GLAD: Cannot load OpenGL ES2.0 functions");
     else TRACELOG(RL_LOG_INFO, "GLAD: OpenGL ES 2.0 loaded successfully");

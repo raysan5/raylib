@@ -91,6 +91,8 @@ elseif ("${PLATFORM}" MATCHES "DRM")
     endif ()
     set(LIBS_PRIVATE ${GLESV2} ${EGL} ${DRM} ${GBM} atomic pthread m dl)
 
+elseif ("${PLATFORM}" MATCHES "Custom")
+  set(PLATFORM_CPP "PLATFORM_CUSTOM")
 endif ()
 
 if (NOT ${OPENGL_VERSION} MATCHES "OFF")

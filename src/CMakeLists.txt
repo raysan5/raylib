@@ -5,6 +5,7 @@ set(API_VERSION 450)
 
 include(GNUInstallDirs)
 include(JoinPaths)
+include(CustomPlatform)
 
 # Sets build type if not set by now
 if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
@@ -38,7 +39,7 @@ set(raylib_sources
     )
 
 # <root>/cmake/GlfwImport.cmake handles the details around the inclusion of glfw
-if (NOT ${PLATFORM} MATCHES "Web")
+if (NOT ${PLATFORM} MATCHES "Web" AND NOT ${PLATFORM} MATCHES "Custom")
     include(GlfwImport)
 endif ()
 
@@ -46,6 +47,8 @@ endif ()
 # also selects the proper graphics API and version for that platform
 # Produces a variable LIBS_PRIVATE that will be used later
 include(LibraryConfigurations)
+
+custom_platform_include_if_exists("raylibPlatformCustomLibraryConfig")
 
 if (USE_AUDIO)
     MESSAGE(STATUS "Audio Backend: miniaudio")
@@ -104,6 +107,12 @@ target_include_directories(raylib
                            ${OPENGL_INCLUDE_DIR}
                            ${OPENAL_INCLUDE_DIR}
                            )
+
+if("${PLATFORM}" MATCHES "Custom")
+  target_include_directories(raylib PUBLIC "${PLATFORM_CUSTOM_ROOT_DIR}/src")
+endif()
+
+custom_platform_include_if_exists("raylibPlatformCustomTargetConfig")
 
 # Copy the header files to the build directory for convenience
 file(COPY ${raylib_public_headers} DESTINATION "include")

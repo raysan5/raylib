@@ -1,0 +1,12 @@
+message(STATUS "From raylibPlatformCustomProjectConfig (Custom platform 2 (Desktop)")
+
+# Note that changing CMAKE_OSX_ARCHITECTURES should be done BEFORE project()
+if(APPLE)
+  if(MACOS_FATLIB)
+    if (CMAKE_OSX_ARCHITECTURES)
+      message(FATAL_ERROR "User supplied -DCMAKE_OSX_ARCHITECTURES overrides -DMACOS_FATLIB=ON")
+    else()
+      set(CMAKE_OSX_ARCHITECTURES "x86_64;i386")
+    endif()
+  endif()
+endif()

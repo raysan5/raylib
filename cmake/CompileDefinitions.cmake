@@ -2,6 +2,11 @@
 target_compile_definitions("raylib" PUBLIC "${PLATFORM_CPP}")
 target_compile_definitions("raylib" PUBLIC "${GRAPHICS}")
 
+if("${PLATFORM}" MATCHES "Custom")
+  target_compile_definitions("raylib" PUBLIC "PLATFORM_CUSTOM_DEFINES=\"${PLATFORM_CUSTOM_DEFINES}\"")
+  target_compile_definitions("raylib" PUBLIC "PLATFORM_CUSTOM_RCORE_IMPL=\"${PLATFORM_CUSTOM_RCORE_IMPL}\"")
+endif()
+
 function(define_if target variable)
     if (${${variable}})
         message(STATUS "${variable}=${${variable}}")
