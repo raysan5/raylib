@@ -48,13 +48,13 @@
 *
 **********************************************************************************************/
 
-#include "SDL2/SDL.h"                // SDL base library (window/rendered, input, timing... functionality)
+#include "SDL.h"                // SDL base library (window/rendered, input, timing... functionality)
 
 #if defined(GRAPHICS_API_OPENGL_ES2)
     // It seems it does not need to be included to work
     //#include "SDL_opengles2.h"
 #else
-    #include "SDL2/SDL_opengl.h"     // SDL OpenGL functionality (if required, instead of internal renderer)
+    #include "SDL_opengl.h"     // SDL OpenGL functionality (if required, instead of internal renderer)
 #endif
 
 //----------------------------------------------------------------------------------
