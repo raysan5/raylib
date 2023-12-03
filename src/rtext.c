@@ -604,7 +604,6 @@ GlyphInfo *LoadFontData(const unsigned char *fileData, int dataSize, int fontSiz
 
             // Fill fontChars in case not provided externally
             // NOTE: By default we fill glyphCount consecutively, starting at 32 (Space)
-
             if (codepoints == NULL)
             {
                 codepoints = (int *)RL_MALLOC(codepointCount*sizeof(int));
@@ -612,7 +611,7 @@ GlyphInfo *LoadFontData(const unsigned char *fileData, int dataSize, int fontSiz
                 genFontChars = true;
             }
 
-            chars = (GlyphInfo *)RL_MALLOC(codepointCount*sizeof(GlyphInfo));
+            chars = (GlyphInfo *)RL_CALLOC(codepointCount, sizeof(GlyphInfo));
 
             // NOTE: Using simple packaging, one char after another
             for (int i = 0; i < codepointCount; i++)
@@ -630,16 +629,19 @@ GlyphInfo *LoadFontData(const unsigned char *fileData, int dataSize, int fontSiz
                 else if (ch != 32) chars[i].image.data = stbtt_GetCodepointSDF(&fontInfo, scaleFactor, ch, FONT_SDF_CHAR_PADDING, FONT_SDF_ON_EDGE_VALUE, FONT_SDF_PIXEL_DIST_SCALE, &chw, &chh, &chars[i].offsetX, &chars[i].offsetY);
                 else chars[i].image.data = NULL;
 
-                stbtt_GetCodepointHMetrics(&fontInfo, ch, &chars[i].advanceX, NULL);
-                chars[i].advanceX = (int)((float)chars[i].advanceX*scaleFactor);
+                if (chars[i].image.data != NULL)    // Glyph data has been found in the font
+                {
+                    stbtt_GetCodepointHMetrics(&fontInfo, ch, &chars[i].advanceX, NULL);
+                    chars[i].advanceX = (int)((float)chars[i].advanceX*scaleFactor);
 
-                // Load characters images
-                chars[i].image.width = chw;
-                chars[i].image.height = chh;
-                chars[i].image.mipmaps = 1;
-                chars[i].image.format = PIXELFORMAT_UNCOMPRESSED_GRAYSCALE;
+                    // Load characters images
+                    chars[i].image.width = chw;
+                    chars[i].image.height = chh;
+                    chars[i].image.mipmaps = 1;
+                    chars[i].image.format = PIXELFORMAT_UNCOMPRESSED_GRAYSCALE;
 
-                chars[i].offsetY += (int)((float)ascent*scaleFactor);
+                    chars[i].offsetY += (int)((float)ascent*scaleFactor);
+                }
 
                 // NOTE: We create an empty image for space character, it could be further required for atlas packing
                 if (ch == 32)
