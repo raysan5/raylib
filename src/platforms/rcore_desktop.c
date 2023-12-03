@@ -88,6 +88,11 @@
 //----------------------------------------------------------------------------------
 // Defines and Macros
 //----------------------------------------------------------------------------------
+// TODO: HACK: Added flag if not provided by GLFW when using external library
+// Latest GLFW release (GLFW 3.3.8) does not implement this flag, it was added for 3.4.0-dev
+#if !defined(GLFW_MOUSE_PASSTHROUGH)
+    #define GLFW_MOUSE_PASSTHROUGH      0x0002000D
+#endif
 
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
@@ -391,13 +396,11 @@ void SetWindowState(unsigned int flags)
     }
 
     // State change: FLAG_WINDOW_MOUSE_PASSTHROUGH
-#if defined (GLFW_MOUSE_PASSTHROUGH)
     if (((CORE.Window.flags & FLAG_WINDOW_MOUSE_PASSTHROUGH) != (flags & FLAG_WINDOW_MOUSE_PASSTHROUGH)) && ((flags & FLAG_WINDOW_MOUSE_PASSTHROUGH) > 0))
     {
         glfwSetWindowAttrib(platform.handle, GLFW_MOUSE_PASSTHROUGH, GLFW_TRUE);
         CORE.Window.flags |= FLAG_WINDOW_MOUSE_PASSTHROUGH;
     }
-#endif
 
     // State change: FLAG_MSAA_4X_HINT
     if (((CORE.Window.flags & FLAG_MSAA_4X_HINT) != (flags & FLAG_MSAA_4X_HINT)) && ((flags & FLAG_MSAA_4X_HINT) > 0))
@@ -506,13 +509,11 @@ void ClearWindowState(unsigned int flags)
     }
 
     // State change: FLAG_WINDOW_MOUSE_PASSTHROUGH
-#if defined (GLFW_MOUSE_PASSTHROUGH)
     if (((CORE.Window.flags & FLAG_WINDOW_MOUSE_PASSTHROUGH) > 0) && ((flags & FLAG_WINDOW_MOUSE_PASSTHROUGH) > 0))
     {
         glfwSetWindowAttrib(platform.handle, GLFW_MOUSE_PASSTHROUGH, GLFW_FALSE);
         CORE.Window.flags &= ~FLAG_WINDOW_MOUSE_PASSTHROUGH;
     }
-#endif
 
     // State change: FLAG_MSAA_4X_HINT
     if (((CORE.Window.flags & FLAG_MSAA_4X_HINT) > 0) && ((flags & FLAG_MSAA_4X_HINT) > 0))
@@ -1315,10 +1316,8 @@ int InitPlatform(void)
     else glfwWindowHint(GLFW_SCALE_TO_MONITOR, GLFW_FALSE);
 
     // Mouse passthrough
-#if defined (GLFW_MOUSE_PASSTHROUGH)
     if ((CORE.Window.flags & FLAG_WINDOW_MOUSE_PASSTHROUGH) > 0) glfwWindowHint(GLFW_MOUSE_PASSTHROUGH, GLFW_TRUE);
     else glfwWindowHint(GLFW_MOUSE_PASSTHROUGH, GLFW_FALSE);
-#endif
 
     if (CORE.Window.flags & FLAG_MSAA_4X_HINT)
     {
