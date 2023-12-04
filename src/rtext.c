@@ -604,7 +604,6 @@ GlyphInfo *LoadFontData(const unsigned char *fileData, int dataSize, int fontSiz
 
             // Fill fontChars in case not provided externally
             // NOTE: By default we fill glyphCount consecutively, starting at 32 (Space)
-
             if (codepoints == NULL)
             {
                 codepoints = (int *)RL_MALLOC(codepointCount*sizeof(int));
@@ -612,7 +611,7 @@ GlyphInfo *LoadFontData(const unsigned char *fileData, int dataSize, int fontSiz
                 genFontChars = true;
             }
 
-            chars = (GlyphInfo *)RL_MALLOC(codepointCount*sizeof(GlyphInfo));
+            chars = (GlyphInfo *)RL_CALLOC(codepointCount, sizeof(GlyphInfo));
 
             // NOTE: Using simple packaging, one char after another
             for (int i = 0; i < codepointCount; i++)
@@ -626,54 +625,67 @@ GlyphInfo *LoadFontData(const unsigned char *fileData, int dataSize, int fontSiz
                 //      stbtt_GetCodepointBitmapBox()        -- how big the bitmap must be
                 //      stbtt_MakeCodepointBitmap()          -- renders into bitmap you provide
 
-                if (type != FONT_SDF) chars[i].image.data = stbtt_GetCodepointBitmap(&fontInfo, scaleFactor, scaleFactor, ch, &chw, &chh, &chars[i].offsetX, &chars[i].offsetY);
-                else if (ch != 32) chars[i].image.data = stbtt_GetCodepointSDF(&fontInfo, scaleFactor, ch, FONT_SDF_CHAR_PADDING, FONT_SDF_ON_EDGE_VALUE, FONT_SDF_PIXEL_DIST_SCALE, &chw, &chh, &chars[i].offsetX, &chars[i].offsetY);
-                else chars[i].image.data = NULL;
+                // Check if a glyph is available in the font
+                // WARNING: if (index == 0), glyph not found, it could fallback to default .notdef glyph (if defined in font)
+                int index = stbtt_FindGlyphIndex(&fontInfo, ch);
 
-                stbtt_GetCodepointHMetrics(&fontInfo, ch, &chars[i].advanceX, NULL);
-                chars[i].advanceX = (int)((float)chars[i].advanceX*scaleFactor);
-
-                // Load characters images
-                chars[i].image.width = chw;
-                chars[i].image.height = chh;
-                chars[i].image.mipmaps = 1;
-                chars[i].image.format = PIXELFORMAT_UNCOMPRESSED_GRAYSCALE;
-
-                chars[i].offsetY += (int)((float)ascent*scaleFactor);
-
-                // NOTE: We create an empty image for space character, it could be further required for atlas packing
-                if (ch == 32)
+                if (index > 0)
                 {
-                    Image imSpace = {
-                        .data = RL_CALLOC(chars[i].advanceX*fontSize, 2),
-                        .width = chars[i].advanceX,
-                        .height = fontSize,
-                        .mipmaps = 1,
-                        .format = PIXELFORMAT_UNCOMPRESSED_GRAYSCALE
-                    };
-
-                    chars[i].image = imSpace;
-                }
-
-                if (type == FONT_BITMAP)
-                {
-                    // Aliased bitmap (black & white) font generation, avoiding anti-aliasing
-                    // NOTE: For optimum results, bitmap font should be generated at base pixel size
-                    for (int p = 0; p < chw*chh; p++)
+                    switch (type)
                     {
-                        if (((unsigned char *)chars[i].image.data)[p] < FONT_BITMAP_ALPHA_THRESHOLD) ((unsigned char *)chars[i].image.data)[p] = 0;
-                        else ((unsigned char *)chars[i].image.data)[p] = 255;
+                        case FONT_DEFAULT:
+                        case FONT_BITMAP: chars[i].image.data = stbtt_GetCodepointBitmap(&fontInfo, scaleFactor, scaleFactor, ch, &chw, &chh, &chars[i].offsetX, &chars[i].offsetY); break;
+                        case FONT_SDF: if (ch != 32) chars[i].image.data = stbtt_GetCodepointSDF(&fontInfo, scaleFactor, ch, FONT_SDF_CHAR_PADDING, FONT_SDF_ON_EDGE_VALUE, FONT_SDF_PIXEL_DIST_SCALE, &chw, &chh, &chars[i].offsetX, &chars[i].offsetY); break;
+                        default: break;
+                    }
+
+                    if (chars[i].image.data != NULL)    // Glyph data has been found in the font
+                    {
+                        stbtt_GetCodepointHMetrics(&fontInfo, ch, &chars[i].advanceX, NULL);
+                        chars[i].advanceX = (int)((float)chars[i].advanceX*scaleFactor);
+
+                        // Load characters images
+                        chars[i].image.width = chw;
+                        chars[i].image.height = chh;
+                        chars[i].image.mipmaps = 1;
+                        chars[i].image.format = PIXELFORMAT_UNCOMPRESSED_GRAYSCALE;
+
+                        chars[i].offsetY += (int)((float)ascent*scaleFactor);
+                    }
+
+                    // NOTE: We create an empty image for space character, 
+                    // it could be further required for atlas packing
+                    if (ch == 32)
+                    {
+                        stbtt_GetCodepointHMetrics(&fontInfo, ch, &chars[i].advanceX, NULL);
+                        chars[i].advanceX = (int)((float)chars[i].advanceX*scaleFactor);
+
+                        Image imSpace = {
+                            .data = RL_CALLOC(chars[i].advanceX*fontSize, 2),
+                            .width = chars[i].advanceX,
+                            .height = fontSize,
+                            .mipmaps = 1,
+                            .format = PIXELFORMAT_UNCOMPRESSED_GRAYSCALE
+                        };
+
+                        chars[i].image = imSpace;
+                    }
+
+                    if (type == FONT_BITMAP)
+                    {
+                        // Aliased bitmap (black & white) font generation, avoiding anti-aliasing
+                        // NOTE: For optimum results, bitmap font should be generated at base pixel size
+                        for (int p = 0; p < chw*chh; p++)
+                        {
+                            if (((unsigned char *)chars[i].image.data)[p] < FONT_BITMAP_ALPHA_THRESHOLD) ((unsigned char *)chars[i].image.data)[p] = 0;
+                            else ((unsigned char *)chars[i].image.data)[p] = 255;
+                        }
                     }
                 }
-
-                // Get bounding box for character (maybe offset to account for chars that dip above or below the line)
-                /*
-                int chX1, chY1, chX2, chY2;
-                stbtt_GetCodepointBitmapBox(&fontInfo, ch, scaleFactor, scaleFactor, &chX1, &chY1, &chX2, &chY2);
-
-                TRACELOGD("FONT: Character box measures: %i, %i, %i, %i", chX1, chY1, chX2 - chX1, chY2 - chY1);
-                TRACELOGD("FONT: Character offsetY: %i", (int)((float)ascent*scaleFactor) + chY1);
-                */
+                else
+                {
+                    // TODO: Use some fallback glyph for codepoints not found in the font
+                }
             }
         }
         else TRACELOG(LOG_WARNING, "FONT: Failed to process TTF font data");

@@ -86,16 +86,21 @@
 #define RAYLIB_VERSION_PATCH 0
 #define RAYLIB_VERSION  "5.1-dev"
 
-// Function specifiers in case library is build/used as a shared library (Windows)
+// Function specifiers in case library is build/used as a shared library
 // NOTE: Microsoft specifiers to tell compiler that symbols are imported/exported from a .dll
+// NOTE: visibility("default") attribute makes symbols "visible" when compiled with -fvisibility=hidden
 #if defined(_WIN32)
+    #if defined(__TINYC__)
+        #define __declspec(x) __attribute__((x))
+    #endif
     #if defined(BUILD_LIBTYPE_SHARED)
-        #if defined(__TINYC__)
-            #define __declspec(x) __attribute__((x))
-        #endif
         #define RLAPI __declspec(dllexport)     // We are building the library as a Win32 shared library (.dll)
     #elif defined(USE_LIBTYPE_SHARED)
         #define RLAPI __declspec(dllimport)     // We are using the library as a Win32 shared library (.dll)
+    #endif
+#else
+    #if defined(BUILD_LIBTYPE_SHARED)
+        #define RLAPI __attribute__((visibility("default"))) // We are building as a Unix shared library (.so/.dylib)
     #endif
 #endif
 
@@ -1531,9 +1536,10 @@ RLAPI void UpdateMeshBuffer(Mesh mesh, int index, const void *data, int dataSize
 RLAPI void UnloadMesh(Mesh mesh);                                                           // Unload mesh data from CPU and GPU
 RLAPI void DrawMesh(Mesh mesh, Material material, Matrix transform);                        // Draw a 3d mesh with material and transform
 RLAPI void DrawMeshInstanced(Mesh mesh, Material material, const Matrix *transforms, int instances); // Draw multiple mesh instances with material and different transforms
-RLAPI bool ExportMesh(Mesh mesh, const char *fileName);                                     // Export mesh data to file, returns true on success
 RLAPI BoundingBox GetMeshBoundingBox(Mesh mesh);                                            // Compute mesh bounding box limits
 RLAPI void GenMeshTangents(Mesh *mesh);                                                     // Compute mesh tangents
+RLAPI bool ExportMesh(Mesh mesh, const char *fileName);                                     // Export mesh data to file, returns true on success
+RLAPI bool ExportMeshAsCode(Mesh mesh, const char *fileName);                               // Export mesh as code file (.h) defining multiple arrays of vertex attributes
 
 // Mesh generation functions
 RLAPI Mesh GenMeshPoly(int sides, float radius);                                            // Generate polygonal mesh

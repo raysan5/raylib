@@ -546,9 +546,6 @@ void PollInputEvents(void)
     CORE.Input.Keyboard.keyPressedQueueCount = 0;
     CORE.Input.Keyboard.charPressedQueueCount = 0;
 
-    // Reset key repeats
-    for (int i = 0; i < MAX_KEYBOARD_KEYS; i++) CORE.Input.Keyboard.keyRepeatInFrame[i] = 0;
-
     // Reset last gamepad button/axis registered state
     CORE.Input.Gamepad.lastButtonPressed = 0;       // GAMEPAD_BUTTON_UNKNOWN
     //CORE.Input.Gamepad.axisCount = 0;
@@ -602,7 +599,7 @@ void PollInputEvents(void)
     if (!platform.eventKeyboardMode) ProcessKeyboard();
 
     // NOTE: Mouse input events polling is done asynchronously in another pthread - EventThread()
-    // NOTE: Gamepad (Joystick) input events polling is done asynchonously in another pthread - GamepadThread()
+    // NOTE: Gamepad (Joystick) input events polling is done asynchronously in another pthread - GamepadThread()
 #endif
 
     // Handle the mouse/touch/gestures events:
@@ -1709,6 +1706,7 @@ static void PollKeyboardEvents(void)
                     // Event interface: 'value' is the value the event carries. Either a relative change for EV_REL,
                     // absolute new value for EV_ABS (joysticks ...), or 0 for EV_KEY for release, 1 for keypress and 2 for autorepeat
                     CORE.Input.Keyboard.currentKeyState[keycode] = (event.value >= 1)? 1 : 0;
+                    CORE.Input.Keyboard.keyRepeatInFrame[keycode] = (event.value == 2)? 1 : 0;
                     if (event.value >= 1)
                     {
                         CORE.Input.Keyboard.keyPressedQueue[CORE.Input.Keyboard.keyPressedQueueCount] = keycode;     // Register last key pressed

@@ -17,14 +17,15 @@ if(NOT glfw3_FOUND AND NOT USE_EXTERNAL_GLFW STREQUAL "ON" AND "${PLATFORM}" MAT
     set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
     set(GLFW_INSTALL OFF CACHE BOOL "" FORCE)
     set(GLFW_USE_WAYLAND ${USE_WAYLAND} CACHE BOOL "" FORCE)
+    set(GLFW_LIBRARY_TYPE "OBJECT" CACHE STRING "" FORCE)
     
-    set(WAS_SHARED ${BUILD_SHARED_LIBS})
-    set(BUILD_SHARED_LIBS OFF CACHE BOOL " " FORCE)
 
     add_subdirectory(external/glfw)
 
-    set(BUILD_SHARED_LIBS ${WAS_SHARED} CACHE BOOL " " FORCE)
-    unset(WAS_SHARED)
+    # Hide glfw's symbols when building a shared lib
+    if (BUILD_SHARED_LIBS)
+        set_property(TARGET glfw PROPERTY C_VISIBILITY_PRESET hidden)
+    endif()
     
     list(APPEND raylib_sources $<TARGET_OBJECTS:glfw>)
     include_directories(BEFORE SYSTEM external/glfw/include)

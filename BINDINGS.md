@@ -24,7 +24,7 @@ Some people ported raylib to other languages in form of bindings or wrappers to 
 | dlang_raylib       | 4.0     | [D](https://dlang.org)                  | MPL-2.0 |https://github.com/rc-05/dlang_raylib          |
 | rayex              | 3.7     | [elixir](https://elixir-lang.org/)      | Apache-2.0 | https://github.com/shiryel/rayex     |
 | raylib-factor      | **4.5** | [Factor](https://factorcode.org/)        | BSD  | https://github.com/factor/factor/blob/master/extra/raylib/raylib.factor   |
-| raylib-freebasic   | **4.5** | [FreeBASIC](https://www.freebasic.net/) | MIT | https://github.com/WIITD/raylib-freebasic     |
+| raylib-freebasic   | **5.0** | [FreeBASIC](https://www.freebasic.net/) | MIT | https://github.com/WIITD/raylib-freebasic     |
 | fortran-raylib     | **4.5** | [Fortran](https://fortran-lang.org/) | ISC | https://github.com/interkosmos/fortran-raylib     |
 | raylib for Pascal  | **4.5** | [Object Pascal](https://en.wikipedia.org/wiki/Object_Pascal) | Modified Zlib | https://github.com/tinyBigGAMES/raylib |
 | raylib-go          | **5.0** | [Go](https://golang.org/)            | Zlib | https://github.com/gen2brain/raylib-go       |
