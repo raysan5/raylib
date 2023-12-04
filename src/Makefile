@@ -443,6 +443,12 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
 endif
 ifeq ($(PLATFORM),PLATFORM_DESKTOP_SDL)
     INCLUDE_PATHS += -I$(SDL_INCLUDE_PATH)
+    # If on a platfrom with shell support, use pkg-confg to find dir if SDL_INCLUDE_PATH doesn't exist
+    ifeq ($(PLATFORM_OS),$(filter $(PLATFORM_OS),LINUX BSD OSX))
+        ifeq ($(shell if [ ! -d "$(SDL_INCLUDE_PATH)" ]; then echo 1; else echo 0; fi), 1)
+            INCLUDE_PATHS += $(shell pkg-config --cflags sdl2)
+        endif
+    endif
 endif
 ifeq ($(PLATFORM),PLATFORM_WEB)
     INCLUDE_PATHS += -Iexternal/glfw/include -Iexternal/glfw/deps/mingw
@@ -499,6 +505,12 @@ endif
 ifeq ($(PLATFORM),PLATFORM_DESKTOP_SDL)
     LDFLAGS += -Wl,-soname,lib$(RAYLIB_LIB_NAME).so.$(RAYLIB_API_VERSION)
     LDFLAGS += -L$(SDL_LIBRARY_PATH)
+    # If on a platfrom with shell support, use pkg-config to find dir if SDL_LIBRARY_PATH doesn't exist
+    ifeq ($(PLATFORM_OS),$(filter $(PLATFORM_OS),LINUX BSD OSX))
+        ifeq ($(shell if [ ! -d "$(SDL_LIBRARY_PATH)" ]; then echo 1; else echo 0; fi), 1)
+            LDFLAGS += $(shell pkg-config --libs sdl2)
+        endif
+    endif
 endif
 ifeq ($(PLATFORM),PLATFORM_DRM)
     LDFLAGS += -Wl,-soname,lib$(RAYLIB_LIB_NAME).so.$(RAYLIB_API_VERSION)
