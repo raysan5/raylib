@@ -1094,7 +1094,7 @@ void PollInputEvents(void)
                 KeyboardKey key = ConvertScancodeToKey(event.key.keysym.scancode);
                 if (key != KEY_NULL) CORE.Input.Keyboard.currentKeyState[key] = 1;
 
-                if(event.key.repeat) CORE.Input.Keyboard.keyRepeatInFrame[key] = 1;
+                if (event.key.repeat) CORE.Input.Keyboard.keyRepeatInFrame[key] = 1;
 
                 // TODO: Put exitKey verification outside the switch?
                 if (CORE.Input.Keyboard.currentKeyState[CORE.Input.Keyboard.exitKey])
