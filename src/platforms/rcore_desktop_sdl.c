@@ -969,9 +969,6 @@ void PollInputEvents(void)
     CORE.Input.Keyboard.keyPressedQueueCount = 0;
     CORE.Input.Keyboard.charPressedQueueCount = 0;
 
-    // Reset key repeats
-    for (int i = 0; i < MAX_KEYBOARD_KEYS; i++) CORE.Input.Keyboard.keyRepeatInFrame[i] = 0;
-
     // Reset mouse wheel
     CORE.Input.Mouse.currentWheelMove.x = 0;
     CORE.Input.Mouse.currentWheelMove.y = 0;
@@ -1096,6 +1093,8 @@ void PollInputEvents(void)
             {
                 KeyboardKey key = ConvertScancodeToKey(event.key.keysym.scancode);
                 if (key != KEY_NULL) CORE.Input.Keyboard.currentKeyState[key] = 1;
+
+                if(event.key.repeat) CORE.Input.Keyboard.keyRepeatInFrame[key] = 1;
 
                 // TODO: Put exitKey verification outside the switch?
                 if (CORE.Input.Keyboard.currentKeyState[CORE.Input.Keyboard.exitKey])
