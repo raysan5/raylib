@@ -1110,6 +1110,25 @@ void PollInputEvents(void)
                 if (key != KEY_NULL) CORE.Input.Keyboard.currentKeyState[key] = 0;
             } break;
 
+            case SDL_TEXTINPUT:
+            {
+                // Check if there is space available in the key queue
+                if (CORE.Input.Keyboard.keyPressedQueueCount < MAX_KEY_PRESSED_QUEUE)
+                {
+                    // Add character to the queue
+                    CORE.Input.Keyboard.keyPressedQueue[CORE.Input.Keyboard.keyPressedQueueCount] = event.text.text[0];
+                    CORE.Input.Keyboard.keyPressedQueueCount++;
+                }
+
+                // Check if there is space available in the queue
+                if (CORE.Input.Keyboard.charPressedQueueCount < MAX_CHAR_PRESSED_QUEUE)
+                {
+                    // Add character to the queue
+                    CORE.Input.Keyboard.charPressedQueue[CORE.Input.Keyboard.charPressedQueueCount] = event.text.text[0];
+                    CORE.Input.Keyboard.charPressedQueueCount++;
+                }
+            } break;
+
             // Check mouse events
             case SDL_MOUSEBUTTONDOWN:
             {
