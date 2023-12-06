@@ -447,7 +447,7 @@ void UpdateCamera(Camera *camera, int mode)
 {
     Vector2 mousePositionDelta = GetMouseDelta();
 
-    bool moveInWorldPlane = ((mode == CAMERA_THIRD_PERSON));
+    bool moveInWorldPlane = ((mode == CAMERA_FIRST_PERSON) || (mode == CAMERA_THIRD_PERSON));
     bool rotateAroundTarget = ((mode == CAMERA_THIRD_PERSON) || (mode == CAMERA_ORBITAL));
     bool lockView = ((mode == CAMERA_FREE) || (mode == CAMERA_FIRST_PERSON) || (mode == CAMERA_THIRD_PERSON) || (mode == CAMERA_ORBITAL));
     bool rotateUp = false;
