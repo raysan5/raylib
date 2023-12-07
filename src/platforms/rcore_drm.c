@@ -571,6 +571,7 @@ void PollInputEvents(void)
     {
         CORE.Input.Mouse.previousButtonState[i] = CORE.Input.Mouse.currentButtonState[i];
         CORE.Input.Mouse.currentButtonState[i] = platform.currentButtonStateEvdev[i];
+        CORE.Input.Touch.currentTouchState[i] = platform.currentButtonStateEvdev[i];
     }
 
     // Register gamepads buttons events
