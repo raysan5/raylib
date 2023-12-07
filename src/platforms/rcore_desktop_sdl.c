@@ -1184,19 +1184,22 @@ void PollInputEvents(void)
 
             // Check touch events
             // NOTE: These cases need to be reviewed on a real touch screen
-            case SDL_FINGERDOWN: {
+            case SDL_FINGERDOWN:
+            {
                 CORE.Input.Touch.currentTouchState[event.tfinger.fingerId] = 1;
 
                 touchAction = 1;
                 gestureUpdate = true;
             } break;
-            case SDL_FINGERUP: {
+            case SDL_FINGERUP:
+            {
                 CORE.Input.Touch.currentTouchState[event.tfinger.fingerId] = 0;
 
                 touchAction = 0;
                 gestureUpdate = true;
             } break;
-            case SDL_FINGERMOTION: {
+            case SDL_FINGERMOTION:
+            {
                 CORE.Input.Touch.position[event.tfinger.fingerId].x = (float)event.motion.x;
                 CORE.Input.Touch.position[event.tfinger.fingerId].y = (float)event.motion.y;
 
