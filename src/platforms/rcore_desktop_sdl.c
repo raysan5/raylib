@@ -996,6 +996,7 @@ void PollInputEvents(void)
     CORE.Input.Touch.position[0] = CORE.Input.Mouse.currentPosition;
 
     int touchAction = -1;       // 0-TOUCH_ACTION_UP, 1-TOUCH_ACTION_DOWN, 2-TOUCH_ACTION_MOVE
+    bool gestureUpdate = false; // Flag to note gestures require to update
     bool realTouch = false;     // Flag to differentiate real touch gestures from mouse ones
 
     // Register previous keys states
@@ -1141,6 +1142,7 @@ void PollInputEvents(void)
                 CORE.Input.Touch.currentTouchState[btn] = 1;
 
                 touchAction = 1;
+                gestureUpdate = true;
             } break;
             case SDL_MOUSEBUTTONUP:
             {
@@ -1154,6 +1156,7 @@ void PollInputEvents(void)
                 CORE.Input.Touch.currentTouchState[btn] = 0;
 
                 touchAction = 0;
+                gestureUpdate = true;
             } break;
             case SDL_MOUSEWHEEL:
             {
@@ -1176,6 +1179,7 @@ void PollInputEvents(void)
 
                 CORE.Input.Touch.position[0] = CORE.Input.Mouse.currentPosition;
                 touchAction = 2;
+                gestureUpdate = true;
             } break;
 
             // Check touch events
@@ -1188,6 +1192,7 @@ void PollInputEvents(void)
                 CORE.Input.Touch.position[touchId].y = event.tfinger.y * CORE.Window.screen.height;
 
                 touchAction = 1;
+                gestureUpdate = true;
                 realTouch = true;
             } break;
             case SDL_FINGERUP:
@@ -1198,6 +1203,7 @@ void PollInputEvents(void)
                 CORE.Input.Touch.position[touchId].y = event.tfinger.y * CORE.Window.screen.height;
 
                 touchAction = 0;
+                gestureUpdate = true;
                 realTouch = true;
             } break;
             case SDL_FINGERMOTION:
@@ -1207,6 +1213,7 @@ void PollInputEvents(void)
                 CORE.Input.Touch.position[touchId].y = event.tfinger.y * CORE.Window.screen.height;
 
                 touchAction = 2;
+                gestureUpdate = true;
                 realTouch = true;
             } break;
 
@@ -1232,7 +1239,7 @@ void PollInputEvents(void)
         }
 
 #if defined(SUPPORT_GESTURES_SYSTEM)
-        if (touchAction > -1)
+        if (gestureUpdate)
         {
             // Process mouse events as touches to be able to use mouse-gestures
             GestureEvent gestureEvent = { 0 };
@@ -1256,6 +1263,8 @@ void PollInputEvents(void)
 
             // Gesture data is sent to gestures-system for processing
             ProcessGestureEvent(gestureEvent);
+
+            gestureUpdate = false;
         }
 #endif
     }
