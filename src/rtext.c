@@ -1421,6 +1421,26 @@ int TextToInteger(const char *text)
     return value*sign;
 }
 
+float TextToFloat(const char *text) {
+    float value = 0;
+    float sign = 1;
+
+    if ((text[0] == '+') || (text[0] == '-')) {
+        if (text[0] == '-') sign = -1;
+        text++;
+    }
+    int i;
+    for (i = 0; ((text[i] >= '0') && (text[i] <= '9')); ++i) value = value * 10 + (float) (text[i] - '0');
+    if (text[i++] == '.') {
+        float divisor = 10;
+        for (; ((text[i] >= '0') && (text[i] <= '9')); ++i) {
+            value += (float) (text[i] - '0') / divisor;
+            divisor *= 10;
+        }
+    }
+    return value * sign;
+}
+
 #if defined(SUPPORT_TEXT_MANIPULATION)
 // Copy one string to another, returns bytes copied
 int TextCopy(char *dst, const char *src)
