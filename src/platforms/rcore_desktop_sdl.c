@@ -1186,10 +1186,10 @@ void PollInputEvents(void)
             // NOTE: These cases need to be reviewed on a real touch screen
             case SDL_FINGERDOWN:
             {
-                CORE.Input.Touch.currentTouchState[(int)event.tfinger.fingerId] = 1;
-
-                CORE.Input.Touch.position[(int)event.tfinger.fingerId].x = event.tfinger.x * CORE.Window.screen.width;
-                CORE.Input.Touch.position[(int)event.tfinger.fingerId].y = event.tfinger.y * CORE.Window.screen.height;
+                const int touchId = (int)event.tfinger.fingerId;
+                CORE.Input.Touch.currentTouchState[touchId] = 1;
+                CORE.Input.Touch.position[touchId].x = event.tfinger.x * CORE.Window.screen.width;
+                CORE.Input.Touch.position[touchId].y = event.tfinger.y * CORE.Window.screen.height;
 
                 touchAction = 1;
                 gestureUpdate = true;
@@ -1197,10 +1197,10 @@ void PollInputEvents(void)
             } break;
             case SDL_FINGERUP:
             {
-                CORE.Input.Touch.currentTouchState[(int)event.tfinger.fingerId] = 0;
-
-                CORE.Input.Touch.position[(int)event.tfinger.fingerId].x = event.tfinger.x * CORE.Window.screen.width;
-                CORE.Input.Touch.position[(int)event.tfinger.fingerId].y = event.tfinger.y * CORE.Window.screen.height;
+                const int touchId = (int)event.tfinger.fingerId;
+                CORE.Input.Touch.currentTouchState[touchId] = 0;
+                CORE.Input.Touch.position[touchId].x = event.tfinger.x * CORE.Window.screen.width;
+                CORE.Input.Touch.position[touchId].y = event.tfinger.y * CORE.Window.screen.height;
 
                 touchAction = 0;
                 gestureUpdate = true;
@@ -1208,8 +1208,9 @@ void PollInputEvents(void)
             } break;
             case SDL_FINGERMOTION:
             {
-                CORE.Input.Touch.position[(int)event.tfinger.fingerId].x = event.tfinger.x * CORE.Window.screen.width;
-                CORE.Input.Touch.position[(int)event.tfinger.fingerId].y = event.tfinger.y * CORE.Window.screen.height;
+                const int touchId = (int)event.tfinger.fingerId;
+                CORE.Input.Touch.position[touchId].x = event.tfinger.x * CORE.Window.screen.width;
+                CORE.Input.Touch.position[touchId].y = event.tfinger.y * CORE.Window.screen.height;
 
                 touchAction = 2;
                 gestureUpdate = true;
