@@ -60,7 +60,7 @@ int main()
             if (exitWindowRequested)
             {
                 DrawRectangle(0, 100, screenWidth, 200, BLACK);
-                DrawText("Are you sure you want to exit program? [Y/N]", 40, 180, 30, WHITE);
+                DrawText("Are you sure you want to quit? [Y/N]", 40, 180, 30, WHITE);
             }
             else DrawText("Try to close the window to get confirmation message!", 120, 200, 20, LIGHTGRAY);
 
