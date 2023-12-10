@@ -257,9 +257,10 @@ void SetWindowState(unsigned int flags)
     }
 
     // State change: FLAG_WINDOW_RESIZABLE
-    if ((flags & FLAG_WINDOW_RESIZABLE) > 0)
+    if (((CORE.Window.flags & FLAG_WINDOW_RESIZABLE) != (flags & FLAG_WINDOW_RESIZABLE)) && ((flags & FLAG_WINDOW_RESIZABLE) > 0))
     {
-        TRACELOG(LOG_WARNING, "SetWindowState(FLAG_WINDOW_RESIZABLE) not available yet on target platform");
+        glfwSetWindowAttrib(platform.handle, GLFW_RESIZABLE, GLFW_TRUE);
+        CORE.Window.flags |= FLAG_WINDOW_RESIZABLE;
     }
 
     // State change: FLAG_WINDOW_UNDECORATED
@@ -363,9 +364,10 @@ void ClearWindowState(unsigned int flags)
     }
 
     // State change: FLAG_WINDOW_RESIZABLE
-    if ((flags & FLAG_WINDOW_RESIZABLE) > 0)
+    if (((CORE.Window.flags & FLAG_WINDOW_RESIZABLE) > 0) && ((flags & FLAG_WINDOW_RESIZABLE) > 0))
     {
-        TRACELOG(LOG_WARNING, "ClearWindowState(FLAG_WINDOW_RESIZABLE) not available yet on target platform");
+        glfwSetWindowAttrib(platform.handle, GLFW_RESIZABLE, GLFW_FALSE);
+        CORE.Window.flags &= ~FLAG_WINDOW_RESIZABLE;
     }
 
     // State change: FLAG_WINDOW_HIDDEN
