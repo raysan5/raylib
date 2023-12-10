@@ -235,13 +235,213 @@ void RestoreWindow(void)
 // Set window configuration state using flags
 void SetWindowState(unsigned int flags)
 {
-    TRACELOG(LOG_WARNING, "SetWindowState() not available on target platform");
+    // Check previous state and requested state to apply required changes
+    // NOTE: In most cases the functions already change the flags internally
+
+    // State change: FLAG_VSYNC_HINT
+    if ((flags & FLAG_VSYNC_HINT) > 0)
+    {
+        TRACELOG(LOG_WARNING, "SetWindowState(FLAG_VSYNC_HINT) not available on target platform");
+    }
+
+    // State change: FLAG_BORDERLESS_WINDOWED_MODE
+    if (((CORE.Window.flags & FLAG_BORDERLESS_WINDOWED_MODE) != (flags & FLAG_BORDERLESS_WINDOWED_MODE)) && ((flags & FLAG_BORDERLESS_WINDOWED_MODE) > 0))
+    {
+        ToggleBorderlessWindowed();     // NOTE: Window state flag updated inside function
+    }
+
+    // State change: FLAG_FULLSCREEN_MODE
+    if ((flags & FLAG_FULLSCREEN_MODE) > 0)
+    {
+        TRACELOG(LOG_WARNING, "SetWindowState(FLAG_FULLSCREEN_MODE) not available yet on target platform");
+    }
+
+    // State change: FLAG_WINDOW_RESIZABLE
+    if ((flags & FLAG_WINDOW_RESIZABLE) > 0)
+    {
+        TRACELOG(LOG_WARNING, "SetWindowState(FLAG_WINDOW_RESIZABLE) not available yet on target platform");
+    }
+
+    // State change: FLAG_WINDOW_UNDECORATED
+    if ((flags & FLAG_WINDOW_UNDECORATED) > 0)
+    {
+        TRACELOG(LOG_WARNING, "SetWindowState(FLAG_WINDOW_UNDECORATED) not available on target platform");
+    }
+
+    // State change: FLAG_WINDOW_HIDDEN
+    if ((flags & FLAG_WINDOW_HIDDEN) > 0)
+    {
+        TRACELOG(LOG_WARNING, "SetWindowState(FLAG_WINDOW_HIDDEN) not available on target platform");
+    }
+
+    // State change: FLAG_WINDOW_MINIMIZED
+    if ((flags & FLAG_WINDOW_MINIMIZED) > 0)
+    {
+        TRACELOG(LOG_WARNING, "SetWindowState(FLAG_WINDOW_MINIMIZED) not available on target platform");
+    }
+
+    // State change: FLAG_WINDOW_MAXIMIZED
+    if ((flags & FLAG_WINDOW_MAXIMIZED) > 0)
+    {
+        TRACELOG(LOG_WARNING, "SetWindowState(FLAG_WINDOW_MAXIMIZED) not available on target platform");
+    }
+
+    // State change: FLAG_WINDOW_UNFOCUSED
+    if ((flags & FLAG_WINDOW_UNFOCUSED) > 0)
+    {
+        TRACELOG(LOG_WARNING, "SetWindowState(FLAG_WINDOW_UNFOCUSED) not available on target platform");
+    }
+
+    // State change: FLAG_WINDOW_TOPMOST
+    if ((flags & FLAG_WINDOW_TOPMOST) > 0)
+    {
+        TRACELOG(LOG_WARNING, "SetWindowState(FLAG_WINDOW_TOPMOST) not available on target platform");
+    }
+
+    // State change: FLAG_WINDOW_ALWAYS_RUN
+    if ((flags & FLAG_WINDOW_ALWAYS_RUN) > 0)
+    {
+        TRACELOG(LOG_WARNING, "SetWindowState(FLAG_WINDOW_ALWAYS_RUN) not available on target platform");
+    }
+
+    // The following states can not be changed after window creation
+    // NOTE: Review for PLATFORM_WEB
+
+    // State change: FLAG_WINDOW_TRANSPARENT
+    if ((flags & FLAG_WINDOW_TRANSPARENT) > 0)
+    {
+        TRACELOG(LOG_WARNING, "SetWindowState(FLAG_WINDOW_TRANSPARENT) not available on target platform");
+    }
+
+    // State change: FLAG_WINDOW_HIGHDPI
+    if ((flags & FLAG_WINDOW_HIGHDPI) > 0)
+    {
+        TRACELOG(LOG_WARNING, "SetWindowState(FLAG_WINDOW_HIGHDPI) not available on target platform");
+    }
+
+    // State change: FLAG_WINDOW_MOUSE_PASSTHROUGH
+    if ((flags & FLAG_WINDOW_MOUSE_PASSTHROUGH) > 0)
+    {
+        TRACELOG(LOG_WARNING, "SetWindowState(FLAG_WINDOW_MOUSE_PASSTHROUGH) not available on target platform");
+    }
+
+    // State change: FLAG_MSAA_4X_HINT
+    if ((flags & FLAG_MSAA_4X_HINT) > 0)
+    {
+        TRACELOG(LOG_WARNING, "SetWindowState(FLAG_MSAA_4X_HINT) not available on target platform");
+    }
+
+    // State change: FLAG_INTERLACED_HINT
+    if ((flags & FLAG_INTERLACED_HINT) > 0)
+    {
+        TRACELOG(LOG_WARNING, "SetWindowState(FLAG_INTERLACED_HINT) not available on target platform");
+    }
 }
 
 // Clear window configuration state flags
 void ClearWindowState(unsigned int flags)
 {
-    TRACELOG(LOG_WARNING, "ClearWindowState() not available on target platform");
+    // Check previous state and requested state to apply required changes
+    // NOTE: In most cases the functions already change the flags internally
+
+    // State change: FLAG_VSYNC_HINT
+    if ((flags & FLAG_VSYNC_HINT) > 0)
+    {
+        TRACELOG(LOG_WARNING, "ClearWindowState(FLAG_VSYNC_HINT) not available on target platform");
+    }
+
+    // State change: FLAG_BORDERLESS_WINDOWED_MODE
+    if (((CORE.Window.flags & FLAG_BORDERLESS_WINDOWED_MODE) > 0) && ((flags & FLAG_BORDERLESS_WINDOWED_MODE) > 0))
+    {
+        ToggleBorderlessWindowed();     // NOTE: Window state flag updated inside function
+    }
+
+    // State change: FLAG_FULLSCREEN_MODE
+    if ((flags & FLAG_FULLSCREEN_MODE) > 0)
+    {
+        TRACELOG(LOG_WARNING, "ClearWindowState(FLAG_FULLSCREEN_MODE) not available yet on target platform");
+    }
+
+    // State change: FLAG_WINDOW_RESIZABLE
+    if ((flags & FLAG_WINDOW_RESIZABLE) > 0)
+    {
+        TRACELOG(LOG_WARNING, "ClearWindowState(FLAG_WINDOW_RESIZABLE) not available yet on target platform");
+    }
+
+    // State change: FLAG_WINDOW_HIDDEN
+    if ((flags & FLAG_WINDOW_HIDDEN) > 0)
+    {
+        TRACELOG(LOG_WARNING, "ClearWindowState(FLAG_WINDOW_HIDDEN) not available on target platform");
+    }
+
+    // State change: FLAG_WINDOW_MINIMIZED
+    if ((flags & FLAG_WINDOW_MINIMIZED) > 0)
+    {
+        TRACELOG(LOG_WARNING, "ClearWindowState(FLAG_WINDOW_MINIMIZED) not available on target platform");
+    }
+
+    // State change: FLAG_WINDOW_MAXIMIZED
+    if ((flags & FLAG_WINDOW_MAXIMIZED) > 0)
+    {
+        TRACELOG(LOG_WARNING, "ClearWindowState(FLAG_WINDOW_MAXIMIZED) not available on target platform");
+    }
+
+    // State change: FLAG_WINDOW_UNDECORATED
+    if ((flags & FLAG_WINDOW_UNDECORATED) > 0)
+    {
+        TRACELOG(LOG_WARNING, "ClearWindowState(FLAG_WINDOW_UNDECORATED) not available on target platform");
+    }
+
+    // State change: FLAG_WINDOW_UNFOCUSED
+    if ((flags & FLAG_WINDOW_UNFOCUSED) > 0)
+    {
+        TRACELOG(LOG_WARNING, "ClearWindowState(FLAG_WINDOW_UNFOCUSED) not available on target platform");
+    }
+
+    // State change: FLAG_WINDOW_TOPMOST
+    if ((flags & FLAG_WINDOW_TOPMOST) > 0)
+    {
+        TRACELOG(LOG_WARNING, "ClearWindowState(FLAG_WINDOW_TOPMOST) not available on target platform");
+    }
+
+    // State change: FLAG_WINDOW_ALWAYS_RUN
+    if ((flags & FLAG_WINDOW_ALWAYS_RUN) > 0)
+    {
+        TRACELOG(LOG_WARNING, "ClearWindowState(FLAG_WINDOW_ALWAYS_RUN) not available on target platform");
+    }
+
+    // The following states can not be changed after window creation
+    // NOTE: Review for PLATFORM_WEB
+
+    // State change: FLAG_WINDOW_TRANSPARENT
+    if ((flags & FLAG_WINDOW_TRANSPARENT) > 0)
+    {
+        TRACELOG(LOG_WARNING, "ClearWindowState(FLAG_WINDOW_TRANSPARENT) not available on target platform");
+    }
+
+    // State change: FLAG_WINDOW_HIGHDPI
+    if ((flags & FLAG_WINDOW_HIGHDPI) > 0)
+    {
+        TRACELOG(LOG_WARNING, "ClearWindowState(FLAG_WINDOW_HIGHDPI) not available on target platform");
+    }
+
+    // State change: FLAG_WINDOW_MOUSE_PASSTHROUGH
+    if ((flags & FLAG_WINDOW_MOUSE_PASSTHROUGH) > 0)
+    {
+        TRACELOG(LOG_WARNING, "ClearWindowState(FLAG_WINDOW_MOUSE_PASSTHROUGH) not available on target platform");
+    }
+
+    // State change: FLAG_MSAA_4X_HINT
+    if ((flags & FLAG_MSAA_4X_HINT) > 0)
+    {
+        TRACELOG(LOG_WARNING, "ClearWindowState(FLAG_MSAA_4X_HINT) not available on target platform");
+    }
+
+    // State change: FLAG_INTERLACED_HINT
+    if ((flags & FLAG_INTERLACED_HINT) > 0)
+    {
+        TRACELOG(LOG_WARNING, "ClearWindowState(FLAG_INTERLACED_HINT) not available on target platform");
+    }
 }
 
 // Set icon for window
