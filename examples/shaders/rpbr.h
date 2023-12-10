@@ -174,6 +174,7 @@ void PBRSetAmbient(Shader shader, Color color, float intensity);
 
 PBRModel PBRModelLoad(const char *fileName);
 void PBRLoadTextures(PBRMaterial *pbrMat,PBRTexType pbrTexType,const char *fileName);
+void UnloadPBRMaterial(PBRMaterial pbrMat)
 void PBRSetColor(PBRMaterial *pbrMat,PBRColorType pbrColorType,Color color);
 void PBRSetVec2(PBRMaterial *pbrMat,PBRVec2Type type,Vector2 value);
 void PBRSetFloat(PBRMaterial *pbrMat, PBRFloatType pbrParamType, float value);
@@ -332,6 +333,13 @@ void PBRLoadTextures(PBRMaterial *pbrMat,PBRTexType pbrTexType,const char *fileN
             pbrMat->useTexEmissive = 1;
             break;
     }
+}
+
+void UnloadPBRMaterial(PBRMaterial pbrMat){
+    if(pbrMat.useTexAlbedo == 1) UnloadTexture(pbrMat.texAlbedo);
+    if(pbrMat.useTexNormal == 1) UnloadTexture(pbrMat.texNormal);
+    if(pbrMat.useTexMRA == 1) UnloadTexture(pbrMat.texMRA);
+    if(pbrMat.useTexEmissive == 1) UnloadTexture(pbrMat.texEmissive);
 }
 
 void PBRSetColor(PBRMaterial *pbrMat,PBRColorType pbrColorType,Color color){

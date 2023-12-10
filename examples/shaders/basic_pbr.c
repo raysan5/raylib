@@ -157,10 +157,12 @@ int main()
     // De-Initialization
     //--------------------------------------------------------------------------------------
 
-    UnloadModel(floor.model);
-    //UnloadModel(model.model);               // Unload model
-    UnloadShader(shader);             // Unload Shader
-
+    UnloadModel(floor.model);           // Unload model
+    UnloadModel(model.model);           // Unload model
+    UnloadShader(shader);               // Unload Shader
+    UnloadPBRMaterial(floor_mat);       // Unload PBRMaterial
+    UnloadPBRMaterial(model_mat);       // Unload PBRMaterial
+    
     CloseWindow();              // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
 
