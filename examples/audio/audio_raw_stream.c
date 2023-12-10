@@ -38,8 +38,7 @@ float sineIdx = 0.0f;
 void AudioInputCallback(void *buffer, unsigned int frames)
 {
     audioFrequency = frequency + (audioFrequency - frequency)*0.95f;
-    audioFrequency += 1.0f;
-    audioFrequency -= 1.0f;
+
     float incr = audioFrequency/44100.0f;
     short *d = (short *)buffer;
 
