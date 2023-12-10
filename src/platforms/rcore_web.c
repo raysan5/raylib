@@ -211,10 +211,10 @@ void ToggleFullscreen(void)
 // Toggle borderless windowed mode
 void ToggleBorderlessWindowed(void)
 {
-    const bool wasFullscreen = EM_ASM_INT( { if ( document.fullscreenElement ) return 1; }, 0);
+    const bool wasFullscreen = EM_ASM_INT( { if (document.fullscreenElement) return 1; }, 0);
     if (wasFullscreen)
     {
-        EM_ASM( document.exitFullscreen(); );
+        EM_ASM(document.exitFullscreen(););
 
         CORE.Window.fullscreen = false;
         CORE.Window.flags &= ~FLAG_FULLSCREEN_MODE;
