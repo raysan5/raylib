@@ -211,7 +211,33 @@ void ToggleFullscreen(void)
 // Toggle borderless windowed mode
 void ToggleBorderlessWindowed(void)
 {
-    TRACELOG(LOG_WARNING, "ToggleBorderlessWindowed() not available on target platform");
+    const bool wasFullscreen = EM_ASM_INT( { if ( document.fullscreenElement ) return 1; }, 0);
+    if (wasFullscreen)
+    {
+        EM_ASM( document.exitFullscreen(); );
+
+        CORE.Window.fullscreen = false;
+        CORE.Window.flags &= ~FLAG_FULLSCREEN_MODE;
+    }
+
+    if (!IsWindowState(FLAG_BORDERLESS_WINDOWED_MODE))
+    {
+        // NOTE: 1. The setTimeouts handle the browser mode change delay
+        //       2. The style unset handles the possibility of a width="100%" like on the default shell.html file
+        EM_ASM(
+            setTimeout(function()
+            {
+                Module.requestFullscreen(true, true);
+                setTimeout(function()
+                {
+                    canvas.style.width="unset";
+                }, 100);
+            }, 100);
+        );
+
+        CORE.Window.flags |= FLAG_BORDERLESS_WINDOWED_MODE;
+    }
+    else CORE.Window.flags &= ~FLAG_BORDERLESS_WINDOWED_MODE;
 }
 
 // Set window state: maximized, if resizable
