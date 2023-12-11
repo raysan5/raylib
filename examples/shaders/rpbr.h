@@ -385,18 +385,20 @@ void PBRSetFloat(PBRMaterial *pbrMat, PBRFloatType pbrParamType, float value){
             pbrMat->emissivePower = value;
             SetShaderValue(pbrMat->pbrShader,pbrMat->emissivePowerLoc,&pbrMat->emissivePower,SHADER_UNIFORM_FLOAT);
             break;
-    }}
+    }
+}
 
 
 void PBRSetVec2(PBRMaterial *pbrMat,PBRVec2Type type,Vector2 value){
-    pbrMat->texTiling[0] =value.x;
-    pbrMat->texTiling[1] =value.y;
     switch(type){
         case PBR_VEC2_TILING:
-
+            pbrMat->texTiling[0] = value.x;
+            pbrMat->texTiling[1] = value.y;
             SetShaderValue(pbrMat->pbrShader,pbrMat->texTilingLoc,&pbrMat->texTiling,SHADER_UNIFORM_VEC2);
             break;
         case PBR_VEC2_OFFSET:
+            pbrMat->texOffset[0] = value.x;
+            pbrMat->texOffset[1] = value.y;
             SetShaderValue(pbrMat->pbrShader,pbrMat->texOffsetLoc,&pbrMat->texOffset,SHADER_UNIFORM_VEC2);
             break;
     }
