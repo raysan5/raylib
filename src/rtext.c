@@ -1421,24 +1421,26 @@ int TextToInteger(const char *text)
     return value*sign;
 }
 
-float TextToFloat(const char *text) {
-    float value = 0;
-    float sign = 1;
+float TextToFloat(const char *text)
+{
+    float value = 0.0f;
+    float sign = 1.0f;
 
-    if ((text[0] == '+') || (text[0] == '-')) {
+    if ((text[0] == '+') || (text[0] == '-'))
+    {
         if (text[0] == '-') sign = -1;
         text++;
     }
-    int i;
-    for (i = 0; ((text[i] >= '0') && (text[i] <= '9')); ++i) value = value * 10 + (float) (text[i] - '0');
-    if (text[i++] == '.') {
-        float divisor = 10;
-        for (; ((text[i] >= '0') && (text[i] <= '9')); ++i) {
-            value += (float) (text[i] - '0') / divisor;
-            divisor *= 10;
-        }
+    int i = 0;
+    for (; ((text[i] >= '0') && (text[i] <= '9')); ++i) value = value*10.0f + (float)(text[i] - '0');
+    if (text[i++] != '.') return value*sign;
+    float divisor = 10.0f;
+    for (; ((text[i] >= '0') && (text[i] <= '9')); ++i)
+    {
+        value += ((float)(text[i] - '0'))/divisor;
+        divisor = divisor*10.0f;
     }
-    return value * sign;
+    return value;
 }
 
 #if defined(SUPPORT_TEXT_MANIPULATION)
