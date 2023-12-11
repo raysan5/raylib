@@ -996,7 +996,7 @@ void PollInputEvents(void)
     CORE.Input.Touch.position[0] = CORE.Input.Mouse.currentPosition;
 
     int touchAction = -1;       // 0-TOUCH_ACTION_UP, 1-TOUCH_ACTION_DOWN, 2-TOUCH_ACTION_MOVE
-    bool gestureUpdate = false; // Flag to note gestures require to update
+    bool realTouch = false;     // Flag to differentiate real touch gestures from mouse ones
 
     // Register previous keys states
     // NOTE: Android supports up to 260 keys
@@ -1141,7 +1141,6 @@ void PollInputEvents(void)
                 CORE.Input.Touch.currentTouchState[btn] = 1;
 
                 touchAction = 1;
-                gestureUpdate = true;
             } break;
             case SDL_MOUSEBUTTONUP:
             {
@@ -1155,7 +1154,6 @@ void PollInputEvents(void)
                 CORE.Input.Touch.currentTouchState[btn] = 0;
 
                 touchAction = 0;
-                gestureUpdate = true;
             } break;
             case SDL_MOUSEWHEEL:
             {
@@ -1178,32 +1176,38 @@ void PollInputEvents(void)
 
                 CORE.Input.Touch.position[0] = CORE.Input.Mouse.currentPosition;
                 touchAction = 2;
-                gestureUpdate = true;
             } break;
 
             // Check touch events
             // NOTE: These cases need to be reviewed on a real touch screen
             case SDL_FINGERDOWN:
             {
-                CORE.Input.Touch.currentTouchState[event.tfinger.fingerId] = 1;
+                const int touchId = (int)event.tfinger.fingerId;
+                CORE.Input.Touch.currentTouchState[touchId] = 1;
+                CORE.Input.Touch.position[touchId].x = event.tfinger.x * CORE.Window.screen.width;
+                CORE.Input.Touch.position[touchId].y = event.tfinger.y * CORE.Window.screen.height;
 
                 touchAction = 1;
-                gestureUpdate = true;
+                realTouch = true;
             } break;
             case SDL_FINGERUP:
             {
-                CORE.Input.Touch.currentTouchState[event.tfinger.fingerId] = 0;
+                const int touchId = (int)event.tfinger.fingerId;
+                CORE.Input.Touch.currentTouchState[touchId] = 0;
+                CORE.Input.Touch.position[touchId].x = event.tfinger.x * CORE.Window.screen.width;
+                CORE.Input.Touch.position[touchId].y = event.tfinger.y * CORE.Window.screen.height;
 
                 touchAction = 0;
-                gestureUpdate = true;
+                realTouch = true;
             } break;
             case SDL_FINGERMOTION:
             {
-                CORE.Input.Touch.position[event.tfinger.fingerId].x = (float)event.motion.x;
-                CORE.Input.Touch.position[event.tfinger.fingerId].y = (float)event.motion.y;
+                const int touchId = (int)event.tfinger.fingerId;
+                CORE.Input.Touch.position[touchId].x = event.tfinger.x * CORE.Window.screen.width;
+                CORE.Input.Touch.position[touchId].y = event.tfinger.y * CORE.Window.screen.height;
 
                 touchAction = 2;
-                gestureUpdate = true;
+                realTouch = true;
             } break;
 
             // Check gamepad events
@@ -1228,7 +1232,7 @@ void PollInputEvents(void)
         }
 
 #if defined(SUPPORT_GESTURES_SYSTEM)
-        if (gestureUpdate)
+        if (touchAction > -1)
         {
             // Process mouse events as touches to be able to use mouse-gestures
             GestureEvent gestureEvent = { 0 };
@@ -1243,7 +1247,7 @@ void PollInputEvents(void)
             gestureEvent.pointCount = 1;
 
             // Register touch points position, only one point registered
-            if (touchAction == 2) gestureEvent.position[0] = CORE.Input.Touch.position[0];
+            if (touchAction == 2 || realTouch) gestureEvent.position[0] = CORE.Input.Touch.position[0];
             else gestureEvent.position[0] = GetMousePosition();
 
             // Normalize gestureEvent.position[0] for CORE.Window.screen.width and CORE.Window.screen.height
@@ -1252,6 +1256,8 @@ void PollInputEvents(void)
 
             // Gesture data is sent to gestures-system for processing
             ProcessGestureEvent(gestureEvent);
+
+            touchAction = -1;
         }
 #endif
     }
@@ -1403,6 +1409,11 @@ int InitPlatform(void)
         platform.gamepad = SDL_JoystickOpen(0);
         //if (platform.gamepadgamepad == NULL) TRACELOG(LOG_WARNING, "PLATFORM: Unable to open game controller [ERROR: %s]", SDL_GetError());
     }
+
+    // Disable mouse events being interpreted as touch events
+    // NOTE: This is wanted because there are SDL_FINGER* events available which provide unique data
+    //       Due to the way PollInputEvents() and rgestures.h are currently implemented, setting this won't break SUPPORT_MOUSE_GESTURES
+    SDL_SetHint(SDL_HINT_TOUCH_MOUSE_EVENTS, "0");
 
     SDL_EventState(SDL_DROPFILE, SDL_ENABLE);
     //----------------------------------------------------------------------------
