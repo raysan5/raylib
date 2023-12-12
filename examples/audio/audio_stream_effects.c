@@ -13,8 +13,7 @@
 
 #include "raylib.h"
 
-#include <stdlib.h>         // Required for: NULL
-#include <stdbool.h>        // Required for: bool
+#include <stdlib.h> // Required for: NULL
 
 // Required delay effect variables
 static float *delayBuffer = NULL;
@@ -151,7 +150,7 @@ static void AudioProcessEffectLPF(void *buffer, unsigned int frames)
     const float k = cutoff / (cutoff + 0.1591549431f); // RC filter formula
 
     // Converts the buffer data before using it
-    float * bufferData = (float *)buffer;
+    float *bufferData = (float *)buffer;
     for (unsigned int i = 0; i < frames*2; i += 2)
     {
         const float l = bufferData[i];
