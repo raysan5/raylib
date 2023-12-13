@@ -173,8 +173,10 @@ void PBRLightUpdate(Shader shader, PBRLight light);
 void PBRSetAmbient(Shader shader, Color color, float intensity);
 
 PBRModel PBRModelLoad(const char *fileName);
+PBRModel PBRModelLoadFromMesh(Mesh mesh);
+
 void PBRLoadTextures(PBRMaterial *pbrMat,PBRTexType pbrTexType,const char *fileName);
-void UnloadPBRMaterial(PBRMaterial pbrMat)
+void UnloadPBRMaterial(PBRMaterial pbrMat);
 void PBRSetColor(PBRMaterial *pbrMat,PBRColorType pbrColorType,Color color);
 void PBRSetVec2(PBRMaterial *pbrMat,PBRVec2Type type,Vector2 value);
 void PBRSetFloat(PBRMaterial *pbrMat, PBRFloatType pbrParamType, float value);
@@ -311,7 +313,6 @@ void PBRMaterialSetup(PBRMaterial *pbrMat, Shader pbrShader, PBREnvironment* env
     SetShaderValue(pbrMat->pbrShader,pbrMat->texTilingLoc,pbrMat->texTiling,SHADER_UNIFORM_VEC2);
     SetShaderValue(pbrMat->pbrShader,pbrMat->texOffsetLoc,pbrMat->texOffset,SHADER_UNIFORM_VEC2);
 }
-
 
 void PBRLoadTextures(PBRMaterial *pbrMat,PBRTexType pbrTexType,const char *fileName){
     if(pbrMat == NULL) return;
@@ -457,4 +458,9 @@ PBRModel PBRModelLoad(const char *fileName){
     return pbrModel;
 }
 
+PBRModel PBRModelLoadFromMesh(Mesh mesh){
+    PBRModel pbrModel = (PBRModel){0};
+    pbrModel.model = LoadModelFromMesh(mesh);
+    return pbrModel;
+}
 #endif // RPBR_IMPLEMENTATION

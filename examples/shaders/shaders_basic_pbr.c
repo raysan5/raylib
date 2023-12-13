@@ -72,6 +72,7 @@ int main()
     PBRSetMaterial(&model,&model_mat,0);
 
     PBRModel floor = PBRModelLoad("resources/models/plane.glb");
+
     PBRMaterial floor_mat = (PBRMaterial){0};
     PBRMaterialSetup(&floor_mat, shader, NULL);
     PBRLoadTextures(&floor_mat, PBR_TEXTURE_ALBEDO, "resources/road_a.png");
