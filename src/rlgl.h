@@ -238,6 +238,13 @@
     #define RL_CULL_DISTANCE_FAR                1000.0      // Default far cull distance
 #endif
 
+// Index buffer params
+#if defined(GRAPHICS_API_OPENGL_ES2)
+#define RL_INDEX_BUFFER_ELEMENT_TYPE unsigned short
+#else
+#define RL_INDEX_BUFFER_ELEMENT_TYPE unsigned int
+#endif
+
 // Texture parameters (equivalent to OpenGL defines)
 #define RL_TEXTURE_WRAP_S                       0x2802      // GL_TEXTURE_WRAP_S
 #define RL_TEXTURE_WRAP_T                       0x2803      // GL_TEXTURE_WRAP_T
@@ -3729,10 +3736,10 @@ void rlDrawVertexArray(int offset, int count)
 void rlDrawVertexArrayElements(int offset, int count, const void *buffer)
 {
     // NOTE: Added pointer math separately from function to avoid UBSAN complaining
-    unsigned short *bufferPtr = (unsigned short *)buffer;
+    RL_INDEX_BUFFER_ELEMENT_TYPE *bufferPtr = (RL_INDEX_BUFFER_ELEMENT_TYPE *)buffer;
     if (offset > 0) bufferPtr += offset;
 
-    glDrawElements(GL_TRIANGLES, count, GL_UNSIGNED_SHORT, (const unsigned short *)bufferPtr);
+    glDrawElements(GL_TRIANGLES, count, GL_UNSIGNED_SHORT, (const RL_INDEX_BUFFER_ELEMENT_TYPE *)bufferPtr);
 }
 
 // Draw vertex array instanced
@@ -3748,10 +3755,10 @@ void rlDrawVertexArrayElementsInstanced(int offset, int count, const void *buffe
 {
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     // NOTE: Added pointer math separately from function to avoid UBSAN complaining
-    unsigned short *bufferPtr = (unsigned short *)buffer;
+    RL_INDEX_BUFFER_ELEMENT_TYPE *bufferPtr = (RL_INDEX_BUFFER_ELEMENT_TYPE *)buffer;
     if (offset > 0) bufferPtr += offset;
 
-    glDrawElementsInstanced(GL_TRIANGLES, count, GL_UNSIGNED_SHORT, (const unsigned short *)bufferPtr, instances);
+    glDrawElementsInstanced(GL_TRIANGLES, count, GL_UNSIGNED_SHORT, (const RL_INDEX_BUFFER_ELEMENT_TYPE *)bufferPtr, instances);
 #endif
 }
 
