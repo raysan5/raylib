@@ -484,7 +484,6 @@ typedef struct VrDeviceInfo {
     int vResolution;                // Vertical resolution in pixels
     float hScreenSize;              // Horizontal size in meters
     float vScreenSize;              // Vertical size in meters
-    float vScreenCenter;            // Screen center in meters
     float eyeToScreenDistance;      // Distance between eye and display in meters
     float lensSeparationDistance;   // Lens separation distance in meters
     float interpupillaryDistance;   // IPD (distance between pupils) in meters
@@ -1481,6 +1480,7 @@ RLAPI const char *TextToUpper(const char *text);                      // Get upp
 RLAPI const char *TextToLower(const char *text);                      // Get lower case version of provided string
 RLAPI const char *TextToPascal(const char *text);                     // Get Pascal case notation version of provided string
 RLAPI int TextToInteger(const char *text);                            // Get integer value from text (negative values not supported)
+RLAPI float TextToFloat(const char *text);                            // Get float value from text (negative values not supported)
 
 //------------------------------------------------------------------------------------
 // Basic 3d Shapes Drawing Functions (Module: models)
