@@ -39,7 +39,7 @@ int main(void)
     Rectangle destRec = { screenWidth/2.0f, screenHeight/2.0f, frameWidth*2.0f, frameHeight*2.0f };
 
     // Origin of the texture (rotation/scale point), it's relative to destination rectangle size
-    Vector2 origin = { (float)frameWidth, (float)frameHeight };
+    Vector2 origin = { destRec.width/2, destRec.height/2 };
 
     int rotation = 0;
 
