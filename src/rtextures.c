@@ -213,14 +213,14 @@
 #define STBIR_MALLOC(size,c) ((void)(c), RL_MALLOC(size))
 #define STBIR_FREE(ptr,c) ((void)(c), RL_FREE(ptr))
 #define STB_IMAGE_RESIZE_IMPLEMENTATION
-#include "external/stb_image_resize2.h"  // Required for: stbir_resize_uint8_linear() [ImageResize()]
+#include "external/stb_image_resize2.h"     // Required for: stbir_resize_uint8_linear() [ImageResize()]
 
 #if defined(SUPPORT_FILEFORMAT_SVG)
-	#define NANOSVG_IMPLEMENTATION	// Expands implementation
-	#include "external/nanosvg.h"
+    #define NANOSVG_IMPLEMENTATION          // Expands implementation
+    #include "external/nanosvg.h"
 
-	#define NANOSVGRAST_IMPLEMENTATION
-	#include "external/nanosvgrast.h"
+    #define NANOSVGRAST_IMPLEMENTATION
+    #include "external/nanosvgrast.h"
 #endif
 
 //----------------------------------------------------------------------------------
