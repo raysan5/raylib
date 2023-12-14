@@ -572,17 +572,19 @@ Vector2 GetMonitorPosition(int monitor)
 // Get selected monitor width (currently used by monitor)
 int GetMonitorWidth(int monitor)
 {
-    int w = 0;
-    w = EM_ASM_INT( { return screen.width; }, 0);
-    return w;
+    // NOTE: Returned value is limited to the current monitor where the browser window is located
+    int width = 0;
+    width = EM_ASM_INT( { return screen.width; }, 0);
+    return width;
 }
 
 // Get selected monitor height (currently used by monitor)
 int GetMonitorHeight(int monitor)
 {
-    int h = 0;
-    h = EM_ASM_INT( { return screen.height; }, 0);
-    return h;
+    // NOTE: Returned value is limited to the current monitor where the browser window is located
+    int height = 0;
+    height = EM_ASM_INT( { return screen.height; }, 0);
+    return height;
 }
 
 // Get selected monitor physical width in millimetres
@@ -616,8 +618,11 @@ const char *GetMonitorName(int monitor)
 // Get window position XY on monitor
 Vector2 GetWindowPosition(void)
 {
-    TRACELOG(LOG_WARNING, "GetWindowPosition() not implemented on target platform");
-    return (Vector2){ 0, 0 };
+    // NOTE: Returned position is relative to the current monitor where the browser window is located
+    Vector2 position = { 0, 0 };
+    position.x = (float)EM_ASM_INT( { return window.screenX;  }, 0);
+    position.y = (float)EM_ASM_INT( { return window.screenY;  }, 0);
+    return position;
 }
 
 // Get window scale DPI factor for current monitor
