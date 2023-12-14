@@ -944,8 +944,13 @@ int InitPlatform(void)
     if ((CORE.Window.flags & FLAG_WINDOW_TOPMOST) > 0) glfwWindowHint(GLFW_FLOATING, GLFW_TRUE);
     else glfwWindowHint(GLFW_FLOATING, GLFW_FALSE);
 
-        // NOTE: Some GLFW flags are not supported on HTML5
-        // e.g.: GLFW_TRANSPARENT_FRAMEBUFFER, GLFW_SCALE_TO_MONITOR, GLFW_COCOA_RETINA_FRAMEBUFFER, GLFW_MOUSE_PASSTHROUGH
+    // NOTE: Some GLFW flags are not supported on HTML5
+    // e.g.: GLFW_TRANSPARENT_FRAMEBUFFER, GLFW_COCOA_RETINA_FRAMEBUFFER, GLFW_MOUSE_PASSTHROUGH
+    
+    // Scale content area based on the monitor content scale where window is placed on
+    // NOTE: This feature requires emscripten 3.1.51
+    //if ((CORE.Window.flags & FLAG_WINDOW_HIGHDPI) > 0) glfwWindowHint(GLFW_SCALE_TO_MONITOR, GLFW_TRUE);
+    //else glfwWindowHint(GLFW_SCALE_TO_MONITOR, GLFW_FALSE);
 
     if (CORE.Window.flags & FLAG_MSAA_4X_HINT)
     {
