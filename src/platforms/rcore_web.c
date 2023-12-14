@@ -620,8 +620,8 @@ Vector2 GetWindowPosition(void)
 {
     // NOTE: Returned position is relative to the current monitor where the browser window is located
     Vector2 position = { 0, 0 };
-    position.x = (float)EM_ASM_INT( { return window.screenX;  }, 0);
-    position.y = (float)EM_ASM_INT( { return window.screenY;  }, 0);
+    position.x = (float)EM_ASM_INT( { return window.screenX; }, 0);
+    position.y = (float)EM_ASM_INT( { return window.screenY; }, 0);
     return position;
 }
 
