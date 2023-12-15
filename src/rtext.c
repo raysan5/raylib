@@ -2102,38 +2102,37 @@ static Font LoadBMFont(const char *fileName)
 
     // Resize and ReDraw Font Image 
     Image fullFont = LoadImage(imPath[0]);;
-
-    Image imFont[pageCount] = { 0 };   // Font atlases, multiple images
+    Image *imFonts = (Image *)RL_CALLOC(pageCount, sizeof(Image));   // Font atlases, multiple images
 
     for (int i = 0; i < pageCount; i++)
     {
-        imFont[i] =  LoadImage(imPath[i]);
+        imFonts[i] =  LoadImage(imPath[i]);
 
-        if (imFont[i].format == PIXELFORMAT_UNCOMPRESSED_GRAYSCALE)
+        if (imFonts[i].format == PIXELFORMAT_UNCOMPRESSED_GRAYSCALE)
         {
             // Convert image to GRAYSCALE + ALPHA, using the mask as the alpha channel
             Image imFontAlpha = {
-                .data = RL_CALLOC(imFont[i].width*imFont[i].height, 2),
-                .width = imFont[i].width,
-                .height = imFont[i].height,
+                .data = RL_CALLOC(imFonts[i].width*imFonts[i].height, 2),
+                .width = imFonts[i].width,
+                .height = imFonts[i].height,
                 .mipmaps = 1,
                 .format = PIXELFORMAT_UNCOMPRESSED_GRAY_ALPHA
             };
 
-            for (int p = 0, pi = 0; p < (imFont[i].width*imFont[i].height*2); p += 2, pi++)
+            for (int p = 0, pi = 0; p < (imFonts[i].width*imFonts[i].height*2); p += 2, pi++)
             {
                 ((unsigned char *)(imFontAlpha.data))[p] = 0xff;
-                ((unsigned char *)(imFontAlpha.data))[p + 1] = ((unsigned char *)imFont[i].data)[pi];
+                ((unsigned char *)(imFontAlpha.data))[p + 1] = ((unsigned char *)imFonts[i].data)[pi];
             }
 
-            UnloadImage(imFont[i]);
-            imFont[i] = imFontAlpha;
+            UnloadImage(imFonts[i]);
+            imFonts[i] = imFontAlpha;
         }
 
         if (lastSlash != NULL) RL_FREE(imPath[i]);
     } 
 
-    fullFont =  imFont[0];
+    fullFont = imFonts[0];
 
     // If multiple atlas, then merge atlas
     // NOTE: WARNING: This process could be really slow!
@@ -2146,9 +2145,11 @@ static Font LoadBMFont(const char *fileName)
         {
             Rectangle srcRec = { 0.0f, 0.0f, (float)imWidth, (float)imHeight };
             Rectangle destRec = { 0.0f, (float)imHeight*(float)i, (float)imWidth, (float)imHeight };
-            ImageDraw(&fullFont, imFont[i], srcRec, destRec, WHITE);              
+            ImageDraw(&fullFont, imFonts[i], srcRec, destRec, WHITE);              
         }
     }
+    
+    RL_FREE(imFonts);
 
     font.texture = LoadTextureFromImage(fullFont);
 
@@ -2179,7 +2180,7 @@ static Font LoadBMFont(const char *fileName)
             font.glyphs[i].offsetY = charOffsetY;
             font.glyphs[i].advanceX = charAdvanceX;
 
-            // Fill character image data from imFont data
+            // Fill character image data from full font data
             font.glyphs[i].image = ImageFromImage(fullFont, font.recs[i]);
         }
         else TRACELOG(LOG_WARNING, "FONT: [%s] Some characters data not correctly provided", fileName);
