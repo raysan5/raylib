@@ -73,6 +73,7 @@
 //----------------------------------------------------------------------------------
 typedef struct {
     GLFWwindow *handle;                 // GLFW window handle (graphic device)
+    bool ourFullscreen;                 // Internal var to filter our handling of fullscreen vs the user handling of fullscreen
 } PlatformData;
 
 //----------------------------------------------------------------------------------
@@ -140,6 +141,37 @@ bool WindowShouldClose(void)
 // Toggle fullscreen mode
 void ToggleFullscreen(void)
 {
+    platform.ourFullscreen = true;
+    bool enterFullscreen = false;
+
+    const bool wasFullscreen = EM_ASM_INT( { if (document.fullscreenElement) return 1; }, 0);
+    if (wasFullscreen)
+    {
+        EM_ASM(document.exitFullscreen(););
+
+        if (CORE.Window.flags & FLAG_FULLSCREEN_MODE) enterFullscreen = false;
+        else enterFullscreen = true;
+
+        CORE.Window.fullscreen = false;
+        CORE.Window.flags &= ~FLAG_FULLSCREEN_MODE;
+        CORE.Window.flags &= ~FLAG_BORDERLESS_WINDOWED_MODE;
+    }
+    else enterFullscreen = true;
+
+    if (enterFullscreen)
+    {
+        // NOTE: The setTimeouts handle the browser mode change delay
+        EM_ASM(
+            setTimeout(function()
+            {
+                Module.requestFullscreen(false, false);
+            }, 100);
+        );
+        CORE.Window.fullscreen = true;
+        CORE.Window.flags |= FLAG_FULLSCREEN_MODE;
+    }
+
+    // NOTE: Old notes below:
     /*
         EM_ASM
         (
@@ -204,40 +236,44 @@ void ToggleFullscreen(void)
             CORE.Window.flags &= ~FLAG_FULLSCREEN_MODE;
         }
     */
-
-    CORE.Window.fullscreen = !CORE.Window.fullscreen; // Toggle fullscreen flag
 }
 
 // Toggle borderless windowed mode
 void ToggleBorderlessWindowed(void)
 {
+    platform.ourFullscreen = true;
+    bool enterBorderless = false;
+
     const bool wasFullscreen = EM_ASM_INT( { if (document.fullscreenElement) return 1; }, 0);
     if (wasFullscreen)
     {
         EM_ASM(document.exitFullscreen(););
 
+        if (CORE.Window.flags & FLAG_BORDERLESS_WINDOWED_MODE) enterBorderless = false;
+        else enterBorderless = true;
+
         CORE.Window.fullscreen = false;
         CORE.Window.flags &= ~FLAG_FULLSCREEN_MODE;
+        CORE.Window.flags &= ~FLAG_BORDERLESS_WINDOWED_MODE;
     }
+    else enterBorderless = true;
 
-    if (!IsWindowState(FLAG_BORDERLESS_WINDOWED_MODE))
+    if (enterBorderless)
     {
         // NOTE: 1. The setTimeouts handle the browser mode change delay
-        //       2. The style unset handles the possibility of a width="100%" like on the default shell.html file
+        //       2. The style unset handles the possibility of a width="value%" like on the default shell.html file
         EM_ASM(
             setTimeout(function()
             {
-                Module.requestFullscreen(true, true);
+                Module.requestFullscreen(false, true);
                 setTimeout(function()
                 {
                     canvas.style.width="unset";
                 }, 100);
             }, 100);
         );
-
         CORE.Window.flags |= FLAG_BORDERLESS_WINDOWED_MODE;
     }
-    else CORE.Window.flags &= ~FLAG_BORDERLESS_WINDOWED_MODE;
 }
 
 // Set window state: maximized, if resizable
@@ -277,9 +313,9 @@ void SetWindowState(unsigned int flags)
     }
 
     // State change: FLAG_FULLSCREEN_MODE
-    if ((flags & FLAG_FULLSCREEN_MODE) > 0)
+    if ((CORE.Window.flags & FLAG_FULLSCREEN_MODE) != (flags & FLAG_FULLSCREEN_MODE))
     {
-        TRACELOG(LOG_WARNING, "SetWindowState(FLAG_FULLSCREEN_MODE) not available yet on target platform");
+        ToggleFullscreen();     // NOTE: Window state flag updated inside function
     }
 
     // State change: FLAG_WINDOW_RESIZABLE
@@ -384,9 +420,9 @@ void ClearWindowState(unsigned int flags)
     }
 
     // State change: FLAG_FULLSCREEN_MODE
-    if ((flags & FLAG_FULLSCREEN_MODE) > 0)
+    if (((CORE.Window.flags & FLAG_FULLSCREEN_MODE) > 0) && ((flags & FLAG_FULLSCREEN_MODE) > 0))
     {
-        TRACELOG(LOG_WARNING, "ClearWindowState(FLAG_FULLSCREEN_MODE) not available yet on target platform");
+        ToggleFullscreen();     // NOTE: Window state flag updated inside function
     }
 
     // State change: FLAG_WINDOW_RESIZABLE
@@ -1015,6 +1051,9 @@ int InitPlatform(void)
     CORE.Window.display.width = CORE.Window.screen.width;
     CORE.Window.display.height = CORE.Window.screen.height;
 
+    // Init fullscreen toggle required var:
+    platform.ourFullscreen = false;
+
     if (CORE.Window.fullscreen)
     {
         // remember center for switchinging from fullscreen to window
@@ -1148,7 +1187,7 @@ int InitPlatform(void)
     // Initialize input events callbacks
     //----------------------------------------------------------------------------
     // Setup callback functions for the DOM events
-    emscripten_set_fullscreenchange_callback("#canvas", NULL, 1, EmscriptenFullscreenChangeCallback);
+    emscripten_set_fullscreenchange_callback(EMSCRIPTEN_EVENT_TARGET_WINDOW, NULL, 1, EmscriptenFullscreenChangeCallback);
 
     // WARNING: Below resize code was breaking fullscreen mode for sample games and examples, it needs review
     // Check fullscreen change events(note this is done on the window since most browsers don't support this on #canvas)
@@ -1412,7 +1451,19 @@ static void CursorEnterCallback(GLFWwindow *window, int enter)
 // Register fullscreen change events
 static EM_BOOL EmscriptenFullscreenChangeCallback(int eventType, const EmscriptenFullscreenChangeEvent *event, void *userData)
 {
-    // TODO: Implement EmscriptenFullscreenChangeCallback()?
+    // NOTE: 1. Reset the fullscreen flags if the user left fullscreen manually by pressing the Escape key
+    //       2. Which is a necessary safeguard because that case will bypass the toggles CORE.Window.flags resets
+    if (platform.ourFullscreen) platform.ourFullscreen = false;
+    else
+    {
+        const bool wasFullscreen = EM_ASM_INT( { if (document.fullscreenElement) return 1; }, 0);
+        if (!wasFullscreen)
+        {
+            CORE.Window.fullscreen = false;
+            CORE.Window.flags &= ~FLAG_FULLSCREEN_MODE;
+            CORE.Window.flags &= ~FLAG_BORDERLESS_WINDOWED_MODE;
+        }
+    }
 
     return 1; // The event was consumed by the callback handler
 }
