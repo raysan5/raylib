@@ -2017,7 +2017,8 @@ static int GetLine(const char *origin, char *buffer, int maxLength)
 // REQUIRES: strstr(), sscanf(), strrchr(), memcpy()
 static Font LoadBMFont(const char *fileName)
 {
-    #define MAX_BUFFER_SIZE     256
+    #define MAX_BUFFER_SIZE       256
+    #define MAX_FONT_IMAGE_PAGES    8
 
     Font font = { 0 };
 
@@ -2029,8 +2030,8 @@ static Font LoadBMFont(const char *fileName)
 
     int imWidth = 0;
     int imHeight = 0;
-    int totalPage = 1;   // page variable
-    char imFileName[10][129] = { 0 };  // up to ten png file.
+    int pageCount = 1;
+    char imFileName[MAX_FONT_IMAGE_PAGES][129] = { 0 };
 
     int base = 0;       // Useless data
     int readBytes = 0;  // Data bytes read
@@ -2049,12 +2050,18 @@ static Font LoadBMFont(const char *fileName)
     // Read line data
     readBytes = GetLine(fileTextPtr, buffer, MAX_BUFFER_SIZE);
     searchPoint = strstr(buffer, "lineHeight");
-    readVars = sscanf(searchPoint, "lineHeight=%i base=%i scaleW=%i scaleH=%i pages=%i", &fontSize, &base, &imWidth, &imHeight, &totalPage);
+    readVars = sscanf(searchPoint, "lineHeight=%i base=%i scaleW=%i scaleH=%i pages=%i", &fontSize, &base, &imWidth, &imHeight, &pageCount);
     fileTextPtr += (readBytes + 1);
     
     if (readVars < 4) { UnloadFileText(fileText); return font; } // Some data not available, file malformed
+    
+    if (pageCount > MAX_FONT_IMAGE_PAGES)
+    {
+        TRACELOG(LOG_WARNING, "FONT: [%s] Font defines more pages than supported: %i/%i", fileName, pageCount, MAX_FONT_IMAGE_PAGES);
+        pageCount = MAX_FONT_IMAGE_PAGES;
+    }
 
-    for (int i = 0; i < totalPage; i++)
+    for (int i = 0; i < pageCount; i++)
     {
         readBytes = GetLine(fileTextPtr, buffer, MAX_BUFFER_SIZE);
         searchPoint = strstr(buffer, "file");
@@ -2074,9 +2081,9 @@ static Font LoadBMFont(const char *fileName)
     // Compose correct path using route of .fnt file (fileName) and imFileName
     char **imPath;
     char *lastSlash = NULL;
-    imPath = malloc(sizeof(char) * 100);  // imPath Initialization
+    imPath = (char **)RL_CALLOC(MAX_FONT_IMAGE_PAGES, sizeof(char *));
 
-    for (int i = 0; i< totalPage; i++)
+    for (int i = 0; i < pageCount; i++)
     {
         lastSlash = strrchr(fileName, '/');
         if (lastSlash == NULL) lastSlash = strrchr(fileName, '\\');
@@ -2090,15 +2097,15 @@ static Font LoadBMFont(const char *fileName)
         }
         else imPath[i] = imFileName[i];
 
-    TRACELOGD("    > Image loading path: %s", imPath[i]);
+        TRACELOGD("    > Image loading path: %s", imPath[i]);
     }
 
     // Resize and ReDraw Font Image 
     Image fullFont = LoadImage(imPath[0]);;
 
-    Image imFont[totalPage];   // font atlas
+    Image imFont[pageCount] = { 0 };   // Font atlases, multiple images
 
-    for (int i = 0; i < totalPage; i++)
+    for (int i = 0; i < pageCount; i++)
     {
         imFont[i] =  LoadImage(imPath[i]);
 
@@ -2129,22 +2136,21 @@ static Font LoadBMFont(const char *fileName)
     fullFont =  imFont[0];
 
     // If multiple atlas, then merge atlas
-    if (totalPage > 1)
+    // NOTE: WARNING: This process could be really slow!
+    if (pageCount > 1)
     {
-        // Resize and ReDraw Font Image 
-        ImageResizeCanvas(&fullFont, imWidth, imHeight * totalPage, 0, 0, BLACK); 
+        // Resize font atlas to draw additional images 
+        ImageResizeCanvas(&fullFont, imWidth, imHeight*pageCount, 0, 0, BLACK); 
 
-        for (int index = 1; index <= totalPage; index++)
+        for (int i = 1; i < pageCount; i++)
         {
-            Rectangle srcRec = { 0.0f, 0.0f, (float)imWidth, (float)imHeight};
-            Rectangle destRec = { 0.0f, (float)imHeight * (float)index, (float)imWidth, (float)imHeight};
-            ImageDraw(&fullFont, imFont[index], srcRec, destRec, WHITE);              
+            Rectangle srcRec = { 0.0f, 0.0f, (float)imWidth, (float)imHeight };
+            Rectangle destRec = { 0.0f, (float)imHeight*(float)i, (float)imWidth, (float)imHeight };
+            ImageDraw(&fullFont, imFont[i], srcRec, destRec, WHITE);              
         }
     }
 
     font.texture = LoadTextureFromImage(fullFont);
-
-
 
     // Fill font characters info data
     font.baseSize = fontSize;
@@ -2165,7 +2171,7 @@ static Font LoadBMFont(const char *fileName)
         if (readVars == 9)  // Make sure all char data has been properly read
         {
             // Get character rectangle in the font atlas texture
-            font.recs[i] = (Rectangle){ (float)charX, (float)charY + (float)imHeight * pageID, (float)charWidth, (float)charHeight };
+            font.recs[i] = (Rectangle){ (float)charX, (float)charY + (float)imHeight*pageID, (float)charWidth, (float)charHeight };
 
             // Save data properly in sprite font
             font.glyphs[i].value = charId;
@@ -2190,7 +2196,8 @@ static Font LoadBMFont(const char *fileName)
     }
     else TRACELOG(LOG_INFO, "FONT: [%s] Font loaded successfully (%i glyphs)", fileName, font.glyphCount);
 
-    free(imPath);
+    RL_FREE(imPath);
+    
     return font;
 }
 
