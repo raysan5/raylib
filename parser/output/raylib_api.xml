@@ -2,10 +2,10 @@
 <raylibAPI>
     <Defines count="56">
         <Define name="RAYLIB_H" type="GUARD" value="" desc="" />
-        <Define name="RAYLIB_VERSION_MAJOR" type="INT" value="4" desc="" />
-        <Define name="RAYLIB_VERSION_MINOR" type="INT" value="6" desc="" />
+        <Define name="RAYLIB_VERSION_MAJOR" type="INT" value="5" desc="" />
+        <Define name="RAYLIB_VERSION_MINOR" type="INT" value="1" desc="" />
         <Define name="RAYLIB_VERSION_PATCH" type="INT" value="0" desc="" />
-        <Define name="RAYLIB_VERSION" type="STRING" value="4.6-dev" desc="" />
+        <Define name="RAYLIB_VERSION" type="STRING" value="5.1-dev" desc="" />
         <Define name="__declspec(x)" type="MACRO" value="__attribute__((x))" desc="" />
         <Define name="RLAPI" type="UNKNOWN" value="__declspec(dllexport)" desc="We are building the library as a Win32 shared library (.dll)" />
         <Define name="PI" type="FLOAT" value="3.14159265358979323846" desc="" />
@@ -58,7 +58,7 @@
         <Define name="SHADER_LOC_MAP_DIFFUSE" type="UNKNOWN" value="SHADER_LOC_MAP_ALBEDO" desc="" />
         <Define name="SHADER_LOC_MAP_SPECULAR" type="UNKNOWN" value="SHADER_LOC_MAP_METALNESS" desc="" />
     </Defines>
-    <Structs count="32">
+    <Structs count="34">
         <Struct name="Vector2" fieldCount="2" desc="Vector2, 2 components">
             <Field type="float" name="x" desc="Vector x component" />
             <Field type="float" name="y" desc="Vector y component" />
@@ -282,6 +282,16 @@
             <Field type="unsigned int" name="capacity" desc="Filepaths max entries" />
             <Field type="unsigned int" name="count" desc="Filepaths entries count" />
             <Field type="char **" name="paths" desc="Filepaths entries" />
+        </Struct>
+        <Struct name="AutomationEvent" fieldCount="3" desc="Automation event">
+            <Field type="unsigned int" name="frame" desc="Event frame" />
+            <Field type="unsigned int" name="type" desc="Event type (AutomationEventType)" />
+            <Field type="int[4]" name="params" desc="Event parameters (if required)" />
+        </Struct>
+        <Struct name="AutomationEventList" fieldCount="3" desc="Automation event list">
+            <Field type="unsigned int" name="capacity" desc="Events max entries (MAX_AUTOMATION_EVENTS)" />
+            <Field type="unsigned int" name="count" desc="Events entries count" />
+            <Field type="AutomationEvent *" name="events" desc="Events entries" />
         </Struct>
     </Structs>
     <Aliases count="5">
@@ -660,15 +670,15 @@
             <Param type="unsigned int" name="frames" desc="" />
         </Callback>
     </Callbacks>
-    <Functions count="529">
+    <Functions count="553">
         <Function name="InitWindow" retType="void" paramCount="3" desc="Initialize window and OpenGL context">
             <Param type="int" name="width" desc="" />
             <Param type="int" name="height" desc="" />
             <Param type="const char *" name="title" desc="" />
         </Function>
-        <Function name="WindowShouldClose" retType="bool" paramCount="0" desc="Check if KEY_ESCAPE pressed or Close icon pressed">
-        </Function>
         <Function name="CloseWindow" retType="void" paramCount="0" desc="Close window and unload OpenGL context">
+        </Function>
+        <Function name="WindowShouldClose" retType="bool" paramCount="0" desc="Check if application should close (KEY_ESCAPE pressed or windows close icon clicked)">
         </Function>
         <Function name="IsWindowReady" retType="bool" paramCount="0" desc="Check if window has been initialized successfully">
         </Function>
@@ -784,13 +794,6 @@
         <Function name="EnableEventWaiting" retType="void" paramCount="0" desc="Enable waiting for events on EndDrawing(), no automatic event polling">
         </Function>
         <Function name="DisableEventWaiting" retType="void" paramCount="0" desc="Disable waiting for events on EndDrawing(), automatic events polling">
-        </Function>
-        <Function name="SwapScreenBuffer" retType="void" paramCount="0" desc="Swap back buffer with front buffer (screen drawing)">
-        </Function>
-        <Function name="PollInputEvents" retType="void" paramCount="0" desc="Register all input events">
-        </Function>
-        <Function name="WaitTime" retType="void" paramCount="1" desc="Wait for some time (halt program execution)">
-            <Param type="double" name="seconds" desc="" />
         </Function>
         <Function name="ShowCursor" retType="void" paramCount="0" desc="Shows cursor">
         </Function>
@@ -931,24 +934,42 @@
         <Function name="SetTargetFPS" retType="void" paramCount="1" desc="Set target FPS (maximum)">
             <Param type="int" name="fps" desc="" />
         </Function>
-        <Function name="GetFPS" retType="int" paramCount="0" desc="Get current FPS">
-        </Function>
         <Function name="GetFrameTime" retType="float" paramCount="0" desc="Get time in seconds for last frame drawn (delta time)">
         </Function>
         <Function name="GetTime" retType="double" paramCount="0" desc="Get elapsed time in seconds since InitWindow()">
+        </Function>
+        <Function name="GetFPS" retType="int" paramCount="0" desc="Get current FPS">
+        </Function>
+        <Function name="SwapScreenBuffer" retType="void" paramCount="0" desc="Swap back buffer with front buffer (screen drawing)">
+        </Function>
+        <Function name="PollInputEvents" retType="void" paramCount="0" desc="Register all input events">
+        </Function>
+        <Function name="WaitTime" retType="void" paramCount="1" desc="Wait for some time (halt program execution)">
+            <Param type="double" name="seconds" desc="" />
+        </Function>
+        <Function name="SetRandomSeed" retType="void" paramCount="1" desc="Set the seed for the random number generator">
+            <Param type="unsigned int" name="seed" desc="" />
         </Function>
         <Function name="GetRandomValue" retType="int" paramCount="2" desc="Get a random value between min and max (both included)">
             <Param type="int" name="min" desc="" />
             <Param type="int" name="max" desc="" />
         </Function>
-        <Function name="SetRandomSeed" retType="void" paramCount="1" desc="Set the seed for the random number generator">
-            <Param type="unsigned int" name="seed" desc="" />
+        <Function name="LoadRandomSequence" retType="int *" paramCount="3" desc="Load random values sequence, no values repeated">
+            <Param type="unsigned int" name="count" desc="" />
+            <Param type="int" name="min" desc="" />
+            <Param type="int" name="max" desc="" />
+        </Function>
+        <Function name="UnloadRandomSequence" retType="void" paramCount="1" desc="Unload random values sequence">
+            <Param type="int *" name="sequence" desc="" />
         </Function>
         <Function name="TakeScreenshot" retType="void" paramCount="1" desc="Takes a screenshot of current screen (filename extension defines format)">
             <Param type="const char *" name="fileName" desc="" />
         </Function>
         <Function name="SetConfigFlags" retType="void" paramCount="1" desc="Setup init configuration flags (view FLAGS)">
             <Param type="unsigned int" name="flags" desc="" />
+        </Function>
+        <Function name="OpenURL" retType="void" paramCount="1" desc="Open URL with default system browser (if available)">
+            <Param type="const char *" name="url" desc="" />
         </Function>
         <Function name="TraceLog" retType="void" paramCount="3" desc="Show trace log messages (LOG_DEBUG, LOG_INFO, LOG_WARNING, LOG_ERROR...)">
             <Param type="int" name="logLevel" desc="" />
@@ -967,9 +988,6 @@
         </Function>
         <Function name="MemFree" retType="void" paramCount="1" desc="Internal memory free">
             <Param type="void *" name="ptr" desc="" />
-        </Function>
-        <Function name="OpenURL" retType="void" paramCount="1" desc="Open URL with default system browser (if available)">
-            <Param type="const char *" name="url" desc="" />
         </Function>
         <Function name="SetTraceLogCallback" retType="void" paramCount="1" desc="Set custom trace log">
             <Param type="TraceLogCallback" name="callback" desc="" />
@@ -1091,6 +1109,29 @@
             <Param type="const unsigned char *" name="data" desc="" />
             <Param type="int *" name="outputSize" desc="" />
         </Function>
+        <Function name="LoadAutomationEventList" retType="AutomationEventList" paramCount="1" desc="Load automation events list from file, NULL for empty list, capacity = MAX_AUTOMATION_EVENTS">
+            <Param type="const char *" name="fileName" desc="" />
+        </Function>
+        <Function name="UnloadAutomationEventList" retType="void" paramCount="1" desc="Unload automation events list from file">
+            <Param type="AutomationEventList *" name="list" desc="" />
+        </Function>
+        <Function name="ExportAutomationEventList" retType="bool" paramCount="2" desc="Export automation events list as text file">
+            <Param type="AutomationEventList" name="list" desc="" />
+            <Param type="const char *" name="fileName" desc="" />
+        </Function>
+        <Function name="SetAutomationEventList" retType="void" paramCount="1" desc="Set automation event list to record to">
+            <Param type="AutomationEventList *" name="list" desc="" />
+        </Function>
+        <Function name="SetAutomationEventBaseFrame" retType="void" paramCount="1" desc="Set automation event internal base frame to start recording">
+            <Param type="int" name="frame" desc="" />
+        </Function>
+        <Function name="StartAutomationEventRecording" retType="void" paramCount="0" desc="Start recording automation events (AutomationEventList must be set)">
+        </Function>
+        <Function name="StopAutomationEventRecording" retType="void" paramCount="0" desc="Stop recording automation events">
+        </Function>
+        <Function name="PlayAutomationEvent" retType="void" paramCount="1" desc="Play a recorded automation event">
+            <Param type="AutomationEvent" name="event" desc="" />
+        </Function>
         <Function name="IsKeyPressed" retType="bool" paramCount="1" desc="Check if a key has been pressed once">
             <Param type="int" name="key" desc="" />
         </Function>
@@ -1106,12 +1147,12 @@
         <Function name="IsKeyUp" retType="bool" paramCount="1" desc="Check if a key is NOT being pressed">
             <Param type="int" name="key" desc="" />
         </Function>
-        <Function name="SetExitKey" retType="void" paramCount="1" desc="Set a custom key to exit program (default is ESC)">
-            <Param type="int" name="key" desc="" />
-        </Function>
         <Function name="GetKeyPressed" retType="int" paramCount="0" desc="Get key pressed (keycode), call it multiple times for keys queued, returns 0 when the queue is empty">
         </Function>
         <Function name="GetCharPressed" retType="int" paramCount="0" desc="Get char pressed (unicode), call it multiple times for chars queued, returns 0 when the queue is empty">
+        </Function>
+        <Function name="SetExitKey" retType="void" paramCount="1" desc="Set a custom key to exit program (default is ESC)">
+            <Param type="int" name="key" desc="" />
         </Function>
         <Function name="IsGamepadAvailable" retType="bool" paramCount="1" desc="Check if a gamepad is available">
             <Param type="int" name="gamepad" desc="" />
@@ -1246,53 +1287,26 @@
             <Param type="int" name="endPosY" desc="" />
             <Param type="Color" name="color" desc="" />
         </Function>
-        <Function name="DrawLineV" retType="void" paramCount="3" desc="Draw a line (Vector version)">
+        <Function name="DrawLineV" retType="void" paramCount="3" desc="Draw a line (using gl lines)">
             <Param type="Vector2" name="startPos" desc="" />
             <Param type="Vector2" name="endPos" desc="" />
             <Param type="Color" name="color" desc="" />
         </Function>
-        <Function name="DrawLineEx" retType="void" paramCount="4" desc="Draw a line defining thickness">
-            <Param type="Vector2" name="startPos" desc="" />
-            <Param type="Vector2" name="endPos" desc="" />
-            <Param type="float" name="thick" desc="" />
-            <Param type="Color" name="color" desc="" />
-        </Function>
-        <Function name="DrawLineBezier" retType="void" paramCount="4" desc="Draw a line using cubic-bezier curves in-out">
+        <Function name="DrawLineEx" retType="void" paramCount="4" desc="Draw a line (using triangles/quads)">
             <Param type="Vector2" name="startPos" desc="" />
             <Param type="Vector2" name="endPos" desc="" />
             <Param type="float" name="thick" desc="" />
             <Param type="Color" name="color" desc="" />
         </Function>
-        <Function name="DrawLineBezierQuad" retType="void" paramCount="5" desc="Draw line using quadratic bezier curves with a control point">
-            <Param type="Vector2" name="startPos" desc="" />
-            <Param type="Vector2" name="endPos" desc="" />
-            <Param type="Vector2" name="controlPos" desc="" />
-            <Param type="float" name="thick" desc="" />
-            <Param type="Color" name="color" desc="" />
-        </Function>
-        <Function name="DrawLineBezierCubic" retType="void" paramCount="6" desc="Draw line using cubic bezier curves with 2 control points">
-            <Param type="Vector2" name="startPos" desc="" />
-            <Param type="Vector2" name="endPos" desc="" />
-            <Param type="Vector2" name="startControlPos" desc="" />
-            <Param type="Vector2" name="endControlPos" desc="" />
-            <Param type="float" name="thick" desc="" />
-            <Param type="Color" name="color" desc="" />
-        </Function>
-        <Function name="DrawLineBSpline" retType="void" paramCount="4" desc="Draw a B-Spline line, minimum 4 points">
+        <Function name="DrawLineStrip" retType="void" paramCount="3" desc="Draw lines sequence (using gl lines)">
             <Param type="Vector2 *" name="points" desc="" />
             <Param type="int" name="pointCount" desc="" />
-            <Param type="float" name="thick" desc="" />
             <Param type="Color" name="color" desc="" />
         </Function>
-        <Function name="DrawLineCatmullRom" retType="void" paramCount="4" desc="Draw a Catmull Rom spline line, minimum 4 points">
-            <Param type="Vector2 *" name="points" desc="" />
-            <Param type="int" name="pointCount" desc="" />
+        <Function name="DrawLineBezier" retType="void" paramCount="4" desc="Draw line segment cubic-bezier in-out interpolation">
+            <Param type="Vector2" name="startPos" desc="" />
+            <Param type="Vector2" name="endPos" desc="" />
             <Param type="float" name="thick" desc="" />
-            <Param type="Color" name="color" desc="" />
-        </Function>
-        <Function name="DrawLineStrip" retType="void" paramCount="3" desc="Draw lines sequence">
-            <Param type="Vector2 *" name="points" desc="" />
-            <Param type="int" name="pointCount" desc="" />
             <Param type="Color" name="color" desc="" />
         </Function>
         <Function name="DrawCircle" retType="void" paramCount="4" desc="Draw a color-filled circle">
@@ -1332,6 +1346,11 @@
         <Function name="DrawCircleLines" retType="void" paramCount="4" desc="Draw circle outline">
             <Param type="int" name="centerX" desc="" />
             <Param type="int" name="centerY" desc="" />
+            <Param type="float" name="radius" desc="" />
+            <Param type="Color" name="color" desc="" />
+        </Function>
+        <Function name="DrawCircleLinesV" retType="void" paramCount="3" desc="Draw circle outline (Vector version)">
+            <Param type="Vector2" name="center" desc="" />
             <Param type="float" name="radius" desc="" />
             <Param type="Color" name="color" desc="" />
         </Function>
@@ -1480,6 +1499,105 @@
             <Param type="float" name="rotation" desc="" />
             <Param type="float" name="lineThick" desc="" />
             <Param type="Color" name="color" desc="" />
+        </Function>
+        <Function name="DrawSplineLinear" retType="void" paramCount="4" desc="Draw spline: Linear, minimum 2 points">
+            <Param type="Vector2 *" name="points" desc="" />
+            <Param type="int" name="pointCount" desc="" />
+            <Param type="float" name="thick" desc="" />
+            <Param type="Color" name="color" desc="" />
+        </Function>
+        <Function name="DrawSplineBasis" retType="void" paramCount="4" desc="Draw spline: B-Spline, minimum 4 points">
+            <Param type="Vector2 *" name="points" desc="" />
+            <Param type="int" name="pointCount" desc="" />
+            <Param type="float" name="thick" desc="" />
+            <Param type="Color" name="color" desc="" />
+        </Function>
+        <Function name="DrawSplineCatmullRom" retType="void" paramCount="4" desc="Draw spline: Catmull-Rom, minimum 4 points">
+            <Param type="Vector2 *" name="points" desc="" />
+            <Param type="int" name="pointCount" desc="" />
+            <Param type="float" name="thick" desc="" />
+            <Param type="Color" name="color" desc="" />
+        </Function>
+        <Function name="DrawSplineBezierQuadratic" retType="void" paramCount="4" desc="Draw spline: Quadratic Bezier, minimum 3 points (1 control point): [p1, c2, p3, c4...]">
+            <Param type="Vector2 *" name="points" desc="" />
+            <Param type="int" name="pointCount" desc="" />
+            <Param type="float" name="thick" desc="" />
+            <Param type="Color" name="color" desc="" />
+        </Function>
+        <Function name="DrawSplineBezierCubic" retType="void" paramCount="4" desc="Draw spline: Cubic Bezier, minimum 4 points (2 control points): [p1, c2, c3, p4, c5, c6...]">
+            <Param type="Vector2 *" name="points" desc="" />
+            <Param type="int" name="pointCount" desc="" />
+            <Param type="float" name="thick" desc="" />
+            <Param type="Color" name="color" desc="" />
+        </Function>
+        <Function name="DrawSplineSegmentLinear" retType="void" paramCount="4" desc="Draw spline segment: Linear, 2 points">
+            <Param type="Vector2" name="p1" desc="" />
+            <Param type="Vector2" name="p2" desc="" />
+            <Param type="float" name="thick" desc="" />
+            <Param type="Color" name="color" desc="" />
+        </Function>
+        <Function name="DrawSplineSegmentBasis" retType="void" paramCount="6" desc="Draw spline segment: B-Spline, 4 points">
+            <Param type="Vector2" name="p1" desc="" />
+            <Param type="Vector2" name="p2" desc="" />
+            <Param type="Vector2" name="p3" desc="" />
+            <Param type="Vector2" name="p4" desc="" />
+            <Param type="float" name="thick" desc="" />
+            <Param type="Color" name="color" desc="" />
+        </Function>
+        <Function name="DrawSplineSegmentCatmullRom" retType="void" paramCount="6" desc="Draw spline segment: Catmull-Rom, 4 points">
+            <Param type="Vector2" name="p1" desc="" />
+            <Param type="Vector2" name="p2" desc="" />
+            <Param type="Vector2" name="p3" desc="" />
+            <Param type="Vector2" name="p4" desc="" />
+            <Param type="float" name="thick" desc="" />
+            <Param type="Color" name="color" desc="" />
+        </Function>
+        <Function name="DrawSplineSegmentBezierQuadratic" retType="void" paramCount="5" desc="Draw spline segment: Quadratic Bezier, 2 points, 1 control point">
+            <Param type="Vector2" name="p1" desc="" />
+            <Param type="Vector2" name="c2" desc="" />
+            <Param type="Vector2" name="p3" desc="" />
+            <Param type="float" name="thick" desc="" />
+            <Param type="Color" name="color" desc="" />
+        </Function>
+        <Function name="DrawSplineSegmentBezierCubic" retType="void" paramCount="6" desc="Draw spline segment: Cubic Bezier, 2 points, 2 control points">
+            <Param type="Vector2" name="p1" desc="" />
+            <Param type="Vector2" name="c2" desc="" />
+            <Param type="Vector2" name="c3" desc="" />
+            <Param type="Vector2" name="p4" desc="" />
+            <Param type="float" name="thick" desc="" />
+            <Param type="Color" name="color" desc="" />
+        </Function>
+        <Function name="GetSplinePointLinear" retType="Vector2" paramCount="3" desc="Get (evaluate) spline point: Linear">
+            <Param type="Vector2" name="startPos" desc="" />
+            <Param type="Vector2" name="endPos" desc="" />
+            <Param type="float" name="t" desc="" />
+        </Function>
+        <Function name="GetSplinePointBasis" retType="Vector2" paramCount="5" desc="Get (evaluate) spline point: B-Spline">
+            <Param type="Vector2" name="p1" desc="" />
+            <Param type="Vector2" name="p2" desc="" />
+            <Param type="Vector2" name="p3" desc="" />
+            <Param type="Vector2" name="p4" desc="" />
+            <Param type="float" name="t" desc="" />
+        </Function>
+        <Function name="GetSplinePointCatmullRom" retType="Vector2" paramCount="5" desc="Get (evaluate) spline point: Catmull-Rom">
+            <Param type="Vector2" name="p1" desc="" />
+            <Param type="Vector2" name="p2" desc="" />
+            <Param type="Vector2" name="p3" desc="" />
+            <Param type="Vector2" name="p4" desc="" />
+            <Param type="float" name="t" desc="" />
+        </Function>
+        <Function name="GetSplinePointBezierQuad" retType="Vector2" paramCount="4" desc="Get (evaluate) spline point: Quadratic Bezier">
+            <Param type="Vector2" name="p1" desc="" />
+            <Param type="Vector2" name="c2" desc="" />
+            <Param type="Vector2" name="p3" desc="" />
+            <Param type="float" name="t" desc="" />
+        </Function>
+        <Function name="GetSplinePointBezierCubic" retType="Vector2" paramCount="5" desc="Get (evaluate) spline point: Cubic Bezier">
+            <Param type="Vector2" name="p1" desc="" />
+            <Param type="Vector2" name="c2" desc="" />
+            <Param type="Vector2" name="c3" desc="" />
+            <Param type="Vector2" name="p4" desc="" />
+            <Param type="float" name="t" desc="" />
         </Function>
         <Function name="CheckCollisionRecs" retType="bool" paramCount="2" desc="Check collision between two rectangles">
             <Param type="Rectangle" name="rec1" desc="" />
@@ -1687,6 +1805,11 @@
         <Function name="ImageBlurGaussian" retType="void" paramCount="2" desc="Apply Gaussian blur using a box blur approximation">
             <Param type="Image *" name="image" desc="" />
             <Param type="int" name="blurSize" desc="" />
+        </Function>
+        <Function name="ImageKernelConvolution" retType="void" paramCount="3" desc="Apply Custom Square image convolution kernel">
+            <Param type="Image *" name="image" desc="" />
+            <Param type="float*" name="kernel" desc="" />
+            <Param type="int" name="kernelSize" desc="" />
         </Function>
         <Function name="ImageResize" retType="void" paramCount="3" desc="Resize image (Bicubic scaling algorithm)">
             <Param type="Image *" name="image" desc="" />
@@ -2631,6 +2754,8 @@
         </Function>
         <Function name="SetMasterVolume" retType="void" paramCount="1" desc="Set master volume (listener)">
             <Param type="float" name="volume" desc="" />
+        </Function>
+        <Function name="GetMasterVolume" retType="float" paramCount="0" desc="Get master volume (listener)">
         </Function>
         <Function name="LoadWave" retType="Wave" paramCount="1" desc="Load wave data from file">
             <Param type="const char *" name="fileName" desc="" />

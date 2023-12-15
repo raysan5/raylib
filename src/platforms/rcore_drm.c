@@ -545,9 +545,6 @@ void PollInputEvents(void)
     CORE.Input.Keyboard.keyPressedQueueCount = 0;
     CORE.Input.Keyboard.charPressedQueueCount = 0;
 
-    // Reset key repeats
-    for (int i = 0; i < MAX_KEYBOARD_KEYS; i++) CORE.Input.Keyboard.keyRepeatInFrame[i] = 0;
-
     // Reset last gamepad button/axis registered state
     CORE.Input.Gamepad.lastButtonPressed = 0;       // GAMEPAD_BUTTON_UNKNOWN
     //CORE.Input.Gamepad.axisCount = 0;
@@ -573,6 +570,7 @@ void PollInputEvents(void)
     {
         CORE.Input.Mouse.previousButtonState[i] = CORE.Input.Mouse.currentButtonState[i];
         CORE.Input.Mouse.currentButtonState[i] = platform.currentButtonStateEvdev[i];
+        CORE.Input.Touch.currentTouchState[i] = platform.currentButtonStateEvdev[i];
     }
 
     // Register gamepads buttons events
@@ -603,7 +601,6 @@ void PollInputEvents(void)
         struct input_event event = { 0 };
 
         int touchAction = -1;           // 0-TOUCH_ACTION_UP, 1-TOUCH_ACTION_DOWN, 2-TOUCH_ACTION_MOVE
-        bool gestureUpdate = false;     // Flag to note gestures require to update
 
         // Try to read data from the mouse/touch/gesture and only continue if successful
         while (read(fd, &event, sizeof(event)) == (int)sizeof(event))
@@ -622,7 +619,6 @@ void PollInputEvents(void)
                     CORE.Input.Touch.position[0].x = CORE.Input.Mouse.currentPosition.x;
 
                     touchAction = 2;    // TOUCH_ACTION_MOVE
-                    gestureUpdate = true;
                 }
 
                 if (event.code == REL_Y)
@@ -636,7 +632,6 @@ void PollInputEvents(void)
                     CORE.Input.Touch.position[0].y = CORE.Input.Mouse.currentPosition.y;
 
                     touchAction = 2;    // TOUCH_ACTION_MOVE
-                    gestureUpdate = true;
                 }
 
                 if (event.code == REL_WHEEL) platform.eventWheelMove.y += event.value;
@@ -652,7 +647,6 @@ void PollInputEvents(void)
                     CORE.Input.Touch.position[0].x = (event.value - platform.absRange.x)*CORE.Window.screen.width/platform.absRange.width;        // Scale according to absRange
 
                     touchAction = 2;    // TOUCH_ACTION_MOVE
-                    gestureUpdate = true;
                 }
 
                 if (event.code == ABS_Y)
@@ -661,7 +655,6 @@ void PollInputEvents(void)
                     CORE.Input.Touch.position[0].y = (event.value - platform.absRange.y)*CORE.Window.screen.height/platform.absRange.height;      // Scale according to absRange
 
                     touchAction = 2;    // TOUCH_ACTION_MOVE
-                    gestureUpdate = true;
                 }
 
                 // Multitouch movement
@@ -697,7 +690,6 @@ void PollInputEvents(void)
                         platform.currentButtonStateEvdev[MOUSE_BUTTON_LEFT] = 0;
 
                         touchAction = 0;    // TOUCH_ACTION_UP
-                        gestureUpdate = true;
                     }
 
                     if (event.value && !previousMouseLeftButtonState)
@@ -705,7 +697,6 @@ void PollInputEvents(void)
                         platform.currentButtonStateEvdev[MOUSE_BUTTON_LEFT] = 1;
 
                         touchAction = 1;    // TOUCH_ACTION_DOWN
-                        gestureUpdate = true;
                     }
                 }
 
@@ -721,7 +712,6 @@ void PollInputEvents(void)
 
                     if (event.value > 0) touchAction = 1;   // TOUCH_ACTION_DOWN
                     else touchAction = 0;       // TOUCH_ACTION_UP
-                    gestureUpdate = true;
                 }
 
                 if (event.code == BTN_RIGHT) platform.currentButtonStateEvdev[MOUSE_BUTTON_RIGHT] = event.value;
@@ -750,7 +740,7 @@ void PollInputEvents(void)
             }
 
 #if defined(SUPPORT_GESTURES_SYSTEM)
-            if (gestureUpdate)
+            if (touchAction > -1)
             {
                 GestureEvent gestureEvent = { 0 };
 
@@ -765,7 +755,7 @@ void PollInputEvents(void)
 
                 ProcessGestureEvent(gestureEvent);
 
-                gestureUpdate = false;
+                touchAction = -1;
             }
 #endif
         }
@@ -1696,6 +1686,7 @@ static void PollKeyboardEvents(void)
                     // Event interface: 'value' is the value the event carries. Either a relative change for EV_REL,
                     // absolute new value for EV_ABS (joysticks ...), or 0 for EV_KEY for release, 1 for keypress and 2 for autorepeat
                     CORE.Input.Keyboard.currentKeyState[keycode] = (event.value >= 1)? 1 : 0;
+                    CORE.Input.Keyboard.keyRepeatInFrame[keycode] = (event.value == 2)? 1 : 0;
                     if (event.value >= 1)
                     {
                         CORE.Input.Keyboard.keyPressedQueue[CORE.Input.Keyboard.keyPressedQueueCount] = keycode;     // Register last key pressed

@@ -1,7 +1,7 @@
 # Setup the project and settings
 project(raylib C)
-set(PROJECT_VERSION 4.5.0)
-set(API_VERSION 450)
+set(PROJECT_VERSION 5.0.0)
+set(API_VERSION 500)
 
 include(GNUInstallDirs)
 include(JoinPaths)
@@ -62,12 +62,10 @@ if (NOT BUILD_SHARED_LIBS)
     add_library(raylib_static ALIAS raylib)
 else()
     MESSAGE(STATUS "Building raylib shared library")
-    if (WIN32)
-        target_compile_definitions(raylib
-                                   PRIVATE $<BUILD_INTERFACE:BUILD_LIBTYPE_SHARED>
-                                   INTERFACE $<INSTALL_INTERFACE:USE_LIBTYPE_SHARED>
-                                   )
-    endif ()
+    target_compile_definitions(raylib
+                               PRIVATE $<BUILD_INTERFACE:BUILD_LIBTYPE_SHARED>
+                               INTERFACE $<INSTALL_INTERFACE:USE_LIBTYPE_SHARED>
+                               )
 endif()
 
 if (${PLATFORM} MATCHES "Web")
@@ -82,6 +80,11 @@ set_target_properties(raylib PROPERTIES
 
 if (WITH_PIC OR BUILD_SHARED_LIBS)
     set_property(TARGET raylib PROPERTY POSITION_INDEPENDENT_CODE ON)
+endif ()
+
+if (BUILD_SHARED_LIBS)
+    # Hide raylib's symbols by default so RLAPI can expose them
+    set_property(TARGET raylib PROPERTY C_VISIBILITY_PRESET hidden)
 endif ()
 
 target_link_libraries(raylib "${LIBS_PRIVATE}")

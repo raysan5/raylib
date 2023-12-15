@@ -1546,10 +1546,96 @@ void DrawPolyLinesEx(Vector2 center, int sides, float radius, float rotation, fl
 // Draw spline: linear, minimum 2 points
 void DrawSplineLinear(Vector2 *points, int pointCount, float thick, Color color)
 {
+    if (pointCount < 2) return;
+
+#if defined(SUPPORT_SPLINE_MITERS)
+    Vector2 prevNormal = (Vector2){-(points[1].y - points[0].y), (points[1].x - points[0].x)};
+    float prevLength = sqrtf(prevNormal.x*prevNormal.x + prevNormal.y*prevNormal.y);
+    
+    if (prevLength > 0.0f)
+    {
+        prevNormal.x /= prevLength;
+        prevNormal.y /= prevLength;
+    }
+    else
+    {
+        prevNormal.x = 0.0f;
+        prevNormal.y = 0.0f;
+    }
+
+    Vector2 prevRadius = { 0.5f*thick*prevNormal.x, 0.5f*thick*prevNormal.y };
+    
+    for (int i = 0; i < pointCount - 1; i++)
+    {
+        Vector2 normal = { 0 };
+
+        if (i < pointCount - 2)
+        {
+            normal = (Vector2){-(points[i + 2].y - points[i + 1].y), (points[i + 2].x - points[i + 1].x)};
+            float normalLength = sqrtf(normal.x*normal.x + normal.y*normal.y);
+            
+            if (normalLength > 0.0f)
+            {
+                normal.x /= normalLength;
+                normal.y /= normalLength;
+            }
+            else
+            {
+                normal.x = 0.0f;
+                normal.y = 0.0f;
+            }
+        }
+        else
+        {
+            normal = prevNormal;
+        }
+
+        Vector2 radius = { prevNormal.x + normal.x, prevNormal.y + normal.y };
+        float radiusLength = sqrtf(radius.x*radius.x + radius.y*radius.y);
+        
+        if (radiusLength > 0.0f)
+        {
+            radius.x /= radiusLength;
+            radius.y /= radiusLength;
+        }
+        else
+        {
+            radius.x = 0.0f;
+            radius.y = 0.0f;
+        }
+
+        float cosTheta = radius.x*normal.x + radius.y*normal.y;
+
+        if (cosTheta != 0.0f)
+        {
+            radius.x *= (thick*0.5f/cosTheta);
+            radius.y *= (thick*0.5f/cosTheta);
+        }
+        else
+        {
+            radius.x = 0.0f;
+            radius.y = 0.0f;
+        }
+        
+        Vector2 strip[4] = {
+            { points[i].x - prevRadius.x, points[i].y - prevRadius.y },
+            { points[i].x + prevRadius.x, points[i].y + prevRadius.y },
+            { points[i + 1].x - radius.x, points[i + 1].y - radius.y },
+            { points[i + 1].x + radius.x, points[i + 1].y + radius.y }
+        };
+
+        DrawTriangleStrip(strip, 4, color);
+
+        prevRadius = radius;
+        prevNormal = normal;
+    }
+
+#else   // !SUPPORT_SPLINE_MITTERS
+
     Vector2 delta = { 0 };
     float length = 0.0f;
     float scale = 0.0f;
-    
+
     for (int i = 0; i < pointCount - 1; i++)
     {
         delta = (Vector2){ points[i + 1].x - points[i].x, points[i + 1].y - points[i].y };
@@ -1567,8 +1653,10 @@ void DrawSplineLinear(Vector2 *points, int pointCount, float thick, Color color)
 
         DrawTriangleStrip(strip, 4, color);
     }
-#if defined(SUPPORT_SPLINE_SEGMENT_CAPS)
+#endif
     
+#if defined(SUPPORT_SPLINE_SEGMENT_CAPS)
+    // TODO: Add spline segment rounded caps at the begin/end of the spline
 #endif
 }
 
@@ -1718,7 +1806,7 @@ void DrawSplineCatmullRom(Vector2 *points, int pointCount, float thick, Color co
 void DrawSplineBezierQuadratic(Vector2 *points, int pointCount, float thick, Color color)
 {
     if (pointCount < 3) return;
-    
+
     for (int i = 0; i < pointCount - 2; i++)
     {
         DrawSplineSegmentBezierQuadratic(points[i], points[i + 1], points[i + 2], thick, color);
@@ -1729,7 +1817,7 @@ void DrawSplineBezierQuadratic(Vector2 *points, int pointCount, float thick, Col
 void DrawSplineBezierCubic(Vector2 *points, int pointCount, float thick, Color color)
 {
     if (pointCount < 4) return;
-    
+
     for (int i = 0; i < pointCount - 3; i++)
     {
         DrawSplineSegmentBezierCubic(points[i], points[i + 1], points[i + 2], points[i + 3], thick, color);
@@ -1740,7 +1828,7 @@ void DrawSplineBezierCubic(Vector2 *points, int pointCount, float thick, Color c
 void DrawSplineSegmentLinear(Vector2 p1, Vector2 p2, float thick, Color color)
 {
     // NOTE: For the linear spline we don't use subdivisions, just a single quad
-    
+
     Vector2 delta = { p2.x - p1.x, p2.y - p1.y };
     float length = sqrtf(delta.x*delta.x + delta.y*delta.y);
 
@@ -1768,9 +1856,9 @@ void DrawSplineSegmentBasis(Vector2 p1, Vector2 p2, Vector2 p3, Vector2 p4, floa
     Vector2 currentPoint = { 0 };
     Vector2 nextPoint = { 0 };
     float t = 0.0f;
-    
+
     Vector2 points[2*SPLINE_SEGMENT_DIVISIONS + 2] = { 0 };
-    
+
     float a[4] = { 0 };
     float b[4] = { 0 };
 
@@ -1825,7 +1913,7 @@ void DrawSplineSegmentCatmullRom(Vector2 p1, Vector2 p2, Vector2 p3, Vector2 p4,
     Vector2 currentPoint = p1;
     Vector2 nextPoint = { 0 };
     float t = 0.0f;
-    
+
     Vector2 points[2*SPLINE_SEGMENT_DIVISIONS + 2] = { 0 };
 
     for (int i = 0; i <= SPLINE_SEGMENT_DIVISIONS; i++)
@@ -2132,11 +2220,11 @@ bool CheckCollisionCircleRec(Vector2 center, float radius, Rectangle rec)
 {
     bool collision = false;
 
-    int recCenterX = (int)(rec.x + rec.width/2.0f);
-    int recCenterY = (int)(rec.y + rec.height/2.0f);
+    float recCenterX = rec.x + rec.width/2.0f;
+    float recCenterY = rec.y + rec.height/2.0f;
 
-    float dx = fabsf(center.x - (float)recCenterX);
-    float dy = fabsf(center.y - (float)recCenterY);
+    float dx = fabsf(center.x - recCenterX);
+    float dy = fabsf(center.y - recCenterY);
 
     if (dx > (rec.width/2.0f + radius)) { return false; }
     if (dy > (rec.height/2.0f + radius)) { return false; }

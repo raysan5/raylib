@@ -73,6 +73,7 @@
 //----------------------------------------------------------------------------------
 typedef struct {
     GLFWwindow *handle;                 // GLFW window handle (graphic device)
+    bool ourFullscreen;                 // Internal var to filter our handling of fullscreen vs the user handling of fullscreen
 } PlatformData;
 
 //----------------------------------------------------------------------------------
@@ -140,6 +141,37 @@ bool WindowShouldClose(void)
 // Toggle fullscreen mode
 void ToggleFullscreen(void)
 {
+    platform.ourFullscreen = true;
+    bool enterFullscreen = false;
+
+    const bool wasFullscreen = EM_ASM_INT( { if (document.fullscreenElement) return 1; }, 0);
+    if (wasFullscreen)
+    {
+        EM_ASM(document.exitFullscreen(););
+
+        if (CORE.Window.flags & FLAG_FULLSCREEN_MODE) enterFullscreen = false;
+        else enterFullscreen = true;
+
+        CORE.Window.fullscreen = false;
+        CORE.Window.flags &= ~FLAG_FULLSCREEN_MODE;
+        CORE.Window.flags &= ~FLAG_BORDERLESS_WINDOWED_MODE;
+    }
+    else enterFullscreen = true;
+
+    if (enterFullscreen)
+    {
+        // NOTE: The setTimeouts handle the browser mode change delay
+        EM_ASM(
+            setTimeout(function()
+            {
+                Module.requestFullscreen(false, false);
+            }, 100);
+        );
+        CORE.Window.fullscreen = true;
+        CORE.Window.flags |= FLAG_FULLSCREEN_MODE;
+    }
+
+    // NOTE: Old notes below:
     /*
         EM_ASM
         (
@@ -204,14 +236,44 @@ void ToggleFullscreen(void)
             CORE.Window.flags &= ~FLAG_FULLSCREEN_MODE;
         }
     */
-
-    CORE.Window.fullscreen = !CORE.Window.fullscreen; // Toggle fullscreen flag
 }
 
 // Toggle borderless windowed mode
 void ToggleBorderlessWindowed(void)
 {
-    TRACELOG(LOG_WARNING, "ToggleBorderlessWindowed() not available on target platform");
+    platform.ourFullscreen = true;
+    bool enterBorderless = false;
+
+    const bool wasFullscreen = EM_ASM_INT( { if (document.fullscreenElement) return 1; }, 0);
+    if (wasFullscreen)
+    {
+        EM_ASM(document.exitFullscreen(););
+
+        if (CORE.Window.flags & FLAG_BORDERLESS_WINDOWED_MODE) enterBorderless = false;
+        else enterBorderless = true;
+
+        CORE.Window.fullscreen = false;
+        CORE.Window.flags &= ~FLAG_FULLSCREEN_MODE;
+        CORE.Window.flags &= ~FLAG_BORDERLESS_WINDOWED_MODE;
+    }
+    else enterBorderless = true;
+
+    if (enterBorderless)
+    {
+        // NOTE: 1. The setTimeouts handle the browser mode change delay
+        //       2. The style unset handles the possibility of a width="value%" like on the default shell.html file
+        EM_ASM(
+            setTimeout(function()
+            {
+                Module.requestFullscreen(false, true);
+                setTimeout(function()
+                {
+                    canvas.style.width="unset";
+                }, 100);
+            }, 100);
+        );
+        CORE.Window.flags |= FLAG_BORDERLESS_WINDOWED_MODE;
+    }
 }
 
 // Set window state: maximized, if resizable
@@ -235,13 +297,215 @@ void RestoreWindow(void)
 // Set window configuration state using flags
 void SetWindowState(unsigned int flags)
 {
-    TRACELOG(LOG_WARNING, "SetWindowState() not available on target platform");
+    // Check previous state and requested state to apply required changes
+    // NOTE: In most cases the functions already change the flags internally
+
+    // State change: FLAG_VSYNC_HINT
+    if ((flags & FLAG_VSYNC_HINT) > 0)
+    {
+        TRACELOG(LOG_WARNING, "SetWindowState(FLAG_VSYNC_HINT) not available on target platform");
+    }
+
+    // State change: FLAG_BORDERLESS_WINDOWED_MODE
+    if (((CORE.Window.flags & FLAG_BORDERLESS_WINDOWED_MODE) != (flags & FLAG_BORDERLESS_WINDOWED_MODE)) && ((flags & FLAG_BORDERLESS_WINDOWED_MODE) > 0))
+    {
+        ToggleBorderlessWindowed();     // NOTE: Window state flag updated inside function
+    }
+
+    // State change: FLAG_FULLSCREEN_MODE
+    if ((CORE.Window.flags & FLAG_FULLSCREEN_MODE) != (flags & FLAG_FULLSCREEN_MODE))
+    {
+        ToggleFullscreen();     // NOTE: Window state flag updated inside function
+    }
+
+    // State change: FLAG_WINDOW_RESIZABLE
+    if (((CORE.Window.flags & FLAG_WINDOW_RESIZABLE) != (flags & FLAG_WINDOW_RESIZABLE)) && ((flags & FLAG_WINDOW_RESIZABLE) > 0))
+    {
+        glfwSetWindowAttrib(platform.handle, GLFW_RESIZABLE, GLFW_TRUE);
+        CORE.Window.flags |= FLAG_WINDOW_RESIZABLE;
+    }
+
+    // State change: FLAG_WINDOW_UNDECORATED
+    if ((flags & FLAG_WINDOW_UNDECORATED) > 0)
+    {
+        TRACELOG(LOG_WARNING, "SetWindowState(FLAG_WINDOW_UNDECORATED) not available on target platform");
+    }
+
+    // State change: FLAG_WINDOW_HIDDEN
+    if ((flags & FLAG_WINDOW_HIDDEN) > 0)
+    {
+        TRACELOG(LOG_WARNING, "SetWindowState(FLAG_WINDOW_HIDDEN) not available on target platform");
+    }
+
+    // State change: FLAG_WINDOW_MINIMIZED
+    if ((flags & FLAG_WINDOW_MINIMIZED) > 0)
+    {
+        TRACELOG(LOG_WARNING, "SetWindowState(FLAG_WINDOW_MINIMIZED) not available on target platform");
+    }
+
+    // State change: FLAG_WINDOW_MAXIMIZED
+    if ((flags & FLAG_WINDOW_MAXIMIZED) > 0)
+    {
+        TRACELOG(LOG_WARNING, "SetWindowState(FLAG_WINDOW_MAXIMIZED) not available on target platform");
+    }
+
+    // State change: FLAG_WINDOW_UNFOCUSED
+    if ((flags & FLAG_WINDOW_UNFOCUSED) > 0)
+    {
+        TRACELOG(LOG_WARNING, "SetWindowState(FLAG_WINDOW_UNFOCUSED) not available on target platform");
+    }
+
+    // State change: FLAG_WINDOW_TOPMOST
+    if ((flags & FLAG_WINDOW_TOPMOST) > 0)
+    {
+        TRACELOG(LOG_WARNING, "SetWindowState(FLAG_WINDOW_TOPMOST) not available on target platform");
+    }
+
+    // State change: FLAG_WINDOW_ALWAYS_RUN
+    if ((flags & FLAG_WINDOW_ALWAYS_RUN) > 0)
+    {
+        TRACELOG(LOG_WARNING, "SetWindowState(FLAG_WINDOW_ALWAYS_RUN) not available on target platform");
+    }
+
+    // The following states can not be changed after window creation
+    // NOTE: Review for PLATFORM_WEB
+
+    // State change: FLAG_WINDOW_TRANSPARENT
+    if ((flags & FLAG_WINDOW_TRANSPARENT) > 0)
+    {
+        TRACELOG(LOG_WARNING, "SetWindowState(FLAG_WINDOW_TRANSPARENT) not available on target platform");
+    }
+
+    // State change: FLAG_WINDOW_HIGHDPI
+    if ((flags & FLAG_WINDOW_HIGHDPI) > 0)
+    {
+        TRACELOG(LOG_WARNING, "SetWindowState(FLAG_WINDOW_HIGHDPI) not available on target platform");
+    }
+
+    // State change: FLAG_WINDOW_MOUSE_PASSTHROUGH
+    if ((flags & FLAG_WINDOW_MOUSE_PASSTHROUGH) > 0)
+    {
+        TRACELOG(LOG_WARNING, "SetWindowState(FLAG_WINDOW_MOUSE_PASSTHROUGH) not available on target platform");
+    }
+
+    // State change: FLAG_MSAA_4X_HINT
+    if ((flags & FLAG_MSAA_4X_HINT) > 0)
+    {
+        TRACELOG(LOG_WARNING, "SetWindowState(FLAG_MSAA_4X_HINT) not available on target platform");
+    }
+
+    // State change: FLAG_INTERLACED_HINT
+    if ((flags & FLAG_INTERLACED_HINT) > 0)
+    {
+        TRACELOG(LOG_WARNING, "SetWindowState(FLAG_INTERLACED_HINT) not available on target platform");
+    }
 }
 
 // Clear window configuration state flags
 void ClearWindowState(unsigned int flags)
 {
-    TRACELOG(LOG_WARNING, "ClearWindowState() not available on target platform");
+    // Check previous state and requested state to apply required changes
+    // NOTE: In most cases the functions already change the flags internally
+
+    // State change: FLAG_VSYNC_HINT
+    if ((flags & FLAG_VSYNC_HINT) > 0)
+    {
+        TRACELOG(LOG_WARNING, "ClearWindowState(FLAG_VSYNC_HINT) not available on target platform");
+    }
+
+    // State change: FLAG_BORDERLESS_WINDOWED_MODE
+    if (((CORE.Window.flags & FLAG_BORDERLESS_WINDOWED_MODE) > 0) && ((flags & FLAG_BORDERLESS_WINDOWED_MODE) > 0))
+    {
+        ToggleBorderlessWindowed();     // NOTE: Window state flag updated inside function
+    }
+
+    // State change: FLAG_FULLSCREEN_MODE
+    if (((CORE.Window.flags & FLAG_FULLSCREEN_MODE) > 0) && ((flags & FLAG_FULLSCREEN_MODE) > 0))
+    {
+        ToggleFullscreen();     // NOTE: Window state flag updated inside function
+    }
+
+    // State change: FLAG_WINDOW_RESIZABLE
+    if (((CORE.Window.flags & FLAG_WINDOW_RESIZABLE) > 0) && ((flags & FLAG_WINDOW_RESIZABLE) > 0))
+    {
+        glfwSetWindowAttrib(platform.handle, GLFW_RESIZABLE, GLFW_FALSE);
+        CORE.Window.flags &= ~FLAG_WINDOW_RESIZABLE;
+    }
+
+    // State change: FLAG_WINDOW_HIDDEN
+    if ((flags & FLAG_WINDOW_HIDDEN) > 0)
+    {
+        TRACELOG(LOG_WARNING, "ClearWindowState(FLAG_WINDOW_HIDDEN) not available on target platform");
+    }
+
+    // State change: FLAG_WINDOW_MINIMIZED
+    if ((flags & FLAG_WINDOW_MINIMIZED) > 0)
+    {
+        TRACELOG(LOG_WARNING, "ClearWindowState(FLAG_WINDOW_MINIMIZED) not available on target platform");
+    }
+
+    // State change: FLAG_WINDOW_MAXIMIZED
+    if ((flags & FLAG_WINDOW_MAXIMIZED) > 0)
+    {
+        TRACELOG(LOG_WARNING, "ClearWindowState(FLAG_WINDOW_MAXIMIZED) not available on target platform");
+    }
+
+    // State change: FLAG_WINDOW_UNDECORATED
+    if ((flags & FLAG_WINDOW_UNDECORATED) > 0)
+    {
+        TRACELOG(LOG_WARNING, "ClearWindowState(FLAG_WINDOW_UNDECORATED) not available on target platform");
+    }
+
+    // State change: FLAG_WINDOW_UNFOCUSED
+    if ((flags & FLAG_WINDOW_UNFOCUSED) > 0)
+    {
+        TRACELOG(LOG_WARNING, "ClearWindowState(FLAG_WINDOW_UNFOCUSED) not available on target platform");
+    }
+
+    // State change: FLAG_WINDOW_TOPMOST
+    if ((flags & FLAG_WINDOW_TOPMOST) > 0)
+    {
+        TRACELOG(LOG_WARNING, "ClearWindowState(FLAG_WINDOW_TOPMOST) not available on target platform");
+    }
+
+    // State change: FLAG_WINDOW_ALWAYS_RUN
+    if ((flags & FLAG_WINDOW_ALWAYS_RUN) > 0)
+    {
+        TRACELOG(LOG_WARNING, "ClearWindowState(FLAG_WINDOW_ALWAYS_RUN) not available on target platform");
+    }
+
+    // The following states can not be changed after window creation
+    // NOTE: Review for PLATFORM_WEB
+
+    // State change: FLAG_WINDOW_TRANSPARENT
+    if ((flags & FLAG_WINDOW_TRANSPARENT) > 0)
+    {
+        TRACELOG(LOG_WARNING, "ClearWindowState(FLAG_WINDOW_TRANSPARENT) not available on target platform");
+    }
+
+    // State change: FLAG_WINDOW_HIGHDPI
+    if ((flags & FLAG_WINDOW_HIGHDPI) > 0)
+    {
+        TRACELOG(LOG_WARNING, "ClearWindowState(FLAG_WINDOW_HIGHDPI) not available on target platform");
+    }
+
+    // State change: FLAG_WINDOW_MOUSE_PASSTHROUGH
+    if ((flags & FLAG_WINDOW_MOUSE_PASSTHROUGH) > 0)
+    {
+        TRACELOG(LOG_WARNING, "ClearWindowState(FLAG_WINDOW_MOUSE_PASSTHROUGH) not available on target platform");
+    }
+
+    // State change: FLAG_MSAA_4X_HINT
+    if ((flags & FLAG_MSAA_4X_HINT) > 0)
+    {
+        TRACELOG(LOG_WARNING, "ClearWindowState(FLAG_MSAA_4X_HINT) not available on target platform");
+    }
+
+    // State change: FLAG_INTERLACED_HINT
+    if ((flags & FLAG_INTERLACED_HINT) > 0)
+    {
+        TRACELOG(LOG_WARNING, "ClearWindowState(FLAG_INTERLACED_HINT) not available on target platform");
+    }
 }
 
 // Set icon for window
@@ -344,15 +608,19 @@ Vector2 GetMonitorPosition(int monitor)
 // Get selected monitor width (currently used by monitor)
 int GetMonitorWidth(int monitor)
 {
-    TRACELOG(LOG_WARNING, "GetMonitorWidth() not implemented on target platform");
-    return 0;
+    // NOTE: Returned value is limited to the current monitor where the browser window is located
+    int width = 0;
+    width = EM_ASM_INT( { return screen.width; }, 0);
+    return width;
 }
 
 // Get selected monitor height (currently used by monitor)
 int GetMonitorHeight(int monitor)
 {
-    TRACELOG(LOG_WARNING, "GetMonitorHeight() not implemented on target platform");
-    return 0;
+    // NOTE: Returned value is limited to the current monitor where the browser window is located
+    int height = 0;
+    height = EM_ASM_INT( { return screen.height; }, 0);
+    return height;
 }
 
 // Get selected monitor physical width in millimetres
@@ -386,8 +654,11 @@ const char *GetMonitorName(int monitor)
 // Get window position XY on monitor
 Vector2 GetWindowPosition(void)
 {
-    TRACELOG(LOG_WARNING, "GetWindowPosition() not implemented on target platform");
-    return (Vector2){ 0, 0 };
+    // NOTE: Returned position is relative to the current monitor where the browser window is located
+    Vector2 position = { 0, 0 };
+    position.x = (float)EM_ASM_INT( { return window.screenX; }, 0);
+    position.y = (float)EM_ASM_INT( { return window.screenY; }, 0);
+    return position;
 }
 
 // Get window scale DPI factor for current monitor
@@ -664,7 +935,7 @@ void PollInputEvents(void)
 
     // TODO: This code does not seem to do anything??
     //if (CORE.Window.eventWaiting) glfwWaitEvents();     // Wait for in input events before continue (drawing is paused)
-    //else glfwPollEvents(); // Poll input events: keyboard/mouse/window events (callbacks) --> WARNING: Where is key input reseted?
+    //else glfwPollEvents(); // Poll input events: keyboard/mouse/window events (callbacks) --> WARNING: Where is key input reset?
 }
 
 //----------------------------------------------------------------------------------
@@ -716,8 +987,13 @@ int InitPlatform(void)
     if ((CORE.Window.flags & FLAG_WINDOW_TOPMOST) > 0) glfwWindowHint(GLFW_FLOATING, GLFW_TRUE);
     else glfwWindowHint(GLFW_FLOATING, GLFW_FALSE);
 
-        // NOTE: Some GLFW flags are not supported on HTML5
-        // e.g.: GLFW_TRANSPARENT_FRAMEBUFFER, GLFW_SCALE_TO_MONITOR, GLFW_COCOA_RETINA_FRAMEBUFFER, GLFW_MOUSE_PASSTHROUGH
+    // NOTE: Some GLFW flags are not supported on HTML5
+    // e.g.: GLFW_TRANSPARENT_FRAMEBUFFER, GLFW_COCOA_RETINA_FRAMEBUFFER, GLFW_MOUSE_PASSTHROUGH
+
+    // Scale content area based on the monitor content scale where window is placed on
+    // NOTE: This feature requires emscripten 3.1.51
+    //if ((CORE.Window.flags & FLAG_WINDOW_HIGHDPI) > 0) glfwWindowHint(GLFW_SCALE_TO_MONITOR, GLFW_TRUE);
+    //else glfwWindowHint(GLFW_SCALE_TO_MONITOR, GLFW_FALSE);
 
     if (CORE.Window.flags & FLAG_MSAA_4X_HINT)
     {
@@ -774,6 +1050,9 @@ int InitPlatform(void)
     // NOTE: Getting video modes is not implemented in emscripten GLFW3 version
     CORE.Window.display.width = CORE.Window.screen.width;
     CORE.Window.display.height = CORE.Window.screen.height;
+
+    // Init fullscreen toggle required var:
+    platform.ourFullscreen = false;
 
     if (CORE.Window.fullscreen)
     {
@@ -908,7 +1187,7 @@ int InitPlatform(void)
     // Initialize input events callbacks
     //----------------------------------------------------------------------------
     // Setup callback functions for the DOM events
-    emscripten_set_fullscreenchange_callback("#canvas", NULL, 1, EmscriptenFullscreenChangeCallback);
+    emscripten_set_fullscreenchange_callback(EMSCRIPTEN_EVENT_TARGET_WINDOW, NULL, 1, EmscriptenFullscreenChangeCallback);
 
     // WARNING: Below resize code was breaking fullscreen mode for sample games and examples, it needs review
     // Check fullscreen change events(note this is done on the window since most browsers don't support this on #canvas)
@@ -937,7 +1216,7 @@ int InitPlatform(void)
     emscripten_set_gamepaddisconnected_callback(NULL, 1, EmscriptenGamepadCallback);
     //----------------------------------------------------------------------------
 
-    // Initialize timming system
+    // Initialize timing system
     //----------------------------------------------------------------------------
     InitTimer();
     //----------------------------------------------------------------------------
@@ -1093,6 +1372,7 @@ static void MouseButtonCallback(GLFWwindow *window, int button, int action, int 
     // WARNING: GLFW could only return GLFW_PRESS (1) or GLFW_RELEASE (0) for now,
     // but future releases may add more actions (i.e. GLFW_REPEAT)
     CORE.Input.Mouse.currentButtonState[button] = action;
+    CORE.Input.Touch.currentTouchState[button] = action;
 
 #if defined(SUPPORT_GESTURES_SYSTEM) && defined(SUPPORT_MOUSE_GESTURES)
     // Process mouse events as touches to be able to use mouse-gestures
@@ -1171,7 +1451,19 @@ static void CursorEnterCallback(GLFWwindow *window, int enter)
 // Register fullscreen change events
 static EM_BOOL EmscriptenFullscreenChangeCallback(int eventType, const EmscriptenFullscreenChangeEvent *event, void *userData)
 {
-    // TODO: Implement EmscriptenFullscreenChangeCallback()?
+    // NOTE: 1. Reset the fullscreen flags if the user left fullscreen manually by pressing the Escape key
+    //       2. Which is a necessary safeguard because that case will bypass the toggles CORE.Window.flags resets
+    if (platform.ourFullscreen) platform.ourFullscreen = false;
+    else
+    {
+        const bool wasFullscreen = EM_ASM_INT( { if (document.fullscreenElement) return 1; }, 0);
+        if (!wasFullscreen)
+        {
+            CORE.Window.fullscreen = false;
+            CORE.Window.flags &= ~FLAG_FULLSCREEN_MODE;
+            CORE.Window.flags &= ~FLAG_BORDERLESS_WINDOWED_MODE;
+        }
+    }
 
     return 1; // The event was consumed by the callback handler
 }
