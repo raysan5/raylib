@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.0)
+cmake_minimum_required(VERSION 3.5)
 project(raylib)
 
 # Avoid excessive expansion of variables in conditionals. In particular, if
