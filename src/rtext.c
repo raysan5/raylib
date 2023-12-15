@@ -2078,35 +2078,12 @@ static Font LoadBMFont(const char *fileName)
 
     if (readVars < 1) { UnloadFileText(fileText); return font; } // No glyphCount read
 
-    // Compose correct path using route of .fnt file (fileName) and imFileName
-    char **imPath;
-    char *lastSlash = NULL;
-    imPath = (char **)RL_CALLOC(MAX_FONT_IMAGE_PAGES, sizeof(char *));
+    // Load all required images for further compose
+    Image *imFonts = (Image *)RL_CALLOC(pageCount, sizeof(Image)); // Font atlases, multiple images
 
     for (int i = 0; i < pageCount; i++)
     {
-        lastSlash = strrchr(fileName, '/');
-        if (lastSlash == NULL) lastSlash = strrchr(fileName, '\\');
-
-        if (lastSlash != NULL)
-        {
-            // NOTE: We need some extra space to avoid memory corruption on next allocations!
-            imPath[i] = (char *)RL_CALLOC(TextLength(fileName) - TextLength(lastSlash) + TextLength(imFileName[i]) + 4, 1);
-            memcpy(imPath[i], fileName, TextLength(fileName) - TextLength(lastSlash) + 1);
-            memcpy(imPath[i] + TextLength(fileName) - TextLength(lastSlash) + 1, imFileName[i], TextLength(imFileName[i]));
-        }
-        else imPath[i] = imFileName[i];
-
-        TRACELOGD("    > Image loading path: %s", imPath[i]);
-    }
-
-    // Resize and ReDraw Font Image 
-    Image fullFont = LoadImage(imPath[0]);;
-    Image *imFonts = (Image *)RL_CALLOC(pageCount, sizeof(Image));   // Font atlases, multiple images
-
-    for (int i = 0; i < pageCount; i++)
-    {
-        imFonts[i] =  LoadImage(imPath[i]);
+        imFonts[i] = LoadImage(TextFormat("%s/%s", GetDirectoryPath(fileName), imFileName[i]));
 
         if (imFonts[i].format == PIXELFORMAT_UNCOMPRESSED_GRAYSCALE)
         {
@@ -2128,11 +2105,10 @@ static Font LoadBMFont(const char *fileName)
             UnloadImage(imFonts[i]);
             imFonts[i] = imFontAlpha;
         }
+    }
 
-        if (lastSlash != NULL) RL_FREE(imPath[i]);
-    } 
-
-    fullFont = imFonts[0];
+    Image fullFont = imFonts[0];
+    for (int i = 1; i < pageCount; i++) UnloadImage(imFonts[i]);
 
     // If multiple atlas, then merge atlas
     // NOTE: WARNING: This process could be really slow!
@@ -2197,8 +2173,6 @@ static Font LoadBMFont(const char *fileName)
     }
     else TRACELOG(LOG_INFO, "FONT: [%s] Font loaded successfully (%i glyphs)", fileName, font.glyphCount);
 
-    RL_FREE(imPath);
-    
     return font;
 }
 
