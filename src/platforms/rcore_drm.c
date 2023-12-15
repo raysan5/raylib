@@ -128,7 +128,6 @@ typedef struct {
     int touchSlot;                      // Hold the touch slot number of the currently being sent multitouch block
 
     // Gamepad data
-    pthread_t gamepadThreadId;          // Gamepad reading thread id
     int gamepadStreamFd[MAX_GAMEPADS];  // Gamepad device file descriptor
 
 } PlatformData;
@@ -191,7 +190,7 @@ static void PollKeyboardEvents(void);           // Process evdev keyboard events
 static void *EventThread(void *arg);            // Input device events reading thread
 
 static void InitGamepad(void);                  // Initialize raw gamepad input
-static void *GamepadThread(void *arg);          // Mouse reading thread
+static void PollGamepadEvents(void);            // Gamepad reading function
 
 static int FindMatchingConnectorMode(const drmModeConnector *connector, const drmModeModeInfo *mode);                               // Search matching DRM mode in connector's mode list
 static int FindExactConnectorMode(const drmModeConnector *connector, uint width, uint height, uint fps, bool allowInterlaced);      // Search exactly matching DRM connector mode in connector's list
@@ -577,14 +576,7 @@ void PollInputEvents(void)
     }
 
     // Register gamepads buttons events
-    for (int i = 0; i < MAX_GAMEPADS; i++)
-    {
-        if (CORE.Input.Gamepad.ready[i])
-        {
-            // Register previous gamepad states
-            for (int k = 0; k < MAX_GAMEPAD_BUTTONS; k++) CORE.Input.Gamepad.previousButtonState[i][k] = CORE.Input.Gamepad.currentButtonState[i][k];
-        }
-    }
+    PollGamepadEvents();
 
     // Register previous touch states
     for (int i = 0; i < MAX_TOUCH_POINTS; i++) CORE.Input.Touch.previousTouchState[i] = CORE.Input.Touch.currentTouchState[i];
@@ -600,9 +592,6 @@ void PollInputEvents(void)
     // stdin reading is still used for legacy purposes, it allows keyboard input trough SSH console
 
     if (!platform.eventKeyboardMode) ProcessKeyboard();
-
-    // NOTE: Mouse input events polling is done asynchronously in another pthread - EventThread()
-    // NOTE: Gamepad (Joystick) input events polling is done asynchonously in another pthread - GamepadThread()
 #endif
 
     // Handle the mouse/touch/gestures events:
@@ -1238,8 +1227,6 @@ void ClosePlatform(void)
             pthread_join(platform.eventWorker[i].threadId, NULL);
         }
     }
-
-    if (platform.gamepadThreadId) pthread_join(platform.gamepadThreadId, NULL);
 }
 
 // Initialize Keyboard system (using standard input)
@@ -1952,14 +1939,8 @@ static void InitGamepad(void)
         {
             CORE.Input.Gamepad.ready[i] = true;
 
-            // NOTE: Only create one thread
-            if (i == 0)
-            {
-                int error = pthread_create(&platform.gamepadThreadId, NULL, &GamepadThread, NULL);
-
-                if (error != 0) TRACELOG(LOG_WARNING, "RPI: Failed to create gamepad input event thread");
-                else  TRACELOG(LOG_INFO, "RPI: Gamepad device initialized successfully");
-            }
+            // NOTE: Only show message for first gamepad
+            if (i == 0) TRACELOG(LOG_INFO, "RPI: Gamepad device initialized successfully");
 
             ioctl(platform.gamepadStreamFd[i], JSIOCGNAME(64), &CORE.Input.Gamepad.name[i]);
             ioctl(platform.gamepadStreamFd[i], JSIOCGAXES, &CORE.Input.Gamepad.axisCount[i]);
@@ -1968,7 +1949,7 @@ static void InitGamepad(void)
 }
 
 // Process Gamepad (/dev/input/js0)
-static void *GamepadThread(void *arg)
+static void PollGamepadEvents(void)
 {
     #define JS_EVENT_BUTTON         0x01    // Button pressed/released
     #define JS_EVENT_AXIS           0x02    // Joystick axis moved
@@ -1984,18 +1965,21 @@ static void *GamepadThread(void *arg)
     // Read gamepad event
     struct js_event gamepadEvent = { 0 };
 
-    while (!CORE.Window.shouldClose)
+    for (int i = 0; i < MAX_GAMEPADS; i++)
     {
-        for (int i = 0; i < MAX_GAMEPADS; i++)
+        if (CORE.Input.Gamepad.ready[i])
         {
-            if (read(platform.gamepadStreamFd[i], &gamepadEvent, sizeof(struct js_event)) == (int)sizeof(struct js_event))
+            // Register previous gamepad states
+            for (int k = 0; k < MAX_GAMEPAD_BUTTONS; k++) CORE.Input.Gamepad.previousButtonState[i][k] = CORE.Input.Gamepad.currentButtonState[i][k];
+
+            while (read(platform.gamepadStreamFd[i], &gamepadEvent, sizeof(struct js_event)) == (int)sizeof(struct js_event))
             {
                 gamepadEvent.type &= ~JS_EVENT_INIT;     // Ignore synthetic events
 
                 // Process gamepad events by type
                 if (gamepadEvent.type == JS_EVENT_BUTTON)
                 {
-                    //TRACELOG(LOG_WARNING, "RPI: Gamepad button: %i, value: %i", gamepadEvent.number, gamepadEvent.value);
+                    TRACELOG(LOG_DEBUG, "RPI: Gamepad %i button: %i, value: %i", i, gamepadEvent.number, gamepadEvent.value);
 
                     if (gamepadEvent.number < MAX_GAMEPAD_BUTTONS)
                     {
@@ -2008,7 +1992,7 @@ static void *GamepadThread(void *arg)
                 }
                 else if (gamepadEvent.type == JS_EVENT_AXIS)
                 {
-                    //TRACELOG(LOG_WARNING, "RPI: Gamepad axis: %i, value: %i", gamepadEvent.number, gamepadEvent.value);
+                    TRACELOG(LOG_DEBUG, "RPI: Gamepad %i axis: %i, value: %i", i, gamepadEvent.number, gamepadEvent.value);
 
                     if (gamepadEvent.number < MAX_GAMEPAD_AXIS)
                     {
@@ -2017,11 +2001,8 @@ static void *GamepadThread(void *arg)
                     }
                 }
             }
-            else WaitTime(0.001);    // Sleep for 1 ms to avoid hogging CPU time
         }
     }
-
-    return NULL;
 }
 
 // Search matching DRM mode in connector's mode list
