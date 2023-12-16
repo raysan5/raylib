@@ -147,10 +147,17 @@ void ToggleFullscreen(void)
     const bool wasFullscreen = EM_ASM_INT( { if (document.fullscreenElement) return 1; }, 0);
     if (wasFullscreen)
     {
-        EM_ASM(document.exitFullscreen(););
-
         if (CORE.Window.flags & FLAG_FULLSCREEN_MODE) enterFullscreen = false;
-        else enterFullscreen = true;
+        else if (CORE.Window.flags & FLAG_BORDERLESS_WINDOWED_MODE) enterFullscreen = true;
+        else
+        {
+            const int canvasWidth = EM_ASM_INT( { return document.getElementById('canvas').width; }, 0);
+            const int canvasStyleWidth = EM_ASM_INT( { return parseInt(document.getElementById('canvas').style.width); }, 0);
+            if (canvasStyleWidth > canvasWidth) enterFullscreen = false;
+            else enterFullscreen = true;
+        }
+
+        EM_ASM(document.exitFullscreen(););
 
         CORE.Window.fullscreen = false;
         CORE.Window.flags &= ~FLAG_FULLSCREEN_MODE;
@@ -247,10 +254,17 @@ void ToggleBorderlessWindowed(void)
     const bool wasFullscreen = EM_ASM_INT( { if (document.fullscreenElement) return 1; }, 0);
     if (wasFullscreen)
     {
-        EM_ASM(document.exitFullscreen(););
-
         if (CORE.Window.flags & FLAG_BORDERLESS_WINDOWED_MODE) enterBorderless = false;
-        else enterBorderless = true;
+        else if (CORE.Window.flags & FLAG_FULLSCREEN_MODE) enterBorderless = true;
+        else
+        {
+            const int canvasWidth = EM_ASM_INT( { return document.getElementById('canvas').width; }, 0);
+            const int screenWidth = EM_ASM_INT( { return screen.width; }, 0);
+            if (screenWidth == canvasWidth) enterBorderless = false;
+            else enterBorderless = true;
+        }
+
+        EM_ASM(document.exitFullscreen(););
 
         CORE.Window.fullscreen = false;
         CORE.Window.flags &= ~FLAG_FULLSCREEN_MODE;
@@ -307,15 +321,31 @@ void SetWindowState(unsigned int flags)
     }
 
     // State change: FLAG_BORDERLESS_WINDOWED_MODE
-    if (((CORE.Window.flags & FLAG_BORDERLESS_WINDOWED_MODE) != (flags & FLAG_BORDERLESS_WINDOWED_MODE)) && ((flags & FLAG_BORDERLESS_WINDOWED_MODE) > 0))
+    if ((flags & FLAG_BORDERLESS_WINDOWED_MODE) > 0)
     {
-        ToggleBorderlessWindowed();     // NOTE: Window state flag updated inside function
+        // NOTE: Window state flag updated inside ToggleBorderlessWindowed() function
+        const bool wasFullscreen = EM_ASM_INT( { if (document.fullscreenElement) return 1; }, 0);
+        if (wasFullscreen)
+        {
+            const int canvasWidth = EM_ASM_INT( { return document.getElementById('canvas').width; }, 0);
+            const int canvasStyleWidth = EM_ASM_INT( { return parseInt(document.getElementById('canvas').style.width); }, 0);
+            if ((CORE.Window.flags & FLAG_FULLSCREEN_MODE) || canvasStyleWidth > canvasWidth) ToggleBorderlessWindowed();
+        }
+        else ToggleBorderlessWindowed();
     }
 
     // State change: FLAG_FULLSCREEN_MODE
-    if ((CORE.Window.flags & FLAG_FULLSCREEN_MODE) != (flags & FLAG_FULLSCREEN_MODE))
+    if ((flags & FLAG_FULLSCREEN_MODE) > 0)
     {
-        ToggleFullscreen();     // NOTE: Window state flag updated inside function
+        // NOTE: Window state flag updated inside ToggleFullscreen() function
+        const bool wasFullscreen = EM_ASM_INT( { if (document.fullscreenElement) return 1; }, 0);
+        if (wasFullscreen)
+        {
+            const int canvasWidth = EM_ASM_INT( { return document.getElementById('canvas').width; }, 0);
+            const int screenWidth = EM_ASM_INT( { return screen.width; }, 0);
+            if ((CORE.Window.flags & FLAG_BORDERLESS_WINDOWED_MODE) || screenWidth == canvasWidth ) ToggleFullscreen();
+        }
+        else ToggleFullscreen();
     }
 
     // State change: FLAG_WINDOW_RESIZABLE
@@ -414,15 +444,32 @@ void ClearWindowState(unsigned int flags)
     }
 
     // State change: FLAG_BORDERLESS_WINDOWED_MODE
-    if (((CORE.Window.flags & FLAG_BORDERLESS_WINDOWED_MODE) > 0) && ((flags & FLAG_BORDERLESS_WINDOWED_MODE) > 0))
+    if ((flags & FLAG_BORDERLESS_WINDOWED_MODE) > 0)
     {
-        ToggleBorderlessWindowed();     // NOTE: Window state flag updated inside function
+        const bool wasFullscreen = EM_ASM_INT( { if (document.fullscreenElement) return 1; }, 0);
+        if (wasFullscreen)
+        {
+            const int canvasWidth = EM_ASM_INT( { return document.getElementById('canvas').width; }, 0);
+            const int screenWidth = EM_ASM_INT( { return screen.width; }, 0);
+            if ((CORE.Window.flags & FLAG_BORDERLESS_WINDOWED_MODE) || (screenWidth == canvasWidth)) EM_ASM(document.exitFullscreen(););
+        }
+
+        CORE.Window.flags &= ~FLAG_BORDERLESS_WINDOWED_MODE;
     }
 
     // State change: FLAG_FULLSCREEN_MODE
-    if (((CORE.Window.flags & FLAG_FULLSCREEN_MODE) > 0) && ((flags & FLAG_FULLSCREEN_MODE) > 0))
+    if ((flags & FLAG_FULLSCREEN_MODE) > 0)
     {
-        ToggleFullscreen();     // NOTE: Window state flag updated inside function
+        const bool wasFullscreen = EM_ASM_INT( { if (document.fullscreenElement) return 1; }, 0);
+        if (wasFullscreen)
+        {
+            const int canvasWidth = EM_ASM_INT( { return document.getElementById('canvas').width; }, 0);
+            const int canvasStyleWidth = EM_ASM_INT( { return parseInt(document.getElementById('canvas').style.width); }, 0);
+            if ((CORE.Window.flags & FLAG_FULLSCREEN_MODE) || (canvasStyleWidth > canvasWidth)) EM_ASM(document.exitFullscreen(););
+        }
+
+        CORE.Window.fullscreen = false;
+        CORE.Window.flags &= ~FLAG_FULLSCREEN_MODE;
     }
 
     // State change: FLAG_WINDOW_RESIZABLE
