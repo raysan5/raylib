@@ -674,8 +674,6 @@ void EnableCursor(void)
 
     // Set cursor position in the middle
     SetMousePosition(CORE.Window.screen.width/2, CORE.Window.screen.height/2);
-
-    CORE.Input.Mouse.cursorHidden = false;
 }
 
 // Disables cursor (lock cursor)
@@ -686,8 +684,10 @@ void DisableCursor(void)
 
     // Set cursor position in the middle
     SetMousePosition(CORE.Window.screen.width/2, CORE.Window.screen.height/2);
+}
 
-    CORE.Input.Mouse.cursorHidden = true;
+bool IsCursorHidden(void) {
+    return EM_ASM_INT({ return document.pointerLockElement !== null; }) ? true : false;
 }
 
 // Swap back buffer with front buffer (screen drawing)

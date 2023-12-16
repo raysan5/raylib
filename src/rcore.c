@@ -790,10 +790,12 @@ void DisableEventWaiting(void)
 }
 
 // Check if cursor is not visible
+#if !defined(PLATFORM_WEB)
 bool IsCursorHidden(void)
 {
     return CORE.Input.Mouse.cursorHidden;
 }
+#endif
 
 // Check if cursor is on the current screen.
 bool IsCursorOnScreen(void)
