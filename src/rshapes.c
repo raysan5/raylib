@@ -1546,6 +1546,92 @@ void DrawPolyLinesEx(Vector2 center, int sides, float radius, float rotation, fl
 // Draw spline: linear, minimum 2 points
 void DrawSplineLinear(Vector2 *points, int pointCount, float thick, Color color)
 {
+    if (pointCount < 2) return;
+
+#if defined(SUPPORT_SPLINE_MITERS)
+    Vector2 prevNormal = (Vector2){-(points[1].y - points[0].y), (points[1].x - points[0].x)};
+    float prevLength = sqrtf(prevNormal.x*prevNormal.x + prevNormal.y*prevNormal.y);
+    
+    if (prevLength > 0.0f)
+    {
+        prevNormal.x /= prevLength;
+        prevNormal.y /= prevLength;
+    }
+    else
+    {
+        prevNormal.x = 0.0f;
+        prevNormal.y = 0.0f;
+    }
+
+    Vector2 prevRadius = { 0.5f*thick*prevNormal.x, 0.5f*thick*prevNormal.y };
+    
+    for (int i = 0; i < pointCount - 1; i++)
+    {
+        Vector2 normal = { 0 };
+
+        if (i < pointCount - 2)
+        {
+            normal = (Vector2){-(points[i + 2].y - points[i + 1].y), (points[i + 2].x - points[i + 1].x)};
+            float normalLength = sqrtf(normal.x*normal.x + normal.y*normal.y);
+            
+            if (normalLength > 0.0f)
+            {
+                normal.x /= normalLength;
+                normal.y /= normalLength;
+            }
+            else
+            {
+                normal.x = 0.0f;
+                normal.y = 0.0f;
+            }
+        }
+        else
+        {
+            normal = prevNormal;
+        }
+
+        Vector2 radius = { prevNormal.x + normal.x, prevNormal.y + normal.y };
+        float radiusLength = sqrtf(radius.x*radius.x + radius.y*radius.y);
+        
+        if (radiusLength > 0.0f)
+        {
+            radius.x /= radiusLength;
+            radius.y /= radiusLength;
+        }
+        else
+        {
+            radius.x = 0.0f;
+            radius.y = 0.0f;
+        }
+
+        float cosTheta = radius.x*normal.x + radius.y*normal.y;
+
+        if (cosTheta != 0.0f)
+        {
+            radius.x *= (thick*0.5f/cosTheta);
+            radius.y *= (thick*0.5f/cosTheta);
+        }
+        else
+        {
+            radius.x = 0.0f;
+            radius.y = 0.0f;
+        }
+        
+        Vector2 strip[4] = {
+            { points[i].x - prevRadius.x, points[i].y - prevRadius.y },
+            { points[i].x + prevRadius.x, points[i].y + prevRadius.y },
+            { points[i + 1].x - radius.x, points[i + 1].y - radius.y },
+            { points[i + 1].x + radius.x, points[i + 1].y + radius.y }
+        };
+
+        DrawTriangleStrip(strip, 4, color);
+
+        prevRadius = radius;
+        prevNormal = normal;
+    }
+
+#else   // !SUPPORT_SPLINE_MITTERS
+
     Vector2 delta = { 0 };
     float length = 0.0f;
     float scale = 0.0f;
@@ -1567,8 +1653,10 @@ void DrawSplineLinear(Vector2 *points, int pointCount, float thick, Color color)
 
         DrawTriangleStrip(strip, 4, color);
     }
+#endif
+    
 #if defined(SUPPORT_SPLINE_SEGMENT_CAPS)
-
+    // TODO: Add spline segment rounded caps at the begin/end of the spline
 #endif
 }
 
