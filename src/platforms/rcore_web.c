@@ -114,6 +114,7 @@ static EM_BOOL EmscriptenResizeCallback(int eventType, const EmscriptenUiEvent *
 
 // Emscripten input callback events
 static EM_BOOL EmscriptenMouseCallback(int eventType, const EmscriptenMouseEvent *mouseEvent, void *userData);
+static EM_BOOL EmscriptenPointerlockCallback(int eventType, const EmscriptenPointerlockChangeEvent *pointerlockChangeEvent, void *userData);
 static EM_BOOL EmscriptenTouchCallback(int eventType, const EmscriptenTouchEvent *touchEvent, void *userData);
 static EM_BOOL EmscriptenGamepadCallback(int eventType, const EmscriptenGamepadEvent *gamepadEvent, void *userData);
 
@@ -765,7 +766,7 @@ void EnableCursor(void)
     // Set cursor position in the middle
     SetMousePosition(CORE.Window.screen.width/2, CORE.Window.screen.height/2);
 
-    CORE.Input.Mouse.cursorHidden = false;
+    // NOTE: CORE.Input.Mouse.cursorHidden handled by EmscriptenPointerlockCallback()
 }
 
 // Disables cursor (lock cursor)
@@ -777,7 +778,7 @@ void DisableCursor(void)
     // Set cursor position in the middle
     SetMousePosition(CORE.Window.screen.width/2, CORE.Window.screen.height/2);
 
-    CORE.Input.Mouse.cursorHidden = true;
+    // NOTE: CORE.Input.Mouse.cursorHidden handled by EmscriptenPointerlockCallback()
 }
 
 // Swap back buffer with front buffer (screen drawing)
@@ -1251,6 +1252,7 @@ int InitPlatform(void)
 
     // Support mouse events
     emscripten_set_click_callback("#canvas", NULL, 1, EmscriptenMouseCallback);
+    emscripten_set_pointerlockchange_callback(EMSCRIPTEN_EVENT_TARGET_WINDOW, NULL, 1, EmscriptenPointerlockCallback);
 
     // Support touch events
     emscripten_set_touchstart_callback("#canvas", NULL, 1, EmscriptenTouchCallback);
@@ -1566,6 +1568,14 @@ static EM_BOOL EmscriptenResizeCallback(int eventType, const EmscriptenUiEvent *
 static EM_BOOL EmscriptenMouseCallback(int eventType, const EmscriptenMouseEvent *mouseEvent, void *userData)
 {
     // This is only for registering mouse click events with emscripten and doesn't need to do anything
+
+    return 1; // The event was consumed by the callback handler
+}
+
+// Register pointer lock events
+static EM_BOOL EmscriptenPointerlockCallback(int eventType, const EmscriptenPointerlockChangeEvent *pointerlockChangeEvent, void *userData)
+{
+    CORE.Input.Mouse.cursorHidden = EM_ASM_INT( { if (document.pointerLockElement) return 1; }, 0);
 
     return 1; // The event was consumed by the callback handler
 }
