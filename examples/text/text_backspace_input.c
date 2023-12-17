@@ -49,7 +49,7 @@ int main(void)
         int letter = GetCharPressed();
         int key = GetKeyPressed();
 
-        while (key > 0 || letter > 0)
+        while (key || letter)
         {
 
             // ingest (key) backspace
@@ -69,7 +69,7 @@ int main(void)
 
             // ingest (letter) and (key)
             // if possible write ascii character to the string
-            else if ((letter > 0) && (letter >= 32) && (letter <= 125) && (usedSize < MAX_INPUT_CHARS))
+            else if ((letter > 0) && (letter >= 32) && (letter <= 126) && (usedSize < MAX_INPUT_CHARS))
             {
                 textField[usedSize] = (char) letter;
                 textField[usedSize + 1] = 0;
