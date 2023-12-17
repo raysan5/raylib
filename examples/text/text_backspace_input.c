@@ -53,7 +53,7 @@ int main(void)
         {
 
             // ingest (key) backspace
-            // if posable delete one character from the string
+            // if possible delete one character from the string
             if (key == KEY_BACKSPACE && usedSize > 0)
             {
                 textField[usedSize - 1] = 0;
@@ -68,7 +68,7 @@ int main(void)
             }
 
             // ingest (letter) and (key)
-            // if possible wright ascii character to the string
+            // if possible write ascii character to the string
             else if ((letter > 0) && (letter >= 32) && (letter <= 125) && (usedSize < MAX_INPUT_CHARS))
             {
                 textField[usedSize] = (char) letter;
