@@ -112,18 +112,13 @@ int main(void)
 
 bool isKeyChar(int key)
 {
-    switch (key)
-    {
-    case KEY_SPACE:
-    case KEY_APOSTROPHE:
-    case KEY_COMMA...KEY_NINE:
-    case KEY_SEMICOLON:
-    case KEY_EQUAL:
-    case KEY_A...KEY_Z:
-    case KEY_LEFT_BRACKET...KEY_RIGHT_BRACKET:
-    case KEY_GRAVE:
-        return true;
-    default:
-        return false;
-    }
+    return (key == KEY_SPACE)
+        || (key == KEY_APOSTROPHE)
+        || (key >= KEY_COMMA && key <= KEY_NINE)
+        || (key == KEY_SEMICOLON)
+        || (key == KEY_EQUAL)
+        || (key >= KEY_A && key <= KEY_Z)
+        || (key >= KEY_LEFT_BRACKET && key <= KEY_RIGHT_BRACKET)
+        || (key == KEY_GRAVE)
+        || (key >= KEY_KP_0 && key <= KEY_KP_EQUAL);
 }
