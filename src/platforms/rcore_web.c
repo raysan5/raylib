@@ -84,6 +84,23 @@ extern CoreData CORE;                   // Global CORE state context
 static PlatformData platform = { 0 };   // Platform specific data
 
 //----------------------------------------------------------------------------------
+// Local Variables Definition
+//----------------------------------------------------------------------------------
+const char cursorLUT[11][12] = {
+    "default",     // 0  MOUSE_CURSOR_DEFAULT
+    "default",     // 1  MOUSE_CURSOR_ARROW
+    "text",        // 2  MOUSE_CURSOR_IBEAM
+    "crosshair",   // 3  MOUSE_CURSOR_CROSSHAIR
+    "pointer",     // 4  MOUSE_CURSOR_POINTING_HAND
+    "ew-resize",   // 5  MOUSE_CURSOR_RESIZE_EW
+    "ns-resize",   // 6  MOUSE_CURSOR_RESIZE_NS
+    "nwse-resize", // 7  MOUSE_CURSOR_RESIZE_NWSE
+    "nesw-resize", // 8  MOUSE_CURSOR_RESIZE_NESW
+    "move",        // 9  MOUSE_CURSOR_RESIZE_ALL
+    "not-allowed"  // 10 MOUSE_CURSOR_NOT_ALLOWED
+};
+
+//----------------------------------------------------------------------------------
 // Module Internal Functions Declaration
 //----------------------------------------------------------------------------------
 int InitPlatform(void);          // Initialize platform (graphics, inputs and more)
@@ -749,13 +766,23 @@ const char *GetClipboardText(void)
 // Show mouse cursor
 void ShowCursor(void)
 {
-    CORE.Input.Mouse.cursorHidden = false;
+    if (CORE.Input.Mouse.cursorHidden)
+    {
+        EM_ASM( { document.getElementById("canvas").style.cursor = UTF8ToString($0); }, cursorLUT[CORE.Input.Mouse.cursor]);
+
+        CORE.Input.Mouse.cursorHidden = false;
+    }
 }
 
 // Hides mouse cursor
 void HideCursor(void)
 {
-    CORE.Input.Mouse.cursorHidden = true;
+    if (!CORE.Input.Mouse.cursorHidden)
+    {
+        EM_ASM(document.getElementById('canvas').style.cursor = 'none';);
+
+        CORE.Input.Mouse.cursorHidden = true;
+    }
 }
 
 // Enables cursor (unlock cursor)
@@ -837,32 +864,10 @@ void SetMouseCursor(int cursor)
 {
     if (CORE.Input.Mouse.cursor != cursor)
     {
-        const char *cursorName = NULL;
+        EM_ASM( { document.getElementById('canvas').style.cursor = UTF8ToString($0); }, cursorLUT[cursor]);
+
         CORE.Input.Mouse.cursor = cursor;
-
-        switch (cursor)
-        {
-            case MOUSE_CURSOR_IBEAM: cursorName = "text"; break;
-            case MOUSE_CURSOR_CROSSHAIR: cursorName = "crosshair"; break;
-            case MOUSE_CURSOR_POINTING_HAND: cursorName = "pointer"; break;
-            case MOUSE_CURSOR_RESIZE_EW: cursorName = "ew-resize"; break;
-            case MOUSE_CURSOR_RESIZE_NS: cursorName = "ns-resize"; break;
-            case MOUSE_CURSOR_RESIZE_NWSE: cursorName = "nwse-resize"; break;
-            case MOUSE_CURSOR_RESIZE_NESW: cursorName = "nesw-resize"; break;
-            case MOUSE_CURSOR_RESIZE_ALL: cursorName = "move"; break;
-            case MOUSE_CURSOR_NOT_ALLOWED: cursorName = "not-allowed"; break;
-            case MOUSE_CURSOR_ARROW: // WARNING: It does not seem t be a specific cursor for arrow
-            case MOUSE_CURSOR_DEFAULT: cursorName = "default"; break;
-            default:
-            {
-                cursorName = "default";
-                CORE.Input.Mouse.cursor = MOUSE_CURSOR_DEFAULT;
-            } break;
-        }
-
-        // Set the cursor element on the canvas CSS
-        // The canvas is coded to the Id "canvas" on init
-        EM_ASM({document.getElementById("canvas").style.cursor = UTF8ToString($0);}, cursorName);
+        CORE.Input.Mouse.cursorHidden = false;
     }
 }
 
