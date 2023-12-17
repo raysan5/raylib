@@ -86,7 +86,7 @@ static PlatformData platform = { 0 };   // Platform specific data
 //----------------------------------------------------------------------------------
 // Local Variables Definition
 //----------------------------------------------------------------------------------
-const char cursorLUT[11][12] = {
+static const char cursorLUT[11][12] = {
     "default",     // 0  MOUSE_CURSOR_DEFAULT
     "default",     // 1  MOUSE_CURSOR_ARROW
     "text",        // 2  MOUSE_CURSOR_IBEAM
