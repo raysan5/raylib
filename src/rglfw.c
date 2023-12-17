@@ -102,10 +102,8 @@
 #endif
 
 #if defined(__FreeBSD__) || defined(__OpenBSD__) || defined( __NetBSD__) || defined(__DragonFly__)
-    #include "external/glfw/src/posix_module.c"
     #include "external/glfw/src/posix_thread.c"
     #include "external/glfw/src/posix_time.c"
-    #include "external/glfw/src/posix_poll.c"
     #include "external/glfw/src/null_joystick.c"
     #include "external/glfw/src/xkb_unicode.c"
 
@@ -119,7 +117,6 @@
 #endif
 
 #if defined(__APPLE__)
-    #include "external/glfw/src/posix_module.c"
     #include "external/glfw/src/posix_thread.c"
     #include "external/glfw/src/cocoa_init.m"
     #include "external/glfw/src/cocoa_joystick.m"
