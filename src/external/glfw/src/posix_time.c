@@ -1,5 +1,5 @@
 //========================================================================
-// GLFW 3.4 POSIX - www.glfw.org
+// GLFW 3.3 POSIX - www.glfw.org
 //------------------------------------------------------------------------
 // Copyright (c) 2002-2006 Marcus Geelnard
 // Copyright (c) 2006-2017 Camilla Löwy <elmindreda@glfw.org>
@@ -29,31 +29,55 @@
 
 #include "internal.h"
 
-#include <unistd.h>
 #include <sys/time.h>
+#include <time.h>
+
+
+//////////////////////////////////////////////////////////////////////////
+//////                       GLFW internal API                      //////
+//////////////////////////////////////////////////////////////////////////
+
+// Initialise timer
+//
+void _glfwInitTimerPOSIX(void)
+{
+#if defined(CLOCK_MONOTONIC)
+    struct timespec ts;
+
+    if (clock_gettime(CLOCK_MONOTONIC, &ts) == 0)
+    {
+        _glfw.timer.posix.monotonic = GLFW_TRUE;
+        _glfw.timer.posix.frequency = 1000000000;
+    }
+    else
+#endif
+    {
+        _glfw.timer.posix.monotonic = GLFW_FALSE;
+        _glfw.timer.posix.frequency = 1000000;
+    }
+}
 
 
 //////////////////////////////////////////////////////////////////////////
 //////                       GLFW platform API                      //////
 //////////////////////////////////////////////////////////////////////////
 
-void _glfwPlatformInitTimer(void)
-{
-    _glfw.timer.posix.clock = CLOCK_REALTIME;
-    _glfw.timer.posix.frequency = 1000000000;
-
-#if defined(_POSIX_MONOTONIC_CLOCK)
-    struct timespec ts;
-    if (clock_gettime(CLOCK_MONOTONIC, &ts) == 0)
-        _glfw.timer.posix.clock = CLOCK_MONOTONIC;
-#endif
-}
-
 uint64_t _glfwPlatformGetTimerValue(void)
 {
-    struct timespec ts;
-    clock_gettime(_glfw.timer.posix.clock, &ts);
-    return (uint64_t) ts.tv_sec * _glfw.timer.posix.frequency + (uint64_t) ts.tv_nsec;
+#if defined(CLOCK_MONOTONIC)
+    if (_glfw.timer.posix.monotonic)
+    {
+        struct timespec ts;
+        clock_gettime(CLOCK_MONOTONIC, &ts);
+        return (uint64_t) ts.tv_sec * (uint64_t) 1000000000 + (uint64_t) ts.tv_nsec;
+    }
+    else
+#endif
+    {
+        struct timeval tv;
+        gettimeofday(&tv, NULL);
+        return (uint64_t) tv.tv_sec * (uint64_t) 1000000 + (uint64_t) tv.tv_usec;
+    }
 }
 
 uint64_t _glfwPlatformGetTimerFrequency(void)

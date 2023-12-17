@@ -1,5 +1,5 @@
 //========================================================================
-// GLFW 3.4 macOS - www.glfw.org
+// GLFW 3.3 macOS - www.glfw.org
 //------------------------------------------------------------------------
 // Copyright (c) 2002-2006 Marcus Geelnard
 // Copyright (c) 2006-2019 Camilla Löwy <elmindreda@glfw.org>
@@ -116,7 +116,7 @@ static char* getMonitorName(CGDirectDisplayID displayID, NSScreen* screen)
     const CFIndex size =
         CFStringGetMaximumSizeForEncoding(CFStringGetLength(nameRef),
                                           kCFStringEncodingUTF8);
-    char* name = _glfw_calloc(size + 1, 1);
+    char* name = calloc(size + 1, 1);
     CFStringGetCString(nameRef, name, size, kCFStringEncodingUTF8);
 
     CFRelease(info);
@@ -293,11 +293,11 @@ static double getFallbackRefreshRate(CGDirectDisplayID displayID)
 
 // Poll for changes in the set of connected monitors
 //
-void _glfwPollMonitorsCocoa(void)
+void _glfwPollMonitorsNS(void)
 {
     uint32_t displayCount;
     CGGetOnlineDisplayList(0, NULL, &displayCount);
-    CGDirectDisplayID* displays = _glfw_calloc(displayCount, sizeof(CGDirectDisplayID));
+    CGDirectDisplayID* displays = calloc(displayCount, sizeof(CGDirectDisplayID));
     CGGetOnlineDisplayList(displayCount, displays, &displayCount);
 
     for (int i = 0;  i < _glfw.monitorCount;  i++)
@@ -307,7 +307,7 @@ void _glfwPollMonitorsCocoa(void)
     uint32_t disconnectedCount = _glfw.monitorCount;
     if (disconnectedCount)
     {
-        disconnected = _glfw_calloc(_glfw.monitorCount, sizeof(_GLFWmonitor*));
+        disconnected = calloc(_glfw.monitorCount, sizeof(_GLFWmonitor*));
         memcpy(disconnected,
                _glfw.monitors,
                _glfw.monitorCount * sizeof(_GLFWmonitor*));
@@ -359,7 +359,7 @@ void _glfwPollMonitorsCocoa(void)
         monitor->ns.unitNumber = unitNumber;
         monitor->ns.screen     = screen;
 
-        _glfw_free(name);
+        free(name);
 
         CGDisplayModeRef mode = CGDisplayCopyDisplayMode(displays[i]);
         if (CGDisplayModeGetRefreshRate(mode) == 0.0)
@@ -375,16 +375,16 @@ void _glfwPollMonitorsCocoa(void)
             _glfwInputMonitor(disconnected[i], GLFW_DISCONNECTED, 0);
     }
 
-    _glfw_free(disconnected);
-    _glfw_free(displays);
+    free(disconnected);
+    free(displays);
 }
 
 // Change the current video mode
 //
-void _glfwSetVideoModeCocoa(_GLFWmonitor* monitor, const GLFWvidmode* desired)
+void _glfwSetVideoModeNS(_GLFWmonitor* monitor, const GLFWvidmode* desired)
 {
     GLFWvidmode current;
-    _glfwGetVideoModeCocoa(monitor, &current);
+    _glfwPlatformGetVideoMode(monitor, &current);
 
     const GLFWvidmode* best = _glfwChooseVideoMode(monitor, desired);
     if (_glfwCompareVideoModes(&current, best) == 0)
@@ -424,7 +424,7 @@ void _glfwSetVideoModeCocoa(_GLFWmonitor* monitor, const GLFWvidmode* desired)
 
 // Restore the previously saved (original) video mode
 //
-void _glfwRestoreVideoModeCocoa(_GLFWmonitor* monitor)
+void _glfwRestoreVideoModeNS(_GLFWmonitor* monitor)
 {
     if (monitor->ns.previousMode)
     {
@@ -443,11 +443,11 @@ void _glfwRestoreVideoModeCocoa(_GLFWmonitor* monitor)
 //////                       GLFW platform API                      //////
 //////////////////////////////////////////////////////////////////////////
 
-void _glfwFreeMonitorCocoa(_GLFWmonitor* monitor)
+void _glfwPlatformFreeMonitor(_GLFWmonitor* monitor)
 {
 }
 
-void _glfwGetMonitorPosCocoa(_GLFWmonitor* monitor, int* xpos, int* ypos)
+void _glfwPlatformGetMonitorPos(_GLFWmonitor* monitor, int* xpos, int* ypos)
 {
     @autoreleasepool {
 
@@ -461,8 +461,8 @@ void _glfwGetMonitorPosCocoa(_GLFWmonitor* monitor, int* xpos, int* ypos)
     } // autoreleasepool
 }
 
-void _glfwGetMonitorContentScaleCocoa(_GLFWmonitor* monitor,
-                                      float* xscale, float* yscale)
+void _glfwPlatformGetMonitorContentScale(_GLFWmonitor* monitor,
+                                         float* xscale, float* yscale)
 {
     @autoreleasepool {
 
@@ -483,9 +483,9 @@ void _glfwGetMonitorContentScaleCocoa(_GLFWmonitor* monitor,
     } // autoreleasepool
 }
 
-void _glfwGetMonitorWorkareaCocoa(_GLFWmonitor* monitor,
-                                  int* xpos, int* ypos,
-                                  int* width, int* height)
+void _glfwPlatformGetMonitorWorkarea(_GLFWmonitor* monitor,
+                                     int* xpos, int* ypos,
+                                     int* width, int* height)
 {
     @autoreleasepool {
 
@@ -500,7 +500,7 @@ void _glfwGetMonitorWorkareaCocoa(_GLFWmonitor* monitor,
     if (xpos)
         *xpos = frameRect.origin.x;
     if (ypos)
-        *ypos = _glfwTransformYCocoa(frameRect.origin.y + frameRect.size.height - 1);
+        *ypos = _glfwTransformYNS(frameRect.origin.y + frameRect.size.height - 1);
     if (width)
         *width = frameRect.size.width;
     if (height)
@@ -509,7 +509,7 @@ void _glfwGetMonitorWorkareaCocoa(_GLFWmonitor* monitor,
     } // autoreleasepool
 }
 
-GLFWvidmode* _glfwGetVideoModesCocoa(_GLFWmonitor* monitor, int* count)
+GLFWvidmode* _glfwPlatformGetVideoModes(_GLFWmonitor* monitor, int* count)
 {
     @autoreleasepool {
 
@@ -517,7 +517,7 @@ GLFWvidmode* _glfwGetVideoModesCocoa(_GLFWmonitor* monitor, int* count)
 
     CFArrayRef modes = CGDisplayCopyAllDisplayModes(monitor->ns.displayID, NULL);
     const CFIndex found = CFArrayGetCount(modes);
-    GLFWvidmode* result = _glfw_calloc(found, sizeof(GLFWvidmode));
+    GLFWvidmode* result = calloc(found, sizeof(GLFWvidmode));
 
     for (CFIndex i = 0;  i < found;  i++)
     {
@@ -549,7 +549,7 @@ GLFWvidmode* _glfwGetVideoModesCocoa(_GLFWmonitor* monitor, int* count)
     } // autoreleasepool
 }
 
-void _glfwGetVideoModeCocoa(_GLFWmonitor* monitor, GLFWvidmode *mode)
+void _glfwPlatformGetVideoMode(_GLFWmonitor* monitor, GLFWvidmode *mode)
 {
     @autoreleasepool {
 
@@ -560,12 +560,12 @@ void _glfwGetVideoModeCocoa(_GLFWmonitor* monitor, GLFWvidmode *mode)
     } // autoreleasepool
 }
 
-GLFWbool _glfwGetGammaRampCocoa(_GLFWmonitor* monitor, GLFWgammaramp* ramp)
+GLFWbool _glfwPlatformGetGammaRamp(_GLFWmonitor* monitor, GLFWgammaramp* ramp)
 {
     @autoreleasepool {
 
     uint32_t size = CGDisplayGammaTableCapacity(monitor->ns.displayID);
-    CGGammaValue* values = _glfw_calloc(size * 3, sizeof(CGGammaValue));
+    CGGammaValue* values = calloc(size * 3, sizeof(CGGammaValue));
 
     CGGetDisplayTransferByTable(monitor->ns.displayID,
                                 size,
@@ -583,17 +583,17 @@ GLFWbool _glfwGetGammaRampCocoa(_GLFWmonitor* monitor, GLFWgammaramp* ramp)
         ramp->blue[i]  = (unsigned short) (values[i + size * 2] * 65535);
     }
 
-    _glfw_free(values);
+    free(values);
     return GLFW_TRUE;
 
     } // autoreleasepool
 }
 
-void _glfwSetGammaRampCocoa(_GLFWmonitor* monitor, const GLFWgammaramp* ramp)
+void _glfwPlatformSetGammaRamp(_GLFWmonitor* monitor, const GLFWgammaramp* ramp)
 {
     @autoreleasepool {
 
-    CGGammaValue* values = _glfw_calloc(ramp->size * 3, sizeof(CGGammaValue));
+    CGGammaValue* values = calloc(ramp->size * 3, sizeof(CGGammaValue));
 
     for (unsigned int i = 0;  i < ramp->size;  i++)
     {
@@ -608,7 +608,7 @@ void _glfwSetGammaRampCocoa(_GLFWmonitor* monitor, const GLFWgammaramp* ramp)
                                 values + ramp->size,
                                 values + ramp->size * 2);
 
-    _glfw_free(values);
+    free(values);
 
     } // autoreleasepool
 }

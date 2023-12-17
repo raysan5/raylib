@@ -1,5 +1,5 @@
 //========================================================================
-// GLFW 3.4 Win32 - www.glfw.org
+// GLFW 3.3 Win32 - www.glfw.org
 //------------------------------------------------------------------------
 // Copyright (c) 2002-2006 Marcus Geelnard
 // Copyright (c) 2006-2017 Camilla Löwy <elmindreda@glfw.org>
@@ -43,7 +43,8 @@ GLFWbool _glfwPlatformCreateTls(_GLFWtls* tls)
     tls->win32.index = TlsAlloc();
     if (tls->win32.index == TLS_OUT_OF_INDEXES)
     {
-        _glfwInputError(GLFW_PLATFORM_ERROR, "Win32: Failed to allocate TLS index");
+        _glfwInputErrorWin32(GLFW_PLATFORM_ERROR,
+                             "Win32: Failed to allocate TLS index");
         return GLFW_FALSE;
     }
 

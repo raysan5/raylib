@@ -1,5 +1,5 @@
 //========================================================================
-// GLFW 3.4 - www.glfw.org
+// GLFW 3.3 - www.glfw.org
 //------------------------------------------------------------------------
 // Copyright (c) 2016 Google Inc.
 // Copyright (c) 2016-2017 Camilla Löwy <elmindreda@glfw.org>
@@ -29,105 +29,24 @@
 
 #include "internal.h"
 
-#include <stdlib.h>
-
 
 //////////////////////////////////////////////////////////////////////////
 //////                       GLFW platform API                      //////
 //////////////////////////////////////////////////////////////////////////
 
-GLFWbool _glfwConnectNull(int platformID, _GLFWplatform* platform)
+int _glfwPlatformInit(void)
 {
-    const _GLFWplatform null =
-    {
-        GLFW_PLATFORM_NULL,
-        _glfwInitNull,
-        _glfwTerminateNull,
-        _glfwGetCursorPosNull,
-        _glfwSetCursorPosNull,
-        _glfwSetCursorModeNull,
-        _glfwSetRawMouseMotionNull,
-        _glfwRawMouseMotionSupportedNull,
-        _glfwCreateCursorNull,
-        _glfwCreateStandardCursorNull,
-        _glfwDestroyCursorNull,
-        _glfwSetCursorNull,
-        _glfwGetScancodeNameNull,
-        _glfwGetKeyScancodeNull,
-        _glfwSetClipboardStringNull,
-        _glfwGetClipboardStringNull,
-        _glfwInitJoysticksNull,
-        _glfwTerminateJoysticksNull,
-        _glfwPollJoystickNull,
-        _glfwGetMappingNameNull,
-        _glfwUpdateGamepadGUIDNull,
-        _glfwFreeMonitorNull,
-        _glfwGetMonitorPosNull,
-        _glfwGetMonitorContentScaleNull,
-        _glfwGetMonitorWorkareaNull,
-        _glfwGetVideoModesNull,
-        _glfwGetVideoModeNull,
-        _glfwGetGammaRampNull,
-        _glfwSetGammaRampNull,
-        _glfwCreateWindowNull,
-        _glfwDestroyWindowNull,
-        _glfwSetWindowTitleNull,
-        _glfwSetWindowIconNull,
-        _glfwGetWindowPosNull,
-        _glfwSetWindowPosNull,
-        _glfwGetWindowSizeNull,
-        _glfwSetWindowSizeNull,
-        _glfwSetWindowSizeLimitsNull,
-        _glfwSetWindowAspectRatioNull,
-        _glfwGetFramebufferSizeNull,
-        _glfwGetWindowFrameSizeNull,
-        _glfwGetWindowContentScaleNull,
-        _glfwIconifyWindowNull,
-        _glfwRestoreWindowNull,
-        _glfwMaximizeWindowNull,
-        _glfwShowWindowNull,
-        _glfwHideWindowNull,
-        _glfwRequestWindowAttentionNull,
-        _glfwFocusWindowNull,
-        _glfwSetWindowMonitorNull,
-        _glfwWindowFocusedNull,
-        _glfwWindowIconifiedNull,
-        _glfwWindowVisibleNull,
-        _glfwWindowMaximizedNull,
-        _glfwWindowHoveredNull,
-        _glfwFramebufferTransparentNull,
-        _glfwGetWindowOpacityNull,
-        _glfwSetWindowResizableNull,
-        _glfwSetWindowDecoratedNull,
-        _glfwSetWindowFloatingNull,
-        _glfwSetWindowOpacityNull,
-        _glfwSetWindowMousePassthroughNull,
-        _glfwPollEventsNull,
-        _glfwWaitEventsNull,
-        _glfwWaitEventsTimeoutNull,
-        _glfwPostEmptyEventNull,
-        _glfwGetEGLPlatformNull,
-        _glfwGetEGLNativeDisplayNull,
-        _glfwGetEGLNativeWindowNull,
-        _glfwGetRequiredInstanceExtensionsNull,
-        _glfwGetPhysicalDevicePresentationSupportNull,
-        _glfwCreateWindowSurfaceNull,
-    };
-
-    *platform = null;
+    _glfwInitTimerPOSIX();
     return GLFW_TRUE;
 }
 
-int _glfwInitNull(void)
+void _glfwPlatformTerminate(void)
 {
-    _glfwPollMonitorsNull();
-    return GLFW_TRUE;
-}
-
-void _glfwTerminateNull(void)
-{
-    free(_glfw.null.clipboardString);
     _glfwTerminateOSMesa();
-    _glfwTerminateEGL();
+}
+
+const char* _glfwPlatformGetVersionString(void)
+{
+    return _GLFW_VERSION_NUMBER " null OSMesa";
 }
 

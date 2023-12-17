@@ -59,7 +59,6 @@
 
 // Common modules to all platforms
 #include "external/glfw/src/init.c"
-#include "external/glfw/src/platform.c"
 #include "external/glfw/src/context.c"
 #include "external/glfw/src/monitor.c"
 #include "external/glfw/src/window.c"
@@ -81,10 +80,8 @@
 #endif
 
 #if defined(__linux__)
-    #include "external/glfw/src/posix_module.c"
     #include "external/glfw/src/posix_thread.c"
     #include "external/glfw/src/posix_time.c"
-    #include "external/glfw/src/posix_poll.c"
     #include "external/glfw/src/linux_joystick.c"
     #include "external/glfw/src/xkb_unicode.c"
 

@@ -1,0 +1,902 @@
+/*!
+
+@page news Release notes
+
+@tableofcontents
+
+
+@section news_33 Release notes for version 3.3
+
+These are the release notes for version 3.3.  For a more detailed view including
+all fixed bugs see the [version history](https://www.glfw.org/changelog.html).
+
+Please review the caveats, deprecations and removals if your project was written
+against an earlier version of GLFW 3.
+
+
+@subsection features_33 New features in version 3.3
+
+@subsubsection gamepad_33 Gamepad input via SDL_GameControllerDB
+
+GLFW can now remap game controllers to a standard Xbox-like layout using
+a built-in copy of SDL_GameControllerDB.  Call @ref glfwJoystickIsGamepad to
+check if a joystick has a mapping, @ref glfwGetGamepadState to retrieve its
+input state, @ref glfwUpdateGamepadMappings to add newer mappings and @ref
+glfwGetGamepadName and @ref glfwGetJoystickGUID for mapping related information.
+
+For more information see @ref gamepad.
+
+
+@subsubsection moltenvk_33 Support for Vulkan on macOS via MoltenVK
+
+GLFW now supports [MoltenVK](https://moltengl.com/moltenvk/), a Vulkan
+implementation on top of the Metal API, and its `VK_MVK_macos_surface` window
+surface creation extension.  MoltenVK is included in the [macOS Vulkan
+SDK](https://vulkan.lunarg.com/).
+
+For more information see @ref vulkan_guide.
+
+
+@subsubsection wayland_libdecor_33 Wayland libdecor decorations
+
+GLFW now supports improved fallback window decorations via
+[libdecor](https://gitlab.freedesktop.org/libdecor/libdecor).
+
+Support for libdecor can be toggled before GLFW is initialized with the
+[GLFW_WAYLAND_LIBDECOR](@ref GLFW_WAYLAND_LIBDECOR_hint) init hint.  It is
+enabled by default.
+
+
+@subsubsection content_scale_33 Content scale queries for DPI-aware rendering
+
+GLFW now provides content scales for windows and monitors, i.e. the ratio
+between their current DPI and the platform's default DPI, with @ref
+glfwGetWindowContentScale and @ref glfwGetMonitorContentScale.
+
+Changes of the content scale of a window can be received with the window content
+scale callback, set with @ref glfwSetWindowContentScaleCallback.
+
+The @ref GLFW_SCALE_TO_MONITOR window hint enables automatic resizing of a
+window by the content scale of the monitor it is placed, on platforms like
+Windows where this is necessary.  This takes effect both on creation and when
+the window is moved between monitors.  It is related to but different from
+[GLFW_COCOA_RETINA_FRAMEBUFFER](@ref GLFW_COCOA_RETINA_FRAMEBUFFER_hint).
+
+For more information see @ref window_scale.
+
+
+@subsubsection setwindowattrib_33 Support for updating window attributes
+
+GLFW now supports changing the [GLFW_DECORATED](@ref GLFW_DECORATED_attrib),
+[GLFW_RESIZABLE](@ref GLFW_RESIZABLE_attrib),
+[GLFW_FLOATING](@ref GLFW_FLOATING_attrib),
+[GLFW_AUTO_ICONIFY](@ref GLFW_AUTO_ICONIFY_attrib) and
+[GLFW_FOCUS_ON_SHOW](@ref GLFW_FOCUS_ON_SHOW_attrib) attributes for existing
+windows with @ref glfwSetWindowAttrib.
+
+For more information see @ref window_attribs.
+
+
+@subsubsection raw_motion_33 Support for raw mouse motion
+
+GLFW now supports raw (unscaled and unaccelerated) mouse motion in disabled
+cursor mode with the [GLFW_RAW_MOUSE_MOTION](@ref GLFW_RAW_MOUSE_MOTION) input
+mode.  Raw mouse motion input is not yet implemented on macOS.  Call @ref
+glfwRawMouseMotionSupported to check if GLFW can provide raw mouse motion on the
+current system.
+
+For more information see @ref raw_mouse_motion.
+
+
+@subsubsection joysticks_33 Joystick hats
+
+GLFW can now return the state of hats (i.e. POVs or D-pads) of a joystick with
+@ref glfwGetJoystickHats.  For compatibility, hats are also exposed as buttons.
+This can be disabled with the @ref GLFW_JOYSTICK_HAT_BUTTONS initialization
+hint.
+
+For more information see @ref joystick_hat.
+
+
+@subsubsection geterror_33 Error query
+
+GLFW now supports querying the last error code for the calling thread and its
+human-readable description with @ref glfwGetError.  This can be used instead of
+or together with the error callback.
+
+For more information see @ref error_handling.
+
+
+@subsubsection init_hints_33 Support for initialization hints
+
+GLFW now supports setting library initialization hints with @ref glfwInitHint.
+These must be set before initialization to take effect.  Some of these hints are
+platform specific but are safe to set on any platform.
+
+For more information see @ref init_hints.
+
+
+@subsubsection attention_33 User attention request
+
+GLFW now supports requesting user attention with @ref
+glfwRequestWindowAttention.  Where possible this calls attention to the
+specified window.  On platforms like macOS it calls attention to the whole
+application.
+
+For more information see @ref window_attention.
+
+
+@subsubsection maximize_33 Window maximization callback
+
+GLFW now supports notifying the application that the window has been maximized
+@ref glfwSetWindowMaximizeCallback.  This is called both when the window was
+maximized by the user and when it was done with @ref glfwMaximizeWindow.
+
+For more information see @ref window_maximize.
+
+
+@subsubsection workarea_33 Query for the monitor work area
+
+GLFW now supports querying the work area of a monitor, i.e. the area not
+occupied by task bars or global menu bars, with @ref glfwGetMonitorWorkarea.  On
+platforms that lack this concept, the whole area of the monitor is returned.
+
+For more information see @ref monitor_workarea.
+
+
+@subsubsection transparency_33 Transparent windows and framebuffers
+
+GLFW now supports the creation of windows with transparent framebuffers on
+systems with desktop compositing enabled with the @ref
+GLFW_TRANSPARENT_FRAMEBUFFER window hint and attribute.  This hint must be set
+before window creation and leaves any window decorations opaque.
+
+GLFW now also supports whole window transparency with @ref glfwGetWindowOpacity
+and @ref glfwSetWindowOpacity.  This value controls the opacity of the whole
+window including decorations and unlike framebuffer transparency can be changed
+at any time after window creation.
+
+For more information see @ref window_transparency.
+
+
+@subsubsection key_scancode_33 Query for the scancode of a key
+
+GLFW now supports querying the platform dependent scancode of any physical key
+with @ref glfwGetKeyScancode.
+
+For more information see @ref input_key.
+
+
+@subsubsection center_cursor_33 Cursor centering window hint
+
+GLFW now supports controlling whether the cursor is centered over newly created
+full screen windows with the [GLFW_CENTER_CURSOR](@ref GLFW_CENTER_CURSOR_hint)
+window hint.  It is enabled by default.
+
+
+@subsubsection cursor_hover_33 Mouse cursor hover window attribute
+
+GLFW now supports polling whether the cursor is hovering over the window content
+area with the [GLFW_HOVERED](@ref GLFW_HOVERED_attrib) window attribute.  This
+attribute corresponds to the [cursor enter/leave](@ref cursor_enter) event.
+
+
+@subsubsection focusonshow_33 Window hint and attribute for input focus on show
+
+GLFW now has the [GLFW_FOCUS_ON_SHOW](@ref GLFW_DECORATED_hint) window hint and
+attribute for controlling whether a window gets input focus when shown.  It is
+enabled by default.  It applies both when creating an visible window with @ref
+glfwCreateWindow and when showing it with @ref glfwShowWindow.
+
+This is a workaround for GLFW 3.0 lacking @ref glfwFocusWindow and will be
+corrected in the next major version.
+
+For more information see @ref window_hide.
+
+
+@subsubsection device_userptr_33 Monitor and joystick user pointers
+
+GLFW now supports setting and querying user pointers for connected monitors and
+joysticks with @ref glfwSetMonitorUserPointer, @ref glfwGetMonitorUserPointer,
+@ref glfwSetJoystickUserPointer and @ref glfwGetJoystickUserPointer.
+
+For more information see @ref monitor_userptr and @ref joystick_userptr.
+
+
+@subsubsection macos_nib_33 macOS menu bar from nib file
+
+GLFW will now load a `MainMenu.nib` file if found in the `Contents/Resources`
+directory of the application bundle, as a way to replace the GLFW menu bar
+without recompiling GLFW.  This behavior can be disabled with the
+[GLFW_COCOA_MENUBAR](@ref GLFW_COCOA_MENUBAR_hint) initialization hint.
+
+
+@subsubsection glext_33 Support for more context creation extensions
+
+The context hint @ref GLFW_SRGB_CAPABLE now supports OpenGL ES via
+`WGL_EXT_colorspace`, the context hint @ref GLFW_CONTEXT_NO_ERROR now supports
+`WGL_ARB_create_context_no_error` and `GLX_ARB_create_context_no_error`, the
+context hint @ref GLFW_CONTEXT_RELEASE_BEHAVIOR now supports
+`EGL_KHR_context_flush_control` and @ref glfwGetProcAddress now supports
+`EGL_KHR_get_all_proc_addresses`.
+
+
+@subsubsection osmesa_33 OSMesa off-screen context creation support
+
+GLFW now supports creating off-screen OpenGL contexts using
+[OSMesa](https://www.mesa3d.org/osmesa.html) by setting
+[GLFW_CONTEXT_CREATION_API](@ref GLFW_CONTEXT_CREATION_API_hint) to
+`GLFW_OSMESA_CONTEXT_API`.  Native access function have been added to retrieve
+the OSMesa color and depth buffers.
+
+There is also a new null backend that uses OSMesa as its native context
+creation API, intended for automated testing.  This backend does not provide
+input.
+
+
+@subsection caveats_33 Caveats for version 3.3
+
+@subsubsection joystick_layout_33 Layout of joysticks have changed
+
+The way joystick elements are arranged have changed to match SDL2 in order to
+support SDL_GameControllerDB mappings.  The layout of joysticks may
+change again if required for compatibility with SDL2.  If you need a known and
+stable layout for game controllers, see if you can switch to @ref gamepad.
+
+Existing code that depends on a specific joystick layout will likely have to be
+updated.
+
+
+@subsubsection wait_events_33 No window required to wait for events
+
+The @ref glfwWaitEvents and @ref glfwWaitEventsTimeout functions no longer need
+a window to be created to wait for events.  Before version 3.3 these functions
+would return immediately if there were no user-created windows.  On platforms
+where only windows can receive events, an internal helper window is used.
+
+Existing code that depends on the earlier behavior will likely have to be
+updated.
+
+
+@subsubsection gamma_ramp_size_33 Gamma ramp size of 256 may be rejected
+
+The documentation for versions before 3.3 stated that a gamma ramp size of 256
+would always be accepted.  This was never the case on X11 and could lead to
+artifacts on macOS.  The @ref glfwSetGamma function has been updated to always
+generate a ramp of the correct size.
+
+Existing code that hardcodes a size of 256 should be updated to use the size of
+the current ramp of a monitor when setting a new ramp for that monitor.
+
+
+@subsubsection xinput_deadzone_33 Windows XInput deadzone removed
+
+GLFW no longer applies any deadzone to the input state received from the XInput
+API.  This was never done for any other platform joystick API so this change
+makes the behavior more consistent but you will need to apply your own deadzone
+if desired.
+
+
+@subsubsection x11_clipboard_33 X11 clipboard transfer limits
+
+GLFW now supports reading clipboard text via the `INCR` method, which removes
+the limit on how much text can be read with @ref glfwGetClipboardString.
+However, writing via this method is not yet supported, so you may not be able to
+write a very large string with @ref glfwSetClipboardString even if you read it
+from the clipboard earlier.
+
+The exact size limit for writing to the clipboard is negotiated with each
+receiving application but is at least several tens of kilobytes.  Note that only
+the read limit has changed.  Any string that could be written before still can
+be.
+
+
+@subsubsection x11_linking_33 X11 extension libraries are loaded dynamically
+
+GLFW now loads all X11 extension libraries at initialization.  The only X11
+library you need to link against is `libX11`.  The header files for the
+extension libraries are still required for compilation.
+
+Existing projects and makefiles that link GLFW directly against the extension
+libraries should still build correctly but will add these libraries as load-time
+dependencies.
+
+
+@subsubsection cmake_version_33 CMake 3.0 or later is required
+
+The minimum CMake version has been raised from 2.8.12 to 3.0.  This is only
+a requirement of the GLFW CMake files.  The GLFW source files do not depend on
+CMake.
+
+
+@subsubsection caveat_fbtransparency_33 Framebuffer transparency requires DWM transparency
+
+GLFW no longer supports framebuffer transparency enabled via @ref
+GLFW_TRANSPARENT_FRAMEBUFFER on Windows 7 if DWM transparency is off
+(the Transparency setting under Personalization > Window Color).
+
+
+@subsubsection emptyevents_33 Empty events on X11 no longer roundtrip to server
+
+Starting with GLFW 3.3.7, events posted with @ref glfwPostEmptyEvent now use a separate
+unnamed pipe instead of sending an X11 client event to the helper window.
+
+
+@subsubsection wayland_alpha_34 Frambuffer may lack alpha channel on older Wayland systems
+
+On Wayland, when creating an EGL context on a machine lacking the new
+`EGL_EXT_present_opaque` extension, the @ref GLFW_ALPHA_BITS window hint will be
+ignored and the framebuffer will have no alpha channel.  This is because some
+Wayland compositors treat any buffer with an alpha channel as per-pixel
+transparent.
+
+If you want a per-pixel transparent window, see the
+[GLFW_TRANSPARENT_FRAMEBUFFER](@ref GLFW_TRANSPARENT_FRAMEBUFFER_hint) window
+hint.
+
+
+@subsection deprecations_33 Deprecations in version 3.3
+
+@subsubsection charmods_callback_33 Character with modifiers callback
+
+The character with modifiers callback set with @ref glfwSetCharModsCallback has
+been deprecated and should if possible not be used.
+
+Existing code should still work but further bug fixes will likely not be made.
+The callback will be removed in the next major version.
+
+
+@subsubsection clipboard_window_33 Window parameter to clipboard functions
+
+The window parameter of the clipboard functions @ref glfwGetClipboardString and
+@ref glfwSetClipboardString has been deprecated and is no longer used on any
+platform.  On platforms where the clipboard must be owned by a specific window,
+an internal helper window is used.
+
+Existing code should still work unless it depends on a specific window owning
+the clipboard.  New code may pass `NULL` as the window argument.  The parameter
+will be removed in a future release.
+
+
+@subsection removals_33 Removals in 3.3
+
+@subsubsection macos_options_33 macOS specific CMake options and macros
+
+The `GLFW_USE_RETINA`, `GLFW_USE_CHDIR` and `GLFW_USE_MENUBAR` CMake options and
+the `_GLFW_USE_RETINA`, `_GLFW_USE_CHDIR` and `_GLFW_USE_MENUBAR` compile-time
+macros have been removed.
+
+These options and macros are replaced by the window hint
+[GLFW_COCOA_RETINA_FRAMEBUFFER](@ref GLFW_COCOA_RETINA_FRAMEBUFFER_hint)
+and the init hints
+[GLFW_COCOA_CHDIR_RESOURCES](@ref GLFW_COCOA_CHDIR_RESOURCES_hint) and
+[GLFW_COCOA_MENUBAR](@ref GLFW_COCOA_MENUBAR_hint).
+
+Existing projects and makefiles that set these options or define these macros
+during compilation of GLFW will still build but it will have no effect and the
+default behaviors will be used.
+
+
+@subsubsection vulkan_sdk_33 LunarG Vulkan SDK dependency
+
+The GLFW test programs that previously depended on the LunarG Vulkan SDK now
+instead uses a Vulkan loader generated by
+[glad2](https://github.com/Dav1dde/glad).  This means the GLFW CMake files no
+longer look for the Vulkan SDK.
+
+Existing CMake projects that depended on the Vulkan SDK cache variables from
+GLFW will need to call `find_package(Vulkan)` themselves.  CMake 3.7 and later
+already comes with a
+[Vulkan find module](https://cmake.org/cmake/help/latest/module/FindVulkan.html)
+similar to the one GLFW previously included.
+
+
+@subsubsection lib_suffix_33 CMake option LIB_SUFFIX
+
+The `LIB_SUFFIX` CMake option has been removed.  GLFW now uses the
+GNUInstallDirs CMake package to handle platform specific details like the
+library directory suffix and the `LIB_SUFFIX` CMake option has been removed.
+
+Existing projects and makefiles that set the `LIB_SUFFIX` option will use the
+suffix chosen by the GNUInstallDirs package and the option will be ignored.
+
+
+@subsubsection wl_shell_33 Support for the wl_shell protocol
+
+Support for the wl_shell protocol has been removed and GLFW now only supports
+the XDG-Shell protocol.  If your Wayland compositor does not support XDG-Shell
+then GLFW will fail to initialize.
+
+
+@subsubsection mir_removed_33 Mir support
+
+The experimental Mir support has been completely removed as the Mir project has
+implemented support for the Wayland protocol and is recommending that
+applications use that instead.
+
+Existing projects and makefiles that select Mir when compiling GLFW will fail.
+Use Wayland or X11 instead.
+
+
+@subsection symbols_33 New symbols in version 3.3
+
+@subsubsection functions_33 New functions in version 3.3
+
+ - @ref glfwInitHint
+ - @ref glfwGetError
+ - @ref glfwGetMonitorWorkarea
+ - @ref glfwGetMonitorContentScale
+ - @ref glfwGetMonitorUserPointer
+ - @ref glfwSetMonitorUserPointer
+ - @ref glfwWindowHintString
+ - @ref glfwGetWindowContentScale
+ - @ref glfwGetWindowOpacity
+ - @ref glfwSetWindowOpacity
+ - @ref glfwRequestWindowAttention
+ - @ref glfwSetWindowAttrib
+ - @ref glfwSetWindowMaximizeCallback
+ - @ref glfwSetWindowContentScaleCallback
+ - @ref glfwRawMouseMotionSupported
+ - @ref glfwGetKeyScancode
+ - @ref glfwGetJoystickHats
+ - @ref glfwGetJoystickGUID
+ - @ref glfwGetJoystickUserPointer
+ - @ref glfwSetJoystickUserPointer
+ - @ref glfwJoystickIsGamepad
+ - @ref glfwUpdateGamepadMappings
+ - @ref glfwGetGamepadName
+ - @ref glfwGetGamepadState
+
+
+@subsubsection types_33 New types in version 3.3
+
+ - @ref GLFWwindowmaximizefun
+ - @ref GLFWwindowcontentscalefun
+ - @ref GLFWgamepadstate
+ - @ref GLFW_WAYLAND_LIBDECOR
+ - @ref GLFW_WAYLAND_PREFER_LIBDECOR
+ - @ref GLFW_WAYLAND_DISABLE_LIBDECOR
+
+
+@subsubsection constants_33 New constants in version 3.3
+
+ - @ref GLFW_NO_ERROR
+ - @ref GLFW_JOYSTICK_HAT_BUTTONS
+ - @ref GLFW_COCOA_CHDIR_RESOURCES
+ - @ref GLFW_COCOA_MENUBAR
+ - @ref GLFW_CENTER_CURSOR
+ - @ref GLFW_TRANSPARENT_FRAMEBUFFER
+ - @ref GLFW_HOVERED
+ - @ref GLFW_FOCUS_ON_SHOW
+ - @ref GLFW_SCALE_TO_MONITOR
+ - @ref GLFW_COCOA_RETINA_FRAMEBUFFER
+ - @ref GLFW_COCOA_FRAME_NAME
+ - @ref GLFW_COCOA_GRAPHICS_SWITCHING
+ - @ref GLFW_X11_CLASS_NAME
+ - @ref GLFW_X11_INSTANCE_NAME
+ - @ref GLFW_OSMESA_CONTEXT_API
+ - @ref GLFW_HAT_CENTERED
+ - @ref GLFW_HAT_UP
+ - @ref GLFW_HAT_RIGHT
+ - @ref GLFW_HAT_DOWN
+ - @ref GLFW_HAT_LEFT
+ - @ref GLFW_HAT_RIGHT_UP
+ - @ref GLFW_HAT_RIGHT_DOWN
+ - @ref GLFW_HAT_LEFT_UP
+ - @ref GLFW_HAT_LEFT_DOWN
+ - @ref GLFW_MOD_CAPS_LOCK
+ - @ref GLFW_MOD_NUM_LOCK
+ - @ref GLFW_LOCK_KEY_MODS
+ - @ref GLFW_RAW_MOUSE_MOTION
+ - @ref GLFW_GAMEPAD_BUTTON_A
+ - @ref GLFW_GAMEPAD_BUTTON_B
+ - @ref GLFW_GAMEPAD_BUTTON_X
+ - @ref GLFW_GAMEPAD_BUTTON_Y
+ - @ref GLFW_GAMEPAD_BUTTON_LEFT_BUMPER
+ - @ref GLFW_GAMEPAD_BUTTON_RIGHT_BUMPER
+ - @ref GLFW_GAMEPAD_BUTTON_BACK
+ - @ref GLFW_GAMEPAD_BUTTON_START
+ - @ref GLFW_GAMEPAD_BUTTON_GUIDE
+ - @ref GLFW_GAMEPAD_BUTTON_LEFT_THUMB
+ - @ref GLFW_GAMEPAD_BUTTON_RIGHT_THUMB
+ - @ref GLFW_GAMEPAD_BUTTON_DPAD_UP
+ - @ref GLFW_GAMEPAD_BUTTON_DPAD_RIGHT
+ - @ref GLFW_GAMEPAD_BUTTON_DPAD_DOWN
+ - @ref GLFW_GAMEPAD_BUTTON_DPAD_LEFT
+ - @ref GLFW_GAMEPAD_BUTTON_LAST
+ - @ref GLFW_GAMEPAD_BUTTON_CROSS
+ - @ref GLFW_GAMEPAD_BUTTON_CIRCLE
+ - @ref GLFW_GAMEPAD_BUTTON_SQUARE
+ - @ref GLFW_GAMEPAD_BUTTON_TRIANGLE
+ - @ref GLFW_GAMEPAD_AXIS_LEFT_X
+ - @ref GLFW_GAMEPAD_AXIS_LEFT_Y
+ - @ref GLFW_GAMEPAD_AXIS_RIGHT_X
+ - @ref GLFW_GAMEPAD_AXIS_RIGHT_Y
+ - @ref GLFW_GAMEPAD_AXIS_LEFT_TRIGGER
+ - @ref GLFW_GAMEPAD_AXIS_RIGHT_TRIGGER
+ - @ref GLFW_GAMEPAD_AXIS_LAST
+
+
+@section news_32 Release notes for 3.2
+
+These are the release notes for version 3.2.  For a more detailed view including
+all fixed bugs see the [version history](https://www.glfw.org/changelog.html).
+
+
+@subsection features_32 New features in version 3.2
+
+@subsubsection news_32_vulkan Support for Vulkan
+
+GLFW now supports basic integration with Vulkan with @ref glfwVulkanSupported,
+@ref glfwGetRequiredInstanceExtensions, @ref glfwGetInstanceProcAddress, @ref
+glfwGetPhysicalDevicePresentationSupport and @ref glfwCreateWindowSurface.
+Vulkan header inclusion can be selected with
+@ref GLFW_INCLUDE_VULKAN.
+
+
+@subsubsection news_32_setwindowmonitor Window mode switching
+
+GLFW now supports switching between windowed and full screen modes and updating
+the monitor and desired resolution and refresh rate of full screen windows with
+@ref glfwSetWindowMonitor.
+
+
+@subsubsection news_32_maximize Window maxmimization support
+
+GLFW now supports window maximization with @ref glfwMaximizeWindow and the
+@ref GLFW_MAXIMIZED window hint and attribute.
+
+
+@subsubsection news_32_focus Window input focus control
+
+GLFW now supports giving windows input focus with @ref glfwFocusWindow.
+
+
+@subsubsection news_32_sizelimits Window size limit support
+
+GLFW now supports setting both absolute and relative window size limits with
+@ref glfwSetWindowSizeLimits and @ref glfwSetWindowAspectRatio.
+
+
+@subsubsection news_32_keyname Localized key names
+
+GLFW now supports querying the localized name of printable keys with @ref
+glfwGetKeyName, either by key token or by scancode.
+
+
+@subsubsection news_32_waittimeout Wait for events with timeout
+
+GLFW now supports waiting for events for a set amount of time with @ref
+glfwWaitEventsTimeout.
+
+
+@subsubsection news_32_icon Window icon support
+
+GLFW now supports setting the icon of windows with @ref glfwSetWindowIcon.
+
+
+@subsubsection news_32_timer Raw timer access
+
+GLFW now supports raw timer values with @ref glfwGetTimerValue and @ref
+glfwGetTimerFrequency.
+
+
+@subsubsection news_32_joystick Joystick connection callback
+
+GLFW now supports notifying when a joystick has been connected or disconnected
+with @ref glfwSetJoystickCallback.
+
+
+@subsubsection news_32_noapi Context-less windows
+
+GLFW now supports creating windows without a OpenGL or OpenGL ES context by
+setting the [GLFW_CLIENT_API](@ref GLFW_CLIENT_API_hint) hint to `GLFW_NO_API`.
+
+
+@subsubsection news_32_contextapi Run-time context creation API selection
+
+GLFW now supports selecting and querying the context creation API at run-time
+with the @ref GLFW_CONTEXT_CREATION_API hint and attribute.
+
+
+@subsubsection news_32_noerror Error-free context creation
+
+GLFW now supports creating and querying OpenGL and OpenGL ES contexts that do
+not emit errors with the @ref GLFW_CONTEXT_NO_ERROR hint, provided the machine
+supports the `GL_KHR_no_error` extension.
+
+
+@subsubsection news_32_cmake CMake config-file package support
+
+GLFW now supports being used as a
+[config-file package](@ref build_link_cmake_package) from other projects for
+easy linking with the library and its dependencies.
+
+
+@section news_31 Release notes for 3.1
+
+These are the release notes for version 3.1.  For a more detailed view including
+all fixed bugs see the [version history](https://www.glfw.org/changelog.html).
+
+
+@subsection features_31 New features in version 3.1
+
+@subsubsection news_31_cursor Custom mouse cursor images
+
+GLFW now supports creating and setting both custom cursor images and standard
+cursor shapes.  They are created with @ref glfwCreateCursor or @ref
+glfwCreateStandardCursor, set with @ref glfwSetCursor and destroyed with @ref
+glfwDestroyCursor.
+
+@see @ref cursor_object
+
+
+@subsubsection news_31_drop Path drop event
+
+GLFW now provides a callback for receiving the paths of files and directories
+dropped onto GLFW windows.  The callback is set with @ref glfwSetDropCallback.
+
+@see @ref path_drop
+
+
+@subsubsection news_31_emptyevent Main thread wake-up
+
+GLFW now provides the @ref glfwPostEmptyEvent function for posting an empty
+event from another thread to the main thread event queue, causing @ref
+glfwWaitEvents to return.
+
+@see @ref events
+
+
+@subsubsection news_31_framesize Window frame size query
+
+GLFW now supports querying the size, on each side, of the frame around the
+content area of a window, with @ref glfwGetWindowFrameSize.
+
+@see [Window size](@ref window_size)
+
+
+@subsubsection news_31_autoiconify Simultaneous multi-monitor rendering
+
+GLFW now supports disabling auto-iconification of full screen windows with
+the [GLFW_AUTO_ICONIFY](@ref GLFW_AUTO_ICONIFY_hint) window hint.  This is
+intended for people building multi-monitor installations, where you need windows
+to stay in full screen despite losing input focus.
+
+
+@subsubsection news_31_floating Floating windows
+
+GLFW now supports floating windows, also called topmost or always on top, for
+easier debugging with the @ref GLFW_FLOATING window hint and attribute.
+
+
+@subsubsection news_31_focused Initially unfocused windows
+
+GLFW now supports preventing a windowed mode window from gaining input focus on
+creation, with the [GLFW_FOCUSED](@ref GLFW_FOCUSED_hint) window hint.
+
+
+@subsubsection news_31_direct Direct access for window attributes and cursor position
+
+GLFW now queries the window input focus, visibility and iconification attributes
+and the cursor position directly instead of returning cached data.
+
+
+@subsubsection news_31_charmods Character with modifiers callback
+
+GLFW now provides a callback for character events with modifier key bits.  The
+callback is set with @ref glfwSetCharModsCallback.  Unlike the regular character
+callback, this will report character events that will not result in a character
+being input, for example if the Control key is held down.
+
+@see @ref input_char
+
+
+@subsubsection news_31_single Single buffered framebuffers
+
+GLFW now supports the creation of single buffered windows, with the @ref
+GLFW_DOUBLEBUFFER hint.
+
+
+@subsubsection news_31_glext Macro for including extension header
+
+GLFW now includes the extension header appropriate for the chosen OpenGL or
+OpenGL ES header when @ref GLFW_INCLUDE_GLEXT is defined.  GLFW does not provide
+these headers.  They must be provided by your development environment or your
+OpenGL or OpenGL ES SDK.
+
+
+@subsubsection news_31_release Context release behaviors
+
+GLFW now supports controlling and querying whether the pipeline is flushed when
+a context is made non-current, with the @ref GLFW_CONTEXT_RELEASE_BEHAVIOR hint
+and attribute, provided the machine supports the `GL_KHR_context_flush_control`
+extension.
+
+
+@subsubsection news_31_wayland (Experimental) Wayland support
+
+GLFW now has an _experimental_ Wayland display protocol backend that can be
+selected on Linux with a CMake option.
+
+
+@subsubsection news_31_mir (Experimental) Mir support
+
+GLFW now has an _experimental_ Mir display server backend that can be selected
+on Linux with a CMake option.
+
+
+@section news_30 Release notes for 3.0
+
+These are the release notes for version 3.0.  For a more detailed view including
+all fixed bugs see the [version history](https://www.glfw.org/changelog.html).
+
+
+@subsection features_30 New features in version 3.0
+
+@subsubsection news_30_cmake CMake build system
+
+GLFW now uses the CMake build system instead of the various makefiles and
+project files used by earlier versions.  CMake is available for all platforms
+supported by GLFW, is present in most package systems and can generate
+makefiles and/or project files for most popular development environments.
+
+For more information on how to use CMake, see the
+[CMake manual](https://cmake.org/cmake/help/documentation.html).
+
+
+@subsubsection news_30_multiwnd Multi-window support
+
+GLFW now supports the creation of multiple windows, each with their own OpenGL
+or OpenGL ES context, and all window functions now take a window handle.  Event
+callbacks are now per-window and are provided with the handle of the window that
+received the event.  The @ref glfwMakeContextCurrent function has been added to
+select which context is current on a given thread.
+
+
+@subsubsection news_30_multimon Multi-monitor support
+
+GLFW now explicitly supports multiple monitors.  They can be enumerated with
+@ref glfwGetMonitors, queried with @ref glfwGetVideoModes, @ref
+glfwGetMonitorPos, @ref glfwGetMonitorName and @ref glfwGetMonitorPhysicalSize,
+and specified at window creation to make the newly created window full screen on
+that specific monitor.
+
+
+@subsubsection news_30_unicode Unicode support
+
+All string arguments to GLFW functions and all strings returned by GLFW now use
+the UTF-8 encoding.  This includes the window title, error string, clipboard
+text, monitor and joystick names as well as the extension function arguments (as
+ASCII is a subset of UTF-8).
+
+
+@subsubsection news_30_clipboard Clipboard text I/O
+
+GLFW now supports reading and writing plain text to and from the system
+clipboard, with the @ref glfwGetClipboardString and @ref glfwSetClipboardString
+functions.
+
+
+@subsubsection news_30_gamma Gamma ramp support
+
+GLFW now supports setting and reading back the gamma ramp of monitors, with the
+@ref glfwGetGammaRamp and @ref glfwSetGammaRamp functions.  There is also @ref
+glfwSetGamma, which generates a ramp from a gamma value and then sets it.
+
+
+@subsubsection news_30_gles OpenGL ES support
+
+GLFW now supports the creation of OpenGL ES contexts, by setting the
+[GLFW_CLIENT_API](@ref GLFW_CLIENT_API_hint) hint to `GLFW_OPENGL_ES_API`, where
+creation of such contexts are supported.  Note that GLFW _does not implement_
+OpenGL ES, so your driver must provide support in a way usable by GLFW.  Modern
+Nvidia and Intel drivers support creation of OpenGL ES context using the GLX and
+WGL APIs, while AMD provides an EGL implementation instead.
+
+
+@subsubsection news_30_egl (Experimental) EGL support
+
+GLFW now has an experimental EGL context creation back end that can be selected
+through CMake options.
+
+
+@subsubsection news_30_hidpi High-DPI support
+
+GLFW now supports high-DPI monitors on both Windows and macOS, giving windows
+full resolution framebuffers where other UI elements are scaled up.  To achieve
+this, @ref glfwGetFramebufferSize and @ref glfwSetFramebufferSizeCallback have
+been added.  These work with pixels, while the rest of the GLFW API works with
+screen coordinates.  This is important as OpenGL uses pixels, not screen
+coordinates.
+
+
+@subsubsection news_30_error Error callback
+
+GLFW now has an error callback, which can provide your application with much
+more detailed diagnostics than was previously possible.  The callback is passed
+an error code and a description string.
+
+
+@subsubsection news_30_wndptr Per-window user pointer
+
+Each window now has a user-defined pointer, retrieved with @ref
+glfwGetWindowUserPointer and set with @ref glfwSetWindowUserPointer, to make it
+easier to integrate GLFW into C++ code.
+
+
+@subsubsection news_30_iconifyfun Window iconification callback
+
+Each window now has a callback for iconification and restoration events,
+which is set with @ref glfwSetWindowIconifyCallback.
+
+
+@subsubsection news_30_wndposfun Window position callback
+
+Each window now has a callback for position events, which is set with @ref
+glfwSetWindowPosCallback.
+
+
+@subsubsection news_30_wndpos Window position query
+
+The position of a window can now be retrieved using @ref glfwGetWindowPos.
+
+
+@subsubsection news_30_focusfun Window focus callback
+
+Each windows now has a callback for focus events, which is set with @ref
+glfwSetWindowFocusCallback.
+
+
+@subsubsection news_30_enterleave Cursor enter/leave callback
+
+Each window now has a callback for when the mouse cursor enters or leaves its
+content area, which is set with @ref glfwSetCursorEnterCallback.
+
+
+@subsubsection news_30_wndtitle Initial window title
+
+The title of a window is now specified at creation time, as one of the arguments
+to @ref glfwCreateWindow.
+
+
+@subsubsection news_30_hidden Hidden windows
+
+Windows can now be hidden with @ref glfwHideWindow, shown using @ref
+glfwShowWindow and created initially hidden with the @ref GLFW_VISIBLE window
+hint and attribute.  This allows for off-screen rendering in a way compatible
+with most drivers, as well as moving a window to a specific position before
+showing it.
+
+
+@subsubsection news_30_undecorated Undecorated windows
+
+Windowed mode windows can now be created without decorations, e.g. things like
+a frame, a title bar, with the @ref GLFW_DECORATED window hint and attribute.
+This allows for the creation of things like splash screens.
+
+
+@subsubsection news_30_keymods Modifier key bit masks
+
+[Modifier key bit mask](@ref mods) parameters have been added to the
+[mouse button](@ref GLFWmousebuttonfun) and [key](@ref GLFWkeyfun) callbacks.
+
+
+@subsubsection news_30_scancode Platform-specific scancodes
+
+A scancode parameter has been added to the [key callback](@ref GLFWkeyfun). Keys
+that don't have a [key token](@ref keys) still get passed on with the key
+parameter set to `GLFW_KEY_UNKNOWN`.  These scancodes will vary between machines
+and are intended to be used for key bindings.
+
+
+@subsubsection news_30_jsname Joystick names
+
+The name of a joystick can now be retrieved using @ref glfwGetJoystickName.
+
+
+@subsubsection news_30_doxygen Doxygen documentation
+
+You are reading it.
+
+*/
