@@ -2,6 +2,8 @@
 *
 *   raylib [core] example - Backspace input
 *
+*   Example demonstrates deletion of characters in a string independent of frame rate
+*
 *   Example originally created with raylib 5.0, last time updated with raylib 5.0
 *
 *   Example contributed by benevo (@benev0) and reviewed by Ramon Santamaria (@raysan5)
