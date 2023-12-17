@@ -864,10 +864,9 @@ void SetMouseCursor(int cursor)
 {
     if (CORE.Input.Mouse.cursor != cursor)
     {
-        EM_ASM( { document.getElementById('canvas').style.cursor = UTF8ToString($0); }, cursorLUT[cursor]);
+        if (!CORE.Input.Mouse.cursorHidden) EM_ASM( { document.getElementById('canvas').style.cursor = UTF8ToString($0); }, cursorLUT[cursor]);
 
         CORE.Input.Mouse.cursor = cursor;
-        CORE.Input.Mouse.cursorHidden = false;
     }
 }
 
