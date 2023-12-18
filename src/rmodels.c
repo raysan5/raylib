@@ -4740,6 +4740,25 @@ static ModelAnimation *LoadModelAnimationsIQM(const char *fileName, int *animCou
 #endif
 
 #if defined(SUPPORT_FILEFORMAT_GLTF)
+// Load file data callback for cgltf
+static cgltf_result LoadFileGLTFCallback(const struct cgltf_memory_options *memoryOptions, const struct cgltf_file_options *fileOptions, const char *path, cgltf_size *size, void **data)
+{
+    int filesize;
+    unsigned char *filedata = LoadFileData(path, &filesize);
+
+    if (filedata == NULL) return cgltf_result_io_error;
+
+    *size = filesize;
+    *data = filedata;
+
+    return cgltf_result_success;
+}
+
+// Release file data callback for cgltf
+static void ReleaseFileGLTFCallback(const struct cgltf_memory_options *memoryOptions, const struct cgltf_file_options *fileOptions, void *data) {
+    UnloadFileData(data);
+}
+
 // Load image from different glTF provided methods (uri, path, buffer_view)
 static Image LoadImageFromCgltfImage(cgltf_image *cgltfImage, const char *texPath)
 {
@@ -4768,6 +4787,8 @@ static Image LoadImageFromCgltfImage(cgltf_image *cgltfImage, const char *texPat
                 void *data = NULL;
 
                 cgltf_options options = { 0 };
+		options.file.read = LoadFileGLTFCallback;
+		options.file.release = ReleaseFileGLTFCallback;
                 cgltf_result result = cgltf_load_buffer_base64(&options, outSize, cgltfImage->uri + i + 1, &data);
 
                 if (result == cgltf_result_success)
@@ -4891,6 +4912,8 @@ static Model LoadGLTF(const char *fileName)
 
     // glTF data loading
     cgltf_options options = { 0 };
+    options.file.read = LoadFileGLTFCallback;
+    options.file.release = ReleaseFileGLTFCallback;
     cgltf_data *data = NULL;
     cgltf_result result = cgltf_parse(&options, fileData, dataSize, &data);
 
@@ -5387,6 +5410,8 @@ static ModelAnimation *LoadModelAnimationsGLTF(const char *fileName, int *animCo
 
     // glTF data loading
     cgltf_options options = { 0 };
+    options.file.read = LoadFileGLTFCallback;
+    options.file.release = ReleaseFileGLTFCallback;
     cgltf_data *data = NULL;
     cgltf_result result = cgltf_parse(&options, fileData, dataSize, &data);
 
