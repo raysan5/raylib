@@ -25,8 +25,10 @@
 #define GLSL_VERSION            120
 #endif
 
-#define MAX_LIGHTS  4        // Max dynamic lights supported by shader
-int lightsCount;              // Current number of dynamic lights that have been created
+#include <stdlib.h>             // Required for: NULL
+
+#define MAX_LIGHTS  4           // Max dynamic lights supported by shader
+int lightsCount;                // Current number of dynamic lights that have been created
 
 typedef struct {
     int enabled;
@@ -186,7 +188,9 @@ int main()
         // Draw
         //----------------------------------------------------------------------------------
         BeginDrawing();
+        
             ClearBackground(BLACK);
+            
             BeginMode3D(camera);
                 
                 SetShaderValue(shader, textureTilingLoc, &floorTiling, SHADER_UNIFORM_VEC2);
@@ -214,9 +218,10 @@ int main()
                     if (lights[i].enabled) DrawSphereEx(lights[i].position, 0.2f, 8, 8, col);
                     else DrawSphereWires(lights[i].position, 0.2f, 8, 8, ColorAlpha(col, 0.3f));
                 }
+                
             EndMode3D();
 
-            DrawText("(c) Old Rusty Car model by Renafox (https://skfb.ly/LxRy)", screenWidth - 320, screenHeight - 20, 10, GRAY);
+            DrawText("(c) Old Rusty Car model by Renafox (https://skfb.ly/LxRy)", screenWidth - 320, screenHeight - 20, 10, LIGHTGRAY);
             DrawFPS(10, 10);
 
         EndDrawing();
@@ -228,12 +233,12 @@ int main()
     //--------------------------------------------------------------------------------------
     model.materials[0].shader = (Shader){ 0 };
     floor.materials[0].shader = (Shader){ 0 };
-    UnloadMaterial(model.materials[0]);       // Unload PBRMaterial
-    UnloadMaterial(floor.materials[0]);       // Unload PBRMaterial
+    UnloadMaterial(model.materials[0]);
+    UnloadMaterial(floor.materials[0]);
     model.materials[0].maps = NULL;
     floor.materials[0].maps = NULL;
-    UnloadModel(floor);           // Unload model
-    UnloadModel(model);           // Unload model
+    UnloadModel(floor);                 // Unload model
+    UnloadModel(model);                 // Unload model
     UnloadShader(shader);               // Unload Shader
     
     CloseWindow();              // Close window and OpenGL context
