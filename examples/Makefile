@@ -560,6 +560,7 @@ SHADERS = \
     shaders/shaders_palette_switch \
     shaders/shaders_postprocessing \
     shaders/shaders_raymarching \
+    shaders/shaders_shadowmap \
     shaders/shaders_shapes_textures \
     shaders/shaders_simple_mask \
     shaders/shaders_spotlight \
