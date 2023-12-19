@@ -17,10 +17,7 @@
 
 #include "raylib.h"
 
-#define MAX_INPUT_CHARS 40
-
-
-bool isKeyChar(int);
+#define MAX_INPUT_CHARS 50
 
 //------------------------------------------------------------------------------------
 // Program main entry point
@@ -33,11 +30,10 @@ int main(void)
     const int screenHeight = 450;
 
     InitWindow(screenWidth, screenHeight, "raylib [text] example - backspace input");
+    SetTargetFPS(1);
 
     char textField[MAX_INPUT_CHARS + 1] = "\0";
-    int usedSize = 0;
-
-    SetTargetFPS(1);
+    int textPos = 0;
     //--------------------------------------------------------------------------------------
 
     // Main game loop
@@ -46,46 +42,32 @@ int main(void)
         // Update
         //----------------------------------------------------------------------------------
 
+        // get first letter and key from the appropiate queues
         int letter = GetCharPressed();
         int key = GetKeyPressed();
 
-        while (key || letter)
+        while (letter || key)
         {
-
-            // ingest (key) backspace
-            // if possible delete one character from the string
-            if (key == KEY_BACKSPACE && usedSize > 0)
+            // if a the backspace key was pressed and there is a character to be deleted
+            // then read backspace in from key queue
+            if (key == KEY_BACKSPACE && textPos > 0)
             {
-                textField[usedSize - 1] = 0;
-                usedSize--;
-                key = GetKeyPressed();
+                textField[textPos -1] = 0;
+                textPos--;
             }
 
-            // ingest (key) non character
-            else if (!isKeyChar(key))
+            // if there is a letter and space in the string
+            // then read letter in from character queue
+            if (letter && textPos < MAX_INPUT_CHARS)
             {
-                key = GetKeyPressed();
+                textField[textPos] = (char) letter;
+                textPos++;
             }
 
-            // ingest (letter) and (key)
-            // if possible write ascii character to the string
-            else if ((letter > 0) && (letter >= 32) && (letter <= 126) && (usedSize < MAX_INPUT_CHARS))
-            {
-                textField[usedSize] = (char) letter;
-                textField[usedSize + 1] = 0;
-                usedSize++;
-                letter = GetCharPressed();
-                key = GetKeyPressed();
-            }
-
-            // ingest (letter) and (key)
-            else
-            {
-                letter = GetCharPressed();
-                key = GetKeyPressed();
-            }
+            // get next key press and character from queue
+            letter = GetCharPressed();
+            key = GetKeyPressed();
         }
-
 
         // Draw
         //----------------------------------------------------------------------------------
@@ -93,9 +75,8 @@ int main(void)
 
             ClearBackground(RAYWHITE);
 
-            // TODO: Draw everything that requires to be drawn at this point:
-
-            DrawText(textField, 40, 200, 20, BLACK);  // Example
+            DrawText("Type something:", 40, 20, 20, BLACK);
+            DrawText(textField, 40, 60, 20, BLACK);
 
         EndDrawing();
         //----------------------------------------------------------------------------------
@@ -103,22 +84,8 @@ int main(void)
 
     // De-Initialization
     //--------------------------------------------------------------------------------------
-
     CloseWindow();        // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
 
     return 0;
-}
-
-bool isKeyChar(int key)
-{
-    return (key == KEY_SPACE)
-        || (key == KEY_APOSTROPHE)
-        || (key >= KEY_COMMA && key <= KEY_NINE)
-        || (key == KEY_SEMICOLON)
-        || (key == KEY_EQUAL)
-        || (key >= KEY_A && key <= KEY_Z)
-        || (key >= KEY_LEFT_BRACKET && key <= KEY_RIGHT_BRACKET)
-        || (key == KEY_GRAVE)
-        || (key >= KEY_KP_0 && key <= KEY_KP_EQUAL);
 }
