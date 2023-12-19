@@ -320,6 +320,8 @@
 #define RL_BLEND_SRC_ALPHA                      0x80CB      // GL_BLEND_SRC_ALPHA
 #define RL_BLEND_COLOR                          0x8005      // GL_BLEND_COLOR
 
+#define GL_READ_FRAMEBUFFER                     0x8CA8
+#define GL_DRAW_FRAMEBUFFER                     0x8CA9
 
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
