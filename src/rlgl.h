@@ -320,8 +320,8 @@
 #define RL_BLEND_SRC_ALPHA                      0x80CB      // GL_BLEND_SRC_ALPHA
 #define RL_BLEND_COLOR                          0x8005      // GL_BLEND_COLOR
 
-#define GL_READ_FRAMEBUFFER                     0x8CA8
-#define GL_DRAW_FRAMEBUFFER                     0x8CA9
+#define RL_READ_FRAMEBUFFER                     0x8CA8      // GL_READ_FRAMEBUFFER
+#define RL_DRAW_FRAMEBUFFER                     0x8CA9      // GL_DRAW_FRAMEBUFFER
 
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
@@ -623,7 +623,7 @@ RLAPI void rlEnableFramebuffer(unsigned int id);        // Enable render texture
 RLAPI void rlDisableFramebuffer(void);                  // Disable render texture (fbo), return to default framebuffer
 RLAPI void rlActiveDrawBuffers(int count);              // Activate multiple draw color buffers
 RLAPI void rlBlitFramebuffer(int srcX, int srcY, int srcWidth, int srcHeight, int dstX, int dstY, int dstWidth, int dstHeight, int bufferMask); // Blit active framebuffer to main framebuffer
-RLAPI void rlBindFramebuffer(unsigned int id,unsigned int val); //  bind (FBO) 
+RLAPI void rlBindFramebuffer(unsigned int target, unsigned int framebuffer); // Bind framebuffer (FBO) 
 
 // General render state
 RLAPI void rlEnableColorBlend(void);                    // Enable color blending
@@ -634,7 +634,7 @@ RLAPI void rlEnableDepthMask(void);                     // Enable depth write
 RLAPI void rlDisableDepthMask(void);                    // Disable depth write
 RLAPI void rlEnableBackfaceCulling(void);               // Enable backface culling
 RLAPI void rlDisableBackfaceCulling(void);              // Disable backface culling
-RLAPI void rlColorMask(bool,bool,bool,bool);            // color mask control
+RLAPI void rlColorMask(bool r, bool g, bool b, bool a); // Color mask control
 RLAPI void rlSetCullFace(int mode);                     // Set face culling mode
 RLAPI void rlEnableScissorTest(void);                   // Enable scissor test
 RLAPI void rlDisableScissorTest(void);                  // Disable scissor test
@@ -1741,11 +1741,11 @@ void rlBlitFramebuffer(int srcX, int srcY, int srcWidth, int srcHeight, int dstX
 #endif
 }
 
-//  bind framebuffer object
-void rlBindFramebuffer(unsigned int id,unsigned int val)
+// Bind framebuffer object (fbo)
+void rlBindFramebuffer(unsigned int target, unsigned int framebuffer);
 {
 #if (defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)) && defined(RLGL_RENDER_TEXTURES_HINT)
-    glBindFramebuffer(id, val);
+    glBindFramebuffer(target, framebuffer);
 #endif
 }
 
@@ -1825,7 +1825,8 @@ void rlEnableBackfaceCulling(void) { glEnable(GL_CULL_FACE); }
 // Disable backface culling
 void rlDisableBackfaceCulling(void) { glDisable(GL_CULL_FACE); }
 
-void rlColorMask(bool r,bool g,bool b,bool a) { glColorMask(r,g,b,a); }
+// Set color mask active for screen read/draw
+void rlColorMask(bool r, bool g, bool b, bool a) { glColorMask(r, g, b, a); }
 
 // Set face culling mode
 void rlSetCullFace(int mode)
