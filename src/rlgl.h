@@ -621,6 +621,7 @@ RLAPI void rlEnableFramebuffer(unsigned int id);        // Enable render texture
 RLAPI void rlDisableFramebuffer(void);                  // Disable render texture (fbo), return to default framebuffer
 RLAPI void rlActiveDrawBuffers(int count);              // Activate multiple draw color buffers
 RLAPI void rlBlitFramebuffer(int srcX, int srcY, int srcWidth, int srcHeight, int dstX, int dstY, int dstWidth, int dstHeight, int bufferMask); // Blit active framebuffer to main framebuffer
+RLAPI void rlBindFramebuffer(unsigned int id,unsigned int val); //  bind (FBO) 
 
 // General render state
 RLAPI void rlEnableColorBlend(void);                    // Enable color blending
@@ -631,6 +632,7 @@ RLAPI void rlEnableDepthMask(void);                     // Enable depth write
 RLAPI void rlDisableDepthMask(void);                    // Disable depth write
 RLAPI void rlEnableBackfaceCulling(void);               // Enable backface culling
 RLAPI void rlDisableBackfaceCulling(void);              // Disable backface culling
+RLAPI void rlColorMask(bool,bool,bool,bool);            // color mask control
 RLAPI void rlSetCullFace(int mode);                     // Set face culling mode
 RLAPI void rlEnableScissorTest(void);                   // Enable scissor test
 RLAPI void rlDisableScissorTest(void);                  // Disable scissor test
@@ -1737,6 +1739,14 @@ void rlBlitFramebuffer(int srcX, int srcY, int srcWidth, int srcHeight, int dstX
 #endif
 }
 
+//  bind framebuffer object
+void rlBindFramebuffer(unsigned int id,unsigned int val)
+{
+#if (defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)) && defined(RLGL_RENDER_TEXTURES_HINT)
+    glBindFramebuffer(id, val);
+#endif
+}
+
 // Activate multiple draw color buffers
 // NOTE: One color buffer is always active by default
 void rlActiveDrawBuffers(int count)
@@ -1812,6 +1822,8 @@ void rlEnableBackfaceCulling(void) { glEnable(GL_CULL_FACE); }
 
 // Disable backface culling
 void rlDisableBackfaceCulling(void) { glDisable(GL_CULL_FACE); }
+
+void rlColorMask(bool r,bool g,bool b,bool a) { glColorMask(r,g,b,a); }
 
 // Set face culling mode
 void rlSetCullFace(int mode)
