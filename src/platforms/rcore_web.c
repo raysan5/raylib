@@ -330,9 +330,9 @@ void SetWindowState(unsigned int flags)
         {
             const int canvasWidth = EM_ASM_INT( { return document.getElementById('canvas').width; }, 0);
             const int canvasStyleWidth = EM_ASM_INT( { return parseInt(document.getElementById('canvas').style.width); }, 0);
-            if ((CORE.Window.flags & FLAG_FULLSCREEN_MODE) || canvasStyleWidth > canvasWidth) ToggleBorderlessWindowed();
+            if ((CORE.Window.flags & FLAG_FULLSCREEN_MODE) || canvasStyleWidth > canvasWidth) ToggleBorderlessWindowed(0);
         }
-        else ToggleBorderlessWindowed();
+        else ToggleBorderlessWindowed(0);
     }
 
     // State change: FLAG_FULLSCREEN_MODE
