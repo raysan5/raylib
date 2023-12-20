@@ -2483,7 +2483,7 @@ AutomationEventList LoadAutomationEventList(const char *fileName)
 void UnloadAutomationEventList(AutomationEventList list)
 {
 #if defined(SUPPORT_AUTOMATION_EVENTS)
-    RL_FREE(list->events);
+    RL_FREE(list.events);
 #endif
 }
 
