@@ -1742,7 +1742,7 @@ void rlBlitFramebuffer(int srcX, int srcY, int srcWidth, int srcHeight, int dstX
 }
 
 // Bind framebuffer object (fbo)
-void rlBindFramebuffer(unsigned int target, unsigned int framebuffer);
+void rlBindFramebuffer(unsigned int target, unsigned int framebuffer)
 {
 #if (defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)) && defined(RLGL_RENDER_TEXTURES_HINT)
     glBindFramebuffer(target, framebuffer);
