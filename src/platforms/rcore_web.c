@@ -247,7 +247,7 @@ void ToggleFullscreen(void)
 }
 
 // Toggle borderless windowed mode
-void ToggleBorderlessWindowed(void)
+void ToggleBorderlessWindowed(int extraWidth)
 {
     platform.ourFullscreen = true;
     bool enterBorderless = false;

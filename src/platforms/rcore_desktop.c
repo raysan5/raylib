@@ -197,7 +197,7 @@ void ToggleFullscreen(void)
 }
 
 // Toggle borderless windowed mode
-void ToggleBorderlessWindowed(void)
+void ToggleBorderlessWindowed(int extraWidth) // increase or decrease window size to stop flickering
 {
     // Leave fullscreen before attempting to set borderless windowed mode and get screen position from it
     bool wasOnFullscreen = false;
@@ -240,7 +240,7 @@ void ToggleBorderlessWindowed(void)
 
                 // Set screen position and size
                 glfwSetWindowPos(platform.handle, monitorPosX, monitorPosY);
-                glfwSetWindowSize(platform.handle, monitorWidth, monitorHeight);
+                glfwSetWindowSize(platform.handle, monitorWidth + extraWidth, monitorHeight);
 
                 // Refocus window
                 glfwFocusWindow(platform.handle);
@@ -317,7 +317,7 @@ void SetWindowState(unsigned int flags)
     // NOTE: This must be handled before FLAG_FULLSCREEN_MODE because ToggleBorderlessWindowed() needs to get some fullscreen values if fullscreen is running
     if (((CORE.Window.flags & FLAG_BORDERLESS_WINDOWED_MODE) != (flags & FLAG_BORDERLESS_WINDOWED_MODE)) && ((flags & FLAG_BORDERLESS_WINDOWED_MODE) > 0))
     {
-        ToggleBorderlessWindowed();     // NOTE: Window state flag updated inside function
+        ToggleBorderlessWindowed(0);     // NOTE: Window state flag updated inside function
     }
 
     // State change: FLAG_FULLSCREEN_MODE
@@ -432,7 +432,7 @@ void ClearWindowState(unsigned int flags)
     // NOTE: This must be handled before FLAG_FULLSCREEN_MODE because ToggleBorderlessWindowed() needs to get some fullscreen values if fullscreen is running
     if (((CORE.Window.flags & FLAG_BORDERLESS_WINDOWED_MODE) > 0) && ((flags & FLAG_BORDERLESS_WINDOWED_MODE) > 0))
     {
-        ToggleBorderlessWindowed();     // NOTE: Window state flag updated inside function
+        ToggleBorderlessWindowed(0);     // NOTE: Window state flag updated inside function
     }
 
     // State change: FLAG_FULLSCREEN_MODE
@@ -1655,8 +1655,17 @@ static void WindowMaximizeCallback(GLFWwindow *window, int maximized)
 // GLFW3 WindowFocus Callback, runs when window get/lose focus
 static void WindowFocusCallback(GLFWwindow *window, int focused)
 {
-    if (focused) CORE.Window.flags &= ~FLAG_WINDOW_UNFOCUSED;   // The window was focused
-    else CORE.Window.flags |= FLAG_WINDOW_UNFOCUSED;            // The window lost focus
+    if (focused) {
+        CORE.Window.flags &= ~FLAG_WINDOW_UNFOCUSED; // The window was focused
+        if (IsWindowState(FLAG_BORDERLESS_WINDOWED_MODE)) {
+          SetWindowState(FLAG_WINDOW_TOPMOST);
+        }
+    } else {
+        CORE.Window.flags |= FLAG_WINDOW_UNFOCUSED; // The window lost focus
+        if (IsWindowState(FLAG_BORDERLESS_WINDOWED_MODE)) {
+          ClearWindowState(FLAG_WINDOW_TOPMOST);
+        }
+    }
 }
 
 // GLFW3 Window Drop Callback, runs when drop files into window
