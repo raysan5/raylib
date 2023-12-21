@@ -85,6 +85,7 @@ Some people ported raylib to other languages in form of bindings or wrappers to 
 | raylib-raku        | **auto** | [Raku](https://www.raku.org/) | Artistic License 2.0 | https://github.com/vushu/raylib-raku |
 | Raylib.lean        | 4.5     | [Lean4](https://lean-lang.org/) | BSD-3-Clause | https://github.com/KislyjKisel/Raylib.lean |
 | Raylib-CSharp-Vinculum | 5.0 | [C#](https://en.wikipedia.org/wiki/C_Sharp_(programming_language)) | MPL-2.0 | https://github.com/ZeroElectric/Raylib-CSharp-Vinculum |
+| raylib-cobol | **auto** | [COBOL](https://gnucobol.sourceforge.io) | Public domain | https://codeberg.org/glowiak/raylib-cobol |
 
 ### Utility Wrapers
 These are utility wrappers for specific languages, they are not required to use raylib in the language but may adapt the raylib API to be more inline with the language's pardigm.
