@@ -33,6 +33,7 @@
 
 #define MAX_CUBES   30
 
+// GBuffer data
 typedef struct GBuffer {
     unsigned int framebuffer;
 
@@ -43,6 +44,7 @@ typedef struct GBuffer {
     unsigned int depthRenderbuffer;
 } GBuffer;
 
+// Deferred mode passes
 typedef enum {
    DEFERRED_POSITION,
    DEFERRED_NORMAL,
@@ -270,9 +272,9 @@ int main(void)
                             }
                         rlDisableShader();
                     EndMode3D();
+                    
                     DrawText("FINAL RESULT", 10, screenHeight - 30, 20, DARKGREEN);
                 } break;
-                
                 case DEFERRED_POSITION:
                 {
                     DrawTextureRec((Texture2D){
@@ -280,9 +282,9 @@ int main(void)
                         .width = screenWidth,
                         .height = screenHeight,
                     }, (Rectangle) { 0, 0, screenWidth, -screenHeight }, Vector2Zero(), RAYWHITE);
+                    
                     DrawText("POSITION TEXTURE", 10, screenHeight - 30, 20, DARKGREEN);
                 } break;
-                
                 case DEFERRED_NORMAL:
                 {
                     DrawTextureRec((Texture2D){
@@ -290,9 +292,9 @@ int main(void)
                         .width = screenWidth,
                         .height = screenHeight,
                     }, (Rectangle) { 0, 0, screenWidth, -screenHeight }, Vector2Zero(), RAYWHITE);
+                    
                     DrawText("NORMAL TEXTURE", 10, screenHeight - 30, 20, DARKGREEN);
                 } break;
-
                 case DEFERRED_ALBEDO:
                 {
                     DrawTextureRec((Texture2D){
@@ -300,8 +302,10 @@ int main(void)
                         .width = screenWidth,
                         .height = screenHeight,
                     }, (Rectangle) { 0, 0, screenWidth, -screenHeight }, Vector2Zero(), RAYWHITE);
+                    
                     DrawText("ALBEDO TEXTURE", 10, screenHeight - 30, 20, DARKGREEN);
                 } break;
+                default: break;
             }
 
             DrawText("Toggle lights keys: [Y][R][G][B]", 10, 40, 20, DARKGRAY);
@@ -318,7 +322,7 @@ int main(void)
     UnloadModel(model);     // Unload the models
     UnloadModel(cube);
 
-    UnloadShader(deferredShader);   // Unload shaders
+    UnloadShader(deferredShader); // Unload shaders
     UnloadShader(gbufferShader);
 
     // Unload geometry buffer and all attached textures
@@ -333,4 +337,3 @@ int main(void)
 
     return 0;
 }
-
