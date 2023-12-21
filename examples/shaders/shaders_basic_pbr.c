@@ -1,35 +1,43 @@
 /*******************************************************************************************
 *
-*   raylib [core] example - Model Defuse Normal Shader (adapted for HTML5 platform)
+*   raylib [shaders] example - Basic PBR
 *
-*   This example is prepared to compile for PLATFORM_WEB and PLATFORM_DESKTOP
-*   As you will notice, code structure is slightly different to the other examples...
-*   To compile it for PLATFORM_WEB just uncomment #define PLATFORM_WEB at beginning
+*   Example originally created with raylib 5.0, last time updated with raylib 5.1-dev
 *
-*   This example has been created using raylib 5.0 (www.raylib.com)
-*   raylib is licensed under an unmodified zlib/libpng license (View raylib.h for details)
+*   Example contributed by Afan OLOVCIC (@_DevDad) and reviewed by Ramon Santamaria (@raysan5)
 *
-*   Copyright (c) 2023-2024 Afan OLOVCIC (@_DevDad)  2015 Ramon Santamaria (@raysan5)
-*   Model: "Old Rusty Car" (https://skfb.ly/LxRy) by Renafox is licensed under Creative Commons Attribution-NonCommercial (http://creativecommons.org/licenses/by-nc/4.0/).
+*   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
+*   BSD-like license that allows static linking with closed source software
+*
+*   Copyright (c) 2023-2024 Afan OLOVCIC (@_DevDad)
+*
+*   Model: "Old Rusty Car" (https://skfb.ly/LxRy) by Renafox, 
+*   licensed under Creative Commons Attribution-NonCommercial 
+*   (http://creativecommons.org/licenses/by-nc/4.0/)
+*
 ********************************************************************************************/
 
 #include "raylib.h"
 
 #if defined(PLATFORM_WEB)
-#include <emscripten/emscripten.h>
+    #include <emscripten/emscripten.h>
 #endif
 
 #if defined(PLATFORM_DESKTOP)
-#define GLSL_VERSION            330
+    #define GLSL_VERSION            330
 #else   // PLATFORM_ANDROID, PLATFORM_WEB
-#define GLSL_VERSION            120
+    #define GLSL_VERSION            120
 #endif
 
 #include <stdlib.h>             // Required for: NULL
 
 #define MAX_LIGHTS  4           // Max dynamic lights supported by shader
-int lightsCount;                // Current number of dynamic lights that have been created
 
+//----------------------------------------------------------------------------------
+// Types and Structures Definition
+//----------------------------------------------------------------------------------
+
+// Light data
 typedef struct {
     int enabled;
     int type;
@@ -44,20 +52,29 @@ typedef struct {
     int targetLoc;
     int colorLoc;
     int intensityLoc;
-} PBRLight;
+} Light;
 
+// Light type
 typedef enum {
     LIGHT_DIRECTIONAL = 0,
     LIGHT_POINT,
     LIGHT_SPOT
-} PBRLightType;
+} LightType;
 
+//----------------------------------------------------------------------------------
+// Global Variables Definition
+//----------------------------------------------------------------------------------
+static int lightCount = 0;     // Current number of dynamic lights that have been created
+
+//----------------------------------------------------------------------------------
+// Module specific Functions Declaration
+//----------------------------------------------------------------------------------
 // Create a light and get shader locations
-PBRLight PBRLightCreate(int type, Vector3 position, Vector3 target, Color color, float intensity, Shader shader);
+static Light CreateLight(int type, Vector3 position, Vector3 target, Color color, float intensity, Shader shader);
 
-// Send light properties to shader
+// Update light properties on shader
 // NOTE: Light shader locations should be available
-void PBRLightUpdate(Shader shader, PBRLight light);
+static void UpdateLight(Shader shader, Light light);
 
 //----------------------------------------------------------------------------------
 // Main Entry Point
@@ -80,59 +97,73 @@ int main()
     camera.fovy = 45.0f;                                // Camera field-of-view Y
     camera.projection = CAMERA_PERSPECTIVE;             // Camera projection type
 
-
-    Shader shader = LoadShader(TextFormat("resources/shaders/glsl%i/pbr.vs",GLSL_VERSION),
-                               TextFormat("resources/shaders/glsl%i/pbr.fs",GLSL_VERSION));
+    // Load PBR shader and setup all required locations
+    Shader shader = LoadShader(TextFormat("resources/shaders/glsl%i/pbr.vs", GLSL_VERSION),
+                               TextFormat("resources/shaders/glsl%i/pbr.fs", GLSL_VERSION));
     shader.locs[SHADER_LOC_MAP_ALBEDO] = GetShaderLocation(shader, "albedoMap");
-    // In reality, metalness, roughness, and ambient occlusion are all packed into the MRA texture
-    // We'll pass it in as the metalness map
+    // WARNING: Metalness, roughness, and ambient occlusion are all packed into a MRA texture
+    // They are passed as to the SHADER_LOC_MAP_METALNESS location for convenience,
+    // shader already takes care of it accordingly
     shader.locs[SHADER_LOC_MAP_METALNESS] = GetShaderLocation(shader, "mraMap");
     shader.locs[SHADER_LOC_MAP_NORMAL] = GetShaderLocation(shader, "normalMap");
-    // Similarly to the MRA map, the emissive map packs different information into a single texture
-    // This map stores both height and emission in reality
+    // WARNING: Similar to the MRA map, the emissive map packs different information 
+    // into a single texture: it stores height and emission data
+    // It is binded to SHADER_LOC_MAP_EMISSION location an properly processed on shader
     shader.locs[SHADER_LOC_MAP_EMISSION] = GetShaderLocation(shader, "emissiveMap");
     shader.locs[SHADER_LOC_COLOR_DIFFUSE] = GetShaderLocation(shader, "albedoColor");
 
+    // Setup additional required shader locations, including lights data
     shader.locs[SHADER_LOC_VECTOR_VIEW] = GetShaderLocation(shader, "viewPos");
-    int numOfLightsLoc = GetShaderLocation(shader, "numOfLights");
-    int numOfLights = 4;
-    SetShaderValue(shader, numOfLightsLoc, &numOfLights, SHADER_UNIFORM_INT);
+    int lightCountLoc = GetShaderLocation(shader, "numOfLights");
+    int maxLightCount = MAX_LIGHTS;
+    SetShaderValue(shader, lightCountLoc, &maxLightCount, SHADER_UNIFORM_INT);
 
-    Color ambCol = (Color){ 26,32,135,255 };
-    Vector3 ambColNormalized = (Vector3){ ambCol.r / 255.0f, ambCol.g / 255.0f, ambCol.b / 255.0f };
-    float ambIntens = 0.02;
+    // Setup ambient color and intensity parameters
+    Color ambientColor = (Color){ 26, 32, 135, 255 };
+    Vector3 ambientColorNormalized = (Vector3){ ambientColor.r/255.0f, ambientColor.g/255.0f, ambientColor.b/255.0f };
+    float ambientIntensity = 0.02;
 
     int albedoLoc = GetShaderLocation(shader, "albedo");
-    int ambColLoc = GetShaderLocation(shader, "ambientColor");
-    int ambLoc = GetShaderLocation(shader, "ambient");
-    SetShaderValue(shader, ambColLoc, &ambColNormalized, SHADER_UNIFORM_VEC3);
-    SetShaderValue(shader, ambLoc, &ambIntens, SHADER_UNIFORM_FLOAT);
+    int ambientColorLoc = GetShaderLocation(shader, "ambientColor");
+    int ambientLoc = GetShaderLocation(shader, "ambient");
+    SetShaderValue(shader, ambientColorLoc, &ambientColorNormalized, SHADER_UNIFORM_VEC3);
+    SetShaderValue(shader, ambientLoc, &ambientIntensity, SHADER_UNIFORM_FLOAT);
 
     int emissiveIntensityLoc = GetShaderLocation(shader, "emissivePower");
     int emissiveColorLoc = GetShaderLocation(shader, "emissiveColor");
     int textureTilingLoc = GetShaderLocation(shader, "tiling");
 
-    Model model = LoadModel("resources/models/old_car_new.glb");
-    // If the OBJ file format is used, we will have to generate tangents manually:
-    // GenMeshTangents(&model.meshes[0]);
+    // Load old car model using PBR maps and shader
+    // WARNING: We know this model consists of a single model.meshes[0] and
+    // that model.materials[0] is by default assigned to that mesh
+    // There could be more complex models consisting of multiple meshes and
+    // multiple materials defined for those meshes... but always 1 mesh = 1 material
+    Model car = LoadModel("resources/models/old_car_new.glb");
 
-    model.materials[0].shader = shader;
+    // Assign already setup PBR shader to model.materials[0], used by models.meshes[0]
+    car.materials[0].shader = shader;
 
-    model.materials[0].maps[MATERIAL_MAP_ALBEDO].color = WHITE;
-    model.materials[0].maps[MATERIAL_MAP_METALNESS].value = 0.0f;
-    model.materials[0].maps[MATERIAL_MAP_ROUGHNESS].value = 0.0f;
-    model.materials[0].maps[MATERIAL_MAP_OCCLUSION].value = 1.0f;
-    model.materials[0].maps[MATERIAL_MAP_EMISSION].color = (Color){ 255, 162, 0, 255 };
+    // Setup materials[0].maps default parameters
+    car.materials[0].maps[MATERIAL_MAP_ALBEDO].color = WHITE;
+    car.materials[0].maps[MATERIAL_MAP_METALNESS].value = 0.0f;
+    car.materials[0].maps[MATERIAL_MAP_ROUGHNESS].value = 0.0f;
+    car.materials[0].maps[MATERIAL_MAP_OCCLUSION].value = 1.0f;
+    car.materials[0].maps[MATERIAL_MAP_EMISSION].color = (Color){ 255, 162, 0, 255 };
 
-    model.materials[0].maps[MATERIAL_MAP_ALBEDO].texture = LoadTexture("resources/old_car_d.png");
-    model.materials[0].maps[MATERIAL_MAP_METALNESS].texture = LoadTexture("resources/old_car_mra.png");
-    model.materials[0].maps[MATERIAL_MAP_NORMAL].texture = LoadTexture("resources/old_car_n.png");
-    model.materials[0].maps[MATERIAL_MAP_EMISSION].texture = LoadTexture("resources/old_car_e.png");
-    // We store tiling parameters in the generic parameter slots in the Material class
-    Vector2 modelTiling = (Vector2){ 0.5f, 0.5f };
+    // Setup materials[0].maps default textures
+    car.materials[0].maps[MATERIAL_MAP_ALBEDO].texture = LoadTexture("resources/old_car_d.png");
+    car.materials[0].maps[MATERIAL_MAP_METALNESS].texture = LoadTexture("resources/old_car_mra.png");
+    car.materials[0].maps[MATERIAL_MAP_NORMAL].texture = LoadTexture("resources/old_car_n.png");
+    car.materials[0].maps[MATERIAL_MAP_EMISSION].texture = LoadTexture("resources/old_car_e.png");
+    
+    // Old car model texture tiling parameter can be stored in the Material struct if required (CURRENTLY NOT USED)
+    // NOTE: Material.params[4] are available for generic parameters storage (float)
+    Vector2 carTextureTiling = (Vector2){ 0.5f, 0.5f };
 
+    // Load floor model mesh and assign material parameters
     Model floor = LoadModel("resources/models/plane.glb");
 
+    // Assign material shader for our floor model, same PBR shader 
     floor.materials[0].shader = shader;
     
     floor.materials[0].maps[MATERIAL_MAP_ALBEDO].color = WHITE;
@@ -145,25 +176,27 @@ int main()
     floor.materials[0].maps[MATERIAL_MAP_METALNESS].texture = LoadTexture("resources/road_mra.png");
     floor.materials[0].maps[MATERIAL_MAP_NORMAL].texture = LoadTexture("resources/road_n.png");
 
-    Vector2 floorTiling = (Vector2){ 0.5f, 0.5f };
+    // Floor texture tiling parameter
+    Vector2 floorTextureTiling = (Vector2){ 0.5f, 0.5f };
 
-    // Create lights
-    PBRLight lights[MAX_LIGHTS] = { 0 };
-    lights[0] = PBRLightCreate(LIGHT_POINT, (Vector3){ -1, 1, -2 }, (Vector3){0,0,0}, YELLOW,4, shader);
-    lights[1] = PBRLightCreate(LIGHT_POINT, (Vector3){ 2,  1, 1 }, (Vector3){0,0,0}, GREEN,3.3, shader);
-    lights[2] = PBRLightCreate(LIGHT_POINT, (Vector3){ -2, 1, 1 }, (Vector3){0,0,0}, RED,8.3, shader);
-    lights[3] = PBRLightCreate(LIGHT_POINT, (Vector3){ 1,  1, -2 }, (Vector3){0,0,0}, BLUE,2, shader);
+    // Create some lights
+    Light lights[MAX_LIGHTS] = { 0 };
+    lights[0] = CreateLight(LIGHT_POINT, (Vector3){ -1, 1, -2 }, (Vector3){0,0,0}, YELLOW,4, shader);
+    lights[1] = CreateLight(LIGHT_POINT, (Vector3){ 2,  1, 1 }, (Vector3){0,0,0}, GREEN,3.3, shader);
+    lights[2] = CreateLight(LIGHT_POINT, (Vector3){ -2, 1, 1 }, (Vector3){0,0,0}, RED,8.3, shader);
+    lights[3] = CreateLight(LIGHT_POINT, (Vector3){ 1,  1, -2 }, (Vector3){0,0,0}, BLUE,2, shader);
 
-    // The textures are always used
-    int one = 1;
-    SetShaderValue(shader, GetShaderLocation(shader, "useTexAlbedo"), &one, SHADER_UNIFORM_INT);
-    SetShaderValue(shader, GetShaderLocation(shader, "useTexNormal"), &one, SHADER_UNIFORM_INT);
-    SetShaderValue(shader, GetShaderLocation(shader, "useTexMRA"), &one, SHADER_UNIFORM_INT);
-    SetShaderValue(shader, GetShaderLocation(shader, "useTexEmissive"), &one, SHADER_UNIFORM_INT);
+    // Setup material texture maps usage in shader
+    // NOTE: By default, the texture maps are always used
+    int usage = 1;
+    SetShaderValue(shader, GetShaderLocation(shader, "useTexAlbedo"), &usage, SHADER_UNIFORM_INT);
+    SetShaderValue(shader, GetShaderLocation(shader, "useTexNormal"), &usage, SHADER_UNIFORM_INT);
+    SetShaderValue(shader, GetShaderLocation(shader, "useTexMRA"), &usage, SHADER_UNIFORM_INT);
+    SetShaderValue(shader, GetShaderLocation(shader, "useTexEmissive"), &usage, SHADER_UNIFORM_INT);
+    
+    SetTargetFPS(60);                   // Set our game to run at 60 frames-per-second
+    //---------------------------------------------------------------------------------------
 
-    SetTargetFPS(60);               // Set our game to run at 60 frames-per-second-------------------------------------------------------------
-
-    int emissiveCnt = 0;
     // Main game loop
     while (!WindowShouldClose())    // Detect window close button or ESC key
     {
@@ -181,8 +214,8 @@ int main()
         if (IsKeyPressed(KEY_R)) { lights[2].enabled = !lights[2].enabled; }
         if (IsKeyPressed(KEY_B)) { lights[3].enabled = !lights[3].enabled; }
 
-        // Update light values (actually, only enable/disable them)
-        for (int i = 0; i < MAX_LIGHTS; i++) PBRLightUpdate(shader, lights[i]);
+        // Update light values on shader (actually, only enable/disable them)
+        for (int i = 0; i < MAX_LIGHTS; i++) UpdateLight(shader, lights[i]);
         //----------------------------------------------------------------------------------
 
         // Draw
@@ -193,53 +226,58 @@ int main()
             
             BeginMode3D(camera);
                 
-                SetShaderValue(shader, textureTilingLoc, &floorTiling, SHADER_UNIFORM_VEC2);
-                Vector4 floorEmission = ColorNormalize(floor.materials[0].maps[MATERIAL_MAP_EMISSION].color);
-                SetShaderValue(shader, emissiveColorLoc, &floorEmission, SHADER_UNIFORM_VEC4);
-                DrawModel(floor, (Vector3){0,0,0}, 5.0f, WHITE);
+                // Set floor model texture tiling and emissive color parameters on shader
+                SetShaderValue(shader, textureTilingLoc, &floorTextureTiling, SHADER_UNIFORM_VEC2);
+                Vector4 floorEmissiveColor = ColorNormalize(floor.materials[0].maps[MATERIAL_MAP_EMISSION].color);
+                SetShaderValue(shader, emissiveColorLoc, &floorEmissiveColor, SHADER_UNIFORM_VEC4);
+                
+                DrawModel(floor, (Vector3){ 0.0f, 0.0f, 0.0f }, 5.0f, WHITE);   // Draw floor model
 
-                emissiveCnt--;
-                if (emissiveCnt <= 0)
-                {
-                    emissiveCnt = GetRandomValue(0, 20);
-                    float intensity = (float)GetRandomValue(0, 100) / 100;
-                    SetShaderValue(shader, emissiveIntensityLoc, &intensity, SHADER_UNIFORM_FLOAT);
-                }
-                SetShaderValue(shader, textureTilingLoc, &modelTiling, SHADER_UNIFORM_VEC2);
-                Vector4 modelEmission = ColorNormalize(model.materials[0].maps[MATERIAL_MAP_EMISSION].color);
-                SetShaderValue(shader, emissiveColorLoc, &modelEmission, SHADER_UNIFORM_VEC4);
-                DrawModel(model, (Vector3) {0, 0.0, 0}, 0.005, WHITE);
+                // Set old car model texture tiling, emissive color and emissive intensity parameters on shader
+                SetShaderValue(shader, textureTilingLoc, &carTextureTiling, SHADER_UNIFORM_VEC2);
+                Vector4 carEmissiveColor = ColorNormalize(car.materials[0].maps[MATERIAL_MAP_EMISSION].color);
+                SetShaderValue(shader, emissiveColorLoc, &carEmissiveColor, SHADER_UNIFORM_VEC4);
+                float emissiveIntensity = 0.01f;
+                SetShaderValue(shader, emissiveIntensityLoc, &emissiveIntensity, SHADER_UNIFORM_FLOAT);
+                
+                DrawModel(car, (Vector3){ 0.0f, 0.0f, 0.0f }, 0.005f, WHITE);   // Draw car model
 
-                // Draw spheres to show where the lights are
+                // Draw spheres to show the lights positions
                 for (int i = 0; i < MAX_LIGHTS; i++)
                 {
-                    Color col = (Color) {lights[i].color[0] * 255, lights[i].color[1] * 255, lights[i].color[2] * 255,
-                                         lights[i].color[3] * 255};
-                    if (lights[i].enabled) DrawSphereEx(lights[i].position, 0.2f, 8, 8, col);
-                    else DrawSphereWires(lights[i].position, 0.2f, 8, 8, ColorAlpha(col, 0.3f));
+                    Color lightColor = (Color){ lights[i].color[0]*255, lights[i].color[1]*255, lights[i].color[2]*255, lights[i].color[3]*255 };
+                    
+                    if (lights[i].enabled) DrawSphereEx(lights[i].position, 0.2f, 8, 8, lightColor);
+                    else DrawSphereWires(lights[i].position, 0.2f, 8, 8, ColorAlpha(lightColor, 0.3f));
                 }
                 
             EndMode3D();
+            
+            DrawText("Toggle lights: [Y][R][G][B]", 10, 40, 20, LIGHTGRAY);
 
             DrawText("(c) Old Rusty Car model by Renafox (https://skfb.ly/LxRy)", screenWidth - 320, screenHeight - 20, 10, LIGHTGRAY);
+            
             DrawFPS(10, 10);
 
         EndDrawing();
         //----------------------------------------------------------------------------------
     }
 
-    //--------------------------------------------------------------------------------------
     // De-Initialization
     //--------------------------------------------------------------------------------------
-    model.materials[0].shader = (Shader){ 0 };
+    // Unbind (disconnect) shader from car.material[0] 
+    // to avoid UnloadMaterial() trying to unload it automatically
+    car.materials[0].shader = (Shader){ 0 };
+    UnloadMaterial(car.materials[0]);
+    car.materials[0].maps = NULL;
+    UnloadModel(car);
+    
     floor.materials[0].shader = (Shader){ 0 };
-    UnloadMaterial(model.materials[0]);
     UnloadMaterial(floor.materials[0]);
-    model.materials[0].maps = NULL;
     floor.materials[0].maps = NULL;
-    UnloadModel(floor);                 // Unload model
-    UnloadModel(model);                 // Unload model
-    UnloadShader(shader);               // Unload Shader
+    UnloadModel(floor);
+    
+    UnloadShader(shader);       // Unload Shader
     
     CloseWindow();              // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
@@ -247,11 +285,13 @@ int main()
     return 0;
 }
 
-PBRLight PBRLightCreate(int type, Vector3 position, Vector3 target, Color color, float intensity, Shader shader)
+// Create light with provided data
+// NOTE: It updated the global lightCount and it's limited to MAX_LIGHTS
+static Light CreateLight(int type, Vector3 position, Vector3 target, Color color, float intensity, Shader shader)
 {
-    PBRLight light = { 0 };
+    Light light = { 0 };
 
-    if (lightsCount < MAX_LIGHTS)
+    if (lightCount < MAX_LIGHTS)
     {
         light.enabled = 1;
         light.type = type;
@@ -263,15 +303,15 @@ PBRLight PBRLightCreate(int type, Vector3 position, Vector3 target, Color color,
         light.color[3] = (float)color.a / (float)255;
         light.intensity = intensity;
         // NOTE: Lighting shader naming must be the provided ones
-        light.enabledLoc = GetShaderLocation(shader, TextFormat("lights[%i].enabled", lightsCount));
-        light.typeLoc = GetShaderLocation(shader, TextFormat("lights[%i].type", lightsCount));
-        light.positionLoc = GetShaderLocation(shader, TextFormat("lights[%i].position", lightsCount));
-        light.targetLoc = GetShaderLocation(shader, TextFormat("lights[%i].target", lightsCount));
-        light.colorLoc = GetShaderLocation(shader, TextFormat("lights[%i].color", lightsCount));
-        light.intensityLoc = GetShaderLocation(shader, TextFormat("lights[%i].intensity", lightsCount));
-        PBRLightUpdate(shader, light);
+        light.enabledLoc = GetShaderLocation(shader, TextFormat("lights[%i].enabled", lightCount));
+        light.typeLoc = GetShaderLocation(shader, TextFormat("lights[%i].type", lightCount));
+        light.positionLoc = GetShaderLocation(shader, TextFormat("lights[%i].position", lightCount));
+        light.targetLoc = GetShaderLocation(shader, TextFormat("lights[%i].target", lightCount));
+        light.colorLoc = GetShaderLocation(shader, TextFormat("lights[%i].color", lightCount));
+        light.intensityLoc = GetShaderLocation(shader, TextFormat("lights[%i].intensity", lightCount));
+        UpdateLight(shader, light);
 
-        lightsCount++;
+        lightCount++;
     }
 
     return light;
@@ -279,10 +319,11 @@ PBRLight PBRLightCreate(int type, Vector3 position, Vector3 target, Color color,
 
 // Send light properties to shader
 // NOTE: Light shader locations should be available
-void PBRLightUpdate(Shader shader, PBRLight light)
+static void UpdateLight(Shader shader, Light light)
 {
     SetShaderValue(shader, light.enabledLoc, &light.enabled, SHADER_UNIFORM_INT);
     SetShaderValue(shader, light.typeLoc, &light.type, SHADER_UNIFORM_INT);
+    
     // Send to shader light position values
     float position[3] = { light.position.x, light.position.y, light.position.z };
     SetShaderValue(shader, light.positionLoc, position, SHADER_UNIFORM_VEC3);
