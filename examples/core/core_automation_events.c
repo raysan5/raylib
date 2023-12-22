@@ -71,7 +71,7 @@ int main(void)
     
     // Automation events
     AutomationEventList aelist = LoadAutomationEventList(0);  // Initialize list of automation events to record new events
-    SetAutomationEventList(aelist);
+    SetAutomationEventList(&aelist);
     bool eventRecording = false;
     bool eventPlaying = false;
     
@@ -98,7 +98,7 @@ int main(void)
             // Supports loading .rgs style files (text or binary) and .png style palette images
             if (IsFileExtension(droppedFiles.paths[0], ".txt;.rae"))
             {
-                UnloadAutomationEventList(&aelist);
+                UnloadAutomationEventList(aelist);
                 aelist = LoadAutomationEventList(droppedFiles.paths[0]);
                 
                 eventRecording = false;
