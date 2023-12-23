@@ -870,8 +870,6 @@ void EndDrawing(void)
 #endif
 
 #if !defined(SUPPORT_CUSTOM_FRAME_CONTROL)
-    SwapScreenBuffer();                  // Copy back buffer to front buffer (screen)
-
     // Frame time control system
     CORE.Time.current = GetTime();
     CORE.Time.draw = CORE.Time.current - CORE.Time.previous;
@@ -890,6 +888,8 @@ void EndDrawing(void)
 
         CORE.Time.frame += waitTime;    // Total frame time: update + draw + wait
     }
+
+    SwapScreenBuffer();                  // Copy back buffer to front buffer (screen)
 
     PollInputEvents();      // Poll user events (before next frame update)
 #endif
