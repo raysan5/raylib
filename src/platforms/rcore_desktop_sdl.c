@@ -1111,19 +1111,23 @@ void PollInputEvents(void)
 
             case SDL_TEXTINPUT:
             {
+                // NOTE: event.text.text data comes an UTF-8 text sequence but we register codepoints (int)
+                
+                int codepointSize = 0;
+
                 // Check if there is space available in the key queue
                 if (CORE.Input.Keyboard.keyPressedQueueCount < MAX_KEY_PRESSED_QUEUE)
                 {
-                    // Add character to the queue
-                    CORE.Input.Keyboard.keyPressedQueue[CORE.Input.Keyboard.keyPressedQueueCount] = event.text.text[0];
+                    // Add character (key) to the queue
+                    CORE.Input.Keyboard.keyPressedQueue[CORE.Input.Keyboard.keyPressedQueueCount] = GetCodepointNext(event.text.text, &codepointSize);
                     CORE.Input.Keyboard.keyPressedQueueCount++;
                 }
 
                 // Check if there is space available in the queue
                 if (CORE.Input.Keyboard.charPressedQueueCount < MAX_CHAR_PRESSED_QUEUE)
                 {
-                    // Add character to the queue
-                    CORE.Input.Keyboard.charPressedQueue[CORE.Input.Keyboard.charPressedQueueCount] = event.text.text[0];
+                    // Add character (codepoint) to the queue
+                    CORE.Input.Keyboard.charPressedQueue[CORE.Input.Keyboard.charPressedQueueCount] = GetCodepointNext(event.text.text, &codepointSize);
                     CORE.Input.Keyboard.charPressedQueueCount++;
                 }
             } break;
