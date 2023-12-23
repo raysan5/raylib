@@ -37,29 +37,30 @@
 // Types and Structures Definition
 //----------------------------------------------------------------------------------
 
-// Light data
-typedef struct {
-    int enabled;
-    int type;
-    Vector3 position;
-    Vector3 target;
-    float color[4];
-    float intensity;
-
-    int enabledLoc;
-    int typeLoc;
-    int positionLoc;
-    int targetLoc;
-    int colorLoc;
-    int intensityLoc;
-} Light;
-
 // Light type
 typedef enum {
     LIGHT_DIRECTIONAL = 0,
     LIGHT_POINT,
     LIGHT_SPOT
 } LightType;
+
+// Light data
+typedef struct {
+    int type;
+    int enabled;
+    Vector3 position;
+    Vector3 target;
+    float color[4];
+    float intensity;
+
+    // Shader light parameters locations
+    int typeLoc;
+    int enabledLoc;
+    int positionLoc;
+    int targetLoc;
+    int colorLoc;
+    int intensityLoc;
+} Light;
 
 //----------------------------------------------------------------------------------
 // Global Variables Definition
@@ -119,16 +120,13 @@ int main()
     SetShaderValue(shader, lightCountLoc, &maxLightCount, SHADER_UNIFORM_INT);
 
     // Setup ambient color and intensity parameters
+    float ambientIntensity = 0.02f;
     Color ambientColor = (Color){ 26, 32, 135, 255 };
     Vector3 ambientColorNormalized = (Vector3){ ambientColor.r/255.0f, ambientColor.g/255.0f, ambientColor.b/255.0f };
-    float ambientIntensity = 0.02;
+    SetShaderValue(shader, GetShaderLocation(shader, "ambientColor"), &ambientColorNormalized, SHADER_UNIFORM_VEC3);
+    SetShaderValue(shader, GetShaderLocation(shader, "ambient"), &ambientIntensity, SHADER_UNIFORM_FLOAT);
 
-    int albedoLoc = GetShaderLocation(shader, "albedo");
-    int ambientColorLoc = GetShaderLocation(shader, "ambientColor");
-    int ambientLoc = GetShaderLocation(shader, "ambient");
-    SetShaderValue(shader, ambientColorLoc, &ambientColorNormalized, SHADER_UNIFORM_VEC3);
-    SetShaderValue(shader, ambientLoc, &ambientIntensity, SHADER_UNIFORM_FLOAT);
-
+    // Get location for shader parameters that can be modified in real time
     int emissiveIntensityLoc = GetShaderLocation(shader, "emissivePower");
     int emissiveColorLoc = GetShaderLocation(shader, "emissiveColor");
     int textureTilingLoc = GetShaderLocation(shader, "tiling");
@@ -156,12 +154,12 @@ int main()
     car.materials[0].maps[MATERIAL_MAP_NORMAL].texture = LoadTexture("resources/old_car_n.png");
     car.materials[0].maps[MATERIAL_MAP_EMISSION].texture = LoadTexture("resources/old_car_e.png");
     
-    // Old car model texture tiling parameter can be stored in the Material struct if required (CURRENTLY NOT USED)
-    // NOTE: Material.params[4] are available for generic parameters storage (float)
-    Vector2 carTextureTiling = (Vector2){ 0.5f, 0.5f };
-
     // Load floor model mesh and assign material parameters
+    // NOTE: A basic plane shape can be generated instead of being loaded from a model file
     Model floor = LoadModel("resources/models/plane.glb");
+    //Mesh floorMesh = GenMeshPlane(10, 10, 10, 10);
+    //GenMeshTangents(&floorMesh);      // TODO: Review tangents generation
+    //Model floor = LoadModelFromMesh(floorMesh);
 
     // Assign material shader for our floor model, same PBR shader 
     floor.materials[0].shader = shader;
@@ -176,7 +174,9 @@ int main()
     floor.materials[0].maps[MATERIAL_MAP_METALNESS].texture = LoadTexture("resources/road_mra.png");
     floor.materials[0].maps[MATERIAL_MAP_NORMAL].texture = LoadTexture("resources/road_n.png");
 
-    // Floor texture tiling parameter
+    // Models texture tiling parameter can be stored in the Material struct if required (CURRENTLY NOT USED)
+    // NOTE: Material.params[4] are available for generic parameters storage (float)
+    Vector2 carTextureTiling = (Vector2){ 0.5f, 0.5f };
     Vector2 floorTextureTiling = (Vector2){ 0.5f, 0.5f };
 
     // Create some lights
@@ -209,10 +209,10 @@ int main()
         SetShaderValue(shader, shader.locs[SHADER_LOC_VECTOR_VIEW], cameraPos, SHADER_UNIFORM_VEC3);
 
         // Check key inputs to enable/disable lights
-        if (IsKeyPressed(KEY_Y)) { lights[0].enabled = !lights[0].enabled; }
-        if (IsKeyPressed(KEY_G)) { lights[1].enabled = !lights[1].enabled; }
-        if (IsKeyPressed(KEY_R)) { lights[2].enabled = !lights[2].enabled; }
-        if (IsKeyPressed(KEY_B)) { lights[3].enabled = !lights[3].enabled; }
+        if (IsKeyPressed(KEY_ONE)) { lights[2].enabled = !lights[2].enabled; }
+        if (IsKeyPressed(KEY_TWO)) { lights[1].enabled = !lights[1].enabled; }
+        if (IsKeyPressed(KEY_THREE)) { lights[3].enabled = !lights[3].enabled; }
+        if (IsKeyPressed(KEY_FOUR)) { lights[0].enabled = !lights[0].enabled; }
 
         // Update light values on shader (actually, only enable/disable them)
         for (int i = 0; i < MAX_LIGHTS; i++) UpdateLight(shader, lights[i]);
@@ -253,7 +253,7 @@ int main()
                 
             EndMode3D();
             
-            DrawText("Toggle lights: [Y][R][G][B]", 10, 40, 20, LIGHTGRAY);
+            DrawText("Toggle lights: [1][2][3][4]", 10, 40, 20, LIGHTGRAY);
 
             DrawText("(c) Old Rusty Car model by Renafox (https://skfb.ly/LxRy)", screenWidth - 320, screenHeight - 20, 10, LIGHTGRAY);
             
