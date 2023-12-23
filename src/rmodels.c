@@ -4787,8 +4787,8 @@ static Image LoadImageFromCgltfImage(cgltf_image *cgltfImage, const char *texPat
                 void *data = NULL;
 
                 cgltf_options options = { 0 };
-		options.file.read = LoadFileGLTFCallback;
-		options.file.release = ReleaseFileGLTFCallback;
+                options.file.read = LoadFileGLTFCallback;
+                options.file.release = ReleaseFileGLTFCallback;
                 cgltf_result result = cgltf_load_buffer_base64(&options, outSize, cgltfImage->uri + i + 1, &data);
 
                 if (result == cgltf_result_success)

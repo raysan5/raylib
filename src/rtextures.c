@@ -1967,7 +1967,7 @@ void ImageBlurGaussian(Image *image, int blurSize) {
                 avgG += pixelsCopy1[row*image->width + i].y;
                 avgB += pixelsCopy1[row*image->width + i].z;
                 avgAlpha += pixelsCopy1[row*image->width + i].w;
-			}
+            }
 
             for (int x = 0; x < image->width; x++)
             {
