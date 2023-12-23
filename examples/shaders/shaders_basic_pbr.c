@@ -19,10 +19,6 @@
 
 #include "raylib.h"
 
-#if defined(PLATFORM_WEB)
-    #include <emscripten/emscripten.h>
-#endif
-
 #if defined(PLATFORM_DESKTOP)
     #define GLSL_VERSION            330
 #else   // PLATFORM_ANDROID, PLATFORM_WEB
@@ -181,10 +177,10 @@ int main()
 
     // Create some lights
     Light lights[MAX_LIGHTS] = { 0 };
-    lights[0] = CreateLight(LIGHT_POINT, (Vector3){ -1, 1, -2 }, (Vector3){0,0,0}, YELLOW,4, shader);
-    lights[1] = CreateLight(LIGHT_POINT, (Vector3){ 2,  1, 1 }, (Vector3){0,0,0}, GREEN,3.3, shader);
-    lights[2] = CreateLight(LIGHT_POINT, (Vector3){ -2, 1, 1 }, (Vector3){0,0,0}, RED,8.3, shader);
-    lights[3] = CreateLight(LIGHT_POINT, (Vector3){ 1,  1, -2 }, (Vector3){0,0,0}, BLUE,2, shader);
+    lights[0] = CreateLight(LIGHT_POINT, (Vector3){ -1.0f, 1.0f, -2.0f }, (Vector3){ 0.0f, 0.0f, 0.0f }, YELLOW, 4.0f, shader);
+    lights[1] = CreateLight(LIGHT_POINT, (Vector3){ 2.0f, 1.0f, 1.0f }, (Vector3){ 0.0f, 0.0f, 0.0f }, GREEN, 3.3f, shader);
+    lights[2] = CreateLight(LIGHT_POINT, (Vector3){ -2.0f, 1.0f, 1.0f }, (Vector3){ 0.0f, 0.0f, 0.0f }, RED, 8.3f, shader);
+    lights[3] = CreateLight(LIGHT_POINT, (Vector3){ 1.0f, 1.0f, -2.0f }, (Vector3){ 0.0f, 0.0f, 0.0f }, BLUE, 2.0f, shader);
 
     // Setup material texture maps usage in shader
     // NOTE: By default, the texture maps are always used
@@ -297,18 +293,20 @@ static Light CreateLight(int type, Vector3 position, Vector3 target, Color color
         light.type = type;
         light.position = position;
         light.target = target;
-        light.color[0] = (float)color.r / (float)255;
-        light.color[1] = (float)color.g / (float)255;
-        light.color[2] = (float)color.b / (float)255;
-        light.color[3] = (float)color.a / (float)255;
+        light.color[0] = (float)color.r/255.0f;
+        light.color[1] = (float)color.g/255.0f;
+        light.color[2] = (float)color.b/255.0f;
+        light.color[3] = (float)color.a/255.0f;
         light.intensity = intensity;
-        // NOTE: Lighting shader naming must be the provided ones
+        
+        // NOTE: Shader parameters names for lights must match the requested ones
         light.enabledLoc = GetShaderLocation(shader, TextFormat("lights[%i].enabled", lightCount));
         light.typeLoc = GetShaderLocation(shader, TextFormat("lights[%i].type", lightCount));
         light.positionLoc = GetShaderLocation(shader, TextFormat("lights[%i].position", lightCount));
         light.targetLoc = GetShaderLocation(shader, TextFormat("lights[%i].target", lightCount));
         light.colorLoc = GetShaderLocation(shader, TextFormat("lights[%i].color", lightCount));
         light.intensityLoc = GetShaderLocation(shader, TextFormat("lights[%i].intensity", lightCount));
+        
         UpdateLight(shader, light);
 
         lightCount++;
