@@ -98,7 +98,7 @@ int main(void)
             // Supports loading .rgs style files (text or binary) and .png style palette images
             if (IsFileExtension(droppedFiles.paths[0], ".txt;.rae"))
             {
-                UnloadAutomationEventList(&aelist);
+                UnloadAutomationEventList(aelist);
                 aelist = LoadAutomationEventList(droppedFiles.paths[0]);
                 
                 eventRecording = false;
