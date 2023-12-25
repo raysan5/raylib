@@ -182,7 +182,7 @@ void DrawLineV(Vector2 startPos, Vector2 endPos, Color color)
 }
 
 // Draw lines sequuence (using gl lines)
-void DrawLineStrip(Vector2 *points, int pointCount, Color color)
+void DrawLineStrip(const Vector2 *points, int pointCount, Color color)
 {
     if (pointCount >= 2)
     {
@@ -1363,7 +1363,7 @@ void DrawTriangleLines(Vector2 v1, Vector2 v2, Vector2 v3, Color color)
 // Draw a triangle fan defined by points
 // NOTE: First vertex provided is the center, shared by all triangles
 // By default, following vertex should be provided in counter-clockwise order
-void DrawTriangleFan(Vector2 *points, int pointCount, Color color)
+void DrawTriangleFan(const Vector2 *points, int pointCount, Color color)
 {
     if (pointCount >= 3)
     {
@@ -1392,7 +1392,7 @@ void DrawTriangleFan(Vector2 *points, int pointCount, Color color)
 
 // Draw a triangle strip defined by points
 // NOTE: Every new vertex connects with previous two
-void DrawTriangleStrip(Vector2 *points, int pointCount, Color color)
+void DrawTriangleStrip(const Vector2 *points, int pointCount, Color color)
 {
     if (pointCount >= 3)
     {
@@ -1544,7 +1544,7 @@ void DrawPolyLinesEx(Vector2 center, int sides, float radius, float rotation, fl
 //----------------------------------------------------------------------------------
 
 // Draw spline: linear, minimum 2 points
-void DrawSplineLinear(Vector2 *points, int pointCount, float thick, Color color)
+void DrawSplineLinear(const Vector2 *points, int pointCount, float thick, Color color)
 {
     if (pointCount < 2) return;
 
@@ -1661,7 +1661,7 @@ void DrawSplineLinear(Vector2 *points, int pointCount, float thick, Color color)
 }
 
 // Draw spline: B-Spline, minimum 4 points
-void DrawSplineBasis(Vector2 *points, int pointCount, float thick, Color color)
+void DrawSplineBasis(const Vector2 *points, int pointCount, float thick, Color color)
 {
     if (pointCount < 4) return;
 
@@ -1737,7 +1737,7 @@ void DrawSplineBasis(Vector2 *points, int pointCount, float thick, Color color)
 }
 
 // Draw spline: Catmull-Rom, minimum 4 points
-void DrawSplineCatmullRom(Vector2 *points, int pointCount, float thick, Color color)
+void DrawSplineCatmullRom(const Vector2 *points, int pointCount, float thick, Color color)
 {
     if (pointCount < 4) return;
 
@@ -1803,7 +1803,7 @@ void DrawSplineCatmullRom(Vector2 *points, int pointCount, float thick, Color co
 }
 
 // Draw spline: Quadratic Bezier, minimum 3 points (1 control point): [p1, c2, p3, c4...]
-void DrawSplineBezierQuadratic(Vector2 *points, int pointCount, float thick, Color color)
+void DrawSplineBezierQuadratic(const Vector2 *points, int pointCount, float thick, Color color)
 {
     if (pointCount < 3) return;
 
@@ -1814,7 +1814,7 @@ void DrawSplineBezierQuadratic(Vector2 *points, int pointCount, float thick, Col
 }
 
 // Draw spline: Cubic Bezier, minimum 4 points (2 control points): [p1, c2, c3, p4, c5, c6...]
-void DrawSplineBezierCubic(Vector2 *points, int pointCount, float thick, Color color)
+void DrawSplineBezierCubic(const Vector2 *points, int pointCount, float thick, Color color)
 {
     if (pointCount < 4) return;
 
@@ -2169,7 +2169,7 @@ bool CheckCollisionPointTriangle(Vector2 point, Vector2 p1, Vector2 p2, Vector2 
 
 // Check if point is within a polygon described by array of vertices
 // NOTE: Based on http://jeffreythompson.org/collision-detection/poly-point.php
-bool CheckCollisionPointPoly(Vector2 point, Vector2 *points, int pointCount)
+bool CheckCollisionPointPoly(Vector2 point, const Vector2 *points, int pointCount)
 {
     bool collision = false;
 
