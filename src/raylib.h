@@ -1220,6 +1220,8 @@ RLAPI void UpdateCameraPro(Camera *camera, Vector3 movement, Vector3 rotation, f
 // NOTE: It can be useful when using basic shapes and one single font,
 // defining a font char white rectangle would allow drawing everything in a single draw call
 RLAPI void SetShapesTexture(Texture2D texture, Rectangle source);       // Set texture and rectangle to be used on shapes drawing
+RLAPI Texture2D GetShapesTexture();                                     // Get texture that is used for shapes drawing
+RLAPI Rectangle GetShapesTextureRectangle();                            // Get texture source rectangle that is used for shapes drawing
 
 // Basic shapes drawing functions
 RLAPI void DrawPixel(int posX, int posY, Color color);                                                   // Draw a pixel
