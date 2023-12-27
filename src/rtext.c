@@ -378,6 +378,33 @@ Font LoadFontEx(const char *fileName, int fontSize, int *codepoints, int codepoi
     return font;
 }
 
+// Reload the font after adding the new characters to the list of desired characters
+// Passing NULL to the newChars variable results in a reset to the default of LoadFontEx
+void AddNewCharsToFontEx(Font *font, const char *fileName, int fontSize, char *newChars)
+{
+  if (newChars == NULL) {
+    *font = LoadFontEx(fileName, fontSize, NULL, 0);
+    return;
+  }
+
+  int codepointCount = 0;
+  int *codepoints = LoadCodepoints(newChars, &codepointCount);
+
+  int newCount = font->glyphCount + codepointCount;
+
+  int *newCodepoints = MemAlloc(newCount * sizeof(int));
+  for (int i=0; i<font->glyphCount; i++) {
+    newCodepoints[i] = font->glyphs[i].value;
+  }
+  for (int i=font->glyphCount; i<newCount; i++) {
+    newCodepoints[i] = codepoints[i-font->glyphCount];
+  }
+
+  *font = LoadFontEx(fileName, fontSize, newCodepoints, newCount);
+
+  MemFree(newCodepoints);
+}
+
 // Load an Image font file (XNA style)
 Font LoadFontFromImage(Image image, Color key, int firstChar)
 {
