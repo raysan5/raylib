@@ -1470,7 +1470,7 @@ RLAPI bool TextIsEqual(const char *text1, const char *text2);                   
 RLAPI unsigned int TextLength(const char *text);                                            // Get text length, checks for '\0' ending
 RLAPI const char *TextFormat(const char *text, ...);                                        // Text formatting with variables (sprintf() style)
 RLAPI const char *TextSubtext(const char *text, int position, int length);                  // Get a piece of a text string
-RLAPI char *TextReplace(char *text, const char *replace, const char *by);                   // Replace text string (WARNING: memory must be freed!)
+RLAPI char *TextReplace(const char *text, const char *replace, const char *by);                   // Replace text string (WARNING: memory must be freed!)
 RLAPI char *TextInsert(const char *text, const char *insert, int position);                 // Insert text in a position (WARNING: memory must be freed!)
 RLAPI const char *TextJoin(const char **textList, int count, const char *delimiter);        // Join text strings with delimiter
 RLAPI const char **TextSplit(const char *text, char delimiter, int *count);                 // Split text into multiple strings
