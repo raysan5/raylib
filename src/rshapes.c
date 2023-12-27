@@ -113,13 +113,14 @@ void SetShapesTexture(Texture2D texture, Rectangle source)
 }
 
 // Get texture that is used for shapes drawing
-Texture2D GetShapesTexture()
+Texture2D GetShapesTexture(void)
 {
     return texShapes;
 }
 
 // Get texture source rectangle that is used for shapes drawing
-Rectangle GetShapesTextureRectangle()
+Rectangle GetShapesTextureRectangle(void)
+Rectangle GetShapesTextureRectangle(void)
 {
     return texShapesRec;
 }
