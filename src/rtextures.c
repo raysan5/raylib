@@ -443,7 +443,7 @@ Image LoadImageAnim(const char *fileName, int *frames)
 //  - Number of frames is returned through 'frames' parameter
 //  - All frames are returned in RGBA format
 //  - Frames delay data is discarded
-Image LoadImageAnimFromMemory(const char *fileType,const char *fileData, int dataSize,int *frames)
+Image LoadImageAnimFromMemory(const char *fileType, const unsigned char *fileData, int dataSize,int *frames)
 {
     Image image = { 0 };
     int frameCount = 0;
@@ -2147,14 +2147,14 @@ void ImageKernelConvolution(Image *image, float* kernel, int kernelSize){
     {
         startRange = -kernelWidth/2;
         endRange = kernelWidth/2;
-    } else 
+    } else
     {
         startRange = -kernelWidth/2;
         endRange = kernelWidth/2+1;
     }
-    for(int x = 0; x < image->height; x++) 
+    for(int x = 0; x < image->height; x++)
     {
-        for(int y = 0; y < image->width; y++) 
+        for(int y = 0; y < image->width; y++)
         {
 
             for(int xk = startRange; xk < endRange; xk++)
@@ -2232,14 +2232,14 @@ void ImageKernelConvolution(Image *image, float* kernel, int kernelSize){
         }
     }
 
-    for (int i = 0; i < (image->width) * (image->height); i++) 
+    for (int i = 0; i < (image->width) * (image->height); i++)
     {
         float alpha = (float)imageCopy2[i].w;
         pixels[i].r = (unsigned char)((imageCopy2[i].x)*255.0f);
         pixels[i].g = (unsigned char)((imageCopy2[i].y)*255.0f);
         pixels[i].b = (unsigned char)((imageCopy2[i].z)*255.0f);
         pixels[i].a = (unsigned char)((alpha)*255.0f);
-        // printf("pixels[%d] = %d", i, pixels[i].r); 
+        // printf("pixels[%d] = %d", i, pixels[i].r);
     }
 
 
@@ -3817,7 +3817,7 @@ TextureCubemap LoadTextureCubemap(Image image, int layout)
             if ((image.height/6) == image.width) { layout = CUBEMAP_LAYOUT_LINE_VERTICAL; cubemap.width = image.height/6; }
             else if ((image.width/3) == (image.height/4)) { layout = CUBEMAP_LAYOUT_CROSS_THREE_BY_FOUR; cubemap.width = image.width/3; }
         }
-    } 
+    }
     else
     {
         if (layout == CUBEMAP_LAYOUT_LINE_VERTICAL) cubemap.width = image.height/6;
@@ -3836,7 +3836,7 @@ TextureCubemap LoadTextureCubemap(Image image, int layout)
 
         Image faces = { 0 };                // Vertical column image
         Rectangle faceRecs[6] = { 0 };      // Face source rectangles
-        
+
         for (int i = 0; i < 6; i++) faceRecs[i] = (Rectangle){ 0, 0, (float)size, (float)size };
 
         if (layout == CUBEMAP_LAYOUT_LINE_VERTICAL)
