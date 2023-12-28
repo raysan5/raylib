@@ -443,7 +443,7 @@ Image LoadImageAnim(const char *fileName, int *frames)
 //  - Number of frames is returned through 'frames' parameter
 //  - All frames are returned in RGBA format
 //  - Frames delay data is discarded
-Image LoadImageAnimFromMemory(const char *fileType, const unsigned char *fileData, int dataSize,int *frames)
+Image LoadImageAnimFromMemory(const char *fileType, const unsigned char *fileData, int dataSize, int *frames)
 {
     Image image = { 0 };
     int frameCount = 0;
