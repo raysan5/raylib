@@ -403,7 +403,7 @@ void AddNewCharsToFontEx(Font *font, const char *fileName, int fontSize, char *n
         bool codepointIsUnique = true;
         int cp = codepoints[i-font->glyphCount];
 
-        // This loop checks for the existence for the existence of the newChars in the input Font
+        // This loop checks for the existence of the newChars in the input Font, and skips them if necessary
         for (int j = 0; j < font->glyphCount; j++)
         {
             if (cp == font->glyphs[j].value)
