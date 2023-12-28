@@ -438,6 +438,45 @@ Image LoadImageAnim(const char *fileName, int *frames)
     return image;
 }
 
+// Load animated image data
+//  - Image.data buffer includes all frames: [image#0][image#1][image#2][...]
+//  - Number of frames is returned through 'frames' parameter
+//  - All frames are returned in RGBA format
+//  - Frames delay data is discarded
+Image LoadImageAnimFromMemory(const char *fileType,const char *fileData, int dataSize,int *frames)
+{
+    Image image = { 0 };
+    int frameCount = 0;
+
+#if defined(SUPPORT_FILEFORMAT_GIF)
+    if ((strcmp(fileType, ".gif") == 0) || (strcmp(fileType, ".GIF") == 0))
+    {
+        if (fileData != NULL)
+        {
+            int comp = 0;
+            int *delays = NULL;
+            image.data = stbi_load_gif_from_memory(fileData, dataSize, &delays, &image.width, &image.height, &frameCount, &comp, 4);
+
+            image.mipmaps = 1;
+            image.format = PIXELFORMAT_UNCOMPRESSED_R8G8B8A8;
+
+            RL_FREE(fileData);
+            RL_FREE(delays);        // NOTE: Frames delays are discarded
+        }
+    }
+#else
+    if (false) { }
+#endif
+    else
+    {
+        image = LoadImageFromMemory(fileType,fileData,dataSize);
+        frameCount = 1;
+    }
+
+    *frames = frameCount;
+    return image;
+}
+
 // Load image from memory buffer, fileType refers to extension: i.e. ".png"
 // WARNING: File extension must be provided in lower-case
 Image LoadImageFromMemory(const char *fileType, const unsigned char *fileData, int dataSize)
