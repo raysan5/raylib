@@ -653,7 +653,7 @@ GlyphInfo *LoadFontData(const unsigned char *fileData, int dataSize, int fontSiz
                         chars[i].offsetY += (int)((float)ascent*scaleFactor);
                     }
 
-                    // NOTE: We create an empty image for space character, 
+                    // NOTE: We create an empty image for space character,
                     // it could be further required for atlas packing
                     if (ch == 32)
                     {
@@ -1514,7 +1514,7 @@ const char *TextSubtext(const char *text, int position, int length)
 // Replace text string
 // REQUIRES: strlen(), strstr(), strncpy(), strcpy()
 // WARNING: Allocated memory must be manually freed
-char *TextReplace(char *text, const char *replace, const char *by)
+char *TextReplace(const char *text, const char *replace, const char *by)
 {
     // Sanity checks and initialization
     if (!text || !replace || !by) return NULL;
@@ -1534,7 +1534,7 @@ char *TextReplace(char *text, const char *replace, const char *by)
     byLen = TextLength(by);
 
     // Count the number of replacements needed
-    insertPoint = text;
+    insertPoint = (char*)text;
     for (count = 0; (temp = strstr(insertPoint, replace)); count++) insertPoint = temp + replaceLen;
 
     // Allocate returning string and point temp to it
@@ -2086,9 +2086,9 @@ static Font LoadBMFont(const char *fileName)
     searchPoint = strstr(buffer, "lineHeight");
     readVars = sscanf(searchPoint, "lineHeight=%i base=%i scaleW=%i scaleH=%i pages=%i", &fontSize, &base, &imWidth, &imHeight, &pageCount);
     fileTextPtr += (readBytes + 1);
-    
+
     if (readVars < 4) { UnloadFileText(fileText); return font; } // Some data not available, file malformed
-    
+
     if (pageCount > MAX_FONT_IMAGE_PAGES)
     {
         TRACELOG(LOG_WARNING, "FONT: [%s] Font defines more pages than supported: %i/%i", fileName, pageCount, MAX_FONT_IMAGE_PAGES);
@@ -2148,17 +2148,17 @@ static Font LoadBMFont(const char *fileName)
     // NOTE: WARNING: This process could be really slow!
     if (pageCount > 1)
     {
-        // Resize font atlas to draw additional images 
-        ImageResizeCanvas(&fullFont, imWidth, imHeight*pageCount, 0, 0, BLACK); 
+        // Resize font atlas to draw additional images
+        ImageResizeCanvas(&fullFont, imWidth, imHeight*pageCount, 0, 0, BLACK);
 
         for (int i = 1; i < pageCount; i++)
         {
             Rectangle srcRec = { 0.0f, 0.0f, (float)imWidth, (float)imHeight };
             Rectangle destRec = { 0.0f, (float)imHeight*(float)i, (float)imWidth, (float)imHeight };
-            ImageDraw(&fullFont, imFonts[i], srcRec, destRec, WHITE);              
+            ImageDraw(&fullFont, imFonts[i], srcRec, destRec, WHITE);
         }
     }
-    
+
     RL_FREE(imFonts);
 
     font.texture = LoadTextureFromImage(fullFont);
@@ -2178,7 +2178,7 @@ static Font LoadBMFont(const char *fileName)
         readVars = sscanf(buffer, "char id=%i x=%i y=%i width=%i height=%i xoffset=%i yoffset=%i xadvance=%i page=%i",
                        &charId, &charX, &charY, &charWidth, &charHeight, &charOffsetX, &charOffsetY, &charAdvanceX, &pageID);
         fileTextPtr += (readBytes + 1);
-        
+
         if (readVars == 9)  // Make sure all char data has been properly read
         {
             // Get character rectangle in the font atlas texture
