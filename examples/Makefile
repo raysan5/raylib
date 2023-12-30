@@ -585,7 +585,8 @@ OTHERS = \
     others/raylib_opengl_interop \
     others/raymath_vector_angle \
     others/rlgl_compute_shader \
-    others/rlgl_standalone
+    others/rlgl_standalone \
+    others/gizmo
 
 CURRENT_MAKEFILE = $(lastword $(MAKEFILE_LIST))
 

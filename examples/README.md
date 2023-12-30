@@ -200,6 +200,7 @@ Examples showing raylib misc functionality that does not fit in other categories
 | 124 | [easings_testbed](others/easings_testbed.c) | <img src="others/easings_testbed.png" alt="easings_testbed" width="80"> | ⭐️⭐️⭐️☆ | 3.0 | 3.0 | [Juan Miguel López](https://github.com/flashback-fx) |
 | 125 | [raylib_opengl_interop](others/raylib_opengl_interop.c) | <img src="others/raylib_opengl_interop.png" alt="raylib_opengl_interop" width="80"> | ⭐️⭐️⭐️⭐️ | **4.0** | **4.0** | [Stephan Soller](https://github.com/arkanis) |
 | 126 | [embedded_files_loading](others/embedded_files_loading.c) | <img src="others/embedded_files_loading.png" alt="embedded_files_loading" width="80"> | ⭐️⭐️☆☆ | 3.5 | 3.5 | [Kristian Holmgren](https://github.com/defutura) |
+| 127 | [gizmo](others/gizmo.c) | <img src="others/gizmo.png" alt="gizmo" width="80"> | ⭐️⭐️☆☆ | 5.0 | 5.0 | [Alexey Karnachev](https://github.com/alexeykarnachev) |
 
 As always contributions are welcome, feel free to send new examples! Here it is an [examples template](examples_template.c) to start with!
 

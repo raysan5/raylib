@@ -491,7 +491,8 @@ OTHERS = \
     others/raylib_opengl_interop \
     others/raymath_vector_angle \
     others/rlgl_compute_shader \
-    others/rlgl_standalone
+    others/rlgl_standalone \
+    others/gizmo
 
 CURRENT_MAKEFILE = $(lastword $(MAKEFILE_LIST))
 
@@ -1098,6 +1099,9 @@ others/rlgl_compute_shader:
 
 others/rlgl_standalone:
 	$(info Skipping_others_rlgl_standalone)
+
+others/gizmo: others/gizmo.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
 # Clean everything
 clean:
