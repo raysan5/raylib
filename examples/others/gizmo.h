@@ -308,7 +308,7 @@ static RayCollision getRayPlaneCollision(
     return collision;
 }
 
-static Handles getSortedHandled(Handle h0, Handle h1, Handle h2) {
+static Handles getSortedHandles(Handle h0, Handle h1, Handle h2) {
     if (h0.distToCamera < h1.distToCamera) SWAP(h0, h1);
     if (h1.distToCamera < h2.distToCamera) SWAP(h1, h2);
     if (h0.distToCamera < h1.distToCamera) SWAP(h0, h1);
@@ -346,7 +346,7 @@ static void drawAxisHandles(
     Handle hy = {py, Y_AXIS, colorY, Vector3DistanceSqr(py, camera.position)};
     Handle hz = {pz, Z_AXIS, colorZ, Vector3DistanceSqr(pz, camera.position)};
 
-    Handles handles = getSortedHandled(hx, hy, hz);
+    Handles handles = getSortedHandles(hx, hy, hz);
 
     for (int i = 0; i < 3; ++i) {
         Handle* h = &handles.arr[i];
@@ -377,7 +377,7 @@ static void drawPlaneHandles(
     Handle hy = {py, Y_AXIS, colorY, Vector3DistanceSqr(py, camera.position)};
     Handle hz = {pz, X_AXIS, colorZ, Vector3DistanceSqr(pz, camera.position)};
 
-    Handles handles = getSortedHandled(hx, hy, hz);
+    Handles handles = getSortedHandles(hx, hy, hz);
 
     rlDisableBackfaceCulling();
     for (int i = 0; i < 3; ++i) {

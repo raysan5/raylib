@@ -25,7 +25,8 @@
 #define CAMERA_ZOOM_SPEED 1.0f
 
 // Updates the camera in the orbital-style, i.e camera rotates around the look-at point by the orbit
-static void updateCamera(Camera3D* camera) {
+static void updateCamera(Camera3D* camera)
+{
     bool isMMBDown = IsMouseButtonDown(2);
     bool isShiftDown = IsKeyDown(KEY_LEFT_SHIFT);
     Vector2 mouseDelta = GetMouseDelta();
