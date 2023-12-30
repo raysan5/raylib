@@ -1,17 +1,60 @@
-#include <raylib.h>
-#include <stdlib.h>
+/*******************************************************************************************
+Alexey Karnachev License
+---------------------------------------------------------------------------------
+MIT License
 
-void LoadGizmo();
-void UnloadGizmo();
-Matrix UpdateGizmo(Camera3D camera, Vector3 position);
+Copyright (c) 2023 Alexey Karnachev
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+---------------------------------------------------------------------------------
+
+Copyright (c) 2015-2023 Ramon Santamaria (@raysan5)
+
+This software is provided "as-is", without any express or implied warranty. In no event
+will the authors be held liable for any damages arising from the use of this software.
+
+Permission is granted to anyone to use this software for any purpose, including commercial
+applications, and to alter it and redistribute it freely, subject to the following restrictions:
+
+  1. The origin of this software must not be misrepresented; you must not claim that you
+  wrote the original software. If you use this software in a product, an acknowledgment
+  in the product documentation would be appreciated but is not required.
+
+  2. Altered source versions must be plainly marked as such, and must not be misrepresented
+  as being the original software.
+
+  3. This notice may not be removed or altered from any source distribution.
+
+**********************************************************************************************/
+
+#include <raylib.h>
+
+void loadGizmo();
+void unloadGizmo();
+Matrix updateAndDrawGizmo(Camera3D camera, Vector3 position);
 
 #ifdef RAYGIZMO_IMPLEMENTATION
 
-#include "raymath.h"
-#include <math.h>
-#include <rlgl.h>
-#include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
+#include <rlgl.h>
+#include "raymath.h"
 
 // This will be multiplied by the distance from the camera to the gizmo,
 // Which keeps the screen-space gizmo size constant.
@@ -22,23 +65,24 @@ Matrix UpdateGizmo(Camera3D camera, Vector3 position);
 #define GIZMO_ACTIVE_AXIS_DRAW_THICKNESS 2.0f
 
 // These sizes are relative to the gizmo radius
-#define GIZMO_AXIS_HANDLE_LENGTH 1.2;
-#define GIZMO_AXIS_HANDLE_TIP_LENGTH 0.3;
-#define GIZMO_AXIS_HANDLE_TIP_RADIUS 0.1;
-#define GIZMO_PLANE_HANDLE_OFFSET 0.4;
-#define GIZMO_PLANE_HANDLE_SIZE 0.2;
+#define GIZMO_AXIS_HANDLE_LENGTH 1.2f;
+#define GIZMO_AXIS_HANDLE_TIP_LENGTH 0.3f;
+#define GIZMO_AXIS_HANDLE_TIP_RADIUS 0.1f;
+#define GIZMO_PLANE_HANDLE_OFFSET 0.4f;
+#define GIZMO_PLANE_HANDLE_SIZE 0.2f;
 
-#define X_AXIS \
-    (Vector3) { 1.0, 0.0, 0.0 }
-#define Y_AXIS \
-    (Vector3) { 0.0, 1.0, 0.0 }
-#define Z_AXIS \
-    (Vector3) { 0.0, 0.0, 1.0 }
+#define X_AXIS (Vector3){ 1.0, 0.0, 0.0 }
+#define Y_AXIS (Vector3){ 0.0, 1.0, 0.0 }
+#define Z_AXIS (Vector3){ 0.0, 0.0, 1.0 }
 
-#define MASK_FRAMEBUFFER_WIDTH 500.0
-#define MASK_FRAMEBUFFER_HEIGHT 500.0
+// Size of the additional buffer to pre-render the gizmo into.
+// Used for the mouse picking.
+#define MASK_FRAMEBUFFER_WIDTH 500
+#define MASK_FRAMEBUFFER_HEIGHT 500
 
-#define swap(x, y) \
+#define ID_TO_RED_COLOR(id) (Color){ id, 0, 0, 0 }
+
+#define SWAP(x, y) \
     do { \
         unsigned char \
             swap_temp[sizeof(x) == sizeof(y) ? (signed)sizeof(x) : -1]; \
@@ -47,9 +91,8 @@ Matrix UpdateGizmo(Camera3D camera, Vector3 position);
         memcpy(&x, swap_temp, sizeof(x)); \
     } while (0)
 
-#define id_to_red_color(id) \
-    (Color) { id, 0, 0, 0 }
 
+#if defined(PLATFORM_DESKTOP)  // Shaders for PLATFORM_DESKTOP
 static const char* SHADER_COLOR_VERT = "\
 #version 330\n\
 in vec3 vertexPosition; \
@@ -57,21 +100,23 @@ in vec4 vertexColor; \
 out vec4 fragColor; \
 out vec3 fragPosition; \
 uniform mat4 mvp; \
-void main() { \
+void main() \
+{ \
     fragColor = vertexColor; \
     fragPosition = vertexPosition; \
     gl_Position = mvp * vec4(vertexPosition, 1.0); \
 } \
 ";
 
-static const char* SHADER_ROT_HANDLE_COLOR_FRAG = "\
+static const char* shaderRotHandleColor_FRAG = "\
 #version 330\n\
 in vec4 fragColor; \
 in vec3 fragPosition; \
 uniform vec3 cameraPosition; \
 uniform vec3 gizmoPosition; \
 out vec4 finalColor; \
-void main() { \
+void main() \
+{ \
     vec3 r = normalize(fragPosition - gizmoPosition); \
     vec3 c = normalize(fragPosition - cameraPosition); \
     if (dot(r, c) > 0.1) discard; \
@@ -79,15 +124,48 @@ void main() { \
 } \
 ";
 
-static Shader SHADER_ROT_HANDLE_COLOR;
-static int SHADER_ROT_HANDLE_CAMERA_POS_LOC;
-static int SHADER_ROT_HANDLE_GIZMO_POS_LOC;
+#else  // Shaders for PLATFORM_ANDROID, PLATFORM_WEB
 
-static unsigned int MASK_FRAMEBUFFER;
-static unsigned int MASK_TEXTURE;
+static const char* SHADER_COLOR_VERT = "\
+#version 100\n\
+attribute vec3 vertexPosition; \
+attribute vec4 vertexColor; \
+varying vec4 fragColor; \
+varying vec3 fragPosition; \
+uniform mat4 mvp; \
+void main() \
+{ \
+    fragColor = vertexColor; \
+    fragPosition = vertexPosition; \
+    gl_Position = mvp * vec4(vertexPosition, 1.0); \
+} \
+";
 
-static bool IS_GIZMO_LOADED;
-static Vector3 GIZMO_CURRENT_AXIS;
+static const char* shaderRotHandleColor_FRAG = "\
+#version 100\n\
+precision mediump float; \
+varying vec4 fragColor; \
+varying vec3 fragPosition; \
+uniform vec3 cameraPosition; \
+uniform vec3 gizmoPosition; \
+void main() { \
+    vec3 r = normalize(fragPosition - gizmoPosition); \
+    vec3 c = normalize(fragPosition - cameraPosition); \
+    if (dot(r, c) > 0.1) discard; \
+    gl_FragColor = fragColor; \
+} \
+";
+#endif
+
+static Shader shaderRotHandleColor;
+static int ShaderRotHandleCameraPosLoc;
+static int ShaderRotHandleGizmoPosLoc;
+
+static unsigned int maskFramebuffer;
+static unsigned int maskTexture;
+
+static bool isGizmoLoaded;
+static Vector3 gizmoCurrentAxis;
 
 typedef enum HandleId {
     HANDLE_X,
@@ -129,7 +207,7 @@ typedef struct Handle {
     Vector3 position;
     Vector3 axis;
     Color color;
-    float dist_to_cam;
+    float distToCamera;
 } Handle;
 
 typedef struct HandleColors {
@@ -142,17 +220,17 @@ typedef struct Handles {
     Handle arr[3];
 } Handles;
 
-static GizmoState GIZMO_STATE;
+static GizmoState gizmoState;
 
-bool check_if_mouse_moved() {
-    Vector2 mouse_delta = GetMouseDelta();
-    return (fabs(mouse_delta.x) + fabs(mouse_delta.y)) > EPSILON;
+static bool checkIfMouseMoved() {
+    Vector2 mouseDelta = GetMouseDelta();
+    return (fabs(mouseDelta.x) + fabs(mouseDelta.y)) > EPSILON;
 }
 
-static float vector2_get_angle(Vector2 v1, Vector2 v2) {
-    Vector2 v1_norm = Vector2Normalize(v1);
-    Vector2 v2_norm = Vector2Normalize(v2);
-    float dot = Vector2DotProduct(v1_norm, v2_norm);
+static float getAngleBetweenTwoVector2(Vector2 v1, Vector2 v2) {
+    Vector2 v1Normal = Vector2Normalize(v1);
+    Vector2 v2Normal = Vector2Normalize(v2);
+    float dot = Vector2DotProduct(v1Normal, v2Normal);
     if (1.0 - fabs(dot) < EPSILON) return 0.0;
 
     float angle = acos(dot);
@@ -163,71 +241,63 @@ static float vector2_get_angle(Vector2 v1, Vector2 v2) {
     else return -angle;
 }
 
-static int isect_line_plane(
-    Vector3* out_p,
-    Vector3 line_p0,
-    Vector3 line_p1,
-    Vector3 plane_p,
-    Vector3 plane_normal
+static int intersectLinePlane(
+    Vector3* outPoint,
+    Vector3 linePoint0,
+    Vector3 linePoint1,
+    Vector3 planePoint,
+    Vector3 planeNormal
 ) {
-    Vector3 u = Vector3Subtract(line_p1, line_p0);
-    float dot = Vector3DotProduct(plane_normal, u);
-    if (fabs(dot) <= EPSILON) {
-        return 0;
-    }
+    Vector3 u = Vector3Subtract(linePoint1, linePoint0);
+    float dot = Vector3DotProduct(planeNormal, u);
+    if (fabs(dot) <= EPSILON) return 0;
 
-    Vector3 w = Vector3Subtract(line_p0, plane_p);
-    float k = -Vector3DotProduct(plane_normal, w) / dot;
+    Vector3 w = Vector3Subtract(linePoint0, planePoint);
+    float k = -Vector3DotProduct(planeNormal, w) / dot;
     u = Vector3Scale(u, k);
-    *out_p = Vector3Add(line_p0, u);
+    *outPoint = Vector3Add(linePoint0, u);
     return 1;
 }
 
-static int get_two_vecs_nearest_point(
-    Vector3* vec0_out_nearest_point,
-    Vector3 vec0_p0,
-    Vector3 vec0_p1,
-    Vector3 vec1_p0,
-    Vector3 vec1_p1
+static int getTwoLinesNearestPoint(
+    Vector3* outPoint,
+    Vector3 line0Point0,
+    Vector3 line0Point1,
+    Vector3 line1Point0,
+    Vector3 line1Point1
 ) {
-    Vector3 vec0 = Vector3Subtract(vec0_p1, vec0_p0);
-    Vector3 vec1 = Vector3Subtract(vec1_p1, vec1_p0);
-    Vector3 plane_vec = Vector3CrossProduct(vec0, vec1);
-    plane_vec = Vector3Normalize(plane_vec);
-    Vector3 plane_normal = Vector3CrossProduct(vec0, plane_vec);
-    plane_normal = Vector3Normalize(plane_normal);
+    Vector3 vec0 = Vector3Subtract(line0Point1, line0Point0);
+    Vector3 vec1 = Vector3Subtract(line1Point1, line1Point0);
+    Vector3 planeVec = Vector3Normalize(Vector3CrossProduct(vec0, vec1));
+    Vector3 planeNormal = Vector3Normalize(Vector3CrossProduct(vec0, planeVec));
 
-    int is_isect = isect_line_plane(
-        vec0_out_nearest_point, vec1_p0, vec1_p1, vec0_p0, plane_normal
+    int isIntersected = intersectLinePlane(
+        outPoint, line1Point0, line1Point1, line0Point0, planeNormal
     );
 
-    return is_isect;
+    return isIntersected;
 }
 
-static RayCollision get_ray_plane_collision(
-    Ray ray, Vector3 plane_point, Vector3 plane_normal
+static RayCollision getRayPlaneCollision(
+    Ray ray, Vector3 planePoint, Vector3 planeNormal
 ) {
     RayCollision collision = {0};
 
     // Calculate the parameter t
-    float denominator = ray.direction.x * plane_normal.x
-                        + ray.direction.y * plane_normal.y
-                        + ray.direction.z * plane_normal.z;
+    float denominator = ray.direction.x * planeNormal.x
+                        + ray.direction.y * planeNormal.y
+                        + ray.direction.z * planeNormal.z;
 
-    if (denominator == 0) {
-        // Ray is parallel to the plane, no collision
-        return collision;
-    }
+    // Ray is parallel to the plane, no collision
+    if (denominator == 0) return collision;
 
-    float t = ((plane_point.x - ray.position.x) * plane_normal.x
-               + (plane_point.y - ray.position.y) * plane_normal.y
-               + (plane_point.z - ray.position.z) * plane_normal.z)
+    float t = ((planePoint.x - ray.position.x) * planeNormal.x
+               + (planePoint.y - ray.position.y) * planeNormal.y
+               + (planePoint.z - ray.position.z) * planeNormal.z)
               / denominator;
 
-    if (t < 0) {
-        // Intersection point is behind the ray's starting point, no collision
-        return collision;
-    }
+    // Intersection point is behind the ray's starting point, no collision
+    if (t < 0) return collision;
 
     // Calculate the collision point
     collision.point.x = ray.position.x + t * ray.direction.x;
@@ -238,188 +308,180 @@ static RayCollision get_ray_plane_collision(
     return collision;
 }
 
-static Handles get_sorted_handles(Handle h0, Handle h1, Handle h2) {
-    if (h0.dist_to_cam < h1.dist_to_cam) swap(h0, h1);
-    if (h1.dist_to_cam < h2.dist_to_cam) swap(h1, h2);
-    if (h0.dist_to_cam < h1.dist_to_cam) swap(h0, h1);
+static Handles getSortedHandled(Handle h0, Handle h1, Handle h2) {
+    if (h0.distToCamera < h1.distToCamera) SWAP(h0, h1);
+    if (h1.distToCamera < h2.distToCamera) SWAP(h1, h2);
+    if (h0.distToCamera < h1.distToCamera) SWAP(h0, h1);
 
     Handles handles = {.arr = {h0, h1, h2}};
     return handles;
 }
 
-static HandleColors get_handle_colors(GizmoState hot_state) {
-    bool is_hot = GIZMO_STATE == hot_state || GIZMO_STATE == hot_state + 4;
-    Color x = is_hot && GIZMO_CURRENT_AXIS.x == 1.0 ? WHITE : RED;
-    Color y = is_hot && GIZMO_CURRENT_AXIS.y == 1.0 ? WHITE : GREEN;
-    Color z = is_hot && GIZMO_CURRENT_AXIS.z == 1.0 ? WHITE : BLUE;
+static HandleColors getHandleColors(GizmoState hotState) {
+    bool isHot = gizmoState == hotState || gizmoState == hotState + 4;
+    Color x = isHot && gizmoCurrentAxis.x == 1.0f ? WHITE : RED;
+    Color y = isHot && gizmoCurrentAxis.y == 1.0f ? WHITE : GREEN;
+    Color z = isHot && gizmoCurrentAxis.z == 1.0f ? WHITE : BLUE;
     HandleColors colors = {x, y, z};
     return colors;
 }
 
-static void draw_axis_handles(
+static void drawAxisHandles(
     Camera3D camera,
     Vector3 position,
-    float gizmo_radius,
-    Color color_x,
-    Color color_y,
-    Color color_z
+    float gizmoRadius,
+    Color colorX,
+    Color colorY,
+    Color colorZ
 ) {
-    float length = gizmo_radius * GIZMO_AXIS_HANDLE_LENGTH;
-    float tip_length = gizmo_radius * GIZMO_AXIS_HANDLE_TIP_LENGTH;
-    float tip_radius = gizmo_radius * GIZMO_AXIS_HANDLE_TIP_RADIUS;
+    float length = gizmoRadius * GIZMO_AXIS_HANDLE_LENGTH;
+    float tipLength = gizmoRadius * GIZMO_AXIS_HANDLE_TIP_LENGTH;
+    float tipRadius = gizmoRadius * GIZMO_AXIS_HANDLE_TIP_RADIUS;
 
     Vector3 px = Vector3Add(position, Vector3Scale(X_AXIS, length));
     Vector3 py = Vector3Add(position, Vector3Scale(Y_AXIS, length));
     Vector3 pz = Vector3Add(position, Vector3Scale(Z_AXIS, length));
 
-    Handle hx = {px, X_AXIS, color_x, Vector3DistanceSqr(px, camera.position)};
-    Handle hy = {py, Y_AXIS, color_y, Vector3DistanceSqr(py, camera.position)};
-    Handle hz = {pz, Z_AXIS, color_z, Vector3DistanceSqr(pz, camera.position)};
+    Handle hx = {px, X_AXIS, colorX, Vector3DistanceSqr(px, camera.position)};
+    Handle hy = {py, Y_AXIS, colorY, Vector3DistanceSqr(py, camera.position)};
+    Handle hz = {pz, Z_AXIS, colorZ, Vector3DistanceSqr(pz, camera.position)};
 
-    Handles handles = get_sorted_handles(hx, hy, hz);
+    Handles handles = getSortedHandled(hx, hy, hz);
 
     for (int i = 0; i < 3; ++i) {
         Handle* h = &handles.arr[i];
-        Vector3 tip_end = Vector3Add(
-            h->position, Vector3Scale(h->axis, tip_length)
+        Vector3 tipEnd = Vector3Add(
+            h->position, Vector3Scale(h->axis, tipLength)
         );
         DrawLine3D(position, h->position, h->color);
-        DrawCylinderEx(h->position, tip_end, tip_radius, 0.0, 16, h->color);
+        DrawCylinderEx(h->position, tipEnd, tipRadius, 0.0f, 16, h->color);
     }
 }
 
-static void draw_plane_handles(
+static void drawPlaneHandles(
     Camera3D camera,
     Vector3 position,
-    float gizmo_radius,
-    Color color_x,
-    Color color_y,
-    Color color_z
+    float gizmoRadius,
+    Color colorX,
+    Color colorY,
+    Color colorZ
 ) {
-    float offset = gizmo_radius * GIZMO_PLANE_HANDLE_OFFSET;
-    float size = gizmo_radius * GIZMO_PLANE_HANDLE_SIZE;
+    float offset = gizmoRadius * GIZMO_PLANE_HANDLE_OFFSET;
+    float size = gizmoRadius * GIZMO_PLANE_HANDLE_SIZE;
 
-    Vector3 px = Vector3Add(position, (Vector3){0.0, offset, offset});
-    Vector3 py = Vector3Add(position, (Vector3){offset, 0.0, offset});
-    Vector3 pz = Vector3Add(position, (Vector3){offset, offset, 0.0});
+    Vector3 px = Vector3Add(position, (Vector3){0.0f, offset, offset});
+    Vector3 py = Vector3Add(position, (Vector3){offset, 0.0f, offset});
+    Vector3 pz = Vector3Add(position, (Vector3){offset, offset, 0.0f});
 
-    Handle hx = {px, Z_AXIS, color_x, Vector3DistanceSqr(px, camera.position)};
-    Handle hy = {py, Y_AXIS, color_y, Vector3DistanceSqr(py, camera.position)};
-    Handle hz = {pz, X_AXIS, color_z, Vector3DistanceSqr(pz, camera.position)};
+    Handle hx = {px, Z_AXIS, colorX, Vector3DistanceSqr(px, camera.position)};
+    Handle hy = {py, Y_AXIS, colorY, Vector3DistanceSqr(py, camera.position)};
+    Handle hz = {pz, X_AXIS, colorZ, Vector3DistanceSqr(pz, camera.position)};
 
-    Handles handles = get_sorted_handles(hx, hy, hz);
+    Handles handles = getSortedHandled(hx, hy, hz);
 
     rlDisableBackfaceCulling();
     for (int i = 0; i < 3; ++i) {
         Handle* h = &handles.arr[i];
         rlPushMatrix();
-        {
             rlTranslatef(h->position.x, h->position.y, h->position.z);
-            rlRotatef(90.0, h->axis.x, h->axis.y, h->axis.z);
+            rlRotatef(90.0f, h->axis.x, h->axis.y, h->axis.z);
             DrawPlane(
                 Vector3Zero(), Vector2Scale(Vector2One(), size), h->color
             );
-        }
         rlPopMatrix();
     }
 }
 
-static void draw_rot_handles(
+static void drawRotHandles(
     Camera3D camera,
     Vector3 position,
-    float gizmo_radius,
-    Color color_x,
-    Color color_y,
-    Color color_z
+    float gizmoRadius,
+    Color colorX,
+    Color colorY,
+    Color colorZ
 ) {
-    BeginShaderMode(SHADER_ROT_HANDLE_COLOR);
-    {
+    BeginShaderMode(shaderRotHandleColor);
         SetShaderValue(
-            SHADER_ROT_HANDLE_COLOR,
-            SHADER_ROT_HANDLE_CAMERA_POS_LOC,
+            shaderRotHandleColor,
+            ShaderRotHandleCameraPosLoc,
             &camera.position,
             SHADER_UNIFORM_VEC3
         );
         SetShaderValue(
-            SHADER_ROT_HANDLE_COLOR,
-            SHADER_ROT_HANDLE_GIZMO_POS_LOC,
+            shaderRotHandleColor,
+            ShaderRotHandleGizmoPosLoc,
             &position,
             SHADER_UNIFORM_VEC3
         );
-        DrawCircle3D(position, gizmo_radius, Y_AXIS, 90.0, color_x);
-        DrawCircle3D(position, gizmo_radius, X_AXIS, 90.0, color_y);
-        DrawCircle3D(position, gizmo_radius, X_AXIS, 0.0, color_z);
-    }
+        DrawCircle3D(position, gizmoRadius, Y_AXIS, 90.0f, colorX);
+        DrawCircle3D(position, gizmoRadius, X_AXIS, 90.0f, colorY);
+        DrawCircle3D(position, gizmoRadius, X_AXIS, 0.0f, colorZ);
     EndShaderMode();
 }
 
-static void draw_gizmo(
+static void drawGizmo(
     Camera3D camera,
     Vector3 position,
-    Color rot_handle_color_x,
-    Color rot_handle_color_y,
-    Color rot_handle_color_z,
-    Color axis_handle_color_x,
-    Color axis_handle_color_y,
-    Color axis_handle_color_z,
-    Color plane_handle_color_x,
-    Color plane_handle_color_y,
-    Color plane_handle_color_z
+    Color rotHandleColorX,
+    Color rotHandleColorY,
+    Color rotHandleColorZ,
+    Color axisHandleColorX,
+    Color axisHandleColorY,
+    Color axisHandleColorZ,
+    Color planeHandleColorX,
+    Color planeHandleColorY,
+    Color planeHandleColorZ
 ) {
     float radius = GIZMO_SIZE * Vector3Distance(camera.position, position);
 
     // Draw gizmo's handle elements
     BeginMode3D(camera);
-    {
         rlSetLineWidth(GIZMO_HANDLE_DRAW_THICKNESS);
         rlDisableDepthTest();
 
-        draw_plane_handles(
+        drawPlaneHandles(
             camera,
             position,
             radius,
-            plane_handle_color_x,
-            plane_handle_color_y,
-            plane_handle_color_z
+            planeHandleColorX,
+            planeHandleColorY,
+            planeHandleColorZ
         );
 
-        draw_rot_handles(
+        drawRotHandles(
             camera,
             position,
             radius,
-            rot_handle_color_x,
-            rot_handle_color_y,
-            rot_handle_color_z
+            rotHandleColorX,
+            rotHandleColorY,
+            rotHandleColorZ
         );
 
-        draw_axis_handles(
+        drawAxisHandles(
             camera,
             position,
             radius,
-            axis_handle_color_x,
-            axis_handle_color_y,
-            axis_handle_color_z
+            axisHandleColorX,
+            axisHandleColorY,
+            axisHandleColorZ
         );
-    }
     EndMode3D();
 
     // Draw long white line which represents current active axis
-    if (GIZMO_STATE == GIZMO_ACTIVE_ROT || GIZMO_STATE == GIZMO_ACTIVE_AXIS) {
+    if (gizmoState == GIZMO_ACTIVE_ROT || gizmoState == GIZMO_ACTIVE_AXIS) {
         BeginMode3D(camera);
-        {
             rlSetLineWidth(GIZMO_ACTIVE_AXIS_DRAW_THICKNESS);
-            Vector3 half_axis_line = Vector3Scale(GIZMO_CURRENT_AXIS, 1000.0);
+            Vector3 halfAxisLine = Vector3Scale(gizmoCurrentAxis, 1000.0f);
             DrawLine3D(
-                Vector3Subtract(position, half_axis_line),
-                Vector3Add(position, half_axis_line),
+                Vector3Subtract(position, halfAxisLine),
+                Vector3Add(position, halfAxisLine),
                 WHITE
             );
-        }
         EndMode3D();
     }
 
     // Draw white line from the gizmo's center to the mouse cursor when rotating
-    if (GIZMO_STATE == GIZMO_ACTIVE_ROT) {
+    if (gizmoState == GIZMO_ACTIVE_ROT) {
         rlSetLineWidth(GIZMO_ACTIVE_AXIS_DRAW_THICKNESS);
         DrawLineV(
             GetWorldToScreen(position, camera), GetMousePosition(), WHITE
@@ -427,26 +489,26 @@ static void draw_gizmo(
     }
 }
 
-static unsigned char get_gizmo_mask_pixel(Camera3D camera, Vector3 position) {
+static unsigned char getGizmoMaskPixel(Camera3D camera, Vector3 position) {
     // -------------------------------------------------------------------
     // Draw gizmo into a separate framebuffer for the mouse pixel-picking
-    rlEnableFramebuffer(MASK_FRAMEBUFFER);
+    rlEnableFramebuffer(maskFramebuffer);
     rlViewport(0, 0, MASK_FRAMEBUFFER_WIDTH, MASK_FRAMEBUFFER_HEIGHT);
     rlClearScreenBuffers();
     rlDisableColorBlend();
 
-    draw_gizmo(
+    drawGizmo(
         camera,
         position,
-        id_to_red_color(ROT_HANDLE_X),
-        id_to_red_color(ROT_HANDLE_Y),
-        id_to_red_color(ROT_HANDLE_Z),
-        id_to_red_color(AXIS_HANDLE_X),
-        id_to_red_color(AXIS_HANDLE_Y),
-        id_to_red_color(AXIS_HANDLE_Z),
-        id_to_red_color(PLANE_HANDLE_X),
-        id_to_red_color(PLANE_HANDLE_Y),
-        id_to_red_color(PLANE_HANDLE_Z)
+        ID_TO_RED_COLOR(ROT_HANDLE_X),
+        ID_TO_RED_COLOR(ROT_HANDLE_Y),
+        ID_TO_RED_COLOR(ROT_HANDLE_Z),
+        ID_TO_RED_COLOR(AXIS_HANDLE_X),
+        ID_TO_RED_COLOR(AXIS_HANDLE_Y),
+        ID_TO_RED_COLOR(AXIS_HANDLE_Z),
+        ID_TO_RED_COLOR(PLANE_HANDLE_X),
+        ID_TO_RED_COLOR(PLANE_HANDLE_Y),
+        ID_TO_RED_COLOR(PLANE_HANDLE_Z)
     );
 
     rlDisableFramebuffer();
@@ -455,38 +517,38 @@ static unsigned char get_gizmo_mask_pixel(Camera3D camera, Vector3 position) {
 
     // -------------------------------------------------------------------
     // Pick the pixel under the mouse cursor
-    Vector2 mouse_position = GetMousePosition();
+    Vector2 mousePosition = GetMousePosition();
     unsigned char* pixels = (unsigned char*)rlReadTexturePixels(
-        MASK_TEXTURE,
+        maskTexture,
         MASK_FRAMEBUFFER_WIDTH,
         MASK_FRAMEBUFFER_HEIGHT,
         RL_PIXELFORMAT_UNCOMPRESSED_R8G8B8A8
     );
 
-    float x_ratio = Clamp(mouse_position.x / (float)GetScreenWidth(), 0.0, 1.0);
-    float y_ratio = Clamp(
-        1.0 - (mouse_position.y / (float)GetScreenHeight()), 0.0, 1.0
+    float xFract = Clamp(mousePosition.x / (float)GetScreenWidth(), 0.0, 1.0);
+    float yFract = Clamp(
+        1.0 - (mousePosition.y / (float)GetScreenHeight()), 0.0, 1.0
     );
-    int x = (int)(MASK_FRAMEBUFFER_WIDTH * x_ratio);
-    int y = (int)(MASK_FRAMEBUFFER_HEIGHT * y_ratio);
+    int x = (int)(MASK_FRAMEBUFFER_WIDTH * xFract);
+    int y = (int)(MASK_FRAMEBUFFER_HEIGHT * yFract);
     int idx = 4 * (y * MASK_FRAMEBUFFER_WIDTH + x);
-    unsigned char mask_val = pixels[idx];
+    unsigned char maskVal = pixels[idx];
 
     free(pixels);
-    return mask_val;
+    return maskVal;
 }
 
-Matrix update_gizmo_rot(Camera3D camera, Vector3 position) {
-    if (!check_if_mouse_moved()) return MatrixIdentity();
+static Matrix updateGizmoRot(Camera3D camera, Vector3 position) {
+    if (!checkIfMouseMoved()) return MatrixIdentity();
 
-    Vector2 rot_center = GetWorldToScreen(position, camera);
-    Vector2 p1 = Vector2Subtract(GetMousePosition(), rot_center);
+    Vector2 posOnScreen = GetWorldToScreen(position, camera);
+    Vector2 p1 = Vector2Subtract(GetMousePosition(), posOnScreen);
     Vector2 p0 = Vector2Subtract(p1, GetMouseDelta());
-    float angle = vector2_get_angle(p1, p0);
+    float angle = getAngleBetweenTwoVector2(p1, p0);
 
-    // If we look at gizmo from behind, we should flip the rotation
-    if (Vector3DotProduct(GIZMO_CURRENT_AXIS, position)
-        > Vector3DotProduct(GIZMO_CURRENT_AXIS, camera.position)) {
+    // If we look at the gizmo from behind, we should flip the rotation
+    if (Vector3DotProduct(gizmoCurrentAxis, position)
+        > Vector3DotProduct(gizmoCurrentAxis, camera.position)) {
         angle *= -1;
     }
 
@@ -495,7 +557,7 @@ Matrix update_gizmo_rot(Camera3D camera, Vector3 position) {
     Matrix transform = MatrixMultiply(
         MatrixMultiply(
             MatrixTranslate(-position.x, -position.y, -position.z),
-            MatrixRotate(GIZMO_CURRENT_AXIS, angle)
+            MatrixRotate(gizmoCurrentAxis, angle)
         ),
         MatrixTranslate(position.x, position.y, position.z)
     );
@@ -503,92 +565,90 @@ Matrix update_gizmo_rot(Camera3D camera, Vector3 position) {
     return transform;
 }
 
-Matrix update_gizmo_axis(Camera3D camera, Vector3 position) {
-    if (!check_if_mouse_moved()) return MatrixIdentity();
+static Matrix updateGizmoAxis(Camera3D camera, Vector3 position) {
+    if (!checkIfMouseMoved()) return MatrixIdentity();
 
     Vector2 p = Vector2Add(GetWorldToScreen(position, camera), GetMouseDelta());
     Ray r = GetMouseRay(p, camera);
-    Vector3 isect_p = Vector3Zero();
-    bool is_isect = get_two_vecs_nearest_point(
-        &isect_p,
+    Vector3 interesctionPoint = Vector3Zero();
+    bool isIntersected = getTwoLinesNearestPoint(
+        &interesctionPoint,
         camera.position,
         Vector3Add(camera.position, r.direction),
         position,
-        Vector3Add(position, GIZMO_CURRENT_AXIS)
+        Vector3Add(position, gizmoCurrentAxis)
     );
 
-    if (!is_isect)
-    {
-        return MatrixIdentity();
-    }
+    if (!isIntersected) return MatrixIdentity();
 
-    Vector3 offset = Vector3Subtract(isect_p, position);
-    offset = Vector3Multiply(offset, GIZMO_CURRENT_AXIS);
+    Vector3 offset = Vector3Subtract(interesctionPoint, position);
+    offset = Vector3Multiply(offset, gizmoCurrentAxis);
     Matrix transform = MatrixTranslate(offset.x, offset.y, offset.z);
 
     return transform;
 }
 
-Matrix update_gizmo_plane(Camera3D camera, Vector3 position) {
-    if (!check_if_mouse_moved()) return MatrixIdentity();
+static Matrix updateGizmoPlane(Camera3D camera, Vector3 position) {
+    if (!checkIfMouseMoved()) return MatrixIdentity();
+
     Vector2 p = Vector2Add(GetWorldToScreen(position, camera), GetMouseDelta());
     Ray r = GetMouseRay(p, camera);
-    RayCollision c = get_ray_plane_collision(r, position, GIZMO_CURRENT_AXIS);
+    RayCollision c = getRayPlaneCollision(r, position, gizmoCurrentAxis);
     Vector3 offset = Vector3Subtract(c.point, position);
     Matrix transform = MatrixTranslate(offset.x, offset.y, offset.z);
 
     return transform;
 }
 
-Matrix update_gizmo(Camera3D camera, Vector3 position, unsigned char mask_val) {
-    bool is_lmb_down = IsMouseButtonDown(0);
+static Matrix updateGizmo(Camera3D camera, Vector3 position, unsigned char maskVal) {
+    bool isLMBDown = IsMouseButtonDown(0);
 
-    if (!is_lmb_down) GIZMO_STATE = GIZMO_COLD;
+    if (!isLMBDown) gizmoState = GIZMO_COLD;
 
-    if (GIZMO_STATE < GIZMO_ACTIVE) {
-        if (mask_val < HANDLE_Y) GIZMO_CURRENT_AXIS = X_AXIS;
-        else if (mask_val < HANDLE_Z) GIZMO_CURRENT_AXIS = Y_AXIS;
-        else GIZMO_CURRENT_AXIS = Z_AXIS;
+    if (gizmoState < GIZMO_ACTIVE) {
+        if (maskVal < HANDLE_Y) gizmoCurrentAxis = X_AXIS;
+        else if (maskVal < HANDLE_Z) gizmoCurrentAxis = Y_AXIS;
+        else gizmoCurrentAxis = Z_AXIS;
 
-        if (mask_val % 4 == 1)
-            GIZMO_STATE = is_lmb_down ? GIZMO_ACTIVE_ROT : GIZMO_HOT_ROT;
-        else if (mask_val % 4 == 2)
-            GIZMO_STATE = is_lmb_down ? GIZMO_ACTIVE_AXIS : GIZMO_HOT_AXIS;
-        else if (mask_val % 4 == 3)
-            GIZMO_STATE = is_lmb_down ? GIZMO_ACTIVE_PLANE : GIZMO_HOT_PLANE;
+        if (maskVal % 4 == 1)
+            gizmoState = isLMBDown ? GIZMO_ACTIVE_ROT : GIZMO_HOT_ROT;
+        else if (maskVal % 4 == 2)
+            gizmoState = isLMBDown ? GIZMO_ACTIVE_AXIS : GIZMO_HOT_AXIS;
+        else if (maskVal % 4 == 3)
+            gizmoState = isLMBDown ? GIZMO_ACTIVE_PLANE : GIZMO_HOT_PLANE;
     }
 
-    switch (GIZMO_STATE) {
-        case GIZMO_ACTIVE_ROT: return update_gizmo_rot(camera, position);
-        case GIZMO_ACTIVE_AXIS: return update_gizmo_axis(camera, position);
-        case GIZMO_ACTIVE_PLANE: return update_gizmo_plane(camera, position);
+    switch (gizmoState) {
+        case GIZMO_ACTIVE_ROT: return updateGizmoRot(camera, position);
+        case GIZMO_ACTIVE_AXIS: return updateGizmoAxis(camera, position);
+        case GIZMO_ACTIVE_PLANE: return updateGizmoPlane(camera, position);
         default: return MatrixIdentity();
     }
 }
 
-void LoadGizmo() {
-    if (IS_GIZMO_LOADED) return;
+void loadGizmo() {
+    if (isGizmoLoaded) return;
 
-    SHADER_ROT_HANDLE_COLOR = LoadShaderFromMemory(
-        SHADER_COLOR_VERT, SHADER_ROT_HANDLE_COLOR_FRAG
+    shaderRotHandleColor = LoadShaderFromMemory(
+        SHADER_COLOR_VERT, shaderRotHandleColor_FRAG
     );
-    SHADER_ROT_HANDLE_CAMERA_POS_LOC = GetShaderLocation(
-        SHADER_ROT_HANDLE_COLOR, "cameraPosition"
+    ShaderRotHandleCameraPosLoc = GetShaderLocation(
+        shaderRotHandleColor, "cameraPosition"
     );
-    SHADER_ROT_HANDLE_GIZMO_POS_LOC = GetShaderLocation(
-        SHADER_ROT_HANDLE_COLOR, "gizmoPosition"
+    ShaderRotHandleGizmoPosLoc = GetShaderLocation(
+        shaderRotHandleColor, "gizmoPosition"
     );
 
-    MASK_FRAMEBUFFER = rlLoadFramebuffer(
+    maskFramebuffer = rlLoadFramebuffer(
         MASK_FRAMEBUFFER_WIDTH, MASK_FRAMEBUFFER_HEIGHT
     );
-    if (!MASK_FRAMEBUFFER) {
+    if (!maskFramebuffer) {
         TraceLog(LOG_ERROR, "Failed to create gizmo's mask framebuffer");
         exit(1);
     }
-    rlEnableFramebuffer(MASK_FRAMEBUFFER);
+    rlEnableFramebuffer(maskFramebuffer);
 
-    MASK_TEXTURE = rlLoadTexture(
+    maskTexture = rlLoadTexture(
         NULL,
         MASK_FRAMEBUFFER_WIDTH,
         MASK_FRAMEBUFFER_HEIGHT,
@@ -597,56 +657,56 @@ void LoadGizmo() {
     );
     rlActiveDrawBuffers(1);
     rlFramebufferAttach(
-        MASK_FRAMEBUFFER,
-        MASK_TEXTURE,
+        maskFramebuffer,
+        maskTexture,
         RL_ATTACHMENT_COLOR_CHANNEL0,
         RL_ATTACHMENT_TEXTURE2D,
         0
     );
-    if (!rlFramebufferComplete(MASK_FRAMEBUFFER)) {
+    if (!rlFramebufferComplete(maskFramebuffer)) {
         TraceLog(LOG_ERROR, "Gizmo's framebuffer is not complete");
         exit(1);
     }
 
-    IS_GIZMO_LOADED = true;
+    isGizmoLoaded = true;
 }
 
-void UnloadGizmo() {
-    if (!IS_GIZMO_LOADED) return;
+void unloadGizmo() {
+    if (!isGizmoLoaded) return;
 
-    UnloadShader(SHADER_ROT_HANDLE_COLOR);
-    rlUnloadFramebuffer(MASK_FRAMEBUFFER);
-    rlUnloadTexture(MASK_TEXTURE);
-    IS_GIZMO_LOADED = false;
+    UnloadShader(shaderRotHandleColor);
+    rlUnloadFramebuffer(maskFramebuffer);
+    rlUnloadTexture(maskTexture);
+    isGizmoLoaded = false;
 }
 
-Matrix UpdateGizmo(Camera3D camera, Vector3 position) {
-    if (!IS_GIZMO_LOADED) {
+Matrix updateAndDrawGizmo(Camera3D camera, Vector3 position) {
+    if (!isGizmoLoaded) {
         TraceLog(LOG_ERROR, "Gizmo must be loaded before the update");
         exit(1);
     }
 
-    unsigned char mask_val = get_gizmo_mask_pixel(camera, position);
-    Matrix transform = update_gizmo(camera, position, mask_val);
+    unsigned char maskVal = getGizmoMaskPixel(camera, position);
+    Matrix transform = updateGizmo(camera, position, maskVal);
 
     // -------------------------------------------------------------------
     // Draw gizmo
-    HandleColors rot_handle_colors = get_handle_colors(GIZMO_HOT_ROT);
-    HandleColors axis_handle_colors = get_handle_colors(GIZMO_HOT_AXIS);
-    HandleColors plane_handle_colors = get_handle_colors(GIZMO_HOT_PLANE);
+    HandleColors rotHandleColors = getHandleColors(GIZMO_HOT_ROT);
+    HandleColors axisHandleColors = getHandleColors(GIZMO_HOT_AXIS);
+    HandleColors planeHandleColors = getHandleColors(GIZMO_HOT_PLANE);
 
-    draw_gizmo(
+    drawGizmo(
         camera,
         position,
-        rot_handle_colors.x,
-        rot_handle_colors.y,
-        rot_handle_colors.z,
-        axis_handle_colors.x,
-        axis_handle_colors.y,
-        axis_handle_colors.z,
-        plane_handle_colors.x,
-        plane_handle_colors.y,
-        plane_handle_colors.z
+        rotHandleColors.x,
+        rotHandleColors.y,
+        rotHandleColors.z,
+        axisHandleColors.x,
+        axisHandleColors.y,
+        axisHandleColors.z,
+        planeHandleColors.x,
+        planeHandleColors.y,
+        planeHandleColors.z
     );
 
     return transform;

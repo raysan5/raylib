@@ -1,3 +1,18 @@
+/*******************************************************************************************
+*
+*   raylib [gizmo] example - Gizmo gadget for an interactive object 3D transformations
+*
+*   Example originally created with raylib 5.0, last time updated with raylib 5.0
+*
+*   Example contributed by Alexey Karnachev (@alexeykarnachev) and reviewed by Ramon Santamaria (@raysan5)
+*
+*   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
+*   BSD-like license that allows static linking with closed source software
+*
+*   Copyright (c) 2023-2024 Alexey Karnachev (@alexeykarnachev)
+*
+********************************************************************************************/
+
 #include "raylib.h"
 #include "rcamera.h"
 
@@ -5,39 +20,46 @@
 #include "gizmo.h"
 #undef RAYGIZMO_IMPLEMENTATION
 
-void updateCamera(Camera3D* camera) {
-    float rot_speed = 0.003f;
-    float move_speed = 0.01f;
-    float zoom_speed = 1.0f;
+#define CAMERA_ROT_SPEED 0.003f
+#define CAMERA_MOVE_SPEED 0.01f
+#define CAMERA_ZOOM_SPEED 1.0f
 
-    bool is_middle = IsMouseButtonDown(2);
-    bool is_shift = IsKeyDown(KEY_LEFT_SHIFT);
-    Vector2 mouse_delta = GetMouseDelta();
+// Updates the camera in the orbital-style, i.e camera rotates around the look-at point by the orbit
+static void updateCamera(Camera3D* camera) {
+    bool isMMBDown = IsMouseButtonDown(2);
+    bool isShiftDown = IsKeyDown(KEY_LEFT_SHIFT);
+    Vector2 mouseDelta = GetMouseDelta();
 
-    if (is_middle && is_shift) {
-        CameraMoveRight(camera, -move_speed * mouse_delta.x, true);
+    // Shift + MMB + mouse move -> change the camera position in the right-direction plane
+    if (isMMBDown && isShiftDown) {
+        CameraMoveRight(camera, -CAMERA_MOVE_SPEED * mouseDelta.x, true);
 
         Vector3 right = GetCameraRight(camera);
         Vector3 up = Vector3CrossProduct(
             Vector3Subtract(camera->position, camera->target), right
         );
-        up = Vector3Scale(Vector3Normalize(up), move_speed * mouse_delta.y);
+        up = Vector3Scale(Vector3Normalize(up), CAMERA_MOVE_SPEED * mouseDelta.y);
         camera->position = Vector3Add(camera->position, up);
         camera->target = Vector3Add(camera->target, up);
-    } else if (is_middle) {
-        CameraYaw(camera, -rot_speed * mouse_delta.x, true);
-        CameraPitch(camera, rot_speed * mouse_delta.y, true, true, false);
+    // Rotate the camera around the look-at point
+    } else if (isMMBDown) {
+        CameraYaw(camera, -CAMERA_ROT_SPEED * mouseDelta.x, true);
+        CameraPitch(camera, CAMERA_ROT_SPEED * mouseDelta.y, true, true, false);
     }
 
-    CameraMoveToTarget(camera, -GetMouseWheelMove() * zoom_speed);
+    // Bring camera closer (or move away), to the look-at point 
+    CameraMoveToTarget(camera, -GetMouseWheelMove() * CAMERA_ZOOM_SPEED);
 }
 
-int main(void) {
-    const int screen_width = 800;
-    const int screen_height = 450;
-    InitWindow(screen_width, screen_height, "Gizmo");
-    SetTargetFPS(60);
+int main(void)
+{
+    // Initialization
+    //--------------------------------------------------------------------------------------
+    const int screenWidth = 800;
+    const int screenHeight = 450;
+    InitWindow(screenWidth, screenHeight, "raylib [gizmo] example - gizmo gadget");
 
+    // Define 3D perspective camera
     Camera3D camera;
     camera.fovy = 45.0f;
     camera.target = (Vector3){0.0f, 0.0f, 0.0f};
@@ -45,20 +67,25 @@ int main(void) {
     camera.up = (Vector3){0.0f, 1.0f, 0.0f};
     camera.projection = CAMERA_PERSPECTIVE;
 
-    Model model = LoadModelFromMesh(GenMeshTorus(0.3, 1.5, 16.0, 16.0));
+    Model model = LoadModelFromMesh(GenMeshTorus(0.3, 1.5, 16.0, 16.0));  // Create simple torus model
+    loadGizmo();                                                          // Load gizmo
 
-    LoadGizmo();
+    SetTargetFPS(60);               // Set our game to run at 60 frames-per-second
+    //--------------------------------------------------------------------------------------
 
-    while (!WindowShouldClose()) {
+    while (!WindowShouldClose())
+    {
+        // Update
+        //----------------------------------------------------------------------------------
         updateCamera(&camera);
 
+        // Draw
+        //----------------------------------------------------------------------------------
         BeginDrawing();
-        {
             ClearBackground(DARKGRAY);
             rlEnableDepthTest();
 
             BeginMode3D(camera);
-            {
                 // Draw main model
                 DrawModel(model, (Vector3){0.0, 0.0, 0.0}, 1.0, PURPLE);
 
@@ -83,13 +110,12 @@ int main(void) {
                     (Vector3){0.0f, 0.0f, 50.0f},
                     DARKBLUE
                 );
-            }
             EndMode3D();
 
             // Immediately update and draw gizmo
             Vector3 position = {
                 model.transform.m12, model.transform.m13, model.transform.m14};
-            Matrix transform = UpdateGizmo(camera, position);
+            Matrix transform = updateAndDrawGizmo(camera, position);
 
             // Apply gizmo-produced transformation to the model
             model.transform = MatrixMultiply(model.transform, transform);
@@ -100,13 +126,16 @@ int main(void) {
             DrawText("    zoom: wheel", 5, 25, 20, RED);
             DrawText("    rotate: mmb", 5, 45, 20, RED);
             DrawText("    translate: shift + mmb", 5, 65, 20, RED);
-        }
         EndDrawing();
     }
 
-    UnloadGizmo();
-    UnloadModel(model);
-    CloseWindow();
+    // De-Initialization
+    //--------------------------------------------------------------------------------------
+    unloadGizmo();       // Unload gizmo
+    UnloadModel(model);  // Unload model
+
+    CloseWindow();       // Close window and OpenGL context
+    //--------------------------------------------------------------------------------------
 
     return 0;
 }
