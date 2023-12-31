@@ -1089,6 +1089,7 @@ void DrawFPS(int posX, int posY)
 
     DrawText(TextFormat("%2i FPS", fps), posX, posY, 20, color);
 }
+// Draw current FPS, but based on one user-specified color
 void DrawFPS(int posX, int posY, Color color)
 {                         
     int fps = GetFPS();
