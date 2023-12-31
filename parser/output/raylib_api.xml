@@ -256,12 +256,11 @@
             <Field type="int" name="ctxType" desc="Type of music context (audio filetype)" />
             <Field type="void *" name="ctxData" desc="Audio context data, depends on type" />
         </Struct>
-        <Struct name="VrDeviceInfo" fieldCount="10" desc="VrDeviceInfo, Head-Mounted-Display device parameters">
+        <Struct name="VrDeviceInfo" fieldCount="9" desc="VrDeviceInfo, Head-Mounted-Display device parameters">
             <Field type="int" name="hResolution" desc="Horizontal resolution in pixels" />
             <Field type="int" name="vResolution" desc="Vertical resolution in pixels" />
             <Field type="float" name="hScreenSize" desc="Horizontal size in meters" />
             <Field type="float" name="vScreenSize" desc="Vertical size in meters" />
-            <Field type="float" name="vScreenCenter" desc="Screen center in meters" />
             <Field type="float" name="eyeToScreenDistance" desc="Distance between eye and display in meters" />
             <Field type="float" name="lensSeparationDistance" desc="Lens separation distance in meters" />
             <Field type="float" name="interpupillaryDistance" desc="IPD (distance between pupils) in meters" />
@@ -670,7 +669,7 @@
             <Param type="unsigned int" name="frames" desc="" />
         </Callback>
     </Callbacks>
-    <Functions count="553">
+    <Functions count="558">
         <Function name="InitWindow" retType="void" paramCount="3" desc="Initialize window and OpenGL context">
             <Param type="int" name="width" desc="" />
             <Param type="int" name="height" desc="" />
@@ -1113,7 +1112,7 @@
             <Param type="const char *" name="fileName" desc="" />
         </Function>
         <Function name="UnloadAutomationEventList" retType="void" paramCount="1" desc="Unload automation events list from file">
-            <Param type="AutomationEventList *" name="list" desc="" />
+            <Param type="AutomationEventList" name="list" desc="" />
         </Function>
         <Function name="ExportAutomationEventList" retType="bool" paramCount="2" desc="Export automation events list as text file">
             <Param type="AutomationEventList" name="list" desc="" />
@@ -1270,6 +1269,10 @@
         <Function name="SetShapesTexture" retType="void" paramCount="2" desc="Set texture and rectangle to be used on shapes drawing">
             <Param type="Texture2D" name="texture" desc="" />
             <Param type="Rectangle" name="source" desc="" />
+        </Function>
+        <Function name="GetShapesTexture" retType="Texture2D" paramCount="0" desc="Get texture that is used for shapes drawing">
+        </Function>
+        <Function name="GetShapesTextureRectangle" retType="Rectangle" paramCount="0" desc="Get texture source rectangle that is used for shapes drawing">
         </Function>
         <Function name="DrawPixel" retType="void" paramCount="3" desc="Draw a pixel">
             <Param type="int" name="posX" desc="" />
@@ -1668,6 +1671,12 @@
         </Function>
         <Function name="LoadImageAnim" retType="Image" paramCount="2" desc="Load image sequence from file (frames appended to image.data)">
             <Param type="const char *" name="fileName" desc="" />
+            <Param type="int *" name="frames" desc="" />
+        </Function>
+        <Function name="LoadImageAnimFromMemory" retType="Image" paramCount="4" desc="Load image sequence from memory buffer">
+            <Param type="const char *" name="fileType" desc="" />
+            <Param type="const unsigned char *" name="fileData" desc="" />
+            <Param type="int" name="dataSize" desc="" />
             <Param type="int *" name="frames" desc="" />
         </Function>
         <Function name="LoadImageFromMemory" retType="Image" paramCount="3" desc="Load image from memory buffer, fileType refers to extension: i.e. '.png'">
@@ -2328,7 +2337,7 @@
             <Param type="int" name="length" desc="" />
         </Function>
         <Function name="TextReplace" retType="char *" paramCount="3" desc="Replace text string (WARNING: memory must be freed!)">
-            <Param type="char *" name="text" desc="" />
+            <Param type="const char *" name="text" desc="" />
             <Param type="const char *" name="replace" desc="" />
             <Param type="const char *" name="by" desc="" />
         </Function>
@@ -2366,6 +2375,9 @@
             <Param type="const char *" name="text" desc="" />
         </Function>
         <Function name="TextToInteger" retType="int" paramCount="1" desc="Get integer value from text (negative values not supported)">
+            <Param type="const char *" name="text" desc="" />
+        </Function>
+        <Function name="TextToFloat" retType="float" paramCount="1" desc="Get float value from text (negative values not supported)">
             <Param type="const char *" name="text" desc="" />
         </Function>
         <Function name="DrawLine3D" retType="void" paramCount="3" desc="Draw a line in 3D world space">
@@ -2597,15 +2609,19 @@
             <Param type="const Matrix *" name="transforms" desc="" />
             <Param type="int" name="instances" desc="" />
         </Function>
-        <Function name="ExportMesh" retType="bool" paramCount="2" desc="Export mesh data to file, returns true on success">
-            <Param type="Mesh" name="mesh" desc="" />
-            <Param type="const char *" name="fileName" desc="" />
-        </Function>
         <Function name="GetMeshBoundingBox" retType="BoundingBox" paramCount="1" desc="Compute mesh bounding box limits">
             <Param type="Mesh" name="mesh" desc="" />
         </Function>
         <Function name="GenMeshTangents" retType="void" paramCount="1" desc="Compute mesh tangents">
             <Param type="Mesh *" name="mesh" desc="" />
+        </Function>
+        <Function name="ExportMesh" retType="bool" paramCount="2" desc="Export mesh data to file, returns true on success">
+            <Param type="Mesh" name="mesh" desc="" />
+            <Param type="const char *" name="fileName" desc="" />
+        </Function>
+        <Function name="ExportMeshAsCode" retType="bool" paramCount="2" desc="Export mesh as code file (.h) defining multiple arrays of vertex attributes">
+            <Param type="Mesh" name="mesh" desc="" />
+            <Param type="const char *" name="fileName" desc="" />
         </Function>
         <Function name="GenMeshPoly" retType="Mesh" paramCount="2" desc="Generate polygonal mesh">
             <Param type="int" name="sides" desc="" />
