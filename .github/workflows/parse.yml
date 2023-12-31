@@ -3,8 +3,8 @@ name: Parse raylib_api
 on:
   workflow_dispatch:
   push:
-    #paths:
-    #  - "src/raylib.h"
+    paths:
+      - "src/raylib.h"
 
 jobs:
   build:
