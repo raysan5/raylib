@@ -1233,11 +1233,6 @@
         },
         {
           "type": "float",
-          "name": "vScreenCenter",
-          "description": "Screen center in meters"
-        },
-        {
-          "type": "float",
           "name": "eyeToScreenDistance",
           "description": "Distance between eye and display in meters"
         },
@@ -4637,7 +4632,7 @@
       "returnType": "void",
       "params": [
         {
-          "type": "AutomationEventList *",
+          "type": "AutomationEventList",
           "name": "list"
         }
       ]
@@ -5171,6 +5166,16 @@
           "name": "source"
         }
       ]
+    },
+    {
+      "name": "GetShapesTexture",
+      "description": "Get texture that is used for shapes drawing",
+      "returnType": "Texture2D"
+    },
+    {
+      "name": "GetShapesTextureRectangle",
+      "description": "Get texture source rectangle that is used for shapes drawing",
+      "returnType": "Rectangle"
     },
     {
       "name": "DrawPixel",
@@ -6696,6 +6701,29 @@
         {
           "type": "const char *",
           "name": "fileName"
+        },
+        {
+          "type": "int *",
+          "name": "frames"
+        }
+      ]
+    },
+    {
+      "name": "LoadImageAnimFromMemory",
+      "description": "Load image sequence from memory buffer",
+      "returnType": "Image",
+      "params": [
+        {
+          "type": "const char *",
+          "name": "fileType"
+        },
+        {
+          "type": "const unsigned char *",
+          "name": "fileData"
+        },
+        {
+          "type": "int",
+          "name": "dataSize"
         },
         {
           "type": "int *",
@@ -9194,7 +9222,7 @@
       "returnType": "char *",
       "params": [
         {
-          "type": "char *",
+          "type": "const char *",
           "name": "text"
         },
         {
@@ -9335,6 +9363,17 @@
       "name": "TextToInteger",
       "description": "Get integer value from text (negative values not supported)",
       "returnType": "int",
+      "params": [
+        {
+          "type": "const char *",
+          "name": "text"
+        }
+      ]
+    },
+    {
+      "name": "TextToFloat",
+      "description": "Get float value from text (negative values not supported)",
+      "returnType": "float",
       "params": [
         {
           "type": "const char *",
@@ -10220,21 +10259,6 @@
       ]
     },
     {
-      "name": "ExportMesh",
-      "description": "Export mesh data to file, returns true on success",
-      "returnType": "bool",
-      "params": [
-        {
-          "type": "Mesh",
-          "name": "mesh"
-        },
-        {
-          "type": "const char *",
-          "name": "fileName"
-        }
-      ]
-    },
-    {
       "name": "GetMeshBoundingBox",
       "description": "Compute mesh bounding box limits",
       "returnType": "BoundingBox",
@@ -10253,6 +10277,36 @@
         {
           "type": "Mesh *",
           "name": "mesh"
+        }
+      ]
+    },
+    {
+      "name": "ExportMesh",
+      "description": "Export mesh data to file, returns true on success",
+      "returnType": "bool",
+      "params": [
+        {
+          "type": "Mesh",
+          "name": "mesh"
+        },
+        {
+          "type": "const char *",
+          "name": "fileName"
+        }
+      ]
+    },
+    {
+      "name": "ExportMeshAsCode",
+      "description": "Export mesh as code file (.h) defining multiple arrays of vertex attributes",
+      "returnType": "bool",
+      "params": [
+        {
+          "type": "Mesh",
+          "name": "mesh"
+        },
+        {
+          "type": "const char *",
+          "name": "fileName"
         }
       ]
     },

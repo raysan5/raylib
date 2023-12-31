@@ -1233,11 +1233,6 @@ return {
         },
         {
           type = "float",
-          name = "vScreenCenter",
-          description = "Screen center in meters"
-        },
-        {
-          type = "float",
           name = "eyeToScreenDistance",
           description = "Distance between eye and display in meters"
         },
@@ -4150,7 +4145,7 @@ return {
       description = "Unload automation events list from file",
       returnType = "void",
       params = {
-        {type = "AutomationEventList *", name = "list"}
+        {type = "AutomationEventList", name = "list"}
       }
     },
     {
@@ -4538,6 +4533,16 @@ return {
         {type = "Texture2D", name = "texture"},
         {type = "Rectangle", name = "source"}
       }
+    },
+    {
+      name = "GetShapesTexture",
+      description = "Get texture that is used for shapes drawing",
+      returnType = "Texture2D"
+    },
+    {
+      name = "GetShapesTextureRectangle",
+      description = "Get texture source rectangle that is used for shapes drawing",
+      returnType = "Rectangle"
     },
     {
       name = "DrawPixel",
@@ -5260,6 +5265,17 @@ return {
       returnType = "Image",
       params = {
         {type = "const char *", name = "fileName"},
+        {type = "int *", name = "frames"}
+      }
+    },
+    {
+      name = "LoadImageAnimFromMemory",
+      description = "Load image sequence from memory buffer",
+      returnType = "Image",
+      params = {
+        {type = "const char *", name = "fileType"},
+        {type = "const unsigned char *", name = "fileData"},
+        {type = "int", name = "dataSize"},
         {type = "int *", name = "frames"}
       }
     },
@@ -6616,7 +6632,7 @@ return {
       description = "Replace text string (WARNING: memory must be freed!)",
       returnType = "char *",
       params = {
-        {type = "char *", name = "text"},
+        {type = "const char *", name = "text"},
         {type = "const char *", name = "replace"},
         {type = "const char *", name = "by"}
       }
@@ -6698,6 +6714,14 @@ return {
       name = "TextToInteger",
       description = "Get integer value from text (negative values not supported)",
       returnType = "int",
+      params = {
+        {type = "const char *", name = "text"}
+      }
+    },
+    {
+      name = "TextToFloat",
+      description = "Get float value from text (negative values not supported)",
+      returnType = "float",
       params = {
         {type = "const char *", name = "text"}
       }
@@ -7127,15 +7151,6 @@ return {
       }
     },
     {
-      name = "ExportMesh",
-      description = "Export mesh data to file, returns true on success",
-      returnType = "bool",
-      params = {
-        {type = "Mesh", name = "mesh"},
-        {type = "const char *", name = "fileName"}
-      }
-    },
-    {
       name = "GetMeshBoundingBox",
       description = "Compute mesh bounding box limits",
       returnType = "BoundingBox",
@@ -7149,6 +7164,24 @@ return {
       returnType = "void",
       params = {
         {type = "Mesh *", name = "mesh"}
+      }
+    },
+    {
+      name = "ExportMesh",
+      description = "Export mesh data to file, returns true on success",
+      returnType = "bool",
+      params = {
+        {type = "Mesh", name = "mesh"},
+        {type = "const char *", name = "fileName"}
+      }
+    },
+    {
+      name = "ExportMeshAsCode",
+      description = "Export mesh as code file (.h) defining multiple arrays of vertex attributes",
+      returnType = "bool",
+      params = {
+        {type = "Mesh", name = "mesh"},
+        {type = "const char *", name = "fileName"}
       }
     },
     {
