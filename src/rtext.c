@@ -1089,6 +1089,11 @@ void DrawFPS(int posX, int posY)
 
     DrawText(TextFormat("%2i FPS", fps), posX, posY, 20, color);
 }
+void DrawFPS(int posX, int posY, Color color)
+{                         
+    int fps = GetFPS();
+    DrawText(TextFormat("%2i FPS", fps), posX, posY, 20, color); // Draw FPS based on single color
+}
 
 // Draw text (using default font)
 // NOTE: fontSize work like in any drawing program but if fontSize is lower than font-base-size, then font-base-size is used
