@@ -1,0 +1,37 @@
+name: Parse raylib_api
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - "src/raylib.h"
+# todo
+#  pull_request:
+#    paths:
+#      - "src/raylib.h"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Update parse files
+        working-directory: parser
+        run: |
+          make raylib_api
+          mv raylib_api.* output
+
+      - name: Diff parse files
+        id: diff
+        run: |
+          git add -N parser
+          git diff --name-only --exit-code
+        continue-on-error: true
+
+      - name: Commit parse files
+        if: steps.diff.outcome == 'failure'
+        run: |
+          set -x
+          echo wip
