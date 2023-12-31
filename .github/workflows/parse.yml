@@ -5,10 +5,6 @@ on:
   push:
     #paths:
     #  - "src/raylib.h"
-# todo
-#  pull_request:
-#    paths:
-#      - "src/raylib.h"
 
 jobs:
   build:
@@ -34,4 +30,8 @@ jobs:
         if: steps.diff.outcome == 'failure'
         run: |
           set -x
-          echo wip
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git config user.name "github-actions[bot]"
+          git add parser
+          git commit -m "Update raylib_api.* by CI"
+          git push
