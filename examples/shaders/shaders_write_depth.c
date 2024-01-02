@@ -9,7 +9,7 @@
 *   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
 *   BSD-like license that allows static linking with closed source software
 *
-*   Copyright (c) 2022-2023 Buğra Alptekin Sarı (@BugraAlptekinSari)
+*   Copyright (c) 2022-2024 Buğra Alptekin Sarı (@BugraAlptekinSari)
 *
 ********************************************************************************************/
 
