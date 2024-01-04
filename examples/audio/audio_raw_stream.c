@@ -35,7 +35,7 @@ float oldFrequency = 1.0f;
 float sineIdx = 0.0f;
 
 // Audio input processing callback
-void AudioInputCallback(void *buffer, unsigned int frames)
+void AudioInputCallback(void *buffer, unsigned int frames, void *context)
 {
     audioFrequency = frequency + (audioFrequency - frequency)*0.95f;
 
@@ -69,7 +69,7 @@ int main(void)
     // Init raw audio stream (sample rate: 44100, sample size: 16bit-short, channels: 1-mono)
     AudioStream stream = LoadAudioStream(44100, 16, 1);
 
-    SetAudioStreamCallback(stream, AudioInputCallback);
+    SetAudioStreamCallback(stream, AudioInputCallback, 0);
 
     // Buffer for the single cycle waveform we are synthesizing
     short *data = (short *)malloc(sizeof(short)*MAX_SAMPLES);

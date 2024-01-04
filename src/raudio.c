@@ -343,6 +343,7 @@ struct rAudioBuffer {
     ma_data_converter converter;    // Audio data converter
 
     AudioCallback callback;         // Audio buffer callback for buffer filling on audio threads
+    void *callbackContext;          // Audio buffer callback context to be passed on callback
     rAudioProcessor *processor;     // Audio processor
 
     float volume;                   // Audio buffer volume
@@ -369,6 +370,7 @@ struct rAudioBuffer {
 // NOTE: Useful to apply effects to an AudioBuffer
 struct rAudioProcessor {
     AudioCallback process;          // Processor callback function
+    void *context;                  // Processor callback context
     rAudioProcessor *next;          // Next audio processor on the list
     rAudioProcessor *prev;          // Previous audio processor on the list
 };
@@ -584,6 +586,7 @@ AudioBuffer *LoadAudioBuffer(ma_format format, ma_uint32 channels, ma_uint32 sam
     audioBuffer->pan = 0.5f;
 
     audioBuffer->callback = NULL;
+    audioBuffer->callbackContext = NULL;
     audioBuffer->processor = NULL;
 
     audioBuffer->playing = false;
@@ -2209,20 +2212,25 @@ void SetAudioStreamBufferSizeDefault(int size)
 }
 
 // Audio thread callback to request new data
-void SetAudioStreamCallback(AudioStream stream, AudioCallback callback)
+void SetAudioStreamCallback(AudioStream stream, AudioCallback callback, void *context)
 {
-    if (stream.buffer != NULL) stream.buffer->callback = callback;
+    if (stream.buffer != NULL)
+    {
+        stream.buffer->callback = callback;
+        stream.buffer->callbackContext = context;
+    }
 }
 
 // Add processor to audio stream. Contrary to buffers, the order of processors is important.
 // The new processor must be added at the end. As there aren't supposed to be a lot of processors attached to
 // a given stream, we iterate through the list to find the end. That way we don't need a pointer to the last element.
-void AttachAudioStreamProcessor(AudioStream stream, AudioCallback process)
+void AttachAudioStreamProcessor(AudioStream stream, AudioCallback process, void *context)
 {
     ma_mutex_lock(&AUDIO.System.lock);
 
     rAudioProcessor *processor = (rAudioProcessor *)RL_CALLOC(1, sizeof(rAudioProcessor));
     processor->process = process;
+    processor->context = context;
 
     rAudioProcessor *last = stream.buffer->processor;
 
@@ -2270,12 +2278,13 @@ void DetachAudioStreamProcessor(AudioStream stream, AudioCallback process)
 // Add processor to audio pipeline. Order of processors is important
 // Works the same way as {Attach,Detach}AudioStreamProcessor() functions, except
 // these two work on the already mixed output just before sending it to the sound hardware
-void AttachAudioMixedProcessor(AudioCallback process)
+void AttachAudioMixedProcessor(AudioCallback process, void *context)
 {
     ma_mutex_lock(&AUDIO.System.lock);
 
     rAudioProcessor *processor = (rAudioProcessor *)RL_CALLOC(1, sizeof(rAudioProcessor));
     processor->process = process;
+    processor->context = context;
 
     rAudioProcessor *last = AUDIO.mixedProcessor;
 
@@ -2337,7 +2346,7 @@ static ma_uint32 ReadAudioBufferFramesInInternalFormat(AudioBuffer *audioBuffer,
     // Using audio buffer callback
     if (audioBuffer->callback)
     {
-        audioBuffer->callback(framesOut, frameCount);
+        audioBuffer->callback(framesOut, frameCount, audioBuffer->callbackContext);
         audioBuffer->framesProcessed += frameCount;
 
         return frameCount;
@@ -2520,7 +2529,7 @@ static void OnSendAudioDataToDevice(ma_device *pDevice, void *pFramesOut, const 
                         rAudioProcessor *processor = audioBuffer->processor;
                         while (processor)
                         {
-                            processor->process(framesIn, framesJustRead);
+                            processor->process(framesIn, framesJustRead, processor->context);
                             processor = processor->next;
                         }
 
@@ -2564,7 +2573,7 @@ static void OnSendAudioDataToDevice(ma_device *pDevice, void *pFramesOut, const 
     rAudioProcessor *processor = AUDIO.mixedProcessor;
     while (processor)
     {
-        processor->process(pFramesOut, frameCount);
+        processor->process(pFramesOut, frameCount, processor->context);
         processor = processor->next;
     }
 

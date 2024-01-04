@@ -21,7 +21,7 @@ static float averageVolume[400] = { 0.0f };   // Average volume history
 //------------------------------------------------------------------------------------
 // Audio processing function
 //------------------------------------------------------------------------------------
-void ProcessAudio(void *buffer, unsigned int frames)
+void ProcessAudio(void *buffer, unsigned int frames, void *context)
 {
     float *samples = (float *)buffer;   // Samples internally stored as <float>s
     float average = 0.0f;               // Temporary average volume
@@ -57,7 +57,7 @@ int main(void)
 
     InitAudioDevice();              // Initialize audio device
 
-    AttachAudioMixedProcessor(ProcessAudio);
+    AttachAudioMixedProcessor(ProcessAudio, 0);
 
     Music music = LoadMusicStream("resources/country.mp3");
     Sound sound = LoadSound("resources/coin.wav");
