@@ -196,6 +196,10 @@ __declspec(dllimport) int __stdcall WideCharToMultiByte(unsigned int cp, unsigne
     #endif
 #endif
 
+#ifndef MAX_SCISSOR_STACK_SIZE
+    #define MAX_SCISSOR_STACK_SIZE         8        // Maximum number of nested scissor calls supported
+#endif
+
 #ifndef MAX_KEYBOARD_KEYS
     #define MAX_KEYBOARD_KEYS            512        // Maximum number of keyboard keys supported
 #endif
@@ -266,6 +270,8 @@ typedef struct CoreData {
         Size currentFbo;                    // Current render width and height (depends on active fbo)
         Size render;                        // Framebuffer width and height (render area, including black bars if required)
         Point renderOffset;                 // Offset from render area (must be divided by 2)
+        Rectangle scissorStack[MAX_SCISSOR_STACK_SIZE];// Scissor stack for nested scissor calls
+        int scissorStackCounter;            // Scissor stack counter
         Size screenMin;                     // Screen minimum width and height (for resizable window)
         Size screenMax;                     // Screen maximum width and height (for resizable window)
         Matrix screenScale;                 // Matrix to scale screen (framebuffer rendering)
@@ -1085,38 +1091,96 @@ void EndBlendMode(void)
     rlSetBlendMode(BLEND_ALPHA);
 }
 
+static void SetScissorRectDPIAware(Rectangle scissorRect)
+{
+#if defined(__APPLE__)
+    if (!CORE.Window.usingFbo)
+    {
+        Vector2 scale = GetWindowScaleDPI();
+        rlScissor(
+            (int)(scissorRect.x*scale.x),
+            (int)(GetScreenHeight()*scale.y - ((scissorRect.y + scissorRect.height)*scale.y)),
+            (int)(scissorRect.width*scale.x),
+            (int)(scissorRect.height*scale.y)
+        );
+    }
+#else
+    if (!CORE.Window.usingFbo && ((CORE.Window.flags & FLAG_WINDOW_HIGHDPI) > 0))
+    {
+        Vector2 scale = GetWindowScaleDPI();
+        rlScissor(
+            (int)(scissorRect.x*scale.x),
+            (int)(CORE.Window.currentFbo.height - (scissorRect.y + scissorRect.height)*scale.y),
+            (int)(scissorRect.width*scale.x),
+            (int)(scissorRect.height*scale.y)
+        );
+    }
+#endif
+    else
+    {
+        rlScissor(
+            scissorRect.x,
+            CORE.Window.currentFbo.height - (scissorRect.y + scissorRect.height),
+            scissorRect.width,
+            scissorRect.height
+        );
+    }
+}
+
 // Begin scissor mode (define screen area for following drawing)
 // NOTE: Scissor rec refers to bottom-left corner, we change it to upper-left
 void BeginScissorMode(int x, int y, int width, int height)
 {
     rlDrawRenderBatchActive();      // Update and draw internal render batch
 
-    rlEnableScissorTest();
+    // Counter > MAX_SCISSOR_STACK_SIZE isn't possible without a bug in Raylib, but check anyway to be safe
+    if (CORE.Window.scissorStackCounter >= MAX_SCISSOR_STACK_SIZE)
+    {
+        TRACELOG(LOG_ERROR, "SYSTEM: Scissor stack overflow (MAX_SCISSOR_STACK_SIZE)");
+        return;
+    }
 
-#if defined(__APPLE__)
-    if (!CORE.Window.usingFbo)
+    if (CORE.Window.scissorStackCounter == 0)
     {
-        Vector2 scale = GetWindowScaleDPI();
-        rlScissor((int)(x*scale.x), (int)(GetScreenHeight()*scale.y - (((y + height)*scale.y))), (int)(width*scale.x), (int)(height*scale.y));
+        rlEnableScissorTest();
     }
-#else
-    if (!CORE.Window.usingFbo && ((CORE.Window.flags & FLAG_WINDOW_HIGHDPI) > 0))
-    {
-        Vector2 scale = GetWindowScaleDPI();
-        rlScissor((int)(x*scale.x), (int)(CORE.Window.currentFbo.height - (y + height)*scale.y), (int)(width*scale.x), (int)(height*scale.y));
-    }
-#endif
-    else
-    {
-        rlScissor(x, CORE.Window.currentFbo.height - (y + height), width, height);
+
+    Rectangle scissorRect = (Rectangle){ x, y, width, height };
+    SetScissorRectDPIAware(scissorRect);
+
+    CORE.Window.scissorStack[CORE.Window.scissorStackCounter] = scissorRect;
+    CORE.Window.scissorStackCounter++;
+}
+
+// Get active scissor region (or entire render area, if scissor mode not enabled)
+Rectangle GetScissorRect(void)
+{
+    if (CORE.Window.scissorStackCounter > 0) {
+        return CORE.Window.scissorStack[CORE.Window.scissorStackCounter - 1];
+    } else {
+        return (Rectangle){ 0, 0, CORE.Window.currentFbo.width, CORE.Window.currentFbo.height };
     }
 }
 
 // End scissor mode
 void EndScissorMode(void)
 {
+    // Counter < 0 isn't possible without a bug in Raylib, but check anyway to be safe
+    if (CORE.Window.scissorStackCounter <= 0)
+    {
+        TRACELOG(LOG_ERROR, "SYSTEM: Scissor stack empty, are you sure your EndScissorMode calls match your BeginScissorMode calls?");
+        return;
+    }
+
     rlDrawRenderBatchActive();      // Update and draw internal render batch
-    rlDisableScissorTest();
+
+    CORE.Window.scissorStackCounter--;
+    if (CORE.Window.scissorStackCounter > 0) {
+        Rectangle scissorRect = CORE.Window.scissorStack[CORE.Window.scissorStackCounter - 1];
+        SetScissorRectDPIAware(scissorRect);
+    } else {
+        rlDisableScissorTest();
+    }
 }
 
 //----------------------------------------------------------------------------------
@@ -1780,7 +1844,7 @@ void TakeScreenshot(const char *fileName)
 
     char path[512] = { 0 };
     strcpy(path, TextFormat("%s/%s", CORE.Storage.basePath, GetFileName(fileName)));
-    
+
     ExportImage(image, path);           // WARNING: Module required: rtextures
     RL_FREE(imgData);
 
