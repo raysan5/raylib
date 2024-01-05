@@ -1050,7 +1050,7 @@ RLAPI void UnloadShader(Shader shader);                                    // Un
 
 // Screen-space-related functions
 RLAPI Ray GetMouseRay(Vector2 mousePosition, Camera camera);      // Get a ray trace from mouse position
-RLAPI Ray GetMouseRayEx(Vector2 mousePosition, Camera camera, float width, float height);      // Get a ray trace from mouse position
+RLAPI Ray GetViewRay(Vector2 mousePosition, Camera camera, float width, float height);      // Get a ray trace from mouse position in a viewport
 RLAPI Matrix GetCameraMatrix(Camera camera);                      // Get camera transform matrix (view matrix)
 RLAPI Matrix GetCameraMatrix2D(Camera2D camera);                  // Get camera 2d transform matrix
 RLAPI Vector2 GetWorldToScreen(Vector3 position, Camera camera);  // Get the screen space position for a 3d world space position
