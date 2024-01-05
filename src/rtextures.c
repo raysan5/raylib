@@ -212,8 +212,18 @@
 
 #define STBIR_MALLOC(size,c) ((void)(c), RL_MALLOC(size))
 #define STBIR_FREE(ptr,c) ((void)(c), RL_FREE(ptr))
+
+#if defined(__GNUC__) // GCC and Clang
+    #pragma GCC diagnostic push
+    #pragma GCC diagnostic ignored "-Wunused-function"
+#endif
+
 #define STB_IMAGE_RESIZE_IMPLEMENTATION
 #include "external/stb_image_resize2.h"     // Required for: stbir_resize_uint8_linear() [ImageResize()]
+
+#if defined(__GNUC__) // GCC and Clang
+    #pragma GCC diagnostic pop
+#endif
 
 #if defined(SUPPORT_FILEFORMAT_SVG)
     #define NANOSVG_IMPLEMENTATION          // Expands implementation
