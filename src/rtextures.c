@@ -2649,21 +2649,17 @@ void ImageColorTint(Image *image, Color color)
     float cB = (float)color.b/255;
     float cA = (float)color.a/255;
 
-    for (int y = 0; y < image->height; y++)
+    for (int i = 0; i < image->width * image->height; i++)
     {
-        for (int x = 0; x < image->width; x++)
-        {
-            int index = y*image->width + x;
-            unsigned char r = (unsigned char)(((float)pixels[index].r/255*cR)*255.0f);
-            unsigned char g = (unsigned char)(((float)pixels[index].g/255*cG)*255.0f);
-            unsigned char b = (unsigned char)(((float)pixels[index].b/255*cB)*255.0f);
-            unsigned char a = (unsigned char)(((float)pixels[index].a/255*cA)*255.0f);
+        unsigned char r = (unsigned char)(((float)pixels[i].r/255*cR)*255.0f);
+        unsigned char g = (unsigned char)(((float)pixels[i].g/255*cG)*255.0f);
+        unsigned char b = (unsigned char)(((float)pixels[i].b/255*cB)*255.0f);
+        unsigned char a = (unsigned char)(((float)pixels[i].a/255*cA)*255.0f);
 
-            pixels[index].r = r;
-            pixels[index].g = g;
-            pixels[index].b = b;
-            pixels[index].a = a;
-        }
+        pixels[i].r = r;
+        pixels[i].g = g;
+        pixels[i].b = b;
+        pixels[i].a = a;
     }
 
     int format = image->format;
@@ -2683,14 +2679,11 @@ void ImageColorInvert(Image *image)
 
     Color *pixels = LoadImageColors(*image);
 
-    for (int y = 0; y < image->height; y++)
+    for (int i = 0; i < image->width * image->height; i++)
     {
-        for (int x = 0; x < image->width; x++)
-        {
-            pixels[y*image->width + x].r = 255 - pixels[y*image->width + x].r;
-            pixels[y*image->width + x].g = 255 - pixels[y*image->width + x].g;
-            pixels[y*image->width + x].b = 255 - pixels[y*image->width + x].b;
-        }
+        pixels[i].r = 255 - pixels[i].r;
+        pixels[i].g = 255 - pixels[i].g;
+        pixels[i].b = 255 - pixels[i].b;
     }
 
     int format = image->format;
@@ -2723,38 +2716,35 @@ void ImageColorContrast(Image *image, float contrast)
 
     Color *pixels = LoadImageColors(*image);
 
-    for (int y = 0; y < image->height; y++)
+    for (int i = 0; i < image->width * image->height; i++)
     {
-        for (int x = 0; x < image->width; x++)
-        {
-            float pR = (float)pixels[y*image->width + x].r/255.0f;
-            pR -= 0.5f;
-            pR *= contrast;
-            pR += 0.5f;
-            pR *= 255;
-            if (pR < 0) pR = 0;
-            if (pR > 255) pR = 255;
+        float pR = (float)pixels[i].r/255.0f;
+        pR -= 0.5f;
+        pR *= contrast;
+        pR += 0.5f;
+        pR *= 255;
+        if (pR < 0) pR = 0;
+        if (pR > 255) pR = 255;
 
-            float pG = (float)pixels[y*image->width + x].g/255.0f;
-            pG -= 0.5f;
-            pG *= contrast;
-            pG += 0.5f;
-            pG *= 255;
-            if (pG < 0) pG = 0;
-            if (pG > 255) pG = 255;
+        float pG = (float)pixels[i].g/255.0f;
+        pG -= 0.5f;
+        pG *= contrast;
+        pG += 0.5f;
+        pG *= 255;
+        if (pG < 0) pG = 0;
+        if (pG > 255) pG = 255;
 
-            float pB = (float)pixels[y*image->width + x].b/255.0f;
-            pB -= 0.5f;
-            pB *= contrast;
-            pB += 0.5f;
-            pB *= 255;
-            if (pB < 0) pB = 0;
-            if (pB > 255) pB = 255;
+        float pB = (float)pixels[i].b/255.0f;
+        pB -= 0.5f;
+        pB *= contrast;
+        pB += 0.5f;
+        pB *= 255;
+        if (pB < 0) pB = 0;
+        if (pB > 255) pB = 255;
 
-            pixels[y*image->width + x].r = (unsigned char)pR;
-            pixels[y*image->width + x].g = (unsigned char)pG;
-            pixels[y*image->width + x].b = (unsigned char)pB;
-        }
+        pixels[i].r = (unsigned char)pR;
+        pixels[i].g = (unsigned char)pG;
+        pixels[i].b = (unsigned char)pB;
     }
 
     int format = image->format;
@@ -2778,27 +2768,24 @@ void ImageColorBrightness(Image *image, int brightness)
 
     Color *pixels = LoadImageColors(*image);
 
-    for (int y = 0; y < image->height; y++)
+    for (int i = 0; i < image->width * image->height; i++)
     {
-        for (int x = 0; x < image->width; x++)
-        {
-            int cR = pixels[y*image->width + x].r + brightness;
-            int cG = pixels[y*image->width + x].g + brightness;
-            int cB = pixels[y*image->width + x].b + brightness;
+        int cR = pixels[i].r + brightness;
+        int cG = pixels[i].g + brightness;
+        int cB = pixels[i].b + brightness;
 
-            if (cR < 0) cR = 1;
-            if (cR > 255) cR = 255;
+        if (cR < 0) cR = 1;
+        if (cR > 255) cR = 255;
 
-            if (cG < 0) cG = 1;
-            if (cG > 255) cG = 255;
+        if (cG < 0) cG = 1;
+        if (cG > 255) cG = 255;
 
-            if (cB < 0) cB = 1;
-            if (cB > 255) cB = 255;
+        if (cB < 0) cB = 1;
+        if (cB > 255) cB = 255;
 
-            pixels[y*image->width + x].r = (unsigned char)cR;
-            pixels[y*image->width + x].g = (unsigned char)cG;
-            pixels[y*image->width + x].b = (unsigned char)cB;
-        }
+        pixels[i].r = (unsigned char)cR;
+        pixels[i].g = (unsigned char)cG;
+        pixels[i].b = (unsigned char)cB;
     }
 
     int format = image->format;
@@ -2818,20 +2805,17 @@ void ImageColorReplace(Image *image, Color color, Color replace)
 
     Color *pixels = LoadImageColors(*image);
 
-    for (int y = 0; y < image->height; y++)
+    for (int i = 0; i < image->width * image->height; i++)
     {
-        for (int x = 0; x < image->width; x++)
+        if ((pixels[i].r == color.r) &&
+            (pixels[i].g == color.g) &&
+            (pixels[i].b == color.b) &&
+            (pixels[i].a == color.a))
         {
-            if ((pixels[y*image->width + x].r == color.r) &&
-                (pixels[y*image->width + x].g == color.g) &&
-                (pixels[y*image->width + x].b == color.b) &&
-                (pixels[y*image->width + x].a == color.a))
-            {
-                pixels[y*image->width + x].r = replace.r;
-                pixels[y*image->width + x].g = replace.g;
-                pixels[y*image->width + x].b = replace.b;
-                pixels[y*image->width + x].a = replace.a;
-            }
+            pixels[i].r = replace.r;
+            pixels[i].g = replace.g;
+            pixels[i].b = replace.b;
+            pixels[i].a = replace.a;
         }
     }
 
