@@ -50,7 +50,7 @@ int main(void)
         irisRightPosition = GetMousePosition();
 
         // Check not inside the left eye sclera
-        if (!CheckCollisionPointCircle(irisLeftPosition, scleraLeftPosition, scleraRadius - 20))
+        if (!CheckCollisionPointCircle(irisLeftPosition, scleraLeftPosition, scleraRadius - irisRadius))
         {
             dx = irisLeftPosition.x - scleraLeftPosition.x;
             dy = irisLeftPosition.y - scleraLeftPosition.y;
@@ -65,7 +65,7 @@ int main(void)
         }
 
         // Check not inside the right eye sclera
-        if (!CheckCollisionPointCircle(irisRightPosition, scleraRightPosition, scleraRadius - 20))
+        if (!CheckCollisionPointCircle(irisRightPosition, scleraRightPosition, scleraRadius - irisRadius))
         {
             dx = irisRightPosition.x - scleraRightPosition.x;
             dy = irisRightPosition.y - scleraRightPosition.y;
