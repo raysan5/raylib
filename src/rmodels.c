@@ -6050,7 +6050,8 @@ static ModelAnimation *LoadModelAnimationsM3D(const char *fileName, int *animCou
             animations[a].boneCount = m3d->numbone + 1;
             animations[a].bones = RL_MALLOC((m3d->numbone + 1)*sizeof(BoneInfo));
             animations[a].framePoses = RL_MALLOC(animations[a].frameCount*sizeof(Transform *));
-            // strncpy(animations[a].name, m3d->action[a].name, sizeof(animations[a].name));
+	    strncpy(animations[a].name, m3d->action[a].name, sizeof(animations[a].name));
+	    animations[a].name[sizeof(animations[a].name) - 1] = '\0';
             TRACELOG(LOG_INFO, "MODEL: [%s] animation #%i: %i msec, %i frames", fileName, a, m3d->action[a].durationmsec, animations[a].frameCount);
 
             for (i = 0; i < (int)m3d->numbone; i++)
