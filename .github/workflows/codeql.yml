@@ -116,6 +116,7 @@ jobs:
           -**:cpp/unsigned-comparison-zero
           -**/cmake*/Modules/**
           -**/src/external/glfw/**
+          -**/src/external/**
         input: ${{ steps.step1.outputs.sarif-output }}/cpp.sarif
         output: ${{ steps.step1.outputs.sarif-output }}/cpp.sarif
 
