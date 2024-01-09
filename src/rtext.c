@@ -725,7 +725,7 @@ Image GenImageFontAtlas(const GlyphInfo *glyphs, Rectangle **glyphRecs, int glyp
     for (int i = 0; i < glyphCount; i++)
     {
         if (glyphs[i].image.width > maxGlyphWidth) maxGlyphWidth = glyphs[i].image.width;
-        totalWidth += glyphs[i].image.width + 4*padding;
+        totalWidth += glyphs[i].image.width + 2*padding;
     }
 
 //#define SUPPORT_FONT_ATLAS_SIZE_CONSERVATIVE
@@ -743,8 +743,9 @@ Image GenImageFontAtlas(const GlyphInfo *glyphs, Rectangle **glyphRecs, int glyp
     atlas.width = imageSize;   // Atlas bitmap width
     atlas.height = imageSize;  // Atlas bitmap height
 #else
+    int paddedFontSize = fontSize + 2*padding;
     // No need for a so-conservative atlas generation
-    float totalArea = totalWidth*fontSize*1.2f;
+    float totalArea = totalWidth*paddedFontSize*1.2f;
     float imageMinSize = sqrtf(totalArea);
     int imageSize = (int)powf(2, ceilf(logf(imageMinSize)/logf(2)));
 
