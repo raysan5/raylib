@@ -1,8 +1,12 @@
 const std = @import("std");
 const builtin = @import("builtin");
 
-// This has been tested to work with zig 0.11.0 and zig 0.12.0-dev.1390+94cee4fb2
-pub fn addRaylib(b: *std.Build, target: std.zig.CrossTarget, optimize: std.builtin.OptimizeMode, options: Options) *std.Build.CompileStep {
+// This has been tested to work with zig 0.11.0 and zig 0.12.0-dev.2075+f5978181e
+//
+// anytype is used here for target because in 0.12.0dev the std.zig.CrossTarget type
+// was reworked into std.Target.Query and std.Build.ResolvedTarget. Using anytype allows
+// us to accept both types and act accordingly in getOsTagVersioned
+pub fn addRaylib(b: *std.Build, target: anytype, optimize: std.builtin.OptimizeMode, options: Options) *std.Build.Step.Compile {
     const raylib_flags = &[_][]const u8{
         "-std=gnu99",
         "-D_GNU_SOURCE",
@@ -68,7 +72,7 @@ pub fn addRaylib(b: *std.Build, target: std.zig.CrossTarget, optimize: std.built
         raylib.addIncludePath(.{ .path = srcdir ++ "/../../raygui/src" });
     }
 
-    switch (target.getOsTag()) {
+    switch (getOsTagVersioned(target)) {
         .windows => {
             addCSourceFilesVersioned(raylib, &.{
                 srcdir ++ "/rglfw.c",
@@ -218,6 +222,14 @@ const srcdir = struct {
         return std.fs.path.dirname(@src().file).?;
     }
 }.getSrcDir();
+
+fn getOsTagVersioned(target: anytype) std.Target.Os.Tag {
+    if (comptime builtin.zig_version.minor >= 12) {
+        return target.result.os.tag;
+    } else {
+        return target.getOsTag();
+    }
+}
 
 fn addCSourceFilesVersioned(exe: *std.Build.Step.Compile, files: []const []const u8, flags: []const []const u8) void {
     if (comptime builtin.zig_version.minor >= 12) {
