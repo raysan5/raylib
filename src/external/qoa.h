@@ -408,7 +408,7 @@ unsigned int qoa_encode_frame(const short *sample_data, qoa_desc *qoa, unsigned 
 			qoa_uint64_t best_error = -1;
 			qoa_uint64_t best_slice;
 			qoa_lms_t best_lms;
-			int best_scalefactor;
+			int best_scalefactor = sfi + prev_scalefactor[c] % 16; /*stolen from 6 lines below*/
 
 			for (int sfi = 0; sfi < 16; sfi++) {
 				/* There is a strong correlation between the scalefactors of
