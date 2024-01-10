@@ -3562,8 +3562,8 @@ void ImageDrawRectangleRec(Image *dst, Rectangle rec, Color color)
     if ((dst->data == NULL) || (dst->width == 0) || (dst->height == 0)) return;
 
     // Security check to avoid drawing out of bounds in case of bad user data
-    if (rec.x < 0) { rec.width -= rec.x; rec.x = 0; }
-    if (rec.y < 0) { rec.height -= rec.y; rec.y = 0; }
+    if (rec.x < 0) { rec.width += rec.x; rec.x = 0; }
+    if (rec.y < 0) { rec.height += rec.y; rec.y = 0; }
     if (rec.width < 0) rec.width = 0;
     if (rec.height < 0) rec.height = 0;
 
