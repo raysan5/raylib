@@ -94,9 +94,10 @@ int main()
     camera.fovy = 45.0f;                                // Camera field-of-view Y
     camera.projection = CAMERA_PERSPECTIVE;             // Camera projection type
 
-    // Load PBR shader and setup all required locations
+    // Load the PBR shader and setup all required locations
     Shader shader = LoadShader(TextFormat("resources/shaders/glsl%i/pbr.vs", GLSL_VERSION),
                                TextFormat("resources/shaders/glsl%i/pbr.fs", GLSL_VERSION));
+    
     shader.locs[SHADER_LOC_MAP_ALBEDO] = GetShaderLocation(shader, "albedoMap");
     // WARNING: Metalness, roughness, and ambient occlusion are all packed into a MRA texture
     // They are passed as to the SHADER_LOC_MAP_METALNESS location for convenience,
@@ -105,11 +106,11 @@ int main()
     shader.locs[SHADER_LOC_MAP_NORMAL] = GetShaderLocation(shader, "normalMap");
     // WARNING: Similar to the MRA map, the emissive map packs different information 
     // into a single texture: it stores height and emission data
-    // It is binded to SHADER_LOC_MAP_EMISSION location an properly processed on shader
+    // It is binded to the SHADER_LOC_MAP_EMISSION location and properly processed on the shader
     shader.locs[SHADER_LOC_MAP_EMISSION] = GetShaderLocation(shader, "emissiveMap");
     shader.locs[SHADER_LOC_COLOR_DIFFUSE] = GetShaderLocation(shader, "albedoColor");
 
-    // Setup additional required shader locations, including lights data
+    // Setup additional required shader locations, including the lights data
     shader.locs[SHADER_LOC_VECTOR_VIEW] = GetShaderLocation(shader, "viewPos");
     int lightCountLoc = GetShaderLocation(shader, "numOfLights");
     int maxLightCount = MAX_LIGHTS;
@@ -122,7 +123,7 @@ int main()
     SetShaderValue(shader, GetShaderLocation(shader, "ambientColor"), &ambientColorNormalized, SHADER_UNIFORM_VEC3);
     SetShaderValue(shader, GetShaderLocation(shader, "ambient"), &ambientIntensity, SHADER_UNIFORM_FLOAT);
 
-    // Get location for shader parameters that can be modified in real time
+    // Get the location for shader parameters that can be modified in real time
     int emissiveIntensityLoc = GetShaderLocation(shader, "emissivePower");
     int emissiveColorLoc = GetShaderLocation(shader, "emissiveColor");
     int textureTilingLoc = GetShaderLocation(shader, "tiling");
