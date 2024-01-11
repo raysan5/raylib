@@ -1,14 +1,26 @@
 const std = @import("std");
 const builtin = @import("builtin");
 
-// This has been tested to work with zig 0.11.0 (67709b6, Aug 4 2023)
-fn add_module(comptime module: []const u8, b: *std.Build, target: std.zig.CrossTarget, optimize: std.builtin.OptimizeMode) !*std.Build.Step {
-    if (target.getOsTag() == .emscripten) {
+// This has been tested to work with zig 0.11.0 (67709b6, Aug 4 2023) and zig 0.12.0-dev.2075+f5978181e (Jan 8 2024)
+//
+// anytype is used here to preserve compatibility, in 0.12.0dev the std.zig.CrossTarget type
+// was reworked into std.Target.Query and std.Build.ResolvedTarget. Using anytype allows
+// us to accept both CrossTarget and ResolvedTarget and act accordingly in getOsTagVersioned.
+fn add_module(comptime module: []const u8, b: *std.Build, target: anytype, optimize: std.builtin.OptimizeMode) !*std.Build.Step {
+    if (comptime builtin.zig_version.minor >= 12 and @TypeOf(target) != std.Build.ResolvedTarget) {
+        @compileError("Expected 'std.Build.ResolvedTarget' for argument 2 'target' in 'add_module', found '" ++ @typeName(@TypeOf(target)) ++ "'");
+    } else if (comptime builtin.zig_version.minor == 11 and @TypeOf(target) != std.zig.CrossTarget) {
+        @compileError("Expected 'std.zig.CrossTarget' for argument 2 'target' in 'add_module', found '" ++ @typeName(@TypeOf(target)) ++ "'");
+    }
+
+    if (getOsTagVersioned(target) == .emscripten) {
         @panic("Emscripten building via Zig unsupported");
     }
 
     const all = b.step(module, "All " ++ module ++ " examples");
-    const dir = try std.fs.cwd().openIterableDir(module, .{});
+    var dir = try openIterableDirVersioned(std.fs.cwd(), module);
+    defer if (comptime builtin.zig_version.minor >= 12) dir.close();
+
     var iter = dir.iterate();
     while (try iter.next()) |entry| {
         if (entry.kind != .file) continue;
@@ -17,7 +29,7 @@ fn add_module(comptime module: []const u8, b: *std.Build, target: std.zig.CrossT
         const path = try std.fs.path.join(b.allocator, &.{ module, entry.name });
 
         // zig's mingw headers do not include pthread.h
-        if (std.mem.eql(u8, "core_loading_thread", name) and target.getOsTag() == .windows) continue;
+        if (std.mem.eql(u8, "core_loading_thread", name) and getOsTagVersioned(target) == .windows) continue;
 
         const exe = b.addExecutable(.{
             .name = name,
@@ -26,7 +38,7 @@ fn add_module(comptime module: []const u8, b: *std.Build, target: std.zig.CrossT
         });
         exe.addCSourceFile(.{ .file = .{ .path = path }, .flags = &.{} });
         exe.linkLibC();
-        exe.addObjectFile(switch (target.getOsTag()) {
+        exe.addObjectFile(switch (getOsTagVersioned(target)) {
             .windows => .{ .path = "../zig-out/lib/raylib.lib" },
             .linux => .{ .path = "../zig-out/lib/libraylib.a" },
             .macos => .{ .path = "../zig-out/lib/libraylib.a" },
@@ -38,7 +50,7 @@ fn add_module(comptime module: []const u8, b: *std.Build, target: std.zig.CrossT
         exe.addIncludePath(.{ .path = "../src/external" });
         exe.addIncludePath(.{ .path = "../src/external/glfw/include" });
 
-        switch (target.getOsTag()) {
+        switch (getOsTagVersioned(target)) {
             .windows => {
                 exe.linkSystemLibrary("winmm");
                 exe.linkSystemLibrary("gdi32");
@@ -105,4 +117,20 @@ pub fn build(b: *std.Build) !void {
     all.dependOn(try add_module("shapes", b, target, optimize));
     all.dependOn(try add_module("text", b, target, optimize));
     all.dependOn(try add_module("textures", b, target, optimize));
+}
+
+fn getOsTagVersioned(target: anytype) std.Target.Os.Tag {
+    if (comptime builtin.zig_version.minor >= 12) {
+        return target.result.os.tag;
+    } else {
+        return target.getOsTag();
+    }
+}
+
+fn openIterableDirVersioned(dir: std.fs.Dir, path: []const u8) !(if (builtin.zig_version.minor >= 12) std.fs.Dir else std.fs.IterableDir) {
+    if (comptime builtin.zig_version.minor >= 12) {
+        return dir.openDir(path, .{ .iterate = true });
+    } else {
+        return dir.openIterableDir(path, .{});
+    }
 }
