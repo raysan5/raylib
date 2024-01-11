@@ -1741,8 +1741,22 @@ void ImageResizeCanvas(Image *image, int newWidth, int newHeight, int offsetX, i
         int bytesPerPixel = GetPixelDataSize(1, 1, image->format);
         unsigned char *resizedData = (unsigned char *)RL_CALLOC(newWidth*newHeight*bytesPerPixel, 1);
 
-        // TODO: Fill resized canvas with fill color (must be formatted to image->format)
+        // Fill resized canvas with fill color
+        // Set first pixel with image->format
+        SetPixelColor(resizedData, fill, image->format);
 
+        // Fill remaining bytes of first row
+        for (int x = 1; x < newWidth; x++)
+        {
+            memcpy(resizedData + x*bytesPerPixel, resizedData, bytesPerPixel);
+        }
+        // Copy the first row into the other rows
+        for (int y = 1; y < newHeight; y++)
+        {
+            memcpy(resizedData + y*newWidth*bytesPerPixel, resizedData, newWidth*bytesPerPixel);
+        }
+
+        // Copy old image to resized canvas
         int dstOffsetSize = ((int)dstPos.y*newWidth + (int)dstPos.x)*bytesPerPixel;
 
         for (int y = 0; y < (int)srcRec.height; y++)
