@@ -1635,6 +1635,10 @@ static EM_BOOL EmscriptenTouchCallback(int eventType, const EmscriptenTouchEvent
         else if (eventType == EMSCRIPTEN_EVENT_TOUCHEND) CORE.Input.Touch.currentTouchState[i] = 0;
     }
 
+    // Update mouse position if we detect a single touch.
+    // This is essential for raylib to work on touchscreen.
+    // Otherwise, mouse position will always be 0,0, so that
+    // things such as raygui and examples/shapes/shapes_lines_bezier.c won't work
     if (CORE.Input.Touch.pointCount == 1) {
         CORE.Input.Mouse.currentPosition.x = CORE.Input.Touch.position[0].x;
         CORE.Input.Mouse.currentPosition.y = CORE.Input.Touch.position[0].y;
