@@ -123,6 +123,7 @@ static void WindowIconifyCallback(GLFWwindow *window, int iconified);           
 static void WindowMaximizeCallback(GLFWwindow* window, int maximized);                     // GLFW3 Window Maximize Callback, runs when window is maximized
 static void WindowFocusCallback(GLFWwindow *window, int focused);                          // GLFW3 WindowFocus Callback, runs when window get/lose focus
 static void WindowDropCallback(GLFWwindow *window, int count, const char **paths);         // GLFW3 Window Drop Callback, runs when drop files into window
+static void WindowContentScaleCallback(GLFWwindow *window, float scalex, float scaley);    // GLFW3 Window Content Scale Callback, runs when window changes scale
 
 // Input callbacks events
 static void KeyCallback(GLFWwindow *window, int key, int scancode, int action, int mods);  // GLFW3 Keyboard Callback, runs on key pressed
@@ -941,31 +942,8 @@ Vector2 GetWindowPosition(void)
 // Get window scale DPI factor for current monitor
 Vector2 GetWindowScaleDPI(void)
 {
-    float xdpi = 1.0;
-    float ydpi = 1.0;
-    Vector2 scale = { 1.0f, 1.0f };
-    Vector2 windowPos = GetWindowPosition();
-
-    int monitorCount = 0;
-    GLFWmonitor **monitors = glfwGetMonitors(&monitorCount);
-
-    // Check window monitor
-    for (int i = 0; i < monitorCount; i++)
-    {
-        glfwGetMonitorContentScale(monitors[i], &xdpi, &ydpi);
-
-        int xpos, ypos, width, height;
-        glfwGetMonitorWorkarea(monitors[i], &xpos, &ypos, &width, &height);
-
-        if ((windowPos.x >= xpos) && (windowPos.x < xpos + width) &&
-            (windowPos.y >= ypos) && (windowPos.y < ypos + height))
-        {
-            scale.x = xdpi;
-            scale.y = ydpi;
-            break;
-        }
-    }
-
+    Vector2 scale = {0};
+    glfwGetWindowContentScale(platform.handle, &scale.x, &scale.y);
     return scale;
 }
 
@@ -1553,6 +1531,11 @@ int InitPlatform(void)
     glfwSetWindowFocusCallback(platform.handle, WindowFocusCallback);
     glfwSetDropCallback(platform.handle, WindowDropCallback);
 
+    if ((CORE.Window.flags & FLAG_WINDOW_HIGHDPI) > 0)
+    {
+       glfwSetWindowContentScaleCallback(platform.handle, WindowContentScaleCallback);
+    }
+
     // Set input callback events
     glfwSetKeyCallback(platform.handle, KeyCallback);
     glfwSetCharCallback(platform.handle, CharCallback);
@@ -1636,6 +1619,11 @@ static void WindowSizeCallback(GLFWwindow *window, int width, int height)
 #endif
 
     // NOTE: Postprocessing texture is not scaled to new size
+}
+
+static void WindowContentScaleCallback(GLFWwindow *window, float scalex, float scaley)
+{
+    CORE.Window.screenScale = MatrixScale(scalex, scaley, 1.0f);
 }
 
 // GLFW3 WindowIconify Callback, runs when window is minimized/restored
