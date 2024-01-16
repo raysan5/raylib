@@ -80,8 +80,8 @@ static PlatformData platform = { 0 };   // Platform specific data
 //----------------------------------------------------------------------------------
 // Local Variables Definition
 //----------------------------------------------------------------------------------
-#define SCANCODE_MAPPED_NUM 162
-static const KeyboardKey ScancodeToKey[SCANCODE_MAPPED_NUM] = {
+#define KEYCODE_MAPPED_NUM 162
+static const KeyboardKey KeycodeMap[KEYCODE_MAPPED_NUM] = {
     KEY_NULL,           // AKEYCODE_UNKNOWN
     0,                  // AKEYCODE_SOFT_LEFT
     0,                  // AKEYCODE_SOFT_RIGHT
@@ -1185,25 +1185,20 @@ static int32_t AndroidInputCallback(struct android_app *app, AInputEvent *event)
             return 1; // Handled gamepad button
         }
 
-        KeyboardKey key = KEY_NULL;
-        if (keycode > 0 && keycode < SCANCODE_MAPPED_NUM)
+        KeyboardKey key = (keycode > 0 && keycode < KEYCODE_MAPPED_NUM) ? KeycodeMap[keycode] : KEY_NULL;
+        if (key != KEY_NULL)
         {
-            key = ScancodeToKey[keycode];
-
-            if (key > 0)
+            // Save current key and its state
+            // NOTE: Android key action is 0 for down and 1 for up
+            if (AKeyEvent_getAction(event) == AKEY_EVENT_ACTION_DOWN)
             {
-                // Save current key and its state
-                // NOTE: Android key action is 0 for down and 1 for up
-                if (AKeyEvent_getAction(event) == AKEY_EVENT_ACTION_DOWN)
-                {
-                    CORE.Input.Keyboard.currentKeyState[key] = 1;   // Key down
+                CORE.Input.Keyboard.currentKeyState[key] = 1;   // Key down
 
-                    CORE.Input.Keyboard.keyPressedQueue[CORE.Input.Keyboard.keyPressedQueueCount] = key;
-                    CORE.Input.Keyboard.keyPressedQueueCount++;
-                }
-                else if (AKeyEvent_getAction(event) == AKEY_EVENT_ACTION_MULTIPLE) CORE.Input.Keyboard.keyRepeatInFrame[key] = 1;
-                else CORE.Input.Keyboard.currentKeyState[key] = 0;  // Key up
+                CORE.Input.Keyboard.keyPressedQueue[CORE.Input.Keyboard.keyPressedQueueCount] = key;
+                CORE.Input.Keyboard.keyPressedQueueCount++;
             }
+            else if (AKeyEvent_getAction(event) == AKEY_EVENT_ACTION_MULTIPLE) CORE.Input.Keyboard.keyRepeatInFrame[key] = 1;
+            else CORE.Input.Keyboard.currentKeyState[key] = 0;  // Key up
         }
 
         if (keycode == AKEYCODE_POWER)
