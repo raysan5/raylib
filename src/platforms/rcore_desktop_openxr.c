@@ -117,6 +117,18 @@ typedef struct {
 
     XrViewConfigurationView* viewconfig_views;
 
+    XrSwapchain* swapchains;
+    uint32_t* swapchain_lengths;
+    XrSwapchainImageOpenGLKHR** images;
+
+    unsigned int fbo;
+
+    XrView* views;
+
+    XrCompositionLayerProjectionView* projection_views;
+
+    XrCompositionLayerProjection layer_projection;
+
 #if defined(_WIN32)
     XrGraphicsBindingOpenGLWin32KHR graphics_binding_gl;
 #else
@@ -1598,6 +1610,8 @@ int InitPlatform(void)
     platform.form_factor = XR_FORM_FACTOR_HEAD_MOUNTED_DISPLAY;
     platform.play_space_type = XR_REFERENCE_SPACE_TYPE_STAGE;
 
+    platform.layer_projection = { .type = XR_TYPE_COMPOSITION_LAYER_PROJECTION };
+
     uint32_t ext_count = 0;
     result = xrEnumerateInstanceExtensionProperties(NULL, 0, &ext_count, NULL);
     if (XR_FAILED(result)) {
@@ -1714,6 +1728,143 @@ int InitPlatform(void)
     if (XR_FAILED(result)) {
         TRACELOG(LOG_FATAL, "Failed to get OpenGL graphics requirements!\n");
         return -1;
+    }
+
+#if defined(_WIN32)
+    platform.graphics_binding_gl = (XrGraphicsBindingOpenGLWin32KHR){
+        .type = XR_TYPE_GRAPHICS_BINDING_OPENGL_WIN32_KHR,
+        .next = NULL,
+        .hDC = wglGetCurrentDC(),
+        .hGLRC = wglGetCurrentContext()
+    };
+#else
+    // TODO: Figure out if this works without the rest of the data
+    platform.graphics_binding_gl = (XrGraphicsBindingOpenGLXlibKHR){
+        .type = XR_TYPE_GRAPHICS_BINDING_OPENGL_XLIB_KHR,
+        .next = NULL,
+    };
+#endif
+    
+    XrSessionCreateInfo session_create_info = {
+        .type = XR_TYPE_SESSION_CREATE_INFO,
+        .next = &(platform.graphics_binding_gl),
+        .systemId = platform.system_id
+    };
+
+    result = xrCreateSession(platform.instance, &session_create_info, &(platform.session));
+    if (XR_FAILED(result)) {
+        TRACELOG(LOG_FATAL, "Failed to session\n");
+        return -1;
+    }
+
+    XrPosef identity_pose = {
+        .orientation = {.x = 0, .y = 0, .z = 0, .w = 1.0},
+        .position = {.x = 0, .y = 0, .z = 0}
+    };
+
+    XrReferenceSpaceCreateInfo play_space_create_info = {
+        .type = XR_TYPE_REFERENCE_SPACE_CREATE_INFO,
+        .next = NULL,
+        .referenceSpaceType = platform.play_space_type,
+        .poseInReferenceSpace = identity_pose
+    };
+
+    result = xrCreateReferenceSpace(platform.session, &play_space_create_info, &(platform.play_space));
+    if (XR_FAILED(result)) {
+        TRACELOG(LOG_FATAL, "Failed to create play space\n");
+        return -1;
+    }
+
+    XrReferenceSpaceCreateInfo view_space_create_info = {
+        .type = XR_TYPE_REFERENCE_SPACE_CREATE_INFO,
+        .next = NULL,
+        .referenceSpaceType = XR_REFERENCE_SPACE_TYPE_VIEW,
+        .poseInReferenceSpace = identity_pose
+    };
+
+    result = xrCreateReferenceSpace(platform.session, &view_space_create_info, &(platform.view_space));
+    if (XR_FAILED(result)) {
+        TRACELOG(LOG_FATAL, "Failed to create view space\n");
+        return -1;
+    }
+
+    uint32_t supported_gl_internal_format_count;
+    result = xrEnumerateSwapchainFormats(platform.session, 0, &supported_gl_internal_format_count, NULL);
+    if (XR_FAILED(result)) {
+        TRACELOG(LOG_FATAL, "Failed to get number of supported swapchain formats\n");
+        return -1;
+    }
+
+    int64_t swapchain_formats[swapchain_format_count];
+    result = xrEnumerateSwapchainFormats(platform.session, supported_gl_internal_format_count, &supported_gl_internal_format_count, supported_gl_internal_formats);
+    if (XR_FAILED(result)) {
+        TRACELOG(LOG_FATAL, "Failed to enumerate swapchain formats\n");
+        return -1;
+    }
+
+    uint32_t swapchain_width = 0;
+    for (uint32_t i = 0; i < view_count; i++) {
+        swapchain_width += platform.viewconfig_views[i].recommendedImageRectWidth;
+    }
+
+    platform.fbo = rlLoadFramebuffer(swapchain_width, platform.viewconfig_views[0].recommendedImageRectHeight);
+
+    int64_t color_gl_internal_format = GL_SRGB8_ALPHA8_EXT;
+
+    platform.swapchains = malloc(sizeof(XrSwapchain) * view_count);
+    platform.swapchain_lengths = = malloc(sizeof(uint32_t) * view_count);
+    platform.images = malloc(sizeof(XrSwapchainImageOpenGLKHR*) * view_count);
+    XrSwapchainCreateInfo swapchain_create_info = {
+        .type = XR_TYPE_SWAPCHAIN_CREATE_INFO,
+        .next = NULL,
+        .createFlags = 0,
+        .usageFlags = XR_SWAPCHAIN_USAGE_SAMPLED_BIT | XR_SWAPCHAIN_USAGE_COLOR_ATTACHMENT_BIT,
+        .format = color_gl_internal_format,
+        .sampleCount = platform.viewconfig_views[0].recommendedSwapchainSampleCount,
+        .width = swapchain_width,
+        .height = platform.viewconfig_views[0].recommendedImageRectHeight,
+        .faceCount = 1,
+        .arraySize = 1,
+        .mipCount = 1
+    };
+
+    result = xrCreateSwapchain(platform.session, &swapchain_create_info, &(platform.swapchains[0]));
+    if (XR_FAILED(result)) {
+        TRACELOG(LOG_FATAL, "Failed to create swapchain!\n");
+        return -1;
+    }
+
+    result = xrEnumerateSwapchainImages(platform.swapchains[0], 0, &(platform.swapchain_lengths[0]), NULL);
+    if (XR_FAILED(result)) {
+        TRACELOG(LOG_FATAL, "Failed to enumerate swapchains\n");
+        return -1;
+    }
+
+    platform.images[0] = malloc(sizeof(XrSwapchainImageOpenGLKHR) * platform.swapchain_lengths[0]);
+
+    for (uint32_t j = 0; j < swapchain_lengths[i]; j++) {
+        platform.images[0][j].type = XR_TYPE_SWAPCHAIN_IMAGE_OPENGL_KHR;
+        platform.images[0][j].next = NULL;
+    }
+
+    result = xrEnumerateSwapchainImages(platform.swapchains[0], platform.swapchain_lengths[0], &(platform.swapchain_lengths[0]), (XrSwapchainImageBaseHeader*)(platform.images[0]));
+    if (XR_FAILED(result)) {
+        TRACELOG(LOG_FATAL, "Failed to enumerate swapchains\n");
+        return -1;
+    }
+
+    platform.views = (XrView*)malloc(sizeof(XrView) * view_count);
+
+    platform.projection_views = (XrCompositionLayerProjectionView*)malloc(sizeof(XrCompositionLayerProjectionView) * view_count);
+    for (uint32_t i = 0; i < view_count; i++) {
+        platform.projection_views[0].type = XR_TYPE_COMPOSITION_LAYER_PROJECTION_VIEW;
+        platform.projection_views[0].next = NULL;
+        platform.projection_views[0].subImage.swapchain = platform.swapchains[0];
+        platform.projection_views[0].subImage.imageArrayIndex = 0;
+        platform.projection_views[0].subImage.imageRect.offset.x = i * platform.viewconfig_views[i].recommendedImageRectWidth;
+        platform.projection_views[0].subImage.imageRect.offset.y = 0;
+        platform.projection_views[0].subImage.imageRect.extent.width = i * platform.viewconfig_views[i].recommendedImageRectWidth;
+        platform.projection_views[0].subImage.imageRect.extent.height = i * platform.viewconfig_views[i].recommendedImageRectHeight;
     }
 
     return 0;
