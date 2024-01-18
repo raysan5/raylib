@@ -717,7 +717,7 @@ Enum 03: KeyboardKey (110 values)
   Value[KEY_KP_ENTER]: 335
   Value[KEY_KP_EQUAL]: 336
   Value[KEY_BACK]: 4
-  Value[KEY_MENU]: 82
+  Value[KEY_MENU]: 5
   Value[KEY_VOLUME_UP]: 24
   Value[KEY_VOLUME_DOWN]: 25
 Enum 04: MouseButton (7 values)
