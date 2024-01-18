@@ -164,7 +164,7 @@ static const KeyboardKey KeycodeMap[KEYCODE_MAP_SIZE] = {
     0,                  // AKEYCODE_HEADSETHOOK
     0,                  // AKEYCODE_FOCUS
     0,                  // AKEYCODE_PLUS
-    0,                  // AKEYCODE_MENU
+    KEY_MENU,           // AKEYCODE_MENU
     0,                  // AKEYCODE_NOTIFICATION
     0,                  // AKEYCODE_SEARCH
     0,                  // AKEYCODE_MEDIA_PLAY_PAUSE
