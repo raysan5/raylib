@@ -999,13 +999,13 @@ void DisableCursor(void)
 // Start the frame
 void StartFrame(void)
 {
-    TRACELOG(LOG_WARNING, "StartFrame() not implemented on target platform");
+    // This is a stub
 }
 
 // End the frame
 void EndFrame(void)
 {
-    TRACELOG(LOG_WARNING, "EndFrame() not implemented on target platform");
+    // This is a stub
 }
 
 // Swap back buffer with front buffer (screen drawing)
