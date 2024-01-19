@@ -815,6 +815,7 @@ void ClearBackground(Color color)
 // Setup canvas (framebuffer) to start drawing
 void BeginDrawing(void)
 {
+    StartFrame();
     // WARNING: Previously to BeginDrawing() other render textures drawing could happen,
     // consequently the measure for update vs draw is not accurate (only the total frame time is accurate)
 
@@ -933,6 +934,8 @@ void EndDrawing(void)
 #endif  // SUPPORT_SCREEN_CAPTURE
 
     CORE.Time.frameCounter++;
+
+    EndFrame();
 }
 
 // Initialize 2D mode with custom camera (2D)

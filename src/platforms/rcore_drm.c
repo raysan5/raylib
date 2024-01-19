@@ -451,6 +451,18 @@ void DisableCursor(void)
     CORE.Input.Mouse.cursorHidden = true;
 }
 
+// Start the frame
+void StartFrame(void)
+{
+    TRACELOG(LOG_WARNING, "StartFrame() not implemented on target platform");
+}
+
+// End the frame
+void EndFrame(void)
+{
+    TRACELOG(LOG_WARNING, "EndFrame() not implemented on target platform");
+}
+
 // Swap back buffer with front buffer (screen drawing)
 void SwapScreenBuffer(void)
 {

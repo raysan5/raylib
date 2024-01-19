@@ -1067,6 +1067,8 @@ RLAPI int GetFPS(void);                                           // Get current
 // NOTE: Those functions are intended for advance users that want full control over the frame processing
 // By default EndDrawing() does this job: draws everything + SwapScreenBuffer() + manage frame timing + PollInputEvents()
 // To avoid that behaviour and control frame processes manually, enable in config.h: SUPPORT_CUSTOM_FRAME_CONTROL
+RLAPI void StartFrame(void);                                      // Start the frame
+RLAPI void EndFrame(void);                                        // End the frame
 RLAPI void SwapScreenBuffer(void);                                // Swap back buffer with front buffer (screen drawing)
 RLAPI void PollInputEvents(void);                                 // Register all input events
 RLAPI void WaitTime(double seconds);                              // Wait for some time (halt program execution)
