@@ -2297,6 +2297,7 @@ static GlyphInfo *LoadBDFFontData(const unsigned char *fileData, int dataSize, i
     int fontBBh = 0;            // Font base character bounding box height
     int fontBBxoff0 = 0;        // Font base character bounding box X0 offset
     int fontBByoff0 = 0;        // Font base character bounding box Y0 offset
+    int fontAscent = 0;         // Font ascent
 
     bool charStarted = false;           // Has character started (STARTCHAR)
     bool charBitmapStarted = false;     // Has bitmap data started (BITMAP)
@@ -2413,7 +2414,7 @@ static GlyphInfo *LoadBDFFontData(const unsigned char *fileData, int dataSize, i
                 {
                     charGlyphInfo->value = charEncoding;
                     charGlyphInfo->offsetX = charBBxoff0 + fontBByoff0;
-                    charGlyphInfo->offsetY = fontBBh - (charBBh + charBByoff0 + fontBByoff0);
+                    charGlyphInfo->offsetY = fontBBh - (charBBh + charBByoff0 + fontBByoff0 + fontAscent);
                     charGlyphInfo->advanceX = charDWidthX;
 
                     charGlyphInfo->image.data = RL_CALLOC(charBBw * charBBh, 1);
@@ -2462,6 +2463,13 @@ static GlyphInfo *LoadBDFFontData(const unsigned char *fileData, int dataSize, i
             if (strstr(buffer, "FONTBOUNDINGBOX") != NULL)
             {
                 readVars = sscanf(buffer, "FONTBOUNDINGBOX %i %i %i %i", &fontBBw, &fontBBh, &fontBBxoff0, &fontBByoff0);
+                continue;
+            }
+
+            // FONT_ASCENT
+            if (strstr(buffer, "FONT_ASCENT") != NULL)
+            {
+                readVars = sscanf(buffer, "FONT_ASCENT %i", &fontAscent);
                 continue;
             }
 
