@@ -437,7 +437,7 @@
             <Value name="KEY_KP_ENTER" integer="335" desc="Key: Keypad Enter" />
             <Value name="KEY_KP_EQUAL" integer="336" desc="Key: Keypad =" />
             <Value name="KEY_BACK" integer="4" desc="Key: Android back button" />
-            <Value name="KEY_MENU" integer="82" desc="Key: Android menu button" />
+            <Value name="KEY_MENU" integer="5" desc="Key: Android menu button" />
             <Value name="KEY_VOLUME_UP" integer="24" desc="Key: Android volume up button" />
             <Value name="KEY_VOLUME_DOWN" integer="25" desc="Key: Android volume down button" />
         </Enum>

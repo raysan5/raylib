@@ -78,6 +78,175 @@ extern CoreData CORE;                   // Global CORE state context
 static PlatformData platform = { 0 };   // Platform specific data
 
 //----------------------------------------------------------------------------------
+// Local Variables Definition
+//----------------------------------------------------------------------------------
+#define KEYCODE_MAP_SIZE 162
+static const KeyboardKey KeycodeMap[KEYCODE_MAP_SIZE] = {
+    KEY_NULL,           // AKEYCODE_UNKNOWN
+    0,                  // AKEYCODE_SOFT_LEFT
+    0,                  // AKEYCODE_SOFT_RIGHT
+    0,                  // AKEYCODE_HOME
+    KEY_BACK,           // AKEYCODE_BACK
+    0,                  // AKEYCODE_CALL
+    0,                  // AKEYCODE_ENDCALL
+    KEY_ZERO,           // AKEYCODE_0
+    KEY_ONE,            // AKEYCODE_1
+    KEY_TWO,            // AKEYCODE_2
+    KEY_THREE,          // AKEYCODE_3
+    KEY_FOUR,           // AKEYCODE_4
+    KEY_FIVE,           // AKEYCODE_5
+    KEY_SIX,            // AKEYCODE_6
+    KEY_SEVEN,          // AKEYCODE_7
+    KEY_EIGHT,          // AKEYCODE_8
+    KEY_NINE,           // AKEYCODE_9
+    0,                  // AKEYCODE_STAR
+    0,                  // AKEYCODE_POUND
+    KEY_UP,             // AKEYCODE_DPAD_UP
+    KEY_DOWN,           // AKEYCODE_DPAD_DOWN
+    KEY_LEFT,           // AKEYCODE_DPAD_LEFT
+    KEY_RIGHT,          // AKEYCODE_DPAD_RIGHT
+    0,                  // AKEYCODE_DPAD_CENTER
+    KEY_VOLUME_UP,      // AKEYCODE_VOLUME_UP
+    KEY_VOLUME_DOWN,    // AKEYCODE_VOLUME_DOWN
+    0,                  // AKEYCODE_POWER
+    0,                  // AKEYCODE_CAMERA
+    0,                  // AKEYCODE_CLEAR
+    KEY_A,              // AKEYCODE_A
+    KEY_B,              // AKEYCODE_B
+    KEY_C,              // AKEYCODE_C
+    KEY_D,              // AKEYCODE_D
+    KEY_E,              // AKEYCODE_E
+    KEY_F,              // AKEYCODE_F
+    KEY_G,              // AKEYCODE_G
+    KEY_H,              // AKEYCODE_H
+    KEY_I,              // AKEYCODE_I
+    KEY_J,              // AKEYCODE_J
+    KEY_K,              // AKEYCODE_K
+    KEY_L,              // AKEYCODE_L
+    KEY_M,              // AKEYCODE_M
+    KEY_N,              // AKEYCODE_N
+    KEY_O,              // AKEYCODE_O
+    KEY_P,              // AKEYCODE_P
+    KEY_Q,              // AKEYCODE_Q
+    KEY_R,              // AKEYCODE_R
+    KEY_S,              // AKEYCODE_S
+    KEY_T,              // AKEYCODE_T
+    KEY_U,              // AKEYCODE_U
+    KEY_V,              // AKEYCODE_V
+    KEY_W,              // AKEYCODE_W
+    KEY_X,              // AKEYCODE_X
+    KEY_Y,              // AKEYCODE_Y
+    KEY_Z,              // AKEYCODE_Z
+    KEY_COMMA,          // AKEYCODE_COMMA
+    KEY_PERIOD,         // AKEYCODE_PERIOD
+    KEY_LEFT_ALT,       // AKEYCODE_ALT_LEFT
+    KEY_RIGHT_ALT,      // AKEYCODE_ALT_RIGHT
+    KEY_LEFT_SHIFT,     // AKEYCODE_SHIFT_LEFT
+    KEY_RIGHT_SHIFT,    // AKEYCODE_SHIFT_RIGHT
+    KEY_TAB,            // AKEYCODE_TAB
+    KEY_SPACE,          // AKEYCODE_SPACE
+    0,                  // AKEYCODE_SYM
+    0,                  // AKEYCODE_EXPLORER
+    0,                  // AKEYCODE_ENVELOPE
+    KEY_ENTER,          // AKEYCODE_ENTER
+    KEY_BACKSPACE,      // AKEYCODE_DEL
+    KEY_GRAVE,          // AKEYCODE_GRAVE
+    KEY_MINUS,          // AKEYCODE_MINUS
+    KEY_EQUAL,          // AKEYCODE_EQUALS
+    KEY_LEFT_BRACKET,   // AKEYCODE_LEFT_BRACKET
+    KEY_RIGHT_BRACKET,  // AKEYCODE_RIGHT_BRACKET
+    KEY_BACKSLASH,      // AKEYCODE_BACKSLASH
+    KEY_SEMICOLON,      // AKEYCODE_SEMICOLON
+    KEY_APOSTROPHE,     // AKEYCODE_APOSTROPHE
+    KEY_SLASH,          // AKEYCODE_SLASH
+    0,                  // AKEYCODE_AT
+    0,                  // AKEYCODE_NUM
+    0,                  // AKEYCODE_HEADSETHOOK
+    0,                  // AKEYCODE_FOCUS
+    0,                  // AKEYCODE_PLUS
+    KEY_MENU,           // AKEYCODE_MENU
+    0,                  // AKEYCODE_NOTIFICATION
+    0,                  // AKEYCODE_SEARCH
+    0,                  // AKEYCODE_MEDIA_PLAY_PAUSE
+    0,                  // AKEYCODE_MEDIA_STOP
+    0,                  // AKEYCODE_MEDIA_NEXT
+    0,                  // AKEYCODE_MEDIA_PREVIOUS
+    0,                  // AKEYCODE_MEDIA_REWIND
+    0,                  // AKEYCODE_MEDIA_FAST_FORWARD
+    0,                  // AKEYCODE_MUTE
+    KEY_PAGE_UP,        // AKEYCODE_PAGE_UP
+    KEY_PAGE_DOWN,      // AKEYCODE_PAGE_DOWN
+    0,                  // AKEYCODE_PICTSYMBOLS
+    0,                  // AKEYCODE_SWITCH_CHARSET
+    0,                  // AKEYCODE_BUTTON_A
+    0,                  // AKEYCODE_BUTTON_B
+    0,                  // AKEYCODE_BUTTON_C
+    0,                  // AKEYCODE_BUTTON_X
+    0,                  // AKEYCODE_BUTTON_Y
+    0,                  // AKEYCODE_BUTTON_Z
+    0,                  // AKEYCODE_BUTTON_L1
+    0,                  // AKEYCODE_BUTTON_R1
+    0,                  // AKEYCODE_BUTTON_L2
+    0,                  // AKEYCODE_BUTTON_R2
+    0,                  // AKEYCODE_BUTTON_THUMBL
+    0,                  // AKEYCODE_BUTTON_THUMBR
+    0,                  // AKEYCODE_BUTTON_START
+    0,                  // AKEYCODE_BUTTON_SELECT
+    0,                  // AKEYCODE_BUTTON_MODE
+    KEY_ESCAPE,         // AKEYCODE_ESCAPE
+    KEY_DELETE,         // AKEYCODE_FORWARD_DELL
+    KEY_LEFT_CONTROL,   // AKEYCODE_CTRL_LEFT
+    KEY_RIGHT_CONTROL,  // AKEYCODE_CTRL_RIGHT
+    KEY_CAPS_LOCK,      // AKEYCODE_CAPS_LOCK
+    KEY_SCROLL_LOCK,    // AKEYCODE_SCROLL_LOCK
+    KEY_LEFT_SUPER,     // AKEYCODE_META_LEFT
+    KEY_RIGHT_SUPER,    // AKEYCODE_META_RIGHT
+    0,                  // AKEYCODE_FUNCTION
+    KEY_PRINT_SCREEN,   // AKEYCODE_SYSRQ
+    KEY_PAUSE,          // AKEYCODE_BREAK
+    KEY_HOME,           // AKEYCODE_MOVE_HOME
+    KEY_END,            // AKEYCODE_MOVE_END
+    KEY_INSERT,         // AKEYCODE_INSERT
+    0,                  // AKEYCODE_FORWARD
+    0,                  // AKEYCODE_MEDIA_PLAY
+    0,                  // AKEYCODE_MEDIA_PAUSE
+    0,                  // AKEYCODE_MEDIA_CLOSE
+    0,                  // AKEYCODE_MEDIA_EJECT
+    0,                  // AKEYCODE_MEDIA_RECORD
+    KEY_F1,             // AKEYCODE_F1
+    KEY_F2,             // AKEYCODE_F2
+    KEY_F3,             // AKEYCODE_F3
+    KEY_F4,             // AKEYCODE_F4
+    KEY_F5,             // AKEYCODE_F5
+    KEY_F6,             // AKEYCODE_F6
+    KEY_F7,             // AKEYCODE_F7
+    KEY_F8,             // AKEYCODE_F8
+    KEY_F9,             // AKEYCODE_F9
+    KEY_F10,            // AKEYCODE_F10
+    KEY_F11,            // AKEYCODE_F11
+    KEY_F12,            // AKEYCODE_F12
+    KEY_NUM_LOCK,       // AKEYCODE_NUM_LOCK
+    KEY_KP_0,           // AKEYCODE_NUMPAD_0
+    KEY_KP_1,           // AKEYCODE_NUMPAD_1
+    KEY_KP_2,           // AKEYCODE_NUMPAD_2
+    KEY_KP_3,           // AKEYCODE_NUMPAD_3
+    KEY_KP_4,           // AKEYCODE_NUMPAD_4
+    KEY_KP_5,           // AKEYCODE_NUMPAD_5
+    KEY_KP_6,           // AKEYCODE_NUMPAD_6
+    KEY_KP_7,           // AKEYCODE_NUMPAD_7
+    KEY_KP_8,           // AKEYCODE_NUMPAD_8
+    KEY_KP_9,           // AKEYCODE_NUMPAD_9
+    KEY_KP_DIVIDE,      // AKEYCODE_NUMPAD_DIVIDE
+    KEY_KP_MULTIPLY,    // AKEYCODE_NUMPAD_MULTIPLY
+    KEY_KP_SUBTRACT,    // AKEYCODE_NUMPAD_SUBTRACT
+    KEY_KP_ADD,         // AKEYCODE_NUMPAD_ADD
+    KEY_KP_DECIMAL,     // AKEYCODE_NUMPAD_DOT
+    0,                  // AKEYCODE_NUMPAD_COMMA
+    KEY_KP_ENTER,       // AKEYCODE_NUMPAD_ENTER
+    KEY_KP_EQUAL        // AKEYCODE_NUMPAD_EQUALS
+};
+
+//----------------------------------------------------------------------------------
 // Module Internal Functions Declaration
 //----------------------------------------------------------------------------------
 int InitPlatform(void);          // Initialize platform (graphics, inputs and more)
@@ -1016,17 +1185,21 @@ static int32_t AndroidInputCallback(struct android_app *app, AInputEvent *event)
             return 1; // Handled gamepad button
         }
 
-        // Save current button and its state
-        // NOTE: Android key action is 0 for down and 1 for up
-        if (AKeyEvent_getAction(event) == AKEY_EVENT_ACTION_DOWN)
+        KeyboardKey key = (keycode > 0 && keycode < KEYCODE_MAP_SIZE) ? KeycodeMap[keycode] : KEY_NULL;
+        if (key != KEY_NULL)
         {
-            CORE.Input.Keyboard.currentKeyState[keycode] = 1;   // Key down
+            // Save current key and its state
+            // NOTE: Android key action is 0 for down and 1 for up
+            if (AKeyEvent_getAction(event) == AKEY_EVENT_ACTION_DOWN)
+            {
+                CORE.Input.Keyboard.currentKeyState[key] = 1;   // Key down
 
-            CORE.Input.Keyboard.keyPressedQueue[CORE.Input.Keyboard.keyPressedQueueCount] = keycode;
-            CORE.Input.Keyboard.keyPressedQueueCount++;
+                CORE.Input.Keyboard.keyPressedQueue[CORE.Input.Keyboard.keyPressedQueueCount] = key;
+                CORE.Input.Keyboard.keyPressedQueueCount++;
+            }
+            else if (AKeyEvent_getAction(event) == AKEY_EVENT_ACTION_MULTIPLE) CORE.Input.Keyboard.keyRepeatInFrame[key] = 1;
+            else CORE.Input.Keyboard.currentKeyState[key] = 0;  // Key up
         }
-        else if (AKeyEvent_getAction(event) == AKEY_EVENT_ACTION_MULTIPLE) CORE.Input.Keyboard.keyRepeatInFrame[keycode] = 1;
-        else CORE.Input.Keyboard.currentKeyState[keycode] = 0;  // Key up
 
         if (keycode == AKEYCODE_POWER)
         {
