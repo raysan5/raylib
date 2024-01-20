@@ -82,6 +82,19 @@
 *
 **********************************************************************************************/
 
+//----------------------------------------------------------------------------------
+// Feature Test Macros required for this module
+//----------------------------------------------------------------------------------
+#if (defined(__linux__) || defined(PLATFORM_WEB)) && (_XOPEN_SOURCE < 500)
+    #undef _XOPEN_SOURCE
+    #define _XOPEN_SOURCE 500 // Required for: readlink if compiled with c99 without gnu ext.
+#endif
+
+#if (defined(__linux__) || defined(PLATFORM_WEB)) && (_POSIX_C_SOURCE < 199309L)
+    #undef _POSIX_C_SOURCE
+    #define _POSIX_C_SOURCE 199309L // Required for: CLOCK_MONOTONIC if compiled with c99 without gnu ext.
+#endif
+
 #include "raylib.h"                 // Declares module functions
 
 // Check if config flags have been externally provided on compilation line
@@ -234,11 +247,6 @@ __declspec(dllimport) int __stdcall WideCharToMultiByte(unsigned int cp, unsigne
 #define FLAG_CLEAR(n, f) ((n) &= ~(f))
 #define FLAG_TOGGLE(n, f) ((n) ^= (f))
 #define FLAG_CHECK(n, f) ((n) & (f))
-
-#if (defined(__linux__) || defined(PLATFORM_WEB)) && (_POSIX_C_SOURCE < 199309L)
-    #undef _POSIX_C_SOURCE
-    #define _POSIX_C_SOURCE 199309L // Required for: CLOCK_MONOTONIC if compiled with c99 without gnu ext.
-#endif
 
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
