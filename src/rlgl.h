@@ -1734,7 +1734,7 @@ unsigned int rlGetActiveFramebuffer(void)
     glGetIntegerv(GL_DRAW_FRAMEBUFFER_BINDING, &fboId);
     return fboId;
 #endif
-	return 0;
+    return 0;
 }
 
 // Disable rendering to texture
