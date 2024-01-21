@@ -1218,6 +1218,19 @@ void PollInputEvents(void)
 // Module Internal Functions Definition
 //----------------------------------------------------------------------------------
 
+static void SetDimensionsFromMonitor(GLFWmonitor *monitor)
+{
+  const GLFWvidmode *mode = glfwGetVideoMode(monitor);
+
+  // Default display resolution to that of the current mode
+  CORE.Window.display.width = mode->width;
+  CORE.Window.display.height = mode->height;
+
+  // Set screen width/height to the display width/height if they are 0
+  if (CORE.Window.screen.width == 0) CORE.Window.screen.width = CORE.Window.display.width;
+  if (CORE.Window.screen.height == 0) CORE.Window.screen.height = CORE.Window.display.height;
+}
+
 // Initialize platform: graphics, inputs and more
 int InitPlatform(void)
 {
@@ -1358,26 +1371,21 @@ int InitPlatform(void)
     // REF: https://github.com/raysan5/raylib/issues/1554
     glfwSetJoystickCallback(NULL);
 
-    // Find monitor resolution
-    GLFWmonitor *monitor = glfwGetPrimaryMonitor();
-    if (!monitor)
-    {
-        TRACELOG(LOG_WARNING, "GLFW: Failed to get primary monitor");
-        return -1;
-    }
-
-    const GLFWvidmode *mode = glfwGetVideoMode(monitor);
-
-    CORE.Window.display.width = mode->width;
-    CORE.Window.display.height = mode->height;
-
-    // Set screen width/height to the display width/height if they are 0
-    if (CORE.Window.screen.width == 0) CORE.Window.screen.width = CORE.Window.display.width;
-    if (CORE.Window.screen.height == 0) CORE.Window.screen.height = CORE.Window.display.height;
-
     if (CORE.Window.fullscreen)
     {
-        // remember center for switchinging from fullscreen to window
+        // According to glfwCreateWindow(), if the user does not have a choice, fullscreen applications
+        // should default to the primary monitor.
+
+        GLFWmonitor *monitor = glfwGetPrimaryMonitor();
+        if (!monitor)
+        {
+          TRACELOG(LOG_WARNING, "GLFW: Failed to get primary monitor");
+          return -1;
+        }
+
+        SetDimensionsFromMonitor(monitor);
+
+        // remember center for switching from fullscreen to window
         if ((CORE.Window.screen.height == CORE.Window.display.height) && (CORE.Window.screen.width == CORE.Window.display.width))
         {
             // If screen width/height equal to the display, we can't calculate the window pos for toggling full-screened/windowed.
@@ -1396,7 +1404,7 @@ int InitPlatform(void)
 
         // Obtain recommended CORE.Window.display.width/CORE.Window.display.height from a valid videomode for the monitor
         int count = 0;
-        const GLFWvidmode *modes = glfwGetVideoModes(glfwGetPrimaryMonitor(), &count);
+        const GLFWvidmode *modes = glfwGetVideoModes(monitor, &count);
 
         // Get closest video mode to desired CORE.Window.screen.width/CORE.Window.screen.height
         for (int i = 0; i < count; i++)
@@ -1426,21 +1434,54 @@ int InitPlatform(void)
         // HighDPI monitors are properly considered in a following similar function: SetupViewport()
         SetupFramebuffer(CORE.Window.display.width, CORE.Window.display.height);
 
-        platform.handle = glfwCreateWindow(CORE.Window.display.width, CORE.Window.display.height, (CORE.Window.title != 0)? CORE.Window.title : " ", glfwGetPrimaryMonitor(), NULL);
+        platform.handle = glfwCreateWindow(CORE.Window.display.width, CORE.Window.display.height, (CORE.Window.title != 0)? CORE.Window.title : " ", monitor, NULL);
 
         // NOTE: Full-screen change, not working properly...
         //glfwSetWindowMonitor(platform.handle, glfwGetPrimaryMonitor(), 0, 0, CORE.Window.screen.width, CORE.Window.screen.height, GLFW_DONT_CARE);
     }
     else
     {
+        // No-fullscreen window creation
+
         // If we are windowed fullscreen, ensures that window does not minimize when focus is lost
-        if ((CORE.Window.screen.height == CORE.Window.display.height) && (CORE.Window.screen.width == CORE.Window.display.width))
+        // TODO: 3693 This code will not work if the user already specified the correct monitor dimensions;
+        //       at this point we don't know the monitor's dimensions. (Though, how did the user then?)
+        if (((CORE.Window.screen.height == 0) && (CORE.Window.screen.width == 0)))
         {
             glfwWindowHint(GLFW_AUTO_ICONIFY, 0);
         }
 
-        // No-fullscreen window creation
-        platform.handle = glfwCreateWindow(CORE.Window.screen.width, CORE.Window.screen.height, (CORE.Window.title != 0)? CORE.Window.title : " ", NULL, NULL);
+        int creationWidth = CORE.Window.screen.width != 0 ? CORE.Window.screen.width : 1;
+        int creationHeight = CORE.Window.screen.height != 0 ? CORE.Window.screen.height : 1;
+
+        platform.handle = glfwCreateWindow(creationWidth, creationHeight, (CORE.Window.title != 0)? CORE.Window.title : " ", NULL, NULL);
+
+        // After the window was created, determine the monitor that the window manager assigned.
+        // Derive display sizes, and, if possible, window size in case it was zero at beginning.
+
+        int monitorCount = 0;
+        int monitorIndex = GetCurrentMonitor();
+        GLFWmonitor **monitors = glfwGetMonitors(&monitorCount);
+
+        if (monitorIndex < monitorCount)
+        {
+            // If window screen dimensions are zero (from user), then prepare to resize to monitor size.
+            bool resizeWindow = CORE.Window.screen.width == 0 && CORE.Window.screen.height == 0;
+            SetDimensionsFromMonitor(monitors[monitorIndex]);
+            if (resizeWindow)
+            {
+                glfwSetWindowSize(platform.handle, CORE.Window.screen.width, CORE.Window.screen.height);
+            }
+        }
+        else
+        {
+            // TODO: 3693 If the monitor is wrong/not known, what now? Core.Window.display.* will not be set to the current monitor then.
+            int width = 0;
+            int height = 0;
+            glfwGetWindowSize(platform.handle, &width, &height);
+            CORE.Window.screen.width = width;
+            CORE.Window.screen.height = height;
+        }
 
         if (platform.handle)
         {
@@ -1515,7 +1556,12 @@ int InitPlatform(void)
 
     // If graphic device is no properly initialized, we end program
     if (!CORE.Window.ready) { TRACELOG(LOG_FATAL, "PLATFORM: Failed to initialize graphic device"); return -1; }
-    else SetWindowPosition(GetMonitorWidth(GetCurrentMonitor())/2 - CORE.Window.screen.width/2, GetMonitorHeight(GetCurrentMonitor())/2 - CORE.Window.screen.height/2);
+    else
+    {
+        int currentMonitor = GetCurrentMonitor();
+        Vector2 monitorPos = GetMonitorPosition(currentMonitor);
+        SetWindowPosition(monitorPos.x + GetMonitorWidth(currentMonitor)/2 - CORE.Window.screen.width/2, monitorPos.y + GetMonitorHeight(currentMonitor)/2 - CORE.Window.screen.height/2);
+    }
 
     // Load OpenGL extensions
     // NOTE: GL procedures address loader is required to load extensions
