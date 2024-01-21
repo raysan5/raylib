@@ -2196,21 +2196,21 @@ bool CheckCollisionPointTriangle(Vector2 point, Vector2 p1, Vector2 p2, Vector2 
 // NOTE: Based on http://jeffreythompson.org/collision-detection/poly-point.php
 bool CheckCollisionPointPoly(Vector2 point, Vector2 *points, int pointCount)
 {
-    bool collision = false;
+    bool inside = false;
 
     if (pointCount > 2)
     {
-        for (int i = 0; i < pointCount - 1; i++)
+        for (int i = 0, j = pointCount - 1; i < pointCount; j = i++)
         {
-            Vector2 vc = points[i];
-            Vector2 vn = points[i + 1];
-
-            if ((((vc.y >= point.y) && (vn.y < point.y)) || ((vc.y < point.y) && (vn.y >= point.y))) &&
-                 (point.x < ((vn.x - vc.x)*(point.y - vc.y)/(vn.y - vc.y) + vc.x))) collision = !collision;
+            if ((points[i].y > point.y) != (points[j].y > point.y) &&
+                (point.x < (points[j].x - points[i].x) * (point.y - points[i].y) / (points[j].y - points[i].y) + points[i].x))
+            {
+                inside = !inside;
+            }
         }
     }
 
-    return collision;
+    return inside;
 }
 
 // Check collision between two rectangles
