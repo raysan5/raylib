@@ -1062,6 +1062,11 @@ void EndTextureMode(void)
     // Set viewport to default framebuffer size
     SetupViewport(CORE.Window.render.width, CORE.Window.render.height);
 
+    // go back to the modelview state from BeginDrawing since we are back to the default FBO
+	rlMatrixMode(RL_MODELVIEW);     // Switch back to modelview matrix
+	rlLoadIdentity();               // Reset current matrix (modelview)
+    rlMultMatrixf(MatrixToFloat(CORE.Window.screenScale)); // Apply screen scaling if required
+
     // Reset current fbo to screen size
     CORE.Window.currentFbo.width = CORE.Window.render.width;
     CORE.Window.currentFbo.height = CORE.Window.render.height;
