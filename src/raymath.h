@@ -253,6 +253,14 @@ RMAPI Vector2 Vector2Add(Vector2 v1, Vector2 v2)
     return result;
 }
 
+// Get direction vector of two points
+RMAPI Vector2 Vector2Dir(Vector2 p1, Vector2 p2)
+{
+    Vector2 result = { p2.x - p1.x, p2.y - p1.y };
+
+    return result;
+}
+
 // Add vector and float value
 RMAPI Vector2 Vector2AddValue(Vector2 v, float add)
 {
