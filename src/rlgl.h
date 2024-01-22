@@ -115,7 +115,7 @@
 #if defined(_WIN32) && defined(BUILD_LIBTYPE_SHARED)
     #define RLAPI __declspec(dllexport)     // We are building the library as a Win32 shared library (.dll)
 #elif defined(BUILD_LIBTYPE_SHARED)
-    #define RLAPI __attribute__((visibility("default"))) // We are building he library as a Unix shared library (.so/.dylib)
+    #define RLAPI __attribute__((visibility("default"))) // We are building the library as a Unix shared library (.so/.dylib)
 #elif defined(_WIN32) && defined(USE_LIBTYPE_SHARED)
     #define RLAPI __declspec(dllimport)     // We are using the library as a Win32 shared library (.dll)
 #endif
