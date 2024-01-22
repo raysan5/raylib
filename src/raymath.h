@@ -494,18 +494,18 @@ RMAPI Vector2 Vector2ClampValue(Vector2 v, float min, float max)
     {
         length = sqrtf(length);
 
+        float scale = 1;    // By default, 1 as the neutral element.
         if (length < min)
         {
-            float scale = min/length;
-            result.x = v.x*scale;
-            result.y = v.y*scale;
+            scale = min/length;
         }
         else if (length > max)
         {
-            float scale = max/length;
-            result.x = v.x*scale;
-            result.y = v.y*scale;
+            scale = max/length;
         }
+
+        result.x = v.x*scale;
+        result.y = v.y*scale;
     }
 
     return result;
@@ -1080,20 +1080,19 @@ RMAPI Vector3 Vector3ClampValue(Vector3 v, float min, float max)
     {
         length = sqrtf(length);
 
+        float scale = 1;    // By default, 1 as the neutral element.
         if (length < min)
         {
-            float scale = min/length;
-            result.x = v.x*scale;
-            result.y = v.y*scale;
-            result.z = v.z*scale;
+            scale = min/length;
         }
         else if (length > max)
         {
-            float scale = max/length;
-            result.x = v.x*scale;
-            result.y = v.y*scale;
-            result.z = v.z*scale;
+            scale = max/length;
         }
+
+        result.x = v.x*scale;
+        result.y = v.y*scale;
+        result.z = v.z*scale;
     }
 
     return result;
