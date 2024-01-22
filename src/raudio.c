@@ -988,7 +988,7 @@ void UnloadSound(Sound sound)
 
 void UnloadSoundAlias(Sound alias)
 {
-    // untrack and unload just the sound buffer, not the sample data, it is shared with the source for the alias
+    // Untrack and unload just the sound buffer, not the sample data, it is shared with the source for the alias
     if (alias.stream.buffer != NULL)
     {
         ma_data_converter_uninit(&alias.stream.buffer->converter, NULL);
@@ -1099,7 +1099,7 @@ bool ExportWaveAsCode(Wave wave, const char *fileName)
     strcpy(varFileName, GetFileNameWithoutExt(fileName));
     for (int i = 0; varFileName[i] != '\0'; i++) if (varFileName[i] >= 'a' && varFileName[i] <= 'z') { varFileName[i] = varFileName[i] - 32; }
 
-    //Add wave information
+    // Add wave information
     byteCount += sprintf(txtData + byteCount, "// Wave data information\n");
     byteCount += sprintf(txtData + byteCount, "#define %s_FRAME_COUNT      %u\n", varFileName, wave.frameCount);
     byteCount += sprintf(txtData + byteCount, "#define %s_SAMPLE_RATE      %u\n", varFileName, wave.sampleRate);
@@ -1405,7 +1405,7 @@ Music LoadMusicStream(const char *fileName)
             music.stream = LoadAudioStream(AUDIO.System.device.sampleRate, bits, AUDIO_DEVICE_CHANNELS);
             music.frameCount = (unsigned int)jar_xm_get_remaining_samples(ctxXm);    // NOTE: Always 2 channels (stereo)
             music.looping = true;   // Looping enabled by default
-            jar_xm_reset(ctxXm);    // make sure we start at the beginning of the song
+            jar_xm_reset(ctxXm);    // Make sure we start at the beginning of the song
             musicLoaded = true;
         }
     }
@@ -1596,7 +1596,7 @@ Music LoadMusicStreamFromMemory(const char *fileType, const unsigned char *data,
             music.stream = LoadAudioStream(AUDIO.System.device.sampleRate, bits, 2);
             music.frameCount = (unsigned int)jar_xm_get_remaining_samples(ctxXm);    // NOTE: Always 2 channels (stereo)
             music.looping = true;   // Looping enabled by default
-            jar_xm_reset(ctxXm);    // make sure we start at the beginning of the song
+            jar_xm_reset(ctxXm);    // Make sure we start at the beginning of the song
 
             music.ctxData = ctxXm;
             musicLoaded = true;
