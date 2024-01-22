@@ -174,7 +174,7 @@ typedef struct float16 {
 // Clamp float value
 RMAPI float Clamp(float value, float min, float max)
 {
-    float result = (value < min)? min : value;
+    float result = (value < min) ? min : value;
 
     if (result > max) result = max;
 
@@ -834,7 +834,7 @@ RMAPI Vector3 Vector3RotateByAxisAngle(Vector3 v, Vector3 axis, float angle)
     // Vector3Normalize(axis);
     float length = sqrtf(axis.x*axis.x + axis.y*axis.y + axis.z*axis.z);
     if (length == 0.0f) length = 1.0f;
-    float ilength = 1.0f / length;
+    float ilength = 1.0f/length;
     axis.x *= ilength;
     axis.y *= ilength;
     axis.z *= ilength;
@@ -1961,7 +1961,7 @@ RMAPI Quaternion QuaternionFromMatrix(Matrix mat)
     }
 
     float biggestVal = sqrtf(fourBiggestSquaredMinus1 + 1.0f)*0.5f;
-    float mult = 0.25f / biggestVal;
+    float mult = 0.25f/biggestVal;
 
     switch (biggestIndex)
     {
