@@ -45,7 +45,7 @@
 #endif
 
 #include <stdlib.h>                     // Required for: exit()
-#include <stdio.h>                      // Required for: FILE, fopen(), fseek(), ftell(), fread(), fwrite(), fprintf(), vprintf(), fclose()
+#include <stdio.h>                      // Required for: FILE, fopen(), fseek(), ftell(), fread(), fwrite(), fprintf(), vfprintf(), fclose()
 #include <stdarg.h>                     // Required for: va_list, va_start(), va_end()
 #include <string.h>                     // Required for: strcpy(), strcat()
 
@@ -147,8 +147,7 @@ void TraceLog(int logType, const char *text, ...)
     unsigned int textSize = (unsigned int)strlen(text);
     memcpy(buffer + strlen(buffer), text, (textSize < (MAX_TRACELOG_MSG_LENGTH - 12))? textSize : (MAX_TRACELOG_MSG_LENGTH - 12));
     strcat(buffer, "\n");
-    vprintf(buffer, args);
-    fflush(stdout);
+    vfprintf(stderr, buffer, args);
 #endif
 
     va_end(args);
