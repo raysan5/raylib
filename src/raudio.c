@@ -2745,9 +2745,19 @@ static bool SaveFileData(const char *fileName, void *data, int dataSize)
 
             fclose(file);
         }
-        else TRACELOG(LOG_WARNING, "FILEIO: [%s] Failed to open file", fileName);
+        else
+        {
+            TRACELOG(LOG_WARNING, "FILEIO: [%s] Failed to open file", fileName);
+            return false;
+        }
     }
-    else TRACELOG(LOG_WARNING, "FILEIO: File name provided is not valid");
+    else 
+    {
+        TRACELOG(LOG_WARNING, "FILEIO: File name provided is not valid");
+        return false;
+    }
+
+    return true;
 }
 
 // Save text data to file (write), string must be '\0' terminated
@@ -2766,9 +2776,19 @@ static bool SaveFileText(const char *fileName, char *text)
 
             fclose(file);
         }
-        else TRACELOG(LOG_WARNING, "FILEIO: [%s] Failed to open text file", fileName);
+        else
+        {
+            TRACELOG(LOG_WARNING, "FILEIO: [%s] Failed to open text file", fileName);
+            return false;
+        }
     }
-    else TRACELOG(LOG_WARNING, "FILEIO: File name provided is not valid");
+    else
+    {
+        TRACELOG(LOG_WARNING, "FILEIO: File name provided is not valid");
+        return false;
+    }
+
+    return true;
 }
 #endif
 
