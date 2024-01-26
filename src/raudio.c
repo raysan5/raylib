@@ -416,6 +416,8 @@ static void MixAudioFrames(float *framesOut, const float *framesIn, ma_uint32 fr
 #if defined(RAUDIO_STANDALONE)
 static bool IsFileExtension(const char *fileName, const char *ext); // Check file extension
 static const char *GetFileExtension(const char *fileName);          // Get pointer to extension for a filename string (includes the dot: .png)
+static const char *GetFileName(const char *filePath);               // Get pointer to filename for a path string
+static const char *GetFileNameWithoutExt(const char *filePath);     // Get filename string without extension (uses static string)
 
 static unsigned char *LoadFileData(const char *fileName, int *dataSize);    // Load file data as byte array (read)
 static bool SaveFileData(const char *fileName, void *data, int dataSize);   // Save data to file from byte array (write)
@@ -2640,6 +2642,50 @@ static const char *GetFileExtension(const char *fileName)
     if (!dot || dot == fileName) return NULL;
 
     return dot;
+}
+
+// String pointer reverse break: returns right-most occurrence of charset in s
+static const char *strprbrk(const char *s, const char *charset)
+{
+    const char *latestMatch = NULL;
+    for (; s = strpbrk(s, charset), s != NULL; latestMatch = s++) { }
+    return latestMatch;
+}
+
+// Get pointer to filename for a path string
+static const char *GetFileName(const char *filePath)
+{
+    const char *fileName = NULL;
+    if (filePath != NULL) fileName = strprbrk(filePath, "\\/");
+
+    if (!fileName) return filePath;
+
+    return fileName + 1;
+}
+
+// Get filename string without extension (uses static string)
+static const char *GetFileNameWithoutExt(const char *filePath)
+{
+    #define MAX_FILENAMEWITHOUTEXT_LENGTH   256
+
+    static char fileName[MAX_FILENAMEWITHOUTEXT_LENGTH] = { 0 };
+    memset(fileName, 0, MAX_FILENAMEWITHOUTEXT_LENGTH);
+
+    if (filePath != NULL) strcpy(fileName, GetFileName(filePath));   // Get filename with extension
+
+    int size = (int)strlen(fileName);   // Get size in bytes
+
+    for (int i = 0; (i < size) && (i < MAX_FILENAMEWITHOUTEXT_LENGTH); i++)
+    {
+        if (fileName[i] == '.')
+        {
+            // NOTE: We break on first '.' found
+            fileName[i] = '\0';
+            break;
+        }
+    }
+
+    return fileName;
 }
 
 // Load data from file into a buffer
