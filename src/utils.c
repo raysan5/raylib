@@ -102,6 +102,9 @@ static int android_close(void *cookie);
 // Set the current threshold (minimum) log level
 void SetTraceLogLevel(int logType) { logTypeLevel = logType; }
 
+// Get the current threshold (minimum) log level
+TraceLogLevel GetTraceLogLevel() { return logTypeLevel; }
+
 // Show trace log messages (LOG_INFO, LOG_WARNING, LOG_ERROR, LOG_DEBUG)
 void TraceLog(int logType, const char *text, ...)
 {
