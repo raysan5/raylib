@@ -621,7 +621,7 @@ RLAPI void rlDisableShader(void);                       // Disable shader progra
 // Framebuffer state
 RLAPI void rlEnableFramebuffer(unsigned int id);        // Enable render texture (fbo)
 RLAPI void rlDisableFramebuffer(void);                  // Disable render texture (fbo), return to default framebuffer
-RLAPI unsigned int rlGetActiveFramebuffer(void);        // Returns the active render texture (fbo), 0 for default framebuffer
+RLAPI unsigned int rlGetActiveFramebuffer(void);        // Get the currently active render texture (fbo), 0 for default framebuffer
 RLAPI void rlActiveDrawBuffers(int count);              // Activate multiple draw color buffers
 RLAPI void rlBlitFramebuffer(int srcX, int srcY, int srcWidth, int srcHeight, int dstX, int dstY, int dstWidth, int dstHeight, int bufferMask); // Blit active framebuffer to main framebuffer
 RLAPI void rlBindFramebuffer(unsigned int target, unsigned int framebuffer); // Bind framebuffer (FBO) 
@@ -1729,12 +1729,11 @@ void rlEnableFramebuffer(unsigned int id)
 // return the active render texture (fbo)
 unsigned int rlGetActiveFramebuffer(void)
 {
-#if (defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES3)) && defined(RLGL_RENDER_TEXTURES_HINT)
     GLint fboId = 0;
+#if (defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES3)) && defined(RLGL_RENDER_TEXTURES_HINT)
     glGetIntegerv(GL_DRAW_FRAMEBUFFER_BINDING, &fboId);
-    return fboId;
 #endif
-    return 0;
+    return fboId;
 }
 
 // Disable rendering to texture

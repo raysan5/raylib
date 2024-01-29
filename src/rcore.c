@@ -961,8 +961,7 @@ void EndMode2D(void)
 
     rlLoadIdentity();               // Reset current matrix (modelview)
 
-    if (rlGetActiveFramebuffer() == 0)
-        rlMultMatrixf(MatrixToFloat(CORE.Window.screenScale)); // Apply screen scaling if required
+    if (rlGetActiveFramebuffer() == 0) rlMultMatrixf(MatrixToFloat(CORE.Window.screenScale)); // Apply screen scaling if required
 }
 
 // Initializes 3D mode with custom camera (3D)
@@ -1015,8 +1014,7 @@ void EndMode3D(void)
     rlMatrixMode(RL_MODELVIEW);     // Switch back to modelview matrix
     rlLoadIdentity();               // Reset current matrix (modelview)
 
-    if (rlGetActiveFramebuffer() == 0)
-        rlMultMatrixf(MatrixToFloat(CORE.Window.screenScale)); // Apply screen scaling if required
+    if (rlGetActiveFramebuffer() == 0) rlMultMatrixf(MatrixToFloat(CORE.Window.screenScale)); // Apply screen scaling if required
 
     rlDisableDepthTest();           // Disable DEPTH_TEST for 2D
 }
@@ -1062,9 +1060,9 @@ void EndTextureMode(void)
     // Set viewport to default framebuffer size
     SetupViewport(CORE.Window.render.width, CORE.Window.render.height);
 
-    // go back to the modelview state from BeginDrawing since we are back to the default FBO
-	rlMatrixMode(RL_MODELVIEW);     // Switch back to modelview matrix
-	rlLoadIdentity();               // Reset current matrix (modelview)
+    // Go back to the modelview state from BeginDrawing since we are back to the default FBO
+    rlMatrixMode(RL_MODELVIEW);     // Switch back to modelview matrix
+    rlLoadIdentity();               // Reset current matrix (modelview)
     rlMultMatrixf(MatrixToFloat(CORE.Window.screenScale)); // Apply screen scaling if required
 
     // Reset current fbo to screen size
