@@ -1950,7 +1950,7 @@ const char *GetFileNameWithoutExt(const char *filePath)
     int pos = (int)strlen(fileName);
     for(int i = pos; i>0; i--)
     {
-        if(filename[i] == '.')
+        if(fileName[i] == '.')
         {
             pos = i;
             break;
