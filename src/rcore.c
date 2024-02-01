@@ -1946,8 +1946,8 @@ const char *GetFileName(const char *filePath)
 // Get filename string without extension (uses static string)
 const char *GetFileNameWithoutExt(const char *filePath)
 {
-    const char *filename = GetFileName(filePath);
-    int pos = TextLength(filename);
+    const char *fileName = GetFileName(filePath);
+    int pos = (int)strlen(fileName);
     for(int i = pos; i>0; i--)
     {
         if(filename[i] == '.')
@@ -1956,7 +1956,7 @@ const char *GetFileNameWithoutExt(const char *filePath)
             break;
         }
     }
-    return TextSubtext(filename,0,pos);
+    return TextSubtext(fileName,0,pos);
 }
 
 // Get directory for a given filePath
