@@ -1950,9 +1950,9 @@ const char *GetFileNameWithoutExt(const char *filePath)
     {
         const char *fileName = GetFileName(filePath);
         int pos = (int)strlen(fileName);
-        for(int i = pos; i>0; i--)
+        for (int i = pos; i>0; i--)
         {
-            if(fileName[i] == '.')
+            if (fileName[i] == '.')
             {
                 pos = i;
                 break;
