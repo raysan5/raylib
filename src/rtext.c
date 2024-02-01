@@ -1257,7 +1257,7 @@ Vector2 MeasureTextEx(Font font, const char *text, float fontSize, float spacing
     float textWidth = 0.0f;
     float tempTextWidth = 0.0f;     // Used to count longer text line width
 
-    float textHeight = (float)font.baseSize;
+    float textHeight = fontSize;
     float scaleFactor = fontSize/(float)font.baseSize;
 
     int letter = 0;                 // Current character
@@ -1294,7 +1294,7 @@ Vector2 MeasureTextEx(Font font, const char *text, float fontSize, float spacing
     if (tempTextWidth < textWidth) tempTextWidth = textWidth;
 
     textSize.x = tempTextWidth*scaleFactor + (float)((tempByteCounter - 1)*spacing);
-    textSize.y = textHeight*scaleFactor;
+    textSize.y = textHeight;
 
     return textSize;
 }
