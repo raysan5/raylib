@@ -1953,7 +1953,11 @@ const char *GetFileNameWithoutExt(const char *filePath)
         {
             if (fileName[i] == '.')
             {
-                return TextSubtext(fileName,0,i);
+                char rfileName[i];
+                strncpy(rfileName, fileName,i);
+                rfileName[i] = '\0';
+                const char* rrfileName = rfileName;
+                return rrfileName;
             }
         }
         return fileName; // Extension not found
