@@ -1948,17 +1948,14 @@ const char *GetFileNameWithoutExt(const char *filePath)
 {
     if (filePath != NULL)
     {
-        const char *fileName = GetFileName(filePath); // get filename without path
-        int pos = (int)strlen(fileName); // get filename lenght
-        for (int i = pos; i>0; i--)
+        const char *fileName = GetFileName(filePath); // Get filename without path
+        for (int i = (int)strlen(fileName); i>0; i--) // reverse search
         {
             if (fileName[i] == '.')
             {
-                pos = i;
-                break;
+                return TextSubtext(fileName,0,i);
             }
         }
-        return TextSubtext(fileName,0,pos);
     }
     return "\0";
 }
