@@ -1305,6 +1305,7 @@ RLAPI Image LoadImageAnim(const char *fileName, int *frames);                   
 RLAPI Image LoadImageAnimFromMemory(const char *fileType, const unsigned char *fileData, int dataSize, int *frames); // Load image sequence from memory buffer
 RLAPI Image LoadImageFromMemory(const char *fileType, const unsigned char *fileData, int dataSize);      // Load image from memory buffer, fileType refers to extension: i.e. '.png'
 RLAPI Image LoadImageFromTexture(Texture2D texture);                                                     // Load image from GPU texture data
+RLAPI void UpdateImageFromTexture(Image *image, Texture2D texture);                                      // Load image from GPU texture data into existing image
 RLAPI Image LoadImageFromScreen(void);                                                                   // Load image from screen buffer and (screenshot)
 RLAPI bool IsImageReady(Image image);                                                                    // Check if an image is ready
 RLAPI void UnloadImage(Image image);                                                                     // Unload image from CPU memory (RAM)

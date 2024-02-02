@@ -715,6 +715,7 @@ RLAPI const char *rlGetPixelFormatName(unsigned int format);              // Get
 RLAPI void rlUnloadTexture(unsigned int id);                              // Unload texture from GPU memory
 RLAPI void rlGenTextureMipmaps(unsigned int id, int width, int height, int format, int *mipmaps); // Generate mipmap data for selected texture
 RLAPI void *rlReadTexturePixels(unsigned int id, int width, int height, int format); // Read texture pixel data
+RLAPI bool rlReadTexturePixelsIntoBuffer(unsigned int id, int width, int height, int format, void *pixels); // Read texture pixel data into provided buffer
 RLAPI unsigned char *rlReadScreenPixels(int width, int height);           // Read screen pixel data (color buffer)
 
 // Framebuffer management (fbo)
@@ -3412,6 +3413,62 @@ void rlGenTextureMipmaps(unsigned int id, int width, int height, int format, int
 #endif
 }
 
+// Read texture pixel data into provided buffer
+// User must ensure the buffer is large enough to store the data
+bool rlReadTexturePixelsIntoBuffer(unsigned int id, int width, int height, int format, void *pixels)
+{
+    bool result = false;
+
+#if defined(GRAPHICS_API_OPENGL_11) || defined(GRAPHICS_API_OPENGL_33)
+    glBindTexture(GL_TEXTURE_2D, id);
+
+    // NOTE: Each row written to or read from by OpenGL pixel operations like glGetTexImage are aligned to a 4 byte boundary by default, which may add some padding.
+    // Use glPixelStorei to modify padding with the GL_[UN]PACK_ALIGNMENT setting.
+    // GL_PACK_ALIGNMENT affects operations that read from OpenGL memory (glReadPixels, glGetTexImage, etc.)
+    // GL_UNPACK_ALIGNMENT affects operations that write to OpenGL memory (glTexImage, etc.)
+    glPixelStorei(GL_PACK_ALIGNMENT, 1);
+
+    unsigned int glInternalFormat, glFormat, glType;
+    rlGetGlTextureFormats(format, &glInternalFormat, &glFormat, &glType);
+
+    if ((glInternalFormat != 0) && (format < RL_PIXELFORMAT_COMPRESSED_DXT1_RGB))
+    {
+        result = true;
+        glGetTexImage(GL_TEXTURE_2D, 0, glFormat, glType, pixels);
+    }
+    else TRACELOG(RL_LOG_WARNING, "TEXTURE: [ID %i] Data retrieval not suported for pixel format (%i)", id, format);
+
+    glBindTexture(GL_TEXTURE_2D, 0);
+#endif
+
+#if defined(GRAPHICS_API_OPENGL_ES2)
+    // glGetTexImage() is not available on OpenGL ES 2.0
+    // Texture width and height are required on OpenGL ES 2.0. There is no way to get it from texture id.
+    // Two possible Options:
+    // 1 - Bind texture to color fbo attachment and glReadPixels()
+    // 2 - Create an fbo, activate it, render quad with texture, glReadPixels()
+    // We are using Option 1, just need to care for texture format on retrieval
+    // NOTE: This behaviour could be conditioned by graphic driver...
+    unsigned int fboId = rlLoadFramebuffer(width, height);
+
+    glBindFramebuffer(GL_FRAMEBUFFER, fboId);
+    glBindTexture(GL_TEXTURE_2D, 0);
+
+    // Attach our texture to FBO
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, id, 0);
+
+    // We read data as RGBA because FBO texture is configured as RGBA, despite binding another texture format
+    glReadPixels(0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
+    result = true;
+
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+    // Clean up temporal fbo
+    rlUnloadFramebuffer(fboId);
+#endif
+
+    return result;
+}
 
 // Read texture pixel data
 void *rlReadTexturePixels(unsigned int id, int width, int height, int format)

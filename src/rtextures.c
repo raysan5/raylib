@@ -678,6 +678,33 @@ Image LoadImageFromTexture(Texture2D texture)
     return image;
 }
 
+// Update image from GPU texture data
+// NOTE: Compressed texture formats not supported
+// Size and format of the texture and image must match
+void UpdateImageFromTexture(Image *image, Texture2D texture)
+{
+    if (image->data == NULL)
+    {
+        *image = LoadImageFromTexture(texture);
+        return;
+    }
+    if (image->format >= PIXELFORMAT_COMPRESSED_DXT1_RGB)
+    {
+        TRACELOG(LOG_WARNING, "TEXTURE: [ID %i] Failed to retrieve compressed pixel data", texture.id);
+        return;
+    }
+    if (image->width != texture.width || image->height != texture.height || image->format != texture.format)
+    {
+        TRACELOG(LOG_WARNING, "TEXTURE: [ID %i] Failed to retrieve pixel data, image didn't match texture", texture.id);
+        return;
+    }
+
+    if (rlReadTexturePixelsIntoBuffer(texture.id, texture.width, texture.height, texture.format, image->data))
+    {
+        TRACELOG(LOG_INFO, "TEXTURE: [ID %i] Pixel data retrieved successfully", texture.id);
+    }
+}
+
 // Load image from screen buffer and (screenshot)
 Image LoadImageFromScreen(void)
 {
