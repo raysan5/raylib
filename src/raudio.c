@@ -1081,8 +1081,9 @@ bool ExportWaveAsCode(Wave wave, const char *fileName)
     int waveDataSize = wave.frameCount*wave.channels*wave.sampleSize/8;
 
     // NOTE: Text data buffer size is estimated considering wave data size in bytes
-    // and requiring 6 char bytes for every byte: "0x00, "
-    char *txtData = (char *)RL_CALLOC(waveDataSize*6 + 2000, sizeof(char));
+    // and requiring 12 char bytes for every byte; the actual size varies, but 
+    // the longest possible char being appended is "%.4ff,\n    ", which is 12 bytes.
+    char *txtData = (char *)RL_CALLOC(waveDataSize*12 + 2000, sizeof(char));
 
     int byteCount = 0;
     byteCount += sprintf(txtData + byteCount, "\n//////////////////////////////////////////////////////////////////////////////////\n");

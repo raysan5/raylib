@@ -9,7 +9,7 @@ Some people ported raylib to other languages in form of bindings or wrappers to 
 | raylib             | **5.0** | [C/C++](https://en.wikipedia.org/wiki/C_(programming_language))    | Zlib | https://github.com/raysan5/raylib          |
 | raylib-beef        | **5.0** | [Beef](https://www.beeflang.org/)    | MIT | https://github.com/Starpelly/raylib-beef    |
 | raylib-boo         | 3.7     | [Boo](http://boo-language.github.io/)| MIT | https://github.com/Rabios/raylib-boo          |
-| Raylib-cs          | 4.5     | [C#](https://en.wikipedia.org/wiki/C_Sharp_(programming_language)) | Zlib | https://github.com/ChrisDill/Raylib-cs     |
+| Raylib-cs          | 5.0     | [C#](https://en.wikipedia.org/wiki/C_Sharp_(programming_language)) | Zlib | https://github.com/ChrisDill/Raylib-cs     |
 | Raylib-CsLo        | 4.2     | [C#](https://en.wikipedia.org/wiki/C_Sharp_(programming_language)) | MPL-2.0 | https://github.com/NotNotTech/Raylib-CsLo  |
 | cl-raylib          | 4.0     | [Common Lisp](https://common-lisp.net/)   | MIT | https://github.com/longlene/cl-raylib     |
 | claylib/wrap       | 4.5     | [Common Lisp](https://common-lisp.net/)   | Zlib | https://github.com/defun-games/claylib |
