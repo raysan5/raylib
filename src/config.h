@@ -181,6 +181,7 @@
 // Selected desired font fileformats to be supported for loading
 #define SUPPORT_FILEFORMAT_FNT          1
 #define SUPPORT_FILEFORMAT_TTF          1
+#define SUPPORT_FILEFORMAT_BDF          1
 
 // Support text management functions
 // If not defined, still some functions are supported: TextLength(), TextFormat()
