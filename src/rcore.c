@@ -1959,6 +1959,7 @@ const char *GetFileNameWithoutExt(const char *filePath)
         {
             if (fileName[i] == '.')
             {
+                // NOTE: We break on first '.' found
                 fileName[i] = '\0';
                 break;
             }
