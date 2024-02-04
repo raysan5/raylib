@@ -1404,14 +1404,20 @@ void SetShaderValueTexture(Shader shader, int locIndex, Texture2D texture)
 //----------------------------------------------------------------------------------
 
 // Get a ray trace from mouse position
-Ray GetMouseRay(Vector2 mouse, Camera camera)
+Ray GetMouseRay(Vector2 mousePosition, Camera camera)
+{
+    return GetViewRay(mousePosition, camera, GetScreenWidth(), GetScreenHeight());
+}
+
+// Get a ray trace from the mouse position within a specific section of the screen
+Ray GetViewRay(Vector2 mousePosition, Camera camera, float width, float height)
 {
     Ray ray = { 0 };
 
     // Calculate normalized device coordinates
     // NOTE: y value is negative
-    float x = (2.0f*mouse.x)/(float)GetScreenWidth() - 1.0f;
-    float y = 1.0f - (2.0f*mouse.y)/(float)GetScreenHeight();
+    float x = (2.0f*mousePosition.x)/width - 1.0f;
+    float y = 1.0f - (2.0f*mousePosition.y)/height;
     float z = 1.0f;
 
     // Store values in a vector
@@ -1425,11 +1431,11 @@ Ray GetMouseRay(Vector2 mouse, Camera camera)
     if (camera.projection == CAMERA_PERSPECTIVE)
     {
         // Calculate projection matrix from perspective
-        matProj = MatrixPerspective(camera.fovy*DEG2RAD, ((double)GetScreenWidth()/(double)GetScreenHeight()), RL_CULL_DISTANCE_NEAR, RL_CULL_DISTANCE_FAR);
+        matProj = MatrixPerspective(camera.fovy*DEG2RAD, ((double)width/(double)height), RL_CULL_DISTANCE_NEAR, RL_CULL_DISTANCE_FAR);
     }
     else if (camera.projection == CAMERA_ORTHOGRAPHIC)
     {
-        double aspect = (double)CORE.Window.screen.width/(double)CORE.Window.screen.height;
+        double aspect = (double)width/(double)height;
         double top = camera.fovy/2.0;
         double right = top*aspect;
 
