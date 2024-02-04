@@ -1633,6 +1633,13 @@ float GetFrameTime(void)
     return (float)CORE.Time.frame;
 }
 
+
+// Get the time spent actively updating and drawing a frame, excluding sleep time.
+float GetFrameBusyTime(void)
+{
+    return (float)(CORE.Time.update + CORE.Time.draw);
+}
+
 //----------------------------------------------------------------------------------
 // Module Functions Definition: Custom frame control
 //----------------------------------------------------------------------------------
