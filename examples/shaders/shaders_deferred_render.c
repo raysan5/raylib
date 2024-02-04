@@ -85,7 +85,7 @@ int main(void)
 
     // Initialize the G-buffer
     GBuffer gBuffer = { 0 };
-    gBuffer.framebuffer = rlLoadFramebuffer(screenWidth, screenHeight);
+    gBuffer.framebuffer = rlLoadFramebuffer();
 
     if (!gBuffer.framebuffer)
     {
