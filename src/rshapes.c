@@ -59,6 +59,8 @@
 #include <float.h>      // Required for: FLT_EPSILON
 #include <stdlib.h>     // Required for: RL_FREE
 
+#include "utils.h"                  // Required for: TRACELOG() macros used when i was testing on Dreamcast
+
 //----------------------------------------------------------------------------------
 // Defines and Macros
 //----------------------------------------------------------------------------------
@@ -178,11 +180,15 @@ void DrawPixelV(Vector2 position, Color color)
 // Draw a line (using gl lines)
 void DrawLine(int startPosX, int startPosY, int endPosX, int endPosY, Color color)
 {
+    #if defined(PLATFORM_DREAMCAST)
+    DrawLineEx((Vector2){startPosX, startPosY},(Vector2){endPosX, endPosY}, 1, color);
+    #else
     rlBegin(RL_LINES);
         rlColor4ub(color.r, color.g, color.b, color.a);
         rlVertex2f((float)startPosX, (float)startPosY);
         rlVertex2f((float)endPosX, (float)endPosY);
     rlEnd();
+    #endif
 }
 
 // Draw a line (using gl lines)
@@ -458,6 +464,15 @@ void DrawCircleLines(int centerX, int centerY, float radius, Color color)
 // Draw circle outline (Vector version)
 void DrawCircleLinesV(Vector2 center, float radius, Color color)
 {
+    #if defined(PLATFORM_DREAMCAST)
+    //no support for RL_LINES/GL_LINES on Dreamcast
+    for (int i = 0; i < 360; i += 10)
+    {
+        DrawLineEx((Vector2) {center.x + cosf(DEG2RAD*i)*radius, center.y + sinf(DEG2RAD*i)*radius},
+                    (Vector2) {center.x + cosf(DEG2RAD*(i + 10))*radius, center.y + sinf(DEG2RAD*(i + 10))*radius}, 
+                    1, color);
+    }
+    #else
     rlBegin(RL_LINES);
         rlColor4ub(color.r, color.g, color.b, color.a);
 
@@ -468,6 +483,7 @@ void DrawCircleLinesV(Vector2 center, float radius, Color color)
             rlVertex2f(center.x + cosf(DEG2RAD*(i + 10))*radius, center.y + sinf(DEG2RAD*(i + 10))*radius);
         }
     rlEnd();
+    #endif
 }
 
 // Draw ellipse
@@ -487,6 +503,9 @@ void DrawEllipse(int centerX, int centerY, float radiusH, float radiusV, Color c
 // Draw ellipse outline
 void DrawEllipseLines(int centerX, int centerY, float radiusH, float radiusV, Color color)
 {
+    #if defined(PLATFORM_DREAMCAST)
+    //no support for RL_LINES/GL_LINES on Dreamcast
+    #else
     rlBegin(RL_LINES);
         for (int i = 0; i < 360; i += 10)
         {
@@ -495,6 +514,7 @@ void DrawEllipseLines(int centerX, int centerY, float radiusH, float radiusV, Co
             rlVertex2f(centerX + cosf(DEG2RAD*i)*radiusH, centerY + sinf(DEG2RAD*i)*radiusV);
         }
     rlEnd();
+    #endif
 }
 
 // Draw ring
@@ -633,6 +653,9 @@ void DrawRingLines(Vector2 center, float innerRadius, float outerRadius, float s
     float angle = startAngle;
     bool showCapLines = true;
 
+    #if defined(PLATFORM_DREAMCAST)
+    //no support for RL_LINES/GL_LINES on Dreamcast
+    #else
     rlBegin(RL_LINES);
         if (showCapLines)
         {
@@ -661,6 +684,7 @@ void DrawRingLines(Vector2 center, float innerRadius, float outerRadius, float s
             rlVertex2f(center.x + cosf(DEG2RAD*angle)*innerRadius, center.y + sinf(DEG2RAD*angle)*innerRadius);
         }
     rlEnd();
+    #endif
 }
 
 // Draw a color-filled rectangle
@@ -818,6 +842,19 @@ void DrawRectangleLines(int posX, int posY, int width, int height, Color color)
     DrawRectangle(posX, posY + height - 1, width, 1, color);
     DrawRectangle(posX, posY + 1, 1, height - 2, color);
 #else
+
+#if defined(PLATFORM_DREAMCAST)
+    rlBegin(RL_QUADS);
+        rlColor4ub(color.r, color.g, color.b, color.a);
+
+        // Define the vertices for the quad
+        rlVertex2f(posX + 1, posY + 1);
+        rlVertex2f(posX + width, posY + 1);
+        rlVertex2f(posX + width, posY + height);
+        rlVertex2f(posX + 1, posY + height);
+
+    rlEnd();
+#else
     rlBegin(RL_LINES);
         rlColor4ub(color.r, color.g, color.b, color.a);
         rlVertex2f(posX + 1, posY + 1);
@@ -833,6 +870,8 @@ void DrawRectangleLines(int posX, int posY, int width, int height, Color color)
         rlVertex2f(posX + 1, posY + 1);
     rlEnd();
 #endif
+#endif
+
 }
 
 // Draw rectangle outline with extended parameters
@@ -1300,6 +1339,9 @@ void DrawRectangleRoundedLines(Rectangle rec, float roundness, int segments, flo
     else
     {
         // Use LINES to draw the outline
+        #if defined(PLATFORM_DREAMCAST)
+        //no support for RL_LINES/GL_LINES on Dreamcast
+        #else
         rlBegin(RL_LINES);
 
             // Draw all the 4 corners first: Upper Left Corner, Upper Right Corner, Lower Right Corner, Lower Left Corner
@@ -1326,6 +1368,7 @@ void DrawRectangleRoundedLines(Rectangle rec, float roundness, int segments, flo
             }
 
         rlEnd();
+        #endif
     }
 }
 
@@ -1368,6 +1411,12 @@ void DrawTriangle(Vector2 v1, Vector2 v2, Vector2 v3, Color color)
 // NOTE: Vertex must be provided in counter-clockwise order
 void DrawTriangleLines(Vector2 v1, Vector2 v2, Vector2 v3, Color color)
 {
+    #if defined(PLATFORM_DREAMCAST)
+        //no support for RL_LINES/GL_LINES on Dreamcast
+        DrawLineEx(v1,v2, 1, color);
+        DrawLineEx(v2,v3, 1, color);
+        DrawLineEx(v3,v1, 1, color);
+    #else
     rlBegin(RL_LINES);
         rlColor4ub(color.r, color.g, color.b, color.a);
         rlVertex2f(v1.x, v1.y);
@@ -1379,6 +1428,7 @@ void DrawTriangleLines(Vector2 v1, Vector2 v2, Vector2 v3, Color color)
         rlVertex2f(v3.x, v3.y);
         rlVertex2f(v1.x, v1.y);
     rlEnd();
+    #endif
 }
 
 // Draw a triangle fan defined by points
@@ -1458,6 +1508,25 @@ void DrawPoly(Vector2 center, int sides, float radius, float rotation, Color col
             rlColor4ub(color.r, color.g, color.b, color.a);
             float nextAngle = centralAngle + angleStep;
 
+            #if defined(PLATFORM_DREAMCAST)
+            //changed a little to work fine on Dreamcast
+            rlTexCoord2f(shapeRect.x/texShapes.width, shapeRect.y/texShapes.height);
+            rlVertex2f(center.x, center.y);
+            //TRACELOG(LOG_INFO, "%d 0: x=%f y=%f",i,center.x,center.y);
+
+            rlTexCoord2f(shapeRect.x/texShapes.width, (shapeRect.y + shapeRect.height)/texShapes.height);
+            rlVertex2f(center.x + cosf(nextAngle)*radius, center.y + sinf(nextAngle)*radius);
+            //TRACELOG(LOG_INFO, "%d 1: x=%f y=%f",i,center.x + cosf(centralAngle)*radius,center.y + sinf(centralAngle)*radius);
+
+            rlTexCoord2f((shapeRect.x + shapeRect.width)/texShapes.width, (shapeRect.y + shapeRect.height)/texShapes.height);
+            rlVertex2f(center.x + cosf(centralAngle)*radius, center.y + sinf(centralAngle)*radius);
+            //TRACELOG(LOG_INFO, "%d 2: x=%f y=%f",i,center.x + cosf(nextAngle)*radius,center.y + sinf(nextAngle)*radius);
+
+            rlTexCoord2f((shapeRect.x + shapeRect.width)/texShapes.width, shapeRect.y/texShapes.height);
+            rlVertex2f(center.x, center.y);
+            // TRACELOG(LOG_INFO, "%d 3: x=%f y=%f",i,center.x + cosf(centralAngle)*radius,center.y + sinf(centralAngle)*radius);
+
+            #else
             rlTexCoord2f(shapeRect.x/texShapes.width, shapeRect.y/texShapes.height);
             rlVertex2f(center.x, center.y);
 
@@ -1469,7 +1538,7 @@ void DrawPoly(Vector2 center, int sides, float radius, float rotation, Color col
 
             rlTexCoord2f((shapeRect.x + shapeRect.width)/texShapes.width, (shapeRect.y + shapeRect.height)/texShapes.height);
             rlVertex2f(center.x + cosf(centralAngle)*radius, center.y + sinf(centralAngle)*radius);
-
+            #endif
             centralAngle = nextAngle;
         }
     rlEnd();
@@ -1497,6 +1566,10 @@ void DrawPolyLines(Vector2 center, int sides, float radius, float rotation, Colo
     float centralAngle = rotation*DEG2RAD;
     float angleStep = 360.0f/(float)sides*DEG2RAD;
 
+    #if defined(PLATFORM_DREAMCAST)
+    //no support for RL_LINES/GL_LINES on Dreamcast
+    DrawPolyLinesEx(center, sides, radius, rotation, 1, color);
+    #else
     rlBegin(RL_LINES);
         for (int i = 0; i < sides; i++)
         {
@@ -1508,6 +1581,7 @@ void DrawPolyLines(Vector2 center, int sides, float radius, float rotation, Colo
             centralAngle += angleStep;
         }
     rlEnd();
+    #endif
 }
 
 void DrawPolyLinesEx(Vector2 center, int sides, float radius, float rotation, float lineThick, Color color)
