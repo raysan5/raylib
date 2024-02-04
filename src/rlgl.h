@@ -1897,7 +1897,7 @@ float rlGetLineWidth(void)
 {
     float width = 0;
     #if defined(PLATFORM_DREAMCAST) //fix needed on gldc by now hardcoded here to avoid compiling errors
-    glGetFloatv(0x0B21/*GL_LINE_WIDTH*/);
+    glGetFloatv(0x0B21/*GL_LINE_WIDTH*/, &width);
     #else
     glGetFloatv(GL_LINE_WIDTH, &width);
     #endif
