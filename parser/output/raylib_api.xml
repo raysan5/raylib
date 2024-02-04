@@ -912,19 +912,9 @@
             <Param type="float" name="width" desc="" />
             <Param type="float" name="height" desc="" />
         </Function>
-        <Function name="GetCameraMatrix" retType="Matrix" paramCount="1" desc="Get camera transform matrix (view matrix)">
-            <Param type="Camera" name="camera" desc="" />
-        </Function>
-        <Function name="GetCameraMatrix2D" retType="Matrix" paramCount="1" desc="Get camera 2d transform matrix">
-            <Param type="Camera2D" name="camera" desc="" />
-        </Function>
         <Function name="GetWorldToScreen" retType="Vector2" paramCount="2" desc="Get the screen space position for a 3d world space position">
             <Param type="Vector3" name="position" desc="" />
             <Param type="Camera" name="camera" desc="" />
-        </Function>
-        <Function name="GetScreenToWorld2D" retType="Vector2" paramCount="2" desc="Get the world space position for a 2d camera screen space position">
-            <Param type="Vector2" name="position" desc="" />
-            <Param type="Camera2D" name="camera" desc="" />
         </Function>
         <Function name="GetWorldToScreenEx" retType="Vector2" paramCount="4" desc="Get size position for a 3d world space position">
             <Param type="Vector3" name="position" desc="" />
@@ -934,6 +924,16 @@
         </Function>
         <Function name="GetWorldToScreen2D" retType="Vector2" paramCount="2" desc="Get the screen space position for a 2d camera world space position">
             <Param type="Vector2" name="position" desc="" />
+            <Param type="Camera2D" name="camera" desc="" />
+        </Function>
+        <Function name="GetScreenToWorld2D" retType="Vector2" paramCount="2" desc="Get the world space position for a 2d camera screen space position">
+            <Param type="Vector2" name="position" desc="" />
+            <Param type="Camera2D" name="camera" desc="" />
+        </Function>
+        <Function name="GetCameraMatrix" retType="Matrix" paramCount="1" desc="Get camera transform matrix (view matrix)">
+            <Param type="Camera" name="camera" desc="" />
+        </Function>
+        <Function name="GetCameraMatrix2D" retType="Matrix" paramCount="1" desc="Get camera 2d transform matrix">
             <Param type="Camera2D" name="camera" desc="" />
         </Function>
         <Function name="SetTargetFPS" retType="void" paramCount="1" desc="Set target FPS (maximum)">

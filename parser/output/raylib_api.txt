@@ -1435,29 +1435,13 @@ Function 085: GetViewRay() (4 input parameters)
   Param[2]: camera (type: Camera)
   Param[3]: width (type: float)
   Param[4]: height (type: float)
-Function 086: GetCameraMatrix() (1 input parameters)
-  Name: GetCameraMatrix
-  Return type: Matrix
-  Description: Get camera transform matrix (view matrix)
-  Param[1]: camera (type: Camera)
-Function 087: GetCameraMatrix2D() (1 input parameters)
-  Name: GetCameraMatrix2D
-  Return type: Matrix
-  Description: Get camera 2d transform matrix
-  Param[1]: camera (type: Camera2D)
-Function 088: GetWorldToScreen() (2 input parameters)
+Function 086: GetWorldToScreen() (2 input parameters)
   Name: GetWorldToScreen
   Return type: Vector2
   Description: Get the screen space position for a 3d world space position
   Param[1]: position (type: Vector3)
   Param[2]: camera (type: Camera)
-Function 089: GetScreenToWorld2D() (2 input parameters)
-  Name: GetScreenToWorld2D
-  Return type: Vector2
-  Description: Get the world space position for a 2d camera screen space position
-  Param[1]: position (type: Vector2)
-  Param[2]: camera (type: Camera2D)
-Function 090: GetWorldToScreenEx() (4 input parameters)
+Function 087: GetWorldToScreenEx() (4 input parameters)
   Name: GetWorldToScreenEx
   Return type: Vector2
   Description: Get size position for a 3d world space position
@@ -1465,12 +1449,28 @@ Function 090: GetWorldToScreenEx() (4 input parameters)
   Param[2]: camera (type: Camera)
   Param[3]: width (type: int)
   Param[4]: height (type: int)
-Function 091: GetWorldToScreen2D() (2 input parameters)
+Function 088: GetWorldToScreen2D() (2 input parameters)
   Name: GetWorldToScreen2D
   Return type: Vector2
   Description: Get the screen space position for a 2d camera world space position
   Param[1]: position (type: Vector2)
   Param[2]: camera (type: Camera2D)
+Function 089: GetScreenToWorld2D() (2 input parameters)
+  Name: GetScreenToWorld2D
+  Return type: Vector2
+  Description: Get the world space position for a 2d camera screen space position
+  Param[1]: position (type: Vector2)
+  Param[2]: camera (type: Camera2D)
+Function 090: GetCameraMatrix() (1 input parameters)
+  Name: GetCameraMatrix
+  Return type: Matrix
+  Description: Get camera transform matrix (view matrix)
+  Param[1]: camera (type: Camera)
+Function 091: GetCameraMatrix2D() (1 input parameters)
+  Name: GetCameraMatrix2D
+  Return type: Matrix
+  Description: Get camera 2d transform matrix
+  Param[1]: camera (type: Camera2D)
 Function 092: SetTargetFPS() (1 input parameters)
   Name: SetTargetFPS
   Return type: void
