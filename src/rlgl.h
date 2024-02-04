@@ -1873,7 +1873,11 @@ void rlEnablePointMode(void)
 #if defined(GRAPHICS_API_OPENGL_11) || defined(GRAPHICS_API_OPENGL_33)
     // NOTE: glPolygonMode() not available on OpenGL ES
     glPolygonMode(GL_FRONT_AND_BACK, GL_POINT);
+    #if defined(PLATFORM_DREAMCAST) //fix needed on gldc by now hardcoded here to avoid compiling errors
+    glEnable(0x8642/*GL_PROGRAM_POINT_SIZE*/);
+    #else
     glEnable(GL_PROGRAM_POINT_SIZE);
+    #endif
 #endif
 }
 // Disable wire mode
@@ -1892,7 +1896,11 @@ void rlSetLineWidth(float width) { glLineWidth(width); }
 float rlGetLineWidth(void)
 {
     float width = 0;
+    #if defined(PLATFORM_DREAMCAST) //fix needed on gldc by now hardcoded here to avoid compiling errors
+    glGetFloatv(0x0B21/*GL_LINE_WIDTH*/);
+    #else
     glGetFloatv(GL_LINE_WIDTH, &width);
+    #endif
     return width;
 }
 
