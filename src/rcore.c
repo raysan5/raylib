@@ -1840,7 +1840,7 @@ bool FileExists(const char *fileName)
 // NOTE: Extensions checking is not case-sensitive
 bool IsFileExtension(const char *fileName, const char *ext)
 {
-    #define MAX_FILE_EXTENSION_SIZE  16
+    #define MAX_FILE_EXTENSION_LENGTH  16
 
     bool result = false;
     const char *fileExt = GetFileExtension(fileName);
@@ -1851,8 +1851,8 @@ bool IsFileExtension(const char *fileName, const char *ext)
         int extCount = 0;
         const char **checkExts = TextSplit(ext, ';', &extCount); // WARNING: Module required: rtext
 
-        char fileExtLower[MAX_FILE_EXTENSION_SIZE + 1] = { 0 };
-        strncpy(fileExtLower, TextToLower(fileExt), MAX_FILE_EXTENSION_SIZE); // WARNING: Module required: rtext
+        char fileExtLower[MAX_FILE_EXTENSION_LENGTH + 1] = { 0 };
+        strncpy(fileExtLower, TextToLower(fileExt), MAX_FILE_EXTENSION_LENGTH); // WARNING: Module required: rtext
 
         for (int i = 0; i < extCount; i++)
         {
@@ -1946,16 +1946,17 @@ const char *GetFileName(const char *filePath)
 // Get filename string without extension (uses static string)
 const char *GetFileNameWithoutExt(const char *filePath)
 {
-    #define MAX_FILENAMEWITHOUTEXT_LENGTH 256
+    #define MAX_FILENAME_LENGTH     256
     
-    static char fileName[MAX_FILENAMEWITHOUTEXT_LENGTH] = { 0 };
-    memset(fileName, 0, MAX_FILENAMEWITHOUTEXT_LENGTH);
+    static char fileName[MAX_FILENAME_LENGTH] = { 0 };
+    memset(fileName, 0, MAX_FILENAME_LENGTH);
 
     if (filePath != NULL)
     {
         strcpy(fileName, GetFileName(filePath)); // Get filename.ext without path
         int size = (int)strlen(fileName); // Get size in bytes
-        for (int i = size; i>0; i--) // Reverse search '.'
+        
+        for (int i = size; i > 0; i--) // Reverse search '.'
         {
             if (fileName[i] == '.')
             {
@@ -1965,6 +1966,7 @@ const char *GetFileNameWithoutExt(const char *filePath)
             }
         }
     }
+    
     return fileName;
 }
 
