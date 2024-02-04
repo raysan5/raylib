@@ -142,7 +142,7 @@ static Font defaultFont = { 0 };
 static Font LoadBMFont(const char *fileName);   // Load a BMFont file (AngelCode font file)
 #endif
 #if defined(SUPPORT_FILEFORMAT_BDF)
-static GlyphInfo *LoadBDFFontData(const unsigned char *fileData, int dataSize, int *codepoints, int codepointCount, int* outFontSize);
+static GlyphInfo *LoadFontDataBDF(const unsigned char *fileData, int dataSize, int *codepoints, int codepointCount, int *outFontSize);
 #endif
 static int textLineSpacing = 15;                // Text vertical line spacing in pixels
 
@@ -547,7 +547,7 @@ Font LoadFontFromMemory(const char *fileType, const unsigned char *fileData, int
 #if defined(SUPPORT_FILEFORMAT_BDF)
     if (TextIsEqual(fileExtLower, ".bdf"))
     {
-        font.glyphs = LoadBDFFontData(fileData, dataSize, codepoints, font.glyphCount, &font.baseSize);
+        font.glyphs = LoadFontDataBDF(fileData, dataSize, codepoints, font.glyphCount, &font.baseSize);
     }
     else
 #endif
@@ -1457,6 +1457,9 @@ int TextToInteger(const char *text)
     return value*sign;
 }
 
+// Get float value from text
+// NOTE: This function replaces atof() [stdlib.h]
+// WARNING: Only '.' character is understood as decimal point
 float TextToFloat(const char *text)
 {
     float value = 0.0f;
@@ -1464,18 +1467,23 @@ float TextToFloat(const char *text)
 
     if ((text[0] == '+') || (text[0] == '-'))
     {
-        if (text[0] == '-') sign = -1;
+        if (text[0] == '-') sign = -1.0f;
         text++;
     }
-    int i = 0;
-    for (; ((text[i] >= '0') && (text[i] <= '9')); ++i) value = value*10.0f + (float)(text[i] - '0');
-    if (text[i++] != '.') return value*sign;
-    float divisor = 10.0f;
-    for (; ((text[i] >= '0') && (text[i] <= '9')); ++i)
+    
+    for (int i = 0; ((text[i] >= '0') && (text[i] <= '9')); i++) value = value*10.0f + (float)(text[i] - '0');
+    
+    if (text[i++] != '.') value *= sign;
+    else
     {
-        value += ((float)(text[i] - '0'))/divisor;
-        divisor = divisor*10.0f;
+        float divisor = 10.0f;
+        for (int i = 0; ((text[i] >= '0') && (text[i] <= '9')); i++)
+        {
+            value += ((float)(text[i] - '0'))/divisor;
+            divisor = divisor*10.0f;
+        }
     }
+    
     return value;
 }
 
@@ -2275,41 +2283,41 @@ static char HexToInt(char hex) {
 
 // Load font data for further use
 // NOTE: Requires BDF font memory data
-static GlyphInfo *LoadBDFFontData(const unsigned char *fileData, int dataSize, int *codepoints, int codepointCount, int* outFontSize)
+static GlyphInfo *LoadFontDataBDF(const unsigned char *fileData, int dataSize, int *codepoints, int codepointCount, int *outFontSize)
 {
     #define MAX_BUFFER_SIZE 256
+    
     char buffer[MAX_BUFFER_SIZE] = { 0 };
 
     GlyphInfo *glyphs = NULL;
-
     bool genFontChars = false;
 
-    int totalReadBytes = 0; // Data bytes read (total)
-    int readBytes = 0;      // Data bytes read (line)
-    int readVars = 0;       // Variables filled by sscanf()
+    int totalReadBytes = 0;         // Data bytes read (total)
+    int readBytes = 0;              // Data bytes read (line)
+    int readVars = 0;               // Variables filled by sscanf()
 
     const char *fileText = (const char*)fileData;
     const char *fileTextPtr = fileText;
 
-    bool fontMalformed = false; // Is the font malformed
-    bool fontStarted = false;   // Has font started (STARTFONT) 
-    int fontBBw = 0;            // Font base character bounding box width
-    int fontBBh = 0;            // Font base character bounding box height
-    int fontBBxoff0 = 0;        // Font base character bounding box X0 offset
-    int fontBByoff0 = 0;        // Font base character bounding box Y0 offset
-    int fontAscent = 0;         // Font ascent
+    bool fontMalformed = false;     // Is the font malformed
+    bool fontStarted = false;       // Has font started (STARTFONT) 
+    int fontBBw = 0;                // Font base character bounding box width
+    int fontBBh = 0;                // Font base character bounding box height
+    int fontBBxoff0 = 0;            // Font base character bounding box X0 offset
+    int fontBByoff0 = 0;            // Font base character bounding box Y0 offset
+    int fontAscent = 0;             // Font ascent
 
-    bool charStarted = false;           // Has character started (STARTCHAR)
-    bool charBitmapStarted = false;     // Has bitmap data started (BITMAP)
-    int charBitmapNextRow = 0;          // Y position for the next row of bitmap data
-    int charEncoding = -1;              // The unicode value of the character (-1 if not set)
-    int charBBw = 0;                    // Character bounding box width 
-    int charBBh = 0;                    // Character bounding box height
-    int charBBxoff0 = 0;                // Character bounding box X0 offset
-    int charBByoff0 = 0;                // Character bounding box Y0 offset
-    int charDWidthX = 0;                // Character advance X
-    int charDWidthY = 0;                // Character advance Y (unused)
-    GlyphInfo *charGlyphInfo = NULL;    // Pointer to output glyph info (NULL if not set)
+    bool charStarted = false;       // Has character started (STARTCHAR)
+    bool charBitmapStarted = false; // Has bitmap data started (BITMAP)
+    int charBitmapNextRow = 0;      // Y position for the next row of bitmap data
+    int charEncoding = -1;          // The unicode value of the character (-1 if not set)
+    int charBBw = 0;                // Character bounding box width 
+    int charBBh = 0;                // Character bounding box height
+    int charBBxoff0 = 0;            // Character bounding box X0 offset
+    int charBByoff0 = 0;            // Character bounding box Y0 offset
+    int charDWidthX = 0;            // Character advance X
+    int charDWidthY = 0;            // Character advance Y (unused)
+    GlyphInfo *charGlyphInfo = NULL; // Pointer to output glyph info (NULL if not set)
 
     if (fileData == NULL) return glyphs;
 
@@ -2333,12 +2341,12 @@ static GlyphInfo *LoadBDFFontData(const unsigned char *fileData, int dataSize, i
         totalReadBytes += (readBytes + 1);
         fileTextPtr += (readBytes + 1);
 
-        // COMMENT
+        // Line: COMMENT
         if (strstr(buffer, "COMMENT") != NULL) continue; // Ignore line
 
         if (charStarted)
         {
-            // ENDCHAR
+            // Line: ENDCHAR
             if (strstr(buffer, "ENDCHAR") != NULL)
             {
                 charStarted = false;
@@ -2347,59 +2355,56 @@ static GlyphInfo *LoadBDFFontData(const unsigned char *fileData, int dataSize, i
 
             if (charBitmapStarted)
             {
-                if (charGlyphInfo != NULL) {
+                if (charGlyphInfo != NULL)
+                {
                     int pixelY = charBitmapNextRow++;
-                    if (pixelY >= charGlyphInfo->image.height)
-                    {
-                        break;
-                    }
+                    
+                    if (pixelY >= charGlyphInfo->image.height) break;
+
                     for (int x = 0; x < readBytes; x++)
                     {
                         char byte = HexToInt(buffer[x]);
+                        
                         for (int bitX = 0; bitX < 4; bitX++)
                         {
                             int pixelX = ((x * 4) + bitX);
-                            if (pixelX >= charGlyphInfo->image.width)
-                            {
-                                break;
-                            }
+                            
+                            if (pixelX >= charGlyphInfo->image.width) break;
 
-                            if ((byte & (8 >> bitX)) > 0)
-                            {
-                                ((unsigned char*)charGlyphInfo->image.data)[(pixelY * charGlyphInfo->image.width) + pixelX] = 255;
-                            }
+                            if ((byte & (8 >> bitX)) > 0) ((unsigned char*)charGlyphInfo->image.data)[(pixelY * charGlyphInfo->image.width) + pixelX] = 255;
                         }
                     }
                 }
                 continue;
             }
 
-            // ENCODING
+            // Line: ENCODING
             if (strstr(buffer, "ENCODING") != NULL)
             {
                 readVars = sscanf(buffer, "ENCODING %i", &charEncoding);
                 continue;
             }
 
-            // BBX
+            // Line: BBX
             if (strstr(buffer, "BBX") != NULL)
             {
                 readVars = sscanf(buffer, "BBX %i %i %i %i", &charBBw, &charBBh, &charBBxoff0, &charBByoff0);
                 continue;
             }
 
-            // DWIDTH
+            // Line: DWIDTH
             if (strstr(buffer, "DWIDTH") != NULL)
             {
                 readVars = sscanf(buffer, "DWIDTH %i %i", &charDWidthX, &charDWidthY);
                 continue;
             }
 
-            // BITMAP
+            // Line: BITMAP
             if (strstr(buffer, "BITMAP") != NULL)
             {
                 // Search for glyph index in codepoints
                 charGlyphInfo = NULL;
+                
                 for (int codepointIndex = 0; codepointIndex < codepointCount; codepointIndex++)
                 {
                     if (codepoints[codepointIndex] == charEncoding)
@@ -2432,30 +2437,24 @@ static GlyphInfo *LoadBDFFontData(const unsigned char *fileData, int dataSize, i
         }
         else if (fontStarted)
         {
-            // ENDFONT
+            // Line: ENDFONT
             if (strstr(buffer, "ENDFONT") != NULL)
             {
                 fontStarted = false;
                 break;
             }
 
-            // SIZE
+            // Line: SIZE
             if (strstr(buffer, "SIZE") != NULL)
             {
-                if (outFontSize != NULL)
-                {
-                    readVars = sscanf(buffer, "SIZE %i", outFontSize);
-                }
+                if (outFontSize != NULL) readVars = sscanf(buffer, "SIZE %i", outFontSize);
                 continue;
             }
 
             // PIXEL_SIZE
             if (strstr(buffer, "PIXEL_SIZE") != NULL)
             {
-                if (outFontSize != NULL)
-                {
-                    readVars = sscanf(buffer, "PIXEL_SIZE %i", outFontSize);
-                }
+                if (outFontSize != NULL) readVars = sscanf(buffer, "PIXEL_SIZE %i", outFontSize);
                 continue;
             }
 
@@ -2520,7 +2519,6 @@ static GlyphInfo *LoadBDFFontData(const unsigned char *fileData, int dataSize, i
 
     return glyphs;
 }
-
 #endif
 
 #endif      // SUPPORT_MODULE_RTEXT
