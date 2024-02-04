@@ -2368,11 +2368,11 @@ static GlyphInfo *LoadFontDataBDF(const unsigned char *fileData, int dataSize, i
                         
                         for (int bitX = 0; bitX < 4; bitX++)
                         {
-                            int pixelX = ((x * 4) + bitX);
+                            int pixelX = ((x*4) + bitX);
                             
                             if (pixelX >= charGlyphInfo->image.width) break;
 
-                            if ((byte & (8 >> bitX)) > 0) ((unsigned char*)charGlyphInfo->image.data)[(pixelY * charGlyphInfo->image.width) + pixelX] = 255;
+                            if ((byte & (8 >> bitX)) > 0) ((unsigned char *)charGlyphInfo->image.data)[(pixelY*charGlyphInfo->image.width) + pixelX] = 255;
                         }
                     }
                 }
@@ -2423,7 +2423,7 @@ static GlyphInfo *LoadFontDataBDF(const unsigned char *fileData, int dataSize, i
                     charGlyphInfo->offsetY = fontBBh - (charBBh + charBByoff0 + fontBByoff0 + fontAscent);
                     charGlyphInfo->advanceX = charDWidthX;
 
-                    charGlyphInfo->image.data = RL_CALLOC(charBBw * charBBh, 1);
+                    charGlyphInfo->image.data = RL_CALLOC(charBBw*charBBh, 1);
                     charGlyphInfo->image.width = charBBw;
                     charGlyphInfo->image.height = charBBh;
                     charGlyphInfo->image.mipmaps = 1;
