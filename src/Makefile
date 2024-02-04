@@ -20,6 +20,8 @@
 #         - Linux DRM subsystem (KMS mode)
 #     > PLATFORM_ANDROID:
 #         - Android (ARM, ARM64)
+#     > PLATFORM_DREAMCAST:
+#         - Sega Dreamcast (SH4)
 #
 #   Many thanks to Milan Nikolic (@gen2brain) for implementing Android platform pipeline.
 #   Many thanks to Emanuele Petriglia for his contribution on GNU/Linux pipeline.
@@ -50,8 +52,8 @@
 
 # Define required environment variables
 #------------------------------------------------------------------------------------------------
-# Define target platform: PLATFORM_DESKTOP, PLATFORM_DRM, PLATFORM_ANDROID, PLATFORM_WEB
-PLATFORM             ?= PLATFORM_DESKTOP
+# Define target platform: PLATFORM_DESKTOP, PLATFORM_DRM, PLATFORM_ANDROID, PLATFORM_WEB, PLATFORM_DREAMCAST
+PLATFORM             ?= PLATFORM_DREAMCAST
 
 # Define required raylib variables
 RAYLIB_VERSION        = 5.0.0
@@ -85,16 +87,17 @@ RAYLIB_CONFIG_FLAGS  ?= NONE
 
 # Include raylib modules on compilation
 # NOTE: Some programs like tools could not require those modules
-RAYLIB_MODULE_AUDIO  ?= TRUE
+RAYLIB_MODULE_AUDIO  ?= FALSE
 RAYLIB_MODULE_MODELS ?= TRUE
 RAYLIB_MODULE_RAYGUI ?= FALSE
+RAYLIB_MODULE_SPINE  ?= FALSE
 
 # NOTE: Additional libraries have been moved to their own repos:
 # raygui: https://github.com/raysan5/raygui
 RAYLIB_MODULE_RAYGUI_PATH ?= $(RAYLIB_SRC_PATH)/../../raygui/src
 
 # Use external GLFW library instead of rglfw module
-USE_EXTERNAL_GLFW     ?= FALSE
+USE_EXTERNAL_GLFW     ?= TRUE
 
 # PLATFORM_DESKTOP_SDL: It requires SDL library to be provided externally
 # WARNING: Library is not included in raylib, it MUST be configured by users
@@ -215,6 +218,12 @@ ifeq ($(PLATFORM),PLATFORM_ANDROID)
 
 endif
 
+#Dreamcast
+ifeq ($(PLATFORM),PLATFORM_DREAMCAST)
+    PLATFORM_OS = DREAMCAST
+    PLATFORM_SHELL = sh
+endif
+
 # Define raylib graphics api depending on selected platform
 ifeq ($(PLATFORM),PLATFORM_DESKTOP)
     # By default use OpenGL 3.3 on desktop platforms
@@ -242,6 +251,10 @@ ifeq ($(PLATFORM),PLATFORM_ANDROID)
     GRAPHICS = GRAPHICS_API_OPENGL_ES2
 endif
 
+ifeq ($(PLATFORM),PLATFORM_DREAMCAST)
+    # By default use OpenGL 1.1 on DREAMCAST
+    GRAPHICS = GRAPHICS_API_OPENGL_11
+endif
 # Define default C compiler and archiver to pack library: CC, AR
 #------------------------------------------------------------------------------------------------
 CC = gcc
@@ -288,6 +301,12 @@ ifeq ($(PLATFORM),PLATFORM_ANDROID)
     # It seems from Android NDK r22 onwards we need to use llvm-ar
     AR = $(ANDROID_TOOLCHAIN)/bin/llvm-ar
 endif
+
+ifeq ($(PLATFORM),PLATFORM_DREAMCAST)
+    CC = $(KOS_CC)
+    AR = $(KOS_AR)
+endif
+
 
 # Define compiler flags: CFLAGS
 #------------------------------------------------------------------------------------------------
@@ -433,6 +452,11 @@ endif
 # NOTE: Several external required libraries (stb and others)
 #------------------------------------------------------------------------------------------------
 INCLUDE_PATHS = -I. 
+
+ifeq ($(PLATFORM),PLATFORM_DREAMCAST)
+    CFLAGS = $(KOS_CFLAGS) -D$(PLATFORM) -D$(GRAPHICS) 
+    INCLUDE_PATHS = $(KOS_INC_PATHS)
+endif
 
 # Define additional directories containing required header files
 ifeq ($(PLATFORM),PLATFORM_DESKTOP)
@@ -597,6 +621,10 @@ ifeq ($(PLATFORM),PLATFORM_ANDROID)
     OBJS += android_native_app_glue.o
 endif
 
+ifeq ($(RAYLIB_MODULE_SPINE),TRUE)
+    OBJS += rspine.o
+endif
+
 # Define processes to execute
 #------------------------------------------------------------------------------------------------
 # Default target entry
@@ -703,6 +731,10 @@ rmodels.o : rmodels.c raylib.h rlgl.h raymath.h
 raudio.o : raudio.c raylib.h
 	$(CC) -c $< $(CFLAGS) $(INCLUDE_PATHS)
 
+# Compile spine module
+rspine.o : rspine.c raylib.h rlgl.h raymath.h utils.h
+	$(CC) -c $< $(CFLAGS) $(INCLUDE_PATHS)
+
 # Compile raygui module
 # NOTE: raygui header should be distributed with raylib.h
 raygui.o : raygui.c
@@ -732,69 +764,36 @@ android_native_app_glue.o : $(NATIVE_APP_GLUE)/android_native_app_glue.c
 # See below and ../examples/Makefile for more information.
 
 # RAYLIB_INSTALL_PATH should be the desired full path to libraylib. No relative paths.
-DESTDIR ?= /usr/local
-RAYLIB_INSTALL_PATH ?= $(DESTDIR)/lib
+#DESTDIR ?= /usr/local
+ifeq ($(PLATFORM),PLATFORM_DREAMCAST)
+PREFIX ?= $(KOS_PORTS)
+endif
+RAYLIB_INSTALL_PATH ?= $(DESTDIR)$(PREFIX)/lib
 # RAYLIB_H_INSTALL_PATH locates the installed raylib header and associated source files.
-RAYLIB_H_INSTALL_PATH ?= $(DESTDIR)/include
+RAYLIB_H_INSTALL_PATH ?= $(DESTDIR)$(PREFIX)/include
 
 install :
-ifeq ($(ROOT),root)
-    ifeq ($(PLATFORM_OS),LINUX)
-        # Attention! You are root, writing files to $(RAYLIB_INSTALL_PATH)
-        # and $(RAYLIB_H_INSTALL_PATH). Consult this Makefile for more information.
-        # Prepare the environment as needed.
-		mkdir --parents --verbose $(RAYLIB_INSTALL_PATH)
-		mkdir --parents --verbose $(RAYLIB_H_INSTALL_PATH)
-        ifeq ($(RAYLIB_LIBTYPE),SHARED)
-            # Installing raylib to $(RAYLIB_INSTALL_PATH).
-			cp --update --verbose $(RAYLIB_RELEASE_PATH)/libraylib.so.$(RAYLIB_VERSION) $(RAYLIB_INSTALL_PATH)/lib$(RAYLIB_LIB_NAME).so.$(RAYLIB_VERSION)
-			cd $(RAYLIB_INSTALL_PATH); ln -fsv lib$(RAYLIB_LIB_NAME).so.$(RAYLIB_VERSION) lib$(RAYLIB_LIB_NAME).so.$(RAYLIB_API_VERSION)
-			cd $(RAYLIB_INSTALL_PATH); ln -fsv lib$(RAYLIB_LIB_NAME).so.$(RAYLIB_API_VERSION) lib$(RAYLIB_LIB_NAME).so
-            # Uncomment to update the runtime linker cache with RAYLIB_INSTALL_PATH.
-            # Not necessary if later embedding RPATH in your executable. See examples/Makefile.
-			ldconfig $(RAYLIB_INSTALL_PATH)
-        else
-            # Installing raylib to $(RAYLIB_INSTALL_PATH).
-			cp --update --verbose $(RAYLIB_RELEASE_PATH)/lib$(RAYLIB_LIB_NAME).a $(RAYLIB_INSTALL_PATH)/lib$(RAYLIB_LIB_NAME).a
-        endif
-        # Copying raylib development files to $(RAYLIB_H_INSTALL_PATH).
-		cp --update raylib.h $(RAYLIB_H_INSTALL_PATH)/raylib.h
-		cp --update raymath.h $(RAYLIB_H_INSTALL_PATH)/raymath.h
-		cp --update rlgl.h $(RAYLIB_H_INSTALL_PATH)/rlgl.h
-		@echo "raylib development files installed/updated!"
-    else
-		@echo "This function currently works on GNU/Linux systems. Add yours today (^;"
-    endif
-else
-	@echo "Error: Root permissions needed for installation. Try sudo make install"
-endif
+	mkdir -p $(RAYLIB_INSTALL_PATH)
+	mkdir -p $(RAYLIB_H_INSTALL_PATH)
+	cp --update --verbose $(RAYLIB_RELEASE_PATH)/lib$(RAYLIB_LIB_NAME).a $(RAYLIB_INSTALL_PATH)/lib$(RAYLIB_LIB_NAME).a
+	cp --update raylib.h $(RAYLIB_H_INSTALL_PATH)/raylib.h
+	cp --update raymath.h $(RAYLIB_H_INSTALL_PATH)/raymath.h
+	cp --update rlgl.h $(RAYLIB_H_INSTALL_PATH)/rlgl.h
+	#cp --update rayspine.h $(RAYLIB_H_INSTALL_PATH)/rayspine.h
+	#cp --update $(RAYLIB_MODULE_PHYSAC_PATH)/physac.h $(RAYLIB_H_INSTALL_PATH)/physac.h
+	@echo "raylib development files installed/updated!"
+
 
 # Remove raylib dev files installed on the system
 # NOTE: see 'install' target.
 uninstall :
-ifeq ($(ROOT),root)
-    # WARNING: You are root, about to delete items from $(RAYLIB_INSTALL_PATH).
-    # and $(RAYLIB_H_INSTALL_PATH). Please confirm each item.
-    ifeq ($(PLATFORM_OS),LINUX)
-        ifeq ($(RAYLIB_LIBTYPE),SHARED)
-			rm --force --interactive --verbose $(RAYLIB_INSTALL_PATH)/libraylib.so
-			rm --force --interactive --verbose $(RAYLIB_INSTALL_PATH)/libraylib.so.$(RAYLIB_API_VERSION)
-			rm --force --interactive --verbose $(RAYLIB_INSTALL_PATH)/libraylib.so.$(RAYLIB_VERSION)
-            # Uncomment to clean up the runtime linker cache. See install target.
-			ldconfig
-        else
-			rm --force --interactive --verbose $(RAYLIB_INSTALL_PATH)/libraylib.a
-        endif
-		rm --force --interactive --verbose $(RAYLIB_H_INSTALL_PATH)/raylib.h
-		rm --force --interactive --verbose $(RAYLIB_H_INSTALL_PATH)/raymath.h
-		rm --force --interactive --verbose $(RAYLIB_H_INSTALL_PATH)/rlgl.h
-		@echo "raylib development files removed!"
-    else
-		@echo "This function currently works on GNU/Linux systems. Add yours today (^;"
-    endif
-else
-	@echo "Error: Root permissions needed for uninstallation. Try sudo make uninstall"
-endif
+	rm --force --interactive --verbose $(RAYLIB_H_INSTALL_PATH)/raylib.h
+	rm --force --interactive --verbose $(RAYLIB_H_INSTALL_PATH)/raymath.h
+	rm --force --interactive --verbose $(RAYLIB_H_INSTALL_PATH)/rlgl.h
+	#rm --force --interactive --verbose $(RAYLIB_H_INSTALL_PATH)/physac.h
+	#rm --force --interactive --verbose $(RAYLIB_H_INSTALL_PATH)/rayspine.h
+	@echo "raylib development files removed!"
+
 
 .PHONY: clean_shell_cmd clean_shell_sh
 
