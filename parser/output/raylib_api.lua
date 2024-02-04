@@ -3644,6 +3644,17 @@ return {
       }
     },
     {
+      name = "GetViewRay",
+      description = "Get a ray trace from mouse position in a viewport",
+      returnType = "Ray",
+      params = {
+        {type = "Vector2", name = "mousePosition"},
+        {type = "Camera", name = "camera"},
+        {type = "float", name = "width"},
+        {type = "float", name = "height"}
+      }
+    },
+    {
       name = "GetCameraMatrix",
       description = "Get camera transform matrix (view matrix)",
       returnType = "Matrix",
