@@ -718,7 +718,7 @@ RLAPI void *rlReadTexturePixels(unsigned int id, int width, int height, int form
 RLAPI unsigned char *rlReadScreenPixels(int width, int height);           // Read screen pixel data (color buffer)
 
 // Framebuffer management (fbo)
-RLAPI unsigned int rlLoadFramebuffer(int width, int height);              // Load an empty framebuffer
+RLAPI unsigned int rlLoadFramebuffer(void);                               // Load an empty framebuffer
 RLAPI void rlFramebufferAttach(unsigned int fboId, unsigned int texId, int attachType, int texType, int mipLevel); // Attach texture/renderbuffer to a framebuffer
 RLAPI bool rlFramebufferComplete(unsigned int id);                        // Verify framebuffer is complete
 RLAPI void rlUnloadFramebuffer(unsigned int id);                          // Delete framebuffer from GPU
@@ -3456,7 +3456,7 @@ void *rlReadTexturePixels(unsigned int id, int width, int height, int format)
     // 2 - Create an fbo, activate it, render quad with texture, glReadPixels()
     // We are using Option 1, just need to care for texture format on retrieval
     // NOTE: This behaviour could be conditioned by graphic driver...
-    unsigned int fboId = rlLoadFramebuffer(width, height);
+    unsigned int fboId = rlLoadFramebuffer();
 
     glBindFramebuffer(GL_FRAMEBUFFER, fboId);
     glBindTexture(GL_TEXTURE_2D, 0);
@@ -3510,7 +3510,7 @@ unsigned char *rlReadScreenPixels(int width, int height)
 //-----------------------------------------------------------------------------------------
 // Load a framebuffer to be used for rendering
 // NOTE: No textures attached
-unsigned int rlLoadFramebuffer(int width, int height)
+unsigned int rlLoadFramebuffer(void)
 {
     unsigned int fboId = 0;
 
